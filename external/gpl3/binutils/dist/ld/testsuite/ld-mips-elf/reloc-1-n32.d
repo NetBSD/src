@@ -8,10 +8,10 @@ Relocation section '\.rela\.text' .*
 #
 # Relocations against tstarta
 #
-.* R_MIPS_HI16 .* \.text \+ ffff7ff0
-.* R_MIPS_LO16 .* \.text \+ ffff7ff0
-.* R_MIPS_HI16 .* \.text \+ ffff8000
-.* R_MIPS_LO16 .* \.text \+ ffff8000
+.* R_MIPS_HI16 .* \.text \- 8010
+.* R_MIPS_LO16 .* \.text \- 8010
+.* R_MIPS_HI16 .* \.text \- 8000
+.* R_MIPS_LO16 .* \.text \- 8000
 .* R_MIPS_HI16 .* \.text \+ 0
 .* R_MIPS_LO16 .* \.text \+ 0
 .* R_MIPS_HI16 .* \.text \+ 7ff0
@@ -21,10 +21,10 @@ Relocation section '\.rela\.text' .*
 #
 # Relocations against t32a
 #
-.* R_MIPS_HI16 .* \.text \+ ffff8010
-.* R_MIPS_LO16 .* \.text \+ ffff8010
-.* R_MIPS_HI16 .* \.text \+ ffff8020
-.* R_MIPS_LO16 .* \.text \+ ffff8020
+.* R_MIPS_HI16 .* \.text \- 7ff0
+.* R_MIPS_LO16 .* \.text \- 7ff0
+.* R_MIPS_HI16 .* \.text \- 7fe0
+.* R_MIPS_LO16 .* \.text \- 7fe0
 .* R_MIPS_HI16 .* \.text \+ 20
 .* R_MIPS_LO16 .* \.text \+ 20
 .* R_MIPS_HI16 .* \.text \+ 8010
@@ -34,10 +34,10 @@ Relocation section '\.rela\.text' .*
 #
 # Relocations against _start
 #
-.* R_MIPS_HI16 .* _start \+ ffff7ff0
-.* R_MIPS_LO16 .* _start \+ ffff7ff0
-.* R_MIPS_HI16 .* _start \+ ffff8000
-.* R_MIPS_LO16 .* _start \+ ffff8000
+.* R_MIPS_HI16 .* _start \- 8010
+.* R_MIPS_LO16 .* _start \- 8010
+.* R_MIPS_HI16 .* _start \- 8000
+.* R_MIPS_LO16 .* _start \- 8000
 .* R_MIPS_HI16 .* _start \+ 0
 .* R_MIPS_LO16 .* _start \+ 0
 .* R_MIPS_HI16 .* _start \+ 7ff0
@@ -47,10 +47,10 @@ Relocation section '\.rela\.text' .*
 #
 # Relocations against tstarta
 #
-.* R_MIPS_GOT16 .* \.text \+ ffff7ff0
-.* R_MIPS_LO16 .* \.text \+ ffff7ff0
-.* R_MIPS_GOT16 .* \.text \+ ffff8000
-.* R_MIPS_LO16 .* \.text \+ ffff8000
+.* R_MIPS_GOT16 .* \.text \- 8010
+.* R_MIPS_LO16 .* \.text \- 8010
+.* R_MIPS_GOT16 .* \.text \- 8000
+.* R_MIPS_LO16 .* \.text \- 8000
 .* R_MIPS_GOT16 .* \.text \+ 0
 .* R_MIPS_LO16 .* \.text \+ 0
 .* R_MIPS_GOT16 .* \.text \+ 7ff0
@@ -60,10 +60,10 @@ Relocation section '\.rela\.text' .*
 #
 # Relocations against t32a
 #
-.* R_MIPS_GOT16 .* \.text \+ ffff8010
-.* R_MIPS_LO16 .* \.text \+ ffff8010
-.* R_MIPS_GOT16 .* \.text \+ ffff8020
-.* R_MIPS_LO16 .* \.text \+ ffff8020
+.* R_MIPS_GOT16 .* \.text \- 7ff0
+.* R_MIPS_LO16 .* \.text \- 7ff0
+.* R_MIPS_GOT16 .* \.text \- 7fe0
+.* R_MIPS_LO16 .* \.text \- 7fe0
 .* R_MIPS_GOT16 .* \.text \+ 20
 .* R_MIPS_LO16 .* \.text \+ 20
 .* R_MIPS_GOT16 .* \.text \+ 8010
@@ -73,20 +73,20 @@ Relocation section '\.rela\.text' .*
 #
 # Relocations against sdg
 #
-.* R_MIPS_GPREL16 .* sdg \+ fffffffc
+.* R_MIPS_GPREL16 .* sdg \- 4
 .* R_MIPS_GPREL16 .* sdg \+ 0
 .* R_MIPS_GPREL16 .* sdg \+ 4
 #
 # Relocations against sdla.  .sdata should be the first piece of gp-relative
 # data, which the linker script should put _gp - 0x7ff0.
 #
-.* R_MIPS_GPREL16 .* \.sdata \+ ffff801c
-.* R_MIPS_GPREL16 .* \.sdata \+ ffff8020
-.* R_MIPS_GPREL16 .* \.sdata \+ ffff8024
+.* R_MIPS_GPREL16 .* \.sdata \- 7fe4
+.* R_MIPS_GPREL16 .* \.sdata \- 7fe0
+.* R_MIPS_GPREL16 .* \.sdata \- 7fdc
 #
 # Relocations against tstarta
 #
-.* R_MIPS_26 .* \.text \+ fffffffc
+.* R_MIPS_26 .* \.text \- 4
 .* R_MIPS_26 .* \.text \+ 0
 .* R_MIPS_26 .* \.text \+ 4
 #
@@ -98,7 +98,7 @@ Relocation section '\.rela\.text' .*
 #
 # Relocations against _start
 #
-.* R_MIPS_26 .* _start \+ fffffffc
+.* R_MIPS_26 .* _start \- 4
 .* R_MIPS_26 .* _start \+ 0
 .* R_MIPS_26 .* _start \+ 4
 #
@@ -130,10 +130,10 @@ Relocation section '\.rela\.text' .*
 #
 # Relocations against _start
 #
-.* R_MIPS_HI16 .* _start \+ ffff7ff0
-.* R_MIPS_LO16 .* _start \+ ffff7ff0
-.* R_MIPS_HI16 .* _start \+ ffff8000
-.* R_MIPS_LO16 .* _start \+ ffff8000
+.* R_MIPS_HI16 .* _start \- 8010
+.* R_MIPS_LO16 .* _start \- 8010
+.* R_MIPS_HI16 .* _start \- 8000
+.* R_MIPS_LO16 .* _start \- 8000
 .* R_MIPS_HI16 .* _start \+ 0
 .* R_MIPS_LO16 .* _start \+ 0
 .* R_MIPS_HI16 .* _start \+ 7ff0
@@ -169,15 +169,15 @@ Relocation section '\.rela\.text' .*
 #
 # Relocations against sdg
 #
-.* R_MIPS_GPREL16 .* sdg \+ fffffffc
+.* R_MIPS_GPREL16 .* sdg \- 4
 .* R_MIPS_GPREL16 .* sdg \+ 0
 .* R_MIPS_GPREL16 .* sdg \+ 4
 #
 # Relocations against sdlb
 #
-.* R_MIPS_GPREL16 .* \.sdata \+ ffff803c
-.* R_MIPS_GPREL16 .* \.sdata \+ ffff8040
-.* R_MIPS_GPREL16 .* \.sdata \+ ffff8044
+.* R_MIPS_GPREL16 .* \.sdata \- 7fc4
+.* R_MIPS_GPREL16 .* \.sdata \- 7fc0
+.* R_MIPS_GPREL16 .* \.sdata \- 7fbc
 #
 # Relocations against tstartb
 #
@@ -193,7 +193,7 @@ Relocation section '\.rela\.text' .*
 #
 # Relocations against _start
 #
-.* R_MIPS_26 .* _start \+ fffffffc
+.* R_MIPS_26 .* _start \- 4
 .* R_MIPS_26 .* _start \+ 0
 .* R_MIPS_26 .* _start \+ 4
 #pass

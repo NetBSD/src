@@ -1,3 +1,5 @@
+#include "vers.h"
+
 int
 bar ()
 {
@@ -36,7 +38,7 @@ hide_new_foo ()
   return 1000 + bar ();
 }
 
-__asm__(".symver hide_original_foo,show_foo@");
-__asm__(".symver hide_old_foo,show_foo@VERS_1.1");
-__asm__(".symver hide_old_foo1,show_foo@VERS_1.2");
-__asm__(".symver hide_new_foo,show_foo@@VERS_2.0");
+SYMVER(hide_original_foo, show_foo@);
+SYMVER(hide_old_foo, show_foo@VERS_1.1);
+SYMVER(hide_old_foo1, show_foo@VERS_1.2);
+SYMVER(hide_new_foo, show_foo@@VERS_2.0);

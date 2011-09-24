@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2001, 2002, 2003, 2007 Free Software Foundation, Inc.
+#   Copyright 2001, 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -34,6 +34,6 @@ need_relax_${EMULATION_NAME}_before_allocation (void)
 
   /* Force -relax on if not doing a relocatable link.  */
   if (! link_info.relocatable)
-    command_line.relax = TRUE;
+    ENABLE_RELAXATION;
 }
 EOF

@@ -19,14 +19,14 @@ _start:
 	vmaskmovps %ymm4,%ymm6,(%ecx)
 
 # Tests for op imm8, ymm/mem256, ymm
-	vpermilpd $100,%ymm6,%ymm2
-	vpermilpd $100,(%ecx),%ymm6
-	vpermilps $100,%ymm6,%ymm2
-	vpermilps $100,(%ecx),%ymm6
-	vroundpd $100,%ymm6,%ymm2
-	vroundpd $100,(%ecx),%ymm6
-	vroundps $100,%ymm6,%ymm2
-	vroundps $100,(%ecx),%ymm6
+	vpermilpd $7,%ymm6,%ymm2
+	vpermilpd $7,(%ecx),%ymm6
+	vpermilps $7,%ymm6,%ymm2
+	vpermilps $7,(%ecx),%ymm6
+	vroundpd $7,%ymm6,%ymm2
+	vroundpd $7,(%ecx),%ymm6
+	vroundps $7,%ymm6,%ymm2
+	vroundps $7,(%ecx),%ymm6
 
 # Tests for op ymm/mem256, ymm, ymm
 	vaddpd %ymm4,%ymm6,%ymm2
@@ -231,65 +231,84 @@ _start:
 	vcvttpd2dqy (%ecx),%xmm4
 
 # Tests for op ymm/mem256, ymm
-	vcvtdq2ps %ymm4,%ymm4
+	vcvtdq2ps %ymm4,%ymm6
 	vcvtdq2ps (%ecx),%ymm4
-	vcvtps2dq %ymm4,%ymm4
+	vcvtps2dq %ymm4,%ymm6
 	vcvtps2dq (%ecx),%ymm4
-	vcvttps2dq %ymm4,%ymm4
+	vcvttps2dq %ymm4,%ymm6
 	vcvttps2dq (%ecx),%ymm4
-	vmovapd %ymm4,%ymm4
+	vmovapd %ymm4,%ymm6
 	vmovapd (%ecx),%ymm4
-	vmovaps %ymm4,%ymm4
+	vmovaps %ymm4,%ymm6
 	vmovaps (%ecx),%ymm4
-	vmovdqa %ymm4,%ymm4
+	vmovdqa %ymm4,%ymm6
 	vmovdqa (%ecx),%ymm4
-	vmovdqu %ymm4,%ymm4
+	vmovdqu %ymm4,%ymm6
 	vmovdqu (%ecx),%ymm4
-	vmovddup %ymm4,%ymm4
+	vmovddup %ymm4,%ymm6
 	vmovddup (%ecx),%ymm4
-	vmovshdup %ymm4,%ymm4
+	vmovshdup %ymm4,%ymm6
 	vmovshdup (%ecx),%ymm4
-	vmovsldup %ymm4,%ymm4
+	vmovsldup %ymm4,%ymm6
 	vmovsldup (%ecx),%ymm4
-	vmovupd %ymm4,%ymm4
+	vmovupd %ymm4,%ymm6
 	vmovupd (%ecx),%ymm4
-	vmovups %ymm4,%ymm4
+	vmovups %ymm4,%ymm6
 	vmovups (%ecx),%ymm4
-	vptest %ymm4,%ymm4
+	vptest %ymm4,%ymm6
 	vptest (%ecx),%ymm4
-	vrcpps %ymm4,%ymm4
+	vrcpps %ymm4,%ymm6
 	vrcpps (%ecx),%ymm4
-	vrsqrtps %ymm4,%ymm4
+	vrsqrtps %ymm4,%ymm6
 	vrsqrtps (%ecx),%ymm4
-	vsqrtpd %ymm4,%ymm4
+	vsqrtpd %ymm4,%ymm6
 	vsqrtpd (%ecx),%ymm4
-	vsqrtps %ymm4,%ymm4
+	vsqrtps %ymm4,%ymm6
 	vsqrtps (%ecx),%ymm4
-	vtestpd %ymm4,%ymm4
+	vtestpd %ymm4,%ymm6
 	vtestpd (%ecx),%ymm4
-	vtestps %ymm4,%ymm4
+	vtestps %ymm4,%ymm6
 	vtestps (%ecx),%ymm4
+
+# Tests for op ymm, ymm/mem256
+	vmovapd %ymm4,%ymm6
+	vmovapd %ymm4,(%ecx)
+	vmovaps %ymm4,%ymm6
+	vmovaps %ymm4,(%ecx)
+	vmovdqa %ymm4,%ymm6
+	vmovdqa %ymm4,(%ecx)
+	vmovdqu %ymm4,%ymm6
+	vmovdqu %ymm4,(%ecx)
+	vmovupd %ymm4,%ymm6
+	vmovupd %ymm4,(%ecx)
+	vmovups %ymm4,%ymm6
+	vmovups %ymm4,(%ecx)
 
 # Tests for op mem256, ymm
 	vlddqu (%ecx),%ymm4
 
+# Tests for op ymm, mem256
+	vmovntdq %ymm4,(%ecx)
+	vmovntpd %ymm4,(%ecx)
+	vmovntps %ymm4,(%ecx)
+
 # Tests for op imm8, ymm/mem256, ymm, ymm
-	vblendpd $100,%ymm4,%ymm6,%ymm2
-	vblendpd $100,(%ecx),%ymm6,%ymm2
-	vblendps $100,%ymm4,%ymm6,%ymm2
-	vblendps $100,(%ecx),%ymm6,%ymm2
-	vcmppd $100,%ymm4,%ymm6,%ymm2
-	vcmppd $100,(%ecx),%ymm6,%ymm2
-	vcmpps $100,%ymm4,%ymm6,%ymm2
-	vcmpps $100,(%ecx),%ymm6,%ymm2
-	vdpps $100,%ymm4,%ymm6,%ymm2
-	vdpps $100,(%ecx),%ymm6,%ymm2
-	vperm2f128 $100,%ymm4,%ymm6,%ymm2
-	vperm2f128 $100,(%ecx),%ymm6,%ymm2
-	vshufpd $100,%ymm4,%ymm6,%ymm2
-	vshufpd $100,(%ecx),%ymm6,%ymm2
-	vshufps $100,%ymm4,%ymm6,%ymm2
-	vshufps $100,(%ecx),%ymm6,%ymm2
+	vblendpd $7,%ymm4,%ymm6,%ymm2
+	vblendpd $7,(%ecx),%ymm6,%ymm2
+	vblendps $7,%ymm4,%ymm6,%ymm2
+	vblendps $7,(%ecx),%ymm6,%ymm2
+	vcmppd $7,%ymm4,%ymm6,%ymm2
+	vcmppd $7,(%ecx),%ymm6,%ymm2
+	vcmpps $7,%ymm4,%ymm6,%ymm2
+	vcmpps $7,(%ecx),%ymm6,%ymm2
+	vdpps $7,%ymm4,%ymm6,%ymm2
+	vdpps $7,(%ecx),%ymm6,%ymm2
+	vperm2f128 $7,%ymm4,%ymm6,%ymm2
+	vperm2f128 $7,(%ecx),%ymm6,%ymm2
+	vshufpd $7,%ymm4,%ymm6,%ymm2
+	vshufpd $7,(%ecx),%ymm6,%ymm2
+	vshufps $7,%ymm4,%ymm6,%ymm2
+	vshufps $7,(%ecx),%ymm6,%ymm2
 
 # Tests for op ymm, ymm/mem256, ymm, ymm
 	vblendvpd %ymm4,%ymm6,%ymm2,%ymm7
@@ -297,59 +316,13 @@ _start:
 	vblendvps %ymm4,%ymm6,%ymm2,%ymm7
 	vblendvps %ymm4,(%ecx),%ymm2,%ymm7
 
-# Tests for op ymm/mem256, ymm, ymm, ymm
-# Tests for op ymm, ymm/mem256, ymm, ymm
-	vfmaddpd %ymm4,%ymm6,%ymm2,%ymm7
-	vfmaddpd (%ecx),%ymm6,%ymm2,%ymm7
-	vfmaddps %ymm4,%ymm6,%ymm2,%ymm7
-	vfmaddps (%ecx),%ymm6,%ymm2,%ymm7
-	vfmaddsubpd %ymm4,%ymm6,%ymm2,%ymm7
-	vfmaddsubpd (%ecx),%ymm6,%ymm2,%ymm7
-	vfmaddsubps %ymm4,%ymm6,%ymm2,%ymm7
-	vfmaddsubps (%ecx),%ymm6,%ymm2,%ymm7
-	vfmsubaddpd %ymm4,%ymm6,%ymm2,%ymm7
-	vfmsubaddpd (%ecx),%ymm6,%ymm2,%ymm7
-	vfmsubaddps %ymm4,%ymm6,%ymm2,%ymm7
-	vfmsubaddps (%ecx),%ymm6,%ymm2,%ymm7
-	vfmsubpd %ymm4,%ymm6,%ymm2,%ymm7
-	vfmsubpd (%ecx),%ymm6,%ymm2,%ymm7
-	vfmsubps %ymm4,%ymm6,%ymm2,%ymm7
-	vfmsubps (%ecx),%ymm6,%ymm2,%ymm7
-	vfnmaddpd %ymm4,%ymm6,%ymm2,%ymm7
-	vfnmaddpd (%ecx),%ymm6,%ymm2,%ymm7
-	vfnmaddps %ymm4,%ymm6,%ymm2,%ymm7
-	vfnmaddps (%ecx),%ymm6,%ymm2,%ymm7
-	vfnmsubpd %ymm4,%ymm6,%ymm2,%ymm7
-	vfnmsubpd (%ecx),%ymm6,%ymm2,%ymm7
-	vfnmsubps %ymm4,%ymm6,%ymm2,%ymm7
-	vfnmsubps (%ecx),%ymm6,%ymm2,%ymm7
-	vpermilmo2pd %ymm4,%ymm6,%ymm2,%ymm7
-	vpermilmo2pd (%ecx),%ymm6,%ymm2,%ymm7
-	vpermilmz2pd %ymm4,%ymm6,%ymm2,%ymm7
-	vpermilmz2pd (%ecx),%ymm6,%ymm2,%ymm7
-	vpermiltd2pd %ymm4,%ymm6,%ymm2,%ymm7
-	vpermiltd2pd (%ecx),%ymm6,%ymm2,%ymm7
-	vpermilmo2ps %ymm4,%ymm6,%ymm2,%ymm7
-	vpermilmo2ps (%ecx),%ymm6,%ymm2,%ymm7
-	vpermilmz2ps %ymm4,%ymm6,%ymm2,%ymm7
-	vpermilmz2ps (%ecx),%ymm6,%ymm2,%ymm7
-	vpermiltd2ps %ymm4,%ymm6,%ymm2,%ymm7
-	vpermiltd2ps (%ecx),%ymm6,%ymm2,%ymm7
-
-# Tests for op imm4, ymm/mem256, ymm, ymm, ymm
-# Tests for op imm4, ymm, ymm/mem256, ymm, ymm
-	vpermil2pd $10,%ymm4,%ymm6,%ymm2,%ymm7
-	vpermil2pd $10,(%ecx),%ymm6,%ymm2,%ymm7
-	vpermil2ps $10,%ymm4,%ymm6,%ymm2,%ymm7
-	vpermil2ps $10,(%ecx),%ymm6,%ymm2,%ymm7
-
 # Tests for op imm8, xmm/mem128, ymm, ymm
-	vinsertf128 $100,%xmm4,%ymm4,%ymm6
-	vinsertf128 $100,(%ecx),%ymm4,%ymm6
+	vinsertf128 $7,%xmm4,%ymm4,%ymm6
+	vinsertf128 $7,(%ecx),%ymm4,%ymm6
 
 # Tests for op imm8, ymm, xmm/mem128
-	vextractf128 $100,%ymm4,%xmm4
-	vextractf128 $100,%ymm4,(%ecx)
+	vextractf128 $7,%ymm4,%xmm4
+	vextractf128 $7,%ymm4,(%ecx)
 
 # Tests for op mem128, ymm
 	vbroadcastf128 (%ecx),%ymm4
@@ -514,6 +487,14 @@ _start:
 	vpavgb (%ecx),%xmm6,%xmm7
 	vpavgw %xmm4,%xmm6,%xmm2
 	vpavgw (%ecx),%xmm6,%xmm7
+	vpclmullqlqdq %xmm4,%xmm6,%xmm2
+	vpclmullqlqdq (%ecx),%xmm6,%xmm7
+	vpclmulhqlqdq %xmm4,%xmm6,%xmm2
+	vpclmulhqlqdq (%ecx),%xmm6,%xmm7
+	vpclmullqhqdq %xmm4,%xmm6,%xmm2
+	vpclmullqhqdq (%ecx),%xmm6,%xmm7
+	vpclmulhqhqdq %xmm4,%xmm6,%xmm2
+	vpclmulhqhqdq (%ecx),%xmm6,%xmm7
 	vpcmpeqb %xmm4,%xmm6,%xmm2
 	vpcmpeqb (%ecx),%xmm6,%xmm7
 	vpcmpeqw %xmm4,%xmm6,%xmm2
@@ -808,58 +789,60 @@ _start:
 	vmaskmovpd (%ecx),%xmm4,%xmm6
 
 # Tests for op imm8, xmm/mem128, xmm
-	vaeskeygenassist $100,%xmm4,%xmm6
-	vaeskeygenassist $100,(%ecx),%xmm6
-	vpcmpestri $100,%xmm4,%xmm6
-	vpcmpestri $100,(%ecx),%xmm6
-	vpcmpestrm $100,%xmm4,%xmm6
-	vpcmpestrm $100,(%ecx),%xmm6
-	vpcmpistri $100,%xmm4,%xmm6
-	vpcmpistri $100,(%ecx),%xmm6
-	vpcmpistrm $100,%xmm4,%xmm6
-	vpcmpistrm $100,(%ecx),%xmm6
-	vpermilpd $100,%xmm4,%xmm6
-	vpermilpd $100,(%ecx),%xmm6
-	vpermilps $100,%xmm4,%xmm6
-	vpermilps $100,(%ecx),%xmm6
-	vpshufd $100,%xmm4,%xmm6
-	vpshufd $100,(%ecx),%xmm6
-	vpshufhw $100,%xmm4,%xmm6
-	vpshufhw $100,(%ecx),%xmm6
-	vpshuflw $100,%xmm4,%xmm6
-	vpshuflw $100,(%ecx),%xmm6
-	vroundpd $100,%xmm4,%xmm6
-	vroundpd $100,(%ecx),%xmm6
-	vroundps $100,%xmm4,%xmm6
-	vroundps $100,(%ecx),%xmm6
+	vaeskeygenassist $7,%xmm4,%xmm6
+	vaeskeygenassist $7,(%ecx),%xmm6
+	vpcmpestri $7,%xmm4,%xmm6
+	vpcmpestri $7,(%ecx),%xmm6
+	vpcmpestrm $7,%xmm4,%xmm6
+	vpcmpestrm $7,(%ecx),%xmm6
+	vpcmpistri $7,%xmm4,%xmm6
+	vpcmpistri $7,(%ecx),%xmm6
+	vpcmpistrm $7,%xmm4,%xmm6
+	vpcmpistrm $7,(%ecx),%xmm6
+	vpermilpd $7,%xmm4,%xmm6
+	vpermilpd $7,(%ecx),%xmm6
+	vpermilps $7,%xmm4,%xmm6
+	vpermilps $7,(%ecx),%xmm6
+	vpshufd $7,%xmm4,%xmm6
+	vpshufd $7,(%ecx),%xmm6
+	vpshufhw $7,%xmm4,%xmm6
+	vpshufhw $7,(%ecx),%xmm6
+	vpshuflw $7,%xmm4,%xmm6
+	vpshuflw $7,(%ecx),%xmm6
+	vroundpd $7,%xmm4,%xmm6
+	vroundpd $7,(%ecx),%xmm6
+	vroundps $7,%xmm4,%xmm6
+	vroundps $7,(%ecx),%xmm6
 
 # Tests for op xmm, xmm, mem128
 	vmaskmovps %xmm4,%xmm6,(%ecx)
 	vmaskmovpd %xmm4,%xmm6,(%ecx)
 
 # Tests for op imm8, xmm/mem128, xmm, xmm
-	vblendpd $100,%xmm4,%xmm6,%xmm2
-	vblendpd $100,(%ecx),%xmm6,%xmm2
-	vblendps $100,%xmm4,%xmm6,%xmm2
-	vblendps $100,(%ecx),%xmm6,%xmm2
-	vcmppd $100,%xmm4,%xmm6,%xmm2
-	vcmppd $100,(%ecx),%xmm6,%xmm2
-	vcmpps $100,%xmm4,%xmm6,%xmm2
-	vcmpps $100,(%ecx),%xmm6,%xmm2
-	vdppd $100,%xmm4,%xmm6,%xmm2
-	vdppd $100,(%ecx),%xmm6,%xmm2
-	vdpps $100,%xmm4,%xmm6,%xmm2
-	vdpps $100,(%ecx),%xmm6,%xmm2
-	vmpsadbw $100,%xmm4,%xmm6,%xmm2
-	vmpsadbw $100,(%ecx),%xmm6,%xmm2
-	vpalignr $100,%xmm4,%xmm6,%xmm2
-	vpalignr $100,(%ecx),%xmm6,%xmm2
-	vpblendw $100,%xmm4,%xmm6,%xmm2
-	vpblendw $100,(%ecx),%xmm6,%xmm2
-	vshufpd $100,%xmm4,%xmm6,%xmm2
-	vshufpd $100,(%ecx),%xmm6,%xmm2
-	vshufps $100,%xmm4,%xmm6,%xmm2
-	vshufps $100,(%ecx),%xmm6,%xmm2
+	vblendpd $7,%xmm4,%xmm6,%xmm2
+	vblendpd $7,(%ecx),%xmm6,%xmm2
+	vblendps $7,%xmm4,%xmm6,%xmm2
+	vblendps $7,(%ecx),%xmm6,%xmm2
+	vcmppd $7,%xmm4,%xmm6,%xmm2
+	vcmppd $7,(%ecx),%xmm6,%xmm2
+	vcmpps $7,%xmm4,%xmm6,%xmm2
+	vcmpps $7,(%ecx),%xmm6,%xmm2
+	vdppd $7,%xmm4,%xmm6,%xmm2
+	vdppd $7,(%ecx),%xmm6,%xmm2
+	vdpps $7,%xmm4,%xmm6,%xmm2
+	vdpps $7,(%ecx),%xmm6,%xmm2
+	vmpsadbw $7,%xmm4,%xmm6,%xmm2
+	vmpsadbw $7,(%ecx),%xmm6,%xmm2
+	vpalignr $7,%xmm4,%xmm6,%xmm2
+	vpalignr $7,(%ecx),%xmm6,%xmm2
+	vpblendw $7,%xmm4,%xmm6,%xmm2
+	vpblendw $7,(%ecx),%xmm6,%xmm2
+	vpclmulqdq $7,%xmm4,%xmm6,%xmm2
+	vpclmulqdq $7,(%ecx),%xmm6,%xmm2
+	vshufpd $7,%xmm4,%xmm6,%xmm2
+	vshufpd $7,(%ecx),%xmm6,%xmm2
+	vshufps $7,%xmm4,%xmm6,%xmm2
+	vshufps $7,(%ecx),%xmm6,%xmm2
 
 # Tests for op xmm, xmm/mem128, xmm, xmm
 	vblendvpd %xmm4,%xmm6,%xmm2,%xmm7
@@ -868,72 +851,6 @@ _start:
 	vblendvps %xmm4,(%ecx),%xmm2,%xmm7
 	vpblendvb %xmm4,%xmm6,%xmm2,%xmm7
 	vpblendvb %xmm4,(%ecx),%xmm2,%xmm7
-
-# Tests for op xmm/mem128, xmm, xmm, xmm
-# Tests for op xmm, xmm/mem128, xmm, xmm
-	vfmaddpd %xmm4,%xmm6,%xmm2,%xmm7
-	vfmaddpd (%ecx),%xmm6,%xmm2,%xmm7
-	vfmaddpd %xmm4,(%ecx),%xmm2,%xmm7
-	vfmaddps %xmm4,%xmm6,%xmm2,%xmm7
-	vfmaddps (%ecx),%xmm6,%xmm2,%xmm7
-	vfmaddps %xmm4,(%ecx),%xmm2,%xmm7
-	vfmaddsubpd %xmm4,%xmm6,%xmm2,%xmm7
-	vfmaddsubpd (%ecx),%xmm6,%xmm2,%xmm7
-	vfmaddsubpd %xmm4,(%ecx),%xmm2,%xmm7
-	vfmaddsubps %xmm4,%xmm6,%xmm2,%xmm7
-	vfmaddsubps (%ecx),%xmm6,%xmm2,%xmm7
-	vfmaddsubps %xmm4,(%ecx),%xmm2,%xmm7
-	vfmsubaddpd %xmm4,%xmm6,%xmm2,%xmm7
-	vfmsubaddpd (%ecx),%xmm6,%xmm2,%xmm7
-	vfmsubaddpd %xmm4,(%ecx),%xmm2,%xmm7
-	vfmsubaddps %xmm4,%xmm6,%xmm2,%xmm7
-	vfmsubaddps (%ecx),%xmm6,%xmm2,%xmm7
-	vfmsubaddps %xmm4,(%ecx),%xmm2,%xmm7
-	vfmsubpd %xmm4,%xmm6,%xmm2,%xmm7
-	vfmsubpd (%ecx),%xmm6,%xmm2,%xmm7
-	vfmsubpd %xmm4,(%ecx),%xmm2,%xmm7
-	vfmsubps %xmm4,%xmm6,%xmm2,%xmm7
-	vfmsubps (%ecx),%xmm6,%xmm2,%xmm7
-	vfmsubps %xmm4,(%ecx),%xmm2,%xmm7
-	vfnmaddpd %xmm4,%xmm6,%xmm2,%xmm7
-	vfnmaddpd (%ecx),%xmm6,%xmm2,%xmm7
-	vfnmaddpd %xmm4,(%ecx),%xmm2,%xmm7
-	vfnmaddps %xmm4,%xmm6,%xmm2,%xmm7
-	vfnmaddps (%ecx),%xmm6,%xmm2,%xmm7
-	vfnmaddps %xmm4,(%ecx),%xmm2,%xmm7
-	vfnmsubpd %xmm4,%xmm6,%xmm2,%xmm7
-	vfnmsubpd (%ecx),%xmm6,%xmm2,%xmm7
-	vfnmsubpd %xmm4,(%ecx),%xmm2,%xmm7
-	vfnmsubps %xmm4,%xmm6,%xmm2,%xmm7
-	vfnmsubps (%ecx),%xmm6,%xmm2,%xmm7
-	vfnmsubps %xmm4,(%ecx),%xmm2,%xmm7
-	vpermilmo2pd %xmm4,%xmm6,%xmm2,%xmm7
-	vpermilmo2pd (%ecx),%xmm6,%xmm2,%xmm7
-	vpermilmo2pd %xmm4,(%ecx),%xmm2,%xmm7
-	vpermilmz2pd %xmm4,%xmm6,%xmm2,%xmm7
-	vpermilmz2pd (%ecx),%xmm6,%xmm2,%xmm7
-	vpermilmz2pd %xmm4,(%ecx),%xmm2,%xmm7
-	vpermiltd2pd %xmm4,%xmm6,%xmm2,%xmm7
-	vpermiltd2pd (%ecx),%xmm6,%xmm2,%xmm7
-	vpermiltd2pd %xmm4,(%ecx),%xmm2,%xmm7
-	vpermilmo2ps %xmm4,%xmm6,%xmm2,%xmm7
-	vpermilmo2ps (%ecx),%xmm6,%xmm2,%xmm7
-	vpermilmo2ps %xmm4,(%ecx),%xmm2,%xmm7
-	vpermilmz2ps %xmm4,%xmm6,%xmm2,%xmm7
-	vpermilmz2ps (%ecx),%xmm6,%xmm2,%xmm7
-	vpermilmz2ps %xmm4,(%ecx),%xmm2,%xmm7
-	vpermiltd2ps %xmm4,%xmm6,%xmm2,%xmm7
-	vpermiltd2ps (%ecx),%xmm6,%xmm2,%xmm7
-	vpermiltd2ps %xmm4,(%ecx),%xmm2,%xmm7
-
-# Tests for op imm4, xmm/mem128, xmm, xmm, xmm
-# Tests for op imm4, xmm, xmm/mem128, xmm, xmm
-	vpermil2pd $10,%xmm4,%xmm6,%xmm2,%xmm7
-	vpermil2pd $10,(%ecx),%xmm6,%xmm2,%xmm7
-	vpermil2pd $10,%xmm4,(%ecx),%xmm2,%xmm7
-	vpermil2ps $10,%xmm4,%xmm6,%xmm2,%xmm7
-	vpermil2ps $10,(%ecx),%xmm6,%xmm2,%xmm7
-	vpermil2ps $10,%xmm4,(%ecx),%xmm2,%xmm7
 
 # Tests for op mem64, ymm
 	vbroadcastsd (%ecx),%ymm4
@@ -990,25 +907,10 @@ _start:
 	vmovhps (%ecx),%xmm4,%xmm6
 
 # Tests for op imm8, xmm/mem64, xmm, xmm
-	vcmpsd $100,%xmm4,%xmm6,%xmm2
-	vcmpsd $100,(%ecx),%xmm6,%xmm2
-	vroundsd $100,%xmm4,%xmm6,%xmm2
-	vroundsd $100,(%ecx),%xmm6,%xmm2
-
-# Tests for op xmm/mem64, xmm, xmm, xmm
-# Tests for op xmm, xmm/mem64, xmm, xmm
-	vfmaddsd %xmm4,%xmm6,%xmm2,%xmm7
-	vfmaddsd (%ecx),%xmm6,%xmm2,%xmm7
-	vfmaddsd %xmm4,(%ecx),%xmm2,%xmm7
-	vfmsubsd %xmm4,%xmm6,%xmm2,%xmm7
-	vfmsubsd (%ecx),%xmm6,%xmm2,%xmm7
-	vfmsubsd %xmm4,(%ecx),%xmm2,%xmm7
-	vfnmaddsd %xmm4,%xmm6,%xmm2,%xmm7
-	vfnmaddsd (%ecx),%xmm6,%xmm2,%xmm7
-	vfnmaddsd %xmm4,(%ecx),%xmm2,%xmm7
-	vfnmsubsd %xmm4,%xmm6,%xmm2,%xmm7
-	vfnmsubsd (%ecx),%xmm6,%xmm2,%xmm7
-	vfnmsubsd %xmm4,(%ecx),%xmm2,%xmm7
+	vcmpsd $7,%xmm4,%xmm6,%xmm2
+	vcmpsd $7,(%ecx),%xmm6,%xmm2
+	vroundsd $7,%xmm4,%xmm6,%xmm2
+	vroundsd $7,(%ecx),%xmm6,%xmm2
 
 # Tests for op xmm/mem64, xmm, xmm
 	vaddsd %xmm4,%xmm6,%xmm2
@@ -1091,6 +993,10 @@ _start:
 	vcmpgt_oqsd (%ecx),%xmm6,%xmm2
 	vcmptrue_ussd %xmm4,%xmm6,%xmm2
 	vcmptrue_ussd (%ecx),%xmm6,%xmm2
+
+# Tests for op mem64
+	vldmxcsr (%ecx)
+	vstmxcsr (%ecx)
 
 # Tests for op xmm/mem32, xmm, xmm
 	vaddss %xmm4,%xmm6,%xmm2
@@ -1216,12 +1122,13 @@ _start:
 	vcvttss2si (%ecx),%ecx
 
 # Tests for op imm8, xmm, regq/mem32
-	vextractps $100,%xmm4,(%ecx)
+	vextractps $7,%xmm4,(%ecx)
+
 # Tests for op imm8, xmm, regl/mem32
-	vpextrd $100,%xmm4,%ecx
-	vpextrd $100,%xmm4,(%ecx)
-	vextractps $100,%xmm4,%ecx
-	vextractps $100,%xmm4,(%ecx)
+	vpextrd $7,%xmm4,%ecx
+	vpextrd $7,%xmm4,(%ecx)
+	vextractps $7,%xmm4,%ecx
+	vextractps $7,%xmm4,(%ecx)
 
 # Tests for op regl/mem32, xmm, xmm
 	vcvtsi2sd %ecx,%xmm4,%xmm6
@@ -1230,27 +1137,12 @@ _start:
 	vcvtsi2ss (%ecx),%xmm4,%xmm6
 
 # Tests for op imm8, xmm/mem32, xmm, xmm
-	vcmpss $100,%xmm4,%xmm6,%xmm2
-	vcmpss $100,(%ecx),%xmm6,%xmm2
-	vinsertps $100,%xmm4,%xmm6,%xmm2
-	vinsertps $100,(%ecx),%xmm6,%xmm2
-	vroundss $100,%xmm4,%xmm6,%xmm2
-	vroundss $100,(%ecx),%xmm6,%xmm2
-
-# Tests for op xmm/mem32, xmm, xmm, xmm
-# Tests for op xmm, xmm/mem32, xmm, xmm
-	vfmaddss %xmm4,%xmm6,%xmm2,%xmm7
-	vfmaddss (%ecx),%xmm6,%xmm2,%xmm7
-	vfmaddss %xmm4,(%ecx),%xmm2,%xmm7
-	vfmsubss %xmm4,%xmm6,%xmm2,%xmm7
-	vfmsubss (%ecx),%xmm6,%xmm2,%xmm7
-	vfmsubss %xmm4,(%ecx),%xmm2,%xmm7
-	vfnmaddss %xmm4,%xmm6,%xmm2,%xmm7
-	vfnmaddss (%ecx),%xmm6,%xmm2,%xmm7
-	vfnmaddss %xmm4,(%ecx),%xmm2,%xmm7
-	vfnmsubss %xmm4,%xmm6,%xmm2,%xmm7
-	vfnmsubss (%ecx),%xmm6,%xmm2,%xmm7
-	vfnmsubss %xmm4,(%ecx),%xmm2,%xmm7
+	vcmpss $7,%xmm4,%xmm6,%xmm2
+	vcmpss $7,(%ecx),%xmm6,%xmm2
+	vinsertps $7,%xmm4,%xmm6,%xmm2
+	vinsertps $7,(%ecx),%xmm6,%xmm2
+	vroundss $7,%xmm4,%xmm6,%xmm2
+	vroundss $7,(%ecx),%xmm6,%xmm2
 
 # Tests for op xmm/m16, xmm
 	vpmovsxbq %xmm4,%xmm6
@@ -1259,31 +1151,30 @@ _start:
 	vpmovzxbq (%ecx),%xmm4
 
 # Tests for op imm8, xmm, regl/mem16
-	vpextrw $100,%xmm4,%ecx
-	vpextrw $100,%xmm4,(%ecx)
+	vpextrw $7,%xmm4,%ecx
+	vpextrw $7,%xmm4,(%ecx)
 
 # Tests for op imm8, xmm, regq/mem16
-	vpextrw $100,%xmm4,(%ecx)
+	vpextrw $7,%xmm4,(%ecx)
 
 # Tests for op imm8, regl/mem16, xmm, xmm
-	vpinsrw $100,%ecx,%xmm4,%xmm6
-	vpinsrw $100,(%ecx),%xmm4,%xmm6
-
+	vpinsrw $7,%ecx,%xmm4,%xmm6
+	vpinsrw $7,(%ecx),%xmm4,%xmm6
 
 # Tests for op imm8, xmm, regl/mem8
-	vpextrb $100,%xmm4,%ecx
-	vpextrb $100,%xmm4,(%ecx)
+	vpextrb $7,%xmm4,%ecx
+	vpextrb $7,%xmm4,(%ecx)
 
 # Tests for op imm8, regl/mem8, xmm, xmm
-	vpinsrb $100,%ecx,%xmm4,%xmm6
-	vpinsrb $100,(%ecx),%xmm4,%xmm6
+	vpinsrb $7,%ecx,%xmm4,%xmm6
+	vpinsrb $7,(%ecx),%xmm4,%xmm6
 
 # Tests for op imm8, xmm, regq/mem8
-	vpextrb $100,%xmm4,(%ecx)
+	vpextrb $7,%xmm4,(%ecx)
 
 # Tests for op imm8, regl/mem8, xmm, xmm
-	vpinsrb $100,%ecx,%xmm4,%xmm6
-	vpinsrb $100,(%ecx),%xmm4,%xmm6
+	vpinsrb $7,%ecx,%xmm4,%xmm6
+	vpinsrb $7,(%ecx),%xmm4,%xmm6
 
 # Tests for op xmm, xmm
 	vmaskmovdqu %xmm4,%xmm6
@@ -1293,6 +1184,7 @@ _start:
 	vmovmskpd %xmm4,%ecx
 	vmovmskps %xmm4,%ecx
 	vpmovmskb %xmm4,%ecx
+
 # Tests for op xmm, xmm, xmm
 	vmovhlps %xmm4,%xmm6,%xmm2
 	vmovlhps %xmm4,%xmm6,%xmm2
@@ -1300,24 +1192,23 @@ _start:
 	vmovss %xmm4,%xmm6,%xmm2
 
 # Tests for op imm8, xmm, xmm
-	vpslld $100,%xmm4,%xmm6
-	vpslldq $100,%xmm4,%xmm6
-	vpsllq $100,%xmm4,%xmm6
-	vpsllw $100,%xmm4,%xmm6
-	vpsrad $100,%xmm4,%xmm6
-	vpsraw $100,%xmm4,%xmm6
-	vpsrld $100,%xmm4,%xmm6
-	vpsrldq $100,%xmm4,%xmm6
-	vpsrlq $100,%xmm4,%xmm6
-	vpsrlw $100,%xmm4,%xmm6
+	vpslld $7,%xmm4,%xmm6
+	vpslldq $7,%xmm4,%xmm6
+	vpsllq $7,%xmm4,%xmm6
+	vpsllw $7,%xmm4,%xmm6
+	vpsrad $7,%xmm4,%xmm6
+	vpsraw $7,%xmm4,%xmm6
+	vpsrld $7,%xmm4,%xmm6
+	vpsrldq $7,%xmm4,%xmm6
+	vpsrlq $7,%xmm4,%xmm6
+	vpsrlw $7,%xmm4,%xmm6
 
 # Tests for op imm8, xmm, regl
-	vpextrw $100,%xmm4,%ecx
+	vpextrw $7,%xmm4,%ecx
 
 # Tests for op ymm, regl
 	vmovmskpd %ymm4,%ecx
 	vmovmskps %ymm4,%ecx
-
 
 # Default instructions without suffixes.
 	vcvtpd2dq %xmm4,%xmm6
@@ -1336,17 +1227,18 @@ _start:
 	vcvtdq2pd 0x1234,%ymm0
 	vcvtpd2psy 0x1234,%xmm0
 	vpavgb 0x1234,%xmm0,%xmm7
-	vaeskeygenassist $100,0x1234,%xmm0
-	vpextrb $100,%xmm0,0x1234
+	vaeskeygenassist $7,0x1234,%xmm0
+	vpextrb $7,%xmm0,0x1234
 	vcvtsi2sdl 0x1234,%xmm0,%xmm7
+	vpclmulqdq $7,0x1234,%xmm0,%xmm7
 	vblendvps %xmm0,0x1234,%xmm4,%xmm6
-	vpinsrb $100,0x1234,%xmm0,%xmm7
+	vpinsrb $7,0x1234,%xmm0,%xmm7
 	vmovdqa 0x1234,%ymm0
 	vmovdqa %ymm0,0x1234
 	vpermilpd 0x1234,%ymm0,%ymm7
-	vroundpd $100,0x1234,%ymm0
-	vextractf128 $100,%ymm0,0x1234
-	vperm2f128 $100,0x1234,%ymm0,%ymm7
+	vroundpd $7,0x1234,%ymm0
+	vextractf128 $7,%ymm0,0x1234
+	vperm2f128 $7,0x1234,%ymm0,%ymm7
 	vblendvpd %ymm0,0x1234,%ymm4,%ymm6
 	vldmxcsr (%ebp)
 	vmovdqa (%ebp),%xmm0
@@ -1356,17 +1248,18 @@ _start:
 	vcvtdq2pd (%ebp),%ymm0
 	vcvtpd2psy (%ebp),%xmm0
 	vpavgb (%ebp),%xmm0,%xmm7
-	vaeskeygenassist $100,(%ebp),%xmm0
-	vpextrb $100,%xmm0,(%ebp)
+	vaeskeygenassist $7,(%ebp),%xmm0
+	vpextrb $7,%xmm0,(%ebp)
 	vcvtsi2sdl (%ebp),%xmm0,%xmm7
+	vpclmulqdq $7,(%ebp),%xmm0,%xmm7
 	vblendvps %xmm0,(%ebp),%xmm4,%xmm6
-	vpinsrb $100,(%ebp),%xmm0,%xmm7
+	vpinsrb $7,(%ebp),%xmm0,%xmm7
 	vmovdqa (%ebp),%ymm0
 	vmovdqa %ymm0,(%ebp)
 	vpermilpd (%ebp),%ymm0,%ymm7
-	vroundpd $100,(%ebp),%ymm0
-	vextractf128 $100,%ymm0,(%ebp)
-	vperm2f128 $100,(%ebp),%ymm0,%ymm7
+	vroundpd $7,(%ebp),%ymm0
+	vextractf128 $7,%ymm0,(%ebp)
+	vperm2f128 $7,(%ebp),%ymm0,%ymm7
 	vblendvpd %ymm0,(%ebp),%ymm4,%ymm6
 	vldmxcsr (%esp)
 	vmovdqa (%esp),%xmm0
@@ -1376,17 +1269,18 @@ _start:
 	vcvtdq2pd (%esp),%ymm0
 	vcvtpd2psy (%esp),%xmm0
 	vpavgb (%esp),%xmm0,%xmm7
-	vaeskeygenassist $100,(%esp),%xmm0
-	vpextrb $100,%xmm0,(%esp)
+	vaeskeygenassist $7,(%esp),%xmm0
+	vpextrb $7,%xmm0,(%esp)
 	vcvtsi2sdl (%esp),%xmm0,%xmm7
+	vpclmulqdq $7,(%esp),%xmm0,%xmm7
 	vblendvps %xmm0,(%esp),%xmm4,%xmm6
-	vpinsrb $100,(%esp),%xmm0,%xmm7
+	vpinsrb $7,(%esp),%xmm0,%xmm7
 	vmovdqa (%esp),%ymm0
 	vmovdqa %ymm0,(%esp)
 	vpermilpd (%esp),%ymm0,%ymm7
-	vroundpd $100,(%esp),%ymm0
-	vextractf128 $100,%ymm0,(%esp)
-	vperm2f128 $100,(%esp),%ymm0,%ymm7
+	vroundpd $7,(%esp),%ymm0
+	vextractf128 $7,%ymm0,(%esp)
+	vperm2f128 $7,(%esp),%ymm0,%ymm7
 	vblendvpd %ymm0,(%esp),%ymm4,%ymm6
 	vldmxcsr 0x99(%ebp)
 	vmovdqa 0x99(%ebp),%xmm0
@@ -1396,17 +1290,18 @@ _start:
 	vcvtdq2pd 0x99(%ebp),%ymm0
 	vcvtpd2psy 0x99(%ebp),%xmm0
 	vpavgb 0x99(%ebp),%xmm0,%xmm7
-	vaeskeygenassist $100,0x99(%ebp),%xmm0
-	vpextrb $100,%xmm0,0x99(%ebp)
+	vaeskeygenassist $7,0x99(%ebp),%xmm0
+	vpextrb $7,%xmm0,0x99(%ebp)
 	vcvtsi2sdl 0x99(%ebp),%xmm0,%xmm7
+	vpclmulqdq $7,0x99(%ebp),%xmm0,%xmm7
 	vblendvps %xmm0,0x99(%ebp),%xmm4,%xmm6
-	vpinsrb $100,0x99(%ebp),%xmm0,%xmm7
+	vpinsrb $7,0x99(%ebp),%xmm0,%xmm7
 	vmovdqa 0x99(%ebp),%ymm0
 	vmovdqa %ymm0,0x99(%ebp)
 	vpermilpd 0x99(%ebp),%ymm0,%ymm7
-	vroundpd $100,0x99(%ebp),%ymm0
-	vextractf128 $100,%ymm0,0x99(%ebp)
-	vperm2f128 $100,0x99(%ebp),%ymm0,%ymm7
+	vroundpd $7,0x99(%ebp),%ymm0
+	vextractf128 $7,%ymm0,0x99(%ebp)
+	vperm2f128 $7,0x99(%ebp),%ymm0,%ymm7
 	vblendvpd %ymm0,0x99(%ebp),%ymm4,%ymm6
 	vldmxcsr 0x99(,%eiz)
 	vmovdqa 0x99(,%eiz),%xmm0
@@ -1416,17 +1311,18 @@ _start:
 	vcvtdq2pd 0x99(,%eiz),%ymm0
 	vcvtpd2psy 0x99(,%eiz),%xmm0
 	vpavgb 0x99(,%eiz),%xmm0,%xmm7
-	vaeskeygenassist $100,0x99(,%eiz),%xmm0
-	vpextrb $100,%xmm0,0x99(,%eiz)
+	vaeskeygenassist $7,0x99(,%eiz),%xmm0
+	vpextrb $7,%xmm0,0x99(,%eiz)
 	vcvtsi2sdl 0x99(,%eiz),%xmm0,%xmm7
+	vpclmulqdq $7,0x99(,%eiz),%xmm0,%xmm7
 	vblendvps %xmm0,0x99(,%eiz),%xmm4,%xmm6
-	vpinsrb $100,0x99(,%eiz),%xmm0,%xmm7
+	vpinsrb $7,0x99(,%eiz),%xmm0,%xmm7
 	vmovdqa 0x99(,%eiz),%ymm0
 	vmovdqa %ymm0,0x99(,%eiz)
 	vpermilpd 0x99(,%eiz),%ymm0,%ymm7
-	vroundpd $100,0x99(,%eiz),%ymm0
-	vextractf128 $100,%ymm0,0x99(,%eiz)
-	vperm2f128 $100,0x99(,%eiz),%ymm0,%ymm7
+	vroundpd $7,0x99(,%eiz),%ymm0
+	vextractf128 $7,%ymm0,0x99(,%eiz)
+	vperm2f128 $7,0x99(,%eiz),%ymm0,%ymm7
 	vblendvpd %ymm0,0x99(,%eiz),%ymm4,%ymm6
 	vldmxcsr 0x99(,%eiz,2)
 	vmovdqa 0x99(,%eiz,2),%xmm0
@@ -1436,17 +1332,18 @@ _start:
 	vcvtdq2pd 0x99(,%eiz,2),%ymm0
 	vcvtpd2psy 0x99(,%eiz,2),%xmm0
 	vpavgb 0x99(,%eiz,2),%xmm0,%xmm7
-	vaeskeygenassist $100,0x99(,%eiz,2),%xmm0
-	vpextrb $100,%xmm0,0x99(,%eiz,2)
+	vaeskeygenassist $7,0x99(,%eiz,2),%xmm0
+	vpextrb $7,%xmm0,0x99(,%eiz,2)
 	vcvtsi2sdl 0x99(,%eiz,2),%xmm0,%xmm7
+	vpclmulqdq $7,0x99(,%eiz,2),%xmm0,%xmm7
 	vblendvps %xmm0,0x99(,%eiz,2),%xmm4,%xmm6
-	vpinsrb $100,0x99(,%eiz,2),%xmm0,%xmm7
+	vpinsrb $7,0x99(,%eiz,2),%xmm0,%xmm7
 	vmovdqa 0x99(,%eiz,2),%ymm0
 	vmovdqa %ymm0,0x99(,%eiz,2)
 	vpermilpd 0x99(,%eiz,2),%ymm0,%ymm7
-	vroundpd $100,0x99(,%eiz,2),%ymm0
-	vextractf128 $100,%ymm0,0x99(,%eiz,2)
-	vperm2f128 $100,0x99(,%eiz,2),%ymm0,%ymm7
+	vroundpd $7,0x99(,%eiz,2),%ymm0
+	vextractf128 $7,%ymm0,0x99(,%eiz,2)
+	vperm2f128 $7,0x99(,%eiz,2),%ymm0,%ymm7
 	vblendvpd %ymm0,0x99(,%eiz,2),%ymm4,%ymm6
 	vldmxcsr 0x99(%eax,%eiz)
 	vmovdqa 0x99(%eax,%eiz),%xmm0
@@ -1456,17 +1353,18 @@ _start:
 	vcvtdq2pd 0x99(%eax,%eiz),%ymm0
 	vcvtpd2psy 0x99(%eax,%eiz),%xmm0
 	vpavgb 0x99(%eax,%eiz),%xmm0,%xmm7
-	vaeskeygenassist $100,0x99(%eax,%eiz),%xmm0
-	vpextrb $100,%xmm0,0x99(%eax,%eiz)
+	vaeskeygenassist $7,0x99(%eax,%eiz),%xmm0
+	vpextrb $7,%xmm0,0x99(%eax,%eiz)
 	vcvtsi2sdl 0x99(%eax,%eiz),%xmm0,%xmm7
+	vpclmulqdq $7,0x99(%eax,%eiz),%xmm0,%xmm7
 	vblendvps %xmm0,0x99(%eax,%eiz),%xmm4,%xmm6
-	vpinsrb $100,0x99(%eax,%eiz),%xmm0,%xmm7
+	vpinsrb $7,0x99(%eax,%eiz),%xmm0,%xmm7
 	vmovdqa 0x99(%eax,%eiz),%ymm0
 	vmovdqa %ymm0,0x99(%eax,%eiz)
 	vpermilpd 0x99(%eax,%eiz),%ymm0,%ymm7
-	vroundpd $100,0x99(%eax,%eiz),%ymm0
-	vextractf128 $100,%ymm0,0x99(%eax,%eiz)
-	vperm2f128 $100,0x99(%eax,%eiz),%ymm0,%ymm7
+	vroundpd $7,0x99(%eax,%eiz),%ymm0
+	vextractf128 $7,%ymm0,0x99(%eax,%eiz)
+	vperm2f128 $7,0x99(%eax,%eiz),%ymm0,%ymm7
 	vblendvpd %ymm0,0x99(%eax,%eiz),%ymm4,%ymm6
 	vldmxcsr 0x99(%eax,%eiz,2)
 	vmovdqa 0x99(%eax,%eiz,2),%xmm0
@@ -1476,17 +1374,18 @@ _start:
 	vcvtdq2pd 0x99(%eax,%eiz,2),%ymm0
 	vcvtpd2psy 0x99(%eax,%eiz,2),%xmm0
 	vpavgb 0x99(%eax,%eiz,2),%xmm0,%xmm7
-	vaeskeygenassist $100,0x99(%eax,%eiz,2),%xmm0
-	vpextrb $100,%xmm0,0x99(%eax,%eiz,2)
+	vaeskeygenassist $7,0x99(%eax,%eiz,2),%xmm0
+	vpextrb $7,%xmm0,0x99(%eax,%eiz,2)
 	vcvtsi2sdl 0x99(%eax,%eiz,2),%xmm0,%xmm7
+	vpclmulqdq $7,0x99(%eax,%eiz,2),%xmm0,%xmm7
 	vblendvps %xmm0,0x99(%eax,%eiz,2),%xmm4,%xmm6
-	vpinsrb $100,0x99(%eax,%eiz,2),%xmm0,%xmm7
+	vpinsrb $7,0x99(%eax,%eiz,2),%xmm0,%xmm7
 	vmovdqa 0x99(%eax,%eiz,2),%ymm0
 	vmovdqa %ymm0,0x99(%eax,%eiz,2)
 	vpermilpd 0x99(%eax,%eiz,2),%ymm0,%ymm7
-	vroundpd $100,0x99(%eax,%eiz,2),%ymm0
-	vextractf128 $100,%ymm0,0x99(%eax,%eiz,2)
-	vperm2f128 $100,0x99(%eax,%eiz,2),%ymm0,%ymm7
+	vroundpd $7,0x99(%eax,%eiz,2),%ymm0
+	vextractf128 $7,%ymm0,0x99(%eax,%eiz,2)
+	vperm2f128 $7,0x99(%eax,%eiz,2),%ymm0,%ymm7
 	vblendvpd %ymm0,0x99(%eax,%eiz,2),%ymm4,%ymm6
 	vldmxcsr 0x99(%eax,%ebx,4)
 	vmovdqa 0x99(%eax,%ebx,4),%xmm0
@@ -1496,17 +1395,18 @@ _start:
 	vcvtdq2pd 0x99(%eax,%ebx,4),%ymm0
 	vcvtpd2psy 0x99(%eax,%ebx,4),%xmm0
 	vpavgb 0x99(%eax,%ebx,4),%xmm0,%xmm7
-	vaeskeygenassist $100,0x99(%eax,%ebx,4),%xmm0
-	vpextrb $100,%xmm0,0x99(%eax,%ebx,4)
+	vaeskeygenassist $7,0x99(%eax,%ebx,4),%xmm0
+	vpextrb $7,%xmm0,0x99(%eax,%ebx,4)
 	vcvtsi2sdl 0x99(%eax,%ebx,4),%xmm0,%xmm7
+	vpclmulqdq $7,0x99(%eax,%ebx,4),%xmm0,%xmm7
 	vblendvps %xmm0,0x99(%eax,%ebx,4),%xmm4,%xmm6
-	vpinsrb $100,0x99(%eax,%ebx,4),%xmm0,%xmm7
+	vpinsrb $7,0x99(%eax,%ebx,4),%xmm0,%xmm7
 	vmovdqa 0x99(%eax,%ebx,4),%ymm0
 	vmovdqa %ymm0,0x99(%eax,%ebx,4)
 	vpermilpd 0x99(%eax,%ebx,4),%ymm0,%ymm7
-	vroundpd $100,0x99(%eax,%ebx,4),%ymm0
-	vextractf128 $100,%ymm0,0x99(%eax,%ebx,4)
-	vperm2f128 $100,0x99(%eax,%ebx,4),%ymm0,%ymm7
+	vroundpd $7,0x99(%eax,%ebx,4),%ymm0
+	vextractf128 $7,%ymm0,0x99(%eax,%ebx,4)
+	vperm2f128 $7,0x99(%eax,%ebx,4),%ymm0,%ymm7
 	vblendvpd %ymm0,0x99(%eax,%ebx,4),%ymm4,%ymm6
 	vldmxcsr 0x99(%esp,%ecx,8)
 	vmovdqa 0x99(%esp,%ecx,8),%xmm0
@@ -1516,17 +1416,18 @@ _start:
 	vcvtdq2pd 0x99(%esp,%ecx,8),%ymm0
 	vcvtpd2psy 0x99(%esp,%ecx,8),%xmm0
 	vpavgb 0x99(%esp,%ecx,8),%xmm0,%xmm7
-	vaeskeygenassist $100,0x99(%esp,%ecx,8),%xmm0
-	vpextrb $100,%xmm0,0x99(%esp,%ecx,8)
+	vaeskeygenassist $7,0x99(%esp,%ecx,8),%xmm0
+	vpextrb $7,%xmm0,0x99(%esp,%ecx,8)
 	vcvtsi2sdl 0x99(%esp,%ecx,8),%xmm0,%xmm7
+	vpclmulqdq $7,0x99(%esp,%ecx,8),%xmm0,%xmm7
 	vblendvps %xmm0,0x99(%esp,%ecx,8),%xmm4,%xmm6
-	vpinsrb $100,0x99(%esp,%ecx,8),%xmm0,%xmm7
+	vpinsrb $7,0x99(%esp,%ecx,8),%xmm0,%xmm7
 	vmovdqa 0x99(%esp,%ecx,8),%ymm0
 	vmovdqa %ymm0,0x99(%esp,%ecx,8)
 	vpermilpd 0x99(%esp,%ecx,8),%ymm0,%ymm7
-	vroundpd $100,0x99(%esp,%ecx,8),%ymm0
-	vextractf128 $100,%ymm0,0x99(%esp,%ecx,8)
-	vperm2f128 $100,0x99(%esp,%ecx,8),%ymm0,%ymm7
+	vroundpd $7,0x99(%esp,%ecx,8),%ymm0
+	vextractf128 $7,%ymm0,0x99(%esp,%ecx,8)
+	vperm2f128 $7,0x99(%esp,%ecx,8),%ymm0,%ymm7
 	vblendvpd %ymm0,0x99(%esp,%ecx,8),%ymm4,%ymm6
 	vldmxcsr 0x99(%ebp,%edx,1)
 	vmovdqa 0x99(%ebp,%edx,1),%xmm0
@@ -1536,24 +1437,26 @@ _start:
 	vcvtdq2pd 0x99(%ebp,%edx,1),%ymm0
 	vcvtpd2psy 0x99(%ebp,%edx,1),%xmm0
 	vpavgb 0x99(%ebp,%edx,1),%xmm0,%xmm7
-	vaeskeygenassist $100,0x99(%ebp,%edx,1),%xmm0
-	vpextrb $100,%xmm0,0x99(%ebp,%edx,1)
+	vaeskeygenassist $7,0x99(%ebp,%edx,1),%xmm0
+	vpextrb $7,%xmm0,0x99(%ebp,%edx,1)
 	vcvtsi2sdl 0x99(%ebp,%edx,1),%xmm0,%xmm7
+	vpclmulqdq $7,0x99(%ebp,%edx,1),%xmm0,%xmm7
 	vblendvps %xmm0,0x99(%ebp,%edx,1),%xmm4,%xmm6
-	vpinsrb $100,0x99(%ebp,%edx,1),%xmm0,%xmm7
+	vpinsrb $7,0x99(%ebp,%edx,1),%xmm0,%xmm7
 	vmovdqa 0x99(%ebp,%edx,1),%ymm0
 	vmovdqa %ymm0,0x99(%ebp,%edx,1)
 	vpermilpd 0x99(%ebp,%edx,1),%ymm0,%ymm7
-	vroundpd $100,0x99(%ebp,%edx,1),%ymm0
-	vextractf128 $100,%ymm0,0x99(%ebp,%edx,1)
-	vperm2f128 $100,0x99(%ebp,%edx,1),%ymm0,%ymm7
+	vroundpd $7,0x99(%ebp,%edx,1),%ymm0
+	vextractf128 $7,%ymm0,0x99(%ebp,%edx,1)
+	vperm2f128 $7,0x99(%ebp,%edx,1),%ymm0,%ymm7
 	vblendvpd %ymm0,0x99(%ebp,%edx,1),%ymm4,%ymm6
 # Tests for all register operands.
 	vmovmskpd %xmm0,%eax
-	vpslld $100,%xmm0,%xmm7
+	vpslld $7,%xmm0,%xmm7
 	vmovmskps %ymm0,%eax
 
 	.intel_syntax noprefix
+
 # Tests for op mem64
 	vldmxcsr DWORD PTR [ecx]
 	vldmxcsr [ecx]
@@ -1572,18 +1475,18 @@ _start:
 	vmaskmovps [ecx],ymm6,ymm4
 
 # Tests for op imm8, ymm/mem256, ymm
-	vpermilpd ymm2,ymm6,100
-	vpermilpd ymm6,YMMWORD PTR [ecx],100
-	vpermilpd ymm6,[ecx],100
-	vpermilps ymm2,ymm6,100
-	vpermilps ymm6,YMMWORD PTR [ecx],100
-	vpermilps ymm6,[ecx],100
-	vroundpd ymm2,ymm6,100
-	vroundpd ymm6,YMMWORD PTR [ecx],100
-	vroundpd ymm6,[ecx],100
-	vroundps ymm2,ymm6,100
-	vroundps ymm6,YMMWORD PTR [ecx],100
-	vroundps ymm6,[ecx],100
+	vpermilpd ymm2,ymm6,7
+	vpermilpd ymm6,YMMWORD PTR [ecx],7
+	vpermilpd ymm6,[ecx],7
+	vpermilps ymm2,ymm6,7
+	vpermilps ymm6,YMMWORD PTR [ecx],7
+	vpermilps ymm6,[ecx],7
+	vroundpd ymm2,ymm6,7
+	vroundpd ymm6,YMMWORD PTR [ecx],7
+	vroundpd ymm6,[ecx],7
+	vroundps ymm2,ymm6,7
+	vroundps ymm6,YMMWORD PTR [ecx],7
+	vroundps ymm6,[ecx],7
 
 # Tests for op ymm/mem256, ymm, ymm
 	vaddpd ymm2,ymm6,ymm4
@@ -1884,93 +1787,121 @@ _start:
 	vcvttpd2dq xmm4,YMMWORD PTR [ecx]
 
 # Tests for op ymm/mem256, ymm
-	vcvtdq2ps ymm4,ymm4
+	vcvtdq2ps ymm6,ymm4
 	vcvtdq2ps ymm4,YMMWORD PTR [ecx]
 	vcvtdq2ps ymm4,[ecx]
-	vcvtps2dq ymm4,ymm4
+	vcvtps2dq ymm6,ymm4
 	vcvtps2dq ymm4,YMMWORD PTR [ecx]
 	vcvtps2dq ymm4,[ecx]
-	vcvttps2dq ymm4,ymm4
+	vcvttps2dq ymm6,ymm4
 	vcvttps2dq ymm4,YMMWORD PTR [ecx]
 	vcvttps2dq ymm4,[ecx]
-	vmovapd ymm4,ymm4
+	vmovapd ymm6,ymm4
 	vmovapd ymm4,YMMWORD PTR [ecx]
 	vmovapd ymm4,[ecx]
-	vmovaps ymm4,ymm4
+	vmovaps ymm6,ymm4
 	vmovaps ymm4,YMMWORD PTR [ecx]
 	vmovaps ymm4,[ecx]
-	vmovdqa ymm4,ymm4
+	vmovdqa ymm6,ymm4
 	vmovdqa ymm4,YMMWORD PTR [ecx]
 	vmovdqa ymm4,[ecx]
-	vmovdqu ymm4,ymm4
+	vmovdqu ymm6,ymm4
 	vmovdqu ymm4,YMMWORD PTR [ecx]
 	vmovdqu ymm4,[ecx]
-	vmovddup ymm4,ymm4
+	vmovddup ymm6,ymm4
 	vmovddup ymm4,YMMWORD PTR [ecx]
 	vmovddup ymm4,[ecx]
-	vmovshdup ymm4,ymm4
+	vmovshdup ymm6,ymm4
 	vmovshdup ymm4,YMMWORD PTR [ecx]
 	vmovshdup ymm4,[ecx]
-	vmovsldup ymm4,ymm4
+	vmovsldup ymm6,ymm4
 	vmovsldup ymm4,YMMWORD PTR [ecx]
 	vmovsldup ymm4,[ecx]
-	vmovupd ymm4,ymm4
+	vmovupd ymm6,ymm4
 	vmovupd ymm4,YMMWORD PTR [ecx]
 	vmovupd ymm4,[ecx]
-	vmovups ymm4,ymm4
+	vmovups ymm6,ymm4
 	vmovups ymm4,YMMWORD PTR [ecx]
 	vmovups ymm4,[ecx]
-	vptest ymm4,ymm4
+	vptest ymm6,ymm4
 	vptest ymm4,YMMWORD PTR [ecx]
 	vptest ymm4,[ecx]
-	vrcpps ymm4,ymm4
+	vrcpps ymm6,ymm4
 	vrcpps ymm4,YMMWORD PTR [ecx]
 	vrcpps ymm4,[ecx]
-	vrsqrtps ymm4,ymm4
+	vrsqrtps ymm6,ymm4
 	vrsqrtps ymm4,YMMWORD PTR [ecx]
 	vrsqrtps ymm4,[ecx]
-	vsqrtpd ymm4,ymm4
+	vsqrtpd ymm6,ymm4
 	vsqrtpd ymm4,YMMWORD PTR [ecx]
 	vsqrtpd ymm4,[ecx]
-	vsqrtps ymm4,ymm4
+	vsqrtps ymm6,ymm4
 	vsqrtps ymm4,YMMWORD PTR [ecx]
 	vsqrtps ymm4,[ecx]
-	vtestpd ymm4,ymm4
+	vtestpd ymm6,ymm4
 	vtestpd ymm4,YMMWORD PTR [ecx]
 	vtestpd ymm4,[ecx]
-	vtestps ymm4,ymm4
+	vtestps ymm6,ymm4
 	vtestps ymm4,YMMWORD PTR [ecx]
 	vtestps ymm4,[ecx]
+
+# Tests for op ymm, ymm/mem256
+	vmovapd ymm6,ymm4
+	vmovapd YMMWORD PTR [ecx],ymm4
+	vmovapd [ecx],ymm4
+	vmovaps ymm6,ymm4
+	vmovaps YMMWORD PTR [ecx],ymm4
+	vmovaps [ecx],ymm4
+	vmovdqa ymm6,ymm4
+	vmovdqa YMMWORD PTR [ecx],ymm4
+	vmovdqa [ecx],ymm4
+	vmovdqu ymm6,ymm4
+	vmovdqu YMMWORD PTR [ecx],ymm4
+	vmovdqu [ecx],ymm4
+	vmovupd ymm6,ymm4
+	vmovupd YMMWORD PTR [ecx],ymm4
+	vmovupd [ecx],ymm4
+	vmovups ymm6,ymm4
+	vmovups YMMWORD PTR [ecx],ymm4
+	vmovups [ecx],ymm4
 
 # Tests for op mem256, ymm
 	vlddqu ymm4,YMMWORD PTR [ecx]
 	vlddqu ymm4,[ecx]
 
+# Tests for op ymm, mem256
+	vmovntdq YMMWORD PTR [ecx],ymm4
+	vmovntdq [ecx],ymm4
+	vmovntpd YMMWORD PTR [ecx],ymm4
+	vmovntpd [ecx],ymm4
+	vmovntps YMMWORD PTR [ecx],ymm4
+	vmovntps [ecx],ymm4
+
 # Tests for op imm8, ymm/mem256, ymm, ymm
-	vblendpd ymm2,ymm6,ymm4,100
-	vblendpd ymm2,ymm6,YMMWORD PTR [ecx],100
-	vblendpd ymm2,ymm6,[ecx],100
-	vblendps ymm2,ymm6,ymm4,100
-	vblendps ymm2,ymm6,YMMWORD PTR [ecx],100
-	vblendps ymm2,ymm6,[ecx],100
-	vcmppd ymm2,ymm6,ymm4,100
-	vcmppd ymm2,ymm6,YMMWORD PTR [ecx],100
-	vcmppd ymm2,ymm6,[ecx],100
-	vcmpps ymm2,ymm6,ymm4,100
-	vcmpps ymm2,ymm6,YMMWORD PTR [ecx],100
-	vcmpps ymm2,ymm6,[ecx],100
-	vdpps ymm2,ymm6,ymm4,100
-	vdpps ymm2,ymm6,YMMWORD PTR [ecx],100
-	vdpps ymm2,ymm6,[ecx],100
-	vperm2f128 ymm2,ymm6,ymm4,100
-	vperm2f128 ymm2,ymm6,YMMWORD PTR [ecx],100
-	vperm2f128 ymm2,ymm6,[ecx],100
-	vshufpd ymm2,ymm6,ymm4,100
-	vshufpd ymm2,ymm6,YMMWORD PTR [ecx],100
-	vshufpd ymm2,ymm6,[ecx],100
-	vshufps ymm2,ymm6,ymm4,100
-	vshufps ymm2,ymm6,YMMWORD PTR [ecx],100
-	vshufps ymm2,ymm6,[ecx],100
+	vblendpd ymm2,ymm6,ymm4,7
+	vblendpd ymm2,ymm6,YMMWORD PTR [ecx],7
+	vblendpd ymm2,ymm6,[ecx],7
+	vblendps ymm2,ymm6,ymm4,7
+	vblendps ymm2,ymm6,YMMWORD PTR [ecx],7
+	vblendps ymm2,ymm6,[ecx],7
+	vcmppd ymm2,ymm6,ymm4,7
+	vcmppd ymm2,ymm6,YMMWORD PTR [ecx],7
+	vcmppd ymm2,ymm6,[ecx],7
+	vcmpps ymm2,ymm6,ymm4,7
+	vcmpps ymm2,ymm6,YMMWORD PTR [ecx],7
+	vcmpps ymm2,ymm6,[ecx],7
+	vdpps ymm2,ymm6,ymm4,7
+	vdpps ymm2,ymm6,YMMWORD PTR [ecx],7
+	vdpps ymm2,ymm6,[ecx],7
+	vperm2f128 ymm2,ymm6,ymm4,7
+	vperm2f128 ymm2,ymm6,YMMWORD PTR [ecx],7
+	vperm2f128 ymm2,ymm6,[ecx],7
+	vshufpd ymm2,ymm6,ymm4,7
+	vshufpd ymm2,ymm6,YMMWORD PTR [ecx],7
+	vshufpd ymm2,ymm6,[ecx],7
+	vshufps ymm2,ymm6,ymm4,7
+	vshufps ymm2,ymm6,YMMWORD PTR [ecx],7
+	vshufps ymm2,ymm6,[ecx],7
 
 # Tests for op ymm, ymm/mem256, ymm, ymm
 	vblendvpd ymm7,ymm2,ymm6,ymm4
@@ -1980,81 +1911,15 @@ _start:
 	vblendvps ymm7,ymm2,YMMWORD PTR [ecx],ymm4
 	vblendvps ymm7,ymm2,[ecx],ymm4
 
-# Tests for op ymm/mem256, ymm, ymm, ymm
-# Tests for op ymm, ymm/mem256, ymm, ymm
-	vfmaddpd ymm7,ymm2,ymm6,ymm4
-	vfmaddpd ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vfmaddpd ymm7,ymm2,ymm6,[ecx]
-	vfmaddps ymm7,ymm2,ymm6,ymm4
-	vfmaddps ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vfmaddps ymm7,ymm2,ymm6,[ecx]
-	vfmaddsubpd ymm7,ymm2,ymm6,ymm4
-	vfmaddsubpd ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vfmaddsubpd ymm7,ymm2,ymm6,[ecx]
-	vfmaddsubps ymm7,ymm2,ymm6,ymm4
-	vfmaddsubps ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vfmaddsubps ymm7,ymm2,ymm6,[ecx]
-	vfmsubaddpd ymm7,ymm2,ymm6,ymm4
-	vfmsubaddpd ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vfmsubaddpd ymm7,ymm2,ymm6,[ecx]
-	vfmsubaddps ymm7,ymm2,ymm6,ymm4
-	vfmsubaddps ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vfmsubaddps ymm7,ymm2,ymm6,[ecx]
-	vfmsubpd ymm7,ymm2,ymm6,ymm4
-	vfmsubpd ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vfmsubpd ymm7,ymm2,ymm6,[ecx]
-	vfmsubps ymm7,ymm2,ymm6,ymm4
-	vfmsubps ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vfmsubps ymm7,ymm2,ymm6,[ecx]
-	vfnmaddpd ymm7,ymm2,ymm6,ymm4
-	vfnmaddpd ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vfnmaddpd ymm7,ymm2,ymm6,[ecx]
-	vfnmaddps ymm7,ymm2,ymm6,ymm4
-	vfnmaddps ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vfnmaddps ymm7,ymm2,ymm6,[ecx]
-	vfnmsubpd ymm7,ymm2,ymm6,ymm4
-	vfnmsubpd ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vfnmsubpd ymm7,ymm2,ymm6,[ecx]
-	vfnmsubps ymm7,ymm2,ymm6,ymm4
-	vfnmsubps ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vfnmsubps ymm7,ymm2,ymm6,[ecx]
-	vpermilmo2pd ymm7,ymm2,ymm6,ymm4
-	vpermilmo2pd ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vpermilmo2pd ymm7,ymm2,ymm6,[ecx]
-	vpermilmz2pd ymm7,ymm2,ymm6,ymm4
-	vpermilmz2pd ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vpermilmz2pd ymm7,ymm2,ymm6,[ecx]
-	vpermiltd2pd ymm7,ymm2,ymm6,ymm4
-	vpermiltd2pd ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vpermiltd2pd ymm7,ymm2,ymm6,[ecx]
-	vpermilmo2ps ymm7,ymm2,ymm6,ymm4
-	vpermilmo2ps ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vpermilmo2ps ymm7,ymm2,ymm6,[ecx]
-	vpermilmz2ps ymm7,ymm2,ymm6,ymm4
-	vpermilmz2ps ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vpermilmz2ps ymm7,ymm2,ymm6,[ecx]
-	vpermiltd2ps ymm7,ymm2,ymm6,ymm4
-	vpermiltd2ps ymm7,ymm2,ymm6,YMMWORD PTR [ecx]
-	vpermiltd2ps ymm7,ymm2,ymm6,[ecx]
-
-# Tests for op imm4, ymm/mem256, ymm, ymm, ymm
-# Tests for op imm4, ymm, ymm/mem256, ymm, ymm
-	vpermil2pd ymm7,ymm2,ymm6,ymm4,10
-	vpermil2pd ymm7,ymm2,ymm6,YMMWORD PTR [ecx],10
-	vpermil2pd ymm7,ymm2,ymm6,[ecx],10
-	vpermil2ps ymm7,ymm2,ymm6,ymm4,10
-	vpermil2ps ymm7,ymm2,ymm6,YMMWORD PTR [ecx],10
-	vpermil2ps ymm7,ymm2,ymm6,[ecx],10
-
 # Tests for op imm8, xmm/mem128, ymm, ymm
-	vinsertf128 ymm6,ymm4,xmm4,100
-	vinsertf128 ymm6,ymm4,XMMWORD PTR [ecx],100
-	vinsertf128 ymm6,ymm4,[ecx],100
+	vinsertf128 ymm6,ymm4,xmm4,7
+	vinsertf128 ymm6,ymm4,XMMWORD PTR [ecx],7
+	vinsertf128 ymm6,ymm4,[ecx],7
 
 # Tests for op imm8, ymm, xmm/mem128
-	vextractf128 xmm4,ymm4,100
-	vextractf128 XMMWORD PTR [ecx],ymm4,100
-	vextractf128 [ecx],ymm4,100
+	vextractf128 xmm4,ymm4,7
+	vextractf128 XMMWORD PTR [ecx],ymm4,7
+	vextractf128 [ecx],ymm4,7
 
 # Tests for op mem128, ymm
 	vbroadcastf128 ymm4,XMMWORD PTR [ecx]
@@ -2294,6 +2159,18 @@ _start:
 	vpavgw xmm2,xmm6,xmm4
 	vpavgw xmm7,xmm6,XMMWORD PTR [ecx]
 	vpavgw xmm7,xmm6,[ecx]
+	vpclmullqlqdq xmm2,xmm6,xmm4
+	vpclmullqlqdq xmm7,xmm6,XMMWORD PTR [ecx]
+	vpclmullqlqdq xmm7,xmm6,[ecx]
+	vpclmulhqlqdq xmm2,xmm6,xmm4
+	vpclmulhqlqdq xmm7,xmm6,XMMWORD PTR [ecx]
+	vpclmulhqlqdq xmm7,xmm6,[ecx]
+	vpclmullqhqdq xmm2,xmm6,xmm4
+	vpclmullqhqdq xmm7,xmm6,XMMWORD PTR [ecx]
+	vpclmullqhqdq xmm7,xmm6,[ecx]
+	vpclmulhqhqdq xmm2,xmm6,xmm4
+	vpclmulhqhqdq xmm7,xmm6,XMMWORD PTR [ecx]
+	vpclmulhqhqdq xmm7,xmm6,[ecx]
 	vpcmpeqb xmm2,xmm6,xmm4
 	vpcmpeqb xmm7,xmm6,XMMWORD PTR [ecx]
 	vpcmpeqb xmm7,xmm6,[ecx]
@@ -2734,42 +2611,42 @@ _start:
 	vmaskmovpd xmm6,xmm4,[ecx]
 
 # Tests for op imm8, xmm/mem128, xmm
-	vaeskeygenassist xmm6,xmm4,100
-	vaeskeygenassist xmm6,XMMWORD PTR [ecx],100
-	vaeskeygenassist xmm6,[ecx],100
-	vpcmpestri xmm6,xmm4,100
-	vpcmpestri xmm6,XMMWORD PTR [ecx],100
-	vpcmpestri xmm6,[ecx],100
-	vpcmpestrm xmm6,xmm4,100
-	vpcmpestrm xmm6,XMMWORD PTR [ecx],100
-	vpcmpestrm xmm6,[ecx],100
-	vpcmpistri xmm6,xmm4,100
-	vpcmpistri xmm6,XMMWORD PTR [ecx],100
-	vpcmpistri xmm6,[ecx],100
-	vpcmpistrm xmm6,xmm4,100
-	vpcmpistrm xmm6,XMMWORD PTR [ecx],100
-	vpcmpistrm xmm6,[ecx],100
-	vpermilpd xmm6,xmm4,100
-	vpermilpd xmm6,XMMWORD PTR [ecx],100
-	vpermilpd xmm6,[ecx],100
-	vpermilps xmm6,xmm4,100
-	vpermilps xmm6,XMMWORD PTR [ecx],100
-	vpermilps xmm6,[ecx],100
-	vpshufd xmm6,xmm4,100
-	vpshufd xmm6,XMMWORD PTR [ecx],100
-	vpshufd xmm6,[ecx],100
-	vpshufhw xmm6,xmm4,100
-	vpshufhw xmm6,XMMWORD PTR [ecx],100
-	vpshufhw xmm6,[ecx],100
-	vpshuflw xmm6,xmm4,100
-	vpshuflw xmm6,XMMWORD PTR [ecx],100
-	vpshuflw xmm6,[ecx],100
-	vroundpd xmm6,xmm4,100
-	vroundpd xmm6,XMMWORD PTR [ecx],100
-	vroundpd xmm6,[ecx],100
-	vroundps xmm6,xmm4,100
-	vroundps xmm6,XMMWORD PTR [ecx],100
-	vroundps xmm6,[ecx],100
+	vaeskeygenassist xmm6,xmm4,7
+	vaeskeygenassist xmm6,XMMWORD PTR [ecx],7
+	vaeskeygenassist xmm6,[ecx],7
+	vpcmpestri xmm6,xmm4,7
+	vpcmpestri xmm6,XMMWORD PTR [ecx],7
+	vpcmpestri xmm6,[ecx],7
+	vpcmpestrm xmm6,xmm4,7
+	vpcmpestrm xmm6,XMMWORD PTR [ecx],7
+	vpcmpestrm xmm6,[ecx],7
+	vpcmpistri xmm6,xmm4,7
+	vpcmpistri xmm6,XMMWORD PTR [ecx],7
+	vpcmpistri xmm6,[ecx],7
+	vpcmpistrm xmm6,xmm4,7
+	vpcmpistrm xmm6,XMMWORD PTR [ecx],7
+	vpcmpistrm xmm6,[ecx],7
+	vpermilpd xmm6,xmm4,7
+	vpermilpd xmm6,XMMWORD PTR [ecx],7
+	vpermilpd xmm6,[ecx],7
+	vpermilps xmm6,xmm4,7
+	vpermilps xmm6,XMMWORD PTR [ecx],7
+	vpermilps xmm6,[ecx],7
+	vpshufd xmm6,xmm4,7
+	vpshufd xmm6,XMMWORD PTR [ecx],7
+	vpshufd xmm6,[ecx],7
+	vpshufhw xmm6,xmm4,7
+	vpshufhw xmm6,XMMWORD PTR [ecx],7
+	vpshufhw xmm6,[ecx],7
+	vpshuflw xmm6,xmm4,7
+	vpshuflw xmm6,XMMWORD PTR [ecx],7
+	vpshuflw xmm6,[ecx],7
+	vroundpd xmm6,xmm4,7
+	vroundpd xmm6,XMMWORD PTR [ecx],7
+	vroundpd xmm6,[ecx],7
+	vroundps xmm6,xmm4,7
+	vroundps xmm6,XMMWORD PTR [ecx],7
+	vroundps xmm6,[ecx],7
 
 # Tests for op xmm, xmm, mem128
 	vmaskmovps XMMWORD PTR [ecx],xmm6,xmm4
@@ -2778,39 +2655,42 @@ _start:
 	vmaskmovpd [ecx],xmm6,xmm4
 
 # Tests for op imm8, xmm/mem128, xmm, xmm
-	vblendpd xmm2,xmm6,xmm4,100
-	vblendpd xmm2,xmm6,XMMWORD PTR [ecx],100
-	vblendpd xmm2,xmm6,[ecx],100
-	vblendps xmm2,xmm6,xmm4,100
-	vblendps xmm2,xmm6,XMMWORD PTR [ecx],100
-	vblendps xmm2,xmm6,[ecx],100
-	vcmppd xmm2,xmm6,xmm4,100
-	vcmppd xmm2,xmm6,XMMWORD PTR [ecx],100
-	vcmppd xmm2,xmm6,[ecx],100
-	vcmpps xmm2,xmm6,xmm4,100
-	vcmpps xmm2,xmm6,XMMWORD PTR [ecx],100
-	vcmpps xmm2,xmm6,[ecx],100
-	vdppd xmm2,xmm6,xmm4,100
-	vdppd xmm2,xmm6,XMMWORD PTR [ecx],100
-	vdppd xmm2,xmm6,[ecx],100
-	vdpps xmm2,xmm6,xmm4,100
-	vdpps xmm2,xmm6,XMMWORD PTR [ecx],100
-	vdpps xmm2,xmm6,[ecx],100
-	vmpsadbw xmm2,xmm6,xmm4,100
-	vmpsadbw xmm2,xmm6,XMMWORD PTR [ecx],100
-	vmpsadbw xmm2,xmm6,[ecx],100
-	vpalignr xmm2,xmm6,xmm4,100
-	vpalignr xmm2,xmm6,XMMWORD PTR [ecx],100
-	vpalignr xmm2,xmm6,[ecx],100
-	vpblendw xmm2,xmm6,xmm4,100
-	vpblendw xmm2,xmm6,XMMWORD PTR [ecx],100
-	vpblendw xmm2,xmm6,[ecx],100
-	vshufpd xmm2,xmm6,xmm4,100
-	vshufpd xmm2,xmm6,XMMWORD PTR [ecx],100
-	vshufpd xmm2,xmm6,[ecx],100
-	vshufps xmm2,xmm6,xmm4,100
-	vshufps xmm2,xmm6,XMMWORD PTR [ecx],100
-	vshufps xmm2,xmm6,[ecx],100
+	vblendpd xmm2,xmm6,xmm4,7
+	vblendpd xmm2,xmm6,XMMWORD PTR [ecx],7
+	vblendpd xmm2,xmm6,[ecx],7
+	vblendps xmm2,xmm6,xmm4,7
+	vblendps xmm2,xmm6,XMMWORD PTR [ecx],7
+	vblendps xmm2,xmm6,[ecx],7
+	vcmppd xmm2,xmm6,xmm4,7
+	vcmppd xmm2,xmm6,XMMWORD PTR [ecx],7
+	vcmppd xmm2,xmm6,[ecx],7
+	vcmpps xmm2,xmm6,xmm4,7
+	vcmpps xmm2,xmm6,XMMWORD PTR [ecx],7
+	vcmpps xmm2,xmm6,[ecx],7
+	vdppd xmm2,xmm6,xmm4,7
+	vdppd xmm2,xmm6,XMMWORD PTR [ecx],7
+	vdppd xmm2,xmm6,[ecx],7
+	vdpps xmm2,xmm6,xmm4,7
+	vdpps xmm2,xmm6,XMMWORD PTR [ecx],7
+	vdpps xmm2,xmm6,[ecx],7
+	vmpsadbw xmm2,xmm6,xmm4,7
+	vmpsadbw xmm2,xmm6,XMMWORD PTR [ecx],7
+	vmpsadbw xmm2,xmm6,[ecx],7
+	vpalignr xmm2,xmm6,xmm4,7
+	vpalignr xmm2,xmm6,XMMWORD PTR [ecx],7
+	vpalignr xmm2,xmm6,[ecx],7
+	vpblendw xmm2,xmm6,xmm4,7
+	vpblendw xmm2,xmm6,XMMWORD PTR [ecx],7
+	vpblendw xmm2,xmm6,[ecx],7
+	vpclmulqdq xmm2,xmm6,xmm4,7
+	vpclmulqdq xmm2,xmm6,XMMWORD PTR [ecx],7
+	vpclmulqdq xmm2,xmm6,[ecx],7
+	vshufpd xmm2,xmm6,xmm4,7
+	vshufpd xmm2,xmm6,XMMWORD PTR [ecx],7
+	vshufpd xmm2,xmm6,[ecx],7
+	vshufps xmm2,xmm6,xmm4,7
+	vshufps xmm2,xmm6,XMMWORD PTR [ecx],7
+	vshufps xmm2,xmm6,[ecx],7
 
 # Tests for op xmm, xmm/mem128, xmm, xmm
 	vblendvpd xmm7,xmm2,xmm6,xmm4
@@ -2822,112 +2702,6 @@ _start:
 	vpblendvb xmm7,xmm2,xmm6,xmm4
 	vpblendvb xmm7,xmm2,XMMWORD PTR [ecx],xmm4
 	vpblendvb xmm7,xmm2,[ecx],xmm4
-
-# Tests for op xmm/mem128, xmm, xmm, xmm
-# Tests for op xmm, xmm/mem128, xmm, xmm
-	vfmaddpd xmm7,xmm2,xmm6,xmm4
-	vfmaddpd xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vfmaddpd xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vfmaddpd xmm7,xmm2,xmm6,[ecx]
-	vfmaddpd xmm7,xmm2,[ecx],xmm4
-	vfmaddps xmm7,xmm2,xmm6,xmm4
-	vfmaddps xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vfmaddps xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vfmaddps xmm7,xmm2,xmm6,[ecx]
-	vfmaddps xmm7,xmm2,[ecx],xmm4
-	vfmaddsubpd xmm7,xmm2,xmm6,xmm4
-	vfmaddsubpd xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vfmaddsubpd xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vfmaddsubpd xmm7,xmm2,xmm6,[ecx]
-	vfmaddsubpd xmm7,xmm2,[ecx],xmm4
-	vfmaddsubps xmm7,xmm2,xmm6,xmm4
-	vfmaddsubps xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vfmaddsubps xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vfmaddsubps xmm7,xmm2,xmm6,[ecx]
-	vfmaddsubps xmm7,xmm2,[ecx],xmm4
-	vfmsubaddpd xmm7,xmm2,xmm6,xmm4
-	vfmsubaddpd xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vfmsubaddpd xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vfmsubaddpd xmm7,xmm2,xmm6,[ecx]
-	vfmsubaddpd xmm7,xmm2,[ecx],xmm4
-	vfmsubaddps xmm7,xmm2,xmm6,xmm4
-	vfmsubaddps xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vfmsubaddps xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vfmsubaddps xmm7,xmm2,xmm6,[ecx]
-	vfmsubaddps xmm7,xmm2,[ecx],xmm4
-	vfmsubpd xmm7,xmm2,xmm6,xmm4
-	vfmsubpd xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vfmsubpd xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vfmsubpd xmm7,xmm2,xmm6,[ecx]
-	vfmsubpd xmm7,xmm2,[ecx],xmm4
-	vfmsubps xmm7,xmm2,xmm6,xmm4
-	vfmsubps xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vfmsubps xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vfmsubps xmm7,xmm2,xmm6,[ecx]
-	vfmsubps xmm7,xmm2,[ecx],xmm4
-	vfnmaddpd xmm7,xmm2,xmm6,xmm4
-	vfnmaddpd xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vfnmaddpd xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vfnmaddpd xmm7,xmm2,xmm6,[ecx]
-	vfnmaddpd xmm7,xmm2,[ecx],xmm4
-	vfnmaddps xmm7,xmm2,xmm6,xmm4
-	vfnmaddps xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vfnmaddps xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vfnmaddps xmm7,xmm2,xmm6,[ecx]
-	vfnmaddps xmm7,xmm2,[ecx],xmm4
-	vfnmsubpd xmm7,xmm2,xmm6,xmm4
-	vfnmsubpd xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vfnmsubpd xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vfnmsubpd xmm7,xmm2,xmm6,[ecx]
-	vfnmsubpd xmm7,xmm2,[ecx],xmm4
-	vfnmsubps xmm7,xmm2,xmm6,xmm4
-	vfnmsubps xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vfnmsubps xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vfnmsubps xmm7,xmm2,xmm6,[ecx]
-	vfnmsubps xmm7,xmm2,[ecx],xmm4
-	vpermilmo2pd xmm7,xmm2,xmm6,xmm4
-	vpermilmo2pd xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vpermilmo2pd xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vpermilmo2pd xmm7,xmm2,xmm6,[ecx]
-	vpermilmo2pd xmm7,xmm2,[ecx],xmm4
-	vpermilmz2pd xmm7,xmm2,xmm6,xmm4
-	vpermilmz2pd xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vpermilmz2pd xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vpermilmz2pd xmm7,xmm2,xmm6,[ecx]
-	vpermilmz2pd xmm7,xmm2,[ecx],xmm4
-	vpermiltd2pd xmm7,xmm2,xmm6,xmm4
-	vpermiltd2pd xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vpermiltd2pd xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vpermiltd2pd xmm7,xmm2,xmm6,[ecx]
-	vpermiltd2pd xmm7,xmm2,[ecx],xmm4
-	vpermilmo2ps xmm7,xmm2,xmm6,xmm4
-	vpermilmo2ps xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vpermilmo2ps xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vpermilmo2ps xmm7,xmm2,xmm6,[ecx]
-	vpermilmo2ps xmm7,xmm2,[ecx],xmm4
-	vpermilmz2ps xmm7,xmm2,xmm6,xmm4
-	vpermilmz2ps xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vpermilmz2ps xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vpermilmz2ps xmm7,xmm2,xmm6,[ecx]
-	vpermilmz2ps xmm7,xmm2,[ecx],xmm4
-	vpermiltd2ps xmm7,xmm2,xmm6,xmm4
-	vpermiltd2ps xmm7,xmm2,xmm6,XMMWORD PTR [ecx]
-	vpermiltd2ps xmm7,xmm2,XMMWORD PTR [ecx],xmm4
-	vpermiltd2ps xmm7,xmm2,xmm6,[ecx]
-	vpermiltd2ps xmm7,xmm2,[ecx],xmm4
-
-# Tests for op imm4, xmm/mem128, xmm, xmm, xmm
-# Tests for op imm4, xmm, xmm/mem128, xmm, xmm
-	vpermil2pd xmm7,xmm2,xmm6,xmm4,10
-	vpermil2pd xmm7,xmm2,xmm6,XMMWORD PTR [ecx],10
-	vpermil2pd xmm7,xmm2,XMMWORD PTR [ecx],xmm4,10
-	vpermil2pd xmm7,xmm2,xmm6,[ecx],10
-	vpermil2pd xmm7,xmm2,[ecx],xmm4,10
-	vpermil2ps xmm7,xmm2,xmm6,xmm4,10
-	vpermil2ps xmm7,xmm2,xmm6,XMMWORD PTR [ecx],10
-	vpermil2ps xmm7,xmm2,XMMWORD PTR [ecx],xmm4,10
-	vpermil2ps xmm7,xmm2,xmm6,[ecx],10
-	vpermil2ps xmm7,xmm2,[ecx],xmm4,10
 
 # Tests for op mem64, ymm
 	vbroadcastsd ymm4,QWORD PTR [ecx]
@@ -3010,35 +2784,12 @@ _start:
 	vmovhps xmm6,xmm4,[ecx]
 
 # Tests for op imm8, xmm/mem64, xmm, xmm
-	vcmpsd xmm2,xmm6,xmm4,100
-	vcmpsd xmm2,xmm6,QWORD PTR [ecx],100
-	vcmpsd xmm2,xmm6,[ecx],100
-	vroundsd xmm2,xmm6,xmm4,100
-	vroundsd xmm2,xmm6,QWORD PTR [ecx],100
-	vroundsd xmm2,xmm6,[ecx],100
-
-# Tests for op xmm/mem64, xmm, xmm, xmm
-# Tests for op xmm, xmm/mem64, xmm, xmm
-	vfmaddsd xmm7,xmm2,xmm6,xmm4
-	vfmaddsd xmm7,xmm2,xmm6,QWORD PTR [ecx]
-	vfmaddsd xmm7,xmm2,QWORD PTR [ecx],xmm4
-	vfmaddsd xmm7,xmm2,xmm6,[ecx]
-	vfmaddsd xmm7,xmm2,[ecx],xmm4
-	vfmsubsd xmm7,xmm2,xmm6,xmm4
-	vfmsubsd xmm7,xmm2,xmm6,QWORD PTR [ecx]
-	vfmsubsd xmm7,xmm2,QWORD PTR [ecx],xmm4
-	vfmsubsd xmm7,xmm2,xmm6,[ecx]
-	vfmsubsd xmm7,xmm2,[ecx],xmm4
-	vfnmaddsd xmm7,xmm2,xmm6,xmm4
-	vfnmaddsd xmm7,xmm2,xmm6,QWORD PTR [ecx]
-	vfnmaddsd xmm7,xmm2,QWORD PTR [ecx],xmm4
-	vfnmaddsd xmm7,xmm2,xmm6,[ecx]
-	vfnmaddsd xmm7,xmm2,[ecx],xmm4
-	vfnmsubsd xmm7,xmm2,xmm6,xmm4
-	vfnmsubsd xmm7,xmm2,xmm6,QWORD PTR [ecx]
-	vfnmsubsd xmm7,xmm2,QWORD PTR [ecx],xmm4
-	vfnmsubsd xmm7,xmm2,xmm6,[ecx]
-	vfnmsubsd xmm7,xmm2,[ecx],xmm4
+	vcmpsd xmm2,xmm6,xmm4,7
+	vcmpsd xmm2,xmm6,QWORD PTR [ecx],7
+	vcmpsd xmm2,xmm6,[ecx],7
+	vroundsd xmm2,xmm6,xmm4,7
+	vroundsd xmm2,xmm6,QWORD PTR [ecx],7
+	vroundsd xmm2,xmm6,[ecx],7
 
 # Tests for op xmm/mem64, xmm, xmm
 	vaddsd xmm2,xmm6,xmm4
@@ -3161,6 +2912,12 @@ _start:
 	vcmptrue_ussd xmm2,xmm6,xmm4
 	vcmptrue_ussd xmm2,xmm6,QWORD PTR [ecx]
 	vcmptrue_ussd xmm2,xmm6,[ecx]
+
+# Tests for op mem64
+	vldmxcsr DWORD PTR [ecx]
+	vldmxcsr [ecx]
+	vstmxcsr DWORD PTR [ecx]
+	vstmxcsr [ecx]
 
 # Tests for op xmm/mem32, xmm, xmm
 	vaddss xmm2,xmm6,xmm4
@@ -3342,15 +3099,16 @@ _start:
 	vcvttss2si ecx,[ecx]
 
 # Tests for op imm8, xmm, regq/mem32
-	vextractps DWORD PTR [ecx],xmm4,100
-	vextractps [ecx],xmm4,100
+	vextractps DWORD PTR [ecx],xmm4,7
+	vextractps [ecx],xmm4,7
+
 # Tests for op imm8, xmm, regl/mem32
-	vpextrd ecx,xmm4,100
-	vpextrd DWORD PTR [ecx],xmm4,100
-	vpextrd [ecx],xmm4,100
-	vextractps ecx,xmm4,100
-	vextractps DWORD PTR [ecx],xmm4,100
-	vextractps [ecx],xmm4,100
+	vpextrd ecx,xmm4,7
+	vpextrd DWORD PTR [ecx],xmm4,7
+	vpextrd [ecx],xmm4,7
+	vextractps ecx,xmm4,7
+	vextractps DWORD PTR [ecx],xmm4,7
+	vextractps [ecx],xmm4,7
 
 # Tests for op regl/mem32, xmm, xmm
 	vcvtsi2sd xmm6,xmm4,ecx
@@ -3361,38 +3119,15 @@ _start:
 	vcvtsi2ss xmm6,xmm4,[ecx]
 
 # Tests for op imm8, xmm/mem32, xmm, xmm
-	vcmpss xmm2,xmm6,xmm4,100
-	vcmpss xmm2,xmm6,DWORD PTR [ecx],100
-	vcmpss xmm2,xmm6,[ecx],100
-	vinsertps xmm2,xmm6,xmm4,100
-	vinsertps xmm2,xmm6,DWORD PTR [ecx],100
-	vinsertps xmm2,xmm6,[ecx],100
-	vroundss xmm2,xmm6,xmm4,100
-	vroundss xmm2,xmm6,DWORD PTR [ecx],100
-	vroundss xmm2,xmm6,[ecx],100
-
-# Tests for op xmm/mem32, xmm, xmm, xmm
-# Tests for op xmm, xmm/mem32, xmm, xmm
-	vfmaddss xmm7,xmm2,xmm6,xmm4
-	vfmaddss xmm7,xmm2,xmm6,DWORD PTR [ecx]
-	vfmaddss xmm7,xmm2,DWORD PTR [ecx],xmm4
-	vfmaddss xmm7,xmm2,xmm6,[ecx]
-	vfmaddss xmm7,xmm2,[ecx],xmm4
-	vfmsubss xmm7,xmm2,xmm6,xmm4
-	vfmsubss xmm7,xmm2,xmm6,DWORD PTR [ecx]
-	vfmsubss xmm7,xmm2,DWORD PTR [ecx],xmm4
-	vfmsubss xmm7,xmm2,xmm6,[ecx]
-	vfmsubss xmm7,xmm2,[ecx],xmm4
-	vfnmaddss xmm7,xmm2,xmm6,xmm4
-	vfnmaddss xmm7,xmm2,xmm6,DWORD PTR [ecx]
-	vfnmaddss xmm7,xmm2,DWORD PTR [ecx],xmm4
-	vfnmaddss xmm7,xmm2,xmm6,[ecx]
-	vfnmaddss xmm7,xmm2,[ecx],xmm4
-	vfnmsubss xmm7,xmm2,xmm6,xmm4
-	vfnmsubss xmm7,xmm2,xmm6,DWORD PTR [ecx]
-	vfnmsubss xmm7,xmm2,DWORD PTR [ecx],xmm4
-	vfnmsubss xmm7,xmm2,xmm6,[ecx]
-	vfnmsubss xmm7,xmm2,[ecx],xmm4
+	vcmpss xmm2,xmm6,xmm4,7
+	vcmpss xmm2,xmm6,DWORD PTR [ecx],7
+	vcmpss xmm2,xmm6,[ecx],7
+	vinsertps xmm2,xmm6,xmm4,7
+	vinsertps xmm2,xmm6,DWORD PTR [ecx],7
+	vinsertps xmm2,xmm6,[ecx],7
+	vroundss xmm2,xmm6,xmm4,7
+	vroundss xmm2,xmm6,DWORD PTR [ecx],7
+	vroundss xmm2,xmm6,[ecx],7
 
 # Tests for op xmm/m16, xmm
 	vpmovsxbq xmm6,xmm4
@@ -3403,38 +3138,37 @@ _start:
 	vpmovzxbq xmm4,[ecx]
 
 # Tests for op imm8, xmm, regl/mem16
-	vpextrw ecx,xmm4,100
-	vpextrw WORD PTR [ecx],xmm4,100
-	vpextrw [ecx],xmm4,100
+	vpextrw ecx,xmm4,7
+	vpextrw WORD PTR [ecx],xmm4,7
+	vpextrw [ecx],xmm4,7
 
 # Tests for op imm8, xmm, regq/mem16
-	vpextrw WORD PTR [ecx],xmm4,100
-	vpextrw [ecx],xmm4,100
+	vpextrw WORD PTR [ecx],xmm4,7
+	vpextrw [ecx],xmm4,7
 
 # Tests for op imm8, regl/mem16, xmm, xmm
-	vpinsrw xmm6,xmm4,ecx,100
-	vpinsrw xmm6,xmm4,WORD PTR [ecx],100
-	vpinsrw xmm6,xmm4,[ecx],100
-
+	vpinsrw xmm6,xmm4,ecx,7
+	vpinsrw xmm6,xmm4,WORD PTR [ecx],7
+	vpinsrw xmm6,xmm4,[ecx],7
 
 # Tests for op imm8, xmm, regl/mem8
-	vpextrb ecx,xmm4,100
-	vpextrb BYTE PTR [ecx],xmm4,100
-	vpextrb [ecx],xmm4,100
+	vpextrb ecx,xmm4,7
+	vpextrb BYTE PTR [ecx],xmm4,7
+	vpextrb [ecx],xmm4,7
 
 # Tests for op imm8, regl/mem8, xmm, xmm
-	vpinsrb xmm6,xmm4,ecx,100
-	vpinsrb xmm6,xmm4,BYTE PTR [ecx],100
-	vpinsrb xmm6,xmm4,[ecx],100
+	vpinsrb xmm6,xmm4,ecx,7
+	vpinsrb xmm6,xmm4,BYTE PTR [ecx],7
+	vpinsrb xmm6,xmm4,[ecx],7
 
 # Tests for op imm8, xmm, regq/mem8
-	vpextrb BYTE PTR [ecx],xmm4,100
-	vpextrb [ecx],xmm4,100
+	vpextrb BYTE PTR [ecx],xmm4,7
+	vpextrb [ecx],xmm4,7
 
 # Tests for op imm8, regl/mem8, xmm, xmm
-	vpinsrb xmm6,xmm4,ecx,100
-	vpinsrb xmm6,xmm4,BYTE PTR [ecx],100
-	vpinsrb xmm6,xmm4,[ecx],100
+	vpinsrb xmm6,xmm4,ecx,7
+	vpinsrb xmm6,xmm4,BYTE PTR [ecx],7
+	vpinsrb xmm6,xmm4,[ecx],7
 
 # Tests for op xmm, xmm
 	vmaskmovdqu xmm6,xmm4
@@ -3444,6 +3178,7 @@ _start:
 	vmovmskpd ecx,xmm4
 	vmovmskps ecx,xmm4
 	vpmovmskb ecx,xmm4
+
 # Tests for op xmm, xmm, xmm
 	vmovhlps xmm2,xmm6,xmm4
 	vmovlhps xmm2,xmm6,xmm4
@@ -3451,24 +3186,23 @@ _start:
 	vmovss xmm2,xmm6,xmm4
 
 # Tests for op imm8, xmm, xmm
-	vpslld xmm6,xmm4,100
-	vpslldq xmm6,xmm4,100
-	vpsllq xmm6,xmm4,100
-	vpsllw xmm6,xmm4,100
-	vpsrad xmm6,xmm4,100
-	vpsraw xmm6,xmm4,100
-	vpsrld xmm6,xmm4,100
-	vpsrldq xmm6,xmm4,100
-	vpsrlq xmm6,xmm4,100
-	vpsrlw xmm6,xmm4,100
+	vpslld xmm6,xmm4,7
+	vpslldq xmm6,xmm4,7
+	vpsllq xmm6,xmm4,7
+	vpsllw xmm6,xmm4,7
+	vpsrad xmm6,xmm4,7
+	vpsraw xmm6,xmm4,7
+	vpsrld xmm6,xmm4,7
+	vpsrldq xmm6,xmm4,7
+	vpsrlq xmm6,xmm4,7
+	vpsrlw xmm6,xmm4,7
 
 # Tests for op imm8, xmm, regl
-	vpextrw ecx,xmm4,100
+	vpextrw ecx,xmm4,7
 
 # Tests for op ymm, regl
 	vmovmskpd ecx,ymm4
 	vmovmskps ecx,ymm4
-
 
 # Default instructions without suffixes.
 	vcvtpd2dq xmm6,xmm4
@@ -3487,17 +3221,18 @@ _start:
 	vcvtdq2pd ymm0,XMMWORD PTR ds:0x1234
 	vcvtpd2ps xmm0,YMMWORD PTR ds:0x1234
 	vpavgb xmm7,xmm0,XMMWORD PTR ds:0x1234
-	vaeskeygenassist xmm0,XMMWORD PTR ds:0x1234,100
-	vpextrb ds:0x1234,xmm0,100
+	vaeskeygenassist xmm0,XMMWORD PTR ds:0x1234,7
+	vpextrb ds:0x1234,xmm0,7
 	vcvtsi2sd xmm7,xmm0,DWORD PTR ds:0x1234
+	vpclmulqdq xmm7,xmm0,XMMWORD PTR ds:0x1234,7
 	vblendvps xmm6,xmm4,XMMWORD PTR ds:0x1234,xmm0
-	vpinsrb xmm7,xmm0,ds:0x1234,100
+	vpinsrb xmm7,xmm0,ds:0x1234,7
 	vmovdqa ymm0,YMMWORD PTR ds:0x1234
 	vmovdqa YMMWORD PTR ds:0x1234,ymm0
 	vpermilpd ymm7,ymm0,YMMWORD PTR ds:0x1234
-	vroundpd ymm0,YMMWORD PTR ds:0x1234,100
-	vextractf128 XMMWORD PTR ds:0x1234,ymm0,100
-	vperm2f128 ymm7,ymm0,YMMWORD PTR ds:0x1234,100
+	vroundpd ymm0,YMMWORD PTR ds:0x1234,7
+	vextractf128 XMMWORD PTR ds:0x1234,ymm0,7
+	vperm2f128 ymm7,ymm0,YMMWORD PTR ds:0x1234,7
 	vblendvpd ymm6,ymm4,YMMWORD PTR ds:0x1234,ymm0
 	vldmxcsr DWORD PTR [ebp]
 	vmovdqa xmm0,XMMWORD PTR [ebp]
@@ -3507,17 +3242,18 @@ _start:
 	vcvtdq2pd ymm0,XMMWORD PTR [ebp]
 	vcvtpd2ps xmm0,YMMWORD PTR [ebp]
 	vpavgb xmm7,xmm0,XMMWORD PTR [ebp]
-	vaeskeygenassist xmm0,XMMWORD PTR [ebp],100
-	vpextrb [ebp],xmm0,100
+	vaeskeygenassist xmm0,XMMWORD PTR [ebp],7
+	vpextrb [ebp],xmm0,7
 	vcvtsi2sd xmm7,xmm0,DWORD PTR [ebp]
+	vpclmulqdq xmm7,xmm0,XMMWORD PTR [ebp],7
 	vblendvps xmm6,xmm4,XMMWORD PTR [ebp],xmm0
-	vpinsrb xmm7,xmm0,[ebp],100
+	vpinsrb xmm7,xmm0,[ebp],7
 	vmovdqa ymm0,YMMWORD PTR [ebp]
 	vmovdqa YMMWORD PTR [ebp],ymm0
 	vpermilpd ymm7,ymm0,YMMWORD PTR [ebp]
-	vroundpd ymm0,YMMWORD PTR [ebp],100
-	vextractf128 XMMWORD PTR [ebp],ymm0,100
-	vperm2f128 ymm7,ymm0,YMMWORD PTR [ebp],100
+	vroundpd ymm0,YMMWORD PTR [ebp],7
+	vextractf128 XMMWORD PTR [ebp],ymm0,7
+	vperm2f128 ymm7,ymm0,YMMWORD PTR [ebp],7
 	vblendvpd ymm6,ymm4,YMMWORD PTR [ebp],ymm0
 	vldmxcsr DWORD PTR [ebp+0x99]
 	vmovdqa xmm0,XMMWORD PTR [ebp+0x99]
@@ -3527,17 +3263,18 @@ _start:
 	vcvtdq2pd ymm0,XMMWORD PTR [ebp+0x99]
 	vcvtpd2ps xmm0,YMMWORD PTR [ebp+0x99]
 	vpavgb xmm7,xmm0,XMMWORD PTR [ebp+0x99]
-	vaeskeygenassist xmm0,XMMWORD PTR [ebp+0x99],100
-	vpextrb [ebp+0x99],xmm0,100
+	vaeskeygenassist xmm0,XMMWORD PTR [ebp+0x99],7
+	vpextrb [ebp+0x99],xmm0,7
 	vcvtsi2sd xmm7,xmm0,DWORD PTR [ebp+0x99]
+	vpclmulqdq xmm7,xmm0,XMMWORD PTR [ebp+0x99],7
 	vblendvps xmm6,xmm4,XMMWORD PTR [ebp+0x99],xmm0
-	vpinsrb xmm7,xmm0,[ebp+0x99],100
+	vpinsrb xmm7,xmm0,[ebp+0x99],7
 	vmovdqa ymm0,YMMWORD PTR [ebp+0x99]
 	vmovdqa YMMWORD PTR [ebp+0x99],ymm0
 	vpermilpd ymm7,ymm0,YMMWORD PTR [ebp+0x99]
-	vroundpd ymm0,YMMWORD PTR [ebp+0x99],100
-	vextractf128 XMMWORD PTR [ebp+0x99],ymm0,100
-	vperm2f128 ymm7,ymm0,YMMWORD PTR [ebp+0x99],100
+	vroundpd ymm0,YMMWORD PTR [ebp+0x99],7
+	vextractf128 XMMWORD PTR [ebp+0x99],ymm0,7
+	vperm2f128 ymm7,ymm0,YMMWORD PTR [ebp+0x99],7
 	vblendvpd ymm6,ymm4,YMMWORD PTR [ebp+0x99],ymm0
 	vldmxcsr DWORD PTR [eiz*1+0x99]
 	vmovdqa xmm0,XMMWORD PTR [eiz*1+0x99]
@@ -3547,17 +3284,18 @@ _start:
 	vcvtdq2pd ymm0,XMMWORD PTR [eiz*1+0x99]
 	vcvtpd2ps xmm0,YMMWORD PTR [eiz*1+0x99]
 	vpavgb xmm7,xmm0,XMMWORD PTR [eiz*1+0x99]
-	vaeskeygenassist xmm0,XMMWORD PTR [eiz*1+0x99],100
-	vpextrb [eiz*1+0x99],xmm0,100
+	vaeskeygenassist xmm0,XMMWORD PTR [eiz*1+0x99],7
+	vpextrb [eiz*1+0x99],xmm0,7
 	vcvtsi2sd xmm7,xmm0,DWORD PTR [eiz*1+0x99]
+	vpclmulqdq xmm7,xmm0,XMMWORD PTR [eiz*1+0x99],7
 	vblendvps xmm6,xmm4,XMMWORD PTR [eiz*1+0x99],xmm0
-	vpinsrb xmm7,xmm0,[eiz*1+0x99],100
+	vpinsrb xmm7,xmm0,[eiz*1+0x99],7
 	vmovdqa ymm0,YMMWORD PTR [eiz*1+0x99]
 	vmovdqa YMMWORD PTR [eiz*1+0x99],ymm0
 	vpermilpd ymm7,ymm0,YMMWORD PTR [eiz*1+0x99]
-	vroundpd ymm0,YMMWORD PTR [eiz*1+0x99],100
-	vextractf128 XMMWORD PTR [eiz*1+0x99],ymm0,100
-	vperm2f128 ymm7,ymm0,YMMWORD PTR [eiz*1+0x99],100
+	vroundpd ymm0,YMMWORD PTR [eiz*1+0x99],7
+	vextractf128 XMMWORD PTR [eiz*1+0x99],ymm0,7
+	vperm2f128 ymm7,ymm0,YMMWORD PTR [eiz*1+0x99],7
 	vblendvpd ymm6,ymm4,YMMWORD PTR [eiz*1+0x99],ymm0
 	vldmxcsr DWORD PTR [eiz*2+0x99]
 	vmovdqa xmm0,XMMWORD PTR [eiz*2+0x99]
@@ -3567,17 +3305,18 @@ _start:
 	vcvtdq2pd ymm0,XMMWORD PTR [eiz*2+0x99]
 	vcvtpd2ps xmm0,YMMWORD PTR [eiz*2+0x99]
 	vpavgb xmm7,xmm0,XMMWORD PTR [eiz*2+0x99]
-	vaeskeygenassist xmm0,XMMWORD PTR [eiz*2+0x99],100
-	vpextrb [eiz*2+0x99],xmm0,100
+	vaeskeygenassist xmm0,XMMWORD PTR [eiz*2+0x99],7
+	vpextrb [eiz*2+0x99],xmm0,7
 	vcvtsi2sd xmm7,xmm0,DWORD PTR [eiz*2+0x99]
+	vpclmulqdq xmm7,xmm0,XMMWORD PTR [eiz*2+0x99],7
 	vblendvps xmm6,xmm4,XMMWORD PTR [eiz*2+0x99],xmm0
-	vpinsrb xmm7,xmm0,[eiz*2+0x99],100
+	vpinsrb xmm7,xmm0,[eiz*2+0x99],7
 	vmovdqa ymm0,YMMWORD PTR [eiz*2+0x99]
 	vmovdqa YMMWORD PTR [eiz*2+0x99],ymm0
 	vpermilpd ymm7,ymm0,YMMWORD PTR [eiz*2+0x99]
-	vroundpd ymm0,YMMWORD PTR [eiz*2+0x99],100
-	vextractf128 XMMWORD PTR [eiz*2+0x99],ymm0,100
-	vperm2f128 ymm7,ymm0,YMMWORD PTR [eiz*2+0x99],100
+	vroundpd ymm0,YMMWORD PTR [eiz*2+0x99],7
+	vextractf128 XMMWORD PTR [eiz*2+0x99],ymm0,7
+	vperm2f128 ymm7,ymm0,YMMWORD PTR [eiz*2+0x99],7
 	vblendvpd ymm6,ymm4,YMMWORD PTR [eiz*2+0x99],ymm0
 	vldmxcsr DWORD PTR [eax+eiz*1+0x99]
 	vmovdqa xmm0,XMMWORD PTR [eax+eiz*1+0x99]
@@ -3587,17 +3326,18 @@ _start:
 	vcvtdq2pd ymm0,XMMWORD PTR [eax+eiz*1+0x99]
 	vcvtpd2ps xmm0,YMMWORD PTR [eax+eiz*1+0x99]
 	vpavgb xmm7,xmm0,XMMWORD PTR [eax+eiz*1+0x99]
-	vaeskeygenassist xmm0,XMMWORD PTR [eax+eiz*1+0x99],100
-	vpextrb [eax+eiz*1+0x99],xmm0,100
+	vaeskeygenassist xmm0,XMMWORD PTR [eax+eiz*1+0x99],7
+	vpextrb [eax+eiz*1+0x99],xmm0,7
 	vcvtsi2sd xmm7,xmm0,DWORD PTR [eax+eiz*1+0x99]
+	vpclmulqdq xmm7,xmm0,XMMWORD PTR [eax+eiz*1+0x99],7
 	vblendvps xmm6,xmm4,XMMWORD PTR [eax+eiz*1+0x99],xmm0
-	vpinsrb xmm7,xmm0,[eax+eiz*1+0x99],100
+	vpinsrb xmm7,xmm0,[eax+eiz*1+0x99],7
 	vmovdqa ymm0,YMMWORD PTR [eax+eiz*1+0x99]
 	vmovdqa YMMWORD PTR [eax+eiz*1+0x99],ymm0
 	vpermilpd ymm7,ymm0,YMMWORD PTR [eax+eiz*1+0x99]
-	vroundpd ymm0,YMMWORD PTR [eax+eiz*1+0x99],100
-	vextractf128 XMMWORD PTR [eax+eiz*1+0x99],ymm0,100
-	vperm2f128 ymm7,ymm0,YMMWORD PTR [eax+eiz*1+0x99],100
+	vroundpd ymm0,YMMWORD PTR [eax+eiz*1+0x99],7
+	vextractf128 XMMWORD PTR [eax+eiz*1+0x99],ymm0,7
+	vperm2f128 ymm7,ymm0,YMMWORD PTR [eax+eiz*1+0x99],7
 	vblendvpd ymm6,ymm4,YMMWORD PTR [eax+eiz*1+0x99],ymm0
 	vldmxcsr DWORD PTR [eax+eiz*2+0x99]
 	vmovdqa xmm0,XMMWORD PTR [eax+eiz*2+0x99]
@@ -3607,17 +3347,18 @@ _start:
 	vcvtdq2pd ymm0,XMMWORD PTR [eax+eiz*2+0x99]
 	vcvtpd2ps xmm0,YMMWORD PTR [eax+eiz*2+0x99]
 	vpavgb xmm7,xmm0,XMMWORD PTR [eax+eiz*2+0x99]
-	vaeskeygenassist xmm0,XMMWORD PTR [eax+eiz*2+0x99],100
-	vpextrb [eax+eiz*2+0x99],xmm0,100
+	vaeskeygenassist xmm0,XMMWORD PTR [eax+eiz*2+0x99],7
+	vpextrb [eax+eiz*2+0x99],xmm0,7
 	vcvtsi2sd xmm7,xmm0,DWORD PTR [eax+eiz*2+0x99]
+	vpclmulqdq xmm7,xmm0,XMMWORD PTR [eax+eiz*2+0x99],7
 	vblendvps xmm6,xmm4,XMMWORD PTR [eax+eiz*2+0x99],xmm0
-	vpinsrb xmm7,xmm0,[eax+eiz*2+0x99],100
+	vpinsrb xmm7,xmm0,[eax+eiz*2+0x99],7
 	vmovdqa ymm0,YMMWORD PTR [eax+eiz*2+0x99]
 	vmovdqa YMMWORD PTR [eax+eiz*2+0x99],ymm0
 	vpermilpd ymm7,ymm0,YMMWORD PTR [eax+eiz*2+0x99]
-	vroundpd ymm0,YMMWORD PTR [eax+eiz*2+0x99],100
-	vextractf128 XMMWORD PTR [eax+eiz*2+0x99],ymm0,100
-	vperm2f128 ymm7,ymm0,YMMWORD PTR [eax+eiz*2+0x99],100
+	vroundpd ymm0,YMMWORD PTR [eax+eiz*2+0x99],7
+	vextractf128 XMMWORD PTR [eax+eiz*2+0x99],ymm0,7
+	vperm2f128 ymm7,ymm0,YMMWORD PTR [eax+eiz*2+0x99],7
 	vblendvpd ymm6,ymm4,YMMWORD PTR [eax+eiz*2+0x99],ymm0
 	vldmxcsr DWORD PTR [eax+ebx*4+0x99]
 	vmovdqa xmm0,XMMWORD PTR [eax+ebx*4+0x99]
@@ -3627,17 +3368,18 @@ _start:
 	vcvtdq2pd ymm0,XMMWORD PTR [eax+ebx*4+0x99]
 	vcvtpd2ps xmm0,YMMWORD PTR [eax+ebx*4+0x99]
 	vpavgb xmm7,xmm0,XMMWORD PTR [eax+ebx*4+0x99]
-	vaeskeygenassist xmm0,XMMWORD PTR [eax+ebx*4+0x99],100
-	vpextrb [eax+ebx*4+0x99],xmm0,100
+	vaeskeygenassist xmm0,XMMWORD PTR [eax+ebx*4+0x99],7
+	vpextrb [eax+ebx*4+0x99],xmm0,7
 	vcvtsi2sd xmm7,xmm0,DWORD PTR [eax+ebx*4+0x99]
+	vpclmulqdq xmm7,xmm0,XMMWORD PTR [eax+ebx*4+0x99],7
 	vblendvps xmm6,xmm4,XMMWORD PTR [eax+ebx*4+0x99],xmm0
-	vpinsrb xmm7,xmm0,[eax+ebx*4+0x99],100
+	vpinsrb xmm7,xmm0,[eax+ebx*4+0x99],7
 	vmovdqa ymm0,YMMWORD PTR [eax+ebx*4+0x99]
 	vmovdqa YMMWORD PTR [eax+ebx*4+0x99],ymm0
 	vpermilpd ymm7,ymm0,YMMWORD PTR [eax+ebx*4+0x99]
-	vroundpd ymm0,YMMWORD PTR [eax+ebx*4+0x99],100
-	vextractf128 XMMWORD PTR [eax+ebx*4+0x99],ymm0,100
-	vperm2f128 ymm7,ymm0,YMMWORD PTR [eax+ebx*4+0x99],100
+	vroundpd ymm0,YMMWORD PTR [eax+ebx*4+0x99],7
+	vextractf128 XMMWORD PTR [eax+ebx*4+0x99],ymm0,7
+	vperm2f128 ymm7,ymm0,YMMWORD PTR [eax+ebx*4+0x99],7
 	vblendvpd ymm6,ymm4,YMMWORD PTR [eax+ebx*4+0x99],ymm0
 	vldmxcsr DWORD PTR [esp+ecx*8+0x99]
 	vmovdqa xmm0,XMMWORD PTR [esp+ecx*8+0x99]
@@ -3647,17 +3389,18 @@ _start:
 	vcvtdq2pd ymm0,XMMWORD PTR [esp+ecx*8+0x99]
 	vcvtpd2ps xmm0,YMMWORD PTR [esp+ecx*8+0x99]
 	vpavgb xmm7,xmm0,XMMWORD PTR [esp+ecx*8+0x99]
-	vaeskeygenassist xmm0,XMMWORD PTR [esp+ecx*8+0x99],100
-	vpextrb [esp+ecx*8+0x99],xmm0,100
+	vaeskeygenassist xmm0,XMMWORD PTR [esp+ecx*8+0x99],7
+	vpextrb [esp+ecx*8+0x99],xmm0,7
 	vcvtsi2sd xmm7,xmm0,DWORD PTR [esp+ecx*8+0x99]
+	vpclmulqdq xmm7,xmm0,XMMWORD PTR [esp+ecx*8+0x99],7
 	vblendvps xmm6,xmm4,XMMWORD PTR [esp+ecx*8+0x99],xmm0
-	vpinsrb xmm7,xmm0,[esp+ecx*8+0x99],100
+	vpinsrb xmm7,xmm0,[esp+ecx*8+0x99],7
 	vmovdqa ymm0,YMMWORD PTR [esp+ecx*8+0x99]
 	vmovdqa YMMWORD PTR [esp+ecx*8+0x99],ymm0
 	vpermilpd ymm7,ymm0,YMMWORD PTR [esp+ecx*8+0x99]
-	vroundpd ymm0,YMMWORD PTR [esp+ecx*8+0x99],100
-	vextractf128 XMMWORD PTR [esp+ecx*8+0x99],ymm0,100
-	vperm2f128 ymm7,ymm0,YMMWORD PTR [esp+ecx*8+0x99],100
+	vroundpd ymm0,YMMWORD PTR [esp+ecx*8+0x99],7
+	vextractf128 XMMWORD PTR [esp+ecx*8+0x99],ymm0,7
+	vperm2f128 ymm7,ymm0,YMMWORD PTR [esp+ecx*8+0x99],7
 	vblendvpd ymm6,ymm4,YMMWORD PTR [esp+ecx*8+0x99],ymm0
 	vldmxcsr DWORD PTR [ebp+edx*1+0x99]
 	vmovdqa xmm0,XMMWORD PTR [ebp+edx*1+0x99]
@@ -3667,19 +3410,20 @@ _start:
 	vcvtdq2pd ymm0,XMMWORD PTR [ebp+edx*1+0x99]
 	vcvtpd2ps xmm0,YMMWORD PTR [ebp+edx*1+0x99]
 	vpavgb xmm7,xmm0,XMMWORD PTR [ebp+edx*1+0x99]
-	vaeskeygenassist xmm0,XMMWORD PTR [ebp+edx*1+0x99],100
-	vpextrb [ebp+edx*1+0x99],xmm0,100
+	vaeskeygenassist xmm0,XMMWORD PTR [ebp+edx*1+0x99],7
+	vpextrb [ebp+edx*1+0x99],xmm0,7
 	vcvtsi2sd xmm7,xmm0,DWORD PTR [ebp+edx*1+0x99]
+	vpclmulqdq xmm7,xmm0,XMMWORD PTR [ebp+edx*1+0x99],7
 	vblendvps xmm6,xmm4,XMMWORD PTR [ebp+edx*1+0x99],xmm0
-	vpinsrb xmm7,xmm0,[ebp+edx*1+0x99],100
+	vpinsrb xmm7,xmm0,[ebp+edx*1+0x99],7
 	vmovdqa ymm0,YMMWORD PTR [ebp+edx*1+0x99]
 	vmovdqa YMMWORD PTR [ebp+edx*1+0x99],ymm0
 	vpermilpd ymm7,ymm0,YMMWORD PTR [ebp+edx*1+0x99]
-	vroundpd ymm0,YMMWORD PTR [ebp+edx*1+0x99],100
-	vextractf128 XMMWORD PTR [ebp+edx*1+0x99],ymm0,100
-	vperm2f128 ymm7,ymm0,YMMWORD PTR [ebp+edx*1+0x99],100
+	vroundpd ymm0,YMMWORD PTR [ebp+edx*1+0x99],7
+	vextractf128 XMMWORD PTR [ebp+edx*1+0x99],ymm0,7
+	vperm2f128 ymm7,ymm0,YMMWORD PTR [ebp+edx*1+0x99],7
 	vblendvpd ymm6,ymm4,YMMWORD PTR [ebp+edx*1+0x99],ymm0
 # Tests for all register operands.
 	vmovmskpd eax,xmm0
-	vpslld xmm7,xmm0,100
+	vpslld xmm7,xmm0,7
 	vmovmskps eax,ymm0

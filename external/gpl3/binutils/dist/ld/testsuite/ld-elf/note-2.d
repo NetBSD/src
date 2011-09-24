@@ -1,6 +1,8 @@
 #ld: -Tnote-2.t
 #objcopy_linked_file: -R .foo 
 #readelf: -l --wide
+#xfail: hppa64-*-*
+# hppa64 adds PHDR
 
 #...
 Program Headers:

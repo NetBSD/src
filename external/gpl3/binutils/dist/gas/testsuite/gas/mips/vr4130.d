@@ -11,9 +11,17 @@ Disassembly.*
 # PART A
 #
 .*	mfhi	.*
+.*	nop
+.*	nop
+.*	nop
+.*	nop
 .*	mult	.*
 #
 .*	mflo	.*
+.*	nop
+.*	nop
+.*	nop
+.*	nop
 .*	mult	.*
 #
 # PART B
@@ -426,9 +434,17 @@ Disassembly.*
 # PART A
 #
 .*	mfhi	.*
+.*	nop
+.*	nop
+.*	nop
+.*	nop
 .*	mult	.*
 #
 .*	mflo	.*
+.*	nop
+.*	nop
+.*	nop
+.*	nop
 .*	mult	.*
 #
 # PART B

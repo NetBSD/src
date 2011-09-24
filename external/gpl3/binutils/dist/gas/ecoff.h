@@ -1,6 +1,6 @@
 /* ecoff.h -- header file for ECOFF debugging support
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2003, 2004, 2005,
+   2007, 2009 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Put together by Ian Lance Taylor <ian@cygnus.com>.
 
@@ -43,6 +43,8 @@ extern void ecoff_new_file (const char *, int);
 /* This function should be called when a new symbol is created, by
    obj_symbol_new_hook.  */
 extern void ecoff_symbol_new_hook (symbolS *);
+
+extern void ecoff_symbol_clone_hook (symbolS *, symbolS *);
 
 /* This function should be called by the obj_frob_symbol hook.  */
 extern void ecoff_frob_symbol (symbolS *);

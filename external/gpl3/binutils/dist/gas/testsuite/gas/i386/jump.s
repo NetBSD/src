@@ -31,3 +31,26 @@
 	jmp	word ptr [ebx]
 	jmp	dword ptr [ebx]
 	jmp	fword ptr [ebx]
+	jmp	$+2
+	nop
+	jecxz	2+$
+	nop
+	jmp	.+2
+	nop
+
+	lcall	0x9090,0x90909090
+	lcall	0x9090:0x90909090
+	lcall	0x9090,xxx
+	lcall	0x9090:xxx
+	call	0x9090,0x90909090
+	call	0x9090:0x90909090
+	call	0x9090,xxx
+	call	0x9090:xxx
+	ljmp	0x9090,0x90909090
+	ljmp	0x9090:0x90909090
+	ljmp	0x9090,xxx
+	ljmp	0x9090:xxx
+	jmp	0x9090,0x90909090
+	jmp	0x9090:0x90909090
+	jmp	0x9090,xxx
+	jmp	0x9090:xxx

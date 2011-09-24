@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2007, 2008 Free Software Foundation, Inc.
+#   Copyright 2006, 2007, 2008, 2010 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -90,7 +90,7 @@ PARSE_AND_LIST_ARGS_CASES=$PARSE_AND_LIST_ARGS_CASES'
 #	something other than gld${EMULATION_NAME}_foo.  We handle
 #	this case in the same way as (1).
 for override in before_parse after_open; do
-  var="LDEMUL_`echo ${override} | tr a-z A-Z`"
+  var="LDEMUL_`echo ${override} | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`"
   eval value=\$${var}
   if test "${value}" = "gld${EMULATION_NAME}_${override}"; then
     fragment <<EOF

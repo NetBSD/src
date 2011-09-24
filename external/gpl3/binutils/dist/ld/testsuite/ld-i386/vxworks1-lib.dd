@@ -6,10 +6,10 @@ Disassembly of section \.plt:
 00080800 <_PROCEDURE_LINKAGE_TABLE_>:
    80800:	ff b3 04 00 00 00    	pushl  0x4\(%ebx\)
    80806:	ff a3 08 00 00 00    	jmp    \*0x8\(%ebx\)
-   8080c:	90                   	nop    
-   8080d:	90                   	nop    
-   8080e:	90                   	nop    
-   8080f:	90                   	nop    
+   8080c:	90                   	nop
+   8080d:	90                   	nop
+   8080e:	90                   	nop
+   8080f:	90                   	nop
 
 00080810 <sexternal@plt>:
    80810:	ff a3 0c 00 00 00    	jmp    \*0xc\(%ebx\)

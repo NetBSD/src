@@ -24,6 +24,12 @@
 	.cfi_def_cfa 0, 16
 	.cfi_endproc
 
+	.globl main
+	.globl start
 	.globl _start
+	.globl __start
+main:
+start:
 _start:
+__start:
 	.long 0

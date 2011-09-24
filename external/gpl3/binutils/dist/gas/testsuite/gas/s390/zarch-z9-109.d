@@ -63,3 +63,6 @@ Disassembly of section .text:
 .*:	ed 95 af ff 60 3a [	 ]*may	%f6,%f9,4095\(%r5,%r10\)
 .*:	ed 95 af ff 60 3c [	 ]*mayh	%f6,%f9,4095\(%r5,%r10\)
 .*:	ed 95 af ff 60 38 [	 ]*mayl	%f6,%f9,4095\(%r5,%r10\)
+.*:	b9 eb 00 67 [	 ]*srstu	%r6,%r7
+.*:	d0 16 5f ff ad 05 [	 ]*trtr	4095\(23,%r5\),3333\(%r10\)
+.*:	07 07 [ 	]*nopr	%r7
