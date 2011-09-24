@@ -300,6 +300,10 @@ typedef struct bfd_section
      TMS320C54X only.  */
 #define SEC_TIC54X_CLINK 0x20000000
 
+  /* Indicate that section has the no read flag set. This happens
+     when memory read flag isn't set. */
+#define SEC_COFF_NOREAD 0x40000000
+
   /*  End of section flags.  */
 
   /* Some internal packed boolean fields.  */
@@ -316,6 +320,12 @@ typedef struct bfd_section
 
   /* Mark flag used by some linker backends for garbage collection.  */
   unsigned int gc_mark : 1;
+
+  /* Section compression status.  */
+  unsigned int compress_status : 2;
+#define COMPRESS_SECTION_NONE    0
+#define COMPRESS_SECTION_DONE    1
+#define DECOMPRESS_SECTION_SIZED 2
 
   /* The following flags are used by the ELF linker. */
 
@@ -336,17 +346,12 @@ typedef struct bfd_section
   /* Bits used by various backends.  The generic code doesn't touch
      these fields.  */
 
-  /* Nonzero if this section has TLS related relocations.  */
-  unsigned int has_tls_reloc:1;
-
-  /* Nonzero if this section has a gp reloc.  */
-  unsigned int has_gp_reloc:1;
-
-  /* Nonzero if this section needs the relax finalize pass.  */
-  unsigned int need_finalize_relax:1;
-
-  /* Whether relocations have been processed.  */
-  unsigned int reloc_done : 1;
+  unsigned int sec_flg0:1;
+  unsigned int sec_flg1:1;
+  unsigned int sec_flg2:1;
+  unsigned int sec_flg3:1;
+  unsigned int sec_flg4:1;
+  unsigned int sec_flg5:1;
 
   /* End of internal packed boolean fields.  */
 
@@ -377,6 +382,16 @@ typedef struct bfd_section
      section multiple times.  For output sections, rawsize holds the
      section size calculated on a previous linker relaxation pass.  */
   bfd_size_type rawsize;
+
+  /* The compressed size of the section in octets.  */
+  bfd_size_type compressed_size;
+
+  /* Relaxation table. */
+  struct relax_table *relax;
+
+  /* Count of used relaxation table entries. */
+  int relax_count;
+
 
   /* If this section is going to be output, then this value is the
      offset in *bytes* into the output section of the first byte in the
@@ -466,6 +481,17 @@ typedef struct bfd_section
     struct bfd_section *s;
   @} map_head, map_tail;
 @} asection;
+
+/* Relax table contains information about instructions which can
+   be removed by relaxation -- replacing a long address with a 
+   short address.  */
+struct relax_table @{
+  /* Address where bytes may be deleted. */
+  bfd_vma addr;
+  
+  /* Number of bytes to be deleted.  */
+  int size;
+@};
 
 /* These sections are global, and are managed by BFD.  The application
    and target back end are not permitted to change the values in
@@ -593,17 +619,17 @@ extern asection bfd_ind_section;
   /* name, id,  index, next, prev, flags, user_set_vma,            */  \
   @{ NAME,  IDX, 0,     NULL, NULL, FLAGS, 0,                           \
                                                                        \
-  /* linker_mark, linker_has_input, gc_mark,                       */  \
-     0,           0,                1,                                 \
+  /* linker_mark, linker_has_input, gc_mark, decompress_status,    */  \
+     0,           0,                1,       0,                        \
                                                                        \
-  /* segment_mark, sec_info_type, use_rela_p, has_tls_reloc,       */  \
-     0,            0,             0,          0,                       \
+  /* segment_mark, sec_info_type, use_rela_p,                      */  \
+     0,            0,             0,                                   \
                                                                        \
-  /* has_gp_reloc, need_finalize_relax, reloc_done,                */  \
-     0,            0,                   0,                             \
+  /* sec_flg0, sec_flg1, sec_flg2, sec_flg3, sec_flg4, sec_flg5,   */  \
+     0,        0,        0,        0,        0,        0,              \
                                                                        \
-  /* vma, lma, size, rawsize                                       */  \
-     0,   0,   0,    0,                                                \
+  /* vma, lma, size, rawsize, compressed_size, relax, relax_count, */  \
+     0,   0,   0,    0,       0,               0,     0,               \
                                                                        \
   /* output_offset, output_section,              alignment_power,  */  \
      0,             (struct bfd_section *) &SEC, 0,                    \
@@ -811,6 +837,16 @@ The section cannot have one or more of the attributes
 requested. For example, a .bss section in @code{a.out} may not
 have the @code{SEC_HAS_CONTENTS} field set.
 @end itemize
+
+@findex bfd_rename_section
+@subsubsection @code{bfd_rename_section}
+@strong{Synopsis}
+@example
+void bfd_rename_section
+   (bfd *abfd, asection *sec, const char *newname);
+@end example
+@strong{Description}@*
+Rename section @var{sec} in @var{abfd} to @var{newname}.
 
 @findex bfd_map_over_sections
 @subsubsection @code{bfd_map_over_sections}

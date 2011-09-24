@@ -1,4 +1,4 @@
-/* Copyright 2002, 2007 Free Software Foundation, Inc.
+/* Copyright 2002, 2005, 2007, 2009 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -68,7 +68,7 @@ ticoff_bfd_is_local_label_name (abfd, name)
 #include "coffcode.h"
 
 /* COFF0 differs in file/section header size and relocation entry size.  */
-static const bfd_coff_backend_data ticoff0_swap_table = 
+static bfd_coff_backend_data ticoff0_swap_table = 
 {
   coff_SWAP_aux_in, coff_SWAP_sym_in, coff_SWAP_lineno_in,
   coff_SWAP_aux_out, coff_SWAP_sym_out,
@@ -81,10 +81,7 @@ static const bfd_coff_backend_data ticoff0_swap_table =
 #else
   FALSE,
 #endif
-#ifdef COFF_LONG_SECTION_NAMES
-  TRUE,
-#else
-  FALSE,
+  COFF_DEFAULT_LONG_SECTION_NAMES,
 #endif
   COFF_DEFAULT_SECTION_ALIGNMENT_POWER,
   coff_SWAP_filehdr_in, coff_SWAP_aouthdr_in, coff_SWAP_scnhdr_in,
@@ -99,7 +96,7 @@ static const bfd_coff_backend_data ticoff0_swap_table =
 };
 
 /* COFF1 differs in section header size.  */
-static const bfd_coff_backend_data ticoff1_swap_table = 
+static bfd_coff_backend_data ticoff1_swap_table = 
 {
   coff_SWAP_aux_in, coff_SWAP_sym_in, coff_SWAP_lineno_in,
   coff_SWAP_aux_out, coff_SWAP_sym_out,
@@ -112,11 +109,7 @@ static const bfd_coff_backend_data ticoff1_swap_table =
 #else
   FALSE,
 #endif
-#ifdef COFF_LONG_SECTION_NAMES
-  TRUE,
-#else
-  FALSE,
-#endif
+  COFF_DEFAULT_LONG_SECTION_NAMES,
   COFF_DEFAULT_SECTION_ALIGNMENT_POWER,
   coff_SWAP_filehdr_in, coff_SWAP_aouthdr_in, coff_SWAP_scnhdr_in,
   coff_SWAP_reloc_in, ticoff1_bad_format_hook, coff_set_arch_mach_hook,

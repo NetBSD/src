@@ -1,6 +1,6 @@
 /* MIPS-specific support for 32-bit ELF
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
 
    Most of the information added by Ian Lance Taylor, Cygnus Support,
    <ian@cygnus.com>.
@@ -1005,7 +1005,7 @@ mips_elf_final_gp (bfd *output_bfd, asymbol *symbol, bfd_boolean relocatable,
       if (relocatable)
 	{
 	  /* Make up a value.  */
-	  *pgp = symbol->section->output_section->vma + 0x4000;
+	  *pgp = symbol->section->output_section->vma /*+ 0x4000*/;
 	  _bfd_set_gp_value (output_bfd, *pgp);
 	}
       else if (!mips_elf_assign_gp (output_bfd, pgp))
@@ -1261,6 +1261,7 @@ static const struct elf_reloc_map mips_reloc_map[] =
   { BFD_RELOC_MIPS_GOT_PAGE, R_MIPS_GOT_PAGE },
   { BFD_RELOC_MIPS_GOT_OFST, R_MIPS_GOT_OFST },
   { BFD_RELOC_MIPS_GOT_DISP, R_MIPS_GOT_DISP },
+  { BFD_RELOC_MIPS_JALR, R_MIPS_JALR },
   { BFD_RELOC_MIPS_TLS_DTPMOD32, R_MIPS_TLS_DTPMOD32 },
   { BFD_RELOC_MIPS_TLS_DTPREL32, R_MIPS_TLS_DTPREL32 },
   { BFD_RELOC_MIPS_TLS_DTPMOD64, R_MIPS_TLS_DTPMOD64 },
@@ -1421,8 +1422,7 @@ mips_info_to_howto_rel (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
      when we do the relocation, because the symbol manipulations done
      by the linker may cause us to lose track of the input BFD.  */
   if (((*cache_ptr->sym_ptr_ptr)->flags & BSF_SECTION_SYM) != 0
-      && (r_type == (unsigned int) R_MIPS_GPREL16
-	  || r_type == (unsigned int) R_MIPS_LITERAL))
+      && (gprel16_reloc_p (r_type) || r_type == (unsigned int) R_MIPS_LITERAL))
     cache_ptr->addend = elf_gp (abfd);
 }
 
@@ -1449,7 +1449,7 @@ mips_elf_sym_is_global (bfd *abfd ATTRIBUTE_UNUSED, asymbol *sym)
   if (SGI_COMPAT (abfd))
     return (sym->flags & BSF_SECTION_SYM) == 0;
   else
-    return ((sym->flags & (BSF_GLOBAL | BSF_WEAK)) != 0
+    return ((sym->flags & (BSF_GLOBAL | BSF_WEAK | BSF_GNU_UNIQUE)) != 0
 	    || bfd_is_und_section (bfd_get_section (sym))
 	    || bfd_is_com_section (bfd_get_section (sym)));
 }
@@ -1506,7 +1506,7 @@ elf32_mips_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 	elf_tdata (abfd)->core_signal = bfd_get_16 (abfd, note->descdata + 12);
 
 	/* pr_pid */
-	elf_tdata (abfd)->core_pid = bfd_get_32 (abfd, note->descdata + 24);
+	elf_tdata (abfd)->core_lwpid = bfd_get_32 (abfd, note->descdata + 24);
 
 	/* pr_reg */
 	offset = 72;
@@ -1605,6 +1605,7 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 };
 
 #define ELF_ARCH			bfd_arch_mips
+#define ELF_TARGET_ID			MIPS_ELF_DATA
 #define ELF_MACHINE_CODE		EM_MIPS
 
 #define elf_backend_collect		TRUE
@@ -1676,7 +1677,6 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define bfd_elf32_set_section_contents	_bfd_mips_elf_set_section_contents
 #define bfd_elf32_bfd_get_relocated_section_contents \
 				_bfd_elf_mips_get_relocated_section_contents
-#define bfd_elf32_mkobject		_bfd_mips_elf_mkobject
 #define bfd_elf32_bfd_link_hash_table_create \
 					_bfd_mips_elf_link_hash_table_create
 #define bfd_elf32_bfd_final_link	_bfd_mips_elf_final_link

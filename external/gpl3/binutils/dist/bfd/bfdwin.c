@@ -1,5 +1,5 @@
 /* Support for memory-mapped windows into a BFD.
-   Copyright 1995, 1996, 2001, 2002, 2003, 2005, 2007, 2008
+   Copyright 1995, 1996, 2001, 2002, 2003, 2005, 2007, 2008, 2009
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -25,10 +25,8 @@
 #include "bfd.h"
 #include "libbfd.h"
 
-/* Currently, if USE_MMAP is undefined, none if the window stuff is
-   used.  Okay, so it's mis-named.  At least the command-line option
-   "--without-mmap" is more obvious than "--without-windows" or some
-   such.  */
+/* Currently, if USE_MMAP is undefined, none of the window stuff is
+   used.  Enabled by --with-mmap.  */
 
 #ifdef USE_MMAP
 
@@ -80,7 +78,7 @@ bfd_free_window (bfd_window *windowp)
   i->refcount--;
   if (debug_windows)
     fprintf (stderr, "freeing window @%p<%p,%lx,%p>\n",
-	     windowp, windowp->data, windowp->size, windowp->i);
+	     windowp, windowp->data, (unsigned long) windowp->size, windowp->i);
   if (i->refcount != 0)
     return;
 

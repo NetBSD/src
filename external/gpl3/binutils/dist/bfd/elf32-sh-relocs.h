@@ -1,4 +1,4 @@
-/* Copyright 2007 Free Software Foundation, Inc.
+/* Copyright 2006, 2007, 2010 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1462,19 +1462,164 @@
 	 0,			/* src_mask */
 	 ((bfd_vma) 0) - 1,	/* dst_mask */
 	 FALSE),		/* pcrel_offset */
+#else
+  EMPTY_HOWTO (169),
+  EMPTY_HOWTO (170),
+  EMPTY_HOWTO (171),
+  EMPTY_HOWTO (172),
+  EMPTY_HOWTO (173),
+  EMPTY_HOWTO (174),
+  EMPTY_HOWTO (175),
+  EMPTY_HOWTO (176),
+  EMPTY_HOWTO (177),
+  EMPTY_HOWTO (178),
+  EMPTY_HOWTO (179),
+  EMPTY_HOWTO (180),
+  EMPTY_HOWTO (181),
+  EMPTY_HOWTO (182),
+  EMPTY_HOWTO (183),
+  EMPTY_HOWTO (184),
+  EMPTY_HOWTO (185),
+  EMPTY_HOWTO (186),
+  EMPTY_HOWTO (187),
+  EMPTY_HOWTO (188),
+  EMPTY_HOWTO (189),
+  EMPTY_HOWTO (190),
+  EMPTY_HOWTO (191),
+  EMPTY_HOWTO (192),
+  EMPTY_HOWTO (193),
+  EMPTY_HOWTO (194),
+  EMPTY_HOWTO (195),
+  EMPTY_HOWTO (196),
+#endif
 
   EMPTY_HOWTO (197),
   EMPTY_HOWTO (198),
   EMPTY_HOWTO (199),
   EMPTY_HOWTO (200),
-  EMPTY_HOWTO (201),
-  EMPTY_HOWTO (202),
-  EMPTY_HOWTO (203),
-  EMPTY_HOWTO (204),
-  EMPTY_HOWTO (205),
-  EMPTY_HOWTO (206),
-  EMPTY_HOWTO (207),
-  EMPTY_HOWTO (208),
+
+  /* FDPIC-relative offset to a GOT entry, for movi20.  */
+  HOWTO (R_SH_GOT20,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 20,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_SH_GOT20",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x00f0ffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  /* FDPIC-relative offset to a data object, for movi20.  */
+  HOWTO (R_SH_GOTOFF20,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 20,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_SH_GOTOFF20",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x00f0ffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  /* FDPIC-relative offset to a GOT entry for a function descriptor.  */
+  HOWTO (R_SH_GOTFUNCDESC,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_SH_GOTFUNCDESC",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  /* FDPIC-relative offset to a GOT entry for a function descriptor,
+     for movi20.  */
+  HOWTO (R_SH_GOTFUNCDESC20,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 20,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_SH_GOTFUNCDESC20",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x00f0ffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  /* FDPIC-relative offset to a function descriptor.  */
+  HOWTO (R_SH_GOTOFFFUNCDESC,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_SH_GOTOFFFUNCDESC",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  /* FDPIC-relative offset to a function descriptor, for movi20.  */
+  HOWTO (R_SH_GOTOFFFUNCDESC20,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 20,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_SH_GOTOFFFUNCDESC20", /* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x00f0ffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  /* Address of an official function descriptor.  */
+  HOWTO (R_SH_FUNCDESC,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_SH_FUNCDESC",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  /* Function descriptor to be filled in by the dynamic linker.  */
+  HOWTO (R_SH_FUNCDESC_VALUE,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 64,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc,	/* special_function */
+	 "R_SH_FUNCDESC_VALUE", /* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+#ifdef INCLUDE_SHMEDIA
   EMPTY_HOWTO (209),
   EMPTY_HOWTO (210),
   EMPTY_HOWTO (211),

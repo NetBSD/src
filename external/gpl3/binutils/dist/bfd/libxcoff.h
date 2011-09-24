@@ -1,5 +1,5 @@
 /* BFD XCOFF object file private structure.
-   Copyright 2001, 2002, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 2001, 2002, 2005, 2007, 2009 Free Software Foundation, Inc.
    Written by Tom Rix, Redhat.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -222,6 +222,8 @@ extern bfd_boolean (*xcoff_calculate_relocation[XCOFF_MAX_CALCULATE_RELOCATION])
   (XCOFF_RELOC_FUNCTION_ARGS);
 extern bfd_boolean (*xcoff_complain_overflow[XCOFF_MAX_COMPLAIN_OVERFLOW])
   (XCOFF_COMPLAIN_FUNCTION_ARGS);
+
+#define XCOFF_NO_LONG_SECTION_NAMES  (FALSE), bfd_coff_set_long_section_names_disallowed
 
 /* Relocation functions */
 bfd_boolean xcoff_reloc_type_noop (XCOFF_RELOC_FUNCTION_ARGS);

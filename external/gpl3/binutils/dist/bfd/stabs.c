@@ -1,6 +1,6 @@
 /* Stabs in sections linking support.
    Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007 Free Software Foundation, Inc.
+   2006, 2007, 2008 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -127,8 +127,8 @@ stab_link_includes_newfunc (struct bfd_hash_entry *entry,
   /* Allocate the structure if it has not already been allocated by a
      subclass.  */
   if (ret == NULL)
-    ret = bfd_hash_allocate (table,
-			     sizeof (struct stab_link_includes_entry));
+    ret = (struct stab_link_includes_entry *)
+        bfd_hash_allocate (table, sizeof (struct stab_link_includes_entry));
   if (ret == NULL)
     return NULL;
 
@@ -337,7 +337,7 @@ _bfd_link_section_stabs (bfd *abfd,
 		      if (num_chars >= buf_len)
 			{
 			  buf_len += 32 * 1024;
-			  symb = bfd_realloc_or_free (symb, buf_len);
+			  symb = (char *) bfd_realloc_or_free (symb, buf_len);
 			  if (symb == NULL)
 			    goto error_return;
 			  symb_rover = symb + num_chars;
@@ -375,7 +375,7 @@ _bfd_link_section_stabs (bfd *abfd,
 	  /* Record this symbol, so that we can set the value
 	     correctly.  */
 	  amt = sizeof *ne;
-	  ne = bfd_alloc (abfd, amt);
+	  ne = (struct stab_excl_list *) bfd_alloc (abfd, amt);
 	  if (ne == NULL)
 	    goto error_return;
 	  ne->offset = sym - stabbuf;
@@ -388,12 +388,14 @@ _bfd_link_section_stabs (bfd *abfd,
 	    {
 	      /* This is the first time we have seen this header file
 		 with this set of stabs strings.  */
-	      t = bfd_hash_allocate (&sinfo->includes, sizeof *t);
+	      t = (struct stab_link_includes_totals *)
+                  bfd_hash_allocate (&sinfo->includes, sizeof *t);
 	      if (t == NULL)
 		goto error_return;
 	      t->sum_chars = sum_chars;
 	      t->num_chars = num_chars;
-	      t->symb = symb = bfd_realloc_or_free (symb, num_chars); /* Trim data down.  */
+              /* Trim data down.  */
+	      t->symb = symb = (char *) bfd_realloc_or_free (symb, num_chars);
 	      t->next = incl_entry->totals;
 	      incl_entry->totals = t;
 	    }
@@ -471,7 +473,7 @@ _bfd_link_section_stabs (bfd *abfd,
       bfd_size_type *pskips;
 
       amt = count * sizeof (bfd_size_type);
-      secinfo->cumulative_skips = bfd_alloc (abfd, amt);
+      secinfo->cumulative_skips = (bfd_size_type *) bfd_alloc (abfd, amt);
       if (secinfo->cumulative_skips == NULL)
 	goto error_return;
 
@@ -624,7 +626,7 @@ _bfd_discard_section_stabs (bfd *abfd,
       if (secinfo->cumulative_skips == NULL)
 	{
 	  amt = count * sizeof (bfd_size_type);
-	  secinfo->cumulative_skips = bfd_alloc (abfd, amt);
+	  secinfo->cumulative_skips = (bfd_size_type *) bfd_alloc (abfd, amt);
 	  if (secinfo->cumulative_skips == NULL)
 	    goto error_return;
 	}

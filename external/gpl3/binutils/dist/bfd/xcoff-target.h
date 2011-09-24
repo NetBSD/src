@@ -1,5 +1,5 @@
 /* Common definitions for backends based on IBM RS/6000 "XCOFF64" files.
-   Copyright 2000, 2001, 2002, 2004, 2005, 2006, 2007
+   Copyright 2000, 2001, 2002, 2004, 2005, 2006, 2007, 2009
    Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
@@ -51,12 +51,14 @@
 #define coff_core_file_failing_command                 _bfd_nocore_core_file_failing_command
 #define coff_core_file_failing_signal                  _bfd_nocore_core_file_failing_signal
 #define coff_core_file_matches_executable_p            _bfd_nocore_core_file_matches_executable_p
+#define coff_core_file_pid                             _bfd_nocore_core_file_pid
 #define _bfd_xcoff_bfd_get_relocated_section_contents  coff_bfd_get_relocated_section_contents
 #define _bfd_xcoff_bfd_relax_section                   coff_bfd_relax_section
 #define _bfd_xcoff_bfd_gc_sections                     coff_bfd_gc_sections
 #define _bfd_xcoff_bfd_merge_sections                  coff_bfd_merge_sections
 #define _bfd_xcoff_bfd_discard_group                   bfd_generic_discard_group
 #define _bfd_xcoff_section_already_linked              _bfd_generic_section_already_linked
+#define _bfd_xcoff_bfd_define_common_symbol            _bfd_xcoff_define_common_symbol
 #define _bfd_xcoff_bfd_link_split_section              coff_bfd_link_split_section
 
 #define CORE_FILE_P _bfd_dummy_target
