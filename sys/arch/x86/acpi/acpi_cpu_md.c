@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.65 2011/09/24 10:59:02 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.66 2011/09/24 11:17:25 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.65 2011/09/24 10:59:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.66 2011/09/24 11:17:25 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -147,6 +147,7 @@ acpicpu_md_flags(void)
 	struct pci_attach_args pa;
 	uint32_t family, val = 0;
 	uint32_t regs[4];
+	uint64_t msr;
 
 	if (acpi_md_ncpus() == 1)
 		val |= ACPICPU_FLAG_C_BM;
@@ -265,7 +266,10 @@ acpicpu_md_flags(void)
 
 		case 0x10:
 		case 0x11:
-			val |= ACPICPU_FLAG_C_C1E;
+
+			if (rdmsr_safe(MSR_CMPHALT, &msr) != EFAULT)
+				val |= ACPICPU_FLAG_C_C1E;
+
 			/* FALLTHROUGH */
 
 		case 0x14: /* AMD Fusion */
@@ -336,8 +340,7 @@ acpicpu_md_quirk_c1e(void)
 	const uint64_t c1e = MSR_CMPHALT_SMI | MSR_CMPHALT_C1E;
 	uint64_t val;
 
-	if (__predict_false(rdmsr_safe(MSR_CMPHALT, &val) == EFAULT))
-		return;
+	val = rdmsr(MSR_CMPHALT);
 
 	if ((val & c1e) != 0)
 		wrmsr(MSR_CMPHALT, val & ~c1e);
