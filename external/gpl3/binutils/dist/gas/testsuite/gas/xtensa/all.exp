@@ -81,6 +81,7 @@ if [istarget xtensa*-*-*] then {
     run_dump_test "short_branch_offset"
     run_dump_test "pcrel"
     run_dump_test "weak-call"
+    run_dump_test "jlong"
 }
 
 if [info exists errorInfo] then {

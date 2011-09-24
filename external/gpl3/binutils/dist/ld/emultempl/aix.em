@@ -10,7 +10,7 @@ fragment <<EOF
 
 /* AIX emulation code for ${EMULATION_NAME}
    Copyright 1991, 1993, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008
+   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
    Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
    AIX support by Ian Lance Taylor <ian@cygnus.com>
@@ -84,6 +84,14 @@ static unsigned short modtype = ('1' << 8) | 'L';
    permitted).  */
 static int textro;
 
+/* A mask of XCOFF_EXPALL and XCOFF_EXPFULL flags, as set by their
+   associated -b and -bno options.  */
+static unsigned int auto_export_flags;
+
+/* A mask of auto_export_flags bits that were explicitly set on the
+   command line.  */
+static unsigned int explicit_auto_export_flags;
+
 /* Whether to implement Unix like linker semantics.  */
 static int unix_ld;
 
@@ -137,6 +145,7 @@ gld${EMULATION_NAME}_before_parse (void)
 {
   ldfile_set_output_arch ("${OUTPUT_ARCH}", bfd_arch_`echo ${ARCH} | sed -e 's/:.*//'`);
 
+  config.dynamic_link = TRUE;
   config.has_shared = TRUE;
 
   /* The link_info.[init|fini]_functions are initialized in ld/lexsup.c.
@@ -155,6 +164,8 @@ enum
     OPTION_AUTOIMP,
     OPTION_ERNOTOK,
     OPTION_EROK,
+    OPTION_EXPALL,
+    OPTION_EXPFULL,
     OPTION_EXPORT,
     OPTION_IMPORT,
     OPTION_INITFINI,
@@ -163,6 +174,8 @@ enum
     OPTION_MAXSTACK,
     OPTION_MODTYPE,
     OPTION_NOAUTOIMP,
+    OPTION_NOEXPALL,
+    OPTION_NOEXPFULL,
     OPTION_NOSTRCMPCT,
     OPTION_PD,
     OPTION_PT,
@@ -200,7 +213,10 @@ gld${EMULATION_NAME}_add_options
     {"bernotok", no_argument, NULL, OPTION_ERNOTOK},
     {"berok", no_argument, NULL, OPTION_EROK},
     {"berrmsg", no_argument, NULL, OPTION_IGNORE},
+    {"bexpall", no_argument, NULL, OPTION_EXPALL},
+    {"bexpfull", no_argument, NULL, OPTION_EXPFULL},
     {"bexport", required_argument, NULL, OPTION_EXPORT},
+    {"bbigtoc", no_argument, NULL, OPTION_IGNORE},
     {"bf", no_argument, NULL, OPTION_ERNOTOK},
     {"bgc", no_argument, &gc, 1},
     {"bh", required_argument, NULL, OPTION_IGNORE},
@@ -215,6 +231,8 @@ gld${EMULATION_NAME}_add_options
     {"bM", required_argument, NULL, OPTION_MODTYPE},
     {"bmodtype", required_argument, NULL, OPTION_MODTYPE},
     {"bnoautoimp", no_argument, NULL, OPTION_NOAUTOIMP},
+    {"bnoexpall", no_argument, NULL, OPTION_NOEXPALL},
+    {"bnoexpfull", no_argument, NULL, OPTION_NOEXPFULL},
     {"bnodelcsect", no_argument, NULL, OPTION_IGNORE},
     {"bnoentry", no_argument, NULL, OPTION_IGNORE},
     {"bnogc", no_argument, &gc, 0},
@@ -378,11 +396,23 @@ gld${EMULATION_NAME}_handle_option (int optc)
       break;
 
     case OPTION_ERNOTOK:
-      force_make_executable = FALSE;
+      link_info.unresolved_syms_in_objects = RM_GENERATE_ERROR;
+      link_info.unresolved_syms_in_shared_libs = RM_GENERATE_ERROR;
       break;
 
     case OPTION_EROK:
-      force_make_executable = TRUE;
+      link_info.unresolved_syms_in_objects = RM_IGNORE;
+      link_info.unresolved_syms_in_shared_libs = RM_IGNORE;
+      break;
+
+    case OPTION_EXPALL:
+      auto_export_flags |= XCOFF_EXPALL;
+      explicit_auto_export_flags |= XCOFF_EXPALL;
+      break;
+
+    case OPTION_EXPFULL:
+      auto_export_flags |= XCOFF_EXPFULL;
+      explicit_auto_export_flags |= XCOFF_EXPFULL;
       break;
 
     case OPTION_EXPORT:
@@ -439,6 +469,16 @@ gld${EMULATION_NAME}_handle_option (int optc)
 
     case OPTION_NOAUTOIMP:
       link_info.static_link = TRUE;
+      break;
+
+    case OPTION_NOEXPALL:
+      auto_export_flags &= ~XCOFF_EXPALL;
+      explicit_auto_export_flags |= XCOFF_EXPALL;
+      break;
+
+    case OPTION_NOEXPFULL:
+      auto_export_flags &= ~XCOFF_EXPFULL;
+      explicit_auto_export_flags |= XCOFF_EXPFULL;
       break;
 
     case OPTION_NOSTRCMPCT:
@@ -569,6 +609,8 @@ gld${EMULATION_NAME}_after_open (void)
   bfd_boolean r;
   struct set_info *p;
 
+  after_open_default ();
+
   /* Call ldctor_build_sets, after pretending that this is a
      relocatable link.  We do this because AIX requires relocation
      entries for all references to symbols, even in a final
@@ -616,7 +658,12 @@ gld${EMULATION_NAME}_before_allocation (void)
   struct export_symbol_list *el;
   char *libpath;
   asection *special_sections[XCOFF_NUMBER_OF_SPECIAL_SECTIONS];
-  int i;
+  static const char *const must_keep_sections[] = {
+    ".text",
+    ".data",
+    ".bss"
+  };
+  unsigned int i, flags;
 
   /* Handle the import and export files, if any.  */
   for (fl = import_files; fl != NULL; fl = fl->next)
@@ -702,11 +749,16 @@ gld${EMULATION_NAME}_before_allocation (void)
 	}
     }
 
+  /* Default to -bexpfull for SVR4-like semantics.  */
+  flags = (unix_ld ? XCOFF_EXPFULL : 0);
+  flags &= ~explicit_auto_export_flags;
+  flags |= auto_export_flags;
+
   /* Let the XCOFF backend set up the .loader section.  */
   if (!bfd_xcoff_size_dynamic_sections
       (link_info.output_bfd, &link_info, libpath, entry_symbol.name, file_align,
        maxstack, maxdata, gc && !unix_ld ? TRUE : FALSE,
-       modtype,	textro ? TRUE : FALSE, unix_ld, special_sections,
+       modtype, textro ? TRUE : FALSE, flags, special_sections,
        rtld ? TRUE : FALSE))
     einfo ("%P%F: failed to set dynamic section sizes: %E\n");
 
@@ -823,6 +875,22 @@ gld${EMULATION_NAME}_before_allocation (void)
 				 &is->header.next);
 	}
     }
+
+  /* Executables and shared objects must always have .text, .data
+     and .bss output sections, so that the header can refer to them.
+     The kernel refuses to load objects that have missing sections.  */
+  if (!link_info.relocatable)
+    for (i = 0; i < ARRAY_SIZE (must_keep_sections); i++)
+      {
+	asection *sec;
+
+	sec = bfd_get_section_by_name (link_info.output_bfd,
+				       must_keep_sections[i]);
+	if (sec == NULL)
+	  einfo ("%P: can't find required output section %s\n", must_keep_sections[i]);
+	else
+	  sec->flags |= SEC_KEEP;
+      }
 
   before_allocation_default ();
 }
@@ -1031,32 +1099,18 @@ gld${EMULATION_NAME}_read_file (const char *filename, bfd_boolean import)
 	  else
 	    {
 	      char cs;
-	      char *file;
+	      char *start;
 
 	      (void) obstack_finish (o);
 	      keep = TRUE;
-	      imppath = s;
-	      file = NULL;
+	      start = s;
 	      while (!ISSPACE (*s) && *s != '(' && *s != '\0')
-		{
-		  if (*s == '/')
-		    file = s + 1;
-		  ++s;
-		}
-	      if (file != NULL)
-		{
-		  file[-1] = '\0';
-		  impfile = file;
-		  if (imppath == file - 1)
-		    imppath = "/";
-		}
-	      else
-		{
-		  impfile = imppath;
-		  imppath = "";
-		}
+		++s;
 	      cs = *s;
 	      *s = '\0';
+	      if (!bfd_xcoff_split_import_path (link_info.output_bfd,
+						start, &imppath, &impfile))
+		einfo ("%F%P: Could not parse import path: %E\n");
 	      while (ISSPACE (cs))
 		{
 		  ++s;
@@ -1142,7 +1196,7 @@ gld${EMULATION_NAME}_read_file (const char *filename, bfd_boolean import)
 	    {
 	      struct export_symbol_list *n;
 
-	      ldlang_add_undef (symname);
+	      ldlang_add_undef (symname, TRUE);
 	      n = ((struct export_symbol_list *)
 		   xmalloc (sizeof (struct export_symbol_list)));
 	      n->next = export_symbols;
@@ -1368,6 +1422,29 @@ gld${EMULATION_NAME}_set_output_arch (void)
   ldfile_output_machine_name = bfd_printable_name (link_info.output_bfd);
 }
 
+static bfd_boolean
+gld${EMULATION_NAME}_open_dynamic_archive (const char *arch,
+					   search_dirs_type *search,
+					   lang_input_statement_type *entry)
+{
+  char *path;
+
+  if (!entry->maybe_archive)
+    return FALSE;
+
+  path = concat (search->name, "/lib", entry->filename, arch, ".a", NULL);
+  if (!ldfile_try_open_bfd (path, entry))
+    {
+      free (path);
+      return FALSE;
+    }
+  /* Don't include the searched directory in the import path.  */
+  bfd_xcoff_set_archive_import_path (&link_info, entry->the_bfd,
+				     path + strlen (search->name) + 1);
+  entry->filename = path;
+  return TRUE;
+}
+
 struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation = {
   gld${EMULATION_NAME}_before_parse,
   syslib_default,
@@ -1383,7 +1460,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation = {
   "${OUTPUT_FORMAT}",
   finish_default,
   gld${EMULATION_NAME}_create_output_section_statements,
-  0,				/* open_dynamic_archive */
+  gld${EMULATION_NAME}_open_dynamic_archive,
   0,				/* place_orphan */
   0,				/* set_symbols */
   gld${EMULATION_NAME}_parse_args,

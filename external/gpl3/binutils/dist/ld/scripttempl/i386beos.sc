@@ -38,7 +38,7 @@ ${RELOCATING-OUTPUT_FORMAT(${RELOCATEABLE_OUTPUT_FORMAT})}
 
 ${LIB_SEARCH_DIRS}
 
-ENTRY(__start)
+${RELOCATING+ENTRY (__start)}
 ${RELOCATING+header = .;}
 ${RELOCATING+__fltused = .; /* set up floating pt for MS .obj\'s */}
 ${RELOCATING+__ldused = .;}

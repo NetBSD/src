@@ -51,18 +51,18 @@ Disassembly of section \.text:
 			50: R_MIPS_GOT16	\.data
   54:	24841345 	addiu	\$4,\$4,4933
 			54: R_MIPS_LO16	\.data
-  58:	8f84c000 	lw	\$4,-16384\(\$28\)
-			58: R_MIPS_GPREL16	\.sdata\+0x4000
-  5c:	8f84c004 	lw	\$4,-16380\(\$28\)
-			5c: R_MIPS_GPREL16	\.sdata\+0x4000
-  60:	8f84c004 	lw	\$4,-16380\(\$28\)
-			60: R_MIPS_GPREL16	\.sdata\+0x4000
-  64:	8f84c008 	lw	\$4,-16376\(\$28\)
-			64: R_MIPS_GPREL16	\.sdata\+0x4000
-  68:	8f84c00c 	lw	\$4,-16372\(\$28\)
-			68: R_MIPS_GPREL16	\.sdata\+0x4000
-  6c:	8f84c014 	lw	\$4,-16364\(\$28\)
-			6c: R_MIPS_GPREL16	\.sdata\+0x4000
-  70:	8f84c018 	lw	\$4,-16360\(\$28\)
-			70: R_MIPS_GPREL16	\.sdata\+0x4000
+  58:	8f840000 	lw	\$4,0\(\$28\)
+			58: R_MIPS_GPREL16	\.sdata
+  5c:	8f840004 	lw	\$4,4\(\$28\)
+			5c: R_MIPS_GPREL16	\.sdata
+  60:	8f840004 	lw	\$4,4\(\$28\)
+			60: R_MIPS_GPREL16	\.sdata
+  64:	8f840008 	lw	\$4,8\(\$28\)
+			64: R_MIPS_GPREL16	\.sdata
+  68:	8f84000c 	lw	\$4,12\(\$28\)
+			68: R_MIPS_GPREL16	\.sdata
+  6c:	8f840014 	lw	\$4,20\(\$28\)
+			6c: R_MIPS_GPREL16	\.sdata
+  70:	8f840018 	lw	\$4,24\(\$28\)
+			70: R_MIPS_GPREL16	\.sdata
 	\.\.\.

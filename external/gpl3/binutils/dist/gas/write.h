@@ -176,6 +176,9 @@ extern void number_to_chars_bigendian (char *, valueT, int);
 extern fixS *fix_new
   (fragS * frag, int where, int size, symbolS * add_symbol,
    offsetT offset, int pcrel, bfd_reloc_code_real_type r_type);
+extern fixS *fix_at_start
+  (fragS * frag, int size, symbolS * add_symbol,
+   offsetT offset, int pcrel, bfd_reloc_code_real_type r_type);
 extern fixS *fix_new_exp
   (fragS * frag, int where, int size, expressionS *exp, int pcrel,
    bfd_reloc_code_real_type r_type);

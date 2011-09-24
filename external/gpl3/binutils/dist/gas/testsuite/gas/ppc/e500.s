@@ -45,3 +45,12 @@ start:
 	efdctsf 5,4
 	efdctuf 5,4
 	efdcfs 5,4
+
+	# eieio handling
+	eieio
+	mbar
+	mbar 1
+
+	#sync and lwsync handling
+	sync
+	lwsync

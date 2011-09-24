@@ -17,6 +17,4 @@ Section Headers:
   \[ 7\] .symtab           SYMTAB          00000000 000208 000060 10      8   6  4
   \[ 8\] .strtab           STRTAB          00000000 000268 000001 00      0   0  1
 Key to Flags:
-  W \(write\), A \(alloc\), X \(execute\), M \(merge\), S \(strings\)
-  I \(info\), L \(link order\), G \(group\), x \(unknown\)
-  O \(extra OS processing required\) o \(OS specific\), p \(processor specific\)
+#...

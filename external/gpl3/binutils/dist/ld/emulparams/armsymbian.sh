@@ -13,10 +13,10 @@ EMBEDDED=yes
 # .ARM.exidx$${Base,Limit} symbols.
 OTHER_READONLY_SECTIONS="
   .ARM.extab ${RELOCATING-0} : { *(.ARM.extab${RELOCATING+* .gnu.linkonce.armextab.*}) }
-  ${RELOCATING+ .ARM.exidx\$\$Base = . ; }
-  ${RELOCATING+ __exidx_start = .; }
+  ${RELOCATING+ PROVIDE_HIDDEN (.ARM.exidx\$\$Base = .); }
+  ${RELOCATING+ PROVIDE_HIDDEN (__exidx_start = .); }
   .ARM.exidx ${RELOCATING-0} : { *(.ARM.exidx${RELOCATING+* .gnu.linkonce.armexidx.*}) }
-  ${RELOCATING+ __exidx_end = .; }
-  ${RELOCATING+ .ARM.exidx\$\$Limit = . ; }"
+  ${RELOCATING+ PROVIDE_HIDDEN (__exidx_end = .); }
+  ${RELOCATING+ PROVIDE_HIDDEN (.ARM.exidx\$\$Limit = .); }"
 
 MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"

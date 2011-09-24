@@ -28,7 +28,7 @@ proc mrisc1_error_test { file testname {warnpattern ""} } {
 }
 
 if [istarget mt-*-*] {
-    foreach file [glob -nocomplain -- $srcdir/$subdir/bad*.s] {
+    foreach file [lsort [glob -nocomplain -- $srcdir/$subdir/bad*.s]] {
 	set file [file tail $file]
 	switch -- $file {
 	    "badreg.s" {

@@ -1,5 +1,51 @@
 -*- text -*-
 
+Changes in 2.21:
+
+
+* Gas no longer requires doubling of ampersands in macros.
+
+* Add support for the TMS320C6000 (TI C6X) processor family.
+
+* GAS now understands an extended syntax in the .section directive flags
+  for COFF targets that allows the section's alignment to be specified.  This
+  feature has also been backported to the 2.20 release series, starting with
+  2.20.1.
+
+* Add support for the Renesas RX processor.
+
+* New command line option, --compress-debug-sections, which requests
+  compression of DWARF debug information sections in the relocatable output
+  file.  Compressed debug sections are supported by readelf, objdump, and
+  gold, but not currently by Gnu ld.
+
+Changes in 2.20:
+
+* Added support for v850e2 and v850e2v3.
+
+* GNU/Linux targets now supports "gnu_unique_object" as a value in the .type
+  pseudo op.  It marks the symbol as being globally unique in the entire
+  process.
+
+* ARM assembler now supports .inst[.nw] pseudo-ops to insert opcodes specified
+  in binary rather than text.
+
+* Add support for common symbol alignment to PE formats.
+
+* Add support for the new discriminator column in the DWARF line table,
+  with a discriminator operand for the .loc directive.
+
+* Add support for Sunplus score architecture.
+
+* The .type pseudo-op now accepts a type of STT_GNU_IFUNC which can be used to
+  indicate that if the symbol is the target of a relocation, its value should
+  not be use.  Instead the function should be invoked and its result used as
+  the value.
+ 
+* Add support for Lattice Mico32 (lm32) architecture.
+
+* Add support for Xilinx MicroBlaze architecture. 
+
 Changes in 2.19:
 
 * New pseudo op .cfi_val_encoded_addr, to record constant addresses in unwind

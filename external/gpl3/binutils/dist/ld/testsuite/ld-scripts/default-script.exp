@@ -1,5 +1,5 @@
 # Test --default-script/-dT
-#   Copyright 2007
+#   Copyright 2007, 2009
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
+set old_ldflags $LDFLAGS
 if { [istarget spu*-*-*] } {
     set LDFLAGS "$LDFLAGS --local-store 0:0"
 }
@@ -30,3 +31,4 @@ foreach t $test_list {
     run_dump_test [file rootname $t]
 }
 
+set LDFLAGS $old_ldflags

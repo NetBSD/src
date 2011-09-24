@@ -11,7 +11,7 @@
 
 SYMBOL TABLE:
 #...
-0+82084 l     O \.got	0+ \.hidden _GLOBAL_OFFSET_TABLE_
+0+82084 l     O \.got	0+ _GLOBAL_OFFSET_TABLE_
 0+80076 g     F \.text	0+2 expfn
 0+82090 g     O \.data	0+4 expobj
 #...

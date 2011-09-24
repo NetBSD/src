@@ -271,8 +271,8 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	e7 00                	out    %eax,\$0x0
 [ 	]*[a-f0-9]+:	66 90                	xchg   %ax,%ax
 [ 	]*[a-f0-9]+:	87 c0                	xchg   %eax,%eax
-[ 	]*[a-f0-9]+:	90                   	nop    
-[ 	]*[a-f0-9]+:	48 90                	rex.W nop    
+[ 	]*[a-f0-9]+:	90                   	nop
+[ 	]*[a-f0-9]+:	48 90                	rex.W nop
 [ 	]*[a-f0-9]+:	49 90                	xchg   %rax,%r8
 [ 	]*[a-f0-9]+:	41 90                	xchg   %eax,%r8d
 [ 	]*[a-f0-9]+:	41 90                	xchg   %eax,%r8d
@@ -295,5 +295,5 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	0f 05                	syscall 
 [ 	]*[a-f0-9]+:	0f 07                	sysret 
 [ 	]*[a-f0-9]+:	0f 01 f8             	swapgs 
-	...
+[ 	]*[a-f0-9]+:	66 68 22 22          	pushw  \$0x2222
 #pass

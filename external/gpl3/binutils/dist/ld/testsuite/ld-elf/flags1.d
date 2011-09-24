@@ -2,13 +2,14 @@
 #ld: -Tflags1.ld
 #objcopy_linked_file: --set-section-flags .post_text_reserve=contents,alloc,load,readonly,code 
 #readelf: -l --wide
-#xfail: "arm*-*-*" "xscale-*-*"
-#xfail: "avr-*-*" "dlx-*-*" "h8300-*-*" "m32r-*-*" "msp430-*-*"
-#xfail: "*-*-hpux*"
-# Fails on the ARM because the .section type character is % rather than @.
-# Fails on the AVR, DLX, H8300, M32R and MSP430 because the two sections
-#  are not merged into one segment.  (There is no good reason why they have to be).
+#xfail: "avr-*-*" "dlx-*-*" "h8300-*-*" "i960-*-*" "ip2k-*-*" "m32r-*-*"
+#xfail: "moxie-*-*" "mt-*-*" "msp430-*-*" "tic6x-*-*"
+#xfail: "*-*-hpux*" "hppa*64*-*-*"
+# Fails on the AVR, DLX, H8300, I960, IP2K, M32R, MOXIE, MT, MSP430 and
+#  TI C6X because the two sections are not merged into one segment.
+#  (There is no good reason why they have to be).
 # Fails on HPUX systems because the .type pseudo-op behaves differently.
+# Fails on hppa64 because a PHDR is always added.
 
 #...
 Program Headers:

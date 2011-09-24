@@ -52,7 +52,7 @@ add_debug_prefix_map (const char *arg)
       as_fatal (_("invalid argument '%s' to -fdebug-prefix-map"), arg);
       return;
     }
-  map = xmalloc (sizeof (debug_prefix_map));
+  map = (struct debug_prefix_map *) xmalloc (sizeof (debug_prefix_map));
   o = xstrdup (arg);
   map->old_prefix = o;
   map->old_len = p - arg;

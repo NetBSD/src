@@ -13,8 +13,8 @@ Disassembly of section .text:
   12:	69 d2 00 00 00 00 [ 	]*imul   \$0x0,%edx,%edx	14: (R_386_)?(dir)?32	.text
   18:	9a 00 00 00 00 00 00 [ 	]*lcall  \$0x0,\$0x0	19: (R_386_)?(dir)?32	.text
   1f:	66 68 00 00 [ 	]*pushw  \$0x0	21: (R_386_)?16	.text
-  23:	90 [ 	]*nop    
-  24:	90 [ 	]*nop    
-  25:	90 [ 	]*nop    
-  26:	90 [ 	]*nop    
-  27:	90 [ 	]*nop    
+  23:	90 [ 	]*nop
+  24:	90 [ 	]*nop
+  25:	90 [ 	]*nop
+  26:	90 [ 	]*nop
+  27:	90 [ 	]*nop

@@ -8,7 +8,7 @@
 # This test is for the semi-official ILP32 variation of EABI64.
 #
 
-The section \.eh_frame contains:
+Contents of the \.eh_frame section:
 
 00000000 0000000c 00000000 CIE
   Version:               1

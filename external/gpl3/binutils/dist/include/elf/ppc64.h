@@ -1,21 +1,22 @@
 /* PPC64 ELF support for BFD.
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2005, 2009, 2010 Free Software Foundation, Inc.
 
-This file is part of BFD, the Binary File Descriptor library.
+   This file is part of BFD, the Binary File Descriptor library.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+   MA 02110-1301, USA.  */
 
 #ifndef _ELF_PPC64_H
 #define _ELF_PPC64_H
@@ -136,6 +137,22 @@ START_RELOC_NUMBERS (elf_ppc64_reloc_type)
   RELOC_NUMBER (R_PPC64_DTPREL16_HIGHERA,  104)
   RELOC_NUMBER (R_PPC64_DTPREL16_HIGHEST,  105)
   RELOC_NUMBER (R_PPC64_DTPREL16_HIGHESTA, 106)
+  RELOC_NUMBER (R_PPC64_TLSGD,		   107)
+  RELOC_NUMBER (R_PPC64_TLSLD,		   108)
+
+#ifndef RELOC_MACROS_GEN_FUNC
+/* Fake relocation only used internally by ld.  */
+  RELOC_NUMBER (R_PPC64_LO_DS_OPT,	   128)
+#endif
+/* Support STT_GNU_IFUNC plt calls.  */
+  RELOC_NUMBER (R_PPC64_JMP_IREL,	   247)
+  RELOC_NUMBER (R_PPC64_IRELATIVE,	   248)
+
+/* These are GNU extensions used in PIC code sequences.  */
+  RELOC_NUMBER (R_PPC64_REL16,		   249)
+  RELOC_NUMBER (R_PPC64_REL16_LO,	   250)
+  RELOC_NUMBER (R_PPC64_REL16_HI,	   251)
+  RELOC_NUMBER (R_PPC64_REL16_HA,	   252)
 
   /* These are GNU extensions to enable C++ vtable garbage collection.  */
   RELOC_NUMBER (R_PPC64_GNU_VTINHERIT,	   253)
@@ -152,5 +169,8 @@ END_RELOC_NUMBERS (R_PPC64_max)
 /* Specify the start and size of the .opd section.  */
 #define DT_PPC64_OPD		(DT_LOPROC + 1)
 #define DT_PPC64_OPDSZ		(DT_LOPROC + 2)
+
+/* Specify that tls descriptors should be optimized.  */
+#define DT_PPC64_TLSOPT		(DT_LOPROC + 3)
 
 #endif /* _ELF_PPC64_H */

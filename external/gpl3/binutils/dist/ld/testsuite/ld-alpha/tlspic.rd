@@ -55,74 +55,74 @@ Relocation section '.rela.plt' at offset 0x[0-9a-f]+ contains 1 entries:
 [0-9a-f]+ +[0-9a-f]+ R_ALPHA_JMP_SLOT +0+ __tls_get_addr \+ 0
 
 Symbol table '\.dynsym' contains [0-9]+ entries:
-   Num:    Value          Size Type    Bind   Vis      Ndx Name
-.* [0-9a-f]+     0 NOTYPE  LOCAL  DEFAULT  UND 
-.* [0-9a-f]+     0 TLS     GLOBAL DEFAULT    8 sg8
-.* [0-9a-f]+     0 TLS     GLOBAL DEFAULT    8 sg3
-.* [0-9a-f]+     0 TLS     GLOBAL DEFAULT    8 sg4
-.* [0-9a-f]+     0 TLS     GLOBAL DEFAULT    8 sg5
-.* [0-9a-f]+     0 NOTYPE  GLOBAL DEFAULT  UND __tls_get_addr
-.* [0-9a-f]+     0 TLS     GLOBAL DEFAULT    8 sg1
-.* [0-9a-f]+   172 FUNC    GLOBAL DEFAULT \[<other>: 88\]     6 fn1
-.* [0-9a-f]+     0 NOTYPE  GLOBAL DEFAULT  ABS __bss_start
-.* [0-9a-f]+     0 TLS     GLOBAL DEFAULT    8 sg2
-.* [0-9a-f]+     0 TLS     GLOBAL DEFAULT    8 sg6
-.* [0-9a-f]+     0 TLS     GLOBAL DEFAULT    8 sg7
-.* [0-9a-f]+     0 NOTYPE  GLOBAL DEFAULT  ABS _edata
-.* [0-9a-f]+     0 NOTYPE  GLOBAL DEFAULT  ABS _end
+ +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+.* [0-9a-f]+ +0 +NOTYPE +LOCAL +DEFAULT +UND 
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg8
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg3
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg4
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg5
+.* [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +UND __tls_get_addr
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg1
+.* [0-9a-f]+ +172 +FUNC +GLOBAL +DEFAULT +\[<other>: 88\] +6 fn1
+.* [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg2
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg6
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg7
+.* [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _edata
+.* [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _end
 
 Symbol table '\.symtab' contains [0-9]+ entries:
- +Num: +Value +Size Type +Bind +Vis +Ndx Name
-.* [0-9a-f]+ +0 NOTYPE +LOCAL +DEFAULT +UND 
-.* [0-9a-f]+ +0 SECTION LOCAL +DEFAULT +1 
-.* [0-9a-f]+ +0 SECTION LOCAL +DEFAULT +2 
-.* [0-9a-f]+ +0 SECTION LOCAL +DEFAULT +3 
-.* [0-9a-f]+ +0 SECTION LOCAL +DEFAULT +4 
-.* [0-9a-f]+ +0 SECTION LOCAL +DEFAULT +5 
-.* [0-9a-f]+ +0 SECTION LOCAL +DEFAULT +6 
-.* [0-9a-f]+ +0 SECTION LOCAL +DEFAULT +7 
-.* [0-9a-f]+ +0 SECTION LOCAL +DEFAULT +8 
-.* [0-9a-f]+ +0 SECTION LOCAL +DEFAULT +9 
-.* [0-9a-f]+ +0 SECTION LOCAL +DEFAULT +10 
-.* [0-9a-f]+ +0 SECTION LOCAL +DEFAULT +11 
-.* [0-9a-f]+ +0 SECTION LOCAL +DEFAULT +12 
-.* [0-9a-f]+ +0 TLS +LOCAL +DEFAULT +8 sl1
-.* [0-9a-f]+ +0 TLS +LOCAL +DEFAULT +8 sl2
-.* [0-9a-f]+ +0 TLS +LOCAL +DEFAULT +8 sl3
-.* [0-9a-f]+ +0 TLS +LOCAL +DEFAULT +8 sl4
-.* [0-9a-f]+ +0 TLS +LOCAL +DEFAULT +8 sl5
-.* [0-9a-f]+ +0 TLS +LOCAL +DEFAULT +8 sl6
-.* [0-9a-f]+ +0 TLS +LOCAL +DEFAULT +8 sl7
-.* [0-9a-f]+ +0 TLS +LOCAL +DEFAULT +8 sl8
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +9 sH1
-.* [0-9a-f]+ +0 OBJECT +LOCAL +HIDDEN +ABS _DYNAMIC
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +8 sh3
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +9 sH2
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +9 sH7
-.* [0-9a-f]+ +0 OBJECT +LOCAL +HIDDEN +ABS _PROCEDURE_LINKAGE_TABLE_
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +8 sh7
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +8 sh8
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +9 sH4
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +8 sh4
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +9 sH3
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +8 sh5
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +9 sH5
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +9 sH6
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +9 sH8
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +8 sh1
-.* [0-9a-f]+ +0 OBJECT +LOCAL +HIDDEN +ABS _GLOBAL_OFFSET_TABLE_
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +8 sh2
-.* [0-9a-f]+ +0 TLS +LOCAL +HIDDEN +8 sh6
-.* [0-9a-f]+ +0 TLS +GLOBAL DEFAULT +8 sg8
-.* [0-9a-f]+ +0 TLS +GLOBAL DEFAULT +8 sg3
-.* [0-9a-f]+ +0 TLS +GLOBAL DEFAULT +8 sg4
-.* [0-9a-f]+ +0 TLS +GLOBAL DEFAULT +8 sg5
-.* [0-9a-f]+ +0 NOTYPE +GLOBAL DEFAULT +UND __tls_get_addr
-.* [0-9a-f]+ +0 TLS +GLOBAL DEFAULT +8 sg1
-.* [0-9a-f]+ +172 FUNC +GLOBAL DEFAULT +\[<other>: 88\] +6 fn1
-.* [0-9a-f]+ +0 NOTYPE +GLOBAL DEFAULT +ABS __bss_start
-.* [0-9a-f]+ +0 TLS +GLOBAL DEFAULT +8 sg2
-.* [0-9a-f]+ +0 TLS +GLOBAL DEFAULT +8 sg6
-.* [0-9a-f]+ +0 TLS +GLOBAL DEFAULT +8 sg7
-.* [0-9a-f]+ +0 NOTYPE +GLOBAL DEFAULT +ABS _edata
-.* [0-9a-f]+ +0 NOTYPE +GLOBAL DEFAULT +ABS _end
+ +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+.* [0-9a-f]+ +0 +NOTYPE +LOCAL +DEFAULT +UND 
+.* [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +1 
+.* [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +2 
+.* [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +3 
+.* [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +4 
+.* [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +5 
+.* [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +6 
+.* [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +7 
+.* [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +8 
+.* [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +9 
+.* [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +10 
+.* [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +11 
+.* [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +12 
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sl1
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sl2
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sl3
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sl4
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sl5
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sl6
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sl7
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sl8
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +9 sH1
+.* [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +ABS _DYNAMIC
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sh3
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +9 sH2
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +9 sH7
+.* [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +ABS _PROCEDURE_LINKAGE_TABLE_
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sh7
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sh8
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +9 sH4
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sh4
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +9 sH3
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sh5
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +9 sH5
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +9 sH6
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +9 sH8
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sh1
+.* [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +ABS _GLOBAL_OFFSET_TABLE_
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sh2
+.* [0-9a-f]+ +0 +TLS +LOCAL +DEFAULT +8 sh6
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg8
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg3
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg4
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg5
+.* [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +UND __tls_get_addr
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg1
+.* [0-9a-f]+ +172 +FUNC +GLOBAL +DEFAULT +\[<other>: 88\] +6 fn1
+.* [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg2
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg6
+.* [0-9a-f]+ +0 +TLS +GLOBAL +DEFAULT +8 sg7
+.* [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _edata
+.* [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _end

@@ -1,5 +1,5 @@
 
-relocs.x:     file format elf32-(mrisc1|ms1)
+relocs.x:     file format .*
 
 Contents of section .text:
  2000 00131000 3700dffc 12000000 3700fff8  ....7.......7...

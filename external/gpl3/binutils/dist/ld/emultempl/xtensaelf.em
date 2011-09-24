@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009
+#   Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -41,9 +41,6 @@ static void xtensa_colocate_output_literals (lang_statement_union_type *);
 static void xtensa_strip_inconsistent_linkonce_sections
   (lang_statement_list_type *);
 
-
-/* Flag for the emulation-specific "--no-relax" option.  */
-static bfd_boolean disable_relaxation = FALSE;
 
 /* This number is irrelevant until we turn on use_literal_pages */
 static bfd_vma xtensa_page_power = 12; /* 4K pages.  */
@@ -101,7 +98,7 @@ replace_insn_sec_with_prop_sec (bfd *abfd,
   bfd_byte *insn_contents = NULL;
   unsigned entry_count;
   unsigned entry;
-  Elf_Internal_Shdr *symtab_hdr;
+  Elf_Internal_Shdr *rel_hdr;
   Elf_Internal_Rela *internal_relocs = NULL;
   unsigned reloc_count;
 
@@ -151,10 +148,9 @@ replace_insn_sec_with_prop_sec (bfd *abfd,
 
   /* The entry size and size must be set to allow the linker to compute
      the number of relocations since it does not use reloc_count.  */
-  elf_section_data (prop_sec)->rel_hdr.sh_entsize =
-    sizeof (Elf32_External_Rela);
-  elf_section_data (prop_sec)->rel_hdr.sh_size =
-    elf_section_data (insn_sec)->rel_hdr.sh_size;
+  rel_hdr = _bfd_elf_single_rel_hdr (prop_sec);
+  rel_hdr->sh_entsize = sizeof (Elf32_External_Rela);
+  rel_hdr->sh_size = _bfd_elf_single_rel_hdr (insn_sec)->sh_size;
 
   if (prop_contents == NULL && prop_sec->size != 0)
     {
@@ -209,7 +205,6 @@ replace_insn_sec_with_prop_sec (bfd *abfd,
   if (internal_relocs)
     {
       unsigned i;
-      symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
 
       for (i = 0; i < reloc_count; i++)
 	{
@@ -527,16 +522,16 @@ elf_xtensa_before_allocation (void)
      specified.  This is done here instead of in the before_parse hook
      because there is a check in main() to prohibit use of --relax and
      -r together and that combination should be allowed for Xtensa.  */
-
-  if (!disable_relaxation)
-    command_line.relax = TRUE;
+  if (RELAXATION_DISABLED_BY_DEFAULT)
+    ENABLE_RELAXATION;
 
   xtensa_strip_inconsistent_linkonce_sections (stat_ptr);
 
   gld${EMULATION_NAME}_before_allocation ();
 
   xtensa_wild_group_interleave (stat_ptr->head);
-  if (command_line.relax)
+
+  if (RELAXATION_ENABLED)
     xtensa_colocate_output_literals (stat_ptr->head);
 
   /* TBD: We need to force the page alignments to here and only do
@@ -600,59 +595,6 @@ static size_t ld_count_children (lang_statement_union_type *);
 #endif
 
 extern lang_statement_list_type constructor_list;
-
-/*  Begin verbatim code from ldlang.c:
-    the following are copied from ldlang.c because they are defined
-    there statically.  */
-
-static void
-lang_for_each_statement_worker (void (*func) (lang_statement_union_type *),
-				lang_statement_union_type *s)
-{
-  for (; s != (lang_statement_union_type *) NULL; s = s->header.next)
-    {
-      func (s);
-
-      switch (s->header.type)
-	{
-	case lang_constructors_statement_enum:
-	  lang_for_each_statement_worker (func, constructor_list.head);
-	  break;
-	case lang_output_section_statement_enum:
-	  lang_for_each_statement_worker
-	    (func,
-	     s->output_section_statement.children.head);
-	  break;
-	case lang_wild_statement_enum:
-	  lang_for_each_statement_worker
-	    (func,
-	     s->wild_statement.children.head);
-	  break;
-	case lang_group_statement_enum:
-	  lang_for_each_statement_worker (func,
-					  s->group_statement.children.head);
-	  break;
-	case lang_data_statement_enum:
-	case lang_reloc_statement_enum:
-	case lang_object_symbols_statement_enum:
-	case lang_output_statement_enum:
-	case lang_target_statement_enum:
-	case lang_input_section_enum:
-	case lang_input_statement_enum:
-	case lang_assignment_statement_enum:
-	case lang_padding_statement_enum:
-	case lang_address_statement_enum:
-	case lang_fill_statement_enum:
-	  break;
-	default:
-	  FAIL ();
-	  break;
-	}
-    }
-}
-
-/* End of verbatim code from ldlang.c.  */
-
 
 static reloc_deps_section *
 xtensa_get_section_deps (const reloc_deps_graph *deps ATTRIBUTE_UNUSED,
@@ -1672,7 +1614,6 @@ xtensa_layout_wild (const reloc_deps_graph *deps, lang_wild_statement_type *w)
 static void
 xtensa_colocate_output_literals_callback (lang_statement_union_type *statement)
 {
-  lang_output_section_statement_type *os;
   reloc_deps_graph *deps;
   if (statement->header.type == lang_output_section_statement_enum)
     {
@@ -1693,8 +1634,6 @@ xtensa_colocate_output_literals_callback (lang_statement_union_type *statement)
       size_t new_child_count;
 #endif
       bfd_boolean no_reorder = FALSE;
-
-      os = &statement->output_section_statement;
 
 #if EXTRA_VALIDATION
       old_child_count = ld_count_children (statement);
@@ -1878,8 +1817,10 @@ ld_local_file_relocations_fit (lang_statement_union_type *statement,
 		  bfd_vma target_addr = e->tgt->output_offset & ~3;
 		  if (l32r_addr < target_addr)
 		    {
+		      fflush (stdout);
 		      fprintf (stderr, "Warning: "
 			       "l32r target section before l32r\n");
+		      fflush (stderr);
 		      return FALSE;
 		    }
 
@@ -1946,7 +1887,7 @@ ld_xtensa_insert_page_offsets (bfd_vma dot,
 		etree_type *name_op = exp_nameop (NAME, ".");
 		etree_type *addend_op = exp_intop (1 << xtensa_page_power);
 		etree_type *add_op = exp_binop ('+', name_op, addend_op);
-		etree_type *assign_op = exp_assop ('=', ".", add_op);
+		etree_type *assign_op = exp_assign (".", add_op);
 
 		lang_assignment_statement_type *assign_stmt;
 		lang_statement_union_type *assign_union;
@@ -1983,8 +1924,7 @@ EOF
 #
 PARSE_AND_LIST_PROLOGUE='
 #define OPTION_OPT_SIZEOPT              (300)
-#define OPTION_NO_RELAX			(OPTION_OPT_SIZEOPT + 1)
-#define OPTION_LITERAL_MOVEMENT		(OPTION_NO_RELAX + 1)
+#define OPTION_LITERAL_MOVEMENT		(OPTION_OPT_SIZEOPT + 1)
 #define OPTION_NO_LITERAL_MOVEMENT	(OPTION_LITERAL_MOVEMENT + 1)
 extern int elf32xtensa_size_opt;
 extern int elf32xtensa_no_literal_movement;
@@ -1992,7 +1932,6 @@ extern int elf32xtensa_no_literal_movement;
 
 PARSE_AND_LIST_LONGOPTS='
   { "size-opt", no_argument, NULL, OPTION_OPT_SIZEOPT},
-  { "no-relax", no_argument, NULL, OPTION_NO_RELAX},
   { "literal-movement", no_argument, NULL, OPTION_LITERAL_MOVEMENT},
   { "no-literal-movement", no_argument, NULL, OPTION_NO_LITERAL_MOVEMENT},
 '
@@ -2001,16 +1940,11 @@ PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("\
   --size-opt                  When relaxing longcalls, prefer size\n\
                                 optimization over branch target alignment\n"));
-  fprintf (file, _("\
-  --no-relax                  Do not relax branches or coalesce literals\n"));
 '
 
 PARSE_AND_LIST_ARGS_CASES='
     case OPTION_OPT_SIZEOPT:
       elf32xtensa_size_opt = 1;
-      break;
-    case OPTION_NO_RELAX:
-      disable_relaxation = TRUE;
       break;
     case OPTION_LITERAL_MOVEMENT:
       elf32xtensa_no_literal_movement = 0;

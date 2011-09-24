@@ -136,6 +136,12 @@ text_label:
 	lwx		$10,$11($12)
 	bposge32	text_label
 	nop
+	madd		$ac2,$11,$12
+	maddu		$ac3,$12,$13
+	msub		$ac0,$13,$14
+	msubu		$ac1,$14,$15
+	mult		$ac3,$21,$22
+	multu		$ac0,$22,$23
 
 # Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
 	.space	8

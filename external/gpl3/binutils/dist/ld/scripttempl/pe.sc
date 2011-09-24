@@ -23,13 +23,14 @@ if test "${RELOCATING}"; then
     R_RDATA='*(.rdata)
              *(SORT(.rdata$*))'
   fi
-  R_IDATA='
+  R_IDATA234='
     SORT(*)(.idata$2)
     SORT(*)(.idata$3)
     /* These zeroes mark the end of the import list.  */
     LONG (0); LONG (0); LONG (0); LONG (0); LONG (0);
-    SORT(*)(.idata$4)
-    SORT(*)(.idata$5)
+    SORT(*)(.idata$4)'
+  R_IDATA5='SORT(*)(.idata$5)'
+  R_IDATA67='
     SORT(*)(.idata$6)
     SORT(*)(.idata$7)'
   R_CRT_XC='*(SORT(.CRT$XC*))  /* C initialization */'
@@ -46,7 +47,9 @@ else
   R_TEXT=
   R_DATA=
   R_RDATA='*(.rdata)'
-  R_IDATA=
+  R_IDATA234=
+  R_IDATA5=
+  R_IDATA67=
   R_CRT=
   R_RSRC=
 fi
@@ -69,6 +72,7 @@ SECTIONS
     ${RELOCATING+ *(.init)}
     *(.text)
     ${R_TEXT}
+    ${RELOCATING+ *(.text.*)}
     *(.glue_7t)
     *(.glue_7)
     ${CONSTRUCTING+ ___CTOR_LIST__ = .; __CTOR_LIST__ = . ; 
@@ -102,12 +106,19 @@ SECTIONS
   .rdata ${RELOCATING+BLOCK(__section_alignment__)} :
   {
     ${R_RDATA}
-    ${RELOCATING+ *(.eh_frame)}
-    ${RELOCATING+___RUNTIME_PSEUDO_RELOC_LIST__ = .;}
-    ${RELOCATING+__RUNTIME_PSEUDO_RELOC_LIST__ = .;}
+    ${RELOCATING+__rt_psrelocs_start = .;}
     *(.rdata_runtime_pseudo_reloc)
-    ${RELOCATING+___RUNTIME_PSEUDO_RELOC_LIST_END__ = .;}
-    ${RELOCATING+__RUNTIME_PSEUDO_RELOC_LIST_END__ = .;}
+    ${RELOCATING+__rt_psrelocs_end = .;}
+  }
+  ${RELOCATING+__rt_psrelocs_size = __rt_psrelocs_end - __rt_psrelocs_start;}
+  ${RELOCATING+___RUNTIME_PSEUDO_RELOC_LIST_END__ = .;}
+  ${RELOCATING+__RUNTIME_PSEUDO_RELOC_LIST_END__ = .;}
+  ${RELOCATING+___RUNTIME_PSEUDO_RELOC_LIST__ = . - __rt_psrelocs_size;}
+  ${RELOCATING+__RUNTIME_PSEUDO_RELOC_LIST__ = . - __rt_psrelocs_size;}
+
+  .eh_frame ${RELOCATING+BLOCK(__section_alignment__)} :
+  {
+    *(.eh_frame)
   }
 
   .pdata ${RELOCATING+BLOCK(__section_alignment__)} :
@@ -134,13 +145,19 @@ SECTIONS
     *(.debug\$T)
     *(.debug\$F)
     *(.drectve)
+    ${RELOCATING+ *(.note.GNU-stack)}
+    ${RELOCATING+ *(.gnu.lto_*)}
   }
 
   .idata ${RELOCATING+BLOCK(__section_alignment__)} :
   {
     /* This cannot currently be handled with grouped sections.
 	See pe.em:sort_sections.  */
-    ${R_IDATA}
+    ${R_IDATA234}
+    ${RELOCATING+__IAT_start__ = .;}
+    ${R_IDATA5}
+    ${RELOCATING+__IAT_end__ = .;}
+    ${R_IDATA67}
   }
   .CRT ${RELOCATING+BLOCK(__section_alignment__)} :
   { 					
@@ -213,6 +230,11 @@ SECTIONS
     *(.debug_pubnames)
   }
 
+  .debug_pubtypes ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.debug_pubtypes)
+  }
+
   /* DWARF 2.  */
   .debug_info ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
   {
@@ -274,6 +296,12 @@ SECTIONS
   .debug_ranges ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
   {
     *(.debug_ranges)
+  }
+
+  /* DWARF 4.  */
+  .debug_types ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.debug_types) *(.gnu.linkonce.wt.*)
   }
 }
 EOF

@@ -1,5 +1,5 @@
 # Expect script for ld-auto-import tests
-#   Copyright 2002, 2007, 2008
+#   Copyright 2002, 2005, 2007, 2008, 2009
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -122,7 +122,7 @@ if [istarget *-pc-cygwin] {
     if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/dll.c $tmpdir/dll.o] {
 	fail "compiling shared lib"
     }
-    if ![ld_special_link "$ld -shared --enable-auto-import --out-implib=$tmpdir/libstandard.dll.a" $tmpdir/dll.dll "$tmpdir/dll.o $MYLIBS"] {
+    if ![ld_special_link "$ld -shared --enable-auto-import -e __cygwin_dll_entry@12 --out-implib=$tmpdir/libstandard.dll.a" $tmpdir/dll.dll "$tmpdir/dll.o $MYLIBS"] {
 	fail "linking shared lib"
     }
 
