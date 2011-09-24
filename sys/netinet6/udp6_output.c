@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.42 2011/08/31 18:31:03 plunky Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.43 2011/09/24 17:22:14 christos Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.42 2011/08/31 18:31:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.43 2011/09/24 17:22:14 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -182,10 +182,9 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 		/*
 		 * IPv4 version of udp_output calls in_pcbconnect in this case,
 		 * which needs splnet and affects performance.
-		 * Since we saw no essential reason for calling in_pcbconnect,
-		 * we get rid of such kind of logic, and call in6_selectsrc
-		 * and in6_pcbsetport in order to fill in the local address
-		 * and the local port.
+		 * We have to do this as well, since in6_pcbsetport needs to
+		 * know the foreign address for some of the algorithms that
+		 * it employs.
 		 */
 		if (sin6->sin6_port == 0) {
 			error = EADDRNOTAVAIL;
@@ -292,7 +291,9 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 			error = sa6_recoverscope(&lsin6);
 			if (error)
 				goto release;
-			error = in6_pcbsetport(&lsin6, in6p, l);
+
+			error = in6_pcbconnect(in6p, addr6, l);
+
 			if (error)
 				goto release;
 		}
