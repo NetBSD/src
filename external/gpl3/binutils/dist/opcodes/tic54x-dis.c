@@ -1,5 +1,5 @@
 /* Disassembly routines for TMS320C54X architecture
-   Copyright 1999, 2000, 2001, 2007 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2005, 2007, 2009 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of the GNU opcodes library.
@@ -27,14 +27,14 @@
 #include "opcode/tic54x.h"
 #include "coff/tic54x.h"
 
-static int has_lkaddr (unsigned short, const template *);
-static int get_insn_size (unsigned short, const template *);
+static int has_lkaddr (unsigned short, const insn_template *);
+static int get_insn_size (unsigned short, const insn_template *);
 static int print_instruction (disassemble_info *, bfd_vma,
                               unsigned short, const char *,
                               const enum optype [], int, int);
 static int print_parallel_instruction (disassemble_info *, bfd_vma,
-                                       unsigned short, 
-                                       const template *, int);
+                                       unsigned short,
+                                       const insn_template *, int);
 static int sprint_dual_address (disassemble_info *,char [],
                                 unsigned short);
 static int sprint_indirect_address (disassemble_info *,char [],
@@ -51,7 +51,7 @@ print_insn_tic54x (bfd_vma memaddr, disassemble_info *info)
   bfd_byte opbuf[2];
   unsigned short opcode;
   int status, size;
-  const template* tm;
+  const insn_template* tm;
 
   status = (*info->read_memory_func) (memaddr, opbuf, 2, info);
   if (status != 0)
@@ -86,7 +86,7 @@ print_insn_tic54x (bfd_vma memaddr, disassemble_info *info)
 }
 
 static int
-has_lkaddr (unsigned short memdata, const template *tm)
+has_lkaddr (unsigned short memdata, const insn_template *tm)
 {
   return (IS_LKADDR (memdata)
 	  && (OPTYPE (tm->operand_types[0]) == OP_Smem
@@ -99,11 +99,11 @@ has_lkaddr (unsigned short memdata, const template *tm)
 
 /* always returns 1 (whether an insn template was found) since we provide an
    "unknown instruction" template */
-const template*
-tic54x_get_insn (disassemble_info *info, bfd_vma addr, 
+const insn_template*
+tic54x_get_insn (disassemble_info *info, bfd_vma addr,
                  unsigned short memdata, int *size)
 {
-  const template *tm = NULL;
+  const insn_template *tm = NULL;
 
   for (tm = tic54x_optab; tm->name; tm++)
   {
@@ -135,7 +135,7 @@ tic54x_get_insn (disassemble_info *info, bfd_vma addr,
         }
     }
   }
-  for (tm = (template *) tic54x_paroptab; tm->name; tm++)
+  for (tm = (insn_template *) tic54x_paroptab; tm->name; tm++)
   {
     if (tm->opcode == (memdata & tm->mask))
     {
@@ -149,7 +149,7 @@ tic54x_get_insn (disassemble_info *info, bfd_vma addr,
 }
 
 static int
-get_insn_size (unsigned short memdata, const template *insn)
+get_insn_size (unsigned short memdata, const insn_template *insn)
 {
   int size;
 
@@ -380,7 +380,10 @@ print_instruction (info, memaddr, opcode, tm_name, tm_operands, size, ext)
         case OP_CC3:
         {
           const char *code[] = { "eq", "lt", "gt", "neq" };
-          sprintf (operand[i], code[CC3 (opcode)]);
+
+	  /* Do not use sprintf with only two parameters as a
+	     compiler warning could be generated in such conditions.  */
+	  sprintf (operand[i], "%s", code[CC3 (opcode)]);
           info->fprintf_func (info->stream, "%s%s", comma, operand[i]);
           break;
         }
@@ -469,7 +472,7 @@ print_parallel_instruction (info, memaddr, opcode, ptm, size)
   disassemble_info *info;
   bfd_vma memaddr;
   unsigned short opcode;
-  const template *ptm;
+  const insn_template *ptm;
   int size;
 {
   print_instruction (info, memaddr, opcode,

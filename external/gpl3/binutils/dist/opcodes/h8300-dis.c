@@ -1,6 +1,6 @@
 /* Disassemble h8300 instructions.
    Copyright 1993, 1994, 1996, 1998, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007  Free Software Foundation, Inc.
+   2007, 2010  Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -53,19 +53,6 @@ bfd_h8_disassemble_init (void)
 
   for (p = h8_opcodes, pi = h8_instructions; p->name; p++, pi++)
     {
-      int n1 = 0;
-      int n2 = 0;
-
-      if ((int) p->data.nib[0] < 16)
-	n1 = (int) p->data.nib[0];
-      else
-	n1 = 0;
-
-      if ((int) p->data.nib[1] < 16)
-	n2 = (int) p->data.nib[1];
-      else
-	n2 = 0;
-
       /* Just make sure there are an even number of nibbles in it, and
 	 that the count is the same as the length.  */
       for (i = 0; p->data.nib[i] != (op_type) E; i++)

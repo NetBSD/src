@@ -38,10 +38,10 @@ Disassembly of section .text:
  +[0-9a-f]+:	90[ 	]+nop *
  +[0-9a-f]+:	90[ 	]+nop *
 # GD, gd first
- +[0-9a-f]+:	66 48 8d 3d 6c 02 20[ 	]+lea    0x20026c\(%rip\),%rdi +# 200690 <.*>
+ +[0-9a-f]+:	66 48 8d 3d 6c 02 20[ 	]+data32 lea 0x20026c\(%rip\),%rdi +# 200690 <.*>
  +[0-9a-f]+:	00 *
 #				-> R_X86_64_DTPMOD64	sG1
- +[0-9a-f]+:	66 66 48 e8 9c ff ff[ 	]+callq  [0-9a-f]+ <.*>
+ +[0-9a-f]+:	66 66 48 e8 9c ff ff[ 	]+data32 data32 callq [0-9a-f]+ <.*>
  +[0-9a-f]+:	ff[ 	]+
 #				-> R_X86_64_JUMP_SLOT	__tls_get_addr
  +[0-9a-f]+:	90[ 	]+nop *
@@ -63,10 +63,10 @@ Disassembly of section .text:
  +[0-9a-f]+:	90[ 	]+nop *
  +[0-9a-f]+:	90[ 	]+nop *
  +[0-9a-f]+:	90[ 	]+nop *
- +[0-9a-f]+:	66 48 8d 3d 1e 02 20[ 	]+lea    0x20021e\(%rip\),%rdi +# 200670 <.*>
+ +[0-9a-f]+:	66 48 8d 3d 1e 02 20[ 	]+data32 lea 0x20021e\(%rip\),%rdi +# 200670 <.*>
  +[0-9a-f]+:	00 *
 #				-> R_X86_64_DTPMOD64	sG2
- +[0-9a-f]+:	66 66 48 e8 6e ff ff[ 	]+callq  [0-9a-f]+ <.*>
+ +[0-9a-f]+:	66 66 48 e8 6e ff ff[ 	]+data32 data32 callq [0-9a-f]+ <.*>
  +[0-9a-f]+:	ff[ 	]+
 #				-> R_X86_64_JUMP_SLOT	__tls_get_addr
  +[0-9a-f]+:	90[ 	]+nop *

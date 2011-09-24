@@ -1,5 +1,5 @@
 /* Routines to help build PEPI-format DLLs (Win64 etc)
-   Copyright 2006, 2007 Free Software Foundation, Inc.
+   Copyright 2006, 2007, 2009 Free Software Foundation, Inc.
    Written by Kai Tietz, OneVision Software GmbH&CoKg.
 
    This file is part of the GNU Binutils.
@@ -29,10 +29,16 @@
 #define pe_dll_compat_implib        pep_dll_compat_implib
 #define pe_dll_extra_pe_debug       pep_dll_extra_pe_debug
 #define pe_dll_export_everything    pep_dll_export_everything
+#define pe_dll_exclude_all_symbols  pep_dll_exclude_all_symbols
 #define pe_dll_do_default_excludes  pep_dll_do_default_excludes
 #define pe_dll_kill_ats             pep_dll_kill_ats
 #define pe_dll_stdcall_aliases      pep_dll_stdcall_aliases
 #define pe_dll_warn_dup_exports     pep_dll_warn_dup_exports
+#define pe_use_nul_prefixed_import_tables \
+				    pep_use_nul_prefixed_import_tables
+#define pe_use_coff_long_section_names \
+				    pep_use_coff_long_section_names
+#define pe_leading_underscore	    pep_leading_underscore
 
 /* External globals.  */
 #define pe_data_import_dll          pep_data_import_dll
@@ -51,6 +57,8 @@
 #define pe_dll_add_excludes         pep_dll_add_excludes
 #define pe_walk_relocs_of_symbol    pep_walk_relocs_of_symbol
 #define pe_bfd_is_dll		    pep_bfd_is_dll
+#define pe_output_file_set_long_section_names \
+				    pep_output_file_set_long_section_names
 
 /* Uses x86_64 PE+.  */
 #define pe_use_x86_64

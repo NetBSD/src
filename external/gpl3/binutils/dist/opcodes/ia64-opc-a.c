@@ -1,5 +1,5 @@
 /* ia64-opc-a.c -- IA-64 `A' opcode table.
-   Copyright 1998, 1999, 2000, 2001, 2002, 2004, 2007
+   Copyright 1998, 1999, 2000, 2001, 2002, 2004, 2005, 2007, 2009
    Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 

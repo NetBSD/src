@@ -1,5 +1,5 @@
 /* m68hc11-opc.c -- Motorola 68HC11 & 68HC12 opcode list
-   Copyright 1999, 2000, 2002, 2007 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2002, 2005, 2007 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
    This file is part of the GNU opcodes library.

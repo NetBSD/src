@@ -1,3 +1,587 @@
+2010-11-12  Ian Lance Taylor  <iant@google.com>
+
+	PR other/46332
+	* cp-demangle.c (d_print_function_type): Don't print parentheses
+	if there are no modifiers to print.
+	* testsuite/demangle-expected: Tweak one test case, add another.
+
+2010-11-04  Richard Henderson  <rth@redhat.com>
+
+	* configure.ac (AC_CHECK_HEADERS): Add process.h.
+	(checkfuncs): Add dup3, spawnve, spawnvpe; sort the list.
+	(AC_CHECK_FUNCS): Add dup3, spawnve, spawnvpe.
+	* configure, config.in: Rebuild.
+	* pex-unix.c [HAVE_SPAWNVE] (pex_unix_exec_child): New function.
+	[HAVE_SPAWNVE] (save_and_install_fd, restore_fd): New functions.
+
+2010-11-02  Ian Lance Taylor  <iant@google.com>
+	    Dave Korn  <dave.korn.cygwin@gmail.com>
+	    Iain Sandoe  <iains@gcc.gnu.org>
+
+	* simple-object.c: New file.
+	* simple-object-common.h: New file.
+	* simple-object-elf.c: New file.
+	* simple-object-mach-o.c: New file.
+	* simple-object-coff.c: New file.
+	* simple-object.txh: New file.
+	* configure.ac: Add AC_TYPE_SSIZE_T.
+	* Makefile.in: Rebuild dependencies.
+	(CFILES): Add simple-object.c, simple-object-coff,
+	simple-object-elf.c, and simple-object-mach-o.c.
+	(REQUIRED_OFILES): Add corresponding object files.
+	* configure: Rebuild.
+	* config.in: Rebuild.
+	* functions.texi: Rebuild.
+
+2010-10-29  Ian Lance Taylor  <iant@google.com>
+
+	* setproctitle.c: Add space after function name in @deftypefn
+	comment.
+	* functions.texi: Rebuild.
+
+2010-10-26  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* aclocal.m4 (AC_LANG_FUNC_LINK_TRY(C)): Delete.
+	* configure: Regenerate.
+
+2010-10-07  Andi Kleen <ak@linux.intel.com>
+
+	* configure: Regenerate.
+	* configure.ac: Turn PR_SET_NAME check into link check.
+
+2010-10-06  Andi Kleen <ak@linux.intel.com>
+
+	* Makefile.in (CFILES): Add setproctitle.
+	(CONFIGURED_OFILES): Add setproctitle.
+	(setproctitle): Add rule.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+	* configure.ac: Add checks for prctl PR_SET_NAME and setproctitle.
+	* setproctitle.c: Add file.
+	* functions.texi: Regenerate.
+
+2010-09-22 Tristan Gingold  <gingold@adacore.com>
+
+	* cplus-dem.c (ada_demangle): Add comments.
+	Handle stream and controlled type operations.
+	Decoding of some uppercase letters moved before separators.
+	* testsuite/demangle-expected: Add tests.
+
+2010-09-10  James Lyon  <jameslyon0@googlemail.com>
+
+	http://sourceware.org/bugzilla/show_bug.cgi?id=11572
+	* cp-demangle.c (d_find_pack): Add case for
+	DEMANGLE_COMPONENT_LAMBDA.
+	* testsuite/demangle-expected: Add regression test.
+
+2010-09-08  Tristan Gingold  <gingold@adacore.com>
+
+	PR 44001
+	* maint-tool (missing): Fix pattern for object file.
+	(deps): Use $(objext) for object extension.
+	* Makefile.in (objext): New variable.
+	Replace all occurences of .o with .$(objext)
+	Regenerate with maint-deps
+	* configure.ac (pexecute): Set to the basename.
+	* configure: Regenerate.
+
+2010-08-20  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* pex-common.c (pex_read_err): Set stderr_pipe to -1 if a
+	corresponding stream has been opened.
+	(pex_free): Close pipe file descriptors corresponding to child's
+	stdout and stderr before waiting.
+
+2010-08-13  Nick Clifton  <nickc@redhat.com>
+
+	* argv.c (expandargv): Limit the number of times that response
+	files are opened in order to prevent infinite recursion.
+
+2010-07-21  Pascal Obry  <obry@adacore.com>
+
+	* make-temp-file.c (choose_tmpdir): Append a dot to P_tmpdir if needed.
+
+2010-07-06  Ken Werner  <ken.werner@de.ibm.com>
+
+	* floatformat.c (floatformat_ieee_half_big): New variable.
+	(floatformat_ieee_half_little): Likewise.
+
+2010-06-14  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* libiberty.texi: Remove reference to GCC 3 and 2001 (thrice).
+	Update copyright years.
+	Move to GFDL 1.3.
+
+2010-06-10  Jakub Jelinek  <jakub@redhat.com>
+
+	PR other/43838
+	* cp-demangle.c (struct d_print_info): Add flush_count field.
+	(d_print_init): Initialize it to 0.
+	(d_print_flush): Increment it.
+	(d_print_comp): If needed flush before appending ", ".  Only
+	decrement dpi->len if no flushes happened during the recursive
+	call.
+	* testsuite/demangle-expected: Add a test for this.
+
+2010-06-08  Laurynas Biveinis  <laurynas.biveinis@gmail.com>
+
+	* splay-tree.c: Update copyright years.
+	(splay_tree_new_typed_alloc): New.
+	(splay_tree_new_with_allocator): Use it.
+
+	* hashtab.c: Update copyright years.
+	(htab_create_typed_alloc): New.
+	(htab_create_alloc): Use it.
+
+	* functions.texi: Regenerate.
+
+2010-06-03  Joern Rennecke <joern.rennecke@embecosm.com>
+	    Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	PR bootstrap/42798
+	* configure.ac: Check for declaration of 'basename(char *)'.
+	* configure: Regenerate.
+
+2010-05-26  Kai Tietz  <kai.tietz@onevision.com>
+
+	* testsuite/demangle-expected: Add tests for __int128
+	and unsigned __int128 types.
+
+2010-05-06  Magnus Fromreide  <magfr@lysator.liu.se>
+	    Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (cplus_demangle_builtin_types): Add nullptr.
+	(cplus_demangle_type): Handle nullptr.
+	* testsuite/demangle-expected: Test it.
+
+2010-04-23  Pedro Alves  <pedro@codesourcery.com>
+
+	* lbasename.c (lbasename): Split into ...
+	(unix_lbasename, dos_basename): ... these.
+	(lbasename): ... and reimplement on top of them.
+	* Makefile.in (lbasename.o): Add dependency on
+	$(INCDIR)/filenames.h.
+
+2010-04-07  Jakub Jelinek  <jakub@redhat.com>
+
+	* regex.c (byte_re_match_2_internal): Avoid set but not used
+	warning.
+
+2010-03-22  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (d_print_mod): Use () rather than [] for vectors.
+
+2010-03-01  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* Makefile.in (all): Do not use exec.
+
+2010-02-04  Tom Tromey  <tromey@redhat.com>
+
+	* testsuite/demangle-expected: Add missing --format=gnu-v3.
+
+2010-02-03  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (d_expression): Handle dependent operator name.
+
+	PR c++/12909
+	* cp-demangle.c (d_number_component, d_vector_type): New.
+	(cplus_demangle_type, d_print_comp, d_print_mod): Handle vectors.
+
+2010-01-25  Ian Lance Taylor  <iant@google.com>
+
+	* cp-demangle.c (cplus_demangle_type): Check for invalid type
+	after "DF".
+	* testsuite/demangle-expected: Add test.
+
+2010-01-20  Jason Merrill  <jason@redhat.com>
+
+	PR c++/42338
+	* cp-demangle.c (d_print_comp): Fix array index printing.
+
+2010-01-11  Tristan Gingold  <gingold@adacore.com>
+
+	* cplus-dem.c (ada_demangle): Remove prototype.
+	(grow_vect): Removed.
+	(ada_demangle): Rewritten.
+	(cplus_demangle): Fix indentation.
+	* testsuite/demangle-expected: Add tests for Ada.
+
+2010-01-09  Ian Lance Taylor  <iant@google.com>
+
+	PR other/42230
+	* cp-demangle.c (d_demangle): Return dgs.alc on success.
+
+2010-01-04  Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
+
+	PR target/42316
+	* configure.ac (PICFLAG): Use -fPIC on SH hosts.
+	* configure: Regenerate.
+
+2009-12-07  Doug Evans  <dje@google.com>
+
+	* pex-unix.c (pex_unix_exec_child): Save/restore environ.
+
+2009-11-26  Ben Elliston  <bje@au.ibm.com>
+
+	* configure.ac (AC_CHECK_FUNCS): Sort into alphabetic order.
+	* configure: Regenerate.
+
+2009-11-25  Ben Elliston  <bje@au.ibm.com>
+
+	* functions.texi: Rebuild.
+
+2009-11-25  Manuel Lopez-Ibanez  <manu@gcc.gnu.org>
+	    Ben Elliston  <bje@au.ibm.com>
+
+	* README: Mention changes to Makefile.in and functions.texi.
+	* gather-docs: Mention 'make stamp-functions' in the header.
+
+2009-11-23  Ben Elliston  <bje@au.ibm.com>
+	    Ian Lance Taylor  <iant@google.com>
+
+	* pex-unix.c (pex_child_error): Improve warning avoidance by
+	checking the results of write(3) and exiting with -2 if any write
+	returns a negative value.
+
+2009-11-22  Steve Ward  <planet36@gmail.com>
+
+	* dyn-string.c (dyn_string_append_char): Fix typo in comment.
+
+2009-11-20  Ben Elliston  <bje@au.ibm.com>
+
+	* pex-unix.c (pex_child_error): Define writeerr macro to avoid
+	unused result warnings from write(3) calls.  Undefine writeerr
+	after all uses.
+
+2009-10-08  Daniel Gutson  <dgutson@codesourcery.com>
+	Daniel Jacobowitz  <dan@codesourcery.com>
+	Pedro Alves  <pedro@codesourcery.com>
+
+	libiberty/
+	* argv.c (consume_whitespace): New function.
+	(only_whitespace): New function.
+	(buildargv): Always use ISSPACE by calling consume_whitespace.
+	(expandargv): Skip empty files.  Do not stop at the first empty
+	argument (calling only_whitespace)..
+	* testsuite/test-expandargv.c: (test_data): Test empty lines
+	and empty arguments.
+	(run_tests): Fix false positives due to shorter arguments.
+
+2009-09-30  Martin Thuresson  <martint@google.com>
+
+	* regex.c (byte_re_match_2_internal): Split declaration and
+	assignment to avoid -Wc++-compat warning due to goto.
+
+2009-09-29  Jason Merrill  <jason@redhat.com>
+
+	* Makefile.in: Enable demangle target.
+	* cp-demangle.c (d_lambda, d_unnamed_type, d_make_default_arg): New.
+	(d_name, d_prefix, d_unqualified_name, d_local_name): Handle lambdas.
+	(d_parmlist): Factor out from d_bare_function_type.
+	(d_compact_number): Factor out from d_template_param and d_expression.
+	(d_append_num): Factor out from d_print_comp.
+	(d_print_comp, d_print_mod_list): Handle lambdas.
+	* testsuite/demangle-expected: Add lambda tests.
+
+2009-09-23  Matthew Gingell  <gingell@adacore.com>
+
+	* cplus-dem.c (ada_demangle): Ensure demangled is freed.
+
+2009-09-22  Ozkan Sezer  <sezeroz@gmail.com>
+
+	* choose-temp.c: Include unistd.h for mingw targets.
+
+2009-09-16  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* hashtab.c [HAVE_INTTYPES_H]: Include <inttypes.h>.
+
+2009-09-15  Tristan Gingold  <gingold@adacore.com>
+
+	* config.h-vms (intptr_t): Define to compile hashtab.c
+
+2009-09-04  Ozkan Sezer  <sezeroz@gmail.com>
+
+	PR target/39065
+	* configure.ac: Replace AC_CHECK_TYPE() for intptr_t and uintptr_t
+	with AC_TYPE_INTPTR_T and AC_TYPE_UINTPTR_T.
+	* config.in: Regenerated.
+	* configure: Regenerated.
+
+2009-09-03  Ozkan Sezer  <sezeroz@gmail.com>
+
+	PR target/39065
+	* configure.ac: Also check for intptr_t.
+	* config.h.in: Regenerated.
+	* configure: Regenerated.
+	* hashtab.c (hash_pointer): Cast the pointer argument to intptr_t
+	instead of of long.
+
+2009-09-02  Tristan Gingold  <gingold@adacore.com>
+
+	* vmsbuild.com: Removed as unused and superceeded by makefile.vms.
+	* makefile.vms: Ported to Itanium VMS.  Remove useless targets and
+	dependencies.  Remove unused FORMAT variable.
+	* configure.com: New file to create build.com DCL script for
+	Itanium VMS or Alpha VMS.
+
+2009-08-24  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* configure.ac (AC_PREREQ): Bump to 2.64.
+
+2009-08-23  H.J. Lu  <hongjiu.lu@intel.com>
+
+	 PR ld/10536
+	 * Makefile.in (install-html-recursive): Removed.
+
+2009-08-22  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* config.in: Regenerate.
+	* configure: Regenerate.
+
+2009-07-30  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* Makefile.in (AUTOCONF, configure_deps): New variables.
+	($(srcdir)/configure): New rule, active only in maintainer mode.
+
+2009-07-29  Douglas B Rupp  <rupp@gnat.com>
+
+	* make-temp-file.c (choose_tmpdir): Try standard temp logical on VMS.
+
+2009-07-27  Douglas B Rupp  <rupp@gnat.com>
+
+	* pex-unix.c (vfork): Remove VMS specific definition (get from header
+	file instead).
+	(to_ptr32): New function.
+	(pex_unix_exec_child): Use it.
+
+2009-07-24  Ian Lance Taylor  <iant@google.com>
+
+	PR bootstrap/40854
+	* crc32.c (xcrc32): Rename from crc32.
+
+2009-07-24  Ian Lance Taylor  <iant@google.com>
+
+	* crc32.c: New file.
+	* Makefile.in: Rebuild dependencies.
+	(CFILES): Add crc32.c.
+	(REQUIRED_OFILES): Add ./crc32.o.
+	* functions.texi: Rebuild.
+
+2009-07-17  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* cp-demangle.c (d_print_comp <DEMANGLE_COMPONENT_GLOBAL_CONSTRUCTORS>)
+	(d_print_comp <DEMANGLE_COMPONENT_GLOBAL_DESTRUCTORS): New.
+	(d_make_comp <DEMANGLE_COMPONENT_GLOBAL_CONSTRUCTORS>)
+	(d_make_comp <DEMANGLE_COMPONENT_GLOBAL_DESTRUCTORS): New.
+	(d_demangle_callback): The variable type is now declared as enum.
+	Replace parser of _GLOBAL_ symbols by a d_make_comp call.
+
+2009-06-21  Jakub Jelinek  <jakub@redhat.com>
+
+	* hashtab.c (htab_traverse): Don't call htab_expand for
+	nearly empty hashtabs with sizes 7, 13 or 31.
+
+2009-06-16  Nick Clifton  <nickc@redhat.com>
+
+	PR 10197
+	* testsuite/test-demangle.c: Rename getline to get_line to avoid
+	conflicts with system function of the same name.
+
+2009-05-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* snprintf.c: Doc fix.
+
+	* vsnprintf.c: Doc fix.
+
+2009-05-29  Kai Tietz  <kai.tietz@onevision.com>
+
+        * pex-win32.c (pex_win32_fdopenr): Set INHERIT to false.
+
+2009-05-29  Michael Matz  <matz@suse.de>
+
+	* fibheap.c (fibheap_replace_key_data): Make sure we don't early
+	out when forcing the minimum.
+	(fibheap_delete_node): Assert that we managed to force the minimum.
+
+2009-05-25  Tristan Gingold  <gingold@adacore.com>
+
+	* config.h-vms: Rewritten.  Define configure macros.
+	Use DEC-C builtin alloca.
+
+	* makefile.vms (OBJS): Update list.
+	(OPT): New variable.
+	(CFLAGS): Update compilation flags.
+	(libiberty.olb): Do not depend on alloca-conf.h anymore.
+
+2009-05-19  Ian Lance Taylor  <iant@google.com>
+	    Ben Elliston  <bje@au.ibm.com>
+
+	* cp-demangle.c (cplus_demangle_fill_ctor): Fix logic bug.
+	(cplus_demangle_fill_dtor): Likewise.
+
+2009-05-17  Julian Brown  <julian@codesourcery.com>
+
+	* pex-win32.c (pex_win32_exec_child): Fix logic to avoid closing
+	standard handles (stdin, stdout, stderr) in parent.
+
+2009-04-29  Julian Brown  <julian@codesourcery.com>
+
+	* pex-win32.c (pex_win32_pipe): Add _O_NOINHERIT.    
+	(pex_win32_exec_child): Ensure each process has only one handle open
+	on pipe endpoints. Close standard input after creating child for
+	symmetry with standard output/standard error.
+
+2009-04-25  Eli Zaretskii  <eliz@gnu.org>
+
+	* Makefile.in (needed-list): Target removed (not used in GCC
+	3.0 and later).  All references deleted.
+	(mostlyclean): Remove references to needed.awk and needed2.awk.
+
+2009-04-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* configure.ac  (setobjs, msdosdjgpp): Move a-priori setting of
+	existing and required library functions to with_target_subdir
+	section, so that the native build does detect them at configure
+	time.
+	* configure: Regenerated.
+	
+2009-04-13  Ozkan Sezer  <sezeroz@gmail.com>
+
+        PR target/39397
+        * pex-common.h (struct pex_obj): Store pid values as pid_t,
+        not as long (members *children and (*wait))
+        * pex-common.c (pex_run_in_environment): Likewise.
+        * pex-win32.c (pex_win32_wait): Return pid_t and properly check
+        returned pid value.
+        * pex-djgpp.c (pex_djgpp_wait): Return pid_t.
+        * pex-msdos.c (pex_msdos_wait): Likewise.
+
+2009-04-07  Arnaud Patard <apatard@mandriva.com>
+
+       * libiberty/configure.ac: Fix Linux/MIPS matching rule.
+       * libiberty/configure: Regenerate.
+
+2009-03-27  Ian Lance Taylor  <iant@google.com>
+
+	* memmem.c: New file, from gnulib.
+	* configure.ac: Add memmem to list of functions provided if they
+	are not available on the host.
+	* Makefile.in: Rebuild dependencies.
+	(CFILES): Add memmem.c.
+	(CONFIGURED_OFILES): Add memmem.o.
+	* configure, config.in, functions.texi: Rebuild.
+
+2009-03-23  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (d_expression): Handle pack expansion.
+	(d_find_pack): Handle DEMANGLE_COMPONENT_FUNCTION_PARAM.
+	(d_print_subexpr): Don't wrap function parms in ().
+	(d_print_comp) [DEMANGLE_COMPONENT_PACK_EXPANSION]: Handle
+	not finding a pack.
+
+2009-03-17  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (d_make_function_param): new fn.
+	(cplus_demangle_mangled_name): Work around abi v2 bug.
+	(d_expr_primary): Likewise.
+	(cplus_demangle_operators): Add alignof ops.
+	(d_expression): Handle function parameters and conversions
+	with other than 1 operand.
+	(d_print_comp): Handle function parameters.  Fix bug with
+	function used in type of function.
+	* testsuite/demangle-expected: Update tests.
+
+2009-02-21  Mark Mitchell  <mark@codesourcery.com>
+
+	* make-temp-file.c (<windows.h>): Include on Windows.
+	(choose_tmpdir): On Windows, use GetTempPath.
+
+2009-01-18  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	* configure.ac (funcs, vars, checkfuncs):  Don't munge on Cygwin,
+	as it no longer shares libiberty object files.
+	* configure:  Regenerated.
+
+2009-01-07  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (d_expression): Remove mangling for zero-op casts.
+
+2009-01-06  Ben Elliston  <bje@au.ibm.com>
+
+	* cp-demangle.c (cplus_demangle_type): Return NULL if the
+	character following a 'D' cannot be recognised.
+
+2008-12-18  Jason Merrill  <jason@redhat.com>
+
+	PR c++/38561
+	* cp-demangle.c (d_expression, d_print_comp): Revert
+	cast changes.
+
+2008-12-17  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (d_expression): Handle rvalue stubs too.
+	[DEMANGLE_COMPONENT_CAST]: Update mangling.
+	(d_print_comp): Avoid extra ", " with empty template argument packs.
+	Remove handling for obsolete T() mangling.
+
+2008-12-10  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (cplus_demangle_type): Support fixed-point types.
+	(d_print_comp, d_dump): Likewise.
+
+2008-10-22  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* Makefile.in (CPPFLAGS): Define.
+	(FLAGS_TO_PASS, COMPILE.c): Add CPPFLAGS.
+
+2008-10-15  Paolo Bonzini  <bonzini@gnu.org>
+
+	PR bootstrap/37137
+	* Makefile.in (LIBCFLAGS): Remove.
+	(FLAGS_TO_PASS): Don't mention it.
+	(COMPILE.c, MULTIOSDIR): Replace it with CFLAGS.
+
+2008-10-08  David Edelsohn  <edelsohn@gnu.org>
+
+	* xstrdup.c: Include <sys/types.h> after "config.h"
+ 
+2008-10-07  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* configure.ac: Call AC_SYS_LARGEFILE.
+	* config.in: Regenerated.
+	* configure: Likewise.
+
+2008-10-06  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (struct d_print_info): Add pack_index.
+	(d_dump): Add DEMANGLE_COMPONENT_PACK_EXPANSION.
+	(d_make_comp): Likewise.  DEMANGLE_COMPONENT_ARGLIST and
+	DEMANGLE_COMPONENT_TEMPLATE_ARGLIST can have two null args.
+	(cplus_demangle_builtin_types): Add char16/32_t.
+	(cplus_demangle_type): Recognize them.
+	(d_template_args): Handle empty argument packs.
+	(d_template_arg): Handle argument packs.
+	(d_expression): Handle dependent name.
+	(d_index_template_argument): New fn.
+	(d_lookup_template_argument): New fn.
+	(d_find_pack, d_pack_length): New fn.
+	(d_print_subexpr): Split out...
+	(d_print_comp): ...from here.  Use d_*_template_argument.
+	Handle empty arg lists.  Support pack expansions.
+	* cp-demangle.h (D_BUILTIN_TYPE_COUNT): Increase to 32.
+
+2008-09-09  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (d_dump): Handle DEMANGLE_COMPONENT_DECLTYPE.
+	(d_make_comp): Likewise.
+	(cplus_demangle_type): Handle decltype and DFP types.
+	(cplus_demangle_operators): Call operator takes 2 args.
+	(cplus_demangle_builtin_types): Add DFP types.
+	(d_exprlist): New fn.
+	(d_expression): Handle parm placeholders, T() and calls.
+	(d_print_comp): Handle decltype, T() and calls.
+	* testsuite/demangle-expected: Test the above.
+
 2008-08-07  Aaron W. LaFramboise  <aaronavay62@aaronwl.com>
 
 	* pex-win32.c (argv_to_argc): New function.
@@ -4901,7 +5485,7 @@ Thu Oct  8 23:42:08 1998  Jeffrey A Law  (law@cygnus.com)
 
 	* Merge egcs & devo libiberty.
 
-1998-09-08  Martin von Löwis  <loewis@informatik.hu-berlin.de>
+1998-09-08  Martin von LÃ¶wis  <loewis@informatik.hu-berlin.de>
 
 	* cplus-dem.c (demangle_arm_pt): Demangle anonymous namespaces.
 

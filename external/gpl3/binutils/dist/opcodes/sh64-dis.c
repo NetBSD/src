@@ -195,8 +195,6 @@ print_insn_shmedia (bfd_vma memaddr, struct disassemble_info *info)
      can get as .byte:s.  */
   if (status != 0)
     {
-      int i;
-
       for (i = 0; i < 3; i++)
 	{
 	  status = info->read_memory_func (memaddr + i, insn, 1, info);

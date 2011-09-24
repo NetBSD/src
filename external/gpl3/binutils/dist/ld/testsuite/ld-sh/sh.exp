@@ -1,5 +1,5 @@
 # Expect script for ld-sh tests
-#   Copyright 1995, 1996, 1997, 2001, 2002, 2003, 2007
+#   Copyright 1995, 1996, 1997, 2001, 2002, 2003, 2005, 2006, 2007, 2010
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -88,7 +88,7 @@ if ![ld_simple_link $ld tmpdir/sh1.s1 $srec_relax_arg ] {
 	verbose "$exec_output"
 	unresolved $testsrec
     } else {
-	send_log "$objcopy -O srec tmpdir/sh1 tmpdir/sh1.s1"
+	send_log "$objcopy -O srec tmpdir/sh1 tmpdir/sh1.s1\n"
 	verbose "$objcopy -O srec tmpdir/sh1 tmpdir/sh1.s1"
 	catch "exec $objcopy -O srec tmpdir/sh1 tmpdir/sh1.s1" exec_output
 	if ![string match "" $exec_output] {
@@ -122,7 +122,7 @@ if { [which $CC] == 0 } {
     return
 }
 
-if [istarget sh*-linux-*] {
+if [istarget sh*-*linux*] {
     exec sed -e s/_main/main/ -e s/_trap/trap/ -e s/_stack/stack/ \
 	    < $srcdir/$subdir/start.s >tmpdir/start.s
 } else {

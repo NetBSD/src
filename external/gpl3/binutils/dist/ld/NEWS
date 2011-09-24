@@ -1,5 +1,92 @@
 -*- text -*-
 
+Changes in 2.21:
+
+
+* Linker script expression evaluation is somewhat more sane.  This may
+  break scripts that depend on quirks of the old expression evaluation.
+
+* Turn off underscoring for x86_64 PE+-COFF targets.  For old behavior the
+  option --enable-leading-mingw64-underscores can be used on configure of
+  bfd.
+
+* Add support for the TMS320C6000 (TI C6X) processor family.
+
+* --add-needed renamed to --copy-dt-needed-entries in order to avoid confusion
+  with --as-needed option.
+
+* Extend .def file syntax by '== <ID>' for imports and exports. This allows
+  to alias the import/export table name written in PE image.
+
+* Add --exlcude-all-symbols option to PE based linkers.  This prevents all
+  symbols from automatically being exported.
+
+* Add support for the Renesas RX processor.
+
+* Add support for alpha-vms target.
+
+Changes in 2.20:
+
+* GNU/Linux targets now support the STB_GNU_UNIQUE symbol binding.  This is a
+  GNU extension to the standard set of ELF symbol bindings.  The binding will
+  be passed on to the dynamic linker which will make sure that in the entire
+  process there is just one symbol with the given name and type in use.
+
+* PE targets now support a GNU extension to allow the alignment of common
+  common symbols to be specified.  This support uses custom options in
+  the .drectve section, which will be disregarded by the native tools.
+
+* PE targets now add primitive support for ELF version scripts; symbols
+  are not versioned, but the local and global symbol visibility directives
+  are respected when filtering symbols in auto-export mode.
+
+* New option --no-export-dynamic to undo the effect of the -E and
+  --export-dynamic options.
+
+* ELF: --warn-alternate-em option to warn if an object has alternate
+  ELF machine code.
+
+* New script function REGION_ALIAS to add alias names to memory regions.
+
+* PE targets no longer make use of the long section names PE extension to
+  the COFF format when generating executable images, by default.  The old
+  (slightly non-conformant) behaviour can still be invoked by using the
+  new '--enable-long-section-names' command-line option.  It is also enabled
+  automatically in the presence of un-stripped debug information, as GDB
+  needs to be able to find the debug info sections by their full names.
+
+* For GNU/Linux systems the linker will now avoid processing any relocations
+  made against symbols of the STT_GNU_IFUNC type and instead emit them into
+  the resulting binary for processing by the loader.
+
+* --as-needed now links in a dynamic library if it satisfies undefined
+  symbols in regular objects, or in other dynamic libraries.  In the
+  latter case the library is not linked if it is found in a DT_NEEDED
+  entry of one of the libraries already linked.
+
+* Add a new command line option, -Ttext-segment ADDR, for ELF targets
+  to set the address of the first byte of the text segment.
+
+* Add support for Sunplus score architecture.
+
+* Add new option --use-nul-prefixed-import-tables to ld for PE targets to
+  allow fallback to old import table generation with null element prefix.
+
+* Windows PE systems now support a new --exclude-modules-for-implib option,
+  allowing users to partition object files and archive members between a DLL
+  and its associated import library as they are generated during linking.
+
+* Add support for Lattice Mico32 (lm32) architecture.
+
+* Add CR16 ELF --embedded-relocs (used to embedded relocations into binaries 
+  for Embedded-PIC code) option.
+
+* Add to the PE/PE+ targets the support of two different kinds of
+  pseudo-relocations.  They can be selected by the switches
+  --enable-runtime-pseudo-reloc-v1 and --enable-runtime-pseudo-reloc-v2.
+  For the switch --enable-runtime-pseudo-reloc it uses for 32-bit
+  runtime pseudo relocation version one, for 64-bit the version two.
+
 Changes in 2.19:
 
 * Linker scripts support a new INSERT command that makes it easier to

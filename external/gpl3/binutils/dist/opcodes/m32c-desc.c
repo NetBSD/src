@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2007 Free Software Foundation, Inc.
+Copyright 1996-2010 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -697,11 +697,7 @@ CGEN_KEYWORD m32c_cgen_opval_h_shimm =
 
 /* The hardware table.  */
 
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define A(a) (1 << CGEN_HW_##a)
-#else
-#define A(a) (1 << CGEN_HW_/**/a)
-#endif
 
 const CGEN_HW_ENTRY m32c_cgen_hw_table[] =
 {
@@ -788,16 +784,12 @@ const CGEN_HW_ENTRY m32c_cgen_hw_table[] =
 
 /* The instruction field table.  */
 
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define A(a) (1 << CGEN_IFLD_##a)
-#else
-#define A(a) (1 << CGEN_IFLD_/**/a)
-#endif
 
 const CGEN_IFLD m32c_cgen_ifld_table[] =
 {
-  { M32C_F_NIL, "f-nil", 0, 0, 0, 0, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
-  { M32C_F_ANYOF, "f-anyof", 0, 0, 0, 0, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
+  { M32C_F_NIL, "f-nil", 0, 0, 0, 0, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
+  { M32C_F_ANYOF, "f-anyof", 0, 0, 0, 0, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
   { M32C_F_0_1, "f-0-1", 0, 32, 0, 1, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
   { M32C_F_0_2, "f-0-2", 0, 32, 0, 2, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
   { M32C_F_0_3, "f-0-3", 0, 32, 0, 3, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
@@ -1164,23 +1156,15 @@ const CGEN_MAYBE_MULTI_IFLD M32C_F_COND32J_MULTI_IFIELD [] =
 
 /* The operand table.  */
 
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define A(a) (1 << CGEN_OPERAND_##a)
-#else
-#define A(a) (1 << CGEN_OPERAND_/**/a)
-#endif
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define OPERAND(op) M32C_OPERAND_##op
-#else
-#define OPERAND(op) M32C_OPERAND_/**/op
-#endif
 
 const CGEN_OPERAND m32c_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", M32C_OPERAND_PC, HW_H_PC, 0, 0,
     { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_NIL] } }, 
-    { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
+    { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src16RnQI: general register QI view */
   { "Src16RnQI", M32C_OPERAND_SRC16RNQI, HW_H_GR_QI, 10, 2,
     { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC16_RN] } }, 
@@ -2718,11 +2702,7 @@ const CGEN_OPERAND m32c_cgen_operand_table[] =
 /* The instruction table.  */
 
 #define OP(field) CGEN_SYNTAX_MAKE_FIELD (OPERAND (field))
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define A(a) (1 << CGEN_INSN_##a)
-#else
-#define A(a) (1 << CGEN_INSN_/**/a)
-#endif
 
 static const CGEN_IBASE m32c_cgen_insn_table[MAX_INSNS] =
 {
@@ -63077,11 +63057,7 @@ m32c_cgen_rebuild_tables (CGEN_CPU_TABLE *cd)
    CGEN_CPU_OPEN_END:     terminates arguments
 
    ??? Simultaneous multiple isas might not make sense, but it's not (yet)
-   precluded.
-
-   ??? We only support ISO C stdargs here, not K&R.
-   Laziness, plus experiment to see if anything requires K&R - eventually
-   K&R will no longer be supported - e.g. GDB is currently trying this.  */
+   precluded.  */
 
 CGEN_CPU_DESC
 m32c_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)

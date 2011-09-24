@@ -4,8 +4,8 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-dis.in isn't
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007,
+   2008, 2010  Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -60,17 +60,62 @@ static int read_insn
 
 /* -- dis.c */
 
-#define CGEN_PRINT_NORMAL(cd, info, value, attrs, pc, length)	\
-  do								\
-    {								\
-      if (CGEN_BOOL_ATTR ((attrs), CGEN_OPERAND_DOT_PREFIX))	\
-        info->fprintf_func (info->stream, ".");			\
-      if (CGEN_BOOL_ATTR ((attrs), CGEN_OPERAND_POF_PREFIX))	\
-        info->fprintf_func (info->stream, "#pof:");		\
-      if (CGEN_BOOL_ATTR ((attrs), CGEN_OPERAND_PAG_PREFIX))	\
-        info->fprintf_func (info->stream, "#pag:");		\
-    }								\
-  while (0)
+/* Print an operand with a "." prefix.
+   NOTE: This prints the operand in hex.
+   ??? This exists to maintain disassembler compatibility with previous
+   versions.  Ideally we'd print the "." in print_dot.  */
+
+static void
+print_with_dot_prefix (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+		       void * dis_info,
+		       long value,
+		       unsigned attrs ATTRIBUTE_UNUSED,
+		       bfd_vma pc ATTRIBUTE_UNUSED,
+		       int length ATTRIBUTE_UNUSED)
+{
+  disassemble_info *info = (disassemble_info *) dis_info;
+
+  info->fprintf_func (info->stream, ".");
+  info->fprintf_func (info->stream, "0x%lx", value);
+}
+
+/* Print an operand with a "#pof:" prefix.
+   NOTE: This prints the operand as an address.
+   ??? This exists to maintain disassembler compatibility with previous
+   versions.  Ideally we'd print "#pof:" in print_pof.  */
+
+static void
+print_with_pof_prefix (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+		       void * dis_info,
+		       bfd_vma value,
+		       unsigned attrs ATTRIBUTE_UNUSED,
+		       bfd_vma pc ATTRIBUTE_UNUSED,
+		       int length ATTRIBUTE_UNUSED)
+{
+  disassemble_info *info = (disassemble_info *) dis_info;
+
+  info->fprintf_func (info->stream, "#pof:");
+  info->fprintf_func (info->stream, "0x%lx", (long) value);
+}
+
+/* Print an operand with a "#pag:" prefix.
+   NOTE: This prints the operand in hex.
+   ??? This exists to maintain disassembler compatibility with previous
+   versions.  Ideally we'd print "#pag:" in print_pag.  */
+
+static void
+print_with_pag_prefix (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+		       void * dis_info,
+		       long value,
+		       unsigned attrs ATTRIBUTE_UNUSED,
+		       bfd_vma pc ATTRIBUTE_UNUSED,
+		       int length ATTRIBUTE_UNUSED)
+{
+  disassemble_info *info = (disassemble_info *) dis_info;
+
+  info->fprintf_func (info->stream, "#pag:");
+  info->fprintf_func (info->stream, "0x%lx", value);
+}
 
 /* Print a 'pof:' prefix to an operand.  */
 
@@ -271,13 +316,13 @@ xc16x_cgen_print_operand (CGEN_CPU_DESC cd,
       print_pof (cd, info, 0, 0|(1<<CGEN_OPERAND_SIGNED), pc, length);
       break;
     case XC16X_OPERAND_QBIT :
-      print_normal (cd, info, fields->f_qbit, 0|(1<<CGEN_OPERAND_DOT_PREFIX), pc, length);
+      print_with_dot_prefix (cd, info, fields->f_qbit, 0|(1<<CGEN_OPERAND_DOT_PREFIX), pc, length);
       break;
     case XC16X_OPERAND_QHIBIT :
-      print_normal (cd, info, fields->f_qhibit, 0|(1<<CGEN_OPERAND_DOT_PREFIX), pc, length);
+      print_with_dot_prefix (cd, info, fields->f_qhibit, 0|(1<<CGEN_OPERAND_DOT_PREFIX), pc, length);
       break;
     case XC16X_OPERAND_QLOBIT :
-      print_normal (cd, info, fields->f_qlobit, 0|(1<<CGEN_OPERAND_DOT_PREFIX), pc, length);
+      print_with_dot_prefix (cd, info, fields->f_qlobit, 0|(1<<CGEN_OPERAND_DOT_PREFIX), pc, length);
       break;
     case XC16X_OPERAND_REG8 :
       print_keyword (cd, info, & xc16x_cgen_opval_r8_names, fields->f_reg8, 0);
@@ -355,10 +400,10 @@ xc16x_cgen_print_operand (CGEN_CPU_DESC cd,
       print_normal (cd, info, fields->f_uimm8, 0|(1<<CGEN_OPERAND_HASH_PREFIX), pc, length);
       break;
     case XC16X_OPERAND_UPAG16 :
-      print_normal (cd, info, fields->f_uimm16, 0|(1<<CGEN_OPERAND_PAG_PREFIX), pc, length);
+      print_with_pag_prefix (cd, info, fields->f_uimm16, 0|(1<<CGEN_OPERAND_PAG_PREFIX), pc, length);
       break;
     case XC16X_OPERAND_UPOF16 :
-      print_address (cd, info, fields->f_memory, 0|(1<<CGEN_OPERAND_POF_PREFIX), pc, length);
+      print_with_pof_prefix (cd, info, fields->f_memory, 0|(1<<CGEN_OPERAND_POF_PREFIX), pc, length);
       break;
     case XC16X_OPERAND_USEG16 :
       print_normal (cd, info, fields->f_offset16, 0|(1<<CGEN_OPERAND_SEG_PREFIX)|(1<<CGEN_OPERAND_RELOC)|(1<<CGEN_OPERAND_ABS_ADDR), pc, length);
@@ -406,10 +451,6 @@ print_normal (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 {
   disassemble_info *info = (disassemble_info *) dis_info;
 
-#ifdef CGEN_PRINT_NORMAL
-  CGEN_PRINT_NORMAL (cd, info, value, attrs, pc, length);
-#endif
-
   /* Print the operand as directed by the attributes.  */
   if (CGEN_BOOL_ATTR (attrs, CGEN_OPERAND_SEM_ONLY))
     ; /* nothing to do */
@@ -430,10 +471,6 @@ print_address (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 	       int length ATTRIBUTE_UNUSED)
 {
   disassemble_info *info = (disassemble_info *) dis_info;
-
-#ifdef CGEN_PRINT_ADDRESS
-  CGEN_PRINT_ADDRESS (cd, info, value, attrs, pc, length);
-#endif
 
   /* Print the operand as directed by the attributes.  */
   if (CGEN_BOOL_ATTR (attrs, CGEN_OPERAND_SEM_ONLY))

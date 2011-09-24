@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2007 Free Software Foundation, Inc.
+Copyright 1996-2010 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -28,8 +28,8 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 /* -- opc.h */
 
 /* Needed for RTL's 'ext' and 'trunc' operators.  */
-#include "cgen-types.h"
-#include "cgen-ops.h"
+#include "cgen/basic-modes.h"
+#include "cgen/basic-ops.h"
 
 /* We can't use the default hash size because many bits are used by
    operands.  */

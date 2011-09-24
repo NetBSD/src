@@ -1,5 +1,6 @@
 /* Disassemble Motorola M*Core instructions.
-   Copyright 1993, 1999, 2000, 2001, 2002, 2007 Free Software Foundation, Inc.
+   Copyright 1993, 1999, 2000, 2001, 2002, 2005, 2007, 2009
+   Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -93,7 +94,7 @@ print_insn_mcore (memaddr, info)
      struct disassemble_info *info;
 {
   unsigned char ibytes[4];
-  fprintf_ftype fprintf = info->fprintf_func;
+  fprintf_ftype print_func = info->fprintf_func;
   void *stream = info->stream;
   unsigned short inst;
   const mcore_opcode_info *op;
@@ -122,12 +123,12 @@ print_insn_mcore (memaddr, info)
       break;
 
   if (op->name == 0)
-    (*fprintf) (stream, ".short 0x%04x", inst);
+    (*print_func) (stream, ".short 0x%04x", inst);
   else
     {
       const char *name = grname[inst & 0x0F];
 
-      (*fprintf) (stream, "%s", op->name);
+      (*print_func) (stream, "%s", op->name);
 
       switch (op->opclass)
 	{
@@ -135,42 +136,42 @@ print_insn_mcore (memaddr, info)
 	  break;
 
 	case OT:
-	  (*fprintf) (stream, "\t%d", inst & 0x3);
+	  (*print_func) (stream, "\t%d", inst & 0x3);
 	  break;
 
 	case O1:
 	case JMP:
 	case JSR:
-	  (*fprintf) (stream, "\t%s", name);
+	  (*print_func) (stream, "\t%s", name);
 	  break;
 
 	case OC:
-	  (*fprintf) (stream, "\t%s, %s", name, crname[(inst >> 4) & 0x1F]);
+	  (*print_func) (stream, "\t%s, %s", name, crname[(inst >> 4) & 0x1F]);
 	  break;
 
 	case O1R1:
-	  (*fprintf) (stream, "\t%s, r1", name);
+	  (*print_func) (stream, "\t%s, r1", name);
 	  break;
 
 	case MULSH:
 	case O2:
-	  (*fprintf) (stream, "\t%s, %s", name, grname[(inst >> 4) & 0xF]);
+	  (*print_func) (stream, "\t%s, %s", name, grname[(inst >> 4) & 0xF]);
 	  break;
 
 	case X1:
-	  (*fprintf) (stream, "\tr1, %s", name);
+	  (*print_func) (stream, "\tr1, %s", name);
 	  break;
 
 	case OI:
-	  (*fprintf) (stream, "\t%s, %d", name, ((inst >> 4) & 0x1F) + 1);
+	  (*print_func) (stream, "\t%s, %d", name, ((inst >> 4) & 0x1F) + 1);
 	  break;
 
 	case RM:
-	  (*fprintf) (stream, "\t%s-r15, (r0)", name);
+	  (*print_func) (stream, "\t%s-r15, (r0)", name);
 	  break;
 
 	case RQ:
-	  (*fprintf) (stream, "\tr4-r7, (%s)", name);
+	  (*print_func) (stream, "\tr4-r7, (%s)", name);
 	  break;
 
 	case OB:
@@ -182,16 +183,16 @@ print_insn_mcore (memaddr, info)
 	case OMa:
 	case OMb:
 	case OMc:
-	  (*fprintf) (stream, "\t%s, %d", name, (inst >> 4) & 0x1F);
+	  (*print_func) (stream, "\t%s, %d", name, (inst >> 4) & 0x1F);
 	  break;
 
 	case I7:
-	  (*fprintf) (stream, "\t%s, %d", name, (inst >> 4) & 0x7F);
+	  (*print_func) (stream, "\t%s, %d", name, (inst >> 4) & 0x7F);
 	  break;
 
 	case LS:
-	  (*fprintf) (stream, "\t%s, (%s, %d)", grname[(inst >> 8) & 0xF],
-		      name, ((inst >> 4) & 0xF) << isiz[(inst >> 13) & 3]);
+	  (*print_func) (stream, "\t%s, (%s, %d)", grname[(inst >> 8) & 0xF],
+			 name, ((inst >> 4) & 0xF) << isiz[(inst >> 13) & 3]);
 	  break;
 
 	case BR:
@@ -201,7 +202,7 @@ print_insn_mcore (memaddr, info)
 	    if (inst & 0x400)
 	      val |= 0xFFFFFC00;
 
-	    (*fprintf) (stream, "\t0x%lx", (long)(memaddr + 2 + (val << 1)));
+	    (*print_func) (stream, "\t0x%lx", (long)(memaddr + 2 + (val << 1)));
 
 	    if (strcmp (op->name, "bsr") == 0)
 	      {
@@ -210,7 +211,7 @@ print_insn_mcore (memaddr, info)
 
 		if (info->print_address_func && val != 0)
 		  {
-		    (*fprintf) (stream, "\t// ");
+		    (*print_func) (stream, "\t// ");
 		    info->print_address_func (val, info);
 		  }
 	      }
@@ -221,9 +222,9 @@ print_insn_mcore (memaddr, info)
 	  {
 	    long val;
 	    val = (inst & 0x000F);
-	    (*fprintf) (stream, "\t%s, 0x%lx",
-			grname[(inst >> 4) & 0xF],
-			(long) (memaddr - (val << 1)));
+	    (*print_func) (stream, "\t%s, 0x%lx",
+			   grname[(inst >> 4) & 0xF],
+			   (long) (memaddr - (val << 1)));
 	  }
 	  break;
 
@@ -248,12 +249,12 @@ print_insn_mcore (memaddr, info)
 		| (ibytes[2] << 8) | (ibytes[3]);
 
 	    /* Removed [] around literal value to match ABI syntax 12/95.  */
-	    (*fprintf) (stream, "\t%s, 0x%lX", grname[(inst >> 8) & 0xF], val);
+	    (*print_func) (stream, "\t%s, 0x%lX", grname[(inst >> 8) & 0xF], val);
 
 	    if (val == 0)
-	      (*fprintf) (stream, "\t// from address pool at 0x%lx",
-			  (long) (memaddr + 2
-				  + ((inst & 0xFF) << 2)) & 0xFFFFFFFC);
+	      (*print_func) (stream, "\t// from address pool at 0x%lx",
+			     (long) (memaddr + 2
+				     + ((inst & 0xFF) << 2)) & 0xFFFFFFFC);
 	  }
 	  break;
 
@@ -278,18 +279,18 @@ print_insn_mcore (memaddr, info)
 		| (ibytes[2] << 8) | (ibytes[3]);
 
 	    /* Removed [] around literal value to match ABI syntax 12/95.  */
-	    (*fprintf) (stream, "\t0x%lX", val);
+	    (*print_func) (stream, "\t0x%lX", val);
 	    /* For jmpi/jsri, we'll try to get a symbol for the target.  */
 	    if (info->print_address_func && val != 0)
 	      {
-		(*fprintf) (stream, "\t// ");
+		(*print_func) (stream, "\t// ");
 		info->print_address_func (val, info);
 	      }
 	    else
 	      {
-		(*fprintf) (stream, "\t// from address pool at 0x%lx",
-			    (long) (memaddr + 2
-				    + ((inst & 0xFF) << 2)) & 0xFFFFFFFC);
+		(*print_func) (stream, "\t// from address pool at 0x%lx",
+			       (long) (memaddr + 2
+				       + ((inst & 0xFF) << 2)) & 0xFFFFFFFC);
 	      }
 	  }
 	  break;
@@ -301,13 +302,13 @@ print_insn_mcore (memaddr, info)
 	      "ee", "ee,ie", "ee,fe", "ee,fe,ie"
 	    };
 
-	    (*fprintf) (stream, "\t%s", fields[inst & 0x7]);
+	    (*print_func) (stream, "\t%s", fields[inst & 0x7]);
 	  }
 	  break;
 
 	default:
 	  /* If the disassembler lags the instruction set.  */
-	  (*fprintf) (stream, "\tundecoded operands, inst is 0x%04x", inst);
+	  (*print_func) (stream, "\tundecoded operands, inst is 0x%04x", inst);
 	  break;
 	}
     }

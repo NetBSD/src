@@ -1,5 +1,5 @@
 /* CGEN generic opcode support.
-   Copyright 2002, 2005, 2007
+   Copyright 2002, 2005, 2007, 2009
    Free Software Foundation, Inc.
 
    This file is part of libopcodes.
@@ -21,10 +21,11 @@
 /* Functions for manipulating CGEN_BITSET.  */
 
 #include "libiberty.h"
-#include "opcode/cgen-bitset.h"
+#include "cgen/bitset.h"
 #include <string.h>
 
 /* Create a bit mask.  */
+
 CGEN_BITSET *
 cgen_bitset_create (unsigned bit_count)
 {

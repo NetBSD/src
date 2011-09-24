@@ -1,5 +1,5 @@
 /* ldcref.c -- output a cross reference table
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2006,
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
    2007, 2008  Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>
 
@@ -179,7 +179,7 @@ add_cref (const char *name,
 
   if (r == NULL)
     {
-      r = bfd_hash_allocate (&cref_table.root, sizeof *r);
+      r = (struct cref_ref *) bfd_hash_allocate (&cref_table.root, sizeof *r);
       if (r == NULL)
 	einfo (_("%X%P: cref alloc failed: %E\n"));
       r->next = h->refs;
@@ -226,7 +226,7 @@ handle_asneeded_cref (bfd *abfd ATTRIBUTE_UNUSED,
 	      entsize += cref_table.root.entsize;
 	      c = (struct cref_hash_entry *) p;
 	      for (r = c->refs; r != NULL; r = r->next)
-		refsize += sizeof (struct cref_hash_entry);
+		refsize += sizeof (struct cref_ref);
 	    }
 	}
 
@@ -258,8 +258,8 @@ handle_asneeded_cref (bfd *abfd ATTRIBUTE_UNUSED,
 	      c = (struct cref_hash_entry *) p;
 	      for (r = c->refs; r != NULL; r = r->next)
 		{
-		  memcpy (old_ref, r, sizeof (struct cref_hash_entry));
-		  old_ref = (char *) old_ref + sizeof (struct cref_hash_entry);
+		  memcpy (old_ref, r, sizeof (struct cref_ref));
+		  old_ref = (char *) old_ref + sizeof (struct cref_ref);
 		}
 	    }
 	}
@@ -300,8 +300,8 @@ handle_asneeded_cref (bfd *abfd ATTRIBUTE_UNUSED,
 	      c = (struct cref_hash_entry *) p;
 	      for (r = c->refs; r != NULL; r = r->next)
 		{
-		  memcpy (r, old_ref, sizeof (struct cref_hash_entry));
-		  old_ref = (char *) old_ref + sizeof (struct cref_hash_entry);
+		  memcpy (r, old_ref, sizeof (struct cref_ref));
+		  old_ref = (char *) old_ref + sizeof (struct cref_ref);
 		}
 	    }
 	}
@@ -324,7 +324,7 @@ handle_asneeded_cref (bfd *abfd ATTRIBUTE_UNUSED,
 static bfd_boolean
 cref_fill_array (struct cref_hash_entry *h, void *data)
 {
-  struct cref_hash_entry ***pph = data;
+  struct cref_hash_entry ***pph = (struct cref_hash_entry ***) data;
 
   ASSERT (h->demangled == NULL);
   h->demangled = bfd_demangle (link_info.output_bfd, h->root.string,
@@ -344,8 +344,10 @@ cref_fill_array (struct cref_hash_entry *h, void *data)
 static int
 cref_sort_array (const void *a1, const void *a2)
 {
-  const struct cref_hash_entry * const *p1 = a1;
-  const struct cref_hash_entry * const *p2 = a2;
+  const struct cref_hash_entry * const *p1 =
+      (const struct cref_hash_entry * const *) a1;
+  const struct cref_hash_entry * const *p2 =
+      (const struct cref_hash_entry * const *) a2;
 
   return strcmp ((*p1)->demangled, (*p2)->demangled);
 }
@@ -378,7 +380,7 @@ output_cref (FILE *fp)
       return;
     }
 
-  csyms = xmalloc (cref_symcount * sizeof (*csyms));
+  csyms = (struct cref_hash_entry **) xmalloc (cref_symcount * sizeof (*csyms));
 
   csym_fill = csyms;
   cref_hash_traverse (&cref_table, cref_fill_array, &csym_fill);
@@ -602,7 +604,7 @@ check_refs (const char *name,
 static void
 check_reloc_refs (bfd *abfd, asection *sec, void *iarg)
 {
-  struct check_refs_info *info = iarg;
+  struct check_refs_info *info = (struct check_refs_info *) iarg;
   asection *outsec;
   const char *outsecname;
   asection *outdefsec;
@@ -649,7 +651,7 @@ check_reloc_refs (bfd *abfd, asection *sec, void *iarg)
   if (relsize == 0)
     return;
 
-  relpp = xmalloc (relsize);
+  relpp = (arelent **) xmalloc (relsize);
   relcount = bfd_canonicalize_reloc (abfd, sec, relpp, info->asymbols);
   if (relcount < 0)
     einfo (_("%B%F: could not read relocs: %E\n"), abfd);

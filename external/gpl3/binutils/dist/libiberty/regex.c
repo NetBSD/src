@@ -4,7 +4,7 @@
    internationalization features.)
 
    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2005 Free Software Foundation, Inc.
+   2002, 2005, 2010 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -5910,10 +5910,13 @@ byte_re_match_2_internal (struct re_pattern_buffer *bufp,
 	    {
 	      /* 1 if this match ends in the same string (string1 or string2)
 		 as the best previous match.  */
-	      boolean same_str_p = (FIRST_STRING_P (match_end)
-				    == MATCHING_IN_FIRST_STRING);
+	      boolean same_str_p;
+
 	      /* 1 if this match is the best seen so far.  */
 	      boolean best_match_p;
+
+              same_str_p = (FIRST_STRING_P (match_end)
+                            == MATCHING_IN_FIRST_STRING);
 
 	      /* AIX compiler got confused when this was combined
 		 with the previous declaration.  */
@@ -7137,8 +7140,8 @@ byte_re_match_2_internal (struct re_pattern_buffer *bufp,
                register from the stack, since lowest will == highest in
                `pop_failure_point'.  */
             active_reg_t dummy_low_reg, dummy_high_reg;
-            UCHAR_T *pdummy = NULL;
-            const CHAR_T *sdummy = NULL;
+            UCHAR_T *pdummy ATTRIBUTE_UNUSED = NULL;
+            const CHAR_T *sdummy ATTRIBUTE_UNUSED = NULL;
 
             DEBUG_PRINT1 ("EXECUTING pop_failure_jump.\n");
             POP_FAILURE_POINT (sdummy, pdummy,

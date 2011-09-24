@@ -1,5 +1,5 @@
 /* Opcode table for TI TMS320C80 (MVP).
-   Copyright 1996, 1997, 2000, 2007 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 2000, 2005, 2007 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -219,7 +219,7 @@ const int tic80_num_predefined_symbols = sizeof (tic80_predefined_symbols) / siz
    in CLASS, and translates it to a numeric value, which it returns.
 
    If CLASS is zero, any symbol that matches NAME is translated.  If
-   CLASS is non-zero, then only a symbol that has class CLASS is
+   CLASS is non-zero, then only a symbol that has symbol_class CLASS is
    matched.
 
    If no translation is possible, it returns -1, a value not used by
@@ -233,9 +233,9 @@ const int tic80_num_predefined_symbols = sizeof (tic80_predefined_symbols) / siz
  */
 
 int
-tic80_symbol_to_value (name, class)
+tic80_symbol_to_value (name, symbol_class)
      char *name;
-     int class;
+     int symbol_class;
 {
   const struct predefined_symbol *pdsp;
   int low = 0;
@@ -259,7 +259,7 @@ tic80_symbol_to_value (name, class)
       else 
 	{
 	  pdsp = &tic80_predefined_symbols[middle];
-	  if ((class == 0) || (class & PDS_VALUE (pdsp)))
+	  if ((symbol_class == 0) || (symbol_class & PDS_VALUE (pdsp)))
 	    {
 	      rtnval = PDS_VALUE (pdsp);
 	    }
@@ -271,13 +271,13 @@ tic80_symbol_to_value (name, class)
 }
 
 /* This function takes a value VAL and finds a matching predefined
-   symbol that is in the operand class specified by CLASS.  If CLASS
+   symbol that is in the operand symbol_class specified by CLASS.  If CLASS
    is zero, the first matching symbol is returned. */
 
 const char *
-tic80_value_to_symbol (val, class)
+tic80_value_to_symbol (val, symbol_class)
      int val;
-     int class;
+     int symbol_class;
 {
   const struct predefined_symbol *pdsp;
   int ival;
@@ -291,7 +291,7 @@ tic80_value_to_symbol (val, class)
       ival = PDS_VALUE (pdsp) & ~TIC80_OPERAND_MASK;
       if (ival == val)
 	{
-	  if ((class == 0) || (class & PDS_VALUE (pdsp)))
+	  if ((symbol_class == 0) || (symbol_class & PDS_VALUE (pdsp)))
 	    {
 	      /* Found the desired match */
 	      name = PDS_NAME (pdsp);

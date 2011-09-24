@@ -1,5 +1,5 @@
 /* Print VAX instructions.
-   Copyright 1995, 1998, 2000, 2001, 2002, 2005, 2007
+   Copyright 1995, 1998, 2000, 2001, 2002, 2005, 2007, 2009
    Free Software Foundation, Inc.
    Contributed by Pauline Middelink <middelin@polyware.iaf.nl>
 
@@ -171,21 +171,24 @@ free_entry_array (void)
     }
 }
 #endif
-/* Check if the given address is a known function entry. Either there must
-   be a symbol of function type at this address, or the address must be
-   a forced entry point.  The later helps in disassembling ROM images, because
-   there's no symbol table at all.  Forced entry points can be given by
-   supplying several -M options to objdump: -M entry:0xffbb7730.  */
+/* Check if the given address is a known function entry point.  This is
+   the case if there is a symbol of the function type at this address.
+   We also check for synthetic symbols as these are used for PLT entries
+   (weak undefined symbols may not have the function type set).  Finally
+   the address may have been forced to be treated as an entry point.  The
+   latter helps in disassembling ROM images, because there's no symbol
+   table at all.  Forced entry points can be given by supplying several
+   -M options to objdump: -M entry:0xffbb7730.  */
 
 static bfd_boolean
 is_function_entry (struct disassemble_info *info, bfd_vma addr)
 {
   unsigned int i;
 
-  /* Check if there's a BSF_FUNCTION symbol at our address.  */
+  /* Check if there's a function or PLT symbol at our address.  */
   if (info->symbols
       && info->symbols[0]
-      && (info->symbols[0]->flags & BSF_FUNCTION)
+      && (info->symbols[0]->flags & (BSF_FUNCTION | BSF_SYNTHETIC))
       && addr == bfd_asymbol_value (info->symbols[0]))
     return TRUE;
 
@@ -193,6 +196,22 @@ is_function_entry (struct disassemble_info *info, bfd_vma addr)
   for (i = entry_addr_occupied_slots; i--;)
     if (entry_addr[i] == addr)
       return TRUE;
+
+  return FALSE;
+}
+
+/* Check if the given address is the last longword of a PLT entry.
+   This longword is data and depending on the value it may interfere
+   with disassembly of further PLT entries.  We make use of the fact
+   PLT symbols are marked BSF_SYNTHETIC.  */
+static bfd_boolean
+is_plt_tail (struct disassemble_info *info, bfd_vma addr)
+{
+  if (info->symbols
+      && info->symbols[0]
+      && (info->symbols[0]->flags & BSF_SYNTHETIC)
+      && addr == bfd_asymbol_value (info->symbols[0]) + 8)
+    return TRUE;
 
   return FALSE;
 }
@@ -410,6 +429,18 @@ print_insn_vax (bfd_vma memaddr, disassemble_info *info)
       (*info->fprintf_func) (info->stream, " >");
 
       return 2;
+    }
+
+  /* Decode PLT entry offset longword.  */
+  if (is_plt_tail (info, memaddr))
+    {
+      int offset;
+
+      FETCH_DATA (info, buffer + 4);
+      offset = buffer[3] << 24 | buffer[2] << 16 | buffer[1] << 8 | buffer[0];
+      (*info->fprintf_func) (info->stream, ".long 0x%08x", offset);
+
+      return 4;
     }
 
   for (votp = &votstrs[0]; votp->name[0]; votp++)

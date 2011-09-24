@@ -1,5 +1,5 @@
 /* xtensa-dis.c.  Disassembly functions for Xtensa.
-   Copyright 2003, 2004, 2007 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
    Contributed by Bob Wilson at Tensilica, Inc. (bwilson@tensilica.com)
 
    This file is part of the GNU opcodes library.

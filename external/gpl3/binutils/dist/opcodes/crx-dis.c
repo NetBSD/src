@@ -1,5 +1,5 @@
 /* Disassembler code for CRX.
-   Copyright 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
    Contributed by Tomer Levi, NSC, Israel.
    Written by Tomer Levi.
 
@@ -155,12 +155,12 @@ getargtype (operand_type op)
    This routine is used when disassembling the 'excp' instruction.  */
 
 static char *
-gettrapstring (unsigned int index)
+gettrapstring (unsigned int trap_index)
 {
   const trap_entry *trap;
 
   for (trap = crx_traps; trap < crx_traps + NUMTRAPS; trap++)
-    if (trap->entry == index)
+    if (trap->entry == trap_index)
       return trap->name;
 
   return ILLEGAL;
@@ -186,12 +186,12 @@ getcinvstring (unsigned int num)
 char *
 getregname (reg r)
 {
-  const reg_entry *reg = &crx_regtab[r];
+  const reg_entry * regentry = &crx_regtab[r];
 
-  if (reg->type != CRX_R_REGTYPE)
+  if (regentry->type != CRX_R_REGTYPE)
     return ILLEGAL;
   else
-    return reg->name;
+    return regentry->name;
 }
 
 /* Given a coprocessor register enum value, retrieve its name.  */
@@ -199,28 +199,28 @@ getregname (reg r)
 char *
 getcopregname (copreg r, reg_type type)
 {
-  const reg_entry *reg;
+  const reg_entry * regentry;
 
   if (type == CRX_C_REGTYPE)
-    reg = &crx_copregtab[r];
+    regentry = &crx_copregtab[r];
   else if (type == CRX_CS_REGTYPE)
-    reg = &crx_copregtab[r+(cs0-c0)];
+    regentry = &crx_copregtab[r+(cs0-c0)];
   else
     return ILLEGAL;
 
-  return reg->name;
+  return regentry->name;
 }
 
 
 /* Getting a processor register name.  */
 
 static char *
-getprocregname (int index)
+getprocregname (int reg_index)
 {
   const reg_entry *r;
 
   for (r = crx_regtab; r < crx_regtab + NUMREGS; r++)
-    if (r->image == index)
+    if (r->image == reg_index)
       return r->name;
 
   return "ILLEGAL REGISTER";
@@ -355,7 +355,7 @@ match_opcode (void)
   unsigned long mask;
 
   /* The instruction 'constant' opcode doewsn't exceed 32 bits.  */
-  unsigned long doubleWord = words[1] + (words[0] << 16);
+  unsigned long doubleWord = (words[1] + (words[0] << 16)) & 0xffffffff;
 
   /* Start searching from end of instruction table.  */
   instruction = &crx_instruction[NUMOPCODES - 2];
@@ -634,17 +634,17 @@ print_arg (argument *a, bfd_vma memaddr, struct disassemble_info *info)
 /* Print all the arguments of CURRINSN instruction.  */
 
 static void
-print_arguments (ins *currInsn, bfd_vma memaddr, struct disassemble_info *info)
+print_arguments (ins *currentInsn, bfd_vma memaddr, struct disassemble_info *info)
 {
   int i;
 
-  for (i = 0; i < currInsn->nargs; i++)
+  for (i = 0; i < currentInsn->nargs; i++)
     {
       processing_argument_number = i;
 
-      print_arg (&currInsn->arg[i], memaddr, info);
+      print_arg (&currentInsn->arg[i], memaddr, info);
 
-      if (i != currInsn->nargs - 1)
+      if (i != currentInsn->nargs - 1)
 	info->fprintf_func (info->stream, ", ");
     }
 }

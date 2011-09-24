@@ -165,7 +165,7 @@
 	seen.
 	(lang_section_start): Add segment parameter.
 	* ldlex.l (SEGMENT_START): Add it.
-	* lexsup.c (seg_segment_start): New function.
+	* lexsup.c (set_segment_start): New function.
 	(parse_args): Use it for -Tbss, -Tdata, and -Ttext.
 	* ld.texinfo (SEGMENT_START): Document it.
 	* emulparams/armsymbian.sh (EMBEDDED): Set it.

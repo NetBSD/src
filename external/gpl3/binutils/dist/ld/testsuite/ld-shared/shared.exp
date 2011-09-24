@@ -1,6 +1,6 @@
 # Expect script for ld-shared tests
 #   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-#   2004, 2007
+#   2004, 2005, 2007, 2008, 2009, 2010
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -38,14 +38,15 @@ if { ![istarget hppa*64*-*-hpux*] \
      && ![istarget i?86-*-unixware] \
      && ![istarget i?86-*-elf*] \
      && ![istarget i?86-*-linux*] \
+     && ![istarget i?86-*-gnu*] \
      && ![istarget ia64-*-elf*] \
      && ![istarget ia64-*-linux*] \
      && ![istarget m68k-*-linux*] \
      && ![istarget mips*-*-irix5*] \
      && ![istarget mips*-*-linux*] \
-     && ![istarget powerpc-*-elf*] \
-     && ![istarget powerpc-*-linux*] \
-     && ![istarget powerpc-*-sysv4*] \
+     && ![istarget powerpc*-*-elf*] \
+     && ![istarget powerpc*-*-linux*] \
+     && ![istarget powerpc*-*-sysv4*] \
      && ![istarget sparc*-*-elf] \
      && ![istarget sparc*-*-solaris2*] \
      && ![istarget sparc*-*-sunos4*] \
@@ -66,6 +67,7 @@ if { [istarget *-*-linux*aout*] \
 
 set tmpdir tmpdir
 set SHCFLAG ""
+set shared_needs_pic "no"
 
 if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
 
@@ -95,6 +97,27 @@ if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
     puts $file shlib_getfunptr1
     puts $file shlib_check
     close $file
+}
+
+if [istarget arm*-*-linux*] {
+    # On ARM section anchors can change the symbol pre-emptability for
+    # non-PIC shared libraries, causing these tests to fail.  Turn section 
+    # anchors off.
+    set SHCFLAG "-fno-section-anchors"
+
+    # On targets that have MOVW the compiler will emit relocations which 
+    # the linker doesn't support when compiling -shared without -fpic.  The
+    # test to find out whether we want to XFAIL the non-PIC tests requires 
+    # a compile - so we pre-calculate it here.  We also note that this can
+    # only affect arm*-*-*eabi targets as the old ABI doesn't support v7.
+    if [istarget arm*-*-*eabi] {
+	set file [open $tmpdir/movw-detect.c w]
+	puts $file "void foo(void) { __asm (\"movw r0, #0\"); }"
+	close $file
+	if [run_host_cmd_yesno "$CC" "$CFLAGS -c $tmpdir/movw-detect.c -o $tmpdir/movw-detect.o"] {
+	    set shared_needs_pic "yes"
+	}
+    }
 }
 
 # The test procedure.
@@ -204,6 +227,7 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	setup_xfail "*-*-sunos4*"
 	setup_xfail "ia64-*-linux*"
 	setup_xfail "alpha*-*-linux*"
+	setup_xfail "powerpc64*-*-*"
 	if { ![istarget hppa*64*-*-linux*] } {
 	    setup_xfail "hppa*-*-linux*"
 	}
@@ -212,6 +236,9 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	}
 	setup_xfail "x86_64-*-linux*"
 	setup_xfail "s390x-*-linux*"
+	if [ string match $shared_needs_pic "yes" ] {
+	    setup_xfail "arm*-*-linux*"
+	}
 	shared_test shnp "shared (non PIC)" mainnp.o sh1np.o sh2np.o shared
 
 	# Test ELF shared library relocations with a non-zero load
@@ -220,7 +247,7 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	# the load address is not zero (which is the default).
 	setup_xfail "*-*-sunos4*"
 	setup_xfail "*-*-linux*libc1"
-	setup_xfail "powerpc-*-linux*"
+	setup_xfail "powerpc*-*-linux*"
 	setup_xfail "ia64-*-linux*"
 	setup_xfail "alpha*-*-linux*"
 	setup_xfail "mips*-*-linux*"
@@ -232,6 +259,9 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	}
 	setup_xfail "x86_64-*-linux*"
 	setup_xfail "s390x-*-linux*"
+	if [ string match $shared_needs_pic "yes" ] {
+	    setup_xfail "arm*-*-linux*"
+	}
 	shared_test shnp "shared (non PIC, load offset)" \
 		mainnp.o sh1np.o sh2np.o shared \
 		"-T $srcdir/$subdir/elf-offset.ld"
@@ -273,6 +303,7 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG $picflag" $srcdir/$subdir/main.c $tmpdir/m
 	    setup_xfail "*-*-sunos4*"
 	    setup_xfail "ia64-*-linux*"
 	    setup_xfail "alpha*-*-linux*"
+	    setup_xfail "powerpc64*-*-*"
 	    if { ![istarget hppa*64*-*-linux*] } {
 		setup_xfail "hppa*-*-linux*"
 	    }
@@ -281,6 +312,9 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG $picflag" $srcdir/$subdir/main.c $tmpdir/m
 	    }
 	    setup_xfail "x86_64-*-linux*"
 	    setup_xfail "s390x-*-linux*"
+	    if [ string match $shared_needs_pic "yes" ] {
+		setup_xfail "arm*-*-linux*"
+	    }
 	    shared_test shmpnp "shared (PIC main, non PIC so)" mainp.o sh1np.o sh2np.o shared
 	}
     } else {

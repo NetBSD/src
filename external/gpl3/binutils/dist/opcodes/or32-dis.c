@@ -20,7 +20,9 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#ifndef DEBUG
 #define DEBUG 0
+#endif
 
 #include "dis-asm.h"
 #include "opcode/or32.h"
@@ -41,7 +43,7 @@ find_bytes_big (unsigned char *insn_ch, unsigned long *insn)
     ((unsigned long) insn_ch[2] << 8) +
     ((unsigned long) insn_ch[3]);
 #if DEBUG
-  printf ("find_bytes_big3: %x\n", *insn);
+  printf ("find_bytes_big3: %lx\n", *insn);
 #endif
 }
 
@@ -88,7 +90,7 @@ or32_extract (char param_ch, char *enc_initial, unsigned long insn)
 	  {
 	    unsigned long tmp = strtoul (enc, NULL, 16);
 #if DEBUG
-	    printf (" enc=%s, tmp=%x ", enc, tmp);
+	    printf (" enc=%s, tmp=%lx ", enc, tmp);
 #endif
 	    if (param_ch == '0')
 	      tmp = 15 - tmp;
@@ -108,7 +110,7 @@ or32_extract (char param_ch, char *enc_initial, unsigned long insn)
 	opc_pos--;
 	param_pos--;
 #if DEBUG
-	printf ("\n  ret=%x opc_pos=%x, param_pos=%x\n", ret, opc_pos, param_pos);
+	printf ("\n  ret=%lx opc_pos=%x, param_pos=%x\n", ret, opc_pos, param_pos);
 #endif
 	ret += ((insn >> opc_pos) & 0x1) << param_pos;
 
@@ -117,12 +119,12 @@ or32_extract (char param_ch, char *enc_initial, unsigned long insn)
 	    && ret >> (letter_range (param_ch) - 1))
 	  {
 #if DEBUG
-	    printf ("\n  ret=%x opc_pos=%x, param_pos=%x\n",
+	    printf ("\n  ret=%lx opc_pos=%x, param_pos=%x\n",
 		    ret, opc_pos, param_pos);
 #endif
 	    ret |= 0xffffffff << letter_range(param_ch);
 #if DEBUG
-	    printf ("\n  after conversion to signed: ret=%x\n", ret);
+	    printf ("\n  after conversion to signed: ret=%lx\n", ret);
 #endif
 	  }
 	enc++;
@@ -141,7 +143,7 @@ or32_extract (char param_ch, char *enc_initial, unsigned long insn)
       enc++;
 
 #if DEBUG
-  printf ("ret=%x\n", ret);
+  printf ("ret=%lx\n", ret);
 #endif
   return ret;
 }
@@ -158,8 +160,8 @@ or32_opcode_match (unsigned long insn, char *encoding)
   zeros = or32_extract ('0', encoding, insn);
   
 #if DEBUG
-  printf ("ones: %x \n", ones);
-  printf ("zeros: %x \n", zeros);
+  printf ("ones: %lx \n", ones);
+  printf ("zeros: %lx \n", zeros);
 #endif
   if ((insn & ones) != ones)
     {
@@ -194,7 +196,7 @@ or32_print_register (char param_ch,
   int regnum = or32_extract (param_ch, encoding, insn);
   
 #if DEBUG
-  printf ("or32_print_register: %c, %s, %x\n", param_ch, encoding, insn);
+  printf ("or32_print_register: %c, %s, %lx\n", param_ch, encoding, insn);
 #endif  
   if (param_ch == 'A')
     (*info->fprintf_func) (info->stream, "r%d", regnum);

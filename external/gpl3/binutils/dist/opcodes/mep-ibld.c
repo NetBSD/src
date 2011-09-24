@@ -3,8 +3,8 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN: Cpu tools GENerator.
    - the resultant file is machine generated, cgen-ibld.in isn't
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2005, 2006, 2007,
+   2008, 2010  Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -33,6 +33,7 @@
 #include "symcat.h"
 #include "mep-desc.h"
 #include "mep-opc.h"
+#include "cgen/basic-modes.h"
 #include "opintl.h"
 #include "safe-ctype.h"
 
@@ -137,7 +138,7 @@ insert_normal (CGEN_CPU_DESC cd,
   if (length == 0)
     return NULL;
 
-  if (word_length > 32)
+  if (word_length > 8 * sizeof (CGEN_INSN_INT))
     abort ();
 
   /* For architectures with insns smaller than the base-insn-bitsize,
@@ -441,7 +442,7 @@ extract_normal (CGEN_CPU_DESC cd,
       return 1;
     }
 
-  if (word_length > 32)
+  if (word_length > 8 * sizeof (CGEN_INSN_INT))
     abort ();
 
   /* For architectures with insns smaller than the insn-base-bitsize,
@@ -468,7 +469,7 @@ extract_normal (CGEN_CPU_DESC cd,
     {
       unsigned char *bufp = ex_info->insn_bytes + word_offset / 8;
 
-      if (word_length > 32)
+      if (word_length > 8 * sizeof (CGEN_INSN_INT))
 	abort ();
 
       if (fill_cache (cd, ex_info, word_offset / 8, word_length / 8, pc) == 0)
@@ -568,8 +569,8 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_ADDR24A4 :
       {
 {
-  FLD (f_24u8a4n_hi) = ((unsigned int) (FLD (f_24u8a4n)) >> (8));
-  FLD (f_24u8a4n_lo) = ((unsigned int) (((FLD (f_24u8a4n)) & (252))) >> (2));
+  FLD (f_24u8a4n_hi) = ((UINT) (FLD (f_24u8a4n)) >> (8));
+  FLD (f_24u8a4n_lo) = ((UINT) (((FLD (f_24u8a4n)) & (252))) >> (2));
 }
         errmsg = insert_normal (cd, fields->f_24u8a4n_hi, 0, 0, 16, 16, 32, total_length, buffer);
         if (errmsg)
@@ -579,12 +580,40 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
           break;
       }
       break;
+    case MEP_OPERAND_C5RMUIMM20 :
+      {
+{
+  FLD (f_c5_rm) = ((UINT) (FLD (f_c5_rmuimm20)) >> (16));
+  FLD (f_c5_16u16) = ((FLD (f_c5_rmuimm20)) & (65535));
+}
+        errmsg = insert_normal (cd, fields->f_c5_rm, 0, 0, 8, 4, 32, total_length, buffer);
+        if (errmsg)
+          break;
+        errmsg = insert_normal (cd, fields->f_c5_16u16, 0, 0, 16, 16, 32, total_length, buffer);
+        if (errmsg)
+          break;
+      }
+      break;
+    case MEP_OPERAND_C5RNMUIMM24 :
+      {
+{
+  FLD (f_c5_rnm) = ((UINT) (FLD (f_c5_rnmuimm24)) >> (16));
+  FLD (f_c5_16u16) = ((FLD (f_c5_rnmuimm24)) & (65535));
+}
+        errmsg = insert_normal (cd, fields->f_c5_rnm, 0, 0, 4, 8, 32, total_length, buffer);
+        if (errmsg)
+          break;
+        errmsg = insert_normal (cd, fields->f_c5_16u16, 0, 0, 16, 16, 32, total_length, buffer);
+        if (errmsg)
+          break;
+      }
+      break;
     case MEP_OPERAND_CALLNUM :
       {
 {
-  FLD (f_5) = ((((unsigned int) (FLD (f_callnum)) >> (3))) & (1));
-  FLD (f_6) = ((((unsigned int) (FLD (f_callnum)) >> (2))) & (1));
-  FLD (f_7) = ((((unsigned int) (FLD (f_callnum)) >> (1))) & (1));
+  FLD (f_5) = ((((UINT) (FLD (f_callnum)) >> (3))) & (1));
+  FLD (f_6) = ((((UINT) (FLD (f_callnum)) >> (2))) & (1));
+  FLD (f_7) = ((((UINT) (FLD (f_callnum)) >> (1))) & (1));
   FLD (f_11) = ((FLD (f_callnum)) & (1));
 }
         errmsg = insert_normal (cd, fields->f_5, 0, 0, 5, 1, 32, total_length, buffer);
@@ -607,7 +636,7 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_CCRN :
       {
 {
-  FLD (f_ccrn_hi) = ((((unsigned int) (FLD (f_ccrn)) >> (4))) & (3));
+  FLD (f_ccrn_hi) = ((((UINT) (FLD (f_ccrn)) >> (4))) & (3));
   FLD (f_ccrn_lo) = ((FLD (f_ccrn)) & (15));
 }
         errmsg = insert_normal (cd, fields->f_ccrn_hi, 0, 0, 28, 2, 32, total_length, buffer);
@@ -618,29 +647,36 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
           break;
       }
       break;
-    case MEP_OPERAND_CDISP8 :
-      errmsg = insert_normal (cd, fields->f_8s24, 0|(1<<CGEN_IFLD_SIGNED), 0, 24, 8, 32, total_length, buffer);
-      break;
-    case MEP_OPERAND_CDISP8A2 :
+    case MEP_OPERAND_CDISP10 :
       {
-        long value = fields->f_8s24a2;
-        value = ((int) (value) >> (1));
-        errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED), 0, 24, 7, 32, total_length, buffer);
+        long value = fields->f_cdisp10;
+        value = (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (512))) ? (((((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023))) - (1024))) : (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023)));
+        errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED), 0, 22, 10, 32, total_length, buffer);
       }
       break;
-    case MEP_OPERAND_CDISP8A4 :
+    case MEP_OPERAND_CDISP10A2 :
       {
-        long value = fields->f_8s24a4;
-        value = ((int) (value) >> (2));
-        errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED), 0, 24, 6, 32, total_length, buffer);
+        long value = fields->f_cdisp10;
+        value = (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (512))) ? (((((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023))) - (1024))) : (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023)));
+        errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED), 0, 22, 10, 32, total_length, buffer);
       }
       break;
-    case MEP_OPERAND_CDISP8A8 :
+    case MEP_OPERAND_CDISP10A4 :
       {
-        long value = fields->f_8s24a8;
-        value = ((int) (value) >> (3));
-        errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED), 0, 24, 5, 32, total_length, buffer);
+        long value = fields->f_cdisp10;
+        value = (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (512))) ? (((((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023))) - (1024))) : (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023)));
+        errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED), 0, 22, 10, 32, total_length, buffer);
       }
+      break;
+    case MEP_OPERAND_CDISP10A8 :
+      {
+        long value = fields->f_cdisp10;
+        value = (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (512))) ? (((((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023))) - (1024))) : (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023)));
+        errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED), 0, 22, 10, 32, total_length, buffer);
+      }
+      break;
+    case MEP_OPERAND_CDISP12 :
+      errmsg = insert_normal (cd, fields->f_12s20, 0|(1<<CGEN_IFLD_SIGNED), 0, 20, 12, 32, total_length, buffer);
       break;
     case MEP_OPERAND_CIMM4 :
       errmsg = insert_normal (cd, fields->f_rn, 0, 0, 4, 4, 32, total_length, buffer);
@@ -654,7 +690,7 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_CODE24 :
       {
 {
-  FLD (f_24u4n_hi) = ((unsigned int) (FLD (f_24u4n)) >> (16));
+  FLD (f_24u4n_hi) = ((UINT) (FLD (f_24u4n)) >> (16));
   FLD (f_24u4n_lo) = ((FLD (f_24u4n)) & (65535));
 }
         errmsg = insert_normal (cd, fields->f_24u4n_hi, 0, 0, 4, 8, 32, total_length, buffer);
@@ -677,7 +713,7 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
       {
 {
   FLD (f_crnx_lo) = ((FLD (f_crnx)) & (15));
-  FLD (f_crnx_hi) = ((unsigned int) (FLD (f_crnx)) >> (4));
+  FLD (f_crnx_hi) = ((UINT) (FLD (f_crnx)) >> (4));
 }
         errmsg = insert_normal (cd, fields->f_crnx_hi, 0, 0, 28, 1, 32, total_length, buffer);
         if (errmsg)
@@ -691,7 +727,7 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
       {
 {
   FLD (f_crnx_lo) = ((FLD (f_crnx)) & (15));
-  FLD (f_crnx_hi) = ((unsigned int) (FLD (f_crnx)) >> (4));
+  FLD (f_crnx_hi) = ((UINT) (FLD (f_crnx)) >> (4));
 }
         errmsg = insert_normal (cd, fields->f_crnx_hi, 0, 0, 28, 1, 32, total_length, buffer);
         if (errmsg)
@@ -701,11 +737,29 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
           break;
       }
       break;
+    case MEP_OPERAND_CROC :
+      errmsg = insert_normal (cd, fields->f_ivc2_5u7, 0, 0, 7, 5, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_CROP :
+      errmsg = insert_normal (cd, fields->f_ivc2_5u23, 0, 0, 23, 5, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_CRPC :
+      errmsg = insert_normal (cd, fields->f_ivc2_5u26, 0, 0, 26, 5, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_CRPP :
+      errmsg = insert_normal (cd, fields->f_ivc2_5u18, 0, 0, 18, 5, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_CRQC :
+      errmsg = insert_normal (cd, fields->f_ivc2_5u21, 0, 0, 21, 5, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_CRQP :
+      errmsg = insert_normal (cd, fields->f_ivc2_5u13, 0, 0, 13, 5, 32, total_length, buffer);
+      break;
     case MEP_OPERAND_CSRN :
       {
 {
   FLD (f_csrn_lo) = ((FLD (f_csrn)) & (15));
-  FLD (f_csrn_hi) = ((unsigned int) (FLD (f_csrn)) >> (4));
+  FLD (f_csrn_hi) = ((UINT) (FLD (f_csrn)) >> (4));
 }
         errmsg = insert_normal (cd, fields->f_csrn_hi, 0, 0, 15, 1, 32, total_length, buffer);
         if (errmsg)
@@ -719,7 +773,7 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
       {
 {
   FLD (f_csrn_lo) = ((FLD (f_csrn)) & (15));
-  FLD (f_csrn_hi) = ((unsigned int) (FLD (f_csrn)) >> (4));
+  FLD (f_csrn_hi) = ((UINT) (FLD (f_csrn)) >> (4));
 }
         errmsg = insert_normal (cd, fields->f_csrn_hi, 0, 0, 15, 1, 32, total_length, buffer);
         if (errmsg)
@@ -737,83 +791,184 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
       break;
     case MEP_OPERAND_EXC :
       break;
-    case MEP_OPERAND_FMAX_CCRN :
-      errmsg = insert_normal (cd, fields->f_fmax_4_4, 0, 0, 4, 4, 32, total_length, buffer);
-      break;
-    case MEP_OPERAND_FMAX_FRD :
-      {
-{
-  FLD (f_fmax_4_4) = ((FLD (f_fmax_frd)) & (15));
-  FLD (f_fmax_28_1) = ((unsigned int) (FLD (f_fmax_frd)) >> (4));
-}
-        errmsg = insert_normal (cd, fields->f_fmax_28_1, 0, 0, 28, 1, 32, total_length, buffer);
-        if (errmsg)
-          break;
-        errmsg = insert_normal (cd, fields->f_fmax_4_4, 0, 0, 4, 4, 32, total_length, buffer);
-        if (errmsg)
-          break;
-      }
-      break;
-    case MEP_OPERAND_FMAX_FRD_INT :
-      {
-{
-  FLD (f_fmax_4_4) = ((FLD (f_fmax_frd)) & (15));
-  FLD (f_fmax_28_1) = ((unsigned int) (FLD (f_fmax_frd)) >> (4));
-}
-        errmsg = insert_normal (cd, fields->f_fmax_28_1, 0, 0, 28, 1, 32, total_length, buffer);
-        if (errmsg)
-          break;
-        errmsg = insert_normal (cd, fields->f_fmax_4_4, 0, 0, 4, 4, 32, total_length, buffer);
-        if (errmsg)
-          break;
-      }
-      break;
-    case MEP_OPERAND_FMAX_FRM :
-      {
-{
-  FLD (f_fmax_24_4) = ((FLD (f_fmax_frm)) & (15));
-  FLD (f_fmax_30_1) = ((unsigned int) (FLD (f_fmax_frm)) >> (4));
-}
-        errmsg = insert_normal (cd, fields->f_fmax_30_1, 0, 0, 30, 1, 32, total_length, buffer);
-        if (errmsg)
-          break;
-        errmsg = insert_normal (cd, fields->f_fmax_24_4, 0, 0, 24, 4, 32, total_length, buffer);
-        if (errmsg)
-          break;
-      }
-      break;
-    case MEP_OPERAND_FMAX_FRN :
-      {
-{
-  FLD (f_fmax_20_4) = ((FLD (f_fmax_frn)) & (15));
-  FLD (f_fmax_29_1) = ((unsigned int) (FLD (f_fmax_frn)) >> (4));
-}
-        errmsg = insert_normal (cd, fields->f_fmax_29_1, 0, 0, 29, 1, 32, total_length, buffer);
-        if (errmsg)
-          break;
-        errmsg = insert_normal (cd, fields->f_fmax_20_4, 0, 0, 20, 4, 32, total_length, buffer);
-        if (errmsg)
-          break;
-      }
-      break;
-    case MEP_OPERAND_FMAX_FRN_INT :
-      {
-{
-  FLD (f_fmax_20_4) = ((FLD (f_fmax_frn)) & (15));
-  FLD (f_fmax_29_1) = ((unsigned int) (FLD (f_fmax_frn)) >> (4));
-}
-        errmsg = insert_normal (cd, fields->f_fmax_29_1, 0, 0, 29, 1, 32, total_length, buffer);
-        if (errmsg)
-          break;
-        errmsg = insert_normal (cd, fields->f_fmax_20_4, 0, 0, 20, 4, 32, total_length, buffer);
-        if (errmsg)
-          break;
-      }
-      break;
-    case MEP_OPERAND_FMAX_RM :
-      errmsg = insert_normal (cd, fields->f_fmax_rm, 0, 0, 8, 4, 32, total_length, buffer);
-      break;
     case MEP_OPERAND_HI :
+      break;
+    case MEP_OPERAND_IMM16P0 :
+      {
+{
+  FLD (f_ivc2_8u0) = ((((UINT) (FLD (f_ivc2_imm16p0)) >> (8))) & (255));
+  FLD (f_ivc2_8u20) = ((FLD (f_ivc2_imm16p0)) & (255));
+}
+        errmsg = insert_normal (cd, fields->f_ivc2_8u0, 0, 0, 0, 8, 32, total_length, buffer);
+        if (errmsg)
+          break;
+        errmsg = insert_normal (cd, fields->f_ivc2_8u20, 0, 0, 20, 8, 32, total_length, buffer);
+        if (errmsg)
+          break;
+      }
+      break;
+    case MEP_OPERAND_IMM3P12 :
+      errmsg = insert_normal (cd, fields->f_ivc2_3u12, 0, 0, 12, 3, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM3P25 :
+      errmsg = insert_normal (cd, fields->f_ivc2_3u25, 0, 0, 25, 3, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM3P4 :
+      errmsg = insert_normal (cd, fields->f_ivc2_3u4, 0, 0, 4, 3, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM3P5 :
+      errmsg = insert_normal (cd, fields->f_ivc2_3u5, 0, 0, 5, 3, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM3P9 :
+      errmsg = insert_normal (cd, fields->f_ivc2_3u9, 0, 0, 9, 3, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM4P10 :
+      errmsg = insert_normal (cd, fields->f_ivc2_4u10, 0, 0, 10, 4, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM4P4 :
+      errmsg = insert_normal (cd, fields->f_ivc2_4u4, 0, 0, 4, 4, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM4P8 :
+      errmsg = insert_normal (cd, fields->f_ivc2_4u8, 0, 0, 8, 4, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM5P23 :
+      errmsg = insert_normal (cd, fields->f_ivc2_5u23, 0, 0, 23, 5, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM5P3 :
+      errmsg = insert_normal (cd, fields->f_ivc2_5u3, 0, 0, 3, 5, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM5P7 :
+      errmsg = insert_normal (cd, fields->f_ivc2_5u7, 0, 0, 7, 5, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM5P8 :
+      errmsg = insert_normal (cd, fields->f_ivc2_5u8, 0, 0, 8, 5, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM6P2 :
+      errmsg = insert_normal (cd, fields->f_ivc2_6u2, 0, 0, 2, 6, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM6P6 :
+      errmsg = insert_normal (cd, fields->f_ivc2_6u6, 0, 0, 6, 6, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM8P0 :
+      errmsg = insert_normal (cd, fields->f_ivc2_8u0, 0, 0, 0, 8, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM8P20 :
+      errmsg = insert_normal (cd, fields->f_ivc2_8u20, 0, 0, 20, 8, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IMM8P4 :
+      errmsg = insert_normal (cd, fields->f_ivc2_8u4, 0, 0, 4, 8, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IVC_X_0_2 :
+      errmsg = insert_normal (cd, fields->f_ivc2_2u0, 0, 0, 0, 2, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IVC_X_0_3 :
+      errmsg = insert_normal (cd, fields->f_ivc2_3u0, 0, 0, 0, 3, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IVC_X_0_4 :
+      errmsg = insert_normal (cd, fields->f_ivc2_4u0, 0, 0, 0, 4, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IVC_X_0_5 :
+      errmsg = insert_normal (cd, fields->f_ivc2_5u0, 0, 0, 0, 5, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IVC_X_6_1 :
+      errmsg = insert_normal (cd, fields->f_ivc2_1u6, 0, 0, 6, 1, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IVC_X_6_2 :
+      errmsg = insert_normal (cd, fields->f_ivc2_2u6, 0, 0, 6, 2, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IVC_X_6_3 :
+      errmsg = insert_normal (cd, fields->f_ivc2_3u6, 0, 0, 6, 3, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_IVC2_ACC0_0 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_1 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_2 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_3 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_4 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_5 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_6 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_7 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_0 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_1 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_2 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_3 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_4 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_5 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_6 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_7 :
+      break;
+    case MEP_OPERAND_IVC2_CC :
+      break;
+    case MEP_OPERAND_IVC2_COFA0 :
+      break;
+    case MEP_OPERAND_IVC2_COFA1 :
+      break;
+    case MEP_OPERAND_IVC2_COFR0 :
+      break;
+    case MEP_OPERAND_IVC2_COFR1 :
+      break;
+    case MEP_OPERAND_IVC2_CSAR0 :
+      break;
+    case MEP_OPERAND_IVC2_CSAR1 :
+      break;
+    case MEP_OPERAND_IVC2C3CCRN :
+      {
+{
+  FLD (f_ivc2_ccrn_c3hi) = ((((UINT) (FLD (f_ivc2_ccrn_c3)) >> (4))) & (3));
+  FLD (f_ivc2_ccrn_c3lo) = ((FLD (f_ivc2_ccrn_c3)) & (15));
+}
+        errmsg = insert_normal (cd, fields->f_ivc2_ccrn_c3hi, 0, 0, 28, 2, 32, total_length, buffer);
+        if (errmsg)
+          break;
+        errmsg = insert_normal (cd, fields->f_ivc2_ccrn_c3lo, 0, 0, 4, 4, 32, total_length, buffer);
+        if (errmsg)
+          break;
+      }
+      break;
+    case MEP_OPERAND_IVC2CCRN :
+      {
+{
+  FLD (f_ivc2_ccrn_h2) = ((((UINT) (FLD (f_ivc2_ccrn)) >> (4))) & (3));
+  FLD (f_ivc2_ccrn_lo) = ((FLD (f_ivc2_ccrn)) & (15));
+}
+        errmsg = insert_normal (cd, fields->f_ivc2_ccrn_h2, 0, 0, 20, 2, 32, total_length, buffer);
+        if (errmsg)
+          break;
+        errmsg = insert_normal (cd, fields->f_ivc2_ccrn_lo, 0, 0, 0, 4, 32, total_length, buffer);
+        if (errmsg)
+          break;
+      }
+      break;
+    case MEP_OPERAND_IVC2CRN :
+      {
+{
+  FLD (f_ivc2_ccrn_h1) = ((((UINT) (FLD (f_ivc2_crnx)) >> (4))) & (1));
+  FLD (f_ivc2_ccrn_lo) = ((FLD (f_ivc2_crnx)) & (15));
+}
+        errmsg = insert_normal (cd, fields->f_ivc2_ccrn_h1, 0, 0, 20, 1, 32, total_length, buffer);
+        if (errmsg)
+          break;
+        errmsg = insert_normal (cd, fields->f_ivc2_ccrn_lo, 0, 0, 0, 4, 32, total_length, buffer);
+        if (errmsg)
+          break;
+      }
+      break;
+    case MEP_OPERAND_IVC2RM :
+      errmsg = insert_normal (cd, fields->f_ivc2_crm, 0, 0, 4, 4, 32, total_length, buffer);
       break;
     case MEP_OPERAND_LO :
       break;
@@ -834,8 +989,8 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_PCABS24A2 :
       {
 {
-  FLD (f_24u5a2n_lo) = ((unsigned int) (((FLD (f_24u5a2n)) & (255))) >> (1));
-  FLD (f_24u5a2n_hi) = ((unsigned int) (FLD (f_24u5a2n)) >> (8));
+  FLD (f_24u5a2n_lo) = ((UINT) (((FLD (f_24u5a2n)) & (255))) >> (1));
+  FLD (f_24u5a2n_hi) = ((UINT) (FLD (f_24u5a2n)) >> (8));
 }
         errmsg = insert_normal (cd, fields->f_24u5a2n_hi, 0, 0, 16, 16, 32, total_length, buffer);
         if (errmsg)
@@ -848,14 +1003,14 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_PCREL12A2 :
       {
         long value = fields->f_12s4a2;
-        value = ((int) (((value) - (pc))) >> (1));
+        value = ((SI) (((value) - (pc))) >> (1));
         errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_PCREL_ADDR), 0, 4, 11, 32, total_length, buffer);
       }
       break;
     case MEP_OPERAND_PCREL17A2 :
       {
         long value = fields->f_17s16a2;
-        value = ((int) (((value) - (pc))) >> (1));
+        value = ((SI) (((value) - (pc))) >> (1));
         errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_PCREL_ADDR), 0, 16, 16, 32, total_length, buffer);
       }
       break;
@@ -863,8 +1018,8 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
       {
 {
   FLD (f_24s5a2n) = ((FLD (f_24s5a2n)) - (pc));
-  FLD (f_24s5a2n_lo) = ((unsigned int) (((FLD (f_24s5a2n)) & (254))) >> (1));
-  FLD (f_24s5a2n_hi) = ((int) (FLD (f_24s5a2n)) >> (8));
+  FLD (f_24s5a2n_lo) = ((UINT) (((FLD (f_24s5a2n)) & (254))) >> (1));
+  FLD (f_24s5a2n_hi) = ((INT) (FLD (f_24s5a2n)) >> (8));
 }
         errmsg = insert_normal (cd, fields->f_24s5a2n_hi, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_PCREL_ADDR), 0, 16, 16, 32, total_length, buffer);
         if (errmsg)
@@ -877,7 +1032,7 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_PCREL8A2 :
       {
         long value = fields->f_8s8a2;
-        value = ((int) (((value) - (pc))) >> (1));
+        value = ((SI) (((value) - (pc))) >> (1));
         errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_PCREL_ADDR), 0, 8, 7, 32, total_length, buffer);
       }
       break;
@@ -889,6 +1044,9 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
       break;
     case MEP_OPERAND_RL :
       errmsg = insert_normal (cd, fields->f_rl, 0, 0, 12, 4, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_RL5 :
+      errmsg = insert_normal (cd, fields->f_rl5, 0, 0, 20, 4, 32, total_length, buffer);
       break;
     case MEP_OPERAND_RM :
       errmsg = insert_normal (cd, fields->f_rm, 0, 0, 8, 4, 32, total_length, buffer);
@@ -946,11 +1104,34 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_SIMM16 :
       errmsg = insert_normal (cd, fields->f_16s16, 0|(1<<CGEN_IFLD_SIGNED), 0, 16, 16, 32, total_length, buffer);
       break;
+    case MEP_OPERAND_SIMM16P0 :
+      {
+{
+  FLD (f_ivc2_8u0) = ((((UINT) (FLD (f_ivc2_simm16p0)) >> (8))) & (255));
+  FLD (f_ivc2_8u20) = ((FLD (f_ivc2_simm16p0)) & (255));
+}
+        errmsg = insert_normal (cd, fields->f_ivc2_8u0, 0, 0, 0, 8, 32, total_length, buffer);
+        if (errmsg)
+          break;
+        errmsg = insert_normal (cd, fields->f_ivc2_8u20, 0, 0, 20, 8, 32, total_length, buffer);
+        if (errmsg)
+          break;
+      }
+      break;
     case MEP_OPERAND_SIMM6 :
       errmsg = insert_normal (cd, fields->f_6s8, 0|(1<<CGEN_IFLD_SIGNED), 0, 8, 6, 32, total_length, buffer);
       break;
     case MEP_OPERAND_SIMM8 :
       errmsg = insert_normal (cd, fields->f_8s8, 0|(1<<CGEN_IFLD_SIGNED), 0, 8, 8, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_SIMM8P0 :
+      errmsg = insert_normal (cd, fields->f_ivc2_8s0, 0|(1<<CGEN_IFLD_SIGNED), 0, 0, 8, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_SIMM8P20 :
+      errmsg = insert_normal (cd, fields->f_ivc2_8s20, 0|(1<<CGEN_IFLD_SIGNED), 0, 20, 8, 32, total_length, buffer);
+      break;
+    case MEP_OPERAND_SIMM8P4 :
+      errmsg = insert_normal (cd, fields->f_ivc2_8s4, 0|(1<<CGEN_IFLD_SIGNED), 0, 4, 8, 32, total_length, buffer);
       break;
     case MEP_OPERAND_SP :
       break;
@@ -969,14 +1150,14 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_UDISP7A2 :
       {
         long value = fields->f_7u9a2;
-        value = ((unsigned int) (value) >> (1));
+        value = ((USI) (value) >> (1));
         errmsg = insert_normal (cd, value, 0, 0, 9, 6, 32, total_length, buffer);
       }
       break;
     case MEP_OPERAND_UDISP7A4 :
       {
         long value = fields->f_7u9a4;
-        value = ((unsigned int) (value) >> (2));
+        value = ((USI) (value) >> (2));
         errmsg = insert_normal (cd, value, 0, 0, 9, 5, 32, total_length, buffer);
       }
       break;
@@ -989,7 +1170,7 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_UIMM24 :
       {
 {
-  FLD (f_24u8n_hi) = ((unsigned int) (FLD (f_24u8n)) >> (8));
+  FLD (f_24u8n_hi) = ((UINT) (FLD (f_24u8n)) >> (8));
   FLD (f_24u8n_lo) = ((FLD (f_24u8n)) & (255));
 }
         errmsg = insert_normal (cd, fields->f_24u8n_hi, 0, 0, 16, 16, 32, total_length, buffer);
@@ -1012,7 +1193,7 @@ mep_cgen_insert_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_UIMM7A4 :
       {
         long value = fields->f_7u9a4;
-        value = ((unsigned int) (value) >> (2));
+        value = ((USI) (value) >> (2));
         errmsg = insert_normal (cd, value, 0, 0, 9, 5, 32, total_length, buffer);
       }
       break;
@@ -1070,6 +1251,28 @@ mep_cgen_extract_operand (CGEN_CPU_DESC cd,
   FLD (f_24u8a4n) = ((((FLD (f_24u8a4n_hi)) << (8))) | (((FLD (f_24u8a4n_lo)) << (2))));
       }
       break;
+    case MEP_OPERAND_C5RMUIMM20 :
+      {
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 8, 4, 32, total_length, pc, & fields->f_c5_rm);
+        if (length <= 0) break;
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 16, 16, 32, total_length, pc, & fields->f_c5_16u16);
+        if (length <= 0) break;
+{
+  FLD (f_c5_rmuimm20) = ((FLD (f_c5_16u16)) | (((FLD (f_c5_rm)) << (16))));
+}
+      }
+      break;
+    case MEP_OPERAND_C5RNMUIMM24 :
+      {
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 4, 8, 32, total_length, pc, & fields->f_c5_rnm);
+        if (length <= 0) break;
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 16, 16, 32, total_length, pc, & fields->f_c5_16u16);
+        if (length <= 0) break;
+{
+  FLD (f_c5_rnmuimm24) = ((FLD (f_c5_16u16)) | (((FLD (f_c5_rnm)) << (16))));
+}
+      }
+      break;
     case MEP_OPERAND_CALLNUM :
       {
         length = extract_normal (cd, ex_info, insn_value, 0, 0, 5, 1, 32, total_length, pc, & fields->f_5);
@@ -1095,32 +1298,40 @@ mep_cgen_extract_operand (CGEN_CPU_DESC cd,
   FLD (f_ccrn) = ((((FLD (f_ccrn_hi)) << (4))) | (FLD (f_ccrn_lo)));
       }
       break;
-    case MEP_OPERAND_CDISP8 :
-      length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 24, 8, 32, total_length, pc, & fields->f_8s24);
-      break;
-    case MEP_OPERAND_CDISP8A2 :
+    case MEP_OPERAND_CDISP10 :
       {
         long value;
-        length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 24, 7, 32, total_length, pc, & value);
-        value = ((value) << (1));
-        fields->f_8s24a2 = value;
+        length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 22, 10, 32, total_length, pc, & value);
+        value = (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (512))) ? (((((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023))) - (1024))) : (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023)));
+        fields->f_cdisp10 = value;
       }
       break;
-    case MEP_OPERAND_CDISP8A4 :
+    case MEP_OPERAND_CDISP10A2 :
       {
         long value;
-        length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 24, 6, 32, total_length, pc, & value);
-        value = ((value) << (2));
-        fields->f_8s24a4 = value;
+        length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 22, 10, 32, total_length, pc, & value);
+        value = (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (512))) ? (((((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023))) - (1024))) : (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023)));
+        fields->f_cdisp10 = value;
       }
       break;
-    case MEP_OPERAND_CDISP8A8 :
+    case MEP_OPERAND_CDISP10A4 :
       {
         long value;
-        length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 24, 5, 32, total_length, pc, & value);
-        value = ((value) << (3));
-        fields->f_8s24a8 = value;
+        length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 22, 10, 32, total_length, pc, & value);
+        value = (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (512))) ? (((((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023))) - (1024))) : (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023)));
+        fields->f_cdisp10 = value;
       }
+      break;
+    case MEP_OPERAND_CDISP10A8 :
+      {
+        long value;
+        length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 22, 10, 32, total_length, pc, & value);
+        value = (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (512))) ? (((((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023))) - (1024))) : (((((((((value) & (128))) ? (((value) ^ (768))) : (value)) & (512))) ? ((((((value) & (128))) ? (((value) ^ (768))) : (value)) - (1024))) : ((((value) & (128))) ? (((value) ^ (768))) : (value))) & (1023)));
+        fields->f_cdisp10 = value;
+      }
+      break;
+    case MEP_OPERAND_CDISP12 :
+      length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 20, 12, 32, total_length, pc, & fields->f_12s20);
       break;
     case MEP_OPERAND_CIMM4 :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 4, 4, 32, total_length, pc, & fields->f_rn);
@@ -1166,6 +1377,24 @@ mep_cgen_extract_operand (CGEN_CPU_DESC cd,
   FLD (f_crnx) = ((((FLD (f_crnx_hi)) << (4))) | (FLD (f_crnx_lo)));
       }
       break;
+    case MEP_OPERAND_CROC :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 7, 5, 32, total_length, pc, & fields->f_ivc2_5u7);
+      break;
+    case MEP_OPERAND_CROP :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 23, 5, 32, total_length, pc, & fields->f_ivc2_5u23);
+      break;
+    case MEP_OPERAND_CRPC :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 26, 5, 32, total_length, pc, & fields->f_ivc2_5u26);
+      break;
+    case MEP_OPERAND_CRPP :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 18, 5, 32, total_length, pc, & fields->f_ivc2_5u18);
+      break;
+    case MEP_OPERAND_CRQC :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 21, 5, 32, total_length, pc, & fields->f_ivc2_5u21);
+      break;
+    case MEP_OPERAND_CRQP :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 13, 5, 32, total_length, pc, & fields->f_ivc2_5u13);
+      break;
     case MEP_OPERAND_CSRN :
       {
         length = extract_normal (cd, ex_info, insn_value, 0, 0, 15, 1, 32, total_length, pc, & fields->f_csrn_hi);
@@ -1192,58 +1421,166 @@ mep_cgen_extract_operand (CGEN_CPU_DESC cd,
       break;
     case MEP_OPERAND_EXC :
       break;
-    case MEP_OPERAND_FMAX_CCRN :
-      length = extract_normal (cd, ex_info, insn_value, 0, 0, 4, 4, 32, total_length, pc, & fields->f_fmax_4_4);
-      break;
-    case MEP_OPERAND_FMAX_FRD :
-      {
-        length = extract_normal (cd, ex_info, insn_value, 0, 0, 28, 1, 32, total_length, pc, & fields->f_fmax_28_1);
-        if (length <= 0) break;
-        length = extract_normal (cd, ex_info, insn_value, 0, 0, 4, 4, 32, total_length, pc, & fields->f_fmax_4_4);
-        if (length <= 0) break;
-  FLD (f_fmax_frd) = ((((FLD (f_fmax_28_1)) << (4))) | (FLD (f_fmax_4_4)));
-      }
-      break;
-    case MEP_OPERAND_FMAX_FRD_INT :
-      {
-        length = extract_normal (cd, ex_info, insn_value, 0, 0, 28, 1, 32, total_length, pc, & fields->f_fmax_28_1);
-        if (length <= 0) break;
-        length = extract_normal (cd, ex_info, insn_value, 0, 0, 4, 4, 32, total_length, pc, & fields->f_fmax_4_4);
-        if (length <= 0) break;
-  FLD (f_fmax_frd) = ((((FLD (f_fmax_28_1)) << (4))) | (FLD (f_fmax_4_4)));
-      }
-      break;
-    case MEP_OPERAND_FMAX_FRM :
-      {
-        length = extract_normal (cd, ex_info, insn_value, 0, 0, 30, 1, 32, total_length, pc, & fields->f_fmax_30_1);
-        if (length <= 0) break;
-        length = extract_normal (cd, ex_info, insn_value, 0, 0, 24, 4, 32, total_length, pc, & fields->f_fmax_24_4);
-        if (length <= 0) break;
-  FLD (f_fmax_frm) = ((((FLD (f_fmax_30_1)) << (4))) | (FLD (f_fmax_24_4)));
-      }
-      break;
-    case MEP_OPERAND_FMAX_FRN :
-      {
-        length = extract_normal (cd, ex_info, insn_value, 0, 0, 29, 1, 32, total_length, pc, & fields->f_fmax_29_1);
-        if (length <= 0) break;
-        length = extract_normal (cd, ex_info, insn_value, 0, 0, 20, 4, 32, total_length, pc, & fields->f_fmax_20_4);
-        if (length <= 0) break;
-  FLD (f_fmax_frn) = ((((FLD (f_fmax_29_1)) << (4))) | (FLD (f_fmax_20_4)));
-      }
-      break;
-    case MEP_OPERAND_FMAX_FRN_INT :
-      {
-        length = extract_normal (cd, ex_info, insn_value, 0, 0, 29, 1, 32, total_length, pc, & fields->f_fmax_29_1);
-        if (length <= 0) break;
-        length = extract_normal (cd, ex_info, insn_value, 0, 0, 20, 4, 32, total_length, pc, & fields->f_fmax_20_4);
-        if (length <= 0) break;
-  FLD (f_fmax_frn) = ((((FLD (f_fmax_29_1)) << (4))) | (FLD (f_fmax_20_4)));
-      }
-      break;
-    case MEP_OPERAND_FMAX_RM :
-      length = extract_normal (cd, ex_info, insn_value, 0, 0, 8, 4, 32, total_length, pc, & fields->f_fmax_rm);
-      break;
     case MEP_OPERAND_HI :
+      break;
+    case MEP_OPERAND_IMM16P0 :
+      {
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 0, 8, 32, total_length, pc, & fields->f_ivc2_8u0);
+        if (length <= 0) break;
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 20, 8, 32, total_length, pc, & fields->f_ivc2_8u20);
+        if (length <= 0) break;
+{
+  FLD (f_ivc2_imm16p0) = ((FLD (f_ivc2_8u20)) | (((FLD (f_ivc2_8u0)) << (8))));
+}
+      }
+      break;
+    case MEP_OPERAND_IMM3P12 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 12, 3, 32, total_length, pc, & fields->f_ivc2_3u12);
+      break;
+    case MEP_OPERAND_IMM3P25 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 3, 32, total_length, pc, & fields->f_ivc2_3u25);
+      break;
+    case MEP_OPERAND_IMM3P4 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 4, 3, 32, total_length, pc, & fields->f_ivc2_3u4);
+      break;
+    case MEP_OPERAND_IMM3P5 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 5, 3, 32, total_length, pc, & fields->f_ivc2_3u5);
+      break;
+    case MEP_OPERAND_IMM3P9 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 9, 3, 32, total_length, pc, & fields->f_ivc2_3u9);
+      break;
+    case MEP_OPERAND_IMM4P10 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 10, 4, 32, total_length, pc, & fields->f_ivc2_4u10);
+      break;
+    case MEP_OPERAND_IMM4P4 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 4, 4, 32, total_length, pc, & fields->f_ivc2_4u4);
+      break;
+    case MEP_OPERAND_IMM4P8 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 8, 4, 32, total_length, pc, & fields->f_ivc2_4u8);
+      break;
+    case MEP_OPERAND_IMM5P23 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 23, 5, 32, total_length, pc, & fields->f_ivc2_5u23);
+      break;
+    case MEP_OPERAND_IMM5P3 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 3, 5, 32, total_length, pc, & fields->f_ivc2_5u3);
+      break;
+    case MEP_OPERAND_IMM5P7 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 7, 5, 32, total_length, pc, & fields->f_ivc2_5u7);
+      break;
+    case MEP_OPERAND_IMM5P8 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 8, 5, 32, total_length, pc, & fields->f_ivc2_5u8);
+      break;
+    case MEP_OPERAND_IMM6P2 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 2, 6, 32, total_length, pc, & fields->f_ivc2_6u2);
+      break;
+    case MEP_OPERAND_IMM6P6 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 6, 6, 32, total_length, pc, & fields->f_ivc2_6u6);
+      break;
+    case MEP_OPERAND_IMM8P0 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 0, 8, 32, total_length, pc, & fields->f_ivc2_8u0);
+      break;
+    case MEP_OPERAND_IMM8P20 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 20, 8, 32, total_length, pc, & fields->f_ivc2_8u20);
+      break;
+    case MEP_OPERAND_IMM8P4 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 4, 8, 32, total_length, pc, & fields->f_ivc2_8u4);
+      break;
+    case MEP_OPERAND_IVC_X_0_2 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 0, 2, 32, total_length, pc, & fields->f_ivc2_2u0);
+      break;
+    case MEP_OPERAND_IVC_X_0_3 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 0, 3, 32, total_length, pc, & fields->f_ivc2_3u0);
+      break;
+    case MEP_OPERAND_IVC_X_0_4 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 0, 4, 32, total_length, pc, & fields->f_ivc2_4u0);
+      break;
+    case MEP_OPERAND_IVC_X_0_5 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 0, 5, 32, total_length, pc, & fields->f_ivc2_5u0);
+      break;
+    case MEP_OPERAND_IVC_X_6_1 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 6, 1, 32, total_length, pc, & fields->f_ivc2_1u6);
+      break;
+    case MEP_OPERAND_IVC_X_6_2 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 6, 2, 32, total_length, pc, & fields->f_ivc2_2u6);
+      break;
+    case MEP_OPERAND_IVC_X_6_3 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 6, 3, 32, total_length, pc, & fields->f_ivc2_3u6);
+      break;
+    case MEP_OPERAND_IVC2_ACC0_0 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_1 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_2 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_3 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_4 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_5 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_6 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_7 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_0 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_1 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_2 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_3 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_4 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_5 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_6 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_7 :
+      break;
+    case MEP_OPERAND_IVC2_CC :
+      break;
+    case MEP_OPERAND_IVC2_COFA0 :
+      break;
+    case MEP_OPERAND_IVC2_COFA1 :
+      break;
+    case MEP_OPERAND_IVC2_COFR0 :
+      break;
+    case MEP_OPERAND_IVC2_COFR1 :
+      break;
+    case MEP_OPERAND_IVC2_CSAR0 :
+      break;
+    case MEP_OPERAND_IVC2_CSAR1 :
+      break;
+    case MEP_OPERAND_IVC2C3CCRN :
+      {
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 28, 2, 32, total_length, pc, & fields->f_ivc2_ccrn_c3hi);
+        if (length <= 0) break;
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 4, 4, 32, total_length, pc, & fields->f_ivc2_ccrn_c3lo);
+        if (length <= 0) break;
+  FLD (f_ivc2_ccrn_c3) = ((((FLD (f_ivc2_ccrn_c3hi)) << (4))) | (FLD (f_ivc2_ccrn_c3lo)));
+      }
+      break;
+    case MEP_OPERAND_IVC2CCRN :
+      {
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 20, 2, 32, total_length, pc, & fields->f_ivc2_ccrn_h2);
+        if (length <= 0) break;
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 0, 4, 32, total_length, pc, & fields->f_ivc2_ccrn_lo);
+        if (length <= 0) break;
+  FLD (f_ivc2_ccrn) = ((((FLD (f_ivc2_ccrn_h2)) << (4))) | (FLD (f_ivc2_ccrn_lo)));
+      }
+      break;
+    case MEP_OPERAND_IVC2CRN :
+      {
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 20, 1, 32, total_length, pc, & fields->f_ivc2_ccrn_h1);
+        if (length <= 0) break;
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 0, 4, 32, total_length, pc, & fields->f_ivc2_ccrn_lo);
+        if (length <= 0) break;
+  FLD (f_ivc2_crnx) = ((((FLD (f_ivc2_ccrn_h1)) << (4))) | (FLD (f_ivc2_ccrn_lo)));
+      }
+      break;
+    case MEP_OPERAND_IVC2RM :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 4, 4, 32, total_length, pc, & fields->f_ivc2_crm);
       break;
     case MEP_OPERAND_LO :
       break;
@@ -1312,6 +1649,9 @@ mep_cgen_extract_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_RL :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 12, 4, 32, total_length, pc, & fields->f_rl);
       break;
+    case MEP_OPERAND_RL5 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 20, 4, 32, total_length, pc, & fields->f_rl5);
+      break;
     case MEP_OPERAND_RM :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 8, 4, 32, total_length, pc, & fields->f_rm);
       break;
@@ -1368,11 +1708,31 @@ mep_cgen_extract_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_SIMM16 :
       length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 16, 16, 32, total_length, pc, & fields->f_16s16);
       break;
+    case MEP_OPERAND_SIMM16P0 :
+      {
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 0, 8, 32, total_length, pc, & fields->f_ivc2_8u0);
+        if (length <= 0) break;
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 20, 8, 32, total_length, pc, & fields->f_ivc2_8u20);
+        if (length <= 0) break;
+{
+  FLD (f_ivc2_simm16p0) = ((FLD (f_ivc2_8u20)) | (((FLD (f_ivc2_8u0)) << (8))));
+}
+      }
+      break;
     case MEP_OPERAND_SIMM6 :
       length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 8, 6, 32, total_length, pc, & fields->f_6s8);
       break;
     case MEP_OPERAND_SIMM8 :
       length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 8, 8, 32, total_length, pc, & fields->f_8s8);
+      break;
+    case MEP_OPERAND_SIMM8P0 :
+      length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 0, 8, 32, total_length, pc, & fields->f_ivc2_8s0);
+      break;
+    case MEP_OPERAND_SIMM8P20 :
+      length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 20, 8, 32, total_length, pc, & fields->f_ivc2_8s20);
+      break;
+    case MEP_OPERAND_SIMM8P4 :
+      length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 4, 8, 32, total_length, pc, & fields->f_ivc2_8s4);
       break;
     case MEP_OPERAND_SP :
       break;
@@ -1479,6 +1839,12 @@ mep_cgen_get_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_ADDR24A4 :
       value = fields->f_24u8a4n;
       break;
+    case MEP_OPERAND_C5RMUIMM20 :
+      value = fields->f_c5_rmuimm20;
+      break;
+    case MEP_OPERAND_C5RNMUIMM24 :
+      value = fields->f_c5_rnmuimm24;
+      break;
     case MEP_OPERAND_CALLNUM :
       value = fields->f_callnum;
       break;
@@ -1488,17 +1854,20 @@ mep_cgen_get_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_CCRN :
       value = fields->f_ccrn;
       break;
-    case MEP_OPERAND_CDISP8 :
-      value = fields->f_8s24;
+    case MEP_OPERAND_CDISP10 :
+      value = fields->f_cdisp10;
       break;
-    case MEP_OPERAND_CDISP8A2 :
-      value = fields->f_8s24a2;
+    case MEP_OPERAND_CDISP10A2 :
+      value = fields->f_cdisp10;
       break;
-    case MEP_OPERAND_CDISP8A4 :
-      value = fields->f_8s24a4;
+    case MEP_OPERAND_CDISP10A4 :
+      value = fields->f_cdisp10;
       break;
-    case MEP_OPERAND_CDISP8A8 :
-      value = fields->f_8s24a8;
+    case MEP_OPERAND_CDISP10A8 :
+      value = fields->f_cdisp10;
+      break;
+    case MEP_OPERAND_CDISP12 :
+      value = fields->f_12s20;
       break;
     case MEP_OPERAND_CIMM4 :
       value = fields->f_rn;
@@ -1527,6 +1896,24 @@ mep_cgen_get_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_CRNX64 :
       value = fields->f_crnx;
       break;
+    case MEP_OPERAND_CROC :
+      value = fields->f_ivc2_5u7;
+      break;
+    case MEP_OPERAND_CROP :
+      value = fields->f_ivc2_5u23;
+      break;
+    case MEP_OPERAND_CRPC :
+      value = fields->f_ivc2_5u26;
+      break;
+    case MEP_OPERAND_CRPP :
+      value = fields->f_ivc2_5u18;
+      break;
+    case MEP_OPERAND_CRQC :
+      value = fields->f_ivc2_5u21;
+      break;
+    case MEP_OPERAND_CRQP :
+      value = fields->f_ivc2_5u13;
+      break;
     case MEP_OPERAND_CSRN :
       value = fields->f_csrn;
       break;
@@ -1545,29 +1932,164 @@ mep_cgen_get_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_EXC :
       value = 0;
       break;
-    case MEP_OPERAND_FMAX_CCRN :
-      value = fields->f_fmax_4_4;
-      break;
-    case MEP_OPERAND_FMAX_FRD :
-      value = fields->f_fmax_frd;
-      break;
-    case MEP_OPERAND_FMAX_FRD_INT :
-      value = fields->f_fmax_frd;
-      break;
-    case MEP_OPERAND_FMAX_FRM :
-      value = fields->f_fmax_frm;
-      break;
-    case MEP_OPERAND_FMAX_FRN :
-      value = fields->f_fmax_frn;
-      break;
-    case MEP_OPERAND_FMAX_FRN_INT :
-      value = fields->f_fmax_frn;
-      break;
-    case MEP_OPERAND_FMAX_RM :
-      value = fields->f_fmax_rm;
-      break;
     case MEP_OPERAND_HI :
       value = 0;
+      break;
+    case MEP_OPERAND_IMM16P0 :
+      value = fields->f_ivc2_imm16p0;
+      break;
+    case MEP_OPERAND_IMM3P12 :
+      value = fields->f_ivc2_3u12;
+      break;
+    case MEP_OPERAND_IMM3P25 :
+      value = fields->f_ivc2_3u25;
+      break;
+    case MEP_OPERAND_IMM3P4 :
+      value = fields->f_ivc2_3u4;
+      break;
+    case MEP_OPERAND_IMM3P5 :
+      value = fields->f_ivc2_3u5;
+      break;
+    case MEP_OPERAND_IMM3P9 :
+      value = fields->f_ivc2_3u9;
+      break;
+    case MEP_OPERAND_IMM4P10 :
+      value = fields->f_ivc2_4u10;
+      break;
+    case MEP_OPERAND_IMM4P4 :
+      value = fields->f_ivc2_4u4;
+      break;
+    case MEP_OPERAND_IMM4P8 :
+      value = fields->f_ivc2_4u8;
+      break;
+    case MEP_OPERAND_IMM5P23 :
+      value = fields->f_ivc2_5u23;
+      break;
+    case MEP_OPERAND_IMM5P3 :
+      value = fields->f_ivc2_5u3;
+      break;
+    case MEP_OPERAND_IMM5P7 :
+      value = fields->f_ivc2_5u7;
+      break;
+    case MEP_OPERAND_IMM5P8 :
+      value = fields->f_ivc2_5u8;
+      break;
+    case MEP_OPERAND_IMM6P2 :
+      value = fields->f_ivc2_6u2;
+      break;
+    case MEP_OPERAND_IMM6P6 :
+      value = fields->f_ivc2_6u6;
+      break;
+    case MEP_OPERAND_IMM8P0 :
+      value = fields->f_ivc2_8u0;
+      break;
+    case MEP_OPERAND_IMM8P20 :
+      value = fields->f_ivc2_8u20;
+      break;
+    case MEP_OPERAND_IMM8P4 :
+      value = fields->f_ivc2_8u4;
+      break;
+    case MEP_OPERAND_IVC_X_0_2 :
+      value = fields->f_ivc2_2u0;
+      break;
+    case MEP_OPERAND_IVC_X_0_3 :
+      value = fields->f_ivc2_3u0;
+      break;
+    case MEP_OPERAND_IVC_X_0_4 :
+      value = fields->f_ivc2_4u0;
+      break;
+    case MEP_OPERAND_IVC_X_0_5 :
+      value = fields->f_ivc2_5u0;
+      break;
+    case MEP_OPERAND_IVC_X_6_1 :
+      value = fields->f_ivc2_1u6;
+      break;
+    case MEP_OPERAND_IVC_X_6_2 :
+      value = fields->f_ivc2_2u6;
+      break;
+    case MEP_OPERAND_IVC_X_6_3 :
+      value = fields->f_ivc2_3u6;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_0 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_1 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_2 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_3 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_4 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_5 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_6 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_7 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_0 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_1 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_2 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_3 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_4 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_5 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_6 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_7 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_CC :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_COFA0 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_COFA1 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_COFR0 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_COFR1 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_CSAR0 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_CSAR1 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2C3CCRN :
+      value = fields->f_ivc2_ccrn_c3;
+      break;
+    case MEP_OPERAND_IVC2CCRN :
+      value = fields->f_ivc2_ccrn;
+      break;
+    case MEP_OPERAND_IVC2CRN :
+      value = fields->f_ivc2_crnx;
+      break;
+    case MEP_OPERAND_IVC2RM :
+      value = fields->f_ivc2_crm;
       break;
     case MEP_OPERAND_LO :
       value = 0;
@@ -1619,6 +2141,9 @@ mep_cgen_get_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
       break;
     case MEP_OPERAND_RL :
       value = fields->f_rl;
+      break;
+    case MEP_OPERAND_RL5 :
+      value = fields->f_rl5;
       break;
     case MEP_OPERAND_RM :
       value = fields->f_rm;
@@ -1677,11 +2202,23 @@ mep_cgen_get_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_SIMM16 :
       value = fields->f_16s16;
       break;
+    case MEP_OPERAND_SIMM16P0 :
+      value = fields->f_ivc2_simm16p0;
+      break;
     case MEP_OPERAND_SIMM6 :
       value = fields->f_6s8;
       break;
     case MEP_OPERAND_SIMM8 :
       value = fields->f_8s8;
+      break;
+    case MEP_OPERAND_SIMM8P0 :
+      value = fields->f_ivc2_8s0;
+      break;
+    case MEP_OPERAND_SIMM8P20 :
+      value = fields->f_ivc2_8s20;
+      break;
+    case MEP_OPERAND_SIMM8P4 :
+      value = fields->f_ivc2_8s4;
       break;
     case MEP_OPERAND_SP :
       value = 0;
@@ -1754,6 +2291,12 @@ mep_cgen_get_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_ADDR24A4 :
       value = fields->f_24u8a4n;
       break;
+    case MEP_OPERAND_C5RMUIMM20 :
+      value = fields->f_c5_rmuimm20;
+      break;
+    case MEP_OPERAND_C5RNMUIMM24 :
+      value = fields->f_c5_rnmuimm24;
+      break;
     case MEP_OPERAND_CALLNUM :
       value = fields->f_callnum;
       break;
@@ -1763,17 +2306,20 @@ mep_cgen_get_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_CCRN :
       value = fields->f_ccrn;
       break;
-    case MEP_OPERAND_CDISP8 :
-      value = fields->f_8s24;
+    case MEP_OPERAND_CDISP10 :
+      value = fields->f_cdisp10;
       break;
-    case MEP_OPERAND_CDISP8A2 :
-      value = fields->f_8s24a2;
+    case MEP_OPERAND_CDISP10A2 :
+      value = fields->f_cdisp10;
       break;
-    case MEP_OPERAND_CDISP8A4 :
-      value = fields->f_8s24a4;
+    case MEP_OPERAND_CDISP10A4 :
+      value = fields->f_cdisp10;
       break;
-    case MEP_OPERAND_CDISP8A8 :
-      value = fields->f_8s24a8;
+    case MEP_OPERAND_CDISP10A8 :
+      value = fields->f_cdisp10;
+      break;
+    case MEP_OPERAND_CDISP12 :
+      value = fields->f_12s20;
       break;
     case MEP_OPERAND_CIMM4 :
       value = fields->f_rn;
@@ -1802,6 +2348,24 @@ mep_cgen_get_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_CRNX64 :
       value = fields->f_crnx;
       break;
+    case MEP_OPERAND_CROC :
+      value = fields->f_ivc2_5u7;
+      break;
+    case MEP_OPERAND_CROP :
+      value = fields->f_ivc2_5u23;
+      break;
+    case MEP_OPERAND_CRPC :
+      value = fields->f_ivc2_5u26;
+      break;
+    case MEP_OPERAND_CRPP :
+      value = fields->f_ivc2_5u18;
+      break;
+    case MEP_OPERAND_CRQC :
+      value = fields->f_ivc2_5u21;
+      break;
+    case MEP_OPERAND_CRQP :
+      value = fields->f_ivc2_5u13;
+      break;
     case MEP_OPERAND_CSRN :
       value = fields->f_csrn;
       break;
@@ -1820,29 +2384,164 @@ mep_cgen_get_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_EXC :
       value = 0;
       break;
-    case MEP_OPERAND_FMAX_CCRN :
-      value = fields->f_fmax_4_4;
-      break;
-    case MEP_OPERAND_FMAX_FRD :
-      value = fields->f_fmax_frd;
-      break;
-    case MEP_OPERAND_FMAX_FRD_INT :
-      value = fields->f_fmax_frd;
-      break;
-    case MEP_OPERAND_FMAX_FRM :
-      value = fields->f_fmax_frm;
-      break;
-    case MEP_OPERAND_FMAX_FRN :
-      value = fields->f_fmax_frn;
-      break;
-    case MEP_OPERAND_FMAX_FRN_INT :
-      value = fields->f_fmax_frn;
-      break;
-    case MEP_OPERAND_FMAX_RM :
-      value = fields->f_fmax_rm;
-      break;
     case MEP_OPERAND_HI :
       value = 0;
+      break;
+    case MEP_OPERAND_IMM16P0 :
+      value = fields->f_ivc2_imm16p0;
+      break;
+    case MEP_OPERAND_IMM3P12 :
+      value = fields->f_ivc2_3u12;
+      break;
+    case MEP_OPERAND_IMM3P25 :
+      value = fields->f_ivc2_3u25;
+      break;
+    case MEP_OPERAND_IMM3P4 :
+      value = fields->f_ivc2_3u4;
+      break;
+    case MEP_OPERAND_IMM3P5 :
+      value = fields->f_ivc2_3u5;
+      break;
+    case MEP_OPERAND_IMM3P9 :
+      value = fields->f_ivc2_3u9;
+      break;
+    case MEP_OPERAND_IMM4P10 :
+      value = fields->f_ivc2_4u10;
+      break;
+    case MEP_OPERAND_IMM4P4 :
+      value = fields->f_ivc2_4u4;
+      break;
+    case MEP_OPERAND_IMM4P8 :
+      value = fields->f_ivc2_4u8;
+      break;
+    case MEP_OPERAND_IMM5P23 :
+      value = fields->f_ivc2_5u23;
+      break;
+    case MEP_OPERAND_IMM5P3 :
+      value = fields->f_ivc2_5u3;
+      break;
+    case MEP_OPERAND_IMM5P7 :
+      value = fields->f_ivc2_5u7;
+      break;
+    case MEP_OPERAND_IMM5P8 :
+      value = fields->f_ivc2_5u8;
+      break;
+    case MEP_OPERAND_IMM6P2 :
+      value = fields->f_ivc2_6u2;
+      break;
+    case MEP_OPERAND_IMM6P6 :
+      value = fields->f_ivc2_6u6;
+      break;
+    case MEP_OPERAND_IMM8P0 :
+      value = fields->f_ivc2_8u0;
+      break;
+    case MEP_OPERAND_IMM8P20 :
+      value = fields->f_ivc2_8u20;
+      break;
+    case MEP_OPERAND_IMM8P4 :
+      value = fields->f_ivc2_8u4;
+      break;
+    case MEP_OPERAND_IVC_X_0_2 :
+      value = fields->f_ivc2_2u0;
+      break;
+    case MEP_OPERAND_IVC_X_0_3 :
+      value = fields->f_ivc2_3u0;
+      break;
+    case MEP_OPERAND_IVC_X_0_4 :
+      value = fields->f_ivc2_4u0;
+      break;
+    case MEP_OPERAND_IVC_X_0_5 :
+      value = fields->f_ivc2_5u0;
+      break;
+    case MEP_OPERAND_IVC_X_6_1 :
+      value = fields->f_ivc2_1u6;
+      break;
+    case MEP_OPERAND_IVC_X_6_2 :
+      value = fields->f_ivc2_2u6;
+      break;
+    case MEP_OPERAND_IVC_X_6_3 :
+      value = fields->f_ivc2_3u6;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_0 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_1 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_2 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_3 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_4 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_5 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_6 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_7 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_0 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_1 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_2 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_3 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_4 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_5 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_6 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_ACC1_7 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_CC :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_COFA0 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_COFA1 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_COFR0 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_COFR1 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_CSAR0 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2_CSAR1 :
+      value = 0;
+      break;
+    case MEP_OPERAND_IVC2C3CCRN :
+      value = fields->f_ivc2_ccrn_c3;
+      break;
+    case MEP_OPERAND_IVC2CCRN :
+      value = fields->f_ivc2_ccrn;
+      break;
+    case MEP_OPERAND_IVC2CRN :
+      value = fields->f_ivc2_crnx;
+      break;
+    case MEP_OPERAND_IVC2RM :
+      value = fields->f_ivc2_crm;
       break;
     case MEP_OPERAND_LO :
       value = 0;
@@ -1894,6 +2593,9 @@ mep_cgen_get_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
       break;
     case MEP_OPERAND_RL :
       value = fields->f_rl;
+      break;
+    case MEP_OPERAND_RL5 :
+      value = fields->f_rl5;
       break;
     case MEP_OPERAND_RM :
       value = fields->f_rm;
@@ -1952,11 +2654,23 @@ mep_cgen_get_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_SIMM16 :
       value = fields->f_16s16;
       break;
+    case MEP_OPERAND_SIMM16P0 :
+      value = fields->f_ivc2_simm16p0;
+      break;
     case MEP_OPERAND_SIMM6 :
       value = fields->f_6s8;
       break;
     case MEP_OPERAND_SIMM8 :
       value = fields->f_8s8;
+      break;
+    case MEP_OPERAND_SIMM8P0 :
+      value = fields->f_ivc2_8s0;
+      break;
+    case MEP_OPERAND_SIMM8P20 :
+      value = fields->f_ivc2_8s20;
+      break;
+    case MEP_OPERAND_SIMM8P4 :
+      value = fields->f_ivc2_8s4;
       break;
     case MEP_OPERAND_SP :
       value = 0;
@@ -2036,6 +2750,12 @@ mep_cgen_set_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_ADDR24A4 :
       fields->f_24u8a4n = value;
       break;
+    case MEP_OPERAND_C5RMUIMM20 :
+      fields->f_c5_rmuimm20 = value;
+      break;
+    case MEP_OPERAND_C5RNMUIMM24 :
+      fields->f_c5_rnmuimm24 = value;
+      break;
     case MEP_OPERAND_CALLNUM :
       fields->f_callnum = value;
       break;
@@ -2045,17 +2765,20 @@ mep_cgen_set_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_CCRN :
       fields->f_ccrn = value;
       break;
-    case MEP_OPERAND_CDISP8 :
-      fields->f_8s24 = value;
+    case MEP_OPERAND_CDISP10 :
+      fields->f_cdisp10 = value;
       break;
-    case MEP_OPERAND_CDISP8A2 :
-      fields->f_8s24a2 = value;
+    case MEP_OPERAND_CDISP10A2 :
+      fields->f_cdisp10 = value;
       break;
-    case MEP_OPERAND_CDISP8A4 :
-      fields->f_8s24a4 = value;
+    case MEP_OPERAND_CDISP10A4 :
+      fields->f_cdisp10 = value;
       break;
-    case MEP_OPERAND_CDISP8A8 :
-      fields->f_8s24a8 = value;
+    case MEP_OPERAND_CDISP10A8 :
+      fields->f_cdisp10 = value;
+      break;
+    case MEP_OPERAND_CDISP12 :
+      fields->f_12s20 = value;
       break;
     case MEP_OPERAND_CIMM4 :
       fields->f_rn = value;
@@ -2083,6 +2806,24 @@ mep_cgen_set_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_CRNX64 :
       fields->f_crnx = value;
       break;
+    case MEP_OPERAND_CROC :
+      fields->f_ivc2_5u7 = value;
+      break;
+    case MEP_OPERAND_CROP :
+      fields->f_ivc2_5u23 = value;
+      break;
+    case MEP_OPERAND_CRPC :
+      fields->f_ivc2_5u26 = value;
+      break;
+    case MEP_OPERAND_CRPP :
+      fields->f_ivc2_5u18 = value;
+      break;
+    case MEP_OPERAND_CRQC :
+      fields->f_ivc2_5u21 = value;
+      break;
+    case MEP_OPERAND_CRQP :
+      fields->f_ivc2_5u13 = value;
+      break;
     case MEP_OPERAND_CSRN :
       fields->f_csrn = value;
       break;
@@ -2097,28 +2838,140 @@ mep_cgen_set_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
       break;
     case MEP_OPERAND_EXC :
       break;
-    case MEP_OPERAND_FMAX_CCRN :
-      fields->f_fmax_4_4 = value;
-      break;
-    case MEP_OPERAND_FMAX_FRD :
-      fields->f_fmax_frd = value;
-      break;
-    case MEP_OPERAND_FMAX_FRD_INT :
-      fields->f_fmax_frd = value;
-      break;
-    case MEP_OPERAND_FMAX_FRM :
-      fields->f_fmax_frm = value;
-      break;
-    case MEP_OPERAND_FMAX_FRN :
-      fields->f_fmax_frn = value;
-      break;
-    case MEP_OPERAND_FMAX_FRN_INT :
-      fields->f_fmax_frn = value;
-      break;
-    case MEP_OPERAND_FMAX_RM :
-      fields->f_fmax_rm = value;
-      break;
     case MEP_OPERAND_HI :
+      break;
+    case MEP_OPERAND_IMM16P0 :
+      fields->f_ivc2_imm16p0 = value;
+      break;
+    case MEP_OPERAND_IMM3P12 :
+      fields->f_ivc2_3u12 = value;
+      break;
+    case MEP_OPERAND_IMM3P25 :
+      fields->f_ivc2_3u25 = value;
+      break;
+    case MEP_OPERAND_IMM3P4 :
+      fields->f_ivc2_3u4 = value;
+      break;
+    case MEP_OPERAND_IMM3P5 :
+      fields->f_ivc2_3u5 = value;
+      break;
+    case MEP_OPERAND_IMM3P9 :
+      fields->f_ivc2_3u9 = value;
+      break;
+    case MEP_OPERAND_IMM4P10 :
+      fields->f_ivc2_4u10 = value;
+      break;
+    case MEP_OPERAND_IMM4P4 :
+      fields->f_ivc2_4u4 = value;
+      break;
+    case MEP_OPERAND_IMM4P8 :
+      fields->f_ivc2_4u8 = value;
+      break;
+    case MEP_OPERAND_IMM5P23 :
+      fields->f_ivc2_5u23 = value;
+      break;
+    case MEP_OPERAND_IMM5P3 :
+      fields->f_ivc2_5u3 = value;
+      break;
+    case MEP_OPERAND_IMM5P7 :
+      fields->f_ivc2_5u7 = value;
+      break;
+    case MEP_OPERAND_IMM5P8 :
+      fields->f_ivc2_5u8 = value;
+      break;
+    case MEP_OPERAND_IMM6P2 :
+      fields->f_ivc2_6u2 = value;
+      break;
+    case MEP_OPERAND_IMM6P6 :
+      fields->f_ivc2_6u6 = value;
+      break;
+    case MEP_OPERAND_IMM8P0 :
+      fields->f_ivc2_8u0 = value;
+      break;
+    case MEP_OPERAND_IMM8P20 :
+      fields->f_ivc2_8u20 = value;
+      break;
+    case MEP_OPERAND_IMM8P4 :
+      fields->f_ivc2_8u4 = value;
+      break;
+    case MEP_OPERAND_IVC_X_0_2 :
+      fields->f_ivc2_2u0 = value;
+      break;
+    case MEP_OPERAND_IVC_X_0_3 :
+      fields->f_ivc2_3u0 = value;
+      break;
+    case MEP_OPERAND_IVC_X_0_4 :
+      fields->f_ivc2_4u0 = value;
+      break;
+    case MEP_OPERAND_IVC_X_0_5 :
+      fields->f_ivc2_5u0 = value;
+      break;
+    case MEP_OPERAND_IVC_X_6_1 :
+      fields->f_ivc2_1u6 = value;
+      break;
+    case MEP_OPERAND_IVC_X_6_2 :
+      fields->f_ivc2_2u6 = value;
+      break;
+    case MEP_OPERAND_IVC_X_6_3 :
+      fields->f_ivc2_3u6 = value;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_0 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_1 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_2 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_3 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_4 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_5 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_6 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_7 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_0 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_1 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_2 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_3 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_4 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_5 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_6 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_7 :
+      break;
+    case MEP_OPERAND_IVC2_CC :
+      break;
+    case MEP_OPERAND_IVC2_COFA0 :
+      break;
+    case MEP_OPERAND_IVC2_COFA1 :
+      break;
+    case MEP_OPERAND_IVC2_COFR0 :
+      break;
+    case MEP_OPERAND_IVC2_COFR1 :
+      break;
+    case MEP_OPERAND_IVC2_CSAR0 :
+      break;
+    case MEP_OPERAND_IVC2_CSAR1 :
+      break;
+    case MEP_OPERAND_IVC2C3CCRN :
+      fields->f_ivc2_ccrn_c3 = value;
+      break;
+    case MEP_OPERAND_IVC2CCRN :
+      fields->f_ivc2_ccrn = value;
+      break;
+    case MEP_OPERAND_IVC2CRN :
+      fields->f_ivc2_crnx = value;
+      break;
+    case MEP_OPERAND_IVC2RM :
+      fields->f_ivc2_crm = value;
       break;
     case MEP_OPERAND_LO :
       break;
@@ -2159,6 +3012,9 @@ mep_cgen_set_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
       break;
     case MEP_OPERAND_RL :
       fields->f_rl = value;
+      break;
+    case MEP_OPERAND_RL5 :
+      fields->f_rl5 = value;
       break;
     case MEP_OPERAND_RM :
       fields->f_rm = value;
@@ -2216,11 +3072,23 @@ mep_cgen_set_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_SIMM16 :
       fields->f_16s16 = value;
       break;
+    case MEP_OPERAND_SIMM16P0 :
+      fields->f_ivc2_simm16p0 = value;
+      break;
     case MEP_OPERAND_SIMM6 :
       fields->f_6s8 = value;
       break;
     case MEP_OPERAND_SIMM8 :
       fields->f_8s8 = value;
+      break;
+    case MEP_OPERAND_SIMM8P0 :
+      fields->f_ivc2_8s0 = value;
+      break;
+    case MEP_OPERAND_SIMM8P20 :
+      fields->f_ivc2_8s20 = value;
+      break;
+    case MEP_OPERAND_SIMM8P4 :
+      fields->f_ivc2_8s4 = value;
       break;
     case MEP_OPERAND_SP :
       break;
@@ -2285,6 +3153,12 @@ mep_cgen_set_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_ADDR24A4 :
       fields->f_24u8a4n = value;
       break;
+    case MEP_OPERAND_C5RMUIMM20 :
+      fields->f_c5_rmuimm20 = value;
+      break;
+    case MEP_OPERAND_C5RNMUIMM24 :
+      fields->f_c5_rnmuimm24 = value;
+      break;
     case MEP_OPERAND_CALLNUM :
       fields->f_callnum = value;
       break;
@@ -2294,17 +3168,20 @@ mep_cgen_set_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_CCRN :
       fields->f_ccrn = value;
       break;
-    case MEP_OPERAND_CDISP8 :
-      fields->f_8s24 = value;
+    case MEP_OPERAND_CDISP10 :
+      fields->f_cdisp10 = value;
       break;
-    case MEP_OPERAND_CDISP8A2 :
-      fields->f_8s24a2 = value;
+    case MEP_OPERAND_CDISP10A2 :
+      fields->f_cdisp10 = value;
       break;
-    case MEP_OPERAND_CDISP8A4 :
-      fields->f_8s24a4 = value;
+    case MEP_OPERAND_CDISP10A4 :
+      fields->f_cdisp10 = value;
       break;
-    case MEP_OPERAND_CDISP8A8 :
-      fields->f_8s24a8 = value;
+    case MEP_OPERAND_CDISP10A8 :
+      fields->f_cdisp10 = value;
+      break;
+    case MEP_OPERAND_CDISP12 :
+      fields->f_12s20 = value;
       break;
     case MEP_OPERAND_CIMM4 :
       fields->f_rn = value;
@@ -2332,6 +3209,24 @@ mep_cgen_set_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_CRNX64 :
       fields->f_crnx = value;
       break;
+    case MEP_OPERAND_CROC :
+      fields->f_ivc2_5u7 = value;
+      break;
+    case MEP_OPERAND_CROP :
+      fields->f_ivc2_5u23 = value;
+      break;
+    case MEP_OPERAND_CRPC :
+      fields->f_ivc2_5u26 = value;
+      break;
+    case MEP_OPERAND_CRPP :
+      fields->f_ivc2_5u18 = value;
+      break;
+    case MEP_OPERAND_CRQC :
+      fields->f_ivc2_5u21 = value;
+      break;
+    case MEP_OPERAND_CRQP :
+      fields->f_ivc2_5u13 = value;
+      break;
     case MEP_OPERAND_CSRN :
       fields->f_csrn = value;
       break;
@@ -2346,28 +3241,140 @@ mep_cgen_set_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
       break;
     case MEP_OPERAND_EXC :
       break;
-    case MEP_OPERAND_FMAX_CCRN :
-      fields->f_fmax_4_4 = value;
-      break;
-    case MEP_OPERAND_FMAX_FRD :
-      fields->f_fmax_frd = value;
-      break;
-    case MEP_OPERAND_FMAX_FRD_INT :
-      fields->f_fmax_frd = value;
-      break;
-    case MEP_OPERAND_FMAX_FRM :
-      fields->f_fmax_frm = value;
-      break;
-    case MEP_OPERAND_FMAX_FRN :
-      fields->f_fmax_frn = value;
-      break;
-    case MEP_OPERAND_FMAX_FRN_INT :
-      fields->f_fmax_frn = value;
-      break;
-    case MEP_OPERAND_FMAX_RM :
-      fields->f_fmax_rm = value;
-      break;
     case MEP_OPERAND_HI :
+      break;
+    case MEP_OPERAND_IMM16P0 :
+      fields->f_ivc2_imm16p0 = value;
+      break;
+    case MEP_OPERAND_IMM3P12 :
+      fields->f_ivc2_3u12 = value;
+      break;
+    case MEP_OPERAND_IMM3P25 :
+      fields->f_ivc2_3u25 = value;
+      break;
+    case MEP_OPERAND_IMM3P4 :
+      fields->f_ivc2_3u4 = value;
+      break;
+    case MEP_OPERAND_IMM3P5 :
+      fields->f_ivc2_3u5 = value;
+      break;
+    case MEP_OPERAND_IMM3P9 :
+      fields->f_ivc2_3u9 = value;
+      break;
+    case MEP_OPERAND_IMM4P10 :
+      fields->f_ivc2_4u10 = value;
+      break;
+    case MEP_OPERAND_IMM4P4 :
+      fields->f_ivc2_4u4 = value;
+      break;
+    case MEP_OPERAND_IMM4P8 :
+      fields->f_ivc2_4u8 = value;
+      break;
+    case MEP_OPERAND_IMM5P23 :
+      fields->f_ivc2_5u23 = value;
+      break;
+    case MEP_OPERAND_IMM5P3 :
+      fields->f_ivc2_5u3 = value;
+      break;
+    case MEP_OPERAND_IMM5P7 :
+      fields->f_ivc2_5u7 = value;
+      break;
+    case MEP_OPERAND_IMM5P8 :
+      fields->f_ivc2_5u8 = value;
+      break;
+    case MEP_OPERAND_IMM6P2 :
+      fields->f_ivc2_6u2 = value;
+      break;
+    case MEP_OPERAND_IMM6P6 :
+      fields->f_ivc2_6u6 = value;
+      break;
+    case MEP_OPERAND_IMM8P0 :
+      fields->f_ivc2_8u0 = value;
+      break;
+    case MEP_OPERAND_IMM8P20 :
+      fields->f_ivc2_8u20 = value;
+      break;
+    case MEP_OPERAND_IMM8P4 :
+      fields->f_ivc2_8u4 = value;
+      break;
+    case MEP_OPERAND_IVC_X_0_2 :
+      fields->f_ivc2_2u0 = value;
+      break;
+    case MEP_OPERAND_IVC_X_0_3 :
+      fields->f_ivc2_3u0 = value;
+      break;
+    case MEP_OPERAND_IVC_X_0_4 :
+      fields->f_ivc2_4u0 = value;
+      break;
+    case MEP_OPERAND_IVC_X_0_5 :
+      fields->f_ivc2_5u0 = value;
+      break;
+    case MEP_OPERAND_IVC_X_6_1 :
+      fields->f_ivc2_1u6 = value;
+      break;
+    case MEP_OPERAND_IVC_X_6_2 :
+      fields->f_ivc2_2u6 = value;
+      break;
+    case MEP_OPERAND_IVC_X_6_3 :
+      fields->f_ivc2_3u6 = value;
+      break;
+    case MEP_OPERAND_IVC2_ACC0_0 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_1 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_2 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_3 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_4 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_5 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_6 :
+      break;
+    case MEP_OPERAND_IVC2_ACC0_7 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_0 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_1 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_2 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_3 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_4 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_5 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_6 :
+      break;
+    case MEP_OPERAND_IVC2_ACC1_7 :
+      break;
+    case MEP_OPERAND_IVC2_CC :
+      break;
+    case MEP_OPERAND_IVC2_COFA0 :
+      break;
+    case MEP_OPERAND_IVC2_COFA1 :
+      break;
+    case MEP_OPERAND_IVC2_COFR0 :
+      break;
+    case MEP_OPERAND_IVC2_COFR1 :
+      break;
+    case MEP_OPERAND_IVC2_CSAR0 :
+      break;
+    case MEP_OPERAND_IVC2_CSAR1 :
+      break;
+    case MEP_OPERAND_IVC2C3CCRN :
+      fields->f_ivc2_ccrn_c3 = value;
+      break;
+    case MEP_OPERAND_IVC2CCRN :
+      fields->f_ivc2_ccrn = value;
+      break;
+    case MEP_OPERAND_IVC2CRN :
+      fields->f_ivc2_crnx = value;
+      break;
+    case MEP_OPERAND_IVC2RM :
+      fields->f_ivc2_crm = value;
       break;
     case MEP_OPERAND_LO :
       break;
@@ -2408,6 +3415,9 @@ mep_cgen_set_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
       break;
     case MEP_OPERAND_RL :
       fields->f_rl = value;
+      break;
+    case MEP_OPERAND_RL5 :
+      fields->f_rl5 = value;
       break;
     case MEP_OPERAND_RM :
       fields->f_rm = value;
@@ -2465,11 +3475,23 @@ mep_cgen_set_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     case MEP_OPERAND_SIMM16 :
       fields->f_16s16 = value;
       break;
+    case MEP_OPERAND_SIMM16P0 :
+      fields->f_ivc2_simm16p0 = value;
+      break;
     case MEP_OPERAND_SIMM6 :
       fields->f_6s8 = value;
       break;
     case MEP_OPERAND_SIMM8 :
       fields->f_8s8 = value;
+      break;
+    case MEP_OPERAND_SIMM8P0 :
+      fields->f_ivc2_8s0 = value;
+      break;
+    case MEP_OPERAND_SIMM8P20 :
+      fields->f_ivc2_8s20 = value;
+      break;
+    case MEP_OPERAND_SIMM8P4 :
+      fields->f_ivc2_8s4 = value;
       break;
     case MEP_OPERAND_SP :
       break;

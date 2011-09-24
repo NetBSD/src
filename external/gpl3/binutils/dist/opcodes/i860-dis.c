@@ -1,5 +1,5 @@
 /* Disassembler for the i860.
-   Copyright 2000, 2003, 2007 Free Software Foundation, Inc.
+   Copyright 2000, 2003, 2005, 2007 Free Software Foundation, Inc.
 
    Contributed by Jason Eckhardt <jle@cygnus.com>.
 

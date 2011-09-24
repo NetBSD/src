@@ -4,7 +4,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-asm.in isn't
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2005, 2007
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2005, 2007, 2008, 2010
    Free Software Foundation, Inc.
 
    This file is part of libopcodes.
@@ -51,7 +51,10 @@ static const char * parse_insn_normal
 
 /* -- asm.c */
 
+#include "elf/mep.h"
+
 #define CGEN_VALIDATE_INSN_SUPPORTED
+#define mep_cgen_insn_supported mep_cgen_insn_supported_asm
 
        const char * parse_csrn       (CGEN_CPU_DESC, const char **, CGEN_KEYWORD *, long *);
        const char * parse_tpreg      (CGEN_CPU_DESC, const char **, CGEN_KEYWORD *, long *);
@@ -59,7 +62,9 @@ static const char * parse_insn_normal
        const char * parse_mep_align  (CGEN_CPU_DESC, const char **, enum cgen_operand_type, long *);
        const char * parse_mep_alignu (CGEN_CPU_DESC, const char **, enum cgen_operand_type, unsigned long *);
 static const char * parse_signed16   (CGEN_CPU_DESC, const char **, int, long *);
+static const char * parse_signed16_range   (CGEN_CPU_DESC, const char **, int, long *) ATTRIBUTE_UNUSED;
 static const char * parse_unsigned16 (CGEN_CPU_DESC, const char **, int, unsigned long *);
+static const char * parse_unsigned16_range (CGEN_CPU_DESC, const char **, int, unsigned long *) ATTRIBUTE_UNUSED;
 static const char * parse_lo16       (CGEN_CPU_DESC, const char **, int, long *, long);
 static const char * parse_unsigned7  (CGEN_CPU_DESC, const char **, enum cgen_operand_type, unsigned long *);
 static const char * parse_zero       (CGEN_CPU_DESC, const char **, int, long *);
@@ -84,20 +89,30 @@ parse_csrn (CGEN_CPU_DESC cd, const char **strp,
 
 /* begin-cop-ip-parse-handlers */
 static const char *
-parse_fmax_cr (CGEN_CPU_DESC cd,
+parse_ivc2_cr (CGEN_CPU_DESC,
+	const char **,
+	CGEN_KEYWORD *,
+	long *) ATTRIBUTE_UNUSED;
+static const char *
+parse_ivc2_cr (CGEN_CPU_DESC cd,
 	const char **strp,
 	CGEN_KEYWORD *keyword_table  ATTRIBUTE_UNUSED,
 	long *field)
 {
-  return cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_cr_fmax, field);
+  return cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_cr_ivc2, field);
 }
 static const char *
-parse_fmax_ccr (CGEN_CPU_DESC cd,
+parse_ivc2_ccr (CGEN_CPU_DESC,
+	const char **,
+	CGEN_KEYWORD *,
+	long *) ATTRIBUTE_UNUSED;
+static const char *
+parse_ivc2_ccr (CGEN_CPU_DESC cd,
 	const char **strp,
 	CGEN_KEYWORD *keyword_table  ATTRIBUTE_UNUSED,
 	long *field)
 {
-  return cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_fmax, field);
+  return cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, field);
 }
 /* end-cop-ip-parse-handlers */
 
@@ -142,9 +157,6 @@ parse_mep_align (CGEN_CPU_DESC cd, const char ** strp,
     case MEP_OPERAND_PCREL12A2:
     case MEP_OPERAND_PCREL17A2:
     case MEP_OPERAND_PCREL24A2:
-    case MEP_OPERAND_CDISP8A2:
-    case MEP_OPERAND_CDISP8A4:
-    case MEP_OPERAND_CDISP8A8:
       err = cgen_parse_signed_integer   (cd, strp, type, field);
       break;
     case MEP_OPERAND_PCABS24A2:
@@ -171,16 +183,13 @@ parse_mep_align (CGEN_CPU_DESC cd, const char ** strp,
     case MEP_OPERAND_PCREL24A2:
     case MEP_OPERAND_PCABS24A2:
     case MEP_OPERAND_UDISP7A2:
-    case MEP_OPERAND_CDISP8A2:
       lsbs = *field & 1;
       break;
     case MEP_OPERAND_UDISP7A4:
     case MEP_OPERAND_UIMM7A4:
     case MEP_OPERAND_ADDR24A4:
-    case MEP_OPERAND_CDISP8A4:
       lsbs = *field & 3;
       break;
-    case MEP_OPERAND_CDISP8A8:
       lsbs = *field & 7;
       break;
     default:
@@ -308,6 +317,46 @@ parse_unsigned16 (CGEN_CPU_DESC cd,
 		  unsigned long *valuep)
 {
   return parse_lo16 (cd, strp, opindex, (long *) valuep, 0);
+}
+
+static const char *
+parse_signed16_range (CGEN_CPU_DESC cd,
+		      const char **strp,
+		      int opindex,
+		      signed long *valuep)
+{
+  const char *errmsg = 0;
+  signed long value;
+
+  errmsg = cgen_parse_signed_integer (cd, strp, opindex, & value);
+  if (errmsg)
+    return errmsg;
+
+  if (value < -32768 || value > 32767)
+    return _("Immediate is out of range -32768 to 32767");
+
+  *valuep = value;
+  return 0;
+}
+
+static const char *
+parse_unsigned16_range (CGEN_CPU_DESC cd,
+			const char **strp,
+			int opindex,
+			unsigned long *valuep)
+{
+  const char *errmsg = 0;
+  unsigned long value;
+
+  errmsg = cgen_parse_unsigned_integer (cd, strp, opindex, & value);
+  if (errmsg)
+    return errmsg;
+
+  if (value > 65535)
+    return _("Immediate is out of range 0 to 65535");
+
+  *valuep = value;
+  return 0;
 }
 
 /* A special case of parse_signed16 which accepts only the value zero.  */
@@ -457,6 +506,66 @@ parse_unsigned7 (CGEN_CPU_DESC cd, const char **strp,
   return parse_mep_alignu (cd, strp, opindex, valuep);
 }
 
+static ATTRIBUTE_UNUSED const char *
+parse_cdisp10 (CGEN_CPU_DESC cd,
+	       const char **strp,
+	       int opindex,
+	       long *valuep)
+{
+  const char *errmsg = 0;
+  signed long value;
+  long have_zero = 0;
+  int wide = 0;
+  int alignment;
+
+  switch (opindex)
+    {
+    case MEP_OPERAND_CDISP10A4:
+      alignment = 2;
+      break;
+    case MEP_OPERAND_CDISP10A2:
+      alignment = 1;
+      break;
+    case MEP_OPERAND_CDISP10:
+    default:
+      alignment = 0;
+      break;
+    }
+
+  if ((MEP_CPU & EF_MEP_CPU_MASK) == EF_MEP_CPU_C5)
+    wide = 1;
+
+  if (strncmp (*strp, "0x0", 3) == 0 
+      || (**strp == '0' && *(*strp + 1) != 'x'))
+    have_zero = 1;
+
+  errmsg = cgen_parse_signed_integer (cd, strp, opindex, & value);
+  if (errmsg)
+    return errmsg;
+
+  if (wide)
+    {
+      if (value < -512 || value > 511)
+	return _("Immediate is out of range -512 to 511");
+    }
+  else
+    {
+      if (value < -128 || value > 127)
+	return _("Immediate is out of range -128 to 127");
+    }
+
+  if (value & ((1<<alignment)-1))
+    return _("Value is not aligned enough");
+
+  /* If this field may require a relocation then use larger dsp16.  */
+  if (! have_zero && value == 0)
+    return (wide ? _("Immediate is out of range -512 to 511")
+	    : _("Immediate is out of range -128 to 127"));
+
+  *valuep = value;
+  return 0;
+}
+
 /* BEGIN LIGHTWEIGHT MACRO PROCESSOR.  */
 
 #define MAXARGS 9
@@ -524,7 +633,7 @@ expand_macro (arg *args, int narg, macro *mac)
   char *result = 0, *rescanned_result = 0;
   char *e = mac->expansion;
   char *mark = e;
-  int arg = 0;
+  int mac_arg = 0;
 
   /*  printf("expanding macro %s with %d args\n", mac->name, narg + 1); */
   while (*e)
@@ -535,9 +644,9 @@ expand_macro (arg *args, int narg, macro *mac)
 	  ((*(e + 1) - '1') <= narg))
 	{
 	  result = str_append (result, mark, e - mark);
-	  arg = (*(e + 1) - '1');
-	  /* printf("replacing `%d with %s\n", arg+1, args[arg].start); */
-	  result = str_append (result, args[arg].start, args[arg].len);
+	  mac_arg = (*(e + 1) - '1');
+	  /* printf("replacing `%d with %s\n", mac_arg+1, args[mac_arg].start); */
+	  result = str_append (result, args[mac_arg].start, args[mac_arg].len);
 	  ++e;
 	  mark = e+1;
 	}
@@ -569,8 +678,7 @@ expand_string (const char *in, int first_only)
   arg args[MAXARGS];
   int state = IN_TEXT;
   const char *mark = in;
-  macro *macro = 0;
-
+  macro *pmacro = NULL;
   char *expansion = 0;
   char *result = 0;
 
@@ -581,18 +689,18 @@ expand_string (const char *in, int first_only)
 	case IN_TEXT:
 	  if (*in == '%' && *(in + 1) && (!first_only || num_expansions == 0)) 
 	    {	      
-	      macro = lookup_macro (in + 1);
-	      if (macro)
+	      pmacro = lookup_macro (in + 1);
+	      if (pmacro)
 		{
 		  /* printf("entering state %d at '%s'...\n", state, in); */
 		  result = str_append (result, mark, in - mark);
 		  mark = in;
-		  in += 1 + strlen (macro->name);
+		  in += 1 + strlen (pmacro->name);
 		  while (*in == ' ') ++in;
 		  if (*in != '(')
 		    {
 		      state = IN_TEXT;		      
-		      macro = 0;
+		      pmacro = NULL;
 		    }
 		  else
 		    {
@@ -618,10 +726,10 @@ expand_string (const char *in, int first_only)
 		case ')':
 		  state = IN_TEXT;
 		  /* printf("entering state %d at '%s'...\n", state, in); */
-		  if (macro)
+		  if (pmacro)
 		    {
 		      expansion = 0;
-		      expansion = expand_macro (args, narg, macro);
+		      expansion = expand_macro (args, narg, pmacro);
 		      num_expansions++;
 		      if (expansion)
 			{
@@ -633,7 +741,7 @@ expand_string (const char *in, int first_only)
 		    {
 		      result = str_append (result, mark, in - mark);
 		    }
-		  macro = 0;
+		  pmacro = NULL;
 		  mark = in + 1;
 		  break;
 		case '(':
@@ -743,6 +851,12 @@ mep_cgen_parse_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_ADDR24A4 :
       errmsg = parse_mep_alignu (cd, strp, MEP_OPERAND_ADDR24A4, (unsigned long *) (& fields->f_24u8a4n));
       break;
+    case MEP_OPERAND_C5RMUIMM20 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_C5RMUIMM20, (unsigned long *) (& fields->f_c5_rmuimm20));
+      break;
+    case MEP_OPERAND_C5RNMUIMM24 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_C5RNMUIMM24, (unsigned long *) (& fields->f_c5_rnmuimm24));
+      break;
     case MEP_OPERAND_CALLNUM :
       errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_CALLNUM, (unsigned long *) (& fields->f_callnum));
       break;
@@ -752,17 +866,20 @@ mep_cgen_parse_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_CCRN :
       errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr, & fields->f_ccrn);
       break;
-    case MEP_OPERAND_CDISP8 :
-      errmsg = cgen_parse_signed_integer (cd, strp, MEP_OPERAND_CDISP8, (long *) (& fields->f_8s24));
+    case MEP_OPERAND_CDISP10 :
+      errmsg = parse_cdisp10 (cd, strp, MEP_OPERAND_CDISP10, (long *) (& fields->f_cdisp10));
       break;
-    case MEP_OPERAND_CDISP8A2 :
-      errmsg = parse_mep_align (cd, strp, MEP_OPERAND_CDISP8A2, (long *) (& fields->f_8s24a2));
+    case MEP_OPERAND_CDISP10A2 :
+      errmsg = parse_cdisp10 (cd, strp, MEP_OPERAND_CDISP10A2, (long *) (& fields->f_cdisp10));
       break;
-    case MEP_OPERAND_CDISP8A4 :
-      errmsg = parse_mep_align (cd, strp, MEP_OPERAND_CDISP8A4, (long *) (& fields->f_8s24a4));
+    case MEP_OPERAND_CDISP10A4 :
+      errmsg = parse_cdisp10 (cd, strp, MEP_OPERAND_CDISP10A4, (long *) (& fields->f_cdisp10));
       break;
-    case MEP_OPERAND_CDISP8A8 :
-      errmsg = parse_mep_align (cd, strp, MEP_OPERAND_CDISP8A8, (long *) (& fields->f_8s24a8));
+    case MEP_OPERAND_CDISP10A8 :
+      errmsg = parse_cdisp10 (cd, strp, MEP_OPERAND_CDISP10A8, (long *) (& fields->f_cdisp10));
+      break;
+    case MEP_OPERAND_CDISP12 :
+      errmsg = cgen_parse_signed_integer (cd, strp, MEP_OPERAND_CDISP12, (long *) (& fields->f_12s20));
       break;
     case MEP_OPERAND_CIMM4 :
       errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_CIMM4, (unsigned long *) (& fields->f_rn));
@@ -791,6 +908,24 @@ mep_cgen_parse_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_CRNX64 :
       errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_cr64, & fields->f_crnx);
       break;
+    case MEP_OPERAND_CROC :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_cr64, & fields->f_ivc2_5u7);
+      break;
+    case MEP_OPERAND_CROP :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_cr64, & fields->f_ivc2_5u23);
+      break;
+    case MEP_OPERAND_CRPC :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_cr64, & fields->f_ivc2_5u26);
+      break;
+    case MEP_OPERAND_CRPP :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_cr64, & fields->f_ivc2_5u18);
+      break;
+    case MEP_OPERAND_CRQC :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_cr64, & fields->f_ivc2_5u21);
+      break;
+    case MEP_OPERAND_CRQP :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_cr64, & fields->f_ivc2_5u13);
+      break;
     case MEP_OPERAND_CSRN :
       errmsg = parse_csrn (cd, strp, & mep_cgen_opval_h_csr, & fields->f_csrn);
       break;
@@ -809,29 +944,164 @@ mep_cgen_parse_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_EXC :
       errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_csr, & junk);
       break;
-    case MEP_OPERAND_FMAX_CCRN :
-      errmsg = parse_fmax_ccr (cd, strp, & mep_cgen_opval_h_ccr, & fields->f_fmax_4_4);
-      break;
-    case MEP_OPERAND_FMAX_FRD :
-      errmsg = parse_fmax_cr (cd, strp, & mep_cgen_opval_h_cr, & fields->f_fmax_frd);
-      break;
-    case MEP_OPERAND_FMAX_FRD_INT :
-      errmsg = parse_fmax_cr (cd, strp, & mep_cgen_opval_h_cr, & fields->f_fmax_frd);
-      break;
-    case MEP_OPERAND_FMAX_FRM :
-      errmsg = parse_fmax_cr (cd, strp, & mep_cgen_opval_h_cr, & fields->f_fmax_frm);
-      break;
-    case MEP_OPERAND_FMAX_FRN :
-      errmsg = parse_fmax_cr (cd, strp, & mep_cgen_opval_h_cr, & fields->f_fmax_frn);
-      break;
-    case MEP_OPERAND_FMAX_FRN_INT :
-      errmsg = parse_fmax_cr (cd, strp, & mep_cgen_opval_h_cr, & fields->f_fmax_frn);
-      break;
-    case MEP_OPERAND_FMAX_RM :
-      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_gpr, & fields->f_fmax_rm);
-      break;
     case MEP_OPERAND_HI :
       errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_csr, & junk);
+      break;
+    case MEP_OPERAND_IMM16P0 :
+      errmsg = parse_unsigned16_range (cd, strp, MEP_OPERAND_IMM16P0, (unsigned long *) (& fields->f_ivc2_imm16p0));
+      break;
+    case MEP_OPERAND_IMM3P12 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM3P12, (unsigned long *) (& fields->f_ivc2_3u12));
+      break;
+    case MEP_OPERAND_IMM3P25 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM3P25, (unsigned long *) (& fields->f_ivc2_3u25));
+      break;
+    case MEP_OPERAND_IMM3P4 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM3P4, (unsigned long *) (& fields->f_ivc2_3u4));
+      break;
+    case MEP_OPERAND_IMM3P5 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM3P5, (unsigned long *) (& fields->f_ivc2_3u5));
+      break;
+    case MEP_OPERAND_IMM3P9 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM3P9, (unsigned long *) (& fields->f_ivc2_3u9));
+      break;
+    case MEP_OPERAND_IMM4P10 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM4P10, (unsigned long *) (& fields->f_ivc2_4u10));
+      break;
+    case MEP_OPERAND_IMM4P4 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM4P4, (unsigned long *) (& fields->f_ivc2_4u4));
+      break;
+    case MEP_OPERAND_IMM4P8 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM4P8, (unsigned long *) (& fields->f_ivc2_4u8));
+      break;
+    case MEP_OPERAND_IMM5P23 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM5P23, (unsigned long *) (& fields->f_ivc2_5u23));
+      break;
+    case MEP_OPERAND_IMM5P3 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM5P3, (unsigned long *) (& fields->f_ivc2_5u3));
+      break;
+    case MEP_OPERAND_IMM5P7 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM5P7, (unsigned long *) (& fields->f_ivc2_5u7));
+      break;
+    case MEP_OPERAND_IMM5P8 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM5P8, (unsigned long *) (& fields->f_ivc2_5u8));
+      break;
+    case MEP_OPERAND_IMM6P2 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM6P2, (unsigned long *) (& fields->f_ivc2_6u2));
+      break;
+    case MEP_OPERAND_IMM6P6 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM6P6, (unsigned long *) (& fields->f_ivc2_6u6));
+      break;
+    case MEP_OPERAND_IMM8P0 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM8P0, (unsigned long *) (& fields->f_ivc2_8u0));
+      break;
+    case MEP_OPERAND_IMM8P20 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM8P20, (unsigned long *) (& fields->f_ivc2_8u20));
+      break;
+    case MEP_OPERAND_IMM8P4 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IMM8P4, (unsigned long *) (& fields->f_ivc2_8u4));
+      break;
+    case MEP_OPERAND_IVC_X_0_2 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IVC_X_0_2, (unsigned long *) (& fields->f_ivc2_2u0));
+      break;
+    case MEP_OPERAND_IVC_X_0_3 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IVC_X_0_3, (unsigned long *) (& fields->f_ivc2_3u0));
+      break;
+    case MEP_OPERAND_IVC_X_0_4 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IVC_X_0_4, (unsigned long *) (& fields->f_ivc2_4u0));
+      break;
+    case MEP_OPERAND_IVC_X_0_5 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IVC_X_0_5, (unsigned long *) (& fields->f_ivc2_5u0));
+      break;
+    case MEP_OPERAND_IVC_X_6_1 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IVC_X_6_1, (unsigned long *) (& fields->f_ivc2_1u6));
+      break;
+    case MEP_OPERAND_IVC_X_6_2 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IVC_X_6_2, (unsigned long *) (& fields->f_ivc2_2u6));
+      break;
+    case MEP_OPERAND_IVC_X_6_3 :
+      errmsg = cgen_parse_unsigned_integer (cd, strp, MEP_OPERAND_IVC_X_6_3, (unsigned long *) (& fields->f_ivc2_3u6));
+      break;
+    case MEP_OPERAND_IVC2_ACC0_0 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC0_1 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC0_2 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC0_3 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC0_4 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC0_5 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC0_6 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC0_7 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC1_0 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC1_1 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC1_2 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC1_3 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC1_4 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC1_5 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC1_6 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_ACC1_7 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_CC :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_COFA0 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_COFA1 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_COFR0 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_COFR1 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_CSAR0 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2_CSAR1 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & junk);
+      break;
+    case MEP_OPERAND_IVC2C3CCRN :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & fields->f_ivc2_ccrn_c3);
+      break;
+    case MEP_OPERAND_IVC2CCRN :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_ccr_ivc2, & fields->f_ivc2_ccrn);
+      break;
+    case MEP_OPERAND_IVC2CRN :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_cr64, & fields->f_ivc2_crnx);
+      break;
+    case MEP_OPERAND_IVC2RM :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_gpr, & fields->f_ivc2_crm);
       break;
     case MEP_OPERAND_LO :
       errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_csr, & junk);
@@ -883,6 +1153,9 @@ mep_cgen_parse_operand (CGEN_CPU_DESC cd,
       break;
     case MEP_OPERAND_RL :
       errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_gpr, & fields->f_rl);
+      break;
+    case MEP_OPERAND_RL5 :
+      errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_gpr, & fields->f_rl5);
       break;
     case MEP_OPERAND_RM :
       errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_gpr, & fields->f_rm);
@@ -941,11 +1214,23 @@ mep_cgen_parse_operand (CGEN_CPU_DESC cd,
     case MEP_OPERAND_SIMM16 :
       errmsg = parse_signed16 (cd, strp, MEP_OPERAND_SIMM16, (long *) (& fields->f_16s16));
       break;
+    case MEP_OPERAND_SIMM16P0 :
+      errmsg = parse_signed16_range (cd, strp, MEP_OPERAND_SIMM16P0, (long *) (& fields->f_ivc2_simm16p0));
+      break;
     case MEP_OPERAND_SIMM6 :
       errmsg = cgen_parse_signed_integer (cd, strp, MEP_OPERAND_SIMM6, (long *) (& fields->f_6s8));
       break;
     case MEP_OPERAND_SIMM8 :
       errmsg = cgen_parse_signed_integer (cd, strp, MEP_OPERAND_SIMM8, (long *) (& fields->f_8s8));
+      break;
+    case MEP_OPERAND_SIMM8P0 :
+      errmsg = cgen_parse_signed_integer (cd, strp, MEP_OPERAND_SIMM8P0, (long *) (& fields->f_ivc2_8s0));
+      break;
+    case MEP_OPERAND_SIMM8P20 :
+      errmsg = cgen_parse_signed_integer (cd, strp, MEP_OPERAND_SIMM8P20, (long *) (& fields->f_ivc2_8s20));
+      break;
+    case MEP_OPERAND_SIMM8P4 :
+      errmsg = cgen_parse_signed_integer (cd, strp, MEP_OPERAND_SIMM8P4, (long *) (& fields->f_ivc2_8s4));
       break;
     case MEP_OPERAND_SP :
       errmsg = cgen_parse_keyword (cd, strp, & mep_cgen_opval_h_gpr, & junk);
@@ -1248,9 +1533,11 @@ parse_insn_normal (CGEN_CPU_DESC cd,
 	  continue;
 	}
 
+#ifdef CGEN_MNEMONIC_OPERANDS
+      (void) past_opcode_p;
+#endif
       /* We have an operand of some sort.  */
-      errmsg = cd->parse_operand (cd, CGEN_SYNTAX_FIELD (*syn),
-					  &str, fields);
+      errmsg = cd->parse_operand (cd, CGEN_SYNTAX_FIELD (*syn), &str, fields);
       if (errmsg)
 	return errmsg;
 
@@ -1367,31 +1654,39 @@ mep_cgen_assemble_insn (CGEN_CPU_DESC cd,
 
   {
     static char errbuf[150];
-#ifdef CGEN_VERBOSE_ASSEMBLER_ERRORS
     const char *tmp_errmsg;
-
-    /* If requesting verbose error messages, use insert_errmsg.
-       Failing that, use parse_errmsg.  */
-    tmp_errmsg = (insert_errmsg ? insert_errmsg :
-		  parse_errmsg ? parse_errmsg :
-		  recognized_mnemonic ?
-		  _("unrecognized form of instruction") :
-		  _("unrecognized instruction"));
-
-    if (strlen (start) > 50)
-      /* xgettext:c-format */
-      sprintf (errbuf, "%s `%.50s...'", tmp_errmsg, start);
-    else 
-      /* xgettext:c-format */
-      sprintf (errbuf, "%s `%.50s'", tmp_errmsg, start);
+#ifdef CGEN_VERBOSE_ASSEMBLER_ERRORS
+#define be_verbose 1
 #else
-    if (strlen (start) > 50)
-      /* xgettext:c-format */
-      sprintf (errbuf, _("bad instruction `%.50s...'"), start);
-    else 
-      /* xgettext:c-format */
-      sprintf (errbuf, _("bad instruction `%.50s'"), start);
+#define be_verbose 0
 #endif
+
+    if (be_verbose)
+      {
+	/* If requesting verbose error messages, use insert_errmsg.
+	   Failing that, use parse_errmsg.  */
+	tmp_errmsg = (insert_errmsg ? insert_errmsg :
+		      parse_errmsg ? parse_errmsg :
+		      recognized_mnemonic ?
+		      _("unrecognized form of instruction") :
+		      _("unrecognized instruction"));
+
+	if (strlen (start) > 50)
+	  /* xgettext:c-format */
+	  sprintf (errbuf, "%s `%.50s...'", tmp_errmsg, start);
+	else 
+	  /* xgettext:c-format */
+	  sprintf (errbuf, "%s `%.50s'", tmp_errmsg, start);
+      }
+    else
+      {
+	if (strlen (start) > 50)
+	  /* xgettext:c-format */
+	  sprintf (errbuf, _("bad instruction `%.50s...'"), start);
+	else 
+	  /* xgettext:c-format */
+	  sprintf (errbuf, _("bad instruction `%.50s'"), start);
+      }
       
     *errmsg = errbuf;
     return NULL;

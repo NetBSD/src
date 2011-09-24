@@ -1,5 +1,5 @@
 /* mmix-dis.c -- Disassemble MMIX instructions.
-   Copyright 2000, 2001, 2002, 2007 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2005, 2007 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com)
 
    This file is part of the GNU opcodes library.
@@ -73,7 +73,7 @@ static bfd_boolean
 initialize_mmix_dis_info (struct disassemble_info *info)
 {
   struct mmix_dis_info *minfop = malloc (sizeof (struct mmix_dis_info));
-  int i;
+  long i;
 
   if (minfop == NULL)
     return FALSE;
@@ -98,7 +98,6 @@ initialize_mmix_dis_info (struct disassemble_info *info)
 	  long symsize = bfd_get_symtab_upper_bound (abfd);
 	  asymbol **syms = malloc (symsize);
 	  long nsyms;
-	  long i;
 
 	  if (syms == NULL)
 	    {
@@ -125,7 +124,7 @@ initialize_mmix_dis_info (struct disassemble_info *info)
   for (i = 0; i < 256; i++)
     if (minfop->reg_name[i] == NULL)
       {
-	sprintf (minfop->basic_reg_name[i], "$%d", i);
+	sprintf (minfop->basic_reg_name[i], "$%ld", i);
 	minfop->reg_name[i] = minfop->basic_reg_name[i];
       }
 

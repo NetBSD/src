@@ -1,0 +1,7 @@
+if { [istarget tic6x-*-*] } {
+    foreach test [lsort [glob -nocomplain $srcdir/$subdir/*.d]] {
+	if { [runtest_file_p $runtests $test] } {
+	    run_dump_test [file rootname $test]
+	}
+    }
+}

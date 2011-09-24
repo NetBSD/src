@@ -1,5 +1,5 @@
 /* cr16-opc.c -- Table of opcodes for the CR16 processor.
-   Copyright 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2007, 2008, 2010  Free Software Foundation, Inc.
    Contributed by M R Swami Reddy (MR.Swami.Reddy@nsc.com)
 
    This file is part of the GNU opcodes library.
@@ -34,7 +34,7 @@ const inst cr16_instruction[] =
   /* opc8 r r */                                                     \
   {NAME, 1, OPC+0x1, 24, ARITH_BYTE_INS, {{regr,20}, {regr,16}}}
 
-/* for Logincal operations, allow unsinged imm16 also */
+/* For Logical operations, allow unsigned imm16 also.  */
 #define  ARITH1_BYTE_INST(NAME, OPC, OP1)                            \
   /* opc8 imm16 r */                                                 \
   {NAME, 2, (OPC<<4)+0xB, 20, ARITH_BYTE_INS, {{OP1,0}, {regr,16}}}

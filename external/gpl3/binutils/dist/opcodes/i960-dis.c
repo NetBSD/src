@@ -1,6 +1,6 @@
 /* Disassemble i80960 instructions.
    Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2003,
-   2007  Free Software Foundation, Inc.
+   2005, 2007  Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -824,7 +824,7 @@ ea (bfd_vma memaddr, int mode, const char *reg2, const char *reg3, int word1,
 /* Register Instruction Operand.  */
 
 static void
-regop (int mode, int spec, int reg, int fp)
+regop (int mode, int spec, int fp_reg, int fp)
 {
   if (fp)
     {
@@ -832,7 +832,7 @@ regop (int mode, int spec, int reg, int fp)
       if (mode == 1)
 	{
 	  /* FP operand.  */
-	  switch (reg)
+	  switch (fp_reg)
 	    {
 	    case 0:  (*info->fprintf_func) (stream, "fp0");
 	      break;
@@ -853,7 +853,7 @@ regop (int mode, int spec, int reg, int fp)
       else
 	{
 	  /* Non-FP register.  */
-	  (*info->fprintf_func) (stream, reg_names[reg]);
+	  (*info->fprintf_func) (stream, reg_names[fp_reg]);
 	}
     }
   else
@@ -862,15 +862,15 @@ regop (int mode, int spec, int reg, int fp)
       if (mode == 1)
 	{
 	  /* Literal.  */
-	  (*info->fprintf_func) (stream, "%d", reg);
+	  (*info->fprintf_func) (stream, "%d", fp_reg);
 	}
       else
 	{
 	  /* Register.  */
 	  if (spec == 0)
-	    (*info->fprintf_func) (stream, reg_names[reg]);
+	    (*info->fprintf_func) (stream, reg_names[fp_reg]);
 	  else
-	    (*info->fprintf_func) (stream, "sf%d", reg);
+	    (*info->fprintf_func) (stream, "sf%d", fp_reg);
 	}
     }
 }
@@ -878,15 +878,15 @@ regop (int mode, int spec, int reg, int fp)
 /* Register Instruction Destination Operand.  */
 
 static void
-dstop (int mode, int reg, int fp)
+dstop (int mode, int dest_reg, int fp)
 {
   /* 'dst' operand can't be a literal. On non-FP instructions,  register
      mode is assumed and "m3" acts as if were "s3";  on FP-instructions,
      sf registers are not allowed so m3 acts normally.  */
   if (fp)
-    regop (mode, 0, reg, fp);
+    regop (mode, 0, dest_reg, fp);
   else
-    regop (0, mode, reg, fp);
+    regop (0, mode, dest_reg, fp);
 }
 
 static void

@@ -1,7 +1,9 @@
-/* A Bison parser, made by GNU Bison 2.1.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
-/* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+/* Skeleton interface for Bison's Yacc-like parsers in C
+
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,10 +20,18 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor,
    Boston, MA 02110-1301, USA.  */
 
-/* As a special exception, when this file is copied by Bison into a
-   Bison output file, you may use that output file without restriction.
-   This special exception was added by the Free Software Foundation
-   in version 1.24 of Bison.  */
+/* As a special exception, you may create a larger work that contains
+   part or all of the Bison parser skeleton and distribute that work
+   under terms of your choice, so long as that work isn't itself a
+   parser generator using the skeleton or a modified version thereof
+   as a parser skeleton.  Alternatively, if you modify or redistribute
+   the parser skeleton itself, you may (at your option) remove this
+   special exception, which will cause the skeleton and the resulting
+   Bison output files to be licensed under the GNU General Public
+   License without this special exception.
+
+   This special exception was added by the Free Software Foundation in
+   version 2.2 of Bison.  */
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -32,7 +42,7 @@
      NAME = 258,
      LIBRARY = 259,
      DESCRIPTION = 260,
-     STACKSIZE = 261,
+     STACKSIZE_K = 261,
      HEAPSIZE = 262,
      CODE = 263,
      DATAU = 264,
@@ -46,22 +56,24 @@
      CONSTANTL = 272,
      PRIVATEU = 273,
      PRIVATEL = 274,
-     READ = 275,
-     WRITE = 276,
-     EXECUTE = 277,
-     SHARED = 278,
-     NONAMEU = 279,
-     NONAMEL = 280,
-     DIRECTIVE = 281,
-     ID = 282,
-     NUMBER = 283
+     ALIGNCOMM = 275,
+     READ = 276,
+     WRITE = 277,
+     EXECUTE = 278,
+     SHARED = 279,
+     NONAMEU = 280,
+     NONAMEL = 281,
+     DIRECTIVE = 282,
+     EQUAL = 283,
+     ID = 284,
+     DIGITS = 285
    };
 #endif
 /* Tokens.  */
 #define NAME 258
 #define LIBRARY 259
 #define DESCRIPTION 260
-#define STACKSIZE 261
+#define STACKSIZE_K 261
 #define HEAPSIZE 262
 #define CODE 263
 #define DATAU 264
@@ -75,33 +87,36 @@
 #define CONSTANTL 272
 #define PRIVATEU 273
 #define PRIVATEL 274
-#define READ 275
-#define WRITE 276
-#define EXECUTE 277
-#define SHARED 278
-#define NONAMEU 279
-#define NONAMEL 280
-#define DIRECTIVE 281
-#define ID 282
-#define NUMBER 283
+#define ALIGNCOMM 275
+#define READ 276
+#define WRITE 277
+#define EXECUTE 278
+#define SHARED 279
+#define NONAMEU 280
+#define NONAMEL 281
+#define DIRECTIVE 282
+#define EQUAL 283
+#define ID 284
+#define DIGITS 285
 
 
 
 
-#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 102 "deffilep.y"
-typedef union YYSTYPE {
+#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+typedef union YYSTYPE
+#line 103 "deffilep.y"
+{
   char *id;
   int number;
-} YYSTYPE;
-/* Line 1447 of yacc.c.  */
-#line 99 "deffilep.h"
+  char *digits;
+}
+/* Line 1529 of yacc.c.  */
+#line 115 "deffilep.h"
+	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 extern YYSTYPE yylval;
-
-
 

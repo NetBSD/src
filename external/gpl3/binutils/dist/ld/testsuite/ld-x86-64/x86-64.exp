@@ -1,5 +1,5 @@
 # Expect script for ld-x86_64 tests
-#   Copyright (C) 2002, 2005, 2006, 2007 Free Software Foundation
+#   Copyright (C) 2002, 2005, 2006, 2007, 2008, 2009 Free Software Foundation
 #
 # This file is part of the GNU Binutils.
 #
@@ -75,11 +75,46 @@ set x86_64tests {
     {"TLS IE->LE transition" "-melf_x86_64"
      "--64" {tlsie1.s}
      {{objdump -dwr tlsie1.dd}} "tlsie1"}
+    {"Helper 64bit object 1" "-r -melf_x86_64"
+     "--64" {mixed1a.s} {} "libmixe1a.o"}
+    {"Helper 32bit object 1" "-r -melf_i386"
+     "--32" {mixed1b.s} {} "libmixe1b.o"}
+    {"Helper 64bit object 2" "-r -melf_x86_64"
+     "--64" {mixed2a.s} {} "libmixe2a.o"}
+    {"Helper 32bit object 2" "-r -melf_i386"
+     "--32" {mixed2b.s} {} "libmixe2b.o"}
+    {"Split by file with 'l' flag on section." "-split-by-file -r"
+     "--64" {split-by-file1.s split-by-file2.s}
+     {{readelf -SW split-by-file.rd}} "split-by-file.o"}
 }
 
 run_ld_link_tests $x86_64tests
 
+global link_output
+global ld
+
+set test_name "Mixed x86_64 and i386 input test 1"
+set test mixed1
+if { ![ld_simple_link $ld tmpdir/$test "-melf_x86_64 tmpdir/${test}a.o tmpdir/${test}b.o"] } {
+    if [string match "*i386 architecture of input file `tmpdir/${test}b.o' is incompatible with i386:x86-64 output*" $link_output] {
+	pass "$test_name" 
+    } {
+	fail "$test_name" 
+    }
+}
+
+set test_name "Mixed x86_64 and i386 input test 2"
+set test mixed2
+if { ![ld_simple_link $ld tmpdir/$test "-melf_x86_64 tmpdir/${test}a.o tmpdir/${test}b.o"] } {
+    if [string match "*i386 architecture of input file `tmpdir/${test}b.o' is incompatible with i386:x86-64 output*" $link_output] {
+	pass "$test_name" 
+    } {
+	fail "$test_name" 
+    }
+}
+
 run_dump_test "abs"
+run_dump_test "abs-l1om"
 run_dump_test "pcrel8"
 run_dump_test "pcrel16"
 run_dump_test "tlsgd2"
@@ -91,4 +126,18 @@ run_dump_test "hidden2"
 run_dump_test "hidden3"
 run_dump_test "protected1"
 run_dump_test "protected2"
+run_dump_test "protected2-l1om"
 run_dump_test "protected3"
+run_dump_test "protected3-l1om"
+run_dump_test "tlsle1"
+run_dump_test "tlspie1"
+run_dump_test "unique1"
+run_dump_test "nogot1"
+run_dump_test "nogot2"
+run_dump_test "discarded1"
+
+if { ![istarget "x86_64-*-linux*"] } {
+    return
+}
+
+run_dump_test "compressed1"

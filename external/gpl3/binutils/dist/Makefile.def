@@ -4,11 +4,12 @@ AutoGen definitions Makefile.tpl;
 // Makefile.in is generated from Makefile.tpl by 'autogen Makefile.def'.
 // This file was originally written by Nathanael Nerode.
 //
-//   Copyright 2002, 2003, 2004, 2005, 2006, 2007 Free Software Foundation
+//   Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+//   Free Software Foundation
 //
 // This file is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
+// the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 // 
 // This program is distributed in the hope that it will be useful,
@@ -17,8 +18,8 @@ AutoGen definitions Makefile.tpl;
 // GNU General Public License for more details.
 // 
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+// along with this program; see the file COPYING3.  If not see
+// <http://www.gnu.org/licenses/>.
 
 
 // "missing" indicates that that module doesn't supply
@@ -42,6 +43,7 @@ host_modules= { module= binutils; bootstrap=true; };
 host_modules= { module= bison; no_check_cross= true; };
 host_modules= { module= byacc; no_check_cross= true; };
 host_modules= { module= bzip2; };
+host_modules= { module= cgen; };
 host_modules= { module= dejagnu; };
 host_modules= { module= diff; };
 host_modules= { module= dosutils; no_check= true; };
@@ -60,14 +62,30 @@ host_modules= { module= gawk; };
 host_modules= { module= gettext; };
 host_modules= { module= gmp; lib_path=.libs; bootstrap=true;
 		extra_configure_flags='--disable-shared';
-		no_install= true; 
+		no_install= true;
+		// none-*-* disables asm optimizations, bootstrap-testing
+		// the compiler more thoroughly.
 	        host="none-${host_vendor}-${host_os}";
-		target="none-${host_vendor}-${host_os}"; };
+		// gmp's configure will complain if given anything
+		// different from host for target.
+	        target="none-${host_vendor}-${host_os}"; };
 host_modules= { module= mpfr; lib_path=.libs; bootstrap=true;
-		extra_configure_flags='--disable-shared --with-gmp-build=$$r/$(HOST_SUBDIR)/gmp';
-		no_install= true; 
-	        host="none-${host_vendor}-${host_os}";
-		target="none-${host_vendor}-${host_os}"; };
+		extra_configure_flags='--disable-shared @extra_mpfr_configure_flags@';
+		no_install= true; };
+host_modules= { module= mpc; lib_path=.libs; bootstrap=true;
+		extra_configure_flags='--disable-shared @extra_mpc_gmp_configure_flags@ @extra_mpc_mpfr_configure_flags@';
+		no_install= true; };
+host_modules= { module= ppl; lib_path=src/.libs; bootstrap=true;
+		extra_configure_flags='--disable-shared --with-libgmp-prefix=$$r/$(HOST_SUBDIR)/gmp/ --with-libgmpxx-prefix=$$r/$(HOST_SUBDIR)/gmp/';
+		no_install= true; };
+host_modules= { module= cloog; lib_path=.libs; bootstrap=true;
+		extra_configure_flags='--disable-shared --with-gmp-library=$$r/$(HOST_SUBDIR)/gmp/.libs --with-gmp-include=$$r/$(HOST_SUBDIR)/gmp --with-bits=gmp --with-ppl';
+		extra_exports='CPPFLAGS="${CPPFLAGS} ${HOST_PPLINC}"; export CPPFLAGS; LDFLAGS="$$LDFLAGS ${HOST_PPLLIBS}"; export LDFLAGS; ';
+		extra_make_flags='CPPFLAGS="${CPPFLAGS} ${HOST_PPLINC}" LDFLAGS="$$LDFLAGS"';
+		no_install= true; };
+host_modules= { module= libelf; lib_path=.libs; bootstrap=true;
+		extra_configure_flags='--disable-shared';
+		no_install= true; };
 host_modules= { module= gnuserv; };
 host_modules= { module= gold; bootstrap=true; };
 host_modules= { module= gprof; };
@@ -82,7 +100,16 @@ host_modules= { module= ld; bootstrap=true; };
 host_modules= { module= libcpp; bootstrap=true; };
 host_modules= { module= libdecnumber; bootstrap=true; };
 host_modules= { module= libgui; };
-host_modules= { module= libiberty; bootstrap=true; };
+host_modules= { module= libiberty; bootstrap=true;
+	        extra_configure_flags='@extra_host_libiberty_configure_flags@';};
+// We abuse missing to avoid installing anything for libiconv.
+host_modules= { module= libiconv;
+		extra_configure_flags='--disable-shared';
+		no_install= true;
+		missing= install-info;
+		missing= install-pdf;
+		missing= install-html;
+		missing= install-info; };
 host_modules= { module= libtool; };
 host_modules= { module= m4; };
 host_modules= { module= make; };
@@ -118,8 +145,12 @@ host_modules= { module= libtermcap; no_check=true;
                 missing=maintainer-clean; };
 host_modules= { module= utils; no_check=true; };
 host_modules= { module= gnattools; };
+host_modules= { module= lto-plugin; bootstrap=true; };
 
-target_modules = { module= libstdc++-v3; lib_path=.libs; raw_cxx=true; };
+target_modules = { module= libstdc++-v3;
+		   bootstrap=true;
+		   lib_path=src/.libs;
+		   raw_cxx=true; };
 target_modules = { module= libmudflap; lib_path=.libs; };
 target_modules = { module= libssp; lib_path=.libs; };
 target_modules = { module= newlib; };
@@ -143,7 +174,7 @@ target_modules = { module= boehm-gc; };
 target_modules = { module= qthreads; };
 target_modules = { module= rda; };
 target_modules = { module= libada; };
-target_modules = { module= libgomp; lib_path=.libs; };
+target_modules = { module= libgomp; bootstrap= true; lib_path=.libs; };
 
 // These are (some of) the make targets to be done in each subdirectory.
 // Not all; these are the ones which don't have special options.
@@ -205,6 +236,7 @@ flags_to_pass = { flag= build_tooldir ; };
 flags_to_pass = { flag= target_alias ; };
 
 // Build tools
+flags_to_pass = { flag= AWK ; };
 flags_to_pass = { flag= BISON ; };
 flags_to_pass = { flag= CC_FOR_BUILD ; };
 flags_to_pass = { flag= CFLAGS_FOR_BUILD ; };
@@ -221,6 +253,7 @@ flags_to_pass = { flag= M4 ; };
 flags_to_pass = { flag= MAKE ; };
 flags_to_pass = { flag= RUNTEST ; };
 flags_to_pass = { flag= RUNTESTFLAGS ; };
+flags_to_pass = { flag= SED ; };
 flags_to_pass = { flag= SHELL ; };
 flags_to_pass = { flag= YACC ; };
 
@@ -236,12 +269,8 @@ flags_to_pass = { flag= CXXFLAGS ; };
 flags_to_pass = { flag= LDFLAGS ; };
 flags_to_pass = { flag= LIBCFLAGS ; };
 flags_to_pass = { flag= LIBCXXFLAGS ; };
-flags_to_pass = { flag= STAGE1_CFLAGS ; };
 flags_to_pass = { flag= STAGE1_CHECKING ; };
 flags_to_pass = { flag= STAGE1_LANGUAGES ; };
-flags_to_pass = { flag= STAGE2_CFLAGS ; };
-flags_to_pass = { flag= STAGE3_CFLAGS ; };
-flags_to_pass = { flag= STAGE4_CFLAGS ; };
 flags_to_pass = { flag= GNATBIND ; };
 flags_to_pass = { flag= GNATMAKE ; };
 
@@ -254,6 +283,7 @@ flags_to_pass = { flag= CPPFLAGS_FOR_TARGET ; };
 flags_to_pass = { flag= CXX_FOR_TARGET ; };
 flags_to_pass = { flag= CXXFLAGS_FOR_TARGET ; };
 flags_to_pass = { flag= DLLTOOL_FOR_TARGET ; };
+flags_to_pass = { flag= FLAGS_FOR_TARGET ; };
 flags_to_pass = { flag= GCJ_FOR_TARGET ; };
 flags_to_pass = { flag= GFORTRAN_FOR_TARGET ; };
 flags_to_pass = { flag= LD_FOR_TARGET ; };
@@ -269,6 +299,7 @@ flags_to_pass = { flag= WINDRES_FOR_TARGET ; };
 flags_to_pass = { flag= WINDMC_FOR_TARGET ; };
 
 // Miscellaneous
+flags_to_pass = { flag= BUILD_CONFIG ; };
 flags_to_pass = { flag= LANGUAGES ; optional=true ; };
 flags_to_pass = { flag= LEAN ; };
 
@@ -291,10 +322,14 @@ dependencies = { module=configure-gcc; on=all-binutils; };
 dependencies = { module=configure-gcc; on=all-gas; };
 dependencies = { module=configure-gcc; on=all-ld; };
 dependencies = { module=configure-gcc; on=all-gold; };
+dependencies = { module=configure-gcc; on=all-libelf; };
 dependencies = { module=all-gcc; on=all-libiberty; hard=true; };
 dependencies = { module=all-gcc; on=all-gmp; };
 dependencies = { module=all-gcc; on=all-intl; };
 dependencies = { module=all-gcc; on=all-mpfr; };
+dependencies = { module=all-gcc; on=all-mpc; };
+dependencies = { module=all-gcc; on=all-ppl; };
+dependencies = { module=all-gcc; on=all-cloog; };
 dependencies = { module=all-gcc; on=all-build-texinfo; };
 dependencies = { module=all-gcc; on=all-build-bison; };
 dependencies = { module=all-gcc; on=all-build-byacc; };
@@ -306,6 +341,10 @@ dependencies = { module=all-gcc; on=all-libcpp; hard=true; };
 dependencies = { module=all-gcc; on=all-libdecnumber; hard=true; };
 dependencies = { module=all-gcc; on=all-libiberty; };
 dependencies = { module=all-gcc; on=all-fixincludes; };
+dependencies = { module=info-gcc; on=all-build-libiberty; };
+dependencies = { module=dvi-gcc; on=all-build-libiberty; };
+dependencies = { module=pdf-gcc; on=all-build-libiberty; };
+dependencies = { module=html-gcc; on=all-build-libiberty; };
 dependencies = { module=install-gcc ; on=install-fixincludes; };
 
 dependencies = { module=configure-libcpp; on=configure-libiberty; hard=true; };
@@ -317,13 +356,23 @@ dependencies = { module=all-fixincludes; on=all-libiberty; };
 
 dependencies = { module=all-gnattools; on=all-target-libada; };
 
+dependencies = { module=all-lto-plugin; on=all-gcc; };
+
 dependencies = { module=configure-mpfr; on=all-gmp; };
+dependencies = { module=configure-mpc; on=all-mpfr; };
+dependencies = { module=configure-ppl; on=all-gmp; };
+dependencies = { module=configure-ppl; on=all-mpfr; };
+dependencies = { module=configure-cloog; on=all-ppl; };
 
 // Host modules specific to gdb.
 dependencies = { module=configure-gdb; on=all-intl; };
 dependencies = { module=configure-gdb; on=configure-sim; };
 dependencies = { module=configure-gdb; on=all-bfd; };
+// Depend on all-libiconv so that configure checks for iconv
+// functions will work.
+dependencies = { module=configure-gdb; on=all-libiconv; };
 dependencies = { module=all-gdb; on=all-libiberty; };
+dependencies = { module=all-gdb; on=all-libiconv; };
 dependencies = { module=all-gdb; on=all-opcodes; };
 dependencies = { module=all-gdb; on=all-readline; };
 dependencies = { module=all-gdb; on=all-build-bison; };
@@ -342,6 +391,8 @@ dependencies = { module=configure-bfd; on=configure-libiberty; hard=true; };
 dependencies = { module=configure-bfd; on=configure-intl; };
 dependencies = { module=all-bfd; on=all-libiberty; };
 dependencies = { module=all-bfd; on=all-intl; };
+dependencies = { module=configure-opcodes; on=configure-libiberty; hard=true; };
+dependencies = { module=all-opcodes; on=all-libiberty; };
 
 dependencies = { module=configure-binutils; on=configure-intl; };
 dependencies = { module=all-binutils; on=all-libiberty; };
@@ -378,6 +429,7 @@ dependencies = { module=all-ld; on=all-build-bison; };
 dependencies = { module=all-ld; on=all-build-byacc; };
 dependencies = { module=all-ld; on=all-build-flex; };
 dependencies = { module=all-ld; on=all-intl; };
+dependencies = { module=install-ld; on=install-gold; };
 dependencies = { module=configure-gold; on=configure-intl; };
 dependencies = { module=all-gold; on=all-libiberty; };
 dependencies = { module=all-gold; on=all-intl; };
@@ -385,6 +437,7 @@ dependencies = { module=all-gold; on=all-bfd; };
 dependencies = { module=all-gold; on=all-build-bison; };
 dependencies = { module=all-gold; on=all-build-byacc; };
 dependencies = { module=check-gold; on=all-binutils; };
+dependencies = { module=check-gold; on=all-gas; };
 
 dependencies = { module=configure-opcodes; on=configure-intl; };
 dependencies = { module=all-opcodes; on=all-bfd; };
@@ -481,6 +534,7 @@ lang_env_dependencies = { module=libgcc; no_gcc=true; no_c=true; };
 lang_env_dependencies = { module=libiberty; no_c=true; };
 
 dependencies = { module=configure-target-boehm-gc; on=configure-target-qthreads; };
+dependencies = { module=configure-target-boehm-gc; on=all-target-libstdc++-v3; };
 dependencies = { module=configure-target-fastjar; on=configure-target-zlib; };
 dependencies = { module=all-target-fastjar; on=all-target-zlib; };
 dependencies = { module=all-target-fastjar; on=all-target-libiberty; };
@@ -498,6 +552,10 @@ dependencies = { module=all-target-libobjc; on=all-target-libiberty; };
 dependencies = { module=all-target-libobjc; on=all-target-boehm-gc; };
 dependencies = { module=all-target-libstdc++-v3; on=all-target-libiberty; };
 dependencies = { module=configure-target-libstdc++-v3; on=configure-target-libgomp; };
+// parallel_list.o and parallel_settings.o depend on omp.h, which is
+// generated by the libgomp configure.  Unfortunately, due to the use of
+//  recursive make, we can't be that specific.
+dependencies = { module=all-target-libstdc++-v3; on=configure-target-libgomp; };
 
 // Target modules in the 'src' repository.
 lang_env_dependencies = { module=examples; };
@@ -509,64 +567,40 @@ lang_env_dependencies = { module=qthreads; };
 dependencies = { module=all-target-libgloss; on=all-target-newlib; };
 dependencies = { module=all-target-winsup; on=all-target-libiberty; };
 dependencies = { module=all-target-winsup; on=all-target-libtermcap; };
+dependencies = { module=configure-target-libiberty; on=all-binutils; };
+dependencies = { module=configure-target-libiberty; on=all-ld; };
+dependencies = { module=configure-target-newlib; on=all-binutils; };
+dependencies = { module=configure-target-newlib; on=all-ld; };
+
+languages = { language=c;	gcc-check-target=check-gcc; };
+languages = { language=c++;	gcc-check-target=check-c++;
+				lib-check-target=check-target-libstdc++-v3; };
+languages = { language=fortran;	gcc-check-target=check-fortran;
+				lib-check-target=check-target-libgfortran; };
+languages = { language=java;	gcc-check-target=check-java;
+				lib-check-target=check-target-libjava; };
+languages = { language=ada;	gcc-check-target=check-ada;
+				lib-check-target=check-target-libada; };
+languages = { language=objc;	gcc-check-target=check-objc;
+				lib-check-target=check-target-libobjc; };
+languages = { language=obj-c++;	gcc-check-target=check-obj-c++; };
 
 // Toplevel bootstrap
-bootstrap_stage = {
-	id=1 ;
-
-	// * We force-disable intermodule optimizations, even if
-	//   --enable-intermodule was passed, since the installed compiler
-	//   probably can't handle them.  Luckily, autoconf always respects
-	//   the last argument when conflicting --enable arguments are passed.
-	// * Likewise, we force-disable coverage flags, since the installed
-	//   compiler probably has never heard of them.
-	stage_configure_flags='--disable-intermodule $(STAGE1_CHECKING) \
-	  --disable-coverage --enable-languages="$(STAGE1_LANGUAGES)"' ;
-	stage_cflags='$(STAGE1_CFLAGS)' ;
-	stage_libcflags='$(STAGE1_LIBCFLAGS)' ; };
+bootstrap_stage = { id=1 ; };
 bootstrap_stage = {
 	id=2 ; prev=1 ;
-	bootstrap_target=bootstrap2 ;
-	stage_configure_flags="@stage2_werror_flag@" ;
-	stage_cflags="$(STAGE2_CFLAGS)" ;
-	stage_libcflags="$(STAGE2_LIBCFLAGS)" ; };
-bootstrap_stage = {
-	id=b2g0 ; prev=1 ;
-	bootstrap_target=bootstrap2-debug ;
-	stage_configure_flags="@stage2_werror_flag@" ;
-	stage_cflags="$(STAGE2_CFLAGS) -g0" ;
-	stage_libcflags="$(STAGE2_LIBCFLAGS) -g0" ; };
+	bootstrap_target=bootstrap2 ; };
 bootstrap_stage = {
 	id=3 ; prev=2 ; lean=1 ;
 	compare_target=compare ;
 	bootstrap_target=bootstrap ;
-	cleanstrap_target=cleanstrap ;
-	stage_configure_flags="@stage2_werror_flag@" ;
-	stage_cflags="$(STAGE3_CFLAGS)" ;
-	stage_libcflags="$(STAGE3_LIBCFLAGS)" ; };
-bootstrap_stage = {
-	id=b3g2 ; prev=b2g0 ; lean=1 ;
-	compare_target=compare-debug ;
-	bootstrap_target=bootstrap-debug ;
-	cleanstrap_target=cleanstrap-debug ;
-	stage_configure_flags="@stage2_werror_flag@" ;
-	stage_cflags="$(STAGE3_CFLAGS) -g2" ;
-	stage_libcflags="$(STAGE3_LIBCFLAGS) -g2" ; };
+	cleanstrap_target=cleanstrap ; };
 bootstrap_stage = {
 	id=4 ; prev=3 ; lean=2 ;
 	compare_target=compare3 ;
-	bootstrap_target=bootstrap4 ;
-	stage_configure_flags="@stage2_werror_flag@" ;
-	stage_cflags="$(STAGE4_CFLAGS)" ;
-	stage_libcflags="$(STAGE4_CFLAGS)" ; };
+	bootstrap_target=bootstrap4 ; };
 bootstrap_stage = {
-	id=profile ; prev=1 ;
-	stage_configure_flags="@stage2_werror_flag@" ;
-	stage_cflags='$(STAGE2_CFLAGS) -fprofile-generate' ;
-	stage_libcflags='$(STAGE2_LIBCFLAGS)' ; };
+	id=profile ; prev=1 ; };
 bootstrap_stage = {
 	id=feedback ; prev=profile ;
-	bootstrap_target=profiledbootstrap ;
-	stage_configure_flags="@stage2_werror_flag@" ;
-	stage_cflags='$(STAGE3_CFLAGS) -fprofile-use' ;
-	stage_libcflags='$(STAGE3_LIBCFLAGS) -fprofile-use' ; };
+	bootstrap_target=profiledbootstrap ; };

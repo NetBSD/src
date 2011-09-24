@@ -1,5 +1,5 @@
 /* ldfile.h -
-   Copyright 1991, 1992, 1993, 1994, 1995, 2000, 2002, 2003, 2004, 2007
+   Copyright 1991, 1992, 1993, 1994, 1995, 2000, 2002, 2003, 2004, 2005, 2007
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -49,6 +49,8 @@ extern void ldfile_add_arch
 extern void ldfile_add_library_path
   (const char *, bfd_boolean cmdline);
 extern void ldfile_open_command_file
+  (const char *name);
+extern void ldfile_open_default_command_file
   (const char *name);
 extern void ldfile_open_file
   (struct lang_input_statement_struct *);

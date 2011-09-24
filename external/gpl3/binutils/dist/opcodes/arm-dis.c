@@ -1,6 +1,6 @@
 /* Instruction printing code for the ARM
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
-   2007, Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
+   2004, 2005, 2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    Modification by James G. Smith (jsmith@cygnus.co.uk)
 
@@ -45,17 +45,28 @@
 #define NUM_ELEM(a)     (sizeof (a) / sizeof (a)[0])
 #endif
 
+struct arm_private_data
+{
+  /* The features to use when disassembling optional instructions.  */
+  arm_feature_set features;
+
+  /* Whether any mapping symbols are present in the provided symbol
+     table.  -1 if we do not know yet, otherwise 0 or 1.  */
+  int has_mapping_symbols;
+};
+
 struct opcode32
 {
   unsigned long arch;		/* Architecture defining this insn.  */
-  unsigned long value, mask;	/* Recognise insn if (op&mask)==value.  */
-  const char *assembler;	/* How to disassemble this insn.  */
+  unsigned long value;		/* If arch == 0 then value is a sentinel.  */
+  unsigned long mask;		/* Recognise insn if (op & mask) == value.  */
+  const char *  assembler;	/* How to disassemble this insn.  */
 };
 
 struct opcode16
 {
   unsigned long arch;		/* Architecture defining this insn.  */
-  unsigned short value, mask;	/* Recognise insn if (op&mask)==value.  */
+  unsigned short value, mask;	/* Recognise insn if (op & mask) == value.  */
   const char *assembler;	/* How to disassemble this insn.  */
 };
 
@@ -68,7 +79,6 @@ struct opcode16
    %u			print condition code (unconditional in ARM mode)
    %A			print address for ldc/stc/ldf/stf instruction
    %B			print vstm/vldm register list
-   %C			print vstr/vldr address operand
    %I                   print cirrus signed shift immediate: bits 0..3|4..6
    %F			print the COUNT field of a LFM/SFM instruction.
    %P			print floating point precision in arithmetic insn
@@ -76,6 +86,8 @@ struct opcode16
    %R			print floating point rounding mode
 
    %<bitfield>r		print as an ARM register
+   %<bitfield>R		as %<>r but r15 is UNPREDICTABLE
+   %<bitfield>ru        as %<>r but each u register must be unique.
    %<bitfield>d		print the bitfield in decimal
    %<bitfield>k		print immediate for VFPv3 conversion instruction
    %<bitfield>x		print the bitfield in hex
@@ -103,8 +115,17 @@ struct opcode16
 			versions.
    %i			print 5-bit immediate in bits 8,3..0
 			(print "32" when 0)
-   %r			print register offset address for wldt/wstr instruction
-*/
+   %r			print register offset address for wldt/wstr instruction.  */
+
+enum opcode_sentinel_enum
+{
+  SENTINEL_IWMMXT_START = 1,
+  SENTINEL_IWMMXT_END,
+  SENTINEL_GENERIC_START
+} opcode_sentinels;
+
+#define UNDEFINED_INSTRUCTION      "\t\t; <UNDEFINED> instruction: %0-31x"
+#define UNPREDICTABLE_INSTRUCTION  "\t; <UNPREDICTABLE>"
 
 /* Common coprocessor opcodes shared between Arm and Thumb-2.  */
 
@@ -116,10 +137,9 @@ static const struct opcode32 coprocessor_opcodes[] =
   {ARM_CEXT_XSCALE, 0x0e2c0010, 0x0ffc0ff0, "mia%17'T%17`B%16'T%16`B%c\tacc0, %0-3r, %12-15r"},
   {ARM_CEXT_XSCALE, 0x0c400000, 0x0ff00fff, "mar%c\tacc0, %12-15r, %16-19r"},
   {ARM_CEXT_XSCALE, 0x0c500000, 0x0ff00fff, "mra%c\t%12-15r, %16-19r, acc0"},
-    
+
   /* Intel Wireless MMX technology instructions.  */
-#define FIRST_IWMMXT_INSN 0x0e130130
-#define IWMMXT_INSN_COUNT 73
+  { 0, SENTINEL_IWMMXT_START, 0, "" },
   {ARM_CEXT_IWMMXT, 0x0e130130, 0x0f3f0fff, "tandc%22-23w%c\t%12-15r"},
   {ARM_CEXT_XSCALE, 0x0e400010, 0x0ff00f3f, "tbcst%6-7w%c\t%16-19g, %12-15r"},
   {ARM_CEXT_XSCALE, 0x0e130170, 0x0f3f0ff8, "textrc%22-23w%c\t%12-15r, #%0-2d"},
@@ -134,11 +154,11 @@ static const struct opcode32 coprocessor_opcodes[] =
   {ARM_CEXT_XSCALE, 0x0e100110, 0x0ff00ff0, "tmrc%c\t%12-15r, %16-19G"},
   {ARM_CEXT_XSCALE, 0x0c500000, 0x0ff00ff0, "tmrrc%c\t%12-15r, %16-19r, %0-3g"},
   {ARM_CEXT_XSCALE, 0x0e130150, 0x0f3f0fff, "torc%22-23w%c\t%12-15r"},
-  {ARM_CEXT_XSCALE, 0x0e130190, 0x0f3f0fff, "torvsc%22-23w%c\t%12-15r"},
+  {ARM_CEXT_XSCALE, 0x0e120190, 0x0f3f0fff, "torvsc%22-23w%c\t%12-15r"},
   {ARM_CEXT_XSCALE, 0x0e2001c0, 0x0f300fff, "wabs%22-23w%c\t%12-15g, %16-19g"},
   {ARM_CEXT_XSCALE, 0x0e0001c0, 0x0f300fff, "wacc%22-23w%c\t%12-15g, %16-19g"},
   {ARM_CEXT_XSCALE, 0x0e000180, 0x0f000ff0, "wadd%20-23w%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_CEXT_XSCALE, 0x0e2001a0, 0x0f300ff0, "waddbhus%22?ml%c\t%12-15g, %16-19g, %0-3g"},
+  {ARM_CEXT_XSCALE, 0x0e2001a0, 0x0fb00ff0, "waddbhus%22?ml%c\t%12-15g, %16-19g, %0-3g"},
   {ARM_CEXT_XSCALE, 0x0ea001a0, 0x0ff00ff0, "waddsubhx%c\t%12-15g, %16-19g, %0-3g"},
   {ARM_CEXT_XSCALE, 0x0e000020, 0x0f800ff0, "waligni%c\t%12-15g, %16-19g, %0-3g, #%20-22d"},
   {ARM_CEXT_XSCALE, 0x0e800020, 0x0fc00ff0, "walignr%20-21d%c\t%12-15g, %16-19g, %0-3g"},
@@ -195,8 +215,9 @@ static const struct opcode32 coprocessor_opcodes[] =
   {ARM_CEXT_XSCALE, 0x0e1000c0, 0x0f300ff0, "wunpckih%22-23w%c\t%12-15g, %16-19g, %0-3g"},
   {ARM_CEXT_XSCALE, 0x0e1000e0, 0x0f300ff0, "wunpckil%22-23w%c\t%12-15g, %16-19g, %0-3g"},
   {ARM_CEXT_XSCALE, 0x0e100000, 0x0ff00ff0, "wxor%c\t%12-15g, %16-19g, %0-3g"},
+  { 0, SENTINEL_IWMMXT_END, 0, "" },
 
-  /* Floating point coprocessor (FPA) instructions */
+  /* Floating point coprocessor (FPA) instructions.  */
   {FPU_FPA_EXT_V1, 0x0e000100, 0x0ff08f10, "adf%c%P%R\t%12-14f, %16-18f, %0-3f"},
   {FPU_FPA_EXT_V1, 0x0e100100, 0x0ff08f10, "muf%c%P%R\t%12-14f, %16-18f, %0-3f"},
   {FPU_FPA_EXT_V1, 0x0e200100, 0x0ff08f10, "suf%c%P%R\t%12-14f, %16-18f, %0-3f"},
@@ -241,15 +262,30 @@ static const struct opcode32 coprocessor_opcodes[] =
   {FPU_FPA_EXT_V2, 0x0c000200, 0x0e100f00, "sfm%c\t%12-14f, %F, %A"},
   {FPU_FPA_EXT_V2, 0x0c100200, 0x0e100f00, "lfm%c\t%12-14f, %F, %A"},
 
-  /* Register load/store */
-  {FPU_NEON_EXT_V1, 0x0d200b00, 0x0fb00f01, "vstmdb%c\t%16-19r%21'!, %B"},
-  {FPU_NEON_EXT_V1, 0x0d300b00, 0x0fb00f01, "vldmdb%c\t%16-19r%21'!, %B"},
-  {FPU_NEON_EXT_V1, 0x0c800b00, 0x0f900f01, "vstmia%c\t%16-19r%21'!, %B"},
-  {FPU_NEON_EXT_V1, 0x0c900b00, 0x0f900f01, "vldmia%c\t%16-19r%21'!, %B"},
-  {FPU_NEON_EXT_V1, 0x0d000b00, 0x0f300f00, "vstr%c\t%12-15,22D, %C"},
-  {FPU_NEON_EXT_V1, 0x0d100b00, 0x0f300f00, "vldr%c\t%12-15,22D, %C"},
+  /* Register load/store.  */
+  {FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1, 0x0d2d0b00, 0x0fbf0f01, "vpush%c\t%B"},
+  {FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1, 0x0d200b00, 0x0fb00f01, "vstmdb%c\t%16-19r!, %B"},
+  {FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1, 0x0d300b00, 0x0fb00f01, "vldmdb%c\t%16-19r!, %B"},
+  {FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1, 0x0c800b00, 0x0f900f01, "vstmia%c\t%16-19r%21'!, %B"},
+  {FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1, 0x0cbd0b00, 0x0fbf0f01, "vpop%c\t%B"},
+  {FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1, 0x0c900b00, 0x0f900f01, "vldmia%c\t%16-19r%21'!, %B"},
+  {FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1, 0x0d000b00, 0x0f300f00, "vstr%c\t%12-15,22D, %A"},
+  {FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1, 0x0d100b00, 0x0f300f00, "vldr%c\t%12-15,22D, %A"},
+  {FPU_VFP_EXT_V1xD, 0x0d2d0a00, 0x0fbf0f00, "vpush%c\t%y3"},
+  {FPU_VFP_EXT_V1xD, 0x0d200a00, 0x0fb00f00, "vstmdb%c\t%16-19r!, %y3"},
+  {FPU_VFP_EXT_V1xD, 0x0d300a00, 0x0fb00f00, "vldmdb%c\t%16-19r!, %y3"},
+  {FPU_VFP_EXT_V1xD, 0x0c800a00, 0x0f900f00, "vstmia%c\t%16-19r%21'!, %y3"},
+  {FPU_VFP_EXT_V1xD, 0x0cbd0a00, 0x0fbf0f00, "vpop%c\t%y3"},
+  {FPU_VFP_EXT_V1xD, 0x0c900a00, 0x0f900f00, "vldmia%c\t%16-19r%21'!, %y3"},
+  {FPU_VFP_EXT_V1xD, 0x0d000a00, 0x0f300f00, "vstr%c\t%y1, %A"},
+  {FPU_VFP_EXT_V1xD, 0x0d100a00, 0x0f300f00, "vldr%c\t%y1, %A"},
 
-  /* Data transfer between ARM and NEON registers */
+  {FPU_VFP_EXT_V1xD, 0x0d200b01, 0x0fb00f01, "fstmdbx%c\t%16-19r!, %z3\t;@ Deprecated"},
+  {FPU_VFP_EXT_V1xD, 0x0d300b01, 0x0fb00f01, "fldmdbx%c\t%16-19r!, %z3\t;@ Deprecated"},
+  {FPU_VFP_EXT_V1xD, 0x0c800b01, 0x0f900f01, "fstmiax%c\t%16-19r%21'!, %z3\t;@ Deprecated"},
+  {FPU_VFP_EXT_V1xD, 0x0c900b01, 0x0f900f01, "fldmiax%c\t%16-19r%21'!, %z3\t;@ Deprecated"},
+
+  /* Data transfer between ARM and NEON registers.  */
   {FPU_NEON_EXT_V1, 0x0e800b10, 0x0ff00f70, "vdup%c.32\t%16-19,7D, %12-15r"},
   {FPU_NEON_EXT_V1, 0x0e800b30, 0x0ff00f70, "vdup%c.16\t%16-19,7D, %12-15r"},
   {FPU_NEON_EXT_V1, 0x0ea00b10, 0x0ff00f70, "vdup%c.32\t%16-19,7Q, %12-15r"},
@@ -264,91 +300,78 @@ static const struct opcode32 coprocessor_opcodes[] =
   {FPU_NEON_EXT_V1, 0x0e100b30, 0x0f500f30, "vmov%c.%23?us16\t%12-15r, %16-19,7D[%6,21d]"},
   {FPU_NEON_EXT_V1, 0x0e400b10, 0x0fd00f10, "vmov%c.8\t%16-19,7D[%5,6,21d], %12-15r"},
   {FPU_NEON_EXT_V1, 0x0e500b10, 0x0f500f10, "vmov%c.%23?us8\t%12-15r, %16-19,7D[%5,6,21d]"},
+  /* Half-precision conversion instructions.  */
+  {FPU_VFP_EXT_FP16, 0x0eb20a40, 0x0fbf0f50, "vcvt%7?tb%c.f32.f16\t%y1, %y0"},
+  {FPU_VFP_EXT_FP16, 0x0eb30a40, 0x0fbf0f50, "vcvt%7?tb%c.f16.f32\t%y1, %y0"},
 
-  /* Floating point coprocessor (VFP) instructions */
-  {FPU_VFP_EXT_V1xD, 0x0ef1fa10, 0x0fffffff, "fmstat%c"},
-  {FPU_VFP_EXT_V1xD, 0x0ee00a10, 0x0fff0fff, "fmxr%c\tfpsid, %12-15r"},
-  {FPU_VFP_EXT_V1xD, 0x0ee10a10, 0x0fff0fff, "fmxr%c\tfpscr, %12-15r"},
-  {FPU_VFP_EXT_V1xD, 0x0ee60a10, 0x0fff0fff, "fmxr%c\tmvfr1, %12-15r"},
-  {FPU_VFP_EXT_V1xD, 0x0ee70a10, 0x0fff0fff, "fmxr%c\tmvfr0, %12-15r"},
-  {FPU_VFP_EXT_V1xD, 0x0ee80a10, 0x0fff0fff, "fmxr%c\tfpexc, %12-15r"},
-  {FPU_VFP_EXT_V1xD, 0x0ee90a10, 0x0fff0fff, "fmxr%c\tfpinst, %12-15r\t@ Impl def"},
-  {FPU_VFP_EXT_V1xD, 0x0eea0a10, 0x0fff0fff, "fmxr%c\tfpinst2, %12-15r\t@ Impl def"},
-  {FPU_VFP_EXT_V1xD, 0x0ef00a10, 0x0fff0fff, "fmrx%c\t%12-15r, fpsid"},
-  {FPU_VFP_EXT_V1xD, 0x0ef10a10, 0x0fff0fff, "fmrx%c\t%12-15r, fpscr"},
-  {FPU_VFP_EXT_V1xD, 0x0ef60a10, 0x0fff0fff, "fmrx%c\t%12-15r, mvfr1"},
-  {FPU_VFP_EXT_V1xD, 0x0ef70a10, 0x0fff0fff, "fmrx%c\t%12-15r, mvfr0"},
-  {FPU_VFP_EXT_V1xD, 0x0ef80a10, 0x0fff0fff, "fmrx%c\t%12-15r, fpexc"},
-  {FPU_VFP_EXT_V1xD, 0x0ef90a10, 0x0fff0fff, "fmrx%c\t%12-15r, fpinst\t@ Impl def"},
-  {FPU_VFP_EXT_V1xD, 0x0efa0a10, 0x0fff0fff, "fmrx%c\t%12-15r, fpinst2\t@ Impl def"},
-  {FPU_VFP_EXT_V1, 0x0e000b10, 0x0ff00fff, "fmdlr%c\t%z2, %12-15r"},
-  {FPU_VFP_EXT_V1, 0x0e100b10, 0x0ff00fff, "fmrdl%c\t%12-15r, %z2"},
-  {FPU_VFP_EXT_V1, 0x0e200b10, 0x0ff00fff, "fmdhr%c\t%z2, %12-15r"},
-  {FPU_VFP_EXT_V1, 0x0e300b10, 0x0ff00fff, "fmrdh%c\t%12-15r, %z2"},
-  {FPU_VFP_EXT_V1xD, 0x0ee00a10, 0x0ff00fff, "fmxr%c\t<impl def %16-19x>, %12-15r"},
-  {FPU_VFP_EXT_V1xD, 0x0ef00a10, 0x0ff00fff, "fmrx%c\t%12-15r, <impl def %16-19x>"},
-  {FPU_VFP_EXT_V1xD, 0x0e000a10, 0x0ff00f7f, "fmsr%c\t%y2, %12-15r"},
-  {FPU_VFP_EXT_V1xD, 0x0e100a10, 0x0ff00f7f, "fmrs%c\t%12-15r, %y2"},
-  {FPU_VFP_EXT_V1xD, 0x0eb50a40, 0x0fbf0f70, "fcmp%7'ezs%c\t%y1"},
-  {FPU_VFP_EXT_V1, 0x0eb50b40, 0x0fbf0f70, "fcmp%7'ezd%c\t%z1"},
-  {FPU_VFP_EXT_V1xD, 0x0eb00a40, 0x0fbf0fd0, "fcpys%c\t%y1, %y0"},
-  {FPU_VFP_EXT_V1xD, 0x0eb00ac0, 0x0fbf0fd0, "fabss%c\t%y1, %y0"},
-  {FPU_VFP_EXT_V1, 0x0eb00b40, 0x0fbf0fd0, "fcpyd%c\t%z1, %z0"},
-  {FPU_VFP_EXT_V1, 0x0eb00bc0, 0x0fbf0fd0, "fabsd%c\t%z1, %z0"},
-  {FPU_VFP_EXT_V1xD, 0x0eb10a40, 0x0fbf0fd0, "fnegs%c\t%y1, %y0"},
-  {FPU_VFP_EXT_V1xD, 0x0eb10ac0, 0x0fbf0fd0, "fsqrts%c\t%y1, %y0"},
-  {FPU_VFP_EXT_V1, 0x0eb10b40, 0x0fbf0fd0, "fnegd%c\t%z1, %z0"},
-  {FPU_VFP_EXT_V1, 0x0eb10bc0, 0x0fbf0fd0, "fsqrtd%c\t%z1, %z0"},
-  {FPU_VFP_EXT_V1, 0x0eb70ac0, 0x0fbf0fd0, "fcvtds%c\t%z1, %y0"},
-  {FPU_VFP_EXT_V1, 0x0eb70bc0, 0x0fbf0fd0, "fcvtsd%c\t%y1, %z0"},
-  {FPU_VFP_EXT_V1xD, 0x0eb80a40, 0x0fbf0fd0, "fuitos%c\t%y1, %y0"},
-  {FPU_VFP_EXT_V1xD, 0x0eb80ac0, 0x0fbf0fd0, "fsitos%c\t%y1, %y0"},
-  {FPU_VFP_EXT_V1, 0x0eb80b40, 0x0fbf0fd0, "fuitod%c\t%z1, %y0"},
-  {FPU_VFP_EXT_V1, 0x0eb80bc0, 0x0fbf0fd0, "fsitod%c\t%z1, %y0"},
-  {FPU_VFP_EXT_V1xD, 0x0eb40a40, 0x0fbf0f50, "fcmp%7'es%c\t%y1, %y0"},
-  {FPU_VFP_EXT_V1, 0x0eb40b40, 0x0fbf0f50, "fcmp%7'ed%c\t%z1, %z0"},
-  {FPU_VFP_EXT_V3, 0x0eba0a40, 0x0fbe0f50, "f%16?us%7?lhtos%c\t%y1, #%5,0-3k"},
-  {FPU_VFP_EXT_V3, 0x0eba0b40, 0x0fbe0f50, "f%16?us%7?lhtod%c\t%z1, #%5,0-3k"},
-  {FPU_VFP_EXT_V1xD, 0x0ebc0a40, 0x0fbe0f50, "fto%16?sui%7'zs%c\t%y1, %y0"},
-  {FPU_VFP_EXT_V1, 0x0ebc0b40, 0x0fbe0f50, "fto%16?sui%7'zd%c\t%y1, %z0"},
-  {FPU_VFP_EXT_V3, 0x0ebe0a40, 0x0fbe0f50, "fto%16?us%7?lhs%c\t%y1, #%5,0-3k"},
-  {FPU_VFP_EXT_V3, 0x0ebe0b40, 0x0fbe0f50, "fto%16?us%7?lhd%c\t%z1, #%5,0-3k"},
-  {FPU_VFP_EXT_V1, 0x0c500b10, 0x0fb00ff0, "fmrrd%c\t%12-15r, %16-19r, %z0"},
-  {FPU_VFP_EXT_V3, 0x0eb00a00, 0x0fb00ff0, "fconsts%c\t%y1, #%0-3,16-19d"},
-  {FPU_VFP_EXT_V3, 0x0eb00b00, 0x0fb00ff0, "fconstd%c\t%z1, #%0-3,16-19d"},
-  {FPU_VFP_EXT_V2, 0x0c400a10, 0x0ff00fd0, "fmsrr%c\t%y4, %12-15r, %16-19r"},
-  {FPU_VFP_EXT_V2, 0x0c400b10, 0x0ff00fd0, "fmdrr%c\t%z0, %12-15r, %16-19r"},
-  {FPU_VFP_EXT_V2, 0x0c500a10, 0x0ff00fd0, "fmrrs%c\t%12-15r, %16-19r, %y4"},
-  {FPU_VFP_EXT_V1xD, 0x0e000a00, 0x0fb00f50, "fmacs%c\t%y1, %y2, %y0"},
-  {FPU_VFP_EXT_V1xD, 0x0e000a40, 0x0fb00f50, "fnmacs%c\t%y1, %y2, %y0"},
-  {FPU_VFP_EXT_V1, 0x0e000b00, 0x0fb00f50, "fmacd%c\t%z1, %z2, %z0"},
-  {FPU_VFP_EXT_V1, 0x0e000b40, 0x0fb00f50, "fnmacd%c\t%z1, %z2, %z0"},
-  {FPU_VFP_EXT_V1xD, 0x0e100a00, 0x0fb00f50, "fmscs%c\t%y1, %y2, %y0"},
-  {FPU_VFP_EXT_V1xD, 0x0e100a40, 0x0fb00f50, "fnmscs%c\t%y1, %y2, %y0"},
-  {FPU_VFP_EXT_V1, 0x0e100b00, 0x0fb00f50, "fmscd%c\t%z1, %z2, %z0"},
-  {FPU_VFP_EXT_V1, 0x0e100b40, 0x0fb00f50, "fnmscd%c\t%z1, %z2, %z0"},
-  {FPU_VFP_EXT_V1xD, 0x0e200a00, 0x0fb00f50, "fmuls%c\t%y1, %y2, %y0"},
-  {FPU_VFP_EXT_V1xD, 0x0e200a40, 0x0fb00f50, "fnmuls%c\t%y1, %y2, %y0"},
-  {FPU_VFP_EXT_V1, 0x0e200b00, 0x0fb00f50, "fmuld%c\t%z1, %z2, %z0"},
-  {FPU_VFP_EXT_V1, 0x0e200b40, 0x0fb00f50, "fnmuld%c\t%z1, %z2, %z0"},
-  {FPU_VFP_EXT_V1xD, 0x0e300a00, 0x0fb00f50, "fadds%c\t%y1, %y2, %y0"},
-  {FPU_VFP_EXT_V1xD, 0x0e300a40, 0x0fb00f50, "fsubs%c\t%y1, %y2, %y0"},
-  {FPU_VFP_EXT_V1, 0x0e300b00, 0x0fb00f50, "faddd%c\t%z1, %z2, %z0"},
-  {FPU_VFP_EXT_V1, 0x0e300b40, 0x0fb00f50, "fsubd%c\t%z1, %z2, %z0"},
-  {FPU_VFP_EXT_V1xD, 0x0e800a00, 0x0fb00f50, "fdivs%c\t%y1, %y2, %y0"},
-  {FPU_VFP_EXT_V1, 0x0e800b00, 0x0fb00f50, "fdivd%c\t%z1, %z2, %z0"},
-  {FPU_VFP_EXT_V1xD, 0x0d200a00, 0x0fb00f00, "fstmdbs%c\t%16-19r!, %y3"},
-  {FPU_VFP_EXT_V1xD, 0x0d200b00, 0x0fb00f00, "fstmdb%0?xd%c\t%16-19r!, %z3"},
-  {FPU_VFP_EXT_V1xD, 0x0d300a00, 0x0fb00f00, "fldmdbs%c\t%16-19r!, %y3"},
-  {FPU_VFP_EXT_V1xD, 0x0d300b00, 0x0fb00f00, "fldmdb%0?xd%c\t%16-19r!, %z3"},
-  {FPU_VFP_EXT_V1xD, 0x0d000a00, 0x0f300f00, "fsts%c\t%y1, %A"},
-  {FPU_VFP_EXT_V1, 0x0d000b00, 0x0f300f00, "fstd%c\t%z1, %A"},
-  {FPU_VFP_EXT_V1xD, 0x0d100a00, 0x0f300f00, "flds%c\t%y1, %A"},
-  {FPU_VFP_EXT_V1, 0x0d100b00, 0x0f300f00, "fldd%c\t%z1, %A"},
-  {FPU_VFP_EXT_V1xD, 0x0c800a00, 0x0f900f00, "fstmias%c\t%16-19r%21'!, %y3"},
-  {FPU_VFP_EXT_V1xD, 0x0c800b00, 0x0f900f00, "fstmia%0?xd%c\t%16-19r%21'!, %z3"},
-  {FPU_VFP_EXT_V1xD, 0x0c900a00, 0x0f900f00, "fldmias%c\t%16-19r%21'!, %y3"},
-  {FPU_VFP_EXT_V1xD, 0x0c900b00, 0x0f900f00, "fldmia%0?xd%c\t%16-19r%21'!, %z3"},
+  /* Floating point coprocessor (VFP) instructions.  */
+  {FPU_VFP_EXT_V1xD, 0x0ee00a10, 0x0fff0fff, "vmsr%c\tfpsid, %12-15r"},
+  {FPU_VFP_EXT_V1xD, 0x0ee10a10, 0x0fff0fff, "vmsr%c\tfpscr, %12-15r"},
+  {FPU_VFP_EXT_V1xD, 0x0ee60a10, 0x0fff0fff, "vmsr%c\tmvfr1, %12-15r"},
+  {FPU_VFP_EXT_V1xD, 0x0ee70a10, 0x0fff0fff, "vmsr%c\tmvfr0, %12-15r"},
+  {FPU_VFP_EXT_V1xD, 0x0ee80a10, 0x0fff0fff, "vmsr%c\tfpexc, %12-15r"},
+  {FPU_VFP_EXT_V1xD, 0x0ee90a10, 0x0fff0fff, "vmsr%c\tfpinst, %12-15r\t@ Impl def"},
+  {FPU_VFP_EXT_V1xD, 0x0eea0a10, 0x0fff0fff, "vmsr%c\tfpinst2, %12-15r\t@ Impl def"},
+  {FPU_VFP_EXT_V1xD, 0x0ef00a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpsid"},
+  {FPU_VFP_EXT_V1xD, 0x0ef1fa10, 0x0fffffff, "vmrs%c\tAPSR_nzcv, fpscr"},
+  {FPU_VFP_EXT_V1xD, 0x0ef10a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpscr"},
+  {FPU_VFP_EXT_V1xD, 0x0ef60a10, 0x0fff0fff, "vmrs%c\t%12-15r, mvfr1"},
+  {FPU_VFP_EXT_V1xD, 0x0ef70a10, 0x0fff0fff, "vmrs%c\t%12-15r, mvfr0"},
+  {FPU_VFP_EXT_V1xD, 0x0ef80a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpexc"},
+  {FPU_VFP_EXT_V1xD, 0x0ef90a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpinst\t@ Impl def"},
+  {FPU_VFP_EXT_V1xD, 0x0efa0a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpinst2\t@ Impl def"},
+  {FPU_VFP_EXT_V1, 0x0e000b10, 0x0fd00fff, "vmov%c.32\t%z2[%21d], %12-15r"},
+  {FPU_VFP_EXT_V1, 0x0e100b10, 0x0fd00fff, "vmov%c.32\t%12-15r, %z2[%21d]"},
+  {FPU_VFP_EXT_V1xD, 0x0ee00a10, 0x0ff00fff, "vmsr%c\t<impl def %16-19x>, %12-15r"},
+  {FPU_VFP_EXT_V1xD, 0x0ef00a10, 0x0ff00fff, "vmrs%c\t%12-15r, <impl def %16-19x>"},
+  {FPU_VFP_EXT_V1xD, 0x0e000a10, 0x0ff00f7f, "vmov%c\t%y2, %12-15r"},
+  {FPU_VFP_EXT_V1xD, 0x0e100a10, 0x0ff00f7f, "vmov%c\t%12-15r, %y2"},
+  {FPU_VFP_EXT_V1xD, 0x0eb50a40, 0x0fbf0f70, "vcmp%7'e%c.f32\t%y1, #0.0"},
+  {FPU_VFP_EXT_V1, 0x0eb50b40, 0x0fbf0f70, "vcmp%7'e%c.f64\t%z1, #0.0"},
+  {FPU_VFP_EXT_V1xD, 0x0eb00a40, 0x0fbf0fd0, "vmov%c.f32\t%y1, %y0"},
+  {FPU_VFP_EXT_V1xD, 0x0eb00ac0, 0x0fbf0fd0, "vabs%c.f32\t%y1, %y0"},
+  {FPU_VFP_EXT_V1, 0x0eb00b40, 0x0fbf0fd0, "vmov%c.f64\t%z1, %z0"},
+  {FPU_VFP_EXT_V1, 0x0eb00bc0, 0x0fbf0fd0, "vabs%c.f64\t%z1, %z0"},
+  {FPU_VFP_EXT_V1xD, 0x0eb10a40, 0x0fbf0fd0, "vneg%c.f32\t%y1, %y0"},
+  {FPU_VFP_EXT_V1xD, 0x0eb10ac0, 0x0fbf0fd0, "vsqrt%c.f32\t%y1, %y0"},
+  {FPU_VFP_EXT_V1, 0x0eb10b40, 0x0fbf0fd0, "vneg%c.f64\t%z1, %z0"},
+  {FPU_VFP_EXT_V1, 0x0eb10bc0, 0x0fbf0fd0, "vsqrt%c.f64\t%z1, %z0"},
+  {FPU_VFP_EXT_V1, 0x0eb70ac0, 0x0fbf0fd0, "vcvt%c.f64.f32\t%z1, %y0"},
+  {FPU_VFP_EXT_V1, 0x0eb70bc0, 0x0fbf0fd0, "vcvt%c.f32.f64\t%y1, %z0"},
+  {FPU_VFP_EXT_V1xD, 0x0eb80a40, 0x0fbf0f50, "vcvt%c.f32.%7?su32\t%y1, %y0"},
+  {FPU_VFP_EXT_V1, 0x0eb80b40, 0x0fbf0f50, "vcvt%c.f64.%7?su32\t%z1, %y0"},
+  {FPU_VFP_EXT_V1xD, 0x0eb40a40, 0x0fbf0f50, "vcmp%7'e%c.f32\t%y1, %y0"},
+  {FPU_VFP_EXT_V1, 0x0eb40b40, 0x0fbf0f50, "vcmp%7'e%c.f64\t%z1, %z0"},
+  {FPU_VFP_EXT_V3xD, 0x0eba0a40, 0x0fbe0f50, "vcvt%c.f32.%16?us%7?31%7?26\t%y1, %y1, #%5,0-3k"},
+  {FPU_VFP_EXT_V3, 0x0eba0b40, 0x0fbe0f50, "vcvt%c.f64.%16?us%7?31%7?26\t%z1, %z1, #%5,0-3k"},
+  {FPU_VFP_EXT_V1xD, 0x0ebc0a40, 0x0fbe0f50, "vcvt%7`r%c.%16?su32.f32\t%y1, %y0"},
+  {FPU_VFP_EXT_V1, 0x0ebc0b40, 0x0fbe0f50, "vcvt%7`r%c.%16?su32.f64\t%y1, %z0"},
+  {FPU_VFP_EXT_V3xD, 0x0ebe0a40, 0x0fbe0f50, "vcvt%c.%16?us%7?31%7?26.f32\t%y1, %y1, #%5,0-3k"},
+  {FPU_VFP_EXT_V3, 0x0ebe0b40, 0x0fbe0f50, "vcvt%c.%16?us%7?31%7?26.f64\t%z1, %z1, #%5,0-3k"},
+  {FPU_VFP_EXT_V1, 0x0c500b10, 0x0fb00ff0, "vmov%c\t%12-15r, %16-19r, %z0"},
+  {FPU_VFP_EXT_V3xD, 0x0eb00a00, 0x0fb00ff0, "vmov%c.f32\t%y1, #%0-3,16-19d"},
+  {FPU_VFP_EXT_V3, 0x0eb00b00, 0x0fb00ff0, "vmov%c.f64\t%z1, #%0-3,16-19d"},
+  {FPU_VFP_EXT_V2, 0x0c400a10, 0x0ff00fd0, "vmov%c\t%y4, %12-15r, %16-19r"},
+  {FPU_VFP_EXT_V2, 0x0c400b10, 0x0ff00fd0, "vmov%c\t%z0, %12-15r, %16-19r"},
+  {FPU_VFP_EXT_V2, 0x0c500a10, 0x0ff00fd0, "vmov%c\t%12-15r, %16-19r, %y4"},
+  {FPU_VFP_EXT_V1xD, 0x0e000a00, 0x0fb00f50, "vmla%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_V1xD, 0x0e000a40, 0x0fb00f50, "vmls%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_V1, 0x0e000b00, 0x0fb00f50, "vmla%c.f64\t%z1, %z2, %z0"},
+  {FPU_VFP_EXT_V1, 0x0e000b40, 0x0fb00f50, "vmls%c.f64\t%z1, %z2, %z0"},
+  {FPU_VFP_EXT_V1xD, 0x0e100a00, 0x0fb00f50, "vnmls%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_V1xD, 0x0e100a40, 0x0fb00f50, "vnmla%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_V1, 0x0e100b00, 0x0fb00f50, "vnmls%c.f64\t%z1, %z2, %z0"},
+  {FPU_VFP_EXT_V1, 0x0e100b40, 0x0fb00f50, "vnmla%c.f64\t%z1, %z2, %z0"},
+  {FPU_VFP_EXT_V1xD, 0x0e200a00, 0x0fb00f50, "vmul%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_V1xD, 0x0e200a40, 0x0fb00f50, "vnmul%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_V1, 0x0e200b00, 0x0fb00f50, "vmul%c.f64\t%z1, %z2, %z0"},
+  {FPU_VFP_EXT_V1, 0x0e200b40, 0x0fb00f50, "vnmul%c.f64\t%z1, %z2, %z0"},
+  {FPU_VFP_EXT_V1xD, 0x0e300a00, 0x0fb00f50, "vadd%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_V1xD, 0x0e300a40, 0x0fb00f50, "vsub%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_V1, 0x0e300b00, 0x0fb00f50, "vadd%c.f64\t%z1, %z2, %z0"},
+  {FPU_VFP_EXT_V1, 0x0e300b40, 0x0fb00f50, "vsub%c.f64\t%z1, %z2, %z0"},
+  {FPU_VFP_EXT_V1xD, 0x0e800a00, 0x0fb00f50, "vdiv%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_V1, 0x0e800b00, 0x0fb00f50, "vdiv%c.f64\t%z1, %z2, %z0"},
 
   /* Cirrus coprocessor instructions.  */
   {ARM_CEXT_MAVERICK, 0x0d100400, 0x0f500f00, "cfldrs%c\tmvf%12-15d, %A"},
@@ -436,24 +459,36 @@ static const struct opcode32 coprocessor_opcodes[] =
   {ARM_CEXT_MAVERICK, 0x0e200600, 0x0ff00f10, "cfmadda32%c\tmvax%5-7d, mvax%12-15d, mvfx%16-19d, mvfx%0-3d"},
   {ARM_CEXT_MAVERICK, 0x0e300600, 0x0ff00f10, "cfmsuba32%c\tmvax%5-7d, mvax%12-15d, mvfx%16-19d, mvfx%0-3d"},
 
-  /* Generic coprocessor instructions */
-  {ARM_EXT_V2, 0x0c400000, 0x0ff00000, "mcrr%c\t%8-11d, %4-7d, %12-15r, %16-19r, cr%0-3d"},
-  {ARM_EXT_V2, 0x0c500000, 0x0ff00000, "mrrc%c\t%8-11d, %4-7d, %12-15r, %16-19r, cr%0-3d"},
+  /* VFP Fused multiply add instructions.  */
+  {FPU_VFP_EXT_FMA, 0x0ea00a00, 0x0fb00f50, "vfma%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_FMA, 0x0ea00b00, 0x0fb00f50, "vfma%c.f64\t%z1, %z2, %z0"},
+  {FPU_VFP_EXT_FMA, 0x0ea00a40, 0x0fb00f50, "vfms%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_FMA, 0x0ea00b40, 0x0fb00f50, "vfms%c.f64\t%z1, %z2, %z0"},
+  {FPU_VFP_EXT_FMA, 0x0e900a40, 0x0fb00f50, "vfnma%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_FMA, 0x0e900b40, 0x0fb00f50, "vfnma%c.f64\t%z1, %z2, %z0"},
+  {FPU_VFP_EXT_FMA, 0x0e900a00, 0x0fb00f50, "vfnms%c.f32\t%y1, %y2, %y0"},
+  {FPU_VFP_EXT_FMA, 0x0e900b00, 0x0fb00f50, "vfnms%c.f64\t%z1, %z2, %z0"},
+
+  /* Generic coprocessor instructions.  */
+  { 0, SENTINEL_GENERIC_START, 0, "" },
+  {ARM_EXT_V5E, 0x0c400000, 0x0ff00000, "mcrr%c\t%8-11d, %4-7d, %12-15R, %16-19r, cr%0-3d"},
+  {ARM_EXT_V5E, 0x0c500000, 0x0ff00000, "mrrc%c\t%8-11d, %4-7d, %12-15Ru, %16-19Ru, cr%0-3d"},
   {ARM_EXT_V2, 0x0e000000, 0x0f000010, "cdp%c\t%8-11d, %20-23d, cr%12-15d, cr%16-19d, cr%0-3d, {%5-7d}"},
+  {ARM_EXT_V2, 0x0e10f010, 0x0f10f010, "mrc%c\t%8-11d, %21-23d, APSR_nzcv, cr%16-19d, cr%0-3d, {%5-7d}"},
   {ARM_EXT_V2, 0x0e100010, 0x0f100010, "mrc%c\t%8-11d, %21-23d, %12-15r, cr%16-19d, cr%0-3d, {%5-7d}"},
-  {ARM_EXT_V2, 0x0e000010, 0x0f100010, "mcr%c\t%8-11d, %21-23d, %12-15r, cr%16-19d, cr%0-3d, {%5-7d}"},
+  {ARM_EXT_V2, 0x0e000010, 0x0f100010, "mcr%c\t%8-11d, %21-23d, %12-15R, cr%16-19d, cr%0-3d, {%5-7d}"},
   {ARM_EXT_V2, 0x0c000000, 0x0e100000, "stc%22'l%c\t%8-11d, cr%12-15d, %A"},
   {ARM_EXT_V2, 0x0c100000, 0x0e100000, "ldc%22'l%c\t%8-11d, cr%12-15d, %A"},
 
-  /* V6 coprocessor instructions */
-  {ARM_EXT_V6, 0xfc500000, 0xfff00000, "mrrc2%c\t%8-11d, %4-7d, %12-15r, %16-19r, cr%0-3d"},
-  {ARM_EXT_V6, 0xfc400000, 0xfff00000, "mcrr2%c\t%8-11d, %4-7d, %12-15r, %16-19r, cr%0-3d"},
+  /* V6 coprocessor instructions.  */
+  {ARM_EXT_V6, 0xfc500000, 0xfff00000, "mrrc2%c\t%8-11d, %4-7d, %12-15Ru, %16-19Ru, cr%0-3d"},
+  {ARM_EXT_V6, 0xfc400000, 0xfff00000, "mcrr2%c\t%8-11d, %4-7d, %12-15R, %16-19R, cr%0-3d"},
 
-  /* V5 coprocessor instructions */
+  /* V5 coprocessor instructions.  */
   {ARM_EXT_V5, 0xfc100000, 0xfe100000, "ldc2%22'l%c\t%8-11d, cr%12-15d, %A"},
   {ARM_EXT_V5, 0xfc000000, 0xfe100000, "stc2%22'l%c\t%8-11d, cr%12-15d, %A"},
   {ARM_EXT_V5, 0xfe000000, 0xff000010, "cdp2%c\t%8-11d, %20-23d, cr%12-15d, cr%16-19d, cr%0-3d, {%5-7d}"},
-  {ARM_EXT_V5, 0xfe000010, 0xff100010, "mcr2%c\t%8-11d, %21-23d, %12-15r, cr%16-19d, cr%0-3d, {%5-7d}"},
+  {ARM_EXT_V5, 0xfe000010, 0xff100010, "mcr2%c\t%8-11d, %21-23d, %12-15R, cr%16-19d, cr%0-3d, {%5-7d}"},
   {ARM_EXT_V5, 0xfe100010, 0xff100010, "mrc2%c\t%8-11d, %21-23d, %12-15r, cr%16-19d, cr%0-3d, {%5-7d}"},
 
   {0, 0, 0, 0}
@@ -487,24 +522,32 @@ static const struct opcode32 coprocessor_opcodes[] =
    
    %<bitfield>'c	print specified char iff bitfield is all ones
    %<bitfield>`c	print specified char iff bitfield is all zeroes
-   %<bitfield>?ab...    select from array of values in big endian order  */
+   %<bitfield>?ab...    select from array of values in big endian order.  */
 
 static const struct opcode32 neon_opcodes[] =
 {
-  /* Extract */
+  /* Extract.  */
   {FPU_NEON_EXT_V1, 0xf2b00840, 0xffb00850, "vext%c.8\t%12-15,22R, %16-19,7R, %0-3,5R, #%8-11d"},
   {FPU_NEON_EXT_V1, 0xf2b00000, 0xffb00810, "vext%c.8\t%12-15,22R, %16-19,7R, %0-3,5R, #%8-11d"},
 
-  /* Move data element to all lanes */
+  /* Move data element to all lanes.  */
   {FPU_NEON_EXT_V1, 0xf3b40c00, 0xffb70f90, "vdup%c.32\t%12-15,22R, %0-3,5D[%19d]"},
   {FPU_NEON_EXT_V1, 0xf3b20c00, 0xffb30f90, "vdup%c.16\t%12-15,22R, %0-3,5D[%18-19d]"},
   {FPU_NEON_EXT_V1, 0xf3b10c00, 0xffb10f90, "vdup%c.8\t%12-15,22R, %0-3,5D[%17-19d]"},
 
-  /* Table lookup */
+  /* Table lookup.  */
   {FPU_NEON_EXT_V1, 0xf3b00800, 0xffb00c50, "vtbl%c.8\t%12-15,22D, %F, %0-3,5D"},
   {FPU_NEON_EXT_V1, 0xf3b00840, 0xffb00c50, "vtbx%c.8\t%12-15,22D, %F, %0-3,5D"},
   
-  /* Two registers, miscellaneous */
+  /* Half-precision conversions.  */
+  {FPU_VFP_EXT_FP16, 0xf3b60600, 0xffbf0fd0, "vcvt%c.f16.f32\t%12-15,22D, %0-3,5Q"},
+  {FPU_VFP_EXT_FP16, 0xf3b60700, 0xffbf0fd0, "vcvt%c.f32.f16\t%12-15,22Q, %0-3,5D"},
+
+  /* NEON fused multiply add instructions.  */
+  {FPU_NEON_EXT_FMA, 0xf2000c10, 0xffa00f10, "vfma%c.f%20U0\t%12-15,22R, %16-19,7R, %0-3,5R"},
+  {FPU_NEON_EXT_FMA, 0xf2200c10, 0xffa00f10, "vfms%c.f%20U0\t%12-15,22R, %16-19,7R, %0-3,5R"},
+
+  /* Two registers, miscellaneous.  */
   {FPU_NEON_EXT_V1, 0xf2880a10, 0xfebf0fd0, "vmovl%c.%24?us8\t%12-15,22Q, %0-3,5D"},
   {FPU_NEON_EXT_V1, 0xf2900a10, 0xfebf0fd0, "vmovl%c.%24?us16\t%12-15,22Q, %0-3,5D"},
   {FPU_NEON_EXT_V1, 0xf2a00a10, 0xfebf0fd0, "vmovl%c.%24?us32\t%12-15,22Q, %0-3,5D"},
@@ -539,7 +582,7 @@ static const struct opcode32 neon_opcodes[] =
   {FPU_NEON_EXT_V1, 0xf3b00600, 0xffb30f10, "vpadal%c.%7?us%18-19S2\t%12-15,22R, %0-3,5R"},
   {FPU_NEON_EXT_V1, 0xf3b30600, 0xffb30e10, "vcvt%c.%7-8?usff%18-19Sa.%7-8?ffus%18-19Sa\t%12-15,22R, %0-3,5R"},
 
-  /* Three registers of the same length */
+  /* Three registers of the same length.  */
   {FPU_NEON_EXT_V1, 0xf2000110, 0xffb00f10, "vand%c\t%12-15,22R, %16-19,7R, %0-3,5R"},
   {FPU_NEON_EXT_V1, 0xf2100110, 0xffb00f10, "vbic%c\t%12-15,22R, %16-19,7R, %0-3,5R"},
   {FPU_NEON_EXT_V1, 0xf2200110, 0xffb00f10, "vorr%c\t%12-15,22R, %16-19,7R, %0-3,5R"},
@@ -594,7 +637,7 @@ static const struct opcode32 neon_opcodes[] =
   {FPU_NEON_EXT_V1, 0xf2000a00, 0xfe800f10, "vpmax%c.%24?us%20-21S2\t%12-15,22R, %16-19,7R, %0-3,5R"},
   {FPU_NEON_EXT_V1, 0xf2000a10, 0xfe800f10, "vpmin%c.%24?us%20-21S2\t%12-15,22R, %16-19,7R, %0-3,5R"},
 
-  /* One register and an immediate value */
+  /* One register and an immediate value.  */
   {FPU_NEON_EXT_V1, 0xf2800e10, 0xfeb80fb0, "vmov%c.i8\t%12-15,22R, %E"},
   {FPU_NEON_EXT_V1, 0xf2800e30, 0xfeb80fb0, "vmov%c.i64\t%12-15,22R, %E"},
   {FPU_NEON_EXT_V1, 0xf2800f10, 0xfeb80fb0, "vmov%c.f32\t%12-15,22R, %E"},
@@ -609,7 +652,7 @@ static const struct opcode32 neon_opcodes[] =
   {FPU_NEON_EXT_V1, 0xf2800010, 0xfeb808b0, "vmov%c.i32\t%12-15,22R, %E"},
   {FPU_NEON_EXT_V1, 0xf2800030, 0xfeb808b0, "vmvn%c.i32\t%12-15,22R, %E"},
 
-  /* Two registers and a shift amount */
+  /* Two registers and a shift amount.  */
   {FPU_NEON_EXT_V1, 0xf2880810, 0xffb80fd0, "vshrn%c.i16\t%12-15,22D, %0-3,5Q, #%16-18e"},
   {FPU_NEON_EXT_V1, 0xf2880850, 0xffb80fd0, "vrshrn%c.i16\t%12-15,22D, %0-3,5Q, #%16-18e"},
   {FPU_NEON_EXT_V1, 0xf2880810, 0xfeb80fd0, "vqshrun%c.s16\t%12-15,22D, %0-3,5Q, #%16-18e"},
@@ -645,10 +688,10 @@ static const struct opcode32 neon_opcodes[] =
   {FPU_NEON_EXT_V1, 0xf2900210, 0xfeb00f90, "vrshr%c.%24?us16\t%12-15,22R, %0-3,5R, #%16-19e"},
   {FPU_NEON_EXT_V1, 0xf2900310, 0xfeb00f90, "vrsra%c.%24?us16\t%12-15,22R, %0-3,5R, #%16-19e"},
   {FPU_NEON_EXT_V1, 0xf2900710, 0xfeb00f90, "vqshl%c.%24?us16\t%12-15,22R, %0-3,5R, #%16-19d"},
-  {FPU_NEON_EXT_V1, 0xf2800810, 0xfec00fd0, "vqshrun%c.s64\t%12-15,22D, %0-3,5Q, #%16-20e"},
-  {FPU_NEON_EXT_V1, 0xf2800850, 0xfec00fd0, "vqrshrun%c.s64\t%12-15,22D, %0-3,5Q, #%16-20e"},
-  {FPU_NEON_EXT_V1, 0xf2800910, 0xfec00fd0, "vqshrn%c.%24?us64\t%12-15,22D, %0-3,5Q, #%16-20e"},
-  {FPU_NEON_EXT_V1, 0xf2800950, 0xfec00fd0, "vqrshrn%c.%24?us64\t%12-15,22D, %0-3,5Q, #%16-20e"},
+  {FPU_NEON_EXT_V1, 0xf2a00810, 0xfea00fd0, "vqshrun%c.s64\t%12-15,22D, %0-3,5Q, #%16-20e"},
+  {FPU_NEON_EXT_V1, 0xf2a00850, 0xfea00fd0, "vqrshrun%c.s64\t%12-15,22D, %0-3,5Q, #%16-20e"},
+  {FPU_NEON_EXT_V1, 0xf2a00910, 0xfea00fd0, "vqshrn%c.%24?us64\t%12-15,22D, %0-3,5Q, #%16-20e"},
+  {FPU_NEON_EXT_V1, 0xf2a00950, 0xfea00fd0, "vqrshrn%c.%24?us64\t%12-15,22D, %0-3,5Q, #%16-20e"},
   {FPU_NEON_EXT_V1, 0xf2a00510, 0xffa00f90, "vshl%c.%24?us32\t%12-15,22R, %0-3,5R, #%16-20d"},
   {FPU_NEON_EXT_V1, 0xf3a00410, 0xffa00f90, "vsri%c.32\t%12-15,22R, %0-3,5R, #%16-20e"},
   {FPU_NEON_EXT_V1, 0xf3a00510, 0xffa00f90, "vsli%c.32\t%12-15,22R, %0-3,5R, #%16-20d"},
@@ -669,7 +712,7 @@ static const struct opcode32 neon_opcodes[] =
   {FPU_NEON_EXT_V1, 0xf2800790, 0xfe800f90, "vqshl%c.%24?us64\t%12-15,22R, %0-3,5R, #%16-21d"},
   {FPU_NEON_EXT_V1, 0xf2a00e10, 0xfea00e90, "vcvt%c.%24,8?usff32.%24,8?ffus32\t%12-15,22R, %0-3,5R, #%16-20e"},
 
-  /* Three registers of different lengths */
+  /* Three registers of different lengths.  */
   {FPU_NEON_EXT_V1, 0xf2800e00, 0xfea00f50, "vmull%c.p%20S0\t%12-15,22Q, %16-19,7D, %0-3,5D"},
   {FPU_NEON_EXT_V1, 0xf2800400, 0xff800f50, "vaddhn%c.i%20-21T2\t%12-15,22D, %16-19,7Q, %0-3,5Q"},
   {FPU_NEON_EXT_V1, 0xf2800600, 0xff800f50, "vsubhn%c.i%20-21T2\t%12-15,22D, %16-19,7Q, %0-3,5Q"},
@@ -688,7 +731,7 @@ static const struct opcode32 neon_opcodes[] =
   {FPU_NEON_EXT_V1, 0xf2800a00, 0xfe800f50, "vmlsl%c.%24?us%20-21S2\t%12-15,22Q, %16-19,7D, %0-3,5D"},
   {FPU_NEON_EXT_V1, 0xf2800c00, 0xfe800f50, "vmull%c.%24?us%20-21S2\t%12-15,22Q, %16-19,7D, %0-3,5D"},
 
-  /* Two registers and a scalar */
+  /* Two registers and a scalar.  */
   {FPU_NEON_EXT_V1, 0xf2800040, 0xff800f50, "vmla%c.i%20-21S6\t%12-15,22D, %16-19,7D, %D"},
   {FPU_NEON_EXT_V1, 0xf2800140, 0xff800f50, "vmla%c.f%20-21Sa\t%12-15,22D, %16-19,7D, %D"},
   {FPU_NEON_EXT_V1, 0xf2800340, 0xff800f50, "vqdmlal%c.s%20-21S6\t%12-15,22Q, %16-19,7D, %D"},
@@ -712,7 +755,7 @@ static const struct opcode32 neon_opcodes[] =
   {FPU_NEON_EXT_V1, 0xf2800640, 0xfe800f50, "vmlsl%c.%24?us%20-21S6\t%12-15,22Q, %16-19,7D, %D"},
   {FPU_NEON_EXT_V1, 0xf2800a40, 0xfe800f50, "vmull%c.%24?us%20-21S6\t%12-15,22Q, %16-19,7D, %D"},
 
-  /* Element and structure load/store */
+  /* Element and structure load/store.  */
   {FPU_NEON_EXT_V1, 0xf4a00fc0, 0xffb00fc0, "vld4%c.32\t%C"},
   {FPU_NEON_EXT_V1, 0xf4a00c00, 0xffb00f00, "vld1%c.%6-7S2\t%C"},
   {FPU_NEON_EXT_V1, 0xf4a00d00, 0xffb00f00, "vld2%c.%6-7S2\t%C"},
@@ -746,6 +789,7 @@ static const struct opcode32 neon_opcodes[] =
 
    %a			print address for ldr/str instruction
    %s                   print address for ldr/str halfword/signextend instruction
+   %S                   like %s but allow UNPREDICTABLE addressing
    %b			print branch destination
    %c			print condition code (always bits 28-31)
    %m			print register mask for ldm/stm instruction
@@ -758,6 +802,9 @@ static const struct opcode32 neon_opcodes[] =
    %P			print address for pli instruction.
 
    %<bitfield>r		print as an ARM register
+   %<bitfield>R		as %r but r15 is UNPREDICTABLE
+   %<bitfield>{r|R}u    as %{r|R} but if matches the other %u field then is UNPREDICTABLE
+   %<bitfield>{r|R}U    as %{r|R} but if matches the other %U field then is UNPREDICTABLE
    %<bitfield>d		print the bitfield in decimal
    %<bitfield>W         print the bitfield plus one in decimal 
    %<bitfield>x		print the bitfield in hex
@@ -769,18 +816,30 @@ static const struct opcode32 neon_opcodes[] =
 
    %e                   print arm SMI operand (bits 0..7,8..19).
    %E			print the LSB and WIDTH fields of a BFI or BFC instruction.
-   %V                   print the 16-bit immediate field of a MOVT or MOVW instruction.  */
+   %V                   print the 16-bit immediate field of a MOVT or MOVW instruction.
+   %R			print the SPSR/CPSR or banked register of an MRS.  */
 
 static const struct opcode32 arm_opcodes[] =
 {
   /* ARM instructions.  */
-  {ARM_EXT_V1, 0xe1a00000, 0xffffffff, "nop\t\t\t(mov r0,r0)"},
+  {ARM_EXT_V1, 0xe1a00000, 0xffffffff, "nop\t\t\t; (mov r0, r0)"},
   {ARM_EXT_V4T | ARM_EXT_V5, 0x012FFF10, 0x0ffffff0, "bx%c\t%0-3r"},
-  {ARM_EXT_V2, 0x00000090, 0x0fe000f0, "mul%20's%c\t%16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V2, 0x00200090, 0x0fe000f0, "mla%20's%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
-  {ARM_EXT_V2S, 0x01000090, 0x0fb00ff0, "swp%22'b%c\t%12-15r, %0-3r, [%16-19r]"},
-  {ARM_EXT_V3M, 0x00800090, 0x0fa000f0, "%22?sumull%20's%c\t%12-15r, %16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V3M, 0x00a00090, 0x0fa000f0, "%22?sumlal%20's%c\t%12-15r, %16-19r, %0-3r, %8-11r"},
+  {ARM_EXT_V2, 0x00000090, 0x0fe000f0, "mul%20's%c\t%16-19R, %0-3R, %8-11R"},
+  {ARM_EXT_V2, 0x00200090, 0x0fe000f0, "mla%20's%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
+  {ARM_EXT_V2S, 0x01000090, 0x0fb00ff0, "swp%22'b%c\t%12-15RU, %0-3Ru, [%16-19RuU]"},
+  {ARM_EXT_V3M, 0x00800090, 0x0fa000f0, "%22?sumull%20's%c\t%12-15Ru, %16-19Ru, %0-3R, %8-11R"},
+  {ARM_EXT_V3M, 0x00a00090, 0x0fa000f0, "%22?sumlal%20's%c\t%12-15Ru, %16-19Ru, %0-3R, %8-11R"},
+
+  /* Virtualization Extension instructions.  */
+  {ARM_EXT_VIRT, 0x0160006e, 0x0fffffff, "eret%c"},
+  {ARM_EXT_VIRT, 0x01400070, 0x0ff000f0, "hvc%c\t%e"},
+
+  /* Integer Divide Extension instructions.  */
+  {ARM_EXT_ADIV, 0x0710f010, 0x0ff0f0f0, "sdiv%c\t%16-19r, %0-3r, %8-11r"},
+  {ARM_EXT_ADIV, 0x0730f010, 0x0ff0f0f0, "udiv%c\t%16-19r, %0-3r, %8-11r"},
+
+  /* MP Extension instructions.  */
+  {ARM_EXT_MP, 0xf410f000, 0xfc70f000, "pldw\t%a"},
 
   /* V7 instructions.  */
   {ARM_EXT_V7, 0xf450f000, 0xfd70f000, "pli\t%P"},
@@ -790,27 +849,30 @@ static const struct opcode32 arm_opcodes[] =
   {ARM_EXT_V7, 0xf57ff060, 0xfffffff0, "isb\t%U"},
 
   /* ARM V6T2 instructions.  */
-  {ARM_EXT_V6T2, 0x07c0001f, 0x0fe0007f, "bfc%c\t%12-15r, %E"},
-  {ARM_EXT_V6T2, 0x07c00010, 0x0fe00070, "bfi%c\t%12-15r, %0-3r, %E"},
-  {ARM_EXT_V6T2, 0x00600090, 0x0ff000f0, "mls%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
-  {ARM_EXT_V6T2, 0x006000b0, 0x0f7000f0, "strht%c\t%12-15r, %s"},
-  {ARM_EXT_V6T2, 0x00300090, 0x0f300090, "ldr%6's%5?hbt%c\t%12-15r, %s"},
-  {ARM_EXT_V6T2, 0x03000000, 0x0ff00000, "movw%c\t%12-15r, %V"},
-  {ARM_EXT_V6T2, 0x03400000, 0x0ff00000, "movt%c\t%12-15r, %V"},
-  {ARM_EXT_V6T2, 0x06ff0f30, 0x0fff0ff0, "rbit%c\t%12-15r, %0-3r"},
+  {ARM_EXT_V6T2, 0x07c0001f, 0x0fe0007f, "bfc%c\t%12-15R, %E"},
+  {ARM_EXT_V6T2, 0x07c00010, 0x0fe00070, "bfi%c\t%12-15R, %0-3r, %E"},
+  {ARM_EXT_V6T2, 0x00600090, 0x0ff000f0, "mls%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
+  {ARM_EXT_V6T2, 0x006000b0, 0x0f7000f0, "strht%c\t%12-15R, %S"},
+  
+  {ARM_EXT_V6T2, 0x00300090, 0x0f3000f0, UNDEFINED_INSTRUCTION },
+  {ARM_EXT_V6T2, 0x00300090, 0x0f300090, "ldr%6's%5?hbt%c\t%12-15R, %S"},
+  
+  {ARM_EXT_V6T2, 0x03000000, 0x0ff00000, "movw%c\t%12-15R, %V"},
+  {ARM_EXT_V6T2, 0x03400000, 0x0ff00000, "movt%c\t%12-15R, %V"},
+  {ARM_EXT_V6T2, 0x06ff0f30, 0x0fff0ff0, "rbit%c\t%12-15R, %0-3R"},
   {ARM_EXT_V6T2, 0x07a00050, 0x0fa00070, "%22?usbfx%c\t%12-15r, %0-3r, #%7-11d, #%16-20W"},
 
-  /* ARM V6Z instructions.  */
-  {ARM_EXT_V6Z, 0x01600070, 0x0ff000f0, "smc%c\t%e"},
+  /* ARM Security extension instructions.  */
+  {ARM_EXT_SEC, 0x01600070, 0x0ff000f0, "smc%c\t%e"},
 
   /* ARM V6K instructions.  */
   {ARM_EXT_V6K, 0xf57ff01f, 0xffffffff, "clrex"},
-  {ARM_EXT_V6K, 0x01d00f9f, 0x0ff00fff, "ldrexb%c\t%12-15r, [%16-19r]"},
-  {ARM_EXT_V6K, 0x01b00f9f, 0x0ff00fff, "ldrexd%c\t%12-15r, [%16-19r]"},
-  {ARM_EXT_V6K, 0x01f00f9f, 0x0ff00fff, "ldrexh%c\t%12-15r, [%16-19r]"},
-  {ARM_EXT_V6K, 0x01c00f90, 0x0ff00ff0, "strexb%c\t%12-15r, %0-3r, [%16-19r]"},
-  {ARM_EXT_V6K, 0x01a00f90, 0x0ff00ff0, "strexd%c\t%12-15r, %0-3r, [%16-19r]"},
-  {ARM_EXT_V6K, 0x01e00f90, 0x0ff00ff0, "strexh%c\t%12-15r, %0-3r, [%16-19r]"},
+  {ARM_EXT_V6K, 0x01d00f9f, 0x0ff00fff, "ldrexb%c\t%12-15R, [%16-19R]"},
+  {ARM_EXT_V6K, 0x01b00f9f, 0x0ff00fff, "ldrexd%c\t%12-15r, [%16-19R]"},
+  {ARM_EXT_V6K, 0x01f00f9f, 0x0ff00fff, "ldrexh%c\t%12-15R, [%16-19R]"},
+  {ARM_EXT_V6K, 0x01c00f90, 0x0ff00ff0, "strexb%c\t%12-15R, %0-3R, [%16-19R]"},
+  {ARM_EXT_V6K, 0x01a00f90, 0x0ff00ff0, "strexd%c\t%12-15R, %0-3r, [%16-19R]"},
+  {ARM_EXT_V6K, 0x01e00f90, 0x0ff00ff0, "strexh%c\t%12-15R, %0-3R, [%16-19R]"},
 
   /* ARM V6K NOP hints.  */
   {ARM_EXT_V6K, 0x0320f001, 0x0fffffff, "yield%c"},
@@ -819,214 +881,280 @@ static const struct opcode32 arm_opcodes[] =
   {ARM_EXT_V6K, 0x0320f004, 0x0fffffff, "sev%c"},
   {ARM_EXT_V6K, 0x0320f000, 0x0fffff00, "nop%c\t{%0-7d}"},
 
-  /* ARM V6 instructions. */
+  /* ARM V6 instructions.  */
   {ARM_EXT_V6, 0xf1080000, 0xfffffe3f, "cpsie\t%8'a%7'i%6'f"},
   {ARM_EXT_V6, 0xf10a0000, 0xfffffe20, "cpsie\t%8'a%7'i%6'f,#%0-4d"},
   {ARM_EXT_V6, 0xf10C0000, 0xfffffe3f, "cpsid\t%8'a%7'i%6'f"},
   {ARM_EXT_V6, 0xf10e0000, 0xfffffe20, "cpsid\t%8'a%7'i%6'f,#%0-4d"},
   {ARM_EXT_V6, 0xf1000000, 0xfff1fe20, "cps\t#%0-4d"},
-  {ARM_EXT_V6, 0x06800010, 0x0ff00ff0, "pkhbt%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06800010, 0x0ff00070, "pkhbt%c\t%12-15r, %16-19r, %0-3r, lsl #%7-11d"},
-  {ARM_EXT_V6, 0x06800050, 0x0ff00ff0, "pkhtb%c\t%12-15r, %16-19r, %0-3r, asr #32"},
-  {ARM_EXT_V6, 0x06800050, 0x0ff00070, "pkhtb%c\t%12-15r, %16-19r, %0-3r, asr #%7-11d"},
-  {ARM_EXT_V6, 0x01900f9f, 0x0ff00fff, "ldrex%c\tr%12-15d, [%16-19r]"},
-  {ARM_EXT_V6, 0x06200f10, 0x0ff00ff0, "qadd16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06200f90, 0x0ff00ff0, "qadd8%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06200f30, 0x0ff00ff0, "qaddsubx%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06200f70, 0x0ff00ff0, "qsub16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06200ff0, 0x0ff00ff0, "qsub8%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06200f50, 0x0ff00ff0, "qsubaddx%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06100f10, 0x0ff00ff0, "sadd16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06100f90, 0x0ff00ff0, "sadd8%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06100f30, 0x0ff00ff0, "saddaddx%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06300f10, 0x0ff00ff0, "shadd16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06300f90, 0x0ff00ff0, "shadd8%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06300f30, 0x0ff00ff0, "shaddsubx%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06300f70, 0x0ff00ff0, "shsub16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06300ff0, 0x0ff00ff0, "shsub8%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06300f50, 0x0ff00ff0, "shsubaddx%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06100f70, 0x0ff00ff0, "ssub16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06100ff0, 0x0ff00ff0, "ssub8%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06100f50, 0x0ff00ff0, "ssubaddx%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06500f10, 0x0ff00ff0, "uadd16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06500f90, 0x0ff00ff0, "uadd8%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06500f30, 0x0ff00ff0, "uaddsubx%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06700f10, 0x0ff00ff0, "uhadd16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06700f90, 0x0ff00ff0, "uhadd8%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06700f30, 0x0ff00ff0, "uhaddsubx%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06700f70, 0x0ff00ff0, "uhsub16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06700ff0, 0x0ff00ff0, "uhsub8%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06700f50, 0x0ff00ff0, "uhsubaddx%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06600f10, 0x0ff00ff0, "uqadd16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06600f90, 0x0ff00ff0, "uqadd8%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06600f30, 0x0ff00ff0, "uqaddsubx%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06600f70, 0x0ff00ff0, "uqsub16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06600ff0, 0x0ff00ff0, "uqsub8%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06600f50, 0x0ff00ff0, "uqsubaddx%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06500f70, 0x0ff00ff0, "usub16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06500ff0, 0x0ff00ff0, "usub8%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06500f50, 0x0ff00ff0, "usubaddx%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06bf0f30, 0x0fff0ff0, "rev%c\t%12-15r, %0-3r"},
-  {ARM_EXT_V6, 0x06bf0fb0, 0x0fff0ff0, "rev16%c\t%12-15r, %0-3r"},
-  {ARM_EXT_V6, 0x06ff0fb0, 0x0fff0ff0, "revsh%c\t%12-15r, %0-3r"},
+  {ARM_EXT_V6, 0x06800010, 0x0ff00ff0, "pkhbt%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06800010, 0x0ff00070, "pkhbt%c\t%12-15R, %16-19R, %0-3R, lsl #%7-11d"},
+  {ARM_EXT_V6, 0x06800050, 0x0ff00ff0, "pkhtb%c\t%12-15R, %16-19R, %0-3R, asr #32"},
+  {ARM_EXT_V6, 0x06800050, 0x0ff00070, "pkhtb%c\t%12-15R, %16-19R, %0-3R, asr #%7-11d"},
+  {ARM_EXT_V6, 0x01900f9f, 0x0ff00fff, "ldrex%c\tr%12-15d, [%16-19R]"},
+  {ARM_EXT_V6, 0x06200f10, 0x0ff00ff0, "qadd16%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06200f90, 0x0ff00ff0, "qadd8%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06200f30, 0x0ff00ff0, "qasx%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06200f70, 0x0ff00ff0, "qsub16%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06200ff0, 0x0ff00ff0, "qsub8%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06200f50, 0x0ff00ff0, "qsax%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06100f10, 0x0ff00ff0, "sadd16%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06100f90, 0x0ff00ff0, "sadd8%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06100f30, 0x0ff00ff0, "sasx%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06300f10, 0x0ff00ff0, "shadd16%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06300f90, 0x0ff00ff0, "shadd8%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06300f30, 0x0ff00ff0, "shasx%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06300f70, 0x0ff00ff0, "shsub16%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06300ff0, 0x0ff00ff0, "shsub8%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06300f50, 0x0ff00ff0, "shsax%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06100f70, 0x0ff00ff0, "ssub16%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06100ff0, 0x0ff00ff0, "ssub8%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06100f50, 0x0ff00ff0, "ssax%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06500f10, 0x0ff00ff0, "uadd16%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06500f90, 0x0ff00ff0, "uadd8%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06500f30, 0x0ff00ff0, "uasx%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06700f10, 0x0ff00ff0, "uhadd16%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06700f90, 0x0ff00ff0, "uhadd8%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06700f30, 0x0ff00ff0, "uhasx%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06700f70, 0x0ff00ff0, "uhsub16%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06700ff0, 0x0ff00ff0, "uhsub8%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06700f50, 0x0ff00ff0, "uhsax%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06600f10, 0x0ff00ff0, "uqadd16%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06600f90, 0x0ff00ff0, "uqadd8%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06600f30, 0x0ff00ff0, "uqasx%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06600f70, 0x0ff00ff0, "uqsub16%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06600ff0, 0x0ff00ff0, "uqsub8%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06600f50, 0x0ff00ff0, "uqsax%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06500f70, 0x0ff00ff0, "usub16%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06500ff0, 0x0ff00ff0, "usub8%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06500f50, 0x0ff00ff0, "usax%c\t%12-15R, %16-19R, %0-3R"},
+  {ARM_EXT_V6, 0x06bf0f30, 0x0fff0ff0, "rev%c\t%12-15R, %0-3R"},
+  {ARM_EXT_V6, 0x06bf0fb0, 0x0fff0ff0, "rev16%c\t%12-15R, %0-3R"},
+  {ARM_EXT_V6, 0x06ff0fb0, 0x0fff0ff0, "revsh%c\t%12-15R, %0-3R"},
   {ARM_EXT_V6, 0xf8100a00, 0xfe50ffff, "rfe%23?id%24?ba\t%16-19r%21'!"},
-  {ARM_EXT_V6, 0x06bf0070, 0x0fff0ff0, "sxth%c\t%12-15r, %0-3r"},
-  {ARM_EXT_V6, 0x06bf0470, 0x0fff0ff0, "sxth%c\t%12-15r, %0-3r, ror #8"},
-  {ARM_EXT_V6, 0x06bf0870, 0x0fff0ff0, "sxth%c\t%12-15r, %0-3r, ror #16"},
-  {ARM_EXT_V6, 0x06bf0c70, 0x0fff0ff0, "sxth%c\t%12-15r, %0-3r, ror #24"},
-  {ARM_EXT_V6, 0x068f0070, 0x0fff0ff0, "sxtb16%c\t%12-15r, %0-3r"},
-  {ARM_EXT_V6, 0x068f0470, 0x0fff0ff0, "sxtb16%c\t%12-15r, %0-3r, ror #8"},
-  {ARM_EXT_V6, 0x068f0870, 0x0fff0ff0, "sxtb16%c\t%12-15r, %0-3r, ror #16"},
-  {ARM_EXT_V6, 0x068f0c70, 0x0fff0ff0, "sxtb16%c\t%12-15r, %0-3r, ror #24"},
-  {ARM_EXT_V6, 0x06af0070, 0x0fff0ff0, "sxtb%c\t%12-15r, %0-3r"},
-  {ARM_EXT_V6, 0x06af0470, 0x0fff0ff0, "sxtb%c\t%12-15r, %0-3r, ror #8"},
-  {ARM_EXT_V6, 0x06af0870, 0x0fff0ff0, "sxtb%c\t%12-15r, %0-3r, ror #16"},
-  {ARM_EXT_V6, 0x06af0c70, 0x0fff0ff0, "sxtb%c\t%12-15r, %0-3r, ror #24"},
-  {ARM_EXT_V6, 0x06ff0070, 0x0fff0ff0, "uxth%c\t%12-15r, %0-3r"},
-  {ARM_EXT_V6, 0x06ff0470, 0x0fff0ff0, "uxth%c\t%12-15r, %0-3r, ror #8"},
-  {ARM_EXT_V6, 0x06ff0870, 0x0fff0ff0, "uxth%c\t%12-15r, %0-3r, ror #16"},
-  {ARM_EXT_V6, 0x06ff0c70, 0x0fff0ff0, "uxth%c\t%12-15r, %0-3r, ror #24"},
-  {ARM_EXT_V6, 0x06cf0070, 0x0fff0ff0, "uxtb16%c\t%12-15r, %0-3r"},
-  {ARM_EXT_V6, 0x06cf0470, 0x0fff0ff0, "uxtb16%c\t%12-15r, %0-3r, ror #8"},
-  {ARM_EXT_V6, 0x06cf0870, 0x0fff0ff0, "uxtb16%c\t%12-15r, %0-3r, ror #16"},
-  {ARM_EXT_V6, 0x06cf0c70, 0x0fff0ff0, "uxtb16%c\t%12-15r, %0-3r, ror #24"},
-  {ARM_EXT_V6, 0x06ef0070, 0x0fff0ff0, "uxtb%c\t%12-15r, %0-3r"},
-  {ARM_EXT_V6, 0x06ef0470, 0x0fff0ff0, "uxtb%c\t%12-15r, %0-3r, ror #8"},
-  {ARM_EXT_V6, 0x06ef0870, 0x0fff0ff0, "uxtb%c\t%12-15r, %0-3r, ror #16"},
-  {ARM_EXT_V6, 0x06ef0c70, 0x0fff0ff0, "uxtb%c\t%12-15r, %0-3r, ror #24"},
-  {ARM_EXT_V6, 0x06b00070, 0x0ff00ff0, "sxtah%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06b00470, 0x0ff00ff0, "sxtah%c\t%12-15r, %16-19r, %0-3r, ror #8"},
-  {ARM_EXT_V6, 0x06b00870, 0x0ff00ff0, "sxtah%c\t%12-15r, %16-19r, %0-3r, ror #16"},
-  {ARM_EXT_V6, 0x06b00c70, 0x0ff00ff0, "sxtah%c\t%12-15r, %16-19r, %0-3r, ror #24"},
-  {ARM_EXT_V6, 0x06800070, 0x0ff00ff0, "sxtab16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06800470, 0x0ff00ff0, "sxtab16%c\t%12-15r, %16-19r, %0-3r, ror #8"},
-  {ARM_EXT_V6, 0x06800870, 0x0ff00ff0, "sxtab16%c\t%12-15r, %16-19r, %0-3r, ror #16"},
-  {ARM_EXT_V6, 0x06800c70, 0x0ff00ff0, "sxtab16%c\t%12-15r, %16-19r, %0-3r, ror #24"},
-  {ARM_EXT_V6, 0x06a00070, 0x0ff00ff0, "sxtab%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06a00470, 0x0ff00ff0, "sxtab%c\t%12-15r, %16-19r, %0-3r, ror #8"},
-  {ARM_EXT_V6, 0x06a00870, 0x0ff00ff0, "sxtab%c\t%12-15r, %16-19r, %0-3r, ror #16"},
-  {ARM_EXT_V6, 0x06a00c70, 0x0ff00ff0, "sxtab%c\t%12-15r, %16-19r, %0-3r, ror #24"},
-  {ARM_EXT_V6, 0x06f00070, 0x0ff00ff0, "uxtah%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06f00470, 0x0ff00ff0, "uxtah%c\t%12-15r, %16-19r, %0-3r, ror #8"},
-  {ARM_EXT_V6, 0x06f00870, 0x0ff00ff0, "uxtah%c\t%12-15r, %16-19r, %0-3r, ror #16"},
-  {ARM_EXT_V6, 0x06f00c70, 0x0ff00ff0, "uxtah%c\t%12-15r, %16-19r, %0-3r, ror #24"},
-  {ARM_EXT_V6, 0x06c00070, 0x0ff00ff0, "uxtab16%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06c00470, 0x0ff00ff0, "uxtab16%c\t%12-15r, %16-19r, %0-3r, ror #8"},
-  {ARM_EXT_V6, 0x06c00870, 0x0ff00ff0, "uxtab16%c\t%12-15r, %16-19r, %0-3r, ror #16"},
-  {ARM_EXT_V6, 0x06c00c70, 0x0ff00ff0, "uxtab16%c\t%12-15r, %16-19r, %0-3r, ROR #24"},
-  {ARM_EXT_V6, 0x06e00070, 0x0ff00ff0, "uxtab%c\t%12-15r, %16-19r, %0-3r"},
-  {ARM_EXT_V6, 0x06e00470, 0x0ff00ff0, "uxtab%c\t%12-15r, %16-19r, %0-3r, ror #8"},
-  {ARM_EXT_V6, 0x06e00870, 0x0ff00ff0, "uxtab%c\t%12-15r, %16-19r, %0-3r, ror #16"},
-  {ARM_EXT_V6, 0x06e00c70, 0x0ff00ff0, "uxtab%c\t%12-15r, %16-19r, %0-3r, ror #24"},
-  {ARM_EXT_V6, 0x06800fb0, 0x0ff00ff0, "sel%c\t%12-15r, %16-19r, %0-3r"},
+  {ARM_EXT_V6, 0x06bf0070, 0x0fff0ff0, "sxth%c\t%12-15R, %0-3R"},
+  {ARM_EXT_V6, 0x06bf0470, 0x0fff0ff0, "sxth%c\t%12-15R, %0-3R, ror #8"},
+  {ARM_EXT_V6, 0x06bf0870, 0x0fff0ff0, "sxth%c\t%12-15R, %0-3R, ror #16"},
+  {ARM_EXT_V6, 0x06bf0c70, 0x0fff0ff0, "sxth%c\t%12-15R, %0-3R, ror #24"},
+  {ARM_EXT_V6, 0x068f0070, 0x0fff0ff0, "sxtb16%c\t%12-15R, %0-3R"},
+  {ARM_EXT_V6, 0x068f0470, 0x0fff0ff0, "sxtb16%c\t%12-15R, %0-3R, ror #8"},
+  {ARM_EXT_V6, 0x068f0870, 0x0fff0ff0, "sxtb16%c\t%12-15R, %0-3R, ror #16"},
+  {ARM_EXT_V6, 0x068f0c70, 0x0fff0ff0, "sxtb16%c\t%12-15R, %0-3R, ror #24"},
+  {ARM_EXT_V6, 0x06af0070, 0x0fff0ff0, "sxtb%c\t%12-15R, %0-3R"},
+  {ARM_EXT_V6, 0x06af0470, 0x0fff0ff0, "sxtb%c\t%12-15R, %0-3R, ror #8"},
+  {ARM_EXT_V6, 0x06af0870, 0x0fff0ff0, "sxtb%c\t%12-15R, %0-3R, ror #16"},
+  {ARM_EXT_V6, 0x06af0c70, 0x0fff0ff0, "sxtb%c\t%12-15R, %0-3R, ror #24"},
+  {ARM_EXT_V6, 0x06ff0070, 0x0fff0ff0, "uxth%c\t%12-15R, %0-3R"},
+  {ARM_EXT_V6, 0x06ff0470, 0x0fff0ff0, "uxth%c\t%12-15R, %0-3R, ror #8"},
+  {ARM_EXT_V6, 0x06ff0870, 0x0fff0ff0, "uxth%c\t%12-15R, %0-3R, ror #16"},
+  {ARM_EXT_V6, 0x06ff0c70, 0x0fff0ff0, "uxth%c\t%12-15R, %0-3R, ror #24"},
+  {ARM_EXT_V6, 0x06cf0070, 0x0fff0ff0, "uxtb16%c\t%12-15R, %0-3R"},
+  {ARM_EXT_V6, 0x06cf0470, 0x0fff0ff0, "uxtb16%c\t%12-15R, %0-3R, ror #8"},
+  {ARM_EXT_V6, 0x06cf0870, 0x0fff0ff0, "uxtb16%c\t%12-15R, %0-3R, ror #16"},
+  {ARM_EXT_V6, 0x06cf0c70, 0x0fff0ff0, "uxtb16%c\t%12-15R, %0-3R, ror #24"},
+  {ARM_EXT_V6, 0x06ef0070, 0x0fff0ff0, "uxtb%c\t%12-15R, %0-3R"},
+  {ARM_EXT_V6, 0x06ef0470, 0x0fff0ff0, "uxtb%c\t%12-15R, %0-3R, ror #8"},
+  {ARM_EXT_V6, 0x06ef0870, 0x0fff0ff0, "uxtb%c\t%12-15R, %0-3R, ror #16"},
+  {ARM_EXT_V6, 0x06ef0c70, 0x0fff0ff0, "uxtb%c\t%12-15R, %0-3R, ror #24"},
+  {ARM_EXT_V6, 0x06b00070, 0x0ff00ff0, "sxtah%c\t%12-15R, %16-19r, %0-3R"},
+  {ARM_EXT_V6, 0x06b00470, 0x0ff00ff0, "sxtah%c\t%12-15R, %16-19r, %0-3R, ror #8"},
+  {ARM_EXT_V6, 0x06b00870, 0x0ff00ff0, "sxtah%c\t%12-15R, %16-19r, %0-3R, ror #16"},
+  {ARM_EXT_V6, 0x06b00c70, 0x0ff00ff0, "sxtah%c\t%12-15R, %16-19r, %0-3R, ror #24"},
+  {ARM_EXT_V6, 0x06800070, 0x0ff00ff0, "sxtab16%c\t%12-15R, %16-19r, %0-3R"},
+  {ARM_EXT_V6, 0x06800470, 0x0ff00ff0, "sxtab16%c\t%12-15R, %16-19r, %0-3R, ror #8"},
+  {ARM_EXT_V6, 0x06800870, 0x0ff00ff0, "sxtab16%c\t%12-15R, %16-19r, %0-3R, ror #16"},
+  {ARM_EXT_V6, 0x06800c70, 0x0ff00ff0, "sxtab16%c\t%12-15R, %16-19r, %0-3R, ror #24"},
+  {ARM_EXT_V6, 0x06a00070, 0x0ff00ff0, "sxtab%c\t%12-15R, %16-19r, %0-3R"},
+  {ARM_EXT_V6, 0x06a00470, 0x0ff00ff0, "sxtab%c\t%12-15R, %16-19r, %0-3R, ror #8"},
+  {ARM_EXT_V6, 0x06a00870, 0x0ff00ff0, "sxtab%c\t%12-15R, %16-19r, %0-3R, ror #16"},
+  {ARM_EXT_V6, 0x06a00c70, 0x0ff00ff0, "sxtab%c\t%12-15R, %16-19r, %0-3R, ror #24"},
+  {ARM_EXT_V6, 0x06f00070, 0x0ff00ff0, "uxtah%c\t%12-15R, %16-19r, %0-3R"},
+  {ARM_EXT_V6, 0x06f00470, 0x0ff00ff0, "uxtah%c\t%12-15R, %16-19r, %0-3R, ror #8"},
+  {ARM_EXT_V6, 0x06f00870, 0x0ff00ff0, "uxtah%c\t%12-15R, %16-19r, %0-3R, ror #16"},
+  {ARM_EXT_V6, 0x06f00c70, 0x0ff00ff0, "uxtah%c\t%12-15R, %16-19r, %0-3R, ror #24"},
+  {ARM_EXT_V6, 0x06c00070, 0x0ff00ff0, "uxtab16%c\t%12-15R, %16-19r, %0-3R"},
+  {ARM_EXT_V6, 0x06c00470, 0x0ff00ff0, "uxtab16%c\t%12-15R, %16-19r, %0-3R, ror #8"},
+  {ARM_EXT_V6, 0x06c00870, 0x0ff00ff0, "uxtab16%c\t%12-15R, %16-19r, %0-3R, ror #16"},
+  {ARM_EXT_V6, 0x06c00c70, 0x0ff00ff0, "uxtab16%c\t%12-15R, %16-19r, %0-3R, ROR #24"},
+  {ARM_EXT_V6, 0x06e00070, 0x0ff00ff0, "uxtab%c\t%12-15R, %16-19r, %0-3R"},
+  {ARM_EXT_V6, 0x06e00470, 0x0ff00ff0, "uxtab%c\t%12-15R, %16-19r, %0-3R, ror #8"},
+  {ARM_EXT_V6, 0x06e00870, 0x0ff00ff0, "uxtab%c\t%12-15R, %16-19r, %0-3R, ror #16"},
+  {ARM_EXT_V6, 0x06e00c70, 0x0ff00ff0, "uxtab%c\t%12-15R, %16-19r, %0-3R, ror #24"},
+  {ARM_EXT_V6, 0x06800fb0, 0x0ff00ff0, "sel%c\t%12-15R, %16-19R, %0-3R"},
   {ARM_EXT_V6, 0xf1010000, 0xfffffc00, "setend\t%9?ble"},
-  {ARM_EXT_V6, 0x0700f010, 0x0ff0f0d0, "smuad%5'x%c\t%16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V6, 0x0700f050, 0x0ff0f0d0, "smusd%5'x%c\t%16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V6, 0x07000010, 0x0ff000d0, "smlad%5'x%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
-  {ARM_EXT_V6, 0x07400010, 0x0ff000d0, "smlald%5'x%c\t%12-15r, %16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V6, 0x07000050, 0x0ff000d0, "smlsd%5'x%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
-  {ARM_EXT_V6, 0x07400050, 0x0ff000d0, "smlsld%5'x%c\t%12-15r, %16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V6, 0x0750f010, 0x0ff0f0d0, "smmul%5'r%c\t%16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V6, 0x07500010, 0x0ff000d0, "smmla%5'r%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
-  {ARM_EXT_V6, 0x075000d0, 0x0ff000d0, "smmls%5'r%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
+  {ARM_EXT_V6, 0x0700f010, 0x0ff0f0d0, "smuad%5'x%c\t%16-19R, %0-3R, %8-11R"},
+  {ARM_EXT_V6, 0x0700f050, 0x0ff0f0d0, "smusd%5'x%c\t%16-19R, %0-3R, %8-11R"},
+  {ARM_EXT_V6, 0x07000010, 0x0ff000d0, "smlad%5'x%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
+  {ARM_EXT_V6, 0x07400010, 0x0ff000d0, "smlald%5'x%c\t%12-15Ru, %16-19Ru, %0-3R, %8-11R"},
+  {ARM_EXT_V6, 0x07000050, 0x0ff000d0, "smlsd%5'x%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
+  {ARM_EXT_V6, 0x07400050, 0x0ff000d0, "smlsld%5'x%c\t%12-15Ru, %16-19Ru, %0-3R, %8-11R"},
+  {ARM_EXT_V6, 0x0750f010, 0x0ff0f0d0, "smmul%5'r%c\t%16-19R, %0-3R, %8-11R"},
+  {ARM_EXT_V6, 0x07500010, 0x0ff000d0, "smmla%5'r%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
+  {ARM_EXT_V6, 0x075000d0, 0x0ff000d0, "smmls%5'r%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
   {ARM_EXT_V6, 0xf84d0500, 0xfe5fffe0, "srs%23?id%24?ba\t%16-19r%21'!, #%0-4d"},
-  {ARM_EXT_V6, 0x06a00010, 0x0fe00ff0, "ssat%c\t%12-15r, #%16-20W, %0-3r"},
-  {ARM_EXT_V6, 0x06a00010, 0x0fe00070, "ssat%c\t%12-15r, #%16-20W, %0-3r, lsl #%7-11d"},
-  {ARM_EXT_V6, 0x06a00050, 0x0fe00070, "ssat%c\t%12-15r, #%16-20W, %0-3r, asr #%7-11d"},
+  {ARM_EXT_V6, 0x06a00010, 0x0fe00ff0, "ssat%c\t%12-15R, #%16-20W, %0-3R"},
+  {ARM_EXT_V6, 0x06a00010, 0x0fe00070, "ssat%c\t%12-15R, #%16-20W, %0-3R, lsl #%7-11d"},
+  {ARM_EXT_V6, 0x06a00050, 0x0fe00070, "ssat%c\t%12-15R, #%16-20W, %0-3R, asr #%7-11d"},
   {ARM_EXT_V6, 0x06a00f30, 0x0ff00ff0, "ssat16%c\t%12-15r, #%16-19W, %0-3r"},
-  {ARM_EXT_V6, 0x01800f90, 0x0ff00ff0, "strex%c\t%12-15r, %0-3r, [%16-19r]"},
-  {ARM_EXT_V6, 0x00400090, 0x0ff000f0, "umaal%c\t%12-15r, %16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V6, 0x0780f010, 0x0ff0f0f0, "usad8%c\t%16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V6, 0x07800010, 0x0ff000f0, "usada8%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
-  {ARM_EXT_V6, 0x06e00010, 0x0fe00ff0, "usat%c\t%12-15r, #%16-20d, %0-3r"},
-  {ARM_EXT_V6, 0x06e00010, 0x0fe00070, "usat%c\t%12-15r, #%16-20d, %0-3r, lsl #%7-11d"},
-  {ARM_EXT_V6, 0x06e00050, 0x0fe00070, "usat%c\t%12-15r, #%16-20d, %0-3r, asr #%7-11d"},
-  {ARM_EXT_V6, 0x06e00f30, 0x0ff00ff0, "usat16%c\t%12-15r, #%16-19d, %0-3r"},
+  {ARM_EXT_V6, 0x01800f90, 0x0ff00ff0, "strex%c\t%12-15R, %0-3R, [%16-19R]"},
+  {ARM_EXT_V6, 0x00400090, 0x0ff000f0, "umaal%c\t%12-15R, %16-19R, %0-3R, %8-11R"},
+  {ARM_EXT_V6, 0x0780f010, 0x0ff0f0f0, "usad8%c\t%16-19R, %0-3R, %8-11R"},
+  {ARM_EXT_V6, 0x07800010, 0x0ff000f0, "usada8%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
+  {ARM_EXT_V6, 0x06e00010, 0x0fe00ff0, "usat%c\t%12-15R, #%16-20d, %0-3R"},
+  {ARM_EXT_V6, 0x06e00010, 0x0fe00070, "usat%c\t%12-15R, #%16-20d, %0-3R, lsl #%7-11d"},
+  {ARM_EXT_V6, 0x06e00050, 0x0fe00070, "usat%c\t%12-15R, #%16-20d, %0-3R, asr #%7-11d"},
+  {ARM_EXT_V6, 0x06e00f30, 0x0ff00ff0, "usat16%c\t%12-15R, #%16-19d, %0-3R"},
 
   /* V5J instruction.  */
-  {ARM_EXT_V5J, 0x012fff20, 0x0ffffff0, "bxj%c\t%0-3r"},
+  {ARM_EXT_V5J, 0x012fff20, 0x0ffffff0, "bxj%c\t%0-3R"},
 
   /* V5 Instructions.  */
   {ARM_EXT_V5, 0xe1200070, 0xfff000f0, "bkpt\t0x%16-19X%12-15X%8-11X%0-3X"},
   {ARM_EXT_V5, 0xfa000000, 0xfe000000, "blx\t%B"},
-  {ARM_EXT_V5, 0x012fff30, 0x0ffffff0, "blx%c\t%0-3r"},
-  {ARM_EXT_V5, 0x016f0f10, 0x0fff0ff0, "clz%c\t%12-15r, %0-3r"},
+  {ARM_EXT_V5, 0x012fff30, 0x0ffffff0, "blx%c\t%0-3R"},
+  {ARM_EXT_V5, 0x016f0f10, 0x0fff0ff0, "clz%c\t%12-15R, %0-3R"},
 
   /* V5E "El Segundo" Instructions.  */    
   {ARM_EXT_V5E, 0x000000d0, 0x0e1000f0, "ldrd%c\t%12-15r, %s"},
   {ARM_EXT_V5E, 0x000000f0, 0x0e1000f0, "strd%c\t%12-15r, %s"},
   {ARM_EXT_V5E, 0xf450f000, 0xfc70f000, "pld\t%a"},
-  {ARM_EXT_V5ExP, 0x01000080, 0x0ff000f0, "smlabb%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
-  {ARM_EXT_V5ExP, 0x010000a0, 0x0ff000f0, "smlatb%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
-  {ARM_EXT_V5ExP, 0x010000c0, 0x0ff000f0, "smlabt%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
-  {ARM_EXT_V5ExP, 0x010000e0, 0x0ff000f0, "smlatt%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
+  {ARM_EXT_V5ExP, 0x01000080, 0x0ff000f0, "smlabb%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
+  {ARM_EXT_V5ExP, 0x010000a0, 0x0ff000f0, "smlatb%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
+  {ARM_EXT_V5ExP, 0x010000c0, 0x0ff000f0, "smlabt%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
+  {ARM_EXT_V5ExP, 0x010000e0, 0x0ff000f0, "smlatt%c\t%16-19r, %0-3r, %8-11R, %12-15R"},
 
-  {ARM_EXT_V5ExP, 0x01200080, 0x0ff000f0, "smlawb%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
-  {ARM_EXT_V5ExP, 0x012000c0, 0x0ff000f0, "smlawt%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
+  {ARM_EXT_V5ExP, 0x01200080, 0x0ff000f0, "smlawb%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
+  {ARM_EXT_V5ExP, 0x012000c0, 0x0ff000f0, "smlawt%c\t%16-19R, %0-3r, %8-11R, %12-15R"},
 
-  {ARM_EXT_V5ExP, 0x01400080, 0x0ff000f0, "smlalbb%c\t%12-15r, %16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V5ExP, 0x014000a0, 0x0ff000f0, "smlaltb%c\t%12-15r, %16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V5ExP, 0x014000c0, 0x0ff000f0, "smlalbt%c\t%12-15r, %16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V5ExP, 0x014000e0, 0x0ff000f0, "smlaltt%c\t%12-15r, %16-19r, %0-3r, %8-11r"},
+  {ARM_EXT_V5ExP, 0x01400080, 0x0ff000f0, "smlalbb%c\t%12-15Ru, %16-19Ru, %0-3R, %8-11R"},
+  {ARM_EXT_V5ExP, 0x014000a0, 0x0ff000f0, "smlaltb%c\t%12-15Ru, %16-19Ru, %0-3R, %8-11R"},
+  {ARM_EXT_V5ExP, 0x014000c0, 0x0ff000f0, "smlalbt%c\t%12-15Ru, %16-19Ru, %0-3R, %8-11R"},
+  {ARM_EXT_V5ExP, 0x014000e0, 0x0ff000f0, "smlaltt%c\t%12-15Ru, %16-19Ru, %0-3R, %8-11R"},
 
-  {ARM_EXT_V5ExP, 0x01600080, 0x0ff0f0f0, "smulbb%c\t%16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V5ExP, 0x016000a0, 0x0ff0f0f0, "smultb%c\t%16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V5ExP, 0x016000c0, 0x0ff0f0f0, "smulbt%c\t%16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V5ExP, 0x016000e0, 0x0ff0f0f0, "smultt%c\t%16-19r, %0-3r, %8-11r"},
+  {ARM_EXT_V5ExP, 0x01600080, 0x0ff0f0f0, "smulbb%c\t%16-19R, %0-3R, %8-11R"},
+  {ARM_EXT_V5ExP, 0x016000a0, 0x0ff0f0f0, "smultb%c\t%16-19R, %0-3R, %8-11R"},
+  {ARM_EXT_V5ExP, 0x016000c0, 0x0ff0f0f0, "smulbt%c\t%16-19R, %0-3R, %8-11R"},
+  {ARM_EXT_V5ExP, 0x016000e0, 0x0ff0f0f0, "smultt%c\t%16-19R, %0-3R, %8-11R"},
 
-  {ARM_EXT_V5ExP, 0x012000a0, 0x0ff0f0f0, "smulwb%c\t%16-19r, %0-3r, %8-11r"},
-  {ARM_EXT_V5ExP, 0x012000e0, 0x0ff0f0f0, "smulwt%c\t%16-19r, %0-3r, %8-11r"},
+  {ARM_EXT_V5ExP, 0x012000a0, 0x0ff0f0f0, "smulwb%c\t%16-19R, %0-3R, %8-11R"},
+  {ARM_EXT_V5ExP, 0x012000e0, 0x0ff0f0f0, "smulwt%c\t%16-19R, %0-3R, %8-11R"},
 
-  {ARM_EXT_V5ExP, 0x01000050, 0x0ff00ff0,  "qadd%c\t%12-15r, %0-3r, %16-19r"},
-  {ARM_EXT_V5ExP, 0x01400050, 0x0ff00ff0, "qdadd%c\t%12-15r, %0-3r, %16-19r"},
-  {ARM_EXT_V5ExP, 0x01200050, 0x0ff00ff0,  "qsub%c\t%12-15r, %0-3r, %16-19r"},
-  {ARM_EXT_V5ExP, 0x01600050, 0x0ff00ff0, "qdsub%c\t%12-15r, %0-3r, %16-19r"},
+  {ARM_EXT_V5ExP, 0x01000050, 0x0ff00ff0,  "qadd%c\t%12-15R, %0-3R, %16-19R"},
+  {ARM_EXT_V5ExP, 0x01400050, 0x0ff00ff0, "qdadd%c\t%12-15R, %0-3R, %16-19R"},
+  {ARM_EXT_V5ExP, 0x01200050, 0x0ff00ff0,  "qsub%c\t%12-15R, %0-3R, %16-19R"},
+  {ARM_EXT_V5ExP, 0x01600050, 0x0ff00ff0, "qdsub%c\t%12-15R, %0-3R, %16-19R"},
 
   /* ARM Instructions.  */
-  {ARM_EXT_V1, 0x00000090, 0x0e100090, "str%6's%5?hb%c\t%12-15r, %s"},
-  {ARM_EXT_V1, 0x00100090, 0x0e100090, "ldr%6's%5?hb%c\t%12-15r, %s"},
-  {ARM_EXT_V1, 0x00000000, 0x0de00000, "and%20's%c\t%12-15r, %16-19r, %o"},
-  {ARM_EXT_V1, 0x00200000, 0x0de00000, "eor%20's%c\t%12-15r, %16-19r, %o"},
-  {ARM_EXT_V1, 0x00400000, 0x0de00000, "sub%20's%c\t%12-15r, %16-19r, %o"},
-  {ARM_EXT_V1, 0x00600000, 0x0de00000, "rsb%20's%c\t%12-15r, %16-19r, %o"},
-  {ARM_EXT_V1, 0x00800000, 0x0de00000, "add%20's%c\t%12-15r, %16-19r, %o"},
-  {ARM_EXT_V1, 0x00a00000, 0x0de00000, "adc%20's%c\t%12-15r, %16-19r, %o"},
-  {ARM_EXT_V1, 0x00c00000, 0x0de00000, "sbc%20's%c\t%12-15r, %16-19r, %o"},
-  {ARM_EXT_V1, 0x00e00000, 0x0de00000, "rsc%20's%c\t%12-15r, %16-19r, %o"},
-  {ARM_EXT_V3, 0x0120f000, 0x0db0f000, "msr%c\t%22?SCPSR%C, %o"},
-  {ARM_EXT_V3, 0x010f0000, 0x0fbf0fff, "mrs%c\t%12-15r, %22?SCPSR"},
-  {ARM_EXT_V1, 0x01000000, 0x0de00000, "tst%p%c\t%16-19r, %o"},
-  {ARM_EXT_V1, 0x01200000, 0x0de00000, "teq%p%c\t%16-19r, %o"},
-  {ARM_EXT_V1, 0x01400000, 0x0de00000, "cmp%p%c\t%16-19r, %o"},
-  {ARM_EXT_V1, 0x01600000, 0x0de00000, "cmn%p%c\t%16-19r, %o"},
-  {ARM_EXT_V1, 0x01800000, 0x0de00000, "orr%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x052d0004, 0x0fff0fff, "push%c\t{%12-15r}\t\t; (str%c %12-15r, %a)"},
+  
+  {ARM_EXT_V1, 0x04400000, 0x0e500000, "strb%t%c\t%12-15R, %a"},
+  {ARM_EXT_V1, 0x04000000, 0x0e500000, "str%t%c\t%12-15r, %a"},
+  {ARM_EXT_V1, 0x06400000, 0x0e500ff0, "strb%t%c\t%12-15R, %a"},
+  {ARM_EXT_V1, 0x06000000, 0x0e500ff0, "str%t%c\t%12-15r, %a"},
+  {ARM_EXT_V1, 0x04400000, 0x0c500010, "strb%t%c\t%12-15R, %a"},
+  {ARM_EXT_V1, 0x04000000, 0x0c500010, "str%t%c\t%12-15r, %a"},
+  
+  {ARM_EXT_V1, 0x04400000, 0x0e500000, "strb%c\t%12-15R, %a"},
+  {ARM_EXT_V1, 0x06400000, 0x0e500010, "strb%c\t%12-15R, %a"},
+  {ARM_EXT_V1, 0x004000b0, 0x0e5000f0, "strh%c\t%12-15R, %s"},
+  {ARM_EXT_V1, 0x000000b0, 0x0e500ff0, "strh%c\t%12-15R, %s"},
+
+  {ARM_EXT_V1, 0x00500090, 0x0e5000f0, UNDEFINED_INSTRUCTION},
+  {ARM_EXT_V1, 0x00500090, 0x0e500090, "ldr%6's%5?hb%c\t%12-15R, %s"},
+  {ARM_EXT_V1, 0x00100090, 0x0e500ff0, UNDEFINED_INSTRUCTION},
+  {ARM_EXT_V1, 0x00100090, 0x0e500f90, "ldr%6's%5?hb%c\t%12-15R, %s"},
+
+  {ARM_EXT_V1, 0x02000000, 0x0fe00000, "and%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00000000, 0x0fe00010, "and%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00000010, 0x0fe00090, "and%20's%c\t%12-15R, %16-19R, %o"},
+
+  {ARM_EXT_V1, 0x02200000, 0x0fe00000, "eor%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00200000, 0x0fe00010, "eor%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00200010, 0x0fe00090, "eor%20's%c\t%12-15R, %16-19R, %o"},
+
+  {ARM_EXT_V1, 0x02400000, 0x0fe00000, "sub%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00400000, 0x0fe00010, "sub%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00400010, 0x0fe00090, "sub%20's%c\t%12-15R, %16-19R, %o"},
+
+  {ARM_EXT_V1, 0x02600000, 0x0fe00000, "rsb%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00600000, 0x0fe00010, "rsb%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00600010, 0x0fe00090, "rsb%20's%c\t%12-15R, %16-19R, %o"},
+
+  {ARM_EXT_V1, 0x02800000, 0x0fe00000, "add%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00800000, 0x0fe00010, "add%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00800010, 0x0fe00090, "add%20's%c\t%12-15R, %16-19R, %o"},
+
+  {ARM_EXT_V1, 0x02a00000, 0x0fe00000, "adc%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00a00000, 0x0fe00010, "adc%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00a00010, 0x0fe00090, "adc%20's%c\t%12-15R, %16-19R, %o"},
+
+  {ARM_EXT_V1, 0x02c00000, 0x0fe00000, "sbc%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00c00000, 0x0fe00010, "sbc%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00c00010, 0x0fe00090, "sbc%20's%c\t%12-15R, %16-19R, %o"},
+
+  {ARM_EXT_V1, 0x02e00000, 0x0fe00000, "rsc%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00e00000, 0x0fe00010, "rsc%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x00e00010, 0x0fe00090, "rsc%20's%c\t%12-15R, %16-19R, %o"},
+
+  {ARM_EXT_VIRT, 0x0120f200, 0x0fb0f200, "msr%c\t%C, %0-3r"},
+  {ARM_EXT_V3, 0x0120f000, 0x0db0f000, "msr%c\t%C, %o"},
+  {ARM_EXT_V3, 0x01000000, 0x0fb00cff, "mrs%c\t%12-15R, %R"},
+
+  {ARM_EXT_V1, 0x03000000, 0x0fe00000, "tst%p%c\t%16-19r, %o"},
+  {ARM_EXT_V1, 0x01000000, 0x0fe00010, "tst%p%c\t%16-19r, %o"},
+  {ARM_EXT_V1, 0x01000010, 0x0fe00090, "tst%p%c\t%16-19R, %o"},
+
+  {ARM_EXT_V1, 0x03200000, 0x0fe00000, "teq%p%c\t%16-19r, %o"},
+  {ARM_EXT_V1, 0x01200000, 0x0fe00010, "teq%p%c\t%16-19r, %o"},
+  {ARM_EXT_V1, 0x01200010, 0x0fe00090, "teq%p%c\t%16-19R, %o"},
+
+  {ARM_EXT_V1, 0x03400000, 0x0fe00000, "cmp%p%c\t%16-19r, %o"},
+  {ARM_EXT_V1, 0x01400000, 0x0fe00010, "cmp%p%c\t%16-19r, %o"},
+  {ARM_EXT_V1, 0x01400010, 0x0fe00090, "cmp%p%c\t%16-19R, %o"},
+
+  {ARM_EXT_V1, 0x03600000, 0x0fe00000, "cmn%p%c\t%16-19r, %o"},
+  {ARM_EXT_V1, 0x01600000, 0x0fe00010, "cmn%p%c\t%16-19r, %o"},
+  {ARM_EXT_V1, 0x01600010, 0x0fe00090, "cmn%p%c\t%16-19R, %o"},
+
+  {ARM_EXT_V1, 0x03800000, 0x0fe00000, "orr%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x01800000, 0x0fe00010, "orr%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x01800010, 0x0fe00090, "orr%20's%c\t%12-15R, %16-19R, %o"},
+
   {ARM_EXT_V1, 0x03a00000, 0x0fef0000, "mov%20's%c\t%12-15r, %o"},
   {ARM_EXT_V1, 0x01a00000, 0x0def0ff0, "mov%20's%c\t%12-15r, %0-3r"},
-  {ARM_EXT_V1, 0x01a00000, 0x0def0060, "lsl%20's%c\t%12-15r, %q"},
-  {ARM_EXT_V1, 0x01a00020, 0x0def0060, "lsr%20's%c\t%12-15r, %q"},
-  {ARM_EXT_V1, 0x01a00040, 0x0def0060, "asr%20's%c\t%12-15r, %q"},
+  {ARM_EXT_V1, 0x01a00000, 0x0def0060, "lsl%20's%c\t%12-15R, %q"},
+  {ARM_EXT_V1, 0x01a00020, 0x0def0060, "lsr%20's%c\t%12-15R, %q"},
+  {ARM_EXT_V1, 0x01a00040, 0x0def0060, "asr%20's%c\t%12-15R, %q"},
   {ARM_EXT_V1, 0x01a00060, 0x0def0ff0, "rrx%20's%c\t%12-15r, %0-3r"},
-  {ARM_EXT_V1, 0x01a00060, 0x0def0060, "ror%20's%c\t%12-15r, %q"},
-  {ARM_EXT_V1, 0x01c00000, 0x0de00000, "bic%20's%c\t%12-15r, %16-19r, %o"},
-  {ARM_EXT_V1, 0x01e00000, 0x0de00000, "mvn%20's%c\t%12-15r, %o"},
-  {ARM_EXT_V1, 0x052d0004, 0x0fff0fff, "push%c\t{%12-15r}\t\t; (str%c %12-15r, %a)"},
-  {ARM_EXT_V1, 0x04000000, 0x0e100000, "str%22'b%t%c\t%12-15r, %a"},
-  {ARM_EXT_V1, 0x06000000, 0x0e100ff0, "str%22'b%t%c\t%12-15r, %a"},
-  {ARM_EXT_V1, 0x04000000, 0x0c100010, "str%22'b%t%c\t%12-15r, %a"},
-  {ARM_EXT_V1, 0x06000010, 0x0e000010, "undefined"},
+  {ARM_EXT_V1, 0x01a00060, 0x0def0060, "ror%20's%c\t%12-15R, %q"},
+
+  {ARM_EXT_V1, 0x03c00000, 0x0fe00000, "bic%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x01c00000, 0x0fe00010, "bic%20's%c\t%12-15r, %16-19r, %o"},
+  {ARM_EXT_V1, 0x01c00010, 0x0fe00090, "bic%20's%c\t%12-15R, %16-19R, %o"},
+
+  {ARM_EXT_V1, 0x03e00000, 0x0fe00000, "mvn%20's%c\t%12-15r, %o"},
+  {ARM_EXT_V1, 0x01e00000, 0x0fe00010, "mvn%20's%c\t%12-15r, %o"},
+  {ARM_EXT_V1, 0x01e00010, 0x0fe00090, "mvn%20's%c\t%12-15R, %o"},
+
+  {ARM_EXT_V1, 0x06000010, 0x0e000010, UNDEFINED_INSTRUCTION},
   {ARM_EXT_V1, 0x049d0004, 0x0fff0fff, "pop%c\t{%12-15r}\t\t; (ldr%c %12-15r, %a)"},
-  {ARM_EXT_V1, 0x04100000, 0x0c100000, "ldr%22'b%t%c\t%12-15r, %a"},
+  
+  {ARM_EXT_V1, 0x04500000, 0x0c500000, "ldrb%t%c\t%12-15R, %a"},
+
+  {ARM_EXT_V1, 0x04300000, 0x0d700000, "ldrt%c\t%12-15R, %a"},
+  {ARM_EXT_V1, 0x04100000, 0x0c500000, "ldr%c\t%12-15r, %a"},
+  
   {ARM_EXT_V1, 0x092d0000, 0x0fff0000, "push%c\t%m"},
-  {ARM_EXT_V1, 0x08800000, 0x0ff00000, "stm%c\t%16-19r%21'!, %m%22'^"},
-  {ARM_EXT_V1, 0x08000000, 0x0e100000, "stm%23?id%24?ba%c\t%16-19r%21'!, %m%22'^"},
+  {ARM_EXT_V1, 0x08800000, 0x0ff00000, "stm%c\t%16-19R%21'!, %m%22'^"},
+  {ARM_EXT_V1, 0x08000000, 0x0e100000, "stm%23?id%24?ba%c\t%16-19R%21'!, %m%22'^"},
   {ARM_EXT_V1, 0x08bd0000, 0x0fff0000, "pop%c\t%m"},
-  {ARM_EXT_V1, 0x08900000, 0x0f900000, "ldm%c\t%16-19r%21'!, %m%22'^"},
-  {ARM_EXT_V1, 0x08100000, 0x0e100000, "ldm%23?id%24?ba%c\t%16-19r%21'!, %m%22'^"},
+  {ARM_EXT_V1, 0x08900000, 0x0f900000, "ldm%c\t%16-19R%21'!, %m%22'^"},
+  {ARM_EXT_V1, 0x08100000, 0x0e100000, "ldm%23?id%24?ba%c\t%16-19R%21'!, %m%22'^"},
   {ARM_EXT_V1, 0x0a000000, 0x0e000000, "b%24'l%c\t%b"},
   {ARM_EXT_V1, 0x0f000000, 0x0f000000, "svc%c\t%0-23x"},
 
   /* The rest.  */
-  {ARM_EXT_V1, 0x00000000, 0x00000000, "undefined instruction %0-31x"},
+  {ARM_EXT_V1, 0x00000000, 0x00000000, UNDEFINED_INSTRUCTION},
   {0, 0x00000000, 0x00000000, 0}
 };
 
@@ -1046,6 +1174,7 @@ static const struct opcode32 arm_opcodes[] =
    %x			print warning if conditional an not at end of IT block"
    %X			print "\t; unpredictable <IT:code>" if conditional
    %I			print IT instruction suffix and operands
+   %W			print Thumb Writeback indicator for LDMIA
    %<bitfield>r		print bitfield as an ARM register
    %<bitfield>d		print bitfield as a decimal
    %<bitfield>H         print (bitfield * 2) as a decimal
@@ -1091,7 +1220,7 @@ static const struct opcode16 thumb_opcodes[] =
   /* This is BLX(2).  BLX(1) is a 32-bit instruction.  */
   {ARM_EXT_V5T, 0x4780, 0xff87, "blx%c\t%3-6r%x"},	/* note: 4 bit register number.  */
   /* ARM V4T ISA (Thumb v1).  */
-  {ARM_EXT_V4T, 0x46C0, 0xFFFF, "nop%c\t\t\t(mov r8, r8)"},
+  {ARM_EXT_V4T, 0x46C0, 0xFFFF, "nop%c\t\t\t; (mov r8, r8)"},
   /* Format 4.  */
   {ARM_EXT_V4T, 0x4000, 0xFFC0, "and%C\t%0-2r, %3-5r"},
   {ARM_EXT_V4T, 0x4040, 0xFFC0, "eor%C\t%0-2r, %3-5r"},
@@ -1133,6 +1262,7 @@ static const struct opcode16 thumb_opcodes[] =
   {ARM_EXT_V4T, 0x5000, 0xFA00, "str%10'b%c\t%0-2r, [%3-5r, %6-8r]"},
   {ARM_EXT_V4T, 0x5800, 0xFA00, "ldr%10'b%c\t%0-2r, [%3-5r, %6-8r]"},
   /* format 1 */
+  {ARM_EXT_V4T, 0x0000, 0xFFC0, "mov%C\t%0-2r, %3-5r"},
   {ARM_EXT_V4T, 0x0000, 0xF800, "lsl%C\t%0-2r, %3-5r, #%6-10d"},
   {ARM_EXT_V4T, 0x0800, 0xF800, "lsr%C\t%0-2r, %3-5r, %s"},
   {ARM_EXT_V4T, 0x1000, 0xF800, "asr%C\t%0-2r, %3-5r, %s"},
@@ -1142,7 +1272,7 @@ static const struct opcode16 thumb_opcodes[] =
   {ARM_EXT_V4T, 0x3000, 0xF800, "add%C\t%8-10r, #%0-7d"},
   {ARM_EXT_V4T, 0x3800, 0xF800, "sub%C\t%8-10r, #%0-7d"},
   /* format 6 */
-  {ARM_EXT_V4T, 0x4800, 0xF800, "ldr%c\t%8-10r, [pc, #%0-7W]\t(%0-7a)"},  /* TODO: Disassemble PC relative "LDR rD,=<symbolic>" */
+  {ARM_EXT_V4T, 0x4800, 0xF800, "ldr%c\t%8-10r, [pc, #%0-7W]\t; (%0-7a)"},  /* TODO: Disassemble PC relative "LDR rD,=<symbolic>" */
   /* format 9 */
   {ARM_EXT_V4T, 0x6000, 0xF800, "str%c\t%0-2r, [%3-5r, #%6-10W]"},
   {ARM_EXT_V4T, 0x6800, 0xF800, "ldr%c\t%0-2r, [%3-5r, #%6-10W]"},
@@ -1155,15 +1285,15 @@ static const struct opcode16 thumb_opcodes[] =
   {ARM_EXT_V4T, 0x9000, 0xF800, "str%c\t%8-10r, [sp, #%0-7W]"},
   {ARM_EXT_V4T, 0x9800, 0xF800, "ldr%c\t%8-10r, [sp, #%0-7W]"},
   /* format 12 */
-  {ARM_EXT_V4T, 0xA000, 0xF800, "add%c\t%8-10r, pc, #%0-7W\t(adr %8-10r, %0-7a)"},
+  {ARM_EXT_V4T, 0xA000, 0xF800, "add%c\t%8-10r, pc, #%0-7W\t; (adr %8-10r, %0-7a)"},
   {ARM_EXT_V4T, 0xA800, 0xF800, "add%c\t%8-10r, sp, #%0-7W"},
   /* format 15 */
   {ARM_EXT_V4T, 0xC000, 0xF800, "stmia%c\t%8-10r!, %M"},
-  {ARM_EXT_V4T, 0xC800, 0xF800, "ldmia%c\t%8-10r!, %M"},
+  {ARM_EXT_V4T, 0xC800, 0xF800, "ldmia%c\t%8-10r%W, %M"},
   /* format 17 */
   {ARM_EXT_V4T, 0xDF00, 0xFF00, "svc%c\t%0-7d"},
   /* format 16 */
-  {ARM_EXT_V4T, 0xDE00, 0xFE00, "undefined"},
+  {ARM_EXT_V4T, 0xDE00, 0xFE00, UNDEFINED_INSTRUCTION},
   {ARM_EXT_V4T, 0xD000, 0xF000, "b%8-11c.n\t%0-7B%X"},
   /* format 18 */
   {ARM_EXT_V4T, 0xE000, 0xF800, "b%c.n\t%0-10B%x"},
@@ -1172,7 +1302,7 @@ static const struct opcode16 thumb_opcodes[] =
      32-bit table, because even in pre-V6T2 ISAs, BL and BLX(1) pairs
      are processed via that table.  Thus, we can never encounter a
      bare "second half of BL/BLX(1)" instruction here.  */
-  {ARM_EXT_V1,  0x0000, 0x0000, "undefined"},
+  {ARM_EXT_V1,  0x0000, 0x0000, UNDEFINED_INSTRUCTION},
   {0, 0, 0, 0}
 };
 
@@ -1188,6 +1318,7 @@ static const struct opcode16 thumb_opcodes[] =
        %M		print a modified 12-bit immediate (same location)
        %J		print a 16-bit immediate from hw1[3:0,10],hw2[14:12,7:0]
        %K		print a 16-bit immediate from hw2[3:0],hw1[3:0],hw2[11:4]
+       %H		print a 16-bit immediate from hw2[3:0],hw1[11:0]
        %S		print a possibly-shifted Rm
 
        %a		print the address of a plain load/store
@@ -1209,6 +1340,7 @@ static const struct opcode16 thumb_opcodes[] =
        %<bitfield>d	print bitfield in decimal
        %<bitfield>W	print bitfield*4 in decimal
        %<bitfield>r	print bitfield as an ARM register
+       %<bitfield>R	as %<>r bit r15 is UNPREDICTABLE
        %<bitfield>c	print bitfield as a condition code
 
        %<bitfield>'c	print specified char iff bitfield is all ones
@@ -1234,12 +1366,22 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_EXT_DIV, 0xfb90f0f0, 0xfff0f0f0, "sdiv%c\t%8-11r, %16-19r, %0-3r"},
   {ARM_EXT_DIV, 0xfbb0f0f0, 0xfff0f0f0, "udiv%c\t%8-11r, %16-19r, %0-3r"},
 
+  /* Virtualization Extension instructions.  */
+  {ARM_EXT_VIRT, 0xf7e08000, 0xfff0f000, "hvc%c\t%V"},
+  /* We skip ERET as that is SUBS pc, lr, #0.  */
+
+  /* MP Extension instructions.  */
+  {ARM_EXT_MP,   0xf830f000, 0xff70f000, "pldw%c\t%a"},
+
+  /* Security extension instructions.  */
+  {ARM_EXT_SEC,  0xf7f08000, 0xfff0f000, "smc%c\t%K"},
+
   /* Instructions defined in the basic V6T2 set.  */
   {ARM_EXT_V6T2, 0xf3af8000, 0xffffffff, "nop%c.w"},
   {ARM_EXT_V6T2, 0xf3af8001, 0xffffffff, "yield%c.w"},
   {ARM_EXT_V6T2, 0xf3af8002, 0xffffffff, "wfe%c.w"},
   {ARM_EXT_V6T2, 0xf3af8003, 0xffffffff, "wfi%c.w"},
-  {ARM_EXT_V6T2, 0xf3af9004, 0xffffffff, "sev%c.w"},
+  {ARM_EXT_V6T2, 0xf3af8004, 0xffffffff, "sev%c.w"},
   {ARM_EXT_V6T2, 0xf3af8000, 0xffffff00, "nop%c.w\t{%0-7d}"},
 
   {ARM_EXT_V6T2, 0xf3bf8f2f, 0xffffffff, "clrex%c"},
@@ -1248,7 +1390,7 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_EXT_V6T2, 0xf3c08f00, 0xfff0ffff, "bxj%c\t%16-19r%x"},
   {ARM_EXT_V6T2, 0xe810c000, 0xffd0ffff, "rfedb%c\t%16-19r%21'!"},
   {ARM_EXT_V6T2, 0xe990c000, 0xffd0ffff, "rfeia%c\t%16-19r%21'!"},
-  {ARM_EXT_V6T2, 0xf3ef8000, 0xffeff000, "mrs%c\t%8-11r, %D"},
+  {ARM_EXT_V6T2, 0xf3e08000, 0xffe0f000, "mrs%c\t%8-11r, %D"},
   {ARM_EXT_V6T2, 0xf3af8100, 0xffffffe0, "cps\t#%0-4d%X"},
   {ARM_EXT_V6T2, 0xe8d0f000, 0xfff0fff0, "tbb%c\t[%16-19r, %0-3r]%x"},
   {ARM_EXT_V6T2, 0xe8d0f010, 0xfff0fff0, "tbh%c\t[%16-19r, %0-3r, lsl #1]%x"},
@@ -1288,12 +1430,12 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_EXT_V6T2, 0xfa90f090, 0xfff0f0f0, "rev16%c.w\t%8-11r, %16-19r"},
   {ARM_EXT_V6T2, 0xfa90f0a0, 0xfff0f0f0, "rbit%c\t%8-11r, %16-19r"},
   {ARM_EXT_V6T2, 0xfa90f0b0, 0xfff0f0f0, "revsh%c.w\t%8-11r, %16-19r"},
-  {ARM_EXT_V6T2, 0xfaa0f000, 0xfff0f0f0, "saddsubx%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfaa0f010, 0xfff0f0f0, "qaddsubx%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfaa0f020, 0xfff0f0f0, "shaddsubx%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfaa0f040, 0xfff0f0f0, "uaddsubx%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfaa0f050, 0xfff0f0f0, "uqaddsubx%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfaa0f060, 0xfff0f0f0, "uhaddsubx%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfaa0f000, 0xfff0f0f0, "sasx%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfaa0f010, 0xfff0f0f0, "qasx%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfaa0f020, 0xfff0f0f0, "shasx%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfaa0f040, 0xfff0f0f0, "uasx%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfaa0f050, 0xfff0f0f0, "uqasx%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfaa0f060, 0xfff0f0f0, "uhasx%c\t%8-11r, %16-19r, %0-3r"},
   {ARM_EXT_V6T2, 0xfaa0f080, 0xfff0f0f0, "sel%c\t%8-11r, %16-19r, %0-3r"},
   {ARM_EXT_V6T2, 0xfab0f080, 0xfff0f0f0, "clz%c\t%8-11r, %16-19r"},
   {ARM_EXT_V6T2, 0xfac0f000, 0xfff0f0f0, "ssub8%c\t%8-11r, %16-19r, %0-3r"},
@@ -1308,17 +1450,17 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_EXT_V6T2, 0xfad0f040, 0xfff0f0f0, "usub16%c\t%8-11r, %16-19r, %0-3r"},
   {ARM_EXT_V6T2, 0xfad0f050, 0xfff0f0f0, "uqsub16%c\t%8-11r, %16-19r, %0-3r"},
   {ARM_EXT_V6T2, 0xfad0f060, 0xfff0f0f0, "uhsub16%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfae0f000, 0xfff0f0f0, "ssubaddx%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfae0f010, 0xfff0f0f0, "qsubaddx%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfae0f020, 0xfff0f0f0, "shsubaddx%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfae0f040, 0xfff0f0f0, "usubaddx%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfae0f050, 0xfff0f0f0, "uqsubaddx%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfae0f060, 0xfff0f0f0, "uhsubaddx%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfae0f000, 0xfff0f0f0, "ssax%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfae0f010, 0xfff0f0f0, "qsax%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfae0f020, 0xfff0f0f0, "shsax%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfae0f040, 0xfff0f0f0, "usax%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfae0f050, 0xfff0f0f0, "uqsax%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfae0f060, 0xfff0f0f0, "uhsax%c\t%8-11r, %16-19r, %0-3r"},
   {ARM_EXT_V6T2, 0xfb00f000, 0xfff0f0f0, "mul%c.w\t%8-11r, %16-19r, %0-3r"},
   {ARM_EXT_V6T2, 0xfb70f000, 0xfff0f0f0, "usad8%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfa00f000, 0xffe0f0f0, "lsl%20's%c.w\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfa20f000, 0xffe0f0f0, "lsr%20's%c.w\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfa40f000, 0xffe0f0f0, "asr%20's%c.w\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfa00f000, 0xffe0f0f0, "lsl%20's%c.w\t%8-11R, %16-19R, %0-3R"},
+  {ARM_EXT_V6T2, 0xfa20f000, 0xffe0f0f0, "lsr%20's%c.w\t%8-11R, %16-19R, %0-3R"},
+  {ARM_EXT_V6T2, 0xfa40f000, 0xffe0f0f0, "asr%20's%c.w\t%8-11R, %16-19R, %0-3R"},
   {ARM_EXT_V6T2, 0xfa60f000, 0xffe0f0f0, "ror%20's%c.w\t%8-11r, %16-19r, %0-3r"},
   {ARM_EXT_V6T2, 0xe8c00f40, 0xfff00fe0, "strex%4?hb%c\t%0-3r, %12-15r, [%16-19r]"},
   {ARM_EXT_V6T2, 0xf3200000, 0xfff0f0e0, "ssat16%c\t%8-11r, #%0-4d, %16-19r"},
@@ -1348,24 +1490,23 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_EXT_V6T2, 0xe8c00070, 0xfff000f0, "strexd%c\t%0-3r, %12-15r, %8-11r, [%16-19r]"},
   {ARM_EXT_V6T2, 0xfb000000, 0xfff000f0, "mla%c\t%8-11r, %16-19r, %0-3r, %12-15r"},
   {ARM_EXT_V6T2, 0xfb000010, 0xfff000f0, "mls%c\t%8-11r, %16-19r, %0-3r, %12-15r"},
-  {ARM_EXT_V6T2, 0xfb700000, 0xfff000f0, "usada8%c\t%8-11r, %16-19r, %0-3r, %12-15r"},
-  {ARM_EXT_V6T2, 0xfb800000, 0xfff000f0, "smull%c\t%12-15r, %8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfba00000, 0xfff000f0, "umull%c\t%12-15r, %8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfbc00000, 0xfff000f0, "smlal%c\t%12-15r, %8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfbe00000, 0xfff000f0, "umlal%c\t%12-15r, %8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfbe00060, 0xfff000f0, "umaal%c\t%12-15r, %8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfb700000, 0xfff000f0, "usada8%c\t%8-11R, %16-19R, %0-3R, %12-15R"},
+  {ARM_EXT_V6T2, 0xfb800000, 0xfff000f0, "smull%c\t%12-15R, %8-11R, %16-19R, %0-3R"},
+  {ARM_EXT_V6T2, 0xfba00000, 0xfff000f0, "umull%c\t%12-15R, %8-11R, %16-19R, %0-3R"},
+  {ARM_EXT_V6T2, 0xfbc00000, 0xfff000f0, "smlal%c\t%12-15R, %8-11R, %16-19R, %0-3R"},
+  {ARM_EXT_V6T2, 0xfbe00000, 0xfff000f0, "umlal%c\t%12-15R, %8-11R, %16-19R, %0-3R"},
+  {ARM_EXT_V6T2, 0xfbe00060, 0xfff000f0, "umaal%c\t%12-15R, %8-11R, %16-19R, %0-3R"},
   {ARM_EXT_V6T2, 0xe8500f00, 0xfff00f00, "ldrex%c\t%12-15r, [%16-19r, #%0-7W]"},
-  {ARM_EXT_V6T2, 0xf7f08000, 0xfff0f000, "smc%c\t%K"},
   {ARM_EXT_V6T2, 0xf04f0000, 0xfbef8000, "mov%20's%c.w\t%8-11r, %M"},
   {ARM_EXT_V6T2, 0xf06f0000, 0xfbef8000, "mvn%20's%c.w\t%8-11r, %M"},
   {ARM_EXT_V6T2, 0xf810f000, 0xff70f000, "pld%c\t%a"},
-  {ARM_EXT_V6T2, 0xfb200000, 0xfff000e0, "smlad%4'x%c\t%8-11r, %16-19r, %0-3r, %12-15r"},
-  {ARM_EXT_V6T2, 0xfb300000, 0xfff000e0, "smlaw%4?tb%c\t%8-11r, %16-19r, %0-3r, %12-15r"},
-  {ARM_EXT_V6T2, 0xfb400000, 0xfff000e0, "smlsd%4'x%c\t%8-11r, %16-19r, %0-3r, %12-15r"},
-  {ARM_EXT_V6T2, 0xfb500000, 0xfff000e0, "smmla%4'r%c\t%8-11r, %16-19r, %0-3r, %12-15r"},
-  {ARM_EXT_V6T2, 0xfb600000, 0xfff000e0, "smmls%4'r%c\t%8-11r, %16-19r, %0-3r, %12-15r"},
-  {ARM_EXT_V6T2, 0xfbc000c0, 0xfff000e0, "smlald%4'x%c\t%12-15r, %8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfbd000c0, 0xfff000e0, "smlsld%4'x%c\t%12-15r, %8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfb200000, 0xfff000e0, "smlad%4'x%c\t%8-11R, %16-19R, %0-3R, %12-15R"},
+  {ARM_EXT_V6T2, 0xfb300000, 0xfff000e0, "smlaw%4?tb%c\t%8-11R, %16-19R, %0-3R, %12-15R"},
+  {ARM_EXT_V6T2, 0xfb400000, 0xfff000e0, "smlsd%4'x%c\t%8-11R, %16-19R, %0-3R, %12-15R"},
+  {ARM_EXT_V6T2, 0xfb500000, 0xfff000e0, "smmla%4'r%c\t%8-11R, %16-19R, %0-3R, %12-15R"},
+  {ARM_EXT_V6T2, 0xfb600000, 0xfff000e0, "smmls%4'r%c\t%8-11R, %16-19R, %0-3R, %12-15R"},
+  {ARM_EXT_V6T2, 0xfbc000c0, 0xfff000e0, "smlald%4'x%c\t%12-15R, %8-11R, %16-19R, %0-3R"},
+  {ARM_EXT_V6T2, 0xfbd000c0, 0xfff000e0, "smlsld%4'x%c\t%12-15R, %8-11R, %16-19R, %0-3R"},
   {ARM_EXT_V6T2, 0xeac00000, 0xfff08030, "pkhbt%c\t%8-11r, %16-19r, %S"},
   {ARM_EXT_V6T2, 0xeac00020, 0xfff08030, "pkhtb%c\t%8-11r, %16-19r, %S"},
   {ARM_EXT_V6T2, 0xf3400000, 0xfff08020, "sbfx%c\t%8-11r, %16-19r, %F"},
@@ -1426,10 +1567,10 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_EXT_V4T,  0xf000d000, 0xf800d000, "bl%c\t%B%x"},
 
   /* Fallback.  */
-  {ARM_EXT_V1,   0x00000000, 0x00000000, "undefined"},
+  {ARM_EXT_V1,   0x00000000, 0x00000000, UNDEFINED_INSTRUCTION},
   {0, 0, 0, 0}
 };
-   
+
 static const char *const arm_conditional[] =
 {"eq", "ne", "cs", "cc", "mi", "pl", "vs", "vc",
  "hi", "ls", "ge", "lt", "gt", "le", "al", "<und>", ""};
@@ -1502,7 +1643,8 @@ static bfd_vma ifthen_address;
 #define IFTHEN_COND ((ifthen_state >> 4) & 0xf)
 
 /* Cached mapping symbol state.  */
-enum map_type {
+enum map_type
+{
   MAP_ARM,
   MAP_THUMB,
   MAP_DATA
@@ -1529,7 +1671,9 @@ set_arm_regname_option (int option)
 }
 
 int
-get_arm_regnames (int option, const char **setname, const char **setdescription,
+get_arm_regnames (int option,
+		  const char **setname,
+		  const char **setdescription,
 		  const char *const **register_names)
 {
   *setname = regnames[option].name;
@@ -1541,11 +1685,13 @@ get_arm_regnames (int option, const char **setname, const char **setdescription,
 /* Decode a bitfield of the form matching regexp (N(-N)?,)*N(-N)?.
    Returns pointer to following character of the format string and
    fills in *VALUEP and *WIDTHP with the extracted value and number of
-   bits extracted.  WIDTHP can be NULL. */
+   bits extracted.  WIDTHP can be NULL.  */
 
 static const char *
-arm_decode_bitfield (const char *ptr, unsigned long insn,
-		     unsigned long *valuep, int *widthp)
+arm_decode_bitfield (const char *ptr,
+		     unsigned long insn,
+		     unsigned long *valuep,
+		     int *widthp)
 {
   unsigned long value = 0;
   int width = 0;
@@ -1577,7 +1723,7 @@ arm_decode_bitfield (const char *ptr, unsigned long insn,
 
 static void
 arm_decode_shift (long given, fprintf_ftype func, void *stream,
-		  int print_shift)
+		  bfd_boolean print_shift)
 {
   func (stream, "%s", arm_regnames[given & 0xf]);
 
@@ -1604,6 +1750,8 @@ arm_decode_shift (long given, fprintf_ftype func, void *stream,
 	  else
 	    func (stream, ", #%d", amount);
 	}
+      else if ((given & 0x80) == 0x80)
+	func (stream, "\t; <illegal shifter operand>");
       else if (print_shift)
 	func (stream, ", %s %s", arm_shift[(given & 0x60) >> 5],
 	      arm_regnames[(given & 0xf00) >> 8]);
@@ -1612,28 +1760,64 @@ arm_decode_shift (long given, fprintf_ftype func, void *stream,
     }
 }
 
+#define W_BIT 21
+#define I_BIT 22
+#define U_BIT 23
+#define P_BIT 24
+
+#define WRITEBACK_BIT_SET   (given & (1 << W_BIT))
+#define IMMEDIATE_BIT_SET   (given & (1 << I_BIT))
+#define NEGATIVE_BIT_SET   ((given & (1 << U_BIT)) == 0)
+#define PRE_BIT_SET         (given & (1 << P_BIT))
+
 /* Print one coprocessor instruction on INFO->STREAM.
    Return TRUE if the instuction matched, FALSE if this is not a
    recognised coprocessor instruction.  */
 
 static bfd_boolean
-print_insn_coprocessor (bfd_vma pc, struct disassemble_info *info, long given,
+print_insn_coprocessor (bfd_vma pc,
+			struct disassemble_info *info,
+			long given,
 			bfd_boolean thumb)
 {
   const struct opcode32 *insn;
   void *stream = info->stream;
   fprintf_ftype func = info->fprintf_func;
   unsigned long mask;
-  unsigned long value;
+  unsigned long value = 0;
+  struct arm_private_data *private_data = info->private_data;
+  unsigned long allowed_arches = private_data->features.coproc;
   int cond;
 
   for (insn = coprocessor_opcodes; insn->assembler; insn++)
     {
-      if (insn->value == FIRST_IWMMXT_INSN
-	  && info->mach != bfd_mach_arm_XScale
-	  && info->mach != bfd_mach_arm_iWMMXt
-	  && info->mach != bfd_mach_arm_iWMMXt2)
-	insn = insn + IWMMXT_INSN_COUNT;
+      unsigned long u_reg = 16;
+      bfd_boolean is_unpredictable = FALSE;
+      signed long value_in_comment = 0;
+      const char *c;
+
+      if (insn->arch == 0)
+	switch (insn->value)
+	  {
+	  case SENTINEL_IWMMXT_START:
+	    if (info->mach != bfd_mach_arm_XScale
+		&& info->mach != bfd_mach_arm_iWMMXt
+		&& info->mach != bfd_mach_arm_iWMMXt2)
+	      do
+		insn++;
+	      while (insn->arch != 0 && insn->value != SENTINEL_IWMMXT_END);
+	    continue;
+
+	  case SENTINEL_IWMMXT_END:
+	    continue;
+
+	  case SENTINEL_GENERIC_START:
+	    allowed_arches = private_data->features.core;
+	    continue;
+
+	  default:
+	    abort ();
+	  }
 
       mask = insn->mask;
       value = insn->value;
@@ -1665,471 +1849,496 @@ print_insn_coprocessor (bfd_vma pc, struct disassemble_info *info, long given,
 		cond = 16;
 	    }
 	}
-      if ((given & mask) == value)
+      
+      if ((given & mask) != value)
+	continue;
+
+      if ((insn->arch & allowed_arches) == 0)
+	continue;
+
+      for (c = insn->assembler; *c; c++)
 	{
-	  const char *c;
-
-	  for (c = insn->assembler; *c; c++)
+	  if (*c == '%')
 	    {
-	      if (*c == '%')
+	      switch (*++c)
 		{
-		  switch (*++c)
-		    {
-		    case '%':
-		      func (stream, "%%");
-		      break;
+		case '%':
+		  func (stream, "%%");
+		  break;
 
-		    case 'A':
-		      func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
+		case 'A':
+		  {
+		    int rn = (given >> 16) & 0xf;
+  		    int offset = given & 0xff;
 
-		      if ((given & (1 << 24)) != 0)
-			{
-			  int offset = given & 0xff;
+		    func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
 
-			  if (offset)
-			    func (stream, ", #%s%d]%s",
-				  ((given & 0x00800000) == 0 ? "-" : ""),
-				  offset * 4,
-				  ((given & 0x00200000) != 0 ? "!" : ""));
-			  else
-			    func (stream, "]");
-			}
-		      else
-			{
-			  int offset = given & 0xff;
-
-			  func (stream, "]");
-
-			  if (given & (1 << 21))
-			    {
-			      if (offset)
-				func (stream, ", #%s%d",
-				      ((given & 0x00800000) == 0 ? "-" : ""),
-				      offset * 4);
-			    }
-			  else
-			    func (stream, ", {%d}", offset);
-			}
-		      break;
-
-		    case 'B':
+		    if (PRE_BIT_SET || WRITEBACK_BIT_SET)
 		      {
-			int regno = ((given >> 12) & 0xf) | ((given >> (22 - 4)) & 0x10);
-			int offset = (given >> 1) & 0x3f;
-			
-			if (offset == 1)
-			  func (stream, "{d%d}", regno);
-			else if (regno + offset > 32)
-			  func (stream, "{d%d-<overflow reg d%d>}", regno, regno + offset - 1);
-			else
-			  func (stream, "{d%d-d%d}", regno, regno + offset - 1);
+			/* Not unindexed.  The offset is scaled.  */
+			offset = offset * 4;
+			if (NEGATIVE_BIT_SET)
+			  offset = - offset;
+			if (rn != 15)
+			  value_in_comment = offset;
 		      }
-		      break;
-		      
-		    case 'C':
+
+		    if (PRE_BIT_SET)
 		      {
-			int rn = (given >> 16) & 0xf;
-			int offset = (given & 0xff) * 4;
-			int add = (given >> 23) & 1;
-			
-			func (stream, "[%s", arm_regnames[rn]);
-			
 			if (offset)
-			  {
-			    if (!add)
-			      offset = -offset;
-			    func (stream, ", #%d", offset);
-			  }
+			  func (stream, ", #%d]%s",
+				offset,
+				WRITEBACK_BIT_SET ? "!" : "");
+			else
+			  func (stream, "]");
+		      }
+		    else
+		      {
 			func (stream, "]");
-			if (rn == 15)
+
+			if (WRITEBACK_BIT_SET)
 			  {
-			    func (stream, "\t; ");
-                            /* FIXME: Unsure if info->bytes_per_chunk is the
-                               right thing to use here.  */
-			    info->print_address_func (offset + pc
-                              + info->bytes_per_chunk * 2, info);
+			    if (offset)
+			      func (stream, ", #%d", offset);
+			  }
+			else
+			  {
+			    func (stream, ", {%d}", offset);
+			    value_in_comment = offset;
 			  }
 		      }
-		      break;
-
-		    case 'c':
-		      func (stream, "%s", arm_conditional[cond]);
-		      break;
-
-		    case 'I':
-		      /* Print a Cirrus/DSP shift immediate.  */
-		      /* Immediates are 7bit signed ints with bits 0..3 in
-			 bits 0..3 of opcode and bits 4..6 in bits 5..7
-			 of opcode.  */
+		    if (rn == 15 && (PRE_BIT_SET || WRITEBACK_BIT_SET))
 		      {
-			int imm;
-
-			imm = (given & 0xf) | ((given & 0xe0) >> 1);
-
-			/* Is ``imm'' a negative number?  */
-			if (imm & 0x40)
-			  imm |= (-1 << 7);
-
-			func (stream, "%d", imm);
+			func (stream, "\t; ");
+			/* For unaligned PCs, apply off-by-alignment
+			   correction.  */
+			info->print_address_func (offset + pc 
+						  + info->bytes_per_chunk * 2
+						  - (pc & 3),
+				 		  info);
 		      }
+		  }
+		  break;
 
-		      break;
+		case 'B':
+		  {
+		    int regno = ((given >> 12) & 0xf) | ((given >> (22 - 4)) & 0x10);
+		    int offset = (given >> 1) & 0x3f;
 
-		    case 'F':
-		      switch (given & 0x00408000)
-			{
-			case 0:
-			  func (stream, "4");
-			  break;
-			case 0x8000:
-			  func (stream, "1");
-			  break;
-			case 0x00400000:
-			  func (stream, "2");
-			  break;
-			default:
-			  func (stream, "3");
-			}
-		      break;
+		    if (offset == 1)
+		      func (stream, "{d%d}", regno);
+		    else if (regno + offset > 32)
+		      func (stream, "{d%d-<overflow reg d%d>}", regno, regno + offset - 1);
+		    else
+		      func (stream, "{d%d-d%d}", regno, regno + offset - 1);
+		  }
+		  break;
 
-		    case 'P':
-		      switch (given & 0x00080080)
-			{
-			case 0:
-			  func (stream, "s");
-			  break;
-			case 0x80:
-			  func (stream, "d");
-			  break;
-			case 0x00080000:
-			  func (stream, "e");
-			  break;
-			default:
-			  func (stream, _("<illegal precision>"));
-			  break;
-			}
-		      break;
-		    case 'Q':
-		      switch (given & 0x00408000)
-			{
-			case 0:
-			  func (stream, "s");
-			  break;
-			case 0x8000:
-			  func (stream, "d");
-			  break;
-			case 0x00400000:
-			  func (stream, "e");
-			  break;
-			default:
-			  func (stream, "p");
-			  break;
-			}
-		      break;
-		    case 'R':
-		      switch (given & 0x60)
-			{
-			case 0:
-			  break;
-			case 0x20:
-			  func (stream, "p");
-			  break;
-			case 0x40:
-			  func (stream, "m");
-			  break;
-			default:
-			  func (stream, "z");
-			  break;
-			}
-		      break;
+		case 'c':
+		  func (stream, "%s", arm_conditional[cond]);
+		  break;
 
-		    case '0': case '1': case '2': case '3': case '4':
-		    case '5': case '6': case '7': case '8': case '9':
+		case 'I':
+		  /* Print a Cirrus/DSP shift immediate.  */
+		  /* Immediates are 7bit signed ints with bits 0..3 in
+		     bits 0..3 of opcode and bits 4..6 in bits 5..7
+		     of opcode.  */
+		  {
+		    int imm;
+
+		    imm = (given & 0xf) | ((given & 0xe0) >> 1);
+
+		    /* Is ``imm'' a negative number?  */
+		    if (imm & 0x40)
+		      imm |= (-1 << 7);
+
+		    func (stream, "%d", imm);
+		  }
+
+		  break;
+
+		case 'F':
+		  switch (given & 0x00408000)
+		    {
+		    case 0:
+		      func (stream, "4");
+		      break;
+		    case 0x8000:
+		      func (stream, "1");
+		      break;
+		    case 0x00400000:
+		      func (stream, "2");
+		      break;
+		    default:
+		      func (stream, "3");
+		    }
+		  break;
+
+		case 'P':
+		  switch (given & 0x00080080)
+		    {
+		    case 0:
+		      func (stream, "s");
+		      break;
+		    case 0x80:
+		      func (stream, "d");
+		      break;
+		    case 0x00080000:
+		      func (stream, "e");
+		      break;
+		    default:
+		      func (stream, _("<illegal precision>"));
+		      break;
+		    }
+		  break;
+
+		case 'Q':
+		  switch (given & 0x00408000)
+		    {
+		    case 0:
+		      func (stream, "s");
+		      break;
+		    case 0x8000:
+		      func (stream, "d");
+		      break;
+		    case 0x00400000:
+		      func (stream, "e");
+		      break;
+		    default:
+		      func (stream, "p");
+		      break;
+		    }
+		  break;
+
+		case 'R':
+		  switch (given & 0x60)
+		    {
+		    case 0:
+		      break;
+		    case 0x20:
+		      func (stream, "p");
+		      break;
+		    case 0x40:
+		      func (stream, "m");
+		      break;
+		    default:
+		      func (stream, "z");
+		      break;
+		    }
+		  break;
+
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+		  {
+		    int width;
+
+		    c = arm_decode_bitfield (c, given, &value, &width);
+
+		    switch (*c)
 		      {
-			int width;
-			unsigned long value;
-
-			c = arm_decode_bitfield (c, given, &value, &width);
-
-			switch (*c)
-			  {
-			  case 'r':
-			    func (stream, "%s", arm_regnames[value]);
-			    break;
-			  case 'D':
-			    func (stream, "d%ld", value);
-			    break;
-			  case 'Q':
-			    if (value & 1)
-			      func (stream, "<illegal reg q%ld.5>", value >> 1);
-			    else
-			      func (stream, "q%ld", value >> 1);
-			    break;
-			  case 'd':
-			    func (stream, "%ld", value);
-			    break;
-                          case 'k':
-                            {
-                              int from = (given & (1 << 7)) ? 32 : 16;
-                              func (stream, "%ld", from - value);
-                            }
-                            break;
-                            
-			  case 'f':
-			    if (value > 7)
-			      func (stream, "#%s", arm_fp_const[value & 7]);
-			    else
-			      func (stream, "f%ld", value);
-			    break;
-
-			  case 'w':
-			    if (width == 2)
-			      func (stream, "%s", iwmmxt_wwnames[value]);
-			    else
-			      func (stream, "%s", iwmmxt_wwssnames[value]);
-			    break;
-
-			  case 'g':
-			    func (stream, "%s", iwmmxt_regnames[value]);
-			    break;
-			  case 'G':
-			    func (stream, "%s", iwmmxt_cregnames[value]);
-			    break;
-
-			  case 'x':
-			    func (stream, "0x%lx", value);
-			    break;
-
-			  case '`':
-			    c++;
-			    if (value == 0)
-			      func (stream, "%c", *c);
-			    break;
-			  case '\'':
-			    c++;
-			    if (value == ((1ul << width) - 1))
-			      func (stream, "%c", *c);
-			    break;
-			  case '?':
-			    func (stream, "%c", c[(1 << width) - (int)value]);
-			    c += 1 << width;
-			    break;
-			  default:
-			    abort ();
-			  }
-			break;
-
-		      case 'y':
-		      case 'z':
-			{
-			  int single = *c++ == 'y';
-			  int regno;
-			  
-			  switch (*c)
-			    {
-			    case '4': /* Sm pair */
-			      func (stream, "{");
-			      /* Fall through.  */
-			    case '0': /* Sm, Dm */
-			      regno = given & 0x0000000f;
-			      if (single)
-				{
-				  regno <<= 1;
-				  regno += (given >> 5) & 1;
-				}
-                              else
-                                regno += ((given >> 5) & 1) << 4;
-			      break;
-
-			    case '1': /* Sd, Dd */
-			      regno = (given >> 12) & 0x0000000f;
-			      if (single)
-				{
-				  regno <<= 1;
-				  regno += (given >> 22) & 1;
-				}
-                              else
-                                regno += ((given >> 22) & 1) << 4;
-			      break;
-
-			    case '2': /* Sn, Dn */
-			      regno = (given >> 16) & 0x0000000f;
-			      if (single)
-				{
-				  regno <<= 1;
-				  regno += (given >> 7) & 1;
-				}
-                              else
-                                regno += ((given >> 7) & 1) << 4;
-			      break;
-			      
-			    case '3': /* List */
-			      func (stream, "{");
-			      regno = (given >> 12) & 0x0000000f;
-			      if (single)
-				{
-				  regno <<= 1;
-				  regno += (given >> 22) & 1;
-				}
-                              else
-                                regno += ((given >> 22) & 1) << 4;
-			      break;
-			      
-			    default:
-			      abort ();
-			    }
-
-			  func (stream, "%c%d", single ? 's' : 'd', regno);
-
-			  if (*c == '3')
-			    {
-			      int count = given & 0xff;
-			      
-			      if (single == 0)
-				count >>= 1;
-			      
-			      if (--count)
-				{
-				  func (stream, "-%c%d",
-					single ? 's' : 'd',
-					regno + count);
-				}
-			      
-			      func (stream, "}");
-			    }
-			  else if (*c == '4')
-			    func (stream, ", %c%d}", single ? 's' : 'd',
-				  regno + 1);
-			}
-			break;
-			    
-		      case 'L':
-			switch (given & 0x00400100)
-			  {
-			  case 0x00000000: func (stream, "b"); break;
-			  case 0x00400000: func (stream, "h"); break;
-			  case 0x00000100: func (stream, "w"); break;
-			  case 0x00400100: func (stream, "d"); break;
-			  default:
-			    break;
-			  }
-			break;
-
-		      case 'Z':
-			{
-			  int value;
-			  /* given (20, 23) | given (0, 3) */
-			  value = ((given >> 16) & 0xf0) | (given & 0xf);
-			  func (stream, "%d", value);
-			}
-			break;
-
-		      case 'l':
-			/* This is like the 'A' operator, except that if
-			   the width field "M" is zero, then the offset is
-			   *not* multiplied by four.  */
-			{
-			  int offset = given & 0xff;
-			  int multiplier = (given & 0x00000100) ? 4 : 1;
-
-			  func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
-
-			  if (offset)
-			    {
-			      if ((given & 0x01000000) != 0)
-				func (stream, ", #%s%d]%s",
-				      ((given & 0x00800000) == 0 ? "-" : ""),
-				      offset * multiplier,
-				      ((given & 0x00200000) != 0 ? "!" : ""));
-			      else
-				func (stream, "], #%s%d",
-				      ((given & 0x00800000) == 0 ? "-" : ""),
-				      offset * multiplier);
-			    }
-			  else
-			    func (stream, "]");
-			}
-			break;
-
+		      case 'R':
+			if (value == 15)
+			  is_unpredictable = TRUE;
+			/* Fall through.  */
 		      case 'r':
+			if (c[1] == 'u')
+			  {
+			    /* Eat the 'u' character.  */
+			    ++ c;
+
+			    if (u_reg == value)
+			      is_unpredictable = TRUE;
+			    u_reg = value;
+			  }
+			func (stream, "%s", arm_regnames[value]);
+			break;
+		      case 'D':
+			func (stream, "d%ld", value);
+			break;
+		      case 'Q':
+			if (value & 1)
+			  func (stream, "<illegal reg q%ld.5>", value >> 1);
+			else
+			  func (stream, "q%ld", value >> 1);
+			break;
+		      case 'd':
+			func (stream, "%ld", value);
+			value_in_comment = value;
+			break;
+		      case 'k':
 			{
-			  int imm4 = (given >> 4) & 0xf;
-			  int puw_bits = ((given >> 22) & 6) | ((given >> 21) & 1);
-			  int ubit = (given >> 23) & 1;
-			  const char *rm = arm_regnames [given & 0xf];
-			  const char *rn = arm_regnames [(given >> 16) & 0xf];
-
-			  switch (puw_bits)
-			    {
-			    case 1:
-			      /* fall through */
-			    case 3:
-			      func (stream, "[%s], %c%s", rn, ubit ? '+' : '-', rm);
-			      if (imm4)
-				func (stream, ", lsl #%d", imm4);
-			      break;
-
-			    case 4:
-			      /* fall through */
-			    case 5:
-			      /* fall through */
-			    case 6:
-			      /* fall through */
-			    case 7:
-			      func (stream, "[%s, %c%s", rn, ubit ? '+' : '-', rm);
-			      if (imm4 > 0)
-				func (stream, ", lsl #%d", imm4);
-			      func (stream, "]");
-			      if (puw_bits == 5 || puw_bits == 7)
-				func (stream, "!");
-			      break;
-
-			    default:
-			      func (stream, "INVALID");
-			    }
+			  int from = (given & (1 << 7)) ? 32 : 16;
+			  func (stream, "%ld", from - value);
 			}
 			break;
 
-		      case 'i':
-			{
-			  long imm5;
-			  imm5 = ((given & 0x100) >> 4) | (given & 0xf);
-			  func (stream, "%ld", (imm5 == 0) ? 32 : imm5);
-			}
+		      case 'f':
+			if (value > 7)
+			  func (stream, "#%s", arm_fp_const[value & 7]);
+			else
+			  func (stream, "f%ld", value);
 			break;
 
+		      case 'w':
+			if (width == 2)
+			  func (stream, "%s", iwmmxt_wwnames[value]);
+			else
+			  func (stream, "%s", iwmmxt_wwssnames[value]);
+			break;
+
+		      case 'g':
+			func (stream, "%s", iwmmxt_regnames[value]);
+			break;
+		      case 'G':
+			func (stream, "%s", iwmmxt_cregnames[value]);
+			break;
+
+		      case 'x':
+			func (stream, "0x%lx", (value & 0xffffffffUL));
+			break;
+
+		      case '`':
+			c++;
+			if (value == 0)
+			  func (stream, "%c", *c);
+			break;
+		      case '\'':
+			c++;
+			if (value == ((1ul << width) - 1))
+			  func (stream, "%c", *c);
+			break;
+		      case '?':
+			func (stream, "%c", c[(1 << width) - (int) value]);
+			c += 1 << width;
+			break;
 		      default:
 			abort ();
 		      }
+		    break;
+
+		  case 'y':
+		  case 'z':
+		    {
+		      int single = *c++ == 'y';
+		      int regno;
+
+		      switch (*c)
+			{
+			case '4': /* Sm pair */
+			case '0': /* Sm, Dm */
+			  regno = given & 0x0000000f;
+			  if (single)
+			    {
+			      regno <<= 1;
+			      regno += (given >> 5) & 1;
+			    }
+			  else
+			    regno += ((given >> 5) & 1) << 4;
+			  break;
+
+			case '1': /* Sd, Dd */
+			  regno = (given >> 12) & 0x0000000f;
+			  if (single)
+			    {
+			      regno <<= 1;
+			      regno += (given >> 22) & 1;
+			    }
+			  else
+			    regno += ((given >> 22) & 1) << 4;
+			  break;
+
+			case '2': /* Sn, Dn */
+			  regno = (given >> 16) & 0x0000000f;
+			  if (single)
+			    {
+			      regno <<= 1;
+			      regno += (given >> 7) & 1;
+			    }
+			  else
+			    regno += ((given >> 7) & 1) << 4;
+			  break;
+
+			case '3': /* List */
+			  func (stream, "{");
+			  regno = (given >> 12) & 0x0000000f;
+			  if (single)
+			    {
+			      regno <<= 1;
+			      regno += (given >> 22) & 1;
+			    }
+			  else
+			    regno += ((given >> 22) & 1) << 4;
+			  break;
+
+			default:
+			  abort ();
+			}
+
+		      func (stream, "%c%d", single ? 's' : 'd', regno);
+
+		      if (*c == '3')
+			{
+			  int count = given & 0xff;
+
+			  if (single == 0)
+			    count >>= 1;
+
+			  if (--count)
+			    {
+			      func (stream, "-%c%d",
+				    single ? 's' : 'd',
+				    regno + count);
+			    }
+
+			  func (stream, "}");
+			}
+		      else if (*c == '4')
+			func (stream, ", %c%d", single ? 's' : 'd',
+			      regno + 1);
 		    }
+		    break;
+
+		  case 'L':
+		    switch (given & 0x00400100)
+		      {
+		      case 0x00000000: func (stream, "b"); break;
+		      case 0x00400000: func (stream, "h"); break;
+		      case 0x00000100: func (stream, "w"); break;
+		      case 0x00400100: func (stream, "d"); break;
+		      default:
+			break;
+		      }
+		    break;
+
+		  case 'Z':
+		    {
+		      /* given (20, 23) | given (0, 3) */
+		      value = ((given >> 16) & 0xf0) | (given & 0xf);
+		      func (stream, "%d", value);
+		    }
+		    break;
+
+		  case 'l':
+		    /* This is like the 'A' operator, except that if
+		       the width field "M" is zero, then the offset is
+		       *not* multiplied by four.  */
+		    {
+		      int offset = given & 0xff;
+		      int multiplier = (given & 0x00000100) ? 4 : 1;
+
+		      func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
+
+		      if (multiplier > 1)
+			{
+			  value_in_comment = offset * multiplier;
+			  if (NEGATIVE_BIT_SET)
+			    value_in_comment = - value_in_comment;
+			}
+
+		      if (offset)
+			{
+			  if (PRE_BIT_SET)
+			    func (stream, ", #%s%d]%s",
+				  NEGATIVE_BIT_SET ? "-" : "",
+				  offset * multiplier,
+				  WRITEBACK_BIT_SET ? "!" : "");
+			  else
+			    func (stream, "], #%s%d",
+				  NEGATIVE_BIT_SET ? "-" : "",
+				  offset * multiplier);
+			}
+		      else
+			func (stream, "]");
+		    }
+		    break;
+
+		  case 'r':
+		    {
+		      int imm4 = (given >> 4) & 0xf;
+		      int puw_bits = ((given >> 22) & 6) | ((given >> W_BIT) & 1);
+		      int ubit = ! NEGATIVE_BIT_SET;
+		      const char *rm = arm_regnames [given & 0xf];
+		      const char *rn = arm_regnames [(given >> 16) & 0xf];
+
+		      switch (puw_bits)
+			{
+			case 1:
+			case 3:
+			  func (stream, "[%s], %c%s", rn, ubit ? '+' : '-', rm);
+			  if (imm4)
+			    func (stream, ", lsl #%d", imm4);
+			  break;
+
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			  func (stream, "[%s, %c%s", rn, ubit ? '+' : '-', rm);
+			  if (imm4 > 0)
+			    func (stream, ", lsl #%d", imm4);
+			  func (stream, "]");
+			  if (puw_bits == 5 || puw_bits == 7)
+			    func (stream, "!");
+			  break;
+
+			default:
+			  func (stream, "INVALID");
+			}
+		    }
+		    break;
+
+		  case 'i':
+		    {
+		      long imm5;
+		      imm5 = ((given & 0x100) >> 4) | (given & 0xf);
+		      func (stream, "%ld", (imm5 == 0) ? 32 : imm5);
+		    }
+		    break;
+
+		  default:
+		    abort ();
+		  }
 		}
-	      else
-		func (stream, "%c", *c);
 	    }
-	  return TRUE;
+	  else
+	    func (stream, "%c", *c);
 	}
+
+      if (value_in_comment > 32 || value_in_comment < -16)
+	func (stream, "\t; 0x%lx", (value_in_comment & 0xffffffffUL));
+
+      if (is_unpredictable)
+	func (stream, UNPREDICTABLE_INSTRUCTION);
+
+      return TRUE;
     }
   return FALSE;
 }
 
-static void
+/* Decodes and prints ARM addressing modes.  Returns the offset
+   used in the address, if any, if it is worthwhile printing the
+   offset as a hexadecimal value in a comment at the end of the
+   line of disassembly.  */
+
+static signed long
 print_arm_address (bfd_vma pc, struct disassemble_info *info, long given)
 {
   void *stream = info->stream;
   fprintf_ftype func = info->fprintf_func;
+  int offset = 0;
 
   if (((given & 0x000f0000) == 0x000f0000)
       && ((given & 0x02000000) == 0))
     {
-      int offset = given & 0xfff;
+      offset = given & 0xfff;
 
       func (stream, "[pc");
 
-      if (given & 0x01000000)
-	{
-	  if ((given & 0x00800000) == 0)
-	    offset = - offset;
+      if (NEGATIVE_BIT_SET)
+	offset = - offset;
 
+      if (PRE_BIT_SET)
+	{
 	  /* Pre-indexed.  */
 	  func (stream, ", #%d]", offset);
 
@@ -2139,67 +2348,66 @@ print_arm_address (bfd_vma pc, struct disassemble_info *info, long given)
 	     being used.  Probably a very dangerous thing
 	     for the programmer to do, but who are we to
 	     argue ?  */
-	  if (given & 0x00200000)
+	  if (WRITEBACK_BIT_SET)
 	    func (stream, "!");
 	}
-      else
+      else  /* Post indexed.  */
 	{
-	  /* Post indexed.  */
 	  func (stream, "], #%d", offset);
 
-	  /* ie ignore the offset.  */
+	  /* Ie ignore the offset.  */
 	  offset = pc + 8;
 	}
 
       func (stream, "\t; ");
       info->print_address_func (offset, info);
+      offset = 0;
     }
   else
     {
       func (stream, "[%s",
 	    arm_regnames[(given >> 16) & 0xf]);
-      if ((given & 0x01000000) != 0)
+
+      if (PRE_BIT_SET)
 	{
 	  if ((given & 0x02000000) == 0)
 	    {
-	      int offset = given & 0xfff;
+	      offset = given & 0xfff;
 	      if (offset)
 		func (stream, ", #%s%d",
-		      (((given & 0x00800000) == 0)
-		       ? "-" : ""), offset);
+		      NEGATIVE_BIT_SET ? "-" : "", offset);
 	    }
 	  else
 	    {
 	      func (stream, ", %s",
-		    (((given & 0x00800000) == 0)
-		     ? "-" : ""));
-	      arm_decode_shift (given, func, stream, 1);
+		    NEGATIVE_BIT_SET ? "-" : "");
+	      arm_decode_shift (given, func, stream, TRUE);
 	    }
 
 	  func (stream, "]%s",
-		((given & 0x00200000) != 0) ? "!" : "");
+		WRITEBACK_BIT_SET ? "!" : "");
 	}
       else
 	{
 	  if ((given & 0x02000000) == 0)
 	    {
-	      int offset = given & 0xfff;
+	      offset = given & 0xfff;
 	      if (offset)
 		func (stream, "], #%s%d",
-		      (((given & 0x00800000) == 0)
-		       ? "-" : ""), offset);
+		      NEGATIVE_BIT_SET ? "-" : "", offset);
 	      else
 		func (stream, "]");
 	    }
 	  else
 	    {
 	      func (stream, "], %s",
-		    (((given & 0x00800000) == 0)
-		     ? "-" : ""));
-	      arm_decode_shift (given, func, stream, 1);
+		    NEGATIVE_BIT_SET ? "-" : "");
+	      arm_decode_shift (given, func, stream, TRUE);
 	    }
 	}
     }
+
+  return (signed long) offset;
 }
 
 /* Print one neon instruction on INFO->STREAM.
@@ -2217,7 +2425,7 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
     {
       if ((given & 0xef000000) == 0xef000000)
 	{
-	  /* move bit 28 to bit 24 to translate Thumb2 to ARM encoding.  */
+	  /* Move bit 28 to bit 24 to translate Thumb2 to ARM encoding.  */
 	  unsigned long bit28 = given & (1 << 28);
 
 	  given &= 0x00ffffff;
@@ -2236,6 +2444,7 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
     {
       if ((given & insn->mask) == insn->value)
 	{
+	  signed long value_in_comment = 0;
 	  const char *c;
 
 	  for (c = insn->assembler; *c; c++)
@@ -2288,7 +2497,7 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 			  func (stream, "d%d-d%d", rd, rd + n - 1);
 			func (stream, "}, [%s", arm_regnames[rn]);
 			if (align)
-			  func (stream, ", :%d", 32 << align);
+			  func (stream, " :%d", 32 << align);
 			func (stream, "]");
 			if (rm == 0xd)
 			  func (stream, "!");
@@ -2363,7 +2572,7 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
                             rd + i * stride, idx);
                         func (stream, "}, [%s", arm_regnames[rn]);
 			if (align)
-			  func (stream, ", :%d", align);
+			  func (stream, " :%d", align);
 			func (stream, "]");
 			if (rm == 0xd)
 			  func (stream, "!");
@@ -2400,13 +2609,13 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 			func (stream, "}, [%s", arm_regnames[rn]);
 			if (align)
 			  {
-                            int align = (8 * (type + 1)) << size;
+                            align = (8 * (type + 1)) << size;
                             if (type == 3)
                               align = (size > 1) ? align >> 1 : align;
 			    if (type == 2 || (type == 0 && !size))
-			      func (stream, ", :<bad align %d>", align);
+			      func (stream, " :<bad align %d>", align);
 			    else
-			      func (stream, ", :%d", align);
+			      func (stream, " :%d", align);
 			  }
 			func (stream, "]");
 			if (rm == 0xd)
@@ -2428,7 +2637,7 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 		      break;
 		      
 		    case 'E':
-		      /* Neon encoded constant for mov, mvn, vorr, vbic */
+		      /* Neon encoded constant for mov, mvn, vorr, vbic.  */
 		      {
 			int bits = 0;
 			int cmode = (given >> 8) & 0xf;
@@ -2445,19 +2654,19 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 			if (cmode < 8)
 			  {
 			    shift = (cmode >> 1) & 3;
-			    value = (unsigned long)bits << (8 * shift);
+			    value = (unsigned long) bits << (8 * shift);
                             size = 32;
 			  }
 			else if (cmode < 12)
 			  {
 			    shift = (cmode >> 1) & 1;
-			    value = (unsigned long)bits << (8 * shift);
+			    value = (unsigned long) bits << (8 * shift);
                             size = 16;
 			  }
 			else if (cmode < 14)
 			  {
 			    shift = (cmode & 1) + 1;
-			    value = (unsigned long)bits << (8 * shift);
+			    value = (unsigned long) bits << (8 * shift);
 			    value |= (1ul << (8 * shift)) - 1;
                             size = 32;
 			  }
@@ -2465,7 +2674,7 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 			  {
 			    if (op)
 			      {
-				/* bit replication into bytes */
+				/* Bit replication into bytes.  */
 				int ix;
 				unsigned long mask;
 				
@@ -2483,20 +2692,20 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 			      }
                             else
                               {
-                                /* byte replication */
-                                value = (unsigned long)bits;
+                                /* Byte replication.  */
+                                value = (unsigned long) bits;
                                 size = 8;
                               }
 			  }
 			else if (!op)
 			  {
-			    /* floating point encoding */
+			    /* Floating point encoding.  */
 			    int tmp;
 			    
-			    value = (unsigned long)(bits & 0x7f) << 19;
-			    value |= (unsigned long)(bits & 0x80) << 24;
+			    value = (unsigned long)  (bits & 0x7f) << 19;
+			    value |= (unsigned long) (bits & 0x80) << 24;
 			    tmp = bits & 0x40 ? 0x3c : 0x40;
-			    value |= (unsigned long)tmp << 24;
+			    value |= (unsigned long) tmp << 24;
                             size = 32;
                             isfloat = 1;
 			  }
@@ -2531,16 +2740,17 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
                                 valbytes[3] = (value >> 24) & 0xff;
                                 
                                 floatformat_to_double 
-                                  (&floatformat_ieee_single_little, valbytes,
-                                  &fvalue);
+                                  (& floatformat_ieee_single_little, valbytes,
+                                  & fvalue);
                                                                 
                                 func (stream, "#%.7g\t; 0x%.8lx", fvalue,
                                       value);
                               }
                             else
                               func (stream, "#%ld\t; 0x%.8lx",
-				(long) ((value & 0x80000000)
-					? value | ~0xffffffffl : value), value);
+				    (long) (((value & 0x80000000L) != 0) 
+					    ? value | ~0xffffffffL : value),
+				    value);
                             break;
 
                           case 64:
@@ -2583,6 +2793,7 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 			    break;
 			  case 'd':
 			    func (stream, "%ld", value);
+			    value_in_comment = value;
 			    break;
 			  case 'e':
 			    func (stream, "%ld", (1ul << width) - value);
@@ -2591,7 +2802,7 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 			  case 'S':
 			  case 'T':
 			  case 'U':
-			    /* various width encodings */
+			    /* Various width encodings.  */
 			    {
 			      int base = 8 << (*c - 'S'); /* 8,16 or 32 */
 			      int limit;
@@ -2639,7 +2850,7 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 			      func (stream, "%c", *c);
 			    break;
 			  case '?':
-			    func (stream, "%c", c[(1 << width) - (int)value]);
+			    func (stream, "%c", c[(1 << width) - (int) value]);
 			    c += 1 << width;
 			    break;
 			  default:
@@ -2655,10 +2866,60 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 	      else
 		func (stream, "%c", *c);
 	    }
+
+	  if (value_in_comment > 32 || value_in_comment < -16)
+	    func (stream, "\t; 0x%lx", value_in_comment);
+
 	  return TRUE;
 	}
     }
   return FALSE;
+}
+
+/* Return the name of a v7A special register.  */
+
+static const char * 
+banked_regname (unsigned reg)
+{
+  switch (reg)
+    {
+      case 15: return "CPSR";
+      case 32: return "R8_usr"; 
+      case 33: return "R9_usr";
+      case 34: return "R10_usr";
+      case 35: return "R11_usr";
+      case 36: return "R12_usr";
+      case 37: return "SP_usr";
+      case 38: return "LR_usr";
+      case 40: return "R8_fiq"; 
+      case 41: return "R9_fiq";
+      case 42: return "R10_fiq";
+      case 43: return "R11_fiq";
+      case 44: return "R12_fiq";
+      case 45: return "SP_fiq";
+      case 46: return "LR_fiq";
+      case 48: return "LR_irq";
+      case 49: return "SP_irq";
+      case 50: return "LR_svc";
+      case 51: return "SP_svc";
+      case 52: return "LR_abt";
+      case 53: return "SP_abt";
+      case 54: return "LR_und";
+      case 55: return "SP_und";
+      case 60: return "LR_mon";
+      case 61: return "SP_mon";
+      case 62: return "ELR_hyp";
+      case 63: return "SP_hyp";
+      case 79: return "SPSR";
+      case 110: return "SPSR_fiq";
+      case 112: return "SPSR_irq";
+      case 114: return "SPSR_svc";
+      case 116: return "SPSR_abt";
+      case 118: return "SPSR_und";
+      case 124: return "SPSR_mon";
+      case 126: return "SPSR_hyp";
+      default: return NULL;
+    }
 }
 
 /* Print one ARM instruction from PC on INFO->STREAM.  */
@@ -2669,6 +2930,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
   const struct opcode32 *insn;
   void *stream = info->stream;
   fprintf_ftype func = info->fprintf_func;
+  struct arm_private_data *private_data = info->private_data;
 
   if (print_insn_coprocessor (pc, info, given, FALSE))
     return;
@@ -2678,25 +2940,31 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 
   for (insn = arm_opcodes; insn->assembler; insn++)
     {
-      if (insn->value == FIRST_IWMMXT_INSN
-	  && info->mach != bfd_mach_arm_XScale
-	  && info->mach != bfd_mach_arm_iWMMXt)
-	insn = insn + IWMMXT_INSN_COUNT;
+      if ((given & insn->mask) != insn->value)
+	continue;
+    
+      if ((insn->arch & private_data->features.core) == 0)
+	continue;
 
-      if ((given & insn->mask) == insn->value
-	  /* Special case: an instruction with all bits set in the condition field
-	     (0xFnnn_nnnn) is only matched if all those bits are set in insn->mask,
-	     or by the catchall at the end of the table.  */
-	  && ((given & 0xF0000000) != 0xF0000000
-	      || (insn->mask & 0xF0000000) == 0xF0000000
-	      || (insn->mask == 0 && insn->value == 0)))
+      /* Special case: an instruction with all bits set in the condition field
+	 (0xFnnn_nnnn) is only matched if all those bits are set in insn->mask,
+	 or by the catchall at the end of the table.  */
+      if ((given & 0xF0000000) != 0xF0000000
+	  || (insn->mask & 0xF0000000) == 0xF0000000
+	  || (insn->mask == 0 && insn->value == 0))
 	{
+	  unsigned long u_reg = 16;
+	  unsigned long U_reg = 16;
+	  bfd_boolean is_unpredictable = FALSE;
+	  signed long value_in_comment = 0;
 	  const char *c;
 
 	  for (c = insn->assembler; *c; c++)
 	    {
 	      if (*c == '%')
 		{
+		  bfd_boolean allow_unpredictable = FALSE;
+
 		  switch (*++c)
 		    {
 		    case '%':
@@ -2704,76 +2972,116 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 		      break;
 
 		    case 'a':
-		      print_arm_address (pc, info, given);
+		      value_in_comment = print_arm_address (pc, info, given);
 		      break;
 
 		    case 'P':
 		      /* Set P address bit and use normal address
 			 printing routine.  */
-		      print_arm_address (pc, info, given | (1 << 24));
+		      value_in_comment = print_arm_address (pc, info, given | (1 << P_BIT));
 		      break;
 
+		    case 'S':
+		      allow_unpredictable = TRUE;
 		    case 's':
                       if ((given & 0x004f0000) == 0x004f0000)
 			{
                           /* PC relative with immediate offset.  */
 			  int offset = ((given & 0xf00) >> 4) | (given & 0xf);
 
-			  if ((given & 0x00800000) == 0)
-			    offset = -offset;
+			  if (NEGATIVE_BIT_SET)
+			    offset = - offset;
 
-			  func (stream, "[pc, #%d]\t; ", offset);
-			  info->print_address_func (offset + pc + 8, info);
-			}
-		      else
-			{
-			  func (stream, "[%s",
-				arm_regnames[(given >> 16) & 0xf]);
-			  if ((given & 0x01000000) != 0)
+			  if (PRE_BIT_SET)
 			    {
-                              /* Pre-indexed.  */
-			      if ((given & 0x00400000) == 0x00400000)
-				{
-                                  /* Immediate.  */
-                                  int offset = ((given & 0xf00) >> 4) | (given & 0xf);
-				  if (offset)
-				    func (stream, ", #%s%d",
-					  (((given & 0x00800000) == 0)
-					   ? "-" : ""), offset);
-				}
+			      if (offset)
+				func (stream, "[pc, #%d]\t; ", offset);
 			      else
-				{
-                                  /* Register.  */
-				  func (stream, ", %s%s",
-					(((given & 0x00800000) == 0)
-					 ? "-" : ""),
-                                        arm_regnames[given & 0xf]);
-				}
-
-			      func (stream, "]%s",
-				    ((given & 0x00200000) != 0) ? "!" : "");
+				func (stream, "[pc]\t; ");				
+			      info->print_address_func (offset + pc + 8, info);
 			    }
 			  else
 			    {
-                              /* Post-indexed.  */
-			      if ((given & 0x00400000) == 0x00400000)
+			      func (stream, "[pc], #%d", offset);
+			      if (! allow_unpredictable)
+				is_unpredictable = TRUE;
+			    }
+			}
+		      else
+			{
+			  int offset = ((given & 0xf00) >> 4) | (given & 0xf);
+
+			  if (NEGATIVE_BIT_SET)
+			    offset = - offset;
+
+			  func (stream, "[%s",
+				arm_regnames[(given >> 16) & 0xf]);
+
+			  if (PRE_BIT_SET)
+			    {
+			      if (IMMEDIATE_BIT_SET)
 				{
-                                  /* Immediate.  */
-                                  int offset = ((given & 0xf00) >> 4) | (given & 0xf);
-				  if (offset)
-				    func (stream, "], #%s%d",
-					  (((given & 0x00800000) == 0)
-					   ? "-" : ""), offset);
-				  else
-				    func (stream, "]");
+				  if (WRITEBACK_BIT_SET)
+				    /* Immediate Pre-indexed.  */
+				    /* PR 10924: Offset must be printed, even if it is zero.  */
+				    func (stream, ", #%d", offset);
+				  else if (offset)
+				    /* Immediate Offset: printing zero offset is optional.  */
+				    func (stream, ", #%d", offset);
+
+				  value_in_comment = offset;
 				}
 			      else
 				{
-                                  /* Register.  */
+				  /* Register Offset or Register Pre-Indexed.  */
+				  func (stream, ", %s%s",
+					NEGATIVE_BIT_SET ? "-" : "",
+					arm_regnames[given & 0xf]);
+
+				  /* Writing back to the register that is the source/
+				     destination of the load/store is unpredictable.  */
+				  if (! allow_unpredictable
+				      && WRITEBACK_BIT_SET
+				      && ((given & 0xf) == ((given >> 12) & 0xf)))
+				    is_unpredictable = TRUE;
+				}
+
+			      func (stream, "]%s",
+				    WRITEBACK_BIT_SET ? "!" : "");
+			    }
+			  else
+			    {
+			      if (IMMEDIATE_BIT_SET)
+				{
+				  /* Immediate Post-indexed.  */
+				  /* PR 10924: Offset must be printed, even if it is zero.  */
+				  func (stream, "], #%d", offset);
+				  value_in_comment = offset;
+				}
+			      else
+				{
+				  /* Register Post-indexed.  */
 				  func (stream, "], %s%s",
-					(((given & 0x00800000) == 0)
-					 ? "-" : ""),
-                                        arm_regnames[given & 0xf]);
+					NEGATIVE_BIT_SET ? "-" : "",
+					arm_regnames[given & 0xf]);
+
+				  /* Writing back to the register that is the source/
+				     destination of the load/store is unpredictable.  */
+				  if (! allow_unpredictable
+				      && (given & 0xf) == ((given >> 12) & 0xf))
+				    is_unpredictable = TRUE;
+				}
+
+			      if (! allow_unpredictable)
+				{
+				  /* Writeback is automatically implied by post- addressing.
+				     Setting the W bit is unnecessary and ARM specify it as
+				     being unpredictable.  */
+				  if (WRITEBACK_BIT_SET
+				      /* Specifying the PC register as the post-indexed
+					 registers is also unpredictable.  */
+				      || (! IMMEDIATE_BIT_SET && ((given & 0xf) == 0xf)))
+				    is_unpredictable = TRUE;
 				}
 			    }
 			}
@@ -2782,7 +3090,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 		    case 'b':
 		      {
 			int disp = (((given & 0xffffff) ^ 0x800000) - 0x800000);
-			info->print_address_func (disp*4 + pc + 8, info);
+			info->print_address_func (disp * 4 + pc + 8, info);
 		      }
 		      break;
 
@@ -2807,11 +3115,13 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			      func (stream, "%s", arm_regnames[reg]);
 			    }
 			func (stream, "}");
+			if (! started)
+			  is_unpredictable = TRUE;
 		      }
 		      break;
 
 		    case 'q':
-		      arm_decode_shift (given, func, stream, 0);
+		      arm_decode_shift (given, func, stream, FALSE);
 		      break;
 
 		    case 'o':
@@ -2819,17 +3129,25 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			{
 			  int rotate = (given & 0xf00) >> 7;
 			  int immed = (given & 0xff);
+
 			  immed = (((immed << (32 - rotate))
 				    | (immed >> rotate)) & 0xffffffff);
-			  func (stream, "#%d\t; 0x%x", immed, immed);
+			  func (stream, "#%d", immed);
+			  value_in_comment = immed;
 			}
 		      else
-			arm_decode_shift (given, func, stream, 1);
+			arm_decode_shift (given, func, stream, TRUE);
 		      break;
 
 		    case 'p':
 		      if ((given & 0x0000f000) == 0x0000f000)
-			func (stream, "p");
+			{
+			  /* The p-variants of tst/cmp/cmn/teq are the pre-V6
+			     mechanism for setting PSR flag bits.  They are
+			     obsolete in V6 onwards.  */
+			  if ((private_data->features.core & ARM_EXT_V6) == 0)
+			    func (stream, "p");
+			}
 		      break;
 
 		    case 't':
@@ -2838,36 +3156,40 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 		      break;
 
 		    case 'A':
-		      func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
+		      {
+			int offset = given & 0xff;
 
-		      if ((given & (1 << 24)) != 0)
-			{
-			  int offset = given & 0xff;
+			value_in_comment = offset * 4;
+			if (NEGATIVE_BIT_SET)
+			  value_in_comment = - value_in_comment;
 
-			  if (offset)
-			    func (stream, ", #%s%d]%s",
-				  ((given & 0x00800000) == 0 ? "-" : ""),
-				  offset * 4,
-				  ((given & 0x00200000) != 0 ? "!" : ""));
-			  else
+			func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
+
+			if (PRE_BIT_SET)
+			  {
+			    if (offset)
+			      func (stream, ", #%d]%s",
+				    value_in_comment,
+				    WRITEBACK_BIT_SET ? "!" : "");
+			    else
+			      func (stream, "]");
+			  }
+			else
+			  {
 			    func (stream, "]");
-			}
-		      else
-			{
-			  int offset = given & 0xff;
 
-			  func (stream, "]");
-
-			  if (given & (1 << 21))
-			    {
-			      if (offset)
-				func (stream, ", #%s%d",
-				      ((given & 0x00800000) == 0 ? "-" : ""),
-				      offset * 4);
-			    }
-			  else
-			    func (stream, ", {%d}", offset);
-			}
+			    if (WRITEBACK_BIT_SET)
+			      {
+				if (offset)
+				  func (stream, ", #%d", value_in_comment);
+			      }
+			    else
+			      {
+				func (stream, ", {%d}", offset);
+				value_in_comment = offset;
+			      }
+			  }
+		      }
 		      break;
 
 		    case 'B':
@@ -2876,7 +3198,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			bfd_vma address;
 			bfd_vma offset = 0;
 
-			if (given & 0x00800000)
+			if (! NEGATIVE_BIT_SET)
 			  /* Is signed, hi bits should be ones.  */
 			  offset = (-1) ^ 0x00ffffff;
 
@@ -2894,27 +3216,61 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 		      break;
 
 		    case 'C':
-		      func (stream, "_");
-		      if (given & 0x80000)
-			func (stream, "f");
-		      if (given & 0x40000)
-			func (stream, "s");
-		      if (given & 0x20000)
-			func (stream, "x");
-		      if (given & 0x10000)
-			func (stream, "c");
+		      if ((given & 0x02000200) == 0x200)
+			{
+			  const char * name;
+			  unsigned sysm = (given & 0x004f0000) >> 16;
+
+			  sysm |= (given & 0x300) >> 4;
+			  name = banked_regname (sysm);
+
+			  if (name != NULL)
+			    func (stream, "%s", name);
+			  else
+			    func (stream, "(UNDEF: %lu)", sysm);
+			}
+		      else
+			{
+			  func (stream, "%cPSR_", 
+				(given & 0x00400000) ? 'S' : 'C');
+			  if (given & 0x80000)
+			    func (stream, "f");
+			  if (given & 0x40000)
+			    func (stream, "s");
+			  if (given & 0x20000)
+			    func (stream, "x");
+			  if (given & 0x10000)
+			    func (stream, "c");
+			}
 		      break;
 
 		    case 'U':
-		      switch (given & 0xf)
+		      if ((given & 0xf0) == 0x60) 
 			{
-			case 0xf: func(stream, "sy"); break;
-			case 0x7: func(stream, "un"); break;
-			case 0xe: func(stream, "st"); break;
-			case 0x6: func(stream, "unst"); break;
-			default:
-			  func(stream, "#%d", (int)given & 0xf);
-			  break;
+			  switch (given & 0xf)
+			    {
+			    case 0xf: func (stream, "sy"); break;
+			    default:
+			      func (stream, "#%d", (int) given & 0xf);
+			      break;
+			    }
+			} 
+		      else 
+			{
+			  switch (given & 0xf)
+			    {
+			    case 0xf: func (stream, "sy"); break;
+			    case 0x7: func (stream, "un"); break;
+			    case 0xe: func (stream, "st"); break;
+			    case 0x6: func (stream, "unst"); break;
+			    case 0xb: func (stream, "ish"); break;
+			    case 0xa: func (stream, "ishst"); break;
+			    case 0x3: func (stream, "osh"); break;
+			    case 0x2: func (stream, "oshst"); break;
+			    default:
+			      func (stream, "#%d", (int) given & 0xf);
+			      break;
+			    }
 			}
 		      break;
 
@@ -2928,17 +3284,42 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			
 			switch (*c)
 			  {
+			  case 'R':
+			    if (value == 15)
+			      is_unpredictable = TRUE;
+			    /* Fall through.  */
 			  case 'r':
+			    if (c[1] == 'u')
+			      {
+				/* Eat the 'u' character.  */
+				++ c;
+
+				if (u_reg == value)
+				  is_unpredictable = TRUE;
+				u_reg = value;
+			      }
+			    if (c[1] == 'U')
+			      {
+				/* Eat the 'U' character.  */
+				++ c;
+
+				if (U_reg == value)
+				  is_unpredictable = TRUE;
+				U_reg = value;
+			      }
 			    func (stream, "%s", arm_regnames[value]);
 			    break;
 			  case 'd':
 			    func (stream, "%ld", value);
+			    value_in_comment = value;
 			    break;
 			  case 'b':
 			    func (stream, "%ld", value * 8);
+			    value_in_comment = value * 8;
 			    break;
 			  case 'W':
 			    func (stream, "%ld", value + 1);
+			    value_in_comment = value + 1;
 			    break;
 			  case 'x':
 			    func (stream, "0x%08lx", value);
@@ -2952,6 +3333,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			    break;
 			  case 'X':
 			    func (stream, "%01lx", value & 0xf);
+			    value_in_comment = value;
 			    break;
 			  case '`':
 			    c++;
@@ -2964,7 +3346,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			      func (stream, "%c", *c);
 			    break;
 			  case '?':
-			    func (stream, "%c", c[(1 << width) - (int)value]);
+			    func (stream, "%c", c[(1 << width) - (int) value]);
 			    c += 1 << width;
 			    break;
 			  default:
@@ -2978,6 +3360,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 
 			  imm = (given & 0xf) | ((given & 0xfff00) >> 4);
 			  func (stream, "%d", imm);
+			  value_in_comment = imm;
 			}
 			break;
 
@@ -2987,12 +3370,28 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			{
 			  long msb = (given & 0x001f0000) >> 16;
 			  long lsb = (given & 0x00000f80) >> 7;
+			  long w = msb - lsb + 1;
 
-			  long width = msb - lsb + 1;
-			  if (width > 0)
-			    func (stream, "#%lu, #%lu", lsb, width);
+			  if (w > 0)
+			    func (stream, "#%lu, #%lu", lsb, w);
 			  else
 			    func (stream, "(invalid: %lu:%lu)", lsb, msb);
+			}
+			break;
+
+		      case 'R':
+			/* Get the PSR/banked register name.  */
+			{
+			  const char * name;
+			  unsigned sysm = (given & 0x004f0000) >> 16;
+
+			  sysm |= (given & 0x300) >> 4;
+			  name = banked_regname (sysm);
+
+			  if (name != NULL)
+			    func (stream, "%s", name);
+			  else
+			    func (stream, "(UNDEF: %lu)", sysm);
 			}
 			break;
 
@@ -3003,7 +3402,9 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			  long hi = (given & 0x000f0000) >> 4;
 			  long lo = (given & 0x00000fff);
 			  long imm16 = hi | lo;
-			  func (stream, "#%lu\t; 0x%lx", imm16, imm16);
+
+			  func (stream, "#%lu", imm16);
+			  value_in_comment = imm16;
 			}
 			break;
 
@@ -3015,6 +3416,13 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 	      else
 		func (stream, "%c", *c);
 	    }
+
+	  if (value_in_comment > 32 || value_in_comment < -16)
+	    func (stream, "\t; 0x%lx", (value_in_comment & 0xffffffffUL));
+
+	  if (is_unpredictable)
+	    func (stream, UNPREDICTABLE_INSTRUCTION);
+
 	  return;
 	}
     }
@@ -3033,7 +3441,9 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
   for (insn = thumb_opcodes; insn->assembler; insn++)
     if ((given & insn->mask) == insn->value)
       {
+	signed long value_in_comment = 0;
 	const char *c = insn->assembler;
+
 	for (; *c; c++)
 	  {
 	    int domaskpc = 0;
@@ -3154,6 +3564,14 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 		}
 		break;
 
+	      case 'W':
+		/* Print writeback indicator for a LDMIA.  We are doing a
+		   writeback if the base register is not in the register
+		   mask.  */
+		if ((given & (1 << ((given & 0x0700) >> 8))) == 0)
+		  func (stream, "!");
+	      	break;
+
 	      case 'b':
 		/* Print ARM V6T2 CZB address: pc+4+6 bits.  */
 		{
@@ -3197,6 +3615,7 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 			  abort ();
 			reg = given >> bitstart;
 			reg &= (2 << (bitend - bitstart)) - 1;
+
 			switch (*c)
 			  {
 			  case 'r':
@@ -3205,14 +3624,17 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 
 			  case 'd':
 			    func (stream, "%ld", reg);
+			    value_in_comment = reg;
 			    break;
 
 			  case 'H':
 			    func (stream, "%ld", reg << 1);
+			    value_in_comment = reg << 1;
 			    break;
 
 			  case 'W':
 			    func (stream, "%ld", reg << 2);
+			    value_in_comment = reg << 2;
 			    break;
 
 			  case 'a':
@@ -3221,6 +3643,7 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 			       before the calculation.  */
 			    info->print_address_func
 			      (((pc + 4) & ~3) + (reg << 2), info);
+			    value_in_comment = 0;
 			    break;
 
 			  case 'x':
@@ -3230,6 +3653,7 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 			  case 'B':
 			    reg = ((reg ^ (1 << bitend)) - (1 << bitend));
 			    info->print_address_func (reg * 2 + pc + 4, info);
+			    value_in_comment = 0;
 			    break;
 
 			  case 'c':
@@ -3266,6 +3690,9 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 		abort ();
 	      }
 	  }
+
+	if (value_in_comment > 32 || value_in_comment < -16)
+	  func (stream, "\t; 0x%lx", value_in_comment);
 	return;
       }
 
@@ -3274,6 +3701,7 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 }
 
 /* Return the name of an V7M special register.  */
+
 static const char *
 psr_name (int regno)
 {
@@ -3315,7 +3743,10 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
   for (insn = thumb32_opcodes; insn->assembler; insn++)
     if ((given & insn->mask) == insn->value)
       {
+	bfd_boolean is_unpredictable = FALSE;
+	signed long value_in_comment = 0;
 	const char *c = insn->assembler;
+
 	for (; *c; c++)
 	  {
 	    if (*c != '%')
@@ -3349,16 +3780,19 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 	      case 'I':
 		{
 		  unsigned int imm12 = 0;
+
 		  imm12 |= (given & 0x000000ffu);
 		  imm12 |= (given & 0x00007000u) >> 4;
 		  imm12 |= (given & 0x04000000u) >> 15;
-		  func (stream, "#%u\t; 0x%x", imm12, imm12);
+		  func (stream, "#%u", imm12);
+		  value_in_comment = imm12;
 		}
 		break;
 
 	      case 'M':
 		{
 		  unsigned int bits = 0, imm, imm8, mod;
+
 		  bits |= (given & 0x000000ffu);
 		  bits |= (given & 0x00007000u) >> 4;
 		  bits |= (given & 0x04000000u) >> 15;
@@ -3367,36 +3801,52 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  switch (mod)
 		    {
 		    case 0: imm = imm8; break;
-		    case 1: imm = ((imm8<<16) | imm8); break;
-		    case 2: imm = ((imm8<<24) | (imm8 << 8)); break;
-		    case 3: imm = ((imm8<<24) | (imm8 << 16) | (imm8 << 8) | imm8); break;
+		    case 1: imm = ((imm8 << 16) | imm8); break;
+		    case 2: imm = ((imm8 << 24) | (imm8 << 8)); break;
+		    case 3: imm = ((imm8 << 24) | (imm8 << 16) | (imm8 << 8) | imm8); break;
 		    default:
 		      mod  = (bits & 0xf80) >> 7;
 		      imm8 = (bits & 0x07f) | 0x80;
 		      imm  = (((imm8 << (32 - mod)) | (imm8 >> mod)) & 0xffffffff);
 		    }
-		  func (stream, "#%u\t; 0x%x", imm, imm);
+		  func (stream, "#%u", imm);
+		  value_in_comment = imm;
 		}
 		break;
 		  
 	      case 'J':
 		{
 		  unsigned int imm = 0;
+
 		  imm |= (given & 0x000000ffu);
 		  imm |= (given & 0x00007000u) >> 4;
 		  imm |= (given & 0x04000000u) >> 15;
 		  imm |= (given & 0x000f0000u) >> 4;
-		  func (stream, "#%u\t; 0x%x", imm, imm);
+		  func (stream, "#%u", imm);
+		  value_in_comment = imm;
 		}
 		break;
 
 	      case 'K':
 		{
 		  unsigned int imm = 0;
+
 		  imm |= (given & 0x000f0000u) >> 16;
 		  imm |= (given & 0x00000ff0u) >> 0;
 		  imm |= (given & 0x0000000fu) << 12;
-		  func (stream, "#%u\t; 0x%x", imm, imm);
+		  func (stream, "#%u", imm);
+		  value_in_comment = imm;
+		}
+		break;
+
+	      case 'V':
+		{
+		  unsigned int imm = 0;
+
+		  imm |= (given & 0x00000fffu);
+		  imm |= (given & 0x000f0000u) >> 4;
+		  func (stream, "#%u", imm);
+		  value_in_comment = imm;
 		}
 		break;
 
@@ -3440,7 +3890,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 	      case 'a':
 		{
 		  unsigned int Rn  = (given & 0x000f0000) >> 16;
-		  unsigned int U   = (given & 0x00800000) >> 23;
+		  unsigned int U   = ! NEGATIVE_BIT_SET;
 		  unsigned int op  = (given & 0x00000f00) >> 8;
 		  unsigned int i12 = (given & 0x00000fff);
 		  unsigned int i8  = (given & 0x000000ff);
@@ -3448,14 +3898,19 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  int offset = 0;
 
 		  func (stream, "[%s", arm_regnames[Rn]);
-		  if (U) /* 12-bit positive immediate offset */
-		    offset = i12;
-		  else if (Rn == 15) /* 12-bit negative immediate offset */
-		    offset = -(int)i12;
-		  else if (op == 0x0) /* shifted register offset */
+		  if (U) /* 12-bit positive immediate offset.  */
+		    {
+		      offset = i12;
+		      if (Rn != 15)
+			value_in_comment = offset;
+		    }
+		  else if (Rn == 15) /* 12-bit negative immediate offset.  */
+		    offset = - (int) i12;
+		  else if (op == 0x0) /* Shifted register offset.  */
 		    {
 		      unsigned int Rm = (i8 & 0x0f);
 		      unsigned int sh = (i8 & 0x30) >> 4;
+
 		      func (stream, ", %s", arm_regnames[Rm]);
 		      if (sh)
 			func (stream, ", lsl #%u", sh);
@@ -3464,30 +3919,30 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		    }
 		  else switch (op)
 		    {
-		    case 0xE:  /* 8-bit positive immediate offset */
+		    case 0xE:  /* 8-bit positive immediate offset.  */
 		      offset = i8;
 		      break;
 
-		    case 0xC:  /* 8-bit negative immediate offset */
+		    case 0xC:  /* 8-bit negative immediate offset.  */
 		      offset = -i8;
 		      break;
 
-		    case 0xF:  /* 8-bit + preindex with wb */
+		    case 0xF:  /* 8-bit + preindex with wb.  */
 		      offset = i8;
 		      writeback = TRUE;
 		      break;
 
-		    case 0xD:  /* 8-bit - preindex with wb */
+		    case 0xD:  /* 8-bit - preindex with wb.  */
 		      offset = -i8;
 		      writeback = TRUE;
 		      break;
 
-		    case 0xB:  /* 8-bit + postindex */
+		    case 0xB:  /* 8-bit + postindex.  */
 		      offset = i8;
 		      postind = TRUE;
 		      break;
 
-		    case 0x9:  /* 8-bit - postindex */
+		    case 0x9:  /* 8-bit - postindex.  */
 		      offset = -i8;
 		      postind = TRUE;
 		      break;
@@ -3517,17 +3972,20 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 
 	      case 'A':
 		{
-		  unsigned int P   = (given & 0x01000000) >> 24;
-		  unsigned int U   = (given & 0x00800000) >> 23;
-		  unsigned int W   = (given & 0x00400000) >> 21;
+		  unsigned int U   = ! NEGATIVE_BIT_SET;
+		  unsigned int W   = WRITEBACK_BIT_SET;
 		  unsigned int Rn  = (given & 0x000f0000) >> 16;
 		  unsigned int off = (given & 0x000000ff);
 
 		  func (stream, "[%s", arm_regnames[Rn]);
-		  if (P)
+
+		  if (PRE_BIT_SET)
 		    {
 		      if (off || !U)
-			func (stream, ", #%c%u", U ? '+' : '-', off * 4);
+			{
+			  func (stream, ", #%c%u", U ? '+' : '-', off * 4);
+			  value_in_comment = off * 4 * U ? 1 : -1;
+			}
 		      func (stream, "]");
 		      if (W)
 			func (stream, "!");
@@ -3536,9 +3994,15 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		    {
 		      func (stream, "], ");
 		      if (W)
-			func (stream, "#%c%u", U ? '+' : '-', off * 4);
+			{
+			  func (stream, "#%c%u", U ? '+' : '-', off * 4);
+			  value_in_comment = off * 4 * U ? 1 : -1;
+			}
 		      else
-			func (stream, "{%u}", off);
+			{
+			  func (stream, "{%u}", off);
+			  value_in_comment = off;
+			}
 		    }
 		}
 		break;
@@ -3547,6 +4011,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		{
 		  unsigned int Sbit = (given & 0x01000000) >> 24;
 		  unsigned int type = (given & 0x00600000) >> 21;
+
 		  switch (type)
 		    {
 		    case 0: func (stream, Sbit ? "sb" : "b"); break;
@@ -3584,6 +4049,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		{
 		  unsigned int msb = (given & 0x0000001f);
 		  unsigned int lsb = 0;
+
 		  lsb |= (given & 0x000000c0u) >> 6;
 		  lsb |= (given & 0x00007000u) >> 10;
 		  func (stream, "#%u, #%u", lsb, msb - lsb + 1);
@@ -3594,6 +4060,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		{
 		  unsigned int width = (given & 0x0000001f) + 1;
 		  unsigned int lsb = 0;
+
 		  lsb |= (given & 0x000000c0u) >> 6;
 		  lsb |= (given & 0x00007000u) >> 10;
 		  func (stream, "#%u, #%u", lsb, width);
@@ -3644,9 +4111,10 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 	      case 's':
 		{
 		  unsigned int shift = 0;
+
 		  shift |= (given & 0x000000c0u) >> 6;
 		  shift |= (given & 0x00007000u) >> 10;
-		  if (given & 0x00200000u)
+		  if (WRITEBACK_BIT_SET)
 		    func (stream, ", asr #%u", shift);
 		  else if (shift)
 		    func (stream, ", lsl #%u", shift);
@@ -3657,22 +4125,40 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 	      case 'R':
 		{
 		  unsigned int rot = (given & 0x00000030) >> 4;
+
 		  if (rot)
 		    func (stream, ", ror #%u", rot * 8);
 		}
 		break;
 
 	      case 'U':
-		switch (given & 0xf)
+		if ((given & 0xf0) == 0x60) 
 		  {
-		  case 0xf: func(stream, "sy"); break;
-		  case 0x7: func(stream, "un"); break;
-		  case 0xe: func(stream, "st"); break;
-		  case 0x6: func(stream, "unst"); break;
-		  default:
-		    func(stream, "#%d", (int)given & 0xf);
-		    break;
+		    switch (given & 0xf)
+		      {
+			case 0xf: func (stream, "sy"); break;
+			default:
+			  func (stream, "#%d", (int) given & 0xf);
+			      break;
+		      }
 		  }
+		else 
+		  {
+		    switch (given & 0xf)
+		      {
+			case 0xf: func (stream, "sy"); break;
+			case 0x7: func (stream, "un"); break;
+			case 0xe: func (stream, "st"); break;
+			case 0x6: func (stream, "unst"); break;
+			case 0xb: func (stream, "ish"); break;
+			case 0xa: func (stream, "ishst"); break;
+			case 0x3: func (stream, "osh"); break;
+			case 0x2: func (stream, "oshst"); break;
+			default:
+			  func (stream, "#%d", (int) given & 0xf);
+			  break;
+		      }
+		   }
 		break;
 
 	      case 'C':
@@ -3688,6 +4174,20 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		    if (given & 0x100)
 		      func (stream, "c");
 		  }
+		else if ((given & 0x20) == 0x20)
+		  {
+		    char const* name;
+		    unsigned sysm = (given & 0xf00) >> 8;
+
+		    sysm |= (given & 0x30);
+		    sysm |= (given & 0x00100000) >> 14;
+		    name = banked_regname (sysm);
+		    
+		    if (name != NULL)
+		      func (stream, "%s", name);
+		    else
+		      func (stream, "(UNDEF: %lu)", sysm);
+		  }
 		else
 		  {
 		    func (stream, psr_name (given & 0xff));
@@ -3695,8 +4195,21 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		break;
 
 	      case 'D':
-		if ((given & 0xff) == 0)
-		  func (stream, "%cPSR", (given & 0x100000) ? 'S' : 'C');
+		if (((given & 0xff) == 0)
+		    || ((given & 0x20) == 0x20))
+		  {
+		    char const* name;
+		    unsigned sm = (given & 0xf0000) >> 16;
+
+		    sm |= (given & 0x30);
+		    sm |= (given & 0x00100000) >> 14;
+		    name = banked_regname (sm);
+
+		    if (name != NULL)
+		      func (stream, "%s", name);
+		    else
+		      func (stream, "(UNDEF: %lu)", sm);
+		  }
 		else
 		  func (stream, psr_name (given & 0xff));
 		break;
@@ -3711,9 +4224,23 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 			
 		  switch (*c)
 		    {
-		    case 'd': func (stream, "%lu", val); break;
-		    case 'W': func (stream, "%lu", val * 4); break;
-		    case 'r': func (stream, "%s", arm_regnames[val]); break;
+		    case 'd':
+		      func (stream, "%lu", val);
+		      value_in_comment = val;
+		      break;
+
+		    case 'W':
+		      func (stream, "%lu", val * 4);
+		      value_in_comment = val * 4;
+		      break;
+
+		    case 'R':
+		      if (val == 15)
+			is_unpredictable = TRUE;
+		      /* Fall through.  */
+		    case 'r':
+		      func (stream, "%s", arm_regnames[val]);
+		      break;
 
 		    case 'c':
 		      func (stream, "%s", arm_conditional[val]);
@@ -3732,8 +4259,12 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		      break;
 
 		    case '?':
-		      func (stream, "%c", c[(1 << width) - (int)val]);
+		      func (stream, "%c", c[(1 << width) - (int) val]);
 		      c += 1 << width;
+		      break;
+		      
+		    case 'x':
+		      func (stream, "0x%lx", val & 0xffffffffUL);
 		      break;
 
 		    default:
@@ -3746,6 +4277,13 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		abort ();
 	      }
 	  }
+
+	if (value_in_comment > 32 || value_in_comment < -16)
+	  func (stream, "\t; 0x%lx", value_in_comment);
+
+	if (is_unpredictable)
+	  func (stream, UNPREDICTABLE_INSTRUCTION);
+
 	return;
       }
 
@@ -3756,7 +4294,8 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 /* Print data bytes on INFO->STREAM.  */
 
 static void
-print_insn_data (bfd_vma pc ATTRIBUTE_UNUSED, struct disassemble_info *info,
+print_insn_data (bfd_vma pc ATTRIBUTE_UNUSED,
+		 struct disassemble_info *info,
 		 long given)
 {
   switch (info->bytes_per_chunk)
@@ -3852,8 +4391,10 @@ parse_disassembler_options (char *options)
 
 /* Search back through the insn stream to determine if this instruction is
    conditionally executed.  */
+
 static void
-find_ifthen_state (bfd_vma pc, struct disassemble_info *info,
+find_ifthen_state (bfd_vma pc,
+		   struct disassemble_info *info,
 		   bfd_boolean little)
 {
   unsigned char b[2];
@@ -3878,7 +4419,7 @@ find_ifthen_state (bfd_vma pc, struct disassemble_info *info,
      IT instruction until we find a definite instruction boundary.  */
   for (;;)
     {
-      if (addr == 0 || info->symbol_at_address_func(addr, info))
+      if (addr == 0 || info->symbol_at_address_func (addr, info))
 	{
 	  /* A symbol must be on an instruction boundary, and will not
 	     be within an IT block.  */
@@ -3888,7 +4429,7 @@ find_ifthen_state (bfd_vma pc, struct disassemble_info *info,
 	  return;
 	}
       addr -= 2;
-      status = info->read_memory_func (addr, (bfd_byte *)b, 2, info);
+      status = info->read_memory_func (addr, (bfd_byte *) b, 2, info);
       if (status)
 	return;
 
@@ -3928,29 +4469,16 @@ find_ifthen_state (bfd_vma pc, struct disassemble_info *info,
     ifthen_state = 0;
 }
 
-/* Try to infer the code type (Arm or Thumb) from a symbol.
-   Returns nonzero if *MAP_TYPE was set.  */
+/* Returns nonzero and sets *MAP_TYPE if the N'th symbol is a
+   mapping symbol.  */
 
 static int
-get_sym_code_type (struct disassemble_info *info, int n,
+is_mapping_symbol (struct disassemble_info *info, int n,
 		   enum map_type *map_type)
 {
-  elf_symbol_type *es;
-  unsigned int type;
   const char *name;
 
-  es = *(elf_symbol_type **)(info->symtab + n);
-  type = ELF_ST_TYPE (es->internal_elf_sym.st_info);
-
-  /* If the symbol has function type then use that.  */
-  if (type == STT_FUNC || type == STT_ARM_TFUNC)
-    {
-      *map_type = (type == STT_ARM_TFUNC) ? MAP_THUMB : MAP_ARM;
-      return TRUE;
-    }
-
-  /* Check for mapping symbols.  */
-  name = bfd_asymbol_name(info->symtab[n]);
+  name = bfd_asymbol_name (info->symtab[n]);
   if (name[0] == '$' && (name[1] == 'a' || name[1] == 't' || name[1] == 'd')
       && (name[2] == 0 || name[2] == '.'))
     {
@@ -3962,6 +4490,90 @@ get_sym_code_type (struct disassemble_info *info, int n,
 
   return FALSE;
 }
+
+/* Try to infer the code type (ARM or Thumb) from a mapping symbol.
+   Returns nonzero if *MAP_TYPE was set.  */
+
+static int
+get_map_sym_type (struct disassemble_info *info,
+		  int n,
+		  enum map_type *map_type)
+{
+  /* If the symbol is in a different section, ignore it.  */
+  if (info->section != NULL && info->section != info->symtab[n]->section)
+    return FALSE;
+
+  return is_mapping_symbol (info, n, map_type);
+}
+
+/* Try to infer the code type (ARM or Thumb) from a non-mapping symbol.
+   Returns nonzero if *MAP_TYPE was set.  */
+
+static int
+get_sym_code_type (struct disassemble_info *info,
+		   int n,
+		   enum map_type *map_type)
+{
+  elf_symbol_type *es;
+  unsigned int type;
+
+  /* If the symbol is in a different section, ignore it.  */
+  if (info->section != NULL && info->section != info->symtab[n]->section)
+    return FALSE;
+
+  es = *(elf_symbol_type **)(info->symtab + n);
+  type = ELF_ST_TYPE (es->internal_elf_sym.st_info);
+
+  /* If the symbol has function type then use that.  */
+  if (type == STT_FUNC || type == STT_ARM_TFUNC)
+    {
+      *map_type = (type == STT_ARM_TFUNC) ? MAP_THUMB : MAP_ARM;
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
+/* Given a bfd_mach_arm_XXX value, this function fills in the fields
+   of the supplied arm_feature_set structure with bitmasks indicating
+   the support base architectures and coprocessor extensions.
+
+   FIXME: This could more efficiently implemented as a constant array,
+   although it would also be less robust.  */
+
+static void
+select_arm_features (unsigned long mach,
+		     arm_feature_set * features)
+{
+#undef  ARM_FEATURE
+#define ARM_FEATURE(ARCH,CEXT) \
+  features->core = (ARCH); \
+  features->coproc = (CEXT) | FPU_FPA; \
+  return
+
+  switch (mach)
+    {
+    case bfd_mach_arm_2:       ARM_ARCH_V2;
+    case bfd_mach_arm_2a:      ARM_ARCH_V2S;
+    case bfd_mach_arm_3:       ARM_ARCH_V3;
+    case bfd_mach_arm_3M:      ARM_ARCH_V3M;
+    case bfd_mach_arm_4:       ARM_ARCH_V4;
+    case bfd_mach_arm_4T:      ARM_ARCH_V4T;
+    case bfd_mach_arm_5:       ARM_ARCH_V5;
+    case bfd_mach_arm_5T:      ARM_ARCH_V5T;
+    case bfd_mach_arm_5TE:     ARM_ARCH_V5TE;
+    case bfd_mach_arm_XScale:  ARM_ARCH_XSCALE;
+    case bfd_mach_arm_ep9312:  ARM_FEATURE (ARM_AEXT_V4T, ARM_CEXT_MAVERICK | FPU_MAVERICK);
+    case bfd_mach_arm_iWMMXt:  ARM_ARCH_IWMMXT;
+    case bfd_mach_arm_iWMMXt2: ARM_ARCH_IWMMXT2;
+      /* If the machine type is unknown allow all
+	 architecture types and all extensions.  */
+    case bfd_mach_arm_unknown: ARM_FEATURE (-1UL, -1UL);
+    default:
+      abort ();
+    }
+}
+
 
 /* NOTE: There are no checks in these routines that
    the relevant number of data bytes exist.  */
@@ -3978,6 +4590,7 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
   unsigned int	size = 4;
   void	 	(*printer) (bfd_vma, struct disassemble_info *, long);
   bfd_boolean   found = FALSE;
+  struct arm_private_data *private_data;
 
   if (info->disassembler_options)
     {
@@ -3987,61 +4600,153 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
       info->disassembler_options = NULL;
     }
 
+  /* PR 10288: Control which instructions will be disassembled.  */
+  if (info->private_data == NULL)
+    {
+      static struct arm_private_data private;
+
+      if ((info->flags & USER_SPECIFIED_MACHINE_TYPE) == 0)
+	/* If the user did not use the -m command line switch then default to
+	   disassembling all types of ARM instruction.
+	   
+	   The info->mach value has to be ignored as this will be based on
+	   the default archictecture for the target and/or hints in the notes
+	   section, but it will never be greater than the current largest arm
+	   machine value (iWMMXt2), which is only equivalent to the V5TE
+	   architecture.  ARM architectures have advanced beyond the machine
+	   value encoding, and these newer architectures would be ignored if
+	   the machine value was used.
+
+	   Ie the -m switch is used to restrict which instructions will be
+	   disassembled.  If it is necessary to use the -m switch to tell
+	   objdump that an ARM binary is being disassembled, eg because the
+	   input is a raw binary file, but it is also desired to disassemble
+	   all ARM instructions then use "-marm".  This will select the
+	   "unknown" arm architecture which is compatible with any ARM
+	   instruction.  */
+	  info->mach = bfd_mach_arm_unknown;
+
+      /* Compute the architecture bitmask from the machine number.
+	 Note: This assumes that the machine number will not change
+	 during disassembly....  */
+      select_arm_features (info->mach, & private.features);
+
+      private.has_mapping_symbols = -1;
+
+      info->private_data = & private;
+    }
+
+  private_data = info->private_data;
+
   /* Decide if our code is going to be little-endian, despite what the
      function argument might say.  */
   little_code = ((info->endian_code == BFD_ENDIAN_LITTLE) || little);
 
-  /* First check the full symtab for a mapping symbol, even if there
-     are no usable non-mapping symbols for this address.  */
-  if (info->symtab != NULL
-      && * info->symtab
+  /* For ELF, consult the symbol table to determine what kind of code
+     or data we have.  */
+  if (info->symtab_size != 0
       && bfd_asymbol_flavour (*info->symtab) == bfd_target_elf_flavour)
     {
       bfd_vma addr;
-      int n;
+      int n, start;
       int last_sym = -1;
       enum map_type type = MAP_ARM;
 
-      if (pc <= last_mapping_addr)
-	last_mapping_sym = -1;
-      is_thumb = (last_type == MAP_THUMB);
-      found = FALSE;
       /* Start scanning at the start of the function, or wherever
 	 we finished last time.  */
-      n = info->symtab_pos + 1;
-      if (n < last_mapping_sym)
-	n = last_mapping_sym;
+      start = info->symtab_pos + 1;
+      if (start < last_mapping_sym)
+	start = last_mapping_sym;
+      found = FALSE;
 
-      /* Scan up to the location being disassembled.  */
-      for (; n < info->symtab_size; n++)
+      /* First, look for mapping symbols.  */
+      if (private_data->has_mapping_symbols != 0)
 	{
-	  addr = bfd_asymbol_value (info->symtab[n]);
-	  if (addr > pc)
-	    break;
-	  if ((info->section == NULL
-	       || info->section == info->symtab[n]->section)
-	      && get_sym_code_type (info, n, &type))
+	  /* Scan up to the location being disassembled.  */
+	  for (n = start; n < info->symtab_size; n++)
 	    {
-	      last_sym = n;
+	      addr = bfd_asymbol_value (info->symtab[n]);
+	      if (addr > pc)
+		break;
+	      if (get_map_sym_type (info, n, &type))
+		{
+		  last_sym = n;
+		  found = TRUE;
+		}
+	    }
+
+	  if (!found)
+	    {
+	      /* No mapping symbol found at this address.  Look backwards
+		 for a preceeding one.  */
+	      for (n = start - 1; n >= 0; n--)
+		{
+		  if (get_map_sym_type (info, n, &type))
+		    {
+		      last_sym = n;
+		      found = TRUE;
+		      break;
+		    }
+		}
+	    }
+
+	  if (found)
+	    private_data->has_mapping_symbols = 1;
+
+	  /* No mapping symbols were found.  A leading $d may be
+	     omitted for sections which start with data; but for
+	     compatibility with legacy and stripped binaries, only
+	     assume the leading $d if there is at least one mapping
+	     symbol in the file.  */
+	  if (!found && private_data->has_mapping_symbols == -1)
+	    {
+	      /* Look for mapping symbols, in any section.  */
+	      for (n = 0; n < info->symtab_size; n++)
+		if (is_mapping_symbol (info, n, &type))
+		  {
+		    private_data->has_mapping_symbols = 1;
+		    break;
+		  }
+	      if (private_data->has_mapping_symbols == -1)
+		private_data->has_mapping_symbols = 0;
+	    }
+
+	  if (!found && private_data->has_mapping_symbols == 1)
+	    {
+	      type = MAP_DATA;
 	      found = TRUE;
 	    }
 	}
 
+      /* Next search for function symbols to separate ARM from Thumb
+	 in binaries without mapping symbols.  */
       if (!found)
 	{
-	  n = info->symtab_pos;
-	  if (n < last_mapping_sym - 1)
-	    n = last_mapping_sym - 1;
-
-	  /* No mapping symbol found at this address.  Look backwards
-	     for a preceeding one.  */
-	  for (; n >= 0; n--)
+	  /* Scan up to the location being disassembled.  */
+	  for (n = start; n < info->symtab_size; n++)
 	    {
+	      addr = bfd_asymbol_value (info->symtab[n]);
+	      if (addr > pc)
+		break;
 	      if (get_sym_code_type (info, n, &type))
 		{
 		  last_sym = n;
 		  found = TRUE;
-		  break;
+		}
+	    }
+
+	  if (!found)
+	    {
+	      /* No mapping symbol found at this address.  Look backwards
+		 for a preceeding one.  */
+	      for (n = start - 1; n >= 0; n--)
+		{
+		  if (get_sym_code_type (info, n, &type))
+		    {
+		      last_sym = n;
+		      found = TRUE;
+		      break;
+		    }
 		}
 	    }
 	}
@@ -4061,7 +4766,9 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
 	  for (n = last_sym + 1; n < info->symtab_size; n++)
 	    {
 	      addr = bfd_asymbol_value (info->symtab[n]);
-	      if (addr > pc)
+	      if (addr > pc
+		  && (info->section == NULL
+		      || info->section == info->symtab[n]->section))
 		{
 		  if (addr - pc < size)
 		    size = addr - pc;
@@ -4107,18 +4814,23 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
   if (force_thumb)
     is_thumb = TRUE;
 
-  info->display_endian = little ? BFD_ENDIAN_LITTLE : BFD_ENDIAN_BIG;
+  if (is_data)
+    info->display_endian = little ? BFD_ENDIAN_LITTLE : BFD_ENDIAN_BIG;
+  else
+    info->display_endian = little_code ? BFD_ENDIAN_LITTLE : BFD_ENDIAN_BIG;
+
   info->bytes_per_line = 4;
 
-  if (is_data)
+  /* PR 10263: Disassemble data if requested to do so by the user.  */
+  if (is_data && ((info->flags & DISASSEMBLE_DATA) == 0))
     {
       int i;
 
-      /* size was already set above.  */
+      /* Size was already set above.  */
       info->bytes_per_chunk = size;
       printer = print_insn_data;
 
-      status = info->read_memory_func (pc, (bfd_byte *)b, size, info);
+      status = info->read_memory_func (pc, (bfd_byte *) b, size, info);
       given = 0;
       if (little)
 	for (i = size - 1; i >= 0; i--)
@@ -4135,7 +4847,7 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
       info->bytes_per_chunk = 4;
       size = 4;
 
-      status = info->read_memory_func (pc, (bfd_byte *)b, 4, info);
+      status = info->read_memory_func (pc, (bfd_byte *) b, 4, info);
       if (little_code)
 	given = (b[0]) | (b[1] << 8) | (b[2] << 16) | (b[3] << 24);
       else
@@ -4151,7 +4863,7 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
       info->bytes_per_chunk = 2;
       size = 2;
 
-      status = info->read_memory_func (pc, (bfd_byte *)b, 2, info);
+      status = info->read_memory_func (pc, (bfd_byte *) b, 2, info);
       if (little_code)
 	given = (b[0]) | (b[1] << 8);
       else
@@ -4165,7 +4877,7 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
 	      || (given & 0xF800) == 0xF000
 	      || (given & 0xF800) == 0xE800)
 	    {
-	      status = info->read_memory_func (pc + 2, (bfd_byte *)b, 2, info);
+	      status = info->read_memory_func (pc + 2, (bfd_byte *) b, 2, info);
 	      if (little_code)
 		given = (b[0]) | (b[1] << 8) | (given << 16);
 	      else
@@ -4177,7 +4889,7 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
 	}
 
       if (ifthen_address != pc)
-	find_ifthen_state(pc, info, little_code);
+	find_ifthen_state (pc, info, little_code);
 
       if (ifthen_state)
 	{

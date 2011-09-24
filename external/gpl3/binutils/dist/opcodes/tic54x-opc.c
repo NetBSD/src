@@ -1,5 +1,5 @@
 /* Table of opcodes for the Texas Instruments TMS320C54X
-   Copyright 1999, 2000, 2001, 2007 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2005, 2007, 2009 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of the GNU opcodes library.
@@ -231,9 +231,9 @@ const char *misc_symbols[] = {
 #define ZPAR 0,{OP_None}
 #define REST 0,0,ZPAR
 #define XREST ZPAR
-const template tic54x_unknown_opcode =
+const insn_template tic54x_unknown_opcode =
   { "???",   1,0,0,0x0000, 0x0000, {0}, 0, REST};
-const template tic54x_optab[] = {
+const insn_template tic54x_optab[] = {
   /* these must precede bc/bcd, cc/ccd to avoid misinterpretation */
   { "fb",    2,1,1,0xF880, 0xFF80, {OP_xpmad}, B_BRANCH|FL_FAR|FL_NR, REST},
   { "fbd",   2,1,1,0xFA80, 0xFF80, {OP_xpmad}, B_BRANCH|FL_FAR|FL_DELAY|FL_NR, REST},
@@ -465,7 +465,7 @@ const template tic54x_optab[] = {
 };
 
 /* assume all parallel instructions have at least three operands */
-const template tic54x_paroptab[] = {
+const insn_template tic54x_paroptab[] = {
   { "ld",1,1,2,0xA800, 0xFE00, {OP_Xmem,OP_DST},      FL_PAR,0,0,
     "mac",                     {OP_Ymem,OPT|OP_RND},},
   { "ld",1,1,2,0xAA00, 0xFE00, {OP_Xmem,OP_DST},      FL_PAR,0,0,
