@@ -1,5 +1,6 @@
 /* tc-crx.c -- Assembler code for the CRX CPU core.
-   Copyright 2004, 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   Free Software Foundation, Inc.
 
    Contributed by Tomer Levi, NSC, Israel.
    Originally written for GAS 2.12 by Tomer Levi, NSC, Israel.
@@ -147,9 +148,9 @@ static int     get_opbits	        (operand_type);
 static int     get_opflags	        (operand_type);
 static int     get_number_of_operands   (void);
 static void    parse_operand	        (char *, ins *);
-static int     gettrap		        (char *);
-static void    handle_LoadStor	        (char *);
-static int     get_cinv_parameters      (char *);
+static int     gettrap		        (const char *);
+static void    handle_LoadStor	        (const char *);
+static int     get_cinv_parameters      (const char *);
 static long    getconstant		(long, int);
 static op_err  check_range		(long *, int, unsigned int, int);
 static int     getreg_image	        (reg);
@@ -205,12 +206,12 @@ get_opflags (operand_type op)
 static reg
 get_register (char *reg_name)
 {
-  const reg_entry *reg;
+  const reg_entry *rreg;
 
-  reg = (const reg_entry *) hash_find (reg_hash, reg_name);
+  rreg = (const reg_entry *) hash_find (reg_hash, reg_name);
 
-  if (reg != NULL)
-    return reg->value.reg_val;
+  if (rreg != NULL)
+    return rreg->value.reg_val;
   else
     return nullregister;
 }
@@ -220,12 +221,12 @@ get_register (char *reg_name)
 static copreg
 get_copregister (char *copreg_name)
 {
-  const reg_entry *copreg;
+  const reg_entry *coreg;
 
-  copreg = (const reg_entry *) hash_find (copreg_hash, copreg_name);
+  coreg = (const reg_entry *) hash_find (copreg_hash, copreg_name);
 
-  if (copreg != NULL)
-    return copreg->value.copreg_val;
+  if (coreg != NULL)
+    return coreg->value.copreg_val;
   else
     return nullcopregister;
 }
@@ -351,7 +352,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS * fixP)
 	}
     }
 
-  assert ((int) fixP->fx_r_type > 0);
+  gas_assert ((int) fixP->fx_r_type > 0);
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixP->fx_r_type);
 
   if (reloc->howto == (reloc_howto_type *) NULL)
@@ -362,7 +363,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS * fixP)
 		    bfd_get_reloc_code_name (fixP->fx_r_type));
       return NULL;
     }
-  assert (!fixP->fx_pcrel == !reloc->howto->pc_relative);
+  gas_assert (!fixP->fx_pcrel == !reloc->howto->pc_relative);
 
   return reloc;
 }
@@ -986,7 +987,7 @@ parse_operands (ins * crx_ins, char *operands)
    This routine is used by assembling the 'excp' instruction.  */
 
 static int
-gettrap (char *s)
+gettrap (const char *s)
 {
   const trap_entry *trap;
 
@@ -1006,7 +1007,7 @@ gettrap (char *s)
    Otherwise, the insn will be mistakenly identified as of type LD_STOR_INS.  */
 
 static void
-handle_LoadStor (char *operands)
+handle_LoadStor (const char *operands)
 {
   /* Post-Increment instructions precede Store-Immediate instructions in 
      CRX instruction table, hence they are handled before. 
@@ -1071,9 +1072,9 @@ parse_insn (ins *insn, char *operands)
 /* Cinv instruction requires special handling.  */
 
 static int
-get_cinv_parameters (char * operand)
+get_cinv_parameters (const char *operand)
 {
-  char *p = operand;
+  const char *p = operand;
   int d_used = 0, i_used = 0, u_used = 0, b_used = 0;
 
   while (*++p != ']')
@@ -1106,7 +1107,7 @@ get_cinv_parameters (char * operand)
 static int
 getreg_image (reg r)
 {
-  const reg_entry *reg;
+  const reg_entry *rreg;
   char *reg_name;
   int is_procreg = 0; /* Nonzero means argument should be processor reg.  */
 
@@ -1116,10 +1117,10 @@ getreg_image (reg r)
 
   /* Check whether the register is in registers table.  */
   if (r < MAX_REG)
-    reg = &crx_regtab[r];
+    rreg = &crx_regtab[r];
   /* Check whether the register is in coprocessor registers table.  */
-  else if (r < MAX_COPREG)
-    reg = &crx_copregtab[r-MAX_REG];
+  else if (r < (int) MAX_COPREG)
+    rreg = &crx_copregtab[r-MAX_REG];
   /* Register not found.  */
   else
     {
@@ -1127,7 +1128,7 @@ getreg_image (reg r)
       return 0;
     }
 
-  reg_name = reg->name;
+  reg_name = rreg->name;
 
 /* Issue a error message when register is illegal.  */
 #define IMAGE_ERR \
@@ -1135,29 +1136,29 @@ getreg_image (reg r)
 	    reg_name, ins_parse);			     \
   break;
 
-  switch (reg->type)
+  switch (rreg->type)
   {
     case CRX_U_REGTYPE:
       if (is_procreg || (instruction->flags & USER_REG))
-	return reg->image;
+	return rreg->image;
       else
 	IMAGE_ERR;
 
     case CRX_CFG_REGTYPE:
       if (is_procreg)
-	return reg->image;
+	return rreg->image;
       else
 	IMAGE_ERR;
 
     case CRX_R_REGTYPE:
       if (! is_procreg)
-	return reg->image;
+	return rreg->image;
       else
 	IMAGE_ERR;
 
     case CRX_C_REGTYPE:
     case CRX_CS_REGTYPE:
-      return reg->image;
+      return rreg->image;
       break;
 
     default:
@@ -1986,6 +1987,7 @@ md_assemble (char *op)
   if (instruction == NULL)
     {
       as_bad (_("Unknown opcode: `%s'"), op);
+      param[-1] = c;
       return;
     }
 
@@ -1997,8 +1999,12 @@ md_assemble (char *op)
 
   /* Assemble the instruction - return upon failure.  */
   if (assemble_insn (op, &crx_ins) == 0)
-    return;
+    {
+      param[-1] = c;
+      return;
+    }
 
   /* Print the instruction.  */
+  param[-1] = c;
   print_insn (&crx_ins);
 }

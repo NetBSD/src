@@ -1,6 +1,6 @@
-// weak_undef_file1.cc -- test handling of weak undefined symbols for gold
+// weak_undef_file2.cc -- test handling of weak undefined symbols for gold
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright 2008, 2010 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.

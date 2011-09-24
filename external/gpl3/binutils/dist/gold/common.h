@@ -1,6 +1,6 @@
 // common.h -- handle common symbols for gold   -*- C++ -*-
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -36,9 +36,8 @@ class Allocate_commons_task : public Task
 {
  public:
   Allocate_commons_task(Symbol_table* symtab, Layout* layout, Mapfile* mapfile,
-			Task_token* symtab_lock, Task_token* blocker)
-    : symtab_(symtab), layout_(layout), mapfile_(mapfile),
-      symtab_lock_(symtab_lock), blocker_(blocker)
+			Task_token* blocker)
+    : symtab_(symtab), layout_(layout), mapfile_(mapfile), blocker_(blocker)
   { }
 
   // The standard Task methods.
@@ -60,7 +59,6 @@ class Allocate_commons_task : public Task
   Symbol_table* symtab_;
   Layout* layout_;
   Mapfile* mapfile_;
-  Task_token* symtab_lock_;
   Task_token* blocker_;
 };
 

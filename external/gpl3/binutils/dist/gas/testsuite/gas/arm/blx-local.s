@@ -1,16 +1,38 @@
-        .text
-	.arch armv5t
-        .arm
-one:
-        blx     foo
-        blx     foo2
+# objdump: -fdrw --prefix-addresses --show-raw-insn
+# not-target: *-*-*aout* *-*-pe
 
-        .thumb
-        .type foo, %function
-        .thumb_func
+  .text
+  .arch armv5t
+  .arm
+one:
+        blx	foo
+	blx     foo2
+	bl	foo
+	bl	foo2
+	blx	fooundefarm
+	bl      fooundefarm
+	blx     fooundefthumb
+	bl      fooundefthumb
+	
+	.thumb
+	.type foo, %function
+	.thumb_func
 foo:
-        nop
+	nop
+	nop
+fooundefthumb:
+ 	nop
+
+ 	.align 2
         .type foo2, %function
-        .thumb_func
+	.arm
 foo2:
-        nop
+ 	bleq  fooundefthumb @no relocs
+ 	beq   fooundefthumb @no relocs
+ 	b     fooundefthumb @no relocs
+ 	bleq  foo  @ R_ARM_PCREL_JUMP
+ 	beq   foo  @ R_ARM_PCREL_JUMP
+ 	b     foo  @ R_ARM_PCREL_JUMP
+	nop
+fooundefarm:
+ 	nop

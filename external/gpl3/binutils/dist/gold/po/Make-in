@@ -1,6 +1,6 @@
 # Makefile for program source directory in GNU NLS utilities package.
 # Copyright (C) 1995, 1996, 1997 by Ulrich Drepper <drepper@gnu.ai.mit.edu>
-# Copyright 2003, 2006 Free Software Foundation, Inc.
+# Copyright 2003, 2006, 2007, 2009 Free Software Foundation, Inc.
 #
 # This file may be copied and used freely without restrictions.  It can
 # be used in projects which are not available under the GNU Public License
@@ -73,7 +73,7 @@ INSTOBJEXT = @INSTOBJEXT@
 	$(MSGFMT) -o $@ $<
 
 .po.gmo:
-	file=$(srcdir)/`echo $* | sed 's,.*/,,'`.gmo \
+	file=`echo $* | sed 's,.*/,,'`.gmo \
 	  && rm -f $$file && $(GMSGFMT) -o $$file $<
 
 .po.cat:
@@ -88,7 +88,8 @@ all-no:
 
 $(srcdir)/$(PACKAGE).pot: $(POTFILES)
 	$(XGETTEXT) --default-domain=$(PACKAGE) --directory=$(top_srcdir) \
-	  --add-comments --keyword=_ --keyword=N_ \
+	  --add-comments -C --keyword=_ --keyword=N_ \
+	  --msgid-bugs-address=bug-binutils@gnu.org \
 	  --files-from=$(srcdir)/POTFILES.in
 	rm -f $(srcdir)/$(PACKAGE).pot
 	mv $(PACKAGE).po $(srcdir)/$(PACKAGE).pot
@@ -112,13 +113,14 @@ install: install-exec install-data
 install-exec:
 install-info:
 install-html:
+install-pdf:
 install-data: install-data-@USE_NLS@
 install-data-no: all
 install-data-yes: all
 	if test -r $(MKINSTALLDIRS); then \
 	  $(MKINSTALLDIRS) $(DESTDIR)$(datadir); \
 	else \
-	  $(top_srcdir)/mkinstalldirs $(DESTDIR)$(datadir); \
+	  $(top_srcdir)/../mkinstalldirs $(DESTDIR)$(datadir); \
 	fi
 	@catalogs='$(CATALOGS)'; \
 	for cat in $$catalogs; do \

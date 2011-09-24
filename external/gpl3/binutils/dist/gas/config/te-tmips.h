@@ -1,5 +1,5 @@
 /* Traditional MIPS targets
-   Copyright 2000, 2003, 2007 Free Software Foundation, Inc.
+   Copyright 2000, 2003, 2005, 2007 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

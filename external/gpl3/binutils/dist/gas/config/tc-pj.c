@@ -1,5 +1,5 @@
 /* tc-pj.c -- Assemble code for Pico Java
-   Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2007
+   Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2007, 2009, 2010
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -183,9 +183,9 @@ fake_opcode (const char *name,
    can have another name.  */
 
 static void
-alias (const char *new, const char *old)
+alias (const char *new_name, const char *old)
 {
-  hash_insert (opcode_hash_control, new,
+  hash_insert (opcode_hash_control, new_name,
 	       (char *) hash_find (opcode_hash_control, old));
 }
 
@@ -261,6 +261,7 @@ md_assemble (char *str)
       return;
     }
 
+  dwarf2_emit_insn (0);
   if (opcode->opcode == -1)
     {
       /* It's a fake opcode.  Dig out the args and pretend that was
@@ -285,7 +286,7 @@ md_assemble (char *str)
 	    op_end++;
 
 	  if (*op_end == 0)
-	    as_bad ("expected expresssion");
+	    as_bad (_("expected expresssion"));
 
 	  op_end = parse_exp_save_ilp (op_end, &arg);
 
@@ -304,13 +305,12 @@ md_assemble (char *str)
 	op_end++;
 
       if (*op_end != 0)
-	as_warn ("extra stuff on line ignored");
+	as_warn (_("extra stuff on line ignored"));
 
     }
 
   if (pending_reloc)
-    as_bad ("Something forgot to clean up\n");
-
+    as_bad (_("Something forgot to clean up\n"));
 }
 
 char *
@@ -366,10 +366,8 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg ATTRIBUTE_UNUSED)
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
   long val = *valP;
   long max, min;
-  int shift;
 
   max = min = 0;
-  shift = 0;
   switch (fixP->fx_r_type)
     {
     case BFD_RELOC_VTABLE_INHERIT:
@@ -490,7 +488,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 		    bfd_get_reloc_code_name (r_type));
       /* Set howto to a garbage value so that we can keep going.  */
       rel->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_32);
-      assert (rel->howto != NULL);
+      gas_assert (rel->howto != NULL);
     }
 
   return rel;

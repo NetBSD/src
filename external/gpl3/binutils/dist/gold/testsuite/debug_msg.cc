@@ -59,6 +59,13 @@ class Derived : public Base
 void SortAscending(int array[], int size);   // in odr_violation1.cc
 void SortDescending(int array[], int size);  // in odr_violation2.cc
 
+extern "C" int OverriddenCFunction(int i);  // in odr_violation*.cc
+
+inline int SometimesInlineFunction(int i) {  // strong in odr_violation2.cc.
+  return i;
+}
+
+
 int main()
 {
   testfn(5);
@@ -74,6 +81,9 @@ int main()
   int kInput2[] = {1, 6, 9, 7, 3, 4, 2, 10, 5, 8};
   int kSize2 = sizeof(kInput2) / sizeof(int);
   SortDescending(kInput2, kSize2);
+
+  OverriddenCFunction(3);
+  SometimesInlineFunction(3);
 
   return 0;
 }

@@ -349,5 +349,36 @@ F:
 	fmxr	mvfr1, r0
 	fmxr	c12, r0
 
-	nop
+	@ ARM VMSR/VMRS instructions
+	vmrs	r0, FPSCR
+	vmrs	r1, FPSCR
+	vmrs	r2, FPSCR
+	vmrs	r3, FPSCR
+	vmrs	r4, FPSCR
+	vmrs	r5, FPSCR
+	vmrs	r6, FPSCR
+	vmrs	r7, FPSCR
+	vmrs	r8, FPSCR
+	vmrs	r9, FPSCR
+	vmrs	r10, FPSCR
+	vmrs	r11, FPSCR
+	vmrs	r12, FPSCR
+	vmrs	r14, FPSCR
+	vmrs	APSR_nzcv, FPSCR
+
+	vmsr	FPSCR, r0
+	vmsr	FPSCR, r1
+	vmsr	FPSCR, r2
+	vmsr	FPSCR, r3
+	vmsr	FPSCR, r4
+	vmsr	FPSCR, r5
+	vmsr	FPSCR, r6
+	vmsr	FPSCR, r7
+	vmsr	FPSCR, r8
+	vmsr	FPSCR, r9
+	vmsr	FPSCR, r10
+	vmsr	FPSCR, r11
+	vmsr	FPSCR, r12
+	vmsr	FPSCR, r14
+
 	nop

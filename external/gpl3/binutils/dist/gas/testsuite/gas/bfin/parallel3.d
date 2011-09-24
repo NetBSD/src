@@ -67,7 +67,7 @@ Disassembly of section .text:
   ec:	20 bd 00 00 
   f0:	81 ce 11 80 	R0 = R1 << 0x2 \(V\) \|\| \[P4 \+ 0xc\] = P0 \|\| NOP;
   f4:	e0 bc 00 00 
-  f8:	01 ce 11 88 	R4 = SHIFT R1 BY R2.L \(V\) \|\| \[P5\] = P0 \|\| NOP;
+  f8:	01 ce 11 88 	R4 = LSHIFT R1 BY R2.L \(V\) \|\| \[P5\] = P0 \|\| NOP;
   fc:	68 93 00 00 
  100:	06 cc 01 0c 	R6 = MAX \(R0, R1\) \(V\) \|\| \[P5\+\+\] = P0 \|\| NOP;
  104:	68 92 00 00 

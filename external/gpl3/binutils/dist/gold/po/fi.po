@@ -1,0 +1,1891 @@
+# Finnish messages for gold.
+# Copyright © 2010 Free Software Foundation, Inc.
+# This file is distributed under the same license as the binutils package.
+# Jorma Karvonen <karvonen.jorma@gmail.com>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gold 2.20\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-09-09 17:16+0930\n"
+"PO-Revision-Date: 2010-03-02 17:04+0200\n"
+"Last-Translator: Jorma Karvonen <karvonen.jorma@gmail.com>\n"
+"Language-Team: Finnish <translation-team-fi@lists.sourceforge.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: archive.cc:107
+#, c-format
+msgid "%s: no archive symbol table (run ranlib)"
+msgstr "%s: ei arkistosymbolitaulua (suorita ranlib)"
+
+#: archive.cc:189
+#, c-format
+msgid "%s: bad archive symbol table names"
+msgstr "%s: virheelliset arkistosymbolitaulunimet"
+
+#: archive.cc:221
+#, c-format
+msgid "%s: malformed archive header at %zu"
+msgstr "%s: vääränmuotoinen arkisto-otsake siirrososoitteessa %zu"
+
+#: archive.cc:241
+#, c-format
+msgid "%s: malformed archive header size at %zu"
+msgstr "%s: vääränmuotoinen arkisto-otsakekoko siirrososoitteessa %zu"
+
+#: archive.cc:252
+#, c-format
+msgid "%s: malformed archive header name at %zu"
+msgstr "%s: vääränmuotoinen arkisto-otsakenimi siirrososoitteessa %zu"
+
+#: archive.cc:282
+#, c-format
+msgid "%s: bad extended name index at %zu"
+msgstr "%s: väärä laajennettu nimi-indeksi siirrososoitteessa %zu"
+
+#: archive.cc:292
+#, c-format
+msgid "%s: bad extended name entry at header %zu"
+msgstr "%s: väärä laajennettu nimimerkintä otsakeosoitteessa %zu"
+
+#: archive.cc:389
+#, c-format
+msgid "%s: short archive header at %zu"
+msgstr "%s: lyhyt arkisto-otsake siirrososoitteessa %zu"
+
+#: archive.cc:530 archive.cc:545
+#, c-format
+msgid "%s: member at %zu is not an ELF object"
+msgstr "%s: jäsen siirrososoitteessa %zu ei ole ELF-objekti"
+
+#: archive.cc:775
+#, c-format
+msgid "%s: archive libraries: %u\n"
+msgstr "%s: arkistokirjastot: %u\n"
+
+#: archive.cc:777
+#, c-format
+msgid "%s: total archive members: %u\n"
+msgstr "%s: yhteensä arkistojäseniä: %u\n"
+
+#: archive.cc:779
+#, c-format
+msgid "%s: loaded archive members: %u\n"
+msgstr "%s: ladattuja arkistojäseniä: %u\n"
+
+#: binary.cc:129
+#, c-format
+msgid "cannot open %s: %s:"
+msgstr "ei voi avata syötetiedostoa %s: %s:"
+
+#: compressed_output.cc:128
+msgid "not compressing section data: zlib error"
+msgstr "ei tiivistetä lohkodataa: zlib-virhe"
+
+#: cref.cc:244
+#, c-format
+msgid "cannot open symbol count file %s: %s"
+msgstr "ei voi avata symbolilukumäärätiedostoa %s: %s"
+
+#: descriptors.cc:94
+#, c-format
+msgid "file %s was removed during the link"
+msgstr "tiedosto %s poistettiin linkityksen aikana"
+
+#: descriptors.cc:133
+msgid "out of file descriptors and couldn't close any"
+msgstr "ei ole enää tiedostokuvaajia eikä voitu sulkea yhtään"
+
+#: descriptors.cc:154 descriptors.cc:189
+#, c-format
+msgid "while closing %s: %s"
+msgstr "suljetaessa tiedostokuvaajaa %s: %s"
+
+#: dirsearch.cc:71
+#, c-format
+msgid "%s: can not read directory: %s"
+msgstr "%s: ei voi lukea hakemistoa: %s"
+
+#: dwarf_reader.cc:53 dwarf_reader.cc:84
+msgid "Unusually large LEB128 decoded, debug information may be corrupted"
+msgstr "Epätavallisen iso LEB128 dekoodattu, vianjäljitystiedot saattavat olla vääristyneitä"
+
+#: dynobj.cc:169
+#, c-format
+msgid "unexpected duplicate type %u section: %u, %u"
+msgstr "odottamaton kaksoiskappaletyyppi %u lohko: %u, %u"
+
+#: dynobj.cc:205
+#, c-format
+msgid "unexpected link in section %u header: %u != %u"
+msgstr "odottamaton linkitys lohkossa %u otsake: %u != %u"
+
+#: dynobj.cc:241
+#, c-format
+msgid "DYNAMIC section %u link out of range: %u"
+msgstr "DYNAAMINEN lohko %u linkki lukualueen ulkopuolella: %u"
+
+#: dynobj.cc:249
+#, c-format
+msgid "DYNAMIC section %u link %u is not a strtab"
+msgstr "DYNAAMINEN lohko %u linkki %u ei ole ”strtab”"
+
+#: dynobj.cc:278
+#, c-format
+msgid "DT_SONAME value out of range: %lld >= %lld"
+msgstr "DT_SONAME-arvo lukualueen ulkopuolella: %lld >= %lld"
+
+#: dynobj.cc:290
+#, c-format
+msgid "DT_NEEDED value out of range: %lld >= %lld"
+msgstr "DT_NEEDED-arvo lukualueen ulkopuolella: %lld >= %lld"
+
+#: dynobj.cc:303
+msgid "missing DT_NULL in dynamic segment"
+msgstr "puuttuva DT_NULL dynaamisessa segmentissä"
+
+#: dynobj.cc:349
+#, c-format
+msgid "invalid dynamic symbol table name index: %u"
+msgstr "virheellinen dynaaminen symbolitaulunimi-indeksi: %u"
+
+#: dynobj.cc:356
+#, c-format
+msgid "dynamic symbol table name section has wrong type: %u"
+msgstr "dynaamisella symbolitaulunimilohkolla on väärä tyyppi: %u"
+
+#: dynobj.cc:443 object.cc:376 object.cc:884
+#, c-format
+msgid "bad section name offset for section %u: %lu"
+msgstr "väärä lohkonimisiirrososoite lohkolle %u: %lu"
+
+#: dynobj.cc:472
+#, c-format
+msgid "duplicate definition for version %u"
+msgstr "kaksoiskappalemäärittely versiolle %u"
+
+#: dynobj.cc:501
+#, c-format
+msgid "unexpected verdef version %u"
+msgstr "odottamaton verdef-versio %u"
+
+#: dynobj.cc:517
+#, c-format
+msgid "verdef vd_cnt field too small: %u"
+msgstr "verdef vd_cnt-kenttä liian pieni: %u"
+
+#: dynobj.cc:525
+#, c-format
+msgid "verdef vd_aux field out of range: %u"
+msgstr "verdef vd_aux-kenttä lukualueen ulkopuolella: %u"
+
+#: dynobj.cc:536
+#, c-format
+msgid "verdaux vda_name field out of range: %u"
+msgstr "verdaux vda_name -kenttä lukualueen ulkopuolella: %u"
+
+#: dynobj.cc:546
+#, c-format
+msgid "verdef vd_next field out of range: %u"
+msgstr "verdef vd_next -kenttää lukualueen ulkopuolella: %u"
+
+#: dynobj.cc:580
+#, c-format
+msgid "unexpected verneed version %u"
+msgstr "odottamaton verneed-versio %u"
+
+#: dynobj.cc:589
+#, c-format
+msgid "verneed vn_aux field out of range: %u"
+msgstr "verneed vn_aux-kenttä lukualueen ulkopuolella: %u"
+
+#: dynobj.cc:603
+#, c-format
+msgid "vernaux vna_name field out of range: %u"
+msgstr "vernaux vna_name-kenttä lukualueen ulkopuolella: %u"
+
+#: dynobj.cc:614
+#, c-format
+msgid "verneed vna_next field out of range: %u"
+msgstr "verneed vna_next-kenttä lukualueen ulkopuolella: %u"
+
+#: dynobj.cc:625
+#, c-format
+msgid "verneed vn_next field out of range: %u"
+msgstr "verneed vn_next-kenttä lukualueen ulkopuolella: %u"
+
+#: dynobj.cc:673
+msgid "size of dynamic symbols is not multiple of symbol size"
+msgstr "dynaamisten symbolien koko ei ole symbolikoon monikerta"
+
+#: dynobj.cc:1425
+#, c-format
+msgid "symbol %s has undefined version %s"
+msgstr "symbolilla %s on määrittelemätön versio %s"
+
+#: ehframe.h:82
+msgid "** eh_frame_hdr"
+msgstr "** eh_frame_hdr"
+
+#: ehframe.h:353
+msgid "** eh_frame"
+msgstr "** eh_frame"
+
+#: errors.cc:106
+#, c-format
+msgid "%s: warning: "
+msgstr "%s: varoitus: "
+
+#: errors.cc:146
+#, c-format
+msgid "%s: %s: warning: "
+msgstr "%s: %s: varoitus: "
+
+#: errors.cc:172
+#, c-format
+msgid "%s: %s: undefined reference to '%s'\n"
+msgstr "%s: %s: määrittelemätön viite kohteeseen ’%s’\n"
+
+#: errors.cc:176
+#, c-format
+msgid "%s: %s: undefined reference to '%s', version '%s'\n"
+msgstr "%s: %s: määrittelemätön viite kohteeseen ’%s’, versio ’%s’\n"
+
+#: errors.cc:186
+#, c-format
+msgid "%s: "
+msgstr "%s: "
+
+#: expression.cc:172
+#, c-format
+msgid "undefined symbol '%s' referenced in expression"
+msgstr "määrittelemättömään symboliin ’%s’ viitattu lausekkeessa"
+
+#: expression.cc:209
+msgid "invalid reference to dot symbol outside of SECTIONS clause"
+msgstr "virheellinen viite dot-symboliin SECTIONS-lauseen ulkopuolella"
+
+#. Handle unary operators.  We use a preprocessor macro as a hack to
+#. capture the C operator.
+#: expression.cc:278
+msgid "unary "
+msgstr "unaari "
+
+#: expression.cc:278 expression.cc:400
+msgid " applied to section relative value"
+msgstr " sovellettu lohkosuhteelliseen arvoon"
+
+#. Handle binary operators.  We use a preprocessor macro as a hack to
+#. capture the C operator.  KEEP_LEFT means that if the left operand
+#. is section relative and the right operand is not, the result uses
+#. the same section as the left operand.  KEEP_RIGHT is the same with
+#. left and right swapped.  IS_DIV means that we need to give an error
+#. if the right operand is zero.  WARN means that we should warn if
+#. used on section relative values in a relocatable link.  We always
+#. warn if used on values in different sections in a relocatable link.
+#: expression.cc:400
+msgid "binary "
+msgstr "binaarinen "
+
+#: expression.cc:404
+msgid " by zero"
+msgstr " nollalla"
+
+#: expression.cc:575
+msgid "max applied to section relative value"
+msgstr "maksimisovellettu lohkosuhteelliseen arvoon"
+
+#: expression.cc:610
+msgid "min applied to section relative value"
+msgstr "minimisovellettu lohkosuhteelliseen arvoon"
+
+#: expression.cc:740
+msgid "aligning to section relative value"
+msgstr "tasaus lohkosuhteelliseen arvoon"
+
+#: expression.cc:895
+#, c-format
+msgid "unknown constant %s"
+msgstr "tuntematon vakio %s"
+
+#: expression.cc:1126
+msgid "SEGMENT_START not implemented"
+msgstr "SEGMENT_START on toteuttamatta"
+
+#: expression.cc:1135
+msgid "ORIGIN not implemented"
+msgstr "ORIGIN on toteuttamatta"
+
+#: expression.cc:1141
+msgid "LENGTH not implemented"
+msgstr "LENGTH on toteuttamatta"
+
+#: fileread.cc:55
+#, c-format
+msgid "munmap failed: %s"
+msgstr "munmap epäonnistui: %s"
+
+#: fileread.cc:119
+#, c-format
+msgid "%s: fstat failed: %s"
+msgstr "%s: fstat epäonnistui: %s"
+
+#: fileread.cc:159
+#, c-format
+msgid "could not reopen file %s"
+msgstr "ei voitu avata uudelleen tiedostoa %s"
+
+#: fileread.cc:292
+#, c-format
+msgid "%s: pread failed: %s"
+msgstr "%s: pread epäonnistui: %s"
+
+#: fileread.cc:298
+#, c-format
+msgid "%s: file too short: read only %lld of %lld bytes at %lld"
+msgstr "%s: tiedosto on liian lyhyt: lue vain %lld / %lld tavua osoitteesta %lld"
+
+#: fileread.cc:382
+#, c-format
+msgid "%s: mmap offset %lld size %lld failed: %s"
+msgstr "%s: mmap siirrososoite %lld koko %lld epäonnistui: %s"
+
+#: fileread.cc:528
+#, c-format
+msgid "%s: lseek failed: %s"
+msgstr "%s: lseek epäonnistui: %s"
+
+#: fileread.cc:534
+#, c-format
+msgid "%s: readv failed: %s"
+msgstr "%s: readv epäonnistui: %s"
+
+#: fileread.cc:537
+#, c-format
+msgid "%s: file too short: read only %zd of %zd bytes at %lld"
+msgstr "%s: tiedosto on liian lyhyt: lue vain %zd / %zd tavua osoitteesta %lld"
+
+#: fileread.cc:686
+#, c-format
+msgid "%s: total bytes mapped for read: %llu\n"
+msgstr "%s: yhteensä tavuja kartoitettu lukemista varten: %llu\n"
+
+#: fileread.cc:688
+#, c-format
+msgid "%s: maximum bytes mapped for read at one time: %llu\n"
+msgstr "%s: maksimitavuja kartoitettu lukemista varten kerrallaan: %llu\n"
+
+#: fileread.cc:783
+#, c-format
+msgid "cannot find -l%s"
+msgstr "ei voi löytää -l%s"
+
+#: fileread.cc:810
+#, c-format
+msgid "cannot find %s"
+msgstr "ei voi löytää %s"
+
+#: fileread.cc:833
+#, c-format
+msgid "cannot open %s: %s"
+msgstr "ei voi avata %s: %s"
+
+#: gold-threads.cc:103
+#, c-format
+msgid "pthead_mutextattr_init failed: %s"
+msgstr "pthead_mutextattr_init epäonnistui: %s"
+
+#: gold-threads.cc:107
+#, c-format
+msgid "pthread_mutextattr_settype failed: %s"
+msgstr "pthread_mutextattr_settype epäonnistui: %s"
+
+#: gold-threads.cc:112
+#, c-format
+msgid "pthread_mutex_init failed: %s"
+msgstr "pthread_mutex_init epäonnistui: %s"
+
+#: gold-threads.cc:116
+#, c-format
+msgid "pthread_mutexattr_destroy failed: %s"
+msgstr "pthread_mutexattr_destroy epäonnistui: %s"
+
+#: gold-threads.cc:123
+#, c-format
+msgid "pthread_mutex_destroy failed: %s"
+msgstr "pthread_mutex_destroy epäonnistui: %s"
+
+#: gold-threads.cc:131
+#, c-format
+msgid "pthread_mutex_lock failed: %s"
+msgstr "pthread_mutex_lock epäonnistui: %s"
+
+#: gold-threads.cc:139
+#, c-format
+msgid "pthread_mutex_unlock failed: %s"
+msgstr "pthread_mutex_unlock epäonnistui: %s"
+
+#: gold-threads.cc:220
+#, c-format
+msgid "pthread_cond_init failed: %s"
+msgstr "pthread_cond_init epäonnistui: %s"
+
+#: gold-threads.cc:227
+#, c-format
+msgid "pthread_cond_destroy failed: %s"
+msgstr "pthread_cond_destroy epäonnistui: %s"
+
+#: gold-threads.cc:236
+#, c-format
+msgid "pthread_cond_wait failed: %s"
+msgstr "pthread_cond_wait epäonnistui: %s"
+
+#: gold-threads.cc:244
+#, c-format
+msgid "pthread_cond_signal failed: %s"
+msgstr "pthread_cond_signal epäonnistui: %s"
+
+#: gold-threads.cc:252
+#, c-format
+msgid "pthread_cond_broadcast failed: %s"
+msgstr "pthread_cond_broadcast epäonnistui: %s"
+
+#: gold.cc:83
+#, c-format
+msgid "%s: internal error in %s, at %s:%d\n"
+msgstr "%s: sisäinen virhe funktiossa %s, tiedostossa %s:%d\n"
+
+#: gold.cc:130
+msgid "no input files"
+msgstr "ei syötetiedostoja"
+
+#. We print out just the first .so we see; there may be others.
+#: gold.cc:195
+#, c-format
+msgid "cannot mix -static with dynamic object %s"
+msgstr "ei voi sekoittaa valitsinta -static dynaamisen objektin %s kanssa"
+
+#: gold.cc:199
+#, c-format
+msgid "cannot mix -r with dynamic object %s"
+msgstr "ei voi sekoittaa valitsinta -r dynaamisen objektin %s kanssa"
+
+#: gold.cc:203
+#, c-format
+msgid "cannot use non-ELF output format with dynamic object %s"
+msgstr "ei voi käyttää ei-ELF-tulostemuotoa dynaamisen objektin %s kanssa"
+
+#. FIXME: This needs to specify the location somehow.
+#: i386.cc:193 i386.cc:1588 sparc.cc:211 sparc.cc:2322 x86_64.cc:208
+#: x86_64.cc:1656
+msgid "missing expected TLS relocation"
+msgstr "puuttuu odotettu TLS-sijoitus"
+
+#: i386.cc:503 sparc.cc:1066 x86_64.cc:533
+msgid "** PLT"
+msgstr "** PLT"
+
+#  Report an unsupported relocation against a local symbol.
+#: i386.cc:843 powerpc.cc:996 sparc.cc:1480 x86_64.cc:921 x86_64.cc:1230
+#, c-format
+msgid "%s: unsupported reloc %u against local symbol"
+msgstr "%s: tukematon sijoitus %u paikallista symbolia kohtaan"
+
+#: i386.cc:907 x86_64.cc:1033
+#, c-format
+msgid "section symbol %u has bad shndx %u"
+msgstr "lohkosymbolilla %u on virheellinen shndx-lohko %u"
+
+#  These are relocations which ...
+#: i386.cc:965 i386.cc:1297 powerpc.cc:1204 powerpc.cc:1413 sparc.cc:1852
+#: sparc.cc:2204 x86_64.cc:1110 x86_64.cc:1418
+#, c-format
+msgid "%s: unexpected reloc %u in object file"
+msgstr "%s: odottamaton sijoitus %u objektitiedostossa"
+
+#: i386.cc:999 i386.cc:1023 sparc.cc:1753 x86_64.cc:1141 x86_64.cc:1169
+#, c-format
+msgid "local symbol %u has bad shndx %u"
+msgstr "paikallisella symbolilla %u on virheellinen shndx-lohko %u"
+
+#  Report an unsupported relocation against a global symbol.
+#: i386.cc:1134 powerpc.cc:1223 sparc.cc:1871 x86_64.cc:1244 x86_64.cc:1536
+#, c-format
+msgid "%s: unsupported reloc %u against global symbol %s"
+msgstr "%s: tukematon sijoitus %u yleissymbolia %s kohtaan"
+
+#  Scan relocations for a section.
+#: i386.cc:1473
+#, c-format
+msgid "%s: unsupported RELA reloc section"
+msgstr "%s: tukematon RELA-sijoituslohko"
+
+#: i386.cc:1735 i386.cc:2429 powerpc.cc:1740 sparc.cc:2637 x86_64.cc:1859
+#: x86_64.cc:2435
+#, c-format
+msgid "unexpected reloc %u in object file"
+msgstr "tukematon sijoitus %u objektitiedostossa"
+
+#: i386.cc:1767 i386.cc:1846 i386.cc:1898 i386.cc:1929 i386.cc:1986
+#: powerpc.cc:1746 sparc.cc:2643 sparc.cc:2826 sparc.cc:2887 sparc.cc:2994
+#: x86_64.cc:1880 x86_64.cc:1963 x86_64.cc:2018 x86_64.cc:2043
+#, c-format
+msgid "unsupported reloc %u"
+msgstr "tukematon sijoitus %u"
+
+#: i386.cc:1906
+msgid "both SUN and GNU model TLS relocations"
+msgstr "sekä SUN- että GNU-mallisia TLS-sijoituksia"
+
+#: i386.cc:2443
+#, c-format
+msgid "unsupported reloc %u in object file"
+msgstr "tukematon sijoitus %u objektitiedostossa"
+
+#: layout.cc:1511
+#, c-format
+msgid "--build-id=uuid failed: could not open /dev/urandom: %s"
+msgstr "--build-id=uuid epäonnistui: ei voitu avata merkkierikoistiedostoa /dev/urandom: %s"
+
+#: layout.cc:1518
+#, c-format
+msgid "/dev/urandom: read failed: %s"
+msgstr "/dev/urandom: lukeminen epäonnistui: %s"
+
+#: layout.cc:1520
+#, c-format
+msgid "/dev/urandom: expected %zu bytes, got %zd bytes"
+msgstr "/dev/urandom: odotettiin %zu tavua, saatiin %zd tavua"
+
+#: layout.cc:1542
+#, c-format
+msgid "--build-id argument '%s' not a valid hex number"
+msgstr "--build-id argumentti ’%s’ ei ole oikea heksadesimaalinumero"
+
+#: layout.cc:1548
+#, c-format
+msgid "unrecognized --build-id argument '%s'"
+msgstr "tunnistamaton --build-id argumentti ’%s’"
+
+#: layout.cc:1866
+#, c-format
+msgid "load segment overlap [0x%llx -> 0x%llx] and [0x%llx -> 0x%llx]"
+msgstr "lataa segmenttilimitys [0x%llx -> 0x%llx] ja [0x%llx -> 0x%llx]"
+
+#: mapfile.cc:70
+#, c-format
+msgid "cannot open map file %s: %s"
+msgstr "ei voi avata map-tiedostoa %s: %s"
+
+#: mapfile.cc:84
+#, c-format
+msgid "cannot close map file: %s"
+msgstr "ei voi sulkea map-tiedostoa: %s"
+
+#: mapfile.cc:116
+#, c-format
+msgid ""
+"Archive member included because of file (symbol)\n"
+"\n"
+msgstr ""
+"Arkistojäsen sisällytetty tiedoston (symboli) vuoksi\n"
+"\n"
+
+#: mapfile.cc:159
+#, c-format
+msgid ""
+"\n"
+"Allocating common symbols\n"
+msgstr ""
+"\n"
+"Varataan yhteissymbolit\n"
+
+#: mapfile.cc:161
+#, c-format
+msgid ""
+"Common symbol       size              file\n"
+"\n"
+msgstr ""
+"Yhteissymboli       koko              tiedosto\n"
+"\n"
+
+#: mapfile.cc:195
+#, c-format
+msgid ""
+"\n"
+"Memory map\n"
+"\n"
+msgstr ""
+"\n"
+"Muistikartta\n"
+"\n"
+
+#: mapfile.cc:361
+#, c-format
+msgid ""
+"\n"
+"Discarded input sections\n"
+"\n"
+msgstr ""
+"\n"
+"Hylätyt syötelohkot\n"
+"\n"
+
+#: merge.cc:449
+#, c-format
+msgid "%s: %s merged constants size: %lu; input: %zu; output: %zu\n"
+msgstr "%s: %s yhdistetty vakioiden koko: %lu; syöte: %zu; tuloste: %zu\n"
+
+#: merge.cc:472
+msgid "mergeable string section length not multiple of character size"
+msgstr "yhdistettävän merkkijonolohkon pituus ei ole merkkikoon monikerta"
+
+#: merge.cc:488
+msgid "entry in mergeable string section not null terminated"
+msgstr "alkio yhdistettävässä merkkijonolohkossa ei ole null-päätteinen"
+
+#: merge.cc:605
+#, c-format
+msgid "%s: %s input: %zu\n"
+msgstr "%s: %s syöte: %zu\n"
+
+#: merge.h:289
+msgid "** merge constants"
+msgstr "** yhdistä vakiot"
+
+#: merge.h:411
+msgid "** merge strings"
+msgstr "** yhdistä merkkijonot"
+
+#: object.cc:73
+msgid "missing SHT_SYMTAB_SHNDX section"
+msgstr "puuttuva SHT_SYMTAB_SHNDX-lohko"
+
+#: object.cc:117
+#, c-format
+msgid "symbol %u out of range for SHT_SYMTAB_SHNDX section"
+msgstr "symboli %u lukualueen ulkopuolella lohkolle SHT_SYMTAB_SHNDX"
+
+#: object.cc:124
+#, c-format
+msgid "extended index for symbol %u out of range: %u"
+msgstr "laajennettu hakemisto symbolille %u lukualueen ulkopuolella: %u"
+
+#: object.cc:141
+#, c-format
+msgid "%s: unsupported ELF machine number %d"
+msgstr "%s: tukematon ELF-konenumero %d"
+
+#: object.cc:159
+#, c-format
+msgid "%s: %s"
+msgstr "%s: %s"
+
+#: object.cc:196
+#, c-format
+msgid "section name section has wrong type: %u"
+msgstr "lohkonimilohko on väärän tyyppinen: %u"
+
+#: object.cc:459
+#, c-format
+msgid "invalid symbol table name index: %u"
+msgstr "virheellinen symbolitaulunimi-indeksi: %u"
+
+#: object.cc:465
+#, c-format
+msgid "symbol table name section has wrong type: %u"
+msgstr "symbolitaulunimilohko on väärän tyyppinen: %u"
+
+#: object.cc:554
+#, c-format
+msgid "section group %u info %u out of range"
+msgstr "lohkoryhmä %u tiedot %u lukualueen ulkopuolella"
+
+#: object.cc:573
+#, c-format
+msgid "symbol %u name offset %u out of range"
+msgstr "symbolin %u nimisiirros %u lukualueen ulkopuolella"
+
+#: object.cc:591
+#, c-format
+msgid "symbol %u invalid section index %u"
+msgstr "symboli %u virheellinen lohkoindeksi %u"
+
+#: object.cc:644
+#, c-format
+msgid "section %u in section group %u out of range"
+msgstr "lohko %u lohkoryhmässä %u lukualueen ulkopuolella"
+
+#: object.cc:652
+#, c-format
+msgid "invalid section group %u refers to earlier section %u"
+msgstr "virheellinen lohkoryhmä %u viittaa aikaisempaan lohkoon %u"
+
+#: object.cc:827 reloc.cc:215 reloc.cc:723
+#, c-format
+msgid "relocation section %u has bad info %u"
+msgstr "uudelleensijoituslohkolla %u on väärät tiedot %u"
+
+#: object.cc:1080
+msgid "size of symbols is not multiple of symbol size"
+msgstr "symboleiden koko ei ole symbolikoon monikerta"
+
+#: object.cc:1187
+#, c-format
+msgid "local symbol %u section name out of range: %u >= %u"
+msgstr "paikallisen symbolin %u lohkonimi lukualueen ulkopuolella: %u >= %u"
+
+#: object.cc:1245
+#, c-format
+msgid "unknown section index %u for local symbol %u"
+msgstr "tuntematon lohkoindeksi %u paikalliselle symbolille %u"
+
+#: object.cc:1254
+#, c-format
+msgid "local symbol %u section index %u out of range"
+msgstr "paikallisen symbolin %u lohkoindeksi %u lukualueen ulkopuolella"
+
+#: object.cc:1619
+msgid "incompatible target"
+msgstr "yhteensopimaton kohde"
+
+#: object.cc:1816
+#, c-format
+msgid "%s: unsupported ELF file type %d"
+msgstr "%s: tukematon ELF-tiedostotyyppi %d"
+
+#: object.cc:1835 object.cc:1881 object.cc:1915
+#, c-format
+msgid "%s: ELF file too short"
+msgstr "%s: ELF-tiedosto on liian lyhyt"
+
+#: object.cc:1843
+#, c-format
+msgid "%s: invalid ELF version 0"
+msgstr "%s: virheellinen ELF-versio 0"
+
+#: object.cc:1845
+#, c-format
+msgid "%s: unsupported ELF version %d"
+msgstr "%s: tukematon ELF-versio %d"
+
+#: object.cc:1852
+#, c-format
+msgid "%s: invalid ELF class 0"
+msgstr "%s: virheellinen ELF-luokka 0"
+
+#: object.cc:1858
+#, c-format
+msgid "%s: unsupported ELF class %d"
+msgstr "%s: tukematon ELF-luokka %d"
+
+#: object.cc:1865
+#, c-format
+msgid "%s: invalid ELF data encoding"
+msgstr "%s: virheellinen ELF-datakoodaus"
+
+#: object.cc:1871
+#, c-format
+msgid "%s: unsupported ELF data encoding %d"
+msgstr "%s: tukematon ELF-datakoodaus %d"
+
+#: object.cc:1891
+#, c-format
+msgid "%s: not configured to support 32-bit big-endian object"
+msgstr "%s: ei ole asetettu tukemaan 32-bittistä big-endian-objektia"
+
+#: object.cc:1904
+#, c-format
+msgid "%s: not configured to support 32-bit little-endian object"
+msgstr "%s: ei ole asetettu tukemaan 32-bittistä little-endian-objektia"
+
+#: object.cc:1925
+#, c-format
+msgid "%s: not configured to support 64-bit big-endian object"
+msgstr "%s: ei ole asetettu tukemaan 64-bittistä big-endian-objektia"
+
+#: object.cc:1938
+#, c-format
+msgid "%s: not configured to support 64-bit little-endian object"
+msgstr "%s: ei ole asetettu tukemaan 64-bittistä little-endian-objektia"
+
+#: options.cc:142
+#, c-format
+msgid ""
+"Usage: %s [options] file...\n"
+"Options:\n"
+msgstr ""
+"Käyttö: %s [valitsimet] tiedosto...\n"
+"Valitsimet:\n"
+
+#. config.guess and libtool.m4 look in ld --help output for the
+#. string "supported targets".
+#: options.cc:150
+#, c-format
+msgid "%s: supported targets:"
+msgstr "%s: tuetut kohteet:"
+
+#: options.cc:162
+#, c-format
+msgid "Report bugs to %s\n"
+msgstr ""
+"Ilmoita virheistä (englanniksi) osoitteeseen %s\n"
+"Ilmoita suomennosvirheistä osoitteeseen <translation-team-fi@lists.sourceforge.net>\n"
+
+#: options.cc:179 options.cc:189
+#, c-format
+msgid "%s: invalid option value (expected an integer): %s"
+msgstr "%s: virheellinen valitsinarvo (odotettiin kokonaislukua): %s"
+
+#: options.cc:199
+#, c-format
+msgid "%s: invalid option value (expected a floating point number): %s"
+msgstr "%s: virheellinen valitsinarvo (odotettiin liukulukunumeroa): %s"
+
+#: options.cc:208
+#, c-format
+msgid "%s: must take a non-empty argument"
+msgstr "%s: täytyy olla ei-tyhjä argumentti"
+
+#: options.cc:249
+#, c-format
+msgid "%s: must take one of the following arguments: %s"
+msgstr "%s: täytyy olla yksi seuraavista argumenteista: %s"
+
+#: options.cc:275
+#, c-format
+msgid "  Supported targets:\n"
+msgstr "  Tuetut kohteet:\n"
+
+#: options.cc:329
+#, c-format
+msgid "unable to parse script file %s"
+msgstr "ei kyetä jäsentämään skriptitiedostoa %s"
+
+#: options.cc:337
+#, c-format
+msgid "unable to parse version script file %s"
+msgstr "ei kyetä jäsentämään versioskriptitiedostoa %s"
+
+#: options.cc:363
+#, c-format
+msgid "%s: use the --help option for usage information\n"
+msgstr "%s: käytä valitsinta --help käyttötietojen saamiseksi\n"
+
+#: options.cc:372
+#, c-format
+msgid "%s: %s: %s\n"
+msgstr "%s: %s: %s\n"
+
+#: options.cc:393
+#, c-format
+msgid "format '%s' not supported; treating as elf (supported formats: elf, binary)"
+msgstr "muotoa ’%s’ ei tueta; käsitellään elf-objektina (tuetut muodot: elf, binääri)"
+
+#: options.cc:499
+msgid "unexpected argument"
+msgstr "odottamaton argumentti"
+
+#: options.cc:512 options.cc:573
+msgid "missing argument"
+msgstr "puuttuva argumentti"
+
+#: options.cc:584
+msgid "unknown -z option"
+msgstr "tuntematon valitsin -z"
+
+#: options.cc:727
+#, c-format
+msgid "ignoring --threads: %s was compiled without thread support"
+msgstr "ei oteta huomioon valitsinta --threads: %s käännettiin ilman säietukea"
+
+#: options.cc:734
+#, c-format
+msgid "ignoring --thread-count: %s was compiled without thread support"
+msgstr "ohitetaan --thread-count: %s käännettiin ilman säietukea"
+
+#: options.cc:776
+msgid "-shared and -r are incompatible"
+msgstr "valitsimet -shared ja -r ovat yhteensopimattomat"
+
+#: options.cc:780
+msgid "binary output format not compatible with -shared or -r"
+msgstr "binääritulostemuoto ei ole yhteensopiva valitsimien -shared tai -r kanssa"
+
+#: options.cc:785
+#, c-format
+msgid "--hash-bucket-empty-fraction value %g out of range [0.0, 1.0)"
+msgstr "--hash-bucket-empty-fraction arvo %g lukualueen ulkopuolella [0.0, 1.0)"
+
+#: options.cc:852
+msgid "May not nest groups"
+msgstr "Ei saa sisäkkäistää ryhmiä"
+
+#: options.cc:864
+msgid "Group end without group start"
+msgstr "Ryhmäloppu ilman ryhmäalkua"
+
+#. I guess it's neither a long option nor a short option.
+#: options.cc:922
+msgid "unknown option"
+msgstr "tuntematon valitsin"
+
+#: options.cc:948
+#, c-format
+msgid "%s: missing group end\n"
+msgstr "%s: puuttuva ryhmäloppu\n"
+
+#: options.h:536
+msgid "Report usage information"
+msgstr "Ilmoita käyttötiedot"
+
+#: options.h:538
+msgid "Report version information"
+msgstr "Ilmoita versiotiedot"
+
+#: options.h:540
+msgid "Report version and target information"
+msgstr "Ilmoita versio- ja kohdetiedot"
+
+#: options.h:549
+msgid "Allow unresolved references in shared libraries"
+msgstr "Salli ratkaisemattomat viitteet jaettuihin kirjastoihin"
+
+#: options.h:550
+msgid "Do not allow unresolved references in shared libraries"
+msgstr "Älä salli ratkaisemattomia viitteitä jaettuihin kirjastoihin"
+
+#: options.h:553
+msgid "Only set DT_NEEDED for dynamic libs if used"
+msgstr "Aseta DT_NEEDED dynaamisille kirjastoille vain jos käytetty"
+
+#: options.h:554
+msgid "Always DT_NEEDED for dynamic libs"
+msgstr "Aina DT_NEEDED dynaamisille kirjastoille"
+
+#: options.h:561
+msgid "Set input format"
+msgstr "Aseta syötemuoto"
+
+#: options.h:564
+msgid "-l searches for shared libraries"
+msgstr "-l etsii jaettuja kirjastoja"
+
+#: options.h:566
+msgid "-l does not search for shared libraries"
+msgstr "-l ei etsi jaettuja kirjastoja"
+
+#: options.h:570
+msgid "Bind defined symbols locally"
+msgstr "Sido määritellyt symbolit paikallisesti"
+
+#: options.h:573
+msgid "Bind defined function symbols locally"
+msgstr "Sido määritellyt funktiosymbolit paikallisesti"
+
+#: options.h:576
+msgid "Generate build ID note"
+msgstr "Tuota rakentamistunnisteilmoitus"
+
+#: options.h:577 options.h:612
+msgid "[=STYLE]"
+msgstr "[=TYYLI]"
+
+#: options.h:580
+msgid "Check segment addresses for overlaps (default)"
+msgstr "Tarkista segmenttiosoitteet päällekkäisyyksien varalta (oletus)"
+
+#: options.h:581
+msgid "Do not check segment addresses for overlaps"
+msgstr "Älä tarkista segmenttiosoitteiden päällekkäisyyksiä"
+
+#: options.h:585 options.h:590
+msgid "Compress .debug_* sections in the output file"
+msgstr "Tiivistä .debug_* -lohkot tulostetiedostossa"
+
+#: options.h:591
+msgid "[none]"
+msgstr "[ei mitään]"
+
+#: options.h:596
+msgid "Define common symbols"
+msgstr "Anna yhteissymbolit"
+
+#: options.h:597
+msgid "Do not define common symbols"
+msgstr "Älä anna yhteissymboleja"
+
+#: options.h:599 options.h:601
+msgid "Alias for -d"
+msgstr "Alias valitsimelle -d"
+
+#: options.h:604
+msgid "Turn on debugging"
+msgstr "Käännä päälle vianjäljitys"
+
+#: options.h:605
+msgid "[all,files,script,task][,...]"
+msgstr "[kaikki,tiedostot,skripti,tehtävä][,...]"
+
+#: options.h:608
+msgid "Define a symbol"
+msgstr "Määrittele symboli"
+
+#: options.h:608
+msgid "SYMBOL=EXPRESSION"
+msgstr "SYMBOLI=LAUSEKE"
+
+#: options.h:611
+msgid "Demangle C++ symbols in log messages"
+msgstr "Elvytä C++ -symbolit lokiviesteissä"
+
+#: options.h:615
+msgid "Do not demangle C++ symbols in log messages"
+msgstr "Älä elvytä C++ -symboleja lokiviesteissä"
+
+#: options.h:619
+msgid "Try to detect violations of the One Definition Rule"
+msgstr "Yritä havaita yhden määrittelysäännön rikkomukset"
+
+#: options.h:623
+msgid "Set program start address"
+msgstr "Aseta ohjelman aloitusosoite"
+
+#: options.h:623 options.h:766 options.h:768 options.h:770
+msgid "ADDRESS"
+msgstr "OSOITE"
+
+#: options.h:626
+msgid "Export all dynamic symbols"
+msgstr "Vie kaikki dynaamiset symbolit"
+
+#: options.h:629
+msgid "Create exception frame header"
+msgstr "Luo poikkeuskehysotsake"
+
+#: options.h:632
+msgid "Treat warnings as errors"
+msgstr "Käsittele varoituksia virheinä"
+
+#: options.h:633
+msgid "Do not treat warnings as errors"
+msgstr "Älä käsittele varoituksia virheinä"
+
+#: options.h:636
+msgid "Set shared library name"
+msgstr "Aseta jaettu kirjastonimi"
+
+#: options.h:636 options.h:696
+msgid "FILENAME"
+msgstr "TIEDOSTONIMI"
+
+#: options.h:639
+msgid "Min fraction of empty buckets in dynamic hash"
+msgstr "Tyhjien lohkojen pienin murto-osa dynaamisessa hash-funktiossa"
+
+#: options.h:640
+msgid "FRACTION"
+msgstr "FRACTION"
+
+#: options.h:643
+msgid "Dynamic hash style"
+msgstr "Dynaaminen hash-tyyli"
+
+#: options.h:643
+msgid "[sysv,gnu,both]"
+msgstr "[sysv,gnu,both]"
+
+#: options.h:647
+msgid "Set dynamic linker path"
+msgstr "Aseta dynaaminen linkittäjäpolku"
+
+#: options.h:647
+msgid "PROGRAM"
+msgstr "OHJELMA"
+
+#: options.h:650
+msgid "Read only symbol values from FILE"
+msgstr "Lue vain symboliarvot TIEDOSTOsta"
+
+#: options.h:650 options.h:684 options.h:751 options.h:779
+msgid "FILE"
+msgstr "TIEDOSTO"
+
+#: options.h:653
+msgid "Search for library LIBNAME"
+msgstr "Haku kirjastolle LIBNAME"
+
+#: options.h:653
+msgid "LIBNAME"
+msgstr "LIBNAME"
+
+#: options.h:656
+msgid "Add directory to search path"
+msgstr "Lisää hakemisto hakupolkuun"
+
+#: options.h:656 options.h:714 options.h:717 options.h:721 options.h:745
+msgid "DIR"
+msgstr "DIR"
+
+#: options.h:659
+msgid "Ignored for compatibility"
+msgstr "Ei oteta huomioon yhteensopivuussyistä"
+
+#: options.h:659
+msgid "EMULATION"
+msgstr "EMULOINTI"
+
+#: options.h:662
+msgid "Write map file on standard output"
+msgstr "Kirjoita karttatiedosto vakiotulosteeseen"
+
+#: options.h:663
+msgid "Write map file"
+msgstr "Kirjoita map-tiedosto"
+
+#: options.h:664
+msgid "MAPFILENAME"
+msgstr "MAPFILENAME"
+
+#: options.h:667
+msgid "Do not page align data"
+msgstr "Älä tasaa dataa sivun kokoisiin osiin"
+
+#: options.h:669
+msgid "Do not page align data, do not make text readonly"
+msgstr "Älä tasaa dataa sivun kokoisiin osiin, älä kirjoitussuojaa tekstiä"
+
+#: options.h:670
+msgid "Page align data, make text readonly"
+msgstr "Sivutasausdataa, tee tekstistä kirjoitussuojattu"
+
+#: options.h:673
+msgid "Enable use of DT_RUNPATH and DT_FLAGS"
+msgstr "Ota käyttöön DT_RUNPATH-hakemistot ja DT_FLAGS-liput"
+
+#: options.h:674
+msgid "Disable use of DT_RUNPATH and DT_FLAGS"
+msgstr "Ota pois käytöstä DT_RUNPATH-hakemistot ja DT_FLAGS-liput"
+
+#: options.h:677
+msgid "Create an output file even if errors occur"
+msgstr "Luo tulostetiedosto myös silloin kun tapahtuu virhe"
+
+#: options.h:680 options.h:808
+msgid "Report undefined symbols (even with --shared)"
+msgstr "Ilmoita määrittelemättömistä symboleista (jopa valitsimella --shared)"
+
+#: options.h:684
+msgid "Set output file name"
+msgstr "Aseta tulostetiedostonimi"
+
+#: options.h:687
+msgid "Optimize output file size"
+msgstr "Optimoi tulostetiedostokoko"
+
+#: options.h:687
+msgid "LEVEL"
+msgstr "TASO"
+
+#: options.h:690
+msgid "Set output format"
+msgstr "Aseta tulostusmuoto"
+
+#: options.h:690
+msgid "[binary]"
+msgstr "[binaari]"
+
+#: options.h:693
+msgid "Preread archive symbols when multi-threaded"
+msgstr "Ennakkoluetut arkistosymbolit monisäikeitä käytettäessä"
+
+#: options.h:695
+msgid "Print symbols defined and used for each input"
+msgstr "Tulosta jokaiselle syötteelle määritellyt ja käytetyt symbolit"
+
+#: options.h:699
+msgid "Ignored for SVR4 compatibility"
+msgstr "Älä ota huomioon SVR4-yhteensopivuutta"
+
+#: options.h:702
+msgid "Generate relocations in output"
+msgstr "Luo sijoitukset tulosteeseen"
+
+#: options.h:705
+msgid "Generate relocatable output"
+msgstr "Tuota uudelleensijoitettava tuloste"
+
+#: options.h:708
+msgid "Relax branches on certain targets"
+msgstr "Relax-projektin haarat tietyissä kohteissa"
+
+#: options.h:714 options.h:717
+msgid "Add DIR to runtime search path"
+msgstr "Lisää DIR ajoaikaiseen hakupolkuun"
+
+#: options.h:720
+msgid "Add DIR to link time shared library search path"
+msgstr "Lisää DIR linkitysaikana jaettuun kirjastohakupolkuun"
+
+#: options.h:724
+msgid "Strip all symbols"
+msgstr "Riisu kaikki symbolit"
+
+#: options.h:726
+msgid "Strip debugging information"
+msgstr "Riisu vianjäljitystiedot"
+
+#: options.h:728
+msgid "Emit only debug line number information"
+msgstr "Lähetä vain vianjäljitysrivinumerotiedot"
+
+#: options.h:730
+msgid "Strip debug symbols that are unused by gdb (at least versions <= 6.7)"
+msgstr "Riisu vianjäljityssymbolit, joita gdb ei käytä (vähintään versioissa <= 6.7)"
+
+#: options.h:734
+msgid "Generate shared library"
+msgstr "Tuota jaettu kirjasto"
+
+#: options.h:739
+msgid "Do not link against shared libraries"
+msgstr "Älä linkitä jaettuihin kirjastoihin"
+
+#: options.h:742
+msgid "Print resource usage statistics"
+msgstr "Tulosta resurssikäyttötilastot"
+
+#: options.h:745
+msgid "Set target system root directory"
+msgstr "Aseta kohdejärjestelmän juurihakemisto"
+
+#: options.h:748
+msgid "Print the name of each input file"
+msgstr "Tulosta jokaisen syötetiedoston nimi"
+
+#: options.h:751
+msgid "Read linker script"
+msgstr "Lue linkkeriskripti"
+
+#: options.h:754
+msgid "Run the linker multi-threaded"
+msgstr "Suorita linkkeri monisäikeisesti"
+
+#: options.h:755
+msgid "Do not run the linker multi-threaded"
+msgstr "Älä suorita linkkeriä monisäikeisesti"
+
+#: options.h:757
+msgid "Number of threads to use"
+msgstr "Käytettävien säikeiden lukumäärä"
+
+#: options.h:757 options.h:759 options.h:761 options.h:763
+msgid "COUNT"
+msgstr "LASKURI"
+
+#: options.h:759
+msgid "Number of threads to use in initial pass"
+msgstr "Alustavassa ajossa käytettyjen säikeiden lukumäärä"
+
+#: options.h:761
+msgid "Number of threads to use in middle pass"
+msgstr "Keskimmäisessä ajossa käytettyjen säikeiden lukumäärä"
+
+#: options.h:763
+msgid "Number of threads to use in final pass"
+msgstr "Lopullisessa ajossa käytettyjen säikeiden lukumäärä"
+
+#: options.h:766
+msgid "Set the address of the bss segment"
+msgstr "Aseta bss-lohkon osoite"
+
+#: options.h:768
+msgid "Set the address of the data segment"
+msgstr "Aseta data-segmentin osoite"
+
+#: options.h:770
+msgid "Set the address of the text segment"
+msgstr "Aseta text-segmentin osoite"
+
+#: options.h:773
+msgid "Create undefined reference to SYMBOL"
+msgstr "Luo määrittelemätön viite SYMBOLIin"
+
+#: options.h:773 options.h:786 options.h:789
+msgid "SYMBOL"
+msgstr "SYMBOLI"
+
+#: options.h:776
+msgid "Synonym for --debug=files"
+msgstr "Synonyymi valitsimelle --debug=tiedostot"
+
+#: options.h:779
+msgid "Read version script"
+msgstr "Lue versioskripti"
+
+#: options.h:782
+msgid "Include all archive contents"
+msgstr "Sisällytä kaikki arkistosisällöt"
+
+#: options.h:783
+msgid "Include only needed archive contents"
+msgstr "Sisällytä vain tarvitut arkistosisällöt"
+
+#: options.h:786
+msgid "Use wrapper functions for SYMBOL"
+msgstr "Käytä käärinfunktioita symbolille SYMBOLI"
+
+#: options.h:789
+msgid "Trace references to symbol"
+msgstr "Jäljitä viitteet symboliin"
+
+#: options.h:792
+msgid "Default search path for Solaris compatibility"
+msgstr "Oletushakupolku Solaris-yhteensopivuutta varten"
+
+#: options.h:793
+msgid "PATH"
+msgstr "POLKU"
+
+#: options.h:796
+msgid "Start a library search group"
+msgstr "Aloita kirjastonetsimisryhmä"
+
+#: options.h:798
+msgid "End a library search group"
+msgstr "Lopeta kirjastonetsimisryhmä"
+
+#: options.h:803
+msgid "Sort dynamic relocs"
+msgstr "Lajittele dynaamiset relocs-tietueet"
+
+#: options.h:804
+msgid "Do not sort dynamic relocs"
+msgstr "Älä lajittele dynaamisia relocs-tietueita"
+
+#: options.h:806
+msgid "Set common page size to SIZE"
+msgstr "Aseta yhteissivun kooksi KOKO"
+
+#: options.h:806 options.h:813
+msgid "SIZE"
+msgstr "KOKO"
+
+#: options.h:811
+msgid "Mark output as requiring executable stack"
+msgstr "Merkitse tuloste vaadittuna suoritettavassa pinossa"
+
+#: options.h:813
+msgid "Set maximum page size to SIZE"
+msgstr "Aseta suurimmaksi sivukooksi KOKO"
+
+#: options.h:815
+msgid "Mark output as not requiring executable stack"
+msgstr "Merkitse, että tuloste ei vaadi suoritettavaa pinoa"
+
+#  DSO on ilmeisesti Dynamic shared object
+#: options.h:817
+msgid "Mark DSO to be initialized first at runtime"
+msgstr "Merkitse dynaamisesti jaetut objektit alustettavaksi ensimmäiseksi ajoaikana"
+
+#: options.h:820
+msgid "Mark object to interpose all DSOs but executable"
+msgstr "Merkitse objekti kaikkien dynaamisesti jaettujen objektien väliin paitsi suoritettavien"
+
+#: options.h:823
+msgid "Mark object requiring immediate process"
+msgstr "Merkitse, että objekti vaatii välitöntä käsittelyä"
+
+#: options.h:826
+msgid "Mark object not to use default search paths"
+msgstr "Merkitse, että objekti ei käytä oletushakupolkuja"
+
+#: options.h:829
+msgid "Mark DSO non-deletable at runtime"
+msgstr "Merkitse dynaamisesti jaettu objekti ei-poistettavaksi ajoaikana"
+
+#: options.h:832
+msgid "Mark DSO not available to dlopen"
+msgstr "Merkitse, että dynaamisesti jaettu objekti ei ole saatavilla funktiolle dlopen"
+
+#: options.h:835
+msgid "Mark DSO not available to dldump"
+msgstr "Merkitse, että dynaamisesti jaettu objekti ei saatavilla funktiolle dldump"
+
+#: options.h:838
+msgid "Where possible mark variables read-only after relocation"
+msgstr "Missä mahdollista, merkitse muuttuja kirjoitussuojatuiksi uudelleensijoituksen jälkeen"
+
+#: options.h:839
+msgid "Don't mark variables read-only after relocation"
+msgstr "Älä merkitse muuttujia kirjoitussuojatuiksi siirroksen jälkeen"
+
+#: output.cc:1098
+msgid "section group retained but group element discarded"
+msgstr "lohkoryhmä palautettu, mutta ryhmän elementti hylätty"
+
+#: output.cc:1800
+#, c-format
+msgid "invalid alignment %lu for section \"%s\""
+msgstr "virheellinen tasaus %lu lohkolle ”%s”"
+
+#: output.cc:3159
+#, c-format
+msgid "nobits section %s may not precede progbits section %s in same segment"
+msgstr "nobits-lohko %s ei voi edeltää progbits-lohkoa %s samassa segmentissä"
+
+#: output.cc:3329
+#, c-format
+msgid "%s: open: %s"
+msgstr "%s: avaa tiedosto: %s"
+
+#: output.cc:3350
+#, c-format
+msgid "%s: mremap: %s"
+msgstr "%s: mremap epäonnistui: %s"
+
+#  Tätä ei löydy enää lähdekoodista
+#: output.cc:3387
+#, c-format
+msgid "%s: lseek: %s"
+msgstr "%s: lseek epäonnistui: %s"
+
+#: output.cc:3390 output.cc:3427
+#, c-format
+msgid "%s: write: %s"
+msgstr "%s: write epäonnistui: %s"
+
+#: output.cc:3398
+#, c-format
+msgid "%s: mmap: %s"
+msgstr "%s: mmap epäonnistui: %s"
+
+#: output.cc:3408
+#, c-format
+msgid "%s: munmap: %s"
+msgstr "%s: munmap epäonnistui: %s"
+
+#: output.cc:3425
+#, c-format
+msgid "%s: write: unexpected 0 return-value"
+msgstr "%s: write: odottamaton 0-paluuarvo"
+
+#: output.cc:3439
+#, c-format
+msgid "%s: close: %s"
+msgstr "%s: close epäonnistui: %s"
+
+#: output.h:415
+msgid "** section headers"
+msgstr "** lohko-otsakkeet"
+
+#: output.h:451
+msgid "** segment headers"
+msgstr "** segmenttiotsakkeet"
+
+#: output.h:490
+msgid "** file header"
+msgstr "** tiedosto-otsake"
+
+#: output.h:696
+msgid "** fill"
+msgstr "** täyte"
+
+#: output.h:850
+msgid "** string table"
+msgstr "** merkkijonotaulu"
+
+#: output.h:1161
+msgid "** dynamic relocs"
+msgstr "** dynaamiset sijoitukset"
+
+#: output.h:1162 output.h:1498
+msgid "** relocs"
+msgstr "** sijoitukset"
+
+#: output.h:1523
+msgid "** group"
+msgstr "** ryhmä"
+
+#: output.h:1630
+msgid "** GOT"
+msgstr "** GOT"
+
+#: output.h:1772
+msgid "** dynamic"
+msgstr "** dynaaminen"
+
+#: output.h:1890
+msgid "** symtab xindex"
+msgstr "** symtab xindex"
+
+#: parameters.cc:87
+#, c-format
+msgid "unrecognized output format %s"
+msgstr "tunnistamaton tulostemuoto %s"
+
+#: powerpc.cc:1086 sparc.cc:1569 x86_64.cc:957
+msgid "requires unsupported dynamic reloc; recompile with -fPIC"
+msgstr "vaatii tukematonta dynaamista reloc-tietuetta, käännä uudelleen valitsimella -fPIC"
+
+#: powerpc.cc:1447 sparc.cc:2237 x86_64.cc:1561
+#, c-format
+msgid "%s: unsupported REL reloc section"
+msgstr "%s: tukematon REL-sijoituslohko"
+
+#: readsyms.cc:150
+#, c-format
+msgid "%s: file is empty"
+msgstr "%s: tiedosto on tyhjä"
+
+#. Here we have to handle any other input file types we need.
+#: readsyms.cc:471
+#, c-format
+msgid "%s: not an object or archive"
+msgstr "%s: ei ole objekti tai arkisto"
+
+#: reduced_debug_output.cc:240
+msgid "Debug abbreviations extend beyond .debug_abbrev section; failed to reduce debug abbreviations"
+msgstr "Vianjäljityslyhennykset laajenevat .debug_abbrev-lohkon ylitse; vianjäljityslyhenteiden vähentäminen epäonnistui"
+
+#: reduced_debug_output.cc:326
+msgid "Extremely large compile unit in debug info; failed to reduce debug info"
+msgstr "Äärimmäisen laaja käännösyksikkö vianjäljitystiedoissa; vianjäljitystietojen vähentäminen epäonnistui"
+
+#: reduced_debug_output.cc:334
+msgid "Debug info extends beyond .debug_info section;failed to reduce debug info"
+msgstr "Vianjäljitystiedot laajentuvat .debug_info-lohkon ylitse; vianjäljitystietojen vähentäminen epäonnistui"
+
+#: reduced_debug_output.cc:354 reduced_debug_output.cc:396
+msgid "Invalid DIE in debug info; failed to reduce debug info"
+msgstr "Virheellinen DIE vianjäljitystiedoissa; vianjäljitystietojen vähentäminen epäonnistui"
+
+#: reduced_debug_output.cc:377
+msgid "Debug info extends beyond .debug_info section; failed to reduce debug info"
+msgstr "Vianjäljitystiedot laajenevat .debug_info-lohkon ylitse; vianjäljitystietojen vähentäminen epäonnistui"
+
+#: reloc.cc:239 reloc.cc:743
+#, c-format
+msgid "relocation section %u uses unexpected symbol table %u"
+msgstr "uudelleensijoituslohko %u käyttää odottomatonta symbolitaulua %u"
+
+#: reloc.cc:254 reloc.cc:761
+#, c-format
+msgid "unexpected entsize for reloc section %u: %lu != %u"
+msgstr "odottamaton entsize reloc-lohkolle %u: %lu != %u"
+
+#: reloc.cc:263 reloc.cc:770
+#, c-format
+msgid "reloc section %u size %lu uneven"
+msgstr "reloc-lohko %u koko %lu pariton"
+
+#: reloc.cc:992
+#, c-format
+msgid "reloc section size %zu is not a multiple of reloc size %d\n"
+msgstr "reloc-lohkokoko %zu ei ole reloc-koon %d monikerta\n"
+
+#. We should only see externally visible symbols in the symbol
+#. table.
+#: resolve.cc:170
+msgid "invalid STB_LOCAL symbol in external symbols"
+msgstr "virheellinen STB_LOCAL-symboli ulkoisissa symboleissa"
+
+#. Any target which wants to handle STB_LOOS, etc., needs to
+#. define a resolve method.
+#: resolve.cc:176
+msgid "unsupported symbol binding"
+msgstr "tukematon symbolisidos"
+
+#. FIXME: Do a better job of reporting locations.
+#: resolve.cc:367
+#, c-format
+msgid "%s: multiple definition of %s"
+msgstr "%s: useita %s-määrittelyjä"
+
+#: resolve.cc:368 resolve.cc:373
+msgid "command line"
+msgstr "komentorivi"
+
+#: resolve.cc:370
+#, c-format
+msgid "%s: previous definition here"
+msgstr "%s: edellinen määrittely tässä"
+
+#: script-sections.cc:432
+msgid "dot may not move backward"
+msgstr "piste ei voi siirtyä taaksepäin"
+
+#: script-sections.cc:498
+msgid "** expression"
+msgstr "** lauseke"
+
+#: script-sections.cc:684
+msgid "fill value is not absolute"
+msgstr "täytearvo ei ole absoluuttinen"
+
+#: script-sections.cc:1693
+#, c-format
+msgid "alignment of section %s is not absolute"
+msgstr "lohkon %s tasaus ei ole absoluuttinen"
+
+#: script-sections.cc:1737
+#, c-format
+msgid "subalign of section %s is not absolute"
+msgstr "lohkon %s alitasaus ei ole absoluuttinen"
+
+#: script-sections.cc:1752
+#, c-format
+msgid "fill of section %s is not absolute"
+msgstr "lohkon %s täyte ei ole absoluuttinen"
+
+#: script-sections.cc:1828
+msgid "SPECIAL constraints are not implemented"
+msgstr "SPECIAL-rajoitteita ei ole toteutettu"
+
+#: script-sections.cc:1870
+msgid "mismatched definition for constrained sections"
+msgstr "täsmäämätön määrittely rajoitetuille lohkoille"
+
+#  DATA_SEGMENT_ALIGN on sisäänrakennettu funktio linkittäjän skriptikielessä.
+#: script-sections.cc:2395
+msgid "DATA_SEGMENT_ALIGN may only appear once in a linker script"
+msgstr "DATA_SEGMENT_ALIGN-funktio voi esiintyä vain kerran linkkeriskriptissä"
+
+#: script-sections.cc:2406
+msgid "DATA_SEGMENT_RELRO_END may only appear once in a linker script"
+msgstr "DATA_SEGMENT_RELRO_END-funktio voi esiintyä vain kerran linkkeriskriptissä"
+
+#: script-sections.cc:2411
+msgid "DATA_SEGMENT_RELRO_END must follow DATA_SEGMENT_ALIGN"
+msgstr "DATA_SEGMENT_RELRO_END-funktion on seurattava DATA_SEGMENT_ALIGN-funktiota"
+
+#: script-sections.cc:2570
+msgid "no matching section constraint"
+msgstr "ei täsmäävää lohkorajoitusta"
+
+#: script-sections.cc:2890
+msgid "TLS sections are not adjacent"
+msgstr "TLS-lohkot eivät ole vierekkäisiä"
+
+#: script-sections.cc:3016
+msgid "allocated section not in any segment"
+msgstr "varattu lohko ei ole missään segmentissä"
+
+#: script-sections.cc:3048
+#, c-format
+msgid "no segment %s"
+msgstr "ei segmenttiä %s"
+
+#: script-sections.cc:3058
+msgid "section in two PT_LOAD segments"
+msgstr "lohko kahdessa PT_LOAD-segmentissä"
+
+#: script-sections.cc:3065
+msgid "allocated section not in any PT_LOAD segment"
+msgstr "varattu lohko ei ole missään PT_LOAD-segmentissä"
+
+#: script-sections.cc:3093
+msgid "may only specify load address for PT_LOAD segment"
+msgstr "voi vain antaa latausosoitteen PT_LOAD-segmentille"
+
+#: script-sections.cc:3117
+#, c-format
+msgid "PHDRS load address overrides section %s load address"
+msgstr "PHDRS-komennon latausosoite korvaa lohkon %s latausosoitteen"
+
+#. We could support this if we wanted to.
+#: script-sections.cc:3128
+msgid "using only one of FILEHDR and PHDRS is not currently supported"
+msgstr "vain yhden avainsanoista FILEHDR ja PHDRS käyttämistä ei nykyisin tueta"
+
+#: script-sections.cc:3143
+msgid "sections loaded on first page without room for file and program headers are not supported"
+msgstr "ei tueta ensimmäisellä sivulla ladattuja lohkoja ilman tilaa tiedostolle ja ohjelmaotsakkeille"
+
+#: script-sections.cc:3149
+msgid "using FILEHDR and PHDRS on more than one PT_LOAD segment is not currently supported"
+msgstr "avainsanojen FILEHDR ja PHDRS käyttämistä useammassa kuin yhdessä PT_LOAD-segmentissä ei nykyisin tueta"
+
+#: script.cc:1063
+msgid "invalid use of PROVIDE for dot symbol"
+msgstr "virheellinen PROVIDE-käyttö dot-symbolille"
+
+#: script.cc:1065
+msgid "invalid assignment to dot outside of SECTIONS"
+msgstr "virheellinen arvonasetus dot-symbolille SECTIONS-lauseen ulkopuolella"
+
+#: script.cc:1995
+#, c-format
+msgid "%s:%d:%d: %s"
+msgstr "%s:%d:%d: %s"
+
+#. There are some options that we could handle here--e.g.,
+#. -lLIBRARY.  Should we bother?
+#: script.cc:2143
+#, c-format
+msgid "%s:%d:%d: ignoring command OPTION; OPTION is only valid for scripts specified via -T/--script"
+msgstr "%s:%d:%d: ohitetaan komento OPTION; OPTION on kelvollinen vain skripteillä, jotka määritellään valitsimilla -T/--script"
+
+#: script.cc:2168
+#, c-format
+msgid "%s:%d:%d: ignoring SEARCH_DIR; SEARCH_DIR is only valid for scripts specified via -T/--script"
+msgstr "%s:%d:%d: ohitetaan SEARCH_DIR; SEARCH_DIR on kelvollinen vain skripteille, jotka on määritelty valitsimien -T/--script kautta"
+
+#: script.cc:2411 script.cc:2425
+#, c-format
+msgid "%s:%d:%d: DATA_SEGMENT_ALIGN not in SECTIONS clause"
+msgstr "%s:%d:%d: DATA_SEGMENT_ALIGN-funktio ei ole SECTIONS-lauseessa"
+
+#: script.cc:2543
+msgid "unknown PHDR type (try integer)"
+msgstr "tuntematon PHDR-tyyppi (yritä kokonaislukua)"
+
+#  Esimerkiksi puhelinluettelossa A-kirjaimella alkavat nimet muodostavat yhden bucketin, B-kirjaimella alkavat toisen jne. A ja B ovat hash key -avaimia.
+#: stringpool.cc:526
+#, c-format
+msgid "%s: %s entries: %zu; buckets: %zu\n"
+msgstr "%s: %s alkiota: %zu; lohkot: %zu\n"
+
+#: stringpool.cc:530
+#, c-format
+msgid "%s: %s entries: %zu\n"
+msgstr "%s: %s alkiota: %zu\n"
+
+#: stringpool.cc:533
+#, c-format
+msgid "%s: %s Stringdata structures: %zu\n"
+msgstr "%s: %s Stringdata-rakenteet: %zu\n"
+
+#  ensimmäinen argumentti on objektinimi, toinen nimi
+#: symtab.cc:623
+#, c-format
+msgid "%s: reference to %s"
+msgstr "%s: viite nimeen %s"
+
+#  ensimmäinen argumentti on objektinimi, toinen nimi
+#: symtab.cc:625
+#, c-format
+msgid "%s: definition of %s"
+msgstr "%s: %s-määrittely"
+
+#: symtab.cc:860
+#, c-format
+msgid "bad global symbol name offset %u at %zu"
+msgstr "väärä yleissymbolinimisiirros %u osoitteessa %zu"
+
+#: symtab.cc:999
+msgid "--just-symbols does not make sense with a shared object"
+msgstr "--just-symbols ei tunnu järkevältä jaetuille objekteille"
+
+#: symtab.cc:1005
+msgid "too few symbol versions"
+msgstr "liian harvoja symboliversioita"
+
+#: symtab.cc:1054
+#, c-format
+msgid "bad symbol name offset %u at %zu"
+msgstr "väärä symbolinimisiirros %u osoitteessa %zu"
+
+#: symtab.cc:1117
+#, c-format
+msgid "versym for symbol %zu out of range: %u"
+msgstr "versym symbolille %zu lukualueen ulkopuolella: %u"
+
+#: symtab.cc:1125
+#, c-format
+msgid "versym for symbol %zu has no name: %u"
+msgstr "versym symbolille %zu ei ole nimeä: %u"
+
+#: symtab.cc:2035 symtab.cc:2251
+#, c-format
+msgid "%s: unsupported symbol section 0x%x"
+msgstr "%s: tukematon symbolilohko 0x%x"
+
+#: symtab.cc:2409
+#, c-format
+msgid "%s: undefined reference to '%s', version '%s'"
+msgstr "%s: määrittelemätön viite kohteeseen ’%s’, versio ’%s’"
+
+#: symtab.cc:2414
+#, c-format
+msgid "%s: undefined reference to '%s'"
+msgstr "%s: määrittelemätön viite kohteeseen ’%s’"
+
+#: symtab.cc:2498
+#, c-format
+msgid "%s: symbol table entries: %zu; buckets: %zu\n"
+msgstr "%s: symbolitaulualkiot: %zu; lohkot: %zu\n"
+
+#: symtab.cc:2501
+#, c-format
+msgid "%s: symbol table entries: %zu\n"
+msgstr "%s: symbolitaulutuloja: %zu\n"
+
+#: symtab.cc:2572
+#, c-format
+msgid "while linking %s: symbol '%s' defined in multiple places (possible ODR violation):"
+msgstr "kun linkitetään %s: symboli ’%s’ määritellään useissa paikoissa (mahdollinen ODR-ristiriita):"
+
+#: target-reloc.h:247
+msgid "Relocation refers to discarded comdat section"
+msgstr "Uudelleensijoitus viittaa hylättyyn comdat-lohkoon"
+
+#: target-reloc.h:278
+#, c-format
+msgid "reloc has bad offset %zu"
+msgstr "reloc-tietueella on väärä siirros %zu"
+
+#: tls.h:59
+msgid "TLS relocation out of range"
+msgstr "TLS-uudelleensijoitus lukualueen ulkopuolella"
+
+#: tls.h:73
+msgid "TLS relocation against invalid instruction"
+msgstr "TLS-uudelleensijoitus virhellistä käskyä vastaan"
+
+#. This output is intended to follow the GNU standards.
+#: version.cc:64
+#, c-format
+msgid "Copyright 2008 Free Software Foundation, Inc.\n"
+msgstr "Copyright 2008 Free Software Foundation, Inc.\n"
+
+#: version.cc:65
+#, c-format
+msgid ""
+"This program is free software; you may redistribute it under the terms of\n"
+"the GNU General Public License version 3 or (at your option) a later version.\n"
+"This program has absolutely no warranty.\n"
+msgstr ""
+"Tämä ohjelma on vapaa ohjelmisto; saat jakaa sitä GNU General Public lisenssi\n"
+"version 3 tai (valintasi mukaan) myöhäisemman version ehtojen mukaisesti.\n"
+"Tällä ohjelmalla ei ehdottomasti ole mitään takuuta.\n"
+
+#: workqueue-threads.cc:106
+#, c-format
+msgid "%s failed: %s"
+msgstr "%s epäonnistui: %s"
+
+#: x86_64.cc:2104
+#, c-format
+msgid "unsupported reloc type %u"
+msgstr "tukematon reloc-tietuetyyppi %u"
+
+#: x86_64.cc:2441
+#, c-format
+msgid "unsupported reloc %u against local symbol"
+msgstr "tukematon reloc %u -tietue paikallista symbolia vastaan"
+
+#~ msgid "Copyright 2009 Free Software Foundation, Inc.\n"
+#~ msgstr "Copyright 2009 Free Software Foundation, Inc.\n"
+
+#~ msgid "symbols %s %zu %zu\n"
+#~ msgstr "symbolit %s %zu %zu\n"
+
+#~ msgid "archive %s %zu %zu\n"
+#~ msgstr "arkisto %s %zu %zu\n"
+
+#~ msgid "Incremental linking might be possible (not implemented yet)\n"
+#~ msgstr "Kasvava linkitys saattaisi olla mahdollista (ei ole vielä toteutettu)\n"

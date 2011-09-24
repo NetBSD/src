@@ -9,7 +9,7 @@ Disassembly of section .text:
 0+002 <[^>]*> bf20 *	wfe
 0+004 <[^>]*> bf30 *	wfi
 0+006 <[^>]*> bf40 *	sev
-0+008 <[^>]*> 46c0 *	nop[ \t]+\(mov r8, r8\)
-0+00a <[^>]*> 46c0 *	nop[ \t]+\(mov r8, r8\)
-0+00c <[^>]*> 46c0 *	nop[ \t]+\(mov r8, r8\)
-0+00e <[^>]*> 46c0 *	nop[ \t]+\(mov r8, r8\)
+0+008 <[^>]*> 46c0 *	nop[ \t]+; \(mov r8, r8\)
+0+00a <[^>]*> 46c0 *	nop[ \t]+; \(mov r8, r8\)
+0+00c <[^>]*> 46c0 *	nop[ \t]+; \(mov r8, r8\)
+0+00e <[^>]*> 46c0 *	nop[ \t]+; \(mov r8, r8\)

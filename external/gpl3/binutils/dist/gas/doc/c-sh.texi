@@ -1,5 +1,5 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 1997, 2001, 2003, 2004, 2005
-@c Free Software Foundation, Inc.
+@c Copyright 1991, 1992, 1993, 1994, 1995, 1997, 2001, 2003, 2004,
+@c 2005, 2008, 2010  Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @page
@@ -53,6 +53,10 @@ Renesas assembler.
 
 @item --allow-reg-prefix
 Allow '$' as a register name prefix.
+
+@kindex --fdpic
+@item --fdpic
+Generate an FDPIC object file.
 
 @item --isa=sh4 | sh4a
 Specify the sh4 or sh4a instruction set.

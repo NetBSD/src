@@ -146,7 +146,7 @@ main ()
   # 4. Write a struct spe_program_handle to .data.
   # 5. Write a table of _SPUEAR_ symbols.
   ${CC} ${FLAGS} -x assembler-with-cpp -nostartfiles -nostdlib \
-	-Wa,-mbig -Wl,-r -Wl,-x -o ${OUTFILE} - <<EOF
+	-Wa,-mbig -Wa,-noexecstack -Wl,-r -Wl,-x -o ${OUTFILE} - <<EOF
  .section .data.spetoe,"aw",@progbits
  .p2align 7
 __spetoe__:

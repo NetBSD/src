@@ -237,7 +237,7 @@ annotate_source (Source_File *sf, unsigned int max_width,
       fprintf (ofp, _("*** File %s:\n"), sf->name);
     }
 
-  annotation = xmalloc (max_width + 1);
+  annotation = (char *) xmalloc (max_width + 1);
   line_num = 1;
   new_line = TRUE;
 

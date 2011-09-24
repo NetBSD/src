@@ -1,5 +1,5 @@
 /* tc-s390.h -- Header file for tc-s390.c.
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
    Free Software Foundation, Inc.
    Written by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
@@ -95,3 +95,7 @@ extern int s390_cie_data_alignment;
 #define DWARF2_LINE_MIN_INSN_LENGTH     1
 #define DWARF2_DEFAULT_RETURN_COLUMN    14
 #define DWARF2_CIE_DATA_ALIGNMENT       s390_cie_data_alignment
+
+extern void s390_elf_final_processing (void);
+
+#define elf_tc_final_processing s390_elf_final_processing

@@ -1,6 +1,6 @@
 // resolve.cc -- symbol resolution for gold
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -26,6 +26,7 @@
 #include "target.h"
 #include "object.h"
 #include "symtab.h"
+#include "plugin.h"
 
 namespace gold
 {
@@ -62,6 +63,26 @@ Symbol::override_version(const char* version)
     }
 }
 
+// This symbol is being overidden by another symbol whose visibility
+// is VISIBILITY.  Updated the VISIBILITY_ field accordingly.
+
+inline void
+Symbol::override_visibility(elfcpp::STV visibility)
+{
+  // The rule for combining visibility is that we always choose the
+  // most constrained visibility.  In order of increasing constraint,
+  // visibility goes PROTECTED, HIDDEN, INTERNAL.  This is the reverse
+  // of the numeric values, so the effect is that we always want the
+  // smallest non-zero value.
+  if (visibility != elfcpp::STV_DEFAULT)
+    {
+      if (this->visibility_ == elfcpp::STV_DEFAULT)
+	this->visibility_ = visibility;
+      else if (this->visibility_ > visibility)
+	this->visibility_ = visibility;
+    }
+}
+
 // Override the fields in Symbol.
 
 template<int size, bool big_endian>
@@ -77,7 +98,7 @@ Symbol::override_base(const elfcpp::Sym<size, big_endian>& sym,
   this->is_ordinary_shndx_ = is_ordinary;
   this->type_ = sym.get_st_type();
   this->binding_ = sym.get_st_bind();
-  this->visibility_ = sym.get_st_visibility();
+  this->override_visibility(sym.get_st_visibility());
   this->nonvis_ = sym.get_st_nonvis();
   if (object->is_dynamic())
     this->in_dyn_ = true;
@@ -157,6 +178,7 @@ symbol_to_bits(elfcpp::STB binding, bool is_dynamic,
   switch (binding)
     {
     case elfcpp::STB_GLOBAL:
+    case elfcpp::STB_GNU_UNIQUE:
       bits = global_flag;
       break;
 
@@ -173,7 +195,7 @@ symbol_to_bits(elfcpp::STB binding, bool is_dynamic,
     default:
       // Any target which wants to handle STB_LOOS, etc., needs to
       // define a resolve method.
-      gold_error(_("unsupported symbol binding"));
+      gold_error(_("unsupported symbol binding %d"), static_cast<int>(binding));
       bits = global_flag;
     }
 
@@ -195,6 +217,8 @@ symbol_to_bits(elfcpp::STB binding, bool is_dynamic,
 
     default:
       if (type == elfcpp::STT_COMMON)
+	bits |= common_flag;
+      else if (!is_ordinary && Symbol::is_common_shndx(shndx))
 	bits |= common_flag;
       else
         bits |= def_flag;
@@ -221,10 +245,10 @@ Symbol_table::resolve(Sized_symbol<size>* to,
 		      unsigned int orig_st_shndx,
 		      Object* object, const char* version)
 {
-  if (object->target()->has_resolve())
+  if (parameters->target().has_resolve())
     {
       Sized_target<size, big_endian>* sized_target;
-      sized_target = object->sized_target<size, big_endian>();
+      sized_target = parameters->sized_target<size, big_endian>();
       sized_target->resolve(to, sym, object, version);
       return;
     }
@@ -234,45 +258,58 @@ Symbol_table::resolve(Sized_symbol<size>* to,
       // Record that we've seen this symbol in a regular object.
       to->set_in_reg();
     }
+  else if (st_shndx == elfcpp::SHN_UNDEF
+           && (to->visibility() == elfcpp::STV_HIDDEN
+               || to->visibility() == elfcpp::STV_INTERNAL))
+    {
+      // A dynamic object cannot reference a hidden or internal symbol
+      // defined in another object.
+      gold_warning(_("%s symbol '%s' in %s is referenced by DSO %s"),
+                   (to->visibility() == elfcpp::STV_HIDDEN
+                    ? "hidden"
+                    : "internal"),
+                   to->demangled_name().c_str(),
+                   to->object()->name().c_str(),
+                   object->name().c_str());
+      return;
+    }
   else
     {
       // Record that we've seen this symbol in a dynamic object.
       to->set_in_dyn();
     }
 
-  unsigned int frombits = symbol_to_bits(sym.get_st_bind(),
-                                         object->is_dynamic(),
-					 st_shndx, is_ordinary,
-                                         sym.get_st_type());
+  // Record if we've seen this symbol in a real ELF object (i.e., the
+  // symbol is referenced from outside the world known to the plugin).
+  if (object->pluginobj() == NULL)
+    to->set_in_real_elf();
 
-  bool adjust_common_sizes;
-  if (Symbol_table::should_override(to, frombits, object,
-				    &adjust_common_sizes))
+  // If we're processing replacement files, allow new symbols to override
+  // the placeholders from the plugin objects.
+  if (to->source() == Symbol::FROM_OBJECT)
     {
-      typename Sized_symbol<size>::Size_type tosize = to->symsize();
-
-      this->override(to, sym, st_shndx, is_ordinary, object, version);
-
-      if (adjust_common_sizes && tosize > to->symsize())
-        to->set_symsize(tosize);
-    }
-  else
-    {
-      if (adjust_common_sizes && sym.get_st_size() > to->symsize())
-        to->set_symsize(sym.get_st_size());
+      Pluginobj* obj = to->object()->pluginobj();
+      if (obj != NULL
+          && parameters->options().plugins()->in_replacement_phase())
+        {
+          this->override(to, sym, st_shndx, is_ordinary, object, version);
+          return;
+        }
     }
 
   // A new weak undefined reference, merging with an old weak
   // reference, could be a One Definition Rule (ODR) violation --
   // especially if the types or sizes of the references differ.  We'll
   // store such pairs and look them up later to make sure they
-  // actually refer to the same lines of code.  (Note: not all ODR
-  // violations can be found this way, and not everything this finds
-  // is an ODR violation.  But it's helpful to warn about.)
+  // actually refer to the same lines of code.  We also check
+  // combinations of weak and strong, which might occur if one case is
+  // inline and the other is not.  (Note: not all ODR violations can
+  // be found this way, and not everything this finds is an ODR
+  // violation.  But it's helpful to warn about.)
   bool to_is_ordinary;
   if (parameters->options().detect_odr_violations()
-      && sym.get_st_bind() == elfcpp::STB_WEAK
-      && to->binding() == elfcpp::STB_WEAK
+      && (sym.get_st_bind() == elfcpp::STB_WEAK
+	  || to->binding() == elfcpp::STB_WEAK)
       && orig_st_shndx != elfcpp::SHN_UNDEF
       && to->shndx(&to_is_ordinary) != elfcpp::SHN_UNDEF
       && to_is_ordinary
@@ -291,6 +328,62 @@ Symbol_table::resolve(Sized_symbol<size>* to,
       this->candidate_odr_violations_[to->name()].insert(fromloc);
       this->candidate_odr_violations_[to->name()].insert(toloc);
     }
+
+  unsigned int frombits = symbol_to_bits(sym.get_st_bind(),
+                                         object->is_dynamic(),
+					 st_shndx, is_ordinary,
+                                         sym.get_st_type());
+
+  bool adjust_common_sizes;
+  bool adjust_dyndef;
+  typename Sized_symbol<size>::Size_type tosize = to->symsize();
+  if (Symbol_table::should_override(to, frombits, OBJECT, object,
+				    &adjust_common_sizes,
+				    &adjust_dyndef))
+    {
+      elfcpp::STB tobinding = to->binding();
+      this->override(to, sym, st_shndx, is_ordinary, object, version);
+      if (adjust_common_sizes && tosize > to->symsize())
+        to->set_symsize(tosize);
+      if (adjust_dyndef)
+	{
+	  // We are overriding an UNDEF or WEAK UNDEF with a DYN DEF.
+	  // Remember which kind of UNDEF it was for future reference.
+	  to->set_undef_binding(tobinding);
+	}
+    }
+  else
+    {
+      if (adjust_common_sizes && sym.get_st_size() > tosize)
+        to->set_symsize(sym.get_st_size());
+      if (adjust_dyndef)
+	{
+	  // We are keeping a DYN DEF after seeing an UNDEF or WEAK UNDEF.
+	  // Remember which kind of UNDEF it was.
+	  to->set_undef_binding(sym.get_st_bind());
+	}
+      // The ELF ABI says that even for a reference to a symbol we
+      // merge the visibility.
+      to->override_visibility(sym.get_st_visibility());
+    }
+
+  if (adjust_common_sizes && parameters->options().warn_common())
+    {
+      if (tosize > sym.get_st_size())
+	Symbol_table::report_resolve_problem(false,
+					     _("common of '%s' overriding "
+					       "smaller common"),
+					     to, OBJECT, object);
+      else if (tosize < sym.get_st_size())
+	Symbol_table::report_resolve_problem(false,
+					     _("common of '%s' overidden by "
+					       "larger common"),
+					     to, OBJECT, object);
+      else
+	Symbol_table::report_resolve_problem(false,
+					     _("multiple common of '%s'"),
+					     to, OBJECT, object);
+    }
 }
 
 // Handle the core of symbol resolution.  This is called with the
@@ -302,9 +395,12 @@ Symbol_table::resolve(Sized_symbol<size>* to,
 
 bool
 Symbol_table::should_override(const Symbol* to, unsigned int frombits,
-                              Object* object, bool* adjust_common_sizes)
+                              Defined defined, Object* object,
+			      bool* adjust_common_sizes,
+			      bool* adjust_dyndef)
 {
   *adjust_common_sizes = false;
+  *adjust_dyndef = false;
 
   unsigned int tobits;
   if (to->source() == Symbol::IS_UNDEFINED)
@@ -360,17 +456,13 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
       // --just-symbols, then don't warn.  This is for compatibility
       // with the GNU linker.  FIXME: This is a hack.
       if ((to->source() == Symbol::FROM_OBJECT && to->object()->just_symbols())
-          || object->just_symbols())
+          || (object != NULL && object->just_symbols()))
         return false;
 
-      // FIXME: Do a better job of reporting locations.
-      gold_error(_("%s: multiple definition of %s"),
-		 object != NULL ? object->name().c_str() : _("command line"),
-		 to->demangled_name().c_str());
-      gold_error(_("%s: previous definition here"),
-		 (to->source() == Symbol::FROM_OBJECT
-		  ? to->object()->name().c_str()
-		  : _("command line")));
+      if (!parameters->options().muldefs())
+	Symbol_table::report_resolve_problem(true,
+					     _("multiple definition of '%s'"),
+					     to, defined, object);
       return false;
 
     case WEAK_DEF * 16 + DEF:
@@ -405,8 +497,12 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
     case DYN_COMMON * 16 + DEF:
     case DYN_WEAK_COMMON * 16 + DEF:
       // We've seen a common symbol and now we see a definition.  The
-      // definition overrides.  FIXME: We should optionally issue, version a
-      // warning.
+      // definition overrides.
+      if (parameters->options().warn_common())
+	Symbol_table::report_resolve_problem(false,
+					     _("definition of '%s' overriding "
+					       "common"),
+					     to, defined, object);
       return true;
 
     case DEF * 16 + WEAK_DEF:
@@ -436,7 +532,12 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
     case DYN_COMMON * 16 + WEAK_DEF:
     case DYN_WEAK_COMMON * 16 + WEAK_DEF:
       // A weak definition does override a definition in a dynamic
-      // object.  FIXME: We should optionally issue a warning.
+      // object.
+      if (parameters->options().warn_common())
+	Symbol_table::report_resolve_problem(false,
+					     _("definition of '%s' overriding "
+					       "dynamic common definition"),
+					     to, defined, object);
       return true;
 
     case DEF * 16 + DYN_DEF:
@@ -447,10 +548,15 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
       return false;
 
     case UNDEF * 16 + DYN_DEF:
-    case WEAK_UNDEF * 16 + DYN_DEF:
     case DYN_UNDEF * 16 + DYN_DEF:
     case DYN_WEAK_UNDEF * 16 + DYN_DEF:
       // Use a dynamic definition if we have a reference.
+      return true;
+
+    case WEAK_UNDEF * 16 + DYN_DEF:
+      // When overriding a weak undef by a dynamic definition,
+      // we need to remember that the original undef was weak.
+      *adjust_dyndef = true;
       return true;
 
     case COMMON * 16 + DYN_DEF:
@@ -470,10 +576,20 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
       return false;
 
     case UNDEF * 16 + DYN_WEAK_DEF:
-    case WEAK_UNDEF * 16 + DYN_WEAK_DEF:
+      // When overriding an undef by a dynamic weak definition,
+      // we need to remember that the original undef was not weak.
+      *adjust_dyndef = true;
+      return true;
+
     case DYN_UNDEF * 16 + DYN_WEAK_DEF:
     case DYN_WEAK_UNDEF * 16 + DYN_WEAK_DEF:
       // Use a weak dynamic definition if we have a reference.
+      return true;
+
+    case WEAK_UNDEF * 16 + DYN_WEAK_DEF:
+      // When overriding a weak undef by a dynamic definition,
+      // we need to remember that the original undef was weak.
+      *adjust_dyndef = true;
       return true;
 
     case COMMON * 16 + DYN_WEAK_DEF:
@@ -486,10 +602,14 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
 
     case DEF * 16 + UNDEF:
     case WEAK_DEF * 16 + UNDEF:
-    case DYN_DEF * 16 + UNDEF:
-    case DYN_WEAK_DEF * 16 + UNDEF:
     case UNDEF * 16 + UNDEF:
       // A new undefined reference tells us nothing.
+      return false;
+
+    case DYN_DEF * 16 + UNDEF:
+    case DYN_WEAK_DEF * 16 + UNDEF:
+      // For a dynamic def, we need to remember which kind of undef we see.
+      *adjust_dyndef = true;
       return false;
 
     case WEAK_UNDEF * 16 + UNDEF:
@@ -507,17 +627,28 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
 
     case DEF * 16 + WEAK_UNDEF:
     case WEAK_DEF * 16 + WEAK_UNDEF:
-    case DYN_DEF * 16 + WEAK_UNDEF:
-    case DYN_WEAK_DEF * 16 + WEAK_UNDEF:
     case UNDEF * 16 + WEAK_UNDEF:
     case WEAK_UNDEF * 16 + WEAK_UNDEF:
     case DYN_UNDEF * 16 + WEAK_UNDEF:
-    case DYN_WEAK_UNDEF * 16 + WEAK_UNDEF:
     case COMMON * 16 + WEAK_UNDEF:
     case WEAK_COMMON * 16 + WEAK_UNDEF:
     case DYN_COMMON * 16 + WEAK_UNDEF:
     case DYN_WEAK_COMMON * 16 + WEAK_UNDEF:
-      // A new weak undefined reference tells us nothing.
+      // A new weak undefined reference tells us nothing unless the
+      // exisiting symbol is a dynamic weak reference.
+      return false;
+
+    case DYN_WEAK_UNDEF * 16 + WEAK_UNDEF:
+      // A new weak reference overrides an existing dynamic weak reference.
+      // This is necessary because a dynamic weak reference remembers
+      // the old binding, which may not be weak.  If we keeps the existing
+      // dynamic weak reference, the weakness may be dropped in the output.
+      return true;
+
+    case DYN_DEF * 16 + WEAK_UNDEF:
+    case DYN_WEAK_DEF * 16 + WEAK_UNDEF:
+      // For a dynamic def, we need to remember which kind of undef we see.
+      *adjust_dyndef = true;
       return false;
 
     case DEF * 16 + DYN_UNDEF:
@@ -552,6 +683,11 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
 
     case DEF * 16 + COMMON:
       // A common symbol does not override a definition.
+      if (parameters->options().warn_common())
+	Symbol_table::report_resolve_problem(false,
+					     _("common '%s' overridden by "
+					       "previous definition"),
+					     to, defined, object);
       return false;
 
     case WEAK_DEF * 16 + COMMON:
@@ -657,18 +793,77 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
     }
 }
 
+// Issue an error or warning due to symbol resolution.  IS_ERROR
+// indicates an error rather than a warning.  MSG is the error
+// message; it is expected to have a %s for the symbol name.  TO is
+// the existing symbol.  DEFINED/OBJECT is where the new symbol was
+// found.
+
+// FIXME: We should have better location information here.  When the
+// symbol is defined, we should be able to pull the location from the
+// debug info if there is any.
+
+void
+Symbol_table::report_resolve_problem(bool is_error, const char* msg,
+				     const Symbol* to, Defined defined,
+				     Object* object)
+{
+  std::string demangled(to->demangled_name());
+  size_t len = strlen(msg) + demangled.length() + 10;
+  char* buf = new char[len];
+  snprintf(buf, len, msg, demangled.c_str());
+
+  const char* objname;
+  switch (defined)
+    {
+    case OBJECT:
+      objname = object->name().c_str();
+      break;
+    case COPY:
+      objname = _("COPY reloc");
+      break;
+    case DEFSYM:
+    case UNDEFINED:
+      objname = _("command line");
+      break;
+    case SCRIPT:
+      objname = _("linker script");
+      break;
+    case PREDEFINED:
+      objname = _("linker defined");
+      break;
+    default:
+      gold_unreachable();
+    }
+
+  if (is_error)
+    gold_error("%s: %s", objname, buf);
+  else
+    gold_warning("%s: %s", objname, buf);
+
+  delete[] buf;
+
+  if (to->source() == Symbol::FROM_OBJECT)
+    objname = to->object()->name().c_str();
+  else
+    objname = _("command line");
+  gold_info("%s: %s: previous definition here", program_name, objname);
+}
+
 // A special case of should_override which is only called for a strong
 // defined symbol from a regular object file.  This is used when
 // defining special symbols.
 
 bool
-Symbol_table::should_override_with_special(const Symbol* to)
+Symbol_table::should_override_with_special(const Symbol* to, Defined defined)
 {
   bool adjust_common_sizes;
+  bool adjust_dyn_def;
   unsigned int frombits = global_flag | regular_flag | def_flag;
-  bool ret = Symbol_table::should_override(to, frombits, NULL,
-					   &adjust_common_sizes);
-  gold_assert(!adjust_common_sizes);
+  bool ret = Symbol_table::should_override(to, frombits, defined, NULL,
+					   &adjust_common_sizes,
+					   &adjust_dyn_def);
+  gold_assert(!adjust_common_sizes && !adjust_dyn_def);
   return ret;
 }
 
@@ -702,7 +897,7 @@ Symbol::override_base_with_special(const Symbol* from)
   this->override_version(from->version_);
   this->type_ = from->type_;
   this->binding_ = from->binding_;
-  this->visibility_ = from->visibility_;
+  this->override_visibility(from->visibility_);
   this->nonvis_ = from->nonvis_;
 
   // Special symbols are always considered to be regular symbols.
@@ -715,9 +910,8 @@ Symbol::override_base_with_special(const Symbol* from)
 
   // We shouldn't see these flags.  If we do, we need to handle them
   // somehow.
-  gold_assert(!from->is_target_special_ || this->is_target_special_);
   gold_assert(!from->is_forwarder_);
-  gold_assert(!from->has_plt_offset_);
+  gold_assert(!from->has_plt_offset());
   gold_assert(!from->has_warning_);
   gold_assert(!from->is_copied_from_dynobj_);
   gold_assert(!from->is_forced_local_);
@@ -757,7 +951,13 @@ Symbol_table::override_with_special(Sized_symbol<size>* tosym,
 	}
       while (ssym != tosym);
     }
-  if (tosym->binding() == elfcpp::STB_LOCAL)
+  if (tosym->binding() == elfcpp::STB_LOCAL
+      || ((tosym->visibility() == elfcpp::STV_HIDDEN
+	   || tosym->visibility() == elfcpp::STV_INTERNAL)
+	  && (tosym->binding() == elfcpp::STB_GLOBAL
+	      || tosym->binding() == elfcpp::STB_GNU_UNIQUE
+	      || tosym->binding() == elfcpp::STB_WEAK)
+	  && !parameters->options().relocatable()))
     this->force_local(tosym);
 }
 
@@ -765,7 +965,10 @@ Symbol_table::override_with_special(Sized_symbol<size>* tosym,
 // script to restrict this to only the ones needed for implemented
 // targets.
 
-#ifdef HAVE_TARGET_32_LITTLE
+// We have to instantiate both big and little endian versions because
+// these are used by other templates that depends on size only.
+
+#if defined(HAVE_TARGET_32_LITTLE) || defined(HAVE_TARGET_32_BIG)
 template
 void
 Symbol_table::resolve<32, false>(
@@ -776,9 +979,7 @@ Symbol_table::resolve<32, false>(
     unsigned int orig_st_shndx,
     Object* object,
     const char* version);
-#endif
 
-#ifdef HAVE_TARGET_32_BIG
 template
 void
 Symbol_table::resolve<32, true>(
@@ -791,7 +992,7 @@ Symbol_table::resolve<32, true>(
     const char* version);
 #endif
 
-#ifdef HAVE_TARGET_64_LITTLE
+#if defined(HAVE_TARGET_64_LITTLE) || defined(HAVE_TARGET_64_BIG)
 template
 void
 Symbol_table::resolve<64, false>(
@@ -802,9 +1003,7 @@ Symbol_table::resolve<64, false>(
     unsigned int orig_st_shndx,
     Object* object,
     const char* version);
-#endif
 
-#ifdef HAVE_TARGET_64_BIG
 template
 void
 Symbol_table::resolve<64, true>(

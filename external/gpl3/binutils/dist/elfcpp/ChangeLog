@@ -1,3 +1,137 @@
+2010-08-12  Cary Coutant  <ccoutant@google.com>
+
+	* elfcpp.h (enum SHT): Add SHT_GNU_INCREMENTAL_GOT_PLT.
+
+2010-08-12  Cary Coutant  <ccoutant@google.com>
+
+	* elfcpp.h (enum SHT): Add SHT_GNU_INCREMENTAL_SYMTAB,
+	SHT_GNU_INCREMENTAL_RELOCS.
+
+2010-08-04  Ian Lance Taylor  <iant@google.com>
+
+	* i386.h (R_386_IRELATIVE): Define.
+	* powerpc.h (R_POWERPC_IRELATIVE): Define.
+	(R_PPC_RELAX32, R_PPC_RELAX32PC): Don't define.
+	(R_PPC_RELAX32_PLT, R_PPC_RELAX32PC_PLT): Don't define.
+	* sparc.h (R_SPARC_IRELATIVE): Define.
+	* x86_64.h (R_X86_64_IRELATIVE): Define.
+	(R_X86_64_GNU_VTINHERIT): Rename from R_386_GNU_VTINHERIT.
+	(R_X86_64_GNU_VTENTRY): Rename from R_386_GNU_VTENTRY.
+
+2010-05-12  Doug Kwan  <dougkwan@google.com>
+
+	* arm.h (Tag_FP_arch, Tag_ABI_align_needed, Tag_ABI_align_preserved,
+	Tag_FP_HP_extension, Tag_MPextension_use_legacy): Rename from
+	existing tags.
+	(Tag_undefined40, Tag_undefined41, Tag_MPextension_use,
+	Tag_undefined43): New tags.
+	(Targ_VFP_arch, Tag_ABI_align8_needed, TAG_ABI_align8_preserved,
+	Tag_VFP_HP_extension): Define aliases for backward compatiblity.
+
+2010-03-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* elfcpp.h (VER_FLG_INFO): Define.
+
+2010-01-21  Doug Kwan  <dougkwan@google.com>
+
+	* arm.h (EXIDX_CANTUNWIND): New enum.
+
+2010-01-19  Ian Lance Taylor  <iant@google.com>
+
+	* elfcpp.h (PN_XNUM): Define.
+
+2009-12-14  Ian Lance Taylor  <iant@google.com>
+
+	* elfcpp_file.h: Revert last patch.
+
+2009-12-11  Nick Clifton  <nickc@redhat.com>
+
+	* elfcpp_file.h: Fix shadowed variable warnings.
+
+2009-12-10  Doug Kwan  <dougkwan@google.com>
+
+	* arm.h: New enums for EABI object attribute tags and values.
+
+2009-12-05  Doug Kwan  <dougkwan@google.com>
+
+	* arm.h: Define enums for Tag_CPU_arch EABI attribute.
+
+2009-11-24  Rafael Avila de Espindola  <espindola@google.com>
+
+	* elfcpp_file.h: Include elfcpp.h.
+
+2009-11-03  Ian Lance Taylor  <iant@google.com>
+
+	* elfcpp.h: Remove trailing commas from enum definitions.
+
+2009-10-30  Doug Kwan  <dougkwan@google.com>
+
+	* arm.h (EF_ARM_BE8, EF_ARM_EABIMASK, EF_ARM_EABI_UNKNOWN,
+	EF_ARM_EABI_VER1, EF_ARM_EABI_VER2, EF_ARM_EABI_VER3,
+	EF_ARM_EABI_VER4, EF_ARM_EABI_VER5): New enums for processor-specific
+	flags.
+	(arm_eabi_version): New inline function.
+	* elfcpp.h: Add a comment about DT_ENCODING.
+
+2009-10-16  Doug Kwan  <dougkwan@google.com>
+
+	* elfcpp/elfcpp.h (DT_PREINIT_ARRAY): Correct enum value.
+
+2009-10-09  Andrew Pinski  <andrew_pinski@playstation.sony.com>
+
+	* elfcpp/elfcpp_file.h (Elf_file::section_name): Change shstr_size
+	to Elf_WXword.
+
+2009-10-09  Mikolaj Zalewski  <mikolajz@google.com>
+
+	* elf_file.h: (class Elf_strtab): New class.
+
+2009-10-09  Mikolaj Zalewski  <mikolajz@google.com>
+
+	* elfcpp_file.h: Fix header guard.  Include <cstdio>.
+	(class Elf_recognizer): New class, code from gold/object.cc.
+	(Elf_file::find_section_by_type): New method.
+
+2009-07-23  Ulrich Drepper  <drepper@redhat.com>
+
+	* elfcpp.h (enum STB): Add STB_GNU_UNIQUE.
+
+2009-06-21  Ian Lance Taylor  <iant@google.com>
+
+	* elfcpp.h (SHN_X86_64_LCOMMON): Define enum constant.
+	(enum SHT): Add SHT_X86_64_UNWIND.
+	(enum SHF): Add SHT_X86_64_LARGE.
+
+2009-05-27  Doug Kwan  <dougkwan@google.com>
+
+	* arm.h: New file.
+	* elfcpp.h (enum SHT): Add ARM-specific special sections.
+	(enum PT): Add ARM-specific section types.
+	(enum SST): Add STT_ARM_TFUNC.
+
+2009-04-30  Nick Clifton  <nickc@redhat.com>
+
+	* elfcpp.h (enum STT): Add STT_GNU_IFUNC.
+
+2009-03-20  Mikolaj Zalewski  <mikolajz@google.com>
+
+	* elfcpp.h (SHT_GNU_INCREMENTAL_INPUTS): Define.
+
+2009-03-01  Ian Lance Taylor  <iant@google.com>
+
+	* elfcpp_swap.h: #include "config.h".  Only #include <byteswap.h>
+	if HAVE_BYTESWAP_H is defined; if not, provide definitions for
+	bswap_{16,32,64}.  For gcc 4.3 and later, use the builtin bswap
+	functions.  Check WORDS_BIGENDIAN rather than __BYTE_ORDER.
+
+2009-01-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elfcpp.h (enum STT): Remove STT_IFUNC.
+
+2008-12-03  Nick Clifton  <nickc@redhat.com>
+
+	* elfcpp.h (enum STT): Add STT_IFUNC.
+
 2008-06-12  David S. Miller  <davem@davemloft.net>
 
 	* powerpc.h: New file.

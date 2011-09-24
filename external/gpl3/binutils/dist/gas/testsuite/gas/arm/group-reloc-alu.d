@@ -165,4 +165,4 @@ Disassembly of section .text:
 			138: R_ARM_ALU_SB_G0_NC	localsym
 0[0-9a-f]+ <[^>]+> e2500c01 	subs	r0, r0, #256	; 0x100
 			13c: R_ARM_ALU_SB_G1_NC	localsym
-0[0-9a-f]+ <[^>]+> e3a00000 	mov	r0, #0	; 0x0
+0[0-9a-f]+ <[^>]+> e3a00000 	mov	r0, #0

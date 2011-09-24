@@ -1,6 +1,6 @@
 /* tc-msp430.c -- Assembler code for the Texas Instruments MSP430
 
-  Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007
+  Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
   Free Software Foundation, Inc.
   Contributed by Dmitry Diky <diwil@mail.ru>
 
@@ -678,7 +678,6 @@ msp430_profiler (int dummy ATTRIBUTE_UNUSED)
 static char *
 extract_word (char * from, char * to, int limit)
 {
-  char *op_start;
   char *op_end;
   int size = 0;
 
@@ -687,7 +686,7 @@ extract_word (char * from, char * to, int limit)
   *to = 0;
 
   /* Find the op code end.  */
-  for (op_start = op_end = from; *op_end != 0 && is_part_of_name (*op_end);)
+  for (op_end = from; *op_end != 0 && is_part_of_name (*op_end);)
     {
       to[size++] = *op_end++;
       if (size + 1 >= limit)
@@ -1010,7 +1009,7 @@ msp430_srcoperand (struct msp430_operand_s * op,
 	      if (bin == 0x1200)
 		{
 		  /* Remove warning as confusing.
-		     as_warn(_("Hardware push bug workaround")); */
+		     as_warn (_("Hardware push bug workaround")); */
 		}
 	      else
 #endif
@@ -1027,7 +1026,7 @@ msp430_srcoperand (struct msp430_operand_s * op,
 	      if (bin == 0x1200)
 		{
 		  /* Remove warning as confusing.
-		     as_warn(_("Hardware push bug workaround")); */
+		     as_warn (_("Hardware push bug workaround")); */
 		}
 	      else
 #endif
@@ -1713,7 +1712,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
     case 4:	/* Extended jumps.  */
       if (!msp430_enable_polys)
 	{
-	  as_bad(_("polymorphs are not enabled. Use -mP option to enable."));
+	  as_bad (_("polymorphs are not enabled. Use -mP option to enable."));
 	  break;
 	}
 	
@@ -1755,7 +1754,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
     case 5:	/* Emulated extended branches.  */
       if (!msp430_enable_polys)
 	{
-	  as_bad(_("polymorphs are not enabled. Use -mP option to enable."));
+	  as_bad (_("polymorphs are not enabled. Use -mP option to enable."));
 	  break;
 	}
       line = extract_operand (line, l1, sizeof (l1));

@@ -1,6 +1,6 @@
 /* stabs.c -- Parse stabs debugging information
    Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2006, 2007 Free Software Foundation, Inc.
+   2005, 2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -677,7 +677,7 @@ parse_stab (void *dhandle, void *handle, int type, int desc, bfd_vma value,
 
 static bfd_boolean
 parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
-		   int desc, bfd_vma value, const char *string)
+		   int desc ATTRIBUTE_UNUSED, bfd_vma value, const char *string)
 {
   const char *p;
   char *name;
@@ -685,7 +685,6 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
   debug_type dtype;
   bfd_boolean synonym;
   bfd_boolean self_crossref;
-  unsigned int lineno;
   debug_type *slot;
 
   p = strchr (string, ':');
@@ -702,14 +701,6 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
 	  return FALSE;
 	}
     }
-
-  /* GCC 2.x puts the line number in desc.  SunOS apparently puts in
-     the number of bytes occupied by a type or object, which we
-     ignore.  */
-  if (info->gcc_compiled >= 2)
-    lineno = desc;
-  else
-    lineno = 0;
 
   /* FIXME: Sometimes the special C++ names start with '.'.  */
   name = NULL;
@@ -1105,6 +1096,26 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
 	return FALSE;
       break;
 
+    case 'Y':
+      /* SUNPro C++ Namespace =Yn0.  */
+      /* Skip the namespace mapping, as it is not used now.  */
+      if (*(++p) == 'n' && *(++p) == '0')
+	{
+	  /* =Yn0name; */
+	  while (*p != ';')
+	    ++p;
+	  ++p;
+	  return TRUE;
+	}
+      /* TODO SUNPro C++ support:
+         Support default arguments after F,P parameters
+         Ya = Anonymous unions
+         YM,YD = Pointers to class members
+         YT,YI = Templates
+         YR = Run-time type information (RTTI)  */
+
+      /* Fall through.  */
+
     default:
       bad_stab (string);
       return FALSE;
@@ -1122,7 +1133,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
    store the slot used if the type is being defined.  */
 
 static debug_type
-parse_stab_type (void *dhandle, struct stab_handle *info, const char *typename, const char **pp, debug_type **slotp)
+parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name, const char **pp, debug_type **slotp)
 {
   const char *orig;
   int typenums[2];
@@ -1286,9 +1297,9 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *typename, 
 	       fleep:T20=xsfleep:
 	   which define structures in terms of themselves.  We need to
 	   tell the caller to avoid building a circular structure.  */
-	if (typename != NULL
-	    && strncmp (typename, *pp, p - *pp) == 0
-	    && typename[p - *pp] == '\0')
+	if (type_name != NULL
+	    && strncmp (type_name, *pp, p - *pp) == 0
+	    && type_name[p - *pp] == '\0')
 	  info->self_crossref = TRUE;
 
 	dtype = stab_find_tagged_type (dhandle, info, *pp, p - *pp, code);
@@ -1519,7 +1530,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *typename, 
 
     case 'r':
       /* Range type.  */
-      dtype = parse_stab_range_type (dhandle, info, typename, pp, typenums);
+      dtype = parse_stab_range_type (dhandle, info, type_name, pp, typenums);
       break;
 
     case 'b':
@@ -1541,7 +1552,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *typename, 
     case 's':
     case 'u':
       /* Struct or union type.  */
-      dtype = parse_stab_struct_type (dhandle, info, typename, pp,
+      dtype = parse_stab_struct_type (dhandle, info, type_name, pp,
 				      descriptor == 's', typenums);
       break;
 
@@ -1631,7 +1642,7 @@ parse_stab_type_number (const char **pp, int *typenums)
 /* Parse a range type.  */
 
 static debug_type
-parse_stab_range_type (void *dhandle, struct stab_handle *info, const char *typename, const char **pp, const int *typenums)
+parse_stab_range_type (void *dhandle, struct stab_handle *info, const char *type_name, const char **pp, const int *typenums)
 {
   const char *orig;
   int rangenums[2];
@@ -1730,11 +1741,11 @@ parse_stab_range_type (void *dhandle, struct stab_handle *info, const char *type
 	         long long int:t6=r1;0;-1;
 		 long long unsigned int:t7=r1;0;-1;
 	     We hack here to handle this reasonably.  */
-	  if (typename != NULL)
+	  if (type_name != NULL)
 	    {
-	      if (strcmp (typename, "long long int") == 0)
+	      if (strcmp (type_name, "long long int") == 0)
 		return debug_make_int_type (dhandle, 8, FALSE);
-	      else if (strcmp (typename, "long long unsigned int") == 0)
+	      else if (strcmp (type_name, "long long unsigned int") == 0)
 		return debug_make_int_type (dhandle, 8, TRUE);
 	    }
 	  /* FIXME: The size here really depends upon the target.  */
@@ -1837,11 +1848,13 @@ parse_stab_sun_builtin_type (void *dhandle, const char **pp)
     }
   ++*pp;
 
-  /* For some odd reason, all forms of char put a c here.  This is strange
-     because no other type has this honor.  We can safely ignore this because
-     we actually determine 'char'acterness by the number of bits specified in
-     the descriptor.  */
-  if (**pp == 'c')
+  /* OpenSolaris source code indicates that one of "cbv" characters
+     can come next and specify the intrinsic 'iformat' encoding.
+     'c' is character encoding, 'b' is boolean encoding, and 'v' is
+     varargs encoding.  This field can be safely ignored because
+     the type of the field is determined from the bitwidth extracted
+     below.  */
+  if (**pp == 'c' || **pp == 'b' || **pp == 'v')
     ++*pp;
 
   /* The first number appears to be the number of bytes occupied
@@ -2006,7 +2019,6 @@ parse_stab_struct_type (void *dhandle, struct stab_handle *info,
 			const char *tagname, const char **pp,
 			bfd_boolean structp, const int *typenums)
 {
-  const char *orig;
   bfd_vma size;
   debug_baseclass *baseclasses;
   debug_field *fields;
@@ -2014,8 +2026,6 @@ parse_stab_struct_type (void *dhandle, struct stab_handle *info,
   debug_method *methods;
   debug_type vptrbase;
   bfd_boolean ownvptr;
-
-  orig = *pp;
 
   /* Get the size.  */
   size = parse_number (pp, (bfd_boolean *) NULL);
@@ -2095,7 +2105,7 @@ parse_stab_baseclasses (void *dhandle, struct stab_handle *info,
 
   for (i = 0; i < c; i++)
     {
-      bfd_boolean virtual;
+      bfd_boolean is_virtual;
       enum debug_visibility visibility;
       bfd_vma bitpos;
       debug_type type;
@@ -2103,14 +2113,14 @@ parse_stab_baseclasses (void *dhandle, struct stab_handle *info,
       switch (**pp)
 	{
 	case '0':
-	  virtual = FALSE;
+	  is_virtual = FALSE;
 	  break;
 	case '1':
-	  virtual = TRUE;
+	  is_virtual = TRUE;
 	  break;
 	default:
 	  warn_stab (orig, _("unknown virtual character for baseclass"));
-	  virtual = FALSE;
+	  is_virtual = FALSE;
 	  break;
 	}
       ++*pp;
@@ -2149,7 +2159,7 @@ parse_stab_baseclasses (void *dhandle, struct stab_handle *info,
       if (type == DEBUG_TYPE_NULL)
 	return FALSE;
 
-      classes[i] = debug_make_baseclass (dhandle, type, bitpos, virtual,
+      classes[i] = debug_make_baseclass (dhandle, type, bitpos, is_virtual,
 					 visibility);
       if (classes[i] == DEBUG_BASECLASS_NULL)
 	return FALSE;
@@ -2274,7 +2284,7 @@ parse_stab_cpp_abbrev (void *dhandle, struct stab_handle *info,
   int cpp_abbrev;
   debug_type context;
   const char *name;
-  const char *typename;
+  const char *type_name;
   debug_type type;
   bfd_vma bitpos;
 
@@ -2310,13 +2320,13 @@ parse_stab_cpp_abbrev (void *dhandle, struct stab_handle *info,
       break;
     case 'b':
       /* $vb -- a virtual bsomethingorother */
-      typename = debug_get_type_name (dhandle, context);
-      if (typename == NULL)
+      type_name = debug_get_type_name (dhandle, context);
+      if (type_name == NULL)
 	{
 	  warn_stab (orig, _("unnamed $vb type"));
-	  typename = "FOO";
+	  type_name = "FOO";
 	}
-      name = concat ("_vb$", typename, (const char *) NULL);
+      name = concat ("_vb$", type_name, (const char *) NULL);
       break;
     default:
       warn_stab (orig, _("unrecognized C++ abbreviation"));
@@ -3255,26 +3265,26 @@ static debug_type *
 stab_find_slot (struct stab_handle *info, const int *typenums)
 {
   int filenum;
-  int index;
+  int tindex;
   struct stab_types **ps;
 
   filenum = typenums[0];
-  index = typenums[1];
+  tindex = typenums[1];
 
   if (filenum < 0 || (unsigned int) filenum >= info->files)
     {
       fprintf (stderr, _("Type file number %d out of range\n"), filenum);
       return NULL;
     }
-  if (index < 0)
+  if (tindex < 0)
     {
-      fprintf (stderr, _("Type index number %d out of range\n"), index);
+      fprintf (stderr, _("Type index number %d out of range\n"), tindex);
       return NULL;
     }
 
   ps = info->file_types + filenum;
 
-  while (index >= STAB_TYPES_SLOTS)
+  while (tindex >= STAB_TYPES_SLOTS)
     {
       if (*ps == NULL)
 	{
@@ -3282,7 +3292,7 @@ stab_find_slot (struct stab_handle *info, const int *typenums)
 	  memset (*ps, 0, sizeof **ps);
 	}
       ps = &(*ps)->next;
-      index -= STAB_TYPES_SLOTS;
+      tindex -= STAB_TYPES_SLOTS;
     }
   if (*ps == NULL)
     {
@@ -3290,7 +3300,7 @@ stab_find_slot (struct stab_handle *info, const int *typenums)
       memset (*ps, 0, sizeof **ps);
     }
 
-  return (*ps)->types + index;
+  return (*ps)->types + tindex;
 }
 
 /* Find a type given a type number.  If the type has not been
@@ -4645,7 +4655,7 @@ stab_demangle_type (struct stab_demangle_info *minfo, const char **pp,
     case 'M':
     case 'O':
       {
-	bfd_boolean memberp, constp, volatilep;
+	bfd_boolean memberp;
 	debug_type class_type = DEBUG_TYPE_NULL;
 	debug_type *args;
 	bfd_boolean varargs;
@@ -4653,8 +4663,6 @@ stab_demangle_type (struct stab_demangle_info *minfo, const char **pp,
 	const char *name;
 
 	memberp = **pp == 'M';
-	constp = FALSE;
-	volatilep = FALSE;
 	args = NULL;
 	varargs = FALSE;
 
@@ -4698,12 +4706,10 @@ stab_demangle_type (struct stab_demangle_info *minfo, const char **pp,
 	  {
 	    if (**pp == 'C')
 	      {
-		constp = TRUE;
 		++*pp;
 	      }
 	    else if (**pp == 'V')
 	      {
-		volatilep = TRUE;
 		++*pp;
 	      }
 	    if (**pp != 'F')
@@ -4764,9 +4770,6 @@ stab_demangle_type (struct stab_demangle_info *minfo, const char **pp,
 
     case 'Q':
       {
-	const char *hold;
-
-	hold = *pp;
 	if (! stab_demangle_qualified (minfo, pp, ptype))
 	  return FALSE;
       }

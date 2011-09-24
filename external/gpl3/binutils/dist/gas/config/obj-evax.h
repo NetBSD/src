@@ -1,5 +1,6 @@
 /* This file is obj-evax.h
-   Copyright 1996, 2000, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 1996, 2000, 2005, 2007, 2009, 2010
+   Free Software Foundation, Inc.
    Contributed by Klaus Kämpf (kkaempf@progis.de) of
      proGIS Software, Aachen, Germany.
 
@@ -25,6 +26,8 @@
  * object format specific header files.
  */
 
+#include "as.h"
+
 /* define an obj specific macro off which target cpu back ends may key.  */
 #define OBJ_EVAX 1
 
@@ -32,6 +35,16 @@
 #include "targ-cpu.h"
 
 #define OUTPUT_FLAVOR bfd_target_evax_flavour
+
+struct fix;
+
+struct alpha_linkage_fixups
+{
+  struct alpha_linkage_fixups *next;
+  struct fix *fixp;
+  segT seg;
+  symbolS *label;
+};
 
 /*
  * SYMBOLS
@@ -58,11 +71,14 @@ typedef void *object_headers;
 
 #define OBJ_EMIT_LINENO(a,b,c)	/* must be *something*.  This no-op's it out.  */
 
-#define obj_symbol_new_hook(s)        {;}
+/* This field keeps the symbols position in the link section.  */
+#define OBJ_SYMFIELD_TYPE valueT
 
-#define S_SET_OTHER(S,V)
-#define S_SET_TYPE(S,T)
-#define S_SET_DESC(S,D)
+#define obj_symbol_new_hook(s)       evax_symbol_new_hook (s)
+#define obj_frob_symbol(s,p)         evax_frob_symbol (s, &p)
+#define obj_frob_file_before_adjust  evax_frob_file_before_adjust
+#define obj_frob_file_before_fix     evax_frob_file_before_fix
+
 #define S_GET_OTHER(S)	0
 #define S_GET_TYPE(S)	0
 #define S_GET_DESC(S)	0
@@ -75,13 +91,23 @@ typedef void *object_headers;
 #define PDSC_S_K_MIN_REGISTER_SIZE 24
 #define PDSC_S_K_NULL_SIZE 16
 
-#define PDSC_S_M_BASE_REG_IS_FP 0x80	/* low byte */
+#define PDSC_S_M_HANDLER_VALID 0x10		/* low byte */
+#define PDSC_S_M_HANDLER_DATA_VALID 0x40	/* low byte */
+#define PDSC_S_M_BASE_REG_IS_FP 0x80		/* low byte */
 #define PDSC_S_M_NATIVE 0x10		/* high byte */
 #define PDSC_S_M_NO_JACKET 0x20		/* high byte */
 
 #define LKP_S_K_SIZE 16
 
-#define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR) (P2VAR) = 3
+extern segT alpha_link_section;
+extern struct alpha_linkage_fixups *alpha_linkage_fixup_root;
+
+extern void evax_section (int);
+extern void evax_symbol_new_hook (symbolS *);
+extern void evax_frob_symbol (symbolS *, int *);
+extern void evax_frob_file_before_adjust (void);
+extern void evax_frob_file_before_fix (void);
+extern char *evax_shorten_name (char *);
 
 /*
  * Local Variables:

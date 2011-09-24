@@ -1,6 +1,6 @@
 /* SOM object file format.
    Copyright 1993, 1994, 1998, 2000, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008  Free Software Foundation, Inc.
+   2007, 2008, 2009  Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -280,7 +280,7 @@ adjust_stab_sections (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
   nsyms = bfd_section_size (abfd, sec) / 12 - 1;
 
   p = seg_info (sec)->stabu.p;
-  assert (p != 0);
+  gas_assert (p != 0);
 
   bfd_h_put_16 (abfd, (bfd_vma) nsyms, (bfd_byte *) p + 6);
   bfd_h_put_32 (abfd, (bfd_vma) strsz, (bfd_byte *) p + 8);

@@ -1,6 +1,6 @@
 /* tc-ppc.h -- Header file for tc-ppc.c.
    Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -134,7 +134,7 @@ struct ppc_tc_sy
      .globl or .lglobl statement.  */
   int output;
   /* The symbol class.  */
-  int class;
+  int symbol_class;
   /* The real name, if the symbol was renamed.  */
   char *real_name;
   /* For a csect symbol, the subsegment we are using.  This is zero
@@ -195,7 +195,7 @@ do {								\
     S_SET_SEGMENT (dest, S_GET_SEGMENT (src));			\
   symbol_get_tc (dest)->size = symbol_get_tc (src)->size;	\
   symbol_get_tc (dest)->align = symbol_get_tc (src)->align;	\
-  symbol_get_tc (dest)->class = symbol_get_tc (src)->class;	\
+  symbol_get_tc (dest)->symbol_class = symbol_get_tc (src)->symbol_class;	\
   symbol_get_tc (dest)->within = symbol_get_tc (src)->within;	\
 } while (0)
 
@@ -206,15 +206,11 @@ extern const char       ppc_symbol_chars[];
 
 #ifdef OBJ_ELF
 
-/* Support for SHF_EXCLUDE and SHT_ORDERED */
-extern int ppc_section_letter (int, char **);
+/* Support for SHT_ORDERED */
 extern int ppc_section_type (char *, size_t);
-extern int ppc_section_word (char *, size_t);
-extern int ppc_section_flags (int, int, int);
+extern int ppc_section_flags (flagword, bfd_vma, int);
 
-#define md_elf_section_letter(LETTER, PTR_MSG)	ppc_section_letter (LETTER, PTR_MSG)
 #define md_elf_section_type(STR, LEN)		ppc_section_type (STR, LEN)
-#define md_elf_section_word(STR, LEN)		ppc_section_word (STR, LEN)
 #define md_elf_section_flags(FLAGS, ATTR, TYPE)	ppc_section_flags (FLAGS, ATTR, TYPE)
 
 #define tc_comment_chars ppc_comment_chars
@@ -248,6 +244,12 @@ extern int ppc_parse_name (const char *, struct expressionS *);
 
 #define md_cleanup() ppc_cleanup ()
 extern void ppc_cleanup (void);
+
+/* ppc uses different register numbers between .eh_frame and .debug_frame.
+   This macro translates the .eh_frame register numbers to .debug_frame
+   register numbers.  */
+#define md_reg_eh_frame_to_debug_frame(regno) \
+  ((regno) == 70 ? 64 /* cr2 */ : (regno))
 
 #define TARGET_USE_CFIPOP 1
 

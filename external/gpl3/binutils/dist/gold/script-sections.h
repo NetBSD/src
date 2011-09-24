@@ -1,6 +1,6 @@
 // script-sections.h -- linker script SECTIONS for gold   -*- C++ -*-
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright 2008, 2009 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -26,6 +26,7 @@
 #define GOLD_SCRIPT_SECTIONS_H
 
 #include <cstdio>
+#include <list>
 #include <vector>
 
 namespace gold
@@ -36,15 +37,34 @@ struct Parser_output_section_trailer;
 struct Input_section_spec;
 class Expression;
 class Sections_element;
+class Memory_region;
 class Phdrs_element;
 class Output_data;
 class Output_section_definition;
 class Output_section;
 class Output_segment;
+class Orphan_section_placement;
 
 class Script_sections
 {
  public:
+  // This is a list, not a vector, because we insert orphan sections
+  // in the middle.
+  typedef std::list<Sections_element*> Sections_elements;
+
+  // Logical script section types.  We map section types returned by the
+  // parser into these since some section types have the same semantics.
+  enum Section_type
+  {
+    // No section type specified.
+    ST_NONE,
+    // Section is NOLOAD.  We allocate space in the output but section
+    // is not loaded in runtime.
+    ST_NOLOAD,
+    // No space is allocated to section.
+    ST_NOALLOC
+  };
+
   Script_sections();
 
   // Start a SECTIONS clause.
@@ -140,9 +160,13 @@ class Script_sections
   // 3) If the input section is not mapped by the SECTIONS clause,
   //    this returns SECTION_NAME, and sets *OUTPUT_SECTION_SLOT to
   //    NULL.
+  // PSCRIPT_SECTION_TYPE points to a location for returning the section
+  // type specified in script.  This can be SCRIPT_SECTION_TYPE_NONE if
+  // no type is specified.
   const char*
   output_section_name(const char* file_name, const char* section_name,
-		      Output_section*** output_section_slot);
+		      Output_section*** output_section_slot,
+		      Section_type* pscript_section_type);
 
   // Place a marker for an orphan output section into the SECTIONS
   // clause.
@@ -180,18 +204,66 @@ class Script_sections
                           uint64_t* load_address, uint64_t* addralign,
                           uint64_t* size) const;
 
+  // Release all Output_segments.  This is used in relaxation.
+  void
+  release_segments();
+
+  // Whether we ever saw a SEGMENT_START expression, the presence of which
+  // changes the behaviour of -Ttext, -Tdata and -Tbss options.
+  bool
+  saw_segment_start_expression() const
+  { return this->saw_segment_start_expression_; }
+
+  // Set the flag which indicates whether we saw a SEGMENT_START expression.
+  void
+  set_saw_segment_start_expression(bool value)
+  { this->saw_segment_start_expression_ = value; }
+
+  // Add a memory region.
+  void
+  add_memory_region(const char*, size_t, unsigned int,
+		    Expression*, Expression*);
+
+  // Find a memory region's origin.
+  Expression*
+  find_memory_region_origin(const char*, size_t);
+
+  // Find a memory region's length.
+  Expression*
+  find_memory_region_length(const char*, size_t);
+
+  // Find a memory region by name.
+  Memory_region*
+  find_memory_region(const char*, size_t);
+
+  // Find a memory region that should be used by a given output section.
+  Memory_region*
+  find_memory_region(Output_section_definition*, bool,
+		     Output_section_definition**);
+
+  // Returns true if the provide block of memory is contained
+  // within a memory region.
+  bool
+  block_in_region(Symbol_table*, Layout*, uint64_t, uint64_t) const;
+    
+  // Set the memory region of the section.
+  void
+  set_memory_region(Memory_region*, bool);
+
   // Print the contents to the FILE.  This is for debugging.
   void
   print(FILE*) const;
 
- private:
-  typedef std::vector<Sections_element*> Sections_elements;
+  // Used for orphan sections.
+  typedef Sections_elements::iterator Elements_iterator;
 
+ private:
+  typedef std::vector<Memory_region*> Memory_regions;
   typedef std::vector<Phdrs_element*> Phdrs_elements;
 
   // Create segments.
   Output_segment*
-  create_segments(Layout*);
+  create_segments(Layout*, uint64_t);
 
   // Create PT_NOTE and PT_TLS segments.
   void
@@ -212,7 +284,7 @@ class Script_sections
 
   // Create the segments from a PHDRS clause.
   Output_segment*
-  create_segments_from_phdrs_clause(Layout* layout);
+  create_segments_from_phdrs_clause(Layout* layout, uint64_t);
 
   // Attach sections to segments from a PHDRS clause.
   void
@@ -220,7 +292,7 @@ class Script_sections
 
   // Set addresses of segments from a PHDRS clause.
   Output_segment*
-  set_phdrs_clause_addresses(Layout*);
+  set_phdrs_clause_addresses(Layout*, uint64_t);
 
   // True if we ever saw a SECTIONS clause.
   bool saw_sections_clause_;
@@ -230,13 +302,32 @@ class Script_sections
   Sections_elements* sections_elements_;
   // The current output section, if there is one.
   Output_section_definition* output_section_;
+  // The list of memory regions in the MEMORY clause.
+  Memory_regions* memory_regions_;
   // The list of program headers in the PHDRS clause.
   Phdrs_elements* phdrs_elements_;
-  // The index of the next Sections_element when we see
+  // Where to put orphan sections.
+  Orphan_section_placement* orphan_section_placement_;
+  // A pointer to the last Sections_element when we see
   // DATA_SEGMENT_ALIGN.
-  size_t data_segment_align_index_;
+  Sections_elements::iterator data_segment_align_start_;
+  // Whether we have seen DATA_SEGMENT_ALIGN.
+  bool saw_data_segment_align_;
   // Whether we have seen DATA_SEGMENT_RELRO_END.
   bool saw_relro_end_;
+  // Whether we have seen SEGMENT_START.
+  bool saw_segment_start_expression_;
+};
+
+// Attributes for memory regions.
+enum
+{
+  MEM_EXECUTABLE   = (1 << 0),
+  MEM_WRITEABLE    = (1 << 1),
+  MEM_READABLE     = (1 << 2),
+  MEM_ALLOCATABLE  = (1 << 3),
+  MEM_INITIALIZED  = (1 << 4),
+  MEM_ATTR_MASK    = (1 << 5) - 1
 };
 
 } // End namespace gold.

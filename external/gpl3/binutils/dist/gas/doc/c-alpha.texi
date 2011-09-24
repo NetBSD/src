@@ -1,4 +1,4 @@
-@c Copyright 2002, 2003
+@c Copyright 2002, 2003, 2005, 2009
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -89,6 +89,15 @@ of saving space and resolving some relocations at assembly time.  Note that
 this option does not propagate all symbol arithmetic into the object file,
 because not all symbol arithmetic can be represented.  However, the option
 can still be useful in specific applications.
+
+@cindex @code{-replace} command line option, Alpha
+@cindex @code{-noreplace} command line option, Alpha
+@item -replace
+@itemx -noreplace
+Enables or disables the optimization of procedure calls, both at assemblage
+and at link time.  These options are only available for VMS targets and
+@code{-replace} is the default.  See section 1.4.1 of the OpenVMS Linker
+Utility Manual.
 
 @cindex @code{-g} command line option, Alpha
 @item -g

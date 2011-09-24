@@ -1,6 +1,6 @@
 /* tc-ia64.h -- Header file for tc-ia64.c.
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008,
+   2009, 2010  Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -79,6 +79,9 @@ extern const char *ia64_target_format (void);
 #define LEX_QM		(LEX_NAME|LEX_BEGIN_NAME) /* allow `?' inside name */
 #define LEX_HASH	LEX_END_NAME	/* allow `#' ending a name */
 
+#define TC_PREDICATE_START_CHAR '('
+#define TC_PREDICATE_END_CHAR ')'
+
 extern const char ia64_symbol_chars[];
 #define tc_symbol_chars ia64_symbol_chars
 
@@ -107,8 +110,8 @@ extern int ia64_force_relocation (struct fix *);
 extern void ia64_cons_fix_new (fragS *, int, int, expressionS *);
 extern void ia64_validate_fix (struct fix *);
 extern char * ia64_canonicalize_symbol_name (char *);
-extern int ia64_elf_section_letter (int, char **);
-extern flagword ia64_elf_section_flags (flagword, int, int);
+extern bfd_vma ia64_elf_section_letter (int, char **);
+extern flagword ia64_elf_section_flags (flagword, bfd_vma, int);
 extern int ia64_elf_section_type (const char *, size_t);
 extern long ia64_pcrel_from_section (struct fix *, segT);
 extern void ia64_md_do_align (int, const char *, int, int);
@@ -156,6 +159,10 @@ extern void ia64_convert_frag (fragS *);
 #define md_after_parse_args()		ia64_after_parse_args ()
 #define TC_DWARF2_EMIT_OFFSET		ia64_dwarf2_emit_offset
 #define tc_check_label(l)		ia64_check_label (l)
+#ifdef TE_VMS
+#define tc_init_after_args() ia64_vms_note ()
+void ia64_vms_note (void);
+#endif
 
 /* Record if an alignment frag should end with a stop bit.  */
 #define TC_FRAG_TYPE			int

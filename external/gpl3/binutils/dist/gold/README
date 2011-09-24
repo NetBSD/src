@@ -15,12 +15,8 @@ documentation for features which gold supports.  gold supports most of
 the features of the GNU linker for ELF targets.  Notable
 omissions--features of the GNU linker not currently supported in
 gold--are:
-  * MEMORY regions in linker scripts
   * MRI compatible linker scripts
-  * linker map files (-M, -Map)
   * cross-reference reports (--cref)
-  * linker garbage collection (--gc-sections)
-  * position independent executables (-pie)
   * various other minor options
 
 
@@ -51,3 +47,16 @@ of work.  Task objects are stored on a single Workqueue object.  Tasks
 communicate via Task_token objects.  Task_token objects are only
 manipulated while holding the master Workqueue lock.  Relatively few
 mutexes are used.
+
+
+Build requirements
+==================
+
+The gold source code uses templates heavily.  Building it requires a
+recent version of g++.  g++ 4.0.3 and 4.1.3 are known to work.  g++
+3.2, 3.4.3, and 4.1.2 are known to fail.
+
+The linker script parser uses features which are only in newer
+versions of bison.  bison 2.3 is known to work.  bison 1.26 is known
+to fail.  If you are building gold from an official binutils release,
+the bison output should already be included.

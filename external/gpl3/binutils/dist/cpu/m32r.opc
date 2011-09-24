@@ -1,6 +1,6 @@
 /* M32R opcode support.  -*- C -*-
 
-   Copyright 1998, 1999, 2000, 2001, 2004, 2005, 2007
+   Copyright 1998, 1999, 2000, 2001, 2004, 2005, 2007, 2009
    Free Software Foundation, Inc.
 
    Contributed by Red Hat Inc; developed under contract from
@@ -238,15 +238,38 @@ parse_ulo16 (CGEN_CPU_DESC cd,
 /* -- */
 
 /* -- dis.c */
-/* Immediate values are prefixed with '#'.  */
 
-#define CGEN_PRINT_NORMAL(cd, info, value, attrs, pc, length)	\
-  do								\
-    {								\
-      if (CGEN_BOOL_ATTR ((attrs), CGEN_OPERAND_HASH_PREFIX))	\
-	(*info->fprintf_func) (info->stream, "#");		\
-    }								\
-  while (0)
+/* Print signed operands with '#' prefixes.  */
+
+static void
+print_signed_with_hash_prefix (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+			       void * dis_info,
+			       long value,
+			       unsigned int attrs ATTRIBUTE_UNUSED,
+			       bfd_vma pc ATTRIBUTE_UNUSED,
+			       int length ATTRIBUTE_UNUSED)
+{
+  disassemble_info *info = (disassemble_info *) dis_info;
+
+  (*info->fprintf_func) (info->stream, "#");
+  (*info->fprintf_func) (info->stream, "%ld", value);
+}
+
+/* Print unsigned operands with '#' prefixes.  */
+
+static void
+print_unsigned_with_hash_prefix (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+				 void * dis_info,
+				 long value,
+				 unsigned int attrs ATTRIBUTE_UNUSED,
+				 bfd_vma pc ATTRIBUTE_UNUSED,
+				 int length ATTRIBUTE_UNUSED)
+{
+  disassemble_info *info = (disassemble_info *) dis_info;
+
+  (*info->fprintf_func) (info->stream, "#");
+  (*info->fprintf_func) (info->stream, "0x%lx", value);
+}
 
 /* Handle '#' prefixes as operands.  */
 

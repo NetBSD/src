@@ -77,6 +77,7 @@
   struct Version_dependency_list* deplist;
   struct Version_expression_list* versyms;
   struct Version_tree* versnode;
+  enum Script_section_type section_type;
 }
 
 /* Operators, including a precedence table for expressions.  */
@@ -121,11 +122,13 @@
 %token BYTE
 %token CONSTANT
 %token CONSTRUCTORS
+%token COPY
 %token CREATE_OBJECT_SYMBOLS
 %token DATA_SEGMENT_ALIGN
 %token DATA_SEGMENT_END
 %token DATA_SEGMENT_RELRO_END
 %token DEFINED
+%token DSECT
 %token ENTRY
 %token EXCLUDE_FILE
 %token EXTERN
@@ -137,8 +140,10 @@
 %token HLL
 %token INCLUDE
 %token INHIBIT_COMMON_ALLOCATION
+%token INFO
 %token INPUT
 %token KEEP
+%token LEN
 %token LENGTH		/* LENGTH, l, len */
 %token LOADADDR
 %token LOCAL		/* local */
@@ -150,8 +155,10 @@
 %token NEXT
 %token NOCROSSREFS
 %token NOFLOAT
+%token NOLOAD
 %token ONLY_IF_RO
 %token ONLY_IF_RW
+%token ORG
 %token ORIGIN		/* ORIGIN, o, org */
 %token OUTPUT
 %token OUTPUT_ARCH
@@ -193,12 +200,14 @@
 %token PARSING_LINKER_SCRIPT
 %token PARSING_VERSION_SCRIPT
 %token PARSING_DEFSYM
+%token PARSING_DYNAMIC_LIST
 
 /* Non-terminal types, where needed.  */
 
-%type <expr> parse_exp exp opt_address_and_section_type
+%type <expr> parse_exp exp
 %type <expr> opt_at opt_align opt_subalign opt_fill
-%type <output_section_header> section_header
+%type <output_section_header> section_header opt_address_and_section_type
+%type <section_type> section_type
 %type <output_section_trailer> section_trailer
 %type <constraint> opt_constraint
 %type <string_list> opt_phdr
@@ -208,7 +217,7 @@
 %type <wildcard_section> wildcard_file wildcard_section
 %type <string_list> exclude_names
 %type <string> wildcard_name
-%type <integer> phdr_type
+%type <integer> phdr_type memory_attr
 %type <phdr_info> phdr_info
 %type <versyms> vers_defns
 %type <versnode> vers_tag
@@ -222,6 +231,7 @@ top:
 	  PARSING_LINKER_SCRIPT linker_script
 	| PARSING_VERSION_SCRIPT version_script
 	| PARSING_DEFSYM defsym_expr
+        | PARSING_DYNAMIC_LIST dynamic_list_expr
 	;
 
 /* A file contains a list of commands.  */
@@ -232,7 +242,8 @@ linker_script:
 
 /* A command which may appear at top level of a linker script.  */
 file_cmd:
-	  FORCE_COMMON_ALLOCATION
+	  EXTERN '(' extern_name_list ')'
+	| FORCE_COMMON_ALLOCATION
 	    { script_set_common_allocation(closure, 1); }
 	| GROUP
 	    { script_start_group(closure); }
@@ -240,8 +251,23 @@ file_cmd:
 	    { script_end_group(closure); }
 	| INHIBIT_COMMON_ALLOCATION
 	    { script_set_common_allocation(closure, 0); }
+	| INPUT '(' input_list ')'
+	| MEMORY '{' memory_defs '}'
         | OPTION '(' string ')'
 	    { script_parse_option(closure, $3.value, $3.length); }
+	| OUTPUT_FORMAT '(' string ')'
+	    {
+	      if (!script_check_output_format(closure, $3.value, $3.length,
+					      NULL, 0, NULL, 0))
+		YYABORT;
+	    }
+	| OUTPUT_FORMAT '(' string ',' string ',' string ')'
+	    {
+	      if (!script_check_output_format(closure, $3.value, $3.length,
+					      $5.value, $5.length,
+					      $7.value, $7.length))
+		YYABORT;
+	    }
 	| PHDRS '{' phdrs_defs '}'
 	| SEARCH_DIR '(' string ')'
 	    { script_add_search_dir(closure, $3.value, $3.length); }
@@ -249,6 +275,8 @@ file_cmd:
 	    { script_start_sections(closure); }
 	  sections_block '}'
 	    { script_finish_sections(closure); }
+	| TARGET_K '(' string ')'
+	    { script_set_target(closure, $3.value, $3.length); }
         | VERSIONK '{'
             { script_push_lex_into_version_mode(closure); }
           version_script '}'
@@ -263,9 +291,26 @@ file_cmd:
    these is more-or-less OK since most scripts simply explicitly
    choose the default.  */
 ignore_cmd:
-	  OUTPUT_FORMAT '(' string ')'
-	| OUTPUT_FORMAT '(' string ',' string ',' string ')'
-	| OUTPUT_ARCH '(' string ')'
+	  OUTPUT_ARCH '(' string ')'
+	;
+
+/* A list of external undefined symbols.  We put the lexer into
+   expression mode so that commas separate names; this is what the GNU
+   linker does.  */
+
+extern_name_list:
+	    { script_push_lex_into_expression_mode(closure); }
+	  extern_name_list_body
+	    { script_pop_lex_mode(closure); }
+	;
+
+extern_name_list_body:
+	  string
+	    { script_add_extern(closure, $1.value, $1.length); }
+	| extern_name_list_body string
+	    { script_add_extern(closure, $2.value, $2.length); }
+	| extern_name_list_body ',' string
+	    { script_add_extern(closure, $3.value, $3.length); }
 	;
 
 /* A list of input file names.  */
@@ -278,6 +323,8 @@ input_list:
 input_list_element:
 	  string
 	    { script_add_file(closure, $1.value, $1.length); }
+	| '-' STRING
+	    { script_add_library(closure, $2.value, $2.length); }
 	| AS_NEEDED
 	    { script_start_as_needed(closure); }
 	  '(' input_list ')'
@@ -307,7 +354,8 @@ section_header:
 	    { script_pop_lex_mode(closure); }
 	  opt_constraint
 	    {
-	      $$.address = $2;
+	      $$.address = $2.address;
+	      $$.section_type = $2.section_type;
 	      $$.load_address = $3;
 	      $$.align = $4;
 	      $$.subalign = $5;
@@ -320,18 +368,61 @@ section_header:
    '(' in section_header.  */
 
 opt_address_and_section_type:
-	  ':'
-	    { $$ = NULL; }
-	| '(' ')' ':'
-	    { $$ = NULL; }
-	| exp ':'
-	    { $$ = $1; }
-	| exp '(' ')' ':'
-	    { $$ = $1; }
-	| exp '(' string ')' ':'
+	':'
 	    {
-	      yyerror(closure, "section types are not supported");
-	      $$ = $1;
+	      $$.address = NULL;
+	      $$.section_type = SCRIPT_SECTION_TYPE_NONE;
+	    }
+	| '(' ')' ':'
+	    {
+	      $$.address = NULL;
+	      $$.section_type = SCRIPT_SECTION_TYPE_NONE;
+	    }
+	| exp ':'
+	    {
+	      $$.address = $1;
+	      $$.section_type = SCRIPT_SECTION_TYPE_NONE;
+	    }
+	| exp '(' ')' ':'
+	    {
+	      $$.address = $1;
+	      $$.section_type = SCRIPT_SECTION_TYPE_NONE;
+	    }
+	| '(' section_type ')' ':'
+	    {
+	      $$.address = NULL;
+	      $$.section_type = $2;
+	    }
+	| exp '(' section_type ')' ':'
+	    {
+	      $$.address = $1;
+	      $$.section_type = $3;
+	    }
+	;
+
+/* We only support NOLOAD.  */
+section_type:
+	NOLOAD
+	    { $$ = SCRIPT_SECTION_TYPE_NOLOAD; }
+	| DSECT
+	    {
+	      yyerror(closure, "DSECT section type is unsupported");
+	      $$ = SCRIPT_SECTION_TYPE_DSECT;
+	    }
+	| COPY
+	    {
+	      yyerror(closure, "COPY section type is unsupported");
+	      $$ = SCRIPT_SECTION_TYPE_COPY;
+	    }
+	| INFO
+	    {
+	      yyerror(closure, "INFO section type is unsupported");
+	      $$ = SCRIPT_SECTION_TYPE_INFO;
+	    }
+	| OVERLAY
+	    {
+	      yyerror(closure, "OVERLAY section type is unsupported");
+	      $$ = SCRIPT_SECTION_TYPE_OVERLAY;
 	    }
 	;
 
@@ -383,14 +474,14 @@ section_trailer:
 /* A memory specification for an output section.  */
 opt_memspec:
 	  '>' string
-	    { yyerror(closure, "memory regions are not supported"); }
+	    { script_set_section_region(closure, $2.value, $2.length, 1); }
 	| /* empty */
 	;
 
 /* A memory specification for where to load an output section.  */
 opt_at_memspec:
 	  AT '>' string
-	    { yyerror(closure, "memory regions are not supported"); }
+	    { script_set_section_region(closure, $3.value, $3.length, 0); }
 	| /* empty */
 	;
 
@@ -600,6 +691,50 @@ file_or_sections_cmd:
 	    { script_add_assertion(closure, $3, $5.value, $5.length); }
 	;
 
+/* A list of MEMORY definitions.  */
+memory_defs:
+	  memory_defs opt_comma memory_def
+	| /* empty */
+	;
+
+/* A single MEMORY definition.  */
+memory_def:
+	  string memory_attr ':' memory_origin '=' parse_exp opt_comma memory_length '=' parse_exp
+	  { script_add_memory(closure, $1.value, $1.length, $2, $6, $10); }
+	|
+	  /* LD supports an INCLUDE directive here, currently GOLD does not.  */
+	  INCLUDE string
+	  { script_include_directive(closure, $2.value, $2.length); }
+	|
+	;
+
+/* The (optional) attributes of a MEMORY region.  */
+memory_attr:
+	  '(' string ')'
+	  { $$ = script_parse_memory_attr(closure, $2.value, $2.length, 0); }
+        | /* Inverted attributes. */
+	  '(' '!' string ')'
+	  { $$ = script_parse_memory_attr(closure, $3.value, $3.length, 1); }
+	| /* empty */
+	    { $$ = 0; }
+	;
+
+memory_origin:
+          ORIGIN
+	|
+	  ORG
+	|
+	  'o'
+	;
+
+memory_length:
+          LENGTH
+	|
+	  LEN
+	|
+	  'l'
+	;
+
 /* A list of program header definitions.  */
 phdrs_defs:
 	  phdrs_defs phdr_def
@@ -779,7 +914,7 @@ exp:
 	| INTEGER
 	    { $$ = script_exp_integer($1); }
 	| string
-	    { $$ = script_exp_string($1.value, $1.length); }
+	    { $$ = script_symbol(closure, $1.value, $1.length); }
 	| MAX_K '(' exp ',' exp ')'
 	    { $$ = script_exp_function_max($3, $5); }
 	| MIN_K '(' exp ',' exp ')'
@@ -797,9 +932,9 @@ exp:
 	| LOADADDR '(' string ')'
 	    { $$ = script_exp_function_loadaddr($3.value, $3.length); }
 	| ORIGIN '(' string ')'
-	    { $$ = script_exp_function_origin($3.value, $3.length); }
+	    { $$ = script_exp_function_origin(closure, $3.value, $3.length); }
 	| LENGTH '(' string ')'
-	    { $$ = script_exp_function_length($3.value, $3.length); }
+	    { $$ = script_exp_function_length(closure, $3.value, $3.length); }
 	| CONSTANT '(' string ')'
 	    { $$ = script_exp_function_constant($3.value, $3.length); }
 	| ABSOLUTE '(' exp ')'
@@ -825,6 +960,10 @@ exp:
 	| SEGMENT_START '(' string ',' exp ')'
 	    {
 	      $$ = script_exp_function_segment_start($3.value, $3.length, $5);
+	      /* We need to take note of any SEGMENT_START expressions
+		 because they change the behaviour of -Ttext, -Tdata and
+		 -Tbss options.  */
+	      script_saw_segment_start_expression(closure);
 	    }
 	| ASSERT_K '(' exp ',' string ')'
 	    { $$ = script_exp_function_assert($3, $5.value, $5.length); }
@@ -835,6 +974,24 @@ defsym_expr:
 	  string '=' parse_exp
 	    { script_set_symbol(closure, $1.value, $1.length, $3, 0, 0); }
 	;
+
+/* Handle the --dynamic-list option.  A dynamic list has the format
+   { sym1; sym2; extern "C++" { namespace::sym3 }; };
+   We store the symbol we see in the "local" list; that is where
+   Command_line::in_dynamic_list() will look to do its check.
+   TODO(csilvers): More than one of these brace-lists can appear, and
+   should just be merged and treated as a single list.  */
+dynamic_list_expr: dynamic_list_nodes ;
+
+dynamic_list_nodes:
+	  dynamic_list_node
+	| dynamic_list_nodes dynamic_list_node
+        ;
+
+dynamic_list_node:
+          '{' vers_defns ';' '}' ';'
+            { script_new_vers_node (closure, NULL, $2); }
+        ;
 
 /* A version script.  */
 version_script:

@@ -36,17 +36,16 @@ using namespace gold;
 
 template<int size, bool big_endian>
 bool
-Sized_object_test(const unsigned char* test_file, unsigned int test_file_size,
-		  Target* target_test_pointer)
+Sized_object_test(const unsigned char* test_file, unsigned int test_file_size)
 {
+  parameters_clear_target();
   // We need a pretend Task.
   const Task* task = reinterpret_cast<const Task*>(-1);
   Input_file input_file(task, "test.o", test_file, test_file_size);
   Object* object = make_elf_object("test.o", &input_file, 0,
-				   test_file, test_file_size);
+				   test_file, test_file_size, NULL);
   CHECK(object->name() == "test.o");
   CHECK(!object->is_dynamic());
-  CHECK(object->target() == target_test_pointer);
   CHECK(object->is_locked());
   object->unlock(task);
   CHECK(!object->is_locked());
@@ -67,30 +66,30 @@ Object_test(Test_report*)
 
 #ifdef HAVE_TARGET_32_LITTLE
   if (!Sized_object_test<32, false>(test_file_1_32_little,
-				    test_file_1_size_32_little,
-				    target_test_pointer_32_little))
+				    test_file_1_size_32_little))
     ++fail;
+  CHECK(&parameters->target() == target_test_pointer_32_little);
 #endif
 
 #ifdef HAVE_TARGET_32_BIG
   if (!Sized_object_test<32, true>(test_file_1_32_big,
-				   test_file_1_size_32_big,
-				   target_test_pointer_32_big))
+				   test_file_1_size_32_big))
     ++fail;
+  CHECK(&parameters->target() == target_test_pointer_32_big);
 #endif
 
 #ifdef HAVE_TARGET_64_LITTLE
   if (!Sized_object_test<64, false>(test_file_1_64_little,
-				    test_file_1_size_64_little,
-				    target_test_pointer_64_little))
+				    test_file_1_size_64_little))
     ++fail;
+  CHECK(&parameters->target() == target_test_pointer_64_little);
 #endif
 
 #ifdef HAVE_TARGET_64_BIG
   if (!Sized_object_test<64, true>(test_file_1_64_big,
-				   test_file_1_size_64_big,
-				   target_test_pointer_64_big))
+				   test_file_1_size_64_big))
     ++fail;
+  CHECK(&parameters->target() == target_test_pointer_64_big);
 #endif
 
   return fail == 0;

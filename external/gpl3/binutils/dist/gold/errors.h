@@ -75,14 +75,10 @@ class Errors
 		      size_t relnum, off_t reloffset,
 		      const char* format, va_list);
 
-  // Issue an undefined symbol error.  SYM is the undefined symbol.
-  // RELINFO is the general relocation info.  RELNUM is the number of
-  // the reloc, and RELOFFSET is the reloc's offset.
-  template<int size, bool big_endian>
+  // Issue an undefined symbol error.  LOCATION is the location of
+  // the error (typically an object file name or relocation info).
   void
-  undefined_symbol(const Symbol* sym,
-		   const Relocate_info<size, big_endian>* relinfo,
-		   size_t relnum, off_t reloffset);
+  undefined_symbol(const Symbol* sym, const std::string& location);
 
   // Report a debugging message.
   void
@@ -120,6 +116,8 @@ class Errors
   // This class can be accessed from multiple threads.  This lock is
   // used to control access to the data structures.
   Lock* lock_;
+  // Used to initialize the lock_ field exactly once.
+  Initialize_lock initialize_lock_;
   // Numbers of errors reported.
   int error_count_;
   // Number of warnings reported.

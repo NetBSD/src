@@ -79,10 +79,10 @@ GAS LISTING .*
   17      00F00000 
   18 \?\?\?\? 10080001 		bra/tx -3 -> bra 10     ;      Valid
 \*\*\*\*  Error:Unable to mix instructions as specified
-  18      00F00000 
 GAS LISTING .*
 
 
+  18      00F00000 
   18      100BFFFF 
   18      00F00000 
   19 \?\?\?\? 00080001 		bra/tx -3 -> bra/fx 10  ;      Valid

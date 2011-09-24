@@ -64,7 +64,7 @@ On 32-bit hosts though, this support will be restricted to 32-bit
 target unless the --enable-64-bit-bfd option is also used:
 
 	./configure --enable-64-bit-bfd --enable-targets=all
-	
+
 You can also specify the --enable-shared option when you run
 configure.  This will build the BFD and opcodes libraries as shared
 libraries.  You can use arguments with the --enable-shared option to
@@ -78,6 +78,17 @@ path for the binaries.  However, in some cases, after you install the
 binaries, you may have to set an environment variable, normally
 LD_LIBRARY_PATH, so that the system can find the installed libbfd
 shared library.
+
+On hosts that support shared system libraries the binutils will be
+linked against them.  If you have static versions of the system
+libraries installed as well and you wish to create static binaries
+instead then use the LDFLAGS environment variable,  like this:
+
+  ../binutils-XXX/configure LDFLAGS="--static" [more options]
+
+Note: the two dashes are important.  The binutils make use of the
+libtool script which has a special interpretation of "-static" when it
+is in the LDFLAGS environment variable.
 
 To build under openVMS/AXP, see the file makefile.vms in the top level
 directory.

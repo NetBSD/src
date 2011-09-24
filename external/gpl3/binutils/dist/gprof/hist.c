@@ -1,6 +1,6 @@
 /* hist.c  -  Histogram related operations.
 
-   Copyright 1999, 2000, 2001, 2002, 2004, 2005, 2007
+   Copyright 1999, 2000, 2001, 2002, 2004, 2005, 2007, 2009
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -48,6 +48,8 @@ extern void flat_blurb (FILE * fp);
 static histogram *find_histogram (bfd_vma lowpc, bfd_vma highpc);
 static histogram *find_histogram_for_pc (bfd_vma pc);
 
+histogram * histograms;
+unsigned num_histograms;
 double hist_scale;
 static char hist_dimension[16] = "seconds";
 static char hist_dimension_abbrev = 's';
@@ -198,8 +200,8 @@ hist_read_rec (FILE * ifp, const char *filename)
 
       /* This is new record.  Add it to global array and allocate space for
 	 the samples.  */
-      histograms = xrealloc (histograms,
-			     sizeof (histogram) * (num_histograms + 1));
+      histograms = (struct histogram *)
+          xrealloc (histograms, sizeof (histogram) * (num_histograms + 1));
       memcpy (histograms + num_histograms,
 	      &n_record, sizeof (histogram));
       record = &histograms[num_histograms];      
@@ -364,7 +366,7 @@ hist_assign_samples_1 (histogram *r)
   bfd_vma overlap, addr;
   unsigned int bin_count;
   unsigned int i, j;
-  double time, credit;
+  double count_time, credit;
 
   bfd_vma lowpc = r->lowpc / sizeof (UNIT);
 
@@ -377,7 +379,7 @@ hist_assign_samples_1 (histogram *r)
 
       bin_low_pc = lowpc + (bfd_vma) (hist_scale * i);
       bin_high_pc = lowpc + (bfd_vma) (hist_scale * (i + 1));
-      time = bin_count;
+      count_time = bin_count;
 
       DBG (SAMPLEDEBUG,
 	   printf (
@@ -385,7 +387,7 @@ hist_assign_samples_1 (histogram *r)
 		    (unsigned long) (sizeof (UNIT) * bin_low_pc),
 		    (unsigned long) (sizeof (UNIT) * bin_high_pc),
 		    bin_count));
-      total_time += time;
+      total_time += count_time;
 
       /* Credit all symbols that are covered by bin I.  */
       for (j = j - 1; j < symtab.len; ++j)
@@ -412,11 +414,11 @@ hist_assign_samples_1 (histogram *r)
 	       "[assign_samples] [0x%lx,0x%lx) %s gets %f ticks %ld overlap\n",
 			   (unsigned long) symtab.base[j].addr,
 			   (unsigned long) (sizeof (UNIT) * sym_high_pc),
-			   symtab.base[j].name, overlap * time / hist_scale,
+			   symtab.base[j].name, overlap * count_time / hist_scale,
 			   (long) overlap));
 
 	      addr = symtab.base[j].addr;
-	      credit = overlap * time / hist_scale;
+	      credit = overlap * count_time / hist_scale;
 
 	      /* Credit symbol if it appears in INCL_FLAT or that
 		 table is empty and it does not appear it in
@@ -561,9 +563,9 @@ void
 hist_print ()
 {
   Sym **time_sorted_syms, *top_dog, *sym;
-  unsigned int index;
+  unsigned int sym_index;
   unsigned log_scale;
-  double top_time, time;
+  double top_time;
   bfd_vma addr;
 
   if (first_output)
@@ -590,8 +592,8 @@ hist_print ()
      and tertiary keys).  */
   time_sorted_syms = (Sym **) xmalloc (symtab.len * sizeof (Sym *));
 
-  for (index = 0; index < symtab.len; ++index)
-    time_sorted_syms[index] = &symtab.base[index];
+  for (sym_index = 0; sym_index < symtab.len; ++sym_index)
+    time_sorted_syms[sym_index] = &symtab.base[sym_index];
 
   qsort (time_sorted_syms, symtab.len, sizeof (Sym *), cmp_time);
 
@@ -607,18 +609,20 @@ hist_print ()
       top_dog = 0;
       top_time = 0.0;
 
-      for (index = 0; index < symtab.len; ++index)
+      for (sym_index = 0; sym_index < symtab.len; ++sym_index)
 	{
-	  sym = time_sorted_syms[index];
+	  sym = time_sorted_syms[sym_index];
 
 	  if (sym->ncalls != 0)
 	    {
-	      time = (sym->hist.time + sym->cg.child_time) / sym->ncalls;
+	      double call_time;
 
-	      if (time > top_time)
+	      call_time = (sym->hist.time + sym->cg.child_time) / sym->ncalls;
+
+	      if (call_time > top_time)
 		{
 		  top_dog = sym;
-		  top_time = time;
+		  top_time = call_time;
 		}
 	    }
 	}
@@ -642,16 +646,16 @@ hist_print ()
      I-cache misses etc.).  */
   print_header (SItab[log_scale].prefix);
 
-  for (index = 0; index < symtab.len; ++index)
+  for (sym_index = 0; sym_index < symtab.len; ++sym_index)
     {
-      addr = time_sorted_syms[index]->addr;
+      addr = time_sorted_syms[sym_index]->addr;
 
       /* Print symbol if its in INCL_FLAT table or that table
 	is empty and the symbol is not in EXCL_FLAT.  */
       if (sym_lookup (&syms[INCL_FLAT], addr)
 	  || (syms[INCL_FLAT].len == 0
 	      && !sym_lookup (&syms[EXCL_FLAT], addr)))
-	print_line (time_sorted_syms[index], SItab[log_scale].scale);
+	print_line (time_sorted_syms[sym_index], SItab[log_scale].scale);
     }
 
   free (time_sorted_syms);

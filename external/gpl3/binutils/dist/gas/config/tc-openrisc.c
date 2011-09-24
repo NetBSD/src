@@ -1,5 +1,6 @@
 /* tc-openrisc.c -- Assembler for the OpenRISC family.
-   Copyright 2001, 2002, 2003, 2005, 2006, 2007 Free Software Foundation.
+   Copyright 2001, 2002, 2003, 2005, 2006, 2007, 2009
+   Free Software Foundation.
    Contributed by Johan Rydberg, jrydberg@opencores.org
 
    This file is part of GAS, the GNU Assembler.
@@ -129,7 +130,7 @@ md_assemble (char * str)
 
   if (!insn.insn)
     {
-      as_bad (errmsg);
+      as_bad ("%s", errmsg);
       return;
     }
 

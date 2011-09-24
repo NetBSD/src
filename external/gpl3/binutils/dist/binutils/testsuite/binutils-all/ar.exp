@@ -1,4 +1,5 @@
-#   Copyright 1995, 1997, 2002, 2004, 2007, 2008 Free Software Foundation, Inc.
+#   Copyright 1995, 1997, 2002, 2004, 2007, 2008, 2009, 2010
+#   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -354,6 +355,89 @@ proc argument_parsing { } {
     pass $testname
 }
 
+# Test building a deterministic archive.
+
+proc deterministic_archive { } {
+    global AR
+    global AS
+    global NM
+    global srcdir
+    global subdir
+
+    set testname "ar deterministic archive"
+
+    if ![binutils_assemble $srcdir/$subdir/bintest.s tmpdir/bintest.o] {
+	unresolved $testname
+	return
+    }
+
+    if [is_remote host] {
+	set archive artest.a
+	set objfile [remote_download host tmpdir/bintest.o]
+	remote_file host delete $archive
+    } else {
+	set archive tmpdir/artest.a
+	set objfile tmpdir/bintest.o
+    }
+
+    remote_file build delete tmpdir/artest.a
+
+    set got [binutils_run $AR "rcD $archive ${objfile}"]
+    if ![string match "" $got] {
+	fail $testname
+	return
+    }
+
+    set got [binutils_run $AR "tv $archive"]
+    # This only checks the file mode and uid/gid.  We can't easily match
+    # date because it's printed with the user's timezone.
+    if ![string match "rw-r--r-- 0/0 *bintest.o*" $got] {
+	fail $testname
+	return
+    }
+
+    pass $testname
+}
+
+proc unique_symbol { } {
+    global AR
+    global AS
+    global NM
+    global srcdir
+    global subdir
+
+    set testname "ar unique symbol in archive"
+
+    if ![binutils_assemble $srcdir/$subdir/unique.s tmpdir/unique.o] {
+	unresolved $testname
+    }
+
+    if [is_remote host] {
+	set archive artest.a
+	set objfile [remote_download host tmpdir/unique.o]
+	remote_file host delete $archive
+    } else {
+	set archive tmpdir/artest.a
+	set objfile tmpdir/unique.o
+    }
+
+    remote_file build delete tmpdir/artest.a
+
+    set got [binutils_run $AR "-s -r -c $archive ${objfile}"]
+    if ![string match "" $got] {
+	fail $testname
+	return
+    }
+
+    set got [binutils_run $NM "--print-armap $archive"]
+    if ![string match "*foo in *unique.o*" $got] {
+	fail $testname
+	return
+    }
+
+    pass $testname
+}
+
 # Run the tests.
 
 long_filenames
@@ -361,3 +445,9 @@ symbol_table
 thin_archive
 thin_archive_with_nested
 argument_parsing
+deterministic_archive
+if { [is_elf_format]
+     && ![istarget "*-*-hpux*"]
+     && ![istarget "msp*-*-*"] } {
+    unique_symbol
+}

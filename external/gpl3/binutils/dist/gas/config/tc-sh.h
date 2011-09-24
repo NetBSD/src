@@ -1,6 +1,6 @@
 /* This file is tc-sh.h
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006, 2007, 2008, 2010 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -134,7 +134,7 @@ extern void sh_frob_file (void);
 
 #define COFF_MAGIC (!target_big_endian ? SH_ARCH_MAGIC_LITTLE : SH_ARCH_MAGIC_BIG)
 
-#define tc_coff_symbol_emit_hook(a) ; /* not used */
+#define tc_coff_symbol_emit_hook(a) ; /* Not used.  */
 
 #define TC_KEEP_FX_OFFSET 1
 
@@ -155,7 +155,7 @@ extern void sh_frob_file (void);
 #ifdef OBJ_ELF
 /* ELF specific definitions.  */
 
-/* Whether or not the target is big endian */
+/* Whether or not the target is big endian.  */
 extern int target_big_endian;
 #ifdef TE_LINUX
 #define TARGET_FORMAT (!target_big_endian ? "elf32-sh-linux" : "elf32-shbig-linux")
@@ -165,6 +165,9 @@ extern int target_big_endian;
 #define TARGET_FORMAT (!target_big_endian ? "elf32-shl-symbian" : "elf32-sh-symbian")
 #elif defined (TE_VXWORKS)
 #define TARGET_FORMAT (!target_big_endian ? "elf32-shl-vxworks" : "elf32-sh-vxworks")
+#elif defined (TE_UCLINUX)
+#define TARGET_FORMAT sh_uclinux_target_format ()
+extern const char * sh_uclinux_target_format (void);
 #else
 #define TARGET_FORMAT (!target_big_endian ? "elf32-shl" : "elf32-sh")
 #endif
@@ -172,7 +175,7 @@ extern int target_big_endian;
 #define elf_tc_final_processing sh_elf_final_processing
 extern void sh_elf_final_processing (void);
 
-#define DIFF_EXPR_OK		/* foo-. gets turned into PC relative relocs */
+#define DIFF_EXPR_OK		/* foo-. gets turned into PC relative relocs.  */
 
 #define GLOBAL_OFFSET_TABLE_NAME "_GLOBAL_OFFSET_TABLE_"
 
@@ -227,8 +230,8 @@ extern bfd_boolean sh_fix_adjustable (struct fix *);
 
 #define md_parse_name(name, exprP, mode, nextcharP) \
   sh_parse_name ((name), (exprP), (mode), (nextcharP))
-int sh_parse_name (char const *name, expressionS *exprP,
-		   enum expr_mode mode, char *nextchar);
+int sh_parse_name (char const *, expressionS *,
+		   enum expr_mode, char *);
 
 #define TC_CONS_FIX_NEW(FRAG, OFF, LEN, EXP) \
   sh_cons_fix_new ((FRAG), (OFF), (LEN), (EXP))
@@ -244,7 +247,7 @@ void sh_cons_fix_new (fragS *, int, int, expressionS *);
 extern void sh_cfi_frame_initial_instructions (void);
 
 #define tc_regname_to_dw2regnum sh_regname_to_dw2regnum
-extern int sh_regname_to_dw2regnum (char *regname);
+extern int sh_regname_to_dw2regnum (char *);
 
 /* All SH instructions are multiples of 16 bits.  */
 #define DWARF2_LINE_MIN_INSN_LENGTH 2

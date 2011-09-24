@@ -20,7 +20,7 @@ Disassembly of section .text:
 0+12 <[^>]*> 4308 *	orrs	r0, r1
 0+14 <[^>]*> 4388 *	bics	r0, r1
 0+16 <[^>]*> 4188 *	sbcs	r0, r1
-0+18 <[^>]*> 46c0 *	nop			\(mov r8, r8\)
-0+1a <[^>]*> 46c0 *	nop			\(mov r8, r8\)
-0+1c <[^>]*> 46c0 *	nop			\(mov r8, r8\)
-0+1e <[^>]*> 46c0 *	nop			\(mov r8, r8\)
+0+18 <[^>]*> 46c0 *	nop			; \(mov r8, r8\)
+0+1a <[^>]*> 46c0 *	nop			; \(mov r8, r8\)
+0+1c <[^>]*> 46c0 *	nop			; \(mov r8, r8\)
+0+1e <[^>]*> 46c0 *	nop			; \(mov r8, r8\)

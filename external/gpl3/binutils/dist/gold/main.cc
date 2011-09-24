@@ -1,6 +1,6 @@
 // main.cc -- gold main function.
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -42,6 +42,11 @@
 #include "archive.h"
 #include "symtab.h"
 #include "layout.h"
+#include "plugin.h"
+#include "gc.h"
+#include "icf.h"
+#include "incremental.h"
+#include "timer.h"
 
 using namespace gold;
 
@@ -131,13 +136,13 @@ int
 main(int argc, char** argv)
 {
 #if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
-  setlocale (LC_MESSAGES, "");
+  setlocale(LC_MESSAGES, "");
 #endif
 #if defined (HAVE_SETLOCALE)
-  setlocale (LC_CTYPE, "");
+  setlocale(LC_CTYPE, "");
 #endif
-  bindtextdomain (PACKAGE, LOCALEDIR);
-  textdomain (PACKAGE);
+  bindtextdomain(PACKAGE, LOCALEDIR);
+  textdomain(PACKAGE);
 
   program_name = argv[0];
 
@@ -157,9 +162,9 @@ main(int argc, char** argv)
   Command_line command_line;
   command_line.process(argc - 1, const_cast<const char**>(argv + 1));
 
-  long start_time = 0;
+  Timer timer;
   if (command_line.options().stats())
-    start_time = get_run_time();
+    timer.start();
 
   // Store some options in the globally accessible parameters.
   set_parameters_options(&command_line.options());
@@ -190,11 +195,21 @@ main(int argc, char** argv)
   if (parameters->options().relocatable())
     command_line.script_options().version_script_info()->clear();
 
+  // Load plugin libraries.
+  if (command_line.options().has_plugins())
+    command_line.options().plugins()->load_plugins();
+
   // The work queue.
   Workqueue workqueue(command_line.options());
 
   // The list of input objects.
   Input_objects input_objects;
+
+  // The Garbage Collection (GC, --gc-sections) Object.
+  Garbage_collection gc;
+
+  // The Identical Code Folding (ICF, --icf) Object.
+  Icf icf;
 
   // The symbol table.  We're going to guess here how many symbols
   // we're going to see based on the number of input files.  Even when
@@ -203,8 +218,21 @@ main(int argc, char** argv)
   Symbol_table symtab(command_line.number_of_input_files() * 1024,
                       command_line.version_script());
 
+  if (parameters->options().gc_sections())
+    symtab.set_gc(&gc);
+
+  if (parameters->options().icf_enabled())
+    symtab.set_icf(&icf);
+
   // The layout object.
-  Layout layout(command_line.options(), &command_line.script_options());
+  Layout layout(command_line.number_of_input_files(),
+		&command_line.script_options());
+
+  if (layout.incremental_inputs() != NULL)
+    layout.incremental_inputs()->report_command_line(argc, argv);
+
+  if (parameters->options().section_ordering_file())
+    layout.read_layout_from_file();
 
   // Get the search path from the -L options.
   Dirsearch search_path;
@@ -220,9 +248,15 @@ main(int argc, char** argv)
 
   if (command_line.options().stats())
     {
-      long run_time = get_run_time() - start_time;
-      fprintf(stderr, _("%s: total run time: %ld.%06ld seconds\n"),
-	      program_name, run_time / 1000000, run_time % 1000000);
+      Timer::TimeStats elapsed = timer.get_elapsed_time();
+      fprintf(stderr,
+             _("%s: total run time: " \
+               "(user: %ld.%06ld sys: %ld.%06ld wall: %ld.%06ld)\n"),
+              program_name,
+              elapsed.user / 1000, (elapsed.user % 1000) * 1000,
+              elapsed.sys / 1000, (elapsed.sys % 1000) * 1000,
+              elapsed.wall / 1000, (elapsed.wall % 1000) * 1000);
+
 #ifdef HAVE_MALLINFO
       struct mallinfo m = mallinfo();
       fprintf(stderr, _("%s: total space allocated by malloc: %d bytes\n"),
@@ -230,18 +264,24 @@ main(int argc, char** argv)
 #endif
       File_read::print_stats();
       Archive::print_stats();
+      Lib_group::print_stats();
       fprintf(stderr, _("%s: output file size: %lld bytes\n"),
 	      program_name, static_cast<long long>(layout.output_file_size()));
       symtab.print_stats();
       layout.print_stats();
     }
 
-  if (mapfile != NULL)
-    mapfile->close();
-
   // Issue defined symbol report.
   if (command_line.options().user_set_print_symbol_counts())
     input_objects.print_symbol_counts(&symtab);
+
+  // Output cross reference table.
+  if (command_line.options().cref())
+    input_objects.print_cref(&symtab,
+			     mapfile == NULL ? stdout : mapfile->file());
+
+  if (mapfile != NULL)
+    mapfile->close();
 
   if (parameters->options().fatal_warnings()
       && errors.warning_count() > 0

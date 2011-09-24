@@ -1,6 +1,6 @@
 // descriptors.cc -- manage file descriptors for gold
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright 2008, 2009 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -23,13 +23,26 @@
 #include "gold.h"
 
 #include <cerrno>
+#include <cstdio>
 #include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
 
 #include "parameters.h"
+#include "options.h"
 #include "gold-threads.h"
 #include "descriptors.h"
+#include "binary-io.h"
+
+// Very old systems may not define FD_CLOEXEC.
+#ifndef FD_CLOEXEC
+#define FD_CLOEXEC 1
+#endif
+
+// O_CLOEXEC is only available on newer systems.
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
 
 namespace gold
 {
@@ -40,8 +53,8 @@ namespace gold
 // adjusted downward if we run out of file descriptors.
 
 Descriptors::Descriptors()
-  : lock_(NULL), open_descriptors_(), stack_top_(-1), current_(0),
-    limit_(8192 - 16)
+  : lock_(NULL), initialize_lock_(&this->lock_), open_descriptors_(),
+    stack_top_(-1), current_(0), limit_(8192 - 16)
 {
   this->open_descriptors_.reserve(128);
 }
@@ -55,13 +68,9 @@ Descriptors::open(int descriptor, const char* name, int flags, int mode)
   // initialize a Lock until we have parsed the options to find out
   // whether we are running with threads.  We can be called before
   // options are valid when reading a linker script.
-  if (this->lock_ == NULL)
-    {
-      if (parameters->options_valid())
-	this->lock_ = new Lock();
-      else
-	gold_assert(descriptor < 0);
-    }
+  bool lock_initialized = this->initialize_lock_.initialize();
+
+  gold_assert(lock_initialized || descriptor < 0);
 
   if (descriptor >= 0)
     {
@@ -75,12 +84,25 @@ Descriptors::open(int descriptor, const char* name, int flags, int mode)
 	{
 	  gold_assert(!pod->inuse);
 	  pod->inuse = true;
+	  if (descriptor == this->stack_top_)
+	    {
+	      this->stack_top_ = pod->stack_next;
+	      pod->stack_next = -1;
+	      pod->is_on_stack = false;
+	    }
 	  return descriptor;
 	}
     }
 
   while (true)
     {
+      // We always want to set the close-on-exec flag; we don't
+      // require callers to pass it.
+      flags |= O_CLOEXEC;
+
+      // Always open the file as a binary file.
+      flags |= O_BINARY;
+
       int new_descriptor = ::open(name, flags, mode);
       if (new_descriptor < 0
 	  && errno != ENFILE
@@ -91,8 +113,7 @@ Descriptors::open(int descriptor, const char* name, int flags, int mode)
 	      {
 		Hold_lock hl(*this->lock_);
 
-		gold_error(_("file %s was removed during the link"),
-			   this->open_descriptors_[descriptor].name);
+		gold_error(_("file %s was removed during the link"), name);
 	      }
 
 	      errno = ENOENT;
@@ -103,23 +124,37 @@ Descriptors::open(int descriptor, const char* name, int flags, int mode)
 
       if (new_descriptor >= 0)
 	{
-	  Hold_optional_lock hl(this->lock_);
+	  // If we have any plugins, we really do need to set the
+	  // close-on-exec flag, even if O_CLOEXEC is not defined.
+	  // FIXME: In some cases O_CLOEXEC may be defined in the
+	  // header file but not supported by the kernel.
+	  // Unfortunately there doesn't seem to be any obvious way to
+	  // detect that, as unknown flags passed to open are ignored.
+	  if (O_CLOEXEC == 0
+	      && parameters->options_valid()
+	      && parameters->options().has_plugins())
+	    fcntl(new_descriptor, F_SETFD, FD_CLOEXEC);
 
-	  if (static_cast<size_t>(new_descriptor)
-	      >= this->open_descriptors_.size())
-	    this->open_descriptors_.resize(new_descriptor + 64);
+	  {
+	    Hold_optional_lock hl(this->lock_);
 
-	  Open_descriptor* pod = &this->open_descriptors_[new_descriptor];
-	  pod->name = name;
-	  pod->stack_next = -1;
-	  pod->inuse = true;
-	  pod->is_write = (flags & O_ACCMODE) != O_RDONLY;
+	    if (static_cast<size_t>(new_descriptor)
+		>= this->open_descriptors_.size())
+	      this->open_descriptors_.resize(new_descriptor + 64);
 
-	  ++this->current_;
-	  if (this->current_ >= this->limit_)
-	    this->close_some_descriptor();
+	    Open_descriptor* pod = &this->open_descriptors_[new_descriptor];
+	    pod->name = name;
+	    pod->stack_next = -1;
+	    pod->inuse = true;
+	    pod->is_write = (flags & O_ACCMODE) != O_RDONLY;
+	    pod->is_on_stack = false;
 
-	  return new_descriptor;
+	    ++this->current_;
+	    if (this->current_ >= this->limit_)
+	      this->close_some_descriptor();
+
+	    return new_descriptor;
+	  }
 	}
 
       // We ran out of file descriptors.
@@ -158,10 +193,11 @@ Descriptors::release(int descriptor, bool permanent)
   else
     {
       pod->inuse = false;
-      if (!pod->is_write)
+      if (!pod->is_write && !pod->is_on_stack)
 	{
 	  pod->stack_next = this->stack_top_;
 	  this->stack_top_ = descriptor;
+	  pod->is_on_stack = true;
 	}
     }
 }
@@ -193,6 +229,8 @@ Descriptors::close_some_descriptor()
 	    this->stack_top_ = pod->stack_next;
 	  else
 	    this->open_descriptors_[last].stack_next = pod->stack_next;
+	  pod->stack_next = -1;
+	  pod->is_on_stack = false;
 	  return true;
 	}
       last = i;

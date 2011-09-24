@@ -1,6 +1,7 @@
 ; Renesas M32R CPU description.  -*- Scheme -*-
 ;
-; Copyright 1998, 1999, 2000, 2001, 2003, 2007 Free Software Foundation, Inc.
+; Copyright 1998, 1999, 2000, 2001, 2003, 2007, 2009
+; Free Software Foundation, Inc.
 ;
 ; Contributed by Red Hat Inc; developed under contract from Mitsubishi
 ; Electric Corporation.
@@ -637,13 +638,21 @@
 ; code.  Usually there's a bit of over-specification, but in more complicated
 ; instruction sets there isn't.
 
-; M32R specific operand attributes:
+;; Print some operands take a hash prefix.
+;; ??? Why don't we also handle one when parsing?
 
-(define-attr
-  (for operand)
-  (type boolean)
-  (name HASH-PREFIX)
-  (comment "immediates have an optional '#' prefix")
+(define-pmacro (duhpo x-name x-comment x-attrs x-type x-index)
+  (define-operand (name x-name) (comment x-comment)
+    (.splice attrs (.unsplice x-attrs))
+    (type x-type) (index x-index)
+    (handlers (print "unsigned_with_hash_prefix")))
+)
+
+(define-pmacro (dshpo x-name x-comment x-attrs x-type x-index)
+  (define-operand (name x-name) (comment x-comment)
+    (.splice attrs (.unsplice x-attrs))
+    (type x-type) (index x-index)
+    (handlers (print "signed_with_hash_prefix")))
 )
 
 ; ??? Convention says this should be o-sr, but then the insn definitions
@@ -661,21 +670,23 @@
 (dnop scr    "source control register"      () h-cr   f-r2)
 (dnop dcr    "destination control register" () h-cr   f-r1)
 
-(dnop simm8  "8 bit signed immediate"       (HASH-PREFIX) h-sint f-simm8)
-(dnop simm16 "16 bit signed immediate"      (HASH-PREFIX) h-sint f-simm16)
-(dnop uimm3  "3 bit unsigned number"        (HASH-PREFIX) h-uint f-uimm3)
-(dnop uimm4  "4 bit trap number"            (HASH-PREFIX) h-uint f-uimm4)
-(dnop uimm5  "5 bit shift count"            (HASH-PREFIX) h-uint f-uimm5)
-(dnop uimm8  "8 bit unsigned immediate"     (HASH-PREFIX) h-uint f-uimm8)
-(dnop uimm16 "16 bit unsigned immediate"    (HASH-PREFIX) h-uint f-uimm16)
+(dshpo simm8  "8 bit signed immediate"       () h-sint f-simm8)
+(dshpo simm16 "16 bit signed immediate"      () h-sint f-simm16)
+(duhpo uimm3  "3 bit unsigned number"        () h-uint f-uimm3)
+(duhpo uimm4  "4 bit trap number"            () h-uint f-uimm4)
+(duhpo uimm5  "5 bit shift count"            () h-uint f-uimm5)
+(duhpo uimm8  "8 bit unsigned immediate"     () h-uint f-uimm8)
+(duhpo uimm16 "16 bit unsigned immediate"    () h-uint f-uimm16)
 
-(dnop imm1   "1 bit immediate"              ((MACH m32rx,m32r2) HASH-PREFIX) h-uint f-imm1)
-(dnop accd   "accumulator destination register" ((MACH m32rx,m32r2))        h-accums f-accd)
-(dnop accs   "accumulator source register"  ((MACH m32rx,m32r2))            h-accums f-accs)
-(dnop acc    "accumulator reg (d)"          ((MACH m32rx,m32r2))            h-accums f-acc)
+(duhpo imm1 "1 bit immediate" ((MACH m32rx,m32r2)) h-uint f-imm1)
+
+(dnop accd   "accumulator destination register" ((MACH m32rx,m32r2)) h-accums f-accd)
+(dnop accs   "accumulator source register"  ((MACH m32rx,m32r2))     h-accums f-accs)
+(dnop acc    "accumulator reg (d)"          ((MACH m32rx,m32r2))     h-accums f-acc)
 
 ; slo16,ulo16 are used in both with-hash-prefix/no-hash-prefix cases.
-; e.g. add3 r3,r3,#1 and ld r3,@(4,r4).  We could use HASH-PREFIX.
+; e.g. add3 r3,r3,#1 and ld r3,@(4,r4).  We could use special handlers on
+; the operands themselves.
 ; Instead we create a fake operand `hash'.  The m32r is an illustration port,
 ; so we often try out various ways of doing things.
 
@@ -715,7 +726,7 @@
   (handlers (parse "ulo16"))
 )
 
-(dnop uimm24 "24 bit address" (HASH-PREFIX) h-addr f-uimm24)
+(dnop uimm24 "24 bit address" () h-addr f-uimm24)
 
 (define-operand
   (name disp8)
@@ -2088,10 +2099,10 @@
      "sth $src1,@$src2+"
      (+ OP1_2 OP2_3 src1 src2)
      ; This has to be coded carefully to avoid an "earlyclobber" of src2.
-     (sequence ((HI new-src2))
-             (set (mem HI new-src2) src1)
-             (set new-src2 (add src2 (const 2)))
-             (set src2 new-src2))
+     (sequence ((WI new-src2))
+	       (set new-src2 src2)
+	       (set (mem HI new-src2) src1)
+	       (set src2 (add new-src2 (const 2))))
      ((m32rx (unit u-store)
            (unit u-exec (in dr src2) (out dr src2) (cycles 0)))
       (m32r2 (unit u-store)
@@ -2104,10 +2115,10 @@
      "stb $src1,@$src2+"
      (+ OP1_2 OP2_1 src1 src2)
      ; This has to be coded carefully to avoid an "earlyclobber" of src2.
-     (sequence ((QI new-src2))
-             (set (mem QI new-src2) src1)
-             (set new-src2 (add src2 (const 1)))
-             (set src2 new-src2))
+     (sequence ((WI new-src2))
+	       (set new-src2 src2)
+	       (set (mem QI new-src2) src1)
+	       (set src2 (add new-src2 (const 1))))
      ((m32rx (unit u-store)
            (unit u-exec (in dr src2) (out dr src2) (cycles 0)))
       (m32r2 (unit u-store)
@@ -2374,14 +2385,14 @@
      ()
 )
 
-; PSW &= ~((unsigned char) uimm8 | 0x000ff00)
+; PSW &= ((~ uimm8) | 0xff00)
 (dni clrpsw "clrpsw"
      ((PIPE O) SPECIAL_M32R)
      "clrpsw $uimm8"
      (+ OP1_7 (f-r1 2) uimm8)
      (set USI (reg h-cr 0)
               (and USI (reg h-cr 0)
-                     (or USI (inv BI uimm8) (const #xff00))))
+		   (or USI (zext SI (inv QI uimm8)) (const #xff00))))
      ()
 )
 
@@ -2401,7 +2412,7 @@
      (+ OP1_10 (f-bit4 0) uimm3 OP2_6 sr slo16)
      (set QI (mem QI (add sr slo16))
              (or QI (mem QI (add sr slo16))
-                  (sll USI (const 1) (sub (const 7) uimm3))))
+		 (sll QI (const 1) (sub (const 7) uimm3))))
      ()
 )
 
@@ -2412,7 +2423,7 @@
      (+ OP1_10 (f-bit4 0) uimm3  OP2_7 sr slo16)
      (set QI (mem QI (add sr slo16))
              (and QI (mem QI (add sr slo16))
-                   (inv QI (sll USI (const 1) (sub (const 7) uimm3)))))
+                   (inv QI (sll QI (const 1) (sub (const 7) uimm3)))))
      ()
 )
 
@@ -2421,7 +2432,6 @@
      (SPECIAL_M32R (PIPE O))
      "btst $uimm3,$sr"
      (+ OP1_0 (f-bit4 0) uimm3 OP2_15 sr)
-     (set condbit (and QI (srl USI sr (sub (const 7) uimm3)) (const 1)))
+     (set condbit (and QI (srl QI sr (sub (const 7) uimm3)) (const 1)))
      ()
 )
-

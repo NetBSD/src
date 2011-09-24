@@ -1,6 +1,6 @@
 /* coff object file format
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007
+   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
    Free Software Foundation, Inc.
 
    This file is part of GAS.
@@ -23,6 +23,7 @@
 #define OBJ_HEADER "obj-coff.h"
 
 #include "as.h"
+#include "safe-ctype.h"
 #include "obstack.h"
 #include "subsegs.h"
 
@@ -52,6 +53,8 @@ static symbolS *def_symbol_in_progress;
 /* PE weak alternate symbols begin with this string.  */
 static const char weak_altprefix[] = ".weak.";
 #endif /* TE_PE */
+
+#include "obj-coff-seh.c"
 
 typedef struct
   {
@@ -169,6 +172,71 @@ obj_coff_bss (int ignore ATTRIBUTE_UNUSED)
     s_lcomm (0);
 }
 
+#ifdef TE_PE
+/* Called from read.c:s_comm after we've parsed .comm symbol, size.
+   Parse a possible alignment value.  */
+
+static symbolS *
+obj_coff_common_parse (int ignore ATTRIBUTE_UNUSED, symbolS *symbolP, addressT size)
+{
+  addressT align = 0;
+
+  if (*input_line_pointer == ',')
+    {
+      align = parse_align (0);
+      if (align == (addressT) -1)
+	return NULL;
+    }
+
+  S_SET_VALUE (symbolP, size);
+  S_SET_EXTERNAL (symbolP);
+  S_SET_SEGMENT (symbolP, bfd_com_section_ptr);
+
+  symbol_get_bfdsym (symbolP)->flags |= BSF_OBJECT;
+
+  /* There is no S_SET_ALIGN (symbolP, align) in COFF/PE.
+     Instead we must add a note to the .drectve section.  */
+  if (align)
+    {
+      segT current_seg = now_seg;
+      subsegT current_subseg = now_subseg;
+      flagword oldflags;
+      asection *sec;
+      size_t pfxlen, numlen;
+      char *frag;
+      char numbuff[20];
+
+      sec = subseg_new (".drectve", 0);
+      oldflags = bfd_get_section_flags (stdoutput, sec);
+      if (oldflags == SEC_NO_FLAGS)
+	{
+	  if (!bfd_set_section_flags (stdoutput, sec,
+		TC_COFF_SECTION_DEFAULT_ATTRIBUTES))
+	    as_warn (_("error setting flags for \"%s\": %s"),
+		bfd_section_name (stdoutput, sec),
+		bfd_errmsg (bfd_get_error ()));
+	}
+
+      /* Emit a string.  Note no NUL-termination.  */
+      pfxlen = strlen (" -aligncomm:") + 2 + strlen (S_GET_NAME (symbolP)) + 1;
+      numlen = snprintf (numbuff, sizeof (numbuff), "%d", (int) align);
+      frag = frag_more (pfxlen + numlen);
+      (void) sprintf (frag, " -aligncomm:\"%s\",", S_GET_NAME (symbolP));
+      memcpy (frag + pfxlen, numbuff, numlen);
+      /* Restore original subseg. */
+      subseg_set (current_seg, current_subseg);
+    }
+
+  return symbolP;
+}
+
+static void
+obj_coff_comm (int ignore ATTRIBUTE_UNUSED)
+{
+  s_comm_internal (ignore, obj_coff_common_parse);
+}
+#endif /* TE_PE */
+
 #define GET_FILENAME_STRING(X) \
   ((char *) (&((X)->sy_symbol.ost_auxent->x_file.x_n.x_offset))[1])
 
@@ -183,7 +251,7 @@ fetch_coff_debug_section (void)
       const asymbol *s;
 
       s = bfd_make_debug_symbol (stdoutput, NULL, 0);
-      assert (s != 0);
+      gas_assert (s != 0);
       debug_section = s->section;
     }
   return debug_section;
@@ -554,14 +622,11 @@ obj_coff_def (int what ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 }
 
-unsigned int dim_index;
-
 static void
 obj_coff_endef (int ignore ATTRIBUTE_UNUSED)
 {
   symbolS *symbolP = NULL;
 
-  dim_index = 0;
   if (def_symbol_in_progress == NULL)
     {
       as_warn (_(".endef pseudo-op used outside of .def/.endef: ignored."));
@@ -794,7 +859,7 @@ obj_coff_endef (int ignore ATTRIBUTE_UNUSED)
 static void
 obj_coff_dim (int ignore ATTRIBUTE_UNUSED)
 {
-  int dim_index;
+  int d_index;
 
   if (def_symbol_in_progress == NULL)
     {
@@ -805,10 +870,10 @@ obj_coff_dim (int ignore ATTRIBUTE_UNUSED)
 
   S_SET_NUMBER_AUXILIARY (def_symbol_in_progress, 1);
 
-  for (dim_index = 0; dim_index < DIMNUM; dim_index++)
+  for (d_index = 0; d_index < DIMNUM; d_index++)
     {
       SKIP_WHITESPACES ();
-      SA_SET_SYM_DIMEN (def_symbol_in_progress, dim_index,
+      SA_SET_SYM_DIMEN (def_symbol_in_progress, d_index,
 			get_absolute_expression ());
 
       switch (*input_line_pointer)
@@ -822,7 +887,7 @@ obj_coff_dim (int ignore ATTRIBUTE_UNUSED)
 	  /* Fall through.  */
 	case '\n':
 	case ';':
-	  dim_index = DIMNUM;
+	  d_index = DIMNUM;
 	  break;
 	}
     }
@@ -1030,15 +1095,8 @@ weak_name2altname (const char * name)
 static const char *
 weak_altname2name (const char * name)
 {
-  char * weak_name;
-  char * dot;
-
-  assert (weak_is_altname (name));
-
-  weak_name = xstrdup (name + 6);
-  if ((dot = strchr (weak_name, '.')))
-    *dot = 0;
-  return weak_name;
+  gas_assert (weak_is_altname (name));
+  return xstrdup (name + 6);
 }
 
 /* Make a weak symbol name unique by
@@ -1050,14 +1108,11 @@ weak_uniquify (const char * name)
   char *ret;
   const char * unique = "";
 
-#ifdef USE_UNIQUE
+#ifdef TE_PE
   if (an_external_name != NULL)
     unique = an_external_name;
 #endif
-  assert (weak_is_altname (name));
-
-  if (strchr (name + sizeof (weak_altprefix), '.'))
-    return name;
+  gas_assert (weak_is_altname (name));
 
   ret = xmalloc (strlen (name) + strlen (unique) + 2);
   strcpy (ret, name);
@@ -1184,8 +1239,8 @@ coff_frob_symbol (symbolS *symp, int *punt)
       symbolS *weakp = symbol_find_noref (weak_altname2name
 					  (S_GET_NAME (symp)), 1);
 
-      assert (weakp);
-      assert (S_GET_NUMBER_AUXILIARY (weakp) == 1);
+      gas_assert (weakp);
+      gas_assert (S_GET_NUMBER_AUXILIARY (weakp) == 1);
 
       if (! S_IS_WEAK (weakp))
 	{
@@ -1267,7 +1322,7 @@ coff_frob_symbol (symbolS *symp, int *punt)
 
       if (!S_IS_DEFINED (symp) && !SF_GET_LOCAL (symp))
 	{
-	  assert (S_GET_VALUE (symp) == 0);
+	  gas_assert (S_GET_VALUE (symp) == 0);
 	  if (S_IS_WEAKREFD (symp))
 	    *punt = 1;
 	  else
@@ -1369,7 +1424,7 @@ coff_frob_symbol (symbolS *symp, int *punt)
   if (next_set_end != NULL)
     {
       if (set_end != NULL)
-	as_warn ("Warning: internal error: forgetting to set endndx of %s",
+	as_warn (_("Warning: internal error: forgetting to set endndx of %s"),
 		 S_GET_NAME (set_end));
       set_end = next_set_end;
     }
@@ -1475,6 +1530,8 @@ coff_frob_file_after_relocs (void)
                                                  'x' for text
   						 'r' for read-only data
   						 's' for shared data (PE)
+						 'y' for noread
+					   '0' - '9' for power-of-two alignment (GNU extension).
    But if the argument is not a quoted string, treat it as a
    subsegment number.
 
@@ -1487,6 +1544,7 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
   /* Strip out the section name.  */
   char *section_name;
   char c;
+  int alignment = -1;
   char *name;
   unsigned int exp;
   flagword flags, oldflags;
@@ -1529,6 +1587,11 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 		 attr != '"'
 		 && ! is_end_of_line[attr])
 	    {
+	      if (ISDIGIT (attr))
+		{
+		  alignment = attr - '0';
+		  continue;
+		}
 	      switch (attr)
 		{
 		case 'b':
@@ -1584,6 +1647,10 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 		    flags |= SEC_READONLY;
 		  break;
 
+		case 'y':
+		  flags |= SEC_COFF_NOREAD | SEC_READONLY;
+		  break;
+
 		case 'i': /* STYP_INFO */
 		case 'l': /* STYP_LIB */
 		case 'o': /* STYP_OVER */
@@ -1601,6 +1668,8 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
     }
 
   sec = subseg_new (name, (subsegT) exp);
+  if (alignment >= 0)
+    sec->alignment_power = alignment;
 
   oldflags = bfd_get_section_flags (stdoutput, sec);
   if (oldflags == SEC_NO_FLAGS)
@@ -1628,7 +1697,8 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
       /* This section's attributes have already been set.  Warn if the
          attributes don't match.  */
       flagword matchflags = (SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE
-			     | SEC_DATA | SEC_COFF_SHARED | SEC_NEVER_LOAD);
+			     | SEC_DATA | SEC_COFF_SHARED | SEC_NEVER_LOAD
+			     | SEC_COFF_NOREAD);
       if ((flags ^ oldflags) & matchflags)
 	as_warn (_("Ignoring changed section attributes for %s"), name);
     }
@@ -1650,17 +1720,18 @@ coff_frob_section (segT sec)
   segT strsec;
   char *p;
   fragS *fragp;
-  bfd_vma size, n_entries, mask;
-  bfd_vma align_power = (bfd_vma)sec->alignment_power + OCTETS_PER_BYTE_POWER;
+  bfd_vma n_entries;
 
   /* The COFF back end in BFD requires that all section sizes be
      rounded up to multiples of the corresponding section alignments,
      supposedly because standard COFF has no other way of encoding alignment
      for sections.  If your COFF flavor has a different way of encoding
      section alignment, then skip this step, as TICOFF does.  */
-  size = bfd_get_section_size (sec);
-  mask = ((bfd_vma) 1 << align_power) - 1;
+  bfd_vma size = bfd_get_section_size (sec);
 #if !defined(TICOFF)
+  bfd_vma align_power = (bfd_vma) sec->alignment_power + OCTETS_PER_BYTE_POWER;
+  bfd_vma mask = ((bfd_vma) 1 << align_power) - 1;
+
   if (size & mask)
     {
       bfd_vma new_size;
@@ -1697,7 +1768,6 @@ coff_frob_section (segT sec)
       SF_SET_STATICS (secsym);
       SA_SET_SCN_SCNLEN (secsym, size);
     }
-
   /* FIXME: These should be in a "stabs.h" file, or maybe as.h.  */
 #ifndef STAB_SECTION_NAME
 #define STAB_SECTION_NAME ".stab"
@@ -1719,7 +1789,7 @@ coff_frob_section (segT sec)
   fragp = seg_info (sec)->frchainP->frch_root;
   while (fragp && fragp->fr_fix == 0)
     fragp = fragp->fr_next;
-  assert (fragp != 0 && fragp->fr_fix >= 12);
+  gas_assert (fragp != 0 && fragp->fr_fix >= 12);
 
   /* Store the values.  */
   p = fragp->fr_literal;
@@ -1749,11 +1819,15 @@ obj_coff_init_stab_section (segT seg)
 }
 
 #ifdef DEBUG
+const char * s_get_name (symbolS *);
+
 const char *
 s_get_name (symbolS *s)
 {
   return ((s == NULL) ? "(NULL)" : S_GET_NAME (s));
 }
+
+void symbol_dump (void);
 
 void
 symbol_dump (void)
@@ -1778,6 +1852,10 @@ const pseudo_typeS coff_pseudo_table[] =
   /* We accept the .bss directive for backward compatibility with
      earlier versions of gas.  */
   {"bss", obj_coff_bss, 0},
+#ifdef TE_PE
+  /* PE provides an enhanced version of .comm with alignment.  */
+  {"comm", obj_coff_comm, 0},
+#endif /* TE_PE */
   {"def", obj_coff_def, 0},
   {"dim", obj_coff_dim, 0},
   {"endef", obj_coff_endef, 0},
@@ -1801,6 +1879,9 @@ const pseudo_typeS coff_pseudo_table[] =
 #if defined TC_TIC4X
   /* The tic4x uses sdef instead of def.  */
   {"sdef", obj_coff_def, 0},
+#endif
+#if defined(SEH_CMDS)
+  SEH_CMDS
 #endif
   {NULL, NULL, 0}
 };
@@ -1851,5 +1932,7 @@ const struct format_ops coff_format_ops =
   coff_pop_insert,
   0,	/* ecoff_set_ext */
   coff_obj_read_begin_hook,
-  coff_obj_symbol_new_hook
+  coff_obj_symbol_new_hook,
+  coff_obj_symbol_clone_hook,
+  coff_adjust_symtab
 };

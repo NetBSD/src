@@ -123,3 +123,5 @@ LINK 0X8;
 LINK 0x3FFFC;
 
 UNLINK ; /* de-allocate the stack frame (b)*/
+
+L$L$foo:  (R7:6,P5:3) = [SP++]; /* Pop multiple on the same line with a label */

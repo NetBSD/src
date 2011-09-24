@@ -1,6 +1,6 @@
 // gold-threads.h -- thread support for gold  -*- C++ -*-
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -35,6 +35,8 @@ namespace gold
 {
 
 class Condvar;
+class Once_initialize;
+class Initialize_lock_once;
 
 // The interface for the implementation of a Lock.
 
@@ -188,6 +190,74 @@ class Condvar
 
   Lock& lock_;
   Condvar_impl* condvar_;
+};
+
+// A class used to do something once.  This is an abstract parent
+// class; any actual use will involve a child of this.
+
+class Once
+{
+ public:
+  Once();
+
+  virtual
+  ~Once()
+  { }
+
+  // Call this function to do whatever it is.  We pass an argument
+  // even though you have to use a child class because in some uses
+  // setting the argument would itself require a Once class.
+  void
+  run_once(void* arg);
+
+  // This is an internal function, which must be public because it is
+  // run by an extern "C" function called via pthread_once.
+  void
+  internal_run(void* arg);
+
+ protected:
+  // This must be implemented by the child class.
+  virtual void
+  do_run_once(void* arg) = 0;
+
+ private:
+  // True if we have already run the function.
+  bool was_run_;
+  // Internal compare-and-swap lock on was_run_;
+  uint32_t was_run_lock_;
+  // The lock to run the function only once.
+  Once_initialize* once_;
+};
+
+// A class used to initialize a lock exactly once, after the options
+// have been read.  This is needed because the implementation of locks
+// depends on whether we've seen the --threads option.  Before the
+// options have been read, we know we are single-threaded, so we can
+// get by without using a lock.  This class should be an instance
+// variable of the class which has a lock which needs to be
+// initialized.
+
+class Initialize_lock : public Once
+{
+ public:
+  // The class which uses this will have a pointer to a lock.  This
+  // must be constructed with a pointer to that pointer.
+  Initialize_lock(Lock** pplock)
+    : pplock_(pplock)
+  { }
+
+  // Initialize the lock.  Return true if the lock is now initialized,
+  // false if it is not (because the options have not yet been read).
+  bool
+  initialize();
+
+ protected:
+  void
+  do_run_once(void*);
+
+ private:
+  // A pointer to the lock pointer which must be initialized.
+  Lock** const pplock_;
 };
 
 } // End namespace gold.

@@ -23,7 +23,6 @@ move_register:
 	R2 = Cycles;
 	R3 = Cycles2;
 	r1 = emudat;
-	CYCLES = A0.W;
 	Rets = Fp;
 	Lt1 = USP;
 	ASTAT = P2; 

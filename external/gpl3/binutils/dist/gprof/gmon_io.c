@@ -493,13 +493,13 @@ gmon_out_read (const char *filename)
       if (!histograms)
 	{
 	  num_histograms = 1;
-	  histograms = xmalloc (sizeof (struct histogram));
+	  histograms = (struct histogram *) xmalloc (sizeof (struct histogram));
 	  histograms->lowpc = tmp.low_pc;
 	  histograms->highpc = tmp.high_pc;
 	  histograms->num_bins = hist_num_bins;
 	  hist_scale = (double)((tmp.high_pc - tmp.low_pc) / sizeof (UNIT))
 	    / hist_num_bins;
-	  histograms->sample = xmalloc (hist_num_bins * sizeof (int));
+	  histograms->sample = (int *) xmalloc (hist_num_bins * sizeof (int));
 	  memset (histograms->sample, 0, 
 		  hist_num_bins * sizeof (int));
 	}
@@ -551,8 +551,6 @@ gmon_out_read (const char *filename)
 	  cg_tally (from_pc, self_pc, count);
 	}
 
-      fclose (ifp);
-
       if (hz == HZ_WRONG)
 	{
 	  /* How many ticks per second?  If we can't tell, report
@@ -572,6 +570,9 @@ gmon_out_read (const char *filename)
 	       whoami, file_format);
       done (1);
     }
+
+  if (ifp != stdin)
+    fclose (ifp);
 
   if (output_style & STYLE_GMON_INFO)
     {

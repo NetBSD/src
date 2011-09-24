@@ -1,5 +1,5 @@
 #   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-#   2003, 2004, 2007, 2008
+#   2003, 2004, 2007, 2008, 2009
 #   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -38,8 +38,8 @@ set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -i"]
 set cpus_expected [list]
 lappend cpus_expected alpha arc arm cris
 lappend cpus_expected d10v d30v fr30 fr500 fr550 h8 hppa i386 i860 i960 ip2022
-lappend cpus_expected m32r m68hc11 m68hc12 m68k m88k MCore
-lappend cpus_expected mips mn10200 mn10300 msp ns32k pj powerpc pyramid
+lappend cpus_expected m16c m32c m32r m68hc11 m68hc12 m68k m88k MCore
+lappend cpus_expected mips mn10200 mn10300 ms1 msp ns32k pj powerpc pyramid
 lappend cpus_expected romp rs6000 s390 sh sparc
 lappend cpus_expected tahoe tic54x tic80 tms320c30 tms320c4x tms320c54x v850
 lappend cpus_expected vax we32k x86-64 xscale xtensa z8k z8001 z8002

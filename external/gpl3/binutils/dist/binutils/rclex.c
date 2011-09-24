@@ -1,6 +1,6 @@
 /* rclex.c -- lexer for Windows rc files parser  */
 
-/* Copyright 1997, 1998, 1999, 2001, 2002, 2003, 2005, 2006, 2007
+/* Copyright 1997, 1998, 1999, 2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009
    Free Software Foundation, Inc.
 
    Written by Kai Tietz, Onevision.
@@ -390,9 +390,9 @@ handle_quotes (rc_uint_type *len)
 	}
       else
 	{
-	  rcparse_warning ("unexpected character after '\"'");
 	  ++t;
-	  assert (ISSPACE (*t));
+	  if (! ISSPACE (*t))
+	    rcparse_warning ("unexpected character after '\"'");
 	  while (ISSPACE (*t))
 	    {
 	      if ((*t) == '\n')
@@ -679,7 +679,7 @@ static void
 rclex_string (void)
 {
   int c;
-  
+
   while ((c = rclex_peekch ()) != -1)
     {
       if (c == '\n')
@@ -693,6 +693,18 @@ rclex_string (void)
         }
       else if (rclex_readch () == '"')
 	{
+	  /* PR 6714
+	     Skip any whitespace after the end of the double quotes.  */
+	  do
+	    {
+	      c = rclex_peekch ();
+	      if (ISSPACE (c))
+		rclex_readch ();
+	      else
+		c = -1;
+	    }
+	  while (c != -1);
+		
 	  if (rclex_peekch () == '"')
 	    rclex_readch ();
 	  else

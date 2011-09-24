@@ -1,6 +1,7 @@
 /* bucomm.h -- binutils common include file.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2005, 2006, 2007 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009
+   Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -23,7 +24,7 @@
 #define _BUCOMM_H
 
 /* Return the filename in a static buffer.  */
-const char *bfd_get_archive_filename (bfd *);
+const char *bfd_get_archive_filename (const bfd *);
 
 void bfd_nonfatal (const char *);
 

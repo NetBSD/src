@@ -1,6 +1,6 @@
 /* tc-arc.c -- Assembler for the ARC
    Copyright 1994, 1995, 1997, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007  Free Software Foundation, Inc.
+   2006, 2007, 2009, 2011  Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -47,7 +47,7 @@ const struct syntax_classes
 {
   char *name;
   int  len;
-  int  class;
+  int  s_class;
 } syntaxclass[] =
 {
   { "SYNTAX_3OP|OP1_MUST_BE_IMM", 26, SYNTAX_3OP|OP1_MUST_BE_IMM|SYNTAX_VALID },
@@ -299,7 +299,7 @@ arc_insert_operand (arc_insn insn,
       errmsg = NULL;
       insn = (*operand->insert) (insn, operand, mods, reg, (long) val, &errmsg);
       if (errmsg != (const char *) NULL)
-	as_warn (errmsg);
+	as_warn ("%s", errmsg);
     }
   else
     insn |= (((long) val & ((1 << operand->bits) - 1))
@@ -540,7 +540,8 @@ arc_extoper (int opertype)
       return;
     }
 
-  ext_oper = xmalloc (sizeof (struct arc_ext_operand_value));
+  ext_oper = (struct arc_ext_operand_value *)
+      xmalloc (sizeof (struct arc_ext_operand_value));
 
   if (opertype)
     {
@@ -646,7 +647,7 @@ arc_extinst (int ignore ATTRIBUTE_UNUSED)
   int suffixcode = -1;
   int opcode, subopcode;
   int i;
-  int class = 0;
+  int s_class = 0;
   int name_len;
   struct arc_opcode *ext_op;
 
@@ -756,20 +757,20 @@ arc_extinst (int ignore ATTRIBUTE_UNUSED)
     {
       if (!strncmp (syntaxclass[i].name,input_line_pointer, syntaxclass[i].len))
 	{
-	  class = syntaxclass[i].class;
+	  s_class = syntaxclass[i].s_class;
 	  input_line_pointer += syntaxclass[i].len;
 	  break;
 	}
     }
 
-  if (0 == (SYNTAX_VALID & class))
+  if (0 == (SYNTAX_VALID & s_class))
     {
       as_bad (_("invalid syntax class"));
       ignore_rest_of_line ();
       return;
     }
 
-  if ((0x3 == opcode) & (class & SYNTAX_3OP))
+  if ((0x3 == opcode) & (s_class & SYNTAX_3OP))
     {
       as_bad (_("opcode 0x3 and SYNTAX_3OP invalid"));
       ignore_rest_of_line ();
@@ -797,17 +798,17 @@ arc_extinst (int ignore ATTRIBUTE_UNUSED)
       break;
     };
 
-  strcat (syntax, ((opcode == 0x3) ? "%a,%b" : ((class & SYNTAX_3OP) ? "%a,%b,%c" : "%b,%c")));
+  strcat (syntax, ((opcode == 0x3) ? "%a,%b" : ((s_class & SYNTAX_3OP) ? "%a,%b,%c" : "%b,%c")));
   if (suffixcode < 2)
     strcat (syntax, "%F");
   strcat (syntax, "%S%L");
 
-  ext_op = xmalloc (sizeof (struct arc_opcode));
+  ext_op = (struct arc_opcode *) xmalloc (sizeof (struct arc_opcode));
   ext_op->syntax = xstrdup (syntax);
 
   ext_op->mask  = I (-1) | ((0x3 == opcode) ? C (-1) : 0);
   ext_op->value = I (opcode) | ((0x3 == opcode) ? C (subopcode) : 0);
-  ext_op->flags = class;
+  ext_op->flags = s_class;
   ext_op->next_asm = arc_ext_opcodes;
   ext_op->next_dis = arc_ext_opcodes;
   arc_ext_opcodes = ext_op;
@@ -829,7 +830,7 @@ arc_extinst (int ignore ATTRIBUTE_UNUSED)
   p = frag_more (1);
   *p = subopcode;
   p = frag_more (1);
-  *p = (class & (OP1_MUST_BE_IMM | OP1_IMM_IMPLIED) ? IGNORE_FIRST_OPD : 0);
+  *p = (s_class & (OP1_MUST_BE_IMM | OP1_IMM_IMPLIED) ? IGNORE_FIRST_OPD : 0);
   p = frag_more (name_len);
   strncpy (p, syntax, name_len);
   p = frag_more (1);
@@ -889,7 +890,7 @@ arc_common (int localScope)
       as_warn (_("length of symbol \"%s\" already %ld, ignoring %d"),
 	       S_GET_NAME (symbolP), (long) S_GET_VALUE (symbolP), size);
     }
-  assert (symbolP->sy_frag == &zero_address_frag);
+  gas_assert (symbolP->sy_frag == &zero_address_frag);
 
   /* Now parse the alignment field.  This field is optional for
      local and global symbols. Default alignment is zero.  */
@@ -933,7 +934,7 @@ arc_common (int localScope)
       S_SET_SIZE       (symbolP, size);
       S_SET_SEGMENT    (symbolP, bss_section);
       S_CLEAR_EXTERNAL (symbolP);
-      symbolP->local = 1;
+      symbol_get_obj (symbolP)->local = 1;
       subseg_set (old_sec, old_subsec);
     }
   else
@@ -1196,7 +1197,8 @@ arc_cons_fix_new (fragS *frag,
 
       /* This may be a special ARC reloc (eg: %st()).  */
       reloc_type = get_arc_exp_reloc_type (1, BFD_RELOC_32, exp, &exptmp);
-      fix_new_exp (frag, where, nbytes, &exptmp, 0, reloc_type);
+      fix_new_exp (frag, where, nbytes, &exptmp, 0,
+                   (enum bfd_reloc_code_real) reloc_type);
     }
   else
     {
@@ -1283,21 +1285,21 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg)
 	 limm values.  */
       if (operand->fmt == 'B')
 	{
-	  assert ((operand->flags & ARC_OPERAND_RELATIVE_BRANCH) != 0
+	  gas_assert ((operand->flags & ARC_OPERAND_RELATIVE_BRANCH) != 0
 		  && operand->bits == 20
 		  && operand->shift == 7);
 	  fixP->fx_r_type = BFD_RELOC_ARC_B22_PCREL;
 	}
       else if (operand->fmt == 'J')
 	{
-	  assert ((operand->flags & ARC_OPERAND_ABSOLUTE_BRANCH) != 0
+	  gas_assert ((operand->flags & ARC_OPERAND_ABSOLUTE_BRANCH) != 0
 		  && operand->bits == 24
 		  && operand->shift == 32);
 	  fixP->fx_r_type = BFD_RELOC_ARC_B26;
 	}
       else if (operand->fmt == 'L')
 	{
-	  assert ((operand->flags & ARC_OPERAND_LIMM) != 0
+	  gas_assert ((operand->flags & ARC_OPERAND_LIMM) != 0
 		  && operand->bits == 32
 		  && operand->shift == 32);
 	  fixP->fx_r_type = BFD_RELOC_32;
@@ -1350,8 +1352,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED,
 {
   arelent *reloc;
 
-  reloc = xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  reloc = (arelent *) xmalloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
 
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   reloc->address = fixP->fx_frag->fr_address + fixP->fx_where;
@@ -1365,7 +1367,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED,
       return NULL;
     }
 
-  assert (!fixP->fx_pcrel == !reloc->howto->pc_relative);
+  gas_assert (!fixP->fx_pcrel == !reloc->howto->pc_relative);
 
   /* Set addend to account for PC being advanced one insn before the
      target address is computed.  */
@@ -1504,11 +1506,11 @@ md_assemble (char *str)
 		      last_errmsg = errmsg;
 		      if (operand->flags & ARC_OPERAND_ERROR)
 			{
-			  as_bad (errmsg);
+			  as_bad ("%s", errmsg);
 			  return;
 			}
 		      else if (operand->flags & ARC_OPERAND_WARN)
-			as_warn (errmsg);
+			as_warn ("%s", errmsg);
 		      break;
 		    }
 		  if (limm_reloc_p
@@ -1568,7 +1570,8 @@ md_assemble (char *str)
 	      if ((suf = get_ext_suffix (s)))
 		ext_suffix_p = 1;
 	      else
-		suf = hash_find (arc_suffix_hash, s);
+		suf = (const struct arc_operand_value *)
+                    hash_find (arc_suffix_hash, s);
 	      if (!suf)
 		{
 		  /* This can happen in "blle foo" and we're currently using
@@ -1721,11 +1724,11 @@ md_assemble (char *str)
 		      last_errmsg = errmsg;
 		      if (operand->flags & ARC_OPERAND_ERROR)
 			{
-			  as_bad (errmsg);
+			  as_bad ("%s", errmsg);
 			  return;
 			}
 		      else if (operand->flags & ARC_OPERAND_WARN)
-			as_warn (errmsg);
+			as_warn ("%s", errmsg);
 		      break;
 		    }
 		}
@@ -1889,5 +1892,5 @@ md_assemble (char *str)
   if (NULL == last_errmsg)
     as_bad (_("bad instruction `%s'"), start);
   else
-    as_bad (last_errmsg);
+    as_bad ("%s", last_errmsg);
 }

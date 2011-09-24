@@ -1,5 +1,5 @@
 @c Copyright 1992, 1993, 1994, 1996, 1997, 1999, 2000, 2001, 2002,
-@c 2003, 2005
+@c 2003, 2005, 2006, 2007, 2008, 2009, 2010
 @c Free Software Foundation, Inc.
 @c This file is part of the documentation for the GAS manual
 
@@ -30,7 +30,7 @@
 @set ARC
 @set ARM
 @set AVR
-@set BFIN
+@set Blackfin
 @set CR16
 @set CRIS
 @set D10V
@@ -43,12 +43,14 @@
 @set I960
 @set IA64
 @set IP2K
+@set LM32
 @set M32C
 @set M32R
 @set xc16x
 @set M68HC11
 @set M680X0
 @set MCORE
+@set MICROBLAZE
 @set MIPS
 @set MMIX
 @set MS1
@@ -56,9 +58,13 @@
 @set PDP11
 @set PJ
 @set PPC
+@set RX
+@set S390
+@set SCORE
 @set SH
 @set SPARC
 @set TIC54X
+@set TIC6X
 @set V850
 @set VAX
 @set XTENSA

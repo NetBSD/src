@@ -1,6 +1,6 @@
 \input texinfo
 @c  Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-@c  2001, 2002, 2003, 2004, 2005, 2006
+@c  2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
 @c  Free Software Foundation, Inc.
 @setfilename internals.info
 @node Top
@@ -252,8 +252,8 @@ Indicate that the symbol is a forward reference, that is its value must only
 be determined upon use.
 
 @item S_GET_TYPE
-@item S_GET_DESC
-@item S_GET_OTHER
+@itemx S_GET_DESC
+@itemx S_GET_OTHER
 @cindex S_GET_TYPE
 @cindex S_GET_DESC
 @cindex S_GET_OTHER
@@ -262,8 +262,8 @@ are only defined for object file formats for which they make sense (primarily
 a.out).
 
 @item S_SET_TYPE
-@item S_SET_DESC
-@item S_SET_OTHER
+@itemx S_SET_DESC
+@itemx S_SET_OTHER
 @cindex S_SET_TYPE
 @cindex S_SET_DESC
 @cindex S_SET_OTHER
@@ -1145,7 +1145,7 @@ simple macro.
 This function is called to convert an ASCII string into a floating point value
 in format used by the CPU.  It takes three arguments.  The first is @var{type}
 which is a byte describing the type of floating point number to be created.  It
-is one of the characters defined in the @xref{FLT_CHARS} macro.  Possible
+is one of the characters defined in the @code{FLT_CHARS} macro.  Possible
 values are @var{'f'} or @var{'s'} for single precision, @var{'d'} or @var{'r'}
 for double precision and @var{'x'} or @var{'p'} for extended precision.  Either
 lower or upper case versions of these letters can be used.  Note: some targets
@@ -1309,12 +1309,12 @@ the subtrahend will be resolved and @code{fx_subsy} set to @code{NULL} for
 @w{@code{! SEG_NORMAL (@var{seg}) || TC_FORCE_RELOCATION (@var{fix})}} will
 be used.
 
-@item TC_FORCE_RELOCATION_SUB_ABS (@var{fix}, @var{seg)
+@item TC_FORCE_RELOCATION_SUB_ABS (@var{fix}, @var{seg})
 @cindex TC_FORCE_RELOCATION_SUB_ABS
 Like @code{TC_FORCE_RELOCATION_SUB_SAME}, but used when the subtrahend is an
 absolute symbol.  If the macro is undefined a default of @code{0} is used.
 
-@item TC_FORCE_RELOCATION_SUB_LOCAL (@var{fix}, @var{seg)
+@item TC_FORCE_RELOCATION_SUB_LOCAL (@var{fix}, @var{seg})
 @cindex TC_FORCE_RELOCATION_SUB_LOCAL
 Like @code{TC_FORCE_RELOCATION_SUB_ABS}, but the subtrahend is a symbol in the
 same section as the fixup.
@@ -1324,6 +1324,11 @@ same section as the fixup.
 This macro is evaluated for any fixup with a @code{fx_subsy} that
 @code{fixup_segment} cannot reduce to a number.  If the macro returns
 @code{false} an error will be reported.
+
+@item TC_GLOBAL_REGISTER_SYMBOL_OK
+@cindex TC_GLOBAL_REGISTER_SYMBOL_OK
+Define this macro if global register symbols are supported. The default
+is to disallow global register symbols.
 
 @item MD_APPLY_SYM_VALUE (@var{fix})
 @cindex MD_APPLY_SYM_VALUE
@@ -1389,6 +1394,11 @@ that @code{md_pcrel_from} does not take a section argument.
 @item tc_frob_label
 @cindex tc_frob_label
 If you define this macro, GAS will call it each time a label is defined.
+
+@item tc_new_dot_label
+@cindex tc_new_dot_label
+If you define this macro, GAS will call it each time a fake label is created
+off the special dot symbol.
 
 @item md_section_align
 @cindex md_section_align

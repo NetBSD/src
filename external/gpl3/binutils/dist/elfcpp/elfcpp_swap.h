@@ -1,6 +1,6 @@
 // elfcpp_swap.h -- Handle swapping for elfcpp   -*- C++ -*-
 
-// Copyright 2006, 2007, Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of elfcpp.
@@ -37,8 +37,54 @@
 #define ELFCPP_SWAP_H
 
 #include <stdint.h>
-#include <endian.h>
+
+// We need an autoconf-generated config.h file for endianness and
+// swapping.  We check two macros: WORDS_BIGENDIAN and
+// HAVE_BYTESWAP_H.
+
+#include "config.h"
+
+#ifdef HAVE_BYTESWAP_H
 #include <byteswap.h>
+#else
+// Provide our own versions of the byteswap functions.
+inline uint16_t
+bswap_16(uint16_t v)
+{
+  return ((v >> 8) & 0xff) | ((v & 0xff) << 8);
+}
+
+inline uint32_t
+bswap_32(uint32_t v)
+{
+  return (  ((v & 0xff000000) >> 24)
+	  | ((v & 0x00ff0000) >>  8)
+	  | ((v & 0x0000ff00) <<  8)
+	  | ((v & 0x000000ff) << 24));
+}
+
+inline uint64_t
+bswap_64(uint64_t v)
+{
+  return (  ((v & 0xff00000000000000ULL) >> 56)
+	  | ((v & 0x00ff000000000000ULL) >> 40)
+	  | ((v & 0x0000ff0000000000ULL) >> 24)
+	  | ((v & 0x000000ff00000000ULL) >>  8)
+	  | ((v & 0x00000000ff000000ULL) <<  8)
+	  | ((v & 0x0000000000ff0000ULL) << 24)
+	  | ((v & 0x000000000000ff00ULL) << 40)
+	  | ((v & 0x00000000000000ffULL) << 56));
+}
+#endif // !defined(HAVE_BYTESWAP_H)
+
+// gcc 4.3 and later provides __builtin_bswap32 and __builtin_bswap64.
+
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))
+#undef bswap_32
+#define bswap_32 __builtin_bswap32
+#undef bswap_64
+#define bswap_64 __builtin_bswap64
+#endif
 
 namespace elfcpp
 {
@@ -49,7 +95,13 @@ struct Endian
 {
  public:
   // Used for template specializations.
-  static const bool host_big_endian = __BYTE_ORDER == __BIG_ENDIAN;
+  static const bool host_big_endian = 
+#ifdef WORDS_BIGENDIAN
+    true
+#else
+    false
+#endif
+    ;
 };
 
 // Valtype_base is a template based on size (8, 16, 32, 64) which

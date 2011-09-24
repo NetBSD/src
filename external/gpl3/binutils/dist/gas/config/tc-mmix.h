@@ -1,5 +1,6 @@
 /* tc-mmix.h -- Header file for tc-mmix.c.
-   Copyright (C) 2001, 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2002, 2003, 2005, 2007, 2008
+   Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -224,3 +225,6 @@ extern void mmix_md_do_align (int, char *, int, int);
 
 /* This target is buggy, and sets fix size too large.  */
 #define TC_FX_SIZE_SLACK(FIX) 6
+
+/* MMIX has global register symbols.  */
+#define TC_GLOBAL_REGISTER_SYMBOL_OK

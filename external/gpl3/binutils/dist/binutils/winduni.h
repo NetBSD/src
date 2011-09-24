@@ -1,5 +1,5 @@
 /* winduni.h -- header file for unicode support for windres program.
-   Copyright 1997, 1998, 2002, 2007
+   Copyright 1997, 1998, 2002, 2005, 2007
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.

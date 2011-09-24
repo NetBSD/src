@@ -1,6 +1,6 @@
 // sparc.h -- ELF definitions specific to EM_SPARC  -*- C++ -*-
 
-// Copyright 2008, Free Software Foundation, Inc.
+// Copyright 2008, 2010 Free Software Foundation, Inc.
 // Written by David S. Miller <davem@davemloft.net>.
 
 // This file is part of elfcpp.
@@ -140,6 +140,8 @@ enum
   R_SPARC_H34 = 85,           // Direct high 12 of 34 bit
   R_SPARC_SIZE32 = 86,        // size of symbol, 32-bit
   R_SPARC_SIZE64 = 87,        // size of symbol, 64-bit
+
+  R_SPARC_IRELATIVE = 249,    // Adjust indirectly by program base
 
   // GNU vtable garbage collection extensions.
   R_SPARC_GNU_VTINHERIT = 250,

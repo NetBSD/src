@@ -1,6 +1,7 @@
 /* tc-score.h -- Score specific file for assembler
-   Copyright 2006, 2007 Free Software Foundation, Inc.
+   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
    Contributed by: 
+   Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
    Pei-Lin Tsai (pltsai@sunplus.com)
  
@@ -38,7 +39,7 @@
 #define md_relax_frag(segment, fragp, stretch)  score_relax_frag (segment, fragp, stretch)
 extern int score_relax_frag (asection *, struct frag *, long);
 
-#define md_frag_check(fragp)  score_frag_check (fragp)
+/* #define md_frag_check(fragp)  score_frag_check (fragp) */
 extern void score_frag_check (fragS *);
 
 #define TC_VALIDATE_FIX(FIXP, SEGTYPE, SKIP)  score_validate_fix (FIXP)
@@ -73,11 +74,5 @@ struct score_tc_frag_data
 #else
 #define GLOBAL_OFFSET_TABLE_NAME "__GLOBAL_OFFSET_TABLE_"
 #endif
-
-enum score_pic_level
-{
-  NO_PIC,
-  PIC
-};
 
 #endif /*TC_SCORE */

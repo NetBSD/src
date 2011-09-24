@@ -1,6 +1,6 @@
 /* corefile.h
 
-   Copyright 2000, 2001, 2002, 2004, 2007 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2004, 2007, 2009 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -24,22 +24,24 @@
 
 struct function_map
 {
-  char *function_name;
-  char *file_name;
+  char *         function_name;
+  char *         file_name;
+  unsigned int   is_first:1;	/* Is this the first symbol in an object file?  */
 };
 
-extern struct function_map *symbol_map;
+extern struct function_map * symbol_map;
 extern unsigned int symbol_map_count;
 
-extern bfd *core_bfd;		/* BFD for core-file.  */
-extern asection *core_text_sect;/* Core text section.  */
-extern PTR core_text_space;	/* Text space of a.out in core.  */
-extern int offset_to_code;	/* Offset (in bytes) of code from entry
-				   address of routine.  */
+extern bfd * core_bfd;		  /* BFD for core-file.  */
+extern asection * core_text_sect; /* Core text section.  */
+extern void * core_text_space;    /* Text space of a.out in core.  */
+extern int offset_to_code;	  /* Offset (in bytes) of code from entry
+				     address of routine.  */
 
 extern void core_init                  (const char *);
 extern void core_get_text_space        (bfd *);
 extern void core_create_function_syms  (void);
 extern void core_create_line_syms      (void);
+extern void core_create_syms_from      (const char *);
 
 #endif /* corefile_h */

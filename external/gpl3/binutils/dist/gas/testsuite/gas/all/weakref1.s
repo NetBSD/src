@@ -189,7 +189,7 @@ l:
 /* d# target symbol definitions */
 	.weakref Wld1, ld1
 	.long Wld1
-	ld1 = l
+	ld1 == l
 
 	.weakref Wld2, ld2
 	.long Wld2

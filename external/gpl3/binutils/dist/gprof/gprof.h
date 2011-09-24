@@ -29,6 +29,10 @@
 #ifndef gprof_h
 #define gprof_h
 
+#include "gconfig.h"
+
+#undef PACKAGE
+
 /* Include the BFD sysdep.h file.  */
 #include "sysdep.h"
 #include "bfd.h"

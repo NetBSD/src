@@ -1,5 +1,5 @@
 /* tc-cris.h -- Header file for tc-cris.c, the CRIS GAS port.
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2007
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2009
    Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB, Lund, Sweden.
@@ -68,11 +68,6 @@ extern const char FLT_CHARS[];
 #define md_operand(x)
 
 #define md_number_to_chars number_to_chars_littleendian
-
-/* There's no use having different functions for this; the sizes are the
-   same.  Note that we can't #define md_short_jump_size here.  */
-#define md_create_short_jump md_create_long_jump
-
 extern const struct relax_type md_cris_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_cris_relax_table
 

@@ -1,6 +1,6 @@
 /* tc-i960.h - Basic 80960 instruction formats.
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2007, 2008
+   2000, 2001, 2002, 2003, 2005, 2007, 2008
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.

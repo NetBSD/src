@@ -1,5 +1,5 @@
 /* Assembly backend for the OpenRISC 1000.
-   Copyright (C) 2002, 2003, 2005, 2007
+   Copyright (C) 2002, 2003, 2005, 2007, 2009, 2010
    Free Software Foundation, Inc.
    Contributed by Damjan Lampret <lampret@opencores.org>.
    Modified bu Johan Rydberg, <johan.rydberg@netinsight.se>.
@@ -262,7 +262,7 @@ static char *
 parse_operand (char *s, expressionS *operandp, int opt)
 {
   char *save = input_line_pointer;
-  char *new;
+  char *new_pointer;
 
 #if DEBUG
   printf ("  PROCESS NEW OPERAND(%s) == %c (%d)\n", s, opt ? opt : '!', opt);
@@ -312,14 +312,15 @@ parse_operand (char *s, expressionS *operandp, int opt)
         }
     }
 
-  new = input_line_pointer;
+  new_pointer = input_line_pointer;
   input_line_pointer = save;
 
 #if DEBUG
-  printf ("  %s=parse_operand(%s): operandp->X_op = %u\n", new, s, operandp->X_op);
+  printf ("  %s=parse_operand(%s): operandp->X_op = %u\n", new_pointer, s,
+          operandp->X_op);
 #endif
 
-  return new;
+  return new_pointer;
 }
 
 /* Instruction parsing.  Takes a string containing the opcode.
@@ -332,7 +333,6 @@ machine_ip (char *str)
   char *s;
   const char *args;
   const struct machine_opcode *insn;
-  char *argsStart;
   unsigned long opcode;
   expressionS the_operand;
   expressionS *operand = &the_operand;
@@ -368,7 +368,6 @@ machine_ip (char *str)
       return;
     }
 
-  argsStart = s;
   opcode = 0;
   memset (&the_insn, '\0', sizeof (the_insn));
   the_insn.reloc = BFD_RELOC_NONE;

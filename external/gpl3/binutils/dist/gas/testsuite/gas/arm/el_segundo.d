@@ -31,4 +31,4 @@ Disassembly of section \.text:
 0+60 <[^>]+> e1220051 	qsub	r0, r1, r2
 0+64 <[^>]+> e1620051 	qdsub	r0, r1, r2
 0+68 <[^>]+> e1220051 	qsub	r0, r1, r2
-0+6c <[^>]+> e1a00000 	nop			\(mov r0,r0\)
+0+6c <[^>]+> e1a00000 	nop			; \(mov r0, r0\)

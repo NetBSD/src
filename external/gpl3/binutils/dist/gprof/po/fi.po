@@ -1,19 +1,21 @@
-# translation of gprof-2.17.90.po to Finnish
-# Copyright (C) 2007 Free Software Foundation, Inc.
+# translation of gprof-2.19.90.po to Finnish
+# Copyright © 2007, 2009 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
-#
 # Jorma Karvonen <karvjorm@users.sf.net>, 2007.
+# Jorma Karvonen <karvonen.jorma@gmail.com>, 2009
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.17.90\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-05-15 16:49+0930\n"
-"PO-Revision-Date: 2007-08-29 20:12+0300\n"
-"Last-Translator: Jorma Karvonen <karvjorm@users.sf.net>\n"
+"Project-Id-Version: gprof 2.19.90\n"
+"Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
+"POT-Creation-Date: 2009-09-07 14:10+0200\n"
+"PO-Revision-Date: 2009-09-14 15:52+0200\n"
+"Last-Translator: Jorma Karvonen <karvonen.jorma@gmail.com>\n"
 "Language-Team: Finnish <translation-team-fi@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: KBabel 1.11.2\n"
 
 #: alpha.c:102 mips.c:54
@@ -119,7 +121,7 @@ msgstr "%9.2f   Keskimäärin suorituksia riviä kohden\n"
 msgid "[cg_tally] arc from %s to %s traversed %lu times\n"
 msgstr "[cg_tally] kaarisektori vanhempinimestä %s lapsinimeen %s käyty lävitse %lu kertaa\n"
 
-#: cg_print.c:73
+#: cg_print.c:74
 #, c-format
 msgid ""
 "\t\t     Call graph (explanation follows)\n"
@@ -128,7 +130,7 @@ msgstr ""
 "\t\t     Kutsugraafi (selitys seuraa)\n"
 "\n"
 
-#: cg_print.c:75
+#: cg_print.c:76
 #, c-format
 msgid ""
 "\t\t\tCall graph\n"
@@ -137,7 +139,7 @@ msgstr ""
 "\t\t\tKutsugraafi\n"
 "\n"
 
-#: cg_print.c:78 hist.c:466
+#: cg_print.c:79 hist.c:466
 #, c-format
 msgid ""
 "\n"
@@ -146,16 +148,16 @@ msgstr ""
 "\n"
 "hienosyisyys: jokainen näyteosuma kattaa %ld tavua"
 
-#: cg_print.c:82
+#: cg_print.c:83
 #, c-format
 msgid ""
 " for %.2f%% of %.2f seconds\n"
 "\n"
 msgstr ""
-" aika: %.2f%% of %.2f sekuntia\n"
+" aika: %.2f%% / %.2f sekuntia\n"
 "\n"
 
-#: cg_print.c:86
+#: cg_print.c:87
 #, c-format
 msgid ""
 " no time propagated\n"
@@ -164,67 +166,67 @@ msgstr ""
 " ei aikaa kulunut\n"
 "\n"
 
-#: cg_print.c:95 cg_print.c:98 cg_print.c:100
+#: cg_print.c:96 cg_print.c:99 cg_print.c:101
 msgid "called"
 msgstr "kutsuttu"
 
-#: cg_print.c:95 cg_print.c:100
+#: cg_print.c:96 cg_print.c:101
 msgid "total"
 msgstr "yhteensä"
 
-#: cg_print.c:95
+#: cg_print.c:96
 msgid "parents"
 msgstr "vanhemmat"
 
-#: cg_print.c:97 cg_print.c:98
+#: cg_print.c:98 cg_print.c:99
 msgid "index"
 msgstr "indeksi"
 
 #  Tässä on ilmeisesti virhe ja prosenttimerkin pitäisi jäädä pois. Kyseinen kohta on seuraava:
 #  _("index"), _("%time"), _("self"), _("descendants"),
 #  _("called"), _("self"), _("name"), _("index"));
-#: cg_print.c:97
+#: cg_print.c:98
 #, c-format
 msgid "%time"
 msgstr "%time"
 
-#: cg_print.c:97 cg_print.c:98
+#: cg_print.c:98 cg_print.c:99
 msgid "self"
 msgstr "itse"
 
-#: cg_print.c:97
+#: cg_print.c:98
 msgid "descendants"
 msgstr "jälkeläiset"
 
-#: cg_print.c:98 hist.c:492
+#: cg_print.c:99 hist.c:492
 msgid "name"
 msgstr "nimi"
 
-#: cg_print.c:100
+#: cg_print.c:101
 msgid "children"
 msgstr "lapset"
 
-#: cg_print.c:105
+#: cg_print.c:106
 #, c-format
 msgid "index %% time    self  children    called     name\n"
 msgstr "indeksi %% aika    itse  lapset    kutsuttu     nimi\n"
 
-#: cg_print.c:128
+#: cg_print.c:129
 #, c-format
 msgid " <cycle %d as a whole> [%d]\n"
 msgstr " <jakso %d kokonaisena> [%d]\n"
 
-#: cg_print.c:354
+#: cg_print.c:355
 #, c-format
 msgid "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <spontaneous>\n"
 msgstr "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <spontaani>\n"
 
-#: cg_print.c:355
+#: cg_print.c:356
 #, c-format
 msgid "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <spontaneous>\n"
 msgstr "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <spontaani>\n"
 
-#: cg_print.c:589
+#: cg_print.c:590
 #, c-format
 msgid ""
 "Index by function name\n"
@@ -233,150 +235,150 @@ msgstr ""
 "Indeksi funktionimittäin\n"
 "\n"
 
-#: cg_print.c:646 cg_print.c:655
+#: cg_print.c:647 cg_print.c:656
 #, c-format
 msgid "<cycle %d>"
 msgstr "<jakso %d>"
 
-#: corefile.c:59
+#: corefile.c:60
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s: mappaustiedostoa %s ei voi jäsentää.\n"
 
-#: corefile.c:72
+#: corefile.c:84 corefile.c:496
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s: ei voitu avata tiedostoa %s.\n"
 
-#: corefile.c:166
+#: corefile.c:183
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr "%s: %s: ei ole suoritustiedostomuotoinen\n"
 
-#: corefile.c:177
+#: corefile.c:194
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr "%s: ei löydy ”.text”-lohkoa kohteesta %s\n"
 
-#: corefile.c:252
+#: corefile.c:269
 #, c-format
 msgid "%s: ran out room for %lu bytes of text space\n"
 msgstr "%s: ei ollut tilaa %lu tavun tekstitilalle\n"
 
-#: corefile.c:266
+#: corefile.c:283
 #, c-format
 msgid "%s: can't do -c\n"
 msgstr "%s: ei voi tehdä -c\n"
 
-#: corefile.c:305
+#: corefile.c:322
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c ei ole tuettu arkkitehtuurissa %s\n"
 
-#: corefile.c:470
+#: corefile.c:505 corefile.c:588
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s: tiedostossa ”%s” ei ole symboleja\n"
 
-#: corefile.c:772
+#: corefile.c:848
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%s: joku laski väärin: ltab.len=%d eikä %ld\n"
 
-#: gmon_io.c:83
+#: gmon_io.c:84
 #, c-format
 msgid "%s: address size has unexpected value of %u\n"
 msgstr "%s: osoitekoossa on odottamaton arvo %u\n"
 
-#: gmon_io.c:320 gmon_io.c:416
+#: gmon_io.c:319 gmon_io.c:415
 #, c-format
 msgid "%s: file too short to be a gmon file\n"
 msgstr "%s: tiedosto on liian lyhyt, jotta se olisi gmon-tiedosto\n"
 
-#: gmon_io.c:330 gmon_io.c:459
+#: gmon_io.c:329 gmon_io.c:458
 #, c-format
 msgid "%s: file `%s' has bad magic cookie\n"
 msgstr "%s: tiedostossa ”%s” on virheellinen maaginen pipari\n"
 
-#: gmon_io.c:341
+#: gmon_io.c:340
 #, c-format
 msgid "%s: file `%s' has unsupported version %d\n"
 msgstr "%s: tiedostossa ”%s” on tukematon versio %d\n"
 
-#: gmon_io.c:371
+#: gmon_io.c:370
 #, c-format
 msgid "%s: %s: found bad tag %d (file corrupted?)\n"
 msgstr "%s: %s: virheellinen tunniste %d löytyi (tiedosto rikkinäinen?)\n"
 
-#: gmon_io.c:438
+#: gmon_io.c:437
 #, c-format
 msgid "%s: profiling rate incompatible with first gmon file\n"
 msgstr "%s: profilointinopeus ei ole yhteensopiva ensimmäisen gmon-tiedoston kanssa\n"
 
-#: gmon_io.c:489
+#: gmon_io.c:488
 #, c-format
 msgid "%s: incompatible with first gmon file\n"
 msgstr "%s: ei ole yhteensopiva ensimmäisen gmon-tiedoston kanssa\n"
 
-#: gmon_io.c:516
+#: gmon_io.c:518
 #, c-format
 msgid "%s: file '%s' does not appear to be in gmon.out format\n"
 msgstr "%s: tiedosto ”%s” ei vaikuta olevan ”gmon.out”-muotoinen\n"
 
-#: gmon_io.c:529
+#: gmon_io.c:531
 #, c-format
 msgid "%s: unexpected EOF after reading %d/%d bins\n"
 msgstr "%s: odottamaton tiedoston loppumerkki ”%d/%d bins”-lukemisen jälkeen\n"
 
-#: gmon_io.c:563
+#: gmon_io.c:565
 #, c-format
 msgid "time is in ticks, not seconds\n"
 msgstr "aika on ticks-yksikköinä, ei sekunteina\n"
 
-#: gmon_io.c:569 gmon_io.c:746
+#: gmon_io.c:571 gmon_io.c:748
 #, c-format
 msgid "%s: don't know how to deal with file format %d\n"
 msgstr "%s: ei tiedetä, kuinka tiedostomuotoa %d pitää käsitellä\n"
 
-#: gmon_io.c:576
+#: gmon_io.c:578
 #, c-format
 msgid "File `%s' (version %d) contains:\n"
 msgstr "Tiedosto ”%s” (versio %d) sisältää:\n"
 
-#: gmon_io.c:579
+#: gmon_io.c:581
 #, c-format
 msgid "\t%d histogram record\n"
 msgstr "\t%d histogrammitietue\n"
 
-#: gmon_io.c:580
+#: gmon_io.c:582
 #, c-format
 msgid "\t%d histogram records\n"
 msgstr "\t%d histogrammitietueet\n"
 
-#: gmon_io.c:582
+#: gmon_io.c:584
 #, c-format
 msgid "\t%d call-graph record\n"
 msgstr "\t%d kutsugraafitietue\n"
 
-#: gmon_io.c:583
+#: gmon_io.c:585
 #, c-format
 msgid "\t%d call-graph records\n"
 msgstr "\t%d kutsugraafitietueet\n"
 
-#: gmon_io.c:585
+#: gmon_io.c:587
 #, c-format
 msgid "\t%d basic-block count record\n"
 msgstr "\t%d peruslohkolukumäärätietue\n"
 
-#: gmon_io.c:586
+#: gmon_io.c:588
 #, c-format
 msgid "\t%d basic-block count records\n"
 msgstr "\t%d peruslohkolukumäärätietueet\n"
 
-#: gprof.c:158
+#: gprof.c:159
 #, c-format
 msgid ""
-"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][name]] [-I dirs]\n"
+"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
@@ -387,7 +389,7 @@ msgid ""
 "\t[--no-static] [--print-path] [--separate-files]\n"
 "\t[--static-call-graph] [--sum] [--table-length=len] [--traditional]\n"
 "\t[--version] [--width=n] [--ignore-non-functions]\n"
-"\t[--demangle[=STYLE]] [--no-demangle] [@FILE]\n"
+"\t[--demangle[=STYLE]] [--no-demangle] [--external-symbol-table=name] [@FILE]\n"
 "\t[image-file] [profile-file...]\n"
 msgstr ""
 "Käyttö: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][nimi]] [-I hakemistot]\n"
@@ -401,61 +403,61 @@ msgstr ""
 "\t[--no-static] [--print-path] [--separate-files]\n"
 "\t[--static-call-graph] [--sum] [--table-length=len] [--traditional]\n"
 "\t[--version] [--width=n] [--ignore-non-functions]\n"
-"\t[--demangle[=TYYLI]] [--no-demangle] [@TIEDOSTO]\n"
+"\t[--demangle[=TYYLI]] [--no-demangle] [--external-symbol-table=name] [@TIEDOSTO]\n"
 "\t[vedostiedosto] [profiilitiedosto...]\n"
 
-#: gprof.c:174
+#: gprof.c:175
 #, c-format
 msgid "Report bugs to %s\n"
 msgstr "Lähetä raportit ohjelmistovioista (englanniksi) osoitteeseen %s\n"
 
-#: gprof.c:250
+#: gprof.c:251
 #, c-format
 msgid "%s: debugging not supported; -d ignored\n"
 msgstr "%s: debuggausta ei tueta; -d:tä ei oteta huomioon\n"
 
-#: gprof.c:330
+#: gprof.c:331
 #, c-format
 msgid "%s: unknown file format %s\n"
 msgstr "%s: tuntematon tiedostomuoto %s\n"
 
 #. This output is intended to follow the GNU standards document.
-#: gprof.c:414
+#: gprof.c:419
 #, c-format
 msgid "GNU gprof %s\n"
 msgstr "GNU gprof %s\n"
 
-#: gprof.c:415
+#: gprof.c:420
 #, c-format
 msgid "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
 msgstr "Perustuu BSD:n gprofiin, copyright 1983 Regents of the University of California.\n"
 
-#: gprof.c:416
+#: gprof.c:421
 #, c-format
 msgid "This program is free software.  This program has absolutely no warranty.\n"
 msgstr "Tämä ohjelma on vapaa ohjelmisto. Tällä ohjelmalla ei ehdottomasti ole mitään takuuta.\n"
 
-#: gprof.c:457
+#: gprof.c:462
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
 msgstr "%s: tuntematon eheytystyyli ”%s”\n"
 
-#: gprof.c:477
+#: gprof.c:482
 #, c-format
 msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr "%s: Vain joko ”--function-ordering” tai ”--file-ordering” saadaan määritellä.\n"
 
-#: gprof.c:527
+#: gprof.c:534
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr "%s: valitettavasti tiedostomuotoa ”prof” ei vielä tueta\n"
 
-#: gprof.c:581
+#: gprof.c:588
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr "%s: ”gmon.out”-tiedosto puuttuu histogrammista\n"
 
-#: gprof.c:588
+#: gprof.c:595
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s: ”gmon.out”-tiedosto puuttuu kutsugraafidatasta\n"
@@ -577,7 +579,7 @@ msgstr "%s: löydetty symboli, joka kattaa useita histogrammitietueita"
 msgid "[find_call] 0x%lx: jal"
 msgstr "[etsi_kutsu] 0x%lx: jal-käsky"
 
-#: mips.c:96
+#: mips.c:99
 #, c-format
 msgid "[find_call] 0x%lx: jalr\n"
 msgstr "[etsi_kutsu] 0x%lx: jalr-käsky (epäsuora kutsu)\n"

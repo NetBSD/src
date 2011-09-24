@@ -1,3 +1,118 @@
+2010-10-08  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	* frv.opc: #undef DEBUG.
+
+2010-07-03  DJ Delorie  <dj@delorie.com>
+
+	* m32c.cpu (f-dsp-8-s24): Mask high byte after shifting it.
+
+2010-02-11  Doug Evans  <dje@sebabeach.org>
+
+	* m32r.cpu (HASH-PREFIX): Delete.
+	(duhpo, dshpo): New pmacros.
+	(simm8, simm16): Delete HASH-PREFIX attribute, define with dshpo.
+	(uimm3, uimm4, uimm5, uimm8, uimm16, imm1): Delete HASH-PREFIX
+	attribute, define with dshpo.
+	(uimm24): Delete HASH-PREFIX attribute.
+	* m32r.opc (CGEN_PRINT_NORMAL): Delete.
+	(print_signed_with_hash_prefix): New function.
+	(print_unsigned_with_hash_prefix): New function.
+	* xc16x.cpu (dowh): New pmacro.
+	(upof16): Define with dowh, specify print handler.
+	(qbit, qlobit, qhibit): Ditto.
+	(upag16): Ditto.
+	* xc16x.opc (CGEN_PRINT_NORMAL): Delete.
+	(print_with_dot_prefix): New functions.
+	(print_with_pof_prefix, print_with_pag_prefix): New functions.
+
+2010-01-24  Doug Evans  <dje@sebabeach.org>
+
+	* frv.cpu (floating-point-conversion): Update call to fp conv op.
+	(floating-point-dual-conversion, ne-floating-point-dual-conversion,
+	conditional-floating-point-conversion, ne-floating-point-conversion,
+	float-parallel-mul-add-double-semantics): Ditto.
+
+2010-01-05  Doug Evans  <dje@sebabeach.org>
+
+	* m32c.cpu (f-dsp-32-u24): Fix mode of extract handler.
+	(f-dsp-40-u20, f-dsp-40-u24): Ditto.
+
+2010-01-02  Doug Evans  <dje@sebabeach.org>
+
+	* m32c.opc (parse_signed16): Fix typo.
+
+2009-12-11  Nick Clifton  <nickc@redhat.com>
+
+	* frv.opc: Fix shadowed variable warnings.
+	* m32c.opc: Fix shadowed variable warnings.
+
+2009-11-14  Doug Evans  <dje@sebabeach.org>
+
+	Must use VOID expression in VOID context.
+	* xc16x.cpu (mov4): Fix mode of `sequence'.
+	(mov9, mov10): Ditto.
+	(movbsrr, moveb1, jmprel, jmpseg, jmps): Fix mode of `if'.
+	(callr, callseg, calls, trap, rets, reti): Ditto.
+	(jb, jbc, jnb, jnbs): Fix mode of `if'.  Comment out no-op `sll'.
+	(atomic, extr, extp, extp1, extpg1, extpr, extpr1): Fix mode of `cond'.
+	(exts, exts1, extsr, extsr1, prior): Ditto.
+
+2009-10-23  Doug Evans  <dje@sebabeach.org>
+
+	* m32c.opc (opc.h): cgen-types.h -> cgen/basic-modes.h.
+	cgen-ops.h -> cgen/basic-ops.h.
+
+2009-09-25  Alan Modra  <amodra@bigpond.net.au>
+
+	* m32r.cpu (stb-plus): Typo fix.
+
+2009-09-23  Doug Evans  <dje@sebabeach.org>
+
+	* m32r.cpu (sth-plus): Fix address mode and calculation.
+	(stb-plus): Ditto.
+	(clrpsw): Fix mask calculation.
+	(bset, bclr, btst): Make mode in bit calculation match expression.
+
+	* xc16x.cpu (rtl-version): Set to 0.8.
+	(gr-names, ext-names,psw-names): Update, print-name -> enum-prefix,
+	make uppercase.  Remove unnecessary name-prefix spec.
+	(grb-names, conditioncode-names, extconditioncode-names): Ditto.
+	(grb8-names, r8-names, regmem8-names, regdiv8-names): Ditto.
+	(reg0-name, reg0-name1, regbmem8-names, memgr8-names): Ditto.
+	(h-cr): New hardware.
+	(muls): Comment out parts that won't compile, add fixme.
+	(mulu, divl, divlu, jmpabs, jmpa-, jmprel, jbc, jnbs, callr): Ditto.
+	(scxti, scxtmg, scxtm, bclear, bclr18, bset19, bitset, bmov): Ditto.
+	(bmovn, band, bor, bxor, bcmp, bfldl, bfldh): Ditto.
+
+2009-07-16  Doug Evans  <dje@sebabeach.org>
+
+	* cpu/simplify.inc (*): One line doc strings don't need \n.
+	(df): Invoke define-full-ifield instead of claiming it's an alias.
+	(dno): Define.
+	(dnop): Mark as deprecated.
+
+2009-06-22  Alan Modra  <amodra@bigpond.net.au>
+
+	* m32c.opc (parse_lab_5_3): Use correct enum.
+
+2009-01-07  Hans-Peter Nilsson  <hp@axis.com>
+
+	* frv.cpu (mabshs): Explicitly sign-extend arguments of abs to DI.
+	(DI-ext-HI, DI-ext-UHI, DI-ext-DI): New pmacros.
+	(media-arith-sat-semantics): Explicitly sign- or zero-extend
+	arguments of "operation" to DI using "mode" and the new pmacros.
+
+2009-01-03  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris.cpu (cris-implemented-writable-specregs-v32): Correct size
+	of number 2, PID.
+
+2008-12-23  Jon Beniston <jon@beniston.com>
+
+	* lm32.cpu: New file.
+	* lm32.opc: New file.
+
 2008-01-29  Alan Modra  <amodra@bigpond.net.au>
 
 	* mt.opc (parse_imm16): Apply 2007-09-26 opcodes/mt-asm.c change

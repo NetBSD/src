@@ -1,6 +1,6 @@
 /* tc-v850.c -- Assembler code for the NEC V850
    Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007  Free Software Foundation, Inc.
+   2006, 2007, 2009, 2010, 2011  Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -39,13 +39,14 @@ static bfd_boolean warn_unsigned_overflows = FALSE;
 static int machine = -1;
 
 /* Indicates the target processor(s) for the assemble.  */
-static int processor_mask = -1;
+static int processor_mask = 0;
 
 /* Structure to hold information about predefined registers.  */
 struct reg_name
 {
   const char *name;
   int value;
+  unsigned int processors;
 };
 
 /* Generic assembler global variables which must be defined by all
@@ -71,15 +72,67 @@ const char FLT_CHARS[] = "dD";
 
 const relax_typeS md_relax_table[] =
 {
-  /* Conditional branches.  */
-  {0xff,     -0x100,    2, 1},
-  {0x1fffff, -0x200000, 6, 0},
-  /* Unconditional branches.  */
-  {0xff,     -0x100,    2, 3},
-  {0x1fffff, -0x200000, 4, 0},
+  /* Conditional branches.(V850/V850E, max 22bit)  */
+#define SUBYPTE_COND_9_22	0
+  {0xfe,	 -0x100,        2, SUBYPTE_COND_9_22 + 1},
+  {0x1ffffe + 2, -0x200000 + 2, 6, 0},
+  /* Conditional branches.(V850/V850E, max 22bit)  */
+#define SUBYPTE_SA_9_22	2
+  {0xfe,         -0x100,      2, SUBYPTE_SA_9_22 + 1},
+  {0x1ffffe + 4, -0x200000 + 4, 8, 0},
+  /* Unconditional branches.(V850/V850E, max 22bit)  */
+#define SUBYPTE_UNCOND_9_22	4
+  {0xfe,     -0x100,    2, SUBYPTE_UNCOND_9_22 + 1},
+  {0x1ffffe, -0x200000, 4, 0},
+  /* Conditional branches.(V850E2, max 32bit)  */
+#define SUBYPTE_COND_9_22_32	6
+  {0xfe,     -0x100,    2, SUBYPTE_COND_9_22_32 + 1},
+  {0x1fffff + 2, -0x200000 + 2, 6, SUBYPTE_COND_9_22_32 + 2},
+  {0x7ffffffe, -0x80000000, 8, 0},
+  /* Conditional branches.(V850E2, max 32bit)  */
+#define SUBYPTE_SA_9_22_32	9
+  {0xfe,     -0x100,    2, SUBYPTE_SA_9_22_32 + 1},
+  {0x1ffffe + 4, -0x200000 + 4, 8, SUBYPTE_SA_9_22_32 + 2},
+  {0x7ffffffe, -0x80000000, 10, 0},
+  /* Unconditional branches.(V850E2, max 32bit)  */
+#define SUBYPTE_UNCOND_9_22_32	12
+  {0xfe,     -0x100,    2, SUBYPTE_UNCOND_9_22_32 + 1},
+  {0x1ffffe, -0x200000, 4, SUBYPTE_UNCOND_9_22_32 + 2},
+  {0x7ffffffe, -0x80000000, 6, 0},
+  /* Conditional branches.(V850E2R max 22bit)  */
+#define SUBYPTE_COND_9_17_22	15
+  {0xfe,     -0x100,    2, SUBYPTE_COND_9_17_22 + 1},
+  {0xfffe, -0x10000,	4, SUBYPTE_COND_9_17_22 + 2},
+  {0x1ffffe + 2, -0x200000 + 2, 6, 0},
+  /* Conditional branches.(V850E2R max 22bit)  */
+#define SUBYPTE_SA_9_17_22	18
+  {0xfe,     -0x100,    2, SUBYPTE_SA_9_17_22 + 1},
+  {0xfffe, -0x10000,	4, SUBYPTE_SA_9_17_22 + 2},
+  {0x1ffffe + 4, -0x200000 + 4, 8, 0},
+  /* Conditional branches.(V850E2R max 32bit)  */
+#define SUBYPTE_COND_9_17_22_32	21
+  {0xfe,     -0x100,    2, SUBYPTE_COND_9_17_22_32 + 1},
+  {0xfffe, -0x10000,	4, SUBYPTE_COND_9_17_22_32 + 2},
+  {0x1ffffe + 2, -0x200000 + 2, 6, SUBYPTE_COND_9_17_22_32 + 3},
+  {0x7ffffffe, -0x80000000, 8, 0},
+  /* Conditional branches.(V850E2R max 32bit)  */
+#define SUBYPTE_SA_9_17_22_32	25
+  {0xfe,     -0x100,    2, SUBYPTE_SA_9_17_22_32 + 1},
+  {0xfffe, -0x10000,	4, SUBYPTE_SA_9_17_22_32 + 2},
+  {0x1ffffe + 4, -0x200000 + 4, 8, SUBYPTE_SA_9_17_22_32 + 3},
+  {0x7ffffffe, -0x80000000, 10, 0},
 };
 
-static int  v850_relax = 0;
+static int v850_relax = 0;
+
+/* Default branch disp size 22 or 32.  */
+static int default_disp_size = 22;
+
+/* Default no using bcond17.  */
+static int no_bcond17 = 0;
+
+/* Default no using ld/st 23bit offset.  */
+static int no_stld23 = 0;
 
 /* Fixups.  */
 #define MAX_INSN_FIXUPS   5
@@ -463,9 +516,12 @@ set_machine (int number)
 
   switch (machine)
     {
-    case 0:		  processor_mask = PROCESSOR_V850;   break;
-    case bfd_mach_v850e:  processor_mask = PROCESSOR_V850E;  break;
-    case bfd_mach_v850e1: processor_mask = PROCESSOR_V850E;  break;
+    case 0:                SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850);    break;
+    case bfd_mach_v850:    SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850);    break;
+    case bfd_mach_v850e:   SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E);   break;
+    case bfd_mach_v850e1:  SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E);   break;
+    case bfd_mach_v850e2:  SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E2);  break;
+    case bfd_mach_v850e2v3:SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E2V3); break;
     }
 }
 
@@ -477,16 +533,16 @@ v850_longcode (int type)
   if (! v850_relax)
     {
       if (type == 1)
-	as_warn (".longcall pseudo-op seen when not relaxing");
+	as_warn (_(".longcall pseudo-op seen when not relaxing"));
       else
-	as_warn (".longjump pseudo-op seen when not relaxing");
+	as_warn (_(".longjump pseudo-op seen when not relaxing"));
     }
 
   expression (&ex);
 
   if (ex.X_op != O_symbol || ex.X_add_number != 0)
     {
-      as_bad ("bad .longcall format");
+      as_bad (_("bad .longcall format"));
       ignore_rest_of_line ();
 
       return;
@@ -523,7 +579,9 @@ const pseudo_typeS md_pseudo_table[] =
   { "call_table_data",	v850_seg,		CALL_TABLE_DATA_SECTION	},
   { "call_table_text",	v850_seg,		CALL_TABLE_TEXT_SECTION	},
   { "v850e",		set_machine,		bfd_mach_v850e		},
-  { "v850e1",		set_machine,		bfd_mach_v850e1 	},
+  { "v850e1",		set_machine,		bfd_mach_v850e1         },
+  { "v850e2",		set_machine,		bfd_mach_v850e2 	},
+  { "v850e2v3",		set_machine,		bfd_mach_v850e2v3 	},
   { "longcall",		v850_longcode,		1			},
   { "longjump",		v850_longcode,		2			},
   { NULL,		NULL,			0			}
@@ -535,45 +593,45 @@ static struct hash_control *v850_hash;
 /* This table is sorted.  Suitable for searching by a binary search.  */
 static const struct reg_name pre_defined_registers[] =
 {
-  { "ep",  30 },		/* ep - element ptr.  */
-  { "gp",   4 },		/* gp - global ptr.  */
-  { "hp",   2 },		/* hp - handler stack ptr.  */
-  { "lp",  31 },		/* lp - link ptr.  */
-  { "r0",   0 },
-  { "r1",   1 },
-  { "r10", 10 },
-  { "r11", 11 },
-  { "r12", 12 },
-  { "r13", 13 },
-  { "r14", 14 },
-  { "r15", 15 },
-  { "r16", 16 },
-  { "r17", 17 },
-  { "r18", 18 },
-  { "r19", 19 },
-  { "r2",   2 },
-  { "r20", 20 },
-  { "r21", 21 },
-  { "r22", 22 },
-  { "r23", 23 },
-  { "r24", 24 },
-  { "r25", 25 },
-  { "r26", 26 },
-  { "r27", 27 },
-  { "r28", 28 },
-  { "r29", 29 },
-  { "r3",   3 },
-  { "r30", 30 },
-  { "r31", 31 },
-  { "r4",   4 },
-  { "r5",   5 },
-  { "r6",   6 },
-  { "r7",   7 },
-  { "r8",   8 },
-  { "r9",   9 },
-  { "sp",   3 },		/* sp - stack ptr.  */
-  { "tp",   5 },		/* tp - text ptr.  */
-  { "zero", 0 },
+  { "ep",  30, PROCESSOR_ALL },		/* ep - element ptr.  */
+  { "gp",   4, PROCESSOR_ALL },		/* gp - global ptr.  */
+  { "hp",   2, PROCESSOR_ALL },		/* hp - handler stack ptr.  */
+  { "lp",  31, PROCESSOR_ALL },		/* lp - link ptr.  */
+  { "r0",   0, PROCESSOR_ALL },
+  { "r1",   1, PROCESSOR_ALL },
+  { "r10", 10, PROCESSOR_ALL },
+  { "r11", 11, PROCESSOR_ALL },
+  { "r12", 12, PROCESSOR_ALL },
+  { "r13", 13, PROCESSOR_ALL },
+  { "r14", 14, PROCESSOR_ALL },
+  { "r15", 15, PROCESSOR_ALL },
+  { "r16", 16, PROCESSOR_ALL },
+  { "r17", 17, PROCESSOR_ALL },
+  { "r18", 18, PROCESSOR_ALL },
+  { "r19", 19, PROCESSOR_ALL },
+  { "r2",   2, PROCESSOR_ALL },
+  { "r20", 20, PROCESSOR_ALL },
+  { "r21", 21, PROCESSOR_ALL },
+  { "r22", 22, PROCESSOR_ALL },
+  { "r23", 23, PROCESSOR_ALL },
+  { "r24", 24, PROCESSOR_ALL },
+  { "r25", 25, PROCESSOR_ALL },
+  { "r26", 26, PROCESSOR_ALL },
+  { "r27", 27, PROCESSOR_ALL },
+  { "r28", 28, PROCESSOR_ALL },
+  { "r29", 29, PROCESSOR_ALL },
+  { "r3",   3, PROCESSOR_ALL },
+  { "r30", 30, PROCESSOR_ALL },
+  { "r31", 31, PROCESSOR_ALL },
+  { "r4",   4, PROCESSOR_ALL },
+  { "r5",   5, PROCESSOR_ALL },
+  { "r6",   6, PROCESSOR_ALL },
+  { "r7",   7, PROCESSOR_ALL },
+  { "r8",   8, PROCESSOR_ALL },
+  { "r9",   9, PROCESSOR_ALL },
+  { "sp",   3, PROCESSOR_ALL },		/* sp - stack ptr.  */
+  { "tp",   5, PROCESSOR_ALL },		/* tp - text ptr.  */
+  { "zero", 0, PROCESSOR_ALL },
 };
 
 #define REG_NAME_CNT						\
@@ -581,66 +639,219 @@ static const struct reg_name pre_defined_registers[] =
 
 static const struct reg_name system_registers[] =
 {
-  { "asid",  23 },
-  { "bpc",   22 },
-  { "bpav",  24 },
-  { "bpam",  25 },
-  { "bpdv",  26 },
-  { "bpdm",  27 },
-  { "ctbp",  20 },
-  { "ctpc",  16 },
-  { "ctpsw", 17 },
-  { "dbpc",  18 },
-  { "dbpsw", 19 },
-  { "dir",   21 },
-  { "ecr",    4 },
-  { "eipc",   0 },
-  { "eipsw",  1 },
-  { "fepc",   2 },
-  { "fepsw",  3 },
-  { "psw",    5 },
+  { "asid",        23, PROCESSOR_NOT_V850 },
+  { "bpam",        25, PROCESSOR_NOT_V850 },
+  { "bpav",        24, PROCESSOR_NOT_V850 },
+  { "bpc",         22, PROCESSOR_NOT_V850 },
+  { "bpdm",        27, PROCESSOR_NOT_V850 },
+  { "bpdv",        26, PROCESSOR_NOT_V850 },
+  { "bsel",        31, PROCESSOR_V850E2_ALL },
+  { "cfg",          7, PROCESSOR_V850E2V3 },
+  { "ctbp",        20, PROCESSOR_NOT_V850 },
+  { "ctpc",        16, PROCESSOR_NOT_V850 },
+  { "ctpsw",       17, PROCESSOR_NOT_V850 },
+  { "dbic",        15, PROCESSOR_V850E2_ALL },
+  { "dbpc",        18, PROCESSOR_NOT_V850 },
+  { "dbpsw",       19, PROCESSOR_NOT_V850 },
+  { "dbwr",        30, PROCESSOR_V850E2_ALL },
+  { "dir",         21, PROCESSOR_NOT_V850 },
+  { "dpa0l",       16, PROCESSOR_V850E2V3 },
+  { "dpa0u",       17, PROCESSOR_V850E2V3 },
+  { "dpa1l",       18, PROCESSOR_V850E2V3 },
+  { "dpa1u",       19, PROCESSOR_V850E2V3 },
+  { "dpa2l",       20, PROCESSOR_V850E2V3 },
+  { "dpa2u",       21, PROCESSOR_V850E2V3 },
+  { "dpa3l",       22, PROCESSOR_V850E2V3 },
+  { "dpa3u",       23, PROCESSOR_V850E2V3 },
+  { "dpa4l",       24, PROCESSOR_V850E2V3 },
+  { "dpa4u",       25, PROCESSOR_V850E2V3 },
+  { "dpa5l",       26, PROCESSOR_V850E2V3 },
+  { "dpa5u",       27, PROCESSOR_V850E2V3 },
+  { "ecr",          4, PROCESSOR_ALL },
+  { "eh_base",      3, PROCESSOR_V850E2V3 },
+  { "eh_cfg",       1, PROCESSOR_V850E2V3 },
+  { "eh_reset",     2, PROCESSOR_V850E2V3 },
+  { "eiic",        13, PROCESSOR_V850E2_ALL },
+  { "eipc",         0, PROCESSOR_ALL },
+  { "eipsw",        1, PROCESSOR_ALL },
+  { "eiwr",        28, PROCESSOR_V850E2_ALL },
+  { "feic",        14, PROCESSOR_V850E2_ALL },
+  { "fepc",         2, PROCESSOR_ALL },
+  { "fepsw",        3, PROCESSOR_ALL },
+  { "fewr",        29, PROCESSOR_V850E2_ALL },
+  { "fpcc",         9, PROCESSOR_V850E2V3 },
+  { "fpcfg",       10, PROCESSOR_V850E2V3 },
+  { "fpec",        11, PROCESSOR_V850E2V3 },
+  { "fpepc",        7, PROCESSOR_V850E2V3 },
+  { "fpspc",       27, PROCESSOR_V850E2V3 },
+  { "fpsr",         6, PROCESSOR_V850E2V3 },
+  { "fpst",         8, PROCESSOR_V850E2V3 },
+  { "ipa0l",        6, PROCESSOR_V850E2V3 },
+  { "ipa0u",        7, PROCESSOR_V850E2V3 },
+  { "ipa1l",        8, PROCESSOR_V850E2V3 },
+  { "ipa1u",        9, PROCESSOR_V850E2V3 },
+  { "ipa2l",       10, PROCESSOR_V850E2V3 },
+  { "ipa2u",       11, PROCESSOR_V850E2V3 },
+  { "ipa3l",       12, PROCESSOR_V850E2V3 },
+  { "ipa3u",       13, PROCESSOR_V850E2V3 },
+  { "ipa4l",       14, PROCESSOR_V850E2V3 },
+  { "ipa4u",       15, PROCESSOR_V850E2V3 },
+  { "mca",         24, PROCESSOR_V850E2V3 },
+  { "mcc",         26, PROCESSOR_V850E2V3 },
+  { "mcr",         27, PROCESSOR_V850E2V3 },
+  { "mcs",         25, PROCESSOR_V850E2V3 },
+  { "mpc",          1, PROCESSOR_V850E2V3 },
+  { "mpm",          0, PROCESSOR_V850E2V3 },
+  { "mpu10_dpa0l", 16, PROCESSOR_V850E2V3 },
+  { "mpu10_dpa0u", 17, PROCESSOR_V850E2V3 },
+  { "mpu10_dpa1l", 18, PROCESSOR_V850E2V3 },
+  { "mpu10_dpa1u", 19, PROCESSOR_V850E2V3 },
+  { "mpu10_dpa2l", 20, PROCESSOR_V850E2V3 },
+  { "mpu10_dpa2u", 21, PROCESSOR_V850E2V3 },
+  { "mpu10_dpa3l", 22, PROCESSOR_V850E2V3 },
+  { "mpu10_dpa3u", 23, PROCESSOR_V850E2V3 },
+  { "mpu10_dpa4l", 24, PROCESSOR_V850E2V3 },
+  { "mpu10_dpa4u", 25, PROCESSOR_V850E2V3 },
+  { "mpu10_dpa5l", 26, PROCESSOR_V850E2V3 },
+  { "mpu10_dpa5u", 27, PROCESSOR_V850E2V3 },
+  { "mpu10_ipa0l",  6, PROCESSOR_V850E2V3 },
+  { "mpu10_ipa0u",  7, PROCESSOR_V850E2V3 },
+  { "mpu10_ipa1l",  8, PROCESSOR_V850E2V3 },
+  { "mpu10_ipa1u",  9, PROCESSOR_V850E2V3 },
+  { "mpu10_ipa2l", 10, PROCESSOR_V850E2V3 },
+  { "mpu10_ipa2u", 11, PROCESSOR_V850E2V3 },
+  { "mpu10_ipa3l", 12, PROCESSOR_V850E2V3 },
+  { "mpu10_ipa3u", 13, PROCESSOR_V850E2V3 },
+  { "mpu10_ipa4l", 14, PROCESSOR_V850E2V3 },
+  { "mpu10_ipa4u", 15, PROCESSOR_V850E2V3 },
+  { "mpu10_mpc",    1, PROCESSOR_V850E2V3 },
+  { "mpu10_mpm",    0, PROCESSOR_V850E2V3 },
+  { "mpu10_tid",    2, PROCESSOR_V850E2V3 },
+  { "mpu10_vmadr",  5, PROCESSOR_V850E2V3 },
+  { "mpu10_vmecr",  3, PROCESSOR_V850E2V3 },
+  { "mpu10_vmtid",  4, PROCESSOR_V850E2V3 },
+  { "pid",          6, PROCESSOR_V850E2V3 },
+  { "pmcr0",        4, PROCESSOR_V850E2V3 },
+  { "pmis2",       14, PROCESSOR_V850E2V3 },
+  { "psw",          5, PROCESSOR_ALL },
+  { "scbp",        12, PROCESSOR_V850E2V3 },
+  { "sccfg",       11, PROCESSOR_V850E2V3 },
+  { "sr0",          0, PROCESSOR_ALL },
+  { "sr1",          1, PROCESSOR_ALL },
+  { "sr10",        10, PROCESSOR_ALL },
+  { "sr11",        11, PROCESSOR_ALL },
+  { "sr12",        12, PROCESSOR_ALL },
+  { "sr13",        13, PROCESSOR_ALL },
+  { "sr14",        14, PROCESSOR_ALL },
+  { "sr15",        15, PROCESSOR_ALL },
+  { "sr16",        16, PROCESSOR_ALL },
+  { "sr17",        17, PROCESSOR_ALL },
+  { "sr18",        18, PROCESSOR_ALL },
+  { "sr19",        19, PROCESSOR_ALL },
+  { "sr2",          2, PROCESSOR_ALL },
+  { "sr20",        20, PROCESSOR_ALL },
+  { "sr21",        21, PROCESSOR_ALL },
+  { "sr22",        22, PROCESSOR_ALL },
+  { "sr23",        23, PROCESSOR_ALL },
+  { "sr24",        24, PROCESSOR_ALL },
+  { "sr25",        25, PROCESSOR_ALL },
+  { "sr26",        26, PROCESSOR_ALL },
+  { "sr27",        27, PROCESSOR_ALL },
+  { "sr28",        28, PROCESSOR_ALL },
+  { "sr29",        29, PROCESSOR_ALL },
+  { "sr3",          3, PROCESSOR_ALL },
+  { "sr30",        30, PROCESSOR_ALL },
+  { "sr31",        31, PROCESSOR_ALL },
+  { "sr4",          4, PROCESSOR_ALL },
+  { "sr5",          5, PROCESSOR_ALL },
+  { "sr6",          6, PROCESSOR_ALL },
+  { "sr7",          7, PROCESSOR_ALL },
+  { "sr8",          8, PROCESSOR_ALL },
+  { "sr9",          9, PROCESSOR_ALL },
+  { "sw_base",      3, PROCESSOR_V850E2V3 },
+  { "sw_cfg",       1, PROCESSOR_V850E2V3 },
+  { "sw_ctl",       0, PROCESSOR_V850E2V3 },
+  { "tid",          2, PROCESSOR_V850E2V3 },
+  { "vmadr",        6, PROCESSOR_V850E2V3 },
+  { "vmecr",        4, PROCESSOR_V850E2V3 },
+  { "vmtid",        5, PROCESSOR_V850E2V3 },
+  { "vsadr",        2, PROCESSOR_V850E2V3 },
+  { "vsecr",        0, PROCESSOR_V850E2V3 },
+  { "vstid",        1, PROCESSOR_V850E2V3 },
 };
 
 #define SYSREG_NAME_CNT						\
   (sizeof (system_registers) / sizeof (struct reg_name))
 
-static const struct reg_name system_list_registers[] =
-{
-  {"PS",      5 },
-  {"SR",      0 + 1}
-};
-
-#define SYSREGLIST_NAME_CNT					\
-  (sizeof (system_list_registers) / sizeof (struct reg_name))
 
 static const struct reg_name cc_names[] =
 {
-  { "c",  0x1 },
-  { "e",  0x2 },
-  { "ge", 0xe },
-  { "gt", 0xf },
-  { "h",  0xb },
-  { "l",  0x1 },
-  { "le", 0x7 },
-  { "lt", 0x6 },
-  { "n",  0x4 },
-  { "nc", 0x9 },
-  { "ne", 0xa },
-  { "nh", 0x3 },
-  { "nl", 0x9 },
-  { "ns", 0xc },
-  { "nv", 0x8 },
-  { "nz", 0xa },
-  { "p",  0xc },
-  { "s",  0x4 },
-  { "sa", 0xd },
-  { "t",  0x5 },
-  { "v",  0x0 },
-  { "z",  0x2 },
+  { "c",  0x1, PROCESSOR_ALL },
+  { "e",  0x2, PROCESSOR_ALL },
+  { "ge", 0xe, PROCESSOR_ALL },
+  { "gt", 0xf, PROCESSOR_ALL },
+  { "h",  0xb, PROCESSOR_ALL },
+  { "l",  0x1, PROCESSOR_ALL },
+  { "le", 0x7, PROCESSOR_ALL },
+  { "lt", 0x6, PROCESSOR_ALL },
+  { "n",  0x4, PROCESSOR_ALL },
+  { "nc", 0x9, PROCESSOR_ALL },
+  { "ne", 0xa, PROCESSOR_ALL },
+  { "nh", 0x3, PROCESSOR_ALL },
+  { "nl", 0x9, PROCESSOR_ALL },
+  { "ns", 0xc, PROCESSOR_ALL },
+  { "nv", 0x8, PROCESSOR_ALL },
+  { "nz", 0xa, PROCESSOR_ALL },
+  { "p",  0xc, PROCESSOR_ALL },
+  { "s",  0x4, PROCESSOR_ALL },
+#define COND_SA_NUM 0xd
+  { "sa", COND_SA_NUM, PROCESSOR_ALL },
+  { "t",  0x5, PROCESSOR_ALL },
+  { "v",  0x0, PROCESSOR_ALL },
+  { "z",  0x2, PROCESSOR_ALL },
 };
 
 #define CC_NAME_CNT					\
   (sizeof (cc_names) / sizeof (struct reg_name))
+
+static const struct reg_name float_cc_names[] =
+{
+  { "eq",  0x2, PROCESSOR_V850E2V3 },	/* true.  */
+  { "f",   0x0, PROCESSOR_V850E2V3 },	/* true.  */
+  { "ge",  0xd, PROCESSOR_V850E2V3 },	/* false.  */
+  { "gl",  0xb, PROCESSOR_V850E2V3 },	/* false.  */
+  { "gle", 0x9, PROCESSOR_V850E2V3 },	/* false.  */
+  { "gt",  0xf, PROCESSOR_V850E2V3 },	/* false.  */
+  { "le",  0xe, PROCESSOR_V850E2V3 },	/* true.  */
+  { "lt",  0xc, PROCESSOR_V850E2V3 },	/* true.  */
+  { "neq", 0x2, PROCESSOR_V850E2V3 },	/* false.  */
+  { "nge", 0xd, PROCESSOR_V850E2V3 },	/* true.  */
+  { "ngl", 0xb, PROCESSOR_V850E2V3 },	/* true.  */
+  { "ngle",0x9, PROCESSOR_V850E2V3 },	/* true.  */
+  { "ngt", 0xf, PROCESSOR_V850E2V3 },	/* true.  */
+  { "nle", 0xe, PROCESSOR_V850E2V3 },	/* false.  */
+  { "nlt", 0xc, PROCESSOR_V850E2V3 },	/* false.  */
+  { "oge", 0x5, PROCESSOR_V850E2V3 },	/* false.  */
+  { "ogl", 0x3, PROCESSOR_V850E2V3 },	/* false.  */
+  { "ogt", 0x7, PROCESSOR_V850E2V3 },	/* false.  */
+  { "ole", 0x6, PROCESSOR_V850E2V3 },	/* true.  */
+  { "olt", 0x4, PROCESSOR_V850E2V3 },	/* true.  */
+  { "or",  0x1, PROCESSOR_V850E2V3 },	/* false.  */
+  { "seq", 0xa, PROCESSOR_V850E2V3 },	/* true.  */
+  { "sf",  0x8, PROCESSOR_V850E2V3 },	/* true.  */
+  { "sne", 0xa, PROCESSOR_V850E2V3 },	/* false.  */
+  { "st",  0x8, PROCESSOR_V850E2V3 },	/* false.  */
+  { "t",   0x0, PROCESSOR_V850E2V3 },	/* false.  */
+  { "ueq", 0x3, PROCESSOR_V850E2V3 },	/* true.  */
+  { "uge", 0x4, PROCESSOR_V850E2V3 },	/* false.  */
+  { "ugt", 0x6, PROCESSOR_V850E2V3 },	/* false.  */
+  { "ule", 0x7, PROCESSOR_V850E2V3 },	/* true.  */
+  { "ult", 0x5, PROCESSOR_V850E2V3 },	/* true.  */
+  { "un",  0x1, PROCESSOR_V850E2V3 },	/* true.  */
+};
+
+#define FLOAT_CC_NAME_CNT					\
+  (sizeof (float_cc_names) / sizeof (struct reg_name))
 
 /* Do a binary search of the given register table to see if NAME is a
    valid regiter name.  Return the register number from the array on
@@ -667,9 +878,7 @@ reg_name_search (const struct reg_name *regs,
       else if (accept_numbers)
 	{
 	  int reg = S_GET_VALUE (symbolP);
-
-	  if (reg >= 0 && reg <= 31)
-	    return reg;
+	  return reg;
 	}
 
       /* Otherwise drop through and try parsing name normally.  */
@@ -687,7 +896,9 @@ reg_name_search (const struct reg_name *regs,
       else if (cmp > 0)
 	low = middle + 1;
       else
-	return regs[middle].value;
+	return ((regs[middle].processors & processor_mask)
+		? regs[middle].value
+		: -1);
     }
   while (low <= high);
   return -1;
@@ -722,25 +933,24 @@ register_name (expressionS *expressionP)
   /* Put back the delimiting char.  */
   *input_line_pointer = c;
 
+  expressionP->X_add_symbol = NULL;
+  expressionP->X_op_symbol  = NULL;
+
   /* Look to see if it's in the register table.  */
   if (reg_number >= 0)
     {
       expressionP->X_op		= O_register;
       expressionP->X_add_number = reg_number;
 
-      /* Make the rest nice.  */
-      expressionP->X_add_symbol = NULL;
-      expressionP->X_op_symbol  = NULL;
-
       return TRUE;
     }
-  else
-    {
-      /* Reset the line as if we had not done anything.  */
-      input_line_pointer = start;
 
-      return FALSE;
-    }
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+
+  expressionP->X_op = O_illegal;
+
+  return FALSE;
 }
 
 /* Summary of system_register_name().
@@ -748,8 +958,6 @@ register_name (expressionS *expressionP)
    in:  INPUT_LINE_POINTER points to 1st char of operand.
 	EXPRESSIONP points to an expression structure to be filled in.
 	ACCEPT_NUMBERS is true iff numerical register names may be used.
-	ACCEPT_LIST_NAMES is true iff the special names PS and SR may be
-	accepted.
 
    out: An expressionS structure in expressionP.
   	The operand may have been a register: in this case, X_op == O_register,
@@ -759,8 +967,7 @@ register_name (expressionS *expressionP)
 
 static bfd_boolean
 system_register_name (expressionS *expressionP,
-		      bfd_boolean accept_numbers,
-		      bfd_boolean accept_list_names)
+		      bfd_boolean accept_numbers)
 {
   int reg_number;
   char *name;
@@ -785,24 +992,12 @@ system_register_name (expressionS *expressionP,
 
       if (ISDIGIT (*input_line_pointer))
 	{
-	  reg_number = strtol (input_line_pointer, &input_line_pointer, 10);
-
-	  /* Make sure that the register number is allowable.  */
-	  if (reg_number < 0
-	      || (reg_number > 5 && reg_number < 16)
-	      || reg_number > 27)
-	    reg_number = -1;
-	}
-      else if (accept_list_names)
-	{
-	  c = get_symbol_end ();
-	  reg_number = reg_name_search (system_list_registers,
-					SYSREGLIST_NAME_CNT, name, FALSE);
-
-	  /* Put back the delimiting char.  */
-	  *input_line_pointer = c;
+	  reg_number = strtol (input_line_pointer, &input_line_pointer, 0);
 	}
     }
+
+  expressionP->X_add_symbol = NULL;
+  expressionP->X_op_symbol  = NULL;
 
   /* Look to see if it's in the register table.  */
   if (reg_number >= 0)
@@ -810,19 +1005,15 @@ system_register_name (expressionS *expressionP,
       expressionP->X_op		= O_register;
       expressionP->X_add_number = reg_number;
 
-      /* Make the rest nice.  */
-      expressionP->X_add_symbol = NULL;
-      expressionP->X_op_symbol  = NULL;
-
       return TRUE;
     }
-  else
-    {
-      /* Reset the line as if we had not done anything.  */
-      input_line_pointer = start;
 
-      return FALSE;
-    }
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+
+  expressionP->X_op = O_illegal;
+
+  return FALSE;
 }
 
 /* Summary of cc_name().
@@ -836,7 +1027,8 @@ system_register_name (expressionS *expressionP,
   	its original state.  */
 
 static bfd_boolean
-cc_name (expressionS *expressionP)
+cc_name (expressionS *expressionP,
+	 bfd_boolean accept_numbers)
 {
   int reg_number;
   char *name;
@@ -847,10 +1039,25 @@ cc_name (expressionS *expressionP)
   start = name = input_line_pointer;
 
   c = get_symbol_end ();
-  reg_number = reg_name_search (cc_names, CC_NAME_CNT, name, FALSE);
+  reg_number = reg_name_search (cc_names, CC_NAME_CNT, name, accept_numbers);
 
   /* Put back the delimiting char.  */
   *input_line_pointer = c;
+
+  if (reg_number < 0
+      && accept_numbers)
+    {
+      /* Reset input_line pointer.  */
+      input_line_pointer = start;
+
+      if (ISDIGIT (*input_line_pointer))
+	{
+	  reg_number = strtol (input_line_pointer, &input_line_pointer, 0);
+	}
+    }
+
+  expressionP->X_add_symbol = NULL;
+  expressionP->X_op_symbol  = NULL;
 
   /* Look to see if it's in the register table.  */
   if (reg_number >= 0)
@@ -858,19 +1065,67 @@ cc_name (expressionS *expressionP)
       expressionP->X_op		= O_constant;
       expressionP->X_add_number = reg_number;
 
-      /* Make the rest nice.  */
-      expressionP->X_add_symbol = NULL;
-      expressionP->X_op_symbol  = NULL;
+      return TRUE;
+    }
+
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+
+  expressionP->X_op = O_illegal;
+  expressionP->X_add_number = 0;
+
+  return FALSE;
+}
+
+static bfd_boolean
+float_cc_name (expressionS *expressionP,
+	       bfd_boolean accept_numbers)
+{
+  int reg_number;
+  char *name;
+  char *start;
+  char c;
+
+  /* Find the spelling of the operand.  */
+  start = name = input_line_pointer;
+
+  c = get_symbol_end ();
+  reg_number = reg_name_search (float_cc_names, FLOAT_CC_NAME_CNT, name, accept_numbers);
+
+  /* Put back the delimiting char.  */
+  *input_line_pointer = c;
+
+  if (reg_number < 0
+      && accept_numbers)
+    {
+      /* Reset input_line pointer.  */
+      input_line_pointer = start;
+
+      if (ISDIGIT (*input_line_pointer))
+	{
+	  reg_number = strtol (input_line_pointer, &input_line_pointer, 0);
+	}
+    }
+
+  expressionP->X_add_symbol = NULL;
+  expressionP->X_op_symbol  = NULL;
+
+  /* Look to see if it's in the register table.  */
+  if (reg_number >= 0)
+    {
+      expressionP->X_op		= O_constant;
+      expressionP->X_add_number = reg_number;
 
       return TRUE;
     }
-  else
-    {
-      /* Reset the line as if we had not done anything.  */
-      input_line_pointer = start;
 
-      return FALSE;
-    }
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+
+  expressionP->X_op = O_illegal;
+  expressionP->X_add_number = 0;
+
+  return FALSE;
 }
 
 static void
@@ -915,16 +1170,7 @@ parse_register_list (unsigned long *insn,
     30,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
      0,  0,  0,  0,  0, 31, 29, 28, 23, 22, 21, 20, 27, 26, 25, 24
   };
-  static int type2_regs[32] =
-  {
-    19, 18, 17, 16,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-     0,  0,  0,  0, 30, 31, 29, 28, 23, 22, 21, 20, 27, 26, 25, 24
-  };
-  static int type3_regs[32] =
-  {
-     3,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-     0,  0,  0,  0, 14, 15, 13, 12,  7,  6,  5,  4, 11, 10,  9,  8
-  };
+
   int *regs;
   expressionS exp;
 
@@ -932,8 +1178,6 @@ parse_register_list (unsigned long *insn,
   switch (operand->shift)
     {
     case 0xffe00001: regs = type1_regs; break;
-    case 0xfff8000f: regs = type2_regs; break;
-    case 0xfff8001f: regs = type3_regs; break;
     default:
       as_bad (_("unknown operand shift: %x\n"), operand->shift);
       return _("internal failure in parse_register_list");
@@ -967,41 +1211,6 @@ parse_register_list (unsigned long *insn,
 		    *insn |= (1 << i);
 	      }
 	}
-      else if (regs == type2_regs)
-	{
-	  if (exp.X_add_number & 0xFFFE0000)
-	    return _("high bits set in register list expression");
-
-	  for (reg = 1; reg < 16; reg++)
-	    if (exp.X_add_number & (1 << (reg - 1)))
-	      {
-		for (i = 0; i < 32; i++)
-		  if (regs[i] == reg)
-		    *insn |= (1 << i);
-	      }
-
-	  if (exp.X_add_number & (1 << 15))
-	    *insn |= (1 << 3);
-
-	  if (exp.X_add_number & (1 << 16))
-	    *insn |= (1 << 19);
-	}
-      else /* regs == type3_regs  */
-	{
-	  if (exp.X_add_number & 0xFFFE0000)
-	    return _("high bits set in register list expression");
-
-	  for (reg = 16; reg < 32; reg++)
-	    if (exp.X_add_number & (1 << (reg - 16)))
-	      {
-		for (i = 0; i < 32; i++)
-		  if (regs[i] == reg)
-		    *insn |= (1 << i);
-	      }
-
-	  if (exp.X_add_number & (1 << 16))
-	    *insn |= (1 << 19);
-	}
 
       return NULL;
     }
@@ -1012,6 +1221,8 @@ parse_register_list (unsigned long *insn,
      new-line) is found.  */
   for (;;)
     {
+      skip_white_space ();
+
       if (register_name (&exp))
 	{
 	  int i;
@@ -1030,25 +1241,15 @@ parse_register_list (unsigned long *insn,
 	  if (i == 32)
 	    return _("illegal register included in list");
 	}
-      else if (system_register_name (&exp, TRUE, TRUE))
+      else if (system_register_name (&exp, TRUE))
 	{
 	  if (regs == type1_regs)
 	    {
 	      return _("system registers cannot be included in list");
 	    }
-	  else if (exp.X_add_number == 5)
-	    {
-	      if (regs == type2_regs)
-		return _("PSW cannot be included in list");
-	      else
-		*insn |= 0x8;
-	    }
-	  else if (exp.X_add_number < 4)
-	    *insn |= 0x80000;
-	  else
-	    return _("High value system registers cannot be included in list");
 	}
-      else if (*input_line_pointer == '}')
+
+      if (*input_line_pointer == '}')
 	{
 	  input_line_pointer++;
 	  break;
@@ -1071,7 +1272,11 @@ parse_register_list (unsigned long *insn,
 	  if (! register_name (&exp2))
 	    {
 	      return _("second register should follow dash in register list");
-	      exp2.X_add_number = exp.X_add_number;
+	    }
+
+	  if (exp.X_add_number > exp2.X_add_number)
+	    {
+	      return _("second register should be greater than first register");
 	    }
 
 	  /* Add the rest of the registers in the range.  */
@@ -1093,11 +1298,11 @@ parse_register_list (unsigned long *insn,
 	      if (i == 32)
 		return _("illegal register included in list");
 	    }
+
+	  exp = exp2;
 	}
       else
 	break;
-
-      skip_white_space ();
     }
 
   return NULL;
@@ -1107,6 +1312,10 @@ const char *md_shortopts = "m:";
 
 struct option md_longopts[] =
 {
+#define OPTION_DISP_SIZE_DEFAULT_22 (OPTION_MD_BASE)
+  {"disp-size-default-22", no_argument, NULL, OPTION_DISP_SIZE_DEFAULT_22},
+#define OPTION_DISP_SIZE_DEFAULT_32 (OPTION_MD_BASE + 1)
+  {"disp-size-default-32", no_argument, NULL, OPTION_DISP_SIZE_DEFAULT_32},
   {NULL, no_argument, NULL, 0}
 };
 
@@ -1121,15 +1330,33 @@ md_show_usage (FILE *stream)
   fprintf (stream, _("  -mv850                    The code is targeted at the v850\n"));
   fprintf (stream, _("  -mv850e                   The code is targeted at the v850e\n"));
   fprintf (stream, _("  -mv850e1                  The code is targeted at the v850e1\n"));
-  fprintf (stream, _("  -mv850any                 The code is generic, despite any processor specific instructions\n"));
+  fprintf (stream, _("  -mv850e2                  The code is targeted at the v850e2\n"));
+  fprintf (stream, _("  -mv850e2v3                The code is targeted at the v850e2v3\n"));
   fprintf (stream, _("  -mrelax                   Enable relaxation\n"));
+  fprintf (stream, _("  --disp-size-default-22    branch displacement with unknown size is 22 bits (default)\n"));
+  fprintf (stream, _("  --disp-size-default-32    branch displacement with unknown size is 32 bits\n"));
+  fprintf (stream, _("  -mextension               enable extension opcode support\n"));
+  fprintf (stream, _("  -mno-bcond17		  disable b<cond> disp17 instruction\n"));
+  fprintf (stream, _("  -mno-stld23		  disable st/ld offset23 instruction\n"));
 }
 
 int
 md_parse_option (int c, char *arg)
 {
   if (c != 'm')
-    return 0;
+    {
+      switch (c)
+        {
+        case OPTION_DISP_SIZE_DEFAULT_22:
+          default_disp_size = 22;
+          return 1;
+
+        case OPTION_DISP_SIZE_DEFAULT_32:
+          default_disp_size = 32;
+          return 1;
+        }
+      return 0;
+    }
 
   if (strcmp (arg, "warn-signed-overflow") == 0)
     warn_signed_overflows = TRUE;
@@ -1140,26 +1367,39 @@ md_parse_option (int c, char *arg)
   else if (strcmp (arg, "v850") == 0)
     {
       machine = 0;
-      processor_mask = PROCESSOR_V850;
+      SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850);
     }
   else if (strcmp (arg, "v850e") == 0)
     {
       machine = bfd_mach_v850e;
-      processor_mask = PROCESSOR_V850E;
+      SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E);
     }
   else if (strcmp (arg, "v850e1") == 0)
     {
       machine = bfd_mach_v850e1;
-      processor_mask = PROCESSOR_V850E1;
+      SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E1);
     }
-  else if (strcmp (arg, "v850any") == 0)
+  else if (strcmp (arg, "v850e2") == 0)
     {
-      /* Tell the world that this is for any v850 chip.  */
-      machine = 0;
-
-      /* But support instructions for the extended versions.  */
-      processor_mask = PROCESSOR_V850E;
-      processor_mask |= PROCESSOR_V850E1;
+      machine = bfd_mach_v850e2;
+      SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E2);
+    }
+  else if (strcmp (arg, "v850e2v3") == 0)
+    {
+      machine = bfd_mach_v850e2v3;
+      SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E2V3);
+    }
+  else if (strcmp (arg, "extension") == 0)
+    {
+      processor_mask |= PROCESSOR_OPTION_EXTENSION | PROCESSOR_OPTION_ALIAS;;
+    }
+  else if (strcmp (arg, "no-bcond17") == 0)
+    {
+      no_bcond17 = 1;
+    }
+  else if (strcmp (arg, "no-stld23") == 0)
+    {
+      no_stld23 = 1;
     }
   else if (strcmp (arg, "relax") == 0)
     v850_relax = 1;
@@ -1188,13 +1428,6 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
 		 asection *sec,
 		 fragS *fragP)
 {
-  /* This code performs some nasty type punning between the
-     fr_opcode field of the frag structure (a char *) and the
-     fx_r_type field of the fix structure (a bfd_reloc_code_real_type)
-     On a 64bit host this causes problems because these two fields
-     are not the same size, but since we know that we are only
-     ever storing small integers in the fields, it is safe to use
-     a union to convert between them.  */
   union u
   {
     bfd_reloc_code_real_type fx_r_type;
@@ -1204,17 +1437,52 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
   subseg_change (sec, 0);
 
   opcode_converter.fr_opcode = fragP->fr_opcode;
-      
+
+  subseg_change (sec, 0);
+
   /* In range conditional or unconditional branch.  */
-  if (fragP->fr_subtype == 0 || fragP->fr_subtype == 2)
+  if (fragP->fr_subtype == SUBYPTE_COND_9_22
+      || fragP->fr_subtype == SUBYPTE_UNCOND_9_22
+      || fragP->fr_subtype == SUBYPTE_COND_9_22_32
+      || fragP->fr_subtype == SUBYPTE_UNCOND_9_22_32
+      || fragP->fr_subtype == SUBYPTE_COND_9_17_22
+      || fragP->fr_subtype == SUBYPTE_COND_9_17_22_32
+      || fragP->fr_subtype == SUBYPTE_SA_9_22
+      || fragP->fr_subtype == SUBYPTE_SA_9_22_32
+      || fragP->fr_subtype == SUBYPTE_SA_9_17_22
+      || fragP->fr_subtype == SUBYPTE_SA_9_17_22_32)
+
     {
       fix_new (fragP, fragP->fr_fix, 2, fragP->fr_symbol,
 	       fragP->fr_offset, 1,
 	       BFD_RELOC_UNUSED + opcode_converter.fx_r_type);
       fragP->fr_fix += 2;
     }
-  /* Out of range conditional branch.  Emit a branch around a jump.  */
-  else if (fragP->fr_subtype == 1)
+  /* V850e2r-v3 17bit conditional branch.  */
+  else if (fragP->fr_subtype == SUBYPTE_COND_9_17_22 + 1
+	   || fragP->fr_subtype == SUBYPTE_COND_9_17_22_32 + 1
+	   || fragP->fr_subtype == SUBYPTE_SA_9_17_22 + 1
+	   || fragP->fr_subtype == SUBYPTE_SA_9_17_22_32 + 1)
+    {
+      unsigned char *buffer =
+	(unsigned char *) (fragP->fr_fix + fragP->fr_literal);
+
+      buffer[0] &= 0x0f;	/* Use condition.  */
+      buffer[0] |= 0xe0;
+      buffer[1] = 0x07;
+
+      /* Now create the unconditional branch + fixup to the final
+	 target.  */
+      md_number_to_chars ((char *) buffer + 2, 0x0001, 2);
+      fix_new (fragP, fragP->fr_fix, 4, fragP->fr_symbol,
+	       fragP->fr_offset, 1, BFD_RELOC_V850_17_PCREL);
+      fragP->fr_fix += 4;
+    }
+  /* Out of range conditional branch.  Emit a branch around a 22bit jump.  */
+  else if (fragP->fr_subtype == SUBYPTE_COND_9_22 + 1
+	   || fragP->fr_subtype == SUBYPTE_COND_9_22_32 + 1
+	   || fragP->fr_subtype == SUBYPTE_COND_9_17_22 + 2 
+	   || fragP->fr_subtype == SUBYPTE_COND_9_17_22_32 + 2)
     {
       unsigned char *buffer =
 	(unsigned char *) (fragP->fr_fix + fragP->fr_literal);
@@ -1232,18 +1500,98 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
 	 target.  */
       md_number_to_chars ((char *) buffer + 2, 0x00000780, 4);
       fix_new (fragP, fragP->fr_fix + 2, 4, fragP->fr_symbol,
-	       fragP->fr_offset, 1,
-	       BFD_RELOC_UNUSED + opcode_converter.fx_r_type + 1);
+	       fragP->fr_offset, 1, BFD_RELOC_V850_22_PCREL);
       fragP->fr_fix += 6;
     }
-  /* Out of range unconditional branch.  Emit a jump.  */
-  else if (fragP->fr_subtype == 3)
+  /* Out of range conditional branch.  Emit a branch around a 32bit jump.  */
+  else if (fragP->fr_subtype == SUBYPTE_COND_9_22_32 + 2
+	   || fragP->fr_subtype == SUBYPTE_COND_9_17_22_32 + 3)
+    {
+      unsigned char *buffer =
+	(unsigned char *) (fragP->fr_fix + fragP->fr_literal);
+
+      /* Reverse the condition of the first branch.  */
+      buffer[0] ^= 0x08;
+      /* Mask off all the displacement bits.  */
+      buffer[0] &= 0x8f;
+      buffer[1] &= 0x07;
+      /* Now set the displacement bits so that we branch
+	 around the unconditional branch.  */
+      buffer[0] |= 0x40;
+
+      /* Now create the unconditional branch + fixup to the final
+	 target.  */
+      md_number_to_chars ((char *) buffer + 2, 0x02e0, 2);
+      fix_new (fragP, fragP->fr_fix + 4, 4, fragP->fr_symbol,
+	       fragP->fr_offset + 2, 1, BFD_RELOC_V850_32_PCREL);
+      fragP->fr_fix += 8;
+    }
+  /* Out of range unconditional branch.  Emit a 22bit jump.  */
+  else if (fragP->fr_subtype == SUBYPTE_UNCOND_9_22 + 1
+	   || fragP->fr_subtype == SUBYPTE_UNCOND_9_22_32 + 1)
     {
       md_number_to_chars (fragP->fr_fix + fragP->fr_literal, 0x00000780, 4);
       fix_new (fragP, fragP->fr_fix, 4, fragP->fr_symbol,
-	       fragP->fr_offset, 1,
-	       BFD_RELOC_UNUSED + opcode_converter.fx_r_type + 1);
+	       fragP->fr_offset, 1, BFD_RELOC_V850_22_PCREL);
       fragP->fr_fix += 4;
+    }
+  /* Out of range unconditional branch.  Emit a 32bit jump.  */
+  else if (fragP->fr_subtype == SUBYPTE_UNCOND_9_22_32 + 2)
+    {
+      md_number_to_chars (fragP->fr_fix + fragP->fr_literal, 0x02e0, 2);
+      fix_new (fragP, fragP->fr_fix + 4, 4, fragP->fr_symbol,
+	       fragP->fr_offset + 2, 1, BFD_RELOC_V850_32_PCREL);
+      fragP->fr_fix += 6;
+    }
+  /* Out of range SA conditional branch.  Emit a branch to a 22bit jump.  */
+  else if (fragP->fr_subtype == SUBYPTE_SA_9_22 + 1
+	   || fragP->fr_subtype == SUBYPTE_SA_9_22_32 + 1
+	   || fragP->fr_subtype == SUBYPTE_SA_9_17_22 + 2
+	   || fragP->fr_subtype == SUBYPTE_SA_9_17_22_32 + 2)
+    {
+      unsigned char *buffer =
+	(unsigned char *) (fragP->fr_fix + fragP->fr_literal);
+
+      /* bsa .+4 */
+      buffer[0] &= 0x8f;
+      buffer[0] |= 0x20;
+      buffer[1] &= 0x07;
+
+      /* br .+6 */
+      md_number_to_chars ((char *) buffer + 2, 0x05b5, 2);
+
+      /* Now create the unconditional branch + fixup to the final
+	 target.  */
+      /* jr SYM */
+      md_number_to_chars ((char *) buffer + 4, 0x00000780, 4);
+      fix_new (fragP, fragP->fr_fix + 4, 4, fragP->fr_symbol,
+	       fragP->fr_offset, 1,
+	       BFD_RELOC_V850_22_PCREL);
+      fragP->fr_fix += 8;
+    }
+  /* Out of range SA conditional branch.  Emit a branch around a 32bit jump.  */
+  else if (fragP->fr_subtype == SUBYPTE_SA_9_22_32 + 2
+	   || fragP->fr_subtype == SUBYPTE_SA_9_17_22_32 + 3)
+    {
+      unsigned char *buffer =
+	(unsigned char *) (fragP->fr_fix + fragP->fr_literal);
+
+      /* bsa .+2 */
+      buffer[0] &= 0x8f;
+      buffer[0] |= 0x20;
+      buffer[1] &= 0x07;
+
+      /* br .+8 */
+      md_number_to_chars ((char *) buffer + 2, 0x05c5, 2);
+
+      /* Now create the unconditional branch + fixup to the final
+	 target.  */
+      /* jr SYM */
+      md_number_to_chars ((char *) buffer + 4, 0x02e0, 2);
+      fix_new (fragP, fragP->fr_fix + 6, 4, fragP->fr_symbol,
+	       fragP->fr_offset + 2, 1, BFD_RELOC_V850_32_PCREL);
+
+      fragP->fr_fix += 10;
     }
   else
     abort ();
@@ -1262,29 +1610,45 @@ md_begin (void)
   char *prev_name = "";
   const struct v850_opcode *op;
 
-  if (strncmp (TARGET_CPU, "v850e1", 6) == 0)
+  if (strncmp (TARGET_CPU, "v850e2v3", 8) == 0)
     {
       if (machine == -1)
-	machine = bfd_mach_v850e1;
+        machine = bfd_mach_v850e2v3;
 
-      if (processor_mask == -1)
-	processor_mask = PROCESSOR_V850E1;
+      if (!processor_mask)
+        SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E2V3);
+    }
+  else if (strncmp (TARGET_CPU, "v850e2", 6) == 0)
+    {
+      if (machine == -1)
+	machine = bfd_mach_v850e2;
+
+      if (!processor_mask)
+	SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E2);
+    }
+  else if (strncmp (TARGET_CPU, "v850e1", 6) == 0)
+    {
+      if (machine == -1)
+        machine = bfd_mach_v850e1;
+
+      if (!processor_mask)
+        SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E1);
     }
   else if (strncmp (TARGET_CPU, "v850e", 5) == 0)
     {
       if (machine == -1)
 	machine = bfd_mach_v850e;
 
-      if (processor_mask == -1)
-	processor_mask = PROCESSOR_V850E;
+      if (!processor_mask)
+	SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E);
     }
   else if (strncmp (TARGET_CPU, "v850", 4) == 0)
     {
       if (machine == -1)
 	machine = 0;
 
-      if (processor_mask == -1)
-	processor_mask = PROCESSOR_V850;
+      if (!processor_mask)
+	SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850);
     }
   else
     /* xgettext:c-format  */
@@ -1312,119 +1676,158 @@ md_begin (void)
   bfd_set_arch_mach (stdoutput, TARGET_ARCH, machine);
 }
 
-static bfd_reloc_code_real_type
-handle_lo16 (const struct v850_operand *operand)
-{
-  if (operand != NULL)
-    {
-      if (operand->bits == -1)
-	return BFD_RELOC_V850_LO16_SPLIT_OFFSET;
 
-      if (!(operand->bits == 16 && operand->shift == 16)
-	  && !(operand->bits == 15 && operand->shift == 17))
-	{
-	  as_bad (_("lo() relocation used on an instruction which does "
-		    "not support it"));
-	  return BFD_RELOC_64;  /* Used to indicate an error condition.  */
-	}
-    }
-  return BFD_RELOC_LO16;
+static bfd_reloc_code_real_type
+handle_hi016 (const struct v850_operand *operand, const char **errmsg)
+{
+  if (operand == NULL)
+    return BFD_RELOC_HI16;
+
+  if (operand->default_reloc == BFD_RELOC_HI16)
+    return BFD_RELOC_HI16;
+
+  if (operand->default_reloc == BFD_RELOC_HI16_S)
+    return BFD_RELOC_HI16;
+
+  if (operand->default_reloc == BFD_RELOC_16)
+    return BFD_RELOC_HI16;
+
+  *errmsg = _("hi0() relocation used on an instruction which does "
+	      "not support it");
+  return BFD_RELOC_64;  /* Used to indicate an error condition.  */
 }
 
 static bfd_reloc_code_real_type
-handle_ctoff (const struct v850_operand *operand)
+handle_hi16 (const struct v850_operand *operand, const char **errmsg)
+{
+  if (operand == NULL)
+    return BFD_RELOC_HI16_S;
+
+  if (operand->default_reloc == BFD_RELOC_HI16_S)
+    return BFD_RELOC_HI16_S;
+
+  if (operand->default_reloc == BFD_RELOC_HI16)
+    return BFD_RELOC_HI16_S;
+
+  if (operand->default_reloc == BFD_RELOC_16)
+    return BFD_RELOC_HI16_S;
+
+  *errmsg = _("hi() relocation used on an instruction which does "
+	      "not support it");
+  return BFD_RELOC_64;  /* Used to indicate an error condition.  */
+}
+
+static bfd_reloc_code_real_type
+handle_lo16 (const struct v850_operand *operand, const char **errmsg)
+{
+  if (operand == NULL)
+    return BFD_RELOC_LO16;
+
+  if (operand->default_reloc == BFD_RELOC_LO16)
+    return BFD_RELOC_LO16;
+
+  if (operand->default_reloc == BFD_RELOC_V850_16_SPLIT_OFFSET)
+    return BFD_RELOC_V850_LO16_SPLIT_OFFSET;
+
+  if (operand->default_reloc == BFD_RELOC_V850_16_S1)
+    return BFD_RELOC_V850_LO16_S1;
+
+  if (operand->default_reloc == BFD_RELOC_16)
+    return BFD_RELOC_LO16;
+
+  *errmsg = _("lo() relocation used on an instruction which does "
+	      "not support it");
+  return BFD_RELOC_64;  /* Used to indicate an error condition.  */
+}
+
+static bfd_reloc_code_real_type
+handle_ctoff (const struct v850_operand *operand, const char **errmsg)
 {
   if (operand == NULL)
     return BFD_RELOC_V850_CALLT_16_16_OFFSET;
 
-  if (operand->bits != 6
-      || operand->shift != 0)
-    {
-      as_bad (_("ctoff() relocation used on an instruction which does not support it"));
-      return BFD_RELOC_64;  /* Used to indicate an error condition.  */
-    }
+  if (operand->default_reloc == BFD_RELOC_V850_CALLT_6_7_OFFSET)
+    return operand->default_reloc;
 
-  return BFD_RELOC_V850_CALLT_6_7_OFFSET;
+  if (operand->default_reloc == BFD_RELOC_V850_16_S1)
+    return BFD_RELOC_V850_CALLT_15_16_OFFSET;
+
+  if (operand->default_reloc == BFD_RELOC_16)
+    return BFD_RELOC_V850_CALLT_16_16_OFFSET;
+
+  *errmsg = _("ctoff() relocation used on an instruction which does not support it");
+  return BFD_RELOC_64;  /* Used to indicate an error condition.  */
 }
 
 static bfd_reloc_code_real_type
-handle_sdaoff (const struct v850_operand *operand)
+handle_sdaoff (const struct v850_operand *operand, const char **errmsg)
 {
   if (operand == NULL)
     return BFD_RELOC_V850_SDA_16_16_OFFSET;
 
-  if (operand->bits == 15 && operand->shift == 17)
-    return BFD_RELOC_V850_SDA_15_16_OFFSET;
-
-  if (operand->bits == -1)
+  if (operand->default_reloc == BFD_RELOC_V850_16_SPLIT_OFFSET)
     return BFD_RELOC_V850_SDA_16_16_SPLIT_OFFSET;
 
-  if (operand->bits != 16
-      || operand->shift != 16)
-    {
-      as_bad (_("sdaoff() relocation used on an instruction which does not support it"));
-      return BFD_RELOC_64;  /* Used to indicate an error condition.  */
-    }
+  if (operand->default_reloc == BFD_RELOC_16)
+    return BFD_RELOC_V850_SDA_16_16_OFFSET;
 
-  return BFD_RELOC_V850_SDA_16_16_OFFSET;
+  if (operand->default_reloc == BFD_RELOC_V850_16_S1)
+    return BFD_RELOC_V850_SDA_15_16_OFFSET;
+
+  *errmsg = _("sdaoff() relocation used on an instruction which does not support it");
+  return BFD_RELOC_64;  /* Used to indicate an error condition.  */
 }
 
 static bfd_reloc_code_real_type
-handle_zdaoff (const struct v850_operand *operand)
+handle_zdaoff (const struct v850_operand *operand, const char **errmsg)
 {
   if (operand == NULL)
     return BFD_RELOC_V850_ZDA_16_16_OFFSET;
 
-  if (operand->bits == 15 && operand->shift == 17)
-    return BFD_RELOC_V850_ZDA_15_16_OFFSET;
-
-  if (operand->bits == -1)
+  if (operand->default_reloc == BFD_RELOC_V850_16_SPLIT_OFFSET)
     return BFD_RELOC_V850_ZDA_16_16_SPLIT_OFFSET;
 
-  if (operand->bits != 16
-      || operand->shift != 16)
-    {
-      as_bad (_("zdaoff() relocation used on an instruction which does not support it"));
-      /* Used to indicate an error condition.  */
-      return BFD_RELOC_64;
-    }
+  if (operand->default_reloc == BFD_RELOC_16)
+    return BFD_RELOC_V850_ZDA_16_16_OFFSET;
 
-  return BFD_RELOC_V850_ZDA_16_16_OFFSET;
+  if (operand->default_reloc == BFD_RELOC_V850_16_S1)
+    return BFD_RELOC_V850_ZDA_15_16_OFFSET;
+
+  *errmsg = _("zdaoff() relocation used on an instruction which does not support it");
+  return BFD_RELOC_64;  /* Used to indicate an error condition.  */
 }
 
 static bfd_reloc_code_real_type
-handle_tdaoff (const struct v850_operand *operand)
+handle_tdaoff (const struct v850_operand *operand, const char **errmsg)
 {
   if (operand == NULL)
     /* Data item, not an instruction.  */
-    return BFD_RELOC_V850_TDA_7_7_OFFSET;
+    return BFD_RELOC_V850_TDA_16_16_OFFSET;
 
-  if (operand->bits == 6 && operand->shift == 1)
+  switch (operand->default_reloc)
+    {
+      /* sld.hu, operand: D5-4.  */
+    case BFD_RELOC_V850_TDA_4_5_OFFSET:
+      /* sld.bu, operand: D4.  */
+    case BFD_RELOC_V850_TDA_4_4_OFFSET:
     /* sld.w/sst.w, operand: D8_6.  */
-    return BFD_RELOC_V850_TDA_6_8_OFFSET;
+    case BFD_RELOC_V850_TDA_6_8_OFFSET:
+    /* sld.h/sst.h, operand: D8_7.  */
+    case BFD_RELOC_V850_TDA_7_8_OFFSET:
+      /* sld.b/sst.b, operand: D7.  */
+    case BFD_RELOC_V850_TDA_7_7_OFFSET:
+      return operand->default_reloc;
+    default:
+      break;
+    }
 
-  if (operand->bits == 4 && operand->insert != NULL)
-    /* sld.hu, operand: D5-4.  */
-    return BFD_RELOC_V850_TDA_4_5_OFFSET;
-
-  if (operand->bits == 4 && operand->insert == NULL)
-    /* sld.bu, operand: D4.   */
-    return BFD_RELOC_V850_TDA_4_4_OFFSET;
-
-  if (operand->bits == 16 && operand->shift == 16)
+  if (operand->default_reloc == BFD_RELOC_16 && operand->shift == 16)
     /* set1 & chums, operands: D16.  */
     return BFD_RELOC_V850_TDA_16_16_OFFSET;
 
-  if (operand->bits != 7)
-    {
-      as_bad (_("tdaoff() relocation used on an instruction which does not support it"));
-      /* Used to indicate an error condition.  */
-      return BFD_RELOC_64;
-    }
-
-  return  operand->insert != NULL
-    ? BFD_RELOC_V850_TDA_7_8_OFFSET     /* sld.h/sst.h, operand: D8_7.  */
-    : BFD_RELOC_V850_TDA_7_7_OFFSET;    /* sld.b/sst.b, operand: D7.    */
+  *errmsg = _("tdaoff() relocation used on an instruction which does not support it");
+  /* Used to indicate an error condition.  */
+  return BFD_RELOC_64;
 }
 
 /* Warning: The code in this function relies upon the definitions
@@ -1432,7 +1835,7 @@ handle_tdaoff (const struct v850_operand *operand)
    matching the hard coded values contained herein.  */
 
 static bfd_reloc_code_real_type
-v850_reloc_prefix (const struct v850_operand *operand)
+v850_reloc_prefix (const struct v850_operand *operand, const char **errmsg)
 {
   bfd_boolean paren_skipped = FALSE;
 
@@ -1450,14 +1853,15 @@ v850_reloc_prefix (const struct v850_operand *operand)
       return reloc;							\
     }
 
-  CHECK_ ("hi0",    BFD_RELOC_HI16	   );
-  CHECK_ ("hi",	    BFD_RELOC_HI16_S	   );
-  CHECK_ ("lo",	    handle_lo16 (operand)  );
-  CHECK_ ("sdaoff", handle_sdaoff (operand));
-  CHECK_ ("zdaoff", handle_zdaoff (operand));
-  CHECK_ ("tdaoff", handle_tdaoff (operand));
-  CHECK_ ("hilo",   BFD_RELOC_32	   );
-  CHECK_ ("ctoff",  handle_ctoff (operand) );
+  CHECK_ ("hi0",    handle_hi016(operand, errmsg)  );
+  CHECK_ ("hi",	    handle_hi16(operand, errmsg)   );
+  CHECK_ ("lo",	    handle_lo16 (operand, errmsg)  );
+  CHECK_ ("sdaoff", handle_sdaoff (operand, errmsg));
+  CHECK_ ("zdaoff", handle_zdaoff (operand, errmsg));
+  CHECK_ ("tdaoff", handle_tdaoff (operand, errmsg));
+  CHECK_ ("hilo",   BFD_RELOC_32);
+  CHECK_ ("lo23",   BFD_RELOC_V850_23);
+  CHECK_ ("ctoff",  handle_ctoff (operand, errmsg) );
 
   /* Restore skipped parenthesis.  */
   if (paren_skipped)
@@ -1472,9 +1876,7 @@ static unsigned long
 v850_insert_operand (unsigned long insn,
 		     const struct v850_operand *operand,
 		     offsetT val,
-		     char *file,
-		     unsigned int line,
-		     char *str)
+		     const char **errmsg)
 {
   if (operand->insert)
     {
@@ -1485,35 +1887,33 @@ v850_insert_operand (unsigned long insn,
 	{
 	  if ((operand->flags & V850_OPERAND_SIGNED)
 	      && ! warn_signed_overflows
-	      && strstr (message, "out of range") != NULL)
+              && v850_msg_is_out_of_range (message))
 	    {
 	      /* Skip warning...  */
 	    }
 	  else if ((operand->flags & V850_OPERAND_SIGNED) == 0
 		   && ! warn_unsigned_overflows
-		   && strstr (message, "out of range") != NULL)
+                  && v850_msg_is_out_of_range (message))
 	    {
 	      /* Skip warning...  */
 	    }
-	  else if (str)
-	    {
-	      if (file == (char *) NULL)
-		as_warn ("%s: %s", str, message);
-	      else
-		as_warn_where (file, line, "%s: %s", str, message);
-	    }
 	  else
 	    {
-	      if (file == (char *) NULL)
-		as_warn (message);
-	      else
-		as_warn_where (file, line, message);
+             if (errmsg != NULL)
+               *errmsg = message;
 	    }
 	}
     }
+  else if (operand->bits == -1
+          || operand->flags & V850E_IMMEDIATE16
+          || operand->flags & V850E_IMMEDIATE23
+          || operand->flags & V850E_IMMEDIATE32)
+    {
+      abort ();
+    }
   else
     {
-      if (operand->bits != 32)
+      if (operand->bits < 32)
 	{
 	  long min, max;
 
@@ -1536,7 +1936,24 @@ v850_insert_operand (unsigned long insn,
 		min = 0;
 	    }
 
-	  if (val < (offsetT) min || val > (offsetT) max)
+	  /* Some people write constants with the sign extension done by
+	     hand but only up to 32 bits.  This shouldn't really be valid,
+	     but, to permit this code to assemble on a 64-bit host, we
+	     sign extend the 32-bit value to 64 bits if so doing makes the
+	     value valid.  */
+	  if (val > max
+	      && (offsetT) (val - 0x80000000 - 0x80000000) >= min
+	      && (offsetT) (val - 0x80000000 - 0x80000000) <= max)
+	    val = val - 0x80000000 - 0x80000000;
+
+	  /* Similarly, people write expressions like ~(1<<15), and expect
+	     this to be OK for a 32-bit unsigned value.  */
+	  else if (val < min
+		   && (offsetT) (val + 0x80000000 + 0x80000000) >= min
+		   && (offsetT) (val + 0x80000000 + 0x80000000) <= max)
+	    val = val + 0x80000000 + 0x80000000;
+
+	  else if (val < (offsetT) min || val > (offsetT) max)
 	    {
 	      char buf [128];
 
@@ -1549,17 +1966,17 @@ v850_insert_operand (unsigned long insn,
 		  && ! warn_unsigned_overflows)
 		min = 0;
 
-	      if (str)
-		sprintf (buf, "%s: ", str);
-	      else
-		buf[0] = 0;
-	      strcat (buf, _("operand"));
-
-	      as_bad_value_out_of_range (buf, val, (offsetT) min, (offsetT) max, file, line);
+	      sprintf (buf, _("operand out of range (%d is not between %d and %d)"),
+		       (int) val, (int) min, (int) max);
+	      *errmsg = buf;
 	    }
-	}
 
-      insn |= (((long) val & ((1 << operand->bits) - 1)) << operand->shift);
+	  insn |= (((long) val & ((1 << operand->bits) - 1)) << operand->shift);
+	}
+      else
+	{
+	  insn |= (((long) val) << operand->shift);
+	}
     }
 
   return insn;
@@ -1586,8 +2003,11 @@ md_assemble (char *str)
   unsigned extra_data_len = 0;
   unsigned long extra_data = 0;
   char *saved_input_line_pointer;
+  char most_match_errmsg[1024];
+  int most_match_count = -1;
 
   strncpy (copy_of_instruction, str, sizeof (copy_of_instruction) - 1);
+  most_match_errmsg[0] = 0;
 
   /* Get the opcode.  */
   for (s = str; *s != '\0' && ! ISSPACE (*s); s++)
@@ -1617,10 +2037,26 @@ md_assemble (char *str)
   for (;;)
     {
       const char *errmsg = NULL;
+      const char *warningmsg = NULL;
 
       match = 0;
+      opindex_ptr = opcode->operands;
 
-      if ((opcode->processors & processor_mask) == 0)
+      if (no_stld23)
+	{
+	  if ((strncmp (opcode->name, "st.", 3) == 0
+	       && v850_operands[opcode->operands[1]].bits == 23)
+	      || (strncmp (opcode->name, "ld.", 3) == 0
+		  && v850_operands[opcode->operands[0]].bits == 23))
+	    {
+	      errmsg = _("st/ld offset 23 instruction was disabled .");
+	      goto error;
+	    }
+	}
+
+      if ((opcode->processors & processor_mask & PROCESSOR_MASK) == 0
+	  || (((opcode->processors & ~PROCESSOR_MASK) != 0)
+	      && ((opcode->processors & processor_mask & ~PROCESSOR_MASK) == 0)))
 	{
 	  errmsg = _("Target processor does not support this instruction.");
 	  goto error;
@@ -1630,6 +2066,7 @@ md_assemble (char *str)
       fc = 0;
       next_opindex = 0;
       insn = opcode->opcode;
+      extra_data_len = 0;
       extra_data_after_insn = FALSE;
 
       input_line_pointer = str = start_of_operands;
@@ -1651,7 +2088,20 @@ md_assemble (char *str)
 
 	  errmsg = NULL;
 
-	  while (*str == ' ' || *str == ',' || *str == '[' || *str == ']')
+	  while (*str == ' ')
+	    ++str;
+
+	  if (operand->flags & V850_OPERAND_BANG
+	      && *str == '!')
+	    ++str;
+	  else if (operand->flags & V850_OPERAND_PERCENT
+		   && *str == '%')
+	    ++str;
+
+	  if (*str == ',' || *str == '[' || *str == ']')
+	    ++str;
+
+	  while (*str == ' ')
 	    ++str;
 
 	  if (operand->flags & V850_OPERAND_RELAX)
@@ -1662,12 +2112,12 @@ md_assemble (char *str)
 	  input_line_pointer = str;
 
 	  /* lo(), hi(), hi0(), etc...  */
-	  if ((reloc = v850_reloc_prefix (operand)) != BFD_RELOC_UNUSED)
+	  if ((reloc = v850_reloc_prefix (operand, &errmsg)) != BFD_RELOC_UNUSED)
 	    {
 	      /* This is a fake reloc, used to indicate an error condition.  */
 	      if (reloc == BFD_RELOC_64)
 		{
-		  match = 1;
+		  /* match = 1;  */
 		  goto error;
 		}
 
@@ -1678,11 +2128,14 @@ md_assemble (char *str)
 		  switch (reloc)
 		    {
 		    case BFD_RELOC_V850_ZDA_16_16_OFFSET:
+		    case BFD_RELOC_V850_ZDA_16_16_SPLIT_OFFSET:
+		    case BFD_RELOC_V850_ZDA_15_16_OFFSET:
 		      /* To cope with "not1 7, zdaoff(0xfffff006)[r0]"
 			 and the like.  */
 		      /* Fall through.  */
 
 		    case BFD_RELOC_LO16:
+		    case BFD_RELOC_V850_LO16_S1:
 		    case BFD_RELOC_V850_LO16_SPLIT_OFFSET:
 		      {
 			/* Truncate, then sign extend the value.  */
@@ -1708,22 +2161,68 @@ md_assemble (char *str)
 			break;
 		      }
 
+		    case BFD_RELOC_V850_23:
+		      if ((operand->flags & V850E_IMMEDIATE23) == 0)
+			{
+			  errmsg = _("immediate operand is too large");
+			  goto error;
+			}
+		      break;
+
 		    case BFD_RELOC_32:
+		    case BFD_RELOC_V850_32_ABS:
+		    case BFD_RELOC_V850_32_PCREL:
 		      if ((operand->flags & V850E_IMMEDIATE32) == 0)
 			{
 			  errmsg = _("immediate operand is too large");
 			  goto error;
 			}
 
-		      extra_data_after_insn = TRUE;
-		      extra_data_len	    = 4;
-		      extra_data	    = 0;
 		      break;
 
 		    default:
 		      fprintf (stderr, "reloc: %d\n", reloc);
 		      as_bad (_("AAARG -> unhandled constant reloc"));
 		      break;
+		    }
+
+		  if (operand->flags & V850E_IMMEDIATE32)
+		    {
+		      extra_data_after_insn = TRUE;
+		      extra_data_len	    = 4;
+		      extra_data	    = 0;
+		    }
+		  else if (operand->flags & V850E_IMMEDIATE23)
+		    {
+		      if (reloc != BFD_RELOC_V850_23)
+			{
+			  errmsg = _("immediate operand is too large");
+			  goto error;
+			}
+		      extra_data_after_insn = TRUE;
+		      extra_data_len	    = 2;
+		      extra_data	    = 0;
+		    }
+		  else if ((operand->flags & V850E_IMMEDIATE16)
+			   || (operand->flags & V850E_IMMEDIATE16HI))
+		    {
+		      if (operand->flags & V850E_IMMEDIATE16HI
+			  && reloc != BFD_RELOC_HI16
+			  && reloc != BFD_RELOC_HI16_S)
+			{
+			  errmsg = _("immediate operand is too large");
+			  goto error;
+			}
+		      else if (operand->flags & V850E_IMMEDIATE16
+			       && reloc != BFD_RELOC_LO16)
+			{
+			  errmsg = _("immediate operand is too large");
+			  goto error;
+			}
+
+		      extra_data_after_insn = TRUE;
+		      extra_data_len	    = 2;
+		      extra_data	    = 0;
 		    }
 
 		  if (fc > MAX_INSN_FIXUPS)
@@ -1734,19 +2233,67 @@ md_assemble (char *str)
 		  fixups[fc].reloc   = reloc;
 		  fc++;
 		}
-	      else
+	      else	/* ex.X_op != O_constant.  */
 		{
-		  if (reloc == BFD_RELOC_32)
+		  if ((reloc == BFD_RELOC_32
+		       || reloc == BFD_RELOC_V850_32_ABS
+		       || reloc == BFD_RELOC_V850_32_PCREL)
+		      && operand->bits < 32)
 		    {
-		      if ((operand->flags & V850E_IMMEDIATE32) == 0)
+		      errmsg = _("immediate operand is too large");
+		      goto error;
+		    }
+		  else if (reloc == BFD_RELOC_V850_23
+			   && (operand->flags & V850E_IMMEDIATE23) == 0)
+		    {
+		      errmsg = _("immediate operand is too large");
+		      goto error;
+		    }
+		  else if ((reloc == BFD_RELOC_HI16
+			    || reloc == BFD_RELOC_HI16_S)
+			   && operand->bits < 16)
+		    {
+		      errmsg = _("immediate operand is too large");
+		      goto error;
+		    }
+
+		  if (operand->flags & V850E_IMMEDIATE32)
+		    {
+		      extra_data_after_insn = TRUE;
+		      extra_data_len	    = 4;
+		      extra_data	    = 0;
+		    }
+		  else if (operand->flags & V850E_IMMEDIATE23)
+		    {
+		      if (reloc != BFD_RELOC_V850_23)
+			{
+			  errmsg = _("immediate operand is too large");
+			  goto error;
+			}
+		      extra_data_after_insn = TRUE;
+		      extra_data_len	    = 2;
+		      extra_data	    = 0;
+		    }
+		  else if ((operand->flags & V850E_IMMEDIATE16)
+			   || (operand->flags & V850E_IMMEDIATE16HI))
+		    {
+		      if (operand->flags & V850E_IMMEDIATE16HI
+			  && reloc != BFD_RELOC_HI16
+			  && reloc != BFD_RELOC_HI16_S)
+			{
+			  errmsg = _("immediate operand is too large");
+			  goto error;
+			}
+		      else if (operand->flags & V850E_IMMEDIATE16
+			       && reloc != BFD_RELOC_LO16)
 			{
 			  errmsg = _("immediate operand is too large");
 			  goto error;
 			}
 
 		      extra_data_after_insn = TRUE;
-		      extra_data_len	    = 4;
-		      extra_data	    = ex.X_add_number;
+		      extra_data_len	    = 2;
+		      extra_data	    = 0;
 		    }
 
 		  if (fc > MAX_INSN_FIXUPS)
@@ -1758,6 +2305,140 @@ md_assemble (char *str)
 		  fc++;
 		}
 	    }
+	  else if (operand->flags & V850E_IMMEDIATE16
+		   || operand->flags & V850E_IMMEDIATE16HI)
+	    {
+	      expression (&ex);
+
+	      switch (ex.X_op)
+		{
+		case O_constant:
+		  if (operand->flags & V850E_IMMEDIATE16HI)
+		    {
+		      if (ex.X_add_number & 0xffff)
+			{
+			  errmsg = _("constant too big to fit into instruction");
+			  goto error;
+			}
+
+		      ex.X_add_number >>= 16;
+		    }
+		  if (operand->flags & V850E_IMMEDIATE16)
+		    {
+		      if (ex.X_add_number & 0xffff0000)
+			{
+			  errmsg = _("constant too big to fit into instruction");
+			  goto error;
+			}
+		    }
+		  break;
+
+		case O_illegal:
+		  errmsg = _("illegal operand");
+		  goto error;
+
+		case O_absent:
+		  errmsg = _("missing operand");
+		  goto error;
+
+		default:
+		  if (fc >= MAX_INSN_FIXUPS)
+		    as_fatal (_("too many fixups"));
+
+		  fixups[fc].exp     = ex;
+		  fixups[fc].opindex = *opindex_ptr;
+		  fixups[fc].reloc   = operand->default_reloc;
+		  ++fc;
+
+		  ex.X_add_number = 0;
+		  break;
+		}
+
+	      extra_data_after_insn = TRUE;
+	      extra_data_len        = 2;
+	      extra_data            = ex.X_add_number;
+	    }
+	  else if (operand->flags & V850E_IMMEDIATE23)
+	    {
+	      expression (&ex);
+
+	      switch (ex.X_op)
+		{
+		case O_constant:
+		  break;
+
+		case O_illegal:
+		  errmsg = _("illegal operand");
+		  goto error;
+
+		case O_absent:
+		  errmsg = _("missing operand");
+		  goto error;
+
+		default:
+		  break;
+		}
+
+	      if (fc >= MAX_INSN_FIXUPS)
+		as_fatal (_("too many fixups"));
+
+	      fixups[fc].exp     = ex;
+	      fixups[fc].opindex = *opindex_ptr;
+	      fixups[fc].reloc   = operand->default_reloc;
+	      ++fc;
+
+	      extra_data_after_insn = TRUE;
+	      extra_data_len        = 2;
+	      extra_data            = 0;
+	    }
+	  else if (operand->flags & V850E_IMMEDIATE32)
+	    {
+	      expression (&ex);
+
+	      switch (ex.X_op)
+		{
+		case O_constant:
+		  if ((operand->default_reloc == BFD_RELOC_V850_32_ABS
+		       || operand->default_reloc == BFD_RELOC_V850_32_PCREL)
+		      && (ex.X_add_number & 1))
+		    {
+		      errmsg = _("odd number cannot be used here");
+		      goto error;
+		    }
+		  break;
+
+		case O_illegal:
+		  errmsg = _("illegal operand");
+		  goto error;
+
+		case O_absent:
+		  errmsg = _("missing operand");
+		  goto error;
+
+		default:
+		  if (fc >= MAX_INSN_FIXUPS)
+		    as_fatal (_("too many fixups"));
+
+		  fixups[fc].exp     = ex;
+		  fixups[fc].opindex = *opindex_ptr;
+		  fixups[fc].reloc   = operand->default_reloc;
+		  ++fc;
+
+		  ex.X_add_number = 0;
+		  break;
+		}
+
+	      extra_data_after_insn = TRUE;
+	      extra_data_len        = 4;
+	      extra_data            = ex.X_add_number;
+	    }
+	  else if (operand->flags & V850E_OPERAND_REG_LIST)
+	    {
+	      errmsg = parse_register_list (&insn, operand);
+
+	      if (errmsg)
+		goto error;
+	    }
 	  else
 	    {
 	      errmsg = NULL;
@@ -1765,22 +2446,30 @@ md_assemble (char *str)
 	      if ((operand->flags & V850_OPERAND_REG) != 0)
 		{
 		  if (!register_name (&ex))
-		    errmsg = _("invalid register name");
-		  else if ((operand->flags & V850_NOT_R0)
+		    {
+		      errmsg = _("invalid register name");
+		    }
+
+		  if ((operand->flags & V850_NOT_R0)
 			   && ex.X_add_number == 0)
 		    {
 		      errmsg = _("register r0 cannot be used here");
-
-		      /* Force an error message to be generated by
-			 skipping over any following potential matches
-			 for this opcode.  */
-		      opcode += 3;
 		    }
+
+		  if (operand->flags & V850_REG_EVEN)
+		    {
+		      if (ex.X_add_number % 2)
+			errmsg = _("odd register cannot be used here");
+		      ex.X_add_number = ex.X_add_number / 2;
+		    }
+
 		}
 	      else if ((operand->flags & V850_OPERAND_SRG) != 0)
 		{
-		  if (!system_register_name (&ex, TRUE, FALSE))
-		    errmsg = _("invalid system register name");
+		  if (!system_register_name (&ex, TRUE))
+		    {
+		      errmsg = _("invalid system register name");
+		    }
 		}
 	      else if ((operand->flags & V850_OPERAND_EP) != 0)
 		{
@@ -1807,53 +2496,26 @@ md_assemble (char *str)
 		}
 	      else if ((operand->flags & V850_OPERAND_CC) != 0)
 		{
-		  if (!cc_name (&ex))
-		    errmsg = _("invalid condition code name");
-		}
-	      else if (operand->flags & V850E_PUSH_POP)
-		{
-		  errmsg = parse_register_list (&insn, operand);
-
-		  /* The parse_register_list() function has already done
-		     everything, so fake a dummy expression.  */
-		  ex.X_op	  = O_constant;
-		  ex.X_add_number = 0;
-		}
-	      else if (operand->flags & V850E_IMMEDIATE16)
-		{
-		  expression (&ex);
-
-		  if (ex.X_op != O_constant)
-		    errmsg = _("constant expression expected");
-		  else if (ex.X_add_number & 0xffff0000)
+		  if (!cc_name (&ex, TRUE))
 		    {
-		      if (ex.X_add_number & 0xffff)
-			errmsg = _("constant too big to fit into instruction");
-		      else if ((insn & 0x001fffc0) == 0x00130780)
-			ex.X_add_number >>= 16;
-		      else
-			errmsg = _("constant too big to fit into instruction");
+		      errmsg = _("invalid condition code name");
 		    }
 
-		  extra_data_after_insn = TRUE;
-		  extra_data_len	= 2;
-		  extra_data		= ex.X_add_number;
-		  ex.X_add_number	= 0;
+		  if ((operand->flags & V850_NOT_SA)
+		      && ex.X_add_number == COND_SA_NUM)
+		    {
+		      errmsg = _("condition sa cannot be used here");
+		    }
 		}
-	      else if (operand->flags & V850E_IMMEDIATE32)
+	      else if ((operand->flags & V850_OPERAND_FLOAT_CC) != 0)
 		{
-		  expression (&ex);
-
-		  if (ex.X_op != O_constant)
-		    errmsg = _("constant expression expected");
-
-		  extra_data_after_insn = TRUE;
-		  extra_data_len	= 4;
-		  extra_data		= ex.X_add_number;
-		  ex.X_add_number	= 0;
+		  if (!float_cc_name (&ex, TRUE))
+		    {
+		      errmsg = _("invalid condition code name");
+		    }
 		}
-	      else if (register_name (&ex)
-		       && (operand->flags & V850_OPERAND_REG) == 0)
+	      else if ((register_name (&ex)
+			&& (operand->flags & V850_OPERAND_REG) == 0))
 		{
 		  char c;
 		  int exists = 0;
@@ -1883,8 +2545,10 @@ md_assemble (char *str)
 			 the parsing of the instruction, (because another
 			 field is missing) then report this.  */
 		      if (opindex_ptr[1] != 0
-			  && (v850_operands[opindex_ptr[1]].flags
-			      & V850_OPERAND_REG))
+			  && ((v850_operands[opindex_ptr[1]].flags
+			       & V850_OPERAND_REG)
+			      ||(v850_operands[opindex_ptr[1]].flags
+				 & V850_OPERAND_VREG)))
 			errmsg = _("syntax error: value is missing before the register name");
 		      else
 			errmsg = _("syntax error: register not expected");
@@ -1898,29 +2562,55 @@ md_assemble (char *str)
 				       &symbol_rootP, &symbol_lastP);
 		    }
 		}
-	      else if (system_register_name (&ex, FALSE, FALSE)
+	      else if (system_register_name (&ex, FALSE)
 		       && (operand->flags & V850_OPERAND_SRG) == 0)
-		errmsg = _("syntax error: system register not expected");
-
-	      else if (cc_name (&ex)
+		{
+		  errmsg = _("syntax error: system register not expected");
+		}
+	      else if (cc_name (&ex, FALSE)
 		       && (operand->flags & V850_OPERAND_CC) == 0)
-		errmsg = _("syntax error: condition code not expected");
-
+		{
+		  errmsg = _("syntax error: condition code not expected");
+		}
+	      else if (float_cc_name (&ex, FALSE)
+		       && (operand->flags & V850_OPERAND_FLOAT_CC) == 0)
+		{
+		  errmsg = _("syntax error: condition code not expected");
+		}
 	      else
 		{
 		  expression (&ex);
+
+		  if ((operand->flags & V850_NOT_IMM0)
+		      && ex.X_op == O_constant
+		      && ex.X_add_number == 0)
+		    {
+		      errmsg = _("immediate 0 cannot be used here");
+		    }
+
 		  /* Special case:
-		     If we are assembling a MOV instruction and the immediate
+		     If we are assembling a MOV/JARL/JR instruction and the immediate
 		     value does not fit into the bits available then create a
-		     fake error so that the next MOV instruction will be
+		     fake error so that the next MOV/JARL/JR instruction will be
 		     selected.  This one has a 32 bit immediate field.  */
 
-		  if (((insn & 0x07e0) == 0x0200)
-		      && operand->bits == 5 /* Do not match the CALLT instruction.  */
+		  if ((strcmp (opcode->name, "mov") == 0
+		       || strcmp (opcode->name, "jarl") == 0
+		       || strcmp (opcode->name, "jr") == 0)
 		      && ex.X_op == O_constant
 		      && (ex.X_add_number < (-(1 << (operand->bits - 1)))
 			  || ex.X_add_number > ((1 << (operand->bits - 1)) - 1)))
-		    errmsg = _("immediate operand is too large");
+		    {
+		      errmsg = _("immediate operand is too large");
+		    }
+
+		  if ((strcmp (opcode->name, "jarl") == 0
+		       || strcmp (opcode->name, "jr") == 0)
+		      && ex.X_op != O_constant
+		      && operand->bits != default_disp_size)
+		    {
+		      errmsg = _("immediate operand is not match");
+		    }
 		}
 
 	      if (errmsg)
@@ -1936,18 +2626,21 @@ md_assemble (char *str)
 		  goto error;
 		case O_register:
 		  if ((operand->flags
-		       & (V850_OPERAND_REG | V850_OPERAND_SRG)) == 0)
+		       & (V850_OPERAND_REG | V850_OPERAND_SRG | V850_OPERAND_VREG)) == 0)
 		    {
 		      errmsg = _("invalid operand");
 		      goto error;
 		    }
-		  insn = v850_insert_operand (insn, operand, ex.X_add_number,
-					      NULL, 0, copy_of_instruction);
+
+		  insn = v850_insert_operand (insn, operand,
+					      ex.X_add_number,
+					      &warningmsg);
+
 		  break;
 
 		case O_constant:
 		  insn = v850_insert_operand (insn, operand, ex.X_add_number,
-					      NULL, 0, copy_of_instruction);
+					      &warningmsg);
 		  break;
 
 		default:
@@ -1970,11 +2663,23 @@ md_assemble (char *str)
 		 || *str == ')')
 	    ++str;
 	}
-      match = 1;
+
+      while (ISSPACE (*str))
+	++str;
+
+      if (*str == '\0')
+	match = 1;
 
     error:
       if (match == 0)
 	{
+	  if ((opindex_ptr - opcode->operands) >= most_match_count)
+	    {
+	      most_match_count = opindex_ptr - opcode->operands;
+	      if (errmsg != NULL)
+		strncpy (most_match_errmsg, errmsg, sizeof (most_match_errmsg)-1);
+	    }
+
 	  next_opcode = opcode + 1;
 	  if (next_opcode->name != NULL
 	      && strcmp (next_opcode->name, opcode->name) == 0)
@@ -1989,7 +2694,11 @@ md_assemble (char *str)
 	      continue;
 	    }
 
-	  as_bad ("%s: %s", copy_of_instruction, errmsg);
+	  if (most_match_errmsg[0] == 0)
+	    /* xgettext:c-format.  */
+	    as_bad (_("junk at end of line: `%s'"), str);
+	  else
+	    as_bad ("%s: %s", copy_of_instruction, most_match_errmsg);
 
 	  if (*input_line_pointer == ']')
 	    ++input_line_pointer;
@@ -1998,15 +2707,11 @@ md_assemble (char *str)
 	  input_line_pointer = saved_input_line_pointer;
 	  return;
 	}
+
+      if (warningmsg != NULL)
+	as_warn ("%s", warningmsg);
       break;
     }
-
-  while (ISSPACE (*str))
-    ++str;
-
-  if (*str != '\0')
-    /* xgettext:c-format  */
-    as_bad (_("junk at end of line: `%s'"), str);
 
   input_line_pointer = str;
 
@@ -2019,40 +2724,124 @@ md_assemble (char *str)
 
   if (relaxable && fc > 0)
     {
-      /* On a 64-bit host the size of an 'int' is not the same
-	 as the size of a pointer, so we need a union to convert
-	 the opindex field of the fr_cgen structure into a char *
-	 so that it can be stored in the frag.  We do not have
-	 to worry about loosing accuracy as we are not going to
-	 be even close to the 32bit limit of the int.  */
-      union
-      {
-	int opindex;
-	char * ptr;
-      }
-      opindex_converter;
-
-      opindex_converter.opindex = fixups[0].opindex;
       insn_size = 2;
       fc = 0;
 
-      if (!strcmp (opcode->name, "br"))
+      if (strcmp (opcode->name, "br") == 0
+	  || strcmp (opcode->name, "jbr") == 0)
 	{
-	  f = frag_var (rs_machine_dependent, 4, 2, 2,
-			fixups[0].exp.X_add_symbol,
-			fixups[0].exp.X_add_number,
-			opindex_converter.ptr);
-	  md_number_to_chars (f, insn, insn_size);
-	  md_number_to_chars (f + 2, 0, 2);
+	  if ((processor_mask & PROCESSOR_V850E2_ALL) == 0 || default_disp_size == 22)
+	    {
+	      f = frag_var (rs_machine_dependent, 4, 2, SUBYPTE_UNCOND_9_22,
+			    fixups[0].exp.X_add_symbol,
+			    fixups[0].exp.X_add_number,
+			    (char *)(size_t) fixups[0].opindex);
+	      md_number_to_chars (f, insn, insn_size);
+	      md_number_to_chars (f + 2, 0, 2);
+	    }
+	  else
+	    {
+	      f = frag_var (rs_machine_dependent, 6, 4, SUBYPTE_UNCOND_9_22_32,
+			    fixups[0].exp.X_add_symbol,
+			    fixups[0].exp.X_add_number,
+			    (char *)(size_t) fixups[0].opindex);
+	      md_number_to_chars (f, insn, insn_size);
+	      md_number_to_chars (f + 2, 0, 4);
+	    }
 	}
-      else
+      else /* b<cond>, j<cond>.  */
 	{
-	  f = frag_var (rs_machine_dependent, 6, 4, 0,
-			fixups[0].exp.X_add_symbol,
-			fixups[0].exp.X_add_number,
-			opindex_converter.ptr);
-	  md_number_to_chars (f, insn, insn_size);
-	  md_number_to_chars (f + 2, 0, 4);
+	  if (default_disp_size == 22
+	      || (processor_mask & PROCESSOR_V850E2_ALL) == 0)
+	    {
+	      if (processor_mask & PROCESSOR_V850E2V3 && !no_bcond17)
+		{
+		  if (strcmp (opcode->name, "bsa") == 0)
+		    {
+		      f = frag_var (rs_machine_dependent, 8, 6, SUBYPTE_SA_9_17_22,
+				    fixups[0].exp.X_add_symbol,
+				    fixups[0].exp.X_add_number,
+				    (char *)(size_t) fixups[0].opindex);
+		      md_number_to_chars (f, insn, insn_size);
+		      md_number_to_chars (f + 2, 0, 6);
+		    }
+		  else
+		    {
+		      f = frag_var (rs_machine_dependent, 6, 4, SUBYPTE_COND_9_17_22,
+				    fixups[0].exp.X_add_symbol,
+				    fixups[0].exp.X_add_number,
+				    (char *)(size_t) fixups[0].opindex);
+		      md_number_to_chars (f, insn, insn_size);
+		      md_number_to_chars (f + 2, 0, 4);
+		    }
+		}
+	      else
+		{
+		  if (strcmp (opcode->name, "bsa") == 0)
+		    {
+		      f = frag_var (rs_machine_dependent, 8, 6, SUBYPTE_SA_9_22,
+				    fixups[0].exp.X_add_symbol,
+				    fixups[0].exp.X_add_number,
+				    (char *)(size_t) fixups[0].opindex);
+		      md_number_to_chars (f, insn, insn_size);
+		      md_number_to_chars (f + 2, 0, 6);
+		    }
+		  else
+		    {
+		      f = frag_var (rs_machine_dependent, 6, 4, SUBYPTE_COND_9_22,
+				    fixups[0].exp.X_add_symbol,
+				    fixups[0].exp.X_add_number,
+				    (char *)(size_t) fixups[0].opindex);
+		      md_number_to_chars (f, insn, insn_size);
+		      md_number_to_chars (f + 2, 0, 4);
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (processor_mask & PROCESSOR_V850E2V3 && !no_bcond17)
+		{
+		  if (strcmp (opcode->name, "bsa") == 0)
+		    {
+		      f = frag_var (rs_machine_dependent, 10, 8, SUBYPTE_SA_9_17_22_32,
+				    fixups[0].exp.X_add_symbol,
+				    fixups[0].exp.X_add_number,
+				    (char *)(size_t) fixups[0].opindex);
+		      md_number_to_chars (f, insn, insn_size);
+		      md_number_to_chars (f + 2, 0, 8);
+		    }
+		  else
+		    {
+		      f = frag_var (rs_machine_dependent, 8, 6, SUBYPTE_COND_9_17_22_32,
+				    fixups[0].exp.X_add_symbol,
+				    fixups[0].exp.X_add_number,
+				    (char *)(size_t) fixups[0].opindex);
+		      md_number_to_chars (f, insn, insn_size);
+		      md_number_to_chars (f + 2, 0, 6);
+		    }
+		}
+	      else
+		{
+		  if (strcmp (opcode->name, "bsa") == 0)
+		    {
+		      f = frag_var (rs_machine_dependent, 10, 8, SUBYPTE_SA_9_22_32,
+				    fixups[0].exp.X_add_symbol,
+				    fixups[0].exp.X_add_number,
+				    (char *)(size_t) fixups[0].opindex);
+		      md_number_to_chars (f, insn, insn_size);
+		      md_number_to_chars (f + 2, 0, 8);
+		    }
+		  else
+		    {
+		      f = frag_var (rs_machine_dependent, 8, 6, SUBYPTE_COND_9_22_32,
+				    fixups[0].exp.X_add_symbol,
+				    fixups[0].exp.X_add_number,
+				    (char *)(size_t) fixups[0].opindex);
+		      md_number_to_chars (f, insn, insn_size);
+		      md_number_to_chars (f + 2, 0, 6);
+		    }
+		}
+	    }
 	}
     }
   else
@@ -2065,6 +2854,12 @@ md_assemble (char *str)
 
       /* Special case: 32 bit MOV.  */
       if ((insn & 0xffe0) == 0x0620)
+	insn_size = 2;
+
+      /* Special case: 32 bit JARL,JMP,JR.  */
+      if ((insn & 0x1ffe0) == 0x2e0	/* JARL.  */
+	  || (insn & 0x1ffe0) == 0x6e0	/* JMP.  */
+	  || (insn & 0x1ffff) == 0x2e0)	/* JR.  */
 	insn_size = 2;
 
       f = frag_more (insn_size);
@@ -2112,11 +2907,26 @@ md_assemble (char *str)
 	  if (size != 2 && size != 4)
 	    abort ();
 
-	  address = (f - frag_now->fr_literal) + insn_size - size;
+	  if (extra_data_len == 0)
+	    {
+	      address = (f - frag_now->fr_literal) + insn_size - size;
+	    }
+	  else
+	    {
+	      address = (f - frag_now->fr_literal) + extra_data_len - size;
+	    }
 
-	  if (reloc == BFD_RELOC_32)
-	    address += 2;
+	  if ((operand->flags & V850E_IMMEDIATE32) && (operand->flags & V850_PCREL))
+	    {
+	      fixups[i].exp.X_add_number += 2;
+	    }
+	  else if (operand->default_reloc ==  BFD_RELOC_V850_16_PCREL)
+	    {
+	      fixups[i].exp.X_add_number += 2;
+	      address += 2;
+	    }
 
+	  /* fprintf (stderr, "0x%x %d %ld\n", address, size, fixups[i].exp.X_add_number);  */
 	  fixP = fix_new_exp (frag_now, address, size,
 			      &fixups[i].exp,
 			      reloc_howto->pc_relative,
@@ -2127,6 +2937,7 @@ md_assemble (char *str)
 	  switch (reloc)
 	    {
 	    case BFD_RELOC_LO16:
+	    case BFD_RELOC_V850_LO16_S1:
 	    case BFD_RELOC_V850_LO16_SPLIT_OFFSET:
 	    case BFD_RELOC_HI16:
 	    case BFD_RELOC_HI16_S:
@@ -2141,7 +2952,7 @@ md_assemble (char *str)
 	  fix_new_exp (frag_now,
 		       f - frag_now->fr_literal, 4,
 		       & fixups[i].exp,
-		       (operand->flags & V850_OPERAND_DISP) != 0,
+		       (operand->flags & V850_PCREL) != 0,
 		       (bfd_reloc_code_real_type) (fixups[i].opindex
 						   + (int) BFD_RELOC_UNUSED));
 	}
@@ -2171,9 +2982,11 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
     reloc->addend = fixp->fx_offset;
   else
     {
+#if 0
       if (fixp->fx_r_type == BFD_RELOC_32
 	  && fixp->fx_pcrel)
 	fixp->fx_r_type = BFD_RELOC_32_PCREL;
+#endif
 
       reloc->addend = fixp->fx_addnumber;
     }
@@ -2278,6 +3091,7 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
       int opindex;
       const struct v850_operand *operand;
       unsigned long insn;
+      const char *errmsg = NULL;
 
       opindex = (int) fixP->fx_r_type - (int) BFD_RELOC_UNUSED;
       operand = &v850_operands[opindex];
@@ -2289,10 +3103,20 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
 	 format!  */
       where = fixP->fx_frag->fr_literal + fixP->fx_where;
 
-      insn = bfd_getl32 ((unsigned char *) where);
+      if (fixP->fx_size > 2)
+	insn = bfd_getl32 ((unsigned char *) where);
+      else
+	insn = bfd_getl16 ((unsigned char *) where);
+
       insn = v850_insert_operand (insn, operand, (offsetT) value,
-				  fixP->fx_file, fixP->fx_line, NULL);
-      bfd_putl32 ((bfd_vma) insn, (unsigned char *) where);
+				  &errmsg);
+      if (errmsg)
+	as_warn_where (fixP->fx_file, fixP->fx_line, "%s", errmsg);
+
+      if (fixP->fx_size > 2)
+	bfd_putl32 ((bfd_vma) insn, (unsigned char *) where);
+      else
+	bfd_putl16 ((bfd_vma) insn, (unsigned char *) where);
 
       if (fixP->fx_done)
 	/* Nothing else to do here.  */
@@ -2301,17 +3125,23 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
       /* Determine a BFD reloc value based on the operand information.
 	 We are only prepared to turn a few of the operands into relocs.  */
 
-      if (operand->bits == 22)
-	fixP->fx_r_type = BFD_RELOC_V850_22_PCREL;
-      else if (operand->bits == 9)
-	fixP->fx_r_type = BFD_RELOC_V850_9_PCREL;
-      else
+      if (operand->default_reloc == BFD_RELOC_NONE)
 	{
 	  as_bad_where (fixP->fx_file, fixP->fx_line,
 			_("unresolved expression that must be resolved"));
 	  fixP->fx_done = 1;
 	  return;
 	}
+
+      {
+	fixP->fx_r_type = operand->default_reloc;
+	if (operand->default_reloc ==  BFD_RELOC_V850_16_PCREL)
+	  {
+	    fixP->fx_where += 2;
+	    fixP->fx_size = 2;
+	    fixP->fx_addnumber += 2;
+	  }
+      }
     }
   else if (fixP->fx_done)
     {
@@ -2319,54 +3149,140 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
       where = fixP->fx_frag->fr_literal + fixP->fx_where;
 
       if (fixP->tc_fix_data != NULL
-	  && ((struct v850_operand *) fixP->tc_fix_data)->insert != NULL)
-	{
-	  const char * message = NULL;
-	  struct v850_operand * operand = (struct v850_operand *) fixP->tc_fix_data;
-	  unsigned long insn;
+          && ((struct v850_operand *) fixP->tc_fix_data)->insert != NULL)
+        {
+          const char * message = NULL;
+          struct v850_operand * operand = (struct v850_operand *) fixP->tc_fix_data;
+          unsigned long insn;
 
-	  /* The variable "where" currently points at the exact point inside
-	     the insn where we need to insert the value.  But we need to
-	     extract the entire insn so we probably need to move "where"
-	     back a few bytes.  */
-	  if (fixP->fx_size == 2)
-	    where -= 2;
-	  else if (fixP->fx_size == 1)
-	    where -= 3;
+          /* The variable "where" currently points at the exact point inside
+             the insn where we need to insert the value.  But we need to
+             extract the entire insn so we probably need to move "where"
+             back a few bytes.  */
 
-	  insn = bfd_getl32 ((unsigned char *) where);
+          if (fixP->fx_size == 2)
+            where -= 2;
+          else if (fixP->fx_size == 1)
+            where -= 3;
 
-	  /* Use the operand's insertion procedure, if present, in order to
-	     make sure that the value is correctly stored in the insn.  */
-	  insn = operand->insert (insn, (offsetT) value, & message);
-	  /* Ignore message even if it is set.  */
+          insn = bfd_getl32 ((unsigned char *) where);
 
-	  bfd_putl32 ((bfd_vma) insn, (unsigned char *) where);
-	}
+          /* Use the operand's insertion procedure, if present, in order to
+             make sure that the value is correctly stored in the insn.  */
+          insn = operand->insert (insn, (offsetT) value, & message);
+          /* Ignore message even if it is set.  */
+
+          bfd_putl32 ((bfd_vma) insn, (unsigned char *) where);
+        }
       else
-	{
-	  if (fixP->fx_r_type == BFD_RELOC_V850_LO16_SPLIT_OFFSET)
-	    bfd_putl32 (((value << 16) & 0xfffe0000)
-			| ((value << 5) & 0x20)
-			| (bfd_getl32 (where) & ~0xfffe0020), where);
-	  else if (fixP->fx_size == 1)
-	    *where = value & 0xff;
-	  else if (fixP->fx_size == 2)
-	    bfd_putl16 (value & 0xffff, (unsigned char *) where);
-	  else if (fixP->fx_size == 4)
-	    bfd_putl32 (value, (unsigned char *) where);
-	}
+        {
+	  switch (fixP->fx_r_type)
+	    {
+	    case BFD_RELOC_V850_32_ABS:
+	    case BFD_RELOC_V850_32_PCREL:
+	      bfd_putl32 (value & 0xfffffffe, (unsigned char *) where);
+	      break;
+
+	    case BFD_RELOC_32:
+	      bfd_putl32 (value, (unsigned char *) where);
+	      break;
+
+	    case BFD_RELOC_V850_23:
+	      bfd_putl32 (((value & 0x7f) << 4) | ((value & 0x7fff80) << (16-7))
+			  | (bfd_getl32 (where) & ~((0x7f << 4) | (0xffff << 16))),
+			  (unsigned char *) where);
+	    break;
+
+	    case BFD_RELOC_16:
+	    case BFD_RELOC_HI16:
+	    case BFD_RELOC_HI16_S:
+	    case BFD_RELOC_LO16:
+	    case BFD_RELOC_V850_ZDA_16_16_OFFSET:
+	    case BFD_RELOC_V850_SDA_16_16_OFFSET:
+	    case BFD_RELOC_V850_TDA_16_16_OFFSET:
+	    case BFD_RELOC_V850_CALLT_16_16_OFFSET:
+	      bfd_putl16 (value & 0xffff, (unsigned char *) where);
+	      break;
+
+	    case BFD_RELOC_8:
+	      *where = value & 0xff;
+	      break;
+
+	    case BFD_RELOC_V850_9_PCREL:
+	      bfd_putl16 (((value & 0x1f0) << 7) | ((value & 0x0e) << 3)
+			  | (bfd_getl16 (where) & ~((0x1f0 << 7) | (0x0e << 3))), where);
+	      break;
+
+	    case BFD_RELOC_V850_17_PCREL:
+	      bfd_putl32 (((value & 0x10000) >> (16 - 4)) | ((value & 0xfffe) << 16)
+			  | (bfd_getl32 (where) & ~((0x10000 >> (16 - 4)) | (0xfffe << 16))), where);
+	      break;
+
+	    case BFD_RELOC_V850_16_PCREL:
+	      bfd_putl16 (-value & 0xfffe, (unsigned char *) where);
+	      break;
+
+	    case BFD_RELOC_V850_22_PCREL:
+	      bfd_putl32 (((value & 0xfffe) << 16) | ((value & 0x3f0000) >> 16)
+			  | (bfd_getl32 (where) & ~((0xfffe << 16) | (0x3f0000 >> 16))), where);
+	      break;
+
+	    case BFD_RELOC_V850_16_S1:
+	    case BFD_RELOC_V850_LO16_S1:
+	    case BFD_RELOC_V850_ZDA_15_16_OFFSET:
+	    case BFD_RELOC_V850_SDA_15_16_OFFSET:
+	      bfd_putl16 (value & 0xfffe, (unsigned char *) where);
+	      break;
+
+	    case BFD_RELOC_V850_16_SPLIT_OFFSET:
+	    case BFD_RELOC_V850_LO16_SPLIT_OFFSET:
+	    case BFD_RELOC_V850_ZDA_16_16_SPLIT_OFFSET:
+	    case BFD_RELOC_V850_SDA_16_16_SPLIT_OFFSET:
+	      bfd_putl32 (((value << 16) & 0xfffe0000)
+			  | ((value << 5) & 0x20)
+			  | (bfd_getl32 (where) & ~0xfffe0020), where);
+	      break;
+
+	    case BFD_RELOC_V850_TDA_6_8_OFFSET:
+	      *where = (*where & ~0x7e) | ((value >> 1) & 0x7e);
+	      break;
+
+	    case BFD_RELOC_V850_TDA_7_8_OFFSET:
+	      *where = (*where & ~0x7f) | ((value >> 1) & 0x7f);
+	      break;
+
+	    case BFD_RELOC_V850_TDA_7_7_OFFSET:
+	      *where = (*where & ~0x7f) | (value & 0x7f);
+	      break;
+
+	    case BFD_RELOC_V850_TDA_4_5_OFFSET:
+	      *where = (*where & ~0xf) | ((value >> 1) & 0xf);
+	      break;
+
+	    case BFD_RELOC_V850_TDA_4_4_OFFSET:
+	      *where = (*where & ~0xf) | (value & 0xf);
+	      break;
+
+	    case BFD_RELOC_V850_CALLT_6_7_OFFSET:
+	      *where = (*where & ~0x3f) | (value & 0x3f);
+	      break;
+
+	    default:
+	      abort ();
+	    }
+        }
     }
 }
-
+
 /* Parse a cons expression.  We have to handle hi(), lo(), etc
    on the v850.  */
 
 void
 parse_cons_expression_v850 (expressionS *exp)
 {
+  const char *errmsg;
   /* See if there's a reloc prefix like hi() we have to handle.  */
-  hold_cons_reloc = v850_reloc_prefix (NULL);
+  hold_cons_reloc = v850_reloc_prefix (NULL, &errmsg);
 
   /* Do normal expression parsing.  */
   expression (exp);
@@ -2428,8 +3344,11 @@ v850_force_relocation (struct fix *fixP)
   if (v850_relax
       && (fixP->fx_pcrel
 	  || fixP->fx_r_type == BFD_RELOC_V850_ALIGN
-	  || fixP->fx_r_type == BFD_RELOC_V850_22_PCREL
 	  || fixP->fx_r_type == BFD_RELOC_V850_9_PCREL
+	  || fixP->fx_r_type == BFD_RELOC_V850_16_PCREL
+	  || fixP->fx_r_type == BFD_RELOC_V850_17_PCREL
+	  || fixP->fx_r_type == BFD_RELOC_V850_22_PCREL
+	  || fixP->fx_r_type == BFD_RELOC_V850_32_PCREL
 	  || fixP->fx_r_type >= BFD_RELOC_UNUSED))
     return 1;
 

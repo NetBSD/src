@@ -1,6 +1,6 @@
 /* wrstabs.c -- Output stabs debugging information
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2006,
+   2007, 2009   Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -394,13 +394,13 @@ stab_write_symbol (struct stab_write_handle *info, int type, int desc,
 
 static bfd_boolean
 stab_push_string (struct stab_write_handle *info, const char *string,
-		  long index, bfd_boolean definition, unsigned int size)
+		  long tindex, bfd_boolean definition, unsigned int size)
 {
   struct stab_type_stack *s;
 
   s = (struct stab_type_stack *) xmalloc (sizeof *s);
   s->string = xstrdup (string);
-  s->index = index;
+  s->index = tindex;
   s->definition = definition;
   s->size = size;
 
@@ -418,13 +418,13 @@ stab_push_string (struct stab_write_handle *info, const char *string,
 /* Push a type index which has already been defined.  */
 
 static bfd_boolean
-stab_push_defined_type (struct stab_write_handle *info, long index,
+stab_push_defined_type (struct stab_write_handle *info, long tindex,
 			unsigned int size)
 {
   char buf[20];
 
-  sprintf (buf, "%ld", index);
-  return stab_push_string (info, buf, index, FALSE, size);
+  sprintf (buf, "%ld", tindex);
+  return stab_push_string (info, buf, tindex, FALSE, size);
 }
 
 /* Pop a type off the type stack.  The caller is responsible for
@@ -586,15 +586,15 @@ stab_empty_type (void *p)
     return stab_push_defined_type (info, info->type_cache.void_type, 0);
   else
     {
-      long index;
+      long tindex;
       char buf[40];
 
-      index = info->type_index;
+      tindex = info->type_index;
       ++info->type_index;
 
-      sprintf (buf, "%ld=%ld", index, index);
+      sprintf (buf, "%ld=%ld", tindex, tindex);
 
-      return stab_push_string (info, buf, index, FALSE, 0);
+      return stab_push_string (info, buf, tindex, FALSE, 0);
     }
 }
 
@@ -609,17 +609,17 @@ stab_void_type (void *p)
     return stab_push_defined_type (info, info->type_cache.void_type, 0);
   else
     {
-      long index;
+      long tindex;
       char buf[40];
 
-      index = info->type_index;
+      tindex = info->type_index;
       ++info->type_index;
 
-      info->type_cache.void_type = index;
+      info->type_cache.void_type = tindex;
 
-      sprintf (buf, "%ld=%ld", index, index);
+      sprintf (buf, "%ld=%ld", tindex, tindex);
 
-      return stab_push_string (info, buf, index, TRUE, 0);
+      return stab_push_string (info, buf, tindex, TRUE, 0);
     }
 }
 
@@ -646,15 +646,15 @@ stab_int_type (void *p, unsigned int size, bfd_boolean unsignedp)
     return stab_push_defined_type (info, cache[size - 1], size);
   else
     {
-      long index;
+      long tindex;
       char buf[100];
 
-      index = info->type_index;
+      tindex = info->type_index;
       ++info->type_index;
 
-      cache[size - 1] = index;
+      cache[size - 1] = tindex;
 
-      sprintf (buf, "%ld=r%ld;", index, index);
+      sprintf (buf, "%ld=r%ld;", tindex, tindex);
       if (unsignedp)
 	{
 	  strcat (buf, "0;");
@@ -679,7 +679,7 @@ stab_int_type (void *p, unsigned int size, bfd_boolean unsignedp)
 	    abort ();
 	}
 
-      return stab_push_string (info, buf, index, TRUE, size);
+      return stab_push_string (info, buf, tindex, TRUE, size);
     }
 }
 
@@ -699,7 +699,7 @@ stab_float_type (void *p, unsigned int size)
 				   size);
   else
     {
-      long index;
+      long tindex;
       char *int_type;
       char buf[50];
 
@@ -708,19 +708,19 @@ stab_float_type (void *p, unsigned int size)
 	return FALSE;
       int_type = stab_pop_type (info);
 
-      index = info->type_index;
+      tindex = info->type_index;
       ++info->type_index;
 
       if (size > 0
 	  && size - 1 < (sizeof info->type_cache.float_types
 			 / sizeof info->type_cache.float_types[0]))
-	info->type_cache.float_types[size - 1] = index;
+	info->type_cache.float_types[size - 1] = tindex;
 
-      sprintf (buf, "%ld=r%s;%u;0;", index, int_type, size);
+      sprintf (buf, "%ld=r%s;%u;0;", tindex, int_type, size);
 
       free (int_type);
 
-      return stab_push_string (info, buf, index, TRUE, size);
+      return stab_push_string (info, buf, tindex, TRUE, size);
     }
 }
 
@@ -731,14 +731,14 @@ stab_complex_type (void *p, unsigned int size)
 {
   struct stab_write_handle *info = (struct stab_write_handle *) p;
   char buf[50];
-  long index;
+  long tindex;
 
-  index = info->type_index;
+  tindex = info->type_index;
   ++info->type_index;
 
-  sprintf (buf, "%ld=r%ld;%u;0;", index, index, size);
+  sprintf (buf, "%ld=r%ld;%u;0;", tindex, tindex, size);
 
-  return stab_push_string (info, buf, index, TRUE, size * 2);
+  return stab_push_string (info, buf, tindex, TRUE, size * 2);
 }
 
 /* Push a bfd_boolean type.  We use an XCOFF predefined type, since gdb
@@ -748,29 +748,29 @@ static bfd_boolean
 stab_bool_type (void *p, unsigned int size)
 {
   struct stab_write_handle *info = (struct stab_write_handle *) p;
-  long index;
+  long tindex;
 
   switch (size)
     {
     case 1:
-      index = -21;
+      tindex = -21;
       break;
 
     case 2:
-      index = -22;
+      tindex = -22;
       break;
 
     default:
     case 4:
-      index = -16;
+      tindex = -16;
       break;
 
     case 8:
-      index = -33;
+      tindex = -33;
       break;
     }
 
-  return stab_push_defined_type (info, index, size);
+  return stab_push_defined_type (info, tindex, size);
 }
 
 /* Push an enum type.  */
@@ -783,7 +783,7 @@ stab_enum_type (void *p, const char *tag, const char **names,
   size_t len;
   const char **pn;
   char *buf;
-  long index = 0;
+  long tindex = 0;
   bfd_signed_vma *pv;
 
   if (names == NULL)
@@ -811,9 +811,9 @@ stab_enum_type (void *p, const char *tag, const char **names,
     strcpy (buf, "e");
   else
     {
-      index = info->type_index;
+      tindex = info->type_index;
       ++info->type_index;
-      sprintf (buf, "%s:T%ld=e", tag, index);
+      sprintf (buf, "%s:T%ld=e", tag, tindex);
     }
 
   for (pn = names, pv = vals; *pn != NULL; pn++, pv++)
@@ -830,7 +830,7 @@ stab_enum_type (void *p, const char *tag, const char **names,
     {
       /* FIXME: The size is just a guess.  */
       if (! stab_write_symbol (info, N_LSYM, 0, 0, buf)
-	  || ! stab_push_defined_type (info, index, 4))
+	  || ! stab_push_defined_type (info, tindex, 4))
 	return FALSE;
     }
 
@@ -847,7 +847,7 @@ stab_modify_type (struct stab_write_handle *info, int mod,
 		  unsigned int size, long **cache, size_t *cache_alloc)
 {
   long targindex;
-  long index;
+  long tindex;
   char *s, *buf;
 
   assert (info->type_stack != NULL);
@@ -887,8 +887,8 @@ stab_modify_type (struct stab_write_handle *info, int mod,
 	  *cache_alloc = alloc;
 	}
 
-      index = (*cache)[targindex];
-      if (index != 0 && ! info->type_stack->definition)
+      tindex = (*cache)[targindex];
+      if (tindex != 0 && ! info->type_stack->definition)
 	{
 	  /* We have already defined a modification of this type, and
              the entry on the type stack is not a definition, so we
@@ -897,22 +897,22 @@ stab_modify_type (struct stab_write_handle *info, int mod,
              is a struct which we did not define at the time it was
              referenced).  */
 	  free (stab_pop_type (info));
-	  if (! stab_push_defined_type (info, index, size))
+	  if (! stab_push_defined_type (info, tindex, size))
 	    return FALSE;
 	}
       else
 	{
-	  index = info->type_index;
+	  tindex = info->type_index;
 	  ++info->type_index;
 
 	  s = stab_pop_type (info);
 	  buf = (char *) xmalloc (strlen (s) + 20);
-	  sprintf (buf, "%ld=%c%s", index, mod, s);
+	  sprintf (buf, "%ld=%c%s", tindex, mod, s);
 	  free (s);
 
-	  (*cache)[targindex] = index;
+	  (*cache)[targindex] = tindex;
 
-	  if (! stab_push_string (info, buf, index, TRUE, size))
+	  if (! stab_push_string (info, buf, tindex, TRUE, size))
 	    return FALSE;
 
 	  free (buf);
@@ -1019,7 +1019,7 @@ stab_array_type (void *p, bfd_signed_vma low, bfd_signed_vma high,
   bfd_boolean definition;
   unsigned int element_size;
   char *range, *element, *buf;
-  long index;
+  long tindex;
   unsigned int size;
 
   definition = info->type_stack->definition;
@@ -1033,17 +1033,17 @@ stab_array_type (void *p, bfd_signed_vma low, bfd_signed_vma high,
 
   if (! stringp)
     {
-      index = 0;
+      tindex = 0;
       *buf = '\0';
     }
   else
     {
       /* We need to define a type in order to include the string
          attribute.  */
-      index = info->type_index;
+      tindex = info->type_index;
       ++info->type_index;
       definition = TRUE;
-      sprintf (buf, "%ld=@S;", index);
+      sprintf (buf, "%ld=@S;", tindex);
     }
 
   sprintf (buf + strlen (buf), "ar%s;%ld;%ld;%s",
@@ -1055,7 +1055,7 @@ stab_array_type (void *p, bfd_signed_vma low, bfd_signed_vma high,
     size = 0;
   else
     size = element_size * ((high - low) + 1);
-  if (! stab_push_string (info, buf, index, definition, size))
+  if (! stab_push_string (info, buf, tindex, definition, size))
     return FALSE;
 
   free (buf);
@@ -1071,7 +1071,7 @@ stab_set_type (void *p, bfd_boolean bitstringp)
   struct stab_write_handle *info = (struct stab_write_handle *) p;
   bfd_boolean definition;
   char *s, *buf;
-  long index;
+  long tindex;
 
   definition = info->type_stack->definition;
 
@@ -1081,22 +1081,22 @@ stab_set_type (void *p, bfd_boolean bitstringp)
   if (! bitstringp)
     {
       *buf = '\0';
-      index = 0;
+      tindex = 0;
     }
   else
     {
       /* We need to define a type in order to include the string
          attribute.  */
-      index = info->type_index;
+      tindex = info->type_index;
       ++info->type_index;
       definition = TRUE;
-      sprintf (buf, "%ld=@S;", index);
+      sprintf (buf, "%ld=@S;", tindex);
     }
 
   sprintf (buf + strlen (buf), "S%s", s);
   free (s);
 
-  if (! stab_push_string (info, buf, index, definition, 0))
+  if (! stab_push_string (info, buf, tindex, definition, 0))
     return FALSE;
 
   free (buf);
@@ -1309,7 +1309,7 @@ stab_start_struct_type (void *p, const char *tag, unsigned int id,
 			bfd_boolean structp, unsigned int size)
 {
   struct stab_write_handle *info = (struct stab_write_handle *) p;
-  long index;
+  long tindex;
   bfd_boolean definition;
   char *buf;
 
@@ -1317,17 +1317,17 @@ stab_start_struct_type (void *p, const char *tag, unsigned int id,
 
   if (id == 0)
     {
-      index = 0;
+      tindex = 0;
       *buf = '\0';
       definition = FALSE;
     }
   else
     {
-      index = stab_get_struct_index (info, tag, id, DEBUG_KIND_ILLEGAL,
+      tindex = stab_get_struct_index (info, tag, id, DEBUG_KIND_ILLEGAL,
 				     &size);
-      if (index < 0)
+      if (tindex < 0)
 	return FALSE;
-      sprintf (buf, "%ld=", index);
+      sprintf (buf, "%ld=", tindex);
       definition = TRUE;
     }
 
@@ -1335,7 +1335,7 @@ stab_start_struct_type (void *p, const char *tag, unsigned int id,
 	   structp ? 's' : 'u',
 	   size);
 
-  if (! stab_push_string (info, buf, index, definition, size))
+  if (! stab_push_string (info, buf, tindex, definition, size))
     return FALSE;
 
   info->type_stack->fields = (char *) xmalloc (1);
@@ -1414,14 +1414,14 @@ stab_end_struct_type (void *p)
 {
   struct stab_write_handle *info = (struct stab_write_handle *) p;
   bfd_boolean definition;
-  long index;
+  long tindex;
   unsigned int size;
   char *fields, *first, *buf;
 
   assert (info->type_stack != NULL && info->type_stack->fields != NULL);
 
   definition = info->type_stack->definition;
-  index = info->type_stack->index;
+  tindex = info->type_stack->index;
   size = info->type_stack->size;
   fields = info->type_stack->fields;
   first = stab_pop_type (info);
@@ -1431,7 +1431,7 @@ stab_end_struct_type (void *p)
   free (first);
   free (fields);
 
-  if (! stab_push_string (info, buf, index, definition, size))
+  if (! stab_push_string (info, buf, tindex, definition, size))
     return FALSE;
 
   free (buf);
@@ -1545,7 +1545,7 @@ stab_class_static_member (void *p, const char *name, const char *physname,
 /* Add a base class to the class on the type stack.  */
 
 static bfd_boolean
-stab_class_baseclass (void *p, bfd_vma bitpos, bfd_boolean virtual,
+stab_class_baseclass (void *p, bfd_vma bitpos, bfd_boolean is_virtual,
 		      enum debug_visibility visibility)
 {
   struct stab_write_handle *info = (struct stab_write_handle *) p;
@@ -1561,7 +1561,7 @@ stab_class_baseclass (void *p, bfd_vma bitpos, bfd_boolean virtual,
   /* Build the base class specifier.  */
 
   buf = (char *) xmalloc (strlen (s) + 25);
-  buf[0] = virtual ? '1' : '0';
+  buf[0] = is_virtual ? '1' : '0';
   switch (visibility)
     {
     default:
@@ -1867,14 +1867,14 @@ stab_tag_type (void *p, const char *name, unsigned int id,
 	       enum debug_type_kind kind)
 {
   struct stab_write_handle *info = (struct stab_write_handle *) p;
-  long index;
+  long tindex;
   unsigned int size = 0;
 
-  index = stab_get_struct_index (info, name, id, kind, &size);
-  if (index < 0)
+  tindex = stab_get_struct_index (info, name, id, kind, &size);
+  if (tindex < 0)
     return FALSE;
 
-  return stab_push_defined_type (info, index, size);
+  return stab_push_defined_type (info, tindex, size);
 }
 
 /* Define a typedef.  */
@@ -1883,24 +1883,24 @@ static bfd_boolean
 stab_typdef (void *p, const char *name)
 {
   struct stab_write_handle *info = (struct stab_write_handle *) p;
-  long index;
+  long tindex;
   unsigned int size;
   char *s, *buf;
   struct string_hash_entry *h;
 
-  index = info->type_stack->index;
+  tindex = info->type_stack->index;
   size = info->type_stack->size;
   s = stab_pop_type (info);
 
   buf = (char *) xmalloc (strlen (name) + strlen (s) + 20);
 
-  if (index > 0)
+  if (tindex > 0)
     sprintf (buf, "%s:t%s", name, s);
   else
     {
-      index = info->type_index;
+      tindex = info->type_index;
       ++info->type_index;
-      sprintf (buf, "%s:t%ld=%s", name, index, s);
+      sprintf (buf, "%s:t%ld=%s", name, tindex, s);
     }
 
   free (s);
@@ -1920,7 +1920,7 @@ stab_typdef (void *p, const char *name)
 
   /* I don't think we care about redefinitions.  */
 
-  h->index = index;
+  h->index = tindex;
   h->size = size;
 
   return TRUE;
@@ -2050,12 +2050,12 @@ stab_variable (void *p, const char *name, enum debug_var_kind kind,
       if (! ISDIGIT (*s))
 	{
 	  char *n;
-	  long index;
+	  long tindex;
 
-	  index = info->type_index;
+	  tindex = info->type_index;
 	  ++info->type_index;
 	  n = (char *) xmalloc (strlen (s) + 20);
-	  sprintf (n, "%ld=%s", index, s);
+	  sprintf (n, "%ld=%s", tindex, s);
 	  free (s);
 	  s = n;
 	}

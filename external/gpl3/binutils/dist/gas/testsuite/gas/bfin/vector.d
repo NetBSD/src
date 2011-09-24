@@ -46,7 +46,7 @@ Disassembly of section .text:
 00000074 <vector_lshift>:
   74:	81 c6 8a 8b 	R5 = R2 >> 0xf \(V\);
   78:	81 c6 11 80 	R0 = R1 << 0x2 \(V\);
-  7c:	01 c6 11 88 	R4 = SHIFT R1 BY R2.L \(V\);
+  7c:	01 c6 11 88 	R4 = LSHIFT R1 BY R2.L \(V\);
 
 00000080 <vector_max>:
   80:	06 c4 01 0c 	R6 = MAX \(R0, R1\) \(V\);

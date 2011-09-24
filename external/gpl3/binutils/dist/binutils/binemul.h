@@ -1,5 +1,5 @@
 /* Binutils emulation layer.
-   Copyright 2002, 2003, 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2002, 2003, 2005, 2007, 2008 Free Software Foundation, Inc.
    Written by Tom Rix, Red Hat Inc.
 
    This file is part of GNU Binutils.
@@ -28,11 +28,14 @@
 
 extern void ar_emul_usage (FILE *);
 extern void ar_emul_default_usage (FILE *);
-extern bfd_boolean ar_emul_append (bfd **, char *, bfd_boolean, bfd_boolean);
-extern bfd_boolean ar_emul_default_append (bfd **, char *, bfd_boolean,
-                                           bfd_boolean);
-extern bfd_boolean ar_emul_replace (bfd **, char *, bfd_boolean);
-extern bfd_boolean ar_emul_default_replace (bfd **, char *, bfd_boolean);
+extern bfd_boolean ar_emul_append (bfd **, char *, const char *,
+				   bfd_boolean, bfd_boolean);
+extern bfd_boolean ar_emul_default_append (bfd **, char *, const char *,
+					   bfd_boolean, bfd_boolean);
+extern bfd_boolean ar_emul_replace (bfd **, char *, const char *,
+				    bfd_boolean);
+extern bfd_boolean ar_emul_default_replace (bfd **, char *,
+					    const char *, bfd_boolean);
 extern bfd_boolean ar_emul_parse_arg (char *);
 extern bfd_boolean ar_emul_default_parse_arg (char *);
 
@@ -55,8 +58,9 @@ typedef struct bin_emulation_xfer_struct
 {
   /* Print out the extra options.  */
   void (* ar_usage) (FILE *fp);
-  bfd_boolean (* ar_append) (bfd **, char *, bfd_boolean, bfd_boolean);
-  bfd_boolean (* ar_replace) (bfd **, char *, bfd_boolean);
+  bfd_boolean (* ar_append) (bfd **, char *, const char *, bfd_boolean,
+			     bfd_boolean);
+  bfd_boolean (* ar_replace) (bfd **, char *, const char *, bfd_boolean);
   bfd_boolean (* ar_parse_arg) (char *);
 }
 bin_emulation_xfer_type;

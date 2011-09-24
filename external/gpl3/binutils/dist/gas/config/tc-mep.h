@@ -1,5 +1,5 @@
 /* tc-mep.h -- Header file for tc-mep.c.
-   Copyright (C) 2001, 2002, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2002, 2005, 2007, 2009 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -34,13 +34,12 @@
 #define TARGET_FORMAT (target_big_endian ? "elf32-mep" : "elf32-mep-little")
 
 /* This is the default.  */
-#define TARGET_BYTES_BIG_ENDIAN 1
+#define TARGET_BYTES_BIG_ENDIAN 0
 
 /* Permit temporary numeric labels. */
 #define LOCAL_LABELS_FB 1
 
-/* .-foo gets turned into PC relative relocs.  */
-#define DIFF_EXPR_OK
+/* Do not define DIFF_EXPR_OK - the MeP does not have a 32-bit PC-relative reloc.  */
 
 /* We don't need to handle .word strangely.  */
 #define WORKING_DOT_WORD
@@ -81,6 +80,9 @@ extern int mep_flush_pending_output(void);
 extern const struct relax_type md_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_relax_table
 
+extern long mep_relax_frag (segT, fragS *, long);
+#define md_relax_frag mep_relax_frag
+
 /* Account for inserting a jmp after the insn.  */
 #define TC_CGEN_MAX_RELAX(insn, len) ((len) + 4)
 
@@ -95,7 +97,7 @@ extern void mep_prepare_relax_scan (fragS *, offsetT *, relax_substateT);
 #define VTEXT_SECTION_NAME ".vtext"
 
 /* Needed to process pending instructions when a label is encountered.  */
-#define TC_START_LABEL(ch, ptr)    ((ch == ':') && mep_flush_pending_output ())
+#define TC_START_LABEL(ch, s, ptr)    ((ch == ':') && mep_flush_pending_output ())
 
 #define tc_unrecognized_line(c) mep_unrecognized_line (c)
 extern int mep_unrecognized_line (int);
@@ -103,9 +105,9 @@ extern int mep_unrecognized_line (int);
 extern void mep_cleanup (void);
 
 #define md_elf_section_letter		mep_elf_section_letter
-extern int mep_elf_section_letter (int, char **);
+extern bfd_vma mep_elf_section_letter (int, char **);
 #define md_elf_section_flags		mep_elf_section_flags
-extern flagword mep_elf_section_flags  (flagword, int, int);
+extern flagword mep_elf_section_flags  (flagword, bfd_vma, int);
 
 #define ELF_TC_SPECIAL_SECTIONS \
   { VTEXT_SECTION_NAME, SHT_PROGBITS, SHF_ALLOC|SHF_EXECINSTR|SHF_MEP_VLIW },

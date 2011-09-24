@@ -1,6 +1,6 @@
 ; Renesas M32C CPU description.  -*- Scheme -*-
 ;
-; Copyright 2005, 2006, 2007 Free Software Foundation, Inc.
+; Copyright 2005, 2006, 2007, 2009 Free Software Foundation, Inc.
 ;
 ; Contributed by Red Hat Inc; developed under contract from Renesas.
 ;
@@ -572,10 +572,10 @@
 )
 (df  f-dsp-8-s24 "24 bit signed" (all-isas) 8 24 INT
      ((value pc) (or SI
-		     (or (srl value 16) (and value #xff00))
+		     (or (and (srl value 16) #xff) (and value #xff00))
 		     (sll (ext INT (trunc QI (and value #xff))) 16)))
      ((value pc) (or SI
-		     (or (srl value 16) (and value #xff00))
+		     (or (and (srl value 16) #xff) (and value #xff00))
 		     (sll (ext INT (trunc QI (and value #xff))) 16)))
  )
 
@@ -617,12 +617,12 @@
 		     (or USI
 			 (and (srl value 16) #x0000ff)
 			 (and value          #x00ff00))
-		     (and (sll value 16) #xff0000))) ; insert
+		     (and (sll value 16)     #xff0000))) ; insert
      ((value pc) (or USI
 		     (or USI
-			 (and USI (srl UHI value 16) #x0000ff)
-			 (and USI value              #x00ff00))
-		     (and USI (sll UHI value 16) #xff0000))) ; extract
+			 (and USI (srl value 16) #x0000ff)
+			 (and USI value          #x00ff00))
+		     (and USI (sll value 16)     #xff0000))) ; extract
 )
 
 (df f-dsp-40-u20 "20 bit unsigned" (all-isas) 40 20 UINT
@@ -630,24 +630,25 @@
 		     (or USI
 			 (and (srl value 16) #x0000ff)
 			 (and value          #x00ff00))
-		     (and (sll value 16) #x0f0000))) ; insert
+		     (and (sll value 16)     #x0f0000))) ; insert
      ((value pc) (or USI
 		     (or USI
-			 (and USI (srl UHI value 16) #x0000ff)
-			 (and USI value              #x00ff00))
-		     (and USI (sll UHI value 16) #x0f0000))) ; extract
+			 (and USI (srl value 16) #x0000ff)
+			 (and USI value          #x00ff00))
+		     (and USI (sll value 16)     #x0f0000))) ; extract
 )
+
 (df f-dsp-40-u24 "24 bit unsigned" (all-isas) 40 24 UINT
      ((value pc) (or USI
 		     (or USI
 			 (and (srl value 16) #x0000ff)
 			 (and value          #x00ff00))
-		     (and (sll value 16) #xff0000))) ; insert
+		     (and (sll value 16)     #xff0000))) ; insert
      ((value pc) (or USI
 		     (or USI
-			 (and USI (srl UHI value 16) #x0000ff)
-			 (and USI value              #x00ff00))
-		     (and USI (sll UHI value 16) #xff0000))) ; extract
+			 (and USI (srl value 16) #x0000ff)
+			 (and USI value          #x00ff00))
+		     (and USI (sll value 16)     #xff0000))) ; extract
 )
 
 (dnmf f-dsp-40-s32 "32 bit signed" (all-isas) INT

@@ -1,6 +1,7 @@
 /* ELF object file format.
    Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2006, 2007 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -80,14 +81,6 @@ struct elf_obj_sy
 
 #define OBJ_SYMFIELD_TYPE struct elf_obj_sy
 
-/* Symbol fields used by the ELF back end.  */
-#define ELF_TARGET_SYMBOL_FIELDS unsigned int local:1;
-
-/* Don't change this; change ELF_TARGET_SYMBOL_FIELDS instead.  */
-#ifndef TARGET_SYMBOL_FIELDS
-#define TARGET_SYMBOL_FIELDS ELF_TARGET_SYMBOL_FIELDS
-#endif
-
 #ifndef FALSE
 #define FALSE 0
 #define TRUE  !FALSE
@@ -97,6 +90,10 @@ struct elf_obj_sy
 #define obj_begin() elf_begin ()
 #endif
 extern void elf_begin (void);
+
+#ifndef LOCAL_LABEL_PREFIX
+#define LOCAL_LABEL_PREFIX '.'
+#endif
 
 /* should be conditional on address size! */
 #define elf_symbol(asymbol) ((elf_symbol_type *) (&(asymbol)->the_bfd))
@@ -160,13 +157,14 @@ extern void elf_file_symbol (const char *, int);
 extern void obj_elf_section_change_hook (void);
 
 extern void obj_elf_section (int);
+extern char * obj_elf_section_name (void);
 extern void obj_elf_previous (int);
 extern void obj_elf_version (int);
 extern void obj_elf_common (int);
 extern void obj_elf_data (int);
 extern void obj_elf_text (int);
 extern void obj_elf_change_section
-  (const char *, int, int, int, const char *, int, int);
+  (const char *, int, bfd_vma, int, const char *, int, int);
 extern struct fix *obj_elf_vtable_inherit (int);
 extern struct fix *obj_elf_vtable_entry (int);
 
@@ -190,6 +188,11 @@ void elf_copy_symbol_attributes (symbolS *, symbolS *);
 #ifndef OBJ_COPY_SYMBOL_ATTRIBUTES
 #define OBJ_COPY_SYMBOL_ATTRIBUTES(DEST, SRC) \
   (elf_copy_symbol_attributes (DEST, SRC))
+#endif
+
+void elf_adjust_symtab (void);
+#ifndef obj_adjust_symtab
+#define obj_adjust_symtab	elf_adjust_symtab
 #endif
 
 #ifndef SEPARATE_STAB_SECTIONS

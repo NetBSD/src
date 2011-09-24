@@ -1,10 +1,10 @@
 // elfcpp.h -- main header file for elfcpp    -*- C++ -*-
 
-// Copyright 2006, 2007, Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of elfcpp.
-   
+
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public License
 // as published by the Free Software Foundation; either version 2, or
@@ -17,7 +17,7 @@
 // combinations without any restriction coming from the use of this
 // file.  (The Library Public License restrictions do apply in other
 // respects; for example, they cover modification of the file, and
-/// distribution when not linked into a combined executable.)
+// distribution when not linked into a combined executable.)
 
 // This program is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -302,6 +302,15 @@ enum EM
   // Old MN10200 objects used 0xdead (EM_MN10200 is correct).
 };
 
+// A special value found in the Ehdr e_phnum field.
+
+enum
+{
+  // Number of program segments stored in sh_info field of first
+  // section headre.
+  PN_XNUM = 0xffff
+};
+
 // Special section indices.
 
 enum
@@ -321,6 +330,9 @@ enum
   // with the SHF_LINK_ORDER and SHF_ORDERED section flags.
   SHN_BEFORE = 0xff00,
   SHN_AFTER = 0xff01,
+
+  // x86_64 specific large common symbol.
+  SHN_X86_64_LCOMMON = 0xff02
 };
 
 // The valid values found in the Shdr sh_type field.
@@ -351,6 +363,11 @@ enum SHT
   SHT_LOUSER = 0x80000000,
   SHT_HIUSER = 0xffffffff,
   // The remaining values are not in the standard.
+  // Incremental build data.
+  SHT_GNU_INCREMENTAL_INPUTS = 0x6fff4700,
+  SHT_GNU_INCREMENTAL_SYMTAB = 0x6fff4701,
+  SHT_GNU_INCREMENTAL_RELOCS = 0x6fff4702,
+  SHT_GNU_INCREMENTAL_GOT_PLT = 0x6fff4703,
   // Object attributes.
   SHT_GNU_ATTRIBUTES = 0x6ffffff5,
   // GNU style dynamic hash table.
@@ -369,9 +386,23 @@ enum SHT
 
   SHT_SPARC_GOTDATA = 0x70000000,
 
+  // ARM-specific section types.
+  // Exception Index table.
+  SHT_ARM_EXIDX = 0x70000001,
+  // BPABI DLL dynamic linking pre-emption map.
+  SHT_ARM_PREEMPTMAP = 0x70000002,
+  // Object file compatibility attributes.
+  SHT_ARM_ATTRIBUTES = 0x70000003,
+  // Support for debugging overlaid programs.
+  SHT_ARM_DEBUGOVERLAY = 0x70000004,
+  SHT_ARM_OVERLAYSECTION = 0x70000005,
+
+  // x86_64 unwind information.
+  SHT_X86_64_UNWIND = 0x70000001,
+
   // Link editor is to sort the entries in this section based on the
   // address specified in the associated symbol table entry.
-  SHT_ORDERED = 0x7fffffff,
+  SHT_ORDERED = 0x7fffffff
 };
 
 // The valid bit flags found in the Shdr sh_flags field.
@@ -402,6 +433,9 @@ enum SHF
   // executable or shared object.  This flag is ignored if SHF_ALLOC
   // is also set, or if relocations exist against the section.
   SHF_EXCLUDE = 0x80000000,
+
+  // x86_64 specific large section.
+  SHF_X86_64_LARGE = 0x10000000
 };
 
 // Bit flags which appear in the first 32-bit word of the section data
@@ -437,7 +471,11 @@ enum PT
   // Stack flags.
   PT_GNU_STACK = 0x6474e551,
   // Read only after relocation.
-  PT_GNU_RELRO = 0x6474e552
+  PT_GNU_RELRO = 0x6474e552,
+  // Platform architecture compatibility information
+  PT_ARM_ARCHEXT = 0x70000000,
+  // Exception unwind tables
+  PT_ARM_EXIDX = 0x70000001
 };
 
 // The valid bit flags found in the Phdr p_flags field.
@@ -459,6 +497,7 @@ enum STB
   STB_GLOBAL = 1,
   STB_WEAK = 2,
   STB_LOOS = 10,
+  STB_GNU_UNIQUE = 10,
   STB_HIOS = 12,
   STB_LOPROC = 13,
   STB_HIPROC = 15
@@ -476,6 +515,7 @@ enum STT
   STT_COMMON = 5,
   STT_TLS = 6,
   STT_LOOS = 10,
+  STT_GNU_IFUNC = 10,
   STT_HIOS = 12,
   STT_LOPROC = 13,
   STT_HIPROC = 15,
@@ -483,6 +523,10 @@ enum STT
   // The section type that must be used for register symbols on
   // Sparc.  These symbols initialize a global register.
   STT_SPARC_REGISTER = 13,
+
+  // ARM: a THUMB function.  This is not defined in ARM ELF Specification but
+  // used by the GNU tool-chain.
+  STT_ARM_TFUNC = 13
 };
 
 inline STB
@@ -624,8 +668,12 @@ enum DT
   DT_FINI_ARRAYSZ = 28,
   DT_RUNPATH = 29,
   DT_FLAGS = 30,
+
+  // This is used to mark a range of dynamic tags.  It is not really
+  // a tag value.
   DT_ENCODING = 32,
-  DT_PREINIT_ARRAY = 33,
+
+  DT_PREINIT_ARRAY = 32,
   DT_PREINIT_ARRAYSZ = 33,
   DT_LOOS = 0x6000000d,
   DT_HIOS = 0x6ffff000,
@@ -719,7 +767,7 @@ enum DF_1
   DF_1_INTERPOSE = 0x400,
   DF_1_NODEFLIB = 0x800,
   DF_1_NODUMP = 0x1000,
-  DF_1_CONLFAT = 0x2000,
+  DF_1_CONLFAT = 0x2000
 };
 
 // Version numbers which appear in the vd_version field of a Verdef
@@ -739,6 +787,7 @@ const int VER_NEED_CURRENT = 1;
 
 const int VER_FLG_BASE = 0x1;
 const int VER_FLG_WEAK = 0x2;
+const int VER_FLG_INFO = 0x4;
 
 // Special constants found in the SHT_GNU_versym entries.
 
@@ -934,7 +983,7 @@ class Ehdr_write
   void
   put_e_type(Elf_Half v)
   { this->p_->e_type = Convert<16, big_endian>::convert_host(v); }
-  
+
   void
   put_e_machine(Elf_Half v)
   { this->p_->e_machine = Convert<16, big_endian>::convert_host(v); }

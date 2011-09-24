@@ -9,8 +9,8 @@ Disassembly of section .text:
 0+004 <[^>]*> f6d9f007 	pli	\[r9, r7\]
 0+008 <[^>]*> f6d0f101 	pli	\[r0, r1, lsl #2\]
 0+00c <[^>]*> f4d5f000 	pli	\[r5\]
-0+010 <[^>]*> f4d5ffff 	pli	\[r5, #4095\]
-0+014 <[^>]*> f455ffff 	pli	\[r5, #-4095\]
+0+010 <[^>]*> f4d5ffff 	pli	\[r5, #4095\].*
+0+014 <[^>]*> f455ffff 	pli	\[r5, #-4095\].*
 0+018 <[^>]*> e320f0f0 	dbg	#0
 0+01c <[^>]*> e320f0ff 	dbg	#15
 0+020 <[^>]*> f57ff05f 	dmb	sy
@@ -26,7 +26,7 @@ Disassembly of section .text:
 0+048 <[^>]*> f919 f007 	pli	\[r9, r7\]
 0+04c <[^>]*> f910 f021 	pli	\[r0, r1, lsl #2\]
 0+050 <[^>]*> f995 f000 	pli	\[r5\]
-0+054 <[^>]*> f995 ffff 	pli	\[r5, #4095\]
+0+054 <[^>]*> f995 ffff 	pli	\[r5, #4095\].*
 0+058 <[^>]*> f915 fcff 	pli	\[r5, #-255\]
 0+05c <[^>]*> f99f ffff 	pli	\[pc, #4095\]	; 0+0105f <[^>]*>
 0+060 <[^>]*> f91f ffff 	pli	\[pc, #-4095\]	; f+ff065 <[^>]*>
@@ -74,3 +74,5 @@ Disassembly of section .text:
 0+104 <[^>]*> f380 8812 	msr	BASEPRI_MASK, r0
 0+108 <[^>]*> f380 8813 	msr	FAULTMASK, r0
 0+10c <[^>]*> f380 8814 	msr	CONTROL, r0
+0+110 <[^>]*> f3ef 8003 	mrs	r0, PSR
+0+114 <[^>]*> f380 8803 	msr	PSR, r0

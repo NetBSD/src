@@ -18,9 +18,9 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
-#include "sysdep.h"
-#include "bfd.h"
-#include "bucomm.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "binary-io.h"
 
 int
 main (int argc, char *argv[])
@@ -28,19 +28,9 @@ main (int argc, char *argv[])
   int c;
   int i;
 
-#if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
-  setlocale (LC_MESSAGES, "");
-#endif
-#if defined (HAVE_SETLOCALE)
-  setlocale (LC_CTYPE, "");
-#endif
-  bindtextdomain (PACKAGE, LOCALEDIR);
-  textdomain (PACKAGE);
-
   if (argc != 1)
     {
       int ishelp = 0;
-      int isvers = 0;
       FILE *stream;
 
       if (argc == 2 && argv[1][0] == '-')
@@ -49,15 +39,11 @@ main (int argc, char *argv[])
 	  if (*opt == '-')
 	    ++opt;
 	  ishelp = *opt == 'h' || *opt == 'H';
-	  isvers = *opt == 'v' || *opt == 'V';
 	}
 
-      if (isvers)
-	print_version ("bin2c");
-
       stream = ishelp ? stdout : stderr;
-      fprintf (stream, _("Usage: %s < input_file > output_file\n"), argv[0]);
-      fprintf (stream, _("Prints bytes from stdin in hex format.\n"));
+      fprintf (stream, "Usage: %s < input_file > output_file\n", argv[0]);
+      fprintf (stream, "Prints bytes from stdin in hex format.\n");
       exit (!ishelp);
     }
 

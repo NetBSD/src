@@ -1,6 +1,6 @@
 // target-select.h -- select a target for an object file  -*- C++ -*-
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -25,10 +25,30 @@
 
 #include <vector>
 
+#include "gold-threads.h"
+
 namespace gold
 {
 
 class Target;
+class Target_selector;
+
+// Used to set the target only once.
+
+class Set_target_once : public Once
+{
+ public:
+  Set_target_once(Target_selector* target_selector)
+    : target_selector_(target_selector)
+  { }
+
+ protected:
+  void
+  do_run_once(void*);
+
+ private:
+  Target_selector* target_selector_;
+};
 
 // We want to avoid a master list of targets, which implies using a
 // global constructor.  And we also want the program to start up as
@@ -106,10 +126,10 @@ class Target_selector
   virtual Target*
   do_instantiate_target() = 0;
 
-  // Recognize an object file given a machine code, size, and
-  // endianness.  When this is called we already know that they match
-  // the machine_, size_, and is_big_endian_ fields.  The child class
-  // may implement a different version of this to do additional
+  // Recognize an object file given a machine code, OSABI code, and
+  // ELF version value.  When this is called we already know that they
+  // match the machine_, size_, and is_big_endian_ fields.  The child
+  // class may implement a different version of this to do additional
   // checks, or to check for multiple machine codes if the machine_
   // field is EM_NONE.
   virtual Target*
@@ -134,15 +154,16 @@ class Target_selector
     names->push_back(this->bfd_name_);
   }
 
- private:
   // Instantiate the target and return it.
   Target*
-  instantiate_target()
-  {
-    if (this->instantiated_target_ == NULL)
-      this->instantiated_target_ = this->do_instantiate_target();
-    return this->instantiated_target_;
-  }
+  instantiate_target();
+
+ private:
+  // Set the target.
+  void
+  set_target();
+
+  friend class Set_target_once;
 
   // ELF machine code.
   const int machine_;
@@ -157,6 +178,8 @@ class Target_selector
   // The singleton Target structure--this points to an instance of the
   // real implementation.
   Target* instantiated_target_;
+  // Used to set the target only once.
+  Set_target_once set_target_once_;
 };
 
 // Select the target for an ELF file.

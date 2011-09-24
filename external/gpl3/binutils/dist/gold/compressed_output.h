@@ -1,6 +1,6 @@
 // compressed_output.h -- compressed output sections for gold  -*- C++ -*-
 
-// Copyright 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2007, 2008, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -36,6 +36,18 @@ namespace gold
 {
 
 class General_options;
+
+// Read the compression header of a compressed debug section and return
+// the uncompressed size.
+
+extern uint64_t
+get_uncompressed_size(const unsigned char*, section_size_type);
+
+// Decompress a compressed debug section directly into the output file.
+
+extern bool
+decompress_input_section(const unsigned char*, unsigned long, unsigned char*,
+			 unsigned long);
 
 // This is used for a section whose data should be compressed.  It is
 // a regular Output_section which computes its contents into a buffer

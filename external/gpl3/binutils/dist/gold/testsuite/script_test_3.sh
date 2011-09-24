@@ -85,4 +85,18 @@ if test "$section_size" != "$segment_size"; then
   exit 1
 fi
 
+# At least one PT_LOAD segment should have an alignment >= 0x100000.
+found=no
+for a in `grep LOAD script_test_3.stdout | sed -e 's/^.* 0x/0x/'`; do
+  script="BEGIN { if ($a >= 0x100000) { print \"true\" } else { print \"false\" } }"
+  x=`awk "$script" < /dev/null`
+  if test "$x" = "true"; then
+    found=yes
+  fi
+done
+if test "$found" = "no"; then
+  echo "no LOAD segment has required alignment"
+  exit 1
+fi
+
 exit 0

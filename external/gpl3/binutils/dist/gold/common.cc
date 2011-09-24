@@ -1,6 +1,6 @@
 // common.cc -- handle common symbols for gold
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -36,24 +36,21 @@ namespace gold
 
 // Allocate_commons_task methods.
 
-// This task allocates the common symbols.  We need a lock on the
-// symbol table.
+// This task allocates the common symbols.  We arrange to run it
+// before anything else which needs to access the symbol table.
 
 Task_token*
 Allocate_commons_task::is_runnable()
 {
-  if (!this->symtab_lock_->is_writable())
-    return this->symtab_lock_;
   return NULL;
 }
 
-// Return the locks we hold: one on the symbol table, and one blocker.
+// Release a blocker.
 
 void
 Allocate_commons_task::locks(Task_locker* tl)
 {
   tl->add(this, this->blocker_);
-  tl->add(this, this->symtab_lock_);
 }
 
 // Allocate the common symbols.
@@ -64,21 +61,26 @@ Allocate_commons_task::run(Workqueue*)
   this->symtab_->allocate_commons(this->layout_, this->mapfile_);
 }
 
-// This class is used to sort the common symbol by size.  We put the
-// larger common symbols first.
+// This class is used to sort the common symbol.  We normally put the
+// larger common symbols first.  This can be changed by using
+// --sort-commons, which tells the linker to sort by alignment.
 
 template<int size>
 class Sort_commons
 {
  public:
-  Sort_commons(const Symbol_table* symtab)
-    : symtab_(symtab)
+  Sort_commons(const Symbol_table* symtab,
+	       Symbol_table::Sort_commons_order sort_order)
+    : symtab_(symtab), sort_order_(sort_order)
   { }
 
   bool operator()(const Symbol* a, const Symbol* b) const;
 
  private:
+  // The symbol table.
   const Symbol_table* symtab_;
+  // How to sort.
+  Symbol_table::Sort_commons_order sort_order_;
 };
 
 template<int size>
@@ -94,22 +96,48 @@ Sort_commons<size>::operator()(const Symbol* pa, const Symbol* pb) const
   const Sized_symbol<size>* psa = symtab->get_sized_symbol<size>(pa);
   const Sized_symbol<size>* psb = symtab->get_sized_symbol<size>(pb);
 
-  // Sort by largest size first.
+  // The size.
   typename Sized_symbol<size>::Size_type sa = psa->symsize();
   typename Sized_symbol<size>::Size_type sb = psb->symsize();
+
+  // The alignment.
+  typename Sized_symbol<size>::Value_type aa = psa->value();
+  typename Sized_symbol<size>::Value_type ab = psb->value();
+
+  if (this->sort_order_ == Symbol_table::SORT_COMMONS_BY_ALIGNMENT_DESCENDING)
+    {
+      if (aa < ab)
+	return false;
+      else if (ab < aa)
+	return true;
+    }
+  else if (this->sort_order_
+	   == Symbol_table::SORT_COMMONS_BY_ALIGNMENT_ASCENDING)
+    {
+      if (aa < ab)
+	return true;
+      else if (ab < aa)
+	return false;
+    }
+  else
+    gold_assert(this->sort_order_
+		== Symbol_table::SORT_COMMONS_BY_SIZE_DESCENDING);
+
+  // Sort by descending size.
   if (sa < sb)
     return false;
   else if (sb < sa)
     return true;
 
-  // When the symbols are the same size, we sort them by alignment,
-  // largest alignment first.
-  typename Sized_symbol<size>::Value_type va = psa->value();
-  typename Sized_symbol<size>::Value_type vb = psb->value();
-  if (va < vb)
-    return false;
-  else if (vb < va)
-    return true;
+  if (this->sort_order_ == Symbol_table::SORT_COMMONS_BY_SIZE_DESCENDING)
+    {
+      // When the symbols are the same size, we sort them by
+      // alignment, largest alignment first.
+      if (aa < ab)
+	return false;
+      else if (ab < aa)
+	return true;
+    }
 
   // Otherwise we stabilize the sort by sorting by name.
   return strcmp(psa->name(), psb->name()) < 0;
@@ -120,10 +148,27 @@ Sort_commons<size>::operator()(const Symbol* pa, const Symbol* pb) const
 void
 Symbol_table::allocate_commons(Layout* layout, Mapfile* mapfile)
 {
+  Sort_commons_order sort_order;
+  if (!parameters->options().user_set_sort_common())
+    sort_order = SORT_COMMONS_BY_SIZE_DESCENDING;
+  else
+    {
+      const char* order = parameters->options().sort_common();
+      if (*order == '\0' || strcmp(order, "descending") == 0)
+	sort_order = SORT_COMMONS_BY_ALIGNMENT_DESCENDING;
+      else if (strcmp(order, "ascending") == 0)
+	sort_order = SORT_COMMONS_BY_ALIGNMENT_ASCENDING;
+      else
+	{
+	  gold_error("invalid --sort-common argument: %s", order);
+	  sort_order = SORT_COMMONS_BY_SIZE_DESCENDING;
+	}
+    }
+
   if (parameters->target().get_size() == 32)
     {
 #if defined(HAVE_TARGET_32_LITTLE) || defined(HAVE_TARGET_32_BIG)
-      this->do_allocate_commons<32>(layout, mapfile);
+      this->do_allocate_commons<32>(layout, mapfile, sort_order);
 #else
       gold_unreachable();
 #endif
@@ -131,7 +176,7 @@ Symbol_table::allocate_commons(Layout* layout, Mapfile* mapfile)
   else if (parameters->target().get_size() == 64)
     {
 #if defined(HAVE_TARGET_64_LITTLE) || defined(HAVE_TARGET_64_BIG)
-      this->do_allocate_commons<64>(layout, mapfile);
+      this->do_allocate_commons<64>(layout, mapfile, sort_order);
 #else
       gold_unreachable();
 #endif
@@ -144,12 +189,25 @@ Symbol_table::allocate_commons(Layout* layout, Mapfile* mapfile)
 
 template<int size>
 void
-Symbol_table::do_allocate_commons(Layout* layout, Mapfile* mapfile)
+Symbol_table::do_allocate_commons(Layout* layout, Mapfile* mapfile,
+				  Sort_commons_order sort_order)
 {
-  this->do_allocate_commons_list<size>(layout, false, &this->commons_,
-				       mapfile);
-  this->do_allocate_commons_list<size>(layout, true, &this->tls_commons_,
-				       mapfile);
+  if (!this->commons_.empty())
+    this->do_allocate_commons_list<size>(layout, COMMONS_NORMAL,
+					 &this->commons_, mapfile,
+					 sort_order);
+  if (!this->tls_commons_.empty())
+    this->do_allocate_commons_list<size>(layout, COMMONS_TLS,
+					 &this->tls_commons_, mapfile,
+					 sort_order);
+  if (!this->small_commons_.empty())
+    this->do_allocate_commons_list<size>(layout, COMMONS_SMALL,
+					 &this->small_commons_, mapfile,
+					 sort_order);
+  if (!this->large_commons_.empty())
+    this->do_allocate_commons_list<size>(layout, COMMONS_LARGE,
+					 &this->large_commons_, mapfile,
+					 sort_order);
 }
 
 // Allocate the common symbols in a list.  IS_TLS indicates whether
@@ -157,9 +215,12 @@ Symbol_table::do_allocate_commons(Layout* layout, Mapfile* mapfile)
 
 template<int size>
 void
-Symbol_table::do_allocate_commons_list(Layout* layout, bool is_tls,
-				       Commons_type* commons,
-				       Mapfile* mapfile)
+Symbol_table::do_allocate_commons_list(
+    Layout* layout,
+    Commons_section_type commons_section_type,
+    Commons_type* commons,
+    Mapfile* mapfile,
+    Sort_commons_order sort_order)
 {
   typedef typename Sized_symbol<size>::Value_type Value_type;
   typedef typename Sized_symbol<size>::Size_type Size_type;
@@ -192,26 +253,52 @@ Symbol_table::do_allocate_commons_list(Layout* layout, bool is_tls,
   if (!any)
     return;
 
-  // Sort the common symbols by size, so that they pack better into
-  // memory.
+  // Sort the common symbols.
   std::sort(commons->begin(), commons->end(),
-	    Sort_commons<size>(this));
+	    Sort_commons<size>(this, sort_order));
 
   // Place them in a newly allocated BSS section.
-
-  Output_data_space *poc = new Output_data_space(addralign,
-						 (is_tls
-						  ? "** tls common"
-						  : "** common"));
-
-  const char* name = ".bss";
   elfcpp::Elf_Xword flags = elfcpp::SHF_WRITE | elfcpp::SHF_ALLOC;
-  if (is_tls)
+  const char* name;
+  const char* ds_name;
+  switch (commons_section_type)
     {
-      name = ".tbss";
+    case COMMONS_NORMAL:
+      name = ".bss";
+      ds_name = "** common";
+      break;
+    case COMMONS_TLS:
       flags |= elfcpp::SHF_TLS;
+      name = ".tbss";
+      ds_name = "** tls common";
+      break;
+    case COMMONS_SMALL:
+      flags |= parameters->target().small_common_section_flags();
+      name = ".sbss";
+      ds_name = "** small common";
+      break;
+    case COMMONS_LARGE:
+      flags |= parameters->target().large_common_section_flags();
+      name = ".lbss";
+      ds_name = "** large common";
+      break;
+    default:
+      gold_unreachable();
     }
-  layout->add_output_section_data(name, elfcpp::SHT_NOBITS, flags, poc);
+
+  Output_data_space* poc = new Output_data_space(addralign, ds_name);
+  Output_section* os = layout->add_output_section_data(name,
+						       elfcpp::SHT_NOBITS,
+						       flags, poc,
+						       ORDER_INVALID,
+						       false);
+  if (os != NULL)
+    {
+      if (commons_section_type == COMMONS_SMALL)
+	os->set_is_small_section();
+      else if (commons_section_type == COMMONS_LARGE)
+	os->set_is_large_section();
+    }
 
   // Allocate them all.
 
@@ -223,6 +310,17 @@ Symbol_table::do_allocate_commons_list(Layout* layout, bool is_tls,
       Symbol* sym = *p;
       if (sym == NULL)
 	break;
+
+      // Because we followed forwarding symbols above, but we didn't
+      // do it reliably before adding symbols to the list, it is
+      // possible for us to have the same symbol on the list twice.
+      // This can happen in the horrible case where a program defines
+      // a common symbol with the same name as a versioned libc
+      // symbol.  That will show up here as a symbol which has already
+      // been allocated and is therefore no longer a common symbol.
+      if (!sym->is_common())
+	continue;
+
       Sized_symbol<size>* ssym = this->get_sized_symbol<size>(sym);
 
       // Record the symbol in the map file now, before we change its

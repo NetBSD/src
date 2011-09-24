@@ -81,3 +81,5 @@ Disassembly of section .text:
   94:	00 e8 02 00 	LINK 0x8;.*
   98:	00 e8 ff ff 	LINK 0x3fffc;.*
   9c:	01 e8 00 00 	UNLINK;
+  a0:	b3 05       	\(R7:6, P5:3\) = \[SP\+\+\];
+	\.\.\.

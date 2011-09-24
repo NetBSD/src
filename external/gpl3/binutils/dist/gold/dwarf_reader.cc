@@ -1,6 +1,6 @@
 // dwarf_reader.cc -- parse dwarf2/3 debug information
 
-// Copyright 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2007, 2008, 2009 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -31,76 +31,10 @@
 #include "parameters.h"
 #include "reloc.h"
 #include "dwarf_reader.h"
+#include "int_encoding.h"
+#include "compressed_output.h"
 
 namespace gold {
-
-// Read an unsigned LEB128 number.  Each byte contains 7 bits of
-// information, plus one bit saying whether the number continues or
-// not.
-
-uint64_t
-read_unsigned_LEB_128(const unsigned char* buffer, size_t* len)
-{
-  uint64_t result = 0;
-  size_t num_read = 0;
-  unsigned int shift = 0;
-  unsigned char byte;
-
-  do
-    {
-      if (num_read >= 64 / 7) 
-        {
-          gold_warning(_("Unusually large LEB128 decoded, "
-			 "debug information may be corrupted"));
-          break;
-        }
-      byte = *buffer++;
-      num_read++;
-      result |= (static_cast<uint64_t>(byte & 0x7f)) << shift;
-      shift += 7;
-    }
-  while (byte & 0x80);
-
-  *len = num_read;
-
-  return result;
-}
-
-// Read a signed LEB128 number.  These are like regular LEB128
-// numbers, except the last byte may have a sign bit set.
-
-int64_t
-read_signed_LEB_128(const unsigned char* buffer, size_t* len)
-{
-  int64_t result = 0;
-  int shift = 0;
-  size_t num_read = 0;
-  unsigned char byte;
-
-  do
-    {
-      if (num_read >= 64 / 7) 
-        {
-          gold_warning(_("Unusually large LEB128 decoded, "
-			 "debug information may be corrupted"));
-          break;
-        }
-      byte = *buffer++;
-      num_read++;
-      result |= (static_cast<uint64_t>(byte & 0x7f) << shift);
-      shift += 7;
-    }
-  while (byte & 0x80);
-
-  if ((shift < 8 * static_cast<int>(sizeof(result))) && (byte & 0x40))
-    result |= -((static_cast<int64_t>(1)) << shift);
-  *len = num_read;
-  return result;
-}
-
-// This is the format of a DWARF2/3 line state machine that we process
-// opcodes using.  There is no need for anything outside the lineinfo
-// processor to know how this works.
 
 struct LineStateMachine
 {
@@ -129,7 +63,7 @@ ResetLineStateMachine(struct LineStateMachine* lsm, bool default_is_stmt)
 
 template<int size, bool big_endian>
 Sized_dwarf_line_info<size, big_endian>::Sized_dwarf_line_info(Object* object,
-                                                               off_t read_shndx)
+                                                               unsigned int read_shndx)
   : data_valid_(false), buffer_(NULL), symtab_buffer_(NULL),
     directories_(), files_(), current_header_index_(-1)
 {
@@ -146,6 +80,21 @@ Sized_dwarf_line_info<size, big_endian>::Sized_dwarf_line_info(Object* object,
       }
   if (this->buffer_ == NULL)
     return;
+
+  section_size_type uncompressed_size = 0;
+  unsigned char* uncompressed_data = NULL;
+  if (object->section_is_compressed(debug_shndx, &uncompressed_size))
+    {
+      uncompressed_data = new unsigned char[uncompressed_size];
+      if (!decompress_input_section(this->buffer_,
+				    this->buffer_end_ - this->buffer_,
+				    uncompressed_data,
+				    uncompressed_size))
+	object->error(_("could not decompress section %s"),
+		      object->section_name(debug_shndx).c_str());
+      this->buffer_ = uncompressed_data;
+      this->buffer_end_ = this->buffer_ + uncompressed_size;
+    }
 
   // Find the relocation section for ".debug_line".
   // We expect these for relobjs (.o's) but not dynobjs (.so's).
@@ -508,7 +457,7 @@ Sized_dwarf_line_info<size, big_endian>::process_one_opcode(
 template<int size, bool big_endian>
 unsigned const char*
 Sized_dwarf_line_info<size, big_endian>::read_lines(unsigned const char* lineptr,
-                                                    off_t shndx)
+                                                    unsigned int shndx)
 {
   struct LineStateMachine lsm;
 
@@ -595,7 +544,7 @@ Sized_dwarf_line_info<size, big_endian>::read_relocs(Object* object)
 template<int size, bool big_endian>
 void
 Sized_dwarf_line_info<size, big_endian>::read_line_mappings(Object* object,
-							    off_t shndx)
+							    unsigned int shndx)
 {
   gold_assert(this->data_valid_ == true);
 

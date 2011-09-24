@@ -2,7 +2,7 @@
 #name: CFI on SPARC 32-bit
 #as: -32
 
-The section .eh_frame contains:
+Contents of the .eh_frame section:
 
 00000000 00000010 00000000 CIE
   Version:               1

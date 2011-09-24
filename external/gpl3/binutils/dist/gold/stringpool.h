@@ -32,6 +32,28 @@ namespace gold
 
 class Output_file;
 
+// Return the length of a string in units of Char_type.
+
+template<typename Char_type>
+inline size_t
+string_length(const Char_type* p)
+{
+  size_t len = 0;
+  for (; *p != 0; ++p)
+    ++len;
+  return len;
+}
+
+// Specialize string_length for char.  Maybe we could just use
+// std::char_traits<>::length?
+
+template<>
+inline size_t
+string_length(const char* p)
+{
+  return strlen(p);
+}
+
 // A Stringpool is a pool of unique strings.  It provides the
 // following features:
 
@@ -77,48 +99,50 @@ class Chunked_vector
 {
  public:
   Chunked_vector()
-    : chunks_()
+    : chunks_(), size_(0)
   { }
 
   // Clear the elements.
   void
   clear()
-  { this->chunks_.clear(); }
+  {
+    this->chunks_.clear();
+    this->size_ = 0;
+  }
 
   // Reserve elements.
   void
   reserve(unsigned int n)
   {
-    n += chunk_size - 1;
-    while (n >= chunk_size)
+    if (n > this->chunks_.size() * chunk_size)
       {
-	this->chunks_.push_back(Element_vector());
-	this->chunks_.back().reserve(chunk_size);
-	n -= chunk_size;
+	this->chunks_.resize((n + chunk_size - 1) / chunk_size);
+	// We need to call reserve() of all chunks since changing
+	// this->chunks_ casues Element_vectors to be copied.  The
+	// reserved capacity of an Element_vector may be lost in copying.
+	for (size_t i = 0; i < this->chunks_.size(); ++i)
+	  this->chunks_[i].reserve(chunk_size);
       }
   }
 
   // Get the number of elements.
   size_t
   size() const
-  {
-    if (this->chunks_.empty())
-      return 0;
-    else
-      return ((this->chunks_.size() - 1) * chunk_size
-	      + this->chunks_.back().size());
-  }
+  { return this->size_; }
 
   // Push a new element on the back of the vector.
   void
   push_back(const Element& element)
   {
-    if (this->chunks_.empty() || this->chunks_.back().size() == chunk_size)
+    size_t chunk_index = this->size_ / chunk_size;
+    if (chunk_index >= this->chunks_.size())
       {
 	this->chunks_.push_back(Element_vector());
 	this->chunks_.back().reserve(chunk_size);
+	gold_assert(chunk_index < this->chunks_.size());
       }
-    this->chunks_.back().push_back(element);
+    this->chunks_[chunk_index].push_back(element);
+    this->size_++;
   }
 
   // Return a reference to an entry in the vector.
@@ -137,6 +161,7 @@ class Chunked_vector
   typedef std::vector<Element_vector> Chunk_vector;
 
   Chunk_vector chunks_;
+  size_t size_;
 };
 
 
@@ -174,7 +199,18 @@ class Stringpool_template
   // should not be called for a proper ELF SHT_STRTAB section.
   void
   set_no_zero_null()
-  { this->zero_null_ = false; }
+  {
+    gold_assert(this->string_set_.empty()
+		&& this->offset_ == sizeof(Stringpool_char));
+    this->zero_null_ = false;
+    this->offset_ = 0;
+  }
+
+  // Indicate that this string pool should be optimized, even if not
+  // running with -O2.
+  void
+  set_optimize()
+  { this->optimize_ = true; }
 
   // Add the string S to the pool.  This returns a canonical permanent
   // pointer to the string in the pool.  If COPY is true, the string
@@ -252,10 +288,6 @@ class Stringpool_template
   Stringpool_template(const Stringpool_template&);
   Stringpool_template& operator=(const Stringpool_template&);
 
-  // Return the length of a string in units of Stringpool_char.
-  static size_t
-  string_length(const Stringpool_char*);
-
   // Return whether two strings are equal.
   static bool
   string_equal(const Stringpool_char*, const Stringpool_char*);
@@ -275,6 +307,10 @@ class Stringpool_template
     // Buffer.
     char data[1];
   };
+
+  // Add a new key offset entry.
+  void
+  new_key_offset(size_t);
 
   // Copy a string into the buffers, returning a canonical string.
   const Stringpool_char*
@@ -364,6 +400,10 @@ class Stringpool_template
   section_size_type strtab_size_;
   // Whether to reserve offset 0 to hold the null string.
   bool zero_null_;
+  // Whether to optimize the string table.
+  bool optimize_;
+  // offset of the next string.
+  section_offset_type offset_;
 };
 
 // The most common type of Stringpool.

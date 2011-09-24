@@ -1,5 +1,5 @@
 %{ /* rcparse.y -- parser for Windows rc files
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007, 2008
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Extended by Kai Tietz, Onevision.
@@ -1247,6 +1247,10 @@ rcdata_data:
 	    $$.first = $1.first;
 	    $1.last->next = ri;
 	    $$.last = ri;
+	  }
+	| rcdata_data ','
+	  {
+	    $$=$1;
 	  }
 	;
 

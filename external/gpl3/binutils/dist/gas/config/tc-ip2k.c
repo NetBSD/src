@@ -1,5 +1,5 @@
 /* tc-ip2k.c -- Assembler for the Scenix IP2xxx.
-   Copyright (C) 2000, 2002, 2003, 2005, 2006, 2007
+   Copyright (C) 2000, 2002, 2003, 2005, 2006, 2007, 2009
    Free Software Foundation. Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -411,8 +411,8 @@ ip2k_apply_fix (fixS *fixP, valueT *valueP, segT seg)
 }
 
 int
-ip2k_elf_section_flags (int flags,
-			int attr ATTRIBUTE_UNUSED,
+ip2k_elf_section_flags (flagword flags,
+			bfd_vma attr ATTRIBUTE_UNUSED,
 			int type ATTRIBUTE_UNUSED)
 {
   /* This is used to detect when the section changes to an executable section.

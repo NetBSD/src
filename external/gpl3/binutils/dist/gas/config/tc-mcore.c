@@ -1,5 +1,5 @@
 /* tc-mcore.c -- Assemble code for M*Core
-   Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007
+   Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -647,7 +647,7 @@ static char *
 parse_exp (char * s, expressionS * e)
 {
   char * save;
-  char * new;
+  char * new_pointer;
 
   /* Skip whitespace.  */
   while (ISSPACE (* s))
@@ -661,10 +661,10 @@ parse_exp (char * s, expressionS * e)
   if (e->X_op == O_absent)
     as_bad (_("missing operand"));
 
-  new = input_line_pointer;
+  new_pointer = input_line_pointer;
   input_line_pointer = save;
 
-  return new;
+  return new_pointer;
 }
 
 static int
@@ -771,10 +771,10 @@ parse_imm (char * s,
 	   unsigned min,
 	   unsigned max)
 {
-  char * new;
+  char * new_pointer;
   expressionS e;
 
-  new = parse_exp (s, & e);
+  new_pointer = parse_exp (s, & e);
 
   if (e.X_op == O_absent)
     ; /* An error message has already been emitted.  */
@@ -786,7 +786,7 @@ parse_imm (char * s,
 
   * val = e.X_add_number;
 
-  return new;
+  return new_pointer;
 }
 
 static char *
@@ -2135,7 +2135,7 @@ md_pcrel_from_section (fixS * fixp, segT sec ATTRIBUTE_UNUSED)
 	  || (S_GET_SEGMENT (fixp->fx_addsy) != sec)))
 
   {
-    assert (fixp->fx_size == 2);	/* must be an insn */
+    gas_assert (fixp->fx_size == 2);	/* must be an insn */
     return fixp->fx_size;
   }
 #endif
@@ -2201,7 +2201,7 @@ tc_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
 
       /* Set howto to a garbage value so that we can keep going.  */
       rel->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_32);
-      assert (rel->howto != NULL);
+      gas_assert (rel->howto != NULL);
     }
 
   return rel;

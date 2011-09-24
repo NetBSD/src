@@ -1,6 +1,6 @@
 // token.h -- lock tokens for gold   -*- C++ -*-
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -141,6 +141,15 @@ class Task_token
   {
     gold_assert(this->is_blocker_);
     ++this->blockers_;
+    this->writer_ = NULL;
+  }
+
+  // Add some number of blockers to the token.
+  void
+  add_blockers(int c)
+  {
+    gold_assert(this->is_blocker_);
+    this->blockers_ += c;
     this->writer_ = NULL;
   }
 

@@ -1,5 +1,5 @@
 /* tc-bfin.c -- Assembler for the ADI Blackfin.
-   Copyright 2005, 2006, 2007, 2008
+   Copyright 2005, 2006, 2007, 2008, 2009, 2010
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -57,163 +57,6 @@ FILE *errorf;
 static flagword bfin_flags = DEFAULT_FLAGS | DEFAULT_FDPIC;
 static const char *bfin_pic_flag = DEFAULT_FDPIC ? "-mfdpic" : (const char *)0;
 
-/* Registers list.  */
-struct bfin_reg_entry
-{
-  const char *name;
-  int number;
-};
-
-static const struct bfin_reg_entry bfin_reg_info[] = {
-  {"R0.L", REG_RL0},
-  {"R1.L", REG_RL1},
-  {"R2.L", REG_RL2},
-  {"R3.L", REG_RL3},
-  {"R4.L", REG_RL4},
-  {"R5.L", REG_RL5},
-  {"R6.L", REG_RL6},
-  {"R7.L", REG_RL7},
-  {"R0.H", REG_RH0},
-  {"R1.H", REG_RH1},
-  {"R2.H", REG_RH2},
-  {"R3.H", REG_RH3},
-  {"R4.H", REG_RH4},
-  {"R5.H", REG_RH5},
-  {"R6.H", REG_RH6},
-  {"R7.H", REG_RH7},
-  {"R0", REG_R0},
-  {"R1", REG_R1},
-  {"R2", REG_R2},
-  {"R3", REG_R3},
-  {"R4", REG_R4},
-  {"R5", REG_R5},
-  {"R6", REG_R6},
-  {"R7", REG_R7},
-  {"P0", REG_P0},
-  {"P0.H", REG_P0},
-  {"P0.L", REG_P0},
-  {"P1", REG_P1},
-  {"P1.H", REG_P1},
-  {"P1.L", REG_P1},
-  {"P2", REG_P2},
-  {"P2.H", REG_P2},
-  {"P2.L", REG_P2},
-  {"P3", REG_P3},
-  {"P3.H", REG_P3},
-  {"P3.L", REG_P3},
-  {"P4", REG_P4},
-  {"P4.H", REG_P4},
-  {"P4.L", REG_P4},
-  {"P5", REG_P5},
-  {"P5.H", REG_P5},
-  {"P5.L", REG_P5},
-  {"SP", REG_SP},
-  {"SP.L", REG_SP},
-  {"SP.H", REG_SP},
-  {"FP", REG_FP},
-  {"FP.L", REG_FP},
-  {"FP.H", REG_FP},
-  {"A0x", REG_A0x},
-  {"A1x", REG_A1x},
-  {"A0w", REG_A0w},
-  {"A1w", REG_A1w},
-  {"A0.x", REG_A0x},
-  {"A1.x", REG_A1x},
-  {"A0.w", REG_A0w},
-  {"A1.w", REG_A1w},
-  {"A0", REG_A0},
-  {"A0.L", REG_A0},
-  {"A0.H", REG_A0},
-  {"A1", REG_A1},
-  {"A1.L", REG_A1},
-  {"A1.H", REG_A1},
-  {"I0", REG_I0},
-  {"I0.L", REG_I0},
-  {"I0.H", REG_I0},
-  {"I1", REG_I1},
-  {"I1.L", REG_I1},
-  {"I1.H", REG_I1},
-  {"I2", REG_I2},
-  {"I2.L", REG_I2},
-  {"I2.H", REG_I2},
-  {"I3", REG_I3},
-  {"I3.L", REG_I3},
-  {"I3.H", REG_I3},
-  {"M0", REG_M0},
-  {"M0.H", REG_M0},
-  {"M0.L", REG_M0},
-  {"M1", REG_M1},
-  {"M1.H", REG_M1},
-  {"M1.L", REG_M1},
-  {"M2", REG_M2},
-  {"M2.H", REG_M2},
-  {"M2.L", REG_M2},
-  {"M3", REG_M3},
-  {"M3.H", REG_M3},
-  {"M3.L", REG_M3},
-  {"B0", REG_B0},
-  {"B0.H", REG_B0},
-  {"B0.L", REG_B0},
-  {"B1", REG_B1},
-  {"B1.H", REG_B1},
-  {"B1.L", REG_B1},
-  {"B2", REG_B2},
-  {"B2.H", REG_B2},
-  {"B2.L", REG_B2},
-  {"B3", REG_B3},
-  {"B3.H", REG_B3},
-  {"B3.L", REG_B3},
-  {"L0", REG_L0},
-  {"L0.H", REG_L0},
-  {"L0.L", REG_L0},
-  {"L1", REG_L1},
-  {"L1.H", REG_L1},
-  {"L1.L", REG_L1},
-  {"L2", REG_L2},
-  {"L2.H", REG_L2},
-  {"L2.L", REG_L2},
-  {"L3", REG_L3},
-  {"L3.H", REG_L3},
-  {"L3.L", REG_L3},
-  {"AZ", S_AZ},
-  {"AN", S_AN},
-  {"AC0", S_AC0},
-  {"AC1", S_AC1},
-  {"AV0", S_AV0},
-  {"AV0S", S_AV0S},
-  {"AV1", S_AV1},
-  {"AV1S", S_AV1S},
-  {"AQ", S_AQ},
-  {"V", S_V},
-  {"VS", S_VS},
-  {"sftreset", REG_sftreset},
-  {"omode", REG_omode},
-  {"excause", REG_excause},
-  {"emucause", REG_emucause},
-  {"idle_req", REG_idle_req},
-  {"hwerrcause", REG_hwerrcause},
-  {"CC", REG_CC},
-  {"LC0", REG_LC0},
-  {"LC1", REG_LC1},
-  {"ASTAT", REG_ASTAT},
-  {"RETS", REG_RETS},
-  {"LT0", REG_LT0},
-  {"LB0", REG_LB0},
-  {"LT1", REG_LT1},
-  {"LB1", REG_LB1},
-  {"CYCLES", REG_CYCLES},
-  {"CYCLES2", REG_CYCLES2},
-  {"USP", REG_USP},
-  {"SEQSTAT", REG_SEQSTAT},
-  {"SYSCFG", REG_SYSCFG},
-  {"RETI", REG_RETI},
-  {"RETX", REG_RETX},
-  {"RETN", REG_RETN},
-  {"RETE", REG_RETE},
-  {"EMUDAT", REG_EMUDAT},
-  {0, 0}
-};
-
 /* Blackfin specific function to handle FD-PIC pointer initializations.  */
 
 static void
@@ -242,7 +85,7 @@ bfin_pic_ptr (int nbytes)
   do
     {
       bfd_reloc_code_real_type reloc_type = BFD_RELOC_BFIN_FUNCDESC;
-      
+
       if (strncasecmp (input_line_pointer, "funcdesc(", 9) == 0)
 	{
 	  input_line_pointer += 9;
@@ -293,7 +136,7 @@ const pseudo_typeS md_pseudo_table[] = {
 };
 
 /* Characters that are used to denote comments and line separators. */
-const char comment_chars[] = "";
+const char comment_chars[] = "#";
 const char line_comment_chars[] = "#";
 const char line_separator_chars[] = ";";
 
@@ -305,14 +148,192 @@ const char EXP_CHARS[] = "eE";
    As in 0f12.456 or  0d1.2345e12.  */
 const char FLT_CHARS[] = "fFdDxX";
 
+typedef enum bfin_cpu_type
+{
+  BFIN_CPU_UNKNOWN,
+  BFIN_CPU_BF504,
+  BFIN_CPU_BF506,
+  BFIN_CPU_BF512,
+  BFIN_CPU_BF514,
+  BFIN_CPU_BF516,
+  BFIN_CPU_BF518,
+  BFIN_CPU_BF522,
+  BFIN_CPU_BF523,
+  BFIN_CPU_BF524,
+  BFIN_CPU_BF525,
+  BFIN_CPU_BF526,
+  BFIN_CPU_BF527,
+  BFIN_CPU_BF531,
+  BFIN_CPU_BF532,
+  BFIN_CPU_BF533,
+  BFIN_CPU_BF534,
+  BFIN_CPU_BF536,
+  BFIN_CPU_BF537,
+  BFIN_CPU_BF538,
+  BFIN_CPU_BF539,
+  BFIN_CPU_BF542,
+  BFIN_CPU_BF542M,
+  BFIN_CPU_BF544,
+  BFIN_CPU_BF544M,
+  BFIN_CPU_BF547,
+  BFIN_CPU_BF547M,
+  BFIN_CPU_BF548,
+  BFIN_CPU_BF548M,
+  BFIN_CPU_BF549,
+  BFIN_CPU_BF549M,
+  BFIN_CPU_BF561,
+  BFIN_CPU_BF592,
+} bfin_cpu_t;
+
+bfin_cpu_t bfin_cpu_type = BFIN_CPU_UNKNOWN;
+/* -msi-revision support. There are three special values:
+   -1      -msi-revision=none.
+   0xffff  -msi-revision=any.  */
+int bfin_si_revision;
+
+unsigned int bfin_anomaly_checks = 0;
+
+struct bfin_cpu
+{
+  const char *name;
+  bfin_cpu_t type;
+  int si_revision;
+  unsigned int anomaly_checks;
+};
+
+struct bfin_cpu bfin_cpus[] =
+{
+  {"bf504", BFIN_CPU_BF504, 0x0000, AC_05000074},
+
+  {"bf506", BFIN_CPU_BF506, 0x0000, AC_05000074},
+
+  {"bf512", BFIN_CPU_BF512, 0x0002, AC_05000074},
+  {"bf512", BFIN_CPU_BF512, 0x0001, AC_05000074},
+  {"bf512", BFIN_CPU_BF512, 0x0000, AC_05000074},
+
+  {"bf514", BFIN_CPU_BF514, 0x0002, AC_05000074},
+  {"bf514", BFIN_CPU_BF514, 0x0001, AC_05000074},
+  {"bf514", BFIN_CPU_BF514, 0x0000, AC_05000074},
+
+  {"bf516", BFIN_CPU_BF516, 0x0002, AC_05000074},
+  {"bf516", BFIN_CPU_BF516, 0x0001, AC_05000074},
+  {"bf516", BFIN_CPU_BF516, 0x0000, AC_05000074},
+
+  {"bf518", BFIN_CPU_BF518, 0x0002, AC_05000074},
+  {"bf518", BFIN_CPU_BF518, 0x0001, AC_05000074},
+  {"bf518", BFIN_CPU_BF518, 0x0000, AC_05000074},
+
+  {"bf522", BFIN_CPU_BF522, 0x0002, AC_05000074},
+  {"bf522", BFIN_CPU_BF522, 0x0001, AC_05000074},
+  {"bf522", BFIN_CPU_BF522, 0x0000, AC_05000074},
+
+  {"bf523", BFIN_CPU_BF523, 0x0002, AC_05000074},
+  {"bf523", BFIN_CPU_BF523, 0x0001, AC_05000074},
+  {"bf523", BFIN_CPU_BF523, 0x0000, AC_05000074},
+
+  {"bf524", BFIN_CPU_BF524, 0x0002, AC_05000074},
+  {"bf524", BFIN_CPU_BF524, 0x0001, AC_05000074},
+  {"bf524", BFIN_CPU_BF524, 0x0000, AC_05000074},
+
+  {"bf525", BFIN_CPU_BF525, 0x0002, AC_05000074},
+  {"bf525", BFIN_CPU_BF525, 0x0001, AC_05000074},
+  {"bf525", BFIN_CPU_BF525, 0x0000, AC_05000074},
+
+  {"bf526", BFIN_CPU_BF526, 0x0002, AC_05000074},
+  {"bf526", BFIN_CPU_BF526, 0x0001, AC_05000074},
+  {"bf526", BFIN_CPU_BF526, 0x0000, AC_05000074},
+
+  {"bf527", BFIN_CPU_BF527, 0x0002, AC_05000074},
+  {"bf527", BFIN_CPU_BF527, 0x0001, AC_05000074},
+  {"bf527", BFIN_CPU_BF527, 0x0000, AC_05000074},
+
+  {"bf531", BFIN_CPU_BF531, 0x0006, AC_05000074},
+  {"bf531", BFIN_CPU_BF531, 0x0005, AC_05000074},
+  {"bf531", BFIN_CPU_BF531, 0x0004, AC_05000074},
+  {"bf531", BFIN_CPU_BF531, 0x0003, AC_05000074},
+
+  {"bf532", BFIN_CPU_BF532, 0x0006, AC_05000074},
+  {"bf532", BFIN_CPU_BF532, 0x0005, AC_05000074},
+  {"bf532", BFIN_CPU_BF532, 0x0004, AC_05000074},
+  {"bf532", BFIN_CPU_BF532, 0x0003, AC_05000074},
+
+  {"bf533", BFIN_CPU_BF533, 0x0006, AC_05000074},
+  {"bf533", BFIN_CPU_BF533, 0x0005, AC_05000074},
+  {"bf533", BFIN_CPU_BF533, 0x0004, AC_05000074},
+  {"bf533", BFIN_CPU_BF533, 0x0003, AC_05000074},
+
+  {"bf534", BFIN_CPU_BF534, 0x0003, AC_05000074},
+  {"bf534", BFIN_CPU_BF534, 0x0002, AC_05000074},
+  {"bf534", BFIN_CPU_BF534, 0x0001, AC_05000074},
+
+  {"bf536", BFIN_CPU_BF536, 0x0003, AC_05000074},
+  {"bf536", BFIN_CPU_BF536, 0x0002, AC_05000074},
+  {"bf536", BFIN_CPU_BF536, 0x0001, AC_05000074},
+
+  {"bf537", BFIN_CPU_BF537, 0x0003, AC_05000074},
+  {"bf537", BFIN_CPU_BF537, 0x0002, AC_05000074},
+  {"bf537", BFIN_CPU_BF537, 0x0001, AC_05000074},
+
+  {"bf538", BFIN_CPU_BF538, 0x0005, AC_05000074},
+  {"bf538", BFIN_CPU_BF538, 0x0004, AC_05000074},
+  {"bf538", BFIN_CPU_BF538, 0x0003, AC_05000074},
+  {"bf538", BFIN_CPU_BF538, 0x0002, AC_05000074},
+
+  {"bf539", BFIN_CPU_BF539, 0x0005, AC_05000074},
+  {"bf539", BFIN_CPU_BF539, 0x0004, AC_05000074},
+  {"bf539", BFIN_CPU_BF539, 0x0003, AC_05000074},
+  {"bf539", BFIN_CPU_BF539, 0x0002, AC_05000074},
+
+  {"bf542m", BFIN_CPU_BF542M, 0x0003, AC_05000074},
+
+  {"bf542", BFIN_CPU_BF542, 0x0002, AC_05000074},
+  {"bf542", BFIN_CPU_BF542, 0x0001, AC_05000074},
+  {"bf542", BFIN_CPU_BF542, 0x0000, AC_05000074},
+
+  {"bf544m", BFIN_CPU_BF544M, 0x0003, AC_05000074},
+
+  {"bf544", BFIN_CPU_BF544, 0x0002, AC_05000074},
+  {"bf544", BFIN_CPU_BF544, 0x0001, AC_05000074},
+  {"bf544", BFIN_CPU_BF544, 0x0000, AC_05000074},
+
+  {"bf547m", BFIN_CPU_BF547M, 0x0003, AC_05000074},
+
+  {"bf547", BFIN_CPU_BF547, 0x0002, AC_05000074},
+  {"bf547", BFIN_CPU_BF547, 0x0001, AC_05000074},
+  {"bf547", BFIN_CPU_BF547, 0x0000, AC_05000074},
+
+  {"bf548m", BFIN_CPU_BF548M, 0x0003, AC_05000074},
+
+  {"bf548", BFIN_CPU_BF548, 0x0002, AC_05000074},
+  {"bf548", BFIN_CPU_BF548, 0x0001, AC_05000074},
+  {"bf548", BFIN_CPU_BF548, 0x0000, AC_05000074},
+
+  {"bf549m", BFIN_CPU_BF549M, 0x0003, AC_05000074},
+
+  {"bf549", BFIN_CPU_BF549, 0x0002, AC_05000074},
+  {"bf549", BFIN_CPU_BF549, 0x0001, AC_05000074},
+  {"bf549", BFIN_CPU_BF549, 0x0000, AC_05000074},
+
+  {"bf561", BFIN_CPU_BF561, 0x0005, AC_05000074},
+  {"bf561", BFIN_CPU_BF561, 0x0003, AC_05000074},
+  {"bf561", BFIN_CPU_BF561, 0x0002, AC_05000074},
+
+  {"bf592", BFIN_CPU_BF592, 0x0001, AC_05000074},
+  {"bf592", BFIN_CPU_BF592, 0x0000, AC_05000074},
+
+  {NULL, 0, 0, 0}
+};
+
 /* Define bfin-specific command-line options (there are none). */
 const char *md_shortopts = "";
 
 #define OPTION_FDPIC		(OPTION_MD_BASE)
 #define OPTION_NOPIC		(OPTION_MD_BASE + 1)
+#define OPTION_MCPU		(OPTION_MD_BASE + 2)
 
 struct option md_longopts[] =
 {
+  { "mcpu",		required_argument,	NULL, OPTION_MCPU	},
   { "mfdpic",		no_argument,		NULL, OPTION_FDPIC      },
   { "mnopic",		no_argument,		NULL, OPTION_NOPIC      },
   { "mno-fdpic",	no_argument,		NULL, OPTION_NOPIC      },
@@ -330,6 +351,72 @@ md_parse_option (int c ATTRIBUTE_UNUSED, char *arg ATTRIBUTE_UNUSED)
     default:
       return 0;
 
+    case OPTION_MCPU:
+      {
+	const char *p, *q;
+	int i;
+
+	i = 0;
+	while ((p = bfin_cpus[i].name) != NULL)
+	  {
+	    if (strncmp (arg, p, strlen (p)) == 0)
+	      break;
+	    i++;
+	  }
+
+	if (p == NULL)
+	  as_fatal ("-mcpu=%s is not valid", arg);
+
+	bfin_cpu_type = bfin_cpus[i].type;
+
+	q = arg + strlen (p);
+
+	if (*q == '\0')
+	  {
+	    bfin_si_revision = bfin_cpus[i].si_revision;
+	    bfin_anomaly_checks |= bfin_cpus[i].anomaly_checks;
+	  }
+	else if (strcmp (q, "-none") == 0)
+	  bfin_si_revision = -1;
+      	else if (strcmp (q, "-any") == 0)
+	  {
+	    bfin_si_revision = 0xffff;
+	    while (bfin_cpus[i].type == bfin_cpu_type)
+	      {
+		bfin_anomaly_checks |= bfin_cpus[i].anomaly_checks;
+		i++;
+	      }
+	  }
+	else
+	  {
+	    unsigned int si_major, si_minor;
+	    int rev_len, n;
+
+	    rev_len = strlen (q);
+
+	    if (sscanf (q, "-%u.%u%n", &si_major, &si_minor, &n) != 2
+		|| n != rev_len
+		|| si_major > 0xff || si_minor > 0xff)
+	      {
+	      invalid_silicon_revision:
+		as_fatal ("-mcpu=%s has invalid silicon revision", arg);
+	      }
+
+	    bfin_si_revision = (si_major << 8) | si_minor;
+
+	    while (bfin_cpus[i].type == bfin_cpu_type
+		   && bfin_cpus[i].si_revision != bfin_si_revision)
+	      i++;
+
+	    if (bfin_cpus[i].type != bfin_cpu_type)
+	      goto invalid_silicon_revision;
+
+	    bfin_anomaly_checks |= bfin_cpus[i].anomaly_checks;
+	  }
+
+	break;
+      }
+
     case OPTION_FDPIC:
       bfin_flags |= EF_BFIN_FDPIC;
       bfin_pic_flag = "-mfdpic";
@@ -345,9 +432,12 @@ md_parse_option (int c ATTRIBUTE_UNUSED, char *arg ATTRIBUTE_UNUSED)
 }
 
 void
-md_show_usage (FILE * stream ATTRIBUTE_UNUSED)
+md_show_usage (FILE * stream)
 {
-  fprintf (stream, _(" BFIN specific command line options:\n"));
+  fprintf (stream, _(" Blackfin specific assembler options:\n"));
+  fprintf (stream, _("  -mcpu=<cpu[-sirevision]> specify the name of the target CPU\n"));
+  fprintf (stream, _("  -mfdpic                  assemble for the FDPIC ABI\n"));
+  fprintf (stream, _("  -mno-fdpic/-mnopic       disable -mfdpic\n"));
 }
 
 /* Perform machine-specific initializations.  */
@@ -365,7 +455,7 @@ md_begin ()
   /* Ensure that lines can begin with '(', for multiple
      register stack pops. */
   lex_type ['('] = LEX_BEGIN_NAME;
-  
+
 #ifdef OBJ_ELF
   record_alignment (text_section, 2);
   record_alignment (data_section, 2);
@@ -378,7 +468,7 @@ md_begin ()
 #ifdef DEBUG
   extern int debug_codeselection;
   debug_codeselection = 1;
-#endif 
+#endif
 
   last_insn_size = 0;
 }
@@ -478,6 +568,10 @@ md_assemble (char *line)
 #ifdef OBJ_ELF
   dwarf2_emit_insn (insn_size);
 #endif
+
+  while (*line++ != '\0')
+    if (*line == '\n')
+      bump_line_counters ();
 }
 
 /* Parse one line of instructions, and generate opcode for it.
@@ -764,146 +858,25 @@ md_pcrel_from_section (fixP, sec)
 /* Return true if the fix can be handled by GAS, false if it must
    be passed through to the linker.  */
 
-bfd_boolean  
+bfd_boolean
 bfin_fix_adjustable (fixS *fixP)
-{         
+{
   switch (fixP->fx_r_type)
-    {     
+    {
   /* Adjust_reloc_syms doesn't know about the GOT.  */
     case BFD_RELOC_BFIN_GOT:
-    case BFD_RELOC_BFIN_GOT17M4:
-    case BFD_RELOC_BFIN_FUNCDESC_GOT17M4:
     case BFD_RELOC_BFIN_PLTPC:
   /* We need the symbol name for the VTABLE entries.  */
     case BFD_RELOC_VTABLE_INHERIT:
     case BFD_RELOC_VTABLE_ENTRY:
       return 0;
-        
+
     default:
       return 1;
-    }     
-}
-
-
-/* Handle the LOOP_BEGIN and LOOP_END statements.
-   Parse the Loop_Begin/Loop_End and create a label.  */
-void
-bfin_start_line_hook ()
-{
-  bfd_boolean maybe_begin = FALSE;
-  bfd_boolean maybe_end = FALSE;
-
-  char *c1, *label_name;
-  symbolS *line_label;
-  char *c = input_line_pointer;
-  int cr_num = 0;
-
-  while (ISSPACE (*c))
-    {
-      if (*c == '\n')
-	cr_num++;
-      c++;
     }
-
-  /* Look for Loop_Begin or Loop_End statements.  */
-
-  if (*c != 'L' && *c != 'l')
-    return;
-
-  c++;
-  if (*c != 'O' && *c != 'o')
-    return;
-
-  c++;
-  if (*c != 'O' && *c != 'o')
-    return;
- 
-  c++;
-  if (*c != 'P' && *c != 'p')
-    return;
-
-  c++;
-  if (*c != '_')
-    return;
-
-  c++;
-  if (*c == 'E' || *c == 'e')
-    maybe_end = TRUE;
-  else if (*c == 'B' || *c == 'b')
-    maybe_begin = TRUE;
-  else
-    return;
-
-  if (maybe_end)
-    {
-      c++;
-      if (*c != 'N' && *c != 'n')
-	return;
-
-      c++;
-      if (*c != 'D' && *c != 'd')
-        return;
-    }
-
-  if (maybe_begin)
-    {
-      c++;
-      if (*c != 'E' && *c != 'e')
-	return;
-
-      c++;
-      if (*c != 'G' && *c != 'g')
-        return;
-
-      c++;
-      if (*c != 'I' && *c != 'i')
-	return;
-
-      c++;
-      if (*c != 'N' && *c != 'n')
-        return;
-    }
-
-  c++;
-  while (ISSPACE (*c)) c++;
-  c1 = c;
-  while (ISALPHA (*c) || ISDIGIT (*c) || *c == '_') c++;
-
-  if (input_line_pointer[-1] == '\n')
-    bump_line_counters ();
-
-  while (cr_num--)
-    bump_line_counters ();
-
-  input_line_pointer = c;
-  if (maybe_end)
-    {
-      label_name = (char *) xmalloc ((c - c1) + strlen ("__END") + 5);
-      label_name[0] = 0;
-      strcat (label_name, "L$L$");
-      strncat (label_name, c1, c-c1);
-      strcat (label_name, "__END");
-    }
-  else /* maybe_begin.  */
-    {
-      label_name = (char *) xmalloc ((c - c1) + strlen ("__BEGIN") + 5);
-      label_name[0] = 0;
-      strcat (label_name, "L$L$");
-      strncat (label_name, c1, c-c1);
-      strcat (label_name, "__BEGIN");
-    }
-
-  line_label = colon (label_name);
-
-  /* Loop_End follows the last instruction in the loop.
-     Adjust label address.  */
-  if (maybe_end)
-    ((struct local_symbol *) line_label)->lsy_value -= last_insn_size;
 }
 
 /* Special extra functions that help bfin-parse.y perform its job.  */
-
-#include <assert.h>
 
 struct obstack mempool;
 
@@ -933,7 +906,7 @@ INSTR_T
 note_reloc (INSTR_T code, Expr_Node * symbol, int reloc, int pcrel)
 {
   /* Assert that the symbol is not an operator.  */
-  assert (symbol->type == Expr_Node_Reloc);
+  gas_assert (symbol->type == Expr_Node_Reloc);
 
   return note_reloc1 (code, symbol->value.s_value, reloc, pcrel);
 
@@ -960,7 +933,7 @@ note_reloc2 (INSTR_T code, const char *symbol, int reloc, int value, int pcrel)
 INSTR_T
 gencode (unsigned long x)
 {
-  INSTR_T cell = (INSTR_T) obstack_alloc (&mempool, sizeof (struct bfin_insn));
+  INSTR_T cell = obstack_alloc (&mempool, sizeof (struct bfin_insn));
   memset (cell, 0, sizeof (struct bfin_insn));
   cell->value = (x);
   return cell;
@@ -973,7 +946,7 @@ int count_insns;
 static void *
 allocate (int n)
 {
-  return (void *) obstack_alloc (&mempool, n);
+  return obstack_alloc (&mempool, n);
 }
 
 Expr_Node *
@@ -1166,8 +1139,7 @@ Expr_Node_Gen_Reloc_R (Expr_Node * head)
     }
   return note;
 }
-
-
+
 /* Blackfin opcode generation.  */
 
 /* These functions are called by the generated parser
@@ -1179,6 +1151,7 @@ Expr_Node_Gen_Reloc_R (Expr_Node * head)
 
 #define INIT(t)  t c_code = init_##t
 #define ASSIGN(x) c_code.opcode |= ((x & c_code.mask_##x)<<c_code.bits_##x)
+#define ASSIGNF(x,f) c_code.opcode |= ((x & c_code.mask_##f)<<c_code.bits_##f)
 #define ASSIGN_R(x) c_code.opcode |= (((x ? (x->regno & CODE_MASK) : 0) & c_code.mask_##x)<<c_code.bits_##x)
 
 #define HI(x) ((x >> 16) & 0xffff)
@@ -1347,13 +1320,13 @@ bfin_gen_calla (Expr_Node * addr, int S)
 {
   int val;
   int high_val;
-  int reloc = 0;
+  int rel = 0;
   INIT (CALLa);
 
   switch(S){
-   case 0 : reloc = BFD_RELOC_BFIN_24_PCREL_JUMP_L; break;
-   case 1 : reloc = BFD_RELOC_24_PCREL; break;
-   case 2 : reloc = BFD_RELOC_BFIN_PLTPC; break;
+   case 0 : rel = BFD_RELOC_BFIN_24_PCREL_JUMP_L; break;
+   case 1 : rel = BFD_RELOC_24_PCREL; break;
+   case 2 : rel = BFD_RELOC_BFIN_PLTPC; break;
    default : break;
   }
 
@@ -1363,7 +1336,7 @@ bfin_gen_calla (Expr_Node * addr, int S)
   high_val = val >> 16;
 
   return conscode (gencode (HI (c_code.opcode) | (high_val & 0xff)),
-                     Expr_Node_Gen_Reloc (addr, reloc));
+                     Expr_Node_Gen_Reloc (addr, rel));
   }
 
 INSTR_T
@@ -1381,7 +1354,7 @@ bfin_gen_linkage (int R, int framesize)
 /* Load and Store.  */
 
 INSTR_T
-bfin_gen_ldimmhalf (REG_T reg, int H, int S, int Z, Expr_Node * phword, int reloc)
+bfin_gen_ldimmhalf (REG_T reg, int H, int S, int Z, Expr_Node * phword, int rel)
 {
   int grp, hword;
   unsigned val = EXPR_VALUE (phword);
@@ -1394,11 +1367,11 @@ bfin_gen_ldimmhalf (REG_T reg, int H, int S, int Z, Expr_Node * phword, int relo
   ASSIGN_R (reg);
   grp = (GROUP (reg));
   ASSIGN (grp);
-  if (reloc == 2)
+  if (rel == 2)
     {
       return conscode (gencode (HI (c_code.opcode)), Expr_Node_Gen_Reloc (phword, BFD_RELOC_BFIN_16_IMM));
     }
-  else if (reloc == 1)
+  else if (rel == 1)
     {
       return conscode (gencode (HI (c_code.opcode)), Expr_Node_Gen_Reloc (phword, IS_H (*reg) ? BFD_RELOC_BFIN_16_HIGH : BFD_RELOC_BFIN_16_LOW));
     }
@@ -1452,14 +1425,14 @@ bfin_gen_ldstidxi (REG_T ptr, REG_T reg, int W, int sz, int Z, Expr_Node * poffs
     {
       int value, offset;
       switch (sz)
-	{				// load/store access size
-	case 0:			// 32 bit
+	{				/* load/store access size */
+	case 0:			/* 32 bit */
 	  value = EXPR_VALUE (poffset) >> 2;
 	  break;
-	case 1:			// 16 bit
+	case 1:			/* 16 bit */
 	  value = EXPR_VALUE (poffset) >> 1;
 	  break;
-	case 2:			// 8 bit
+	case 2:			/* 8 bit */
 	  value = EXPR_VALUE (poffset);
 	  break;
 	default:
@@ -1495,12 +1468,11 @@ bfin_gen_ldst (REG_T ptr, REG_T reg, int aop, int sz, int Z, int W)
 }
 
 INSTR_T
-bfin_gen_ldstii (REG_T ptr, REG_T reg, Expr_Node * poffset, int W, int op)
+bfin_gen_ldstii (REG_T ptr, REG_T reg, Expr_Node * poffset, int W, int opc)
 {
   int offset;
   int value = 0;
   INIT (LDSTii);
-
 
   if (!IS_PREG (*ptr))
     {
@@ -1508,7 +1480,7 @@ bfin_gen_ldstii (REG_T ptr, REG_T reg, Expr_Node * poffset, int W, int op)
       return 0;
     }
 
-  switch (op)
+  switch (opc)
     {
     case 1:
     case 2:
@@ -1526,7 +1498,7 @@ bfin_gen_ldstii (REG_T ptr, REG_T reg, Expr_Node * poffset, int W, int op)
   offset = value;
   ASSIGN (offset);
   ASSIGN (W);
-  ASSIGN (op);
+  ASSIGNF (opc, op);
 
   return GEN_OPCODE16 ();
 }
@@ -1625,48 +1597,48 @@ bfin_gen_alu2op (REG_T dst, REG_T src, int opc)
 }
 
 INSTR_T
-bfin_gen_compi2opd (REG_T dst, int src, int op)
+bfin_gen_compi2opd (REG_T dst, int src, int opc)
 {
   INIT (COMPI2opD);
 
   ASSIGN_R (dst);
   ASSIGN (src);
-  ASSIGN (op);
+  ASSIGNF (opc, op);
 
   return GEN_OPCODE16 ();
 }
 
 INSTR_T
-bfin_gen_compi2opp (REG_T dst, int src, int op)
+bfin_gen_compi2opp (REG_T dst, int src, int opc)
 {
   INIT (COMPI2opP);
 
   ASSIGN_R (dst);
   ASSIGN (src);
-  ASSIGN (op);
+  ASSIGNF (opc, op);
 
   return GEN_OPCODE16 ();
 }
 
 INSTR_T
-bfin_gen_dagmodik (REG_T i, int op)
+bfin_gen_dagmodik (REG_T i, int opc)
 {
   INIT (DagMODik);
 
   ASSIGN_R (i);
-  ASSIGN (op);
+  ASSIGNF (opc, op);
 
   return GEN_OPCODE16 ();
 }
 
 INSTR_T
-bfin_gen_dagmodim (REG_T i, REG_T m, int op, int br)
+bfin_gen_dagmodim (REG_T i, REG_T m, int opc, int br)
 {
   INIT (DagMODim);
 
   ASSIGN_R (i);
   ASSIGN_R (m);
-  ASSIGN (op);
+  ASSIGNF (opc, op);
   ASSIGN (br);
 
   return GEN_OPCODE16 ();
@@ -1729,12 +1701,12 @@ bfin_gen_ccmv (REG_T src, REG_T dst, int T)
 }
 
 INSTR_T
-bfin_gen_cc2stat (int cbit, int op, int D)
+bfin_gen_cc2stat (int cbit, int opc, int D)
 {
   INIT (CC2stat);
 
   ASSIGN (cbit);
-  ASSIGN (op);
+  ASSIGNF (opc, op);
   ASSIGN (D);
 
   return GEN_OPCODE16 ();
@@ -1758,11 +1730,11 @@ bfin_gen_regmv (REG_T src, REG_T dst)
 }
 
 INSTR_T
-bfin_gen_cc2dreg (int op, REG_T reg)
+bfin_gen_cc2dreg (int opc, REG_T reg)
 {
   INIT (CC2dreg);
 
-  ASSIGN (op);
+  ASSIGNF (opc, op);
   ASSIGN_R (reg);
 
   return GEN_OPCODE16 ();
@@ -1780,13 +1752,13 @@ bfin_gen_progctrl (int prgfunc, int poprnd)
 }
 
 INSTR_T
-bfin_gen_cactrl (REG_T reg, int a, int op)
+bfin_gen_cactrl (REG_T reg, int a, int opc)
 {
   INIT (CaCTRL);
 
   ASSIGN_R (reg);
   ASSIGN (a);
-  ASSIGN (op);
+  ASSIGNF (opc, op);
 
   return GEN_OPCODE16 ();
 }
@@ -1836,13 +1808,26 @@ bfin_gen_pseudodbg (int fn, int reg, int grp)
 INSTR_T
 bfin_gen_pseudodbg_assert (int dbgop, REG_T regtest, int expected)
 {
+  int grp;
   INIT (PseudoDbg_Assert);
 
   ASSIGN (dbgop);
   ASSIGN_R (regtest);
+  grp = GROUP (regtest);
+  ASSIGN (grp);
   ASSIGN (expected);
 
   return GEN_OPCODE32 ();
+}
+
+INSTR_T
+bfin_gen_pseudochr (int ch)
+{
+  INIT (PseudoChr);
+
+  ASSIGN (ch);
+
+  return GEN_OPCODE16 ();
 }
 
 /* Multiple instruction generation.  */
@@ -1883,14 +1868,15 @@ bfin_gen_multi_instr (INSTR_T dsp32, INSTR_T dsp16_grp1, INSTR_T dsp16_grp2)
 }
 
 INSTR_T
-bfin_gen_loop (Expr_Node *expr, REG_T reg, int rop, REG_T preg)
+bfin_gen_loop (Expr_Node *exp, REG_T reg, int rop, REG_T preg)
 {
   const char *loopsym;
   char *lbeginsym, *lendsym;
   Expr_Node_Value lbeginval, lendval;
   Expr_Node *lbegin, *lend;
+  symbolS *sym;
 
-  loopsym = expr->value.s_value;
+  loopsym = exp->value.s_value;
   lbeginsym = (char *) xmalloc (strlen (loopsym) + strlen ("__BEGIN") + 5);
   lendsym = (char *) xmalloc (strlen (loopsym) + strlen ("__END") + 5);
 
@@ -1911,9 +1897,45 @@ bfin_gen_loop (Expr_Node *expr, REG_T reg, int rop, REG_T preg)
   lbegin = Expr_Node_Create (Expr_Node_Reloc, lbeginval, NULL, NULL);
   lend   = Expr_Node_Create (Expr_Node_Reloc, lendval, NULL, NULL);
 
-  symbol_remove (symbol_find (loopsym), &symbol_rootP, &symbol_lastP);
+  sym = symbol_find(loopsym);
+  if (!S_IS_LOCAL (sym) || (S_IS_LOCAL (sym) && !symbol_used_p (sym)))
+    symbol_remove (sym, &symbol_rootP, &symbol_lastP);
 
-  return bfin_gen_loopsetup(lbegin, reg, rop, lend, preg);
+  return bfin_gen_loopsetup (lbegin, reg, rop, lend, preg);
+}
+
+void
+bfin_loop_attempt_create_label (Expr_Node *exp, int is_begin)
+{
+  char *name;
+  name = fb_label_name (exp->value.i_value, is_begin);
+  exp->value.s_value = xstrdup (name);
+  exp->type = Expr_Node_Reloc;
+}
+
+void
+bfin_loop_beginend (Expr_Node *exp, int begin)
+{
+  const char *loopsym;
+  char *label_name;
+  symbolS *linelabel;
+  const char *suffix = begin ? "__BEGIN" : "__END";
+
+  loopsym = exp->value.s_value;
+  label_name = (char *) xmalloc (strlen (loopsym) + strlen (suffix) + 5);
+
+  label_name[0] = 0;
+
+  strcat (label_name, "L$L$");
+  strcat (label_name, loopsym);
+  strcat (label_name, suffix);
+
+  linelabel = colon (label_name);
+
+  /* LOOP_END follows the last instruction in the loop.
+     Adjust label address.  */
+  if (!begin)
+    ((struct local_symbol *) linelabel)->lsy_value -= last_insn_size;
 }
 
 bfd_boolean
@@ -1944,18 +1966,17 @@ bfin_eol_in_insn (char *line)
 }
 
 bfd_boolean
-bfin_start_label (char *ptr)
+bfin_start_label (char *s, char *ptr)
 {
-  ptr--;
-  while (!ISSPACE (*ptr) && !is_end_of_line[(unsigned char) *ptr])
-    ptr--;
-
-  ptr++;
-  if (*ptr == '(' || *ptr == '[')
-    return FALSE;
+  while (s != ptr)
+    {
+      if (*s == '(' || *s == '[')
+	return FALSE;
+      s++;
+    }
 
   return TRUE;
-} 
+}
 
 int
 bfin_force_relocation (struct fix *fixp)
@@ -1965,4 +1986,744 @@ bfin_force_relocation (struct fix *fixp)
     return TRUE;
 
   return generic_force_reloc (fixp);
+}
+
+/* This is a stripped down version of the disassembler.  The only thing it
+   does is return a mask of registers modified by an instruction.  Only
+   instructions that can occur in a parallel-issue bundle are handled, and
+   only the registers that can cause a conflict are recorded.  */
+
+#define DREG_MASK(n) (0x101 << (n))
+#define DREGH_MASK(n) (0x100 << (n))
+#define DREGL_MASK(n) (0x001 << (n))
+#define IREG_MASK(n) (1 << ((n) + 16))
+
+static int
+decode_ProgCtrl_0 (int iw0)
+{
+  if (iw0 == 0)
+    return 0;
+  abort ();
+}
+
+static int
+decode_LDSTpmod_0 (int iw0)
+{
+  /* LDSTpmod
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+
+     | 1 | 0 | 0 | 0 |.W.|.aop...|.reg.......|.idx.......|.ptr.......|
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+  */
+  int W   = ((iw0 >> LDSTpmod_W_bits) & LDSTpmod_W_mask);
+  int aop = ((iw0 >> LDSTpmod_aop_bits) & LDSTpmod_aop_mask);
+  int idx = ((iw0 >> LDSTpmod_idx_bits) & LDSTpmod_idx_mask);
+  int ptr = ((iw0 >> LDSTpmod_ptr_bits) & LDSTpmod_ptr_mask);
+  int reg = ((iw0 >> LDSTpmod_reg_bits) & LDSTpmod_reg_mask);
+
+  if (aop == 1 && W == 0 && idx == ptr)
+    return DREGL_MASK (reg);
+  else if (aop == 2 && W == 0 && idx == ptr)
+    return DREGH_MASK (reg);
+  else if (aop == 1 && W == 1 && idx == ptr)
+    return 0;
+  else if (aop == 2 && W == 1 && idx == ptr)
+    return 0;
+  else if (aop == 0 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 1 && W == 0)
+    return DREGL_MASK (reg);
+  else if (aop == 2 && W == 0)
+    return DREGH_MASK (reg);
+  else if (aop == 3 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 3 && W == 1)
+    return DREG_MASK (reg);
+  else if (aop == 0 && W == 1)
+    return 0;
+  else if (aop == 1 && W == 1)
+    return 0;
+  else if (aop == 2 && W == 1)
+    return 0;
+  else
+    return 0;
+
+  return 2;
+}
+
+static int
+decode_dagMODim_0 (int iw0)
+{
+  /* dagMODim
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+
+     | 1 | 0 | 0 | 1 | 1 | 1 | 1 | 0 |.br| 1 | 1 |.op|.m.....|.i.....|
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+  */
+  int i  = ((iw0 >> DagMODim_i_bits) & DagMODim_i_mask);
+  int opc  = ((iw0 >> DagMODim_op_bits) & DagMODim_op_mask);
+
+  if (opc == 0 || opc == 1)
+    return IREG_MASK (i);
+  else
+    return 0;
+
+  return 2;
+}
+
+static int
+decode_dagMODik_0 (int iw0)
+{
+  /* dagMODik
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+
+     | 1 | 0 | 0 | 1 | 1 | 1 | 1 | 1 | 0 | 1 | 1 | 0 |.op....|.i.....|
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+  */
+  int i  = ((iw0 >> DagMODik_i_bits) & DagMODik_i_mask);
+  return IREG_MASK (i);
+}
+
+/* GOOD */
+static int
+decode_dspLDST_0 (int iw0)
+{
+  /* dspLDST
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+
+     | 1 | 0 | 0 | 1 | 1 | 1 |.W.|.aop...|.m.....|.i.....|.reg.......|
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+  */
+  int i   = ((iw0 >> DspLDST_i_bits) & DspLDST_i_mask);
+  int m   = ((iw0 >> DspLDST_m_bits) & DspLDST_m_mask);
+  int W   = ((iw0 >> DspLDST_W_bits) & DspLDST_W_mask);
+  int aop = ((iw0 >> DspLDST_aop_bits) & DspLDST_aop_mask);
+  int reg = ((iw0 >> DspLDST_reg_bits) & DspLDST_reg_mask);
+
+  if (aop == 0 && W == 0 && m == 0)
+    return DREG_MASK (reg) | IREG_MASK (i);
+  else if (aop == 0 && W == 0 && m == 1)
+    return DREGL_MASK (reg) | IREG_MASK (i);
+  else if (aop == 0 && W == 0 && m == 2)
+    return DREGH_MASK (reg) | IREG_MASK (i);
+  else if (aop == 1 && W == 0 && m == 0)
+    return DREG_MASK (reg) | IREG_MASK (i);
+  else if (aop == 1 && W == 0 && m == 1)
+    return DREGL_MASK (reg) | IREG_MASK (i);
+  else if (aop == 1 && W == 0 && m == 2)
+    return DREGH_MASK (reg) | IREG_MASK (i);
+  else if (aop == 2 && W == 0 && m == 0)
+    return DREG_MASK (reg);
+  else if (aop == 2 && W == 0 && m == 1)
+    return DREGL_MASK (reg);
+  else if (aop == 2 && W == 0 && m == 2)
+    return DREGH_MASK (reg);
+  else if (aop == 0 && W == 1 && m == 0)
+    return IREG_MASK (i);
+  else if (aop == 0 && W == 1 && m == 1)
+    return IREG_MASK (i);
+  else if (aop == 0 && W == 1 && m == 2)
+    return IREG_MASK (i);
+  else if (aop == 1 && W == 1 && m == 0)
+    return IREG_MASK (i);
+  else if (aop == 1 && W == 1 && m == 1)
+    return IREG_MASK (i);
+  else if (aop == 1 && W == 1 && m == 2)
+    return IREG_MASK (i);
+  else if (aop == 2 && W == 1 && m == 0)
+    return 0;
+  else if (aop == 2 && W == 1 && m == 1)
+    return 0;
+  else if (aop == 2 && W == 1 && m == 2)
+    return 0;
+  else if (aop == 3 && W == 0)
+    return DREG_MASK (reg) | IREG_MASK (i);
+  else if (aop == 3 && W == 1)
+    return IREG_MASK (i);
+
+  abort ();
+}
+
+/* GOOD */
+static int
+decode_LDST_0 (int iw0)
+{
+  /* LDST
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+
+     | 1 | 0 | 0 | 1 |.sz....|.W.|.aop...|.Z.|.ptr.......|.reg.......|
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+  */
+  int Z   = ((iw0 >> LDST_Z_bits) & LDST_Z_mask);
+  int W   = ((iw0 >> LDST_W_bits) & LDST_W_mask);
+  int sz  = ((iw0 >> LDST_sz_bits) & LDST_sz_mask);
+  int aop = ((iw0 >> LDST_aop_bits) & LDST_aop_mask);
+  int reg = ((iw0 >> LDST_reg_bits) & LDST_reg_mask);
+
+  if (aop == 0 && sz == 0 && Z == 0 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 0 && sz == 0 && Z == 1 && W == 0)
+    return 0;
+  else if (aop == 0 && sz == 1 && Z == 0 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 0 && sz == 1 && Z == 1 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 0 && sz == 2 && Z == 0 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 0 && sz == 2 && Z == 1 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 1 && sz == 0 && Z == 0 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 1 && sz == 0 && Z == 1 && W == 0)
+    return 0;
+  else if (aop == 1 && sz == 1 && Z == 0 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 1 && sz == 1 && Z == 1 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 1 && sz == 2 && Z == 0 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 1 && sz == 2 && Z == 1 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 2 && sz == 0 && Z == 0 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 2 && sz == 0 && Z == 1 && W == 0)
+    return 0;
+  else if (aop == 2 && sz == 1 && Z == 0 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 2 && sz == 1 && Z == 1 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 2 && sz == 2 && Z == 0 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 2 && sz == 2 && Z == 1 && W == 0)
+    return DREG_MASK (reg);
+  else if (aop == 0 && sz == 0 && Z == 0 && W == 1)
+    return 0;
+  else if (aop == 0 && sz == 0 && Z == 1 && W == 1)
+    return 0;
+  else if (aop == 0 && sz == 1 && Z == 0 && W == 1)
+    return 0;
+  else if (aop == 0 && sz == 2 && Z == 0 && W == 1)
+    return 0;
+  else if (aop == 1 && sz == 0 && Z == 0 && W == 1)
+    return 0;
+  else if (aop == 1 && sz == 0 && Z == 1 && W == 1)
+    return 0;
+  else if (aop == 1 && sz == 1 && Z == 0 && W == 1)
+    return 0;
+  else if (aop == 1 && sz == 2 && Z == 0 && W == 1)
+    return 0;
+  else if (aop == 2 && sz == 0 && Z == 0 && W == 1)
+    return 0;
+  else if (aop == 2 && sz == 0 && Z == 1 && W == 1)
+    return 0;
+  else if (aop == 2 && sz == 1 && Z == 0 && W == 1)
+    return 0;
+  else if (aop == 2 && sz == 2 && Z == 0 && W == 1)
+    return 0;
+
+  abort ();
+}
+
+static int
+decode_LDSTiiFP_0 (int iw0)
+{
+  /* LDSTiiFP
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+
+     | 1 | 0 | 1 | 1 | 1 | 0 |.W.|.offset............|.reg...........|
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+  */
+  int reg = ((iw0 >> LDSTiiFP_reg_bits) & LDSTiiFP_reg_mask);
+  int W = ((iw0 >> LDSTiiFP_W_bits) & LDSTiiFP_W_mask);
+
+  if (W == 0)
+    return reg < 8 ? DREG_MASK (reg) : 0;
+  else
+    return 0;
+}
+
+static int
+decode_LDSTii_0 (int iw0)
+{
+  /* LDSTii
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+
+     | 1 | 0 | 1 |.W.|.op....|.offset........|.ptr.......|.reg.......|
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+  */
+  int reg = ((iw0 >> LDSTii_reg_bit) & LDSTii_reg_mask);
+  int opc = ((iw0 >> LDSTii_op_bit) & LDSTii_op_mask);
+  int W = ((iw0 >> LDSTii_W_bit) & LDSTii_W_mask);
+
+  if (W == 0 && opc != 3)
+    return DREG_MASK (reg);
+  else if (W == 0 && opc == 3)
+   return 0;
+  else if (W == 1 && opc == 0)
+    return 0;
+  else if (W == 1 && opc == 1)
+    return 0;
+  else if (W == 1 && opc == 3)
+    return 0;
+
+  abort ();
+}
+
+static int
+decode_dsp32mac_0 (int iw0, int iw1)
+{
+  int result = 0;
+  /* dsp32mac
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+
+     | 1 | 1 | 0 | 0 |.M.| 0 | 0 |.mmod..........|.MM|.P.|.w1|.op1...|
+     |.h01|.h11|.w0|.op0...|.h00|.h10|.dst.......|.src0......|.src1..|
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+  */
+  int op1  = ((iw0 >> (DSP32Mac_op1_bits - 16)) & DSP32Mac_op1_mask);
+  int w1   = ((iw0 >> (DSP32Mac_w1_bits - 16)) & DSP32Mac_w1_mask);
+  int P    = ((iw0 >> (DSP32Mac_p_bits - 16)) & DSP32Mac_p_mask);
+  int mmod = ((iw0 >> (DSP32Mac_mmod_bits - 16)) & DSP32Mac_mmod_mask);
+  int w0   = ((iw1 >> DSP32Mac_w0_bits) & DSP32Mac_w0_mask);
+  int MM   = ((iw1 >> DSP32Mac_MM_bits) & DSP32Mac_MM_mask);
+  int dst  = ((iw1 >> DSP32Mac_dst_bits) & DSP32Mac_dst_mask);
+  int op0  = ((iw1 >> DSP32Mac_op0_bits) & DSP32Mac_op0_mask);
+
+  if (w0 == 0 && w1 == 0 && op1 == 3 && op0 == 3)
+    return 0;
+
+  if (op1 == 3 && MM)
+    return 0;
+
+  if ((w1 || w0) && mmod == M_W32)
+    return 0;
+
+  if (((1 << mmod) & (P ? 0x131b : 0x1b5f)) == 0)
+    return 0;
+
+  if (w1 == 1 || op1 != 3)
+    {
+      if (w1)
+	{
+	  if (P)
+	    return DREG_MASK (dst + 1);
+	  else
+	    return DREGH_MASK (dst);
+	}
+    }
+
+  if (w0 == 1 || op0 != 3)
+    {
+      if (w0)
+	{
+	  if (P)
+	    return DREG_MASK (dst);
+	  else
+	    return DREGL_MASK (dst);
+	}
+    }
+
+  return result;
+}
+
+static int
+decode_dsp32mult_0 (int iw0, int iw1)
+{
+  /* dsp32mult
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+
+     | 1 | 1 | 0 | 0 |.M.| 0 | 1 |.mmod..........|.MM|.P.|.w1|.op1...|
+     |.h01|.h11|.w0|.op0...|.h00|.h10|.dst.......|.src0......|.src1..|
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+  */
+  int w1   = ((iw0 >> (DSP32Mac_w1_bits - 16)) & DSP32Mac_w1_mask);
+  int P    = ((iw0 >> (DSP32Mac_p_bits - 16)) & DSP32Mac_p_mask);
+  int mmod = ((iw0 >> (DSP32Mac_mmod_bits - 16)) & DSP32Mac_mmod_mask);
+  int w0   = ((iw1 >> DSP32Mac_w0_bits) & DSP32Mac_w0_mask);
+  int dst  = ((iw1 >> DSP32Mac_dst_bits) & DSP32Mac_dst_mask);
+  int result = 0;
+
+  if (w1 == 0 && w0 == 0)
+    return 0;
+
+  if (((1 << mmod) & (P ? 0x313 : 0x1b57)) == 0)
+    return 0;
+
+  if (w1)
+    {
+      if (P)
+	return DREG_MASK (dst | 1);
+      else
+	return DREGH_MASK (dst);
+    }
+
+  if (w0)
+    {
+      if (P)
+	return DREG_MASK (dst);
+      else
+	return DREGL_MASK (dst);
+    }
+
+  return result;
+}
+
+static int
+decode_dsp32alu_0 (int iw0, int iw1)
+{
+  /* dsp32alu
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+
+     | 1 | 1 | 0 | 0 |.M.| 1 | 0 | - | - | - |.HL|.aopcde............|
+     |.aop...|.s.|.x.|.dst0......|.dst1......|.src0......|.src1......|
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+  */
+  int s    = ((iw1 >> DSP32Alu_s_bits) & DSP32Alu_s_mask);
+  int x    = ((iw1 >> DSP32Alu_x_bits) & DSP32Alu_x_mask);
+  int aop  = ((iw1 >> DSP32Alu_aop_bits) & DSP32Alu_aop_mask);
+  int dst0 = ((iw1 >> DSP32Alu_dst0_bits) & DSP32Alu_dst0_mask);
+  int dst1 = ((iw1 >> DSP32Alu_dst1_bits) & DSP32Alu_dst1_mask);
+  int HL   = ((iw0 >> (DSP32Alu_HL_bits - 16)) & DSP32Alu_HL_mask);
+  int aopcde = ((iw0 >> (DSP32Alu_aopcde_bits - 16)) & DSP32Alu_aopcde_mask);
+
+  if (aop == 0 && aopcde == 9 && s == 0)
+    return 0;
+  else if (aop == 2 && aopcde == 9 && HL == 0 && s == 0)
+    return 0;
+  else if (aop >= x * 2 && aopcde == 5)
+    return HL ? DREGH_MASK (dst0) : DREGL_MASK (dst0);
+  else if (HL == 0 && aopcde == 2)
+    return DREGL_MASK (dst0);
+  else if (HL == 1 && aopcde == 2)
+    return DREGH_MASK (dst0);
+  else if (HL == 0 && aopcde == 3)
+    return DREGL_MASK (dst0);
+  else if (HL == 1 && aopcde == 3)
+    return DREGH_MASK (dst0);
+
+  else if (aop == 0 && aopcde == 9 && s == 1)
+    return 0;
+  else if (aop == 1 && aopcde == 9 && s == 0)
+    return 0;
+  else if (aop == 2 && aopcde == 9 && s == 1)
+    return 0;
+  else if (aop == 3 && aopcde == 9 && s == 0)
+    return 0;
+  else if (aopcde == 8)
+    return 0;
+  else if (aop == 0 && aopcde == 11)
+    return DREG_MASK (dst0);
+  else if (aop == 1 && aopcde == 11)
+    return HL ? DREGH_MASK (dst0) : DREGL_MASK (dst0);
+  else if (aopcde == 11)
+    return 0;
+  else if (aopcde == 22)
+    return DREG_MASK (dst0);
+
+  else if ((aop == 0 || aop == 1) && aopcde == 14)
+    return 0;
+  else if (aop == 3 && HL == 0 && aopcde == 14)
+    return 0;
+
+  else if (aop == 3 && HL == 0 && aopcde == 15)
+    return DREG_MASK (dst0);
+
+  else if (aop == 1 && aopcde == 16)
+    return 0;
+
+  else if (aop == 0 && aopcde == 16)
+    return 0;
+
+  else if (aop == 3 && HL == 0 && aopcde == 16)
+    return 0;
+
+  else if (aop == 3 && HL == 0 && aopcde == 7)
+    return DREG_MASK (dst0);
+  else if ((aop == 0 || aop == 1 || aop == 2) && aopcde == 7)
+    return DREG_MASK (dst0);
+
+  else if (aop == 0 && aopcde == 12)
+    return DREG_MASK (dst0);
+  else if (aop == 1 && aopcde == 12)
+    return DREG_MASK (dst0) | DREG_MASK (dst1);
+  else if (aop == 3 && aopcde == 12)
+    return HL ? DREGH_MASK (dst0) : DREGL_MASK (dst0);
+
+  else if (aopcde == 0)
+    return DREG_MASK (dst0);
+  else if (aopcde == 1)
+    return DREG_MASK (dst0) | DREG_MASK (dst1);
+
+  else if (aop == 0 && aopcde == 10)
+    return DREGL_MASK (dst0);
+  else if (aop == 1 && aopcde == 10)
+    return DREGL_MASK (dst0);
+
+  else if ((aop == 1 || aop == 0) && aopcde == 4)
+    return DREG_MASK (dst0);
+  else if (aop == 2 && aopcde == 4)
+    return DREG_MASK (dst0) | DREG_MASK (dst1);
+
+  else if (aop == 0 && aopcde == 17)
+    return DREG_MASK (dst0) | DREG_MASK (dst1);
+  else if (aop == 1 && aopcde == 17)
+    return DREG_MASK (dst0) | DREG_MASK (dst1);
+  else if (aop == 0 && aopcde == 18)
+    return 0;
+  else if (aop == 3 && aopcde == 18)
+    return 0;
+
+  else if ((aop == 0 || aop == 1 || aop == 2) && aopcde == 6)
+    return DREG_MASK (dst0);
+
+  else if ((aop == 0 || aop == 1) && aopcde == 20)
+    return DREG_MASK (dst0);
+
+  else if ((aop == 0 || aop == 1) && aopcde == 21)
+    return DREG_MASK (dst0) | DREG_MASK (dst1);
+
+  else if (aop == 0 && aopcde == 23 && HL == 1)
+    return DREG_MASK (dst0);
+  else if (aop == 0 && aopcde == 23 && HL == 0)
+    return DREG_MASK (dst0);
+
+  else if (aop == 0 && aopcde == 24)
+    return DREG_MASK (dst0);
+  else if (aop == 1 && aopcde == 24)
+    return DREG_MASK (dst0) | DREG_MASK (dst1);
+  else if (aopcde == 13)
+    return DREG_MASK (dst0) | DREG_MASK (dst1);
+  else
+    return 0;
+
+  return 4;
+}
+
+static int
+decode_dsp32shift_0 (int iw0, int iw1)
+{
+  /* dsp32shift
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+
+     | 1 | 1 | 0 | 0 |.M.| 1 | 1 | 0 | 0 | - | - |.sopcde............|
+     |.sop...|.HLs...|.dst0......| - | - | - |.src0......|.src1......|
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+  */
+  int HLs  = ((iw1 >> DSP32Shift_HLs_bits) & DSP32Shift_HLs_mask);
+  int sop  = ((iw1 >> DSP32Shift_sop_bits) & DSP32Shift_sop_mask);
+  int src0 = ((iw1 >> DSP32Shift_src0_bits) & DSP32Shift_src0_mask);
+  int src1 = ((iw1 >> DSP32Shift_src1_bits) & DSP32Shift_src1_mask);
+  int dst0 = ((iw1 >> DSP32Shift_dst0_bits) & DSP32Shift_dst0_mask);
+  int sopcde = ((iw0 >> (DSP32Shift_sopcde_bits - 16)) & DSP32Shift_sopcde_mask);
+
+  if (sop == 0 && sopcde == 0)
+    return HLs & 2 ? DREGH_MASK (dst0) : DREGL_MASK (dst0);
+  else if (sop == 1 && sopcde == 0)
+    return HLs & 2 ? DREGH_MASK (dst0) : DREGL_MASK (dst0);
+  else if (sop == 2 && sopcde == 0)
+    return HLs & 2 ? DREGH_MASK (dst0) : DREGL_MASK (dst0);
+  else if (sop == 0 && sopcde == 3)
+    return 0;
+  else if (sop == 1 && sopcde == 3)
+    return 0;
+  else if (sop == 2 && sopcde == 3)
+    return 0;
+  else if (sop == 3 && sopcde == 3)
+    return DREG_MASK (dst0);
+  else if (sop == 0 && sopcde == 1)
+    return DREG_MASK (dst0);
+  else if (sop == 1 && sopcde == 1)
+    return DREG_MASK (dst0);
+  else if (sop == 2 && sopcde == 1)
+    return DREG_MASK (dst0);
+  else if (sopcde == 2)
+    return DREG_MASK (dst0);
+  else if (sopcde == 4)
+    return DREG_MASK (dst0);
+  else if (sop == 0 && sopcde == 5)
+    return DREGL_MASK (dst0);
+  else if (sop == 1 && sopcde == 5)
+    return DREGL_MASK (dst0);
+  else if (sop == 2 && sopcde == 5)
+    return DREGL_MASK (dst0);
+  else if (sop == 0 && sopcde == 6)
+    return DREGL_MASK (dst0);
+  else if (sop == 1 && sopcde == 6)
+    return DREGL_MASK (dst0);
+  else if (sop == 3 && sopcde == 6)
+    return DREGL_MASK (dst0);
+  else if (sop == 0 && sopcde == 7)
+    return DREGL_MASK (dst0);
+  else if (sop == 1 && sopcde == 7)
+    return DREGL_MASK (dst0);
+  else if (sop == 2 && sopcde == 7)
+    return DREGL_MASK (dst0);
+  else if (sop == 3 && sopcde == 7)
+    return DREGL_MASK (dst0);
+  else if (sop == 0 && sopcde == 8)
+    return DREG_MASK (src0) | DREG_MASK (src1);
+#if 0
+    {
+      OUTS (outf, "BITMUX (");
+      OUTS (outf, dregs (src0));
+      OUTS (outf, ", ");
+      OUTS (outf, dregs (src1));
+      OUTS (outf, ", A0) (ASR)");
+    }
+#endif
+  else if (sop == 1 && sopcde == 8)
+    return DREG_MASK (src0) | DREG_MASK (src1);
+#if 0
+    {
+      OUTS (outf, "BITMUX (");
+      OUTS (outf, dregs (src0));
+      OUTS (outf, ", ");
+      OUTS (outf, dregs (src1));
+      OUTS (outf, ", A0) (ASL)");
+    }
+#endif
+  else if (sopcde == 9)
+    return sop < 2 ? DREGL_MASK (dst0) : DREG_MASK (dst0);
+  else if (sopcde == 10)
+    return DREG_MASK (dst0);
+  else if (sop == 0 && sopcde == 11)
+    return DREGL_MASK (dst0);
+  else if (sop == 1 && sopcde == 11)
+    return DREGL_MASK (dst0);
+  else if (sop == 0 && sopcde == 12)
+    return 0;
+  else if (sop == 1 && sopcde == 12)
+    return DREGL_MASK (dst0);
+  else if (sop == 0 && sopcde == 13)
+    return DREG_MASK (dst0);
+  else if (sop == 1 && sopcde == 13)
+    return DREG_MASK (dst0);
+  else if (sop == 2 && sopcde == 13)
+    return DREG_MASK (dst0);
+
+  abort ();
+}
+
+static int
+decode_dsp32shiftimm_0 (int iw0, int iw1)
+{
+  /* dsp32shiftimm
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+
+     | 1 | 1 | 0 | 0 |.M.| 1 | 1 | 0 | 1 | - | - |.sopcde............|
+     |.sop...|.HLs...|.dst0......|.immag.................|.src1......|
+     +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+  */
+  int sop      = ((iw1 >> DSP32ShiftImm_sop_bits) & DSP32ShiftImm_sop_mask);
+  int bit8     = ((iw1 >> 8) & 0x1);
+  int dst0     = ((iw1 >> DSP32ShiftImm_dst0_bits) & DSP32ShiftImm_dst0_mask);
+  int sopcde   = ((iw0 >> (DSP32ShiftImm_sopcde_bits - 16)) & DSP32ShiftImm_sopcde_mask);
+  int HLs      = ((iw1 >> DSP32ShiftImm_HLs_bits) & DSP32ShiftImm_HLs_mask);
+
+
+  if (sop == 0 && sopcde == 0)
+    return HLs & 2 ? DREGH_MASK (dst0) : DREGL_MASK (dst0);
+  else if (sop == 1 && sopcde == 0 && bit8 == 0)
+    return HLs & 2 ? DREGH_MASK (dst0) : DREGL_MASK (dst0);
+  else if (sop == 1 && sopcde == 0 && bit8 == 1)
+    return HLs & 2 ? DREGH_MASK (dst0) : DREGL_MASK (dst0);
+  else if (sop == 2 && sopcde == 0 && bit8 == 0)
+    return HLs & 2 ? DREGH_MASK (dst0) : DREGL_MASK (dst0);
+  else if (sop == 2 && sopcde == 0 && bit8 == 1)
+    return HLs & 2 ? DREGH_MASK (dst0) : DREGL_MASK (dst0);
+  else if (sop == 2 && sopcde == 3 && HLs == 1)
+    return 0;
+  else if (sop == 0 && sopcde == 3 && HLs == 0 && bit8 == 0)
+    return 0;
+  else if (sop == 0 && sopcde == 3 && HLs == 0 && bit8 == 1)
+    return 0;
+  else if (sop == 0 && sopcde == 3 && HLs == 1 && bit8 == 0)
+    return 0;
+  else if (sop == 0 && sopcde == 3 && HLs == 1 && bit8 == 1)
+    return 0;
+  else if (sop == 1 && sopcde == 3 && HLs == 0)
+    return 0;
+  else if (sop == 1 && sopcde == 3 && HLs == 1)
+    return 0;
+  else if (sop == 2 && sopcde == 3 && HLs == 0)
+    return 0;
+  else if (sop == 1 && sopcde == 1 && bit8 == 0)
+    return DREG_MASK (dst0);
+  else if (sop == 1 && sopcde == 1 && bit8 == 1)
+    return DREG_MASK (dst0);
+  else if (sop == 2 && sopcde == 1 && bit8 == 1)
+    return DREG_MASK (dst0);
+  else if (sop == 2 && sopcde == 1 && bit8 == 0)
+    return DREG_MASK (dst0);
+  else if (sop == 0 && sopcde == 1)
+    return DREG_MASK (dst0);
+  else if (sop == 1 && sopcde == 2)
+    return DREG_MASK (dst0);
+  else if (sop == 2 && sopcde == 2 && bit8 == 1)
+    return DREG_MASK (dst0);
+  else if (sop == 2 && sopcde == 2 && bit8 == 0)
+    return DREG_MASK (dst0);
+  else if (sop == 3 && sopcde == 2)
+    return DREG_MASK (dst0);
+  else if (sop == 0 && sopcde == 2)
+    return DREG_MASK (dst0);
+
+  abort ();
+}
+
+int
+insn_regmask (int iw0, int iw1)
+{
+  if ((iw0 & 0xf7ff) == 0xc003 && iw1 == 0x1800)
+    return 0; /* MNOP */
+  else if ((iw0 & 0xff00) == 0x0000)
+    return decode_ProgCtrl_0 (iw0);
+  else if ((iw0 & 0xffc0) == 0x0240)
+    abort ();
+  else if ((iw0 & 0xff80) == 0x0100)
+    abort ();
+  else if ((iw0 & 0xfe00) == 0x0400)
+    abort ();
+  else if ((iw0 & 0xfe00) == 0x0600)
+    abort ();
+  else if ((iw0 & 0xf800) == 0x0800)
+    abort ();
+  else if ((iw0 & 0xffe0) == 0x0200)
+    abort ();
+  else if ((iw0 & 0xff00) == 0x0300)
+    abort ();
+  else if ((iw0 & 0xf000) == 0x1000)
+    abort ();
+  else if ((iw0 & 0xf000) == 0x2000)
+    abort ();
+  else if ((iw0 & 0xf000) == 0x3000)
+    abort ();
+  else if ((iw0 & 0xfc00) == 0x4000)
+    abort ();
+  else if ((iw0 & 0xfe00) == 0x4400)
+    abort ();
+  else if ((iw0 & 0xf800) == 0x4800)
+    abort ();
+  else if ((iw0 & 0xf000) == 0x5000)
+    abort ();
+  else if ((iw0 & 0xf800) == 0x6000)
+    abort ();
+  else if ((iw0 & 0xf800) == 0x6800)
+    abort ();
+  else if ((iw0 & 0xf000) == 0x8000)
+    return decode_LDSTpmod_0 (iw0);
+  else if ((iw0 & 0xff60) == 0x9e60)
+    return decode_dagMODim_0 (iw0);
+  else if ((iw0 & 0xfff0) == 0x9f60)
+    return decode_dagMODik_0 (iw0);
+  else if ((iw0 & 0xfc00) == 0x9c00)
+    return decode_dspLDST_0 (iw0);
+  else if ((iw0 & 0xf000) == 0x9000)
+    return decode_LDST_0 (iw0);
+  else if ((iw0 & 0xfc00) == 0xb800)
+    return decode_LDSTiiFP_0 (iw0);
+  else if ((iw0 & 0xe000) == 0xA000)
+    return decode_LDSTii_0 (iw0);
+  else if ((iw0 & 0xff80) == 0xe080 && (iw1 & 0x0C00) == 0x0000)
+    abort ();
+  else if ((iw0 & 0xff00) == 0xe100 && (iw1 & 0x0000) == 0x0000)
+    abort ();
+  else if ((iw0 & 0xfe00) == 0xe200 && (iw1 & 0x0000) == 0x0000)
+    abort ();
+  else if ((iw0 & 0xfc00) == 0xe400 && (iw1 & 0x0000) == 0x0000)
+    abort ();
+  else if ((iw0 & 0xfffe) == 0xe800 && (iw1 & 0x0000) == 0x0000)
+    abort ();
+  else if ((iw0 & 0xf600) == 0xc000 && (iw1 & 0x0000) == 0x0000)
+    return decode_dsp32mac_0 (iw0, iw1);
+  else if ((iw0 & 0xf600) == 0xc200 && (iw1 & 0x0000) == 0x0000)
+    return decode_dsp32mult_0 (iw0, iw1);
+  else if ((iw0 & 0xf7c0) == 0xc400 && (iw1 & 0x0000) == 0x0000)
+    return decode_dsp32alu_0 (iw0, iw1);
+  else if ((iw0 & 0xf780) == 0xc600 && (iw1 & 0x01c0) == 0x0000)
+    return decode_dsp32shift_0 (iw0, iw1);
+  else if ((iw0 & 0xf780) == 0xc680 && (iw1 & 0x0000) == 0x0000)
+    return decode_dsp32shiftimm_0 (iw0, iw1);
+  else if ((iw0 & 0xff00) == 0xf800)
+    abort ();
+  else if ((iw0 & 0xFFC0) == 0xf000 && (iw1 & 0x0000) == 0x0000)
+    abort ();
+
+  abort ();
 }

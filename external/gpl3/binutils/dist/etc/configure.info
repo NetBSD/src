@@ -1,5 +1,5 @@
 This is configure.info, produced by makeinfo version 4.8 from
-.././etc/configure.texi.
+./configure.texi.
 
 INFO-DIR-SECTION GNU admin
 START-INFO-DIR-ENTRY
@@ -2710,64 +2710,64 @@ Index
 
 
 Tag Table:
-Node: Top978
-Node: Introduction1506
-Node: Goals2588
-Node: Tools3312
-Node: History4306
-Node: Building7304
-Node: Getting Started10567
-Node: Write configure.in11080
-Node: Write Makefile.am18331
-Node: Write acconfig.h21508
-Node: Generate files23045
-Node: Getting Started Example25011
-Node: Getting Started Example 125766
-Node: Getting Started Example 227687
-Node: Getting Started Example 330682
-Node: Generate Files in Example33046
-Node: Files34136
-Node: Developer Files34747
-Node: Developer Files Picture35127
-Node: Written Developer Files36415
-Node: Generated Developer Files38967
-Node: Build Files42111
-Node: Build Files Picture42772
-Node: Build Files Description43536
-Node: Support Files45542
-Node: Configuration Names48424
-Node: Configuration Name Definition48924
-Node: Using Configuration Names51247
-Node: Cross Compilation Tools53217
-Node: Cross Compilation Concepts53908
-Node: Host and Target54876
-Node: Using the Host Type56377
-Node: Specifying the Target57726
-Node: Using the Target Type58515
-Node: Cross Tools in the Cygnus Tree61946
-Node: Host and Target Libraries63003
-Node: Target Library Configure Scripts66752
-Node: Make Targets in Cygnus Tree69844
-Node: Target libiberty71192
-Node: Canadian Cross72579
-Node: Canadian Cross Example73420
-Node: Canadian Cross Concepts74539
-Node: Build Cross Host Tools76051
-Node: Build and Host Options77003
-Node: CCross not in Cygnus Tree78789
-Node: CCross in Cygnus Tree79767
-Node: Standard Cygnus CCross80188
-Node: Cross Cygnus CCross81552
-Node: Supporting Canadian Cross84352
-Node: CCross in Configure84967
-Node: CCross in Make88135
-Node: Cygnus Configure89738
-Node: Cygnus Configure Basics90573
-Node: Cygnus Configure in C++ Libraries95251
-Node: Multilibs96258
-Node: Multilibs in gcc97303
-Node: Multilibs in Target Libraries98381
-Node: FAQ102572
-Node: Index106672
+Node: Top971
+Node: Introduction1499
+Node: Goals2581
+Node: Tools3305
+Node: History4299
+Node: Building7297
+Node: Getting Started10560
+Node: Write configure.in11073
+Node: Write Makefile.am18324
+Node: Write acconfig.h21501
+Node: Generate files23038
+Node: Getting Started Example25004
+Node: Getting Started Example 125759
+Node: Getting Started Example 227680
+Node: Getting Started Example 330675
+Node: Generate Files in Example33039
+Node: Files34129
+Node: Developer Files34740
+Node: Developer Files Picture35120
+Node: Written Developer Files36408
+Node: Generated Developer Files38960
+Node: Build Files42104
+Node: Build Files Picture42765
+Node: Build Files Description43529
+Node: Support Files45535
+Node: Configuration Names48417
+Node: Configuration Name Definition48917
+Node: Using Configuration Names51240
+Node: Cross Compilation Tools53210
+Node: Cross Compilation Concepts53901
+Node: Host and Target54869
+Node: Using the Host Type56370
+Node: Specifying the Target57719
+Node: Using the Target Type58508
+Node: Cross Tools in the Cygnus Tree61939
+Node: Host and Target Libraries62996
+Node: Target Library Configure Scripts66745
+Node: Make Targets in Cygnus Tree69837
+Node: Target libiberty71185
+Node: Canadian Cross72572
+Node: Canadian Cross Example73413
+Node: Canadian Cross Concepts74532
+Node: Build Cross Host Tools76044
+Node: Build and Host Options76996
+Node: CCross not in Cygnus Tree78782
+Node: CCross in Cygnus Tree79760
+Node: Standard Cygnus CCross80181
+Node: Cross Cygnus CCross81545
+Node: Supporting Canadian Cross84345
+Node: CCross in Configure84960
+Node: CCross in Make88128
+Node: Cygnus Configure89731
+Node: Cygnus Configure Basics90566
+Node: Cygnus Configure in C++ Libraries95244
+Node: Multilibs96251
+Node: Multilibs in gcc97296
+Node: Multilibs in Target Libraries98374
+Node: FAQ102565
+Node: Index106665
 
 End Tag Table

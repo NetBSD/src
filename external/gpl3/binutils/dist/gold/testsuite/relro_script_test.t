@@ -46,6 +46,8 @@ SECTIONS
 
   . = DATA_SEGMENT_RELRO_END(0, .);
 
+  .got.plt : { *(.got.plt) }
+
   .data : { *(.data .data.* .gnu.linkonce.d.*) }
 
   . = DATA_SEGMENT_END (.);

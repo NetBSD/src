@@ -1,6 +1,6 @@
-// compressed_output.cc -- manage compressed output sections for gold
+// compressed_output.cc -- manage compressed debug sections for gold
 
-// Copyright 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2007, 2008, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -33,6 +33,8 @@
 namespace gold
 {
 
+#ifdef HAVE_ZLIB_H
+
 // Compress UNCOMPRESSED_DATA of size UNCOMPRESSED_SIZE.  Returns true
 // if it successfully compressed, false if it failed for any reason
 // (including not having zlib support in the library).  If it returns
@@ -41,8 +43,6 @@ namespace gold
 // It also writes a header before COMPRESSED_DATA: 4 bytes saying
 // "ZLIB", and 8 bytes indicating the uncompressed size, in big-endian
 // order.
-
-#ifdef HAVE_ZLIB_H
 
 static bool
 zlib_compress(const unsigned char* uncompressed_data,
@@ -81,6 +81,49 @@ zlib_compress(const unsigned char* uncompressed_data,
     }
 }
 
+// Decompress COMPRESSED_DATA of size COMPRESSED_SIZE, into a buffer
+// UNCOMPRESSED_DATA of size UNCOMPRESSED_SIZE.  Returns TRUE if it
+// decompressed successfully, false if it failed.  The buffer, of
+// appropriate size, is provided by the caller, and is typically part
+// of the memory-mapped output file.
+
+static bool
+zlib_decompress(const unsigned char* compressed_data,
+		unsigned long compressed_size,
+		unsigned char* uncompressed_data,
+		unsigned long uncompressed_size)
+{
+  z_stream strm;
+  int rc;
+
+  /* It is possible the section consists of several compressed
+     buffers concatenated together, so we uncompress in a loop.  */
+  strm.zalloc = NULL;
+  strm.zfree = NULL;
+  strm.opaque = NULL;
+  strm.avail_in = compressed_size;
+  strm.next_in = const_cast<Bytef*>(compressed_data);
+  strm.avail_out = uncompressed_size;
+
+  rc = inflateInit(&strm);
+  while (strm.avail_in > 0)
+    {
+      if (rc != Z_OK)
+        return false;
+      strm.next_out = ((Bytef*) uncompressed_data
+                       + (uncompressed_size - strm.avail_out));
+      rc = inflate(&strm, Z_FINISH);
+      if (rc != Z_STREAM_END)
+        return false;
+      rc = inflateReset(&strm);
+    }
+  rc = inflateEnd(&strm);
+  if (rc != Z_OK || strm.avail_out != 0)
+    return false;
+
+  return true;
+}
+
 #else // !defined(HAVE_ZLIB_H)
 
 static bool
@@ -90,7 +133,61 @@ zlib_compress(const unsigned char*, unsigned long,
   return false;
 }
 
+static bool
+zlib_decompress(const unsigned char*, unsigned long,
+		unsigned char*, unsigned long)
+{
+  return false;
+}
+
 #endif // !defined(HAVE_ZLIB_H)
+
+// Read the compression header of a compressed debug section and return
+// the uncompressed size.
+
+uint64_t
+get_uncompressed_size(const unsigned char* compressed_data,
+		      section_size_type compressed_size)
+{
+  const unsigned int zlib_header_size = 12;
+
+  /* Verify the compression header.  Currently, we support only zlib
+     compression, so it should be "ZLIB" followed by the uncompressed
+     section size, 8 bytes in big-endian order.  */
+  if (compressed_size >= zlib_header_size
+      && strncmp(reinterpret_cast<const char*>(compressed_data),
+		 "ZLIB", 4) == 0)
+    return elfcpp::Swap_unaligned<64, true>::readval(compressed_data + 4);
+  return -1ULL;
+}
+
+// Decompress a compressed debug section directly into the output file.
+
+bool
+decompress_input_section(const unsigned char* compressed_data,
+			 unsigned long compressed_size,
+			 unsigned char* uncompressed_data,
+			 unsigned long uncompressed_size)
+{
+  const unsigned int zlib_header_size = 12;
+
+  /* Verify the compression header.  Currently, we support only zlib
+     compression, so it should be "ZLIB" followed by the uncompressed
+     section size, 8 bytes in big-endian order.  */
+  if (compressed_size >= zlib_header_size
+      && strncmp(reinterpret_cast<const char*>(compressed_data),
+		 "ZLIB", 4) == 0)
+    {
+      unsigned long uncompressed_size_check =
+	  elfcpp::Swap_unaligned<64, true>::readval(compressed_data + 4);
+      gold_assert(uncompressed_size_check == uncompressed_size);
+      return zlib_decompress(compressed_data + zlib_header_size,
+			     compressed_size - zlib_header_size,
+			     uncompressed_data,
+			     uncompressed_size);
+    }
+  return false;
+}
 
 // Class Output_compressed_section.
 

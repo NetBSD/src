@@ -1,6 +1,6 @@
 /* tc-tic54x.c -- Assembly code for the Texas Instruments TMS320C54X
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+   2009, 2010  Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of GAS, the GNU Assembler.
@@ -81,7 +81,7 @@ static struct stag
 
 typedef struct _tic54x_insn
 {
-  const template *tm;		/* Opcode template.  */
+  const insn_template *tm;	/* Opcode template.  */
 
   char mnemonic[MAX_LINE];	/* Opcode name/mnemonic.  */
   char parmnemonic[MAX_LINE];   /* 2nd mnemonic of parallel insn.  */
@@ -243,11 +243,11 @@ md_show_usage (FILE *stream)
 static void
 tic54x_emit_char (char c)
 {
-  expressionS exp;
+  expressionS expn;
 
-  exp.X_op = O_constant;
-  exp.X_add_number = c;
-  emit_expr (&exp, 2);
+  expn.X_op = O_constant;
+  expn.X_add_number = c;
+  emit_expr (&expn, 2);
 }
 
 /* Walk backwards in the frag chain.  */
@@ -298,14 +298,14 @@ frag_bit_offset (fragS *frag, segT seg)
    expression.  */
 
 static char *
-parse_expression (char *str, expressionS *exp)
+parse_expression (char *str, expressionS *expn)
 {
   char *s;
   char *tmp;
 
   tmp = input_line_pointer;	/* Save line pointer.  */
   input_line_pointer = str;
-  expression (exp);
+  expression (expn);
   s = input_line_pointer;
   input_line_pointer = tmp;	/* Restore line pointer.  */
   return s;			/* Return pointer to where parsing stopped.  */
@@ -356,7 +356,7 @@ tic54x_asg (int x ATTRIBUTE_UNUSED)
   c = get_symbol_end ();	/* Get terminator.  */
   if (!ISALPHA (*name))
     {
-      as_bad ("symbols assigned with .asg must begin with a letter");
+      as_bad (_("symbols assigned with .asg must begin with a letter"));
       ignore_rest_of_line ();
       return;
     }
@@ -476,7 +476,7 @@ tic54x_bss (int x ATTRIBUTE_UNUSED)
   c = get_symbol_end ();	/* Get terminator.  */
   if (c != ',')
     {
-      as_bad (".bss size argument missing\n");
+      as_bad (_(".bss size argument missing\n"));
       ignore_rest_of_line ();
       return;
     }
@@ -485,7 +485,7 @@ tic54x_bss (int x ATTRIBUTE_UNUSED)
   words = get_absolute_expression ();
   if (words < 0)
     {
-      as_bad (".bss size %d < 0!", words);
+      as_bad (_(".bss size %d < 0!"), words);
       ignore_rest_of_line ();
       return;
     }
@@ -1018,28 +1018,28 @@ tic54x_cons (int type)
 	}
       else
 	{
-	  expressionS exp;
+	  expressionS expn;
 
-	  input_line_pointer = parse_expression (input_line_pointer, &exp);
-	  if (exp.X_op == O_constant)
+	  input_line_pointer = parse_expression (input_line_pointer, &expn);
+	  if (expn.X_op == O_constant)
 	    {
-	      offsetT value = exp.X_add_number;
+	      offsetT value = expn.X_add_number;
 	      /* Truncate overflows.  */
 	      switch (octets)
 		{
 		case 1:
 		  if ((value > 0 && value > 0xFF)
 		      || (value < 0 && value < - 0x100))
-		    as_warn ("Overflow in expression, truncated to 8 bits");
+		    as_warn (_("Overflow in expression, truncated to 8 bits"));
 		  break;
 		case 2:
 		  if ((value > 0 && value > 0xFFFF)
 		      || (value < 0 && value < - 0x10000))
-		    as_warn ("Overflow in expression, truncated to 16 bits");
+		    as_warn (_("Overflow in expression, truncated to 16 bits"));
 		  break;
 		}
 	    }
-	  if (exp.X_op != O_constant && octets < 2)
+	  if (expn.X_op != O_constant && octets < 2)
 	    {
 	      /* Disallow .byte with a non constant expression that will
 		 require relocation.  */
@@ -1048,7 +1048,7 @@ tic54x_cons (int type)
 	      return;
 	    }
 
-	  if (exp.X_op != O_constant
+	  if (expn.X_op != O_constant
 	      && amode == c_mode
 	      && octets == 4)
 	    {
@@ -1059,14 +1059,14 @@ tic54x_cons (int type)
 		 totally ignored in the latest tools).  */
 	      amode = far_mode;
 	      emitting_long = 1;
-	      emit_expr (&exp, 4);
+	      emit_expr (&expn, 4);
 	      emitting_long = 0;
 	      amode = c_mode;
 	    }
 	  else
 	    {
 	      emitting_long = octets == 4;
-	      emit_expr (&exp, (octets == 1) ? 2 : octets);
+	      emit_expr (&expn, (octets == 1) ? 2 : octets);
 	      emitting_long = 0;
 	    }
 	}
@@ -1222,7 +1222,7 @@ tic54x_sect (int arg)
 static void
 tic54x_space (int arg)
 {
-  expressionS exp;
+  expressionS expn;
   char *p = 0;
   int octets = 0;
   long words;
@@ -1238,22 +1238,21 @@ tic54x_space (int arg)
 #endif
 
   /* Read the bit count.  */
-  expression (&exp);
+  expression (&expn);
 
   /* Some expressions are unresolvable until later in the assembly pass;
      postpone until relaxation/fixup.  we also have to postpone if a previous
      partial allocation has not been completed yet.  */
-  if (exp.X_op != O_constant || frag_bit_offset (frag_now, now_seg) == -1)
+  if (expn.X_op != O_constant || frag_bit_offset (frag_now, now_seg) == -1)
     {
       struct bit_info *bi = xmalloc (sizeof (struct bit_info));
-      char *p;
 
       bi->seg = now_seg;
       bi->type = bes;
       bi->sym = label;
       p = frag_var (rs_machine_dependent,
 		    65536 * 2, 1, (relax_substateT) 0,
-		    make_expr_symbol (&exp), (offsetT) 0,
+		    make_expr_symbol (&expn), (offsetT) 0,
 		    (char *) bi);
       if (p)
 	*p = 0;
@@ -1268,7 +1267,7 @@ tic54x_space (int arg)
     {
       int spare_bits = bits_per_byte - bit_offset;
 
-      if (spare_bits >= exp.X_add_number)
+      if (spare_bits >= expn.X_add_number)
 	{
 	  /* Don't have to do anything; sufficient bits have already been
 	     allocated; just point the label to the right place.  */
@@ -1278,10 +1277,10 @@ tic54x_space (int arg)
 	      S_SET_VALUE (label, frag_now_fix () - 1);
 	      label = NULL;
 	    }
-	  frag_now->tc_frag_data += exp.X_add_number;
+	  frag_now->tc_frag_data += expn.X_add_number;
 	  goto getout;
 	}
-      exp.X_add_number -= spare_bits;
+      expn.X_add_number -= spare_bits;
       /* Set the label to point to the first word allocated, which in this
 	 case is the previous word, which was only partially filled.  */
       if (!bes && label != NULL)
@@ -1292,9 +1291,9 @@ tic54x_space (int arg)
 	}
     }
   /* Convert bits to bytes/words and octets, rounding up.  */
-  words = ((exp.X_add_number + bits_per_byte - 1) / bits_per_byte);
+  words = ((expn.X_add_number + bits_per_byte - 1) / bits_per_byte);
   /* How many do we have left over?  */
-  bit_offset = exp.X_add_number % bits_per_byte;
+  bit_offset = expn.X_add_number % bits_per_byte;
   octets = words * OCTETS_PER_BYTE;
   if (octets < 0)
     {
@@ -1439,7 +1438,7 @@ tic54x_usect (int x ATTRIBUTE_UNUSED)
     flags |= SEC_TIC54X_BLOCK;
 
   if (!bfd_set_section_flags (stdoutput, seg, flags))
-    as_warn ("Error setting flags for \"%s\": %s", name,
+    as_warn (_("Error setting flags for \"%s\": %s"), name,
 	     bfd_errmsg (bfd_get_error ()));
 
   subseg_set (current_seg, current_subseg);	/* Restore current seg.  */
@@ -1571,7 +1570,6 @@ static void
 tic54x_stringer (int type)
 {
   unsigned int c;
-  char *start;
   int append_zero = type == 'S' || type == 'P';
   int packed = type == 'p' || type == 'P';
   int last_char = -1; /* Packed strings need two bytes at a time to encode.  */
@@ -1601,7 +1599,6 @@ tic54x_stringer (int type)
 	  }
 	case '\"':
 	  ++input_line_pointer;	/* -> 1st char of string.  */
-	  start = input_line_pointer;
 	  while (is_a_char (c = next_char_of_string ()))
 	    {
 	      if (!packed)
@@ -1695,7 +1692,7 @@ tic54x_align_words (int arg)
 static void
 tic54x_field (int ignore ATTRIBUTE_UNUSED)
 {
-  expressionS exp;
+  expressionS expn;
   int size = 16;
   char *p;
   valueT value;
@@ -1707,7 +1704,7 @@ tic54x_field (int ignore ATTRIBUTE_UNUSED)
       return;
     }
 
-  input_line_pointer = parse_expression (input_line_pointer, &exp);
+  input_line_pointer = parse_expression (input_line_pointer, &expn);
 
   if (*input_line_pointer == ',')
     {
@@ -1722,7 +1719,7 @@ tic54x_field (int ignore ATTRIBUTE_UNUSED)
     }
 
   /* Truncate values to the field width.  */
-  if (exp.X_op != O_constant)
+  if (expn.X_op != O_constant)
     {
       /* If the expression value is relocatable, the field size *must*
          be 16.  */
@@ -1734,17 +1731,17 @@ tic54x_field (int ignore ATTRIBUTE_UNUSED)
 	}
 
       frag_now->tc_frag_data = 0;
-      emit_expr (&exp, 2);
+      emit_expr (&expn, 2);
     }
   else
     {
       unsigned long fmask = (size == 32) ? 0xFFFFFFFF : (1ul << size) - 1;
 
-      value = exp.X_add_number;
-      exp.X_add_number &= fmask;
-      if (value != (valueT) exp.X_add_number)
+      value = expn.X_add_number;
+      expn.X_add_number &= fmask;
+      if (value != (valueT) expn.X_add_number)
 	as_warn (_("field value truncated"));
-      value = exp.X_add_number;
+      value = expn.X_add_number;
       /* Bits are stored MS first.  */
       while (size >= 16)
 	{
@@ -2656,11 +2653,11 @@ subsym_ismember (char *sym, char *list)
 static int
 subsym_iscons (char *a, char *ignore ATTRIBUTE_UNUSED)
 {
-  expressionS exp;
+  expressionS expn;
 
-  parse_expression (a, &exp);
+  parse_expression (a, &expn);
 
-  if (exp.X_op == O_constant)
+  if (expn.X_op == O_constant)
     {
       int len = strlen (a);
 
@@ -2989,7 +2986,7 @@ static const math_proc_entry math_procs[] =
 void
 md_begin (void)
 {
-  template *tm;
+  insn_template *tm;
   symbol *sym;
   const subsym_proc_entry *subsym_proc;
   const math_proc_entry *math_proc;
@@ -3018,7 +3015,7 @@ md_begin (void)
     }
 
   op_hash = hash_new ();
-  for (tm = (template *) tic54x_optab; tm->name; tm++)
+  for (tm = (insn_template *) tic54x_optab; tm->name; tm++)
     {
       if (hash_find (op_hash, tm->name))
 	continue;
@@ -3028,7 +3025,7 @@ md_begin (void)
 		  tm->name, hash_err);
     }
   parop_hash = hash_new ();
-  for (tm = (template *) tic54x_paroptab; tm->name; tm++)
+  for (tm = (insn_template *) tic54x_paroptab; tm->name; tm++)
     {
       if (hash_find (parop_hash, tm->name))
 	continue;
@@ -3128,7 +3125,7 @@ get_operands (struct opstruct operands[], char *line)
 	    {
 	      if (paren_not_balanced)
 		{
-		  as_bad ("Unbalanced parenthesis in operand %d", numexp);
+		  as_bad (_("Unbalanced parenthesis in operand %d"), numexp);
 		  return -1;
 		}
 	      else
@@ -3159,7 +3156,7 @@ get_operands (struct opstruct operands[], char *line)
 	{
 	  if (expecting_operand || *lptr == ',')
 	    {
-	      as_bad ("Expecting operand after ','");
+	      as_bad (_("Expecting operand after ','"));
 	      return -1;
 	    }
 	}
@@ -3167,7 +3164,7 @@ get_operands (struct opstruct operands[], char *line)
 	{
 	  if (*++lptr == '\0')
 	    {
-	      as_bad ("Expecting operand after ','");
+	      as_bad (_("Expecting operand after ','"));
 	      return -1;
 	    }
 	  expecting_operand = 1;
@@ -3178,7 +3175,7 @@ get_operands (struct opstruct operands[], char *line)
     ;
   if (!is_end_of_line[(int) *lptr])
     {
-      as_bad ("Extra junk on line");
+      as_bad (_("Extra junk on line"));
       return -1;
     }
 
@@ -4179,7 +4176,7 @@ optimize_insn (tic54x_insn *insn)
 static int
 tic54x_parse_insn (tic54x_insn *insn, char *line)
 {
-  insn->tm = (template *) hash_find (op_hash, insn->mnemonic);
+  insn->tm = (insn_template *) hash_find (op_hash, insn->mnemonic);
   if (!insn->tm)
     {
       as_bad (_("Unrecognized instruction \"%s\""), insn->mnemonic);
@@ -4202,8 +4199,8 @@ tic54x_parse_insn (tic54x_insn *insn, char *line)
 	  /* SUCCESS! now try some optimizations.  */
 	  if (optimize_insn (insn))
 	    {
-	      insn->tm = (template *) hash_find (op_hash,
-						 insn->mnemonic);
+	      insn->tm = (insn_template *) hash_find (op_hash,
+                                                      insn->mnemonic);
 	      continue;
 	    }
 
@@ -4237,7 +4234,7 @@ next_line_shows_parallel (char *next_line)
 static int
 tic54x_parse_parallel_insn_firstline (tic54x_insn *insn, char *line)
 {
-  insn->tm = (template *) hash_find (parop_hash, insn->mnemonic);
+  insn->tm = (insn_template *) hash_find (parop_hash, insn->mnemonic);
   if (!insn->tm)
     {
       as_bad (_("Unrecognized parallel instruction \"%s\""),
@@ -4570,10 +4567,10 @@ subsym_substitute (char *line, int forced)
 	      ++ptr;
 	      if (math_entry != NULL)
 		{
-		  float arg1, arg2 = 0;
+		  float farg1, farg2 = 0;
 		  volatile float fresult;
 
-		  arg1 = (float) strtod (ptr, &ptr);
+		  farg1 = (float) strtod (ptr, &ptr);
 		  if (math_entry->nargs == 2)
 		    {
 		      if (*ptr++ != ',')
@@ -4581,9 +4578,9 @@ subsym_substitute (char *line, int forced)
 			  as_bad (_("Expecting second argument"));
 			  break;
 			}
-		      arg2 = (float) strtod (ptr, &ptr);
+		      farg2 = (float) strtod (ptr, &ptr);
 		    }
-		  fresult = (*math_entry->proc) (arg1, arg2);
+		  fresult = (*math_entry->proc) (farg1, farg2);
 		  value = xmalloc (128);
 		  if (math_entry->int_return)
 		    sprintf (value, "%d", (int) fresult);
@@ -5080,7 +5077,7 @@ tic54x_undefined_symbol (char *name)
 
 int
 tic54x_parse_name (char *name ATTRIBUTE_UNUSED,
-		   expressionS *exp ATTRIBUTE_UNUSED)
+		   expressionS *expn ATTRIBUTE_UNUSED)
 {
   return 0;
 }
@@ -5125,7 +5122,7 @@ tc_gen_reloc (asection *section, fixS *fixP)
 /* Handle cons expressions.  */
 
 void
-tic54x_cons_fix_new (fragS *frag, int where, int octets, expressionS *exp)
+tic54x_cons_fix_new (fragS *frag, int where, int octets, expressionS *expn)
 {
   bfd_reloc_code_real_type r;
 
@@ -5148,7 +5145,7 @@ tic54x_cons_fix_new (fragS *frag, int where, int octets, expressionS *exp)
 	r = BFD_RELOC_32;
       break;
     }
-  fix_new_exp (frag, where, octets, exp, 0, r);
+  fix_new_exp (frag, where, octets, expn, 0, r);
 }
 
 /* Attempt to simplify or even eliminate a fixup.

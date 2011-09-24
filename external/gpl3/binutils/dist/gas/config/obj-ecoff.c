@@ -1,6 +1,6 @@
 /* ECOFF object file format.
    Copyright 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2002,
-   2005, 2007  Free Software Foundation, Inc.
+   2005, 2007, 2009, 2010  Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    This file was put together by Ian Lance Taylor <ian@cygnus.com>.
 
@@ -146,7 +146,7 @@ ecoff_frob_file (void)
   char *set;
 
   /* Build the ECOFF debugging information.  */
-  assert (ecoff_data (stdoutput) != 0);
+  gas_assert (ecoff_data (stdoutput) != 0);
   hdr = &ecoff_data (stdoutput)->debug_info.symbolic_header;
   ecoff_build_debug (hdr, &buf, debug_swap);
 
@@ -314,5 +314,7 @@ const struct format_ops ecoff_format_ops =
   ecoff_pop_insert,
   ecoff_set_ext,
   ecoff_read_begin_hook,
-  ecoff_symbol_new_hook
+  ecoff_symbol_new_hook,
+  ecoff_symbol_clone_hook,
+  0	/* adjust_symtab.  */
 };

@@ -1,4 +1,4 @@
-/* Copyright 2007 Free Software Foundation, Inc.
+/* Copyright 2004, 2005, 2007, 2009 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -20,5 +20,5 @@
 #include "te-linux.h"
 
 /* The EABI requires the use of VFP.  */
-#define FPU_DEFAULT FPU_ARCH_VFP_V2
-#define EABI_DEFAULT EF_ARM_EABI_VER4
+#define FPU_DEFAULT FPU_ARCH_VFP
+#define EABI_DEFAULT EF_ARM_EABI_VER5

@@ -1,6 +1,6 @@
 // mapfile.h -- map file generation for gold   -*- C++ -*-
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright 2008, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -53,6 +53,11 @@ class Mapfile
   // Close the map file.
   void
   close();
+
+  // Return the underlying file.
+  FILE*
+  file()
+  { return this->map_file_; }
 
   // Report that we are including a member from an archive.  This is
   // called by the archive reading code.

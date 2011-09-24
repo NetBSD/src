@@ -148,17 +148,20 @@ alpha_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
 	  if (hist_check_address (dest_pc))
 	    {
 	      child = sym_lookup (&symtab, dest_pc);
-	      DBG (CALLDEBUG,
-		   printf (" 0x%lx\t; name=%s, addr=0x%lx",
-			   (unsigned long) dest_pc, child->name,
-			   (unsigned long) child->addr));
-	      if (child->addr == dest_pc || child->addr == dest_pc - 8)
-		{
-		  DBG (CALLDEBUG, printf ("\n"));
-		  /* a hit:  */
-		  arc_add (parent, child, (unsigned long) 0);
-		  continue;
-		}
+              if (child)
+                {
+	          DBG (CALLDEBUG,
+		       printf (" 0x%lx\t; name=%s, addr=0x%lx",
+			       (unsigned long) dest_pc, child->name,
+			       (unsigned long) child->addr));
+	          if (child->addr == dest_pc || child->addr == dest_pc - 8)
+		    {
+		      DBG (CALLDEBUG, printf ("\n"));
+		      /* a hit:  */
+		      arc_add (parent, child, (unsigned long) 0);
+		      continue;
+		    }
+                }
 	    }
 	  /*
 	   * Something funny going on.

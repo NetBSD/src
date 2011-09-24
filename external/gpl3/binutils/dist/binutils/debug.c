@@ -1,6 +1,6 @@
 /* debug.c -- Handle generic debugging information.
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2002, 2003, 2007
-   Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2002, 2003, 2005, 2007,
+   2009  Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -96,7 +96,7 @@ struct debug_file
 
 /* A type.  */
 
-struct debug_type
+struct debug_type_s
 {
   /* Kind of type.  */
   enum debug_type_kind kind;
@@ -118,11 +118,11 @@ struct debug_type
       /* DEBUG_KIND_ENUM.  */
       struct debug_enum_type *kenum;
       /* DEBUG_KIND_POINTER.  */
-      struct debug_type *kpointer;
+      struct debug_type_s *kpointer;
       /* DEBUG_KIND_FUNCTION.  */
       struct debug_function_type *kfunction;
       /* DEBUG_KIND_REFERENCE.  */
-      struct debug_type *kreference;
+      struct debug_type_s *kreference;
       /* DEBUG_KIND_RANGE.  */
       struct debug_range_type *krange;
       /* DEBUG_KIND_ARRAY.  */
@@ -134,9 +134,9 @@ struct debug_type
       /* DEBUG_KIND_METHOD.  */
       struct debug_method_type *kmethod;
       /* DEBUG_KIND_CONST.  */
-      struct debug_type *kconst;
+      struct debug_type_s *kconst;
       /* DEBUG_KIND_VOLATILE.  */
-      struct debug_type *kvolatile;
+      struct debug_type_s *kvolatile;
       /* DEBUG_KIND_NAMED, DEBUG_KIND_TAGGED.  */
       struct debug_named_type *knamed;
     } u;
@@ -271,12 +271,12 @@ struct debug_named_type
 
 /* A field in a struct or union.  */
 
-struct debug_field
+struct debug_field_s
 {
   /* Name of the field.  */
   const char *name;
   /* Type of the field.  */
-  struct debug_type *type;
+  struct debug_type_s *type;
   /* Visibility of the field.  */
   enum debug_visibility visibility;
   /* Whether this is a static member.  */
@@ -301,37 +301,37 @@ struct debug_field
 
 /* A base class for an object.  */
 
-struct debug_baseclass
+struct debug_baseclass_s
 {
   /* Type of the base class.  */
-  struct debug_type *type;
+  struct debug_type_s *type;
   /* Bit position of the base class in the object.  */
   unsigned int bitpos;
   /* Whether the base class is virtual.  */
-  bfd_boolean virtual;
+  bfd_boolean is_virtual;
   /* Visibility of the base class.  */
   enum debug_visibility visibility;
 };
 
 /* A method of an object.  */
 
-struct debug_method
+struct debug_method_s
 {
   /* The name of the method.  */
   const char *name;
   /* A NULL terminated array of different types of variants.  */
-  struct debug_method_variant **variants;
+  struct debug_method_variant_s **variants;
 };
 
 /* The variants of a method function of an object.  These indicate
    which method to run.  */
 
-struct debug_method_variant
+struct debug_method_variant_s
 {
   /* The physical name of the function.  */
   const char *physname;
   /* The type of the function.  */
-  struct debug_type *type;
+  struct debug_type_s *type;
   /* The visibility of the function.  */
   enum debug_visibility visibility;
   /* Whether the function is const.  */
@@ -343,7 +343,7 @@ struct debug_method_variant
   /* If voffset is VOFFSET_STATIC_METHOD, this is a static method.  */
 #define VOFFSET_STATIC_METHOD ((bfd_vma) -1)
   /* Context of a virtual method function.  */
-  struct debug_type *context;
+  struct debug_type_s *context;
 };
 
 /* A variable.  This is the information we keep for a variable object.
@@ -500,9 +500,9 @@ struct debug_name
   union
     {
       /* DEBUG_OBJECT_TYPE.  */
-      struct debug_type *type;
+      struct debug_type_s *type;
       /* DEBUG_OBJECT_TAG.  */
-      struct debug_type *tag;
+      struct debug_type_s *tag;
       /* DEBUG_OBJECT_VARIABLE.  */
       struct debug_variable *variable;
       /* DEBUG_OBJECT_FUNCTION.  */
@@ -524,7 +524,7 @@ struct debug_class_id
   /* Next ID number.  */
   struct debug_class_id *next;
   /* The type with the ID.  */
-  struct debug_type *type;
+  struct debug_type_s *type;
   /* The tag; NULL if no tag.  */
   const char *tag;
 };
@@ -537,8 +537,8 @@ struct debug_type_compare_list
   /* Next type on list.  */
   struct debug_type_compare_list *next;
   /* The types we are comparing.  */
-  struct debug_type *t1;
-  struct debug_type *t2;
+  struct debug_type_s *t1;
+  struct debug_type_s *t2;
 };
 
 /* During debug_get_real_type, a linked list of these structures is
@@ -549,7 +549,7 @@ struct debug_type_real_list
   /* Next type on list.  */
   struct debug_type_real_list *next;
   /* The type we are checking.  */
-  struct debug_type *t;
+  struct debug_type_s *t;
 };
 
 /* Local functions.  */
@@ -561,19 +561,19 @@ static struct debug_name *debug_add_to_namespace
 static struct debug_name *debug_add_to_current_namespace
   (struct debug_handle *, const char *, enum debug_object_kind,
    enum debug_object_linkage);
-static struct debug_type *debug_make_type
+static struct debug_type_s *debug_make_type
   (struct debug_handle *, enum debug_type_kind, unsigned int);
-static struct debug_type *debug_get_real_type
+static struct debug_type_s *debug_get_real_type
   (void *, debug_type, struct debug_type_real_list *);
 static bfd_boolean debug_write_name
   (struct debug_handle *, const struct debug_write_fns *, void *,
    struct debug_name *);
 static bfd_boolean debug_write_type
   (struct debug_handle *, const struct debug_write_fns *, void *,
-   struct debug_type *, struct debug_name *);
+   struct debug_type_s *, struct debug_name *);
 static bfd_boolean debug_write_class_type
   (struct debug_handle *, const struct debug_write_fns *, void *,
-   struct debug_type *, const char *);
+   struct debug_type_s *, const char *);
 static bfd_boolean debug_write_function
   (struct debug_handle *, const struct debug_write_fns *, void *,
    const char *, enum debug_object_linkage, struct debug_function *);
@@ -583,11 +583,11 @@ static bfd_boolean debug_write_block
 static bfd_boolean debug_write_linenos
   (struct debug_handle *, const struct debug_write_fns *, void *, bfd_vma);
 static bfd_boolean debug_set_class_id
-  (struct debug_handle *, const char *, struct debug_type *);
+  (struct debug_handle *, const char *, struct debug_type_s *);
 static bfd_boolean debug_type_samep
-  (struct debug_handle *, struct debug_type *, struct debug_type *);
+  (struct debug_handle *, struct debug_type_s *, struct debug_type_s *);
 static bfd_boolean debug_class_type_samep
-  (struct debug_handle *, struct debug_type *, struct debug_type *);
+  (struct debug_handle *, struct debug_type_s *, struct debug_type_s *);
 
 /* Issue an error message.  */
 
@@ -1172,13 +1172,13 @@ debug_record_variable (void *handle, const char *name, debug_type type,
 
 /* Make a type with a given kind and size.  */
 
-static struct debug_type *
+static struct debug_type_s *
 debug_make_type (struct debug_handle *info ATTRIBUTE_UNUSED,
 		 enum debug_type_kind kind, unsigned int size)
 {
-  struct debug_type *t;
+  struct debug_type_s *t;
 
-  t = (struct debug_type *) xmalloc (sizeof *t);
+  t = (struct debug_type_s *) xmalloc (sizeof *t);
   memset (t, 0, sizeof *t);
 
   t->kind = kind;
@@ -1194,7 +1194,7 @@ debug_type
 debug_make_indirect_type (void *handle, debug_type *slot, const char *tag)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
   struct debug_indirect_type *i;
 
   t = debug_make_type (info, DEBUG_KIND_INDIRECT, 0);
@@ -1229,7 +1229,7 @@ debug_type
 debug_make_int_type (void *handle, unsigned int size, bfd_boolean unsignedp)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
 
   t = debug_make_type (info, DEBUG_KIND_INT, size);
   if (t == NULL)
@@ -1281,7 +1281,7 @@ debug_make_struct_type (void *handle, bfd_boolean structp, bfd_vma size,
 			debug_field *fields)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
   struct debug_class_type *c;
 
   t = debug_make_type (info,
@@ -1314,7 +1314,7 @@ debug_make_object_type (void *handle, bfd_boolean structp, bfd_vma size,
 			bfd_boolean ownvptr)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
   struct debug_class_type *c;
 
   t = debug_make_type (info,
@@ -1347,7 +1347,7 @@ debug_make_enum_type (void *handle, const char **names,
 		      bfd_signed_vma *values)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
   struct debug_enum_type *e;
 
   t = debug_make_type (info, DEBUG_KIND_ENUM, 0);
@@ -1371,7 +1371,7 @@ debug_type
 debug_make_pointer_type (void *handle, debug_type type)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
 
   if (type == NULL)
     return DEBUG_TYPE_NULL;
@@ -1398,7 +1398,7 @@ debug_make_function_type (void *handle, debug_type type,
 			  debug_type *arg_types, bfd_boolean varargs)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
   struct debug_function_type *f;
 
   if (type == NULL)
@@ -1426,7 +1426,7 @@ debug_type
 debug_make_reference_type (void *handle, debug_type type)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
 
   if (type == NULL)
     return DEBUG_TYPE_NULL;
@@ -1447,7 +1447,7 @@ debug_make_range_type (void *handle, debug_type type, bfd_signed_vma lower,
 		       bfd_signed_vma upper)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
   struct debug_range_type *r;
 
   if (type == NULL)
@@ -1481,7 +1481,7 @@ debug_make_array_type (void *handle, debug_type element_type,
 		       bfd_signed_vma upper, bfd_boolean stringp)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
   struct debug_array_type *a;
 
   if (element_type == NULL || range_type == NULL)
@@ -1513,7 +1513,7 @@ debug_type
 debug_make_set_type (void *handle, debug_type type, bfd_boolean bitstringp)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
   struct debug_set_type *s;
 
   if (type == NULL)
@@ -1544,7 +1544,7 @@ debug_make_offset_type (void *handle, debug_type base_type,
 			debug_type target_type)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
   struct debug_offset_type *o;
 
   if (base_type == NULL || target_type == NULL)
@@ -1575,7 +1575,7 @@ debug_make_method_type (void *handle, debug_type return_type,
 			bfd_boolean varargs)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
   struct debug_method_type *m;
 
   if (return_type == NULL)
@@ -1604,7 +1604,7 @@ debug_type
 debug_make_const_type (void *handle, debug_type type)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
 
   if (type == NULL)
     return DEBUG_TYPE_NULL;
@@ -1624,7 +1624,7 @@ debug_type
 debug_make_volatile_type (void *handle, debug_type type)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
 
   if (type == NULL)
     return DEBUG_TYPE_NULL;
@@ -1646,7 +1646,7 @@ debug_make_undefined_tagged_type (void *handle, const char *name,
 				  enum debug_type_kind kind)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
 
   if (name == NULL)
     return DEBUG_TYPE_NULL;
@@ -1680,17 +1680,17 @@ debug_make_undefined_tagged_type (void *handle, const char *name,
 
 debug_baseclass
 debug_make_baseclass (void *handle ATTRIBUTE_UNUSED, debug_type type,
-		      bfd_vma bitpos, bfd_boolean virtual,
+		      bfd_vma bitpos, bfd_boolean is_virtual,
 		      enum debug_visibility visibility)
 {
-  struct debug_baseclass *b;
+  struct debug_baseclass_s *b;
 
-  b = (struct debug_baseclass *) xmalloc (sizeof *b);
+  b = (struct debug_baseclass_s *) xmalloc (sizeof *b);
   memset (b, 0, sizeof *b);
 
   b->type = type;
   b->bitpos = bitpos;
-  b->virtual = virtual;
+  b->is_virtual = is_virtual;
   b->visibility = visibility;
 
   return b;
@@ -1707,9 +1707,9 @@ debug_make_field (void *handle ATTRIBUTE_UNUSED, const char *name,
 		  debug_type type, bfd_vma bitpos, bfd_vma bitsize,
 		  enum debug_visibility visibility)
 {
-  struct debug_field *f;
+  struct debug_field_s *f;
 
-  f = (struct debug_field *) xmalloc (sizeof *f);
+  f = (struct debug_field_s *) xmalloc (sizeof *f);
   memset (f, 0, sizeof *f);
 
   f->name = name;
@@ -1733,9 +1733,9 @@ debug_make_static_member (void *handle ATTRIBUTE_UNUSED, const char *name,
 			  debug_type type, const char *physname,
 			  enum debug_visibility visibility)
 {
-  struct debug_field *f;
+  struct debug_field_s *f;
 
-  f = (struct debug_field *) xmalloc (sizeof *f);
+  f = (struct debug_field_s *) xmalloc (sizeof *f);
   memset (f, 0, sizeof *f);
 
   f->name = name;
@@ -1754,9 +1754,9 @@ debug_method
 debug_make_method (void *handle ATTRIBUTE_UNUSED, const char *name,
 		   debug_method_variant *variants)
 {
-  struct debug_method *m;
+  struct debug_method_s *m;
 
-  m = (struct debug_method *) xmalloc (sizeof *m);
+  m = (struct debug_method_s *) xmalloc (sizeof *m);
   memset (m, 0, sizeof *m);
 
   m->name = name;
@@ -1781,9 +1781,9 @@ debug_make_method_variant (void *handle ATTRIBUTE_UNUSED,
 			   bfd_boolean constp, bfd_boolean volatilep,
 			   bfd_vma voffset, debug_type context)
 {
-  struct debug_method_variant *m;
+  struct debug_method_variant_s *m;
 
-  m = (struct debug_method_variant *) xmalloc (sizeof *m);
+  m = (struct debug_method_variant_s *) xmalloc (sizeof *m);
   memset (m, 0, sizeof *m);
 
   m->physname = physname;
@@ -1807,9 +1807,9 @@ debug_make_static_method_variant (void *handle ATTRIBUTE_UNUSED,
 				  enum debug_visibility visibility,
 				  bfd_boolean constp, bfd_boolean volatilep)
 {
-  struct debug_method_variant *m;
+  struct debug_method_variant_s *m;
 
-  m = (struct debug_method_variant *) xmalloc (sizeof *m);
+  m = (struct debug_method_variant_s *) xmalloc (sizeof *m);
   memset (m, 0, sizeof *m);
 
   m->physname = physname;
@@ -1828,7 +1828,7 @@ debug_type
 debug_name_type (void *handle, const char *name, debug_type type)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
   struct debug_named_type *n;
   struct debug_name *nm;
 
@@ -1874,7 +1874,7 @@ debug_type
 debug_tag_type (void *handle, const char *name, debug_type type)
 {
   struct debug_handle *info = (struct debug_handle *) handle;
-  struct debug_type *t;
+  struct debug_type_s *t;
   struct debug_named_type *n;
   struct debug_name *nm;
 
@@ -2030,7 +2030,7 @@ debug_find_tagged_type (void *handle, const char *name,
 /* Get a base type.  We build a linked list on the stack to avoid
    crashing if the type is defined circularly.  */
 
-static struct debug_type *
+static struct debug_type_s *
 debug_get_real_type (void *handle, debug_type type,
 		     struct debug_type_real_list *list)
 {
@@ -2415,7 +2415,7 @@ debug_write_name (struct debug_handle *info,
 static bfd_boolean
 debug_write_type (struct debug_handle *info,
 		  const struct debug_write_fns *fns, void *fhandle,
-		  struct debug_type *type, struct debug_name *name)
+		  struct debug_type_s *type, struct debug_name *name)
 {
   unsigned int i;
   int is;
@@ -2434,7 +2434,7 @@ debug_write_type (struct debug_handle *info,
 	return (*fns->typedef_type) (fhandle, type->u.knamed->name->name);
       else
 	{
-	  struct debug_type *real;
+	  struct debug_type_s *real;
 	  unsigned int id;
 
 	  real = debug_get_real_type ((void *) info, type, NULL);
@@ -2531,7 +2531,7 @@ debug_write_type (struct debug_handle *info,
 	{
 	  for (i = 0; type->u.kclass->fields[i] != NULL; i++)
 	    {
-	      struct debug_field *f;
+	      struct debug_field_s *f;
 
 	      f = type->u.kclass->fields[i];
 	      if (! debug_write_type (info, fns, fhandle, f->type,
@@ -2660,11 +2660,11 @@ debug_write_type (struct debug_handle *info,
 static bfd_boolean
 debug_write_class_type (struct debug_handle *info,
 			const struct debug_write_fns *fns, void *fhandle,
-			struct debug_type *type, const char *tag)
+			struct debug_type_s *type, const char *tag)
 {
   unsigned int i;
   unsigned int id;
-  struct debug_type *vptrbase;
+  struct debug_type_s *vptrbase;
 
   if (type->u.kclass == NULL)
     {
@@ -2713,7 +2713,7 @@ debug_write_class_type (struct debug_handle *info,
 	{
 	  for (i = 0; type->u.kclass->fields[i] != NULL; i++)
 	    {
-	      struct debug_field *f;
+	      struct debug_field_s *f;
 
 	      f = type->u.kclass->fields[i];
 	      if (! debug_write_type (info, fns, fhandle, f->type,
@@ -2739,13 +2739,13 @@ debug_write_class_type (struct debug_handle *info,
 	{
 	  for (i = 0; type->u.kclass->baseclasses[i] != NULL; i++)
 	    {
-	      struct debug_baseclass *b;
+	      struct debug_baseclass_s *b;
 
 	      b = type->u.kclass->baseclasses[i];
 	      if (! debug_write_type (info, fns, fhandle, b->type,
 				      (struct debug_name *) NULL))
 		return FALSE;
-	      if (! (*fns->class_baseclass) (fhandle, b->bitpos, b->virtual,
+	      if (! (*fns->class_baseclass) (fhandle, b->bitpos, b->is_virtual,
 					     b->visibility))
 		return FALSE;
 	    }
@@ -2755,7 +2755,7 @@ debug_write_class_type (struct debug_handle *info,
 	{
 	  for (i = 0; type->u.kclass->methods[i] != NULL; i++)
 	    {
-	      struct debug_method *m;
+	      struct debug_method_s *m;
 	      unsigned int j;
 
 	      m = type->u.kclass->methods[i];
@@ -2763,7 +2763,7 @@ debug_write_class_type (struct debug_handle *info,
 		return FALSE;
 	      for (j = 0; m->variants[j] != NULL; j++)
 		{
-		  struct debug_method_variant *v;
+		  struct debug_method_variant_s *v;
 
 		  v = m->variants[j];
 		  if (v->context != NULL)
@@ -2935,7 +2935,7 @@ debug_write_linenos (struct debug_handle *info,
 
 static bfd_boolean
 debug_set_class_id (struct debug_handle *info, const char *tag,
-		    struct debug_type *type)
+		    struct debug_type_s *type)
 {
   struct debug_class_type *c;
   struct debug_class_id *l;
@@ -2996,8 +2996,8 @@ debug_set_class_id (struct debug_handle *info, const char *tag,
    tags and the like.  */
 
 static bfd_boolean
-debug_type_samep (struct debug_handle *info, struct debug_type *t1,
-		  struct debug_type *t2)
+debug_type_samep (struct debug_handle *info, struct debug_type_s *t1,
+		  struct debug_type_s *t2)
 {
   struct debug_type_compare_list *l;
   struct debug_type_compare_list top;
@@ -3133,7 +3133,7 @@ debug_type_samep (struct debug_handle *info, struct debug_type *t1,
 	ret = TRUE;
       else
 	{
-	  struct debug_type **a1, **a2;
+	  struct debug_type_s **a1, **a2;
 
 	  a1 = t1->u.kfunction->arg_types;
 	  a2 = t2->u.kfunction->arg_types;
@@ -3191,7 +3191,7 @@ debug_type_samep (struct debug_handle *info, struct debug_type *t1,
 	ret = TRUE;
       else
 	{
-	  struct debug_type **a1, **a2;
+	  struct debug_type_s **a1, **a2;
 
 	  a1 = t1->u.kmethod->arg_types;
 	  a2 = t2->u.kmethod->arg_types;
@@ -3231,8 +3231,8 @@ debug_type_samep (struct debug_handle *info, struct debug_type *t1,
    debug_type_samep.  */
 
 static bfd_boolean
-debug_class_type_samep (struct debug_handle *info, struct debug_type *t1,
-			struct debug_type *t2)
+debug_class_type_samep (struct debug_handle *info, struct debug_type_s *t1,
+			struct debug_type_s *t2)
 {
   struct debug_class_type *c1, *c2;
 
@@ -3247,13 +3247,13 @@ debug_class_type_samep (struct debug_handle *info, struct debug_type *t1,
 
   if (c1->fields != NULL)
     {
-      struct debug_field **pf1, **pf2;
+      struct debug_field_s **pf1, **pf2;
 
       for (pf1 = c1->fields, pf2 = c2->fields;
 	   *pf1 != NULL && *pf2 != NULL;
 	   pf1++, pf2++)
 	{
-	  struct debug_field *f1, *f2;
+	  struct debug_field_s *f1, *f2;
 
 	  f1 = *pf1;
 	  f2 = *pf2;
@@ -3296,18 +3296,18 @@ debug_class_type_samep (struct debug_handle *info, struct debug_type *t1,
 
   if (c1->baseclasses != NULL)
     {
-      struct debug_baseclass **pb1, **pb2;
+      struct debug_baseclass_s **pb1, **pb2;
 
       for (pb1 = c1->baseclasses, pb2 = c2->baseclasses;
 	   *pb1 != NULL && *pb2 != NULL;
 	   ++pb1, ++pb2)
 	{
-	  struct debug_baseclass *b1, *b2;
+	  struct debug_baseclass_s *b1, *b2;
 
 	  b1 = *pb1;
 	  b2 = *pb2;
 	  if (b1->bitpos != b2->bitpos
-	      || b1->virtual != b2->virtual
+	      || b1->is_virtual != b2->is_virtual
 	      || b1->visibility != b2->visibility
 	      || ! debug_type_samep (info, b1->type, b2->type))
 	    return FALSE;
@@ -3318,13 +3318,13 @@ debug_class_type_samep (struct debug_handle *info, struct debug_type *t1,
 
   if (c1->methods != NULL)
     {
-      struct debug_method **pm1, **pm2;
+      struct debug_method_s **pm1, **pm2;
 
       for (pm1 = c1->methods, pm2 = c2->methods;
 	   *pm1 != NULL && *pm2 != NULL;
 	   ++pm1, ++pm2)
 	{
-	  struct debug_method *m1, *m2;
+	  struct debug_method_s *m1, *m2;
 
 	  m1 = *pm1;
 	  m2 = *pm2;
@@ -3334,13 +3334,13 @@ debug_class_type_samep (struct debug_handle *info, struct debug_type *t1,
 	    return FALSE;
 	  if (m1->variants == NULL)
 	    {
-	      struct debug_method_variant **pv1, **pv2;
+	      struct debug_method_variant_s **pv1, **pv2;
 
 	      for (pv1 = m1->variants, pv2 = m2->variants;
 		   *pv1 != NULL && *pv2 != NULL;
 		   ++pv1, ++pv2)
 		{
-		  struct debug_method_variant *v1, *v2;
+		  struct debug_method_variant_s *v1, *v2;
 
 		  v1 = *pv1;
 		  v2 = *pv2;

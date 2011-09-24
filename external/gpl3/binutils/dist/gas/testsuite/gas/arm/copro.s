@@ -20,7 +20,7 @@ bar:
 	mrc	2, 3, r5, c1, c2
 	mrcge	p4, 5, r15, cr1, cr2, 7
 
-	mcr	p7, 1, r15, cr1, cr1
+	mcr	p7, 1, r5, cr1, cr1
 	mcrlt	5, 1, r8, cr2, cr9, 0
 
 	@ The following patterns test Addressing Mode 5 "Unindexed"
@@ -44,3 +44,6 @@ bar:
 	# Extra instructions to allow for code alignment in arm-aout target.
 	nop
 	nop
+
+	# UAL-syntax for MRC with APSR. Pre-UAL was PC
+	mrcge	p4, 5, APSR_nzcv, cr1, cr2, 7

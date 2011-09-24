@@ -26,8 +26,10 @@
 
 int t3_2;
 
+/* Since we don't use any of the arguments to main, we give it a void
+   prototype, so as to quiet gcc -Wstrict-prototypes.  */
 int
-main()
+main(void)
 {
   return t3_2;
 }

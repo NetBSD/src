@@ -1,5 +1,5 @@
 
-tmpdir/dw2-compressed.o:     file format .*
+.*dw2-compressed.o:     file format .*
 
 Contents of section .zdebug_abbrev:
  0000 5a4c4942 00000000 00000033 785e6314  ZLIB.......3x\^c.

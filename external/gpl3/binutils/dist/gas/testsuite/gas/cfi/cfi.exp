@@ -1,4 +1,4 @@
-if ![is_elf_format] then {
+if { ![is_elf_format] && ![is_pecoff_format] } then {
     return
 }
 
@@ -35,6 +35,10 @@ if  { [istarget "i*86-*-*"] || [istarget "x86_64-*-*"] } then {
 	set ASFLAGS "$old_ASFLAGS"
     }
 
+    if { [is_pecoff_format] } then {
+	run_dump_test "reloc-pe-i386"
+    }
+
 } elseif { [istarget alpha*-*-*] } then {
     run_dump_test "cfi-alpha-1"
     run_dump_test "cfi-alpha-2"
@@ -69,6 +73,10 @@ if  { [istarget "i*86-*-*"] || [istarget "x86_64-*-*"] } then {
     }
 
 } elseif { [istarget "arm*-*"] || [istarget "xscale*-*"] } then {
+    # Only ELF based ARM targets support CFI.
+    if { [is_pecoff_format] } then {
+	return
+    }
     run_dump_test "cfi-arm-1"
 
 } elseif { [istarget "mips*-*"] } then {
@@ -88,7 +96,11 @@ if { ![istarget "hppa64*-*"] } then {
   run_dump_test "cfi-common-2"
   run_dump_test "cfi-common-3"
   run_dump_test "cfi-common-4"
-  run_dump_test "cfi-common-5"
+  if { ![is_pecoff_format] } then {
+    # This test uses .subsection/.previous which are elf-specific.
+    run_dump_test "cfi-common-5"
+  }
+  run_dump_test "cfi-common-7"
 }
 
 # MIPS doesn't support PC relative cfi directives.

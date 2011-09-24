@@ -1,7 +1,7 @@
 /* tc-i370.c -- Assembler for the IBM 360/370/390 instruction set.
    Loosely based on the ppc files by Linas Vepstas <linas@linas.org> 1998, 99
    Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+   2004, 2005, 2006, 2007, 2009, 2010  Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -416,7 +416,7 @@ md_parse_option (int c, char *arg)
 #endif
       else
         {
-          as_bad ("invalid switch -m%s", arg);
+          as_bad (_("invalid switch -m%s"), arg);
           return 0;
         }
       break;
@@ -513,7 +513,7 @@ md_begin (void)
            retval = hash_insert (i370_hash, op->name, (void *) op);
            if (retval != (const char *) NULL)
              {
-               as_bad ("Internal assembler error for instruction %s", op->name);
+               as_bad (_("Internal assembler error for instruction %s"), op->name);
                dup_insn = TRUE;
              }
          }
@@ -532,7 +532,7 @@ md_begin (void)
           retval = hash_insert (i370_macro_hash, macro->name, (void *) macro);
           if (retval != (const char *) NULL)
             {
-              as_bad ("Internal assembler error for macro %s", macro->name);
+              as_bad (_("Internal assembler error for macro %s"), macro->name);
               dup_insn = TRUE;
             }
         }
@@ -627,7 +627,7 @@ i370_elf_suffix (char **str_p, expressionS *exp_p)
         	|| ptr->reloc == BFD_RELOC_LO16_GOTOFF
         	|| ptr->reloc == BFD_RELOC_HI16_GOTOFF
         	|| ptr->reloc == BFD_RELOC_HI16_S_GOTOFF))
-          as_warn ("identifier+constant@got means identifier@got+constant");
+          as_warn (_("identifier+constant@got means identifier@got+constant"));
 
         /* Now check for identifier@suffix+constant */
         if (*str == '-' || *str == '+')
@@ -681,7 +681,8 @@ i370_elf_cons (int nbytes)   /* 1=.byte, 2=.word, 4=.long.  */
           int size = bfd_get_reloc_size (reloc_howto);
 
           if (size > nbytes)
-            as_bad ("%s relocations do not fit in %d bytes\n", reloc_howto->name, nbytes);
+            as_bad (_("%s relocations do not fit in %d bytes\n"),
+		    reloc_howto->name, nbytes);
           else
             {
               char *p = frag_more ((int) nbytes);
@@ -899,6 +900,7 @@ i370_dc (int unused ATTRIBUTE_UNUSED)
   int nbytes=0;
   expressionS exp;
   char type=0;
+  char * clse;
 
   if (is_it_end_of_statement ())
     {
@@ -921,33 +923,29 @@ i370_dc (int unused ATTRIBUTE_UNUSED)
       nbytes = 8;
       break;
     default:
-      as_bad ("unsupported DC type");
+      as_bad (_("unsupported DC type"));
       return;
     }
 
   /* Get rid of pesky quotes.  */
   if ('\'' == *input_line_pointer)
     {
-      char * close;
-
       ++input_line_pointer;
-      close = strchr (input_line_pointer, '\'');
-      if (close)
-	*close= ' ';
+      clse = strchr (input_line_pointer, '\'');
+      if (clse)
+	*clse= ' ';
       else
-	as_bad ("missing end-quote");
+	as_bad (_("missing end-quote"));
     }
 
   if ('\"' == *input_line_pointer)
     {
-      char * close;
-
       ++input_line_pointer;
-      close = strchr (input_line_pointer, '\"');
-      if (close)
-	*close= ' ';
+      clse = strchr (input_line_pointer, '\"');
+      if (clse)
+	*clse= ' ';
       else
-	as_bad ("missing end-quote");
+	as_bad (_("missing end-quote"));
     }
 
   switch (type)
@@ -965,7 +963,7 @@ i370_dc (int unused ATTRIBUTE_UNUSED)
       memcpy (p, tmp, nbytes);
       break;
     default:
-      as_bad ("unsupported DC type");
+      as_bad (_("unsupported DC type"));
       return;
     }
 
@@ -995,14 +993,14 @@ i370_ds (int unused ATTRIBUTE_UNUSED)
 	  alignment = 3;
 	  break;
 	default:
-	  as_bad ("unsupported alignment");
+	  as_bad (_("unsupported alignment"));
 	  return;
 	}
       frag_align (alignment, 0, 0);
       record_alignment (now_seg, alignment);
     }
   else
-    as_bad ("this DS form not yet supported");
+    as_bad (_("this DS form not yet supported"));
 }
 
 /* Solaris pseudo op to change to the .rodata section.  */
@@ -1045,7 +1043,7 @@ i370_elf_lcomm (int unused ATTRIBUTE_UNUSED)
   SKIP_WHITESPACE ();
   if (*input_line_pointer != ',')
     {
-      as_bad ("Expected comma after symbol-name: rest of line ignored.");
+      as_bad (_("Expected comma after symbol-name: rest of line ignored."));
       ignore_rest_of_line ();
       return;
     }
@@ -1054,7 +1052,7 @@ i370_elf_lcomm (int unused ATTRIBUTE_UNUSED)
   input_line_pointer++;
   if ((size = get_absolute_expression ()) < 0)
     {
-      as_warn (".COMMon length (%ld.) <0! Ignored.", (long) size);
+      as_warn (_(".COMMon length (%ld.) <0! Ignored."), (long) size);
       ignore_rest_of_line ();
       return;
     }
@@ -1068,7 +1066,7 @@ i370_elf_lcomm (int unused ATTRIBUTE_UNUSED)
       align = get_absolute_expression ();
       if (align <= 0)
         {
-          as_warn ("ignoring bad alignment");
+          as_warn (_("ignoring bad alignment"));
           align = 8;
         }
     }
@@ -1079,7 +1077,7 @@ i370_elf_lcomm (int unused ATTRIBUTE_UNUSED)
 
   if (S_IS_DEFINED (symbolP) && ! S_IS_COMMON (symbolP))
     {
-      as_bad ("Ignoring attempt to re-define symbol `%s'.",
+      as_bad (_("Ignoring attempt to re-define symbol `%s'."),
               S_GET_NAME (symbolP));
       ignore_rest_of_line ();
       return;
@@ -1087,7 +1085,7 @@ i370_elf_lcomm (int unused ATTRIBUTE_UNUSED)
 
   if (S_GET_VALUE (symbolP) && S_GET_VALUE (symbolP) != (valueT) size)
     {
-      as_bad ("Length of .lcomm \"%s\" is already %ld. Not changed to %ld.",
+      as_bad (_("Length of .lcomm \"%s\" is already %ld. Not changed to %ld."),
               S_GET_NAME (symbolP),
               (long) S_GET_VALUE (symbolP),
               (long) size);
@@ -1106,7 +1104,7 @@ i370_elf_lcomm (int unused ATTRIBUTE_UNUSED)
 	;
       if (align != 1)
         {
-          as_bad ("Common alignment not a power of 2");
+          as_bad (_("Common alignment not a power of 2"));
           ignore_rest_of_line ();
           return;
         }
@@ -1244,7 +1242,7 @@ i370_make_relative (expressionS *exx, expressionS *baseaddr)
        exx->X_add_number += baseaddr->X_add_number;
     }
   else
-    as_bad ("Missing or bad .using directive");
+    as_bad (_("Missing or bad .using directive"));
 }
 /* Add an expression to the literal pool.  */
 
@@ -1289,7 +1287,7 @@ add_to_lit_pool (expressionS *exx, char *name, int sz)
   if (lit_count == next_literal_pool_place) /* new entry */
     {
       if (next_literal_pool_place > MAX_LITERAL_POOL_SIZE)
-	as_bad ("Literal Pool Overflow");
+	as_bad (_("Literal Pool Overflow"));
 
       literals[next_literal_pool_place].exp = *exx;
       literals[next_literal_pool_place].size = sz;
@@ -1522,23 +1520,25 @@ i370_addr_cons (expressionS *exp)
       /* Get rid of pesky quotes.  */
       if ('\'' == *input_line_pointer)
 	{
-	  char * close;
+	  char * clse;
+
 	  ++input_line_pointer;
-	  close = strchr (input_line_pointer, '\'');
-	  if (close)
-	    *close= ' ';
+	  clse = strchr (input_line_pointer, '\'');
+	  if (clse)
+	    *clse= ' ';
 	  else
-	    as_bad ("missing end-quote");
+	    as_bad (_("missing end-quote"));
 	}
       if ('\"' == *input_line_pointer)
 	{
-	  char * close;
+	  char * clse;
+
 	  ++input_line_pointer;
-	  close = strchr (input_line_pointer, '\"');
-	  if (close)
-	    *close= ' ';
+	  clse = strchr (input_line_pointer, '\"');
+	  if (clse)
+	    *clse= ' ';
 	  else
-	    as_bad ("missing end-quote");
+	    as_bad (_("missing end-quote"));
 	}
       if (('X' == name[0]) || ('E' == name[0]) || ('D' == name[0]))
 	{
@@ -1585,14 +1585,14 @@ i370_addr_cons (expressionS *exp)
       /* O_big occurs when more than 4 bytes worth gets parsed.  */
       if ((exp->X_op != O_constant) && (exp->X_op != O_big))
 	{
-	  as_bad ("expression not a constant");
+	  as_bad (_("expression not a constant"));
 	  return FALSE;
 	}
       add_to_lit_pool (exp, 0x0, cons_len);
       break;
 
     default:
-      as_bad ("Unknown/unsupported address literal type");
+      as_bad (_("Unknown/unsupported address literal type"));
       return FALSE;
     }
 
@@ -1615,11 +1615,11 @@ i370_ltorg (int ignore ATTRIBUTE_UNUSED)
   if (strncmp (now_seg->name, ".text", 5))
     {
       if (i370_other_section == undefined_section)
-	as_bad (".ltorg without prior .using in section %s",
+	as_bad (_(".ltorg without prior .using in section %s"),
 		now_seg->name);
 
       if (i370_other_section != now_seg)
-	as_bad (".ltorg in section %s paired to .using in section %s",
+	as_bad (_(".ltorg in section %s paired to .using in section %s"),
 		now_seg->name, i370_other_section->name);
     }
 
@@ -1642,7 +1642,7 @@ i370_ltorg (int ignore ATTRIBUTE_UNUSED)
   else if (2 == biggest_literal_size) biggest_align = 1;
   else if (4 == biggest_literal_size) biggest_align = 2;
   else if (8 == biggest_literal_size) biggest_align = 3;
-  else as_bad ("bad alignment of %d bytes in literal pool", biggest_literal_size);
+  else as_bad (_("bad alignment of %d bytes in literal pool"), biggest_literal_size);
   if (0 == biggest_align) biggest_align = 1;
 
   /* Align pool for short, word, double word accesses.  */
@@ -1666,7 +1666,7 @@ i370_ltorg (int ignore ATTRIBUTE_UNUSED)
 	case 1:
 	  current_poolP = byte_poolP; break;
 	default:
-	  as_bad ("bad literal size\n");
+	  as_bad (_("bad literal size\n"));
 	}
       if (NULL == current_poolP)
 	continue;
@@ -1740,7 +1740,7 @@ i370_using (int ignore ATTRIBUTE_UNUSED)
   if (O_constant != baseaddr.X_op
       && O_symbol != baseaddr.X_op
       && O_uminus != baseaddr.X_op)
-    as_bad (".using: base address expression illegal or too complex");
+    as_bad (_(".using: base address expression illegal or too complex"));
 
   if (*input_line_pointer != '\0') ++input_line_pointer;
 
@@ -1775,7 +1775,7 @@ i370_drop (int ignore ATTRIBUTE_UNUSED)
   if (0 == strncmp (now_seg->name, ".text", 5))
     {
       if (iregno != i370_using_text_regno)
-	as_bad ("droping register %d in section %s does not match using register %d",
+	as_bad (_("droping register %d in section %s does not match using register %d"),
 		iregno, now_seg->name, i370_using_text_regno);
 
       i370_using_text_regno = -1;
@@ -1784,11 +1784,11 @@ i370_drop (int ignore ATTRIBUTE_UNUSED)
   else
     {
       if (iregno != i370_using_other_regno)
-	as_bad ("droping register %d in section %s does not match using register %d",
+	as_bad (_("droping register %d in section %s does not match using register %d"),
 		iregno, now_seg->name, i370_using_other_regno);
 
       if (i370_other_section != now_seg)
-	as_bad ("droping register %d in section %s previously used in section %s",
+	as_bad (_("droping register %d in section %s previously used in section %s"),
 		iregno, now_seg->name, i370_other_section->name);
 
       i370_using_other_regno = -1;
@@ -1844,7 +1844,7 @@ i370_macro (char *str, const struct i370_macro *macro)
 
   if (count != macro->operands)
     {
-      as_bad ("wrong number of operands");
+      as_bad (_("wrong number of operands"));
       return;
     }
 
@@ -1894,7 +1894,7 @@ i370_macro (char *str, const struct i370_macro *macro)
 void
 md_assemble (char *str)
 {
-  char *s, *opcode_str;
+  char *s;
   const struct i370_opcode *opcode;
   i370_insn_t insn;
   const unsigned char *opindex_ptr;
@@ -1915,7 +1915,6 @@ md_assemble (char *str)
     ;
   if (*s != '\0')
     *s++ = '\0';
-  opcode_str = str;
 
   /* Look up the opcode in the hash table.  */
   opcode = (const struct i370_opcode *) hash_find (i370_hash, str);
@@ -1923,10 +1922,10 @@ md_assemble (char *str)
     {
       const struct i370_macro *macro;
 
-      assert (i370_macro_hash);
+      gas_assert (i370_macro_hash);
       macro = (const struct i370_macro *) hash_find (i370_macro_hash, str);
       if (macro == (const struct i370_macro *) NULL)
-        as_bad ("Unrecognized opcode: `%s'", str);
+        as_bad (_("Unrecognized opcode: `%s'"), str);
       else
 	i370_macro (s, macro);
 
@@ -2033,12 +2032,10 @@ md_assemble (char *str)
   for (opindex_ptr = opcode->operands; *opindex_ptr != 0; opindex_ptr++)
     {
       const struct i370_operand *operand;
-      const char *errmsg;
       char *hold;
       expressionS ex;
 
       operand = &i370_operands[*opindex_ptr];
-      errmsg = NULL;
 
       /* If this is an index operand, and we are skipping it,
 	 just insert a zero.  */
@@ -2071,7 +2068,7 @@ md_assemble (char *str)
 		basereg = i370_using_other_regno;
             }
           if (0 > basereg)
-	    as_bad ("not using any base register");
+	    as_bad (_("not using any base register"));
 
           insn = i370_insert_operand (insn, operand, basereg);
           continue;
@@ -2101,7 +2098,7 @@ md_assemble (char *str)
             }
 
           if (! register_name (&ex))
-	    as_bad ("expecting a register for operand %d",
+	    as_bad (_("expecting a register for operand %d"),
 		    (int) (opindex_ptr - opcode->operands + 1));
         }
 
@@ -2125,9 +2122,9 @@ md_assemble (char *str)
 	ex.X_add_number --;
 
       if (ex.X_op == O_illegal)
-        as_bad ("illegal operand");
+        as_bad (_("illegal operand"));
       else if (ex.X_op == O_absent)
-        as_bad ("missing operand");
+        as_bad (_("missing operand"));
       else if (ex.X_op == O_register)
 	insn = i370_insert_operand (insn, operand, ex.X_add_number);
       else if (ex.X_op == O_constant)
@@ -2207,7 +2204,7 @@ md_assemble (char *str)
     ++str;
 
   if (*str != '\0')
-    as_bad ("junk at end of line: `%s'", str);
+    as_bad (_("junk at end of line: `%s'"), str);
 
   /* Write out the instruction.  */
   f = frag_more (opcode->len);
@@ -2222,7 +2219,7 @@ md_assemble (char *str)
       else
 	{
 	  /* Not used --- don't have any 8 byte instructions.  */
-	  as_bad ("Internal Error: bad instruction length");
+	  as_bad (_("Internal Error: bad instruction length"));
 	  md_number_to_chars ((f + 4), insn.i[1], opcode->len -4);
 	}
     }
@@ -2668,4 +2665,3 @@ const pseudo_typeS md_pseudo_table[] =
 
   { NULL,       NULL,		0 }
 };
-

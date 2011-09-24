@@ -1,5 +1,5 @@
 /* resbin.c -- manipulate the Windows binary resource format.
-   Copyright 1997, 1998, 1999, 2002, 2003, 2007
+   Copyright 1997, 1998, 1999, 2002, 2003, 2005, 2006, 2007, 2009, 2010
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
@@ -227,7 +227,7 @@ bin_to_res_menu (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type length)
 {
   rc_res_resource *r;
   rc_menu *m;
-  rc_uint_type version, read;
+  rc_uint_type version, got;
 
   r = (rc_res_resource *) res_alloc (sizeof *r);
   r->type = RES_TYPE_MENU;
@@ -245,7 +245,7 @@ bin_to_res_menu (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type length)
       if (length < 4)
 	toosmall (_("menu header"));
       m->help = 0;
-      m->items = bin_to_res_menuitems (wrbfd, data + 4, length - 4, &read);
+      m->items = bin_to_res_menuitems (wrbfd, data + 4, length - 4, &got);
     }
   else if (version == 1)
     {
@@ -258,7 +258,7 @@ bin_to_res_menu (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type length)
       if (offset + 4 >= length)
 	toosmall (_("menuex offset"));
       m->items = bin_to_res_menuexitems (wrbfd, data + 4 + offset,
-					 length - (4 + offset), &read);
+					 length - (4 + offset), &got);
     }
   else
     fatal (_("unsupported menu version %d"), (int) version);
@@ -270,14 +270,14 @@ bin_to_res_menu (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type length)
 
 static rc_menuitem *
 bin_to_res_menuitems (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type length,
-		      rc_uint_type *read)
+		      rc_uint_type *got)
 {
   rc_menuitem *first, **pp;
 
   first = NULL;
   pp = &first;
 
-  *read = 0;
+  *got = 0;
 
   while (length > 0)
     {
@@ -334,7 +334,7 @@ bin_to_res_menuitems (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type len
 
       data += itemlen;
       length -= itemlen;
-      *read += itemlen;
+      *got += itemlen;
 
       if ((flags & MENUITEM_ENDMENU) != 0)
 	return first;
@@ -347,14 +347,14 @@ bin_to_res_menuitems (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type len
 
 static rc_menuitem *
 bin_to_res_menuexitems (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type length,
-			rc_uint_type *read)
+			rc_uint_type *got)
 {
   rc_menuitem *first, **pp;
 
   first = NULL;
   pp = &first;
 
-  *read = 0;
+  *got = 0;
 
   while (length > 0)
     {
@@ -408,7 +408,7 @@ bin_to_res_menuexitems (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type l
 
       data += itemlen;
       length -= itemlen;
-      *read += itemlen;
+      *got += itemlen;
 
       if ((flags & 0x80) != 0)
 	return first;
@@ -1357,11 +1357,7 @@ static rc_uint_type
 res_to_bin_accelerator (windres_bfd *wrbfd, rc_uint_type off,
 			const rc_accelerator *accelerators)
 {
-  bindata *first, **pp;
   const rc_accelerator *a;
-
-  first = NULL;
-  pp = &first;
 
   for (a = accelerators; a != NULL; a = a->next)
     {

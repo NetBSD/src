@@ -36,8 +36,10 @@ namespace gold
 template<typename Stringpool_char>
 Stringpool_template<Stringpool_char>::Stringpool_template()
   : string_set_(), key_to_offset_(), strings_(), strtab_size_(0),
-    zero_null_(true)
+    zero_null_(true), optimize_(false), offset_(sizeof(Stringpool_char))
 {
+  if (parameters->options_valid() && parameters->options().optimize() >= 2)
+    this->optimize_ = true;
 }
 
 template<typename Stringpool_char>
@@ -85,28 +87,6 @@ Stringpool_template<Stringpool_char>::reserve(unsigned int n)
   this->string_set_.swap(new_string_set);
 }
 
-// Return the length of a string of arbitrary character type.
-
-template<typename Stringpool_char>
-size_t
-Stringpool_template<Stringpool_char>::string_length(const Stringpool_char* p)
-{
-  size_t len = 0;
-  for (; *p != 0; ++p)
-    ++len;
-  return len;
-}
-
-// Specialize string_length for char.  Maybe we could just use
-// std::char_traits<>::length?
-
-template<>
-inline size_t
-Stringpool_template<char>::string_length(const char* p)
-{
-  return strlen(p);
-}
-
 // Compare two strings of arbitrary character type for equality.
 
 template<typename Stringpool_char>
@@ -151,16 +131,7 @@ size_t
 Stringpool_template<Stringpool_char>::string_hash(const Stringpool_char* s,
 						  size_t length)
 {
-  // This is the hash function used by the dynamic linker for
-  // DT_GNU_HASH entries.  I compared this to a Fowler/Noll/Vo hash
-  // for a C++ program with 385,775 global symbols.  This hash
-  // function was very slightly worse.  However, it is much faster to
-  // compute.  Overall wall clock time was a win.
-  const unsigned char* p = reinterpret_cast<const unsigned char*>(s);
-  size_t h = 5381;
-  for (size_t i = 0; i < length * sizeof(Stringpool_char); ++i)
-    h = h * 33 + *p++;
-  return h;
+  return gold::string_hash<Stringpool_char>(s, length);
 }
 
 // Add the string S to the list of canonical strings.  Return a
@@ -198,7 +169,7 @@ Stringpool_template<Stringpool_char>::add_string(const Stringpool_char* s,
     alc = sizeof(Stringdata) + buffer_size;
   else
     {
-      Stringdata *psd = this->strings_.front();
+      Stringdata* psd = this->strings_.front();
       if (len > psd->alc - psd->len)
 	alc = sizeof(Stringdata) + buffer_size;
       else
@@ -214,7 +185,7 @@ Stringpool_template<Stringpool_char>::add_string(const Stringpool_char* s,
 	}
     }
 
-  Stringdata *psd = reinterpret_cast<Stringdata*>(new char[alc]);
+  Stringdata* psd = reinterpret_cast<Stringdata*>(new char[alc]);
   psd->alc = alc - sizeof(Stringdata);
   memcpy(psd->data, s, len - sizeof(Stringpool_char));
   memset(psd->data + len - sizeof(Stringpool_char), 0,
@@ -237,6 +208,23 @@ Stringpool_template<Stringpool_char>::add(const Stringpool_char* s, bool copy,
                                           Key* pkey)
 {
   return this->add_with_length(s, string_length(s), copy, pkey);
+}
+
+// Add a new key offset entry.
+
+template<typename Stringpool_char>
+void
+Stringpool_template<Stringpool_char>::new_key_offset(size_t length)
+{
+  section_offset_type offset;
+  if (this->zero_null_ && length == 0)
+    offset = 0;
+  else
+    {
+      offset = this->offset_;
+      this->offset_ += (length + 1) * sizeof(Stringpool_char);
+    }
+  this->key_to_offset_.push_back(offset);
 }
 
 template<typename Stringpool_char>
@@ -266,7 +254,7 @@ Stringpool_template<Stringpool_char>::add_with_length(const Stringpool_char* s,
 	{
 	  // We just added the string.  The key value has now been
 	  // used.
-	  this->key_to_offset_.push_back(0);
+	  this->new_key_offset(length);
 	}
       else
 	{
@@ -292,7 +280,7 @@ Stringpool_template<Stringpool_char>::add_with_length(const Stringpool_char* s,
       return p->first.string;
     }
 
-  this->key_to_offset_.push_back(0);
+  this->new_key_offset(length);
 
   hk.string = this->add_string(s, length);
   // The contents of the string stay the same, so we don't need to
@@ -395,21 +383,10 @@ Stringpool_template<Stringpool_char>::set_string_offsets()
   // the strtab size, and gives a relatively small benefit (it's
   // typically rare for a symbol to be a suffix of another), we only
   // take the time to sort when the user asks for heavy optimization.
-  if (parameters->options().optimize() < 2)
+  if (!this->optimize_)
     {
-      for (typename String_set_type::iterator curr = this->string_set_.begin();
-           curr != this->string_set_.end();
-           curr++)
-        {
-	  section_offset_type* poff = &this->key_to_offset_[curr->second - 1];
-          if (this->zero_null_ && curr->first.string[0] == 0)
-            *poff = 0;
-          else
-            {
-              *poff = offset;
-              offset += (curr->first.length + 1) * charsize;
-            }
-        }
+      // If we are not optimizing, the offsets are already assigned.
+      offset = this->offset_;
     }
   else
     {

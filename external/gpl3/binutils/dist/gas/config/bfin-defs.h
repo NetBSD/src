@@ -1,5 +1,5 @@
 /* bfin-defs.h ADI Blackfin gas header file
-   Copyright 2005, 2006, 2007
+   Copyright 2005, 2006, 2007, 2009, 2010
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -20,10 +20,10 @@
    02110-1301, USA.  */
 
 #ifndef BFIN_PARSE_H
-#define BFIN_PARSE_H  
+#define BFIN_PARSE_H
 
 #define PCREL	1
-#define CODE_FRAG_SIZE 4096  /* 1 page.  */  
+#define CODE_FRAG_SIZE 4096  /* 1 page.  */
 
 
 /* Definition for all status bits.  */
@@ -36,7 +36,7 @@ typedef enum
   c_uimm2,
   c_uimm3,
   c_imm3,
-  c_pcrel4, 
+  c_pcrel4,
   c_imm4,
   c_uimm4s4,
   c_uimm4,
@@ -44,7 +44,7 @@ typedef enum
   c_negimm5s4,
   c_imm5,
   c_uimm5,
-  c_imm6,  
+  c_imm6,
   c_imm7,
   c_imm8,
   c_uimm8,
@@ -52,7 +52,7 @@ typedef enum
   c_uimm8s4,
   c_pcrel8s4,
   c_lppcrel10,
-  c_pcrel10, 
+  c_pcrel10,
   c_pcrel12,
   c_imm16s4,
   c_luimm16,
@@ -60,9 +60,9 @@ typedef enum
   c_huimm16,
   c_rimm16,
   c_imm16s2,
-  c_uimm16s4, 
+  c_uimm16s4,
   c_uimm16,
-  c_pcrel24 
+  c_pcrel24
 } const_forms_t;
 
 
@@ -82,24 +82,25 @@ typedef enum
 #define T_NOGROUP     0xa0
 
 /* Flags.  */
-#define F_REG_ALL    0x1000
-#define F_REG_HIGH   0x2000  /* Half register: high half.  */
+#define F_REG_NONE 0
+#define F_REG_HIGH 1
+#define F_REG_LOW 2
 
 enum machine_registers
 {
-  REG_R0    = T_REG_R, REG_R1, REG_R2, REG_R3, REG_R4, REG_R5, REG_R6, REG_R7, 
+  REG_R0    = T_REG_R, REG_R1, REG_R2, REG_R3, REG_R4, REG_R5, REG_R6, REG_R7,
   REG_P0    = T_REG_P, REG_P1, REG_P2, REG_P3, REG_P4, REG_P5, REG_SP, REG_FP,
   REG_I0    = T_REG_I, REG_I1, REG_I2, REG_I3,
-  REG_M0    = T_REG_M, REG_M1, REG_M2, REG_M3, 
+  REG_M0    = T_REG_M, REG_M1, REG_M2, REG_M3,
   REG_B0    = T_REG_B, REG_B1, REG_B2, REG_B3,
-  REG_L0    = T_REG_L, REG_L1, REG_L2, REG_L3, 
+  REG_L0    = T_REG_L, REG_L1, REG_L2, REG_L3,
   REG_A0x   = T_REG_A, REG_A0w, REG_A1x, REG_A1w,
   REG_ASTAT = 0x46,
   REG_RETS  = 0x47,
   REG_LC0   = 0x60, REG_LT0, REG_LB0,  REG_LC1, REG_LT1, REG_LB1,
               REG_CYCLES, REG_CYCLES2,
   REG_USP   = 0x70, REG_SEQSTAT, REG_SYSCFG,
-	      REG_RETI, REG_RETX, REG_RETN, REG_RETE, REG_EMUDAT, 
+	      REG_RETI, REG_RETX, REG_RETN, REG_RETE, REG_EMUDAT,
 
 /* These don't have groups.  */
   REG_sftreset = T_NOGROUP, REG_omode, REG_excause, REG_emucause,
@@ -107,9 +108,9 @@ enum machine_registers
   REG_A0       = 0xc0, REG_A1, REG_CC,
 /* Pseudo registers, used only for distinction from symbols.  */
 		 REG_RL0, REG_RL1, REG_RL2, REG_RL3,
-		 REG_RL4, REG_RL5, REG_RL6, REG_RL7, 
+		 REG_RL4, REG_RL5, REG_RL6, REG_RL7,
 		 REG_RH0, REG_RH1, REG_RH2, REG_RH3,
-		 REG_RH4, REG_RH5, REG_RH6, REG_RH7, 
+		 REG_RH4, REG_RH5, REG_RH6, REG_RH7,
 		 REG_LASTREG
 };
 
@@ -119,7 +120,10 @@ enum statusflags
 {
   S_AZ = 0,
   S_AN,
+  S_AC0_COPY,
+  S_V_COPY,
   S_AQ = 6,
+  S_RND_MOD = 8,
   S_AC0 = 12,
   S_AC1,
   S_AV0 = 16,
@@ -128,7 +132,7 @@ enum statusflags
   S_AV1S,
   S_V = 24,
   S_VS = 25
-}; 
+};
 
 
 enum reg_class
@@ -180,12 +184,12 @@ enum reg_class
 
 #define REG_SAME(a, b)   ((a).regno == (b).regno)
 #define REG_EQUAL(a, b)  (((a).regno & CODE_MASK) == ((b).regno & CODE_MASK))
-#define REG_CLASS(a)     ((a.regno) & 0xf0)
+#define REG_CLASS(a)     ((a).regno & 0xf0)
 #define IS_A1(a)         ((a).regno == REG_A1)
-#define IS_H(a)          ((a).regno & F_REG_HIGH ? 1: 0)
-#define IS_EVEN(r)       (r.regno % 2 == 0)
+#define IS_H(a)          ((a).flags & F_REG_HIGH ? 1: 0)
+#define IS_EVEN(r)       ((r).regno % 2 == 0)
 #define IS_HCOMPL(a, b)  (REG_EQUAL(a, b) && \
-                         ((a).regno & F_REG_HIGH) != ((b).regno & F_REG_HIGH))
+                         ((a).flags & F_REG_HIGH) != ((b).flags & F_REG_HIGH))
 
 /* register type checking.  */
 #define _TYPECHECK(r, x) (((r).regno & CLASS_MASK) == T_REG_##x)
@@ -199,12 +203,32 @@ enum reg_class
 #define IS_BREG(r)       (((r).regno & 0xf4) == T_REG_B)
 #define IS_LREG(r)       (((r).regno & 0xf4) == T_REG_L)
 #define IS_CREG(r)       ((r).regno == REG_LC0 || (r).regno == REG_LC1)
+#define IS_EMUDAT(r)     ((r).regno == REG_EMUDAT)
 #define IS_ALLREG(r)     ((r).regno < T_NOGROUP)
+
+#define IS_GENREG(r) \
+  (IS_DREG (r) || IS_PREG (r)				\
+   || (r).regno == REG_A0x || (r).regno == REG_A0w	\
+   || (r).regno == REG_A1x || (r).regno == REG_A1w)
+
+#define IS_DAGREG(r) \
+  (IS_IREG (r) || IS_MREG (r) || IS_BREG (r) || IS_LREG (r))
+
+#define IS_SYSREG(r) \
+  ((r).regno == REG_ASTAT || (r).regno == REG_SEQSTAT		\
+   || (r).regno == REG_SYSCFG || (r).regno == REG_RETI		\
+   || (r).regno == REG_RETX || (r).regno == REG_RETN		\
+   || (r).regno == REG_RETE || (r).regno == REG_RETS		\
+   || (r).regno == REG_LC0 || (r).regno == REG_LC1		\
+   || (r).regno == REG_LT0 || (r).regno == REG_LT1		\
+   || (r).regno == REG_LB0 || (r).regno == REG_LB1		\
+   || (r).regno == REG_CYCLES || (r).regno == REG_CYCLES2	\
+   || (r).regno == REG_EMUDAT)
 
 /* Expression value macros.  */
 
 typedef enum
-{ 
+{
   ones_compl,
   twos_compl,
   mult,
@@ -222,7 +246,7 @@ typedef enum
 struct expressionS;
 
 #define SYMBOL_T       symbolS*
- 
+
 struct expression_cell
 {
   int value;
@@ -238,14 +262,14 @@ struct bfin_insn
   int pcrel;
   int reloc;
 };
-    
+
 #define INSTR_T struct bfin_insn*
-#define EXPR_T  struct expression_cell* 
+#define EXPR_T  struct expression_cell*
 
 typedef struct expr_node_struct Expr_Node;
- 
+
 extern INSTR_T gencode (unsigned long x);
-extern INSTR_T conscode (INSTR_T head, INSTR_T tail);   
+extern INSTR_T conscode (INSTR_T head, INSTR_T tail);
 extern INSTR_T conctcode (INSTR_T head, INSTR_T tail);
 extern INSTR_T note_reloc
        (INSTR_T code, Expr_Node *, int reloc,int pcrel);
@@ -253,9 +277,9 @@ extern INSTR_T note_reloc1
        (INSTR_T code, const char * sym, int reloc, int pcrel);
 extern INSTR_T note_reloc2
        (INSTR_T code, const char *symbol, int reloc, int value, int pcrel);
- 
+
 /* Types of expressions.  */
-typedef enum 
+typedef enum
 {
   Expr_Node_Binop,		/* Binary operator.  */
   Expr_Node_Unop,		/* Unary operator.  */
@@ -265,7 +289,7 @@ typedef enum
 } Expr_Node_Type;
 
 /* Types of operators.  */
-typedef enum 
+typedef enum
 {
   Expr_Op_Type_Add,
   Expr_Op_Type_Sub,
@@ -287,7 +311,7 @@ typedef enum
 typedef union
 {
   const char *s_value;		/* if relocation symbol, the text.  */
-  int i_value;			/* if constant, the value.  */
+  long long i_value;		/* if constant, the value.  */
   Expr_Op_Type op_value;	/* if operator, the value.  */
 } Expr_Node_Value;
 
@@ -302,17 +326,17 @@ struct expr_node_struct
 
 
 /* Operations on the expression node.  */
-Expr_Node *Expr_Node_Create (Expr_Node_Type type, 
-		         Expr_Node_Value value, 
-			 Expr_Node *Left_Child, 
+Expr_Node *Expr_Node_Create (Expr_Node_Type type,
+		         Expr_Node_Value value,
+			 Expr_Node *Left_Child,
 			 Expr_Node *Right_Child);
 
 /* Generate the reloc structure as a series of instructions.  */
 INSTR_T Expr_Node_Gen_Reloc (Expr_Node *head, int parent_reloc);
- 
+
 #define MKREF(x)	mkexpr (0,x)
 #define ALLOCATE(x)	malloc (x)
- 
+
 #define NULL_CODE ((INSTR_T) 0)
 
 #ifndef EXPR_VALUE
@@ -374,6 +398,7 @@ EXPR_T mkexpr (int, SYMBOL_T);
 /* Defined in bfin-lex.l.  */
 void set_start_state (void);
 
+extern int insn_regmask (int, int);
 #ifdef __cplusplus
 }
 #endif

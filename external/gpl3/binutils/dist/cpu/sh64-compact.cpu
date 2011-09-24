@@ -1,6 +1,6 @@
 ; Hitachi SHcompact instruction set description.  -*- Scheme -*-
 ;
-; Copyright 2000, 2007 Free Software Foundation, Inc.
+; Copyright 2000, 2007, 2009 Free Software Foundation, Inc.
 ;
 ; Contributed by Red Hat Inc; developed under contract from Hitachi
 ; Semiconductor (America) Inc.
