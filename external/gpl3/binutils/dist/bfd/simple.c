@@ -1,5 +1,5 @@
 /* simple.c -- BFD simple client routines
-   Copyright 2002, 2003, 2004, 2005, 2007, 2008
+   Copyright 2002, 2003, 2004, 2005, 2007, 2008, 2009
    Free Software Foundation, Inc.
    Contributed by MontaVista Software, Inc.
 
@@ -82,10 +82,7 @@ simple_dummy_unattached_reloc (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
 
 static bfd_boolean
 simple_dummy_multiple_definition (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
-				  const char *name ATTRIBUTE_UNUSED,
-				  bfd *obfd ATTRIBUTE_UNUSED,
-				  asection *osec ATTRIBUTE_UNUSED,
-				  bfd_vma oval ATTRIBUTE_UNUSED,
+				  struct bfd_link_hash_entry *h ATTRIBUTE_UNUSED,
 				  bfd *nbfd ATTRIBUTE_UNUSED,
 				  asection *nsec ATTRIBUTE_UNUSED,
 				  bfd_vma nval ATTRIBUTE_UNUSED)
@@ -109,7 +106,7 @@ simple_save_output_info (bfd *abfd ATTRIBUTE_UNUSED,
 			 asection *section,
 			 void *ptr)
 {
-  struct saved_output_info *output_info = ptr;
+  struct saved_output_info *output_info = (struct saved_output_info *) ptr;
   output_info[section->index].offset = section->output_offset;
   output_info[section->index].section = section->output_section;
   if ((section->flags & SEC_DEBUGGING) != 0
@@ -125,7 +122,7 @@ simple_restore_output_info (bfd *abfd ATTRIBUTE_UNUSED,
 			    asection *section,
 			    void *ptr)
 {
-  struct saved_output_info *output_info = ptr;
+  struct saved_output_info *output_info = (struct saved_output_info *) ptr;
   section->output_offset = output_info[section->index].offset;
   section->output_section = output_info[section->index].section;
 }
@@ -167,17 +164,9 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
   if ((abfd->flags & (HAS_RELOC | EXEC_P | DYNAMIC)) != HAS_RELOC
       || ! (sec->flags & SEC_RELOC))
     {
-      bfd_size_type amt = sec->rawsize > sec->size ? sec->rawsize : sec->size;
-      bfd_size_type size = sec->rawsize ? sec->rawsize : sec->size;
-
-      if (outbuf == NULL)
-	contents = bfd_malloc (amt);
-      else
-	contents = outbuf;
-
-      if (contents)
-	bfd_get_section_contents (abfd, sec, contents, 0, size);
-
+      contents = outbuf;
+      if (!bfd_get_full_section_contents (abfd, sec, &contents))
+	return NULL;
       return contents;
     }
 
@@ -210,7 +199,8 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
   data = NULL;
   if (outbuf == NULL)
     {
-      data = bfd_malloc (sec->size);
+      bfd_size_type amt = sec->rawsize > sec->size ? sec->rawsize : sec->size;
+      data = (bfd_byte *) bfd_malloc (amt);
       if (data == NULL)
 	return NULL;
       outbuf = data;
@@ -240,7 +230,7 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
       _bfd_generic_link_add_symbols (abfd, &link_info);
 
       storage_needed = bfd_get_symtab_upper_bound (abfd);
-      symbol_table = bfd_malloc (storage_needed);
+      symbol_table = (asymbol **) bfd_malloc (storage_needed);
       bfd_canonicalize_symtab (abfd, symbol_table);
     }
   else

@@ -1,6 +1,6 @@
 /* BFD back-end for Intel 960 COFF files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2000, 2001,
-   2002, 2003, 2004, 2007, 2008  Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2007, 2008  Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -488,14 +488,14 @@ coff_i960_relocate_section (output_bfd, info, input_bfd, input_section,
 
       if (howto->type == R_OPTCALL && ! info->relocatable && symndx != -1)
 	{
-	  int class;
+	  int class_val;
 
 	  if (h != NULL)
-	    class = h->class;
+	    class_val = h->symbol_class;
 	  else
-	    class = sym->n_sclass;
+	    class_val = sym->n_sclass;
 
-	  switch (class)
+	  switch (class_val)
 	    {
 	    case C_NULL:
 	      /* This symbol is apparently not from a COFF input file.

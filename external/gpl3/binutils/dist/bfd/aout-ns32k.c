@@ -1,6 +1,6 @@
 /* BFD back-end for ns32k a.out-ish binaries.
    Copyright 1990, 1991, 1992, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
-   2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+   2002, 2003, 2005, 2006, 2007, 2010 Free Software Foundation, Inc.
    Contributed by Ian Dall (idall@eleceng.adelaide.edu.au).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -214,7 +214,7 @@ MY (bfd_reloc_type_lookup) (bfd *abfd, bfd_reloc_code_real_type code)
 
   BFD_ASSERT (ext == 0);
   if (code == BFD_RELOC_CTOR)
-    switch (bfd_get_arch_info (abfd)->bits_per_address)
+    switch (bfd_arch_bits_per_address (abfd))
       {
       case 32:
 	code = BFD_RELOC_32;

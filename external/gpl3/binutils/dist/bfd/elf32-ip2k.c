@@ -1,5 +1,5 @@
 /* Ubicom IP2xxx specific support for 32-bit ELF
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -347,7 +347,7 @@ ip2k_is_switch_table_128 (bfd *abfd ATTRIBUTE_UNUSED,
 			  bfd_byte *contents)
 {
   bfd_byte code[4];
-  int index = 0;
+  int table_index = 0;
   
   /* Check current page-jmp.  */
   if (addr + 4 > sec->size)
@@ -369,13 +369,13 @@ ip2k_is_switch_table_128 (bfd *abfd ATTRIBUTE_UNUSED,
       ip2k_get_mem (abfd, contents + addr - 4, 4, code);
       if ((IS_ADD_W_WREG_OPCODE (code + 0))
 	  && (IS_ADD_PCL_W_OPCODE (code + 2)))
-	return index;
+	return table_index;
 
       if ((! IS_PAGE_OPCODE (code + 0))
 	  || (! IS_JMP_OPCODE (code + 2)))
 	return -1;
 
-      index++;
+      table_index++;
       addr -= 4;
     }
 }
@@ -427,7 +427,7 @@ ip2k_is_switch_table_256 (bfd *abfd ATTRIBUTE_UNUSED,
 			  bfd_byte *contents)
 {
   bfd_byte code[16];
-  int index = 0;
+  int table_index = 0;
   
   /* Check current page-jmp.  */
   if (addr + 4 > sec->size)
@@ -454,7 +454,7 @@ ip2k_is_switch_table_256 (bfd *abfd ATTRIBUTE_UNUSED,
 	  && (IS_INC_1SP_OPCODE (code + 10))
 	  && (IS_PAGE_OPCODE (code + 12))
 	  && (IS_JMP_OPCODE (code + 14)))
-	return index;
+	return table_index;
 
       if ((IS_ADD_W_WREG_OPCODE (code + 2))
 	  && (IS_SNC_OPCODE (code + 4))
@@ -463,13 +463,13 @@ ip2k_is_switch_table_256 (bfd *abfd ATTRIBUTE_UNUSED,
 	  && (IS_SNC_OPCODE (code + 10))
 	  && (IS_INC_1SP_OPCODE (code + 12))
 	  && (IS_JMP_OPCODE (code + 14)))
-	return index;
+	return table_index;
       
       if ((! IS_PAGE_OPCODE (code + 0))
 	  || (! IS_JMP_OPCODE (code + 2)))
 	return -1;
 
-      index++;
+      table_index++;
       addr -= 4;
     }
 }
@@ -577,7 +577,6 @@ adjust_all_relocations (bfd *abfd,
   Elf_Internal_Shdr *symtab_hdr;
   Elf_Internal_Sym *isymbuf, *isym, *isymend;
   unsigned int shndx;
-  bfd_byte *contents;
   Elf_Internal_Rela *irel, *irelend, *irelbase;
   struct elf_link_hash_entry **sym_hashes;
   struct elf_link_hash_entry **end_hashes;
@@ -588,8 +587,6 @@ adjust_all_relocations (bfd *abfd,
   isymbuf = (Elf_Internal_Sym *) symtab_hdr->contents;
 
   shndx = _bfd_elf_section_from_bfd_section (abfd, sec);
-
-  contents = elf_section_data (sec)->this_hdr.contents;
 
   irelbase = elf_section_data (sec)->relocs;
   irelend = irelbase + sec->reloc_count;
@@ -669,9 +666,7 @@ adjust_all_relocations (bfd *abfd,
 		  if (sym_sec == sec)
 		    {
 		      const char *name;
-		      unsigned long strx;
-		      unsigned char type, other;
-		      unsigned short desc;
+		      unsigned char type;
 		      bfd_vma value;
 		      bfd_vma baseaddr = BASEADDR (sec);
 		      bfd_vma symval = BASEADDR (sym_sec) + isym->st_value
@@ -685,10 +680,7 @@ adjust_all_relocations (bfd *abfd,
 		      stabp = stabcontents + irel->r_offset - 8; 
 
 		      /* Go pullout the stab entry.  */
-		      strx  = bfd_h_get_32 (abfd, stabp + STRDXOFF);
 		      type  = bfd_h_get_8 (abfd, stabp + TYPEOFF);
-		      other = bfd_h_get_8 (abfd, stabp + OTHEROFF);
-		      desc  = bfd_h_get_16 (abfd, stabp + DESCOFF);
 		      value = bfd_h_get_32 (abfd, stabp + VALOFF);
 		      
 		      name = bfd_get_stab_name (type);
@@ -706,10 +698,7 @@ adjust_all_relocations (bfd *abfd,
 			  for (;stabp < stabend; stabp += STABSIZE)
 			    {
 			      /* Go pullout the stab entry.  */
-			      strx  = bfd_h_get_32 (abfd, stabp + STRDXOFF);
 			      type  = bfd_h_get_8 (abfd, stabp + TYPEOFF);
-			      other = bfd_h_get_8 (abfd, stabp + OTHEROFF);
-			      desc  = bfd_h_get_16 (abfd, stabp + DESCOFF);
 			      value = bfd_h_get_32 (abfd, stabp + VALOFF);
 
 			      name = bfd_get_stab_name (type);
@@ -1089,7 +1078,6 @@ ip2k_elf_relax_section (bfd *abfd,
   static bfd_boolean new_pass = FALSE;
   static bfd_boolean changed = FALSE;
   struct misc misc;
-  asection *stab;
 
   /* Assume nothing changes.  */
   *again = FALSE;
@@ -1121,18 +1109,6 @@ ip2k_elf_relax_section (bfd *abfd,
 					       link_info->keep_memory);
   if (internal_relocs == NULL)
     goto error_return;
-
-  /* Make sure the stac.rela stuff gets read in.  */
-  stab = bfd_get_section_by_name (abfd, ".stab");
-
-  if (stab)
-    {
-      /* So stab does exits.  */
-      Elf_Internal_Rela * irelbase;
-
-      irelbase = _bfd_elf_link_read_relocs (abfd, stab, NULL, NULL,
-					    link_info->keep_memory);
-    }
 
   /* Get section contents cached copy if it exists.  */
   if (contents == NULL)
@@ -1432,7 +1408,7 @@ ip2k_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       r_type = ELF32_R_TYPE (rel->r_info);
       r_symndx = ELF32_R_SYM (rel->r_info);
-      howto  = ip2k_elf_howto_table + ELF32_R_TYPE (rel->r_info);
+      howto  = ip2k_elf_howto_table + r_type;
       h      = NULL;
       sym    = NULL;
       sec    = NULL;
@@ -1461,15 +1437,8 @@ ip2k_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
 
       if (sec != NULL && elf_discarded_section (sec))
-	{
-	  /* For relocs against symbols from removed linkonce sections,
-	     or sections discarded by a linker script, we just want the
-	     section contents zeroed.  Avoid any special processing.  */
-	  _bfd_clear_contents (howto, input_bfd, contents + rel->r_offset);
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
-	}
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rel, relend, howto, contents);
 
       if (info->relocatable)
 	continue;

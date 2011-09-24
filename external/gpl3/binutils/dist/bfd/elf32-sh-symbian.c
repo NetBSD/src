@@ -392,10 +392,9 @@ sh_symbian_process_embedded_commands (struct bfd_link_info *info, bfd * abfd,
 
 /* Scan a bfd for a .directive section, and if found process it.
    Returns TRUE upon success, FALSE otherwise.  */
-bfd_boolean bfd_elf32_sh_symbian_process_directives (struct bfd_link_info *info, bfd * abfd);
 
-bfd_boolean
-bfd_elf32_sh_symbian_process_directives (struct bfd_link_info *info, bfd * abfd)
+static bfd_boolean
+sh_symbian_process_directives (bfd *abfd, struct bfd_link_info *info)
 {
   bfd_boolean result = FALSE;
   bfd_byte *  contents;
@@ -617,18 +616,12 @@ sh_symbian_relocate_section (bfd *                  output_bfd,
 				  contents, relocs, local_syms, local_sections);
 }
 
-static bfd_boolean
-sh_symbian_check_directives (bfd *abfd, struct bfd_link_info *info)
-{
-  return bfd_elf32_sh_symbian_process_directives (info, abfd);
-}
-
 #define TARGET_LITTLE_SYM	bfd_elf32_shl_symbian_vec
 #define TARGET_LITTLE_NAME      "elf32-shl-symbian"
 
 #undef  elf_backend_relocate_section
 #define elf_backend_relocate_section	sh_symbian_relocate_section
 #undef  elf_backend_check_directives
-#define elf_backend_check_directives    sh_symbian_check_directives
+#define elf_backend_check_directives    sh_symbian_process_directives
 
 #include "elf32-target.h"

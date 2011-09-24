@@ -1,6 +1,6 @@
 /* BFD back-end for PPCbug boot records.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2006,
-   2007, 2008 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
+   2007, 2008, 2009 Free Software Foundation, Inc.
    Written by Michael Meissner, Cygnus Support, <meissner@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -475,10 +475,13 @@ ppcboot_bfd_print_private_bfd_data (abfd, farg)
 #define ppcboot_bfd_discard_group bfd_generic_discard_group
 #define ppcboot_section_already_linked \
   _bfd_generic_section_already_linked
+#define ppcboot_bfd_define_common_symbol bfd_generic_define_common_symbol
 #define ppcboot_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define ppcboot_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define ppcboot_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define ppcboot_bfd_link_just_syms _bfd_generic_link_just_syms
+#define ppcboot_bfd_copy_link_hash_symbol_type \
+  _bfd_generic_copy_link_hash_symbol_type
 #define ppcboot_bfd_final_link _bfd_generic_final_link
 #define ppcboot_bfd_link_split_section _bfd_generic_link_split_section
 #define ppcboot_get_section_contents_in_window \

@@ -1,5 +1,5 @@
 /* BFD support for the D10V processor
-   Copyright 1996, 1999, 2000, 2002, 2005, 2007
+   Copyright 1996, 1999, 2000, 2002, 2005, 2007, 2010
    Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
@@ -27,7 +27,7 @@
 static const bfd_arch_info_type d10v_ts3_info =
 {
   16,	/* 16 bits in a word.  */
-  16,	/* 16 bits in an address.  */
+  18,	/* really 16 bits in an address, but code has 18 bit range.  */
   8,	/* 8 bits in a byte.  */
   bfd_arch_d10v,
   bfd_mach_d10v_ts3,
@@ -42,14 +42,14 @@ static const bfd_arch_info_type d10v_ts3_info =
 
 static const bfd_arch_info_type d10v_ts2_info =
 {
-  16,	/* 16 bits in a word.  */
-  16,	/* 16 bits in an address.  */
-  8,	/* 8 bits in a byte.  */
+  16,
+  18,
+  8,
   bfd_arch_d10v,
   bfd_mach_d10v_ts2,
   "d10v",
   "d10v:ts2",
-  4, 	/* Section alignment power.  */
+  4,
   FALSE,
   bfd_default_compatible,
   bfd_default_scan,
@@ -58,14 +58,14 @@ static const bfd_arch_info_type d10v_ts2_info =
 
 const bfd_arch_info_type bfd_d10v_arch =
 {
-  16,	/* 16 bits in a word.  */
-  16,	/* 16 bits in an address.  */
-  8,	/* 8 bits in a byte.  */
+  16,
+  18,
+  8,
   bfd_arch_d10v,
   bfd_mach_d10v,
   "d10v",
   "d10v",
-  4, 	/* Section alignment power.  */
+  4,
   TRUE,
   bfd_default_compatible,
   bfd_default_scan,

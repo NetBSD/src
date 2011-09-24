@@ -1,6 +1,6 @@
 /* Generic BFD support for file formats.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1999, 2000, 2001, 2002,
-   2003, 2005, 2007, 2008 Free Software Foundation, Inc.
+   2003, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -149,7 +149,7 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
       bfd_size_type amt;
 
       amt = sizeof (*matching_vector) * 2 * _bfd_target_vector_entries;
-      matching_vector = bfd_malloc (amt);
+      matching_vector = (const bfd_target **) bfd_malloc (amt);
       if (!matching_vector)
 	return FALSE;
     }

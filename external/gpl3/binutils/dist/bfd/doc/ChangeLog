@@ -1,3 +1,52 @@
+2010-10-28  Matthias Klose  <doko@ubuntu.com>
+
+	* bfd.texinfo: Add directory section for info document.
+
+2010-05-07  Tristan Gingold  <gingold@adacore.com>
+
+	* Makefile.in: Regenerate with automake 1.11.1.
+
+2010-01-09  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* Makefile.in: Regenerate.
+
+2009-09-25  Martin Thuresson  <martint@google.com>
+
+	Update soruces to make alpha targets compile cleanly with
+	-Wc++-compat:
+	* chew.c: Add casts.
+
+2009-08-29  Martin Thuresson  <martin@mtme.org>
+
+	* chew.c (newentry, add_intrinsic): Rename variable new to
+	new_d.
+
+2009-08-27  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* Makefile.in: Regenerate.
+
+2009-08-22  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* Makefile.am (pdf__strip_dir, install-pdf, install-pdf-am)
+	(html__strip_dir, install-html, install-html-am): Remove.
+	* Makefile.in: Regenerate.
+
+	* Makefile.in: Regenerate.
+
+2009-05-22  Alan Modra  <amodra@bigpond.net.au>
+
+	* Makefile.in: Regenerate.
+
+2009-04-22  Anthony Green  <green@moxielogic.com>
+
+	* bfdint.texi (BFD target vector miscellaneous): Mention verilog
+	flavour.
+
+2008-11-19  Nick Clifton  <nickc@redhat.com>
+
+	* fdl.texi: Update to v1.3
+	* bfd.texinfo: Change license to v1.3.
+
 2008-08-24  Alan Modra  <amodra@bigpond.net.au>
 
 	* Makefile.am (chew.o): Delete rule.

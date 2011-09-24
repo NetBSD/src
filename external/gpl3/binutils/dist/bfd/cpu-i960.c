@@ -1,5 +1,5 @@
 /* BFD library support routines for the i960 architecture.
-   Copyright 1990, 1991, 1993, 1994, 1996, 1999, 2000, 2001, 2002, 2006,
+   Copyright 1990, 1991, 1993, 1994, 1996, 1999, 2000, 2001, 2002, 2005, 2006,
    2007 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 

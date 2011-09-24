@@ -176,7 +176,10 @@ archive, it must look through the symbols defined by the
 archive and decide which elements of the archive should be
 included in the link.  For each such element it must call the
 @code{add_archive_element} linker callback, and it must add the
-symbols from the object file to the linker hash table.
+symbols from the object file to the linker hash table.  (The
+callback may in fact indicate that a replacement BFD should be
+used, in which case the symbols from that BFD should be added
+to the linker hash table instead.)
 
 @findex _bfd_generic_link_add_archive_symbols
 In most cases the work of looking through the symbols in the
@@ -196,9 +199,13 @@ symbols of the archive element and decide whether the archive
 element should be included in the link.  If the element is to
 be included, the @code{add_archive_element} linker callback
 routine must be called with the element as an argument, and
-the elements symbols must be added to the linker hash table
+the element's symbols must be added to the linker hash table
 just as though the element had itself been passed to the
-@code{_bfd_link_add_symbols} function.
+@code{_bfd_link_add_symbols} function.  The @code{add_archive_element}
+callback has the option to indicate that it would like to
+replace the element archive with a substitute BFD, in which
+case it is the symbols of that substitute BFD that must be
+added to the linker hash table instead.
 
 When the a.out @code{_bfd_link_add_symbols} function receives an
 archive, it calls @code{_bfd_generic_link_add_archive_symbols}
@@ -210,7 +217,8 @@ non-common, definition for a previously undefined or common
 symbol) it calls the @code{add_archive_element} callback and then
 @code{aout_link_check_archive_element} calls
 @code{aout_link_add_symbols} to actually add the symbols to the
-linker hash table.
+linker hash table - possibly those of a substitute BFD, if the
+@code{add_archive_element} callback avails itself of that option.
 
 The ECOFF back end is unusual in that it does not normally
 call @code{_bfd_generic_link_add_archive_symbols}, because ECOFF
@@ -378,4 +386,35 @@ or final link.
        BFD_SEND (abfd, _section_already_linked, (abfd, sec, info))
 
 @end example
+
+@findex bfd_generic_define_common_symbol
+@subsubsection @code{bfd_generic_define_common_symbol}
+@strong{Synopsis}
+@example
+bfd_boolean bfd_generic_define_common_symbol
+   (bfd *output_bfd, struct bfd_link_info *info,
+    struct bfd_link_hash_entry *h);
+@end example
+@strong{Description}@*
+Convert common symbol @var{h} into a defined symbol.
+Return TRUE on success and FALSE on failure.
+@example
+#define bfd_define_common_symbol(output_bfd, info, h) \
+       BFD_SEND (output_bfd, _bfd_define_common_symbol, (output_bfd, info, h))
+
+@end example
+
+@findex bfd_find_version_for_sym 
+@subsubsection @code{bfd_find_version_for_sym }
+@strong{Synopsis}
+@example
+struct bfd_elf_version_tree * bfd_find_version_for_sym
+   (struct bfd_elf_version_tree *verdefs,
+    const char *sym_name, bfd_boolean *hide);
+@end example
+@strong{Description}@*
+Search an elf version script tree for symbol versioning
+info and export / don't-export status for a given symbol.
+Return non-NULL on success and NULL on failure; also sets
+the output @samp{hide} boolean parameter.
 

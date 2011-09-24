@@ -51,6 +51,7 @@ const bfd_target *sco5_core_file_p PARAMS ((bfd *abfd));
 char *sco5_core_file_failing_command PARAMS ((bfd *abfd));
 int sco5_core_file_failing_signal PARAMS ((bfd *abfd));
 #define sco5_core_file_matches_executable_p generic_core_file_matches_executable_p
+#define sco5_core_file_pid _bfd_nocore_core_file_pid
 static void swap_abort PARAMS ((void));
 
 static asection *

@@ -55,7 +55,7 @@ elf32_am33lin_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 	elf_tdata (abfd)->core_signal = bfd_get_16 (abfd, note->descdata + 12);
 
 	/* pr_pid */
-	elf_tdata (abfd)->core_pid = bfd_get_32 (abfd, note->descdata + 24);
+	elf_tdata (abfd)->core_lwpid = bfd_get_32 (abfd, note->descdata + 24);
 
 	/* pr_reg */
 	offset = 72;

@@ -132,12 +132,15 @@ enum bfd_architecture
 #define bfd_mach_mips9000              9000
 #define bfd_mach_mips10000             10000
 #define bfd_mach_mips12000             12000
+#define bfd_mach_mips14000             14000
+#define bfd_mach_mips16000             16000
 #define bfd_mach_mips16                16
 #define bfd_mach_mips5                 5
 #define bfd_mach_mips_loongson_2e      3001
 #define bfd_mach_mips_loongson_2f      3002
 #define bfd_mach_mips_sb1              12310201 /* octal 'SB', 01 */
 #define bfd_mach_mips_octeon           6501
+#define bfd_mach_mips_xlr              887682   /* decimal 'XLR'  */
 #define bfd_mach_mipsisa32             32
 #define bfd_mach_mipsisa32r2           33
 #define bfd_mach_mipsisa64             64
@@ -148,6 +151,9 @@ enum bfd_architecture
 #define bfd_mach_i386_i386_intel_syntax 3
 #define bfd_mach_x86_64 64
 #define bfd_mach_x86_64_intel_syntax 65
+  bfd_arch_l1om,   /* Intel L1OM */
+#define bfd_mach_l1om 66
+#define bfd_mach_l1om_intel_syntax 67
   bfd_arch_we32k,     /* AT&T WE32xxx */
   bfd_arch_tahoe,     /* CCI/Harris Tahoe */
   bfd_arch_i860,      /* Intel 860 */
@@ -166,11 +172,13 @@ enum bfd_architecture
 #define bfd_mach_h8300sx  6
 #define bfd_mach_h8300sxn 7
   bfd_arch_pdp11,     /* DEC PDP-11 */
+  bfd_arch_plugin,
   bfd_arch_powerpc,   /* PowerPC */
 #define bfd_mach_ppc           32
 #define bfd_mach_ppc64         64
 #define bfd_mach_ppc_403       403
 #define bfd_mach_ppc_403gc     4030
+#define bfd_mach_ppc_405       405
 #define bfd_mach_ppc_505       505
 #define bfd_mach_ppc_601       601
 #define bfd_mach_ppc_602       602
@@ -187,6 +195,8 @@ enum bfd_architecture
 #define bfd_mach_ppc_7400      7400
 #define bfd_mach_ppc_e500      500
 #define bfd_mach_ppc_e500mc    5001
+#define bfd_mach_ppc_e500mc64  5005
+#define bfd_mach_ppc_titan     83
   bfd_arch_rs6000,    /* IBM RS/6000 */
 #define bfd_mach_rs6k          6000
 #define bfd_mach_rs6k_rs1      6001
@@ -260,11 +270,14 @@ enum bfd_architecture
 #define bfd_mach_tic3x         30
 #define bfd_mach_tic4x         40
   bfd_arch_tic54x,    /* Texas Instruments TMS320C54X */
+  bfd_arch_tic6x,     /* Texas Instruments TMS320C6X */
   bfd_arch_tic80,     /* TI TMS320c80 (MVP) */
   bfd_arch_v850,      /* NEC V850 */
 #define bfd_mach_v850          1
 #define bfd_mach_v850e         'E'
 #define bfd_mach_v850e1        '1'
+#define bfd_mach_v850e2        0x4532
+#define bfd_mach_v850e2v3      0x45325633
   bfd_arch_arc,       /* ARC Cores */
 #define bfd_mach_arc_5         5
 #define bfd_mach_arc_6         6
@@ -293,10 +306,13 @@ enum bfd_architecture
 #define bfd_mach_frvtomcat     499     /* fr500 prototype */
 #define bfd_mach_fr500         500
 #define bfd_mach_fr550         550
+  bfd_arch_moxie,       /* The moxie processor */
+#define bfd_mach_moxie         1
   bfd_arch_mcore,
   bfd_arch_mep,
 #define bfd_mach_mep           1
 #define bfd_mach_mep_h1        0x6831
+#define bfd_mach_mep_c5        0x6335
   bfd_arch_ia64,      /* HP/Intel ia64 */
 #define bfd_mach_ia64_elf64    64
 #define bfd_mach_ia64_elf32    32
@@ -334,10 +350,14 @@ enum bfd_architecture
 #define bfd_mach_cris_v0_v10   255
 #define bfd_mach_cris_v32      32
 #define bfd_mach_cris_v10_v32  1032
+  bfd_arch_rx,        /* Renesas RX.  */
+#define bfd_mach_rx            0x75
   bfd_arch_s390,      /* IBM s390 */
 #define bfd_mach_s390_31       31
 #define bfd_mach_s390_64       64
   bfd_arch_score,     /* Sunplus score */ 
+#define bfd_mach_score3         3
+#define bfd_mach_score7         7
   bfd_arch_openrisc,  /* OpenRISC */
   bfd_arch_mmix,      /* Donald Knuth's educational processor.  */
   bfd_arch_xstormy16,
@@ -364,14 +384,14 @@ enum bfd_architecture
 #define bfd_mach_xc16xs         3
   bfd_arch_xtensa,    /* Tensilica's Xtensa cores.  */
 #define bfd_mach_xtensa        1
-   bfd_arch_maxq,     /* Dallas MAXQ 10/20 */
-#define bfd_mach_maxq10    10
-#define bfd_mach_maxq20    20
   bfd_arch_z80,
 #define bfd_mach_z80strict      1 /* No undocumented opcodes.  */
 #define bfd_mach_z80            3 /* With ixl, ixh, iyl, and iyh.  */
 #define bfd_mach_z80full        7 /* All undocumented instructions.  */
 #define bfd_mach_r800           11 /* R800: successor with multiplication.  */
+  bfd_arch_lm32,      /* Lattice Mico32 */
+#define bfd_mach_lm32      1
+  bfd_arch_microblaze,/* Xilinx MicroBlaze. */
   bfd_arch_last
   @};
 @end example

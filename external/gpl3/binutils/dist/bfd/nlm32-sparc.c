@@ -1,6 +1,6 @@
 /* Support for 32-bit SPARC NLM (NetWare Loadable Module)
    Copyright 1993, 1994, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007 Free Software Foundation, Inc.
+   2007, 2009, 2010 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -93,17 +93,15 @@ nlm_sparc_read_reloc (bfd *abfd,
 		      arelent *rel)
 {
   bfd_vma val, addend;
-  unsigned int index;
+  unsigned int howto_index;
   unsigned int type;
   struct nlm32_sparc_reloc_ext tmp_reloc;
-  asection *code_sec, *data_sec;
+  asection *code_sec;
 
   if (bfd_bread (&tmp_reloc, (bfd_size_type) 12, abfd) != 12)
     return FALSE;
 
   code_sec = bfd_get_section_by_name (abfd, NLM_CODE_NAME);
-  data_sec = bfd_get_section_by_name (abfd, NLM_INITIALIZED_DATA_NAME);
-
   *secp = code_sec;
 
   val = bfd_get_32 (abfd, tmp_reloc.offset);
@@ -114,12 +112,12 @@ nlm_sparc_read_reloc (bfd *abfd,
   rel->addend = addend;
   rel->howto = NULL;
 
-  for (index = 0;
-       index < sizeof (nlm32_sparc_howto_table) / sizeof (reloc_howto_type);
-       index++)
-    if (nlm32_sparc_howto_table[index].type == type)
+  for (howto_index = 0;
+       howto_index < sizeof (nlm32_sparc_howto_table) / sizeof (reloc_howto_type);
+       howto_index++)
+    if (nlm32_sparc_howto_table[howto_index].type == type)
       {
-	rel->howto = &nlm32_sparc_howto_table[index];
+	rel->howto = &nlm32_sparc_howto_table[howto_index];
 	break;
       }
 
@@ -139,15 +137,15 @@ nlm_sparc_write_reloc (bfd * abfd, asection * sec, arelent * rel)
 {
   bfd_vma val;
   struct nlm32_sparc_reloc_ext tmp_reloc;
-  unsigned int index;
+  unsigned int howto_index;
   int type = -1;
   reloc_howto_type *tmp;
 
-  for (index = 0;
-       index < sizeof (nlm32_sparc_howto_table) / sizeof (reloc_howto_type);
-       index++)
+  for (howto_index = 0;
+       howto_index < sizeof (nlm32_sparc_howto_table) / sizeof (reloc_howto_type);
+       howto_index++)
     {
-      tmp = &nlm32_sparc_howto_table[index];
+      tmp = &nlm32_sparc_howto_table[howto_index];
 
       if (tmp->rightshift == rel->howto->rightshift
 	  && tmp->size == rel->howto->size

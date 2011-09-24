@@ -1,5 +1,5 @@
 /* BFD back-end for PDP-11 a.out binaries.
-   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007
+   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -58,19 +58,13 @@
 /* The header is not included in the text segment.  */
 #define N_HEADER_IN_TEXT(x)	0
 
-/* There are no shared libraries.  */
-#define N_SHARED_LIB(x) 	0
-
 /* There is no flags field.  */
 #define N_FLAGS(exec)		0
 
 #define N_SET_FLAGS(exec, flags) do { } while (0)
-#define N_BADMAG(x) (((x).a_info != OMAGIC)   \
-		  && ((x).a_info != NMAGIC)   \
-		  && ((x).a_info != A_MAGIC3) \
-		  && ((x).a_info != A_MAGIC4) \
-		  && ((x).a_info != A_MAGIC5) \
-		  && ((x).a_info != A_MAGIC6))
+#define N_BADMAG(x) (N_MAGIC(x) != OMAGIC	\
+		     && N_MAGIC(x) != NMAGIC	\
+		     && N_MAGIC(x) != ZMAGIC)
 
 #include "sysdep.h"
 #include "bfd.h"
@@ -507,19 +501,12 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
       abfd->flags |= D_PAGED | WP_TEXT;
       adata (abfd).magic = z_magic;
     }
-  else if (N_MAGIC (*execp) == QMAGIC)
-    {
-      abfd->flags |= D_PAGED | WP_TEXT;
-      adata (abfd).magic = z_magic;
-      adata (abfd).subformat = q_magic_format;
-    }
   else if (N_MAGIC (*execp) == NMAGIC)
     {
       abfd->flags |= WP_TEXT;
       adata (abfd).magic = n_magic;
     }
-  else if (N_MAGIC (*execp) == OMAGIC
-	   || N_MAGIC (*execp) == BMAGIC)
+  else if (N_MAGIC (*execp) == OMAGIC)
     adata (abfd).magic = o_magic;
   else
     {
@@ -958,10 +945,7 @@ adjust_z_magic (bfd *abfd, struct internal_exec *execp)
   execp->a_text = obj_textsec(abfd)->size;
   if (ztih && (!abdp || (abdp && !abdp->exec_header_not_counted)))
     execp->a_text += adata(abfd).exec_bytes_size;
-  if (obj_aout_subformat (abfd) == q_magic_format)
-    N_SET_MAGIC (*execp, QMAGIC);
-  else
-    N_SET_MAGIC (*execp, ZMAGIC);
+  N_SET_MAGIC (*execp, ZMAGIC);
 
   /* Spec says data section should be rounded up to page boundary.  */
   obj_datasec(abfd)->size
@@ -1446,13 +1430,13 @@ asymbol *
 NAME (aout, make_empty_symbol) (bfd *abfd)
 {
   bfd_size_type amt = sizeof (aout_symbol_type);
-  aout_symbol_type *new = bfd_zalloc (abfd, amt);
+  aout_symbol_type *new_symbol_type = bfd_zalloc (abfd, amt);
 
-  if (!new)
+  if (!new_symbol_type)
     return NULL;
-  new->symbol.the_bfd = abfd;
+  new_symbol_type->symbol.the_bfd = abfd;
 
-  return &new->symbol;
+  return &new_symbol_type->symbol;
 }
 
 /* Translate a set of internal symbols into external symbols.  */
@@ -1585,7 +1569,7 @@ add_to_stringtab (bfd *abfd,
 		  bfd_boolean copy)
 {
   bfd_boolean hash;
-  bfd_size_type index;
+  bfd_size_type str_index;
 
   /* An index of 0 always means the empty string.  */
   if (str == 0 || *str == '\0')
@@ -1597,14 +1581,14 @@ add_to_stringtab (bfd *abfd,
   if ((abfd->flags & BFD_TRADITIONAL_FORMAT) != 0)
     hash = FALSE;
 
-  index = _bfd_stringtab_add (tab, str, hash, copy);
+  str_index = _bfd_stringtab_add (tab, str, hash, copy);
 
-  if (index != (bfd_size_type) -1)
+  if (str_index != (bfd_size_type) -1)
     /* Add BYTES_IN_LONG to the return value to account for the
        space taken up by the string table size.  */
-    index += BYTES_IN_LONG;
+    str_index += BYTES_IN_LONG;
 
-  return index;
+  return str_index;
 }
 
 /* Write out a strtab.  ABFD is already at the right location in the
@@ -2561,7 +2545,8 @@ aout_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
 static bfd_boolean
 aout_link_check_ar_symbols (bfd *abfd,
 			    struct bfd_link_info *info,
-			    bfd_boolean *pneeded)
+			    bfd_boolean *pneeded,
+			    bfd **subsbfd)
 {
   struct external_nlist *p;
   struct external_nlist *pend;
@@ -2616,7 +2601,8 @@ aout_link_check_ar_symbols (bfd *abfd,
 	     but not if it is defined in the .text section.  That
 	     seems a bit crazy to me, and I haven't implemented it.
 	     However, it might be correct.  */
-	  if (! (*info->callbacks->add_archive_element) (info, abfd, name))
+	  if (!(*info->callbacks
+		->add_archive_element) (info, abfd, name, subsbfd))
 	    return FALSE;
 	  *pneeded = TRUE;
 	  return TRUE;
@@ -2643,8 +2629,8 @@ aout_link_check_ar_symbols (bfd *abfd,
 			 outside BFD.  We assume that we should link
 			 in the object file.  This is done for the -u
 			 option in the linker.  */
-		      if (! (*info->callbacks->add_archive_element)
-			  (info, abfd, name))
+		      if (!(*info->callbacks
+			    ->add_archive_element) (info, abfd, name, subsbfd))
 			return FALSE;
 		      *pneeded = TRUE;
 		      return TRUE;
@@ -2696,21 +2682,36 @@ aout_link_check_archive_element (bfd *abfd,
 				 struct bfd_link_info *info,
 				 bfd_boolean *pneeded)
 {
-  if (! aout_get_external_symbols (abfd))
+  bfd *oldbfd;
+  bfd_boolean needed;
+
+  if (!aout_get_external_symbols (abfd))
     return FALSE;
 
-  if (! aout_link_check_ar_symbols (abfd, info, pneeded))
+  oldbfd = abfd;
+  if (!aout_link_check_ar_symbols (abfd, info, pneeded, &abfd))
     return FALSE;
 
-  if (*pneeded)
+  needed = *pneeded;
+  if (needed)
     {
-      if (! aout_link_add_symbols (abfd, info))
+      /* Potentially, the add_archive_element hook may have set a
+	 substitute BFD for us.  */
+      if (abfd != oldbfd)
+	{
+	  if (!info->keep_memory
+	      && !aout_link_free_symbols (oldbfd))
+	    return FALSE;
+	  if (!aout_get_external_symbols (abfd))
+	    return FALSE;
+	}
+      if (!aout_link_add_symbols (abfd, info))
 	return FALSE;
     }
 
-  if (! info->keep_memory || ! *pneeded)
+  if (!info->keep_memory || !needed)
     {
-      if (! aout_link_free_symbols (abfd))
+      if (!aout_link_free_symbols (abfd))
 	return FALSE;
     }
 
@@ -3230,7 +3231,6 @@ pdp11_aout_link_input_section (struct aout_final_link_info *finfo,
   char *strings;
   struct aout_link_hash_entry **sym_hashes;
   int *symbol_map;
-  bfd_size_type reloc_count;
   bfd_byte *rel;
   bfd_byte *rel_end;
 
@@ -3247,7 +3247,6 @@ pdp11_aout_link_input_section (struct aout_final_link_info *finfo,
   sym_hashes = obj_aout_sym_hashes (input_bfd);
   symbol_map = finfo->symbol_map;
 
-  reloc_count = rel_size / RELOC_SIZE;
   rel = relocs;
   rel_end = rel + rel_size;
   for (; rel < rel_end; rel += RELOC_SIZE)
@@ -3584,8 +3583,6 @@ aout_link_input_section (struct aout_final_link_info *finfo,
 static bfd_boolean
 aout_link_input_bfd (struct aout_final_link_info *finfo, bfd *input_bfd)
 {
-  bfd_size_type sym_count;
-
   BFD_ASSERT (bfd_get_format (input_bfd) == bfd_object);
 
   /* If this is a dynamic object, it may need special handling.  */
@@ -3598,8 +3595,6 @@ aout_link_input_bfd (struct aout_final_link_info *finfo, bfd *input_bfd)
      finfo->info->keep_memory is FALSE.  */
   if (! aout_get_external_symbols (input_bfd))
     return FALSE;
-
-  sym_count = obj_aout_external_sym_count (input_bfd);
 
   /* Write out the symbols and get a map of the new indices.  The map
      is placed into finfo->symbol_map.  */

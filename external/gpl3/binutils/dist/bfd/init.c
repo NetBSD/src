@@ -1,5 +1,5 @@
 /* bfd initialization stuff
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 2003, 2007
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 2003, 2005, 2007
    Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 

@@ -1,6 +1,6 @@
 /* bfd back-end for HP PA-RISC SOM objects.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
@@ -23,45 +23,15 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
+#include "alloca-conf.h"
 #include "sysdep.h"
 #include "bfd.h"
-
-#if defined (HOST_HPPAHPUX) || defined (HOST_HPPABSD) || defined (HOST_HPPAOSF) || defined(HOST_HPPAMPEIX)
 
 #include "libbfd.h"
 #include "som.h"
 #include "safe-ctype.h"
-
-#include <sys/param.h>
-#include <signal.h>
-#include <machine/reg.h>
-#include <sys/file.h>
-
-/* This is the code recommended in the autoconf documentation, almost
-   verbatim.  */
-
-#ifndef __GNUC__
-# if HAVE_ALLOCA_H
-#  include <alloca.h>
-# else
-#  ifdef _AIX
-/* Indented so that pre-ansi C compilers will ignore it, rather than
-   choke on it.  Some versions of AIX require this to be the first
-   thing in the file.  */
- #pragma alloca
-#  else
-#   ifndef alloca /* predefined by HP cc +Olibcalls */
-#    if !defined (__STDC__) && !defined (__hpux)
-extern char *alloca ();
-#    else
-extern void *alloca ();
-#    endif /* __STDC__, __hpux */
-#   endif /* alloca */
-#  endif /* _AIX */
-# endif /* HAVE_ALLOCA_H */
-#else
-extern void *alloca (size_t);
-#endif /* __GNUC__ */
+#include "som/reloc.h"
+#include "aout/ar.h"
 
 static bfd_reloc_status_type hppa_som_reloc
   (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
@@ -69,7 +39,7 @@ static bfd_boolean som_mkobject (bfd *);
 static bfd_boolean som_is_space (asection *);
 static bfd_boolean som_is_subspace (asection *);
 static int compare_subspaces (const void *, const void *);
-static unsigned long som_compute_checksum (bfd *);
+static unsigned long som_compute_checksum (struct som_external_header *);
 static bfd_boolean som_build_and_write_symbol_table (bfd *);
 static unsigned int som_slurp_symbol_table (bfd *);
 
@@ -170,7 +140,7 @@ typedef enum
 
 struct section_to_type
 {
-  char *section;
+  const char *section;
   char type;
 };
 
@@ -661,50 +631,11 @@ static const int comp3_opcodes[] =
 };
 
 /* These apparently are not in older versions of hpux reloc.h (hpux7).  */
-#ifndef R_DLT_REL
-#define R_DLT_REL 0x78
-#endif
-
-#ifndef R_AUX_UNWIND
-#define R_AUX_UNWIND 0xcf
-#endif
-
-#ifndef R_SEC_STMT
-#define R_SEC_STMT 0xd7
-#endif
 
 /* And these first appeared in hpux10.  */
 #ifndef R_SHORT_PCREL_MODE
 #define NO_PCREL_MODES
 #define R_SHORT_PCREL_MODE 0x3e
-#endif
-
-#ifndef R_LONG_PCREL_MODE
-#define R_LONG_PCREL_MODE 0x3f
-#endif
-
-#ifndef R_N0SEL
-#define R_N0SEL 0xd8
-#endif
-
-#ifndef R_N1SEL
-#define R_N1SEL 0xd9
-#endif
-
-#ifndef R_LINETAB
-#define R_LINETAB 0xda
-#endif
-
-#ifndef R_LINETAB_ESC
-#define R_LINETAB_ESC 0xdb
-#endif
-
-#ifndef R_LTP_OVERRIDE
-#define R_LTP_OVERRIDE 0xdc
-#endif
-
-#ifndef R_COMMENT
-#define R_COMMENT 0xdd
 #endif
 
 #define SOM_HOWTO(TYPE, NAME)	\
@@ -1007,12 +938,12 @@ som_reloc_queue_insert (unsigned char *p,
    to the front of the queue.  */
 
 static void
-som_reloc_queue_fix (struct reloc_queue *queue, unsigned int index)
+som_reloc_queue_fix (struct reloc_queue *queue, unsigned int idx)
 {
-  if (index == 0)
+  if (idx == 0)
     return;
 
-  if (index == 1)
+  if (idx == 1)
     {
       unsigned char *tmp1 = queue[0].reloc;
       unsigned int tmp2 = queue[0].size;
@@ -1024,7 +955,7 @@ som_reloc_queue_fix (struct reloc_queue *queue, unsigned int index)
       return;
     }
 
-  if (index == 2)
+  if (idx == 2)
     {
       unsigned char *tmp1 = queue[0].reloc;
       unsigned int tmp2 = queue[0].size;
@@ -1038,7 +969,7 @@ som_reloc_queue_fix (struct reloc_queue *queue, unsigned int index)
       return;
     }
 
-  if (index == 3)
+  if (idx == 3)
     {
       unsigned char *tmp1 = queue[0].reloc;
       unsigned int tmp2 = queue[0].size;
@@ -1670,12 +1601,355 @@ som_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
   return NULL;
 }
 
+static void
+som_swap_clock_in (struct som_external_clock *src,
+                   struct som_clock *dst)
+{
+  dst->secs = bfd_getb32 (src->secs);
+  dst->nanosecs = bfd_getb32 (src->nanosecs);
+}
+
+static void
+som_swap_clock_out (struct som_clock *src,
+                    struct som_external_clock *dst)
+{
+  bfd_putb32 (src->secs, dst->secs);
+  bfd_putb32 (src->nanosecs, dst->nanosecs);
+}
+
+static void
+som_swap_header_in (struct som_external_header *src,
+                    struct som_header *dst)
+{
+  dst->system_id = bfd_getb16 (src->system_id);
+  dst->a_magic = bfd_getb16 (src->a_magic);
+  dst->version_id = bfd_getb32 (src->version_id);
+  som_swap_clock_in (&src->file_time, &dst->file_time);
+  dst->entry_space = bfd_getb32 (src->entry_space);
+  dst->entry_subspace = bfd_getb32 (src->entry_subspace);
+  dst->entry_offset = bfd_getb32 (src->entry_offset);
+  dst->aux_header_location = bfd_getb32 (src->aux_header_location);
+  dst->aux_header_size = bfd_getb32 (src->aux_header_size);
+  dst->som_length = bfd_getb32 (src->som_length);
+  dst->presumed_dp = bfd_getb32 (src->presumed_dp);
+  dst->space_location = bfd_getb32 (src->space_location);
+  dst->space_total = bfd_getb32 (src->space_total);
+  dst->subspace_location = bfd_getb32 (src->subspace_location);
+  dst->subspace_total = bfd_getb32 (src->subspace_total);
+  dst->loader_fixup_location = bfd_getb32 (src->loader_fixup_location);
+  dst->loader_fixup_total = bfd_getb32 (src->loader_fixup_total);
+  dst->space_strings_location = bfd_getb32 (src->space_strings_location);
+  dst->space_strings_size = bfd_getb32 (src->space_strings_size);
+  dst->init_array_location = bfd_getb32 (src->init_array_location);
+  dst->init_array_total = bfd_getb32 (src->init_array_total);
+  dst->compiler_location = bfd_getb32 (src->compiler_location);
+  dst->compiler_total = bfd_getb32 (src->compiler_total);
+  dst->symbol_location = bfd_getb32 (src->symbol_location);
+  dst->symbol_total = bfd_getb32 (src->symbol_total);
+  dst->fixup_request_location = bfd_getb32 (src->fixup_request_location);
+  dst->fixup_request_total = bfd_getb32 (src->fixup_request_total);
+  dst->symbol_strings_location = bfd_getb32 (src->symbol_strings_location);
+  dst->symbol_strings_size = bfd_getb32 (src->symbol_strings_size);
+  dst->unloadable_sp_location = bfd_getb32 (src->unloadable_sp_location);
+  dst->unloadable_sp_size = bfd_getb32 (src->unloadable_sp_size);
+  dst->checksum = bfd_getb32 (src->checksum);
+}
+
+static void
+som_swap_header_out (struct som_header *src,
+                    struct som_external_header *dst)
+{
+  bfd_putb16 (src->system_id, dst->system_id);
+  bfd_putb16 (src->a_magic, dst->a_magic);
+  bfd_putb32 (src->version_id, dst->version_id);
+  som_swap_clock_out (&src->file_time, &dst->file_time);
+  bfd_putb32 (src->entry_space, dst->entry_space);
+  bfd_putb32 (src->entry_subspace, dst->entry_subspace);
+  bfd_putb32 (src->entry_offset, dst->entry_offset);
+  bfd_putb32 (src->aux_header_location, dst->aux_header_location);
+  bfd_putb32 (src->aux_header_size, dst->aux_header_size);
+  bfd_putb32 (src->som_length, dst->som_length);
+  bfd_putb32 (src->presumed_dp, dst->presumed_dp);
+  bfd_putb32 (src->space_location, dst->space_location);
+  bfd_putb32 (src->space_total, dst->space_total);
+  bfd_putb32 (src->subspace_location, dst->subspace_location);
+  bfd_putb32 (src->subspace_total, dst->subspace_total);
+  bfd_putb32 (src->loader_fixup_location, dst->loader_fixup_location);
+  bfd_putb32 (src->loader_fixup_total, dst->loader_fixup_total);
+  bfd_putb32 (src->space_strings_location, dst->space_strings_location);
+  bfd_putb32 (src->space_strings_size, dst->space_strings_size);
+  bfd_putb32 (src->init_array_location, dst->init_array_location);
+  bfd_putb32 (src->init_array_total, dst->init_array_total);
+  bfd_putb32 (src->compiler_location, dst->compiler_location);
+  bfd_putb32 (src->compiler_total, dst->compiler_total);
+  bfd_putb32 (src->symbol_location, dst->symbol_location);
+  bfd_putb32 (src->symbol_total, dst->symbol_total);
+  bfd_putb32 (src->fixup_request_location, dst->fixup_request_location);
+  bfd_putb32 (src->fixup_request_total, dst->fixup_request_total);
+  bfd_putb32 (src->symbol_strings_location, dst->symbol_strings_location);
+  bfd_putb32 (src->symbol_strings_size, dst->symbol_strings_size);
+  bfd_putb32 (src->unloadable_sp_location, dst->unloadable_sp_location);
+  bfd_putb32 (src->unloadable_sp_size, dst->unloadable_sp_size);
+  bfd_putb32 (src->checksum, dst->checksum);
+}
+
+static void
+som_swap_space_dictionary_in (struct som_external_space_dictionary_record *src,
+                              struct som_space_dictionary_record *dst)
+{
+  unsigned int flags;
+
+  dst->name = bfd_getb32 (src->name);
+  flags = bfd_getb32 (src->flags);
+  dst->is_loadable = (flags & SOM_SPACE_IS_LOADABLE) != 0;
+  dst->is_defined = (flags & SOM_SPACE_IS_DEFINED) != 0;
+  dst->is_private = (flags & SOM_SPACE_IS_PRIVATE) != 0;
+  dst->has_intermediate_code = (flags & SOM_SPACE_HAS_INTERMEDIATE_CODE) != 0;
+  dst->is_tspecific = (flags & SOM_SPACE_IS_TSPECIFIC) != 0;
+  dst->reserved = 0;
+  dst->sort_key = (flags >> SOM_SPACE_SORT_KEY_SH) & SOM_SPACE_SORT_KEY_MASK;
+  dst->reserved2 = 0;
+  dst->space_number = bfd_getb32 (src->space_number);
+  dst->subspace_index = bfd_getb32 (src->subspace_index);
+  dst->subspace_quantity = bfd_getb32 (src->subspace_quantity);
+  dst->loader_fix_index = bfd_getb32 (src->loader_fix_index);
+  dst->loader_fix_quantity = bfd_getb32 (src->loader_fix_quantity);
+  dst->init_pointer_index = bfd_getb32 (src->init_pointer_index);
+  dst->init_pointer_quantity = bfd_getb32 (src->init_pointer_quantity);
+}
+
+static void
+som_swap_space_dictionary_out (struct som_space_dictionary_record *src,
+                               struct som_external_space_dictionary_record *dst)
+{
+  unsigned int flags;
+
+  bfd_putb32 (src->name, dst->name);
+
+  flags = 0;
+  if (src->is_loadable)
+    flags |= SOM_SPACE_IS_LOADABLE;
+  if (src->is_defined)
+    flags |= SOM_SPACE_IS_DEFINED;
+  if (src->is_private)
+    flags |= SOM_SPACE_IS_PRIVATE;
+  if (src->has_intermediate_code)
+    flags |= SOM_SPACE_HAS_INTERMEDIATE_CODE;
+  if (src->is_tspecific)
+    flags |= SOM_SPACE_IS_TSPECIFIC;
+  flags |= (src->sort_key & SOM_SPACE_SORT_KEY_MASK) << SOM_SPACE_SORT_KEY_SH;
+  bfd_putb32 (flags, dst->flags);
+  bfd_putb32 (src->space_number, dst->space_number);
+  bfd_putb32 (src->subspace_index, dst->subspace_index);
+  bfd_putb32 (src->subspace_quantity, dst->subspace_quantity);
+  bfd_putb32 (src->loader_fix_index, dst->loader_fix_index);
+  bfd_putb32 (src->loader_fix_quantity, dst->loader_fix_quantity);
+  bfd_putb32 (src->init_pointer_index, dst->init_pointer_index);
+  bfd_putb32 (src->init_pointer_quantity, dst->init_pointer_quantity);
+}
+
+static void
+som_swap_subspace_dictionary_in
+  (struct som_external_subspace_dictionary_record *src,
+   struct som_subspace_dictionary_record *dst)
+{
+  unsigned int flags;
+  dst->space_index = bfd_getb32 (src->space_index);
+  flags = bfd_getb32 (src->flags);
+  dst->access_control_bits = (flags >> SOM_SUBSPACE_ACCESS_CONTROL_BITS_SH)
+    & SOM_SUBSPACE_ACCESS_CONTROL_BITS_MASK;
+  dst->memory_resident = (flags & SOM_SUBSPACE_MEMORY_RESIDENT) != 0;
+  dst->dup_common = (flags & SOM_SUBSPACE_DUP_COMMON) != 0;
+  dst->is_common = (flags & SOM_SUBSPACE_IS_COMMON) != 0;
+  dst->is_loadable = (flags & SOM_SUBSPACE_IS_LOADABLE) != 0;
+  dst->quadrant = (flags >> SOM_SUBSPACE_QUADRANT_SH)
+    & SOM_SUBSPACE_QUADRANT_MASK;
+  dst->initially_frozen = (flags & SOM_SUBSPACE_INITIALLY_FROZEN) != 0;
+  dst->is_first = (flags & SOM_SUBSPACE_IS_FIRST) != 0;
+  dst->code_only = (flags & SOM_SUBSPACE_CODE_ONLY) != 0;
+  dst->sort_key = (flags >> SOM_SUBSPACE_SORT_KEY_SH)
+    & SOM_SUBSPACE_SORT_KEY_MASK;
+  dst->replicate_init = (flags & SOM_SUBSPACE_REPLICATE_INIT) != 0;
+  dst->continuation = (flags & SOM_SUBSPACE_CONTINUATION) != 0;
+  dst->is_tspecific = (flags & SOM_SUBSPACE_IS_TSPECIFIC) != 0;
+  dst->is_comdat = (flags & SOM_SUBSPACE_IS_COMDAT) != 0;
+  dst->reserved = 0;
+  dst->file_loc_init_value = bfd_getb32 (src->file_loc_init_value);
+  dst->initialization_length = bfd_getb32 (src->initialization_length);
+  dst->subspace_start = bfd_getb32 (src->subspace_start);
+  dst->subspace_length = bfd_getb32 (src->subspace_length);
+  dst->alignment = bfd_getb32 (src->alignment);
+  dst->name = bfd_getb32 (src->name);
+  dst->fixup_request_index = bfd_getb32 (src->fixup_request_index);
+  dst->fixup_request_quantity = bfd_getb32 (src->fixup_request_quantity);
+}
+
+static void
+som_swap_subspace_dictionary_record_out
+  (struct som_subspace_dictionary_record *src,
+   struct som_external_subspace_dictionary_record *dst)
+{
+  unsigned int flags;
+
+  bfd_putb32 (src->space_index, dst->space_index);
+  flags = (src->access_control_bits & SOM_SUBSPACE_ACCESS_CONTROL_BITS_MASK)
+    << SOM_SUBSPACE_ACCESS_CONTROL_BITS_SH;
+  if (src->memory_resident)
+    flags |= SOM_SUBSPACE_MEMORY_RESIDENT;
+  if (src->dup_common)
+    flags |= SOM_SUBSPACE_DUP_COMMON;
+  if (src->is_common)
+    flags |= SOM_SUBSPACE_IS_COMMON;
+  if (src->is_loadable)
+    flags |= SOM_SUBSPACE_IS_LOADABLE;
+  flags |= (src->quadrant & SOM_SUBSPACE_QUADRANT_MASK)
+    << SOM_SUBSPACE_QUADRANT_SH;
+  if (src->initially_frozen)
+    flags |= SOM_SUBSPACE_INITIALLY_FROZEN;
+  if (src->is_first)
+    flags |= SOM_SUBSPACE_IS_FIRST;
+  if (src->code_only)
+    flags |= SOM_SUBSPACE_CODE_ONLY;
+  flags |= (src->sort_key & SOM_SUBSPACE_SORT_KEY_MASK)
+    << SOM_SUBSPACE_SORT_KEY_SH;
+  if (src->replicate_init)
+    flags |= SOM_SUBSPACE_REPLICATE_INIT;
+  if (src->continuation)
+    flags |= SOM_SUBSPACE_CONTINUATION;
+  if (src->is_tspecific)
+    flags |= SOM_SUBSPACE_IS_TSPECIFIC;
+  if (src->is_comdat)
+    flags |= SOM_SUBSPACE_IS_COMDAT;
+  bfd_putb32 (flags, dst->flags);
+  bfd_putb32 (src->file_loc_init_value, dst->file_loc_init_value);
+  bfd_putb32 (src->initialization_length, dst->initialization_length);
+  bfd_putb32 (src->subspace_start, dst->subspace_start);
+  bfd_putb32 (src->subspace_length, dst->subspace_length);
+  bfd_putb32 (src->alignment, dst->alignment);
+  bfd_putb32 (src->name, dst->name);
+  bfd_putb32 (src->fixup_request_index, dst->fixup_request_index);
+  bfd_putb32 (src->fixup_request_quantity, dst->fixup_request_quantity);
+}
+
+static void
+som_swap_aux_id_in (struct som_external_aux_id *src,
+                    struct som_aux_id *dst)
+{
+  unsigned int flags = bfd_getb32 (src->flags);
+
+  dst->mandatory = (flags & SOM_AUX_ID_MANDATORY) != 0;
+  dst->copy = (flags & SOM_AUX_ID_COPY) != 0;
+  dst->append = (flags & SOM_AUX_ID_APPEND) != 0;
+  dst->ignore = (flags & SOM_AUX_ID_IGNORE) != 0;
+  dst->type = (flags >> SOM_AUX_ID_TYPE_SH) & SOM_AUX_ID_TYPE_MASK;
+  dst->length = bfd_getb32 (src->length);
+}
+
+static void
+som_swap_aux_id_out (struct som_aux_id *src,
+                    struct som_external_aux_id *dst)
+{
+  unsigned int flags = 0;
+
+  if (src->mandatory)
+    flags |= SOM_AUX_ID_MANDATORY;
+  if (src->copy)
+    flags |= SOM_AUX_ID_COPY;
+  if (src->append)
+    flags |= SOM_AUX_ID_APPEND;
+  if (src->ignore)
+    flags |= SOM_AUX_ID_IGNORE;
+  flags |= (src->type & SOM_AUX_ID_TYPE_MASK) << SOM_AUX_ID_TYPE_SH;
+  bfd_putb32 (flags, dst->flags);
+  bfd_putb32 (src->length, dst->length);
+}
+
+static void
+som_swap_string_auxhdr_out (struct som_string_auxhdr *src,
+                            struct som_external_string_auxhdr *dst)
+{
+  som_swap_aux_id_out (&src->header_id, &dst->header_id);
+  bfd_putb32 (src->string_length, dst->string_length);
+}
+
+static void
+som_swap_compilation_unit_out (struct som_compilation_unit *src,
+                               struct som_external_compilation_unit *dst)
+{
+  bfd_putb32 (src->name.strx, dst->name);
+  bfd_putb32 (src->language_name.strx, dst->language_name);
+  bfd_putb32 (src->product_id.strx, dst->product_id);
+  bfd_putb32 (src->version_id.strx, dst->version_id);
+  bfd_putb32 (src->flags, dst->flags);
+  som_swap_clock_out (&src->compile_time, &dst->compile_time);
+  som_swap_clock_out (&src->source_time, &dst->source_time);
+}
+
+static void
+som_swap_exec_auxhdr_in (struct som_external_exec_auxhdr *src,
+                         struct som_exec_auxhdr *dst)
+{
+  som_swap_aux_id_in (&src->som_auxhdr, &dst->som_auxhdr);
+  dst->exec_tsize = bfd_getb32 (src->exec_tsize);
+  dst->exec_tmem = bfd_getb32 (src->exec_tmem);
+  dst->exec_tfile = bfd_getb32 (src->exec_tfile);
+  dst->exec_dsize = bfd_getb32 (src->exec_dsize);
+  dst->exec_dmem = bfd_getb32 (src->exec_dmem);
+  dst->exec_dfile = bfd_getb32 (src->exec_dfile);
+  dst->exec_bsize = bfd_getb32 (src->exec_bsize);
+  dst->exec_entry = bfd_getb32 (src->exec_entry);
+  dst->exec_flags = bfd_getb32 (src->exec_flags);
+  dst->exec_bfill = bfd_getb32 (src->exec_bfill);
+}
+
+static void
+som_swap_exec_auxhdr_out (struct som_exec_auxhdr *src,
+                         struct som_external_exec_auxhdr *dst)
+{
+  som_swap_aux_id_out (&src->som_auxhdr, &dst->som_auxhdr);
+  bfd_putb32 (src->exec_tsize, dst->exec_tsize);
+  bfd_putb32 (src->exec_tmem, dst->exec_tmem);
+  bfd_putb32 (src->exec_tfile, dst->exec_tfile);
+  bfd_putb32 (src->exec_dsize, dst->exec_dsize);
+  bfd_putb32 (src->exec_dmem, dst->exec_dmem);
+  bfd_putb32 (src->exec_dfile, dst->exec_dfile);
+  bfd_putb32 (src->exec_bsize, dst->exec_bsize);
+  bfd_putb32 (src->exec_entry, dst->exec_entry);
+  bfd_putb32 (src->exec_flags, dst->exec_flags);
+  bfd_putb32 (src->exec_bfill, dst->exec_bfill);
+}
+
+static void
+som_swap_lst_header_in (struct som_external_lst_header *src,
+                        struct som_lst_header *dst)
+{
+  dst->system_id = bfd_getb16 (src->system_id);
+  dst->a_magic = bfd_getb16 (src->a_magic);
+  dst->version_id = bfd_getb32 (src->version_id);
+  som_swap_clock_in (&src->file_time, &dst->file_time);
+  dst->hash_loc = bfd_getb32 (src->hash_loc);
+  dst->hash_size = bfd_getb32 (src->hash_size);
+  dst->module_count = bfd_getb32 (src->module_count);
+  dst->module_limit = bfd_getb32 (src->module_limit);
+  dst->dir_loc = bfd_getb32 (src->dir_loc);
+  dst->export_loc = bfd_getb32 (src->export_loc);
+  dst->export_count = bfd_getb32 (src->export_count);
+  dst->import_loc = bfd_getb32 (src->import_loc);
+  dst->aux_loc = bfd_getb32 (src->aux_loc);
+  dst->aux_size = bfd_getb32 (src->aux_size);
+  dst->string_loc = bfd_getb32 (src->string_loc);
+  dst->string_size = bfd_getb32 (src->string_size);
+  dst->free_list = bfd_getb32 (src->free_list);
+  dst->file_end = bfd_getb32 (src->file_end);
+  dst->checksum = bfd_getb32 (src->checksum);
+}
+
 /* Perform some initialization for an object.  Save results of this
    initialization in the BFD.  */
 
 static const bfd_target *
 som_object_setup (bfd *abfd,
-		  struct header *file_hdrp,
+		  struct som_header *file_hdrp,
 		  struct som_exec_auxhdr *aux_hdrp,
 		  unsigned long current_offset)
 {
@@ -1799,7 +2073,7 @@ som_object_setup (bfd *abfd,
 
 static bfd_boolean
 setup_sections (bfd *abfd,
-		struct header *file_hdr,
+		struct som_header *file_hdr,
 		unsigned long current_offset)
 {
   char *space_strings;
@@ -1824,7 +2098,10 @@ setup_sections (bfd *abfd,
   /* Loop over all of the space dictionaries, building up sections.  */
   for (space_index = 0; space_index < file_hdr->space_total; space_index++)
     {
-      struct space_dictionary_record space;
+      struct som_space_dictionary_record space;
+      struct som_external_space_dictionary_record ext_space;
+      char *space_name;
+      struct som_external_subspace_dictionary_record ext_subspace;
       struct som_subspace_dictionary_record subspace, save_subspace;
       unsigned int subspace_index;
       asection *space_asect;
@@ -1834,22 +2111,24 @@ setup_sections (bfd *abfd,
       /* Read the space dictionary element.  */
       if (bfd_seek (abfd,
 		    (current_offset + file_hdr->space_location
-		     + space_index * sizeof space),
+		     + space_index * sizeof (ext_space)),
 		    SEEK_SET) != 0)
 	goto error_return;
-      amt = sizeof space;
-      if (bfd_bread (&space, amt, abfd) != amt)
+      amt = sizeof ext_space;
+      if (bfd_bread (&ext_space, amt, abfd) != amt)
 	goto error_return;
 
+      som_swap_space_dictionary_in (&ext_space, &space);
+
       /* Setup the space name string.  */
-      space.name.n_name = space.name.n_strx + space_strings;
+      space_name = space.name + space_strings;
 
       /* Make a section out of it.  */
-      amt = strlen (space.name.n_name) + 1;
+      amt = strlen (space_name) + 1;
       newname = bfd_alloc (abfd, amt);
       if (!newname)
 	goto error_return;
-      strcpy (newname, space.name.n_name);
+      strcpy (newname, space_name);
 
       space_asect = bfd_make_section_anyway (abfd, newname);
       if (!space_asect)
@@ -1871,18 +2150,20 @@ setup_sections (bfd *abfd,
       /* Now, read in the first subspace for this space.  */
       if (bfd_seek (abfd,
 		    (current_offset + file_hdr->subspace_location
-		     + space.subspace_index * sizeof subspace),
+		     + space.subspace_index * sizeof ext_subspace),
 		    SEEK_SET) != 0)
 	goto error_return;
-      amt = sizeof subspace;
-      if (bfd_bread (&subspace, amt, abfd) != amt)
+      amt = sizeof ext_subspace;
+      if (bfd_bread (&ext_subspace, amt, abfd) != amt)
 	goto error_return;
       /* Seek back to the start of the subspaces for loop below.  */
       if (bfd_seek (abfd,
 		    (current_offset + file_hdr->subspace_location
-		     + space.subspace_index * sizeof subspace),
+		     + space.subspace_index * sizeof ext_subspace),
 		    SEEK_SET) != 0)
 	goto error_return;
+
+      som_swap_subspace_dictionary_in (&ext_subspace, &subspace);
 
       /* Setup the start address and file loc from the first subspace
 	 record.  */
@@ -1901,20 +2182,23 @@ setup_sections (bfd *abfd,
 	   subspace_index++)
 	{
 	  asection *subspace_asect;
+          char *subspace_name;
 
 	  /* Read in the next subspace.  */
-	  amt = sizeof subspace;
-	  if (bfd_bread (&subspace, amt, abfd) != amt)
+	  amt = sizeof ext_subspace;
+	  if (bfd_bread (&ext_subspace, amt, abfd) != amt)
 	    goto error_return;
 
-	  /* Setup the subspace name string.  */
-	  subspace.name.n_name = subspace.name.n_strx + space_strings;
+          som_swap_subspace_dictionary_in (&ext_subspace, &subspace);
 
-	  amt = strlen (subspace.name.n_name) + 1;
+	  /* Setup the subspace name string.  */
+	  subspace_name = subspace.name + space_strings;
+
+	  amt = strlen (subspace_name) + 1;
 	  newname = bfd_alloc (abfd, amt);
 	  if (!newname)
 	    goto error_return;
-	  strcpy (newname, subspace.name.n_name);
+	  strcpy (newname, subspace_name);
 
 	  /* Make a section out of this subspace.  */
 	  subspace_asect = bfd_make_section_anyway (abfd, newname);
@@ -2091,26 +2375,31 @@ setup_sections (bfd *abfd,
   return FALSE;
 }
 
+
 /* Read in a SOM object and make it into a BFD.  */
 
 static const bfd_target *
 som_object_p (bfd *abfd)
 {
-  struct header file_hdr;
+  struct som_external_header ext_file_hdr;
+  struct som_header file_hdr;
   struct som_exec_auxhdr *aux_hdr_ptr = NULL;
   unsigned long current_offset = 0;
-  struct lst_header lst_header;
-  struct som_entry som_entry;
+  struct som_external_lst_header ext_lst_header;
+  struct som_external_som_entry ext_som_entry;
   bfd_size_type amt;
-#define ENTRY_SIZE sizeof (struct som_entry)
+  unsigned int loc;
+#define ENTRY_SIZE sizeof (struct som_external_som_entry)
 
-  amt = FILE_HDR_SIZE;
-  if (bfd_bread ((void *) &file_hdr, amt, abfd) != amt)
+  amt = sizeof (struct som_external_header);
+  if (bfd_bread (&ext_file_hdr, amt, abfd) != amt)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
       return NULL;
     }
+
+  som_swap_header_in (&ext_file_hdr, &file_hdr);
 
   if (!_PA_RISC_ID (file_hdr.system_id))
     {
@@ -2124,18 +2413,13 @@ som_object_p (bfd *abfd)
     case EXEC_MAGIC:
     case SHARE_MAGIC:
     case DEMAND_MAGIC:
-#ifdef DL_MAGIC
     case DL_MAGIC:
-#endif
-#ifdef SHL_MAGIC
     case SHL_MAGIC:
-#endif
 #ifdef SHARED_MAGIC_CNX
     case SHARED_MAGIC_CNX:
 #endif
       break;
 
-#ifdef EXECLIBMAGIC
     case EXECLIBMAGIC:
       /* Read the lst header and determine where the SOM directory begins.  */
 
@@ -2146,8 +2430,8 @@ som_object_p (bfd *abfd)
 	  return NULL;
 	}
 
-      amt = SLSTHDR;
-      if (bfd_bread ((void *) &lst_header, amt, abfd) != amt)
+      amt = sizeof (struct som_external_lst_header);
+      if (bfd_bread (&ext_lst_header, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -2155,8 +2439,8 @@ som_object_p (bfd *abfd)
 	}
 
       /* Position to and read the first directory entry.  */
-
-      if (bfd_seek (abfd, lst_header.dir_loc, SEEK_SET) != 0)
+      loc = bfd_getb32 (ext_lst_header.dir_loc);
+      if (bfd_seek (abfd, loc, SEEK_SET) != 0)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -2164,7 +2448,7 @@ som_object_p (bfd *abfd)
 	}
 
       amt = ENTRY_SIZE;
-      if (bfd_bread ((void *) &som_entry, amt, abfd) != amt)
+      if (bfd_bread (&ext_som_entry, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -2172,34 +2456,33 @@ som_object_p (bfd *abfd)
 	}
 
       /* Now position to the first SOM.  */
-
-      if (bfd_seek (abfd, som_entry.location, SEEK_SET) != 0)
+      current_offset = bfd_getb32 (ext_som_entry.location);
+      if (bfd_seek (abfd, current_offset, SEEK_SET) != 0)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
 	  return NULL;
 	}
-
-      current_offset = som_entry.location;
 
       /* And finally, re-read the som header.  */
-      amt = FILE_HDR_SIZE;
-      if (bfd_bread ((void *) &file_hdr, amt, abfd) != amt)
+      amt = sizeof (struct som_external_header);
+      if (bfd_bread (&ext_file_hdr, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
 	  return NULL;
 	}
 
+      som_swap_header_in (&ext_file_hdr, &file_hdr);
+
       break;
-#endif
 
     default:
       bfd_set_error (bfd_error_wrong_format);
       return NULL;
     }
 
-  if (file_hdr.version_id != VERSION_ID
+  if (file_hdr.version_id != OLD_VERSION_ID
       && file_hdr.version_id != NEW_VERSION_ID)
     {
       bfd_set_error (bfd_error_wrong_format);
@@ -2211,17 +2494,20 @@ som_object_p (bfd *abfd)
      a non-existant auxiliary header.  */
   if (file_hdr.aux_header_size != 0)
     {
+      struct som_external_exec_auxhdr ext_exec_auxhdr;
+
       aux_hdr_ptr = bfd_zalloc (abfd, 
 				(bfd_size_type) sizeof (*aux_hdr_ptr));
       if (aux_hdr_ptr == NULL)
 	return NULL;
-      amt = AUX_HDR_SIZE;
-      if (bfd_bread ((void *) aux_hdr_ptr, amt, abfd) != amt)
+      amt = sizeof (struct som_external_exec_auxhdr);
+      if (bfd_bread (&ext_exec_auxhdr, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
 	  return NULL;
 	}
+      som_swap_exec_auxhdr_in (&ext_exec_auxhdr, aux_hdr_ptr);
     }
 
   if (!setup_sections (abfd, &file_hdr, current_offset))
@@ -2254,9 +2540,9 @@ som_mkobject (bfd *abfd)
 static bfd_boolean
 som_prep_headers (bfd *abfd)
 {
-  struct header *file_hdr;
+  struct som_header *file_hdr;
   asection *section;
-  bfd_size_type amt = sizeof (struct header);
+  bfd_size_type amt = sizeof (struct som_header);
 
   /* Make and attach a file header to the BFD.  */
   file_hdr = bfd_zalloc (abfd, amt);
@@ -2309,7 +2595,7 @@ som_prep_headers (bfd *abfd)
       if (som_is_space (section))
 	{
 	  /* Allocate space for the space dictionary.  */
-	  amt = sizeof (struct space_dictionary_record);
+	  amt = sizeof (struct som_space_dictionary_record);
 	  som_section_data (section)->space_dict = bfd_zalloc (abfd, amt);
 	  if (som_section_data (section)->space_dict == NULL)
 	    return FALSE;
@@ -3067,7 +3353,10 @@ som_write_space_strings (bfd *abfd,
 		 returning from this function.)  The same technique is
 		 used a few more times below when a buffer is
 		 reallocated.  */
-	      tmp_space_size = MAX (2 * tmp_space_size, 5 + length);
+              if (2 * tmp_space_size < length + 5)
+                tmp_space_size = length + 5;
+              else
+                tmp_space_size = 2 * tmp_space_size;
 	      tmp_space = alloca (tmp_space_size);
 	    }
 
@@ -3083,9 +3372,9 @@ som_write_space_strings (bfd *abfd,
 
       /* Record the index in the space/subspace records.  */
       if (som_is_space (section))
-	som_section_data (section)->space_dict->name.n_strx = strings_size;
+	som_section_data (section)->space_dict->name = strings_size;
       else
-	som_section_data (section)->subspace_dict->name.n_strx = strings_size;
+	som_section_data (section)->subspace_dict->name = strings_size;
 
       /* Next comes the string itself + a null terminator.  */
       strcpy (p, section->name);
@@ -3118,7 +3407,7 @@ som_write_symbol_strings (bfd *abfd,
 			  asymbol **syms,
 			  unsigned int num_syms,
 			  unsigned int *string_sizep,
-			  COMPUNIT *compilation_unit)
+			  struct som_compilation_unit *compilation_unit)
 {
   unsigned int i;
 
@@ -3129,7 +3418,6 @@ som_write_symbol_strings (bfd *abfd,
   char *p = tmp_space;
 
   unsigned int strings_size = 0;
-  char *comp[4];
   bfd_size_type amt;
 
   /* This gets a bit gruesome because of the compilation unit.  The
@@ -3138,13 +3426,6 @@ som_write_symbol_strings (bfd *abfd,
      write them and update the compilation unit header.  On input, the
      compilation unit header contains local copies of the strings.
      Move them aside.  */
-  if (compilation_unit)
-    {
-      comp[0] = compilation_unit->name.n_name;
-      comp[1] = compilation_unit->language_name.n_name;
-      comp[2] = compilation_unit->product_id.n_name;
-      comp[3] = compilation_unit->version_id.n_name;
-    }
 
   /* Seek to the start of the space strings in preparation for writing
      them out.  */
@@ -3155,7 +3436,28 @@ som_write_symbol_strings (bfd *abfd,
     {
       for (i = 0; i < 4; i++)
 	{
-	  size_t length = strlen (comp[i]);
+          struct som_name_pt *name;
+          size_t length;
+
+	  switch (i)
+	    {
+	    case 0:
+	      name = &compilation_unit->name;
+	      break;
+	    case 1:
+	      name = &compilation_unit->language_name;
+	      break;
+	    case 2:
+	      name = &compilation_unit->product_id;
+	      break;
+	    case 3:
+	      name = &compilation_unit->version_id;
+	      break;
+            default:
+              abort ();
+	    }
+
+	  length = strlen (name->name);
 
 	  /* If there is not enough room for the next entry, then dump
 	     the current buffer contents now and maybe allocate a
@@ -3171,7 +3473,10 @@ som_write_symbol_strings (bfd *abfd,
 	      if (5 + length > tmp_space_size)
 		{
 		  /* See alloca above for discussion of new size.  */
-		  tmp_space_size = MAX (2 * tmp_space_size, 5 + length);
+                  if (2 * tmp_space_size < 5 + length)
+                    tmp_space_size = 5 + length;
+                  else
+                    tmp_space_size = 2 * tmp_space_size;
 		  tmp_space = alloca (tmp_space_size);
 		}
 
@@ -3189,26 +3494,9 @@ som_write_symbol_strings (bfd *abfd,
 	  p += 4;
 
 	  /* Next comes the string itself + a null terminator.  */
-	  strcpy (p, comp[i]);
+	  strcpy (p, name->name);
 
-	  switch (i)
-	    {
-	    case 0:
-	      obj_som_compilation_unit (abfd)->name.n_strx = strings_size;
-	      break;
-	    case 1:
-	      obj_som_compilation_unit (abfd)->language_name.n_strx =
-		strings_size;
-	      break;
-	    case 2:
-	      obj_som_compilation_unit (abfd)->product_id.n_strx =
-		strings_size;
-	      break;
-	    case 3:
-	      obj_som_compilation_unit (abfd)->version_id.n_strx =
-		strings_size;
-	      break;
-	    }
+          name->strx = strings_size;
 
 	  p += length + 1;
 	  strings_size += length + 1;
@@ -3240,7 +3528,10 @@ som_write_symbol_strings (bfd *abfd,
 	  if (5 + length > tmp_space_size)
 	    {
 	      /* See alloca above for discussion of new size.  */
-	      tmp_space_size = MAX (2 * tmp_space_size, 5 + length);
+              if (2 * tmp_space_size < 5 + length)
+                tmp_space_size = 5 + length;
+              else
+                tmp_space_size = 2 * tmp_space_size;
 	      tmp_space = alloca (tmp_space_size);
 	    }
 
@@ -3307,7 +3598,7 @@ som_begin_writing (bfd *abfd)
 
   /* Make room for the file header, it's contents are not complete
      yet, so it can not be written at this time.  */
-  current_offset += sizeof (struct header);
+  current_offset += sizeof (struct som_external_header);
 
   /* Any auxiliary headers will follow the file header.  Right now
      we support only the copyright and version headers.  */
@@ -3318,55 +3609,61 @@ som_begin_writing (bfd *abfd)
       /* Parts of the exec header will be filled in later, so
 	 delay writing the header itself.  Fill in the defaults,
 	 and write it later.  */
-      current_offset += sizeof (struct som_exec_auxhdr);
+      current_offset += sizeof (struct som_external_exec_auxhdr);
       obj_som_file_hdr (abfd)->aux_header_size
-	+= sizeof (struct som_exec_auxhdr);
+	+= sizeof (struct som_external_exec_auxhdr);
       exec_header = obj_som_exec_hdr (abfd);
       exec_header->som_auxhdr.type = EXEC_AUX_ID;
       exec_header->som_auxhdr.length = 40;
     }
   if (obj_som_version_hdr (abfd) != NULL)
     {
+      struct som_external_string_auxhdr ext_string_auxhdr;
       bfd_size_type len;
 
       if (bfd_seek (abfd, (file_ptr) current_offset, SEEK_SET) != 0)
 	return FALSE;
 
       /* Write the aux_id structure and the string length.  */
-      len = sizeof (struct aux_id) + sizeof (unsigned int);
+      len = sizeof (struct som_external_string_auxhdr);
       obj_som_file_hdr (abfd)->aux_header_size += len;
       current_offset += len;
-      if (bfd_bwrite ((void *) obj_som_version_hdr (abfd), len, abfd) != len)
+      som_swap_string_auxhdr_out
+        (obj_som_version_hdr (abfd), &ext_string_auxhdr);
+      if (bfd_bwrite (&ext_string_auxhdr, len, abfd) != len)
 	return FALSE;
 
       /* Write the version string.  */
-      len = obj_som_version_hdr (abfd)->header_id.length - sizeof (int);
+      len = obj_som_version_hdr (abfd)->header_id.length - 4;
       obj_som_file_hdr (abfd)->aux_header_size += len;
       current_offset += len;
-      if (bfd_bwrite ((void *) obj_som_version_hdr (abfd)->user_string, len, abfd)
+      if (bfd_bwrite ((void *) obj_som_version_hdr (abfd)->string, len, abfd)
 	  != len)
 	return FALSE;
     }
 
   if (obj_som_copyright_hdr (abfd) != NULL)
     {
+      struct som_external_string_auxhdr ext_string_auxhdr;
       bfd_size_type len;
 
       if (bfd_seek (abfd, (file_ptr) current_offset, SEEK_SET) != 0)
 	return FALSE;
 
       /* Write the aux_id structure and the string length.  */
-      len = sizeof (struct aux_id) + sizeof (unsigned int);
+      len = sizeof (struct som_external_string_auxhdr);
       obj_som_file_hdr (abfd)->aux_header_size += len;
       current_offset += len;
-      if (bfd_bwrite ((void *) obj_som_copyright_hdr (abfd), len, abfd) != len)
+      som_swap_string_auxhdr_out
+        (obj_som_copyright_hdr (abfd), &ext_string_auxhdr);
+      if (bfd_bwrite (&ext_string_auxhdr, len, abfd) != len)
 	return FALSE;
 
       /* Write the copyright string.  */
-      len = obj_som_copyright_hdr (abfd)->header_id.length - sizeof (int);
+      len = obj_som_copyright_hdr (abfd)->header_id.length - 4;
       obj_som_file_hdr (abfd)->aux_header_size += len;
       current_offset += len;
-      if (bfd_bwrite ((void *) obj_som_copyright_hdr (abfd)->copyright, len, abfd)
+      if (bfd_bwrite ((void *) obj_som_copyright_hdr (abfd)->string, len, abfd)
 	  != len)
 	return FALSE;
     }
@@ -3388,7 +3685,8 @@ som_begin_writing (bfd *abfd)
   num_spaces = som_count_spaces (abfd);
   obj_som_file_hdr (abfd)->space_location = current_offset;
   obj_som_file_hdr (abfd)->space_total = num_spaces;
-  current_offset += num_spaces * sizeof (struct space_dictionary_record);
+  current_offset +=
+    num_spaces * sizeof (struct som_external_space_dictionary_record);
 
   /* Next are the subspace records.  These are fixed length records.
 
@@ -3401,7 +3699,7 @@ som_begin_writing (bfd *abfd)
   obj_som_file_hdr (abfd)->subspace_location = current_offset;
   obj_som_file_hdr (abfd)->subspace_total = num_subspaces;
   current_offset
-    += num_subspaces * sizeof (struct som_subspace_dictionary_record);
+    += num_subspaces * sizeof (struct som_external_subspace_dictionary_record);
 
   /* Next is the string table for the space/subspace names.  We will
      build and write the string table on the fly.  At the same time
@@ -3430,7 +3728,7 @@ som_begin_writing (bfd *abfd)
   if (obj_som_compilation_unit (abfd))
     {
       obj_som_file_hdr (abfd)->compiler_total = 1;
-      current_offset += COMPUNITSZ;
+      current_offset += sizeof (struct som_external_compilation_unit);
     }
 
   /* Now compute the file positions for the loadable subspaces, taking
@@ -3645,6 +3943,7 @@ som_finish_writing (bfd *abfd)
   unsigned long current_offset;
   unsigned int strings_size, total_reloc_size;
   bfd_size_type amt;
+  struct som_external_header ext_header;
 
   /* We must set up the version identifier here as objcopy/strip copy
      private BFD data too late for us to handle this in som_begin_writing.  */
@@ -3676,7 +3975,8 @@ som_finish_writing (bfd *abfd)
   num_syms = bfd_get_symcount (abfd);
   obj_som_file_hdr (abfd)->symbol_location = current_offset;
   obj_som_file_hdr (abfd)->symbol_total = num_syms;
-  current_offset += num_syms * sizeof (struct symbol_dictionary_record);
+  current_offset +=
+    num_syms * sizeof (struct som_external_symbol_dictionary_record);
 
   /* Next are the symbol strings.
      Align them to a word boundary.  */
@@ -3745,6 +4045,7 @@ som_finish_writing (bfd *abfd)
 	   subsection != NULL;
 	   subsection = subsection->next)
 	{
+          struct som_external_subspace_dictionary_record ext_subspace_dict;
 
 	  /* Skip any section which does not correspond to a space
 	     or subspace.  Or does not have SEC_ALLOC set (and therefore
@@ -3775,9 +4076,10 @@ som_finish_writing (bfd *abfd)
 	  som_section_data (subsection)->subspace_dict->space_index = i;
 
 	  /* Dump the current subspace header.  */
+          som_swap_subspace_dictionary_record_out
+            (som_section_data (subsection)->subspace_dict, &ext_subspace_dict);
 	  amt = sizeof (struct som_subspace_dictionary_record);
-	  if (bfd_bwrite ((void *) som_section_data (subsection)->subspace_dict,
-			 amt, abfd) != amt)
+	  if (bfd_bwrite (&ext_subspace_dict, amt, abfd) != amt)
 	    return FALSE;
 	}
       /* Goto the next section.  */
@@ -3800,6 +4102,7 @@ som_finish_writing (bfd *abfd)
 	   subsection != NULL;
 	   subsection = subsection->next)
 	{
+          struct som_external_subspace_dictionary_record ext_subspace_dict;
 
 	  /* Skip any section which does not correspond to a space or
 	     subspace, or which SEC_ALLOC set (and therefore handled
@@ -3831,9 +4134,10 @@ som_finish_writing (bfd *abfd)
 	  som_section_data (subsection)->subspace_dict->space_index = i;
 
 	  /* Dump this subspace header.  */
+          som_swap_subspace_dictionary_record_out
+            (som_section_data (subsection)->subspace_dict, &ext_subspace_dict);
 	  amt = sizeof (struct som_subspace_dictionary_record);
-	  if (bfd_bwrite ((void *) som_section_data (subsection)->subspace_dict,
-			 amt, abfd) != amt)
+	  if (bfd_bwrite (&ext_subspace_dict, amt, abfd) != amt)
 	    return FALSE;
 	}
       /* Goto the next section.  */
@@ -3852,14 +4156,17 @@ som_finish_writing (bfd *abfd)
   section = abfd->sections;
   for (i = 0; i < num_spaces; i++)
     {
+      struct som_external_space_dictionary_record ext_space_dict;
+
       /* Find a space.  */
       while (!som_is_space (section))
 	section = section->next;
 
       /* Dump its header.  */
-      amt = sizeof (struct space_dictionary_record);
-      if (bfd_bwrite ((void *) som_section_data (section)->space_dict,
-		     amt, abfd) != amt)
+      som_swap_space_dictionary_out (som_section_data (section)->space_dict,
+                                     &ext_space_dict);
+      amt = sizeof (struct som_external_space_dictionary_record);
+      if (bfd_bwrite (&ext_space_dict, amt, abfd) != amt)
 	return FALSE;
 
       /* Goto the next section.  */
@@ -3869,12 +4176,17 @@ som_finish_writing (bfd *abfd)
   /* Write the compilation unit record if there is one.  */
   if (obj_som_compilation_unit (abfd))
     {
+      struct som_external_compilation_unit ext_comp_unit;
+
       location = obj_som_file_hdr (abfd)->compiler_location;
       if (bfd_seek (abfd, location, SEEK_SET) != 0)
 	return FALSE;
 
-      amt = COMPUNITSZ;
-      if (bfd_bwrite ((void *) obj_som_compilation_unit (abfd), amt, abfd) != amt)
+      som_swap_compilation_unit_out
+        (obj_som_compilation_unit (abfd), &ext_comp_unit);
+
+      amt = sizeof (struct som_external_compilation_unit);
+      if (bfd_bwrite (&ext_comp_unit, amt, abfd) != amt)
 	return FALSE;
     }
 
@@ -3889,16 +4201,17 @@ som_finish_writing (bfd *abfd)
   else
     obj_som_file_hdr (abfd)->system_id = CPU_PA_RISC1_0;
 
-  /* Compute the checksum for the file header just before writing
+  /* Swap and compute the checksum for the file header just before writing
      the header to disk.  */
-  obj_som_file_hdr (abfd)->checksum = som_compute_checksum (abfd);
+  som_swap_header_out (obj_som_file_hdr (abfd), &ext_header);
+  bfd_putb32 (som_compute_checksum (&ext_header), ext_header.checksum);
 
   /* Only thing left to do is write out the file header.  It is always
      at location zero.  Seek there and write it.  */
   if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
     return FALSE;
-  amt = sizeof (struct header);
-  if (bfd_bwrite ((void *) obj_som_file_hdr (abfd), amt, abfd) != amt)
+  amt = sizeof (struct som_external_header);
+  if (bfd_bwrite (&ext_header, amt, abfd) != amt)
     return FALSE;
 
   /* Now write the exec header.  */
@@ -3906,6 +4219,7 @@ som_finish_writing (bfd *abfd)
     {
       long tmp, som_length;
       struct som_exec_auxhdr *exec_header;
+      struct som_external_exec_auxhdr ext_exec_header;
 
       exec_header = obj_som_exec_hdr (abfd);
       exec_header->exec_entry = bfd_get_start_address (abfd);
@@ -3931,12 +4245,14 @@ som_finish_writing (bfd *abfd)
 	  return FALSE;
 	}
 
+      som_swap_exec_auxhdr_out (exec_header, &ext_exec_header);
+
       if (bfd_seek (abfd, obj_som_file_hdr (abfd)->aux_header_location,
 		    SEEK_SET) != 0)
 	return FALSE;
 
-      amt = AUX_HDR_SIZE;
-      if (bfd_bwrite ((void *) exec_header, amt, abfd) != amt)
+      amt = sizeof (ext_exec_header);
+      if (bfd_bwrite (&ext_exec_header, amt, abfd) != amt)
 	return FALSE;
     }
   return TRUE;
@@ -3945,13 +4261,13 @@ som_finish_writing (bfd *abfd)
 /* Compute and return the checksum for a SOM file header.  */
 
 static unsigned long
-som_compute_checksum (bfd *abfd)
+som_compute_checksum (struct som_external_header *hdr)
 {
   unsigned long checksum, count, i;
-  unsigned long *buffer = (unsigned long *) obj_som_file_hdr (abfd);
+  unsigned long *buffer = (unsigned long *) hdr;
 
   checksum = 0;
-  count = sizeof (struct header) / sizeof (unsigned long);
+  count = sizeof (struct som_external_header) / 4;
   for (i = 0; i < count; i++)
     checksum ^= *(buffer + i);
 
@@ -4015,7 +4331,9 @@ som_bfd_derive_misc_symbol_info (bfd *abfd ATTRIBUTE_UNUSED,
 	 section (ST_DATA for DATA sections, ST_CODE for CODE sections).  */
       else if (som_symbol_data (sym)->som_type == SYMBOL_TYPE_UNKNOWN)
 	{
-	  if (sym->section->flags & SEC_CODE)
+	  if (bfd_is_abs_section (sym->section))
+	    info->symbol_type = ST_ABSOLUTE;
+	  else if (sym->section->flags & SEC_CODE)
 	    info->symbol_type = ST_CODE;
 	  else
 	    info->symbol_type = ST_DATA;
@@ -4122,14 +4440,14 @@ som_build_and_write_symbol_table (bfd *abfd)
   unsigned int num_syms = bfd_get_symcount (abfd);
   file_ptr symtab_location = obj_som_file_hdr (abfd)->symbol_location;
   asymbol **bfd_syms = obj_som_sorted_syms (abfd);
-  struct symbol_dictionary_record *som_symtab = NULL;
+  struct som_external_symbol_dictionary_record *som_symtab = NULL;
   unsigned int i;
   bfd_size_type symtab_size;
 
   /* Compute total symbol table size and allocate a chunk of memory
      to hold the symbol table as we build it.  */
   symtab_size = num_syms;
-  symtab_size *= sizeof (struct symbol_dictionary_record);
+  symtab_size *= sizeof (struct som_external_symbol_dictionary_record);
   som_symtab = bfd_zmalloc (symtab_size);
   if (som_symtab == NULL && symtab_size != 0)
     goto error_return;
@@ -4138,26 +4456,32 @@ som_build_and_write_symbol_table (bfd *abfd)
   for (i = 0; i < num_syms; i++)
     {
       struct som_misc_symbol_info info;
+      unsigned int flags;
 
       /* This is really an index into the symbol strings table.
 	 By the time we get here, the index has already been
 	 computed and stored into the name field in the BFD symbol.  */
-      som_symtab[i].name.n_strx = som_symbol_data(bfd_syms[i])->stringtab_offset;
+      bfd_putb32 (som_symbol_data (bfd_syms[i])->stringtab_offset,
+                  som_symtab[i].name);
 
       /* Derive SOM information from the BFD symbol.  */
       som_bfd_derive_misc_symbol_info (abfd, bfd_syms[i], &info);
 
       /* Now use it.  */
-      som_symtab[i].symbol_type = info.symbol_type;
-      som_symtab[i].symbol_scope = info.symbol_scope;
-      som_symtab[i].arg_reloc = info.arg_reloc;
-      som_symtab[i].symbol_info = info.symbol_info;
-      som_symtab[i].xleast = 3;
-      som_symtab[i].symbol_value = info.symbol_value | info.priv_level;
-      som_symtab[i].secondary_def = info.secondary_def;
-      som_symtab[i].is_comdat = info.is_comdat;
-      som_symtab[i].is_common = info.is_common;
-      som_symtab[i].dup_common = info.dup_common;
+      flags = (info.symbol_type << SOM_SYMBOL_TYPE_SH)
+        | (info.symbol_scope << SOM_SYMBOL_SCOPE_SH)
+        | (info.arg_reloc << SOM_SYMBOL_ARG_RELOC_SH)
+        | (3 << SOM_SYMBOL_XLEAST_SH)
+        | (info.secondary_def ? SOM_SYMBOL_SECONDARY_DEF : 0)
+        | (info.is_common ? SOM_SYMBOL_IS_COMMON : 0)
+        | (info.dup_common ? SOM_SYMBOL_DUP_COMMON : 0);
+      bfd_putb32 (flags, som_symtab[i].flags);
+
+      flags = (info.symbol_info << SOM_SYMBOL_SYMBOL_INFO_SH)
+        | (info.is_comdat ? SOM_SYMBOL_IS_COMDAT : 0);
+      bfd_putb32 (flags, som_symtab[i].info);
+      bfd_putb32 (info.symbol_value | info.priv_level,
+                  som_symtab[i].symbol_value);
     }
 
   /* Everything is ready, seek to the right location and
@@ -4249,28 +4573,32 @@ som_get_symtab_upper_bound (bfd *abfd)
 /* Convert from a SOM subspace index to a BFD section.  */
 
 static asection *
-bfd_section_from_som_symbol (bfd *abfd, struct symbol_dictionary_record *symbol)
+bfd_section_from_som_symbol
+  (bfd *abfd, struct som_external_symbol_dictionary_record *symbol)
 {
   asection *section;
+  unsigned int flags = bfd_getb32 (symbol->flags);
+  unsigned int symbol_type = (flags >> SOM_SYMBOL_TYPE_SH) & SOM_SYMBOL_TYPE_MASK;
 
   /* The meaning of the symbol_info field changes for functions
      within executables.  So only use the quick symbol_info mapping for
      incomplete objects and non-function symbols in executables.  */
   if ((abfd->flags & (EXEC_P | DYNAMIC)) == 0
-      || (symbol->symbol_type != ST_ENTRY
-	  && symbol->symbol_type != ST_PRI_PROG
-	  && symbol->symbol_type != ST_SEC_PROG
-	  && symbol->symbol_type != ST_MILLICODE))
+      || (symbol_type != ST_ENTRY
+	  && symbol_type != ST_PRI_PROG
+	  && symbol_type != ST_SEC_PROG
+	  && symbol_type != ST_MILLICODE))
     {
-      int index = symbol->symbol_info;
+      int idx = (bfd_getb32 (symbol->info) >> SOM_SYMBOL_SYMBOL_INFO_SH)
+        & SOM_SYMBOL_SYMBOL_INFO_MASK;
 
       for (section = abfd->sections; section != NULL; section = section->next)
-	if (section->target_index == index && som_is_subspace (section))
+	if (section->target_index == idx && som_is_subspace (section))
 	  return section;
     }
   else
     {
-      unsigned int value = symbol->symbol_value;
+      unsigned int value = bfd_getb32 (symbol->symbol_value);
 
       /* For executables we will have to use the symbol's address and
 	 find out what section would contain that address.   Yuk.  */
@@ -4292,9 +4620,9 @@ static unsigned int
 som_slurp_symbol_table (bfd *abfd)
 {
   int symbol_count = bfd_get_symcount (abfd);
-  int symsize = sizeof (struct symbol_dictionary_record);
+  int symsize = sizeof (struct som_external_symbol_dictionary_record);
   char *stringtab;
-  struct symbol_dictionary_record *buf = NULL, *bufp, *endbufp;
+  struct som_external_symbol_dictionary_record *buf = NULL, *bufp, *endbufp;
   som_symbol_type *sym, *symbase;
   bfd_size_type amt;
 
@@ -4332,42 +4660,48 @@ som_slurp_symbol_table (bfd *abfd)
   endbufp = buf + symbol_count;
   for (bufp = buf, sym = symbase; bufp < endbufp; ++bufp)
     {
+      unsigned int flags = bfd_getb32 (bufp->flags);
+      unsigned int symbol_type =
+        (flags >> SOM_SYMBOL_TYPE_SH) & SOM_SYMBOL_TYPE_MASK;
+      unsigned int symbol_scope =
+        (flags >> SOM_SYMBOL_SCOPE_SH) & SOM_SYMBOL_SCOPE_MASK;
+
       /* I don't think we care about these.  */
-      if (bufp->symbol_type == ST_SYM_EXT
-	  || bufp->symbol_type == ST_ARG_EXT)
+      if (symbol_type == ST_SYM_EXT || symbol_type == ST_ARG_EXT)
 	continue;
 
       /* Set some private data we care about.  */
-      if (bufp->symbol_type == ST_NULL)
+      if (symbol_type == ST_NULL)
 	som_symbol_data (sym)->som_type = SYMBOL_TYPE_UNKNOWN;
-      else if (bufp->symbol_type == ST_ABSOLUTE)
+      else if (symbol_type == ST_ABSOLUTE)
 	som_symbol_data (sym)->som_type = SYMBOL_TYPE_ABSOLUTE;
-      else if (bufp->symbol_type == ST_DATA)
+      else if (symbol_type == ST_DATA)
 	som_symbol_data (sym)->som_type = SYMBOL_TYPE_DATA;
-      else if (bufp->symbol_type == ST_CODE)
+      else if (symbol_type == ST_CODE)
 	som_symbol_data (sym)->som_type = SYMBOL_TYPE_CODE;
-      else if (bufp->symbol_type == ST_PRI_PROG)
+      else if (symbol_type == ST_PRI_PROG)
 	som_symbol_data (sym)->som_type = SYMBOL_TYPE_PRI_PROG;
-      else if (bufp->symbol_type == ST_SEC_PROG)
+      else if (symbol_type == ST_SEC_PROG)
 	som_symbol_data (sym)->som_type = SYMBOL_TYPE_SEC_PROG;
-      else if (bufp->symbol_type == ST_ENTRY)
+      else if (symbol_type == ST_ENTRY)
 	som_symbol_data (sym)->som_type = SYMBOL_TYPE_ENTRY;
-      else if (bufp->symbol_type == ST_MILLICODE)
+      else if (symbol_type == ST_MILLICODE)
 	som_symbol_data (sym)->som_type = SYMBOL_TYPE_MILLICODE;
-      else if (bufp->symbol_type == ST_PLABEL)
+      else if (symbol_type == ST_PLABEL)
 	som_symbol_data (sym)->som_type = SYMBOL_TYPE_PLABEL;
       else
 	som_symbol_data (sym)->som_type = SYMBOL_TYPE_UNKNOWN;
-      som_symbol_data (sym)->tc_data.ap.hppa_arg_reloc = bufp->arg_reloc;
+      som_symbol_data (sym)->tc_data.ap.hppa_arg_reloc =
+        (flags >> SOM_SYMBOL_ARG_RELOC_SH) & SOM_SYMBOL_ARG_RELOC_MASK;
 
       /* Some reasonable defaults.  */
       sym->symbol.the_bfd = abfd;
-      sym->symbol.name = bufp->name.n_strx + stringtab;
-      sym->symbol.value = bufp->symbol_value;
+      sym->symbol.name = bfd_getb32 (bufp->name) + stringtab;
+      sym->symbol.value = bfd_getb32 (bufp->symbol_value);
       sym->symbol.section = 0;
       sym->symbol.flags = 0;
 
-      switch (bufp->symbol_type)
+      switch (symbol_type)
 	{
 	case ST_ENTRY:
 	case ST_MILLICODE:
@@ -4386,7 +4720,7 @@ som_slurp_symbol_table (bfd *abfd)
 	  sym->symbol.value &= ~0x3;
 	  /* If the symbol's scope is SS_UNSAT, then these are
 	     undefined function symbols.  */
-	  if (bufp->symbol_scope == SS_UNSAT)
+	  if (symbol_scope == SS_UNSAT)
 	    sym->symbol.flags |= BSF_FUNCTION;
 
 	default:
@@ -4394,12 +4728,12 @@ som_slurp_symbol_table (bfd *abfd)
 	}
 
       /* Handle scoping and section information.  */
-      switch (bufp->symbol_scope)
+      switch (symbol_scope)
 	{
 	/* symbol_info field is undefined for SS_EXTERNAL and SS_UNSAT symbols,
 	   so the section associated with this symbol can't be known.  */
 	case SS_EXTERNAL:
-	  if (bufp->symbol_type != ST_STORAGE)
+	  if (symbol_type != ST_STORAGE)
 	    sym->symbol.section = bfd_und_section_ptr;
 	  else
 	    sym->symbol.section = bfd_com_section_ptr;
@@ -4407,7 +4741,7 @@ som_slurp_symbol_table (bfd *abfd)
 	  break;
 
 	case SS_UNSAT:
-	  if (bufp->symbol_type != ST_STORAGE)
+	  if (symbol_type != ST_STORAGE)
 	    sym->symbol.section = bfd_und_section_ptr;
 	  else
 	    sym->symbol.section = bfd_com_section_ptr;
@@ -4427,7 +4761,7 @@ som_slurp_symbol_table (bfd *abfd)
 	}
 
       /* Check for a weak symbol.  */
-      if (bufp->secondary_def)
+      if (flags & SOM_SYMBOL_SECONDARY_DEF)
 	sym->symbol.flags |= BSF_WEAK;
 
       /* Mark section symbols and symbols used by the debugger.
@@ -4495,13 +4829,13 @@ static asymbol *
 som_make_empty_symbol (bfd *abfd)
 {
   bfd_size_type amt = sizeof (som_symbol_type);
-  som_symbol_type *new = bfd_zalloc (abfd, amt);
+  som_symbol_type *new_symbol_type = bfd_zalloc (abfd, amt);
 
-  if (new == NULL)
+  if (new_symbol_type == NULL)
     return NULL;
-  new->symbol.the_bfd = abfd;
+  new_symbol_type->symbol.the_bfd = abfd;
 
-  return &new->symbol;
+  return &new_symbol_type->symbol;
 }
 
 /* Print symbol information.  */
@@ -5126,7 +5460,7 @@ static bfd_boolean
 som_bfd_print_private_bfd_data (bfd *abfd, void *farg)
 {
   struct som_exec_auxhdr *exec_header;
-  struct aux_id* auxhdr;
+  struct som_aux_id* auxhdr;
   FILE *f;
 
   f = (FILE *) farg;
@@ -5200,7 +5534,7 @@ bfd_som_set_section_attributes (asection *section,
 bfd_boolean
 bfd_som_set_subsection_attributes (asection *section,
 				   asection *container,
-				   int access,
+				   int access_ctr,
 				   unsigned int sort_key,
 				   int quadrant,
 				   int comdat,
@@ -5217,7 +5551,7 @@ bfd_som_set_subsection_attributes (asection *section,
 	return FALSE;
     }
   som_section_data (section)->copy_data->sort_key = sort_key;
-  som_section_data (section)->copy_data->access_control_bits = access;
+  som_section_data (section)->copy_data->access_control_bits = access_ctr;
   som_section_data (section)->copy_data->quadrant = quadrant;
   som_section_data (section)->copy_data->container = container;
   som_section_data (section)->copy_data->is_comdat = comdat;
@@ -5253,15 +5587,15 @@ bfd_som_attach_aux_hdr (bfd *abfd, int type, char *string)
 
       if (len % 4)
 	pad = (4 - (len % 4));
-      amt = sizeof (struct aux_id) + sizeof (unsigned int) + len + pad;
+      amt = sizeof (struct som_string_auxhdr) + len + pad;
       obj_som_version_hdr (abfd) = bfd_zalloc (abfd, amt);
       if (!obj_som_version_hdr (abfd))
 	return FALSE;
       obj_som_version_hdr (abfd)->header_id.type = VERSION_AUX_ID;
-      obj_som_version_hdr (abfd)->header_id.length = len + pad;
-      obj_som_version_hdr (abfd)->header_id.length += sizeof (int);
+      obj_som_version_hdr (abfd)->header_id.length = 4 + len + pad;
       obj_som_version_hdr (abfd)->string_length = len;
-      strncpy (obj_som_version_hdr (abfd)->user_string, string, len);
+      memcpy (obj_som_version_hdr (abfd)->string, string, len);
+      memset (obj_som_version_hdr (abfd)->string + len, 0, pad);
     }
   else if (type == COPYRIGHT_AUX_ID)
     {
@@ -5270,15 +5604,15 @@ bfd_som_attach_aux_hdr (bfd *abfd, int type, char *string)
 
       if (len % 4)
 	pad = (4 - (len % 4));
-      amt = sizeof (struct aux_id) + sizeof (unsigned int) + len + pad;
+      amt = sizeof (struct som_string_auxhdr) + len + pad;
       obj_som_copyright_hdr (abfd) = bfd_zalloc (abfd, amt);
       if (!obj_som_copyright_hdr (abfd))
 	return FALSE;
       obj_som_copyright_hdr (abfd)->header_id.type = COPYRIGHT_AUX_ID;
-      obj_som_copyright_hdr (abfd)->header_id.length = len + pad;
-      obj_som_copyright_hdr (abfd)->header_id.length += sizeof (int);
+      obj_som_copyright_hdr (abfd)->header_id.length = len + pad + 4;
       obj_som_copyright_hdr (abfd)->string_length = len;
-      strcpy (obj_som_copyright_hdr (abfd)->copyright, string);
+      memcpy (obj_som_copyright_hdr (abfd)->string, string, len);
+      memset (obj_som_copyright_hdr (abfd)->string + len, 0, pad);
     }
   return TRUE;
 }
@@ -5293,18 +5627,20 @@ bfd_som_attach_compilation_unit (bfd *abfd,
 				 const char *product_id,
 				 const char *version_id)
 {
-  COMPUNIT *n = (COMPUNIT *) bfd_zalloc (abfd, (bfd_size_type) COMPUNITSZ);
+  struct som_compilation_unit *n;
 
+  n = (struct som_compilation_unit *) bfd_zalloc
+    (abfd, (bfd_size_type) sizeof (*n));
   if (n == NULL)
     return FALSE;
 
 #define STRDUP(f) \
   if (f != NULL) \
     { \
-      n->f.n_name = bfd_alloc (abfd, (bfd_size_type) strlen (f) + 1); \
-      if (n->f.n_name == NULL) \
+      n->f.name = bfd_alloc (abfd, (bfd_size_type) strlen (f) + 1); \
+      if (n->f.name == NULL) \
 	return FALSE; \
-      strcpy (n->f.n_name, f); \
+      strcpy (n->f.name, f); \
     }
 
   STRDUP (name);
@@ -5438,7 +5774,6 @@ som_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 		    struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
   (*_bfd_error_handler) (_("som_sizeof_headers unimplemented"));
-  fflush (stderr);
   abort ();
   return 0;
 }
@@ -5525,18 +5860,19 @@ som_get_symbol_info (bfd *ignore_abfd ATTRIBUTE_UNUSED,
 
 static bfd_boolean
 som_bfd_count_ar_symbols (bfd *abfd,
-			  struct lst_header *lst_header,
+			  struct som_lst_header *lst_header,
 			  symindex *count)
 {
   unsigned int i;
-  unsigned int *hash_table = NULL;
+  unsigned char *hash_table;
   bfd_size_type amt;
-  file_ptr lst_filepos = bfd_tell (abfd) - sizeof (struct lst_header);
+  file_ptr lst_filepos;
 
-  amt = lst_header->hash_size;
-  amt *= sizeof (unsigned int);
+  lst_filepos = bfd_tell (abfd) - sizeof (struct som_external_lst_header);
+
+  amt = lst_header->hash_size * 4;
   hash_table = bfd_malloc (amt);
-  if (hash_table == NULL && lst_header->hash_size != 0)
+  if (hash_table == NULL && amt != 0)
     goto error_return;
 
   /* Don't forget to initialize the counter!  */
@@ -5551,35 +5887,39 @@ som_bfd_count_ar_symbols (bfd *abfd,
      chain.  */
   for (i = 0; i < lst_header->hash_size; i++)
     {
-      struct lst_symbol_record lst_symbol;
+      struct som_external_lst_symbol_record ext_lst_symbol;
+      unsigned int hash_val = bfd_getb32 (hash_table + 4 * i);
 
       /* An empty chain has zero as it's file offset.  */
-      if (hash_table[i] == 0)
+      if (hash_val == 0)
 	continue;
 
       /* Seek to the first symbol in this hash chain.  */
-      if (bfd_seek (abfd, lst_filepos + hash_table[i], SEEK_SET) != 0)
+      if (bfd_seek (abfd, lst_filepos + hash_val, SEEK_SET) != 0)
 	goto error_return;
 
       /* Read in this symbol and update the counter.  */
-      amt = sizeof (lst_symbol);
-      if (bfd_bread ((void *) &lst_symbol, amt, abfd) != amt)
+      amt = sizeof (ext_lst_symbol);
+      if (bfd_bread ((void *) &ext_lst_symbol, amt, abfd) != amt)
 	goto error_return;
 
       (*count)++;
 
       /* Now iterate through the rest of the symbols on this chain.  */
-      while (lst_symbol.next_entry)
+      while (1)
 	{
+          unsigned int next_entry = bfd_getb32 (ext_lst_symbol.next_entry);
+
+          if (next_entry == 0)
+            break;
 
 	  /* Seek to the next symbol.  */
-	  if (bfd_seek (abfd, lst_filepos + lst_symbol.next_entry, SEEK_SET)
-	      != 0)
+	  if (bfd_seek (abfd, lst_filepos + next_entry, SEEK_SET) != 0)
 	    goto error_return;
 
 	  /* Read the symbol in and update the counter.  */
-	  amt = sizeof (lst_symbol);
-	  if (bfd_bread ((void *) &lst_symbol, amt, abfd) != amt)
+	  amt = sizeof (ext_lst_symbol);
+	  if (bfd_bread ((void *) &ext_lst_symbol, amt, abfd) != amt)
 	    goto error_return;
 
 	  (*count)++;
@@ -5600,20 +5940,21 @@ som_bfd_count_ar_symbols (bfd *abfd,
 
 static bfd_boolean
 som_bfd_fill_in_ar_symbols (bfd *abfd,
-			    struct lst_header *lst_header,
+			    struct som_lst_header *lst_header,
 			    carsym **syms)
 {
-  unsigned int i, len;
+  unsigned int i;
   carsym *set = syms[0];
-  unsigned int *hash_table = NULL;
-  struct som_entry *som_dict = NULL;
+  unsigned char *hash_table;
+  struct som_external_som_entry *som_dict = NULL;
   bfd_size_type amt;
-  file_ptr lst_filepos = bfd_tell (abfd) - sizeof (struct lst_header);
+  file_ptr lst_filepos;
+  unsigned int string_loc;
 
-  amt = lst_header->hash_size;
-  amt *= sizeof (unsigned int);
+  lst_filepos = bfd_tell (abfd) - sizeof (struct som_external_lst_header);
+  amt = lst_header->hash_size * 4;
   hash_table = bfd_malloc (amt);
-  if (hash_table == NULL && lst_header->hash_size != 0)
+  if (hash_table == NULL && amt != 0)
     goto error_return;
 
   /* Read in the hash table.  The has table is an array of 32bit file offsets
@@ -5626,26 +5967,31 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
   if (bfd_seek (abfd, lst_filepos + lst_header->dir_loc, SEEK_SET) != 0)
     goto error_return;
 
-  amt = lst_header->module_count;
-  amt *= sizeof (struct som_entry);
+  amt = lst_header->module_count * sizeof (struct som_external_som_entry);
   som_dict = bfd_malloc (amt);
-  if (som_dict == NULL && lst_header->module_count != 0)
+  if (som_dict == NULL && amt != 0)
     goto error_return;
 
   if (bfd_bread ((void *) som_dict, amt, abfd) != amt)
     goto error_return;
 
+  string_loc = lst_header->string_loc;
+
   /* Walk each chain filling in the carsyms as we go along.  */
   for (i = 0; i < lst_header->hash_size; i++)
     {
-      struct lst_symbol_record lst_symbol;
+      struct som_external_lst_symbol_record lst_symbol;
+      unsigned int hash_val;
+      unsigned int len;
+      unsigned char ext_len[4];
 
       /* An empty chain has zero as it's file offset.  */
-      if (hash_table[i] == 0)
+      hash_val = bfd_getb32 (hash_table + 4 * i);
+      if (hash_val == 0)
 	continue;
 
       /* Seek to and read the first symbol on the chain.  */
-      if (bfd_seek (abfd, lst_filepos + hash_table[i], SEEK_SET) != 0)
+      if (bfd_seek (abfd, lst_filepos + hash_val, SEEK_SET) != 0)
 	goto error_return;
 
       amt = sizeof (lst_symbol);
@@ -5659,12 +6005,13 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 	 and index into it.  Well, according to the SOM ABI the string
 	 index can point *anywhere* in the archive to save space, so just
 	 using the string table would not be safe.  */
-      if (bfd_seek (abfd, lst_filepos + lst_header->string_loc
-			    + lst_symbol.name.n_strx - 4, SEEK_SET) != 0)
+      if (bfd_seek (abfd, (lst_filepos + string_loc
+                           + bfd_getb32 (lst_symbol.name) - 4), SEEK_SET) != 0)
 	goto error_return;
 
-      if (bfd_bread (&len, (bfd_size_type) 4, abfd) != 4)
+      if (bfd_bread (&ext_len, (bfd_size_type) 4, abfd) != 4)
 	goto error_return;
+      len = bfd_getb32 (ext_len);
 
       /* Allocate space for the name and null terminate it too.  */
       set->name = bfd_zalloc (abfd, (bfd_size_type) len + 1);
@@ -5677,18 +6024,23 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 
       /* Fill in the file offset.  Note that the "location" field points
 	 to the SOM itself, not the ar_hdr in front of it.  */
-      set->file_offset = som_dict[lst_symbol.som_index].location
-			  - sizeof (struct ar_hdr);
+      set->file_offset =
+        bfd_getb32 (som_dict[bfd_getb32 (lst_symbol.som_index)].location)
+        - sizeof (struct ar_hdr);
 
       /* Go to the next symbol.  */
       set++;
 
       /* Iterate through the rest of the chain.  */
-      while (lst_symbol.next_entry)
+      while (1)
 	{
+          unsigned int next_entry = bfd_getb32 (lst_symbol.next_entry);
+
+          if (next_entry == 0)
+            break;
+
 	  /* Seek to the next symbol and read it in.  */
-	  if (bfd_seek (abfd, lst_filepos + lst_symbol.next_entry, SEEK_SET)
-	      != 0)
+	  if (bfd_seek (abfd, lst_filepos + next_entry, SEEK_SET) != 0)
 	    goto error_return;
 
 	  amt = sizeof (lst_symbol);
@@ -5696,12 +6048,13 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 	    goto error_return;
 
 	  /* Seek to the name length & string and read them in.  */
-	  if (bfd_seek (abfd, lst_filepos + lst_header->string_loc
-				+ lst_symbol.name.n_strx - 4, SEEK_SET) != 0)
+	  if (bfd_seek (abfd, lst_filepos + string_loc
+                        + bfd_getb32 (lst_symbol.name) - 4, SEEK_SET) != 0)
 	    goto error_return;
 
-	  if (bfd_bread (&len, (bfd_size_type) 4, abfd) != 4)
+	  if (bfd_bread (&ext_len, (bfd_size_type) 4, abfd) != 4)
 	    goto error_return;
+          len = bfd_getb32 (ext_len);
 
 	  /* Allocate space for the name and null terminate it too.  */
 	  set->name = bfd_zalloc (abfd, (bfd_size_type) len + 1);
@@ -5714,8 +6067,9 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 
 	  /* Fill in the file offset.  Note that the "location" field points
 	     to the SOM itself, not the ar_hdr in front of it.  */
-	  set->file_offset = som_dict[lst_symbol.som_index].location
-			       - sizeof (struct ar_hdr);
+	  set->file_offset =
+            bfd_getb32 (som_dict[bfd_getb32 (lst_symbol.som_index)].location)
+            - sizeof (struct ar_hdr);
 
 	  /* Go on to the next symbol.  */
 	  set++;
@@ -5742,7 +6096,8 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 static bfd_boolean
 som_slurp_armap (bfd *abfd)
 {
-  struct lst_header lst_header;
+  struct som_external_lst_header ext_lst_header;
+  struct som_lst_header lst_header;
   struct ar_hdr ar_header;
   unsigned int parsed_size;
   struct artdata *ardata = bfd_ardata (abfd);
@@ -5791,9 +6146,11 @@ som_slurp_armap (bfd *abfd)
 
   /* Read in the library symbol table.  We'll make heavy use of this
      in just a minute.  */
-  amt = sizeof (struct lst_header);
-  if (bfd_bread ((void *) &lst_header, amt, abfd) != amt)
+  amt = sizeof (struct som_external_lst_header);
+  if (bfd_bread ((void *) &ext_lst_header, amt, abfd) != amt)
     return FALSE;
+
+  som_swap_lst_header_in (&ext_lst_header, &lst_header);
 
   /* Sanity check.  */
   if (lst_header.a_magic != LIBMAGIC)
@@ -5808,7 +6165,8 @@ som_slurp_armap (bfd *abfd)
 
   /* Get back to the start of the library symbol table.  */
   if (bfd_seek (abfd, (ardata->first_file_filepos - parsed_size
-		       + sizeof (struct lst_header)), SEEK_SET) != 0)
+		       + sizeof (struct som_external_lst_header)),
+                SEEK_SET) != 0)
     return FALSE;
 
   /* Initialize the cache and allocate space for the library symbols.  */
@@ -5899,7 +6257,7 @@ som_bfd_prep_for_ar_write (bfd *abfd,
 	  /* Bump the various counters, being careful to honor
 	     alignment considerations in the string table.  */
 	  (*num_syms)++;
-	  *stringsize = *stringsize + strlen (sym->symbol.name) + 5;
+	  *stringsize += strlen (sym->symbol.name) + 5;
 	  while (*stringsize % 4)
 	    (*stringsize)++;
 	}
@@ -5932,40 +6290,36 @@ static bfd_boolean
 som_bfd_ar_write_symbol_stuff (bfd *abfd,
 			       unsigned int nsyms,
 			       unsigned int string_size,
-			       struct lst_header lst,
+			       struct som_external_lst_header lst,
 			       unsigned elength)
 {
-  file_ptr lst_filepos;
   char *strings = NULL, *p;
-  struct lst_symbol_record *lst_syms = NULL, *curr_lst_sym;
+  struct som_external_lst_symbol_record *lst_syms = NULL, *curr_lst_sym;
   bfd *curr_bfd;
-  unsigned int *hash_table = NULL;
-  struct som_entry *som_dict = NULL;
-  struct lst_symbol_record **last_hash_entry = NULL;
+  unsigned char *hash_table = NULL;
+  struct som_external_som_entry *som_dict = NULL;
+  struct som_external_lst_symbol_record **last_hash_entry = NULL;
   unsigned int curr_som_offset, som_index = 0;
   bfd_size_type amt;
+  unsigned int module_count;
+  unsigned int hash_size;
 
-  amt = lst.hash_size;
-  amt *= sizeof (unsigned int);
+  hash_size = bfd_getb32 (lst.hash_size);
+  amt = hash_size * 4;
   hash_table = bfd_zmalloc (amt);
-  if (hash_table == NULL && lst.hash_size != 0)
+  if (hash_table == NULL && hash_size != 0)
     goto error_return;
 
-  amt = lst.module_count;
-  amt *= sizeof (struct som_entry);
+  module_count = bfd_getb32 (lst.module_count);
+  amt = module_count * sizeof (struct som_external_som_entry);
   som_dict = bfd_zmalloc (amt);
-  if (som_dict == NULL && lst.module_count != 0)
+  if (som_dict == NULL && module_count != 0)
     goto error_return;
 
-  amt = lst.hash_size;
-  amt *= sizeof (struct lst_symbol_record *);
+  amt = hash_size * sizeof (struct som_external_lst_symbol_record *);
   last_hash_entry = bfd_zmalloc (amt);
-  if (last_hash_entry == NULL && lst.hash_size != 0)
+  if (last_hash_entry == NULL && hash_size != 0)
     goto error_return;
-
-  /* Lots of fields are file positions relative to the start
-     of the lst record.  So save its location.  */
-  lst_filepos = bfd_tell (abfd) - sizeof (struct lst_header);
 
   /* Symbols have som_index fields, so we have to keep track of the
      index of each SOM in the archive.
@@ -5979,7 +6333,7 @@ som_bfd_ar_write_symbol_stuff (bfd *abfd,
   /* We add in the size of the archive header twice as the location
      in the SOM dictionary is the actual offset of the SOM, not the
      archive header before the SOM.  */
-  curr_som_offset = 8 + 2 * sizeof (struct ar_hdr) + lst.file_end;
+  curr_som_offset = 8 + 2 * sizeof (struct ar_hdr) + bfd_getb32 (lst.file_end);
 
   /* Make room for the archive header and the contents of the
      extended string table.  Note that elength includes the size
@@ -5992,7 +6346,7 @@ som_bfd_ar_write_symbol_stuff (bfd *abfd,
 
   /* FIXME should be done with buffers just like everything else...  */
   amt = nsyms;
-  amt *= sizeof (struct lst_symbol_record);
+  amt *= sizeof (struct som_external_lst_symbol_record);
   lst_syms = bfd_malloc (amt);
   if (lst_syms == NULL && nsyms != 0)
     goto error_return;
@@ -6029,6 +6383,11 @@ som_bfd_ar_write_symbol_stuff (bfd *abfd,
       for (i = 0; i < curr_count; i++, sym++)
 	{
 	  struct som_misc_symbol_info info;
+          struct som_external_lst_symbol_record *last;
+          unsigned int symbol_pos;
+          unsigned int slen;
+          unsigned int symbol_key;
+          unsigned int flags;
 
 	  /* Derive SOM information from the BFD symbol.  */
 	  som_bfd_derive_misc_symbol_info (curr_bfd, &sym->symbol, &info);
@@ -6050,72 +6409,74 @@ som_bfd_ar_write_symbol_stuff (bfd *abfd,
 
 	  /* If this is the first symbol from this SOM, then update
 	     the SOM dictionary too.  */
-	  if (som_dict[som_index].location == 0)
+	  if (bfd_getb32 (som_dict[som_index].location) == 0)
 	    {
-	      som_dict[som_index].location = curr_som_offset;
-	      som_dict[som_index].length = arelt_size (curr_bfd);
+	      bfd_putb32 (curr_som_offset, som_dict[som_index].location);
+	      bfd_putb32 (arelt_size (curr_bfd), som_dict[som_index].length);
 	    }
 
+          symbol_key = som_bfd_ar_symbol_hash (&sym->symbol);
+
 	  /* Fill in the lst symbol record.  */
-	  curr_lst_sym->hidden = 0;
-	  curr_lst_sym->secondary_def = info.secondary_def;
-	  curr_lst_sym->symbol_type = info.symbol_type;
-	  curr_lst_sym->symbol_scope = info.symbol_scope;
-	  curr_lst_sym->check_level = 0;
-	  curr_lst_sym->must_qualify = 0;
-	  curr_lst_sym->initially_frozen = 0;
-	  curr_lst_sym->memory_resident = 0;
-	  curr_lst_sym->is_common = bfd_is_com_section (sym->symbol.section);
-	  curr_lst_sym->dup_common = info.dup_common;
-	  curr_lst_sym->xleast = 3;
-	  curr_lst_sym->arg_reloc = info.arg_reloc;
-	  curr_lst_sym->name.n_strx = p - strings + 4;
-	  curr_lst_sym->qualifier_name.n_strx = 0;
-	  curr_lst_sym->symbol_info = info.symbol_info;
-	  curr_lst_sym->symbol_value = info.symbol_value | info.priv_level;
-	  curr_lst_sym->symbol_descriptor = 0;
-	  curr_lst_sym->reserved = 0;
-	  curr_lst_sym->som_index = som_index;
-	  curr_lst_sym->symbol_key = som_bfd_ar_symbol_hash (&sym->symbol);
-	  curr_lst_sym->next_entry = 0;
+          flags = 0;
+          if (info.secondary_def)
+            flags |= LST_SYMBOL_SECONDARY_DEF;
+          flags |= info.symbol_type << LST_SYMBOL_SYMBOL_TYPE_SH;
+          flags |= info.symbol_scope << LST_SYMBOL_SYMBOL_SCOPE_SH;
+          if (bfd_is_com_section (sym->symbol.section))
+            flags |= LST_SYMBOL_IS_COMMON;
+          if (info.dup_common)
+            flags |= LST_SYMBOL_DUP_COMMON;
+          flags |= 3 << LST_SYMBOL_XLEAST_SH;
+          flags |= info.arg_reloc << LST_SYMBOL_ARG_RELOC_SH;
+          bfd_putb32 (flags, curr_lst_sym->flags);
+          bfd_putb32 (p - strings + 4, curr_lst_sym->name);
+          bfd_putb32 (0, curr_lst_sym->qualifier_name);
+          bfd_putb32 (info.symbol_info, curr_lst_sym->symbol_info);
+          bfd_putb32 (info.symbol_value | info.priv_level,
+                      curr_lst_sym->symbol_value);
+          bfd_putb32 (0, curr_lst_sym->symbol_descriptor);
+          curr_lst_sym->reserved = 0;
+          bfd_putb32 (som_index, curr_lst_sym->som_index);
+          bfd_putb32 (symbol_key, curr_lst_sym->symbol_key);
+          bfd_putb32 (0, curr_lst_sym->next_entry);
 
 	  /* Insert into the hash table.  */
-	  if (hash_table[curr_lst_sym->symbol_key % lst.hash_size])
+          symbol_pos =
+            (curr_lst_sym - lst_syms)
+            * sizeof (struct som_external_lst_symbol_record)
+            + hash_size * 4
+            + module_count * sizeof (struct som_external_som_entry)
+            + sizeof (struct som_external_lst_header);
+          last = last_hash_entry[symbol_key % hash_size];
+	  if (last != NULL)
 	    {
-	      struct lst_symbol_record *tmp;
-
 	      /* There is already something at the head of this hash chain,
 		 so tack this symbol onto the end of the chain.  */
-	      tmp = last_hash_entry[curr_lst_sym->symbol_key % lst.hash_size];
-	      tmp->next_entry
-		= (curr_lst_sym - lst_syms) * sizeof (struct lst_symbol_record)
-		  + lst.hash_size * 4
-		  + lst.module_count * sizeof (struct som_entry)
-		  + sizeof (struct lst_header);
+	      bfd_putb32 (symbol_pos, last->next_entry);
 	    }
 	  else
 	    /* First entry in this hash chain.  */
-	    hash_table[curr_lst_sym->symbol_key % lst.hash_size]
-	      = (curr_lst_sym - lst_syms) * sizeof (struct lst_symbol_record)
-	      + lst.hash_size * 4
-	      + lst.module_count * sizeof (struct som_entry)
-	      + sizeof (struct lst_header);
+            bfd_putb32 (symbol_pos, hash_table + 4 * (symbol_key % hash_size));
 
 	  /* Keep track of the last symbol we added to this chain so we can
 	     easily update its next_entry pointer.  */
-	  last_hash_entry[curr_lst_sym->symbol_key % lst.hash_size]
-	    = curr_lst_sym;
+          last_hash_entry[symbol_key % hash_size] = curr_lst_sym;
 
 	  /* Update the string table.  */
-	  bfd_put_32 (abfd, strlen (sym->symbol.name), p);
+          slen = strlen (sym->symbol.name);
+	  bfd_put_32 (abfd, slen, p);
 	  p += 4;
-	  strcpy (p, sym->symbol.name);
-	  p += strlen (sym->symbol.name) + 1;
-	  while ((int) p % 4)
+          slen++; /* Nul terminator.  */
+	  memcpy (p, sym->symbol.name, slen);
+	  p += slen;
+	  while (slen % 4)
 	    {
 	      bfd_put_8 (abfd, 0, p);
 	      p++;
+              slen++;
 	    }
+          BFD_ASSERT (p <= strings + string_size);
 
 	  /* Head to the next symbol.  */
 	  curr_lst_sym++;
@@ -6134,17 +6495,17 @@ som_bfd_ar_write_symbol_stuff (bfd *abfd,
     }
 
   /* Now scribble out the hash table.  */
-  amt = lst.hash_size * 4;
+  amt = hash_size * 4;
   if (bfd_bwrite ((void *) hash_table, amt, abfd) != amt)
     goto error_return;
 
   /* Then the SOM dictionary.  */
-  amt = lst.module_count * sizeof (struct som_entry);
+  amt = module_count * sizeof (struct som_external_som_entry);
   if (bfd_bwrite ((void *) som_dict, amt, abfd) != amt)
     goto error_return;
 
   /* The library symbols.  */
-  amt = nsyms * sizeof (struct lst_symbol_record);
+  amt = nsyms * sizeof (struct som_external_lst_symbol_record);
   if (bfd_bwrite ((void *) lst_syms, amt, abfd) != amt)
     goto error_return;
 
@@ -6195,9 +6556,11 @@ som_write_armap (bfd *abfd,
   struct stat statbuf;
   unsigned int i, lst_size, nsyms, stringsize;
   struct ar_hdr hdr;
-  struct lst_header lst;
-  int *p;
+  struct som_external_lst_header lst;
+  unsigned char *p;
   bfd_size_type amt;
+  unsigned int csum;
+  unsigned int module_count;
 
   /* We'll use this for the archive's date and mode later.  */
   if (stat (abfd->filename, &statbuf) != 0)
@@ -6209,78 +6572,86 @@ som_write_armap (bfd *abfd,
   bfd_ardata (abfd)->armap_timestamp = statbuf.st_mtime + 60;
 
   /* Account for the lst header first.  */
-  lst_size = sizeof (struct lst_header);
+  lst_size = sizeof (struct som_external_lst_header);
 
   /* Start building the LST header.  */
   /* FIXME:  Do we need to examine each element to determine the
      largest id number?  */
-  lst.system_id = CPU_PA_RISC1_0;
-  lst.a_magic = LIBMAGIC;
-  lst.version_id = VERSION_ID;
-  lst.file_time.secs = 0;
-  lst.file_time.nanosecs = 0;
+  bfd_putb16 (CPU_PA_RISC1_0, &lst.system_id);
+  bfd_putb16 (LIBMAGIC, &lst.a_magic);
+  bfd_putb32 (VERSION_ID, &lst.version_id);
+  bfd_putb32 (0, &lst.file_time.secs);
+  bfd_putb32 (0, &lst.file_time.nanosecs);
 
-  lst.hash_loc = lst_size;
-  lst.hash_size = SOM_LST_HASH_SIZE;
+  bfd_putb32 (lst_size, &lst.hash_loc);
+  bfd_putb32 (SOM_LST_HASH_SIZE, &lst.hash_size);
 
   /* Hash table is a SOM_LST_HASH_SIZE 32bit offsets.  */
   lst_size += 4 * SOM_LST_HASH_SIZE;
 
   /* We need to count the number of SOMs in this archive.  */
   curr_bfd = abfd->archive_head;
-  lst.module_count = 0;
+  module_count = 0;
   while (curr_bfd != NULL)
     {
       /* Only true SOM objects count.  */
       if (curr_bfd->format == bfd_object
 	  && curr_bfd->xvec->flavour == bfd_target_som_flavour)
-	lst.module_count++;
+	module_count++;
       curr_bfd = curr_bfd->archive_next;
     }
-  lst.module_limit = lst.module_count;
-  lst.dir_loc = lst_size;
-  lst_size += sizeof (struct som_entry) * lst.module_count;
+  bfd_putb32 (module_count, &lst.module_count);
+  bfd_putb32 (module_count, &lst.module_limit);
+  bfd_putb32 (lst_size, &lst.dir_loc);
+  lst_size += sizeof (struct som_external_som_entry) * module_count;
 
   /* We don't support import/export tables, auxiliary headers,
      or free lists yet.  Make the linker work a little harder
      to make our life easier.  */
 
-  lst.export_loc = 0;
-  lst.export_count = 0;
-  lst.import_loc = 0;
-  lst.aux_loc = 0;
-  lst.aux_size = 0;
+  bfd_putb32 (0, &lst.export_loc);
+  bfd_putb32 (0, &lst.export_count);
+  bfd_putb32 (0, &lst.import_loc);
+  bfd_putb32 (0, &lst.aux_loc);
+  bfd_putb32 (0, &lst.aux_size);
 
   /* Count how many symbols we will have on the hash chains and the
      size of the associated string table.  */
   if (! som_bfd_prep_for_ar_write (abfd, &nsyms, &stringsize))
     return FALSE;
 
-  lst_size += sizeof (struct lst_symbol_record) * nsyms;
+  lst_size += sizeof (struct som_external_lst_symbol_record) * nsyms;
 
   /* For the string table.  One day we might actually use this info
      to avoid small seeks/reads when reading archives.  */
-  lst.string_loc = lst_size;
-  lst.string_size = stringsize;
+  bfd_putb32 (lst_size, &lst.string_loc);
+  bfd_putb32 (stringsize, &lst.string_size);
   lst_size += stringsize;
 
   /* SOM ABI says this must be zero.  */
-  lst.free_list = 0;
-  lst.file_end = lst_size;
+  bfd_putb32 (0, &lst.free_list);
+  bfd_putb32 (lst_size, &lst.file_end);
 
   /* Compute the checksum.  Must happen after the entire lst header
      has filled in.  */
-  p = (int *) &lst;
-  lst.checksum = 0;
-  for (i = 0; i < sizeof (struct lst_header) / sizeof (int) - 1; i++)
-    lst.checksum ^= *p++;
+  p = (unsigned char *) &lst;
+  csum = 0;
+  for (i = 0; i < sizeof (struct som_external_lst_header) - sizeof (int);
+       i += 4)
+    csum ^= bfd_getb32 (&p[i]);
+  bfd_putb32 (csum, &lst.checksum);
 
-  sprintf (hdr.ar_name, "/               ");
-  sprintf (hdr.ar_date, "%ld", bfd_ardata (abfd)->armap_timestamp);
-  sprintf (hdr.ar_uid, "%ld", (long) getuid ());
-  sprintf (hdr.ar_gid, "%ld", (long) getgid ());
-  sprintf (hdr.ar_mode, "%-8o", (unsigned int) statbuf.st_mode);
-  sprintf (hdr.ar_size, "%-10d", (int) lst_size);
+  sprintf (hdr.ar_name, "/              ");
+  _bfd_ar_spacepad (hdr.ar_date, sizeof (hdr.ar_date), "%-12ld",
+                    bfd_ardata (abfd)->armap_timestamp);
+  _bfd_ar_spacepad (hdr.ar_uid, sizeof (hdr.ar_uid), "%ld",
+                    statbuf.st_uid);
+  _bfd_ar_spacepad (hdr.ar_gid, sizeof (hdr.ar_gid), "%ld",
+                    statbuf.st_gid);
+  _bfd_ar_spacepad (hdr.ar_mode, sizeof (hdr.ar_mode), "%-8o",
+                    (unsigned int)statbuf.st_mode);
+  _bfd_ar_spacepad (hdr.ar_size, sizeof (hdr.ar_size), "%-10d",
+                    (int) lst_size);
   hdr.ar_fmag[0] = '`';
   hdr.ar_fmag[1] = '\012';
 
@@ -6295,7 +6666,7 @@ som_write_armap (bfd *abfd,
     return FALSE;
 
   /* Now scribble out the lst header.  */
-  amt = sizeof (struct lst_header);
+  amt = sizeof (struct som_external_lst_header);
   if (bfd_bwrite ((void *) &lst, amt, abfd) != amt)
     return FALSE;
 
@@ -6327,8 +6698,7 @@ som_bfd_free_cached_info (bfd *abfd)
       /* Free the native relocations.  */
       o->reloc_count = (unsigned) -1;
       FREE (som_section_data (o)->reloc_stream);
-      /* Free the generic relocations.  */
-      FREE (o->relocation);
+      /* Do not free the generic relocations as they are objalloc'ed.  */
     }
 #undef FREE
 
@@ -6347,6 +6717,7 @@ som_bfd_link_split_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
 
 #define	som_close_and_cleanup		        som_bfd_free_cached_info
 #define som_read_ar_hdr			        _bfd_generic_read_ar_hdr
+#define som_write_ar_hdr		        _bfd_generic_write_ar_hdr
 #define som_openr_next_archived_file	        bfd_generic_openr_next_archived_file
 #define som_get_elt_at_index		        _bfd_generic_get_elt_at_index
 #define som_generic_stat_arch_elt	        bfd_generic_stat_arch_elt
@@ -6366,12 +6737,15 @@ som_bfd_link_split_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
 #define som_bfd_link_hash_table_free            _bfd_generic_link_hash_table_free
 #define som_bfd_link_add_symbols                _bfd_generic_link_add_symbols
 #define som_bfd_link_just_syms                  _bfd_generic_link_just_syms
+#define som_bfd_copy_link_hash_symbol_type \
+  _bfd_generic_copy_link_hash_symbol_type
 #define som_bfd_final_link                      _bfd_generic_final_link
 #define som_bfd_gc_sections		        bfd_generic_gc_sections
 #define som_bfd_merge_sections		        bfd_generic_merge_sections
 #define som_bfd_is_group_section	        bfd_generic_is_group_section
 #define som_bfd_discard_group		        bfd_generic_discard_group
 #define som_section_already_linked              _bfd_generic_section_already_linked
+#define som_bfd_define_common_symbol            bfd_generic_define_common_symbol
 #define som_bfd_merge_private_bfd_data		_bfd_generic_bfd_merge_private_bfd_data
 #define som_bfd_copy_private_header_data	_bfd_generic_bfd_copy_private_header_data
 #define som_bfd_set_private_flags		_bfd_generic_bfd_set_private_flags
@@ -6434,4 +6808,3 @@ const bfd_target som_vec =
   NULL
 };
 
-#endif /* HOST_HPPAHPUX || HOST_HPPABSD || HOST_HPPAOSF */

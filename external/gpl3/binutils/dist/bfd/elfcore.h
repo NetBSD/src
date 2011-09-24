@@ -1,6 +1,6 @@
 /* ELF core file support for BFD.
    Copyright 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2003, 2005, 2007,
-   2008 Free Software Foundation, Inc.
+   2008, 2010 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,6 +29,12 @@ int
 elf_core_file_failing_signal (bfd *abfd)
 {
   return elf_tdata (abfd)->core_signal;
+}
+
+int
+elf_core_file_pid (bfd *abfd)
+{
+  return elf_tdata (abfd)->core_pid;
 }
 
 bfd_boolean
@@ -184,13 +190,68 @@ elf_core_file_p (bfd *abfd)
   if (i_ehdrp->e_phentsize != sizeof (Elf_External_Phdr))
     goto wrong;
 
+  /* If the program header count is PN_XNUM(0xffff), the actual
+     count is in the first section header.  */
+  if (i_ehdrp->e_shoff != 0 && i_ehdrp->e_phnum == PN_XNUM)
+    {
+      Elf_External_Shdr x_shdr;
+      Elf_Internal_Shdr i_shdr;
+      bfd_signed_vma where = i_ehdrp->e_shoff;
+
+      if (where != (file_ptr) where)
+	goto wrong;
+
+      /* Seek to the section header table in the file.  */
+      if (bfd_seek (abfd, (file_ptr) where, SEEK_SET) != 0)
+	goto fail;
+
+      /* Read the first section header at index 0, and convert to internal
+	 form.  */
+      if (bfd_bread (&x_shdr, sizeof (x_shdr), abfd) != sizeof (x_shdr))
+	goto fail;
+      elf_swap_shdr_in (abfd, &x_shdr, &i_shdr);
+
+      if (i_shdr.sh_info != 0)
+	{
+	  i_ehdrp->e_phnum = i_shdr.sh_info;
+	  if (i_ehdrp->e_phnum != i_shdr.sh_info)
+	    goto wrong;
+	}
+    }
+
+  /* Sanity check that we can read all of the program headers.
+     It ought to be good enough to just read the last one.  */
+  if (i_ehdrp->e_phnum > 1)
+    {
+      Elf_External_Phdr x_phdr;
+      Elf_Internal_Phdr i_phdr;
+      bfd_signed_vma where;
+
+      /* Check that we don't have a totally silly number of
+	 program headers.  */
+      if (i_ehdrp->e_phnum > (unsigned int) -1 / sizeof (x_phdr)
+	  || i_ehdrp->e_phnum > (unsigned int) -1 / sizeof (i_phdr))
+	goto wrong;
+
+      where = i_ehdrp->e_phoff + (i_ehdrp->e_phnum - 1) * sizeof (x_phdr);
+      if (where != (file_ptr) where)
+	goto wrong;
+      if ((bfd_size_type) where <= i_ehdrp->e_phoff)
+	goto wrong;
+
+      if (bfd_seek (abfd, (file_ptr) where, SEEK_SET) != 0)
+	goto fail;
+      if (bfd_bread (&x_phdr, sizeof (x_phdr), abfd) != sizeof (x_phdr))
+	goto fail;
+    }
+
   /* Move to the start of the program headers.  */
   if (bfd_seek (abfd, (file_ptr) i_ehdrp->e_phoff, SEEK_SET) != 0)
     goto wrong;
 
   /* Allocate space for the program headers.  */
   amt = sizeof (*i_phdrp) * i_ehdrp->e_phnum;
-  i_phdrp = bfd_alloc (abfd, amt);
+  i_phdrp = (Elf_Internal_Phdr *) bfd_alloc (abfd, amt);
   if (!i_phdrp)
     goto fail;
 

@@ -1,5 +1,5 @@
 /* BFD backend for local host's a.out binaries
-   Copyright 1990, 1991, 1992, 1994, 1995, 2001, 2007
+   Copyright 1990, 1991, 1992, 1994, 1995, 2001, 2005, 2007
    Free Software Foundation, Inc.
    Written by Cygnus Support.  Probably John Gilmore's fault.
 

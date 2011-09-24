@@ -1,5 +1,5 @@
 /* BFD back-end for mmo objects (MMIX-specific object-format).
-   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007
+   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
    Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com).
    Infrastructure and other bits originally copied from srec.c and
@@ -1530,7 +1530,6 @@ mmo_scan (bfd *abfd)
   asection *sec = bfd_make_section_old_way (abfd, MMO_TEXT_SECTION_NAME);
   asection *non_spec_sec = NULL;
   bfd_vma non_spec_vma = 0;
-  char *current_filename = NULL;
   bfd_size_type nbytes_read = 0;
   /* Buffer with room to read a 64-bit value.  */
   bfd_byte buf[8];
@@ -1789,7 +1788,6 @@ mmo_scan (bfd *abfd)
 		  goto error_return;
 		}
 
-	      current_filename = file_names[y];
 	      lineno = 0;
 	      break;
 
@@ -2827,7 +2825,6 @@ static bfd_boolean
 mmo_write_symbols_and_terminator (bfd *abfd)
 {
   int count = bfd_get_symcount (abfd);
-  asymbol *maintable[2];
   asymbol **table;
   asymbol **orig_table = bfd_get_outsymbols (abfd);
   int serno;
@@ -2843,8 +2840,6 @@ mmo_write_symbols_and_terminator (bfd *abfd)
   fakemain->value = bfd_get_start_address (abfd);
   fakemain->name = MMIX_START_SYMBOL_NAME;
   fakemain->section = bfd_abs_section_ptr;
-  maintable[0] = fakemain;
-  maintable[1] = NULL;
 
   memset (&root, 0, sizeof (root));
 
@@ -3199,6 +3194,8 @@ mmo_write_object_contents (bfd *abfd)
 #define mmo_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define mmo_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define mmo_bfd_link_just_syms _bfd_generic_link_just_syms
+#define mmo_bfd_copy_link_hash_symbol_type \
+  _bfd_generic_copy_link_hash_symbol_type
 #define mmo_bfd_final_link _bfd_generic_final_link
 #define mmo_bfd_link_split_section _bfd_generic_link_split_section
 
@@ -3211,6 +3208,7 @@ mmo_write_object_contents (bfd *abfd)
 #define mmo_bfd_discard_group bfd_generic_discard_group
 #define mmo_section_already_linked \
   _bfd_generic_section_already_linked
+#define mmo_bfd_define_common_symbol bfd_generic_define_common_symbol
 
 /* We want to copy time of creation, otherwise we'd use
    BFD_JUMP_TABLE_COPY (_bfd_generic).  */

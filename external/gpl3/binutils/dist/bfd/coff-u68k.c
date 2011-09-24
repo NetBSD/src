@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola 68000 COFF binaries having underscore with name.
-   Copyright 1990, 1991, 1992, 2007 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 2005, 2007 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.

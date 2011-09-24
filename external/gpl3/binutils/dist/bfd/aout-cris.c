@@ -1,5 +1,5 @@
 /* BFD backend for CRIS a.out binaries.
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2007
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2009
    Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson.
@@ -56,11 +56,6 @@
    to set alignment and padding in linker scripts.  */
 #define TARGET_PAGE_SIZE SEGMENT_SIZE
 #define TARGETNAME "a.out-cris"
-
-/* N_SHARED_LIB gets this reasonable default as of 1999-07-12, but we
-   have to work with 2.9.1.  Note that N_SHARED_LIB is used in a
-   SUN-specific context, not applicable to CRIS.  */
-#define N_SHARED_LIB(x) 0
 
 /* The definition here seems not used; just provided as a convention.  */
 #define DEFAULT_ARCH bfd_arch_cris

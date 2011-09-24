@@ -1,5 +1,5 @@
 /* BFD back-end for OSF/1 core files.
-   Copyright 1993, 1994, 1995, 1998, 1999, 2001, 2002, 2003, 2004, 2006,
+   Copyright 1993, 1994, 1995, 1998, 1999, 2001, 2002, 2003, 2004, 2005, 2006,
    2007 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -43,6 +43,7 @@ static char *osf_core_core_file_failing_command
 static int osf_core_core_file_failing_signal
   PARAMS ((bfd *));
 #define osf_core_core_file_matches_executable_p generic_core_file_matches_executable_p
+#define osf_core_core_file_pid _bfd_nocore_core_file_pid
 static void swap_abort
   PARAMS ((void));
 

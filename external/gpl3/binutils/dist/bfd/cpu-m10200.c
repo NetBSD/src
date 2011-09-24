@@ -1,5 +1,5 @@
 /* BFD support for the Matsushita 10200 processor
-   Copyright 1996, 1997, 2002, 2007 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 2002, 2005, 2007 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

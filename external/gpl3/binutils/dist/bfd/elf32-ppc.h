@@ -28,6 +28,6 @@ enum ppc_elf_plt_type
 
 int ppc_elf_select_plt_layout (bfd *, struct bfd_link_info *,
 			       enum ppc_elf_plt_type, int);
-asection *ppc_elf_tls_setup (bfd *, struct bfd_link_info *);
+asection *ppc_elf_tls_setup (bfd *, struct bfd_link_info *, int);
 bfd_boolean ppc_elf_tls_optimize (bfd *, struct bfd_link_info *);
 void ppc_elf_set_sdata_syms (bfd *, struct bfd_link_info *);

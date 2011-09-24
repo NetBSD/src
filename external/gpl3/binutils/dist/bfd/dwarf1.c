@@ -1,5 +1,5 @@
 /* DWARF 1 find nearest line (_bfd_dwarf1_find_nearest_line).
-   Copyright 1998, 1999, 2000, 2001, 2002, 2004, 2005, 2007
+   Copyright 1998, 1999, 2000, 2001, 2002, 2004, 2005, 2007, 2008, 2009, 2010
    Free Software Foundation, Inc.
 
    Written by Gavin Romig-Koch of Cygnus Solutions (gavin@cygnus.com).
@@ -143,7 +143,7 @@ alloc_dwarf1_unit (struct dwarf1_debug* stash)
 {
   bfd_size_type amt = sizeof (struct dwarf1_unit);
 
-  struct dwarf1_unit* x = bfd_zalloc (stash->abfd, amt);
+  struct dwarf1_unit* x = (struct dwarf1_unit *) bfd_zalloc (stash->abfd, amt);
   if (x)
     {
       x->prev = stash->lastUnit;
@@ -161,7 +161,7 @@ alloc_dwarf1_func (struct dwarf1_debug* stash, struct dwarf1_unit* aUnit)
 {
   bfd_size_type amt = sizeof (struct dwarf1_func);
 
-  struct dwarf1_func* x = bfd_zalloc (stash->abfd, amt);
+  struct dwarf1_func* x = (struct dwarf1_func *) bfd_zalloc (stash->abfd, amt);
   if (x)
     {
       x->prev = aUnit->func_list;
@@ -251,8 +251,8 @@ parse_die (bfd *             abfd,
 	  break;
 	case FORM_STRING:
 	  if (attr == AT_name)
-	    aDieInfo->name = (char *)xptr;
-	  xptr += strlen (aDieInfo->name) + 1;
+	    aDieInfo->name = (char *) xptr;
+	  xptr += strlen ((char *) xptr) + 1;
 	  break;
 	}
     }
@@ -312,7 +312,8 @@ parse_line_table (struct dwarf1_debug* stash, struct dwarf1_unit* aUnit)
 
       /* Allocate an array for the entries.  */
       amt = sizeof (struct linenumber) * aUnit->line_count;
-      aUnit->linenumber_table = bfd_alloc (stash->abfd, amt);
+      aUnit->linenumber_table = (struct linenumber *) bfd_alloc (stash->abfd,
+                                                                 amt);
       if (!aUnit->linenumber_table)
 	return FALSE;
 
@@ -473,7 +474,7 @@ _bfd_dwarf1_find_nearest_line (bfd *abfd,
       bfd_size_type size = sizeof (struct dwarf1_debug);
 
       stash = elf_tdata (abfd)->dwarf1_find_line_info
-	= bfd_zalloc (abfd, size);
+	= (struct dwarf1_debug *) bfd_zalloc (abfd, size);
 
       if (! stash)
 	return FALSE;

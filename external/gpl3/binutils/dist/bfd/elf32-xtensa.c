@@ -1,5 +1,6 @@
 /* Xtensa-specific support for 32-bit ELF.
-   Copyright 2003, 2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -154,6 +155,10 @@ static bfd_boolean relaxing_section = FALSE;
 
 int elf32xtensa_no_literal_movement = 1;
 
+/* Rename one of the generic section flags to better document how it
+   is used here.  */
+/* Whether relocations have been processed.  */
+#define reloc_done sec_flg0
 
 static reloc_howto_type elf_howto_table[] =
 {
@@ -571,13 +576,13 @@ struct elf_xtensa_obj_tdata
 #define is_xtensa_elf(bfd) \
   (bfd_get_flavour (bfd) == bfd_target_elf_flavour \
    && elf_tdata (bfd) != NULL \
-   && elf_object_id (bfd) == XTENSA_ELF_TDATA)
+   && elf_object_id (bfd) == XTENSA_ELF_DATA)
 
 static bfd_boolean
 elf_xtensa_mkobject (bfd *abfd)
 {
   return bfd_elf_allocate_object (abfd, sizeof (struct elf_xtensa_obj_tdata),
-				  XTENSA_ELF_TDATA);
+				  XTENSA_ELF_DATA);
 }
 
 /* Xtensa ELF linker hash table.  */
@@ -609,7 +614,8 @@ struct elf_xtensa_link_hash_table
 /* Get the Xtensa ELF linker hash table from a link_info structure.  */
 
 #define elf_xtensa_hash_table(p) \
-  ((struct elf_xtensa_link_hash_table *) ((p)->hash))
+  (elf_hash_table_id ((struct elf_link_hash_table *) ((p)->hash)) \
+  == XTENSA_ELF_DATA ? ((struct elf_xtensa_link_hash_table *) ((p)->hash)) : NULL)
 
 /* Create an entry in an Xtensa ELF linker hash table.  */
 
@@ -655,7 +661,8 @@ elf_xtensa_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
 				      elf_xtensa_link_hash_newfunc,
-				      sizeof (struct elf_xtensa_link_hash_entry)))
+				      sizeof (struct elf_xtensa_link_hash_entry),
+				      XTENSA_ELF_DATA))
     {
       free (ret);
       return NULL;
@@ -976,6 +983,9 @@ elf_xtensa_check_relocs (bfd *abfd,
   BFD_ASSERT (is_xtensa_elf (abfd));
 
   htab = elf_xtensa_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
+
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
 
@@ -1277,6 +1287,8 @@ elf_xtensa_gc_sweep_hook (bfd *abfd,
   struct elf_xtensa_link_hash_table *htab;
 
   htab = elf_xtensa_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
 
   if (info->relocatable)
     return TRUE;
@@ -1396,6 +1408,8 @@ elf_xtensa_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   flagword flags, noalloc_flags;
 
   htab = elf_xtensa_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
 
   /* First do all the standard stuff.  */
   if (! _bfd_elf_create_dynamic_sections (dynobj, info))
@@ -1404,6 +1418,7 @@ elf_xtensa_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   htab->srelplt = bfd_get_section_by_name (dynobj, ".rela.plt");
   htab->sgot = bfd_get_section_by_name (dynobj, ".got");
   htab->sgotplt = bfd_get_section_by_name (dynobj, ".got.plt");
+  htab->srelgot = bfd_get_section_by_name (dynobj, ".rela.got");
 
   /* Create any extra PLT sections in case check_relocs has already
      been called on all the non-dynamic input files.  */
@@ -1417,12 +1432,6 @@ elf_xtensa_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   /* Mark the ".got.plt" section READONLY.  */
   if (htab->sgotplt == NULL
       || ! bfd_set_section_flags (dynobj, htab->sgotplt, flags))
-    return FALSE;
-
-  /* Create ".rela.got".  */
-  htab->srelgot = bfd_make_section_with_flags (dynobj, ".rela.got", flags);
-  if (htab->srelgot == NULL
-      || ! bfd_set_section_alignment (dynobj, htab->srelgot, 2))
     return FALSE;
 
   /* Create ".got.loc" (literal tables for use by dynamic linker).  */
@@ -1527,6 +1536,8 @@ elf_xtensa_allocate_dynrelocs (struct elf_link_hash_entry *h, void *arg)
 
   info = (struct bfd_link_info *) arg;
   htab = elf_xtensa_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
 
   /* If we saw any use of an IE model for this symbol, we can then optimize
      away GOT entries for any TLSDESC_FN relocs.  */
@@ -1556,6 +1567,8 @@ elf_xtensa_allocate_local_got_size (struct bfd_link_info *info)
   bfd *i;
 
   htab = elf_xtensa_hash_table (info);
+  if (htab == NULL)
+    return;
 
   for (i = info->input_bfds; i; i = i->link_next)
     {
@@ -1606,6 +1619,9 @@ elf_xtensa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   plt_chunks = 0;
 
   htab = elf_xtensa_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
+
   dynobj = elf_hash_table (info)->dynobj;
   if (dynobj == NULL)
     abort ();
@@ -1839,6 +1855,9 @@ elf_xtensa_always_size_sections (bfd *output_bfd,
   asection *tls_sec;
 
   htab = elf_xtensa_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
+
   tls_sec = htab->elf.tls_sec;
 
   if (tls_sec && (htab->tlsbase->tls_type & GOT_TLS_ANY) != 0)
@@ -1947,9 +1966,8 @@ elf_xtensa_do_reloc (reloc_howto_type *howto,
       if (!is_weak_undef)
 	{
 	  /* Check for windowed CALL across a 1GB boundary.  */
-	  xtensa_opcode opcode =
-	    get_expanded_call_opcode (contents + address,
-				      input_size - address, 0);
+	  opcode = get_expanded_call_opcode (contents + address,
+					     input_size - address, 0);
 	  if (is_windowed_call_opcode (opcode))
 	    {
 	      if ((self_address >> CALL_SEGMENT_BITS)
@@ -2551,6 +2569,9 @@ elf_xtensa_relocate_section (bfd *output_bfd,
   BFD_ASSERT (is_xtensa_elf (input_bfd));
 
   htab = elf_xtensa_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
+
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
   local_got_tls_types = elf_xtensa_local_got_tls_type (input_bfd);
@@ -2639,18 +2660,14 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	}
 
       if (sec != NULL && elf_discarded_section (sec))
-	{
-	  /* For relocs against symbols from removed linkonce sections,
-	     or sections discarded by a linker script, we just want the
-	     section contents zeroed.  Avoid any special processing.  */
-	  _bfd_clear_contents (howto, input_bfd, contents + rel->r_offset);
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
-	}
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rel, relend, howto, contents);
 
       if (info->relocatable)
 	{
+	  bfd_vma dest_addr;
+	  asection * sym_sec = get_elf_r_symndx_section (input_bfd, r_symndx);
+
 	  /* This is a relocatable link.
 	     1) If the reloc is against a section symbol, adjust
 	     according to the output section.
@@ -2667,9 +2684,12 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 		return FALSE;
 	    }
 
+	  dest_addr = sym_sec->output_section->vma + sym_sec->output_offset
+	    + get_elf_r_symndx_offset (input_bfd, r_symndx) + rel->r_addend;
+
 	  if (r_type == R_XTENSA_ASM_SIMPLIFY)
 	    {
-	      char *error_message = NULL;
+	      error_message = NULL;
 	      /* Convert ASM_SIMPLIFY into the simpler relocation
 		 so that they never escape a relaxing link.  */
 	      r = contract_asm_expansion (contents, input_size, rel,
@@ -2703,24 +2723,40 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	     to work around problems with DWARF in relocatable links
 	     with some previous version of BFD.  Now we can't easily get
 	     rid of the hack without breaking backward compatibility.... */
-	  if (rel->r_addend)
+	  r = bfd_reloc_ok;
+	  howto = &elf_howto_table[r_type];
+	  if (howto->partial_inplace && rel->r_addend)
 	    {
-	      howto = &elf_howto_table[r_type];
-	      if (howto->partial_inplace)
+	      r = elf_xtensa_do_reloc (howto, input_bfd, input_section,
+				       rel->r_addend, contents,
+				       rel->r_offset, FALSE,
+				       &error_message);
+	      rel->r_addend = 0;
+	    }
+	  else
+	    {
+	      /* Put the correct bits in the target instruction, even
+		 though the relocation will still be present in the output
+		 file.  This makes disassembly clearer, as well as
+		 allowing loadable kernel modules to work without needing
+		 relocations on anything other than calls and l32r's.  */
+
+	      /* If it is not in the same section, there is nothing we can do.  */
+	      if (r_type >= R_XTENSA_SLOT0_OP && r_type <= R_XTENSA_SLOT14_OP &&
+		  sym_sec->output_section == input_section->output_section)
 		{
 		  r = elf_xtensa_do_reloc (howto, input_bfd, input_section,
-					   rel->r_addend, contents,
+					   dest_addr, contents,
 					   rel->r_offset, FALSE,
 					   &error_message);
-		  if (r != bfd_reloc_ok)
-		    {
-		      if (!((*info->callbacks->reloc_dangerous)
-			    (info, error_message, input_bfd, input_section,
-			     rel->r_offset)))
-			return FALSE;
-		    }
-		  rel->r_addend = 0;
 		}
+	    }
+	  if (r != bfd_reloc_ok)
+	    {
+	      if (!((*info->callbacks->reloc_dangerous)
+		    (info, error_message, input_bfd, input_section,
+		     rel->r_offset)))
+		return FALSE;
 	    }
 
 	  /* Done with work for relocatable link; continue with next reloc.  */
@@ -2757,7 +2793,7 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	    name = bfd_section_name (input_bfd, sec);
 	}
 
-      if (r_symndx != 0
+      if (r_symndx != STN_UNDEF
 	  && r_type != R_XTENSA_NONE
 	  && (h == NULL
 	      || h->root.type == bfd_link_hash_defined
@@ -3170,18 +3206,18 @@ elf_xtensa_combine_prop_entries (bfd *output_bfd,
 
   for (n = 0; n < num; n++)
     {
-      bfd_boolean remove = FALSE;
+      bfd_boolean remove_entry = FALSE;
 
       if (table[n].size == 0)
-	remove = TRUE;
-      else if (n > 0 &&
-	       (table[n-1].address + table[n-1].size == table[n].address))
+	remove_entry = TRUE;
+      else if (n > 0
+	       && (table[n-1].address + table[n-1].size == table[n].address))
 	{
 	  table[n-1].size += table[n].size;
-	  remove = TRUE;
+	  remove_entry = TRUE;
 	}
 
-      if (remove)
+      if (remove_entry)
 	{
 	  for (m = n; m < num - 1; m++)
 	    {
@@ -3236,6 +3272,9 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
     return TRUE;
 
   htab = elf_xtensa_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
+
   dynobj = elf_hash_table (info)->dynobj;
   sdyn = bfd_get_section_by_name (dynobj, ".dynamic");
   BFD_ASSERT (sdyn != NULL);
@@ -3756,7 +3795,7 @@ elf_xtensa_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
   elf_tdata (abfd)->core_signal = bfd_get_16 (abfd, note->descdata + 12);
 
   /* pr_pid */
-  elf_tdata (abfd)->core_pid = bfd_get_32 (abfd, note->descdata + 24);
+  elf_tdata (abfd)->core_lwpid = bfd_get_32 (abfd, note->descdata + 24);
 
   /* pr_reg */
   offset = 72;
@@ -5478,12 +5517,20 @@ text_action_add (text_action_list *l,
   for (m_p = &l->head; *m_p && (*m_p)->offset <= offset; m_p = &(*m_p)->next)
     {
       text_action *t = *m_p;
-      /* When the action is another fill at the same address,
-	 just increase the size.  */
-      if (t->offset == offset && t->action == ta_fill && action == ta_fill)
+      
+      if (action == ta_fill) 
 	{
-	  t->removed_bytes += removed;
-	  return;
+	  /* When the action is another fill at the same address,
+	     just increase the size.  */
+	  if (t->offset == offset && t->action == ta_fill)
+	    {
+	      t->removed_bytes += removed;
+	      return;
+	    }
+	  /* Fills need to happen before widens so that we don't
+	     insert fill bytes into the instruction stream.  */
+	  if (t->offset == offset && t->action == ta_widen_insn)
+	    break;
 	}
     }
 
@@ -5656,7 +5703,7 @@ print_action_list (FILE *fp, text_action_list *action_list)
 
       fprintf (fp, "%s: %s[0x%lx] \"%s\" %d\n",
 	       r->sec->owner->filename,
-	       r->sec->name, r->offset, t, r->removed_bytes);
+	       r->sec->name, (unsigned long) r->offset, t, r->removed_bytes);
     }
 }
 
@@ -7775,7 +7822,6 @@ xlate_offset_with_removed_text (const xlate_map_t *map,
 				text_action_list *action_list,
 				bfd_vma offset)
 {
-  xlate_map_entry_t tmp;
   void *r;
   xlate_map_entry_t *e;
 
@@ -7784,10 +7830,6 @@ xlate_offset_with_removed_text (const xlate_map_t *map,
 
   if (map->entry_count == 0)
     return offset;
-
-  tmp.orig_address = offset;
-  tmp.new_address = offset;
-  tmp.size = 1;
 
   r = bsearch (&offset, map->entry, map->entry_count,
 	       sizeof (xlate_map_entry_t), &xlate_compare);
@@ -8816,6 +8858,9 @@ relax_section (bfd *abfd, asection *sec, struct bfd_link_info *link_info)
 
   internal_relocs = retrieve_internal_relocs (abfd, sec, 
 					      link_info->keep_memory);
+  if (!internal_relocs && !relax_info->action_list.head)
+    return TRUE;
+
   contents = retrieve_contents (abfd, sec, link_info->keep_memory);
   if (contents == NULL && sec_size != 0)
     {
@@ -9492,6 +9537,9 @@ shrink_dynamic_reloc_sections (struct bfd_link_info *info,
   bfd_boolean dynamic_symbol;
 
   htab = elf_xtensa_hash_table (info);
+  if (htab == NULL)
+    return;
+
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
 
@@ -9600,12 +9648,10 @@ move_literal (bfd *abfd,
     {
       int r_type;
       unsigned i;
-      asection *target_sec;
       reloc_bfd_fix *fix;
       unsigned insert_at;
 
       r_type = ELF32_R_TYPE (r_rel->rela.r_info);
-      target_sec = r_reloc_get_section (r_rel);
 
       /* This is the difficult case.  We have to create a fix up.  */
       this_rela.r_offset = offset;
@@ -10007,12 +10053,7 @@ relax_property_section (bfd *abfd,
 	  if (remove_this_rel)
 	    {
 	      offset_rel->r_info = ELF32_R_INFO (0, R_XTENSA_NONE);
-	      /* In case this is the last entry, move the relocation offset
-		 to the previous entry, if there is one.  */
-	      if (offset_rel->r_offset >= bytes_to_remove)
-		offset_rel->r_offset -= bytes_to_remove;
-	      else
-		offset_rel->r_offset = 0;
+	      offset_rel->r_offset = 0;
 	    }
 
 	  if (bytes_to_remove != 0)
@@ -10227,6 +10268,9 @@ elf_xtensa_get_plt_section (struct bfd_link_info *info, int chunk)
   if (chunk == 0)
     {
       htab = elf_xtensa_hash_table (info);
+      if (htab == NULL)
+	return NULL;
+
       return htab->splt;
     }
 
@@ -10246,6 +10290,8 @@ elf_xtensa_get_gotplt_section (struct bfd_link_info *info, int chunk)
   if (chunk == 0)
     {
       htab = elf_xtensa_hash_table (info);
+      if (htab == NULL)
+	return NULL;
       return htab->sgotplt;
     }
 
@@ -10713,6 +10759,7 @@ static const struct bfd_elf_special_section elf_xtensa_special_sections[] =
   { NULL,                       0,      0, 0,            0 }
 };
 
+#define ELF_TARGET_ID			XTENSA_ELF_DATA
 #ifndef ELF_ARCH
 #define TARGET_LITTLE_SYM		bfd_elf32_xtensa_le_vec
 #define TARGET_LITTLE_NAME		"elf32-xtensa-le"

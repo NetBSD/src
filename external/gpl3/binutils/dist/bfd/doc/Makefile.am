@@ -56,12 +56,12 @@ bfd_TEXINFOS = $(DOCFILES) bfdsumm.texi
 
 MKDOC = chew$(EXEEXT_FOR_BUILD)
 
-INCLUDES = -I.. -I$(srcdir)/.. -I$(srcdir)/../../include \
+AM_CPPFLAGS = -I.. -I$(srcdir)/.. -I$(srcdir)/../../include \
 	-I$(srcdir)/../../intl -I../../intl
 
 $(MKDOC): $(srcdir)/chew.c
 	$(CC_FOR_BUILD) -o chew.$$$$ $(CFLAGS_FOR_BUILD) $(LDFLAGS_FOR_BUILD) \
-	  $(H_CFLAGS) $(INCLUDES) $(srcdir)/chew.c; \
+	  $(H_CFLAGS) $(AM_CPPFLAGS) $(srcdir)/chew.c; \
 	$(SHELL) $(srcdir)/../../move-if-change chew.$$$$ $(MKDOC)
 
 protos: libbfd.h libcoff.h bfd.h
@@ -295,27 +295,6 @@ MAINTAINERCLEANFILES = $(DOCFILES)
 # We want install to imply install-info as per GNU standards, despite the
 # cygnus option.
 install: install-info
-
-html__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-
-install-html: install-html-am
-
-install-html-am: $(HTMLS)
-	@$(NORMAL_INSTALL)
-	test -z "$(htmldir)" || $(mkdir_p) "$(DESTDIR)$(htmldir)"
-	@list='$(HTMLS)'; for p in $$list; do \
-	  if test -f "$$p" || test -d "$$p"; then d=""; else d="$(srcdir)/"; fi; \
-	  f=$(html__strip_dir) \
-	  if test -d "$$d$$p"; then \
-	    echo " $(mkdir_p) '$(DESTDIR)$(htmldir)/$$f'"; \
-	    $(mkdir_p) "$(DESTDIR)$(htmldir)/$$f" || exit 1; \
-	    echo " $(INSTALL_DATA) '$$d$$p'/* '$(DESTDIR)$(htmldir)/$$f'"; \
-	    $(INSTALL_DATA) "$$d$$p"/* "$(DESTDIR)$(htmldir)/$$f"; \
-	  else \
-	    echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(htmldir)/$$f'"; \
-	    $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(htmldir)/$$f"; \
-	  fi; \
-	done
 
 MAINTAINERCLEANFILES += bfd.info
 

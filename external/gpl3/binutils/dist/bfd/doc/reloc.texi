@@ -281,10 +281,7 @@ struct reloc_howto_struct
       when doing overflow checking.  */
   unsigned int bitsize;
 
-  /*  Notes that the relocation is relative to the location in the
-      data section of the addend.  The relocation function will
-      subtract from the relocation value the address of the location
-      being relocated.  */
+  /*  The relocation is relative to the field being relocated.  */
   bfd_boolean pc_relative;
 
   /*  The bit position of the reloc value in the destination.
@@ -556,6 +553,21 @@ For ELF.
 @deffn {} BFD_RELOC_68K_GLOB_DAT
 @deffnx {} BFD_RELOC_68K_JMP_SLOT
 @deffnx {} BFD_RELOC_68K_RELATIVE
+@deffnx {} BFD_RELOC_68K_TLS_GD32
+@deffnx {} BFD_RELOC_68K_TLS_GD16
+@deffnx {} BFD_RELOC_68K_TLS_GD8
+@deffnx {} BFD_RELOC_68K_TLS_LDM32
+@deffnx {} BFD_RELOC_68K_TLS_LDM16
+@deffnx {} BFD_RELOC_68K_TLS_LDM8
+@deffnx {} BFD_RELOC_68K_TLS_LDO32
+@deffnx {} BFD_RELOC_68K_TLS_LDO16
+@deffnx {} BFD_RELOC_68K_TLS_LDO8
+@deffnx {} BFD_RELOC_68K_TLS_IE32
+@deffnx {} BFD_RELOC_68K_TLS_IE16
+@deffnx {} BFD_RELOC_68K_TLS_IE8
+@deffnx {} BFD_RELOC_68K_TLS_LE32
+@deffnx {} BFD_RELOC_68K_TLS_LE16
+@deffnx {} BFD_RELOC_68K_TLS_LE8
 Relocations used by 68K ELF.
 @end deffn
 @deffn {} BFD_RELOC_32_BASEREL
@@ -617,6 +629,8 @@ Reloc types used for i960/b.out.
 @deffnx {} BFD_RELOC_SPARC_GOTDATA_OP_HIX22
 @deffnx {} BFD_RELOC_SPARC_GOTDATA_OP_LOX10
 @deffnx {} BFD_RELOC_SPARC_GOTDATA_OP
+@deffnx {} BFD_RELOC_SPARC_JMP_IREL
+@deffnx {} BFD_RELOC_SPARC_IRELATIVE
 SPARC ELF relocations.  There is probably some overlap with other
 relocation types already defined.
 @end deffn
@@ -693,6 +707,7 @@ SPARC TLS relocations
 @deffnx {} BFD_RELOC_SPU_HI16
 @deffnx {} BFD_RELOC_SPU_PPU32
 @deffnx {} BFD_RELOC_SPU_PPU64
+@deffnx {} BFD_RELOC_SPU_ADD_PIC
 SPU Relocations.
 @end deffn
 @deffn {} BFD_RELOC_ALPHA_GPDISP_HI16
@@ -763,6 +778,22 @@ GP register.
 Like BFD_RELOC_23_PCREL_S2, except that the source and target must
 share a common GP, and the target address is adjusted for
 STO_ALPHA_STD_GPLOAD.
+@end deffn
+@deffn {} BFD_RELOC_ALPHA_NOP
+The NOP relocation outputs a NOP if the longword displacement
+between two procedure entry points is < 2^21.
+@end deffn
+@deffn {} BFD_RELOC_ALPHA_BSR
+The BSR relocation outputs a BSR if the longword displacement
+between two procedure entry points is < 2^21.
+@end deffn
+@deffn {} BFD_RELOC_ALPHA_LDA
+The LDA relocation outputs a LDA if the longword displacement
+between two procedure entry points is < 2^16.
+@end deffn
+@deffn {} BFD_RELOC_ALPHA_BOH
+The BOH relocation outputs a BSR if the longword displacement
+between two procedure entry points is < 2^21, or else a hint.
 @end deffn
 @deffn {} BFD_RELOC_ALPHA_TLSGD
 @deffnx {} BFD_RELOC_ALPHA_TLSLDM
@@ -870,6 +901,9 @@ MIPS ELF relocations.
 @deffnx {} BFD_RELOC_MIPS_JUMP_SLOT
 MIPS ELF relocations (VxWorks and PLT extensions).
 @end deffn
+@deffn {} BFD_RELOC_MOXIE_10_PCREL
+Moxie ELF relocations.
+@end deffn
 @deffn {} BFD_RELOC_FRV_LABEL16
 @deffnx {} BFD_RELOC_FRV_LABEL24
 @deffnx {} BFD_RELOC_FRV_LO16
@@ -971,6 +1005,7 @@ relaxation.
 @deffnx {} BFD_RELOC_386_TLS_GOTDESC
 @deffnx {} BFD_RELOC_386_TLS_DESC_CALL
 @deffnx {} BFD_RELOC_386_TLS_DESC
+@deffnx {} BFD_RELOC_386_IRELATIVE
 i386/elf relocations
 @end deffn
 @deffn {} BFD_RELOC_X86_64_GOT32
@@ -999,6 +1034,7 @@ i386/elf relocations
 @deffnx {} BFD_RELOC_X86_64_GOTPC32_TLSDESC
 @deffnx {} BFD_RELOC_X86_64_TLSDESC_CALL
 @deffnx {} BFD_RELOC_X86_64_TLSDESC
+@deffnx {} BFD_RELOC_X86_64_IRELATIVE
 x86-64/elf relocations
 @end deffn
 @deffn {} BFD_RELOC_NS32K_IMM_8
@@ -1083,6 +1119,8 @@ Picojava relocs.  Not all of these appear in object files.
 Power(rs6000) and PowerPC relocations.
 @end deffn
 @deffn {} BFD_RELOC_PPC_TLS
+@deffnx {} BFD_RELOC_PPC_TLSGD
+@deffnx {} BFD_RELOC_PPC_TLSLD
 @deffnx {} BFD_RELOC_PPC_DTPMOD
 @deffnx {} BFD_RELOC_PPC_TPREL16
 @deffnx {} BFD_RELOC_PPC_TPREL16_LO
@@ -1205,6 +1243,7 @@ Low and High halfword relocations for MOVW and MOVT instructions.
 @deffnx {} BFD_RELOC_ARM_RELATIVE
 @deffnx {} BFD_RELOC_ARM_GOTOFF
 @deffnx {} BFD_RELOC_ARM_GOTPC
+@deffnx {} BFD_RELOC_ARM_GOT_PREL
 Relocations for setting up GOTs and PLTs for shared libraries.
 @end deffn
 @deffn {} BFD_RELOC_ARM_TLS_GD32
@@ -1258,6 +1297,7 @@ Annotation of BX instructions.
 @deffnx {} BFD_RELOC_ARM_T32_ADD_PC12
 @deffnx {} BFD_RELOC_ARM_SHIFT_IMM
 @deffnx {} BFD_RELOC_ARM_SMC
+@deffnx {} BFD_RELOC_ARM_HVC
 @deffnx {} BFD_RELOC_ARM_SWI
 @deffnx {} BFD_RELOC_ARM_MULTI
 @deffnx {} BFD_RELOC_ARM_CP_OFF_IMM
@@ -1368,6 +1408,13 @@ These relocs are only used within the ARM assembler.  They are not
 @deffnx {} BFD_RELOC_SH_TLS_DTPMOD32
 @deffnx {} BFD_RELOC_SH_TLS_DTPOFF32
 @deffnx {} BFD_RELOC_SH_TLS_TPOFF32
+@deffnx {} BFD_RELOC_SH_GOT20
+@deffnx {} BFD_RELOC_SH_GOTOFF20
+@deffnx {} BFD_RELOC_SH_GOTFUNCDESC
+@deffnx {} BFD_RELOC_SH_GOTFUNCDESC20
+@deffnx {} BFD_RELOC_SH_GOTOFFFUNCDESC
+@deffnx {} BFD_RELOC_SH_GOTOFFFUNCDESC20
+@deffnx {} BFD_RELOC_SH_FUNCDESC
 Renesas / SuperH SH relocs.  Not all of these appear in object files.
 @end deffn
 @deffn {} BFD_RELOC_ARC_B22_PCREL
@@ -1694,6 +1741,72 @@ Used to maintain alignment whilst relaxing.
 This is a variation of BFD_RELOC_LO16 that can be used in v850e ld.bu
 instructions.
 @end deffn
+@deffn {} BFD_RELOC_V850_16_PCREL
+This is a 16-bit reloc.
+@end deffn
+@deffn {} BFD_RELOC_V850_17_PCREL
+This is a 17-bit reloc.
+@end deffn
+@deffn {} BFD_RELOC_V850_23
+This is a 23-bit reloc.
+@end deffn
+@deffn {} BFD_RELOC_V850_32_PCREL
+This is a 32-bit reloc.
+@end deffn
+@deffn {} BFD_RELOC_V850_32_ABS
+This is a 32-bit reloc.
+@end deffn
+@deffn {} BFD_RELOC_V850_16_SPLIT_OFFSET
+This is a 16-bit reloc.
+@end deffn
+@deffn {} BFD_RELOC_V850_16_S1
+This is a 16-bit reloc.
+@end deffn
+@deffn {} BFD_RELOC_V850_LO16_S1
+Low 16 bits. 16 bit shifted by 1.
+@end deffn
+@deffn {} BFD_RELOC_V850_CALLT_15_16_OFFSET
+This is a 16 bit offset from the call table base pointer.
+@end deffn
+@deffn {} BFD_RELOC_V850_32_GOTPCREL
+DSO relocations.
+@end deffn
+@deffn {} BFD_RELOC_V850_16_GOT
+DSO relocations.
+@end deffn
+@deffn {} BFD_RELOC_V850_32_GOT
+DSO relocations.
+@end deffn
+@deffn {} BFD_RELOC_V850_22_PLT_PCREL
+DSO relocations.
+@end deffn
+@deffn {} BFD_RELOC_V850_32_PLT_PCREL
+DSO relocations.
+@end deffn
+@deffn {} BFD_RELOC_V850_COPY
+DSO relocations.
+@end deffn
+@deffn {} BFD_RELOC_V850_GLOB_DAT
+DSO relocations.
+@end deffn
+@deffn {} BFD_RELOC_V850_JMP_SLOT
+DSO relocations.
+@end deffn
+@deffn {} BFD_RELOC_V850_RELATIVE
+DSO relocations.
+@end deffn
+@deffn {} BFD_RELOC_V850_16_GOTOFF
+DSO relocations.
+@end deffn
+@deffn {} BFD_RELOC_V850_32_GOTOFF
+DSO relocations.
+@end deffn
+@deffn {} BFD_RELOC_V850_CODE
+start code.
+@end deffn
+@deffn {} BFD_RELOC_V850_DATA
+start data in text.
+@end deffn
 @deffn {} BFD_RELOC_MN10300_32_PCREL
 This is a 32bit pcrel reloc for the mn10300, offset by two bytes in the
 instruction.
@@ -1729,6 +1842,34 @@ the opcode.
 This is a reloc for the tms320c54x, where the most
 significant 7 bits of a 23-bit extended address are placed into
 the opcode.
+@end deffn
+@deffn {} BFD_RELOC_C6000_PCR_S21
+@deffnx {} BFD_RELOC_C6000_PCR_S12
+@deffnx {} BFD_RELOC_C6000_PCR_S10
+@deffnx {} BFD_RELOC_C6000_PCR_S7
+@deffnx {} BFD_RELOC_C6000_ABS_S16
+@deffnx {} BFD_RELOC_C6000_ABS_L16
+@deffnx {} BFD_RELOC_C6000_ABS_H16
+@deffnx {} BFD_RELOC_C6000_SBR_U15_B
+@deffnx {} BFD_RELOC_C6000_SBR_U15_H
+@deffnx {} BFD_RELOC_C6000_SBR_U15_W
+@deffnx {} BFD_RELOC_C6000_SBR_S16
+@deffnx {} BFD_RELOC_C6000_SBR_L16_B
+@deffnx {} BFD_RELOC_C6000_SBR_L16_H
+@deffnx {} BFD_RELOC_C6000_SBR_L16_W
+@deffnx {} BFD_RELOC_C6000_SBR_H16_B
+@deffnx {} BFD_RELOC_C6000_SBR_H16_H
+@deffnx {} BFD_RELOC_C6000_SBR_H16_W
+@deffnx {} BFD_RELOC_C6000_SBR_GOT_U15_W
+@deffnx {} BFD_RELOC_C6000_SBR_GOT_L16_W
+@deffnx {} BFD_RELOC_C6000_SBR_GOT_H16_W
+@deffnx {} BFD_RELOC_C6000_DSBT_INDEX
+@deffnx {} BFD_RELOC_C6000_PREL31
+@deffnx {} BFD_RELOC_C6000_COPY
+@deffnx {} BFD_RELOC_C6000_ALIGN
+@deffnx {} BFD_RELOC_C6000_FPHEAD
+@deffnx {} BFD_RELOC_C6000_NOCMP
+TMS320C6000 relocations.
 @end deffn
 @deffn {} BFD_RELOC_FR30_48
 This is a 48 bit reloc for the FR30 that stores 32 bits.
@@ -1940,6 +2081,32 @@ instructions
 This is a 6 bit reloc for the AVR that stores offset for adiw/sbiw
 instructions
 @end deffn
+@deffn {} BFD_RELOC_RX_NEG8
+@deffnx {} BFD_RELOC_RX_NEG16
+@deffnx {} BFD_RELOC_RX_NEG24
+@deffnx {} BFD_RELOC_RX_NEG32
+@deffnx {} BFD_RELOC_RX_16_OP
+@deffnx {} BFD_RELOC_RX_24_OP
+@deffnx {} BFD_RELOC_RX_32_OP
+@deffnx {} BFD_RELOC_RX_8U
+@deffnx {} BFD_RELOC_RX_16U
+@deffnx {} BFD_RELOC_RX_24U
+@deffnx {} BFD_RELOC_RX_DIR3U_PCREL
+@deffnx {} BFD_RELOC_RX_DIFF
+@deffnx {} BFD_RELOC_RX_GPRELB
+@deffnx {} BFD_RELOC_RX_GPRELW
+@deffnx {} BFD_RELOC_RX_GPRELL
+@deffnx {} BFD_RELOC_RX_SYM
+@deffnx {} BFD_RELOC_RX_OP_SUBTRACT
+@deffnx {} BFD_RELOC_RX_ABS8
+@deffnx {} BFD_RELOC_RX_ABS16
+@deffnx {} BFD_RELOC_RX_ABS32
+@deffnx {} BFD_RELOC_RX_ABS16U
+@deffnx {} BFD_RELOC_RX_ABS16UW
+@deffnx {} BFD_RELOC_RX_ABS16UL
+@deffnx {} BFD_RELOC_RX_RELAX
+Renesas RX Relocations.
+@end deffn
 @deffn {} BFD_RELOC_390_12
 Direct 12 bit.
 @end deffn
@@ -2046,10 +2213,8 @@ s390 tls relocations.
 @deffnx {} BFD_RELOC_390_TLS_GOTIE20
 Long displacement extension.
 @end deffn
-@deffn {} BFD_RELOC_SCORE_DUMMY1
-Score relocations
-@end deffn
 @deffn {} BFD_RELOC_SCORE_GPREL15
+Score relocations
 Low 16 bit for load/store
 @end deffn
 @deffn {} BFD_RELOC_SCORE_DUMMY2
@@ -2059,11 +2224,20 @@ This is a 24-bit reloc with the right 1 bit assumed to be 0
 @deffn {} BFD_RELOC_SCORE_BRANCH
 This is a 19-bit reloc with the right 1 bit assumed to be 0
 @end deffn
+@deffn {} BFD_RELOC_SCORE_IMM30
+This is a 32-bit reloc for 48-bit instructions.
+@end deffn
+@deffn {} BFD_RELOC_SCORE_IMM32
+This is a 32-bit reloc for 48-bit instructions.
+@end deffn
 @deffn {} BFD_RELOC_SCORE16_JMP
 This is a 11-bit reloc with the right 1 bit assumed to be 0
 @end deffn
 @deffn {} BFD_RELOC_SCORE16_BRANCH
 This is a 8-bit reloc with the right 1 bit assumed to be 0
+@end deffn
+@deffn {} BFD_RELOC_SCORE_BCMP
+This is a 9-bit reloc with the right 1 bit assumed to be 0
 @end deffn
 @deffn {} BFD_RELOC_SCORE_GOT15
 @deffnx {} BFD_RELOC_SCORE_GOT_LO16
@@ -2325,6 +2499,9 @@ NS CR16C Relocations.
 @deffnx {} BFD_RELOC_CR16_SWITCH8
 @deffnx {} BFD_RELOC_CR16_SWITCH16
 @deffnx {} BFD_RELOC_CR16_SWITCH32
+@deffnx {} BFD_RELOC_CR16_GOT_REGREL20
+@deffnx {} BFD_RELOC_CR16_GOTC_REGREL20
+@deffnx {} BFD_RELOC_CR16_GLOB_DAT
 NS CR16 Relocations.
 @end deffn
 @deffn {} BFD_RELOC_CRX_REL4
@@ -2388,6 +2565,20 @@ Relocs used in ELF shared libraries for CRIS.
 @end deffn
 @deffn {} BFD_RELOC_CRIS_32_PLT_PCREL
 32-bit offset to symbol with PLT entry, relative to this relocation.
+@end deffn
+@deffn {} BFD_RELOC_CRIS_32_GOT_GD
+@deffnx {} BFD_RELOC_CRIS_16_GOT_GD
+@deffnx {} BFD_RELOC_CRIS_32_GD
+@deffnx {} BFD_RELOC_CRIS_DTP
+@deffnx {} BFD_RELOC_CRIS_32_DTPREL
+@deffnx {} BFD_RELOC_CRIS_16_DTPREL
+@deffnx {} BFD_RELOC_CRIS_32_GOT_TPREL
+@deffnx {} BFD_RELOC_CRIS_16_GOT_TPREL
+@deffnx {} BFD_RELOC_CRIS_32_TPREL
+@deffnx {} BFD_RELOC_CRIS_16_TPREL
+@deffnx {} BFD_RELOC_CRIS_DTPMOD
+@deffnx {} BFD_RELOC_CRIS_32_IE
+Relocs used in TLS code for CRIS.
 @end deffn
 @deffn {} BFD_RELOC_860_COPY
 @deffnx {} BFD_RELOC_860_GLOB_DAT
@@ -2585,6 +2776,104 @@ CALR offset.
 @end deffn
 @deffn {} BFD_RELOC_Z8K_IMM4L
 4 bit value.
+@end deffn
+@deffn {} BFD_RELOC_LM32_CALL
+@deffnx {} BFD_RELOC_LM32_BRANCH
+@deffnx {} BFD_RELOC_LM32_16_GOT
+@deffnx {} BFD_RELOC_LM32_GOTOFF_HI16
+@deffnx {} BFD_RELOC_LM32_GOTOFF_LO16
+@deffnx {} BFD_RELOC_LM32_COPY
+@deffnx {} BFD_RELOC_LM32_GLOB_DAT
+@deffnx {} BFD_RELOC_LM32_JMP_SLOT
+@deffnx {} BFD_RELOC_LM32_RELATIVE
+Lattice Mico32 relocations.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_SECTDIFF
+Difference between two section addreses.  Must be followed by a
+BFD_RELOC_MACH_O_PAIR.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_PAIR
+Pair of relocation.  Contains the first symbol.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_X86_64_BRANCH32
+@deffnx {} BFD_RELOC_MACH_O_X86_64_BRANCH8
+PCREL relocations.  They are marked as branch to create PLT entry if
+required.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_X86_64_GOT
+Used when referencing a GOT entry.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_X86_64_GOT_LOAD
+Used when loading a GOT entry with movq.  It is specially marked so that
+the linker could optimize the movq to a leaq if possible.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_X86_64_SUBTRACTOR32
+Symbol will be substracted.  Must be followed by a BFD_RELOC_64.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_X86_64_SUBTRACTOR64
+Symbol will be substracted.  Must be followed by a BFD_RELOC_64.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_X86_64_PCREL32_1
+Same as BFD_RELOC_32_PCREL but with an implicit -1 addend.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_X86_64_PCREL32_2
+Same as BFD_RELOC_32_PCREL but with an implicit -2 addend.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_X86_64_PCREL32_4
+Same as BFD_RELOC_32_PCREL but with an implicit -4 addend.
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_32_LO
+This is a 32 bit reloc for the microblaze that stores the 
+low 16 bits of a value
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_32_LO_PCREL
+This is a 32 bit pc-relative reloc for the microblaze that 
+stores the low 16 bits of a value
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_32_ROSDA
+This is a 32 bit reloc for the microblaze that stores a 
+value relative to the read-only small data area anchor
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_32_RWSDA
+This is a 32 bit reloc for the microblaze that stores a 
+value relative to the read-write small data area anchor
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_32_SYM_OP_SYM
+This is a 32 bit reloc for the microblaze to handle 
+expressions of the form "Symbol Op Symbol"
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_64_NONE
+This is a 64 bit reloc that stores the 32 bit pc relative 
+value in two words (with an imm instruction).  No relocation is 
+done here - only used for relaxing
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_64_GOTPC
+This is a 64 bit reloc that stores the 32 bit pc relative 
+value in two words (with an imm instruction).  The relocation is
+PC-relative GOT offset
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_64_GOT
+This is a 64 bit reloc that stores the 32 bit pc relative 
+value in two words (with an imm instruction).  The relocation is
+GOT offset
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_64_PLT
+This is a 64 bit reloc that stores the 32 bit pc relative 
+value in two words (with an imm instruction).  The relocation is
+PC-relative offset into PLT
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_64_GOTOFF
+This is a 64 bit reloc that stores the 32 bit GOT relative 
+value in two words (with an imm instruction).  The relocation is
+relative offset from _GLOBAL_OFFSET_TABLE_
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_32_GOTOFF
+This is a 32 bit reloc that stores the 32 bit GOT relative 
+value in a word.  The relocation is relative offset from
+@end deffn
+@deffn {} BFD_RELOC_MICROBLAZE_COPY
+This is used to tell the dynamic linker to copy the value out of
+the dynamic object into the runtime process image.
 @end deffn
 
 @example

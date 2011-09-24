@@ -125,6 +125,7 @@ enum bfd_flavour
   bfd_target_oasys_flavour,
   bfd_target_tekhex_flavour,
   bfd_target_srec_flavour,
+  bfd_target_verilog_flavour,
   bfd_target_ihex_flavour,
   bfd_target_som_flavour,
   bfd_target_os9k_flavour,
@@ -283,11 +284,13 @@ BFD_JUMP_TABLE macros.
 #define BFD_JUMP_TABLE_CORE(NAME) \
   NAME##_core_file_failing_command, \
   NAME##_core_file_failing_signal, \
-  NAME##_core_file_matches_executable_p
+  NAME##_core_file_matches_executable_p, \
+  NAME##_core_file_pid
 
   char *      (*_core_file_failing_command) (bfd *);
   int         (*_core_file_failing_signal) (bfd *);
   bfd_boolean (*_core_file_matches_executable_p) (bfd *, bfd *);
+  int         (*_core_file_pid) (bfd *);
 
   /* Archive entry points.  */
 #define BFD_JUMP_TABLE_ARCHIVE(NAME) \
@@ -297,6 +300,7 @@ BFD_JUMP_TABLE macros.
   NAME##_truncate_arname, \
   NAME##_write_armap, \
   NAME##_read_ar_hdr, \
+  NAME##_write_ar_hdr, \
   NAME##_openr_next_archived_file, \
   NAME##_get_elt_at_index, \
   NAME##_generic_stat_arch_elt, \
@@ -310,6 +314,7 @@ BFD_JUMP_TABLE macros.
   bfd_boolean (*write_armap)
     (bfd *, unsigned int, struct orl *, unsigned int, int);
   void *      (*_bfd_read_ar_hdr_fn) (bfd *);
+  bfd_boolean (*_bfd_write_ar_hdr_fn) (bfd *, bfd *);
   bfd *       (*openr_next_archived_file) (bfd *, bfd *);
 #define bfd_get_elt_at_index(b,i) BFD_SEND (b, _bfd_get_elt_at_index, (b,i))
   bfd *       (*_bfd_get_elt_at_index) (bfd *, symindex);
@@ -405,13 +410,15 @@ BFD_JUMP_TABLE macros.
   NAME##_bfd_link_hash_table_free, \
   NAME##_bfd_link_add_symbols, \
   NAME##_bfd_link_just_syms, \
+  NAME##_bfd_copy_link_hash_symbol_type, \
   NAME##_bfd_final_link, \
   NAME##_bfd_link_split_section, \
   NAME##_bfd_gc_sections, \
   NAME##_bfd_merge_sections, \
   NAME##_bfd_is_group_section, \
   NAME##_bfd_discard_group, \
-  NAME##_section_already_linked \
+  NAME##_section_already_linked, \
+  NAME##_bfd_define_common_symbol
 
   int         (*_bfd_sizeof_headers) (bfd *, struct bfd_link_info *);
   bfd_byte *  (*_bfd_get_relocated_section_contents)
@@ -434,6 +441,12 @@ BFD_JUMP_TABLE macros.
 
   /* Indicate that we are only retrieving symbol values from this section.  */
   void        (*_bfd_link_just_syms) (asection *, struct bfd_link_info *);
+
+  /* Copy the symbol type of a linker hash table entry.  */
+#define bfd_copy_link_hash_symbol_type(b, t, f) \
+  BFD_SEND (b, _bfd_copy_link_hash_symbol_type, (b, t, f))
+  void (*_bfd_copy_link_hash_symbol_type)
+    (bfd *, struct bfd_link_hash_entry *, struct bfd_link_hash_entry *);
 
   /* Do a link based on the link_order structures attached to each
      section of the BFD.  */
@@ -458,6 +471,10 @@ BFD_JUMP_TABLE macros.
      final link.  */
   void (*_section_already_linked) (bfd *, struct bfd_section *,
                                    struct bfd_link_info *);
+
+  /* Define a common symbol.  */
+  bfd_boolean (*_bfd_define_common_symbol) (bfd *, struct bfd_link_info *,
+                                            struct bfd_link_hash_entry *);
 
   /* Routines to handle dynamic symbols and relocs.  */
 #define BFD_JUMP_TABLE_DYNAMIC(NAME) \
@@ -528,6 +545,36 @@ the target list to be returned, and "target_defaulted" will be
 set in the BFD if @var{abfd} isn't @code{NULL}.  This causes
 @code{bfd_check_format} to loop over all the targets to find the
 one that matches the file being read.
+
+@findex bfd_get_target_info
+@subsubsection @code{bfd_get_target_info}
+@strong{Synopsis}
+@example
+const bfd_target *bfd_get_target_info (const char *target_name,
+    bfd *abfd,
+    bfd_boolean *is_bigendian,
+    int *underscoring,
+    const char **def_target_arch);
+@end example
+@strong{Description}@*
+Return a pointer to the transfer vector for the object target
+named @var{target_name}.  If @var{target_name} is @code{NULL},
+choose the one in the environment variable @code{GNUTARGET}; if
+that is null or not defined, then choose the first entry in the
+target list.  Passing in the string "default" or setting the
+environment variable to "default" will cause the first entry in
+the target list to be returned, and "target_defaulted" will be
+set in the BFD if @var{abfd} isn't @code{NULL}.  This causes
+@code{bfd_check_format} to loop over all the targets to find the
+one that matches the file being read.
+If @var{is_bigendian} is not @code{NULL}, then set this value to target's
+endian mode. True for big-endian, FALSE for little-endian or for
+invalid target.
+If @var{underscoring} is not @code{NULL}, then set this value to target's
+underscoring mode. Zero for none-underscoring, -1 for invalid target,
+else the value of target vector's symbol underscoring.
+If @var{def_target_arch} is not @code{NULL}, then set it to the architecture
+string specified by the target_name.
 
 @findex bfd_target_list
 @subsubsection @code{bfd_target_list}

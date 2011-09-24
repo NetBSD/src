@@ -1,6 +1,6 @@
 /* Support for the generic parts of PE/PEI, for BFD.
    Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008  Free Software Foundation, Inc.
+   2005, 2006, 2007, 2008, 2009  Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -236,8 +236,8 @@ coff_swap_scnhdr_in (bfd * abfd, void * ext, void * in)
      use the virtual size (stored in s_paddr) instead.  */
   if (scnhdr_int->s_paddr > 0
       && (((scnhdr_int->s_flags & IMAGE_SCN_CNT_UNINITIALIZED_DATA) != 0
-	   && (! bfd_pe_executable_p (abfd) || scnhdr_int->s_size == 0))
-          || (bfd_pe_executable_p (abfd) && (scnhdr_int->s_size > scnhdr_int->s_paddr))))
+	   && (! bfd_pei_p (abfd) || scnhdr_int->s_size == 0))
+          || (bfd_pei_p (abfd) && (scnhdr_int->s_size > scnhdr_int->s_paddr))))
   /* This code used to set scnhdr_int->s_paddr to 0.  However,
      coff_set_alignment_hook stores s_paddr in virt_size, which
      only works if it correctly holds the virtual size of the
@@ -263,13 +263,6 @@ pe_mkobject (bfd * abfd)
 
   /* in_reloc_p is architecture dependent.  */
   pe->in_reloc_p = in_reloc_p;
-
-#ifdef PEI_FORCE_MINIMUM_ALIGNMENT
-  pe->force_minimum_alignment = 1;
-#endif
-#ifdef PEI_TARGET_SUBSYSTEM
-  pe->target_subsystem = PEI_TARGET_SUBSYSTEM;
-#endif
 
   return TRUE;
 }
@@ -429,7 +422,6 @@ pe_bfd_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 #define SIZEOF_ILF_SECTIONS     (NUM_ILF_SECTIONS * sizeof (struct coff_section_tdata))
 
 #define ILF_DATA_SIZE				\
-      sizeof (* vars.bim)			\
     + SIZEOF_ILF_SYMS				\
     + SIZEOF_ILF_SYM_TABLE			\
     + SIZEOF_ILF_NATIVE_SYMS			\
@@ -787,15 +779,16 @@ pe_ILF_build_a_bfd (bfd *           abfd,
 
      We are going to construct the contents of the BFD in memory,
      so allocate all the space that we will need right now.  */
-  ptr = bfd_zalloc (abfd, (bfd_size_type) ILF_DATA_SIZE);
-  if (ptr == NULL)
+  vars.bim
+    = (struct bfd_in_memory *) bfd_malloc ((bfd_size_type) sizeof (*vars.bim));
+  if (vars.bim == NULL)
     return FALSE;
 
-  /* Create a bfd_in_memory structure.  */
-  vars.bim = (struct bfd_in_memory *) ptr;
+  ptr = (bfd_byte *) bfd_zmalloc ((bfd_size_type) ILF_DATA_SIZE);
   vars.bim->buffer = ptr;
   vars.bim->size   = ILF_DATA_SIZE;
-  ptr += sizeof (* vars.bim);
+  if (ptr == NULL)
+    goto error_return;
 
   /* Initialise the pointers to regions of the memory and the
      other contents of the pe_ILF_vars structure as well.  */
@@ -849,7 +842,7 @@ pe_ILF_build_a_bfd (bfd *           abfd,
   id4 = pe_ILF_make_a_section (& vars, ".idata$4", SIZEOF_IDATA4, 0);
   id5 = pe_ILF_make_a_section (& vars, ".idata$5", SIZEOF_IDATA5, 0);
   if (id4 == NULL || id5 == NULL)
-    return FALSE;
+    goto error_return;
 
   /* Fill in the contents of these sections.  */
   if (import_name_type == IMPORT_ORDINAL)
@@ -876,7 +869,7 @@ pe_ILF_build_a_bfd (bfd *           abfd,
       /* Create .idata$6 - the Hint Name Table.  */
       id6 = pe_ILF_make_a_section (& vars, ".idata$6", SIZEOF_IDATA6, 0);
       if (id6 == NULL)
-	return FALSE;
+	goto error_return;
 
       /* If necessary, trim the import symbol name.  */
       symbol = symbol_name;
@@ -943,7 +936,7 @@ pe_ILF_build_a_bfd (bfd *           abfd,
       /* Create the .text section.  */
       text = pe_ILF_make_a_section (& vars, ".text", jtab[i].size, SEC_CODE);
       if (text == NULL)
-	return FALSE;
+	goto error_return;
 
       /* Copy in the jump code.  */
       memcpy (text->contents, jtab[i].data, jtab[i].size);
@@ -992,10 +985,10 @@ pe_ILF_build_a_bfd (bfd *           abfd,
 
   if (   ! bfd_set_start_address (abfd, (bfd_vma) 0)
       || ! bfd_coff_set_arch_mach_hook (abfd, & internal_f))
-    return FALSE;
+    goto error_return;
 
   if (bfd_coff_mkobject_hook (abfd, (void *) & internal_f, NULL) == NULL)
-    return FALSE;
+    goto error_return;
 
   coff_data (abfd)->pe = 1;
 #ifdef THUMBPEMAGIC
@@ -1009,7 +1002,9 @@ pe_ILF_build_a_bfd (bfd *           abfd,
 
   abfd->iostream = (void *) vars.bim;
   abfd->flags |= BFD_IN_MEMORY /* | HAS_LOCALS */;
+  abfd->iovec = &_bfd_memory_iovec;
   abfd->where = 0;
+  abfd->origin = 0;
   obj_sym_filepos (abfd) = 0;
 
   /* Now create a symbol describing the imported value.  */
@@ -1057,6 +1052,12 @@ pe_ILF_build_a_bfd (bfd *           abfd,
   abfd->flags |= HAS_SYMS;
 
   return TRUE;
+
+ error_return:
+  if (vars.bim->buffer != NULL)
+    free (vars.bim->buffer);
+  free (vars.bim);
+  return FALSE;
 }
 
 /* We have detected a Image Library Format archive element.
@@ -1201,7 +1202,7 @@ pe_ILF_object_p (bfd * abfd)
   /* ptr += 2; */
 
   /* Now read in the two strings that follow.  */
-  ptr = bfd_alloc (abfd, size);
+  ptr = (bfd_byte *) bfd_alloc (abfd, size);
   if (ptr == NULL)
     return NULL;
 
@@ -1236,25 +1237,6 @@ pe_ILF_object_p (bfd * abfd)
   return abfd->xvec;
 }
 
-enum arch_type
-{
-  arch_type_unknown,
-  arch_type_i386,
-  arch_type_x86_64
-};
-
-static enum arch_type
-pe_arch (const char *arch)
-{
-  if (strcmp (arch, "i386") == 0 || strcmp (arch, "ia32") == 0)
-    return arch_type_i386;
-
-  if (strcmp (arch, "x86_64") == 0 || strcmp (arch, "x86-64") == 0)
-    return arch_type_x86_64;
-
-  return arch_type_unknown;
-}
-
 static const bfd_target *
 pe_bfd_object_p (bfd * abfd)
 {
@@ -1262,8 +1244,6 @@ pe_bfd_object_p (bfd * abfd)
   struct external_PEI_DOS_hdr dos_hdr;
   struct external_PEI_IMAGE_hdr image_hdr;
   file_ptr offset;
-  const bfd_target *target;
-  struct bfd_preserve preserve;
 
   /* Detect if this a Microsoft Import Library Format element.  */
   if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
@@ -1328,110 +1308,7 @@ pe_bfd_object_p (bfd * abfd)
       return NULL;
     }
 
-  preserve.marker = NULL;
-  if (! bfd_preserve_save (abfd, &preserve))
-    return NULL;
-
-  target = coff_object_p (abfd);
-  if (target)
-    {
-      pe_data_type *pe = pe_data (abfd);
-      struct internal_extra_pe_aouthdr *i = &pe->pe_opthdr;
-      bfd_boolean efi = i->Subsystem == IMAGE_SUBSYSTEM_EFI_APPLICATION
-                     || i->Subsystem == IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER
-                     || i->Subsystem == IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER;
-      enum arch_type arch;
-      const bfd_target * const *target_ptr;
-
-      /* Get the machine.  */
-      if (bfd_target_efi_app_p (abfd->xvec))
-	arch = pe_arch (bfd_target_efi_app_arch (abfd->xvec));
-      else if (bfd_target_efi_bsdrv_p (abfd->xvec))
-        arch = pe_arch (bfd_target_efi_bsdrv_arch (abfd->xvec));
-      else if (bfd_target_efi_rtdrv_p (abfd->xvec))
-        arch = pe_arch (bfd_target_efi_rtdrv_arch (abfd->xvec));
-      else
-	arch = pe_arch (bfd_target_pei_arch (abfd->xvec));
-
-      /* Don't check PE vs. EFI if arch is unknown.  */
-      if (arch == arch_type_unknown)
-	{
-	  bfd_preserve_finish (abfd, &preserve);
-	  return target;
-	}
-
-      for (target_ptr = bfd_target_vector; *target_ptr != NULL;
-	   target_ptr++)
-	{
-	  if (*target_ptr == target
-	      || (*target_ptr)->flavour != bfd_target_coff_flavour)
-	    continue;
-
-	  if (bfd_target_efi_app_p (*target_ptr))
-	    {
-	      /* Skip incompatible arch.  */
-	      if (pe_arch (bfd_target_efi_app_arch (*target_ptr)) != arch)
-		continue;
-
-	      if (efi)
-		{
-		  /* TARGET_PTR is an EFI backend.  Don't match
-		     TARGET with a EFI file.  */
-		  bfd_set_error (bfd_error_wrong_format);
-		  return NULL;
-		}
-	    }
-          else if (bfd_target_efi_bsdrv_p (*target_ptr))
-	    {
-	      /* Skip incompatible arch.  */
-	      if (pe_arch (bfd_target_efi_bsdrv_arch (*target_ptr)) != arch)
-		continue;
-
-	      if (efi)
-		{
-		  /* TARGET_PTR is an EFI backend.  Don't match
-		     TARGET with a EFI file.  */
-		  bfd_set_error (bfd_error_wrong_format);
-		  return NULL;
-		}
-	    }
-          else if (bfd_target_efi_rtdrv_p (*target_ptr))
-	    {
-	      /* Skip incompatible arch.  */
-	      if (pe_arch (bfd_target_efi_rtdrv_arch (*target_ptr)) != arch)
-		continue;
-
-	      if (efi)
-		{
-no_match:
-		  /* TARGET_PTR is an EFI backend.  Don't match
-		     TARGET with a EFI file.  */
-		  bfd_preserve_restore (abfd, &preserve);
-		  bfd_set_error (bfd_error_wrong_format);
-		  return NULL;
-		}
-	    }
-	  else if (bfd_target_pei_p (*target_ptr))
-	    {
-	      /* Skip incompatible arch.  */
-	      if (pe_arch (bfd_target_pei_arch (*target_ptr)) != arch)
-		continue;
-
-	      if (!efi)
-		{
-		  /* TARGET_PTR is a PE backend.  Don't match
-		     TARGET with a PE file.  */
-		  goto no_match;
-		}
-	    }
-	}
-
-      bfd_preserve_finish (abfd, &preserve);
-    }
-  else
-    bfd_preserve_restore (abfd, &preserve);
-
-  return target;
+  return coff_object_p (abfd);
 }
 
 #define coff_object_p pe_bfd_object_p

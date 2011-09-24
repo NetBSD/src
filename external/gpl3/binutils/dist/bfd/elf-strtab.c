@@ -68,7 +68,8 @@ elf_strtab_hash_newfunc (struct bfd_hash_entry *entry,
   /* Allocate the structure if it has not already been allocated by a
      subclass.  */
   if (entry == NULL)
-    entry = bfd_hash_allocate (table, sizeof (struct elf_strtab_hash_entry));
+    entry = (struct bfd_hash_entry *)
+        bfd_hash_allocate (table, sizeof (struct elf_strtab_hash_entry));
   if (entry == NULL)
     return NULL;
 
@@ -97,7 +98,7 @@ _bfd_elf_strtab_init (void)
   struct elf_strtab_hash *table;
   bfd_size_type amt = sizeof (struct elf_strtab_hash);
 
-  table = bfd_malloc (amt);
+  table = (struct elf_strtab_hash *) bfd_malloc (amt);
   if (table == NULL)
     return NULL;
 
@@ -112,7 +113,8 @@ _bfd_elf_strtab_init (void)
   table->size = 1;
   table->alloced = 64;
   amt = sizeof (struct elf_strtab_hasn_entry *);
-  table->array = bfd_malloc (table->alloced * amt);
+  table->array = (struct elf_strtab_hash_entry **)
+      bfd_malloc (table->alloced * amt);
   if (table->array == NULL)
     {
       free (table);
@@ -166,7 +168,8 @@ _bfd_elf_strtab_add (struct elf_strtab_hash *tab,
 	{
 	  bfd_size_type amt = sizeof (struct elf_strtab_hash_entry *);
 	  tab->alloced *= 2;
-	  tab->array = bfd_realloc_or_free (tab->array, tab->alloced * amt);
+	  tab->array = (struct elf_strtab_hash_entry **)
+              bfd_realloc_or_free (tab->array, tab->alloced * amt);
 	  if (tab->array == NULL)
 	    return (bfd_size_type) -1;
 	}
@@ -311,7 +314,7 @@ _bfd_elf_strtab_finalize (struct elf_strtab_hash *tab)
 
   /* Sort the strings by suffix and length.  */
   amt = tab->size * sizeof (struct elf_strtab_hash_entry *);
-  array = bfd_malloc (amt);
+  array = (struct elf_strtab_hash_entry **) bfd_malloc (amt);
   if (array == NULL)
     goto alloc_failure;
 

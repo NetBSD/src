@@ -1,6 +1,6 @@
 /* HP PA-RISC SOM object file format:  definitions internal to BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001,
-   2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -30,9 +30,9 @@
 /* We want reloc.h to provide PA 2.0 defines.  */
 #define PA_2_0
 
-#include <a.out.h>
-#include <lst.h>
-#include <ar.h>
+#include "som/aout.h"
+#include "som/lst.h"
+#include "som/internal.h"
 
 /* The SOM BFD backend doesn't currently use anything from these
    two include files, but it's likely to need them in the future.  */
@@ -41,16 +41,13 @@
 #include <dl.h>
 #endif
 
-#if defined(HOST_HPPABSD) || defined (HOST_HPPAOSF)
+#if defined (HOST_HPPABSD) || defined (HOST_HPPAOSF)
 /* BSD uses a completely different scheme for object file identification.
    so for now, define _PA_RISC_ID to accept any random value for a model
    number.  */
 #undef _PA_RISC_ID
 #define _PA_RISC_ID(__m_num) 1
 #endif /* HOST_HPPABSD */
-
-#define FILE_HDR_SIZE sizeof (struct header)
-#define AUX_HDR_SIZE sizeof (struct som_exec_auxhdr)
 
 typedef struct som_symbol
 {
@@ -116,11 +113,11 @@ struct somdata
   /* These three fields are only used when writing files and are
      generated from scratch.  They need not be copied for objcopy
      or strip to work.  */
-  struct header *file_hdr;
-  struct copyright_aux_hdr *copyright_aux_hdr;
-  struct user_string_aux_hdr *version_aux_hdr;
+  struct som_header *file_hdr;
+  struct som_string_auxhdr *copyright_aux_hdr;
+  struct som_string_auxhdr *version_aux_hdr;
   struct som_exec_auxhdr *exec_hdr;
-  COMPUNIT *comp_unit;
+  struct som_compilation_unit *comp_unit;
 
   /* Pointers to a saved copy of the symbol and string tables.  These
      need not be copied for objcopy or strip to work.  */
@@ -142,35 +139,6 @@ struct somdata
 struct som_data_struct
 {
   struct somdata a;
-};
-
-struct som_subspace_dictionary_record
-{
-  int space_index;
-  unsigned int access_control_bits : 7;
-  unsigned int memory_resident : 1;
-  unsigned int dup_common : 1;
-  unsigned int is_common : 1;
-  unsigned int is_loadable : 1;
-  unsigned int quadrant : 2;
-  unsigned int initially_frozen : 1;
-  unsigned int is_first : 1;
-  unsigned int code_only : 1;
-  unsigned int sort_key : 8;
-  unsigned int replicate_init	: 1;
-  unsigned int continuation : 1;
-  unsigned int is_tspecific : 1;
-  unsigned int is_comdat : 1;
-  unsigned int reserved : 4;
-  int file_loc_init_value;
-  unsigned int initialization_length;
-  unsigned int subspace_start;
-  unsigned int subspace_length;
-  unsigned int reserved2 : 5;   
-  unsigned int alignment :27;
-  union name_pt name;
-  int fixup_request_index;
-  unsigned int fixup_request_quantity;
 };
 
 /* Substructure of som_section_data_struct used to hold information
@@ -216,7 +184,7 @@ struct som_section_data_struct
   struct som_copyable_section_data_struct *copy_data;
   unsigned int reloc_size;
   unsigned char *reloc_stream;
-  struct space_dictionary_record *space_dict;
+  struct som_space_dictionary_record *space_dict;
   struct som_subspace_dictionary_record *subspace_dict;
 };
 

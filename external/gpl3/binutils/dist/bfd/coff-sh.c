@@ -1,6 +1,7 @@
 /* BFD back-end for Renesas Super-H COFF binaries.
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007, 2008  Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011
+   Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
    Relaxing code written by Ian Lance Taylor, <ian@cygnus.com>.
@@ -517,7 +518,7 @@ sh_coff_reloc_type_lookup (abfd, code)
     if (sh_reloc_map[i].bfd_reloc_val == code)
       return &sh_coff_howtos[(int) sh_reloc_map[i].shcoff_reloc_val];
 
-  fprintf (stderr, "SH Error: unknown reloc type %d\n", code);
+  (*_bfd_error_handler) (_("SH Error: unknown reloc type %d"), code);
   return NULL;
 }
 
@@ -3121,7 +3122,7 @@ coff_small_new_section_hook (abfd, section)
 /* This is copied from bfd_coff_std_swap_table so that we can change
    the default section alignment power.  */
 
-static const bfd_coff_backend_data bfd_coff_small_swap_table =
+static bfd_coff_backend_data bfd_coff_small_swap_table =
 {
   coff_swap_aux_in, coff_swap_sym_in, coff_swap_lineno_in,
   coff_swap_aux_out, coff_swap_sym_out,
@@ -3134,11 +3135,7 @@ static const bfd_coff_backend_data bfd_coff_small_swap_table =
 #else
   FALSE,
 #endif
-#ifdef COFF_LONG_SECTION_NAMES
-  TRUE,
-#else
-  FALSE,
-#endif
+  COFF_DEFAULT_LONG_SECTION_NAMES,
   2,
 #ifdef COFF_FORCE_SYMBOLS_IN_STRINGS
   TRUE,

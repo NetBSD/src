@@ -44,6 +44,7 @@
 #define SPARC64_WCOOKIE_OFFSET	832
 
 #define netbsd_core_file_matches_executable_p generic_core_file_matches_executable_p
+#define netbsd_core_file_pid _bfd_nocore_core_file_pid
 
 struct netbsd_core_struct
 {

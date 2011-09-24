@@ -1,5 +1,5 @@
 /* Motorola 68HC11-specific support for 32-bit ELF
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2010
    Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
    (Heavily copied from the D10V port by Martin Hunt (hunt@cygnus.com))
@@ -409,6 +409,8 @@ m68hc11_elf_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
   info = (struct bfd_link_info *) in_arg;
 
   htab = m68hc11_elf_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
 
   stub_sec = stub_entry->stub_sec;
 
@@ -674,7 +676,6 @@ m68hc11_elf_relax_section (bfd *abfd, asection *sec,
                            struct bfd_link_info *link_info, bfd_boolean *again)
 {
   Elf_Internal_Shdr *symtab_hdr;
-  Elf_Internal_Shdr *shndx_hdr;
   Elf_Internal_Rela *internal_relocs;
   Elf_Internal_Rela *free_relocs = NULL;
   Elf_Internal_Rela *irel, *irelend;
@@ -699,7 +700,6 @@ m68hc11_elf_relax_section (bfd *abfd, asection *sec,
     return TRUE;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  shndx_hdr = &elf_tdata (abfd)->symtab_shndx_hdr;
 
   /* Get a copy of the native relocations.  */
   internal_relocs = (_bfd_elf_link_read_relocs
@@ -1285,6 +1285,7 @@ static const struct bfd_elf_special_section elf32_m68hc11_special_sections[] =
 };
 
 #define ELF_ARCH		bfd_arch_m68hc11
+#define ELF_TARGET_ID		M68HC11_ELF_DATA
 #define ELF_MACHINE_CODE	EM_68HC11
 #define ELF_MAXPAGESIZE		0x1000
 

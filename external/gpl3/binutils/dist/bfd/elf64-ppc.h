@@ -1,5 +1,5 @@
 /* PowerPC64-specific support for 64-bit ELF.
-   Copyright 2002, 2003, 2004, 2005, 2007, 2008
+   Copyright 2002, 2003, 2004, 2005, 2007, 2008, 2010
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -22,26 +22,34 @@
 void ppc64_elf_init_stub_bfd
   (bfd *, struct bfd_link_info *);
 bfd_boolean ppc64_elf_edit_opd
-  (bfd *, struct bfd_link_info *, bfd_boolean);
+  (struct bfd_link_info *, bfd_boolean);
 asection *ppc64_elf_tls_setup
-  (bfd *, struct bfd_link_info *);
+  (struct bfd_link_info *, int, int *);
 bfd_boolean ppc64_elf_tls_optimize
-  (bfd *, struct bfd_link_info *);
+  (struct bfd_link_info *);
 bfd_boolean ppc64_elf_edit_toc
-  (bfd *, struct bfd_link_info *);
+  (struct bfd_link_info *);
+bfd_boolean ppc64_elf_has_small_toc_reloc
+  (asection *);
 bfd_vma ppc64_elf_toc
   (bfd *);
 int ppc64_elf_setup_section_lists
-  (bfd *, struct bfd_link_info *, int);
-void ppc64_elf_next_toc_section
+  (struct bfd_link_info *, asection *(*) (const char *, asection *),
+   void (*) (void));
+void ppc64_elf_start_multitoc_partition
+  (struct bfd_link_info *);
+bfd_boolean ppc64_elf_next_toc_section
   (struct bfd_link_info *, asection *);
-void ppc64_elf_reinit_toc
-  (bfd *, struct bfd_link_info *);
+bfd_boolean ppc64_elf_layout_multitoc
+  (struct bfd_link_info *);
+void ppc64_elf_finish_multitoc_partition
+  (struct bfd_link_info *);
+bfd_boolean ppc64_elf_check_init_fini
+  (struct bfd_link_info *);
 bfd_boolean ppc64_elf_next_input_section
   (struct bfd_link_info *, asection *);
 bfd_boolean ppc64_elf_size_stubs
-  (bfd *, struct bfd_link_info *, bfd_signed_vma,
-   asection *(*) (const char *, asection *), void (*) (void));
+  (struct bfd_link_info *, bfd_signed_vma);
 bfd_boolean ppc64_elf_build_stubs
   (bfd_boolean, struct bfd_link_info *, char **);
 void ppc64_elf_restore_symbols

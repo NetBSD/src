@@ -1,5 +1,5 @@
 /* BFD support for the Motorola 68HC11 processor
-   Copyright 1999, 2000, 2001, 2002, 2007 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2005, 2007 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

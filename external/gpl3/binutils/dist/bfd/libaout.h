@@ -349,6 +349,21 @@ typedef struct aout_symbol
    Various things depend on this struct being around any time an a.out
    file is being handled.  An example is dbxread.c in GDB.  */
 
+enum aout_subformat {
+  default_format = 0,
+  /* Used on HP 9000/300 running HP/UX.  See hp300hpux.c.  */
+  gnu_encap_format,
+  /* Used on Linux, 386BSD, etc.  See include/aout/aout64.h.  */
+  q_magic_format
+};
+
+enum aout_magic {
+  undecided_magic = 0,
+  z_magic,
+  o_magic,
+  n_magic
+};
+
 struct aoutdata
 {
   struct internal_exec *hdr;		/* Exec file header.  */
@@ -384,22 +399,9 @@ struct aoutdata
   unsigned vma_adjusted : 1;
 
   /* Used when a bfd supports several highly similar formats.  */
-  enum
-    {
-      default_format = 0,
-      /* Used on HP 9000/300 running HP/UX.  See hp300hpux.c.  */
-      gnu_encap_format,
-      /* Used on Linux, 386BSD, etc.  See include/aout/aout64.h.  */
-      q_magic_format
-    } subformat;
+  enum aout_subformat subformat;
 
-  enum
-    {
-      undecided_magic = 0,
-      z_magic,
-      o_magic,
-      n_magic
-    } magic;
+  enum aout_magic magic;
 
   /* A buffer for find_nearest_line.  */
   char *line_buf;

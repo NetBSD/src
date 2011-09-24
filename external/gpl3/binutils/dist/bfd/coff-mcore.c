@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola MCore COFF/PE
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2010
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -370,8 +370,6 @@ coff_mcore_relocate_section (output_bfd, info, input_bfd, input_section,
 {
   struct internal_reloc * rel;
   struct internal_reloc * relend;
-  bfd_boolean hihalf;
-  bfd_vma hihalf_val;
 
   /* If we are performing a relocatable link, we don't need to do a
      thing.  The caller will take care of adjusting the reloc
@@ -392,9 +390,6 @@ coff_mcore_relocate_section (output_bfd, info, input_bfd, input_section,
       bfd_set_error (bfd_error_wrong_format);
       return FALSE;
     }
-
-  hihalf = FALSE;
-  hihalf_val = 0;
 
   rel = relocs;
   relend = rel + input_section->reloc_count;

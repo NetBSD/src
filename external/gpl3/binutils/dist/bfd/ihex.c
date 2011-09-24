@@ -1,6 +1,6 @@
 /* BFD back-end for Intel Hex objects.
    Copyright 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007 Free Software Foundation, Inc.
+   2006, 2007, 2009 Free Software Foundation, Inc.
    Written by Ian Lance Taylor of Cygnus Support <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -177,7 +177,7 @@ ihex_mkobject (bfd *abfd)
 {
   struct ihex_data_struct *tdata;
 
-  tdata = bfd_alloc (abfd, sizeof (* tdata));
+  tdata = (struct ihex_data_struct *) bfd_alloc (abfd, sizeof (* tdata));
   if (tdata == NULL)
     return FALSE;
 
@@ -309,7 +309,7 @@ ihex_scan (bfd *abfd)
 	  chars = len * 2 + 2;
 	  if (chars >= bufsize)
 	    {
-	      buf = bfd_realloc (buf, (bfd_size_type) chars);
+	      buf = (bfd_byte *) bfd_realloc (buf, (bfd_size_type) chars);
 	      if (buf == NULL)
 		goto error_return;
 	      bufsize = chars;
@@ -361,7 +361,7 @@ ihex_scan (bfd *abfd)
 
 		  sprintf (secbuf, ".sec%d", bfd_count_sections (abfd) + 1);
 		  amt = strlen (secbuf) + 1;
-		  secname = bfd_alloc (abfd, amt);
+		  secname = (char *) bfd_alloc (abfd, amt);
 		  if (secname == NULL)
 		    goto error_return;
 		  strcpy (secname, secbuf);
@@ -583,7 +583,7 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
 
       if (len * 2 > bufsize)
 	{
-	  buf = bfd_realloc (buf, (bfd_size_type) len * 2);
+	  buf = (bfd_byte *) bfd_realloc (buf, (bfd_size_type) len * 2);
 	  if (buf == NULL)
 	    goto error_return;
 	  bufsize = len * 2;
@@ -640,7 +640,8 @@ ihex_get_section_contents (bfd *abfd,
       section->used_by_bfd = bfd_alloc (abfd, section->size);
       if (section->used_by_bfd == NULL)
 	return FALSE;
-      if (! ihex_read_section (abfd, section, section->used_by_bfd))
+      if (! ihex_read_section (abfd, section,
+                               (bfd_byte *) section->used_by_bfd))
 	return FALSE;
     }
 
@@ -668,11 +669,11 @@ ihex_set_section_contents (bfd *abfd,
       || (section->flags & SEC_LOAD) == 0)
     return TRUE;
 
-  n = bfd_alloc (abfd, sizeof (* n));
+  n = (struct ihex_data_list *) bfd_alloc (abfd, sizeof (* n));
   if (n == NULL)
     return FALSE;
 
-  data = bfd_alloc (abfd, count);
+  data = (bfd_byte *) bfd_alloc (abfd, count);
   if (data == NULL)
     return FALSE;
   memcpy (data, location, (size_t) count);
@@ -933,10 +934,13 @@ ihex_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 #define ihex_bfd_is_group_section                 bfd_generic_is_group_section
 #define ihex_bfd_discard_group                    bfd_generic_discard_group
 #define ihex_section_already_linked               _bfd_generic_section_already_linked
+#define ihex_bfd_define_common_symbol             bfd_generic_define_common_symbol
 #define ihex_bfd_link_hash_table_create           _bfd_generic_link_hash_table_create
 #define ihex_bfd_link_hash_table_free             _bfd_generic_link_hash_table_free
 #define ihex_bfd_link_add_symbols                 _bfd_generic_link_add_symbols
 #define ihex_bfd_link_just_syms                   _bfd_generic_link_just_syms
+#define ihex_bfd_copy_link_hash_symbol_type \
+  _bfd_generic_copy_link_hash_symbol_type
 #define ihex_bfd_final_link                       _bfd_generic_final_link
 #define ihex_bfd_link_split_section               _bfd_generic_link_split_section
 
