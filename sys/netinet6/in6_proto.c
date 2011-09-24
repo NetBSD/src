@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.92 2011/05/24 18:07:11 spz Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.93 2011/09/24 17:22:14 christos Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.92 2011/05/24 18:07:11 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.93 2011/09/24 17:22:14 christos Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -168,13 +168,13 @@ PR_WRAP_CTLINPUT(tcp6_ctlinput)
 #define	tcp6_ctlinput	tcp6_ctlinput_wrapper
 
 PR_WRAP_CTLOUTPUT(rip6_ctloutput)
-PR_WRAP_CTLOUTPUT(ip6_ctloutput)
 PR_WRAP_CTLOUTPUT(tcp_ctloutput)
+PR_WRAP_CTLOUTPUT(udp6_ctloutput)
 PR_WRAP_CTLOUTPUT(icmp6_ctloutput)
 
 #define	rip6_ctloutput	rip6_ctloutput_wrapper
-#define	ip6_ctloutput	ip6_ctloutput_wrapper
 #define	tcp_ctloutput	tcp_ctloutput_wrapper
+#define	udp6_ctloutput	udp6_ctloutput_wrapper
 #define	icmp6_ctloutput	icmp6_ctloutput_wrapper
 
 #if defined(IPSEC) || defined(FAST_IPSEC)
@@ -203,7 +203,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_PURGEIF,
 	.pr_input = udp6_input,
 	.pr_ctlinput = udp6_ctlinput,
-	.pr_ctloutput = ip6_ctloutput,
+	.pr_ctloutput = udp6_ctloutput,
 	.pr_usrreq = udp6_usrreq,
 	.pr_init = udp6_init,
 },
