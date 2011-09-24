@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2007 Free Software Foundation, Inc.
+Copyright 1996-2010 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -76,11 +76,7 @@ static unsigned int dis_hash_insn (const char *, CGEN_INSN_INT);
 
 /* Instruction formats.  */
 
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define F(f) & ip2k_cgen_ifld_table[IP2K_##f]
-#else
-#define F(f) & ip2k_cgen_ifld_table[IP2K_/**/f]
-#endif
 static const CGEN_IFMT ifmt_empty ATTRIBUTE_UNUSED = {
   0, 0, 0x0, { { 0 } }
 };
@@ -127,16 +123,8 @@ static const CGEN_IFMT ifmt_reti ATTRIBUTE_UNUSED = {
 
 #undef F
 
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define A(a) (1 << CGEN_INSN_##a)
-#else
-#define A(a) (1 << CGEN_INSN_/**/a)
-#endif
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define OPERAND(op) IP2K_OPERAND_##op
-#else
-#define OPERAND(op) IP2K_OPERAND_/**/op
-#endif
 #define MNEM CGEN_SYNTAX_MNEMONIC /* syntax value for mnemonic */
 #define OP(field) CGEN_SYNTAX_MAKE_FIELD (OPERAND (field))
 
@@ -673,11 +661,7 @@ static const CGEN_OPCODE ip2k_cgen_insn_opcode_table[MAX_INSNS] =
 
 /* Formats for ALIAS macro-insns.  */
 
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define F(f) & ip2k_cgen_ifld_table[IP2K_##f]
-#else
-#define F(f) & ip2k_cgen_ifld_table[IP2K_/**/f]
-#endif
 static const CGEN_IFMT ifmt_sc ATTRIBUTE_UNUSED = {
   16, 16, 0xffff, { { F (F_OP4) }, { F (F_BITNO) }, { F (F_REG) }, { 0 } }
 };
@@ -706,16 +690,8 @@ static const CGEN_IFMT ifmt_skipb ATTRIBUTE_UNUSED = {
 
 /* Each non-simple macro entry points to an array of expansion possibilities.  */
 
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define A(a) (1 << CGEN_INSN_##a)
-#else
-#define A(a) (1 << CGEN_INSN_/**/a)
-#endif
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
 #define OPERAND(op) IP2K_OPERAND_##op
-#else
-#define OPERAND(op) IP2K_OPERAND_/**/op
-#endif
 #define MNEM CGEN_SYNTAX_MNEMONIC /* syntax value for mnemonic */
 #define OP(field) CGEN_SYNTAX_MAKE_FIELD (OPERAND (field))
 
@@ -892,7 +868,10 @@ ip2k_cgen_init_opcode_table (CGEN_CPU_DESC cd)
   const CGEN_OPCODE *oc = & ip2k_cgen_macro_insn_opcode_table[0];
   CGEN_INSN *insns = xmalloc (num_macros * sizeof (CGEN_INSN));
 
-  memset (insns, 0, num_macros * sizeof (CGEN_INSN));
+  /* This test has been added to avoid a warning generated
+     if memset is called with a third argument of value zero.  */
+  if (num_macros >= 1)
+    memset (insns, 0, num_macros * sizeof (CGEN_INSN));
   for (i = 0; i < num_macros; ++i)
     {
       insns[i].base = &ib[i];

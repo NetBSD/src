@@ -1,5 +1,5 @@
 /* ldlex.h -
-   Copyright 1991, 1992, 1993, 1994, 1995, 1997, 2000, 2003, 2007
+   Copyright 1991, 1992, 1993, 1994, 1995, 1997, 2000, 2003, 2005, 2006, 2007
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.

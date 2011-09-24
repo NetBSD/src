@@ -68,7 +68,7 @@ Disassembly of section .text:
   401066:	90[ 	]+nop *
   401067:	90[ 	]+nop *
 #  LD -> LE
-  401068:	66 66 66 64 48 8b 04[ 	]+mov    %fs:0x0,%rax
+  401068:	66 66 66 64 48 8b 04[ 	]+data32 data32 data32 mov %fs:0x0,%rax
   40106f:	25 00 00 00 00 *
   401074:	90[ 	]+nop *
   401075:	90[ 	]+nop *
@@ -83,7 +83,7 @@ Disassembly of section .text:
   401088:	90[ 	]+nop *
   401089:	90[ 	]+nop *
 #  LD -> LE against hidden variables
-  40108a:	66 66 66 64 48 8b 04[ 	]+mov    %fs:0x0,%rax
+  40108a:	66 66 66 64 48 8b 04[ 	]+data32 data32 data32 mov %fs:0x0,%rax
   401091:	25 00 00 00 00 *
   401096:	90[ 	]+nop *
   401097:	90[ 	]+nop *

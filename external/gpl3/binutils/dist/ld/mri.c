@@ -1,6 +1,6 @@
 /* mri.c -- handle MRI style linker scripts
    Copyright 1991, 1992, 1993, 1994, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2007, 2011 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain <sac@cygnus.com>.
 
    This file is part of the GNU Binutils.
@@ -68,7 +68,8 @@ lookup (const char *name, struct section_name_struct **list)
 	ptr = &((*ptr)->next);
     }
 
-  *ptr = xmalloc (sizeof (struct section_name_struct));
+  *ptr = (struct section_name_struct *)
+      xmalloc (sizeof (struct section_name_struct));
   return ptr;
 }
 
@@ -206,10 +207,10 @@ mri_draw_tree (void)
 	    base = p->vma ? p->vma : exp_nameop (NAME, ".");
 
 	  lang_enter_output_section_statement (p->name, base,
-					       p->ok_to_load ? 0 : noload_section,
+					       p->ok_to_load ? normal_section : noload_section,
 					       align, subalign, NULL, 0);
 	  base = 0;
-	  tmp = xmalloc (sizeof *tmp);
+	  tmp = (struct wildcard_list *) xmalloc (sizeof *tmp);
 	  tmp->next = NULL;
 	  tmp->spec.name = p->name;
 	  tmp->spec.exclude_name_list = NULL;
@@ -220,7 +221,7 @@ mri_draw_tree (void)
 	  for (aptr = alias; aptr; aptr = aptr->next)
 	    if (strcmp (aptr->alias, p->name) == 0)
 	      {
-		tmp = xmalloc (sizeof *tmp);
+		tmp = (struct wildcard_list *) xmalloc (sizeof *tmp);
 		tmp->next = NULL;
 		tmp->spec.name = aptr->name;
 		tmp->spec.exclude_name_list = NULL;
@@ -294,7 +295,7 @@ mri_format (const char *name)
 void
 mri_public (const char *name, etree_type *exp)
 {
-  lang_add_assignment (exp_assop ('=', name, exp));
+  lang_add_assignment (exp_assign (name, exp));
 }
 
 void

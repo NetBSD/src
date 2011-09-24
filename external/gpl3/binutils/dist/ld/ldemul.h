@@ -1,6 +1,6 @@
 /* ld-emul.h - Linker emulation header file
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001,
-   2002, 2003, 2004, 2005, 2007
+   2002, 2003, 2004, 2005, 2007, 2008
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -58,7 +58,7 @@ extern void ldemul_set_symbols
   (void);
 extern void ldemul_create_output_section_statements
   (void);
-extern bfd_boolean ldemul_place_orphan
+extern lang_output_section_statement_type *ldemul_place_orphan
   (asection *, const char *, int);
 extern bfd_boolean ldemul_parse_args
   (int, char **);
@@ -151,7 +151,7 @@ typedef struct ld_emulation_xfer_struct {
   /* Place an orphan section.  Return TRUE if it was placed, FALSE if
      the default action should be taken.  This field may be NULL, in
      which case the default action will always be taken.  */
-  bfd_boolean (*place_orphan)
+  lang_output_section_statement_type *(*place_orphan)
     (asection *, const char *, int);
 
   /* Run after assigning parsing with the args, but before

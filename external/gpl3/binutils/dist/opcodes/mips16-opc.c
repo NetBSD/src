@@ -1,5 +1,6 @@
 /* mips16-opc.c.  Mips16 opcode table.
-   Copyright 1996, 1997, 1998, 2000, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 2000, 2005, 2006, 2007
+   Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support
 
    This file is part of the GNU opcodes library.
@@ -32,7 +33,8 @@
    the opcodes table.  */
 
 #define UBD     INSN_UNCOND_BRANCH_DELAY
-#define BR      MIPS16_INSN_BRANCH
+#define UBR	MIPS16_INSN_UNCOND_BRANCH
+#define CBR	MIPS16_INSN_COND_BRANCH
 
 #define WR_x	MIPS16_INSN_WRITE_X
 #define WR_y	MIPS16_INSN_WRITE_Y
@@ -84,10 +86,10 @@ const struct mips_opcode mips16_opcodes[] =
 {"addu",    "x,P,V",	0x0800, 0xf800, WR_x|RD_PC,	0,	I1 },
 {"addu",    "x,S,V",	0x0000, 0xf800, WR_x|RD_SP,	0,	I1 },
 {"and",	    "x,y",	0xe80c, 0xf81f, WR_x|RD_x|RD_y,	0,	I1 },
-{"b",	    "q",	0x1000, 0xf800, BR,		0,	I1 },
+{"b",	    "q",	0x1000, 0xf800, UBR,		0,	I1 },
 {"beq",	    "x,y,p",	0, (int) M_BEQ, INSN_MACRO,	0,	I1 },
 {"beq",     "x,U,p",	0, (int) M_BEQ_I, INSN_MACRO,	0,	I1 },
-{"beqz",    "x,p",	0x2000, 0xf800, BR|RD_x,	0,	I1 },
+{"beqz",    "x,p",	0x2000, 0xf800, CBR|RD_x,	0,	I1 },
 {"bge",	    "x,y,p",	0, (int) M_BGE, INSN_MACRO,	0,	I1 },
 {"bge",     "x,8,p",	0, (int) M_BGE_I, INSN_MACRO,	0,	I1 },
 {"bgeu",    "x,y,p",	0, (int) M_BGEU, INSN_MACRO,	0,	I1 },
@@ -106,10 +108,10 @@ const struct mips_opcode mips16_opcodes[] =
 {"bltu",    "x,8,p",	0, (int) M_BLTU_I, INSN_MACRO,	0,	I1 },
 {"bne",	    "x,y,p",	0, (int) M_BNE, INSN_MACRO,	0,	I1 },
 {"bne",     "x,U,p",	0, (int) M_BNE_I, INSN_MACRO,	0,	I1 },
-{"bnez",    "x,p",	0x2800, 0xf800, BR|RD_x,	0,	I1 },
+{"bnez",    "x,p",	0x2800, 0xf800, CBR|RD_x,	0,	I1 },
 {"break",   "6",	0xe805, 0xf81f, TRAP,		0,	I1 },
-{"bteqz",   "p",	0x6000, 0xff00, BR|RD_T,	0,	I1 },
-{"btnez",   "p",	0x6100, 0xff00, BR|RD_T,	0,	I1 },
+{"bteqz",   "p",	0x6000, 0xff00, CBR|RD_T,	0,	I1 },
+{"btnez",   "p",	0x6100, 0xff00, CBR|RD_T,	0,	I1 },
 {"cmpi",    "x,U",	0x7000, 0xf800, WR_T|RD_x,	0,	I1 },
 {"cmp",	    "x,y",	0xe80a, 0xf81f, WR_T|RD_x|RD_y,	0,	I1 },
 {"cmp",     "x,U",	0x7000, 0xf800, WR_T|RD_x,	0,	I1 },
@@ -225,10 +227,10 @@ const struct mips_opcode mips16_opcodes[] =
 {"sw",	    "R,V(S)",	0x6200, 0xff00, RD_31|RD_SP,	0,	I1 },
 {"xor",	    "x,y",	0xe80e, 0xf81f, WR_x|RD_x|RD_y, 0,	I1 },
   /* MIPS16e additions */
-{"jalrc",   "x",	0xe8c0, 0xf8ff, WR_31|RD_x|TRAP, 0,     I32 },
-{"jalrc",   "R,x",	0xe8c0, 0xf8ff, WR_31|RD_x|TRAP, 0,     I32 },
-{"jrc",     "x",	0xe880, 0xf8ff, RD_x|TRAP,	0,      I32 },
-{"jrc",     "R",	0xe8a0, 0xffff, RD_31|TRAP,	0,      I32 },
+{"jalrc",   "x",	0xe8c0, 0xf8ff, UBR|WR_31|RD_x|TRAP, 0,     I32 },
+{"jalrc",   "R,x",	0xe8c0, 0xf8ff, UBR|WR_31|RD_x|TRAP, 0,     I32 },
+{"jrc",     "x",	0xe880, 0xf8ff, UBR|RD_x|TRAP,	0,      I32 },
+{"jrc",     "R",	0xe8a0, 0xffff, UBR|RD_31|TRAP,	0,      I32 },
 {"restore", "M",	0x6400, 0xff80, WR_31|RD_SP|WR_SP|TRAP,	0,	I32 },
 {"save",    "m",	0x6480, 0xff80, RD_31|RD_SP|WR_SP|TRAP,	0,	I32 },
 {"sdbbp",   "6",	0xe801, 0xf81f, TRAP,		0,	I32 },

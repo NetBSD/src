@@ -1,5 +1,5 @@
 # Test handling of weak undefined symbols
-#   Copyright 2001, 2002, 2004, 2007
+#   Copyright 2001, 2002, 2004, 2005, 2007, 2010
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -30,6 +30,7 @@ if { ![istarget *-*-sysv4*] \
      && ![istarget *-*-eabi*] \
      && ![istarget hppa*64*-*-hpux*] \
      && ![istarget *-*-linux*] \
+     && ![istarget *-*-gnu*] \
      && ![istarget *-*-irix5*] \
      && ![istarget *-*-irix6*] \
      && ![is_pecoff_format] \

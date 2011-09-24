@@ -1,5 +1,5 @@
 /* opintl.h - opcodes specific header for gettext code.
-   Copyright 1998, 1999, 2000, 2007 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2005, 2007, 2009 Free Software Foundation, Inc.
 
    Written by Tom Tromey <tromey@cygnus.com>
 
