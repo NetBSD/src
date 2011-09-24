@@ -1,5 +1,5 @@
 /* Binutils emulation layer.
-   Copyright (C) 2002, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002, 2005, 2007 Free Software Foundation, Inc.
    Written by Tom Rix, Red Hat Inc.
 
    This file is part of GNU Binutils.

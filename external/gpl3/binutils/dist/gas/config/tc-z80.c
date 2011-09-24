@@ -1,5 +1,5 @@
 /* tc-z80.c -- Assemble code for the Zilog Z80 and ASCII R800
-   Copyright 2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -253,10 +253,8 @@ z80_start_line_hook (void)
     {
       char c, *rest, *line_start;
       int len;
-      symbolS * symbolP;
 
       line_start = input_line_pointer;
-      LISTING_NEWLINE ();
       if (ignore_input ())
 	return 0;
 
@@ -275,20 +273,17 @@ z80_start_line_hook (void)
 	len = 4;
       else
 	len = 0;
-      if (len && (rest[len] == ' ' || rest[len] == '\t'))
+      if (len && (!ISALPHA(rest[len]) ) )
 	{
 	  /* Handle assignment here.  */
-	  input_line_pointer = rest + len;
 	  if (line_start[-1] == '\n')
-	    bump_line_counters ();
-	  /* Most Z80 assemblers require the first definition of a
-             label to use "EQU" and redefinitions to have "DEFL".  */
-	  if (len == 3 && (symbolP = symbol_find (line_start)) != NULL) 
 	    {
-	      if (S_IS_DEFINED (symbolP) || symbol_equated_p (symbolP))
-		as_bad (_("symbol `%s' is already defined"), line_start);
+	      bump_line_counters ();
+	      LISTING_NEWLINE ();
 	    }
-	  equals (line_start, 1);
+	  input_line_pointer = rest + len - 1;
+	  /* Allow redefining with "DEFL" (len == 4), but not with "EQU".  */
+	  equals (line_start, len == 4);
 	  return 1;
 	}
       else
@@ -412,7 +407,7 @@ static char err_flag;
 static void
 error (const char * message)
 {
-  as_bad (message);
+  as_bad ("%s", message);
   err_flag = 1;
 }
 
@@ -687,7 +682,7 @@ emit_byte (expressionS * val, bfd_reloc_code_real_type r_type)
   *p = val->X_add_number;
   if ((r_type == BFD_RELOC_8_PCREL) && (val->X_op == O_constant))
     {
-      as_bad(_("cannot make a relative jump to an absolute location"));
+      as_bad (_("cannot make a relative jump to an absolute location"));
     }
   else if (val->X_op == O_constant)
     {
@@ -774,8 +769,12 @@ emit_mx (char prefix, char opcode, int shift, expressionS * arg)
       q = frag_more (2);
       *q++ = (rnum & R_IX) ? 0xDD : 0xFD;
       *q = (prefix) ? prefix : (opcode + (6 << shift));
-      emit_byte (symbol_get_value_expression (arg->X_add_symbol),
-		 BFD_RELOC_Z80_DISP8);
+      {
+	expressionS offset = *arg;
+	offset.X_op = O_symbol;
+	offset.X_add_number = 0;
+	emit_byte (&offset, BFD_RELOC_Z80_DISP8);
+      }
       if (prefix)
 	{
 	  q = frag_more (1);
@@ -1471,7 +1470,7 @@ emit_ldreg (int dest, expressionS * src)
 	  && (src->X_add_number == REG_BC || src->X_add_number == REG_DE))
 	{
 	  q = frag_more (1);
-	  *q = 0x0A + ((dest & 1) << 4);
+	  *q = 0x0A + ((src->X_add_number & 1) << 4);
 	  break;
 	}
 
@@ -1603,8 +1602,13 @@ emit_ld (char prefix_in ATTRIBUTE_UNUSED, char opcode_in ATTRIBUTE_UNUSED,
   switch (dst.X_op)
     {
     case O_md1:
-      emit_ldxhl ((dst.X_add_number & R_IX) ? 0xDD : 0xFD, 0x70,
-		  &src, symbol_get_value_expression (dst.X_add_symbol));
+      {
+        expressionS dst_offset = dst;
+	dst_offset.X_op = O_symbol;
+	dst_offset.X_add_number = 0;
+	emit_ldxhl ((dst.X_add_number & R_IX) ? 0xDD : 0xFD, 0x70,
+		    &src, &dst_offset);
+      }
       break;
 
     case O_register:
@@ -1917,7 +1921,7 @@ void
 md_apply_fix (fixS * fixP, valueT* valP, segT seg ATTRIBUTE_UNUSED)
 {
   long val = * (long *) valP;
-  char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
+  char *p_lit = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   switch (fixP->fx_r_type)
     {
@@ -1933,7 +1937,7 @@ md_apply_fix (fixS * fixP, valueT* valP, segT seg ATTRIBUTE_UNUSED)
 	  if (!fixP->fx_no_overflow)
             as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("relative jump out of range"));
-	  *buf++ = val;
+	  *p_lit++ = val;
           fixP->fx_done = 1;
         }
       break;
@@ -1950,7 +1954,7 @@ md_apply_fix (fixS * fixP, valueT* valP, segT seg ATTRIBUTE_UNUSED)
 	  if (!fixP->fx_no_overflow)
             as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("index offset  out of range"));
-	  *buf++ = val;
+	  *p_lit++ = val;
           fixP->fx_done = 1;
         }
       break;
@@ -1958,34 +1962,34 @@ md_apply_fix (fixS * fixP, valueT* valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_8:
       if (val > 255 || val < -128)
 	as_warn_where (fixP->fx_file, fixP->fx_line, _("overflow"));
-      *buf++ = val;
+      *p_lit++ = val;
       fixP->fx_no_overflow = 1; 
       if (fixP->fx_addsy == NULL)
 	fixP->fx_done = 1;
       break;
 
     case BFD_RELOC_16:
-      *buf++ = val;
-      *buf++ = (val >> 8);
+      *p_lit++ = val;
+      *p_lit++ = (val >> 8);
       fixP->fx_no_overflow = 1; 
       if (fixP->fx_addsy == NULL)
 	fixP->fx_done = 1;
       break;
 
     case BFD_RELOC_24: /* Def24 may produce this.  */
-      *buf++ = val;
-      *buf++ = (val >> 8);
-      *buf++ = (val >> 16);
+      *p_lit++ = val;
+      *p_lit++ = (val >> 8);
+      *p_lit++ = (val >> 16);
       fixP->fx_no_overflow = 1; 
       if (fixP->fx_addsy == NULL)
 	fixP->fx_done = 1;
       break;
 
     case BFD_RELOC_32: /* Def32 and .long may produce this.  */
-      *buf++ = val;
-      *buf++ = (val >> 8);
-      *buf++ = (val >> 16);
-      *buf++ = (val >> 24);
+      *p_lit++ = val;
+      *p_lit++ = (val >> 8);
+      *p_lit++ = (val >> 16);
+      *p_lit++ = (val >> 24);
       if (fixP->fx_addsy == NULL)
 	fixP->fx_done = 1;
       break;
@@ -2028,4 +2032,3 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED , fixS *fixp)
 
   return reloc;
 }
-

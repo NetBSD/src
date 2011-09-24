@@ -68,15 +68,18 @@ sparc_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
 	  if (hist_check_address (dest_pc))
 	    {
 	      child = sym_lookup (&symtab, dest_pc);
-	      DBG (CALLDEBUG,
-		   printf ("\tdest_pc=0x%lx, (name=%s, addr=0x%lx)\n",
-			   (unsigned long) dest_pc, child->name,
-			   (unsigned long) child->addr));
-	      if (child->addr == dest_pc)
+	      if (child)
 		{
-		  /* a hit:  */
-		  arc_add (parent, child, (unsigned long) 0);
-		  continue;
+	          DBG (CALLDEBUG,
+		      printf ("\tdest_pc=0x%lx, (name=%s, addr=0x%lx)\n",
+			     (unsigned long) dest_pc, child->name,
+			     (unsigned long) child->addr));
+	          if (child->addr == dest_pc)
+		    {
+		      /* a hit:  */
+		      arc_add (parent, child, (unsigned long) 0);
+		      continue;
+		    }
 		}
 	    }
 	  /*

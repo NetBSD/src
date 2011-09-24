@@ -1,6 +1,6 @@
 /* tc-s390.c -- Assemble for the S390
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+   2009, 2010  Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -38,8 +38,11 @@ static char *default_arch = DEFAULT_ARCH;
 /* Either 32 or 64, selects file format.  */
 static int s390_arch_size = 0;
 
+/* If no -march option was given default to the highest available CPU.
+   Since with S/390 a newer CPU always supports everything from its
+   predecessors this will accept every valid asm input.  */
+static unsigned int current_cpu = S390_OPCODE_MAXCPU - 1;
 static unsigned int current_mode_mask = 0;
-static unsigned int current_cpu = -1U;
 
 /* Whether to use user friendly register names. Default is TRUE.  */
 #ifndef TARGET_REG_NAMES_P
@@ -82,6 +85,7 @@ static void s390_elf_cons (int);
 static void s390_bss (int);
 static void s390_insn (int);
 static void s390_literals (int);
+static void s390_machine (int);
 
 const pseudo_typeS md_pseudo_table[] =
 {
@@ -96,6 +100,7 @@ const pseudo_typeS md_pseudo_table[] =
   { "quad",     s390_elf_cons,  8 },
   { "ltorg",    s390_literals,  0 },
   { "string",   stringer,       8 + 1 },
+  { "machine",  s390_machine,   0 },
   { NULL,	NULL,		0 }
 };
 
@@ -290,7 +295,7 @@ register_name (expressionS *expressionP)
 static struct hash_control *s390_opformat_hash;
 
 /* Opcode hash table.  */
-static struct hash_control *s390_opcode_hash;
+static struct hash_control *s390_opcode_hash = NULL;
 
 /* Flags to set in the elf header */
 static flagword s390_flags = 0;
@@ -324,21 +329,15 @@ init_default_arch (void)
 	s390_arch_size = 64;
     }
   else
-    as_fatal ("Invalid default architecture, broken assembler.");
+    as_fatal (_("Invalid default architecture, broken assembler."));
 
   if (current_mode_mask == 0)
     {
-      if (s390_arch_size == 32)
+      /* Default to z/Architecture mode if the CPU supports it.  */
+      if (current_cpu < S390_OPCODE_Z900)
 	current_mode_mask = 1 << S390_OPCODE_ESA;
       else
 	current_mode_mask = 1 << S390_OPCODE_ZARCH;
-    }
-  if (current_cpu == -1U)
-    {
-      if (current_mode_mask == (1 << S390_OPCODE_ESA))
-	current_cpu = S390_OPCODE_G5;
-      else
-	current_cpu = S390_OPCODE_Z900;
     }
 }
 
@@ -351,6 +350,35 @@ s390_target_format (void)
   init_default_arch ();
 
   return s390_arch_size == 64 ? "elf64-s390" : "elf32-s390";
+}
+
+/* Map a CPU string as given with -march= or .machine to the
+   respective enum s390_opcode_cpu_val value.  0xffffffff is returned
+   in case of an error.  */
+
+static unsigned int
+s390_parse_cpu (char *arg)
+{
+  if (strcmp (arg, "g5") == 0)
+    return S390_OPCODE_G5;
+  else if (strcmp (arg, "g6") == 0)
+    return S390_OPCODE_G6;
+  else if (strcmp (arg, "z900") == 0)
+    return S390_OPCODE_Z900;
+  else if (strcmp (arg, "z990") == 0)
+    return S390_OPCODE_Z990;
+  else if (strcmp (arg, "z9-109") == 0)
+    return S390_OPCODE_Z9_109;
+  else if (strcmp (arg, "z9-ec") == 0)
+    return S390_OPCODE_Z9_EC;
+  else if (strcmp (arg, "z10") == 0)
+    return S390_OPCODE_Z10;
+  else if (strcmp (arg, "z196") == 0)
+    return S390_OPCODE_Z196;
+  else if (strcmp (arg, "all") == 0)
+    return S390_OPCODE_MAXCPU - 1;
+  else
+    return -1;
 }
 
 int
@@ -385,21 +413,9 @@ md_parse_option (int c, char *arg)
 
       else if (arg != NULL && strncmp (arg, "arch=", 5) == 0)
 	{
-	  if (strcmp (arg + 5, "g5") == 0)
-	    current_cpu = S390_OPCODE_G5;
-	  else if (strcmp (arg + 5, "g6") == 0)
-	    current_cpu = S390_OPCODE_G6;
-	  else if (strcmp (arg + 5, "z900") == 0)
-	    current_cpu = S390_OPCODE_Z900;
-	  else if (strcmp (arg + 5, "z990") == 0)
-	    current_cpu = S390_OPCODE_Z990;
-	  else if (strcmp (arg + 5, "z9-109") == 0)
-	    current_cpu = S390_OPCODE_Z9_109;
-	  else if (strcmp (arg + 5, "z9-ec") == 0)
-	    current_cpu = S390_OPCODE_Z9_EC;
-	  else if (strcmp (arg + 5, "z10") == 0)
-	    current_cpu = S390_OPCODE_Z10;
-	  else
+	  current_cpu = s390_parse_cpu (arg + 5);
+
+	  if (current_cpu == (unsigned int)-1)
 	    {
 	      as_bad (_("invalid switch -m%s"), arg);
 	      return 0;
@@ -420,7 +436,7 @@ md_parse_option (int c, char *arg)
       else if (arg != NULL && strcmp (arg, "esame") == 0)
 	current_cpu = S390_OPCODE_Z900;
       else
-	as_bad ("invalid architecture -A%s", arg);
+	as_bad (_("invalid architecture -A%s"), arg);
       break;
 
       /* -V: SVR4 argument to print version ID.  */
@@ -455,6 +471,53 @@ md_show_usage (FILE *stream)
         -Qy, -Qn          ignored\n"));
 }
 
+/* Generate the hash table mapping mnemonics to struct s390_opcode.
+   This table is built at startup and whenever the CPU level is
+   changed using .machine.  */
+
+static void
+s390_setup_opcodes (void)
+{
+  register const struct s390_opcode *op;
+  const struct s390_opcode *op_end;
+  bfd_boolean dup_insn = FALSE;
+  const char *retval;
+
+  if (s390_opcode_hash != NULL)
+    hash_die (s390_opcode_hash);
+
+  /* Insert the opcodes into a hash table.  */
+  s390_opcode_hash = hash_new ();
+
+  op_end = s390_opcodes + s390_num_opcodes;
+  for (op = s390_opcodes; op < op_end; op++)
+    {
+      while (op < op_end - 1 && strcmp(op->name, op[1].name) == 0)
+	{
+          if (op->min_cpu <= current_cpu && (op->modes & current_mode_mask))
+	    break;
+	  op++;
+        }
+
+      if (op->min_cpu <= current_cpu && (op->modes & current_mode_mask))
+	{
+	  retval = hash_insert (s390_opcode_hash, op->name, (void *) op);
+	  if (retval != (const char *) NULL)
+	    {
+	      as_bad (_("Internal assembler error for instruction %s"),
+		      op->name);
+	      dup_insn = TRUE;
+	    }
+	}
+
+      while (op < op_end - 1 && strcmp (op->name, op[1].name) == 0)
+	op++;
+      }
+
+  if (dup_insn)
+    abort ();
+}
+
 /* This function is called when the assembler starts up.  It is called
    after the options have been parsed and the output file has been
    opened.  */
@@ -469,7 +532,7 @@ md_begin (void)
 
   /* Give a warning if the combination -m64-bit and -Aesa is used.  */
   if (s390_arch_size == 64 && current_cpu < S390_OPCODE_Z900)
-    as_warn ("The 64 bit file format is used without esame instructions.");
+    as_warn (_("The 64 bit file format is used without esame instructions."));
 
   s390_cie_data_alignment = -s390_arch_size / 8;
 
@@ -492,36 +555,11 @@ md_begin (void)
 	}
     }
 
-  /* Insert the opcodes into a hash table.  */
-  s390_opcode_hash = hash_new ();
-
-  op_end = s390_opcodes + s390_num_opcodes;
-  for (op = s390_opcodes; op < op_end; op++)
-    {
-      while (op < op_end - 1 && strcmp(op->name, op[1].name) == 0)
-	{
-          if (op->min_cpu <= current_cpu && (op->modes & current_mode_mask))
-	    break;
-	  op++;
-        }
-      retval = hash_insert (s390_opcode_hash, op->name, (void *) op);
-      if (retval != (const char *) NULL)
-        {
-          as_bad (_("Internal assembler error for instruction %s"),
-		  op->name);
-	  dup_insn = TRUE;
-	}
-      while (op < op_end - 1 && strcmp (op->name, op[1].name) == 0)
-	op++;
-      }
-
-  if (dup_insn)
-    abort ();
+  s390_setup_opcodes ();
 
   record_alignment (text_section, 2);
   record_alignment (data_section, 2);
   record_alignment (bss_section, 2);
-
 }
 
 /* Called after all assembly has been done.  */
@@ -559,7 +597,7 @@ s390_insert_operand (unsigned char *insn,
       if (val < min || val > max)
 	{
 	  const char *err =
-	    "operand out of range (%s not between %ld and %ld)";
+	    _("operand out of range (%s not between %ld and %ld)");
 	  char buf[100];
 
 	  if (operand->flags & S390_OPERAND_PCREL)
@@ -1145,14 +1183,12 @@ md_gather_operands (char *str,
   elf_suffix_type suffix;
   bfd_reloc_code_real_type reloc;
   int skip_optional;
-  int parentheses;
   char *f;
   int fc, i;
 
   while (ISSPACE (*str))
     str++;
 
-  parentheses = 0;
   skip_optional = 0;
 
   /* Gather the operands.  */
@@ -1188,7 +1224,24 @@ md_gather_operands (char *str,
       if (ex.X_op == O_illegal)
 	as_bad (_("illegal operand"));
       else if (ex.X_op == O_absent)
-	as_bad (_("missing operand"));
+	{
+	  /* No operands, check if all operands can be skipped.  */
+	  while (*opindex_ptr != 0 && operand->flags & S390_OPERAND_OPTIONAL)
+	    {
+	      if (operand->flags & S390_OPERAND_DISP)
+		{
+		  /* An optional displacement makes the whole D(X,B)
+		     D(L,B) or D(B) block optional.  */
+		  do {
+		    operand = s390_operands + *(++opindex_ptr);
+		  } while (!(operand->flags & S390_OPERAND_BASE));
+		}
+	      operand = s390_operands + *(++opindex_ptr);
+	    }
+	  if (opindex_ptr[0] == '\0')
+	    break;
+	  as_bad (_("missing operand"));
+	}
       else if (ex.X_op == O_register || ex.X_op == O_constant)
 	{
 	  s390_lit_suffix (&str, &ex, ELF_SUFFIX_NONE);
@@ -1209,11 +1262,11 @@ md_gather_operands (char *str,
 	      if ((operand->flags & S390_OPERAND_INDEX)
 		  && ex.X_add_number == 0
 		  && warn_areg_zero)
-		as_warn ("index register specified but zero");
+		as_warn (_("index register specified but zero"));
 	      if ((operand->flags & S390_OPERAND_BASE)
 		  && ex.X_add_number == 0
 		  && warn_areg_zero)
-		as_warn ("base register specified but zero");
+		as_warn (_("base register specified but zero"));
 	      s390_insert_operand (insn, operand, ex.X_add_number, NULL, 0);
 	    }
 	}
@@ -1529,7 +1582,7 @@ md_assemble (char *str)
     }
   else if (!(opcode->modes & current_mode_mask))
     {
-      as_bad ("Opcode %s not available in this mode", str);
+      as_bad (_("Opcode %s not available in this mode"), str);
       return;
     }
   memcpy (insn, opcode->opcode, sizeof (insn));
@@ -1734,6 +1787,72 @@ s390_literals (int ignore ATTRIBUTE_UNUSED)
   lpe_count = 0;
 }
 
+/* The .machine pseudo op allows to switch to a different CPU level in
+   the asm listing.  The current CPU setting can be stored on a stack
+   with .machine push and restored with .machined pop.  */
+
+static void
+s390_machine (int ignore ATTRIBUTE_UNUSED)
+{
+  char *cpu_string;
+#define MAX_HISTORY 100
+  static unsigned int *cpu_history;
+  static int curr_hist;
+
+  SKIP_WHITESPACE ();
+
+  if (*input_line_pointer == '"')
+    {
+      int len;
+      cpu_string = demand_copy_C_string (&len);
+    }
+  else
+    {
+      char c;
+      cpu_string = input_line_pointer;
+      c = get_symbol_end ();
+      cpu_string = xstrdup (cpu_string);
+      *input_line_pointer = c;
+    }
+
+  if (cpu_string != NULL)
+    {
+      unsigned int old_cpu = current_cpu;
+      unsigned int new_cpu;
+      char *p;
+
+      for (p = cpu_string; *p != 0; p++)
+	*p = TOLOWER (*p);
+
+      if (strcmp (cpu_string, "push") == 0)
+	{
+	  if (cpu_history == NULL)
+	    cpu_history = xmalloc (MAX_HISTORY * sizeof (*cpu_history));
+
+	  if (curr_hist >= MAX_HISTORY)
+	    as_bad (_(".machine stack overflow"));
+	  else
+	    cpu_history[curr_hist++] = current_cpu;
+	}
+      else if (strcmp (cpu_string, "pop") == 0)
+	{
+	  if (curr_hist <= 0)
+	    as_bad (_(".machine stack underflow"));
+	  else
+	    current_cpu = cpu_history[--curr_hist];
+	}
+      else if ((new_cpu = s390_parse_cpu (cpu_string)) != (unsigned int)-1)
+	current_cpu = new_cpu;
+      else
+	as_bad (_("invalid machine `%s'"), cpu_string);
+
+      if (current_cpu != old_cpu)
+	s390_setup_opcodes ();
+    }
+
+  demand_empty_rest_of_line ();
+}
+
 char *
 md_atof (int type, char *litp, int *sizep)
 {
@@ -1918,7 +2037,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 
   if (fixP->fx_subsy != NULL)
     as_bad_where (fixP->fx_file, fixP->fx_line,
-		  "cannot emit relocation %s against subsy symbol %s",
+		  _("cannot emit relocation %s against subsy symbol %s"),
 		  bfd_get_reloc_code_name (fixP->fx_r_type),
 		  S_GET_NAME (fixP->fx_subsy));
 
@@ -2053,7 +2172,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	case BFD_RELOC_16_GOTOFF:
 	  if (fixP->fx_pcrel)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
-			  "cannot emit PC relative %s relocation%s%s",
+			  _("cannot emit PC relative %s relocation%s%s"),
 			  bfd_get_reloc_code_name (fixP->fx_r_type),
 			  fixP->fx_addsy != NULL ? " against " : "",
 			  (fixP->fx_addsy != NULL
@@ -2178,11 +2297,9 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	    const char *reloc_name = bfd_get_reloc_code_name (fixP->fx_r_type);
 
 	    if (reloc_name != NULL)
-	      fprintf (stderr, "Gas failure, reloc type %s\n", reloc_name);
+	      as_fatal (_("Gas failure, reloc type %s\n"), reloc_name);
 	    else
-	      fprintf (stderr, "Gas failure, reloc type #%i\n", fixP->fx_r_type);
-	    fflush (stderr);
-	    abort ();
+	      as_fatal (_("Gas failure, reloc type #%i\n"), fixP->fx_r_type);
 	  }
 	}
 
@@ -2220,7 +2337,7 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 		    bfd_get_reloc_code_name (code));
       /* Set howto to a garbage value so that we can keep going.  */
       reloc->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_32);
-      assert (reloc->howto != NULL);
+      gas_assert (reloc->howto != NULL);
     }
   reloc->addend = fixp->fx_offset;
 
@@ -2249,4 +2366,11 @@ tc_s390_regname_to_dw2regnum (char *regname)
   else if (strcmp (regname, "cc") == 0)
     regnum = 33;
   return regnum;
+}
+
+void
+s390_elf_final_processing (void)
+{
+  if (s390_arch_size == 32 && (current_mode_mask & (1 << S390_OPCODE_ZARCH)))
+    elf_elfheader (stdoutput)->e_flags |= EF_S390_HIGH_GPRS;
 }

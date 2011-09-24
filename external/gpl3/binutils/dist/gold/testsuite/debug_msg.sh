@@ -55,37 +55,56 @@ check_missing()
 
 # We don't know how the compiler might order these variables, so we
 # can't test for the actual offset from .data, hence the regexp.
-check debug_msg.err "debug_msg.o: in function fn_array:debug_msg.cc(.data+0x[0-9a-fA-F]*): undefined reference to 'undef_fn1()'"
-check debug_msg.err "debug_msg.o: in function fn_array:debug_msg.cc(.data+0x[0-9a-fA-F]*): undefined reference to 'undef_fn2()'"
-check debug_msg.err "debug_msg.o: in function badref1:debug_msg.cc(.data+0x[0-9a-fA-F]*): undefined reference to 'undef_int'"
+check debug_msg.err "debug_msg.o: in function fn_array:debug_msg.cc(.data+0x[0-9a-fA-F]*): error: undefined reference to 'undef_fn1()'"
+check debug_msg.err "debug_msg.o: in function fn_array:debug_msg.cc(.data+0x[0-9a-fA-F]*): error: undefined reference to 'undef_fn2()'"
+check debug_msg.err "debug_msg.o: in function badref1:debug_msg.cc(.data+0x[0-9a-fA-F]*): error: undefined reference to 'undef_int'"
 
-check debug_msg.err "debug_msg.o: in function Base::virtfn():${srcdir}/debug_msg.cc:50: undefined reference to 'undef_fn1()'"
-check debug_msg.err "debug_msg.o: in function Derived::virtfn():${srcdir}/debug_msg.cc:55: undefined reference to 'undef_fn2()'"
-check debug_msg.err "debug_msg.o: in function int testfn<int>(int):${srcdir}/debug_msg.cc:43: undefined reference to 'undef_fn1()'"
-check debug_msg.err "debug_msg.o: in function int testfn<int>(int):${srcdir}/debug_msg.cc:44: undefined reference to 'undef_fn2()'"
-check debug_msg.err "debug_msg.o: in function int testfn<int>(int):${srcdir}/debug_msg.cc:45: undefined reference to 'undef_int'"
-check debug_msg.err "debug_msg.o: in function int testfn<double>(double):${srcdir}/debug_msg.cc:43: undefined reference to 'undef_fn1()'"
-check debug_msg.err "debug_msg.o: in function int testfn<double>(double):${srcdir}/debug_msg.cc:44: undefined reference to 'undef_fn2()'"
-check debug_msg.err "debug_msg.o: in function int testfn<double>(double):${srcdir}/debug_msg.cc:45: undefined reference to 'undef_int'"
+# These tests check only for the source file's file name (not the complete
+# path) because use of -fdebug-prefix-map may change the path to the source
+# file recorded in the objects.
+check debug_msg.err "debug_msg.o: in function Base::virtfn():.*/debug_msg.cc:50: error: undefined reference to 'undef_fn1()'"
+check debug_msg.err "debug_msg.o: in function Derived::virtfn():.*/debug_msg.cc:55: error: undefined reference to 'undef_fn2()'"
+check debug_msg.err "debug_msg.o: in function int testfn<int>(int):.*/debug_msg.cc:43: error: undefined reference to 'undef_fn1()'"
+check debug_msg.err "debug_msg.o: in function int testfn<int>(int):.*/debug_msg.cc:44: error: undefined reference to 'undef_fn2()'"
+check debug_msg.err "debug_msg.o: in function int testfn<int>(int):.*/debug_msg.cc:.*: error: undefined reference to 'undef_int'"
+check debug_msg.err "debug_msg.o: in function int testfn<double>(double):.*/debug_msg.cc:43: error: undefined reference to 'undef_fn1()'"
+check debug_msg.err "debug_msg.o: in function int testfn<double>(double):.*/debug_msg.cc:44: error: undefined reference to 'undef_fn2()'"
+check debug_msg.err "debug_msg.o: in function int testfn<double>(double):.*/debug_msg.cc:.*: error: undefined reference to 'undef_int'"
 
 # Check we detected the ODR (One Definition Rule) violation.
 check debug_msg.err ": symbol 'Ordering::operator()(int, int)' defined in multiple places (possible ODR violation):"
 check debug_msg.err "odr_violation1.cc:5"
 check debug_msg.err "odr_violation2.cc:5"
+# We block ODR detection for combinations of C weak and strong
+# symbols, to allow people to use the linker to override things.  We
+# still flag it for C++ symbols since those are more likely to be
+# unintentional.
+check_missing debug_msg.err ": symbol 'OverriddenCFunction' defined in multiple places (possible ODR violation):"
+check_missing debug_msg.err "odr_violation1.cc:15"
+check_missing debug_msg.err "odr_violation2.cc:17"
+check debug_msg.err ": symbol 'SometimesInlineFunction(int)' defined in multiple places (possible ODR violation):"
+check debug_msg.err "debug_msg.cc:64"
+check debug_msg.err "odr_violation2.cc:21"
 
 # When linking together .so's, we don't catch the line numbers, but we
 # still find all the undefined variables, and the ODR violation.
-check debug_msg_so.err "debug_msg.so: undefined reference to 'undef_fn1()'"
-check debug_msg_so.err "debug_msg.so: undefined reference to 'undef_fn2()'"
-check debug_msg_so.err "debug_msg.so: undefined reference to 'undef_int'"
+check debug_msg_so.err "debug_msg.so: error: undefined reference to 'undef_fn1()'"
+check debug_msg_so.err "debug_msg.so: error: undefined reference to 'undef_fn2()'"
+check debug_msg_so.err "debug_msg.so: error: undefined reference to 'undef_int'"
 check debug_msg_so.err ": symbol 'Ordering::operator()(int, int)' defined in multiple places (possible ODR violation):"
 check debug_msg_so.err "odr_violation1.cc:5"
 check debug_msg_so.err "odr_violation2.cc:5"
+check_missing debug_msg.err ": symbol 'OverriddenCFunction' defined in multiple places (possible ODR violation):"
+check_missing debug_msg.err "odr_violation1.cc:15"
+check_missing debug_msg.err "odr_violation2.cc:17"
+check debug_msg.err ": symbol 'SometimesInlineFunction(int)' defined in multiple places (possible ODR violation):"
+check debug_msg.err "debug_msg.cc:64"
+check debug_msg.err "odr_violation2.cc:21"
 
 # These messages shouldn't need any debug info to detect:
-check debug_msg_ndebug.err "debug_msg_ndebug.so: undefined reference to 'undef_fn1()'"
-check debug_msg_ndebug.err "debug_msg_ndebug.so: undefined reference to 'undef_fn2()'"
-check debug_msg_ndebug.err "debug_msg_ndebug.so: undefined reference to 'undef_int'"
+check debug_msg_ndebug.err "debug_msg_ndebug.so: error: undefined reference to 'undef_fn1()'"
+check debug_msg_ndebug.err "debug_msg_ndebug.so: error: undefined reference to 'undef_fn2()'"
+check debug_msg_ndebug.err "debug_msg_ndebug.so: error: undefined reference to 'undef_int'"
 # However, we shouldn't detect or declare any ODR violation
 check_missing debug_msg_ndebug.err "(possible ODR violation)"
 

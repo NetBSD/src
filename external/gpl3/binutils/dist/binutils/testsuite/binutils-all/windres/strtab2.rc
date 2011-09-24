@@ -1,4 +1,3 @@
-//#xfail x86_64-*-mingw*
 #include "windows.h"
 
 LANGUAGE 0, 0

@@ -2,7 +2,7 @@
 
 # ver_matching_test.sh -- a test case for version script matching
 
-# Copyright 2008 Free Software Foundation, Inc.
+# Copyright 2008, 2010 Free Software Foundation, Inc.
 # Written by Ian Lance Taylor <iant@google.com>.
 
 # This file is part of gold.
@@ -66,9 +66,9 @@ check ver_matching_test.stdout "V1  *myns::blah()$"
 check ver_matching_test.stdout "V1  *myns::bip()$"
 check ver_matching_test.stdout "V1  *myns::Stuff::Stuff()$"
 check ver_matching_test.stdout "Base  *Biz::Biz()$"
-check ver_matching_test.stdout "V1  *blaza1$"
+check ver_matching_test.stdout "V2  *blaza1$"
 check ver_matching_test.stdout "V2  *blaza2$"
-check ver_matching_test.stdout "V1  *blaza$"
+check ver_matching_test.stdout "V2  *blaza$"
 check ver_matching_test.stdout "Base  *bla$"
 check ver_matching_test.stdout "V2  *blaz$"
 check ver_matching_test.stdout "V2  *blazb$"

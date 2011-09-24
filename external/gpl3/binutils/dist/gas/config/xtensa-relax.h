@@ -1,5 +1,5 @@
 /* Table of relaxations for Xtensa assembly.
-   Copyright 2003, 2004, 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -105,6 +105,7 @@ enum op_type
   OP_OPERAND_LOW16U,		/* Low 16 bits of immed.  */
   OP_OPERAND_HI16U,		/* High 16 bits of immed.  */
   OP_LITERAL,
+  OP_FREEREG,
   OP_LABEL
 };
 
@@ -175,5 +176,14 @@ extern TransitionTable *xg_build_widen_table (transition_cmp_fn);
 
 extern bfd_boolean xg_has_userdef_op_fn (OpType);
 extern long xg_apply_userdef_op_fn (OpType, long);
+
+enum flix_level
+{
+  FLIX_ALL,
+  FLIX_NO_GENERATE,
+  FLIX_NONE
+};
+
+extern enum flix_level produce_flix;
 
 #endif /* !XTENSA_RELAX_H */

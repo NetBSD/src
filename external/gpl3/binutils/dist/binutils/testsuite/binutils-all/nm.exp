@@ -1,4 +1,4 @@
-#   Copyright 1993, 1994, 1995, 1997, 2007 Free Software Foundation, Inc.
+#   Copyright 1993, 1994, 1995, 1997, 2007, 2009 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,6 +96,41 @@ if {![info exists vars(text_symbol)] \
     fail "nm -g"
 } else {
     pass "nm -g"
+}
+
+if [is_elf_format] {
+    # PR binutils/12753
+    # Test nm -g on a unique global symbol.
+
+    # Only some targets support unique symbols.
+    if {([istarget "i?86-*-*"]
+	 || [istarget "x86_64-*-*"]
+	 || [istarget "arm-*-*"]
+	 || [istarget "powerpc*-*-*"]
+	 || [istarget "sparc*-*-*"])} then {
+
+	if {![binutils_assemble $srcdir/$subdir/unique.s tmpdir/unique.o]} then {
+	    fail "nm -g on unique symbols (assembling)"
+	} else {
+	    if [is_remote host] {
+		set tmpfile [remote_download host tmpdir/unique.o]
+	    } else {
+		set tmpfile tmpdir/unique.o
+	    }
+	
+	    set got [binutils_run $NM "$NMFLAGS -g $tmpfile"]
+
+	    if [regexp "u foo" $got] then {
+		pass "nm -g on unique symbols"
+	    } else {
+		fail "nm -g on unique symbols"
+	    }
+
+	    if { $verbose < 1 } {
+		remote_file host delete "tmpdir/unique.o"
+	    }
+	}
+   }
 }
 
 # Test nm -P

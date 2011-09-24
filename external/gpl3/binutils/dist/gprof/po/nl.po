@@ -1,15 +1,15 @@
 # Dutch messages for gprof.
-# Copyright (C) 2008 Free Software Foundation, Inc.
+# Copyright (C) 2008, 2009 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
 #
-# Tim Van Holder <tim.van.holder@telenet.be>, 2008.
+# Tim Van Holder <tim.van.holder@telenet.be>, 2008, 2009.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.17.90\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-05-15 16:49+0930\n"
-"PO-Revision-Date: 2008-06-03 21:38+0200\n"
+"Project-Id-Version: gprof 2.19.90\n"
+"Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
+"POT-Creation-Date: 2009-09-07 14:10+0200\n"
+"PO-Revision-Date: 2009-09-11 20:51+0200\n"
 "Last-Translator: Tim Van Holder <tim.van.holder@telenet.be>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
 "MIME-Version: 1.0\n"
@@ -120,7 +120,7 @@ msgstr "%9.2f   Gemiddeld aantal uitvoeringen per lijn\n"
 msgid "[cg_tally] arc from %s to %s traversed %lu times\n"
 msgstr "[cg_tally] boog van %s naar %s werd %lu keer doorlopen\n"
 
-#: cg_print.c:73
+#: cg_print.c:74
 #, c-format
 msgid ""
 "\t\t     Call graph (explanation follows)\n"
@@ -129,7 +129,7 @@ msgstr ""
 "\t\t     Oproepgraaf (uitleg volgt)\n"
 "\n"
 
-#: cg_print.c:75
+#: cg_print.c:76
 #, c-format
 msgid ""
 "\t\t\tCall graph\n"
@@ -139,7 +139,7 @@ msgstr ""
 "\n"
 
 # Goede vertaling voor "sample hit" - proeftreffer?
-#: cg_print.c:78 hist.c:466
+#: cg_print.c:79 hist.c:466
 #, c-format
 msgid ""
 "\n"
@@ -148,7 +148,7 @@ msgstr ""
 "\n"
 "granulariteit: elke \"sample hit\" bestrijkt %ld byte(s)"
 
-#: cg_print.c:82
+#: cg_print.c:83
 #, c-format
 msgid ""
 " for %.2f%% of %.2f seconds\n"
@@ -158,7 +158,7 @@ msgstr ""
 "\n"
 
 # doorgegeven is ambigu - betere vertaling hier voor "propagated"?
-#: cg_print.c:86
+#: cg_print.c:87
 #, c-format
 msgid ""
 " no time propagated\n"
@@ -167,64 +167,64 @@ msgstr ""
 " no time doorgegeven\n"
 "\n"
 
-#: cg_print.c:95 cg_print.c:98 cg_print.c:100
+#: cg_print.c:96 cg_print.c:99 cg_print.c:101
 msgid "called"
 msgstr "opgeroepen"
 
-#: cg_print.c:95 cg_print.c:100
+#: cg_print.c:96 cg_print.c:101
 msgid "total"
 msgstr "totaal"
 
-#: cg_print.c:95
+#: cg_print.c:96
 msgid "parents"
 msgstr "ouders"
 
-#: cg_print.c:97 cg_print.c:98
+#: cg_print.c:98 cg_print.c:99
 msgid "index"
 msgstr "index"
 
-#: cg_print.c:97
+#: cg_print.c:98
 #, c-format
 msgid "%time"
 msgstr "%tijd"
 
-#: cg_print.c:97 cg_print.c:98
+#: cg_print.c:98 cg_print.c:99
 msgid "self"
 msgstr "zichzelf"
 
-#: cg_print.c:97
+#: cg_print.c:98
 msgid "descendants"
 msgstr "afstammelingen"
 
-#: cg_print.c:98 hist.c:492
+#: cg_print.c:99 hist.c:492
 msgid "name"
 msgstr "naam"
 
-#: cg_print.c:100
+#: cg_print.c:101
 msgid "children"
 msgstr "kinderen"
 
-#: cg_print.c:105
+#: cg_print.c:106
 #, c-format
 msgid "index %% time    self  children    called     name\n"
 msgstr "index %% tijd    zelf  kinderen    opgeroepen naam\n"
 
-#: cg_print.c:128
+#: cg_print.c:129
 #, c-format
 msgid " <cycle %d as a whole> [%d]\n"
 msgstr " <cyclus %d als een geheel> [%d]\n"
 
-#: cg_print.c:354
+#: cg_print.c:355
 #, c-format
 msgid "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <spontaneous>\n"
 msgstr "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <spontaan>\n"
 
-#: cg_print.c:355
+#: cg_print.c:356
 #, c-format
 msgid "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <spontaneous>\n"
 msgstr "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <spontaan>\n"
 
-#: cg_print.c:589
+#: cg_print.c:590
 #, c-format
 msgid ""
 "Index by function name\n"
@@ -233,156 +233,156 @@ msgstr ""
 "Index volgens functienaam\n"
 "\n"
 
-#: cg_print.c:646 cg_print.c:655
+#: cg_print.c:647 cg_print.c:656
 #, c-format
 msgid "<cycle %d>"
 msgstr "<cyclus %d>"
 
 # is iets zwakker dan het oorspronkelijke "parsen", maar "begrijpen" lijkt me dan weer te sterk
-#: corefile.c:59
+#: corefile.c:60
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s: inlezen van mappingsbestand %s lukt niet.\n"
 
-#: corefile.c:72
+#: corefile.c:84 corefile.c:496
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s: kan %s niet openen.\n"
 
-#: corefile.c:166
+#: corefile.c:183
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr "%s: %s: niet in uitvoerbaar formaat\n"
 
-#: corefile.c:177
+#: corefile.c:194
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr "%s: kan geen .text sectie vinden in %s\n"
 
-#: corefile.c:252
+#: corefile.c:269
 #, c-format
 msgid "%s: ran out room for %lu bytes of text space\n"
 msgstr "%s: had geen plaats meer voor %lu bytes aan text-ruimte\n"
 
 # Klinkt nogal zwak
-#: corefile.c:266
+#: corefile.c:283
 #, c-format
 msgid "%s: can't do -c\n"
 msgstr "%s: -c lukt niet\n"
 
-#: corefile.c:305
+#: corefile.c:322
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c wordt niet ondersteund op de %s architectuur\n"
 
-#: corefile.c:470
+#: corefile.c:505 corefile.c:588
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s: bestand `%s' heeft geen symbolen\n"
 
-#: corefile.c:772
+#: corefile.c:848
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%s: iemand heeft verkeerd geteld: ltab.len=%d in plaats van %ld\n"
 
-#: gmon_io.c:83
+#: gmon_io.c:84
 #, c-format
 msgid "%s: address size has unexpected value of %u\n"
 msgstr "%s: adresgrootte heeft een overwachte waarde (%u)\n"
 
-#: gmon_io.c:320 gmon_io.c:416
+#: gmon_io.c:319 gmon_io.c:415
 #, c-format
 msgid "%s: file too short to be a gmon file\n"
 msgstr "%s: bestand is te kort om een gmon-bestand te kunnen zijn\n"
 
 # betere vertaling voor "magic cookie"?
-#: gmon_io.c:330 gmon_io.c:459
+#: gmon_io.c:329 gmon_io.c:458
 #, c-format
 msgid "%s: file `%s' has bad magic cookie\n"
 msgstr "%s: bestand `%s' heeft verkeerd herkenningsteken\n"
 
-#: gmon_io.c:341
+#: gmon_io.c:340
 #, c-format
 msgid "%s: file `%s' has unsupported version %d\n"
 msgstr "%s: bestand `%s' heeft een versie (%d) die niet ondersteund wordt\n"
 
-#: gmon_io.c:371
+#: gmon_io.c:370
 #, c-format
 msgid "%s: %s: found bad tag %d (file corrupted?)\n"
 msgstr "%s: %s: slechte tag (%d) gevonden (is het bestand corrupt?)\n"
 
 # is rate hier ratio of eerder snelheid?
-#: gmon_io.c:438
+#: gmon_io.c:437
 #, c-format
 msgid "%s: profiling rate incompatible with first gmon file\n"
 msgstr "%s: profileringsratio is niet compatibel met het eerste gmon-bestand\n"
 
-#: gmon_io.c:489
+#: gmon_io.c:488
 #, c-format
 msgid "%s: incompatible with first gmon file\n"
 msgstr "%s: niet compatibel met het eerste gmon-bestand\n"
 
-#: gmon_io.c:516
+#: gmon_io.c:518
 #, c-format
 msgid "%s: file '%s' does not appear to be in gmon.out format\n"
 msgstr "%s: bestand '%s' is blijkbaar niet in \"gmon.out\" formaat\n"
 
 # EOF onvertaald laten? betere vertaling voor "bins"?
-#: gmon_io.c:529
+#: gmon_io.c:531
 #, c-format
 msgid "%s: unexpected EOF after reading %d/%d bins\n"
 msgstr "%s: onverwacht bestandseinde na het lezen van %d/%d binaire waarden\n"
 
-#: gmon_io.c:563
+#: gmon_io.c:565
 #, c-format
 msgid "time is in ticks, not seconds\n"
 msgstr "tijd is uitgedrukt in ticks, niet in seconden\n"
 
 # of beter "ik weet niet hoe ik met bestandsformaat %d moet omgaan"?
-#: gmon_io.c:569 gmon_io.c:746
+#: gmon_io.c:571 gmon_io.c:748
 #, c-format
 msgid "%s: don't know how to deal with file format %d\n"
 msgstr "%s: weet niet hoe bestandsformaat %d behandeld moet worden\n"
 
-#: gmon_io.c:576
+#: gmon_io.c:578
 #, c-format
 msgid "File `%s' (version %d) contains:\n"
 msgstr "Bestand `%s' (versie %d) bevat:\n"
 
-#: gmon_io.c:579
+#: gmon_io.c:581
 #, c-format
 msgid "\t%d histogram record\n"
 msgstr "\t%d histogram record\n"
 
-#: gmon_io.c:580
+#: gmon_io.c:582
 #, c-format
 msgid "\t%d histogram records\n"
 msgstr "\t%d histogram records\n"
 
-#: gmon_io.c:582
+#: gmon_io.c:584
 #, c-format
 msgid "\t%d call-graph record\n"
 msgstr "\t%d oproepgraaf record\n"
 
-#: gmon_io.c:583
+#: gmon_io.c:585
 #, c-format
 msgid "\t%d call-graph records\n"
 msgstr "\t%d oproepgraaf records\n"
 
-#: gmon_io.c:585
+#: gmon_io.c:587
 #, c-format
 msgid "\t%d basic-block count record\n"
 msgstr "\t%d basisbloktelling record\n"
 
-#: gmon_io.c:586
+#: gmon_io.c:588
 #, c-format
 msgid "\t%d basic-block count records\n"
 msgstr "\t%d basisbloktelling records\n"
 
-#: gprof.c:158
+#: gprof.c:159
 #, c-format
 msgid ""
-"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][name]] [-I dirs]\n"
+"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
@@ -393,10 +393,10 @@ msgid ""
 "\t[--no-static] [--print-path] [--separate-files]\n"
 "\t[--static-call-graph] [--sum] [--table-length=len] [--traditional]\n"
 "\t[--version] [--width=n] [--ignore-non-functions]\n"
-"\t[--demangle[=STYLE]] [--no-demangle] [@FILE]\n"
+"\t[--demangle[=STYLE]] [--no-demangle] [--external-symbol-table=name] [@FILE]\n"
 "\t[image-file] [profile-file...]\n"
 msgstr ""
-"Gebruik: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][naam]] [-I dirs]\n"
+"Gebruik: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][naam]] [-I dirs]\n"
 "\t[-d[aantal]] [-k van/tot] [-m min-aantal] [-t tabelgrootte]\n"
 "\t[--[no-]annotated-source[=naam]] [--[no-]exec-counts[=naam]]\n"
 "\t[--[no-]flat-profile[=naam]] [--[no-]graph[=naam]]\n"
@@ -407,65 +407,65 @@ msgstr ""
 "\t[--no-static] [--print-path] [--separate-files]\n"
 "\t[--static-call-graph] [--sum] [--table-length=len] [--traditional]\n"
 "\t[--version] [--width=n] [--ignore-non-functions]\n"
-"\t[--demangle[=STIJL]] [--no-demangle] [@BESTAND]\n"
-"\t[image-bestand] [profielbestand...]\n"
+"\t[--demangle[=STIJL]] [--no-demangle] [--external-symbol-table=naam]\n"
+"\t[@BESTAND] [image-bestand] [profielbestand...]\n"
 
-#: gprof.c:174
+#: gprof.c:175
 #, c-format
 msgid "Report bugs to %s\n"
 msgstr ""
 "Meld bugs aan %s\n"
 "Meld fouten in de vertaling aan vertaling@vrijschrift.org\n"
 
-#: gprof.c:250
+#: gprof.c:251
 #, c-format
 msgid "%s: debugging not supported; -d ignored\n"
 msgstr "%s: debuggen wordt niet ondersteund; -d genegeerd\n"
 
-#: gprof.c:330
+#: gprof.c:331
 #, c-format
 msgid "%s: unknown file format %s\n"
 msgstr "%s: onbekend bestandsformaat %s\n"
 
 #. This output is intended to follow the GNU standards document.
-#: gprof.c:414
+#: gprof.c:419
 #, c-format
 msgid "GNU gprof %s\n"
 msgstr "GNU gprof %s\n"
 
 # Ben niet zeker of die "Regents of" vertaald moet/mag worden...
-#: gprof.c:415
+#: gprof.c:420
 #, c-format
 msgid "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
 msgstr "Gebaseerd op BSD gprof, copyright 1983 Regents of the University of California.\n"
 
-#: gprof.c:416
+#: gprof.c:421
 #, c-format
 msgid "This program is free software.  This program has absolutely no warranty.\n"
 msgstr "Dit programma is vrije software.  Er is helemaal geen garantie.\n"
 
 # betere vertaling voor demangle?
-#: gprof.c:457
+#: gprof.c:462
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
 msgstr "%s: onbekende ontwarringsstijl `%s'\n"
 
-#: gprof.c:477
+#: gprof.c:482
 #, c-format
 msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr "%s: --function-ordering en --file-ordering mogen niet tegelijk opgegeven worden.\n"
 
-#: gprof.c:527
+#: gprof.c:534
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr "%s: sorry, bestandsformaat `prof' wordt nog niet ondersteund\n"
 
-#: gprof.c:581
+#: gprof.c:588
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr "%s: bestand gmon.out bevat geen histogram\n"
 
-#: gprof.c:588
+#: gprof.c:595
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s: bestand gmon.out bevat geen gegevens voor de oproepgraaf\n"
@@ -591,7 +591,7 @@ msgstr "%s: symbool gevonden dat meerdere histogram records omvat"
 msgid "[find_call] 0x%lx: jal"
 msgstr "[find_call] 0x%lx: jal"
 
-#: mips.c:96
+#: mips.c:99
 #, c-format
 msgid "[find_call] 0x%lx: jalr\n"
 msgstr "[find_call] 0x%lx: jalr\n"

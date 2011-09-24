@@ -44,8 +44,9 @@ using namespace gold;
 
 template<int size, bool big_endian>
 bool
-Sized_binary_test(Target* target)
+Sized_binary_test()
 {
+  parameters_clear_target();
   // We need a pretend Task.
   const Task* task = reinterpret_cast<const Task*>(-1);
 
@@ -67,13 +68,12 @@ Sized_binary_test(Target* target)
 			binary.converted_size());
   Object* object = make_elf_object("test.o", &input_file, 0,
 				   binary.converted_data(),
-				   binary.converted_size());
+				   binary.converted_size(), NULL);
   CHECK(object != NULL);
   if (object == NULL)
     return false;
 
   CHECK(!object->is_dynamic());
-  CHECK(object->target() == target);
   CHECK(object->shnum() == 5);
   CHECK(object->section_name(1) == ".data");
   CHECK(object->section_flags(1) == (elfcpp::SHF_ALLOC | elfcpp::SHF_WRITE));
@@ -87,9 +87,13 @@ Sized_binary_test(Target* target)
   Read_symbols_data sd;
   object->read_symbols(&sd);
   delete sd.section_headers;
+  sd.section_headers = NULL;
   delete sd.section_names;
+  sd.section_names = NULL;
   delete sd.symbols;
+  sd.symbols = NULL;
   delete sd.symbol_names;
+  sd.symbol_names = NULL;
 
   Sized_relobj<size, big_endian>* relobj =
     static_cast<Sized_relobj<size, big_endian>*>(object);
@@ -125,23 +129,27 @@ Binary_test(Test_report*)
   int fail = 0;
 
 #ifdef HAVE_TARGET_32_LITTLE
-  if (!Sized_binary_test<32, false>(target_test_pointer_32_little))
+  if (!Sized_binary_test<32, false>())
     ++fail;
+  CHECK(&parameters->target() == target_test_pointer_32_little);
 #endif
 
 #ifdef HAVE_TARGET_32_BIG
-  if (!Sized_binary_test<32, true>(target_test_pointer_32_big))
+  if (!Sized_binary_test<32, true>())
     ++fail;
+  CHECK(&parameters->target() == target_test_pointer_32_big);
 #endif
 
 #ifdef HAVE_TARGET_64_LITTLE
-  if (!Sized_binary_test<64, false>(target_test_pointer_64_little))
+  if (!Sized_binary_test<64, false>())
     ++fail;
+  CHECK(&parameters->target() == target_test_pointer_64_little);
 #endif
 
 #ifdef HAVE_TARGET_64_BIG
-  if (!Sized_binary_test<64, true>(target_test_pointer_64_big))
+  if (!Sized_binary_test<64, true>())
     ++fail;
+  CHECK(&parameters->target() == target_test_pointer_64_big);
 #endif
 
   return fail == 0;

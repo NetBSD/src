@@ -1,6 +1,6 @@
 /* atof_ieee.c - turn a Flonum into an IEEE floating point number
    Copyright 1987, 1992, 1994, 1996, 1997, 1998, 1999, 2000, 2001, 2005,
-   2007 Free Software Foundation, Inc.
+   2007, 2009  Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -285,7 +285,7 @@ gen_to_words (LITTLENUM_TYPE *words, int precision, long exponent_bits)
   if (generic_floating_point_number.sign == 0)
     {
       if (TC_LARGEST_EXPONENT_IS_NORMAL (precision))
-	as_warn ("NaNs are not supported by this target\n");
+	as_warn (_("NaNs are not supported by this target\n"));
       if (precision == F_PRECISION)
 	{
 	  words[0] = 0x7fff;
@@ -324,7 +324,7 @@ gen_to_words (LITTLENUM_TYPE *words, int precision, long exponent_bits)
   else if (generic_floating_point_number.sign == 'P')
     {
       if (TC_LARGEST_EXPONENT_IS_NORMAL (precision))
-	as_warn ("Infinities are not supported by this target\n");
+	as_warn (_("Infinities are not supported by this target\n"));
 
       /* +INF:  Do the right thing.  */
       if (precision == F_PRECISION)
@@ -365,7 +365,7 @@ gen_to_words (LITTLENUM_TYPE *words, int precision, long exponent_bits)
   else if (generic_floating_point_number.sign == 'N')
     {
       if (TC_LARGEST_EXPONENT_IS_NORMAL (precision))
-	as_warn ("Infinities are not supported by this target\n");
+	as_warn (_("Infinities are not supported by this target\n"));
 
       /* Negative INF.  */
       if (precision == F_PRECISION)
@@ -784,7 +784,7 @@ ieee_md_atof (int type,
       return _("Unrecognized or unsupported floating point constant");
     }
 
-  assert (prec <= MAX_LITTLENUMS);
+  gas_assert (prec <= MAX_LITTLENUMS);
 
   t = atof_ieee (input_line_pointer, type, words);
   if (t)

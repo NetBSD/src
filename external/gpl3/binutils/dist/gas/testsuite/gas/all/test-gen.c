@@ -1,7 +1,7 @@
 #ifndef TEST_GEN_C
 #define TEST_GEN_C 1
 
-/* Copyright (C) 2000, 2003, 2007 Free Software Foundation
+/* Copyright (C) 2000, 2003, 2005, 2007 Free Software Foundation
    Contributed by Alexandre Oliva <aoliva@cygnus.com>
 
    This file is free software; you can redistribute it and/or modify it

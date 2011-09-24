@@ -1,6 +1,6 @@
 /* tc-d30v.c -- Assembler code for the Mitsubishi D30V
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2008,
+   2009, 2010 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -23,6 +23,7 @@
 #include "safe-ctype.h"
 #include "subsegs.h"
 #include "opcode/d30v.h"
+#include "dwarf2dbg.h"
 
 const char comment_chars[]        = ";";
 const char line_comment_chars[]   = "#";
@@ -484,7 +485,7 @@ get_operands (expressionS exp[], int cmp_hack)
 static long long
 build_insn (struct d30v_insn *opcode, expressionS *opers)
 {
-  int i, length, bits, shift, flags;
+  int i, bits, shift, flags;
   unsigned long number, id = 0;
   long long insn;
   struct d30v_opcode *op = opcode->op;
@@ -506,7 +507,6 @@ build_insn (struct d30v_insn *opcode, expressionS *opers)
       if (flags & OPERAND_SHIFT)
 	bits += 3;
 
-      length = d30v_operand_table[form->operands[i]].length;
       shift = 12 - d30v_operand_table[form->operands[i]].position;
       if (opers[i].X_op != O_symbol)
 	number = opers[i].X_add_number;
@@ -593,6 +593,7 @@ write_long (struct d30v_insn *opcode ATTRIBUTE_UNUSED,
   int i, where;
   char *f = frag_more (8);
 
+  dwarf2_emit_insn (8);
   insn |= FM11;
   d30v_number_to_chars (f, insn, 8);
 
@@ -620,6 +621,7 @@ write_1_short (struct d30v_insn *opcode,
   char *f = frag_more (8);
   int i, where;
 
+  dwarf2_emit_insn (8);
   if (warn_nops == NOP_ALL)
     as_warn (_("%s NOP inserted"), use_sequential ?
 	     _("sequential") : _("parallel"));
@@ -1087,6 +1089,7 @@ write_2_short (struct d30v_insn *opcode1,
     }
 
   f = frag_more (8);
+  dwarf2_emit_insn (8);
   d30v_number_to_chars (f, insn, 8);
 
   /* If the previous instruction was a 32-bit multiply but it is put into a
@@ -1129,26 +1132,26 @@ find_format (struct d30v_opcode *opcode,
 	     int fsize,
 	     int cmp_hack)
 {
-  int numops, match, index, i = 0, j, k;
+  int match, opcode_index, i = 0, j, k;
   struct d30v_format *fm;
 
   if (opcode == NULL)
     return NULL;
 
   /* Get all the operands and save them as expressions.  */
-  numops = get_operands (myops, cmp_hack);
+  get_operands (myops, cmp_hack);
 
-  while ((index = opcode->format[i++]) != 0)
+  while ((opcode_index = opcode->format[i++]) != 0)
     {
-      if (fsize == FORCE_SHORT && index >= LONG)
+      if (fsize == FORCE_SHORT && opcode_index >= LONG)
 	continue;
 
-      if (fsize == FORCE_LONG && index < LONG)
+      if (fsize == FORCE_LONG && opcode_index < LONG)
 	continue;
 
-      fm = (struct d30v_format *) &d30v_format_table[index];
-      k = index;
-      while (fm->form == index)
+      fm = (struct d30v_format *) &d30v_format_table[opcode_index];
+      k = opcode_index;
+      while (fm->form == opcode_index)
 	{
 	  match = 1;
 	  /* Now check the operands for compatibility.  */
@@ -1342,13 +1345,14 @@ do_assemble (char *str,
   if (!strncmp (name, "cmp", 3))
     {
       int p, i;
-      char **str = (char **) d30v_cc_names;
+      char **d30v_str = (char **) d30v_cc_names;
+
       if (name[3] == 'u')
 	p = 4;
       else
 	p = 3;
 
-      for (i = 1; *str && strncmp (*str, &name[p], 2); i++, str++)
+      for (i = 1; *d30v_str && strncmp (*d30v_str, &name[p], 2); i++, d30v_str++)
 	;
 
       /* cmpu only supports some condition codes.  */
@@ -1361,7 +1365,7 @@ do_assemble (char *str,
 	    }
 	}
 
-      if (!*str)
+      if (!*d30v_str)
 	{
 	  name[p + 2] = 0;
 	  as_bad (_("unknown condition code: %s"), &name[p]);
@@ -1516,7 +1520,7 @@ d30v_align (int n, char *pfill, symbolS *label)
       valueT       old_value;
       valueT       new_value;
 
-      assert (S_GET_SEGMENT (label) == now_seg);
+      gas_assert (S_GET_SEGMENT (label) == now_seg);
 
       old_frag  = symbol_get_frag (label);
       old_value = S_GET_VALUE (label);
@@ -1684,6 +1688,7 @@ md_assemble (char *str)
 	      else
 		{
 		  f = frag_more (8);
+		  dwarf2_emit_insn (8);
 		  d30v_number_to_chars (f, NOP2, 8);
 
 		  if (warn_nops == NOP_ALL || warn_nops == NOP_MULTIPLY)
@@ -1868,6 +1873,8 @@ d30v_frob_label (symbolS *lab)
   /* Record this label for future adjustment after we find out what
      kind of data it references, and the required alignment therewith.  */
   d30v_last_label = lab;
+
+  dwarf2_emit_label (lab);
 }
 
 /* Hook into cons for capturing alignment changes.  */
@@ -1876,6 +1883,11 @@ void
 d30v_cons_align (int size)
 {
   int log_size;
+
+  /* Don't specially align anything in debug sections.  */
+  if ((now_seg->flags & SEC_ALLOC) == 0
+      || strcmp (now_seg->name, ".eh_frame") == 0)
+    return;
 
   log_size = 0;
   while ((size >>= 1) != 0)
@@ -2113,4 +2125,3 @@ const pseudo_typeS md_pseudo_table[] =
   { "sect.s", s_d30v_section, 0 },
   { NULL, NULL, 0 }
 };
-

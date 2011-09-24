@@ -1,6 +1,6 @@
 ; Collection of macros, for GNU Binutils .cpu files. -*- Scheme -*-
 ;
-; Copyright 2000, 2007 Free Software Foundation, Inc.
+; Copyright 2000, 2007, 2009 Free Software Foundation, Inc.
 ;
 ; Contributed by Red Hat Inc.
 ;
@@ -28,75 +28,69 @@
 ; that way (it's define-full-enum that would change).
 
 (define-pmacro (define-normal-enum name comment attrs prefix vals)
-  "\
-Define a normal enum, fixed number of arguments.
-"
+  "Define a normal enum, fixed number of arguments."
   (define-full-enum name comment attrs prefix vals)
 )
 
 ; Define a normal insn enum.
 
 (define-pmacro (define-normal-insn-enum name comment attrs prefix fld vals)
-  "\
-Define a normal instruction opcode enum.
-"
+  "Define a normal instruction opcode enum."
   (define-full-insn-enum name comment attrs prefix fld vals)
 )
 
 ; Instruction fields.
 
-; Normally, fields are unsigned have no encode/decode needs.
+; Normally, fields are unsigned and have no encode/decode needs.
 
 (define-pmacro (define-normal-ifield name comment attrs start length)
-  "Define a normal instruction field.\n"
+  "Define a normal instruction field."
   (define-full-ifield name comment attrs start length UINT #f #f)
 )
 
 ; For those who don't like typing.
 
-(define-pmacro df
-  "Shorthand form of define-full-ifield.\n"
-  define-full-ifield
+(define-pmacro (df name comment attrs start length mode encode decode)
+  "Shorthand form of normal fields requiring mode, encode/decode."
+  (define-full-ifield name comment attrs start length mode encode decode)
 )
 (define-pmacro dnf
-  "Shorthand form of define-normal-ifield.\n"
+  "Shorthand form of define-normal-ifield."
   define-normal-ifield
 )
 
 ; Define a normal multi-ifield.
-; FIXME: The define-normal version for ifields doesn't include the mode.
 
 (define-pmacro (define-normal-multi-ifield name comment attrs
 		 mode subflds insert extract)
-  "Define a normal multi-part instruction field.\n"
+  "Define a normal multi-part instruction field."
   (define-full-multi-ifield name comment attrs mode subflds insert extract)
 )
 
 ; For those who don't like typing.
 
 (define-pmacro dnmf
-  "Shorthand form of define-normal-multi-ifield.\n"
+  "Shorthand form of define-normal-multi-ifield."
   define-normal-multi-ifield
 )
 
-; Simple multi-ifields: mode is UINT, default insert/extract support.
+; Simple multi-ifields: mode is UINT, default insert/extract support,
+; default encode/decode support.
 
 (define-pmacro (dsmf name comment attrs subflds)
-  "Define a simple multi-part instruction field.\n"
+  "Define a simple multi-part instruction field."
   (define-full-multi-ifield name comment attrs UINT subflds #f #f)
 )
 
 ; Hardware.
 
 ; Simpler version for most hardware elements.
-; Allow special assembler support specification but no semantic-name or
-; get/set specs.
+; Allow special assembler support specification but no semantic-name,
+; getter/setter, or layout specs.
 
 (define-pmacro (define-normal-hardware name comment attrs type
 		 indices values handlers)
-  "\
-Define a normal hardware element.
-"
+  "Define a normal hardware element."
   (define-full-hardware name comment attrs name type
     indices values handlers () () ())
 )
@@ -104,12 +98,12 @@ Define a normal hardware element.
 ; For those who don't like typing.
 
 (define-pmacro dnh
-  "Shorthand form of define-normal-hardware.\n"
+  "Shorthand form of define-normal-hardware."
   define-normal-hardware
 )
 
 ; Simpler version of dnh that leaves out the indices, values, handlers,
-; get, set, and layout specs.
+; getter/setter, and layout specs.
 ; This is useful for 1 bit registers.
 ; ??? While dsh and dnh aren't that distinguishable when perusing a .cpu file,
 ; they both take a fixed number of positional arguments, and dsh is a proper
@@ -117,29 +111,37 @@ Define a normal hardware element.
 ; are ok.
 
 (define-pmacro (define-simple-hardware name comment attrs type)
-  "\
-Define a simple hardware element (usually a scalar register).
-"
+  "Define a simple hardware element (usually a scalar register)."
   (define-full-hardware name comment attrs name type () () () () () ())
 )
 
 (define-pmacro dsh
-  "Shorthand form of define-simple-hardware.\n"
+  "Shorthand form of define-simple-hardware."
   define-simple-hardware
 )
 
 ; Operands.
 
+; Simpler version for most operands.
+; Allow special assembler support specification but no handlers or
+; getter/setter specs.
+
 (define-pmacro (define-normal-operand name comment attrs type index)
-  "Define a normal operand.\n"
+  "Define a normal operand."
   (define-full-operand name comment attrs type DFLT index () () ())
 )
 
 ; For those who don't like typing.
-; FIXME: dno?
+
+(define-pmacro dno
+  "Shorthand form of define-normal-operand."
+  define-normal-operand
+)
+
+; Deprecated, but still in wide use.
 
 (define-pmacro dnop
-  "Shorthand form of define-normal-operand.\n"
+  "Shorthand form of define-normal-operand."
   define-normal-operand
 )
 
@@ -167,7 +169,7 @@ Define a simple hardware element (usually a scalar register).
 ; Fields ifield-assertion is absent.
 
 (define-pmacro (define-normal-insn name comment attrs syntax fmt semantics timing)
-  "Define a normal instruction.\n"
+  "Define a normal instruction."
   (define-full-insn name comment attrs syntax fmt () semantics timing)
 )
 
@@ -176,7 +178,7 @@ Define a simple hardware element (usually a scalar register).
 ; this must be the right way to go. :-)
 
 (define-pmacro dni
-  "Shorthand form of define-normal-insn.\n"
+  "Shorthand form of define-normal-insn."
   define-normal-insn
 )
 
@@ -186,14 +188,14 @@ Define a simple hardware element (usually a scalar register).
 ; This only supports expanding to one real insn.
 
 (define-pmacro (define-normal-macro-insn name comment attrs syntax expansion)
-  "Define a normal macro instruction.\n"
+  "Define a normal macro instruction."
   (define-full-minsn name comment attrs syntax expansion)
 )
 
 ; To reduce the amount of typing.
 
 (define-pmacro dnmi
-  "Shorthand form of define-normal-macro-insn.\n"
+  "Shorthand form of define-normal-macro-insn."
   define-normal-macro-insn
 )
 

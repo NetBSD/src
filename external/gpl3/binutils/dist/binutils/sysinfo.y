@@ -1,4 +1,4 @@
-/* Copyright 2001, 2003, 2005, 2007 Free Software Foundation, Inc.
+/* Copyright 2001, 2003, 2005, 2007, 2009 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
    This file is part of GNU binutils.
@@ -102,45 +102,39 @@ it:
 	  case 'd':
 	    printf("\n\n\n#define IT_%s_CODE 0x%x\n", it,code);
 	    printf("struct IT_%s;\n", it);
-	    printf("extern void sysroff_swap_%s_in PARAMS ((struct IT_%s *));\n",
+	    printf("extern void sysroff_swap_%s_in (struct IT_%s *);\n",
 		   $2, it);
-	    printf("extern void sysroff_swap_%s_out PARAMS ((FILE *, struct IT_%s *));\n",
+	    printf("extern void sysroff_swap_%s_out (FILE *, struct IT_%s *);\n",
 		   $2, it);
-	    printf("extern void sysroff_print_%s_out PARAMS ((struct IT_%s *));\n",
+	    printf("extern void sysroff_print_%s_out (struct IT_%s *);\n",
 		   $2, it);
 	    printf("struct IT_%s { \n", it);
 	    break;
 	  case 'i':
-	    printf("void sysroff_swap_%s_in(ptr)\n",$2);
-	    printf("struct IT_%s *ptr;\n", it);
-	    printf("{\n");
-	    printf("unsigned char raw[255];\n");
-	    printf("\tint idx = 0 ;\n");
-	    printf("\tint size;\n");
-	    printf("memset(raw,0,255);\n");	
-	    printf("memset(ptr,0,sizeof(*ptr));\n");
-	    printf("size = fillup(raw);\n");
-	    break;
-	  case 'g':
-	    printf("void sysroff_swap_%s_out(file,ptr)\n",$2);
-	    printf("FILE * file;\n");
-	    printf("struct IT_%s *ptr;\n", it);
+	    printf("void sysroff_swap_%s_in (struct IT_%s * ptr)\n",$2,it);
 	    printf("{\n");
 	    printf("\tunsigned char raw[255];\n");
-	    printf("\tint idx = 16 ;\n");
+	    printf("\tint idx = 0;\n");
+	    printf("\tint size;\n");
+	    printf("\tmemset(raw,0,255);\n");	
+	    printf("\tmemset(ptr,0,sizeof(*ptr));\n");
+	    printf("\tsize = fillup(raw);\n");
+	    break;
+	  case 'g':
+	    printf("void sysroff_swap_%s_out (FILE * ffile, struct IT_%s * ptr)\n",$2,it);
+	    printf("{\n");
+	    printf("\tunsigned char raw[255];\n");
+	    printf("\tint idx = 16;\n");
 	    printf("\tmemset (raw, 0, 255);\n");
 	    printf("\tcode = IT_%s_CODE;\n", it);
 	    break;
 	  case 'o':
-	    printf("void sysroff_swap_%s_out(abfd,ptr)\n",$2);
-	    printf("bfd * abfd;\n");
-	    printf("struct IT_%s *ptr;\n",it);
+	    printf("void sysroff_swap_%s_out (bfd * abfd, struct IT_%s * ptr)\n",$2, it);
 	    printf("{\n");
-	    printf("int idx = 0 ;\n");
+	    printf("\tint idx = 0;\n");
 	    break;
 	  case 'c':
-	    printf("void sysroff_print_%s_out(ptr)\n",$2);
-	    printf("struct IT_%s *ptr;\n", it);
+	    printf("void sysroff_print_%s_out (struct IT_%s *ptr)\n",$2,it);
 	    printf("{\n");
 	    printf("itheader(\"%s\", IT_%s_CODE);\n",$2,$2);
 	    break;
@@ -158,7 +152,7 @@ it:
     printf("};\n");
     break;
   case 'g':
-    printf("\tchecksum(file,raw, idx, IT_%s_CODE);\n", it);
+    printf("\tchecksum(ffile,raw, idx, IT_%s_CODE);\n", it);
     
   case 'i':
 
@@ -274,7 +268,7 @@ char *ptr = pnames[rdepth];
 
 		}
 	      else {
-		printf("\twrite%s(ptr->%s%s,raw,&idx,%d,file);\n",
+		printf("\twrite%s(ptr->%s%s,raw,&idx,%d,ffile);\n",
 		       type,
 		       id,
 		       names[rdepth],size/8);

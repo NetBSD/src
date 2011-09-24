@@ -1,4 +1,4 @@
-/* Copyright 2007 Free Software Foundation, Inc.
+/* Copyright 2005, 2007 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

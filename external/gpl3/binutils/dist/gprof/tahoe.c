@@ -298,21 +298,24 @@ tahoe_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
 	      if (hist_check_address (destpc))
 		{
 		  child = sym_lookup (&symtab, destpc);
-		  DBG (CALLDEBUG,
-		       printf ("[findcall]\tdestpc 0x%lx",
-			       (unsigned long) destpc);
-		       printf (" child->name %s", child->name);
-		       printf (" child->addr 0x%lx\n",
-			       (unsigned long) child->addr);
-		    );
-		  if (child->addr == destpc)
+                  if (child)
 		    {
-		      /*
-		       *    a hit
-		       */
-		      arc_add (parent, child, (unsigned long) 0);
-		      length += tahoe_operandlength (instructp + length);
-		      continue;
+		      DBG (CALLDEBUG,
+		           printf ("[findcall]\tdestpc 0x%lx",
+			           (unsigned long) destpc);
+		           printf (" child->name %s", child->name);
+		           printf (" child->addr 0x%lx\n",
+			           (unsigned long) child->addr);
+		        );
+		      if (child->addr == destpc)
+		        {
+		          /*
+		           *    a hit
+		           */
+		          arc_add (parent, child, (unsigned long) 0);
+		          length += tahoe_operandlength (instructp + length);
+		          continue;
+		        }
 		    }
 		  goto botched;
 		}
