@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.12 2011/02/23 11:43:23 jruoho Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.13 2011/09/24 10:49:13 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.12 2011/02/23 11:43:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.13 2011/09/24 10:49:13 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,13 +104,11 @@ p3_get_bus_clock(struct cpu_info *ci)
 		 * Newer CPUs will GP when attemping to access MSR_FSB_FREQ.
 		 * In the long-term, use ACPI instead of all this.
 		 */
-		switch (CPUID2EXTMODEL(ci->ci_signature)) {
-		case 0x2:
-			aprint_debug("%s: unable to determine bus speed",
-			    device_xname(ci->ci_dev));
+		if (rdmsr_safe(MSR_FSB_FREQ, &msr) == EFAULT) {
+			aprint_debug_dev(ci->ci_dev,
+			    "unable to determine bus speed");
 			goto print_msr;
 		}
-		msr = rdmsr(MSR_FSB_FREQ);
 		bus = (msr >> 0) & 0x7;
 		switch (bus) {
 		case 1:
@@ -123,7 +121,11 @@ p3_get_bus_clock(struct cpu_info *ci)
 		}
 		break;
 	case 0xd: /* Pentium M (90 nm, Dothan) */
-		msr = rdmsr(MSR_FSB_FREQ);
+		if (rdmsr_safe(MSR_FSB_FREQ, &msr) == EFAULT) {
+			aprint_debug_dev(ci->ci_dev,
+			    "unable to determine bus speed");
+			goto print_msr;
+		}
 		bus = (msr >> 0) & 0x7;
 		switch (bus) {
 		case 0:
@@ -144,15 +146,18 @@ p3_get_bus_clock(struct cpu_info *ci)
 		 * Newer CPUs will GP when attemping to access MSR_FSB_FREQ.
 		 * In the long-term, use ACPI instead of all this.
 		 */
-		switch (CPUID2EXTMODEL(ci->ci_signature)) {
-		case 0x1:
-			aprint_debug("%s: unable to determine bus speed",
-			    device_xname(ci->ci_dev));
+		if (rdmsr_safe(MSR_FSB_FREQ, &msr) == EFAULT) {
+			aprint_debug_dev(ci->ci_dev,
+			    "unable to determine bus speed");
 			goto print_msr;
 		}
 		/* FALLTHROUGH */
 	case 0xf: /* Core Xeon */
-		msr = rdmsr(MSR_FSB_FREQ);
+		if (rdmsr_safe(MSR_FSB_FREQ, &msr) == EFAULT) {
+			aprint_debug_dev(ci->ci_dev,
+			    "unable to determine bus speed");
+			goto print_msr;
+		}
 		bus = (msr >> 0) & 0x7;
 		switch (bus) {
 		case 5:
