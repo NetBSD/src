@@ -27,74 +27,12 @@
 #include "dwarf.h"
 #include "dwarf_reader.h"
 #include "reduced_debug_output.h"
+#include "int_encoding.h"
 
 #include <vector>
 
 namespace gold
 {
-
-void
-write_unsigned_LEB_128(std::vector<unsigned char>* buffer, uint64_t value)
-{
-  do
-    {
-      unsigned char current_byte = value & 0x7f;
-      value >>= 7;
-      if (value != 0)
-        {
-          current_byte |= 0x80;
-        }
-      buffer->push_back(current_byte);
-    }
-  while (value != 0);
-}
-
-size_t
-get_length_as_unsigned_LEB_128(uint64_t value)
-{
-  size_t length = 0;
-  do
-    {
-      unsigned char current_byte = value & 0x7f;
-      value >>= 7;
-      if (value != 0)
-        {
-          current_byte |= 0x80;
-        }
-      length++;
-    }
-  while (value != 0);
-  return length;
-}
-
-template <int valsize>
-void Insert_into_vector(std::vector<unsigned char>* destination,
-                        typename elfcpp::Valtype_base<valsize>::Valtype value)
-{
-  union
-    {
-      unsigned char buffer[valsize / 8];
-      long long align;
-    } u;
-  if (parameters->target().is_big_endian())
-    elfcpp::Swap<valsize, true>::writeval(u.buffer, value);
-  else
-    elfcpp::Swap<valsize, false>::writeval(u.buffer, value);
-  destination->insert(destination->end(), u.buffer, u.buffer + valsize / 8);
-}
-
-template <int valsize>
-typename elfcpp::Valtype_base<valsize>::Valtype
-read_from_pointer(unsigned char** source)
-{
-  typename elfcpp::Valtype_base<valsize>::Valtype return_value;
-  if (parameters->target().is_big_endian())
-    return_value = elfcpp::Swap_unaligned<valsize, true>::readval(*source);
-  else
-    return_value = elfcpp::Swap_unaligned<valsize, false>::readval(*source);
-  *source += valsize / 8;
-  return return_value;
-}
 
 // Given a pointer to the beginning of a die and the beginning of the associated
 // abbreviation fills in die_end with the end of the information entry.  If
@@ -356,15 +294,15 @@ void Output_reduced_debug_info_section::set_final_data_size()
               return;
             }
 
-          Insert_into_vector<32>(&this->data_, 0xFFFFFFFF);
-          Insert_into_vector<32>(&this->data_, 0);
-          Insert_into_vector<64>(
+          insert_into_vector<32>(&this->data_, 0xFFFFFFFF);
+          insert_into_vector<32>(&this->data_, 0);
+          insert_into_vector<64>(
               &this->data_,
               (11 + get_length_as_unsigned_LEB_128(abbreviation_number)
 	       + die_end - debug_info));
-          Insert_into_vector<16>(&this->data_, version);
-          Insert_into_vector<64>(&this->data_, 0);
-          Insert_into_vector<8>(&this->data_, address_size);
+          insert_into_vector<16>(&this->data_, version);
+          insert_into_vector<64>(&this->data_, 0);
+          insert_into_vector<8>(&this->data_, address_size);
           write_unsigned_LEB_128(&this->data_, abbreviation_number);
           this->data_.insert(this->data_.end(), debug_info, die_end);
         }
@@ -398,13 +336,13 @@ void Output_reduced_debug_info_section::set_final_data_size()
               return;
             }
 
-          Insert_into_vector<32>(
+          insert_into_vector<32>(
               &this->data_,
               (7 + get_length_as_unsigned_LEB_128(abbreviation_number)
 	       + die_end - debug_info));
-          Insert_into_vector<16>(&this->data_, version);
-          Insert_into_vector<32>(&this->data_, 0);
-          Insert_into_vector<8>(&this->data_, address_size);
+          insert_into_vector<16>(&this->data_, version);
+          insert_into_vector<32>(&this->data_, 0);
+          insert_into_vector<8>(&this->data_, address_size);
           write_unsigned_LEB_128(&this->data_, abbreviation_number);
           this->data_.insert(this->data_.end(), debug_info, die_end);
         }

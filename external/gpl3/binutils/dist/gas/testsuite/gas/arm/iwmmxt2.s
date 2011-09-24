@@ -32,6 +32,11 @@ iwmmxt2:
 	waddbhusmgt	wr1, wr2, wr3
 	waddbhuslgt	wr4, wr5, wr6
 
+	waddsubhx	wr1, wr2, wr3
+	waddsubhxlt	wr4, wr5, wr6
+	waddsubhxeq	wr1, wr2, wr3
+	waddsubhxgt	wr4, wr5, wr6
+
 	wavg4		wr1, wr2, wr3
 	wavg4gt		wr4, wr5, wr6
 	wavg4r		wr1, wr2, wr3

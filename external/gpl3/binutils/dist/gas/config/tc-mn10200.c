@@ -1,6 +1,6 @@
 /* tc-mn10200.c -- Assembler code for the Matsushita 10200
    Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007  Free Software Foundation, Inc.
+   2005, 2006, 2007, 2009  Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1156,6 +1156,7 @@ keep_going:
     abort ();
 
   /* Write out the instruction.  */
+  dwarf2_emit_insn (0);
   if (relaxable && fc > 0)
     {
       /* On a 64-bit host the size of an 'int' is not the same
@@ -1240,12 +1241,12 @@ keep_going:
       for (i = 0; i < fc; i++)
 	{
 	  const struct mn10200_operand *operand;
+	  int reloc_size;
 
 	  operand = &mn10200_operands[fixups[i].opindex];
 	  if (fixups[i].reloc != BFD_RELOC_UNUSED)
 	    {
 	      reloc_howto_type *reloc_howto;
-	      int size;
 	      int offset;
 	      fixS *fixP;
 
@@ -1255,14 +1256,14 @@ keep_going:
 	      if (!reloc_howto)
 		abort ();
 
-	      size = bfd_get_reloc_size (reloc_howto);
+	      reloc_size = bfd_get_reloc_size (reloc_howto);
 
-	      if (size < 1 || size > 4)
+	      if (reloc_size < 1 || reloc_size > 4)
 		abort ();
 
-	      offset = 4 - size;
+	      offset = 4 - reloc_size;
 	      fixP = fix_new_exp (frag_now, f - frag_now->fr_literal + offset,
-				  size,
+				  reloc_size,
 				  &fixups[i].exp,
 				  reloc_howto->pc_relative,
 				  fixups[i].reloc);
@@ -1271,11 +1272,11 @@ keep_going:
 		 next instruction, not from the start of the current
 		 instruction.  */
 	      if (reloc_howto->pc_relative)
-		fixP->fx_offset += size;
+		fixP->fx_offset += reloc_size;
 	    }
 	  else
 	    {
-	      int reloc, pcrel, reloc_size, offset;
+	      int reloc, pcrel, offset;
 	      fixS *fixP;
 
 	      reloc = BFD_RELOC_NONE;

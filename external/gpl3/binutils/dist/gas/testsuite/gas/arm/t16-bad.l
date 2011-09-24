@@ -110,7 +110,11 @@
 [^:]*:84: Error: lo register required -- `sub r8,r1,r2'
 [^:]*:85: Error: lo register required -- `sub r1,r8,r2'
 [^:]*:86: Error: lo register required -- `sub r1,r2,r8'
+[^:]*:88: Error: shifts in CMP/MOV instructions are only supported in unified syntax -- `cmp r0,r1,lsl#2'
+[^:]*:89: Error: shifts in CMP/MOV instructions are only supported in unified syntax -- `cmp r0,r1,lsl r3'
 [^:]*:90: Error: only lo regs allowed with immediate -- `cmp r8,#255'
+[^:]*:92: Error: shifts in CMP/MOV instructions are only supported in unified syntax -- `mov r0,r1,lsl#2'
+[^:]*:93: Error: shifts in CMP/MOV instructions are only supported in unified syntax -- `mov r0,r1,lsl r3'
 [^:]*:94: Error: only lo regs allowed with immediate -- `mov r8,#255'
 [^:]*:106: Error: lo register required -- `ldr r8,\[r0\]'
 [^:]*:106: Error: lo register required -- `ldr r0,\[r8\]'
@@ -177,7 +181,7 @@
 [^:]*:124: Error: lo register required -- `stmia r8!,{r1,r2}'
 [^:]*:125: Error: lo register required -- `stmia r7!,{r8}'
 [^:]*:126: Warning: this instruction will write back the base register
-[^:]*:127: Warning: value stored for r7 is UNPREDICTABLE
+[^:]*:127: Warning: value stored for r7 is UNKNOWN
 [^:]*:129: Error: invalid register list to push/pop instruction -- `push {r8,r9}'
 [^:]*:130: Error: invalid register list to push/pop instruction -- `pop {r8,r9}'
 [^:]*:133: Error: immediate value out of range -- `bkpt #257'
@@ -185,3 +189,6 @@
 [^:]*:135: Error: Thumb does not support the 2-argument form of this instruction -- `cpsid ai,#5'
 [^:]*:138: Error: Thumb does not support conditional execution
 [^:]*:141: Error: cannot honor width suffix -- `add r0,r1'
+[^:]*:145: Error: lo register required -- `mul r0,r0,r8'
+[^:]*:146: Error: lo register required -- `mul r0,r8,r0'
+[^:]*:147: Error: dest must overlap one source register -- `mul r8,r0,r0'

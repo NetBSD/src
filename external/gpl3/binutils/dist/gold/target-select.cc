@@ -1,6 +1,6 @@
 // target-select.cc -- select a target for an object file
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -39,6 +39,14 @@ gold::Target_selector* target_selectors;
 namespace gold
 {
 
+// Class Set_target_once.
+
+void
+Set_target_once::do_run_once(void*)
+{
+  this->target_selector_->set_target();
+}
+
 // Construct a Target_selector, which means adding it to the linked
 // list.  This runs at global constructor time, so we want it to be
 // fast.
@@ -46,11 +54,29 @@ namespace gold
 Target_selector::Target_selector(int machine, int size, bool is_big_endian,
 				 const char* bfd_name)
   : machine_(machine), size_(size), is_big_endian_(is_big_endian),
-    bfd_name_(bfd_name), instantiated_target_(NULL)
-    
+    bfd_name_(bfd_name), instantiated_target_(NULL), set_target_once_(this)
 {
   this->next_ = target_selectors;
   target_selectors = this;
+}
+
+// Instantiate the target and return it.  Use SET_TARGET_ONCE_ to
+// avoid instantiating two instances of the same target.
+
+Target*
+Target_selector::instantiate_target()
+{
+  this->set_target_once_.run_once(NULL);
+  return this->instantiated_target_;
+}
+
+// Instantiate the target.  This is called at most once.
+
+void
+Target_selector::set_target()
+{
+  gold_assert(this->instantiated_target_ == NULL);
+  this->instantiated_target_ = this->do_instantiate_target();
 }
 
 // Find the target for an ELF file.

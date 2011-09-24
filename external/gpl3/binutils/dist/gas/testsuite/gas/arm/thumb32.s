@@ -153,6 +153,7 @@ arit3:
 	arit3	orr orrs orr.w orrs.w
 	arit3	rsb rsbs rsb.w rsbs.w
 	arit3	sbc sbcs sbc.w sbcs.w
+	arit3	orn orns orn orns
 
 	.purgem arit3
 
@@ -399,6 +400,7 @@ ldxstx:
 	strexh	r1, r2, [r4]
 	strex	r1, r2, [r4]
 	strexd	r1, r2, r3, [r4]
+	strexd	r1, r3, r3, [r4]
 
 	ldrex	r1, [r4,#516]
 	strex	r1, r2, [r4,#516]
@@ -526,41 +528,57 @@ push_pop:
 	pop	{r8,r9,r10,r11,r12}
 
 qadd:
+	qadd		r1, r2, r3
 	qadd16		r1, r2, r3
 	qadd8		r1, r2, r3
+	qasx		r1, r2, r3
 	qaddsubx	r1, r2, r3
+	qdadd		r1, r2, r3
+	qdsub		r1, r2, r3
+	qsub		r1, r2, r3
 	qsub16		r1, r2, r3
 	qsub8		r1, r2, r3
+	qsax		r1, r2, r3
 	qsubaddx	r1, r2, r3
 	sadd16		r1, r2, r3
 	sadd8		r1, r2, r3
+	sasx		r1, r2, r3
 	saddsubx	r1, r2, r3
 	ssub16		r1, r2, r3
 	ssub8		r1, r2, r3
+	ssax		r1, r2, r3
 	ssubaddx	r1, r2, r3
 	shadd16		r1, r2, r3
 	shadd8		r1, r2, r3
+	shasx		r1, r2, r3
 	shaddsubx	r1, r2, r3
 	shsub16		r1, r2, r3
 	shsub8		r1, r2, r3
+	shsax		r1, r2, r3
 	shsubaddx	r1, r2, r3
 	uadd16		r1, r2, r3
 	uadd8		r1, r2, r3
+	uasx		r1, r2, r3
 	uaddsubx	r1, r2, r3
 	usub16		r1, r2, r3
 	usub8		r1, r2, r3
+	usax		r1, r2, r3
 	usubaddx	r1, r2, r3
 	uhadd16		r1, r2, r3
 	uhadd8		r1, r2, r3
+	uhasx		r1, r2, r3
 	uhaddsubx	r1, r2, r3
 	uhsub16		r1, r2, r3
 	uhsub8		r1, r2, r3
+	uhsax		r1, r2, r3
 	uhsubaddx	r1, r2, r3
 	uqadd16		r1, r2, r3
 	uqadd8		r1, r2, r3
+	uqasx		r1, r2, r3
 	uqaddsubx	r1, r2, r3
 	uqsub16		r1, r2, r3
 	uqsub8		r1, r2, r3
+	uqsax		r1, r2, r3
 	uqsubaddx	r1, r2, r3
 	sel		r1, r2, r3
 
@@ -609,6 +627,12 @@ shift:
 
 	.purgem sh
 
+rrx:	
+	rrx	r1, r2
+	rrxs	r3, r4
+
+	.arch armv7-a
+	.arch_extension sec
 smc:
 	smc	#0
 	smc	#0xabcd

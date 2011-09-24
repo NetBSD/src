@@ -141,7 +141,7 @@ Disassembly of section .text:
  168:	2d c1 17 d8 	R1 = \(A1 \+= R2.H \* R7.H\) \(ISS2\);
  16c:	0e c0 80 58 	R3 = \(A1 -= R0.L \* R0.H\);
  170:	1e c1 17 59 	R5 = \(A1 -= R2.L \* R7.H\) \(M, IS\);
- 174:	0d c0 8b d9 	R7 = \(A1 \+= R1.H \* R3.H\);
+ 174:	8d c1 8b d9 	R7 = \(A1 \+= R1.H \* R3.H\) \(IU\);
 
 00000178 <negate>:
  178:	85 43       	R5 = -R0;

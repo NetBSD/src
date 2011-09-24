@@ -1,7 +1,7 @@
 #objdump: --syms --special-syms -d
 #name: ARM Mapping Symbols for .short (ELF version)
 # This test is only valid on ELF based ports.
-#not-target: *-*-*coff *-*-pe *-*-wince *-*-*aout* *-*-netbsd *-*-riscix* *-*-*eabi *-*-syymbianelf *-*-linux-* *-*-vxworks
+#not-target: *-*-*coff *-*-pe *-*-wince *-*-*aout* *-*-netbsd *-*-riscix* *-*-*eabi *-*-syymbianelf *-*-linux-* *-*-vxworks *-*-elf
 #source: mapshort.s
 
 # Test the generation and use of ARM ELF Mapping Symbols
@@ -28,14 +28,14 @@ SYMBOL TABLE:
 Disassembly of section .text:
 
 0+00 <foo>:
-   0:	e1a00000 	nop			\(mov r0,r0\)
-   4:	46c0      	nop			\(mov r8, r8\)
-   6:	46c0      	nop			\(mov r8, r8\)
+   0:	e1a00000 	nop			; \(mov r0, r0\)
+   4:	46c0      	nop			; \(mov r8, r8\)
+   6:	46c0      	nop			; \(mov r8, r8\)
    8:	00000002 	.word	0x00000002
    c:	00010001 	.word	0x00010001
   10:	0003      	.short	0x0003
-  12:	46c0      	nop			\(mov r8, r8\)
-  14:	46c0      	nop			\(mov r8, r8\)
+  12:	46c0      	nop			; \(mov r8, r8\)
+  14:	46c0      	nop			; \(mov r8, r8\)
   16:	0001      	.short	0x0001
   18:	ebfffff8 	bl	0 <foo>
   1c:	0008      	.short	0x0008

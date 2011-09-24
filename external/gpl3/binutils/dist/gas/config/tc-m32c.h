@@ -1,5 +1,6 @@
 /* tc-m32c.h -- Header file for tc-m32c.c.
-   Copyright (C) 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -27,7 +28,7 @@
 
 #define TARGET_FORMAT "elf32-m32c"
 
-#define TARGET_BYTES_BIG_ENDIAN 1
+#define TARGET_BYTES_BIG_ENDIAN 0
 
 #define md_end  m32c_md_end
 extern void m32c_md_end (void);
@@ -77,13 +78,9 @@ extern long md_pcrel_from_section (struct fix *, segT);
 
 /* We need a special version of the TC_START_LABEL macro so that we
    allow the :Z, :S, :Q and :G suffixes to be
-   parsed as such.  Note - in a HORRIBLE HACK, we make use of the
-   knowledge that this marco is only ever evaluated in one place
-   (read_a_source_file in read.c) where we can access the local
-   variable 's' - the start of the symbol that was terminated by
-   'character'.  Also we need to be able to change the contents of
+   parsed as such. We need to be able to change the contents of
    the local variable 'c' which is passed to this macro as 'character'.  */
-#define TC_START_LABEL(character, i_l_p)			\
+#define TC_START_LABEL(character, s, i_l_p)				\
   ((character) != ':' ? 0 : (character = m32c_is_colon_insn (s)) ? 0 : ((character = ':'), 1))
 extern char m32c_is_colon_insn (char *);
 

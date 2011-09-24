@@ -9,7 +9,7 @@
 # targ_emul_vector	name of vector to use
 
 case "${targ}" in
-    powerpc-*-aix5* | rs6000-*-aix5*)
+    powerpc-*-aix[5-9]* | rs6000-*-aix[5-9]*)
 	targ_emul=aix 
 	targ_emul_vector=bin_aix5_emulation 
         ;;

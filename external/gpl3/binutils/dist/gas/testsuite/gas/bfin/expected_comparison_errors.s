@@ -13,3 +13,9 @@
 	CC = P0 == R0;
 	CC = P0 < R0;
 	CC = P0 <= R0;
+	CC = I0 == 0;
+	CC = I0 == I0;
+	CC = I0 < 0;
+	CC = I0 < I0;
+	CC = I0 <= 0;
+	CC = I0 <= I0;

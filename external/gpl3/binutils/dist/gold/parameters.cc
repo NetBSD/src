@@ -1,6 +1,6 @@
 // parameters.cc -- general parameters for a link using gold
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -30,6 +30,47 @@
 namespace gold
 {
 
+// Our local version of the variable, which is not const.
+
+static Parameters static_parameters;
+
+// The global variable.
+
+const Parameters* parameters = &static_parameters;
+
+// A helper class to set the target once.
+
+class Set_parameters_target_once : public Once
+{
+ public:
+  Set_parameters_target_once(Parameters* parameters)
+    : parameters_(parameters)
+  { }
+
+ protected:
+  void
+  do_run_once(void* arg)
+  { this->parameters_->set_target_once(static_cast<Target*>(arg)); }
+
+ private:
+  Parameters* parameters_;
+};
+
+// We only need one Set_parameters_target_once.
+
+static
+Set_parameters_target_once set_parameters_target_once(&static_parameters);
+
+// Class Parameters.
+
+Parameters::Parameters()
+   : errors_(NULL), options_(NULL), target_(NULL),
+     doing_static_link_valid_(false), doing_static_link_(false),
+     debug_(0), incremental_mode_(General_options::INCREMENTAL_OFF),
+     set_parameters_target_once_(&set_parameters_target_once)
+ {
+ }
+
 void
 Parameters::set_errors(Errors* errors)
 {
@@ -45,9 +86,14 @@ Parameters::set_options(const General_options* options)
   // For speed, we convert the options() debug var from a string to an
   // enum (from debug.h).
   this->debug_ = debug_string_to_enum(this->options().debug());
+  // Set incremental_mode_ based on the value of the --incremental option.
+  // We copy the mode into parameters because it can change based on inputs.
+  this->incremental_mode_ = this->options().incremental_mode();
   // If --verbose is set, it acts as "--debug=files".
   if (options->verbose())
     this->debug_ |= DEBUG_FILES;
+  if (this->target_valid())
+    this->check_target_endianness();
 }
 
 void
@@ -59,42 +105,42 @@ Parameters::set_doing_static_link(bool doing_static_link)
 }
 
 void
-Parameters::set_target(const Target* target)
+Parameters::set_target(Target* target)
 {
-  if (!this->target_valid())
-    this->target_ = target;
-  else
-    gold_assert(target == this->target_);
+  this->set_parameters_target_once_->run_once(static_cast<void*>(target));
+  gold_assert(target == this->target_);
 }
 
-// The x86_64 kernel build converts a binary file to an object file
-// using -r --format binary --oformat elf32-i386 foo.o.  In order to
-// support that for gold we support determining the default target
-// choice from the output format.  We recognize names that the GNU
-// linker uses.
+// This is called at most once.
 
-const Target&
-Parameters::default_target() const
+void
+Parameters::set_target_once(Target* target)
 {
-  gold_assert(this->options_valid());
-  if (this->options().user_set_oformat())
-    {
-      const Target* target
-          = select_target_by_name(this->options().oformat());
-      if (target != NULL)
-	return *target;
+  gold_assert(this->target_ == NULL);
+  this->target_ = target;
+  if (this->options_valid())
+    this->check_target_endianness();
+}
 
-      gold_error(_("unrecognized output format %s"),
-                 this->options().oformat());
-    }
+// Clear the target, for testing.
 
-  // The GOLD_DEFAULT_xx macros are defined by the configure script.
-  const Target* target = select_target(elfcpp::GOLD_DEFAULT_MACHINE,
-                                       GOLD_DEFAULT_SIZE,
-                                       GOLD_DEFAULT_BIG_ENDIAN,
-                                       0, 0);
-  gold_assert(target != NULL);
-  return *target;
+void
+Parameters::clear_target()
+{
+  this->target_ = NULL;
+  // We need a new Set_parameters_target_once so that we can set the
+  // target again.
+  this->set_parameters_target_once_ = new Set_parameters_target_once(this);
+}
+
+// Return whether TARGET is compatible with the target we are using.
+
+bool
+Parameters::is_compatible_target(const Target* target) const
+{
+  if (this->target_ == NULL)
+    return true;
+  return target == this->target_;
 }
 
 Parameters::Target_size_endianness
@@ -142,14 +188,60 @@ Parameters::size_and_endianness() const
     gold_unreachable();
 }
 
+// If output endianness is specified in command line, check that it does
+// not conflict with the target.
 
-// Our local version of the variable, which is not const.
+void
+Parameters::check_target_endianness()
+{
+  General_options::Endianness endianness = this->options().endianness();
+  if (endianness != General_options::ENDIANNESS_NOT_SET)
+    {
+      bool big_endian;
+      if (endianness == General_options::ENDIANNESS_BIG)
+	big_endian = true;
+      else
+	{
+	  gold_assert(endianness == General_options::ENDIANNESS_LITTLE);
+	  big_endian = false;;
+	}
+      
+      if (this->target().is_big_endian() != big_endian)
+	gold_error(_("input file does not match -EB/EL option"));
+    }
+}
 
-static Parameters static_parameters;
+// Set the incremental linking mode to INCREMENTAL_FULL.  Used when
+// the linker determines that an incremental update is not possible.
+// Returns false if the incremental mode was INCREMENTAL_UPDATE,
+// indicating that the linker should exit if an update is not possible.
 
-// The global variable.
+bool
+Parameters::set_incremental_full()
+{
+  gold_assert(this->incremental_mode_ != General_options::INCREMENTAL_OFF);
+  if (this->incremental_mode_ == General_options::INCREMENTAL_UPDATE)
+    return false;
+  this->incremental_mode_ = General_options::INCREMENTAL_FULL;
+  return true;
+}
 
-const Parameters* parameters = &static_parameters;
+// Return true if we need to prepare incremental linking information.
+
+bool
+Parameters::incremental() const
+{
+  return this->incremental_mode_ != General_options::INCREMENTAL_OFF;
+}
+
+// Return true if we are doing an incremental update.
+
+bool
+Parameters::incremental_update() const
+{
+  return (this->incremental_mode_ == General_options::INCREMENTAL_UPDATE
+	  || this->incremental_mode_ == General_options::INCREMENTAL_AUTO);
+}
 
 void
 set_parameters_errors(Errors* errors)
@@ -160,11 +252,75 @@ set_parameters_options(const General_options* options)
 { static_parameters.set_options(options); }
 
 void
-set_parameters_target(const Target* target)
-{ static_parameters.set_target(target); }
+set_parameters_target(Target* target)
+{
+  static_parameters.set_target(target);
+  target->select_as_default_target();
+}
 
 void
 set_parameters_doing_static_link(bool doing_static_link)
 { static_parameters.set_doing_static_link(doing_static_link); }
+
+// Set the incremental linking mode to INCREMENTAL_FULL.  Used when
+// the linker determines that an incremental update is not possible.
+// Returns false if the incremental mode was INCREMENTAL_UPDATE,
+// indicating that the linker should exit if an update is not possible.
+bool
+set_parameters_incremental_full()
+{ return static_parameters.set_incremental_full(); }
+
+// Force the target to be valid by using the default.  Use the
+// --oformat option is set; this supports the x86_64 kernel build,
+// which converts a binary file to an object file using -r --format
+// binary --oformat elf32-i386 foo.o.  Otherwise use the configured
+// default.
+
+void
+parameters_force_valid_target()
+{
+  if (parameters->target_valid())
+    return;
+
+  gold_assert(parameters->options_valid());
+  if (parameters->options().user_set_oformat())
+    {
+      Target* target = select_target_by_name(parameters->options().oformat());
+      if (target != NULL)
+	{
+	  set_parameters_target(target);
+	  return;
+	}
+
+      gold_error(_("unrecognized output format %s"),
+                 parameters->options().oformat());
+    }
+
+  // The GOLD_DEFAULT_xx macros are defined by the configure script.
+  bool is_big_endian;
+  General_options::Endianness endianness = parameters->options().endianness();
+  if (endianness == General_options::ENDIANNESS_BIG)
+    is_big_endian = true;
+  else if (endianness == General_options::ENDIANNESS_LITTLE)
+    is_big_endian = false;
+  else
+    is_big_endian = GOLD_DEFAULT_BIG_ENDIAN;
+
+  Target* target = select_target(elfcpp::GOLD_DEFAULT_MACHINE,
+				 GOLD_DEFAULT_SIZE,
+				 is_big_endian,
+				 elfcpp::GOLD_DEFAULT_OSABI,
+				 0);
+  gold_assert(target != NULL);
+  set_parameters_target(target);
+}
+
+// Clear the current target, for testing.
+
+void
+parameters_clear_target()
+{
+  static_parameters.clear_target();
+}
 
 } // End namespace gold.

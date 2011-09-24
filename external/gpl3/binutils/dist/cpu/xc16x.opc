@@ -1,6 +1,6 @@
 /* XC16X opcode support.  -*- C -*-
 
-   Copyright 2006, 2007 Free Software Foundation, Inc.
+   Copyright 2006, 2007, 2009 Free Software Foundation, Inc.
 
    Contributed by KPIT Cummins Infosystems Ltd.; developed under contract 
    from Infineon Systems, GMBH , Germany.
@@ -149,17 +149,62 @@ parse_seg (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 
 /* -- dis.c */
 
-#define CGEN_PRINT_NORMAL(cd, info, value, attrs, pc, length)	\
-  do								\
-    {								\
-      if (CGEN_BOOL_ATTR ((attrs), CGEN_OPERAND_DOT_PREFIX))	\
-        info->fprintf_func (info->stream, ".");			\
-      if (CGEN_BOOL_ATTR ((attrs), CGEN_OPERAND_POF_PREFIX))	\
-        info->fprintf_func (info->stream, "#pof:");		\
-      if (CGEN_BOOL_ATTR ((attrs), CGEN_OPERAND_PAG_PREFIX))	\
-        info->fprintf_func (info->stream, "#pag:");		\
-    }								\
-  while (0)
+/* Print an operand with a "." prefix.
+   NOTE: This prints the operand in hex.
+   ??? This exists to maintain disassembler compatibility with previous
+   versions.  Ideally we'd print the "." in print_dot.  */
+
+static void
+print_with_dot_prefix (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+		       void * dis_info,
+		       long value,
+		       unsigned attrs ATTRIBUTE_UNUSED,
+		       bfd_vma pc ATTRIBUTE_UNUSED,
+		       int length ATTRIBUTE_UNUSED)
+{
+  disassemble_info *info = (disassemble_info *) dis_info;
+
+  info->fprintf_func (info->stream, ".");
+  info->fprintf_func (info->stream, "0x%lx", value);
+}
+
+/* Print an operand with a "#pof:" prefix.
+   NOTE: This prints the operand as an address.
+   ??? This exists to maintain disassembler compatibility with previous
+   versions.  Ideally we'd print "#pof:" in print_pof.  */
+
+static void
+print_with_pof_prefix (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+		       void * dis_info,
+		       bfd_vma value,
+		       unsigned attrs ATTRIBUTE_UNUSED,
+		       bfd_vma pc ATTRIBUTE_UNUSED,
+		       int length ATTRIBUTE_UNUSED)
+{
+  disassemble_info *info = (disassemble_info *) dis_info;
+
+  info->fprintf_func (info->stream, "#pof:");
+  info->fprintf_func (info->stream, "0x%lx", (long) value);
+}
+
+/* Print an operand with a "#pag:" prefix.
+   NOTE: This prints the operand in hex.
+   ??? This exists to maintain disassembler compatibility with previous
+   versions.  Ideally we'd print "#pag:" in print_pag.  */
+
+static void
+print_with_pag_prefix (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+		       void * dis_info,
+		       long value,
+		       unsigned attrs ATTRIBUTE_UNUSED,
+		       bfd_vma pc ATTRIBUTE_UNUSED,
+		       int length ATTRIBUTE_UNUSED)
+{
+  disassemble_info *info = (disassemble_info *) dis_info;
+
+  info->fprintf_func (info->stream, "#pag:");
+  info->fprintf_func (info->stream, "0x%lx", value);
+}
 
 /* Print a 'pof:' prefix to an operand.  */
 

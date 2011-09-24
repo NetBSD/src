@@ -1,6 +1,6 @@
 // dynobj.cc -- dynamic object support for gold
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -83,13 +83,8 @@ Sized_dynobj<size, big_endian>::Sized_dynobj(
 
 template<int size, bool big_endian>
 void
-Sized_dynobj<size, big_endian>::setup(
-    const elfcpp::Ehdr<size, big_endian>& ehdr)
+Sized_dynobj<size, big_endian>::setup()
 {
-  this->set_target(ehdr.get_e_machine(), size, big_endian,
-		   ehdr.get_e_ident()[elfcpp::EI_OSABI],
-		   ehdr.get_e_ident()[elfcpp::EI_ABIVERSION]);
-
   const unsigned int shnum = this->elf_file_.shnum();
   this->set_shnum(shnum);
 }
@@ -111,6 +106,7 @@ Sized_dynobj<size, big_endian>::find_dynsym_sections(
   *pverneed_shndx = -1U;
   *pdynamic_shndx = -1U;
 
+  unsigned int symtab_shndx = 0;
   unsigned int xindex_shndx = 0;
   unsigned int xindex_link = 0;
   const unsigned int shnum = this->shnum();
@@ -131,6 +127,10 @@ Sized_dynobj<size, big_endian>::find_dynsym_sections(
 							   pshdrs);
 	      this->set_xindex(xindex);
 	    }
+	  pi = NULL;
+	  break;
+	case elfcpp::SHT_SYMTAB:
+	  symtab_shndx = i;
 	  pi = NULL;
 	  break;
 	case elfcpp::SHT_GNU_versym:
@@ -170,6 +170,25 @@ Sized_dynobj<size, big_endian>::find_dynsym_sections(
 		    shdr.get_sh_type(), *pi, i);
 
       *pi = i;
+    }
+
+  // If there is no dynamic symbol table, use the normal symbol table.
+  // On some SVR4 systems, a shared library is stored in an archive.
+  // The version stored in the archive only has a normal symbol table.
+  // It has an SONAME entry which points to another copy in the file
+  // system which has a dynamic symbol table as usual.  This is way of
+  // addressing the issues which glibc addresses using GROUP with
+  // libc_nonshared.a.
+  if (this->dynsym_shndx_ == -1U && symtab_shndx != 0)
+    {
+      this->dynsym_shndx_ = symtab_shndx;
+      if (xindex_shndx > 0 && xindex_link == symtab_shndx)
+	{
+	  Xindex* xindex = new Xindex(this->elf_file_.large_shndx_offset());
+	  xindex->read_symtab_xindex<size, big_endian>(this, xindex_shndx,
+						       pshdrs);
+	  this->set_xindex(xindex);
+	}
     }
 }
 
@@ -328,13 +347,20 @@ Sized_dynobj<size, big_endian>::do_read_symbols(Read_symbols_data* sd)
   sd->external_symbols_offset = 0;
   sd->symbol_names = NULL;
   sd->symbol_names_size = 0;
+  sd->versym = NULL;
+  sd->versym_size = 0;
+  sd->verdef = NULL;
+  sd->verdef_size = 0;
+  sd->verdef_info = 0;
+  sd->verneed = NULL;
+  sd->verneed_size = 0;
+  sd->verneed_info = 0;
 
   if (this->dynsym_shndx_ != -1U)
     {
       // Get the dynamic symbols.
       typename This::Shdr dynsymshdr(pshdrs
 				     + this->dynsym_shndx_ * This::shdr_size);
-      gold_assert(dynsymshdr.get_sh_type() == elfcpp::SHT_DYNSYM);
 
       sd->symbols = this->get_lasting_view(dynsymshdr.get_sh_offset(),
 					   dynsymshdr.get_sh_size(), true,
@@ -413,7 +439,7 @@ Sized_dynobj<size, big_endian>::do_initialize_xindex()
 
 // Lay out the input sections for a dynamic object.  We don't want to
 // include sections from a dynamic object, so all that we actually do
-// here is check for .gnu.warning sections.
+// here is check for .gnu.warning and .note.GNU-split-stack sections.
 
 template<int size, bool big_endian>
 void
@@ -448,6 +474,7 @@ Sized_dynobj<size, big_endian>::do_layout(Symbol_table* symtab,
       const char* name = pnames + shdr.get_sh_name();
 
       this->handle_gnu_warning_section(name, i, symtab);
+      this->handle_split_stack_section(name);
     }
 
   delete sd->section_headers;
@@ -655,7 +682,8 @@ Sized_dynobj<size, big_endian>::make_version_map(
 template<int size, bool big_endian>
 void
 Sized_dynobj<size, big_endian>::do_add_symbols(Symbol_table* symtab,
-					       Read_symbols_data* sd)
+					       Read_symbols_data* sd,
+					       Layout*)
 {
   if (sd->symbols == NULL)
     {
@@ -677,9 +705,10 @@ Sized_dynobj<size, big_endian>::do_add_symbols(Symbol_table* symtab,
   Version_map version_map;
   this->make_version_map(sd, &version_map);
 
-  // If printing symbol counts, we want to track symbols.
-  
-  if (parameters->options().user_set_print_symbol_counts())
+  // If printing symbol counts or a cross reference table, we want to
+  // track symbols.
+  if (parameters->options().user_set_print_symbol_counts()
+      || parameters->options().cref())
     {
       this->symbols_ = new Symbols();
       this->symbols_->resize(symcount);
@@ -720,6 +749,16 @@ Sized_dynobj<size, big_endian>::do_add_symbols(Symbol_table* symtab,
   // This is normally the last time we will read any data from this
   // file.
   this->clear_view_cache_marks();
+}
+
+template<int size, bool big_endian>
+Archive::Should_include
+Sized_dynobj<size, big_endian>::do_should_include_member(Symbol_table*,
+							 Layout*,
+							 Read_symbols_data*,
+							 std::string*)
+{
+  return Archive::SHOULD_INCLUDE_YES;
 }
 
 // Get symbol counts.
@@ -954,9 +993,10 @@ Dynobj::create_gnu_hash_table(const std::vector<Symbol*>& dynsyms,
     {
       Symbol* sym = dynsyms[i];
 
-      // FIXME: Should put on unhashed_dynsyms if the symbol is
-      // hidden.
-      if (sym->is_undefined())
+      if (!sym->needs_dynsym_value()
+	  && (sym->is_undefined()
+	      || sym->is_from_dynobj()
+	      || sym->is_forced_local()))
 	unhashed_dynsyms.push_back(sym);
       else
 	{
@@ -1191,7 +1231,8 @@ Verdef::write(const Stringpool* dynpool, bool is_last, unsigned char* pb) const
   elfcpp::Verdef_write<size, big_endian> vd(pb);
   vd.set_vd_version(elfcpp::VER_DEF_CURRENT);
   vd.set_vd_flags((this->is_base_ ? elfcpp::VER_FLG_BASE : 0)
-		  | (this->is_weak_ ? elfcpp::VER_FLG_WEAK : 0));
+		  | (this->is_weak_ ? elfcpp::VER_FLG_WEAK : 0)
+		  | (this->is_info_ ? elfcpp::VER_FLG_INFO : 0));
   vd.set_vd_ndx(this->index());
   vd.set_vd_cnt(1 + this->deps_.size());
   vd.set_vd_hash(Dynobj::elf_hash(this->name()));
@@ -1303,27 +1344,18 @@ Verneed::write(const Stringpool* dynpool, bool is_last,
 Versions::Versions(const Version_script_info& version_script,
                    Stringpool* dynpool)
   : defs_(), needs_(), version_table_(),
-    is_finalized_(false), version_script_(version_script)
+    is_finalized_(false), version_script_(version_script),
+    needs_base_version_(parameters->options().shared())
 {
-  // We always need a base version, so define that first.  Nothing
-  // explicitly declares itself as part of base, so it doesn't need to
-  // be in version_table_.
-  if (parameters->options().shared())
-    {
-      const char* name = parameters->options().soname();
-      if (name == NULL)
-	name = parameters->options().output_file_name();
-      name = dynpool->add(name, false, NULL);
-      Verdef* vdbase = new Verdef(name, std::vector<std::string>(),
-                                  true, false, true);
-      this->defs_.push_back(vdbase);
-    }
-
   if (!this->version_script_.empty())
     {
       // Parse the version script, and insert each declared version into
       // defs_ and version_table_.
       std::vector<std::string> versions = this->version_script_.get_versions();
+
+      if (this->needs_base_version_ && !versions.empty())
+	this->define_base_version(dynpool);
+
       for (size_t k = 0; k < versions.size(); ++k)
         {
           Stringpool::Key version_key;
@@ -1332,7 +1364,7 @@ Versions::Versions(const Version_script_info& version_script,
           Verdef* const vd = new Verdef(
               version,
               this->version_script_.get_dependencies(version),
-              false, false, false);
+              false, false, false, false);
           this->defs_.push_back(vd);
           Key key(version_key, 0);
           this->version_table_.insert(std::make_pair(key, vd));
@@ -1351,6 +1383,28 @@ Versions::~Versions()
        p != this->needs_.end();
        ++p)
     delete *p;
+}
+
+// Define the base version of a shared library.  The base version definition
+// must be the first entry in defs_.  We insert it lazily so that defs_ is
+// empty if no symbol versioning is used.  Then layout can just drop the
+// version sections.
+
+void
+Versions::define_base_version(Stringpool* dynpool)
+{
+  // If we do any versioning at all,  we always need a base version, so
+  // define that first.  Nothing explicitly declares itself as part of base,
+  // so it doesn't need to be in version_table_.
+  gold_assert(this->defs_.empty());
+  const char* name = parameters->options().soname();
+  if (name == NULL)
+    name = parameters->options().output_file_name();
+  name = dynpool->add(name, false, NULL);
+  Verdef* vdbase = new Verdef(name, std::vector<std::string>(),
+                              true, false, false, true);
+  this->defs_.push_back(vdbase);
+  this->needs_base_version_ = false;
 }
 
 // Return the dynamic object which a symbol refers to.
@@ -1424,11 +1478,14 @@ Versions::add_def(const Symbol* sym, const char* version,
       if (parameters->options().shared())
 	gold_error(_("symbol %s has undefined version %s"),
 		   sym->demangled_name().c_str(), version);
-
+      else
+	// We only insert a base version for shared library.
+	gold_assert(!this->needs_base_version_);
+	
       // When creating a regular executable, automatically define
       // a new version.
       Verdef* vd = new Verdef(version, std::vector<std::string>(),
-                              false, false, false);
+                              false, false, false, false);
       this->defs_.push_back(vd);
       ins.first->second = vd;
     }
@@ -1471,6 +1528,10 @@ Versions::add_need(Stringpool* dynpool, const char* filename, const char* name,
 
   if (vn == NULL)
     {
+      // Create base version definition lazily for shared library.
+      if (this->needs_base_version_)
+	this->define_base_version(dynpool);
+
       // We have a new filename.
       vn = new Verneed(filename);
       this->needs_.push_back(vn);
@@ -1501,13 +1562,16 @@ Versions::finalize(Symbol_table* symtab, unsigned int dynsym_index,
       if (!(*p)->is_symbol_created())
 	{
 	  Symbol* vsym = symtab->define_as_constant((*p)->name(),
-						    (*p)->name(), 0, 0,
+						    (*p)->name(),
+						    Symbol_table::PREDEFINED,
+						    0, 0,
 						    elfcpp::STT_OBJECT,
 						    elfcpp::STB_GLOBAL,
 						    elfcpp::STV_DEFAULT, 0,
 						    false, false);
 	  vsym->set_needs_dynsym_entry();
           vsym->set_dynsym_index(dynsym_index);
+	  vsym->set_is_default();
 	  ++dynsym_index;
 	  syms->push_back(vsym);
 	  // The name is already in the dynamic pool.
@@ -1597,10 +1661,15 @@ Versions::symbol_section_contents(const Symbol_table* symtab,
     {
       unsigned int version_index;
       const char* version = (*p)->version();
-      if (version == NULL)
-	version_index = elfcpp::VER_NDX_GLOBAL;
-      else        
+      if (version != NULL)
 	version_index = this->version_index(symtab, dynpool, *p);
+      else
+	{
+	  if ((*p)->is_defined() && !(*p)->is_from_dynobj())
+	    version_index = elfcpp::VER_NDX_GLOBAL;
+	  else
+	    version_index = elfcpp::VER_NDX_LOCAL;
+	}
       // If the symbol was defined as foo@V1 instead of foo@@V1, add
       // the hidden bit.
       if ((*p)->version() != NULL && !(*p)->is_default())
@@ -1662,8 +1731,8 @@ Versions::def_section_contents(const Stringpool* dynpool,
 template<int size, bool big_endian>
 void
 Versions::need_section_contents(const Stringpool* dynpool,
-				unsigned char** pp, unsigned int *psize,
-				unsigned int *pentries) const
+				unsigned char** pp, unsigned int* psize,
+				unsigned int* pentries) const
 {
   gold_assert(this->is_finalized_);
   gold_assert(!this->needs_.empty());

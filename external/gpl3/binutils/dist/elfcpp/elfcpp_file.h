@@ -53,14 +53,46 @@
 // This permits writing
 //    elfcpp::Shdr shdr(file, ef.section_header(n));
 
-#ifndef ELFPCP_FILE_H
+#ifndef ELFCPP_FILE_H
 #define ELFCPP_FILE_H
 
 #include <string>
+#include <cstdio>
 #include <cstring>
+
+#include "elfcpp.h"
 
 namespace elfcpp
 {
+
+// A simple helper class to recognize if a file has an ELF header.
+
+class Elf_recognizer
+{
+ public:
+  // Maximum header size.  The user should try to read this much of
+  // the file when using this class.
+
+  static const int max_header_size = Elf_sizes<64>::ehdr_size;
+
+  // Checks if the file contains the ELF magic.  Other header fields
+  // are not checked.
+
+  static bool
+  is_elf_file(const unsigned char* ehdr_buf, int size);
+
+  // Check if EHDR_BUF/BUFSIZE is a valid header of a 32-bit or
+  // 64-bit, little-endian or big-endian ELF file.  Assumes
+  // is_elf_file() has been checked to be true.  If the header is not
+  // valid, *ERROR contains a human-readable error message.  If is is,
+  // *SIZE is set to either 32 or 64, *BIG_ENDIAN is set to indicate
+  // whether the file is big-endian.
+
+  static bool
+  is_valid_header(const unsigned char* ehdr_buf, off_t bufsize,
+                  int* size, bool* big_endian,
+                  std::string* error);
+};
 
 // This object is used to read an ELF file.
 //   SIZE: The size of file, 32 or 64.
@@ -98,6 +130,11 @@ class Elf_file
   off_t
   shoff() const
   { return this->shoff_; }
+
+  // Find the first section with an sh_type field equal to TYPE and
+  // return its index.  Returns SHN_UNDEF if there is no such section.
+  unsigned int
+  find_section_by_type(unsigned int type);
 
   // Return the number of sections.
   unsigned int
@@ -193,6 +230,142 @@ class Elf_file
   int large_shndx_offset_;
 };
 
+// A small wrapper around SHT_STRTAB data mapped to memory. It checks that the
+// index is not out of bounds and the string is NULL-terminated.
+
+class Elf_strtab
+{
+ public:
+  // Construct an Elf_strtab for a section with contents *P and size SIZE.
+  Elf_strtab(const unsigned char* p, size_t size);
+
+  // Return the file offset to the section headers.
+  bool
+  get_c_string(size_t offset, const char** cstring) const
+  {
+    if (offset >= this->usable_size_)
+      return false;
+    *cstring = this->base_ + offset;
+    return true;
+  }
+
+ private:
+  // Contents of the section mapped to memory.
+  const char* base_;
+  // One larger that the position of the last NULL character in the section.
+  // For valid SHT_STRTAB sections, this is the size of the section.
+  size_t usable_size_;
+};
+
+// Inline function definitions.
+
+// Check for presence of the ELF magic number.
+
+inline bool
+Elf_recognizer::is_elf_file(const unsigned char* ehdr_buf, int size)
+{
+  if (size < 4)
+    return false;
+
+  static unsigned char elfmagic[4] =
+    {
+      elfcpp::ELFMAG0, elfcpp::ELFMAG1,
+      elfcpp::ELFMAG2, elfcpp::ELFMAG3
+    };
+  return memcmp(ehdr_buf, elfmagic, 4) == 0;
+}
+
+namespace
+{
+
+// Print a number to a string.
+
+inline std::string
+internal_printf_int(const char* format, int arg)
+{
+  char buf[256];
+  snprintf(buf, sizeof(buf), format, arg);
+  return std::string(buf);
+}
+
+}  // End anonymous namespace.
+
+// Check the validity of the ELF header.
+
+inline bool
+Elf_recognizer::is_valid_header(
+    const unsigned char* ehdr_buf,
+    off_t bufsize,
+    int* size,
+    bool* big_endian,
+    std::string* error)
+{
+  if (bufsize < elfcpp::EI_NIDENT)
+    {
+      *error = _("ELF file too short");
+      return false;
+    }
+
+  int v = ehdr_buf[elfcpp::EI_VERSION];
+  if (v != elfcpp::EV_CURRENT)
+    {
+      if (v == elfcpp::EV_NONE)
+        *error = _("invalid ELF version 0");
+      else
+        *error = internal_printf_int(_("unsupported ELF version %d"), v);
+      return false;
+    }
+
+  int c = ehdr_buf[elfcpp::EI_CLASS];
+  if (c == elfcpp::ELFCLASSNONE)
+    {
+      *error = _("invalid ELF class 0");
+      return false;
+    }
+  else if (c != elfcpp::ELFCLASS32
+           && c != elfcpp::ELFCLASS64)
+    {
+      *error = internal_printf_int(_("unsupported ELF class %d"), c);
+      return false;
+    }
+
+  int d = ehdr_buf[elfcpp::EI_DATA];
+  if (d == elfcpp::ELFDATANONE)
+    {
+      *error = _("invalid ELF data encoding");
+      return false;
+    }
+  else if (d != elfcpp::ELFDATA2LSB
+           && d != elfcpp::ELFDATA2MSB)
+    {
+      *error = internal_printf_int(_("unsupported ELF data encoding %d"), d);
+      return false;
+    }
+
+  *big_endian = (d == elfcpp::ELFDATA2MSB);
+
+  if (c == elfcpp::ELFCLASS32)
+    {
+      if (bufsize < elfcpp::Elf_sizes<32>::ehdr_size)
+        {
+          *error = _("ELF file too short");
+          return false;
+        }
+      *size = 32;
+    }
+  else
+    {
+      if (bufsize < elfcpp::Elf_sizes<64>::ehdr_size)
+        {
+          *error = _("ELF file too short");
+          return false;
+        }
+      *size = 64;
+    }
+
+  return true;
+}
+
 // Template function definitions.
 
 // Construct an Elf_file given an ELF file header.
@@ -269,6 +442,25 @@ Elf_file<size, big_endian, File>::initialize_shnum()
     }
 }
 
+// Find section with sh_type equal to TYPE and return its index.
+// Returns SHN_UNDEF if not found.
+
+template<int size, bool big_endian, typename File>
+unsigned int
+Elf_file<size, big_endian, File>::find_section_by_type(unsigned int type)
+{
+  unsigned int shnum = this->shnum();
+  typename File::View v(this->file_->view(this->shoff_,
+					  This::shdr_size * shnum));
+  for (unsigned int i = 0; i < shnum; i++)
+    {
+      Ef_shdr shdr(v.data() + This::shdr_size * i);
+      if (shdr.get_sh_type() == type)
+        return i;
+    }
+  return SHN_UNDEF;
+}
+
 // Return the file offset of the section header of section SHNDX.
 
 template<int size, bool big_endian, typename File>
@@ -300,7 +492,7 @@ Elf_file<size, big_endian, File>::section_name(unsigned int shndx)
 
   // Get the file offset for the section name string table data.
   off_t shstr_off;
-  off_t shstr_size;
+  typename Elf_types<size>::Elf_WXword shstr_size;
   {
     const unsigned int shstrndx = this->shstrndx_;
     typename File::View v(file->view(this->section_header_offset(shstrndx),
@@ -477,6 +669,18 @@ Elf_file<size, big_endian, File>::section_addralign(unsigned int shndx)
 
   Ef_shdr shdr(v.data());
   return shdr.get_sh_addralign();
+}
+
+inline
+Elf_strtab::Elf_strtab(const unsigned char* p, size_t size)
+{
+  // Check if the section is NUL-terminated. If it isn't, we ignore
+  // the last part to make sure we don't return non-NUL-terminated
+  // strings.
+  while (size > 0 && p[size - 1] != 0)
+    size--;
+  this->base_ = reinterpret_cast<const char*>(p);
+  this->usable_size_ = size;
 }
 
 } // End namespace elfcpp.
