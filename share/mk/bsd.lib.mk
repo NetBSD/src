@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.316 2011/09/10 16:57:35 apb Exp $
+#	$NetBSD: bsd.lib.mk,v 1.317 2011/09/25 11:20:41 apb Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -595,14 +595,27 @@ lint: ${LOBJS}
 	${LINT} ${LINTFLAGS} ${LOBJS}
 .endif
 
+# If the number of entries in CLEANFILES is too large, then the
+# commands in bsd.clean.mk encounter errors like "exec(/bin/sh)
+# failed (Argument list too long)".  Avoid that by splitting the
+# files to clean into several lists using different variable names.
+# __cleanuse is an internal target in bsd.clean.mk; the way we
+# use it here mimics the way it's used by the clean target in
+# bsd.clean.mk.
+#
+clean: libclean1 libclean2 libclean3 libclean4 libclean5
+libclean1: .PHONY .MADE __cleanuse LIBCLEANFILES1
+libclean2: .PHONY .MADE __cleanuse LIBCLEANFILES2
+libclean3: .PHONY .MADE __cleanuse LIBCLEANFILES3
+libclean4: .PHONY .MADE __cleanuse LIBCLEANFILES4
+libclean5: .PHONY .MADE __cleanuse LIBCLEANFILES5
 CLEANFILES+= a.out [Ee]rrs mklog core *.core
-CLEANFILES+= lib${LIB}.a ${STOBJS}
-CLEANFILES+= lib${LIB}_p.a ${POBJS}
-CLEANFILES+= lib${LIB}_g.a ${GOBJS}
-CLEANFILES+= lib${LIB}_pic.a lib${LIB}.so.* lib${LIB}.so ${_LIB.debug} ${SOBJS}
-CLEANFILES+= ${STOBJS:=.tmp} ${POBJS:=.tmp} ${SOBJS:=.tmp} ${GOBJS:=.tmp}
-CLEANFILES+= llib-l${LIB}.ln ${LOBJS}
-
+LIBCLEANFILES1+= lib${LIB}.a   ${STOBJS} ${STOBJS:=.tmp}
+LIBCLEANFILES2+= lib${LIB}_p.a ${POBJS}  ${POBJS:=.tmp}
+LIBCLEANFILES3+= lib${LIB}_g.a ${GOBJS}  ${GOBJS:=.tmp}
+LIBCLEANFILES4+= lib${LIB}_pic.a lib${LIB}.so.* lib${LIB}.so ${_LIB.debug}
+LIBCLEANFILES4+= ${SOBJS} ${SOBJS:=.tmp}
+LIBCLEANFILES5+= llib-l${LIB}.ln ${LOBJS}
 
 .if !target(libinstall)							# {
 # Make sure it gets defined, in case MKPIC==no && MKLINKLIB==no
