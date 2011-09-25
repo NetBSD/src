@@ -5,21 +5,22 @@
    Contributed by Ralph Campbell and OSF
    Commented and modified by Ian Lance Taylor, Cygnus Support
 
-This file is part of GDB, GAS, and the GNU binutils.
+   This file is part of GDB, GAS, and the GNU binutils.
 
-GDB, GAS, and the GNU binutils are free software; you can redistribute
-them and/or modify them under the terms of the GNU General Public
-License as published by the Free Software Foundation; either version
-1, or (at your option) any later version.
+   GDB, GAS, and the GNU binutils are free software; you can redistribute
+   them and/or modify them under the terms of the GNU General Public
+   License as published by the Free Software Foundation; either version 3,
+   or (at your option) any later version.
 
-GDB, GAS, and the GNU binutils are distributed in the hope that they
-will be useful, but WITHOUT ANY WARRANTY; without even the implied
-warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
-the GNU General Public License for more details.
+   GDB, GAS, and the GNU binutils are distributed in the hope that they
+   will be useful, but WITHOUT ANY WARRANTY; without even the implied
+   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+   the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this file; see the file COPYING.  If not, write to the Free
-Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this file; see the file COPYING3.  If not, write to the Free
+   Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
+   MA 02110-1301, USA.  */
 
 #ifndef _MIPS_H_
 #define _MIPS_H_
@@ -262,6 +263,7 @@ struct mips_opcode
 
    Each of these characters corresponds to a mask field defined above.
 
+   "1" 5 bit sync type (OP_*_SHAMT)
    "<" 5 bit shift amount (OP_*_SHAMT)
    ">" shift amount between 32 and 63, stored after subtracting 32 (OP_*_SHAMT)
    "a" 26 bit target address (OP_*_TARGET)
@@ -401,7 +403,7 @@ struct mips_opcode
    "+"  Start of extension sequence.
 
    Characters used so far, for quick reference when adding more:
-   "234567890"
+   "1234567890"
    "%[]<>(),+:'@!$*&"
    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
    "abcdefghijklopqrstuvwxz"
@@ -553,8 +555,9 @@ static const unsigned int mips_isa_table[] =
 /* DSP ASE */ 
 #define INSN_DSP                  0x00001000
 #define INSN_DSP64                0x00002000
-/* MIPS 16 ASE */
-#define INSN_MIPS16               0x00004000
+
+/* 0x00004000 is unused.  */
+
 /* MIPS-3D ASE */
 #define INSN_MIPS3D               0x00008000
 
@@ -633,6 +636,8 @@ static const unsigned int mips_isa_table[] =
 #define CPU_RM9000	9000
 #define CPU_R10000	10000
 #define CPU_R12000	12000
+#define CPU_R14000	14000
+#define CPU_R16000	16000
 #define CPU_MIPS16	16
 #define CPU_MIPS32	32
 #define CPU_MIPS32R2	33
@@ -663,7 +668,8 @@ static const unsigned int mips_isa_table[] =
      || (cpu == CPU_R4010 && ((insn)->membership & INSN_4010) != 0)	\
      || (cpu == CPU_VR4100 && ((insn)->membership & INSN_4100) != 0)	\
      || (cpu == CPU_R3900 && ((insn)->membership & INSN_3900) != 0)	\
-     || ((cpu == CPU_R10000 || cpu == CPU_R12000)			\
+     || ((cpu == CPU_R10000 || cpu == CPU_R12000 || cpu == CPU_R14000	\
+	  || cpu == CPU_R16000)						\
 	 && ((insn)->membership & INSN_10000) != 0)			\
      || (cpu == CPU_SB1 && ((insn)->membership & INSN_SB1) != 0)	\
      || (cpu == CPU_R4111 && ((insn)->membership & INSN_4111) != 0)	\
@@ -1087,8 +1093,10 @@ extern int bfd_mips_num_opcodes;
 #define MIPS16_INSN_READ_PC		    0x00002000
 /* Reads the general purpose register in MIPS16OP_*_REGR32.  */
 #define MIPS16_INSN_READ_GPR_X		    0x00004000
-/* Is a branch insn. */
-#define MIPS16_INSN_BRANCH                  0x00010000
+/* Is an unconditional branch insn. */
+#define MIPS16_INSN_UNCOND_BRANCH	    0x00008000
+/* Is a conditional branch insn. */
+#define MIPS16_INSN_COND_BRANCH		    0x00010000
 
 /* The following flags have the same value for the mips16 opcode
    table:

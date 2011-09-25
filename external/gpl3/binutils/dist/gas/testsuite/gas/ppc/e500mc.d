@@ -50,7 +50,7 @@ Disassembly of section \.text:
   a0:	7c 64 29 fe 	dcbtstep r3,r4,r5
   a4:	7c c7 42 7e 	dcbtep  r6,r7,r8
   a8:	7c 0b 67 fe 	dcbzep  r11,r12
-  ac:	7c 00 06 26 	tlbilx  0,0,r0
-  b0:	7c 20 06 26 	tlbilx  1,0,r0
-  b4:	7c 62 1e 26 	tlbilx  3,r2,r3
-  b8:	7c 64 2e 26 	tlbilx  3,r4,r5
+  ac:	7c 00 00 24 	tlbilxlpid
+  b0:	7c 20 00 24 	tlbilxpid
+  b4:	7c 62 18 24 	tlbilxva r2,r3
+  b8:	7c 64 28 24 	tlbilxva r4,r5

@@ -570,6 +570,12 @@ For ELF.
 @deffnx {} BFD_RELOC_68K_TLS_LE8
 Relocations used by 68K ELF.
 @end deffn
+@deffn {} BFD_RELOC_VAX_GLOB_DAT
+@deffnx {} BFD_RELOC_VAX_GLOB_REF
+@deffnx {} BFD_RELOC_VAX_JMP_SLOT
+@deffnx {} BFD_RELOC_VAX_RELATIVE
+Relocations used by VAX ELF.
+@end deffn
 @deffn {} BFD_RELOC_32_BASEREL
 @deffnx {} BFD_RELOC_16_BASEREL
 @deffnx {} BFD_RELOC_LO16_BASEREL

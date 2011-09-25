@@ -1,5 +1,6 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+#   Copyright 2006, 2007, 2008, 2009, 2010, 2011
+#   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -26,31 +27,26 @@ fragment <<EOF
 #include "ldctor.h"
 #include "elf32-spu.h"
 
-/* Non-zero if no overlay processing should be done.  */
-static int no_overlays = 0;
+static void spu_place_special_section (asection *, asection *, const char *);
+static bfd_size_type spu_elf_load_ovl_mgr (void);
+static FILE *spu_elf_open_overlay_script (void);
+static void spu_elf_relink (void);
 
-/* Non-zero if we want stubs on all calls out of overlay regions.  */
-static int non_overlay_stubs = 0;
+static struct spu_elf_params params =
+{
+  &spu_place_special_section,
+  &spu_elf_load_ovl_mgr,
+  &spu_elf_open_overlay_script,
+  &spu_elf_relink,
+  0, ovly_normal, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0x3ffff,
+  1, 0, 16, 0, 0, 2000
+};
 
-/* Whether to emit symbols for stubs.  */
-static int emit_stub_syms = 0;
-
-/* Non-zero to perform stack space analysis.  */
-static int stack_analysis = 0;
-
-/* Whether to emit symbols with stack requirements for each function.  */
-static int emit_stack_syms = 0;
-
-/* Range of valid addresses for loadable sections.  */
-static bfd_vma local_store_lo = 0;
-static bfd_vma local_store_hi = 0x3ffff;
-
-/* Control --auto-overlay feature.  */
-static int auto_overlay = 0;
+static unsigned int no_overlays = 0;  
+static unsigned int num_lines_set = 0;
+static unsigned int line_size_set = 0;
 static char *auto_overlay_file = 0;
-static unsigned int auto_overlay_fixed = 0;
-static unsigned int auto_overlay_reserved = 0;
-static int extra_stack_space = 2000;
 int my_argc;
 char **my_argv;
 
@@ -60,7 +56,20 @@ EOF
 if ! cat ${srcdir}/emultempl/spu_ovl.o_c >> e${EMULATION_NAME}.c
 then
   echo >&2 "Missing ${srcdir}/emultempl/spu_ovl.o_c"
-  echo >&2 "You must build gas/as-new with --target=spu to build spu_ovl.o"
+  echo >&2 "You must build gas/as-new with --target=spu"
+  exit 1
+fi
+
+fragment <<EOF
+};
+
+static const char icache_mgr[] = {
+EOF
+
+if ! cat ${srcdir}/emultempl/spu_icache.o_c >> e${EMULATION_NAME}.c
+then
+  echo >&2 "Missing ${srcdir}/emultempl/spu_icache.o_c"
+  echo >&2 "You must build gas/as-new with --target=spu"
   exit 1
 fi
 
@@ -70,6 +79,11 @@ fragment <<EOF
 static const struct _ovl_stream ovl_mgr_stream = {
   ovl_mgr,
   ovl_mgr + sizeof (ovl_mgr)
+};
+
+static const struct _ovl_stream icache_mgr_stream = {
+  icache_mgr,
+  icache_mgr + sizeof (icache_mgr)
 };
 
 
@@ -86,18 +100,29 @@ is_spu_target (void)
 static void
 spu_after_open (void)
 {
-  if (is_spu_target ()
-      && !link_info.relocatable
-      && link_info.input_bfds != NULL
-      && !spu_elf_create_sections (&link_info,
-				   stack_analysis, emit_stack_syms))
-    einfo ("%X%P: can not create note section: %E\n");
+  if (is_spu_target ())
+    {
+      /* Pass params to backend.  */
+      if ((params.auto_overlay & AUTO_OVERLAY) == 0)
+	params.auto_overlay = 0;
+      params.emit_stub_syms |= link_info.emitrelocations;
+      spu_elf_setup (&link_info, &params);
+
+      if (link_info.relocatable)
+	lang_add_unique (".text.ia.*");
+
+      if (!link_info.relocatable
+	  && link_info.input_bfds != NULL
+	  && !spu_elf_create_sections (&link_info))
+	einfo ("%X%P: can not create note section: %E\n");
+    }
 
   gld${EMULATION_NAME}_after_open ();
 }
 
 /* If O is NULL, add section S at the end of output section OUTPUT_NAME.
-   If O is not NULL, add section S at the beginning of output section O.
+   If O is not NULL, add section S at the beginning of output section O,
+   except for soft-icache which adds to the end.
 
    Really, we should be duplicating ldlang.c map_input_to_output_sections
    logic here, ie. using the linker script to find where the section
@@ -112,10 +137,16 @@ spu_place_special_section (asection *s, asection *o, const char *output_name)
 {
   lang_output_section_statement_type *os;
 
-  os = lang_output_section_find (o != NULL ? o->name : output_name);
+  if (o != NULL)
+    output_name = o->name;
+  os = lang_output_section_find (output_name);
   if (os == NULL)
-    gld${EMULATION_NAME}_place_orphan (s, output_name, 0);
-  else if (o != NULL && os->children.head != NULL)
+    {
+      os = gld${EMULATION_NAME}_place_orphan (s, output_name, 0);
+      os->addr_tree = NULL;
+    }
+  else if (params.ovly_flavour != ovly_soft_icache
+	   && o != NULL && os->children.head != NULL)
     {
       lang_statement_list_type add;
 
@@ -125,21 +156,43 @@ spu_place_special_section (asection *s, asection *o, const char *output_name)
       os->children.head = add.head;
     }
   else
-    lang_add_section (&os->children, s, os);
+    {
+      if (params.ovly_flavour == ovly_soft_icache && o != NULL)
+	{
+	  /* Pad this stub section so that it finishes at the
+	     end of the icache line.  */
+	  etree_type *e_size;
+
+	  push_stat_ptr (&os->children);
+	  e_size = exp_intop (params.line_size - s->size);
+	  lang_add_assignment (exp_assign (".", e_size));
+	  pop_stat_ptr ();
+	}
+      lang_add_section (&os->children, s, os);
+    }
 
   s->output_section->size += s->size;
 }
 
-/* Load built-in overlay manager, and tweak overlay section alignment.  */
+/* Load built-in overlay manager.  */
 
-static void
+static bfd_size_type
 spu_elf_load_ovl_mgr (void)
 {
-  lang_output_section_statement_type *os;
   struct elf_link_hash_entry *h;
+  const char *ovly_mgr_entry;
+  const struct _ovl_stream *mgr_stream;
+  bfd_size_type total = 0;
 
+  ovly_mgr_entry = "__ovly_load";
+  mgr_stream = &ovl_mgr_stream;
+  if (params.ovly_flavour == ovly_soft_icache)
+    {
+      ovly_mgr_entry = "__icache_br_handler";
+      mgr_stream = &icache_mgr_stream;
+    }
   h = elf_link_hash_lookup (elf_hash_table (&link_info),
-			    "__ovly_load", FALSE, FALSE, FALSE);
+			    ovly_mgr_entry, FALSE, FALSE, FALSE);
 
   if (h != NULL
       && (h->root.type == bfd_link_hash_defined
@@ -148,7 +201,7 @@ spu_elf_load_ovl_mgr (void)
     {
       /* User supplied __ovly_load.  */
     }
-  else if (ovl_mgr_stream.start == ovl_mgr_stream.end)
+  else if (mgr_stream->start == mgr_stream->end)
     einfo ("%F%P: no built-in overlay manager\n");
   else
     {
@@ -158,7 +211,7 @@ spu_elf_load_ovl_mgr (void)
 				    lang_input_file_is_file_enum,
 				    NULL);
 
-      if (!spu_elf_open_builtin_lib (&ovl_is->the_bfd, &ovl_mgr_stream))
+      if (!spu_elf_open_builtin_lib (&ovl_is->the_bfd, mgr_stream))
 	einfo ("%X%P: can not open built-in overlay manager: %E\n");
       else
 	{
@@ -167,28 +220,42 @@ spu_elf_load_ovl_mgr (void)
 	  if (!load_symbols (ovl_is, NULL))
 	    einfo ("%X%P: can not load built-in overlay manager: %E\n");
 
-	  /* Map overlay manager sections to output sections.  */
+	  /* Map overlay manager sections to output sections.
+	     First try for a matching output section name, if that
+	     fails then try mapping .abc.xyz to .abc, otherwise map
+	     to .text.  */
 	  for (in = ovl_is->the_bfd->sections; in != NULL; in = in->next)
 	    if ((in->flags & (SEC_ALLOC | SEC_LOAD))
 		== (SEC_ALLOC | SEC_LOAD))
-	      spu_place_special_section (in, NULL, ".text");
+	      {
+		const char *oname = in->name;
+		if (strncmp (in->name, ".ovl.init", 9) != 0)
+		  {
+		    total += in->size;
+		    if (!lang_output_section_find (oname))
+		      {
+			lang_output_section_statement_type *os = NULL;
+			char *p = strchr (oname + 1, '.');
+			if (p != NULL)
+			  {
+			    size_t len = p - oname;
+			    p = memcpy (xmalloc (len + 1), oname, len);
+			    p[len] = '\0';
+			    os = lang_output_section_find (p);
+			    free (p);
+			  }
+			if (os != NULL)
+			  oname = os->name;
+			else
+			  oname = ".text";
+		      }
+		  }
+
+		spu_place_special_section (in, NULL, oname);
+	      }
 	}
     }
-
-  /* Ensure alignment of overlay sections is sufficient.  */
-  for (os = &lang_output_section_statement.head->output_section_statement;
-       os != NULL;
-       os = os->next)
-    if (os->bfd_section != NULL
-	&& spu_elf_section_data (os->bfd_section) != NULL
-	&& spu_elf_section_data (os->bfd_section)->u.o.ovl_index != 0)
-      {
-	if (os->bfd_section->alignment_power < 4)
-	  os->bfd_section->alignment_power = 4;
-
-	/* Also ensure size rounds up.  */
-	os->block_value = 16;
-      }
+  return total;
 }
 
 /* Go find if we need to do anything special for overlays.  */
@@ -200,6 +267,8 @@ spu_before_allocation (void)
       && !link_info.relocatable
       && !no_overlays)
     {
+      int ret;
+
       /* Size the sections.  This is premature, but we need to know the
 	 rough layout so that overlays can be found.  */
       expld.phase = lang_mark_phase_enum;
@@ -207,28 +276,50 @@ spu_before_allocation (void)
       one_lang_size_sections_pass (NULL, TRUE);
 
       /* Find overlays by inspecting section vmas.  */
-      if (spu_elf_find_overlays (&link_info))
+      ret = spu_elf_find_overlays (&link_info);
+      if (ret == 0)
+	einfo ("%X%P: can not find overlays: %E\n");
+      else if (ret == 2)
 	{
-	  int ret;
+	  lang_output_section_statement_type *os;
 
-	  if (auto_overlay != 0)
+	  if (params.auto_overlay != 0)
 	    {
 	      einfo ("%P: --auto-overlay ignored with user overlay script\n");
-	      auto_overlay = 0;
+	      params.auto_overlay = 0;
 	    }
 
-	  ret = spu_elf_size_stubs (&link_info,
-				    spu_place_special_section,
-				    non_overlay_stubs);
+	  /* Ensure alignment of overlay sections is sufficient.  */
+	  for (os = &lang_output_section_statement.head->output_section_statement;
+	       os != NULL;
+	       os = os->next)
+	    if (os->bfd_section != NULL
+		&& spu_elf_section_data (os->bfd_section) != NULL
+		&& spu_elf_section_data (os->bfd_section)->u.o.ovl_index != 0)
+	      {
+		if (os->bfd_section->alignment_power < 4)
+		  os->bfd_section->alignment_power = 4;
+
+		/* Also ensure size rounds up.  */
+		os->block_value = 16;
+	      }
+
+	  ret = spu_elf_size_stubs (&link_info);
 	  if (ret == 0)
 	    einfo ("%X%P: can not size overlay stubs: %E\n");
 	  else if (ret == 2)
 	    spu_elf_load_ovl_mgr ();
+
+	  spu_elf_place_overlay_data (&link_info);
 	}
 
       /* We must not cache anything from the preliminary sizing.  */
       lang_reset_memory_regions ();
     }
+
+  if (is_spu_target ()
+      && !link_info.relocatable)
+    spu_elf_size_sections (link_info.output_bfd, &link_info);
 
   gld${EMULATION_NAME}_before_allocation ();
 }
@@ -265,7 +356,7 @@ new_tmp_file (char **fname)
   *fname = mktemp (*fname);
   if (*fname == NULL)
     return -1;
-  fd = open (fname, O_RDWR | O_CREAT | O_EXCL, 0600);
+  fd = open (*fname, O_RDWR | O_CREAT | O_EXCL, 0600);
 #endif
   return fd;
 }
@@ -316,34 +407,18 @@ spu_elf_relink (void)
 static void
 gld${EMULATION_NAME}_finish (void)
 {
-  int need_laying_out;
-
-  need_laying_out = bfd_elf_discard_info (link_info.output_bfd, &link_info);
-
-  gld${EMULATION_NAME}_map_segments (need_laying_out);
-
   if (is_spu_target ())
     {
-      if (local_store_lo < local_store_hi)
+      if (params.local_store_lo < params.local_store_hi)
         {
 	  asection *s;
 
-	  s = spu_elf_check_vma (&link_info, auto_overlay,
-				 local_store_lo, local_store_hi,
-				 auto_overlay_fixed, auto_overlay_reserved,
-				 extra_stack_space,
-				 spu_elf_load_ovl_mgr,
-				 spu_elf_open_overlay_script,
-				 spu_elf_relink);
-	  if (s != NULL && !auto_overlay)
+	  s = spu_elf_check_vma (&link_info);
+	  if (s != NULL && !params.auto_overlay)
 	    einfo ("%X%P: %A exceeds local store range\n", s);
 	}
-      else if (auto_overlay)
+      else if (params.auto_overlay)
 	einfo ("%P: --auto-overlay ignored with zero local store range\n");
-
-      if (!spu_elf_build_stubs (&link_info,
-				emit_stub_syms || link_info.emitrelocations))
-	einfo ("%F%P: can not build overlay stubs: %E\n");
     }
 
   finish_default ();
@@ -361,9 +436,9 @@ EOF
 
 if grep -q 'ld_elf.*ppc.*_emulation' ldemul-list.h; then
   fragment <<EOF
+#include <errno.h>
 #include "filenames.h"
-#include <fcntl.h>
-#include <sys/wait.h>
+#include "libiberty.h"
 
 static const char *
 base_name (const char *path)
@@ -396,11 +471,11 @@ bfd_boolean
 embedded_spu_file (lang_input_statement_type *entry, const char *flags)
 {
   const char *cmd[6];
+  const char *pex_return;
   const char *sym;
   char *handle, *p;
   char *oname;
   int fd;
-  pid_t pid;
   int status;
   union lang_statement_union **old_stat_tail;
   union lang_statement_union **old_file_tail;
@@ -443,8 +518,6 @@ embedded_spu_file (lang_input_statement_type *entry, const char *flags)
 	  }
       }
 
-  /* Use fork() and exec() rather than system() so that we don't
-     need to worry about quoting args.  */
   cmd[0] = EMBEDSPU;
   cmd[1] = flags;
   cmd[2] = handle;
@@ -458,37 +531,30 @@ embedded_spu_file (lang_input_statement_type *entry, const char *flags)
       fflush (stdout);
     }
 
-  pid = fork ();
-  if (pid == -1)
-    return FALSE;
-  if (pid == 0)
-    {
-      execvp (cmd[0], (char *const *) cmd);
+  pex_return = pex_one (PEX_SEARCH | PEX_LAST, cmd[0], (char *const *) cmd,
+			cmd[0], NULL, NULL, &status, &errno);
+  if (NULL != pex_return) {
       if (strcmp ("embedspu", EMBEDSPU) != 0)
 	{
 	  cmd[0] = "embedspu";
-	  execvp (cmd[0], (char *const *) cmd);
+	  pex_return = pex_one (PEX_SEARCH | PEX_LAST, cmd[0], (char *const *) cmd,
+				cmd[0], NULL, NULL, &status, &errno);
 	}
-      perror (cmd[0]);
-      _exit (127);
-    }
-#ifdef HAVE_WAITPID
-#define WAITFOR(PID, STAT) waitpid (PID, STAT, 0)
-#else
-#define WAITFOR(PID, STAT) wait (STAT)
-#endif
-  if (WAITFOR (pid, &status) != pid
-      || !WIFEXITED (status)
-      || WEXITSTATUS (status) != 0)
+      if (NULL != pex_return) {      
+	perror (pex_return);
+	_exit (127);
+      }
+  }
+  if (status)
     return FALSE;
-#undef WAITFOR
+
 
   old_stat_tail = stat_ptr->tail;
   old_file_tail = input_file_chain.tail;
   if (lang_add_input_file (oname, lang_input_file_is_file_enum, NULL) == NULL)
     return FALSE;
 
-  /* lang_add_input_file put the new list entry at the end of the statement
+  /* lang_add_input_file puts the new list entry at the end of the statement
      and input file lists.  Move it to just after the current entry.  */
   new_ent = *old_stat_tail;
   *old_stat_tail = NULL;
@@ -515,7 +581,8 @@ fi
 PARSE_AND_LIST_PROLOGUE='
 #define OPTION_SPU_PLUGIN		301
 #define OPTION_SPU_NO_OVERLAYS		(OPTION_SPU_PLUGIN + 1)
-#define OPTION_SPU_STUB_SYMS		(OPTION_SPU_NO_OVERLAYS + 1)
+#define OPTION_SPU_COMPACT_STUBS	(OPTION_SPU_NO_OVERLAYS + 1)
+#define OPTION_SPU_STUB_SYMS		(OPTION_SPU_COMPACT_STUBS + 1)
 #define OPTION_SPU_NON_OVERLAY_STUBS	(OPTION_SPU_STUB_SYMS + 1)
 #define OPTION_SPU_LOCAL_STORE		(OPTION_SPU_NON_OVERLAY_STUBS + 1)
 #define OPTION_SPU_STACK_ANALYSIS	(OPTION_SPU_LOCAL_STORE + 1)
@@ -523,15 +590,27 @@ PARSE_AND_LIST_PROLOGUE='
 #define OPTION_SPU_AUTO_OVERLAY		(OPTION_SPU_STACK_SYMS + 1)
 #define OPTION_SPU_AUTO_RELINK		(OPTION_SPU_AUTO_OVERLAY + 1)
 #define OPTION_SPU_OVERLAY_RODATA	(OPTION_SPU_AUTO_RELINK + 1)
-#define OPTION_SPU_FIXED_SPACE		(OPTION_SPU_OVERLAY_RODATA + 1)
+#define OPTION_SPU_SOFT_ICACHE		(OPTION_SPU_OVERLAY_RODATA + 1)
+#define OPTION_SPU_LINE_SIZE		(OPTION_SPU_SOFT_ICACHE + 1)
+#define OPTION_SPU_NUM_LINES		(OPTION_SPU_LINE_SIZE + 1)
+#define OPTION_SPU_LRLIVE		(OPTION_SPU_NUM_LINES + 1)
+#define OPTION_SPU_NON_IA_TEXT		(OPTION_SPU_LRLIVE + 1)
+#define OPTION_SPU_FIXED_SPACE		(OPTION_SPU_NON_IA_TEXT + 1)
 #define OPTION_SPU_RESERVED_SPACE	(OPTION_SPU_FIXED_SPACE + 1)
 #define OPTION_SPU_EXTRA_STACK		(OPTION_SPU_RESERVED_SPACE + 1)
 #define OPTION_SPU_NO_AUTO_OVERLAY	(OPTION_SPU_EXTRA_STACK + 1)
+#define OPTION_SPU_EMIT_FIXUPS		(OPTION_SPU_NO_AUTO_OVERLAY + 1)
 '
 
 PARSE_AND_LIST_LONGOPTS='
   { "plugin", no_argument, NULL, OPTION_SPU_PLUGIN },
+  { "soft-icache", no_argument, NULL, OPTION_SPU_SOFT_ICACHE },
+  { "lrlive-analysis", no_argument, NULL, OPTION_SPU_LRLIVE },
+  { "num-lines", required_argument, NULL, OPTION_SPU_NUM_LINES },
+  { "line-size", required_argument, NULL, OPTION_SPU_LINE_SIZE },
+  { "non-ia-text", no_argument, NULL, OPTION_SPU_NON_IA_TEXT },
   { "no-overlays", no_argument, NULL, OPTION_SPU_NO_OVERLAYS },
+  { "compact-stubs", no_argument, NULL, OPTION_SPU_COMPACT_STUBS },
   { "emit-stub-syms", no_argument, NULL, OPTION_SPU_STUB_SYMS },
   { "extra-overlay-stubs", no_argument, NULL, OPTION_SPU_NON_OVERLAY_STUBS },
   { "local-store", required_argument, NULL, OPTION_SPU_LOCAL_STORE },
@@ -540,16 +619,20 @@ PARSE_AND_LIST_LONGOPTS='
   { "auto-overlay", optional_argument, NULL, OPTION_SPU_AUTO_OVERLAY },
   { "auto-relink", no_argument, NULL, OPTION_SPU_AUTO_RELINK },
   { "overlay-rodata", no_argument, NULL, OPTION_SPU_OVERLAY_RODATA },
+  { "num-regions", required_argument, NULL, OPTION_SPU_NUM_LINES },
+  { "region-size", required_argument, NULL, OPTION_SPU_LINE_SIZE },
   { "fixed-space", required_argument, NULL, OPTION_SPU_FIXED_SPACE },
   { "reserved-space", required_argument, NULL, OPTION_SPU_RESERVED_SPACE },
   { "extra-stack-space", required_argument, NULL, OPTION_SPU_EXTRA_STACK },
   { "no-auto-overlay", optional_argument, NULL, OPTION_SPU_NO_AUTO_OVERLAY },
+  { "emit-fixups", optional_argument, NULL, OPTION_SPU_EMIT_FIXUPS },
 '
 
 PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("\
   --plugin                    Make SPU plugin.\n\
   --no-overlays               No overlay handling.\n\
+  --compact-stubs             Use smaller and possibly slower call stubs.\n\
   --emit-stub-syms            Add symbols on overlay call stubs.\n\
   --extra-overlay-stubs       Add stubs on all calls out of overlay regions.\n\
   --local-store=lo:hi         Valid address range.\n\
@@ -560,11 +643,18 @@ PARSE_AND_LIST_OPTIONS='
   --auto-relink               Rerun linker using auto-overlay script.\n\
   --overlay-rodata            Place read-only data with associated function\n\
                               code in overlays.\n\
+  --num-regions               Number of overlay buffers (default 1).\n\
+  --region-size               Size of overlay buffers (default 0, auto).\n\
   --fixed-space=bytes         Local store for non-overlay code and data.\n\
   --reserved-space=bytes      Local store for stack and heap.  If not specified\n\
                               ld will estimate stack size and assume no heap.\n\
   --extra-stack-space=bytes   Space for negative sp access (default 2000) if\n\
-                              --reserved-space not given.\n"
+                              --reserved-space not given.\n\
+  --soft-icache               Generate software icache overlays.\n\
+  --num-lines                 Number of soft-icache lines (default 32).\n\
+  --line-size                 Size of soft-icache lines (default 1k).\n\
+  --non-ia-text               Allow non-icache code in icache lines.\n\
+  --lrlive-analysis           Scan function prologue for lr liveness.\n"
 		   ));
 '
 
@@ -577,21 +667,25 @@ PARSE_AND_LIST_ARGS_CASES='
       no_overlays = 1;
       break;
 
+    case OPTION_SPU_COMPACT_STUBS:
+      params.compact_stub = 1;
+      break;
+
     case OPTION_SPU_STUB_SYMS:
-      emit_stub_syms = 1;
+      params.emit_stub_syms = 1;
       break;
 
     case OPTION_SPU_NON_OVERLAY_STUBS:
-      non_overlay_stubs = 1;
+      params.non_overlay_stubs = 1;
       break;
 
     case OPTION_SPU_LOCAL_STORE:
       {
 	char *end;
-	local_store_lo = strtoul (optarg, &end, 0);
+	params.local_store_lo = strtoul (optarg, &end, 0);
 	if (*end == '\'':'\'')
 	  {
-	    local_store_hi = strtoul (end + 1, &end, 0);
+	    params.local_store_hi = strtoul (end + 1, &end, 0);
 	    if (*end == 0)
 	      break;
 	  }
@@ -600,15 +694,15 @@ PARSE_AND_LIST_ARGS_CASES='
       break;
 
     case OPTION_SPU_STACK_ANALYSIS:
-      stack_analysis = 1;
+      params.stack_analysis = 1;
       break;
 
     case OPTION_SPU_STACK_SYMS:
-      emit_stack_syms = 1;
+      params.emit_stack_syms = 1;
       break;
 
     case OPTION_SPU_AUTO_OVERLAY:
-      auto_overlay |= 1;
+      params.auto_overlay |= 1;
       if (optarg != NULL)
 	{
 	  auto_overlay_file = optarg;
@@ -617,17 +711,67 @@ PARSE_AND_LIST_ARGS_CASES='
       /* Fall thru */
 
     case OPTION_SPU_AUTO_RELINK:
-      auto_overlay |= 2;
+      params.auto_overlay |= 2;
       break;
 
     case OPTION_SPU_OVERLAY_RODATA:
-      auto_overlay |= 4;
+      params.auto_overlay |= 4;
+      break;
+
+    case OPTION_SPU_SOFT_ICACHE:
+      params.ovly_flavour = ovly_soft_icache;
+      /* Software i-cache stubs are always "compact".  */
+      params.compact_stub = 1;
+      if (!num_lines_set)
+	params.num_lines = 32;
+      else if ((params.num_lines & -params.num_lines) != params.num_lines)
+	einfo (_("%P%F: invalid --num-lines/--num-regions `%u'\''\n"),
+	       params.num_lines);
+      if (!line_size_set)
+	params.line_size = 1024;
+      else if ((params.line_size & -params.line_size) != params.line_size)
+	einfo (_("%P%F: invalid --line-size/--region-size `%u'\''\n"),
+	       params.line_size);
+      break;
+
+    case OPTION_SPU_LRLIVE:
+      params.lrlive_analysis = 1;
+      break;
+
+    case OPTION_SPU_NON_IA_TEXT:
+      params.non_ia_text = 1;
+      break;
+
+    case OPTION_SPU_NUM_LINES:
+      {
+	char *end;
+	params.num_lines = strtoul (optarg, &end, 0);
+	num_lines_set = 1;
+	if (*end == 0
+	    && (params.ovly_flavour != ovly_soft_icache
+		|| (params.num_lines & -params.num_lines) == params.num_lines))
+	  break;
+	einfo (_("%P%F: invalid --num-lines/--num-regions `%s'\''\n"), optarg);
+      }
+      break;
+
+    case OPTION_SPU_LINE_SIZE:
+      {
+	char *end;
+	params.line_size = strtoul (optarg, &end, 0);
+	line_size_set = 1;
+	if (*end == 0
+	    && (params.ovly_flavour != ovly_soft_icache
+		|| (params.line_size & -params.line_size) == params.line_size))
+	  break;
+	einfo (_("%P%F: invalid --line-size/--region-size `%s'\''\n"), optarg);
+      }
       break;
 
     case OPTION_SPU_FIXED_SPACE:
       {
 	char *end;
-	auto_overlay_fixed = strtoul (optarg, &end, 0);
+	params.auto_overlay_fixed = strtoul (optarg, &end, 0);
 	if (*end != 0)
 	  einfo (_("%P%F: invalid --fixed-space value `%s'\''\n"), optarg);
       }
@@ -636,7 +780,7 @@ PARSE_AND_LIST_ARGS_CASES='
     case OPTION_SPU_RESERVED_SPACE:
       {
 	char *end;
-	auto_overlay_reserved = strtoul (optarg, &end, 0);
+	params.auto_overlay_reserved = strtoul (optarg, &end, 0);
 	if (*end != 0)
 	  einfo (_("%P%F: invalid --reserved-space value `%s'\''\n"), optarg);
       }
@@ -645,14 +789,14 @@ PARSE_AND_LIST_ARGS_CASES='
     case OPTION_SPU_EXTRA_STACK:
       {
 	char *end;
-	extra_stack_space = strtol (optarg, &end, 0);
+	params.extra_stack_space = strtol (optarg, &end, 0);
 	if (*end != 0)
 	  einfo (_("%P%F: invalid --extra-stack-space value `%s'\''\n"), optarg);
       }
       break;
 
     case OPTION_SPU_NO_AUTO_OVERLAY:
-      auto_overlay = 0;
+      params.auto_overlay = 0;
       if (optarg != NULL)
 	{
 	  struct tflist *tf;
@@ -668,6 +812,10 @@ PARSE_AND_LIST_ARGS_CASES='
 	  tmp_file_list = tf;
 	  break;
 	}
+      break;
+
+    case OPTION_SPU_EMIT_FIXUPS:
+      params.emit_fixups = 1;
       break;
 '
 
