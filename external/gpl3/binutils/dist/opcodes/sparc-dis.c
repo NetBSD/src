@@ -1,6 +1,7 @@
 /* Print SPARC instructions.
    Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   2000, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010
+   Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -994,7 +995,8 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 
 	  if (opcode->flags & (F_UNBR|F_CONDBR|F_JSR))
 	    {
-		/* FIXME -- check is_annulled flag.  */
+	      /* FIXME -- check is_annulled flag.  */
+	      (void) is_annulled;
 	      if (opcode->flags & F_UNBR)
 		info->insn_type = dis_branch;
 	      if (opcode->flags & F_CONDBR)

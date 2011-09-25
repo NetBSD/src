@@ -1,6 +1,7 @@
 /* strings -- print the strings of printable characters in files
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -53,6 +54,7 @@
    -h		Print the usage message on the standard output.
 
    --version
+   -V
    -v		Print the program version number.
 
    Written by Richard Stallman <rms@gnu.ai.mit.edu>
@@ -77,21 +79,6 @@ extern int errno;
 
 /* The BFD section flags that identify an initialized data section.  */
 #define DATA_FLAGS (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS)
-
-#ifdef HAVE_FOPEN64
-typedef off64_t file_off;
-#define file_open(s,m) fopen64(s, m)
-#else
-typedef off_t file_off;
-#define file_open(s,m) fopen(s, m)
-#endif
-#ifdef HAVE_STAT64
-typedef struct stat64 statbuf;
-#define file_stat(f,s) stat64(f, s)
-#else
-typedef struct stat statbuf;
-#define file_stat(f,s) stat(f, s)
-#endif
 
 /* Radix for printing addresses (must be 8, 10 or 16).  */
 static int address_radix;
@@ -143,9 +130,9 @@ typedef struct
 static void strings_a_section (bfd *, asection *, void *);
 static bfd_boolean strings_object_file (const char *);
 static bfd_boolean strings_file (char *file);
-static void print_strings (const char *, FILE *, file_off, int, int, char *);
+static void print_strings (const char *, FILE *, file_ptr, int, int, char *);
 static void usage (FILE *, int);
-static long get_char (FILE *, file_off *, int *, char **);
+static long get_char (FILE *, file_ptr *, int *, char **);
 
 int main (int, char **);
 
@@ -155,6 +142,8 @@ main (int argc, char **argv)
   int optc;
   int exit_status = 0;
   bfd_boolean files_given = FALSE;
+  char *s;
+  int numeric_opt = 0;
 
 #if defined (HAVE_SETLOCALE)
   setlocale (LC_ALL, "");
@@ -192,7 +181,9 @@ main (int argc, char **argv)
 	  usage (stdout, 0);
 
 	case 'n':
-	  string_min = (int) strtoul (optarg, NULL, 0);
+	  string_min = (int) strtoul (optarg, &s, 0);
+	  if (s != NULL && *s != 0)
+	    fatal (_("invalid integer argument %s"), optarg);
 	  break;
 
 	case 'o':
@@ -242,11 +233,17 @@ main (int argc, char **argv)
 	  usage (stderr, 1);
 
 	default:
-	  string_min = (int) strtoul (argv[optind - 1] + 1, NULL, 0);
+	  numeric_opt = optind;
 	  break;
 	}
     }
 
+  if (numeric_opt != 0)
+    {
+      string_min = (int) strtoul (argv[numeric_opt - 1] + 1, &s, 0);
+      if (s != NULL && *s != 0)
+	fatal (_("invalid integer argument %s"), argv[numeric_opt - 1] + 1);
+    }
   if (string_min < 1)
     fatal (_("invalid minimum string length %d"), string_min);
 
@@ -350,7 +347,7 @@ strings_a_section (bfd *abfd, asection *sect, void *arg)
       got_a_section = TRUE;
 
       print_strings (filename_and_sizep->filename, NULL, sect->filepos,
-		     0, sectsize, mem);
+		     0, sectsize, (char *) mem);
     }
 
   free (mem);
@@ -402,9 +399,11 @@ strings_object_file (const char *file)
 static bfd_boolean
 strings_file (char *file)
 {
-  statbuf st;
+  struct stat st;
 
-  if (file_stat (file, &st) < 0)
+  /* get_file_size does not support non-S_ISREG files.  */
+
+  if (stat (file, &st) < 0)
     {
       if (errno == ENOENT)
 	non_fatal (_("'%s': No such file"), file);
@@ -422,7 +421,7 @@ strings_file (char *file)
     {
       FILE *stream;
 
-      stream = file_open (file, FOPEN_RB);
+      stream = fopen (file, FOPEN_RB);
       if (stream == NULL)
 	{
 	  fprintf (stderr, "%s: ", program_name);
@@ -430,7 +429,7 @@ strings_file (char *file)
 	  return FALSE;
 	}
 
-      print_strings (file, stream, (file_off) 0, 0, 0, (char *) 0);
+      print_strings (file, stream, (file_ptr) 0, 0, 0, (char *) 0);
 
       if (fclose (stream) == EOF)
 	{
@@ -454,7 +453,7 @@ strings_file (char *file)
    MAGICCOUNT is how many characters are in it.  */
 
 static long
-get_char (FILE *stream, file_off *address, int *magiccount, char **magic)
+get_char (FILE *stream, file_ptr *address, int *magiccount, char **magic)
 {
   int c, i;
   long r = EOF;
@@ -530,14 +529,14 @@ get_char (FILE *stream, file_off *address, int *magiccount, char **magic)
    Those characters come at address ADDRESS and the data in STREAM follow.  */
 
 static void
-print_strings (const char *filename, FILE *stream, file_off address,
+print_strings (const char *filename, FILE *stream, file_ptr address,
 	       int stop_point, int magiccount, char *magic)
 {
   char *buf = (char *) xmalloc (sizeof (char) * (string_min + 1));
 
   while (1)
     {
-      file_off start;
+      file_ptr start;
       int i;
       long c;
 
@@ -658,7 +657,7 @@ usage (FILE *stream, int status)
                             s = 7-bit, S = 8-bit, {b,l} = 16-bit, {B,L} = 32-bit\n\
   @<file>                   Read options from <file>\n\
   -h --help                 Display this information\n\
-  -v --version              Print the program's version number\n"));
+  -v -V --version           Print the program's version number\n"));
   list_supported_targets (program_name, stream);
   if (REPORT_BUGS_TO[0] && status == 0)
     fprintf (stream, _("Report bugs to %s\n"), REPORT_BUGS_TO);
