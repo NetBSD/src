@@ -842,6 +842,8 @@ NetBSD_DISABLED_strip.1:
 	rm -f strip.pod
 
 elfedit.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_elfedit.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Delfedit < $(binutils_TEXI) > elfedit.pod
 	-($(POD2MAN) elfedit.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
