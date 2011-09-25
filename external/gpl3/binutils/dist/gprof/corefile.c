@@ -1,7 +1,7 @@
 /* corefile.c
 
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009,
+   2010, 2011  Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -35,13 +35,13 @@ bfd *core_bfd;
 static int core_num_syms;
 static asymbol **core_syms;
 asection *core_text_sect;
-PTR core_text_space;
+void * core_text_space;
 
 static int min_insn_size;
 int offset_to_code;
 
 /* For mapping symbols to specific .o files during file ordering.  */
-struct function_map *symbol_map;
+struct function_map * symbol_map;
 unsigned int symbol_map_count;
 
 static void read_function_mappings (const char *);
@@ -63,12 +63,23 @@ parse_error (const char *filename)
   done (1);
 }
 
+/* Compare two function_map structs based on function name.
+   We want to sort in ascending order.  */
+
+static int
+cmp_symbol_map (const void * l, const void * r)
+{
+  return strcmp (((struct function_map *) l)->function_name, 
+		 ((struct function_map *) r)->function_name);
+}
+
 static void
 read_function_mappings (const char *filename)
 {
-  FILE *file = fopen (filename, "r");
+  FILE * file = fopen (filename, "r");
   char dummy[1024];
   int count = 0;
+  unsigned int i;
 
   if (!file)
     {
@@ -131,7 +142,7 @@ read_function_mappings (const char *filename)
 	}
 
       /* dummy has the filename, go ahead and copy it.  */
-      symbol_map[count].file_name = xmalloc (strlen (dummy) + 1);
+      symbol_map[count].file_name = (char *) xmalloc (strlen (dummy) + 1);
       strcpy (symbol_map[count].file_name, dummy);
 
       /* Now we need the function name.  */
@@ -139,18 +150,23 @@ read_function_mappings (const char *filename)
       if (!matches)
 	parse_error (filename);
       tmp = strrchr (dummy, ' ') + 1;
-      symbol_map[count].function_name = xmalloc (strlen (tmp) + 1);
+      symbol_map[count].function_name = (char *) xmalloc (strlen (tmp) + 1);
       strcpy (symbol_map[count].function_name, tmp);
       count++;
     }
 
   /* Record the size of the map table for future reference.  */
   symbol_map_count = count;
+
+  for (i = 0; i < symbol_map_count; ++i)
+    if (i == 0 || strcmp (symbol_map[i].file_name, symbol_map[i - 1].file_name))
+      symbol_map[i].is_first = 1;
+
+  qsort (symbol_map, symbol_map_count, sizeof (struct function_map), cmp_symbol_map);
 }
 
-
 void
-core_init (const char *aout_name)
+core_init (const char * aout_name)
 {
   int core_sym_bytes;
   asymbol *synthsyms;
@@ -213,7 +229,7 @@ core_init (const char *aout_name)
       long i;
 
       new_size = (core_num_syms + synth_count + 1) * sizeof (*core_syms);
-      core_syms = xrealloc (core_syms, new_size);
+      core_syms = (asymbol **) xrealloc (core_syms, new_size);
       symp = core_syms + core_num_syms;
       core_num_syms += synth_count;
       for (i = 0; i < synth_count; i++)
@@ -371,12 +387,20 @@ core_sym_class (asymbol *sym)
       if (*name == '$')
         return 0;
 
-      /* Do not discard nested subprograms (those
-	 which end with .NNN, where N are digits).  */
       if (*name == '.')
-	for (name++; *name; name++)
-	  if (! ISDIGIT (*name))
-	    return 0;
+	{
+	  /* Allow GCC cloned functions.  */
+	  if (strlen (name) > 7 && strncmp (name, ".clone.", 7) == 0)
+	    name += 6;
+
+	  /* Do not discard nested subprograms (those
+	     which end with .NNN, where N are digits).  */
+	  for (name++; *name; name++)
+	    if (! ISDIGIT (*name))
+	      return 0;
+
+	  break;
+	}
     }
 
   /* On systems where the C compiler adds an underscore to all
@@ -436,17 +460,135 @@ get_src_info (bfd_vma addr, const char **filename, const char **name, int *line_
     }
 }
 
+/* Return number of symbols in a symbol-table file.  */
+
+static int 
+num_of_syms_in (FILE * f)
+{
+  const int BUFSIZE = 1024;
+  char * buf = (char *) xmalloc (BUFSIZE);
+  char * address = (char *) xmalloc (BUFSIZE);
+  char   type;
+  char * name = (char *) xmalloc (BUFSIZE);
+  int num = 0;
+  
+  while (!feof (f) && fgets (buf, BUFSIZE - 1, f))
+    {
+      if (sscanf (buf, "%s %c %s", address, &type, name) == 3)
+        if (type == 't' || type == 'T')
+          ++num;
+    }
+
+  free (buf);
+  free (address);
+  free (name);
+
+  return num;
+}
+
+/* Read symbol table from a file.  */
+
+void
+core_create_syms_from (const char * sym_table_file)
+{
+  const int BUFSIZE = 1024;
+  char * buf = (char *) xmalloc (BUFSIZE);
+  char * address = (char *) xmalloc (BUFSIZE);
+  char type;
+  char * name = (char *) xmalloc (BUFSIZE);
+  bfd_vma min_vma = ~(bfd_vma) 0;
+  bfd_vma max_vma = 0;
+  FILE * f;
+
+  f = fopen (sym_table_file, "r");
+  if (!f)
+    {
+      fprintf (stderr, _("%s: could not open %s.\n"), whoami, sym_table_file);
+      done (1);
+    }
+
+  /* Pass 1 - determine upper bound on number of function names.  */
+  symtab.len = num_of_syms_in (f);
+
+  if (symtab.len == 0)
+    {
+      fprintf (stderr, _("%s: file `%s' has no symbols\n"), whoami, sym_table_file);
+      done (1);
+    }
+
+  symtab.base = (Sym *) xmalloc (symtab.len * sizeof (Sym));
+
+  /* Pass 2 - create symbols.  */
+  symtab.limit = symtab.base;
+
+  if (fseek (f, 0, SEEK_SET) != 0)
+    {
+      perror (sym_table_file);
+      done (1);
+    }
+
+  while (!feof (f) && fgets (buf, BUFSIZE - 1, f))
+    {
+      if (sscanf (buf, "%s %c %s", address, &type, name) == 3)
+        if (type != 't' && type != 'T')
+          continue;
+
+      sym_init (symtab.limit);
+
+      sscanf (address, "%" BFD_VMA_FMT "x", &(symtab.limit->addr) );
+
+      symtab.limit->name = (char *) xmalloc (strlen (name) + 1);
+      strcpy ((char *) symtab.limit->name, name);
+      symtab.limit->mapped = 0;
+      symtab.limit->is_func = TRUE;
+      symtab.limit->is_bb_head = TRUE;
+      symtab.limit->is_static = (type == 't');
+      min_vma = MIN (symtab.limit->addr, min_vma);
+      max_vma = MAX (symtab.limit->addr, max_vma);
+
+      ++symtab.limit;
+    }
+  fclose (f);
+
+  symtab.len = symtab.limit - symtab.base;
+  symtab_finalize (&symtab);
+
+  free (buf);
+  free (address);
+  free (name);
+}
+
+static int
+search_mapped_symbol (const void * l, const void * r)
+{
+    return strcmp ((const char *) l, ((const struct function_map *) r)->function_name);
+}
+
 /* Read in symbol table from core.
    One symbol per function is entered.  */
 
 void
-core_create_function_syms ()
+core_create_function_syms (void)
 {
-  bfd_vma min_vma = ~(bfd_vma) 0;
+  bfd_vma min_vma = ~ (bfd_vma) 0;
   bfd_vma max_vma = 0;
-  int class;
-  long i, found, skip;
-  unsigned int j;
+  int cxxclass;
+  long i;
+  struct function_map * found;
+  int core_has_func_syms = 0;
+
+  switch (core_bfd->xvec->flavour)
+    {
+    default:
+      break;
+    case bfd_target_coff_flavour:
+    case bfd_target_ecoff_flavour:
+    case bfd_target_xcoff_flavour:
+    case bfd_target_elf_flavour:
+    case bfd_target_nlm_flavour:
+    case bfd_target_som_flavour:
+      core_has_func_syms = 1;
+    }
 
   /* Pass 1 - determine upper bound on number of function names.  */
   symtab.len = 0;
@@ -456,23 +598,14 @@ core_create_function_syms ()
       if (!core_sym_class (core_syms[i]))
 	continue;
 
-      /* This should be replaced with a binary search or hashed
-	 search.  Gross.
-
-	 Don't create a symtab entry for a function that has
+      /* Don't create a symtab entry for a function that has
 	 a mapping to a file, unless it's the first function
 	 in the file.  */
-      skip = 0;
-      for (j = 0; j < symbol_map_count; j++)
-	if (!strcmp (core_syms[i]->name, symbol_map[j].function_name))
-	  {
-	    if (j > 0 && ! strcmp (symbol_map [j].file_name,
-				   symbol_map [j - 1].file_name))
-	      skip = 1;
-	    break;
-	  }
-
-      if (!skip)
+      found = (struct function_map *) bsearch (core_syms[i]->name, symbol_map,
+                                               symbol_map_count,
+                                               sizeof (struct function_map),
+                                               search_mapped_symbol);
+      if (found == NULL || found->is_first)
 	++symtab.len;
     }
 
@@ -482,8 +615,7 @@ core_create_function_syms ()
       done (1);
     }
 
-  /* The "+ 2" is for the sentinels.  */
-  symtab.base = (Sym *) xmalloc ((symtab.len + 2) * sizeof (Sym));
+  symtab.base = (Sym *) xmalloc (symtab.len * sizeof (Sym));
 
   /* Pass 2 - create symbols.  */
   symtab.limit = symtab.base;
@@ -492,9 +624,9 @@ core_create_function_syms ()
     {
       asection *sym_sec;
 
-      class = core_sym_class (core_syms[i]);
+      cxxclass = core_sym_class (core_syms[i]);
 
-      if (!class)
+      if (!cxxclass)
 	{
 	  DBG (AOUTDEBUG,
 	       printf ("[core_create_function_syms] rejecting: 0x%lx %s\n",
@@ -503,23 +635,10 @@ core_create_function_syms ()
 	  continue;
 	}
 
-      /* This should be replaced with a binary search or hashed
-	 search.  Gross.   */
-      skip = 0;
-      found = 0;
-
-      for (j = 0; j < symbol_map_count; j++)
-	if (!strcmp (core_syms[i]->name, symbol_map[j].function_name))
-	  {
-	    if (j > 0 && ! strcmp (symbol_map [j].file_name,
-				   symbol_map [j - 1].file_name))
-	      skip = 1;
-	    else
-	      found = j;
-	    break;
-	  }
-
-      if (skip)
+      found = (struct function_map *) bsearch (core_syms[i]->name, symbol_map,
+                                               symbol_map_count,
+		       sizeof (struct function_map), search_mapped_symbol);
+      if (found && ! found->is_first)
 	continue;
 
       sym_init (symtab.limit);
@@ -530,10 +649,9 @@ core_create_function_syms ()
       if (sym_sec)
 	symtab.limit->addr += bfd_get_section_vma (sym_sec->owner, sym_sec);
 
-      if (symbol_map_count
-	  && !strcmp (core_syms[i]->name, symbol_map[found].function_name))
+      if (found)
 	{
-	  symtab.limit->name = symbol_map[found].file_name;
+	  symtab.limit->name = found->file_name;
 	  symtab.limit->mapped = 1;
 	}
       else
@@ -544,10 +662,11 @@ core_create_function_syms ()
 
       /* Lookup filename and line number, if we can.  */
       {
-	const char *filename, *func_name;
+	const char * filename;
+	const char * func_name;
 
-	if (get_src_info (symtab.limit->addr, &filename, &func_name,
-			  &symtab.limit->line_num))
+	if (get_src_info (symtab.limit->addr, & filename, & func_name,
+			  & symtab.limit->line_num))
 	  {
 	    symtab.limit->file = source_file_lookup_path (filename);
 
@@ -575,10 +694,11 @@ core_create_function_syms ()
 	  }
       }
 
-      symtab.limit->is_func = TRUE;
+      symtab.limit->is_func = (!core_has_func_syms
+			       || (core_syms[i]->flags & BSF_FUNCTION) != 0);
       symtab.limit->is_bb_head = TRUE;
 
-      if (class == 't')
+      if (cxxclass == 't')
 	symtab.limit->is_static = TRUE;
 
       /* Keep track of the minimum and maximum vma addresses used by all
@@ -599,19 +719,6 @@ core_create_function_syms ()
       ++symtab.limit;
     }
 
-  /* Create sentinels.  */
-  sym_init (symtab.limit);
-  symtab.limit->name = "<locore>";
-  symtab.limit->addr = 0;
-  symtab.limit->end_addr = min_vma - 1;
-  ++symtab.limit;
-
-  sym_init (symtab.limit);
-  symtab.limit->name = "<hicore>";
-  symtab.limit->addr = max_vma + 1;
-  symtab.limit->end_addr = ~(bfd_vma) 0;
-  ++symtab.limit;
-
   symtab.len = symtab.limit - symtab.base;
   symtab_finalize (&symtab);
 }
@@ -620,12 +727,12 @@ core_create_function_syms ()
    One symbol per line of source code is entered.  */
 
 void
-core_create_line_syms ()
+core_create_line_syms (void)
 {
   char *prev_name, *prev_filename;
   unsigned int prev_name_len, prev_filename_len;
   bfd_vma vma, min_vma = ~(bfd_vma) 0, max_vma = 0;
-  Sym *prev, dummy, *sentinel, *sym;
+  Sym *prev, dummy, *sym;
   const char *filename;
   int prev_line_num;
   Sym_Table ltab;
@@ -647,8 +754,8 @@ core_create_line_syms ()
      BFD would provide an iterator for enumerating all line infos.  */
   prev_name_len = PATH_MAX;
   prev_filename_len = PATH_MAX;
-  prev_name = xmalloc (prev_name_len);
-  prev_filename = xmalloc (prev_filename_len);
+  prev_name = (char *) xmalloc (prev_name_len);
+  prev_filename = (char *) xmalloc (prev_filename_len);
   ltab.len = 0;
   prev_line_num = 0;
 
@@ -672,7 +779,7 @@ core_create_line_syms ()
 	{
 	  prev_name_len = len + 1024;
 	  free (prev_name);
-	  prev_name = xmalloc (prev_name_len);
+	  prev_name = (char *) xmalloc (prev_name_len);
 	}
 
       strcpy (prev_name, dummy.name);
@@ -682,7 +789,7 @@ core_create_line_syms ()
 	{
 	  prev_filename_len = len + 1024;
 	  free (prev_filename);
-	  prev_filename = xmalloc (prev_filename_len);
+	  prev_filename = (char *) xmalloc (prev_filename_len);
 	}
 
       strcpy (prev_filename, filename);
@@ -746,7 +853,8 @@ core_create_line_syms ()
       else
 	{
 	  sym = sym_lookup(&symtab, ltab.limit->addr);
-	  ltab.limit->is_static = sym->is_static;
+          if (sym)
+	    ltab.limit->is_static = sym->is_static;
 	}
 
       prev = ltab.limit;
@@ -757,21 +865,6 @@ core_create_line_syms ()
 			      (unsigned long) ltab.limit->addr));
       ++ltab.limit;
     }
-
-  /* Update sentinels.  */
-  sentinel = sym_lookup (&symtab, (bfd_vma) 0);
-
-  if (sentinel
-      && strcmp (sentinel->name, "<locore>") == 0
-      && min_vma <= sentinel->end_addr)
-    sentinel->end_addr = min_vma - 1;
-
-  sentinel = sym_lookup (&symtab, ~(bfd_vma) 0);
-
-  if (sentinel
-      && strcmp (sentinel->name, "<hicore>") == 0
-      && max_vma >= sentinel->addr)
-    sentinel->addr = max_vma + 1;
 
   /* Copy in function symbols.  */
   memcpy (ltab.limit, symtab.base, symtab.len * sizeof (Sym));
