@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.141 2011/09/23 06:48:08 mrg Exp $
+# $NetBSD: md.amd64,v 1.142 2011/09/25 04:11:47 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -58,8 +58,8 @@
 ./usr/lib/i386/libarchive.so.3.1		base-compat-shlib	compat,pic
 ./usr/lib/i386/libasn1.so.9			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos
-./usr/lib/i386/libbfd.so.11			base-compat-shlib	compat,pic,binutils
-./usr/lib/i386/libbfd.so.11.0			base-compat-shlib	compat,pic,binutils
+./usr/lib/i386/libbfd.so.12			base-compat-shlib	compat,pic,binutils
+./usr/lib/i386/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libbind9.so.5			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbind9.so.5.6			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4		base-compat-shlib	compat,pic
@@ -179,8 +179,8 @@
 ./usr/lib/i386/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/i386/libobjc.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libobjc.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libopcodes.so.4			base-compat-shlib	compat,pic,binutils
-./usr/lib/i386/libopcodes.so.4.0		base-compat-shlib	compat,pic,binutils
+./usr/lib/i386/libopcodes.so.5			base-compat-shlib	compat,pic,binutils
+./usr/lib/i386/libopcodes.so.5.0		base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libossaudio.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libossaudio.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libp2k.so.2			base-compat-shlib	compat,pic
