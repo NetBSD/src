@@ -30,6 +30,9 @@
 #include "sh-tdep.h"
 #include "inf-ptrace.h"
 #include "regcache.h"
+#include "inf-ptrace.h"
+
+#include "nbsd-nat.h"
 
 
 /* Determine if PT_GETREGS fetches this register.  */
@@ -37,6 +40,7 @@
   (((regno) >= R0_REGNUM && (regno) <= (R0_REGNUM + 15)) \
 || (regno) == gdbarch_pc_regnum (gdbarch) || (regno) == PR_REGNUM \
 || (regno) == MACH_REGNUM || (regno) == MACL_REGNUM \
+|| (regno) == SR_REGNUM || (regno) == GBR_REGNUM)
 || (regno) == SR_REGNUM)
 
 /* Sizeof `struct reg' in <machine/reg.h>.  */
@@ -51,7 +55,7 @@ shnbsd_fetch_inferior_registers (struct target_ops *ops,
       struct reg inferior_registers;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &inferior_registers, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sh_corefile_supply_regset (&sh_corefile_gregset, regcache, regno,
@@ -72,7 +76,7 @@ shnbsd_store_inferior_registers (struct target_ops *ops,
       struct reg inferior_registers;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &inferior_registers, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sh_corefile_collect_regset (&sh_corefile_gregset, regcache, regno,
@@ -80,7 +84,7 @@ shnbsd_store_inferior_registers (struct target_ops *ops,
 				  SHNBSD_SIZEOF_GREGS);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &inferior_registers, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't set registers"));
 
       if (regno != -1)
@@ -99,5 +103,6 @@ _initialize_shnbsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = shnbsd_fetch_inferior_registers;
   t->to_store_registers = shnbsd_store_inferior_registers;
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
   add_target (t);
 }

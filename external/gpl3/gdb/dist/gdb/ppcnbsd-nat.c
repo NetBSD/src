@@ -33,6 +33,7 @@
 
 #include "gdb_assert.h"
 
+#include "nbsd-nat.h"
 #include "ppc-tdep.h"
 #include "ppcnbsd-tdep.h"
 #include "bsd-kvm.h"
@@ -162,20 +163,20 @@ ppcnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
     return 0;
 
   read_memory (pcb->pcb_sp, (gdb_byte *)&sf, sizeof sf);
-  regcache_raw_supply (regcache, tdep->ppc_cr_regnum, &sf.cr);
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 2, &sf.fixreg2);
+  regcache_raw_supply (regcache, tdep->ppc_cr_regnum, &sf.sf_cr);
+  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 2, &sf.sf_fixreg2);
   for (i = 0 ; i < 19 ; i++)
     regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 13 + i,
-			 &sf.fixreg[i]);
+			 &sf.sf-fixreg[i]);
 
   read_memory(sf.sp, (gdb_byte *)&cf, sizeof(cf));
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 30, &cf.r30);
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 31, &cf.r31);
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 1, &cf.sp);
+  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 30, &cf.cf_r30);
+  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 31, &cf.cf_r31);
+  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 1, &cf.cf_sp);
 
   read_memory(cf.sp, (gdb_byte *)&cf, sizeof(cf));
-  regcache_raw_supply (regcache, tdep->ppc_lr_regnum, &cf.lr);
-  regcache_raw_supply (regcache, gdbarch_pc_regnum (gdbarch), &cf.lr);
+  regcache_raw_supply (regcache, tdep->ppc_lr_regnum, &cf.cf_lr);
+  regcache_raw_supply (regcache, gdbarch_pc_regnum (gdbarch), &cf.cf_lr);
 
   return 1;
 }
@@ -195,5 +196,6 @@ _initialize_ppcnbsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = ppcnbsd_fetch_inferior_registers;
   t->to_store_registers = ppcnbsd_store_inferior_registers;
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
   add_target (t);
 }
