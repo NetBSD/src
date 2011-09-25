@@ -133,9 +133,10 @@ amd64nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 {
   struct trad_frame_cache *cache;
   CORE_ADDR func, sp, addr;
-  ULONGEST cs, rip;
+  ULONGEST cs = 0, rip = 0;
   char *name;
   int i;
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
 
   if (*this_cache)
     return *this_cache;
@@ -143,7 +144,7 @@ amd64nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
   cache = trad_frame_cache_zalloc (next_frame);
   *this_cache = cache;
 
-  func = frame_func_unwind (next_frame);
+  func = get_frame_func (next_frame);
   sp = frame_unwind_register_unsigned (next_frame, AMD64_RSP_REGNUM);
 
   find_pc_partial_function (func, &name, NULL, NULL);
@@ -162,10 +163,15 @@ amd64nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 
       /* Read %cs and %rip when we have the addresses to hand */
       if (i == AMD64_CS_REGNUM)
-        cs = read_memory_unsigned_integer (addr + amd64nbsd_tf_reg_offset[i], 8);
+        cs = read_memory_unsigned_integer (addr + amd64nbsd_tf_reg_offset[i], 8,
+	  byte_order);
       if (i == AMD64_RIP_REGNUM)
-        rip = read_memory_unsigned_integer (addr + amd64nbsd_tf_reg_offset[i], 8);
+        rip = read_memory_unsigned_integer (addr + amd64nbsd_tf_reg_offset[i],
+	  8, byte_order);
     }
+
+  if (cs == 0 || rip == 0)
+     abort();
 
   /* The trap frame layout was changed lf the %rip value is less than 2^16 it
    * is almost certainly the %ss of the old format. */
@@ -182,7 +188,8 @@ amd64nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 
           /* Read %cs when we have the address to hand */
           if (i == AMD64_CS_REGNUM)
-	    cs = read_memory_unsigned_integer (addr + amd64nbsd_r_reg_offset[i], 8);
+	    cs = read_memory_unsigned_integer (addr + amd64nbsd_r_reg_offset[i],
+	    8, byte_order);
         }
     }
 
@@ -202,7 +209,8 @@ amd64nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 
 static void
 amd64nbsd_trapframe_this_id (struct frame_info *next_frame,
-			     void **this_cache, struct frame_id *this_id)
+			     void **this_cache,
+			     struct frame_id *this_id)
 {
   struct trad_frame_cache *cache =
     amd64nbsd_trapframe_cache (next_frame, this_cache);
@@ -210,18 +218,14 @@ amd64nbsd_trapframe_this_id (struct frame_info *next_frame,
   trad_frame_get_id (cache, this_id);
 }
 
-static void
-amd64nbsd_trapframe_prev_register (struct frame_info *next_frame,
-				   void **this_cache, int regnum,
-				   int *optimizedp, enum lval_type *lvalp,
-				   CORE_ADDR *addrp, int *realnump,
-				   gdb_byte *valuep)
+static struct value *
+amd64nbsd_trapframe_prev_register (struct frame_info *this_frame,
+				   void **this_cache, int regnum) 
 {
   struct trad_frame_cache *cache =
-    amd64nbsd_trapframe_cache (next_frame, this_cache);
+    amd64nbsd_trapframe_cache (this_frame, this_cache);
 
-  trad_frame_get_register (cache, next_frame, regnum,
-			   optimizedp, lvalp, addrp, realnump, valuep);
+  return trad_frame_get_register (cache, this_frame, regnum);
 }
 
 static int
@@ -238,7 +242,7 @@ amd64nbsd_trapframe_sniffer (const struct frame_unwind *self,
   if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
     return 0;
 
-  find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
+  find_pc_partial_function (get_frame_pc (next_frame), &name, NULL, NULL);
   return (name && ((strcmp (name, "alltraps") == 0)
 		   || (strcmp (name, "calltrap") == 0)
 		   || (strncmp (name, "Xtrap", 5) == 0)
@@ -257,6 +261,7 @@ static const struct frame_unwind amd64nbsd_trapframe_unwind = {
      frame, but SIGTRAMP_FRAME would print <signal handler called>,
      which really is not what we want here.  */
   NORMAL_FRAME,
+  default_frame_unwind_stop_reason,
   amd64nbsd_trapframe_this_id,
   amd64nbsd_trapframe_prev_register,
   NULL,
