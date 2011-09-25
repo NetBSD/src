@@ -211,7 +211,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 	/* ISA C has no bra.l instruction, and since this assembly file
 	   gets assembled into multiple object files, we avoid the
 	   bra instruction entirely.  */
-#if defined (__mcoldfire__) && !defined (__mcfisab__)
+#if (defined (__mcoldfire__) && !defined (__mcfisab__)) || defined(__NetBSD__)
 	lea	\addr-.-8,a0
 	jmp	pc@(a0)
 #else
