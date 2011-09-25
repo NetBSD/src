@@ -323,6 +323,8 @@ while (0)
 
 #undef STACK_BOUNDARY
 #define STACK_BOUNDARY 32
+#undef PREFERRED_STACK_BOUNDARY
+#define PREFERRED_STACK_BOUNDARY 32
 
 
 /* Alignment of field after `int : 0' in a structure.
