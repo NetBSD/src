@@ -1,6 +1,6 @@
 /* Generic symbol-table support for the BFD library.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009
+   2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -205,100 +205,107 @@ CODE_FRAGMENT
 .  symvalue value;
 .
 .  {* Attributes of a symbol.  *}
-.#define BSF_NO_FLAGS    0x00
+.#define BSF_NO_FLAGS    	0x00
 .
 .  {* The symbol has local scope; <<static>> in <<C>>. The value
 .     is the offset into the section of the data.  *}
-.#define BSF_LOCAL	0x01
+.#define BSF_LOCAL		(1 << 0)
 .
 .  {* The symbol has global scope; initialized data in <<C>>. The
 .     value is the offset into the section of the data.  *}
-.#define BSF_GLOBAL	0x02
+.#define BSF_GLOBAL		(1 << 1)
 .
 .  {* The symbol has global scope and is exported. The value is
 .     the offset into the section of the data.  *}
 .#define BSF_EXPORT	BSF_GLOBAL {* No real difference.  *}
 .
 .  {* A normal C symbol would be one of:
-.     <<BSF_LOCAL>>, <<BSF_FORT_COMM>>,  <<BSF_UNDEFINED>> or
+.     <<BSF_LOCAL>>, <<BSF_COMMON>>,  <<BSF_UNDEFINED>> or
 .     <<BSF_GLOBAL>>.  *}
 .
 .  {* The symbol is a debugging record. The value has an arbitrary
 .     meaning, unless BSF_DEBUGGING_RELOC is also set.  *}
-.#define BSF_DEBUGGING	0x08
+.#define BSF_DEBUGGING		(1 << 2)
 .
 .  {* The symbol denotes a function entry point.  Used in ELF,
 .     perhaps others someday.  *}
-.#define BSF_FUNCTION    0x10
+.#define BSF_FUNCTION		(1 << 3)
 .
 .  {* Used by the linker.  *}
-.#define BSF_KEEP        0x20
-.#define BSF_KEEP_G      0x40
+.#define BSF_KEEP		(1 << 5)
+.#define BSF_KEEP_G		(1 << 6)
 .
 .  {* A weak global symbol, overridable without warnings by
 .     a regular global symbol of the same name.  *}
-.#define BSF_WEAK        0x80
+.#define BSF_WEAK		(1 << 7)
 .
 .  {* This symbol was created to point to a section, e.g. ELF's
 .     STT_SECTION symbols.  *}
-.#define BSF_SECTION_SYM 0x100
+.#define BSF_SECTION_SYM	(1 << 8)
 .
 .  {* The symbol used to be a common symbol, but now it is
 .     allocated.  *}
-.#define BSF_OLD_COMMON  0x200
-.
-.  {* The default value for common data.  *}
-.#define BFD_FORT_COMM_DEFAULT_VALUE 0
+.#define BSF_OLD_COMMON		(1 << 9)
 .
 .  {* In some files the type of a symbol sometimes alters its
 .     location in an output file - ie in coff a <<ISFCN>> symbol
 .     which is also <<C_EXT>> symbol appears where it was
 .     declared and not at the end of a section.  This bit is set
 .     by the target BFD part to convey this information.  *}
-.#define BSF_NOT_AT_END    0x400
+.#define BSF_NOT_AT_END		(1 << 10)
 .
 .  {* Signal that the symbol is the label of constructor section.  *}
-.#define BSF_CONSTRUCTOR   0x800
+.#define BSF_CONSTRUCTOR	(1 << 11)
 .
 .  {* Signal that the symbol is a warning symbol.  The name is a
 .     warning.  The name of the next symbol is the one to warn about;
 .     if a reference is made to a symbol with the same name as the next
 .     symbol, a warning is issued by the linker.  *}
-.#define BSF_WARNING       0x1000
+.#define BSF_WARNING		(1 << 12)
 .
 .  {* Signal that the symbol is indirect.  This symbol is an indirect
 .     pointer to the symbol with the same name as the next symbol.  *}
-.#define BSF_INDIRECT      0x2000
+.#define BSF_INDIRECT		(1 << 13)
 .
 .  {* BSF_FILE marks symbols that contain a file name.  This is used
 .     for ELF STT_FILE symbols.  *}
-.#define BSF_FILE          0x4000
+.#define BSF_FILE		(1 << 14)
 .
 .  {* Symbol is from dynamic linking information.  *}
-.#define BSF_DYNAMIC	   0x8000
+.#define BSF_DYNAMIC		(1 << 15)
 .
 .  {* The symbol denotes a data object.  Used in ELF, and perhaps
 .     others someday.  *}
-.#define BSF_OBJECT	   0x10000
+.#define BSF_OBJECT		(1 << 16)
 .
 .  {* This symbol is a debugging symbol.  The value is the offset
 .     into the section of the data.  BSF_DEBUGGING should be set
 .     as well.  *}
-.#define BSF_DEBUGGING_RELOC 0x20000
+.#define BSF_DEBUGGING_RELOC	(1 << 17)
 .
 .  {* This symbol is thread local.  Used in ELF.  *}
-.#define BSF_THREAD_LOCAL  0x40000
+.#define BSF_THREAD_LOCAL	(1 << 18)
 .
 .  {* This symbol represents a complex relocation expression,
 .     with the expression tree serialized in the symbol name.  *}
-.#define BSF_RELC 0x80000
+.#define BSF_RELC		(1 << 19)
 .
 .  {* This symbol represents a signed complex relocation expression,
 .     with the expression tree serialized in the symbol name.  *}
-.#define BSF_SRELC 0x100000
+.#define BSF_SRELC		(1 << 20)
 .
 .  {* This symbol was created by bfd_get_synthetic_symtab.  *}
-.#define BSF_SYNTHETIC 0x200000
+.#define BSF_SYNTHETIC		(1 << 21)
+.
+.  {* This symbol is an indirect code object.  Unrelated to BSF_INDIRECT.
+.     The dynamic linker will compute the value of this symbol by
+.     calling the function that it points to.  BSF_FUNCTION must
+.     also be also set.  *}
+.#define BSF_GNU_INDIRECT_FUNCTION (1 << 22)
+.  {* This symbol is a globally unique data object.  The dynamic linker
+.     will make sure that in the entire process there is just one symbol
+.     with this name and type in use.  BSF_OBJECT must also be set.  *}
+.#define BSF_GNU_UNIQUE		(1 << 23)
 .
 .  flagword flags;
 .
@@ -467,7 +474,7 @@ DESCRIPTION
 void
 bfd_print_symbol_vandf (bfd *abfd, void *arg, asymbol *symbol)
 {
-  FILE *file = arg;
+  FILE *file = (FILE *) arg;
 
   flagword type = symbol->flags;
 
@@ -482,11 +489,12 @@ bfd_print_symbol_vandf (bfd *abfd, void *arg, asymbol *symbol)
   fprintf (file, " %c%c%c%c%c%c%c",
 	   ((type & BSF_LOCAL)
 	    ? (type & BSF_GLOBAL) ? '!' : 'l'
-	    : (type & BSF_GLOBAL) ? 'g' : ' '),
+	    : (type & BSF_GLOBAL) ? 'g'
+	    : (type & BSF_GNU_UNIQUE) ? 'u' : ' '),
 	   (type & BSF_WEAK) ? 'w' : ' ',
 	   (type & BSF_CONSTRUCTOR) ? 'C' : ' ',
 	   (type & BSF_WARNING) ? 'W' : ' ',
-	   (type & BSF_INDIRECT) ? 'I' : ' ',
+	   (type & BSF_INDIRECT) ? 'I' : (type & BSF_GNU_INDIRECT_FUNCTION) ? 'i' : ' ',
 	   (type & BSF_DEBUGGING) ? 'd' : (type & BSF_DYNAMIC) ? 'D' : ' ',
 	   ((type & BSF_FUNCTION)
 	    ? 'F'
@@ -531,10 +539,10 @@ asymbol *
 _bfd_generic_make_empty_symbol (bfd *abfd)
 {
   bfd_size_type amt = sizeof (asymbol);
-  asymbol *new = bfd_zalloc (abfd, amt);
-  if (new)
-    new->the_bfd = abfd;
-  return new;
+  asymbol *new_symbol = (asymbol *) bfd_zalloc (abfd, amt);
+  if (new_symbol)
+    new_symbol->the_bfd = abfd;
+  return new_symbol;
 }
 
 /*
@@ -672,6 +680,8 @@ bfd_decode_symclass (asymbol *symbol)
     }
   if (bfd_is_ind_section (symbol->section))
     return 'I';
+  if (symbol->flags & BSF_GNU_INDIRECT_FUNCTION)
+    return 'i';
   if (symbol->flags & BSF_WEAK)
     {
       /* If weak, determine if it's specifically an object
@@ -681,6 +691,8 @@ bfd_decode_symclass (asymbol *symbol)
       else
 	return 'W';
     }
+  if (symbol->flags & BSF_GNU_UNIQUE)
+    return 'u';
   if (!(symbol->flags & (BSF_GLOBAL | BSF_LOCAL)))
     return '?';
 
@@ -799,7 +811,7 @@ _bfd_generic_read_minisymbols (bfd *abfd,
   if (storage == 0)
     return 0;
 
-  syms = bfd_malloc (storage);
+  syms = (asymbol **) bfd_malloc (storage);
   if (syms == NULL)
     goto error_return;
 
@@ -866,8 +878,8 @@ struct indexentry
 static int
 cmpindexentry (const void *a, const void *b)
 {
-  const struct indexentry *contestantA = a;
-  const struct indexentry *contestantB = b;
+  const struct indexentry *contestantA = (const struct indexentry *) a;
+  const struct indexentry *contestantB = (const struct indexentry *) b;
 
   if (contestantA->val < contestantB->val)
     return -1;
@@ -954,7 +966,7 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 #define VALOFF (8)
 #define STABSIZE (12)
 
-  info = *pinfo;
+  info = (struct stab_find_info *) *pinfo;
   if (info != NULL)
     {
       if (info->stabsec == NULL || info->strsec == NULL)
@@ -979,7 +991,7 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
       char *function_name;
       bfd_size_type amt = sizeof *info;
 
-      info = bfd_zalloc (abfd, amt);
+      info = (struct stab_find_info *) bfd_zalloc (abfd, amt);
       if (info == NULL)
 	return FALSE;
 
@@ -1012,8 +1024,8 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 		 ? info->strsec->rawsize
 		 : info->strsec->size);
 
-      info->stabs = bfd_alloc (abfd, stabsize);
-      info->strs = bfd_alloc (abfd, strsize);
+      info->stabs = (bfd_byte *) bfd_alloc (abfd, stabsize);
+      info->strs = (bfd_byte *) bfd_alloc (abfd, strsize);
       if (info->stabs == NULL || info->strs == NULL)
 	return FALSE;
 
@@ -1030,7 +1042,7 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
       reloc_size = bfd_get_reloc_upper_bound (abfd, info->stabsec);
       if (reloc_size < 0)
 	return FALSE;
-      reloc_vector = bfd_malloc (reloc_size);
+      reloc_vector = (arelent **) bfd_malloc (reloc_size);
       if (reloc_vector == NULL && reloc_size != 0)
 	return FALSE;
       reloc_count = bfd_canonicalize_reloc (abfd, info->stabsec, reloc_vector,
@@ -1127,7 +1139,7 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 
       amt = info->indextablesize;
       amt *= sizeof (struct indexentry);
-      info->indextable = bfd_alloc (abfd, amt);
+      info->indextable = (struct indexentry *) bfd_alloc (abfd, amt);
       if (info->indextable == NULL)
 	return FALSE;
 
@@ -1383,7 +1395,7 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 	     apps keep a copy of a previously returned file name
 	     pointer.  */
 	  len = strlen (file_name) + 1;
-	  info->filename = bfd_alloc (abfd, dirlen + len);
+	  info->filename = (char *) bfd_alloc (abfd, dirlen + len);
 	  if (info->filename == NULL)
 	    return FALSE;
 	  memcpy (info->filename, directory_name, dirlen);

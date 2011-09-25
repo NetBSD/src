@@ -69,3 +69,5 @@ Disassembly of section \.text:
   ec:	7d 6a 02 74 	cbcdtd  r10,r11
   f0:	7d 6a 02 34 	cdtbcd  r10,r11
   f4:	7d 4b 60 94 	addg6s  r10,r11,r12
+  f8:	60 21 00 00 	ori     r1,r1,0
+  fc:	60 21 00 00 	ori     r1,r1,0
