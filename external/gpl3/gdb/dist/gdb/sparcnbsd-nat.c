@@ -22,6 +22,7 @@
 #include "regcache.h"
 #include "target.h"
 
+#include "nbsd-nat.h"
 #include "sparc-tdep.h"
 #include "sparc-nat.h"
 
@@ -63,10 +64,13 @@ void _initialize_sparcnbsd_nat (void);
 void
 _initialize_sparcnbsd_nat (void)
 {
+  struct target_ops *t;
   sparc_gregset = &sparc32nbsd_gregset;
 
-  /* We've got nothing to add to the generic SPARC target.  */
-  add_target (sparc_target ());
+  /* Add some extra features to the generic SPARC target.  */
+  t = sparc_target ();
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
+  add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (sparc32nbsd_supply_pcb);
