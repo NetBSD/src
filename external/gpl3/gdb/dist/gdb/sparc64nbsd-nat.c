@@ -23,6 +23,7 @@
 #include "regcache.h"
 #include "target.h"
 
+#include "nbsd-nat.h"
 #include "sparc64-tdep.h"
 #include "sparc-nat.h"
 
@@ -173,6 +174,8 @@ void _initialize_sparc64nbsd_nat (void);
 void
 _initialize_sparc64nbsd_nat (void)
 {
+  struct target_ops *t;
+
   sparc_supply_gregset = sparc64nbsd_supply_gregset;
   sparc_collect_gregset = sparc64nbsd_collect_gregset;
   sparc_supply_fpregset = sparc64nbsd_supply_fpregset;
@@ -180,8 +183,10 @@ _initialize_sparc64nbsd_nat (void)
   sparc_gregset_supplies_p = sparc64nbsd_gregset_supplies_p;
   sparc_fpregset_supplies_p = sparc64nbsd_fpregset_supplies_p;
 
-  /* We've got nothing to add to the generic SPARC target.  */
-  add_target (sparc_target ());
+  /* Add some extra features to the generic SPARC target.  */
+  t = sparc_target ();
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
+  add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (sparc64nbsd_supply_pcb);
