@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_bus_intio.c,v 1.3 2011/07/01 19:22:35 dyoung Exp $ */
+/* $NetBSD: jensenio_bus_intio.c,v 1.4 2011/09/25 13:36:53 chs Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_bus_intio.c,v 1.3 2011/07/01 19:22:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_bus_intio.c,v 1.4 2011/09/25 13:36:53 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,11 +60,11 @@ int		jensenio_intio_subregion(void *, bus_space_handle_t,
 	/* Not supported for Internal space */
 
 /* barrier */
-inline void	jensenio_intio_barrier(void *, bus_space_handle_t,
+static inline void	jensenio_intio_barrier(void *, bus_space_handle_t,
 		    bus_size_t, bus_size_t, int);
 
 /* read (single) */
-inline u_int8_t	jensenio_intio_read_1(void *, bus_space_handle_t, bus_size_t);
+static inline u_int8_t	jensenio_intio_read_1(void *, bus_space_handle_t, bus_size_t);
 
 /* read multiple */
 void		jensenio_intio_read_multi_1(void *, bus_space_handle_t,
@@ -74,7 +74,7 @@ void		jensenio_intio_read_multi_1(void *, bus_space_handle_t,
 	/* Not supported for Internal space */
 
 /* write (single) */
-inline void	jensenio_intio_write_1(void *, bus_space_handle_t,
+static inline void	jensenio_intio_write_1(void *, bus_space_handle_t,
 		    bus_size_t, u_int8_t);
 
 /* write multiple */
@@ -211,7 +211,7 @@ jensenio_intio_subregion(void *v, bus_space_handle_t ioh, bus_size_t offset,
 	return (0);
 }
 
-inline void
+static inline void
 jensenio_intio_barrier(void *v, bus_space_handle_t h, bus_size_t o,
     bus_size_t l, int f)
 {
@@ -222,7 +222,7 @@ jensenio_intio_barrier(void *v, bus_space_handle_t h, bus_size_t o,
 		alpha_wmb();
 }
 
-inline u_int8_t
+static inline u_int8_t
 jensenio_intio_read_1(void *v, bus_space_handle_t ioh, bus_size_t off)
 {
 	register u_int32_t *port;
@@ -245,7 +245,7 @@ jensenio_intio_read_multi_1(void *v, bus_space_handle_t h, bus_size_t o,
 	}
 }
 
-inline void
+static inline void
 jensenio_intio_write_1(void *v, bus_space_handle_t ioh, bus_size_t off,
     u_int8_t val)
 {

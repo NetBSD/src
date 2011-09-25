@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.32 2011/07/01 19:19:50 dyoung Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.33 2011/09/25 13:36:53 chs Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.32 2011/07/01 19:19:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.33 2011/09/25 13:36:53 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,14 +71,14 @@ void *		tc_mem_vaddr(void *, bus_space_handle_t);
 paddr_t		tc_mem_mmap(void *, bus_addr_t, off_t, int, int);
 
 /* barrier */
-inline void	tc_mem_barrier(void *, bus_space_handle_t,
+static inline void	tc_mem_barrier(void *, bus_space_handle_t,
 		    bus_size_t, bus_size_t, int);
 
 /* read (single) */
-inline u_int8_t	tc_mem_read_1(void *, bus_space_handle_t, bus_size_t);
-inline u_int16_t tc_mem_read_2(void *, bus_space_handle_t, bus_size_t);
-inline u_int32_t tc_mem_read_4(void *, bus_space_handle_t, bus_size_t);
-inline u_int64_t tc_mem_read_8(void *, bus_space_handle_t, bus_size_t);
+static inline u_int8_t	tc_mem_read_1(void *, bus_space_handle_t, bus_size_t);
+static inline u_int16_t tc_mem_read_2(void *, bus_space_handle_t, bus_size_t);
+static inline u_int32_t tc_mem_read_4(void *, bus_space_handle_t, bus_size_t);
+static inline u_int64_t tc_mem_read_8(void *, bus_space_handle_t, bus_size_t);
 
 /* read multiple */
 void		tc_mem_read_multi_1(void *, bus_space_handle_t,
@@ -101,13 +101,13 @@ void		tc_mem_read_region_8(void *, bus_space_handle_t,
 		    bus_size_t, u_int64_t *, bus_size_t);
 
 /* write (single) */
-inline void	tc_mem_write_1(void *, bus_space_handle_t, bus_size_t,
+static inline void	tc_mem_write_1(void *, bus_space_handle_t, bus_size_t,
 		    u_int8_t);
-inline void	tc_mem_write_2(void *, bus_space_handle_t, bus_size_t,
+static inline void	tc_mem_write_2(void *, bus_space_handle_t, bus_size_t,
 		    u_int16_t);
-inline void	tc_mem_write_4(void *, bus_space_handle_t, bus_size_t,
+static inline void	tc_mem_write_4(void *, bus_space_handle_t, bus_size_t,
 		    u_int32_t);
-inline void	tc_mem_write_8(void *, bus_space_handle_t, bus_size_t,
+static inline void	tc_mem_write_8(void *, bus_space_handle_t, bus_size_t,
 		    u_int64_t);
 
 /* write multiple */
@@ -354,7 +354,7 @@ tc_mem_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 	return (alpha_btop(rv));
 }
 
-inline void
+static inline void
 tc_mem_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int f)
 {
 
@@ -364,7 +364,7 @@ tc_mem_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int f)
 		alpha_wmb();
 }
 
-inline u_int8_t
+static inline u_int8_t
 tc_mem_read_1(void *v, bus_space_handle_t memh, bus_size_t off)
 {
 	volatile u_int8_t *p;
@@ -378,7 +378,7 @@ tc_mem_read_1(void *v, bus_space_handle_t memh, bus_size_t off)
 	return (*p);
 }
 
-inline u_int16_t
+static inline u_int16_t
 tc_mem_read_2(void *v, bus_space_handle_t memh, bus_size_t off)
 {
 	volatile u_int16_t *p;
@@ -392,7 +392,7 @@ tc_mem_read_2(void *v, bus_space_handle_t memh, bus_size_t off)
 	return (*p);
 }
 
-inline u_int32_t
+static inline u_int32_t
 tc_mem_read_4(void *v, bus_space_handle_t memh, bus_size_t off)
 {
 	volatile u_int32_t *p;
@@ -407,7 +407,7 @@ tc_mem_read_4(void *v, bus_space_handle_t memh, bus_size_t off)
 	return (*p);
 }
 
-inline u_int64_t
+static inline u_int64_t
 tc_mem_read_8(void *v, bus_space_handle_t memh, bus_size_t off)
 {
 	volatile u_int64_t *p;
@@ -459,7 +459,7 @@ tc_mem_read_region_N(2,u_int16_t)
 tc_mem_read_region_N(4,u_int32_t)
 tc_mem_read_region_N(8,u_int64_t)
 
-inline void
+static inline void
 tc_mem_write_1(void *v, bus_space_handle_t memh, bus_size_t off, u_int8_t val)
 {
 
@@ -485,7 +485,7 @@ tc_mem_write_1(void *v, bus_space_handle_t memh, bus_size_t off, u_int8_t val)
         alpha_mb();		/* XXX XXX XXX */
 }
 
-inline void
+static inline void
 tc_mem_write_2(void *v, bus_space_handle_t memh, bus_size_t off, u_int16_t val)
 {
 
@@ -511,7 +511,7 @@ tc_mem_write_2(void *v, bus_space_handle_t memh, bus_size_t off, u_int16_t val)
         alpha_mb();		/* XXX XXX XXX */
 }
 
-inline void
+static inline void
 tc_mem_write_4(void *v, bus_space_handle_t memh, bus_size_t off, u_int32_t val)
 {
 	volatile u_int32_t *p;
@@ -525,7 +525,7 @@ tc_mem_write_4(void *v, bus_space_handle_t memh, bus_size_t off, u_int32_t val)
         alpha_mb();		/* XXX XXX XXX */
 }
 
-inline void
+static inline void
 tc_mem_write_8(void *v, bus_space_handle_t memh, bus_size_t off, u_int64_t val)
 {
 	volatile u_int64_t *p;
