@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2011/08/15 18:31:20 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2011/09/25 13:34:16 chs Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -87,7 +87,7 @@ BUILDSYMLINKS+=	${file} ${file:T:S/.asm$/.S/}
 .endfor
 
 # XXX
-.if ${MACHINE_ARCH} == "m68000"
+.if (${MACHINE_ARCH} == "m68000" || ${MACHINE_ARCH} == "m68k")
 CPICFLAGS:=
 BUILDSYMLINKS+=	${DIST}/gcc/config/m68k/fpgnulib.c fpgnulib.c
 BUILDSYMLINKS+=	${DIST}/gcc/config/m68k/fpgnulib.c xfgnulib.c
