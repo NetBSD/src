@@ -37,6 +37,7 @@
 #include <paths.h>
 #include "readline/readline.h"
 #include <sys/param.h>
+#define _KMEMUSER
 #include <sys/proc.h>
 #include <sys/user.h>
 
@@ -238,7 +239,7 @@ bsd_kvm_fetch_registers (struct target_ops *ops,
       if (kvm_read (core_kd, nl[0].n_value, &paddr, sizeof paddr) == -1)
 	error (("%s"), kvm_geterr (core_kd));
 
-      bsd_kvm_fetch_pcb (paddr);
+      bsd_kvm_fetch_pcb (regcache, paddr);
       return;
     }
 #endif
