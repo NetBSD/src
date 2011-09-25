@@ -13009,6 +13009,7 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <sys/param.h>
+#define _KMEMUSER
 #include <sys/lwp.h>
 int
 main ()
