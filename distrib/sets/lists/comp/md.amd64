@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.139 2011/09/25 04:11:47 christos Exp $
+# $NetBSD: md.amd64,v 1.140 2011/09/25 07:00:45 mrg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1153,6 +1153,19 @@
 ./usr/libdata/ldscripts/elf_i386.xsw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.x		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xbn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xd		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xdc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xdw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xr		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xs		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xsc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xsw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xu		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_l1om.xw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.x		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xbn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xc		comp-util-bin		binutils
