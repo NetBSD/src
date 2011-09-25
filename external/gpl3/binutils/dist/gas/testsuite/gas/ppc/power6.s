@@ -64,3 +64,5 @@ start:
 	cbcdtd  10,11
 	cdtbcd  10,11
 	addg6s  10,11,12
+	ori	1,1,0
+	.p2align 4,,15

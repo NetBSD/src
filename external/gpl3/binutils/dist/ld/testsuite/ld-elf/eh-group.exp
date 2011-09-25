@@ -1,5 +1,5 @@
 # Expect script for .eh_frame entries to a removed section.
-#   Copyright 2008  Free Software Foundation, Inc.
+#   Copyright 2008, 2009  Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -32,6 +32,11 @@
 # Exclude non-CFI (such as ia64) targets.
 
 if {![check_as_cfi]} {
+    return
+}
+
+# The test uses ELF .section directive
+if ![is_elf_format] {
     return
 }
 

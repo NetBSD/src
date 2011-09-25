@@ -1,6 +1,6 @@
 /* atof_generic.c - turn a string of digits into a Flonum
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1998, 1999, 2000,
-   2001, 2003, 2005, 2006, 2007 Free Software Foundation, Inc.
+   2001, 2003, 2005, 2006, 2007, 2009 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -101,7 +101,7 @@ atof_generic (/* return pointer to just AFTER number we read.  */
   int seen_significant_digit;
 
 #ifdef ASSUME_DECIMAL_MARK_IS_DOT
-  assert (string_of_decimal_marks[0] == '.'
+  gas_assert (string_of_decimal_marks[0] == '.'
 	  && string_of_decimal_marks[1] == 0);
 #define IS_DECIMAL_MARK(c)	((c) == '.')
 #else

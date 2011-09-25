@@ -1,6 +1,6 @@
 /* Motorola 68k series support for 32-bit ELF
    Copyright 1993, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -114,16 +114,277 @@ static reloc_howto_type howto_table[] = {
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
 	 FALSE),
+
+  /* TLS general dynamic variable reference.  */
+  HOWTO (R_68K_TLS_GD32,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_GD32",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_GD16,	/* type */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_GD16",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x0000ffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_GD8,		/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_GD8",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x000000ff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  /* TLS local dynamic variable reference.  */
+  HOWTO (R_68K_TLS_LDM32,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_LDM32",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_LDM16,	/* type */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_LDM16",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x0000ffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_LDM8,		/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_LDM8",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x000000ff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_LDO32,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_LDO32",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_LDO16,	/* type */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_LDO16",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x0000ffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_LDO8,		/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_LDO8",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x000000ff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  /* TLS initial execution variable reference.  */
+  HOWTO (R_68K_TLS_IE32,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_IE32",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_IE16,	/* type */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_IE16",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x0000ffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_IE8,		/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_IE8",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x000000ff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  /* TLS local execution variable reference.  */
+  HOWTO (R_68K_TLS_LE32,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_LE32",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_LE16,	/* type */
+	 0,			/* rightshift */
+	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_LE16",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x0000ffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_LE8,		/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_LE8",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0x000000ff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  /* TLS GD/LD dynamic relocations.  */
+  HOWTO (R_68K_TLS_DTPMOD32,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_DTPMOD32",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_DTPREL32,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_DTPREL32",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
+
+  HOWTO (R_68K_TLS_TPREL32,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_68K_TLS_TPREL32",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 FALSE),		/* pcrel_offset */
 };
 
 static void
-rtype_to_howto (abfd, cache_ptr, dst)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *cache_ptr;
-     Elf_Internal_Rela *dst;
+rtype_to_howto (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
-  BFD_ASSERT (ELF32_R_TYPE(dst->r_info) < (unsigned int) R_68K_max);
-  cache_ptr->howto = &howto_table[ELF32_R_TYPE(dst->r_info)];
+  unsigned int indx = ELF32_R_TYPE (dst->r_info);
+
+  if (indx >= (unsigned int) R_68K_max)
+    {
+      (*_bfd_error_handler) (_("%B: invalid relocation type %d"),
+			     abfd, (int) indx);
+      indx = R_68K_NONE;
+    }
+  cache_ptr->howto = &howto_table[indx];
 }
 
 #define elf_info_to_howto rtype_to_howto
@@ -132,7 +393,9 @@ static const struct
 {
   bfd_reloc_code_real_type bfd_val;
   int elf_val;
-} reloc_map[] = {
+}
+  reloc_map[] =
+{
   { BFD_RELOC_NONE, R_68K_NONE },
   { BFD_RELOC_32, R_68K_32 },
   { BFD_RELOC_16, R_68K_16 },
@@ -159,6 +422,21 @@ static const struct
   { BFD_RELOC_CTOR, R_68K_32 },
   { BFD_RELOC_VTABLE_INHERIT, R_68K_GNU_VTINHERIT },
   { BFD_RELOC_VTABLE_ENTRY, R_68K_GNU_VTENTRY },
+  { BFD_RELOC_68K_TLS_GD32, R_68K_TLS_GD32 },
+  { BFD_RELOC_68K_TLS_GD16, R_68K_TLS_GD16 },
+  { BFD_RELOC_68K_TLS_GD8, R_68K_TLS_GD8 },
+  { BFD_RELOC_68K_TLS_LDM32, R_68K_TLS_LDM32 },
+  { BFD_RELOC_68K_TLS_LDM16, R_68K_TLS_LDM16 },
+  { BFD_RELOC_68K_TLS_LDM8, R_68K_TLS_LDM8 },
+  { BFD_RELOC_68K_TLS_LDO32, R_68K_TLS_LDO32 },
+  { BFD_RELOC_68K_TLS_LDO16, R_68K_TLS_LDO16 },
+  { BFD_RELOC_68K_TLS_LDO8, R_68K_TLS_LDO8 },
+  { BFD_RELOC_68K_TLS_IE32, R_68K_TLS_IE32 },
+  { BFD_RELOC_68K_TLS_IE16, R_68K_TLS_IE16 },
+  { BFD_RELOC_68K_TLS_IE8, R_68K_TLS_IE8 },
+  { BFD_RELOC_68K_TLS_LE32, R_68K_TLS_LE32 },
+  { BFD_RELOC_68K_TLS_LE16, R_68K_TLS_LE16 },
+  { BFD_RELOC_68K_TLS_LE8, R_68K_TLS_LE8 },
 };
 
 static reloc_howto_type *
@@ -191,6 +469,7 @@ reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 #define bfd_elf32_bfd_reloc_type_lookup reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup reloc_name_lookup
 #define ELF_ARCH bfd_arch_m68k
+#define ELF_TARGET_ID M68K_ELF_DATA
 
 /* Functions for the m68k ELF linker.  */
 
@@ -419,7 +698,19 @@ struct elf_m68k_got_entry_key
 
   /* Symbol index.  Either local symbol index or h->got_entry_key.  */
   unsigned long symndx;
+
+  /* Type is one of R_68K_GOT{8, 16, 32}O, R_68K_TLS_GD{8, 16, 32},
+     R_68K_TLS_LDM{8, 16, 32} or R_68K_TLS_IE{8, 16, 32}.
+
+     From perspective of hashtable key, only elf_m68k_got_reloc_type (type)
+     matters.  That is, we distinguish between, say, R_68K_GOT16O
+     and R_68K_GOT32O when allocating offsets, but they are considered to be
+     the same when searching got->entries.  */
+  enum elf_m68k_reloc_type type;
 };
+
+/* Size of the GOT offset suitable for relocation.  */
+enum elf_m68k_got_offset_size { R_8, R_16, R_32, R_LAST };
 
 /* Entry of the GOT.  */
 struct elf_m68k_got_entry
@@ -435,9 +726,6 @@ struct elf_m68k_got_entry
       /* Number of times this entry is referenced.  It is used to
 	 filter out unnecessary GOT slots in elf_m68k_gc_sweep_hook.  */
       bfd_vma refcount;
-
-      /* Type is one of R_68K_GOT8O, R_68K_GOT16O or R_68K_GOT32O.  */
-      int type;
     } s1;
 
     struct
@@ -456,6 +744,116 @@ struct elf_m68k_got_entry
   } u;
 };
 
+/* Return representative type for relocation R_TYPE.
+   This is used to avoid enumerating many relocations in comparisons,
+   switches etc.  */
+
+static enum elf_m68k_reloc_type
+elf_m68k_reloc_got_type (enum elf_m68k_reloc_type r_type)
+{
+  switch (r_type)
+    {
+      /* In most cases R_68K_GOTx relocations require the very same
+	 handling as R_68K_GOT32O relocation.  In cases when we need
+	 to distinguish between the two, we use explicitly compare against
+	 r_type.  */
+    case R_68K_GOT32:
+    case R_68K_GOT16:
+    case R_68K_GOT8:
+    case R_68K_GOT32O:
+    case R_68K_GOT16O:
+    case R_68K_GOT8O:
+      return R_68K_GOT32O;
+
+    case R_68K_TLS_GD32:
+    case R_68K_TLS_GD16:
+    case R_68K_TLS_GD8:
+      return R_68K_TLS_GD32;
+
+    case R_68K_TLS_LDM32:
+    case R_68K_TLS_LDM16:
+    case R_68K_TLS_LDM8:
+      return R_68K_TLS_LDM32;
+
+    case R_68K_TLS_IE32:
+    case R_68K_TLS_IE16:
+    case R_68K_TLS_IE8:
+      return R_68K_TLS_IE32;
+
+    default:
+      BFD_ASSERT (FALSE);
+      return 0;
+    }
+}
+
+/* Return size of the GOT entry offset for relocation R_TYPE.  */
+
+static enum elf_m68k_got_offset_size
+elf_m68k_reloc_got_offset_size (enum elf_m68k_reloc_type r_type)
+{
+  switch (r_type)
+    {
+    case R_68K_GOT32: case R_68K_GOT16: case R_68K_GOT8:
+    case R_68K_GOT32O: case R_68K_TLS_GD32: case R_68K_TLS_LDM32:
+    case R_68K_TLS_IE32:
+      return R_32;
+
+    case R_68K_GOT16O: case R_68K_TLS_GD16: case R_68K_TLS_LDM16:
+    case R_68K_TLS_IE16:
+      return R_16;
+
+    case R_68K_GOT8O: case R_68K_TLS_GD8: case R_68K_TLS_LDM8:
+    case R_68K_TLS_IE8:
+      return R_8;
+
+    default:
+      BFD_ASSERT (FALSE);
+      return 0;
+    }
+}
+
+/* Return number of GOT entries we need to allocate in GOT for
+   relocation R_TYPE.  */
+
+static bfd_vma
+elf_m68k_reloc_got_n_slots (enum elf_m68k_reloc_type r_type)
+{
+  switch (elf_m68k_reloc_got_type (r_type))
+    {
+    case R_68K_GOT32O:
+    case R_68K_TLS_IE32:
+      return 1;
+
+    case R_68K_TLS_GD32:
+    case R_68K_TLS_LDM32:
+      return 2;
+
+    default:
+      BFD_ASSERT (FALSE);
+      return 0;
+    }
+}
+
+/* Return TRUE if relocation R_TYPE is a TLS one.  */
+
+static bfd_boolean
+elf_m68k_reloc_tls_p (enum elf_m68k_reloc_type r_type)
+{
+  switch (r_type)
+    {
+    case R_68K_TLS_GD32: case R_68K_TLS_GD16: case R_68K_TLS_GD8:
+    case R_68K_TLS_LDM32: case R_68K_TLS_LDM16: case R_68K_TLS_LDM8:
+    case R_68K_TLS_LDO32: case R_68K_TLS_LDO16: case R_68K_TLS_LDO8:
+    case R_68K_TLS_IE32: case R_68K_TLS_IE16: case R_68K_TLS_IE8:
+    case R_68K_TLS_LE32: case R_68K_TLS_LE16: case R_68K_TLS_LE8:
+    case R_68K_TLS_DTPMOD32: case R_68K_TLS_DTPREL32: case R_68K_TLS_TPREL32:
+      return TRUE;
+
+    default:
+      return FALSE;
+    }
+}
+
 /* Data structure representing a single GOT.  */
 struct elf_m68k_got
 {
@@ -464,18 +862,20 @@ struct elf_m68k_got
      R_68K_GOT8O entries.  */
   htab_t entries;
 
-  /* Number of R_68K_GOT8O entries in this GOT.
-     This is used to detect the overflow of number of such entries.  */
-  bfd_vma rel_8o_n_entries;
+  /* Number of R_x slots in this GOT.  Some (e.g., TLS) entries require
+     several GOT slots.
 
-  /* Cumulative count of R_68K_GOT8O and R_68K_GOT16O entries in this GOT.
-     This is used to detect the overflow of number of such entries.  */
-  bfd_vma rel_8o_16o_n_entries;
+     n_slots[R_8] is the count of R_8 slots in this GOT.
+     n_slots[R_16] is the cumulative count of R_8 and R_16 slots
+     in this GOT.
+     n_slots[R_32] is the cumulative count of R_8, R_16 and R_32 slots
+     in this GOT.  This is the total number of slots.  */
+  bfd_vma n_slots[R_LAST];
 
-  /* Number of local (entry->key_.h == NULL) entries in this GOT.
+  /* Number of local (entry->key_.h == NULL) slots in this GOT.
      This is only used to properly calculate size of .rela.got section;
      see elf_m68k_partition_multi_got.  */
-  bfd_vma local_n_entries;
+  bfd_vma local_n_slots;
 
   /* Offset of this GOT relative to beginning of .got section.  */
   bfd_vma offset;
@@ -514,8 +914,8 @@ struct elf_m68k_link_hash_table
 {
   struct elf_link_hash_table root;
 
-  /* Small local sym to section mapping cache.  */
-  struct sym_sec_cache sym_sec;
+  /* Small local sym cache.  */
+  struct sym_cache sym_cache;
 
   /* The PLT format used by this link, or NULL if the format has not
      yet been chosen.  */
@@ -538,7 +938,8 @@ struct elf_m68k_link_hash_table
 /* Get the m68k ELF linker hash table from a link_info structure.  */
 
 #define elf_m68k_hash_table(p) \
-  ((struct elf_m68k_link_hash_table *) (p)->hash)
+  (elf_hash_table_id ((struct elf_link_hash_table *) ((p)->hash)) \
+  == M68K_ELF_DATA ? ((struct elf_m68k_link_hash_table *) ((p)->hash)) : NULL)
 
 /* Shortcut to multi-GOT data.  */
 #define elf_m68k_multi_got(INFO) (&elf_m68k_hash_table (INFO)->multi_got_)
@@ -546,10 +947,9 @@ struct elf_m68k_link_hash_table
 /* Create an entry in an m68k ELF linker hash table.  */
 
 static struct bfd_hash_entry *
-elf_m68k_link_hash_newfunc (entry, table, string)
-     struct bfd_hash_entry *entry;
-     struct bfd_hash_table *table;
-     const char *string;
+elf_m68k_link_hash_newfunc (struct bfd_hash_entry *entry,
+			    struct bfd_hash_table *table,
+			    const char *string)
 {
   struct bfd_hash_entry *ret = entry;
 
@@ -576,8 +976,7 @@ elf_m68k_link_hash_newfunc (entry, table, string)
 /* Create an m68k ELF linker hash table.  */
 
 static struct bfd_link_hash_table *
-elf_m68k_link_hash_table_create (abfd)
-     bfd *abfd;
+elf_m68k_link_hash_table_create (bfd *abfd)
 {
   struct elf_m68k_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct elf_m68k_link_hash_table);
@@ -588,13 +987,14 @@ elf_m68k_link_hash_table_create (abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      elf_m68k_link_hash_newfunc,
-				      sizeof (struct elf_m68k_link_hash_entry)))
+				      sizeof (struct elf_m68k_link_hash_entry),
+				      M68K_ELF_DATA))
     {
       free (ret);
       return NULL;
     }
 
-  ret->sym_sec.abfd = NULL;
+  ret->sym_cache.abfd = NULL;
   ret->plt_info = NULL;
   ret->local_gp_p = FALSE;
   ret->use_neg_got_offsets_p = FALSE;
@@ -681,7 +1081,68 @@ elf32_m68k_object_p (bfd *abfd)
   return TRUE;
 }
 
+/* Somewhat reverse of elf32_m68k_object_p, this sets the e_flag
+   field based on the machine number.  */
+
+static void
+elf_m68k_final_write_processing (bfd *abfd,
+				 bfd_boolean linker ATTRIBUTE_UNUSED)
+{
+  int mach = bfd_get_mach (abfd);
+  unsigned long e_flags = elf_elfheader (abfd)->e_flags;
+
+  if (!e_flags)
+    {
+      unsigned int arch_mask;
+
+      arch_mask = bfd_m68k_mach_to_features (mach);
+
+      if (arch_mask & m68000)
+	e_flags = EF_M68K_M68000;
+      else if (arch_mask & cpu32)
+	e_flags = EF_M68K_CPU32;
+      else if (arch_mask & fido_a)
+	e_flags = EF_M68K_FIDO;
+      else
+	{
+	  switch (arch_mask
+		  & (mcfisa_a | mcfisa_aa | mcfisa_b | mcfisa_c | mcfhwdiv | mcfusp))
+	    {
+	    case mcfisa_a:
+	      e_flags |= EF_M68K_CF_ISA_A_NODIV;
+	      break;
+	    case mcfisa_a | mcfhwdiv:
+	      e_flags |= EF_M68K_CF_ISA_A;
+	      break;
+	    case mcfisa_a | mcfisa_aa | mcfhwdiv | mcfusp:
+	      e_flags |= EF_M68K_CF_ISA_A_PLUS;
+	      break;
+	    case mcfisa_a | mcfisa_b | mcfhwdiv:
+	      e_flags |= EF_M68K_CF_ISA_B_NOUSP;
+	      break;
+	    case mcfisa_a | mcfisa_b | mcfhwdiv | mcfusp:
+	      e_flags |= EF_M68K_CF_ISA_B;
+	      break;
+	    case mcfisa_a | mcfisa_c | mcfhwdiv | mcfusp:
+	      e_flags |= EF_M68K_CF_ISA_C;
+	      break;
+	    case mcfisa_a | mcfisa_c | mcfusp:
+	      e_flags |= EF_M68K_CF_ISA_C_NODIV;
+	      break;
+	    }
+	  if (arch_mask & mcfmac)
+	    e_flags |= EF_M68K_CF_MAC;
+	  else if (arch_mask & mcfemac)
+	    e_flags |= EF_M68K_CF_EMAC;
+	  if (arch_mask & cfloat)
+	    e_flags |= EF_M68K_CF_FLOAT | EF_M68K_CFV4E;
+	}
+      elf_elfheader (abfd)->e_flags = e_flags;
+    }
+}
+
 /* Keep m68k-specific flags in the ELF header.  */
+
 static bfd_boolean
 elf32_m68k_set_private_flags (abfd, flags)
      bfd *abfd;
@@ -833,6 +1294,9 @@ elf32_m68k_print_private_bfd_data (bfd *abfd, void * ptr)
 	    case EF_M68K_CF_EMAC:
 	      mac = "emac";
 	      break;
+	    case EF_M68K_CF_EMAC_B:
+	      mac = "emac_b";
+	      break;
 	    }
 	  if (mac)
 	    fprintf (file, " [%s]", mac);
@@ -882,22 +1346,22 @@ elf32_m68k_print_private_bfd_data (bfd *abfd, void * ptr)
 
    Notes:
 
-   GOT entry type: We have 3 types of GOT entries.
-   * R_68K_GOT8O type is used in entries for symbols that have
-   at least one R_68K_GOT8O relocation.  We can have at most 0x40
+   GOT entry type: We have several types of GOT entries.
+   * R_8 type is used in entries for symbols that have at least one
+   R_68K_GOT8O or R_68K_TLS_*8 relocation.  We can have at most 0x40
    such entries in one GOT.
-   * R_68K_GOT16O type is used in entries for symbols that have
-   at least one R_68K_GOT16O relocation and no R_68K_GOT8O relocations.
+   * R_16 type is used in entries for symbols that have at least one
+   R_68K_GOT16O or R_68K_TLS_*16 relocation and no R_8 relocations.
    We can have at most 0x4000 such entries in one GOT.
-   * R_68K_GOT32O type is used in all other cases.  We can have as many
-   such entries in one GOT as we like.
+   * R_32 type is used in all other cases.  We can have as many
+   such entries in one GOT as we'd like.
    When counting relocations we have to include the count of the smaller
    ranged relocations in the counts of the larger ranged ones in order
    to correctly detect overflow.
 
    Sorting the GOT: In each GOT starting offsets are assigned to
-   R_68K_GOT8O entries, which are followed by R_68K_GOT16O entries, and
-   R_68K_GOT32O entries go at the end.  See finalize_got_offsets for details.
+   R_8 entries, which are followed by R_16 entries, and
+   R_32 entries go at the end.  See finalize_got_offsets for details.
 
    Negative GOT offsets: To double usable offset range of GOTs we use
    negative offsets.  As we assign entries with GOT offsets relative to
@@ -921,18 +1385,14 @@ elf32_m68k_print_private_bfd_data (bfd *abfd, void * ptr)
 /* Initialize GOT.  */
 
 static void
-elf_m68k_init_got (struct elf_m68k_got *got,
-		   htab_t entries,
-		   bfd_vma rel_8o_n_entries,
-		   bfd_vma rel_8o_16o_n_entries,
-		   bfd_vma local_n_entries,
-		   bfd_vma offset)
+elf_m68k_init_got (struct elf_m68k_got *got)
 {
-  got->entries = entries;
-  got->rel_8o_n_entries = rel_8o_n_entries;
-  got->rel_8o_16o_n_entries = rel_8o_16o_n_entries;
-  got->local_n_entries = local_n_entries;
-  got->offset = offset;
+  got->entries = NULL;
+  got->n_slots[R_8] = 0;
+  got->n_slots[R_16] = 0;
+  got->n_slots[R_32] = 0;
+  got->local_n_slots = 0;
+  got->offset = (bfd_vma) -1;
 }
 
 /* Destruct GOT.  */
@@ -959,7 +1419,7 @@ elf_m68k_create_empty_got (struct bfd_link_info *info)
   if (got == NULL)
     return NULL;
 
-  elf_m68k_init_got (got, NULL, 0, 0, 0, (bfd_vma) -1);
+  elf_m68k_init_got (got);
 
   return got;
 }
@@ -969,19 +1429,30 @@ elf_m68k_create_empty_got (struct bfd_link_info *info)
 static void
 elf_m68k_init_got_entry_key (struct elf_m68k_got_entry_key *key,
 			     struct elf_link_hash_entry *h,
-			     const bfd *abfd, unsigned long symndx)
+			     const bfd *abfd, unsigned long symndx,
+			     enum elf_m68k_reloc_type reloc_type)
 {
-  if (h != NULL)
+  if (elf_m68k_reloc_got_type (reloc_type) == R_68K_TLS_LDM32)
+    /* All TLS_LDM relocations share a single GOT entry.  */
+    {
+      key->bfd = NULL;
+      key->symndx = 0;
+    }
+  else if (h != NULL)
+    /* Global symbols are identified with their got_entry_key.  */
     {
       key->bfd = NULL;
       key->symndx = elf_m68k_hash_entry (h)->got_entry_key;
       BFD_ASSERT (key->symndx != 0);
     }
   else
+    /* Local symbols are identified by BFD they appear in and symndx.  */
     {
       key->bfd = abfd;
       key->symndx = symndx;
     }
+
+  key->type = reloc_type;
 }
 
 /* Calculate hash of got_entry.
@@ -994,9 +1465,9 @@ elf_m68k_got_entry_hash (const void *_entry)
 
   key = &((const struct elf_m68k_got_entry *) _entry)->key_;
 
-  return key->symndx + (key->bfd != NULL
-			? (int) key->bfd->id
-			: -1);
+  return (key->symndx
+	  + (key->bfd != NULL ? (int) key->bfd->id : -1)
+	  + elf_m68k_reloc_got_type (key->type));
 }
 
 /* Check if two got entries are equal.  */
@@ -1011,19 +1482,25 @@ elf_m68k_got_entry_eq (const void *_entry1, const void *_entry2)
   key2 = &((const struct elf_m68k_got_entry *) _entry2)->key_;
 
   return (key1->bfd == key2->bfd
-	  && key1->symndx == key2->symndx);
+	  && key1->symndx == key2->symndx
+	  && (elf_m68k_reloc_got_type (key1->type)
+	      == elf_m68k_reloc_got_type (key2->type)));
 }
 
-/* Maximal number of R_68K_GOT8O entries in a single GOT.  */
-#define ELF_M68K_REL_8O_MAX_N_ENTRIES_IN_GOT(INFO)		\
+/* When using negative offsets, we allocate one extra R_8, one extra R_16
+   and one extra R_32 slots to simplify handling of 2-slot entries during
+   offset allocation -- hence -1 for R_8 slots and -2 for R_16 slots.  */
+
+/* Maximal number of R_8 slots in a single GOT.  */
+#define ELF_M68K_R_8_MAX_N_SLOTS_IN_GOT(INFO)		\
   (elf_m68k_hash_table (INFO)->use_neg_got_offsets_p		\
-   ? 0x40							\
+   ? (0x40 - 1)							\
    : 0x20)
 
-/* Maximal number of R_68K_GOT8O and R_68K_GOT16O entries in a single GOT.  */
-#define ELF_M68K_REL_8O_16O_MAX_N_ENTRIES_IN_GOT(INFO)		\
+/* Maximal number of R_8 and R_16 slots in a single GOT.  */
+#define ELF_M68K_R_8_16_MAX_N_SLOTS_IN_GOT(INFO)		\
   (elf_m68k_hash_table (INFO)->use_neg_got_offsets_p		\
-   ? 0x4000							\
+   ? (0x4000 - 2)						\
    : 0x2000)
 
 /* SEARCH - simply search the hashtable, don't insert new entries or fail when
@@ -1062,7 +1539,7 @@ elf_m68k_get_got_entry (struct elf_m68k_got *got,
       if (howto == SEARCH)
 	return NULL;
 
-      got->entries = htab_try_create (ELF_M68K_REL_8O_MAX_N_ENTRIES_IN_GOT
+      got->entries = htab_try_create (ELF_M68K_R_8_MAX_N_SLOTS_IN_GOT
 				      (info),
 				      elf_m68k_got_entry_hash,
 				      elf_m68k_got_entry_eq, NULL);
@@ -1100,7 +1577,9 @@ elf_m68k_get_got_entry (struct elf_m68k_got *got,
       entry->key_ = *key;
 
       entry->u.s1.refcount = 0;
-      entry->u.s1.type = R_68K_GOT32O;
+
+      /* Mark the entry as not initialized.  */
+      entry->key_.type = R_68K_max;
 
       *ptr = entry;
     }
@@ -1118,52 +1597,68 @@ elf_m68k_get_got_entry (struct elf_m68k_got *got,
 /* Update GOT counters when merging entry of WAS type with entry of NEW type.
    Return the value to which ENTRY's type should be set.  */
 
-static int
-elf_m68k_update_got_entry_type (struct elf_m68k_got *got, int was, int new)
+static enum elf_m68k_reloc_type
+elf_m68k_update_got_entry_type (struct elf_m68k_got *got,
+				enum elf_m68k_reloc_type was,
+				enum elf_m68k_reloc_type new_reloc)
 {
-  if (new == R_68K_GOT8O && was != R_68K_GOT8O)
-    /* NEW overrides WAS.  */
+  enum elf_m68k_got_offset_size was_size;
+  enum elf_m68k_got_offset_size new_size;
+  bfd_vma n_slots;
+
+  if (was == R_68K_max)
+    /* The type of the entry is not initialized yet.  */
     {
-      ++got->rel_8o_n_entries;
+      /* Update all got->n_slots counters, including n_slots[R_32].  */
+      was_size = R_LAST;
 
-      if (was != R_68K_GOT16O)
-	/* Update this counter too.  */
-	++got->rel_8o_16o_n_entries;
+      was = new_reloc;
     }
-  else if (new == R_68K_GOT16O && was != R_68K_GOT8O && was != R_68K_GOT16O)
-    /* NEW overrides WAS.  */
-    ++got->rel_8o_16o_n_entries;
   else
-    /* NEW doesn't override WAS.  */
-    new = was;
+    {
+      /* !!! We, probably, should emit an error rather then fail on assert
+	 in such a case.  */
+      BFD_ASSERT (elf_m68k_reloc_got_type (was)
+		  == elf_m68k_reloc_got_type (new_reloc));
 
-  return new;
+      was_size = elf_m68k_reloc_got_offset_size (was);
+    }
+
+  new_size = elf_m68k_reloc_got_offset_size (new_reloc);
+  n_slots = elf_m68k_reloc_got_n_slots (new_reloc);
+
+  while (was_size > new_size)
+    {
+      --was_size;
+      got->n_slots[was_size] += n_slots;
+    }
+
+  if (new_reloc > was)
+    /* Relocations are ordered from bigger got offset size to lesser,
+       so choose the relocation type with lesser offset size.  */
+    was = new_reloc;
+
+  return was;
 }
 
 /* Update GOT counters when removing an entry of type TYPE.  */
 
 static void
-elf_m68k_remove_got_entry_type (struct elf_m68k_got *got, int type)
+elf_m68k_remove_got_entry_type (struct elf_m68k_got *got,
+				enum elf_m68k_reloc_type type)
 {
-  switch (type)
+  enum elf_m68k_got_offset_size os;
+  bfd_vma n_slots;
+
+  n_slots = elf_m68k_reloc_got_n_slots (type);
+
+  /* Decrese counter of slots with offset size corresponding to TYPE
+     and all greater offset sizes.  */
+  for (os = elf_m68k_reloc_got_offset_size (type); os <= R_32; ++os)
     {
-    case R_68K_GOT8O:
-      BFD_ASSERT (got->rel_8o_n_entries > 0);
+      BFD_ASSERT (got->n_slots[os] >= n_slots);
 
-      --got->rel_8o_n_entries;
-      /* FALLTHRU */
-
-    case R_68K_GOT16O:
-      BFD_ASSERT (got->rel_8o_16o_n_entries >= got->rel_8o_n_entries);
-
-      --got->rel_8o_16o_n_entries;
-      /* FALLTHRU */
-
-    case R_68K_GOT32O:
-      break;
-
-    default:
-      BFD_ASSERT (FALSE);
+      got->n_slots[os] -= n_slots;
     }
 }
 
@@ -1175,7 +1670,8 @@ static struct elf_m68k_got_entry *
 elf_m68k_add_entry_to_got (struct elf_m68k_got *got,
 			   struct elf_link_hash_entry *h,
 			   const bfd *abfd,
-			   int type, unsigned long symndx,
+			   enum elf_m68k_reloc_type reloc_type,
+			   unsigned long symndx,
 			   struct bfd_link_info *info)
 {
   struct elf_m68k_got_entry_key key_;
@@ -1185,11 +1681,16 @@ elf_m68k_add_entry_to_got (struct elf_m68k_got *got,
     elf_m68k_hash_entry (h)->got_entry_key
       = elf_m68k_multi_got (info)->global_symndx++;
 
-  elf_m68k_init_got_entry_key (&key_, h, abfd, symndx);
+  elf_m68k_init_got_entry_key (&key_, h, abfd, symndx, reloc_type);
 
   entry = elf_m68k_get_got_entry (got, &key_, FIND_OR_CREATE, info);
   if (entry == NULL)
     return NULL;
+
+  /* Determine entry's type and update got->n_slots counters.  */
+  entry->key_.type = elf_m68k_update_got_entry_type (got,
+						     entry->key_.type,
+						     reloc_type);
 
   /* Update refcount.  */
   ++entry->u.s1.refcount;
@@ -1198,31 +1699,29 @@ elf_m68k_add_entry_to_got (struct elf_m68k_got *got,
     /* We see this entry for the first time.  */
     {
       if (entry->key_.bfd != NULL)
-	++got->local_n_entries;
+	got->local_n_slots += elf_m68k_reloc_got_n_slots (entry->key_.type);
     }
 
-  /* Determine entry's type and update got->rel_*_n_entries counters.  */
-  entry->u.s1.type = elf_m68k_update_got_entry_type (got, entry->u.s1.type,
-						     type);
+  BFD_ASSERT (got->n_slots[R_32] >= got->local_n_slots);
 
-  if ((got->rel_8o_n_entries
-       > ELF_M68K_REL_8O_MAX_N_ENTRIES_IN_GOT (info))
-      || (got->rel_8o_16o_n_entries
-	  > ELF_M68K_REL_8O_16O_MAX_N_ENTRIES_IN_GOT (info)))
+  if ((got->n_slots[R_8]
+       > ELF_M68K_R_8_MAX_N_SLOTS_IN_GOT (info))
+      || (got->n_slots[R_16]
+	  > ELF_M68K_R_8_16_MAX_N_SLOTS_IN_GOT (info)))
     /* This BFD has too many relocation.  */
     {
-      if (got->rel_8o_n_entries
-	  > ELF_M68K_REL_8O_MAX_N_ENTRIES_IN_GOT (info))
+      if (got->n_slots[R_8] > ELF_M68K_R_8_MAX_N_SLOTS_IN_GOT (info))
 	(*_bfd_error_handler) (_("%B: GOT overflow: "
-				 "Number of R_68K_GOT8O relocations > %d"),
+				 "Number of relocations with 8-bit "
+				 "offset > %d"),
 			       abfd,
-			       ELF_M68K_REL_8O_MAX_N_ENTRIES_IN_GOT (info));
+			       ELF_M68K_R_8_MAX_N_SLOTS_IN_GOT (info));
       else
 	(*_bfd_error_handler) (_("%B: GOT overflow: "
-				 "Number of R_68K_GOT8O and R_68K_GOT16O "
-				 "relocations > %d"),
+				 "Number of relocations with 8- or 16-bit "
+				 "offset > %d"),
 			       abfd,
-			       ELF_M68K_REL_8O_16O_MAX_N_ENTRIES_IN_GOT (info));
+			       ELF_M68K_R_8_16_MAX_N_SLOTS_IN_GOT (info));
 
       return NULL;
     }
@@ -1369,7 +1868,7 @@ elf_m68k_can_merge_gots_1 (void **_entry_ptr, void *_arg)
   const struct elf_m68k_got_entry *entry1;
   struct elf_m68k_can_merge_gots_arg *arg;
   const struct elf_m68k_got_entry *entry2;
-  int type;
+  enum elf_m68k_reloc_type type;
 
   entry1 = (const struct elf_m68k_got_entry *) *_entry_ptr;
   arg = (struct elf_m68k_can_merge_gots_arg *) _arg;
@@ -1377,29 +1876,31 @@ elf_m68k_can_merge_gots_1 (void **_entry_ptr, void *_arg)
   entry2 = elf_m68k_get_got_entry (arg->big, &entry1->key_, SEARCH, NULL);
 
   if (entry2 != NULL)
+    /* We found an existing entry.  Check if we should update it.  */
     {
-      type = elf_m68k_update_got_entry_type (arg->diff, entry2->u.s1.type,
-					     entry1->u.s1.type);
+      type = elf_m68k_update_got_entry_type (arg->diff,
+					     entry2->key_.type,
+					     entry1->key_.type);
 
-      if (type == entry2->u.s1.type)
+      if (type == entry2->key_.type)
 	/* ENTRY1 doesn't update data in ENTRY2.  Skip it.
 	   To skip creation of difference entry we use the type,
 	   which we won't see in GOT entries for sure.  */
-	type = R_68K_32;
+	type = R_68K_max;
     }
   else
+    /* We didn't find the entry.  Add entry1 to DIFF.  */
     {
-      BFD_ASSERT (entry1->u.s1.type != R_68K_32);
+      BFD_ASSERT (entry1->key_.type != R_68K_max);
 
-      type = elf_m68k_update_got_entry_type (arg->diff, R_68K_GOT32O,
-					     entry1->u.s1.type);
+      type = elf_m68k_update_got_entry_type (arg->diff,
+					     R_68K_max, entry1->key_.type);
 
-      /* Update local counter.  */
       if (entry1->key_.bfd != NULL)
-	++arg->diff->local_n_entries;
+	arg->diff->local_n_slots += elf_m68k_reloc_got_n_slots (type);
     }
 
-  if (type != R_68K_32)
+  if (type != R_68K_max)
     /* Create an entry in DIFF.  */
     {
       struct elf_m68k_got_entry *entry;
@@ -1412,7 +1913,7 @@ elf_m68k_can_merge_gots_1 (void **_entry_ptr, void *_arg)
 	  return 0;
 	}
 
-      entry->u.s1.type = type;
+      entry->key_.type = type;
     }
 
   return 1;
@@ -1445,10 +1946,10 @@ elf_m68k_can_merge_gots (struct elf_m68k_got *big,
     }
 
   /* Check for overflow.  */
-  if ((big->rel_8o_n_entries + arg_.diff->rel_8o_n_entries
-       > ELF_M68K_REL_8O_MAX_N_ENTRIES_IN_GOT (info))
-      || (big->rel_8o_16o_n_entries + arg_.diff->rel_8o_16o_n_entries
-	  > ELF_M68K_REL_8O_16O_MAX_N_ENTRIES_IN_GOT (info)))
+  if ((big->n_slots[R_8] + arg_.diff->n_slots[R_8]
+       > ELF_M68K_R_8_MAX_N_SLOTS_IN_GOT (info))
+      || (big->n_slots[R_16] + arg_.diff->n_slots[R_16]
+	  > ELF_M68K_R_8_16_MAX_N_SLOTS_IN_GOT (info)))
     return FALSE;
 
   return TRUE;
@@ -1489,7 +1990,7 @@ elf_m68k_merge_gots_1 (void **entry_ptr, void *_arg)
 
   BFD_ASSERT (to->u.s1.refcount == 0);
   /* All we need to merge is TYPE.  */
-  to->u.s1.type = from->u.s1.type;
+  to->key_.type = from->key_.type;
 
   return 1;
 }
@@ -1516,47 +2017,42 @@ elf_m68k_merge_gots (struct elf_m68k_got *big,
 	return FALSE;
 
       /* Merge counters.  */
-      big->rel_8o_n_entries += diff->rel_8o_n_entries;
-      big->rel_8o_16o_n_entries += diff->rel_8o_16o_n_entries;
-      big->local_n_entries += diff->local_n_entries;
+      big->n_slots[R_8] += diff->n_slots[R_8];
+      big->n_slots[R_16] += diff->n_slots[R_16];
+      big->n_slots[R_32] += diff->n_slots[R_32];
+      big->local_n_slots += diff->local_n_slots;
     }
   else
     /* DIFF is empty.  */
     {
-      BFD_ASSERT (diff->rel_8o_n_entries == 0);
-      BFD_ASSERT (diff->rel_8o_16o_n_entries == 0);
-      BFD_ASSERT (diff->local_n_entries == 0);
+      BFD_ASSERT (diff->n_slots[R_8] == 0);
+      BFD_ASSERT (diff->n_slots[R_16] == 0);
+      BFD_ASSERT (diff->n_slots[R_32] == 0);
+      BFD_ASSERT (diff->local_n_slots == 0);
     }
 
   BFD_ASSERT (!elf_m68k_hash_table (info)->allow_multigot_p
-	      || ((big->rel_8o_n_entries
-		   <= ELF_M68K_REL_8O_MAX_N_ENTRIES_IN_GOT (info))
-		  && (big->rel_8o_16o_n_entries
-		      <= ELF_M68K_REL_8O_16O_MAX_N_ENTRIES_IN_GOT (info))));
+	      || ((big->n_slots[R_8]
+		   <= ELF_M68K_R_8_MAX_N_SLOTS_IN_GOT (info))
+		  && (big->n_slots[R_16]
+		      <= ELF_M68K_R_8_16_MAX_N_SLOTS_IN_GOT (info))));
 
   return TRUE;
 }
 
 struct elf_m68k_finalize_got_offsets_arg
 {
-  /* Offset for the next R_68K_GOT8O entry.  */
-  bfd_vma rel_8o_offset;
-
-  /* Offset for the next R_68K_GOT16O entry.  */
-  bfd_vma rel_16o_offset;
-
-  /* Offset for the next R_68K_GOT32O entry.  */
-  bfd_vma rel_32o_offset;
-
-  /* Should we use negative (relative to GP) offsets for GOT entries.  */
-  bfd_boolean use_neg_got_offsets_p;
-
-  /* Offset of this GOT relative to .got section.  */
-  bfd_vma got_offset;
+  /* Ranges of the offsets for GOT entries.
+     R_x entries receive offsets between offset1[R_x] and offset2[R_x].
+     R_x is R_8, R_16 and R_32.  */
+  bfd_vma *offset1;
+  bfd_vma *offset2;
 
   /* Mapping from global symndx to global symbols.
      This is used to build lists of got entries for global symbols.  */
   struct elf_m68k_link_hash_entry **symndx2h;
+
+  bfd_vma n_ldm_entries;
 };
 
 /* Assign ENTRY an offset.  Build list of GOT entries for global symbols
@@ -1568,99 +2064,65 @@ elf_m68k_finalize_got_offsets_1 (void **entry_ptr, void *_arg)
   struct elf_m68k_got_entry *entry;
   struct elf_m68k_finalize_got_offsets_arg *arg;
 
+  enum elf_m68k_got_offset_size got_offset_size;
+  bfd_vma entry_size;
+
   entry = (struct elf_m68k_got_entry *) *entry_ptr;
   arg = (struct elf_m68k_finalize_got_offsets_arg *) _arg;
 
   /* This should be a fresh entry created in elf_m68k_can_merge_gots.  */
   BFD_ASSERT (entry->u.s1.refcount == 0);
 
-  switch (entry->u.s1.type)
+  /* Get GOT offset size for the entry .  */
+  got_offset_size = elf_m68k_reloc_got_offset_size (entry->key_.type);
+
+  /* Calculate entry size in bytes.  */
+  entry_size = 4 * elf_m68k_reloc_got_n_slots (entry->key_.type);
+
+  /* Check if we should switch to negative range of the offsets. */
+  if (arg->offset1[got_offset_size] + entry_size
+      > arg->offset2[got_offset_size])
     {
-    case R_68K_GOT8O:
-      entry->u.s2.offset = arg->rel_8o_offset;
+      /* Verify that this is the only switch to negative range for
+	 got_offset_size.  If this assertion fails, then we've miscalculated
+	 range for got_offset_size entries in
+	 elf_m68k_finalize_got_offsets.  */
+      BFD_ASSERT (arg->offset2[got_offset_size]
+		  != arg->offset2[-(int) got_offset_size - 1]);
 
-      if (arg->use_neg_got_offsets_p)
-	{
-	  if (arg->rel_8o_offset >= arg->got_offset)
-	    /* We've assigned a positive offset to this entry,
-	       next entry should get (-abs(offset) - 4).  */
-	    arg->rel_8o_offset = (arg->got_offset
-				  - (arg->rel_8o_offset - arg->got_offset)
-				  - 4);
-	  else
-	    /* We've assigned a negative offset to this entry,
-	       next entry should get (+abs(offset) + 0).  */
-	    arg->rel_8o_offset = (arg->got_offset
-				  + (arg->got_offset - arg->rel_8o_offset));
-	}
-      else
-	/* Next entry will simply get next offset.  */
-	arg->rel_8o_offset += 4;
+      /* Switch.  */
+      arg->offset1[got_offset_size] = arg->offset1[-(int) got_offset_size - 1];
+      arg->offset2[got_offset_size] = arg->offset2[-(int) got_offset_size - 1];
 
-      break;
-
-    case R_68K_GOT16O:
-      entry->u.s2.offset = arg->rel_16o_offset;
-
-      if (arg->use_neg_got_offsets_p)
-	{
-	  if (arg->rel_16o_offset >= arg->got_offset)
-	    /* We've assigned a positive offset to this entry,
-	       next entry should get (-abs(offset) - 4).  */
-	    arg->rel_16o_offset = (arg->got_offset
-				   - (arg->rel_16o_offset - arg->got_offset)
-				   - 4);
-	  else
-	    /* We've assigned a negative offset to this entry,
-	       next entry should get (+abs(offset) + 0).  */
-	    arg->rel_16o_offset = (arg->got_offset
-				   + (arg->got_offset - arg->rel_16o_offset));
-	}
-      else
-	/* Next entry will simply get next offset.  */
-	arg->rel_16o_offset += 4;
-
-      break;
-
-    case R_68K_GOT32O:
-      entry->u.s2.offset = arg->rel_32o_offset;
-
-      if (arg->use_neg_got_offsets_p)
-	{
-	  if (arg->rel_32o_offset >= arg->got_offset)
-	    /* We've assigned a positive offset to this entry,
-	       next entry should get (-abs(offset) - 4).  */
-	    arg->rel_32o_offset = (arg->got_offset
-				   - (arg->rel_32o_offset - arg->got_offset)
-				   - 4);
-	  else
-	    /* We've assigned a negative offset to this entry,
-	       next entry should get (+abs(offset) + 0).  */
-	    arg->rel_32o_offset = (arg->got_offset
-				   + (arg->got_offset - arg->rel_32o_offset));
-	}
-      else
-	/* Next entry will simply get next offset.  */
-	arg->rel_32o_offset += 4;
-
-      break;
-
-    default:
-      BFD_ASSERT (FALSE);
-      break;
+      /* Verify that now we have enough room for the entry.  */
+      BFD_ASSERT (arg->offset1[got_offset_size] + entry_size
+		  <= arg->offset2[got_offset_size]);
     }
+
+  /* Assign offset to entry.  */
+  entry->u.s2.offset = arg->offset1[got_offset_size];
+  arg->offset1[got_offset_size] += entry_size;
 
   if (entry->key_.bfd == NULL)
     /* Hook up this entry into the list of got_entries of H.  */
     {
       struct elf_m68k_link_hash_entry *h;
 
-      BFD_ASSERT (entry->key_.symndx != 0);
       h = arg->symndx2h[entry->key_.symndx];
-      BFD_ASSERT (h != NULL);
+      if (h != NULL)
+	{
+	  entry->u.s2.next = h->glist;
+	  h->glist = entry;
+	}
+      else
+	/* This should be the entry for TLS_LDM relocation then.  */
+	{
+	  BFD_ASSERT ((elf_m68k_reloc_got_type (entry->key_.type)
+		       == R_68K_TLS_LDM32)
+		      && entry->key_.symndx == 0);
 
-      entry->u.s2.next = h->glist;
-      h->glist = entry;
+	  ++arg->n_ldm_entries;
+	}
     }
   else
     /* This entry is for local symbol.  */
@@ -1673,118 +2135,101 @@ elf_m68k_finalize_got_offsets_1 (void **entry_ptr, void *_arg)
    should use negative offsets.
    Build list of GOT entries for global symbols along the way.
    SYMNDX2H is mapping from global symbol indices to actual
-   global symbols.  */
+   global symbols.
+   Return offset at which next GOT should start.  */
 
 static void
 elf_m68k_finalize_got_offsets (struct elf_m68k_got *got,
 			       bfd_boolean use_neg_got_offsets_p,
-			       struct elf_m68k_link_hash_entry **symndx2h)
+			       struct elf_m68k_link_hash_entry **symndx2h,
+			       bfd_vma *final_offset, bfd_vma *n_ldm_entries)
 {
   struct elf_m68k_finalize_got_offsets_arg arg_;
+  bfd_vma offset1_[2 * R_LAST];
+  bfd_vma offset2_[2 * R_LAST];
+  int i;
+  bfd_vma start_offset;
 
   BFD_ASSERT (got->offset != (bfd_vma) -1);
 
   /* We set entry offsets relative to the .got section (and not the
      start of a particular GOT), so that we can use them in
-     finish_dynamic_symbol without needing to know the GOT they come
+     finish_dynamic_symbol without needing to know the GOT which they come
      from.  */
 
+  /* Put offset1 in the middle of offset1_, same for offset2.  */
+  arg_.offset1 = offset1_ + R_LAST;
+  arg_.offset2 = offset2_ + R_LAST;
+
+  start_offset = got->offset;
+
   if (use_neg_got_offsets_p)
+    /* Setup both negative and positive ranges for R_8, R_16 and R_32.  */
+    i = -(int) R_32 - 1;
+  else
+    /* Setup positives ranges for R_8, R_16 and R_32.  */
+    i = (int) R_8;
+
+  for (; i <= (int) R_32; ++i)
     {
+      int j;
       size_t n;
 
-      /* Put GOT pointer in the middle of GOT.  */
-      n = htab_elements (got->entries);
-      if ((n & 1) == 0)
-	/* Even number of GOT entries.  */
-	got->offset += 2 * n;
-      else
-	/* Odd number of GOT entries.  */
-	got->offset += 2 * (n - 1);
+      /* Set beginning of the range of offsets I.  */
+      arg_.offset1[i] = start_offset;
 
-      /* R_68K_GOT8O entries shall start at GOT offset.  */
-      arg_.rel_8o_offset = got->offset;
+      /* Calculate number of slots that require I offsets.  */
+      j = (i >= 0) ? i : -i - 1;
+      n = (j >= 1) ? got->n_slots[j - 1] : 0;
+      n = got->n_slots[j] - n;
 
-      n = got->rel_8o_n_entries;
-      if ((n & 1) == 0)
-	/* Even number of R_68K_GOT8O entries.
-	   The last R_68K_GOT8O entry will be at
-	   (got->offset - 2 * n).  Hence the first R_68K_GOT16O
-	   entry will be at offset ...  */
-	arg_.rel_16o_offset = got->offset + 2 * n;
-      else
-	/* Odd number of R_68K_GOT8O entries.
-	   The last R_68K_GOT8O entry will be at
-	   (got->offset + 2 * (n - 1)).  Hence the first R_68K_GOT16O
-	   entry will be at offset ...  */
-	arg_.rel_16o_offset = got->offset - 2 * (n - 1) - 4;
+      if (use_neg_got_offsets_p && n != 0)
+	{
+	  if (i < 0)
+	    /* We first fill the positive side of the range, so we might
+	       end up with one empty slot at that side when we can't fit
+	       whole 2-slot entry.  Account for that at negative side of
+	       the interval with one additional entry.  */
+	    n = n / 2 + 1;
+	  else
+	    /* When the number of slots is odd, make positive side of the
+	       range one entry bigger.  */
+	    n = (n + 1) / 2;
+	}
 
-      n = got->rel_8o_16o_n_entries;
-      if ((n & 1) == 0)
-	/* Even number of R_68K_GOT8O and R_68K_GOT16O entries.
-	   The last R_68K_GOT8O entry will be at
-	   (got->offset - 2 * n).  Hence the first R_68K_GOT32O
-	   entry will be at offset ...  */
-	arg_.rel_32o_offset = got->offset + 2 * n;
-      else
-	/* Odd number of R_68K_GOT8O and R_68K_GOT16O entries.
-	   The last R_68K_GOT16O entry will be at
-	   (got->offset + 2 * (n - 1)).  Hence the first R_68K_GOT32O
-	   entry will be at offset ...  */
-	arg_.rel_32o_offset = got->offset - 2 * (n - 1) - 4;
+      /* N is the number of slots that require I offsets.
+	 Calculate length of the range for I offsets.  */
+      n = 4 * n;
 
-      arg_.use_neg_got_offsets_p = TRUE;
+      /* Set end of the range.  */
+      arg_.offset2[i] = start_offset + n;
 
-      arg_.got_offset = got->offset;
+      start_offset = arg_.offset2[i];
     }
-  else
-    {
-      arg_.rel_8o_offset = got->offset;
-      arg_.rel_16o_offset = 4 * got->rel_8o_n_entries + got->offset;
-      arg_.rel_32o_offset = 4 * got->rel_8o_16o_n_entries + got->offset;
 
-      arg_.use_neg_got_offsets_p = FALSE;
+  if (!use_neg_got_offsets_p)
+    /* Make sure that if we try to switch to negative offsets in
+       elf_m68k_finalize_got_offsets_1, the assert therein will catch
+       the bug.  */
+    for (i = R_8; i <= R_32; ++i)
+      arg_.offset2[-i - 1] = arg_.offset2[i];
 
-      /* This shouldn't be used.  */
-      arg_.got_offset = (bfd_vma) -1;
-    }
+  /* Setup got->offset.  offset1[R_8] is either in the middle or at the
+     beginning of GOT depending on use_neg_got_offsets_p.  */
+  got->offset = arg_.offset1[R_8];
 
   arg_.symndx2h = symndx2h;
+  arg_.n_ldm_entries = 0;
 
+  /* Assign offsets.  */
   htab_traverse (got->entries, elf_m68k_finalize_got_offsets_1, &arg_);
 
-  /* Calculate offset ranges we have actually assigned.  */
-  if (use_neg_got_offsets_p)
-    {
-      if (arg_.rel_8o_offset == (bfd_vma) -4
-	  || arg_.rel_8o_offset < got->offset)
-	arg_.rel_8o_offset = 2 * (got->offset - arg_.rel_8o_offset) - 4;
-      else
-	arg_.rel_8o_offset = 2 * (arg_.rel_8o_offset - got->offset);
+  /* Check offset ranges we have actually assigned.  */
+  for (i = (int) R_8; i <= (int) R_32; ++i)
+    BFD_ASSERT (arg_.offset2[i] - arg_.offset1[i] <= 4);
 
-      if (arg_.rel_16o_offset == (bfd_vma) -4
-	  || arg_.rel_16o_offset < got->offset)
-	arg_.rel_16o_offset = 2 * (got->offset - arg_.rel_16o_offset) - 4;
-      else
-	arg_.rel_16o_offset = 2 * (arg_.rel_16o_offset - got->offset);
-
-      if (arg_.rel_32o_offset == (bfd_vma) -4
-	  || arg_.rel_32o_offset < got->offset)
-	arg_.rel_32o_offset = 2 * (got->offset - arg_.rel_32o_offset) - 4;
-      else
-	arg_.rel_32o_offset = 2 * (arg_.rel_32o_offset - got->offset);
-    }
-  else
-    {
-      arg_.rel_8o_offset -= got->offset;
-      arg_.rel_16o_offset -= got->offset;
-      arg_.rel_32o_offset -= got->offset;
-    }
-
-  /* These asserts check that we got counting of entries right.  */
-  BFD_ASSERT (arg_.rel_8o_offset == 4 * got->rel_8o_n_entries);
-  BFD_ASSERT (arg_.rel_16o_offset == 4 * got->rel_8o_16o_n_entries);
-  BFD_ASSERT (arg_.rel_32o_offset == 4 * htab_elements (got->entries));
+  *final_offset = start_offset;
+  *n_ldm_entries = arg_.n_ldm_entries;
 }
 
 struct elf_m68k_partition_multi_got_arg
@@ -1798,13 +2243,14 @@ struct elf_m68k_partition_multi_got_arg
   /* Context where memory should be allocated.  */
   struct bfd_link_info *info;
 
-  /* Total number of entries in the .got section.
+  /* Total number of slots in the .got section.
      This is used to calculate size of the .got and .rela.got sections.  */
-  bfd_vma n_entries;
+  bfd_vma n_slots;
 
-  /* Total number of local entries in the .got section.
+  /* Difference in numbers of allocated slots in the .got section
+     and necessary relocations in the .rela.got section.
      This is used to calculate size of the .rela.got section.  */
-  bfd_vma local_n_entries;
+  bfd_vma slots_relas_diff;
 
   /* Error flag.  */
   bfd_boolean error_p;
@@ -1813,6 +2259,34 @@ struct elf_m68k_partition_multi_got_arg
      This is used to build lists of got entries for global symbols.  */
   struct elf_m68k_link_hash_entry **symndx2h;
 };
+
+static void
+elf_m68k_partition_multi_got_2 (struct elf_m68k_partition_multi_got_arg *arg)
+{
+  bfd_vma n_ldm_entries;
+
+  elf_m68k_finalize_got_offsets (arg->current_got,
+				 (elf_m68k_hash_table (arg->info)
+				  ->use_neg_got_offsets_p),
+				 arg->symndx2h,
+				 &arg->offset, &n_ldm_entries);
+
+  arg->n_slots += arg->current_got->n_slots[R_32];
+
+  if (!arg->info->shared)
+    /* If we are generating a shared object, we need to
+       output a R_68K_RELATIVE reloc so that the dynamic
+       linker can adjust this GOT entry.  Overwise we
+       don't need space in .rela.got for local symbols.  */
+    arg->slots_relas_diff += arg->current_got->local_n_slots;
+
+  /* @LDM relocations require a 2-slot GOT entry, but only
+     one relocation.  Account for that.  */
+  arg->slots_relas_diff += n_ldm_entries;
+
+  BFD_ASSERT (arg->slots_relas_diff <= arg->n_slots);
+}
+
 
 /* Process a single BFD2GOT entry and either merge GOT to CURRENT_GOT
    or start a new CURRENT_GOT.  */
@@ -1823,7 +2297,6 @@ elf_m68k_partition_multi_got_1 (void **_entry, void *_arg)
   struct elf_m68k_bfd2got_entry *entry;
   struct elf_m68k_partition_multi_got_arg *arg;
   struct elf_m68k_got *got;
-  struct elf_m68k_got *current_got;
   struct elf_m68k_got diff_;
   struct elf_m68k_got *diff;
 
@@ -1840,7 +2313,7 @@ elf_m68k_partition_multi_got_1 (void **_entry, void *_arg)
     /* Construct diff.  */
     {
       diff = &diff_;
-      elf_m68k_init_got (diff, NULL, 0, 0, 0, (bfd_vma) -1);
+      elf_m68k_init_got (diff);
 
       if (!elf_m68k_can_merge_gots (arg->current_got, got, arg->info, diff))
 	{
@@ -1854,7 +2327,7 @@ elf_m68k_partition_multi_got_1 (void **_entry, void *_arg)
 	  if (elf_m68k_hash_table (arg->info)->allow_multigot_p)
 	    {
 	      elf_m68k_clear_got (diff);
-	      /* Schedule to finish up CURRENT_GOT and start new one.  */
+	      /* Schedule to finish up current_got and start new one.  */
 	      diff = NULL;
 	    }
 	  /* else
@@ -1867,7 +2340,7 @@ elf_m68k_partition_multi_got_1 (void **_entry, void *_arg)
   else
     /* Diff of got against empty current_got is got itself.  */
     {
-      /* Create empty CURRENT_GOT to subsequent GOTs to.  */
+      /* Create empty current_got to put subsequent GOTs to.  */
       arg->current_got = elf_m68k_create_empty_got (arg->info);
       if (arg->current_got == NULL)
 	{
@@ -1880,11 +2353,9 @@ elf_m68k_partition_multi_got_1 (void **_entry, void *_arg)
       diff = got;
     }
 
-  current_got = arg->current_got;
-
   if (diff != NULL)
     {
-      if (!elf_m68k_merge_gots (current_got, diff, arg->info))
+      if (!elf_m68k_merge_gots (arg->current_got, diff, arg->info))
 	{
 	  arg->error_p = TRUE;
 	  goto final_return;
@@ -1893,27 +2364,15 @@ elf_m68k_partition_multi_got_1 (void **_entry, void *_arg)
       /* Now we can free GOT.  */
       elf_m68k_clear_got (got);
 
-      entry->got = current_got;
+      entry->got = arg->current_got;
     }
   else
     {
+      /* Finish up current_got.  */
+      elf_m68k_partition_multi_got_2 (arg);
+
       /* Schedule to start a new current_got.  */
       arg->current_got = NULL;
-      arg->offset = (current_got->offset
-		     + 4 * htab_elements (current_got->entries));
-
-      /* Finish up current_got.  */
-      {
-	elf_m68k_finalize_got_offsets (current_got,
-				       elf_m68k_hash_table (arg->info)
-				       ->use_neg_got_offsets_p,
-				       arg->symndx2h);
-
-	arg->n_entries += htab_elements (current_got->entries);
-	arg->local_n_entries += current_got->local_n_entries;
-
-	BFD_ASSERT (arg->local_n_entries <= arg->n_entries);
-      }
 
       /* Retry.  */
       if (!elf_m68k_partition_multi_got_1 (_entry, _arg))
@@ -1969,8 +2428,8 @@ elf_m68k_partition_multi_got (struct bfd_link_info *info)
   arg_.current_got = NULL;
   arg_.offset = 0;
   arg_.info = info;
-  arg_.n_entries = 0;
-  arg_.local_n_entries = 0;
+  arg_.n_slots = 0;
+  arg_.slots_relas_diff = 0;
   arg_.error_p = FALSE;
 
   if (multi_got->bfd2got != NULL)
@@ -1998,16 +2457,7 @@ elf_m68k_partition_multi_got (struct bfd_link_info *info)
 	}
 
       /* Finish up last current_got.  */
-      {
-	elf_m68k_finalize_got_offsets (arg_.current_got,
-				       elf_m68k_hash_table (info)
-				       ->use_neg_got_offsets_p, arg_.symndx2h);
-
-	arg_.n_entries += htab_elements (arg_.current_got->entries);
-	arg_.local_n_entries += arg_.current_got->local_n_entries;
-
-	BFD_ASSERT (arg_.local_n_entries <= arg_.n_entries);
-      }
+      elf_m68k_partition_multi_got_2 (&arg_);
 
       free (arg_.symndx2h);
     }
@@ -2019,25 +2469,18 @@ elf_m68k_partition_multi_got (struct bfd_link_info *info)
 
       s = bfd_get_section_by_name (elf_hash_table (info)->dynobj, ".got");
       if (s != NULL)
-	s->size = arg_.n_entries * 4;
+	s->size = arg_.offset;
       else
-	BFD_ASSERT (arg_.n_entries == 0);
+	BFD_ASSERT (arg_.offset == 0);
 
-      /* If we are generating a shared object, we need to
-	 output a R_68K_RELATIVE reloc so that the dynamic
-	 linker can adjust this GOT entry.  Overwise we
-	 don't need space in .rela.got for local symbols.  */
-      if (!info->shared)
-	{
-	  BFD_ASSERT (arg_.local_n_entries <= arg_.n_entries);
-	  arg_.n_entries -= arg_.local_n_entries;
-	}
+      BFD_ASSERT (arg_.slots_relas_diff <= arg_.n_slots);
+      arg_.n_slots -= arg_.slots_relas_diff;
 
       s = bfd_get_section_by_name (elf_hash_table (info)->dynobj, ".rela.got");
       if (s != NULL)
-	s->size = arg_.n_entries * sizeof (Elf32_External_Rela);
+	s->size = arg_.n_slots * sizeof (Elf32_External_Rela);
       else
-	BFD_ASSERT (arg_.n_entries == 0);
+	BFD_ASSERT (arg_.n_slots == 0);
     }
   else
     BFD_ASSERT (multi_got->bfd2got == NULL);
@@ -2081,10 +2524,12 @@ elf_m68k_remove_got_entry (struct elf_m68k_got *got,
   /* Check that this entry is indeed unused.  */
   BFD_ASSERT (entry->u.s1.refcount == 0);
 
-  elf_m68k_remove_got_entry_type (got, entry->u.s1.type);
+  elf_m68k_remove_got_entry_type (got, entry->key_.type);
 
   if (entry->key_.bfd != NULL)
-    --got->local_n_entries;
+    got->local_n_slots -= elf_m68k_reloc_got_n_slots (entry->key_.type);
+
+  BFD_ASSERT (got->n_slots[R_32] >= got->local_n_slots);
 
   htab_clear_slot (got->entries, (void **) entry_ptr);
 }
@@ -2110,6 +2555,10 @@ elf_m68k_copy_indirect_symbol (struct bfd_link_info *info,
 
   dir = elf_m68k_hash_entry (_dir);
   ind = elf_m68k_hash_entry (_ind);
+
+  /* Any absolute non-dynamic relocations against an indirect or weak
+     definition will be against the target symbol.  */
+  _dir->non_got_ref |= _ind->non_got_ref;
 
   /* We might have a direct symbol already having entries in the GOTs.
      Update its key only in case indirect symbol has GOT entries and
@@ -2187,9 +2636,32 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 	      && strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0)
 	    break;
 	  /* Fall through.  */
+
+	  /* Relative GOT relocations.  */
 	case R_68K_GOT8O:
 	case R_68K_GOT16O:
 	case R_68K_GOT32O:
+	  /* Fall through.  */
+
+	  /* TLS relocations.  */
+	case R_68K_TLS_GD8:
+	case R_68K_TLS_GD16:
+	case R_68K_TLS_GD32:
+	case R_68K_TLS_LDM8:
+	case R_68K_TLS_LDM16:
+	case R_68K_TLS_LDM32:
+	case R_68K_TLS_IE8:
+	case R_68K_TLS_IE16:
+	case R_68K_TLS_IE32:
+
+	case R_68K_TLS_TPREL32:
+	case R_68K_TLS_DTPREL32:
+
+	  if (ELF32_R_TYPE (rel->r_info) == R_68K_TLS_TPREL32
+	      && info->shared)
+	    /* Do the special chorus for libraries with static TLS.  */
+	    info->flags |= DF_STATIC_TLS;
+
 	  /* This symbol requires a global offset table entry.  */
 
 	  if (dynobj == NULL)
@@ -2260,14 +2732,6 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 		    if (!bfd_elf_link_record_dynamic_symbol (info, h))
 		      return FALSE;
 		  }
-
-		/* Allocate space in the .got section.  */
-		sgot->size += 4;
-
-		/* Allocate relocation space.  */
-		if (h != NULL
-		    || info->shared)
-		  srelgot->size += sizeof (Elf32_External_Rela);
 	      }
 	  }
 
@@ -2356,6 +2820,10 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 	      /* Make sure a plt entry is created for this symbol if it
 		 turns out to be a function defined by a dynamic object.  */
 	      h->plt.refcount++;
+
+	      if (!info->shared)
+		/* This symbol needs a non-GOT reference.  */
+		h->non_got_ref = 1;
 	    }
 
 	  /* If we are creating a shared library, we need to copy the
@@ -2368,35 +2836,11 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 		 section in dynobj and make room for this reloc.  */
 	      if (sreloc == NULL)
 		{
-		  const char *name;
+		  sreloc = _bfd_elf_make_dynamic_reloc_section
+		    (sec, dynobj, 2, abfd, /*rela?*/ TRUE);
 
-		  name = (bfd_elf_string_from_elf_section
-			  (abfd,
-			   elf_elfheader (abfd)->e_shstrndx,
-			   elf_section_data (sec)->rel_hdr.sh_name));
-		  if (name == NULL)
-		    return FALSE;
-
-		  BFD_ASSERT (CONST_STRNEQ (name, ".rela")
-			      && strcmp (bfd_get_section_name (abfd, sec),
-					 name + 5) == 0);
-
-		  sreloc = bfd_get_section_by_name (dynobj, name);
 		  if (sreloc == NULL)
-		    {
-		      sreloc = bfd_make_section_with_flags (dynobj,
-							    name,
-							    (SEC_ALLOC
-							     | SEC_LOAD
-							     | SEC_HAS_CONTENTS
-							     | SEC_IN_MEMORY
-							     | SEC_LINKER_CREATED
-							     | SEC_READONLY));
-		      if (sreloc == NULL
-			  || !bfd_set_section_alignment (dynobj, sreloc, 2))
-			return FALSE;
-		    }
-		  elf_section_data (sec)->sreloc = sreloc;
+		    return FALSE;
 		}
 
 	      if (sec->flags & SEC_READONLY
@@ -2434,12 +2878,16 @@ elf_m68k_check_relocs (abfd, info, sec, relocs)
 		    {
 		      asection *s;
 		      void *vpp;
+		      Elf_Internal_Sym *isym;
 
-		      s = (bfd_section_from_r_symndx
-			   (abfd, &elf_m68k_hash_table (info)->sym_sec,
-			    sec, r_symndx));
-		      if (s == NULL)
+		      isym = bfd_sym_from_r_symndx (&elf_m68k_hash_table (info)->sym_cache,
+						    abfd, r_symndx);
+		      if (isym == NULL)
 			return FALSE;
+
+		      s = bfd_section_from_elf_index (abfd, isym->st_shndx);
+		      if (s == NULL)
+			s = sec;
 
 		      vpp = &elf_section_data (s)->local_dynrel;
 		      head = (struct elf_m68k_pcrel_relocs_copied **) vpp;
@@ -2524,8 +2972,6 @@ elf_m68k_gc_sweep_hook (bfd *abfd,
   struct elf_link_hash_entry **sym_hashes;
   const Elf_Internal_Rela *rel, *relend;
   bfd *dynobj;
-  asection *sgot;
-  asection *srelgot;
   struct elf_m68k_got *got;
 
   if (info->relocatable)
@@ -2537,9 +2983,6 @@ elf_m68k_gc_sweep_hook (bfd *abfd,
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
-
-  sgot = bfd_get_section_by_name (dynobj, ".got");
-  srelgot = bfd_get_section_by_name (dynobj, ".rela.got");
   got = NULL;
 
   relend = relocs + sec->reloc_count;
@@ -2570,6 +3013,22 @@ elf_m68k_gc_sweep_hook (bfd *abfd,
 	case R_68K_GOT8O:
 	case R_68K_GOT16O:
 	case R_68K_GOT32O:
+	  /* Fall through.  */
+
+	  /* TLS relocations.  */
+	case R_68K_TLS_GD8:
+	case R_68K_TLS_GD16:
+	case R_68K_TLS_GD32:
+	case R_68K_TLS_LDM8:
+	case R_68K_TLS_LDM16:
+	case R_68K_TLS_LDM32:
+	case R_68K_TLS_IE8:
+	case R_68K_TLS_IE16:
+	case R_68K_TLS_IE32:
+
+	case R_68K_TLS_TPREL32:
+	case R_68K_TLS_DTPREL32:
+
 	  if (got == NULL)
 	    {
 	      got = elf_m68k_get_bfd2got_entry (elf_m68k_multi_got (info),
@@ -2582,7 +3041,8 @@ elf_m68k_gc_sweep_hook (bfd *abfd,
 	    struct elf_m68k_got_entry **got_entry_ptr;
 	    struct elf_m68k_got_entry *got_entry;
 
-	    elf_m68k_init_got_entry_key (&key_, h, abfd, r_symndx);
+	    elf_m68k_init_got_entry_key (&key_, h, abfd, r_symndx,
+					 ELF32_R_TYPE (rel->r_info));
 	    got_entry_ptr = elf_m68k_find_got_entry_ptr (got, &key_);
 
 	    got_entry = *got_entry_ptr;
@@ -2780,6 +3240,11 @@ elf_m68k_adjust_dynamic_symbol (info, h)
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
   if (info->shared)
+    return TRUE;
+
+  /* If there are no references to this symbol that do not use the
+     GOT, we don't need to generate a copy reloc.  */
+  if (!h->non_got_ref)
     return TRUE;
 
   if (h->size == 0)
@@ -3004,9 +3469,7 @@ elf_m68k_discard_copies (h, inf)
   if (h->root.type == bfd_link_hash_warning)
     h = (struct elf_link_hash_entry *) h->root.u.i.link;
 
-  if (!h->def_regular
-      || (!info->symbolic
-	  && !h->forced_local))
+  if (!SYMBOL_CALLS_LOCAL (info, h))
     {
       if ((info->flags & DF_TEXTREL) == 0)
 	{
@@ -3032,6 +3495,145 @@ elf_m68k_discard_copies (h, inf)
   return TRUE;
 }
 
+
+/* Install relocation RELA.  */
+
+static void
+elf_m68k_install_rela (bfd *output_bfd,
+		       asection *srela,
+		       Elf_Internal_Rela *rela)
+{
+  bfd_byte *loc;
+
+  loc = srela->contents;
+  loc += srela->reloc_count++ * sizeof (Elf32_External_Rela);
+  bfd_elf32_swap_reloca_out (output_bfd, rela, loc);
+}
+
+/* Find the base offsets for thread-local storage in this object,
+   for GD/LD and IE/LE respectively.  */
+
+#define DTP_OFFSET 0x8000
+#define TP_OFFSET  0x7000
+
+static bfd_vma
+dtpoff_base (struct bfd_link_info *info)
+{
+  /* If tls_sec is NULL, we should have signalled an error already.  */
+  if (elf_hash_table (info)->tls_sec == NULL)
+    return 0;
+  return elf_hash_table (info)->tls_sec->vma + DTP_OFFSET;
+}
+
+static bfd_vma
+tpoff_base (struct bfd_link_info *info)
+{
+  /* If tls_sec is NULL, we should have signalled an error already.  */
+  if (elf_hash_table (info)->tls_sec == NULL)
+    return 0;
+  return elf_hash_table (info)->tls_sec->vma + TP_OFFSET;
+}
+
+/* Output necessary relocation to handle a symbol during static link.
+   This function is called from elf_m68k_relocate_section.  */
+
+static void
+elf_m68k_init_got_entry_static (struct bfd_link_info *info,
+				bfd *output_bfd,
+				enum elf_m68k_reloc_type r_type,
+				asection *sgot,
+				bfd_vma got_entry_offset,
+				bfd_vma relocation)
+{
+  switch (elf_m68k_reloc_got_type (r_type))
+    {
+    case R_68K_GOT32O:
+      bfd_put_32 (output_bfd, relocation, sgot->contents + got_entry_offset);
+      break;
+
+    case R_68K_TLS_GD32:
+      /* We know the offset within the module,
+	 put it into the second GOT slot.  */
+      bfd_put_32 (output_bfd, relocation - dtpoff_base (info),
+		  sgot->contents + got_entry_offset + 4);
+      /* FALLTHRU */
+
+    case R_68K_TLS_LDM32:
+      /* Mark it as belonging to module 1, the executable.  */
+      bfd_put_32 (output_bfd, 1, sgot->contents + got_entry_offset);
+      break;
+
+    case R_68K_TLS_IE32:
+      bfd_put_32 (output_bfd, relocation - tpoff_base (info),
+		  sgot->contents + got_entry_offset);
+      break;
+
+    default:
+      BFD_ASSERT (FALSE);
+    }
+}
+
+/* Output necessary relocation to handle a local symbol
+   during dynamic link.
+   This function is called either from elf_m68k_relocate_section
+   or from elf_m68k_finish_dynamic_symbol.  */
+
+static void
+elf_m68k_init_got_entry_local_shared (struct bfd_link_info *info,
+				      bfd *output_bfd,
+				      enum elf_m68k_reloc_type r_type,
+				      asection *sgot,
+				      bfd_vma got_entry_offset,
+				      bfd_vma relocation,
+				      asection *srela)
+{
+  Elf_Internal_Rela outrel;
+
+  switch (elf_m68k_reloc_got_type (r_type))
+    {
+    case R_68K_GOT32O:
+      /* Emit RELATIVE relocation to initialize GOT slot
+	 at run-time.  */
+      outrel.r_info = ELF32_R_INFO (0, R_68K_RELATIVE);
+      outrel.r_addend = relocation;
+      break;
+
+    case R_68K_TLS_GD32:
+      /* We know the offset within the module,
+	 put it into the second GOT slot.  */
+      bfd_put_32 (output_bfd, relocation - dtpoff_base (info),
+		  sgot->contents + got_entry_offset + 4);
+      /* FALLTHRU */
+
+    case R_68K_TLS_LDM32:
+      /* We don't know the module number,
+	 create a relocation for it.  */
+      outrel.r_info = ELF32_R_INFO (0, R_68K_TLS_DTPMOD32);
+      outrel.r_addend = 0;
+      break;
+
+    case R_68K_TLS_IE32:
+      /* Emit TPREL relocation to initialize GOT slot
+	 at run-time.  */
+      outrel.r_info = ELF32_R_INFO (0, R_68K_TLS_TPREL32);
+      outrel.r_addend = relocation - elf_hash_table (info)->tls_sec->vma;
+      break;
+
+    default:
+      BFD_ASSERT (FALSE);
+    }
+
+  /* Offset of the GOT entry.  */
+  outrel.r_offset = (sgot->output_section->vma
+		     + sgot->output_offset
+		     + got_entry_offset);
+
+  /* Install one of the above relocations.  */
+  elf_m68k_install_rela (output_bfd, srela, &outrel);
+
+  bfd_put_32 (output_bfd, outrel.r_addend, sgot->contents + got_entry_offset);
+}
+
 /* Relocate an M68K ELF section.  */
 
 static bfd_boolean
@@ -3052,6 +3654,7 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
   asection *sgot;
   asection *splt;
   asection *sreloc;
+  asection *srela;
   struct elf_m68k_got *got;
   Elf_Internal_Rela *rel;
   Elf_Internal_Rela *relend;
@@ -3063,6 +3666,7 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
   sgot = NULL;
   splt = NULL;
   sreloc = NULL;
+  srela = NULL;
 
   got = NULL;
 
@@ -3112,15 +3716,8 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 	}
 
       if (sec != NULL && elf_discarded_section (sec))
-	{
-	  /* For relocs against symbols from removed linkonce sections,
-	     or sections discarded by a linker script, we just want the
-	     section contents zeroed.  Avoid any special processing.  */
-	  _bfd_clear_contents (howto, input_bfd, contents + rel->r_offset);
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
-	}
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rel, relend, howto, contents);
 
       if (info->relocatable)
 	continue;
@@ -3194,6 +3791,19 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 	case R_68K_GOT8O:
 	case R_68K_GOT16O:
 	case R_68K_GOT32O:
+
+	case R_68K_TLS_LDM32:
+	case R_68K_TLS_LDM16:
+	case R_68K_TLS_LDM8:
+
+	case R_68K_TLS_GD8:
+	case R_68K_TLS_GD16:
+	case R_68K_TLS_GD32:
+
+	case R_68K_TLS_IE8:
+	case R_68K_TLS_IE16:
+	case R_68K_TLS_IE32:
+
 	  /* Relocation is the offset of the entry for this symbol in
 	     the global offset table.  */
 
@@ -3217,84 +3827,100 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 	      }
 
 	    /* Get GOT offset for this symbol.  */
-	    elf_m68k_init_got_entry_key (&key_, h, input_bfd, r_symndx);
+	    elf_m68k_init_got_entry_key (&key_, h, input_bfd, r_symndx,
+					 r_type);
 	    off_ptr = &elf_m68k_get_got_entry (got, &key_, MUST_FIND,
 					       NULL)->u.s2.offset;
 	    off = *off_ptr;
 
-	    if (h != NULL)
-	      {
-		bfd_boolean dyn;
-
-		dyn = elf_hash_table (info)->dynamic_sections_created;
-		if (!WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared, h)
-		    || (info->shared
-			&& (info->symbolic
-			    || h->dynindx == -1
-			    || h->forced_local)
-			&& h->def_regular))
-		  {
-		    /* This is actually a static link, or it is a
-		       -Bsymbolic link and the symbol is defined
-		       locally, or the symbol was forced to be local
-		       because of a version file..  We must initialize
-		       this entry in the global offset table.  Since
-		       the offset must always be a multiple of 4, we
-		       use the least significant bit to record whether
-		       we have initialized it already.
-
-		       When doing a dynamic link, we create a .rela.got
-		       relocation entry to initialize the value.  This
-		       is done in the finish_dynamic_symbol routine.  */
-		    if ((off & 1) != 0)
-		      off &= ~1;
-		    else
-		      {
-			bfd_put_32 (output_bfd, relocation,
-				    sgot->contents + off);
-			*off_ptr |= 1;
-		      }
-		  }
-		else
-		  unresolved_reloc = FALSE;
-	      }
+	    /* The offset must always be a multiple of 4.  We use
+	       the least significant bit to record whether we have
+	       already generated the necessary reloc.  */
+	    if ((off & 1) != 0)
+	      off &= ~1;
 	    else
 	      {
-		/* The offset must always be a multiple of 4.  We use
-		   the least significant bit to record whether we have
-		   already generated the necessary reloc.  */
-		if ((off & 1) != 0)
-		  off &= ~1;
-		else
+		if (h != NULL
+		    /* @TLSLDM relocations are bounded to the module, in
+		       which the symbol is defined -- not to the symbol
+		       itself.  */
+		    && elf_m68k_reloc_got_type (r_type) != R_68K_TLS_LDM32)
 		  {
-		    bfd_put_32 (output_bfd, relocation, sgot->contents + off);
+		    bfd_boolean dyn;
 
-		    if (info->shared)
+		    dyn = elf_hash_table (info)->dynamic_sections_created;
+		    if (!WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared, h)
+			|| (info->shared
+			    && SYMBOL_REFERENCES_LOCAL (info, h))
+			|| (ELF_ST_VISIBILITY (h->other)
+			    && h->root.type == bfd_link_hash_undefweak))
 		      {
-			asection *s;
-			Elf_Internal_Rela outrel;
-			bfd_byte *loc;
+			/* This is actually a static link, or it is a
+			   -Bsymbolic link and the symbol is defined
+			   locally, or the symbol was forced to be local
+			   because of a version file.  We must initialize
+			   this entry in the global offset table.  Since
+			   the offset must always be a multiple of 4, we
+			   use the least significant bit to record whether
+			   we have initialized it already.
 
-			s = bfd_get_section_by_name (dynobj, ".rela.got");
-			BFD_ASSERT (s != NULL);
+			   When doing a dynamic link, we create a .rela.got
+			   relocation entry to initialize the value.  This
+			   is done in the finish_dynamic_symbol routine.  */
 
-			outrel.r_offset = (sgot->output_section->vma
-					   + sgot->output_offset
-					   + off);
-			outrel.r_info = ELF32_R_INFO (0, R_68K_RELATIVE);
-			outrel.r_addend = relocation;
-			loc = s->contents;
-			loc += s->reloc_count++ * sizeof (Elf32_External_Rela);
-			bfd_elf32_swap_reloca_out (output_bfd, &outrel, loc);
+			elf_m68k_init_got_entry_static (info,
+							output_bfd,
+							r_type,
+							sgot,
+							off,
+							relocation);
+
+			*off_ptr |= 1;
 		      }
+		    else
+		      unresolved_reloc = FALSE;
+		  }
+		else if (info->shared) /* && h == NULL */
+		  /* Process local symbol during dynamic link.  */
+		  {
+		    if (srela == NULL)
+		      {
+			srela = bfd_get_section_by_name (dynobj, ".rela.got");
+			BFD_ASSERT (srela != NULL);
+		      }
+
+		    elf_m68k_init_got_entry_local_shared (info,
+							  output_bfd,
+							  r_type,
+							  sgot,
+							  off,
+							  relocation,
+							  srela);
+
+		    *off_ptr |= 1;
+		  }
+		else /* h == NULL && !info->shared */
+		  {
+		    elf_m68k_init_got_entry_static (info,
+						    output_bfd,
+						    r_type,
+						    sgot,
+						    off,
+						    relocation);
 
 		    *off_ptr |= 1;
 		  }
 	      }
 
-	    if (r_type == R_68K_GOT8O
+	    /* We don't use elf_m68k_reloc_got_type in the condition below
+	       because this is the only place where difference between
+	       R_68K_GOTx and R_68K_GOTxO relocations matters.  */
+	    if (r_type == R_68K_GOT32O
 		|| r_type == R_68K_GOT16O
-		|| r_type == R_68K_GOT32O)
+		|| r_type == R_68K_GOT8O
+		|| elf_m68k_reloc_got_type (r_type) == R_68K_TLS_GD32
+		|| elf_m68k_reloc_got_type (r_type) == R_68K_TLS_LDM32
+		|| elf_m68k_reloc_got_type (r_type) == R_68K_TLS_IE32)
 	      {
 		/* GOT pointer is adjusted to point to the start/middle
 		   of local GOT.  Adjust the offset accordingly.  */
@@ -3310,13 +3936,35 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 		  }
 
 		/* This relocation does not use the addend.  */
-		BFD_ASSERT (rel->r_addend == 0);
 		rel->r_addend = 0;
 	      }
 	    else
 	      relocation = (sgot->output_section->vma + sgot->output_offset
 			    + off);
 	  }
+	  break;
+
+	case R_68K_TLS_LDO32:
+	case R_68K_TLS_LDO16:
+	case R_68K_TLS_LDO8:
+	  relocation -= dtpoff_base (info);
+	  break;
+
+	case R_68K_TLS_LE32:
+	case R_68K_TLS_LE16:
+	case R_68K_TLS_LE8:
+	  if (info->shared)
+	    {
+	      (*_bfd_error_handler)
+		(_("%B(%A+0x%lx): R_68K_TLS_LE32 relocation not permitted "
+		   "in shared object"),
+		 input_bfd, input_section, (long) rel->r_offset, howto->name);
+
+	      return FALSE;
+	    }
+	  else
+	    relocation -= tpoff_base (info);
+
 	  break;
 
 	case R_68K_PLT8:
@@ -3372,19 +4020,14 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 
 	  break;
 
-	case R_68K_PC8:
-	case R_68K_PC16:
-	case R_68K_PC32:
-	  if (h == NULL
-	      || (info->shared
-		  && h->forced_local))
-	    break;
-	  /* Fall through.  */
 	case R_68K_8:
 	case R_68K_16:
 	case R_68K_32:
+	case R_68K_PC8:
+	case R_68K_PC16:
+	case R_68K_PC32:
 	  if (info->shared
-	      && r_symndx != 0
+	      && r_symndx != STN_UNDEF
 	      && (input_section->flags & SEC_ALLOC) != 0
 	      && (h == NULL
 		  || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
@@ -3392,10 +4035,7 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 	      && ((r_type != R_68K_PC8
 		   && r_type != R_68K_PC16
 		   && r_type != R_68K_PC32)
-		  || (h != NULL
-		      && h->dynindx != -1
-		      && (!info->symbolic
-			  || !h->def_regular))))
+		  || !SYMBOL_CALLS_LOCAL (info, h)))
 	    {
 	      Elf_Internal_Rela outrel;
 	      bfd_byte *loc;
@@ -3520,6 +4160,42 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
 	     howto->name,
 	     h->root.root.string);
 	  return FALSE;
+	}
+
+      if (r_symndx != STN_UNDEF
+	  && r_type != R_68K_NONE
+	  && (h == NULL
+	      || h->root.type == bfd_link_hash_defined
+	      || h->root.type == bfd_link_hash_defweak))
+	{
+	  char sym_type;
+
+	  sym_type = (sym != NULL) ? ELF32_ST_TYPE (sym->st_info) : h->type;
+
+	  if (elf_m68k_reloc_tls_p (r_type) != (sym_type == STT_TLS))
+	    {
+	      const char *name;
+
+	      if (h != NULL)
+		name = h->root.root.string;
+	      else
+		{
+		  name = (bfd_elf_string_from_elf_section
+			  (input_bfd, symtab_hdr->sh_link, sym->st_name));
+		  if (name == NULL || *name == '\0')
+		    name = bfd_section_name (input_bfd, sec);
+		}
+
+	      (*_bfd_error_handler)
+		((sym_type == STT_TLS
+		  ? _("%B(%A+0x%lx): %s used with TLS symbol %s")
+		  : _("%B(%A+0x%lx): %s used with non-TLS symbol %s")),
+		 input_bfd,
+		 input_section,
+		 (long) rel->r_offset,
+		 howto->name,
+		 name);
+	    }
 	}
 
       r = _bfd_final_link_relocate (howto, input_bfd, input_section,
@@ -3686,42 +4362,100 @@ elf_m68k_finish_dynamic_symbol (output_bfd, info, h, sym)
 
       while (got_entry != NULL)
 	{
-	  Elf_Internal_Rela rela;
-	  bfd_byte *loc;
+	  enum elf_m68k_reloc_type r_type;
+	  bfd_vma got_entry_offset;
 
-	  rela.r_offset = (sgot->output_section->vma
-			   + sgot->output_offset
-			   + (got_entry->u.s2.offset &~ (bfd_vma) 1));
+	  r_type = got_entry->key_.type;
+	  got_entry_offset = got_entry->u.s2.offset &~ (bfd_vma) 1;
 
 	  /* If this is a -Bsymbolic link, and the symbol is defined
 	     locally, we just want to emit a RELATIVE reloc.  Likewise if
 	     the symbol was forced to be local because of a version file.
-	     The entry in the global offset table will already have been
+	     The entry in the global offset table already have been
 	     initialized in the relocate_section function.  */
 	  if (info->shared
-	      && (info->symbolic
-		  || h->dynindx == -1
-		  || h->forced_local)
-	      && h->def_regular)
+	      && SYMBOL_REFERENCES_LOCAL (info, h))
 	    {
-	      rela.r_info = ELF32_R_INFO (0, R_68K_RELATIVE);
-	      rela.r_addend = bfd_get_signed_32 (output_bfd,
-						 (sgot->contents
-						  + (got_entry->u.s2.offset
-						     &~ (bfd_vma) 1)));
+	      bfd_vma relocation;
+
+	      relocation = bfd_get_signed_32 (output_bfd,
+					      (sgot->contents
+					       + got_entry_offset));
+
+	      /* Undo TP bias.  */
+	      switch (elf_m68k_reloc_got_type (r_type))
+		{
+		case R_68K_GOT32O:
+		case R_68K_TLS_LDM32:
+		  break;
+
+		case R_68K_TLS_GD32:
+		  relocation += dtpoff_base (info);
+		  break;
+
+		case R_68K_TLS_IE32:
+		  relocation += tpoff_base (info);
+		  break;
+
+		default:
+		  BFD_ASSERT (FALSE);
+		}
+
+	      elf_m68k_init_got_entry_local_shared (info,
+						    output_bfd,
+						    r_type,
+						    sgot,
+						    got_entry_offset,
+						    relocation,
+						    srela);
 	    }
 	  else
 	    {
-	      bfd_put_32 (output_bfd, (bfd_vma) 0,
-			  sgot->contents + (got_entry->u.s2.offset
-					    &~ (bfd_vma) 1));
-	      rela.r_info = ELF32_R_INFO (h->dynindx, R_68K_GLOB_DAT);
-	      rela.r_addend = 0;
-	    }
+	      Elf_Internal_Rela rela;
 
-	  loc = srela->contents;
-	  loc += srela->reloc_count++ * sizeof (Elf32_External_Rela);
-	  bfd_elf32_swap_reloca_out (output_bfd, &rela, loc);
+	      /* Put zeros to GOT slots that will be initialized
+		 at run-time.  */
+	      {
+		bfd_vma n_slots;
+
+		n_slots = elf_m68k_reloc_got_n_slots (got_entry->key_.type);
+		while (n_slots--)
+		  bfd_put_32 (output_bfd, (bfd_vma) 0,
+			      (sgot->contents + got_entry_offset
+			       + 4 * n_slots));
+	      }
+
+	      rela.r_addend = 0;
+	      rela.r_offset = (sgot->output_section->vma
+			       + sgot->output_offset
+			       + got_entry_offset);
+
+	      switch (elf_m68k_reloc_got_type (r_type))
+		{
+		case R_68K_GOT32O:
+		  rela.r_info = ELF32_R_INFO (h->dynindx, R_68K_GLOB_DAT);
+		  elf_m68k_install_rela (output_bfd, srela, &rela);
+		  break;
+
+		case R_68K_TLS_GD32:
+		  rela.r_info = ELF32_R_INFO (h->dynindx, R_68K_TLS_DTPMOD32);
+		  elf_m68k_install_rela (output_bfd, srela, &rela);
+
+		  rela.r_offset += 4;
+		  rela.r_info = ELF32_R_INFO (h->dynindx, R_68K_TLS_DTPREL32);
+		  elf_m68k_install_rela (output_bfd, srela, &rela);
+		  break;
+
+		case R_68K_TLS_IE32:
+		  rela.r_info = ELF32_R_INFO (h->dynindx, R_68K_TLS_TPREL32);
+		  elf_m68k_install_rela (output_bfd, srela, &rela);
+		  break;
+
+		default:
+		  BFD_ASSERT (FALSE);
+		  break;
+		}
+	    }
 
 	  got_entry = got_entry->u.s2.next;
 	}
@@ -4005,34 +4739,44 @@ void
 bfd_elf_m68k_set_target_options (struct bfd_link_info *info, int got_handling)
 {
   struct elf_m68k_link_hash_table *htab;
-
-  htab = elf_m68k_hash_table (info);
+  bfd_boolean use_neg_got_offsets_p;
+  bfd_boolean allow_multigot_p;
+  bfd_boolean local_gp_p;
 
   switch (got_handling)
     {
     case 0:
       /* --got=single.  */
-      htab->local_gp_p = FALSE;
-      htab->use_neg_got_offsets_p = FALSE;
-      htab->allow_multigot_p = FALSE;
+      local_gp_p = FALSE;
+      use_neg_got_offsets_p = FALSE;
+      allow_multigot_p = FALSE;
       break;
 
     case 1:
       /* --got=negative.  */
-      htab->local_gp_p = TRUE;
-      htab->use_neg_got_offsets_p = TRUE;
-      htab->allow_multigot_p = FALSE;
+      local_gp_p = TRUE;
+      use_neg_got_offsets_p = TRUE;
+      allow_multigot_p = FALSE;
       break;
 
     case 2:
       /* --got=multigot.  */
-      htab->local_gp_p = TRUE;
-      htab->use_neg_got_offsets_p = TRUE;
-      htab->allow_multigot_p = TRUE;
+      local_gp_p = TRUE;
+      use_neg_got_offsets_p = TRUE;
+      allow_multigot_p = TRUE;
       break;
 
     default:
       BFD_ASSERT (FALSE);
+      return;
+    }
+
+  htab = elf_m68k_hash_table (info);
+  if (htab != NULL)
+    {
+      htab->local_gp_p = local_gp_p;
+      htab->use_neg_got_offsets_p = use_neg_got_offsets_p;
+      htab->allow_multigot_p = allow_multigot_p;
     }
 }
 
@@ -4083,6 +4827,7 @@ elf_m68k_plt_sym_val (bfd_vma i, const asection *plt,
 					elf_m68k_adjust_dynamic_symbol
 #define elf_backend_size_dynamic_sections \
 					elf_m68k_size_dynamic_sections
+#define elf_backend_final_write_processing	elf_m68k_final_write_processing
 #define elf_backend_init_index_section	_bfd_elf_init_1_index_section
 #define elf_backend_relocate_section	elf_m68k_relocate_section
 #define elf_backend_finish_dynamic_symbol \

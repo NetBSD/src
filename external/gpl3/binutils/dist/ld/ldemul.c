@@ -1,6 +1,6 @@
 /* ldemul.c -- clearing house for ld emulation states
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2005, 2007, 2008
+   2001, 2002, 2003, 2005, 2007, 2008, 2009
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -119,12 +119,12 @@ ldemul_open_dynamic_archive (const char *arch, search_dirs_type *search,
   return FALSE;
 }
 
-bfd_boolean
+lang_output_section_statement_type *
 ldemul_place_orphan (asection *s, const char *name, int constraint)
 {
   if (ld_emulation->place_orphan)
     return (*ld_emulation->place_orphan) (s, name, constraint);
-  return FALSE;
+  return NULL;
 }
 
 void
@@ -192,9 +192,35 @@ ldemul_default_target (int argc ATTRIBUTE_UNUSED, char **argv ATTRIBUTE_UNUSED)
   return ld_emulation->target_name;
 }
 
+/* If the entry point was not specified as an address, then add the
+   symbol as undefined.  This will cause ld to extract an archive
+   element defining the entry if ld is linking against such an archive.
+
+   We don't do this when generating shared libraries unless given -e
+   on the command line, because most shared libs are not designed to
+   be run as an executable.  However, some are, eg. glibc ld.so and
+   may rely on the default linker script supplying ENTRY.  So we can't
+   remove the ENTRY from the script, but would rather not insert
+   undefined _start syms.  */
+
 void
 after_parse_default (void)
 {
+  if (entry_symbol.name != NULL
+      && (link_info.executable || entry_from_cmdline))
+    {
+      bfd_boolean is_vma = FALSE;
+
+      if (entry_from_cmdline)
+	{
+	  const char *send;
+
+	  bfd_scan_vma (entry_symbol.name, &send, 0);
+	  is_vma = *send == '\0';
+	}
+      if (!is_vma)
+	ldlang_add_undef (entry_symbol.name, entry_from_cmdline);
+    }
 }
 
 void
@@ -205,6 +231,7 @@ after_open_default (void)
 void
 after_allocation_default (void)
 {
+  lang_relax_sections (FALSE);
 }
 
 void
@@ -227,6 +254,9 @@ set_output_arch_default (void)
   /* Set the output architecture and machine if possible.  */
   bfd_set_arch_mach (link_info.output_bfd,
 		     ldfile_output_architecture, ldfile_output_machine);
+
+  bfd_emul_set_maxpagesize (output_target, config.maxpagesize);
+  bfd_emul_set_commonpagesize (output_target, config.commonpagesize);
 }
 
 void

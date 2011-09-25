@@ -10,6 +10,14 @@ to the rest of the data.
 
 @example
 
+enum bfd_direction
+  @{
+    no_direction = 0,
+    read_direction = 1,
+    write_direction = 2,
+    both_direction = 3
+  @};
+
 struct bfd
 @{
   /* A unique identifier of the BFD  */
@@ -44,14 +52,7 @@ struct bfd
   bfd_format format;
 
   /* The direction with which the BFD was opened.  */
-  enum bfd_direction
-    @{
-      no_direction = 0,
-      read_direction = 1,
-      write_direction = 2,
-      both_direction = 3
-    @}
-  direction;
+  enum bfd_direction direction;
 
   /* Format_specific flags.  */
   flagword flags;
@@ -120,10 +121,28 @@ struct bfd
      to any input file.  */
 #define BFD_LINKER_CREATED 0x2000
 
-/* This may be set before writing out a BFD to request that it
-   be written using values for UIDs, GIDs, timestamps, etc. that
-   will be consistent from run to run.  */
+  /* This may be set before writing out a BFD to request that it
+     be written using values for UIDs, GIDs, timestamps, etc. that
+     will be consistent from run to run.  */
 #define BFD_DETERMINISTIC_OUTPUT 0x4000
+
+  /* Compress sections in this BFD.  */
+#define BFD_COMPRESS 0x8000
+
+  /* Decompress sections in this BFD.  */
+#define BFD_DECOMPRESS 0x10000
+
+  /* BFD is a dummy, for plugins.  */
+#define BFD_PLUGIN 0x20000
+
+  /* Flags bits to be saved in bfd_preserve_save.  */
+#define BFD_FLAGS_SAVED \
+  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN)
+
+  /* Flags bits which are for BFD use only.  */
+#define BFD_FLAGS_FOR_BFD_USE_MASK \
+  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
+   | BFD_PLUGIN | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT)
 
   /* Currently my_archive is tested before adding origin to
      anything. I believe that this can become always an add of
@@ -195,6 +214,7 @@ struct bfd
       struct ieee_data_struct *ieee_data;
       struct ieee_ar_data_struct *ieee_ar_data;
       struct srec_data_struct *srec_data;
+      struct verilog_data_struct *verilog_data;
       struct ihex_data_struct *ihex_data;
       struct tekhex_data_struct *tekhex_data;
       struct elf_obj_tdata *elf_obj_data;
@@ -215,6 +235,7 @@ struct bfd
       struct netbsd_core_struct *netbsd_core_data;
       struct mach_o_data_struct *mach_o_data;
       struct mach_o_fat_data_struct *mach_o_fat_data;
+      struct plugin_data_struct *plugin_data;
       struct bfd_pef_data_struct *pef_data;
       struct bfd_pef_xlib_data_struct *pef_xlib_data;
       struct bfd_sym_data_struct *sym_data;
@@ -258,6 +279,10 @@ struct bfd
 
   /* Set if this is a thin archive.  */
   unsigned int is_thin_archive : 1;
+
+  /* Set if only required symbols should be added in the link hash table for
+     this object.  Used by VMS linkers.  */
+  unsigned int selective_search : 1;
 @};
 
 @end example
@@ -818,8 +843,7 @@ Returns the maximum page size, in bytes, as determined by
 emulation.
 
 @strong{Returns}@*
-Returns the maximum page size in bytes for ELF, abort
-otherwise.
+Returns the maximum page size in bytes for ELF, 0 otherwise.
 
 @findex bfd_emul_set_maxpagesize
 @subsubsection @code{bfd_emul_set_maxpagesize}
@@ -842,7 +866,7 @@ Returns the common page size, in bytes, as determined by
 emulation.
 
 @strong{Returns}@*
-Returns the common page size in bytes for ELF, abort otherwise.
+Returns the common page size in bytes for ELF, 0 otherwise.
 
 @findex bfd_emul_set_commonpagesize
 @subsubsection @code{bfd_emul_set_commonpagesize}

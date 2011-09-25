@@ -1,10 +1,495 @@
-2009-03-02  Alan Modra  <amodra@bigpond.net.au>
+2011-02-25  Alan Modra  <amodra@gmail.com>
 
-	2008-11-14  Nathan Sidwell  <nathan@codesourcery.com>
+	PR 12516
+	* internal.h (ELF_SECTION_IN_SEGMENT_1): Don't match zero size
+	sections at start or end of PT_DYNAMIC.
+
+2010-11-02  Joseph Myers  <joseph@codesourcery.com>
+
+	* tic6x-attrs.h (Tag_ABI_wchar_t, Tag_ABI_stack_align_needed,
+	Tag_ABI_stack_align_preserved, Tag_ABI_PID, Tag_ABI_PIC,
+	Tag_ABI_array_object_alignment,
+	Tag_ABI_array_object_align_expected, Tag_ABI_conformance): Define.
+
+2010-10-29  Joseph Myers  <joseph@codesourcery.com>
+
+	* tic6x-attrs.h (Tag_ABI_compatibility): Define.
+
+2010-10-29  Bernd Schmidt  <bernds@codesourcery.com>
+            Joseph Myers  <joseph@codesourcery.com>
+
+	* tic6x-attrs.h (Tag_ABI_DSBT): New.
+
+2010-10-21  Joseph Myers  <joseph@codesourcery.com>
+
+	* tic6x-attrs.h (Tag_C6XABI_Tag_CPU_arch): Change to Tag_ISA,
+	value 4.
+	* tic6x.h (Values for Tag_C6XABI_Tag_CPU_arch): Rename for
+	attribute renaming.
+
+2010-07-23  Naveen.H.S  <naveen.S@kpitcummins.com>
+	    Ina Pandit  <ina.pandit@kpitcummins.com>
+
+	* v850.h: Add support for V850E2 and V850E2V3.
+	(v850_reloc_type): Update the newly added relocations
+
+2010-07-20  Alan Modra  <amodra@gmail.com>
+
+	* internal.h (ELF_TBSS_SPECIAL): New macro, extracted from..
+	(ELF_SECTION_SIZE): ..here.
+	(ELF_SECTION_IN_SEGMENT_1): Add "strict" arg.
+	(ELF_SECTION_IN_SEGMENT_STRICT): New macro.
+
+2010-06-25  Alan Modra  <amodra@gmail.com>
+
+	* ppc64.h (R_PPC64_LO_DS_OPT): Define.
+
+2010-06-15  Joseph Myers  <joseph@codesourcery.com>
+
+	* tic6x-attrs.h: New.
+	* tic6x.h: Include elf/tic6x-attrs.h for attribute table.
+	(C6XABI_Tag_CPU_arch_none, C6XABI_Tag_CPU_arch_C62X,
+	C6XABI_Tag_CPU_arch_C67X, C6XABI_Tag_CPU_arch_C67XP,
+	C6XABI_Tag_CPU_arch_C64X, C6XABI_Tag_CPU_arch_C64XP,
+	C6XABI_Tag_CPU_arch_C674X): Define.
+
+2010-06-11  Tristan Gingold  <gingold@adacore.com>
+
+	* ia64.h (EF_IA_64_VMS_COMCOD, EF_IA_64_VMS_COMCOD_SUCCESS)
+	(EF_IA_64_VMS_COMCOD_WARNING, EF_IA_64_VMS_COMCOD_ERROR)
+	(EF_IA_64_VMS_COMCOD_ABORT, EF_IA_64_VMS_LINKAGES): Define.
+	(VMS_LF_CALL_DEBUG, VMS_LF_NOP0BUFS, VMS_LF_P0IMAGE)
+	(VMS_LF_MKTHREADS, VMS_LF_UPCALLS, VMS_LF_IMGSTA)
+	(VMS_LF_INITIALIZE, VMS_LF_MAIN, VMS_LF_EXE_INIT)
+	(VMS_LF_TBK_IN_IMG, VMS_LF_DBG_IN_IMG, VMS_LF_TBK_IN_DSF)
+	(VMS_LF_DBG_IN_DSF, VMS_LF_SIGNATURES, VMS_LF_REL_SEG_OFF): Define.
+	(VMS_STO_VISIBILITY, VMS_ST_VISIBILITY, VMS_STO_FUNC_TYPE)
+	(VMS_ST_FUNC_TYPE, VMS_SFT_CODE_ADDR, VMS_SFT_SYMV_IDX)
+	(VMS_SFT_FD, VMS_SFT_RESERVE, VMS_STO_LINKAGE, VMS_ST_LINKAGE)
+	(VMS_STL_IGNORE, VMS_STL_RESERVE, VMS_STL_STD, VMS_STL_LNK): Define.
+	(Elf64_External_VMS_IMAGE_FIXUP): New declaration.
+	(Elf64_External_VMS_IMAGE_RELA): Ditto.
+	(R_IA64_VMS_DIR8, R_IA64_VMS_DIR16LSB, R_IA64_VMS_CALL_SIGNATURE)
+	(R_IA64_VMS_EXECLET_FUNC, R_IA64_VMS_EXECLET_DATA, R_IA64_VMS_FIX8)
+	(R_IA64_VMS_FIX16, R_IA64_VMS_FIX32, R_IA64_VMS_FIX64)
+	(R_IA64_VMS_FIXFD, R_IA64_VMS_ACC_LOAD, R_IA64_VMS_ACC_ADD)
+	(R_IA64_VMS_ACC_SUB, R_IA64_VMS_ACC_MUL, R_IA64_VMS_ACC_DIV)
+	(R_IA64_VMS_ACC_AND, R_IA64_VMS_ACC_IOR, R_IA64_VMS_ACC_EOR)
+	(R_IA64_VMS_ACC_ASH, R_IA64_VMS_ACC_STO8, R_IA64_VMS_ACC_STO16LSH)
+	(R_IA64_VMS_ACC_STO32LSH, R_IA64_VMS_ACC_STO64LSH): New.
+
+2010-05-25  Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
+	    Andrew Stubbs  <ams@codesourcery.com>
+
+	* sh.h (EF_SH_PIC, EF_SH_FDPIC): Define.
+	(R_SH_FIRST_INVALID_RELOC_6, R_SH_LAST_INVALID_RELOC_6): New.  Adjust
+	other invalid ranges.
+	(R_SH_GOT20, R_SH_GOTOFF20, R_SH_GOTFUNCDESC, R_SH_GOTFUNCDESC20)
+	(R_SH_GOTOFFFUNCDESC, R_SH_GOTOFFFUNCDESC20, R_SH_FUNCDESC)
+	(R_SH_FUNCDESC_VALUE): New.
+
+2010-05-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11600
+	* common.h (SHF_EXCLUDE): New.
+
+	* i370.h (SHF_EXCLUDE): Removed.
+	* or32.h (SHF_EXCLUDE): Likewise.
+	* ppc.h (SHF_EXCLUDE): Likewise.
+	* sparc.h (SHF_EXCLUDE): Likewise.
+
+2010-04-23  Alan Modra  <amodra@gmail.com>
+
+	* internal.h (ELF_SECTION_SIZE): Protect macro args with parentheses.
+	Invert logic to clarify test for .tbss.
+	(ELF_IS_SECTION_IN_SEGMENT): Rename to..
+	(ELF_SECTION_IN_SEGMENT_1): ..this.  Add check_vma param.  Protect
+	macro args with parentheses.
+	(ELF_SECTION_IN_SEGMENT): Define.
+	(ELF_IS_SECTION_IN_SEGMENT_FILE): Delete.
+	(ELF_IS_SECTION_IN_SEGMENT_MEMORY): Delete.
+
+2010-04-15  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* arm.h (Tag_FP_arch, Tag_ABI_align_needed, Tag_ABI_align_preserved,
+	Tag_FP_HP_extension): Add new ABI attribute tags.
+
+2010-04-15  Nick Clifton  <nickc@redhat.com>
+
+	* alpha.h: Update copyright notice to use GPLv3.
+	* arc.h: Likewise.
+	* arm.h: Likewise.
+	* avr.h: Likewise.
+	* bfin.h: Likewise.
+	* common.h: Likewise.
+	* cr16.h: Likewise.
+	* cr16c.h: Likewise.
+	* cris.h: Likewise.
+	* crx.h: Likewise.
+	* d10v.h: Likewise.
+	* d30v.h: Likewise.
+	* dlx.h: Likewise.
+	* dwarf.h: Likewise.
+	* external.h: Likewise.
+	* fr30.h: Likewise.
+	* frv.h: Likewise.
+	* h8.h: Likewise.
+	* hppa.h: Likewise.
+	* i370.h: Likewise.
+	* i386.h: Likewise.
+	* i860.h: Likewise.
+	* i960.h: Likewise.
+	* ia64.h: Likewise.
+	* internal.h: Likewise.
+	* ip2k.h: Likewise.
+	* iq2000.h: Likewise.
+	* lm32.h: Likewise.
+	* m32c.h: Likewise.
+	* m32r.h: Likewise.
+	* m68hc11.h: Likewise.
+	* m68k.h: Likewise.
+	* mcore.h: Likewise.
+	* mep.h: Likewise.
+	* microblaze.h: Likewise.
+	* mips.h: Likewise.
+	* mmix.h: Likewise.
+	* mn10200.h: Likewise.
+	* moxie.h: Likewise.
+	* msp430.h: Likewise.
+	* mt.h: Likewise.
+	* openrisc.h: Likewise.
+	* or32.h: Likewise.
+	* pj.h: Likewise.
+	* ppc.h: Likewise.
+	* ppc64.h: Likewise.
+	* reloc-macros.h: Likewise.
+	* rx.h: Likewise.
+	* s390.h: Likewise.
+	* sh.h: Likewise.
+	* sparc.h: Likewise.
+	* spu.h: Likewise.
+	* v850.h: Likewise.
+	* vax.h: Likewise.
+	* vxworks.h: Likewise.
+	* x86-64.h: Likewise.
+	* xc16x.h: Likewise.
+	* xstormy16.h: Likewise.
+	* xtensa.h: Likewise.
+
+2010-04-08  David Stubbs  <stubbs@icerasemi.com>
+
+	* internal.h (ELF_IS_SECTION_IN_SEGMENT): PT_PHDR program headers
+	cannot contain any sections.
+
+2010-03-25  Joseph Myers  <joseph@codesourcery.com>
+
+	* common.h (ELFOSABI_C6000_ELFABI, ELFOSABI_C6000_LINUX): Define.
+	* tic6x.h: New.
+
+2010-03-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* common.h (VER_FLG_*): Document.
+	(VER_FLG_INFO): Define.
+
+2010-02-23  Andrew Zabolotny  <anpaza@mail.ru>
+
+	PR binutils/11297
+	* avr.h: (R_AVR_8): New relocation number.
+
+2010-02-18  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* arm.h (Tag_MPextension_use): Renumber.
+	(Tag_DIV_use): Add.
+	(Tag_MPextension_use_legacy): Likewise.
+
+2010-02-09  Michael Holzheu  <holzheu@de.ibm.com>
+
+	* common.h (NT_S390_TIMER, NT_S390_TODCMP, NT_S390_TODPREG,
+	NT_S390_CTRS and NT_S390_PREFIX): Define.
+
+2010-02-08  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h (R_SPARC_JMP_IREL, R_SPARC_IRELATIVE): Define.
+
+2010-02-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common.h (NT_386_XSTATE): New.
+
+2010-01-21  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* s390.h (EF_S390_HIGH_GPRS): Added macro definition.
+
+2010-01-19  Daisuke Hatayama  <d.hatayama@jp.fujitsu.com>
+
+	* common.h (PN_XNUM): Define.
+
+2009-12-18  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* common.h (NT_S390_HIGH_GPRS): Define.
+
+2009-12-17  Alan Modra  <amodra@bigpond.net.au>
+
+	* ppc.h (R_PPC_RELAX32, R_PPC_RELAX32PC, R_PPC_RELAX32_PLT,
+	R_PPC_RELAX32PC_PLT): Delete.
+	(R_PPC_RELAX, R_PPC_RELAX_PLT, R_PPC_RELAX_PLTREL24): Define.
+
+2009-11-28  Joseph Myers  <joseph@codesourcery.com>
+
+	* common.h (ELFOSABI_FENIXOS, EM_TI_C6000, EM_TI_C2000,
+	EM_TI_C5500, EM_CUDA): Define.
+	(EM_res140, EM_res141, EM_res142): Remove.
+
+2009-11-17  Paul Brook  <paul@codesourcery.com>
+	Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* arm.h (TAG_CPU_ARCH_V7E_M): Define.
+
+2009-09-29  DJ Delorie  <dj@redhat.com>
+
+	* rx.h: New file.
+
+2009-09-21  Alan Modra  <amodra@bigpond.net.au>
+
+	* ppc.h (DT_PPC_TLSOPT): Define.
+	* ppc64.h (DT_PPC64_TLSOPT): Define.
+
+2009-08-10  Daniel Gutson  <dgutson@codesourcery.com>
+
+	* arm.h: (SHT_ARM_DEBUGOVERLAY): New define.
+	(SHT_ARM_OVERLAYSECTION): New define.
+
+2006-08-09  Bernd Schmidt  <bernd.schmidt@analog.com>
+
+	From Mike Frysinger <michael.frysinger@analog.com>
+	* bfin.h (R_BFIN_UNUSED, R_BFIN_PCREL5M2, R_BFIN_UNUSED1,
+	R_BFIN_PCREL10, R_BFIN_PCREL12_JUMP, R_BFIN_RIMM16,
+	R_BFIN_LUIMM16, R_BFIN_HUIMM16, R_BFIN_PCREL12_JUMP_S,
+	R_BFIN_PCREL24_JUMP_X, R_BFIN_PCREL24, R_BFIN_UNUSEDB,
+	R_BFIN_UNUSEDC, R_BFIN_PCREL24_JUMP_L, R_BFIN_PCREL24_CALL_X,
+	R_BFIN_VAR_EQ_SYMB, R_BFIN_BYTE_DATA, R_BFIN_BYTE2_DATA,
+	R_BFIN_BYTE4_DATA, R_BFIN_PCREL11, R_BFIN_PUSH, R_BFIN_CONST,
+	R_BFIN_ADD, R_BFIN_SUB, R_BFIN_MULT, R_BFIN_DIV, R_BFIN_MOD,
+	R_BFIN_LSHIFT, R_BFIN_RSHIFT, R_BFIN_AND, R_BFIN_OR, R_BFIN_XOR,
+	R_BFIN_LAND, R_BFIN_LOR, R_BFIN_LEN, R_BFIN_NEG, R_BFIN_COMP,
+	R_BFIN_PAGE, R_BFIN_HWPAGE, R_BFIN_ADDR, R_BFIN_PLTPLC,
+	R_BFIN_GOT, R_BFIN_MAX): Renamed from R_unused0, R_pcrel5ms,
+	R_unused1, R_pcrel10, R_pcrel12_jump, R_rimm16, R_luimm16,
+	R_huimm16, R_pcrel12_jump_s, R_pcrel24_jump_x, R_pcrel24,
+	R_unusedb, R_unusedc, R_pcrel24_jump_l, R_pcrel24_call_x,
+	R_var_eq_symb, R_byte_data, R_byte2_data, R_byte4_data, R_pcrel11,
+	R_push, R_const, R_add, R_sub, R_mult, R_div, R_mod, R_lshift,
+	R_rshift, R_and, R_or, R_xor, R_land, R_lor, R_len, R_neg, R_comp,
+	R_page, R_hwpage, R_addr, R_pltpc, R_got.
+
+2009-08-09  Michael Eager <eager@eagercon.com>
+
+	* elf/common.h: Define EM_resnnn reserved values. Add EM_AVR32,
+	EM_STM8, EM_TILE64, EM_TILEPRO.  Change EM_MICROBLAZE.
+
+2009-08-06  Michael Eager <eager@eagercon.com>
+
+	* elf/common.h: Define EM_MICROBLAZE & EM_MICROBLAZE_OLD.
+	* elf/microblaze.h: New reloc definitions.
+
+2009-07-30  Alan Modra  <amodra@bigpond.net.au>
+
+	* ppc64.h: Add R_PPC64_JMP_IREL, R_PPC64_REL16, R_PPC64_REL16_LO,
+	R_PPC64_REL16_HI, R_PPC64_REL16_HA.
+
+2009-07-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common.h (EM_L1OM): New.
+
+2009-07-24  Trevor Smigiel  <Trevor_Smigiel@playstation.sony.com>
+	    Alan Modra  <amodra@bigpond.net.au>
+
+	* spu.h (R_SPU_ADD_PIC): New.
+
+2009-07-23  Ulrich Drepper  <drepper@redhat.com>
+
+	* common.h (STB_GNU_UNIQUE): Define.
+
+2009-07-10  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf2.h: Move to `..'.
+
+2009-07-10  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* dwarf2.h: Just include ../dwarf2.h.
+
+2009-07-10  Alan Modra  <amodra@bigpond.net.au>
+
+	* ppc.h (R_PPC_IRELATIVE): Add.
+	(R_PPC_RELAX32, R_PPC_RELAX32PC,
+	R_PPC_RELAX32_PLT, R_PPC_RELAX32PC_PLT): Renumber.
+	* ppc64.h (R_PPC64_IRELATIVE): Add.
+
+2009-07-03  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf2.h (enum dwarf_location_atom): Add DW_OP_implicit_value
+	and DW_OP_stack_value.
+
+2009-06-22  Alan Modra  <amodra@bigpond.net.au>
+
+	* ppc.h (R_PPC_RELAX*): Define as enum.
+
+2009-06-11  Anthony Green  <green@moxielogic.org>
+
+	* moxie.h (R_MOXIE_PCREL10): New.
+
+2009-06-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/10205
+	* i386.h (R_386_IRELATIVE): New.
+	* x86-64.h (R_X86_64_IRELATIVE): Likewise.
+
+2009-05-27  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common.h: Update comments for dynamic tag ranges.
+
+2009-04-30  DJ Delorie  <dj@redhat.com>
+
+	* mep.h (EF_MEP_COP_*): New.
+	(EF_MEP_ALL_FLAGS): Add them.
+
+2009-04-30  Nick Clifton  <nickc@redhat.com>
+
+	* common.h (STT_GNU_IFUNC): Define.
+
+2009-04-24  Cary Coutant  <ccoutant@google.com>
+
+	 * dwarf2.h (DW_LNE_set_discriminator): New enum value.
+
+2009-04-15  Anthony Green  <green@moxielogic.com>
+
+	* common.h (EM_MOXIE): Define.
+	* moxie.h: New file.
+
+2009-04-07  DJ Delorie  <dj@redhat.com>
+
+	* mep.h (EF_MEP_CPU_C5): New.
+
+2009-04-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common.h (EM_INTEL178): Removed.
+	(EM_INTEL179): Likewise.
+	(EM_ETPU): New.
+	(EM_SLE9X): Likewise.
+	(EM_INTEL181): Likewise.
+	(EM_INTEL182): Likewise.
+
+2009-03-31  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common.h (EM_INTEL178): New.
+	(EM_INTEL179): Likewise.
+	(EM_INTEL180): Likewise.
+
+2009-03-20  Mikolaj Zalewski  <mikolajz@google.com>
+
+	* common.h (SHT_GNU_INCREMENTAL_INPUTS): Define.
+
+2009-03-14  Mark Kettenis  <kettenis@gnu.org>
+
+	* common.h (NT_OPENBSD_PROCINFO, NT_OPENBSD_AUXV)
+	(NT_OPENBSD_REGS, NT_OPENBSD_FPREGS, NT_OPENBSD_XFPREGS)
+	(NT_OPENBSD_WCOOKIE): New defines.
+
+2009-03-16  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* common.h (AT_RANDOM): Define.
+
+2009-03-04  Alan Modra  <amodra@bigpond.net.au>
+
+	* ppc.h (R_PPC_TLSGD, R_PPC_TLSLD): Add new relocs.
+	* ppc64.h (R_PPC64_TLSGD, R_PPC64_TLSLD): Add new relocs.
+
+2009-03-02  Qinwei  <qinwei@sunnorth.com.cn>
+
+	* score.h (RELOC_NUMBER): Add R_SCORE_IMM32.
+	* common.h (EM_SCORE_OLD): Define.
+
+2009-02-23  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common.h (STB_LOPROC): Replace Application-specific with
+	Processor-specific in comments.
+	(STB_HIPROC): Likewise.
+	(STT_LOPROC): Likewise.
+	(STT_HIPROC): Likewise.
+
+2009-02-03  Sandip Matte  <sandip@rmicorp.com>
+
+	* mips.h (E_MIPS_MACH_XLR): Define.
+
+2009-02-03  Maxim Kuvyrkov  <maxim@codesourcery.com>
+
+	* m68k.h: Map TLS relocations to numbers.
+
+2009-01-15  Andrew Stubbs  <ams@codesourcery.com>
+	    Julian Brown   <julian@codesourcery.com>
+
+	* arm.h (TAG_CPU_ARCH_V6_M, TAG_CPU_ARCH_V6S_M): New defines.
+	(MAX_TAG_CPU_ARCH, TAG_CPU_ARCH_V4T_PLUS_V6_M): New defines.
+	(Tag_NEON_arch): Rename to Tag_Advanced_SIMD_arch to match ARM ABI
+	version 2.07.
+	(Tag_undefined39, Tag_nodefaults): New enum values.
+	(Tag_also_compatible_with, Tag_T2EE_use): Likewise.
+	(Tag_conformance, Tag_Virtualization_use): Likewise.
+	(Tag_undefined69, Tag_MPextension_use): Likewise.
+
+2009-01-15  Douglas B Rupp  <rupp@gnat.com>
+
+	* ia64.h (SHT_IA_64_VMS_DISPLAY_NAME_INFO, EF_IA_64_ARCHVER_1):
+	New macros. Minor reformatting.
+
+2008-12-23  Jon Beniston <jon@beniston.com>
+
+	* lm32.h: New file.
+
+2008-12-23  Nick Clifton  <nickc@redhat.com>
+
+	* commmon.h (STT_IFUNC): Delete.
+
+2008-12-20  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris.h (R_CRIS_32_IE): New relocation.
+
+2008-12-03  Nick Clifton  <nickc@redhat.com>
+
+	* common.h (STT_IFUNC): Define.
+
+2008-11-27  M R Swami Reddy <MR.Swami.Reddy@nsc.com>
+
+	* cr16.h (R_CR16_GOT_REGREL20, R_CR16_GOTC_REGREL20 and
+	R_CR16_GLOB_DAT): New relocations.
+
+2008-11-25  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris.h (R_CRIS_32_TPREL): Correct comment.
+	(R_CRIS_DTPMOD): Open up for use elsewhere than the fourth GOT entry.
+
+2008-11-18  Catherine Moore  <clm@codesourcery.com>
+
+	* arm.h (Tag_ABI_FP_16bit_format): Define.
+
+2008-11-14  Nathan Sidwell  <nathan@codesourcery.com>
+
 	* internal.h (struct elf_segment_map): Add header_size field.
- 
-	2008-10-10  Nathan Froyd  <froydnj@codesourcery.com>
+
+2008-10-13  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* common.h (AT_BASE_PLATFORM, AT_EXECFN): Define.
+
+2008-10-10  Nathan Froyd  <froydnj@codesourcery.com>
+
 	* ppc.h: Add Tag_GNU_Power_ABI_Struct_Return.
+
+2008-10-04  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris.h (R_CRIS_32_GOT_GD, R_CRIS_16_GOT_GD, R_CRIS_32_GD)
+	(R_CRIS_DTP, R_CRIS_32_DTPREL, R_CRIS_16_DTPREL, R_CRIS_DTPMOD)
+	(R_CRIS_32_GOT_TPREL, R_CRIS_16_GOT_TPREL, R_CRIS_32_TPREL)
+	(R_CRIS_16_TPREL): New relocations.
 
 2008-08-20  Bob Wilson  <bob.wilson@acm.org>
 
@@ -64,7 +549,7 @@
 	END_RELOC_NUMBERS symbol as a sentinel value.
 
 2008-05-15  Christophe Lyon  <christophe.lyon@st.com>
-	
+
 	* arm.h (END_RELOC_NUMBERS): Provide a maximum value.
 
 2008-04-16  David S. Miller  <davem@davemloft.net>

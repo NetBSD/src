@@ -1,7 +1,9 @@
+%option nounput
+
 %{
 
 /* Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2007
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
    Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
@@ -22,7 +24,6 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include "sysdep.h"
 #include "bfd.h"
 #include "safe-ctype.h"
 #include "bfdlink.h"
@@ -57,8 +58,7 @@ const char *lex_string = NULL;
    Otherwise, stack elements 0 through `include_stack_ptr - 1' are valid.  */
 
 #undef YY_INPUT
-#define YY_INPUT(buf,result,max_size) yy_input (buf, &result, max_size)
-
+#define YY_INPUT(buf,result,max_size) result = yy_input (buf, max_size)
 
 #define MAX_INCLUDE_DEPTH 10
 static YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
@@ -67,7 +67,7 @@ static unsigned int lineno_stack[MAX_INCLUDE_DEPTH];
 static unsigned int include_stack_ptr = 0;
 static int vers_node_nesting = 0;
 
-static void yy_input (char *, int *, int);
+static int yy_input (char *, int);
 static void comment (void);
 static void lex_warn_invalid (char *where, char *what);
 
@@ -99,7 +99,7 @@ CMDFILENAMECHAR1  [_a-zA-Z0-9\/\.\\_\+\$\:\[\]\\\,\=\&\!\<\>\~]
 FILENAMECHAR1	[_a-zA-Z\/\.\\\$\_\~]
 SYMBOLCHARN     [_a-zA-Z\/\.\\\$\_\~0-9]
 FILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\=\$\:\[\]\\\,\~]
-WILDCHAR	[_a-zA-Z0-9\/\.\-\_\+\=\$\:\[\]\\\,\~\?\*]
+WILDCHAR	[_a-zA-Z0-9\/\.\-\_\+\=\$\:\[\]\\\,\~\?\*\^\!]
 WHITE		[ \t\n\r]+
 
 NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\$\:\[\]\\\~]
@@ -240,6 +240,8 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <BOTH,SCRIPT,EXPRESSION,MRI>":"		{ RTOKEN(':'); }
 <BOTH,SCRIPT,EXPRESSION,MRI>";"		{ RTOKEN(';');}
 <BOTH,SCRIPT>"MEMORY"			{ RTOKEN(MEMORY);}
+<BOTH,SCRIPT>"REGION_ALIAS"		{ RTOKEN(REGION_ALIAS);}
+<BOTH,SCRIPT>"LD_FEATURE"		{ RTOKEN(LD_FEATURE);}
 <BOTH,SCRIPT,EXPRESSION>"ORIGIN"	{ RTOKEN(ORIGIN);}
 <BOTH,SCRIPT>"VERSION"			{ RTOKEN(VERSIONK);}
 <EXPRESSION,BOTH,SCRIPT>"BLOCK"		{ RTOKEN(BLOCK);}
@@ -608,22 +610,23 @@ ldlex_popstate (void)
 }
 
 
-/* Place up to MAX_SIZE characters in BUF and return in *RESULT
+/* Place up to MAX_SIZE characters in BUF and return
    either the number of characters read, or 0 to indicate EOF.  */
 
-static void
-yy_input (char *buf, int *result, int max_size)
+static int
+yy_input (char *buf, int max_size)
 {
-  *result = 0;
+  int result = 0;
   if (YY_CURRENT_BUFFER->yy_input_file)
     {
       if (yyin)
 	{
-	  *result = fread (buf, 1, max_size, yyin);
-	  if (*result < max_size && ferror (yyin))
+	  result = fread (buf, 1, max_size, yyin);
+	  if (result < max_size && ferror (yyin))
 	    einfo ("%F%P: read in flex scanner failed\n");
 	}
     }
+  return result;
 }
 
 /* Eat the rest of a C-style comment.  */
@@ -683,7 +686,7 @@ lex_warn_invalid (char *where, char *what)
 
   if (! ISPRINT (*what))
     {
-      sprintf (buf, "\\%03o", (unsigned int) *what);
+      sprintf (buf, "\\%03o", *(unsigned char *) what);
       what = buf;
     }
 
