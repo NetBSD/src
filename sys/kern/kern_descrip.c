@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.216 2011/07/15 14:50:19 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.217 2011/09/25 13:40:37 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.216 2011/07/15 14:50:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.217 2011/09/25 13:40:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,7 @@ fd_used(filedesc_t *fdp, unsigned fd)
 	KASSERT(ff->ff_file == NULL);
 	KASSERT(!ff->ff_allocated);
 
-	ff->ff_allocated = 1;
+	ff->ff_allocated = true;
 	fdp->fd_lomap[off] |= 1 << (fd & NDENTRYMASK);
 	if (__predict_false(fdp->fd_lomap[off] == ~0)) {
 		KASSERT((fdp->fd_himap[off >> NDENTRYSHIFT] &
@@ -337,7 +337,7 @@ fd_unused(filedesc_t *fdp, unsigned fd)
 	}
 	KASSERT((fdp->fd_lomap[off] & (1 << (fd & NDENTRYMASK))) != 0);
 	fdp->fd_lomap[off] &= ~(1 << (fd & NDENTRYMASK));
-	ff->ff_allocated = 0;
+	ff->ff_allocated = false;
 
 	KASSERT(fd <= fdp->fd_lastfile);
 	if (fd == fdp->fd_lastfile) {
@@ -1083,6 +1083,7 @@ fd_allocfile(file_t **resultfp, int *resultfd)
 
 	fp = pool_cache_get(file_cache, PR_WAITOK);
 	if (fp == NULL) {
+		fd_abort(p, NULL, *resultfd);
 		return ENFILE;
 	}
 	KASSERT(fp->f_count == 0);
