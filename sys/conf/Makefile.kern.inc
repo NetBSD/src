@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.148 2011/08/31 20:16:43 plunky Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.149 2011/09/25 22:26:33 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -532,6 +532,7 @@ CPPFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
 
 .include <bsd.files.mk>
+.include <bsd.clang-analyze.mk>
 
 ##
 ## the end
