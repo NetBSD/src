@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc6056.c,v 1.2 2011/09/24 18:32:23 christos Exp $	*/
+/*	$NetBSD: rfc6056.c,v 1.3 2011/09/25 11:54:28 mrg Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.2 2011/09/24 18:32:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.3 2011/09/25 11:54:28 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -231,12 +231,14 @@ check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr,
 kauth_cred_t cred)
 {
 	struct inpcbtable *table;
-	struct socket *so;
 #ifdef INET
 	vestigial_inpcb_t vestigial;
 #endif
 	int error;
+#ifdef INET6
+	struct socket *so;
 	int wild = 0;
+#endif
 
 	DPRINTF("%s called for argument %d\n", __func__, port);
 
@@ -567,7 +569,9 @@ Fhash(const struct inpcb_hdr *inp_hdr)
 static bool
 iscompletetuple(struct inpcb_hdr *inp_hdr)
 {
+#ifdef INET6
 	struct in6pcb *in6p;
+#endif
 
 	switch (inp_hdr->inph_af) {
 #ifdef INET
@@ -910,14 +914,16 @@ sysctl_rfc6056_helper(SYSCTLFN_ARGS, int *algo)
 int
 sysctl_rfc6056_selected(SYSCTLFN_ARGS)
 {
-	return sysctl_rfc6056_helper(SYSCTLFN_CALL(rnode), &inet6_rfc6056algo);
+	return sysctl_rfc6056_helper(SYSCTLFN_CALL(rnode), &inet4_rfc6056algo);
 }
 
+#ifdef INET6
 int
 sysctl_rfc6056_selected6(SYSCTLFN_ARGS)
 {
-	return sysctl_rfc6056_helper(SYSCTLFN_CALL(rnode), &inet4_rfc6056algo);
+	return sysctl_rfc6056_helper(SYSCTLFN_CALL(rnode), &inet6_rfc6056algo);
 }
+#endif
 
 /*
  * The sysctl hook that returns the available
