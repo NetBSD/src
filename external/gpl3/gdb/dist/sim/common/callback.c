@@ -501,7 +501,11 @@ os_time (p, t)
      host_callback *p;
      long *t;
 {
-  return wrap (p, time (t));
+  long v = (long)time(NULL);
+
+  if (t != NULL)
+    *t = v;
+  return wrap (p, v);
 }
 
 
