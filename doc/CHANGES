@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1610 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1611 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1130,3 +1130,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		RFC6056 port selection algorithms. The selection can
 		be done at the global level via sysctl(7), or at the socket
 		level via setsockopt(2) [christos 20110923]
+	binutils: updated to FSF binutils 2.21.1a.  [christos 20110924]
