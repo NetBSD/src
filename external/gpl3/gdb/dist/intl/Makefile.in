@@ -133,8 +133,8 @@ libintl.h: $(srcdir)/libgnuintl.h
 	$(COMPILE) $<
 
 .y.c:
-	$(YACC) $(YFLAGS) --output $@ $<
-	rm -f $*.h
+#	$(YACC) $(YFLAGS) --output $@ $<
+#	rm -f $*.h
 
 INCLUDES = -I. -I$(srcdir)
 
