@@ -3773,7 +3773,7 @@ subdirs="$subdirs arm"
 
 
        ;;
-   sh64*-*-*)
+   sh64*-*-* | sh5*-*-*)
 
   sim_arch=sh64
   subdirs="$subdirs sh64"

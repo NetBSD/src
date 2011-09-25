@@ -1,2 +1,2 @@
 # Host: NetBSD/sh
-NATDEPFILES= fork-child.o inf-ptrace.o shnbsd-nat.o
+NATDEPFILES= inf-ptrace.o fork-child.o nbsd-nat.o shnbsd-nat.o

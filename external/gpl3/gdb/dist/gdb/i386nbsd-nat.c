@@ -40,34 +40,59 @@ i386nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
   struct switchframe sf;
 
-  /* The following is true for NetBSD 1.6.2:
+  /* The following is true for NetBSD 1.6.2 and after:
 
      The pcb contains %esp and %ebp at the point of the context switch
-     in cpu_switch().  At that point we have a stack frame as
-     described by `struct switchframe', which for NetBSD 1.6.2 has the
-     following layout:
+     in cpu_switch()/cpu_switchto().  At that point we have a stack frame as
+     described by `struct switchframe', which for NetBSD (2.0 and later) has
+     the following layout:
 
-     interrupt level
      %edi
      %esi
      %ebx
-     %eip
+     return address
 
      we reconstruct the register state as it would look when we just
-     returned from cpu_switch().  */
+     returned from cpu_switch()/cpu_switchto().
+
+     For core dumps the pcb is saved by savectx()/dumpsys() and contains the
+     stack pointer and frame pointer.  A new dumpsys() fakes a switchframe
+     whereas older code isn't reliable so use an iffy heuristic to detect this
+     and use the frame pointer to recover enough state.  */
 
   /* The stack pointer shouldn't be zero.  */
   if (pcb->pcb_esp == 0)
     return 0;
 
-  read_memory (pcb->pcb_esp, (gdb_byte *)&sf, sizeof sf);
-  pcb->pcb_esp += sizeof (struct switchframe);
-  regcache_raw_supply (regcache, I386_EDI_REGNUM, &sf.sf_edi);
-  regcache_raw_supply (regcache, I386_ESI_REGNUM, &sf.sf_esi);
-  regcache_raw_supply (regcache, I386_EBP_REGNUM, &pcb->pcb_ebp);
-  regcache_raw_supply (regcache, I386_ESP_REGNUM, &pcb->pcb_esp);
-  regcache_raw_supply (regcache, I386_EBX_REGNUM, &sf.sf_ebx);
-  regcache_raw_supply (regcache, I386_EIP_REGNUM, &sf.sf_eip);
+  read_memory (pcb->pcb_esp, (gdb_byte *) &sf, sizeof sf);
+
+  if ( (unsigned long)sf.sf_eip >= (unsigned long)0xc0100000 )
+    {
+      /* Yes, we have a switchframe that matches cpu_switchto() or
+         the new dumpsys().  */
+
+      pcb->pcb_esp += sizeof (struct switchframe);
+      regcache_raw_supply (regcache, I386_EDI_REGNUM, &sf.sf_edi);
+      regcache_raw_supply (regcache, I386_ESI_REGNUM, &sf.sf_esi);
+      regcache_raw_supply (regcache, I386_EBP_REGNUM, &pcb->pcb_ebp);
+      regcache_raw_supply (regcache, I386_ESP_REGNUM, &pcb->pcb_esp);
+      regcache_raw_supply (regcache, I386_EBX_REGNUM, &sf.sf_ebx);
+      regcache_raw_supply (regcache, I386_EIP_REGNUM, &sf.sf_eip);
+    }
+  else
+    {
+      CORE_ADDR pc, fp;
+
+      /* No, the pcb must have been last updated by savectx() in old
+         dumpsys(). Use the frame pointer to recover enough state.  */
+
+      read_memory (pcb->pcb_ebp, (gdb_byte *) &fp, sizeof(fp));
+      read_memory (pcb->pcb_ebp + 4, (gdb_byte *) &pc, sizeof(pc));
+
+      regcache_raw_supply (regcache, I386_ESP_REGNUM, &pcb->pcb_ebp);
+      regcache_raw_supply (regcache, I386_EBP_REGNUM, &fp);
+      regcache_raw_supply (regcache, I386_EIP_REGNUM, &pc);
+    }
 
   return 1;
 }

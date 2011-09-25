@@ -200,6 +200,7 @@ _initialize_alphabsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = alphabsd_fetch_inferior_registers;
   t->to_store_registers = alphabsd_store_inferior_registers;
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
   add_target (t);
 
   /* Support debugging kernel virtual memory images.  */

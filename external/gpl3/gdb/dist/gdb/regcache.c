@@ -839,7 +839,7 @@ typedef void (regcache_write_ftype) (struct regcache *regcache, int regnum,
 static enum register_status
 regcache_xfer_part (struct regcache *regcache, int regnum,
 		    int offset, int len, void *in, const void *out,
-		    enum register_status (*read) (struct regcache *regcache,
+		    enum register_status (*xread) (struct regcache *regcache,
 						  int regnum,
 						  gdb_byte *buf),
 		    void (*write) (struct regcache *regcache, int regnum,
@@ -860,8 +860,8 @@ regcache_xfer_part (struct regcache *regcache, int regnum,
     {
       enum register_status status;
 
-      gdb_assert (read != NULL);
-      status = read (regcache, regnum, reg);
+      gdb_assert (xread != NULL);
+      status = xread (regcache, regnum, reg);
       if (status != REG_VALID)
 	return status;
     }

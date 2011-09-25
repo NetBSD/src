@@ -128,6 +128,8 @@ powerpc-*-aix* | rs6000-*-*)
 powerpc-*-linux*)	gdb_host=linux ;;
 powerpc-*-netbsd* | powerpc-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
+powerpc64-*-netbsd* | powerpc64-*-knetbsd*-gnu)
+			gdb_host=ppc64-nbsd ;;
 powerpc-*-openbsd*)	gdb_host=obsd ;;
 
 powerpc64-*-linux*)     gdb_host=ppc64-linux

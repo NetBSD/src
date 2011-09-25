@@ -27,6 +27,7 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 
+#include "nbsd-nat.h"
 #include "vax-tdep.h"
 #include "inf-ptrace.h"
 
@@ -138,9 +139,11 @@ _initialize_vaxbsd_nat (void)
 {
   struct target_ops *t;
 
+  /* Add some extra features to the common *BSD/vax target.  */
   t = inf_ptrace_target ();
   t->to_fetch_registers = vaxbsd_fetch_inferior_registers;
   t->to_store_registers = vaxbsd_store_inferior_registers;
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
   add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
