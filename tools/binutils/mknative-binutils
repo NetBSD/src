@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-binutils,v 1.7 2009/11/09 13:50:41 skrll Exp $
+#	$NetBSD: mknative-binutils,v 1.8 2011/09/25 04:00:58 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/binutils
@@ -91,9 +91,13 @@ get_binutils () {
 
 	mkdir -p $_TOP/external/gpl3/binutils/usr.bin/gas/arch/$MACHINE_ARCH
 
-	getvars gas/Makefile \
-		DEFS INCLUDES OBJS \
-		| write_mk external/gpl3/binutils/usr.bin/gas/arch/$MACHINE_ARCH/defs.mk
+	grep -v DEPDIR "$_TMPDIR/gas/Makefile" > "$_TMPDIR/gas/Makefile.nodeps"
+	getvars gas/Makefile.nodeps \
+                DEFS INCLUDES as_new_OBJECTS as_new_LDADD | 
+	sed	-e s/G_as_new_OBJECTS/G_OBJS/ \
+		-e s/G_as_new_LDADD=/G_OBJS+=/ \
+		-e 's/\.\..*a//' |
+	write_mk external/gpl3/binutils/usr.bin/gas/arch/$MACHINE_ARCH/defs.mk
 
 	for f in config itbl-cpu obj-format targ-cpu targ-env; do
 		write_c external/gpl3/binutils/usr.bin/gas/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gas/$f.h
