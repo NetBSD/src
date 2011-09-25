@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.67 2011/09/23 06:48:08 mrg Exp $
+# $NetBSD: ad.mips64el,v 1.68 2011/09/25 04:11:47 christos Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -55,8 +55,8 @@
 ./usr/lib/64/libarchive.so.3.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libasn1.so.9			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos
-./usr/lib/64/libbfd.so.11			base-compat-shlib	compat,pic,binutils
-./usr/lib/64/libbfd.so.11.0			base-compat-shlib	compat,pic,binutils
+./usr/lib/64/libbfd.so.12			base-compat-shlib	compat,pic,binutils
+./usr/lib/64/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/64/libbind9.so.5			base-compat-shlib	compat,pic
 ./usr/lib/64/libbind9.so.5.6			base-compat-shlib	compat,pic
 ./usr/lib/64/libbluetooth.so.4			base-compat-shlib	compat,pic
@@ -173,8 +173,8 @@
 ./usr/lib/64/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/64/libobjc.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libobjc.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/64/libopcodes.so.4			base-compat-shlib	compat,pic,binutils
-./usr/lib/64/libopcodes.so.4.0			base-compat-shlib	compat,pic,binutils
+./usr/lib/64/libopcodes.so.5			base-compat-shlib	compat,pic,binutils
+./usr/lib/64/libopcodes.so.5.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/64/libossaudio.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libossaudio.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libp2k.so.2			base-compat-shlib	compat,pic
@@ -343,8 +343,8 @@
 ./usr/lib/o32/libarchive.so.3.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libasn1.so.9			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos
-./usr/lib/o32/libbfd.so.11			base-compat-shlib	compat,pic,binutils
-./usr/lib/o32/libbfd.so.11.0			base-compat-shlib	compat,pic,binutils
+./usr/lib/o32/libbfd.so.12			base-compat-shlib	compat,pic,binutils
+./usr/lib/o32/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/o32/libbind9.so.5			base-compat-shlib	compat,pic
 ./usr/lib/o32/libbind9.so.5.6			base-compat-shlib	compat,pic
 ./usr/lib/o32/libbluetooth.so.4			base-compat-shlib	compat,pic
@@ -461,8 +461,8 @@
 ./usr/lib/o32/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/o32/libobjc.so.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libobjc.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libopcodes.so.4			base-compat-shlib	compat,pic,binutils
-./usr/lib/o32/libopcodes.so.4.0			base-compat-shlib	compat,pic,binutils
+./usr/lib/o32/libopcodes.so.5			base-compat-shlib	compat,pic,binutils
+./usr/lib/o32/libopcodes.so.5.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/o32/libossaudio.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libossaudio.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/o32/libp2k.so.2			base-compat-shlib	compat,pic
