@@ -1,5 +1,81 @@
 -*- text -*-
 
+Changes in 2.21:
+
+
+* Add --interleave-width option to objcopy to allowing copying a range of
+  bytes from the input to the output with the --interleave option.
+
+* Add support for the TMS320C6000 (TI C6X) processor family.
+
+* Readelf can now display ARM unwind tables (.ARM.exidx / .ARM.extab) using
+  the -u / --unwind option.
+
+* Add --dyn-syms to readelf to dump dynamic symbol table.
+
+* A new tool - elfedit - has been added to directly manipulate ELF format
+  binaries.
+
+* Add to dlltool .def file feature of aliasing PE internal symbol name by
+  '== <ID>' option.
+
+* Add a new command line option -a / --addresses to addr2line to display the
+  address before function name or source filename.
+
+* Add a new command line option -p / --pretty-print to addr2line to have
+  a more human readable output.
+
+* The hppa/som targets can now be compiled on any host.
+
+Changes in 2.20:
+
+* Add support for delay importing to dlltool.  Use the --output-delaylib <file>
+  switch to create a delay-import library.  The resulting app will load the dll
+  as soon as the first function is called.  It will link to __delayLoadHelper2()
+  from the static delayimp library, which will import LoadLibraryA and
+  GetProcAddress from kernel32.
+
+* Add a new command line option, --insn-width=WIDTH, to objdump to specify
+  number of bytes to be displayed on a single line when disassembling
+  instructions.
+
+* Readelf can now display the relocated contents of a section as a sequence
+  of bytes via the --relocated-dump=<name|number> command line option.
+
+* The gprof program has been given a new command line option:
+  --external-symbols-table=<filename> which reads in symbols from a specified
+  file.
+
+* The plugin target has been added to bfd. It can load the same shared objects
+  used by gold and uses them to provide basic support for new file formats.
+
+* The verilog memory hex dump file format is now supported as an output format
+  for objcopy.
+
+* Add --file-alignment, --heap, --image-base, --section-alignment,
+  --stack and --subsystem command line options to objcopy, which will
+  set PE optional header.
+
+* Option --dwarf/-W of objdump is now as flexible as readelf --debug-dump/-w.
+
+* --as-needed now links in a dynamic library if it satisfies undefined
+  symbols in regular objects, or in other dynamic libraries.  In the
+  latter case the library is not linked if it is found in a DT_NEEDED
+  entry of one of the libraries already linked.
+
+* Added --prefix=PREFIX and --prefix-strip=LEVEL switches to objdump to
+  add absolute paths for -S.
+
+* Add new option --use-nul-prefixed-import-tables to dlltool to allow fall-
+  back to old import table generation with null element prefix.
+
+* Added --identify-strict switch to cause --identify <implib> to 
+  report an error when the import library is associated with
+  multiple DLLs.
+
+* Added --identify <implib> option to dlltool, which determines the
+  name of the DLL associated with the specified <implib>.
+
 * Support for PowerPC booke64 instructions has been removed.  The assembler no
   longer accepts -mbooke32 or -mbooke64 and the disassembler no longer accepts
   -Mbooke32 or -Mbooke64.  Instead, -mbooke and -Mbooke should be used.

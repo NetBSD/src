@@ -1,6 +1,6 @@
 /* Parse options for the GNU linker.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -40,6 +40,9 @@
 #include "ldver.h"
 #include "ldemul.h"
 #include "demangle.h"
+#ifdef ENABLE_PLUGINS
+#include "plugin.h"
+#endif /* ENABLE_PLUGINS */
 
 #ifndef PATH_SEPARATOR
 #if defined (__MSDOS__) || (defined (_WIN32) && ! defined (__CYGWIN32__))
@@ -77,6 +80,7 @@ enum option_values
   OPTION_EL,
   OPTION_EMBEDDED_RELOCS,
   OPTION_EXPORT_DYNAMIC,
+  OPTION_NO_EXPORT_DYNAMIC,
   OPTION_HELP,
   OPTION_IGNORE,
   OPTION_MAP,
@@ -89,6 +93,7 @@ enum option_values
   OPTION_NO_WHOLE_ARCHIVE,
   OPTION_OFORMAT,
   OPTION_RELAX,
+  OPTION_NO_RELAX,
   OPTION_RETAIN_SYMBOLS_FILE,
   OPTION_RPATH,
   OPTION_RPATH_LINK,
@@ -103,6 +108,7 @@ enum option_values
   OPTION_TBSS,
   OPTION_TDATA,
   OPTION_TTEXT,
+  OPTION_TTEXT_SEGMENT,
   OPTION_TRADITIONAL_FORMAT,
   OPTION_UR,
   OPTION_VERBOSE,
@@ -123,10 +129,10 @@ enum option_values
   OPTION_SPLIT_BY_RELOC,
   OPTION_SPLIT_BY_FILE ,
   OPTION_WHOLE_ARCHIVE,
-  OPTION_ADD_NEEDED,
-  OPTION_NO_ADD_NEEDED,
-  OPTION_AS_NEEDED,
-  OPTION_NO_AS_NEEDED,
+  OPTION_ADD_DT_NEEDED_FOR_DYNAMIC,
+  OPTION_NO_ADD_DT_NEEDED_FOR_DYNAMIC,
+  OPTION_ADD_DT_NEEDED_FOR_REGULAR,
+  OPTION_NO_ADD_DT_NEEDED_FOR_REGULAR,
   OPTION_WRAP,
   OPTION_FORCE_EXE_SUFFIX,
   OPTION_GC_SECTIONS,
@@ -162,13 +168,37 @@ enum option_values
   OPTION_WARN_UNRESOLVED_SYMBOLS,
   OPTION_ERROR_UNRESOLVED_SYMBOLS,
   OPTION_WARN_SHARED_TEXTREL,
+  OPTION_WARN_ALTERNATE_EM,
   OPTION_REDUCE_MEMORY_OVERHEADS,
+#ifdef ENABLE_PLUGINS
+  OPTION_PLUGIN,
+  OPTION_PLUGIN_OPT,
+#endif /* ENABLE_PLUGINS */
   OPTION_DEFAULT_SCRIPT,
   OPTION_IGNORE_UNRESOLVED_SYMBOL
 };
 
 /* The long options.  This structure is used for both the option
    parsing and the help text.  */
+
+enum control_enum {
+  /* Use one dash before long option name.  */
+  ONE_DASH,
+  /* Use two dashes before long option name.  */
+  TWO_DASHES,
+  /* Only accept two dashes before the long option name.
+     This is an overloading of the use of this enum, since originally it
+     was only intended to tell the --help display function how to display
+     the long option name.  This feature was added in order to resolve
+     the confusion about the -omagic command line switch.  Is it setting
+     the output file name to "magic" or is it setting the NMAGIC flag on
+     the output ?  It has been decided that it is setting the output file
+     name, and that if you want to set the NMAGIC flag you should use -N
+     or --omagic.  */
+  EXACTLY_TWO_DASHES,
+  /* Don't mention this option in --help output.  */
+  NO_HELP
+};
 
 struct ld_option
 {
@@ -181,24 +211,7 @@ struct ld_option
   /* The documentation string.  If this is NULL, this is a synonym for
      the previous option.  */
   const char *doc;
-  enum {
-    /* Use one dash before long option name.  */
-    ONE_DASH,
-    /* Use two dashes before long option name.  */
-    TWO_DASHES,
-    /* Only accept two dashes before the long option name.
-       This is an overloading of the use of this enum, since originally it
-       was only intended to tell the --help display function how to display
-       the long option name.  This feature was added in order to resolve
-       the confusion about the -omagic command line switch.  Is it setting
-       the output file name to "magic" or is it setting the NMAGIC flag on
-       the output ?  It has been decided that it is setting the output file
-       name, and that if you want to set the NMAGIC flag you should use -N
-       or --omagic.  */
-    EXACTLY_TWO_DASHES,
-    /* Don't mention this option in --help output.  */
-    NO_HELP
-  } control;
+  enum control_enum control;
 };
 
 static const struct ld_option ld_options[] =
@@ -221,6 +234,8 @@ static const struct ld_option ld_options[] =
     'e', N_("ADDRESS"), N_("Set start address"), TWO_DASHES },
   { {"export-dynamic", no_argument, NULL, OPTION_EXPORT_DYNAMIC},
     'E', NULL, N_("Export all dynamic symbols"), TWO_DASHES },
+  { {"no-export-dynamic", no_argument, NULL, OPTION_NO_EXPORT_DYNAMIC},
+    '\0', NULL, N_("Undo the effect of --export-dynamic"), TWO_DASHES },
   { {"EB", no_argument, NULL, OPTION_EB},
     '\0', NULL, N_("Link big-endian objects"), ONE_DASH },
   { {"EL", no_argument, NULL, OPTION_EL},
@@ -264,6 +279,18 @@ static const struct ld_option ld_options[] =
     'o', N_("FILE"), N_("Set output file name"), EXACTLY_TWO_DASHES },
   { {NULL, required_argument, NULL, '\0'},
     'O', NULL, N_("Optimize output file"), ONE_DASH },
+#ifdef ENABLE_PLUGINS
+  { {"plugin", required_argument, NULL, OPTION_PLUGIN},
+    '\0', N_("PLUGIN"), N_("Load named plugin"), ONE_DASH },
+  { {"plugin-opt", required_argument, NULL, OPTION_PLUGIN_OPT},
+    '\0', N_("ARG"), N_("Send arg to last-loaded plugin"), ONE_DASH },
+  { {"flto", optional_argument, NULL, OPTION_IGNORE},
+    '\0', NULL, N_("Ignored for GCC LTO option compatibility"),
+    ONE_DASH },
+  { {"flto-partition=", required_argument, NULL, OPTION_IGNORE},
+    '\0', NULL, N_("Ignored for GCC LTO option compatibility"),
+    ONE_DASH },
+#endif /* ENABLE_PLUGINS */
   { {"Qy", no_argument, NULL, OPTION_IGNORE},
     '\0', NULL, N_("Ignored for SVR4 compatibility"), ONE_DASH },
   { {"emit-relocs", no_argument, NULL, 'q'},
@@ -327,19 +354,22 @@ static const struct ld_option ld_options[] =
      OPTION_NO_ACCEPT_UNKNOWN_INPUT_ARCH},
     '\0', NULL, N_("Reject input files whose architecture is unknown"),
     TWO_DASHES },
-  { {"add-needed", no_argument, NULL, OPTION_ADD_NEEDED},
-    '\0', NULL, N_("Set DT_NEEDED tags for DT_NEEDED entries in\n"
-		   "                                following dynamic libs"),
-    TWO_DASHES },
-  { {"no-add-needed", no_argument, NULL, OPTION_NO_ADD_NEEDED},
-    '\0', NULL, N_("Do not set DT_NEEDED tags for DT_NEEDED entries\n"
-		   "                                in following dynamic libs"),
-    TWO_DASHES },
-  { {"as-needed", no_argument, NULL, OPTION_AS_NEEDED},
+
+  /* The next two options are deprecated because of their similarity to
+     --as-needed and --no-as-needed.  They have been replaced by
+     --resolve-implicit-dynamic-symbols and
+     --no-resolve-implicit-dynamic-symbols.  */
+  { {"add-needed", no_argument, NULL, OPTION_ADD_DT_NEEDED_FOR_DYNAMIC},
+    '\0', NULL, NULL, NO_HELP },
+  { {"no-add-needed", no_argument, NULL, OPTION_NO_ADD_DT_NEEDED_FOR_DYNAMIC},
+    '\0', NULL, NULL, NO_HELP },
+
+  { {"as-needed", no_argument, NULL, OPTION_ADD_DT_NEEDED_FOR_REGULAR},
     '\0', NULL, N_("Only set DT_NEEDED for following dynamic libs if used"),
     TWO_DASHES },
-  { {"no-as-needed", no_argument, NULL, OPTION_NO_AS_NEEDED},
-    '\0', NULL, N_("Always set DT_NEEDED for following dynamic libs"),
+  { {"no-as-needed", no_argument, NULL, OPTION_NO_ADD_DT_NEEDED_FOR_REGULAR},
+    '\0', NULL, N_("Always set DT_NEEDED for dynamic libraries mentioned on\n"
+		   "                                the command line"),
     TWO_DASHES },
   { {"assert", required_argument, NULL, OPTION_ASSERT},
     '\0', N_("KEYWORD"), N_("Ignored for SunOS compatibility"), ONE_DASH },
@@ -367,6 +397,15 @@ static const struct ld_option ld_options[] =
   { {"no-check-sections", no_argument, NULL, OPTION_NO_CHECK_SECTIONS},
     '\0', NULL, N_("Do not check section addresses for overlaps"),
     TWO_DASHES },
+  { {"copy-dt-needed-entries", no_argument, NULL,
+     OPTION_ADD_DT_NEEDED_FOR_DYNAMIC},
+    '\0', NULL, N_("Copy DT_NEEDED links mentioned inside DSOs that follow"),
+    TWO_DASHES },
+  { {"no-copy-dt-needed-entries", no_argument, NULL,
+     OPTION_NO_ADD_DT_NEEDED_FOR_DYNAMIC},
+    '\0', NULL, N_("Do not copy DT_NEEDED links mentioned inside DSOs that follow"),
+    TWO_DASHES },
+
   { {"cref", no_argument, NULL, OPTION_CREF},
     '\0', NULL, N_("Output cross reference table"), TWO_DASHES },
   { {"defsym", required_argument, NULL, OPTION_DEFSYM},
@@ -461,7 +500,9 @@ static const struct ld_option ld_options[] =
     '\0', NULL, N_("Reduce memory overheads, possibly taking much longer"),
     TWO_DASHES },
   { {"relax", no_argument, NULL, OPTION_RELAX},
-    '\0', NULL, N_("Relax branches on certain targets"), TWO_DASHES },
+    '\0', NULL, N_("Reduce code size by using target specific optimizations"), TWO_DASHES },
+  { {"no-relax", no_argument, NULL, OPTION_NO_RELAX},
+    '\0', NULL, N_("Do not use relaxation techniques to reduce code size"), TWO_DASHES },
   { {"retain-symbols-file", required_argument, NULL,
      OPTION_RETAIN_SYMBOLS_FILE},
     '\0', N_("FILE"), N_("Keep only symbols listed in FILE"), TWO_DASHES },
@@ -513,14 +554,17 @@ static const struct ld_option ld_options[] =
     '\0', N_("ADDRESS"), N_("Set address of .data section"), ONE_DASH },
   { {"Ttext", required_argument, NULL, OPTION_TTEXT},
     '\0', N_("ADDRESS"), N_("Set address of .text section"), ONE_DASH },
+  { {"Ttext-segment", required_argument, NULL, OPTION_TTEXT_SEGMENT},
+    '\0', N_("ADDRESS"), N_("Set address of text segment"), ONE_DASH },
   { {"unresolved-symbols=<method>", required_argument, NULL,
      OPTION_UNRESOLVED_SYMBOLS},
     '\0', NULL, N_("How to handle unresolved symbols.  <method> is:\n"
 		   "                                ignore-all, report-all, ignore-in-object-files,\n"
 		   "                                ignore-in-shared-libs"),
     TWO_DASHES },
-  { {"verbose", no_argument, NULL, OPTION_VERBOSE},
-    '\0', NULL, N_("Output lots of information during link"), TWO_DASHES },
+  { {"verbose", optional_argument, NULL, OPTION_VERBOSE},
+    '\0', N_("[=NUMBER]"),
+    N_("Output lots of information during link"), TWO_DASHES },
   { {"dll-verbose", no_argument, NULL, OPTION_VERBOSE}, /* Linux.  */
     '\0', NULL, NULL, NO_HELP },
   { {"version-script", required_argument, NULL, OPTION_VERSION_SCRIPT },
@@ -552,6 +596,9 @@ static const struct ld_option ld_options[] =
     TWO_DASHES },
   { {"warn-shared-textrel", no_argument, NULL, OPTION_WARN_SHARED_TEXTREL},
     '\0', NULL, N_("Warn if shared object has DT_TEXTREL"),
+    TWO_DASHES },
+  { {"warn-alternate-em", no_argument, NULL, OPTION_WARN_ALTERNATE_EM},
+    '\0', NULL, N_("Warn if an object has alternate ELF machine code"),
     TWO_DASHES },
   { {"warn-unresolved-symbols", no_argument, NULL,
      OPTION_WARN_UNRESOLVED_SYMBOLS},
@@ -587,9 +634,11 @@ parse_args (unsigned argc, char **argv)
   int last_optind;
   enum report_method how_to_report_unresolved_symbols = RM_GENERATE_ERROR;
 
-  shortopts = xmalloc (OPTION_COUNT * 3 + 2);
-  longopts = xmalloc (sizeof (*longopts) * (OPTION_COUNT + 1));
-  really_longopts = xmalloc (sizeof (*really_longopts) * (OPTION_COUNT + 1));
+  shortopts = (char *) xmalloc (OPTION_COUNT * 3 + 2);
+  longopts = (struct option *)
+      xmalloc (sizeof (*longopts) * (OPTION_COUNT + 1));
+  really_longopts = (struct option *)
+      malloc (sizeof (*really_longopts) * (OPTION_COUNT + 1));
 
   /* Starting the short option string with '-' is for programs that
      expect options and other ARGV-elements in any order and that care about
@@ -674,7 +723,7 @@ parse_args (unsigned argc, char **argv)
 	{
 	  char *n;
 
-	  n = xmalloc (strlen (argv[i]) + 20);
+	  n = (char *) xmalloc (strlen (argv[i]) + 20);
 	  sprintf (n, "--library=%s", argv[i] + 2);
 	  argv[i] = n;
 	}
@@ -820,13 +869,17 @@ parse_args (unsigned argc, char **argv)
 	case 'E': /* HP/UX compatibility.  */
 	  link_info.export_dynamic = TRUE;
 	  break;
+	case OPTION_NO_EXPORT_DYNAMIC:
+	  link_info.export_dynamic = FALSE;
+	  break;
 	case 'e':
 	  lang_add_entry (optarg, TRUE);
 	  break;
 	case 'f':
 	  if (command_line.auxiliary_filters == NULL)
 	    {
-	      command_line.auxiliary_filters = xmalloc (2 * sizeof (char *));
+	      command_line.auxiliary_filters = (char **)
+                  xmalloc (2 * sizeof (char *));
 	      command_line.auxiliary_filters[0] = optarg;
 	      command_line.auxiliary_filters[1] = NULL;
 	    }
@@ -838,8 +891,8 @@ parse_args (unsigned argc, char **argv)
 	      c = 0;
 	      for (p = command_line.auxiliary_filters; *p != NULL; p++)
 		++c;
-	      command_line.auxiliary_filters
-		= xrealloc (command_line.auxiliary_filters,
+	      command_line.auxiliary_filters = (char **)
+                  xrealloc (command_line.auxiliary_filters,
 			    (c + 2) * sizeof (char *));
 	      command_line.auxiliary_filters[c] = optarg;
 	      command_line.auxiliary_filters[c + 1] = NULL;
@@ -1014,6 +1067,17 @@ parse_args (unsigned argc, char **argv)
 	case OPTION_OFORMAT:
 	  lang_add_output_format (optarg, NULL, NULL, 0);
 	  break;
+#ifdef ENABLE_PLUGINS
+	case OPTION_PLUGIN:
+	  if (plugin_opt_plugin (optarg))
+	    einfo (_("%P%F: %s: error loading plugin\n"),
+		   plugin_error_plugin ());
+	  break;
+	case OPTION_PLUGIN_OPT:
+	  if (plugin_opt_plugin_arg (optarg))
+	    einfo(_("%P%F: bad -plugin-opt option\n"));
+	  break;
+#endif /* ENABLE_PLUGINS */
 	case 'q':
 	  link_info.emitrelocations = TRUE;
 	  break;
@@ -1085,7 +1149,7 @@ parse_args (unsigned argc, char **argv)
 
 	      if (cp == NULL)
 		{
-		  buf = xmalloc (rpath_len + optarg_len + 2);
+		  buf = (char *) xmalloc (rpath_len + optarg_len + 2);
 		  sprintf (buf, "%s%c%s", command_line.rpath,
 			   config.rpath_separator, optarg);
 		  free (command_line.rpath);
@@ -1100,17 +1164,20 @@ parse_args (unsigned argc, char **argv)
 	    {
 	      char *buf;
 
-	      buf = xmalloc (strlen (command_line.rpath_link)
-			     + strlen (optarg)
-			     + 2);
+	      buf = (char *) xmalloc (strlen (command_line.rpath_link)
+                                      + strlen (optarg)
+                                      + 2);
 	      sprintf (buf, "%s%c%s", command_line.rpath_link,
 		       config.rpath_separator, optarg);
 	      free (command_line.rpath_link);
 	      command_line.rpath_link = buf;
 	    }
 	  break;
+	case OPTION_NO_RELAX:
+	  DISABLE_RELAXATION;
+	  break;
 	case OPTION_RELAX:
-	  command_line.relax = TRUE;
+	  ENABLE_RELAXATION;
 	  break;
 	case OPTION_RETAIN_SYMBOLS_FILE:
 	  add_keepsyms_file (optarg);
@@ -1217,7 +1284,7 @@ parse_args (unsigned argc, char **argv)
 	    /* We must copy the section name as set_section_start
 	       doesn't do it for us.  */
 	    len = optarg2 - optarg;
-	    sec_name = xmalloc (len);
+	    sec_name = (char *) xmalloc (len);
 	    memcpy (sec_name, optarg, len - 1);
 	    sec_name[len - 1] = 0;
 
@@ -1238,6 +1305,9 @@ parse_args (unsigned argc, char **argv)
 	case OPTION_TTEXT:
 	  set_segment_start (".text", optarg);
 	  break;
+	case OPTION_TTEXT_SEGMENT:
+	  set_segment_start (".text-segment", optarg);
+	  break;
 	case OPTION_TRADITIONAL_FORMAT:
 	  link_info.traditional_format = TRUE;
 	  break;
@@ -1252,7 +1322,7 @@ parse_args (unsigned argc, char **argv)
 	  config.dynamic_link = FALSE;
 	  break;
 	case 'u':
-	  ldlang_add_undef (optarg);
+	  ldlang_add_undef (optarg, TRUE);
 	  break;
 	case OPTION_UNIQUE:
 	  if (optarg != NULL)
@@ -1265,6 +1335,16 @@ parse_args (unsigned argc, char **argv)
 	  version_printed = TRUE;
 	  trace_file_tries = TRUE;
 	  overflow_cutoff_limit = -2;
+	  if (optarg != NULL)
+	    {
+	      char *end;
+	      int level ATTRIBUTE_UNUSED = strtoul (optarg, &end, 0);
+	      if (*end)
+		einfo (_("%P%F: invalid number `%s'\n"), optarg);
+#ifdef ENABLE_PLUGINS
+	      report_plugin_symbols = level > 1;
+#endif /* ENABLE_PLUGINS */
+	    }
 	  break;
 	case 'v':
 	  ldversion (0);
@@ -1359,20 +1439,23 @@ parse_args (unsigned argc, char **argv)
 	case OPTION_WARN_SHARED_TEXTREL:
 	  link_info.warn_shared_textrel = TRUE;
 	  break;
+	case OPTION_WARN_ALTERNATE_EM:
+	  link_info.warn_alternate_em = TRUE;
+	  break;
 	case OPTION_WHOLE_ARCHIVE:
 	  whole_archive = TRUE;
 	  break;
-	case OPTION_ADD_NEEDED:
-	  add_needed = TRUE;
+	case OPTION_ADD_DT_NEEDED_FOR_DYNAMIC:
+	  add_DT_NEEDED_for_dynamic = TRUE;
 	  break;
-	case OPTION_NO_ADD_NEEDED:
-	  add_needed = FALSE;
+	case OPTION_NO_ADD_DT_NEEDED_FOR_DYNAMIC:
+	  add_DT_NEEDED_for_dynamic = FALSE;
 	  break;
-	case OPTION_AS_NEEDED:
-	  as_needed = TRUE;
+	case OPTION_ADD_DT_NEEDED_FOR_REGULAR:
+	  add_DT_NEEDED_for_regular = TRUE;
 	  break;
-	case OPTION_NO_AS_NEEDED:
-	  as_needed = FALSE;
+	case OPTION_NO_ADD_DT_NEEDED_FOR_REGULAR:
+	  add_DT_NEEDED_for_regular = FALSE;
 	  break;
 	case OPTION_WRAP:
 	  add_wrap (optarg);
@@ -1415,10 +1498,10 @@ parse_args (unsigned argc, char **argv)
 	    config.split_by_file = 1;
 	  break;
 	case OPTION_CHECK_SECTIONS:
-	  command_line.check_section_addresses = TRUE;
+	  command_line.check_section_addresses = 1;
 	  break;
 	case OPTION_NO_CHECK_SECTIONS:
-	  command_line.check_section_addresses = FALSE;
+	  command_line.check_section_addresses = 0;
 	  break;
 	case OPTION_ACCEPT_UNKNOWN_INPUT_ARCH:
 	  command_line.accept_unknown_input_arch = TRUE;
@@ -1427,18 +1510,15 @@ parse_args (unsigned argc, char **argv)
 	  command_line.accept_unknown_input_arch = FALSE;
 	  break;
 	case '(':
-	  if (ingroup)
-	    einfo (_("%P%F: may not nest groups (--help for usage)\n"));
-
 	  lang_enter_group ();
-	  ingroup = 1;
+	  ingroup++;
 	  break;
 	case ')':
 	  if (! ingroup)
 	    einfo (_("%P%F: group ended before it began (--help for usage)\n"));
 
 	  lang_leave_group ();
-	  ingroup = 0;
+	  ingroup--;
 	  break;
 
 	case OPTION_INIT:
@@ -1469,8 +1549,11 @@ parse_args (unsigned argc, char **argv)
 	}
     }
 
-  if (ingroup)
-    lang_leave_group ();
+  while (ingroup)
+    {
+      lang_leave_group ();
+      ingroup--;
+    }
 
   if (default_dirlist != NULL)
     {
@@ -1485,6 +1568,12 @@ parse_args (unsigned argc, char **argv)
   if (link_info.unresolved_syms_in_shared_libs == RM_NOT_YET_SET)
     /* FIXME: Should we allow emulations a chance to set this ?  */
     link_info.unresolved_syms_in_shared_libs = how_to_report_unresolved_symbols;
+
+#ifdef ENABLE_PLUGINS
+  /* Now all the plugin arguments have been gathered, we can load them.  */
+  if (plugin_load_plugins ())
+    einfo (_("%P%F: %s: error loading plugin\n"), plugin_error_plugin ());
+#endif /* ENABLE_PLUGINS */
 }
 
 /* Add the (colon-separated) elements of DIRLIST_PTR to the
@@ -1539,7 +1628,7 @@ set_segment_start (const char *section, char *valstr)
       }
   /* There was no existing value so we must create a new segment
      entry.  */
-  seg = stat_alloc (sizeof (*seg));
+  seg = (segment_type *) stat_alloc (sizeof (*seg));
   seg->name = name;
   seg->value = val;
   seg->used = FALSE;
