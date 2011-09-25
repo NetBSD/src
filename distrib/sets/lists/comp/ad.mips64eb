@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.55 2011/09/23 06:48:08 mrg Exp $
+# $NetBSD: ad.mips64eb,v 1.56 2011/09/25 04:11:47 christos Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -1245,7 +1245,7 @@
 ./usr/libdata/debug/usr/lib/64/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/64/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
-./usr/libdata/debug/usr/lib/64/libbfd.so.11.0.debug	comp-sys-debug	binutils,debug,compat
+./usr/libdata/debug/usr/lib/64/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/64/libbind9.so.5.6.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
@@ -1318,7 +1318,7 @@
 ./usr/libdata/debug/usr/lib/64/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug,compat
 ./usr/libdata/debug/usr/lib/64/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug,compat
 ./usr/libdata/debug/usr/lib/64/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug,compat
-./usr/libdata/debug/usr/lib/64/libopcodes.so.4.0.debug	comp-c-debug	binutils,debug,compat
+./usr/libdata/debug/usr/lib/64/libopcodes.so.5.0.debug	comp-c-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/64/libossaudio.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libpam.so.3.0.debug		comp-sys-debug	pam,debug,compat
@@ -1395,7 +1395,7 @@
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
-./usr/libdata/debug/usr/lib/o32/libbfd.so.11.0.debug	comp-sys-debug	binutils,debug,compat
+./usr/libdata/debug/usr/lib/o32/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbind9.so.5.6.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
@@ -1468,7 +1468,7 @@
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug,compat
-./usr/libdata/debug/usr/lib/o32/libopcodes.so.4.0.debug	comp-c-debug	binutils,debug,compat
+./usr/libdata/debug/usr/lib/o32/libopcodes.so.5.0.debug	comp-c-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libossaudio.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libpam.so.3.0.debug		comp-sys-debug	pam,debug,compat

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.603 2011/09/23 06:48:08 mrg Exp $
+# $NetBSD: shl.mi,v 1.604 2011/09/25 04:11:47 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -157,8 +157,8 @@
 ./usr/lib/libavl.so				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libavl.so.0				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libavl.so.0.0          		base-zfs-shlib		zfs,dynamicroot
-./usr/lib/libbfd.so.11				base-sys-shlib		binutils
-./usr/lib/libbfd.so.11.0			base-sys-shlib		binutils
+./usr/lib/libbfd.so.12				base-sys-shlib		binutils
+./usr/lib/libbfd.so.12.0			base-sys-shlib		binutils
 ./usr/lib/libbind9.so				base-bind-shlib
 ./usr/lib/libbind9.so.5				base-bind-shlib
 ./usr/lib/libbind9.so.5.6			base-bind-shlib

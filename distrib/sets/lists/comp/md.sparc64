@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.122 2011/09/23 06:48:09 mrg Exp $
+# $NetBSD: md.sparc64,v 1.123 2011/09/25 04:11:47 christos Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -876,7 +876,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libarchive.so.3.1.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/sparc/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/sparc/libbfd.so.11.0.debug			comp-compat-shlib	compat,pic,binutils,debug
+./usr/libdata/debug/usr/lib/sparc/libbfd.so.12.0.debug			comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/sparc/libbind9.so.5.6.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbluetooth.so.4.2.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbsdmalloc.so.0.0.debug		comp-compat-shlib	compat,pic,debug
@@ -940,7 +940,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libnetpgp.so.3.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libnpf.so.0.0.debug			comp-compat-shlib	compat,pic,debug,npf
 ./usr/libdata/debug/usr/lib/sparc/libobjc.so.3.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libopcodes.so.4.0.debug		comp-compat-shlib	compat,pic,binutils,debug
+./usr/libdata/debug/usr/lib/sparc/libopcodes.so.5.0.debug		comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/sparc/libossaudio.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libp2k.so.2.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpam.so.3.0.debug			comp-compat-shlib	compat,pic,debug

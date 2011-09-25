@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.193 2011/09/23 06:48:10 mrg Exp $
+# $NetBSD: shl.mi,v 1.194 2011/09/25 04:11:48 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -92,8 +92,8 @@
 ./usr/lib/libnpf_pic.a				comp-npf-piclib		npf
 ./usr/lib/libnvpair_pic.a			comp-zfs-piclib		zfs
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
-./usr/lib/libopcodes.so.4			comp-c-shlib		binutils
-./usr/lib/libopcodes.so.4.0			comp-c-shlib		binutils
+./usr/lib/libopcodes.so.5			comp-c-shlib		binutils
+./usr/lib/libopcodes.so.5.0			comp-c-shlib		binutils
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio_pic.a			comp-c-piclib
 ./usr/lib/libp2k_pic.a				comp-puffs-piclib
@@ -240,7 +240,7 @@
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
-./usr/libdata/debug/usr/lib/libbfd.so.11.0.debug	comp-sys-debug	binutils,debug
+./usr/libdata/debug/usr/lib/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug
 ./usr/libdata/debug/usr/lib/libbind9.so.5.6.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
@@ -305,7 +305,7 @@
 ./usr/libdata/debug/usr/lib/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug
 ./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug
 ./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug
-./usr/libdata/debug/usr/lib/libopcodes.so.4.0.debug	comp-c-debug	binutils,debug
+./usr/libdata/debug/usr/lib/libopcodes.so.5.0.debug	comp-c-debug	binutils,debug
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug		comp-puffs-debug	debug
 ./usr/libdata/debug/usr/lib/libpam.so.3.0.debug		comp-sys-debug	pam,debug
