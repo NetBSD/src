@@ -440,7 +440,7 @@ extern int alpha_this_gpdisp_sequence_number;
    As of Jan 2002, only glibc 2.2.4 can actually make use of this, but
    I imagine that other systems will catch up.  In the meantime, it
    doesn't harm to make sure that the data exists to be used later.  */
-#if defined(HAVE_LD_EH_FRAME_HDR)
+#if defined(HAVE_LD_EH_FRAME_HDR) && !defined(LINK_EH_SPEC)
 #define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
 #endif
 
