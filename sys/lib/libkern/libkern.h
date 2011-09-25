@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.99 2011/09/01 22:35:17 jym Exp $	*/
+/*	$NetBSD: libkern.h,v 1.100 2011/09/25 20:31:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -177,13 +177,8 @@ tolower(int ch)
 #ifdef NDEBUG						/* tradition! */
 #define	assert(e)	((void)0)
 #else
-#ifdef __STDC__
 #define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
 			    kern_assert("", __FILE__, __LINE__, #e))
-#else
-#define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
-			    kern_assert("", __FILE__, __LINE__, "e"))
-#endif
 #endif
 
 #ifdef __COVERITY__
@@ -209,13 +204,8 @@ tolower(int ch)
 	if (__predict_false(!(e)))	\
 		panic msg;		\
 	} while (/*CONSTCOND*/ 0)
-#ifdef __STDC__
 #define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    kern_assert("diagnostic ", __FILE__, __LINE__, #e))
-#else
-#define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    kern_assert("diagnostic ", __FILE__, __LINE__,"e"))
-#endif
 #endif
 
 #ifndef DEBUG
@@ -231,13 +221,8 @@ tolower(int ch)
 	if (__predict_false(!(e)))	\
 		panic msg;		\
 	} while (/*CONSTCOND*/ 0)
-#ifdef __STDC__
 #define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    kern_assert("debugging ", __FILE__, __LINE__, #e))
-#else
-#define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    kern_assert("debugging ", __FILE__, __LINE__, "e"))
-#endif
 #endif
 /*
  * XXX: For compatibility we use SMALL_RANDOM by default.
