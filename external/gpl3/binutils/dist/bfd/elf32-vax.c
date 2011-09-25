@@ -769,6 +769,7 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 		  if (sreloc == NULL)
 		    return FALSE;
 
+#if 0
 		  BFD_ASSERT (CONST_STRNEQ (name, ".rela")
 			      && strcmp (bfd_get_section_name (abfd, sec),
 					 name + 5) == 0);
@@ -788,6 +789,7 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 			  || !bfd_set_section_alignment (dynobj, sreloc, 2))
 			return FALSE;
 		    }
+#endif
 
 		  if (sec->flags & SEC_READONLY)
 		    info->flags |= DF_TEXTREL;
@@ -1644,7 +1646,6 @@ elf_vax_relocate_section (bfd *output_bfd,
 
 	case R_VAX_PC8:
 	case R_VAX_PC16:
-	case R_VAX_PC32:
 	r_vax_pc32_shared:
 	  if (h == NULL
 	      || ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
