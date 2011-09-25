@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.35 2010/07/12 02:58:01 christos Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.36 2011/09/25 13:42:30 chs Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.35 2010/07/12 02:58:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.36 2011/09/25 13:42:30 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.35 2010/07/12 02:58:01 christos Exp $
 
 const smb_unichar smb_unieol = 0;
 
-static MALLOC_DEFINE(M_SMBSTR, "smbstr", "SMB strings");
+/* XXX M_SMBSTR could be static but that doesn't work with gcc 4.5 on alpha. */
+MALLOC_DEFINE(M_SMBSTR, "smbstr", "SMB strings");
 MALLOC_DEFINE(M_SMBTEMP, "smbtemp", "Temp netsmb data");
 
 void
