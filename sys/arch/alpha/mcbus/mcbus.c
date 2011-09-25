@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.20 2008/07/09 21:25:59 joerg Exp $ */
+/* $NetBSD: mcbus.c,v 1.21 2011/09/25 13:37:20 chs Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.20 2008/07/09 21:25:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.21 2011/09/25 13:37:20 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ mcbusattach(device_t parent, device_t self, void *aux)
 	    bcs[mcbus_primary.mcbus_bcache] : "Unknown");
 
 	mbp->mcbus_types[0] = MCBUS_TYPE_RES;
-	for (mid = 1; mid <= MCBUS_MID_MAX; ++mid)
+	for (mid = 1; mid < MCBUS_MID_MAX; ++mid)
 		mbp->mcbus_types[mid] = MCBUS_TYPE_UNK;
 
 	/*
