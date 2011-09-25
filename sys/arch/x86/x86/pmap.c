@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.130 2011/09/20 00:12:23 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.131 2011/09/25 18:39:30 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.130 2011/09/20 00:12:23 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2011/09/25 18:39:30 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1982,7 +1982,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 #endif
 
 	/*
-	 * NOTE: The `pmap_lock' is held when the PDP is allocated.
+	 * NOTE: The `pmaps_lock' is held when the PDP is allocated.
 	 */
 
 #if defined(XEN) && defined(__x86_64__)
