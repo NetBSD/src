@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/09/26 03:02:45 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2011/09/26 14:31:25 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,7 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/libdecnumber \
 		-I${DIST} \
 		-I${.CURDIR}/../libbfd/arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../libdecnumber/arch/${MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
 		-DTARGET_SYSTEM_ROOT=\"\" \
