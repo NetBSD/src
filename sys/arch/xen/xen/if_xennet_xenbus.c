@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.52 2011/09/20 00:12:24 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.53 2011/09/26 21:44:09 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.52 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.53 2011/09/26 21:44:09 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -223,7 +223,7 @@ static void xennet_free_rx_buffer(struct xennet_xenbus_softc *);
 static void xennet_tx_complete(struct xennet_xenbus_softc *);
 static void xennet_rx_mbuf_free(struct mbuf *, void *, size_t, void *);
 static int  xennet_handler(void *);
-static int  xennet_talk_to_backend(struct xennet_xenbus_softc *);
+static bool xennet_talk_to_backend(struct xennet_xenbus_softc *);
 #ifdef XENNET_DEBUG_DUMP
 static void xennet_hex_dump(const unsigned char *, size_t, const char *, int);
 #endif
@@ -518,7 +518,7 @@ abort_resume:
 	return false;
 }
 
-static int
+static bool
 xennet_talk_to_backend(struct xennet_xenbus_softc *sc)
 {
 	int error;
@@ -657,7 +657,7 @@ static void xennet_backend_changed(void *arg, XenbusState new_state)
 	case XenbusStateInitWait:
 		if (sc->sc_backend_status == BEST_CONNECTED)
 			break;
-		if (xennet_talk_to_backend(sc) == 0)
+		if (xennet_talk_to_backend(sc))
 			xenbus_switch_state(sc->sc_xbusd, NULL,
 			    XenbusStateConnected);
 		break;
