@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.18 2010/12/24 13:12:09 njoly Exp $
+#	$NetBSD: Makefile,v 1.19 2011/09/26 02:36:19 christos Exp $
 
 .include <bsd.own.mk>
 
-MODULE=		gdb6
+MODULE=		gdb
+GNUHOSTDIST=    ${.CURDIR}/../../external/gpl3/gdb/dist
 
 FIND_ARGS=	\! \( -type d -name sim -prune \)
 
@@ -16,8 +17,11 @@ INSTALL_TARGET=	install-gdb
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-CCADDFLAGS=     ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include -B${DESTDIR}/usr/lib/
-LDADDFLAGS=	-L${DESTDIR}/lib -L${DESTDIR}/usr/lib -Wl,-rpath-link,${DESTDIR}/usr/lib
+.if ${HAVE_GCC} >= 45
+CCADDFLAGS=	--sysroot=${DESTDIR} -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
+.else
+CCADDFLAGS=	${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+.endif
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-gdb
