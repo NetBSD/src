@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2011/09/26 02:36:19 christos Exp $
+#	$NetBSD: Makefile,v 1.20 2011/09/26 21:16:14 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -17,11 +17,7 @@ INSTALL_TARGET=	install-gdb
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-.if ${HAVE_GCC} >= 45
 CCADDFLAGS=	--sysroot=${DESTDIR} -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
-.else
-CCADDFLAGS=	${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
-.endif
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-gdb
