@@ -32,6 +32,17 @@
 
 #include <machine/frame.h>
 #include <machine/pcb.h>
+#include <machine/reg.h>
+
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+
+#include "gregset.h"
 
 /* Mapping between the general-purpose registers in NetBSD/amd64
    `struct reg' format and GDB's register cache layout for
@@ -111,6 +122,45 @@ amd64nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   regcache_raw_supply (regcache, AMD64_GS_REGNUM, &pcb->pcb_gs);
 
   return 1;
+}
+
+void
+supply_gregset (struct regcache *regcache, const gregset_t *gregsetp)
+{
+  amd64_supply_native_gregset (regcache, gregsetp, -1);
+}
+
+/* Fill register REGNUM (if it is a general-purpose register) in
+   *GREGSETP with the value in GDB's register cache.  If REGNUM is -1,
+   do this for all registers.  */
+
+void
+fill_gregset (const struct regcache *regcache,
+	      gregset_t *gregsetp, int regnum)
+{
+  amd64_collect_native_gregset (regcache, gregsetp, regnum);
+}
+
+/* Transfering floating-point registers between GDB, inferiors and cores.  */
+
+/* Fill GDB's register cache with the floating-point and SSE register
+   values in *FPREGSETP.  */
+
+void
+supply_fpregset (struct regcache *regcache, const fpregset_t *fpregsetp)
+{
+  amd64_supply_fxsave (regcache, -1, fpregsetp);
+}
+
+/* Fill register REGNUM (if it is a floating-point or SSE register) in
+   *FPREGSETP with the value in GDB's register cache.  If REGNUM is
+   -1, do this for all registers.  */
+
+void
+fill_fpregset (const struct regcache *regcache,
+	       fpregset_t *fpregsetp, int regnum)
+{
+  amd64_collect_fxsave (regcache, regnum, fpregsetp);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
