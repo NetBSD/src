@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2011/09/21 02:15:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.46 2011/09/26 21:16:14 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -109,13 +109,8 @@ GCCSRCDIR=${.CURDIR}/../../gnu/dist/gcc4
 GCCSRCDIR=${.CURDIR}/../../external/gpl3/gcc/dist
 .endif
 
-.if ${HAVE_GCC} >= 45
 CXXADDFLAGS=	--sysroot=${DESTDIR}
 CCADDFLAGS=	--sysroot=${DESTDIR} -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
-.else
-CXXADDFLAGS=	${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++
-CCADDFLAGS=	${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
-.endif
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-gcc
