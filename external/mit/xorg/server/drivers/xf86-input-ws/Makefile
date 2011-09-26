@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2009/11/28 12:10:24 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.2 2011/09/26 18:08:09 tsutsui Exp $
+
+WARNS?=		2
 
 DRIVER=		xf86-input-ws
 DRIVER_NAME=	ws_drv
@@ -9,7 +11,5 @@ MAN=		ws.4
 CPPFLAGS+=	-DHAVE_CONFIG_H \
 		-I${X11SRCDIR.${DRIVER}}/../include \
 		-I${X11SRCDIR.${DRIVER}}/include
-
-COPTS.ws.c=      -Wno-error	# XXX deprecated
 
 .include "../Makefile.xf86-driver"
