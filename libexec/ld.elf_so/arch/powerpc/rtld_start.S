@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.16 2011/03/04 00:40:48 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.17 2011/09/26 01:52:22 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -124,7 +124,7 @@ ENTRY_NOPROFILE(_rtld_bind_bssplt_start)
 
 	addi	%r1,%r1,160
 	bctr
-END(_rtld_bind_start)
+END(_rtld_bind_secureplt_start)
 
 	.globl	_rtld_powerpc_pltcall
 	.globl	_rtld_powerpc_pltresolve
