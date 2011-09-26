@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.17 2011/09/11 14:54:49 jdc Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.18 2011/09/26 06:51:57 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.17 2011/09/11 14:54:49 jdc Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.18 2011/09/26 06:51:57 jruoho Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -247,7 +247,7 @@ cpu_list(char **argv)
 	for (i = 0; i < cnt; i++) {
 		cs.cs_id = i;
 		if (ioctl(fd, IOC_CPU_GETSTATE, &cs) < 0)
-			err(EXIT_FAILURE, "IOC_CPU_GETINFO");
+			err(EXIT_FAILURE, "IOC_CPU_GETSTATE");
 		if (ioctl(fd, IOC_CPU_MAPID, &cs.cs_id) < 0)
 			err(EXIT_FAILURE, "IOC_CPU_MAPID");
 		if (cs.cs_online)
