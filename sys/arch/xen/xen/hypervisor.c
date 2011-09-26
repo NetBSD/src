@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.42.4.4 2011/09/23 12:44:51 sborrill Exp $ */
+/* $NetBSD: hypervisor.c,v 1.42.4.5 2011/09/26 09:56:54 sborrill Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42.4.4 2011/09/23 12:44:51 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42.4.5 2011/09/26 09:56:54 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42.4.4 2011/09/23 12:44:51 sborrill
 #include <xen/xen3-public/version.h>
 #endif
 
-#if defined(DOM0OPS) || defined(XEN3)
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/tree.h>
@@ -108,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42.4.4 2011/09/23 12:44:51 sborrill
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
 #include <xen/kernfs_machdep.h>
+#if defined(DOM0OPS) || defined(XEN3)
 #include <dev/isa/isavar.h>
 #endif /* DOM0OPS || XEN3 */
 #ifdef XEN3
