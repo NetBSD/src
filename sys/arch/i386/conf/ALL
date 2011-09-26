@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.320 2011/09/22 01:15:31 jakllsch Exp $
+# $NetBSD: ALL,v 1.321 2011/09/26 18:14:07 jakllsch Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.320 $"
+#ident 		"ALL-$Revision: 1.321 $"
 
 maxusers	64		# estimated number of users
 
@@ -556,7 +556,6 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 vga0		at isa?
