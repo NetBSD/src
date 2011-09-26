@@ -1,8 +1,8 @@
 #!/bin/sh
-#	$NetBSD: mknative-gdb,v 1.2 2007/02/19 18:26:22 chs Exp $
+#	$NetBSD: mknative-gdb,v 1.3 2011/09/26 02:36:20 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
-# platform build of src/gnu/dist/gdb6.
+# platform build of src/external/gpl3/gdb
 #
 
 # initialise
@@ -11,117 +11,139 @@ _TMPDIR=$2
 _TOP=$3
 _PLATFORM=$4
 _VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*=[ 	]*,,'`
+_GDB=external/gpl3/gdb
 
 . $_TOP/tools/gcc/mknative.common
 
-##### gnu/usr.bin/gdb6/bfd #####
+##### gdb/lib/libbfd #####
 
 get_gdb_libbfd () {
-	mkdir -p $_TOP/gnu/usr.bin/gdb6/bfd/arch/$MACHINE_ARCH
+	local _BFD=$_GDB/lib/libbfd
+	mkdir -p $_TOP/$_BFD/arch/$MACHINE_ARCH
 
 	{
 		getvars bfd/Makefile \
 			libbfd_la_DEPENDENCIES libbfd_la_OBJECTS DEFS \
 			INCLUDES TDEFAULTS
-	} | write_mk gnu/usr.bin/gdb6/bfd/arch/$MACHINE_ARCH/defs.mk
+	} | write_mk $_BFD/arch/$MACHINE_ARCH/defs.mk
 
-	write_c gnu/usr.bin/gdb6/bfd/arch/$MACHINE_ARCH/bfd.h <$_TMPDIR/bfd/bfd.h
-	write_c gnu/usr.bin/gdb6/bfd/arch/$MACHINE_ARCH/bfdver.h <$_TMPDIR/bfd/bfdver.h
-
-	{
-		cat $_TMPDIR/bfd/config.h
-	} | write_c gnu/usr.bin/gdb6/bfd/arch/$MACHINE_ARCH/config.h
+	for i in bfd-in3.h bfd_stdint.h config.h bfd.h bfdver.h targmatch.h 
+	do
+	    write_c $_BFD/arch/$MACHINE_ARCH/$i <$_TMPDIR/bfd/$i
+	done
 }
 
-##### gnu/lib/opcodes #####
+##### gdb/lib/libopcodes #####
 
 get_gdb_libopcodes () {
-	mkdir -p $_TOP/gnu/usr.bin/gdb6/opcodes/arch/$MACHINE_ARCH
+	local _OPCODES=$_GDB/lib/libopcodes
+	mkdir -p $_TOP/$_OPCODES/arch/$MACHINE_ARCH
 
 	{
 		getvars opcodes/Makefile \
 			archdefs BFD_MACHINES libopcodes_la_SOURCES
-	} | write_mk gnu/usr.bin/gdb6/opcodes/arch/$MACHINE_ARCH/defs.mk
+	} | write_mk $_GDB/lib/libopcodes//arch/$MACHINE_ARCH/defs.mk
 
 	{
 		cat $_TMPDIR/opcodes/config.h
-	} | write_c gnu/usr.bin/gdb6/opcodes/arch/$MACHINE_ARCH/config.h
+	} | write_c $_OPCODES/arch/$MACHINE_ARCH/config.h
 }
 
-##### gnu/lib/libiberty #####
+##### gdb/lib/libiberty #####
 
 get_gdb_libiberty () {
-	mkdir -p $_TOP/gnu/usr.bin/gdb6/libiberty/arch/$MACHINE_ARCH
+	local _IBERTY=$_GDB/lib/libiberty
+	mkdir -p $_TOP/$_IBERTY/arch/$MACHINE_ARCH
 
 	getvars libiberty/Makefile \
 		ALLOCA EXTRA_OFILES LIBOBJS REQUIRED_OFILES \
-		| write_mk gnu/usr.bin/gdb6/libiberty/arch/$MACHINE_ARCH/defs.mk
+		| write_mk $_IBERTY/arch/$MACHINE_ARCH/defs.mk
 
-	write_c gnu/usr.bin/gdb6/libiberty/arch/$MACHINE_ARCH/config.h \
+	write_c $_IBERTY/arch/$MACHINE_ARCH/config.h \
 		<$_TMPDIR/libiberty/config.h
 }
 
-##### gnu/usr.bin/gdb6/readline #####
+##### gdb/lib/libreadline #####
 
 get_gdb_libreadline () {
-	mkdir -p $_TOP/gnu/usr.bin/gdb6/readline/arch/$MACHINE_ARCH
+	local _READLINE=$_GDB/lib/libreadline
+	mkdir -p $_TOP/$_READLINE/arch/$MACHINE_ARCH
 
 	{
 		getvars readline/Makefile \
 			CCFLAGS OBJECTS
-	} | write_mk gnu/usr.bin/gdb6/readline/arch/$MACHINE_ARCH/defs.mk
+	} | write_mk $_READLINE/arch/$MACHINE_ARCH/defs.mk
 
-	write_c gnu/usr.bin/gdb6/readline/arch/$MACHINE_ARCH/config.h \
+	write_c $_READLINE/arch/$MACHINE_ARCH/config.h \
 		<$_TMPDIR/readline/config.h
 }
 
-##### gnu/usr.bin/gdb6 #####
+##### gdb/lib/libdecnumber #####
 
-get_gdb () {
-	mkdir -p $_TOP/gnu/usr.bin/gdb6/arch/$MACHINE_ARCH
+get_gdb_libdecnumber () {
+	local _DECNUMBER=$_GDB/lib/libdecnumber
+	mkdir -p $_TOP/$_DECNUMBER/arch/$MACHINE_ARCH
+
+	getvars libdecnumber/Makefile \
+		libdecnumber_a_OBJS |
+	sed -e s/libdecnumber_a_// |
+	write_mk $_DECNUMBER/arch/$MACHINE_ARCH/defs.mk
+
+	write_c $_DECNUMBER/arch/$MACHINE_ARCH/config.h \
+		<$_TMPDIR/readline/config.h
+
+	write_c $_DECNUMBER/arch/$MACHINE_ARCH/gstdint.h \
+		< $_TMPDIR/libdecnumber/gstdint.h
+}
+
+##### gdb/lib/libgdb #####
+
+get_gdb_libgdb () {
+	local _GDBP=$_GDB/lib/libgdb
+	mkdir -p $_TOP/$_GDBP/arch/$MACHINE_ARCH
 
 	{
 		getvars gdb/Makefile \
 			INTERNAL_CFLAGS LIBGDB_OBS SIM_OBS
-	} | write_mk gnu/usr.bin/gdb6/arch/$MACHINE_ARCH/defs.mk
+	} | write_mk $_GDBP/arch/$MACHINE_ARCH/defs.mk
 
 #	getvars gdb/gdbserver/Makefile \
 #		INTERNAL_CFLAGS OBS \
-#		| write_mk gnu/usr.bin/gdb/arch/$MACHINE_ARCH/gdbserver.mk
+#		| write_mk $_GDB/bin/gdb/arch/$MACHINE_ARCH/gdbserver.mk
 
-	write_c gnu/usr.bin/gdb6/arch/$MACHINE_ARCH/config.h \
-		< $_TMPDIR/gdb/config.h
-
-	for f in init version; do
-		write_c gnu/usr.bin/gdb6/arch/$MACHINE_ARCH/$f.c <$_TMPDIR/gdb/$f.c
+	for i in config.h observer.h observer.inc version.c init.c xml-builtin.c
+	do
+	    write_c $_GDBP/arch/$MACHINE_ARCH/$i \
+		< $_TMPDIR/gdb/$i
 	done
 
 	for f in nm tm xm; do
 		if [ -f $_TMPDIR/gdb/$f.h ]; then 
 			ls -l $_TMPDIR/gdb/$f.h | sed 's,^.*->.*/gdb/,,;s,^,#include <,;s,$,>,' \
-				| write_c gnu/usr.bin/gdb6/arch/$MACHINE_ARCH/$f.h
+				| write_c $_GDBP/arch/$MACHINE_ARCH/$f.h
 		fi
 	done
 
+	local _LIBSIM=$_GDB/lib/libsim
 	case $MACHINE_ARCH in
 	powerpc*)
-		mkdir -p $_TOP/gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH
-		write_c gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH/config.h \
+		mkdir -p $_LIBSIM/arch/$MACHINE_ARCH
+		write_c $_LIBSIM/arch/$MACHINE_ARCH/config.h \
 			<$_TMPDIR/sim/ppc/config.h
-		write_c gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH/cconfig.h \
+		write_c $_LIBSIM/arch/$MACHINE_ARCH/cconfig.h \
 			<$_TMPDIR/sim/common/cconfig.h
 		;;
 	xxmips*)
-		mkdir -p $_TOP/gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH
-		write_c gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH/config.h \
+		mkdir -p $_LIBSIM/arch/$MACHINE_ARCH
+		write_c $_LIBSIM/arch/$MACHINE_ARCH/config.h \
 			<$_TMPDIR/sim/mips/config.h
-		write_c gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH/cconfig.h \
+		write_c $_LIBSIM/arch/$MACHINE_ARCH/cconfig.h \
 			<$_TMPDIR/sim/common/cconfig.h
 		{
 			getvars sim/mips/Makefile \
 				LIB_OBJS CONFIG_CFLAGS \
 			    	BUILT_SRC_FROM_IGEN IGEN_OBJS
-		} | write_mk gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH/defs.mk
+		} | write_mk $_LIBSIM/arch/$MACHINE_ARCH/defs.mk
 		;;
 	*)
 		;;
@@ -132,11 +154,12 @@ get_gdb () {
 
 case $1 in
 all|gdb)	# everything (uses "canadian cross" temp environment)
-	get_gdb
+	get_gdb_libgdb
 	get_gdb_libbfd
 	get_gdb_libopcodes
 	get_gdb_libiberty
 	get_gdb_libreadline
+	get_gdb_libdecnumber
 	exit 0
 	;;
 

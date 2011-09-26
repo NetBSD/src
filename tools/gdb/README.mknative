@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.4 2006/11/23 23:33:56 uwe Exp $
+$NetBSD: README.mknative,v 1.5 2011/09/26 02:36:19 christos Exp $
 
 This file describes how to use the cross-compiler to generate the
 native files for GDB on a target platform.
@@ -37,11 +37,11 @@ work.
    native-to-NetBSD GDB on a cross host, and mknative pulls glue data
    from this.
 
-   NOTE: this step writes files under src/gnu/usr.bin/gdb6, so you
+   NOTE: this step writes files under src/external/gpl3/gdb/bin/gdb, so you
    need to do it in a writable src tree!
 
 7. Try out a full build using "nbmake-MACHINE" in
-   src/gnu/usr.bin/gdb6; the result should include a native GDB.
+   src/external/gpl3/bin/gdb; the result should include a native GDB.
 
 8. If all is well, commit the glue files and directories added to
-   src/gnu/usr.bin/gdb6.
+   src/external/gpl3/gdb/bin/gdb.
