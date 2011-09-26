@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.124 2011/09/25 12:56:46 mrg Exp $
+# $NetBSD: md.sparc64,v 1.125 2011/09/26 00:07:26 mrg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -429,7 +429,7 @@
 ./usr/lib/sparc/libgnumalloc_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/sparc/libgomp.a			comp-c-lib		compat,gcc=45
 ./usr/lib/sparc/libgomp.so			base-sys-shlib		compat,pic,gcc=45
-./usr/lib/sparc/libgomp.a			-unknown-		compat,debuglib,gcc=45
+./usr/lib/sparc/libgomp_g.a			-unknown-		compat,debuglib,gcc=45
 ./usr/lib/sparc/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
 ./usr/lib/sparc/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45
 ./usr/lib/sparc/libgssapi.a			comp-c-lib		compat,kerberos
