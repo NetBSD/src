@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.8 2011/08/29 14:47:08 jmcneill Exp $ */
+/* $NetBSD: cxdtv.c,v 1.9 2011/09/26 18:07:37 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.8 2011/08/29 14:47:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.9 2011/09/26 18:07:37 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -780,7 +780,7 @@ cxdtv_risc_field(struct cxdtv_softc *sc, uint32_t *rm, uint32_t bpl)
 
 	rm = sc->sc_riscbuf;
 
-	/* htole32 will be done when program is copied to chip sram */
+	/* htole32 will be done when program is copied to chip SRAM */
 
 	/* XXX */
 	*(rm++) = (CX_RISC_SYNC|0);
@@ -881,33 +881,32 @@ cxdtv_mpeg_trigger(struct cxdtv_softc *sc, void *buf)
 
 	/* software reset */
 
-	/* serial MPEG port on HD5500 */
 	switch(sc->sc_vendor) {
 	case PCI_VENDOR_ATI:
 		/* both ATI boards with DTV are the same */
 		bus_space_write_4(sc->sc_memt, sc->sc_memh,
-		    CXDTV_TS_GEN_CONTROL, 0x40);
+		    CXDTV_TS_GEN_CONTROL, IPB_SW_RST);
 		delay(100);
 		/* parallel MPEG port */
 		bus_space_write_4(sc->sc_memt, sc->sc_memh,
-		    CXDTV_PINMUX_IO, 0x80); /* XXX bit defines */
+		    CXDTV_PINMUX_IO, MPEG_PAR_EN);
 		break;
 	case PCI_VENDOR_PCHDTV:
 		if (sc->sc_product == PCI_PRODUCT_PCHDTV_HD5500) {
 			bus_space_write_4(sc->sc_memt, sc->sc_memh,
-			    CXDTV_TS_GEN_CONTROL, 0x48);
+			    CXDTV_TS_GEN_CONTROL, IPB_SW_RST|IPB_SMODE);
 			delay(100);
-			/* serial MPEG port */
 			bus_space_write_4(sc->sc_memt, sc->sc_memh,
-			    CXDTV_PINMUX_IO, 0x00); /* XXX bit defines */
+			    CXDTV_PINMUX_IO, 0x00); /* serial MPEG port */
 			/* byte-width start-of-packet */
 			bus_space_write_4(sc->sc_memt, sc->sc_memh,
 			    CXDTV_HW_SOP_CONTROL,
 			    0x47 << 16 | 188 << 4 | 1);
 			bus_space_write_4(sc->sc_memt, sc->sc_memh,
-			    CXDTV_TS_SOP_STATUS, 1 << 13);
+			    CXDTV_TS_SOP_STATUS, IPB_SOP_BYTEWIDE);
+			/* serial MPEG port on HD5500 */
 			bus_space_write_4(sc->sc_memt, sc->sc_memh,
-			    CXDTV_TS_GEN_CONTROL, 0x08);
+			    CXDTV_TS_GEN_CONTROL, IPB_SMODE);
 		}
 		break;
 	default:
@@ -917,7 +916,7 @@ cxdtv_mpeg_trigger(struct cxdtv_softc *sc, void *buf)
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_TS_LNGTH,
 	    CXDTV_TS_PKTSIZE);
 
-	/* Configure for standard MPEG TS, 1 good to sync  */
+	/* Configure for standard MPEG TS, 1 good packet to sync  */
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, CXDTV_HW_SOP_CONTROL,
 	    0x47 << 16 | 188 << 4 | 1);
 
