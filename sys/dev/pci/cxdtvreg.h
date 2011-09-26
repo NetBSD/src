@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtvreg.h,v 1.1 2011/07/11 00:46:04 jakllsch Exp $ */
+/* $NetBSD: cxdtvreg.h,v 1.2 2011/09/26 18:07:38 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -76,7 +76,10 @@
 
 #define CXDTV_DEV_CNTRL2_RUN_RISC __BIT(5)
 
-/* mpeg ts registers */
+/* PINMUX_IO */
+#define MPEG_PAR_EN		__BIT(7)
+
+/* MPEG TS registers */
 
 #define CXDTV_DMA28_PTR1	0x30009c
 #define CXDTV_DMA28_PTR2	0x3000dc
@@ -98,13 +101,33 @@
 #define CXDTV_TS_INT_MSTAT	0x200078
 #define CXDTV_TS_INT_SSTAT	0x20007c
 
-/* for TS_DMA_CNTRL */
+/* TS_DMA_CNTRL */
 #define CXDTV_TS_RISC_EN	__BIT(4)
 #define CXDTV_TS_FIFO_EN	__BIT(0)
 
-#define CXDTV_TS_RISCI2		0x10
-#define CXDTV_TS_RISCI1		0x01
+/* TS_INT_* */
+#define CXDTV_TS_RISCI2		__BIT(4)
+#define CXDTV_TS_RISCI1		__BIT(0)
 #define CXDTV_TS_RISCI		(CXDTV_TS_RISCI2|CXDTV_TS_RISCI1)
+
+/* HW_SOP_CONTROL */
+
+/* TS_GEN_CONTROL */
+#define MPEG_IN_SYNC		__BIT(0)
+#define IPB_MCLK_POL		__BIT(1)
+#define IPB_PUNC_CLK		__BIT(2)
+#define IPB_SMODE		__BIT(3)
+#define IPB_BIT_RVRS		__BIT(4)
+#define IPB_ERR_ACK		__BIT(5)
+#define IPB_SW_RST		__BIT(6)
+#define IPB_STAT_CLR		__BIT(7)
+
+/* TS_SOP_STATUS */
+#define MPG_BAD_SOP_STAT	__BITS(11,0)
+#define IPB_SOP_SYNC_CHK	__BIT(12)
+#define IPB_SOP_BYTEWIDE	__BIT(13)
+#define IPB_SOP_SEL		__BITS(15, 14)
+#define IPB_TSSOP_POL		__BIT(16)
 
 /* RISC instructions */
 #define CX_RISC_WRITECR		0xd0000000
