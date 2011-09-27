@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.60 2011/09/13 17:59:46 dyoung Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.61 2011/09/27 23:25:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.60 2011/09/13 17:59:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.61 2011/09/27 23:25:55 dyoung Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -168,7 +168,7 @@ static void _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
 static int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 	    void *buf, bus_size_t buflen, struct vmspace *vm, int flags);
 static inline int _bus_dmamap_load_busaddr(bus_dma_tag_t, bus_dmamap_t,
-    bus_addr_t, int);
+    bus_addr_t, bus_size_t);
 
 #ifndef _BUS_DMAMEM_ALLOC_RANGE
 static int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
@@ -436,7 +436,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 static inline int
 _bus_dmamap_load_busaddr(bus_dma_tag_t t, bus_dmamap_t map,
-    bus_addr_t addr, int size)
+    bus_addr_t addr, bus_size_t size)
 {
 	bus_dma_segment_t * const segs = map->dm_segs;
 	int nseg = map->dm_nsegs;
