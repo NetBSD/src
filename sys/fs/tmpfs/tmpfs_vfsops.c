@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.51 2011/05/29 22:29:07 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.51 2011/05/29 22:29:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -181,7 +181,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	mp->mnt_data = tmp;
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_stat.f_namemax = TMPFS_MAXNAMLEN;
 	mp->mnt_fs_bshift = PAGE_SHIFT;
 	mp->mnt_dev_bshift = DEV_BSHIFT;
 	mp->mnt_iflag |= IMNT_MPSAFE;
