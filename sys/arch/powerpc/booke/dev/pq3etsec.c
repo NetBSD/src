@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.7 2011/08/01 17:05:17 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.8 2011/09/27 01:02:35 jym Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.7 2011/08/01 17:05:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.8 2011/09/27 01:02:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2036,11 +2036,13 @@ pq3etsec_txq_consume(
 
 			IF_DEQUEUE(&txq->txq_mbufs, m);
 #ifdef ETSEC_DEBUG
-			KASSERTMSG(m == txq->txq_lmbufs[consumer-txq->txq_first],
-			    ("%s: %p [%u]: flags %#x m (%p) != %p (%p)", __func__,
-			     consumer, consumer - txq->txq_first, txbd_flags,
-			     m, &txq->txq_lmbufs[consumer-txq->txq_first],
-			     txq->txq_lmbufs[consumer-txq->txq_first]));
+			KASSERTMSG(
+			    m == txq->txq_lmbufs[consumer-txq->txq_first],
+			    "%s: %p [%u]: flags %#x m (%p) != %p (%p)",
+			    __func__, consumer, consumer - txq->txq_first,
+			    txbd_flags, m,
+			    &txq->txq_lmbufs[consumer-txq->txq_first],
+			    txq->txq_lmbufs[consumer-txq->txq_first]);
 #endif
 			KASSERT(m);
 			pq3etsec_txq_map_unload(sc, txq, m);

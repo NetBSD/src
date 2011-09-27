@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.144 2011/06/21 06:38:50 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.145 2011/09/27 01:02:36 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.144 2011/06/21 06:38:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145 2011/09/27 01:02:36 jym Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -95,7 +95,7 @@ trap(struct trapframe *tf)
 	ci->ci_ev_traps.ev_count++;
 
 	KASSERTMSG(!usertrap || tf == l->l_md.md_utf,
-	    ("trap: tf=%p is invalid: trapframe(%p)=%p", tf, l, l->l_md.md_utf));
+	    "trap: tf=%p is invalid: trapframe(%p)=%p", tf, l, l->l_md.md_utf);
 
 	if (usertrap) {
 		type |= EXC_USER;

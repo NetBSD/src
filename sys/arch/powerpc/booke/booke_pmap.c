@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.9 2011/06/29 21:53:10 dholland Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.10 2011/09/27 01:02:35 jym Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.9 2011/06/29 21:53:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.10 2011/09/27 01:02:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -325,8 +325,8 @@ pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 	xpte ^= xpte & (PTE_UNSYNCED|PTE_UNMODIFIED|PTE_WIRED);
 
 	KASSERTMSG(pte == xpte,
-	    ("pm=%p va=%#"PRIxVADDR" asid=%u: TLB pte (%#x) != real pte (%#x/%#x)",
-	    pm, va, asid, pte, xpte, *ptep));
+	    "pm=%p va=%#"PRIxVADDR" asid=%u: TLB pte (%#x) != real pte (%#x/%#x)",
+	    pm, va, asid, pte, xpte, *ptep);
 
 	return true;
 }

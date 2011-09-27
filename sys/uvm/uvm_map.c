@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.304 2011/09/01 06:40:28 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.305 2011/09/27 01:02:39 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.304 2011/09/01 06:40:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.305 2011/09/27 01:02:39 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -435,8 +435,7 @@ uvm_rb_insert(struct vm_map *map, struct vm_map_entry *entry)
 
 	ret = rb_tree_insert_node(&map->rb_tree, entry);
 	KASSERTMSG(ret == entry,
-	    ("uvm_rb_insert: map %p: duplicate entry %p", map, ret)
-	);
+	    "uvm_rb_insert: map %p: duplicate entry %p", map, ret);
 
 	/*
 	 * If the previous entry is not our immediate left child, then it's an

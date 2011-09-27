@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_fmn.c,v 1.3 2011/04/29 21:55:20 matt Exp $	*/
+/*	$NetBSD: rmixl_fmn.c,v 1.4 2011/09/27 01:02:34 jym Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -405,8 +405,8 @@ rmixl_fmn_init(void)
 	fmn_t *fmnp;
 	static bool once=false;
 
-	KASSERTMSG((CPU_IS_PRIMARY(curcpu())), ("ci=%p, index=%d\n",
-		curcpu(), cpu_index(curcpu())));
+	KASSERTMSG((CPU_IS_PRIMARY(curcpu())), "ci=%p, index=%d\n",
+		curcpu(), cpu_index(curcpu()));
 	fmnp = fmn_lookup(curcpu()->ci_cpuid);
 
 	if (once == true)

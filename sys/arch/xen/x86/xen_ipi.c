@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.4 2011/08/15 20:17:12 cherry Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.5 2011/09/27 01:02:37 jym Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.4 2011/08/15 20:17:12 cherry Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5 2011/09/27 01:02:37 jym Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.4 2011/08/15 20:17:12 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5 2011/09/27 01:02:37 jym Exp $");
 
 #include <sys/types.h>
 
@@ -165,7 +165,7 @@ xen_send_ipi(struct cpu_info *ci, uint32_t ipimask)
 	evtchn = ci->ci_ipi_evtchn;
 
 	KASSERTMSG(valid_ipimask(ipimask) == true, 
-		("xen_send_ipi() called with invalid ipimask\n"));
+		"xen_send_ipi() called with invalid ipimask\n");
 
 	atomic_or_32(&ci->ci_ipis, ipimask);
 	hypervisor_notify_via_evtchn(evtchn);
@@ -180,7 +180,7 @@ xen_broadcast_ipi(uint32_t ipimask)
 	CPU_INFO_ITERATOR cii;
 
 	KASSERTMSG(valid_ipimask(ipimask) == true, 
-		("xen_broadcast_ipi() called with invalid ipimask\n"));
+		"xen_broadcast_ipi() called with invalid ipimask\n");
 
 	/* 
 	 * XXX-cherry: there's an implicit broadcast sending order
