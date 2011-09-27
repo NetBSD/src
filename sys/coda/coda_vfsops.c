@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.69 2009/06/29 05:08:15 dholland Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.70 2011/09/27 00:54:47 christos Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.69 2009/06/29 05:08:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.70 2011/09/27 00:54:47 christos Exp $");
 
 #ifndef _KERNEL_OPT
 #define	NVCODA 4
@@ -257,7 +257,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
     vfsp->mnt_stat.f_fsidx.__fsid_val[0] = 0;
     vfsp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_CODA);
     vfsp->mnt_stat.f_fsid = vfsp->mnt_stat.f_fsidx.__fsid_val[0];
-    vfsp->mnt_stat.f_namemax = MAXNAMLEN;
+    vfsp->mnt_stat.f_namemax = CODA_MAXNAMLEN;
     mi->mi_vfsp = vfsp;
 
     /*
