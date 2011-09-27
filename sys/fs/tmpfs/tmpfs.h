@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.44 2011/05/29 22:29:06 rmind Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.45 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -63,8 +63,9 @@ TAILQ_HEAD(tmpfs_dir, tmpfs_dirent);
 
 #if defined(_KERNEL)
 
+#define TMPFS_MAXNAMLEN	255
 /* Validate maximum td_namelen length. */
-CTASSERT(MAXNAMLEN < UINT16_MAX);
+CTASSERT(TMPFS_MAXNAMLEN < UINT16_MAX);
 
 #define	TMPFS_DIRCOOKIE_DOT	0
 #define	TMPFS_DIRCOOKIE_DOTDOT	1
