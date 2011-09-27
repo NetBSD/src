@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.73 2010/11/30 10:43:02 dholland Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.74 2011/09/27 00:56:14 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.73 2010/11/30 10:43:02 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.74 2011/09/27 00:56:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1084,7 +1084,7 @@ svr4_32_copyout_statvfs(const struct statvfs *bfs, struct svr4_32_statvfs *sufs)
 		sfs->f_flag |= SVR4_ST_RDONLY;
 	if (bfs->f_flag & MNT_NOSUID)
 		sfs->f_flag |= SVR4_ST_NOSUID;
-	sfs->f_namemax = MAXNAMLEN;
+	sfs->f_namemax = bfs->f_namemax;
 	memcpy(sfs->f_fstr, bfs->f_fstypename, sizeof(sfs->f_fstr)); /* XXX */
 	memset(sfs->f_filler, 0, sizeof(sfs->f_filler));
 
@@ -1116,7 +1116,7 @@ svr4_32_copyout_statvfs64(const struct statvfs *bfs, struct svr4_32_statvfs64 *s
 		sfs->f_flag |= SVR4_ST_RDONLY;
 	if (bfs->f_flag & MNT_NOSUID)
 		sfs->f_flag |= SVR4_ST_NOSUID;
-	sfs->f_namemax = MAXNAMLEN;
+	sfs->f_namemax = bfs->f_namemax;
 	memcpy(sfs->f_fstr, bfs->f_fstypename, sizeof(sfs->f_fstr)); /* XXX */
 	memset(sfs->f_filler, 0, sizeof(sfs->f_filler));
 
