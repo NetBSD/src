@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.187 2011/06/19 02:42:53 rmind Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.188 2011/09/27 01:07:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.187 2011/06/19 02:42:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.188 2011/09/27 01:07:38 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -177,7 +177,7 @@ nfs_bioread(struct vnode *vp, struct uio *uio, int ioflag,
 
 	    case VLNK:
 		nfsstats.biocache_readlinks++;
-		bp = nfs_getcacheblk(vp, (daddr_t)0, NFS_MAXPATHLEN, l);
+		bp = nfs_getcacheblk(vp, (daddr_t)0, MAXPATHLEN, l);
 		if (!bp)
 			return (EINTR);
 		if ((bp->b_oflags & BO_DONE) == 0) {
@@ -188,7 +188,7 @@ nfs_bioread(struct vnode *vp, struct uio *uio, int ioflag,
 				return (error);
 			}
 		}
-		n = MIN(uio->uio_resid, NFS_MAXPATHLEN - bp->b_resid);
+		n = MIN(uio->uio_resid, MAXPATHLEN - bp->b_resid);
 		got_buf = 1;
 		on = 0;
 		break;
