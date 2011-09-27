@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.16 2008/05/16 09:21:59 hannken Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.17 2011/09/27 01:27:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.16 2008/05/16 09:21:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.17 2011/09/27 01:27:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,7 +620,7 @@ cd9660_rrip_getname(struct iso_directory_record *isodir, char *outbuf,
 
 	analyze.outbuf = outbuf;
 	analyze.outlen = outlen;
-	analyze.maxlen = NAME_MAX;
+	analyze.maxlen = ISO_MAXNAMLEN;
 	analyze.inump = inump;
 	analyze.imp = imp;
 	analyze.fields = ISO_SUSP_ALTNAME | ISO_SUSP_RELDIR | ISO_SUSP_CLINK | ISO_SUSP_PLINK;
