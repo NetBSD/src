@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.41 2009/10/20 20:55:01 tron Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.42 2011/09/27 02:05:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.41 2009/10/20 20:55:01 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.42 2011/09/27 02:05:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1122,7 +1122,7 @@ static int
 smbfs_findopenLM2(struct smbfs_fctx *ctx, struct smbnode *dnp,
     const char *wildcard, int wclen, int attr, struct smb_cred *scred)
 {
-	ctx->f_name = malloc(SMB_MAXFNAMELEN, M_SMBFSDATA, M_WAITOK);
+	ctx->f_name = malloc(SMB_MAXNAMLEN, M_SMBFSDATA, M_WAITOK);
 	if (ctx->f_name == NULL)
 		return ENOMEM;
 	ctx->f_infolevel = SMB_DIALECT(SSTOVC(ctx->f_ssp)) < SMB_DIALECT_NTLM0_12 ?
@@ -1205,7 +1205,7 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 		return EINVAL;
 #endif
 	}
-	nmlen = min(size, SMB_MAXFNAMELEN);
+	nmlen = min(size, SMB_MAXNAMLEN);
 	cp = ctx->f_name;
 	error = md_get_mem(mbp, cp, nmlen, MB_MSYSTEM);
 	if (error)

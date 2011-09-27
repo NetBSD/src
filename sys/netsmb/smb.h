@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.18 2011/09/27 01:16:35 christos Exp $	*/
+/*	$NetBSD: smb.h,v 1.19 2011/09/27 02:05:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -394,6 +394,7 @@ enum smb_dialects {
 #define	SMB_MAXSHARENAMELEN	128
 #define	SMB_MAXPKTLEN		0x1FFFF
 #define	SMB_MAXCHALLENGELEN	8
+#define	SMB_MAXNAMLEN	255
 
 #define	SMB_MAXRCN		3	/* number of reconnect attempts */
 
