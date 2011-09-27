@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.190 2011/09/01 15:31:27 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.191 2011/09/27 01:42:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.190 2011/09/01 15:31:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.191 2011/09/27 01:42:45 christos Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.190 2011/09/01 15:31:27 yamt Exp $"
 #endif
 
 int vfs_magiclinks = MAGICLINKS;
+
+__CTASSERT(MAXNAMLEN == NAME_MAX);
 
 /*
  * Substitute replacement text for 'magic' strings in symlinks.
@@ -810,7 +812,7 @@ lookup_parsepath(struct namei_state *state)
 	cp = NULL;
 	cnp->cn_hash = namei_hash(cnp->cn_nameptr, &cp);
 	cnp->cn_namelen = cp - cnp->cn_nameptr;
-	if (cnp->cn_namelen > NAME_MAX) {
+	if (cnp->cn_namelen > KERNEL_NAME_MAX) {
 		return ENAMETOOLONG;
 	}
 #ifdef NAMEI_DIAGNOSTIC
@@ -1545,7 +1547,7 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 	cp = NULL;
 	cnp->cn_hash = namei_hash(cnp->cn_nameptr, &cp);
 	cnp->cn_namelen = cp - cnp->cn_nameptr;
-	KASSERT(cnp->cn_namelen <= NAME_MAX);
+	KASSERT(cnp->cn_namelen <= KERNEL_NAME_MAX);
 	ndp->ni_pathlen -= cnp->cn_namelen;
 	ndp->ni_next = cp;
 	state->slashes = 0;
@@ -1606,7 +1608,7 @@ lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 	 * Note: the name sent in here (is not|should not be) allowed
 	 * to contain a slash.
 	 */
-	if (strlen(ndp->ni_pathbuf->pb_path) > NAME_MAX) {
+	if (strlen(ndp->ni_pathbuf->pb_path) > KERNEL_NAME_MAX) {
 		return ENAMETOOLONG;
 	}
 	if (strchr(ndp->ni_pathbuf->pb_path, '/')) {
