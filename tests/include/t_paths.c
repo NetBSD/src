@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.8 2011/08/12 03:59:44 riastradh Exp $ */
+/*	$NetBSD: t_paths.c,v 1.9 2011/09/27 11:24:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.8 2011/08/12 03:59:44 riastradh Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.9 2011/09/27 11:24:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -59,6 +59,7 @@ static const struct {
 	{ _PATH_CLOCKCTL,	PATH_DEV | PATH_ROOT	},
 	{ _PATH_CONSOLE,	PATH_DEV | PATH_ROOT	},
 	{ _PATH_CONSTTY,	PATH_DEV | PATH_ROOT	},
+	{ _PATH_CPUCTL,		PATH_DEV		},
 	{ _PATH_CSMAPPER,	PATH_DIR		},
 	{ _PATH_DEFTAPE,	PATH_DEV | PATH_ROOT	},
 	{ _PATH_DEVDB,		PATH_FILE		},
@@ -91,7 +92,7 @@ static const struct {
 	{ _PATH_SOUND0,		PATH_DEV		},
 	{ _PATH_SYSMON,		PATH_DEV		},
 	{ _PATH_TTY,		PATH_DEV		},
-	{ _PATH_UNIX,		PATH_FILE		},
+	{ _PATH_UNIX,		PATH_FILE | PATH_ROOT	},
 	{ _PATH_URANDOM,	PATH_DEV		},
 	{ _PATH_VIDEO,		PATH_DEV		},
 	{ _PATH_VIDEO0,		PATH_DEV		},
