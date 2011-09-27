@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.16 2009/03/18 10:22:45 cegger Exp $	*/
+/*	$NetBSD: ls.c,v 1.17 2011/09/27 01:08:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: ls.c,v 1.16 2009/03/18 10:22:45 cegger Exp $");
+__RCSID("$NetBSD: ls.c,v 1.17 2011/09/27 01:08:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ ls(register int fd)
 		    dp += ((DP *)dp)->d_reclen) {
 			if (((DP *)dp)->d_fileno == 0)
 				continue;
-			if (((DP *)dp)->d_namlen > MAXNAMLEN+1) {
+			if (((DP *)dp)->d_namlen > NAME_MAX + 1) {
 				printf("Corrupt file name length!  Run fsck soon!\n");
 				return;
 			}
