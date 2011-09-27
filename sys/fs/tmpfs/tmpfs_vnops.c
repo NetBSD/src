@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.90 2011/08/27 15:32:28 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.91 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.90 2011/08/27 15:32:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.91 2011/09/27 01:10:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1119,7 +1119,7 @@ tmpfs_sane_rename(struct vnode *fdvp, struct componentname *fcnp,
 	 * we can't sleep, hence the early allocation above.
 	 */
 	if (newname != NULL) {
-		KASSERT(tcnp->cn_namelen <= MAXNAMLEN);
+		KASSERT(tcnp->cn_namelen <= TMPFS_MAXNAMLEN);
 
 		tmpfs_strname_free(tmpfs, fde->td_name, fde->td_namelen);
 		fde->td_namelen = (uint16_t)tcnp->cn_namelen;
