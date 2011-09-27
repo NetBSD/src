@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.202 2011/08/03 10:03:51 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.203 2011/09/27 01:30:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.202 2011/08/03 10:03:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.203 2011/09/27 01:30:54 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -108,6 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.202 2011/08/03 10:03:51 hannken Exp 
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/lfs/lfs_extern.h>
 
+CTASSERT(EXT2FS_MAXNAMLEN == FFS_MAXNAMLEN);
+CTASSERT(LFS_MAXNAMLEN == FFS_MAXNAMLEN);
 #include <uvm/uvm.h>
 
 static int ufs_chmod(struct vnode *, int, kauth_cred_t, struct lwp *);
@@ -2706,7 +2708,7 @@ ufs_pathconf(void *v)
 		*ap->a_retval = LINK_MAX;
 		return (0);
 	case _PC_NAME_MAX:
-		*ap->a_retval = NAME_MAX;
+		*ap->a_retval = FFS_MAXNAMLEN;
 		return (0);
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;
