@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.35 2009/01/11 02:45:53 christos Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.36 2011/09/27 01:23:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,6 +118,8 @@ struct kernfs_mount {
 #define VFSTOKERNFS(mp)	((struct kernfs_mount *)((mp)->mnt_data))
 #define	VTOKERN(vp)	((struct kernfs_node *)(vp)->v_data)
 #define KERNFSTOV(kfs)	((kfs)->kfs_vnode)
+
+#define KERNFS_MAXNAMLEN	255
 
 extern const struct kern_target kern_targets[];
 extern int nkern_targets;
