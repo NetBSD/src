@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.76 2011/07/04 08:07:30 manu Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.77 2011/09/27 01:48:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -253,7 +253,7 @@ struct puffs_kcred {
 #define PUFFS_MSG_MAXSIZE	2*MAXPHYS
 #define PUFFS_MSGSTRUCT_MAX	4096 /* approximate */
 
-#define PUFFS_EXTNAMELEN NAME_MAX /* currently same as EXTATTR_MAXNAMELEN */
+#define PUFFS_EXTNAMELEN KERNEL_NAME_MAX /* currently same as EXTATTR_MAXNAMELEN */
 
 #define PUFFS_TOMOVE(a,b) (MIN((a), b->pmp_msg_maxsize - PUFFS_MSGSTRUCT_MAX))
 
