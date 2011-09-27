@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.9 2007/01/27 07:20:31 cbiere Exp $	*/
+/*	$NetBSD: iso.h,v 1.10 2011/09/27 01:01:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -61,6 +61,8 @@ struct iso_volume_descriptor {
 
 #define ISO_STANDARD_ID "CD001"
 #define ISO_ECMA_ID     "CDW01"
+
+#define	ISO_MAXNAMLEN	255
 
 struct iso_primary_descriptor {
 	char type			[ISODCL (  1,   1)]; /* 711 */
