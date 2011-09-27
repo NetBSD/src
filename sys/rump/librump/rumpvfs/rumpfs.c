@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.101 2011/09/27 01:45:04 christos Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.102 2011/09/27 13:53:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.101 2011/09/27 01:45:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.102 2011/09/27 13:53:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -229,7 +229,7 @@ static struct rumpfs_node *makeprivate(enum vtype, dev_t, off_t, bool);
  */
 
 struct etfs {
-	char et_key[RUMPFS_MAXPATHLEN];
+	char et_key[MAXPATHLEN];
 	size_t et_keylen;
 	bool et_prefixkey;
 	bool et_removing;
@@ -1076,7 +1076,7 @@ rump_vop_symlink(void *v)
 	int rv;
 
 	linklen = strlen(target);
-	KASSERT(linklen < RUMPFS_MAXPATHLEN);
+	KASSERT(linklen < MAXPATHLEN);
 	rn = makeprivate(VLNK, NODEV, linklen, false);
 	if ((cnp->cn_flags & ISWHITEOUT) != 0)
 		rn->rn_va.va_flags |= UF_OPAQUE;
@@ -1086,7 +1086,7 @@ rump_vop_symlink(void *v)
 
 	makedir(rnd, cnp, rn);
 
-	KASSERT(linklen < RUMPFS_MAXPATHLEN);
+	KASSERT(linklen < MAXPATHLEN);
 	rn->rn_linktarg = PNBUF_GET();
 	rn->rn_linklen = linklen;
 	strcpy(rn->rn_linktarg, target);
@@ -1500,7 +1500,7 @@ rump_vop_pathconf(void *v)
 		*retval = 43; /* this one goes to 11 */
 		return 0;
 	case _PC_SYMLINK_MAX:
-		*retval = RUMPFS_MAXPATHLEN;
+		*retval =_MAXPATHLEN;
 		return 0;
 	case _PC_2_SYMLINKS:
 		*retval = 1;
