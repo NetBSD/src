@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.131 2011/09/25 18:39:30 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.132 2011/09/27 01:02:37 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2011/09/25 18:39:30 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2011/09/27 01:02:37 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3207,9 +3207,9 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 
 	pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte));
 
-	KASSERTMSG(pg != NULL, ("pmap_remove_pte: unmanaged page marked "
+	KASSERTMSG(pg != NULL, "pmap_remove_pte: unmanaged page marked "
 	    "PG_PVLIST, va = %#" PRIxVADDR ", pa = %#" PRIxPADDR,
-	    va, (paddr_t)pmap_pte2pa(opte)));
+	    va, (paddr_t)pmap_pte2pa(opte));
 
 	KASSERT(uvm_page_locked_p(pg));
 
@@ -3262,8 +3262,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			if (pmap != pmap_kernel()) {
 				ptp = pmap_find_ptp(pmap, va, ptppa, 1);
 				KASSERTMSG(ptp != NULL,
-				    ("pmap_remove: unmanaged PTP detected")
-				);
+				    "pmap_remove: unmanaged PTP detected");
 			} else {
 				/* Never free kernel PTPs. */
 				ptp = NULL;
@@ -3324,8 +3323,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		if (pmap != pmap_kernel()) {
 			ptp = pmap_find_ptp(pmap, va, ptppa, 1);
 			KASSERTMSG(ptp != NULL,
-			    ("pmap_remove: unmanaged PTP detected")
-			);
+			    "pmap_remove: unmanaged PTP detected");
 		} else {
 			/* Never free kernel PTPs. */
 			ptp = NULL;
@@ -3816,10 +3814,10 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
 	KASSERT(va < VM_MAX_KERNEL_ADDRESS);
 	KASSERTMSG(va != (vaddr_t)PDP_BASE && va != (vaddr_t)APDP_BASE,
-	    ("pmap_enter: trying to map over PDP/APDP!"));
+	    "pmap_enter: trying to map over PDP/APDP!");
 	KASSERTMSG(va < VM_MIN_KERNEL_ADDRESS ||
 	    pmap_valid_entry(pmap->pm_pdir[pl_i(va, PTP_LEVELS)]),
-	    ("pmap_enter: missing kernel PTP for VA %lx!", va));
+	    "pmap_enter: missing kernel PTP for VA %lx!", va);
 
 #ifdef XEN
 	KASSERT(domid == DOMID_SELF || pa == 0);
@@ -3949,9 +3947,9 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	if ((~opte & (PG_V | PG_PVLIST)) == 0) {
 		pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte));
 
-		KASSERTMSG(pg != NULL, ("pmap_enter: PG_PVLIST mapping with "
+		KASSERTMSG(pg != NULL, "pmap_enter: PG_PVLIST mapping with "
 		    "unmanaged page pa = 0x%" PRIx64 " (0x%" PRIx64 ")",
-		    (int64_t)pa, (int64_t)atop(pa)));
+		    (int64_t)pa, (int64_t)atop(pa));
 
 		KASSERT(uvm_page_locked_p(pg));
 

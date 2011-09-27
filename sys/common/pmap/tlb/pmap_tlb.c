@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.10 2011/06/29 05:53:44 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.11 2011/09/27 01:02:37 jym Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.10 2011/06/29 05:53:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.11 2011/09/27 01:02:37 jym Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -451,8 +451,8 @@ pmap_tlb_shootdown_process(void)
 
 	KASSERT(cpu_intr_p());
 	KASSERTMSG(ci->ci_cpl >= IPL_SCHED,
-	    ("%s: cpl (%d) < IPL_SCHED (%d)",
-	    __func__, ci->ci_cpl, IPL_SCHED));
+	    "%s: cpl (%d) < IPL_SCHED (%d)",
+	    __func__, ci->ci_cpl, IPL_SCHED);
 
 	TLBINFO_LOCK(ti);
 
@@ -816,8 +816,8 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 		struct cpu_info * const ci = curcpu();
 		KASSERT(!cpu_intr_p());
 		KASSERTMSG(pm->pm_onproc & CPUSET_SINGLE(cpu_index(ci)),
-		    ("%s: pmap %p onproc %#x doesn't include cpu %d (%p)",
-		    __func__, pm, pm->pm_onproc, cpu_index(ci), ci));
+		    "%s: pmap %p onproc %#x doesn't include cpu %d (%p)",
+		    __func__, pm, pm->pm_onproc, cpu_index(ci), ci);
 		/*
 		 * The bits in pm_onproc that belong to this TLB can
 		 * be changed while this TLBs lock is not held as long
@@ -871,8 +871,8 @@ pmap_tlb_asid_check(void)
 	kpreempt_disable();
 	const tlb_asid_t asid = tlb_get_asid();
 	KDASSERTMSG(asid == curcpu()->ci_pmap_asid_cur,
-	   ("%s: asid (%#x) != current asid (%#x)",
-	    __func__, asid, curcpu()->ci_pmap_asid_cur));
+	   "%s: asid (%#x) != current asid (%#x)",
+	    __func__, asid, curcpu()->ci_pmap_asid_cur);
 	kpreempt_enable();
 #endif
 }

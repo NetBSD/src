@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.17 2011/06/21 18:02:43 rjs Exp $ */
+/*	$NetBSD: intr.c,v 1.18 2011/09/27 01:02:36 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17 2011/06/21 18:02:43 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2011/09/27 01:02:36 jym Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -438,9 +438,9 @@ intr_deliver(struct intr_source *is, int virq)
 	bool locked = false;
 	for (struct intrhand *ih = is->is_hand; ih != NULL; ih = ih->ih_next) {
 		KASSERTMSG(ih->ih_fun != NULL,
-		    ("%s: irq %d, hwirq %d, is %p ih %p: "
+		    "%s: irq %d, hwirq %d, is %p ih %p: "
 		     "NULL interrupt handler!\n", __func__,
-		     virq, is->is_hwirq, is, ih));
+		     virq, is->is_hwirq, is, ih);
 		if (ih->ih_ipl == IPL_VM) {
 			if (!locked) {
 				KERNEL_LOCK(1, NULL);

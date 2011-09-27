@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.21 2011/06/20 06:00:46 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.22 2011/09/27 01:02:36 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,7 +52,7 @@ static __inline void
 userret(struct lwp *l, struct trapframe *tf)
 {
 	KASSERTMSG((tf == trapframe(curlwp)),
-	   ("tf=%p, trapframe(curlwp)=%p\n", tf, trapframe(curlwp)));
+	   "tf=%p, trapframe(curlwp)=%p\n", tf, trapframe(curlwp));
 
 	/* Invoke MI userret code */
 	mi_userret(l);

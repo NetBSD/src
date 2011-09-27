@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.14 2011/02/13 01:21:52 jakllsch Exp $ */
+/* $NetBSD: siisata.c,v 1.15 2011/09/27 01:02:38 jym Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.14 2011/02/13 01:21:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.15 2011/09/27 01:02:38 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1185,7 +1185,7 @@ siisata_activate_prb(struct siisata_channel *schp, int slot)
 	sc = (struct siisata_softc *)schp->ata_channel.ch_atac;
 
 	KASSERTMSG((schp->sch_active_slots & __BIT(slot)) != __BIT(slot),
-	    ("%s: trying to activate active slot %d", SIISATANAME(sc), slot));
+	    "%s: trying to activate active slot %d", SIISATANAME(sc), slot);
 
 	SIISATA_PRB_SYNC(sc, schp, slot, BUS_DMASYNC_PREWRITE);
 	/* keep track of what's going on */
@@ -1207,8 +1207,8 @@ siisata_deactivate_prb(struct siisata_channel *schp, int slot)
 	sc = (struct siisata_softc *)schp->ata_channel.ch_atac;
 
 	KASSERTMSG((schp->sch_active_slots & __BIT(slot)) != 0,
-	    ("%s: trying to deactivate inactive slot %d", SIISATANAME(sc),
-	    slot));
+	    "%s: trying to deactivate inactive slot %d", SIISATANAME(sc),
+	    slot);
 
 	schp->sch_active_slots &= ~__BIT(slot); /* mark free */
 	SIISATA_PRB_SYNC(sc, schp, slot, BUS_DMASYNC_POSTWRITE);

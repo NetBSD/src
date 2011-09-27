@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_gpio.c,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_gpio.c,v 1.3 2011/09/27 01:02:34 jym Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_gpio.c -- Ralink 3052 gpio driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.2 2011/07/28 15:38:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.3 2011/09/27 01:02:34 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -411,32 +411,32 @@ static int gpio_driver_blink_leds = 1;
 static inline uint32_t
 sy_read(ra_gpio_softc_t *sc, bus_size_t off)
 {
-	KASSERTMSG((off & 3) == 0, ("%s: unaligned off=%#" PRIxBUSSIZE "\n",
-		__func__, off));
+	KASSERTMSG((off & 3) == 0, "%s: unaligned off=%#" PRIxBUSSIZE "\n",
+		__func__, off);
 	return bus_space_read_4(sc->sc_memt, sc->sc_sy_memh, off);
 }
 
 static inline void
 sy_write(ra_gpio_softc_t *sc, bus_size_t off, uint32_t val)
 {
-	KASSERTMSG((off & 3) == 0, ("%s: unaligned off=%#" PRIxBUSSIZE "\n",
-		__func__, off));
+	KASSERTMSG((off & 3) == 0, "%s: unaligned off=%#" PRIxBUSSIZE "\n",
+		__func__, off);
 	bus_space_write_4(sc->sc_memt, sc->sc_sy_memh, off, val);
 }
 
 static inline uint32_t
 gp_read(ra_gpio_softc_t *sc, bus_size_t off)
 {
-	KASSERTMSG((off & 3) == 0, ("%s: unaligned off=%#" PRIxBUSSIZE "\n",
-		__func__, off));
+	KASSERTMSG((off & 3) == 0, "%s: unaligned off=%#" PRIxBUSSIZE "\n",
+		__func__, off);
 	return bus_space_read_4(sc->sc_memt, sc->sc_gp_memh, off);
 }
 
 static inline void
 gp_write(ra_gpio_softc_t *sc, bus_size_t off, uint32_t val)
 {
-	KASSERTMSG((off & 3) == 0, ("%s: unaligned off=%#" PRIxBUSSIZE "\n",
-		__func__, off));
+	KASSERTMSG((off & 3) == 0, "%s: unaligned off=%#" PRIxBUSSIZE "\n",
+		__func__, off);
 	bus_space_write_4(sc->sc_memt, sc->sc_gp_memh, off, val);
 }
 
@@ -760,8 +760,8 @@ ra_gpio_pin_read(void *arg, int pin)
 		 * then warn and return 0
 		 */
 		const int index = pin_tab_index[pin];
-		KASSERTMSG(index != -1, ("%s: non-existant pin=%d\n",
-			__func__, pin));
+		KASSERTMSG(index != -1, "%s: non-existant pin=%d\n",
+			__func__, pin);
 		if (index == -1) {
 			rv = 0;
 		} else {
@@ -853,7 +853,7 @@ ra_gpio_pin_write(void *arg, int pin, int value)
 	 * then warn and return
 	 */
 	const int index = pin_tab_index[pin];
-	KASSERTMSG(index != -1, ("%s: non-existant pin=%d\n", __func__, pin));
+	KASSERTMSG(index != -1, "%s: non-existant pin=%d\n", __func__, pin);
 	if (index == -1)
 		return;
 
@@ -1236,7 +1236,7 @@ disable_gpio_interrupt(ra_gpio_softc_t *sc, int pin)
 {
 	RALINK_DEBUG_FUNC_ENTRY();
 	const int index = pin_tab_index[pin];
-	KASSERTMSG(index != -1, ("%s: non-existant pin=%d\n", __func__, pin));
+	KASSERTMSG(index != -1, "%s: non-existant pin=%d\n", __func__, pin);
 	if (index == -1)
 		return;
 
@@ -1260,7 +1260,7 @@ static void
 enable_gpio_interrupt(ra_gpio_softc_t *sc, int pin)
 {
 	const int index = pin_tab_index[pin];
-	KASSERTMSG(index != -1, ("%s: non-existant pin=%d\n", __func__, pin));
+	KASSERTMSG(index != -1, "%s: non-existant pin=%d\n", __func__, pin);
 	if (index == -1)
 		return;
 

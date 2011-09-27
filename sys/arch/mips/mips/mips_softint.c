@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_softint.c,v 1.5 2011/07/10 23:13:22 matt Exp $	*/
+/*	$NetBSD: mips_softint.c,v 1.6 2011/09/27 01:02:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.5 2011/07/10 23:13:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.6 2011/09/27 01:02:34 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -101,7 +101,7 @@ softint_trigger(uintptr_t si)
 		softint_fast_dispatch(ci->ci_softlwps[SOFTINT_##level], \
 		    IPL_SOFT##level); \
 		KASSERT(ci->ci_softlwps[SOFTINT_##level]->l_ctxswtch == 0); \
-		KASSERTMSG(ci->ci_cpl == IPL_HIGH, ("cpl (%d) != HIGH", ci->ci_cpl)); \
+		KASSERTMSG(ci->ci_cpl == IPL_HIGH, "cpl (%d) != HIGH", ci->ci_cpl); \
 		continue; \
 	}
 
@@ -115,8 +115,8 @@ softint_process(uint32_t ipending)
 	KASSERT((ipending & ~MIPS_SOFT_INT_MASK) == 0);
 	KASSERT(ci->ci_cpl == IPL_HIGH);
 	KASSERTMSG(ci->ci_mtx_count == 0,
-	    ("%s: cpu%u (%p): ci_mtx_count (%d) != 0",
-	     __func__, cpu_index(ci), ci, ci->ci_mtx_count));
+	    "%s: cpu%u (%p): ci_mtx_count (%d) != 0",
+	     __func__, cpu_index(ci), ci, ci->ci_mtx_count);
 
 	if (ipending & MIPS_SOFT_INT_MASK_0) {
 		/*

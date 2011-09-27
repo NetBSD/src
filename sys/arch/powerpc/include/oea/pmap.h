@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 2011/06/30 00:52:59 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 2011/09/27 01:02:36 jym Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -177,7 +177,7 @@ vtophys(vaddr_t va)
 
 	if (pmap_extract(pmap_kernel(), va, &pa))
 		return pa;
-	KASSERTMSG(0, ("vtophys: pmap_extract of %#"PRIxVADDR" failed", va));
+	KASSERTMSG(0, "vtophys: pmap_extract of %#"PRIxVADDR" failed", va);
 	return (paddr_t) -1;
 }
 

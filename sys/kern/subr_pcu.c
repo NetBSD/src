@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.9 2011/06/13 21:32:42 matt Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.10 2011/09/27 01:02:39 jym Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.9 2011/06/13 21:32:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.10 2011/09/27 01:02:39 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -236,8 +236,8 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, int flags)
 		 * State is on the current CPU - just perform the operations.
 		 */
 		KASSERTMSG(ci->ci_pcu_curlwp[id] == l,
-		    ("%s: cpu%u: pcu_curlwp[%u] (%p) != l (%p)",
-		     __func__, cpu_index(ci), id, ci->ci_pcu_curlwp[id], l));
+		    "%s: cpu%u: pcu_curlwp[%u] (%p) != l (%p)",
+		     __func__, cpu_index(ci), id, ci->ci_pcu_curlwp[id], l);
 		pcu_do_op(pcu, l, flags);
 		splx(s);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: softint_machdep.c,v 1.2 2011/06/21 04:22:25 matt Exp $	*/
+/*	$NetBSD: softint_machdep.c,v 1.3 2011/09/27 01:02:36 jym Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@ softint_deliver(struct cpu_info *ci, int ipl)
 	softint_fast_dispatch(ci->ci_softlwps[si_level], ipl);
 	KASSERT(ci->ci_softlwps[si_level]->l_ctxswtch == 0);
 	KASSERTMSG(ci->ci_cpl == IPL_HIGH,
-	    ("%s: cpl (%d) != HIGH", __func__, ci->ci_cpl));
+	    "%s: cpl (%d) != HIGH", __func__, ci->ci_cpl);
 }
 
 void
@@ -70,8 +70,8 @@ powerpc_softint(struct cpu_info *ci, int old_ipl, vaddr_t pc)
 	u_int softints;
 
 	KASSERTMSG(ci->ci_idepth == -1,
-	    ("%s: cpu%u: idepth (%d) != -1", __func__,
-	     cpu_index(ci), ci->ci_idepth));
+	    "%s: cpu%u: idepth (%d) != -1", __func__,
+	     cpu_index(ci), ci->ci_idepth);
 	KASSERT(ci->ci_mtx_count == 0);
 	KASSERT(ci->ci_cpl == IPL_HIGH);
 	while ((softints = (ci->ci_data.cpu_softints & softint_mask)) != 0) {
