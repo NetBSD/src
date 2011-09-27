@@ -40,7 +40,7 @@
 #include "elf-bfd.h"		/* for header hack */
 #include "trad-frame.h"		/* signal trampoline/kernel frame support */
 #include "frame-unwind.h"	/* kernel frame support */
-#include "tramp-frame.h"	/* signal trampoline/kernel frame support
+#include "tramp-frame.h"	/* signal trampoline/kernel frame support */
 
 /* From <machine/reg.h>.  */
 static int i386nbsd_r_reg_offset[] =
@@ -304,6 +304,7 @@ i386nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
   ULONGEST cs;
   char *name;
   int i;
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
 
   if (*this_cache)
     return *this_cache;
@@ -311,14 +312,14 @@ i386nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
   cache = trad_frame_cache_zalloc (next_frame);
   *this_cache = cache;
 
-  func = frame_func_unwind (next_frame);
+  func = get_frame_func (next_frame);
   sp = frame_unwind_register_unsigned (next_frame, I386_ESP_REGNUM);
 
   find_pc_partial_function (func, &name, NULL, NULL);
   if (name && strncmp (name, "Xintr", 5) == 0)
     {
       /* It's an interrupt frame. */
-      tmp = read_memory_unsigned_integer (sp + 4, 4);
+      tmp = read_memory_unsigned_integer (sp + 4, 4, byte_order);
       if (tmp < 15)
         {
           /* Reasonable value for 'ppl': already on interrupt stack. */
@@ -342,7 +343,7 @@ i386nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 
   /* Read %cs from trap frame.  */
   addr += i386nbsd_tf_reg_offset[I386_CS_REGNUM];
-  cs = read_memory_unsigned_integer (addr, 4); 
+  cs = read_memory_unsigned_integer (addr, 4, byte_order); 
   if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
     {
       /* Trap from user space; terminate backtrace.  */
@@ -367,18 +368,14 @@ i386nbsd_trapframe_this_id (struct frame_info *next_frame,
   trad_frame_get_id (cache, this_id);
 }
 
-static void
+static struct value *
 i386nbsd_trapframe_prev_register (struct frame_info *next_frame,
-				  void **this_cache, int regnum,
-				  int *optimizedp, enum lval_type *lvalp,
-				  CORE_ADDR *addrp, int *realnump,
-				  gdb_byte *valuep)
+				  void **this_cache, int regnum)
 {
   struct trad_frame_cache *cache =
     i386nbsd_trapframe_cache (next_frame, this_cache);
 
-  trad_frame_get_register (cache, next_frame, regnum,
-			   optimizedp, lvalp, addrp, realnump, valuep);
+  return trad_frame_get_register (cache, next_frame, regnum);
 }
 
 static int
@@ -396,7 +393,7 @@ i386nbsd_trapframe_sniffer (const struct frame_unwind *self,
     return 0;
 
 
-  find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
+  find_pc_partial_function (get_frame_pc (next_frame), &name, NULL, NULL);
   return (name && ((strcmp (name, "alltraps") == 0)
 		   || (strcmp (name, "calltrap") == 0)
 		   || (strncmp (name, "Xtrap", 5) == 0)
@@ -415,6 +412,7 @@ const struct frame_unwind i386nbsd_trapframe_unwind = {
      frame, but SIGTRAMP_FRAME would print <signal handler called>,
      which really is not what we want here.  */
   NORMAL_FRAME,
+  default_frame_unwind_stop_reason,
   i386nbsd_trapframe_this_id,
   i386nbsd_trapframe_prev_register,
   NULL,
@@ -450,9 +448,10 @@ i386nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tramp_frame_prepend_unwinder (gdbarch, &i386nbsd_sigtramp_si2);
   tramp_frame_prepend_unwinder (gdbarch, &i386nbsd_sigtramp_si31);
   tramp_frame_prepend_unwinder (gdbarch, &i386nbsd_sigtramp_si4);
-
+#ifdef notyet
   /* Unwind kernel trap frames correctly.  */
   frame_unwind_prepend_unwinder (gdbarch, &i386nbsd_trapframe_unwind);
+#endif
 }
 
 /* NetBSD ELF.  */
