@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.191 2011/09/27 01:42:45 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.192 2011/09/27 02:10:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.191 2011/09/27 01:42:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.192 2011/09/27 02:10:55 christos Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.191 2011/09/27 01:42:45 christos Ex
 #include <sys/syslog.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
+#include <sys/dirent.h>
 
 #ifndef MAGICLINKS
 #define MAGICLINKS 0
