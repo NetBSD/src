@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.18 2010/06/24 13:03:09 hannken Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.19 2011/09/27 01:27:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.18 2010/06/24 13:03:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.19 2011/09/27 01:27:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -116,7 +116,7 @@ cd9660_lookup(void *v)
 	ino_t ino = 0;
 	int reclen;
 	u_short namelen;
-	char altname[NAME_MAX];
+	char altname[ISO_MAXNAMLEN];
 	int res;
 	int assoc, len;
 	const char *name;
