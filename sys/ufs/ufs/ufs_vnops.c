@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.203 2011/09/27 01:30:54 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.204 2011/09/27 01:43:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.203 2011/09/27 01:30:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.204 2011/09/27 01:43:39 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -108,9 +108,10 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.203 2011/09/27 01:30:54 christos Exp
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/lfs/lfs_extern.h>
 
-CTASSERT(EXT2FS_MAXNAMLEN == FFS_MAXNAMLEN);
-CTASSERT(LFS_MAXNAMLEN == FFS_MAXNAMLEN);
 #include <uvm/uvm.h>
+
+__CTASSERT(EXT2FS_MAXNAMLEN == FFS_MAXNAMLEN);
+__CTASSERT(LFS_MAXNAMLEN == FFS_MAXNAMLEN);
 
 static int ufs_chmod(struct vnode *, int, kauth_cred_t, struct lwp *);
 static int ufs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
