@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.61 2011/04/23 18:14:13 rmind Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.62 2011/09/27 01:02:39 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.61 2011/04/23 18:14:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.62 2011/09/27 01:02:39 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,10 +289,10 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	 */
 	ps->start_hint = try + num - ps->avail_start;
 	KASSERTMSG(ps->start_hint <= ps->avail_end - ps->avail_start,
-	    ("%x %u (%#x) <= %#"PRIxPADDR" - %#"PRIxPADDR" (%#"PRIxPADDR")",
+	    "%x %u (%#x) <= %#"PRIxPADDR" - %#"PRIxPADDR" (%#"PRIxPADDR")",
 	    try + num,
 	    ps->start_hint, ps->start_hint, ps->avail_end, ps->avail_start,
-	    ps->avail_end - ps->avail_start));
+	    ps->avail_end - ps->avail_start);
 
 #ifdef PGALLOC_VERBOSE
 	printf("got %d pgs\n", num);
@@ -406,11 +406,11 @@ again:
 			int cidx = 0;
 			const int bank = vm_physseg_find(try, &cidx);
 			KDASSERTMSG(bank == ps - vm_physmem,
-			    ("vm_physseg_find(%#x) (%d) != ps %zd",
-			     try, bank, ps - vm_physmem));
+			    "vm_physseg_find(%#x) (%d) != ps %zd",
+			     try, bank, ps - vm_physmem);
 			KDASSERTMSG(cidx == try - ps->start,
-			    ("vm_physseg_find(%#x): %#x != off %"PRIxPADDR,
-			     try, cidx, try - ps->start));
+			    "vm_physseg_find(%#x): %#x != off %"PRIxPADDR,
+			     try, cidx, try - ps->start);
 		}
 #endif
 		if (VM_PAGE_IS_FREE(pg) == 0)
@@ -428,10 +428,10 @@ again:
 	 */
 	ps->start_hint = try + 1 - ps->avail_start;
 	KASSERTMSG(ps->start_hint <= ps->avail_end - ps->avail_start,
-	    ("%#x %u (%#x) <= %#"PRIxPADDR" - %#"PRIxPADDR" (%#"PRIxPADDR")",
+	    "%#x %u (%#x) <= %#"PRIxPADDR" - %#"PRIxPADDR" (%#"PRIxPADDR")",
 	    try + 1,
 	    ps->start_hint, ps->start_hint, ps->avail_end, ps->avail_start,
-	    ps->avail_end - ps->avail_start));
+	    ps->avail_end - ps->avail_start);
 
 #ifdef PGALLOC_VERBOSE
 	printf("got %d pgs\n", num - todo);

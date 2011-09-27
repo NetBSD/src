@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.15 2011/06/29 21:53:11 dholland Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.16 2011/09/27 01:02:35 jym Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.15 2011/06/29 21:53:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.16 2011/09/27 01:02:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1052,11 +1052,11 @@ static void
 e500_idlespin(void)
 {
 	KASSERTMSG(curcpu()->ci_cpl == IPL_NONE,
-	    ("%s: cpu%u: ci_cpl (%d) != 0", __func__, cpu_number(),
-	     curcpu()->ci_cpl));
+	    "%s: cpu%u: ci_cpl (%d) != 0", __func__, cpu_number(),
+	     curcpu()->ci_cpl);
 	KASSERTMSG(CTPR2IPL(openpic_read(curcpu()->ci_softc, OPENPIC_CTPR)) == IPL_NONE,
-	    ("%s: cpu%u: CTPR (%d) != IPL_NONE", __func__, cpu_number(),
-	     CTPR2IPL(openpic_read(curcpu()->ci_softc, OPENPIC_CTPR))));
+	    "%s: cpu%u: CTPR (%d) != IPL_NONE", __func__, cpu_number(),
+	     CTPR2IPL(openpic_read(curcpu()->ci_softc, OPENPIC_CTPR)));
 	KASSERT(mfmsr() & PSL_EE);
 
 	if (powersave > 0)
@@ -1154,8 +1154,8 @@ e500_intr_cpu_send_ipi(cpuid_t target, uint32_t ipimsg)
 		struct cpu_info * const dst_ci = cpu_lookup(target);
 		KASSERT(dst_ci != NULL);
 		KASSERTMSG(target == cpu_index(dst_ci),
-		    ("%s: target (%lu) != cpu_index(cpu%u)",
-		     __func__, target, cpu_index(dst_ci)));
+		    "%s: target (%lu) != cpu_index(cpu%u)",
+		     __func__, target, cpu_index(dst_ci));
 		dstmask = (1 << target);
 		if (ipimsg)
 			atomic_or_32(&dst_ci->ci_pending_ipis, ipimsg);

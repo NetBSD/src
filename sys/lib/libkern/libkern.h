@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.100 2011/09/25 20:31:18 jym Exp $	*/
+/*	$NetBSD: libkern.h,v 1.101 2011/09/27 01:02:39 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/inttypes.h>
 #include <sys/null.h>
+#include <sys/systm.h>
 
 #ifndef LIBKERN_INLINE
 #define LIBKERN_INLINE	static __inline
@@ -174,11 +175,13 @@ tolower(int ch)
 
 #define	__NULL_STMT		do { } while (/* CONSTCOND */ 0)
 
+#define __KASSERTSTR  "kernel %sassertion \"%s\" failed: file \"%s\", line %d "
+
 #ifdef NDEBUG						/* tradition! */
 #define	assert(e)	((void)0)
 #else
 #define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
-			    kern_assert("", __FILE__, __LINE__, #e))
+			    panic(__KASSERTSTR, "", #e, __FILE__, __LINE__))
 #endif
 
 #ifdef __COVERITY__
@@ -192,38 +195,43 @@ tolower(int ch)
 #ifndef DIAGNOSTIC
 #define _DIAGASSERT(a)	(void)0
 #ifdef lint
-#define	KASSERTMSG(e, msg)	/* NOTHING */
+#define	KASSERTMSG(e, msg, ...)	/* NOTHING */
 #define	KASSERT(e)		/* NOTHING */
 #else /* !lint */
-#define	KASSERTMSG(e, msg)	((void)0)
+#define	KASSERTMSG(e, msg, ...)	((void)0)
 #define	KASSERT(e)		((void)0)
 #endif /* !lint */
 #else /* DIAGNOSTIC */
 #define _DIAGASSERT(a)	assert(a)
-#define	KASSERTMSG(e, msg) do {		\
-	if (__predict_false(!(e)))	\
-		panic msg;		\
-	} while (/*CONSTCOND*/ 0)
+#define	KASSERTMSG(e, msg, ...)		\
+			(__predict_true((e)) ? (void)0 :		    \
+			    panic(__KASSERTSTR msg, "diagnostic ", #e,	    \
+				__FILE__, __LINE__, ## __VA_ARGS__))
+
 #define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    kern_assert("diagnostic ", __FILE__, __LINE__, #e))
+			    panic(__KASSERTSTR, "diagnostic ", #e,	    \
+				__FILE__, __LINE__))
 #endif
 
 #ifndef DEBUG
 #ifdef lint
-#define	KDASSERTMSG(e,msg)	/* NOTHING */
+#define	KDASSERTMSG(e,msg, ...)	/* NOTHING */
 #define	KDASSERT(e)		/* NOTHING */
 #else /* lint */
-#define	KDASSERTMSG(e,msg)	((void)0)
+#define	KDASSERTMSG(e,msg, ...)	((void)0)
 #define	KDASSERT(e)		((void)0)
 #endif /* lint */
 #else
-#define	KDASSERTMSG(e, msg) do {	\
-	if (__predict_false(!(e)))	\
-		panic msg;		\
-	} while (/*CONSTCOND*/ 0)
+#define	KDASSERTMSG(e, msg, ...)	\
+			(__predict_true((e)) ? (void)0 :		    \
+			    panic(__KASSERTSTR msg, "debugging ", #e,	    \
+				__FILE__, __LINE__, ## __VA_ARGS__))
+
 #define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    kern_assert("debugging ", __FILE__, __LINE__, #e))
+			    panic(__KASSERTSTR, "debugging ", #e,	    \
+				__FILE__, __LINE__))
 #endif
+
 /*
  * XXX: For compatibility we use SMALL_RANDOM by default.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.9 2011/06/29 05:53:44 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 2011/09/27 01:02:37 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2011/06/29 05:53:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2011/09/27 01:02:37 jym Exp $");
 
 /*
  *	Manages physical address maps.
@@ -956,7 +956,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #endif
 
 	KASSERTMSG(prot & VM_PROT_READ,
-	    ("%s: no READ (%#x) in prot %#x", __func__, VM_PROT_READ, prot));
+	    "%s: no READ (%#x) in prot %#x", __func__, VM_PROT_READ, prot);
 
 	struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 	struct vm_page_md *mdpg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.78 2011/06/29 19:51:12 hannken Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.79 2011/09/27 01:02:39 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.78 2011/06/29 19:51:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.79 2011/09/27 01:02:39 jym Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -540,8 +540,7 @@ again:
 
 	if (flags & UBC_WRITE) {
 		KASSERTMSG(umap->writeoff == 0 && umap->writelen == 0,
-		    ("ubc_alloc: concurrent writes to uobj %p", uobj)
-		);
+		    "ubc_alloc: concurrent writes to uobj %p", uobj);
 		umap->writeoff = slot_offset;
 		umap->writelen = *lenp;
 	}
