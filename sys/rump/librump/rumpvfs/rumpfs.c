@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.102 2011/09/27 13:53:26 christos Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.103 2011/09/27 14:24:52 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.102 2011/09/27 13:53:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.103 2011/09/27 14:24:52 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1500,7 +1500,7 @@ rump_vop_pathconf(void *v)
 		*retval = 43; /* this one goes to 11 */
 		return 0;
 	case _PC_SYMLINK_MAX:
-		*retval =_MAXPATHLEN;
+		*retval = MAXPATHLEN;
 		return 0;
 	case _PC_2_SYMLINKS:
 		*retval = 1;
