@@ -1,4 +1,4 @@
-/*	$NetBSD: mqueue.h,v 1.13 2011/04/24 20:17:53 rmind Exp $	*/
+/*	$NetBSD: mqueue.h,v 1.14 2011/09/27 01:40:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -50,6 +50,7 @@ struct mq_attr {
 #include <sys/queue.h>
 #include <sys/selinfo.h>
 #include <sys/types.h>
+#include <sys/param.h>
 
 /*
  * Flags below are used in mq_flags for internal purposes.
@@ -62,7 +63,7 @@ struct mq_attr {
 #define	MQ_RECEIVE		0x20000000
 
 /* Maximal length of mqueue name */
-#define	MQ_NAMELEN		(NAME_MAX + 1)
+#define	MQ_NAMELEN		(KERNEL_NAME_MAX + 1)
 
 /* Default size of the message */
 #define	MQ_DEF_MSGSIZE		1024

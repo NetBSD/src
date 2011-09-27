@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.393 2011/09/23 14:47:41 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.394 2011/09/27 01:40:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -322,6 +322,15 @@
  */
 #define	MAXPATHLEN	PATH_MAX
 #define	MAXSYMLINKS	32
+
+/*
+ * This is the maximum individual filename component length enforced by
+ * namei. Filesystems cannot exceed this limit. The upper bound for that
+ * limit is NAME_MAX. We don't bump it for now, for compatibility with
+ * old binaries during the time where MAXPATHLEN was 511 and NAME_MAX was
+ * 255
+ */
+#define	KERNEL_NAME_MAX	255
 
 /* Bit map related macros. */
 #define	setbit(a,i)	((a)[(i)/NBBY] |= 1<<((i)%NBBY))
