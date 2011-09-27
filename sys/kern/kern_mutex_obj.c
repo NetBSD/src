@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex_obj.c,v 1.4 2011/06/11 01:07:33 matt Exp $	*/
+/*	$NetBSD: kern_mutex_obj.c,v 1.5 2011/09/27 01:02:38 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.4 2011/06/11 01:07:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.5 2011/09/27 01:02:38 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -107,11 +107,11 @@ mutex_obj_hold(kmutex_t *lock)
 	struct kmutexobj *mo = (struct kmutexobj *)lock;
 
 	KASSERTMSG(mo->mo_magic == MUTEX_OBJ_MAGIC,
-	    ("%s: lock %p: mo->mo_magic (%#x) != MUTEX_OBJ_MAGIC (%#x)",
-	     __func__, mo, mo->mo_magic, MUTEX_OBJ_MAGIC));
+	    "%s: lock %p: mo->mo_magic (%#x) != MUTEX_OBJ_MAGIC (%#x)",
+	     __func__, mo, mo->mo_magic, MUTEX_OBJ_MAGIC);
 	KASSERTMSG(mo->mo_refcnt > 0,
-	    ("%s: lock %p: mo->mo_refcnt (%#x) == 0",
-	     __func__, mo, mo->mo_refcnt));
+	    "%s: lock %p: mo->mo_refcnt (%#x) == 0",
+	     __func__, mo, mo->mo_refcnt);
 
 	atomic_inc_uint(&mo->mo_refcnt);
 }
@@ -128,11 +128,11 @@ mutex_obj_free(kmutex_t *lock)
 	struct kmutexobj *mo = (struct kmutexobj *)lock;
 
 	KASSERTMSG(mo->mo_magic == MUTEX_OBJ_MAGIC,
-	    ("%s: lock %p: mo->mo_magic (%#x) != MUTEX_OBJ_MAGIC (%#x)",
-	     __func__, mo, mo->mo_magic, MUTEX_OBJ_MAGIC));
+	    "%s: lock %p: mo->mo_magic (%#x) != MUTEX_OBJ_MAGIC (%#x)",
+	     __func__, mo, mo->mo_magic, MUTEX_OBJ_MAGIC);
 	KASSERTMSG(mo->mo_refcnt > 0,
-	    ("%s: lock %p: mo->mo_refcnt (%#x) == 0",
-	     __func__, mo, mo->mo_refcnt));
+	    "%s: lock %p: mo->mo_refcnt (%#x) == 0",
+	     __func__, mo, mo->mo_refcnt);
 
 	if (atomic_dec_uint_nv(&mo->mo_refcnt) > 0) {
 		return false;

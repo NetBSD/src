@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 2011/06/21 06:38:50 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 2011/09/27 01:02:35 jym Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.12 2011/06/21 06:38:50 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.13 2011/09/27 01:02:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,7 +689,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 	ci->ci_data.cpu_ntrap++;
 
 	KASSERTMSG(!usertrap || tf == trapframe(l),
-	    ("trap: tf=%p is invalid: trapframe(%p)=%p", tf, l, trapframe(l)));
+	    "trap: tf=%p is invalid: trapframe(%p)=%p", tf, l, trapframe(l));
 
 #if 0
 	if (trap_code != T_PROGRAM || usertrap)
