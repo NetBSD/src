@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.23 2011/05/19 03:11:56 rmind Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.24 2011/09/27 01:14:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.23 2011/05/19 03:11:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.24 2011/09/27 01:14:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -923,11 +923,11 @@ struct vop_readdir_args /* {
 	DPRINTF(("numchildren = %u\n", numchildren));
 	for (curchild = 0; curchild < numchildren && uio->uio_resid > 0;
 	    curchild++) {
-		namlen = utf16_to_utf8(curent.d_name, MAXNAMLEN, 
+		namlen = utf16_to_utf8(curent.d_name, NAME_MAX, 
 		    childnames[curchild].unicode, childnames[curchild].length,
 		    0, NULL);
 		/* XXX: check conversion errors? */
-		if (namlen > MAXNAMLEN) {
+		if (namlen > NAME_MAX) {
 			/* XXX: how to handle name too long? */
 			continue;
 		}
