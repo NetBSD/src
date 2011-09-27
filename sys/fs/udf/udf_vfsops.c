@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.60 2010/06/24 13:03:11 hannken Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.61 2011/09/27 01:13:16 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.60 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.61 2011/09/27 01:13:16 christos Exp $");
 #endif /* not lint */
 
 
@@ -576,7 +576,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (uint32_t) devvp->v_rdev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_UDF);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
-	mp->mnt_stat.f_namemax = UDF_MAX_NAMELEN;
+	mp->mnt_stat.f_namemax = UDF_MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 //	mp->mnt_iflag |= IMNT_MPSAFE;
 

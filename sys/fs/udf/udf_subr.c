@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.116 2011/08/16 14:29:16 mbalmer Exp $ */
+/* $NetBSD: udf_subr.c,v 1.117 2011/09/27 01:13:16 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.116 2011/08/16 14:29:16 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.117 2011/09/27 01:13:16 christos Exp $");
 #endif /* not lint */
 
 
@@ -4178,7 +4178,7 @@ udf_to_unix_name(char *result, int result_len, char *id, int len,
 	} else {
 		/* assume 8bit char length byte latin-1 */
 		assert(*id == 8);
-		assert(strlen((char *) (id+1)) <= MAXNAMLEN);
+		assert(strlen((char *) (id+1)) <= NAME_MAX);
 		strncpy((char *) result, (char *) (id+1), strlen((char *) (id+1)));
 	}
 	free(raw_name, M_UDFTEMP);
@@ -5259,7 +5259,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 
 	/* append to the dirhash */
 	/* NOTE do not use dirent anymore or it won't match later! */
-	udf_to_unix_name(dirent.d_name, MAXNAMLEN,
+	udf_to_unix_name(dirent.d_name, NAME_MAX,
 		(char *) fid->data + udf_rw16(fid->l_iu), fid->l_fi, &osta_charspec);
 	dirent.d_namlen = strlen(dirent.d_name);
 	dirhash_enter(dirh, &dirent, chosen_fid_pos,
@@ -6359,7 +6359,7 @@ brokendir:
 
 	/* create resulting dirent structure */
 	fid_name = (char *) fid->data + udf_rw16(fid->l_iu);
-	udf_to_unix_name(dirent->d_name, MAXNAMLEN,
+	udf_to_unix_name(dirent->d_name, NAME_MAX,
 		fid_name, fid->l_fi, &ump->logical_vol->desc_charset);
 
 	/* '..' has no name, so provide one */

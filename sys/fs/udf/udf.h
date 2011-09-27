@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.43 2010/09/25 01:42:40 matt Exp $ */
+/* $NetBSD: udf.h,v 1.44 2011/09/27 01:13:16 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -139,7 +139,7 @@ extern int udf_verbose;
 
 
 /* constants */
-#define UDF_MAX_NAMELEN		255			/* as per SPEC */
+#define UDF_MAXNAMLEN		255			/* as per SPEC */
 #define UDF_TRANS_ZERO		((uint64_t) -1)
 #define UDF_TRANS_UNMAPPED	((uint64_t) -2)
 #define UDF_TRANS_INTERN	((uint64_t) -3)
