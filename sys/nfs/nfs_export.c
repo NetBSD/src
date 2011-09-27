@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.50 2011/03/31 19:40:53 dyoung Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.51 2011/09/27 01:07:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.50 2011/03/31 19:40:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.51 2011/09/27 01:07:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -783,9 +783,9 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	 * If an indexfile was specified, pull it in.
 	 */
 	if (argp->ex_indexfile != NULL) {
-		nfs_pub.np_index = malloc(MAXNAMLEN + 1, M_TEMP, M_WAITOK);
+		nfs_pub.np_index = malloc(NFS_MAXNAMLEN + 1, M_TEMP, M_WAITOK);
 		error = copyinstr(argp->ex_indexfile, nfs_pub.np_index,
-		    MAXNAMLEN, (size_t *)0);
+		    NFS_MAXNAMLEN, (size_t *)0);
 		if (!error) {
 			/*
 			 * Check for illegal filenames.
