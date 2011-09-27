@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_send_ioctl.3,v 1.7 2011/01/20 10:45:10 wiz Exp $
+.\"	$NetBSD: prop_send_ioctl.3,v 1.8 2011/09/27 11:12:49 jym Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,6 +49,7 @@
 .Ft int
 .Fn prop_dictionary_recv_ioctl "int fd" "unsigned long cmd" \
     "prop_dictionary_t *dictp"
+.Ft int
 .Fn prop_dictionary_sendrecv_ioctl "prop_dictionary_t dict" "int fd" \
     "unsigned long cmd" "prop_dictionary_t *dictp"
 .Sh DESCRIPTION
