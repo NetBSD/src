@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.349 2011/07/30 18:19:05 rmind Exp $
+#       $NetBSD: Makefile,v 1.350 2011/09/27 00:36:51 jym Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -81,7 +81,8 @@ MLINKS+=dmover.9 dmover_backend_register.9 \
 MAN+=	CTASSERT.9
 MAN+=	KASSERT.9
 MLINKS+=KASSERT.9 KASSERTMSG.9 \
-	KASSERT.9 KDASSERT.9
+	KASSERT.9 KDASSERT.9 \
+	KASSERT.9 KDASSERTMSG.9
 
 MLINKS+=accept_filter.9 accept_filt_add.9
 MLINKS+=accept_filter.9 accept_filt_del.9
