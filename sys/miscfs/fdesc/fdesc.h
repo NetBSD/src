@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.20 2009/07/31 19:47:47 pooka Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.21 2011/09/27 01:22:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,8 @@ struct fdescnode {
 };
 
 #define	VTOFDESC(vp) ((struct fdescnode *)(vp)->v_data)
+
+#define FDESC_MAXNAMLEN	255
 
 extern dev_t devctty;
 extern void fdesc_init(void);
