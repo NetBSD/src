@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.91 2011/09/27 01:10:43 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.92 2011/09/27 01:32:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.91 2011/09/27 01:10:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.92 2011/09/27 01:32:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -2373,7 +2373,7 @@ tmpfs_pathconf(void *v)
 		*retval = LINK_MAX;
 		break;
 	case _PC_NAME_MAX:
-		*retval = NAME_MAX;
+		*retval = TMPFS_MAXNAMLEN;
 		break;
 	case _PC_PATH_MAX:
 		*retval = PATH_MAX;
