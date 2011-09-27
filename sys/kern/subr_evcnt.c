@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.10 2011/09/16 01:03:02 christos Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.11 2011/09/27 01:02:39 jym Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.10 2011/09/16 01:03:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.11 2011/09/27 01:02:39 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -132,8 +132,8 @@ evcnt_attach_static(struct evcnt *ev)
 	int len;
 
 	KASSERTMSG(init_done,
-	    ("%s: evcnt non initialized: group=<%s> name=<%s>",
-	    __func__, ev->ev_group, ev->ev_name));
+	    "%s: evcnt non initialized: group=<%s> name=<%s>",
+	    __func__, ev->ev_group, ev->ev_name);
 
 	len = strlen(ev->ev_group);
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.49 2011/06/12 03:26:20 rmind Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.50 2011/09/27 01:02:38 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.49 2011/06/12 03:26:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.50 2011/09/27 01:02:38 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -269,8 +269,8 @@ usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 	/* Check for free fragments. */
 	LIST_FOREACH(f, &usb_frag_freelist, next) {
 		KDASSERTMSG(usb_valid_block_p(f->block, &usb_blk_fraglist),
-		    ("%s: usb frag %p: unknown block pointer %p",
-		     __func__, f, f->block));
+		    "%s: usb frag %p: unknown block pointer %p",
+		     __func__, f, f->block);
 		if (f->block->tag == tag)
 			break;
 	}
@@ -316,15 +316,15 @@ usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 
 	if (p->block->flags & USB_DMA_FULLBLOCK) {
 		KDASSERTMSG(usb_valid_block_p(p->block, &usb_blk_fulllist),
-		    ("%s: dma %p: invalid block pointer %p",
-		     __func__, p, p->block));
+		    "%s: dma %p: invalid block pointer %p",
+		     __func__, p, p->block);
 		DPRINTFN(1, ("usb_freemem: large free\n"));
 		usb_block_freemem(p->block);
 		return;
 	}
 	KDASSERTMSG(usb_valid_block_p(p->block, &usb_blk_fraglist),
-	    ("%s: dma %p: invalid block pointer %p",
-	     __func__, p, p->block));
+	    "%s: dma %p: invalid block pointer %p",
+	     __func__, p, p->block);
 	//usb_syncmem(p, 0, USB_MEM_SMALL, BUS_DMASYNC_POSTREAD);
 	f = KERNADDR(p, 0);
 #ifdef USB_FRAG_DMA_WORKAROUND

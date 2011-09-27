@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.140 2011/09/01 06:41:38 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.141 2011/09/27 01:02:34 jym Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.140 2011/09/01 06:41:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.141 2011/09/27 01:02:34 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -210,11 +210,11 @@ cpu_uarea_alloc(bool system)
 	KASSERT(pg != NULL);
 	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	KASSERTMSG(pa >= mips_avail_start,
-	    ("pa (%#"PRIxPADDR") < mips_avail_start (%#"PRIxPADDR")",
-	     pa, mips_avail_start));
+	    "pa (%#"PRIxPADDR") < mips_avail_start (%#"PRIxPADDR")",
+	     pa, mips_avail_start);
 	KASSERTMSG(pa < mips_avail_end,
-	    ("pa (%#"PRIxPADDR") >= mips_avail_end (%#"PRIxPADDR")",
-	     pa, mips_avail_end));
+	    "pa (%#"PRIxPADDR") >= mips_avail_end (%#"PRIxPADDR")",
+	     pa, mips_avail_end);
 
 	/*
 	 * we need to return a direct-mapped VA for the pa.

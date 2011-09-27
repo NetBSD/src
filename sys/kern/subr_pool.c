@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.189 2011/03/22 15:16:23 pooka Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.190 2011/09/27 01:02:39 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.189 2011/03/22 15:16:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.190 2011/09/27 01:02:39 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2539,8 +2539,8 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 
 	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()) ||
 	    (pc->pc_pool.pr_ipl != IPL_NONE || cold || panicstr != NULL),
-	    ("pool '%s' is IPL_NONE, but called from interrupt context\n",
-	    pc->pc_pool.pr_wchan));
+	    "pool '%s' is IPL_NONE, but called from interrupt context\n",
+	    pc->pc_pool.pr_wchan);
 
 	if (flags & PR_WAITOK) {
 		ASSERT_SLEEPABLE();

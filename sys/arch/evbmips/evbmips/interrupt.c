@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.17 2011/07/10 00:03:53 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.18 2011/09/27 01:02:33 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.17 2011/07/10 00:03:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18 2011/09/27 01:02:33 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -66,15 +66,14 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 		splx(ipl);	/* lower to interrupt level */
 
 		KASSERTMSG(ci->ci_cpl == ipl,
-		    ("%s: cpl (%d) != ipl (%d)",
-		    __func__, ci->ci_cpl, ipl));
+		    "%s: cpl (%d) != ipl (%d)", __func__, ci->ci_cpl, ipl);
 		KASSERT(pending != 0);
 
 		if (pending & MIPS_INT_MASK_5) {
 			struct clockframe cf;
 			KASSERTMSG(ipl == IPL_SCHED,
-			    ("%s: ipl (%d) != IPL_SCHED (%d)",
-			     __func__, ipl, IPL_SCHED));
+			    "%s: ipl (%d) != IPL_SCHED (%d)",
+			     __func__, ipl, IPL_SCHED);
 			/* call the common MIPS3 clock interrupt handler */ 
 			cf.pc = pc;
 			cf.sr = status;

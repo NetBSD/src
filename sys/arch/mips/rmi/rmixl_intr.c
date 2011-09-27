@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.7 2011/07/10 23:13:22 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.8 2011/09/27 01:02:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.7 2011/07/10 23:13:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.8 2011/09/27 01:02:34 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -928,9 +928,9 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 				(void)(*ih->ih_func)(ih->ih_arg);
 			} else {
 				KASSERTMSG(ipl == IPL_VM,
-				    ("%s: %s: ipl (%d) != IPL_VM for KERNEL_LOCK",
+				    "%s: %s: ipl (%d) != IPL_VM for KERNEL_LOCK",
 				    __func__, sc->sc_vec_evcnts[vec].ev_name,
-				    ipl));
+				    ipl);
 				KERNEL_LOCK(1, NULL);
 				(void)(*ih->ih_func)(ih->ih_arg);
 				KERNEL_UNLOCK_ONE(NULL);
@@ -941,9 +941,9 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 		}
 		KASSERT(ipl == ih->ih_ipl);
 		KASSERTMSG(curcpu()->ci_cpl >= ipl,
-		    ("%s: after %s: cpl (%d) < ipl %d",
+		    "%s: after %s: cpl (%d) < ipl %d",
 		    __func__, sc->sc_vec_evcnts[vec].ev_name,
-		    ipl, curcpu()->ci_cpl));
+		    ipl, curcpu()->ci_cpl);
 		sc->sc_vec_evcnts[vec].ev_count++;
 	}
 }
