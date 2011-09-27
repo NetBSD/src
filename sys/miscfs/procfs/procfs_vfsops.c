@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.85 2009/11/30 10:59:20 pooka Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.86 2011/09/27 01:23:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.85 2009/11/30 10:59:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.86 2011/09/27 01:23:59 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -157,7 +157,7 @@ procfs_mount(
 	pmnt = (struct procfsmount *) malloc(sizeof(struct procfsmount),
 	    M_UFSMNT, M_WAITOK);   /* XXX need new malloc type */
 
-	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_stat.f_namemax = PROCFS_MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = pmnt;
 	vfs_getnewfsid(mp);
