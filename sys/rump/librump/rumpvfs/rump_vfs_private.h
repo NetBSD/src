@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs_private.h,v 1.14 2010/09/07 21:11:10 pooka Exp $	*/
+/*	$NetBSD: rump_vfs_private.h,v 1.15 2011/09/27 01:25:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -56,6 +56,8 @@ void	rump_vfs_drainbufs(int);
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <rump/rump.h>
+
+#define	RUMPFS_MAXNAMLEN	255
 
 #include "rumpvfs_if_priv.h"
 
