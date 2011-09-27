@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.7 2011/08/03 04:11:17 manu Exp $	*/
+/*	$NetBSD: extattr.h,v 1.8 2011/09/27 01:40:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -52,12 +52,12 @@
 
 #ifdef _KERNEL
 
-#include <sys/syslimits.h>
+#include <sys/param.h>
 
 /* VOP_LISTEXTATTR flags */
 #define EXTATTR_LIST_LENPREFIX	1	/* names with length prefix */
 
-#define	EXTATTR_MAXNAMELEN	NAME_MAX
+#define	EXTATTR_MAXNAMELEN	KERNEL_NAME_MAX
 struct lwp;
 struct vnode;
 int	extattr_check_cred(struct vnode *, int, kauth_cred_t,
