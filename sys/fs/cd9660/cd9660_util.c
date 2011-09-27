@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.9 2008/02/27 19:43:36 matt Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.10 2011/09/27 01:01:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.9 2008/02/27 19:43:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.10 2011/09/27 01:01:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,10 +187,10 @@ isofntrans(const u_char *infn, int infnlen, u_char *outfn, u_short *outfnlen,
 			break;
 		}
 
-		sz = wput(outfn, MAXNAMLEN - fnidx, c, joliet_level);
+		sz = wput(outfn, ISO_MAXNAMLEN - fnidx, c, joliet_level);
 		if (sz == 0) {
 			/* not enough space to write the character */
-			if (fnidx < MAXNAMLEN) {
+			if (fnidx < ISO_MAXNAMLEN) {
 				*outfn = '?';
 				fnidx++;
 			}
