@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.100 2011/09/27 01:25:32 christos Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.101 2011/09/27 01:45:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.100 2011/09/27 01:25:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.101 2011/09/27 01:45:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1479,7 +1479,7 @@ rump_vop_pathconf(void *v)
 		*retval = LINK_MAX;
 		return 0;
 	case _PC_NAME_MAX:
-		*retval = NAME_MAX;
+		*retval = RUMPFS_MAXNAMLEN;
 		return 0;
 	case _PC_PATH_MAX:
 		*retval = PATH_MAX;
@@ -1661,7 +1661,7 @@ rumpfs_mountfs(struct mount *mp)
 	VOP_UNLOCK(rfsmp->rfsmp_rvp);
 
 	mp->mnt_data = rfsmp;
-	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_stat.f_namemax = RUMPFS_MAXNAMLEN;
 	mp->mnt_stat.f_iosize = 512;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO;
