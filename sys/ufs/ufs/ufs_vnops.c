@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.204 2011/09/27 01:43:39 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.205 2011/09/27 02:10:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.204 2011/09/27 01:43:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.205 2011/09/27 02:10:32 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -105,8 +105,10 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.204 2011/09/27 01:43:39 christos Exp
 #include <ufs/ufs/dirhash.h>
 #endif
 #include <ufs/ext2fs/ext2fs_extern.h>
+#include <ufs/ext2fs/ext2fs_dir.h>
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/lfs/lfs_extern.h>
+#include <ufs/lfs/lfs.h>
 
 #include <uvm/uvm.h>
 
