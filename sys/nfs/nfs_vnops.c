@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.291 2011/06/12 03:35:59 rmind Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.292 2011/09/27 01:05:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.291 2011/06/12 03:35:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.292 2011/09/27 01:05:08 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1131,7 +1131,7 @@ nfs_readlinkrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 		if (v3) {
 			nfsm_dissect(tl, uint32_t *, NFSX_UNSIGNED);
 			len = fxdr_unsigned(uint32_t, *tl);
-			if (len > MAXPATHLEN) {
+			if (len > NFS_MAXPATHLEN) {
 				/*
 				 * this pathname is too long for us.
 				 */
