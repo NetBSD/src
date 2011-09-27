@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.66 2011/06/12 03:35:55 rmind Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.67 2011/09/27 01:33:30 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.66 2011/06/12 03:35:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.67 2011/09/27 01:33:30 christos Exp $");
 #endif /* not lint */
 
 
@@ -1218,7 +1218,7 @@ udf_pathconf(void *v)
 		*ap->a_retval = (1<<16)-1;	/* 16 bits */
 		return 0;
 	case _PC_NAME_MAX:
-		*ap->a_retval = NAME_MAX;
+		*ap->a_retval = UDF_MAXNAMLEN;
 		return 0;
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;
