@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.13 2011/06/19 02:42:53 rmind Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.14 2011/09/27 01:34:41 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.13 2011/06/19 02:42:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.14 2011/09/27 01:34:41 christos Exp $");
 #endif /* not lint */
 
 
@@ -902,7 +902,7 @@ nilfs_pathconf(void *v)
 		*ap->a_retval = (1<<16)-1;	/* 16 bits */
 		return 0;
 	case _PC_NAME_MAX:
-		*ap->a_retval = NAME_MAX;
+		*ap->a_retval = NILFS_MAXNAMLEN;
 		return 0;
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;
