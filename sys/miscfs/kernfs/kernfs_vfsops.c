@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.90 2009/11/30 10:59:20 pooka Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.91 2011/09/27 01:23:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.90 2009/11/30 10:59:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.91 2011/09/27 01:23:05 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -145,7 +145,7 @@ kernfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	fmp = malloc(sizeof(struct kernfs_mount), M_KERNFSMNT, M_WAITOK|M_ZERO);
 	TAILQ_INIT(&fmp->nodelist);
 
-	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_stat.f_namemax = KERNFS_MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
