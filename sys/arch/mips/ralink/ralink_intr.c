@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_intr.c,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_intr.c,v 1.3 2011/09/27 01:02:34 jym Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_intr.c,v 1.2 2011/07/28 15:38:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_intr.c,v 1.3 2011/09/27 01:02:34 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -208,7 +208,7 @@ ra_intr_establish(int intr, int (*func)(void *), void *arg, int priority)
 	struct evbmips_intrhand *ih;
 
 	if ((ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT)) == NULL) {
-		KASSERTMSG(0, ("%s: cannot malloc intrhand", __func__));
+		KASSERTMSG(0, "%s: cannot malloc intrhand", __func__);
 		return NULL;
 	}
 

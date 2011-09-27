@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.10 2011/08/17 18:52:00 matt Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.11 2011/09/27 01:02:35 jym Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.10 2011/08/17 18:52:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.11 2011/09/27 01:02:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -524,9 +524,9 @@ pq3pci_msi_intr(void *v)
 			 * if MSIs are working, just clear the free MSIs.
 			 */
 			KASSERTMSG((group & msig->msig_free_mask) == 0,
-			   ("%s: group#%u: unexpected MSIs (%#x)",
+			   "%s: group#%u: unexpected MSIs (%#x)",
 			    __func__, msig->msig_group,
-			    group & msig->msig_free_mask));
+			    group & msig->msig_free_mask);
 			group &= ~msig->msig_free_mask;
 		} else {
 			/*
