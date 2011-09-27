@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.18 2011/09/26 06:51:57 jruoho Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.19 2011/09/27 11:24:21 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.18 2011/09/26 06:51:57 jruoho Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.19 2011/09/27 11:24:21 jruoho Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: cpuctl.c,v 1.18 2011/09/26 06:51:57 jruoho Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -87,8 +88,8 @@ main(int argc, char **argv)
 	if (argc < 2)
 		usage();
 
-	if ((fd = open("/dev/cpuctl", O_RDWR)) < 0)
-		err(EXIT_FAILURE, "/dev/cpuctl");
+	if ((fd = open(_PATH_CPUCTL, O_RDWR)) < 0)
+		err(EXIT_FAILURE, _PATH_CPUCTL);
 
 	for (ct = cpu_cmdtab; ct->label != NULL; ct++) {
 		if (strcmp(argv[1], ct->label) == 0) {
