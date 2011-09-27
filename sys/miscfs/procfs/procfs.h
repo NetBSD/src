@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.66 2011/09/04 17:32:10 jmcneill Exp $	*/
+/*	$NetBSD: procfs.h,v 1.67 2011/09/27 01:23:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -130,6 +130,7 @@ struct pfsnode {
 
 #define PROCFS_NOTELEN	64	/* max length of a note (/proc/$pid/note) */
 #define PROCFS_CTLLEN 	8	/* max length of a ctl msg (/proc/$pid/ctl */
+#define PROCFS_MAXNAMLEN	255
 
 #endif /* _KERNEL */
 
