@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.11 2011/08/08 16:04:07 dholland Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.12 2011/09/27 01:05:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.11 2011/08/08 16:04:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.12 2011/09/27 01:05:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -129,7 +129,7 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 	*retdirp = NULL;
 	ndp->ni_pathbuf = NULL;
 
-	if ((len + 1) > MAXPATHLEN)
+	if ((len + 1) > NFS_MAXPATHLEN)
 		return (ENAMETOOLONG);
 	if (len == 0)
 		return (EACCES);
