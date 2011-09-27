@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.39 2010/03/29 13:11:32 pooka Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.40 2011/09/27 01:27:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.39 2010/03/29 13:11:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.40 2011/09/27 01:27:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -757,7 +757,7 @@ cd9660_pathconf(void *v)
 		return (0);
 	case _PC_NAME_MAX:
 		if (VTOI(ap->a_vp)->i_mnt->iso_ftype == ISO_FTYPE_RRIP)
-			*ap->a_retval = NAME_MAX;
+			*ap->a_retval = ISO_MAXNAMLEN;
 		else
 			*ap->a_retval = 37;
 		return (0);
