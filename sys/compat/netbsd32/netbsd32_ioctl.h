@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.40 2011/09/07 02:35:00 macallan Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.41 2011/09/28 01:46:39 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -130,6 +130,33 @@ struct netbsd32_ieee80211_nwkey {
 /* for powerd */
 #define POWER_EVENT_RECVDICT32	_IOWR('P', 1, struct netbsd32_plistref)
 
+/* Colormap operations.  Not applicable to all display types. */
+struct netbsd32_wsdisplay_cmap {
+	u_int	index;				/* first element (0 origin) */
+	u_int	count;				/* number of elements */
+	netbsd32_charp red;			/* red color map elements */
+	netbsd32_charp green;			/* green color map elements */
+	netbsd32_charp blue;			/* blue color map elements */
+};
+
+#define	WSDISPLAYIO_GETCMAP32	_IOW('W', 66, struct netbsd32_wsdisplay_cmap)
+#define	WSDISPLAYIO_PUTCMAP32	_IOW('W', 67, struct netbsd32_wsdisplay_cmap)
+
+struct netbsd32_wsdisplay_cursor {
+	u_int	which;				/* values to get/set */
+	u_int	enable;				/* enable/disable */
+	struct wsdisplay_curpos pos;		/* position */
+	struct wsdisplay_curpos hot;		/* hot spot */
+	struct netbsd32_wsdisplay_cmap cmap;	/* color map info */
+	struct wsdisplay_curpos size;		/* bit map size */
+	netbsd32_charp image;			/* image data */
+	netbsd32_charp mask;			/* mask data */
+};
+
+/* Cursor control: get/set cursor attributes/shape */
+#define	WSDISPLAYIO_GCURSOR32	_IOWR('W', 73, struct netbsd32_wsdisplay_cursor)
+#define	WSDISPLAYIO_SCURSOR32	_IOW('W', 74, struct netbsd32_wsdisplay_cursor)
+
 /* can wait! */
 #if 0
 dev/ccdvar.h:219:#define CCDIOCSET	_IOWR('F', 16, struct ccd_ioctl)   /* enable ccd */
@@ -143,9 +170,6 @@ dev/wscons/wsconsio.h:134:#define WSKBDIO_SETMAP		_IOW('W', 14, struct wskbd_map
 
 dev/wscons/wsconsio.h:188:#define WSDISPLAYIO_GETCMAP	_IOW('W', 66, struct wsdisplay_cmap)
 dev/wscons/wsconsio.h:189:#define WSDISPLAYIO_PUTCMAP	_IOW('W', 67, struct wsdisplay_cmap)
-
-dev/wscons/wsconsio.h:227:#define	WSDISPLAYIO_GCURSOR	_IOWR('W', 73, struct wsdisplay_cursor)
-dev/wscons/wsconsio.h:228:#define	WSDISPLAYIO_SCURSOR	_IOW('W', 74, struct wsdisplay_cursor)
 
 dev/wscons/wsconsio.h:241:#define WSDISPLAYIO_SFONT	_IOW('W', 77, struct wsdisplay_font)
 
