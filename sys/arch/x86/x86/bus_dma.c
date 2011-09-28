@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.65 2011/09/28 01:35:58 dyoung Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.66 2011/09/28 01:38:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.65 2011/09/28 01:35:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.66 2011/09/28 01:38:19 dyoung Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -424,7 +424,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	cookie->id_origbuflen = buflen;
 	cookie->id_buftype = X86_DMA_BUFTYPE_LINEAR;
 	map->dm_nsegs = 0;
-	error = _bus_dmamap_load(t, map, cookie->id_bouncebuf, buflen,
+	error = bus_dmamap_load(t, map, cookie->id_bouncebuf, buflen,
 	    p, flags);
 	if (error)
 		return (error);
@@ -620,7 +620,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	cookie->id_origbuf = m0;
 	cookie->id_origbuflen = m0->m_pkthdr.len;	/* not really used */
 	cookie->id_buftype = X86_DMA_BUFTYPE_MBUF;
-	error = _bus_dmamap_load(t, map, cookie->id_bouncebuf,
+	error = bus_dmamap_load(t, map, cookie->id_bouncebuf,
 	    m0->m_pkthdr.len, NULL, flags);
 	if (error)
 		return (error);
@@ -700,7 +700,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	cookie->id_origbuf = uio;
 	cookie->id_origbuflen = uio->uio_resid;
 	cookie->id_buftype = X86_DMA_BUFTYPE_UIO;
-	error = _bus_dmamap_load(t, map, cookie->id_bouncebuf,
+	error = bus_dmamap_load(t, map, cookie->id_bouncebuf,
 	    uio->uio_resid, NULL, flags);
 	if (error)
 		return (error);
