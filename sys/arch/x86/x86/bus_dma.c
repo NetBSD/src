@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.66 2011/09/28 01:38:19 dyoung Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.67 2011/09/28 01:45:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.66 2011/09/28 01:38:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.67 2011/09/28 01:45:49 dyoung Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -395,11 +395,9 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		return 0;
 	}
 
-	if (cookie == NULL)
+	if (cookie == NULL ||
+	    (cookie->id_flags & X86_DMA_MIGHT_NEED_BOUNCE) == 0)
 		return error;
-	if ((cookie->id_flags & X86_DMA_MIGHT_NEED_BOUNCE) == 0)
-		return error;
-
 
 	/*
 	 * First attempt failed; bounce it.
@@ -594,7 +592,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	map->dm_nsegs = 0;
 
 	if (cookie == NULL ||
-	    ((cookie->id_flags & X86_DMA_MIGHT_NEED_BOUNCE) == 0))
+	    (cookie->id_flags & X86_DMA_MIGHT_NEED_BOUNCE) == 0)
 		return error;
 
 	/*
@@ -678,7 +676,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	map->dm_nsegs = 0;
 
 	if (cookie == NULL ||
-	    ((cookie->id_flags & X86_DMA_MIGHT_NEED_BOUNCE) == 0))
+	    (cookie->id_flags & X86_DMA_MIGHT_NEED_BOUNCE) == 0)
 		return error;
 
 	STAT_INCR(bounces);
