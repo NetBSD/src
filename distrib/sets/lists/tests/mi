@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.396 2011/09/24 18:36:03 christos Exp $
+# $NetBSD: mi,v 1.397 2011/09/28 16:14:04 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -660,6 +660,7 @@
 ./usr/libdata/debug/usr/tests/net/if_loop/t_pr.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/net					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/net/t_raw.debug		tests-net-debug		debug,atf
+./usr/libdata/debug/usr/tests/net/net/t_unix.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/sys					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/sys/t_listen.debug			tests-net-debug		debug,atf
@@ -2441,6 +2442,7 @@
 ./usr/tests/net/net				tests-net-tests
 ./usr/tests/net/net/Atffile			tests-net-tests		atf
 ./usr/tests/net/net/t_raw		tests-net-tests		atf
+./usr/tests/net/net/t_unix		tests-net-tests		atf
 ./usr/tests/net/route				tests-net-tests
 ./usr/tests/net/route/Atffile			tests-net-tests		atf
 ./usr/tests/net/route/t_change		tests-net-tests		atf
