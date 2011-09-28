@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.53 2011/08/29 14:35:03 joerg Exp $   */
+/*      $NetBSD: raidctl.c,v 1.54 2011/09/28 10:29:41 mrg Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.53 2011/08/29 14:35:03 joerg Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.54 2011/09/28 10:29:41 mrg Exp $");
 #endif
 
 
@@ -734,7 +734,7 @@ get_component_label(int fd, char *component)
 	printf("   Row: %d, Column: %d, Num Rows: %d, Num Columns: %d\n",
 	       component_label.row, component_label.column, 
 	       component_label.num_rows, component_label.num_columns);
-	printf("   Version: %d, Serial Number: %d, Mod Counter: %d\n",
+	printf("   Version: %d, Serial Number: %u, Mod Counter: %d\n",
 	       component_label.version, component_label.serial_number,
 	       component_label.mod_counter);
 	printf("   Clean: %s, Status: %d\n",
