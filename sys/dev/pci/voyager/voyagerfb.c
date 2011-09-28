@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.5 2011/09/22 06:16:13 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.6 2011/09/28 02:36:37 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.5 2011/09/22 06:16:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.6 2011/09/28 02:36:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,12 @@ __KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.5 2011/09/22 06:16:13 macallan Exp $
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/pci/voyagervar.h>
+
+#ifdef VOYAGERFB_DEBUG
+#define DPRINTF aprint_error
+#else
+#define DPRINTF while (0) printf
+#endif
 
 /* there are probably gdium-specific */
 #define GPIO_BACKLIGHT	0x20000000
@@ -86,6 +92,16 @@ struct voyagerfb_softc {
 	int sc_mode;
 	int sc_bl_on, sc_bl_level;
 	void *sc_gpio_cookie;
+
+	/* cursor stuff */
+	int sc_cur_x;
+	int sc_cur_y;
+	int sc_hot_x;
+	int sc_hot_y;
+	uint32_t sc_cursor_addr;
+	uint32_t *sc_cursor;
+ 
+	/* colour map */
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
@@ -126,6 +142,10 @@ static void	voyagerfb_copycols(void *, int, int, int, int);
 static void	voyagerfb_erasecols(void *, int, int, int, long);
 static void	voyagerfb_copyrows(void *, int, int, int);
 static void	voyagerfb_eraserows(void *, int, int, long);
+
+static int	voyagerfb_set_curpos(struct voyagerfb_softc *, int, int);
+static int	voyagerfb_gcursor(struct voyagerfb_softc *, struct wsdisplay_cursor *);
+static int	voyagerfb_scursor(struct voyagerfb_softc *, struct wsdisplay_cursor *);
 
 struct wsdisplay_accessops voyagerfb_accessops = {
 	voyagerfb_ioctl,
@@ -410,6 +430,51 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			return 0;
 		}
 		return EPASSTHROUGH;
+
+	case WSDISPLAYIO_GCURPOS:
+		{
+			struct wsdisplay_curpos *pos;
+
+			pos = (struct wsdisplay_curpos *)data;
+			pos->x = sc->sc_cur_x;
+			pos->y = sc->sc_cur_y;
+		}
+		return 0;
+
+	case WSDISPLAYIO_SCURPOS:
+		{
+			struct wsdisplay_curpos *pos;
+
+			pos = (struct wsdisplay_curpos *)data;
+			voyagerfb_set_curpos(sc, pos->x, pos->y);
+		}
+		return 0;
+
+	case WSDISPLAYIO_GCURMAX:
+		{
+			struct wsdisplay_curpos *pos;
+
+			pos = (struct wsdisplay_curpos *)data;
+			pos->x = 64;
+			pos->y = 64;
+		}
+		return 0;
+
+	case WSDISPLAYIO_GCURSOR:
+		{
+			struct wsdisplay_cursor *cu;
+
+			cu = (struct wsdisplay_cursor *)data;
+			return voyagerfb_gcursor(sc, cu);
+		}
+
+	case WSDISPLAYIO_SCURSOR:
+		{
+			struct wsdisplay_cursor *cu;
+
+			cu = (struct wsdisplay_cursor *)data;
+			return voyagerfb_scursor(sc, cu);
+		}
 	}
 	return EPASSTHROUGH;
 }
@@ -612,6 +677,29 @@ voyagerfb_init(struct voyagerfb_softc *sc)
 			    SM502_STRETCH, SM502_STRETCH_32BIT);
 			break;
 	}
+	/* put the cursor at the end of video memory */
+	sc->sc_cursor_addr = 16 * 1024 * 1024 - 16 * 64;	/* XXX */
+	DPRINTF("%s: %08x\n", __func__, sc->sc_cursor_addr); 
+	sc->sc_cursor = (uint32_t *)((uint8_t *)bus_space_vaddr(sc->sc_memt, sc->sc_fbh)
+			 + sc->sc_cursor_addr);
+#ifdef VOYAGERFB_DEBUG
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_XY, 0x00100010);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_COL12, 0x0000ffff);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_COL3, 0x0000f800);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_ADDR,
+	    SM502_CRSR_ENABLE | sc->sc_cursor_addr);
+	sc->sc_cursor[0] = 0x00000000;
+	sc->sc_cursor[1] = 0x00000000;
+	sc->sc_cursor[2] = 0xffffffff;
+	sc->sc_cursor[3] = 0xffffffff;
+	sc->sc_cursor[4] = 0xaaaaaaaa;
+	sc->sc_cursor[5] = 0xaaaaaaaa;
+	sc->sc_cursor[6] = 0xffffffff;
+	sc->sc_cursor[7] = 0x00000000;
+#else
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_ADDR,
+	    sc->sc_cursor_addr);
+#endif
 }
 
 static void
@@ -929,4 +1017,116 @@ voyagerfb_brightness_down(device_t dev)
 	struct voyagerfb_softc *sc = device_private(dev);
 
 	voyagerfb_set_backlight(sc, sc->sc_bl_level - 8);
+}
+
+static int
+voyagerfb_set_curpos(struct voyagerfb_softc *sc, int x, int y)
+{
+	uint32_t val;
+	int xx, yy;
+
+	sc->sc_cur_x = x;
+	sc->sc_cur_y = y;
+
+	xx = x - sc->sc_hot_x;
+	yy = y - sc->sc_hot_y;
+	
+	if (xx < 0) xx = abs(xx) | 0x800;
+	if (yy < 0) yy = abs(yy) | 0x800;
+	
+	val = (xx & 0xffff) | (yy << 16);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_XY, val);
+
+	return 0;
+}
+
+static int
+voyagerfb_gcursor(struct voyagerfb_softc *sc, struct wsdisplay_cursor *cur)
+{
+	/* do nothing for now */
+	return 0;
+}
+
+static int
+voyagerfb_scursor(struct voyagerfb_softc *sc, struct wsdisplay_cursor *cur)
+{
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    SM502_PANEL_CRSR_ADDR,
+		    sc->sc_cursor_addr | (cur->enable ? SM502_CRSR_ENABLE : 0));
+		DPRINTF("%s: %08x\n", __func__, sc->sc_cursor_addr);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		sc->sc_hot_x = cur->hot.x;
+		sc->sc_hot_y = cur->hot.y;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		voyagerfb_set_curpos(sc, cur->pos.x, cur->pos.y);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		int i, idx;
+		uint32_t val;
+	
+		for (i = 0; i < cur->cmap.count; i++) {
+			val = ((cur->cmap.red[i] & 0xf8) << 8) |
+			      ((cur->cmap.green[i] & 0xfc) << 3) |
+			      ((cur->cmap.blue[i] & 0xf8) >> 3);
+			idx = i + cur->cmap.index;
+			bus_space_write_2(sc->sc_memt, sc->sc_regh,
+			    SM502_PANEL_CRSR_COL12 + (idx << 1),
+			    val);
+			/*
+			 * if userland doesn't try to set the 3rd colour we
+			 * assume it expects an X11-style 2 colour cursor
+			 * X should be our main user anyway
+			 */
+			if ((idx == 1) && 
+			   ((cur->cmap.count + cur->cmap.index) < 3)) {
+				bus_space_write_2(sc->sc_memt, sc->sc_regh,
+				    SM502_PANEL_CRSR_COL3,
+				    val);
+			}
+			DPRINTF("%s: %d %04x\n", __func__, i + cur->cmap.index, val);
+		}
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+
+		int i, j, cnt = 0;
+		uint32_t latch = 0, omask;
+		uint8_t imask;
+		DPRINTF("%s: %d %d\n", __func__, cur->size.x, cur->size.y);
+		for (i = 0; i < 256; i++) {
+			omask = 0x00000001;
+			imask = 0x01;
+			cur->image[cnt] &= cur->mask[cnt];
+			for (j = 0; j < 8; j++) {
+				if (cur->mask[cnt] & imask)
+					latch |= omask;
+				omask <<= 1;
+				if (cur->image[cnt] & imask)
+					latch |= omask;
+				omask <<= 1;
+				imask <<= 1;
+			}
+			cnt++;
+			imask = 0x01;
+			cur->image[cnt] &= cur->mask[cnt];
+			for (j = 0; j < 8; j++) {
+				if (cur->mask[cnt] & imask)
+					latch |= omask;
+				omask <<= 1;
+				if (cur->image[cnt] & imask)
+					latch |= omask;
+				omask <<= 1;
+				imask <<= 1;
+			}
+			cnt++;
+			sc->sc_cursor[i] = latch;
+			latch = 0;
+		}				
+	}
+	return 0;
 }
