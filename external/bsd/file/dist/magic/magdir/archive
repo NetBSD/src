@@ -183,7 +183,7 @@
 # MAR
 2	string	=-ah MAR archive data
 # ACB
-0	belong&0x00f800ff	0x00800000 ACB archive data
+#0	belong&0x00f800ff	0x00800000 ACB archive data
 # CPZ
 # TODO, this is what idarc says: 0	string	\0\0\0 CPZ archive data
 # JRC
