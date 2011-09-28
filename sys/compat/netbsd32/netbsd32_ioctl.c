@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.61 2011/09/07 02:35:00 macallan Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.62 2011/09/28 01:46:39 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.61 2011/09/07 02:35:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.62 2011/09/28 01:46:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,6 +339,28 @@ netbsd32_to_ieee80211_nwkey(struct netbsd32_ieee80211_nwkey *nwk32,
 	}
 }
 
+static inline void
+netbsd32_to_wsdisplay_cursor(struct netbsd32_wsdisplay_cursor *c32,
+					       struct wsdisplay_cursor *c,
+					       u_long cmd)
+{
+	c->which = c32->which;
+	c->enable = c32->enable;
+	c->pos.x = c32->pos.x;
+	c->pos.y = c32->pos.y;
+	c->hot.x = c32->hot.x;
+	c->hot.y = c32->hot.y;
+	c->size.x = c32->size.x;
+	c->size.y = c32->size.y;
+	c->cmap.index = c32->cmap.index;
+	c->cmap.count = c32->cmap.count;
+	c->cmap.red = NETBSD32PTR64(c32->cmap.red);
+	c->cmap.green = NETBSD32PTR64(c32->cmap.green);
+	c->cmap.blue = NETBSD32PTR64(c32->cmap.blue);
+	c->image = NETBSD32PTR64(c32->image);
+	c->mask = NETBSD32PTR64(c32->mask);
+}
+
 /*
  * handle ioctl conversions from 64-bit kernel -> netbsd32
  */
@@ -512,6 +534,28 @@ netbsd32_from_wsdisplay_addscreendata(struct wsdisplay_addscreendata *asd,
 	NETBSD32PTR32(asd32->screentype, asd->screentype);
 	NETBSD32PTR32(asd32->emul, asd->emul);
 	asd32->idx = asd->idx;
+}
+
+static inline void
+netbsd32_from_wsdisplay_cursor(struct wsdisplay_cursor *c,
+					       struct netbsd32_wsdisplay_cursor *c32,
+					       u_long cmd)
+{
+	c32->which = c->which;
+	c32->enable = c->enable;
+	c32->pos.x = c->pos.x;
+	c32->pos.y = c->pos.y;
+	c32->hot.x = c->hot.x;
+	c32->hot.y = c->hot.y;
+	c32->size.x = c->size.x;
+	c32->size.y = c->size.y;
+	c32->cmap.index = c->cmap.index;
+	c32->cmap.count = c->cmap.count;
+	NETBSD32PTR32(c32->cmap.red, c->cmap.red);
+	NETBSD32PTR32(c32->cmap.green, c->cmap.green);
+	NETBSD32PTR32(c32->cmap.blue, c->cmap.blue);
+	NETBSD32PTR32(c32->image, c->image);
+	NETBSD32PTR32(c32->mask, c->mask);
 }
 
 static inline void
@@ -869,6 +913,11 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 
 	case WSDISPLAYIO_ADDSCREEN32:
 		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_ADDSCREEN, wsdisplay_addscreendata);
+
+	case WSDISPLAYIO_GCURSOR32:
+		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_GCURSOR, wsdisplay_cursor);
+	case WSDISPLAYIO_SCURSOR32:
+		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_SCURSOR, wsdisplay_cursor);
 
 	case SIOCS80211NWKEY32:
 		IOCTL_STRUCT_CONV_TO(SIOCG80211NWKEY, ieee80211_nwkey);
