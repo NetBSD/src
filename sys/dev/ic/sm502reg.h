@@ -1,4 +1,4 @@
-/*	$NetBSD: sm502reg.h,v 1.2 2011/08/31 16:45:07 macallan Exp $	*/
+/*	$NetBSD: sm502reg.h,v 1.3 2011/09/28 02:33:20 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -128,6 +128,24 @@
 #define SM502_GPIO_INTR_SETUP		0x00010010
 #define SM502_GPIO_INTR_STATUS		0x00010014	/* read */
 #define SM502_GPIO_INTR_CLEAR		0x00010014	/* write */
+
+/* PWM - Pulse Width Modulation */
+#define SM502_PWM0			0x00010020
+#define SM502_PWM1			0x00010024
+#define SM502_PWM2			0x00010028
+#define		SM502_PWM_ENABLE		0x00000001
+#define		SM502_PWM_ENABLE_INTR		0x00000004
+#define		SM502_PWM_INTR_PENDING		0x00000008 /* write 1 to clear */
+/* 96MHz divided by 1 << n */
+#define		SM502_PWM_CLOCK_DIV_MASK	0x000000f0
+#define		SM502_PWM_CLOCK_DIV_SHIFT	4
+/* output remains low for n+1 cycles */
+#define		SM502_PWM_CLOCK_LOW_MASK	0x000fff00
+#define		SM502_PWM_CLOCK_LOW_SHIFT	8
+/* output remains high for n+1 cycles */
+#define		SM502_PWM_CLOCK_HIGH_MASK	0xfff00000
+#define		SM502_PWM_CLOCK_HIGH_SHIFT	20
+
 /* Video Controller Registers */
 #define SM502_PANEL_DISP_CRTL			0x080000
 #define		SM502_PDC_8BIT			0x00000000
@@ -211,6 +229,20 @@
 #define 	SM502_VT_VDISPE_MASK		0x00000fff
 #define 	SM502_VT_VTOTAL_MASK		0x0fff0000
 #define SM502_PANEL_VSYNC	0x080030
+#define SM502_PANEL_CRSR_ADDR	0x0800f0
+#define		SM502_CRSR_ENABLE	0x80000000
+#define		SM502_CRSR_SYSTEM_MEM	0x08000000
+#define		SM502_CRSR_SYSMEM_CS1	0x04000000
+#define		SM502_CRSR_ADDRESS_M	0x03fffff0
+#define SM502_PANEL_CRSR_XY	0x0800f4
+#define		SM502_CRSR_X_MASK	0x00000fff
+#define		SM502_CRSR_Y_MASK	0x0fff0000
+#define SM502_PANEL_CRSR_COL12	0x0800f8
+#define		SM502_CRSR_COLOR_1_MASK	0x0000ffff
+#define		SM502_CRSR_COLOR_2_MASK	0xffff0000
+#define SM502_PANEL_CRSR_COL3	0x0800fc
+#define		SM502_CRSR_COLOR_3_MASK	0x0000ffff
+
 
 #define SM502_PALETTE_PANEL	0x080400
 #define SM502_PALETTE_VIDEO	0x080800
