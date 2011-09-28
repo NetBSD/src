@@ -1,4 +1,4 @@
-.\" $NetBSD: cpufreq.9,v 1.2 2011/09/28 11:42:00 jruoho Exp $ */
+.\" $NetBSD: cpufreq.9,v 1.3 2011/09/28 11:50:42 wiz Exp $ */
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen.iki.fi>
 .\" All rights reserved.
@@ -178,7 +178,7 @@ to all processors in the system.
 The
 .Vt cf_cookie
 field is an opaque pointer passed to the backend when
-.Fn cpufreq_get
+.Fn cpufreq_get ,
 .Fn cpufreq_set ,
 or
 .Fn cpufreq_set_all
