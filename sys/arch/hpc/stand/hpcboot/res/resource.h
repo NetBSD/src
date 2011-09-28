@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: resource.h,v 1.11 2010/04/06 16:20:28 nonaka Exp $	*/
+/* -*-C++-*-	$NetBSD: resource.h,v 1.12 2011/09/28 14:19:13 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -123,9 +123,10 @@
 #define	IDS_DIR_CARD_JP1		10020
 #define	IDS_DIR_CARD_JP2		10022
 #define	IDS_DIR_CARD_MMCARD		10024
-#define	IDS_DIR_CARD_MINISD_JP		10026
-#define	IDS_DIR_CARD_MICROSD_JP		10028
-#define	IDS_DIR_USER_DEFINED		10030
+#define	IDS_DIR_CARD_SDMMCARD		10026
+#define	IDS_DIR_CARD_MINISD_JP		10028
+#define	IDS_DIR_CARD_MICROSD_JP		10030
+#define	IDS_DIR_USER_DEFINED		10032
 
 
 #define	IDS_DIR_START			IDS_DIR_FFS_ROOT1
