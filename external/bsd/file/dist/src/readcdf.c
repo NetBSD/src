@@ -1,4 +1,4 @@
-/*	$NetBSD: readcdf.c,v 1.5 2011/09/17 10:46:52 joerg Exp $	*/
+/*	$NetBSD: readcdf.c,v 1.6 2011/09/28 13:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -31,7 +31,7 @@
 #if 0
 FILE_RCSID("@(#)$File: readcdf.c,v 1.26 2011/08/26 13:38:28 christos Exp $")
 #else
-__RCSID("$NetBSD: readcdf.c,v 1.5 2011/09/17 10:46:52 joerg Exp $");
+__RCSID("$NetBSD: readcdf.c,v 1.6 2011/09/28 13:50:09 christos Exp $");
 #endif
 #endif
 
@@ -154,6 +154,9 @@ cdf_file_property_info(struct magic_set *ms, const cdf_property_info_t *info,
         if (!NOTMIME(ms)) {
 		if (str == NULL)
 			return 0;
+		if (file_printf(ms, "application/%s", str) == -1)
+			return -1;
+
         }
         return 1;
 }
