@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.1 2011/09/28 16:13:03 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.2 2011/09/28 22:08:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$Id: t_unix.c,v 1.1 2011/09/28 16:13:03 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.2 2011/09/28 22:08:12 christos Exp $");
 
 #include <stdio.h>
 #include <err.h>
@@ -59,9 +59,9 @@ acc(int s)
 
 	guard1 = guard2 = 's';
 
-	len = sizeof(sun);
+	len = sizeof(len);
 	if (accept(s, (struct sockaddr *)&sun, &len) == -1)
-		err(EXIT_FAILURE, "connect");
+		err(EXIT_FAILURE, "accept");
 	if (guard1 != 's')
 		errx(EXIT_FAILURE, "guard1 = '%c'", guard1);
 	if (guard2 != 's')
