@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1027 2011/09/19 08:53:30 jnemeth Exp $
+#	$NetBSD: files,v 1.1028 2011/09/28 10:55:46 jruoho Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1525,6 +1525,7 @@ file	kern/subr_autoconf.c
 file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c
 file	kern/subr_callback.c
+file	kern/subr_cpufreq.c
 file	kern/subr_copy.c
 file	kern/subr_debug.c		debug
 file	kern/subr_device.c
