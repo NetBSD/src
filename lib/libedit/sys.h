@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.16 2011/07/29 15:20:39 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.17 2011/09/28 14:08:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,6 +93,7 @@ char	*fgetln(FILE *fp, size_t *len);
 #endif
 
 #ifndef HAVE_WCSDUP
+#include <wchar.h>
 wchar_t *wcsdup(const wchar_t *);
 #endif
 
