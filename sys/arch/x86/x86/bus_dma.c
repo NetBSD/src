@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.64 2011/09/28 01:33:26 dyoung Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.65 2011/09/28 01:35:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.64 2011/09/28 01:33:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.65 2011/09/28 01:35:58 dyoung Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1623,6 +1623,8 @@ bit_to_function_pointer(const struct bus_dma_overrides *ov, uint64_t bit)
 void
 bus_dma_tag_destroy(bus_dma_tag_t bdt)
 {
+	if (bdt->bdt_super != NULL)
+		bus_dmatag_destroy(bdt->bdt_super);
 	kmem_free(bdt, sizeof(struct x86_bus_dma_tag));
 }
 
@@ -1641,6 +1643,10 @@ bus_dma_tag_create(bus_dma_tag_t obdt, const uint64_t present,
 
 	if (bdt == NULL)
 		return ENOMEM;
+
+	*bdt = *obdt;
+	/* don't let bus_dmatag_destroy free these */
+	bdt->_tag_needs_free = 0;
 
 	bdt->bdt_super = obdt;
 
@@ -1661,6 +1667,8 @@ bus_dma_tag_create(bus_dma_tag_t obdt, const uint64_t present,
 	bdt->bdt_ctx = ctx;
 
 	*bdtp = bdt;
+	if (obdt->_tag_needs_free)
+		obdt->_tag_needs_free++;
 
 	return 0;
 einval:
