@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1680 2011/09/27 00:36:49 jym Exp $
+#	$NetBSD: mi,v 1.1681 2011/09/28 10:55:46 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2354,6 +2354,7 @@
 ./usr/include/sys/conf.h			comp-c-include
 ./usr/include/sys/core.h			comp-c-include
 ./usr/include/sys/cpu_data.h			comp-obsolete		obsolete
+./usr/include/sys/cpufreq.h			comp-c-include
 ./usr/include/sys/cpuio.h			comp-c-include
 ./usr/include/sys/ctype_bits.h			comp-c-include
 ./usr/include/sys/ctype_inline.h		comp-c-include
@@ -9768,6 +9769,17 @@
 ./usr/share/man/cat9/cpu_switchto.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_sysctl.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/cpu_wait.0			comp-obsolete		obsolete
+./usr/share/man/cat9/cpufreq.0			comp-sys-catman		.cat
+./usr/share/man/cat9/cpufreq_register.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cpufreq_deregister.0	comp-sys-catman		.cat
+./usr/share/man/cat9/cpufreq_suspend.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cpufreq_resume.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cpufreq_get.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cpufreq_get_backend.0	comp-sys-catman		.cat
+./usr/share/man/cat9/cpufreq_get_state.0	comp-sys-catman		.cat
+./usr/share/man/cat9/cpufreq_get_state_index.0	comp-sys-catman		.cat
+./usr/share/man/cat9/cpufreq_set.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cpufreq_set_all.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/crcopy.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/crcvt.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/crdup.0			comp-obsolete		obsolete
@@ -15840,6 +15852,17 @@
 ./usr/share/man/html9/cpu_swapin.html		comp-obsolete		obsolete
 ./usr/share/man/html9/cpu_swapout.html		comp-obsolete		obsolete
 ./usr/share/man/html9/cpu_switchto.html		comp-sys-htmlman	html
+./usr/share/man/html9/cpufreq.html		comp-sys-htmlman	html
+./usr/share/man/html9/cpufreq_register.html	comp-sys-htmlman	html
+./usr/share/man/html9/cpufreq_deregister.html	comp-sys-htmlman	html
+./usr/share/man/html9/cpufreq_suspend.html	comp-sys-htmlman	html
+./usr/share/man/html9/cpufreq_resume.html	comp-sys-htmlman	html
+./usr/share/man/html9/cpufreq_get.html		comp-sys-htmlman	html
+./usr/share/man/html9/cpufreq_get_backend.html	comp-sys-htmlman	html
+./usr/share/man/html9/cpufreq_get_state.html	comp-sys-htmlman	html
+./usr/share/man/html9/cpufreq_get_state_index.html	comp-sys-htmlman	html
+./usr/share/man/html9/cpufreq_set.html		comp-sys-htmlman	html
+./usr/share/man/html9/cpufreq_set_all.html	comp-sys-htmlman	html
 ./usr/share/man/html9/crypto_dispatch.html	comp-sys-htmlman	html
 ./usr/share/man/html9/crypto_done.html		comp-sys-htmlman	html
 ./usr/share/man/html9/crypto_freereq.html	comp-sys-htmlman	html
@@ -22041,6 +22064,17 @@
 ./usr/share/man/man9/cpu_switchto.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_sysctl.9		comp-obsolete		obsolete
 ./usr/share/man/man9/cpu_wait.9			comp-obsolete		obsolete
+./usr/share/man/man9/cpufreq.9			comp-sys-man		.man
+./usr/share/man/man9/cpufreq_register.9		comp-sys-man		.man
+./usr/share/man/man9/cpufreq_deregister.9	comp-sys-man		.man
+./usr/share/man/man9/cpufreq_suspend.9		comp-sys-man		.man
+./usr/share/man/man9/cpufreq_resume.9		comp-sys-man		.man
+./usr/share/man/man9/cpufreq_get.9		comp-sys-man		.man
+./usr/share/man/man9/cpufreq_get_backend.9	comp-sys-man		.man
+./usr/share/man/man9/cpufreq_get_state.9	comp-sys-man		.man
+./usr/share/man/man9/cpufreq_get_state_index.9	comp-sys-man		.man
+./usr/share/man/man9/cpufreq_set.9		comp-sys-man		.man
+./usr/share/man/man9/cpufreq_set_all.9		comp-sys-man		.man
 ./usr/share/man/man9/crcopy.9			comp-obsolete		obsolete
 ./usr/share/man/man9/crcvt.9			comp-obsolete		obsolete
 ./usr/share/man/man9/crdup.9			comp-obsolete		obsolete
