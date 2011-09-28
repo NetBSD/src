@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.435 2011/08/07 13:33:01 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.436 2011/09/28 15:52:47 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.435 2011/08/07 13:33:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436 2011/09/28 15:52:47 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -130,6 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.435 2011/08/07 13:33:01 rmind Exp $"
 #include <sys/errno.h>
 #include <sys/callout.h>
 #include <sys/cpu.h>
+#include <sys/cpufreq.h>
 #include <sys/spldebug.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -416,6 +417,9 @@ main(void)
 
 	/* Initialize processor-sets */
 	psets_init();
+
+	/* Initialize cpufreq(9) */
+	cpufreq_init();
 
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
