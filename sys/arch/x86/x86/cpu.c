@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.92 2011/08/11 20:33:20 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.93 2011/09/28 15:38:21 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.92 2011/08/11 20:33:20 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.93 2011/09/28 15:38:21 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.92 2011/08/11 20:33:20 cherry Exp $");
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/cpu.h>
+#include <sys/cpufreq.h>
 #include <sys/atomic.h>
 #include <sys/reboot.h>
 
@@ -1090,11 +1091,15 @@ cpu_suspend(device_t dv, const pmf_qual_t *qual)
 	struct cpu_info *ci = sc->sc_info;
 	int err;
 
-	if (ci->ci_flags & CPUF_PRIMARY)
-		return true;
-	if (ci->ci_data.cpu_idlelwp == NULL)
-		return true;
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
+		return true;
+
+	cpufreq_suspend(ci);
+
+	if ((ci->ci_flags & CPUF_PRIMARY) != 0)
+		return true;
+
+	if (ci->ci_data.cpu_idlelwp == NULL)
 		return true;
 
 	sc->sc_wasonline = !(ci->ci_schedstate.spc_flags & SPCF_OFFLINE);
@@ -1104,7 +1109,7 @@ cpu_suspend(device_t dv, const pmf_qual_t *qual)
 		err = cpu_setstate(ci, false);
 		mutex_exit(&cpu_lock);
 
-		if (err)
+		if (err != 0)
 			return false;
 	}
 
@@ -1118,12 +1123,14 @@ cpu_resume(device_t dv, const pmf_qual_t *qual)
 	struct cpu_info *ci = sc->sc_info;
 	int err = 0;
 
-	if (ci->ci_flags & CPUF_PRIMARY)
-		return true;
-	if (ci->ci_data.cpu_idlelwp == NULL)
-		return true;
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
 		return true;
+
+	if ((ci->ci_flags & CPUF_PRIMARY) != 0)
+		goto out;
+
+	if (ci->ci_data.cpu_idlelwp == NULL)
+		goto out;
 
 	if (sc->sc_wasonline) {
 		mutex_enter(&cpu_lock);
@@ -1131,7 +1138,13 @@ cpu_resume(device_t dv, const pmf_qual_t *qual)
 		mutex_exit(&cpu_lock);
 	}
 
-	return err == 0;
+out:
+	if (err != 0)
+		return false;
+
+	cpufreq_resume(ci);
+
+	return true;
 }
 
 static bool
