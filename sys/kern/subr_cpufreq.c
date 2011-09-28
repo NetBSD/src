@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpufreq.c,v 1.1 2011/09/28 10:55:48 jruoho Exp $ */
+/*	$NetBSD: subr_cpufreq.c,v 1.2 2011/09/28 15:52:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,18 +30,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.1 2011/09/28 10:55:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.2 2011/09/28 15:52:48 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/cpufreq.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
-#include <sys/once.h>
 #include <sys/time.h>
 #include <sys/xcall.h>
 
-static int	 cpufreq_init(void);
 static int	 cpufreq_latency(void);
 static uint32_t	 cpufreq_get_max(void);
 static uint32_t	 cpufreq_get_min(void);
@@ -53,25 +51,19 @@ static void	 cpufreq_set_all_raw(uint32_t);
 static kmutex_t cpufreq_lock __cacheline_aligned;
 static struct cpufreq *cf_backend __read_mostly = NULL;
 
-static int
+void
 cpufreq_init(void)
 {
 
 	mutex_init(&cpufreq_lock, MUTEX_DEFAULT, IPL_NONE);
-
-	return 0;
 }
 
 int
 cpufreq_register(struct cpufreq *cf)
 {
-	static ONCE_DECL(cpufreq_once);
 	uint32_t count, i, j, k, m;
 	int rv;
 
-	rv = RUN_ONCE(&cpufreq_once, cpufreq_init);
-
-	KASSERT(rv == 0);
 	KASSERT(cf != NULL);
 	KASSERT(cf->cf_get_freq != NULL);
 	KASSERT(cf->cf_set_freq != NULL);

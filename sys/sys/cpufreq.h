@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufreq.h,v 1.1 2011/09/28 10:55:48 jruoho Exp $ */
+/*	$NetBSD: cpufreq.h,v 1.2 2011/09/28 15:52:47 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,8 +46,8 @@
 #define CPUFREQ_STATE_MAX	 64
 #define CPUFREQ_LATENCY_MAX	 UINT16_MAX	  /* Maximum per-CPU latency */
 
-#define CPUFREQ_STATE_ENABLED	UINT32_MAX
-#define CPUFREQ_STATE_DISABLED	UINT32_MAX - 1
+#define CPUFREQ_STATE_ENABLED	 UINT32_MAX
+#define CPUFREQ_STATE_DISABLED	 UINT32_MAX - 1
 
 struct cpufreq_state {
 	uint32_t		 cfs_freq;	  /* MHz  */
@@ -76,6 +76,7 @@ struct cpufreq {
 };
 
 #ifdef _KERNEL
+void		cpufreq_init(void);
 int		cpufreq_register(struct cpufreq *);
 void		cpufreq_deregister(void);
 void		cpufreq_suspend(struct cpu_info *);
