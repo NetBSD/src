@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.41 2011/02/02 20:07:25 chuck Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.42 2011/09/28 22:52:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -165,6 +165,7 @@ struct uvm_pagerops {
  */
 
 void	uvm_pager_init(void);
+void	uvm_pager_realloc_emerg(void);
 struct vm_page *uvm_pageratop(vaddr_t);
 vaddr_t	uvm_pagermapin(struct vm_page **, int, int);
 void	uvm_pagermapout(vaddr_t, int);
