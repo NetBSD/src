@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.65 2011/09/20 00:12:24 jym Exp $	*/
+/*	$NetBSD: cpu.c,v 1.66 2011/09/28 15:38:22 jruoho Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.65 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66 2011/09/28 15:38:22 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.65 2011/09/20 00:12:24 jym Exp $");
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/cpu.h>
+#include <sys/cpufreq.h>
 #include <sys/atomic.h>
 #include <sys/reboot.h>
 #include <sys/idle.h>
@@ -1142,11 +1143,15 @@ cpu_suspend(device_t dv, const pmf_qual_t *qual)
 	struct cpu_info *ci = sc->sc_info;
 	int err;
 
-	if (ci->ci_flags & CPUF_PRIMARY)
-		return true;
-	if (ci->ci_data.cpu_idlelwp == NULL)
-		return true;
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
+		return true;
+
+	cpufreq_suspend(ci);
+
+	if ((ci->ci_flags & CPUF_PRIMARY) != 0)
+		return true;
+
+	if (ci->ci_data.cpu_idlelwp == NULL)
 		return true;
 
 	sc->sc_wasonline = !(ci->ci_schedstate.spc_flags & SPCF_OFFLINE);
@@ -1156,7 +1161,7 @@ cpu_suspend(device_t dv, const pmf_qual_t *qual)
 		err = cpu_setstate(ci, false);
 		mutex_exit(&cpu_lock);
 
-		if (err)
+		if (err != 0)
 			return false;
 	}
 
@@ -1170,12 +1175,14 @@ cpu_resume(device_t dv, const pmf_qual_t *qual)
 	struct cpu_info *ci = sc->sc_info;
 	int err = 0;
 
-	if (ci->ci_flags & CPUF_PRIMARY)
-		return true;
-	if (ci->ci_data.cpu_idlelwp == NULL)
-		return true;
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
 		return true;
+
+	if ((ci->ci_flags & CPUF_PRIMARY) != 0)
+		goto out;
+
+	if (ci->ci_data.cpu_idlelwp == NULL)
+		goto out;
 
 	if (sc->sc_wasonline) {
 		mutex_enter(&cpu_lock);
@@ -1183,7 +1190,13 @@ cpu_resume(device_t dv, const pmf_qual_t *qual)
 		mutex_exit(&cpu_lock);
 	}
 
-	return err == 0;
+out:
+	if (err != 0)
+		return false;
+
+	cpufreq_resume(ci);
+
+	return true;
 }
 #endif
 
