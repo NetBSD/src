@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.114 2011/09/21 17:48:53 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.115 2011/09/28 16:28:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.114 2011/09/21 17:48:53 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.115 2011/09/28 16:28:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1031,11 +1031,7 @@ static void
 ktruser_soname(const char *name, const void *buf, size_t len)
 {
 	char fmt[512];
-	struct sockaddr_storage ss;
-
-	memset(&ss, 0, sizeof(ss));
-	memcpy(&ss, buf, len);
-	sockaddr_snprintf(fmt, sizeof(fmt), "%a", (struct sockaddr *)&ss);
+	sockaddr_snprintf(fmt, sizeof(fmt), "%a", buf);
 	printf("%.*s: [%s]\n", KTR_USER_MAXIDLEN, name, fmt);
 }
 
