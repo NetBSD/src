@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.104 2011/09/01 06:40:28 matt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.105 2011/09/28 22:52:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.104 2011/09/01 06:40:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.105 2011/09/28 22:52:15 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -80,7 +80,47 @@ struct vm_map *pager_map;		/* XXX */
 kmutex_t pager_map_wanted_lock;
 bool pager_map_wanted;	/* locked by pager map */
 static vaddr_t emergva;
+static int emerg_ncolors;
 static bool emerginuse;
+
+void
+uvm_pager_realloc_emerg(void)
+{
+	vaddr_t new_emergva, old_emergva;
+	int old_emerg_ncolors;
+
+	if (__predict_true(emergva != 0 && emerg_ncolors >= uvmexp.ncolors))
+		return;
+
+	KASSERT(!emerginuse);
+
+	new_emergva = uvm_km_alloc(kernel_map,
+	    round_page(MAXPHYS) + ptoa(uvmexp.ncolors), 0,
+	    UVM_KMF_VAONLY);
+
+	KASSERT(new_emergva != 0);
+
+	old_emergva = emergva;
+	old_emerg_ncolors = emerg_ncolors;
+
+	/*
+	 * don't support re-color in late boot anyway.
+	 */
+	if (0) /* XXX */
+		mutex_enter(&pager_map_wanted_lock);
+
+	emergva = new_emergva;
+	emerg_ncolors = uvmexp.ncolors;
+	wakeup(&old_emergva);
+
+	if (0) /* XXX */
+		mutex_exit(&pager_map_wanted_lock);
+
+	if (old_emergva)
+		uvm_km_free(kernel_map, old_emergva,
+		    round_page(MAXPHYS) + ptoa(old_emerg_ncolors),
+		    UVM_KMF_VAONLY);
+}
 
 /*
  * uvm_pager_init: init pagers (at boot time)
@@ -101,14 +141,8 @@ uvm_pager_init(void)
 	    false, NULL);
 	mutex_init(&pager_map_wanted_lock, MUTEX_DEFAULT, IPL_NONE);
 	pager_map_wanted = false;
-	emergva = uvm_km_alloc(kernel_map,
-	    round_page(MAXPHYS) + ptoa(uvmexp.ncolors), 0,
-	    UVM_KMF_VAONLY);
-#if defined(DEBUG)
-	if (emergva == 0)
-		panic("emergva");
-#endif
-	emerginuse = false;
+
+	uvm_pager_realloc_emerg();
 
 	/*
 	 * init ASYNC I/O queue
