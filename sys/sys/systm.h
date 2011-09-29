@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.248 2011/07/17 20:54:54 joerg Exp $	*/
+/*	$NetBSD: systm.h,v 1.249 2011/09/29 20:52:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -226,13 +226,22 @@ void	printf_nolog(const char *, ...)
 
 void	printf(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
+
 int	sprintf(char *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
+
 int	snprintf(char *, size_t, const char *, ...)
     __attribute__((__format__(__printf__,3,4)));
-void	vprintf(const char *, va_list);
-int	vsprintf(char *, const char *, va_list);
-int	vsnprintf(char *, size_t, const char *, va_list);
+
+void	vprintf(const char *, va_list)
+    __attribute__((__format__(__printf__,1,0)));
+
+int	vsprintf(char *, const char *, va_list)
+    __attribute__((__format__(__printf__,2,0)));
+
+int	vsnprintf(char *, size_t, const char *, va_list)
+    __attribute__((__format__(__printf__,3,0)));
+
 int	humanize_number(char *, size_t, uint64_t, const char *, int);
 
 void	twiddle(void);
@@ -241,6 +250,8 @@ void	banner(void);
 
 void	panic(const char *, ...)
     __dead __attribute__((__format__(__printf__,1,2)));
+void	vpanic(const char *, va_list)
+    __dead __attribute__((__format__(__printf__,1,0)));
 void	uprintf(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	uprintf_locked(const char *, ...)
