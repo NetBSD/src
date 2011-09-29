@@ -1,29 +1,20 @@
-/*	$NetBSD: flt_rounds.S,v 1.3 2011/09/28 15:11:42 christos Exp $	*/
-
-/*
- * Written by J.T. Conklin, Apr 4, 1995
- * Public domain.
- */
+/*	$NetBSD: flt_rounds.S,v 1.4 2011/09/29 22:45:20 christos Exp $	*/
 
 #include <machine/asm.h>
 
+/*
+ * 00 0 round to zero 
+ * 01 1 round to nearest
+ * 10 2 round to positive infinity
+ * 11 3 round to negative infinity
+ */
 	.text
 	_ALIGN_TEXT
-_map:
-	.byte 1		/* round to nearest */
-	.byte 3		/* round to negative infinity */
-	.byte 2		/* round to positive infinity */
-	.byte 0		/* round to zero */
-
 ENTRY(__flt_rounds)
-	fnstcw -4(%rsp)
-	movl -4(%rsp),%eax
-	shrl $10,%eax
-	andl $3,%eax
-#ifdef PIC
-	leaq _map(%rip),%rcx
-	movb (%rcx,%rax,1),%al
-#else
-	movb _map(,%rax,1),%al
-#endif
+	fnstcw	-4(%rsp)
+	movl	-4(%rsp), %ecx
+	shrl	$9, %ecx
+	andl	$6, %ecx
+	xorl	$1, %eax	/* map 0,1,2,3 -> 1,0,3,2 */
+	andl	$3, %eax
 	ret
