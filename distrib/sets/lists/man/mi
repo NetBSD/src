@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1343 2011/09/24 17:09:29 christos Exp $
+# $NetBSD: mi,v 1.1344 2011/09/29 23:35:48 sjg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -983,6 +983,7 @@
 ./usr/share/man/cat4/fast_ipsec.0		man-sys-catman		.cat
 ./usr/share/man/cat4/fd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fea.0			man-sys-catman		.cat
+./usr/share/man/cat4/filemon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/finsio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/flash.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fms.0			man-sys-catman		.cat
@@ -3814,6 +3815,7 @@
 ./usr/share/man/html4/fast_ipsec.html		man-sys-htmlman		html
 ./usr/share/man/html4/fd.html			man-sys-htmlman		html
 ./usr/share/man/html4/fea.html			man-sys-htmlman		html
+./usr/share/man/html4/filemon.html		man-sys-htmlman		html
 ./usr/share/man/html4/finsio.html		man-sys-htmlman		html
 ./usr/share/man/html4/flash.html		man-sys-htmlman		html
 ./usr/share/man/html4/fms.html			man-sys-htmlman		html
@@ -6420,6 +6422,7 @@
 ./usr/share/man/man4/fast_ipsec.4		man-sys-man		.man
 ./usr/share/man/man4/fd.4			man-sys-man		.man
 ./usr/share/man/man4/fea.4			man-sys-man		.man
+./usr/share/man/man4/filemon.4			man-sys-man		.man
 ./usr/share/man/man4/finsio.4			man-sys-man		.man
 ./usr/share/man/man4/flash.4			man-sys-man		.man
 ./usr/share/man/man4/fms.4			man-sys-man		.man
