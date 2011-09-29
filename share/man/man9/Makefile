@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.351 2011/09/28 10:55:48 jruoho Exp $
+#       $NetBSD: Makefile,v 1.352 2011/09/29 20:55:49 christos Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -53,7 +53,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	uiomove.9 ucom.9 userret.9 \
 	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
 	video.9 vme.9 \
-	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
+	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 vpanic.9 \
 	ubc.9 usbdi.9 uvm.9 uvm_km.9 uvm_map.9 vmem.9 \
 	wdc.9 workqueue.9 \
 	wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
@@ -941,6 +941,7 @@ MLINKS+=wsmouse.9 wsmouse_input.9 \
 MLINKS+=xcall.9 xc_broadcast.9 \
 	xcall.9 xc_unicast.9 \
 	xcall.9 xc_wait.9
+MLINKS+=panic.9 vpanic.9
 
 SUBDIR= man9.i386 man9.sun3 man9.x86
 
