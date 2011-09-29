@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.10 2011/08/31 13:25:49 mbalmer Exp $
+# $NetBSD: md.evbppc,v 1.11 2011/09/29 17:40:19 sjg Exp $
 ./stand/powerpc-4xx						base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@					base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod
@@ -50,6 +50,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ffs/ffs.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/filecore				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/filecore/filecore.kmod		base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/filemon				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/filemon/filemon.kmod		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/flash				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/flash/flash.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/fss				base-kernel-modules	kmod
@@ -207,6 +209,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/ffs/ffs.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/filecore				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/filecore/filecore.kmod		base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/filemon				base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/filemon/filemon.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/flash				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/flash/flash.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/fss				base-kernel-modules	kmod
