@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.142 2011/09/08 18:15:56 jym Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.143 2011/09/29 20:52:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.142 2011/09/08 18:15:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.143 2011/09/29 20:52:39 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -199,10 +199,19 @@ twiddle(void)
 void
 panic(const char *fmt, ...)
 {
+	va_list ap;
+
+	va_start(ap, fmt);
+	vpanic(fmt, ap);
+	va_end(ap);
+}
+
+void
+vpanic(const char *fmt, va_list ap)
+{
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci, *oci;
 	int bootopt;
-	va_list ap;
 	static char scratchstr[256]; /* stores panic message */
 
 	spldebug_stop();
@@ -253,15 +262,12 @@ panic(const char *fmt, ...)
 		/* first time in panic - store fmt first for precaution */
 		panicstr = fmt;
 
-		va_start(ap, fmt);
 		vsnprintf(scratchstr, sizeof(scratchstr), fmt, ap);
 		printf("%s", scratchstr);
 		panicstr = scratchstr;
 	} else {
-		va_start(ap, fmt);
 		vprintf(fmt, ap);
 	}
-	va_end(ap);
 	printf("\n");
 
 	if (msgbufenabled && msgbufp->msg_magic == MSG_MAGIC)
