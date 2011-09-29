@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.92 2011/08/31 13:25:50 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.93 2011/09/29 17:40:19 sjg Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ SUBDIR+=	exec_script
 SUBDIR+=	fdesc
 SUBDIR+=	ffs
 SUBDIR+=	filecore
+SUBDIR+=	filemon
 SUBDIR+=	flash
 SUBDIR+=	fss
 SUBDIR+=	gpio
