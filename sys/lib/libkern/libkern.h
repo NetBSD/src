@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.101 2011/09/27 01:02:39 jym Exp $	*/
+/*	$NetBSD: libkern.h,v 1.102 2011/09/29 20:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,6 @@
 #include <sys/types.h>
 #include <sys/inttypes.h>
 #include <sys/null.h>
-#include <sys/systm.h>
 
 #ifndef LIBKERN_INLINE
 #define LIBKERN_INLINE	static __inline
@@ -181,7 +180,7 @@ tolower(int ch)
 #define	assert(e)	((void)0)
 #else
 #define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
-			    panic(__KASSERTSTR, "", #e, __FILE__, __LINE__))
+			    kern_assert(__KASSERTSTR, "", #e, __FILE__, __LINE__))
 #endif
 
 #ifdef __COVERITY__
@@ -205,11 +204,11 @@ tolower(int ch)
 #define _DIAGASSERT(a)	assert(a)
 #define	KASSERTMSG(e, msg, ...)		\
 			(__predict_true((e)) ? (void)0 :		    \
-			    panic(__KASSERTSTR msg, "diagnostic ", #e,	    \
+			    kern_assert(__KASSERTSTR msg, "diagnostic ", #e,	    \
 				__FILE__, __LINE__, ## __VA_ARGS__))
 
 #define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    panic(__KASSERTSTR, "diagnostic ", #e,	    \
+			    kern_assert(__KASSERTSTR, "diagnostic ", #e,	    \
 				__FILE__, __LINE__))
 #endif
 
@@ -224,11 +223,11 @@ tolower(int ch)
 #else
 #define	KDASSERTMSG(e, msg, ...)	\
 			(__predict_true((e)) ? (void)0 :		    \
-			    panic(__KASSERTSTR msg, "debugging ", #e,	    \
+			    kern_assert(__KASSERTSTR msg, "debugging ", #e,	    \
 				__FILE__, __LINE__, ## __VA_ARGS__))
 
 #define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    panic(__KASSERTSTR, "debugging ", #e,	    \
+			    kern_assert(__KASSERTSTR, "debugging ", #e,	    \
 				__FILE__, __LINE__))
 #endif
 
@@ -300,7 +299,8 @@ int	 ffs(int);
 #define	ffs(x)		__builtin_ffs(x)
 #endif
 
-void	 kern_assert(const char *, const char *, int, const char *);
+void	 kern_assert(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 unsigned int
 	bcdtobin(unsigned int);
 unsigned int

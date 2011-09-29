@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_assert.c,v 1.1 2010/01/19 22:28:30 pooka Exp $	*/
+/*	$NetBSD: kern_assert.c,v 1.2 2011/09/29 20:50:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -39,14 +39,14 @@
 #endif
 
 void
-kern_assert(const char *t, const char *f, int l, const char *e)
+kern_assert(const char *fmt, ...)
 {
-
+	va_list ap;
 #ifdef _KERNEL
 	if (panicstr != NULL)
 		return;
 #endif
-
-	panic("kernel %sassertion \"%s\" failed: file \"%s\", line %d",
-	    t, e, f, l);
+	va_start(ap, fmt);
+	vpanic(fmt, ap);
+	va_end(ap);
 }
