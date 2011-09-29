@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.32 2011/04/07 01:40:02 joerg Exp $
+# $NetBSD: Makefile,v 1.33 2011/09/29 23:38:04 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -35,6 +35,7 @@ SUBFILES= \
 	modorder \
 	modts \
 	modword \
+	phony-end \
 	posix \
 	qequals \
 	sysv \
