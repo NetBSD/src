@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1681 2011/09/28 10:55:46 jruoho Exp $
+#	$NetBSD: mi,v 1.1682 2011/09/29 20:59:27 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10770,6 +10770,7 @@
 ./usr/share/man/cat9/vnodeops.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vnsubr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/voidop.0			comp-sys-catman		.cat
+./usr/share/man/cat9/vpanic.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vprint.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vprintf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vput.0			comp-sys-catman		.cat
@@ -16791,6 +16792,7 @@
 ./usr/share/man/html9/vnodeops.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vnsubr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/voidop.html		comp-sys-htmlman	html
+./usr/share/man/html9/vpanic.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vprint.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vprintf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vput.html			comp-sys-htmlman	html
@@ -23065,6 +23067,7 @@
 ./usr/share/man/man9/vnodeops.9			comp-sys-man		.man
 ./usr/share/man/man9/vnsubr.9			comp-sys-man		.man
 ./usr/share/man/man9/voidop.9			comp-sys-man		.man
+./usr/share/man/man9/vpanic.9			comp-sys-man		.man
 ./usr/share/man/man9/vprint.9			comp-sys-man		.man
 ./usr/share/man/man9/vprintf.9			comp-sys-man		.man
 ./usr/share/man/man9/vput.9			comp-sys-man		.man
