@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.10 2011/09/01 09:04:08 christos Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.11 2011/09/29 20:51:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.10 2011/09/01 09:04:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.11 2011/09/29 20:51:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -162,7 +162,8 @@ static int		vrele_gen		__cacheline_aligned;
 
 static vnode_t *	getcleanvnode(void);
 static void		vrele_thread(void *);
-static void		vpanic(vnode_t *, const char *);
+static void		vnpanic(vnode_t *, const char *, ...)
+    __attribute__((__format__(__printf__, 2, 3)));
 
 /* Routines having to do with the management of the vnode table. */
 extern int		(**dead_vnodeop_p)(void *);
@@ -657,7 +658,7 @@ vrelel(vnode_t *vp, int flags)
 
 	if (__predict_false(vp->v_op == dead_vnodeop_p &&
 	    (vp->v_iflag & (VI_CLEAN|VI_XLOCK)) == 0)) {
-		vpanic(vp, "dead but not clean");
+		vnpanic(vp, "dead but not clean");
 	}
 
 	/*
@@ -670,7 +671,7 @@ vrelel(vnode_t *vp, int flags)
 		return;
 	}
 	if (vp->v_usecount <= 0 || vp->v_writecount != 0) {
-		vpanic(vp, "vrelel: bad ref count");
+		vnpanic(vp, "%s: bad ref count", __func__);
 	}
 
 	KASSERT((vp->v_iflag & VI_XLOCK) == 0);
@@ -702,7 +703,8 @@ retry:
 			error = vn_lock(vp, LK_EXCLUSIVE);
 			if (error != 0) {
 				/* XXX */
-				vpanic(vp, "vrele: unable to lock %p");
+				vnpanic(vp, "%s: unable to lock %p",
+				    __func__, vp);
 			}
 			defer = false;
 		} else if ((vp->v_iflag & VI_LAYER) != 0) {
@@ -953,7 +955,7 @@ holdrelel(vnode_t *vp)
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
 	if (vp->v_holdcnt <= 0) {
-		vpanic(vp, "holdrelel: holdcnt vp %p");
+		vnpanic(vp, "%s: holdcnt vp %p", __func__, vp);
 	}
 
 	vp->v_holdcnt--;
@@ -1043,7 +1045,7 @@ vclean(vnode_t *vp, int flags)
 
 	/* Disassociate the underlying file system from the vnode. */
 	if (VOP_RECLAIM(vp)) {
-		vpanic(vp, "vclean: cannot reclaim");
+		vnpanic(vp, "%s: cannot reclaim", __func__);
 	}
 
 	KASSERT(vp->v_data == NULL);
@@ -1179,7 +1181,7 @@ vwakeup(struct buf *bp)
 	KASSERT(mutex_owned(bp->b_objlock));
 
 	if (--vp->v_numoutput < 0)
-		panic("vwakeup: neg numoutput, vp %p", vp);
+		vnpanic(vp, "%s: neg numoutput, vp %p", __func__, vp);
 	if (vp->v_numoutput == 0)
 		cv_broadcast(&vp->v_cv);
 }
@@ -1217,11 +1219,14 @@ vfs_drainvnodes(long target)
 }
 
 void
-vpanic(vnode_t *vp, const char *msg)
+vnpanic(vnode_t *vp, const char *fmt, ...)
 {
-#ifdef DIAGNOSTIC
+	va_list ap;
 
+#ifdef DIAGNOSTIC
 	vprint(NULL, vp);
-	panic("%s\n", msg);
 #endif
+	va_start(ap, fmt);
+	vpanic(fmt, ap);
+	va_end(ap);
 }
