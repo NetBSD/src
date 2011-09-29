@@ -292,6 +292,11 @@ LIST:tw:C/ /,/g="one two three four five six"
 LIST:tw:C/ /,/1g="one two three four five six"
 LIST:tw:tW:C/ /,/="one,two three four five six"
 LIST:tW:tw:C/ /,/="one two three four five six"
+.TARGET="phony" .PREFIX="phony" .IMPSRC=""
+.TARGET="all" .PREFIX="all" .IMPSRC=""
+.TARGET="ok" .PREFIX="ok" .IMPSRC=""
+.TARGET="also.ok" .PREFIX="also.ok" .IMPSRC=""
+.TARGET="bug" .PREFIX="bug" .IMPSRC=""
 Posix says we should execute the command as if run by system(3)
 Expect 'Hello,' and 'World!'
 Hello,
