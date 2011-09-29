@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/11/27 22:21:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2011/09/29 09:44:08 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -38,7 +38,10 @@ CLEANFILES+=			netbsd.site.def
 
 netbsd.site.def:	site.def.in
 	${_MKTARGET_CREATE}
-	${TOOL_SED} -e 's,@prefix@,${X11ROOTDIR},' <${.ALLSRC} >${.TARGET}
+	${TOOL_SED} -e 's,@prefix@,${X11ROOTDIR},' <${.ALLSRC} |\
+	   ${TOOL_SED} -e 's,@FONTROOTDIR@,${X11ROOTDIR}/share/fonts/X11,' |\
+	   ${TOOL_SED} -e 's,@ENCODINGSDIR@,\$${FONTROOTDIR}/encodings,' \
+	   >${.TARGET}
 realall:	netbsd.site.def
 
 .include <bsd.prog.mk>
