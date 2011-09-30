@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.26 2011/03/24 17:05:47 bouyer Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.27 2011/09/30 22:08:20 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.26 2011/03/24 17:05:47 bouyer Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.27 2011/09/30 22:08:20 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ quotaonoff( struct fstab *fs, int offmode, int type, const char *qfpathname)
 	if (!prop_dictionary_set(dict, "commands", cmds))
 		err(1, "prop_dictionary_set(command)");
 
-	if (!prop_dictionary_send_syscall(dict, &pref))
+	if (prop_dictionary_send_syscall(dict, &pref) != 0)
 		err(1, "prop_dictionary_send_syscall");
 	prop_object_release(dict);
 
@@ -206,7 +206,7 @@ quotaonoff( struct fstab *fs, int offmode, int type, const char *qfpathname)
 		return(1);
 	}
 
-	if ((errno = prop_dictionary_recv_syscall(&pref, &dict)) != 0)
+	if (prop_dictionary_recv_syscall(&pref, &dict) != 0)
 		err(1, "prop_dictionary_recv_syscall");
 
 	if ((errno = quota_get_cmds(dict, &cmds)) != 0)

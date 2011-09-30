@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.h,v 1.13 2011/03/24 17:05:39 bouyer Exp $	*/
+/*	$NetBSD: prop_dictionary.h,v 1.14 2011/09/30 22:08:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -86,6 +86,8 @@ struct plistref;
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 bool		prop_dictionary_externalize_to_pref(prop_dictionary_t, struct plistref *);
+bool		prop_dictionary_internalize_from_pref(const struct plistref *,
+		                                      prop_dictionary_t *);
 int		prop_dictionary_send_ioctl(prop_dictionary_t, int,
 					   unsigned long);
 int		prop_dictionary_recv_ioctl(int, unsigned long,
@@ -93,9 +95,9 @@ int		prop_dictionary_recv_ioctl(int, unsigned long,
 int		prop_dictionary_sendrecv_ioctl(prop_dictionary_t,
 					       int, unsigned long,
 					       prop_dictionary_t *);
-bool		prop_dictionary_send_syscall(prop_dictionary_t,
+int		prop_dictionary_send_syscall(prop_dictionary_t,
 		     struct plistref *);
-bool		prop_dictionary_recv_syscall(const struct plistref *,
+int		prop_dictionary_recv_syscall(const struct plistref *,
 					   prop_dictionary_t *);
 #elif defined(_KERNEL)
 int		prop_dictionary_copyin(const struct plistref *,

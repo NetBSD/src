@@ -1,4 +1,4 @@
-/*	$NetBSD: getufsquota.c,v 1.2 2011/06/07 14:56:12 bouyer Exp $ */
+/*	$NetBSD: getufsquota.c,v 1.3 2011/09/30 22:08:19 jym Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -27,7 +27,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getufsquota.c,v 1.2 2011/06/07 14:56:12 bouyer Exp $");
+__RCSID("$NetBSD: getufsquota.c,v 1.3 2011/09/30 22:08:19 jym Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,14 +90,14 @@ getufsquota(const char *mp, struct ufs_quota_entry *qv, uid_t id,
 		goto end_dict;
 	}
 
-	if (!prop_dictionary_send_syscall(dict, &pref))
+	if (prop_dictionary_send_syscall(dict, &pref) != 0)
 		goto end_dict;
 	prop_object_release(dict);
 
 	if (quotactl(mp, &pref) != 0)
 		return -1;
 	
-	if ((errno = prop_dictionary_recv_syscall(&pref, &dict)) != 0)
+	if (prop_dictionary_recv_syscall(&pref, &dict) != 0)
 		return -1;
 	
 	if ((errno = quota_get_cmds(dict, &cmds)) != 0)

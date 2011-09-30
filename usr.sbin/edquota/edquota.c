@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.35 2011/07/10 07:54:49 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.36 2011/09/30 22:08:19 jym Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.35 2011/07/10 07:54:49 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.36 2011/09/30 22:08:19 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -341,14 +341,14 @@ putprivs2(uint32_t id, int quotaclass, struct quotause *qup)
 		printf("message to kernel:\n%s\n",
 		    prop_dictionary_externalize(dict));
 
-	if (!prop_dictionary_send_syscall(dict, &pref))
+	if (prop_dictionary_send_syscall(dict, &pref) != 0)
 		err(1, "prop_dictionary_send_syscall");
 	prop_object_release(dict);
 
 	if (quotactl(qup->fsname, &pref) != 0)
 		err(1, "quotactl");
 
-	if ((errno = prop_dictionary_recv_syscall(&pref, &dict)) != 0) {
+	if (prop_dictionary_recv_syscall(&pref, &dict) != 0) {
 		err(1, "prop_dictionary_recv_syscall");
 	}
 
@@ -504,12 +504,12 @@ clearpriv(int argc, char **argv, const char *filesys, int quotaclass)
 			    prop_dictionary_externalize(protodict));
 		}
 
-		if (!prop_dictionary_send_syscall(protodict, &pref))
+		if (prop_dictionary_send_syscall(protodict, &pref) != 0)
 			err(1, "prop_dictionary_send_syscall");
 		if (quotactl(fst[i].f_mntonname, &pref) != 0)
 			err(1, "quotactl");
 
-		if ((errno = prop_dictionary_recv_syscall(&pref, &dict)) != 0) {
+		if (prop_dictionary_recv_syscall(&pref, &dict) != 0) {
 			err(1, "prop_dictionary_recv_syscall");
 		}
 
