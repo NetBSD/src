@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpsetround.c,v 1.3 2011/09/30 18:27:18 christos Exp $ */
+/* $NetBSD: t_fpsetround.c,v 1.4 2011/09/30 23:46:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpsetround.c,v 1.3 2011/09/30 18:27:18 christos Exp $");
+__RCSID("$NetBSD: t_fpsetround.c,v 1.4 2011/09/30 23:46:15 christos Exp $");
 
 #include <float.h>
 #include <math.h>
@@ -82,6 +82,15 @@ static const struct {
 	{ "-1.9", { -1, -2, -1, -2 } },
 };
 
+static const char *
+getname(int r)
+{
+	for (size_t i = 0; i < __arraycount(rnd); i++)
+		if (rnd[i].rm == r)
+			return rnd[i].n;
+	return "*unknown*";
+}
+
 static void
 test(int r)
 {
@@ -112,24 +121,29 @@ ATF_TC_BODY(fpsetround_basic, tc)
 	int r;
 
 	ATF_CHECK_EQ(r = fpgetround(), FP_RN);
+	if (FP_RN != r)
+		fprintf(stderr, "default expected=%s got=%s\n", getname(FP_RN),
+		    getname(r));
 	ATF_CHECK_EQ(FLT_ROUNDS, 1);
 
 	for (size_t i = 0; i < __arraycount(rnd); i++) {
-		size_t j = (i + 1) & 3;
-		int o = rnd[i].rm;
-		int n = rnd[j].rm;
+		const size_t j = (i + 1) & 3;
+		const int o = rnd[i].rm;
+		const int n = rnd[j].rm;
 
 		ATF_CHECK_EQ(r = fpsetround(n), o);
 		if (o != r)
-			fprintf(stderr, "set expected=%x got=%x\n", o, r);
+			fprintf(stderr, "set %s expected=%s got=%s\n",
+			    getname(n), getname(o), getname(r));
 		ATF_CHECK_EQ(r = fpgetround(), n);
 		if (n != r)
-			fprintf(stderr, "get expected=%x got=%x\n", n, r);
-		ATF_CHECK_EQ(r= FLT_ROUNDS, rnd[j].rf);
+			fprintf(stderr, "get expected=%s got=%s\n", getname(n),
+			    getname(r));
+		ATF_CHECK_EQ(r = FLT_ROUNDS, rnd[j].rf);
 		if (r != rnd[j].rf)
 			fprintf(stderr, "rounds expected=%x got=%x\n",
 			    rnd[j].rf, r);
-		test(rnd[j].rf);
+		test(r);
 	}
 #endif /* defined(__mc68000__) || defined(__vax__) */
 }
