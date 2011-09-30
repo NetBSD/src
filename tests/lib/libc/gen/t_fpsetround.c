@@ -1,19 +1,60 @@
-/* $NetBSD: t_fpsetround.c,v 1.1 2011/09/19 05:25:50 jruoho Exp $ */
+/* $NetBSD: t_fpsetround.c,v 1.2 2011/09/30 17:44:58 christos Exp $ */
 
-/*
- * Written by J.T. Conklin, Apr 18, 1995
- * Public domain.
+/*-
+ * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Christos Zoulas.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <atf-c.h>
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_fpsetround.c,v 1.2 2011/09/30 17:44:58 christos Exp $");
 
 #include <float.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
 #if !defined(__mc68000__) && !defined(__vax__)
 #include <ieeefp.h>
 #endif
+
+#ifdef DEBUG
+#include <stdio.h>
+#define DPRINTF(a)	printf a
+#else
+#define DPRINTF(a)
+#endif
+
+#include <atf-c.h>
 
 ATF_TC(fpsetround_basic);
 ATF_TC_HEAD(fpsetround_basic, tc)
@@ -23,48 +64,62 @@ ATF_TC_HEAD(fpsetround_basic, tc)
 	    "Minimal testing of fpgetround(3) and fpsetround(3)");
 }
 
+static const struct {
+	const char *n;
+	int v[4];
+} tst[] = {	/*  RN  RP  RM  RZ */
+	{  "1.1", {  1,  1,  2,  1 } },
+	{  "1.5", {  1,  2,  2,  1 } },
+	{  "1.9", {  1,  2,  2,  1 } },
+	{ "-1.1", { -1, -1, -1, -2 } },
+	{ "-1.5", { -1, -2, -1, -2 } },
+	{ "-1.9", { -1, -2, -1, -2 } },
+};
+
+static void
+test(int r)
+{
+	for (size_t i = 0; i < __arraycount(tst); i++) {
+		double d = strtod(tst[i].n, NULL);
+		ATF_CHECK_EQ((int)rint(d), tst[i].v[r]);
+		DPRINTF(("%s %d %d\n", tst[i].n, (int)rint(d), tst[i].v[r]));
+	}
+}
+
+static const struct {
+	int rm;
+	int rf;
+} rnd[] = {
+	{ FP_RN, 1 },
+	{ FP_RP, 2 },
+	{ FP_RM, 3 },
+	{ FP_RZ, 0 },
+
+};
+
 ATF_TC_BODY(fpsetround_basic, tc)
 {
 
 #if defined(__mc68000__) || defined(__vax__)
 	atf_tc_skip("Test not applicable on this architecture.");
 #else
-	/*
-	 * This test would be better if it actually performed some
-	 * calculations to verify the selected rounding mode.  But
-	 * this is probably acceptable since the fp{get,set}round
-	 * functions usually just get or set the processors fpu
-	 * control word.
-	 */
+	int r;
 
-	ATF_CHECK_EQ(fpgetround(), FP_RN);
+	ATF_CHECK_EQ(r = fpgetround(), FP_RN);
 	ATF_CHECK_EQ(FLT_ROUNDS, 1);
 
-	/*
-	 * At least on one port (amd64), fpsetround() doesn't have any visible
-	 * effect.  So disable checking for the non-default modes for now.
-	 * See PR port-amd64/44293
-	 */
-#ifdef NOTYET
-	ATF_CHECK_EQ(fpsetround(FP_RP), FP_RN);
-	ATF_CHECK_EQ(fpgetround(), FP_RP);
-	ATF_CHECK_EQ(FLT_ROUNDS, 2);
+	for (size_t i = 0; i < __arraycount(rnd); i++) {
+		size_t j = (i + 1) & 3;
+		int o = rnd[i].rm;
+		int n = rnd[j].rm;
 
-	ATF_CHECK_EQ(fpsetround(FP_RM), FP_RP);
-	ATF_CHECK_EQ(fpgetround(), FP_RM);
-	ATF_CHECK_EQ(FLT_ROUNDS, 3);
-
-	ATF_CHECK_EQ(fpsetround(FP_RZ), FP_RM);
-	ATF_CHECK_EQ(fpgetround(), FP_RZ);
-	ATF_CHECK_EQ(FLT_ROUNDS, 0);
-
-	ATF_CHECK_EQ(fpsetround(FP_RN), FP_RZ);
-#else /* NOTYET */
-	ATF_CHECK_EQ(fpsetround(FP_RN), FP_RN);
-#endif /* NOTYET */
-
-	ATF_CHECK_EQ(fpgetround(), FP_RN);
-	ATF_CHECK_EQ(FLT_ROUNDS, 1);
+		ATF_CHECK_EQ(r = fpsetround(n), o);
+		DPRINTF(("s o=%x r=%x\n", o, r));
+		ATF_CHECK_EQ(r = fpgetround(), n);
+		DPRINTF(("g n=%x r=%x\n", n, r));
+		ATF_CHECK_EQ(FLT_ROUNDS, rnd[j].rf);
+		test(rnd[j].rf);
+	}
 #endif /* defined(__mc68000__) || defined(__vax__) */
 }
 
