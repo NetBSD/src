@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpsetround.c,v 1.2 2011/09/30 17:44:58 christos Exp $ */
+/* $NetBSD: t_fpsetround.c,v 1.3 2011/09/30 18:27:18 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,22 +36,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpsetround.c,v 1.2 2011/09/30 17:44:58 christos Exp $");
+__RCSID("$NetBSD: t_fpsetround.c,v 1.3 2011/09/30 18:27:18 christos Exp $");
 
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #if !defined(__mc68000__) && !defined(__vax__)
 #include <ieeefp.h>
-#endif
-
-#ifdef DEBUG
-#include <stdio.h>
-#define DPRINTF(a)	printf a
-#else
-#define DPRINTF(a)
 #endif
 
 #include <atf-c.h>
@@ -63,6 +57,18 @@ ATF_TC_HEAD(fpsetround_basic, tc)
 	atf_tc_set_md_var(tc, "descr",
 	    "Minimal testing of fpgetround(3) and fpsetround(3)");
 }
+
+static const struct {
+	const char *n;
+	int rm;
+	int rf;
+} rnd[] = {
+	{ "RN", FP_RN, 1 },
+	{ "RP", FP_RP, 2 },
+	{ "RM", FP_RM, 3 },
+	{ "RZ", FP_RZ, 0 },
+
+};
 
 static const struct {
 	const char *n;
@@ -79,23 +85,23 @@ static const struct {
 static void
 test(int r)
 {
+	int did = 0;
 	for (size_t i = 0; i < __arraycount(tst); i++) {
 		double d = strtod(tst[i].n, NULL);
-		ATF_CHECK_EQ((int)rint(d), tst[i].v[r]);
-		DPRINTF(("%s %d %d\n", tst[i].n, (int)rint(d), tst[i].v[r]));
+		int g = (int)rint(d);
+		int e = tst[i].v[r];
+		ATF_CHECK_EQ(g, e);
+		if (g != e) {
+			if (!did) {
+				fprintf(stderr, "Mode Value Result Expected\n");
+				did = 1;
+			}
+			fprintf(stderr, "%4.4s %-5.5s %6d %8d\n", rnd[r].n,
+			    tst[i].n, (int)rint(d), tst[i].v[r]);
+		}
 	}
 }
 
-static const struct {
-	int rm;
-	int rf;
-} rnd[] = {
-	{ FP_RN, 1 },
-	{ FP_RP, 2 },
-	{ FP_RM, 3 },
-	{ FP_RZ, 0 },
-
-};
 
 ATF_TC_BODY(fpsetround_basic, tc)
 {
@@ -114,10 +120,15 @@ ATF_TC_BODY(fpsetround_basic, tc)
 		int n = rnd[j].rm;
 
 		ATF_CHECK_EQ(r = fpsetround(n), o);
-		DPRINTF(("s o=%x r=%x\n", o, r));
+		if (o != r)
+			fprintf(stderr, "set expected=%x got=%x\n", o, r);
 		ATF_CHECK_EQ(r = fpgetround(), n);
-		DPRINTF(("g n=%x r=%x\n", n, r));
-		ATF_CHECK_EQ(FLT_ROUNDS, rnd[j].rf);
+		if (n != r)
+			fprintf(stderr, "get expected=%x got=%x\n", n, r);
+		ATF_CHECK_EQ(r= FLT_ROUNDS, rnd[j].rf);
+		if (r != rnd[j].rf)
+			fprintf(stderr, "rounds expected=%x got=%x\n",
+			    rnd[j].rf, r);
 		test(rnd[j].rf);
 	}
 #endif /* defined(__mc68000__) || defined(__vax__) */
