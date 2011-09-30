@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1682 2011/09/29 20:59:27 christos Exp $
+#	$NetBSD: mi,v 1.1683 2011/09/30 22:08:18 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8187,6 +8187,7 @@
 ./usr/share/man/cat3/prop_array_get_uint8.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_internalize.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_internalize_from_file.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_internalize_from_pref.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_iterator.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_make_immutable.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_mutable.0	comp-c-catman		.cat
@@ -8250,6 +8251,7 @@
 ./usr/share/man/cat3/prop_dictionary_ingest.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_internalize.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_internalize_from_file.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_internalize_from_pref.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_iterator.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_keysym_cstring_nocopy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_keysym_equals.0	comp-c-catman		.cat
@@ -14342,6 +14344,7 @@
 ./usr/share/man/html3/prop_array_get_uint8.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_internalize.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_internalize_from_file.html	comp-c-htmlman		html
+./usr/share/man/html3/prop_array_internalize_from_pref.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_iterator.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_make_immutable.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_mutable.html	comp-c-htmlman		html
@@ -14405,6 +14408,7 @@
 ./usr/share/man/html3/prop_dictionary_ingest.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_internalize.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_internalize_from_file.html	comp-c-htmlman		html
+./usr/share/man/html3/prop_dictionary_internalize_from_pref.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_iterator.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_keysym_cstring_nocopy.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_keysym_equals.html	comp-c-htmlman		html
@@ -20489,6 +20493,7 @@
 ./usr/share/man/man3/prop_array_get_uint8.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_internalize.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_internalize_from_file.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_internalize_from_pref.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_iterator.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_make_immutable.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_mutable.3	comp-c-man		.man
@@ -20552,6 +20557,7 @@
 ./usr/share/man/man3/prop_dictionary_ingest.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_internalize.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_internalize_from_file.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_internalize_from_pref.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_iterator.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_keysym_cstring_nocopy.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_keysym_equals.3	comp-c-man		.man
