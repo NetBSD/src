@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.S,v 1.8 2011/09/29 22:53:13 christos Exp $	*/
+/*	$NetBSD: flt_rounds.S,v 1.9 2011/09/30 23:42:00 christos Exp $	*/
 
 #include <machine/asm.h>
 
@@ -12,8 +12,10 @@
 	_ALIGN_TEXT
 ENTRY(__flt_rounds)
 	fnstcw	-4(%esp)
-	movl	-4(%esp), %eax
-	shrl	$10, %eax
+	movl	-4(%esp), %ecx
+	shrl	$9, %ecx
+	andl	$6, %ecx
+	movl	$0x2d, %eax	/* 0x2d = 00.10.11.01 */
+	sarl	%cl, %eax	/* 0,1,2,3 -> 1,3,2,0 */
 	andl	$3, %eax
-	xorl	$1, %eax	/* map 0,1,2,3 -> 1,0,3,2 */
 	ret
