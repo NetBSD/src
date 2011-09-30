@@ -1,5 +1,5 @@
-/* $NetBSD: ppath.c,v 1.2 2011/09/29 20:53:30 christos Exp $ */
-/* $Id: ppath.c,v 1.2 2011/09/29 20:53:30 christos Exp $ */
+/* $NetBSD: ppath.c,v 1.3 2011/09/30 10:23:03 mrg Exp $ */
+/* $Id: ppath.c,v 1.3 2011/09/30 10:23:03 mrg Exp $ */
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$Id: ppath.c,v 1.2 2011/09/29 20:53:30 christos Exp $");
+__RCSID("$Id: ppath.c,v 1.3 2011/09/30 10:23:03 mrg Exp $");
 
+#ifdef _KERNEL
 #include <sys/systm.h>
+#endif
 #include <ppath/ppath.h>
 #include <ppath/ppath_impl.h>
 
