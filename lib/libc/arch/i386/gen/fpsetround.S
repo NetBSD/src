@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.S,v 1.4 2011/09/30 23:42:00 christos Exp $	*/
+/*	$NetBSD: fpsetround.S,v 1.5 2011/09/30 23:45:41 christos Exp $	*/
 
 /*
  * Written by Frank van der Linden at Wasabi Systems for NetBSD.
@@ -25,8 +25,8 @@ ENTRY(fpsetround)
 	movl	%edx, %eax
 	andl	$0x00000c00, %eax	
 	andl	$0xfffff3ff, %edx
-	movl	4(%esp), %edi
-	orl	%edi, %edx
+	movl	4(%esp), %ecx
+	orl	%ecx, %edx
 	movl	%edx, -4(%esp)
 	fldcw	-4(%esp)
 
