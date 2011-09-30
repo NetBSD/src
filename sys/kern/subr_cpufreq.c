@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpufreq.c,v 1.2 2011/09/28 15:52:48 jruoho Exp $ */
+/*	$NetBSD: subr_cpufreq.c,v 1.3 2011/09/30 04:01:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.2 2011/09/28 15:52:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.3 2011/09/30 04:01:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -48,23 +48,25 @@ static void	 cpufreq_get_state_raw(uint32_t, struct cpufreq_state *);
 static void	 cpufreq_set_raw(struct cpu_info *, uint32_t);
 static void	 cpufreq_set_all_raw(uint32_t);
 
-static kmutex_t cpufreq_lock __cacheline_aligned;
-static struct cpufreq *cf_backend __read_mostly = NULL;
+static kmutex_t		cpufreq_lock __cacheline_aligned;
+static struct cpufreq  *cf_backend __read_mostly = NULL;
 
 void
 cpufreq_init(void)
 {
 
 	mutex_init(&cpufreq_lock, MUTEX_DEFAULT, IPL_NONE);
+	cf_backend = kmem_zalloc(sizeof(*cf_backend), KM_SLEEP);
 }
 
 int
 cpufreq_register(struct cpufreq *cf)
 {
-	uint32_t count, i, j, k, m;
+	uint32_t c, i, j, k, m;
 	int rv;
 
 	KASSERT(cf != NULL);
+	KASSERT(cf_backend != NULL);
 	KASSERT(cf->cf_get_freq != NULL);
 	KASSERT(cf->cf_set_freq != NULL);
 	KASSERT(cf->cf_state_count > 0);
@@ -72,19 +74,12 @@ cpufreq_register(struct cpufreq *cf)
 
 	mutex_enter(&cpufreq_lock);
 
-	if (cf_backend != NULL) {
+	if (cf_backend->cf_init != false) {
 		mutex_exit(&cpufreq_lock);
 		return EALREADY;
 	}
 
-	mutex_exit(&cpufreq_lock);
-	cf_backend = kmem_zalloc(sizeof(*cf), KM_SLEEP);
-
-	if (cf_backend == NULL)
-		return ENOMEM;
-
-	mutex_enter(&cpufreq_lock);
-
+	cf_backend->cf_init = true;
 	cf_backend->cf_mp = cf->cf_mp;
 	cf_backend->cf_cookie = cf->cf_cookie;
 	cf_backend->cf_get_freq = cf->cf_get_freq;
@@ -95,12 +90,17 @@ cpufreq_register(struct cpufreq *cf)
 	/*
 	 * Sanity check the values and verify descending order.
 	 */
-	for (count = i = 0; i < cf->cf_state_count; i++) {
+	for (c = i = 0; i < cf->cf_state_count; i++) {
 
 		CTASSERT(CPUFREQ_STATE_ENABLED != 0);
 		CTASSERT(CPUFREQ_STATE_DISABLED != 0);
 
 		if (cf->cf_state[i].cfs_freq == 0)
+			continue;
+
+		if (cf->cf_state[i].cfs_freq > 9999 &&
+		    cf->cf_state[i].cfs_freq != CPUFREQ_STATE_ENABLED &&
+		    cf->cf_state[i].cfs_freq != CPUFREQ_STATE_DISABLED)
 			continue;
 
 		for (j = k = 0; j < i; j++) {
@@ -115,14 +115,14 @@ cpufreq_register(struct cpufreq *cf)
 		if (k != 0)
 			continue;
 
-		cf_backend->cf_state[i].cfs_index = count;
-		cf_backend->cf_state[i].cfs_freq = cf->cf_state[i].cfs_freq;
-		cf_backend->cf_state[i].cfs_power = cf->cf_state[i].cfs_power;
+		cf_backend->cf_state[c].cfs_index = c;
+		cf_backend->cf_state[c].cfs_freq = cf->cf_state[i].cfs_freq;
+		cf_backend->cf_state[c].cfs_power = cf->cf_state[i].cfs_power;
 
-		count++;
+		c++;
 	}
 
-	cf_backend->cf_state_count = count;
+	cf_backend->cf_state_count = c;
 
 	if (cf_backend->cf_state_count == 0) {
 		mutex_exit(&cpufreq_lock);
@@ -150,15 +150,8 @@ cpufreq_deregister(void)
 {
 
 	mutex_enter(&cpufreq_lock);
-
-	if (cf_backend == NULL) {
-		mutex_exit(&cpufreq_lock);
-		return;
-	}
-
+	memset(cf_backend, 0, sizeof(*cf_backend));
 	mutex_exit(&cpufreq_lock);
-	kmem_free(cf_backend, sizeof(*cf_backend));
-	cf_backend = NULL;
 }
 
 static int
@@ -225,13 +218,12 @@ cpufreq_latency(void)
 void
 cpufreq_suspend(struct cpu_info *ci)
 {
-	struct cpufreq *cf;
+	struct cpufreq *cf = cf_backend;
 	uint32_t l, s;
 
 	mutex_enter(&cpufreq_lock);
-	cf = cf_backend;
 
-	if (cf == NULL) {
+	if (cf->cf_init != true) {
 		mutex_exit(&cpufreq_lock);
 		return;
 	}
@@ -248,12 +240,11 @@ cpufreq_suspend(struct cpu_info *ci)
 void
 cpufreq_resume(struct cpu_info *ci)
 {
-	struct cpufreq *cf;
+	struct cpufreq *cf = cf_backend;
 
 	mutex_enter(&cpufreq_lock);
-	cf = cf_backend;
 
-	if (cf == NULL || cf->cf_state_saved == 0) {
+	if (cf->cf_init != true || cf->cf_state_saved == 0) {
 		mutex_exit(&cpufreq_lock);
 		return;
 	}
@@ -265,13 +256,12 @@ cpufreq_resume(struct cpu_info *ci)
 uint32_t
 cpufreq_get(struct cpu_info *ci)
 {
-	struct cpufreq *cf;
+	struct cpufreq *cf = cf_backend;
 	uint32_t freq;
 
 	mutex_enter(&cpufreq_lock);
-	cf = cf_backend;
 
-	if (cf == NULL) {
+	if (cf->cf_init != true) {
 		mutex_exit(&cpufreq_lock);
 		return 0;
 	}
@@ -287,7 +277,7 @@ cpufreq_get_max(void)
 {
 	struct cpufreq *cf = cf_backend;
 
-	KASSERT(cf != NULL);
+	KASSERT(cf->cf_init != false);
 	KASSERT(mutex_owned(&cpufreq_lock) != 0);
 
 	return cf->cf_state[0].cfs_freq;
@@ -298,7 +288,7 @@ cpufreq_get_min(void)
 {
 	struct cpufreq *cf = cf_backend;
 
-	KASSERT(cf != NULL);
+	KASSERT(cf->cf_init != false);
 	KASSERT(mutex_owned(&cpufreq_lock) != 0);
 
 	return cf->cf_state[cf->cf_state_count - 1].cfs_freq;
@@ -311,7 +301,7 @@ cpufreq_get_raw(struct cpu_info *ci)
 	uint32_t freq = 0;
 	uint64_t xc;
 
-	KASSERT(cf != NULL);
+	KASSERT(cf->cf_init != false);
 	KASSERT(mutex_owned(&cpufreq_lock) != 0);
 
 	xc = xc_unicast(0, (*cf->cf_get_freq), cf->cf_cookie, &freq, ci);
@@ -321,17 +311,18 @@ cpufreq_get_raw(struct cpu_info *ci)
 }
 
 int
-cpufreq_get_backend(struct cpufreq *cf)
+cpufreq_get_backend(struct cpufreq *dst)
 {
+	struct cpufreq *cf = cf_backend;
 
 	mutex_enter(&cpufreq_lock);
 
-	if (cf_backend == NULL || cf == NULL) {
+	if (cf->cf_init != true || dst == NULL) {
 		mutex_exit(&cpufreq_lock);
 		return ENODEV;
 	}
 
-	(void)memcpy(cf, cf_backend, sizeof(*cf));
+	memcpy(dst, cf, sizeof(*cf));
 	mutex_exit(&cpufreq_lock);
 
 	return 0;
@@ -340,12 +331,11 @@ cpufreq_get_backend(struct cpufreq *cf)
 int
 cpufreq_get_state(uint32_t freq, struct cpufreq_state *cfs)
 {
-	struct cpufreq *cf;
+	struct cpufreq *cf = cf_backend;
 
 	mutex_enter(&cpufreq_lock);
-	cf = cf_backend;
 
-	if (cf == NULL || cfs == NULL) {
+	if (cf->cf_init != true || cfs == NULL) {
 		mutex_exit(&cpufreq_lock);
 		return ENODEV;
 	}
@@ -359,12 +349,11 @@ cpufreq_get_state(uint32_t freq, struct cpufreq_state *cfs)
 int
 cpufreq_get_state_index(uint32_t index, struct cpufreq_state *cfs)
 {
-	struct cpufreq *cf;
+	struct cpufreq *cf = cf_backend;
 
 	mutex_enter(&cpufreq_lock);
-	cf = cf_backend;
 
-	if (cf == NULL || cfs == NULL) {
+	if (cf->cf_init != true || cfs == NULL) {
 		mutex_exit(&cpufreq_lock);
 		return ENODEV;
 	}
@@ -374,7 +363,7 @@ cpufreq_get_state_index(uint32_t index, struct cpufreq_state *cfs)
 		return EINVAL;
 	}
 
-	(void)memcpy(cfs, &cf->cf_state[index], sizeof(*cfs));
+	memcpy(cfs, &cf->cf_state[index], sizeof(*cfs));
 	mutex_exit(&cpufreq_lock);
 
 	return 0;
@@ -386,8 +375,8 @@ cpufreq_get_state_raw(uint32_t freq, struct cpufreq_state *cfs)
 	struct cpufreq *cf = cf_backend;
 	uint32_t f, hi, i = 0, lo = 0;
 
-	KASSERT(cf != NULL && cfs != NULL);
 	KASSERT(mutex_owned(&cpufreq_lock) != 0);
+	KASSERT(cf->cf_init != false && cfs != NULL);
 
 	hi = cf->cf_state_count;
 
@@ -405,18 +394,17 @@ cpufreq_get_state_raw(uint32_t freq, struct cpufreq_state *cfs)
 		}
 	}
 
-	(void)memcpy(cfs, &cf->cf_state[i], sizeof(*cfs));
+	memcpy(cfs, &cf->cf_state[i], sizeof(*cfs));
 }
 
 void
 cpufreq_set(struct cpu_info *ci, uint32_t freq)
 {
-	struct cpufreq *cf;
+	struct cpufreq *cf = cf_backend;
 
 	mutex_enter(&cpufreq_lock);
-	cf = cf_backend;
 
-	if (__predict_false(cf == NULL)) {
+	if (__predict_false(cf->cf_init != true)) {
 		mutex_exit(&cpufreq_lock);
 		return;
 	}
@@ -431,7 +419,7 @@ cpufreq_set_raw(struct cpu_info *ci, uint32_t freq)
 	struct cpufreq *cf = cf_backend;
 	uint64_t xc;
 
-	KASSERT(cf != NULL);
+	KASSERT(cf->cf_init != false);
 	KASSERT(mutex_owned(&cpufreq_lock) != 0);
 
 	xc = xc_unicast(0, (*cf->cf_set_freq), cf->cf_cookie, &freq, ci);
@@ -441,12 +429,11 @@ cpufreq_set_raw(struct cpu_info *ci, uint32_t freq)
 void
 cpufreq_set_all(uint32_t freq)
 {
-	struct cpufreq *cf;
+	struct cpufreq *cf = cf_backend;
 
 	mutex_enter(&cpufreq_lock);
-	cf = cf_backend;
 
-	if (__predict_false(cf == NULL)) {
+	if (__predict_false(cf->cf_init != true)) {
 		mutex_exit(&cpufreq_lock);
 		return;
 	}
@@ -461,7 +448,7 @@ cpufreq_set_all_raw(uint32_t freq)
 	struct cpufreq *cf = cf_backend;
 	uint64_t xc;
 
-	KASSERT(cf != NULL);
+	KASSERT(cf->cf_init != false);
 	KASSERT(mutex_owned(&cpufreq_lock) != 0);
 
 	xc = xc_broadcast(0, (*cf->cf_set_freq), cf->cf_cookie, &freq);
@@ -484,15 +471,15 @@ cpufreq_set_lower(struct cpu_info *ci)
 static void
 cpufreq_set_step(struct cpu_info *ci, int32_t step)
 {
+	struct cpufreq *cf = cf_backend;
 	struct cpufreq_state cfs;
-	struct cpufreq *cf;
 	uint32_t freq;
 	int32_t index;
 
 	mutex_enter(&cpufreq_lock);
 	cf = cf_backend;
 
-	if (__predict_false(cf == NULL)) {
+	if (__predict_false(cf->cf_init != true)) {
 		mutex_exit(&cpufreq_lock);
 		return;
 	}
