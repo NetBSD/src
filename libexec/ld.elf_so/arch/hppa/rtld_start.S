@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.10 2011/03/10 12:53:42 skrll Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.11 2011/09/30 03:05:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ L$lpc2:	addil	L'_rtld_bind_start - ($PIC_pcrel$0 - 8), %arg0
 	stw	%arg0, -8(%arg1)
 	bv	%r0(%rp)
 	stw	%r19, -4(%arg1)
-EXIT(__rtld_hppa_setup_pltgot)
+EXIT(__rtld_setup_hppa_pltgot)
 
 /*
  * In order to support lazy binding, this implementation of _rtld_bind_start is
