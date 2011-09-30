@@ -11417,6 +11417,8 @@ struct option md_longopts[] =
   {"mno-fix-loongson2f-jump", no_argument, NULL, OPTION_NO_FIX_LOONGSON2F_JUMP},
   {"mfix-loongson2f-nop", no_argument, NULL, OPTION_FIX_LOONGSON2F_NOP},
   {"mno-fix-loongson2f-nop", no_argument, NULL, OPTION_NO_FIX_LOONGSON2F_NOP},
+  {"mfix-loongson2f-btb", no_argument, NULL, OPTION_FIX_LOONGSON2F_BTB},
+  {"mno-fix-loongson2f-btb", no_argument, NULL, OPTION_NO_FIX_LOONGSON2F_BTB},
   {"mfix-vr4120",    no_argument, NULL, OPTION_FIX_VR4120},
   {"mno-fix-vr4120", no_argument, NULL, OPTION_NO_FIX_VR4120},
   {"mfix-vr4130",    no_argument, NULL, OPTION_FIX_VR4130},
