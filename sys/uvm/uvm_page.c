@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.176 2011/09/28 22:52:15 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.177 2011/09/30 05:29:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.176 2011/09/28 22:52:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.177 2011/09/30 05:29:12 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1045,16 +1045,20 @@ uvm_page_recolor(int newncolors)
 		ucpu->page_free[lcv].pgfl_buckets = pgfl.pgfl_buckets;
 	}
 
-	uvm_pager_realloc_emerg();
-
-	if (have_recolored_pages) {
-		mutex_spin_exit(&uvm_fpageqlock);
-		free(oldbucketarray, M_VMPAGE);
-		return;
-	}
+	if (!have_recolored_pages)
+		oldbucketarray = NULL;
 
 	have_recolored_pages = true;
 	mutex_spin_exit(&uvm_fpageqlock);
+
+	if (oldbucketarray)
+		free(oldbucketarray, M_VMPAGE);
+
+	/*
+	 * this calls uvm_km_alloc() which may want to hold
+	 * uvm_fpageqlock.
+	 */
+	uvm_pager_realloc_emerg();
 }
 
 /*
