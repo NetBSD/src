@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.31 2011/03/27 17:15:17 bouyer Exp $	*/
+/*	$NetBSD: repquota.c,v 1.32 2011/09/30 22:08:20 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.31 2011/03/27 17:15:17 bouyer Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.32 2011/09/30 22:08:20 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,14 +229,14 @@ repquota2(const struct statvfs *vfs, int class)
 	if (Dflag)
 		printf("message to kernel:\n%s\n",
 		    prop_dictionary_externalize(dict));
-	if (!prop_dictionary_send_syscall(dict, &pref))
+	if (prop_dictionary_send_syscall(dict, &pref) != 0)
 		err(1, "prop_dictionary_send_syscall");
 	prop_object_release(dict);
 
 	if (quotactl(vfs->f_mntonname, &pref) != 0)
 		err(1, "quotactl");
 
-	if ((errno = prop_dictionary_recv_syscall(&pref, &dict)) != 0) {
+	if (prop_dictionary_recv_syscall(&pref, &dict) != 0) {
 		err(1, "prop_dictionary_recv_syscall");
 	}
 	if (Dflag)

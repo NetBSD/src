@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary.3,v 1.17 2011/02/21 13:42:57 njoly Exp $
+.\"	$NetBSD: prop_dictionary.3,v 1.18 2011/09/30 22:08:18 jym Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,6 +53,7 @@
 .Nm prop_dictionary_externalize_to_file ,
 .Nm prop_dictionary_internalize_from_file ,
 .Nm prop_dictionary_externalize_to_pref ,
+.Nm prop_dictionary_internalize_from_pref ,
 .Nm prop_dictionary_equals ,
 .Nm prop_dictionary_keysym_cstring_nocopy ,
 .Nm prop_dictionary_keysym_equals
@@ -130,6 +131,9 @@
 .Ft bool
 .Fn prop_dictionary_externalize_to_pref "prop_dictionary_t dict" \
     "struct plistref *pref"
+.Ft bool
+.Fn prop_dictionary_internalize_from_pref "const struct plistref *pref" \
+    "prop_dictionary_t *dictp"
 .\"
 .Sh DESCRIPTION
 The
@@ -324,6 +328,14 @@ Externalizes a dictionary and packs it into the plistref specified by
 Returns
 .Dv false
 if externalizing the dictionary fails for any reason.
+.It Fn prop_dictionary_internalize_from_pref "const struct plistref *pref" \
+    "prop_dictionary_t *dictp"
+Reads the plistref specified by
+.Fa pref ,
+internalizes it, and returns the corresponding dictionary.
+Returns
+.Dv false
+if internalizing or writing the dictionary fails for any reason.
 .El
 .Sh SEE ALSO
 .Xr prop_array 3 ,

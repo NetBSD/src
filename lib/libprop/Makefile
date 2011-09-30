@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2011/01/19 20:34:24 bouyer Exp $
+#	$NetBSD: Makefile,v 1.19 2011/09/30 22:08:19 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -76,6 +76,7 @@ MLINKS+= prop_array.3 prop_array_externalize_to_pref.3
 MLINKS+= prop_array.3 prop_array_get.3
 MLINKS+= prop_array.3 prop_array_internalize.3
 MLINKS+= prop_array.3 prop_array_internalize_from_file.3
+MLINKS+= prop_array.3 prop_array_internalize_from_pref.3
 MLINKS+= prop_array.3 prop_array_iterator.3
 MLINKS+= prop_array.3 prop_array_make_immutable.3
 MLINKS+= prop_array.3 prop_array_mutable.3
@@ -135,6 +136,7 @@ MLINKS+= prop_dictionary.3 prop_dictionary_get.3
 MLINKS+= prop_dictionary.3 prop_dictionary_get_keysym.3
 MLINKS+= prop_dictionary.3 prop_dictionary_internalize.3
 MLINKS+= prop_dictionary.3 prop_dictionary_internalize_from_file.3
+MLINKS+= prop_dictionary.3 prop_dictionary_internalize_from_pref.3
 MLINKS+= prop_dictionary.3 prop_dictionary_iterator.3
 MLINKS+= prop_dictionary.3 prop_dictionary_keysym_cstring_nocopy.3
 MLINKS+= prop_dictionary.3 prop_dictionary_keysym_equals.3
