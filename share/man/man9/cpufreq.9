@@ -1,4 +1,4 @@
-.\" $NetBSD: cpufreq.9,v 1.3 2011/09/28 11:50:42 wiz Exp $ */
+.\" $NetBSD: cpufreq.9,v 1.4 2011/09/30 04:21:17 jruoho Exp $ */
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen.iki.fi>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 28, 2011
+.Dd September 30, 2011
 .Dt CPUFREQ 9
 .Os
 .Sh NAME
@@ -161,6 +161,8 @@ field should be set to
 .Dv CPUFREQ_STATE_ENABLED
 or
 .Dv CPUFREQ_STATE_DISABLED .
+The first constant should precede the latter one in
+.Vt cf_state .
 .It
 The
 .Vt cf_state_count
