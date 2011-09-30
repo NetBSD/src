@@ -1,4 +1,4 @@
-/*	$NetBSD: getvfsquota.c,v 1.7 2011/06/07 14:56:13 bouyer Exp $ */
+/*	$NetBSD: getvfsquota.c,v 1.8 2011/09/30 22:08:19 jym Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -27,7 +27,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getvfsquota.c,v 1.7 2011/06/07 14:56:13 bouyer Exp $");
+__RCSID("$NetBSD: getvfsquota.c,v 1.8 2011/09/30 22:08:19 jym Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,14 +85,14 @@ getvfsquota(const char *mp, struct ufs_quota_entry *qv, int8_t *versp,
 		printf("message to kernel:\n%s\n",
 		    prop_dictionary_externalize(dict));
 
-	if (!prop_dictionary_send_syscall(dict, &pref))
+	if (prop_dictionary_send_syscall(dict, &pref) != 0)
 		err(1, "prop_dictionary_send_syscall");
 	prop_object_release(dict);
 
 	if (quotactl(mp, &pref) != 0)
 		err(1, "quotactl");
 	
-	if ((errno = prop_dictionary_recv_syscall(&pref, &dict)) != 0)
+	if (prop_dictionary_recv_syscall(&pref, &dict) != 0)
 		err(1, "prop_dictionary_recv_syscall");
 	if (debug)
 		printf("reply from kernel:\n%s\n",
