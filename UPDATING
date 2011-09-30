@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.228 2011/08/17 09:18:38 mrg Exp $
+$NetBSD: UPDATING,v 1.229 2011/09/30 22:17:50 jym Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+20111001:
+	the prop_*_send_syscall() functions from proplib(3) have been
+	changed and their new version is not backward compatible with the old
+	one. So ensure that all consumers of these functions (currently:
+	quota2 code and its tests) are updated together with the new lib.
+
 20110817:
 	sparc has been changed to use GCC 4.5.3, so any objdir or
 	DESTDIR for them should be deleted before updating.
