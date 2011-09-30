@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpsetround.c,v 1.4 2011/09/30 23:46:15 christos Exp $ */
+/* $NetBSD: t_fpsetround.c,v 1.5 2011/09/30 23:51:50 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpsetround.c,v 1.4 2011/09/30 23:46:15 christos Exp $");
+__RCSID("$NetBSD: t_fpsetround.c,v 1.5 2011/09/30 23:51:50 christos Exp $");
 
 #include <float.h>
 #include <math.h>
@@ -77,9 +77,15 @@ static const struct {
 	{  "1.1", {  1,  1,  2,  1 } },
 	{  "1.5", {  1,  2,  2,  1 } },
 	{  "1.9", {  1,  2,  2,  1 } },
+	{  "2.1", {  2,  2,  3,  2 } },
+	{  "2.5", {  2,  2,  3,  2 } },
+	{  "2.9", {  2,  3,  3,  2 } },
 	{ "-1.1", { -1, -1, -1, -2 } },
 	{ "-1.5", { -1, -2, -1, -2 } },
 	{ "-1.9", { -1, -2, -1, -2 } },
+	{ "-2.1", { -2, -2, -2, -3 } },
+	{ "-2.5", { -2, -2, -2, -3 } },
+	{ "-2.9", { -2, -3, -2, -3 } },
 };
 
 static const char *
