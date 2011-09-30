@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.26 2011/08/29 17:39:54 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.27 2011/09/30 14:50:20 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.26 2011/08/29 17:39:54 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.27 2011/09/30 14:50:20 jruoho Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -280,7 +280,12 @@ ATF_TC_BODY(strtod_round, tc)
 
 	double d2 = strtod(val, NULL);
 
-	ATF_REQUIRE(fabs(d1 - d2) > 0.0);
+	if (fabs(d1 - d2) > 0.0)
+		return;
+	else {
+		atf_tc_expect_fail("PR misc/44767");
+		atf_tc_fail("strtod(3) did not honor fesetround(3)");
+	}
 #else
 	atf_tc_skip("Requires one of i386, amd64 or sparc");
 #endif
