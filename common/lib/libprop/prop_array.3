@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_array.3,v 1.12 2011/02/21 13:42:57 njoly Exp $
+.\"	$NetBSD: prop_array.3,v 1.13 2011/09/30 22:08:18 jym Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,6 +51,7 @@
 .Nm prop_array_externalize_to_file ,
 .Nm prop_array_internalize_from_file ,
 .Nm prop_array_externalize_to_pref ,
+.Nm prop_array_internalize_from_pref ,
 .Nm prop_array_equals
 .Nd array property collection object
 .Sh LIBRARY
@@ -104,6 +105,9 @@
 .\"
 .Ft bool
 .Fn prop_array_externalize_to_pref "prop_array_t array" "struct plistref *pref"
+.Ft bool
+.Fn prop_array_internalize_from_pref "const struct plistref *pref" \
+    "prop_array_t *arrayp"
 .\"
 .Ft bool
 .Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
@@ -266,12 +270,20 @@ Returns
 .Dv NULL
 on failure.
 .It Fn prop_array_externalize_to_pref "prop_array_t array" \
-	"struct plistref *pref"
+    "struct plistref *pref"
 Externalizes an array and packs it into the plistref specified by
 .Fa pref .
 Returns
 .Dv false
 if externalizing the array fails for any reason.
+.It Fn prop_array_internalize_from_pref "const struct plistref *pref" \
+    "prop_array_t *arrayp"
+Reads the plistref specified by
+.Fa pref ,
+internalizes it, and returns the corresponding array.
+Returns
+.Dv false
+if internalizing or writing the array fails for any reason.
 .It Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
 Returns
 .Dv true
