@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpufreq.c,v 1.3 2011/09/30 04:01:21 jruoho Exp $ */
+/*	$NetBSD: subr_cpufreq.c,v 1.4 2011/09/30 04:10:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.3 2011/09/30 04:01:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.4 2011/09/30 04:10:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -477,7 +477,6 @@ cpufreq_set_step(struct cpu_info *ci, int32_t step)
 	int32_t index;
 
 	mutex_enter(&cpufreq_lock);
-	cf = cf_backend;
 
 	if (__predict_false(cf->cf_init != true)) {
 		mutex_exit(&cpufreq_lock);
