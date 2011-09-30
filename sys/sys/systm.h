@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.249 2011/09/29 20:52:12 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.250 2011/09/30 10:23:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -46,10 +46,8 @@
 
 #include <machine/endian.h>
 
-#ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/stdarg.h>
-#endif
 
 #include <sys/device_if.h>
 
