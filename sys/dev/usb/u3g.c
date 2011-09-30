@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.19 2011/08/24 19:42:52 veego Exp $	*/
+/*	$NetBSD: u3g.c,v 1.20 2011/09/30 18:59:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.19 2011/08/24 19:42:52 veego Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.20 2011/09/30 18:59:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,10 +246,13 @@ static const struct usb_devno u3g_devs[] = {
 
 	/* Toshiba */
 	{ USB_VENDOR_TOSHIBA, USB_PRODUCT_TOSHIBA_HSDPA_MODEM_EU870DT1 },
+
+	/* 4G Systems */
+	{ USB_VENDOR_4GSYSTEMS, USB_PRODUCT_4GSYSTEMS_XSSTICK_P14 },
 };
 
 static int
-send_bulkmsg(usbd_device_handle dev, char *cmd, size_t cmdlen)
+send_bulkmsg(usbd_device_handle dev, void *cmd, size_t cmdlen)
 {
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
@@ -437,6 +440,20 @@ u3g_sierra_reinit(usbd_device_handle dev)
 	return (UMATCH_HIGHEST); /* Match to prevent umass from attaching */
 }
 
+static int
+u3g_4gsystems_reinit(usbd_device_handle dev)
+{
+	/* magic string adapted from usb_modeswitch database */
+	static unsigned char cmd[31] = {
+		0x55, 0x53, 0x42, 0x43, 0x12, 0x34, 0x56, 0x78, 0x80, 0x00,
+		0x00, 0x00, 0x80, 0x00, 0x06, 0x06, 0xf5, 0x04, 0x02, 0x52,
+		0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00
+	};
+
+	return send_bulkmsg(dev, cmd, sizeof(cmd));
+}
+
 /*
  * First personality:
  *
@@ -486,6 +503,11 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 	case USB_VENDOR_QUALCOMMINC:
 		if (uaa->product == USB_PRODUCT_QUALCOMMINC_ZTE_STOR)
 			return u3g_novatel_reinit(uaa->device);
+		break;
+
+	case USB_VENDOR_4GSYSTEMS:
+		if (uaa->product == USB_PRODUCT_4GSYSTEMS_XSSTICK_P14)
+			return u3g_4gsystems_reinit(uaa->device);
 		break;
 
 	default:
