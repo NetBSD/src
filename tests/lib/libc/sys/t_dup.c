@@ -1,4 +1,4 @@
-/* $NetBSD: t_dup.c,v 1.5 2011/07/18 04:29:37 jruoho Exp $ */
+/* $NetBSD: t_dup.c,v 1.6 2011/09/30 21:08:19 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,13 +29,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dup.c,v 1.5 2011/07/18 04:29:37 jruoho Exp $");
+__RCSID("$NetBSD: t_dup.c,v 1.6 2011/09/30 21:08:19 njoly Exp $");
 
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
 #include <atf-c.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -300,13 +301,11 @@ ATF_TC_BODY(dup_max, tc)
 		(void)closefrom(0);
 		(void)memset(&res, 0, sizeof(struct rlimit));
 
-		if (getrlimit(RLIMIT_NOFILE, &res) != 0)
+		n = 10;
+		res.rlim_cur = res.rlim_max = n;
+		if (setrlimit(RLIMIT_NOFILE, &res) != 0)
 			_exit(EX_OSERR);
 
-		if (res.rlim_cur == 0 || res.rlim_max == 0)
-			_exit(EX_OSERR);
-
-		n = res.rlim_cur;
 		buf = calloc(n, sizeof(int));
 
 		if (buf == NULL)
