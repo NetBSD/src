@@ -1,4 +1,4 @@
-.\"	$NetBSD: filemon.4,v 1.5 2011/09/26 19:02:39 sjg Exp $
+.\"	$NetBSD: filemon.4,v 1.6 2011/09/30 05:07:39 sjg Exp $
 .\"
 .\" Copyright (c) 2011, Juniper Networks, Inc.
 .\"
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 1, 2011
+.Dd September 29, 2011
 .Dt FILEMON 4
 .Os
 .Sh NAME
@@ -41,20 +41,47 @@ learning dependencies.
 .Pp
 The data captured by
 .Nm
-for the command
+for the script
 .Bd -literal -offset indent
-cat /etc/motd
+n=`wc -l /etc/motd`; echo "int motd_lines = $n;" > foo.h.new
+cmp -s foo.h foo.h.new 2> /dev/null || mv foo.h.new foo.h
 .Ed
 .Pp
 looks like:
 .Bd -literal -offset indent
-# filemon version 2
-# Target pid 7437
+# filemon version 4
+# Target pid 24291
 V 4
-E 21848 /bin/cat
-R 21848 /lib/libc.so.12
-R 21848 /etc/motd
-X 21848 0
+E 29676 /bin/sh
+R 29676 /etc/ld.so.conf
+R 29676 /lib/libedit.so.2
+R 29676 /lib/libtermcap.so.0
+R 29676 /lib/libc.so.12
+F 29676 4899
+E 4899 /usr/bin/wc
+R 4899 /etc/ld.so.conf
+R 4899 /usr/lib/libc.so.12
+R 4899 /etc/motd
+X 4899 0
+W 29676 foo.h.new
+X 29676 0
+# Bye bye
+E 3250 /bin/sh
+R 3250 /etc/ld.so.conf
+R 3250 /lib/libedit.so.2
+R 3250 /lib/libtermcap.so.0
+R 3250 /lib/libc.so.12
+W 26673 /dev/null
+E 26673 /usr/bin/cmp
+R 26673 /etc/ld.so.conf
+R 26673 /usr/lib/libc.so.12
+X 26673 2
+E 576 /bin/mv
+R 576 /etc/ld.so.conf
+R 576 /lib/libc.so.12
+M 576 'foo.h.new' 'foo.h'
+X 576 0
+X 3250 0
 # Bye bye
 .Ed
 .Pp
@@ -148,9 +175,16 @@ switch(pid) {
 }
 .Ed
 .Pp
+The outut of
+.Nm
+is intended to be simple to parse.
 It is possible to achieve almost equivalent results with
 .Xr dtrace 1
 though on many systems this requires elevated privileges.
+Also,
+.Xr ktrace 1
+can capture similar data, but records failed system calls as well as
+successful, and is thus more complex to post-process.
 .Sh HISTORY
 .Nm
 was contributed by Juniper Networks.
