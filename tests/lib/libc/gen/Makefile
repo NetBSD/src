@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2011/09/19 05:40:38 jruoho Exp $
+# $NetBSD: Makefile,v 1.31 2011/09/30 17:44:58 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -30,9 +30,14 @@ TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
 
 LDADD.t_fpclassify+=	-lm
+DPADD.t_fpclassify+=	${LIBM}
+LDADD.t_fpsetround+=	-lm
+DPADD.t_fpsetround+=	${LIBM}
 
 LDADD.t_nice+=		-lpthread
+DPADD.t_nice+=		${LIBPTHREAD}
 LDADD.t_syslog+=	-lpthread
+DPADD.t_syslog+=	${LIBPTHREAD}
 
 .if ${MACHINE_ARCH} == "alpha"
 COPTS+=			-mieee
