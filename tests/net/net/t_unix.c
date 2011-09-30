@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.3 2011/09/28 22:19:52 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.4 2011/09/30 19:12:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$Id: t_unix.c,v 1.3 2011/09/28 22:19:52 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.4 2011/09/30 19:12:35 christos Exp $");
 
 #include <stdio.h>
 #include <err.h>
@@ -48,6 +48,15 @@ __RCSID("$Id: t_unix.c,v 1.3 2011/09/28 22:19:52 christos Exp $");
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+
+#ifdef TEST
+#define FAIL(msg, ...)	err(EXIT_FAILURE, msg, ## __VA_ARGS__)
+#else
+
+#include <atf-c.h>
+#define FAIL(msg, ...)	ATF_CHECK_MSG(0, msg, ## __VA_ARGS__)
+
+#endif
 
 static __dead int
 acc(int s)
@@ -61,7 +70,7 @@ acc(int s)
 
 	len = sizeof(sun);
 	if (accept(s, (struct sockaddr *)&sun, &len) == -1)
-		err(EXIT_FAILURE, "accept");
+		FAIL("accept");
 	if (guard1 != 's')
 		errx(EXIT_FAILURE, "guard1 = '%c'", guard1);
 	if (guard2 != 's')
@@ -79,11 +88,11 @@ test(size_t len)
 	slen = len + offsetof(struct sockaddr_un, sun_path) + 1;
 	
 	if ((sun = calloc(1, slen)) == NULL)
-		err(EXIT_FAILURE, "calloc");
+		FAIL("calloc");
 
 	s = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (s == -1)
-		err(EXIT_FAILURE, "socket");
+		FAIL("socket");
 
 	memset(sun->sun_path, 'a', len);
 	sun->sun_path[len] = '\0';
@@ -93,25 +102,21 @@ test(size_t len)
 	sun->sun_family = AF_UNIX;
 
 	if (bind(s, (struct sockaddr *)sun, sun->sun_len) == -1)
-#ifdef TEST
-		err(EXIT_FAILURE, "bind");
-#else
-		return -1;
-#endif
+		FAIL("bind");
 
 	if (listen(s, 5) == -1)
-		err(EXIT_FAILURE, "listen");
+		FAIL("listen");
 
 	switch (fork()) {
 	case -1:
-		err(EXIT_FAILURE, "fork");
+		FAIL("fork");
 	case 0:
 		sleep(1);
 		s2 = socket(AF_UNIX, SOCK_STREAM, 0);
 		if (s == -1)
-			err(EXIT_FAILURE, "socket");
+			FAIL("socket");
 		if (connect(s2, (struct sockaddr *)sun, sun->sun_len) == -1)
-			err(EXIT_FAILURE, "connect");
+			FAIL("connect");
 		break;
 	default:
 		acc(s);
@@ -121,7 +126,6 @@ test(size_t len)
 }
 
 #ifndef TEST
-#include <atf-c.h>
 
 ATF_TC(sockaddr_un_len_exceed);
 ATF_TC_HEAD(sockaddr_un_len_exceed, tc)
