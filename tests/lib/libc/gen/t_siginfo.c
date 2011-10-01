@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.11 2011/05/24 15:20:37 joerg Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.12 2011/10/01 17:46:10 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -42,8 +42,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <setjmp.h>
+#include <float.h>
 
-#ifndef __vax__
+#ifdef _FLOAT_IEEE754
 #include <ieeefp.h>
 #endif
 
@@ -311,7 +312,7 @@ ATF_TC_BODY(sigfpe_flt, tc)
 		sa.sa_sigaction = sigfpe_flt_action;
 		sigemptyset(&sa.sa_mask);
 		sigaction(SIGFPE, &sa, NULL);
-#ifndef __vax__
+#ifdef _FLOAT_IEEE754
 		fpsetmask(FP_X_INV|FP_X_DZ|FP_X_OFL|FP_X_UFL|FP_X_IMP);
 #endif
 		printf("%g\n", 1 / d);
@@ -362,7 +363,7 @@ ATF_TC_BODY(sigfpe_int, tc)
 		sa.sa_sigaction = sigfpe_int_action;
 		sigemptyset(&sa.sa_mask);
 		sigaction(SIGFPE, &sa, NULL);
-#ifndef __vax__
+#ifdef _FLOAT_IEEE754
 		fpsetmask(FP_X_INV|FP_X_DZ|FP_X_OFL|FP_X_UFL|FP_X_IMP);
 #endif
 		printf("%ld\n", 1 / l);
