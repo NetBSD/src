@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.2 2011/10/01 17:46:10 christos Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.3 2011/10/01 21:47:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef _FLOAT_IEE754
+#ifndef _FLOAT_IEEE754
 
 ATF_TC(no_test);
 ATF_TC_HEAD(no_test, tc)
