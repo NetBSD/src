@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.4 2009/07/20 04:41:37 kiyohara Exp $ */
+/*	$NetBSD: exception.S,v 1.5 2011/10/01 15:59:27 chs Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -29,7 +29,6 @@
 
 #include <machine/asm.h>
 #include <machine/pte.h>
-#include <machine/vmparam.h>
 
 #include "assym.h"
 	
