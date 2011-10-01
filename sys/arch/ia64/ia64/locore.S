@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: locore.S,v 1.4 2011/10/01 15:59:28 chs Exp $	*/
 	
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -28,11 +28,10 @@
  * $FreeBSD$
  */
 
+#include "opt_multiprocessor.h"
 
 #include <machine/asm.h>
 #include <machine/ia64_cpu.h>
-#include <machine/param.h>
-#include <machine/vmparam.h>
 #include <machine/pte.h>
 #include <machine/elf_machdep.h>
 #include <sys/syscall.h>
@@ -102,7 +101,7 @@ ENTRY_NOPROFILE(start, 1)
 END(start)
 
 
-#ifdef SMP
+#ifdef MULTIPROCESSOR
 /*
  * AP wake-up entry point. The handoff state is similar as for the BSP,
  * as described on page 3-9 of the IPF SAL Specification. The difference
@@ -217,7 +216,7 @@ ENTRY_NOPROFILE(os_boot_rendez,0)
 }
 END(os_boot_rendez)
 
-#endif /* !SMP */
+#endif /* MULTIPROCESSOR */
 
 /*
  * Create a default interrupt name table. The first entry (vector 0) is

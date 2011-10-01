@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2010/02/08 19:02:29 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.5 2011/10/01 15:59:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,13 +41,17 @@
  * Machine dependent constants for Intel Itanium.
  */
 
+#ifdef _KERNEL
+#include <machine/cpu.h>
+#endif
+
 #define	_MACHINE	ia64
 #define	MACHINE		"ia64"
 #define	_MACHINE_ARCH	ia64
 #define	MACHINE_ARCH	"ia64"
 #define	MID_MACHINE	MID_IA64
 
-#ifdef SMP
+#ifdef MULTIPROCESSOR
 #define	MAXCPU		16
 #else
 #define MAXCPU		1
