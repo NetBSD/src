@@ -1,4 +1,4 @@
-/*	$NetBSD: float_ieee754.h,v 1.9 2011/07/07 18:23:18 matt Exp $	*/
+/*	$NetBSD: float_ieee754.h,v 1.10 2011/10/01 17:39:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,6 +41,11 @@
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
+
+/*
+ * feature macro to test for IEEE754
+ */
+#define _FLOAT_IEEE754	1
 
 #ifndef FLT_ROUNDS
 __BEGIN_DECLS
