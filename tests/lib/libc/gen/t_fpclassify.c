@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.1 2011/09/19 05:25:50 jruoho Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.2 2011/10/01 17:46:10 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if defined(__vax__)
+#ifndef _FLOAT_IEE754
 
 ATF_TC(no_test);
 ATF_TC_HEAD(no_test, tc)
@@ -46,7 +46,7 @@ ATF_TC_BODY(no_test,tc)
 	atf_tc_skip("Test not available on this architecture");
 }
 
-#else /* defined(__vax__) */
+#else /* defined(_FLOAT_IEEE754) */
 
 ATF_TC(fpclassify_float);
 ATF_TC_HEAD(fpclassify_float, tc)
@@ -187,12 +187,12 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	ATF_REQUIRE_EQ(f, 0);
 }
 #endif /* TEST_LONG_DOUBLE */
-#endif /* defined(__vax__) */
+#endif /* _FLOAT_IEEE754 */
 
 ATF_TP_ADD_TCS(tp)
 {
 
-#if defined(__vax__)
+#ifndef _FLOAT_IEEE754
 	ATF_TP_ADD_TC(tp, no_test);
 #else
 	ATF_TP_ADD_TC(tp, fpclassify_float);
@@ -200,7 +200,7 @@ ATF_TP_ADD_TCS(tp)
 #ifdef TEST_LONG_DOUBLE
 	ATF_TP_ADD_TC(tp, fpclassify_long_double);
 #endif /* TEST_LONG_DOUBLE */
-#endif
+#endif /* _FLOAT_IEEE754 */
 
 	return atf_no_error();
 }

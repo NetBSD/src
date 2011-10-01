@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpsetround.c,v 1.5 2011/09/30 23:51:50 christos Exp $ */
+/* $NetBSD: t_fpsetround.c,v 1.6 2011/10/01 17:46:10 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,17 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpsetround.c,v 1.5 2011/09/30 23:51:50 christos Exp $");
+__RCSID("$NetBSD: t_fpsetround.c,v 1.6 2011/10/01 17:46:10 christos Exp $");
 
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
-#if !defined(__mc68000__) && !defined(__vax__)
-#include <ieeefp.h>
-#endif
 
 #include <atf-c.h>
 
@@ -57,6 +53,9 @@ ATF_TC_HEAD(fpsetround_basic, tc)
 	atf_tc_set_md_var(tc, "descr",
 	    "Minimal testing of fpgetround(3) and fpsetround(3)");
 }
+
+#ifdef _FLOAT_IEEE754
+#include <ieeefp.h>
 
 static const struct {
 	const char *n;
@@ -116,12 +115,13 @@ test(int r)
 		}
 	}
 }
+#endif
 
 
 ATF_TC_BODY(fpsetround_basic, tc)
 {
 
-#if defined(__mc68000__) || defined(__vax__)
+#ifndef _FLOAT_IEEE754
 	atf_tc_skip("Test not applicable on this architecture.");
 #else
 	int r;
@@ -151,7 +151,7 @@ ATF_TC_BODY(fpsetround_basic, tc)
 			    rnd[j].rf, r);
 		test(r);
 	}
-#endif /* defined(__mc68000__) || defined(__vax__) */
+#endif /* _FLOAT_IEEE754 */
 }
 
 ATF_TP_ADD_TCS(tp)

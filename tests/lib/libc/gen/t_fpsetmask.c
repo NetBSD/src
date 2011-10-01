@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.1 2011/09/19 05:25:50 jruoho Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.2 2011/10/01 17:46:10 christos Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(__mc68000__) || defined(__vax__)
+#ifndef _FLOAT_IEEE754
 
 ATF_TC(no_test);
 ATF_TC_HEAD(no_test, tc)
@@ -50,7 +50,7 @@ ATF_TC_BODY(no_test, tc)
 	atf_tc_skip("Test not available on this architecture.");
 }
 
-#else /* defined(__mc68000__) || defined(__vax__) */
+#else /* defined(_FLOAT_IEEE754) */
 
 #include <ieeefp.h>
 
@@ -310,12 +310,12 @@ TEST(fpsetmask_unmasked, float)
 TEST(fpsetmask_unmasked, double)
 TEST(fpsetmask_unmasked, long_double)
 
-#endif /* defined(__mc68000__) || defined(__vax__) */
+#endif /* defined(_FLOAT_IEEE754) */
 
 ATF_TP_ADD_TCS(tp)
 {
 
-#if defined(__mc68000__) || defined(__vax__)
+#ifndef _FLOAT_IEEE754
 	ATF_TP_ADD_TC(tp, no_test);
 #else
 	ATF_TP_ADD_TC(tp, fpsetmask_masked_float);
