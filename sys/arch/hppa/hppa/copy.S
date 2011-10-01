@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.18 2010/07/07 01:18:39 chs Exp $	*/
+/*	$NetBSD: copy.S,v 1.19 2011/10/01 15:50:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ LEAF_ENTRY_NOPROFILE(fusufault)
 ALTENTRY(fusubadaddr)
 	bv	0(%rp)
 	ldi	-1, %ret0
-EXIT(fusuexit)
+EXIT(fusufault)
 
 FUX(fubyte,   ldb)
 FUX(fusword,  ldh)
