@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.102 2011/09/29 20:50:09 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.103 2011/10/01 16:06:24 chs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -257,12 +257,11 @@ struct mtprng_state {
 void	*memcpy(void *, const void *, size_t);
 int	 memcmp(const void *, const void *, size_t);
 void	*memset(void *, int, size_t);
-#if __GNUC_PREREQ__(2, 95) && (__GNUC_PREREQ__(4, 0) || !defined(__vax__)) && \
-    !defined(_STANDALONE)
+#if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
 #define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
 #define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
 #endif
-#if __GNUC_PREREQ__(2, 95) && !defined(__vax__) && !defined(_STANDALONE)
+#if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
 #define	memset(d, v, l)		__builtin_memset(d, v, l)
 #endif
 
