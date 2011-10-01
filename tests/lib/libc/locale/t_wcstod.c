@@ -1,4 +1,4 @@
-/* $NetBSD: t_wcstod.c,v 1.2 2011/10/01 17:54:13 christos Exp $ */
+/* $NetBSD: t_wcstod.c,v 1.3 2011/10/01 17:56:11 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -56,14 +56,13 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_wcstod.c,v 1.2 2011/10/01 17:54:13 christos Exp $");
+__RCSID("$NetBSD: t_wcstod.c,v 1.3 2011/10/01 17:56:11 christos Exp $");
 
 #include <errno.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-#include <float.h>
 
 #include <atf-c.h>
 
@@ -71,7 +70,7 @@ __RCSID("$NetBSD: t_wcstod.c,v 1.2 2011/10/01 17:54:13 christos Exp $");
 #define	ALT_MINUS_HUGE_VAL	-2
 #define	ALT_NAN			-3
 
-#ifdef _FLOAT_IEEE754
+#if !defined(__vax__)
 static struct test {
 	const wchar_t *wcs;
 	size_t len;
@@ -383,7 +382,7 @@ static struct test {
 
 { NULL, 0, 0, 0 }
 };
-#endif /* defined(_FLOAT_IEEE754) */
+#endif /* !defined(__vax__) */
 
 ATF_TC(wcstod);
 ATF_TC_HEAD(wcstod, tc)
@@ -392,9 +391,12 @@ ATF_TC_HEAD(wcstod, tc)
 }
 ATF_TC_BODY(wcstod, tc)
 {
-#ifdef _FLOAT_IEEE754
+#if defined(__vax__)
+#else
 	struct test *t;
+#endif
 
+#if !defined(__vax__)
 	for (t = &tests[0]; t->wcs != NULL; ++t) {
 		double d;
 		size_t n;
@@ -441,9 +443,9 @@ ATF_TC_BODY(wcstod, tc)
 
 		(void)printf("\n");
 	}
-#else /* !_FLOAT_IEEE754 */
-	atf_tc_skip("Test is unavailable on this architecture.");
-#endif /* _FLOAT_IEEE754 */
+#else /* !defined(__vax__) */
+	atf_tc_skip("Test is unavailable on vax.");
+#endif /* !defined(__vax__) */
 }
 
 ATF_TP_ADD_TCS(tp)
