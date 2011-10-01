@@ -1,4 +1,4 @@
-/*	$NetBSD: edahdi.c,v 1.10 2010/02/10 14:48:26 roy Exp $	*/
+/*	$NetBSD: edahdi.c,v 1.11 2011/10/01 15:59:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman, Waldi Ravens.
@@ -413,7 +413,9 @@ ahdi_getparts(fd, ptable, rsec, esec)
 		end = &root->ar_parts[AHDI_MAXRPD];
 	else end = &root->ar_parts[AHDI_MAXARPD];
 	for (part = root->ar_parts; part < end; ++part) {
-		u_int	id = *((u_int32_t *)&part->ap_flg);
+		u_int	id;
+
+		memcpy(&id, &part->ap_flg, sizeof (id));
 		if (!(id & 0x01000000))
 			continue;
 		if ((id &= 0x00ffffff) == AHDI_PID_XGM) {
@@ -433,7 +435,7 @@ ahdi_getparts(fd, ptable, rsec, esec)
 				goto done;
 			}
 			p = &ptable->parts[--i];
-			*((u_int32_t *)&p->id) = id << 8;
+			memcpy(&p->id, &id, sizeof (id));
 			p->start = part->ap_st + rsec;
 			p->end   = p->start + part->ap_size - 1;
 			p->rsec  = rsec;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.5 2009/03/14 21:04:07 dsl Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.6 2011/10/01 15:59:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -173,8 +173,9 @@ ahdi_label (int fd, u_int32_t *bbsec, struct disklabel *label)
 	 */
 	for (i = 0; i < al.nparts; ++i) {
 		struct ahdi_part *pd = &al.parts[i];
-		u_int id = *((u_int32_t *)&pd->ap_flg);
+		u_int id;
 
+		memcpy(&id, &pd->ap_flg, sizeof (id));
 		if (id == AHDI_PID_NBD || id == AHDI_PID_RAW) {
 			off_t	offs = pd->ap_st * AHDI_BSIZE;
 			if ((e = bsd_label(fd, offs, label)) < 0)
@@ -214,7 +215,9 @@ ahdi_getparts(fd, rsec, esec, alab)
 		end = &root.ar_parts[AHDI_MAXRPD];
 	else end = &root.ar_parts[AHDI_MAXARPD];
 	for (part = root.ar_parts; part < end; ++part) {
-		u_int	id = *((u_int32_t *)&part->ap_flg);
+		u_int	id;
+
+		memcpy(&id, &part->ap_flg, sizeof (id));
 		if (!(id & 0x01000000))
 			continue;
 		if ((id &= 0x00ffffff) == AHDI_PID_XGM) {
@@ -232,7 +235,7 @@ ahdi_getparts(fd, rsec, esec, alab)
 			alab->parts = realloc(alab->parts,
 					(alab->nparts + 1) * sizeof(*alab->parts));
 			p = &alab->parts[alab->nparts++];
-			*((u_int32_t *)&p->ap_flg) = id;
+			memcpy(&p->ap_flg, &id, sizeof (id));
 			p->ap_st = part->ap_st + rsec;
 			p->ap_end  = p->ap_st + part->ap_size - 1;
 		}

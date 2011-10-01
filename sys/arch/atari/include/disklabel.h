@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.9 2011/08/30 12:39:53 bouyer Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.10 2011/10/01 15:59:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -71,7 +71,7 @@ struct bootblock {
 };
 
 struct disklabel;
-#define	BBGETLABEL(bb, dl)	*(dl) = *((struct disklabel *)(bb)->bb_label)
-#define	BBSETLABEL(bb, dl)	*((struct disklabel *)(bb)->bb_label) = *(dl)
+#define	BBGETLABEL(bb, dl)	memcpy((dl), (bb)->bb_label, sizeof (struct disklabel))
+#define	BBSETLABEL(bb, dl)	memcpy((bb)->bb_label, (dl), sizeof (struct disklabel))
 
 #endif /* _MACHINE_DISKLABEL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.21 2010/04/24 19:58:13 dbj Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.22 2011/10/01 15:59:01 chs Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.21 2010/04/24 19:58:13 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.22 2011/10/01 15:59:01 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
@@ -93,9 +93,9 @@ static char romprint_hextable[] = "0123456789abcdef@";
 #define ROM_PUTX(v) \
   do { \
     (*MONRELOC(putcptr,MG_putc)) \
-			 ((romprint_hextable+NEXT_RAMBASE)[((v)>>4)&0xf]); \
+	(RELOC(romprint_hextable, const char *)[((v)>>4)&0xf]); \
     (*MONRELOC(putcptr,MG_putc)) \
-			 ((romprint_hextable+NEXT_RAMBASE)[(v)&0xf]); \
+	(RELOC(romprint_hextable, const char *)[(v)&0xf]); \
 	} while(0);
 #else
 #define lookup_hex(v)  ((v)>9?('a'+(v)-0xa):('0'+(v)))

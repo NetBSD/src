@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 2009/10/22 22:28:57 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 2011/10/01 15:59:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -78,16 +78,17 @@
 #include <sys/cctr.h>
 #include <machine/frame.h>
 #include <machine/ia64_cpu.h>
-
+#include <sys/device_if.h>
 
 struct cpu_info {
-	struct device *ci_dev;		/* pointer to our device */
 
 	/*
 	 * Public members.
 	 */
-	struct lwp *ci_curlwp;		/* current owner of the processor */
+
 	struct cpu_data ci_data;	/* MI per-cpu data */
+	device_t ci_dev;		/* pointer to our device */
+	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct cctr_state ci_cc;	/* cycle counter state */
 	struct cpu_info *ci_next;	/* next cpu_info structure */
 
@@ -99,6 +100,8 @@ struct cpu_info {
 	 * Private members.
 	 */
 	cpuid_t ci_cpuid;		/* our CPU ID */
+	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
+	uint32_t ci_initapicid;		/* our intitial APIC ID */
 	struct pmap *ci_pmap;		/* current pmap */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
@@ -112,7 +115,11 @@ struct cpu_info {
 
 
 extern struct cpu_info cpu_info_primary;
+extern struct cpu_info *cpu_info_list;
 
+#define	CPU_INFO_ITERATOR		int
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
+					ci != NULL; ci = ci->ci_next
 #ifdef MULTIPROCESSOR
 /*
  * XXX: TODO use percpu infrastructure that yamt proposed or use KR? for

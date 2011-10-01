@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 2010/12/20 00:25:35 matt Exp $
+#	$NetBSD: genassym.cf,v 1.10 2011/10/01 15:59:28 chs Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ include <machine/vmparam.h>
 include <machine/intr.h>
 include <machine/frame.h>
 include <machine/types.h>
+include <machine/pcb.h>
 
 ifdef COMPAT_LINUX
 include <compat/linux/common/linux_signal.h>
@@ -107,6 +108,10 @@ endif
 ifdef MULTIPROCESSOR
 include <machine/cpu.h>
 endif
+
+define	PAGE_SIZE		PAGE_SIZE
+define	PAGE_SHIFT		PAGE_SHIFT
+define	KSTACK_PAGES		KSTACK_PAGES
 
 define	DT_NULL			DT_NULL
 define	DT_RELA			DT_RELA

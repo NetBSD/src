@@ -1,4 +1,4 @@
-/*	$NetBSD: sal.c,v 1.2 2006/04/08 14:52:09 cherry Exp $	*/
+/*	$NetBSD: sal.c,v 1.3 2011/10/01 15:59:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -25,6 +25,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
 
@@ -121,7 +123,7 @@ ia64_sal_init(void)
 		}
 		case 5: {
 			struct sal_ap_wakeup_descriptor *dp;
-#ifdef SMP
+#ifdef MULTIPROCESSOR
 			struct ia64_sal_result result;
 			struct ia64_fdesc *fd;
 #endif
@@ -164,7 +166,7 @@ ia64_sal_init(void)
 			ipi_vector[IPI_AP_WAKEUP] = dp->sale_vector;
 			setup_ipi_vectors(dp->sale_vector & 0xf0);
 
-#ifdef SMP
+#ifdef MULTIPROCESSOR
 			fd = (struct ia64_fdesc *) os_boot_rendez;
 			result = ia64_sal_entry(SAL_SET_VECTORS,
 			    SAL_OS_BOOT_RENDEZ, ia64_tpa(fd->func),

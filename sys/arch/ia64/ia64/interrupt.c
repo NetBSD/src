@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.5 2010/12/20 00:25:35 matt Exp $ */
+/* $NetBSD: interrupt.c,v 1.6 2011/10/01 15:59:28 chs Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,13 +33,14 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.5 2010/12/20 00:25:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6 2011/10/01 15:59:28 chs Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
 #include <sys/lwp.h>
+#include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/sched.h>
 
