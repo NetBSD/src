@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.13 2009/03/31 11:48:15 tsutsui Exp $	*/
+/*	$NetBSD: elf.c,v 1.14 2011/10/01 15:59:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ elf_load(int fd, osdsc_t *od, char **errp, int loadsyms)
 	int		err;
 	Elf32_Ehdr	ehdr;
 	Elf32_Phdr	*phdrs;
-	Elf32_Word	symsize, symstart;
+	Elf32_Word	ident, symsize, symstart;
 	long		kernsize;
 
 	*errp = NULL;
@@ -79,7 +79,8 @@ elf_load(int fd, osdsc_t *od, char **errp, int loadsyms)
 	if (read(fd, (char *)&ehdr, sizeof(ehdr)) != sizeof(ehdr))
 		return -1;
 
-	if (*((u_int *)ehdr.e_ident) != ELFMAGIC)
+	memcpy(&ident, ehdr.e_ident, sizeof ident);
+	if (ident != ELFMAGIC)
 		return -1;
 
 	/*

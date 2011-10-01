@@ -1,4 +1,4 @@
-/*	$NetBSD: ahdilbl.h,v 1.3 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: ahdilbl.h,v 1.4 2011/10/01 15:59:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -60,8 +60,8 @@ struct bootblock {
 						/* second-stage boot loader*/
 };
 
-#define	BBGETLABEL(bb, dl)	*(dl) = *((struct disklabel *)(bb)->bb_label)
-#define	BBSETLABEL(bb, dl)	*((struct disklabel *)(bb)->bb_label) = *(dl)
+#define BBGETLABEL(bb, dl)	memcpy((dl), (bb)->bb_label, sizeof (struct disklabel))
+#define BBSETLABEL(bb, dl)	memcpy((bb)->bb_label, (dl), sizeof (struct disklabel))
 
 /***** from src/sys/arch/atari/include/ahdilabel.h *************************/
 

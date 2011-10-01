@@ -1,4 +1,4 @@
-/*	$NetBSD: mboot.c,v 1.8 2009/03/14 15:36:15 dsl Exp $	*/
+/*	$NetBSD: mboot.c,v 1.9 2011/10/01 15:59:01 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -162,12 +162,14 @@ bootmain(int scsiid)
 	{
 		struct cpu_disklabel *label = (void*) 0x3000;
 		int i, firstinuse=-1;
+		unsigned char *t;
 
 		if (IOCS_S_READ(2<<(2-size), size?2:1, scsiid, size, label) < 0) {
 			IOCS_B_PRINT("Error in reading.\r\n");
 			return 0;
 		}
-		if (*((long*) &label->dosparts[0].dp_typname) != 0x5836384b) {
+		t = label->dosparts[0].dp_typname;
+		if (t[0] != 'X' || t[1] != '6' || t[2] != '8' || t[3] != 'K') {
 			IOCS_B_PRINT("Invalid disk.\r\n");
 			return 0;
 		}
