@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.44 2011/04/24 16:26:59 rmind Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.45 2011/10/01 15:59:01 chs Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.44 2011/04/24 16:26:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.45 2011/10/01 15:59:01 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -795,8 +795,8 @@ clmpcc_param(struct tty *tp, struct termios *t)
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
 	u_char cor;
 	u_char oldch;
-	int oclk, obpr;
-	int iclk, ibpr;
+	int oclk = 0, obpr = 0;
+	int iclk = 0, ibpr = 0;
 	int s;
 
 	/* Check requested parameters. */

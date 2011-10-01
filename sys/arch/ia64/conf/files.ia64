@@ -1,4 +1,4 @@
-#	$NetBSD: files.ia64,v 1.6 2011/06/12 03:35:42 rmind Exp $
+#	$NetBSD: files.ia64,v 1.7 2011/10/01 15:59:27 chs Exp $
 #
 # new style config file for ia64 architecture
 #
@@ -73,6 +73,9 @@ file	dev/md_root.c			memory_disk_hooks
 defpseudo ssccons
 file	arch/ia64/ia64/ssc.c		ssccons			needs-flag
 
+include	"dev/i2o/files.i2o"
+include	"dev/pci/files.pci"
+include "dev/pci/files.agp"
 
 include "dev/isa/files.isa"		# XXXXXXX: Oops, required by acpi
 include "dev/apm/files.apm"		# XXXXXXX: Oops, required by acpi
