@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.11 2011/09/30 14:50:20 jruoho Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.12 2011/10/01 18:38:39 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bitops.c,v 1.11 2011/09/30 14:50:20 jruoho Exp $");
+__RCSID("$NetBSD: t_bitops.c,v 1.12 2011/10/01 18:38:39 christos Exp $");
 
 #include <atf-c.h>
 
@@ -165,6 +165,9 @@ ATF_TC_HEAD(ilog2_log2, tc)
 
 ATF_TC_BODY(ilog2_log2, tc)
 {
+#ifdef __vax___
+	atf_tc_skip("Test is unavailable on vax because of lack of log2()");
+#else
 	double  x, y;
 	uint64_t i;
 
@@ -184,6 +187,7 @@ ATF_TC_BODY(ilog2_log2, tc)
 			    "ilog2(%"PRIu64")", i, i);
 		}
 	}
+#endif
 }
 
 ATF_TP_ADD_TCS(tp)
