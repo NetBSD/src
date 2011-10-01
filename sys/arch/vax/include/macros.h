@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.44 2007/11/22 23:02:05 plunky Exp $	*/
+/*	$NetBSD: macros.h,v 1.45 2011/10/01 16:06:24 chs Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -106,7 +106,6 @@ vax_memmove(void *to, const void *from, size_t len)
 	return to;
 }
 #define memmove vax_memmove
-#endif
 
 static __inline void *__attribute__((__unused__))
 vax_memset(void *block, int c, size_t len)
@@ -122,6 +121,7 @@ vax_memset(void *block, int c, size_t len)
 	return block;
 }
 #define memset vax_memset
+#endif
 
 #ifdef notdef 
 /* XXX - the return syntax of memcmp is wrong */
