@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.39 2011/04/24 16:26:55 rmind Exp $	*/
+/*	$NetBSD: pdc.c,v 1.40 2011/10/01 15:51:17 chs Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.39 2011/04/24 16:26:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.40 2011/10/01 15:51:17 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -569,7 +569,7 @@ pdcproc_chassis_info(struct pdc_chassis_info *pci, struct pdc_chassis_lcd *pcl)
 	int err;
 
 	err = pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_INFO,
-	    &pdcret1, &pdcret2);
+	    &pdcret1, &pdcret2 , sizeof(*pcl));
 	if (err < 0)
 		return err;
 
