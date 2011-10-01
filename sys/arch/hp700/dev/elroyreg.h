@@ -1,4 +1,4 @@
-/*	$NetBSD: elroyreg.h,v 1.2 2009/04/30 07:01:26 skrll Exp $	*/
+/*	$NetBSD: elroyreg.h,v 1.3 2011/10/01 15:51:36 chs Exp $	*/
 
 /*	$OpenBSD: elroyreg.h,v 1.1 2007/05/21 22:43:38 kettenis Exp $	*/
 
@@ -126,7 +126,7 @@ struct elroy_regs {
 	uint32_t	pad850;
 	uint64_t	res14[123];	/* 0x858 */
 					/*0x1000 */
-} __packed;
+};
 
 /* APIC registers */
 #define	APIC_VERSION	0x01
