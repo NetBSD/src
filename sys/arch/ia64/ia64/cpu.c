@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9 2010/06/28 12:08:13 kiyohara Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10 2011/10/01 15:59:27 chs Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2010/06/28 12:08:13 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2011/10/01 15:59:27 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2010/06/28 12:08:13 kiyohara Exp $");
 #define GHz	(1000L * MHz)
 
 struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE);
+struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 struct cpu_softc {
 	device_t sc_dev;		/* device tree glue */
