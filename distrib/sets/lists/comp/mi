@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1684 2011/10/02 16:39:45 jmcneill Exp $
+#	$NetBSD: mi,v 1.1685 2011/10/02 21:19:35 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9048,6 +9048,7 @@
 ./usr/share/man/cat3/tempnam.0			comp-c-catman		.cat
 ./usr/share/man/cat3/termcap.0			comp-c-catman		.cat
 ./usr/share/man/cat3/terminfo.0			comp-c-catman		.cat
+./usr/share/man/cat3/termname.0			comp-c-catman		.cat
 ./usr/share/man/cat3/textdomain.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tfind.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgetent.0			comp-c-catman		.cat
@@ -15166,6 +15167,7 @@
 ./usr/share/man/html3/tempnam.html		comp-c-htmlman		html
 ./usr/share/man/html3/termcap.html		comp-c-htmlman		html
 ./usr/share/man/html3/terminfo.html		comp-c-htmlman		html
+./usr/share/man/html3/termname.html		comp-c-htmlman		html
 ./usr/share/man/html3/textdomain.html		comp-c-htmlman		html
 ./usr/share/man/html3/tfind.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgetent.html		comp-c-htmlman		html
@@ -21350,6 +21352,7 @@
 ./usr/share/man/man3/tempnam.3			comp-c-man		.man
 ./usr/share/man/man3/termcap.3			comp-c-man		.man
 ./usr/share/man/man3/terminfo.3			comp-c-man		.man
+./usr/share/man/man3/termname.3			comp-c-man		.man
 ./usr/share/man/man3/textdomain.3		comp-c-man		.man
 ./usr/share/man/man3/tfind.3			comp-c-man		.man
 ./usr/share/man/man3/tgetent.3			comp-c-man		.man
