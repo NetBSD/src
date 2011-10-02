@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.29 2011/10/02 12:13:08 mbalmer Exp $	*/
+/*	$NetBSD: i2c.c,v 1.30 2011/10/02 12:25:40 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.29 2011/10/02 12:13:08 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.30 2011/10/02 12:25:40 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ iicbus_print(void *aux, const char *pnp)
 	if (pnp != NULL)
 		aprint_normal("iic at %s", pnp);
 
-	return (UNCONF);
+	return UNCONF;
 }
 
 static int
@@ -100,7 +100,7 @@ iic_print(void *aux, const char *pnp)
 	if (ia->ia_addr != (i2c_addr_t)-1)
 		aprint_normal(" addr 0x%x", ia->ia_addr);
 
-	return (UNCONF);
+	return UNCONF;
 }
 
 static int
@@ -126,8 +126,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 			sc->sc_devices[ia.ia_addr] =
 			    config_attach(parent, cf, &ia, iic_print);
 	}
-
-	return (0);
+	return 0;
 }
 
 static void
@@ -154,7 +153,7 @@ static int
 iic_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 static void
