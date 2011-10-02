@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/09/26 03:02:44 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2011/10/02 18:15:23 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -69,9 +69,7 @@ DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 LDADD+=		-lz -lcurses -lintl -lm -lkvm
 DPADD+=		${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
 
-.if ${SRCS:Mnbsd-thread.c} != ""
 LDADD+=                -lpthread_dbg
-.endif
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${MACHINE_ARCH}
