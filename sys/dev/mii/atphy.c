@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.10 2011/02/23 03:22:44 jmcneill Exp $ */
+/*	$NetBSD: atphy.c,v 1.11 2011/10/02 21:42:19 jmcneill Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.10 2011/02/23 03:22:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.11 2011/10/02 21:42:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ static int atphy_service(struct mii_softc *, struct mii_data *, int);
 static void atphy_reset(struct mii_softc *);
 static void atphy_status(struct mii_softc *);
 static int atphy_mii_phy_auto(struct mii_softc *);
+static bool atphy_is_gige(const struct mii_phydesc *);
 
 CFATTACH_DECL_NEW(atphy, sizeof(struct mii_softc),
 	atphy_match, atphy_attach, mii_phy_detach, mii_phy_activate);
@@ -101,6 +102,20 @@ static const struct mii_phydesc etphys[] = {
 	{ 0,			0,
 	  NULL },
 };
+
+static bool
+atphy_is_gige(const struct mii_phydesc *mpd)
+{
+	switch (mpd->mpd_oui) {
+	case MII_OUI_ATTANSIC:
+		switch (mpd->mpd_model) {
+		case MII_MODEL_ATTANSIC_L2:
+			return false;
+		}
+	}
+
+	return true;
+}
 
 static int
 atphy_match(device_t parent, cfdata_t match, void *aux)
@@ -132,7 +147,10 @@ atphy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &atphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
+	if (atphy_is_gige(mpd))
+		sc->mii_anegticks = MII_ANEGTICKS_GIGE;
+	else
+		sc->mii_anegticks = MII_ANEGTICKS;
 
 	sc->mii_flags |= MIIF_NOLOOP;
 
@@ -140,7 +158,7 @@ atphy_attach(device_t parent, device_t self, void *aux)
 
 	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
 	sc->mii_capabilities = bmsr & ma->mii_capmask;
-	if (sc->mii_capabilities & BMSR_EXTSTAT)
+	if (atphy_is_gige(mpd) && (sc->mii_capabilities & BMSR_EXTSTAT))
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
 	aprint_normal_dev(self, "");
