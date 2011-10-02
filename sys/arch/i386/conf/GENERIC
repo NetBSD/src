@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1053 2011/09/04 12:31:30 mbalmer Exp $
+# $NetBSD: GENERIC,v 1.1054 2011/10/02 12:19:17 mbalmer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1053 $"
+#ident 		"GENERIC-$Revision: 1.1054 $"
 
 maxusers	64		# estimated number of users
 
@@ -715,7 +715,8 @@ dpti*	at iop? tid 0			# DPT/Adaptec control interface
 #owtemp* 	at onewire?			# Temperature sensors
 
 # i2c support
-#gpioiic*	at gpio?
+#gpioiic*	at gpio? offset ? mask ? flag 0x00	# flag 0x01 reverses
+							# SCA and SCL signals
 #iic*		at gpioiic?
 
 # Keylock support
