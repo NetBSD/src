@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.124 2011/09/16 16:05:59 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.125 2011/10/02 18:18:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.124 2011/09/16 16:05:59 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.125 2011/10/02 18:18:56 christos Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -96,6 +96,7 @@ static int pthread__diagassert;
 int pthread__concurrency;
 int pthread__nspins;
 int pthread__unpark_max = PTHREAD__UNPARK_MAX;
+int pthread__dbg;	/* set by libpthread_dbg if active */
 
 /* 
  * We have to initialize the pthread_stack* variables here because
