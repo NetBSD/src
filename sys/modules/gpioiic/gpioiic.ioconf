@@ -1,0 +1,8 @@
+#	$NetBSD: gpioiic.ioconf,v 1.1 2011/10/02 11:43:30 mbalmer Exp $
+
+ioconf		gpioiic
+
+include		"conf/files"
+
+pseudo-root	gpio*
+gpioiic*	at gpio? offset ? mask ?
