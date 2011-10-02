@@ -1,4 +1,4 @@
-/* $NetBSD: auvitekvar.h,v 1.6 2011/10/02 16:30:58 jmcneill Exp $ */
+/* $NetBSD: auvitekvar.h,v 1.7 2011/10/02 19:15:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -136,6 +136,7 @@ struct auvitek_softc {
 /* auvitek.c */
 uint8_t	auvitek_read_1(struct auvitek_softc *, uint16_t);
 void	auvitek_write_1(struct auvitek_softc *, uint16_t, uint8_t);
+void	auvitek_attach_tuner(device_t);
 
 /* auvitek_audio.c */
 int	auvitek_audio_attach(struct auvitek_softc *);

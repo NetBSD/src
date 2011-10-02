@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_dtv.c,v 1.3 2011/08/09 01:42:24 jmcneill Exp $ */
+/* $NetBSD: auvitek_dtv.c,v 1.4 2011/10/02 19:15:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.3 2011/08/09 01:42:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.4 2011/10/02 19:15:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,15 +149,7 @@ auvitek_dtv_open(void *priv, int flags)
 	if (sc->sc_dying)
 		return EIO;
 
-	mutex_enter(&sc->sc_subdev_lock);
-	if (sc->sc_xc5k == NULL) {
-		sc->sc_xc5k = xc5k_open(sc->sc_dev, &sc->sc_i2c, 0xc2 >> 1, 
-		    auvitek_board_tuner_reset, sc,
-		    auvitek_board_get_if_frequency(sc),
-		    FE_ATSC);
-	}
-	mutex_exit(&sc->sc_subdev_lock);
-
+	auvitek_attach_tuner(sc->sc_dev);
 	if (sc->sc_xc5k == NULL)
 		return ENXIO;
 

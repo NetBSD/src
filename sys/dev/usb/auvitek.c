@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.6 2011/10/02 16:30:58 jmcneill Exp $ */
+/* $NetBSD: auvitek.c,v 1.7 2011/10/02 19:15:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.6 2011/10/02 16:30:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.7 2011/10/02 19:15:39 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -254,9 +254,26 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 		return;
 	}
 
+	config_mountroot(self, auvitek_attach_tuner);
+
 	auvitek_video_attach(sc);
 	auvitek_audio_attach(sc);
 	auvitek_dtv_attach(sc);
+}
+
+void
+auvitek_attach_tuner(device_t self)
+{
+	struct auvitek_softc *sc = device_private(self);
+
+	mutex_enter(&sc->sc_subdev_lock);
+	if (sc->sc_xc5k == NULL) {
+		sc->sc_xc5k = xc5k_open(sc->sc_dev, &sc->sc_i2c, 0xc2 >> 1,
+		    auvitek_board_tuner_reset, sc,
+		    auvitek_board_get_if_frequency(sc),
+		    FE_ATSC);
+	}
+	mutex_exit(&sc->sc_subdev_lock);
 }
 
 static int
