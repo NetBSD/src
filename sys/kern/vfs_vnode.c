@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.11 2011/09/29 20:51:38 christos Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.12 2011/10/02 13:00:06 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@
  *	starts in one of the following ways:
  *
  *	- Allocation, via getnewvnode(9) and/or vnalloc(9).
- *	- Recycle from a free list, via getnewvnode(9) -> getcleanvnode(9).
  *	- Reclamation of inactive vnode, via vget(9).
  *
  *	The life-cycle ends when the last reference is dropped, usually
@@ -121,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.11 2011/09/29 20:51:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.12 2011/10/02 13:00:06 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -159,8 +158,10 @@ static kcondvar_t	vrele_cv		__cacheline_aligned;
 static lwp_t *		vrele_lwp		__cacheline_aligned;
 static int		vrele_pending		__cacheline_aligned;
 static int		vrele_gen		__cacheline_aligned;
+static kcondvar_t	vdrain_cv		__cacheline_aligned;
 
-static vnode_t *	getcleanvnode(void);
+static int		cleanvnode(void);
+static void		vdrain_thread(void *);
 static void		vrele_thread(void *);
 static void		vnpanic(vnode_t *, const char *, ...)
     __attribute__((__format__(__printf__, 2, 3)));
@@ -183,7 +184,11 @@ vfs_vnode_sysinit(void)
 	TAILQ_INIT(&vrele_list);
 
 	mutex_init(&vrele_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&vdrain_cv, "vdrain");
 	cv_init(&vrele_cv, "vrele");
+	error = kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, vdrain_thread,
+	    NULL, NULL, "vdrain");
+	KASSERT(error == 0);
 	error = kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, vrele_thread,
 	    NULL, &vrele_lwp, "vrele");
 	KASSERT(error == 0);
@@ -249,13 +254,12 @@ vnfree(vnode_t *vp)
 }
 
 /*
- * getcleanvnode: grab a vnode from freelist and clean it.
+ * cleanvnode: grab a vnode from freelist, clean and free it.
  *
  * => Releases vnode_free_list_lock.
- * => Returns referenced vnode on success.
  */
-static vnode_t *
-getcleanvnode(void)
+static int
+cleanvnode(void)
 {
 	vnode_t *vp;
 	vnodelst_t *listhd;
@@ -288,7 +292,7 @@ try_nextlist:
 			goto try_nextlist;
 		}
 		mutex_exit(&vnode_free_list_lock);
-		return NULL;
+		return EBUSY;
 	}
 
 	/* Remove it from the freelist. */
@@ -300,7 +304,7 @@ try_nextlist:
 
 	/*
 	 * The vnode is still associated with a file system, so we must
-	 * clean it out before reusing it.  We need to add a reference
+	 * clean it out before freeing it.  We need to add a reference
 	 * before doing this.  If the vnode gains another reference while
 	 * being cleaned out then we lose - retry.
 	 */
@@ -308,15 +312,7 @@ try_nextlist:
 	vclean(vp, DOCLOSE);
 	KASSERT(vp->v_usecount >= 1 + VC_XLOCK);
 	atomic_add_int(&vp->v_usecount, -VC_XLOCK);
-	if (vp->v_usecount == 1) {
-		/* We're about to dirty it. */
-		vp->v_iflag &= ~VI_CLEAN;
-		mutex_exit(vp->v_interlock);
-		if (vp->v_type == VBLK || vp->v_type == VCHR) {
-			spec_node_destroy(vp);
-		}
-		vp->v_type = VNON;
-	} else {
+	if (vp->v_usecount > 1) {
 		/*
 		 * Don't return to freelist - the holder of the last
 		 * reference will destroy it.
@@ -326,17 +322,26 @@ try_nextlist:
 		goto retry;
 	}
 
+	KASSERT((vp->v_iflag & VI_CLEAN) == VI_CLEAN);
+	mutex_exit(vp->v_interlock);
+	if (vp->v_type == VBLK || vp->v_type == VCHR) {
+		spec_node_destroy(vp);
+	}
+	vp->v_type = VNON;
+
 	KASSERT(vp->v_data == NULL);
 	KASSERT(vp->v_uobj.uo_npages == 0);
 	KASSERT(TAILQ_EMPTY(&vp->v_uobj.memq));
 	KASSERT(vp->v_numoutput == 0);
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 
-	return vp;
+	vrele(vp);
+
+	return 0;
 }
 
 /*
- * getnewvnode: return the next vnode from the free list.
+ * getnewvnode: return a fresh vnode.
  *
  * => Returns referenced vnode, moved into the mount queue.
  * => Shares the interlock specified by 'slock', if it is not NULL.
@@ -346,9 +351,8 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
     kmutex_t *slock, vnode_t **vpp)
 {
 	struct uvm_object *uobj;
-	static int toggle;
 	vnode_t *vp;
-	int error = 0, tryalloc;
+	int error = 0;
 
 try_again:
 	if (mp != NULL) {
@@ -361,80 +365,28 @@ try_again:
 			return error;
 	}
 
-	/*
-	 * We must choose whether to allocate a new vnode or recycle an
-	 * existing one. The criterion for allocating a new one is that
-	 * the total number of vnodes is less than the number desired or
-	 * there are no vnodes on either free list. Generally we only
-	 * want to recycle vnodes that have no buffers associated with
-	 * them, so we look first on the vnode_free_list. If it is empty,
-	 * we next consider vnodes with referencing buffers on the
-	 * vnode_hold_list. The toggle ensures that half the time we
-	 * will use a buffer from the vnode_hold_list, and half the time
-	 * we will allocate a new one unless the list has grown to twice
-	 * the desired size. We are reticent to recycle vnodes from the
-	 * vnode_hold_list because we will lose the identity of all its
-	 * referencing buffers.
-	 */
-
 	vp = NULL;
 
+	/* Allocate a new vnode. */
 	mutex_enter(&vnode_free_list_lock);
-
-	toggle ^= 1;
-	if (numvnodes > 2 * desiredvnodes)
-		toggle = 0;
-
-	tryalloc = numvnodes < desiredvnodes ||
-	    (TAILQ_FIRST(&vnode_free_list) == NULL &&
-	    (TAILQ_FIRST(&vnode_hold_list) == NULL || toggle));
-
-	if (tryalloc) {
-		/* Allocate a new vnode. */
-		numvnodes++;
+	numvnodes++;
+	if (numvnodes > desiredvnodes + desiredvnodes / 10)
+		cv_signal(&vdrain_cv);
+	mutex_exit(&vnode_free_list_lock);
+	if ((vp = vnalloc(NULL)) == NULL) {
+		mutex_enter(&vnode_free_list_lock);
+		numvnodes--;
 		mutex_exit(&vnode_free_list_lock);
-		if ((vp = vnalloc(NULL)) == NULL) {
-			mutex_enter(&vnode_free_list_lock);
-			numvnodes--;
-		} else
-			vp->v_usecount = 1;
+		if (mp != NULL) {
+			vfs_unbusy(mp, false, NULL);
+		}
+		printf("WARNING: unable to allocate new vnode, retrying...\n");
+		kpause("newvn", false, hz, NULL);
+		goto try_again;
 	}
 
-	if (vp == NULL) {
-		/* Recycle and get vnode clean. */
-		vp = getcleanvnode();
-		if (vp == NULL) {
-			if (mp != NULL) {
-				vfs_unbusy(mp, false, NULL);
-			}
-			if (tryalloc) {
-				printf("WARNING: unable to allocate new "
-				    "vnode, retrying...\n");
-				kpause("newvn", false, hz, NULL);
-				goto try_again;
-			}
-			tablefull("vnode", "increase kern.maxvnodes or NVNODE");
-			*vpp = 0;
-			return ENFILE;
-		}
-		if ((vp->v_iflag & VI_LOCKSHARE) != 0 || slock) {
-			/* We must remove vnode from the old mount point. */
-			if (vp->v_mount) {
-				vfs_insmntque(vp, NULL);
-			}
-			/* Allocate a new interlock, if it was shared. */
-			if (vp->v_iflag & VI_LOCKSHARE) {
-				uvm_obj_setlock(&vp->v_uobj, NULL);
-				vp->v_iflag &= ~VI_LOCKSHARE;
-			}
-		}
-		vp->v_iflag = 0;
-		vp->v_vflag = 0;
-		vp->v_uflag = 0;
-		vp->v_socket = NULL;
-	}
+	vp->v_usecount = 1;
 
-	KASSERT(vp->v_usecount == 1);
 	KASSERT(vp->v_freelisthd == NULL);
 	KASSERT(LIST_EMPTY(&vp->v_nclist));
 	KASSERT(LIST_EMPTY(&vp->v_dnclist));
@@ -490,6 +442,29 @@ ungetnewvnode(vnode_t *vp)
 	mutex_enter(vp->v_interlock);
 	vp->v_iflag |= VI_CLEAN;
 	vrelel(vp, 0);
+}
+
+/*
+ * Helper thread to keep the number of vnodes below desiredvnodes.
+ */
+static void
+vdrain_thread(void *cookie)
+{
+	int error;
+
+	mutex_enter(&vnode_free_list_lock);
+
+	for (;;) {
+		cv_timedwait(&vdrain_cv, &vnode_free_list_lock, hz);
+		while (numvnodes > desiredvnodes) {
+			error = cleanvnode();
+			if (error)
+				kpause("vndsbusy", false, hz, NULL);
+			mutex_enter(&vnode_free_list_lock);
+			if (error)
+				break;
+		}
+	}
 }
 
 /*
@@ -1204,17 +1179,19 @@ vwait(vnode_t *vp, int flags)
 int
 vfs_drainvnodes(long target)
 {
+	int error;
+
+	mutex_enter(&vnode_free_list_lock);
 
 	while (numvnodes > target) {
-		vnode_t *vp;
-
+		error = cleanvnode();
+		if (error != 0)
+			return error;
 		mutex_enter(&vnode_free_list_lock);
-		vp = getcleanvnode();
-		if (vp == NULL) {
-			return EBUSY;
-		}
-		ungetnewvnode(vp);
 	}
+
+	mutex_exit(&vnode_free_list_lock);
+
 	return 0;
 }
 
