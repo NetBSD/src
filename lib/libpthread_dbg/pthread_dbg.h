@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.h,v 1.5 2004/06/02 21:18:25 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.h,v 1.6 2011/10/02 18:18:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@ typedef struct td_sync_st td_sync_t;
 struct td_proc_callbacks_t {
 	int (*proc_read)(void *arg, caddr_t addr, void *buf, size_t size);
 	int (*proc_write)(void *arg, caddr_t addr, void *buf, size_t size);
-	int (*proc_lookup)(void *arg, char *sym, caddr_t *addr);
+	int (*proc_lookup)(void *arg, const char *sym, caddr_t *addr);
 	int (*proc_regsize)(void *arg, int regset, size_t *size);
 	int (*proc_getregs)(void *arg, int regset, int lwp, void *buf);
 	int (*proc_setregs)(void *arg, int regset, int lwp, void *buf);
