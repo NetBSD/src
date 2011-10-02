@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.408 2011/06/17 18:13:49 wiz Exp $
+.\"	$NetBSD: options.4,v 1.409 2011/10/02 16:39:46 jmcneill Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd June 17, 2011
+.Dd October 2, 2011
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1494,19 +1494,6 @@ Support for
 Number of storage slots per file for
 .Xr fileassoc 9 .
 Default is 4.
-.It Cd options I2C_SCAN
-Scan each i2c bus to determine which addresses respond.
-.Pp
-.Em WARNING !
-Using this option can access some devices in such a
-manner as to leave them in an unstable or unuseable state, and
-can prevent those devices from being properly matched and/or
-attached.
-It can also lock up the entire
-.Xr iic 4
-bus and even prevent a machine from completing the boot process.
-Don't use this option unless you know what you're doing and can
-accept all sorts of unforeseen consequences.
 .El
 .Ss Networking Options
 .Bl -ohang
