@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.13 2011/09/15 11:46:32 mbalmer Exp $ */
+/* $NetBSD: gpioctl.c,v 1.14 2011/10/02 09:33:19 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2008, 2010, 2011 Marc Balmer <mbalmer@NetBSD.org>
@@ -46,7 +46,7 @@ static void gpiowrite(int, char *, int);
 static void gpiopulse(int, char *, double, double);
 static void gpioset(int pin, char *name, int flags, char *alias);
 static void gpiounset(int pin, char *name);
-static void devattach(char *, int, uint32_t);
+static void devattach(char *, int, uint32_t, uint32_t);
 static void devdetach(char *);
 __dead static void usage(void);
 
@@ -81,8 +81,10 @@ main(int argc, char *argv[])
 	char *ep;
 	int ga_offset = -1;
 	uint32_t ga_mask = 0;
+	uint32_t ga_flags = 0;
 	long lval;
 	char *nam = NULL;
+	char *flags;
 	char devn[32];
 
 	while ((ch = getopt(argc, argv, "q")) != -1)
@@ -119,12 +121,13 @@ main(int argc, char *argv[])
 	if (!strcmp(argv[1], "attach")) {
 		char *driver, *offset, *mask;
 
-		if (argc != 5)
+		if (argc != 5 && argc != 6)
 			usage();
 
 		driver = argv[2];
 		offset = argv[3];
 		mask = argv[4];
+		flags = argc == 6 ? argv[5] : NULL;
 
 		ga_offset = strtonum(offset, 0, INT_MAX, &errstr);
 		if (errstr)
@@ -136,7 +139,18 @@ main(int argc, char *argv[])
 		    || lval == LONG_MIN)) || (unsigned long)lval > UINT_MAX)
 			errx(EXIT_FAILURE, "mask out of range");
 		ga_mask = lval;
-		devattach(driver, ga_offset, ga_mask);
+		if (flags != NULL) {
+			lval = strtol(flags, &ep, 0);
+			if (*flags == '\0' || *ep != '\0')
+				errx(EXIT_FAILURE,
+				    "invalid flags (not a number)");
+			if ((errno == ERANGE && (lval == LONG_MAX
+			    || lval == LONG_MIN))
+			    || (unsigned long)lval > UINT_MAX)
+				errx(EXIT_FAILURE, "flags out of range");
+			ga_flags = lval;
+		}
+		devattach(driver, ga_offset, ga_mask, ga_flags);
 		return EXIT_SUCCESS;
 	} else if (!strcmp(argv[1], "detach")) {
 		if (argc != 3)
@@ -385,7 +399,7 @@ gpiounset(int pin, char *name)
 }
 
 static void
-devattach(char *dvname, int offset, uint32_t mask)
+devattach(char *dvname, int offset, uint32_t mask, uint32_t flags)
 {
 	struct gpio_attach attach;
 
@@ -393,6 +407,7 @@ devattach(char *dvname, int offset, uint32_t mask)
 	strlcpy(attach.ga_dvname, dvname, sizeof(attach.ga_dvname));
 	attach.ga_offset = offset;
 	attach.ga_mask = mask;
+	attach.ga_flags = flags;
 	if (ioctl(devfd, GPIOATTACH, &attach) == -1)
 		err(EXIT_FAILURE, "GPIOATTACH");
 }
@@ -421,7 +436,8 @@ usage(void)
 	fprintf(stderr, "       %s [-q] device pin set [flags] [name]\n",
 	    progname);
 	fprintf(stderr, "       %s [-q] device pin unset\n", progname);
-	fprintf(stderr, "       %s [-q] device attach device offset mask\n",
+	fprintf(stderr, "       %s [-q] device attach device offset mask "
+	    "[flags]\n",
 	    progname);
 	fprintf(stderr, "       %s [-q] device detach device\n", progname);
 
