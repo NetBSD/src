@@ -1,4 +1,4 @@
-/* $NetBSD: auvitekvar.h,v 1.5 2011/08/16 23:35:55 dyoung Exp $ */
+/* $NetBSD: auvitekvar.h,v 1.6 2011/10/02 16:30:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -101,7 +101,7 @@ struct auvitek_bulk {
 
 struct auvitek_softc {
 	device_t		sc_dev;
-	device_t		sc_videodev, sc_dtvdev, sc_audiodev;
+	device_t		sc_videodev, sc_dtvdev, sc_audiodev, sc_i2cdev;
 	struct i2c_controller	sc_i2c;
 	kmutex_t		sc_i2c_lock;
 
@@ -150,6 +150,8 @@ unsigned int auvitek_board_get_if_frequency(struct auvitek_softc *);
 /* auvitek_i2c.c */
 int	auvitek_i2c_attach(struct auvitek_softc *);
 int	auvitek_i2c_detach(struct auvitek_softc *, int);
+void	auvitek_i2c_rescan(struct auvitek_softc *, const char *, const int *);
+void	auvitek_i2c_childdet(struct auvitek_softc *, device_t);
 
 /* auvitek_video.c */
 int	auvitek_video_attach(struct auvitek_softc *);

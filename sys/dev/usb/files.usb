@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.114 2011/08/23 16:16:43 christos Exp $
+#	$NetBSD: files.usb,v 1.115 2011/10/02 16:30:58 jmcneill Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -160,7 +160,7 @@ attach	uvideo at usbifif
 file	dev/usb/uvideo.c		uvideo
 
 # Auvitek AU0828
-device	auvitek: videobus, dtvbus, i2cexec, usbifif, au8522, xc5k
+device	auvitek: videobus, dtvbus, i2cbus, i2cexec, usbifif, au8522, xc5k
 attach	auvitek at usbdevif
 file	dev/usb/auvitek.c		auvitek
 file	dev/usb/auvitek_audio.c		auvitek
