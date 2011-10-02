@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.956 2011/09/11 19:10:56 christos Exp $
+# $NetBSD: mi,v 1.957 2011/10/02 16:48:47 jmcneill Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1224,6 +1224,7 @@
 ./usr/sbin/hostapd_cli				base-sysutil-bin
 ./usr/sbin/hprop				base-krb5-bin		kerberos
 ./usr/sbin/htable				base-obsolete		obsolete
+./usr/sbin/i2cscan				base-sysutil-bin
 ./usr/sbin/ifmcstat				base-netutil-bin	inet6
 ./usr/sbin/ifwatchd				base-netutil-bin
 ./usr/sbin/inetd				base-netutil-bin
