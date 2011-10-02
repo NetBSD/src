@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.5 2011/08/09 01:42:24 jmcneill Exp $ */
+/* $NetBSD: auvitek.c,v 1.6 2011/10/02 16:30:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.5 2011/08/09 01:42:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.6 2011/10/02 16:30:58 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -313,6 +313,7 @@ auvitek_rescan(device_t self, const char *ifattr, const int *locs)
 
 	auvitek_video_rescan(sc, ifattr, locs);
 	auvitek_dtv_rescan(sc, ifattr, locs);
+	auvitek_i2c_rescan(sc, ifattr, locs);
 
 	return 0;
 }
