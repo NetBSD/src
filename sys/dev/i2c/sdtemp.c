@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.19 2011/07/31 15:59:45 jmcneill Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.20 2011/10/02 19:03:56 jmcneill Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.19 2011/07/31 15:59:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.20 2011/10/02 19:03:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,7 +548,7 @@ sdtemp_pmf_resume(device_t dev, const pmf_qual_t *qual)
 	return (error == 0);
 }
 
-MODULE(MODULE_CLASS_DRIVER, sdtemp, NULL);
+MODULE(MODULE_CLASS_DRIVER, sdtemp, "iic");
 
 #ifdef _MODULE
 #include "ioconf.c"
