@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.11 2011/09/29 17:40:19 sjg Exp $
+# $NetBSD: md.evbppc,v 1.12 2011/10/02 12:13:08 mbalmer Exp $
 ./stand/powerpc-4xx						base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@					base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod
@@ -58,12 +58,16 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/fss/fss.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpio				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpio/gpio.kmod			base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/gpioiic				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/gpioiic/gpioiic.kmod		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpioow				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpioow/gpioow.kmod		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpiosim				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpiosim/gpiosim.kmod		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/iic				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/iic/iic.kmod			base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/kernfs				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/kernfs/kernfs.kmod		base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ksem				base-kernel-modules	kmod
@@ -217,12 +221,16 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/fss/fss.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpio				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpio/gpio.kmod		base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/gpioiic			base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/gpioiic/gpioiic.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpioow				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpioow/gpioow.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpiosim			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpiosim/gpiosim.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/iic				base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/iic/iic.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/kernfs				base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/kernfs/kernfs.kmod		base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/ksem				base-kernel-modules	kmod
