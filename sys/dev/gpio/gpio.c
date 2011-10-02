@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.41 2011/09/02 06:50:20 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.42 2011/10/02 09:33:19 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.41 2011/09/02 06:50:20 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.42 2011/10/02 09:33:19 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -83,9 +83,11 @@ static void	gpio_pulse(void *);
 static int	gpio_ioctl(struct gpio_softc *, u_long, void *, int,
     struct lwp *);
 
+#ifdef COMPAT_50
 /* Old API */
 static int	gpio_ioctl_oapi(struct gpio_softc *, u_long, void *, int,
     kauth_cred_t);
+#endif
 
 CFATTACH_DECL3_NEW(gpio, sizeof(struct gpio_softc),
     gpio_match, gpio_attach, gpio_detach, NULL, gpio_rescan,
@@ -255,6 +257,7 @@ gpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ga.ga_gpio = aux;
 	ga.ga_offset = cf->cf_loc[GPIOCF_OFFSET];
 	ga.ga_mask = cf->cf_loc[GPIOCF_MASK];
+	ga.ga_flags = cf->cf_loc[GPIOCF_FLAG];
 
 	if (config_match(parent, cf, &ga) > 0)
 		config_attach(parent, cf, &ga, gpio_print);
@@ -516,6 +519,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 	int error, pin, value, flags, npins;
 
 	gc = sc->sc_gc;
+	ga.ga_flags = 0;
 
 	if (cmd != GPIOINFO && !device_is_active(sc->sc_dev)) {
 		DPRINTF(("%s: device is not active\n",
@@ -667,11 +671,23 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		sc->sc_pins[pin].pin_state = value;
 		break;
 	case GPIOATTACH:
+		attach = (struct gpio_attach *)data;
+		ga.ga_flags = attach->ga_flags;
+#ifdef COMPAT_50
+		/* FALLTHROUGH */
+	case GPIOATTACH50:
+		/*
+		 * The double assignment to 'attach' in case of GPIOATTACH
+		 * and COMPAT_50 is on purpose. It ensures backward
+		 * compatability in case we are called through the old
+		 * GPIOATTACH50 ioctl(2), which had not the ga_flags field
+		 * in struct gpio_attach.
+		 */
+		attach = (struct gpio_attach *)data;
+#endif
 		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
 		    NULL, NULL, NULL, NULL))
 			return EPERM;
-
-		attach = (struct gpio_attach *)data;
 
 		/* do not try to attach if the pins are already mapped */
 		if (!gpio_pin_can_map(sc, attach->ga_offset, attach->ga_mask))
@@ -691,15 +707,17 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 			return EBUSY;
 
 		ga.ga_gpio = sc;
+		/* Don't access attach->ga_flags here. */
 		ga.ga_dvname = attach->ga_dvname;
 		ga.ga_offset = attach->ga_offset;
 		ga.ga_mask = attach->ga_mask;
-		DPRINTF(("%s: attach %s with offset %d and mask "
-		    "0x%02x\n", device_xname(sc->sc_dev), ga.ga_dvname,
-		    ga.ga_offset, ga.ga_mask));
+		DPRINTF(("%s: attach %s with offset %d, mask "
+		    "0x%02x, and flags 0x%02x\n", device_xname(sc->sc_dev),
+		    ga.ga_dvname, ga.ga_offset, ga.ga_mask, ga.ga_flags));
 
 		locs[GPIOCF_OFFSET] = ga.ga_offset;
 		locs[GPIOCF_MASK] = ga.ga_mask;
+		locs[GPIOCF_FLAG] = ga.ga_flags;
 
 		cf = config_search_loc(NULL, sc->sc_dev, "gpio", locs, &ga);
 		if (cf != NULL) {
@@ -719,6 +737,10 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		cv_signal(&sc->sc_attach);
 		mutex_exit(&sc->sc_mtx);
 		return error;
+#ifdef COMPAT_50
+	case GPIODETACH50:
+		/* FALLTHOUGH */
+#endif
 	case GPIODETACH:
 		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
 		    NULL, NULL, NULL, NULL))
@@ -841,13 +863,18 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		sc->sc_pins[pin].pin_flags &= ~GPIO_PIN_SET;
 		break;
 	default:
+#ifdef COMPAT_50
 		/* Try the old API */
 		DPRINTF(("%s: trying the old API\n", device_xname(sc->sc_dev)));
 		return gpio_ioctl_oapi(sc, cmd, data, flag, cred);
+#else
+		return ENOTTY;
+#endif
 	}
 	return 0;
 }
 
+#ifdef COMPAT_50
 static int
 gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
     kauth_cred_t cred)
@@ -965,6 +992,7 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 	}
 	return 0;
 }
+#endif	/* COMPAT_50 */
 
 MODULE(MODULE_CLASS_DRIVER, gpio, NULL);
 
