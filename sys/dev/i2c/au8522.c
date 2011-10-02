@@ -1,4 +1,4 @@
-/* $NetBSD: au8522.c,v 1.5 2011/07/10 00:47:34 jmcneill Exp $ */
+/* $NetBSD: au8522.c,v 1.6 2011/10/02 19:03:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.5 2011/07/10 00:47:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.6 2011/10/02 19:03:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,7 +419,7 @@ au8522_get_snr(struct au8522 *au)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, au8522, NULL);
+MODULE(MODULE_CLASS_DRIVER, au8522, "iic");
 
 static int
 au8522_modcmd(modcmd_t cmd, void *opaque)
