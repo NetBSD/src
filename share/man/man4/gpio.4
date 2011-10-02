@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.19 2011/08/28 07:48:50 mbalmer Exp $
+.\" $NetBSD: gpio.4,v 1.20 2011/10/02 09:33:18 mbalmer Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd August 21, 2011
+.Dd October 2, 2011
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -216,18 +216,19 @@ structure on this gpio device.
 struct gpio_attach {
         char ga_dvname[16];     /* device name */
         int ga_offset;          /* pin number */
-        u_int32_t ga_mask;      /* binary mask */
+        uint32_t ga_mask;       /* binary mask */
+        uint32_t ga_flags;      /* driver dependent */
 };
 .Ed
-.Pp
 .It Dv GPIODETACH (struct gpio_attach)
 Detach a device from this gpio device that was previously attached using the
 .Dv GPIOATTACH
 .Xr ioctl 2 .
 The
-.Fa ga_offset
+.Fa ga_offset ,
+.Fa ga_mask ,
 and
-.Fa ga_mask
+.Fa ga_flags
 fields of the
 .Fa gpio_attach
 structure are ignored.

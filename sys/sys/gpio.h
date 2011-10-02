@@ -1,7 +1,7 @@
-/* $NetBSD: gpio.h,v 1.9 2011/08/28 07:48:50 mbalmer Exp $ */
+/* $NetBSD: gpio.h,v 1.10 2011/10/02 09:33:19 mbalmer Exp $ */
 /*	$OpenBSD: gpio.h,v 1.7 2008/11/26 14:51:20 mbalmer Exp $	*/
 /*
- * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
+ * Copyright (c) 2009, 2011 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -81,6 +81,26 @@ struct gpio_attach {
 	char		ga_dvname[16];	/* device name */
 	int		ga_offset;	/* pin number */
 	uint32_t	ga_mask;	/* binary mask */
+	uint32_t	ga_flags;	/* driver dependent flags */
+};
+
+/* gpio(4) API */
+#define GPIOINFO		_IOR('G', 0, struct gpio_info)
+#define GPIOSET			_IOWR('G', 5, struct gpio_set)
+#define GPIOUNSET		_IOWR('G', 6, struct gpio_set)
+#define GPIOREAD		_IOWR('G', 7, struct gpio_req)
+#define GPIOWRITE		_IOWR('G', 8, struct gpio_req)
+#define GPIOTOGGLE		_IOWR('G', 9, struct gpio_req)
+#define GPIOATTACH		_IOWR('G', 10, struct gpio_attach)
+#define GPIODETACH		_IOWR('G', 11, struct gpio_attach)
+#define GPIOPULSE		_IOWR('G', 12, struct gpio_pulse)
+
+#ifdef COMPAT_50
+/* Old structure to attach/detach devices */
+struct gpio_attach50 {
+	char		ga_dvname[16];	/* device name */
+	int		ga_offset;	/* pin number */
+	uint32_t	ga_mask;	/* binary mask */
 };
 
 /* GPIO pin control (old API) */
@@ -96,22 +116,13 @@ struct gpio_pin_op {
 	int gp_value;		/* value */
 };
 
-#define GPIOINFO		_IOR('G', 0, struct gpio_info)
-
-/* the old API, kept for backwards compatibility */
+/* the old API */
 #define GPIOPINREAD		_IOWR('G', 1, struct gpio_pin_op)
 #define GPIOPINWRITE		_IOWR('G', 2, struct gpio_pin_op)
 #define GPIOPINTOGGLE		_IOWR('G', 3, struct gpio_pin_op)
 #define GPIOPINCTL		_IOWR('G', 4, struct gpio_pin_ctl)
-
-/* the new API */
-#define GPIOSET			_IOWR('G', 5, struct gpio_set)
-#define GPIOUNSET		_IOWR('G', 6, struct gpio_set)
-#define GPIOREAD		_IOWR('G', 7, struct gpio_req)
-#define GPIOWRITE		_IOWR('G', 8, struct gpio_req)
-#define GPIOTOGGLE		_IOWR('G', 9, struct gpio_req)
-#define GPIOATTACH		_IOWR('G', 10, struct gpio_attach)
-#define GPIODETACH		_IOWR('G', 11, struct gpio_attach)
-#define GPIOPULSE		_IOWR('G', 12, struct gpio_pulse)
+#define GPIOATTACH50		_IOWR('G', 10, struct gpio_attach50)
+#define GPIODETACH50		_IOWR('G', 11, struct gpio_attach50)
+#endif	/* COMPAT_50 */
 
 #endif	/* !_SYS_GPIO_H_ */
