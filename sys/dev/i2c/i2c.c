@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.27 2011/08/02 18:46:35 pgoyette Exp $	*/
+/*	$NetBSD: i2c.c,v 1.28 2011/10/02 11:38:48 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.27 2011/08/02 18:46:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.28 2011/10/02 11:38:48 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.27 2011/08/02 18:46:35 pgoyette Exp $");
 #include <sys/kthread.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/module.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -116,7 +117,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_compat = NULL;
 
 	if (config_match(parent, cf, &ia) > 0) {
-		if (ia.ia_addr == (i2c_addr_t)-1) 
+		if (ia.ia_addr == (i2c_addr_t)-1)
 			config_attach(parent, cf, &ia, iic_print);
 		else if (ia.ia_addr <= I2C_MAX_ADDR &&
 			   !sc->sc_devices[ia.ia_addr])
@@ -341,7 +342,7 @@ iic_smbus_intr_establish(i2c_tag_t ic, int (*intr)(void *), void *intrarg)
 	il = malloc(sizeof(struct ic_intr_list), M_DEVBUF, M_WAITOK);
 	if (il == NULL)
 		return NULL;
-	    
+
 	il->il_intr = intr;
 	il->il_intrarg = intrarg;
 
@@ -371,7 +372,7 @@ iic_smbus_intr_establish_proc(i2c_tag_t ic, int (*intr)(void *), void *intrarg)
 	il = malloc(sizeof(struct ic_intr_list), M_DEVBUF, M_WAITOK);
 	if (il == NULL)
 		return NULL;
-	    
+
 	il->il_intr = intr;
 	il->il_intrarg = intrarg;
 
@@ -460,3 +461,37 @@ iic_compat_match(struct i2c_attach_args *ia, const char ** compats)
 
 CFATTACH_DECL2_NEW(iic, sizeof(struct iic_softc),
     iic_match, iic_attach, NULL, NULL, iic_rescan, iic_child_detach);
+
+MODULE(MODULE_CLASS_DRIVER, iic, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+iic_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error;
+
+	error = 0;
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_iic,
+		    cfattach_ioconf_iic, cfdata_ioconf_iic);
+		if (error)
+			aprint_error("%s: unable to init component\n",
+			    iic_cd.cd_name);
+#endif
+		break;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		config_fini_component(cfdriver_ioconf_iic,
+		    cfattach_ioconf_iic, cfdata_ioconf_iic);
+#endif
+		break;
+	default:
+		error = ENOTTY;
+	}
+	return error;
+}
