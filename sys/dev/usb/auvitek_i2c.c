@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_i2c.c,v 1.2 2011/07/09 15:00:45 jmcneill Exp $ */
+/* $NetBSD: auvitek_i2c.c,v 1.3 2011/10/02 16:30:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_i2c.c,v 1.2 2011/07/09 15:00:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_i2c.c,v 1.3 2011/10/02 16:30:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: auvitek_i2c.c,v 1.2 2011/07/09 15:00:45 jmcneill Exp
 #include <dev/usb/auvitekreg.h>
 #include <dev/usb/auvitekvar.h>
 
+/* #define AUVITEK_I2C_DEBUG */
+
 static int	auvitek_i2c_acquire_bus(void *, int);
 static void	auvitek_i2c_release_bus(void *, int);
 static int	auvitek_i2c_exec(void *, i2c_op_t, i2c_addr_t,
@@ -67,11 +69,13 @@ static bool	auvitek_i2c_wait_wrdone(struct auvitek_softc *);
 int
 auvitek_i2c_attach(struct auvitek_softc *sc)
 {
-	mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = auvitek_i2c_acquire_bus;
 	sc->sc_i2c.ic_release_bus = auvitek_i2c_release_bus;
 	sc->sc_i2c.ic_exec = auvitek_i2c_exec;
+
+	auvitek_i2c_rescan(sc, NULL, NULL);
 
 	return 0;
 }
@@ -81,7 +85,34 @@ auvitek_i2c_detach(struct auvitek_softc *sc, int flags)
 {
 	mutex_destroy(&sc->sc_i2c_lock);
 
+	if (sc->sc_i2cdev)
+		config_detach(sc->sc_i2cdev, flags);
+
 	return 0;
+}
+
+void
+auvitek_i2c_rescan(struct auvitek_softc *sc, const char *ifattr,
+    const int *locs)
+{
+#ifdef AUVITEK_I2C_DEBUG
+	struct i2cbus_attach_args iba;
+
+	if (ifattr_match(ifattr, "i2cbus") && sc->sc_i2cdev == NULL) {
+		memset(&iba, 0, sizeof(iba));
+		iba.iba_type = I2C_TYPE_SMBUS;
+		iba.iba_tag = &sc->sc_i2c;
+		sc->sc_i2cdev = config_found_ia(sc->sc_dev, "i2cbus",
+		    &iba, iicbus_print);
+	}
+#endif
+}
+
+void
+auvitek_i2c_childdet(struct auvitek_softc *sc, device_t child)
+{
+	if (sc->sc_i2cdev == child)
+		sc->sc_i2cdev = NULL;
 }
 
 static int
@@ -89,7 +120,12 @@ auvitek_i2c_acquire_bus(void *opaque, int flags)
 {
 	struct auvitek_softc *sc = opaque;
 
-	mutex_enter(&sc->sc_i2c_lock);
+	if (flags & I2C_F_POLL) {
+		if (!mutex_tryenter(&sc->sc_i2c_lock))
+			return EBUSY;
+	} else {
+		mutex_enter(&sc->sc_i2c_lock);
+	}
 
 	return 0;
 }
