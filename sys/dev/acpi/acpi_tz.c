@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.83 2011/07/16 15:45:24 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.84 2011/10/02 22:20:33 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.83 2011/07/16 15:45:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.84 2011/10/02 22:20:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -836,7 +836,6 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 		  sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct acpitz_softc *sc = sme->sme_cookie;
-	int i;
 
 	switch (edata->units) {
 	case ENVSYS_STEMP:
@@ -847,14 +846,6 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 		} else if (sc->sc_zone.crt != ATZ_TMP_INVALID) {
 			*props |= PROP_CRITMAX;
 			limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.crt);
-		}
-		for (i = 0; i < ATZ_NLEVELS; i++) {
-			if (sc->sc_zone.ac[i] != ATZ_TMP_INVALID) {
-				limits->sel_warnmax =
-				    ATZ2UKELVIN(sc->sc_zone.ac[i]);
-				*props |= PROP_WARNMAX;
-				break;
-			}
 		}
 		break;
 
