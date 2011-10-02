@@ -1,4 +1,4 @@
-/* $NetBSD: nxt2k.c,v 1.2 2011/07/14 23:44:34 jmcneill Exp $ */
+/* $NetBSD: nxt2k.c,v 1.3 2011/10/02 19:03:56 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nxt2k.c,v 1.2 2011/07/14 23:44:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nxt2k.c,v 1.3 2011/10/02 19:03:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -830,7 +830,7 @@ nxt2k_set_modulation(struct nxt2k *nxt, fe_modulation_t modulation)
 	return nxt2k_fe_set_frontend(nxt, modulation);
 }
 
-MODULE(MODULE_CLASS_DRIVER, nxt2k, NULL);
+MODULE(MODULE_CLASS_DRIVER, nxt2k, "iic");
 
 static int
 nxt2k_modcmd(modcmd_t cmd, void *opaque)

@@ -1,4 +1,4 @@
-/* $NetBSD: cx24227.c,v 1.4 2011/08/05 21:19:23 jmcneill Exp $ */
+/* $NetBSD: cx24227.c,v 1.5 2011/10/02 19:03:56 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.4 2011/08/05 21:19:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.5 2011/10/02 19:03:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ cx24227_init(struct cx24227 *sc)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, cx24227, NULL);
+MODULE(MODULE_CLASS_DRIVER, cx24227, "iic");
 
 static int
 cx24227_modcmd(modcmd_t cmd, void *priv)
