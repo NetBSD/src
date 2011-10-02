@@ -1,4 +1,4 @@
-/* $NetBSD: tvpll.c,v 1.3 2011/07/15 03:31:37 jmcneill Exp $ */
+/* $NetBSD: tvpll.c,v 1.4 2011/10/02 19:03:56 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.3 2011/07/15 03:31:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.4 2011/10/02 19:03:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ tvpll_tune_dtv(struct tvpll *tvpll,
 	return rv;
 }
 
-MODULE(MODULE_CLASS_DRIVER, tvpll, NULL);
+MODULE(MODULE_CLASS_DRIVER, tvpll, "iic");
 
 static int
 tvpll_modcmd(modcmd_t cmd, void *opaque)

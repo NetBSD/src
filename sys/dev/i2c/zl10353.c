@@ -1,4 +1,4 @@
-/*	$NetBSD: zl10353.c,v 1.2 2011/08/29 11:16:35 jruoho Exp $ */
+/*	$NetBSD: zl10353.c,v 1.3 2011/10/02 19:03:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zl10353.c,v 1.2 2011/08/29 11:16:35 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zl10353.c,v 1.3 2011/10/02 19:03:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -650,7 +650,7 @@ zl10353_get_snr(struct zl10353 *zl)
 	return (val << 8) | val;
 }
 
-MODULE(MODULE_CLASS_DRIVER, zl10353, NULL);
+MODULE(MODULE_CLASS_DRIVER, zl10353, "iic");
 
 static int
 zl10353_modcmd(modcmd_t cmd, void *aux)

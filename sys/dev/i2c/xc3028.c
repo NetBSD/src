@@ -1,4 +1,4 @@
-/* $NetBSD: xc3028.c,v 1.4 2011/08/09 10:54:22 jmcneill Exp $ */
+/* $NetBSD: xc3028.c,v 1.5 2011/10/02 19:03:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xc3028.c,v 1.4 2011/08/09 10:54:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xc3028.c,v 1.5 2011/10/02 19:03:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -564,7 +564,7 @@ xc3028_tune_dtv(struct xc3028 *xc, const struct dvb_frontend_parameters *params)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, xc3028, NULL);
+MODULE(MODULE_CLASS_DRIVER, xc3028, "iic");
 
 static int
 xc3028_modcmd(modcmd_t cmd, void *opaque)
