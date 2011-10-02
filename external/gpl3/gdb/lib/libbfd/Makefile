@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/09/26 03:02:44 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2011/10/02 18:16:06 christos Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -50,9 +50,9 @@ elf64-ia64.c: elfxx-ia64.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/64/g < $> > $@
 
-#peigen.c: peXXigen.c
-#	${_MKTARGET_CREATE}
-#	${TOOL_SED} -e s/XX/pe/g < $> > $@
+peigen.c: peXXigen.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/XX/pe/g < $> > $@
 
 pex64igen.c: peXXigen.c
 	${_MKTARGET_CREATE}
