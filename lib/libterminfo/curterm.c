@@ -1,7 +1,7 @@
-/* $NetBSD: curterm.c,v 1.4 2010/02/22 23:05:39 roy Exp $ */
+/* $NetBSD: curterm.c,v 1.5 2011/10/02 19:24:25 roy Exp $ */
 
 /*
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: curterm.c,v 1.4 2010/02/22 23:05:39 roy Exp $");
+__RCSID("$NetBSD: curterm.c,v 1.5 2011/10/02 19:24:25 roy Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -90,6 +90,15 @@ int
 del_curterm(TERMINAL *oterm)
 {
 
+	_DIAGASSERT(oterm != NULL);
 	_ti_freeterm(oterm);
 	return 0;
+}
+
+char *
+termname(void)
+{
+
+        _DIAGASSERT(cur_term != NULL);
+	return __UNCONST(cur_term->name);
 }

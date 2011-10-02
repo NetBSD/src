@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2011/08/16 10:36:30 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2011/10/02 19:24:25 roy Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -15,6 +15,7 @@ INCSDIR=	/usr/include
 MAN=		terminfo.3 terminfo.5
 MLINKS=		terminfo.3 setupterm.3 \
 		terminfo.3 set_curterm.3 terminfo.3 del_curterm.3 \
+		terminfo.3 termname.3 \
 		terminfo.3 tigetnum.3 terminfo.3 tigetflag.3 \
 		terminfo.3 tigetstr.3 terminfo.3 tparm.3 terminfo.3 tputs.3 \
 		terminfo.3 putp.3 \
