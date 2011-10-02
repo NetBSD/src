@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1683 2011/09/30 22:08:18 jym Exp $
+#	$NetBSD: mi,v 1.1684 2011/10/02 16:39:45 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -282,6 +282,7 @@
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
 ./usr/include/dev/i2c/i2c_bus.h			comp-obsolete		obsolete
 ./usr/include/dev/i2c/i2c_eeprom.h		comp-obsolete		obsolete
+./usr/include/dev/i2c/i2c_io.h			comp-c-include
 ./usr/include/dev/i2o/i2o.h			comp-c-include
 ./usr/include/dev/i2o/iopio.h			comp-c-include
 ./usr/include/dev/i2o/iopvar.h			comp-obsolete		obsolete
