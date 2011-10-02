@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.33 2011/10/02 18:58:45 jmcneill Exp $	*/
+/*	$NetBSD: i2c.c,v 1.34 2011/10/02 21:12:43 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.33 2011/10/02 18:58:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.34 2011/10/02 21:12:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.33 2011/10/02 18:58:45 jmcneill Exp $");
 #include <sys/event.h>
 #include <sys/conf.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
@@ -479,8 +480,8 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 {
 	i2c_tag_t ic = sc->sc_tag;
 	uint8_t buf[I2C_EXEC_MAX_BUFLEN];
+	void *cmd = NULL;
 	int error;
-	void *cmd;
 
 	/* Validate parameters */
 	if (iie->iie_addr > I2C_MAX_ADDR)
@@ -502,15 +503,23 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 #endif
 
 	if (iie->iie_cmd != NULL) {
+		cmd = kmem_alloc(iie->iie_cmdlen, KM_SLEEP);
+		if (cmd == NULL)
+			return ENOMEM;
 		error = copyin(iie->iie_cmd, cmd, iie->iie_cmdlen);
-		if (error)
+		if (error) {
+			kmem_free(cmd, iie->iie_cmdlen);
 			return error;
+		}
 	}
 
 	iic_acquire_bus(ic, 0);
 	error = iic_exec(ic, iie->iie_op, iie->iie_addr, cmd, iie->iie_cmdlen,
 	    buf, iie->iie_buflen, 0);
 	iic_release_bus(ic, 0);
+
+	if (cmd)
+		kmem_free(cmd, iie->iie_cmdlen);
 
 	if (error)
 		return error;
