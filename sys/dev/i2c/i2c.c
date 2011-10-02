@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.28 2011/10/02 11:38:48 mbalmer Exp $	*/
+/*	$NetBSD: i2c.c,v 1.29 2011/10/02 12:13:08 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.28 2011/10/02 11:38:48 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.29 2011/10/02 12:13:08 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.28 2011/10/02 11:38:48 mbalmer Exp $");
 #include <dev/i2c/i2cvar.h>
 
 #include "locators.h"
+#ifdef KERNEL_OPT
 #include <opt_i2cbus.h>
+#endif
 
 #define I2C_MAX_ADDR	0x3ff	/* 10-bit address, max */
 
