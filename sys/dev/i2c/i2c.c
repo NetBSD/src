@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.31 2011/10/02 16:39:47 jmcneill Exp $	*/
+/*	$NetBSD: i2c.c,v 1.32 2011/10/02 17:39:40 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.31 2011/10/02 16:39:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.32 2011/10/02 17:39:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.31 2011/10/02 16:39:47 jmcneill Exp $");
 #include <sys/kthread.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/fcntl.h>
 #include <sys/module.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -421,7 +422,7 @@ iic_close(dev_t dev, int flag, int fmt, lwp_t *l)
 }
 
 static int
-iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie)
+iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 {
 	i2c_tag_t ic = sc->sc_tag;
 	uint8_t buf[I2C_EXEC_MAX_BUFLEN];
@@ -438,6 +439,8 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie)
 		return EINVAL;
 	if (iie->iie_buf != NULL && iie->iie_buflen == 0)
 		return EINVAL;
+	if (I2C_OP_WRITE_P(iie->iie_op) && (flag & FWRITE) == 0)
+		return EBADF;
 
 #if 0
 	/* Disallow userspace access to devices that have drivers attached. */
@@ -475,7 +478,7 @@ iic_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 
 	switch (cmd) {
 	case I2C_IOCTL_EXEC:
-		return iic_ioctl_exec(sc, (i2c_ioctl_exec_t *)data);
+		return iic_ioctl_exec(sc, (i2c_ioctl_exec_t *)data, flag);
 	default:
 		return ENODEV;
 	}
