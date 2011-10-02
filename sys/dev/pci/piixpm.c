@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.35 2011/02/13 11:20:12 hannken Exp $ */
+/* $NetBSD: piixpm.c,v 1.36 2011/10/02 23:25:20 jmcneill Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.35 2011/02/13 11:20:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.36 2011/10/02 23:25:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,17 @@ __KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.35 2011/02/13 11:20:12 hannken Exp $");
 	PCI_PRODUCT((id)) == PCI_PRODUCT_SERVERWORKS_CSB5)
 #define PIIXPM_DELAY	200
 #define PIIXPM_TIMEOUT	1
+
+#define PIIXPM_INDIRECTIO_BASE	0xcd6
+#define PIIXPM_INDIRECTIO_SIZE	2
+#define PIIXPM_INDIRECTIO_INDEX	0
+#define PIIXPM_INDIRECTIO_DATA	1
+
+#define SB800_PM_SMBUS0EN_LO	0x2c
+#define SB800_PM_SMBUS0EN_HI	0x2d
+
+#define SB800_PM_SMBUS0EN_ENABLE	0x0001
+#define SB800_PM_SMBUS0EN_BADDR		0xffe0
 
 struct piixpm_softc {
 	device_t		sc_dev;
@@ -89,6 +100,8 @@ static void	piixpm_attach(device_t, device_t, void *);
 static bool	piixpm_suspend(device_t, const pmf_qual_t *);
 static bool	piixpm_resume(device_t, const pmf_qual_t *);
 
+static int	piixpm_sb800_init(struct piixpm_softc *,
+    struct pci_attach_args *);
 static void	piixpm_csb5_reset(void *);
 static int	piixpm_i2c_acquire_bus(void *, int);
 static void	piixpm_i2c_release_bus(void *, int);
@@ -195,6 +208,17 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 		(PCI_REVISION(pa->pa_class) < 3) ? ACPIPMT_BADLATCH : 0 );
 
 nopowermanagement:
+
+	/* SB800 rev 0x40+ needs special initialization */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB600_SMB &&
+	    PCI_REVISION(pa->pa_class) >= 0x40) {
+		if (piixpm_sb800_init(sc, pa) == 0)
+			goto attach_i2c;
+		aprint_normal_dev(self, "SMBus disabled\n");
+		return;
+	}
+
 	if ((conf & PIIX_SMB_HOSTC_HSTEN) == 0) {
 		aprint_normal_dev(self, "SMBus disabled\n");
 		return;
@@ -229,6 +253,7 @@ nopowermanagement:
 	if (sc->sc_poll)
 		aprint_normal("polling");
 
+attach_i2c:
 	aprint_normal("\n");
 
 	/* Attach I2C bus */
@@ -270,6 +295,51 @@ piixpm_resume(device_t dv, const pmf_qual_t *qual)
 	    sc->sc_devact[1]);
 
 	return true;
+}
+
+/*
+ * Extract SMBus base address from SB800 Power Management (PM) registers.
+ * The PM registers can be accessed either through indirect I/O (CD6/CD7) or
+ * direct mapping if AcpiMMioDecodeEn is enabled. Since this function is only
+ * called once it uses indirect I/O for simplicity.
+ */
+static int
+piixpm_sb800_init(struct piixpm_softc *sc, struct pci_attach_args *pa)
+{
+	bus_space_tag_t iot = pa->pa_iot;
+	bus_space_handle_t ioh;	/* indirect I/O handle */
+	uint16_t val, base_addr;
+
+	/* Fetch SMB base address */
+	if (bus_space_map(iot,
+	    PIIXPM_INDIRECTIO_BASE, PIIXPM_INDIRECTIO_SIZE, 0, &ioh)) {
+		device_printf(sc->sc_dev, "couldn't map indirect I/O space\n");
+		return EBUSY;
+	}
+	bus_space_write_1(iot, ioh, PIIXPM_INDIRECTIO_INDEX,
+	    SB800_PM_SMBUS0EN_LO);
+	val = bus_space_read_1(iot, ioh, PIIXPM_INDIRECTIO_DATA);
+	bus_space_write_1(iot, ioh, PIIXPM_INDIRECTIO_INDEX,
+	    SB800_PM_SMBUS0EN_HI);
+	val |= bus_space_read_1(iot, ioh, PIIXPM_INDIRECTIO_DATA) << 8;
+	bus_space_unmap(iot, ioh, 2);
+
+	if ((val & SB800_PM_SMBUS0EN_ENABLE) == 0)
+		return ENOENT;
+
+	base_addr = val & SB800_PM_SMBUS0EN_BADDR;
+
+	aprint_debug_dev(sc->sc_dev, "SMBus @ 0x%04x\n", base_addr);
+
+	sc->sc_smb_iot = iot;
+	if (bus_space_map(sc->sc_smb_iot, PCI_MAPREG_IO_ADDR(base_addr),
+	    PIIX_SMB_SIZE, 0, &sc->sc_smb_ioh)) {
+		aprint_error_dev(sc->sc_dev, "can't map smbus I/O space\n");
+		return EBUSY;
+	}
+	sc->sc_poll = 1;
+
+	return 0;
 }
 
 static void
