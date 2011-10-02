@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.32 2011/10/02 17:39:40 jmcneill Exp $	*/
+/*	$NetBSD: i2c.c,v 1.33 2011/10/02 18:58:45 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.32 2011/10/02 17:39:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.33 2011/10/02 18:58:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,10 +128,9 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_compat = NULL;
 
 	if (config_match(parent, cf, &ia) > 0) {
-		if (ia.ia_addr == (i2c_addr_t)-1)
-			config_attach(parent, cf, &ia, iic_print);
-		else if (ia.ia_addr <= I2C_MAX_ADDR &&
-			   !sc->sc_devices[ia.ia_addr])
+		if (ia.ia_addr != (i2c_addr_t)-1 &&
+		    ia.ia_addr <= I2C_MAX_ADDR &&
+		    !sc->sc_devices[ia.ia_addr])
 			sc->sc_devices[ia.ia_addr] =
 			    config_attach(parent, cf, &ia, iic_print);
 	}
@@ -175,7 +174,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 	i2c_tag_t ic;
 	int rv;
 
-	aprint_naive(": I2C bus\n");
+	aprint_naive("\n");
 	aprint_normal(": I2C bus\n");
 
 	sc->sc_tag = iba->iba_tag;
@@ -186,8 +185,9 @@ iic_attach(device_t parent, device_t self, void *aux)
 	LIST_INIT(&(sc->sc_tag->ic_list));
 	LIST_INIT(&(sc->sc_tag->ic_proc_list));
 
-	rv = kthread_create(PRI_NONE, 0, NULL, iic_smbus_intr_thread,
-	    ic, &ic->ic_intr_thread, "%s", ic->ic_devname);
+	rv = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN, NULL,
+	    iic_smbus_intr_thread, ic, &ic->ic_intr_thread,
+	    "%s", ic->ic_devname);
 	if (rv)
 		aprint_error_dev(self, "unable to create intr thread\n");
 
@@ -238,8 +238,19 @@ iic_attach(device_t parent, device_t self, void *aux)
 				    prop_data_data_nocopy(cdata),
 				    prop_data_size(cdata), &buf);
 
-			config_found_sm_loc(self, "iic", loc, &ia,
-			    iic_print_direct, NULL);
+			if (addr > I2C_MAX_ADDR) {
+				aprint_error_dev(self,
+				    "WARNING: ignoring bad device address "
+				    "@ 0x%02x\n", addr);
+			} else if (ia.ia_addr == addr) {
+				aprint_error_dev(self,
+				    "WARNING: ignoring duplicate device "
+				    "@ 0x%02x\n", addr);
+			} else if (sc->sc_devices[addr] == NULL) {
+				sc->sc_devices[addr] =
+				    config_found_sm_loc(self, "iic", loc, &ia,
+					iic_print_direct, NULL);
+			}
 
 			if (ia.ia_compat)
 				free(ia.ia_compat, M_TEMP);
@@ -253,6 +264,48 @@ iic_attach(device_t parent, device_t self, void *aux)
 		 */
 		iic_rescan(self, "iic", NULL);
 	}
+}
+
+static int
+iic_detach(device_t self, int flags)
+{
+	struct iic_softc *sc = device_private(self);
+	i2c_tag_t ic = sc->sc_tag;
+	int i, error;
+	void *hdl;
+
+	for (i = 0; i <= I2C_MAX_ADDR; i++) {
+		if (sc->sc_devices[i]) {
+			error = config_detach(sc->sc_devices[i], flags);
+			if (error)
+				return error;
+		}
+	}
+
+	if (ic->ic_running) {
+		ic->ic_running = 0;
+		wakeup(ic);
+		kthread_join(ic->ic_intr_thread);
+	}
+
+	if (!LIST_EMPTY(&ic->ic_list)) {
+		device_printf(self, "WARNING: intr handler list not empty\n");
+		while (!LIST_EMPTY(&ic->ic_list)) {
+			hdl = LIST_FIRST(&ic->ic_list);
+			iic_smbus_intr_disestablish(ic, hdl);
+		}
+	}
+	if (!LIST_EMPTY(&ic->ic_proc_list)) {
+		device_printf(self, "WARNING: proc handler list not empty\n");
+		while (!LIST_EMPTY(&ic->ic_proc_list)) {
+			hdl = LIST_FIRST(&ic->ic_proc_list);
+			iic_smbus_intr_disestablish_proc(ic, hdl);
+		}
+	}
+
+	pmf_device_deregister(self);
+
+	return 0;
 }
 
 static void
@@ -486,7 +539,7 @@ iic_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 
 
 CFATTACH_DECL2_NEW(iic, sizeof(struct iic_softc),
-    iic_match, iic_attach, NULL, NULL, iic_rescan, iic_child_detach);
+    iic_match, iic_attach, iic_detach, NULL, iic_rescan, iic_child_detach);
 
 MODULE(MODULE_CLASS_DRIVER, iic, NULL);
 
