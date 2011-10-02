@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2011/07/12 03:09:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2011/10/02 18:30:50 christos Exp $
 
 ### what we need:
 
@@ -99,7 +99,6 @@ fdstart.o: ${.CURDIR}/../boot//bbstart.s
 libboot.a: ${OBJS}
 	${AR} r $@ $> && ${RANLIB} $@
 
-.PHONY:	vers.c
 vers.c:	${.CURDIR}/../boot/version
 	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh -N \
 	    ${.CURDIR}/../boot/version "amiga"
