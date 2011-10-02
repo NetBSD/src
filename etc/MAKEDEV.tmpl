@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.142 2011/09/06 13:34:44 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.143 2011/10/02 16:39:46 jmcneill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -811,6 +811,10 @@ dtv)
 	makedev dtv0 dtv1 dtv2 dtv3
 	;;
 
+iic)
+	makedev iic0 iic1 iic2 iic3
+	;;
+
 altmem)
 	makedev altmem0 altmem1
 	;;
@@ -1415,6 +1419,12 @@ dtv[0-9]*)
 	mkdev dvb/adapter$unit/frontend0 c %dtv_chr% $(($unit + 0)) 666
 	mkdev dvb/adapter$unit/demux0 c %dtv_chr% $(($unit + 16)) 666
 	mkdev dvb/adapter$unit/dvr0 c %dtv_chr% $(($unit + 32)) 666
+	;;
+
+iic[0-9]*)
+	unit=${i#iic}
+	: ${unit:-0}
+	mkdev iic$unit c %iic_chr% $unit 600
 	;;
 
 amr[0-9]*)
