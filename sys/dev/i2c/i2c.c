@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.30 2011/10/02 12:25:40 mbalmer Exp $	*/
+/*	$NetBSD: i2c.c,v 1.31 2011/10/02 16:39:47 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.30 2011/10/02 12:25:40 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.31 2011/10/02 16:39:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,9 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.30 2011/10/02 12:25:40 mbalmer Exp $");
 #include <dev/i2c/i2cvar.h>
 
 #include "locators.h"
-#ifdef KERNEL_OPT
-#include <opt_i2cbus.h>
-#endif
 
 #define I2C_MAX_ADDR	0x3ff	/* 10-bit address, max */
 
@@ -63,6 +60,17 @@ struct iic_softc {
 	int sc_type;
 	device_t sc_devices[I2C_MAX_ADDR + 1];
 };
+
+static dev_type_open(iic_open);
+static dev_type_close(iic_close);
+static dev_type_ioctl(iic_ioctl);
+
+const struct cdevsw iic_cdevsw = {
+	iic_open, iic_close, noread, nowrite, iic_ioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+};
+
+extern struct cfdriver iic_cd;
 
 static void	iic_smbus_intr_thread(void *);
 static void	iic_fill_compat(struct i2c_attach_args*, const char*,
@@ -181,70 +189,6 @@ iic_attach(device_t parent, device_t self, void *aux)
 	    ic, &ic->ic_intr_thread, "%s", ic->ic_devname);
 	if (rv)
 		aprint_error_dev(self, "unable to create intr thread\n");
-
-#if I2C_SCAN
-	if (sc->sc_type == I2C_TYPE_SMBUS) {
-		int err;
-		int found = 0;
-		i2c_addr_t addr;
-		uint8_t val;
-
-		for (addr = 0x09; addr < 0x78; addr++) {
-			/*
-			 * Skip certain i2c addresses:
-			 *	0x00		General Call / START
-			 *	0x01		CBUS Address
-			 *	0x02		Different Bus format
-			 *	0x03 - 0x07	Reserved
-			 *	0x08		Host Address
-			 *	0x0c		Alert Response Address
-			 *	0x28		ACCESS.Bus host
-			 *	0x37		ACCESS.Bus default address
-			 *	0x48 - 0x4b	Prototypes
-			 *	0x61		Device Default Address
-			 *	0x78 - 0x7b	10-bit addresses
-			 *	0x7c - 0x7f	Reserved
-			 *
-			 * Some of these are skipped by judicious selection
-			 * of the range of the above for (;;) statement.
-			 *
-			 * if (addr <= 0x08 || addr >= 0x78)
-			 *	continue;
-			 */
-			if (addr == 0x0c || addr == 0x28 || addr == 0x37 ||
-			    addr == 0x61 || (addr & 0x7c) == 0x48)
-				continue;
-
-			iic_acquire_bus(ic, 0);
-			/*
-			 * Use SMBus quick_write command to detect most
-			 * addresses;  should avoid hanging the bus on
-			 * some write-only devices (like clocks that show
-			 * up at address 0x69)
-			 *
-			 * XXX The quick_write() is allegedly known to
-			 * XXX corrupt the Atmel AT24RF08 EEPROM found
-			 * XXX on some IBM Thinkpads!
-			 */
-			if ((addr & 0xf8) == 0x30 ||
-			    (addr & 0xf0) == 0x50)
-				err = iic_smbus_receive_byte(ic, addr, &val, 0);
-			else
-				err = iic_smbus_quick_write(ic, addr, 0);
-			if (err == 0) {
-				if (found == 0)
-					aprint_normal("%s: devices at",
-							ic->ic_devname);
-				found++;
-				aprint_normal(" 0x%02x", addr);
-			}
-			iic_release_bus(ic, 0);
-		}
-		if (found == 0)
-			aprint_normal("%s: no devices found", ic->ic_devname);
-		aprint_normal("\n");
-	}
-#endif
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -457,6 +401,84 @@ iic_compat_match(struct i2c_attach_args *ia, const char ** compats)
 		}
 	}
 	return 0;
+}
+
+static int
+iic_open(dev_t dev, int flag, int fmt, lwp_t *l)
+{
+	struct iic_softc *sc = device_lookup_private(&iic_cd, minor(dev));
+
+	if (sc == NULL)
+		return ENXIO;
+
+	return 0;
+}
+
+static int
+iic_close(dev_t dev, int flag, int fmt, lwp_t *l)
+{
+	return 0;
+}
+
+static int
+iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie)
+{
+	i2c_tag_t ic = sc->sc_tag;
+	uint8_t buf[I2C_EXEC_MAX_BUFLEN];
+	int error;
+	void *cmd;
+
+	/* Validate parameters */
+	if (iie->iie_addr > I2C_MAX_ADDR)
+		return EINVAL;
+	if (iie->iie_cmdlen > I2C_EXEC_MAX_CMDLEN ||
+	    iie->iie_buflen > I2C_EXEC_MAX_BUFLEN)
+		return EINVAL;
+	if (iie->iie_cmd != NULL && iie->iie_cmdlen == 0)
+		return EINVAL;
+	if (iie->iie_buf != NULL && iie->iie_buflen == 0)
+		return EINVAL;
+
+#if 0
+	/* Disallow userspace access to devices that have drivers attached. */
+	if (sc->sc_devices[iie->iie_addr] != NULL)
+		return EBUSY;
+#endif
+
+	if (iie->iie_cmd != NULL) {
+		error = copyin(iie->iie_cmd, cmd, iie->iie_cmdlen);
+		if (error)
+			return error;
+	}
+
+	iic_acquire_bus(ic, 0);
+	error = iic_exec(ic, iie->iie_op, iie->iie_addr, cmd, iie->iie_cmdlen,
+	    buf, iie->iie_buflen, 0);
+	iic_release_bus(ic, 0);
+
+	if (error)
+		return error;
+
+	if (iie->iie_buf)
+		error = copyout(buf, iie->iie_buf, iie->iie_buflen);
+
+	return error;
+}
+
+static int
+iic_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
+{
+	struct iic_softc *sc = device_lookup_private(&iic_cd, minor(dev));
+
+	if (sc == NULL)
+		return ENXIO;
+
+	switch (cmd) {
+	case I2C_IOCTL_EXEC:
+		return iic_ioctl_exec(sc, (i2c_ioctl_exec_t *)data);
+	default:
+		return ENODEV;
+	}
 }
 
 
