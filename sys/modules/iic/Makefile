@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2011/10/02 11:43:30 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.2 2011/10/02 21:14:22 jmcneill Exp $
 
 .include "../Makefile.inc"
 
 .PATH:		${S}/dev/i2c
 
 KMOD=   	iic
-IOCONF=		i2c.ioconf
+IOCONF=		iic.ioconf
 SRCS=		i2c.c i2c_bitbang.c
-
-CPPFLAGS+=	-I${S}/i2c
 
 .include <bsd.kmodule.mk>
