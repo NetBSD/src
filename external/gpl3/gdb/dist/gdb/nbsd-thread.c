@@ -39,6 +39,7 @@
 #include "inferior.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
+#include "observer.h"
 
 #include <machine/reg.h>
 
@@ -200,7 +201,7 @@ nbsd_thread_detach (struct target_ops *ops, char *args, int from_tty)
   struct target_ops *beneath = find_target_beneath (ops);
   nbsd_thread_deactivate ();
   unpush_target (ops);
-  /* Ordinairly, gdb caches solib information, but this means that it
+  /* Ordinarily, gdb caches solib information, but this means that it
      won't call the new_obfile hook on a reattach. Clear the symbol file
      cache so that attach -> detach -> attach works. */
   clear_solib();
@@ -666,16 +667,7 @@ nbsd_find_new_threads (struct target_ops *ops)
 }
 
 
-/* Mark our target-struct as eligible for stray "run" and "attach" commands.  */
-
-static int
-nbsd_thread_can_run (void)
-{
-  return 1;
-}
-
-
-/* Fork an inferior process, and start debugging it with /proc.  */
+/* Fork an inferior process, and start debugging it.  */
 
 static void
 nbsd_thread_create_inferior (struct target_ops *ops, char *exec_file,
@@ -1056,7 +1048,7 @@ nbsd_thread_proc_write (void *arg, caddr_t addr, void *buf, size_t size)
 }
 
 static int
-nbsd_thread_proc_lookup (void *arg, char *sym, caddr_t *addr)
+nbsd_thread_proc_lookup (void *arg, const char *sym, caddr_t *addr)
 {
   struct minimal_symbol *ms;
 
@@ -1226,7 +1218,6 @@ init_nbsd_thread_ops (void)
   nbsd_thread_ops.to_terminal_info = child_terminal_info;
   nbsd_thread_ops.to_create_inferior = nbsd_thread_create_inferior;
   nbsd_thread_ops.to_mourn_inferior = nbsd_thread_mourn_inferior;
-  nbsd_thread_ops.to_can_run = nbsd_thread_can_run;
   nbsd_thread_ops.to_thread_alive = nbsd_thread_alive;
   nbsd_thread_ops.to_pid_to_str = nbsd_pid_to_str;
   nbsd_thread_ops.to_find_new_threads = nbsd_find_new_threads;
@@ -1297,4 +1288,6 @@ _initialize_nbsd_thread (void)
 	   "Show all threads.",
 	   &thread_examine_list);
 
+  /* Hook into new_objfile notification.  */ 
+  observer_attach_new_objfile (nbsd_thread_new_objfile);
 }
