@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.61 2011/09/02 22:25:08 dyoung Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.62 2011/10/02 21:32:48 rmind Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.61 2011/09/02 22:25:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.62 2011/10/02 21:32:48 rmind Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.61 2011/09/02 22:25:08 dyoung Exp $"
 #include <sys/param.h>
 #include <sys/hash.h>
 #include <sys/queue.h>
+#include <sys/bitops.h>
 
 #if defined(_KERNEL)
 #include <sys/systm.h>
@@ -180,89 +181,53 @@ typedef struct vmem_btag bt_t;
 
 #define	VMEM_ALIGNUP(addr, align) \
 	(-(-(addr) & -(align)))
+
 #define	VMEM_CROSS_P(addr1, addr2, boundary) \
 	((((addr1) ^ (addr2)) & -(boundary)) != 0)
 
 #define	ORDER2SIZE(order)	((vmem_size_t)1 << (order))
+#define	SIZE2ORDER(size)	((int)ilog2(size))
 
-static int
-calc_order(vmem_size_t size)
-{
-	vmem_size_t target;
-	int i;
+#if !defined(_KERNEL)
+#define	xmalloc(sz, flags)	malloc(sz)
+#define	xfree(p)		free(p)
+#define	bt_alloc(vm, flags)	malloc(sizeof(bt_t))
+#define	bt_free(vm, bt)		free(bt)
+#else	/* !defined(_KERNEL) */
 
-	KASSERT(size != 0);
-
-	i = 0;
-	target = size >> 1;
-	while (ORDER2SIZE(i) <= target) {
-		i++;
-	}
-
-	KASSERT(ORDER2SIZE(i) <= size);
-	KASSERT(size < ORDER2SIZE(i + 1) || ORDER2SIZE(i + 1) < ORDER2SIZE(i));
-
-	return i;
-}
-
-#if defined(_KERNEL)
 static MALLOC_DEFINE(M_VMEM, "vmem", "vmem");
-#endif /* defined(_KERNEL) */
 
-static void *
+static inline void *
 xmalloc(size_t sz, vm_flag_t flags)
 {
-
-#if defined(_KERNEL)
 	return malloc(sz, M_VMEM,
 	    M_CANFAIL | ((flags & VM_SLEEP) ? M_WAITOK : M_NOWAIT));
-#else /* defined(_KERNEL) */
-	return malloc(sz);
-#endif /* defined(_KERNEL) */
 }
 
-static void
+static inline void
 xfree(void *p)
 {
-
-#if defined(_KERNEL)
 	return free(p, M_VMEM);
-#else /* defined(_KERNEL) */
-	return free(p);
-#endif /* defined(_KERNEL) */
 }
 
 /* ---- boundary tag */
 
-#if defined(_KERNEL)
 static struct pool_cache bt_cache;
-#endif /* defined(_KERNEL) */
 
-static bt_t *
+static inline bt_t *
 bt_alloc(vmem_t *vm, vm_flag_t flags)
 {
-	bt_t *bt;
-
-#if defined(_KERNEL)
-	bt = pool_cache_get(&bt_cache,
-	    (flags & VM_SLEEP) != 0 ? PR_WAITOK : PR_NOWAIT);
-#else /* defined(_KERNEL) */
-	bt = malloc(sizeof *bt);
-#endif /* defined(_KERNEL) */
-
-	return bt;
+	return pool_cache_get(&bt_cache,
+	    (flags & VM_SLEEP) ? PR_WAITOK : PR_NOWAIT);
 }
 
-static void
+static inline void
 bt_free(vmem_t *vm, bt_t *bt)
 {
-
-#if defined(_KERNEL)
 	pool_cache_put(&bt_cache, bt);
-#else /* defined(_KERNEL) */
-	free(bt);
-#endif /* defined(_KERNEL) */
 }
+
+#endif	/* !defined(_KERNEL) */
 
 /*
  * freelist[0] ... [1, 1] 
@@ -278,12 +243,10 @@ static struct vmem_freelist *
 bt_freehead_tofree(vmem_t *vm, vmem_size_t size)
 {
 	const vmem_size_t qsize = size >> vm->vm_quantum_shift;
-	int idx;
+	const int idx = SIZE2ORDER(qsize);
 
+	KASSERT(size != 0 && qsize != 0);
 	KASSERT((size & vm->vm_quantum_mask) == 0);
-	KASSERT(size != 0);
-
-	idx = calc_order(qsize);
 	KASSERT(idx >= 0);
 	KASSERT(idx < VMEM_MAXORDER);
 
@@ -303,12 +266,11 @@ static struct vmem_freelist *
 bt_freehead_toalloc(vmem_t *vm, vmem_size_t size, vm_flag_t strat)
 {
 	const vmem_size_t qsize = size >> vm->vm_quantum_shift;
-	int idx;
+	int idx = SIZE2ORDER(qsize);
 
+	KASSERT(size != 0 && qsize != 0);
 	KASSERT((size & vm->vm_quantum_mask) == 0);
-	KASSERT(size != 0);
 
-	idx = calc_order(qsize);
 	if (strat == VM_INSTANTFIT && ORDER2SIZE(idx) != qsize) {
 		idx++;
 		/* check too large request? */
@@ -794,6 +756,7 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
+	KASSERT(quantum > 0);
 
 #if defined(_KERNEL)
 	if (RUN_ONCE(&control, vmem_init)) {
@@ -808,7 +771,7 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
 	VMEM_LOCK_INIT(vm, ipl);
 	vm->vm_name = name;
 	vm->vm_quantum_mask = quantum - 1;
-	vm->vm_quantum_shift = calc_order(quantum);
+	vm->vm_quantum_shift = SIZE2ORDER(quantum);
 	KASSERT(ORDER2SIZE(vm->vm_quantum_shift) == quantum);
 	vm->vm_importfn = importfn;
 	vm->vm_releasefn = releasefn;
