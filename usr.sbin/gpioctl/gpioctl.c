@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.14 2011/10/02 09:33:19 mbalmer Exp $ */
+/* $NetBSD: gpioctl.c,v 1.15 2011/10/02 12:43:53 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2008, 2010, 2011 Marc Balmer <mbalmer@NetBSD.org>
@@ -143,11 +143,12 @@ main(int argc, char *argv[])
 			lval = strtol(flags, &ep, 0);
 			if (*flags == '\0' || *ep != '\0')
 				errx(EXIT_FAILURE,
-				    "invalid flags (not a number)");
+				    "invalid flag locator (not a number)");
 			if ((errno == ERANGE && (lval == LONG_MAX
 			    || lval == LONG_MIN))
 			    || (unsigned long)lval > UINT_MAX)
-				errx(EXIT_FAILURE, "flags out of range");
+				errx(EXIT_FAILURE, "flag locator out of range");
+
 			ga_flags = lval;
 		}
 		devattach(driver, ga_offset, ga_mask, ga_flags);
@@ -437,7 +438,7 @@ usage(void)
 	    progname);
 	fprintf(stderr, "       %s [-q] device pin unset\n", progname);
 	fprintf(stderr, "       %s [-q] device attach device offset mask "
-	    "[flags]\n",
+	    "[flag]\n",
 	    progname);
 	fprintf(stderr, "       %s [-q] device detach device\n", progname);
 
