@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.8 2011/10/02 19:24:25 roy Exp $ */
+/* $NetBSD: term.h,v 1.9 2011/10/03 12:31:51 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -1484,7 +1484,7 @@ int		ti_setupterm(TERMINAL **, const char *, int, int *);
 int		ti_getflag(const TERMINAL *, const char *);
 int		ti_getnum(const TERMINAL *, const char *);
 const char *	ti_getstr(const TERMINAL *, const char *);
-char *		t_parm(TERMINAL *, const char *,
+char *		ti_parm(TERMINAL *, const char *,
     long, long, long, long, long, long, long, long, long);
 
 /* These functions do not use PC or speed, but the terminal */
@@ -1493,14 +1493,15 @@ int		ti_puts(const TERMINAL *, const char *, int,
 int		ti_putp(const TERMINAL *, const char *);
 
 /* Using tparm can be kunkly, so provide a variadic function */
-char *		vtparm(const char *, ...);
+/* This is not standard, but ncurses also provides this */
+char *		tiparm(const char *, ...);
 /* And a thread safe version */
-char *		t_vparm(TERMINAL *, const char *, ...);
+char *		ti_tiparm(TERMINAL *, const char *, ...);
 
 /* Default to X/Open tparm, but allow it to be variadic also */
 #ifdef TPARM_VARARGS
-#  define tparm	vtparm
-#  define t_parm t_vtparm
+#  define tparm	tiparm
+#  define ti_parm ti_tiparm
 #endif
 
 /* Convert a termcap string into a terminfo string.
