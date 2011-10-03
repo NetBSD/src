@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.3,v 1.6 2011/10/03 12:31:51 roy Exp $
+.\"	$NetBSD: terminfo.3,v 1.7 2011/10/03 19:15:03 roy Exp $
 .\"
 .\" Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,9 +52,9 @@
 .Ft int
 .Fn setupterm "const char *name" "int fildes" "int *errret"
 .Ft TERMINAL *
-.Fn set_curterm "TERMINAL *term"
+.Fn set_curterm "TERMINAL *nterm"
 .Ft int
-.Fn del_curterm "TERMINAL *term"
+.Fn del_curterm "TERMINAL *oterm"
 .Ft char *
 .Fn termname "void"
 .Ft int
