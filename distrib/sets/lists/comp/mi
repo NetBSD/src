@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1686 2011/10/03 09:52:23 njoly Exp $
+#	$NetBSD: mi,v 1.1687 2011/10/03 13:12:15 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9015,10 +9015,10 @@
 ./usr/share/man/cat3/t_getnum.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/t_getstr.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/t_goto.0			comp-obsolete		obsolete
-./usr/share/man/cat3/t_parm.0			comp-c-catman		.cat
+./usr/share/man/cat3/t_parm.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/t_puts.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/t_putws.0			comp-obsolete		obsolete
-./usr/share/man/cat3/t_vparm.0			comp-c-catman		.cat
+./usr/share/man/cat3/t_vparm.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/tailq_empty.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/tailq_entry.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/tailq_first.0		comp-obsolete		obsolete
@@ -9065,6 +9065,7 @@
 ./usr/share/man/cat3/ti_putp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ti_puts.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ti_setupterm.0		comp-c-catman		.cat
+./usr/share/man/cat3/ti_tiparm.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tigetflag.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tigetnum.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tigetstr.0			comp-c-catman		.cat
@@ -9089,6 +9090,7 @@
 ./usr/share/man/cat3/timespecsub.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timeval.0			comp-c-catman		.cat
 ./usr/share/man/cat3/timezone.0			comp-c-catman		.cat
+./usr/share/man/cat3/tiparm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tmpfile.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tmpnam.0			comp-c-catman		.cat
@@ -15146,10 +15148,10 @@
 ./usr/share/man/html3/t_getnum.html		comp-obsolete		obsolete
 ./usr/share/man/html3/t_getstr.html		comp-obsolete		obsolete
 ./usr/share/man/html3/t_goto.html		comp-obsolete		obsolete
-./usr/share/man/html3/t_parm.html		comp-c-htmlman		html
+./usr/share/man/html3/t_parm.html		comp-obsolete		obsolete
 ./usr/share/man/html3/t_puts.html		comp-obsolete		obsolete
 ./usr/share/man/html3/t_putws.html		comp-obsolete		obsolete
-./usr/share/man/html3/t_vparm.html		comp-c-htmlman		html
+./usr/share/man/html3/t_vparm.html		comp-obsolete		obsolete
 ./usr/share/man/html3/tan.html			comp-c-htmlman		html
 ./usr/share/man/html3/tanf.html			comp-c-htmlman		html
 ./usr/share/man/html3/tanh.html			comp-c-htmlman		html
@@ -15183,6 +15185,7 @@
 ./usr/share/man/html3/ti_putp.html		comp-c-htmlman		html
 ./usr/share/man/html3/ti_puts.html		comp-c-htmlman		html
 ./usr/share/man/html3/ti_setupterm.html		comp-c-htmlman		html
+./usr/share/man/html3/ti_tiparm.html		comp-c-htmlman		html
 ./usr/share/man/html3/tigetflag.html		comp-c-htmlman		html
 ./usr/share/man/html3/tigetnum.html		comp-c-htmlman		html
 ./usr/share/man/html3/tigetstr.html		comp-c-htmlman		html
@@ -15207,6 +15210,7 @@
 ./usr/share/man/html3/timespecsub.html		comp-c-htmlman		html
 ./usr/share/man/html3/timeval.html		comp-c-htmlman		html
 ./usr/share/man/html3/timezone.html		comp-c-htmlman		html
+./usr/share/man/html3/tiparm.html		comp-c-htmlman		html
 ./usr/share/man/html3/tm.html			comp-c-htmlman		html
 ./usr/share/man/html3/tmpfile.html		comp-c-htmlman		html
 ./usr/share/man/html3/tmpnam.html		comp-c-htmlman		html
@@ -21319,10 +21323,10 @@
 ./usr/share/man/man3/t_getnum.3			comp-obsolete		obsolete
 ./usr/share/man/man3/t_getstr.3			comp-obsolete		obsolete
 ./usr/share/man/man3/t_goto.3			comp-obsolete		obsolete
-./usr/share/man/man3/t_parm.3			comp-c-man		.man
+./usr/share/man/man3/t_parm.3			comp-obsolete		obsolete
 ./usr/share/man/man3/t_puts.3			comp-obsolete		obsolete
 ./usr/share/man/man3/t_putws.3			comp-obsolete		obsolete
-./usr/share/man/man3/t_vparm.3			comp-c-man		.man
+./usr/share/man/man3/t_vparm.3			comp-obsolete		obsolete
 ./usr/share/man/man3/tailq_empty.3		comp-obsolete		obsolete
 ./usr/share/man/man3/tailq_entry.3		comp-obsolete		obsolete
 ./usr/share/man/man3/tailq_first.3		comp-obsolete		obsolete
@@ -21369,6 +21373,7 @@
 ./usr/share/man/man3/ti_putp.3			comp-c-man		.man
 ./usr/share/man/man3/ti_puts.3			comp-c-man		.man
 ./usr/share/man/man3/ti_setupterm.3		comp-c-man		.man
+./usr/share/man/man3/ti_tiparm.3		comp-c-man		.man
 ./usr/share/man/man3/tigetflag.3		comp-c-man		.man
 ./usr/share/man/man3/tigetnum.3			comp-c-man		.man
 ./usr/share/man/man3/tigetstr.3			comp-c-man		.man
@@ -21393,6 +21398,7 @@
 ./usr/share/man/man3/timespecsub.3		comp-c-man		.man
 ./usr/share/man/man3/timeval.3			comp-c-man		.man
 ./usr/share/man/man3/timezone.3			comp-c-man		.man
+./usr/share/man/man3/tiparm.3			comp-c-man		.man
 ./usr/share/man/man3/tm.3			comp-c-man		.man
 ./usr/share/man/man3/tmpfile.3			comp-c-man		.man
 ./usr/share/man/man3/tmpnam.3			comp-c-man		.man
