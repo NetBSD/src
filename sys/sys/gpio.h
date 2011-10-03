@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.h,v 1.10 2011/10/02 09:33:19 mbalmer Exp $ */
+/* $NetBSD: gpio.h,v 1.11 2011/10/03 11:16:47 mbalmer Exp $ */
 /*	$OpenBSD: gpio.h,v 1.7 2008/11/26 14:51:20 mbalmer Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Marc Balmer <marc@msys.ch>
@@ -76,7 +76,7 @@ struct gpio_set {
 	char	gp_name2[GPIOMAXNAME];	/* new name */
 };
 
-/* Attach/detach device drivers that use GPIO pins */
+/* Attach device drivers that use GPIO pins */
 struct gpio_attach {
 	char		ga_dvname[16];	/* device name */
 	int		ga_offset;	/* pin number */
@@ -92,7 +92,6 @@ struct gpio_attach {
 #define GPIOWRITE		_IOWR('G', 8, struct gpio_req)
 #define GPIOTOGGLE		_IOWR('G', 9, struct gpio_req)
 #define GPIOATTACH		_IOWR('G', 10, struct gpio_attach)
-#define GPIODETACH		_IOWR('G', 11, struct gpio_attach)
 #define GPIOPULSE		_IOWR('G', 12, struct gpio_pulse)
 
 #ifdef COMPAT_50
@@ -123,6 +122,7 @@ struct gpio_pin_op {
 #define GPIOPINCTL		_IOWR('G', 4, struct gpio_pin_ctl)
 #define GPIOATTACH50		_IOWR('G', 10, struct gpio_attach50)
 #define GPIODETACH50		_IOWR('G', 11, struct gpio_attach50)
+#define GPIODETACH		_IOWR('G', 11, struct gpio_attach)
 #endif	/* COMPAT_50 */
 
 #endif	/* !_SYS_GPIO_H_ */
