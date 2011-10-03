@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.4 2011/09/30 19:12:35 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.5 2011/10/03 14:55:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$Id: t_unix.c,v 1.4 2011/09/30 19:12:35 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.5 2011/10/03 14:55:23 christos Exp $");
 
 #include <stdio.h>
 #include <err.h>
@@ -84,6 +84,7 @@ test(size_t len)
 	struct sockaddr_un *sun;
 	int s, s2;
 	size_t slen;
+	socklen_t sl;
 
 	slen = len + offsetof(struct sockaddr_un, sun_path) + 1;
 	
@@ -98,11 +99,15 @@ test(size_t len)
 	sun->sun_path[len] = '\0';
 	(void)unlink(sun->sun_path);
 
-	sun->sun_len = SUN_LEN(sun);
+	sl = SUN_LEN(sun);
+	sun->sun_len = sl;
 	sun->sun_family = AF_UNIX;
 
-	if (bind(s, (struct sockaddr *)sun, sun->sun_len) == -1)
+	if (bind(s, (struct sockaddr *)sun, sl) == -1) {
+		if (errno == EINVAL && sl >= 256)
+			return -1;
 		FAIL("bind");
+	}
 
 	if (listen(s, 5) == -1)
 		FAIL("listen");
@@ -115,7 +120,7 @@ test(size_t len)
 		s2 = socket(AF_UNIX, SOCK_STREAM, 0);
 		if (s == -1)
 			FAIL("socket");
-		if (connect(s2, (struct sockaddr *)sun, sun->sun_len) == -1)
+		if (connect(s2, (struct sockaddr *)sun, sl) == -1)
 			FAIL("connect");
 		break;
 	default:
