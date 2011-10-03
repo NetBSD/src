@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.20 2011/10/02 09:33:18 mbalmer Exp $
+.\" $NetBSD: gpio.4,v 1.21 2011/10/03 11:16:47 mbalmer Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd October 2, 2011
+.Dd October 3, 2011
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -220,18 +220,10 @@ struct gpio_attach {
         uint32_t ga_flags;      /* driver dependent */
 };
 .Ed
-.It Dv GPIODETACH (struct gpio_attach)
-Detach a device from this gpio device that was previously attached using the
-.Dv GPIOATTACH
-.Xr ioctl 2 .
+.Pp
 The
-.Fa ga_offset ,
-.Fa ga_mask ,
-and
-.Fa ga_flags
-fields of the
-.Fa gpio_attach
-structure are ignored.
+.Xr drvctl 8
+command can be used to detach a device from a gpio pin.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/gpiou" -compact
@@ -241,6 +233,7 @@ GPIO device unit
 file.
 .El
 .Sh SEE ALSO
+.Xr drvctl 8 ,
 .Xr ioctl 2 ,
 .Xr gpioctl 8
 .Sh HISTORY
