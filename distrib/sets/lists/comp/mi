@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1685 2011/10/02 21:19:35 pgoyette Exp $
+#	$NetBSD: mi,v 1.1686 2011/10/03 09:52:23 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4077,6 +4077,7 @@
 ./usr/libdata/debug/usr/sbin/hostapd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/hostapd_cli.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/hprop.debug	comp-krb5-debug		kerberos,debug
+./usr/libdata/debug/usr/sbin/i2cscan.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ifmcstat.debug	comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/ifwatchd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/inetd.debug	comp-netutil-debug	debug
