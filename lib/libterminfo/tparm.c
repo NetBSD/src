@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.5 2011/03/10 13:39:26 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.6 2011/10/03 12:31:51 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.5 2011/03/10 13:39:26 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.6 2011/10/03 12:31:51 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -129,7 +129,7 @@ onum(TERMINAL *term, const char *fmt, long num, int len)
 }
 
 static char *
-_ti_vtparm(TERMINAL *term, const char *str, va_list parms)
+_ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 {
 	const char *sp;
 	char c, fmt[64], *fp, *ostr;
@@ -208,7 +208,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 	memset(&params, 0, sizeof(params));
 	for (l = 0; l < max; l++) {
 		if (piss[l] == 0)
-			params[l].num = va_arg(parms, long);
+			params[l].num = va_arg(parms, int);
 		else
 			params[l].string = va_arg(parms, char *);
 	}
@@ -495,7 +495,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 }
 
 char *
-t_vparm(TERMINAL *term, const char *str, ...)
+ti_tiparm(TERMINAL *term, const char *str, ...)
 {
 	va_list va;
 	char *ret;
@@ -504,13 +504,13 @@ t_vparm(TERMINAL *term, const char *str, ...)
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
-	ret = _ti_vtparm(term, str, va);
+	ret = _ti_tiparm(term, str, va);
 	va_end(va);
 	return ret;
 }
 
 char *
-vtparm(const char *str, ...)
+tiparm(const char *str, ...)
 {
 	va_list va;
 	char *ret;
@@ -518,28 +518,18 @@ vtparm(const char *str, ...)
 	_DIAGASSERT(str != NULL);
 
 	va_start(va, str);
-        ret = _ti_vtparm(NULL, str, va);
+        ret = _ti_tiparm(NULL, str, va);
 	va_end(va);
 	return ret;
-}
-
-char *
-t_parm(TERMINAL *term, const char *str,
-    long p1, long p2, long p3, long p4, long p5,
-    long p6, long p7, long p8, long p9)
-{
-	
-	_DIAGASSERT(term != NULL);
-	_DIAGASSERT(str != NULL);
-	return t_vparm(term, str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
 }
 
 char *
 tparm(const char *str,
-    long p1, long p2, long p3, long p4, long p5,
-    long p6, long p7, long p8, long p9)
+    long lp1, long lp2, long lp3, long lp4, long lp5,
+    long lp6, long lp7, long lp8, long lp9)
 {
+	int p1 = lp1, p2 = lp2, p3 = lp3, p4 = lp4, p5 = lp5;
+	int p6 = lp6, p7 = lp7, p8 = lp8, p9 = lp9;
 	
-	_DIAGASSERT(str != NULL);
-	return t_vparm(NULL, str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+	return tiparm(NULL, str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
 }
