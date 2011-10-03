@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.8 2011/08/16 16:25:15 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.9 2011/10/03 14:09:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.8 2011/08/16 16:25:15 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.9 2011/10/03 14:09:38 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -969,7 +969,7 @@ terminal_get_size(EditLine *el, int *lins, int *cols)
 		}
 	}
 #endif
-	return Val(T_co != *cols || Val(T_li) != *lins);
+	return Val(T_co) != *cols || Val(T_li) != *lins;
 }
 
 
