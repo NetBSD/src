@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.15 2011/09/06 18:34:12 joerg Exp $	*/
+/*	$NetBSD: set.c,v 1.16 2011/10/03 12:36:32 roy Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: set.c,v 1.15 2011/09/06 18:34:12 joerg Exp $");
+__RCSID("$NetBSD: set.c,v 1.16 2011/10/03 12:36:32 roy Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -255,7 +255,7 @@ set_tabs(void)
 		
 		for (c = 8; c < ncolumns; c += 8) {
 			if (column_address)
-				out = vtparm(column_address, c);
+				out = tiparm(column_address, c);
 			else
 				out = NULL;
 			if (out)
