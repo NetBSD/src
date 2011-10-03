@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.36 2011/10/02 23:25:20 jmcneill Exp $ */
+/* $NetBSD: piixpm.c,v 1.37 2011/10/03 22:33:02 jmcneill Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.36 2011/10/02 23:25:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.37 2011/10/03 22:33:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,9 +253,9 @@ nopowermanagement:
 	if (sc->sc_poll)
 		aprint_normal("polling");
 
-attach_i2c:
 	aprint_normal("\n");
 
+attach_i2c:
 	/* Attach I2C bus */
 	rw_init(&sc->sc_i2c_rwlock);
 	sc->sc_i2c_tag.ic_cookie = sc;
