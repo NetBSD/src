@@ -1,4 +1,4 @@
-.\"	$NetBSD: libmagic.3,v 1.7 2011/09/16 21:06:25 christos Exp $
+.\"	$NetBSD: libmagic.3,v 1.8 2011/10/03 15:43:55 njoly Exp $
 .\"
 .\" $File: libmagic.man,v 1.24 2011/05/13 22:11:44 christos Exp $
 .\"
@@ -54,9 +54,9 @@
 .Ft int
 .Fn magic_errno "magic_t cookie"
 .Ft const char *
-.Fn magic_descriptor "magic_t cookie, "int fd"
+.Fn magic_descriptor "magic_t cookie" "int fd"
 .Ft const char *
-.Fn magic_file "magic_t cookie, const char *filename"
+.Fn magic_file "magic_t cookie" "const char *filename"
 .Ft const char *
 .Fn magic_buffer "magic_t cookie" "const void *buffer" "size_t length"
 .Ft int
