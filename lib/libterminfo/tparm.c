@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.6 2011/10/03 12:31:51 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.7 2011/10/03 20:13:48 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.6 2011/10/03 12:31:51 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.7 2011/10/03 20:13:48 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -43,18 +43,18 @@ __RCSID("$NetBSD: tparm.c,v 1.6 2011/10/03 12:31:51 roy Exp $");
 static TERMINAL *dumbterm; /* For non thread safe functions */
 
 typedef struct {
-	long nums[20];
+	int nums[20];
 	char *strings[20];
 	size_t offset;
 } TPSTACK;
 
 typedef struct {
-	long num;
+	int num;
 	char *string;
 } TPVAR;
 
 static int
-push(long num, char *string, TPSTACK *stack)
+push(int num, char *string, TPSTACK *stack)
 {
 	if (stack->offset > sizeof(stack->nums)) {
 		errno = E2BIG;
@@ -67,7 +67,7 @@ push(long num, char *string, TPSTACK *stack)
 }
 
 static int
-pop(long *num, char **string, TPSTACK *stack)
+pop(int *num, char **string, TPSTACK *stack)
 {
 	if (stack->offset == 0) {
 		if (num)
@@ -114,7 +114,7 @@ ochar(TERMINAL *term, int c)
 }
 
 static size_t
-onum(TERMINAL *term, const char *fmt, long num, int len)
+onum(TERMINAL *term, const char *fmt, int num, int len)
 {
 	size_t l;
 
@@ -133,8 +133,8 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 {
 	const char *sp;
 	char c, fmt[64], *fp, *ostr;
-	long val, val2;
-	long dnums[26]; /* dynamic variables a-z, not preserved */
+	int val, val2;
+	int dnums[26]; /* dynamic variables a-z, not preserved */
 	size_t l, max;
 	TPSTACK stack;
 	TPVAR params[9];
@@ -150,6 +150,7 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 	  still work with non thread safe functions (which sadly are still the
 	  norm and standard).
 	*/
+
 	if (term == NULL) {
 		if (dumbterm == NULL) {
 			dumbterm = malloc(sizeof(*dumbterm));
@@ -171,7 +172,7 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 
 	/*
 	  Make a first pass through the string so we can work out
-	  which parameters are longs and which are char *.
+	  which parameters are ints and which are char *.
 	  Basically we only use char * if %p[1-9] is followed by %l or %s.
 	*/
 	memset(&piss, 0, sizeof(piss));
@@ -315,7 +316,7 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 				l = 0;
 			else
 				l = strlen(ostr);
-			if (onum(term, "%d", (long)l, 0) == 0)
+			if (onum(term, "%d", (int)l, 0) == 0)
 				return NULL;
 			break;
 		case 'd': /* FALLTHROUGH */
@@ -357,7 +358,7 @@ _ti_tiparm(TERMINAL *term, const char *str, va_list parms)
 				params[1].num++;
 			break;
 		case '\'':
-			if (push((long)(unsigned char)*str++, NULL, &stack))
+			if (push((int)(unsigned char)*str++, NULL, &stack))
 				return NULL;
 			while (*str != '\0' && *str != '\'')
 				str++;
@@ -530,6 +531,6 @@ tparm(const char *str,
 {
 	int p1 = lp1, p2 = lp2, p3 = lp3, p4 = lp4, p5 = lp5;
 	int p6 = lp6, p7 = lp7, p8 = lp8, p9 = lp9;
-	
-	return tiparm(NULL, str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+
+	return tiparm(str, p1, p2, p3, p4, p5, p6, p7, p8, p9);
 }
