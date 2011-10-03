@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.52 2011/07/26 12:59:41 yamt Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.53 2011/10/03 17:31:35 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -178,7 +178,7 @@
 			    "\36LONG\0373DNOW2\0403DNOW" \
 
 /* AMD Fn80000001 extended features - %ecx */
-#define CPUID_LAHF	0x00000001	/* LAHF/SAHF instruction */
+/* 	CPUID_LAHF			   LAHF/SAHF instruction */
 #define CPUID_CMPLEGACY	0x00000002	/* Compare Legacy */
 #define CPUID_SVM	0x00000004	/* Secure Virtual Machine */
 #define CPUID_EAPIC	0x00000008	/* Extended APIC space */
