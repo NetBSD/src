@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.35 2011/10/03 22:27:23 jmcneill Exp $	*/
+/*	$NetBSD: i2c.c,v 1.36 2011/10/03 23:53:04 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.35 2011/10/03 22:27:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.36 2011/10/03 23:53:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,6 +507,12 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 	error = iic_exec(ic, iie->iie_op, iie->iie_addr, cmd, iie->iie_cmdlen,
 	    buf, iie->iie_buflen, 0);
 	iic_release_bus(ic, 0);
+
+	/*
+	 * Some drivers return error codes on failure, and others return -1.
+	 */
+	if (error < 0)
+		error = EIO;
 
 	if (cmd)
 		kmem_free(cmd, iie->iie_cmdlen);
