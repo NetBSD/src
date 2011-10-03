@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.26 2010/02/03 15:34:39 roy Exp $	*/
+/*	$NetBSD: screen.c,v 1.27 2011/10/03 12:32:28 roy Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@ moveto(int r, int c)
 {
 	char *buf;
 
-	buf = vtparm(cursor_address, r, c);
+	buf = tiparm(cursor_address, r, c);
 	if (buf != NULL)
 		putpad(buf);
 }

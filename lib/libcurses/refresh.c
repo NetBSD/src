@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.74 2011/06/16 22:45:46 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.75 2011/10/03 12:32:15 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.74 2011/06/16 22:45:46 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.75 2011/10/03 12:32:15 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1573,18 +1573,18 @@ scrolln(starts, startw, curs, bot, top)
 		    top > 3 || bot + 3 < __virtscr->maxy) &&
 		    scroll_forward != NULL)))
 		{
-			tputs(vtparm(change_scroll_region, top, bot),
+			tputs(tiparm(change_scroll_region, top, bot),
 			    0, __cputchar);
 			__mvcur(oy, ox, 0, 0, 1);
 			tputs(cursor_home, 0, __cputchar);
 			__mvcur(0, 0, bot, 0, 1);
 			if (parm_index != NULL)
-				tputs(vtparm(parm_index, n),
+				tputs(tiparm(parm_index, n),
 				    0, __cputchar);
 			else
 				for (i = 0; i < n; i++)
 					tputs(scroll_forward, 0, __cputchar);
-			tputs(vtparm(change_scroll_region,
+			tputs(tiparm(change_scroll_region,
 			    0, (int) __virtscr->maxy - 1), 0, __cputchar);
 			__mvcur(bot, 0, 0, 0, 1);
 			tputs(cursor_home, 0, __cputchar);
@@ -1595,11 +1595,11 @@ scrolln(starts, startw, curs, bot, top)
 		/* Scroll up the block. */
 		if (parm_index != NULL && top == 0) {
 			__mvcur(oy, ox, bot, 0, 1);
-			tputs(vtparm(parm_index, n), 0, __cputchar);
+			tputs(tiparm(parm_index, n), 0, __cputchar);
 		} else
 			if (parm_delete_line != NULL) {
 				__mvcur(oy, ox, top, 0, 1);
-				tputs(vtparm(parm_delete_line, n),
+				tputs(tiparm(parm_delete_line, n),
 				    0, __cputchar);
 			} else
 				if (delete_line != NULL) {
@@ -1619,7 +1619,7 @@ scrolln(starts, startw, curs, bot, top)
 		/* Push down the bottom region. */
 		__mvcur(top, 0, bot - n + 1, 0, 1);
 		if (parm_insert_line != NULL)
-			tputs(vtparm(parm_insert_line, n), 0, __cputchar);
+			tputs(tiparm(parm_insert_line, n), 0, __cputchar);
 		else
 			if (insert_line != NULL)
 				for (i = 0; i < n; i++)
@@ -1641,19 +1641,19 @@ scrolln(starts, startw, curs, bot, top)
 		    top > 3 ||
 		    bot + 3 < __virtscr->maxy) && scroll_reverse != NULL)))
 		{
-			tputs(vtparm(change_scroll_region, top, bot),
+			tputs(tiparm(change_scroll_region, top, bot),
 			    0, __cputchar);
 			__mvcur(oy, ox, 0, 0, 1);
 			tputs(cursor_home, 0, __cputchar);
 			__mvcur(0, 0, top, 0, 1);
 
 			if (parm_rindex != NULL)
-				tputs(vtparm(parm_rindex, -n),
+				tputs(tiparm(parm_rindex, -n),
 				    0, __cputchar);
 			else
 				for (i = n; i < 0; i++)
 					tputs(scroll_reverse, 0, __cputchar);
-			tputs(vtparm(change_scroll_region,
+			tputs(tiparm(change_scroll_region,
 			    0, (int) __virtscr->maxy - 1), 0, __cputchar);
 			__mvcur(top, 0, 0, 0, 1);
 			tputs(cursor_home, 0, __cputchar);
@@ -1664,10 +1664,10 @@ scrolln(starts, startw, curs, bot, top)
 		/* Preserve the bottom lines. */
 		__mvcur(oy, ox, bot + n + 1, 0, 1);
 		if (parm_rindex != NULL && bot == __virtscr->maxy)
-			tputs(vtparm(parm_rindex, -n), 0, __cputchar);
+			tputs(tiparm(parm_rindex, -n), 0, __cputchar);
 		else
 			if (parm_delete_line != NULL)
-				tputs(vtparm(parm_delete_line, -n),
+				tputs(tiparm(parm_delete_line, -n),
 				    0, __cputchar);
 			else
 				if (delete_line != NULL)
@@ -1686,7 +1686,7 @@ scrolln(starts, startw, curs, bot, top)
 		/* Scroll the block down. */
 		__mvcur(bot + n + 1, 0, top, 0, 1);
 		if (parm_insert_line != NULL)
-			tputs(vtparm(parm_insert_line, -n), 0, __cputchar);
+			tputs(tiparm(parm_insert_line, -n), 0, __cputchar);
 		else
 			if (insert_line != NULL)
 				for (i = n; i < 0; i++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.25 2010/02/03 15:34:39 roy Exp $	*/
+/*	$NetBSD: io.c,v 1.26 2011/10/03 12:32:28 roy Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.25 2010/02/03 15:34:39 roy Exp $");
+__RCSID("$NetBSD: io.c,v 1.26 2011/10/03 12:32:28 roy Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -831,7 +831,7 @@ lflush()
 				case CURSOR:
 					curx = *++str - 1;
 					cury = *++str - 1;
-					tputs(vtparm(cursor_address,
+					tputs(tiparm(cursor_address,
 						    cury, curx), 0, ttputch);
 					break;
 
@@ -845,7 +845,7 @@ lflush()
 
 							if (++scrline > 23)
 								scrline = 19;
-							tputs(vtparm(
+							tputs(tiparm(
 							    cursor_address,
 							    scrline, 0),
 							    0, ttputch);
@@ -854,20 +854,20 @@ lflush()
 
 							if (--scrline < 19)
 								scrline = 23;
-							tputs(vtparm(
+							tputs(tiparm(
 							    cursor_address,
 							    scrline, 0),
 							    0, ttputch);
 							tputs(clr_eol, 0,
 							    ttputch);
 						} else {
-							tputs(vtparm(
+							tputs(tiparm(
 							    cursor_address,
 							    19, 0),
 							    0, ttputch);
 							tputs(delete_line, 0,
 							    ttputch);
-							tputs(vtparm(
+							tputs(tiparm(
 							    cursor_address,
 							    23, 0),
 							    0, ttputch);
