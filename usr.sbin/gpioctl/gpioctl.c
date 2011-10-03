@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.15 2011/10/02 12:43:53 mbalmer Exp $ */
+/* $NetBSD: gpioctl.c,v 1.16 2011/10/03 11:16:48 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2008, 2010, 2011 Marc Balmer <mbalmer@NetBSD.org>
@@ -47,7 +47,6 @@ static void gpiopulse(int, char *, double, double);
 static void gpioset(int pin, char *name, int flags, char *alias);
 static void gpiounset(int pin, char *name);
 static void devattach(char *, int, uint32_t, uint32_t);
-static void devdetach(char *);
 __dead static void usage(void);
 
 extern long long strtonum(const char *numstr, long long minval,
@@ -153,10 +152,6 @@ main(int argc, char *argv[])
 		}
 		devattach(driver, ga_offset, ga_mask, ga_flags);
 		return EXIT_SUCCESS;
-	} else if (!strcmp(argv[1], "detach")) {
-		if (argc != 3)
-			usage();
-		devdetach(argv[2]);
 	} else {
 		char *nm = NULL;
 
@@ -414,17 +409,6 @@ devattach(char *dvname, int offset, uint32_t mask, uint32_t flags)
 }
 
 static void
-devdetach(char *dvname)
-{
-	struct gpio_attach attach;
-
-	memset(&attach, 0, sizeof(attach));
-	strlcpy(attach.ga_dvname, dvname, sizeof(attach.ga_dvname));
-	if (ioctl(devfd, GPIODETACH, &attach) == -1)
-		err(EXIT_FAILURE, "GPIODETACH");
-}
-
-static void
 usage(void)
 {
 	const char *progname;
@@ -440,7 +424,6 @@ usage(void)
 	fprintf(stderr, "       %s [-q] device attach device offset mask "
 	    "[flag]\n",
 	    progname);
-	fprintf(stderr, "       %s [-q] device detach device\n", progname);
 
 	exit(EXIT_FAILURE);
 }

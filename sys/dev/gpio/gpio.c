@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.43 2011/10/03 08:23:58 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.44 2011/10/03 11:16:47 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.43 2011/10/03 08:23:58 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.44 2011/10/03 11:16:47 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -737,49 +737,6 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		cv_signal(&sc->sc_attach);
 		mutex_exit(&sc->sc_mtx);
 		return error;
-#ifdef COMPAT_50
-	case GPIODETACH50:
-		/* FALLTHOUGH */
-#endif
-	case GPIODETACH:
-		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
-			return EPERM;
-
-		error = 0;
-		mutex_enter(&sc->sc_mtx);
-		while (sc->sc_attach_busy) {
-			error = cv_wait_sig(&sc->sc_attach, &sc->sc_mtx);
-			if (error)
-				break;
-		}
-		if (!error)
-			sc->sc_attach_busy = 1;
-		mutex_exit(&sc->sc_mtx);
-		if (error)
-			return EBUSY;
-
-		attach = data;
-		LIST_FOREACH(gdev, &sc->sc_devs, sc_next) {
-			if (strcmp(device_xname(gdev->sc_dev),
-			    attach->ga_dvname) == 0) {
-				mutex_enter(&sc->sc_mtx);
-				sc->sc_attach_busy = 0;
-				cv_signal(&sc->sc_attach);
-				mutex_exit(&sc->sc_mtx);
-
-				if (config_detach(gdev->sc_dev, 0) == 0)
-					return 0;
-				break;
-			}
-		}
-		if (gdev == NULL) {
-			mutex_enter(&sc->sc_mtx);
-			sc->sc_attach_busy = 0;
-			cv_signal(&sc->sc_attach);
-			mutex_exit(&sc->sc_mtx);
-		}
-		return EINVAL;
 	case GPIOSET:
 		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
 		    NULL, NULL, NULL, NULL))
@@ -987,6 +944,48 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 			sc->sc_pins[pin].pin_flags = flags;
 		}
 		break;
+	case GPIODETACH50:
+		/* FALLTHOUGH */
+	case GPIODETACH:
+		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
+		    NULL, NULL, NULL, NULL))
+			return EPERM;
+
+		error = 0;
+		mutex_enter(&sc->sc_mtx);
+		while (sc->sc_attach_busy) {
+			error = cv_wait_sig(&sc->sc_attach, &sc->sc_mtx);
+			if (error)
+				break;
+		}
+		if (!error)
+			sc->sc_attach_busy = 1;
+		mutex_exit(&sc->sc_mtx);
+		if (error)
+			return EBUSY;
+
+		attach = data;
+		LIST_FOREACH(gdev, &sc->sc_devs, sc_next) {
+			if (strcmp(device_xname(gdev->sc_dev),
+			    attach->ga_dvname) == 0) {
+				mutex_enter(&sc->sc_mtx);
+				sc->sc_attach_busy = 0;
+				cv_signal(&sc->sc_attach);
+				mutex_exit(&sc->sc_mtx);
+
+				if (config_detach(gdev->sc_dev, 0) == 0)
+					return 0;
+				break;
+			}
+		}
+		if (gdev == NULL) {
+			mutex_enter(&sc->sc_mtx);
+			sc->sc_attach_busy = 0;
+			cv_signal(&sc->sc_attach);
+			mutex_exit(&sc->sc_mtx);
+		}
+		return EINVAL;
+
 	default:
 		return ENOTTY;
 	}
