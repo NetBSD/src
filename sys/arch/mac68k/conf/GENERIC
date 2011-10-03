@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.201 2011/06/30 20:09:32 wiz Exp $
+# $NetBSD: GENERIC,v 1.202 2011/10/03 19:22:59 hauke Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.201 $"
+#ident 		"GENERIC-$Revision: 1.202 $"
 
 maxusers	16		# estimated number of users
 
@@ -350,6 +350,7 @@ pseudo-device	ite		1	# ite emulation for wscons
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	putter			# for puffs and pud
+pseudo-device	swwdog			# software watchdog driver
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator
