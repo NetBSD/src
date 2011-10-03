@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.12 2011/10/02 13:00:06 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.13 2011/10/03 10:30:13 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.12 2011/10/02 13:00:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.13 2011/10/03 10:30:13 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -196,17 +196,15 @@ vfs_vnode_sysinit(void)
 
 /*
  * Allocate a new, uninitialized vnode.  If 'mp' is non-NULL, this is a
- * marker vnode and we are prepared to wait for the allocation.
+ * marker vnode.
  */
 vnode_t *
 vnalloc(struct mount *mp)
 {
 	vnode_t *vp;
 
-	vp = pool_cache_get(vnode_cache, (mp != NULL ? PR_WAITOK : PR_NOWAIT));
-	if (vp == NULL) {
-		return NULL;
-	}
+	vp = pool_cache_get(vnode_cache, PR_WAITOK);
+	KASSERT(vp != NULL);
 
 	memset(vp, 0, sizeof(*vp));
 	uvm_obj_init(&vp->v_uobj, &uvm_vnodeops, true, 0);
