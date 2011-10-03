@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.71 2011/08/18 20:55:21 jakllsch Exp $
+# $NetBSD: XEN3_DOM0,v 1.72 2011/10/03 07:28:14 mbalmer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -297,7 +297,7 @@ amdtemp* at pchb?			# AMD CPU Temperature sensors
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
-#iic*	at amdpm?			# sensors below are on this bus
+iic*	at amdpm?			# sensors below are on this bus
 
 # Thermal monitor and fan controller
 #dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
