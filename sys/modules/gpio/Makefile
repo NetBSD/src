@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/08/31 14:42:18 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.3 2011/10/03 23:39:05 jmcneill Exp $
 
 .include "../Makefile.inc"
 
@@ -8,7 +8,6 @@ KMOD=   	gpio
 IOCONF=		gpio.ioconf
 SRCS=		gpio.c
 
-CPPFLAGS+=	-I${S}/gpio
 CWARNFLAGS+=	-Wno-unused
 
 .include <bsd.kmodule.mk>
