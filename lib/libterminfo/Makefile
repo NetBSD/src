@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2011/10/03 12:31:51 roy Exp $
+#	$NetBSD: Makefile,v 1.16 2011/10/03 13:10:58 roy Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -21,7 +21,7 @@ MLINKS=		terminfo.3 setupterm.3 \
 		terminfo.3 putp.3 \
 		terminfo.3 ti_setupterm.3 terminfo.3 ti_getflag.3 \
 		terminfo.3 ti_getnum.3 terminfo.3 ti_getstr.3 \
-		terminfo.3 t_parm.3 terminfo.3 t_tiparm.3 \
+		terminfo.3 tiparm.3 terminfo.3 ti_tiparm.3 \
 		terminfo.3 ti_puts.3 terminfo.3 ti_putp.3
 
 # Build in termcap emulation
