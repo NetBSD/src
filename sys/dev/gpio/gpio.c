@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.42 2011/10/02 09:33:19 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.43 2011/10/03 08:23:58 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.42 2011/10/02 09:33:19 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.43 2011/10/03 08:23:58 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -403,7 +403,7 @@ gpio_lock(void *data)
 	int error;
 
 	error = 0;
-	sc = (struct gpio_softc *)data;
+	sc = data;
 	mutex_enter(&sc->sc_mtx);
 	while (sc->sc_ioctl_busy) {
 		error = cv_wait_sig(&sc->sc_ioctl, &sc->sc_mtx);
@@ -421,7 +421,7 @@ gpio_unlock(void *data)
 {
 	struct gpio_softc *sc;
 
-	sc = (struct gpio_softc *)data;
+	sc = data;
 	mutex_enter(&sc->sc_mtx);
 	sc->sc_ioctl_busy = 0;
 	cv_signal(&sc->sc_ioctl);
@@ -466,7 +466,7 @@ gpio_pulse(void *arg)
 {
 	struct gpio_pin *pin;
 
-	pin = (struct gpio_pin *)arg;
+	pin = arg;
 	if ((pin->pin_state & GPIO_PIN_PULSE) == 0)
 		return;
 
@@ -531,7 +531,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 
 	switch (cmd) {
 	case GPIOINFO:
-		info = (struct gpio_info *)data;
+		info = data;
 		if (!kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
 		    NULL, NULL, NULL, NULL))
 			info->gpio_npins = sc->sc_npins;
@@ -543,7 +543,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		}
 		break;
 	case GPIOREAD:
-		req = (struct gpio_req *)data;
+		req = data;
 
 		if (req->gp_name[0] != '\0')
 			pin = gpio_pinbyname(sc, req->gp_name);
@@ -565,7 +565,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		req = (struct gpio_req *)data;
+		req = data;
 
 		if (req->gp_name[0] != '\0')
 			pin = gpio_pinbyname(sc, req->gp_name);
@@ -601,7 +601,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		pulse = (struct gpio_pulse *)data;
+		pulse = data;
 		if (pulse->gp_name[0] != '\0')
 			pin = gpio_pinbyname(sc, pulse->gp_name);
 		else
@@ -644,7 +644,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		req = (struct gpio_req *)data;
+		req = data;
 
 		if (req->gp_name[0] != '\0')
 			pin = gpio_pinbyname(sc, req->gp_name);
@@ -671,7 +671,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		sc->sc_pins[pin].pin_state = value;
 		break;
 	case GPIOATTACH:
-		attach = (struct gpio_attach *)data;
+		attach = data;
 		ga.ga_flags = attach->ga_flags;
 #ifdef COMPAT_50
 		/* FALLTHROUGH */
@@ -683,7 +683,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		 * GPIOATTACH50 ioctl(2), which had not the ga_flags field
 		 * in struct gpio_attach.
 		 */
-		attach = (struct gpio_attach *)data;
+		attach = data;
 #endif
 		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
 		    NULL, NULL, NULL, NULL))
@@ -759,7 +759,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		if (error)
 			return EBUSY;
 
-		attach = (struct gpio_attach *)data;
+		attach = data;
 		LIST_FOREACH(gdev, &sc->sc_devs, sc_next) {
 			if (strcmp(device_xname(gdev->sc_dev),
 			    attach->ga_dvname) == 0) {
@@ -785,7 +785,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		    NULL, NULL, NULL, NULL))
 			return EPERM;
 
-		set = (struct gpio_set *)data;
+		set = data;
 
 		if (set->gp_name[0] != '\0')
 			pin = gpio_pinbyname(sc, set->gp_name);
@@ -840,7 +840,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		    NULL, NULL, NULL, NULL))
 			return EPERM;
 
-		set = (struct gpio_set *)data;
+		set = data;
 		if (set->gp_name[0] != '\0')
 			pin = gpio_pinbyname(sc, set->gp_name);
 		else
@@ -888,7 +888,7 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 
 	switch (cmd) {
 	case GPIOPINREAD:
-		op = (struct gpio_pin_op *)data;
+		op = data;
 
 		pin = op->gp_pin;
 
@@ -907,7 +907,7 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		op = (struct gpio_pin_op *)data;
+		op = data;
 
 		pin = op->gp_pin;
 
@@ -936,7 +936,7 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		op = (struct gpio_pin_op *)data;
+		op = data;
 
 		pin = op->gp_pin;
 
@@ -960,7 +960,7 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		sc->sc_pins[pin].pin_state = value;
 		break;
 	case GPIOPINCTL:
-		ctl = (struct gpio_pin_ctl *) data;
+		ctl = data;
 
 		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
 		    NULL, NULL, NULL, NULL))
