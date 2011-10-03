@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.44 2011/10/03 11:16:47 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.45 2011/10/03 11:28:28 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.44 2011/10/03 11:16:47 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.45 2011/10/03 11:28:28 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -65,7 +65,9 @@ struct gpio_softc {
 	int			 sc_ioctl_busy;	/* ioctl is busy */
 	kcondvar_t		 sc_attach;	/* attach/detach in progress */
 	int			 sc_attach_busy;/* busy in attach/detach */
+#ifdef COMPAT_50
 	LIST_HEAD(, gpio_dev)	 sc_devs;	/* devices */
+#endif
 	LIST_HEAD(, gpio_name)	 sc_names;	/* named pins */
 };
 
@@ -138,6 +140,7 @@ gpio_resume(device_t self, const pmf_qual_t *qual)
 static void
 gpio_childdetached(device_t self, device_t child)
 {
+#ifdef COMPAT_50
 	struct gpio_dev *gdev;
 	struct gpio_softc *sc;
 	int error;
@@ -172,6 +175,7 @@ gpio_childdetached(device_t self, device_t child)
 	sc->sc_attach_busy = 0;
 	cv_signal(&sc->sc_attach);
 	mutex_exit(&sc->sc_mtx);
+#endif
 }
 
 static int
@@ -506,8 +510,8 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 	struct gpio_info *info;
 	struct gpio_attach *attach;
 	struct gpio_attach_args ga;
-	struct gpio_dev *gdev;
 	struct gpio_req *req;
+	struct gpio_dev *gdev;
 	struct gpio_pulse *pulse;
 	struct gpio_name *nm;
 	struct gpio_set *set;
@@ -723,6 +727,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		if (cf != NULL) {
 			dv = config_attach_loc(sc->sc_dev, cf, locs, &ga,
 			    gpiobus_print);
+#ifdef COMPAT_50
 			if (dv != NULL) {
 				gdev = kmem_alloc(sizeof(struct gpio_dev),
 				    KM_SLEEP);
@@ -730,6 +735,10 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 				LIST_INSERT_HEAD(&sc->sc_devs, gdev, sc_next);
 			} else
 				error = EINVAL;
+#else
+			if (dv == NULL)
+				error = EINVAL;
+#endif
 		} else
 			error = EINVAL;
 		mutex_enter(&sc->sc_mtx);
@@ -839,7 +848,10 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 	gpio_chipset_tag_t gc;
 	struct gpio_pin_op *op;
 	struct gpio_pin_ctl *ctl;
-	int pin, value, flags;
+	struct gpio_attach *attach;
+	struct gpio_dev *gdev;
+
+	int error, pin, value, flags;
 
 	gc = sc->sc_gc;
 
