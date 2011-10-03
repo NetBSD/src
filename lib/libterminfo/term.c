@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.12 2011/04/11 21:37:19 roy Exp $ */
+/* $NetBSD: term.c,v 1.13 2011/10/03 19:18:55 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.12 2011/04/11 21:37:19 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.13 2011/10/03 19:18:55 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -70,18 +70,18 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 
 	term->flags = calloc(TIFLAGMAX + 1, sizeof(char));
 	if (term->flags == NULL)
-		goto err;
+		return -1;
 	term->nums = malloc((TINUMMAX + 1) * sizeof(short));
 	if (term->nums == NULL)
-		goto err;
+		return -1;
 	memset(term->nums, (short)-1, (TINUMMAX + 1) * sizeof(short));
 	term->strs = calloc(TISTRMAX + 1, sizeof(char *));
 	if (term->strs == NULL)
-		goto err;
+		return -1;
 	term->_arealen = caplen;
 	term->_area = malloc(term->_arealen);
 	if (term->_area == NULL)
-		goto err;
+		return -1;
 	memcpy(term->_area, cap, term->_arealen);
 
 	cap = term->_area;
@@ -205,15 +205,11 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 				break;
 			default:
 				errno = EINVAL;
-				goto err;
+				return -1;
 			}
 		}
 	}
 	return 1;
-	
-err:
-	_ti_freeterm(term);
-	return -1;
 }
 
 static int
@@ -403,17 +399,4 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 	}
 
 	return r;
-}
-	
-void
-_ti_freeterm(TERMINAL *term)
-{
-
-	if (term != NULL) {
-		free(term->_area);
-		free(term->strs);
-		free(term->nums);
-		free(term->flags);
-		free(term->_userdefs);
-	}
 }

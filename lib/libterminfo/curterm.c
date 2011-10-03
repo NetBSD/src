@@ -1,4 +1,4 @@
-/* $NetBSD: curterm.c,v 1.5 2011/10/02 19:24:25 roy Exp $ */
+/* $NetBSD: curterm.c,v 1.6 2011/10/03 19:18:55 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: curterm.c,v 1.5 2011/10/02 19:24:25 roy Exp $");
+__RCSID("$NetBSD: curterm.c,v 1.6 2011/10/03 19:18:55 roy Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -90,9 +90,15 @@ int
 del_curterm(TERMINAL *oterm)
 {
 
-	_DIAGASSERT(oterm != NULL);
-	_ti_freeterm(oterm);
-	return 0;
+	if (oterm == NULL)
+		return ERR;
+	free(oterm->_area);
+	free(oterm->strs);
+	free(oterm->nums);
+	free(oterm->flags);
+	free(oterm->_userdefs);
+	free(oterm);
+	return OK;
 }
 
 char *

@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.8 2010/09/22 06:10:51 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.9 2011/10/03 19:18:55 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -114,7 +114,6 @@ const char *	_ti_numid(ssize_t);
 const char *	_ti_strid(ssize_t);
 int		_ti_getterm(TERMINAL *, const char *, int);
 void		_ti_setospeed(TERMINAL *);
-void		_ti_freeterm(TERMINAL *);
 
 /* libterminfo can compile terminfo strings too */
 #define TIC_WARNING	(1 << 0)
