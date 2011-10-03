@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.terminfo.c,v 1.1 2010/02/03 15:34:38 roy Exp $	*/
+/*	$NetBSD: hack.terminfo.c,v 1.2 2011/10/03 12:32:28 roy Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.terminfo.c,v 1.1 2010/02/03 15:34:38 roy Exp $");
+__RCSID("$NetBSD: hack.terminfo.c,v 1.2 2011/10/03 12:32:28 roy Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -126,7 +126,7 @@ cmov(int x, int y)
 {
 	char *p; 
 
-	p = vtparm(cursor_address, y - 1, x - 1);
+	p = tiparm(cursor_address, y - 1, x - 1);
 	if (p) {
 		xputs(p);
 		cury = y;
@@ -246,7 +246,7 @@ home(void)
 	
 	if (cursor_home)
 		xputs(cursor_home);
-	else if ((cursor_address) && (out = vtparm(cursor_address, 0, 0)))
+	else if ((cursor_address) && (out = tiparm(cursor_address, 0, 0)))
 		xputs(out);
 	else
 		curs(1, 1);	/* using UP ... */
