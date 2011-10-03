@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.34 2011/10/02 21:12:43 jmcneill Exp $	*/
+/*	$NetBSD: i2c.c,v 1.35 2011/10/03 22:27:23 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.34 2011/10/02 21:12:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.35 2011/10/03 22:27:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,16 +77,6 @@ extern struct cfdriver iic_cd;
 static void	iic_smbus_intr_thread(void *);
 static void	iic_fill_compat(struct i2c_attach_args*, const char*,
 			size_t, char **);
-
-int
-iicbus_print(void *aux, const char *pnp)
-{
-
-	if (pnp != NULL)
-		aprint_normal("iic at %s", pnp);
-
-	return UNCONF;
-}
 
 static int
 iic_print_direct(void *aux, const char *pnp)
