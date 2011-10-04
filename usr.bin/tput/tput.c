@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.21 2011/10/04 11:02:32 roy Exp $	*/
+/*	$NetBSD: tput.c,v 1.22 2011/10/04 12:23:14 roy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.21 2011/10/04 11:02:32 roy Exp $");
+__RCSID("$NetBSD: tput.c,v 1.22 2011/10/04 12:23:14 roy Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -62,6 +62,7 @@ main(int argc, char **argv)
 	int ch, exitval, n;
 	char *term;
 	const char *p, *s;
+	size_t pl;
 
 	term = NULL;
 	while ((ch = getopt(argc, argv, "T:")) != -1)
@@ -109,17 +110,21 @@ main(int argc, char **argv)
 			}
 			break;
 		}
+		pl = strlen(p);
 		if (((s = tigetstr(p)) != NULL && s != (char *)-1) ||
-		    ((s = tgetstr(p, NULL)) != NULL))
+		    (pl <= 2 && (s = tgetstr(p, NULL)) != NULL))
 			argv = process(p, s, argv);
-		else if ((((n = tigetnum(p)) != -1 && n != -2 )||
-			   (n = tgetnum(p)) != -1))
+		else if ((((n = tigetnum(p)) != -1 && n != -2 ) ||
+			   (pl <= 2 && (n = tgetnum(p)) != -1)))
 			(void)printf("%d\n", n);
 		else {
 			exitval = tigetflag(p);
-			if (exitval == -1)
-				exitval = !tgetflag(p);
-			else
+			if (exitval == -1) {
+				if (pl <= 2)
+					exitval = !tgetflag(p);
+				else
+					exitval = 1;
+			} else
 				exitval = !exitval;
 		}
 
