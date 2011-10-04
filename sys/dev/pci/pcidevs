@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1098 2011/09/23 14:25:13 njoly Exp $
+$NetBSD: pcidevs,v 1.1099 2011/10/04 09:16:23 njoly Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -748,6 +748,7 @@ product 3WARE 9000		0x1002	9000 Series RAID
 product 3WARE 9550		0x1003	9550 Series RAID
 product 3WARE 9650		0x1004	9650 Series RAID
 product 3WARE 9690		0x1005	9690 Series RAID
+product 3WARE 9750		0x1010	9750 Series RAID
 
 /* AboCom products */
 product ABOCOM FE2500		0xab02	FE2500 10/100 Ethernet
