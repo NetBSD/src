@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.99 2011/05/11 22:21:59 dyoung Exp $	*/
+/*	$NetBSD: inet.c,v 1.100 2011/10/04 21:12:40 shattered Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.99 2011/05/11 22:21:59 dyoung Exp $");
+__RCSID("$NetBSD: inet.c,v 1.100 2011/10/04 21:12:40 shattered Exp $");
 #endif
 #endif /* not lint */
 
@@ -976,8 +976,8 @@ tcp_dump(u_long pcbaddr)
 
 	printf("rxtshift %d, rxtcur %d, dupacks %d\n", tcpcb.t_rxtshift,
 	    tcpcb.t_rxtcur, tcpcb.t_dupacks);
-	printf("peermss %u, ourmss %u, segsz %u\n\n", tcpcb.t_peermss,
-	    tcpcb.t_ourmss, tcpcb.t_segsz);
+        printf("peermss %u, ourmss %u, segsz %u, segqlen %u\n\n",
+	    tcpcb.t_peermss, tcpcb.t_ourmss, tcpcb.t_segsz, tcpcb.t_segqlen);
 
 	printf("snd_una %u, snd_nxt %u, snd_up %u\n",
 	    tcpcb.snd_una, tcpcb.snd_nxt, tcpcb.snd_up);
