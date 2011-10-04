@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.9 2011/10/03 14:09:38 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.10 2011/10/04 15:27:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.9 2011/10/03 14:09:38 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.10 2011/10/04 15:27:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1235,7 +1235,7 @@ terminal__putc(EditLine *el, Int c)
 {
 	char buf[MB_LEN_MAX +1];
 	ssize_t i;
-	if (c == MB_FILL_CHAR)
+	if (c == (Int)MB_FILL_CHAR)
 		return 0;
 	i = ct_encode_char(buf, (size_t)MB_LEN_MAX, c);
 	if (i <= 0)

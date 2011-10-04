@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.29 2011/08/16 16:25:15 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.30 2011/10/04 15:27:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.29 2011/08/16 16:25:15 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.30 2011/10/04 15:27:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -600,7 +600,7 @@ cv_csearch(EditLine *el, int direction, Int ch, int count, int tflag)
 	if (ch == 0)
 		return CC_ERROR;
 
-	if (ch == -1) {
+	if (ch == (Int)-1) {
 		Char c;
 		if (FUN(el,getc)(el, &c) != 1)
 			return ed_end_of_file(el, 0);
@@ -614,14 +614,14 @@ cv_csearch(EditLine *el, int direction, Int ch, int count, int tflag)
 
 	cp = el->el_line.cursor;
 	while (count--) {
-		if (*cp == ch)
+		if ((Int)*cp == ch)
 			cp += direction;
 		for (;;cp += direction) {
 			if (cp >= el->el_line.lastchar)
 				return CC_ERROR;
 			if (cp < el->el_line.buffer)
 				return CC_ERROR;
-			if (*cp == ch)
+			if ((Int)*cp == ch)
 				break;
 		}
 	}
