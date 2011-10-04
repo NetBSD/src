@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.40 2011/08/16 16:25:15 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.41 2011/10/04 15:27:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.40 2011/08/16 16:25:15 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.41 2011/10/04 15:27:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -154,7 +154,7 @@ private const ttymap_t tty_map[] = {
 	{C_LNEXT, VLNEXT,
 	{ED_QUOTED_INSERT, ED_QUOTED_INSERT, ED_UNASSIGNED}},
 #endif /* VLNEXT */
-	{-1, -1,
+	{(Int)-1, (Int)-1,
 	{ED_UNASSIGNED, ED_UNASSIGNED, ED_UNASSIGNED}}
 };
 
@@ -914,7 +914,7 @@ tty_bind_char(EditLine *el, int force)
 		dalt = NULL;
 	}
 
-	for (tp = tty_map; tp->nch != -1; tp++) {
+	for (tp = tty_map; tp->nch != (Int)-1; tp++) {
 		new[0] = t_n[tp->nch];
 		old[0] = t_o[tp->och];
 		if (new[0] == old[0] && !force)
