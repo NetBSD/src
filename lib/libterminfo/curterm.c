@@ -1,4 +1,4 @@
-/* $NetBSD: curterm.c,v 1.6 2011/10/03 19:18:55 roy Exp $ */
+/* $NetBSD: curterm.c,v 1.7 2011/10/04 11:01:14 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: curterm.c,v 1.6 2011/10/03 19:18:55 roy Exp $");
+__RCSID("$NetBSD: curterm.c,v 1.7 2011/10/04 11:01:14 roy Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -107,4 +107,16 @@ termname(void)
 
         _DIAGASSERT(cur_term != NULL);
 	return __UNCONST(cur_term->name);
+}
+
+static const char * nullname = '\0';
+
+char *
+longname(void)
+{
+
+	_DIAGASSERT(cur_term != NULL);
+	if (cur_term->desc == NULL)
+		return __UNCONST(nullname);
+	return __UNCONST(cur_term->desc);
 }

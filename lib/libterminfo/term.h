@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.9 2011/10/03 12:31:51 roy Exp $ */
+/* $NetBSD: term.h,v 1.10 2011/10/04 11:01:14 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -1469,6 +1469,7 @@ int		setupterm(const char *, int, int *);
 TERMINAL *	set_curterm(TERMINAL *);
 int		del_curterm(TERMINAL *);
 char *		termname(void);
+char *		longname(void);
 
 /* information functions */
 int		tigetflag(const char *);

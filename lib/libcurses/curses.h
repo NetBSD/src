@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.102 2011/07/17 20:54:34 joerg Exp $	*/
+/*	$NetBSD: curses.h,v 1.103 2011/10/04 11:01:13 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -672,7 +672,6 @@ int	 keypad(WINDOW *, bool);
 char	*keyname(int);
 char     killchar(void);
 int	 leaveok(WINDOW *, bool);
-char	*longname(void);
 int	 meta(WINDOW *, bool);
 int	 mvcur(int, int, int, int);
 int      mvderwin(WINDOW *, int, int);

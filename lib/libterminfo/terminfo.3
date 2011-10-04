@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.3,v 1.7 2011/10/03 19:15:03 roy Exp $
+.\"	$NetBSD: terminfo.3,v 1.8 2011/10/04 11:01:14 roy Exp $
 .\"
 .\" Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 3, 2011
+.Dd October 4, 2011
 .Dt TERMINFO 3
 .Os
 .Sh NAME
@@ -35,6 +35,7 @@
 .Nm set_curterm ,
 .Nm del_curterm ,
 .Nm termname ,
+.Nm longname ,
 .Nm tigetflag ,
 .Nm tigetnum ,
 .Nm tigetstr ,
@@ -57,6 +58,8 @@
 .Fn del_curterm "TERMINAL *oterm"
 .Ft char *
 .Fn termname "void"
+.Ft char *
+.Fn longname "void"
 .Ft int
 .Fn tigetnum "const char *id"
 .Ft int
@@ -147,6 +150,10 @@ function frees space pointed to by
 The
 .Fn termname
 function returns the name of
+.Va cur_term .
+The
+.Fn longname
+function returns the description of
 .Va cur_term .
 .Pp
 The
