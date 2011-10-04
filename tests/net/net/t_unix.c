@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.5 2011/10/03 14:55:23 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.6 2011/10/04 16:28:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$Id: t_unix.c,v 1.5 2011/10/03 14:55:23 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.6 2011/10/04 16:28:26 christos Exp $");
 
 #include <stdio.h>
 #include <err.h>
@@ -75,6 +75,7 @@ acc(int s)
 		errx(EXIT_FAILURE, "guard1 = '%c'", guard1);
 	if (guard2 != 's')
 		errx(EXIT_FAILURE, "guard2 = '%c'", guard2);
+	close(s);
 	exit(0);
 }
 
@@ -116,17 +117,18 @@ test(size_t len)
 	case -1:
 		FAIL("fork");
 	case 0:
+		acc(s);
+		/*NOTREACHED*/
+	default:
 		sleep(1);
 		s2 = socket(AF_UNIX, SOCK_STREAM, 0);
-		if (s == -1)
+		if (s2 == -1)
 			FAIL("socket");
 		if (connect(s2, (struct sockaddr *)sun, sl) == -1)
 			FAIL("connect");
+		close(s2);
 		break;
-	default:
-		acc(s);
 	}
-
 	return 0;
 }
 
