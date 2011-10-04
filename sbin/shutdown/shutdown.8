@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.30 2011/02/16 19:33:39 wiz Exp $
+.\"	$NetBSD: shutdown.8,v 1.31 2011/10/04 07:25:34 dholland Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)shutdown.8	8.2 (Berkeley) 4/27/95
 .\"
-.Dd February 16, 2011
+.Dd October 4, 2011
 .Dt SHUTDOWN 8
 .Os
 .Sh NAME
@@ -102,7 +102,7 @@ before stopping.
 The system is powered down at the specified
 .Ar time ,
 using
-.Xr halt 8 .
+.Xr poweroff 8 .
 If the powerdown fails, or the system does not support software powerdown,
 the system will simply halt instead.
 .It Fl r
