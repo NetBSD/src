@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.62 2011/01/21 15:59:10 joerg Exp $
+#	$NetBSD: Makefile.x68k,v 1.63 2011/10/04 04:05:17 chs Exp $
 #
 # Makefile for NetBSD
 #
@@ -84,7 +84,8 @@ intio.o vm_machdep.o: Makefile
 ## (7) misc settings
 ##
 
-
+# XXX work around gcc 4.5 issue
+COPTS.machdep.c += -O1
 
 ##
 ## (8) config(8) generated machinery
