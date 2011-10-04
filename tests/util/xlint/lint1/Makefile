@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/07/18 10:11:01 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2011/10/04 16:24:27 christos Exp $
 
 NOMAN=		# defined
 
@@ -20,6 +20,7 @@ FILES+=		d_c99_union_init2.c
 FILES+=		d_c99_union_init3.c
 FILES+=		d_c9x_array_init.c
 FILES+=		d_c9x_recursive_init.c
+FILES+=		d_c99_decls_after_stmt.c
 FILES+=		d_cast_init.c
 FILES+=		d_cast_init2.c
 FILES+=		d_cast_lhs.c
