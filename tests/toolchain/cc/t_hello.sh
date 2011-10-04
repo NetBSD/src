@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.4 2011/05/11 22:08:12 njoly Exp $
+#	$NetBSD: t_hello.sh,v 1.5 2011/10/04 12:01:21 martin Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -99,7 +99,7 @@ EOF
 	fi
 	echo "32bit binaries on this platform are:"
 	cat ./ftype32
-	echo "While native (64bit) binareis are:"
+	echo "While native (64bit) binaries are:"
 	cat ./ftype64
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello32
 
