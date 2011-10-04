@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.40 2011/08/16 16:25:15 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.41 2011/10/04 15:27:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.40 2011/08/16 16:25:15 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.41 2011/10/04 15:27:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -63,7 +63,7 @@ cv_action(EditLine *el, Int c)
 
 	if (el->el_chared.c_vcmd.action != NOP) {
 		/* 'cc', 'dd' and (possibly) friends */
-		if (c != el->el_chared.c_vcmd.action)
+		if (c != (Int)el->el_chared.c_vcmd.action)
 			return CC_ERROR;
 
 		if (!(c & YANK))
