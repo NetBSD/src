@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.43 2009/10/02 15:03:45 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.44 2011/10/04 16:19:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.43 2009/10/02 15:03:45 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.44 2011/10/04 16:19:59 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -386,6 +386,7 @@ const	char *msgs[] = {
 	"suggest cast from '%s' to '%s' on op %s to avoid overflow",  /* 324 */
 	"variable declaration in for loop", 			      /* 325 */
 	"%s attribute ignored for %s",				      /* 326 */
+	"declarations after statements is a C9X feature",	      /* 327 */
 };
 
 /*

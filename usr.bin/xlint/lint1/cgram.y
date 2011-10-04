@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.49 2010/02/09 23:05:16 wiz Exp $ */
+/* $NetBSD: cgram.y,v 1.50 2011/10/04 16:19:59 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.49 2010/02/09 23:05:16 wiz Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.50 2011/10/04 16:19:59 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -107,7 +107,7 @@ static inline void RESTORE(const char *file, size_t line)
 #endif
 %}
 
-%expect 3
+%expect 7
 
 %union {
 	int	y_int;
@@ -1329,9 +1329,19 @@ label:
 	  }
 	;
 
+stmnt_d_list:
+	  stmnt_list
+	| stmnt_d_list declaration_list stmnt_list {
+		if (!Sflag)
+			c99ism(327);
+	}
+	;
+
 comp_stmnt:
-	  comp_stmnt_lbrace declaration_list opt_stmnt_list comp_stmnt_rbrace
-	| comp_stmnt_lbrace opt_stmnt_list comp_stmnt_rbrace
+	  comp_stmnt_lbrace comp_stmnt_rbrace
+	| comp_stmnt_lbrace stmnt_list comp_stmnt_rbrace
+	| comp_stmnt_lbrace declaration_list comp_stmnt_rbrace
+	| comp_stmnt_lbrace declaration_list stmnt_d_list comp_stmnt_rbrace
 	;
 
 comp_stmnt_lbrace:
@@ -1350,11 +1360,6 @@ comp_stmnt_rbrace:
 		blklev--;
 		ftflg = 0;
 	  }
-	;
-
-opt_stmnt_list:
-	  /* empty */
-	| stmnt_list
 	;
 
 stmnt_list:
@@ -1789,8 +1794,9 @@ point_or_arrow:
 
 point:
 	  T_STROP {
-		if ($1 != POINT)
+		if ($1 != POINT) {
 			error(249, yytext);
+		}
 	  }
 	;
 
