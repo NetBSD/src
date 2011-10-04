@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.20 2010/02/03 15:34:46 roy Exp $	*/
+/*	$NetBSD: tput.c,v 1.21 2011/10/04 11:02:32 roy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.20 2010/02/03 15:34:46 roy Exp $");
+__RCSID("$NetBSD: tput.c,v 1.21 2011/10/04 11:02:32 roy Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: tput.c,v 1.20 2010/02/03 15:34:46 roy Exp $");
 #include <unistd.h>
 
 static int    outc(int);
-static void   prlongname(char *);
 static void   usage(void) __dead;
 static char **process(const char *, const char *, char **);
 
@@ -61,7 +60,7 @@ int
 main(int argc, char **argv)
 {
 	int ch, exitval, n;
-	char *term, tbuf[1024];
+	char *term;
 	const char *p, *s;
 
 	term = NULL;
@@ -97,7 +96,7 @@ main(int argc, char **argv)
 			break;
 		case 'l':
 			if (!strcmp(p, "longname")) {
-				prlongname(tbuf);
+				(void)printf("%s\n", longname());
 				continue;
 			}
 			break;
@@ -128,21 +127,6 @@ main(int argc, char **argv)
 			break;
 	}
 	return argv ? exitval : 2;
-}
-
-static void
-prlongname(char *buf)
-{
-	int savech;
-	char *p, *savep;
-
-	for (p = buf; *p && *p != ':'; ++p)
-		continue;
-	savech = *(savep = p);
-	for (*p = '\0'; p >= buf && *p != '|'; --p)
-		continue;
-	(void)printf("%s\n", p + 1);
-	*savep = savech;
 }
 
 static char **
