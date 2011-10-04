@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2011/07/12 03:09:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.47 2011/10/04 04:04:15 chs Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -88,8 +88,11 @@ CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS}
 CFLAGS+= -Werror
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
+# XXX work around a gcc 4.5 bug
+COPTS.cread.c = -O1
+
 .c.o:
-	${CC} ${CFLAGS} -S $< -o $*.s
+	${CC} ${CFLAGS} ${COPTS.${.IMPSRC:T}} -S $< -o $*.s
 	${TXLT} < $*.s | ${AS} ${AFLAGS} -o $@
 	rm $*.s
 
