@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.h,v 1.3 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: grfabs_et.h,v 1.4 2011/10/04 04:50:20 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
 typedef struct {
 	u_char	misc_output;
 	u_char	crt[25];	/* Std. VGA crt registers	*/
-	u_char	attr[21];	/* Std. VGA attr. registers	*/
+	u_char	attr[25];	/* Std. VGA attr. registers	*/
 	u_char	grf[9];		/* Std. VGA grf. registers	*/
 	u_char	seq[5];		/* Std. VGA seq. registers	*/
 
