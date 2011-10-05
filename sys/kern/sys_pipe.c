@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.132 2011/07/15 14:50:19 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.133 2011/10/05 13:30:24 apb Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.132 2011/07/15 14:50:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.133 2011/10/05 13:30:24 apb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,9 +255,8 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 		return EINVAL;
 	p = curproc;
 	rpipe = wpipe = NULL;
-	if (pipe_create(&rpipe, pipe_rd_cache) ||
-	    pipe_create(&wpipe, pipe_wr_cache)) {
-		error = ENOMEM;
+	if ((error = pipe_create(&rpipe, pipe_rd_cache)) ||
+	    (error = pipe_create(&wpipe, pipe_wr_cache))) {
 		goto free2;
 	}
 	rpipe->pipe_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
