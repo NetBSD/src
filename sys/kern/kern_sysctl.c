@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.231 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.232 2011/10/05 13:24:09 apb Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.231 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.232 2011/10/05 13:24:09 apb Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1574,7 +1574,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		}
 
 		/*
-		 * did they null terminate it, or do we have space
+		 * did they NUL terminate it, or do we have space
 		 * left to do it ourselves?
 		 */
 		if (newbuf[len - 1] != '\0' && len == sz) {
