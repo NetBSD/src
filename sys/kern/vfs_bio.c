@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.231 2011/07/11 08:27:37 hannken Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.232 2011/10/05 01:53:03 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.231 2011/07/11 08:27:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.232 2011/10/05 01:53:03 jakllsch Exp $");
 
 #include "opt_bufcache.h"
 
@@ -142,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.231 2011/07/11 08:27:37 hannken Exp $"
 #include <sys/intr.h>
 #include <sys/cpu.h>
 #include <sys/wapbl.h>
+#include <sys/bitops.h>
 
 #include <uvm/uvm.h>	/* extern struct uvm uvm */
 
@@ -215,21 +216,9 @@ static void *biodone_sih;
 static pool_cache_t buf_cache;
 static pool_cache_t bufio_cache;
 
-/* XXX - somewhat gross.. */
-#if MAXBSIZE == 0x2000
-#define NMEMPOOLS 5
-#elif MAXBSIZE == 0x4000
-#define NMEMPOOLS 6
-#elif MAXBSIZE == 0x8000
-#define NMEMPOOLS 7
-#else
-#define NMEMPOOLS 8
-#endif
-
-#define MEMPOOL_INDEX_OFFSET 9	/* smallest pool is 512 bytes */
-#if (1 << (NMEMPOOLS + MEMPOOL_INDEX_OFFSET - 1)) != MAXBSIZE
-#error update vfs_bio buffer memory parameters
-#endif
+#define MEMPOOL_INDEX_OFFSET (ilog2(DEV_BSIZE))	/* smallest pool is 512 bytes */
+#define NMEMPOOLS (ilog2(MAXBSIZE) - MEMPOOL_INDEX_OFFSET + 1)
+__CTASSERT((1 << (NMEMPOOLS + MEMPOOL_INDEX_OFFSET - 1)) == MAXBSIZE);
 
 /* Buffer memory pools */
 static struct pool bmempools[NMEMPOOLS];
@@ -491,10 +480,12 @@ bufinit(void)
 		struct pool *pp = &bmempools[i];
 		u_int size = 1 << (i + MEMPOOL_INDEX_OFFSET);
 		char *name = kmem_alloc(8, KM_SLEEP); /* XXX: never freed */
-		if (__predict_true(size >= 1024))
-			(void)snprintf(name, 8, "buf%dk", size / 1024);
+		if (__predict_false(size >= 1048576))
+			(void)snprintf(name, 8, "buf%um", size / 1048576);
+		else if (__predict_true(size >= 1024))
+			(void)snprintf(name, 8, "buf%uk", size / 1024);
 		else
-			(void)snprintf(name, 8, "buf%db", size);
+			(void)snprintf(name, 8, "buf%ub", size);
 		pa = (size <= PAGE_SIZE && use_std)
 			? &pool_allocator_nointr
 			: &bufmempool_allocator;
