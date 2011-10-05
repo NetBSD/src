@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66 2011/04/03 22:29:25 dyoung Exp $	*/
+/*	$NetBSD: trap.c,v 1.67 2011/10/05 20:39:24 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66 2011/04/03 22:29:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2011/10/05 20:39:24 njoly Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -275,7 +275,7 @@ trap(struct trapframe *frame)
 		else
 			printf("unknown trap %ld", (u_long)frame->tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 "
+		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2"
 		       " %lx cpl %x rsp %lx\n",
 		    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
 		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
