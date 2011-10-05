@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.105 2011/10/04 18:11:27 apb Exp $
+.\"	$NetBSD: sh.1,v 1.106 2011/10/05 13:15:30 christos Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -967,8 +967,8 @@ In addition, a parameter expansion can be modified by using one of the
 following formats.
 If the
 .Dq Dv \&:
-is omitted in the modifiers, then the expansion is applied only to unset
-parameters, not null ones.
+is omitted in the following modifiers, then the expansion is applied only
+to unset parameters, not null ones.
 .Bl -tag -width aaparameterwordaaaaa
 .It ${parameter:-word}
 Use Default Values.
@@ -994,9 +994,6 @@ If parameter is unset or null, null is
 substituted; otherwise, the expansion of word is substituted.
 .El
 .Pp
-In the parameter expansions shown previously, use of the colon in the
-format results in a test for a parameter that is unset or null; omission
-of the colon results in a test for a parameter that is only unset.
 .Bl -tag -width aaparameterwordaaaaa
 .It ${#parameter}
 String Length.
