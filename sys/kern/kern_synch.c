@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.292 2011/10/05 13:05:49 apb Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.293 2011/10/05 13:22:13 apb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.292 2011/10/05 13:05:49 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.293 2011/10/05 13:22:13 apb Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1245,14 +1245,21 @@ sched_pstats(void)
 
 		/*
 		 * Check if the process exceeds its CPU resource allocation.
-		 * If over max, kill it.
+		 * If over the hard limit, kill it with SIGKILL.
+		 * If over the soft limit, send SIGXCPU and raise
+		 * the soft limit a little.
 		 */
 		rlim = &p->p_rlimit[RLIMIT_CPU];
 		sig = 0;
 		if (__predict_false(runtm >= rlim->rlim_cur)) {
-			if (runtm >= rlim->rlim_max)
+			if (runtm >= rlim->rlim_max) {
 				sig = SIGKILL;
-			else {
+				log(LOG_NOTICE, "pid %d is killed: %s\n",
+					p->p_pid, "exceeded RLIMIT_CPU");
+				uprintf("pid %d, command %s, is killed: %s\n",
+					p->p_pid, p->p_comm,
+					"exceeded RLIMIT_CPU");
+			} else {
 				sig = SIGXCPU;
 				if (rlim->rlim_cur < rlim->rlim_max)
 					rlim->rlim_cur += 5;
