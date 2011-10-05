@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.387 2011/07/30 04:42:03 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.388 2011/10/05 03:40:18 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.387 2011/07/30 04:42:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.388 2011/10/05 03:40:18 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -125,6 +125,8 @@ int	wddetach(device_t, int);
 int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
+static void	wdminphys(struct buf *);
+
 static int	wdlastclose(device_t);
 static bool	wd_suspend(device_t, const pmf_qual_t *);
 static int	wd_standby(struct wd_softc *, int);
@@ -185,7 +187,7 @@ bool  wd_shutdown(device_t, int);
 int   wd_getcache(struct wd_softc *, int *);
 int   wd_setcache(struct wd_softc *, int);
 
-struct dkdriver wddkdriver = { wdstrategy, minphys };
+struct dkdriver wddkdriver = { wdstrategy, wdminphys };
 
 #ifdef HAS_BAD144_HANDLING
 static void bad144intern(struct wd_softc *);
@@ -849,12 +851,22 @@ wdrestart(void *v)
 	splx(s);
 }
 
+static void
+wdminphys(struct buf *bp)
+{
+
+	if (bp->b_bcount > (512 * 128)) {
+		bp->b_bcount = (512 * 128);
+	}
+	minphys(bp);
+}
+
 int
 wdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	ATADEBUG_PRINT(("wdread\n"), DEBUG_XFERS);
-	return (physio(wdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(wdstrategy, NULL, dev, B_READ, wdminphys, uio));
 }
 
 int
@@ -862,7 +874,7 @@ wdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	ATADEBUG_PRINT(("wdwrite\n"), DEBUG_XFERS);
-	return (physio(wdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(wdstrategy, NULL, dev, B_WRITE, wdminphys, uio));
 }
 
 int
@@ -1349,7 +1361,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		auio.uio_offset =
 			fop->df_startblk * wd->sc_dk.dk_label->d_secsize;
 		auio.uio_vmspace = l->l_proc->p_vmspace;
-		error = physio(wdformat, NULL, dev, B_WRITE, minphys,
+		error = physio(wdformat, NULL, dev, B_WRITE, wdminphys,
 		    &auio);
 		fop->df_count -= auio.uio_resid;
 		fop->df_reg[0] = wdc->sc_status;
@@ -1405,7 +1417,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE;
 			error1 = physio(wdioctlstrategy, &wi->wi_bp, dev,
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
-			    minphys, &wi->wi_uio);
+			    wdminphys, &wi->wi_uio);
 			if (tbuf != NULL && error1 == 0) {
 				error1 = copyout(tbuf, atareq->databuf,
 				    atareq->datalen);
