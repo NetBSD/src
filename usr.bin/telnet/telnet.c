@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.31 2006/02/02 19:33:12 he Exp $	*/
+/*	$NetBSD: telnet.c,v 1.32 2011/10/05 10:48:54 roy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.31 2006/02/02 19:33:12 he Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.32 2011/10/05 10:48:54 roy Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 
 #include <signal.h>
-#include <termcap.h>
+#include <term.h>
 #include <unistd.h>
 /* By the way, we need to include curses.h before telnet.h since,
  * among other things, telnet.h #defines 'DO', which is a variable
@@ -66,7 +66,6 @@ __RCSID("$NetBSD: telnet.c,v 1.31 2006/02/02 19:33:12 he Exp $");
 #include <libtelnet/encrypt.h>
 #endif
 
-
 #define	strip(x) ((my_want_state_is_wont(TELOPT_BINARY)) ? ((x)&0x7f) : (x))
 
 static unsigned char	subbuffer[SUBBUFSIZE],
@@ -750,7 +749,7 @@ char *termbuf;
 
 /*ARGSUSED*/
 int
-setup_term(char *tname, int fd, int *errp)
+setupterm(char *tname, int fd, int *errp)
 {
 	char zz[1024], *zz_ptr;
 	char *ext_tc, *newptr;
@@ -803,7 +802,7 @@ gettermname(void)
 		if (tnamep && tnamep != unknown)
 			free(tnamep);
 		if ((tname = (char *)env_getvalue((unsigned char *)"TERM")) &&
-				(setup_term(tname, 1, &err) == 0)) {
+				(setupterm(tname, 1, &err) == 0)) {
 			tnamep = mklist(termbuf, tname);
 		} else {
 			if (tname && ((int)strlen(tname) <= 40)) {
