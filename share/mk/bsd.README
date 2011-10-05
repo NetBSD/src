@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.286 2011/09/10 16:57:35 apb Exp $
+#	$NetBSD: bsd.README,v 1.287 2011/10/05 12:34:04 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -819,12 +819,44 @@ CLEANFILES	Files to remove for both the clean and cleandir targets.
 CLEANDIRFILES	Files to remove for the cleandir target, but not for
 		the clean target.
 
-If ${.OBJDIR} and ${.CURDIR} are different, then the clean and cleandir
-targets will delete files from both those directories.  Deleting files
-from ${.OBJDIR} is the traditional behaviour.  Deleting files from
-${.CURDIR} is intended to remove output files that had been left in
-the source directory by an earlier build that had used ${.OBJDIR} ==
-${.CURDIR}.
+MKCLEANSRC	Controls whether or not the clean and cleandir targets
+		will delete files from both the object directory,
+		${.OBJDIR}, and the source directory, ${.CURDIR}.
+
+		If MKCLEANSRC is set to "no", then the file names in
+		CLEANFILES or CLEANDIRFILES are interpreted relative
+		to the object directory, ${.OBJDIR}.  This is the
+		traditional behaviour.
+
+		If MKCLEANSRC is set to "yes", then the file deletion
+		is performed relative to both the object directory,
+		${.OBJDIR}, and the source directory, ${.CURDIR}.  (This
+		has no effect if ${.OBJDIR} is the same as ${.CURDIR}.)
+		Deleting files from ${.CURDIR} is intended to remove
+		stray output files that had been left in the source
+		directory by an earlier build that did not use object
+		directories.
+
+		The default is MKCLEANSRC=yes.  If you always build with
+		separate object directories, and you are sure that there
+		are no stray files in the source directories, then you
+		may set MKCLEANSRC=no to save some time.
+
+MKCLEANVERIFY	Controls whether or not the clean and cleandir targets
+		will verify that files have been deleted.
+
+		If MKCLEANVERIFY is set to "no", then the files will
+		be deleted using a "rm -f" command, and its success or
+		failure will be ignored.
+
+		If MKCLEANVERIFY is set to "yes", then the success of
+		the "rm -f" command will be verified using an "ls"
+		command.
+
+		The default is MKCLEANVERIFY=yes.  If you are sure that
+		there will be no problems caused by file permissions,
+		read-only file systems, or the like, then you may set
+		MKCLEANVERIFY=no to save some time.
 
 To use the clean and cleandir targets defined in <bsd.clean.mk>, other
 Makefiles or bsd.*.mk files should append file names to the CLEANFILES

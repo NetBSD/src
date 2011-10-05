@@ -1,4 +1,4 @@
-# $NetBSD: bsd.clean.mk,v 1.3 2011/09/23 21:13:14 apb Exp $
+# $NetBSD: bsd.clean.mk,v 1.4 2011/10/05 12:34:04 apb Exp $
 
 # <bsd.clean.mk>
 #
@@ -13,11 +13,20 @@
 #
 # CLEANDIRFILES	Files to remove for the cleandir target, but not for
 #		the clean target.
+#
+# MKCLEANSRC	Whether or not to clean the source directory
+# 		in addition to the object directory.
+#
+# MKCLEANVERIFY	Whether or not to verify that the file deletion worked.
+#
 
 .if !defined(_BSD_CLEAN_MK_)
 _BSD_CLEAN_MK_=1
 
 .include <bsd.init.mk>
+
+MKCLEANSRC?=	yes
+MKCLEANVERIFY?=	yes
 
 clean:		.PHONY __doclean
 __doclean:	.PHONY .MADE __cleanuse CLEANFILES
@@ -32,24 +41,20 @@ __docleandir:	.PHONY .MADE __cleanuse CLEANDIRFILES
 # want make to replace any of the file names with the result of
 # searching .PATH.)
 #
-# If the list of file names is non-empty then use "rm -f" to
-# delete the files, and "ls -d" to check that the deletion was
-# successful.  If the list of files is empty, then the commands
+# If the list of files is empty, then the commands
 # reduce to "true", with an "@" prefix to prevent echoing.
-#
-# If .OBJDIR is different from .SRCDIR then repeat all this for
-# both .OBJDIR and .SRCDIR.
 #
 __cleanuse: .USE
 .if 0	# print "# clean CLEANFILES" for debugging
 	${"${.ALLSRC:@v@${${v}:M*}@}" == "":?@true:${_MKMSG} \
 		"clean" ${.ALLSRC} }
 .endif
-.for _d in ${"${.OBJDIR}" == "${.CURDIR}" \
+.for _d in ${"${.OBJDIR}" == "${.CURDIR}" || "${MKCLEANSRC}" == "no" \
 		:? ${.OBJDIR} \
 		:  ${.OBJDIR} ${.CURDIR} }
 	${"${.ALLSRC:@v@${${v}:M*}@}" == "":?@true: \
 	    (cd ${_d} && rm -f ${.ALLSRC:@v@${${v}}@} || true) }
+.if "${MKCLEANVERIFY}" == "yes"
 	@${"${.ALLSRC:@v@${${v}:M*}@}" == "":?true: \
 	    bad="\$(cd ${_d} && ls -d ${.ALLSRC:@v@${${v}}@} 2>/dev/null)"; \
 	    if test -n "\$bad"; then \
@@ -57,6 +62,7 @@ __cleanuse: .USE
 	        echo "\$bad" ; \
 	        false ; \
 	    fi }
+.endif
 .endfor
 
 # Don't automatically load ".depend" files during "make clean"
