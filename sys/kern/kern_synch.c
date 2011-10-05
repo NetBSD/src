@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.293 2011/10/05 13:22:13 apb Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.294 2011/10/05 14:28:08 apb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.293 2011/10/05 13:22:13 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.294 2011/10/05 14:28:08 apb Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1269,7 +1269,7 @@ sched_pstats(void)
 		if (__predict_false(runtm < 0)) {
 			if (!backwards) {
 				backwards = true;
-				log(LOG_WARNING, "WARNING: negative runtime; "
+				printf("WARNING: negative runtime; "
 				    "monotonic clock has gone backwards\n");
 			}
 		} else if (__predict_false(sig)) {
