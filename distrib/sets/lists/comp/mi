@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1687 2011/10/03 13:12:15 roy Exp $
+#	$NetBSD: mi,v 1.1688 2011/10/06 05:23:39 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10076,6 +10076,24 @@
 ./usr/share/man/cat9/kauth.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kcont.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/kcopy.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_create.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_destroy.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_copy.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_use.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_unuse.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_copyin.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_copyout.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_zero.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_fill.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_set.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_clear.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_isset.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_iszero.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_match.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_merge.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_atomic_set.0	comp-sys-catman		.cat
+./usr/share/man/cat9/kcpuset_atomic_clear.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/kernacc.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/kfilter_register.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kfilter_unregister.0	comp-sys-catman		.cat
@@ -16152,6 +16170,24 @@
 ./usr/share/man/html9/itimerfix.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kauth.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kcopy.html		comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset.html		comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_create.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_destroy.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_copy.html		comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_use.html		comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_unuse.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_copyin.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_copyout.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_zero.html		comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_fill.html		comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_set.html		comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_clear.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_isset.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_iszero.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_match.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_merge.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_atomic_set.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_atomic_clear.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kfilter_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kfilter_unregister.html	comp-sys-htmlman	html
 ./usr/share/man/html9/killproc.html		comp-sys-htmlman	html
@@ -22383,6 +22419,24 @@
 ./usr/share/man/man9/kauth.9			comp-sys-man		.man
 ./usr/share/man/man9/kcont.9			comp-obsolete		obsolete
 ./usr/share/man/man9/kcopy.9			comp-sys-man		.man
+./usr/share/man/man9/kcpuset.9			comp-sys-man		.man
+./usr/share/man/man9/kcpuset_create.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_destroy.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_copy.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_use.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_unuse.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_copyin.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_copyout.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_zero.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_fill.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_set.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_clear.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_isset.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_iszero.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_match.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_merge.9		comp-sys-man		.man
+./usr/share/man/man9/kcpuset_atomic_set.9	comp-sys-man		.man
+./usr/share/man/man9/kcpuset_atomic_clear.9	comp-sys-man		.man
 ./usr/share/man/man9/kernacc.9			comp-obsolete		obsolete
 ./usr/share/man/man9/kfilter_register.9		comp-sys-man		.man
 ./usr/share/man/man9/kfilter_unregister.9	comp-sys-man		.man
