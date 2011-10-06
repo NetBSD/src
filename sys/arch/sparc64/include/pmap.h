@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54 2011/06/12 03:35:47 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.55 2011/10/06 06:55:34 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -97,7 +97,7 @@
 struct page_size_map {
 	uint64_t mask;
 	uint64_t code;
-#ifdef DEBUG
+#if defined(DEBUG) || 1
 	uint64_t use;
 #endif
 };
