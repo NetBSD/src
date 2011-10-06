@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1345 2011/10/06 07:38:55 mrg Exp $
+# $NetBSD: mi,v 1.1346 2011/10/06 12:38:57 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2333,6 +2333,7 @@
 ./usr/share/man/cat8/hpropd.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/htable.0			man-obsolete		obsolete
 ./usr/share/man/cat8/httpd.0			man-netutil-catman	.cat
+./usr/share/man/cat8/i2cscan.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/i386/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/apm.0			man-obsolete		obsolete
 ./usr/share/man/cat8/i386/apmd.0		man-obsolete		obsolete
@@ -4992,6 +4993,7 @@
 ./usr/share/man/html8/hprop.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/hpropd.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/httpd.html		man-netutil-htmlman	html
+./usr/share/man/html8/i2cscan.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/i386/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/i386/boot_console.html	man-sys-htmlman		html
 ./usr/share/man/html8/i386/bootselect.html	man-sys-htmlman		html
@@ -7773,6 +7775,7 @@
 ./usr/share/man/man8/hpropd.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/htable.8			man-obsolete		obsolete
 ./usr/share/man/man8/httpd.8			man-netutil-man		.man
+./usr/share/man/man8/i2cscan.8			man-sysutil-man		.man
 ./usr/share/man/man8/i386/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/apm.8			man-obsolete		obsolete
 ./usr/share/man/man8/i386/apmd.8		man-obsolete		obsolete
