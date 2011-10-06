@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_ids.c,v 1.3 2011/02/12 15:15:34 jmcneill Exp $ */
+/* $NetBSD: hdaudio_ids.c,v 1.4 2011/10/06 22:25:00 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.3 2011/02/12 15:15:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.4 2011/10/06 22:25:00 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,6 +59,7 @@ static const struct hdaudio_id {
 	{ HDA_VENDOR_NVIDIA, 0x000b, "GT21x HDMI" },
 	{ HDA_VENDOR_NVIDIA, 0x000c, "MCP89 HDMI" },
 	{ HDA_VENDOR_NVIDIA, 0x000d, "GT240 HDMI" },
+	{ HDA_VENDOR_NVIDIA, 0x0015, "GT5xx HDMI/DP" }, /* ??? GTX 550 Ti */
 	{ HDA_VENDOR_NVIDIA, 0x0067, "MCP67 HDMI" },
 	{ HDA_VENDOR_NVIDIA, 0x8001, "MCP73 HDMI" },
 	{ HDA_VENDOR_NVIDIA, HDA_PRODUCT_ANY, "NVIDIA" },
