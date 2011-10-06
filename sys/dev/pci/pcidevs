@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1099 2011/10/04 09:16:23 njoly Exp $
+$NetBSD: pcidevs,v 1.1100 2011/10/06 22:13:35 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3803,6 +3803,7 @@ product NVIDIA	MCP77_AHCI_9	0x0ad8	nForce MCP77 AHCI Controller
 product NVIDIA	MCP77_AHCI_10	0x0ad9	nForce MCP77 AHCI Controller
 product NVIDIA	MCP77_AHCI_11	0x0ada	nForce MCP77 AHCI Controller
 product NVIDIA	MCP77_AHCI_12	0x0adb	nForce MCP77 AHCI Controller
+product NVIDIA	GF116		0x1244	GeForce GTX 550 Ti
 
 /* Nvidia & SGS-Thomson Microelectronics */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
