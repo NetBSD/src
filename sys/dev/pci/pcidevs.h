@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1094 2011/10/04 09:17:15 njoly Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1095 2011/10/06 22:13:50 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1099 2011/10/04 09:16:23 njoly Exp
+ *	NetBSD: pcidevs,v 1.1100 2011/10/06 22:13:35 jmcneill Exp
  */
 
 /*
@@ -3810,6 +3810,7 @@
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_10	0x0ad9		/* nForce MCP77 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_11	0x0ada		/* nForce MCP77 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_12	0x0adb		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_GF116	0x1244		/* GeForce GTX 550 Ti */
 
 /* Nvidia & SGS-Thomson Microelectronics */
 #define	PCI_PRODUCT_NVIDIA_SGS_RIVA128	0x0018		/* Riva 128 */
