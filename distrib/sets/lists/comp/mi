@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1688 2011/10/06 05:23:39 jruoho Exp $
+#	$NetBSD: mi,v 1.1689 2011/10/06 07:38:54 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3498,6 +3498,7 @@
 ./usr/libdata/debug/usr/bin/atf-sh.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/bin/atf-version.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/bin/audioctl.debug	comp-audio-debug	debug
+./usr/libdata/debug/usr/bin/audiocfg.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/audioplay.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/audiorecord.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/awk.debug		comp-util-debug		debug

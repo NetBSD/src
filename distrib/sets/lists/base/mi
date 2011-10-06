@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.958 2011/10/02 19:29:41 pgoyette Exp $
+# $NetBSD: mi,v 1.959 2011/10/06 07:38:54 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -378,6 +378,7 @@
 ./usr/bin/atq					base-cron-bin
 ./usr/bin/atrm					base-cron-bin
 ./usr/bin/audioctl				base-audio-bin
+./usr/bin/audiocfg				base-audio-bin
 ./usr/bin/audioplay				base-audio-bin
 ./usr/bin/audiorecord				base-audio-bin
 ./usr/bin/awk					base-util-bin
