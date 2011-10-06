@@ -1,4 +1,4 @@
-#	$NetBSD: files.dev,v 1.13 2011/05/22 12:33:49 macallan Exp $
+#	$NetBSD: files.dev,v 1.14 2011/10/06 12:25:42 he Exp $
 
 define giobus {}
 
@@ -31,7 +31,7 @@ device	crime
 attach	crime at mainbus
 file	arch/sgimips/dev/crime.c		crime needs-flag
 
-device	crmfb: wsemuldisplaydev, vcons, rasops8, rasops15, rasops16, rasops32, i2cbus, iic, i2c_bitbang, ddc_read_edid, edid 
+device	crmfb: wsemuldisplaydev, vcons, rasops8, rasops15, rasops16, rasops32, i2cbus, i2c_bitbang, ddc_read_edid, edid 
 attach	crmfb at mainbus
 file	arch/sgimips/dev/crmfb.c		crmfb needs-flag
 defflag	opt_crmfb.h	CRMFB_DEBUG
