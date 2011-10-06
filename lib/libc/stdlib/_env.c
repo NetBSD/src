@@ -1,4 +1,4 @@
-/*	$NetBSD: _env.c,v 1.5 2010/11/17 13:25:53 tron Exp $ */
+/*	$NetBSD: _env.c,v 1.6 2011/10/06 20:31:41 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _env.c,v 1.5 2010/11/17 13:25:53 tron Exp $");
+__RCSID("$NetBSD: _env.c,v 1.6 2011/10/06 20:31:41 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -94,6 +94,8 @@ __warn_references(__findenv,
 
 /* Our initialization function. */
 void __libc_env_init(void);
+
+char **environ;
 
 /*ARGSUSED*/
 static signed int
