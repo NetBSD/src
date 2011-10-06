@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.80 2011/09/16 16:05:59 joerg Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.81 2011/10/06 16:03:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 
 #include <lwp.h>
 #include <signal.h>
+#include <limits.h>
 
 #ifdef __GNUC__
 #define	PTHREAD_HIDE	__attribute__ ((visibility("hidden")))
@@ -61,7 +62,6 @@
 #define	PTHREAD_HIDE	/* nothing */
 #endif
 
-#define PTHREAD_KEYS_MAX 	256
 #define	PTHREAD__UNPARK_MAX	32
 
 /*
