@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.353 2011/09/30 15:47:20 njoly Exp $
+#       $NetBSD: Makefile,v 1.354 2011/10/06 05:23:41 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -26,7 +26,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	ieee80211_radiotap.9 iic.9 imax.9 \
 	in_getifa.9 \
 	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 ipkdb.9 isa.9 \
-	isapnp.9 itimerfix.9 kauth.9 kcopy.9 kmem.9 \
+	isapnp.9 itimerfix.9 kauth.9 kcopy.9 kcpuset.9 kmem.9 \
 	kpause.9 \
 	kfilter_register.9 knote.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 ltsleep.9 \
@@ -375,6 +375,23 @@ MLINKS+=isapnp.9 isapnp_devmatch.9 \
 	isapnp.9 isapnp_unconfig.9
 MLINKS+=knote.9 KNOTE.9 \
 	kfilter_register.9 kfilter_unregister.9
+MLINKS+=kcpuset.9 kcpuset_create.9 \
+	kcpuset.9 kcpuset_destroy.9 \
+	kcpuset.9 kcpuset_copy.9 \
+	kcpuset.9 kcpuset_use.9 \
+	kcpuset.9 kcpuset_unuse.9 \
+	kcpuset.9 kcpuset_copyin.9 \
+	kcpuset.9 kcpuset_copyout.9 \
+	kcpuset.9 kcpuset_zero.9 \
+	kcpuset.9 kcpuset_fill.9 \
+	kcpuset.9 kcpuset_set.9 \
+	kcpuset.9 kcpuset_clear.9 \
+	kcpuset.9 kcpuset_isset.9 \
+	kcpuset.9 kcpuset_iszero.9 \
+	kcpuset.9 kcpuset_match.9 \
+	kcpuset.9 kcpuset_merge.9 \
+	kcpuset.9 kcpuset_atomic_set.9 \
+	kcpuset.9 kcpuset_atomic_clear.9
 MLINKS+=kmem.9 kmem_alloc.9 \
 	kmem.9 kmem_free.9 \
 	kmem.9 kmem_zalloc.9 \
