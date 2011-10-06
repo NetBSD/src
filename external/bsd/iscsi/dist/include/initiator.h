@@ -45,7 +45,9 @@
 #include "parameters.h"
 #include "defs.h"
 
+#ifndef CONFIG_INITIATOR_NUM_TARGETS
 #define CONFIG_INITIATOR_NUM_TARGETS 16
+#endif
 
 /***********
  * Private *
@@ -113,6 +115,8 @@ typedef struct initiator_cmd_t {
 	char            targetname[TARGET_HOSTNAME_SIZE];
 } initiator_cmd_t;
 
+DEFINE_ARRAY(strv_t, char *);
+
 typedef struct initiator_target_t {
 	char            name[TARGET_HOSTNAME_SIZE];
 	char            ip[TARGET_IP_SIZE];
@@ -121,9 +125,8 @@ typedef struct initiator_target_t {
 	initiator_session_t *sess;
 	int             has_session;
 	char		iqnwanted[TARGET_NAME_SIZE];
+	strv_t		all_targets;
 } initiator_target_t;
-
-DEFINE_ARRAY(strv_t, char *);
 
 
 /**********
@@ -140,5 +143,6 @@ int		ii_initiator_init(const char *, int, int, const char *, char *, int, int, i
 
 int		iscsi_initiator_get_targets(int, strv_t *);
 int		initiator_set_target_name(int, char *);
+int		iscsi_initiator_get_max_targets(void);
 
 #endif				/* _INITIATOR_H_ */
