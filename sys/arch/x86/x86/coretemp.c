@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.27 2011/09/24 10:52:56 jruoho Exp $ */
+/* $NetBSD: coretemp.c,v 1.28 2011/10/06 14:05:26 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.27 2011/09/24 10:52:56 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.28 2011/10/06 14:05:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -281,7 +281,8 @@ coretemp_tjmax(device_t self)
 	if ((model == 0x0F && stepping >= 2) ||
 	    (model == 0x0E && extmodel != 1)) {
 
-		msr = rdmsr(MSR_IA32_EXT_CONFIG);
+		if (rdmsr_safe(MSR_IA32_EXT_CONFIG, &msr) == EFAULT)
+			return;
 
 		if ((msr & __BIT(30)) != 0) {
 			sc->sc_tjmax = 85;
