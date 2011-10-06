@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.202 2011/07/03 21:58:52 tron Exp $
+#	$NetBSD: Makefile,v 1.203 2011/10/06 07:38:56 mrg Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
 
-SUBDIR= apply apropos asa at audio \
+SUBDIR= apply apropos asa at audio audiocfg \
 	banner basename biff bthset btkey btpin \
 	bzip2 bzip2recover cal calendar cap_mkdb cdplay \
 	checknr chflags chpass cksum cmp col colcrt colrm \
