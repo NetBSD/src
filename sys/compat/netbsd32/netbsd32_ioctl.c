@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.63 2011/10/05 14:17:41 macallan Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.64 2011/10/06 03:19:32 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.63 2011/10/05 14:17:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.64 2011/10/06 03:19:32 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -920,7 +920,7 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_SCURSOR, wsdisplay_cursor);
 
 	case SIOCS80211NWKEY32:
-		IOCTL_STRUCT_CONV_TO(SIOCG80211NWKEY, ieee80211_nwkey);
+		IOCTL_STRUCT_CONV_TO(SIOCS80211NWKEY, ieee80211_nwkey);
 	case SIOCG80211NWKEY32:
 		IOCTL_STRUCT_CONV_TO(SIOCG80211NWKEY, ieee80211_nwkey);
 
