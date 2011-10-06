@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.30 2011/08/16 07:55:29 manu Exp $	*/
+/*	$NetBSD: limits.h,v 1.31 2011/10/06 16:02:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -59,9 +59,37 @@
 #define	_POSIX_STREAM_MAX	8
 #define	_POSIX_SYMLINK_MAX	255
 #define	_POSIX_SYMLOOP_MAX	8
+
+/*
+ * We have not implemented these yet
+ *
+ * _POSIX_THREAD_ATTR_STACKADDR
+ * _POSIX_THREAD_ATTR_STACKSIZE
+ * _POSIX_THREAD_CPUTIME
+ * _POSIX_THREAD_PRIORITY_SCHEDULING
+ * _POSIX_THREAD_PRIO_INHERIT
+ * _POSIX_THREAD_PRIO_PROTECT
+ * _POSIX_THREAD_PROCESS_SHARED
+ * _POSIX_THREAD_SAFE_FUNCTIONS
+ * _POSIX_THREAD_SPORADIC_SERVER
+ */
+
+/*
+ * The following 3 are not part of the standard
+ * but left here for compatibility
+ */
 #define	_POSIX_THREAD_DESTRUCTOR_ITERATIONS	4
-#define	_POSIX_THREAD_KEYS_MAX	128
+#define	_POSIX_THREAD_KEYS_MAX			256
 #define	_POSIX_THREAD_THREADS_MAX		64
+
+/*
+ * These are the correct names, defined in terms of the above
+ */
+#define	PTHREAD_DESTRUCTOR_ITERATIONS 	_POSIX_THREAD_DESTRUCTOR_ITERATIONS
+#define	PTHREAD_KEYS_MAX		_POSIX_THREAD_KEYS_MAX
+/* Not yet: PTHREAD_STACK_MIN */
+#define	PTHREAD_THREADS_MAX		_POSIX_THREAD_THREADS_MAX
+
 #define	_POSIX_TIMER_MAX	32
 #define	_POSIX_TTY_NAME_MAX	9
 #define	_POSIX_TZNAME_MAX	6
