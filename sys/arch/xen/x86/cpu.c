@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.66 2011/09/28 15:38:22 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.67 2011/10/06 06:56:30 mrg Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66 2011/09/28 15:38:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2011/10/06 06:56:30 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -376,11 +376,9 @@ cpu_vm_init(struct cpu_info *ci)
 	}
 
 	/*
-	 * Knowing the size of the largest cache on this CPU, re-color
-	 * our pages.
+	 * Knowing the size of the largest cache on this CPU, potentially
+	 * re-color our pages.
 	 */
-	if (ncolors <= uvmexp.ncolors)
-		return;
 	aprint_debug_dev(ci->ci_dev, "%d page colors\n", ncolors);
 	uvm_page_recolor(ncolors);
 }
