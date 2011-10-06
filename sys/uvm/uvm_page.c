@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.177 2011/09/30 05:29:12 mrg Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178 2011/10/06 12:26:03 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.177 2011/09/30 05:29:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178 2011/10/06 12:26:03 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -393,6 +393,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	if (uvmexp.ncolors == 0)
 		uvmexp.ncolors = 1;
 	uvmexp.colormask = uvmexp.ncolors - 1;
+	KASSERT((uvmexp.colormask & uvmexp.ncolors) == 0);
 
 	/*
 	 * we now know we have (PAGE_SIZE * freepages) bytes of memory we can
@@ -985,6 +986,8 @@ uvm_page_recolor(int newncolors)
 	vsize_t bucketcount;
 	int lcv, color, i, ocolors;
 	struct uvm_cpu *ucpu;
+
+	KASSERT(((newncolors - 1) & newncolors) == 0);
 
 	if (newncolors <= uvmexp.ncolors)
 		return;

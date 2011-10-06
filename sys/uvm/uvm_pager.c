@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.105 2011/09/28 22:52:15 matt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.106 2011/10/06 12:26:03 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.105 2011/09/28 22:52:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.106 2011/10/06 12:26:03 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -95,7 +95,7 @@ uvm_pager_realloc_emerg(void)
 	KASSERT(!emerginuse);
 
 	new_emergva = uvm_km_alloc(kernel_map,
-	    round_page(MAXPHYS) + ptoa(uvmexp.ncolors), 0,
+	    round_page(MAXPHYS) + ptoa(uvmexp.ncolors), ptoa(uvmexp.ncolors),
 	    UVM_KMF_VAONLY);
 
 	KASSERT(new_emergva != 0);
@@ -264,6 +264,7 @@ uvm_pagermapout(vaddr_t kva, int npages)
 
 	if ((kva & ~ptoa(uvmexp.colormask)) == emergva) {
 		mutex_enter(&pager_map_wanted_lock);
+		KASSERT(emerginuse);
 		emerginuse = false;
 		wakeup(&emergva);
 		mutex_exit(&pager_map_wanted_lock);
