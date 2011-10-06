@@ -548,6 +548,7 @@ main(int argc, char **argv)
 	int			discover;
 	int			cc;
 	int			i;
+	uint32_t		max_targets;
 
 	(void) memset(&tinfo, 0x0, sizeof(tinfo));
 	iscsi_initiator_set_defaults(&ini);
@@ -557,6 +558,8 @@ main(int argc, char **argv)
 	(void) stat("/etc/hosts", &sti.st);
 	devtype = 'f';
 	iscsi_initiator_setvar(&ini, "address family", "4");
+	max_targets = iscsi_initiator_get_max_targets();
+	
 	while ((i = getopt(argc, argv, "46a:bcd:Dfh:p:t:u:v:V")) != -1) {
 		switch(i) {
 		case '4':
@@ -663,16 +666,19 @@ main(int argc, char **argv)
                 exit(EXIT_SUCCESS);
         }
 
-	if (all_targets.c/2 > CONFIG_INITIATOR_NUM_TARGETS) {
+	if (all_targets.c/2 > max_targets) {
 		(void) fprintf(stderr,
 			"CONFIG_INITIATOR_NUM_TARGETS in initiator.h "
 			"is too small.  %d targets available, "
 			"only %d configurable.\n",
-			all_targets.c/2, CONFIG_INITIATOR_NUM_TARGETS);
+			all_targets.c/2, max_targets);
+		(void) fprintf(stderr,
+			"To increase this value, libiscsi will have be "
+			"recompiled.\n");
 		(void) fprintf(stderr,
 			"Truncating number of targets to %d.\n",
-			CONFIG_INITIATOR_NUM_TARGETS);
-		all_targets.c = CONFIG_INITIATOR_NUM_TARGETS;
+			max_targets);
+		all_targets.c = 2 * max_targets;
 	}
 
 	sti.st.st_ino = 0x15c51;
