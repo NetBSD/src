@@ -155,7 +155,6 @@ static int      session_destroy_i(initiator_session_t *);
 static int      wait_callback_i(void *);
 static int      discovery_phase(int, strv_t *);
 
-
 /*
  * Private Functions
  */
@@ -623,6 +622,13 @@ initiator_set_target_name(int target, char *target_name)
 
 
 int
+iscsi_initiator_get_max_targets(void)
+{
+	return CONFIG_INITIATOR_NUM_TARGETS;
+}
+
+#if 0
+int
 iscsi_initiator_get_targets(int target, strv_t *svp)
 {
         initiator_session_t	*sess = g_target[target].sess;
@@ -675,6 +681,27 @@ iscsi_initiator_get_targets(int target, strv_t *svp)
 
 	return 1;
 }
+#else
+/* SendTargets=All must be sent in discovery session. */
+int
+iscsi_initiator_get_targets(int target, strv_t *svp)
+{
+	initiator_session_t	*sess = g_target[target].sess;
+	strv_t *tp = &g_target[target].all_targets;
+	uint32_t i;
+
+	if (sess == NULL)
+		return -1;
+
+	for (i = 0; i < tp->c; i++) {
+		ALLOC(char *, svp->v, svp->size, svp->c, 10,
+			10, "igt", return -1);
+		svp->v[svp->c++] = strdup(tp->v[i]);
+	}
+
+	return 1;
+}
+#endif
 
 static int 
 discovery_phase(int target, strv_t *svp)
@@ -1209,7 +1236,6 @@ enqueue_worker_proc(void *arg)
 	iscsi_worker_t *me = (iscsi_worker_t *) arg;
 	uint64_t	target;
 	uint32_t        tag;
-	strv_t		sv;
 	int             rc;
 
 
@@ -1273,7 +1299,7 @@ initialize:
 
 			if (strlen(g_target[(int)target].TargetName) == 0) {
 				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: entering Discovery phase with target %llu\n", target);
-				rc = discovery_phase((int)target, &sv);
+				rc = discovery_phase((int)target, &g_target[(int)target].all_targets);
 				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: Discovery phase complete\n");
 
 				/* Destroy session */
