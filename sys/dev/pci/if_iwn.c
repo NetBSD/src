@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.58 2011/08/28 16:33:51 elric Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.59 2011/10/07 22:42:18 elric Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.58 2011/08/28 16:33:51 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.59 2011/10/07 22:42:18 elric Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -226,6 +226,7 @@ static void	iwn_tune_sensitivity(struct iwn_softc *,
 		    const struct iwn_rx_stats *);
 static int	iwn_send_sensitivity(struct iwn_softc *);
 static int	iwn_set_pslevel(struct iwn_softc *, int, int, int);
+static int	iwn5000_runtime_calib(struct iwn_softc *);
 static int	iwn_config(struct iwn_softc *);
 static int	iwn_scan(struct iwn_softc *, uint16_t);
 static int	iwn_auth(struct iwn_softc *);
@@ -2173,6 +2174,14 @@ iwn_rx_statistics(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		return;
 	}
 
+	/*
+	 * XXX Differential gain calibration makes the 6005 firmware
+	 * crap out, so skip it for now.  This effectively disables
+	 * sensitivity tuning as well.
+	 */
+	if (sc->hw_type == IWN_HW_REV_TYPE_6005)
+		return;
+
 	if (calib->state == IWN_CALIB_STATE_ASSOC)
 		iwn_collect_noise(sc, &stats->rx.general);
 	else if (calib->state == IWN_CALIB_STATE_RUN)
@@ -4089,6 +4098,18 @@ iwn_set_pslevel(struct iwn_softc *sc, int dtim, int level, int async)
 	return iwn_cmd(sc, IWN_CMD_SET_POWER_MODE, &cmd, sizeof cmd, async);
 }
 
+ int
+iwn5000_runtime_calib(struct iwn_softc *sc)
+{
+	struct iwn5000_calib_config cmd;
+
+	memset(&cmd, 0, sizeof cmd);
+	cmd.ucode.once.enable = 0xffffffff;
+	cmd.ucode.once.start = IWN5000_CALIB_DC;
+	DPRINTF(("configuring runtime calibration\n"));
+	return iwn_cmd(sc, IWN5000_CMD_CALIB_CONFIG, &cmd, sizeof(cmd), 0);
+}
+
 static int
 iwn_config(struct iwn_softc *sc)
 {
@@ -4099,6 +4120,17 @@ iwn_config(struct iwn_softc *sc)
 	uint32_t txmask;
 	uint16_t rxchain;
 	int error;
+
+	if (sc->hw_type == IWN_HW_REV_TYPE_6050 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_6005) {
+		/* Configure runtime DC calibration. */
+		error = iwn5000_runtime_calib(sc);
+		if (error != 0) {
+			printf("%s: could not configure runtime calibration\n",
+			    sc->sc_dev.dv_xname);
+			return error;
+		}
+	}
 
 	/* Configure valid TX chains for 5000 Series. */
 	if (sc->hw_type != IWN_HW_REV_TYPE_4965) {
