@@ -1,4 +1,4 @@
-.\" $NetBSD: p5pb.4,v 1.3 2011/10/07 08:46:34 rkujawa Exp $
+.\" $NetBSD: p5pb.4,v 1.4 2011/10/07 09:22:53 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the PCI bus present on BlizzardVisionPPC, 
+driver provides support for the PCI bus present on BlizzardVisionPPC,
 CyberVisionPPC and CybrerVision 64/3D graphics cards.
 .Sh HARDWARE
 The
@@ -57,7 +57,7 @@ Phase5 CyberVision 64/3D graphics card.
 .Sh SEE ALSO
 .Xr genfb 4 ,
 .Xr grfcv3d 4 ,
-.Xr pci 4 
+.Xr pci 4
 .\" .Xr pm2fb 4
 .Sh HISTORY
 The
@@ -70,6 +70,19 @@ The
 .Nm
 driver was written by
 .An Radoslaw Kujawa Aq radoslaw.kujawa@gmail.com .
+.Sh CAVEATS
+G-REX PCI bridge is currently not supported, however the driver
+will try to attach to it, because it has the same vendor and product
+ID as CVPPC/BVPPC cards.
+Due to similarities between these products, it may even detect the
+card inserted into first slot, but the driver will (most likely)
+not work properly.
+.Pp
+Support for CV64/3D is disabled by default, since the
+.Xr grfcv3d 4
+driver does attach directly to
+.Xr zbus 4 .
+Machine independent PCI driver for S3 ViRGE does not exist yet.
 .Sh BUGS
 Current version of this driver depends on PCI bus setup and enumeration
 done by the firmware.
@@ -79,11 +92,3 @@ for CVPPC/BVPPC card (Zorro product ID 110).
 Some firmware revisions are known not to create this entry.
 .Pp
 It is not (yet) possible to use the CVPPC/BVPPC as a console.
-.Sh CAVEATS
-G-REX PCI bridge is currently not supported, however the driver will try to attach to it, because it has the same vendor and product ID as CVPPC/BVPPC cards. Due to similarities between these products, it may even detect the card inserted into first slot, but the driver will (most likely) not work properly.
-.Pp
-Support for CV64/3D is disabled by default, since the 
-.Xr grfcv3d 4
-driver does attach directly to 
-.Xr zbus 4 . 
-Machine independent PCI driver for S3 ViRGE does not exist yet.
