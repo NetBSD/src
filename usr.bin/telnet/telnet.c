@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.33 2011/10/07 10:14:22 joerg Exp $	*/
+/*	$NetBSD: telnet.c,v 1.34 2011/10/07 16:30:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.33 2011/10/07 10:14:22 joerg Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.34 2011/10/07 16:30:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -755,20 +755,18 @@ setupterm(char *tname, int fd, int *errp)
 	char *ext_tc, *newptr;
 	size_t len;
 	
-	if ((termbuf = (char *) malloc(1024)) == NULL)
+	if ((termbuf = malloc(1024)) == NULL)
 		goto error;
 	
 	if (tgetent(termbuf, tname) == 1) {
-		  /* check for ZZ capability, which indicates termcap truncated */
+		/* check for ZZ capability, indicating termcap truncated */
 		zz_ptr = zz;
 		if (tgetstr("ZZ", &zz_ptr) != NULL) {
-			  /* it was, fish back the full termcap */
+			/* it was, fish back the full termcap */
 			sscanf(zz, "%p", &ext_tc);
 			len = strlen(ext_tc) + 1;
-			if ((newptr = (char *) realloc(termbuf, len))
-			    == NULL) {
+			if ((newptr = realloc(termbuf, len)) == NULL)
 				goto error;
-			}
 
 			memcpy(newptr, ext_tc, len);
 			termbuf = newptr;
