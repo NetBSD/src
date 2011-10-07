@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.177 2011/09/23 07:12:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.178 2011/10/07 21:33:56 mbalmer Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -186,5 +186,8 @@ SUBDIR+=	libukfs		# depends on librumpvfs, librump
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
+
+# Lua bindings come last, they might depend on anything
+SUBDIR+=	lua
 
 .include <bsd.subdir.mk>
