@@ -149,24 +149,6 @@ along with GCC; see the file COPYING3.  If not see
 #undef LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
 
-/* Provide a LIBGCC_SPEC for NetBSD that will find libgcc_pic.  Override
-   the this entirely by defining REAL_LIBGCC_SPEC.  */
-
-#define NETBSD_LIBGCC_SPEC						\
-  "%{static:-lgcc -lgcc_eh}						\
-   %{static-libgcc:							\
-     %{!shared:-lgcc -lgcc_eh}						\
-     %{shared:-lgcc_pic -lgcc_eh_pic}}					\
-   %{!static:								\
-     %{!static-libgcc:							\
-       %{!shared:							\
-         %{!shared-libgcc:-lgcc -lgcc_eh}				\
-         %{shared-libgcc:-lgcc_s -lgcc}}				\
-       %{shared:							\
-         %{shared-libgcc:-lgcc_s} -lgcc_pic}}}"
-
-#define REAL_LIBGCC_SPEC NETBSD_LIBGCC_SPEC
-
 /* Pass -cxx-isystem to cc1/cc1plus.  */
 #define NETBSD_CC1_AND_CC1PLUS_SPEC		\
   "%{cxx-isystem}"
