@@ -168,10 +168,8 @@ zfs_sync(vfs_t *vfsp, int flag, cred_t *cr)
 		return (0);
 
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(vfsp)) == NULL)
-		return (ENOMEM);
-	
-	
+	mvp = vnalloc(vfsp);
+
 	/*
 	 * On NetBSD, we need to push out atime updates.  Solaris does
 	 * this during VOP_INACTIVE, but that does not work well with the

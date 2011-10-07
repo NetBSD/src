@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.268 2011/06/17 14:23:52 manu Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.269 2011/10/07 09:35:07 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.268 2011/06/17 14:23:52 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.269 2011/10/07 09:35:07 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -785,8 +785,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	}
 
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL)
-		return ENOMEM;
+	mvp = vnalloc(mp);
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
@@ -1598,8 +1597,7 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	}
 
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL)
-		return (ENOMEM);
+	mvp = vnalloc(mp);
 
 	fstrans_start(mp, FSTRANS_SHARED);
 	is_suspending = (fstrans_getstate(mp) == FSTRANS_SUSPENDING);
