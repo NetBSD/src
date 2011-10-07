@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.125 2011/09/06 21:39:30 jym Exp $
+# $NetBSD: postinstall,v 1.126 2011/10/07 02:07:56 mrg Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,6 +32,10 @@
 # postinstall
 #	Check for or fix configuration changes that occur
 #	over time as NetBSD evolves.
+#
+
+#
+# XXX BE SURE TO USE ${DEST_DIR} PREFIX BEFORE ALL REAL FILE OPERATIONS XXX
 #
 
 #
@@ -1218,9 +1222,11 @@ do_sendmail()
 	for f in /etc/mail/helpfile /etc/mail/local-host-names \
 	    /etc/mail/sendmail.cf /etc/mail/submit.cf /etc/rc.d/sendmail \
 	    /etc/rc.d/smmsp /usr/share/misc/sendmail.hf \
-	    $(find /usr/share/sendmail -type f) \
-	    $(find /usr/share/sendmail -type d) /var/log/sendmail.st \
-	    /var/spool/clientmqueue /var/spool/mqueue; do
+	    $(find ${DEST_DIR}/usr/share/sendmail -type f) \
+	    $(find ${DEST_DIR}/usr/share/sendmail -type d) \
+	    ${DEST_DIR}/var/log/sendmail.st \
+	    ${DEST_DIR}/var/spool/clientmqueue \
+	    ${DEST_DIR}/var/spool/mqueue; do
 		[ -e "${DEST_DIR}${f}" ] && echo "${f}"
 	done | obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
@@ -1238,7 +1244,7 @@ do_mailerconf()
 	op="$1"
 
 	failed=0
-	mta_path="$(${AWK} '/^sendmail[ \t]/{print$2}' /etc/mailer.conf)"
+	mta_path="$(${AWK} '/^sendmail[ \t]/{print$2}' ${DEST_DIR}/etc/mailer.conf)"
 	old_sendmail_path="/usr/libexec/sendmail/sendmail"
 	if [ "${mta_path}" = "${old_sendmail_path}" ]; then
 	    if [ "$op" = check ]; then
@@ -1556,18 +1562,18 @@ do_atf()
 	op="$1"
 	failed=0
 
-	if grep '[^#]*unprivileged-user[ \t]*=.*_atf' /etc/atf/common.conf \
+	if grep '[^#]*unprivileged-user[ \t]*=.*_atf' ${DEST_DIR}/etc/atf/common.conf \
 	    >/dev/null
 	then
 		if [ "$1" = "fix" ]; then
 			sed -e \
 			    "/[^#]*unprivileged-user[\ t]*=/s/_atf/_tests/" \
-			    /etc/atf/common.conf >/etc/atf/common.conf.new
+			    ${DEST_DIR}/etc/atf/common.conf >${DEST_DIR}/etc/atf/common.conf.new
 			failed=$(( ${failed} + $? ))
-			mv /etc/atf/common.conf.new /etc/atf/common.conf
+			mv ${DEST_DIR}/etc/atf/common.conf.new ${DEST_DIR}/etc/atf/common.conf
 			failed=$(( ${failed} + $? ))
 		else
-			msg "unprivileged-user=_atf in /etc/atf/common.conf" \
+			msg "unprivileged-user=_atf in ${DEST_DIR}/etc/atf/common.conf" \
 			    "should be _tests"
 			failed=1
 		fi
