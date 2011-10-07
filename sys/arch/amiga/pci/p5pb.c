@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.3 2011/10/07 08:44:21 rkujawa Exp $ */
+/*	$NetBSD: p5pb.c,v 1.4 2011/10/07 23:08:33 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #define P5GFX_DEPTH		8
 #define P5GFX_LINEBYTES		640
 
-#define P5PB_MATCH_CV643D	1 
+/* #define P5PB_MATCH_CV643D	1 */
 /* #define P5PB_DEBUG		1 */
 
 static struct p5pb_bridge_type p5pb_bridge_cvppc = {
