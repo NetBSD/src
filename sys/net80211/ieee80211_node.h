@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.23 2007/12/22 00:51:07 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.24 2011/10/07 16:51:45 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -35,6 +35,7 @@
 #ifndef _NET80211_IEEE80211_NODE_H_
 #define _NET80211_IEEE80211_NODE_H_
 
+#include <sys/atomic.h>
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_ioctl.h>		/* for ieee80211_nodestats */
 
@@ -158,20 +159,6 @@ MALLOC_DECLARE(M_80211_NODE);
 #define	IEEE80211_NODE_STAT(ni,stat)	(ni->ni_stats.ns_##stat++)
 #define	IEEE80211_NODE_STAT_ADD(ni,stat,v)	(ni->ni_stats.ns_##stat += v)
 #define	IEEE80211_NODE_STAT_SET(ni,stat,v)	(ni->ni_stats.ns_##stat = v)
-
-static __inline struct ieee80211_node *
-ieee80211_ref_node(struct ieee80211_node *ni)
-{
-	ieee80211_node_incref(ni);
-	return ni;
-}
-
-static __inline void
-ieee80211_unref_node(struct ieee80211_node **ni)
-{
-	ieee80211_node_decref(*ni);
-	*ni = NULL;			/* guard against use */
-}
 
 struct ieee80211com;
 
@@ -326,6 +313,57 @@ struct ieee80211_scanparams {
 	u_int8_t	*wpa;
 	u_int8_t	*wme;
 };
+
+/*
+ * Node reference counting definitions.
+ *
+ * ieee80211_node_initref	initialize the reference count to 1
+ * ieee80211_node_incref	add a reference
+ * ieee80211_node_decref	remove a reference
+ * ieee80211_node_dectestref	remove a reference and return 1 if this
+ *				is the last reference, otherwise 0
+ * ieee80211_node_refcnt	reference count for printing (only)
+ */
+
+static inline void
+ieee80211_node_initref(struct ieee80211_node *ni)
+{
+	ni->ni_refcnt = 1;
+}
+
+static inline void
+ieee80211_node_incref(struct ieee80211_node *ni)
+{
+	atomic_inc_uint(&ni->ni_refcnt);
+}
+
+static inline void
+ieee80211_node_decref(struct ieee80211_node *ni)
+{
+	atomic_dec_uint(&ni->ni_refcnt);
+}
+
+int ieee80211_node_dectestref(struct ieee80211_node *ni);
+
+static inline unsigned int
+ieee80211_node_refcnt(const struct ieee80211_node *ni)
+{
+	return ni->ni_refcnt;
+}
+
+static __inline struct ieee80211_node *
+ieee80211_ref_node(struct ieee80211_node *ni)
+{
+	ieee80211_node_incref(ni);
+	return ni;
+}
+
+static __inline void
+ieee80211_unref_node(struct ieee80211_node **ni)
+{
+	ieee80211_node_decref(*ni);
+	*ni = NULL;			/* guard against use */
+}
 
 void	ieee80211_add_scan(struct ieee80211com *,
 		const struct ieee80211_scanparams *,
