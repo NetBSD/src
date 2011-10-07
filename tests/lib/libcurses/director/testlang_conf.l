@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.5 2011/06/18 20:05:28 joerg Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.6 2011/10/07 13:39:33 joerg Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -197,11 +197,9 @@ include		BEGIN(incl);
 
 		include_stack[include_ptr] = line;
 		include_files[include_ptr++] = cur_file;
-		cur_file = malloc(strlen(inc_file));
+		cur_file = strdup(inc_file);
 		if (cur_file == NULL)
 			err(2, "Cannot allocate new include file string");
-
-		strlcpy(cur_file, inc_file, sizeof(inc_file));
 		line = 0;
 		BEGIN(INITIAL);
 	}
