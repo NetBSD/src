@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.43 2011/08/29 14:47:08 jmcneill Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.44 2011/10/07 20:47:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.43 2011/08/29 14:47:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.44 2011/10/07 20:47:42 dyoung Exp $");
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
@@ -178,8 +178,6 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 
 	aprint_verbose_dev(self, "interrupting at %s\n", intrstr);
 
-	ATH_LOCK_INIT(sc);
-
 	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) != 0)
 		goto bad3;
 
@@ -190,8 +188,6 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	return;
 bad3:
-	ATH_LOCK_DESTROY(sc);
-
 	pci_intr_disestablish(pc, psc->sc_ih);
 bad1:
 	bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
@@ -212,8 +208,6 @@ ath_pci_detach(device_t self, int flags)
 
 	if (psc->sc_ih != NULL)
 		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
-
-	ATH_LOCK_DESTROY(&psc->sc_sc);
 
 	bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
 	return 0;

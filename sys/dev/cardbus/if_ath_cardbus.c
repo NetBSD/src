@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.44 2011/08/01 11:20:27 drochner Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.45 2011/10/07 20:47:42 dyoung Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.44 2011/08/01 11:20:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.45 2011/10/07 20:47:42 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -186,8 +186,6 @@ ath_cardbus_attach(device_t parent, device_t self, void *aux)
 	 */
 	ath_cardbus_setup(csc);
 
-	ATH_LOCK_INIT(sc);
-
 	/*
 	 * Finish off the attach.
 	 */
@@ -234,8 +232,6 @@ ath_cardbus_detach(device_t self, int flags)
 	 */
 	Cardbus_mapreg_unmap(ct, ATH_PCI_MMBA, csc->sc_iot, csc->sc_ioh,
 	    csc->sc_mapsize);
-
-	ATH_LOCK_DESTROY(sc);
 
 	return (0);
 }
