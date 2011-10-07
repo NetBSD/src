@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.2 2011/09/19 19:15:29 rkujawa Exp $ */
+/*	$NetBSD: p5pb.c,v 1.3 2011/10/07 08:44:21 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <m68k/bus_dma.h>
 #include <amiga/dev/zbusvar.h>
 #include <amiga/pci/p5pbreg.h>
+#include <amiga/pci/p5pbvar.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -56,20 +57,39 @@
 #define ZORRO_MANID_P5		8512
 #define ZORRO_PRODID_BPPC	110		/* BlizzardPPC */
 #define ZORRO_PRODID_CSPPC	100		/* CyberStormPPC */
-#define ZORRO_PRODID_P5PB	101		/* CVPPC/BVPPC (/G-REX?) */
-/* Initial resolution as configured by the firmware */
+#define ZORRO_PRODID_P5PB	101		/* CVPPC/BVPPC/G-REX */
+#define ZORRO_PRODID_CV643D_Z3	67		/* CV64/3D */
+
+/* Initial CVPPC/BVPPC resolution as configured by the firmware */
 #define P5GFX_WIDTH		640
 #define P5GFX_HEIGHT		480
 #define P5GFX_DEPTH		8
 #define P5GFX_LINEBYTES		640
 
-struct p5pb_softc {
-	device_t sc_dev;
-	struct bus_space_tag pci_conf_area;
-	struct bus_space_tag pci_mem_area;
-	struct bus_space_tag pci_io_area;
-	struct amiga_pci_chipset apc;	
+#define P5PB_MATCH_CV643D	1 
+/* #define P5PB_DEBUG		1 */
+
+static struct p5pb_bridge_type p5pb_bridge_cvppc = {
+	"Phase5 CVPPC/BVPPC PCI bridge",
+	false,
+	true,
+	1,
 };
+
+static struct p5pb_bridge_type p5pb_bridge_cv643d = {
+	"Phase5 CyberVision 64/3D PCI bridge",
+	false,
+	false,
+	1,
+};
+
+/* const struct p5pb_bridge_type p5pb_bridge_grex {
+	"DCE Computer G-REX PCI bridge",
+	true,
+	false,
+	5
+}
+*/
 
 static int	p5pb_match(struct device *, struct cfdata *, void *);
 static void	p5pb_attach(struct device *, struct device *, void *);
@@ -87,6 +107,8 @@ void		p5pb_pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
 		    int *bp, int *dp, int *fp);
 int		p5pb_pci_intr_map(const struct pci_attach_args *pa, 
 		    pci_intr_handle_t *ihp);
+bool	p5pb_bus_map_cv643d(struct p5pb_softc *sc);
+static bool	p5pb_bus_map_cvppc(struct p5pb_softc *sc);
 
 CFATTACH_DECL_NEW(p5pb, sizeof(struct p5pb_softc),
     p5pb_match, p5pb_attach, NULL, NULL);
@@ -103,7 +125,32 @@ p5pb_match(device_t parent, cfdata_t cf, void *aux)
 	if (zap->manid != ZORRO_MANID_P5)
 		return 0;
 
-	if (zap->prodid != ZORRO_PRODID_P5PB)
+#ifdef I_HAVE_P5PB_REALLY
+	/* 
+	 * At least some firmware versions do not create AutoConfig entries for 
+	 * CyberVisionPPC/BlizzardVisionPPC (product ID 0101). There's no "nice"
+	 * way to detect the PCI bus in this case. At least check for CSPPC/BPPC.
+         */
+	if ((zap->prodid != ZORRO_PRODID_BPPC) && 
+	    (zap->prodid != ZORRO_PRODID_CSPPC)) {
+		if (!p5pb_present) {
+			p5pb_present = 1;
+			return 100; /* XXX: This will break SCSI! */
+		}
+	}
+#endif 
+
+	if ((zap->prodid != ZORRO_PRODID_P5PB)
+#ifdef P5PB_MATCH_CV643D
+	/*
+	 * This should not be used now, because CV64/3D grf driver does
+	 * attach directly to Zorro bus. Might get useful if we ever get
+	 * virgefb..
+	 */
+		&& (zap->prodid != ZORRO_PRODID_CV643D_Z3)
+
+#endif
+	    )
 		return 0;
 		
 #ifdef P5PB_DEBUG
@@ -115,66 +162,47 @@ p5pb_match(device_t parent, cfdata_t cf, void *aux)
 		return 0; /* Allow only one. */
 
 
-#ifdef I_HAVE_P5PB_REALLY
-	/* 
-	 * At least some firmware versions do not create AutoConfig entries for 
-	 * CyberVisionPPC/BlizzardVisionPPC (product ID 0101). There's no "nice"
-	 * way to detect the PCI bus in this case. At least check for CSPPC/BPPC.
-         */
-	if (zap->prodid = !(ZORRO_PRODID_BPPC || ZORRO_PRODID_CSPPC)) {
-		if (!p5pb_present) {
-			p5pb_present = 1;
-			return 100; /* XXX: This will break SCSI! */
-		}
-	}
-#endif 
 	p5pb_present = 1;
-	return 1;
+	return 10;
 }
 
 
 static void
 p5pb_attach(device_t parent, device_t self, void *aux)
 {
-	struct p5pb_softc *sc = device_private(self);
+	struct p5pb_softc *sc; 
 	struct pcibus_attach_args pba;  
+	struct p5pb_bridge_type *bt;
+	struct zbus_args *zap;
 
+	sc = device_private(self);
 	pci_chipset_tag_t pc = &sc->apc;
 	sc->sc_dev = self;
-	aprint_normal(": Phase5 CVPPC/BVPPC PCI bridge\n"); 
-
-	/* Setup bus space mappings. */
-	sc->pci_conf_area.base = (bus_addr_t) zbusmap(
-	    (void *) P5BUS_PCI_CONF_BASE, P5BUS_PCI_CONF_SIZE);
-	sc->pci_conf_area.absm = &amiga_bus_stride_1;
-
-	sc->pci_io_area.base = (bus_addr_t) zbusmap(
-	    (void *) P5BUS_PCI_IO_BASE, P5BUS_PCI_IO_SIZE);
-	sc->pci_io_area.absm = &amiga_bus_stride_1swap_abs;
-
-	sc->pci_mem_area.base = (bus_addr_t) zbusmap(
-	    (void *) P5BUS_PCI_MEM_BASE, P5BUS_PCI_MEM_SIZE);
-	sc->pci_mem_area.absm = &amiga_bus_stride_1swap_abs;
+	zap = aux;
 	
+	if(zap->prodid == ZORRO_PRODID_CV643D_Z3) {
+		bt = &p5pb_bridge_cv643d;
+		sc->p5pb_bus_map = &p5pb_bus_map_cv643d;
+		sc->ba = zap->va;
+	} else {
+		bt = &p5pb_bridge_cvppc;
+		sc->p5pb_bus_map = p5pb_bus_map_cvppc;
+	}
+
+	if(!(sc->p5pb_bus_map(sc))) {
+		aprint_error_dev(self,
+		    "couldn't map PCI configuration registers\n");
+		return;
+	}
+
+	aprint_normal(": %s\n", bt->name); 
+
 #ifdef P5PB_DEBUG
-	aprint_normal("p5pb mapped %x -> %x, %x -> %x\n, %x -> %x\n",
+	aprint_normal("p5pb: mapped %x -> %x, %x -> %x\n, %x -> %x\n",
 	    P5BUS_PCI_CONF_BASE, sc->pci_conf_area.base,
 	    P5BUS_PCI_IO_BASE, sc->pci_conf_area.base,
 	    P5BUS_PCI_MEM_BASE, sc->pci_mem_area.base ); 
 #endif 
-
-	sc->apc.pci_conf_datat = &(sc->pci_conf_area);
-	sc->apc.pci_conf_addresst = &(sc->pci_conf_area);
-
-	if (bus_space_map(sc->apc.pci_conf_addresst, OFF_PCI_CONF_ADDR, 
-	    256, 0, &sc->apc.pci_conf_addressh)) 
-		aprint_error_dev(self,
-		    "couldn't map PCI configuration address register\n");
-
-	if (bus_space_map(sc->apc.pci_conf_datat, OFF_PCI_CONF_DATA, 
-	    256, 0, &sc->apc.pci_conf_datah)) 
-		aprint_error_dev(self,
-		    "couldn't map PCI configuration data register\n");
 
 	/* Initialize the PCI chipset tag. */
 	sc->apc.pc_conf_v = (void*) pc;
@@ -274,26 +302,6 @@ p5pb_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 	return 1;
 }
 
-pcitag_t
-p5pb_pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
-{
-
-	return (bus << 16) | (device << 11) | (function << 8);
-}
-
-void
-p5pb_pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp,
-    int *dp, int *fp)
-{
-
-	if (bp != NULL)
-		*bp = (tag >> 16) & 0xff;
-	if (dp != NULL)
-		*dp = (tag >> 11) & 0x1f;
-	if (fp != NULL)
-		*fp = (tag >> 8) & 0x07;
-}
-
 void
 p5pb_pci_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
@@ -307,5 +315,64 @@ p5pb_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	*ihp = 2; 
 	return 0;
+}
+
+static bool
+p5pb_bus_map_cvppc(struct p5pb_softc *sc) 
+{
+#ifdef P5PB_DEBUG
+	aprint_normal("p5pb: p5pb_bus_map_cvppc called\n");
+#endif /* P5PB_DEBUG */
+	/* Setup bus space mappings. */
+	sc->pci_conf_area.base = (bus_addr_t) zbusmap(
+	    (void *) P5BUS_PCI_CONF_BASE, P5BUS_PCI_CONF_SIZE);
+	sc->pci_conf_area.absm = &amiga_bus_stride_1;
+
+	sc->pci_io_area.base = (bus_addr_t) zbusmap(
+	    (void *) P5BUS_PCI_IO_BASE, P5BUS_PCI_IO_SIZE);
+	sc->pci_io_area.absm = &amiga_bus_stride_1swap_abs;
+
+	sc->pci_mem_area.base = (bus_addr_t) zbusmap(
+	    (void *) P5BUS_PCI_MEM_BASE, P5BUS_PCI_MEM_SIZE);
+	sc->pci_mem_area.absm = &amiga_bus_stride_1swap_abs;
+	
+	sc->apc.pci_conf_datat = &(sc->pci_conf_area);
+	sc->apc.pci_conf_addresst = &(sc->pci_conf_area);
+
+	if (bus_space_map(sc->apc.pci_conf_addresst, OFF_PCI_CONF_ADDR, 
+	    256, 0, &sc->apc.pci_conf_addressh)) 
+		return false;
+
+	if (bus_space_map(sc->apc.pci_conf_datat, OFF_PCI_CONF_DATA, 
+	    256, 0, &sc->apc.pci_conf_datah)) 
+		return false;
+
+	return true;
+}
+
+bool
+p5pb_bus_map_cv643d(struct p5pb_softc *sc) {
+#ifdef P5PB_DEBUG
+	aprint_normal("p5pb: p5pb_bus_map_cv643d called, ba = %x\n", 
+	    (bus_addr_t) sc->ba);
+#endif /* P5PB_DEBUG */
+
+	sc->pci_conf_area.base = (bus_addr_t) sc->ba + CV643D_PCI_CONF_BASE;
+	sc->pci_conf_area.absm = &amiga_bus_stride_1;
+
+	sc->pci_mem_area.base = (bus_addr_t) sc->ba + CV643D_PCI_MEM_BASE; 
+	sc->pci_mem_area.absm = &amiga_bus_stride_1;
+
+	sc->pci_io_area.base = (bus_addr_t) sc->ba + CV643D_PCI_IO_BASE;
+	sc->pci_io_area.absm = &amiga_bus_stride_1;
+
+	sc->apc.pci_conf_datat = &(sc->pci_conf_area);
+
+	if (bus_space_map(sc->apc.pci_conf_datat, 0, 
+	    CV643D_PCI_CONF_SIZE, 0, &sc->apc.pci_conf_datah)) 
+		return false;
+
+		
+	return true;
 }
 
