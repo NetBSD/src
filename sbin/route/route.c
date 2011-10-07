@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.132 2011/08/29 14:35:03 joerg Exp $	*/
+/*	$NetBSD: route.c,v 1.133 2011/10/07 09:56:15 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.132 2011/08/29 14:35:03 joerg Exp $");
+__RCSID("$NetBSD: route.c,v 1.133 2011/10/07 09:56:15 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1392,11 +1392,10 @@ readtag(sup su, const char *s)
 	int mplssize = 0;
 	sup retsu = su;
 
-	n = (char*)malloc(strlen(s) + 1);
+	n = strdup(s);
 	if (n == NULL)
 		errx(EXIT_FAILURE, "%s: Cannot allocate memory", s);
 	norig = n;
-	strlcpy(n, s, strlen(s) + 1);
 	for (uint i = 0; i < strlen(n); i++)
 		if(n[i] == ',')
 			mplssize++;
