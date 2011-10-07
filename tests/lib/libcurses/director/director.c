@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.8 2011/09/15 11:53:12 blymn Exp $	*/
+/*	$NetBSD: director.c,v 1.9 2011/10/07 13:39:33 joerg Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -267,10 +267,8 @@ main(int argc, char *argv[])
 	if ((yyin = fopen(argv[0], "r")) == NULL)
 		err(1, "Cannot open command file %s", argv[0]);
 
-	if ((cur_file = malloc(strlen(argv[0]) + 1)) == NULL)
+	if ((cur_file = strdup(argv[0])) == NULL)
 		err(2, "Failed to alloc memory for test file name");
-
-	strlcpy(cur_file, argv[0], strlen(argv[0]) + 1);
 
 	init_parse_variables(1);
 
