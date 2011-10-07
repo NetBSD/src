@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.43 2011/05/30 13:55:27 joerg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.44 2011/10/07 19:41:03 jakllsch Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.43 2011/05/30 13:55:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.44 2011/10/07 19:41:03 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -185,8 +185,11 @@ umidi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	aprint_normal("%s\n", devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_iface = uaa->iface;
