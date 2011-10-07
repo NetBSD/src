@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.18 2011/07/17 20:54:52 joerg Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.19 2011/10/07 16:51:45 dyoung Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.18 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.19 2011/10/07 16:51:45 dyoung Exp $");
 #endif
 
 /*
@@ -488,15 +488,11 @@ err:
 int
 ieee80211_node_dectestref(struct ieee80211_node *ni)
 {
-	int rc, s;
-	s = splnet();
-	if (--ni->ni_refcnt == 0) {
-		rc = 1;
-		ni->ni_refcnt = 1;
+	if (atomic_dec_uint_nv(&ni->ni_refcnt) == 0) {
+		atomic_inc_uint(&ni->ni_refcnt);
+		return 1;
 	} else
-		rc = 0;
-	splx(s);
-	return rc;
+		return 0;
 }
 
 void
