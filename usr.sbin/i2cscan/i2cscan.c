@@ -1,4 +1,4 @@
-/* $NetBSD: i2cscan.c,v 1.1 2011/10/02 16:48:47 jmcneill Exp $ */
+/* $NetBSD: i2cscan.c,v 1.2 2011/10/07 10:30:21 joerg Exp $ */
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: i2cscan.c,v 1.1 2011/10/02 16:48:47 jmcneill Exp $");
+__RCSID("$NetBSD: i2cscan.c,v 1.2 2011/10/07 10:30:21 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: i2cscan.c,v 1.1 2011/10/02 16:48:47 jmcneill Exp $");
 
 #include <dev/i2c/i2c_io.h>
 
-static void
+__dead static void
 usage(const char *pn)
 {
 	fprintf(stderr, "usage: %s <i2cdev>\n", pn);
