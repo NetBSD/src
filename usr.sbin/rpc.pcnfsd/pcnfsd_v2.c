@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_v2.c,v 1.11 2011/08/31 16:24:59 plunky Exp $	*/
+/*	$NetBSD: pcnfsd_v2.c,v 1.12 2011/10/07 10:46:29 joerg Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v2.c 1.2 91/12/18 13:26:13 SMI */
 /*
@@ -333,9 +333,11 @@ static char *
 my_strdup(s)
 	const char   *s;
 {
+	size_t len;
 	char   *r;
-	r = (char *) grab(strlen(s) + 1);
-	strlcpy(r, s, strlen(s) + 1);
+	len = strlen(s);
+	r = (char *) grab(len + 1);
+	memcpy(r, s, len + 1);
 	return (r);
 }
 
