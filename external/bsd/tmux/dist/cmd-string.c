@@ -1,4 +1,4 @@
-/* $Id: cmd-string.c,v 1.3 2011/08/17 18:48:36 jmmv Exp $ */
+/* $Id: cmd-string.c,v 1.4 2011/10/07 10:38:02 joerg Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -64,7 +64,7 @@ cmd_string_parse(const char *s, struct cmd_list **cmdlist, char **cause)
 	int		ch, i, argc, rval;
 	char	      **argv, *buf, *t;
 	const char     *whitespace, *equals;
-	size_t		len;
+	size_t		len, len2;
 
 	argv = NULL;
 	argc = 0;
@@ -84,25 +84,28 @@ cmd_string_parse(const char *s, struct cmd_list **cmdlist, char **cause)
 		case '\'':
 			if ((t = cmd_string_string(s, &p, '\'', 0)) == NULL)
 				goto error;
-			buf = xrealloc(buf, 1, len + strlen(t) + 1);
-			strlcpy(buf + len, t, strlen(t) + 1);
-			len += strlen(t);
+			len2 = strlen(t);
+			buf = xrealloc(buf, 1, len + len2 + 1);
+			memcpy(buf + len, t, len2 + 1);
+			len += len2;
 			xfree(t);
 			break;
 		case '"':
 			if ((t = cmd_string_string(s, &p, '"', 1)) == NULL)
 				goto error;
-			buf = xrealloc(buf, 1, len + strlen(t) + 1);
-			strlcpy(buf + len, t, strlen(t) + 1);
-			len += strlen(t);
+			len2 = strlen(t);
+			buf = xrealloc(buf, 1, len + len2 + 1);
+			memcpy(buf + len, t, len2 + 1);
+			len += len2;
 			xfree(t);
 			break;
 		case '$':
 			if ((t = cmd_string_variable(s, &p)) == NULL)
 				goto error;
-			buf = xrealloc(buf, 1, len + strlen(t) + 1);
-			strlcpy(buf + len, t, strlen(t) + 1);
-			len += strlen(t);
+			len2 = strlen(t);
+			buf = xrealloc(buf, 1, len + len2 + 1);
+			strlcpy(buf + len, t, len2 + 1);
+			len += len2;
 			xfree(t);
 			break;
 		case '#':
@@ -149,9 +152,10 @@ cmd_string_parse(const char *s, struct cmd_list **cmdlist, char **cause)
 			if (buf == NULL) {
 				if ((t = cmd_string_expand_tilde(s, &p)) == NULL)
 					goto error;
-				buf = xrealloc(buf, 1, len + strlen(t) + 1);
-				strlcpy(buf + len, t, strlen(t) + 1);
-				len += strlen(t);
+				len2 = strlen(t);
+				buf = xrealloc(buf, 1, len + len2 + 1);
+				memcpy(buf + len, t, len2 + 1);
+				len += len2;
 				xfree(t);
 				break;
 			}
@@ -187,7 +191,7 @@ cmd_string_string(const char *s, size_t *p, char endch, int esc)
 {
 	int	ch;
 	char   *buf, *t;
-	size_t	len;
+	size_t	len, len2;
 
 	buf = NULL;
 	len = 0;
@@ -221,9 +225,10 @@ cmd_string_string(const char *s, size_t *p, char endch, int esc)
 				break;
 			if ((t = cmd_string_variable(s, p)) == NULL)
 				goto error;
-			buf = xrealloc(buf, 1, len + strlen(t) + 1);
-			strlcpy(buf + len, t, strlen(t) + 1);
-			len += strlen(t);
+			len2 = strlen(t);
+			buf = xrealloc(buf, 1, len + len2 + 1);
+			memcpy(buf + len, t, len2 + 1);
+			len += len2;
 			xfree(t);
 			continue;
 		}
