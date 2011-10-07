@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.94 2011/06/12 03:35:54 rmind Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.95 2011/10/07 09:35:05 hannken Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.94 2011/06/12 03:35:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.95 2011/10/07 09:35:05 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,8 +418,7 @@ smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	int error, allerror = 0;
 
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL)
-		return ENOMEM;
+	mvp = vnalloc(mp);
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */

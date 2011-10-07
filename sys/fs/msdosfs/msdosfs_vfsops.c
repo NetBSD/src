@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.91 2011/06/12 03:35:53 rmind Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.92 2011/10/07 09:35:04 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.91 2011/06/12 03:35:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.92 2011/10/07 09:35:04 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -953,8 +953,7 @@ msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 		}
 	}
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL)
-		return ENOMEM;
+	mvp = vnalloc(mp);
 	fstrans_start(mp, FSTRANS_SHARED);
 	/*
 	 * Write back each (modified) denode.
