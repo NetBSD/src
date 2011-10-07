@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lua.mk,v 1.1 2011/10/07 16:25:37 plunky Exp $
+#	$NetBSD: bsd.lua.mk,v 1.2 2011/10/07 17:53:03 apb Exp $
 #
 # Build rules and definitions for Lua modules
 
@@ -54,7 +54,6 @@ _BSD_LUA_MK_=1
 realinstall:	.PHONY lua-install
 realall:	.PHONY lua-all
 lint:		.PHONY lua-lint
-clean:		.PHONY lua-clean
 
 lua-install:	.PHONY
 
@@ -62,8 +61,7 @@ lua-all:	.PHONY
 
 lua-lint:	.PHONY
 
-lua-clean:	.PHONY
-	rm -f a.out [Ee]rrs mklog core *.core ${LUA_CLEAN}
+CLEANFILES+= a.out [Ee]rrs mklog core *.core
 
 ##
 ##### Global variables
@@ -108,7 +106,7 @@ LUA_DEST.${_M}=${LUA_LIBDIR}${_M:S/./\//g:S/^/\//:H}
 ## The module has Lua source and needs to be compiled
 LUA_TARG.${_M}=${_M:S/./_/g}.luac
 LUA_NAME.${_M}=${_M:S/./\//g:T}.luac
-LUA_CLEAN+=${LUA_TARG.${_M}}
+CLEANFILES+=${LUA_TARG.${_M}}
 DPSRCS+=${LUA_SRCS.${_M}}
 
 .NOPATH:		${LUA_TARG.${_M}}
@@ -127,7 +125,7 @@ LUA_OBJS.${_M}=${LUA_SRCS.${_M}:N*.lua:R:S/$/.o/g}
 LUA_LOBJ.${_M}=${LUA_SRCS.${_M}:M*.c:.c=.ln}
 LUA_TARG.${_M}=${_M:S/./_/g}.so
 LUA_NAME.${_M}=${_M:S/./\//g:T}.so
-LUA_CLEAN+=${LUA_OBJS.${_M}} ${LUA_LOBJ.${_M}} ${LUA_TARG.${_M}}
+CLEANFILES+=${LUA_OBJS.${_M}} ${LUA_LOBJ.${_M}} ${LUA_TARG.${_M}}
 DPSRCS+=${LUA_SRCS.${_M}}
 SRCS+=${LUA_SRCS.${_M}}
 
@@ -159,6 +157,7 @@ ${DESTDIR}${LUA_DEST.${_M}}/${LUA_NAME.${_M}}! ${LUA_TARG.${_M}}
 ##
 ##### end of modules
 
+.include <bsd.clean.mk>
 .include <bsd.dep.mk>
 .include <bsd.inc.mk>
 .include <bsd.obj.mk>
