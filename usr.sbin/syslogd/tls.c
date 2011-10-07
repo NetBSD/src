@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.7 2011/08/01 12:28:53 mbalmer Exp $	*/
+/*	$NetBSD: tls.c,v 1.8 2011/10/07 10:50:01 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.7 2011/08/01 12:28:53 mbalmer Exp $");
+__RCSID("$NetBSD: tls.c,v 1.8 2011/10/07 10:50:01 joerg Exp $");
 
 #ifndef DISABLE_TLS
 #include "syslogd.h"
@@ -1368,8 +1368,9 @@ dispatch_socket_accept(int fd, short event, void *ev)
 		peername = NULL;
 	}
 	else {
-		MALLOC(peername, strlen(hbuf)+1);
-		(void)strlcpy(peername, hbuf, strlen(hbuf)+1);
+		size_t len = strlen(hbuf) + 1;
+		MALLOC(peername, len);
+		(void)memcpy(peername, hbuf, len);
 	}
 
 #ifdef LIBWRAP
