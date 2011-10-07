@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.194 2011/09/25 04:11:48 christos Exp $
+# $NetBSD: shl.mi,v 1.195 2011/10/07 09:15:21 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -39,8 +39,8 @@
 ./usr/lib/libg2c_pic.a				comp-obsolete		gcc=4,obsolete
 ./usr/lib/libgcc_eh.a				comp-c-lib
 ./usr/lib/libgcc_eh_p.a				comp-c-proflib		profile
-./usr/lib/libgcc_eh_pic.a			comp-c-piclib
-./usr/lib/libgcc_pic.a				comp-c-lib
+./usr/lib/libgcc_eh_pic.a			comp-c-piclib		obsolete
+./usr/lib/libgcc_pic.a				comp-c-lib		obsolete
 ./usr/lib/libgmp.so				comp-c-shlib		obsolete
 ./usr/lib/libgmp.so.10				comp-c-shlib		obsolete
 ./usr/lib/libgmp.so.10.2			comp-c-shlib		obsolete

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.109 2011/06/27 14:27:56 uwe Exp $
+#	$NetBSD: Makefile,v 1.110 2011/10/07 09:15:21 mrg Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -121,8 +121,8 @@ DPADD+=		${CLIBOBJ}/libc.a
 
 .if ${MACHINE_CPU} == "hppa" || ${MACHINE_CPU} == "sh3"
 # for $$divU, $$remU etc. (millicode)
-LDADD+=		-lgcc_pic
-DPADD+=		${LIBGCC_PIC}
+LDADD+=		-lgcc
+DPADD+=		${LIBGCC}
 .endif
 
 STRIPFLAG=

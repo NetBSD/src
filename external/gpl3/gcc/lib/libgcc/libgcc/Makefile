@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/08/15 09:19:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/10/07 09:15:21 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -32,6 +32,8 @@ SRCS+=		${LIB2_EH}
 BUILDSYMLINKS+=	${GNUHOSTDIST}/gcc/config/rs6000/${file:S/.S$/.asm/} ${file}
 .endfor
 .   endif
+
+MKPIC:= no
 
 .include <bsd.lib.mk>
 
