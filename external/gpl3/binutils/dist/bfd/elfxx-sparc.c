@@ -3393,11 +3393,10 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd,
 	      /* h->dynindx may be -1 if the symbol was marked to
 		 become local.  */
 	      else if (h != NULL &&
-		       h->dynindx != -1
-		       && (! is_plt
-			   || !info->shared
-			   || !SYMBOLIC_BIND (info, h)
-			   || !h->def_regular))
+		       h->dynindx != -1 && ! is_plt &&
+		       (!info->shared
+			|| !SYMBOLIC_BIND (info, h)
+			|| !h->def_regular))
 		{
 		  BFD_ASSERT (h->dynindx != -1);
 		  outrel.r_info = SPARC_ELF_R_INFO (htab, rel, h->dynindx, r_type);
