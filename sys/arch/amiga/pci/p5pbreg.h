@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pbreg.h,v 1.2 2011/09/19 19:15:29 rkujawa Exp $ */
+/*	$NetBSD: p5pbreg.h,v 1.3 2011/10/07 08:44:21 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -71,5 +71,13 @@
 #define OFF_P2_APERTURE_2	0x00800000
 #define OFF_P2_REGS		0x01000000 
 /* #define OFF_P2_REGS		0x0F000000 */   /* ? alt. Permedia regs */
+
+/* PCI configuration register on CV64/3D, base is an offset from card base */
+#define CV643D_PCI_CONF_BASE	0xC0E0000
+#define CV643D_PCI_CONF_SIZE	0xFFF
+#define CV643D_PCI_MEM_BASE	0x4000000
+#define CV643D_PCI_MEM_SIZ	0x4000FFF
+#define CV643D_PCI_IO_BASE	0xC000000	
+#define CV643D_PCI_IO_SIZE	0xFFFF
 
 #endif /* _AMIGA_P5PBREG_H_ */
