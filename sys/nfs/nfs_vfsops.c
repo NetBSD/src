@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.218 2011/06/12 03:35:59 rmind Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.219 2011/10/07 09:35:06 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.218 2011/06/12 03:35:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.219 2011/10/07 09:35:06 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -953,8 +953,7 @@ nfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
-	if ((mvp = vnalloc(mp)) == NULL)
-		return (ENOMEM);
+	mvp = vnalloc(mp);
 loop:
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()

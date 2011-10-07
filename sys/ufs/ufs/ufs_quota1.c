@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.4 2011/06/12 03:36:02 rmind Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.5 2011/10/07 09:35:07 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.4 2011/06/12 03:36:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.5 2011/10/07 09:35:07 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -368,10 +368,7 @@ quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
 		dqrele(NULLVP, dq);
 	}
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL) {
-		error = ENOMEM;
-		goto out;
-	}
+	mvp = vnalloc(mp);
 	/*
 	 * Search vnodes associated with this mount point,
 	 * adding references to quota file being opened.
@@ -405,7 +402,7 @@ again:
 	}
 	mutex_exit(&mntvnode_lock);
 	vnfree(mvp);
- out:
+
 	mutex_enter(&dqlock);
 	ump->umq1_qflags[type] &= ~QTF_OPENING;
 	cv_broadcast(&dqcv);
@@ -432,8 +429,7 @@ quota1_handle_cmd_quotaoff(struct lwp *l, struct ufsmount *ump, int type)
 	int i, error;
 
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL)
-		return ENOMEM;
+	mvp = vnalloc(mp);
 
 	mutex_enter(&dqlock);
 	while ((ump->umq1_qflags[type] & (QTF_CLOSING | QTF_OPENING)) != 0)
@@ -760,8 +756,7 @@ q1sync(struct mount *mp)
 		return (0);
 
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL)
-		return (ENOMEM);
+	mvp = vnalloc(mp);
 
 	/*
 	 * Search vnodes associated with this mount point,

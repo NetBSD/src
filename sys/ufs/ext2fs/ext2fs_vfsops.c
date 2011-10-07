@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.160 2011/06/12 03:36:00 rmind Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.161 2011/10/07 09:35:06 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.160 2011/06/12 03:36:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.161 2011/10/07 09:35:06 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -592,8 +592,7 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	}
 
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL)
-		return ENOMEM;
+	mvp = vnalloc(mp);
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
@@ -914,8 +913,7 @@ ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	}
 
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL)
-		return (ENOMEM);
+	mvp = vnalloc(mp);
 
 	/*
 	 * Write back each (modified) inode.

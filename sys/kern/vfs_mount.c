@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.9 2011/09/01 12:29:41 christos Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.10 2011/10/07 09:35:05 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.9 2011/09/01 12:29:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.10 2011/10/07 09:35:05 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -443,9 +443,6 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 
 	/* Allocate a marker vnode. */
 	mvp = vnalloc(mp);
-	if (mvp == NULL) {
-		return ENOMEM;
-	}
 
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()

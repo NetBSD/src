@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.13 2011/10/03 10:30:13 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.14 2011/10/07 09:35:06 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.13 2011/10/03 10:30:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.14 2011/10/07 09:35:06 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -352,7 +352,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vnode_t *vp;
 	int error = 0;
 
-try_again:
 	if (mp != NULL) {
 		/*
 		 * Mark filesystem busy while we are creating a vnode.
@@ -371,25 +370,14 @@ try_again:
 	if (numvnodes > desiredvnodes + desiredvnodes / 10)
 		cv_signal(&vdrain_cv);
 	mutex_exit(&vnode_free_list_lock);
-	if ((vp = vnalloc(NULL)) == NULL) {
-		mutex_enter(&vnode_free_list_lock);
-		numvnodes--;
-		mutex_exit(&vnode_free_list_lock);
-		if (mp != NULL) {
-			vfs_unbusy(mp, false, NULL);
-		}
-		printf("WARNING: unable to allocate new vnode, retrying...\n");
-		kpause("newvn", false, hz, NULL);
-		goto try_again;
-	}
-
-	vp->v_usecount = 1;
+	vp = vnalloc(NULL);
 
 	KASSERT(vp->v_freelisthd == NULL);
 	KASSERT(LIST_EMPTY(&vp->v_nclist));
 	KASSERT(LIST_EMPTY(&vp->v_dnclist));
 
 	/* Initialize vnode. */
+	vp->v_usecount = 1;
 	vp->v_type = VNON;
 	vp->v_tag = tag;
 	vp->v_op = vops;

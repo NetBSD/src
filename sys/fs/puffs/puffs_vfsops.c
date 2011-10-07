@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.97 2011/09/21 15:36:33 manu Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.98 2011/10/07 09:35:05 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.97 2011/09/21 15:36:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.98 2011/10/07 09:35:05 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -519,8 +519,7 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 	fsyncwait = (waitfor == MNT_WAIT) ? FSYNC_WAIT : 0;
 
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL)
-		return ENOMEM;
+	mvp = vnalloc(mp);
 
 	/*
 	 * Sync all cached data from regular vnodes (which are not

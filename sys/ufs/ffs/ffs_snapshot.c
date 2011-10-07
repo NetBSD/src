@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.117 2011/07/01 14:28:21 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.118 2011/10/07 09:35:06 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.117 2011/07/01 14:28:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.118 2011/10/07 09:35:06 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -629,10 +629,7 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	/*
 	 * Allocate a marker vnode.
 	 */
-	if ((mvp = vnalloc(mp)) == NULL) {
-		error = ENOMEM;
-		goto out;
-	}
+	mvp = vnalloc(mp);
 	/*
 	 * We also calculate the needed size for the snapshot list.
 	 */
