@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.111 2011/03/07 11:25:41 cegger Exp $	*/
+/*	$NetBSD: ath.c,v 1.112 2011/10/07 16:58:11 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.111 2011/03/07 11:25:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.112 2011/10/07 16:58:11 dyoung Exp $");
 #endif
 
 /*
@@ -979,18 +979,18 @@ ath_init(struct ath_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_hal *ah = sc->sc_ah;
 	HAL_STATUS status;
-	int error = 0;
+	int error = 0, s;
 
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags 0x%x\n",
 		__func__, ifp->if_flags);
 
 	if (device_is_active(sc->sc_dev)) {
-		ATH_LOCK(sc);
+		s = splnet();
 	} else if (!pmf_device_subtree_resume(sc->sc_dev, &sc->sc_qual) ||
 	           !device_is_active(sc->sc_dev))
 		return 0;
 	else
-		ATH_LOCK(sc);
+		s = splnet();
 
 	/*
 	 * Stop anything previously setup.  This is safe
@@ -1074,7 +1074,7 @@ ath_init(struct ath_softc *sc)
 	} else
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 done:
-	ATH_UNLOCK(sc);
+	splx(s);
 	return error;
 }
 
@@ -1088,7 +1088,7 @@ ath_stop_locked(struct ifnet *ifp, int disable)
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: invalid %d if_flags 0x%x\n",
 		__func__, !device_is_enabled(sc->sc_dev), ifp->if_flags);
 
-	ATH_LOCK_ASSERT(sc);
+	/* KASSERT() IPL_NET */
 	if (ifp->if_flags & IFF_RUNNING) {
 		/*
 		 * Shutdown the hardware and driver:
@@ -1137,11 +1137,11 @@ ath_stop_locked(struct ifnet *ifp, int disable)
 static void
 ath_stop(struct ifnet *ifp, int disable)
 {
-	struct ath_softc *sc = ifp->if_softc;
+	int s;
 
-	ATH_LOCK(sc);
+	s = splnet();
 	ath_stop_locked(ifp, disable);
-	ATH_UNLOCK(sc);
+	splx(s);
 }
 
 static void
@@ -4599,10 +4599,11 @@ ath_calibrate(void *arg)
 	struct ath_softc *sc = arg;
 	struct ath_hal *ah = sc->sc_ah;
 	HAL_BOOL iqCalDone;
+	int s;
 
 	sc->sc_stats.ast_per_cal++;
 
-	ATH_LOCK(sc);
+	 s = splnet();
 
 	if (ath_hal_getrfgain(ah) == HAL_RFGAIN_NEED_CHANGE) {
 		/*
@@ -4648,7 +4649,7 @@ ath_calibrate(void *arg)
 	sc->sc_caltries++;
 	callout_reset(&sc->sc_cal_ch, sc->sc_calinterval * hz,
 		ath_calibrate, sc);
-	ATH_UNLOCK(sc);
+	splx(s);
 }
 
 static int
@@ -5300,9 +5301,9 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ath_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifreq *ifr = (struct ifreq *)data;
-	int error = 0;
+	int error = 0, s;
 
-	ATH_LOCK(sc);
+	s = splnet();
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
@@ -5348,7 +5349,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		sc->sc_stats.ast_tx_packets = ifp->if_opackets;
 		sc->sc_stats.ast_rx_packets = ifp->if_ipackets;
 		sc->sc_stats.ast_rx_rssi = ieee80211_getrssi(ic);
-		ATH_UNLOCK(sc);
+		splx(s);
 		/*
 		 * NB: Drop the softc lock in case of a page fault;
 		 * we'll accept any potential inconsisentcy in the
@@ -5371,7 +5372,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		break;
 	}
-	ATH_UNLOCK(sc);
+	splx(s);
 	return error;
 #undef IS_RUNNING
 }

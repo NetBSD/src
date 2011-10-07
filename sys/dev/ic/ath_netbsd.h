@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.h,v 1.11 2011/01/21 17:46:19 dyoung Exp $ */
+/*	$NetBSD: ath_netbsd.h,v 1.12 2011/10/07 16:58:11 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -48,49 +48,19 @@ typedef struct ath_task {
 #define TASK_RUN_OR_ENQUEUE(__task)	\
 	((*(__task)->t_func)((__task)->t_context, 1))
 
-struct ath_lock {
-	int count;
-	int ipl;
-};
+typedef kmutex_t ath_txq_lock_t;
+#define	ATH_TXQ_LOCK_INIT(_sc, _tq)	mutex_init(&(_tq)->axq_lock, MUTEX_DEFAULT, IPL_NET)
+#define	ATH_TXQ_LOCK_DESTROY(_tq)	mutex_destroy(&(_tq)->axq_lock)
+#define	ATH_TXQ_LOCK(_tq)		mutex_enter(&(_tq)->axq_lock)
+#define	ATH_TXQ_UNLOCK(_tq)		mutex_exit(&(_tq)->axq_lock)
+#define	ATH_TXQ_LOCK_ASSERT(_tq)	do { KASSERT(mutex_owned(&(_tq)->axq_lock), ("txq lock unheld")); } while (/*CONSTCOND*/true)
 
-#define	ATH_LOCK_INIT_IMPL(_obj, _member)		\
-	do { (_obj)->_member.count = 0; } while (0)
-#define	ATH_LOCK_IMPL(_obj, _member)			\
-	do {						\
-		int __s = splnet();			\
-		if ((_obj)->_member.count++ == 0)	\
-			(_obj)->_member.ipl = __s;	\
-	} while (0)
-#define	ATH_UNLOCK_IMPL(_obj, _member)					\
-	do {								\
-		if (--(_obj)->_member.count == 0)			\
-			splx((_obj)->_member.ipl);			\
-		else {							\
-			KASSERT((_obj)->_member.count >= 0,		\
-			    ("%s: no ATH_LOCK holders", __func__));	\
-		}							\
-	} while (0)
-
-typedef struct ath_lock ath_lock_t;
-#define	ATH_LOCK_INIT(_sc)	ATH_LOCK_INIT_IMPL(_sc, sc_mtx)
-#define	ATH_LOCK_DESTROY(_sc)
-#define	ATH_LOCK(_sc)	ATH_LOCK_IMPL(_sc, sc_mtx)
-#define	ATH_UNLOCK(_sc)	ATH_UNLOCK_IMPL(_sc, sc_mtx)
-#define	ATH_LOCK_ASSERT(_sc)
-
-typedef struct ath_lock ath_txq_lock_t;
-#define	ATH_TXQ_LOCK_INIT(_sc, _tq)	ATH_LOCK_INIT_IMPL(_tq, axq_lock)
-#define	ATH_TXQ_LOCK_DESTROY(_tq)
-#define	ATH_TXQ_LOCK(_tq)		ATH_LOCK_IMPL(_tq, axq_lock)
-#define	ATH_TXQ_UNLOCK(_tq)		ATH_UNLOCK_IMPL(_tq, axq_lock)
-#define	ATH_TXQ_LOCK_ASSERT(_tq)
-
-typedef struct ath_lock ath_txbuf_lock_t;
-#define	ATH_TXBUF_LOCK_INIT(_sc)	ATH_LOCK_INIT_IMPL(_sc, sc_txbuflock)
-#define	ATH_TXBUF_LOCK_DESTROY(_sc)
-#define	ATH_TXBUF_LOCK(_sc)		ATH_LOCK_IMPL(_sc, sc_txbuflock)
-#define	ATH_TXBUF_UNLOCK(_sc)		ATH_UNLOCK_IMPL(_sc, sc_txbuflock)
-#define	ATH_TXBUF_LOCK_ASSERT(_sc)
+typedef kmutex_t ath_txbuf_lock_t;
+#define	ATH_TXBUF_LOCK_INIT(_sc)	mutex_init(&(_sc)->sc_txbuflock, MUTEX_DEFAULT, IPL_NET)
+#define	ATH_TXBUF_LOCK_DESTROY(_sc)	mutex_destroy(&(_sc)->sc_txbuflock)
+#define	ATH_TXBUF_LOCK(_sc)		mutex_enter(&(_sc)->sc_txbuflock)
+#define	ATH_TXBUF_UNLOCK(_sc)		mutex_exit(&(_sc)->sc_txbuflock)
+#define	ATH_TXBUF_LOCK_ASSERT(_sc)	do { KASSERT(mutex_owned(&(_sc)->sc_txbuflock), ("txbuf lock unheld")); } while (/*CONSTCOND*/true)
 
 #define	NET_LOCK_GIANT()
 #define	NET_UNLOCK_GIANT()
