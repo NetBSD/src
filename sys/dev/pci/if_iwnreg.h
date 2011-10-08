@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnreg.h,v 1.9 2011/05/15 13:56:20 christos Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.10 2011/10/08 09:15:08 elric Exp $	*/
 /*	$OpenBSD: if_iwnreg.h,v 1.40 2010/05/05 19:41:57 damien Exp $	*/
 
 /*-
@@ -732,6 +732,7 @@ struct iwn5000_wimax_coex {
 struct iwn5000_calib_elem {
 	uint32_t	enable;
 	uint32_t	start;
+#define IWN5000_CALIB_DC	(1 << 1)
 	uint32_t	send;
 	uint32_t	apply;
 	uint32_t	reserved;
