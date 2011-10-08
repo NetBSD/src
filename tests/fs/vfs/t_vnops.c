@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.28 2011/08/19 01:25:27 riastradh Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.29 2011/10/08 13:08:54 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -45,8 +45,9 @@
 
 #define TESTFILE "afile"
 
-#define USES_DIRS \
-    if (FSTYPE_SYSVBFS(tc)) atf_tc_skip("dirs not supported by file system")
+#define USES_DIRS					\
+    if (FSTYPE_SYSVBFS(tc))				\
+	atf_tc_skip("directories not supported by file system")
 
 #define USES_SYMLINKS					\
     if (FSTYPE_SYSVBFS(tc) || FSTYPE_MSDOS(tc))		\
@@ -205,7 +206,7 @@ rename_dir(const atf_tc_t *tc, const char *mp)
 	struct stat ref, sb;
 
 	if (FSTYPE_RUMPFS(tc))
-		atf_tc_skip("rename not supported by fs");
+		atf_tc_skip("rename not supported by file system");
 
 	USES_DIRS;
 
@@ -307,7 +308,7 @@ rename_dotdot(const atf_tc_t *tc, const char *mp)
 {
 
 	if (FSTYPE_RUMPFS(tc))
-		atf_tc_skip("rename not supported by fs");
+		atf_tc_skip("rename not supported by file system");
 
 	USES_DIRS;
 
@@ -345,7 +346,7 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 	ino_t f1ino, f2ino;
 
 	if (FSTYPE_RUMPFS(tc))
-		atf_tc_skip("rename not supported by fs");
+		atf_tc_skip("rename not supported by file system");
 
 	if (rump_sys_chdir(mp) == -1)
 		atf_tc_fail_errno("chdir mountpoint");
@@ -482,7 +483,7 @@ rename_nametoolong(const atf_tc_t *tc, const char *mp)
 	size_t len;
 
 	if (FSTYPE_RUMPFS(tc))
-		atf_tc_skip("rename not supported by fs");
+		atf_tc_skip("rename not supported by file system");
 
 	if (rump_sys_chdir(mp) == -1)
 		atf_tc_fail_errno("chdir mountpoint");

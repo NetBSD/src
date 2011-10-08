@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rmdirrace.c,v 1.7 2010/07/19 16:00:45 pooka Exp $	*/
+/*	$NetBSD: t_rmdirrace.c,v 1.8 2011/10/08 13:08:54 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ race(const atf_tc_t *tc, const char *path)
 	if (FSTYPE_LFS(tc))
 		atf_tc_expect_signal(-1, "PR kern/43582");
 	if (FSTYPE_SYSVBFS(tc))
-		atf_tc_skip("rmdir(2) not supported by file system");
+		atf_tc_skip("directories not supported by file system");
 
 	fd = rump_sys_open(".", O_RDONLY, 0666);
 	if (fd == -1)
