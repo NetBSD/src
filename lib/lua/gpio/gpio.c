@@ -1,3 +1,5 @@
+/*	$NetBSD: gpio.c,v 1.2 2011/10/08 08:46:40 mbalmer Exp $ */
+
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
  * All rights reserved.
@@ -185,7 +187,6 @@ gpio_write(lua_State *L)
 	return 1;
 }
 
-
 static int
 gpio_toggle(lua_State *L)
 {
@@ -200,7 +201,6 @@ gpio_toggle(lua_State *L)
 	lua_pushinteger(L, req.gp_value);
 	return 1;
 }
-
 
 static int
 gpio_attach(lua_State *L)
@@ -223,7 +223,6 @@ gpio_attach(lua_State *L)
 		gpio_error(L, "GPIOATTACH");
 	return 0;
 }
-
 
 static int
 gpio_pulse(lua_State *L)
