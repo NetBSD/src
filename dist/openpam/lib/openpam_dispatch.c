@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: openpam_dispatch.c,v 1.5 2011/08/17 09:55:41 christos Exp $
+ * $Id: openpam_dispatch.c,v 1.6 2011/10/08 20:40:06 apb Exp $
  */
 
 #include <sys/param.h>
@@ -59,7 +59,7 @@ openpam_dispatch(pam_handle_t *pamh,
 	int flags)
 {
 	pam_chain_t *chain;
-	int err, fail, r;
+	int err, fail, nsuccess, r;
 #ifdef DEBUG
 	int debug;
 #endif
@@ -98,18 +98,19 @@ openpam_dispatch(pam_handle_t *pamh,
 		RETURNC(PAM_SYSTEM_ERR);
 	}
 
-#ifdef __NetBSD__
-	/* Require chains to exist, so that we don't fail open */
-	if (chain == NULL)
-		RETURNC(PAM_SYSTEM_ERR);
-#endif
-
 	/* execute */
-	for (err = fail = 0; chain != NULL; chain = chain->next) {
+	err = PAM_SUCCESS;
+	fail = nsuccess = 0;
+	for (; chain != NULL; chain = chain->next) {
 		if (chain->module->func[primitive] == NULL) {
+			/*
+			 * This module does not implement this primitive.
+			 * That may be ignorable, or not, depending
+			 * on flags.
+			 */
 			openpam_log(PAM_LOG_ERROR, "%s: no %s()",
 			    chain->module->path, _pam_sm_func_name[primitive]);
-			continue;
+			r = PAM_SYSTEM_ERR;
 		} else {
 			pamh->primitive = primitive;
 			pamh->current = chain;
@@ -135,6 +136,7 @@ openpam_dispatch(pam_handle_t *pamh,
 		if (r == PAM_IGNORE)
 			continue;
 		if (r == PAM_SUCCESS) {
+			++nsuccess;
 			/*
 			 * For pam_setcred() and pam_chauthtok() with the
 			 * PAM_PRELIM_CHECK flag, treat "sufficient" as
@@ -156,7 +158,7 @@ openpam_dispatch(pam_handle_t *pamh,
 		 * fail.  If a required module fails, record the
 		 * return code from the first required module to fail.
 		 */
-		if (err == 0)
+		if (err == PAM_SUCCESS)
 			err = r;
 		if ((chain->flag == PAM_REQUIRED ||
 		    chain->flag == PAM_BINDING) && !fail) {
@@ -178,6 +180,20 @@ openpam_dispatch(pam_handle_t *pamh,
 
 	if (!fail && err != PAM_NEW_AUTHTOK_REQD)
 		err = PAM_SUCCESS;
+
+#ifdef __NetBSD__
+	/*
+	 * Require the chain to be non-empty, and at least one module
+	 * in the chain to be successful, so that we don't fail open.
+	 */
+	if (err == PAM_SUCCESS && nsuccess < 1) {
+		openpam_log(PAM_LOG_ERROR,
+		    "all modules were unsuccessful for %s()",
+		    _pam_sm_func_name[primitive]);
+		err = PAM_SYSTEM_ERR;
+	}
+#endif
+
 	RETURNC(err);
 	/*NOTREACHED*/
 }
