@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.104 2011/07/01 18:48:36 dyoung Exp $	*/
+/*	$NetBSD: iommu.c,v 1.105 2011/10/08 08:49:07 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.104 2011/07/01 18:48:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.105 2011/10/08 08:49:07 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -241,7 +241,7 @@ iommu_reset(struct iommu_state *is)
 			bus_space_write_8(is->is_bustag, is->is_sb[i]->sb_sb,
 				STRBUFREG(strbuf_ctl), STRBUF_EN);
 
-			membar_lookaside();
+			membar_Lookaside();
 
 			/* No streaming buffers? Disable them */
 			if (bus_space_read_8(is->is_bustag,
@@ -366,7 +366,7 @@ iommu_remove(struct iommu_state *is, vaddr_t va, size_t len)
 		 * until the next iommu_enter call.
 		 */
 		is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] &= ~IOTTE_V;
-		membar_storestore();
+		membar_StoreStore();
 #endif
 		IOMMUREG_WRITE(is, iommu_flush, va);
 

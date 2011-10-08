@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.55 2011/03/16 02:35:48 mrg Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.56 2011/10/08 08:49:07 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -900,22 +900,22 @@ dmmu_set_secondary_context(uint ctx)
  * SPARC V9 memory barrier instructions.
  */
 /* Make all stores complete before next store */
-#define	membar_storestore() __asm volatile("membar #StoreStore" : :)
+#define	membar_StoreStore() __asm volatile("membar #StoreStore" : :)
 /* Make all loads complete before next store */ 
-#define	membar_loadstore() __asm volatile("membar #LoadStore" : :)
+#define	membar_LoadStore() __asm volatile("membar #LoadStore" : :)
 /* Make all stores complete before next load */ 
-#define	membar_storeload() __asm volatile("membar #StoreLoad" : :)
+#define	membar_StoreLoad() __asm volatile("membar #StoreLoad" : :)
 /* Make all loads complete before next load */
-#define	membar_loadload() __asm volatile("membar #LoadLoad" : :)
+#define	membar_LoadLoad() __asm volatile("membar #LoadLoad" : :)
 /* Complete all outstanding memory operations and exceptions */
-#define	membar_sync() __asm volatile("membar #Sync" : :)
+#define	membar_Sync() __asm volatile("membar #Sync" : :)
 /* Complete all outstanding memory operations */
-#define	membar_memissue() __asm volatile("membar #MemIssue" : :)
+#define	membar_MemIssue() __asm volatile("membar #MemIssue" : :)
 /* Complete all outstanding stores before any new loads */
-#define	membar_lookaside() __asm volatile("membar #Lookaside" : :)
+#define	membar_Lookaside() __asm volatile("membar #Lookaside" : :)
 
-#define membar_load() __asm volatile("membar #LoadLoad | #LoadStore" : :)
-#define membar_store() __asm volatile("membar #LoadStore | #StoreStore" : :)
+#define membar_Load() __asm volatile("membar #LoadLoad | #LoadStore" : :)
+#define membar_Store() __asm volatile("membar #LoadStore | #StoreStore" : :)
 
 #endif
 
