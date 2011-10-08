@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.42 2011/06/06 02:49:39 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.43 2011/10/08 08:49:07 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.42 2011/06/06 02:49:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.43 2011/10/08 08:49:07 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -111,9 +111,9 @@ sparc64_do_pause(void)
 	CPUSET_ADD(cpus_paused, cpu_number());
 
 	do {
-		membar_sync();
+		membar_Sync();
 	} while(CPUSET_HAS(cpus_paused, cpu_number()));
-	membar_sync();
+	membar_Sync();
 	CPUSET_ADD(cpus_resumed, cpu_number());
 
 #if defined(DDB)
@@ -229,11 +229,11 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 		stxa(IDDR_1H, ASI_INTERRUPT_DISPATCH, arg1);
 		stxa(IDDR_2H, ASI_INTERRUPT_DISPATCH, arg2);
 		stxa(IDCR(upaid), ASI_INTERRUPT_DISPATCH, 0);
-		membar_sync();
+		membar_Sync();
 		/* Workaround for SpitFire erratum #54, from FreeBSD */
 		if (CPU_IS_SPITFIRE()) {
 			(void)ldxa(P_DCR_0, ASI_INTERRUPT_RECEIVE_DATA);
-			membar_sync();
+			membar_Sync();
 		}
 
 		for (ik = 0; ik < 1000000; ik++) {
@@ -271,7 +271,7 @@ sparc64_ipi_wait(sparc64_cpuset_t volatile *cpus_watchset, sparc64_cpuset_t cpus
 	uint64_t limit = gettick() + cpu_frequency(curcpu());
 
 	while (gettick() < limit) {
-		membar_sync();
+		membar_Sync();
 		if (CPUSET_EQUAL(*cpus_watchset, cpus_mask))
 			return 0;
 	}
@@ -345,7 +345,7 @@ void
 mp_resume_cpu(int cno)
 {
 	CPUSET_DEL(cpus_paused, cno);
-	membar_sync();
+	membar_Sync();
 }
 
 /*
@@ -358,7 +358,7 @@ mp_resume_cpus(void)
 
 	CPUSET_CLEAR(cpus_resumed);
 	CPUSET_ASSIGN(cpuset, cpus_paused);
-	membar_sync();
+	membar_Sync();
 	CPUSET_CLEAR(cpus_paused);
 
 	/* CPUs awake on cpus_paused clear */
