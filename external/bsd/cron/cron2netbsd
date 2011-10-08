@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: cron2netbsd,v 1.1 2010/05/06 23:19:56 christos Exp $
+#	$NetBSD: cron2netbsd,v 1.2 2011/10/08 19:28:39 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -78,13 +78,7 @@ cd $d
 rm -f bitstring.h bitstring.3 putman.sh
 
 ### Remove the $'s around RCS tags
-find $d -type f -print | xargs egrep -l '\$(Id|Created|Header)' | while read f; do
-	sed -e 's/\$\(Id.*\) \$/\1/' \
-	    -e 's/\$\(Created.*\) \$/\1/' \
-	    -e 's/\$\(Header.*\) \$/\1/' \
-	    < $f > /tmp/cron1f$$ && mv /tmp/cron1f$$ $f && \
-	echo removed \$RCS tag from $f
-done
+cleantags $d
 
 echo "cleaning up CVS residue."
 (

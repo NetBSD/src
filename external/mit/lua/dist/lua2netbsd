@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: lua2netbsd,v 1.1 2010/10/31 11:18:20 mbalmer Exp $
+#	$NetBSD: lua2netbsd,v 1.2 2011/10/08 19:28:40 christos Exp $
 #	adapted from dist/ipf/ipf2netbsd:
 #	NetBSD: ipf2netbsd,v 1.23 2010/04/17 22:05:53 darrenr Exp $
 #
@@ -31,17 +31,7 @@
 # lua2netbsd:  prepare a Lua source tree for NeBSD.
 
 ### Remove the $'s around various RCSIDs
-find src -type f -print | while read f; do
-	sed -e 's/\$\(Id.*\) \$/\1/' \
-	    $f > /tmp/lua2f$$ && mv /tmp/lua2f$$ $f && \
-	echo removed RCS tag from $f
-done
-
-find doc -type f -name '*.[0-9]' -print | while read f; do
-	sed -e 's/\$\(Id.*\) \$/\1/' \
-	    $f > /tmp/lua2f$$ && mv /tmp/lua2f$$ $f && \
-	echo removed RCS tag from $f
-done
+cleantags src doc
 
 ### Add our NetBSD RCS Id
 find src -type f -name '*.[ch]' -print | while read c; do

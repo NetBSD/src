@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: flex2netbsd,v 1.1 2009/10/26 01:34:43 christos Exp $
+#	$NetBSD: flex2netbsd,v 1.2 2011/10/08 19:28:39 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -75,14 +75,7 @@ cd $r
 pax -rw * $d
 
 ### Remove the $'s around RCS tags
-find $d -type f -print | xargs egrep -l '\$(Id|Created|Header|Revision)' | while read f; do
-	sed -e 's/\$\(Id.*\) \$/\1/' \
-	    -e 's/\$\(Created.*\) \$/\1/' \
-	    -e 's/\$\(Header.*\) \$/\1/' \
-	    -e 's/\$\(Revision.*\) \$/\1/' \
-	    < $f > /tmp/flex1f$$ && mv /tmp/flex1f$$ $f && \
-	echo removed \$RCS tag from $f
-done
+cleantags $d
 
 ### Add our NetBSD RCS Id
 find $d -type f -name '*.[chly]' -print | while read c; do
