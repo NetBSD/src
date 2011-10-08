@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.100 2011/07/12 07:51:34 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.101 2011/10/08 08:49:07 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100 2011/07/12 07:51:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101 2011/10/08 08:49:07 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -432,7 +432,7 @@ cpu_boot_secondary_processors(void)
 		cpu_pmap_prepare(ci, false);
 		cpu_args->cb_node = ci->ci_node;
 		cpu_args->cb_cpuinfo = ci->ci_paddr;
-		membar_sync();
+		membar_Sync();
 
 		/* Disable interrupts and start another CPU. */
 		pstate = getpstate();
@@ -441,7 +441,7 @@ cpu_boot_secondary_processors(void)
 		prom_startcpu(ci->ci_node, (void *)cpu_spinup_trampoline, 0);
 
 		for (i = 0; i < 2000; i++) {
-			membar_sync();
+			membar_Sync();
 			if (CPUSET_HAS(cpus_active, ci->ci_index))
 				break;
 			delay(10000);
@@ -450,7 +450,7 @@ cpu_boot_secondary_processors(void)
 		/* synchronize %tick ( to some degree at least ) */
 		delay(1000);
 		sync_tick = 1;
-		membar_sync();
+		membar_Sync();
 		settick(0);
 
 		setpstate(pstate);
@@ -473,7 +473,7 @@ cpu_hatch(void)
 	CPUSET_ADD(cpus_active, cpu_number());
 	cpu_reset_fpustate();
 	curlwp = curcpu()->ci_data.cpu_idlelwp;
-	membar_sync();
+	membar_Sync();
 
 	/* wait for the boot CPU to flip the switch */
 	while (sync_tick == 0) {
