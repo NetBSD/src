@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1346 2011/10/06 12:38:57 wiz Exp $
+# $NetBSD: mi,v 1.1347 2011/10/08 19:19:41 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -103,6 +103,7 @@
 ./usr/share/man/cat1/cksum.0			man-util-catman		.cat
 ./usr/share/man/cat1/clear.0			man-util-catman		.cat
 ./usr/share/man/cat1/cmp.0			man-util-catman		.cat
+./usr/share/man/cat1/cleantags.0		man-util-catman		.cat
 ./usr/share/man/cat1/co.0			man-rcs-catman		.cat
 ./usr/share/man/cat1/col.0			man-util-catman		.cat
 ./usr/share/man/cat1/colcrt.0			man-util-catman		.cat
@@ -3018,6 +3019,7 @@
 ./usr/share/man/html1/cksum.html		man-util-htmlman	html
 ./usr/share/man/html1/clear.html		man-util-htmlman	html
 ./usr/share/man/html1/cmp.html			man-util-htmlman	html
+./usr/share/man/html1/cleantags.html		man-util-htmlman	html
 ./usr/share/man/html1/co.html			man-rcs-htmlman		html
 ./usr/share/man/html1/col.html			man-util-htmlman	html
 ./usr/share/man/html1/colcrt.html		man-util-htmlman	html
@@ -5546,6 +5548,7 @@
 ./usr/share/man/man1/cksum.1			man-util-man		.man
 ./usr/share/man/man1/clear.1			man-util-man		.man
 ./usr/share/man/man1/cmp.1			man-util-man		.man
+./usr/share/man/man1/cleantags.1		man-util-man		.man
 ./usr/share/man/man1/co.1			man-rcs-man		.man
 ./usr/share/man/man1/col.1			man-util-man		.man
 ./usr/share/man/man1/colcrt.1			man-util-man		.man
