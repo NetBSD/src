@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 2011/08/18 08:55:43 phx Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24 2011/10/08 06:55:19 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2011/08/18 08:55:43 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2011/10/08 06:55:19 kiyohara Exp $");
 
 #include "opt_disksubr.h"
 
@@ -448,6 +448,7 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		case ADT_AMIX:
 		case ADT_EXT2:
 		case ADT_RAID:
+		case ADT_MSD:
 		case ADT_UNKNOWN:
 			pp = &lp->d_partitions[lp->d_npartitions];
 			break;
@@ -647,6 +648,10 @@ getadostype(u_long dostype)
 	case DOST_RAID:
 		adt.archtype = ADT_RAID;
 		adt.fstype = FS_RAID;
+		return adt;
+	case DOST_MSD:
+		adt.archtype = ADT_MSD;
+		adt.fstype = FS_MSDOS;
 		return adt;
 	default:
 #ifdef DIAGNOSTIC
