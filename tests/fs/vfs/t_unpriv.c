@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unpriv.c,v 1.1 2011/01/06 15:19:10 njoly Exp $	*/
+/*	$NetBSD: t_unpriv.c,v 1.2 2011/10/08 13:00:55 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "../common/h_fsmacros.h"
 #include "../../h_macros.h"
 
-#define USE_OWNER							 \
+#define USES_OWNER							 \
 	if (FSTYPE_SYSVBFS(tc) || FSTYPE_MSDOS(tc) || FSTYPE_RUMPFS(tc)) \
 	    atf_tc_skip("owner not supported by file system")
 
@@ -43,7 +43,7 @@ static void
 owner(const atf_tc_t *tc, const char *mp)
 {
 
-	USE_OWNER;
+	USES_OWNER;
 
 	FSTEST_ENTER();
 
