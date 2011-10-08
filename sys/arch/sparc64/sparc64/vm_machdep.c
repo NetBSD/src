@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.97 2011/07/01 18:49:24 dyoung Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.98 2011/10/08 08:49:07 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97 2011/07/01 18:49:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.98 2011/10/08 08:49:07 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -325,7 +325,7 @@ fpusave_lwp(struct lwp *l, bool save)
 
 		spincount = 0;
 		while (ci->ci_fplwp == l) {
-			membar_sync();
+			membar_Sync();
 			spincount++;
 			if (spincount > 10000000)
 				panic("fpusave_lwp ipi didn't");
