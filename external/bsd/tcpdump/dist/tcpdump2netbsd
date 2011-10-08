@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: tcpdump2netbsd,v 1.1 2010/12/05 05:14:00 christos Exp $
+#	$NetBSD: tcpdump2netbsd,v 1.2 2011/10/08 19:28:39 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -74,13 +74,7 @@ cd $r
 pax -rw * $d
 
 ### Remove the $'s around RCS tags
-find $d -type f -print | xargs egrep -l '\$(Id|Created|Header)' | while read f; do
-	sed -e 's/\$\(Id.*\) \$/\1/' \
-	    -e 's/\$\(Created.*\) \$/\1/' \
-	    -e 's/\$\(Header.*\) \$/\1/' \
-	    < $f > /tmp/amd1f$$ && mv /tmp/amd1f$$ $f && \
-	echo removed \$RCS tag from $f
-done
+cleantags $d
 
 ### Clean up any CVS directories that might be around.
 echo "cleaning up CVS residue."
