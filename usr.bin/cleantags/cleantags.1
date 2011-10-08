@@ -1,22 +1,22 @@
-.\"	$NetBSD: cleantags.1,v 1.2 2011/10/08 19:20:50 christos Exp $
+.\"	$NetBSD: cleantags.1,v 1.3 2011/10/08 20:19:10 wiz Exp $
 .\"
-.Dd October 8, 2001
-.Dt cleantags 1
+.Dd October 8, 2011
+.Dt CLEANTAGS 1
 .Os
 .Sh NAME
 .Nm cleantags
-.Nd Remove
-.Dv $
-around
+.Nd remove dollar signs around
 .Xr rcs 1
-keywords.
+keywords
 .Sh SYNOPSIS
 .Nm Op Fl v
 .Ar files|directories
 .Sh DESCRIPTION
 The
 .Nm
-utility removes dollars around
+utility removes dollar signs
+.Pq Sq $
+around
 .Xr rcs 1
 id keywords in order to disable further changes to them.
 It is used when importing 3rd party programs to the tree.
