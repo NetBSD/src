@@ -1,4 +1,4 @@
-# $NetBSD: md.shark,v 1.38 2011/10/02 21:10:03 christos Exp $
+# $NetBSD: md.shark,v 1.39 2011/10/08 18:00:40 christos Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -337,7 +337,7 @@
 ./usr/X11R7/lib/modules/libexa.a			-unknown-	xorg
 ./usr/X11R7/lib/modules/libexa.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/libexa.so.0			-unknown-	xorg
-./usr/X11R7/lib/modules/libexa_g.a			-unknown-	xorg
+./usr/X11R7/lib/modules/libexa_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libexa_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb.a				-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb.so			-unknown-	xorg
