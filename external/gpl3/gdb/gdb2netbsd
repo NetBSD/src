@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: gdb2netbsd,v 1.1 2011/09/24 20:52:37 christos Exp $
+#	$NetBSD: gdb2netbsd,v 1.2 2011/10/08 19:28:40 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,24 +42,7 @@ fi
 FILE="$1"
 
 ### Remove the $'s around RCS tags
-find "$FILE" -type f -print | xargs egrep -l '\$(Author|Date|Header|Id|LocalId|Locker|Log|Name|RCSfile|Revision|Source|State|NetBSD)'\
-    | while read f; do
-	sed \
-	    -e 's/\$\(Author.*\) \$/\1/' \
-	    -e 's/\$\(Date.*\) \$/\1/' \
-	    -e 's/\$\(Header.*\) \$/\1/' \
-	    -e 's/\$\(Id.*\) \$/\1/' \
-	    -e 's/\$\(LocalId.*\) \$/\1/' \
-	    -e 's/\$\(Locker.*\) \$/\1/' \
-	    -e 's/\$\(Log.*\) \$/\1/' \
-	    -e 's/\$\(Name.*\) \$/\1/' \
-	    -e 's/\$\(RCSfile.*\) \$/\1/' \
-	    -e 's/\$\(Revision.*\) \$/\1/' \
-	    -e 's/\$\(Source.*\) \$/\1/' \
-	    -e 's/\$\(State.*\) \$/\1/' \
-	    -e 's/\$\(NetBSD.*\) \$/\1/' \
-	    $f > /tmp/gdb2$$ && mv /tmp/gdb2$$ $f
-done
+cleantags "$FILE"
 
 echo You can import now.  Use the following command:
 echo cvs import src/external/gpl3/gdb/dist FSF gdb-X-Y-Z

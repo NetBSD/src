@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: libbind2netbsd,v 1.1 2009/04/12 15:39:53 christos Exp $
+#	$NetBSD: libbind2netbsd,v 1.2 2011/10/08 19:28:39 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,14 +76,7 @@ cd $r
 pax -rw * $d
 
 ### Remove the $'s around RCS tags
-find $d -type f -print | xargs egrep -l '\$(Id|Created|Header|Revision)' | while read f; do
-	sed -e 's/\$\(Id.*\) \$/\1/' \
-	    -e 's/\$\(Created.*\) \$/\1/' \
-	    -e 's/\$\(Header.*\) \$/\1/' \
-	    -e 's/\$\(Revision.*\) \$/\1/' \
-	    < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
-	echo removed \$RCS tag from $f
-done
+cleantags $d
 
 ### Add our NetBSD RCS Id
 find $d -type f -name '*.[chly]' -print | while read c; do
