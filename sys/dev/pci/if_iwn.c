@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.59 2011/10/07 22:42:18 elric Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.60 2011/10/08 10:21:16 mbalmer Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.59 2011/10/07 22:42:18 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.60 2011/10/08 10:21:16 mbalmer Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -4098,7 +4098,7 @@ iwn_set_pslevel(struct iwn_softc *sc, int dtim, int level, int async)
 	return iwn_cmd(sc, IWN_CMD_SET_POWER_MODE, &cmd, sizeof cmd, async);
 }
 
- int
+int
 iwn5000_runtime_calib(struct iwn_softc *sc)
 {
 	struct iwn5000_calib_config cmd;
@@ -4127,7 +4127,7 @@ iwn_config(struct iwn_softc *sc)
 		error = iwn5000_runtime_calib(sc);
 		if (error != 0) {
 			printf("%s: could not configure runtime calibration\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			return error;
 		}
 	}
