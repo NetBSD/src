@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.15 2011/04/15 02:05:53 christos Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.16 2011/10/08 08:45:37 njoly Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.15 2011/04/15 02:05:53 christos Exp $
+ * $Id: m_netbsd.c,v 1.16 2011/10/08 08:45:37 njoly Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.15 2011/04/15 02:05:53 christos Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.16 2011/10/08 08:45:37 njoly Exp $");
 #endif
 
 #include <sys/param.h>
@@ -413,7 +413,7 @@ format_process_header(struct process_select *sel, caddr_t handle, int count)
 {
 	char *header;
 	char *ptr;
-	const char *uname_field = sel->usernames ? "USERNAME" : "   UID  ";
+	const char *uname_field = sel->usernames ? "USERNAME" : "    UID ";
 
 	if (sel->threads) {
 		header = Thread_header;
