@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lua.mk,v 1.2 2011/10/07 17:53:03 apb Exp $
+#	$NetBSD: bsd.lua.mk,v 1.3 2011/10/08 08:35:56 mbalmer Exp $
 #
 # Build rules and definitions for Lua modules
 
@@ -8,7 +8,7 @@
 # LUA_VERSION	currently installed version of Lua
 # LUA_LIBDIR	${LIBDIR}/lua/${LUA_VERSION}
 #
-# LUA_MODULES	list of Lua modules to build/install
+# LUA_MODULES	list of Lua modules to build/installi
 # LUA_DPLIBS	shared library dependencies as per LIBDPLIBS
 #		(liblua is automatically included)
 #
@@ -82,14 +82,14 @@ CFLAGS+=	-fPIC -DPIC
 
 ##
 ##### Libraries that modules may depend upon.
-.for _lib _dir in lua ${NETBSDSRCDIR}/external/mit/lua/lib/liblua ${LUA_DPLIBS}
-.if !defined(LIBDO.${_lib})
-LIBDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
-.MAKEOVERRIDES+=LIBDO.${_lib}
-.endif
-LDADD+=-L${LIBDO.${_lib}} -l${_lib}
-DPADD+=${LIBDO.${_lib}}/lib${_lib}.so
-.endfor
+#.for _lib _dir in lua ${NETBSDSRCDIR}/external/mit/lua/lib/liblua ${LUA_DPLIBS}
+#.if !defined(LIBDO.${_lib})
+#LIBDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
+#.MAKEOVERRIDES+=LIBDO.${_lib}
+#.endif
+#LDADD+=-L${LIBDO.${_lib}} -l${_lib}
+#DPADD+=${LIBDO.${_lib}}/lib${_lib}.so
+#.endfor
 
 ##
 ##### Lua Modules
