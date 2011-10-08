@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.682 2011/10/02 22:10:10 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.683 2011/10/08 21:55:16 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -75,8 +75,17 @@ USE_COMPILERCRTSTUFF?=	no
 .endif
 USE_COMPILERCRTSTUFF?=	yes
 
+#
+# Platforms using GDB 7
+#
+.if ${MACHINE_ARCH} == "i386"     || \
+    ${MACHINE_ARCH} == "x86_64"
+HAVE_GDB?= 7
+.else
 # default to GDB6
 HAVE_GDB?=	6
+.endif
+
 
 # default to binutils 2.19
 HAVE_BINUTILS?=	219
