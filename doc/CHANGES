@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1611 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1612 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1131,3 +1131,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		be done at the global level via sysctl(7), or at the socket
 		level via setsockopt(2) [christos 20110923]
 	binutils: updated to FSF binutils 2.21.1a.  [christos 20110924]
+	audiocfg(1): New tool to control default audio defaults, by Jared
+		D. McNeill.  [mrg 20111006]
+	GCC: Obsolete libgcc_pic.  [mrg 20111006]
