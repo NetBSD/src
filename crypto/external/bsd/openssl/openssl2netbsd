@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: openssl2netbsd,v 1.1 2009/07/19 23:30:37 christos Exp $
+#	$NetBSD: openssl2netbsd,v 1.2 2011/10/08 19:30:02 christos Exp $
 #
 # Copyright (c) 2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,17 +33,4 @@ then
 	exit 1
 fi
 ### Remove the $'s around RCS tags
-find $1 -type f -print | xargs egrep -l '\$(Author|Date|Header|Id|Locker|Log|Name|RCSfile|Revision|Source|State)' | while read f; do
-	sed -e 's/\$\(Author.*\) \$/\1/' \
-	    -e 's/\$\(Date.*\) \$/\1/' \
-	    -e 's/\$\(Header.*\) \$/\1/' \
-	    -e 's/\$\(Locker.*\) \$/\1/' \
-	    -e 's/\$\(Log.*\) \$/\1/' \
-	    -e 's/\$\(Name.*\) \$/\1/' \
-	    -e 's/\$\(RCSfile.*\) \$/\1/' \
-	    -e 's/\$\(Revision.*\) \$/\1/' \
-	    -e 's/\$\(Source.*\) \$/\1/' \
-	    -e 's/\$\(State.*\) \$/\1/' \
-	    < $f > /tmp/drcs.$$ && mv /tmp/drcs.$$ $f && \
-	echo removed \$RCS tag from $f
-done
+cleantags $1
