@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ntp2netbsd,v 1.1 2009/12/13 17:13:48 kardel Exp $
+#	$NetBSD: ntp2netbsd,v 1.2 2011/10/08 19:28:39 christos Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -99,13 +99,7 @@ rm -r ports html/pic
 find $d -name '.cvsignore*' -exec rm {} \;
 
 ### Remove the $'s around RCS tags
-find $d -type f -print | xargs egrep -l '\$(Id|Created|Header)' | while read f; do
-	sed -e 's/\$\(Id.*\) \$/\1/' \
-	    -e 's/\$\(Created.*\) \$/\1/' \
-	    -e 's/\$\(Header.*\) \$/\1/' \
-	    < $f > /tmp/ntp1f$$ && mv /tmp/ntp1f$$ $f && \
-	echo removed \$RCS tag from $f
-done
+cleantags $d
 
 ### Add our NetBSD RCS Id
 find $d -name '*.[chly]' -print | while read c; do
