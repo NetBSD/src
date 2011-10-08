@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: openldap2netbsd,v 1.1 2010/03/08 06:42:31 lukem Exp $
+#	$NetBSD: openldap2netbsd,v 1.2 2011/10/08 19:28:38 christos Exp $
 #
 # Copyright (c) 1998, 1999, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,16 +33,7 @@
 d=. #XXX
 
 ### Remove the $'s around RCS tags
-find $d -type f -print | xargs egrep -l '\$(Id|OpenLDAP|FreeBSD|OpenBSD)' | \
-while read f; do
-	sed -e 's/\$\(Id.*\) \$/\1/' \
-	    -e 's/\$\(OpenLDAP.*\) \$/\1/' \
-	    -e 's/\$\(FreeBSD.*\) \$/\1/' \
-	    -e 's/\$\(OpenBSD.*\) \$/\1/' \
-	    < $f > /tmp/openldap1f$$ && mv /tmp/openldap1f$$ $f && \
-	echo removed \$RCS tag from $f
-done
-
+cleantags $d
 ### Add our NetBSD RCS Id
 find $d -name '*.[chly]' -print | while read c; do
 	sed 1q < $c | grep -q '\$NetBSD' || (

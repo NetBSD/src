@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: file2netbsd,v 1.1 2011/09/16 20:38:12 christos Exp $
+#	$NetBSD: file2netbsd,v 1.2 2011/10/08 19:28:39 christos Exp $
 #
 # Copyright (c) 2003, 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,16 +47,7 @@ file_vers="$(awk -F', ' '/AC_INIT\(/ { print $2 }' "$FILE/configure.ac")"
 find "$FILE" -name .cvsignore -delete
 
 ### Remove the $'s around RCS tags
-find "$FILE" -type f -print | xargs egrep -l '\$(Id|Date|Header|Log|Revision)'\
-    | while read f; do
-	sed -e 's/\$\(Id.*\) \$/\1/' \
-	    -e 's/\$\(Date.*\) \$/\1/' \
-	    -e 's/\$\(Header.*\) \$/\1/' \
-	    -e 's/\$\(Log.*\) \$/\1/' \
-	    -e 's/\$\(Revision.*\) \$/\1/' \
-	    $f > /tmp/file2$$ && mv /tmp/file2$$ $f && \
-	echo removed RCS tag from $f
-done
+cleantags $d
 
 ### Add NetBSD RCS Id
 find "$FILE" -type f -name '*.[chly]' -print | while read c; do
