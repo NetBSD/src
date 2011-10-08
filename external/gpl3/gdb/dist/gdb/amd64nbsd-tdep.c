@@ -129,7 +129,7 @@ static const int amd64nbsd_tf_reg_offset[] =
 };
 
 static struct trad_frame_cache *
-amd64nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
+amd64nbsd_trapframe_cache(struct frame_info *this_frame, void **this_cache)
 {
   struct trad_frame_cache *cache;
   CORE_ADDR func, sp, addr;
@@ -141,11 +141,11 @@ amd64nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
   if (*this_cache)
     return *this_cache;
 
-  cache = trad_frame_cache_zalloc (next_frame);
+  cache = trad_frame_cache_zalloc (this_frame);
   *this_cache = cache;
 
-  func = get_frame_func (next_frame);
-  sp = frame_unwind_register_unsigned (next_frame, AMD64_RSP_REGNUM);
+  func = get_frame_func (this_frame);
+  sp = get_frame_register_unsigned (this_frame, AMD64_RSP_REGNUM);
 
   find_pc_partial_function (func, &name, NULL, NULL);
 
@@ -196,7 +196,7 @@ amd64nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
   if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
     {
       /* Trap from user space; terminate backtrace.  */
-      trad_frame_set_id (cache, null_frame_id);
+      trad_frame_set_id (cache, outer_frame_id);
     }
   else
     {
@@ -208,12 +208,12 @@ amd64nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 }
 
 static void
-amd64nbsd_trapframe_this_id (struct frame_info *next_frame,
+amd64nbsd_trapframe_this_id (struct frame_info *this_frame,
 			     void **this_cache,
 			     struct frame_id *this_id)
 {
   struct trad_frame_cache *cache =
-    amd64nbsd_trapframe_cache (next_frame, this_cache);
+    amd64nbsd_trapframe_cache (this_frame, this_cache);
   
   trad_frame_get_id (cache, this_id);
 }
@@ -230,7 +230,7 @@ amd64nbsd_trapframe_prev_register (struct frame_info *this_frame,
 
 static int
 amd64nbsd_trapframe_sniffer (const struct frame_unwind *self,
-			     struct frame_info *next_frame,
+			     struct frame_info *this_frame,
 			     void **this_prologue_cache)
 {
   ULONGEST cs;
@@ -238,11 +238,11 @@ amd64nbsd_trapframe_sniffer (const struct frame_unwind *self,
 
   /* Check Current Privilege Level and bail out if we're not executing
      in kernel space.  */
-  cs = frame_unwind_register_unsigned (next_frame, AMD64_CS_REGNUM);
+  cs = get_frame_register_unsigned (this_frame, AMD64_CS_REGNUM);
   if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
     return 0;
 
-  find_pc_partial_function (get_frame_pc (next_frame), &name, NULL, NULL);
+  find_pc_partial_function (get_frame_pc (this_frame), &name, NULL, NULL);
   return (name && ((strcmp (name, "alltraps") == 0)
 		   || (strcmp (name, "calltrap") == 0)
 		   || (strncmp (name, "Xtrap", 5) == 0)
@@ -291,10 +291,8 @@ amd64nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* NetBSD uses SVR4-style shared libraries.  */
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_lp64_fetch_link_map_offsets);
-#ifdef notyet
   /* Unwind kernel trap frames correctly.  */
   frame_unwind_prepend_unwinder (gdbarch, &amd64nbsd_trapframe_unwind);
-#endif
 }
 
 
