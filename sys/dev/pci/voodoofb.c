@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.27 2011/01/22 15:14:28 cegger Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.28 2011/10/08 00:22:25 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.27 2011/01/22 15:14:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.28 2011/10/08 00:22:25 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ static int	voodoofb_drm_map(struct voodoofb_softc *);
 CFATTACH_DECL_NEW(voodoofb, sizeof(struct voodoofb_softc), voodoofb_match, 
     voodoofb_attach, NULL, NULL);
 
-static int	voodoofb_is_console(struct pci_attach_args *);
+static bool	voodoofb_is_console(struct voodoofb_softc *);
 static void 	voodoofb_init(struct voodoofb_softc *);	
 
 static void	voodoofb_cursor(void *, int, int, int);
@@ -312,16 +312,14 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	ulong defattr;
 	int console, width, height, i, j;
 #ifdef HAVE_OPENFIRMWARE
-	int linebytes, depth, node;
+	prop_dictionary_t dict;
+	int linebytes, depth;
 #endif
 	uint32_t bg, fg, ul;
 
 	sc->sc_dev = self;
 
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
-#ifdef HAVE_OPENFIRMWARE
-	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
-#endif
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dacw = -1;
@@ -358,14 +356,20 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	width = height = -1;
 	
 #ifdef HAVE_OPENFIRMWARE
-	if (OF_getprop(node, "width", &width, 4) != 4)
-		OF_interpret("screen-width", 1, 1, &width);
-	if (OF_getprop(node, "height", &height, 4) != 4)
-		OF_interpret("screen-height", 1, 1, &height);
-	if (OF_getprop(node, "linebytes", &linebytes, 4) != 4)
-		linebytes = width;			/* XXX */
-	if (OF_getprop(node, "depth", &depth, 4) != 4)
-		depth = 8;				/* XXX */
+	dict = device_properties(self);
+	if (!prop_dictionary_get_uint32(dict, "width", &width)) {
+		aprint_error_dev(self, "no width property\n");
+		return;
+	}
+	if (!prop_dictionary_get_uint32(dict, "height", &height)) {
+		aprint_error_dev(self, "no height property\n");
+		return;
+	}
+	if (!prop_dictionary_get_uint32(dict, "depth", &depth)) {
+		aprint_error_dev(self, "no depth property\n");
+		return;
+	}
+	linebytes = width;			/* XXX */
 
 	if (width == -1 || height == -1)
 		return;
@@ -385,7 +389,7 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	vcons_init(&sc->vd, sc, &voodoofb_defaultscreen, &voodoofb_accessops);
 	sc->vd.init_screen = voodoofb_init_screen;
 
-	console = voodoofb_is_console(pa);
+	console = voodoofb_is_console(sc);
 
 	ri = &voodoofb_console_screen.scr_ri;
 	if (console) {
@@ -589,22 +593,19 @@ voodoofb_getcmap(struct voodoofb_softc *sc, struct wsdisplay_cmap *cm)
 	return 0;
 }
 
-static int
-voodoofb_is_console(struct pci_attach_args *pa)
+static bool
+voodoofb_is_console(struct voodoofb_softc *sc)
 {
-
 #ifdef HAVE_OPENFIRMWARE
-	/* check if we're the /chosen console device */
-	int chosen, stdout, node, us;
-	
-	us=pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
-	chosen = OF_finddevice("/chosen");
-	OF_getprop(chosen, "stdout", &stdout, 4);
-	node = OF_instance_to_package(stdout);
-	return(us == node);
+	prop_dictionary_t dict;
+	bool console;
+
+	dict = device_properties(sc->sc_dev);
+	prop_dictionary_get_bool(dict, "is_console", &console);
+	return console;
 #else
 	/* XXX how do we know we're console on i386? */
-	return 1;
+	return true;
 #endif
 }
 
