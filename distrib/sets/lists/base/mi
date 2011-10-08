@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.961 2011/10/07 16:36:23 plunky Exp $
+# $NetBSD: mi,v 1.962 2011/10/08 13:14:03 mbalmer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -904,6 +904,7 @@
 ./usr/lib/libusb.so				base-obsolete		obsolete
 ./usr/lib/lua					base-sys-usr
 ./usr/lib/lua/5.1				base-sys-usr
+./usr/lib/lua/5.1/gpio.so			base-sys-usr
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.so			base-obsolete		obsolete
