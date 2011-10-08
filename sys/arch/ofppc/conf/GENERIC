@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.136 2011/03/06 17:08:29 bouyer Exp $
+# $NetBSD: GENERIC,v 1.137 2011/10/08 00:56:54 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.136 $"
+#ident 		"GENERIC-$Revision: 1.137 $"
 
 maxusers	32
 
@@ -210,6 +210,7 @@ isa*		at pcib?
 # Console Devices
 genfb*		at pci? dev ? function ?
 #radeonfb*	at pci? dev ? function ?
+#voodoofb*	at pci? dev ? function ?	# 3Dfx Voodoo3 
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
