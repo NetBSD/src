@@ -1,0 +1,28 @@
+.\"	$NetBSD: cleantags.1,v 1.1 2011/10/08 19:16:08 christos Exp $
+.\"
+.Dd October 8, 2001
+.Dt cleantags 1
+.Os
+.Sh NAME
+.Nm cleantags
+.Nd Remove
+.Dv $
+around
+.Xr rcs 1
+keywords.
+.Sh SYNOPSIS
+.Nm Op Ar v
+.Ar files|directories
+.Sh DESCRIPTION
+The
+.Nm
+utility removes dollars around
+.Xr rcs 1
+id keywords in order to disable further changes to them.
+It is used when importing 3rd party programs to the tree.
+.Pp
+The
+.Op v
+flag can be used to list the files that are changed.
+.Sh SEE ALSO
+.Xr rcs 1
