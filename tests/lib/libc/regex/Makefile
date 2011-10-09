@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/01/09 01:00:40 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2 2011/10/09 18:21:08 christos Exp $
 
 MKMAN=	no
 
@@ -12,6 +12,7 @@ SRCS=		main.c split.c debug.c
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/regex
 
 TESTS_SH=	t_regex
+TESTS_C=	t_exhaust
 
 FILESDIR=	${TESTSDIR}/data
 FILES+=		README
