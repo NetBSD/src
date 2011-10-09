@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.22 2009/02/12 05:06:54 lukem Exp $	*/
+/*	$NetBSD: engine.c,v 1.23 2011/10/09 18:23:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -212,8 +212,8 @@ matcher(
 	/* prescreening; this does wonders for this rather slow code */
 	if (g->must != NULL) {
 		for (dp = start; dp < stop; dp++)
-			if (*dp == g->must[0] && stop - dp >= g->mlen &&
-				memcmp(dp, g->must, (size_t)g->mlen) == 0)
+			if (*dp == g->must[0] && (size_t)(stop - dp) >= g->mlen &&
+				memcmp(dp, g->must, g->mlen) == 0)
 				break;
 		if (dp == stop)		/* we didn't find g->must */
 			return(REG_NOMATCH);
