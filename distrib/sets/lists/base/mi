@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.962 2011/10/08 13:14:03 mbalmer Exp $
+# $NetBSD: mi,v 1.963 2011/10/09 14:11:00 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -408,6 +408,7 @@
 ./usr/bin/cksum					base-util-bin
 ./usr/bin/clear					base-util-bin
 ./usr/bin/cmp					base-util-bin
+./usr/bin/cleantags				base-util-bin
 ./usr/bin/co					base-rcs-bin
 ./usr/bin/col					base-util-bin
 ./usr/bin/colcrt				base-util-bin
