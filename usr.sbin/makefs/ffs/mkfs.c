@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.21 2004/12/20 20:51:42 jmc Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.22 2011/10/09 21:33:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.21 2004/12/20 20:51:42 jmc Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.22 2011/10/09 21:33:43 christos Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -147,7 +147,10 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	avgfpdir =      ffs_opts->avgfpdir;
 	bbsize =        BBSIZE;
 	sbsize =        SBLOCKSIZE;
-	
+
+	strlcpy((char *)sblock.fs_volname, ffs_opts->label,
+	    sizeof(sblock.fs_volname));
+
 	if (Oflag == 0) {
 		sblock.fs_old_inodefmt = FS_42INODEFMT;
 		sblock.fs_maxsymlinklen = 0;
