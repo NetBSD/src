@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.30 2011/10/09 18:23:00 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.31 2011/10/09 22:14:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.30 2011/10/09 18:23:00 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.31 2011/10/09 22:14:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -145,7 +145,7 @@ static void repeat(struct parse *p, sopno start, int from, int to, size_t reclim
 static int seterr(struct parse *p, int e);
 static cset *allocset(struct parse *p);
 static void freeset(struct parse *p, cset *cs);
-static int freezeset(struct parse *p, cset *cs);
+static sopno freezeset(struct parse *p, cset *cs);
 static int firstch(struct parse *p, cset *cs);
 static int nch(struct parse *p, cset *cs);
 static void mcadd(struct parse *p, cset *cs, const char *cp);
@@ -619,8 +619,7 @@ p_simp_re(
 	int c;
 	int count;
 	int count2;
-	sopno pos;
-	int i;
+	sopno pos, i;
 	sopno subno;
 #	define	BACKSL	(1<<CHAR_BIT)
 
@@ -1085,7 +1084,7 @@ ordinary(
 	    && othercase((unsigned char) ch) != (unsigned char) ch)
 		bothcases(p, (unsigned char) ch);
 	else {
-		EMIT(OCHAR, (unsigned char)ch);
+		EMIT(OCHAR, (sopno)(unsigned char)ch);
 		if (cap[ch] == 0)
 			cap[ch] = p->g->ncategories++;
 	}
@@ -1316,7 +1315,7 @@ freeset(
  * is done using addition rather than xor -- all ASCII [aA] sets xor to
  * the same value!
  */
-static int			/* set number */
+static sopno			/* set number */
 freezeset(
     struct parse *p,
     cset *cs)
@@ -1350,7 +1349,7 @@ freezeset(
 		cs = cs2;
 	}
 
-	return((int)(cs - p->g->sets));
+	return (sopno)(cs - p->g->sets);
 }
 
 /*
