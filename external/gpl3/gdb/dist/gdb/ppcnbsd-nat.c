@@ -167,14 +167,14 @@ ppcnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 2, &sf.sf_fixreg2);
   for (i = 0 ; i < 19 ; i++)
     regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 13 + i,
-			 &sf.sf-fixreg[i]);
+			 &sf.sf_fixreg[i]);
 
-  read_memory(sf.sp, (gdb_byte *)&cf, sizeof(cf));
+  read_memory(sf.sf_sp, (gdb_byte *)&cf, sizeof(cf));
   regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 30, &cf.cf_r30);
   regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 31, &cf.cf_r31);
   regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 1, &cf.cf_sp);
 
-  read_memory(cf.sp, (gdb_byte *)&cf, sizeof(cf));
+  read_memory(cf.cf_sp, (gdb_byte *)&cf, sizeof(cf));
   regcache_raw_supply (regcache, tdep->ppc_lr_regnum, &cf.cf_lr);
   regcache_raw_supply (regcache, gdbarch_pc_regnum (gdbarch), &cf.cf_lr);
 
