@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.44 2009/04/28 22:49:26 joerg Exp $	*/
+/*	$NetBSD: ffs.c,v 1.45 2011/10/09 21:33:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.44 2009/04/28 22:49:26 joerg Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.45 2011/10/09 21:33:43 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -240,6 +240,9 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 			warnx("Invalid optimization `%s'", val);
 			goto leave_ffs_parse_opts;
 		}
+		rv = 1;
+	} else if (strcmp(var, "label") == 0) {
+		strlcpy(ffs_opts->label, val, sizeof(ffs_opts->label));
 		rv = 1;
 	} else
 		rv = set_option(ffs_options, var, val);
