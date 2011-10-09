@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.103 2011/05/14 10:49:06 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.104 2011/10/09 08:51:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -870,7 +870,11 @@ Ljupiterdone:
 	.long	0x4e7b0007		| movc d0,dtt1
 	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
+#if PGSHIFT == 13
+	movl	#0xc000,%d0
+#else
 	movl	#0x8000,%d0
+#endif
 	.long	0x4e7b0003		| movc d0,tc
 #ifdef M68060
 	RELOC(cputype, %a0)
@@ -887,7 +891,11 @@ Lnot060cache:
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
+#if PGSHIFT == 13
+	movl	#0x82d08b00,%sp@-	| value to load TC with
+#else
 	movl	#0x82c0aa00,%sp@-	| value to load TC with
+#endif
 	pmove	%sp@,%tc		| load it
 
 /*
