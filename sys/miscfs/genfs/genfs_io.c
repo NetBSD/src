@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.51 2011/09/01 16:55:08 matt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.52 2011/10/09 14:34:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,20 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.51 2011/09/01 16:55:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.52 2011/10/09 14:34:39 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
-#include <sys/namei.h>
 #include <sys/vnode.h>
-#include <sys/fcntl.h>
 #include <sys/kmem.h>
-#include <sys/poll.h>
-#include <sys/mman.h>
-#include <sys/file.h>
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
 #include <sys/buf.h>
