@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2011/10/02 18:15:23 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2011/10/09 18:17:53 christos Exp $
 
+.include <bsd.own.mk>
 .include "../Makefile.inc"
 
 GDBARCHDIR=${.CURDIR}/../../lib/libgdb/arch/${MACHINE_ARCH}
@@ -19,9 +20,18 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/include \
 		${GCPPFLAGS:M-D*}
 
-#TEXINFO=	gdb.texinfo gdbint.texinfo stabs.texinfo
-#INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
-#		-I${DIST}/readline/doc -I${.CURDIR}/..
+TEXINFO=	gdb.texinfo gdbint.texinfo stabs.texinfo
+INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
+		-I${DIST}/readline/doc -I${.CURDIR}/.. -DGDBN=${GDBN}
+
+GDBvn.texi: ${DIST}/gdb/version.in
+	echo "@set GDBVN $$(${TOOL_CAT} ${.ALLSRC})" > ${.TARGET}
+
+gdb-cfg.texi: ${DIST}/gdb/doc/all-cfg.texi
+	${TOOL_CAT} ${.ALLSRC} > ${.TARGET}
+
+CLEANFILES+= GDBvn.texi gdb-cfg.texi
+gdb.info: gdb-cfg.texi GDBvn.texi
 
 .include "../../Makefile.inc"
 .include <bsd.info.mk>
