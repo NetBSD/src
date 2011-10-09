@@ -1,7 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.1 2011/09/26 03:02:44 christos Exp $
+# $NetBSD: Makefile.inc,v 1.2 2011/10/09 13:58:27 christos Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes
+BINDIR=/usr/bin
 WARNS?=		0
 
 CWARNFLAGS.clang+=	-Wno-unused-value -Wno-conversion \
