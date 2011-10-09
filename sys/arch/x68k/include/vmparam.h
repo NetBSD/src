@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.33 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.34 2011/10/09 08:42:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,8 +98,8 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFFFD000)
-#define VM_MAX_ADDRESS		((vaddr_t)0xFFFFD000)
+#define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFF00000)
+#define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG))
 
