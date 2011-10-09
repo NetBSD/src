@@ -3764,7 +3764,8 @@ emit_push_insn (rtx x, enum machine_mode mode, tree type, rtx size,
   xinner = x;
 
   if (mode == BLKmode
-      || (STRICT_ALIGNMENT && align < GET_MODE_ALIGNMENT (mode)))
+      || (STRICT_ALIGNMENT && align < GET_MODE_ALIGNMENT (mode)
+	  && type != NULL_TREE))
     {
       /* Copy a block into the stack, entirely or partially.  */
 
