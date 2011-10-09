@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.94 2011/09/23 07:31:39 mrg Exp $	*/
+/*	$NetBSD: fstat.c,v 1.95 2011/10/09 21:16:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.94 2011/09/23 07:31:39 mrg Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.95 2011/10/09 21:16:00 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,12 +57,13 @@ __RCSID("$NetBSD: fstat.c,v 1.94 2011/09/23 07:31:39 mrg Exp $");
 #include <sys/sysctl.h>
 #include <sys/filedesc.h>
 #include <sys/pipe.h>
+#define _KERNEL
+#include <sys/mount.h>
+#undef _KERNEL
 #define	_KERNEL
 #include <sys/file.h>
 #include <ufs/ufs/inode.h>
-#undef _KERNEL
-#define _KERNEL
-#include <sys/mount.h>
+#include <ufs/ufs/ufsmount.h>
 #undef _KERNEL
 #define NFS
 #include <nfs/nfsproto.h>
@@ -583,6 +584,7 @@ static int
 ufs_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct inode inode;
+	struct ufsmount ufsmount;
 	union dinode {
 		struct ufs1_dinode dp1;
 		struct ufs2_dinode dp2;
@@ -593,23 +595,35 @@ ufs_filestat(struct vnode *vp, struct filestat *fsp)
 		return 0;
 	}
 
-	if (!KVM_READ(inode.i_din.ffs1_din, &dip, sizeof(struct ufs1_dinode))) {
-		dprintf("can't read dinode at %p for pid %d",
-		    inode.i_din.ffs1_din, Pid);
+	if (!KVM_READ(inode.i_ump, &ufsmount, sizeof (struct ufsmount))) {
+		dprintf("can't read ufsmount at %p for pid %d", inode.i_ump, Pid);
 		return 0;
 	}
-	if (inode.i_size == dip.dp1.di_size)
-		fsp->rdev = dip.dp1.di_rdev;
-	else {
+
+	switch (ufsmount.um_fstype) {
+	case UFS1:
 		if (!KVM_READ(inode.i_din.ffs1_din, &dip,
+		    sizeof(struct ufs1_dinode))) {
+			dprintf("can't read dinode at %p for pid %d",
+				inode.i_din.ffs1_din, Pid);
+			return 0;
+		}
+		fsp->rdev = dip.dp1.di_rdev;
+		break;
+	case UFS2:
+		if (!KVM_READ(inode.i_din.ffs2_din, &dip,
 		    sizeof(struct ufs2_dinode))) {
 			dprintf("can't read dinode at %p for pid %d",
-			    inode.i_din.ffs1_din, Pid);
+			    inode.i_din.ffs2_din, Pid);
 			return 0;
 		}
 		fsp->rdev = dip.dp2.di_rdev;
+		break;
+	default:
+		dprintf("unknown ufs type %ld for pid %d",
+			ufsmount.um_fstype, Pid);
+		break;
 	}
-
 	fsp->fsid = inode.i_dev & 0xffff;
 	fsp->fileid = inode.i_number;
 	fsp->mode = (mode_t)inode.i_mode;
@@ -622,8 +636,7 @@ static int
 ext2fs_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct inode inode;
-	u_int16_t mode;
-	u_int32_t size;
+	struct ext2fs_dinode dinode;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
 		dprintf("can't read inode at %p for pid %d", VTOI(vp), Pid);
@@ -632,20 +645,15 @@ ext2fs_filestat(struct vnode *vp, struct filestat *fsp)
 	fsp->fsid = inode.i_dev & 0xffff;
 	fsp->fileid = inode.i_number;
 
-	if (!KVM_READ(&inode.i_e2fs_mode, &mode, sizeof mode)) {
-		dprintf("can't read inode %p's mode at %p for pid %d", VTOI(vp),
-			&inode.i_e2fs_mode, Pid);
+	if (!KVM_READ(inode.i_din.e2fs_din, &dinode, sizeof dinode)) {
+		dprintf("can't read ext2fs_dinode at %p for pid %d",
+			inode.i_din.e2fs_din, Pid);
 		return 0;
 	}
-	fsp->mode = mode;
+	fsp->mode = dinode.e2di_mode;
+	fsp->size = dinode.e2di_size;
+	fsp->rdev = dinode.e2di_rdev;
 
-	if (!KVM_READ(&inode.i_e2fs_size, &size, sizeof size)) {
-		dprintf("can't read inode %p's size at %p for pid %d", VTOI(vp),
-			&inode.i_e2fs_size, Pid);
-		return 0;
-	}
-	fsp->size = size;
-	fsp->rdev = 0;  /* XXX */
 	return 1;
 }
 
