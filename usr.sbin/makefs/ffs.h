@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.h,v 1.1 2004/12/20 20:51:42 jmc Exp $	*/
+/*	$NetBSD: ffs.h,v 1.2 2011/10/09 21:33:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -38,7 +38,11 @@
 #ifndef _FFS_H
 #define _FFS_H
 
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
+
 typedef struct {
+	char	label[MAXVOLLEN];	/* volume name/label */
 	int	bsize;		/* block size */
 	int	fsize;		/* fragment size */
 	int	cpg;		/* cylinders per group */
