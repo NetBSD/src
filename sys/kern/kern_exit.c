@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.234 2011/06/06 22:04:34 matt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.235 2011/10/09 20:30:37 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.234 2011/06/06 22:04:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.235 2011/10/09 20:30:37 chs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -133,7 +133,8 @@ SDT_PROBE_DEFINE(proc,,,exit,
 /*
  * Fill in the appropriate signal information, and signal the parent.
  */
-static void
+/* XXX noclone works around a gcc 4.5 bug on arm */
+static void __noclone
 exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
 {
 
