@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1689 2011/10/06 07:38:54 mrg Exp $
+#	$NetBSD: mi,v 1.1690 2011/10/09 17:41:06 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -40,7 +40,7 @@
 ./usr/bin/gcore					comp-debug-bin
 ./usr/bin/gcov					comp-debug-bin		gcccmds
 ./usr/bin/gdb					comp-debug-bin		gdb
-./usr/bin/gdbtui				comp-debug-bin		gdb,gdb=6
+./usr/bin/gdbtui				comp-debug-bin		gdb
 ./usr/bin/genassym				comp-util-bin
 ./usr/bin/genclass				comp-obsolete		obsolete
 ./usr/bin/gettext				comp-c-bin
@@ -3577,7 +3577,7 @@
 ./usr/libdata/debug/usr/bin/gcore.debug		comp-debug-debug	debug
 ./usr/libdata/debug/usr/bin/gcov.debug		comp-debug-debug	gcccmds,debug
 ./usr/libdata/debug/usr/bin/gdb.debug		comp-debug-debug	gdb,debug
-./usr/libdata/debug/usr/bin/gdbtui.debug	comp-debug-debug	gdb,gdb=6,debug
+./usr/libdata/debug/usr/bin/gdbtui.debug	comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gencat.debug	comp-locale-debug	debug
 ./usr/libdata/debug/usr/bin/getconf.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getent.debug	comp-util-debug		debug
