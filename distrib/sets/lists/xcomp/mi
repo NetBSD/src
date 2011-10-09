@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.131 2011/08/03 00:38:42 macallan Exp $
+#	 $NetBSD: mi,v 1.132 2011/10/09 04:29:14 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6504,7 +6504,10 @@
 ./usr/X11R7/lib/pkgconfig/xmu.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xmuu.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xorg-server.pc		-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xp.pc				-obsolete-	obsolete
 ./usr/X11R7/lib/pkgconfig/xpm.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xprintapputil.pc		-obsolete-	obsolete
+./usr/X11R7/lib/pkgconfig/xprintutil.pc			-obsolete-	obsolete
 ./usr/X11R7/lib/pkgconfig/xproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xproxymngproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xrandr.pc			-unknown-	xorg
