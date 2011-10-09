@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.398 2011/10/04 20:20:32 christos Exp $
+# $NetBSD: mi,v 1.399 2011/10/09 18:25:28 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -416,6 +416,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_servent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/t_getprotoent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/regex				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/regex/t_exhaust.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/rpc				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/rpc/t_xdr.debug			tests-lib-debug		debug,atf
@@ -2016,8 +2017,8 @@
 ./usr/tests/lib/libc/regex/data/subtle.in	tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/word_bound.in	tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/h_regex		tests-lib-tests		atf
+./usr/tests/lib/libc/regex/t_exhaust		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/t_regex		tests-lib-tests		atf
-./usr/tests/lib/libc/regex/h_regex		tests-lib-tests		atf
 ./usr/tests/lib/libc/rpc			tests-lib-tests
 ./usr/tests/lib/libc/rpc/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/rpc/t_xdr			tests-lib-tests		atf
