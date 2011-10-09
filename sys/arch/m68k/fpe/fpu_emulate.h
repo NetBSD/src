@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.16 2011/07/18 07:44:30 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.17 2011/10/09 01:34:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -91,15 +91,15 @@ struct fpn {
 #define	FP_1		(1 << FP_LG)		/* 1.0 in fp_mant[0] */
 #define	FP_2		(1 << (FP_LG + 1))	/* 2.0 in fp_mant[0] */
 
-#define CPYFPN(dst, src)						\
-if ((dst) != (src)) {							\
-	(dst)->fp_class = (src)->fp_class;				\
-	(dst)->fp_sign = (src)->fp_sign;				\
-	(dst)->fp_exp = (src)->fp_exp;					\
-	(dst)->fp_sticky = (src)->fp_sticky;				\
-	(dst)->fp_mant[0] = (src)->fp_mant[0];				\
-	(dst)->fp_mant[1] = (src)->fp_mant[1];				\
-	(dst)->fp_mant[2] = (src)->fp_mant[2];				\
+static inline void CPYFPN(struct fpn * dst, const struct fpn * src);
+
+static inline void
+CPYFPN(struct fpn * dst, const struct fpn * src)
+{
+
+	if (dst != src) {
+		*dst = *src;
+	}
 }
 
 /*
