@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.132 2011/09/27 01:02:37 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.133 2011/10/10 01:28:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2011/09/27 01:02:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.133 2011/10/10 01:28:26 christos Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -983,8 +983,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #ifdef DOM0OPS
 	if (pa < pmap_pa_start || pa >= pmap_pa_end) {
 #ifdef DEBUG
-		printk("pmap_kenter_pa: pa 0x%" PRIx64 " for va 0x%" PRIx64
-		    " outside range\n", (int64_t)pa, (int64_t)va);
+		printf_nolog("%s: pa 0x%" PRIx64 " for va 0x%" PRIx64
+		    " outside range\n", __func__, (int64_t)pa, (int64_t)va);
 #endif /* DEBUG */
 		npte = pa;
 	} else
@@ -996,11 +996,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #if defined(DIAGNOSTIC)
 	/* XXX For now... */
 	if (opte & PG_PS)
-		panic("pmap_kenter_pa: PG_PS");
+		panic("%s: PG_PS", __func__);
 #endif
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
 #if defined(DIAGNOSTIC)
-		printf("pmap_kenter_pa: mapping already present\n");
+		printf_nolog("%s: mapping already present\n", __func__);
 #endif
 		/* This should not happen. */
 		kpreempt_disable();
