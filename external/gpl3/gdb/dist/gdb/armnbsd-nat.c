@@ -24,6 +24,7 @@
 #include "regcache.h"
 #include "target.h"
 
+#include "nbsd-nat.h"
 #include "gdb_string.h"
 #include <sys/types.h>
 #include <sys/ptrace.h>
@@ -134,50 +135,50 @@ arm_supply_fparegset (struct regcache *regcache, struct fpreg *fparegset)
 		       (char *) &fparegset->fpr_fpsr);
 }
 
-+void
-fill_gregset (gregset_t *gregsetp, int regno)
+void
+fill_gregset (const struct regcache *regcache, gregset_t *gregsetp, int regno)
 {
   if (-1 == regno)
     {
       int regnum;
       for (regnum = ARM_A1_REGNUM; regnum < ARM_SP_REGNUM; regnum++) 
-	regcache_raw_collect (current_regcache, regnum, (char *) &gregsetp->r[regnum]);
+	regcache_raw_collect (regcache, regnum, (char *) &gregsetp->r[regnum]);
     }
   else if (regno >= ARM_A1_REGNUM && regno < ARM_SP_REGNUM)
-    regcache_raw_collect (current_regcache, regno, (char *) &gregsetp->r[regno]);
+    regcache_raw_collect (regcache, regno, (char *) &gregsetp->r[regno]);
 
   if (ARM_SP_REGNUM == regno || -1 == regno)
-    regcache_raw_collect (current_regcache, ARM_SP_REGNUM, (char *) &gregsetp->r_sp);
+    regcache_raw_collect (regcache, ARM_SP_REGNUM, (char *) &gregsetp->r_sp);
 
   if (ARM_LR_REGNUM == regno || -1 == regno)
-    regcache_raw_collect (current_regcache, ARM_LR_REGNUM, (char *) &gregsetp->r_lr);
+    regcache_raw_collect (regcache, ARM_LR_REGNUM, (char *) &gregsetp->r_lr);
 
   if (ARM_PC_REGNUM == regno || -1 == regno)
-    regcache_raw_collect (current_regcache, ARM_PC_REGNUM, (char *) &gregsetp->r_pc);
+    regcache_raw_collect (regcache, ARM_PC_REGNUM, (char *) &gregsetp->r_pc);
 
   if (ARM_PS_REGNUM == regno || -1 == regno)
     {
       if (arm_apcs_32)
-	regcache_raw_collect (current_regcache, ARM_PS_REGNUM, (char *) &gregsetp->r_cpsr);
+	regcache_raw_collect (regcache, ARM_PS_REGNUM, (char *) &gregsetp->r_cpsr);
       else
-	regcache_raw_collect (current_regcache, ARM_PS_REGNUM, (char *) &gregsetp->r_pc);
+	regcache_raw_collect (regcache, ARM_PS_REGNUM, (char *) &gregsetp->r_pc);
     }
  }
  
 void
-fill_fpregset (fpregset_t *fpregsetp, int regno)
+fill_fpregset (const struct regcache *regcache, fpregset_t *fpregsetp, int regno)
 {
   if (-1 == regno)
     {
        int regnum;
        for (regnum = ARM_F0_REGNUM; regnum <= ARM_F7_REGNUM; regnum++)
-         regcache_raw_collect(current_regcache, regnum, (char *) &fpregsetp->fpr[regnum - ARM_F0_REGNUM]);
+         regcache_raw_collect(regcache, regnum, (char *) &fpregsetp->fpr[regnum - ARM_F0_REGNUM]);
     }
   else if (regno >= ARM_F0_REGNUM && regno <= ARM_F7_REGNUM)
-    regcache_raw_collect(current_regcache, regno, (char *) &fpregsetp->fpr[regno - ARM_F0_REGNUM]);
+    regcache_raw_collect(regcache, regno, (char *) &fpregsetp->fpr[regno - ARM_F0_REGNUM]);
 
   if (ARM_FPS_REGNUM == regno || -1 == regno)
-    regcache_raw_collect (current_regcache, ARM_FPS_REGNUM, (char *) &fpregsetp->fpr_fpsr);
+    regcache_raw_collect (regcache, ARM_FPS_REGNUM, (char *) &fpregsetp->fpr_fpsr);
 }
 
 static void
