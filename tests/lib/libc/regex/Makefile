@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/10/09 18:21:08 christos Exp $
+# $NetBSD: Makefile,v 1.3 2011/10/10 04:32:41 christos Exp $
 
 MKMAN=	no
 
@@ -7,8 +7,8 @@ MKMAN=	no
 TESTSDIR=	${TESTSBASE}/lib/libc/regex
 
 BINDIR=		${TESTSDIR}
-PROG=		h_regex
-SRCS=		main.c split.c debug.c
+PROGS+=		h_regex
+SRCS.h_regex=	main.c split.c debug.c
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/regex
 
 TESTS_SH=	t_regex

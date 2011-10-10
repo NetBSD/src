@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.1 2011/01/08 18:10:31 pgoyette Exp $	*/
+/*	$NetBSD: debug.c,v 1.2 2011/10/10 04:32:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -51,12 +51,11 @@ void
 regprint(regex_t *r, FILE *d)
 {
 	struct re_guts *g = r->re_g;
-	int i;
 	int c;
 	int last;
 	int nincat[NC];
 
-	fprintf(d, "%ld states, %d categories", (long)g->nstates,
+	fprintf(d, "%ld states, %zu categories", (long)g->nstates,
 							g->ncategories);
 	fprintf(d, ", first %ld last %ld", (long)g->firststate,
 						(long)g->laststate);
@@ -77,24 +76,24 @@ regprint(regex_t *r, FILE *d)
 		fprintf(d, ", nplus %ld", (long)g->nplus);
 	fprintf(d, "\n");
 	s_print(g, d);
-	for (i = 0; i < g->ncategories; i++) {
+	for (size_t i = 0; i < g->ncategories; i++) {
 		nincat[i] = 0;
 		for (c = CHAR_MIN; c <= CHAR_MAX; c++)
 			if (g->categories[c] == i)
 				nincat[i]++;
 	}
 	fprintf(d, "cc0#%d", nincat[0]);
-	for (i = 1; i < g->ncategories; i++)
+	for (size_t i = 1; i < g->ncategories; i++)
 		if (nincat[i] == 1) {
 			for (c = CHAR_MIN; c <= CHAR_MAX; c++)
 				if (g->categories[c] == i)
 					break;
-			fprintf(d, ", %d=%s", i, regchar(c));
+			fprintf(d, ", %zu=%s", i, regchar(c));
 		}
 	fprintf(d, "\n");
-	for (i = 1; i < g->ncategories; i++)
+	for (size_t i = 1; i < g->ncategories; i++)
 		if (nincat[i] != 1) {
-			fprintf(d, "cc%d\t", i);
+			fprintf(d, "cc%zu\t", i);
 			last = -1;
 			for (c = CHAR_MIN; c <= CHAR_MAX+1; c++)	/* +1 does flush */
 				if (c <= CHAR_MAX && g->categories[c] == i) {
@@ -122,11 +121,10 @@ s_print(struct re_guts *g, FILE *d)
 {
 	sop *s;
 	cset *cs;
-	int i;
 	int done = 0;
 	sop opnd;
 	int col = 0;
-	int last;
+	ssize_t last;
 	sopno offset = 2;
 #	define	GAP()	{	if (offset % 5 == 0) { \
 					if (col > 40) { \
@@ -175,7 +173,7 @@ s_print(struct re_guts *g, FILE *d)
 			fprintf(d, "[(%ld)", (long)opnd);
 			cs = &g->sets[opnd];
 			last = -1;
-			for (i = 0; i < g->csetsize+1; i++)	/* +1 flushes */
+			for (size_t i = 0; i < g->csetsize+1; i++)	/* +1 flushes */
 				if (CHIN(cs, i) && i < g->csetsize) {
 					if (last < 0) {
 						fprintf(d, "%s", regchar(i));
@@ -183,9 +181,9 @@ s_print(struct re_guts *g, FILE *d)
 					}
 				} else {
 					if (last >= 0) {
-						if (last != i-1)
+						if (last != (ssize_t)i - 1)
 							fprintf(d, "-%s",
-								regchar(i-1));
+							    regchar(i - 1));
 						last = -1;
 					}
 				}
