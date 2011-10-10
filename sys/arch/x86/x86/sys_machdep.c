@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.24 2010/07/07 01:20:50 chs Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.25 2011/10/10 15:15:28 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.24 2010/07/07 01:20:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.25 2011/10/10 15:15:28 jakllsch Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -97,7 +97,7 @@ int x86_set_sdbase(void *, char, lwp_t *, bool);
 int x86_get_sdbase32(void *, char);
 int x86_get_sdbase(void *, char);
 
-#ifdef LDT_DEBUG
+#if defined(USER_LDT) && defined(LDT_DEBUG)
 static void x86_print_ldt(int, const struct segment_descriptor *);
 
 static void
