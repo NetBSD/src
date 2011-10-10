@@ -2,6 +2,6 @@
 # Generated from: 	NetBSD: mknative-gdb,v 1.4 2011/10/09 02:03:30 christos Exp 
 # Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp 
 #
-G_archdefs=-DARCH_hppa
-G_BFD_MACHINES=hppa-dis.lo
+G_archdefs=-DARCH_arm
+G_BFD_MACHINES=arm-dis.lo
 G_libopcodes_la_SOURCES=dis-buf.c disassemble.c dis-init.c

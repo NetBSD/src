@@ -46,10 +46,10 @@
 #define DEBUGDIR_RELOCATABLE 1
 
 /* Define to BFD's default architecture. */
-#define DEFAULT_BFD_ARCH bfd_hppa_arch
+#define DEFAULT_BFD_ARCH bfd_arm_arch
 
 /* Define to BFD's default target vector. */
-#define DEFAULT_BFD_VEC bfd_elf32_hppa_nbsd_vec
+#define DEFAULT_BFD_VEC bfd_elf32_littlearm_vec
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -874,7 +874,7 @@
 # endif
 #else
 # ifndef WORDS_BIGENDIAN
-#  define WORDS_BIGENDIAN 1
+/* #  undef WORDS_BIGENDIAN */
 # endif
 #endif
 
