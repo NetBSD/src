@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.21 2011/10/07 18:59:13 tnozaki Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.22 2011/10/10 22:45:45 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.21 2011/10/07 18:59:13 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.22 2011/10/10 22:45:45 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -695,7 +695,7 @@ _ISO2022_sgetwchar(_ISO2022EncodingInfo * __restrict ei,
 			if (n < sp->len) {
 				if (nmatch == n) {
 					if (result)
-						*result = string + n;
+						*result = string;
 					return (_ISO2022INVALID);
 				}
 			} else {
@@ -755,7 +755,7 @@ asis:
 
 		/* we still need to wait for more characters to come */
 		if (result)
-			*result = string + n;
+			*result = string;
 		return (_ISO2022INVALID);
 
 	case CS94:
@@ -765,7 +765,7 @@ asis:
 
 		/* we still need to wait for more characters to come */
 		if (result)
-			*result = string + n;
+			*result = string;
 		return (_ISO2022INVALID);
 	}
 
