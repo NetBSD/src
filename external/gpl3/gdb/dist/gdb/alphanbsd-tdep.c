@@ -35,6 +35,9 @@
 #include "alphabsd-tdep.h"
 #include "nbsd-tdep.h"
 #include "solib-svr4.h"
+#include "trad-frame.h"
+#include "frame-unwind.h"
+#include "tramp-frame.h"
 #include "target.h"
 
 /* Core file support.  */
@@ -193,7 +196,7 @@ alphanbsd_sigtramp_cache_init (const struct tramp_frame *,
    designated code sequence that is used to return from a signal handler.
    In particular, the return address of a signal handler points to the
    following code sequences: */
-static const struct tramp_frame alphanbsd_sigtramp_sc1 =
+static const struct tramp_frame alphanbsd_sigtramp_sc1 = {
   SIGTRAMP_FRAME,
   4,
   {
@@ -243,16 +246,16 @@ static const struct tramp_frame alphanbsd_sigtramp_si4 =
 
 static void
 alphanbsd_sigtramp_cache_init (const struct tramp_frame *self,
-			       struct frame_info *next_frame,
+			       struct frame_info *this_frame,
 			       struct trad_frame_cache *this_cache,
 			       CORE_ADDR func)
 {
-  struct gdbarch *gdbarch = get_frame_arch (next_frame);
+  struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   CORE_ADDR addr, sp;
   int i;
 
-  sp = frame_unwind_register_unsigned (next_frame, SP_REGNUM);
+  sp = get_frame_register_unsigned (this_frame, ALPHA_SP_REGNUM);
 
   if (self == &alphanbsd_sigtramp_sc1) {
     addr = sp;
@@ -286,14 +289,15 @@ alphanbsd_init_abi (struct gdbarch_info info,
   /* NetBSD/alpha does not provide single step support via ptrace(2); we
      must use software single-stepping.  */
   set_gdbarch_software_single_step (gdbarch, alpha_software_single_step);
-
   /* NetBSD/alpha has SVR4-style shared libraries.  */
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_lp64_fetch_link_map_offsets);
 
+#ifdef notyet
   tdep->dynamic_sigtramp_offset = alphanbsd_sigtramp_offset;
   tdep->pc_in_sigtramp = alphanbsd_pc_in_sigtramp;
   tdep->sigcontext_addr = alphanbsd_sigcontext_addr;
+#endif
 
   tdep->jb_pc = 2;
   tdep->jb_elt_size = 8;
