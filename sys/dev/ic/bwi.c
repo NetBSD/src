@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.17 2011/01/28 20:36:06 pooka Exp $	*/
+/*	$NetBSD: bwi.c,v 1.18 2011/10/10 11:15:24 njoly Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.17 2011/01/28 20:36:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.18 2011/10/10 11:15:24 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -118,8 +118,6 @@ do {									\
 #define IEEE80211_DUR_SLOT      20      /* DS/CCK slottime, ERP long slottime */
 #define IEEE80211_DUR_SHSLOT    9       /* ERP short slottime */
 #define IEEE80211_DUR_OFDM_SLOT 9       /* OFDM slottime */
-
-#define __unused __attribute__((__unused__))
 
 /* XXX end porting goop */
 
