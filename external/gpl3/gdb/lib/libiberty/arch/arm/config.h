@@ -458,7 +458,7 @@
 # endif
 #else
 # ifndef WORDS_BIGENDIAN
-#  define WORDS_BIGENDIAN 1
+/* #  undef WORDS_BIGENDIAN */
 # endif
 #endif
 
