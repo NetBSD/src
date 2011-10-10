@@ -4,5 +4,5 @@
 
 #include "version.h"
 const char version[] = "7.3.1";
-const char host_name[] = "hppa--netbsd";
-const char target_name[] = "hppa--netbsd";
+const char host_name[] = "arm--netbsdelf";
+const char target_name[] = "arm--netbsdelf";
