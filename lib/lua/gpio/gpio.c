@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.2 2011/10/08 08:46:40 mbalmer Exp $ */
+/*	$NetBSD: gpio.c,v 1.3 2011/10/10 20:41:05 christos Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -112,7 +112,7 @@ gpio_get_pin(lua_State *L, int n, struct gpio_req *req)
 {
 	switch (lua_type(L, n)) {
 	case LUA_TNUMBER:
-		req->gp_pin = lua_tointeger(L, n) - 1;	/* 1 based! */
+		req->gp_pin = (int)lua_tointeger(L, n) - 1;	/* 1 based! */
 		break;
 	case LUA_TSTRING:
 		strlcpy(req->gp_name, lua_tostring(L, n), sizeof(req->gp_name));
@@ -131,8 +131,8 @@ gpio_set(lua_State *L)
 
 	fd = luaL_checkudata(L, 1, GPIO_METATABLE);
 	memset(&set, 0, sizeof(set));
-	gpio_get_pin(L, 2, (struct gpio_req *)&set);
-	set.gp_flags = luaL_checkinteger(L, 3);
+	gpio_get_pin(L, 2, (void *)&set);
+	set.gp_flags = (int)luaL_checkinteger(L, 3);
 	if (ioctl(*fd, GPIOSET, &set) == -1)
 		gpio_error(L, "GPIOSET");
 	return 0;
@@ -146,7 +146,7 @@ gpio_unset(lua_State *L)
 
 	fd = luaL_checkudata(L, 1, GPIO_METATABLE);
 	memset(&set, 0, sizeof(set));
-	gpio_get_pin(L, 2, (struct gpio_req *)&set);
+	gpio_get_pin(L, 2, (void *)&set);
 	if (ioctl(*fd, GPIOUNSET, &set) == -1)
 		gpio_error(L, "GPIOUNSET");
 	return 0;
@@ -175,7 +175,7 @@ gpio_write(lua_State *L)
 	int *fd, val;
 
 	fd = luaL_checkudata(L, 1, GPIO_METATABLE);
-	val = luaL_checkinteger(L, 3);
+	val = (int)luaL_checkinteger(L, 3);
 	if (val != GPIO_PIN_HIGH && val != GPIO_PIN_LOW)
 		gpio_error(L, "%d: invalid value", val);
 	memset(&req, 0, sizeof(req));
@@ -191,7 +191,7 @@ static int
 gpio_toggle(lua_State *L)
 {
 	struct gpio_req req;
-	int *fd, val;
+	int *fd;
 
 	fd = luaL_checkudata(L, 1, GPIO_METATABLE);
 	memset(&req, 0, sizeof(req));
@@ -212,10 +212,10 @@ gpio_attach(lua_State *L)
 	memset(&attach, 0, sizeof(attach));
 	strlcpy(attach.ga_dvname, luaL_checkstring(L, 2),
 	    sizeof(attach.ga_dvname));
-	attach.ga_offset = luaL_checkinteger(L, 3);
-	attach.ga_mask = luaL_checkinteger(L, 4);
+	attach.ga_offset = (int)luaL_checkinteger(L, 3);
+	attach.ga_mask = (int)luaL_checkinteger(L, 4);
 	if (lua_gettop(L) > 4)
-		attach.ga_flags = luaL_checkinteger(L, 5);
+		attach.ga_flags = (int)luaL_checkinteger(L, 5);
 	else
 		attach.ga_flags = 0;
 
@@ -228,7 +228,7 @@ static int
 gpio_pulse(lua_State *L)
 {
 	struct gpio_pulse pulse;
-	suseconds_t period, on, off;
+	suseconds_t period, on, off, sec;
 	double freq, dc;
 	int *fd;
 
@@ -241,7 +241,7 @@ gpio_pulse(lua_State *L)
 		    freq, dc);
 
 	memset(&pulse, 0, sizeof(pulse));
-	gpio_get_pin(L, 2, (struct gpio_req *)&pulse);
+	gpio_get_pin(L, 2, (void *)&pulse);
 
 	if (freq > 0.0 && dc > 0.0) {
 		period = 1000000 / freq;
@@ -249,16 +249,16 @@ gpio_pulse(lua_State *L)
 		off = period - on;
 
 		if (on >= 1000000) {
-			pulse.gp_pulse_on.tv_sec = on / 1000000;
-			on -= pulse.gp_pulse_on.tv_sec * 1000000;
+			pulse.gp_pulse_on.tv_sec = sec = on / 1000000;
+			on -= sec * 1000000;
 			pulse.gp_pulse_on.tv_usec = on;
 		} else {
 			pulse.gp_pulse_on.tv_sec = 0;
 			pulse.gp_pulse_on.tv_usec = on;
 		}
 		if (off >= 1000000) {
-			pulse.gp_pulse_off.tv_sec = off / 1000000;
-			off -= pulse.gp_pulse_off.tv_sec * 1000000;
+			pulse.gp_pulse_off.tv_sec = sec = off / 1000000;
+			off -= sec * 1000000;
 			pulse.gp_pulse_off.tv_usec = off;
 		} else {
 			pulse.gp_pulse_off.tv_sec = 0;
@@ -271,14 +271,15 @@ gpio_pulse(lua_State *L)
 
 	if (ioctl(*fd, GPIOPULSE, &pulse) == -1)
 		gpio_error(L, "GPIOPULSE");
+	return 0;
 }
 
 struct constant {
-	char *name;
+	const char *name;
 	int value;
 };
 
-static struct constant gpio_constant[] = {
+static const struct constant gpio_constant[] = {
 	/* GPIO pin states */
 	{ "PIN_LOW",		GPIO_PIN_LOW },
 	{ "PIN_HIGH",		GPIO_PIN_HIGH },
@@ -316,6 +317,8 @@ gpio_set_info(lua_State *L)
 	lua_pushliteral(L, "gpio 1.0.0");
 	lua_settable(L, -3);
 }
+
+int luaopen_gpio(lua_State*);
 
 int
 luaopen_gpio(lua_State* L)
