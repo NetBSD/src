@@ -2,7 +2,7 @@
 /* Generated from: 	NetBSD: mknative-gdb,v 1.4 2011/10/09 02:03:30 christos Exp  */
 /* Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp  */
 
-/* generated for  hppa--netbsd-gcc (NetBSD nb1 20110620) 4.5.3 */
+/* generated for  arm--netbsdelf-gcc (GCC) 4.1.3 20080704 (prerelease) (NetBSD nb2 20081120) */
 
 #ifndef GCC_GENERATED_STDINT_H
 #define GCC_GENERATED_STDINT_H 1
