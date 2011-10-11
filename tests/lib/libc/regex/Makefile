@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/10/10 04:32:41 christos Exp $
+# $NetBSD: Makefile,v 1.4 2011/10/11 23:04:21 dholland Exp $
 
 MKMAN=	no
 
@@ -25,7 +25,6 @@ FILES+=		data/complex.in
 FILES+=		data/error.in
 FILES+=		data/meta.in
 FILES+=		data/nospec.in
-FILES+=		data/nul.in
 FILES+=		data/paren.in
 FILES+=		data/regress.in
 FILES+=		data/repet_bounded.in
@@ -35,6 +34,7 @@ FILES+=		data/startend.in
 FILES+=		data/subexp.in
 FILES+=		data/subtle.in
 FILES+=		data/word_bound.in
+FILES+=		data/zero.in
 
 t_regex.sh: t_regex.awk t_regex.in
 	${TOOL_AWK} -f ${.CURDIR}/t_regex.awk ${.CURDIR}/t_regex.in > ${.TARGET}
