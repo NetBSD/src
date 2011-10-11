@@ -1,6 +1,6 @@
-/*	$Vendor-Id: tree.c,v 1.37 2011/03/23 12:33:01 kristaps Exp $ */
+/*	$Vendor-Id: tree.c,v 1.47 2011/09/18 14:14:15 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #endif
 
 #include <assert.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -28,8 +29,9 @@
 #include "man.h"
 #include "main.h"
 
-static	void	print_mdoc(const struct mdoc_node *, int);
+static	void	print_box(const struct eqn_box *, int);
 static	void	print_man(const struct man_node *, int);
+static	void	print_mdoc(const struct mdoc_node *, int);
 static	void	print_span(const struct tbl_span *, int);
 
 
@@ -63,6 +65,7 @@ print_mdoc(const struct mdoc_node *n, int indent)
 	argv = NULL;
 	argc = sz = 0;
 	params = NULL;
+	t = p = NULL;
 
 	switch (n->type) {
 	case (MDOC_ROOT):
@@ -90,17 +93,13 @@ print_mdoc(const struct mdoc_node *n, int indent)
 		t = "text";
 		break;
 	case (MDOC_TBL):
-		t = "tbl";
-		break;
+		/* FALLTHROUGH */
 	case (MDOC_EQN):
-		t = "eqn";
 		break;
 	default:
 		abort();
 		/* NOTREACHED */
 	}
-
-	p = NULL;
 
 	switch (n->type) {
 	case (MDOC_TEXT):
@@ -130,9 +129,8 @@ print_mdoc(const struct mdoc_node *n, int indent)
 		}
 		break;
 	case (MDOC_TBL):
-		break;
+		/* FALLTHROUGH */
 	case (MDOC_EQN):
-		p = n->eqn->data;
 		break;
 	case (MDOC_ROOT):
 		p = "root";
@@ -143,8 +141,11 @@ print_mdoc(const struct mdoc_node *n, int indent)
 	}
 
 	if (n->span) {
-		assert(NULL == p);
+		assert(NULL == p && NULL == t);
 		print_span(n->span, indent);
+	} else if (n->eqn) {
+		assert(NULL == p && NULL == t);
+		print_box(n->eqn->root, indent);
 	} else {
 		for (i = 0; i < indent; i++)
 			putchar('\t');
@@ -164,10 +165,8 @@ print_mdoc(const struct mdoc_node *n, int indent)
 		for (i = 0; i < (int)sz; i++)
 			printf(" [%s]", params[i]);
 
-		printf(" %d:%d", n->line, n->pos);
+		printf(" %d:%d\n", n->line, n->pos);
 	}
-
-	putchar('\n');
 
 	if (n->child)
 		print_mdoc(n->child, indent + 1);
@@ -181,6 +180,8 @@ print_man(const struct man_node *n, int indent)
 {
 	const char	 *p, *t;
 	int		  i;
+
+	t = p = NULL;
 
 	switch (n->type) {
 	case (MAN_ROOT):
@@ -205,17 +206,13 @@ print_man(const struct man_node *n, int indent)
 		t = "block-tail";
 		break;
 	case (MAN_TBL):
-		t = "tbl";
-		break;
+		/* FALLTHROUGH */
 	case (MAN_EQN):
-		t = "eqn";
 		break;
 	default:
 		abort();
 		/* NOTREACHED */
 	}
-
-	p = NULL;
 
 	switch (n->type) {
 	case (MAN_TEXT):
@@ -236,9 +233,8 @@ print_man(const struct man_node *n, int indent)
 		p = "root";
 		break;
 	case (MAN_TBL):
-		break;
+		/* FALLTHROUGH */
 	case (MAN_EQN):
-		p = n->eqn->data;
 		break;
 	default:
 		abort();
@@ -246,20 +242,63 @@ print_man(const struct man_node *n, int indent)
 	}
 
 	if (n->span) {
-		assert(NULL == p);
+		assert(NULL == p && NULL == t);
 		print_span(n->span, indent);
+	} else if (n->eqn) {
+		assert(NULL == p && NULL == t);
+		print_box(n->eqn->root, indent);
 	} else {
 		for (i = 0; i < indent; i++)
 			putchar('\t');
-		printf("%s (%s) %d:%d", p, t, n->line, n->pos);
+		printf("%s (%s) %d:%d\n", p, t, n->line, n->pos);
 	}
-
-	putchar('\n');
 
 	if (n->child)
 		print_man(n->child, indent + 1);
 	if (n->next)
 		print_man(n->next, indent);
+}
+
+static void
+print_box(const struct eqn_box *ep, int indent)
+{
+	int		 i;
+	const char	*t;
+
+	if (NULL == ep)
+		return;
+	for (i = 0; i < indent; i++)
+		putchar('\t');
+
+	t = NULL;
+	switch (ep->type) {
+	case (EQN_ROOT):
+		t = "eqn-root";
+		break;
+	case (EQN_LIST):
+		t = "eqn-list";
+		break;
+	case (EQN_SUBEXPR):
+		t = "eqn-expr";
+		break;
+	case (EQN_TEXT):
+		t = "eqn-text";
+		break;
+	case (EQN_MATRIX):
+		t = "eqn-matrix";
+		break;
+	}
+
+	assert(t);
+	printf("%s(%d, %d, %d, %d, %d, \"%s\", \"%s\") %s\n", 
+		t, EQN_DEFSIZE == ep->size ? 0 : ep->size,
+		ep->pos, ep->font, ep->mark, ep->pile, 
+		ep->left ? ep->left : "",
+		ep->right ? ep->right : "",
+		ep->text ? ep->text : "");
+
+	print_box(ep->first, indent + 1);
+	print_box(ep->next, indent);
 }
 
 static void
@@ -306,5 +345,5 @@ print_span(const struct tbl_span *sp, int indent)
 		putchar(' ');
 	}
 
-	printf("(tbl) %d:1", sp->line);
+	printf("(tbl) %d:1\n", sp->line);
 }

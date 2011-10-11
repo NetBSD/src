@@ -21,5 +21,9 @@ extern	size_t	  strlcat(char *, const char *, size_t);
 #ifndef HAVE_STRLCPY
 extern	size_t	  strlcpy(char *, const char *, size_t);
 #endif
+#ifndef HAVE_GETSUBOPT
+extern	int	  getsubopt(char **, char * const *, char **);
+extern	char	 *suboptarg;
+#endif
 
 #endif /* MANDOC_CONFIG_H */

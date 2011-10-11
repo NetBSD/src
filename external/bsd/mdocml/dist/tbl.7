@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: tbl.7,v 1.13 2011/03/17 15:12:42 kristaps Exp $
+.\"	$Vendor-Id: tbl.7,v 1.16 2011/09/03 00:29:21 kristaps Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd March 17, 2011
+.Dd September 3, 2011
 .Dt TBL 7
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ macro tags, whose precise syntax is documented in
 Tables consist of a series of options on a single line, followed by the
 table layout, followed by data.
 .Pp
-For example, the following creates a boxed table with digits centered in
+For example, the following creates a boxed table with digits centred in
 the cells.
 .Bd -literal -offset indent
 \&.TS
@@ -256,12 +256,21 @@ The following case-insensitive modifier keys are available:
 .Cm e ,
 .Cm t ,
 .Cm d ,
-.Cm f ,
 .Cm b ,
 .Cm i ,
-.Cm b ,
+.Cm r ,
 and
-.Cm i .
+.Cm f
+.Po
+followed by
+.Cm b ,
+.Cm i ,
+.Cm r ,
+.Cm 3 ,
+.Cm 2 ,
+or
+.Cm 1
+.Pc .
 All of these are ignored by
 .Xr mandoc 1 .
 .Pp
@@ -332,7 +341,8 @@ This formed the basis of the implementation that is part of the
 .Xr mandoc 1
 utility.
 .Sh AUTHORS
-This partial
+This
 .Nm
 reference was written by
-.An Kristaps Dzonsons Aq kristaps@bsd.lv .
+.An Kristaps Dzonsons ,
+.Mt kristaps@bsd.lv .

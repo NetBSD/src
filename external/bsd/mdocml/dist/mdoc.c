@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc.c,v 1.188 2011/03/28 23:52:13 kristaps Exp $ */
+/*	$Vendor-Id: mdoc.c,v 1.196 2011/09/30 00:13:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -97,6 +97,9 @@ static	struct mdoc_node *node_alloc(struct mdoc *, int, int,
 				enum mdoct, enum mdoc_type);
 static	int		  node_append(struct mdoc *, 
 				struct mdoc_node *);
+#if 0
+static	int		  mdoc_preptext(struct mdoc *, int, char *, int);
+#endif
 static	int		  mdoc_ptext(struct mdoc *, int, char *, int);
 static	int		  mdoc_pmacro(struct mdoc *, int, char *, int);
 
@@ -157,6 +160,7 @@ mdoc_alloc1(struct mdoc *mdoc)
 	mdoc->last = mandoc_calloc(1, sizeof(struct mdoc_node));
 	mdoc->first = mdoc->last;
 	mdoc->last->type = MDOC_ROOT;
+	mdoc->last->tok = MDOC_MAX;
 	mdoc->next = MDOC_NEXT_CHILD;
 }
 
@@ -193,14 +197,14 @@ mdoc_free(struct mdoc *mdoc)
  * Allocate volatile and non-volatile parse resources.  
  */
 struct mdoc *
-mdoc_alloc(struct regset *regs, struct mparse *parse)
+mdoc_alloc(struct roff *roff, struct mparse *parse)
 {
 	struct mdoc	*p;
 
 	p = mandoc_calloc(1, sizeof(struct mdoc));
 
 	p->parse = parse;
-	p->regs = regs;
+	p->roff = roff;
 
 	mdoc_hash_init();
 	mdoc_alloc1(p);
@@ -233,11 +237,11 @@ mdoc_addeqn(struct mdoc *m, const struct eqn *ep)
 	/* No text before an initial macro. */
 
 	if (SEC_NONE == m->lastnamed) {
-		mdoc_pmsg(m, ep->line, ep->pos, MANDOCERR_NOTEXT);
+		mdoc_pmsg(m, ep->ln, ep->pos, MANDOCERR_NOTEXT);
 		return(1);
 	}
 
-	n = node_alloc(m, ep->line, ep->pos, MDOC_MAX, MDOC_EQN);
+	n = node_alloc(m, ep->ln, ep->pos, MDOC_MAX, MDOC_EQN);
 	n->eqn = ep;
 
 	if ( ! node_append(m, n))
@@ -290,8 +294,8 @@ mdoc_parseln(struct mdoc *m, int ln, char *buf, int offs)
 	 * whether this mode is on or off.
 	 * Note that this mode is also switched by the Sh macro.
 	 */
-	if (m->regs->regs[(int)REG_nS].set) {
-		if (m->regs->regs[(int)REG_nS].v.u)
+	if (roff_regisset(m->roff, REG_nS)) {
+		if (roff_regget(m->roff, REG_nS))
 			m->flags |= MDOC_SYNOPSIS;
 		else
 			m->flags &= ~MDOC_SYNOPSIS;
@@ -565,16 +569,9 @@ int
 mdoc_word_alloc(struct mdoc *m, int line, int pos, const char *p)
 {
 	struct mdoc_node *n;
-	size_t		  sv, len;
-
-	len = strlen(p);
 
 	n = node_alloc(m, line, pos, MDOC_MAX, MDOC_TEXT);
-	n->string = mandoc_malloc(len + 1);
-	sv = strlcpy(n->string, p, len + 1);
-
-	/* Prohibit truncation. */
-	assert(sv < len + 1);
+	n->string = roff_strdup(m->roff, p);
 
 	if ( ! node_append(m, n))
 		return(0);
@@ -650,6 +647,59 @@ mdoc_node_delete(struct mdoc *m, struct mdoc_node *p)
 	mdoc_node_free(p);
 }
 
+#if 0
+/*
+ * Pre-treat a text line.
+ * Text lines can consist of equations, which must be handled apart from
+ * the regular text.
+ * Thus, use this function to step through a line checking if it has any
+ * equations embedded in it.
+ * This must handle multiple equations AND equations that do not end at
+ * the end-of-line, i.e., will re-enter in the next roff parse.
+ */
+static int
+mdoc_preptext(struct mdoc *m, int line, char *buf, int offs)
+{
+	char		*start, *end;
+	char		 delim;
+
+	while ('\0' != buf[offs]) {
+		/* Mark starting position if eqn is set. */
+		start = NULL;
+		if ('\0' != (delim = roff_eqndelim(m->roff)))
+			if (NULL != (start = strchr(buf + offs, delim)))
+				*start++ = '\0';
+
+		/* Parse text as normal. */
+		if ( ! mdoc_ptext(m, line, buf, offs))
+			return(0);
+
+		/* Continue only if an equation exists. */
+		if (NULL == start)
+			break;
+
+		/* Read past the end of the equation. */
+		offs += start - (buf + offs);
+		assert(start == &buf[offs]);
+		if (NULL != (end = strchr(buf + offs, delim))) {
+			*end++ = '\0';
+			while (' ' == *end)
+				end++;
+		}
+
+		/* Parse the equation itself. */
+		roff_openeqn(m->roff, NULL, line, offs, buf);
+
+		/* Process a finished equation? */
+		if (roff_closeeqn(m->roff))
+			if ( ! mdoc_addeqn(m, roff_eqn(m->roff)))
+				return(0);
+		offs += (end - (buf + offs));
+	} 
+
+	return(1);
+}
+#endif
 
 /*
  * Parse free-form text, that is, a line that does not begin with the
@@ -703,11 +753,6 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 	ws = NULL;
 	for (c = end = buf + offs; *c; c++) {
 		switch (*c) {
-		case '-':
-			if (mandoc_hyph(buf + offs, c))
-				*c = ASCII_HYPH;
-			ws = NULL;
-			break;
 		case ' ':
 			if (NULL == ws)
 				ws = c;

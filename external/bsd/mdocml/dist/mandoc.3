@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: mandoc.3,v 1.2 2011/03/28 21:49:42 kristaps Exp $
+.\"	$Vendor-Id: mandoc.3,v 1.14 2011/10/06 22:29:12 kristaps Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,34 +15,78 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd March 28, 2011
+.Dd October 6, 2011
 .Dt MANDOC 3
 .Os
 .Sh NAME
 .Nm mandoc ,
+.Nm mandoc_escape ,
 .Nm man_meta ,
+.Nm man_mparse ,
 .Nm man_node ,
+.Nm mchars_alloc ,
+.Nm mchars_free ,
+.Nm mchars_num2char ,
+.Nm mchars_num2uc ,
+.Nm mchars_spec2cp ,
+.Nm mchars_spec2str ,
 .Nm mdoc_meta ,
 .Nm mdoc_node ,
 .Nm mparse_alloc ,
 .Nm mparse_free ,
+.Nm mparse_getkeep ,
+.Nm mparse_keep ,
 .Nm mparse_readfd ,
 .Nm mparse_reset ,
 .Nm mparse_result ,
 .Nm mparse_strerror ,
 .Nm mparse_strlevel
 .Nd mandoc macro compiler library
+.Sh LIBRARY
+.Lb mandoc
 .Sh SYNOPSIS
 .In man.h
 .In mdoc.h
 .In mandoc.h
+.Ft "enum mandoc_esc"
+.Fo mandoc_escape
+.Fa "const char **in"
+.Fa "const char **seq"
+.Fa "int *len"
+.Fc
 .Ft "const struct man_meta *"
 .Fo man_meta
+.Fa "const struct man *man"
+.Fc
+.Ft "const struct mparse *"
+.Fo man_mparse
 .Fa "const struct man *man"
 .Fc
 .Ft "const struct man_node *"
 .Fo man_node
 .Fa "const struct man *man"
+.Fc
+.Ft "struct mchars *"
+.Fn mchars_alloc
+.Ft void
+.Fn mchars_free "struct mchars *p"
+.Ft char
+.Fn mchars_num2char "const char *cp" "size_t sz"
+.Ft int
+.Fn mchars_num2uc "const char *cp" "size_t sz"
+.Ft "const char *"
+.Fo mchars_spec2str
+.Fa "struct mchars *p"
+.Fa "const char *cp"
+.Fa "size_t sz"
+.Fa "size_t *rsz"
+.Fc
+.Ft int
+.Fo mchars_spec2cp
+.Fa "struct mchars *p"
+.Fa "const char *cp"
+.Fa "size_t sz"
+.Ft "const char *"
 .Fc
 .Ft "const struct mdoc_meta *"
 .Fo mdoc_meta
@@ -61,6 +105,14 @@
 .Fc
 .Ft void
 .Fo mparse_free
+.Fa "struct mparse *parse"
+.Fc
+.Ft void
+.Fo mparse_getkeep
+.Fa "const struct mparse *parse"
+.Fc
+.Ft void
+.Fo mparse_keep
 .Fa "struct mparse *parse"
 .Fc
 .Ft "enum mandoclevel"
@@ -90,6 +142,8 @@
 .Vt extern const char * const * man_macronames;
 .Vt extern const char * const * mdoc_argnames;
 .Vt extern const char * const * mdoc_macronames;
+.Fd "#define ASCII_NBRSP"
+.Fd "#define ASCII_HYPH"
 .Sh DESCRIPTION
 The
 .Nm mandoc
@@ -131,12 +185,221 @@ or invoke
 .Fn mparse_reset
 and parse new files.
 .El
+.Pp
+The
+.Nm
+library also contains routines for translating character strings into glyphs
+.Pq see Fn mchars_alloc
+and parsing escape sequences from strings
+.Pq see Fn mandoc_escape .
+.Sh REFERENCE
+This section documents the functions, types, and variables available
+via
+.In mandoc.h .
+.Ss Types
+.Bl -ohang
+.It Vt "enum mandoc_esc"
+An escape sequence classification.
+.It Vt "enum mandocerr"
+A fatal error, error, or warning message during parsing.
+.It Vt "enum mandoclevel"
+A classification of an
+.Vt "enum mandoclevel"
+as regards system operation.
+.It Vt "struct mchars"
+An opaque pointer to an object allowing for translation between
+character strings and glyphs.
+See
+.Fn mchars_alloc .
+.It Vt "enum mparset"
+The type of parser when reading input.
+This should usually be
+.Dv MPARSE_AUTO
+for auto-detection.
+.It Vt "struct mparse"
+An opaque pointer to a running parse sequence.
+Created with
+.Fn mparse_alloc
+and freed with
+.Fn mparse_free .
+This may be used across parsed input if
+.Fn mparse_reset
+is called between parses.
+.It Vt "mandocmsg"
+A prototype for a function to handle fatal error, error, and warning
+messages emitted by the parser.
+.El
+.Ss Functions
+.Bl -ohang
+.It Fn mandoc_escape
+Scan an escape sequence, i.e., a character string beginning with
+.Sq \e .
+Pass a pointer to this string as
+.Va end ;
+it will be set to the supremum of the parsed escape sequence unless
+returning
+.Dv ESCAPE_ERROR ,
+in which case the string is bogus and should be
+thrown away.
+If not
+.Dv ESCAPE_ERROR
+or
+.Dv ESCAPE_IGNORE ,
+.Va start
+is set to the first relevant character of the substring (font, glyph,
+whatever) of length
+.Va sz .
+Both
+.Va start
+and
+.Va sz
+may be
+.Dv NULL .
+.It Fn man_meta
+Obtain the meta-data of a successful parse.
+This may only be used on a pointer returned by
+.Fn mparse_result .
+.It Fn man_mparse
+Get the parser used for the current output.
+.It Fn man_node
+Obtain the root node of a successful parse.
+This may only be used on a pointer returned by
+.Fn mparse_result .
+.It Fn mchars_alloc
+Allocate an
+.Vt "struct mchars *"
+object for translating special characters into glyphs.
+See
+.Xr mandoc_char 7
+for an overview of special characters.
+The object must be freed with
+.Fn mchars_free .
+.It Fn mchars_free
+Free an object created with
+.Fn mchars_alloc .
+.It Fn mchars_num2char
+Convert a character index (e.g., the \eN\(aq\(aq escape) into a
+printable ASCII character.
+Returns \e0 (the nil character) if the input sequence is malformed.
+.It Fn mchars_num2uc
+Convert a hexadecimal character index (e.g., the \e[uNNNN] escape) into
+a Unicode codepoint.
+Returns \e0 (the nil character) if the input sequence is malformed.
+.It Fn mchars_spec2cp
+Convert a special character into a valid Unicode codepoint.
+Returns \-1 on failure or a non-zero Unicode codepoint on success.
+.It Fn mchars_spec2str
+Convert a special character into an ASCII string.
+Returns
+.Dv NULL
+on failure.
+.It Fn mdoc_meta
+Obtain the meta-data of a successful parse.
+This may only be used on a pointer returned by
+.Fn mparse_result .
+.It Fn mdoc_node
+Obtain the root node of a successful parse.
+This may only be used on a pointer returned by
+.Fn mparse_result .
+.It Fn mparse_alloc
+Allocate a parser.
+The same parser may be used for multiple files so long as
+.Fn mparse_reset
+is called between parses.
+.Fn mparse_free
+must be called to free the memory allocated by this function.
+.It Fn mparse_free
+Free all memory allocated by
+.Fn mparse_alloc .
+.It Fn mparse_getkeep
+Acquire the keep buffer.
+Must follow a call of
+.Fn mparse_keep .
+.It Fn mparse_keep
+Instruct the parser to retain a copy of its parsed input.
+This can be acquired with subsequent
+.Fn mparse_getkeep
+calls.
+.It Fn mparse_readfd
+Parse a file or file descriptor.
+If
+.Va fd
+is -1,
+.Va fname
+is opened for reading.
+Otherwise,
+.Va fname
+is assumed to be the name associated with
+.Va fd .
+This may be called multiple times with different parameters; however,
+.Fn mparse_reset
+should be invoked between parses.
+.It Fn mparse_reset
+Reset a parser so that
+.Fn mparse_readfd
+may be used again.
+.It Fn mparse_result
+Obtain the result of a parse.
+Only successful parses
+.Po
+i.e., those where
+.Fn mparse_readfd
+returned less than MANDOCLEVEL_FATAL
+.Pc
+should invoke this function, in which case one of the two pointers will
+be filled in.
+.It Fn mparse_strerror
+Return a statically-allocated string representation of an error code.
+.It Fn mparse_strlevel
+Return a statically-allocated string representation of a level code.
+.El
+.Ss Variables
+.Bl -ohang
+.It Va man_macronames
+The string representation of a man macro as indexed by
+.Vt "enum mant" .
+.It Va mdoc_argnames
+The string representation of a mdoc macro argument as indexed by
+.Vt "enum mdocargt" .
+.It Va mdoc_macronames
+The string representation of a mdoc macro as indexed by
+.Vt "enum mdoct" .
+.El
 .Sh IMPLEMENTATION NOTES
 This section consists of structural documentation for
 .Xr mdoc 7
 and
 .Xr man 7
-syntax trees.
+syntax trees and strings.
+.Ss Man and Mdoc Strings
+Strings may be extracted from mdoc and man meta-data, or from text
+nodes (MDOC_TEXT and MAN_TEXT, respectively).
+These strings have special non-printing formatting cues embedded in the
+text itself, as well as
+.Xr roff 7
+escapes preserved from input.
+Implementing systems will need to handle both situations to produce
+human-readable text.
+In general, strings may be assumed to consist of 7-bit ASCII characters.
+.Pp
+The following non-printing characters may be embedded in text strings:
+.Bl -tag -width Ds
+.It Dv ASCII_NBRSP
+A non-breaking space character.
+.It Dv ASCII_HYPH
+A soft hyphen.
+.El
+.Pp
+Escape characters are also passed verbatim into text strings.
+An escape character is a sequence of characters beginning with the
+backslash
+.Pq Sq \e .
+To construct human-readable text, these should be intercepted with
+.Fn mandoc_escape
+and converted with one of
+.Fn mchars_num2char ,
+.Fn mchars_spec2str ,
+and so on.
 .Ss Man Abstract Syntax Tree
 This AST is governed by the ontological rules dictated in
 .Xr man 7
@@ -177,7 +440,7 @@ where capitalised non-terminals represent nodes.
 .It ELEMENT
 \(<- ELEMENT | TEXT*
 .It TEXT
-\(<- [[:alpha:]]*
+\(<- [[:ascii:]]*
 .El
 .Pp
 The only elements capable of nesting other elements are those with
@@ -236,7 +499,7 @@ where capitalised non-terminals represent nodes.
 .It TAIL
 \(<- mnode*
 .It TEXT
-\(<- [[:printable:],0x1e]*
+\(<- [[:ascii:]]*
 .El
 .Pp
 Of note are the TEXT nodes following the HEAD, BODY and TAIL nodes of
@@ -251,7 +514,7 @@ where a new body introduces a new phrase.
 .Pp
 The
 .Xr mdoc 7
-syntax tree accomodates for broken block structures as well.
+syntax tree accommodates for broken block structures as well.
 The ENDBODY node is available to end the formatting associated
 with a given block before the physical end of that block.
 It has a non-null
@@ -323,6 +586,7 @@ levels of badly-nested blocks.
 .Xr mandoc 1 ,
 .Xr eqn 7 ,
 .Xr man 7 ,
+.Xr mandoc_char 7 ,
 .Xr mdoc 7 ,
 .Xr roff 7 ,
 .Xr tbl 7
@@ -330,4 +594,5 @@ levels of badly-nested blocks.
 The
 .Nm
 library was written by
-.An Kristaps Dzonsons Aq kristaps@bsd.lv .
+.An Kristaps Dzonsons ,
+.Mt kristaps@bsd.lv .

@@ -1,6 +1,6 @@
-/*	$Vendor-Id: html.h,v 1.40 2011/01/29 14:49:44 kristaps Exp $ */
+/*	$Vendor-Id: html.h,v 1.47 2011/10/05 21:35:17 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -104,7 +104,7 @@ struct	htmlpair {
 #define	PAIR_STYLE_INIT(p, h)	PAIR_INIT(p, ATTR_STYLE, (h)->buf)
 #define	PAIR_SUMMARY_INIT(p, v)	PAIR_INIT(p, ATTR_SUMMARY, v)
 
-enum	htmltype {
+enum	htmltype { 
 	HTML_HTML_4_01_STRICT,
 	HTML_XHTML_1_0_STRICT
 };
@@ -120,16 +120,18 @@ struct	html {
 	struct tagq	  tags; /* stack of open tags */
 	struct rofftbl	  tbl; /* current table */
 	struct tag	 *tblt; /* current open table scope */
-	void		 *symtab; /* character-escapes */
+	struct mchars	 *symtab; /* character-escapes */
 	char		 *base_man; /* base for manpage href */
 	char		 *base_includes; /* base for include href */
 	char		 *style; /* style-sheet URI */
 	char		  buf[BUFSIZ]; /* see bufcat and friends */
-	size_t		  buflen;
+	size_t		  buflen; 
 	struct tag	 *metaf; /* current open font scope */
 	enum htmlfont	  metal; /* last used font */
 	enum htmlfont	  metac; /* current font mode */
-	enum htmltype	  type;
+	enum htmltype	  type; /* output media type */
+	int		  oflags; /* output options */
+#define	HTML_FRAGMENT	 (1 << 0) /* don't emit HTML/HEAD/BODY */
 };
 
 void		  print_gen_decls(struct html *);
@@ -141,20 +143,21 @@ void		  print_stagq(struct html *, const struct tag *);
 void		  print_text(struct html *, const char *);
 void		  print_tblclose(struct html *);
 void		  print_tbl(struct html *, const struct tbl_span *);
+void		  print_eqn(struct html *, const struct eqn *);
 
+void		  bufcat_fmt(struct html *, const char *, ...);
+void		  bufcat(struct html *, const char *);
+void		  bufcat_id(struct html *, const char *);
+void		  bufcat_style(struct html *, 
+			const char *, const char *);
 void		  bufcat_su(struct html *, const char *, 
 			const struct roffsu *);
+void		  bufinit(struct html *);
 void		  buffmt_man(struct html *, 
 			const char *, const char *);
 void		  buffmt_includes(struct html *, const char *);
-void		  buffmt(struct html *, const char *, ...);
-void		  bufcat(struct html *, const char *);
-void		  bufcat_style(struct html *, 
-			const char *, const char *);
-void		  bufncat(struct html *, const char *, size_t);
-void		  bufinit(struct html *);
 
-void		  html_idcat(char *, const char *, int);
+int		  html_strlen(const char *);
 
 __END_DECLS
 
