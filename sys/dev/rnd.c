@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.81 2011/06/30 20:09:40 wiz Exp $	*/
+/*	$NetBSD: rnd.c,v 1.82 2011/10/11 23:55:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.81 2011/06/30 20:09:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.82 2011/10/11 23:55:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/select.h>
 #include <sys/poll.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
@@ -75,7 +75,7 @@ int	rnd_debug = 0;
 #endif
 
 /*
- * The size of a temporary buffer, malloc()ed when needed, and used for
+ * The size of a temporary buffer, kmem_alloc()ed when needed, and used for
  * reading and writing data.
  */
 #define	RND_TEMP_BUFFER_SIZE	128
@@ -110,12 +110,6 @@ kmutex_t			rnd_mtx;
 struct selinfo rnd_selq;
 
 /*
- * Set when there are readers blocking on data from us
- */
-#define	RND_READWAITING 0x00000001
-volatile u_int32_t rnd_status;
-
-/*
  * Memory pool for sample buffers
  */
 static struct pool rnd_mempool;
@@ -130,6 +124,7 @@ static struct pool rnd_mempool;
  */
 rndpool_t rnd_pool;
 kmutex_t  rndpool_mtx;
+kcondvar_t rndpool_cv;
 
 /*
  * This source is used to easily "remove" queue entries when the source
@@ -156,13 +151,14 @@ dev_type_kqfilter(rndkqfilter);
 
 const struct cdevsw rnd_cdevsw = {
 	rndopen, nullclose, rndread, rndwrite, rndioctl,
-	nostop, notty, rndpoll, nommap, rndkqfilter, D_OTHER,
+	nostop, notty, rndpoll, nommap, rndkqfilter, D_OTHER|D_MPSAFE,
 };
 
 static inline void	rnd_wakeup_readers(void);
 static inline u_int32_t rnd_estimate_entropy(rndsource_t *, u_int32_t);
 static inline u_int32_t rnd_counter(void);
 static        void	rnd_timeout(void *);
+static u_int32_t	rnd_extract_data_locked(void *, u_int32_t, u_int32_t);
 
 static int		rnd_ready = 0;
 static int		rnd_have_entropy = 0;
@@ -203,12 +199,7 @@ rnd_wakeup_readers(void)
 	 */
 	mutex_enter(&rndpool_mtx);
 	if (rndpool_get_entropy_count(&rnd_pool) > RND_ENTROPY_THRESHOLD * 8) {
-		if (rnd_status & RND_READWAITING) {
-			DPRINTF(RND_DEBUG_SNOOZE,
-			    ("waking up pending readers.\n"));
-			rnd_status &= ~RND_READWAITING;
-			wakeup(&rnd_selq);
-		}
+		cv_broadcast(&rndpool_cv);
 		selnotify(&rnd_selq, 0, 0);
 
 #ifdef RND_VERBOSE
@@ -328,6 +319,7 @@ rnd_init(void)
 
 	rndpool_init(&rnd_pool);
 	mutex_init(&rndpool_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
+	cv_init(&rndpool_cv, "rndread");
 
 	/* Mix *something*, *anything* into the pool to help it get started.
 	 * However, it's not safe for rnd_counter() to call microtime() yet,
@@ -389,9 +381,7 @@ rndread(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	ret = 0;
-
-	bf = malloc(RND_TEMP_BUFFER_SIZE, M_TEMP, M_WAITOK);
-
+	bf = kmem_alloc(RND_TEMP_BUFFER_SIZE, KM_SLEEP);
 	while (uio->uio_resid > 0) {
 		n = min(RND_TEMP_BUFFER_SIZE, uio->uio_resid);
 
@@ -400,42 +390,37 @@ rndread(dev_t dev, struct uio *uio, int ioflag)
 		 * is, do the I/O even if it is partial.  If not,
 		 * sleep unless the user has requested non-blocking
 		 * I/O.
+		 *
+		 * If not requesting strong randomness, we can always read.
 		 */
-		for (;;) {
-			/*
-			 * If not requesting strong randomness, we
-			 * can always read.
-			 */
-			if (mode == RND_EXTRACT_ANY)
-				break;
+		mutex_enter(&rndpool_mtx);
+		if (mode != RND_EXTRACT_ANY) {
+			for (;;) {
+				/*
+				 * How much entropy do we have?
+				 * If it is enough for one hash, we can read.
+				 */
+				entcnt = rndpool_get_entropy_count(&rnd_pool);
+				if (entcnt >= RND_ENTROPY_THRESHOLD * 8)
+					break;
 
-			/*
-			 * How much entropy do we have?  If it is enough for
-			 * one hash, we can read.
-			 */
-			mutex_enter(&rndpool_mtx);
-			entcnt = rndpool_get_entropy_count(&rnd_pool);
-			mutex_exit(&rndpool_mtx);
-			if (entcnt >= RND_ENTROPY_THRESHOLD * 8)
-				break;
-
-			/*
-			 * Data is not available.
-			 */
-			if (ioflag & IO_NDELAY) {
-				ret = EWOULDBLOCK;
-				goto out;
+				/*
+				 * Data is not available.
+				 */
+				if (ioflag & IO_NDELAY) {
+					mutex_exit(&rndpool_mtx);
+					ret = EWOULDBLOCK;
+					goto out;
+				}
+				ret = cv_wait_sig(&rndpool_cv, &rndpool_mtx);
+				if (ret) {
+					mutex_exit(&rndpool_mtx);
+					goto out;
+				}
 			}
-
-			rnd_status |= RND_READWAITING;
-			ret = tsleep(&rnd_selq, PRIBIO|PCATCH,
-			    "rndread", 0);
-
-			if (ret)
-				goto out;
 		}
-
-		nread = rnd_extract_data(bf, n, mode);
+		nread = rnd_extract_data_locked(bf, n, mode);
+		mutex_exit(&rndpool_mtx);
 
 		/*
 		 * Copy (possibly partial) data to the user.
@@ -448,7 +433,7 @@ rndread(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 out:
-	free(bf, M_TEMP);
+	kmem_free(bf, RND_TEMP_BUFFER_SIZE);
 	return (ret);
 }
 
@@ -463,11 +448,8 @@ rndwrite(dev_t dev, struct uio *uio, int ioflag)
 
 	if (uio->uio_resid == 0)
 		return (0);
-
 	ret = 0;
-
-	bf = malloc(RND_TEMP_BUFFER_SIZE, M_TEMP, M_WAITOK);
-
+	bf = kmem_alloc(RND_TEMP_BUFFER_SIZE, KM_SLEEP);
 	while (uio->uio_resid > 0) {
 		n = min(RND_TEMP_BUFFER_SIZE, uio->uio_resid);
 
@@ -484,8 +466,7 @@ rndwrite(dev_t dev, struct uio *uio, int ioflag)
 
 		DPRINTF(RND_DEBUG_WRITE, ("Random: Copied in %d bytes\n", n));
 	}
-
-	free(bf, M_TEMP);
+	kmem_free(bf, RND_TEMP_BUFFER_SIZE);
 	return (ret);
 }
 
@@ -711,12 +692,11 @@ rndpoll(dev_t dev, int events, struct lwp *l)
 	 */
 	mutex_enter(&rndpool_mtx);
 	entcnt = rndpool_get_entropy_count(&rnd_pool);
-	mutex_exit(&rndpool_mtx);
-
 	if (entcnt >= RND_ENTROPY_THRESHOLD * 8)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
 		selrecord(l, &rnd_selq);
+	mutex_exit(&rndpool_mtx);
 
 	return (revents);
 }
@@ -734,7 +714,9 @@ filt_rndread(struct knote *kn, long hint)
 {
 	uint32_t entcnt;
 
+	mutex_enter(&rndpool_mtx);
 	entcnt = rndpool_get_entropy_count(&rnd_pool);
+	mutex_exit(&rndpool_mtx);
 	if (entcnt >= RND_ENTROPY_THRESHOLD * 8) {
 		kn->kn_data = RND_TEMP_BUFFER_SIZE;
 		return (1);
@@ -1071,14 +1053,14 @@ rnd_timeout(void *arg)
 	rnd_wakeup_readers();
 }
 
-u_int32_t
-rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
+static u_int32_t
+rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
 {
-	int retval;
-	u_int32_t c;
 
-	mutex_enter(&rndpool_mtx);
+	KASSERT(mutex_owned(&rndpool_mtx));
 	if (!rnd_have_entropy) {
+		u_int32_t c;
+
 #ifdef RND_VERBOSE
 		printf("rnd: WARNING! initial entropy low (%u).\n",
 		       rndpool_get_entropy_count(&rnd_pool));
@@ -1087,8 +1069,16 @@ rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 		c = rnd_counter();
 		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
 	}
-	retval = rndpool_extract_data(&rnd_pool, p, len, flags);
-	mutex_exit(&rndpool_mtx);
+	return rndpool_extract_data(&rnd_pool, p, len, flags);
+}
 
-	return (retval);
+u_int32_t
+rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
+{
+	uint32_t retval;
+
+	mutex_enter(&rndpool_mtx);
+	retval = rnd_extract_data_locked(p, len, flags);
+	mutex_exit(&rndpool_mtx);
+	return retval;
 }
