@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:46 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/10/11 13:53:58 joerg Exp $
 
 PROG_CXX=	llvm-link
 NOMAN=		yes
@@ -15,6 +15,8 @@ LLVM_LIBS+= \
 	BitWriter \
 	Linker \
 	TransformsUtils \
+	Analysis \
+	Target \
 	Core \
 	Support
 
