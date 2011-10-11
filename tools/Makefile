@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.148 2011/07/16 15:52:01 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.149 2011/10/11 13:54:01 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -69,8 +69,9 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 .if ${MKLLVM} != "no"
 SUBDIR+= \
 	llvm .WAIT \
-	llvm-lib/libLLVMSupport .WAIT \
+	llvm-lib/libLLVMSupport llvm-lib/libLLVMTableGen .WAIT \
 	llvm-tblgen .WAIT \
+	llvm-clang-tblgen .WAIT \
 	llvm-include .WAIT \
 	llvm-lib .WAIT \
 	llvm-clang

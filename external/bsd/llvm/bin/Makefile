@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/28 11:41:48 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/10/11 13:53:57 joerg Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	clang \
+	clang-tblgen \
 	tblgen
 
 .if defined(LLVM_DEVELOPER)
@@ -13,8 +14,10 @@ SUBDIR+= \
 	llvm-ar \
 	llvm-as \
 	llvm-bcanalyzer \
+	llvm-cov \
 	llvm-diff \
 	llvm-dis \
+	llvm-dwarfdump \
 	llvm-extract \
 	llvm-ld \
 	llvm-link \
@@ -22,8 +25,8 @@ SUBDIR+= \
 	llvm-nm \
 	llvm-prof \
 	llvm-ranlib \
+	llvm-size \
 	llvm-stub \
-	llvmc \
 	macho-dumpx \
 	opt
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/07/17 20:07:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/10/11 13:53:57 joerg Exp $
 
 PROG_CXX=	lli
 NOMAN=		yes
@@ -27,10 +27,10 @@ LLVM_LIBS+= \
 	Object \
 	SelectionDAG \
 	CodeGen \
-	Target \
 	ScalarOpts \
 	TransformsUtils \
 	Analysis \
+	Target \
 	MC \
 	Core \
 	Support
