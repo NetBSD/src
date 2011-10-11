@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.103 2011/08/17 20:46:27 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.104 2011/10/11 23:57:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.103 2011/08/17 20:46:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.104 2011/10/11 23:57:50 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -887,6 +887,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 		if (amap->am_anon[lcv] == NULL)
 			continue;
 		KASSERT(amap->am_anon[lcv]->an_lock == srcamap->am_lock);
+		KASSERT(amap->am_anon[lcv]->an_ref > 0);
 		amap->am_anon[lcv]->an_ref++;
 		amap->am_bckptr[lcv] = amap->am_nused;
 		amap->am_slots[amap->am_nused] = lcv;
