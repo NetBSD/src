@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.133 2011/10/10 01:28:26 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.134 2011/10/11 23:50:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.133 2011/10/10 01:28:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134 2011/10/11 23:50:24 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -364,7 +364,7 @@ struct evcnt pmap_ldt_evcnt;
 #define	PAT_WB		0x6ULL
 #define	PAT_UCMINUS	0x7ULL
 
-static bool cpu_pat_enabled = false;
+static bool cpu_pat_enabled __read_mostly = false;
 
 /*
  * global data structures
@@ -378,14 +378,14 @@ struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
  * set pmap_pg_g to PG_G (otherwise it is zero).
  */
 
-int pmap_pg_g = 0;
+int pmap_pg_g __read_mostly = 0;
 
 /*
  * pmap_largepages: if our processor supports PG_PS and we are
  * using it, this is set to true.
  */
 
-int pmap_largepages;
+int pmap_largepages __read_mostly;
 
 /*
  * i386 physical memory comes in a big contig chunk with a small
@@ -393,8 +393,8 @@ int pmap_largepages;
  * (shared with machdep.c) describe the physical address space
  * of this machine.
  */
-paddr_t avail_start;	/* PA of first available physical page */
-paddr_t avail_end;	/* PA of last available physical page */
+paddr_t avail_start __read_mostly; /* PA of first available physical page */
+paddr_t avail_end __read_mostly; /* PA of last available physical page */
 
 #ifdef XEN
 #ifdef __x86_64__
@@ -466,8 +466,9 @@ pvhash_remove(struct pv_hash_head *hh, struct vm_page *ptp, vaddr_t va)
  * other data structures
  */
 
-static pt_entry_t protection_codes[8];	/* maps MI prot to i386 prot code */
-static bool pmap_initialized = false;	/* pmap_init done yet? */
+static pt_entry_t protection_codes[8] __read_mostly; /* maps MI prot to i386
+							prot code */
+static bool pmap_initialized __read_mostly = false; /* pmap_init done yet? */
 
 /*
  * the following two vaddr_t's are used during system startup
@@ -476,8 +477,8 @@ static bool pmap_initialized = false;	/* pmap_init done yet? */
  * VM space is turned over to the kernel_map vm_map.
  */
 
-static vaddr_t virtual_avail;	/* VA of first free KVA */
-static vaddr_t virtual_end;	/* VA of last free KVA */
+static vaddr_t virtual_avail __read_mostly;	/* VA of first free KVA */
+static vaddr_t virtual_end __read_mostly;	/* VA of last free KVA */
 
 /*
  * linked list of all non-kernel pmaps
