@@ -1,4 +1,4 @@
-/*	$Vendor-Id: read.c,v 1.10 2011/04/03 10:11:25 kristaps Exp $ */
+/*	$Vendor-Id: read.c,v 1.25 2011/10/08 15:42:29 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -19,8 +19,10 @@
 #include "config.h"
 #endif
 
-#include <sys/stat.h>
-#include <sys/mman.h>
+#ifdef HAVE_MMAP
+# include <sys/stat.h>
+# include <sys/mman.h>
+#endif
 
 #include <assert.h>
 #include <ctype.h>
@@ -57,11 +59,11 @@ struct	mparse {
 	struct man	 *man; /* man parser */
 	struct mdoc	 *mdoc; /* mdoc parser */
 	struct roff	 *roff; /* roff parser (!NULL) */
-	struct regset	  regs; /* roff registers */
 	int		  reparse_count; /* finite interp. stack */
 	mandocmsg	  mmsg; /* warning/error message handler */
 	void		 *arg; /* argument to mmsg */
 	const char	 *file; 
+	struct buf	 *secondary;
 };
 
 static	void	  resize_buf(struct buf *, size_t);
@@ -142,10 +144,20 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"tab in non-literal context",
 	"end of line whitespace",
 	"bad comment style",
-	"unknown escape sequence",
+	"bad escape sequence",
 	"unterminated quoted string",
+
+	/* related to equations */
+	"unexpected literal in equation",
 	
 	"generic error",
+
+	/* related to equations */
+	"unexpected equation scope closure",
+	"equation scope open on exit",
+	"overlapping equation scopes",
+	"unexpected end of equation",
+	"equation syntax error",
 
 	/* related to tables */
 	"bad table syntax",
@@ -235,13 +247,13 @@ pset(const char *buf, int pos, struct mparse *curp)
 	switch (curp->inttype) {
 	case (MPARSE_MDOC):
 		if (NULL == curp->pmdoc) 
-			curp->pmdoc = mdoc_alloc(&curp->regs, curp);
+			curp->pmdoc = mdoc_alloc(curp->roff, curp);
 		assert(curp->pmdoc);
 		curp->mdoc = curp->pmdoc;
 		return;
 	case (MPARSE_MAN):
 		if (NULL == curp->pman) 
-			curp->pman = man_alloc(&curp->regs, curp);
+			curp->pman = man_alloc(curp->roff, curp);
 		assert(curp->pman);
 		curp->man = curp->pman;
 		return;
@@ -251,14 +263,14 @@ pset(const char *buf, int pos, struct mparse *curp)
 
 	if (pos >= 3 && 0 == memcmp(buf, ".Dd", 3))  {
 		if (NULL == curp->pmdoc) 
-			curp->pmdoc = mdoc_alloc(&curp->regs, curp);
+			curp->pmdoc = mdoc_alloc(curp->roff, curp);
 		assert(curp->pmdoc);
 		curp->mdoc = curp->pmdoc;
 		return;
 	} 
 
 	if (NULL == curp->pman) 
-		curp->pman = man_alloc(&curp->regs, curp);
+		curp->pman = man_alloc(curp->roff, curp);
 	assert(curp->pman);
 	curp->man = curp->pman;
 }
@@ -354,7 +366,7 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 				continue;
 			}
 
-			if ('"' == blk.buf[i + 1]) {
+			if ('"' == blk.buf[i + 1] || '#' == blk.buf[i + 1]) {
 				i += 2;
 				/* Comment, skip to end of line */
 				for (; i < (int)blk.sz; ++i) {
@@ -400,6 +412,27 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 
 		of = 0;
 
+		/*
+		 * Maintain a lookaside buffer of all parsed lines.  We
+		 * only do this if mparse_keep() has been invoked (the
+		 * buffer may be accessed with mparse_getkeep()).
+		 */
+
+		if (curp->secondary) {
+			curp->secondary->buf = 
+				mandoc_realloc
+				(curp->secondary->buf, 
+				 curp->secondary->sz + pos + 2);
+			memcpy(curp->secondary->buf + 
+					curp->secondary->sz, 
+					ln.buf, pos);
+			curp->secondary->sz += pos;
+			curp->secondary->buf
+				[curp->secondary->sz] = '\n';
+			curp->secondary->sz++;
+			curp->secondary->buf
+				[curp->secondary->sz] = '\0';
+		}
 rerun:
 		rr = roff_parseln
 			(curp->roff, curp->line, 
@@ -426,6 +459,13 @@ rerun:
 			assert(MANDOCLEVEL_FATAL <= curp->file_status);
 			break;
 		case (ROFF_SO):
+			/*
+			 * We remove `so' clauses from our lookaside
+			 * buffer because we're going to descend into
+			 * the file recursively.
+			 */
+			if (curp->secondary) 
+				curp->secondary->sz -= pos + 1;
 			mparse_readfd_r(curp, -1, ln.buf + of, 1);
 			if (MANDOCLEVEL_FATAL <= curp->file_status)
 				break;
@@ -445,7 +485,7 @@ rerun:
 
 		/*
 		 * If input parsers have not been allocated, do so now.
-		 * We keep these instanced betwen parsers, but set them
+		 * We keep these instanced between parsers, but set them
 		 * locally per parse routine since we can use different
 		 * parsers with each one.
 		 */
@@ -529,19 +569,22 @@ pdesc(struct mparse *curp, const char *file, int fd)
 
 	mparse_buf_r(curp, blk, 1);
 
+#ifdef	HAVE_MMAP
 	if (with_mmap)
 		munmap(blk.buf, blk.sz);
 	else
+#endif
 		free(blk.buf);
 }
 
 static int
 read_whole_file(const char *file, int fd, struct buf *fb, int *with_mmap)
 {
-	struct stat	 st;
 	size_t		 off;
 	ssize_t		 ssz;
 
+#ifdef	HAVE_MMAP
+	struct stat	 st;
 	if (-1 == fstat(fd, &st)) {
 		perror(file);
 		return(0);
@@ -566,6 +609,7 @@ read_whole_file(const char *file, int fd, struct buf *fb, int *with_mmap)
 		if (fb->buf != MAP_FAILED)
 			return(1);
 	}
+#endif
 
 	/*
 	 * If this isn't a regular file (like, say, stdin), then we must
@@ -675,7 +719,7 @@ mparse_alloc(enum mparset inttype, enum mandoclevel wlevel, mandocmsg mmsg, void
 	curp->arg = arg;
 	curp->inttype = inttype;
 
-	curp->roff = roff_alloc(&curp->regs, curp);
+	curp->roff = roff_alloc(curp);
 	return(curp);
 }
 
@@ -683,14 +727,14 @@ void
 mparse_reset(struct mparse *curp)
 {
 
-	memset(&curp->regs, 0, sizeof(struct regset));
-
 	roff_reset(curp->roff);
 
 	if (curp->mdoc)
 		mdoc_reset(curp->mdoc);
 	if (curp->man)
 		man_reset(curp->man);
+	if (curp->secondary)
+		curp->secondary->sz = 0;
 
 	curp->file_status = MANDOCLEVEL_OK;
 	curp->mdoc = NULL;
@@ -707,7 +751,10 @@ mparse_free(struct mparse *curp)
 		man_free(curp->pman);
 	if (curp->roff)
 		roff_free(curp->roff);
+	if (curp->secondary)
+		free(curp->secondary->buf);
 
+	free(curp->secondary);
 	free(curp);
 }
 
@@ -766,4 +813,20 @@ const char *
 mparse_strlevel(enum mandoclevel lvl)
 {
 	return(mandoclevels[lvl]);
+}
+
+void
+mparse_keep(struct mparse *p)
+{
+
+	assert(NULL == p->secondary);
+	p->secondary = mandoc_calloc(1, sizeof(struct buf));
+}
+
+const char *
+mparse_getkeep(const struct mparse *p)
+{
+
+	assert(p->secondary);
+	return(p->secondary->sz ? p->secondary->buf : NULL);
 }
