@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 2011/06/12 06:34:59 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.47 2011/10/11 12:25:56 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.46 2011/06/12 06:34:59 mrg Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.47 2011/10/11 12:25:56 tsutsui Exp $");
 #endif
 
 #include <string.h>
@@ -161,7 +161,7 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 	if (print_ddb) {
 		const char *name = mapname(P(vm_map));
 
-		printf("%*s%s %p: [0x%#"PRIxVADDR"->0x%#"PRIxVADDR"]\n", indent(2), "",
+		printf("%*s%s %p: [%#"PRIxVADDR"->%#"PRIxVADDR"]\n", indent(2), "",
 		       recurse < 2 ? "MAP" : "SUBMAP", P(vm_map),
 		       vm_map_min(D(vm_map, vm_map)),
 		       vm_map_max(D(vm_map, vm_map)));
@@ -384,7 +384,7 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 	name = findname(kd, vmspace, vm_map_entry, vp, vfs, uvm_obj);
 
 	if (print_map) {
-		printf("%*s0x%#"PRIxVADDR" 0x%#"PRIxVADDR" %c%c%c %c%c%c %s %s %d %d %d",
+		printf("%*s%#"PRIxVADDR" %#"PRIxVADDR" %c%c%c %c%c%c %s %s %d %d %d",
 		       indent(2), "",
 		       vme->start, vme->end,
 		       (vme->protection & VM_PROT_READ) ? 'r' : '-',
@@ -427,7 +427,7 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 	}
 
 	if (print_ddb) {
-		printf("%*s - %p: 0x%"PRIxVADDR"->0x%"PRIxVADDR": obj=%p/0x%" PRIx64 ", amap=%p/%d\n",
+		printf("%*s - %p: %#"PRIxVADDR"->%#"PRIxVADDR": obj=%p/0x%" PRIx64 ", amap=%p/%d\n",
 		       indent(2), "",
 		       P(vm_map_entry), vme->start, vme->end,
 		       vme->object.uvm_obj, vme->offset,
