@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.71 2011/03/15 13:20:14 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.72 2011/10/11 14:37:17 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -2943,7 +2943,7 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 		port = myaddr_getsport(iph1->local);
 		if (port == 0)
 			port = PORT_ISAKMP;
-		set_port(iph1->local, PORT_ISAKMP);
+		set_port(iph1->local, port);
 	}
 
 #ifdef ENABLE_NATT
