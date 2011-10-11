@@ -323,7 +323,7 @@ elf_i386_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
     case BFD_RELOC_386_IRELATIVE:
       TRACE ("BFD_RELOC_386_IRELATIVE");
-      return &elf_howto_table[R_386_IRELATIVE];
+      return &elf_howto_table[R_386_IRELATIVE - R_386_tls_offset];
 
     case BFD_RELOC_VTABLE_INHERIT:
       TRACE ("BFD_RELOC_VTABLE_INHERIT");
