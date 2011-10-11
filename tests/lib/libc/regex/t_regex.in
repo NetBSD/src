@@ -1,4 +1,4 @@
-# $NetBSD: t_regex.in,v 1.2 2011/01/09 05:44:46 pgoyette Exp $
+# $NetBSD: t_regex.in,v 1.3 2011/10/11 23:04:21 dholland Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -51,7 +51,7 @@ tc:c_comments:Checks matching C comments
 tc:subexp:Checks subexpressions
 tc:startend:Checks STARTEND option
 tc:nospec:Checks NOSPEC option
-tc:nul:Checks NULs
+tc:zero:Checks NULs
 tc:word_bound:Checks word boundaries
 tc:regress:Checks various past problems and suspected problems
 
