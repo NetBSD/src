@@ -577,7 +577,7 @@ memory_bstat (bfd *abfd, struct stat *statbuf)
 {
   struct bfd_in_memory *bim = (struct bfd_in_memory *) abfd->iostream;
 
-  memset (statbuf, 0, sizeof (statbuf));
+  memset (statbuf, 0, sizeof (*statbuf));
   statbuf->st_size = bim->size;
 
   return 0;
