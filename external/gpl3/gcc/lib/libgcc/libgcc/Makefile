@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/10/07 09:15:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/10/11 03:10:26 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -21,6 +21,8 @@ SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} \
 		${G_LIB2ADD_HACK:T:S/.asm/.S/} ${G_LIB2ADD:T:S/.asm/.S/} ${G_LIB2ADD_ST} ${LIB1ASMFUNCS}
 .if ${MKPIC} == "no"
 SRCS+=		${LIB2_EH}
+.else
+CPPFLAGS+=	-DPIC
 .endif
 
 # These usually just have "foo.S", we need to link from the
@@ -33,6 +35,8 @@ BUILDSYMLINKS+=	${GNUHOSTDIST}/gcc/config/rs6000/${file:S/.S$/.asm/} ${file}
 .endfor
 .   endif
 
+# Force building libgcc.a.  It will be PIC from -DPIC above and also
+# the -fpic/-FPIC present in ${G_LIBGCC2_CFLAGS}.
 MKPIC:= no
 
 .include <bsd.lib.mk>
@@ -40,7 +44,7 @@ MKPIC:= no
 
 CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 
-.c.pico:
+.c.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp1
 	${NM} -pg ${.TARGET}.tmp1 | \
@@ -54,7 +58,7 @@ CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 .endif
 	rm -f ${.TARGET}.tmp1
 
-.S.pico .s.pico:
+.S.o .s.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}.tmp1
 	${NM} -pg ${.TARGET}.tmp1 | \
