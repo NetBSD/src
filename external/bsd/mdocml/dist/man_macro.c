@@ -1,6 +1,6 @@
-/*	$Vendor-Id: man_macro.c,v 1.60 2011/03/23 15:33:57 kristaps Exp $ */
+/*	$Vendor-Id: man_macro.c,v 1.65 2011/09/18 14:14:15 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -120,6 +120,9 @@ man_unscope(struct man *m, const struct man_node *to,
 
 	assert(to);
 
+	assert(MAN_ROOT != m->last->type);
+	m->next = MAN_NEXT_SIBLING;
+
 	/* LINTED */
 	while (m->last != to) {
 		/*
@@ -139,9 +142,6 @@ man_unscope(struct man *m, const struct man_node *to,
 	rew_warn(m, m->last, er);
 	if ( ! man_valid_post(m))
 		return(0);
-
-	m->next = MAN_ROOT == m->last->type ? 
-		MAN_NEXT_CHILD : MAN_NEXT_SIBLING;
 
 	return(1);
 }
@@ -307,11 +307,6 @@ blk_exp(MACRO_PROT_ARGS)
 	 * anywhere.
 	 */
 
-	if ( ! rew_scope(MAN_BODY, m, tok))
-		return(0);
-	if ( ! rew_scope(MAN_BLOCK, m, tok))
-		return(0);
-
 	if ( ! man_block_alloc(m, line, ppos, tok))
 		return(0);
 	if ( ! man_head_alloc(m, line, ppos, tok))
@@ -433,6 +428,9 @@ in_line_eoln(MACRO_PROT_ARGS)
 		assert( ! (MAN_SCOPED & man_macros[tok].flags));
 		m->flags |= MAN_ILINE;
 	}
+
+	assert(MAN_ROOT != m->last->type);
+	m->next = MAN_NEXT_SIBLING;
 	
 	/*
 	 * Rewind our element scope.  Note that when TH is pruned, we'll
@@ -457,9 +455,6 @@ in_line_eoln(MACRO_PROT_ARGS)
 
 	if (m->last->type != MAN_ROOT && ! man_valid_post(m))
 		return(0);
-
-	m->next = MAN_ROOT == m->last->type ?
-		MAN_NEXT_CHILD : MAN_NEXT_SIBLING;
 
 	return(1);
 }

@@ -1,6 +1,6 @@
-/*	$Vendor-Id: tbl_html.c,v 1.7 2011/01/13 14:30:13 kristaps Exp $ */
+/*	$Vendor-Id: tbl_html.c,v 1.9 2011/09/18 14:14:15 schwarze Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
