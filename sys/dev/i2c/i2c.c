@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.36 2011/10/03 23:53:04 jmcneill Exp $	*/
+/*	$NetBSD: i2c.c,v 1.37 2011/10/11 15:19:09 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.36 2011/10/03 23:53:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.37 2011/10/11 15:19:09 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,10 +232,6 @@ iic_attach(device_t parent, device_t self, void *aux)
 			if (addr > I2C_MAX_ADDR) {
 				aprint_error_dev(self,
 				    "WARNING: ignoring bad device address "
-				    "@ 0x%02x\n", addr);
-			} else if (ia.ia_addr == addr) {
-				aprint_error_dev(self,
-				    "WARNING: ignoring duplicate device "
 				    "@ 0x%02x\n", addr);
 			} else if (sc->sc_devices[addr] == NULL) {
 				sc->sc_devices[addr] =
