@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.399 2011/10/09 18:25:28 christos Exp $
+# $NetBSD: mi,v 1.400 2011/10/11 23:04:21 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2006,7 +2006,6 @@
 ./usr/tests/lib/libc/regex/data/error.in	tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/meta.in		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/nospec.in	tests-lib-tests		atf
-./usr/tests/lib/libc/regex/data/nul.in		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/paren.in	tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/regress.in	tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/repet_bounded.in tests-lib-tests	atf
@@ -2016,6 +2015,7 @@
 ./usr/tests/lib/libc/regex/data/subexp.in	tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/subtle.in	tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/word_bound.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/zero.in		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/h_regex		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/t_exhaust		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/t_regex		tests-lib-tests		atf
