@@ -1,6 +1,6 @@
-/*	$Vendor-Id: mdoc_macro.c,v 1.106 2011/03/22 14:33:05 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_macro.c,v 1.111 2011/09/18 14:14:15 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -74,8 +74,8 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Dd */
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Dt */
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Os */
-	{ blk_full, 0 }, /* Sh */
-	{ blk_full, 0 }, /* Ss */ 
+	{ blk_full, MDOC_PARSED }, /* Sh */
+	{ blk_full, MDOC_PARSED }, /* Ss */ 
 	{ in_line_eoln, 0 }, /* Pp */ 
 	{ blk_part_imp, MDOC_PARSED }, /* D1 */
 	{ blk_part_imp, MDOC_PARSED }, /* Dl */
@@ -600,7 +600,19 @@ dword(struct mdoc *m, int line,
 
 	if (DELIM_OPEN == d)
 		m->last->flags |= MDOC_DELIMO;
-	else if (DELIM_CLOSE == d)
+
+	/*
+	 * Closing delimiters only suppress the preceding space
+	 * when they follow something, not when they start a new
+	 * block or element, and not when they follow `No'.
+	 *
+	 * XXX	Explicitly special-casing MDOC_No here feels
+	 *	like a layering violation.  Find a better way
+	 *	and solve this in the code related to `No'!
+	 */
+
+	else if (DELIM_CLOSE == d && m->last->prev &&
+			m->last->prev->tok != MDOC_No)
 		m->last->flags |= MDOC_DELIMC;
 
 	return(1);
@@ -618,7 +630,7 @@ append_delims(struct mdoc *m, int line, int *pos, char *buf)
 
 	for (;;) {
 		la = *pos;
-		ac = mdoc_zargs(m, line, pos, buf, ARGS_NOWARN, &p);
+		ac = mdoc_zargs(m, line, pos, buf, &p);
 
 		if (ARGS_ERROR == ac)
 			return(0);
@@ -631,12 +643,12 @@ append_delims(struct mdoc *m, int line, int *pos, char *buf)
 		 * If we encounter end-of-sentence symbols, then trigger
 		 * the double-space.
 		 *
-		 * XXX: it's easy to allow this to propogate outward to
+		 * XXX: it's easy to allow this to propagate outward to
 		 * the last symbol, such that `. )' will cause the
 		 * correct double-spacing.  However, (1) groff isn't
 		 * smart enough to do this and (2) it would require
 		 * knowing which symbols break this behaviour, for
-		 * example, `.  ;' shouldn't propogate the double-space.
+		 * example, `.  ;' shouldn't propagate the double-space.
 		 */
 		if (mandoc_eos(p, strlen(p), 0))
 			m->last->flags |= MDOC_EOS;
@@ -995,7 +1007,7 @@ blk_full(MACRO_PROT_ARGS)
 	}
 
 	/*
-	 * This routine accomodates implicitly- and explicitly-scoped
+	 * This routine accommodates implicitly- and explicitly-scoped
 	 * macro openings.  Implicit ones first close out prior scope
 	 * (seen above).  Delay opening the head until necessary to
 	 * allow leading punctuation to print.  Special consideration
@@ -1292,7 +1304,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 		if (mandoc_eos(n->string, strlen(n->string), 1))
 			n->flags |= MDOC_EOS;
 
-	/* Up-propogate the end-of-space flag. */
+	/* Up-propagate the end-of-space flag. */
 
 	if (n && (MDOC_EOS & n->flags)) {
 		body->flags |= MDOC_EOS;
@@ -1717,7 +1729,7 @@ phrase(struct mdoc *m, int line, int ppos, char *buf)
 	for (pos = ppos; ; ) {
 		la = pos;
 
-		ac = mdoc_zargs(m, line, &pos, buf, 0, &p);
+		ac = mdoc_zargs(m, line, &pos, buf, &p);
 
 		if (ARGS_ERROR == ac)
 			return(0);
@@ -1762,7 +1774,7 @@ phrase_ta(MACRO_PROT_ARGS)
 
 	for (;;) {
 		la = *pos;
-		ac = mdoc_zargs(m, line, pos, buf, 0, &p);
+		ac = mdoc_zargs(m, line, pos, buf, &p);
 
 		if (ARGS_ERROR == ac)
 			return(0);
