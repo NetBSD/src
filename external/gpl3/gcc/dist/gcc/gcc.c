@@ -3154,10 +3154,11 @@ execute (void)
 	    else
 #endif
 	      fatal_ice ("\
-Internal error: %s (program %s)\n\
+Internal error: %s (program %s received signal %d)\n\
 Please submit a full bug report.\n\
 See %s for instructions.",
 		 	strsignal (WTERMSIG (status)), commands[i].prog,
+			WTERMSIG (status),
 		 	bug_report_url);
 	  }
 	else if (WIFEXITED (status)
