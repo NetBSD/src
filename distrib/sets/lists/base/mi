@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.963 2011/10/09 14:11:00 christos Exp $
+# $NetBSD: mi,v 1.964 2011/10/11 05:19:38 dholland Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4499,6 +4499,7 @@
 ./usr/share/zoneinfo/Asia/Dushanbe		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Gaza			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Harbin		base-sys-share		share
+./usr/share/zoneinfo/Asia/Hebron		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Ho_Chi_Minh		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Hong_Kong		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Hovd			base-sys-share		share
