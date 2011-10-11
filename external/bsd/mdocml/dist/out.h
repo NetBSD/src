@@ -1,4 +1,4 @@
-/*	$Vendor-Id: out.h,v 1.18 2011/03/22 10:13:01 kristaps Exp $ */
+/*	$Vendor-Id: out.h,v 1.21 2011/07/17 15:24:25 kristaps Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,27 +29,6 @@ enum	roffscale {
 	SCALE_VS, /* default vertical (v) */
 	SCALE_FS, /* syn. for u (f) */
 	SCALE_MAX
-};
-
-enum	roffdeco {
-	DECO_NONE,
-	DECO_NUMBERED, /* numbered character */
-	DECO_SPECIAL, /* special character */
-	DECO_SSPECIAL, /* single-char special */
-	DECO_RESERVED, /* reserved word */
-	DECO_BOLD, /* bold font */
-	DECO_ITALIC, /* italic font */
-	DECO_ROMAN, /* "normal" undecorated font */
-	DECO_PREVIOUS, /* revert to previous font */
-	DECO_NOSPACE, /* suppress spacing */
-	DECO_FONT, /* font */
-	DECO_FFONT, /* font family */
-	DECO_MAX
-};
-
-enum	chars {
-	CHARS_ASCII, /* 7-bit ascii representation */
-	CHARS_HTML /* unicode values */
 };
 
 struct	roffcol {
@@ -85,17 +64,7 @@ __BEGIN_DECLS
 	while (/* CONSTCOND */ 0)
 
 int	  	  a2roffsu(const char *, struct roffsu *, enum roffscale);
-int	  	  a2roffdeco(enum roffdeco *, const char **, size_t *);
-void	  	  time2a(time_t, char *, size_t);
 void	  	  tblcalc(struct rofftbl *tbl, const struct tbl_span *);
-
-void		 *chars_init(enum chars);
-const char	 *chars_num2char(const char *, size_t);
-const char	 *chars_spec2str(void *, const char *, size_t, size_t *);
-int		  chars_spec2cp(void *, const char *, size_t);
-const char	 *chars_res2str(void *, const char *, size_t, size_t *);
-int		  chars_res2cp(void *, const char *, size_t);
-void		  chars_free(void *);
 
 __END_DECLS
 

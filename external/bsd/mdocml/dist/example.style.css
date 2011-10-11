@@ -1,4 +1,4 @@
-/* $Vendor-Id: example.style.css,v 1.42 2011/02/09 09:52:47 kristaps Exp $ */
+/* $Vendor-Id: example.style.css,v 1.47 2011/10/05 21:35:17 kristaps Exp $ */
 
 /*
  * This is an example style-sheet provided for mandoc(1) and the -Thtml
@@ -9,33 +9,29 @@
  * See mdoc(7) and man(7) for macro explanations.
  */
 
-html		{ min-width: 580px; width: 580px; }
-body		{ font-family: monospace; }
+div.mandoc	{ min-width: 78ex; 
+		  width: 78ex; 
+	  	  font-family: monospace; } /* This is the outer node of all mandoc -T[x]html documents. */
 
-/* Preamble structure. */
-
-table.foot	{ width: 100%; } /* Document footer. */
-td.foot-date	{ width: 50%; } /* Document footer: date. */
-td.foot-os	{ width: 50%; text-align: right; } /* Document footer: OS/source. */
-table.head	{ width: 100%; } /* Document header. */
-td.head-ltitle	{ width: 10%; } /* Document header: left-title. */
-td.head-vol	{ width: 80%; text-align: center; } /* Document header: volume. */
-td.head-rtitle	{ width: 10%; text-align: right; } /* Document header: right-title. */
-
-/* Sections. */
-
-h1		{ margin-bottom: 0px; font-size: medium; margin-left: -4ex; } /* Section header (Sh, SH). */
-h2		{ margin-bottom: 0px; font-size: medium; margin-left: -2ex; } /* Sub-section header (Ss, SS). */
-div.section	{ margin-bottom: 2ex; margin-left: 4ex; } /* Sections (Sh, SH). */
+h1		{ margin-bottom: 0ex; font-size: inherit; margin-left: -4ex; } /* Section header (Sh, SH). */
+h2		{ margin-bottom: 0ex; font-size: inherit; margin-left: -2ex; } /* Sub-section header (Ss, SS). */
+table		{ width: 100%; margin-top: 0ex; margin-bottom: 0ex; } /* All tables. */
+td		{ vertical-align: top; } /* All table cells. */
+p		{ } /* Paragraph: Pp, Lp. */
+blockquote	{ margin-left: 5ex; margin-top: 0ex; margin-bottom: 0ex; } /* D1. */
+div.section	{ margin-bottom: 2ex; margin-left: 5ex; } /* Sections (Sh, SH). */
 div.subsection	{ } /* Sub-sections (Ss, SS). */
 table.synopsis	{ } /* SYNOPSIS section table. */
 
-/* Vertical spacing. */
+/* Preamble structure. */
 
-p		{ } /* Paragraph: Pp, Lp. */
-blockquote	{ margin-top: 0px; margin-bottom: 0px; }
-table		{ margin-top: 0px; margin-bottom: 0px; }
-td		{ vertical-align: top; }
+table.foot	{ } /* Document footer. */
+td.foot-date	{ width: 50%; } /* Document footer: date. */
+td.foot-os	{ width: 50%; text-align: right; } /* Document footer: OS/source. */
+table.head	{ } /* Document header. */
+td.head-ltitle	{ width: 10%; } /* Document header: left-title. */
+td.head-vol	{ width: 80%; text-align: center; } /* Document header: volume. */
+td.head-rtitle	{ width: 10%; text-align: right; } /* Document header: right-title. */
 
 /* General font modes. */
 
@@ -44,6 +40,7 @@ i		{ } /* Italic: BI, IB, I, (implicit). */
 b		{ } /* Bold: SB, BI, IB, BR, RB, B, (implicit). */
 .symb		{ font-style: normal; font-weight: bold; } /* Symbolic: Sy, Ms, Bf -symbolic. */
 small		{ } /* Small: SB, SM. */
+.lit		{ font-style: normal; font-weight: normal; font-family: monospace; } /* Literal: Dl, Li, Ql, Bf -literal, Bl -literal, Bl -unfilled. */
 
 /* Block modes. */
 
@@ -70,7 +67,6 @@ i.ftype		{ font-weight: normal; } /* Function types (Ft, Fn). */
 b.includes	{ font-style: normal; } /* Header includes (In). */
 span.lib	{ } /* Library (Lb). */
 i.link-sec	{ font-weight: normal; } /* Section links (Sx). */
-code.lit	{ font-style: normal; font-weight: normal; } /* Literal: Dl, Li, Bf -literal, Bl -literal, Bl -unfilled. */
 b.macro		{ font-style: normal; } /* Macro-ish thing (Fd). */
 b.name		{ font-style: normal; } /* Name of utility (Nm). */
 span.opt	{ } /* Options (Op, Oo/Oc). */
@@ -116,7 +112,7 @@ dd.list-inset	{ }
 
 dl.list-ohang	{ }
 dt.list-ohang	{ }
-dd.list-ohang	{ margin-left: 0em; }
+dd.list-ohang	{ margin-left: 0ex; }
 
 dl.list-tag	{ }
 dt.list-tag	{ }
