@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134 2011/10/11 23:50:24 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.135 2011/10/11 23:53:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134 2011/10/11 23:50:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2011/10/11 23:53:31 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -721,6 +721,22 @@ pmap_reference(struct pmap *pmap)
 /*
  * pmap_map_ptes: map a pmap's PTEs into KVM and lock them in
  *
+ * there are several pmaps involved.  some or all of them might be same.
+ *
+ *	- the pmap given by the first argument
+ *		our caller wants to access this pmap's PTEs.
+ *
+ *	- pmap_kernel()
+ *		the kernel pmap.  note that it only contains the kernel part
+ *		of the address space which is shared by any pmap.  ie. any
+ *		pmap can be used instead of pmap_kernel() for our purpose.
+ *
+ *	- ci->ci_pmap
+ *		pmap currently loaded on the cpu.
+ *
+ *	- vm_map_pmap(&curproc->p_vmspace->vm_map)
+ *		current process' pmap.
+ *
  * => we lock enough pmaps to keep things locked in
  * => must be undone with pmap_unmap_ptes before returning
  */
@@ -769,7 +785,8 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		}
 	} else {
 		/*
-		 * Toss current pmap from CPU, but keep ref to it.
+		 * Toss current pmap from CPU, but keep a reference to it.
+		 * The reference will be dropped by pmap_unmap_ptes().
 		 * Can happen if we block during exit().
 		 */
 		cpumask = ci->ci_cpumask;
@@ -2574,6 +2591,14 @@ pmap_reactivate(struct pmap *pmap)
 
 /*
  * pmap_load: actually switch pmap.  (fill in %cr3 and LDT info)
+ *
+ * ensures that the current process' pmap is loaded on the current cpu's MMU
+ * and there's no stale TLB entries.
+ *
+ * the caller should disable preemption or do check-and-retry to prevent
+ * a preemption from undoing our efforts.
+ *
+ * this function can block.
  */
 
 void
@@ -2743,6 +2768,11 @@ pmap_deactivate(struct lwp *l)
 	ci = curcpu();
 
 	if (ci->ci_want_pmapload) {
+		/*
+		 * ci_want_pmapload means that our pmap is not loaded on
+		 * the CPU or TLB might be stale.  note that pmap_kernel()
+		 * is always considered loaded.
+		 */
 		KASSERT(vm_map_pmap(&l->l_proc->p_vmspace->vm_map)
 		    != pmap_kernel());
 		KASSERT(vm_map_pmap(&l->l_proc->p_vmspace->vm_map)
