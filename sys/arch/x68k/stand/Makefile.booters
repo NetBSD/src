@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.6 2011/04/11 15:20:30 tsutsui Exp $
+#	$NetBSD: Makefile.booters,v 1.7 2011/10/11 13:07:06 tsutsui Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -6,6 +6,8 @@ CFLAGS+= -ffreestanding
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CFLAGS+= -Wno-pointer-sign
 CFLAGS+= -Werror
+
+CPPFLAGS+=	-D__daddr_t=int32_t
 
 .include <bsd.klinks.mk>
 

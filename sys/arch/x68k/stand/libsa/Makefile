@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.26 2011/04/12 14:07:35 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.27 2011/10/11 13:07:06 tsutsui Exp $
 
 S=		${.CURDIR}/../../../..
+
+CFLAGS+=	-m68020-60
 
 CPPFLAGS+=	-nostdinc -I${.OBJDIR} -I. -I${S}
 CPPFLAGS+=	-I${.CURDIR}/../libiocs -I${.CURDIR}/../common
