@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.683 2011/10/08 21:55:16 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.684 2011/10/11 13:54:00 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -274,6 +274,7 @@ TOOL_AWK=		${TOOLDIR}/bin/${_TOOL_PREFIX}awk
 TOOL_CAP_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}cap_mkdb
 TOOL_CAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}cat
 TOOL_CKSUM=		${TOOLDIR}/bin/${_TOOL_PREFIX}cksum
+TOOL_CLANG_TBLGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}clang-tblgen
 TOOL_COMPILE_ET=	${TOOLDIR}/bin/${_TOOL_PREFIX}compile_et
 TOOL_CONFIG=		${TOOLDIR}/bin/${_TOOL_PREFIX}config
 TOOL_CRUNCHGEN=		MAKE=${.MAKE:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}crunchgen
@@ -297,6 +298,7 @@ TOOL_INDXBIB=		${TOOLDIR}/bin/${_TOOL_PREFIX}indxbib
 TOOL_INSTALLBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}installboot
 TOOL_INSTALL_INFO=	${TOOLDIR}/bin/${_TOOL_PREFIX}install-info
 TOOL_JOIN=		${TOOLDIR}/bin/${_TOOL_PREFIX}join
+TOOL_LLVM_TBLGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}llvm-tblgen
 TOOL_M4=		${TOOLDIR}/bin/${_TOOL_PREFIX}m4
 TOOL_MACPPCFIXCOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}macppc-fixcoff
 TOOL_MAKEFS=		${TOOLDIR}/bin/${_TOOL_PREFIX}makefs
@@ -339,7 +341,6 @@ TOOL_STAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}stat
 TOOL_STRFILE=		${TOOLDIR}/bin/${_TOOL_PREFIX}strfile
 TOOL_SUNLABEL=		${TOOLDIR}/bin/${_TOOL_PREFIX}sunlabel
 TOOL_TBL=		${TOOLDIR}/bin/${_TOOL_PREFIX}tbl
-TOOL_TBLGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}tblgen
 TOOL_TIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}tic
 TOOL_UUDECODE=		${TOOLDIR}/bin/${_TOOL_PREFIX}uudecode
 TOOL_VGRIND=		${TOOLDIR}/bin/${_TOOL_PREFIX}vgrind -f
@@ -372,6 +373,7 @@ TOOL_AWK=		awk
 TOOL_CAP_MKDB=		cap_mkdb
 TOOL_CAT=		cat
 TOOL_CKSUM=		cksum
+TOOL_CLANG_TBLGEN=	clang-tblgen
 TOOL_COMPILE_ET=	compile_et
 TOOL_CONFIG=		config
 TOOL_CRUNCHGEN=		crunchgen
@@ -395,6 +397,7 @@ TOOL_INDXBIB=		indxbib
 TOOL_INSTALLBOOT=	installboot
 TOOL_INSTALL_INFO=	install-info
 TOOL_JOIN=		join
+TOOL_LLVM_TBLGEN=	llvm-tblgen
 TOOL_M4=		m4
 TOOL_MACPPCFIXCOFF=	macppc-fixcoff
 TOOL_MAKEFS=		makefs
@@ -436,7 +439,6 @@ TOOL_STAT=		stat
 TOOL_STRFILE=		strfile
 TOOL_SUNLABEL=		sunlabel
 TOOL_TBL=		tbl
-TOOL_TBLGEN=		llvm-tblgen
 TOOL_TIC=		tic
 TOOL_UUDECODE=		uudecode
 TOOL_VGRIND=		vgrind -f

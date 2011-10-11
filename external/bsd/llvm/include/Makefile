@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/05/12 14:56:23 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/10/11 13:53:58 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -34,29 +34,32 @@ HEADER=	\
 	${CLANG_SRCDIR}/include/clang/Basic \
 	${CLANG_SRCDIR}/include/clang/Driver
 
-TABLEGEN_SRC=	Intrinsics.td Attr.td StmtNodes.td DeclNodes.td \
-	Diagnostic.td arm_neon.td Options.td CC1AsOptions.td CC1Options.td
+TABLEGEN_SRC=	Intrinsics.td
 
 TABLEGEN_OUTPUT.Intrinsics.td= \
 	llvm/Intrinsics.gen|-gen-intrinsic
 
-TABLEGEN_INCLUDES.Attr.td=	-I${CLANG_SRCDIR}/include
-TABLEGEN_OUTPUT.Attr.td= \
+CLANG_TABLEGEN_SRC=	Attr.td StmtNodes.td DeclNodes.td \
+	Diagnostic.td arm_neon.td Options.td CC1AsOptions.td CC1Options.td
+
+CLANG_TABLEGEN_INCLUDES.Attr.td=	-I${CLANG_SRCDIR}/include
+CLANG_TABLEGEN_OUTPUT.Attr.td= \
 	clang/AST/Attrs.inc|-gen-clang-attr-classes \
         clang/AST/AttrImpl.inc|-gen-clang-attr-impl \
 	clang/Basic/AttrList.inc|-gen-clang-attr-list \
 	clang/Lex/AttrSpellings.inc|-gen-clang-attr-spelling-list \
+	clang/Parse/AttrLateParsed.inc|-gen-clang-attr-late-parsed-list \
 	clang/Serialization/AttrPCHRead.inc|-gen-clang-attr-pch-read \
 	clang/Serialization/AttrPCHWrite.inc|-gen-clang-attr-pch-write
 
-TABLEGEN_OUTPUT.StmtNodes.td= \
+CLANG_TABLEGEN_OUTPUT.StmtNodes.td= \
 	clang/AST/StmtNodes.inc|-gen-clang-stmt-nodes
 
-TABLEGEN_OUTPUT.DeclNodes.td= \
+CLANG_TABLEGEN_OUTPUT.DeclNodes.td= \
 	clang/AST/DeclNodes.inc|-gen-clang-decl-nodes
 
-TABLEGEN_INCLUDES.Diagnostic.td=	-I${CLANG_SRCDIR}/include/clang/Basic
-TABLEGEN_OUTPUT.Diagnostic.td= \
+CLANG_TABLEGEN_INCLUDES.Diagnostic.td=	-I${CLANG_SRCDIR}/include/clang/Basic
+CLANG_TABLEGEN_OUTPUT.Diagnostic.td= \
 	clang/Basic/DiagnosticAnalysisKinds.inc|-gen-clang-diags-defs^-clang-component=Analysis \
 	clang/Basic/DiagnosticASTKinds.inc|-gen-clang-diags-defs^-clang-component=AST \
 	clang/Basic/DiagnosticCommonKinds.inc|-gen-clang-diags-defs^-clang-component=Common \
@@ -68,20 +71,20 @@ TABLEGEN_OUTPUT.Diagnostic.td= \
 	clang/Basic/DiagnosticGroups.inc|-gen-clang-diag-groups \
 	clang/Basic/DiagnosticIndexName.inc|-gen-clang-diags-index-name
 
-TABLEGEN_OUTPUT.arm_neon.td= \
+CLANG_TABLEGEN_OUTPUT.arm_neon.td= \
 	clang/Basic/arm_neon.inc|-gen-arm-neon-sema \
 	arm_neon.h.inc|-gen-arm-neon
 
-TABLEGEN_INCLUDES.Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
-TABLEGEN_OUTPUT.Options.td= \
+CLANG_TABLEGEN_INCLUDES.Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
+CLANG_TABLEGEN_OUTPUT.Options.td= \
 	clang/Driver/Options.inc|-gen-opt-parser-defs
 
-TABLEGEN_INCLUDES.CC1Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
-TABLEGEN_OUTPUT.CC1Options.td= \
+CLANG_TABLEGEN_INCLUDES.CC1Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
+CLANG_TABLEGEN_OUTPUT.CC1Options.td= \
 	clang/Driver/CC1Options.inc|-gen-opt-parser-defs
 
-TABLEGEN_INCLUDES.CC1AsOptions.td=	-I${CLANG_SRCDIR}/include/clang/Driver
-TABLEGEN_OUTPUT.CC1AsOptions.td= \
+CLANG_TABLEGEN_INCLUDES.CC1AsOptions.td=	-I${CLANG_SRCDIR}/include/clang/Driver
+CLANG_TABLEGEN_OUTPUT.CC1AsOptions.td= \
 	clang/Driver/CC1AsOptions.inc|-gen-opt-parser-defs
 
 .include "${.PARSEDIR}/../tablegen.mk"
