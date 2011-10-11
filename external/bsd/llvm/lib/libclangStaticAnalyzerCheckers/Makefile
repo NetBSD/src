@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/09/12 13:32:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2011/10/11 13:54:00 joerg Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -59,9 +59,9 @@ SRCS+=	AdjustedReturnValueChecker.cpp \
 	UnreachableCodeChecker.cpp \
 	VLASizeChecker.cpp
 
-TABLEGEN_SRC=		Checkers.td
-TABLEGEN_INCLUDES=	-I${CLANG_SRCDIR}/include
-TABLEGEN_OUTPUT=	Checkers.inc|-gen-clang-sa-checkers
+CLANG_TABLEGEN_SRC=		Checkers.td
+CLANG_TABLEGEN_INCLUDES=	-I${CLANG_SRCDIR}/include
+CLANG_TABLEGEN_OUTPUT=	Checkers.inc|-gen-clang-sa-checkers
 
 .include "${.PARSEDIR}/../../tablegen.mk"
 

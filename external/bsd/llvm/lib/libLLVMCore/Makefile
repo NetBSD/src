@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/07/13 23:48:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/10/11 13:53:59 joerg Exp $
 
 LIB=	LLVMCore
 
@@ -17,6 +17,7 @@ SRCS+=	AsmWriter.cpp \
 	DebugLoc.cpp \
 	Dominators.cpp \
 	Function.cpp \
+	GCOV.cpp \
 	GVMaterializer.cpp \
 	Globals.cpp \
 	IRBuilder.cpp \

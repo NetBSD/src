@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/10/11 13:54:00 joerg Exp $
 
 LIB=	clangAST
 
@@ -38,6 +38,7 @@ SRCS+=	APValue.cpp \
 	ParentMap.cpp \
 	RecordLayout.cpp \
 	RecordLayoutBuilder.cpp \
+	SelectorLocationsKind.cpp \
 	Stmt.cpp \
 	StmtDumper.cpp \
 	StmtIterator.cpp \
@@ -48,7 +49,9 @@ SRCS+=	APValue.cpp \
 	TemplateName.cpp \
 	Type.cpp \
 	TypeLoc.cpp \
-	TypePrinter.cpp
+	TypePrinter.cpp \
+	VTTBuilder.cpp \
+	VTableBuilder.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

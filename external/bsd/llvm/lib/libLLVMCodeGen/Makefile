@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/09/01 12:24:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2011/10/11 13:53:58 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -20,7 +20,9 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	EdgeBundles.cpp \
 	ELFCodeEmitter.cpp \
 	ELFWriter.cpp \
+	ExecutionDepsFix.cpp \
 	ExpandISelPseudos.cpp \
+	ExpandPostRAPseudos.cpp \
 	GCMetadata.cpp \
 	GCMetadataPrinter.cpp \
 	GCStrategy.cpp \
@@ -35,11 +37,11 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	LiveInterval.cpp \
 	LiveIntervalAnalysis.cpp \
 	LiveIntervalUnion.cpp \
+	LiveRangeCalc.cpp \
 	LiveStackAnalysis.cpp \
 	LiveVariables.cpp \
 	LiveRangeEdit.cpp \
 	LocalStackSlotAllocation.cpp \
-	LowerSubregs.cpp \
 	MachineBasicBlock.cpp \
 	MachineBranchProbabilityInfo.cpp \
 	MachineBlockFrequencyInfo.cpp \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/09/01 12:24:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/10/11 13:53:58 joerg Exp $
 
 LIB=	LLVMARMCodeGen
 
@@ -30,7 +30,6 @@ SRCS+=	ARMAsmPrinter.cpp \
 	ARMTargetMachine.cpp \
 	ARMTargetObjectFile.cpp \
 	MLxExpansionPass.cpp \
-	NEONMoveFix.cpp \
 	Thumb1InstrInfo.cpp \
 	Thumb1FrameLowering.cpp \
 	Thumb1RegisterInfo.cpp \

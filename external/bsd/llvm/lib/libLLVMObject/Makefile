@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/07/04 16:10:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/10/11 13:53:59 joerg Exp $
 
 LIB=	LLVMObject
 NOGCCERROR=	yes
@@ -7,7 +7,8 @@ NOGCCERROR=	yes
 
 .PATH: ${LLVM_SRCDIR}/lib/Object
 
-SRCS+=	Binary.cpp \
+SRCS+=	Archive.cpp \
+	Binary.cpp \
 	COFFObjectFile.cpp \
 	ELFObjectFile.cpp \
 	Error.cpp \

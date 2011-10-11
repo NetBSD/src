@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2011/07/17 20:07:57 joerg Exp $
+# $NetBSD: Makefile,v 1.16 2011/10/11 13:53:58 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,7 @@ SUBDIR=	\
 	libLLVMScalarOpts \
 	libLLVMSelectionDAG \
 	libLLVMSupport \
+	libLLVMTableGen \
 	libLLVMTarget \
 	libLLVMTransformsUtils \
 	libLLVMARMCodeGen \
@@ -64,9 +65,9 @@ SUBDIR+= \
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
 	libLLVMArchive \
+	libLLVMDebugInfo \
 	libLLVMCBackend \
 	libLLVMCBackendInfo \
-	libLLVMCompilerDriver \
 	libLLVMCppBackend \
 	libLLVMCppBackendInfo \
 	libLLVMExecutionEngine \
