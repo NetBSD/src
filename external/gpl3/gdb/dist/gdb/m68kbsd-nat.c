@@ -28,6 +28,7 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 
+#include "nbsd-nat.h"
 #include "m68k-tdep.h"
 #include "inf-ptrace.h"
 
