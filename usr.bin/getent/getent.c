@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.17 2010/02/03 18:11:18 roy Exp $	*/
+/*	$NetBSD: getent.c,v 1.18 2011/10/11 19:24:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.17 2010/02/03 18:11:18 roy Exp $");
+__RCSID("$NetBSD: getent.c,v 1.18 2011/10/11 19:24:43 christos Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -132,12 +132,17 @@ static int
 usage(void)
 {
 	struct getentdb	*curdb;
+	size_t i;
 
 	(void)fprintf(stderr, "Usage: %s database [key ...]\n",
 	    getprogname());
-	(void)fprintf(stderr, "       database may be one of:\n\t");
-	for (curdb = databases; curdb->name != NULL; curdb++)
-		(void)fprintf(stderr, " %s", curdb->name);
+	(void)fprintf(stderr, "\tdatabase may be one of:");
+	for (i = 0, curdb = databases; curdb->name != NULL; curdb++, i++) {
+		if (i % 7 == 0)
+			(void)fputs("\n\t\t", stderr);
+		(void)fprintf(stderr, "%s%s", i % 7 == 0 ? "" : " ",
+		    curdb->name);
+	}
 	(void)fprintf(stderr, "\n");
 	exit(RV_USAGE);
 	/* NOTREACHED */
