@@ -1,4 +1,4 @@
-/*	$Vendor-Id: main.c,v 1.161 2011/03/31 10:53:43 kristaps Exp $ */
+/*	$Vendor-Id: main.c,v 1.165 2011/10/06 22:29:12 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -43,7 +43,10 @@ typedef	void		(*out_free)(void *);
 
 enum	outt {
 	OUTT_ASCII = 0,	/* -Tascii */
+	OUTT_LOCALE,	/* -Tlocale */
+	OUTT_UTF8,	/* -Tutf8 */
 	OUTT_TREE,	/* -Ttree */
+	OUTT_MAN,	/* -Tman */
 	OUTT_HTML,	/* -Thtml */
 	OUTT_XHTML,	/* -Txhtml */
 	OUTT_LINT,	/* -Tlint */
@@ -123,6 +126,12 @@ main(int argc, char *argv[])
 		}
 
 	curp.mp = mparse_alloc(type, curp.wlevel, mmsg, &curp);
+
+	/*
+	 * Conditionally start up the lookaside buffer before parsing.
+	 */
+	if (OUTT_MAN == curp.outtype)
+		mparse_keep(curp.mp);
 
 	argc -= optind;
 	argv += optind;
@@ -206,9 +215,19 @@ parse(struct curparse *curp, int fd,
 		switch (curp->outtype) {
 		case (OUTT_XHTML):
 			curp->outdata = xhtml_alloc(curp->outopts);
+			curp->outfree = html_free;
 			break;
 		case (OUTT_HTML):
 			curp->outdata = html_alloc(curp->outopts);
+			curp->outfree = html_free;
+			break;
+		case (OUTT_UTF8):
+			curp->outdata = utf8_alloc(curp->outopts);
+			curp->outfree = ascii_free;
+			break;
+		case (OUTT_LOCALE):
+			curp->outdata = locale_alloc(curp->outopts);
+			curp->outfree = ascii_free;
 			break;
 		case (OUTT_ASCII):
 			curp->outdata = ascii_alloc(curp->outopts);
@@ -232,15 +251,22 @@ parse(struct curparse *curp, int fd,
 		case (OUTT_XHTML):
 			curp->outman = html_man;
 			curp->outmdoc = html_mdoc;
-			curp->outfree = html_free;
 			break;
 		case (OUTT_TREE):
 			curp->outman = tree_man;
 			curp->outmdoc = tree_mdoc;
 			break;
+		case (OUTT_MAN):
+			curp->outmdoc = man_mdoc;
+			curp->outman = man_man;
+			break;
 		case (OUTT_PDF):
 			/* FALLTHROUGH */
 		case (OUTT_ASCII):
+			/* FALLTHROUGH */
+		case (OUTT_UTF8):
+			/* FALLTHROUGH */
+		case (OUTT_LOCALE):
 			/* FALLTHROUGH */
 		case (OUTT_PS):
 			curp->outman = terminal_man;
@@ -297,8 +323,14 @@ toptions(struct curparse *curp, char *arg)
 		curp->wlevel  = MANDOCLEVEL_WARNING;
 	} else if (0 == strcmp(arg, "tree"))
 		curp->outtype = OUTT_TREE;
+	else if (0 == strcmp(arg, "man"))
+		curp->outtype = OUTT_MAN;
 	else if (0 == strcmp(arg, "html"))
 		curp->outtype = OUTT_HTML;
+	else if (0 == strcmp(arg, "utf8"))
+		curp->outtype = OUTT_UTF8;
+	else if (0 == strcmp(arg, "locale"))
+		curp->outtype = OUTT_LOCALE;
 	else if (0 == strcmp(arg, "xhtml"))
 		curp->outtype = OUTT_XHTML;
 	else if (0 == strcmp(arg, "ps"))
