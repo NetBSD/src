@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.964 2011/10/11 05:19:38 dholland Exp $
+# $NetBSD: mi,v 1.965 2011/10/11 19:34:38 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -453,6 +453,7 @@
 ./usr/bin/ftp					base-netutil-bin
 ./usr/bin/gcpp					base-util-bin		gcccmds
 ./usr/bin/gencat				base-locale-bin
+./usr/bin/getcap				base-util-bin
 ./usr/bin/getconf				base-util-bin
 ./usr/bin/getent				base-util-bin
 ./usr/bin/getextattr				base-util-bin
