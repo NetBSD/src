@@ -1,6 +1,6 @@
-/*	$Vendor-Id: tbl_layout.c,v 1.18 2011/04/04 23:04:38 kristaps Exp $ */
+/*	$Vendor-Id: tbl_layout.c,v 1.22 2011/09/18 14:14:15 schwarze Exp $ */
 /*
- * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -71,6 +71,23 @@ mods(struct tbl_node *tbl, struct tbl_cell *cp,
 {
 	char		 buf[5];
 	int		 i;
+
+	/* Not all types accept modifiers. */
+
+	switch (cp->pos) {
+	case (TBL_CELL_DOWN):
+		/* FALLTHROUGH */
+	case (TBL_CELL_HORIZ):
+		/* FALLTHROUGH */
+	case (TBL_CELL_DHORIZ):
+		/* FALLTHROUGH */
+	case (TBL_CELL_VERT):
+		/* FALLTHROUGH */
+	case (TBL_CELL_DVERT):
+		return(1);
+	default:
+		break;
+	}
 
 mod:
 	/* 
@@ -156,6 +173,8 @@ mod:
 		goto mod;
 	case ('f'):
 		break;
+	case ('r'):
+		/* FALLTHROUGH */
 	case ('b'):
 		/* FALLTHROUGH */
 	case ('i'):
@@ -168,11 +187,19 @@ mod:
 	}
 
 	switch (tolower((unsigned char)p[(*pos)++])) {
+	case ('3'):
+		/* FALLTHROUGH */
 	case ('b'):
 		cp->flags |= TBL_CELL_BOLD;
 		goto mod;
+	case ('2'):
+		/* FALLTHROUGH */
 	case ('i'):
 		cp->flags |= TBL_CELL_ITALIC;
+		goto mod;
+	case ('1'):
+		/* FALLTHROUGH */
+	case ('r'):
 		goto mod;
 	default:
 		break;
