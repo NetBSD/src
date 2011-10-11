@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_validate.c,v 1.166 2011/04/03 09:53:50 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_validate.c,v 1.176 2011/09/02 19:40:18 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -72,9 +72,7 @@ static	void	 check_text(struct mdoc *, int, int, char *);
 static	void	 check_argv(struct mdoc *, 
 			struct mdoc_node *, struct mdoc_argv *);
 static	void	 check_args(struct mdoc *, struct mdoc_node *);
-
-static	int	 concat(struct mdoc *, char *, 
-			const struct mdoc_node *, size_t);
+static	int	 concat(char *, const struct mdoc_node *, size_t);
 static	enum mdoc_sec	a2sec(const char *);
 static	size_t		macro2len(enum mdoct);
 
@@ -155,9 +153,9 @@ static	v_post	 posts_notext[] = { ewarn_eq0, NULL };
 static	v_post	 posts_ns[] = { post_ns, NULL };
 static	v_post	 posts_os[] = { post_os, post_prol, NULL };
 static	v_post	 posts_rs[] = { post_rs, NULL };
-static	v_post	 posts_sh[] = { post_ignpar, hwarn_ge1, bwarn_ge1, post_sh, NULL };
+static	v_post	 posts_sh[] = { post_ignpar, hwarn_ge1, post_sh, NULL };
 static	v_post	 posts_sp[] = { ewarn_le1, NULL };
-static	v_post	 posts_ss[] = { post_ignpar, hwarn_ge1, bwarn_ge1, NULL };
+static	v_post	 posts_ss[] = { post_ignpar, hwarn_ge1, NULL };
 static	v_post	 posts_st[] = { post_st, NULL };
 static	v_post	 posts_std[] = { post_std, NULL };
 static	v_post	 posts_text[] = { ewarn_ge1, NULL };
@@ -545,31 +543,13 @@ check_argv(struct mdoc *m, struct mdoc_node *n, struct mdoc_argv *v)
 static void
 check_text(struct mdoc *m, int ln, int pos, char *p)
 {
-	int		 c;
-	size_t		 sz;
+	char		*cp;
 
-	for ( ; *p; p++, pos++) {
-		sz = strcspn(p, "\t\\");
-		p += (int)sz;
-
-		if ('\0' == *p)
-			break;
-
-		pos += (int)sz;
-
-		if ('\t' == *p) {
-			if ( ! (MDOC_LITERAL & m->flags))
-				mdoc_pmsg(m, ln, pos, MANDOCERR_BADTAB);
+	cp = p;
+	for (cp = p; NULL != (p = strchr(p, '\t')); p++) {
+		if (MDOC_LITERAL & m->flags)
 			continue;
-		}
-
-		if (0 == (c = mandoc_special(p))) {
-			mdoc_pmsg(m, ln, pos, MANDOCERR_BADESCAPE);
-			continue;
-		}
-
-		p += c - 1;
-		pos += c - 1;
+		mdoc_pmsg(m, ln, pos + (int)(p - cp), MANDOCERR_BADTAB);
 	}
 }
 
@@ -891,7 +871,7 @@ pre_sh(PRE_ARGS)
 	if (MDOC_BLOCK != n->type)
 		return(1);
 
-	mdoc->regs->regs[(int)REG_nS].set = 0;
+	roff_regunset(mdoc->roff, REG_nS);
 	return(check_parent(mdoc, n, MDOC_MAX, MDOC_ROOT));
 }
 
@@ -1125,6 +1105,7 @@ static int
 post_nm(POST_ARGS)
 {
 	char		 buf[BUFSIZ];
+	int		 c;
 
 	/* If no child specified, make sure we have the meta name. */
 
@@ -1136,11 +1117,14 @@ post_nm(POST_ARGS)
 
 	/* If no meta name, set it from the child. */
 
-	if ( ! concat(mdoc, buf, mdoc->last->child, BUFSIZ))
+	buf[0] = '\0';
+	if (-1 == (c = concat(buf, mdoc->last->child, BUFSIZ))) {
+		mdoc_nmsg(mdoc, mdoc->last->child, MANDOCERR_MEM);
 		return(0);
+	}
 
+	assert(c);
 	mdoc->meta.name = mandoc_strdup(buf);
-
 	return(1);
 }
 
@@ -1411,7 +1395,7 @@ post_bl_block_width(POST_ARGS)
 
 	assert(i < (int)n->args->argc);
 
-	snprintf(buf, NUMSIZ, "%zun", width);
+	snprintf(buf, NUMSIZ, "%un", (unsigned int)width);
 	free(n->args->argv[i].value[0]);
 	n->args->argv[i].value[0] = mandoc_strdup(buf);
 
@@ -1461,7 +1445,7 @@ post_bl_block_tag(POST_ARGS)
 
 	/* Defaults to ten ens. */
 
-	snprintf(buf, NUMSIZ, "%zun", sz);
+	snprintf(buf, NUMSIZ, "%un", (unsigned int)sz);
 
 	/*
 	 * We have to dynamically add this to the macro's argument list.
@@ -1527,7 +1511,7 @@ post_bl_head(POST_ARGS)
 	assert(0 == np->args->argv[j].sz);
 
 	/*
-	 * Accomodate for new-style groff column syntax.  Shuffle the
+	 * Accommodate for new-style groff column syntax.  Shuffle the
 	 * child nodes, all of which must be TEXT, as arguments for the
 	 * column field.  Then, delete the head children.
 	 */
@@ -1836,6 +1820,7 @@ post_sh_head(POST_ARGS)
 {
 	char		 buf[BUFSIZ];
 	enum mdoc_sec	 sec;
+	int		 c;
 
 	/*
 	 * Process a new section.  Sections are either "named" or
@@ -1844,10 +1829,13 @@ post_sh_head(POST_ARGS)
 	 * manual sections.
 	 */
 
-	if ( ! concat(mdoc, buf, mdoc->last->child, BUFSIZ))
+	sec = SEC_CUSTOM;
+	buf[0] = '\0';
+	if (-1 == (c = concat(buf, mdoc->last->child, BUFSIZ))) {
+		mdoc_nmsg(mdoc, mdoc->last->child, MANDOCERR_MEM);
 		return(0);
-
-	sec = a2sec(buf);
+	} else if (1 == c)
+		sec = a2sec(buf);
 
 	/* The NAME should be first. */
 
@@ -1996,6 +1984,7 @@ post_dd(POST_ARGS)
 {
 	char		  buf[DATESIZE];
 	struct mdoc_node *n;
+	int		  c;
 
 	if (mdoc->meta.date)
 		free(mdoc->meta.date);
@@ -2007,9 +1996,13 @@ post_dd(POST_ARGS)
 		return(1);
 	}
 
-	if ( ! concat(mdoc, buf, n->child, DATESIZE))
+	buf[0] = '\0';
+	if (-1 == (c = concat(buf, n->child, DATESIZE))) {
+		mdoc_nmsg(mdoc, n->child, MANDOCERR_MEM);
 		return(0);
+	}
 
+	assert(c);
 	mdoc->meta.date = mandoc_normdate
 		(mdoc->parse, buf, n->line, n->pos);
 
@@ -2038,7 +2031,7 @@ post_dt(POST_ARGS)
 
 	if (NULL != (nn = n->child))
 		for (p = nn->string; *p; p++) {
-			if (toupper((u_char)*p) == *p)
+			if (toupper((unsigned char)*p) == *p)
 				continue;
 
 			/* 
@@ -2164,6 +2157,7 @@ post_os(POST_ARGS)
 {
 	struct mdoc_node *n;
 	char		  buf[BUFSIZ];
+	int		  c;
 #ifndef OSNAME
 	struct utsname	  utsname;
 #endif
@@ -2180,8 +2174,13 @@ post_os(POST_ARGS)
 	if (mdoc->meta.os)
 		free(mdoc->meta.os);
 
-	if ( ! concat(mdoc, buf, n->child, BUFSIZ))
+	buf[0] = '\0';
+	if (-1 == (c = concat(buf, n->child, BUFSIZ))) {
+		mdoc_nmsg(mdoc, n->child, MANDOCERR_MEM);
 		return(0);
+	}
+
+	assert(c);
 
 	/* XXX: yes, these can all be dynamically-adjusted buffers, but
 	 * it's really not worth the extra hackery.
@@ -2248,34 +2247,24 @@ post_std(POST_ARGS)
 	return(1);
 }
 
+/*
+ * Concatenate a node, stopping at the first non-text.
+ * Concatenation is separated by a single whitespace.  
+ * Returns -1 on fatal (string overrun) error, 0 if child nodes were
+ * encountered, 1 otherwise.
+ */
 static int
-concat(struct mdoc *m, char *p, const struct mdoc_node *n, size_t sz)
+concat(char *p, const struct mdoc_node *n, size_t sz)
 {
 
-	p[0] = '\0';
-
-	/*
-	 * Concatenate sibling nodes together.  All siblings must be of
-	 * type MDOC_TEXT or an assertion is raised.  Concatenation is
-	 * separated by a single whitespace.  Returns 0 on fatal (string
-	 * overrun) error.
-	 */
-
-	for ( ; n; n = n->next) {
-		assert(MDOC_TEXT == n->type);
-
-		if (strlcat(p, n->string, sz) >= sz) {
-			mdoc_nmsg(m, n, MANDOCERR_MEM);
+	for ( ; NULL != n; n = n->next) {
+		if (MDOC_TEXT != n->type) 
 			return(0);
-		}
-
-		if (NULL == n->next)
-			continue;
-
-		if (strlcat(p, " ", sz) >= sz) {
-			mdoc_nmsg(m, n, MANDOCERR_MEM);
-			return(0);
-		}
+		if ('\0' != p[0] && strlcat(p, " ", sz) >= sz)
+			return(-1);
+		if (strlcat(p, n->string, sz) >= sz)
+			return(-1);
+		concat(p, n->child, sz);
 	}
 
 	return(1);

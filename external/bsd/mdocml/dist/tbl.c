@@ -1,4 +1,4 @@
-/*	$Vendor-Id: tbl.c,v 1.25 2011/04/04 23:04:38 kristaps Exp $ */
+/*	$Vendor-Id: tbl.c,v 1.26 2011/07/25 15:37:00 kristaps Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -154,8 +154,12 @@ tbl_span(struct tbl_node *tbl)
 }
 
 void
-tbl_end(struct tbl_node *tbl)
+tbl_end(struct tbl_node **tblp)
 {
+	struct tbl_node	*tbl;
+
+	tbl = *tblp;
+	*tblp = NULL;
 
 	if (NULL == tbl->first_span || NULL == tbl->first_span->first)
 		mandoc_msg(MANDOCERR_TBLNODATA, tbl->parse, 
