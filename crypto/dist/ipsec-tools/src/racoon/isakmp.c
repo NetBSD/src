@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.72 2011/10/11 14:37:17 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.73 2011/10/11 14:50:15 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -2186,7 +2186,7 @@ isakmp_post_acquire(iph2, iph1hint, nopassive)
 			"because of passive mode, "
 			"ignore the acquire message for %s.\n",
 			saddrwop2str(iph2->dst));
-		return 0;
+		return -1;
 	}
 
 	/*
