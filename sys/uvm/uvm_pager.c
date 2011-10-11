@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.106 2011/10/06 12:26:03 uebayasi Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.107 2011/10/11 23:57:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.106 2011/10/06 12:26:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.107 2011/10/11 23:57:07 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -305,7 +305,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 	struct uvm_object *uobj;
 	struct vm_page *pg;
 	kmutex_t *slock;
-	int pageout_done;
+	int pageout_done;	/* number of PG_PAGEOUT pages processed */
 	int swslot;
 	int i;
 	bool swap;
