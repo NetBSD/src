@@ -1,4 +1,4 @@
-.\"	$NetBSD: chmod.2,v 1.37 2010/05/31 12:16:20 njoly Exp $
+.\"	$NetBSD: chmod.2,v 1.38 2011/10/12 22:46:36 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)chmod.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd January 4, 2009
+.Dd October 11, 2011
 .Dt CHMOD 2
 .Os
 .Sh NAME
@@ -101,24 +101,14 @@ defined in
 
 #define S_ISUID 0004000    /* set user id on execution */
 #define S_ISGID 0002000    /* set group id on execution */
-#define S_ISVTX 0001000    /* save swapped text even after use */
+#define S_ISVTX 0001000    /* sticky bit */
 .Ed
 .Pp
-If mode
+The mode
 .Dv ISVTX
 (the
 .Sq sticky bit )
-is set on a regular file, it historically meant that the system should
-save a shareable copy of the program text in the swap area.
-When applied to commonly used programs like the shell or editor, this
-would decrease memory usage and startup time.
-In
-.Nx ,
-the sticky bit may still be set on regular files by the super-user,
-but has no effect.
-The historical meaning became obsolete in the 1980s with the advent of
-memory-mapped executables, and is only documented as a matter of
-historical interest.
+can be set on a regular file by the super-user, but has no effect.
 .Pp
 If mode
 .Dv ISVTX
@@ -130,7 +120,7 @@ files of other users in that directory.
 The sticky bit may be set by any user on a directory which the user
 owns or has appropriate permissions.
 .Pp
-For more information about the properties of the sticky bit, see
+For more information about the history and properties of the sticky bit, see
 .Xr sticky 7 .
 .Pp
 Changing the owner of a file
