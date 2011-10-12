@@ -571,9 +571,7 @@ roff_parsetext(char *p)
 
 		if ('\\' == *p) {
 			/* Skip over escapes. */
-			p++;
-			esc = mandoc_escape
-				((const char **)&p, NULL, NULL);
+			esc = mandoc_escape((void *)&p, NULL, NULL);
 			if (ESCAPE_ERROR == esc)
 				break;
 			continue;
