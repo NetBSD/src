@@ -21,9 +21,11 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "main.h"
 #include "mandoc.h"
 #include "libroff.h"
 #include "libmandoc.h"
@@ -559,6 +561,7 @@ roff_parsetext(char *p)
 	size_t		 sz;
 	const char	*start;
 	enum mandoc_esc	 esc;
+	const char	*const_p;
 
 	start = p;
 
@@ -571,7 +574,10 @@ roff_parsetext(char *p)
 
 		if ('\\' == *p) {
 			/* Skip over escapes. */
-			esc = mandoc_escape((void *)&p, NULL, NULL);
+			p++;
+			const_p = p;
+			esc = mandoc_escape(&const_p, NULL, NULL);
+			p = UNCONST(const_p);
 			if (ESCAPE_ERROR == esc)
 				break;
 			continue;
