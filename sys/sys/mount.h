@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.200 2011/06/27 11:52:24 uch Exp $	*/
+/*	$NetBSD: mount.h,v 1.201 2011/10/12 23:04:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -42,6 +42,7 @@
 #endif
 
 #ifndef _STANDALONE
+#include <sys/param.h> /* precautionary upon removal from ucred.h */
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/ucred.h>

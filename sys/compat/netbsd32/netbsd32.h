@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.87 2011/06/30 20:09:39 wiz Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.88 2011/10/12 23:04:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -36,6 +36,7 @@
  * NetBSD 32-bit compatibility module.
  */
 
+#include <sys/param.h> /* precautionary upon removal from ucred.h */
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/stat.h>

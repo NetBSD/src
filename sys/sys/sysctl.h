@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.195 2011/04/26 21:27:44 joerg Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.196 2011/10/12 23:04:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,6 +40,7 @@
 /*
  * These are for the eproc structure defined below.
  */
+#include <sys/param.h> /* precautionary upon removal from ucred.h */
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/ucontext.h>
