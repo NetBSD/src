@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.137 2011/06/23 23:42:44 matt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.138 2011/10/12 00:03:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.137 2011/06/23 23:42:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.138 2011/10/12 00:03:47 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -395,7 +395,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 			fd_putfile(fd);
 			return (EINVAL);
 		}
-		if (vp->v_type != VCHR && (pos + size) < pos) {
+		if (vp->v_type != VCHR && (off_t)(pos + size) < pos) {
 			fd_putfile(fd);
 			return (EOVERFLOW);		/* no offset wrapping */
 		}
