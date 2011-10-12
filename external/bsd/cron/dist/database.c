@@ -1,4 +1,4 @@
-/*	$NetBSD: database.c,v 1.3 2010/07/15 20:04:14 christos Exp $	*/
+/*	$NetBSD: database.c,v 1.4 2011/10/12 16:39:48 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: database.c,v 1.7 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: database.c,v 1.3 2010/07/15 20:04:14 christos Exp $");
+__RCSID("$NetBSD: database.c,v 1.4 2011/10/12 16:39:48 christos Exp $");
 #endif
 #endif
 
@@ -40,13 +40,87 @@ static	void		process_crontab(const char *, const char *,
 					const char *, struct stat *,
 					cron_db *, cron_db *);
 
+static void
+process_dir(const char *dname, struct stat *st, int sys, cron_db *new_db,
+    cron_db *old_db)
+{
+	DIR *dir;
+	DIR_T *dp;
+
+	/* we used to keep this dir open all the time, for the sake of
+	 * efficiency.  however, we need to close it in every fork, and
+	 * we fork a lot more often than the mtime of the dir changes.
+	 */
+	if (!(dir = opendir(dname))) {
+		log_it("CRON", getpid(), "OPENDIR FAILED", dname);
+		(void) exit(ERROR_EXIT);
+	}
+
+	while (NULL != (dp = readdir(dir))) {
+		char	fname[MAXNAMLEN+1], tabname[MAXNAMLEN+1];
+		size_t i, len;
+		/*
+		 * Homage to...
+		 */
+		static const char *junk[] = {
+			".rpmsave", ".rpmorig", ".rpmnew",
+		};
+
+		/* avoid file names beginning with ".".  this is good
+		 * because we would otherwise waste two guaranteed calls
+		 * to getpwnam() for . and .., and there shouldn't be 
+		 * hidden files in here anyway (in the non system case).
+		 */
+		if (dp->d_name[0] == '.')
+			continue;
+
+		/* ignore files starting with # ... */
+		if (dp->d_name[0] == '#')
+			continue;
+		
+		len = strlen(dp->d_name);
+
+		/* ... or too big or to small ... */
+		if (len == 0 || len >= sizeof(fname)) {
+			log_it(dp->d_name, getpid(), "ORPHAN",
+			    "name too short or long");
+			continue;
+		}
+
+		/* ... or ending with ~ ... */
+		if ((dp->d_name[len - 1] == '~'))
+			continue;
+
+		(void)strlcpy(fname, dp->d_name, sizeof(fname));
+		
+		/* ... or look leftover crap */
+		for (i = 0; i < __arraycount(junk); i++) {
+			char *p;
+			if ((p = strstr(fname, junk[len])) != NULL &&
+			    p[strlen(junk[len]) - 1] == '\0')
+				break;
+		}
+		if (i != __arraycount(junk))
+			continue;
+
+		if (!glue_strings(tabname, sizeof tabname, dname, fname, '/')) {
+			log_it(fname, getpid(), "ORPHAN",
+			    "could not glue strings");
+			continue;
+		}
+
+		process_crontab(sys ? "root" : fname, sys ? "*system*" :
+				fname, tabname, st, new_db, old_db);
+	}
+	(void)closedir(dir);
+}
+
 void
 load_database(cron_db *old_db) {
-	struct stat statbuf, syscron_stat;
+	struct stat spool_stat, syscron_stat, crond_stat;
 	cron_db new_db;
-	DIR_T *dp;
-	DIR *dir;
 	user *u, *nu;
+	time_t new_mtime;
 
 	Debug(DLOAD, ("[%ld] load_database()\n", (long)getpid()));
 
@@ -54,10 +128,15 @@ load_database(cron_db *old_db) {
 	 * so that if anything changes as of this moment (i.e., before we've
 	 * cached any of the database), we'll see the changes next time.
 	 */
-	if (stat(SPOOL_DIR, &statbuf) < OK) {
+	if (stat(SPOOL_DIR, &spool_stat) < OK) {
 		log_it("CRON", getpid(), "STAT FAILED", SPOOL_DIR);
 		(void) exit(ERROR_EXIT);
 	}
+
+	/* track system crontab directory
+	 */
+	if (stat(CROND_DIR, &crond_stat) < OK)
+		crond_stat.st_mtime = 0;
 
 	/* track system crontab file
 	 */
@@ -71,7 +150,9 @@ load_database(cron_db *old_db) {
 	 * so is guaranteed to be different than the stat() mtime the first
 	 * time this function is called.
 	 */
-	if (old_db->mtime == TMAX(statbuf.st_mtime, syscron_stat.st_mtime)) {
+	new_mtime = TMAX(crond_stat.st_mtime, TMAX(spool_stat.st_mtime,
+	    syscron_stat.st_mtime));
+	if (old_db->mtime == new_mtime) {
 		Debug(DLOAD, ("[%ld] spool dir mtime unch, no load needed.\n",
 			      (long)getpid()));
 		return;
@@ -82,45 +163,17 @@ load_database(cron_db *old_db) {
 	 * actually changed.  Whatever is left in the old database when
 	 * we're done is chaff -- crontabs that disappeared.
 	 */
-	new_db.mtime = TMAX(statbuf.st_mtime, syscron_stat.st_mtime);
+	new_db.mtime = new_mtime;
 	new_db.head = new_db.tail = NULL;
 
 	if (syscron_stat.st_mtime)
 		process_crontab("root", NULL, SYSCRONTAB, &syscron_stat,
 				&new_db, old_db);
 
-	/* we used to keep this dir open all the time, for the sake of
-	 * efficiency.  however, we need to close it in every fork, and
-	 * we fork a lot more often than the mtime of the dir changes.
-	 */
-	if (!(dir = opendir(SPOOL_DIR))) {
-		log_it("CRON", getpid(), "OPENDIR FAILED", SPOOL_DIR);
-		(void) exit(ERROR_EXIT);
-	}
+	if (crond_stat.st_mtime)
+		process_dir(CROND_DIR, &crond_stat, 1, &new_db, old_db);
 
-	while (NULL != (dp = readdir(dir))) {
-		char fname[MAXNAMLEN+1], tabname[MAXNAMLEN+1];
-
-		/* avoid file names beginning with ".".  this is good
-		 * because we would otherwise waste two guaranteed calls
-		 * to getpwnam() for . and .., and also because user names
-		 * starting with a period are just too nasty to consider.
-		 */
-		if (dp->d_name[0] == '.')
-			continue;
-
-		if (strlen(dp->d_name) >= sizeof fname)
-			continue;	/* XXX log? */
-		(void)strlcpy(fname, dp->d_name, sizeof(fname));
-		
-		if (!glue_strings(tabname, sizeof tabname, SPOOL_DIR,
-				  fname, '/'))
-			continue;	/* XXX log? */
-
-		process_crontab(fname, fname, tabname,
-				&statbuf, &new_db, old_db);
-	}
-	(void)closedir(dir);
+	process_dir(SPOOL_DIR, &spool_stat, 0, &new_db, old_db);
 
 	/* if we don't do this, then when our children eventually call
 	 * getpwnam() in do_command.c's child_process to verify MAILTO=,
