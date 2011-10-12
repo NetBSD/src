@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.35 2010/05/29 23:18:39 dholland Exp $	*/
+/*	$NetBSD: ucred.h,v 1.36 2011/10/12 23:03:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,11 @@
 #ifndef _SYS_UCRED_H_
 #define	_SYS_UCRED_H_
 
-#include <sys/param.h>
+#ifdef _KERNEL
+#include <sys/syslimits.h>
+#else
+#include <limits.h>
+#endif
 
 /*
  * Credentials.
