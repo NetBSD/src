@@ -1,4 +1,4 @@
-/*	$NetBSD: pgfs_subs.c,v 1.1 2011/10/12 01:05:00 yamt Exp $	*/
+/*	$NetBSD: pgfs_subs.c,v 1.2 2011/10/12 16:24:39 yamt Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pgfs_subs.c,v 1.1 2011/10/12 01:05:00 yamt Exp $");
+__RCSID("$NetBSD: pgfs_subs.c,v 1.2 2011/10/12 16:24:39 yamt Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -795,17 +795,23 @@ cleanupfile(struct Xconn *xc, fileid_t fileid, struct vattr *va)
 
 	if (va->va_type == VREG || va->va_type == VLNK) {
 		static struct cmd *c_datafork;
+		int32_t ret;
 		int error;
 
-		/*
-		 * use CASE instead of AND to preserve the evaluation ordering.
-		 */
 		CREATECMD(c_datafork,
-			"DELETE FROM datafork WHERE CASE WHEN fileid = $1 "
-			"THEN lo_unlink(loid) = 1 ELSE false END", INT8OID);
-		error = simplecmd(xc, c_datafork, fileid);
+			"WITH loids AS (DELETE FROM datafork WHERE fileid = $1 "
+			"RETURNING loid) SELECT lo_unlink(loid) FROM loids",
+			INT8OID);
+		error = sendcmd(xc, c_datafork, fileid);
 		if (error != 0) {
 			return error;
+		}
+		error = simplefetch(xc, INT4OID, &ret);
+		if (error != 0) {
+			return error;
+		}
+		if (ret != 1) {
+			return EIO; /* lo_unlink failed */
 		}
 	}
 	CREATECMD(c, "DELETE FROM file WHERE fileid = $1", INT8OID);

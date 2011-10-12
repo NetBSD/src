@@ -1,4 +1,4 @@
--- $NetBSD: fix.sql,v 1.1 2011/10/12 01:05:00 yamt Exp $
+-- $NetBSD: fix.sql,v 1.2 2011/10/12 16:24:39 yamt Exp $
 
 -- Copyright (c)2011 YAMAMOTO Takashi,
 -- All rights reserved.
@@ -35,8 +35,7 @@ pgfs_clients AS (SELECT -count(*) FROM pg_stat_activity WHERE
 	WHERE datname = current_database())),
 files_to_remove AS (DELETE FROM file WHERE nlink IN (SELECT * FROM pgfs_clients)
 	RETURNING fileid),
-removed_files AS (DELETE FROM datafork WHERE CASE WHEN fileid IN (SELECT * FROM
-	files_to_remove) THEN lo_unlink(loid) = 1 ELSE false END
-	RETURNING fileid)
-SELECT fileid AS "orphaned files" from removed_files;
+removed_files AS (DELETE FROM datafork WHERE fileid IN (SELECT * FROM
+	files_to_remove) RETURNING fileid, loid)
+SELECT fileid AS "orphaned files" FROM removed_files WHERE lo_unlink(loid) = 1;
 COMMIT;
