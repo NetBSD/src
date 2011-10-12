@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.54 2011/09/28 10:29:41 mrg Exp $   */
+/*      $NetBSD: raidctl.c,v 1.55 2011/10/12 16:45:37 christos Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.54 2011/09/28 10:29:41 mrg Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.55 2011/10/12 16:45:37 christos Exp $");
 #endif
 
 
@@ -988,7 +988,6 @@ do_meter(int fd, u_long option)
 	double rate;
 	RF_uint64 amount;
 	int tbit_value;
-	char buffer[1024];
 	char bar_buffer[1024];
 	char eta_buffer[1024];
 
@@ -1049,10 +1048,8 @@ do_meter(int fd, u_long option)
 
 		get_time_string(eta_buffer, simple_eta);
 
-		snprintf(buffer,1024,"\r%3d%% |%s| ETA: %s %c",
-			 percent_done,bar_buffer,eta_buffer,tbits[tbit_value]);
-
-		write(fileno(stdout),buffer,strlen(buffer));
+		fprintf(stdout,"\r%3d%% |%s| ETA: %s %c",
+			percent_done,bar_buffer,eta_buffer,tbits[tbit_value]);
 		fflush(stdout);
 
 		if (++tbit_value>3) 
