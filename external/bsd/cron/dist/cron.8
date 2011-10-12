@@ -1,4 +1,4 @@
-.\"	$NetBSD: cron.8,v 1.4 2011/10/12 16:39:48 christos Exp $
+.\"	$NetBSD: cron.8,v 1.5 2011/10/12 22:50:31 wiz Exp $
 .\"
 .\" Id: cron.8,v 1.8 2004/01/23 19:03:32 vixie Exp
 .\"
@@ -48,13 +48,13 @@ or
 it will not process files that:
 .Bl -dash -compact -offset indent
 .It
-Start with a 
-.Sq \&. 
+Start with a
+.Sq \&.
 or a
 .Sq # .
 .It
 End with a
-.Sq ~ 
+.Sq ~
 or with
 .Dq .rpmsave ,
 .Dq .rpmorig ,
@@ -91,7 +91,7 @@ Additionally,
 .Nm
 checks each minute to see if its spool directory's modtime (or the modtime
 on
-.Pa /etc/crontab 
+.Pa /etc/crontab
 or
 .Pa /etc/cron.d )
 has changed, and if it has,
