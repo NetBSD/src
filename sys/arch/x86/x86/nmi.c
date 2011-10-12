@@ -1,7 +1,7 @@
-/*	$Id: nmi.c,v 1.2 2009/02/24 10:37:27 yamt Exp $	*/
+/*	$Id: nmi.c,v 1.3 2011/10/12 00:07:29 yamt Exp $	*/
 
 /*-
- * Copyright (c)2009 YAMAMOTO Takashi,
+ * Copyright (c)2009,2011 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.2 2009/02/24 10:37:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.3 2011/10/12 00:07:29 yamt Exp $");
 
 /*
  * nmi dispatcher.
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.2 2009/02/24 10:37:27 yamt Exp $");
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
-#include <sys/xcall.h>
+#include <sys/pserialize.h>
 
 #include <x86/nmi.h>
 
@@ -57,6 +57,7 @@ struct nmi_handler {
 };
 
 static kmutex_t nmi_list_lock; /* serialize establish and disestablish */
+static pserialize_t nmi_psz;
 static nmi_handler_t *nmi_handlers; /* list of handlers */
 
 /*
@@ -131,13 +132,7 @@ nmi_disestablish(nmi_handler_t *handle)
 	 * in the middle of nmi_dispatch.
 	 */
 
-	if (mp_online) {
-		uint64_t h;
-
-		h = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-		xc_wait(h);
-	}
-
+	pserialize_perform(nmi_psz);
 	kmem_free(n, sizeof(*n));
 }
 
@@ -153,9 +148,18 @@ nmi_dispatch(const struct trapframe *tf)
 	const struct nmi_handler *n;
 	int handled = 0;
 
+	/*
+	 * XXX abstraction violation
+	 *
+	 * we don't bother to call pserialize_read_enter/pserialize_read_exit
+	 * because they are not necessary here as we are sure our IPL is
+	 * higher than IPL_SOFTCLOCK.  better to avoid unnecessary calls as
+	 * we are in a dangerous context. (NMI)
+	 */
+
 	for (n = nmi_handlers; /* atomic load */
 	    n != NULL;
-	    n = n->n_next) { /* atomic load */
+	    membar_consumer(), n = n->n_next) { /* atomic load */
 		handled |= (*n->n_func)(tf, n->n_arg);
 	}
 	return handled;
@@ -166,4 +170,5 @@ nmi_init(void)
 {
 
 	mutex_init(&nmi_list_lock, MUTEX_DEFAULT, IPL_NONE);
+	nmi_psz = pserialize_create();
 }
