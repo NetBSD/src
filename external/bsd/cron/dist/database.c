@@ -1,4 +1,4 @@
-/*	$NetBSD: database.c,v 1.4 2011/10/12 16:39:48 christos Exp $	*/
+/*	$NetBSD: database.c,v 1.5 2011/10/12 19:48:24 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: database.c,v 1.7 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: database.c,v 1.4 2011/10/12 16:39:48 christos Exp $");
+__RCSID("$NetBSD: database.c,v 1.5 2011/10/12 19:48:24 christos Exp $");
 #endif
 #endif
 
@@ -96,8 +96,8 @@ process_dir(const char *dname, struct stat *st, int sys, cron_db *new_db,
 		/* ... or look leftover crap */
 		for (i = 0; i < __arraycount(junk); i++) {
 			char *p;
-			if ((p = strstr(fname, junk[len])) != NULL &&
-			    p[strlen(junk[len]) - 1] == '\0')
+			if ((p = strstr(fname, junk[i])) != NULL &&
+			    p[strlen(junk[i]) - 1] == '\0')
 				break;
 		}
 		if (i != __arraycount(junk))
