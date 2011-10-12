@@ -1,4 +1,4 @@
-.\"	$NetBSD: chipsfb.4,v 1.2 2007/12/02 19:03:16 wiz Exp $
+.\"	$NetBSD: chipsfb.4,v 1.3 2011/10/12 16:59:20 njoly Exp $
 .\"
 .\" Copyright (c) 2007 Michael Lorenz
 .\" All rights reserved.
@@ -31,14 +31,14 @@
 .Os
 .Sh NAME
 .Nm chipsfb
-.Nd Chips \*[Amp] Technologies 6555x based graphics chips
+.Nd Chips \*[Am] Technologies 6555x based graphics chips
 .Sh SYNOPSIS
 .Cd "chipsfb* at pci?"
 .Cd "wsdisplay* at chipsfb?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the C\*[Amp]T 65550 and 65554 graphics controllers.
+driver provides support for the C\*[Am]T 65550 and 65554 graphics controllers.
 Currently it depends on the firmware (usually Open Firmware) to set up the
 framebuffer, but all graphics operations used by wsdisplay use the blitter.
 .Sh SEE ALSO
