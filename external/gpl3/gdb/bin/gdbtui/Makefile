@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/10/02 18:15:23 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2011/10/12 03:57:45 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -44,11 +44,11 @@ DPADD+= ${LIBGDBDIR}/libgdb.a
 # Simulator support
 .if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle || \
     ${MACHINE_ARCH} == powerpc64
-SIMOBJ!=	cd ${.CURDIR}/../sim/ppc && ${PRINTOBJDIR}
+SIMOBJ!=	cd ${.CURDIR}/../../lib/libsim && ${PRINTOBJDIR}
 LDADD+=		-L${SIMOBJ} -lsim
 DPADD+=		${SIMOBJ}/libsim.a
 .elif ${MACHINE_CPU} == xxmips
-SIMOBJ!=	cd ${.CURDIR}/../sim/mips && ${PRINTOBJDIR}
+SIMOBJ!=	cd ${.CURDIR}/../../lib/libsim && ${PRINTOBJDIR}
 LDADD+=		-L${SIMOBJ} -lsim
 DPADD+=		${SIMOBJ}/libsim.a
 .endif
