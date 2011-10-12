@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.143 2011/10/02 16:39:46 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.144 2011/10/12 20:57:55 apb Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -419,6 +419,7 @@ setup()
 	: ${TOOL_MKNOD:=mknod}
 	: ${TOOL_MTREE:=mtree}
 	: ${TOOL_PAX:=pax}
+	status=0
 	do_create_mfs=false
 	do_force=false
 	do_mknod=false
@@ -587,18 +588,49 @@ setup()
 	fi
 }
 
-# wrap_makedev makedev_name ...
-#	Invoke a makedev-like function, with additional processing
-#	as appropriate for use from the outer level.
+# specfile_before
+#	This is called before the bulk of the makedev processing,
+#	if do_specfile is set.
 #
-wrap_makedev()
+#	It simply prints ". type=dir optional", which must be the
+#	first line of the specfile.
+#
+specfile_before()
 {
-	if $do_specfile; then
-		# "." must appear as the first line of the specfile.
-		# "optional" means do not create the directory itself.
-		echo ". type=dir optional"
-	fi
-	"$@"
+	echo ". type=dir optional"
+}
+
+# mtree_after
+#	Output in specfile format is piped into this function.
+#
+#	It uses mtree to create the devices defined in the specfile.
+#
+mtree_after()
+{
+	nooutput -1 "${TOOL_MTREE}" -e -U
+}
+
+# pax_after
+#	Output in specfile format is piped into this function.
+#
+#	It uses pax to create the devices defined in the specfile.
+#
+pax_after()
+{
+	# Run pax in an empty directory, so it pays
+	# attention only to the specfile, without being
+	# confused by the existing contents of the target
+	# directory.  Without this, pax would complain "file
+	# would overwrite itself" for already-existing
+	# device nodes.
+	tmpdir=./tmp.$$
+	mkdir "${tmpdir}" || die "can't create temporary directory"
+	cd "${tmpdir}" || die "can't cd to temporary directory"
+	"${TOOL_PAX}" -r -w -M -pe ..
+	pax_status=$?
+	cd .. # back to where we started
+	rmdir "${tmpdir}"
+	return $pax_status
 }
 
 # makedev_main makedev_name args...
@@ -626,33 +658,51 @@ makedev_main()
 		unset count_nodes
 	fi
 
-	# If using mtree or pax, then wrap_makedev should print an mtree
-	# specification, which we postprocess to create the device nodes.
-	# Otherwise, wrap_makedev should do all the work itself.
-	if $do_mtree ; then
-		wrap_makedev $makedev ${1+"$@"} \
-		| nooutput -1 "${TOOL_MTREE}" -e -U
-	elif $do_pax ; then
-		wrap_makedev $makedev ${1+"$@"} \
-		| (
-		    # Run pax in an empty directory, so it pays
-		    # attention only to the specfile, without being
-		    # confused by the existing contents of the target
-		    # directory.  Without this, pax would complain "file
-		    # would overwrite itself" for already-existing
-		    # device nodes.
-		    tmpdir=./tmp.$$
-		    mkdir "${tmpdir}" || die "can't create temporary directory"
-		    cd "${tmpdir}" || die "can't cd to temporary directory"
-		    "${TOOL_PAX}" -r -w -M -pe ..
-		    status=$?
-		    cd .. # back to where we started
-		    rmdir "${tmpdir}"
-		    exit $status
-		)
+	# Set before, middle, and after variables, so we can do
+	# something like "( $before && $middle ) | $after",
+	# except it will have to be more complex so we can capture
+	# the exit status from both sides of the pipe.
+	#
+	if $do_specfile; then
+		before=specfile_before
 	else
-		wrap_makedev $makedev ${1+"$@"}
+		before=:
 	fi
+	middle='$makedev ${1+"$@"} && (exit $status)'
+	if $do_mtree; then
+		after=mtree_after
+	elif $do_pax ; then
+		after=pax_after
+	else
+		after=cat
+	fi
+
+	# Actually perform the "{ $before && $middle } | $after" commands.
+	#
+	# We go to some trouble to ensure that, if any of
+	# $before, $middle, or $after fails, then we also
+	# exit with a non-zero status.
+	#
+	# In the block below, fd 3 is a copy of the original stdout,
+	# and fd 4 goes to a subshell that analyses the exit status
+	# status from the other commands.
+	#
+	{
+		exec 3>&1;
+		{
+			{ eval "$before" && eval "$middle"; echo $? >&4; } \
+			| { eval "$after"; echo $? >&4; } \
+		} 4>&1 1>&3 \
+		| (
+			read status1;
+			read status2; 
+			case "$status1,$status2" in
+			0,0) exit 0;;
+			0,*) exit $status2;;
+			*,*) exit $status1;;
+			esac
+		)
+	}
 }
 
 #
@@ -724,6 +774,7 @@ makedir()
 warn()
 {
 	echo 1>&2 "$0: $*"
+	status=1
 }
 
 die()
