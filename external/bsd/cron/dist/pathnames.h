@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.3 2010/05/19 12:50:49 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.4 2011/10/12 16:39:48 christos Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -86,6 +86,8 @@
 			/* what editor to use if no EDITOR or VISUAL
 			 * environment variable specified.
 			 */
+			/* system V cron dir */
+#define	CROND_DIR	"/etc/cron.d"
 #if defined(_PATH_VI)
 # define EDITOR _PATH_VI
 #else

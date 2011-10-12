@@ -1,8 +1,8 @@
-.\"	$NetBSD: cron.8,v 1.3 2010/05/08 11:55:01 wiz Exp $
+.\"	$NetBSD: cron.8,v 1.4 2011/10/12 16:39:48 christos Exp $
 .\"
 .\" Id: cron.8,v 1.8 2004/01/23 19:03:32 vixie Exp
 .\"
-.Dd May 5, 2010
+.Dd October 12, 2011
 .Dt CRON 8
 .Os
 .Sh NAME
@@ -33,6 +33,40 @@ also searches for
 .Pa /etc/crontab
 which is in a different format (see
 .Xr crontab 5 ) .
+Finally
+.Nm
+looks for crontabs in
+.Pa /etc/cron.d
+if it exists, and executes each file as a crontab.
+.Pp
+When
+.Nm
+looks in a directory for crontabs (either in
+.Pa /var/cron/tabs
+or
+.Pa /etc/cron.d )
+it will not process files that:
+.Bl -dash -compact -offset indent
+.It
+Start with a 
+.Sq \&. 
+or a
+.Sq # .
+.It
+End with a
+.Sq ~ 
+or with
+.Dq .rpmsave ,
+.Dq .rpmorig ,
+or
+.Dq .rpmnew .
+.It
+Are of zero length.
+.It
+Their length is greater than
+.Dv MAXNAMLEN .
+.El
+.Pp
 .Nm
 then wakes up every minute, examining all stored crontabs, checking each
 command to see if it should be run in the current minute.
@@ -57,7 +91,9 @@ Additionally,
 .Nm
 checks each minute to see if its spool directory's modtime (or the modtime
 on
-.Pa /etc/crontab )
+.Pa /etc/crontab 
+or
+.Pa /etc/cron.d )
 has changed, and if it has,
 .Nm
 will then examine the modtime on all crontabs and reload those which have
@@ -131,7 +167,9 @@ Naturally this is not relevant if cron was built to use
 .Nm
 spool directory
 .It Pa /etc/crontab
-system crontab
+system crontab file
+.It Pa /etc/cron.d/
+system crontab directory
 .It Pa /var/log/cron
 log file for cron events
 .El
