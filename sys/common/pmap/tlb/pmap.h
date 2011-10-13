@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2011/06/23 07:58:19 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 2011/10/13 19:50:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,9 +141,9 @@ struct pmap {
 	u_int			pm_flags;
 #define	PMAP_DEFERRED_ACTIVATE	0x0001
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	struct pmap_asid_info	pm_pai[1];
 	vaddr_t			pm_minaddr;
 	vaddr_t			pm_maxaddr;
+	struct pmap_asid_info	pm_pai[1];
 };
 
 enum tlb_invalidate_op {
