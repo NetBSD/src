@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.64 2011/09/23 06:43:46 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.65 2011/10/13 19:52:33 matt Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -637,7 +637,7 @@ get_gcc () {
 /configuration_arguments/ s/$//
 ya
 i
-#ifdef _SOFT_FLOAT_
+#ifdef _SOFT_FLOAT
 .
 pu
 s/";$/ -with-float=soft";/
@@ -648,7 +648,7 @@ a
 . m +1
 /configure_default_options/ s/{ NULL.*$//
 a
-#ifdef _SOFT_FLOAT_
+#ifdef _SOFT_FLOAT
   { "float", "soft" },
 #endif
   { NULL, NULL }
