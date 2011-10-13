@@ -1,4 +1,4 @@
-/* $NetBSD: ipivar.h,v 1.5 2011/06/05 16:52:26 matt Exp $ */
+/* $NetBSD: ipivar.h,v 1.6 2011/10/13 19:49:50 matt Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,11 +29,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.5 2011/06/05 16:52:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.6 2011/10/13 19:49:50 matt Exp $");
 
 #ifndef _IPI_VAR_H_
 #define _IPI_VAR_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
+
+#if defined(_KERNEL) && !defined(PPC_BOOKE)
 struct ipi_ops {
 	void (*ppc_send_ipi)(cpuid_t, uint32_t);
 	/* type, level, arg */
@@ -64,5 +69,6 @@ cpu_send_ipi(cpuid_t cpuid, uint32_t msg)
 {
 	(*ipiops.ppc_send_ipi)(cpuid, msg);
 }
+#endif
 
 #endif /*_IPI_VAR_H_*/
