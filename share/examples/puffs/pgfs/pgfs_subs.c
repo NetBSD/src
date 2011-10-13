@@ -1,4 +1,4 @@
-/*	$NetBSD: pgfs_subs.c,v 1.2 2011/10/12 16:24:39 yamt Exp $	*/
+/*	$NetBSD: pgfs_subs.c,v 1.3 2011/10/13 14:40:06 yamt Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pgfs_subs.c,v 1.2 2011/10/12 16:24:39 yamt Exp $");
+__RCSID("$NetBSD: pgfs_subs.c,v 1.3 2011/10/13 14:40:06 yamt Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -906,10 +906,8 @@ check_path(struct Xconn *xc, fileid_t gate_fileid, fileid_t child_fileid)
 int
 isempty(struct Xconn *xc, fileid_t fileid, bool *emptyp)
 {
-	fileid_t dummy;
+	int32_t dummy;
 	static struct cmd *c;
-	static const Oid types[] = { INT8OID, };
-	struct fetchstatus s;
 	int error;
 
 	CREATECMD(c,
@@ -919,9 +917,7 @@ isempty(struct Xconn *xc, fileid_t fileid, bool *emptyp)
 	if (error != 0) {
 		return error;
 	}
-	fetchinit(&s, xc);
-	error = FETCHNEXT(&s, types, &dummy);
-	fetchdone(&s);
+	error = simplefetch(xc, INT4OID, &dummy);
 	assert(error != 0 || dummy == 1);
 	if (error == ENOENT) {
 		*emptyp = true;
