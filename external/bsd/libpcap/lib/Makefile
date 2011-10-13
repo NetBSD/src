@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2011/09/15 17:59:45 plunky Exp $	
+# $NetBSD: Makefile,v 1.7 2011/10/13 17:23:28 plunky Exp $	
 
 .include <bsd.own.mk>
 
@@ -52,7 +52,7 @@ MANMISCIN= pcap-filter.manmisc.in pcap-linktype.manmisc.in
 MANFILEIN= pcap-savefile.manfile.in 
 CLEANFILES+= ${MAN}
 
-WARNS?=		5
+WARNS?=		4
 
 .for i in ${MAN3IN}
 ${i:S/pcap.in//}: ${i} __sed

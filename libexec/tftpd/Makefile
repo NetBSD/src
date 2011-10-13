@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.13 2010/01/08 21:05:14 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2011/10/13 17:23:29 plunky Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
-WARNS?=	5
+WARNS?=	4
 
 .include <bsd.own.mk>
 

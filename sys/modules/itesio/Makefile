@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/07/29 20:59:25 jmcneill Exp $
+# $NetBSD: Makefile,v 1.2 2011/10/13 17:23:29 plunky Exp $
 
 .include "../Makefile.inc"
 
@@ -8,6 +8,6 @@ KMOD=	itesio
 IOCONF=	itesio.ioconf
 SRCS=	itesio_isa.c
 
-WARNS=	5
+WARNS?=	4
 
 .include <bsd.kmodule.mk>
