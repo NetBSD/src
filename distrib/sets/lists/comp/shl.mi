@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.195 2011/10/07 09:15:21 mrg Exp $
+# $NetBSD: shl.mi,v 1.196 2011/10/13 22:08:19 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -196,6 +196,7 @@
 ./usr/lib/libsdp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libskey_pic.a				comp-c-piclib		skey
 ./usr/lib/libsl_pic.a				comp-c-piclib		kerberos
+./usr/lib/libsqlite3_pic.a			comp-c-piclib
 ./usr/lib/libss_pic.a				comp-obsolete		obsolete
 ./usr/lib/libssh_pic.a				comp-c-piclib		crypto
 ./usr/lib/libssl_pic.a				comp-c-piclib		crypto

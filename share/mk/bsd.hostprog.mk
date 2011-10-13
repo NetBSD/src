@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.65 2011/10/07 09:15:22 mrg Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.66 2011/10/13 22:08:20 joerg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -52,6 +52,7 @@ LIBRUMPNET?=	/usr/lib/librumpnet.a
 LIBRUMPUSER?=	/usr/lib/librumpuser.a
 LIBRUMPVFS?=	/usr/lib/librumpvfs.a
 LIBSKEY?=	/usr/lib/libskey.a
+LIBSQLITE3?=	/usr/lib/libsqlite3.a
 LIBSSP?=	/usr/lib/libssp.a
 LIBSTDCXX?=	/usr/lib/libstdc++.a
 LIBSUPCXX?=	/usr/lib/libsupc++.a
