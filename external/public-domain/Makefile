@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2010/11/02 16:34:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/10/13 22:08:20 joerg Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= xz
+SUBDIR+= sqlite xz
 
 .include <bsd.subdir.mk>

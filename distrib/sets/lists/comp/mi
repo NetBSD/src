@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1691 2011/10/11 13:53:56 joerg Exp $
+#	$NetBSD: mi,v 1.1692 2011/10/13 22:08:18 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2311,6 +2311,8 @@
 ./usr/include/skey.h				comp-c-include		skey
 ./usr/include/smbfs				comp-obsolete		obsolete
 ./usr/include/soundcard.h			comp-c-include
+./usr/include/sqlite3.h				comp-c-include
+./usr/include/sqlite3ext.h			comp-c-include
 ./usr/include/ssp/ssp.h				comp-c-include
 ./usr/include/ssp/stdio.h			comp-c-include
 ./usr/include/ssp/string.h			comp-c-include
@@ -3257,6 +3259,9 @@
 ./usr/lib/libsl.a				comp-krb5-lib		kerberos
 ./usr/lib/libsl_g.a				-unknown-		kerberos,debuglib
 ./usr/lib/libsl_p.a				comp-krb5-proflib	profile,kerberos
+./usr/lib/libsqlite3.a				comp-c-clib
+./usr/lib/libsqlite3_g.a			-unknown-		debuglib
+./usr/lib/libsqlite3_p.a			comp-c-proflib		profile
 ./usr/lib/libsm.a				comp-obsolete		obsolete
 ./usr/lib/libss.a				comp-obsolete		obsolete
 ./usr/lib/libss_g.a				-unknown-		obsolete
@@ -3328,6 +3333,7 @@
 ./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf-sh.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
+./usr/lib/pkgconfig/sqlite3.pc			comp-c-lib
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chmod.debug		comp-util-debug		debug
@@ -4387,6 +4393,7 @@
 ./usr/libdata/lint/llib-lsdp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lskey.ln		comp-c-lintlib		lint,skey
 ./usr/libdata/lint/llib-lsm.ln			comp-obsolete		obsolete
+./usr/libdata/lint/llib-lsqlite3.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lssh.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lssl.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lssp.ln			comp-obsolete		obsolete

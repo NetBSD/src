@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.141 2011/10/07 09:15:21 mrg Exp $
+# $NetBSD: md.amd64,v 1.142 2011/10/13 22:08:18 joerg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -916,6 +916,11 @@
 ./usr/lib/i386/libsl_g.a			comp-c-proflib		compat,debuglib,kerberos
 ./usr/lib/i386/libsl_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/i386/libsl_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libsqlite3.a			comp-c-lib		compat
+./usr/lib/i386/libsqlite3.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libsqlite3_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libsqlite3_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libsqlite3_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libss.a				comp-obsolete		obsolete
 ./usr/lib/i386/libss.so				comp-obsolete		obsolete
 ./usr/lib/i386/libss_g.a			comp-obsolete		obsolete
@@ -1125,6 +1130,7 @@
 ./usr/libdata/debug/usr/lib/i386/libskey.so.2.0.debug	comp-compat-shlib	compat,pic,skey,debug
 ./usr/libdata/debug/usr/lib/i386/libsl.so.4.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libsl.so.5.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libsqlite3.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libss.so.6.0.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libssh.so.18.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libssl.so.9.0.debug	comp-compat-shlib	compat,pic,debug
