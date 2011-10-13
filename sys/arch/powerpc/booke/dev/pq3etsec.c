@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.8 2011/09/27 01:02:35 jym Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.9 2011/10/13 19:53:30 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.8 2011/09/27 01:02:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.9 2011/10/13 19:53:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -484,7 +484,8 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 		    cnl->cnl_instance);
 		sc->sc_phy_addr = board_info_get_number(prop_name);
 	}
-	aprint_normal(" phy %d", sc->sc_phy_addr);
+	if (sc->sc_phy_addr != MII_PHY_ANY)
+		aprint_normal(" phy %d", sc->sc_phy_addr);
 
 	error = bus_space_map(sc->sc_bst, cnl->cnl_addr, cnl->cnl_size, 0,
 	    &sc->sc_bsh);
