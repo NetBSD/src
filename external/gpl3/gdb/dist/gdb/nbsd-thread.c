@@ -71,10 +71,8 @@ static ptid_t main_ptid;		/* Real process ID */
 static ptid_t cached_thread;
 
 struct target_ops nbsd_thread_ops;
-struct target_ops nbsd_core_ops;
 
 struct td_proc_callbacks_t nbsd_thread_callbacks;
-struct td_proc_callbacks_t nbsd_core_callbacks;
 
 static ptid_t find_active_thread (void);
 static void nbsd_find_new_threads (struct target_ops *);
@@ -325,6 +323,10 @@ find_active_thread (void)
 	     (pl.pl_event != PL_EVENT_SIGNAL))
 	val = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
     }
+  else
+    {
+      return inferior_ptid;
+    }
 
   cached_thread = BUILD_LWP (pl.pl_lwpid, main_ptid);
   return cached_thread;
@@ -515,11 +517,7 @@ nbsd_add_to_thread_list (bfd *abfd, asection *asect, PTR reg_sect_arg)
 
   regval = atoi (bfd_section_name (abfd, asect) + 5);
 
-#ifdef notyet
-  td_map_lwp2thr (main_ta, regval >> 16, &dummy);
-#endif
-
-  add_thread (BUILD_LWP(regval >> 16, main_ptid));
+  add_thread (BUILD_LWP(regval, main_ptid));
 }
 
 /* This routine is called whenever a new symbol table is read in, or when all
@@ -535,7 +533,7 @@ nbsd_add_to_thread_list (bfd *abfd, asection *asect, PTR reg_sect_arg)
 void
 nbsd_thread_new_objfile (struct objfile *objfile)
 {
-  int val, core_pid;
+  int val;
 
   if (!objfile)
     {
@@ -569,15 +567,6 @@ nbsd_thread_new_objfile (struct objfile *objfile)
       nbsd_thread_activate();
     }
 
-  core_pid = elf_tdata (core_bfd)->core_pid;
-  if (core_pid)
-    {
-      main_ptid = pid_to_ptid (core_pid);
-      nbsd_thread_active = 1;
-      init_thread_list ();
-      bfd_map_over_sections (core_bfd, nbsd_add_to_thread_list, NULL);
-      nbsd_find_new_threads (NULL);
-    }
 quit:
   return;
 }
@@ -643,8 +632,6 @@ nbsd_find_new_threads_callback (td_thread_t *th, void *ignored)
 
   if (td_thr_info (th, &ti) != 0)
       return -1;
-
-printf("find new thread %d\n", ti.thread_id);
 
   ptid = BUILD_THREAD (ti.thread_id, main_ptid);
   if (ti.thread_type == TD_TYPE_USER &&
@@ -980,54 +967,6 @@ nbsd_thread_tsd_cmd (char *exp, int from_tty)
   td_tsd_iter (main_ta, tsd_cb, NULL);
 }
 
-static void
-nbsd_core_open (char *filename, int from_tty)
-{
-  int val;
-
-  nbsd_thread_core = 1;
-
-  core_target->to_open (filename, from_tty);
-
-  if (nbsd_thread_present)
-    {
-      val = td_open (&nbsd_thread_callbacks, NULL, &main_ta);
-      if (val == 0)
-	{
-	  main_ptid = pid_to_ptid (elf_tdata (core_bfd)->core_pid);
-	  nbsd_thread_active = 1;
-	  init_thread_list ();
-	  bfd_map_over_sections (core_bfd, nbsd_add_to_thread_list, NULL);
-	  nbsd_find_new_threads (NULL);
-	}
-      else
-	error ("nbsd_core_open: td_open: %s", td_err_string (val));
-    }
-}
-
-static void
-nbsd_core_close (int quitting)
-{
-  /* XXX Setting these here is a gross hack. It needs to be set to
-   * XXX the "current thread ID" when a core file is loaded, but there's
-   * XXX no hook that happens then. However, core_open() in corelow is
-   * XXX pretty likely to call this.
-   */
-  inferior_ptid = minus_one_ptid;
-
-  core_target->to_close (quitting);
-}
-
-static void
-nbsd_core_detach (struct target_ops *ops, char *args, int from_tty)
-{
-  struct target_ops *beneath = find_target_beneath (ops);
-  if (nbsd_thread_active)
-    nbsd_thread_deactivate ();
-  unpush_target (ops);
-  beneath->to_detach (beneath, args, from_tty);
-}
-
 /*
  * Process operation callbacks
  */
@@ -1208,8 +1147,6 @@ init_nbsd_thread_ops (void)
   nbsd_thread_ops.to_shortname = "netbsd-threads";
   nbsd_thread_ops.to_longname = "NetBSD pthread.";
   nbsd_thread_ops.to_doc = "NetBSD pthread support.";
-  nbsd_thread_ops.to_open = 0;
-  nbsd_thread_ops.to_close = 0;
   nbsd_thread_ops.to_attach = nbsd_thread_attach;
   nbsd_thread_ops.to_post_attach = nbsd_thread_post_attach;
   nbsd_thread_ops.to_detach = nbsd_thread_detach;
@@ -1217,7 +1154,6 @@ init_nbsd_thread_ops (void)
   nbsd_thread_ops.to_wait = nbsd_thread_wait;
   nbsd_thread_ops.to_fetch_registers = nbsd_thread_fetch_registers;
   nbsd_thread_ops.to_store_registers = nbsd_thread_store_registers;
-  nbsd_thread_ops.to_prepare_to_store = 0;
   nbsd_thread_ops.to_xfer_partial = nbsd_thread_xfer_partial;
   nbsd_thread_ops.to_files_info = nbsd_thread_files_info;
   nbsd_thread_ops.to_insert_breakpoint = memory_insert_breakpoint;
@@ -1233,43 +1169,9 @@ init_nbsd_thread_ops (void)
   nbsd_thread_ops.to_pid_to_str = nbsd_pid_to_str;
   nbsd_thread_ops.to_find_new_threads = nbsd_find_new_threads;
   nbsd_thread_ops.to_stratum = thread_stratum;
-  nbsd_thread_ops.to_has_all_memory = one;
-  nbsd_thread_ops.to_has_memory = one;
-  nbsd_thread_ops.to_has_stack = one;
-  nbsd_thread_ops.to_has_registers = one;
-  nbsd_thread_ops.to_has_execution = oneptid;
   nbsd_thread_ops.to_has_thread_control = tc_none;
   nbsd_thread_ops.to_magic = OPS_MAGIC;
 }
-
-static void
-init_nbsd_core_ops (void)
-{
-  nbsd_core_ops.to_shortname = "netbsd-core";
-  nbsd_core_ops.to_longname = "NetBSD core pthread.";
-  nbsd_core_ops.to_doc = "NetBSD pthread support for core files.";
-  nbsd_core_ops.to_open = nbsd_core_open;
-  nbsd_core_ops.to_close = nbsd_core_close;
-  nbsd_core_ops.to_detach = nbsd_core_detach;
-  nbsd_core_ops.to_fetch_registers = nbsd_thread_fetch_registers;
-  nbsd_core_ops.to_xfer_partial = nbsd_thread_xfer_partial;
-  nbsd_core_ops.to_files_info = nbsd_core_files_info;
-  nbsd_core_ops.to_create_inferior = nbsd_thread_create_inferior;
-  nbsd_core_ops.to_has_memory = one;
-  nbsd_core_ops.to_has_stack = one;
-  nbsd_core_ops.to_has_registers = one;
-  nbsd_core_ops.to_has_thread_control = tc_schedlock;
-  nbsd_core_ops.to_thread_alive = nbsd_core_thread_alive;
-  nbsd_core_ops.to_pid_to_str = nbsd_pid_to_str;
-  nbsd_core_ops.to_find_new_threads = nbsd_find_new_threads;
-  nbsd_core_ops.to_magic = OPS_MAGIC;
-}
-
-/* we suppress the call to add_target of core_ops in corelow because
-   if there are two targets in the stratum core_stratum, find_core_target
-   won't know which one to return.  see corelow.c for an additonal
-   comment on coreops_suppress_target. */
-int coreops_suppress_target = 1;
 
 void
 _initialize_nbsd_thread (void)
@@ -1277,7 +1179,6 @@ _initialize_nbsd_thread (void)
   static struct cmd_list_element *thread_examine_list = NULL;
 
   init_nbsd_thread_ops ();
-  init_nbsd_core_ops ();
   init_nbsd_proc_callbacks ();
 
   add_target (&nbsd_thread_ops);
