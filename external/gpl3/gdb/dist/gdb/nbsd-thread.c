@@ -504,6 +504,24 @@ nbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
 }
 
 
+static void
+nbsd_add_to_thread_list (bfd *abfd, asection *asect, PTR reg_sect_arg)
+{
+  int regval;
+  td_thread_t *dummy;
+
+  if (strncmp (bfd_section_name (abfd, asect), ".reg/", 5) != 0)
+    return;
+
+  regval = atoi (bfd_section_name (abfd, asect) + 5);
+
+#ifdef notyet
+  td_map_lwp2thr (main_ta, regval >> 16, &dummy);
+#endif
+
+  add_thread (BUILD_LWP(regval >> 16, main_ptid));
+}
+
 /* This routine is called whenever a new symbol table is read in, or when all
    symbol tables are removed.  libthread_db can only be initialized when it
    finds the right variables in libthread.so.  Since it's a shared library,
@@ -517,7 +535,7 @@ nbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
 void
 nbsd_thread_new_objfile (struct objfile *objfile)
 {
-  int val;
+  int val, core_pid;
 
   if (!objfile)
     {
@@ -528,6 +546,7 @@ nbsd_thread_new_objfile (struct objfile *objfile)
   /* Don't do anything if we've already fired up the debugging library */
   if (nbsd_thread_active)
     goto quit;
+
 
   /* Now, initialize the thread debugging library.  This needs to be
      done after the shared libraries are located because it needs
@@ -548,6 +567,16 @@ nbsd_thread_new_objfile (struct objfile *objfile)
     {
       push_target (&nbsd_thread_ops);
       nbsd_thread_activate();
+    }
+
+  core_pid = elf_tdata (core_bfd)->core_pid;
+  if (core_pid)
+    {
+      main_ptid = pid_to_ptid (core_pid);
+      nbsd_thread_active = 1;
+      init_thread_list ();
+      bfd_map_over_sections (core_bfd, nbsd_add_to_thread_list, NULL);
+      nbsd_find_new_threads (NULL);
     }
 quit:
   return;
@@ -614,6 +643,8 @@ nbsd_find_new_threads_callback (td_thread_t *th, void *ignored)
 
   if (td_thr_info (th, &ti) != 0)
       return -1;
+
+printf("find new thread %d\n", ti.thread_id);
 
   ptid = BUILD_THREAD (ti.thread_id, main_ptid);
   if (ti.thread_type == TD_TYPE_USER &&
@@ -950,32 +981,13 @@ nbsd_thread_tsd_cmd (char *exp, int from_tty)
 }
 
 static void
-nbsd_add_to_thread_list (bfd *abfd, asection *asect, PTR reg_sect_arg)
-{
-  int regval;
-  td_thread_t *dummy;
-
-  if (strncmp (bfd_section_name (abfd, asect), ".reg/", 5) != 0)
-    return;
-
-  regval = atoi (bfd_section_name (abfd, asect) + 5);
-
-#ifdef notyet
-  td_map_lwp2thr (main_ta, regval >> 16, &dummy);
-#endif
-
-  add_thread (BUILD_LWP(regval >> 16, main_ptid));
-}
-
-#ifdef notyet
-static void
 nbsd_core_open (char *filename, int from_tty)
 {
   int val;
 
   nbsd_thread_core = 1;
 
-  beneath->to_open (filename, from_tty);
+  core_target->to_open (filename, from_tty);
 
   if (nbsd_thread_present)
     {
@@ -1003,9 +1015,8 @@ nbsd_core_close (int quitting)
    */
   inferior_ptid = minus_one_ptid;
 
-  beneath->to_close (quitting);
+  core_target->to_close (quitting);
 }
-#endif
 
 static void
 nbsd_core_detach (struct target_ops *ops, char *args, int from_tty)
@@ -1237,10 +1248,8 @@ init_nbsd_core_ops (void)
   nbsd_core_ops.to_shortname = "netbsd-core";
   nbsd_core_ops.to_longname = "NetBSD core pthread.";
   nbsd_core_ops.to_doc = "NetBSD pthread support for core files.";
-#ifdef notyet
   nbsd_core_ops.to_open = nbsd_core_open;
   nbsd_core_ops.to_close = nbsd_core_close;
-#endif
   nbsd_core_ops.to_detach = nbsd_core_detach;
   nbsd_core_ops.to_fetch_registers = nbsd_thread_fetch_registers;
   nbsd_core_ops.to_xfer_partial = nbsd_thread_xfer_partial;
