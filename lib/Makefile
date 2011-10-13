@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.178 2011/10/07 21:33:56 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.179 2011/10/13 22:08:20 joerg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -66,6 +66,7 @@ SUBDIR+=	../external/bsd/libpcap/lib
 
 SUBDIR+=	../external/mit/lua/lib
 
+SUBDIR+=	../external/public-domain/sqlite/lib
 SUBDIR+=	../external/public-domain/xz/lib
 
 SUBDIR+=	../gnu/lib/libmalloc
