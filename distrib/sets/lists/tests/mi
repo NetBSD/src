@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.400 2011/10/11 23:04:21 dholland Exp $
+# $NetBSD: mi,v 1.401 2011/10/13 07:47:30 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2006,6 +2006,7 @@
 ./usr/tests/lib/libc/regex/data/error.in	tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/meta.in		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/nospec.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/nul.in		tests-obsolete		obsolete
 ./usr/tests/lib/libc/regex/data/paren.in	tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/regress.in	tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/repet_bounded.in tests-lib-tests	atf
