@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.877 2011/10/13 22:08:19 joerg Exp $
+#	$NetBSD: 3RDPARTY,v 1.878 2011/10/13 23:40:53 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -283,7 +283,7 @@ The distribution doesn't include the Linux specific bits or build system.
 
 Package:	diffutils
 Version:	2.8.1
-Current Vers:	2.8.1
+Current Vers:	3.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
 Home Page:	http://www.gnu.org/software/diffutils/
@@ -650,7 +650,7 @@ Notes:
 The sources were integrated into src/sys/external/apache2/mDNSResponder/dist.
 
 Package:	mdocml
-Version:	1.11.1
+Version:	1.12.0
 Current Vers:	1.12.0
 Maintainer:	Kristaps Džonsons
 Archive Site:	http://mdocml.bsd.lv/snapshots/
@@ -686,7 +686,7 @@ Delete the otherOS directory before importing.
 
 Package:	nawk
 Version:	2010-05-23
-Current Vers:	2010-05-23
+Current Vers:	2011-08-10
 Maintainer:	Brian Kernighan <bwk@princeton.edu>
 Archive Site:	http://www.cs.princeton.edu/~bwk/btl.mirror/
 Home Page:	http://www.cs.princeton.edu/~bwk/btl.mirror/
