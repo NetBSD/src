@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.57 2011/08/06 13:19:46 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.58 2011/10/13 05:20:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.57 2011/08/06 13:19:46 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.58 2011/10/13 05:20:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -376,8 +376,6 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		rv = AE_AML_INVALID_SPACE_ID;
 		goto out;
 	}
-
-	KASSERT(type == ACPI_STATE_C1 || cs[type].cs_method == 0);
 
 	cs[type].cs_addr = state.cs_addr;
 	cs[type].cs_power = state.cs_power;
