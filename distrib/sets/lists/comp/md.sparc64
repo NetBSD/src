@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.126 2011/10/07 09:15:21 mrg Exp $
+# $NetBSD: md.sparc64,v 1.127 2011/10/13 22:08:18 joerg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -770,6 +770,11 @@
 ./usr/lib/sparc/libsl_g.a			-unknown-		compat,debuglib,kerberos
 ./usr/lib/sparc/libsl_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/sparc/libsl_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libsqlite3.a			comp-c-lib		compat
+./usr/lib/sparc/libsqlite3.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libsqlite3_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libsqlite3_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libsqlite3_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/sparc/libss.a				comp-c-lib		obsolete
 ./usr/lib/sparc/libss.so			base-sys-shlib		obsolete
 ./usr/lib/sparc/libss_g.a			-unknown-		obsolete
@@ -972,6 +977,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libsaslc.so.0.0.debug			comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/sparc/libskey.so.2.0.debug			comp-compat-shlib	compat,pic,debug,skey
 ./usr/libdata/debug/usr/lib/sparc/libsl.so.5.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libsqlite3.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libss.so.6.0.debug			comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/sparc/libssh.so.18.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libssl.so.9.0.debug			comp-compat-shlib	compat,pic,debug

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.965 2011/10/11 19:34:38 christos Exp $
+# $NetBSD: mi,v 1.966 2011/10/13 22:08:17 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -659,6 +659,7 @@
 ./usr/bin/sort					base-util-bin
 ./usr/bin/spell					base-util-bin
 ./usr/bin/split					base-util-bin
+./usr/bin/sqlite3				base-util-bin
 ./usr/bin/ssh					base-secsh-bin		crypto
 ./usr/bin/ssh-add				base-secsh-bin		crypto
 ./usr/bin/ssh-agent				base-secsh-bin		crypto

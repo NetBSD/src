@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.876 2011/10/10 20:01:08 apb Exp $
+#	$NetBSD: 3RDPARTY,v 1.877 2011/10/13 22:08:19 joerg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1001,6 +1001,17 @@ Notes:
 Heavily modified for use as a soft float library for GCC.  The actual
 arithmetic code is unchanged, though, and should behave exactly like the
 original.
+
+Package:	sqlite
+Version:	pre-3.6.9 snapshot
+Current Vers:	3.6.8
+Maintainer:	Richard Hipp <drh@sqlite.org>
+Home Page:	http://www.sqlite.org
+Responsible:	joerg
+License:	Public domain
+Notes:
+Initial import uses a pre-release with a number of bug fixes to avoid
+unnecessary local changes.
 
 Package:	tcpdump
 Version:	4.1.1
