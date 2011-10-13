@@ -1,4 +1,4 @@
-/*	$NetBSD: database.c,v 1.5 2011/10/12 19:48:24 christos Exp $	*/
+/*	$NetBSD: database.c,v 1.6 2011/10/13 16:58:30 joerg Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: database.c,v 1.7 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: database.c,v 1.5 2011/10/12 19:48:24 christos Exp $");
+__RCSID("$NetBSD: database.c,v 1.6 2011/10/13 16:58:30 joerg Exp $");
 #endif
 #endif
 
@@ -88,7 +88,7 @@ process_dir(const char *dname, struct stat *st, int sys, cron_db *new_db,
 		}
 
 		/* ... or ending with ~ ... */
-		if ((dp->d_name[len - 1] == '~'))
+		if (dp->d_name[len - 1] == '~')
 			continue;
 
 		(void)strlcpy(fname, dp->d_name, sizeof(fname));
