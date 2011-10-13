@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2010/12/18 15:02:06 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2011/10/13 17:23:29 plunky Exp $
 #
 
 TESTSDIR=	${TESTSBASE}/fs/ptyfs
-WARNS?=		5
+WARNS?=		4
 
 TESTS_C=	t_ptyfs
 TESTS_C+=	t_nullpts
