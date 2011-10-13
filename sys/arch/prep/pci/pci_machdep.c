@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.37 2011/07/01 16:56:52 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.38 2011/10/13 19:51:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.37 2011/07/01 16:56:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.38 2011/10/13 19:51:17 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,6 +91,9 @@ prep_pci_get_chipset_tag_indirect(pci_chipset_tag_t pc)
 	pc->pc_intr_establish = genppc_pci_intr_establish;
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
 	pc->pc_intr_setattr = genppc_pci_intr_setattr;
+
+	pc->pc_msi_v = (void *)pc;
+	genppc_pci_chipset_msi_init(pc);
 
 	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
 	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
