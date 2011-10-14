@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.11 2011/10/14 15:31:35 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.12 2011/10/14 16:06:05 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.11 2011/10/14 15:31:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.12 2011/10/14 16:06:05 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.11 2011/10/14 15:31:35 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.11 2011/10/14 15:31:35 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.12 2011/10/14 16:06:05 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -987,6 +987,7 @@ test1(void)
 
 struct testnode {
 	uint64_t idx;
+	bool tagged[RADIX_TREE_TAG_ID_MAX];
 };
 
 static void
@@ -1048,11 +1049,12 @@ test2(const char *title, bool dense)
 		}
 		radix_tree_insert_node(t, n->idx, n);
 		for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
-			if (test2_should_tag(i, tag)) {
+			n->tagged[tag] = test2_should_tag(i, tag);
+			if (n->tagged[tag]) {
 				radix_tree_set_tag(t, n->idx, tag);
 				ntagged[tag]++;
 			}
-			assert(test2_should_tag(i, tag) ==
+			assert(n->tagged[tag] ==
 			    radix_tree_get_tag(t, n->idx, tag));
 		}
 	}
@@ -1066,14 +1068,22 @@ test2(const char *title, bool dense)
 	printops(title, "lookup", 0, nnodes, &stv, &etv);
 
 	for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
+		unsigned int count = 0;
+
 		gettimeofday(&stv, NULL);
 		for (i = 0; i < nnodes; i++) {
+			bool tagged;
+
 			n = &nodes[i];
-			assert(test2_should_tag(i, tag) ==
-			    radix_tree_get_tag(t, n->idx, tag));
+			tagged = radix_tree_get_tag(t, n->idx, tag);
+			assert(n->tagged[tag] == tagged);
+			if (tagged) {
+				count++;
+			}
 		}
 		gettimeofday(&etv, NULL);
-		printops(title, "get_tag", tag, ntagged[tag], &stv, &etv);
+		assert(ntagged[tag] == count);
+		printops(title, "get_tag", tag, nnodes, &stv, &etv);
 	}
 
 	gettimeofday(&stv, NULL);
@@ -1097,7 +1107,7 @@ test2(const char *title, bool dense)
 		gettimeofday(&stv, NULL);
 		for (i = 0; i < nnodes; i++) {
 			n = &nodes[i];
-			if (test2_should_tag(i, tag)) {
+			if (n->tagged[tag]) {
 				radix_tree_set_tag(t, n->idx, tag);
 				ntagged[tag]++;
 			}
