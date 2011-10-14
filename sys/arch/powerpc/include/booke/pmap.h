@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1.2.1 2011/01/07 01:26:20 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.1.2.2 2011/10/14 17:21:26 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,11 +36,26 @@
 #ifndef _POWERPC_BOOKE_PMAP_H_
 #define _POWERPC_BOOKE_PMAP_H_
 
+#ifdef _LOCORE
+#error use assym.h instead
+#endif
+
+#if defined(_MODULE)
+#error this file should not be included by loadable kernel modules
+#endif
+
 #include <sys/cpu.h>
 #include <sys/kcore.h>
+#include <uvm/uvm_page.h>
+#ifdef __PMAP_PRIVATE
 #include <powerpc/booke/cpuvar.h>
+#include <powerpc/cpuset.h>
+#endif
+
+#define	PMAP_NEED_PROCWR
 
 #define	PMAP_NOCACHE	0x01000000	/*  */
+#include <common/pmap/tlb/vmpagemd.h>
 
 #include <powerpc/booke/pte.h>
 
@@ -55,12 +70,12 @@
 #define	PMAP_TLB_NUM_PIDS		256
 #define	PMAP_INVALID_SEGTAB_ADDRESS	((struct pmap_segtab *)0xfeeddead)
 
-#ifndef _LOCORE
 #define	pmap_phys_address(x)		(x)
 
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
 
+#ifdef __PMAP_PRIVATE
 struct vm_page *
 	pmap_md_alloc_poolpage(int flags);
 vaddr_t	pmap_md_map_poolpage(paddr_t);
@@ -70,25 +85,14 @@ paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
 vaddr_t	pmap_md_direct_map_paddr(paddr_t);
 void	pmap_md_init(void);
 
-void	pmap_md_page_syncicache(struct vm_page *);
+bool	pmap_md_tlb_check_entry(void *, vaddr_t, tlb_asid_t, pt_entry_t);
+#endif
+
+void	pmap_md_page_syncicache(struct vm_page *, __cpuset_t);
 void	pmap_bootstrap(vaddr_t, vaddr_t, const phys_ram_seg_t *, size_t);
 bool	pmap_extract(struct pmap *, vaddr_t, paddr_t *);
 
-#include <common/pmap/tlb/pmap.h>
-
-#define pmap_kernel()	(&kernel_pmap_store.kernel_pmap)
-
-static inline paddr_t
-vtophys(vaddr_t va)
-{
-	paddr_t pa;
-
-	if (pmap_extract(pmap_kernel(), va, &pa))
-		return pa;
-	KASSERT(0);
-	return (paddr_t) -1;
-}
-
+#ifdef __PMAP_PRIVATE
 /*
  * Virtual Cache Alias helper routines.  Not a problem for Booke CPUs.
  */
@@ -109,9 +113,30 @@ pmap_md_vca_clean(struct vm_page *pg, vaddr_t va, int op)
 {
 }
 
+static inline size_t
+pmap_md_tlb_asid_max(void)
+{
+	return PMAP_TLB_NUM_PIDS - 1;
+}
+#endif
+
 #define	POOL_VTOPHYS(va)	((paddr_t)(vaddr_t)(va))
 #define	POOL_PHYSTOV(pa)	((vaddr_t)(paddr_t)(pa))
 
-#endif /* _LOCORE */
+#include <common/pmap/tlb/pmap.h>
+
+#define	pmap_kernel()	(&kernel_pmap_store.kernel_pmap)
+static inline paddr_t vtophys(vaddr_t);
+
+static inline paddr_t
+vtophys(vaddr_t va)
+{
+	paddr_t pa;
+
+	if (pmap_extract(pmap_kernel(), va, &pa))
+		return pa;
+	KASSERT(0);
+	return (paddr_t) -1;
+}
 
 #endif /* !_POWERPC_BOOKE_PMAP_H_ */

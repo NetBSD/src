@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.1.2.2 2011/01/17 07:45:58 matt Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.1.2.3 2011/10/14 17:21:25 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,9 +38,13 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.1.2.3 2011/10/14 17:21:25 matt Exp $");
+
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
@@ -50,7 +54,11 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <powerpc/altivec.h>
+#include <powerpc/cpuset.h>
+#include <powerpc/pcb.h>
+#include <powerpc/spr.h>
+#include <powerpc/booke/spr.h>
+#include <powerpc/booke/cpuvar.h>
 
 /*
  * Global variables used here and there
@@ -60,6 +68,12 @@ paddr_t msgbuf_paddr;
 psize_t pmemsize;
 struct vm_map *mb_map;
 struct vm_map *phys_map;
+
+#ifdef MODULAR
+register_t cpu_psluserset = PSL_USERSET;
+register_t cpu_pslusermod = PSL_USERMOD;
+register_t cpu_pslusermask = PSL_USERMASK;
+#endif
 
 static bus_addr_t booke_dma_phys_to_bus_mem(bus_dma_tag_t, bus_addr_t);
 static bus_addr_t booke_dma_bus_mem_to_phys(bus_dma_tag_t, bus_addr_t);
@@ -95,57 +109,37 @@ booke_dma_bus_mem_to_phys(bus_dma_tag_t t, bus_addr_t a)
 	return a;
 }
 
-static int
-null_splraise(int ipl)
-{
-	int cpl = curcpu()->ci_cpl;
-	curcpu()->ci_cpl = ipl;
-	return cpl;
-}
-
-static void
-null_splx(int ipl)
-{
-	curcpu()->ci_cpl = ipl;
-}
-
-static const struct intrsw null_intrsw = {
-	.intrsw_splraise = null_splraise,
-	.intrsw_splx = null_splx,
-};
-
-const struct intrsw *powerpc_intrsw = &null_intrsw;
 struct cpu_md_ops cpu_md_ops;
-extern struct cpu_info cpu_info[1];
 
-#if 0
-pt_entry_t ptp0[NPTEPG] = {
-	[(0x20000 & SEGOFSET) >> PGSHIFT] = 0x00020000|PTE_xR|PTE_xX|PTE_M,
-};
-
-struct pmap_segtab pmap_kern_segtab = {
-	.seg_tab[0x20000 >> SEGSHIFT] = ptp0,
-};
-#endif
-
-struct cpu_softc cpu_softc[1] = {
+struct cpu_softc cpu_softc[] = {
 	[0] = {
-		.cpu_ci = cpu_info,
+		.cpu_ci = &cpu_info[0],
 	},
+#ifdef MULTIPROCESSOR
+	[CPU_MAXNUM-1] = {
+		.cpu_ci = &cpu_info[CPU_MAXNUM-1],
+	},
+#endif
 };
-struct cpu_info cpu_info[1] = {
+struct cpu_info cpu_info[] = {
 	[0] = {
 		.ci_curlwp = &lwp0,
 		.ci_tlb_info = &pmap_tlb0_info,
-		.ci_softc = cpu_softc,
+		.ci_softc = &cpu_softc[0],
 		.ci_cpl = IPL_HIGH,
-		.ci_fpulwp = &lwp0,
-		.ci_veclwp = &lwp0,
-#if 0
-		.ci_pmap_kern_segtab = &pmap_kern_segtab,
-#endif
+		.ci_idepth = -1,
 	},
+#ifdef MULTIPROCESSOR
+	[CPU_MAXNUM-1] = {
+		.ci_curlwp = NULL,
+		.ci_tlb_info = &pmap_tlb0_info,
+		.ci_softc = &cpu_softc[CPU_MAXNUM-1],
+		.ci_cpl = IPL_HIGH,
+		.ci_idepth = -1,
+	},
+#endif
 };
+CTASSERT(__arraycount(cpu_info) == __arraycount(cpu_softc));
 
 /*
  * This should probably be in autoconf!				XXX
@@ -160,9 +154,11 @@ char bootpath[256];
 void *startsym, *endsym;
 #endif
 
-int fake_mapiodev = 1;
+#if defined(MULTIPROCESSOR)
+volatile struct cpu_hatch_data cpu_hatch_data __cacheline_aligned;
+#endif
 
-void lcsplx(int);
+int fake_mapiodev = 1;
 
 void
 booke_cpu_startup(const char *model)
@@ -174,7 +170,7 @@ booke_cpu_startup(const char *model)
 
 	printf("%s%s", copyright, version);
 
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob((uint64_t)physmem));
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
@@ -194,6 +190,11 @@ booke_cpu_startup(const char *model)
 	printf("avail memory = %s\n", pbuf);
 
 	/*
+	 * Register the tlb's evcnts
+	 */
+	pmap_tlb_info_evcnt_attach(curcpu()->ci_tlb_info);
+
+	/*
 	 * Set up the board properties database.
 	 */
 	board_info_init();
@@ -203,6 +204,23 @@ booke_cpu_startup(const char *model)
 	 */
 	bus_space_mallocok();
 	fake_mapiodev = 0;
+
+#ifdef MULTIPROCESSOR
+	for (size_t i = 1; i < __arraycount(cpu_info); i++) {
+		struct cpu_info * const ci = &cpu_info[i];
+		struct cpu_softc * const cpu = &cpu_softc[i];
+		cpu->cpu_ci = ci;
+		cpu->cpu_bst = cpu_softc[0].cpu_bst;
+		cpu->cpu_le_bst = cpu_softc[0].cpu_le_bst;
+		cpu->cpu_bsh = cpu_softc[0].cpu_bsh;
+		cpu->cpu_highmem = cpu_softc[0].cpu_highmem;
+		ci->ci_softc = cpu;
+		ci->ci_tlb_info = &pmap_tlb0_info;
+		ci->ci_cpl = IPL_HIGH;
+		ci->ci_idepth = -1;
+		ci->ci_pmap_kern_segtab = curcpu()->ci_pmap_kern_segtab;
+	}
+#endif /* MULTIPROCESSOR */
 }
 
 static void
@@ -289,11 +307,6 @@ cpu_reboot(int howto, char *what)
 		/* nothing */;
 #endif
 }
-void
-lcsplx(int spl)
-{
-	splx(spl);
-}
 
 /*
  * mapiodev:
@@ -310,7 +323,7 @@ mapiodev(paddr_t pa, psize_t len)
 	 * See if we have reserved TLB entry for the pa. This needs to be
 	 * true for console as we can't use uvm during early bootstrap.
 	 */
-	void * const p = tlb_mapiodev(pa, len);
+	void * const p = tlb_mapiodev(pa, len, false);
 	if (p != NULL)
 		return p;
 
@@ -328,8 +341,7 @@ mapiodev(paddr_t pa, psize_t len)
 	for (va += len, pa += len; len > 0; len -= PAGE_SIZE) {
 		va -= PAGE_SIZE;
 		pa -= PAGE_SIZE;
-		pmap_kenter_pa(va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_NOCACHE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE|PMAP_NOCACHE);
 	}
 	pmap_update(pmap_kernel());
 	return (void *)(va + off);
@@ -363,14 +375,6 @@ cpu_evcnt_attach(struct cpu_info *ci)
 		NULL, xname, "late clock");
 	evcnt_attach_dynamic_nozero(&cpu->cpu_ev_exec_trap_sync, EVCNT_TYPE_TRAP,
 		NULL, xname, "exec pages synced (trap)");
-#ifndef __HAVE_FAST_SOFTINTS
-	evcnt_attach_dynamic_nozero(&ci->ci_ev_softclock, EVCNT_TYPE_INTR,
-		NULL, xname, "soft clock");
-	evcnt_attach_dynamic_nozero(&ci->ci_ev_softnet, EVCNT_TYPE_INTR,
-		NULL, xname, "soft net");
-	evcnt_attach_dynamic_nozero(&ci->ci_ev_softserial, EVCNT_TYPE_INTR,
-		NULL, xname, "soft serial");
-#endif
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_traps, EVCNT_TYPE_TRAP,
 		NULL, xname, "traps");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_kdsi, EVCNT_TYPE_TRAP,
@@ -389,6 +393,8 @@ cpu_evcnt_attach(struct cpu_info *ci)
 		&ci->ci_ev_traps, xname, "system call traps");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_pgm, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_traps, xname, "PGM traps");
+	evcnt_attach_dynamic_nozero(&ci->ci_ev_debug, EVCNT_TYPE_TRAP,
+		&ci->ci_ev_traps, xname, "debug traps");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_fpu, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_traps, xname, "FPU unavailable traps");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_fpusw, EVCNT_TYPE_MISC,
@@ -412,6 +418,63 @@ cpu_evcnt_attach(struct cpu_info *ci)
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_itlbmiss_hard, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_traps, xname, "inst tlb misses");
 }
+
+#ifdef MULTIPROCESSOR
+register_t
+cpu_hatch(void)
+{
+	volatile struct cpuset_info * const csi = &cpuset_info;
+	const size_t id = cpu_number();
+
+	/*
+	 * We've hatched so tell the spinup code.
+	 */
+	CPUSET_ADD(csi->cpus_hatched, id);
+
+	/*
+	 * Loop until running bit for this cpu is set.
+	 */
+	while (!CPUSET_HAS_P(csi->cpus_running, id)) {
+		continue;
+	}
+
+	/*
+	 * Now that we are active, start the clocks.
+	 */
+	cpu_initclocks();
+
+	/*
+	 * Return sp of the idlelwp.  Which we should be already using but ...
+	 */
+	return curcpu()->ci_curpcb->pcb_sp;
+}
+
+void
+cpu_boot_secondary_processors(void)
+{
+	volatile struct cpuset_info * const csi = &cpuset_info;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	__cpuset_t running = CPUSET_NULLSET;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		/*
+		 * Skip this CPU if it didn't sucessfully hatch.
+		 */
+		if (! CPUSET_HAS_P(csi->cpus_hatched, cpu_index(ci)))
+			continue;
+
+		KASSERT(!CPU_IS_PRIMARY(ci));
+		KASSERT(ci->ci_data.cpu_idlelwp);
+
+		CPUSET_ADD(running, cpu_index(ci));
+	}
+	KASSERT(CPUSET_EQUAL_P(csi->cpus_hatched, running));
+	if (!CPUSET_EMPTY_P(running)) {
+		CPUSET_ADDSET(csi->cpus_running, running);
+	}
+}
+#endif
 
 uint32_t
 cpu_read_4(bus_addr_t a)
@@ -441,4 +504,38 @@ cpu_write_1(bus_addr_t a, uint8_t v)
 {
 	struct cpu_softc * const cpu = curcpu()->ci_softc;
 	bus_space_write_1(cpu->cpu_bst, cpu->cpu_bsh, a, v);
+}
+
+void
+booke_sstep(struct trapframe *tf)
+{
+	KASSERT(tf->tf_srr1 & PSL_DE);
+	const uint32_t insn = ufetch_32((const void *)tf->tf_srr0);
+	register_t dbcr0 = DBCR0_IAC1 | DBCR0_IDM;
+	register_t dbcr1 = DBCR1_IAC1US_USER | DBCR1_IAC1ER_DS1;
+	if ((insn >> 28) == 4) {
+		uint32_t iac2 = 0;
+		if ((insn >> 26) == 0x12) {
+			const int32_t off = (((int32_t)insn << 6) >> 6) & ~3;
+			iac2 = ((insn & 2) ? 0 : tf->tf_srr0) + off;
+			dbcr0 |= DBCR0_IAC2;
+		} else if ((insn >> 26) == 0x10) {
+			const int16_t off = insn & ~3;
+			iac2 = ((insn & 2) ? 0 : tf->tf_srr0) + off;
+			dbcr0 |= DBCR0_IAC2;
+		} else if ((insn & 0xfc00ffde) == 0x4c000420) {
+			iac2 = tf->tf_ctr;
+			dbcr0 |= DBCR0_IAC2;
+		} else if ((insn & 0xfc00ffde) == 0x4c000020) {
+			iac2 = tf->tf_lr;
+			dbcr0 |= DBCR0_IAC2;
+		}
+		if (dbcr0 & DBCR0_IAC2) {
+			dbcr1 |= DBCR1_IAC2US_USER | DBCR1_IAC2ER_DS1;
+			mtspr(SPR_IAC2, iac2);
+		}
+	}
+	mtspr(SPR_IAC1, tf->tf_srr0 + 4);
+	mtspr(SPR_DBCR1, dbcr1);
+	mtspr(SPR_DBCR0, dbcr0);
 }

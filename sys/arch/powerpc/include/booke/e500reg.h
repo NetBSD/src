@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.1.2.2 2011/08/02 01:34:36 matt Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.1.2.3 2011/10/14 17:21:26 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,6 +45,9 @@
 #endif
 
 #define	GUR_SIZE		0x100000
+#define	GUR_BPTR		0x0020		/* Boot Page Translation */
+#define	BPTR_EN			__PPCBIT(0)	/* Boot Page Enabled */
+#define	BPTR_BOOT_PAGE		__PPCBITS(8,31)	/* high 24 bits of phys addr */
 
 #define	DDRC1_BASE		0x02000
 #define	DDRC2_BASE		0x06000
@@ -60,6 +63,49 @@
 	((((((n) & BNDS_EA) + __LOWEST_SET_BIT(BNDS_EA)) << 16) - (((n) & BNDS_SA))) << 8)
 #define	CS_CONFIG(n)		(0x080 + 0x004 * (n))
 #define CS_CONFIG_EN		__PPCBIT(0)
+
+#define	DDR_SDRAM_CFG		0x110
+#define	SDRAM_CFG_MEM_EN	__PPCBIT(0)
+#define	SDRAM_CFG_SREN		__PPCBIT(1)
+#define	SDRAM_CFG_ECC_EN	__PPCBIT(2)
+#define	SDRAM_CFG_RDEN		__PPCBIT(3)
+#define	SDRAM_CFG_TYPE		__PPCBITS(5,7)
+#define	SDRAM_CFG_TYPE_DDR2	3
+#define	SDRAM_CFG_TYPE_DDR3	7
+#define	SDRAM_CFG_DYN_PWR	__PPCBIT(10)
+#define	SDRAM_CFG_DBW		__PPCBITS(11,12)
+#define	SDRAM_CFG_DBW_64BIT	0
+#define	SDRAM_CFG_DBW_32BIT	1
+
+#define	CAPTURE_DATA_HI		0xe20
+#define	CAPTURE_DATA_LO		0xe24
+#define	CAPTURE_ECC		0xe28
+
+#define	ERR_DETECT		0xe40
+#define	ERR_DISABLE		0xe44
+#define	ERR_INT_EN		0xe48
+
+#define	ERR_MMEE		__PPCBIT(0)
+#define	ERR_APEE		__PPCBIT(23)
+#define	ERR_ACEE		__PPCBIT(24)
+#define	ERR_MBEE		__PPCBIT(28)
+#define	ERR_SBEE		__PPCBIT(29)
+#define	ERR_MSEE		__PPCBIT(31)
+
+#define	CAPTURE_ATTRIBUTES	0xe4c
+#define	CATTR_BNUM		__PPCBITS(1,3)
+#define	CATTR_TSIZ		__PPCBITS(5,7)
+#define	CATTR_TSRC		__PPCBITS(11,15)
+#define	CATTR_TTYP		__PPCBITS(18,19)
+#define	CATTR_VLD		__PPCBIT(31)
+
+#define	CAPTURE_ADDRESS		0xe50
+#define	CAPTURE_EXT_ADDRESS	0xe54
+
+#define	ERR_SBE			0xe58
+#define	ERR_SBE_SBET		__PPCBITS(8,15)
+#define	ERR_SBE_SBEC		__PPCBITS(24,31)
+
 #endif /* DDRC_PRIVATE */
 
 #define	GPIO_BASE		0x0fc00
@@ -77,8 +123,8 @@
 #endif /* GPIO_PRIVATE */
 
 #define	PCIE1_BASE		0x0a000
-#define	PCIE2_MPC8572_BASE	0x09000
-#define	PCIE3_MPC8572_BASE	0x08000
+#define	PCIE2_MPC8572_BASE	0x09000	/* P2020 too */
+#define	PCIE3_MPC8572_BASE	0x08000	/* P2020 too */
 #define	PCIX1_MPC8548_BASE	0x08000
 #define	PCIX2_MPC8548_BASE	0x09000
 #define	PCIE2_MPC8544_BASE	0x09000	/* MPC8536 too */
@@ -217,6 +263,9 @@
 #define PEX_LTSSM		0x404
 #define	LTSSM_L0		16
 
+#define	PCI_PBFR		0x44	/* Bus Function Register */
+#define	PBFR_PAH		__BIT(0)
+
 #endif /* PCI_PRIVATE */
 
 #define	OPENPIC_BASE		0x40000
@@ -296,6 +345,8 @@
 
 /* Power-On Reset Configuration Values */
 #define PORPLLSR	0x000 /* POR PLL ratio status register */
+#define	E500_RATIO2	__PPCBITS(2,7)
+#define	E500_RATIO2_GET(n) __SHIFTOUT(n, E500_RATIO2)
 #define	E500_RATIO	__PPCBITS(10,15)
 #define	E500_RATIO_GET(n) __SHIFTOUT(n, E500_RATIO)
 #define	PCI1_CLK_SEL	__PPCBIT(16)
@@ -303,6 +354,7 @@
 #define	PLAT_RATIO	__PPCBITS(26,30)
 #define	PLAT_RATIO_GET(n) __SHIFTOUT(n, PLAT_RATIO)
 #define PORBMSR		0x004 /* POR boot mode status register */
+#define	PORBMSR_BCFG	__PPCBITS(0,1)
 #define	PORBMSR_HA	__PPCBITS(13,15)
 #define	PORBMSR_HA_GET(n) __SHIFTOUT(m, PORBMSR_HA)
 #define	PORBMSR_HA_PEXSRIO_AGENT	0 /* PCI Express & SRIO agent mode */
@@ -353,6 +405,13 @@
 #define	IOSEL_MPC8572_SRIO3125		13
 #define	IOSEL_MPC8572_SRIO1250		14
 #define	IOSEL_MPC8572_PCIE1_X8		15
+#define	IOSEL_P20x0_PCIE1_X1		0
+#define	IOSEL_P20x0_PCIE12_X1_3_X2	2
+#define	IOSEL_P20x0_PCIE13_X2		4
+#define	IOSEL_P20x0_PCIE1_X4		6
+#define	IOSEL_P20x0_PCIE1_X1_SRIO2500_1X	13
+#define	IOSEL_P20x0_PCIE12_X1_SGMII23	14
+#define	IOSEL_P20x0_PCIE1_X2_SGMII23	15
 #define	PORDEVSR_PCI2_ARB	__PPCBIT(13)
 #define	PORDEVSR_PCI1_ARB	__PPCBIT(14)
 #define	PORDEVSR_PCI32		__PPCBIT(15)
@@ -393,9 +452,13 @@
 #define	PMUXCR_SDHC_CD	__PPCBIT(1)
 #define	PMUXCR_SDHC_WP	__PPCBIT(2)
 #define	PMUXCR_PCI_REQGNT3 __PPCBIT(3)
+#define	PMUXCR_TSEC1_TS __PPCBIT(3)
 #define	PMUXCR_PCI_REQGNT4 __PPCBIT(4)
+#define	PMUXCR_TSEC2_TS __PPCBIT(4)
 #define	PMUXCR_USB1	__PPCBIT(5)
+#define	PMUXCR_TSEC3_TS __PPCBIT(5)
 #define	PMUXCR_USB2	__PPCBIT(6)
+#define	PMUXCR_USB	 __PPCBIT(6)
 #define	PMUXCR_DMA0	__PPCBIT(14)
 #define	PMUXCR_DMA2	__PPCBIT(15)
 #define	PMUXCR_DMA1	__PPCBIT(30)
@@ -415,16 +478,18 @@
 #define	DEVDISR_TLU1	__PPCBIT(9)
 #define	DEVDISR_USB2	__PPCBIT(9)	/* MPC8536 */
 #define	DEVDISR_TLU2	__PPCBIT(10)
+#define	DEVDISR_ESDHC_10 __PPCBIT(10)
 #define	DEVDISR_USB3	__PPCBIT(10)	/* MPC8536 */
 #define	DEVDISR_L2	__PPCBIT(11)	/* MPC8536 */
 #define	DEVDISR_SRIO	__PPCBIT(12)
-#define	DEVDISR_ESDHC	__PPCBIT(12)	/* MPC8536 */
+#define	DEVDISR_ESDHC_12 __PPCBIT(12)	/* MPC8536 */
 #define	DEVDISR_RMSG	__PPCBIT(13)
 #define	DEVDISR_SATA1	__PPCBIT(13)	/* MPC8536 */
-#define	DEVDISR_DDR2	__PPCBIT(14)
-#define	DEVDISR_DDR	__PPCBIT(15)
-#define	DEVDISR_SPI	__PPCBIT(15)	/* MPC8536 */
+#define	DEVDISR_DDR2_14	__PPCBIT(14)
+#define	DEVDISR_DDR_15	__PPCBIT(15)
+#define	DEVDISR_SPI_15	__PPCBIT(15)	/* MPC8536 */
 #define	DEVDISR_E500	__PPCBIT(16)
+#define	DEVDISR_DDR_16	__PPCBIT(16)	/* MPC8536 */
 #define	DEVDISR_TB	__PPCBIT(17)
 #define	DEVDISR_E500_1	__PPCBIT(18)
 #define	DEVDISR_TB_1	__PPCBIT(19)
@@ -437,6 +502,7 @@
 #define	DEVDISR_TSEC3	__PPCBIT(26)
 #define	DEVDISR_TSEC4	__PPCBIT(27)
 #define	DEVDISR_FEC	__PPCBIT(28)
+#define	DEVDISR_SPI_28	__PPCBIT(28)	/* P2020 */
 #define	DEVDISR_I2C	__PPCBIT(29)
 #define	DEVDISR_DUART	__PPCBIT(30)
 #define	DEVDISR_SRDS1	__PPCBIT(31)	/* MPC8536 */
@@ -532,15 +598,140 @@
 #define MBMR		0x074 /* UPMB mode register */
 #define MCMR		0x078 /* UPMC mode register */
 #define MRTPR		0x084 /* Memory refresh timer prescaler register */
-#define MDR		0x088 /* UPM data register */
+#define MDR		0x088 /* UPM/FCM data register */
+#define	MDR_AS3		__PPCBITS(0,7)
+#define	MDR_AS2		__PPCBITS(8,15)
+#define	MDR_AS1		__PPCBITS(16,23)
+#define	MDR_AS0		__PPCBITS(24,31)
+#define	LSOR		0x090 /* Special Operation Initiation register */
 #define LSDMR		0x094 /* SDRAM mode register */
 #define LURT		0x0A0 /* UPM refresh timer */
 #define LSRT		0x0A4 /* SDRAM refresh timer */
 #define LTESR		0x0B0 /* Transfer error status register */
+#define	LTESR_BM	__PPCBIT(0)
+#define	LTESR_FCT	__PPCBIT(1)
+#define	LTESR_PAR	__PPCBIT(2)
+#define	LTESR_WP	__PPCBIT(5)
+#define	LTESR_ATMW	__PPCBIT(8)
+#define	LTESR_ATMR	__PPCBIT(9)
+#define	LTESR_CS	__PPCBIT(12)
+#define	LTESR_UCC	__PPCBIT(30)
+#define	LTESR_CC	__PPCBIT(31)
 #define LTEDR		0x0B4 /* Transfer error disable register */
+#define	LTEDR_BMD	__PPCBIT(0)
+#define	LTEDR_FCTD	__PPCBIT(1)
+#define	LTEDR_PARD	__PPCBIT(2)
+#define	LTEDR_WPD	__PPCBIT(5)
+#define	LTEDR_WARA	__PPCBIT(8)
+#define	LTEDR_RAWA	__PPCBIT(9)
+#define	LTEDR_CSD	__PPCBIT(12)
+#define	LTEDR_UCCD	__PPCBIT(30)
+#define	LTEDR_CCD	__PPCBIT(31)
 #define LTEIR		0x0B8 /* Transfer error interrupt register */
+#define	LTEIR_BMI	__PPCBIT(0)
+#define	LTEIR_FCTI	__PPCBIT(1)
+#define	LTEIR_PARI	__PPCBIT(2)
+#define	LTEIR_WPI	__PPCBIT(5)
+#define	LTEIR_WARA	__PPCBIT(8)
+#define	LTEIR_RAWA	__PPCBIT(9)
+#define	LTEIR_CSI	__PPCBIT(12)
+#define	LTEIR_UCCI	__PPCBIT(30)
+#define	LTEIR_CCI	__PPCBIT(31)
 #define LTEATR		0x0BC /* Transfer error attributes register */
+#define	LTEATR_RWB	__PPCBIT(3)
+#define	LTEATR_SRCID	__PPCBITS(11,15)
+#define	LTEATR_PB	__PPCBITS(16,19)
+#define	LTEATR_BNK	__PPCBITS(20,27)
+#define	LTEATR_V	__PPCBIT(31)
 #define LTEAR		0x0C0 /* Transfer error address register */
+#define	LTECCR		0x0C4 /* Transfer error ECC register */
+#define	LTECCR_SBCE	__PPCBITS(12,15)
+#define	LTECCR_MBUE	__PPCBITS(28,31)
 #define LBCR		0x0D0 /* Configuration register */
 #define LCRR		0x0D4 /* Clock ratio register */
+
+#define	FMR		0x0E0 /* Flash Mode Register */
+#define	FMR_CWTO	__PPCBITS(16,19)
+#define	FMR_BOOT	__PPCBIT(20)
+#define	FMR_ECCM	__PPCBIT(23)
+#define	FMR_AL		__PPCBITS(26,27)
+#define	FMR_OP		__PPCBITS(30,31)
+#define	FIR		0x0E4 /* Flash Instruction Register */
+#define	FIR_OP0		__PPCBITS(0,3)
+#define	FIR_OP1		__PPCBITS(4,7)
+#define	FIR_OP2		__PPCBITS(8,11)
+#define	FIR_OP3		__PPCBITS(12,15)
+#define	FIR_OP4		__PPCBITS(16,19)
+#define	FIR_OP5		__PPCBITS(20,23)
+#define	FIR_OP6		__PPCBITS(24,27)
+#define	FIR_OP7		__PPCBITS(28,31)
+#define	FIR_OP_NOP	0
+#define	FIR_OP_CA	1	/* Issue current column address */
+#define	FIR_OP_PA	2	/* Issue current block+page address */
+#define	FIR_OP_UA	3	/* Issue user-defined address byte */
+#define	FIR_OP_CM0	4	/* Issue command from FCR[CMD0] */
+#define	FIR_OP_CM1	5	/* Issue command from FCR[CMD1] */
+#define	FIR_OP_CM2	6	/* Issue command from FCR[CMD2] */
+#define	FIR_OP_CM3	7	/* Issue command from FCR[CMD3] */
+#define	FIR_OP_WB	8	/* Write FBCR bytes of data */
+#define	FIR_OP_WS	9	/* Write one byte of data from MDR */
+#define	FIR_OP_RB	10	/* Read FBCR bytes of data */
+#define	FIR_OP_RS	11	/* Read one byte of data into MDR */
+#define	FIR_OP_CW0	12	/* Wait for LFRB then FCR[CMD0] */
+#define	FIR_OP_CW1	13	/* Wait for LFRB then FCR[CMD1] */
+#define	FIR_OP_RBW	14	/* Wait for LFRB then read FBCR bytes */
+#define	FIR_OP_RSW	15	/* Wait for LFRB then byte into MDR */
+#define	FCR		0xE8 /* Flash Command Register */
+#define	FCR_CMD0	__PPCBITS(0,7)
+#define	FCR_CMD1	__PPCBITS(8,15)
+#define	FCR_CMD2	__PPCBITS(16,23)
+#define	FCR_CMD3	__PPCBITS(24,31)
+#define	FBAR		0xEC /* Flash Block Address Register */
+#define	FBAR_BLK	__PPCBITS(8,31)
+#define	FPAR		0xF0 /* Flash Page Address Register */
+#define	FPAR_S_PI	__PPCBITS(17,21)	/* Page Index */
+#define	FPAR_S_MS	__PPCBIT(22)		/* Main(0)/Spare(1) */
+#define	FPAR_S_CI	__PPCBITS(23,31)	/* Column Index */
+#define	FPAR_L_PI	__PPCBITS(14,19)	/* Page Index */
+#define	FPAR_L_MS	__PPCBIT(20)		/* Main(0)/Spare(1) */
+#define	FPAR_L_CI	__PPCBITS(21,31)	/* Column Index */
+#define	FBCR		0xF4 /* Flash Byte Count Register */
+#define	FBCR_BC		__PPCBITS(20,31)
+#define	FECC0		0x100
+#define	FECC_V		__PPCBIT(0)
+#define	FECC_ECC	__PPCBIT(8,31)
+#define	FECC1		0x104
+#define	FECC2		0x108
+#define	FECC3		0x10C
+
+#define MXMR_RFEN	__PPCBIT(1)	/* Refresh enable */
+#define MXMR_OP		__PPCBITS(2,3)	/* Command opcode */
+#define	MXMR_OP_NORMAL	__SHIFTIN(0, MXMR_OP)	/* Normal Operation */
+#define	MXMR_OP_WRITE	__SHIFTIN(1, MXMR_OP)	/* Write to UPM memory */
+#define	MXMR_OP_READ	__SHIFTIN(2, MXMR_OP)	/* Read from UPM memory */
+#define	MXMR_OP_RUN	__SHIFTIN(3, MXMR_OP)	/* Run Pattern */
+#define MXMR_UWPL	__PPCBIT(3)	/* LUPWAIT is active low */
+#define MXMR_AM		__PPCBITS(5,7)	/* Address multiplex size */
+#define MXMR_DS		__PPCBITS(8,9)	/* Disable timer period */
+#define	MXMR_DS_1CYCLE	__SHIFTIN(0,MXMR_DS)
+#define	MXMR_DS_2CYCLE	__SHIFTIN(1,MXMR_DS)
+#define	MXMR_DS_3CYCLE	__SHIFTIN(2,MXMR_DS)
+#define	MXMR_DS_4CYCLE	__SHIFTIN(3,MXMR_DS)
+#define MXMR_G0CL	__PPCBITS(10,12)	/* General line 0 control */
+#define	MXMR_G0CL_A12	__SHIFTIN(0,MXMR_G0CL)
+#define	MXMR_G0CL_A11	__SHIFTIN(1,MXMR_G0CL)
+#define	MXMR_G0CL_A10	__SHIFTIN(2,MXMR_G0CL)
+#define	MXMR_G0CL_A9	__SHIFTIN(3,MXMR_G0CL)
+#define	MXMR_G0CL_A8	__SHIFTIN(4,MXMR_G0CL)
+#define	MXMR_G0CL_A7	__SHIFTIN(5,MXMR_G0CL)
+#define	MXMR_G0CL_A6	__SHIFTIN(6,MXMR_G0CL)
+#define	MXMR_G0CL_A5	__SHIFTIN(7,MXMR_G0CL)
+#define MXMR_GPL4	__PPCBIT(13)	/* LGPL4 output line disable */
+#define MXMR_RLF	__PPCBITS(14,17)	/* Read loop field */
+#define MXMR_WLF	__PPCBITS(18,21)	/* Write loop field */
+#define MXMR_TLF	__PPCBITS(22,25)	/* Refresh loop field */
+#define MXMR_MAS	__PPCBITS(26,31)	/* Machine Address */
+
+#define	MRTPR_PTP	__PPCBITS(0,7)		/* Refresh timers prescaler */
+
 #endif /* LBC_PRIVATE */

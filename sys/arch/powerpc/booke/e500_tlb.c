@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.1.2.2 2011/07/26 03:34:13 matt Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.1.2.3 2011/10/14 17:21:25 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.1.2.2 2011/07/26 03:34:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.1.2.3 2011/10/14 17:21:25 matt Exp $");
 
 #include <sys/param.h>
 
@@ -273,6 +273,38 @@ tlb_to_hwtlb(const struct e500_tlb tlb)
 	return hwtlb;
 }
 
+void *
+e500_tlb1_fetch(size_t slot)
+{
+	struct e500_tlb1 * const tlb1 = &e500_tlb1;
+
+	return &tlb1->tlb1_entries[slot].e_hwtlb;
+}
+
+void
+e500_tlb1_sync(void)
+{
+	struct e500_tlb1 * const tlb1 = &e500_tlb1;
+	for (u_int slot = 1; slot < tlb1->tlb1_numentries; slot++) {
+		const struct e500_hwtlb * const new_hwtlb =
+		    &tlb1->tlb1_entries[slot].e_hwtlb;
+		const struct e500_hwtlb old_hwtlb =
+		    hwtlb_read(MAS0_TLBSEL_TLB1, slot);
+#define CHANGED(n,o,f)	((n)->f != (o).f)
+		bool mas1_changed_p = CHANGED(new_hwtlb, old_hwtlb, hwtlb_mas1);
+		bool mas2_changed_p = CHANGED(new_hwtlb, old_hwtlb, hwtlb_mas2);
+		bool mas3_changed_p = CHANGED(new_hwtlb, old_hwtlb, hwtlb_mas3);
+#undef CHANGED
+		bool new_valid_p = (new_hwtlb->hwtlb_mas1 & MAS1_V) != 0;
+		bool old_valid_p = (old_hwtlb.hwtlb_mas1 & MAS1_V) != 0;
+		if ((new_valid_p || old_valid_p)
+		    && (mas1_changed_p
+			|| (new_valid_p
+			    && (mas2_changed_p || mas3_changed_p))))
+			hwtlb_write(*new_hwtlb, true);
+	}
+}
+
 static int
 e500_alloc_tlb1_entry(void)
 {
@@ -303,12 +335,20 @@ e500_free_tlb1_entry(struct e500_xtlb *xtlb, u_int slot, bool needs_sync)
 	wrtee(msr);
 }
 
-static void e500_tlb_set_asid(uint32_t asid)
+static tlb_asid_t
+e500_tlb_get_asid(void)
+{
+	return mfspr(SPR_PID0);
+}
+
+static void
+e500_tlb_set_asid(tlb_asid_t asid)
 {
 	mtspr(SPR_PID0, asid);
 }
 
-static void e500_tlb_invalidate_all(void)
+static void
+e500_tlb_invalidate_all(void)
 {
 	/*
 	 * This does a flash invalidate of all entries in TLB0.
@@ -373,7 +413,7 @@ e500_tlb_invalidate_globals(void)
 }
 
 static void
-e500_tlb_invalidate_asids(uint32_t asid_lo, uint32_t asid_hi)
+e500_tlb_invalidate_asids(tlb_asid_t asid_lo, tlb_asid_t asid_hi)
 {
 	const size_t tlbassoc = TLBCFG_ASSOC(mftlb0cfg());
 	const size_t tlbentries = TLBCFG_NENTRY(mftlb0cfg());
@@ -396,7 +436,7 @@ e500_tlb_invalidate_asids(uint32_t asid_lo, uint32_t asid_hi)
 			 */
 			if ((mas1 & (MAS1_V|MAS1_TS)) == (MAS1_V|MAS1_TS)
 			    && asid_lo <= (mas1 & MAS1_TID)
-			    && (mas1 & MAS1_TID) < asid_hi) {
+			    && (mas1 & MAS1_TID) <= asid_hi) {
 				mtspr(SPR_MAS1, mas1 ^ MAS1_V);
 #if 0
 				printf("%s[%zu,%zu]->[%x]\n",
@@ -411,7 +451,7 @@ e500_tlb_invalidate_asids(uint32_t asid_lo, uint32_t asid_hi)
 }
 
 static u_int
-e500_tlb_record_asids(u_long *bitmap, uint32_t start_slot)
+e500_tlb_record_asids(u_long *bitmap)
 {
 	const size_t tlbassoc = TLBCFG_ASSOC(mftlb0cfg());
 	const size_t tlbentries = TLBCFG_NENTRY(mftlb0cfg());
@@ -448,7 +488,7 @@ e500_tlb_record_asids(u_long *bitmap, uint32_t start_slot)
 }
 
 static void
-e500_tlb_invalidate_addr(vaddr_t va, uint32_t asid)
+e500_tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 {
 	KASSERT((va & PAGE_MASK) == 0);
 	/*
@@ -460,7 +500,7 @@ e500_tlb_invalidate_addr(vaddr_t va, uint32_t asid)
 }
 
 static bool
-e500_tlb_update_addr(vaddr_t va, uint32_t asid, uint32_t pte, bool insert)
+e500_tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert)
 {
 	struct e500_hwtlb hwtlb = tlb_to_hwtlb(
 	    (struct e500_tlb){ .tlb_va = va, .tlb_asid = asid,
@@ -494,6 +534,11 @@ e500_tlb_update_addr(vaddr_t va, uint32_t asid, uint32_t pte, bool insert)
 	    hwtlb.hwtlb_mas1, hwtlb.hwtlb_mas2, hwtlb.hwtlb_mas3);
 #endif
 	return (mas1 & MAS1_V) != 0;
+}
+
+static void
+e500_tlb_write_entry(size_t index, const struct tlbmask *tlb)
+{
 }
 
 static void
@@ -638,16 +683,19 @@ e500_tlb_lookup_xtlb2(vaddr_t va, vsize_t len)
 }
 
 static void *
-e500_tlb_mapiodev(paddr_t pa, psize_t len)
+e500_tlb_mapiodev(paddr_t pa, psize_t len, bool prefetchable)
 {
 	struct e500_xtlb * const xtlb = e500_tlb_lookup_xtlb(pa, NULL);
 
 	/*
 	 * See if we have a TLB entry for the pa.  If completely falls within
-	 * mark the reference and return the pa.
+	 * mark the reference and return the pa.  But only if the tlb entry
+	 * is not cacheable.
 	 */
-	if (xtlb && pa + len <= xtlb->e_tlb.tlb_va + xtlb->e_tlb.tlb_size
-	    && (xtlb->e_tlb.tlb_pte & PTE_WIG) == (PTE_I|PTE_G)) {
+	if (xtlb
+	    && pa + len <= xtlb->e_tlb.tlb_va + xtlb->e_tlb.tlb_size
+	    && (prefetchable
+		|| (xtlb->e_tlb.tlb_pte & PTE_WIG) == (PTE_I|PTE_G))) {
 		xtlb->e_refcnt++;
 		return (void *) pa;
 	}
@@ -665,7 +713,7 @@ e500_tlb_unmapiodev(vaddr_t va, vsize_t len)
 }
 
 static int
-e500_tlb_ioreserve(vaddr_t va, vsize_t len, uint32_t pte)
+e500_tlb_ioreserve(vaddr_t va, vsize_t len, pt_entry_t pte)
 {
 	struct e500_tlb1 * const tlb1 = &e500_tlb1;
 	struct e500_xtlb *xtlb;
@@ -755,6 +803,7 @@ e500_tlbmemmap(paddr_t memstart, psize_t memsize, struct e500_tlb1 *tlb1)
 	return nextslot;
 }
 static const struct tlb_md_ops e500_tlb_ops = {
+	.md_tlb_get_asid = e500_tlb_get_asid,
 	.md_tlb_set_asid = e500_tlb_set_asid,
 	.md_tlb_invalidate_all = e500_tlb_invalidate_all,
 	.md_tlb_invalidate_globals = e500_tlb_invalidate_globals,
@@ -762,13 +811,17 @@ static const struct tlb_md_ops e500_tlb_ops = {
 	.md_tlb_invalidate_addr = e500_tlb_invalidate_addr,
 	.md_tlb_update_addr = e500_tlb_update_addr,
 	.md_tlb_record_asids = e500_tlb_record_asids,
+	.md_tlb_write_entry = e500_tlb_write_entry,
 	.md_tlb_read_entry = e500_tlb_read_entry,
+	.md_tlb_dump = e500_tlb_dump,
+	.md_tlb_walk = e500_tlb_walk,
+};
+
+static const struct tlb_md_io_ops e500_tlb_io_ops = {
 	.md_tlb_mapiodev = e500_tlb_mapiodev,
 	.md_tlb_unmapiodev = e500_tlb_unmapiodev,
 	.md_tlb_ioreserve = e500_tlb_ioreserve,
 	.md_tlb_iorelease = e500_tlb_iorelease,
-	.md_tlb_dump = e500_tlb_dump,
-	.md_tlb_walk = e500_tlb_walk,
 };
 
 void
@@ -851,6 +904,7 @@ e500_tlb_init(vaddr_t endkernel, psize_t memsize)
 	}
 
 	cpu_md_ops.md_tlb_ops = &e500_tlb_ops;
+	cpu_md_ops.md_tlb_io_ops = &e500_tlb_io_ops;
 
 	if (__predict_false(memmapped < memsize)) {
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_autoconf.c,v 1.1.2.2 2011/10/14 17:21:25 matt Exp $	*/
+/*	$NetBSD: softint.h,v 1.1.4.2 2011/10/14 17:21:26 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,48 +34,44 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_autoconf.c,v 1.1.2.2 2011/10/14 17:21:25 matt Exp $");
+#ifdef __INTR_PRIVATE
+#ifndef _POWERPC_SOFTINT_H_
+#define _POWERPC_SOFTINT_H_
 
-#include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/systm.h>
-#include <sys/cpu.h>
+#include <sys/intr.h>
 
-#include <net/if.h>
-#include <net/if_ether.h>
+#ifdef __HAVE_FAST_SOFTINTS
 
-#include <powerpc/booke/cpuvar.h>
+#ifdef __HAVE_PREEMPTION
+#define	IPL_PREEMPT_SOFTMASK	(1 << IPL_NONE)
+#else
+#define	IPL_PREEMPT_SOFTMASK	0
+#endif
 
-void
-e500_device_register(device_t dev, void *aux)
-{
-	device_t parent = device_parent(dev);
+#define	IPL_SOFTMASK \
+	    ((1 << IPL_SOFTSERIAL) | (1 << IPL_SOFTNET   )	\
+	    |(1 << IPL_SOFTBIO   ) | (1 << IPL_SOFTCLOCK )	\
+	    |IPL_PREEMPT_SOFTMASK)
 
-	if (device_is_a(dev, "etsec") && device_is_a(parent, "cpunode")) {
-		/* Set the mac-addr of the on-chip Ethernet. */
-		struct cpunode_attach_args *cna = aux;
+#define SOFTINT2IPL_MAP \
+	    ((IPL_SOFTSERIAL << (4*SOFTINT_SERIAL))	\
+	    |(IPL_SOFTNET    << (4*SOFTINT_NET   ))	\
+	    |(IPL_SOFTBIO    << (4*SOFTINT_BIO   ))	\
+	    |(IPL_SOFTCLOCK  << (4*SOFTINT_CLOCK )))
+#define	SOFTINT2IPL(si_level)	((SOFTINT2IPL_MAP >> (4 * (si_level))) & 0x0f)
+#define IPL2SOFTINT_MAP \
+	    ((SOFTINT_SERIAL << (4*IPL_SOFTSERIAL))	\
+	    |(SOFTINT_NET    << (4*IPL_SOFTNET   ))	\
+	    |(SOFTINT_BIO    << (4*IPL_SOFTBIO   ))	\
+	    |(SOFTINT_CLOCK  << (4*IPL_SOFTCLOCK )))
+#define	IPL2SOFTINT(ipl)	((IPL2SOFTINT_MAP >> (4 * (ipl))) & 0x0f)
 
-		if (cna->cna_locs.cnl_instance < 4) {
-			prop_data_t pd;
-			char prop_name[15];
+#ifdef _KERNEL
+void	powerpc_softint(struct cpu_info *, int, vaddr_t);
+void	powerpc_softint_init_md(lwp_t *, u_int, uintptr_t *);
+void	powerpc_softint_trigger(uintptr_t);
+#endif
 
-			snprintf(prop_name, sizeof(prop_name),
-			    "etsec%d-mac-addr", cna->cna_locs.cnl_instance);
-
-			pd = prop_dictionary_get(board_properties, prop_name);
-			if (pd == NULL) {
-				printf("WARNING: unable to get mac-addr "
-				    "property from board properties\n");
-				return;
-			}
-			if (prop_dictionary_set(device_properties(dev),
-						"mac-address", pd) == false) {
-				printf("WARNING: unable to set mac-addr "
-				    "property for %s\n", device_xname(dev));
-			}
-		}
-		return;
-	}
-}
+#endif /* __HAVE_FAST_SOFTINTS */
+#endif /* !_POWERPC_SOFTINT_H_ */
+#endif /* __INTR_PRIVATE */

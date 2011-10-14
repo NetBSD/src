@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_timer.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $	*/
+/*	$NetBSD: e500_timer.c,v 1.1.2.2 2011/10/14 17:21:25 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.1.2.2 2011/10/14 17:21:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,9 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp 
 #include <powerpc/booke/e500var.h>
 #include <powerpc/booke/openpicreg.h>
 
-/*
- * Initially we assume a processor with a bus frequency of 12.5 MHz.
- */
 static u_long ns_per_tick;
 
 static void init_ppcbooke_tc(void);
@@ -153,6 +150,8 @@ e500_clock_intr(void *v)
 
 	wrtee(0);	/* turn off interrupts */
 
+	tf->tf_srr1 &= ~PSL_POW;	/* make cpu_idle exit */
+
 	return 1;
 }
 
@@ -172,7 +171,8 @@ cpu_initclocks(void)
 	openpic_write(cpu, cpu->cpu_clock_gtbcr,
 	     cpu->cpu_ticks_per_clock_intr);
 
-	init_ppcbooke_tc();
+	if (CPU_IS_PRIMARY(ci))
+		init_ppcbooke_tc();
 }
 
 void

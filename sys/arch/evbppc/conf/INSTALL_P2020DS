@@ -1,0 +1,11 @@
+# 	$NetBSD: INSTALL_P2020DS,v 1.1.6.2 2011/10/14 17:21:27 matt Exp $
+
+include "arch/evbppc/conf/P2020DS"
+
+#ident 		"INSTALL_P2020DS-$Revision: 1.1.6.2 $"
+
+include "arch/evbppc/conf/INSTALL.inc"
+
+no config nfsnetbsd
+no config netbsd-esata
+no config netbsd-sd0a
