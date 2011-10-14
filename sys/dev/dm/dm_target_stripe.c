@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.15 2011/08/27 17:09:09 ahoka Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.16 2011/10/14 09:23:30 hannken Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -329,7 +329,10 @@ dm_target_stripe_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 	tsc = table_en->target_config;
 
 	TAILQ_FOREACH(tlc, &tsc->stripe_devs, entries) {
-		if ((error = VOP_GETATTR(tlc->pdev->pdev_vnode, &va, curlwp->l_cred)) != 0)
+		vn_lock(tlc->pdev->pdev_vnode, LK_SHARED | LK_RETRY);
+		error = VOP_GETATTR(tlc->pdev->pdev_vnode, &va, curlwp->l_cred);
+		VOP_UNLOCK(tlc->pdev->pdev_vnode);
+		if (error != 0)
 			return error;
 
 		prop_array_add_uint64(prop_array, (uint64_t) va.va_rdev);

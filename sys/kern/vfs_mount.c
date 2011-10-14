@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.10 2011/10/07 09:35:05 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.11 2011/10/14 09:23:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.10 2011/10/07 09:35:05 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.11 2011/10/14 09:23:31 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -664,8 +664,14 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	 * If the user is not root, ensure that they own the directory
 	 * onto which we are attempting to mount.
 	 */
-	if ((error = VOP_GETATTR(vp, &va, l->l_cred)) != 0 ||
-	    (va.va_uid != kauth_cred_geteuid(l->l_cred) &&
+	vn_lock(vp, LK_SHARED | LK_RETRY);
+	error = VOP_GETATTR(vp, &va, l->l_cred);
+	VOP_UNLOCK(vp);
+	if (error != 0) {
+		vfs_delref(vfsops);
+		return error;
+	}
+	if ((va.va_uid != kauth_cred_geteuid(l->l_cred) &&
 	    (error = kauth_authorize_generic(l->l_cred,
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)) {
 		vfs_delref(vfsops);
