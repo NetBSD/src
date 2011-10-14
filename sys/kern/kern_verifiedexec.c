@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.126 2011/09/01 18:33:11 matt Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.127 2011/10/14 09:23:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.126 2011/09/01 18:33:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.127 2011/10/14 09:23:31 hannken Exp $");
 
 #include "opt_veriexec.h"
 
@@ -411,7 +411,9 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp, int lock_state,
 	size_t resid, npages;
 	int error, do_perpage, pagen;
 
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	error = VOP_GETATTR(vp, &va, l->l_cred);
+	VOP_UNLOCK(vp);
 	if (error)
 		return (error);
 

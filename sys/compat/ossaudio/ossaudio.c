@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.66 2011/09/06 01:19:34 jmcneill Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.67 2011/10/14 09:23:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.66 2011/09/06 01:19:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.67 2011/10/14 09:23:29 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -935,7 +935,7 @@ getdevinfo(file_t *fp)
 	struct vattr va;
 	static struct audiodevinfo devcache;
 	struct audiodevinfo *di = &devcache;
-	int mlen, dlen;
+	int error, mlen, dlen;
 
 	/*
 	 * Figure out what device it is so we can check if the
@@ -944,7 +944,10 @@ getdevinfo(file_t *fp)
 	vp = fp->f_data;
 	if (vp->v_type != VCHR)
 		return 0;
-	if (VOP_GETATTR(vp, &va, kauth_cred_get()))
+	vn_lock(vp, LK_SHARED | LK_RETRY);
+	error = VOP_GETATTR(vp, &va, kauth_cred_get());
+	VOP_UNLOCK(vp);
+	if (error)
 		return 0;
 	if (di->done && di->dev == va.va_rdev)
 		return di;

@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.62 2011/07/11 08:23:00 hannken Exp $
+#	$NetBSD: vnode_if.src,v 1.63 2011/10/14 09:23:31 hannken Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -141,7 +141,7 @@ vop_access {
 };
 
 #
-#% getattr    vp      = = =
+#% getattr    vp      L L L
 #
 vop_getattr {
 	IN struct vnode *vp;

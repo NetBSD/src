@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.81 2011/08/03 14:44:38 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.82 2011/10/14 09:23:30 hannken Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.81 2011/08/03 14:44:38 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.82 2011/10/14 09:23:30 hannken Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -630,7 +630,10 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		raidPtr->bytesPerSector = diskPtr->blockSize;
 
 	if (diskPtr->status == rf_ds_optimal) {
-		if ((error = VOP_GETATTR(vp, &va, curlwp->l_cred)) != 0) 
+		vn_lock(vp, LK_SHARED | LK_RETRY);
+		error = VOP_GETATTR(vp, &va, curlwp->l_cred);
+		VOP_UNLOCK(vp);
+		if (error != 0)
 			return (error);
 
 		raidPtr->raid_cinfo[col].ci_vp = vp;

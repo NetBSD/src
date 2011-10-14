@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.12 2010/09/11 20:53:04 chs Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.13 2011/10/14 09:23:29 hannken Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.12 2010/09/11 20:53:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.13 2011/10/14 09:23:29 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -130,7 +130,10 @@ linux32_sys_getdents(struct lwp *l, const struct linux32_sys_getdents_args *uap,
 		goto out1;
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, l->l_cred)))
+	vn_lock(vp, LK_SHARED | LK_RETRY);
+	error = VOP_GETATTR(vp, &va, l->l_cred);
+	VOP_UNLOCK(vp);
+	if (error)
 		goto out1;
 
 	nbytes = SCARG(uap, count);

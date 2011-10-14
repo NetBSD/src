@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.48 2011/08/03 14:44:38 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.49 2011/10/14 09:23:30 hannken Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.48 2011/08/03 14:44:38 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.49 2011/10/14 09:23:30 hannken Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -160,7 +160,10 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 		/* Ok, so we can at least do a lookup... How about actually
 		 * getting a vp for it? */
 
-		if ((retcode = VOP_GETATTR(vp, &va, curlwp->l_cred)) != 0)
+		vn_lock(vp, LK_SHARED | LK_RETRY);
+		retcode = VOP_GETATTR(vp, &va, curlwp->l_cred);
+		VOP_UNLOCK(vp);
+		if (retcode != 0)
 			return;
 		retcode = rf_getdisksize(vp, &raidPtr->Disks[fcol]);
 		if (retcode) {

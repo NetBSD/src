@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.74 2011/06/21 06:23:38 jruoho Exp $ */
+/* $NetBSD: cgd.c,v 1.75 2011/10/14 09:23:30 hannken Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.74 2011/06/21 06:23:38 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.75 2011/10/14 09:23:30 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -773,7 +773,10 @@ cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	cs->sc_tpath = malloc(cs->sc_tpathlen, M_DEVBUF, M_WAITOK);
 	memcpy(cs->sc_tpath, tmppath, cs->sc_tpathlen);
 
-	if ((ret = VOP_GETATTR(vp, &va, l->l_cred)) != 0)
+	vn_lock(vp, LK_SHARED | LK_RETRY);
+	ret = VOP_GETATTR(vp, &va, l->l_cred);
+	VOP_UNLOCK(vp);
+	if (ret != 0)
 		goto bail;
 
 	cs->sc_tdev = va.va_rdev;

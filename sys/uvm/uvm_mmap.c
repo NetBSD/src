@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.138 2011/10/12 00:03:47 yamt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.139 2011/10/14 09:23:31 hannken Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.138 2011/10/12 00:03:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.139 2011/10/14 09:23:31 hannken Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -460,8 +460,10 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 			 * EPERM.
 			 */
 			if (fp->f_flag & FWRITE) {
-				if ((error =
-				    VOP_GETATTR(vp, &va, l->l_cred))) {
+				vn_lock(vp, LK_SHARED | LK_RETRY);
+				error = VOP_GETATTR(vp, &va, l->l_cred);
+				VOP_UNLOCK(vp);
+				if (error) {
 					fd_putfile(fd);
 					return (error);
 				}
