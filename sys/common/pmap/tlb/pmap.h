@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1.2.1 2011/01/07 01:21:10 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.1.2.2 2011/10/14 16:59:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,6 +74,12 @@
 #ifndef	_COMMON_PMAP_H_
 #define	_COMMON_PMAP_H_
 
+#include <uvm/uvm_stat.h>
+#ifdef UVMHIST
+UVMHIST_DECL(pmapexechist);
+UVMHIST_DECL(pmaphist);
+#endif
+
 /*
  * The user address space is mapped using a two level structure where
  * virtual address bits 31..22 are used to index into a segment table which
@@ -126,8 +132,8 @@ struct pmap_asid_info {
  */
 struct pmap {
 #ifdef MULTIPROCESSOR
-	volatile uint32_t	pm_active;	/* pmap was active on ... */
-	volatile uint32_t	pm_onproc;	/* pmap is active on ... */
+	__cpuset_t		pm_active;	/* pmap was active on ... */
+	__cpuset_t		pm_onproc;	/* pmap is active on ... */
 	volatile u_int		pm_shootdown_pending;
 #endif
 	struct pmap_segtab	*pm_segtab;	/* pointers to pages of PTEs */
@@ -135,11 +141,10 @@ struct pmap {
 	u_int			pm_flags;
 #define	PMAP_DEFERRED_ACTIVATE	0x0001
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	struct pmap_asid_info	pm_pai[1];
 	vaddr_t			pm_minaddr;
 	vaddr_t			pm_maxaddr;
+	struct pmap_asid_info	pm_pai[1];
 };
-
 typedef struct pmap *pmap_t;
 
 enum tlb_invalidate_op {
@@ -157,13 +162,12 @@ struct pmap_tlb_info {
 #define	tlbinfo_noasids_p(ti)	((ti)->ti_asids_free == 0)
 	kmutex_t *ti_lock;
 	u_int ti_wired;			/* # of wired TLB entries */
-	uint32_t ti_asid_mask;
 	uint32_t ti_asid_max;
 	LIST_HEAD(, pmap_asid_info) ti_pais; /* list of active ASIDs */
 #ifdef MULTIPROCESSOR
 	pmap_t ti_victim;
 	uint32_t ti_synci_page_bitmap;	/* page indices needing a syncicache */
-	uint32_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
+	__cpuset_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
 	enum tlb_invalidate_op ti_tlbinvop;
 	u_int ti_index;
 #define tlbinfo_index(ti)	((ti)->ti_index)
@@ -176,6 +180,7 @@ struct pmap_tlb_info {
 #else
 #define tlbinfo_index(ti)	(0)
 #endif
+	struct evcnt ti_evcnt_asid_reinits;
 	u_long ti_asid_bitmap[256 / (sizeof(u_long) * 8)];
 };
 
@@ -217,8 +222,8 @@ extern struct pmap_limits pmap_limits;
  */
 void	pmap_remove_all(pmap_t);
 void	pmap_set_modified(paddr_t);
-bool	pmap_page_clear_attributes(struct vm_page *, u_int);
-void	pmap_page_set_attributes(struct vm_page *, u_int);
+bool	pmap_page_clear_attributes(struct vm_page_md *, u_int);
+void	pmap_page_set_attributes(struct vm_page_md *, u_int);
 void	pmap_pvlist_lock_init(size_t);
 
 #define	PMAP_WB		0
@@ -229,11 +234,13 @@ void	pmap_pvlist_lock_init(size_t);
 void	pmap_tlb_shootdown_process(void);
 bool	pmap_tlb_shootdown_bystanders(pmap_t pmap);
 void	pmap_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
-void	pmap_tlb_syncicache_ast(struct cpu_info *);
-void	pmap_tlb_syncicache_wanted(struct cpu_info *);
-void	pmap_tlb_syncicache(vaddr_t, uint32_t);
+void	pmap_md_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
+void	pmap_syncicache_ast(struct cpu_info *);
+void	pmap_syncicache_wanted(struct cpu_info *);
+void	pmap_syncicache(vaddr_t, uint32_t);
 #endif
 void	pmap_tlb_info_init(struct pmap_tlb_info *);
+void	pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *);
 void	pmap_tlb_asid_acquire(pmap_t, struct lwp *l);
 void	pmap_tlb_asid_deactivate(pmap_t);
 void	pmap_tlb_asid_release_all(pmap_t);
@@ -241,9 +248,10 @@ int	pmap_tlb_update_addr(pmap_t, vaddr_t, uint32_t, u_int);
 #define	PMAP_TLB_NEED_IPI	0x01
 #define	PMAP_TLB_INSERT		0x02
 void	pmap_tlb_invalidate_addr(pmap_t, vaddr_t);
-void	pmap_tlb_check(pmap_t);
+void	pmap_tlb_check(pmap_t, bool (*)(void *, vaddr_t, tlb_asid_t, pt_entry_t));
+void	pmap_tlb_asid_check(void);
 
-uint16_t pmap_pvlist_lock(struct vm_page *, bool);
+uint16_t pmap_pvlist_lock(struct vm_page_md *, bool);
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
 
@@ -256,6 +264,8 @@ struct vm_page *pmap_md_alloc_poolpage(int);
 #define	PMAP_ALLOC_POOLPAGE(flags)	pmap_md_alloc_poolpage(flags)
 #define	PMAP_MAP_POOLPAGE(pa)		pmap_map_poolpage(pa)
 #define	PMAP_UNMAP_POOLPAGE(va)		pmap_unmap_poolpage(va)
+
+#define pmap_collect(p)		do { } while (/*CONSTCOND*/ 0)
 
 #endif	/* _KERNEL */
 #endif	/* _COMMON_PMAP_H_ */
