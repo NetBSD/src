@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1692 2011/10/13 22:08:18 joerg Exp $
+#	$NetBSD: mi,v 1.1693 2011/10/14 12:53:21 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3800,6 +3800,7 @@
 ./usr/libdata/debug/usr/bin/soelim.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/sort.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/split.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/sqlite3.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ssh-add.debug	comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/ssh-agent.debug	comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/ssh-keygen.debug	comp-secsh-debug	crypto,debug
