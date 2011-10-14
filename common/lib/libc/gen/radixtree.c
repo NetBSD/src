@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.13 2011/10/14 16:10:47 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.14 2011/10/14 16:15:54 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.13 2011/10/14 16:10:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.14 2011/10/14 16:15:54 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.13 2011/10/14 16:10:47 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.13 2011/10/14 16:10:47 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.14 2011/10/14 16:15:54 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -663,8 +663,7 @@ scan_siblings:
 			if (entry_match_p(n->n_ptrs[i], tagmask)) {
 				vpp = &n->n_ptrs[i];
 				path->p_refs[lastidx].pptr = vpp;
-				KASSERT(path_idx(t, path, lastidx - 1)
-				    == i);
+				KASSERT(path_idx(t, path, lastidx - 1) == i);
 				break;
 			}
 		}
