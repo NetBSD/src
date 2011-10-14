@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.67 2011/09/28 01:45:49 dyoung Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.68 2011/10/14 18:28:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.67 2011/09/28 01:45:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.68 2011/10/14 18:28:04 bouyer Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1317,8 +1317,9 @@ bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t p, bus_addr_t o, bus_size_t l,
 	else for (it = t; it != NULL; it = it->bdt_super) {
 		if ((it->bdt_present & BUS_DMAMAP_OVERRIDE_SYNC) == 0)
 			continue;
-		return (*it->bdt_ov->ov_dmamap_sync)(it->bdt_ctx, t, p, o,
+		(*it->bdt_ov->ov_dmamap_sync)(it->bdt_ctx, t, p, o,
 		    l, ops);
+		return;
 	}
 
 	if (ops & BUS_DMASYNC_POSTREAD)
