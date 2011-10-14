@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.h,v 1.3 2011/10/14 15:16:59 yamt Exp $	*/
+/*	$NetBSD: radixtree.h,v 1.4 2011/10/14 19:42:14 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -67,6 +67,8 @@ void *radix_tree_remove_node(struct radix_tree *, uint64_t);
 void *radix_tree_lookup_node(struct radix_tree *, uint64_t);
 unsigned int radix_tree_gang_lookup_node(struct radix_tree *, uint64_t,
     void **, unsigned int);
+unsigned int radix_tree_gang_lookup_node_reverse(struct radix_tree *, uint64_t,
+    void **, unsigned int);
 
 /*
  * tag
@@ -79,5 +81,7 @@ void radix_tree_set_tag(struct radix_tree *, uint64_t, radix_tree_tagid_t);
 void radix_tree_clear_tag(struct radix_tree *, uint64_t, radix_tree_tagid_t);
 unsigned int radix_tree_gang_lookup_tagged_node(struct radix_tree *, uint64_t,
     void **, unsigned int, radix_tree_tagid_t);
+unsigned int radix_tree_gang_lookup_tagged_node_reverse(struct radix_tree *,
+    uint64_t, void **, unsigned int, radix_tree_tagid_t);
 
 #endif /* !defined(_SYS_RADIXTREE_H_) */
