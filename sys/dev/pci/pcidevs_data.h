@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.15.2.1 2011/01/07 02:22:19 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.15.2.2 2011/10/14 16:51:54 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.15.2.1 2011/01/07 02:21:52 matt Exp
+ *	NetBSD: pcidevs,v 1.962.4.15.2.2 2011/10/14 16:51:22 matt Exp
  */
 
 /*
@@ -2862,6 +2862,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5261,
 	    "M5261 Tulip Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5288,
+	    "M5288 SATA/Raid Controller",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451,
@@ -15064,4 +15068,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3163;
+const int pci_nproducts = 3164;
