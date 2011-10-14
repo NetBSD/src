@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.218 2011/06/29 09:12:42 hannken Exp $	*/
+/*	$NetBSD: vnd.c,v 1.219 2011/10/14 09:23:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.218 2011/06/29 09:12:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.219 2011/10/14 09:23:30 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -918,6 +918,7 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 static int
 vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 {
+	int error;
 	struct vnd_softc *vnd;
 
 	if (*un == -1)
@@ -932,7 +933,10 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 	if ((vnd->sc_flags & VNF_INITED) == 0)
 		return -1;
 
-	return VOP_GETATTR(vnd->sc_vp, va, l->l_cred);
+	vn_lock(vnd->sc_vp, LK_SHARED | LK_RETRY);
+	error = VOP_GETATTR(vnd->sc_vp, va, l->l_cred);
+	VOP_UNLOCK(vnd->sc_vp);
+	return error;
 }
 
 static int

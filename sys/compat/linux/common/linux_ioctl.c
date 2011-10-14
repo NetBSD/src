@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.55 2008/07/19 23:01:52 jmcneill Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.56 2011/10/14 09:23:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.55 2008/07/19 23:01:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.56 2011/10/14 09:23:28 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -128,6 +128,7 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 		 * way.  We do it by indexing in the cdevsw with the major
 		 * device number and check if that is the sequencer entry.
 		 */
+		bool is_sequencer = false;
 		struct file *fp;
 		struct vnode *vp;
 		struct vattr va;
@@ -137,9 +138,15 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 			return EBADF;
 		if (fp->f_type == DTYPE_VNODE &&
 		    (vp = (struct vnode *)fp->f_data) != NULL &&
-		    vp->v_type == VCHR &&
-		    VOP_GETATTR(vp, &va, l->l_cred) == 0 &&
-		    cdevsw_lookup(va.va_rdev) == &sequencer_cdevsw) {
+		    vp->v_type == VCHR) {
+			vn_lock(vp, LK_SHARED | LK_RETRY);
+			error = VOP_GETATTR(vp, &va, l->l_cred);
+			VOP_UNLOCK(vp);
+			if (error == 0 &&
+			    cdevsw_lookup(va.va_rdev) == &sequencer_cdevsw)
+				is_sequencer = true;
+		}
+		if (is_sequencer) {
 			error = oss_ioctl_sequencer(l, (const void *)LINUX_TO_OSS(uap),
 						   retval);
 		}
