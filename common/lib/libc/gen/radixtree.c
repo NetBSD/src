@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.14 2011/10/14 16:15:54 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.15 2011/10/14 19:42:15 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.14 2011/10/14 16:15:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.15 2011/10/14 19:42:15 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.14 2011/10/14 16:15:54 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.14 2011/10/14 16:15:54 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.15 2011/10/14 19:42:15 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: radixtree.c,v 1.14 2011/10/14 16:15:54 yamt Exp $");
 #define	RADIX_TREE_BITS_PER_HEIGHT	4	/* XXX tune */
 #define	RADIX_TREE_PTR_PER_NODE		(1 << RADIX_TREE_BITS_PER_HEIGHT)
 #define	RADIX_TREE_MAX_HEIGHT		(64 / RADIX_TREE_BITS_PER_HEIGHT)
+#define	RADIX_TREE_INVALID_HEIGHT	(RADIX_TREE_MAX_HEIGHT + 1)
 __CTASSERT((64 % RADIX_TREE_BITS_PER_HEIGHT) == 0);
 
 __CTASSERT(((1 << RADIX_TREE_TAG_ID_MAX) & (sizeof(int) - 1)) == 0);
@@ -161,6 +162,12 @@ struct radix_tree_path {
 	struct radix_tree_node_ref {
 		void **pptr;
 	} p_refs[RADIX_TREE_MAX_HEIGHT + 1]; /* +1 for the root ptr */
+	/*
+	 * p_lastidx is either the index of the last valid element of p_refs[]
+	 * or RADIX_TREE_INVALID_HEIGHT.
+	 * RADIX_TREE_INVALID_HEIGHT means that radix_tree_lookup_ptr found
+	 * that the height of the tree is not enough to cover the given index.
+	 */
 	unsigned int p_lastidx;
 };
 
@@ -180,15 +187,6 @@ path_node(const struct radix_tree * t, const struct radix_tree_path *p,
 
 	KASSERT(height <= t->t_height);
 	return entry_ptr(*path_pptr(t, p, height));
-}
-
-static inline unsigned int
-path_idx(const struct radix_tree * t, const struct radix_tree_path *p,
-    unsigned int height)
-{
-
-	KASSERT(height <= t->t_height);
-	return path_pptr(t, p, height + 1) - path_node(t, p, height)->n_ptrs;
 }
 
 /*
@@ -357,6 +355,9 @@ radix_tree_grow(struct radix_tree *t, unsigned int newheight)
  * if path is not NULL, fill it for the caller's investigation.
  *
  * if tagmask is not zero, search only for nodes with the tag set.
+ * note that, however, this function doesn't check the tagmask for the leaf
+ * pointer.  it's a caller's responsibility to investigate the value which
+ * is pointed by the returned pointer if necessary.
  *
  * while this function is a bit large, as it's called with some constant
  * arguments, inlining might have benefits.  anyway, a compiler will decide.
@@ -400,7 +401,8 @@ radix_tree_lookup_ptr(struct radix_tree *t, uint64_t idx,
 			if (!alloc) {
 				if (path != NULL) {
 					KASSERT((refs - path->p_refs) == 0);
-					path->p_lastidx = 0;
+					path->p_lastidx =
+					    RADIX_TREE_INVALID_HEIGHT;
 				}
 				return NULL;
 			}
@@ -614,22 +616,58 @@ gang_lookup_init(struct radix_tree *t, uint64_t idx,
 	KASSERT(vpp == NULL ||
 	    vpp == path_pptr(t, path, path->p_lastidx));
 	KASSERT(&t->t_root == path_pptr(t, path, 0));
+	KASSERT(path->p_lastidx == RADIX_TREE_INVALID_HEIGHT ||
+	   path->p_lastidx == t->t_height ||
+	   !entry_match_p(*path_pptr(t, path, path->p_lastidx), tagmask));
 }
 
+/*
+ * gang_lookup_scan:
+ *
+ * a helper routine for radix_tree_gang_lookup_node and its variants.
+ */
+
 static inline unsigned int
+__attribute__((__always_inline__))
 gang_lookup_scan(struct radix_tree *t, struct radix_tree_path *path,
-    void **results, unsigned int maxresults, const unsigned int tagmask)
+    void **results, unsigned int maxresults, const unsigned int tagmask,
+    bool reverse)
 {
+
+	/*
+	 * we keep the path updated only for lastidx-1.
+	 * vpp is what path_pptr(t, path, lastidx) would be.
+	 */
 	void **vpp;
 	unsigned int nfound;
 	unsigned int lastidx;
+	/*
+	 * set up scan direction dependant constants so that we can iterate
+	 * n_ptrs as the following.
+	 *
+	 *	for (i = first; i != guard; i += step)
+	 *		visit n->n_ptrs[i];
+	 */
+	const int step = reverse ? -1 : 1;
+	const unsigned int first = reverse ? RADIX_TREE_PTR_PER_NODE - 1 : 0;
+	const unsigned int last = reverse ? 0 : RADIX_TREE_PTR_PER_NODE - 1;
+	const unsigned int guard = last + step;
 
 	KASSERT(maxresults > 0);
+	KASSERT(&t->t_root == path_pptr(t, path, 0));
 	lastidx = path->p_lastidx;
-	if (lastidx == 0) {
+	KASSERT(lastidx == RADIX_TREE_INVALID_HEIGHT ||
+	   lastidx == t->t_height ||
+	   !entry_match_p(*path_pptr(t, path, lastidx), tagmask));
+	nfound = 0;
+	if (lastidx == RADIX_TREE_INVALID_HEIGHT) {
+		if (reverse) {
+			lastidx = 0;
+			vpp = path_pptr(t, path, lastidx);
+			goto descend;
+		}
 		return 0;
 	}
-	nfound = 0;
 	vpp = path_pptr(t, path, lastidx);
 	while (/*CONSTCOND*/true) {
 		struct radix_tree_node *n;
@@ -638,7 +676,7 @@ gang_lookup_scan(struct radix_tree *t, struct radix_tree_path *path,
 		if (entry_match_p(*vpp, tagmask)) {
 			KASSERT(lastidx == t->t_height);
 			/*
-			 * record the non-NULL leaf.
+			 * record the matching non-NULL leaf.
 			 */
 			results[nfound] = entry_ptr(*vpp);
 			nfound++;
@@ -648,47 +686,59 @@ gang_lookup_scan(struct radix_tree *t, struct radix_tree_path *path,
 		}
 scan_siblings:
 		/*
-		 * try to find the next non-NULL sibling.
+		 * try to find the next matching non-NULL sibling.
 		 */
+		if (lastidx == 0) {
+			/*
+			 * the root has no siblings.
+			 * we've done.
+			 */
+			KASSERT(vpp == &t->t_root);
+			break;
+		}
 		n = path_node(t, path, lastidx - 1);
 		if (*vpp != NULL && n->n_nptrs == 1) {
 			/*
-			 * optimization
+			 * optimization; if the node has only a single pointer
+			 * and we've already visited it, there's no point to
+			 * keep scanning in this node.
 			 */
 			goto no_siblings;
 		}
-		for (i = path_idx(t, path, lastidx - 1) + 1;
-		    i < RADIX_TREE_PTR_PER_NODE;
-		    i++) {
+		for (i = vpp - n->n_ptrs + step; i != guard; i += step) {
+			KASSERT(i < RADIX_TREE_PTR_PER_NODE);
 			if (entry_match_p(n->n_ptrs[i], tagmask)) {
 				vpp = &n->n_ptrs[i];
-				path->p_refs[lastidx].pptr = vpp;
-				KASSERT(path_idx(t, path, lastidx - 1) == i);
 				break;
 			}
 		}
-		if (i == RADIX_TREE_PTR_PER_NODE) {
+		if (i == guard) {
 no_siblings:
 			/*
 			 * not found.  go to parent.
 			 */
 			lastidx--;
-			if (lastidx == 0) {
-				return nfound;
-			}
 			vpp = path_pptr(t, path, lastidx);
 			goto scan_siblings;
 		}
+descend:
 		/*
-		 * descending the left-most child node, upto the leaf or NULL.
+		 * following the left-most (or right-most in the case of
+		 * reverse scan) child node, decend until reaching the leaf or
+		 * an non-matching entry.
 		 */
 		while (entry_match_p(*vpp, tagmask) && lastidx < t->t_height) {
-			n = entry_ptr(*vpp);
-			vpp = &n->n_ptrs[0];
-			lastidx++;
+			/*
+			 * save vpp in the path so that we can come back to this
+			 * node after finishing visiting children.
+			 */
 			path->p_refs[lastidx].pptr = vpp;
+			n = entry_ptr(*vpp);
+			vpp = &n->n_ptrs[first];
+			lastidx++;
 		}
 	}
+	return nfound;
 }
 
 /*
@@ -716,7 +766,24 @@ radix_tree_gang_lookup_node(struct radix_tree *t, uint64_t idx,
 	struct radix_tree_path path;
 
 	gang_lookup_init(t, idx, &path, 0);
-	return gang_lookup_scan(t, &path, results, maxresults, 0);
+	return gang_lookup_scan(t, &path, results, maxresults, 0, false);
+}
+
+/*
+ * radix_tree_gang_lookup_node_reverse:
+ *
+ * same as radix_tree_gang_lookup_node except that this one scans the
+ * tree in the reverse order.  ie. descending index values.
+ */
+
+unsigned int
+radix_tree_gang_lookup_node_reverse(struct radix_tree *t, uint64_t idx,
+    void **results, unsigned int maxresults)
+{
+	struct radix_tree_path path;
+
+	gang_lookup_init(t, idx, &path, 0);
+	return gang_lookup_scan(t, &path, results, maxresults, 0, true);
 }
 
 /*
@@ -734,7 +801,25 @@ radix_tree_gang_lookup_tagged_node(struct radix_tree *t, uint64_t idx,
 	const unsigned int tagmask = tagid_to_mask(tagid);
 
 	gang_lookup_init(t, idx, &path, tagmask);
-	return gang_lookup_scan(t, &path, results, maxresults, tagmask);
+	return gang_lookup_scan(t, &path, results, maxresults, tagmask, false);
+}
+
+/*
+ * radix_tree_gang_lookup_tagged_node_reverse:
+ *
+ * same as radix_tree_gang_lookup_tagged_node except that this one scans the
+ * tree in the reverse order.  ie. descending index values.
+ */
+
+unsigned int
+radix_tree_gang_lookup_tagged_node_reverse(struct radix_tree *t, uint64_t idx,
+    void **results, unsigned int maxresults, radix_tree_tagid_t tagid)
+{
+	struct radix_tree_path path;
+	const unsigned int tagmask = tagid_to_mask(tagid);
+
+	gang_lookup_init(t, idx, &path, tagmask);
+	return gang_lookup_scan(t, &path, results, maxresults, tagmask, true);
 }
 
 /*
@@ -916,8 +1001,55 @@ test1(void)
 	radix_tree_dump(t);
 	assert(radix_tree_lookup_node(t, 0) == NULL);
 	assert(radix_tree_lookup_node(t, 1000) == NULL);
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3) == 0);
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3) == 0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3) == 0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3) == 0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, 0) == 0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 1000, results, 3, 0) == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3, 0)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 1000, results, 3,
+	    0) == 0);
+	assert(radix_tree_empty_tree_p(t));
+	assert(radix_tree_insert_node(t, 0, (void *)0xdeadbea0) == 0);
+	assert(!radix_tree_empty_tree_p(t));
+	assert(radix_tree_lookup_node(t, 0) == (void *)0xdeadbea0);
+	assert(radix_tree_lookup_node(t, 1000) == NULL);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3) == 1);
+	assert(results[0] == (void *)0xdeadbea0);
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3) == 0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3) == 1);
+	assert(results[0] == (void *)0xdeadbea0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3) == 1);
+	assert(results[0] == (void *)0xdeadbea0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, 0)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3, 0)
+	    == 0);
 	assert(radix_tree_insert_node(t, 1000, (void *)0xdeadbea0) == 0);
+	assert(radix_tree_remove_node(t, 0) == (void *)0xdeadbea0);
+	assert(!radix_tree_empty_tree_p(t));
 	radix_tree_dump(t);
+	assert(radix_tree_lookup_node(t, 0) == NULL);
+	assert(radix_tree_lookup_node(t, 1000) == (void *)0xdeadbea0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3) == 1);
+	assert(results[0] == (void *)0xdeadbea0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3) == 1);
+	assert(results[0] == (void *)0xdeadbea0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3) == 0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3) == 1);
+	assert(results[0] == (void *)0xdeadbea0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, 0)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3, 0)
+	    == 0);
 	assert(!radix_tree_get_tag(t, 1000, 0));
 	assert(!radix_tree_get_tag(t, 1000, 1));
 	radix_tree_set_tag(t, 1000, 1);
@@ -1130,11 +1262,36 @@ test2(const char *title, bool dense)
 		    (void *)results, __arraycount(results))) > 0) {
 			nextidx = results[nfound - 1]->idx + 1;
 			total += nfound;
+			if (nextidx == 0) {
+				break;
+			}
 		}
 		assert(total == nnodes);
 	}
 	gettimeofday(&etv, NULL);
 	printops(title, "ganglookup", 0, nnodes, &stv, &etv);
+
+	gettimeofday(&stv, NULL);
+	{
+		struct testnode *results[TEST2_GANG_LOOKUP_NODES];
+		uint64_t nextidx;
+		unsigned int nfound;
+		unsigned int total;
+
+		nextidx = UINT64_MAX;
+		total = 0;
+		while ((nfound = radix_tree_gang_lookup_node_reverse(t, nextidx,
+		    (void *)results, __arraycount(results))) > 0) {
+			nextidx = results[nfound - 1]->idx - 1;
+			total += nfound;
+			if (nextidx == UINT64_MAX) {
+				break;
+			}
+		}
+		assert(total == nnodes);
+	}
+	gettimeofday(&etv, NULL);
+	printops(title, "ganglookup_reverse", 0, nnodes, &stv, &etv);
 
 	for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
 		gettimeofday(&stv, NULL);
@@ -1159,6 +1316,33 @@ test2(const char *title, bool dense)
 		    &etv);
 	}
 
+	for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
+		gettimeofday(&stv, NULL);
+		{
+			struct testnode *results[TEST2_GANG_LOOKUP_NODES];
+			uint64_t nextidx;
+			unsigned int nfound;
+			unsigned int total;
+
+			nextidx = UINT64_MAX;
+			total = 0;
+			while ((nfound =
+			    radix_tree_gang_lookup_tagged_node_reverse(t,
+			    nextidx, (void *)results, __arraycount(results),
+			    tag)) > 0) {
+				nextidx = results[nfound - 1]->idx - 1;
+				total += nfound;
+				if (nextidx == UINT64_MAX) {
+					break;
+				}
+			}
+			assert(total == ntagged[tag]);
+		}
+		gettimeofday(&etv, NULL);
+		printops(title, "ganglookup_tag_reverse", tag, ntagged[tag],
+		    &stv, &etv);
+	}
+
 	removed = 0;
 	for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
 		unsigned int total;
@@ -1180,6 +1364,9 @@ test2(const char *title, bool dense)
 				}
 				nextidx = results[nfound - 1]->idx + 1;
 				total += nfound;
+				if (nextidx == 0) {
+					break;
+				}
 			}
 			assert(tag != 0 || total == ntagged[tag]);
 			assert(total <= ntagged[tag]);
@@ -1207,6 +1394,9 @@ test2(const char *title, bool dense)
 			}
 			nextidx = results[nfound - 1]->idx + 1;
 			total += nfound;
+			if (nextidx == 0) {
+				break;
+			}
 		}
 		assert(total == nnodes - removed);
 	}
