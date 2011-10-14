@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.10 2011/10/14 15:18:05 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.11 2011/10/14 15:31:35 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.10 2011/10/14 15:18:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.11 2011/10/14 15:31:35 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.10 2011/10/14 15:18:05 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.10 2011/10/14 15:18:05 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.11 2011/10/14 15:31:35 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -990,13 +990,14 @@ struct testnode {
 };
 
 static void
-printops(const char *name, unsigned int n, const struct timeval *stv,
-    const struct timeval *etv)
+printops(const char *title, const char *name, int tag, unsigned int n,
+    const struct timeval *stv, const struct timeval *etv)
 {
 	uint64_t s = stv->tv_sec * 1000000 + stv->tv_usec;
 	uint64_t e = etv->tv_sec * 1000000 + etv->tv_usec;
 
-	printf("%lf %s/s\n", (double)n / (e - s) * 1000000, name);
+	printf("RESULT %s %s %d %lf op/s\n", title, name, tag,
+	    (double)n / (e - s) * 1000000);
 }
 
 #define	TEST2_GANG_LOOKUP_NODES	16
@@ -1006,14 +1007,14 @@ test2_should_tag(unsigned int i, radix_tree_tagid_t tagid)
 {
 
 	if (tagid == 0) {
-		return (i & 0x3) == 0;
+		return (i & 0x3) == 0;	/* 25% */
 	} else {
-		return (i % 7) == 0;
+		return (i % 7) == 0;	/* 14% */
 	}
 }
 
 static void
-test2(bool dense)
+test2(const char *title, bool dense)
 {
 	struct radix_tree s;
 	struct radix_tree *t = &s;
@@ -1062,7 +1063,7 @@ test2(bool dense)
 		assert(radix_tree_lookup_node(t, n->idx) == n);
 	}
 	gettimeofday(&etv, NULL);
-	printops("lookup", nnodes, &stv, &etv);
+	printops(title, "lookup", 0, nnodes, &stv, &etv);
 
 	for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
 		gettimeofday(&stv, NULL);
@@ -1072,7 +1073,7 @@ test2(bool dense)
 			    radix_tree_get_tag(t, n->idx, tag));
 		}
 		gettimeofday(&etv, NULL);
-		printops("get_tag", ntagged[tag], &stv, &etv);
+		printops(title, "get_tag", tag, ntagged[tag], &stv, &etv);
 	}
 
 	gettimeofday(&stv, NULL);
@@ -1081,7 +1082,7 @@ test2(bool dense)
 		radix_tree_remove_node(t, n->idx);
 	}
 	gettimeofday(&etv, NULL);
-	printops("remove", nnodes, &stv, &etv);
+	printops(title, "remove", 0, nnodes, &stv, &etv);
 
 	gettimeofday(&stv, NULL);
 	for (i = 0; i < nnodes; i++) {
@@ -1089,7 +1090,7 @@ test2(bool dense)
 		radix_tree_insert_node(t, n->idx, n);
 	}
 	gettimeofday(&etv, NULL);
-	printops("insert", nnodes, &stv, &etv);
+	printops(title, "insert", 0, nnodes, &stv, &etv);
 
 	for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
 		ntagged[tag] = 0;
@@ -1102,7 +1103,7 @@ test2(bool dense)
 			}
 		}
 		gettimeofday(&etv, NULL);
-		printops("set_tag", ntagged[tag], &stv, &etv);
+		printops(title, "set_tag", tag, ntagged[tag], &stv, &etv);
 	}
 
 	gettimeofday(&stv, NULL);
@@ -1122,7 +1123,7 @@ test2(bool dense)
 		assert(total == nnodes);
 	}
 	gettimeofday(&etv, NULL);
-	printops("ganglookup", nnodes, &stv, &etv);
+	printops(title, "ganglookup", 0, nnodes, &stv, &etv);
 
 	for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
 		gettimeofday(&stv, NULL);
@@ -1143,7 +1144,8 @@ test2(bool dense)
 			assert(total == ntagged[tag]);
 		}
 		gettimeofday(&etv, NULL);
-		printops("ganglookup_tag", ntagged[tag], &stv, &etv);
+		printops(title, "ganglookup_tag", tag, ntagged[tag], &stv,
+		    &etv);
 	}
 
 	removed = 0;
@@ -1172,7 +1174,8 @@ test2(bool dense)
 			assert(total <= ntagged[tag]);
 		}
 		gettimeofday(&etv, NULL);
-		printops("ganglookup_tag+remove", total, &stv, &etv);
+		printops(title, "ganglookup_tag+remove", tag, total, &stv,
+		    &etv);
 		removed += total;
 	}
 
@@ -1197,7 +1200,7 @@ test2(bool dense)
 		assert(total == nnodes - removed);
 	}
 	gettimeofday(&etv, NULL);
-	printops("ganglookup+remove", nnodes - removed, &stv, &etv);
+	printops(title, "ganglookup+remove", 0, nnodes - removed, &stv, &etv);
 
 	radix_tree_fini_tree(t);
 	free(nodes);
@@ -1208,10 +1211,8 @@ main(int argc, char *argv[])
 {
 
 	test1();
-	printf("dense distribution:\n");
-	test2(true);
-	printf("sparse distribution:\n");
-	test2(false);
+	test2("dense", true);
+	test2("sparse", false);
 	return 0;
 }
 
