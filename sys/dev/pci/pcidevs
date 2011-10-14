@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.962.4.15.2.1 2011/01/07 02:21:52 matt Exp $
+$NetBSD: pcidevs,v 1.962.4.15.2.2 2011/10/14 16:51:22 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -779,6 +779,7 @@ product ALI M5239	0x5239	M5239 USB 2.0 Host Controller
 product ALI M5243	0x5243	M5243 PCI-AGP Bridge
 product ALI M5249	0x5249	M5249 Hypertransport to PCI bridge
 product ALI M5261	0x5261	M5261 Tulip Ethernet Controller
+product	ALI M5288	0x5288	M5288 SATA/Raid Controller
 product ALI M5451	0x5451	M5451 AC-Link Controller Audio Device
 product ALI M5453	0x5453	M5453 AC-Link Controller Modem Device
 product ALI M5455	0x5455	M5455 AC-Link Controller Audio Device
