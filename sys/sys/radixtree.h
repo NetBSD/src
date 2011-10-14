@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.h,v 1.2 2011/04/14 15:34:43 yamt Exp $	*/
+/*	$NetBSD: radixtree.h,v 1.3 2011/10/14 15:16:59 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -55,6 +55,7 @@ void radix_tree_init(void);
 
 void radix_tree_init_tree(struct radix_tree *);
 void radix_tree_fini_tree(struct radix_tree *);
+bool radix_tree_empty_tree_p(struct radix_tree *);
 
 /*
  * node
