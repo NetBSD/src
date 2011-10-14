@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.141 2011/07/04 16:06:45 joerg Exp $	*/
+/*	$NetBSD: ccd.c,v 1.142 2011/10/14 09:23:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.141 2011/07/04 16:06:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.142 2011/10/14 09:23:29 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,10 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		/*
 		 * XXX: Cache the component's dev_t.
 		 */
-		if ((error = VOP_GETATTR(vpp[ix], &va, l->l_cred)) != 0) {
+		vn_lock(vpp[ix], LK_SHARED | LK_RETRY);
+		error = VOP_GETATTR(vpp[ix], &va, l->l_cred);
+		VOP_UNLOCK(vpp[ix]);
+		if (error != 0) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
 				printf("%s: %s: getattr failed %s = %d\n",

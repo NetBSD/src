@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.103 2011/04/14 00:59:06 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.104 2011/10/14 09:23:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.103 2011/04/14 00:59:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.104 2011/10/14 09:23:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,9 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 			break;
 		}
 
+		vn_lock(vp, LK_SHARED | LK_RETRY);
 		error = VOP_GETATTR(vp, &va, l->l_cred);
+		VOP_UNLOCK(vp);
 
 		fd_putfile(fd);
 
