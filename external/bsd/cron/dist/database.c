@@ -1,4 +1,4 @@
-/*	$NetBSD: database.c,v 1.6 2011/10/13 16:58:30 joerg Exp $	*/
+/*	$NetBSD: database.c,v 1.7 2011/10/14 14:38:20 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: database.c,v 1.7 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: database.c,v 1.6 2011/10/13 16:58:30 joerg Exp $");
+__RCSID("$NetBSD: database.c,v 1.7 2011/10/14 14:38:20 christos Exp $");
 #endif
 #endif
 
@@ -63,7 +63,7 @@ process_dir(const char *dname, struct stat *st, int sys, cron_db *new_db,
 		 * Homage to...
 		 */
 		static const char *junk[] = {
-			".rpmsave", ".rpmorig", ".rpmnew",
+			"rpmsave", "rpmorig", "rpmnew",
 		};
 
 		/* avoid file names beginning with ".".  this is good
@@ -93,11 +93,11 @@ process_dir(const char *dname, struct stat *st, int sys, cron_db *new_db,
 
 		(void)strlcpy(fname, dp->d_name, sizeof(fname));
 		
-		/* ... or look leftover crap */
+		/* ... or look for blacklisted extensions */
 		for (i = 0; i < __arraycount(junk); i++) {
 			char *p;
-			if ((p = strstr(fname, junk[i])) != NULL &&
-			    p[strlen(junk[i]) - 1] == '\0')
+			if ((p = strrchr(fname, '.')) != NULL &&
+			    strcmp(p + 1, junk[i]) == 0)
 				break;
 		}
 		if (i != __arraycount(junk))
