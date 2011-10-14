@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.9 2011/10/14 15:16:59 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.10 2011/10/14 15:18:05 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.9 2011/10/14 15:16:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.10 2011/10/14 15:18:05 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.9 2011/10/14 15:16:59 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.9 2011/10/14 15:16:59 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.10 2011/10/14 15:18:05 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -161,7 +161,7 @@ struct radix_tree_path {
 	struct radix_tree_node_ref {
 		void **pptr;
 	} p_refs[RADIX_TREE_MAX_HEIGHT + 1]; /* +1 for the root ptr */
-	int p_lastidx;
+	unsigned int p_lastidx;
 };
 
 static inline void **
@@ -619,7 +619,7 @@ gang_lookup_scan(struct radix_tree *t, struct radix_tree_path *path,
     void **results, unsigned int maxresults, const unsigned int tagmask)
 {
 	void **vpp;
-	int nfound;
+	unsigned int nfound;
 	unsigned int lastidx;
 
 	KASSERT(maxresults > 0);
@@ -631,7 +631,7 @@ gang_lookup_scan(struct radix_tree *t, struct radix_tree_path *path,
 	vpp = path_pptr(t, path, lastidx);
 	while (/*CONSTCOND*/true) {
 		struct radix_tree_node *n;
-		int i;
+		unsigned int i;
 
 		if (entry_match_p(*vpp, tagmask)) {
 			KASSERT(lastidx == t->t_height);
