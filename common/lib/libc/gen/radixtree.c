@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.12 2011/10/14 16:06:05 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.13 2011/10/14 16:10:47 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.12 2011/10/14 16:06:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.13 2011/10/14 16:10:47 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.12 2011/10/14 16:06:05 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.12 2011/10/14 16:06:05 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.13 2011/10/14 16:10:47 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -136,7 +136,7 @@ struct radix_tree_node {
  */
 
 static unsigned int
-any_children_tagmask(struct radix_tree_node *n)
+any_children_tagmask(const struct radix_tree_node *n)
 {
 	unsigned int mask;
 	int i;
@@ -165,7 +165,7 @@ struct radix_tree_path {
 };
 
 static inline void **
-path_pptr(struct radix_tree *t, struct radix_tree_path *p,
+path_pptr(const struct radix_tree *t, const struct radix_tree_path *p,
     unsigned int height)
 {
 
@@ -174,7 +174,8 @@ path_pptr(struct radix_tree *t, struct radix_tree_path *p,
 }
 
 static inline struct radix_tree_node *
-path_node(struct radix_tree * t, struct radix_tree_path *p, unsigned int height)
+path_node(const struct radix_tree * t, const struct radix_tree_path *p,
+    unsigned int height)
 {
 
 	KASSERT(height <= t->t_height);
@@ -182,7 +183,8 @@ path_node(struct radix_tree * t, struct radix_tree_path *p, unsigned int height)
 }
 
 static inline unsigned int
-path_idx(struct radix_tree * t, struct radix_tree_path *p, unsigned int height)
+path_idx(const struct radix_tree * t, const struct radix_tree_path *p,
+    unsigned int height)
 {
 
 	KASSERT(height <= t->t_height);
