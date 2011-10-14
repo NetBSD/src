@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1.2.4 2011/07/26 03:42:21 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.1.2.5 2011/10/14 17:21:25 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,12 +39,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.1.2.4 2011/07/26 03:42:21 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.1.2.5 2011/10/14 17:21:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/siginfo.h>
-#include <sys/user.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
@@ -52,7 +51,6 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.1.2.4 2011/07/26 03:42:21 matt Exp $");
 #include <sys/savar.h>
 #endif
 #include <sys/kauth.h>
-#include <sys/kmem.h>
 #include <sys/ras.h>
 
 #include <uvm/uvm_extern.h>
@@ -65,6 +63,7 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.1.2.4 2011/07/26 03:42:21 matt Exp $");
 
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
+#include <powerpc/booke/cpuvar.h>
 
 #include <powerpc/db_machdep.h>
 #include <ddb/db_interface.h>
@@ -177,6 +176,8 @@ pagefault(struct vm_map *map, vaddr_t va, vm_prot_t ftype, bool usertrap)
 		rv = uvm_fault(map, trunc_page(va), ftype);
 		if (rv == 0)
 			uvm_grow(l->l_proc, trunc_page(va));
+		if (rv == EACCES)
+			rv = EFAULT;
 #ifdef KERN_SA
 		l->l_pflag &= ~LP_SA_PAGEFAULT;
 #endif
@@ -232,9 +233,10 @@ dsi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		const paddr_t pa = pte_to_paddr(pte);
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 		KASSERT(pg);
+		struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
-		if (!VM_PAGE_MD_MODIFIED_P(pg)) {
-			pmap_page_set_attributes(pg, VM_PAGE_MD_MODIFIED);
+		if (!VM_PAGEMD_MODIFIED_P(mdpg)) {
+			pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED);
 		}
 		pte &= ~PTE_UNMODIFIED;
 		*ptep = pte;
@@ -287,24 +289,36 @@ isi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	KASSERT(ptep != NULL);
 	pt_entry_t pte = *ptep;
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmapexechist);
+
 	if ((pte & PTE_UNSYNCED) == PTE_UNSYNCED) {
 		const paddr_t pa = pte_to_paddr(pte);
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 		KASSERT(pg);
+		struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
-		if (!VM_PAGE_MD_EXECPAGE_P(pg)) {
+		UVMHIST_LOG(pmapexechist,
+		    "srr0=%#x pg=%p (pa %#"PRIxPADDR"): %s", 
+		    tf->tf_srr0, pg, pa, 
+		    (VM_PAGEMD_EXECPAGE_P(mdpg)
+			? "no syncicache (already execpage)"
+			: "performed syncicache (now execpage)"));
+
+		if (!VM_PAGEMD_EXECPAGE_P(mdpg)) {
 			ci->ci_softc->cpu_ev_exec_trap_sync.ev_count++;
 			dcache_wb_page(pa);
 			icache_inv_page(pa);
-			pmap_page_set_attributes(pg, VM_PAGE_MD_EXECPAGE);
+			pmap_page_set_attributes(mdpg, VM_PAGEMD_EXECPAGE);
 		}
 		pte &= ~PTE_UNSYNCED;
 		pte |= PTE_xX;
 		*ptep = pte;
+
 		pmap_tlb_update_addr(faultmap->pmap, trunc_page(faultva),
 		    pte, 0);
 		kpreempt_enable();
-		return false;
+		UVMHIST_LOG(pmapexechist, "<- 0", 0,0,0,0);
+		return 0;
 	}
 	kpreempt_enable();
 
@@ -323,6 +337,7 @@ isi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		ksi->ksi_code = SEGV_ACCERR;
 		ksi->ksi_addr = (void *)tf->tf_srr0; /* not truncated */
 	}
+	UVMHIST_LOG(pmapexechist, "<- %d", rv, 0,0,0);
 	return rv;
 }
 
@@ -442,6 +457,12 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	if (!usertrap_p(tf))
 		return rv;
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmapexechist);
+
+	UVMHIST_LOG(pmapexechist, " srr0/1=%#x/%#x esr=%#x pte=%#x", 
+	    tf->tf_srr0, tf->tf_srr1, tf->tf_esr,
+	    *trap_pte_lookup(tf, trunc_page(tf->tf_srr0), PSL_IS));
+
 	ci->ci_ev_pgm.ev_count++;
 
 	if (tf->tf_esr & ESR_PTR) {
@@ -451,7 +472,9 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 			tf->tf_srr0 += 4;
 			return 0;
 		}
-	} else if (tf->tf_esr & (ESR_PIL|ESR_PPR)) {
+	}
+
+	if (tf->tf_esr & (ESR_PIL|ESR_PPR)) {
 		if (emulate_opcode(tf, ksi)) {
 			tf->tf_srr0 += 4;
 			return 0;
@@ -461,15 +484,52 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	KSI_INIT_TRAP(ksi);
 	ksi->ksi_signo = SIGILL;
 	ksi->ksi_trap = EXC_PGM;
-	if (tf->tf_esr & ESR_PIL)
+	if (tf->tf_esr & ESR_PIL) {
 		ksi->ksi_code = ILL_ILLOPC;
-	else if (tf->tf_esr & ESR_PPR)
+	} else if (tf->tf_esr & ESR_PPR) {
 		ksi->ksi_code = ILL_PRVOPC;
-	else if (tf->tf_esr & ESR_PTR)
-		ksi->ksi_code = ILL_ILLTRP;
-	else
+	} else if (tf->tf_esr & ESR_PTR) {
+		ksi->ksi_signo = SIGTRAP;
+		ksi->ksi_code = TRAP_BRKPT;
+	} else {
 		ksi->ksi_code = 0;
+	}
 	ksi->ksi_addr = (void *)tf->tf_srr0;
+	return rv;
+}
+
+static int
+debug_exception(struct trapframe *tf, ksiginfo_t *ksi)
+{
+	struct cpu_info * const ci = curcpu();
+	int rv = EPERM;
+
+	if (!usertrap_p(tf))
+		return rv;
+
+	ci->ci_ev_debug.ev_count++;
+
+	/*
+	 * Ack the interrupt.
+	 */
+	mtspr(SPR_DBSR, tf->tf_esr);
+	KASSERT(tf->tf_esr & (DBSR_IAC1|DBSR_IAC2));
+	KASSERT((tf->tf_srr1 & PSL_SE) == 0);
+
+	/*
+	 * Disable debug events
+	 */
+	mtspr(SPR_DBCR1, 0);
+	mtspr(SPR_DBCR0, 0);
+
+	/*
+	 * Tell the debugger ...
+	 */
+	KSI_INIT_TRAP(ksi);
+	ksi->ksi_signo = SIGTRAP;
+	ksi->ksi_trap = EXC_TRC;
+	ksi->ksi_addr = (void *)tf->tf_srr0;
+	ksi->ksi_code = TRAP_TRACE;
 	return rv;
 }
 
@@ -577,6 +637,7 @@ ddb_exception(struct trapframe *tf)
 	}
 	return false;
 #else
+#if 0
 	struct cpu_info * const ci = curcpu();
 	struct cpu_softc * const cpu = ci->ci_softc;
 	printf("CPL stack:");
@@ -587,6 +648,7 @@ ddb_exception(struct trapframe *tf)
 	}
 	printf(" %u\n", ci->ci_cpl);
 	dump_trapframe(tf);
+#endif
 	if (kdb_trap(tf->tf_exc, tf)) {
 		tf->tf_srr0 += 4;
 		return true;
@@ -653,7 +715,14 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 	}
 #endif
 
-#if 0
+	if (usertrap && (tf->tf_fixreg[1] & 0x80000000)) {
+		printf("%s(entry): pid %d.%d (%s): %s invalid sp %#lx (sprg1=%#lx)\n",
+		    __func__, p->p_pid, l->l_lid, p->p_comm,
+		    trap_names[trap_code], tf->tf_fixreg[1], mfspr(SPR_SPRG1));
+		dump_trapframe(tf);
+		Debugger();
+	}
+
 	if (usertrap && (tf->tf_srr1 & (PSL_DS|PSL_IS)) != (PSL_DS|PSL_IS)) {
 		printf("%s(entry): pid %d.%d (%s): %s invalid PSL %#lx\n",
 		    __func__, p->p_pid, l->l_lid, p->p_comm,
@@ -661,12 +730,6 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		dump_trapframe(tf);
 		Debugger();
 	}
-#endif
-
-	if (usertrap) {
-		LWP_CACHE_CREDS(l, p);
-	}
-
 
 	switch (trap_code) {
 	case T_CRITIAL_INPUT:
@@ -711,6 +774,12 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		rv = itlb_exception(tf, &ksi);
 		break;
 	case T_DEBUG:
+#ifdef DDB
+		if (!usertrap && ddb_exception(tf))
+			return;
+#endif
+		rv = debug_exception(tf, &ksi);
+		break;
 	case T_EMBEDDED_FP_DATA:
 		rv = embedded_fp_data_exception(tf, &ksi);
 		break;
@@ -724,15 +793,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		break;
 	case T_AST:
 		KASSERT(usertrap);
-		ci->ci_astpending = 0;		/* we are about to do it */
-		ci->ci_data.cpu_nsoft++;
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
-		/* Check whether we are being preempted. */
-		if (ci->ci_want_resched)
-			preempt();
+		cpu_ast(l, ci);
 		if (tf->tf_fixreg[1] & 0x80000000) {
 			printf("%s(ast-exit): pid %d.%d (%s): invalid sp %#lx\n",
 			    __func__, p->p_pid, l->l_lid, p->p_comm,
@@ -830,12 +891,26 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 	}
 }
 
+void
+cpu_ast(struct lwp *l, struct cpu_info *ci)
+{
+	ci->ci_astpending = 0;		/* we are about to do it */
+	ci->ci_data.cpu_nsoft++;
+	if (l->l_pflag & LP_OWEUPC) {
+		l->l_pflag &= ~LP_OWEUPC;
+		ADDUPROF(l);
+	}
+	/* Check whether we are being preempted. */
+	if (ci->ci_want_resched)
+		preempt();
+}
+
 void            
 upcallret(struct lwp *l)
 {       
                 
 	mi_userret(l);		/* Invoke MI userret code */
-}               
+}
 
 /* 
  * Start a new LWP

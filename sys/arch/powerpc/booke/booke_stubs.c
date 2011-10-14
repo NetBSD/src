@@ -1,3 +1,4 @@
+/*	$NetBSD: booke_stubs.c,v 1.1.2.4 2011/10/14 17:21:25 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,33 +34,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	__INTR_PRIVATE
-#define	__INTR_NOINLINE
-
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.1.2.3 2011/02/18 21:17:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.1.2.4 2011/10/14 17:21:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
-#include <sys/intr.h>
 
 #include <powerpc/instr.h>
 #include <powerpc/booke/cpuvar.h>
 
 #define	__stub	__section(".stub") __noprofile
 
-void tlb_set_asid(uint32_t) __stub;
+void tlb_set_asid(tlb_asid_t) __stub;
 
 void
-tlb_set_asid(uint32_t asid)
+tlb_set_asid(tlb_asid_t asid)
 {
 	(*cpu_md_ops.md_tlb_ops->md_tlb_set_asid)(asid);
 }
 
-uint32_t tlb_get_asid(void) __stub;
+tlb_asid_t tlb_get_asid(void) __stub;
 
-uint32_t
+tlb_asid_t
 tlb_get_asid(void)
 {
 	return (*cpu_md_ops.md_tlb_ops->md_tlb_get_asid)();
@@ -81,26 +78,26 @@ tlb_invalidate_globals(void)
 	(*cpu_md_ops.md_tlb_ops->md_tlb_invalidate_globals)();
 }
 
-void tlb_invalidate_asids(uint32_t, uint32_t) __stub;
+void tlb_invalidate_asids(tlb_asid_t, tlb_asid_t) __stub;
 
 void
-tlb_invalidate_asids(uint32_t asid_lo, uint32_t asid_hi)
+tlb_invalidate_asids(tlb_asid_t asid_lo, tlb_asid_t asid_hi)
 {
 	(*cpu_md_ops.md_tlb_ops->md_tlb_invalidate_asids)(asid_lo, asid_hi);
 }
 
-void tlb_invalidate_addr(vaddr_t, uint32_t) __stub;
+void tlb_invalidate_addr(vaddr_t, tlb_asid_t) __stub;
 
 void
-tlb_invalidate_addr(vaddr_t va, uint32_t asid)
+tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 {
 	(*cpu_md_ops.md_tlb_ops->md_tlb_invalidate_addr)(va, asid);
 }
 
-bool tlb_update_addr(vaddr_t, uint32_t, uint32_t, bool) __stub;
+bool tlb_update_addr(vaddr_t, tlb_asid_t, pt_entry_t, bool) __stub;
 
 bool
-tlb_update_addr(vaddr_t va, uint32_t asid, uint32_t pte, bool insert_p)
+tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert_p)
 {
 	return (*cpu_md_ops.md_tlb_ops->md_tlb_update_addr)(va, asid, pte, insert_p);
 }
@@ -113,44 +110,20 @@ tlb_read_entry(size_t pos, struct tlbmask *tlb)
 	(*cpu_md_ops.md_tlb_ops->md_tlb_read_entry)(pos, tlb);
 }
 
-u_int tlb_record_asids(u_long *, uint32_t) __stub;
-
-u_int
-tlb_record_asids(u_long *bitmap, uint32_t start)
-{
-	return (*cpu_md_ops.md_tlb_ops->md_tlb_record_asids)(bitmap, start);
-}
-
-void *tlb_mapiodev(paddr_t, psize_t) __stub;
-
-void *
-tlb_mapiodev(paddr_t pa, psize_t len)
-{
-	return (*cpu_md_ops.md_tlb_ops->md_tlb_mapiodev)(pa, len);
-}
-
-void tlb_unmapiodev(vaddr_t, vsize_t) __stub;
+void tlb_write_entry(size_t, const struct tlbmask *) __stub;
 
 void
-tlb_unmapiodev(vaddr_t va, vsize_t len)
+tlb_write_entry(size_t pos, const struct tlbmask *tlb)
 {
-	(*cpu_md_ops.md_tlb_ops->md_tlb_unmapiodev)(va, len);
+	(*cpu_md_ops.md_tlb_ops->md_tlb_write_entry)(pos, tlb);
 }
 
-int tlb_ioreserve(vaddr_t, vsize_t, uint32_t) __stub;
+u_int tlb_record_asids(u_long *) __stub;
 
-int
-tlb_ioreserve(vaddr_t va, vsize_t len, uint32_t pte)
+u_int
+tlb_record_asids(u_long *bitmap)
 {
-	return (*cpu_md_ops.md_tlb_ops->md_tlb_ioreserve)(va, len, pte);
-}
-
-int tlb_iorelease(vaddr_t) __stub;
-
-int
-tlb_iorelease(vaddr_t va)
-{
-	return (*cpu_md_ops.md_tlb_ops->md_tlb_iorelease)(va);
+	return (*cpu_md_ops.md_tlb_ops->md_tlb_record_asids)(bitmap);
 }
 
 void tlb_dump(void (*)(const char *, ...)) __stub;
@@ -170,105 +143,34 @@ tlb_walk(void *ctx, bool (*func)(void *, vaddr_t, uint32_t, uint32_t))
 	(*cpu_md_ops.md_tlb_ops->md_tlb_walk)(ctx, func);
 }
 
-void *intr_establish(int, int, int, int (*)(void *), void *) __stub;
+void *tlb_mapiodev(paddr_t, psize_t, bool) __stub;
 
 void *
-intr_establish(int irq, int ipl, int ist, int (*func)(void *), void *arg)
+tlb_mapiodev(paddr_t pa, psize_t len, bool prefetchable)
 {
-	return (*powerpc_intrsw->intrsw_establish)(irq, ipl, ist, func, arg);
+	return (*cpu_md_ops.md_tlb_io_ops->md_tlb_mapiodev)(pa, len, prefetchable);
 }
 
-void intr_disestablish(void *) __stub;
+void tlb_unmapiodev(vaddr_t, vsize_t) __stub;
 
 void
-intr_disestablish(void *ih)
+tlb_unmapiodev(vaddr_t va, vsize_t len)
 {
-	(*powerpc_intrsw->intrsw_disestablish)(ih);
+	(*cpu_md_ops.md_tlb_io_ops->md_tlb_unmapiodev)(va, len);
 }
 
-const char *intr_string(int, int) __stub;
+int tlb_ioreserve(vaddr_t, vsize_t, uint32_t) __stub;
 
-const char *
-intr_string(int irq, int ist)
+int
+tlb_ioreserve(vaddr_t va, vsize_t len, uint32_t pte)
 {
-	return (*powerpc_intrsw->intrsw_string)(irq, ist);
+	return (*cpu_md_ops.md_tlb_io_ops->md_tlb_ioreserve)(va, len, pte);
 }
 
-void spl0(void) __stub;
+int tlb_iorelease(vaddr_t) __stub;
 
-void
-spl0(void)
+int
+tlb_iorelease(vaddr_t va)
 {
-	(*powerpc_intrsw->intrsw_spl0)();
-}
-
-int splraise(int) __stub;
-
-int 
-splraise(int ipl)
-{
-	return (*powerpc_intrsw->intrsw_splraise)(ipl);
-}
-
-#if 0
-int splhigh(void) __stub;
-#endif
-
-/*
- * This is called by softint_cleanup and can't be a stub but it can call
- * a stub.
- */
-int __noprofile
-splhigh(void)
-{
-	return splraise(IPL_HIGH);
-}
-
-void splx(int) __stub;
-
-void
-splx(int ipl)
-{
-	return (*powerpc_intrsw->intrsw_splx)(ipl);
-}
-
-void softint_init_md(struct lwp *, u_int, uintptr_t *) __stub;
-
-void
-softint_init_md(struct lwp *l, u_int level, uintptr_t *machdep_p)
-{
-	(*powerpc_intrsw->intrsw_softint_init_md)(l, level, machdep_p);
-}
-
-void softint_trigger(uintptr_t) __stub;
-
-void
-softint_trigger(uintptr_t machdep)
-{
-	(*powerpc_intrsw->intrsw_softint_trigger)(machdep);
-}
-
-void intr_cpu_init(struct cpu_info *) __stub;
-
-void
-intr_cpu_init(struct cpu_info *ci)
-{
-	(*powerpc_intrsw->intrsw_cpu_init)(ci);
-}
-
-void intr_init(void) __stub;
-
-void
-intr_init(void)
-{
-	(*powerpc_intrsw->intrsw_init)();
-}
-
-void
-booke_fixup_stubs(void)
-{
-	extern uint32_t _ftext[];
-	extern uint32_t _etext[];
-
-	powerpc_fixup_stubs(_ftext, _etext);
+	return (*cpu_md_ops.md_tlb_io_ops->md_tlb_iorelease)(va);
 }
