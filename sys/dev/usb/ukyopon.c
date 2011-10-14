@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.12 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.13 2011/10/14 13:12:41 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.12 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.13 2011/10/14 13:12:41 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ ukyopon_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 	if ((sc->sc_umodem.sc_msr & UMSR_DCD) == 0)
 		sc->sc_umodem.sc_msr |= UMSR_DCD;
 
-	return umodem_get_status(addr, portno, lsr, msr);
+	umodem_get_status(addr, portno, lsr, msr);
 }
 
 Static int
