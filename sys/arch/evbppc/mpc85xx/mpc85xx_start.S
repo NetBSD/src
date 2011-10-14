@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc85xx_start.S,v 1.1.2.2 2011/01/17 07:47:20 matt Exp $	*/
+/*	$NetBSD: mpc85xx_start.S,v 1.1.2.3 2011/10/14 17:21:27 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,12 +34,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define _NOREGNAMES
+#define	_NOREGNAMES
 #include <sys/cdefs.h>
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: mpc85xx_start.S,v 1.1.2.2 2011/01/17 07:47:20 matt Exp $")
+RCSID("$NetBSD: mpc85xx_start.S,v 1.1.2.3 2011/10/14 17:21:27 matt Exp $")
 
+#include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
@@ -47,11 +48,11 @@ RCSID("$NetBSD: mpc85xx_start.S,v 1.1.2.2 2011/01/17 07:47:20 matt Exp $")
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
 #include "opt_ppcparam.h"
-#include "opt_altivec.h"
 
 #include "ksyms.h"
 
 #include <powerpc/param.h>
+
 #include <powerpc/spr.h>
 #include <powerpc/trap.h>
 #include <powerpc/booke/pte.h>
@@ -63,13 +64,12 @@ RCSID("$NetBSD: mpc85xx_start.S,v 1.1.2.2 2011/01/17 07:47:20 matt Exp $")
 
 #define	INTSTK	0
 
-	.machine e500x2
+	.machine e500
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
  * mark the start of kernel text.
  */
 	.text
-	.p2align 4
 	.globl	_C_LABEL(kernel_text)
 _C_LABEL(kernel_text):
         .globl  __start 
@@ -126,7 +126,7 @@ __start:
 /* zero bss */
 	sub	%r17,%r16,%r15
 	addi	%r17,%r17,3+USPACE
-	rlwinm	%r3,%r17,32-2,2,31	/* srwl	%r0,%r0,2 */
+	rlwinm	%r3,%r17,32-2,2,31	/* srwl	%r3,%r17,2 */
 	mtctr	%r3
 	li	%r0,0
 2:	stwu	%r0,4(%r15)
@@ -134,12 +134,10 @@ __start:
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* If we had symbol table location we'd store it here and would've adjusted r8 here */
-	lis	%r7,_C_LABEL(startsym)@ha
-	addi	%r7,%r7,_C_LABEL(startsym)@l
-	stw	%r8,0(%r7)
-	lis	%r7,_C_LABEL(endsym)@ha
-	addi	%r7,%r7,_C_LABEL(endsym)@l
-	stw	%r8,0(%r7)
+	lis	%r17,_C_LABEL(startsym)@ha
+	stw	%r18,_C_LABEL(startsym)@l(%r17)
+	lis	%r17,_C_LABEL(endsym)@ha
+	stw	%r18,_C_LABEL(endsym)@l(%r17)
 #endif
 
 	/* Set kernel MMU context. */
@@ -147,16 +145,16 @@ __start:
 	mtpid	%r0
 	isync
 
-	INIT_CPUINFO(16,1,9,20)
-	mr	%r4,%r16
-	mfsprg0	%r21
-	lwz	%r20,CI_CURLWP(%r21)
-	mtsprg2	%r20
-	stw	%r21,L_CPU(%r20)
-	addi	%r21,%r21,CI_SAVELIFO
-	mtsprg3 %r21
-	mr	%r20,%r31		/* make deadbeef again */
-	mr	%r21,%r31		/* make deadbeef again */
+	INIT_CPUINFO(16,1,18,17)	/* r16 has &_end */
+	mr	%r4,%r16		/* remember kernelend */
+	mtsprg2	%r13			/* r13 has &lwp0, put into sprg2 */
+	GET_CPUINFO(%r17)
+	addi	%r17,%r17,CI_SAVELIFO
+	mtsprg3 %r17
+	mr	%r18,%r31		/* make deadbeef again */
+	mr	%r17,%r31		/* make deadbeef again */
+	mr	%r16,%r31		/* make deadbeef again */
+	mr	%r15,%r31		/* make deadbeef again */
 
 #if defined(GXEMUL)
 	/*
@@ -276,6 +274,9 @@ loop:	b	loop			/* XXX not reached */
 #include <powerpc/powerpc/pio_subr.S>
 #ifdef PPC_HAVE_SPE
 #include <powerpc/booke/spe_subr.S>
+#endif
+#if defined(MULTIPROCESSOR)
+#include <powerpc/booke/e500_mpsubr.S>
 #endif
 
 #if 0

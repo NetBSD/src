@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.1.2.2 2011/10/14 17:21:25 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,15 +34,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define __PMAP_PRIVATE
+
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.1.2.2 2011/10/14 17:21:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
 #include <sys/buf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/pmap.h>
 
@@ -86,8 +88,15 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 }
 
 void
-pmap_md_page_syncicache(struct vm_page *pg)
+pmap_md_page_syncicache(struct vm_page *pg, __cpuset_t onproc)
 {
+	/*
+	 * If onproc is empty, we could do a
+	 * pmap_page_protect(pg, VM_PROT_NONE) and remove all
+	 * mappings of the page and clear its execness.  Then
+	 * the next time page is faulted, it will get icache
+	 * synched.  But this is easier. :)
+	 */
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	dcache_wb_page(pa);
 	icache_inv_page(pa);
@@ -255,8 +264,9 @@ pmap_md_alloc_poolpage(int flags)
 void
 pmap_zero_page(paddr_t pa)
 {
-//	printf("%s(%#lx): calling dcache_zero_page(%#lx)\n", __func__, pa, pa);
 	dcache_zero_page(pa);
+
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(pa))));
 }
 
 void
@@ -281,6 +291,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 			      "r28", "r29", "r30", "r31");
 		}
 	}
+
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(dst - PAGE_SIZE))));
 }
 
 void
@@ -297,3 +309,32 @@ pmap_md_io_vaddr_p(vaddr_t va)
 	    && !(VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS);
 }
 
+bool
+pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
+{
+	pmap_t pm = ctx;
+        struct pmap_asid_info * const pai = PMAP_PAI(pm, curcpu()->ci_tlb_info);
+
+	if (asid != pai->pai_asid)
+		return true;
+
+	const pt_entry_t * const ptep = pmap_pte_lookup(pm, va);
+	KASSERT(ptep != NULL);
+	pt_entry_t xpte = *ptep;
+	xpte &= ~((xpte & (PTE_UNSYNCED|PTE_UNMODIFIED)) << 1);
+	xpte ^= xpte & (PTE_UNSYNCED|PTE_UNMODIFIED|PTE_WIRED);
+
+	KASSERTMSG(pte == xpte,
+	    ("pm=%p va=%#"PRIxVADDR" asid=%u: TLB pte (%#x) != real pte (%#x/%#x)",
+	    pm, va, asid, pte, xpte, *ptep));
+
+	return true;
+}
+
+#ifdef MULTIPROCESSOR
+void
+pmap_md_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
+{
+	/* nothing */
+}
+#endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.1.2.2 2011/10/14 17:21:25 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_mpc85xx.h"
+
 #define __INTR_PRIVATE
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.1.2.2 2011/10/14 17:21:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -43,8 +48,14 @@
 #include <sys/kmem.h>
 #include <sys/atomic.h>
 #include <sys/bus.h>
+#include <sys/xcall.h>
+#include <sys/bitops.h>
 
 #include <uvm/uvm_extern.h>
+
+#ifdef __HAVE_FAST_SOFTINTS
+#include <powerpc/softint.h>
+#endif
 
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
@@ -58,17 +69,6 @@
 #define CTPR2IPL(ctpr)		((ctpr) - (15 - IPL_HIGH))
 
 #define	IST_PERCPU_P(ist)	((ist) >= IST_TIMER)
-
-#define	IPL_SOFTMASK \
-	    ((1 << IPL_SOFTSERIAL) | (1 << IPL_SOFTNET   )	\
-	    |(1 << IPL_SOFTBIO   ) | (1 << IPL_SOFTCLOCK ))
-
-#define SOFTINT2IPL_MAP \
-	    ((IPL_SOFTSERIAL << (4*SOFTINT_SERIAL))	\
-	    |(IPL_SOFTNET    << (4*SOFTINT_NET   ))	\
-	    |(IPL_SOFTBIO    << (4*SOFTINT_BIO   ))	\
-	    |(IPL_SOFTCLOCK  << (4*SOFTINT_CLOCK )))
-#define	SOFTINT2IPL(si_level)	((SOFTINT2IPL_MAP >> (4 * si_level)) & 0x0f)
 
 struct e500_intr_irq_info {
 	bus_addr_t irq_vpr;
@@ -108,6 +108,7 @@ static const struct e500_intr_name e500_onchip_intr_names[] = {
 	{ ISOURCE_PCIEX2, "pcie2" },
 	{ ISOURCE_PCIEX	, "pcie1" },
 	{ ISOURCE_PCIEX3, "pcie3" },
+	{ ISOURCE_USB1, "usb1" },
 	{ ISOURCE_ETSEC1_TX, "etsec1-tx" },
 	{ ISOURCE_ETSEC1_RX, "etsec1-rx" },
 	{ ISOURCE_ETSEC3_TX, "etsec3-tx" },
@@ -124,6 +125,7 @@ static const struct e500_intr_name e500_onchip_intr_names[] = {
 	{ ISOURCE_I2C, "i2c" },
 	{ ISOURCE_PERFMON, "perfmon" },
 	{ ISOURCE_SECURITY1, "sec1" },
+	{ ISOURCE_GPIO, "gpio" },
 	{ ISOURCE_SRIO_EWPU, "srio-ewpu" },
 	{ ISOURCE_SRIO_ODBELL, "srio-odbell" },
 	{ ISOURCE_SRIO_IDBELL, "srio-idbell" },
@@ -131,65 +133,17 @@ static const struct e500_intr_name e500_onchip_intr_names[] = {
 	{ ISOURCE_SRIO_IMU1, "srio-imu1" },
 	{ ISOURCE_SRIO_OMU2, "srio-omu2" },
 	{ ISOURCE_SRIO_IMU2, "srio-imu2" },
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8548_external_intr_names[] = {
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8536_external_intr_names[] = {
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8572_external_intr_names[] = {
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8548_onchip_intr_names[] = {
-	{ ISOURCE_PCI1, "pci1" },
-	{ ISOURCE_PCI2, "pci2" },
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8544_onchip_intr_names[] = {
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8536_onchip_intr_names[] = {
-	{ ISOURCE_USB1, "usb1" },
-	{ ISOURCE_SATA2, "sata2" },
-	{ ISOURCE_USB2, "usb2" },
 	{ ISOURCE_SECURITY2, "sec2" },
 	{ ISOURCE_SPI, "spi" },
-	{ ISOURCE_USB3, "usb3" },
-	{ ISOURCE_ETSEC1_PTP, "etsec1-ptp" },
-	{ ISOURCE_ETSEC3_PTP, "etsec3-ptp" },
-	{ ISOURCE_ESDHC, "esdhc" },
-	{ ISOURCE_SATA1, "sata1" },
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8572_onchip_intr_names[] = {
-	{ ISOURCE_PCIEX3_MPC8572, "pcie3" },
-	{ ISOURCE_FEC, "fec" },
-	{ ISOURCE_GPIO, "gpio" },
-	{ ISOURCE_PME_GENERAL, "pme" },
-	{ ISOURCE_SECURITY2, "sec2" },
-	{ ISOURCE_TLU1, "tlu1" },
-	{ ISOURCE_TLU2, "tlu2" },
-	{ ISOURCE_PME_CHAN1, "pme-chan1" },
-	{ ISOURCE_PME_CHAN2, "pme-chan2" },
-	{ ISOURCE_PME_CHAN3, "pme-chan3" },
-	{ ISOURCE_PME_CHAN4, "pme-chan4" },
 	{ ISOURCE_ETSEC1_PTP, "etsec1-ptp" },
 	{ ISOURCE_ETSEC2_PTP, "etsec2-ptp" },
 	{ ISOURCE_ETSEC3_PTP, "etsec3-ptp" },
 	{ ISOURCE_ETSEC4_PTP, "etsec4-ptp" },
-	{ ISOURCE_DMA2_CHAN1, "dma2-chan1" },
-	{ ISOURCE_DMA2_CHAN2, "dma2-chan2" },
-	{ ISOURCE_DMA2_CHAN3, "dma2-chan3" },
-	{ ISOURCE_DMA2_CHAN4, "dma2-chan4" },
+	{ ISOURCE_ESDHC, "esdhc" },
+	{ 0, "" },
+};
+
+const struct e500_intr_name default_external_intr_names[] = {
 	{ 0, "" },
 };
 
@@ -243,137 +197,148 @@ struct e500_intr_info {
 	u_int8_t ii_ist_vectors[IST_MAX+1];
 };
 
-static kmutex_t e500_intr_lock __aligned(32);
+static kmutex_t e500_intr_lock /* __cacheline_aligned */ __aligned(32);
 static struct e500_intr_info e500_intr_info;
 
-static const struct e500_intr_info mpc8548_intr_info = {
-	.ii_external_sources = MPC8548_EXTERNALSOURCES,
-	.ii_onchip_bitmap = MPC8548_ONCHIPBITMAP,
-	.ii_onchip_sources = MPC8548_ONCHIPSOURCES,
-	.ii_msigroup_sources = MPC8548_MSIGROUPSOURCES,
-	.ii_timer_sources = MPC8548_TIMERSOURCES,
-	.ii_ipi_sources = MPC8548_IPISOURCES,
-	.ii_mi_sources = MPC8548_MISOURCES,
-	.ii_percpu_sources = MPC8548_TIMERSOURCES
-	    + MPC8548_IPISOURCES + MPC8548_MISOURCES, 
-	.ii_external_intr_names = mpc8548_external_intr_names,
-	.ii_onchip_intr_names = mpc8548_onchip_intr_names,
-	.ii_ist_vectors = {
-		[IST_NONE]		= ~0,
-		[IST_EDGE]		= 0,
-		[IST_LEVEL_LOW]		= 0,
-		[IST_LEVEL_HIGH]	= 0,
-		[IST_ONCHIP]		= MPC8548_EXTERNALSOURCES,
-		[IST_MSIGROUP]		= MPC8548_EXTERNALSOURCES
-					    + MPC8548_ONCHIPSOURCES,
-		[IST_TIMER]		= MPC8548_EXTERNALSOURCES
-					    + MPC8548_ONCHIPSOURCES
-					    + MPC8548_MSIGROUPSOURCES,
-		[IST_IPI]		= MPC8548_EXTERNALSOURCES
-					    + MPC8548_ONCHIPSOURCES
-					    + MPC8548_MSIGROUPSOURCES
-					    + MPC8548_TIMERSOURCES,
-		[IST_MI]		= MPC8548_EXTERNALSOURCES
-					    + MPC8548_ONCHIPSOURCES
-					    + MPC8548_MSIGROUPSOURCES
-					    + MPC8548_TIMERSOURCES
-					    + MPC8548_IPISOURCES,
-		[IST_MAX]		= MPC8548_EXTERNALSOURCES
-					    + MPC8548_ONCHIPSOURCES
-					    + MPC8548_MSIGROUPSOURCES
-					    + MPC8548_TIMERSOURCES
-					    + MPC8548_IPISOURCES
-					    + MPC8548_MISOURCES,
-	},
+#define	INTR_INFO_DECL(lc_chip, UC_CHIP)				\
+static const struct e500_intr_info lc_chip##_intr_info = {		\
+	.ii_external_sources = UC_CHIP ## _EXTERNALSOURCES,		\
+	.ii_onchip_bitmap = UC_CHIP ## _ONCHIPBITMAP,			\
+	.ii_onchip_sources = UC_CHIP ## _ONCHIPSOURCES,			\
+	.ii_msigroup_sources = UC_CHIP ## _MSIGROUPSOURCES,		\
+	.ii_timer_sources = UC_CHIP ## _TIMERSOURCES,			\
+	.ii_ipi_sources = UC_CHIP ## _IPISOURCES,			\
+	.ii_mi_sources = UC_CHIP ## _MISOURCES,				\
+	.ii_percpu_sources = UC_CHIP ## _TIMERSOURCES			\
+	    + UC_CHIP ## _IPISOURCES + UC_CHIP ## _MISOURCES, 		\
+	.ii_external_intr_names = lc_chip ## _external_intr_names,	\
+	.ii_onchip_intr_names = lc_chip ## _onchip_intr_names,		\
+	.ii_ist_vectors = {						\
+		[IST_NONE]		= ~0,				\
+		[IST_EDGE]		= 0,				\
+		[IST_LEVEL_LOW]		= 0,				\
+		[IST_LEVEL_HIGH]	= 0,				\
+		[IST_PULSE]		= 0,				\
+		[IST_ONCHIP]		= UC_CHIP ## _EXTERNALSOURCES,	\
+		[IST_MSIGROUP]		= UC_CHIP ## _EXTERNALSOURCES	\
+					    + UC_CHIP ## _ONCHIPSOURCES, \
+		[IST_TIMER]		= UC_CHIP ## _EXTERNALSOURCES	\
+					    + UC_CHIP ## _ONCHIPSOURCES	\
+					    + UC_CHIP ## _MSIGROUPSOURCES, \
+		[IST_IPI]		= UC_CHIP ## _EXTERNALSOURCES	\
+					    + UC_CHIP ## _ONCHIPSOURCES	\
+					    + UC_CHIP ## _MSIGROUPSOURCES \
+					    + UC_CHIP ## _TIMERSOURCES,	\
+		[IST_MI]		= UC_CHIP ## _EXTERNALSOURCES	\
+					    + UC_CHIP ## _ONCHIPSOURCES	\
+					    + UC_CHIP ## _MSIGROUPSOURCES \
+					    + UC_CHIP ## _TIMERSOURCES	\
+					    + UC_CHIP ## _IPISOURCES,	\
+		[IST_MAX]		= UC_CHIP ## _EXTERNALSOURCES	\
+					    + UC_CHIP ## _ONCHIPSOURCES	\
+					    + UC_CHIP ## _MSIGROUPSOURCES \
+					    + UC_CHIP ## _TIMERSOURCES	\
+					    + UC_CHIP ## _IPISOURCES	\
+					    + UC_CHIP ## _MISOURCES,	\
+	},								\
+}
+
+#ifdef MPC8536
+#define	mpc8536_external_intr_names	default_external_intr_names
+const struct e500_intr_name mpc8536_onchip_intr_names[] = {
+	{ ISOURCE_SATA2, "sata2" },
+	{ ISOURCE_USB2, "usb2" },
+	{ ISOURCE_USB3, "usb3" },
+	{ ISOURCE_SATA1, "sata1" },
+	{ 0, "" },
 };
 
-static const struct e500_intr_info mpc8536_intr_info = {
-	.ii_external_sources = MPC8536_EXTERNALSOURCES,
-	.ii_onchip_bitmap = MPC8536_ONCHIPBITMAP,
-	.ii_onchip_sources = MPC8536_ONCHIPSOURCES,
-	.ii_msigroup_sources = MPC8536_MSIGROUPSOURCES,
-	.ii_timer_sources = MPC8536_TIMERSOURCES,
-	.ii_ipi_sources = MPC8536_IPISOURCES,
-	.ii_mi_sources = MPC8536_MISOURCES,
-	.ii_percpu_sources = MPC8536_TIMERSOURCES
-	    + MPC8536_IPISOURCES + MPC8536_MISOURCES, 
-	.ii_external_intr_names = mpc8536_external_intr_names,
-	.ii_onchip_intr_names = mpc8536_onchip_intr_names,
-	.ii_ist_vectors = {
-		[IST_NONE]		= ~0,
-		[IST_EDGE]		= 0,
-		[IST_LEVEL_LOW]		= 0,
-		[IST_LEVEL_HIGH]	= 0,
-		[IST_ONCHIP]		= MPC8536_EXTERNALSOURCES,
-		[IST_MSIGROUP]		= MPC8536_EXTERNALSOURCES
-					    + MPC8536_ONCHIPSOURCES,
-		[IST_TIMER]		= MPC8536_EXTERNALSOURCES
-					    + MPC8536_ONCHIPSOURCES
-					    + MPC8536_MSIGROUPSOURCES,
-		[IST_IPI]		= MPC8536_EXTERNALSOURCES
-					    + MPC8536_ONCHIPSOURCES
-					    + MPC8536_MSIGROUPSOURCES
-					    + MPC8536_TIMERSOURCES,
-		[IST_MI]		= MPC8536_EXTERNALSOURCES
-					    + MPC8536_ONCHIPSOURCES
-					    + MPC8536_MSIGROUPSOURCES
-					    + MPC8536_TIMERSOURCES
-					    + MPC8536_IPISOURCES,
-		[IST_MAX]		= MPC8536_EXTERNALSOURCES
-					    + MPC8536_ONCHIPSOURCES
-					    + MPC8536_MSIGROUPSOURCES
-					    + MPC8536_TIMERSOURCES
-					    + MPC8536_IPISOURCES
-					    + MPC8536_MISOURCES,
-	},
+INTR_INFO_DECL(mpc8536, MPC8536);
+#endif
+
+#ifdef MPC8544
+#define	mpc8544_external_intr_names	default_external_intr_names
+const struct e500_intr_name mpc8544_onchip_intr_names[] = {
+	{ 0, "" },
 };
 
-static const struct e500_intr_info mpc8572_intr_info = {
-	.ii_external_sources = MPC8572_EXTERNALSOURCES,
-	.ii_onchip_bitmap = MPC8572_ONCHIPBITMAP,
-	.ii_onchip_sources = MPC8572_ONCHIPSOURCES,
-	.ii_msigroup_sources = MPC8572_MSIGROUPSOURCES,
-	.ii_timer_sources = MPC8572_TIMERSOURCES,
-	.ii_ipi_sources = MPC8572_IPISOURCES,
-	.ii_mi_sources = MPC8572_MISOURCES,
-	.ii_percpu_sources = MPC8572_TIMERSOURCES
-	    + MPC8572_IPISOURCES + MPC8572_MISOURCES, 
-	.ii_external_intr_names = mpc8572_external_intr_names,
-	.ii_onchip_intr_names = mpc8572_onchip_intr_names,
-	.ii_ist_vectors = {
-		[IST_NONE]		= ~0,
-		[IST_EDGE]		= 0,
-		[IST_LEVEL_LOW]		= 0,
-		[IST_LEVEL_HIGH]	= 0,
-		[IST_ONCHIP]		= MPC8572_EXTERNALSOURCES,
-		[IST_MSIGROUP]		= MPC8572_EXTERNALSOURCES
-					    + MPC8572_ONCHIPSOURCES,
-		[IST_TIMER]		= MPC8572_EXTERNALSOURCES
-					    + MPC8572_ONCHIPSOURCES
-					    + MPC8572_MSIGROUPSOURCES,
-		[IST_IPI]		= MPC8572_EXTERNALSOURCES
-					    + MPC8572_ONCHIPSOURCES
-					    + MPC8572_MSIGROUPSOURCES
-					    + MPC8572_TIMERSOURCES,
-		[IST_MI]		= MPC8572_EXTERNALSOURCES
-					    + MPC8572_ONCHIPSOURCES
-					    + MPC8572_MSIGROUPSOURCES
-					    + MPC8572_TIMERSOURCES
-					    + MPC8572_IPISOURCES,
-		[IST_MAX]		= MPC8572_EXTERNALSOURCES
-					    + MPC8572_ONCHIPSOURCES
-					    + MPC8572_MSIGROUPSOURCES
-					    + MPC8572_TIMERSOURCES
-					    + MPC8572_IPISOURCES
-					    + MPC8572_MISOURCES,
-	},
+INTR_INFO_DECL(mpc8544, MPC8544);
+#endif
+#ifdef MPC8548
+#define	mpc8548_external_intr_names	default_external_intr_names
+const struct e500_intr_name mpc8548_onchip_intr_names[] = {
+	{ ISOURCE_PCI1, "pci1" },
+	{ ISOURCE_PCI2, "pci2" },
+	{ 0, "" },
 };
+
+INTR_INFO_DECL(mpc8548, MPC8548);
+#endif
+#ifdef MPC8555
+#define	mpc8555_external_intr_names	default_external_intr_names
+const struct e500_intr_name mpc8555_onchip_intr_names[] = {
+	{ ISOURCE_PCI2, "pci2" },
+	{ ISOURCE_CPM, "CPM" },
+	{ 0, "" },
+};
+
+INTR_INFO_DECL(mpc8555, MPC8555);
+#endif
+#ifdef MPC8568
+#define	mpc8568_external_intr_names	default_external_intr_names
+const struct e500_intr_name mpc8568_onchip_intr_names[] = {
+	{ ISOURCE_QEB_LOW, "QEB low" },
+	{ ISOURCE_QEB_PORT, "QEB port" },
+	{ ISOURCE_QEB_IECC, "QEB iram ecc" },
+	{ ISOURCE_QEB_MUECC, "QEB ram ecc" },
+	{ ISOURCE_TLU1, "tlu1" },
+	{ ISOURCE_QEB_HIGH, "QEB high" },
+	{ 0, "" },
+};
+
+INTR_INFO_DECL(mpc8568, MPC8568);
+#endif
+#ifdef MPC8572
+#define	mpc8572_external_intr_names	default_external_intr_names
+const struct e500_intr_name mpc8572_onchip_intr_names[] = {
+	{ ISOURCE_PCIEX3_MPC8572, "pcie3" },
+	{ ISOURCE_FEC, "fec" },
+	{ ISOURCE_PME_GENERAL, "pme" },
+	{ ISOURCE_TLU1, "tlu1" },
+	{ ISOURCE_TLU2, "tlu2" },
+	{ ISOURCE_PME_CHAN1, "pme-chan1" },
+	{ ISOURCE_PME_CHAN2, "pme-chan2" },
+	{ ISOURCE_PME_CHAN3, "pme-chan3" },
+	{ ISOURCE_PME_CHAN4, "pme-chan4" },
+	{ ISOURCE_DMA2_CHAN1, "dma2-chan1" },
+	{ ISOURCE_DMA2_CHAN2, "dma2-chan2" },
+	{ ISOURCE_DMA2_CHAN3, "dma2-chan3" },
+	{ ISOURCE_DMA2_CHAN4, "dma2-chan4" },
+	{ 0, "" },
+};
+
+INTR_INFO_DECL(mpc8572, MPC8572);
+#endif
+#ifdef P2020
+#define	p20x0_external_intr_names	default_external_intr_names
+const struct e500_intr_name p20x0_onchip_intr_names[] = {
+	{ ISOURCE_PCIEX3_MPC8572, "pcie3" },
+	{ ISOURCE_DMA2_CHAN1, "dma2-chan1" },
+	{ ISOURCE_DMA2_CHAN2, "dma2-chan2" },
+	{ ISOURCE_DMA2_CHAN3, "dma2-chan3" },
+	{ ISOURCE_DMA2_CHAN4, "dma2-chan4" },
+	{ 0, "" },
+};
+
+INTR_INFO_DECL(p20x0, P20x0);
+#endif
 
 static const char ist_names[][12] = {
 	[IST_NONE] = "none",
 	[IST_EDGE] = "edge",
 	[IST_LEVEL_LOW] = "level-",
 	[IST_LEVEL_HIGH] = "level+",
+	[IST_PULSE] = "pulse",
 	[IST_MSI] = "msi",
 	[IST_ONCHIP] = "onchip",
 	[IST_MSIGROUP] = "msigroup",
@@ -387,9 +352,12 @@ static const struct intr_source *e500_intr_last_source;
 
 static void 	*e500_intr_establish(int, int, int, int (*)(void *), void *);
 static void 	e500_intr_disestablish(void *);
-static void 	e500_intr_cpu_init(struct cpu_info *ci);
+static void 	e500_intr_cpu_attach(struct cpu_info *ci);
+static void 	e500_intr_cpu_hatch(struct cpu_info *ci);
+static void	e500_intr_cpu_send_ipi(cpuid_t, uintptr_t);
 static void 	e500_intr_init(void);
 static const char *e500_intr_string(int, int);
+static const char *e500_intr_typename(int);
 static void 	e500_critintr(struct trapframe *tf);
 static void 	e500_decrintr(struct trapframe *tf);
 static void 	e500_extintr(struct trapframe *tf);
@@ -398,17 +366,16 @@ static void 	e500_wdogintr(struct trapframe *tf);
 static void	e500_spl0(void);
 static int 	e500_splraise(int);
 static void 	e500_splx(int);
-#ifdef __HAVE_FAST_SOFTINTS
-static void 	e500_softint_init_md(lwp_t *l, u_int si_level, uintptr_t *machdep_p);
-static void 	e500_softint_trigger(uintptr_t machdep);
-#endif
 
 const struct intrsw e500_intrsw = {
 	.intrsw_establish = e500_intr_establish,
 	.intrsw_disestablish = e500_intr_disestablish,
 	.intrsw_init = e500_intr_init,
-	.intrsw_cpu_init = e500_intr_cpu_init,
+	.intrsw_cpu_attach = e500_intr_cpu_attach,
+	.intrsw_cpu_hatch = e500_intr_cpu_hatch,
+	.intrsw_cpu_send_ipi = e500_intr_cpu_send_ipi,
 	.intrsw_string = e500_intr_string,
+	.intrsw_typename = e500_intr_typename,
 
 	.intrsw_critintr = e500_critintr,
 	.intrsw_decrintr = e500_decrintr,
@@ -421,8 +388,8 @@ const struct intrsw e500_intrsw = {
 	.intrsw_spl0 = e500_spl0,
 
 #ifdef __HAVE_FAST_SOFTINTS
-	.intrsw_softint_init_md = e500_softint_init_md,
-	.intrsw_softint_trigger = e500_softint_trigger,
+	.intrsw_softint_init_md = powerpc_softint_init_md,
+	.intrsw_softint_trigger = powerpc_softint_trigger,
 #endif
 };
 
@@ -469,67 +436,18 @@ e500_intr_onchip_name_lookup(int irq)
 {
 	const char *name;
 
-	return e500_intr_name_lookup(e500_intr_info.ii_onchip_intr_names, irq);
-	if (name != NULL)
-		return name;
+	name = e500_intr_name_lookup(e500_intr_info.ii_onchip_intr_names, irq);
+	if (name == NULL)
+	       name = e500_intr_name_lookup(e500_onchip_intr_names, irq);
 
-	name = e500_intr_name_lookup(e500_onchip_intr_names, irq);
+	return name;
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-static inline void
-e500_softint_deliver(struct cpu_info *ci, struct cpu_softc *cpu,
-	int ipl, int si_level)
-{
-	KASSERT(ci->ci_data.cpu_softints & (1 << ipl));
-	ci->ci_data.cpu_softints ^= 1 << ipl;
-	softint_fast_dispatch(cpu->cpu_softlwps[si_level], ipl);
-	KASSERT(cpu->cpu_softlwps[si_level]->l_ctxswtch == 0);
-	KASSERTMSG(ci->ci_cpl == IPL_HIGH,
-	    ("%s: cpl (%d) != HIGH", __func__, ci->ci_cpl));
-}
-
-static inline void
-e500_softint(struct cpu_info *ci, struct cpu_softc *cpu, int old_ipl)
-{
-	const u_int softint_mask = (IPL_SOFTMASK << old_ipl) & IPL_SOFTMASK;
-	u_int softints;
-
-	KASSERT(ci->ci_mtx_count == 0);
-	KASSERT(ci->ci_cpl == IPL_HIGH);
-	while ((softints = (ci->ci_data.cpu_softints & softint_mask)) != 0) {
-		KASSERT(old_ipl < IPL_SOFTSERIAL);
-		if (softints & (1 << IPL_SOFTSERIAL)) {
-			e500_softint_deliver(ci, cpu, IPL_SOFTSERIAL,
-			    SOFTINT_SERIAL);
-			continue;
-		}
-		KASSERT(old_ipl < IPL_SOFTNET);
-		if (softints & (1 << IPL_SOFTNET)) {
-			e500_softint_deliver(ci, cpu, IPL_SOFTNET,
-			    SOFTINT_NET);
-			continue;
-		}
-		KASSERT(old_ipl < IPL_SOFTBIO);
-		if (softints & (1 << IPL_SOFTBIO)) {
-			e500_softint_deliver(ci, cpu, IPL_SOFTBIO,
-			    SOFTINT_BIO);
-			continue;
-		}
-		KASSERT(old_ipl < IPL_SOFTCLOCK);
-		if (softints & (1 << IPL_SOFTCLOCK)) {
-			e500_softint_deliver(ci, cpu, IPL_SOFTCLOCK,
-			    SOFTINT_CLOCK);
-			continue;
-		}
-	}
-}
-#endif /* __HAVE_FAST_SOFTINTS */
 
 static inline void
 e500_splset(struct cpu_info *ci, int ipl)
 {
 	struct cpu_softc * const cpu = ci->ci_softc;
+
 	//KASSERT(!cpu_intr_p() || ipl >= IPL_VM);
 	KASSERT((curlwp->l_pflag & LP_INTR) == 0 || ipl != IPL_NONE);
 #if 0
@@ -540,9 +458,8 @@ e500_splset(struct cpu_info *ci, int ipl)
 	u_int ctpr = (ipl >= IPL_VM ? 15 : ipl);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == old_ctpr);
 #else
-	u_int old_ctpr = IPL2CTPR(ci->ci_cpl);
-	u_int ctpr = IPL2CTPR(ipl);
-	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == old_ctpr);
+	const u_int ctpr = IPL2CTPR(ipl);
+	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == IPL2CTPR(ci->ci_cpl));
 #endif
 	openpic_write(cpu, OPENPIC_CTPR, ctpr);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == ctpr);
@@ -552,14 +469,15 @@ e500_splset(struct cpu_info *ci, int ipl)
 static void
 e500_spl0(void)
 {
-	struct cpu_info * const ci = curcpu();
-
 	wrtee(0);
+
+	struct cpu_info * const ci = curcpu();
 
 #ifdef __HAVE_FAST_SOFTINTS
 	if (__predict_false(ci->ci_data.cpu_softints != 0)) {
 		e500_splset(ci, IPL_HIGH);
-		e500_softint(ci, ci->ci_softc, IPL_NONE);
+		powerpc_softint(ci, IPL_NONE,
+		    (vaddr_t)__builtin_return_address(0));
 	}
 #endif /* __HAVE_FAST_SOFTINTS */
 	e500_splset(ci, IPL_NONE);
@@ -591,7 +509,8 @@ e500_splx(int ipl)
 	const u_int softints = (ci->ci_data.cpu_softints << ipl) & IPL_SOFTMASK;
 	if (__predict_false(softints != 0)) {
 		e500_splset(ci, IPL_HIGH);
-		e500_softint(ci, ci->ci_softc, ipl);
+		powerpc_softint(ci, ipl,
+		    (vaddr_t)__builtin_return_address(0));
 	}
 #endif /* __HAVE_FAST_SOFTINTS */
 	e500_splset(ci, ipl);
@@ -632,29 +551,6 @@ e500_splraise(int ipl)
 	return old_ipl;
 }
 
-#ifdef __HAVE_FAST_SOFTINTS
-static void
-e500_softint_init_md(lwp_t *l, u_int si_level, uintptr_t *machdep_p)
-{
-	struct cpu_info * const ci = l->l_cpu;
-	struct cpu_softc * const cpu = ci->ci_softc;
-
-	*machdep_p = 1 << SOFTINT2IPL(si_level);
-	KASSERT(*machdep_p & IPL_SOFTMASK);
-	cpu->cpu_softlwps[si_level] = l;
-}
-
-static void
-e500_softint_trigger(uintptr_t machdep)
-{
-	struct cpu_info * const ci = curcpu();
-
-	atomic_or_uint(&ci->ci_data.cpu_softints, machdep);
-	if (machdep == (1 << IPL_SOFTBIO))
-		printf("%s(%u): cpl=%u\n", __func__, machdep, ci->ci_cpl);
-}
-#endif /* __HAVE_FAST_SOFTINTS */
-
 static int
 e500_intr_spurious(void *arg)
 {
@@ -687,7 +583,7 @@ e500_intr_irq_info_get(struct cpu_info *ci, u_int irq, int ipl, int ist,
 	}
 
 	ii->irq_vector = irq + info->ii_ist_vectors[ist];
-	if (IST_PERCPU_P(ist))
+	if (IST_PERCPU_P(ist) && ist != IST_IPI)
 		ii->irq_vector += ci->ci_cpuid * info->ii_percpu_sources;
 
 	switch (ist) {
@@ -698,6 +594,9 @@ e500_intr_irq_info_get(struct cpu_info *ci, u_int irq, int ipl, int ist,
 		    && (ist == IST_EDGE
 			|| ist == IST_LEVEL_LOW
 			|| ist == IST_LEVEL_HIGH);
+		break;
+	case IST_PULSE:
+		ok = false;
 		break;
 	case IST_ONCHIP:
 		ii->irq_vpr = OPENPIC_IIVPR(irq);
@@ -756,6 +655,17 @@ e500_intr_string(int irq, int ist)
 	return cpu->cpu_evcnt_intrs[ii.irq_vector].ev_name;
 }
 
+CTASSERT(__arraycount(ist_names) == IST_MAX);
+
+static const char *
+e500_intr_typename(int ist)
+{
+	if (IST_NONE <= ist && ist < IST_MAX)
+		return ist_names[ist];
+
+	return NULL;
+}
+
 static void *
 e500_intr_cpu_establish(struct cpu_info *ci, int irq, int ipl, int ist,
 	int (*handler)(void *), void *arg)
@@ -799,7 +709,9 @@ e500_intr_cpu_establish(struct cpu_info *ci, int irq, int ipl, int ist,
 	 * All interrupts go to the primary except per-cpu interrupts which get
 	 * routed to the appropriate cpu.
 	 */
-	uint32_t dr = IST_PERCPU_P(ist) ? 1 << ci->ci_cpuid : 1;
+	uint32_t dr = openpic_read(cpu, ii.irq_dr);
+
+	dr |= 1 << (IST_PERCPU_P(ist) ? ci->ci_cpuid : 0);
 
 	/*
 	 * Update the vector/priority and destination registers keeping the
@@ -944,7 +856,9 @@ e500_extintr(struct trapframe *tf)
 			    __func__, tf, __LINE__, old_ipl, 
 			    15 - IPL_HIGH, openpic_read(cpu, OPENPIC_CTPR));
 		const uint32_t iack = openpic_read(cpu, OPENPIC_IACK);
+#ifdef DIAGNOSTIC
 		const int ipl = iack & 0xf;
+#endif
 		const int irq = (iack >> 4) - 1;
 #if 0
 		printf("%s: iack=%d ipl=%d irq=%d <%s>\n",
@@ -1030,7 +944,8 @@ e500_extintr(struct trapframe *tf)
 	if (__predict_false(softints != 0)) {
 		KASSERT(old_ipl < IPL_VM);
 		e500_splset(ci, IPL_HIGH);	/* pop to high */
-		e500_softint(ci, cpu, old_ipl);	/* deal with them */
+		powerpc_softint(ci, old_ipl,	/* deal with them */
+		    tf->tf_srr0);
 		e500_splset(ci, old_ipl);	/* and drop back */
 	}
 #endif /* __HAVE_FAST_SOFTINTS */
@@ -1039,6 +954,13 @@ e500_extintr(struct trapframe *tf)
 #else
 	e500_splset(ci, old_ipl);		/* and drop back */
 #endif
+
+	/*
+	 * If we interrupted while power-saving and we need to exit idle,
+	 * we need to clear PSL_POW so we won't go back into power-saving.
+	 */
+	if (__predict_false(tf->tf_srr1 & PSL_POW) && ci->ci_want_resched)
+		tf->tf_srr1 &= ~PSL_POW;
 
 //	printf("%s(%p): idepth=%d exit\n", __func__, tf, ci->ci_idepth);
 }
@@ -1054,28 +976,49 @@ e500_intr_init(void)
 	struct intr_source *is;
 	struct e500_intr_info * const ii = &e500_intr_info;
 
-	switch (nirq) {
-	case MPC8548_SOURCES: {
-		CTASSERT(MPC8548_ONCHIPSOURCES == MPC8544_ONCHIPSOURCES);
-		*ii = mpc8548_intr_info;
-		if ((mfspr(SPR_SVR) >> 16) == (SVR_MPC8544v1 >> 16)) {
-			uint32_t bitmap[2] = MPC8548_ONCHIPBITMAP;
-			ii->ii_onchip_bitmap[0] = bitmap[0];
-			ii->ii_onchip_bitmap[1] = bitmap[1];
-			ii->ii_onchip_sources = MPC8544_ONCHIPSOURCES;
-			ii->ii_onchip_intr_names = mpc8544_onchip_intr_names;
-		}
-		break;
-	}
-	case MPC8536_SOURCES:
+	const uint16_t svr = (mfspr(SPR_SVR) & ~0x80000) >> 16;
+	switch (svr) {
+#ifdef MPC8536
+	case SVR_MPC8536v1 >> 16:
 		*ii = mpc8536_intr_info;
 		break;
-	case MPC8572_SOURCES:
+#endif
+#ifdef MPC8544
+	case SVR_MPC8544v1 >> 16:
+		*ii = mpc8544_intr_info;
+		break;
+#endif
+#ifdef MPC8548
+	case SVR_MPC8543v1 >> 16:
+	case SVR_MPC8548v1 >> 16:
+		*ii = mpc8548_intr_info;
+		break;
+#endif
+#ifdef MPC8555
+	case SVR_MPC8541v1 >> 16:
+	case SVR_MPC8555v1 >> 16:
+		*ii = mpc8555_intr_info;
+		break;
+#endif
+#ifdef MPC8568
+	case SVR_MPC8568v1 >> 16:
+		*ii = mpc8568_intr_info;
+		break;
+#endif
+#ifdef MPC8572
+	case SVR_MPC8572v1 >> 16:
 		*ii = mpc8572_intr_info;
 		break;
+#endif
+#ifdef P2020
+	case SVR_P2010v2 >> 16:
+	case SVR_P2020v2 >> 16:
+		*ii = p20x0_intr_info;
+		break;
+#endif
 	default:
-		panic("%s: don't know how to deal with %u interrupt sources",
-		    __func__, nirq);
+		panic("%s: don't know how to deal with SVR %#lx",
+		    __func__, mfspr(SPR_SVR));
 	}
 
 	/*
@@ -1106,7 +1049,22 @@ e500_intr_init(void)
 }
 
 static void
-e500_intr_cpu_init(struct cpu_info *ci)
+e500_idlespin(void)
+{
+	KASSERTMSG(curcpu()->ci_cpl == IPL_NONE,
+	    ("%s: cpu%u: ci_cpl (%d) != 0", __func__, cpu_number(),
+	     curcpu()->ci_cpl));
+	KASSERTMSG(CTPR2IPL(openpic_read(curcpu()->ci_softc, OPENPIC_CTPR)) == IPL_NONE,
+	    ("%s: cpu%u: CTPR (%d) != IPL_NONE", __func__, cpu_number(),
+	     CTPR2IPL(openpic_read(curcpu()->ci_softc, OPENPIC_CTPR))));
+	KASSERT(mfmsr() & PSL_EE);
+
+	if (powersave > 0)
+		mtmsr(mfmsr() | PSL_POW);
+}
+
+static void
+e500_intr_cpu_attach(struct cpu_info *ci)
 {
 	struct cpu_softc * const cpu = ci->ci_softc;
 	const char * const xname = device_xname(ci->ci_dev);
@@ -1130,10 +1088,17 @@ e500_intr_cpu_init(struct cpu_info *ci)
 	}
 	KASSERT(evcnt == cpu->cpu_evcnt_intrs + info->ii_ist_vectors[IST_ONCHIP]);
 	for (size_t j = 0; j < info->ii_onchip_sources; j++, evcnt++) {
-		const char *name = e500_intr_onchip_name_lookup(j);
-		if (name != NULL) {
-			evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR,
-			    NULL, xname, name);
+		if (info->ii_onchip_bitmap[j / 32] & __BIT(j & 31)) {
+			const char *name = e500_intr_onchip_name_lookup(j);
+			if (name != NULL) {
+				evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR,
+				    NULL, xname, name);
+#ifdef DIAGNOSTIC
+			} else {
+				printf("%s: missing evcnt for onchip irq %zu\n",
+				    __func__, j);
+#endif
+			}
 		}
 	}
 
@@ -1160,12 +1125,101 @@ e500_intr_cpu_init(struct cpu_info *ci)
 		    NULL, xname, e500_mi_intr_names[j].in_name);
 	}
 
+	ci->ci_idlespin = e500_idlespin;
+}
+
+static void
+e500_intr_cpu_send_ipi(cpuid_t target, uint32_t ipimsg)
+{
+	struct cpu_info * const ci = curcpu();
+	struct cpu_softc * const cpu = ci->ci_softc;
+	uint32_t dstmask;
+
+	if (target >= CPU_MAXNUM) {
+		CPU_INFO_ITERATOR cii;
+		struct cpu_info *dst_ci;
+
+		KASSERT(target == IPI_DST_NOTME || target == IPI_DST_ALL);
+
+		dstmask = 0;
+		for (CPU_INFO_FOREACH(cii, dst_ci)) {
+			if (target == IPI_DST_ALL || ci != dst_ci) {
+				dstmask |= 1 << cpu_index(ci);
+				if (ipimsg)
+					atomic_or_32(&dst_ci->ci_pending_ipis,
+					    ipimsg);
+			}
+		}
+	} else {
+		struct cpu_info * const dst_ci = cpu_lookup(target);
+		KASSERT(dst_ci != NULL);
+		KASSERTMSG(target == cpu_index(dst_ci),
+		    ("%s: target (%lu) != cpu_index(cpu%u)",
+		     __func__, target, cpu_index(dst_ci)));
+		dstmask = (1 << target);
+		if (ipimsg)
+			atomic_or_32(&dst_ci->ci_pending_ipis, ipimsg);
+	}
+
+	openpic_write(cpu, OPENPIC_IPIDR(0), dstmask);
+}
+
+typedef void (*ipifunc_t)(void);
+
+#ifdef __HAVE_PREEEMPTION
+static void
+e500_ipi_kpreempt(void)
+{
+	poowerpc_softint_trigger(1 << IPL_NONE);
+}
+#endif
+
+static const ipifunc_t e500_ipifuncs[] = {
+#if 0
+	[ilog2(IPI_XCALL)] =	xc_ipi_handler,
+#endif
+	[ilog2(IPI_HALT)] =	e500_ipi_halt,
+#ifdef __HAVE_PREEMPTION
+	[ilog2(IPI_KPREEMPT)] =	e500_ipi_kpreempt,
+#endif
+	[ilog2(IPI_TLB1SYNC)] =	e500_tlb1_sync,
+};
+
+static int
+e500_ipi_intr(void *v)
+{
+	struct cpu_info * const ci = curcpu();
+
+	ci->ci_ev_ipi.ev_count++;
+
+	uint32_t pending_ipis = atomic_swap_32(&ci->ci_pending_ipis, 0);
+	for (u_int ipi = 31; pending_ipis != 0; ipi--, pending_ipis <<= 1) {
+		const u_int bits = __builtin_clz(pending_ipis);
+		ipi -= bits;
+		pending_ipis <<= bits;
+		KASSERT(e500_ipifuncs[ipi] != NULL);
+		(*e500_ipifuncs[ipi])();
+	}
+	
+	return 1;
+}
+
+static void
+e500_intr_cpu_hatch(struct cpu_info *ci)
+{
 	/*
-	 * Establish interrupt for this CPU.
+	 * Establish clock interrupt for this CPU.
 	 */
 	if (e500_intr_cpu_establish(ci, E500_CLOCK_TIMER, IPL_CLOCK, IST_TIMER,
 	    e500_clock_intr, NULL) == NULL)
 		panic("%s: failed to establish clock interrupt!", __func__);
+
+	/*
+	 * Establish the IPI interrupts for this CPU.
+	 */
+	if (e500_intr_cpu_establish(ci, 0, IPL_VM, IST_IPI, e500_ipi_intr,
+	    NULL) == NULL)
+		panic("%s: failed to establish ipi interrupt!", __func__);
 
 	/*
 	 * Enable watchdog interrupts.

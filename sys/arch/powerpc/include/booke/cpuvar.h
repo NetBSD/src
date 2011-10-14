@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.1.2.3 2011/08/02 01:34:36 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.1.2.4 2011/10/14 17:21:26 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,8 +37,9 @@
 #ifndef _POWERPC_BOOKE_CPUVAR_H_
 #define _POWERPC_BOOKE_CPUVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <prop/proplib.h>
+#include <powerpc/psl.h>
 
 struct cpunode_softc {
 	device_t sc_dev;
@@ -53,11 +54,10 @@ struct cpu_softc {
 	bus_space_handle_t cpu_bsh;
 	bus_addr_t cpu_clock_gtbcr;
 
-	paddr_t cpu_highmem;     
+	paddr_t cpu_highmem;
 
 	u_int cpu_pcpls[5];
 	struct evcnt cpu_evcnt_spurious_intr;
-	struct lwp *cpu_softlwps[SOFTINT_COUNT];
 
 	struct evcnt cpu_ev_late_clock;
 	u_long cpu_ticks_per_clock_intr;
@@ -72,6 +72,7 @@ struct cpunode_locators {
 	uint8_t cnl_nintr;
 	uint8_t cnl_intrs[4];
 	uint32_t cnl_flags;
+	uint16_t cnl_ids[6];
 };
 
 struct cpunode_attach_args {
@@ -101,30 +102,23 @@ struct generic_attach_args {
 	int ga_irq;
 };
 
-struct tlbmask;
+#ifndef __BSD_PT_ENTRY_T
+#define __BSD_PT_ENTRY_T	__uint32_t
+typedef __BSD_PT_ENTRY_T	pt_entry_t;
+#endif
 
-struct tlb_md_ops {
+#include <common/pmap/tlb/tlb.h>
+
+struct tlb_md_io_ops {
 	/*
 	 * We need mapiodev to be first so we can easily override it in
 	 * early boot by doing cpu_md_ops.tlb_md_ops = (const struct
 	 * tlb_md_ops *) &<variable containing mapiodev pointer>.
 	 */
-	void *(*md_tlb_mapiodev)(paddr_t, psize_t);
+	void *(*md_tlb_mapiodev)(paddr_t, psize_t, bool);
 	void (*md_tlb_unmapiodev)(vaddr_t, vsize_t);
-	void (*md_tlb_set_asid)(uint32_t);
-	uint32_t (*md_tlb_get_asid)(void);
-	void (*md_tlb_invalidate_all)(void);
-	void (*md_tlb_invalidate_globals)(void);
-	void (*md_tlb_invalidate_asids)(uint32_t, uint32_t);
-	void (*md_tlb_invalidate_addr)(vaddr_t, uint32_t);
-	bool (*md_tlb_update_addr)(vaddr_t, uint32_t, uint32_t, bool);
-	void (*md_tlb_read_entry)(size_t, struct tlbmask *);
-	u_int (*md_tlb_record_asids)(u_long *, uint32_t);
 	int (*md_tlb_ioreserve)(vaddr_t, vsize_t, uint32_t);
 	int (*md_tlb_iorelease)(vaddr_t);
-	void (*md_tlb_dump)(void (*)(const char *, ...));
-	void (*md_tlb_walk)(void *, bool (*)(void *, vaddr_t, uint32_t,
-	    uint32_t));
 };
 
 struct cpu_md_ops {
@@ -137,6 +131,7 @@ struct cpu_md_ops {
 	void (*md_cpunode_attach)(device_t, device_t, void *);
 
 	const struct tlb_md_ops *md_tlb_ops;
+	const struct tlb_md_io_ops *md_tlb_io_ops;
 };
 
 
@@ -156,9 +151,18 @@ wrtee(register_t msr)
 	return old_msr;
 }
 
-void	booke_fixup_stubs(void);
+uint32_t ufetch_32(const void *);
+
+struct trapframe;
+void	booke_sstep(struct trapframe *);
+
 void	booke_cpu_startup(const char *);	/* model name */
 struct powerpc_bus_dma_tag booke_bus_dma_tag;
+
+extern struct cpu_info cpu_info[];
+#ifdef MULTIPROCESSOR
+extern volatile struct cpu_hatch_data cpu_hatch_data;
+#endif
 
 void	cpu_evcnt_attach(struct cpu_info *);
 uint32_t cpu_read_4(bus_size_t);
@@ -171,22 +175,10 @@ void	calc_delayconst(void);
 struct intrsw;
 void	exception_init(const struct intrsw *);
 
-uint32_t tlb_get_asid(void);
-void	tlb_set_asid(uint32_t);
-void	tlb_invalidate_all(void);
-void	tlb_invalidate_globals(void);
-void	tlb_invalidate_asids(uint32_t, uint32_t);
-void	tlb_invalidate_addr(vaddr_t, uint32_t);
-bool	tlb_update_addr(vaddr_t, uint32_t, uint32_t, bool);
-u_int	tlb_record_asids(u_long *, uint32_t);
-void	tlb_enter_addr(size_t, const struct tlbmask *);
-void	tlb_read_entry(size_t, struct tlbmask *);
-void	*tlb_mapiodev(paddr_t, psize_t);
+void	*tlb_mapiodev(paddr_t, psize_t, bool);
 void	tlb_unmapiodev(vaddr_t, vsize_t);
-int	tlb_ioreserve(vaddr_t, vsize_t, uint32_t);
+int	tlb_ioreserve(vaddr_t, vsize_t, pt_entry_t);
 int	tlb_iorelease(vaddr_t);
-void	tlb_dump(void (*)(const char *, ...));
-void	tlb_walk(void *, bool (*)(void *, vaddr_t, uint32_t, uint32_t));
 
 extern struct cpu_md_ops cpu_md_ops;
 

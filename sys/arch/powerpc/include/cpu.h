@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.65.22.2 2011/01/17 07:45:59 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.65.22.3 2011/10/14 17:21:26 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -116,6 +116,9 @@ struct cpu_info {
 #define	ci_pmap_kern_segtab	ci_pmap_segtabs[0]
 #define	ci_pmap_user_segtab	ci_pmap_segtabs[1]
 	struct pmap_tlb_info *ci_tlb_info;
+	tlb_asid_t ci_pmap_asid_cur;
+	volatile uint32_t ci_pending_ipis;
+	struct lwp *ci_softlwps[SOFTINT_COUNT];
 #endif /* PPC_BOOKE */
 	struct cache_info ci_ci;		
 	void *ci_sysmon_cookie;
@@ -136,6 +139,7 @@ struct cpu_info {
 	struct evcnt ci_ev_isi;		/* user ISI traps */
 	struct evcnt ci_ev_isi_fatal;	/* user ISI trap failures */
 	struct evcnt ci_ev_pgm;		/* user PGM traps */
+	struct evcnt ci_ev_debug;	/* user debug traps */
 	struct evcnt ci_ev_fpu;		/* FPU traps */
 	struct evcnt ci_ev_fpusw;	/* FPU context switch */
 	struct evcnt ci_ev_ali;		/* Alignment traps */
@@ -379,6 +383,11 @@ void cpu_spinup_trampoline(void);
 #define	cpu_did_resched(l)	((void)(curcpu()->ci_want_resched = 0))
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
 #define	cpu_signotify(l)	(curcpu()->ci_astpending = 1)	/* XXXSMP */
+
+#ifdef PPC_BOOKE
+void	cpu_ast(struct lwp *, struct cpu_info *);
+void    cpu_fixup_stubs(void);
+#endif
 
 #if !defined(PPC_IBM4XX) && !defined(PPC_BOOKE)
 void oea_init(void (*)(void));

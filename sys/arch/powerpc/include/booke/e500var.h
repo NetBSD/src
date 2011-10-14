@@ -1,4 +1,4 @@
-/*	$NetBSD: e500var.h,v 1.1.2.1 2011/01/07 01:26:20 matt Exp $	*/
+/*	$NetBSD: e500var.h,v 1.1.2.2 2011/10/14 17:21:26 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,6 +39,9 @@
 
 #ifdef _KERNEL
 
+#include <sys/device.h>
+#include <sys/extent.h>
+
 #ifdef _KERNEL_OPT
 #include "locators.h"
 #endif
@@ -78,7 +81,32 @@ uint16_t e500_get_svr(void);
 int	e500_cpunode_submatch(device_t, cfdata_t, const char *, void *);
 #endif
 
+/*
+ * Used by MP hatch code to fetch the TLB1 entries so they be setup on the
+ * just hatched CPU.
+ */
+void *	e500_tlb1_fetch(size_t);
+void	e500_tlb1_sync(void);
+void	e500_ipi_halt(void);
+void	e500_spinup_trampoline(void);
+void	e500_cpu_hatch(struct cpu_info *);
+
 void	pq3gpio_attach(device_t, device_t, void *);
+
+/*
+ * For a lack of a better place, define this u-boot structure here.
+ */
+
+struct uboot_spinup_entry {
+	uint32_t entry_addr_upper;
+	uint32_t entry_addr_lower;
+	uint32_t entry_r3_upper;
+	uint32_t entry_r3_lower;
+	uint32_t entry__rsvd;
+	uint32_t entry_pir;
+	uint32_t entry_r6_upper;
+	uint32_t entry_r6_lower;
+};
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,5 @@
-/*	$NetBSD: e500_autoconf.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $	*/
+/*	$NetBSD: e500_autoconf.c,v 1.1.2.2 2011/10/14 17:21:25 matt Exp $	*/
+
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,13 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_autoconf.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_autoconf.c,v 1.1.2.2 2011/10/14 17:21:25 matt Exp $");
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -58,57 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: e500_autoconf.c,v 1.1.2.1 2011/01/07 01:26:19 matt E
 void
 e500_device_register(device_t dev, void *aux)
 {
-#if 0
-	device_t parent = device_parent(dev);
-
-	if (device_is_a(dev, "pq3etsec") && device_is_a(parent, "cpunode")) {
-		/* Set the mac-addr of the on-chip Ethernet. */
-		struct cpunode_attach_args *cna = aux;
-
-		if (cna->cna_locs.cnl_instance <= 4) {
-			unsigned char prop_name[15];
-
-			snprintf(prop_name, sizeof(prop_name),
-				"etsec%d-mac-addr", cna->cna_locs.cnl_instance);
-
-			prop_data_t pd =
-			    prop_dictionary_get(board_properties, prop_name);
-			if (pd == NULL) {
-				aprint_error_dev(dev,
-				    "WARNING: unable to get %s property "
-				    "from board properties\n",
-				    prop_name);
-				return;
-			}
-			if (prop_dictionary_set(device_properties(dev),
-						"mac-address", pd) == false) {
-				aprint_error_dev(dev,
-				    "WARNING: unable to set %s property\n",
-				    "mac-addr");
-			}
-
-			snprintf(prop_name, sizeof(prop_name),
-				"etsec%d-phy-addr", cna->cna_locs.cnl_instance);
-			prop_number_t pn =
-			    prop_dictionary_get(board_properties, prop_name);
-			if (pn == NULL) {
-				aprint_error_dev(dev,
-				    "WARNING: unable to get %s property "
-				    "from board properties\n",
-				    prop_name);
-				return;
-			}
-			if (prop_dictionary_set(device_properties(dev),
-						"phy-addr", pn) == false) {
-				aprint_error_dev(dev,
-				    "WARNING: unable to set %s property\n",
-				    "phy-addr");
-			}
-
-		}
-		return;
-	}
-#endif
 }
 
 /*

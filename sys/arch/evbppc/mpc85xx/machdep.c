@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.4 2011/08/02 01:34:36 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.5 2011/10/14 17:21:27 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,10 +38,10 @@
 
 __KERNEL_RCSID(0, "$NetSBD$");
 
-#include "opt_mpc85xx.h"
 #include "opt_altivec.h"
-#include "opt_pci.h"
 #include "opt_ddb.h"
+#include "opt_mpc85xx.h"
+#include "opt_pci.h"
 #include "gpio.h"
 #include "pci.h"
 
@@ -60,14 +60,11 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <sys/bus.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
-#include <sys/ksyms.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
-
-#include <machine/stdarg.h>
-#include <powerpc/pcb.h>
 
 #include <dev/cons.h>
 
@@ -78,6 +75,9 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <net/if_media.h>
 #include <dev/mii/miivar.h>
 
+#include <powerpc/stdarg.h>
+#include <powerpc/cpuset.h>
+#include <powerpc/pcb.h>
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
 
@@ -93,13 +93,38 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <evbppc/mpc85xx/pixisreg.h>
 #endif
 
-#include "ksyms.h"
+struct uboot_bdinfo {
+	uint32_t bd_memstart;
+	uint32_t bd_memsize;
+	uint32_t bd_flashstart;
+	uint32_t bd_flashsize;
+/*10*/	uint32_t bd_flashoffset;
+	uint32_t bd_sramstart;
+	uint32_t bd_sramsize;
+	uint32_t bd_immrbase;
+/*20*/	uint32_t bd_bootflags;
+	uint32_t bd_ipaddr;
+	uint8_t bd_etheraddr[6];
+	uint16_t bd_ethspeed;
+/*30*/	uint32_t bd_intfreq;
+	uint32_t bd_cpufreq;
+	uint32_t bd_baudrate;
+/*3c*/	uint8_t bd_etheraddr1[6];
+/*42*/	uint8_t bd_etheraddr2[6];
+/*48*/	uint8_t bd_etheraddr3[6];
+/*4e*/	uint16_t bd_pad;
+};
 
-void	initppc(vaddr_t, vaddr_t);
+/*
+ * booke kernels need to set module_machine to this for modules to work.
+ */
+char module_machine_booke[] = "powerpc-booke";
+
+void	initppc(vaddr_t, vaddr_t, void *, void *, void *, void *);
 
 #define	MEMREGIONS	4
-phys_ram_seg_t physmemr[MEMREGIONS];         /* All memory */
-phys_ram_seg_t availmemr[MEMREGIONS];        /* Available memory */
+phys_ram_seg_t physmemr[MEMREGIONS];		/* All memory */
+phys_ram_seg_t availmemr[2*MEMREGIONS];		/* Available memory */
 static u_int nmemr;
 
 #ifndef CONSFREQ
@@ -139,10 +164,15 @@ struct powerpc_bus_space gur_le_bst = {
 
 const bus_space_handle_t gur_bsh = (bus_space_handle_t)(uintptr_t)(GUR_BASE);
 
+#if defined(SYS_CLK)
+static uint64_t e500_sys_clk = SYS_CLK;
+#endif
 #ifdef CADMUS
 static uint8_t cadmus_pci;
 static uint8_t cadmus_csr;
+#ifndef SYS_CLK
 static uint64_t e500_sys_clk = 33333333; /* 33.333333Mhz */
+#endif
 #elif defined(PIXIS)
 static const uint32_t pixis_spd_map[8] = {
     [PX_SPD_33MHZ] = 33333333,
@@ -155,10 +185,10 @@ static const uint32_t pixis_spd_map[8] = {
     [PX_SPD_166MHZ] = 166666667,
 };
 static uint8_t pixis_spd;
+#ifndef SYS_CLK
 static uint64_t e500_sys_clk;
-#elif defined(SYS_CLK)
-static uint64_t e500_sys_clk = SYS_CLK;	/* from config file */
-#else
+#endif
+#elif !defined(SYS_CLK)
 static uint64_t e500_sys_clk = 66666667; /* 66.666667Mhz */
 #endif
 
@@ -175,94 +205,166 @@ static struct consdev e500_earlycons = {
  * List of port-specific devices to attach to the processor local bus.
  */
 static const struct cpunode_locators mpc8548_cpunode_locs[] = {
-	{ "cpu" },	/* not a real device */
+	{ "cpu", 0, 0, 0, 0, { 0 }, 0,	/* not a real device */
+		{ 0xffff, SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+#if defined(MPC8572) || defined(P2020)
+	{ "cpu", 0, 0, 1, 0, { 0 }, 0,	/* not a real device */
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+	{ "cpu", 0, 0, 2, 0, { 0 }, 0,	/* not a real device */
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+#endif
 	{ "wdog" },	/* not a real device */
-	{ "duart", DUART1_BASE, 2*DUART_SIZE, 0, 1,
-		{ ISOURCE_DUART },
+	{ "duart", DUART1_BASE, 2*DUART_SIZE, 0,
+		1, { ISOURCE_DUART },
 		1 + ilog2(DEVDISR_DUART) },
+	{ "tsec", ETSEC1_BASE, ETSEC_SIZE, 1,
+		3, { ISOURCE_ETSEC1_TX, ISOURCE_ETSEC1_RX, ISOURCE_ETSEC1_ERR },
+		1 + ilog2(DEVDISR_TSEC1) },
+#if defined(MPC8548) || defined(MPC8555) || defined(MPC8572) || defined(P2020)
+	{ "tsec", ETSEC2_BASE, ETSEC_SIZE, 2,
+		3, { ISOURCE_ETSEC2_TX, ISOURCE_ETSEC2_RX, ISOURCE_ETSEC2_ERR },
+		1 + ilog2(DEVDISR_TSEC2),
+		{ SVR_MPC8548v1 >> 16, SVR_MPC8555v1 >> 16,
+		  SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+#endif
+#if defined(MPC8544) || defined(MPC8536)
+	{ "tsec", ETSEC3_BASE, ETSEC_SIZE, 2,
+		3, { ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
+		1 + ilog2(DEVDISR_TSEC3),
+		{ SVR_MPC8536v1 >> 16, SVR_MPC8544v1 >> 16 } },
+#endif
+#if defined(MPC8548) || defined(MPC8572) || defined(P2020)
+	{ "tsec", ETSEC3_BASE, ETSEC_SIZE, 3,
+		3, { ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
+		1 + ilog2(DEVDISR_TSEC3),
+		{ SVR_MPC8548v1 >> 16, SVR_MPC8572v1 >> 16,
+		  SVR_P2020v2 >> 16 } },
+#endif
 #if defined(MPC8548) || defined(MPC8572)
-	{ "tsec", ETSEC1_BASE, ETSEC_SIZE, 1, 3,
-		{ ISOURCE_ETSEC1_TX, ISOURCE_ETSEC1_RX, ISOURCE_ETSEC1_ERR },
-		1 + ilog2(DEVDISR_TSEC1) },
-	{ "tsec", ETSEC2_BASE, ETSEC_SIZE, 2, 3,
-		{ ISOURCE_ETSEC2_TX, ISOURCE_ETSEC2_RX, ISOURCE_ETSEC2_ERR },
-		1 + ilog2(DEVDISR_TSEC2) },
-	{ "tsec", ETSEC3_BASE, ETSEC_SIZE, 3, 3,
-		{ ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
-		1 + ilog2(DEVDISR_TSEC3) },
-	{ "tsec", ETSEC4_BASE, ETSEC_SIZE, 4, 3,
-		{ ISOURCE_ETSEC4_TX, ISOURCE_ETSEC4_RX, ISOURCE_ETSEC4_ERR },
-		1 + ilog2(DEVDISR_TSEC4) },
+	{ "tsec", ETSEC4_BASE, ETSEC_SIZE, 4,
+		3, { ISOURCE_ETSEC4_TX, ISOURCE_ETSEC4_RX, ISOURCE_ETSEC4_ERR },
+		1 + ilog2(DEVDISR_TSEC4),
+		{ SVR_MPC8548v1 >> 16, SVR_MPC8572v1 >> 16 } },
 #endif
-#if defined(MPC8544) || defined(MPC8536)
-	{ "tsec", ETSEC1_BASE, ETSEC_SIZE, 1, 3,
-		{ ISOURCE_ETSEC1_TX, ISOURCE_ETSEC1_RX, ISOURCE_ETSEC1_ERR },
-		1 + ilog2(DEVDISR_TSEC1) },
-	{ "tsec", ETSEC3_BASE, ETSEC_SIZE, 2, 3,
-		{ ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
-		1 + ilog2(DEVDISR_TSEC2) },
-#endif
-	{ "diic", I2C1_BASE, 2*I2C_SIZE, 0, 1,
-		{ ISOURCE_I2C },
-		1 + ilog2(DEVDISR_TSEC2) },
-#ifndef MPC8572
+	{ "diic", I2C1_BASE, 2*I2C_SIZE, 0,
+		1, { ISOURCE_I2C },
+		1 + ilog2(DEVDISR_I2C) },
 	/* MPC8572 doesn't have any GPIO */
-	{ "gpio", GLOBAL_BASE, GLOBAL_SIZE, 0, 0 },
+	{ "gpio", GLOBAL_BASE, GLOBAL_SIZE, 0, 
+		1, { ISOURCE_GPIO },
+		0, 
+		{ 0xffff, SVR_MPC8572v1 >> 16 } },
+	{ "ddrc", DDRC1_BASE, DDRC_SIZE, 0,
+		1, { ISOURCE_DDR },
+		1 + ilog2(DEVDISR_DDR_15),
+		{ 0xffff, SVR_MPC8572v1 >> 16, SVR_MPC8536v1 >> 16 } },
+#if defined(MPC8536)
+	{ "ddrc", DDRC1_BASE, DDRC_SIZE, 0,
+		1, { ISOURCE_DDR },
+		1 + ilog2(DEVDISR_DDR_16),
+		{ SVR_MPC8536v1 >> 16 } },
 #endif
-	{ "ddrc", DDRC1_BASE, DDRC_SIZE, 0, 1,
-		{ ISOURCE_DDR },
-		1 + ilog2(DEVDISR_TSEC2) },
+#if defined(MPC8572)
+	{ "ddrc", DDRC1_BASE, DDRC_SIZE, 1,
+		1, { ISOURCE_DDR },
+		1 + ilog2(DEVDISR_DDR_15),
+		{ SVR_MPC8572v1 >> 16 } },
+	{ "ddrc", DDRC2_BASE, DDRC_SIZE, 2,
+		1, { ISOURCE_DDR },
+		1 + ilog2(DEVDISR_DDR2_14),
+		{ SVR_MPC8572v1 >> 16 } },
+#endif
+	{ "lbc", LBC_BASE, LBC_SIZE, 0,
+		1, { ISOURCE_LBC },
+		1 + ilog2(DEVDISR_LBC) },
 #if defined(MPC8544) || defined(MPC8536)
-	{ "pcie", PCIE1_BASE, PCI_SIZE, 1, 1,
-		{ ISOURCE_PCIEX },
-		1 + ilog2(DEVDISR_PCIE) },
-	{ "pcie", PCIE2_MPC8544_BASE, PCI_SIZE, 2, 1,
-		{ ISOURCE_PCIEX2 },
-		1 + ilog2(DEVDISR_PCIE3) },
-	{ "pcie", PCIE3_MPC8544_BASE, PCI_SIZE, 3, 1,
-		{ ISOURCE_PCIEX3 },
-		1 + ilog2(DEVDISR_PCIE2) },
-	{ "pci", PCIX1_MPC8544_BASE, PCI_SIZE, 1, 1,
-		{ ISOURCE_PCI1 },
-		1 + ilog2(DEVDISR_PCI1) },
+	{ "pcie", PCIE1_BASE, PCI_SIZE, 1,
+		1, { ISOURCE_PCIEX },
+		1 + ilog2(DEVDISR_PCIE),
+		{ SVR_MPC8536v1 >> 16, SVR_MPC8544v1 >> 16 } },
+	{ "pcie", PCIE2_MPC8544_BASE, PCI_SIZE, 2,
+		1, { ISOURCE_PCIEX2 },
+		1 + ilog2(DEVDISR_PCIE2),
+		{ SVR_MPC8536v1 >> 16, SVR_MPC8544v1 >> 16 } },
+	{ "pcie", PCIE3_MPC8544_BASE, PCI_SIZE, 3,
+		1, { ISOURCE_PCIEX3 },
+		1 + ilog2(DEVDISR_PCIE3),
+		{ SVR_MPC8536v1 >> 16, SVR_MPC8544v1 >> 16 } },
+	{ "pci", PCIX1_MPC8544_BASE, PCI_SIZE, 0,
+		1, { ISOURCE_PCI1 },
+		1 + ilog2(DEVDISR_PCI1),
+		{ SVR_MPC8536v1 >> 16, SVR_MPC8544v1 >> 16 } },
 #endif
 #ifdef MPC8548
-	{ "pcie", PCIE1_BASE, PCI_SIZE, 0, 1,
-		{ ISOURCE_PCIEX },
-		1 + ilog2(DEVDISR_PCIE) },
-	{ "pci", PCIX1_MPC8548_BASE, PCI_SIZE, 1, 1,
-		{ ISOURCE_PCI1 },
-		1 + ilog2(DEVDISR_PCI1) },
-	{ "pci", PCIX2_MPC8548_BASE, PCI_SIZE, 2, 1,
-		{ ISOURCE_PCI2 },
-		1 + ilog2(DEVDISR_PCI2) },
+	{ "pcie", PCIE1_BASE, PCI_SIZE, 0,
+		1, { ISOURCE_PCIEX },
+		1 + ilog2(DEVDISR_PCIE),
+		{ SVR_MPC8548v1 >> 16 }, },
+	{ "pci", PCIX1_MPC8548_BASE, PCI_SIZE, 1,
+		1, { ISOURCE_PCI1 },
+		1 + ilog2(DEVDISR_PCI1),
+		{ SVR_MPC8548v1 >> 16 }, },
+	{ "pci", PCIX2_MPC8548_BASE, PCI_SIZE, 2,
+		1, { ISOURCE_PCI2 },
+		1 + ilog2(DEVDISR_PCI2),
+		{ SVR_MPC8548v1 >> 16 }, },
+#endif
+#if defined(MPC8572) || defined(P2020)
+	{ "pcie", PCIE1_BASE, PCI_SIZE, 1,
+		1, { ISOURCE_PCIEX },
+		1 + ilog2(DEVDISR_PCIE),
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+	{ "pcie", PCIE2_MPC8572_BASE, PCI_SIZE, 2,
+		1, { ISOURCE_PCIEX2 },
+		1 + ilog2(DEVDISR_PCIE2),
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+	{ "pcie", PCIE3_MPC8572_BASE, PCI_SIZE, 3,
+		1, { ISOURCE_PCIEX3_MPC8572 },
+		1 + ilog2(DEVDISR_PCIE3),
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+#endif
+#if defined(MPC8536) || defined(P2020)
+	{ "ehci", USB1_BASE, USB_SIZE, 1,
+		1, { ISOURCE_USB1 },
+		1 + ilog2(DEVDISR_USB1),
+		{ SVR_MPC8536v1 >> 16, SVR_P2020v2 >> 16 } },
 #endif
 #ifdef MPC8536
-	{ "ehci", USB1_BASE, USB_SIZE, 1, 1,
-		{ ISOURCE_USB1 },
-		1 + ilog2(DEVDISR_USB1) },
-	{ "ehci", USB2_BASE, USB_SIZE, 2, 1,
-		{ ISOURCE_USB2 },
-		1 + ilog2(DEVDISR_USB2) },
-	{ "ehci", USB3_BASE, USB_SIZE, 3, 1,
-		{ ISOURCE_USB3 },
-		1 + ilog2(DEVDISR_USB3) },
-	{ "sata", SATA1_BASE, SATA_SIZE, 1, 1,
-		{ ISOURCE_SATA1 },
-		1 + ilog2(DEVDISR_SATA1) },
-	{ "sata", SATA2_BASE, SATA_SIZE, 2, 1,
-		{ ISOURCE_SATA2 },
-		1 + ilog2(DEVDISR_SATA2) },
-	{ "spi", SPI_BASE, SPI_SIZE, 0, 1,
-		{ ISOURCE_SPI },
-		1 + ilog2(DEVDISR_SPI) },
-	{ "sdhc", ESDHC_BASE, ESDHC_SIZE, 0, 1,
-		{ ISOURCE_ESDHC },
-		1 + ilog2(DEVDISR_ESDHC) },
+	{ "ehci", USB2_BASE, USB_SIZE, 2,
+		1, { ISOURCE_USB2 },
+		1 + ilog2(DEVDISR_USB2),
+		{ SVR_MPC8536v1 >> 16 }, },
+	{ "ehci", USB3_BASE, USB_SIZE, 3,
+		1, { ISOURCE_USB3 },
+		1 + ilog2(DEVDISR_USB3),
+		{ SVR_MPC8536v1 >> 16 }, },
+	{ "sata", SATA1_BASE, SATA_SIZE, 1,
+		1, { ISOURCE_SATA1 },
+		1 + ilog2(DEVDISR_SATA1),
+		{ SVR_MPC8536v1 >> 16 }, },
+	{ "sata", SATA2_BASE, SATA_SIZE, 2,
+		1, { ISOURCE_SATA2 },
+		1 + ilog2(DEVDISR_SATA2),
+		{ SVR_MPC8536v1 >> 16 }, },
+	{ "spi", SPI_BASE, SPI_SIZE, 0,
+		1, { ISOURCE_SPI },
+		1 + ilog2(DEVDISR_SPI_15),
+		{ SVR_MPC8536v1 >> 16 }, },
+	{ "sdhc", ESDHC_BASE, ESDHC_SIZE, 0,
+		1, { ISOURCE_ESDHC },
+		1 + ilog2(DEVDISR_ESDHC_12),
+		{ SVR_MPC8536v1 >> 16 }, },
 #endif
-	{ "lbc", LBC_BASE, LBC_SIZE, 0, 1,
-		{ ISOURCE_LBC },
-		1 + ilog2(DEVDISR_LBC) },
+#if defined(P2020)
+	{ "spi", SPI_BASE, SPI_SIZE, 0,
+		1, { ISOURCE_SPI },
+		1 + ilog2(DEVDISR_SPI_28),
+		{ SVR_P2020v2 >> 16 }, },
+	{ "sdhc", ESDHC_BASE, ESDHC_SIZE, 0,
+		1, { ISOURCE_ESDHC },
+		1 + ilog2(DEVDISR_ESDHC_10),
+		{ SVR_P2020v2 >> 16 }, },
+#endif
 	//{ "sec", RNG_BASE, RNG_SIZE, 0, 0, },
 	{ NULL }
 };
@@ -295,8 +397,10 @@ e500_cnputc(dev_t dv, int c)
 }
 
 static void *
-gur_tlb_mapiodev(paddr_t pa, psize_t len)
+gur_tlb_mapiodev(paddr_t pa, psize_t len, bool prefetchable)
 {
+	if (prefetchable)
+		return NULL;
 	if (pa < gur_bst.pbs_offset)
 		return NULL;
 	if (pa + len > gur_bst.pbs_offset + gur_bst.pbs_limit)
@@ -304,7 +408,7 @@ gur_tlb_mapiodev(paddr_t pa, psize_t len)
 	return (void *)pa;
 }
 
-static void *(* const early_tlb_mapiodev)(paddr_t, psize_t) = gur_tlb_mapiodev;
+static void *(* const early_tlb_mapiodev)(paddr_t, psize_t, bool) = gur_tlb_mapiodev;
 
 static void
 e500_cpu_reset(void)
@@ -318,6 +422,16 @@ static psize_t
 memprobe(vaddr_t endkernel)
 {
 	phys_ram_seg_t *mr;
+	paddr_t boot_page = cpu_read_4(GUR_BPTR);
+	printf(" bptr=%"PRIxPADDR, boot_page);
+	if (boot_page & BPTR_EN) {
+		/*
+		 * shift it to an address
+		 */
+		boot_page = (boot_page & BPTR_BOOT_PAGE) << PAGE_SHIFT;
+	} else {
+		boot_page = ~(paddr_t)0;
+	}
 
 	/*
 	 * First we need to find out how much physical memory we have.
@@ -325,24 +439,30 @@ memprobe(vaddr_t endkernel)
 	 * to ask the DDR memory controller.
 	 */
 	mr = physmemr;
-#if 1
 	for (u_int i = 0; i < 4; i++) {
 		uint32_t v = cpu_read_4(DDRC1_BASE + CS_CONFIG(i));
 		if (v & CS_CONFIG_EN) {
 			v = cpu_read_4(DDRC1_BASE + CS_BNDS(i));
+			if (v == 0)
+				continue;
 			mr->start = BNDS_SA_GET(v);
 			mr->size  = BNDS_SIZE_GET(v);
+#ifdef MEMSIZE
+			if (mr->start >= MEMSIZE)
+				continue;
+			if (mr->start + mr->size > MEMSIZE)
+				mr->size = MEMSIZE - mr->start;
+#endif
+#if 0
+			printf(" [%zd]={%#"PRIx64"@%#"PRIx64"}",
+			    mr - physmemr, mr->size, mr->start);
+#endif
 			mr++;
 		}
 	}
 
 	if (mr == physmemr)
 		panic("no memory configured!");
-#else
-	mr->start = 0;
-	mr->size = 32 << 20;
-	mr++;
-#endif
 
 	/*
 	 * Sort memory regions from low to high and coalesce adjacent regions
@@ -359,14 +479,16 @@ memprobe(vaddr_t endkernel)
 			}
 		}
 		mr = physmemr;
-		for (u_int i = 0; i < cnt; i++, mr++) {
+		for (u_int i = 0; i + 1 < cnt; i++, mr++) {
 			if (mr->start + mr->size == mr[1].start) {
 				mr->size += mr[1].size;
-				for (u_int j = 1; j < cnt - i; j++)
+				for (u_int j = 1; i + j + 1 < cnt; j++)
 					mr[j] = mr[j+1];
 				cnt--;
 			}
 		}
+	} else if (cnt == 0) {
+		panic("%s: no memory found", __func__);
 	}
 
 	/*
@@ -380,12 +502,45 @@ memprobe(vaddr_t endkernel)
 	availmemr[0].size -= endkernel - availmemr[0].start;
 	availmemr[0].start = endkernel;
 
+	mr = availmemr;
+	for (u_int i = 0; i < cnt; i++, mr++) {
+		/*
+		 * U-boot reserves a boot-page on multi-core chips.
+		 * We need to make sure that we never disturb it.
+		 */
+		const paddr_t mr_end = mr->start + mr->size;
+		if (mr_end > boot_page && boot_page >= mr->start) {
+			/*
+			 * Normally u-boot will put in at the end
+			 * of memory.  But in case it doesn't, deal
+			 * with all possibilities.
+			 */
+			if (boot_page + PAGE_SIZE == mr_end) {
+				mr->size -= PAGE_SIZE;
+			} else if (boot_page == mr->start) {
+				mr->start += PAGE_SIZE;
+				mr->size -= PAGE_SIZE;
+			} else {
+				mr->size = boot_page - mr->start;
+				mr++;
+				for (u_int j = cnt; j > i + 1; j--) {
+					availmemr[j] = availmemr[j-1];
+				}
+				cnt++;
+				mr->start = boot_page + PAGE_SIZE;
+				mr->size = mr_end - mr->start;
+			}
+			break;
+		}
+	}
+
 	/*
 	 * Steal pages at the end of memory for the kernel message buffer.
 	 */
-	availmemr[cnt-1].size -= round_page(MSGBUFSIZE);
-	msgbuf_paddr =
-	    (uintptr_t)(availmemr[cnt-1].start + availmemr[cnt-1].size);
+	mr = availmemr + cnt - 1;
+	KASSERT(mr->size >= round_page(MSGBUFSIZE));
+	mr->size -= round_page(MSGBUFSIZE);
+	msgbuf_paddr = (uintptr_t)(mr->start + mr->size);
 
 	/*
 	 * Calculate physmem.
@@ -447,18 +602,39 @@ cpu_probe_cache(void)
 #endif
 }
 
+static uint16_t
+getsvr(void)
+{
+	uint16_t svr = mfspr(SPR_SVR) >> 16;
+
+	svr &= ~0x8;		/* clear security bit */
+	switch (svr) {
+	case SVR_MPC8543v1 >> 16:	return SVR_MPC8548v1 >> 16;
+	case SVR_MPC8541v1 >> 16:	return SVR_MPC8555v1 >> 16;
+	case SVR_P2010v2 >> 16:		return SVR_P2020v2 >> 16;
+	default:			return svr;
+	}
+}
+
 static const char *
 socname(uint32_t svr)
 {
-	svr &= ~0x80000;
+	svr &= ~0x80000;	/* clear security bit */
 	switch (svr >> 8) {
-	case SVR_MPC8548v2 >> 8: return "MPC8548";
-	case SVR_MPC8547v2 >> 8: return "MPC8547";
-	case SVR_MPC8545v2 >> 8: return "MPC8545";
+	case SVR_MPC8533 >> 8: return "MPC8533";
+	case SVR_MPC8536v1 >> 8: return "MPC8536";
+	case SVR_MPC8541v1 >> 8: return "MPC8541";
 	case SVR_MPC8543v2 >> 8: return "MPC8543";
 	case SVR_MPC8544v1 >> 8: return "MPC8544";
-	case SVR_MPC8536v1 >> 8: return "MPC8536";
-	case SVR_MPC8572 >> 8: return "MPC8572";
+	case SVR_MPC8545v2 >> 8: return "MPC8545";
+	case SVR_MPC8547v2 >> 8: return "MPC8547";
+	case SVR_MPC8548v2 >> 8: return "MPC8548";
+	case SVR_MPC8555v1 >> 8: return "MPC8555";
+	case SVR_MPC8568v1 >> 8: return "MPC8568";
+	case SVR_MPC8567v1 >> 8: return "MPC8567";
+	case SVR_MPC8572v1 >> 8: return "MPC8572";
+	case SVR_P2020v2 >> 8: return "P2020";
+	case SVR_P2010v2 >> 8: return "P2010";
 	default:
 		panic("%s: unknown SVR %#x", __func__, svr);
 	}
@@ -492,22 +668,11 @@ e500_tlb_print(device_t self, const char *name, uint32_t tlbcfg)
 }
 
 static void
-e500_cpu_attach(device_t self, u_int instance)
+cpu_print_info(struct cpu_info *ci)
 {
-	struct cpu_info * const ci = &cpu_info[instance];
-	
-	KASSERT(instance == 0);
-	self->dv_private = ci;
-
-	ci->ci_cpuid = instance;
-	ci->ci_dev = self;
-        //ci->ci_idlespin = cpu_idlespin;
-	if (instance > 0) {
-		ci->ci_idepth = -1;
-		cpu_probe_cache();
-	}
-
 	uint64_t freq = board_info_get_number("processor-frequency");
+	device_t self = ci->ci_dev;
+
 	char freqbuf[10];
 	if (freq >= 999500000) {
 		const uint32_t freq32 = (freq + 500000) / 10000000;
@@ -559,10 +724,256 @@ e500_cpu_attach(device_t self, u_int instance)
 
 	e500_tlb_print(self, "tlb0", mfspr(SPR_TLB0CFG));
 	e500_tlb_print(self, "tlb1", mfspr(SPR_TLB1CFG));
-
-	intr_cpu_init(ci);
-	cpu_evcnt_attach(ci);
 }
+
+#ifdef MULTIPROCESSOR
+static void
+e500_cpu_spinup(device_t self, struct cpu_info *ci)
+{
+	uintptr_t spinup_table_addr = board_info_get_number("mp-spin-up-table");
+	struct pglist splist;
+
+	if (spinup_table_addr == 0) {
+		aprint_error_dev(self, "hatch failed (no spin-up table)");
+		return;
+	}
+
+	struct uboot_spinup_entry * const e = (void *)spinup_table_addr;
+	volatile struct cpu_hatch_data * const h = &cpu_hatch_data;
+	const size_t id = cpu_index(ci);
+	volatile __cpuset_t * const hatchlings = &cpuset_info.cpus_hatched;
+
+	if (h->hatch_sp == 0) {
+		int error = uvm_pglistalloc(PAGE_SIZE, PAGE_SIZE,
+		    64*1024*1024, PAGE_SIZE, 0, &splist, 1, 1);
+		if (error) {
+			aprint_error_dev(self,
+			    "unable to allocate hatch stack\n");
+			return;
+		}
+		h->hatch_sp = VM_PAGE_TO_PHYS(TAILQ_FIRST(&splist))
+		    + PAGE_SIZE - CALLFRAMELEN;
+        }
+
+
+	for (size_t i = 1; e[i].entry_pir != 0; i++) {
+		printf("%s: cpu%u: entry#%zu(%p): pir=%u\n",
+		    __func__, ci->ci_cpuid, i, &e[i], e[i].entry_pir);
+		if (e[i].entry_pir == ci->ci_cpuid) {
+
+			ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
+			ci->ci_curpcb = lwp_getpcb(ci->ci_curlwp);
+			ci->ci_curpm = pmap_kernel();
+			ci->ci_lasttb = cpu_info[0].ci_lasttb;
+			ci->ci_data.cpu_cc_freq =
+			    cpu_info[0].ci_data.cpu_cc_freq;
+
+			h->hatch_self = self;
+			h->hatch_ci = ci;
+			h->hatch_running = -1;
+			h->hatch_pir = e[i].entry_pir;
+			h->hatch_hid0 = mfspr(SPR_HID0);
+			KASSERT(h->hatch_sp != 0);
+			/*
+			 * Get new timebase.  We don't want to deal with
+			 * timebase crossing a 32-bit boundary so make sure
+			 * that we have enough headroom to do the timebase
+			 * synchronization. 
+			 */
+#define	TBSYNC_SLOP	2000
+			uint32_t tbl;
+			uint32_t tbu;
+			do {
+				tbu = mfspr(SPR_RTBU);
+				tbl = mfspr(SPR_RTBL) + TBSYNC_SLOP;
+			} while (tbl < TBSYNC_SLOP);
+			
+			h->hatch_tbu = tbu;
+			h->hatch_tbl = tbl;
+			__asm("sync;isync");
+			dcache_wbinv((vaddr_t)h, sizeof(*h));
+
+#if 1
+			/*
+			 * And here we go...
+			 */
+			e[i].entry_addr_lower =
+			    (uint32_t)e500_spinup_trampoline;
+			dcache_wbinv((vaddr_t)&e[i], sizeof(e[i]));
+			__asm __volatile("sync;isync");
+			__insn_barrier();
+
+			for (u_int timo = 0; timo++ < 10000; ) {
+				dcache_inv((vaddr_t)&e[i], sizeof(e[i]));
+				if (e[i].entry_addr_lower == 3) {
+					printf(
+					    "%s: cpu%u started in %u spins\n",
+					    __func__, cpu_index(ci), timo);
+					break;
+				}
+			}
+			for (u_int timo = 0; timo++ < 10000; ) {
+				dcache_inv((vaddr_t)h, sizeof(*h));
+				if (h->hatch_running == 0) {
+					printf(
+					    "%s: cpu%u cracked in %u spins: (running=%d)\n",
+					    __func__, cpu_index(ci),
+					    timo, h->hatch_running);
+					break;
+				}
+			}
+			if (h->hatch_running == -1) {
+				aprint_error_dev(self,
+				    "hatch failed (timeout): running=%d"
+				    ", entry=%#x\n",
+				    h->hatch_running, e[i].entry_addr_lower);
+				goto out;
+			}
+#endif
+
+			/*
+			 * First then we do is to synchronize timebases.
+			 * TBSYNC_SLOP*16 should be more than enough
+			 * instructions.
+			 */
+			while (tbl != mftbl())
+				continue;
+			h->hatch_running = 1;
+			dcache_wbinv((vaddr_t)h, sizeof(*h));
+			__asm("sync;isync");
+			__insn_barrier();
+
+			for (u_int timo = 10000; timo-- > 0; ) {
+				dcache_inv((vaddr_t)h, sizeof(*h));
+				if (h->hatch_running > 1)
+					break;
+			}
+			if (h->hatch_running == 1) {
+				printf(
+				    "%s: tb sync failed: offset from %"PRId64"=%"PRId64" (running=%d)\n",
+				    __func__,
+				    ((int64_t)tbu << 32) + tbl,
+				    (int64_t)
+					(((uint64_t)h->hatch_tbu << 32)
+					+ (uint64_t)h->hatch_tbl),
+				    h->hatch_running);
+				goto out;
+			}
+			printf(
+			    "%s: tb synced: offset=%"PRId64" (running=%d)\n",
+			    __func__,
+			    (int64_t)
+				(((uint64_t)h->hatch_tbu << 32)
+				+ (uint64_t)h->hatch_tbl),
+			    h->hatch_running);
+			/*
+			 * Now we wait for the hatching to complete.  10ms
+			 * should be long enough.
+			 */
+			for (u_int timo = 10000; timo-- > 0; ) {
+				if (CPUSET_HAS_P(*hatchlings, id)) {
+					aprint_normal_dev(self,
+					    "hatch successful (%u spins, "
+					    "timebase adjusted by %"PRId64")\n",
+					    10000 - timo,
+					    (int64_t)
+						(((uint64_t)h->hatch_tbu << 32)
+						+ (uint64_t)h->hatch_tbl));
+					goto out;
+				}
+				DELAY(1);
+			}
+
+			aprint_error_dev(self,
+			    "hatch failed (timeout): running=%u\n",
+			    h->hatch_running);
+			goto out;
+		}
+	}
+
+	aprint_error_dev(self, "hatch failed (no spin-up entry for PIR %u)",
+	    ci->ci_cpuid);
+out:
+	if (h->hatch_sp == 0)
+		uvm_pglistfree(&splist);
+}
+#endif
+
+void
+e500_cpu_hatch(struct cpu_info *ci)
+{
+	mtmsr(mfmsr() | PSL_CE | PSL_ME | PSL_DE);
+
+	/*
+	 * Make sure interrupts are blocked.
+	 */
+	cpu_write_4(OPENPIC_BASE + OPENPIC_CTPR, 15);	/* IPL_HIGH */
+
+	intr_cpu_hatch(ci);
+
+	cpu_print_info(ci);
+
+/*
+ */
+}
+
+static void
+e500_cpu_attach(device_t self, u_int instance)
+{
+	struct cpu_info * const ci = &cpu_info[instance - (instance > 0)];
+
+	if (instance > 1) {
+#if defined(MULTIPROCESSOR)
+		ci->ci_idepth = -1;
+		self->dv_private = ci;
+
+		ci->ci_cpuid = instance - (instance > 0);
+		ci->ci_dev = self;
+		ci->ci_tlb_info = cpu_info[0].ci_tlb_info;
+
+		mi_cpu_attach(ci);
+
+		intr_cpu_attach(ci);
+		cpu_evcnt_attach(ci);
+
+		e500_cpu_spinup(self, ci);
+		return;
+#else
+		aprint_error_dev(self, "disabled (uniprocessor kernel)\n");
+		return;
+#endif
+	}
+
+	self->dv_private = ci;
+
+	ci->ci_cpuid = instance - (instance > 0);
+	ci->ci_dev = self;
+
+	intr_cpu_attach(ci);
+	cpu_evcnt_attach(ci);
+
+	KASSERT(ci == curcpu());
+	intr_cpu_hatch(ci);
+
+	cpu_print_info(ci);
+}
+
+void
+e500_ipi_halt(void)
+{
+	register_t msr, hid0;
+
+	msr = wrtee(0);
+
+	hid0 = mfspr(SPR_HID0);
+	hid0 = (hid0 & ~(HID0_TBEN|HID0_NAP|HID0_SLEEP)) | HID0_DOZE;
+	mtspr(SPR_HID0, hid0);
+
+	msr = (msr & ~(PSL_EE|PSL_CE|PSL_ME)) | PSL_WE;
+	mtmsr(msr);
+	for (;;);	/* loop forever */
+}
+
 
 static void
 calltozero(void)
@@ -571,16 +982,23 @@ calltozero(void)
 }
 
 void
-initppc(vaddr_t startkernel, vaddr_t endkernel)
+initppc(vaddr_t startkernel, vaddr_t endkernel,
+	void *a0, void *a1, void *a2, void *a3)
 {
 	struct cpu_info * const ci = curcpu();
 	struct cpu_softc * const cpu = ci->ci_softc;
 
 	cn_tab = &e500_earlycons;
-	printf(" initppc<enter>");
+	printf(" initppc(%#"PRIxVADDR", %#"PRIxVADDR", %p, %p, %p, %p)<enter>",
+	    startkernel, endkernel, a0, a1, a2, a3);
 
+	/*
+	 * Make sure we don't enter NAP or SLEEP if PSL_POW (MSR[WE]) is set.
+	 * DOZE is ok.
+	 */
 	const register_t hid0 = mfspr(SPR_HID0);
-	mtspr(SPR_HID0, hid0 | HID0_TBEN | HID0_EMCP);
+	mtspr(SPR_HID0,
+	    (hid0 & ~(HID0_NAP | HID0_SLEEP)) | HID0_TBEN | HID0_EMCP | HID0_DOZE);
 #ifdef CADMUS
 	/*
 	 * Need to cache this from cadmus since we need to unmap cadmus since
@@ -598,8 +1016,13 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 #endif
 #ifdef PIXIS
 	pixis_spd = ((uint8_t *)PX_BASE)[PX_SPD];
-	printf(" pixis_spd=%#x ", pixis_spd);
+	printf(" pixis_spd=%#x sysclk=%"PRIuMAX,
+	    pixis_spd, PX_SPD_SYSCLK_GET(pixis_spd));
+#ifndef SYS_CLK
 	e500_sys_clk = pixis_spd_map[PX_SPD_SYSCLK_GET(pixis_spd)];
+#else
+	printf(" pixis_sysclk=%u", pixis_spd_map[PX_SPD_SYSCLK_GET(pixis_spd)]);
+#endif
 #endif
 	printf(" porpllsr=0x%08x",
 	    *(uint32_t *)(GUR_BASE + GLOBAL_BASE + PORPLLSR));
@@ -617,8 +1040,8 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	 * We know the GUR is mapped via a TLB1 entry so we add a limited
 	 * mapiodev which allows mappings in GUR space.
 	 */
-	CTASSERT(offsetof(struct tlb_md_ops, md_tlb_mapiodev) == 0);
-	cpu_md_ops.md_tlb_ops = (const void *)&early_tlb_mapiodev;
+	CTASSERT(offsetof(struct tlb_md_io_ops, md_tlb_mapiodev) == 0);
+	cpu_md_ops.md_tlb_io_ops = (const void *)&early_tlb_mapiodev;
 	bus_space_init(&gur_bst, NULL, NULL, 0);
 	bus_space_init(&gur_le_bst, NULL, NULL, 0);
 	cpu->cpu_bst = &gur_bst;
@@ -651,7 +1074,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	 * Get the cache sizes.
 	 */
 	cpu_probe_cache();
-		printf(" cache(DC=%u/%u,IC=%u/%u)",
+		printf(" cache(DC=%uKB/%u,IC=%uKB/%u)",
 		    ci->ci_ci.dcache_size >> 10,
 		    ci->ci_ci.dcache_line_size,
 		    ci->ci_ci.icache_size >> 10,
@@ -691,7 +1114,9 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	 * Initialize exception vectors and interrupts
 	 */
 	exception_init(&e500_intrsw);
+
 	printf(" exception_init=%p", &e500_intrsw);
+
 	mtspr(SPR_TCR, TCR_WIE | mfspr(SPR_TCR));
 
 	/*
@@ -708,7 +1133,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	 * Let's take all the indirect calls via our stubs and patch 
 	 * them to be direct calls.
 	 */
-	booke_fixup_stubs();
+	cpu_fixup_stubs();
 #if 0
 	/*
 	 * As a debug measure we can change the TLB entry that maps all of
@@ -742,17 +1167,6 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 #endif
 
 	/*
-	 * Initialize a few things in lwp0.
-	 */
-	lwp0.l_md.md_veccpu = curcpu();
-	lwp0.l_md.md_fpucpu = curcpu();
-	{
-		extern void *proc0paddr;
-		lwp0.l_addr = proc0paddr;
-	}
-	lwp0.l_md.md_utf = trapframe(&lwp0);
-
-	/*
 	 * Set some more MD helpers
 	 */
 	cpu_md_ops.md_cpunode_locs = mpc8548_cpunode_locs;
@@ -763,15 +1177,14 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	cpu_md_ops.md_cpunode_attach = pq3gpio_attach;
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	{
-		extern void *startsym, *endsym;
-		ksyms_init((int)((u_int)endsym - (u_int)startsym),
-		    startsym, endsym);
-	}
-#endif
+		printf(" initppc done!\n");
 
-	printf(" initppc done!\n");
+#if 0
+	/*
+	 * Look for the Book-E modules in the right place.
+	 */
+	module_machine = module_machine_booke;
+#endif
 }
 
 #ifdef MPC8548
@@ -872,6 +1285,9 @@ void
 cpu_startup(void)
 {
 	struct cpu_info * const ci = curcpu();
+	const uint16_t svr = getsvr();
+
+	powersave = 0;	/* we can do it but turn it on by default */
 
 	booke_cpu_startup(socname(mfspr(SPR_SVR)));
 
@@ -885,17 +1301,46 @@ cpu_startup(void)
 	ci->ci_khz = (cpu_freq + 500) / 1000;
 	cpu_timebase = ci->ci_data.cpu_cc_freq = ccb_freq / 8;
 
+	board_info_add_number("my-id", svr);
 	board_info_add_bool("pq3");
 	board_info_add_number("mem-size", pmemsize);
 	const uint32_t l2ctl = cpu_read_4(L2CACHE_BASE + L2CTL);
 	uint32_t l2siz = L2CTL_L2SIZ_GET(l2ctl);
 	uint32_t l2banks = l2siz >> 16;
 #ifdef MPC85555
-	if (e500_get_svr() == (MPC8555v1 >> 16)) {
+	if (svr == (MPC8555v1 >> 16)) {
 		l2siz >>= 1;
 		l2banks >>= 1;
 	}
 #endif
+	paddr_t boot_page = cpu_read_4(GUR_BPTR);
+	if (boot_page & BPTR_EN) {
+		bool found = false;
+		boot_page = (boot_page & BPTR_BOOT_PAGE) << PAGE_SHIFT;
+		for (const uint32_t *dp = (void *)(boot_page + PAGE_SIZE - 4),
+		     * const bp = (void *)boot_page;
+		     bp <= dp; dp--) {
+			if (*dp == boot_page) {
+				uintptr_t spinup_table_addr = (uintptr_t)++dp;
+				spinup_table_addr =
+				    roundup2(spinup_table_addr, 32);
+				board_info_add_number("mp-boot-page",
+				    boot_page);
+				board_info_add_number("mp-spin-up-table", 
+				    spinup_table_addr);
+				printf("Found MP boot page @ %#"PRIxPADDR". "
+				    "Spin-up table @ %#"PRIxPTR"\n",
+				    boot_page, spinup_table_addr);
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			printf("Found MP boot page @ %#"PRIxPADDR
+			    " with missing U-boot signature!\n", boot_page);
+			board_info_add_number("mp-spin-up-table", 0);
+		}
+	}
 	board_info_add_number("l2-cache-size", l2siz);
 	board_info_add_number("l2-cache-line-size", 32);
 	board_info_add_number("l2-cache-banks", l2banks);
@@ -912,9 +1357,6 @@ cpu_startup(void)
 	board_info_add_number("tsec2-phy-addr", phy_base + 1);
 	board_info_add_number("tsec3-phy-addr", phy_base + 2);
 	board_info_add_number("tsec4-phy-addr", phy_base + 3);
-#elif defined(PIXIS)
-	board_info_add_number("tsec1-phy-addr", 1);  
-	board_info_add_number("tsec2-phy-addr", 0);  
 #else
 	board_info_add_number("tsec1-phy-addr", MII_PHY_ANY);
 	board_info_add_number("tsec2-phy-addr", MII_PHY_ANY);
@@ -942,21 +1384,48 @@ cpu_startup(void)
 	 * PCI-Express virtual wire interrupts on combined with
 	 * External IRQ0/1/2/3.
 	 */
+	switch (svr) {
 #if defined(MPC8548)
-	mpc85xx_pci_setup("pcie0-interrupt-map", 0x001800, IST_LEVEL, 0, 1, 2, 3);
+	case SVR_MPC8548v1 >> 16:
+		mpc85xx_pci_setup("pcie0-interrupt-map", 0x001800,
+		    IST_LEVEL, 0, 1, 2, 3);
+		break;
 #endif
-#if defined(MPC8544) || defined(MPC8572) || defined(MPC8536)
-	mpc85xx_pci_setup("pcie1-interrupt-map", 0x001800, IST_LEVEL, 0, 1, 2, 3);
-	mpc85xx_pci_setup("pcie2-interrupt-map", 0x001800, IST_LEVEL, 4, 5, 6, 7);
-	mpc85xx_pci_setup("pcie3-interrupt-map", 0x001800, IST_LEVEL, 8, 9, 10, 11);
+#if defined(MPC8544) || defined(MPC8572) || defined(MPC8536) || defined(P2020)
+	case SVR_MPC8536v1 >> 16:
+	case SVR_MPC8544v1 >> 16:
+	case SVR_MPC8572v1 >> 16:
+	case SVR_P2010v2 >> 16:
+	case SVR_P2020v2 >> 16:
+		mpc85xx_pci_setup("pcie1-interrupt-map", 0x001800, IST_LEVEL,
+		    0, 1, 2, 3);
+		mpc85xx_pci_setup("pcie2-interrupt-map", 0x001800, IST_LEVEL,
+		    4, 5, 6, 7);
+		mpc85xx_pci_setup("pcie3-interrupt-map", 0x001800, IST_LEVEL,
+		    8, 9, 10, 11);
+		break;
 #endif
-#if defined(MPC8544) || defined(MPC8548)
-	mpc85xx_pci_setup("pci1-interrupt-map", 0x001800, IST_LEVEL, 0, 1, 2, 3);
-#endif
+	}
+	switch (svr) {
 #if defined(MPC8536)
-	mpc85xx_pci_setup("pci1-interrupt-map", 0x001800, IST_LEVEL, 1, 2, 3, 4);
+	case SVR_MPC8536v1 >> 16:
+		mpc85xx_pci_setup("pci0-interrupt-map", 0x001800, IST_LEVEL,
+		    1, 2, 3, 4);
+		break;
+#endif
+#if defined(MPC8544)
+	case SVR_MPC8544v1 >> 16:
+		mpc85xx_pci_setup("pci0-interrupt-map", 0x001800, IST_LEVEL,
+		    0, 1, 2, 3);
+		break;
 #endif
 #if defined(MPC8548)
-	mpc85xx_pci_setup("pci2-interrupt-map", 0x001800, IST_LEVEL, 11, 1, 2, 3);
+	case SVR_MPC8548v1 >> 16:
+		mpc85xx_pci_setup("pci1-interrupt-map", 0x001800, IST_LEVEL,
+		    0, 1, 2, 3);
+		mpc85xx_pci_setup("pci2-interrupt-map", 0x001800, IST_LEVEL,
+		    11, 1, 2, 3);
+		break;
 #endif
+	}
 }
