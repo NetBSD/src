@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.182 2011/08/16 22:33:38 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.183 2011/10/14 09:23:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.182 2011/08/16 22:33:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.183 2011/10/14 09:23:31 hannken Exp $");
 
 #include "veriexec.h"
 
@@ -689,8 +689,9 @@ vn_ioctl(file_t *fp, u_long com, void *data)
 	case VREG:
 	case VDIR:
 		if (com == FIONREAD) {
-			error = VOP_GETATTR(vp, &vattr,
-			    kauth_cred_get());
+			vn_lock(vp, LK_SHARED | LK_RETRY);
+			error = VOP_GETATTR(vp, &vattr, kauth_cred_get());
+			VOP_UNLOCK(vp);
 			if (error)
 				return (error);
 			*(int *)data = vattr.va_size - fp->f_offset;
