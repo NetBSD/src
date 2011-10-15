@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.132 2011/08/31 18:31:02 plunky Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.133 2011/10/15 21:14:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.132 2011/08/31 18:31:02 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.133 2011/10/15 21:14:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -372,7 +372,7 @@ kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
 	}
 	ksp->ks_size |= 1 << indx;
 #ifdef DIAGNOSTIC
-	if (ksp->ks_active[indx - MINBUCKET] == USHRT_MAX)
+	if (ksp->ks_active[indx - MINBUCKET] == UINT_MAX)
 		panic("too many allocations in bucket");
 #endif
 	ksp->ks_active[indx - MINBUCKET]++;
