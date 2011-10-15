@@ -1,4 +1,4 @@
-/* $NetBSD: t_mkdir.c,v 1.3 2010/11/07 17:51:19 jmmv Exp $ */
+/* $NetBSD: t_mkdir.c,v 1.1 2011/10/15 06:26:33 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,23 +32,21 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mkdir.c,v 1.3 2010/11/07 17:51:19 jmmv Exp $");
+__RCSID("$NetBSD: t_mkdir.c,v 1.1 2011/10/15 06:26:33 jruoho Exp $");
 
 #include <sys/stat.h>
 
+#include <atf-c.h>
 #include <stdio.h>
 #include <unistd.h>
 
-#include <atf-c.h>
-
-#include "../h_macros.h"
-
-ATF_TC(mkdir);
-ATF_TC_HEAD(mkdir, tc)
+ATF_TC(mkdir_trail);
+ATF_TC_HEAD(mkdir_trail, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks mkdir(2)");
+	atf_tc_set_md_var(tc, "descr", "Checks mkdir(2) for trailing slashes");
 }
-ATF_TC_BODY(mkdir, tc)
+
+ATF_TC_BODY(mkdir_trail, tc)
 {
 	const char *tests[] = {
 		/*
@@ -63,22 +61,24 @@ ATF_TC_BODY(mkdir, tc)
 
 		NULL,
 	};
+
 	const char **test;
 
 	for (test = &tests[0]; *test != NULL; ++test) {
+
 		(void)printf("Checking \"%s\"\n", *test);
 		(void)rmdir(*test);
 
-		RL(mkdir(*test, 0777));
-		RL(rename(*test, "foo"));
-		RL(rename("foo/", *test));
-		RL(rmdir(*test));
+		ATF_REQUIRE(mkdir(*test, 0777) == 0);
+		ATF_REQUIRE(rename(*test, "foo") == 0);
+		ATF_REQUIRE(rename("foo/", *test) == 0);
+		ATF_REQUIRE(rmdir(*test) == 0);
 	}
 }
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, mkdir);
+	ATF_TP_ADD_TC(tp, mkdir_trail);
 
 	return atf_no_error();
 }
