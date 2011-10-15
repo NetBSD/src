@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.184 2011/09/21 12:08:02 jym Exp $ */
+/* $NetBSD: vmstat.c,v 1.185 2011/10/15 21:06:05 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.184 2011/09/21 12:08:02 jym Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.185 2011/10/15 21:06:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -266,18 +266,18 @@ int	winlines = 20;
 kvm_t *kd;
 
 
-#define	FORKSTAT	1<<0
-#define	INTRSTAT	1<<1
-#define	MEMSTAT		1<<2
-#define	SUMSTAT		1<<3
-#define	EVCNTSTAT	1<<4
-#define	VMSTAT		1<<5
-#define	HISTLIST	1<<6
-#define	HISTDUMP	1<<7
-#define	HASHSTAT	1<<8
-#define	HASHLIST	1<<9
-#define	VMTOTAL		1<<10
-#define	POOLCACHESTAT	1<<11
+#define	FORKSTAT	0x001
+#define	INTRSTAT	0x002
+#define	MEMSTAT		0x004
+#define	SUMSTAT		0x008
+#define	EVCNTSTAT	0x010
+#define	VMSTAT		0x020
+#define	HISTLIST	0x040
+#define	HISTDUMP	0x080
+#define	HASHSTAT	0x100
+#define	HASHLIST	0x200
+#define	VMTOTAL		0x400
+#define	POOLCACHESTAT	0x800
 
 /*
  * Print single word.  `ovflow' is number of characters didn't fit
@@ -473,6 +473,7 @@ main(int argc, char *argv[])
 		interval.tv_sec = 1;
 
 
+	getnlist(todo);
 	/*
 	 * Statistics dumping is incompatible with the default
 	 * VMSTAT/dovmstat() output. So perform the interval/reps handling
@@ -543,9 +544,7 @@ void
 getnlist(int todo)
 {
 	static int namelist_done = 0;
-	static int hash_done = 0;
-	static int hist_done = 0;
-	static int intr_done = 0;
+	static int done = 0;
 	int c;
 	size_t i;
 
@@ -576,17 +575,17 @@ getnlist(int todo)
 			}
 		}
 	}
-	if ((todo & INTRSTAT) && !intr_done) {
-		intr_done = 1;
+	if ((todo & (SUMSTAT|INTRSTAT)) && !(done & (SUMSTAT|INTRSTAT))) {
+		done |= SUMSTAT|INTRSTAT;
 		(void) kvm_nlist(kd, intrnl);
 	}
-	if ((todo & HASHLIST) && !hash_done) {
-		hash_done = 1;
+	if ((todo & (HASHLIST|HASHSTAT)) && !(done & (HASHLIST|HASHSTAT))) {
+		done |= HASHLIST|HASHSTAT;
 		if ((c = kvm_nlist(kd, hashnl)) == -1 || c == X_HASHNL_SIZE)
 			errx(1, "kvm_nlist: %s %s", "hashnl", kvm_geterr(kd));
 	}
-	if ((todo & (HISTLIST|HISTDUMP)) && !hist_done) {
-		hist_done = 1;
+	if ((todo & (HISTLIST|HISTDUMP)) && !(done & (HISTLIST|HISTDUMP))) {
+		done |= HISTLIST|HISTDUMP;
 		if (kvm_nlist(kd, histnl) == -1)
 			errx(1, "kvm_nlist: %s %s", "histnl", kvm_geterr(kd));
 	}
@@ -731,7 +730,6 @@ dovmstat(struct timespec *interval, int reps)
 	int pagesize = getpagesize();
 	int ovflw;
 
-	getnlist(VMSTAT);
 	uptime = getuptime();
 	halfuptime = uptime / 2;
 	(void)signal(SIGCONT, needhdr);
@@ -866,8 +864,6 @@ dosum(void)
 	size_t ssize;
 	int active_kernel;
 	struct cpu_counter cc;
-
-	getnlist(INTRSTAT);
 
 	/*
 	 * The "active" and "inactive" variables
@@ -1005,7 +1001,6 @@ dosum(void)
 void
 doforkst(void)
 {
-
 	kread(namelist, X_UVMEXP, &uvmexp, sizeof(uvmexp));
 
 	(void)printf("%u forks total\n", uvmexp.forks);
@@ -1097,7 +1092,6 @@ dointr(int verbose)
 	int nintr, inamlen;
 	char *intrname, *ointrname;
 
-	getnlist(INTRSTAT);
 	inttotal = 0;
 	uptime = getuptime();
 	(void)printf("%-34s %16s %8s\n", "interrupt", "total", "rate");
@@ -1199,7 +1193,6 @@ doevcnt(int verbose, int type)
 		return;
 	} while (/*CONSTCOND*/ 0);
 
-	getnlist(EVCNTSTAT);
 	kread(namelist, X_ALLEVENTS, &allevents, sizeof allevents);
 	evptr = TAILQ_FIRST(&allevents);
 	while (evptr) {
@@ -1245,7 +1238,6 @@ domem(void)
 	long totuse = 0, totfree = 0, totreq = 0;
 	struct kmembuckets buckets[MINBUCKET + 16];
 
-	getnlist(MEMSTAT);
 	kread(namelist, X_KMEMBUCKETS, buckets, sizeof(buckets));
 	for (first = 1, i = MINBUCKET, kp = &buckets[i]; i < MINBUCKET + 16;
 	    i++, kp++) {
@@ -1358,7 +1350,6 @@ dopool(int verbose, int wide)
 	struct pool_allocator pa;
 	char name[32], maxp[32];
 
-	getnlist(MEMSTAT);
 	kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
 	addr = TAILQ_FIRST(&pool_head);
 
@@ -1469,7 +1460,6 @@ dopoolcache(int verbose)
 	size_t i;
 	double p;
 
-	getnlist(POOLCACHESTAT);
 	kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
 	addr = TAILQ_FIRST(&pool_head);
 
@@ -1595,7 +1585,6 @@ dohashstat(int verbose, int todo, const char *hashname)
 	hashbuf = NULL;
 	hashbufsize = 0;
 
-	getnlist(todo);
 	if (todo & HASHLIST) {
 		(void)printf("Supported hashes:\n");
 		for (curhash = khashes; curhash->description; curhash++) {
@@ -1766,7 +1755,6 @@ hist_traverse(int todo, const char *histname)
 	char *name = NULL;
 	size_t namelen = 0;
 
-	getnlist(todo);
 	if (histnl[0].n_value == 0) {
 		warnx("kernel history is not compiled into the kernel.");
 		return;
