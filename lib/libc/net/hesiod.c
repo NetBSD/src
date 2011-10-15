@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.25 2011/01/05 00:09:43 wiz Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.26 2011/10/15 22:57:57 christos Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -51,7 +51,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.25 2011/01/05 00:09:43 wiz Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.26 2011/10/15 22:57:57 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -317,8 +317,7 @@ read_config_file(ctx, filename)
 	struct hesiod_p	*ctx;
 	const char	*filename;
 {
-	char	*key, *data, *p, **which;
-	char	 buf[MAXDNAME + 7];
+	char	*buf, *key, *data, *p, **which;
 	int	 n;
 	FILE	*fp;
 
@@ -344,10 +343,9 @@ read_config_file(ctx, filename)
 	}
 	ctx->lhs = NULL;
 	ctx->rhs = NULL;
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
+	for (; (buf = fparseln(fp, NULL, NULL, NULL, FPARSELN_UNESCALL))
+	    != NULL; free(buf)) {
 		p = buf;
-		if (*p == '#' || *p == '\n' || *p == '\r')
-			continue;
 		while (*p == ' ' || *p == '\t')
 			p++;
 		key = p;
@@ -378,6 +376,7 @@ read_config_file(ctx, filename)
 			*which = strdup(data);
 			if (!*which) {
 				errno = ENOMEM;
+				free(buf);
 				(void)fclose(fp);
 				return -1;
 			}
