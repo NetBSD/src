@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.42 2011/03/31 07:52:34 jruoho Exp $
+.\"	$NetBSD: mmap.2,v 1.43 2011/10/15 21:39:35 rmind Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mmap.2	8.4 (Berkeley) 5/11/95
 .\"
-.Dd March 31, 2011
+.Dd October 15, 2011
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -287,3 +287,15 @@ would exceed the offset maximum established in its open file description.
 .Xr munmap 2 ,
 .Xr getpagesize 3 ,
 .Xr sysconf 3
+.Sh STANDARDS
+The
+.Fn mmap
+function conforms to
+.St -p1003.1b-93 .
+.Sh HISTORY
+The
+.Fn mmap
+interface was first designed in
+.Bx 4.2 ,
+however the function first appeared in
+.Bx 4.4 .
