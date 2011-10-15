@@ -1,4 +1,4 @@
-/*	$NetBSD: mallocvar.h,v 1.9 2010/04/05 08:03:41 he Exp $	*/
+/*	$NetBSD: mallocvar.h,v 1.10 2011/10/15 21:14:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -57,7 +57,7 @@ struct malloc_type {
 	u_long	ks_maxused;	/* maximum number ever used */
 	u_long	ks_limit;	/* most that are allowed to exist */
 	u_long	ks_size;	/* sizes of this thing that are allocated */
-	u_short	ks_active[MAXBUCKET+1];	/* number of active allocations per size */
+	u_int	ks_active[MAXBUCKET+1];	/* number of active allocations per size */
 };
 
 #ifdef _KERNEL
