@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.406 2011/10/15 06:42:17 jruoho Exp $
+# $NetBSD: mi,v 1.407 2011/10/15 06:50:52 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -334,7 +334,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_sigaction.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-kernel-tests	debug,atf
-./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/tty				tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/tty/t_pr.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/lib					tests-lib-debug
@@ -525,6 +525,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_truncate.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_umask.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_unlink.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_write.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/termios				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/termios/t_tcsetpgrp.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls				tests-lib-debug
@@ -1863,7 +1864,7 @@
 ./usr/tests/kernel/t_time			tests-obsolete			obsolete
 ./usr/tests/kernel/t_ucontext			tests-kernel-tests		atf
 ./usr/tests/kernel/t_umount			tests-kernel-tests		atf
-./usr/tests/kernel/t_writev			tests-kernel-tests		atf
+./usr/tests/kernel/t_writev			tests-obsolete			obsolete
 ./usr/tests/kernel/tty				tests-kernel-tests
 ./usr/tests/kernel/tty/Atffile			tests-kernel-tests		atf
 ./usr/tests/kernel/tty/t_pr			tests-kernel-tests		atf
@@ -2141,6 +2142,7 @@
 ./usr/tests/lib/libc/sys/t_truncate		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_umask		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_unlink		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_write		tests-lib-tests		atf
 ./usr/tests/lib/libc/termios			tests-lib-tests
 ./usr/tests/lib/libc/termios/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/termios/t_tcsetpgrp	tests-lib-tests		atf
