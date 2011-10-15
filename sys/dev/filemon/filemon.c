@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.3 2011/07/04 23:37:30 sjg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.4 2011/10/15 00:23:08 sjg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,7 +48,7 @@ MODULE(MODULE_CLASS_DRIVER, filemon, NULL);
 
 static dev_type_open(filemon_open);
 
-static struct cdevsw filemon_cdevsw = {
+struct cdevsw filemon_cdevsw = {
 	.d_open = filemon_open,
 	.d_flag = D_MPSAFE,
 	.d_close = noclose,
@@ -300,6 +300,17 @@ filemon_load(void *dummy __unused)
 
 	/* Install the syscall wrappers. */
 	filemon_wrapper_install();
+}
+
+void filemonattach(int);
+
+/*
+ * If this gets called we are linked into the kernel
+ */
+void
+filemonattach(int num)
+{
+    filemon_load(NULL);
 }
 
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1028 2011/09/28 10:55:46 jruoho Exp $
+#	$NetBSD: files,v 1.1029 2011/10/15 00:23:08 sjg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1692,6 +1692,12 @@ include "netisdn/files.i4b"
 # Game adapter (joystick)
 device	joy
 file	dev/ic/joy.c			joy needs-flag
+
+# process monitor for make(1)
+# normally built as module
+defpseudo filemon
+file	dev/filemon/filemon.c		filemon
+file	dev/filemon/filemon_wrapper.c	filemon
 
 include	"net/agr/files.agr"
 
