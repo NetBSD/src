@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.968 2011/10/15 01:32:11 christos Exp $
+# $NetBSD: mi,v 1.969 2011/10/15 13:00:59 mbalmer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1632,6 +1632,10 @@
 ./usr/share/examples/ipf			base-netutil-examples
 ./usr/share/examples/isdn			base-isdn-examples
 ./usr/share/examples/kerberos			base-krb5-examples
+./usr/share/examples/lua			base-sys-examples	share
+./usr/share/examples/lua/README			base-sys-examples	share
+./usr/share/examples/lua/gpio.lua		base-sys-examples	share
+./usr/share/examples/lua/sqlite.lua		base-sys-examples	share
 ./usr/share/examples/mount_portal		base-miscfs-examples
 ./usr/share/examples/named			base-obsolete	obsolete
 ./usr/share/examples/openssl			base-crypto-examples
