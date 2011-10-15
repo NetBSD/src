@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.27 2011/09/17 01:52:29 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.28 2011/10/15 23:00:02 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.27 2011/09/17 01:52:29 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.28 2011/10/15 23:00:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -120,7 +120,7 @@ getutxent()
 	if (fp == NULL) {
 		struct stat st;
 
-		if ((fp = fopen(utfile, "r+")) == NULL)
+		if ((fp = fopen(utfile, "re+")) == NULL)
 			if ((fp = fopen(utfile, "w+")) == NULL) {
 				if ((fp = fopen(utfile, "r")) == NULL)
 					goto fail;
