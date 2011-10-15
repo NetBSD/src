@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.92 2011/10/02 19:31:45 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.93 2011/10/15 13:00:59 mbalmer Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -336,6 +336,7 @@
 ./usr/share/examples/kerberos
 ./usr/share/examples/libsaslc
 ./usr/share/examples/libsaslc/mech
+./usr/share/examples/lua
 ./usr/share/examples/mount_portal
 ./usr/share/examples/openssl
 ./usr/share/examples/pf
