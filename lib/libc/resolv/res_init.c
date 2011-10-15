@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.22 2009/10/24 17:24:01 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.23 2011/10/15 23:00:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.26 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.22 2009/10/24 17:24:01 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.23 2011/10/15 23:00:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -346,7 +346,7 @@ __res_vinit(res_state statp, int preinit) {
 	 line[sizeof(name) - 1] == '\t'))
 
 	nserv = 0;
-	if ((fp = fopen(_PATH_RESCONF, "r")) != NULL) {
+	if ((fp = fopen(_PATH_RESCONF, "re")) != NULL) {
 	    struct stat st;
 	    struct kevent kc;
 
@@ -502,9 +502,7 @@ __res_vinit(res_state statp, int preinit) {
 	    if (fstat(statp->_u._ext.ext->resfd, &st) != -1)
 		    __res_conf_time = statp->_u._ext.ext->res_conf_time =
 			st.st_mtimespec;
-	    statp->_u._ext.ext->kq = kqueue();
-	    (void)fcntl(statp->_u._ext.ext->kq, F_SETFD, FD_CLOEXEC);
-	    (void)fcntl(statp->_u._ext.ext->resfd, F_SETFD, FD_CLOEXEC);
+	    statp->_u._ext.ext->kq = kqueue1(O_CLOEXEC);
 	    EV_SET(&kc, statp->_u._ext.ext->resfd, EVFILT_VNODE,
 		EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_DELETE|NOTE_WRITE| NOTE_EXTEND|
 		NOTE_ATTRIB|NOTE_LINK|NOTE_RENAME|NOTE_REVOKE, 0, 0);

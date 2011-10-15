@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.49 2011/02/07 21:39:47 joerg Exp $	*/
+/*	$NetBSD: getcap.c,v 1.50 2011/10/15 23:00:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.49 2011/02/07 21:39:47 joerg Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.50 2011/10/15 23:00:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -789,7 +789,7 @@ cgetnext(char **bp, const char * const *db_array)
 	if (dbp == NULL)
 		dbp = db_array;
 
-	if (pfp == NULL && (pfp = fopen(*dbp, "r")) == NULL) {
+	if (pfp == NULL && (pfp = fopen(*dbp, "re")) == NULL) {
 		(void)cgetclose();
 		return -1;
 	}
@@ -812,7 +812,7 @@ cgetnext(char **bp, const char * const *db_array)
 						(void)cgetclose();
 						return 0;
 					} else if ((pfp =
-					    fopen(*dbp, "r")) == NULL) {
+					    fopen(*dbp, "re")) == NULL) {
 						(void)cgetclose();
 						return -1;
 					} else

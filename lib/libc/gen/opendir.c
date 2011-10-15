@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.37 2010/09/26 02:26:59 yamt Exp $	*/
+/*	$NetBSD: opendir.c,v 1.38 2011/10/15 23:00:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.37 2010/09/26 02:26:59 yamt Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.38 2011/10/15 23:00:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,7 +77,7 @@ __opendir2(const char *name, int flags)
 {
 	int fd;
 
-	if ((fd = open(name, O_RDONLY | O_NONBLOCK)) == -1)
+	if ((fd = open(name, O_RDONLY | O_NONBLOCK | O_CLOEXEC)) == -1)
 		return NULL;
 	return __opendir_common(fd, name, flags);
 }
@@ -86,6 +86,8 @@ __opendir2(const char *name, int flags)
 DIR *
 _fdopendir(int fd)
 {
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
+		return NULL;
 
 	return __opendir_common(fd, NULL, DTF_HIDEW|DTF_NODUP);
 }
@@ -100,13 +102,11 @@ __opendir_common(int fd, const char *name, int flags)
 	struct statvfs sfb;
 	int error;
 
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
-		goto error;
 	if (fstat(fd, &sb) || !S_ISDIR(sb.st_mode)) {
 		errno = ENOTDIR;
 		goto error;
 	}
-	if ((dirp = (DIR *)malloc(sizeof(DIR))) == NULL)
+	if ((dirp = malloc(sizeof(*dirp))) == NULL)
 		goto error;
 	dirp->dd_buf = NULL;
 	dirp->dd_internal = NULL;

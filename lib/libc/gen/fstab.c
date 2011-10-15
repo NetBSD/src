@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.28 2006/08/12 23:49:54 christos Exp $	*/
+/*	$NetBSD: fstab.c,v 1.29 2011/10/15 23:00:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.28 2006/08/12 23:49:54 christos Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.29 2011/10/15 23:00:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -216,7 +216,7 @@ setfsent(void)
 		rewind(_fs_fp);
 		return 1;
 	}
-	if ((_fs_fp = fopen(_PATH_FSTAB, "r")) == NULL) {
+	if ((_fs_fp = fopen(_PATH_FSTAB, "re")) == NULL) {
 		warn("Cannot open `%s'", _PATH_FSTAB);
 		return 0;
 	}

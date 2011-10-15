@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetent.c,v 1.18 2007/01/27 22:27:35 christos Exp $	*/
+/*	$NetBSD: getnetent.c,v 1.19 2011/10/15 23:00:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@
 static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: getnetent.c,v 8.4 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetent.c,v 1.18 2007/01/27 22:27:35 christos Exp $");
+__RCSID("$NetBSD: getnetent.c,v 1.19 2011/10/15 23:00:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,7 +97,7 @@ __setnetent(f)
 {
 
 	if (netf == NULL)
-		netf = fopen(_PATH_NETWORKS, "r" );
+		netf = fopen(_PATH_NETWORKS, "re");
 	else
 		rewind(netf);
 	_net_stayopen |= f;
@@ -120,7 +120,7 @@ getnetent()
 	char *p;
 	register char *cp, **q;
 
-	if (netf == NULL && (netf = fopen(_PATH_NETWORKS, "r" )) == NULL)
+	if (netf == NULL && (netf = fopen(_PATH_NETWORKS, "re")) == NULL)
 		return (NULL);
 #if (defined(__sparc__) && defined(_LP64)) ||		\
     defined(__alpha__) ||				\
