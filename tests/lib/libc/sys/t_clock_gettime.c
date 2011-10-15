@@ -1,4 +1,4 @@
-/* $NetBSD: t_time.c,v 1.2 2010/11/08 21:38:13 pooka Exp $ */
+/* $NetBSD: t_clock_gettime.c,v 1.1 2011/10/15 06:42:16 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,13 +58,14 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_time.c,v 1.2 2010/11/08 21:38:13 pooka Exp $");
+__RCSID("$NetBSD: t_clock_gettime.c,v 1.1 2011/10/15 06:42:16 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
 #include <machine/int_limits.h>
 
+#include <atf-c.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,9 +73,7 @@ __RCSID("$NetBSD: t_time.c,v 1.2 2010/11/08 21:38:13 pooka Exp $");
 #include <time.h>
 #include <unistd.h>
 
-#include <atf-c.h>
-
-#include "../h_macros.h"
+#include "../../../h_macros.h"
 
 #define MINPOSDIFF	15000000	/* 15 ms for now */
 #define TIMEOUT		5
@@ -148,15 +147,16 @@ check_timecounter(void)
 #undef CL
 }
 
-ATF_TC(time);
-ATF_TC_HEAD(time, tc)
+ATF_TC(clock_gettime_real);
+ATF_TC_HEAD(clock_gettime_real, tc)
 {
 	atf_tc_set_md_var(tc, "require.user", "root");
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks the monotonicity of the CLOCK_REALTIME implementation");
 	atf_tc_set_md_var(tc, "timeout", "300");
 }
-ATF_TC_BODY(time, tc)
+
+ATF_TC_BODY(clock_gettime_real, tc)
 {
 	char name[128], cbuf[512], ctrbuf[10240];
 	size_t cbufsiz = sizeof(cbuf);
@@ -205,7 +205,8 @@ ATF_TC_BODY(time, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, time);
+
+	ATF_TP_ADD_TC(tp, clock_gettime_real);
 
 	return atf_no_error();
 }
