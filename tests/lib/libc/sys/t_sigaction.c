@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigaction.c,v 1.2 2011/02/07 09:40:52 matt Exp $ */
+/* $NetBSD: t_sigaction.c,v 1.1 2011/10/15 07:00:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sigaction.c,v 1.2 2011/02/07 09:40:52 matt Exp $");
+__RCSID("$NetBSD: t_sigaction.c,v 1.1 2011/10/15 07:00:48 jruoho Exp $");
 
 #include <sys/wait.h>
 
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: t_sigaction.c,v 1.2 2011/02/07 09:40:52 matt Exp $");
 #include <atf-c.h>
 #include <atf-c/config.h>
 
-#include "../h_macros.h"
+#include "../../../h_macros.h"
 
 static bool handler_called = false;
 
@@ -79,13 +79,14 @@ wait_and_check_child(const pid_t pid, const char *fail_message)
 		atf_tc_fail("%s; raw exit status was %d", fail_message, status);
 }
 
-ATF_TC(sa_noflags);
-ATF_TC_HEAD(sa_noflags, tc)
+ATF_TC(sigaction_noflags);
+ATF_TC_HEAD(sigaction_noflags, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks programming a signal with "
 	    "sigaction(2) but without any flags");
 }
-ATF_TC_BODY(sa_noflags, tc)
+
+ATF_TC_BODY(sigaction_noflags, tc)
 {
 	const pid_t pid = fork();
 	if (pid == -1)
@@ -93,16 +94,17 @@ ATF_TC_BODY(sa_noflags, tc)
 	else if (pid == 0)
 		sa_resethand_child(0);
 	else
-		wait_and_check_child(pid, "Child process did not exit cleanly; "
-		    "it failed to process the signal");
+		wait_and_check_child(pid, "Child process did not exit cleanly;"
+		    " it failed to process the signal");
 }
 
-ATF_TC(sa_resethand);
-ATF_TC_HEAD(sa_resethand, tc)
+ATF_TC(sigaction_resethand);
+ATF_TC_HEAD(sigaction_resethand, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks that SA_RESETHAND works");
 }
-ATF_TC_BODY(sa_resethand, tc)
+
+ATF_TC_BODY(sigaction_resethand, tc)
 {
 	const pid_t pid = fork();
 	if (pid == -1)
@@ -110,16 +112,17 @@ ATF_TC_BODY(sa_resethand, tc)
 	else if (pid == 0)
 		sa_resethand_child(SA_RESETHAND);
 	else {
-		wait_and_check_child(pid, "Child process did not exit cleanly; "
-		    "it either failed to process the signal or SA_RESETHAND is "
-		    "broken");
+		wait_and_check_child(pid, "Child process did not exit cleanly;"
+		    " it either failed to process the signal or SA_RESETHAND"
+		    " is broken");
 	}
 }
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, sa_noflags);
-	ATF_TP_ADD_TC(tp, sa_resethand);
+
+	ATF_TP_ADD_TC(tp, sigaction_noflags);
+	ATF_TP_ADD_TC(tp, sigaction_resethand);
 
 	return atf_no_error();
 }

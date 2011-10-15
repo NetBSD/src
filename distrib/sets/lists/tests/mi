@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.408 2011/10/15 06:54:53 jruoho Exp $
+# $NetBSD: mi,v 1.409 2011/10/15 07:00:49 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -331,7 +331,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_posix_fadvise.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_pty.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug,atf
-./usr/libdata/debug/usr/tests/kernel/t_sigaction.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_sigaction.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-obsolete		obsolete
@@ -519,6 +519,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_select.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_setrlimit.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_setuid.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigaction.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigqueue.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_stat.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_timer_create.debug		tests-lib-debug		debug,atf
@@ -1861,7 +1862,7 @@
 ./usr/tests/kernel/t_ps_strings			tests-kernel-tests		atf
 ./usr/tests/kernel/t_pty			tests-kernel-tests		atf
 ./usr/tests/kernel/t_rnd			tests-kernel-tests		atf
-./usr/tests/kernel/t_sigaction			tests-kernel-tests		atf
+./usr/tests/kernel/t_sigaction			tests-obsolete			obsolete
 ./usr/tests/kernel/t_time			tests-obsolete			obsolete
 ./usr/tests/kernel/t_ucontext			tests-obsolete			obsolete
 ./usr/tests/kernel/t_umount			tests-kernel-tests		atf
@@ -2137,6 +2138,7 @@
 ./usr/tests/lib/libc/sys/t_select		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_setrlimit		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_setuid		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_sigaction		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_sigqueue		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_stat			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_timer_create		tests-lib-tests		atf

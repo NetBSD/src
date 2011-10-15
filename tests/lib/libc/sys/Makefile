@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2011/10/15 06:54:52 jruoho Exp $
+# $NetBSD: Makefile,v 1.16 2011/10/15 07:00:48 jruoho Exp $
 
 MKMAN=	no
 
@@ -40,6 +40,7 @@ TESTS_C+=		t_revoke
 TESTS_C+=		t_select
 TESTS_C+=		t_setrlimit
 TESTS_C+=		t_setuid
+TESTS_C+=		t_sigaction
 TESTS_C+=		t_sigqueue
 TESTS_C+=		t_stat
 TESTS_C+=		t_timer_create
