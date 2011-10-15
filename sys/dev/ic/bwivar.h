@@ -1,4 +1,4 @@
-/*	$NetBSD: bwivar.h,v 1.7 2010/02/24 22:37:58 dyoung Exp $	*/
+/*	$NetBSD: bwivar.h,v 1.8 2011/10/15 19:50:20 dholland Exp $	*/
 /*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
@@ -770,7 +770,7 @@ bwi_rf_calc_rssi(struct bwi_mac *_mac, const struct bwi_rxbuf_hdr *_hdr)
 static __inline void
 bwi_rf_lo_update(struct bwi_mac *_mac)
 {
-	return (_mac->mac_rf.rf_lo_update(_mac));
+	_mac->mac_rf.rf_lo_update(_mac);
 }
 
 #define RF_WRITE(mac, ofs, val)		bwi_rf_write((mac), (ofs), (val))
