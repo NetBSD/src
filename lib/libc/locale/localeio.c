@@ -1,4 +1,4 @@
-/*	$NetBSD: localeio.c,v 1.5 2010/06/19 13:26:52 tnozaki Exp $	*/
+/*	$NetBSD: localeio.c,v 1.6 2011/10/15 23:00:02 christos Exp $	*/
 /*
  * Copyright (c) 2008, The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeio.c,v 1.5 2010/06/19 13:26:52 tnozaki Exp $");
+__RCSID("$NetBSD: localeio.c,v 1.6 2011/10/15 23:00:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -64,10 +64,10 @@ _localeio_map_file(const char * __restrict path,
 	_DIAGASSERT(pvar != NULL);
 	_DIAGASSERT(plenvar != NULL);
 
-	fd = open(path, O_RDONLY);
+	fd = open(path, O_RDONLY | O_CLOEXEC);
 	if (fd == -1)
 		return errno;
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 || fstat(fd, &st) == 1) {
+	if (fstat(fd, &st) == -1) {
 		ret = errno;
 		goto error;
 	}

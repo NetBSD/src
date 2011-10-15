@@ -1,4 +1,4 @@
-/*	$NetBSD: initdir.c,v 1.1 2010/09/26 02:26:59 yamt Exp $	*/
+/*	$NetBSD: initdir.c,v 1.2 2011/10/15 23:00:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: initdir.c,v 1.1 2010/09/26 02:26:59 yamt Exp $");
+__RCSID("$NetBSD: initdir.c,v 1.2 2011/10/15 23:00:01 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -153,8 +153,7 @@ retry:
 		 */
 		if (flags & DTF_REWIND) {
 			(void) close(fd);
-			if ((fd = open(name, O_RDONLY)) == -1 ||
-			    fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
+			if ((fd = open(name, O_RDONLY | O_CLOEXEC)) == -1) {
 				dirp->dd_buf = buf;
 				return errno;
 			}
