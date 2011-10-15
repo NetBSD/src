@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.2 2011/10/15 06:33:45 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,14 +30,120 @@
  */
 
 #include <sys/time.h>
+#include <sys/wait.h>
 
 #include <atf-c.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <poll.h>
+#include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
+
+static int desc;
+
+static void
+child1(void)
+{
+	struct pollfd pfd;
+
+	pfd.fd = desc;
+	pfd.events = POLLIN | POLLHUP | POLLOUT;
+
+	(void)poll(&pfd, 1, 2000);
+	(void)printf("child1 exit\n");
+}
+
+static void
+child2(void)
+{
+	struct pollfd pfd;
+
+	pfd.fd = desc;
+	pfd.events = POLLIN | POLLHUP | POLLOUT;
+
+	(void)sleep(1);
+	(void)poll(&pfd, 1, INFTIM);
+	(void)printf("child2 exit\n");
+}
+
+static void
+child3(void)
+{
+	struct pollfd pfd;
+
+	(void)sleep(5);
+
+	pfd.fd = desc;
+	pfd.events = POLLIN | POLLHUP | POLLOUT;
+
+	(void)poll(&pfd, 1, INFTIM);
+	(void)printf("child3 exit\n");
+}
+
+ATF_TC(poll_3way);
+ATF_TC_HEAD(poll_3way, tc)
+{
+	atf_tc_set_md_var(tc, "timeout", "15");
+	atf_tc_set_md_var(tc, "descr",
+	    "Check for 3-way collision for descriptor. First child comes "
+	    "and polls on descriptor, second child comes and polls, first "
+	    "child times out and exits, third child comes and polls. When "
+	    "the wakeup event happens, the two remaining children should "
+	    "both be awaken. (kern/17517)");
+}
+
+ATF_TC_BODY(poll_3way, tc)
+{
+	int pf[2];
+	int status, i;
+	pid_t pid;
+
+	pipe(pf);
+	desc = pf[0];
+
+	pid = fork();
+	ATF_REQUIRE(pid >= 0);
+
+	if (pid == 0) {
+		(void)close(pf[1]);
+		child1();
+		_exit(0);
+		/* NOTREACHED */
+	}
+
+	pid = fork();
+	ATF_REQUIRE(pid >= 0);
+
+	if (pid == 0) {
+		(void)close(pf[1]);
+		child2();
+		_exit(0);
+		/* NOTREACHED */
+	}
+
+	pid = fork();
+	ATF_REQUIRE( pid >= 0);
+
+	if (pid == 0) {
+		(void)close(pf[1]);
+		child3();
+		_exit(0);
+		/* NOTREACHED */
+	}
+
+	(void)sleep(10);
+
+	(void)printf("parent write\n");
+
+	ATF_REQUIRE(write(pf[1], "konec\n", 6) == 6);
+
+	for(i = 0; i < 3; ++i)
+		(void)wait(&status);
+
+	(void)printf("parent terminated\n");
+}
 
 ATF_TC(poll_basic);
 ATF_TC_HEAD(poll_basic, tc)
@@ -277,6 +383,7 @@ ATF_TC_BODY(pollts_sigmask, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, poll_3way);
 	ATF_TP_ADD_TC(tp, poll_basic);
 	ATF_TP_ADD_TC(tp, poll_err);
 	ATF_TP_ADD_TC(tp, pollts_basic);
