@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.149 2010/11/13 13:52:06 uebayasi Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.150 2011/10/15 19:50:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.149 2010/11/13 13:52:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.150 2011/10/15 19:50:20 dholland Exp $");
 
 #include "rnd.h"
 
@@ -1110,7 +1110,8 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
-		return sipcom_do_detach(self, SIP_ATTACH_MAP);
+		sipcom_do_detach(self, SIP_ATTACH_MAP);
+		return;
 	}
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
@@ -1126,7 +1127,8 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	    &rseg, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to allocate control data, error = %d\n",
 		    error);
-		return sipcom_do_detach(self, SIP_ATTACH_INTR);
+		sipcom_do_detach(self, SIP_ATTACH_INTR);
+		return;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_seg, rseg,
