@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.18 2011/10/15 15:14:30 tsutsui Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.19 2011/10/15 15:34:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -91,10 +91,10 @@ struct fpn {
 #define	FP_1		(1 << FP_LG)		/* 1.0 in fp_mant[0] */
 #define	FP_2		(1 << (FP_LG + 1))	/* 2.0 in fp_mant[0] */
 
-static inline void CPYFPN(struct fpn * dst, const struct fpn * src);
+static inline void CPYFPN(struct fpn *, const struct fpn *);
 
 static inline void
-CPYFPN(struct fpn * dst, const struct fpn * src)
+CPYFPN(struct fpn *dst, const struct fpn *src)
 {
 
 	if (dst != src) {
@@ -213,37 +213,37 @@ struct instruction {
  */
 
 /* Build a new Quiet NaN (sign=0, frac=all 1's). */
-struct	fpn *fpu_newnan(struct fpemu *fe);
+struct	fpn *fpu_newnan(struct fpemu *);
 
 /*
  * Shift a number right some number of bits, taking care of round/sticky.
  * Note that the result is probably not a well-formed number (it will lack
  * the normal 1-bit mant[0]&FP_1).
  */
-int	fpu_shr(struct fpn * fp, int shr);
+int	fpu_shr(struct fpn *, int);
 /*
  * Round a number according to the round mode in FPCR
  */
-int	fpu_round(register struct fpemu *fe, register struct fpn *fp);
+int	fpu_round(register struct fpemu *, register struct fpn *);
 
 /* type conversion */
-void	fpu_explode(struct fpemu *fe, struct fpn *fp, int t, u_int *src);
-void	fpu_implode(struct fpemu *fe, struct fpn *fp, int t, u_int *dst);
+void	fpu_explode(struct fpemu *, struct fpn *, int t, u_int *);
+void	fpu_implode(struct fpemu *, struct fpn *, int t, u_int *);
 
 /*
  * non-static emulation functions
  */
 /* type 0 */
-int fpu_emul_fmovecr(struct fpemu *fe, struct instruction *insn);
-int fpu_emul_fstore(struct fpemu *fe, struct instruction *insn);
-int fpu_emul_fscale(struct fpemu *fe, struct instruction *insn);
+int fpu_emul_fmovecr(struct fpemu *, struct instruction *);
+int fpu_emul_fstore(struct fpemu *, struct instruction *);
+int fpu_emul_fscale(struct fpemu *, struct instruction *);
 
 /*
  * include function declarations of those which are called by fpu_emul_arith()
  */
 #include "fpu_arith_proto.h"
 
-int fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi);
+int fpu_emulate(struct frame *, struct fpframe *, ksiginfo_t *);
 struct fpn *fpu_cmp(struct fpemu *);
 
 struct fpn *fpu_sincos_taylor(struct fpemu *, struct fpn *, u_int, int);
@@ -252,21 +252,21 @@ struct fpn *fpu_sincos_taylor(struct fpemu *, struct fpn *, u_int, int);
  * "helper" functions
  */
 /* return values from constant rom */
-struct fpn *fpu_const(struct fpn *fp, u_int offset);
+struct fpn *fpu_const(struct fpn *, u_int);
 /* update exceptions and FPSR */
-int fpu_upd_excp(struct fpemu *fe);
-u_int fpu_upd_fpsr(struct fpemu *fe, struct fpn *fp);
+int fpu_upd_excp(struct fpemu *);
+u_int fpu_upd_fpsr(struct fpemu *, struct fpn *);
 
 /* address mode decoder, and load/store */
-int fpu_decode_ea(struct frame *frame, struct instruction *insn,
-		   struct insn_ea *ea, int modreg);
-int fpu_load_ea(struct frame *frame, struct instruction *insn,
-		 struct insn_ea *ea, char *dst);
-int fpu_store_ea(struct frame *frame, struct instruction *insn,
-		  struct insn_ea *ea, char *src);
+int fpu_decode_ea(struct frame *, struct instruction *,
+		   struct insn_ea *, int);
+int fpu_load_ea(struct frame *, struct instruction *,
+		 struct insn_ea *, char *);
+int fpu_store_ea(struct frame *, struct instruction *,
+		  struct insn_ea *, char *);
 
 /* fpu_subr.c */
-void fpu_norm(register struct fpn *fp);
+void fpu_norm(register struct fpn *);
 
 #if !defined(FPE_DEBUG)
 #  define FPE_DEBUG 0
