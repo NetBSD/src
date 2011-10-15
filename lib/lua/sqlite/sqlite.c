@@ -1,4 +1,4 @@
-/*	$NetBSD: sqlite.c,v 1.2 2011/10/15 10:35:06 mbalmer Exp $ */
+/*	$NetBSD: sqlite.c,v 1.3 2011/10/15 12:58:20 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -178,6 +178,16 @@ db_get_autocommit(lua_State *L)
 
 	db = luaL_checkudata(L, 1, SQLITE_DB_METATABLE);
 	lua_pushboolean(L, sqlite3_get_autocommit(*db));
+	return 1;
+}
+
+static int
+db_changes(lua_State *L)
+{
+	sqlite3 **db;
+
+	db = luaL_checkudata(L, 1, SQLITE_DB_METATABLE);
+	lua_pushinteger(L, sqlite3_changes(*db));
 	return 1;
 }
 
@@ -410,6 +420,7 @@ luaopen_sqlite(lua_State* L)
 		{ "errcode",		db_errcode },
 		{ "errmsg",		db_errmsg },
 		{ "get_autocommit",	db_get_autocommit },
+		{ "changes",		db_changes },
 		{ NULL,			NULL }
 	};
 	static const struct luaL_Reg stmt_methods[] = {
