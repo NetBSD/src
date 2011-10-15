@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.403 2011/10/15 06:17:02 jruoho Exp $
+# $NetBSD: mi,v 1.404 2011/10/15 06:26:34 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -324,7 +324,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_filedesc.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_lock.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-kernel-tests	debug,atf
-./usr/libdata/debug/usr/tests/kernel/t_mkdir.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_mkdir.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_pipe.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_poll3w.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_pollts.debug			tests-obsolete		obsolete
@@ -504,6 +504,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_kill.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_link.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mincore.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkdir.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkfifo.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mknod.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mmap.debug			tests-lib-debug		debug,atf
@@ -1849,7 +1850,7 @@
 ./usr/tests/kernel/t_filedesc			tests-kernel-tests		atf
 ./usr/tests/kernel/t_lock			tests-kernel-tests		atf
 ./usr/tests/kernel/t_lwpctl			tests-kernel-tests		atf
-./usr/tests/kernel/t_mkdir			tests-kernel-tests		atf
+./usr/tests/kernel/t_mkdir			tests-obsolete			obsolete
 ./usr/tests/kernel/t_pipe			tests-obsolete			obsolete
 ./usr/tests/kernel/t_poll3w			tests-kernel-tests		atf
 ./usr/tests/kernel/t_pollts			tests-obsolete			obsolete
@@ -2118,6 +2119,7 @@
 ./usr/tests/lib/libc/sys/t_kill			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_link			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mincore		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_mkdir		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mkfifo		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mknod		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mmap			tests-lib-tests		atf
