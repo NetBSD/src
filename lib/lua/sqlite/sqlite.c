@@ -1,4 +1,4 @@
-/*	$NetBSD: sqlite.c,v 1.1 2011/10/15 10:26:30 mbalmer Exp $ */
+/*	$NetBSD: sqlite.c,v 1.2 2011/10/15 10:35:06 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -27,15 +27,11 @@
 
 /* SQLite interface for Lua */
 
-#include <errno.h>
-#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <sqlite3.h>
-#include <unistd.h>
 
 #include <lua.h>
 #include <lauxlib.h>
