@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.185 2011/10/15 21:06:05 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.186 2011/10/15 21:59:48 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.185 2011/10/15 21:06:05 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.186 2011/10/15 21:59:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1153,7 +1153,7 @@ doevcnt(int verbose, int type)
 				/* if the sysctl is unknown, try groveling */
 				if (error == ENOENT)
 					break;
-				perror("sysctl: kern.evcnt");
+				warn("kern.evcnt");
 				if (buf)
 					free(buf);
 				return;
