@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.35 2011/07/18 14:11:27 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.36 2011/10/15 15:14:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.35 2011/07/18 14:11:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.36 2011/10/15 15:14:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -65,7 +65,6 @@ static int fpu_emul_arith(struct fpemu *, struct instruction *);
 static int fpu_emul_type1(struct fpemu *, struct instruction *);
 static int fpu_emul_brcc(struct fpemu *, struct instruction *);
 static int test_cc(struct fpemu *, int);
-static struct fpn *fpu_cmp(struct fpemu *);
 
 #ifdef DEBUG_FPE
 #define DUMP_INSN(insn)							\
@@ -494,7 +493,7 @@ fpu_emul_fmovm(struct fpemu *fe, struct instruction *insn)
 	return sig;
 }
 
-static struct fpn *
+struct fpn *
 fpu_cmp(struct fpemu *fe)
 {
 	struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.17 2011/10/09 01:34:19 tsutsui Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.18 2011/10/15 15:14:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -244,6 +244,9 @@ int fpu_emul_fscale(struct fpemu *fe, struct instruction *insn);
 #include "fpu_arith_proto.h"
 
 int fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi);
+struct fpn *fpu_cmp(struct fpemu *);
+
+struct fpn *fpu_sincos_taylor(struct fpemu *, struct fpn *, u_int, int);
 
 /*
  * "helper" functions
