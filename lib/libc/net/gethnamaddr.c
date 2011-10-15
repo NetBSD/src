@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.76 2010/08/29 15:40:35 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.77 2011/10/15 23:00:02 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.76 2010/08/29 15:40:35 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.77 2011/10/15 23:00:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -720,7 +720,7 @@ void
 _sethtent(int f)
 {
 	if (!hostf)
-		hostf = fopen(_PATH_HOSTS, "r" );
+		hostf = fopen(_PATH_HOSTS, "re");
 	else
 		rewind(hostf);
 	stayopen = f;
@@ -742,7 +742,7 @@ _gethtent(void)
 	char *cp, **q;
 	int af, len;
 
-	if (!hostf && !(hostf = fopen(_PATH_HOSTS, "r" ))) {
+	if (!hostf && !(hostf = fopen(_PATH_HOSTS, "re"))) {
 		h_errno = NETDB_INTERNAL;
 		return NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.95 2009/10/02 07:41:08 wiz Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.96 2011/10/15 23:00:02 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.95 2009/10/02 07:41:08 wiz Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.96 2011/10/15 23:00:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1406,7 +1406,7 @@ _sethtent(FILE **hostf)
 {
 
 	if (!*hostf)
-		*hostf = fopen(_PATH_HOSTS, "r" );
+		*hostf = fopen(_PATH_HOSTS, "re");
 	else
 		rewind(*hostf);
 }
@@ -1434,7 +1434,7 @@ _gethtent(FILE **hostf, const char *name, const struct addrinfo *pai)
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(pai != NULL);
 
-	if (!*hostf && !(*hostf = fopen(_PATH_HOSTS, "r" )))
+	if (!*hostf && !(*hostf = fopen(_PATH_HOSTS, "re")))
 		return (NULL);
  again:
 	if (!(p = fgets(hostbuf, sizeof hostbuf, *hostf)))
