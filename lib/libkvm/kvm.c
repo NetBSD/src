@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.98 2011/09/12 21:11:32 christos Exp $	*/
+/*	$NetBSD: kvm.c,v 1.99 2011/10/15 21:08:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.98 2011/09/12 21:11:32 christos Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.99 2011/10/15 21:08:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,7 +80,6 @@ static kvm_t	*_kvm_open(kvm_t *, const char *, const char *,
 		    const char *, int, char *);
 static int	clear_gap(kvm_t *, bool (*)(void *, const void *, size_t),
 		    void *, size_t);
-static int	open_cloexec(const char *, int, int);
 static off_t	Lseek(kvm_t *, int, off_t, int);
 static ssize_t	Pread(kvm_t *, int, void *, size_t, off_t);
 
@@ -149,27 +148,6 @@ _kvm_malloc(kvm_t *kd, size_t n)
 	if ((p = malloc(n)) == NULL)
 		_kvm_err(kd, kd->program, "%s", strerror(errno));
 	return (p);
-}
-
-/*
- * Open a file setting the close on exec bit.
- */
-static int
-open_cloexec(const char *fname, int flags, int mode)
-{
-	int fd;
-
-	if ((fd = open(fname, flags, mode)) == -1)
-		return fd;
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
-		goto error;
-
-	return fd;
-error:
-	flags = errno;
-	(void)close(fd);
-	errno = flags;
-	return -1;
 }
 
 /*
@@ -336,9 +314,9 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 	 * exist, open the current kernel.
 	 */
 	if (ufgiven == 0)
-		kd->nlfd = open_cloexec(_PATH_KSYMS, O_RDONLY, 0);
+		kd->nlfd = open(_PATH_KSYMS, O_RDONLY | O_CLOEXEC, 0);
 	if (kd->nlfd < 0) {
-		if ((kd->nlfd = open_cloexec(uf, O_RDONLY, 0)) < 0) {
+		if ((kd->nlfd = open(uf, O_RDONLY | O_CLOEXEC, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
 		}
@@ -356,7 +334,7 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 		kd->nlfd = -1;
 	}
 
-	if ((kd->pmfd = open_cloexec(mf, flag, 0)) < 0) {
+	if ((kd->pmfd = open(mf, flag | O_CLOEXEC, 0)) < 0) {
 		_kvm_syserr(kd, kd->program, "%s", mf);
 		goto failed;
 	}
@@ -370,12 +348,12 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 		 * make it work for either /dev/mem or /dev/kmem -- in either
 		 * case you're working with a live kernel.)
 		 */
-		if ((kd->vmfd = open_cloexec(_PATH_KMEM, flag, 0)) < 0) {
+		if ((kd->vmfd = open(_PATH_KMEM, flag | O_CLOEXEC, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", _PATH_KMEM);
 			goto failed;
 		}
 		kd->alive = KVM_ALIVE_FILES;
-		if ((kd->swfd = open_cloexec(sf, flag, 0)) < 0) {
+		if ((kd->swfd = open(sf, flag | O_CLOEXEC, 0)) < 0) {
 			if (errno != ENXIO) {
 				_kvm_syserr(kd, kd->program, "%s", sf);
 				goto failed;
@@ -781,7 +759,7 @@ kvm_nlist(kvm_t *kd, struct nlist *nl)
 	 * So open it again, just for the time we retrieve the list.
 	 */
 	if (kd->nlfd < 0) {
-		nlfd = open_cloexec(_PATH_KSYMS, O_RDONLY, 0);
+		nlfd = open(_PATH_KSYMS, O_RDONLY | O_CLOEXEC, 0);
 		if (nlfd < 0) {
 			_kvm_err(kd, 0, "failed to open %s", _PATH_KSYMS);
 			return (nlfd);
