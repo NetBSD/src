@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.407 2011/10/15 06:50:52 jruoho Exp $
+# $NetBSD: mi,v 1.408 2011/10/15 06:54:53 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -333,7 +333,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_sigaction.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-obsolete		obsolete
-./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/tty				tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/tty/t_pr.debug			tests-kernel-tests	debug,atf
@@ -523,6 +523,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_stat.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_timer_create.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_truncate.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_ucontext.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_umask.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_unlink.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_write.debug		tests-lib-debug		debug,atf
@@ -1862,7 +1863,7 @@
 ./usr/tests/kernel/t_rnd			tests-kernel-tests		atf
 ./usr/tests/kernel/t_sigaction			tests-kernel-tests		atf
 ./usr/tests/kernel/t_time			tests-obsolete			obsolete
-./usr/tests/kernel/t_ucontext			tests-kernel-tests		atf
+./usr/tests/kernel/t_ucontext			tests-obsolete			obsolete
 ./usr/tests/kernel/t_umount			tests-kernel-tests		atf
 ./usr/tests/kernel/t_writev			tests-obsolete			obsolete
 ./usr/tests/kernel/tty				tests-kernel-tests
@@ -2140,6 +2141,7 @@
 ./usr/tests/lib/libc/sys/t_stat			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_timer_create		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_truncate		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_ucontext		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_umask		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_unlink		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_write		tests-lib-tests		atf

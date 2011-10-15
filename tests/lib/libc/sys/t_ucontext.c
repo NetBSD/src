@@ -1,4 +1,4 @@
-/* $NetBSD: t_ucontext.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $ */
+/* $NetBSD: t_ucontext.c,v 1.1 2011/10/15 06:54:52 jruoho Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,19 +29,19 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ucontext.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $");
+__RCSID("$NetBSD: t_ucontext.c,v 1.1 2011/10/15 06:54:52 jruoho Exp $");
 
+#include <atf-c.h>
 #include <stdio.h>
 #include <ucontext.h>
 
-#include <atf-c.h>
-
-ATF_TC(ucontext);
-ATF_TC_HEAD(ucontext, tc)
+ATF_TC(ucontext_basic);
+ATF_TC_HEAD(ucontext_basic, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks {get,set}context(2)");
 }
-ATF_TC_BODY(ucontext, tc)
+
+ATF_TC_BODY(ucontext_basic, tc)
 {
 	ucontext_t u, v, w;
 	volatile int x, y;
@@ -70,7 +70,7 @@ ATF_TC_BODY(ucontext, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, ucontext);
+	ATF_TP_ADD_TC(tp, ucontext_basic);
 
 	return atf_no_error();
 }
