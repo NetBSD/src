@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $ */
+/* $NetBSD: t_pipe.c,v 1.1 2011/10/15 06:17:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_pipe.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $");
+__RCSID("$NetBSD: t_pipe.c,v 1.1 2011/10/15 06:17:02 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: t_pipe.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $");
 
 #include <atf-c.h>
 
-#include "../h_macros.h"
+#include "../../../h_macros.h"
 
 static pid_t pid;
 static int nsiginfo = 0;
@@ -64,14 +64,15 @@ sighand(int sig)
 	}
 }
 
-ATF_TC(pipe);
-ATF_TC_HEAD(pipe, tc)
+ATF_TC(pipe_restart);
+ATF_TC_HEAD(pipe_restart, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks that writing to pipe "
 	    "works correctly after being interrupted and restarted "
 	    "(kern/14087)");
 }
-ATF_TC_BODY(pipe, tc)
+
+ATF_TC_BODY(pipe_restart, tc)
 {
 	int pp[2], st;
 	ssize_t sz, todo, done;
@@ -107,7 +108,8 @@ ATF_TC_BODY(pipe, tc)
 		RL(sigprocmask(SIG_BLOCK, &asigset, &osigset));
 		while (nsiginfo == 0) {
 			if (sigsuspend(&emptysigset) != -1 || errno != EINTR)
-				atf_tc_fail("sigsuspend(&emptysigset): %s", strerror(errno));
+				atf_tc_fail("sigsuspend(&emptysigset): %s",
+				    strerror(errno));
 		}
 		RL(sigprocmask(SIG_SETMASK, &osigset, NULL));
 
@@ -154,7 +156,7 @@ ATF_TC_BODY(pipe, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, pipe);
+	ATF_TP_ADD_TC(tp, pipe_restart);
 
 	return atf_no_error();
 }
