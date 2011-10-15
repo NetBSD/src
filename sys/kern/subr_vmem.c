@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.62 2011/10/02 21:32:48 rmind Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.63 2011/10/15 19:02:27 rmind Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.62 2011/10/02 21:32:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.63 2011/10/15 19:02:27 rmind Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -207,7 +207,7 @@ xmalloc(size_t sz, vm_flag_t flags)
 static inline void
 xfree(void *p)
 {
-	return free(p, M_VMEM);
+	free(p, M_VMEM);
 }
 
 /* ---- boundary tag */
@@ -1067,7 +1067,8 @@ vmem_free(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 		int qidx = (size + vm->vm_quantum_mask) >> vm->vm_quantum_shift;
 		qcache_t *qc = vm->vm_qcache[qidx - 1];
 
-		return pool_cache_put(qc->qc_cache, (void *)addr);
+		pool_cache_put(qc->qc_cache, (void *)addr);
+		return;
 	}
 #endif /* defined(QCACHE) */
 
