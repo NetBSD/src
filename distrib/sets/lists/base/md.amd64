@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.144 2011/10/13 22:08:17 joerg Exp $
+# $NetBSD: md.amd64,v 1.145 2011/10/15 10:46:24 mbalmer Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -274,6 +274,7 @@
 ./usr/lib/i386/lua				base-compat-shlib	compat
 ./usr/lib/i386/lua/5.1				base-compat-shlib	compat
 ./usr/lib/i386/lua/5.1/gpio.so			base-compat-shlib	compat,pic
+./usr/lib/i386/lua/5.1/sqlite.so		base-compat-shlib	compat,pic
 ./usr/lib/i386/security				base-compat-shlib	compat
 ./usr/lib/i386/security/pam_afslog.so.3		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/i386/security/pam_chroot.so.3		base-compat-shlib	compat,pic,pam
