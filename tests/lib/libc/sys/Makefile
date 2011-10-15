@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2011/10/15 06:26:34 jruoho Exp $
+# $NetBSD: Makefile,v 1.13 2011/10/15 06:42:16 jruoho Exp $
 
 MKMAN=	no
 
@@ -10,6 +10,7 @@ TESTSDIR=		${TESTSBASE}/lib/libc/sys
 
 TESTS_C+=		t_access
 TESTS_C+=		t_chroot
+TESTS_C+=		t_clock_gettime
 TESTS_C+=		t_clone
 TESTS_C+=		t_dup
 TESTS_C+=		t_fsync
