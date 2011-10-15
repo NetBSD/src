@@ -1,4 +1,4 @@
-/* $NetBSD: t_writev.c,v 1.2 2011/06/11 18:03:17 christos Exp $ */
+/* $NetBSD: t_write.c,v 1.1 2011/10/15 06:50:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -29,27 +29,27 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_writev.c,v 1.2 2011/06/11 18:03:17 christos Exp $");
+__RCSID("$NetBSD: t_write.c,v 1.1 2011/10/15 06:50:52 jruoho Exp $");
 
 #include <sys/uio.h>
 #include <sys/syslimits.h>
 
+#include <atf-c.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-#include <atf-c.h>
-
-ATF_TC(writev);
-ATF_TC_HEAD(writev, tc)
+ATF_TC(writev_iovmax);
+ATF_TC_HEAD(writev_iovmax, tc)
 {
 	atf_tc_set_md_var(tc, "timeout", "10");
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks that file descriptor is properly FILE_UNUSE()d "
 	    "when iovcnt is greater than IOV_MAX");
 }
-ATF_TC_BODY(writev, tc)
+
+ATF_TC_BODY(writev_iovmax, tc)
 {
 	ssize_t retval;
 
@@ -64,7 +64,7 @@ ATF_TC_BODY(writev, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, writev);
+	ATF_TP_ADD_TC(tp, writev_iovmax);
 
 	return atf_no_error();
 }
