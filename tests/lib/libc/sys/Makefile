@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2011/10/15 06:42:16 jruoho Exp $
+# $NetBSD: Makefile,v 1.14 2011/10/15 06:50:52 jruoho Exp $
 
 MKMAN=	no
 
@@ -46,6 +46,7 @@ TESTS_C+=		t_timer_create
 TESTS_C+=		t_truncate
 TESTS_C+=		t_umask
 TESTS_C+=		t_unlink
+TESTS_C+=		t_write
 
 SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT}
 
