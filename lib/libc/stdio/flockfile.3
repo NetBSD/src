@@ -1,4 +1,4 @@
-.\"	$NetBSD: flockfile.3,v 1.5 2011/10/15 21:35:49 rmind Exp $
+.\"	$NetBSD: flockfile.3,v 1.6 2011/10/15 21:43:19 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -117,11 +117,11 @@ and
 .Fn funlockfile
 functions conform to
 .St -p1003.1-2001 .
-.Sh BUGS
-The design of these interfaces does not allow for addressing the
-problem of priority inversion.
 .Sh HISTORY
 The
 .Fn flockfile
 function first appeared in
 .Fx 2.0 .
+.Sh BUGS
+The design of these interfaces does not allow for addressing the
+problem of priority inversion.
