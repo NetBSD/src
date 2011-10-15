@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.401 2011/10/13 07:47:30 njoly Exp $
+# $NetBSD: mi,v 1.402 2011/10/15 06:10:26 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -328,7 +328,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_pipe.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_poll3w.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_pollts.debug			tests-obsolete		obsolete
-./usr/libdata/debug/usr/tests/kernel/t_posix_fadvise.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_posix_fadvise.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_pty.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_sigaction.debug			tests-kernel-tests	debug,atf
@@ -511,6 +511,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_msync.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_nanosleep.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_poll.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_posix_fadvise.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_revoke.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_select.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_setrlimit.debug		tests-lib-debug		debug,atf
@@ -1851,7 +1852,7 @@
 ./usr/tests/kernel/t_pipe			tests-kernel-tests		atf
 ./usr/tests/kernel/t_poll3w			tests-kernel-tests		atf
 ./usr/tests/kernel/t_pollts			tests-obsolete			obsolete
-./usr/tests/kernel/t_posix_fadvise		tests-kernel-tests		atf
+./usr/tests/kernel/t_posix_fadvise		tests-obsolete			obsolete
 ./usr/tests/kernel/t_ps_strings			tests-kernel-tests		atf
 ./usr/tests/kernel/t_pty			tests-kernel-tests		atf
 ./usr/tests/kernel/t_rnd			tests-kernel-tests		atf
@@ -2123,6 +2124,7 @@
 ./usr/tests/lib/libc/sys/t_msync		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_nanosleep		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_poll			tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_posix_fadvise	tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_revoke		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_select		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_setrlimit		tests-lib-tests		atf

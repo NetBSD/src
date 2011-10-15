@@ -1,4 +1,4 @@
-/* $NetBSD: t_posix_fadvise.c,v 1.6 2011/03/14 20:41:25 pooka Exp $ */
+/* $NetBSD: t_posix_fadvise.c,v 1.1 2011/10/15 06:10:26 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_posix_fadvise.c,v 1.6 2011/03/14 20:41:25 pooka Exp $");
+__RCSID("$NetBSD: t_posix_fadvise.c,v 1.1 2011/10/15 06:10:26 jruoho Exp $");
 
 #include <sys/fcntl.h>
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: t_posix_fadvise.c,v 1.6 2011/03/14 20:41:25 pooka Exp $");
 
 #include <atf-c.h>
 
-#include "../h_macros.h"
+#include "../../../h_macros.h"
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
