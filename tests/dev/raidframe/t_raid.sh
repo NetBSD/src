@@ -1,5 +1,5 @@
 #! /usr/bin/atf-sh
-#	$NetBSD: t_raid.sh,v 1.10 2011/08/09 13:48:55 martin Exp $
+#	$NetBSD: t_raid.sh,v 1.11 2011/10/15 11:31:40 gson Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -202,7 +202,7 @@ raid1_normal_body()
 
 }
 
-raid1_comp0fail_cleanup()
+raid1_normal_cleanup()
 {       
         export RUMP_SERVER=unix://sock
         rump.halt
