@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.47 2011/08/22 17:50:07 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.48 2011/10/16 23:49:21 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2813,4 +2813,9 @@ xsrc/xfree/xc/lib/font/fontfile/decompress.c			1.2
 
 	Address CVE-2011-2895, buffer overflow in decompression.
 	[joerg, ticket #1661]
+
+sbin/ifconfig/carp.c				1.13
+
+	Stop ifconfig dumping core when attaching carp to an interface.
+	[bouyer, ticket #1670]
 
