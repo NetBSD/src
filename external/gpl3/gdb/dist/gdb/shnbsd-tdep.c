@@ -268,8 +268,9 @@ shnbsd_get_next_pc (CORE_ADDR pc)
   int reg;
   CORE_ADDR next_pc;
   int delay_slot;
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
 
-  insn = read_memory_integer (pc, sizeof (insn));
+  insn = read_memory_integer (pc, sizeof (insn), byte_order);
   delay_slot = 0;
 
   /* As we cannot step through the delay slot, we break at the target
@@ -356,7 +357,8 @@ shnbsd_get_next_pc (CORE_ADDR pc)
    which would be executed.
  */
 void
-shnbsd_software_single_step (enum target_signal sig,
+shnbsd_software_single_step (struct gdbarch *gdbarch,
+			     enum target_signal sig,
 			     int insert_breakpoints_p)
 {
   static CORE_ADDR next_pc;
@@ -372,7 +374,7 @@ shnbsd_software_single_step (enum target_signal sig,
       if (sig == 0 || pc != next_pc)
 	next_pc = shnbsd_get_next_pc (pc);
 
-      insert_single_step_breakpoint (next_pc);
+      insert_single_step_breakpoint (gdbarch, next_pc);
     }
   else
       remove_single_step_breakpoints ();
@@ -450,13 +452,13 @@ static const struct tramp_frame shnbsd_sigtramp_si2 =
 
 static void
 shnbsd_sigtramp_cache_init (const struct tramp_frame *self,
-			     struct frame_info *next_frame,
-			     struct trad_frame_cache *this_cache,
-			     CORE_ADDR func)
+			    struct frame_info *next_frame,
+			    struct trad_frame_cache *this_cache,
+			    CORE_ADDR func)
 {
   struct gdbarch *gdbarch = get_frame_arch (next_frame);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  CORE_ADDR sp = frame_unwind_register_unsigned (next_frame, SP_REGNUM);
+  CORE_ADDR sp = get_frame_register_unsigned (next_frame, SP_REGNUM);
   CORE_ADDR base;
   const int *reg_offset;
   int num_regs;
