@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2011/10/16 13:42:22 jruoho Exp $
+# $NetBSD: Makefile,v 1.17 2011/10/16 13:43:26 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,6 @@ TESTS_C+=	t_infinity
 TESTS_C+=	t_ldexp
 TESTS_C+=	t_log
 TESTS_C+=	t_pow
-TESTS_C+=	t_rint
 TESTS_C+=	t_round
 TESTS_C+=	t_scalbn
 TESTS_C+=	t_sin
