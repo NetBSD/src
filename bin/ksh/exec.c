@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.13 2006/04/24 19:58:20 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.14 2011/10/16 17:12:11 joerg Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.13 2006/04/24 19:58:20 christos Exp $");
+__RCSID("$NetBSD: exec.c,v 1.14 2011/10/16 17:12:11 joerg Exp $");
 #endif
 
 
@@ -151,7 +151,7 @@ execute(t, flags)
 				 */
 				if (tp && tp->type == CSHELL
 				    && (tp->flag & SPEC_BI))
-					errorf(null);
+					errorf("%s", null);
 				/* Deal with FERREXIT, quitenv(), etc. */
 				goto Break;
 			}
