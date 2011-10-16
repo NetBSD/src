@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.14 2011/01/23 17:15:15 hauke Exp $	*/
+/*	$NetBSD: lex.c,v 1.15 2011/10/16 17:12:11 joerg Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: lex.c,v 1.14 2011/01/23 17:15:15 hauke Exp $");
+__RCSID("$NetBSD: lex.c,v 1.15 2011/10/16 17:12:11 joerg Exp $");
 #endif
 
 
@@ -861,7 +861,7 @@ yyerror(fmt, va_alist)
 	SH_VA_START(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
-	errorf(null);
+	errorf("%s", null);
 }
 
 /*
