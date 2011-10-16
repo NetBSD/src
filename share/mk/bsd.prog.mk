@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.267 2011/09/10 16:57:35 apb Exp $
+#	$NetBSD: bsd.prog.mk,v 1.268 2011/10/16 01:14:33 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -82,20 +82,105 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 #	etc..
 
 .for _lib in \
-	archive asn1 bluetooth bsdmalloc bz2 c c_pic cdk com_err compat \
-	crypt crypto crypto_idea crypto_mdc2 crypto_rc5 \
-	curses dbm des edit event \
-	fetch form fl g2c gcc gnumalloc gssapi hdb heimbase heimntlm hx509 \
-	intl ipsec \
-	kadm5clnt kadm5srv kafs krb5 kvm l lber ldap ldap_r lua \
-	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
-	puffs radius resolv rmt roken rpcsvc rt rump rumpuser saslc skey sl ss \
-	ssh ssl termcap usbhid util wrap y z bind9 dns lwres isccfg isccc isc \
-	\
-	rumpfs_cd9660fs rumpfs_efs rumpfs_ext2fs rumpfs_ffs rumpfs_hfs \
-	rumpfs_lfs rumpfs_msdosfs rumpfs_nfs rumpfs_ntfs rumpfs_syspuffs \
-	rumpfs_tmpfs rumpfs_udf rumpfs_ufs \
-	wind
+	archive \
+	asn1 \
+	bind9 \
+	bluetooth \
+	bsdmalloc \
+	bz2 \
+	c \
+	c_pic \
+	com_err \
+	compat \
+	crt0 \
+	crypt \
+	crypto \
+	crypto_idea \
+	crypto_mdc2 \
+	crypto_rc5 \
+	curses \
+	dbm \
+	des \
+	dns \
+	edit \
+	event \
+	fetch \
+	fl \
+	form \
+	g2c \
+	gcc \
+	gnumalloc \
+	gssapi \
+	hdb \
+	heimbase \
+	heimntlm \
+	hx509 \
+	intl \
+	ipsec \
+	isc \
+	isccc \
+	isccfg \
+	kadm5clnt \
+	kadm5srv \
+	kafs \
+	krb5 \
+	kvm \
+	l \
+	lber \
+	ldap \
+	ldap_r \
+	lua \
+	lwres \
+	m \
+	magic \
+	menu \
+	objc \
+	ossaudio \
+	pam \
+	pcap \
+	pci \
+	pmc \
+	posix \
+	pthread \
+	pthread_dbg \
+	puffs \
+	quota \
+	radius \
+	resolv \
+	rmt \
+	roken \
+	rpcsvc \
+	rt \
+	rump \
+	rumpfs_cd9660fs \
+	rumpfs_efs \
+	rumpfs_ext2fs \
+	rumpfs_ffs \
+	rumpfs_hfs \
+	rumpfs_lfs \
+	rumpfs_msdosfs \
+	rumpfs_nfs \
+	rumpfs_ntfs \
+	rumpfs_syspuffs \
+	rumpfs_tmpfs \
+	rumpfs_udf \
+	rumpfs_ufs \
+	rumpuser \
+	saslc \
+	skey \
+	sl \
+	sqlite3 \
+	ss \
+	ssh \
+	ssl \
+	ssp \
+	terminfo \
+	usbhid \
+	util \
+	wind \
+	wrap \
+	y \
+	z 
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
@@ -104,9 +189,13 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 # atf-c and atf-c++ are special cases because we cannot use [-+] as part of
 # make(1) variable names.  Just define them here.
 LIBATF_C=	${DESTDIR}/usr/lib/libatf-c.a
+.MADE:		${LIBATF_C}
 LIBATF_CXX=	${DESTDIR}/usr/lib/libatf-c++.a
-.MADE:		${LIBATF_C} ${LIBATF_CXX}
-
+.MADE:		${LIBATF_CXX}
+LIBSTDCXX=	${DESTDIR}/usr/lib/libstdc++.a
+.MADE:		${LIBSTDCXX}
+LIBSUPCXX=	${DESTDIR}/usr/lib/libsupc++.a
+.MADE:		${LIBSUPCXX}
 # PAM applications, if linked statically, need more libraries
 .if (${MKPIC} == "no")
 .if (${MKCRYPTO} != "no")
@@ -131,21 +220,44 @@ PAM_STATIC_DPADD=
 .endif
 
 # These need + -> X transformations
-.ifndef LIBSTDCXX
-LIBSTDCXX=	${DESTDIR}/usr/lib/libstdc++.a
-.MADE:		${LIBSTDCXX}
-.endif
-
-.ifndef LIBSUPCXX
-LIBSUPCXX=	${DESTDIR}/usr/lib/libsupc++.a
-.MADE:		${LIBSUPCXX}
-.endif
 
 .for _lib in \
-	dps expat fntstubs fontcache fontconfig fontenc freetype FS \
-	GL GLU ICE lbxutil SM X11 Xau Xaw Xdmcp Xext Xfont Xft \
-	Xi Xinerama xkbfile Xmu Xmuu Xpm Xrandr Xrender Xss Xt \
-	XTrap Xtst Xv Xxf86dga Xxf86misc Xxf86vm
+	FS \
+	GL \
+	GLU \
+	ICE \
+	SM \
+	X11 \
+	XTrap \
+	Xau \
+	Xaw \
+	Xdmcp \
+	Xext \
+	Xfont \
+	Xft \
+	Xi \
+	Xinerama \
+	Xmu \
+	Xmuu \
+	Xpm \
+	Xrandr \
+	Xrender \
+	Xss \
+	Xt \
+	Xtst \
+	Xv \
+	Xxf86dga \
+	Xxf86misc \
+	Xxf86vm \
+	dps \
+	expat \
+	fntstubs \
+	fontcache \
+	fontconfig \
+	fontenc \
+	freetype \
+	lbxutil \
+	xkbfile
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}${X11USRLIBDIR}/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
