@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2011/09/26 03:02:46 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2011/10/16 19:41:07 christos Exp $
 
 .include <bsd.own.mk>
+.include "../Makefile.inc"
 
 LIBISPRIVATE=	yes
 
@@ -10,10 +11,9 @@ NOGCCERROR=	yes
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
-DIST=		${NETBSDSRCDIR}/gnu/dist/gdb6
-
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${MACHINE_ARCH} \
 		-I${DIST}/ \
+		-DHAVE_SYS_IOCTL_H \
 		${G_CCFLAGS:M-DRL_*} \
 
 SRCS=		${G_OBJECTS:.o=.c}
