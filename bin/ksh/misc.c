@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.14 2009/10/22 15:53:19 seanb Exp $	*/
+/*	$NetBSD: misc.c,v 1.15 2011/10/16 17:12:11 joerg Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.14 2009/10/22 15:53:19 seanb Exp $");
+__RCSID("$NetBSD: misc.c,v 1.15 2011/10/16 17:12:11 joerg Exp $");
 #endif
 
 
@@ -265,7 +265,7 @@ printoptions(verbose)
 		for (i = 0; i < (int)NELEM(goptions); i++)
 			if (Flag(i) && goptions[i].name)
 				shprintf(" -o %s", goptions[i].name);
-		shprintf(newline);
+		shprintf("%s", newline);
 	}
 }
 
@@ -1011,7 +1011,7 @@ ksh_getopt(argv, go, options)
 				(go->flags & GF_NONAME) ? "" : argv[0],
 				(go->flags & GF_NONAME) ? "" : ": ", c);
 			if (go->flags & GF_ERROR)
-				bi_errorf(null);
+				bi_errorf("%s", null);
 		}
 		return '?';
 	}
@@ -1037,7 +1037,7 @@ ksh_getopt(argv, go, options)
 				(go->flags & GF_NONAME) ? "" : argv[0],
 				(go->flags & GF_NONAME) ? "" : ": ", c);
 			if (go->flags & GF_ERROR)
-				bi_errorf(null);
+				bi_errorf("%s", null);
 			return '?';
 		}
 		go->p = 0;
@@ -1088,7 +1088,7 @@ print_value_quoted(s)
 	}
 	for (p = s; *p; p++) {
 		if (*p == '\'') {
-			shprintf("'\\'" + 1 - inquote);
+			shprintf("%s", "'\\'" + 1 - inquote);
 			inquote = 0;
 		} else {
 			if (!inquote) {

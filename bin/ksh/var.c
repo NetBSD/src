@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.16 2011/10/16 00:32:25 reed Exp $	*/
+/*	$NetBSD: var.c,v 1.17 2011/10/16 17:12:11 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.16 2011/10/16 00:32:25 reed Exp $");
+__RCSID("$NetBSD: var.c,v 1.17 2011/10/16 17:12:11 joerg Exp $");
 #endif
 
 
@@ -377,7 +377,7 @@ setstr(vq, s, error_ok)
 	if ((vq->flag & RDONLY) && !no_ro_check) {
 		warningf(TRUE, "%s: is read only", vq->name);
 		if (!error_ok)
-			errorf(null);
+			errorf("%s", null);
 		return 0;
 	}
 	if (!(vq->flag&INTEGER)) { /* string dest */
@@ -738,7 +738,7 @@ typeset(var, set, clr, field, base)
 			}
 		}
 		if (!ok)
-		    errorf(null);
+		    errorf("%s", null);
 	}
 
 	if (val != NULL) {

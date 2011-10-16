@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.9 2006/02/25 00:58:34 wiz Exp $	*/
+/*	$NetBSD: jobs.c,v 1.10 2011/10/16 17:12:11 joerg Exp $	*/
 
 /*
  * Process and job control
@@ -26,7 +26,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: jobs.c,v 1.9 2006/02/25 00:58:34 wiz Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.10 2011/10/16 17:12:11 joerg Exp $");
 #endif
 
 
@@ -900,7 +900,7 @@ j_resume(cp, bg)
 		}
 		shprintf("%s%s", p->command, p->next ? "| " : null);
 	}
-	shprintf(newline);
+	shprintf("%s", newline);
 	shf_flush(shl_stdout);
 	if (running)
 		j->state = PRUNNING;
