@@ -1,4 +1,4 @@
-/* $NetBSD: t_stat.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/* $NetBSD: t_stat.c,v 1.2 2011/10/16 08:28:10 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stat.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
+__RCSID("$NetBSD: t_stat.c,v 1.2 2011/10/16 08:28:10 jruoho Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -87,17 +87,12 @@ ATF_TC_HEAD(stat_dir, tc)
 
 ATF_TC_BODY(stat_dir, tc)
 {
-	const short depth = 3;
+	const short depth = 2;
 	struct stat sa, sb;
 	char *argv[2];
 	FTSENT *ftse;
 	FTS *fts;
 	int ops;
-
-	/*
-	 * XXX: This is verified to panic at least a qemu/i386 guest.
-	 */
-	atf_tc_skip("the test may cause a panic");
 
 	argv[1] = NULL;
 	argv[0] = __UNCONST("/");
