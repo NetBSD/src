@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.410 2011/10/16 07:40:48 jruoho Exp $
+# $NetBSD: mi,v 1.411 2011/10/16 08:25:40 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -563,6 +563,7 @@
 ./usr/libdata/debug/usr/tests/lib/libm/t_acos.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_asin.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_atan.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libm/t_cbrt.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_ceil.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_cos.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_cosh.debug			tests-lib-debug		debug,atf
@@ -578,6 +579,7 @@
 ./usr/libdata/debug/usr/tests/lib/libm/t_scalbn.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_sin.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_sinh.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libm/t_sqrt.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_tan.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_tanh.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libobjc				tests-lib-debug
@@ -2295,6 +2297,7 @@
 ./usr/tests/lib/libm/t_acos			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_asin			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_atan			tests-lib-tests		atf
+./usr/tests/lib/libm/t_cbrt			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_ceil			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_cos			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_cosh			tests-lib-tests		atf
@@ -2310,6 +2313,7 @@
 ./usr/tests/lib/libm/t_scalbn			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_sin			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_sinh			tests-lib-tests		atf
+./usr/tests/lib/libm/t_sqrt			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_tan			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_tanh			tests-lib-tests		atf
 ./usr/tests/lib/libobjc				tests-lib-tests		atf
