@@ -1,4 +1,4 @@
-/* $NetBSD: t_cosh.c,v 1.1 2011/10/16 07:40:47 jruoho Exp $ */
+/* $NetBSD: t_cosh.c,v 1.2 2011/10/16 13:42:22 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cosh.c,v 1.1 2011/10/16 07:40:47 jruoho Exp $");
+__RCSID("$NetBSD: t_cosh.c,v 1.2 2011/10/16 13:42:22 jruoho Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -48,7 +48,7 @@ ATF_TC_BODY(cosh_def, tc)
 {
 #ifndef __vax__
 	const double x[] = { -9.0, -1.0, -0.05, 0.0, 1.0, 10.0, 20.0 };
-	const double eps = 1.0e-16;
+	const double eps = 1.0e-8;
 	double y, z;
 	size_t i;
 
