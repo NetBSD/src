@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.42 2011/07/09 09:12:11 plunky Exp $
+.\" $NetBSD: ctime.3,v 1.43 2011/10/16 17:59:32 christos Exp $
 .\"
 .\" XXX: Lincense missing?
 .\"
-.Dd July 9, 2011
+.Dd October 16, 2011
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -245,6 +245,19 @@ are determined.
 The function returns the specified calendar time;
 if the calendar time cannot be represented, it returns
 .Va "(time_t)-1" .
+This can happen either because the resulting conversion would not fit
+in a
+.Vt time_t
+variable, or because the time specified happens to be in the daylight
+savings gap and
+.Fa tm_isdst
+was set to
+.Dv \-1 .
+Other
+.Fn mktime
+implementations do not return an error in the second case and return
+the appropriate time offset after the daylight savings gap.
+There is code to mimick this behavior, but it is not enabled by default.
 .It Fn mktime_z "tz" "tm"
 The
 .Fn mktime_z
