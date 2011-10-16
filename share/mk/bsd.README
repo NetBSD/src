@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.288 2011/10/16 01:14:33 christos Exp $
+#	$NetBSD: bsd.README,v 1.289 2011/10/16 01:28:35 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1460,19 +1460,19 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 		LIBRT?=		${DESTDIR}/usr/lib/librt.a
 		LIBRUMP?=	${DESTDIR}/usr/lib/librump.a
-		LIBRUMFS_CD9660FS?=${DESTDIR}/usr/lib/librumpfs_cd9660fs.a
-		LIBRUMFS_EFS?=	${DESTDIR}/usr/lib/librumpfs_efs.a
-		LIBRUMFS_EXT2FS?=${DESTDIR}/usr/lib/librumpfs_ext2fs.a
-		LIBRUMFS_FFS?=	${DESTDIR}/usr/lib/librumpfs_ffs.a
-		LIBRUMFS_HFS?=	${DESTDIR}/usr/lib/librumpfs_hfs.a
-		LIBRUMFS_LFS?=	${DESTDIR}/usr/lib/librumpfs_lfs.a
-		LIBRUMFS_MSDOSFS?=${DESTDIR}/usr/lib/librumpfs_msdosfs.a
-		LIBRUMFS_NFS?=	${DESTDIR}/usr/lib/librumpfs_nfs.a
-		LIBRUMFS_NTFS?=	${DESTDIR}/usr/lib/librumpfs_ntfs.a
-		LIBRUMFS_SYSPUFFS?=${DESTDIR}/usr/lib/librumpfs_syspuffs.a
-		LIBRUMFS_TMPFS?=${DESTDIR}/usr/lib/librumpfs_tmpfs.a
-		LIBRUMFS_UDF?=	${DESTDIR}/usr/lib/librumpfs_udf.a
-		LIBRUMFS_UFS?=	${DESTDIR}/usr/lib/librumpfs_ufs.a
+		LIBRUMPFS_CD9660FS?=${DESTDIR}/usr/lib/librumpfs_cd9660fs.a
+		LIBRUMPFS_EFS?=	${DESTDIR}/usr/lib/librumpfs_efs.a
+		LIBRUMPFS_EXT2FS?=${DESTDIR}/usr/lib/librumpfs_ext2fs.a
+		LIBRUMPFS_FFS?=	${DESTDIR}/usr/lib/librumpfs_ffs.a
+		LIBRUMPFS_HFS?=	${DESTDIR}/usr/lib/librumpfs_hfs.a
+		LIBRUMPFS_LFS?=	${DESTDIR}/usr/lib/librumpfs_lfs.a
+		LIBRUMPFS_MSDOSFS?=${DESTDIR}/usr/lib/librumpfs_msdosfs.a
+		LIBRUMPFS_NFS?=	${DESTDIR}/usr/lib/librumpfs_nfs.a
+		LIBRUMPFS_NTFS?=${DESTDIR}/usr/lib/librumpfs_ntfs.a
+		LIBRUMPFS_SYSPUFFS?=${DESTDIR}/usr/lib/librumpfs_syspuffs.a
+		LIBRUMPFS_TMPFS?=${DESTDIR}/usr/lib/librumpfs_tmpfs.a
+		LIBRUMPFS_UDF?=	${DESTDIR}/usr/lib/librumpfs_udf.a
+		LIBRUMPFS_UFS?=	${DESTDIR}/usr/lib/librumpfs_ufs.a
 		LIBRUMPUSER?=	${DESTDIR}/usr/lib/librumpuser.a
 		LIBSASLC?=	${DESTDIR}/usr/lib/libsaslc.a
 		LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
