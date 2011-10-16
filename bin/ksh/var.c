@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.15 2009/08/02 21:24:18 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.16 2011/10/16 00:32:25 reed Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.15 2009/08/02 21:24:18 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.16 2011/10/16 00:32:25 reed Exp $");
 #endif
 
 
@@ -634,7 +634,7 @@ typeset(var, set, clr, field, base)
 		/* IMPORT is only used when the shell starts up and is
 		 * setting up its environment.  Allow only simple array
 		 * references at this time since parameter/command substitution
-		 * is preformed on the [expression], which would be a major
+		 * is performed on the [expression], which would be a major
 		 * security hole.
 		 */
 		if (set & IMPORT) {
