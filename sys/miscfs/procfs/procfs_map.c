@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.40 2011/07/26 13:18:55 yamt Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.41 2011/10/16 12:26:16 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.40 2011/07/26 13:18:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.41 2011/10/16 12:26:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,9 @@ again:
 			if (UVM_ET_ISOBJ(entry) &&
 			    UVM_OBJ_IS_VNODE(entry->object.uvm_obj)) {
 				vp = (struct vnode *)entry->object.uvm_obj;
+				vn_lock(vp, LK_SHARED | LK_RETRY);
 				error = VOP_GETATTR(vp, &va, curl->l_cred);
+				VOP_UNLOCK(vp);
 				if (error == 0 && vp != pfs->pfs_vnode) {
 					fileid = va.va_fileid;
 					dev = va.va_fsid;
