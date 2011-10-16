@@ -47,6 +47,7 @@
 
 /* System-specific feature definitions and include files. */
 #include "rldefs.h"
+#include "rltty.h"
 #include "rlmbutil.h"
 
 /* Termcap library stuff. */
