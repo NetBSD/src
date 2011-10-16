@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.268 2011/10/16 01:14:33 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.269 2011/10/16 01:24:05 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -80,10 +80,13 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 #		LIBC?=${DESTDIR}/usr/lib/libc.a
 #		LIBX11?=${DESTDIR}/usr/X11R7/lib/libX11.a
 #	etc..
+#	NB:	If you are a library here, add it in bsd.README
 
 .for _lib in \
 	archive \
 	asn1 \
+	atf_c \
+	atf_cxx \
 	bind9 \
 	bluetooth \
 	bsdmalloc \
@@ -174,6 +177,8 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	ssh \
 	ssl \
 	ssp \
+	stdcxx \
+	supcxx \
 	terminfo \
 	usbhid \
 	util \
@@ -182,20 +187,11 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	y \
 	z 
 .ifndef LIB${_lib:tu}
-LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
+LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
 .endif
 .endfor
-# atf-c and atf-c++ are special cases because we cannot use [-+] as part of
-# make(1) variable names.  Just define them here.
-LIBATF_C=	${DESTDIR}/usr/lib/libatf-c.a
-.MADE:		${LIBATF_C}
-LIBATF_CXX=	${DESTDIR}/usr/lib/libatf-c++.a
-.MADE:		${LIBATF_CXX}
-LIBSTDCXX=	${DESTDIR}/usr/lib/libstdc++.a
-.MADE:		${LIBSTDCXX}
-LIBSUPCXX=	${DESTDIR}/usr/lib/libsupc++.a
-.MADE:		${LIBSUPCXX}
+
 # PAM applications, if linked statically, need more libraries
 .if (${MKPIC} == "no")
 .if (${MKCRYPTO} != "no")
@@ -219,8 +215,7 @@ PAM_STATIC_LDADD=
 PAM_STATIC_DPADD=
 .endif
 
-# These need + -> X transformations
-
+#	NB:	If you are a library here, add it in bsd.README
 .for _lib in \
 	FS \
 	GL \
