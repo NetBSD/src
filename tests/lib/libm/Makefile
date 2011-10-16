@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2011/10/16 07:40:48 jruoho Exp $
+# $NetBSD: Makefile,v 1.15 2011/10/16 08:25:55 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ TESTSDIR=	${TESTSBASE}/lib/libm
 TESTS_C+=	t_acos
 TESTS_C+=	t_asin
 TESTS_C+=	t_atan
+TESTS_C+=	t_cbrt
 TESTS_C+=	t_ceil
 TESTS_C+=	t_cos
 TESTS_C+=	t_cosh
@@ -20,6 +21,7 @@ TESTS_C+=	t_round
 TESTS_C+=	t_scalbn
 TESTS_C+=	t_sin
 TESTS_C+=	t_sinh
+TESTS_C+=	t_sqrt
 TESTS_C+=	t_tan
 TESTS_C+=	t_tanh
 
