@@ -39,9 +39,6 @@
 
 #endif /* !PTR_T */
 
-/* xmalloc and xrealloc should be also protected from RL_STATE_SIGHANDLER.  */
-#define xfree xfree_readline
-
 /* readline-5.1 backport.  */
 #define free xfree
 
