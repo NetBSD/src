@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.11 2010/03/14 00:26:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2011/10/17 14:20:54 chs Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
+NOPROFILE=	# defined
 
 LIB=		gcc
 
