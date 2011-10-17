@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.72 2011/08/29 22:46:56 dyoung Exp $
+#	$NetBSD: files.x86,v 1.73 2011/10/17 22:39:22 jmcneill Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -60,6 +60,10 @@ file	arch/x86/x86/powernow.c		powernow
 device	viac7temp: sysmon_envsys
 attach	viac7temp at cpufeaturebus
 file	arch/x86/x86/viac7temp.c	viac7temp
+
+device	vmt: sysmon_power
+attach	vmt at cpufeaturebus
+file	arch/x86/x86/vmt.c		vmt
 
 file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c
