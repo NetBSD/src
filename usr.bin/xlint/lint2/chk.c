@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.21 2010/01/14 16:58:27 christos Exp $ */
+/* $NetBSD: chk.c,v 1.22 2011/10/17 16:31:14 mbalmer Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.21 2010/01/14 16:58:27 christos Exp $");
+__RCSID("$NetBSD: chk.c,v 1.22 2011/10/17 16:31:14 mbalmer Exp $");
 #endif
 
 #include <ctype.h>
@@ -1071,7 +1071,7 @@ chkrvu(hte_t *hte, sym_t *def)
 	int	used, ignored;
 
 	if (def == NULL)
-		/* don't know wheter or not the functions returns a value */
+		/* don't know whether or not the functions returns a value */
 		return;
 
 	if (hte->h_calls == NULL)

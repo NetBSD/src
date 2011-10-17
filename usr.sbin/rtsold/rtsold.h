@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.h,v 1.9 2009/04/11 07:51:59 lukem Exp $	*/
+/*	$NetBSD: rtsold.h,v 1.10 2011/10/17 16:31:14 mbalmer Exp $	*/
 /*	$KAME: rtsold.h,v 1.14 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -39,7 +39,7 @@ struct ifinfo {
 	int active;		/* interface status */
 	int probeinterval;	/* interval of probe timer(if necessary) */
 	int probetimer;		/* rest of probe timer */
-	int mediareqok;		/* wheter the IF supports SIOCGIFMEDIA */
+	int mediareqok;		/* whether the IF supports SIOCGIFMEDIA */
 	int state;
 	int probes;
 	int dadcount;
