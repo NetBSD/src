@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.250 2011/09/14 17:35:44 apb Exp $
+#	$NetBSD: build.sh,v 1.251 2011/10/17 16:22:12 mbalmer Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -184,7 +184,7 @@ if test -z "$errmsg"; then
 fi
 
 #
-# If shelltest is true, exit now, reporting wheher or not the shell is good.
+# If shelltest is true, exit now, reporting whether or not the shell is good.
 #
 if $shelltest; then
     if test -n "$errmsg"; then
@@ -1632,7 +1632,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.250 2011/09/14 17:35:44 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.251 2011/10/17 16:22:12 mbalmer Exp $
 # with these arguments: ${_args}
 #
 
