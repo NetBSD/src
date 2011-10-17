@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: sleep_button,v 1.9 2011/09/17 14:44:18 jym Exp $
+#	$NetBSD: sleep_button,v 1.10 2011/10/17 23:27:41 jmcneill Exp $
 #
 # Generic script for sleep button events.
 #
@@ -41,8 +41,12 @@ pressed)
 	;;
 
 released)
-	# Note that we don't really need to handle a released event here,
-	# so we can gracefully exit.
+	case "${1}" in
+	vmt0)
+		# Virtual machine is resuming, restart the network
+		/etc/rc.d/dhcpcd restart
+		;;
+	esac
 	;;
 *)
 	logger -p warning "${0}: unsupported event ${2} on device ${1}" >&1
