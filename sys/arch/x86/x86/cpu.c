@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.94 2011/10/06 06:56:29 mrg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.95 2011/10/17 22:38:01 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.94 2011/10/06 06:56:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.95 2011/10/17 22:38:01 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -490,6 +490,12 @@ cpu_rescan(device_t self, const char *ifattr, const int *locators)
 			ci->ci_temperature = config_found_ia(self,
 			    "cpufeaturebus", &cfaa, NULL);
 		}
+
+		if (ci->ci_vm == NULL) {
+			cfaa.name = "vm";
+			ci->ci_vm = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
 	}
 
 	return 0;
@@ -509,6 +515,9 @@ cpu_childdetached(device_t self, device_t child)
 
 	if (ci->ci_temperature == child)
 		ci->ci_temperature = NULL;
+
+	if (ci->ci_vm == child)
+		ci->ci_vm = NULL;
 }
 
 /*
