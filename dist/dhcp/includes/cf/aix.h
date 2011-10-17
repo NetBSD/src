@@ -77,7 +77,7 @@ extern int h_errno;
 #define va_dcl
 
 /* The vsnprint function definition in /usr/include/ appears to use this
- * as a key for wether or not it should be declared.  Seems reasoanble for
+ * as a key for whether or not it should be declared.  Seems reasoanble for
  * us to use the same key.
  */
 #if (_XOPEN_SOURCE != 500)

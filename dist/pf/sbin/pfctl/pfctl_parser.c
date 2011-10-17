@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_parser.c,v 1.10 2008/06/18 09:06:26 yamt Exp $	*/
+/*	$NetBSD: pfctl_parser.c,v 1.11 2011/10/17 16:35:22 mbalmer Exp $	*/
 /*	$OpenBSD: pfctl_parser.c,v 1.234 2006/10/31 23:46:24 mcbride Exp $ */
 
 /*
@@ -1230,7 +1230,7 @@ ifa_exists(const char *ifa_name)
 	if (iftab == NULL)
 		ifa_load();
 
-	/* check wether this is a group */
+	/* check whether this is a group */
 #ifndef __NetBSD__
 	/* XXXPF TODO investigate what's needed for NetBSD */
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)

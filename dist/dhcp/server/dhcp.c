@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.12 2011/08/15 21:12:43 christos Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.13 2011/10/17 16:35:23 mbalmer Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2688,7 +2688,7 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp, hp)
 		lease -> timestamp = cur_time;
 		icmp_echorequest (&lease -> ip_addr);
 
-		/* Determine wether to use configured or default ping timeout.
+		/* Determine whether to use configured or default ping timeout.
 		 */
 		if ((oc = lookup_option (&server_universe, state -> options,
 						SV_PING_TIMEOUT)) &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.40 2010/11/03 22:28:31 dyoung Exp $ */
+/*	$NetBSD: if_atu.c,v 1.41 2011/10/17 16:35:21 mbalmer Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.40 2010/11/03 22:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.41 2011/10/17 16:35:21 mbalmer Exp $");
 
 
 #include <sys/param.h>
@@ -493,7 +493,7 @@ atu_start_scan(struct atu_softc *sc)
 	/* the time we stay on one channel */
 	USETW(Scan.MinChannelTime, 100);
 	USETW(Scan.MaxChannelTime, 200);
-	/* wether or not we scan all channels */
+	/* whether or not we scan all channels */
 	Scan.InternationalScan = 0xc1;
 
 #ifdef ATU_DEBUG
