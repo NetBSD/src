@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.104 2011/09/23 12:45:14 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.105 2011/10/17 00:03:22 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5637,4 +5637,21 @@ sys/arch/xen/xenbus/xenbus_probe.c		1.35
 	use pkgsrc's sysutils/xentools inside a domU to query XenStore
 	entries (or even modify part of it if the domain has enough rights).
 	[jym, ticket #1672]
+
+sys/arch/i386/stand/lib/gatea20.c		1.12
+
+	Fix long boot delay on some Soekris hardware.  PR#39726, PR#41162
+	[jmcneill, ticket #923]
+
+sbin/ifconfig/carp.c				1.13
+
+	Stop ifconfig dumping core when attaching carp to an interface.
+	[bouyer, ticket #1670]
+
+gnu/dist/xcvs/doc/cvs.1			patch
+gnu/dist/xcvs/doc/cvs.texinfo		patch
+gnu/dist/xcvs/src/patch.c		patch
+
+	Implement and document "cvs rdiff -p".
+	[spz, ticket #1673]
 
