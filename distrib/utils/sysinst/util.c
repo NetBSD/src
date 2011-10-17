@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.169 2011/04/04 08:30:14 mbalmer Exp $	*/
+/*	$NetBSD: util.c,v 1.170 2011/10/17 16:35:22 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -486,7 +486,7 @@ set_cd_select(menudesc *m, void *arg)
 }
 
 /*
- * Check wether we can remove the boot media.
+ * Check whether we can remove the boot media.
  * If it is not a local filesystem, return -1.
  * If we can not decide for sure (can not tell MD content from plain ffs
  * on hard disk, for example), return 0.

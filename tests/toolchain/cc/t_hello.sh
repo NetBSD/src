@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.5 2011/10/04 12:01:21 martin Exp $
+#	$NetBSD: t_hello.sh,v 1.6 2011/10/17 16:35:22 mbalmer Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -73,7 +73,7 @@ EOF
 }
 
 hello32_body() {
-	# check wether this arch is 64bit
+	# check whether this arch is 64bit
 	if ! cc -dM -E - < /dev/null | fgrep -q _LP64; then
 		atf_skip "this is not a 64 bit architecture"
 	fi

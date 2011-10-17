@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.87 2011/05/30 14:20:48 joerg Exp $ */
+/*	$NetBSD: mbr.c,v 1.88 2011/10/17 16:35:22 mbalmer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1399,7 +1399,7 @@ validate_and_set_names(mbr_info_t *mbri, const struct mbr_bootsel *src,
 	const unsigned char *p;
 
 	/*
-	 * The 16 bit magic used to detect wether mbr_bootsel is valid
+	 * The 16 bit magic used to detect whether mbr_bootsel is valid
 	 * or not is pretty week - collisions have been seen in the wild;
 	 * but maybe it is just foreign tools corruption reminiscents
 	 * of NetBSD MBRs. Anyway, before accepting a boot menu definition,
