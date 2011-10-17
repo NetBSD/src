@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_debug.c,v 1.7 2010/04/28 22:45:27 chs Exp $	*/
+/*	$NetBSD: mpt_debug.c,v 1.8 2011/10/17 16:40:53 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.7 2010/04/28 22:45:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.8 2011/10/17 16:40:53 mbalmer Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -81,15 +81,15 @@ static const struct Error_Map IOC_Status[] = {
 { MPI_IOCSTATUS_TARGET_NO_CONNECTION,     "SCSI Target: No Connection" },
 { MPI_IOCSTATUS_TARGET_XFER_COUNT_MISMATCH,"SCSI Target: Transfer Count Mismatch" },
 { MPI_IOCSTATUS_TARGET_FC_ABORTED,        "FC: Aborted" },
-{ MPI_IOCSTATUS_TARGET_FC_RX_ID_INVALID,  "FC: Recieve ID Invalid" },
-{ MPI_IOCSTATUS_TARGET_FC_DID_INVALID,    "FC: Recieve DID Invalid" },
+{ MPI_IOCSTATUS_TARGET_FC_RX_ID_INVALID,  "FC: Receive ID Invalid" },
+{ MPI_IOCSTATUS_TARGET_FC_DID_INVALID,    "FC: Receive DID Invalid" },
 { MPI_IOCSTATUS_TARGET_FC_NODE_LOGGED_OUT,"FC: Node Logged Out" },
 { MPI_IOCSTATUS_LAN_DEVICE_NOT_FOUND,     "LAN: Device Not Found" },
 { MPI_IOCSTATUS_LAN_DEVICE_FAILURE,       "LAN: Device Not Failure" },
 { MPI_IOCSTATUS_LAN_TRANSMIT_ERROR,       "LAN: Transmit Error" },
 { MPI_IOCSTATUS_LAN_TRANSMIT_ABORTED,     "LAN: Transmit Aborted" },
-{ MPI_IOCSTATUS_LAN_RECEIVE_ERROR,        "LAN: Recieve Error" },
-{ MPI_IOCSTATUS_LAN_RECEIVE_ABORTED,      "LAN: Recieve Aborted" },
+{ MPI_IOCSTATUS_LAN_RECEIVE_ERROR,        "LAN: Receive Error" },
+{ MPI_IOCSTATUS_LAN_RECEIVE_ABORTED,      "LAN: Receive Aborted" },
 { MPI_IOCSTATUS_LAN_PARTIAL_PACKET,       "LAN: Partial Packet" },
 { MPI_IOCSTATUS_LAN_CANCELED,             "LAN: Canceled" },
 { -1, 0},
@@ -114,7 +114,7 @@ static const struct Error_Map IOC_Func[] = {
 { MPI_FUNCTION_TARGET_FC_EX_SEND_LINK_SRVC,  "FC: Send Extended Link Service" },
 { MPI_FUNCTION_TARGET_FC_ABORT,              "FC: Abort" },
 { MPI_FUNCTION_LAN_SEND,                     "LAN Send" },
-{ MPI_FUNCTION_LAN_RECEIVE,                  "LAN Recieve" },
+{ MPI_FUNCTION_LAN_RECEIVE,                  "LAN Receive" },
 { MPI_FUNCTION_LAN_RESET,                    "LAN Reset" },
 { -1, 0},
 };
