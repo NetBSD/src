@@ -1,4 +1,4 @@
-/* $NetBSD: t_dup.c,v 1.6 2011/09/30 21:08:19 njoly Exp $ */
+/* $NetBSD: t_dup.c,v 1.7 2011/10/17 17:58:43 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,14 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dup.c,v 1.6 2011/09/30 21:08:19 njoly Exp $");
+__RCSID("$NetBSD: t_dup.c,v 1.7 2011/10/17 17:58:43 njoly Exp $");
 
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
 #include <atf-c.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
