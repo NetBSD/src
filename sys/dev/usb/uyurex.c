@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.4 2010/11/04 01:58:07 dyoung Exp $ */
+/*	$NetBSD: uyurex.c,v 1.5 2011/10/17 16:44:02 mbalmer Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -253,11 +253,11 @@ uyurex_intr(struct uhidev *addr, void *ibuf, u_int len)
 	switch (buf[0]) {
 	case CMD_ACK:
 		if (buf[1] == sc->issueing_cmd) {
-			DPRINTF(("ack recieved for cmd 0x%.2x\n", buf[1]));
+			DPRINTF(("ack received for cmd 0x%.2x\n", buf[1]));
 			sc->accepted_cmd = buf[1];
 		} else {
-			DPRINTF(("cmd-ack mismatch: recved 0x%.2x, expect 0x%.2x\n",
-				buf[1], sc->issueing_cmd));
+			DPRINTF(("cmd-ack mismatch: received 0x%.2x, "
+			    "expect 0x%.2x\n", buf[1], sc->issueing_cmd));
 			/* discard previous command */
 			sc->accepted_cmd = CMD_NONE;
 			sc->issueing_cmd = CMD_NONE;

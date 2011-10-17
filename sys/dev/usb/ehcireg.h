@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.32 2011/01/18 08:29:24 matt Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.33 2011/10/17 16:44:02 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -361,7 +361,7 @@ typedef struct {
 /* USB PIDs Register */
 #define  EHCI_DPR_TOKEN		__BITS(7,0)
 #define  EHCI_DPR_SEND		__BITS(15,8)
-#define  EHCI_DPR_RECIEVED	__BITS(23,16)
+#define  EHCI_DPR_RECEIVED	__BITS(23,16)
 /* Data Registers */
 #define EHCI_DEBUG_DATA0123	0x08
 #define EHCI_DEBUG_DATA4567	0x0c
