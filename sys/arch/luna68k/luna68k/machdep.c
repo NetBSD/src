@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.82 2011/07/28 09:59:13 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.83 2011/10/17 13:52:11 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82 2011/07/28 09:59:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 2011/10/17 13:52:11 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -289,7 +289,7 @@ identifycpu(void)
 	memset(cpu_model, 0, sizeof(cpu_model));
 	switch (cputype) {
 	case CPU_68030:
-		cpu = "MC68030 CPU+MMU, MC68882 FPU";
+		cpu = "MC68030 CPU+MMU, MC68881 FPU";
 		machtype = LUNA_I;
 		/* 20MHz 68030 */
 		cpuspeed = 20;
