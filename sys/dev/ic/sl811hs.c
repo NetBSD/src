@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.29 2011/06/21 15:13:34 kiyohara Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.30 2011/10/17 13:06:08 isaki Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -13,7 +13,7 @@
  * Cypress/ScanLogic SL811HS/T USB Host Controller
  * Datasheet, Errata, and App Note available at www.cypress.com
  *
- * Uses: Ratoc CFU1U PCMCIA USB Host Controller, Nereid Mac 68k USB HC, ISA 
+ * Uses: Ratoc CFU1U PCMCIA USB Host Controller, Nereid X68k USB HC, ISA 
  * HCs.  The Ratoc CFU2 uses a different chip.
  *
  * This chip puts the serial in USB.  It implements USB by means of an eight 
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.29 2011/06/21 15:13:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.30 2011/10/17 13:06:08 isaki Exp $");
 
 #include "opt_slhci.h"
 
