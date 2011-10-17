@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2011/09/20 00:12:23 jym Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 2011/10/17 22:38:01 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -200,6 +200,7 @@ struct cpu_info {
 	device_t	ci_frequency;	/* Frequency scaling technology */
 	device_t	ci_padlock;	/* VIA PadLock private storage */
 	device_t	ci_temperature;	/* Intel coretemp(4) or equivalent */
+	device_t	ci_vm;		/* Virtual machine guest driver */
 
 	struct i386tss	ci_tss;		/* Per-cpu TSS; shared among LWPs */
 	char		ci_iomap[IOMAPSIZE]; /* I/O Bitmap */
