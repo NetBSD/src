@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.323 2011/10/15 00:23:08 sjg Exp $
+# $NetBSD: ALL,v 1.324 2011/10/17 22:40:31 jmcneill Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.323 $"
+#ident 		"ALL-$Revision: 1.324 $"
 
 maxusers	64		# estimated number of users
 
@@ -37,6 +37,7 @@ odcm0		at cpu0		# On-demand clock modulation
 padlock0	at cpu0		# VIA PadLock
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 viac7temp*	at cpu?		# VIA C7 temperature sensor
+vmt0		at cpu0		# VMware Tools
 
 # XBOX support
 options 	XBOX
