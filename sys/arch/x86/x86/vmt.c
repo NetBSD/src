@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.1 2011/10/17 22:39:23 jmcneill Exp $ */
+/* $NetBSD: vmt.c,v 1.2 2011/10/17 23:25:10 jmcneill Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -165,6 +165,11 @@ static int	vmt_match(device_t, cfdata_t, void *);
 static void	vmt_attach(device_t, device_t, void *);
 static int	vmt_detach(device_t, int);
 
+struct vmt_event {
+	struct sysmon_pswitch	ev_smpsw;
+	int			ev_code;
+};
+
 struct vmt_softc {
 	device_t		sc_dev;
 
@@ -183,8 +188,9 @@ struct vmt_softc {
 	struct ksensor		sc_sensor;
 #endif
 
-	struct sysmon_pswitch	sc_smpsw_power;
-	struct sysmon_pswitch	sc_smpsw_reset;
+	struct vmt_event	sc_ev_power;
+	struct vmt_event	sc_ev_reset;
+	struct vmt_event	sc_ev_sleep;
 	bool			sc_smpsw_valid;
 
 	char			sc_hostname[MAXHOSTNAMELEN];
@@ -324,12 +330,18 @@ vmt_attach(device_t parent, device_t self, void *aux)
 
 	sysmon_task_queue_init();
 
-	sc->sc_smpsw_power.smpsw_type = PSWITCH_TYPE_POWER;
-	sc->sc_smpsw_power.smpsw_name = device_xname(self);
-	sysmon_pswitch_register(&sc->sc_smpsw_power);
-	sc->sc_smpsw_reset.smpsw_type = PSWITCH_TYPE_RESET;
-	sc->sc_smpsw_reset.smpsw_name = device_xname(self);
-	sysmon_pswitch_register(&sc->sc_smpsw_reset);
+	sc->sc_ev_power.ev_smpsw.smpsw_type = PSWITCH_TYPE_POWER;
+	sc->sc_ev_power.ev_smpsw.smpsw_name = device_xname(self);
+	sc->sc_ev_power.ev_code = PSWITCH_EVENT_PRESSED;
+	sysmon_pswitch_register(&sc->sc_ev_power.ev_smpsw);
+	sc->sc_ev_reset.ev_smpsw.smpsw_type = PSWITCH_TYPE_RESET;
+	sc->sc_ev_reset.ev_smpsw.smpsw_name = device_xname(self);
+	sc->sc_ev_reset.ev_code = PSWITCH_EVENT_PRESSED;
+	sysmon_pswitch_register(&sc->sc_ev_reset.ev_smpsw);
+	sc->sc_ev_sleep.ev_smpsw.smpsw_type = PSWITCH_TYPE_SLEEP;
+	sc->sc_ev_sleep.ev_smpsw.smpsw_name = device_xname(self);
+	sc->sc_ev_sleep.ev_code = PSWITCH_EVENT_RELEASED;
+	sysmon_pswitch_register(&sc->sc_ev_sleep.ev_smpsw);
 	sc->sc_smpsw_valid = true;
 
 	callout_setfunc(&sc->sc_tick, vmt_tick, sc);
@@ -356,8 +368,9 @@ vmt_detach(device_t self, int flags)
 		vm_rpc_close(&sc->sc_tclo_rpc);
 
 	if (sc->sc_smpsw_valid) {
-		sysmon_pswitch_unregister(&sc->sc_smpsw_reset);
-		sysmon_pswitch_unregister(&sc->sc_smpsw_power);
+		sysmon_pswitch_unregister(&sc->sc_ev_sleep.ev_smpsw);
+		sysmon_pswitch_unregister(&sc->sc_ev_reset.ev_smpsw);
+		sysmon_pswitch_unregister(&sc->sc_ev_power.ev_smpsw);
 	}
 
 	callout_halt(&sc->sc_tick, NULL);
@@ -480,7 +493,7 @@ vmt_do_shutdown(struct vmt_softc *sc)
 	vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK);
 
 	device_printf(sc->sc_dev, "host requested shutdown\n");
-	sysmon_task_queue_sched(0, vmt_pswitch_event, &sc->sc_smpsw_power);
+	sysmon_task_queue_sched(0, vmt_pswitch_event, &sc->sc_ev_power);
 }
 
 static void
@@ -490,7 +503,26 @@ vmt_do_reboot(struct vmt_softc *sc)
 	vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK);
 
 	device_printf(sc->sc_dev, "host requested reboot\n");
-	sysmon_task_queue_sched(0, vmt_pswitch_event, &sc->sc_smpsw_reset);
+	sysmon_task_queue_sched(0, vmt_pswitch_event, &sc->sc_ev_reset);
+}
+
+static void
+vmt_do_resume(struct vmt_softc *sc)
+{
+	device_printf(sc->sc_dev, "guest resuming from suspended state\n");
+
+	/* force guest info update */
+	sc->sc_hostname[0] = '\0';
+	sc->sc_set_guest_os = 0;
+	vmt_update_guest_info(sc);
+
+	vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_RESUME);
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
+		device_printf(sc->sc_dev, "error sending resume response\n");
+		sc->sc_rpc_error = 1;
+	}
+
+	sysmon_task_queue_sched(0, vmt_pswitch_event, &sc->sc_ev_sleep);
 }
 
 static bool
@@ -514,9 +546,9 @@ vmt_shutdown(device_t self, int flags)
 static void
 vmt_pswitch_event(void *xarg)
 {
-	struct sysmon_pswitch *smpsw = xarg;
+	struct vmt_event *ev = xarg;
 
-	sysmon_pswitch_event(smpsw, PSWITCH_EVENT_PRESSED);
+	sysmon_pswitch_event(&ev->ev_smpsw, ev->ev_code);
 }
 
 static void
@@ -619,18 +651,7 @@ vmt_tclo_tick(void *xarg)
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "OS_Resume") == 0) {
-		log(LOG_KERN | LOG_NOTICE, "VMware guest resuming from suspended state\n");
-
-		/* force guest info update */
-		sc->sc_hostname[0] = '\0';
-		sc->sc_set_guest_os = 0;
-		vmt_update_guest_info(sc);
-
-		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_RESUME);
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev, "error sending resume response\n");
-			sc->sc_rpc_error = 1;
-		}
+		vmt_do_resume(sc);
 	} else if (strcmp(sc->sc_rpc_buf, "Capabilities_Register") == 0) {
 
 		/* don't know if this is important at all */
