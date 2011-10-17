@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.25 2011/08/27 22:22:01 joerg Exp $ */
+/* $NetBSD: btconfig.c,v 1.26 2011/10/17 16:37:50 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btconfig.c,v 1.25 2011/08/27 22:22:01 joerg Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.26 2011/10/17 16:37:50 mbalmer Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -759,7 +759,7 @@ print_stats(void)
 			err(EXIT_FAILURE, "SIOCZBTSTATS");
 	}
 
-	printf( "\tTotal bytes sent %d, recieved %d\n"
+	printf( "\tTotal bytes sent %d, received %d\n"
 		"\tCommands sent %d, Events received %d\n"
 		"\tACL data packets sent %d, received %d\n"
 		"\tSCO data packets sent %d, received %d\n"
