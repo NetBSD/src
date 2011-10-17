@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.58 2011/10/13 22:08:18 joerg Exp $
+# $NetBSD: ad.mips64el,v 1.59 2011/10/17 14:20:54 chs Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -275,9 +275,9 @@
 ./usr/lib/64/libform_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libgcc.a				comp-c-lib		compat
 ./usr/lib/64/libgcc_eh.a			comp-c-lib		compat,pic
-./usr/lib/64/libgcc_eh_p.a			comp-c-proflib		compat,profile,pic
+./usr/lib/64/libgcc_eh_p.a			comp-c-proflib		obsolete
 ./usr/lib/64/libgcc_eh_pic.a			comp-c-piclib		obsolete
-./usr/lib/64/libgcc_p.a				comp-c-proflib		compat,profile
+./usr/lib/64/libgcc_p.a				comp-c-proflib		obsolete
 ./usr/lib/64/libgcc_pic.a			comp-c-piclib		obsolete
 ./usr/lib/64/libgcc_s.a				comp-obsolete		obsolete
 ./usr/lib/64/libgcc_s.so			base-sys-shlib		compat,pic
@@ -856,9 +856,9 @@
 ./usr/lib/o32/libform_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libgcc.a				comp-c-lib		compat
 ./usr/lib/o32/libgcc_eh.a			comp-c-lib		compat,pic
-./usr/lib/o32/libgcc_eh_p.a			comp-c-proflib		compat,profile,pic
+./usr/lib/o32/libgcc_eh_p.a			comp-c-proflib		obsolete
 ./usr/lib/o32/libgcc_eh_pic.a			comp-c-piclib		obsolete
-./usr/lib/o32/libgcc_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/libgcc_p.a			comp-c-proflib		obsolete
 ./usr/lib/o32/libgcc_pic.a			comp-c-piclib		obsolete
 ./usr/lib/o32/libgcc_s.a			comp-obsolete		obsolete
 ./usr/lib/o32/libgcc_s.so			base-sys-shlib		compat,pic

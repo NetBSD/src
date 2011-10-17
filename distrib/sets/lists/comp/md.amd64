@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.142 2011/10/13 22:08:18 joerg Exp $
+# $NetBSD: md.amd64,v 1.143 2011/10/17 14:20:54 chs Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -544,10 +544,10 @@
 ./usr/lib/i386/libgcc.a				comp-c-lib		compat
 ./usr/lib/i386/libgcc_eh.a			comp-c-lib		compat,pic
 ./usr/lib/i386/libgcc_eh_g.a			comp-c-proflib		compat,debuglib
-./usr/lib/i386/libgcc_eh_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libgcc_eh_p.a			comp-c-proflib		obsolete
 ./usr/lib/i386/libgcc_eh_pic.a			comp-c-piclib		obsolete
 ./usr/lib/i386/libgcc_g.a			comp-c-proflib		compat,debuglib
-./usr/lib/i386/libgcc_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libgcc_p.a			comp-c-proflib		obsolete
 ./usr/lib/i386/libgcc_pic.a			comp-c-piclib		obsolete
 ./usr/lib/i386/libgcc_s.a			comp-obsolete		obsolete
 ./usr/lib/i386/libgcc_s.so			comp-sys-shlib		compat,pic
