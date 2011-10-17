@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2011/07/16 15:52:21 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2011/10/17 14:42:42 tsutsui Exp $
 #
 #	etc.luna68k/Makefile.inc -- luna68k-specific etc Makefile targets
 #
@@ -7,6 +7,7 @@
 # to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC
+KERNEL_SUFFIXES=	aout
 
 BUILD_KERNELS=		INSTALL
 
