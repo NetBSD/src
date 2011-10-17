@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.83 2011/10/17 13:52:11 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.84 2011/10/17 14:19:28 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 2011/10/17 13:52:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2011/10/17 14:19:28 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -284,11 +284,12 @@ void
 identifycpu(void)
 {
 	extern int cputype;
-	const char *cpu;
+	const char *cpu, *model;
 
 	memset(cpu_model, 0, sizeof(cpu_model));
 	switch (cputype) {
 	case CPU_68030:
+		model ="LUNA-I";
 		cpu = "MC68030 CPU+MMU, MC68881 FPU";
 		machtype = LUNA_I;
 		/* 20MHz 68030 */
@@ -298,6 +299,7 @@ identifycpu(void)
 		break;
 #if defined(M68040)
 	case CPU_68040:
+		model ="LUNA-II";
 		cpu = "MC68040 CPU+MMU+FPU, 4k on-chip physical I/D caches";
 		machtype = LUNA_II;
 		/* 25MHz 68040 */
@@ -309,7 +311,7 @@ identifycpu(void)
 		panic("unknown CPU type");
 	}
 	strcpy(cpu_model, cpu);
-	printf("%s\n", cpu_model);
+	printf("%s (%s)\n", model, cpu);
 }
 
 /*
