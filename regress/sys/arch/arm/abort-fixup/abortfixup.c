@@ -1,4 +1,4 @@
-/* $NetBSD: abortfixup.c,v 1.9 2011/05/18 19:44:18 mellon Exp $ */
+/* $NetBSD: abortfixup.c,v 1.10 2011/10/17 16:39:15 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/types.h>
 
-__RCSID("$NetBSD: abortfixup.c,v 1.9 2011/05/18 19:44:18 mellon Exp $");
+__RCSID("$NetBSD: abortfixup.c,v 1.10 2011/10/17 16:39:15 mbalmer Exp $");
 
 #include <setjmp.h>
 #include <signal.h>
@@ -73,7 +73,7 @@ main(void)
 		"	str r1, [r0], r1, ror #10");
 		
 		/* Should not be reached if OK */
-		printf("!!! Regression test FAILED - no SEGV recieved\n");
+		printf("!!! Regression test FAILED - no SEGV received\n");
 		exit(1);
 	}
 
@@ -88,7 +88,7 @@ main(void)
 		"	str r1, [r0, r1, ror #10]");
 		
 		/* Should not be reached if OK */
-		printf("!!! Regression test FAILED - no SEGV recieved\n");
+		printf("!!! Regression test FAILED - no SEGV received\n");
 		exit(1);
 	}
 
