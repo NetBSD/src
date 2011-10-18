@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.4 2011/10/18 00:31:07 jmcneill Exp $ */
+/* $NetBSD: vmt.c,v 1.5 2011/10/18 21:41:25 jmcneill Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -45,6 +45,13 @@
 #include <dev/sysmon/sysmon_taskq.h>
 
 /* #define VMT_DEBUG */
+
+/* OS name to report to host */
+#ifdef __i386__
+#define VM_OS_NAME	"other"
+#else
+#define VM_OS_NAME	"other-64"
+#endif
 
 /* "The" magic number, always occupies the EAX register. */
 #define VM_MAGIC			0x564D5868
@@ -423,10 +430,10 @@ vmt_update_guest_info(struct vmt_softc *sc)
 
 		/*
 		 * host doesn't like it if we send an OS name it doesn't recognise,
-		 * so use the closest match, which happens to be FreeBSD.
+		 * so use "other" for i386 and "other-64" for amd64
 		 */
 		if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %s",
-		    VM_GUEST_INFO_OS_NAME, "FreeBSD") != 0) {
+		    VM_GUEST_INFO_OS_NAME, VM_OS_NAME) != 0) {
 			device_printf(sc->sc_dev, "unable to set guest OS\n");
 			sc->sc_rpc_error = 1;
 		}
