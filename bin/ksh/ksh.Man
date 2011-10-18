@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.22 2009/10/24 11:08:46 reed Exp $
+.\" $NetBSD: ksh.Man,v 1.23 2011/10/18 12:36:31 reed Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -996,7 +996,7 @@ BTW, don't blame me for this hack; it's in the original ksh.
 .sh(
 The prompt is printed verbatim (\fIi.e.\fP, no substitutions are done).
 .sh)
-Default is `\fB$\ \fP' for non-root users, `\fB#\ \fP' for root..
+Default is `\fB$\ \fP' for non-root users, `\fB#\ \fP' for root.
 .\"}}}
 .\"{{{  PS2
 .IP \fBPS2\fP
