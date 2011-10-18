@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.95 2011/10/17 22:38:01 jmcneill Exp $	*/
+/*	$NetBSD: cpu.c,v 1.96 2011/10/18 05:16:02 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.95 2011/10/17 22:38:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96 2011/10/18 05:16:02 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -123,6 +123,7 @@ static void	cpu_attach(device_t, device_t, void *);
 static void	cpu_defer(device_t);
 static int	cpu_rescan(device_t, const char *, const int *);
 static void	cpu_childdetached(device_t, device_t);
+static bool	cpu_stop(device_t);
 static bool	cpu_suspend(device_t, const pmf_qual_t *);
 static bool	cpu_resume(device_t, const pmf_qual_t *);
 static bool	cpu_shutdown(device_t, int);
@@ -1092,16 +1093,13 @@ cpu_offline_md(void)
 
 /* XXX joerg restructure and restart CPUs individually */
 static bool
-cpu_suspend(device_t dv, const pmf_qual_t *qual)
+cpu_stop(device_t dv)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
 	int err;
 
-	if ((ci->ci_flags & CPUF_PRESENT) == 0)
-		return true;
-
-	cpufreq_suspend(ci);
+	KASSERT((ci->ci_flags & CPUF_PRESENT) != 0);
 
 	if ((ci->ci_flags & CPUF_PRIMARY) != 0)
 		return true;
@@ -1121,6 +1119,21 @@ cpu_suspend(device_t dv, const pmf_qual_t *qual)
 	}
 
 	return true;
+}
+
+static bool
+cpu_suspend(device_t dv, const pmf_qual_t *qual)
+{
+	struct cpu_softc *sc = device_private(dv);
+	struct cpu_info *ci = sc->sc_info;
+
+	if ((ci->ci_flags & CPUF_PRESENT) == 0)
+		return true;
+	else {
+		cpufreq_suspend(ci);
+	}
+
+	return cpu_stop(dv);
 }
 
 static bool
@@ -1160,10 +1173,13 @@ cpu_shutdown(device_t dv, int how)
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
 
-	if (ci->ci_flags & CPUF_BSP)
+	if ((ci->ci_flags & CPUF_BSP) != 0)
 		return false;
 
-	return cpu_suspend(dv, NULL);
+	if ((ci->ci_flags & CPUF_PRESENT) == 0)
+		return true;
+
+	return cpu_stop(dv);
 }
 
 void
