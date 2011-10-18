@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pcivar.h,v 1.1 2009/08/24 11:32:49 jmcneill Exp $ */
+/*	$NetBSD: genfb_pcivar.h,v 1.2 2011/10/18 23:05:17 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,6 +28,8 @@
 
 #ifndef _SYS_DEV_PCI_GENFB_PCIVAR_H
 #define _SYS_DEV_PCI_GENFB_PCIVAR_H
+
+#include <dev/wsfb/genfbvar.h>
 
 struct range {
 	bus_addr_t offset;
