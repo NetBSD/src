@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.20 2011/09/09 22:51:44 christos Exp $ */
+/*  $NetBSD: perfuse.c,v 1.21 2011/10/18 15:47:32 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -399,13 +399,6 @@ perfuse_init(pc, pmi)
 	unsigned int puffs_flags;
 	struct puffs_node *pn_root;
 	struct puffs_pathobj *po_root;
-
-	/*
-	 * perfused needs to remain in memory. If it gets
-	 * swapped out, the kernel will deadlock when trying
-	 * to free memory backed by the PUFFS filesystem
-	 */
-	mlockall(MCL_CURRENT|MCL_FUTURE);
 
 	ps = init_state();
 	ps->ps_owner_uid = pmi->pmi_uid;
