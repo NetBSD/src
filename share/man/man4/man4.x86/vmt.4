@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmt.4,v 1.1 2011/10/18 10:19:12 wiz Exp $
+.\"	$NetBSD: vmt.4,v 1.2 2011/10/18 11:31:54 jmcneill Exp $
 .\"	$OpenBSD: vmt.4,v 1.4 2010/10/26 05:07:31 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -22,7 +22,7 @@
 .Nm vmt
 .Nd VMware Tools driver
 .Sh SYNOPSIS
-.Cd "vmt0 at mainbus0"
+.Cd "vmt0 at cpufeaturebus*"
 .Sh DESCRIPTION
 The
 .Nm
@@ -31,20 +31,22 @@ VMware Tools are intended to provide better support for operating systems
 running inside virtual machines.
 .Pp
 .Nm
-handles shutdown and reboot requests from the host by signalling
-.Xr init 8
-with SIGUSR2 and SIGINT respectively.
+handles shutdown, reboot, resume requests from the host by sending
+events using
+.Xr sysmon_pswitch 9
+of type PSWITCH_TYPE_POWER, PSWITCH_TYPE_RESET, and PSWITCH_TYPE_SLEEP that
+can be handled by
+.Xr powerd 9 .
 .Nm
 will log notifications that the guest has been suspended or resumed by the
 host.
-It also provides access to the host machine's clock as a timedelta sensor.
+.\" It also provides access to the host machine's clock as a timedelta sensor.
 .Pp
 .Nm
 reports the guest's hostname and first non-loopback IP address to the host.
 .Sh SEE ALSO
-.Xr init 8 ,
-,\" .Xr sensorsd 8 ,
-.Xr sysctl 8
+.Xr cpu 4
+.Xr powerd 8
 .Sh HISTORY
 The
 .Nm
