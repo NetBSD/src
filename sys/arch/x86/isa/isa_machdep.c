@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.30 2011/09/01 15:10:31 christos Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.31 2011/10/18 23:43:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.30 2011/09/01 15:10:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.31 2011/10/18 23:43:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,12 +80,16 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.30 2011/09/01 15:10:31 christos Ex
 #include <machine/bus_private.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
+#include <machine/autoconf.h>
+#include <machine/bootinfo.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
 #include <uvm/uvm_extern.h>
 
+#include "acpica.h"
+#include "opt_acpi.h"
 #include "ioapic.h"
 
 #if NIOAPIC > 0
@@ -334,4 +338,49 @@ _isa_dma_may_bounce(bus_dma_tag_t t, bus_dmamap_t map, int flags,
 	if (((map->_dm_size / PAGE_SIZE) + 1) > map->_dm_segcnt)
 		*cookieflagsp |= X86_DMA_MIGHT_NEED_BOUNCE;
 	return 0;
+}
+
+device_t
+device_isa_register(device_t dev, void *aux)
+{
+
+	/*
+	 * Handle network interfaces here, the attachment information is
+	 * not available driver-independently later.
+	 *
+	 * For disks, there is nothing useful available at attach time.
+	 */
+	if (device_class(dev) == DV_IFNET) {
+		struct btinfo_netif *bin = lookup_bootinfo(BTINFO_NETIF);
+		if (bin == NULL)
+			return NULL;
+
+		/*
+		 * We don't check the driver name against the device name
+		 * passed by the boot ROM.  The ROM should stay usable if
+		 * the driver becomes obsolete.  The physical attachment
+		 * information (checked below) must be sufficient to
+		 * idenfity the device.
+		 */
+		if (bin->bus == BI_BUS_ISA &&
+		    device_is_a(device_parent(dev), "isa")) {
+			struct isa_attach_args *iaa = aux;
+
+			/* Compare IO base address */
+			/* XXXJRT What about multiple IO addrs? */
+			if (iaa->ia_nio > 0 &&
+			    bin->addr.iobase == iaa->ia_io[0].ir_addr)
+			    	return dev;
+		}
+	}
+#if NACPICA > 0
+#if notyet
+	if (device_is_a(dev, "isa") && acpi_active) {
+		if (!(AcpiGbl_FADT.BootFlags & ACPI_FADT_LEGACY_DEVICES))
+			prop_dictionary_set_bool(device_properties(dev),
+			    "no-legacy-devices", true);
+	}
+#endif
+#endif /* NACPICA > 0 */
+	return NULL;
 }
