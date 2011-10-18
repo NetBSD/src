@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.50 2011/08/23 07:39:37 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.51 2011/10/18 09:22:53 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.50 2011/08/23 07:39:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.51 2011/10/18 09:22:53 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,9 +472,13 @@ loop:
 	if (uppervp != NULLVP)
 		if (VOP_GETATTR(uppervp, &va, FSCRED) == 0)
 			uppersz = va.va_size;
-	if (lowervp != NULLVP)
-		if (VOP_GETATTR(lowervp, &va, FSCRED) == 0)
+	if (lowervp != NULLVP) {
+		vn_lock(lowervp, LK_SHARED | LK_RETRY);
+		error = VOP_GETATTR(lowervp, &va, FSCRED);
+		VOP_UNLOCK(lowervp);
+		if (error == 0)
 			lowersz = va.va_size;
+	}
 	hash = UNION_HASH(uppervp, lowervp);
 
 	/*
@@ -1213,18 +1217,16 @@ union_readdirhook(struct vnode **vpp, struct file *fp, struct lwp *l)
 	if (vp->v_op != union_vnodeop_p)
 		return (0);
 
-	if ((lvp = union_dircache(vp, l)) == NULLVP)
-		return (0);
-
 	/*
 	 * If the directory is opaque,
 	 * then don't show lower entries
 	 */
 	error = VOP_GETATTR(vp, &va, fp->f_cred);
-	if (error || (va.va_flags & OPAQUE)) {
-		vput(lvp);
-		return (error);
-	}
+	if (error || (va.va_flags & OPAQUE))
+		return error;
+
+	if ((lvp = union_dircache(vp, l)) == NULLVP)
+		return (0);
 
 	error = VOP_OPEN(lvp, FREAD, fp->f_cred);
 	if (error) {

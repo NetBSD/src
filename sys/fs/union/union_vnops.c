@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.46 2011/08/23 07:39:37 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.47 2011/10/18 09:22:53 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.46 2011/08/23 07:39:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.47 2011/10/18 09:22:53 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -830,14 +830,6 @@ union_getattr(void *v)
 
 	vp = un->un_uppervp;
 	if (vp != NULLVP) {
-		/*
-		 * It's not clear whether VOP_GETATTR is to be
-		 * called with the vnode locked or not.  stat() calls
-		 * it with (vp) locked, and fstat calls it with
-		 * (vp) unlocked.
-		 * In the mean time, compensate here by checking
-		 * the union_node's lock flag.
-		 */
 		if (un->un_flags & UN_LOCKED)
 			FIXUP(un);
 
@@ -858,7 +850,11 @@ union_getattr(void *v)
 	}
 
 	if (vp != NULLVP) {
+		if (vp == un->un_lowervp)
+			vn_lock(vp, LK_SHARED | LK_RETRY);
 		error = VOP_GETATTR(vp, vap, ap->a_cred);
+		if (vp == un->un_lowervp)
+			VOP_UNLOCK(vp);
 		if (error)
 			return (error);
 		union_newsize(ap->a_vp, VNOVAL, vap->va_size);
