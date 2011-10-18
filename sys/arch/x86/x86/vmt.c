@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.3 2011/10/18 00:07:45 jmcneill Exp $ */
+/* $NetBSD: vmt.c,v 1.4 2011/10/18 00:31:07 jmcneill Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -389,7 +389,7 @@ static void
 vmt_update_guest_uptime(struct vmt_softc *sc)
 {
 	/* host wants uptime in hundredths of a second */
-	if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %llu00",
+	if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %" PRId64 "00",
 	    VM_GUEST_INFO_UPTIME, time_uptime) != 0) {
 		device_printf(sc->sc_dev, "unable to set guest uptime\n");
 		sc->sc_rpc_error = 1;
