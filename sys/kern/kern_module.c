@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.82 2011/09/19 00:40:22 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.83 2011/10/18 12:25:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.82 2011/09/19 00:40:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.83 2011/10/18 12:25:31 jmcneill Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1089,6 +1089,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		 * a short delay.
 		 */
 		mod->mod_autotime = time_second + module_autotime;
+		mod->mod_flags |= MODFLG_AUTO_LOADED;
 		module_thread_kick();
 	}
 	depth--;
@@ -1273,8 +1274,14 @@ module_thread(void *cookie)
 		kernconfig_lock();
 		for (mod = TAILQ_FIRST(&module_list); mod != NULL; mod = next) {
 			next = TAILQ_NEXT(mod, mod_chain);
+
+			/* skip built-in modules */
 			if (mod->mod_source == MODULE_SOURCE_KERNEL)
 				continue;
+			/* skip modules that weren't auto-loaded */
+			if ((mod->mod_flags & MODFLG_AUTO_LOADED) == 0)
+				continue;
+
 			if (uvmexp.free < uvmexp.freemin) {
 				module_thread_ticks = hz;
 			} else if (mod->mod_autotime == 0) {
@@ -1285,6 +1292,7 @@ module_thread(void *cookie)
 			} else {
 				mod->mod_autotime = 0;
 			}
+
 			/*
 			 * If this module wants to avoid autounload then
 			 * skip it.  Some modules can ping-pong in and out
