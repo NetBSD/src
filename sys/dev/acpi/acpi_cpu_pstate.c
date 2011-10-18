@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.51 2011/06/22 08:49:54 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.52 2011/10/18 05:08:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,11 +27,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.51 2011/06/22 08:49:54 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.52 2011/10/18 05:08:24 jruoho Exp $");
 
 #include <sys/param.h>
+#include <sys/cpufreq.h>
 #include <sys/kmem.h>
-#include <sys/xcall.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -53,7 +53,6 @@ static int		 acpicpu_pstate_min(struct acpicpu_softc *);
 static void		 acpicpu_pstate_change(struct acpicpu_softc *);
 static void		 acpicpu_pstate_reset(struct acpicpu_softc *);
 static void		 acpicpu_pstate_bios(void);
-static void		 acpicpu_pstate_set_xcall(void *, void *);
 
 extern struct acpicpu_softc **acpicpu_sc;
 
@@ -129,6 +128,7 @@ acpicpu_pstate_attach(device_t self)
 	if (ACPI_SUCCESS(rv))
 		sc->sc_flags |= ACPICPU_FLAG_P_DEP;
 
+	sc->sc_pstate_current = 0;
 	sc->sc_flags |= ACPICPU_FLAG_P;
 
 	acpicpu_pstate_bios();
@@ -175,99 +175,33 @@ void
 acpicpu_pstate_start(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
-	struct acpicpu_pstate *ps;
-	uint32_t i;
-	int rv;
 
-	rv = acpicpu_md_pstate_start(sc);
+	if (acpicpu_md_pstate_start(sc) == 0)
+		return;
 
-	if (rv != 0)
-		goto fail;
-
-	/*
-	 * Initialize the states to P0.
-	 */
-	for (i = 0, rv = ENXIO; i < sc->sc_pstate_count; i++) {
-
-		ps = &sc->sc_pstate[i];
-
-		if (ps->ps_freq != 0) {
-			acpicpu_pstate_set(sc->sc_ci, ps->ps_freq);
-			return;
-		}
-	}
-
-fail:
 	sc->sc_flags &= ~ACPICPU_FLAG_P;
-	aprint_error_dev(self, "failed to start P-states (err %d)\n", rv);
+	aprint_error_dev(self, "failed to start P-states\n");
 }
 
 void
 acpicpu_pstate_suspend(void *aux)
 {
-	struct acpicpu_pstate *ps = NULL;
 	struct acpicpu_softc *sc;
-	struct cpu_info *ci;
 	device_t self = aux;
-	uint64_t xc;
-	int32_t i;
-
-	sc = device_private(self);
-	ci = sc->sc_ci;
 
 	/*
 	 * Reset any dynamic limits.
 	 */
+	sc = device_private(self);
 	mutex_enter(&sc->sc_mtx);
 	acpicpu_pstate_reset(sc);
-
-	/*
-	 * Following design notes for Windows, we set the highest
-	 * P-state when entering any of the system sleep states.
-	 * When resuming, the saved P-state will be restored.
-	 *
-	 *	Microsoft Corporation: Windows Native Processor
-	 *	Performance Control. Version 1.1a, November, 2002.
-	 */
-	sc->sc_pstate_saved = sc->sc_pstate_current;
-
-	for (i = sc->sc_pstate_count - 1; i >= 0; i--) {
-
-		if (sc->sc_pstate[i].ps_freq != 0) {
-			ps = &sc->sc_pstate[i];
-			break;
-		}
-	}
-
-	if (__predict_false(ps == NULL)) {
-		mutex_exit(&sc->sc_mtx);
-		return;
-	}
-
-	if (sc->sc_pstate_saved == ps->ps_freq) {
-		mutex_exit(&sc->sc_mtx);
-		return;
-	}
-
 	mutex_exit(&sc->sc_mtx);
-
-	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &ps->ps_freq, NULL, ci);
-	xc_wait(xc);
 }
 
 void
 acpicpu_pstate_resume(void *aux)
 {
-	struct acpicpu_softc *sc;
-	device_t self = aux;
-	uint32_t freq;
-	uint64_t xc;
-
-	sc = device_private(self);
-	freq = sc->sc_pstate_saved;
-
-	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &freq, NULL, sc->sc_ci);
-	xc_wait(xc);
+	/* Nothing. */
 }
 
 void
@@ -276,10 +210,8 @@ acpicpu_pstate_callback(void *aux)
 	struct acpicpu_softc *sc;
 	device_t self = aux;
 	uint32_t freq;
-	uint64_t xc;
 
 	sc = device_private(self);
-
 	mutex_enter(&sc->sc_mtx);
 	acpicpu_pstate_change(sc);
 
@@ -294,12 +226,10 @@ acpicpu_pstate_callback(void *aux)
 	}
 
 	mutex_exit(&sc->sc_mtx);
-
-	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &freq, NULL, sc->sc_ci);
-	xc_wait(xc);
+	cpufreq_set(sc->sc_ci, freq);
 }
 
-ACPI_STATUS
+static ACPI_STATUS
 acpicpu_pstate_pss(struct acpicpu_softc *sc)
 {
 	struct acpicpu_pstate *ps;
@@ -529,7 +459,7 @@ acpicpu_pstate_xpss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 	return AE_OK;
 }
 
-ACPI_STATUS
+static ACPI_STATUS
 acpicpu_pstate_pct(struct acpicpu_softc *sc)
 {
 	static const size_t size = sizeof(struct acpicpu_reg);
@@ -635,31 +565,31 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 	(void)memcpy(&sc->sc_pstate_control, reg[0], size);
 	(void)memcpy(&sc->sc_pstate_status,  reg[1], size);
 
-	if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) == 0)
-		goto out;
+	if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) != 0) {
 
-	/*
-	 * At the very least, mandate that
-	 * XPSS supplies the control address.
-	 */
-	if (sc->sc_pstate_control.reg_addr == 0) {
-		rv = AE_AML_BAD_RESOURCE_LENGTH;
-		goto out;
-	}
+		/*
+		 * At the very least, mandate that
+		 * XPSS supplies the control address.
+		 */
+		if (sc->sc_pstate_control.reg_addr == 0) {
+			rv = AE_AML_BAD_RESOURCE_LENGTH;
+			goto out;
+		}
 
-	/*
-	 * If XPSS is present, copy the MSR addresses
-	 * to the P-state structures for convenience.
-	 */
-	for (i = 0; i < sc->sc_pstate_count; i++) {
+		/*
+		 * If XPSS is present, copy the supplied
+		 * MSR addresses to the P-state structures.
+		 */
+		for (i = 0; i < sc->sc_pstate_count; i++) {
 
-		ps = &sc->sc_pstate[i];
+			ps = &sc->sc_pstate[i];
 
-		if (ps->ps_freq == 0)
-			continue;
+			if (ps->ps_freq == 0)
+				continue;
 
-		ps->ps_status_addr  = sc->sc_pstate_status.reg_addr;
-		ps->ps_control_addr = sc->sc_pstate_control.reg_addr;
+			ps->ps_status_addr  = sc->sc_pstate_status.reg_addr;
+			ps->ps_control_addr = sc->sc_pstate_control.reg_addr;
+		}
 	}
 
 out:
@@ -863,12 +793,13 @@ acpicpu_pstate_bios(void)
 	(void)AcpiOsWritePort(addr, val, 8);
 }
 
-int
-acpicpu_pstate_get(struct cpu_info *ci, uint32_t *freq)
+void
+acpicpu_pstate_get(void *aux, void *cpu_freq)
 {
 	struct acpicpu_pstate *ps = NULL;
+	struct cpu_info *ci = curcpu();
 	struct acpicpu_softc *sc;
-	uint32_t i, val = 0;
+	uint32_t freq, i, val = 0;
 	uint64_t addr;
 	uint8_t width;
 	int rv;
@@ -877,11 +808,6 @@ acpicpu_pstate_get(struct cpu_info *ci, uint32_t *freq)
 
 	if (__predict_false(sc == NULL)) {
 		rv = ENXIO;
-		goto fail;
-	}
-
-	if (__predict_false(sc->sc_cold != false)) {
-		rv = EBUSY;
 		goto fail;
 	}
 
@@ -895,10 +821,10 @@ acpicpu_pstate_get(struct cpu_info *ci, uint32_t *freq)
 	/*
 	 * Use the cached value, if available.
 	 */
-	if (sc->sc_pstate_current != ACPICPU_P_STATE_UNKNOWN) {
-		*freq = sc->sc_pstate_current;
+	if (sc->sc_pstate_current != 0) {
+		*(uint32_t *)cpu_freq = sc->sc_pstate_current;
 		mutex_exit(&sc->sc_mtx);
-		return 0;
+		return;
 	}
 
 	mutex_exit(&sc->sc_mtx);
@@ -907,7 +833,7 @@ acpicpu_pstate_get(struct cpu_info *ci, uint32_t *freq)
 
 	case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
-		rv = acpicpu_md_pstate_get(sc, freq);
+		rv = acpicpu_md_pstate_get(sc, &freq);
 
 		if (__predict_false(rv != 0))
 			goto fail;
@@ -942,7 +868,7 @@ acpicpu_pstate_get(struct cpu_info *ci, uint32_t *freq)
 			goto fail;
 		}
 
-		*freq = ps->ps_freq;
+		freq = ps->ps_freq;
 		break;
 
 	default:
@@ -951,33 +877,24 @@ acpicpu_pstate_get(struct cpu_info *ci, uint32_t *freq)
 	}
 
 	mutex_enter(&sc->sc_mtx);
-	sc->sc_pstate_current = *freq;
+	sc->sc_pstate_current = freq;
+	*(uint32_t *)cpu_freq = freq;
 	mutex_exit(&sc->sc_mtx);
 
-	return 0;
+	return;
 
 fail:
 	aprint_error_dev(sc->sc_dev, "failed "
 	    "to get frequency (err %d)\n", rv);
 
 	mutex_enter(&sc->sc_mtx);
-	*freq = sc->sc_pstate_current = ACPICPU_P_STATE_UNKNOWN;
+	sc->sc_pstate_current = 0;
+	*(uint32_t *)cpu_freq = 0;
 	mutex_exit(&sc->sc_mtx);
-
-	return rv;
 }
 
 void
-acpicpu_pstate_set(struct cpu_info *ci, uint32_t freq)
-{
-	uint64_t xc;
-
-	xc = xc_broadcast(0, acpicpu_pstate_set_xcall, &freq, NULL);
-	xc_wait(xc);
-}
-
-static void
-acpicpu_pstate_set_xcall(void *arg1, void *arg2)
+acpicpu_pstate_set(void *aux, void *cpu_freq)
 {
 	struct acpicpu_pstate *ps = NULL;
 	struct cpu_info *ci = curcpu();
@@ -987,16 +904,11 @@ acpicpu_pstate_set_xcall(void *arg1, void *arg2)
 	uint8_t width;
 	int rv;
 
-	freq = *(uint32_t *)arg1;
+	freq = *(uint32_t *)cpu_freq;
 	sc = acpicpu_sc[ci->ci_acpiid];
 
 	if (__predict_false(sc == NULL)) {
 		rv = ENXIO;
-		goto fail;
-	}
-
-	if (__predict_false(sc->sc_cold != false)) {
-		rv = EBUSY;
 		goto fail;
 	}
 
@@ -1096,6 +1008,6 @@ fail:
 		    "frequency to %u (err %d)\n", freq, rv);
 
 	mutex_enter(&sc->sc_mtx);
-	sc->sc_pstate_current = ACPICPU_P_STATE_UNKNOWN;
+	sc->sc_pstate_current = 0;
 	mutex_exit(&sc->sc_mtx);
 }
