@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2011/06/23 22:50:53 christos Exp $ */
+/*	$NetBSD: main.c,v 1.22 2011/10/18 20:54:56 jym Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.21 2011/06/23 22:50:53 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2011/10/18 20:54:56 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -308,15 +308,23 @@ main(int argc, char *argv[])
 			}
 		}
 
+		/*
+		 * Only print mappings for processes we can send a signal(7)
+		 * to, or kernel mappings if we are root
+		 */
+		if (kill(pid, 0) == -1 ||
+		   (pid == 0 && getuid() != 0)) {
+			errno = EPERM;
+			warn("%d", pid);
+			pid = -1;
+			continue;
+
+		}
+
 		/* find the process id */
 		if (pid == 0)
 			kproc = NULL;
 		else {
-			if (kill(pid, 0) == -1) {
-				warn("%d", pid);
-				pid = -1;
-				continue;
-			}
 			kproc = kvm_getproc2(kd, KERN_PROC_PID, pid,
 					     sizeof(struct kinfo_proc2), &rc);
 			if (kproc == NULL || rc == 0) {
