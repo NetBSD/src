@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1348 2011/10/11 19:34:39 christos Exp $
+# $NetBSD: mi,v 1.1349 2011/10/18 09:50:24 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1788,6 +1788,7 @@
 ./usr/share/man/cat4/vlan.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmnet.0			man-sys-catman		.cat
+./usr/share/man/cat4/vmt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vnd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vte.0			man-sys-catman		.cat
@@ -4544,6 +4545,7 @@
 ./usr/share/man/html4/vlan.html			man-sys-htmlman		html
 ./usr/share/man/html4/vmmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/vmnet.html		man-sys-htmlman		html
+./usr/share/man/html4/vmt.html		man-sys-htmlman		html
 ./usr/share/man/html4/vnd.html			man-sys-htmlman		html
 ./usr/share/man/html4/vr.html			man-sys-htmlman		html
 ./usr/share/man/html4/vte.html			man-sys-htmlman		html
@@ -7235,6 +7237,7 @@
 ./usr/share/man/man4/vlan.4			man-sys-man		.man
 ./usr/share/man/man4/vmmon.4			man-sys-man		.man
 ./usr/share/man/man4/vmnet.4			man-sys-man		.man
+./usr/share/man/man4/vmt.4			man-sys-man		.man
 ./usr/share/man/man4/vnd.4			man-sys-man		.man
 ./usr/share/man/man4/vr.4			man-sys-man		.man
 ./usr/share/man/man4/vte.4			man-sys-man		.man
