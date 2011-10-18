@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.42 2011/09/20 00:12:23 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43 2011/10/18 23:14:28 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -117,6 +117,12 @@
  */
 
 LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
+
+/*
+ * linked list of all non-kernel pmaps
+ */
+extern struct pmap_head pmaps;
+extern kmutex_t pmaps_lock;    /* protects pmaps */
 
 /*
  * the pmap structure
@@ -244,6 +250,8 @@ int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
 u_int		x86_mmap_flags(paddr_t);
 
 bool		pmap_is_curpmap(struct pmap *);
+
+void		pmap_invalidate_pool_caches(void);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
