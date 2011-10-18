@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.250 2011/08/05 18:59:44 jakllsch Exp $	*/
+/*	$NetBSD: acpi.c,v 1.251 2011/10/18 23:47:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.250 2011/08/05 18:59:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.251 2011/10/18 23:47:26 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1385,6 +1385,17 @@ acpi_enter_sleep_state(int state)
 			if (ACPI_FAILURE(rv))
 				aprint_error_dev(sc->sc_dev, "failed to "
 				    "enter S1: %s\n", AcpiFormatException(rv));
+
+			/*
+			 * Clear fixed events and disable all GPEs before
+			 * interrupts are enabled.
+			 */
+			AcpiClearEvent(ACPI_EVENT_PMTIMER);
+			AcpiClearEvent(ACPI_EVENT_GLOBAL);
+			AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
+			AcpiClearEvent(ACPI_EVENT_SLEEP_BUTTON);
+			AcpiClearEvent(ACPI_EVENT_RTC);
+			AcpiHwDisableAllGpes();
 
 			acpi_md_OsEnableInterrupt();
 			rv = AcpiLeaveSleepState(state);
