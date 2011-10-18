@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.2 2011/10/17 23:25:10 jmcneill Exp $ */
+/* $NetBSD: vmt.c,v 1.3 2011/10/18 00:07:45 jmcneill Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -1206,6 +1206,9 @@ vmt_modcmd(modcmd_t cmd, void *aux)
 		error = config_fini_component(cfdriver_ioconf_vmt,
 		    cfattach_ioconf_vmt, cfdata_ioconf_vmt);
 #endif
+		break;
+	case MODULE_CMD_AUTOUNLOAD:
+		error = EBUSY;
 		break;
 	default:
 		error = ENOTTY;
