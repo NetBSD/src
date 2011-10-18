@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.136 2011/10/18 23:14:28 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137 2011/10/18 23:43:06 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.136 2011/10/18 23:14:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137 2011/10/18 23:43:06 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4412,118 +4412,18 @@ x86_mmap_flags(paddr_t mdpgno)
 	return pflag;
 }
 
+/*
+ * Invalidates pool_cache(9) used by pmap(9).
+ */
+void
+pmap_invalidate_pool_caches(void)
+{
 #ifdef XEN
-/*
- * Flush all APDP entries found in pmaps
- * Required during Xen save/restore operations, as it does not
- * handle alternative recursive mappings properly
- */
-void
-pmap_unmap_all_apdp_pdes(void)
-{
-
-	int i;
-	int s;
-	struct pmap *pm;
-
-	s = splvm();
-
-	pmap_unmap_apdp();
-
-	mutex_enter(&pmaps_lock);
-	/*
-	 * Set APDP entries to 0 in all pmaps.
-	 * Note that for PAE kernels, this only clears the APDP entries
-	 * found in the L2 shadow pages, as pmap_pdirpa() is used to obtain
-	 * the PA of the pmap->pm_pdir[] pages (forming the 4 contiguous
-	 * pages of PAE PD: 3 for user space, 1 for the L2 kernel shadow page)
-	 */
-	LIST_FOREACH(pm, &pmaps, pm_list) {
-		for (i = 0; i < PDP_SIZE; i++) {
-			xpq_queue_pte_update(
-			    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_APTE + i)), 0);
-		}
-	}
-	mutex_exit(&pmaps_lock);
-
-	xpq_flush_queue();
-
-	splx(s);
-
-}
-
-#ifdef PAE
-/*
- * NetBSD uses L2 shadow pages to support PAE with Xen. However, Xen does not
- * handle them correctly during save/restore, leading to incorrect page
- * tracking and pinning during restore.
- * For save/restore to succeed, two functions are introduced:
- * - pmap_map_recursive_entries(), used by resume code to set the recursive
- *   mapping entries to their correct value
- * - pmap_unmap_recursive_entries(), used by suspend code to clear all
- *   PDIR_SLOT_PTE entries
- */
-void
-pmap_map_recursive_entries(void)
-{
-
-	int i;
-	struct pmap *pm;
-
-	mutex_enter(&pmaps_lock);
-
-	LIST_FOREACH(pm, &pmaps, pm_list) {
-		for (i = 0; i < PDP_SIZE; i++) {
-			xpq_queue_pte_update(
-			    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_PTE + i)),
-			    xpmap_ptom((pm)->pm_pdirpa[i]) | PG_V);
-		}
-	}
-
-	mutex_exit(&pmaps_lock);
-
-	for (i = 0; i < PDP_SIZE; i++) {
-		xpq_queue_pte_update(
-		    xpmap_ptom(pmap_pdirpa(pmap_kernel(), PDIR_SLOT_PTE + i)),
-		    xpmap_ptom(pmap_kernel()->pm_pdirpa[i]) | PG_V);
-	}
-
-	xpq_flush_queue();
-}
-
-void
-pmap_unmap_recursive_entries(void)
-{
-
-	int i;
-	struct pmap *pm;
-
 	/*
 	 * We must invalidate all shadow pages found inside the pmap_pdp_cache.
 	 * They are technically considered by Xen as L2 pages, although they
 	 * are not currently found inside pmaps list.
 	 */
 	pool_cache_invalidate(&pmap_pdp_cache);
-
-	mutex_enter(&pmaps_lock);
-
-	LIST_FOREACH(pm, &pmaps, pm_list) {
-		for (i = 0; i < PDP_SIZE; i++) {
-			xpq_queue_pte_update(
-			    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_PTE + i)), 0);
-		}
-	}
-
-	mutex_exit(&pmaps_lock);
-
-	/* do it for pmap_kernel() too! */
-	for (i = 0; i < PDP_SIZE; i++)
-		xpq_queue_pte_update(
-		    xpmap_ptom(pmap_pdirpa(pmap_kernel(), PDIR_SLOT_PTE + i)),
-		    0);
-
-	xpq_flush_queue();
-
+#endif
 }
-#endif /* PAE */
-#endif /* XEN */
