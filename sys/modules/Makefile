@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 2011/10/02 12:13:08 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.95 2011/10/18 00:33:47 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -106,6 +106,7 @@ SUBDIR+=	odcm
 SUBDIR+=	powernow
 SUBDIR+=	tprof_pmi
 SUBDIR+=	tprof_amdpmi
+SUBDIR+=	vmt
 .endif
 
 #
