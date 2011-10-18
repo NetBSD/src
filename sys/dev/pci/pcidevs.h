@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1095 2011/10/06 22:13:50 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1096 2011/10/18 23:23:20 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1100 2011/10/06 22:13:35 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.1101 2011/10/18 23:23:07 jmcneill Exp
  */
 
 /*
@@ -4779,8 +4779,11 @@
 #define	PCI_PRODUCT_VLSI_82C925	0x0280		/* 82C925 */
 
 /* VMware products */
-#define	PCI_PRODUCT_VMWARE_VIRTUAL	0x0710		/* Virtual SVGA */
 #define	PCI_PRODUCT_VMWARE_VIRTUAL2	0x0405		/* Virtual SVGA II */
+#define	PCI_PRODUCT_VMWARE_VIRTUAL	0x0710		/* Virtual SVGA */
+#define	PCI_PRODUCT_VMWARE_VMCI	0x0740		/* Virtual Machine Communication Interface */
+#define	PCI_PRODUCT_VMWARE_PCIB	0x0790		/* PCI Bridge */
+#define	PCI_PRODUCT_VMWARE_PCIE	0x07a0		/* PCI Express Root Port */
 
 /* Weitek products */
 #define	PCI_PRODUCT_WEITEK_P9000	0x9001		/* P9000 */
