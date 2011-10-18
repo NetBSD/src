@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1100 2011/10/06 22:13:35 jmcneill Exp $
+$NetBSD: pcidevs,v 1.1101 2011/10/18 23:23:07 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4772,8 +4772,11 @@ product VLSI 82C975	0x0200	82C975
 product VLSI 82C925	0x0280	82C925
 
 /* VMware products */
-product VMWARE VIRTUAL	0x0710	Virtual SVGA
 product VMWARE VIRTUAL2 0x0405	Virtual SVGA II
+product VMWARE VIRTUAL	0x0710	Virtual SVGA
+product VMWARE VMCI	0x0740	Virtual Machine Communication Interface
+product VMWARE PCIB	0x0790	PCI Bridge
+product VMWARE PCIE	0x07a0	PCI Express Root Port
 
 /* Weitek products */
 product WEITEK P9000	0x9001	P9000
