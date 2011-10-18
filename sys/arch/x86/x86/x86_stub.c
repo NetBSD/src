@@ -1,7 +1,7 @@
-/* $NetBSD: x86_stub.c,v 1.2 2011/10/18 23:25:20 dyoung Exp $ */
+/* $NetBSD: x86_stub.c,v 1.3 2011/10/18 23:41:45 dyoung Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_stub.c,v 1.2 2011/10/18 23:25:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_stub.c,v 1.3 2011/10/18 23:41:45 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -9,8 +9,8 @@ __KERNEL_RCSID(0, "$NetBSD: x86_stub.c,v 1.2 2011/10/18 23:25:20 dyoung Exp $");
 
 #include <machine/autoconf.h>
 
-int x86_nullop(void);
-void *x86_zeroop(void);
+int x86_zeroop(void);
+void *x86_nullop(void);
 void x86_voidop(void);
 
 void
@@ -18,16 +18,16 @@ x86_voidop(void)
 {
 }
 
-int
+void *
 x86_nullop(void)
 {
-	return 0;
+	return NULL;
 }
 
-void *
+int
 x86_zeroop(void)
 {
-	return NULL;
+	return 0;
 }
 
 __weak_alias(device_pci_props_register, x86_voidop);
