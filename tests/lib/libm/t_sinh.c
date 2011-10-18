@@ -1,4 +1,4 @@
-/* $NetBSD: t_sinh.c,v 1.2 2011/10/16 13:42:22 jruoho Exp $ */
+/* $NetBSD: t_sinh.c,v 1.3 2011/10/18 04:51:01 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sinh.c,v 1.2 2011/10/16 13:42:22 jruoho Exp $");
+__RCSID("$NetBSD: t_sinh.c,v 1.3 2011/10/18 04:51:01 jruoho Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -47,7 +47,7 @@ ATF_TC_HEAD(sinh_def, tc)
 ATF_TC_BODY(sinh_def, tc)
 {
 #ifndef __vax__
-	const double x[] = { -9.0, -1.0, -0.05, 0.0, 1.0, 10.0, 20.0 };
+	const double x[] = { 0.005, 0.05, 0.0, 1.0, 10.0, 20.0 };
 	const double eps = 1.0e-8;
 	double y, z;
 	size_t i;
@@ -56,6 +56,10 @@ ATF_TC_BODY(sinh_def, tc)
 
 		y = sinh(x[i]);
 		z = (exp(x[i]) - exp(-x[i])) / 2;
+
+		(void)fprintf(stderr,
+		    "sinh(%0.03f) = %f\n(exp(%0.03f) - "
+		    "exp(-%0.03f)) / 2 = %f\n", x[i], y, x[i], x[i], z);
 
 		if (fabs(y - z) > eps)
 			atf_tc_fail_nonfatal("sinh(%0.03f) != %0.03f\n",
@@ -160,7 +164,7 @@ ATF_TC_HEAD(sinhf_def, tc)
 ATF_TC_BODY(sinhf_def, tc)
 {
 #ifndef __vax__
-	const float x[] = { -9.0, -1.0, -0.05, 0.0, 1.0, 10.0, 20.0 };
+	const float x[] = { 0.005, 0.05, 0.0, 1.0, 10.0, 20.0 };
 	const float eps = 1.0e-4;
 	float y, z;
 	size_t i;
@@ -169,6 +173,10 @@ ATF_TC_BODY(sinhf_def, tc)
 
 		y = sinhf(x[i]);
 		z = (expf(x[i]) - expf(-x[i])) / 2;
+
+		(void)fprintf(stderr,
+		    "sinhf(%0.03f) = %f\n(expf(%0.03f) - "
+		    "expf(-%0.03f)) / 2 = %f\n", x[i], y, x[i], x[i], z);
 
 		if (fabsf(y - z) > eps)
 			atf_tc_fail_nonfatal("sinhf(%0.03f) != %0.03f\n",
