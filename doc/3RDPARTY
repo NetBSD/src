@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.879 2011/10/13 23:42:06 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.880 2011/10/18 12:42:19 reed Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -859,6 +859,7 @@ Home Page:	http://www.cs.mun.ca/~michael/pdksh/
 Mailing List:
 Responsible:	jdolecek
 License:	Public domain
+Notes:
 pdksh-5.2.14-patches.1 and pdksh-5.2.14-patches.2 have been applied.
 
 Package:	PF (openbsd packet filter)
