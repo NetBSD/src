@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.6 2011/09/28 02:36:37 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.7 2011/10/18 17:59:01 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.6 2011/09/28 02:36:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.7 2011/10/18 17:59:01 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,7 @@ struct wsdisplay_accessops voyagerfb_accessops = {
 	NULL	/* scroll */
 };
 
+static void	voyagerfb_setup_backlight(struct voyagerfb_softc *);
 static void	voyagerfb_brightness_up(device_t);
 static void	voyagerfb_brightness_down(device_t);
 /* set backlight level */
@@ -273,13 +274,7 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 
 	/* backlight control */
 	sc->sc_gpio_cookie = device_private(parent);
-	voyager_write_gpio(sc->sc_gpio_cookie, 0xffffffff, GPIO_BACKLIGHT);
-	sc->sc_bl_on = 1;
-	sc->sc_bl_level = 255;
-	pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP,
-	    voyagerfb_brightness_up, TRUE);
-	pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN,
-	    voyagerfb_brightness_down, TRUE);
+	voyagerfb_setup_backlight(sc);
 
 	/* init engine here */
 	voyagerfb_init(sc);
@@ -971,6 +966,21 @@ voyagerfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 
 /* backlight control */
 static void
+voyagerfb_setup_backlight(struct voyagerfb_softc *sc)
+{
+	/* switch the pin to gpio mode if it isn't already */
+	voyager_control_gpio(sc->sc_gpio_cookie, ~GPIO_BACKLIGHT, 0);
+	/* turn it on */
+	voyager_write_gpio(sc->sc_gpio_cookie, 0xffffffff, GPIO_BACKLIGHT);
+	sc->sc_bl_on = 1;
+	sc->sc_bl_level = 255;
+	pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP,
+	    voyagerfb_brightness_up, TRUE);
+	pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN,
+	    voyagerfb_brightness_down, TRUE);
+}
+
+static void
 voyagerfb_set_backlight(struct voyagerfb_softc *sc, int level)
 {
 
@@ -988,8 +998,25 @@ voyagerfb_set_backlight(struct voyagerfb_softc *sc, int level)
 	sc->sc_bl_level = level;
 	if (sc->sc_bl_on == 0)
 		sc->sc_bl_on = 1;
-	level = 255 - level;
 	/* and here we would actually muck with the hardware */
+	if ((level == 0) || (level == 255)) {
+		/* in these cases bypass the PWM and use the gpio */
+		voyager_control_gpio(sc->sc_gpio_cookie, ~GPIO_BACKLIGHT, 0);
+		if (level == 0) {
+			voyager_write_gpio(sc->sc_gpio_cookie, ~GPIO_BACKLIGHT, 0);
+		} else {
+			voyager_write_gpio(sc->sc_gpio_cookie, 0xffffffff, GPIO_BACKLIGHT);
+		}
+	} else {
+		uint32_t pwm;
+
+		pwm = voyager_set_pwm(20000, level * 1000 / 256);
+		pwm |= SM502_PWM_ENABLE;
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PWM0, pwm);
+
+		/* let the PWM take over */
+		voyager_control_gpio(sc->sc_gpio_cookie, 0xffffffff, GPIO_BACKLIGHT);
+	}
 }
 
 static void
@@ -999,7 +1026,15 @@ voyagerfb_switch_backlight(struct voyagerfb_softc *sc, int on)
 	if (on == sc->sc_bl_on)
 		return;
 	sc->sc_bl_on = on;
-	voyager_write_gpio(sc->sc_gpio_cookie, ~GPIO_BACKLIGHT, on ? GPIO_BACKLIGHT : 0);
+	if (on) {
+		int level = sc->sc_bl_level;
+
+		sc->sc_bl_level = -1;
+		voyagerfb_set_backlight(sc, level);
+	} else {
+		voyager_control_gpio(sc->sc_gpio_cookie, ~GPIO_BACKLIGHT, 0);
+		voyager_write_gpio(sc->sc_gpio_cookie, ~GPIO_BACKLIGHT, 0);
+	}
 }
 	
 
