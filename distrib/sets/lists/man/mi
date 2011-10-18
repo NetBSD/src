@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1349 2011/10/18 09:50:24 wiz Exp $
+# $NetBSD: mi,v 1.1350 2011/10/18 10:19:11 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -64,8 +64,8 @@
 ./usr/share/man/cat1/atf-version.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atq.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atrm.0			man-cron-catman		.cat
-./usr/share/man/cat1/audioctl.0			man-audio-catman	.cat
 ./usr/share/man/cat1/audiocfg.0			man-audio-catman	.cat
+./usr/share/man/cat1/audioctl.0			man-audio-catman	.cat
 ./usr/share/man/cat1/audioplay.0		man-audio-catman	.cat
 ./usr/share/man/cat1/audiorecord.0		man-audio-catman	.cat
 ./usr/share/man/cat1/audit-packages.0		man-obsolete		obsolete
@@ -101,9 +101,9 @@
 ./usr/share/man/cat1/chsh.0			man-util-catman		.cat
 ./usr/share/man/cat1/ci.0			man-rcs-catman		.cat
 ./usr/share/man/cat1/cksum.0			man-util-catman		.cat
+./usr/share/man/cat1/cleantags.0		man-util-catman		.cat
 ./usr/share/man/cat1/clear.0			man-util-catman		.cat
 ./usr/share/man/cat1/cmp.0			man-util-catman		.cat
-./usr/share/man/cat1/cleantags.0		man-util-catman		.cat
 ./usr/share/man/cat1/co.0			man-rcs-catman		.cat
 ./usr/share/man/cat1/col.0			man-util-catman		.cat
 ./usr/share/man/cat1/colcrt.0			man-util-catman		.cat
@@ -1788,7 +1788,6 @@
 ./usr/share/man/cat4/vlan.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmnet.0			man-sys-catman		.cat
-./usr/share/man/cat4/vmt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vnd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vte.0			man-sys-catman		.cat
@@ -1839,6 +1838,7 @@
 ./usr/share/man/cat4/x86/mem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/odcm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/powernow.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/vmt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbdback.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbox.0			man-sys-catman		.cat
@@ -2982,8 +2982,8 @@
 ./usr/share/man/html1/atf-version.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atq.html			man-cron-htmlman	html
 ./usr/share/man/html1/atrm.html			man-cron-htmlman	html
-./usr/share/man/html1/audioctl.html		man-audio-htmlman	html
 ./usr/share/man/html1/audiocfg.html		man-audio-htmlman	html
+./usr/share/man/html1/audioctl.html		man-audio-htmlman	html
 ./usr/share/man/html1/audioplay.html		man-audio-htmlman	html
 ./usr/share/man/html1/audiorecord.html		man-audio-htmlman	html
 ./usr/share/man/html1/audit-packages.html	man-obsolete		obsolete
@@ -3019,9 +3019,9 @@
 ./usr/share/man/html1/chsh.html			man-util-htmlman	html
 ./usr/share/man/html1/ci.html			man-rcs-htmlman		html
 ./usr/share/man/html1/cksum.html		man-util-htmlman	html
+./usr/share/man/html1/cleantags.html		man-util-htmlman	html
 ./usr/share/man/html1/clear.html		man-util-htmlman	html
 ./usr/share/man/html1/cmp.html			man-util-htmlman	html
-./usr/share/man/html1/cleantags.html		man-util-htmlman	html
 ./usr/share/man/html1/co.html			man-rcs-htmlman		html
 ./usr/share/man/html1/col.html			man-util-htmlman	html
 ./usr/share/man/html1/colcrt.html		man-util-htmlman	html
@@ -4042,8 +4042,8 @@
 ./usr/share/man/html4/lc.html			man-sys-htmlman		html
 ./usr/share/man/html4/ld.html			man-sys-htmlman		html
 ./usr/share/man/html4/le.html			man-sys-htmlman		html
-./usr/share/man/html4/lii.html			man-sys-htmlman		html
 ./usr/share/man/html4/lg3303.html		man-sys-htmlman		html
+./usr/share/man/html4/lii.html			man-sys-htmlman		html
 ./usr/share/man/html4/lkm.html			man-obsolete		obsolete
 ./usr/share/man/html4/lm.html			man-sys-htmlman		html
 ./usr/share/man/html4/lmc.html			man-sys-htmlman		html
@@ -4545,7 +4545,6 @@
 ./usr/share/man/html4/vlan.html			man-sys-htmlman		html
 ./usr/share/man/html4/vmmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/vmnet.html		man-sys-htmlman		html
-./usr/share/man/html4/vmt.html		man-sys-htmlman		html
 ./usr/share/man/html4/vnd.html			man-sys-htmlman		html
 ./usr/share/man/html4/vr.html			man-sys-htmlman		html
 ./usr/share/man/html4/vte.html			man-sys-htmlman		html
@@ -4596,6 +4595,7 @@
 ./usr/share/man/html4/x86/mem.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/odcm.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/powernow.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/vmt.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbd.html			man-sys-htmlman		html
 ./usr/share/man/html4/xbdback.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbox.html			man-sys-htmlman		html
@@ -5513,8 +5513,8 @@
 ./usr/share/man/man1/atf-version.1		man-atf-man		.man,atf
 ./usr/share/man/man1/atq.1			man-cron-man		.man
 ./usr/share/man/man1/atrm.1			man-cron-man		.man
-./usr/share/man/man1/audioctl.1			man-audio-man		.man
 ./usr/share/man/man1/audiocfg.1			man-audio-man		.man
+./usr/share/man/man1/audioctl.1			man-audio-man		.man
 ./usr/share/man/man1/audioplay.1		man-audio-man		.man
 ./usr/share/man/man1/audiorecord.1		man-audio-man		.man
 ./usr/share/man/man1/audit-packages.1		man-obsolete		obsolete
@@ -5550,9 +5550,9 @@
 ./usr/share/man/man1/chsh.1			man-util-man		.man
 ./usr/share/man/man1/ci.1			man-rcs-man		.man
 ./usr/share/man/man1/cksum.1			man-util-man		.man
+./usr/share/man/man1/cleantags.1		man-util-man		.man
 ./usr/share/man/man1/clear.1			man-util-man		.man
 ./usr/share/man/man1/cmp.1			man-util-man		.man
-./usr/share/man/man1/cleantags.1		man-util-man		.man
 ./usr/share/man/man1/co.1			man-rcs-man		.man
 ./usr/share/man/man1/col.1			man-util-man		.man
 ./usr/share/man/man1/colcrt.1			man-util-man		.man
@@ -6688,8 +6688,8 @@
 ./usr/share/man/man4/lc.4			man-sys-man		.man
 ./usr/share/man/man4/ld.4			man-sys-man		.man
 ./usr/share/man/man4/le.4			man-sys-man		.man
-./usr/share/man/man4/lii.4			man-sys-man		.man
 ./usr/share/man/man4/lg3303.4			man-sys-man		.man
+./usr/share/man/man4/lii.4			man-sys-man		.man
 ./usr/share/man/man4/lkm.4			man-obsolete 		obsolete
 ./usr/share/man/man4/lm.4			man-sys-man		.man
 ./usr/share/man/man4/lmc.4			man-sys-man		.man
@@ -7237,7 +7237,6 @@
 ./usr/share/man/man4/vlan.4			man-sys-man		.man
 ./usr/share/man/man4/vmmon.4			man-sys-man		.man
 ./usr/share/man/man4/vmnet.4			man-sys-man		.man
-./usr/share/man/man4/vmt.4			man-sys-man		.man
 ./usr/share/man/man4/vnd.4			man-sys-man		.man
 ./usr/share/man/man4/vr.4			man-sys-man		.man
 ./usr/share/man/man4/vte.4			man-sys-man		.man
@@ -7288,6 +7287,7 @@
 ./usr/share/man/man4/x86/mem.4			man-sys-man		.man
 ./usr/share/man/man4/x86/odcm.4			man-sys-man		.man
 ./usr/share/man/man4/x86/powernow.4		man-sys-man		.man
+./usr/share/man/man4/x86/vmt.4			man-sys-man		.man
 ./usr/share/man/man4/xbd.4			man-sys-man		.man
 ./usr/share/man/man4/xbdback.4			man-sys-man		.man
 ./usr/share/man/man4/xbox.4			man-sys-man		.man
