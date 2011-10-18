@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagervar.h,v 1.2 2011/09/06 06:26:13 macallan Exp $	*/
+/*	$NetBSD: voyagervar.h,v 1.3 2011/10/18 17:57:40 macallan Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,10 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagervar.h,v 1.2 2011/09/06 06:26:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagervar.h,v 1.3 2011/10/18 17:57:40 macallan Exp $");
 
 #ifndef VOYAGERVAR_H
 #define VOYAGERVAR_H
+
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
 
 struct voyager_attach_args {
 	pci_chipset_tag_t		vaa_pc;
@@ -42,6 +45,15 @@ struct voyager_attach_args {
 	char			vaa_name[32];
 };
 
+/* set gpio bits - (register & param1) | param2 */
 void voyager_write_gpio(void *, uint32_t, uint32_t);
+/* control gpio pin usage - 0 is gpio, 1 is other stuff ( like PWM ) */
+void voyager_control_gpio(void *, uint32_t, uint32_t);
+
+void *voyager_establish_intr(device_t, int, int (*)(void *), void *);
+void  voyager_disestablish_intr(device_t, void *);
+
+/* frequency in Hz, duty cycle in 1000ths */
+uint32_t voyager_set_pwm(int, int);
 
 #endif
