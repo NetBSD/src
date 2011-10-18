@@ -1,4 +1,4 @@
-/* $NetBSD: t_sinh.c,v 1.3 2011/10/18 04:51:01 jruoho Exp $ */
+/* $NetBSD: t_sinh.c,v 1.4 2011/10/18 14:16:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sinh.c,v 1.3 2011/10/18 04:51:01 jruoho Exp $");
+__RCSID("$NetBSD: t_sinh.c,v 1.4 2011/10/18 14:16:42 jruoho Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -48,7 +48,7 @@ ATF_TC_BODY(sinh_def, tc)
 {
 #ifndef __vax__
 	const double x[] = { 0.005, 0.05, 0.0, 1.0, 10.0, 20.0 };
-	const double eps = 1.0e-8;
+	const double eps = 1.0e-4;
 	double y, z;
 	size_t i;
 
@@ -165,7 +165,7 @@ ATF_TC_BODY(sinhf_def, tc)
 {
 #ifndef __vax__
 	const float x[] = { 0.005, 0.05, 0.0, 1.0, 10.0, 20.0 };
-	const float eps = 1.0e-4;
+	const float eps = 1.0e-2;
 	float y, z;
 	size_t i;
 
