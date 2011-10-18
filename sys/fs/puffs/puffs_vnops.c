@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.158 2011/10/17 23:54:01 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.159 2011/10/18 15:39:09 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.158 2011/10/17 23:54:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.159 2011/10/18 15:39:09 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1243,6 +1243,9 @@ puffs_vnop_readdir(void *v)
 
 	/* provide cookies to caller if so desired */
 	if (ap->a_cookies) {
+#ifdef DIAGNOSTIC
+		KASSERT(curlwp != uvm.pagedaemon_lwp);
+#endif
 		*ap->a_cookies = malloc(readdir_msg->pvnr_ncookies*CSIZE,
 		    M_TEMP, M_WAITOK);
 		*ap->a_ncookies = readdir_msg->pvnr_ncookies;
@@ -2217,12 +2220,13 @@ puffs_vnop_strategy(void *v)
 	struct buf *bp;
 	size_t argsize;
 	size_t tomove, moved;
-	int error, dofaf, dobiodone;
+	int error, dofaf, cansleep, dobiodone;
 
 	pmp = MPTOPUFFSMP(vp->v_mount);
 	bp = ap->a_bp;
 	error = 0;
 	dofaf = 0;
+	cansleep = 0;
 	pn = VPTOPP(vp);
 	park_rw = NULL; /* explicit */
 	dobiodone = 1;
@@ -2262,6 +2266,8 @@ puffs_vnop_strategy(void *v)
 		mutex_exit(vp->v_interlock);
 	}
 
+	cansleep = (curlwp == uvm.pagedaemon_lwp || dofaf) ? 0 : 1;
+
 #ifdef DIAGNOSTIC
 		if (curlwp == uvm.pagedaemon_lwp)
 			KASSERT(dofaf || BIOASYNC(bp));
@@ -2271,7 +2277,7 @@ puffs_vnop_strategy(void *v)
 	tomove = PUFFS_TOMOVE(bp->b_bcount, pmp);
 	argsize = sizeof(struct puffs_vnmsg_rw);
 	error = puffs_msgmem_alloc(argsize + tomove, &park_rw,
-	    (void *)&rw_msg, dofaf);
+	    (void *)&rw_msg, cansleep);
 	if (error)
 		goto out;
 	RWARGS(rw_msg, 0, tomove, bp->b_blkno << DEV_BSHIFT, FSCRED);
@@ -2531,6 +2537,10 @@ puffs_vnop_getpages(void *v)
 #ifdef notnowjohn
 		/* allocate worst-case memory */
 		runsizes = ((npages / 2) + 1) * sizeof(struct puffs_cacherun);
+#ifdef DIAGNOSTIC
+		if (curlwp == uvm.pagedaemon_lwp)
+			KASSERT(locked);
+#endif
 		pcinfo = kmem_zalloc(sizeof(struct puffs_cacheinfo) + runsize,
 		    locked ? KM_NOSLEEP : KM_SLEEP);
 
