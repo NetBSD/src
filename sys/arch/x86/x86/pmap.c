@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.135 2011/10/11 23:53:31 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.136 2011/10/18 23:14:28 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2011/10/11 23:53:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.136 2011/10/18 23:14:28 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -325,7 +325,8 @@ pd_entry_t * const normal_pdes[] = PDES_INITIALIZER;
 
 long nkptp[] = NKPTP_INITIALIZER;
 
-static kmutex_t pmaps_lock;
+struct pmap_head pmaps;
+kmutex_t pmaps_lock;
 
 static vaddr_t pmap_maxkvaddr;
 
@@ -479,12 +480,6 @@ static bool pmap_initialized __read_mostly = false; /* pmap_init done yet? */
 
 static vaddr_t virtual_avail __read_mostly;	/* VA of first free KVA */
 static vaddr_t virtual_end __read_mostly;	/* VA of last free KVA */
-
-/*
- * linked list of all non-kernel pmaps
- */
-
-static struct pmap_head pmaps;
 
 /*
  * pool that pmap structures are allocated from
