@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_ranges.c,v 1.2 2011/09/13 18:09:52 dyoung Exp $	*/
+/*	$NetBSD: pci_ranges.c,v 1.3 2011/10/18 23:30:54 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.2 2011/09/13 18:09:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.3 2011/10/18 23:30:54 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.2 2011/09/13 18:09:52 dyoung Exp $"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pccbbreg.h>
+
+#include <machine/autoconf.h>
 
 typedef enum pci_alloc_regtype {
 	  PCI_ALLOC_REGTYPE_NONE = 0
@@ -955,4 +957,64 @@ pci_ranges_infer(pci_chipset_tag_t pc, int minbus, int maxbus,
 	if (memdict != NULL)
 		prop_object_release(memdict);
 	/* XXX release iorsvns, memrsvns */
+}
+
+static bool
+pcibus_rsvn_predicate(void *arg, prop_dictionary_t rsvn)
+{
+	struct pcibus_attach_args *pba = arg;
+	uint8_t bus;
+
+	if (!prop_dictionary_get_uint8(rsvn, "bus", &bus))
+		return false;
+
+	return pba->pba_bus <= bus && bus <= pba->pba_sub;
+}
+
+static bool
+pci_rsvn_predicate(void *arg, prop_dictionary_t rsvn)
+{
+	struct pci_attach_args *pa = arg;
+	uint8_t bus, device, function;
+	bool rc;
+
+	rc = prop_dictionary_get_uint8(rsvn, "bus", &bus) &&
+	    prop_dictionary_get_uint8(rsvn, "device", &device) &&
+	    prop_dictionary_get_uint8(rsvn, "function", &function);
+
+	if (!rc)
+		return false;
+
+	return pa->pa_bus == bus && pa->pa_device == device &&
+	    pa->pa_function == function;
+}
+
+void
+device_pci_props_register(device_t dev, void *aux)
+{
+	cfdata_t cf;
+	prop_dictionary_t dict;
+
+	cf = (device_parent(dev) != NULL) ? device_cfdata(dev) : NULL;
+#if 0
+	aprint_normal_dev(dev, "is%s a pci, parent %p, cf %p, ifattr %s\n",
+	    device_is_a(dev, "pci") ? "" : " not",
+	    (const void *)device_parent(dev),
+	    cf,
+	    cf != NULL ? cfdata_ifattr(cf) : "");
+#endif
+	if (pci_rsrc_dict == NULL)
+		return;
+
+	if (!device_is_a(dev, "pci") &&
+	    (cf == NULL || strcmp(cfdata_ifattr(cf), "pci") != 0))
+		return;
+
+	dict = pci_rsrc_filter(pci_rsrc_dict,
+	    device_is_a(dev, "pci") ? &pcibus_rsvn_predicate
+				    : &pci_rsvn_predicate, aux);
+	if (dict == NULL)
+		return;
+	(void)prop_dictionary_set(device_properties(dev),
+	    "pci-resources", dict);
 }
