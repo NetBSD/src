@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.4 2011/09/06 06:26:13 macallan Exp $	*/
+/*	$NetBSD: voyager.c,v 1.5 2011/10/18 17:57:40 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.4 2011/09/06 06:26:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.5 2011/10/18 17:57:40 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,24 @@ __KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.4 2011/09/06 06:26:13 macallan Exp $")
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>
 
+#include <sys/evcnt.h>
+#include <sys/bitops.h>
+
 #include <dev/pci/voyagervar.h>
+
+#ifdef VOYAGER_DEBUG
+#define DPRINTF aprint_normal
+#else
+#define DPRINTF while (0) printf
+#endif
+
+/* interrupt stuff */
+struct voyager_intr {
+	int (*vih_func)(void *);
+	void *vih_arg;
+	struct evcnt vih_count;
+	char vih_name[32];
+};
 
 struct voyager_softc {
 	device_t sc_dev;
@@ -61,11 +78,16 @@ struct voyager_softc {
 
 	struct i2c_controller sc_i2c;
 	kmutex_t sc_i2c_lock;
+
+	/* interrupt dispatcher */
+	void *sc_ih;
+	struct voyager_intr sc_intrs[32];
 };
 
 static int	voyager_match(device_t, cfdata_t, void *);
 static void	voyager_attach(device_t, device_t, void *);
-static int  voyager_print(void *, const char *);
+static int	voyager_print(void *, const char *);
+static int	voyager_intr(void *);
 
 CFATTACH_DECL_NEW(voyager, sizeof(struct voyager_softc),
     voyager_match, voyager_attach, NULL, NULL);
@@ -97,6 +119,10 @@ static const struct i2c_bitbang_ops voyager_i2cbb_ops = {
 };
 #define GPIO_I2C_BITS ((1 << 6) | (1 << 13))
 
+#ifdef VOYAGER_DEBUG
+static void voyager_print_pwm(struct voyager_softc *, int);
+#endif
+
 static int
 voyager_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -118,10 +144,13 @@ voyager_attach(device_t parent, device_t self, void *aux)
 {
 	struct voyager_softc	*sc = device_private(self);
 	struct pci_attach_args	*pa = aux;
+	pci_intr_handle_t ih;
 	char devinfo[256];
-	struct voyager_attach_args	vaa;
+	struct voyager_attach_args vaa;
 	struct i2cbus_attach_args iba;
 	uint32_t reg;
+	const char *intrstr;
+	int i;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -145,6 +174,40 @@ voyager_attach(device_t parent, device_t self, void *aux)
 		    device_xname(sc->sc_dev));
 	}
 
+	/* disable all interrupts */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_INTR_MASK, 0);
+	
+	/* initialize handler list */
+	for (i = 0; i < 32; i++) {
+		sc->sc_intrs[i].vih_func = NULL;
+		snprintf(sc->sc_intrs[i].vih_name, 32, "int %d", i);
+		evcnt_attach_dynamic(&sc->sc_intrs[i].vih_count,
+		    EVCNT_TYPE_INTR, NULL, "voyager", sc->sc_intrs[i].vih_name);
+	}
+
+	/* Map and establish the interrupt. */
+	if (pci_intr_map(pa, &ih)) {
+		aprint_error_dev(self, "couldn't map interrupt\n");
+		return;
+	}
+
+	intrstr = pci_intr_string(sc->sc_pc, ih);
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_AUDIO, voyager_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt");
+		if (intrstr != NULL)
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
+		return;
+	}
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
+
+#ifdef VOYAGER_DEBUG
+	voyager_print_pwm(sc, SM502_PWM0);
+	voyager_print_pwm(sc, SM502_PWM1);
+	voyager_print_pwm(sc, SM502_PWM2);
+#endif
+
 	/* attach the framebuffer driver */
 	vaa.vaa_memh = sc->sc_fbh;
 	vaa.vaa_mem_pa = sc->sc_fb;
@@ -154,6 +217,8 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	vaa.vaa_pc = sc->sc_pc;
 	vaa.vaa_pcitag = sc->sc_pcitag;
 	strcpy(vaa.vaa_name, "voyagerfb");
+	config_found_ia(sc->sc_dev, "voyagerbus", &vaa, voyager_print);
+	strcpy(vaa.vaa_name, "pwmclock");
 	config_found_ia(sc->sc_dev, "voyagerbus", &vaa, voyager_print);
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO0_CONTROL);
@@ -301,4 +366,129 @@ voyager_write_gpio(void *cookie, uint32_t mask, uint32_t bits)
 	reg |= bits;
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DATA0, reg);
 	mutex_exit(&sc->sc_i2c_lock);
+}
+
+void
+voyager_control_gpio(void *cookie, uint32_t mask, uint32_t bits)
+{
+	struct voyager_softc *sc = cookie;
+	uint32_t reg;
+
+	/* don't interfere with i2c ops */
+	mutex_enter(&sc->sc_i2c_lock);
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO0_CONTROL);
+	reg &= mask;
+	reg |= bits;
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_GPIO0_CONTROL, reg);
+	mutex_exit(&sc->sc_i2c_lock);
+}
+
+static int
+voyager_intr(void *cookie)
+{
+	struct voyager_softc *sc = cookie;
+	struct voyager_intr *ih;
+	uint32_t intrs;
+	uint32_t mask, bit;
+	int num;
+
+	intrs = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_INTR_STATUS);
+	mask = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_INTR_MASK);
+	intrs &= mask;
+
+	while (intrs != 0) {
+		num = ffs32(intrs) - 1;
+		bit = 1 << num;
+		intrs &= ~bit;
+		ih = &sc->sc_intrs[num];
+		if (ih->vih_func != NULL) {
+			ih->vih_func(ih->vih_arg);
+		}
+		ih->vih_count.ev_count++;
+	}
+	return 0;
+}	
+
+void *
+voyager_establish_intr(device_t dev, int bit, int (*handler)(void *), void *arg)
+{
+	struct voyager_softc *sc = device_private(dev);
+	struct voyager_intr *ih;
+	uint32_t reg;
+
+	if ((bit < 0) || (bit > 31)) {
+		aprint_error_dev(dev, "bogus interrupt %d\n", bit);
+		return NULL;
+	}
+
+	ih = &sc->sc_intrs[bit];
+	if (ih->vih_func != NULL) {
+		aprint_error_dev(dev, "interrupt %d is already in use\n", bit);
+		return NULL;
+	}
+	ih->vih_func = handler;
+	ih->vih_arg = arg;
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_INTR_MASK);
+	reg |= 1 << bit;
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_INTR_MASK, reg);
+	
+	return (void *)(uintptr_t)(0x80000000 | bit);
+}
+
+void
+voyager_disestablish_intr(device_t dev, void *ih)
+{
+}
+
+/* timer */
+#ifdef VOYAGER_DEBUG
+static void
+voyager_print_pwm(struct voyager_softc *sc, int pwmreg)
+{
+	uint32_t reg;
+
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, pwmreg);
+	aprint_debug_dev(sc->sc_dev, "%08x: %08x = %d Hz, %d high, %d low\n", 
+	    pwmreg, reg,
+	    96000000 / (1 << ((reg & SM502_PWM_CLOCK_DIV_MASK) >> SM502_PWM_CLOCK_DIV_SHIFT)),
+	    (reg & SM502_PWM_CLOCK_HIGH_MASK) >> SM502_PWM_CLOCK_HIGH_SHIFT,
+	    (reg & SM502_PWM_CLOCK_LOW_MASK) >> SM502_PWM_CLOCK_LOW_SHIFT);
+}
+#endif
+
+uint32_t
+voyager_set_pwm(int freq, int duty_cycle)
+{
+	int ifreq, factor, bit, steps;
+	uint32_t reg = 0, hi, lo;
+
+	/*
+	 * find the smallest divider that gets us within 4096 steps of the
+	 * target frequency
+	 */
+	ifreq = freq * 4096;
+	factor = 96000000 / ifreq;
+	bit = fls32(factor);
+	factor = 1 << bit;
+	steps = 96000000 / (factor * freq);
+	/* can't have it all off */
+	if (duty_cycle < 1)
+		duty_cycle = 1;
+	/* can't be always on either */
+	if (duty_cycle > 999)
+		duty_cycle = 999;
+	hi = steps * duty_cycle / 1000;
+	if (hi < 1)
+		hi = 1;
+	lo = steps - hi;
+	if (lo < 1) {
+		hi = steps - 1;
+		lo = 1;
+	}
+	DPRINTF("%d hz -> %d, %d, %d / %d\n", freq, factor, steps, lo, hi);
+	reg = ((hi - 1) & 0xfff) << SM502_PWM_CLOCK_HIGH_SHIFT;
+	reg |= ((lo - 1) & 0xfff) << SM502_PWM_CLOCK_LOW_SHIFT;
+	reg |= (bit & 0xf) << SM502_PWM_CLOCK_DIV_SHIFT;
+	DPRINTF("reg: %08x\n", reg);
+	return reg;
 }
