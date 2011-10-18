@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.44 2011/06/22 08:49:54 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.45 2011/10/18 05:08:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.44 2011/06/22 08:49:54 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.45 2011/10/18 05:08:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.44 2011/06/22 08:49:54 jruoho Exp $")
 #include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/sysctl.h>
+#include <sys/cpufreq.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -66,7 +67,8 @@ static bool		  acpicpu_resume(device_t, const pmf_qual_t *);
 static void		  acpicpu_evcnt_attach(device_t);
 static void		  acpicpu_evcnt_detach(device_t);
 static void		  acpicpu_debug_print(device_t);
-static const char	 *acpicpu_debug_print_method(uint8_t);
+static const char	 *acpicpu_debug_print_method_c(uint8_t);
+static const char	 *acpicpu_debug_print_method_pt(uint8_t);
 static const char	 *acpicpu_debug_print_dep(uint32_t);
 
 static uint32_t		  acpicpu_count = 0;
@@ -247,6 +249,7 @@ acpicpu_once_attach(void)
 static int
 acpicpu_once_detach(void)
 {
+	struct cpu_info *ci = curcpu();
 	struct acpicpu_softc *sc;
 
 	if (acpicpu_count != 0)
@@ -255,8 +258,15 @@ acpicpu_once_detach(void)
 	if (acpicpu_log != NULL)
 		sysctl_teardown(&acpicpu_log);
 
-	if (acpicpu_sc != NULL)
+	if (acpicpu_sc != NULL) {
+
+		sc = acpicpu_sc[ci->ci_acpiid];
+
+		if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
+			cpufreq_deregister();
+
 		kmem_free(acpicpu_sc, maxcpus * sizeof(*sc));
+	}
 
 	return 0;
 }
@@ -266,6 +276,8 @@ acpicpu_start(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 	static uint32_t count = 0;
+	struct cpufreq cf;
+	uint32_t i;
 
 	/*
 	 * Run the state-specific initialization routines. These
@@ -294,6 +306,34 @@ acpicpu_start(device_t self)
 
 	acpicpu_sysctl(self);
 	aprint_debug_dev(self, "ACPI CPUs started\n");
+
+	/*
+	 * Register with cpufreq(9).
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0) {
+
+		(void)memset(&cf, 0, sizeof(struct cpufreq));
+
+		cf.cf_mp = false;
+		cf.cf_cookie = NULL;
+		cf.cf_get_freq = acpicpu_pstate_get;
+		cf.cf_set_freq = acpicpu_pstate_set;
+		cf.cf_state_count = sc->sc_pstate_count;
+
+		(void)strlcpy(cf.cf_name, "acpicpu", sizeof(cf.cf_name));
+
+		for (i = 0; i < sc->sc_pstate_count; i++) {
+
+			if (sc->sc_pstate[i].ps_freq == 0)
+				continue;
+
+			cf.cf_state[i].cfs_freq = sc->sc_pstate[i].ps_freq;
+			cf.cf_state[i].cfs_power = sc->sc_pstate[i].ps_power;
+		}
+
+		if (cpufreq_register(&cf) != 0)
+			aprint_error_dev(self, "failed to register cpufreq\n");
+	}
 }
 
 static void
@@ -726,7 +766,7 @@ acpicpu_debug_print(device_t self)
 
 			aprint_verbose_dev(sc->sc_dev, "C%d: %3s, "
 			    "lat %3u us, pow %5u mW%s\n", i,
-			    acpicpu_debug_print_method(cs->cs_method),
+			    acpicpu_debug_print_method_c(cs->cs_method),
 			    cs->cs_latency, cs->cs_power,
 			    (cs->cs_flags != 0) ? ", bus master check" : "");
 		}
@@ -742,7 +782,7 @@ acpicpu_debug_print(device_t self)
 
 			aprint_verbose_dev(sc->sc_dev, "P%d: %3s, "
 			    "lat %3u us, pow %5u mW, %4u MHz%s\n", i,
-			    acpicpu_debug_print_method(method),
+			    acpicpu_debug_print_method_pt(method),
 			    ps->ps_latency, ps->ps_power, ps->ps_freq,
 			    (ps->ps_flags & ACPICPU_FLAG_P_TURBO) != 0 ?
 			    ", turbo boost" : "");
@@ -759,7 +799,7 @@ acpicpu_debug_print(device_t self)
 
 			aprint_verbose_dev(sc->sc_dev, "T%u: %3s, "
 			    "lat %3u us, pow %5u mW, %3u %%\n", i,
-			    acpicpu_debug_print_method(method),
+			    acpicpu_debug_print_method_pt(method),
 			    ts->ts_latency, ts->ts_power, ts->ts_percent);
 		}
 
@@ -799,7 +839,7 @@ acpicpu_debug_print(device_t self)
 }
 
 static const char *
-acpicpu_debug_print_method(uint8_t val)
+acpicpu_debug_print_method_c(uint8_t val)
 {
 
 	if (val == ACPICPU_C_STATE_FFH)
@@ -810,6 +850,13 @@ acpicpu_debug_print_method(uint8_t val)
 
 	if (val == ACPICPU_C_STATE_SYSIO)
 		return "I/O";
+
+	return "???";
+}
+
+static const char *
+acpicpu_debug_print_method_pt(uint8_t val)
+{
 
 	if (val == ACPI_ADR_SPACE_SYSTEM_IO)
 		return "I/O";

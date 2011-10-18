@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.42 2011/06/22 08:49:54 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.43 2011/10/18 05:08:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -84,7 +84,6 @@
  */
 #define ACPICPU_P_STATE_MAX	 255		/* Arbitrary upper limit     */
 #define ACPICPU_P_STATE_RETRY	 100
-#define ACPICPU_P_STATE_UNKNOWN	 0x0
 
 /*
  * T-states.
@@ -245,8 +244,8 @@ void		 acpicpu_pstate_start(device_t);
 void		 acpicpu_pstate_suspend(void *);
 void		 acpicpu_pstate_resume(void *);
 void		 acpicpu_pstate_callback(void *);
-int		 acpicpu_pstate_get(struct cpu_info *, uint32_t *);
-void		 acpicpu_pstate_set(struct cpu_info *, uint32_t);
+void		 acpicpu_pstate_get(void *, void *);
+void		 acpicpu_pstate_set(void *, void *);
 
 void		 acpicpu_tstate_attach(device_t);
 void		 acpicpu_tstate_detach(device_t);

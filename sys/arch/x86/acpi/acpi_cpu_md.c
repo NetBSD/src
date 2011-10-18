@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.67 2011/09/24 19:41:40 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.68 2011/10/18 05:08:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,10 +27,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.67 2011/09/24 19:41:40 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.68 2011/10/18 05:08:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/cpufreq.h>
 #include <sys/device.h>
 #include <sys/kcore.h>
 #include <sys/sysctl.h>
@@ -749,7 +750,7 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 
 	/*
 	 * Pick any P-state for the status address.
-	*/
+	 */
 	for (i = 0; i < sc->sc_pstate_count; i++) {
 
 		ps = &sc->sc_pstate[i];
@@ -790,6 +791,9 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 	 * The state is P0 if the return value is 100 %.
 	 */
 	if ((sc->sc_flags & ACPICPU_FLAG_P_HWF) != 0) {
+
+		KASSERT(sc->sc_pstate_count > 0);
+		KASSERT(sc->sc_pstate[0].ps_freq != 0);
 
 		if (acpicpu_md_pstate_hwf(sc->sc_ci) == 100) {
 			*freq = sc->sc_pstate[0].ps_freq;
@@ -1136,15 +1140,14 @@ fail:
 static int
 acpicpu_md_pstate_sysctl_get(SYSCTLFN_ARGS)
 {
-	struct cpu_info *ci = curcpu();
 	struct sysctlnode node;
 	uint32_t freq;
 	int err;
 
-	err = acpicpu_pstate_get(ci, &freq);
+	freq = cpufreq_get(curcpu());
 
-	if (err != 0)
-		return err;
+	if (freq == 0)
+		return ENXIO;
 
 	node = *rnode;
 	node.sysctl_data = &freq;
@@ -1160,15 +1163,14 @@ acpicpu_md_pstate_sysctl_get(SYSCTLFN_ARGS)
 static int
 acpicpu_md_pstate_sysctl_set(SYSCTLFN_ARGS)
 {
-	struct cpu_info *ci = curcpu();
 	struct sysctlnode node;
 	uint32_t freq;
 	int err;
 
-	err = acpicpu_pstate_get(ci, &freq);
+	freq = cpufreq_get(curcpu());
 
-	if (err != 0)
-		return err;
+	if (freq == 0)
+		return ENXIO;
 
 	node = *rnode;
 	node.sysctl_data = &freq;
@@ -1178,7 +1180,7 @@ acpicpu_md_pstate_sysctl_set(SYSCTLFN_ARGS)
 	if (err != 0 || newp == NULL)
 		return err;
 
-	acpicpu_pstate_set(ci, freq);
+	cpufreq_set_all(freq);
 
 	return 0;
 }
