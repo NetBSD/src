@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.67 2011/09/27 01:33:30 christos Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.68 2011/10/18 20:20:29 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.67 2011/09/27 01:33:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.68 2011/10/18 20:20:29 hannken Exp $");
 #endif /* not lint */
 
 
@@ -1978,13 +1978,15 @@ udf_rename(void *v)
 	}
 
 	/* get info about the node to be moved */
+	vn_lock(fvp, LK_SHARED | LK_RETRY);
 	error = VOP_GETATTR(fvp, &fvap, FSCRED);
+	VOP_UNLOCK(fvp);
 	KASSERT(error == 0);
 
 	/* check when to delete the old already existing entry */
 	if (tvp) {
 		/* get info about the node to be moved to */
-		error = VOP_GETATTR(fvp, &tvap, FSCRED);
+		error = VOP_GETATTR(tvp, &tvap, FSCRED);
 		KASSERT(error == 0);
 
 		/* if both dirs, make sure the destination is empty */
