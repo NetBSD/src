@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.5 2008/11/19 18:07:20 cube Exp $
+#	$NetBSD: dot.profile,v 1.6 2011/10/19 10:14:35 tsutsui Exp $
 #
 # This is the default .profile file.
 # Users are expected to edit it to meet their own needs.
@@ -13,8 +13,7 @@ PATH=$HOME/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R7/bin:/usr/X11R6/bin:/usr/
 PATH=${PATH}:/usr/pkg/sbin:/usr/games:/usr/local/bin:/usr/local/sbin
 export PATH
 
-export EDITOR=vi
-export EXINIT='set autoindent'
-export PAGER=more
+#export EDITOR=vi
+#export PAGER=more
 
 export ENV=$HOME/.shrc
