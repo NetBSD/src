@@ -1,4 +1,4 @@
-/*	$NetBSD: ioccom.h,v 1.10 2009/05/19 21:59:10 christos Exp $	*/
+/*	$NetBSD: ioccom.h,v 1.11 2011/10/19 10:53:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -38,6 +38,11 @@
  * Ioctl's have the command encoded in the lower word, and the size of
  * any in or out parameters in the upper word.  The high 3 bits of the
  * upper word are used to encode the in/out status of the parameter.
+ *
+ *	 31 29 28                     16 15            8 7             0
+ *	+---------------------------------------------------------------+
+ *	| I/O | Parameter Length        | Command Group | Command       |
+ *	+---------------------------------------------------------------+
  */
 #define	IOCPARM_MASK	0x1fff		/* parameter length, at most 13 bits */
 #define	IOCPARM_SHIFT	16
