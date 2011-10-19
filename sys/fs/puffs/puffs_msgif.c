@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.88 2011/10/18 15:39:09 manu Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.89 2011/10/19 01:39:29 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.88 2011/10/18 15:39:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.89 2011/10/19 01:39:29 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -134,10 +134,8 @@ puffs_msgpark_alloc(int waitok)
 {
 	struct puffs_msgpark *park;
 
-#ifdef DIAGNOSTIC
-	if (curlwp == uvm.pagedaemon_lwp)
-		KASSERT(!waitok);
-#endif
+	KASSERT(curlwp != uvm.pagedaemon_lwp || !waitok);
+
 	park = pool_cache_get(parkpc, waitok ? PR_WAITOK : PR_NOWAIT);
 	if (park == NULL)
 		return park;
@@ -238,10 +236,7 @@ puffs_msgmem_alloc(size_t len, struct puffs_msgpark **ppark, void **mem,
 	struct puffs_msgpark *park;
 	void *m;
 
-#ifdef DIAGNOSTIC
-	if (curlwp == uvm.pagedaemon_lwp)
-		KASSERT(!cansleep);
-#endif
+	KASSERT(curlwp != uvm.pagedaemon_lwp || !cansleep);
 	m = kmem_zalloc(len, cansleep ? KM_SLEEP : KM_NOSLEEP);
 	if (m == NULL) {
 		KASSERT(cansleep == 0);
@@ -960,9 +955,7 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		}
 		pf = (struct puffs_flush *)preq;
 
-#ifdef DIAGNOSTIC
 		KASSERT(curlwp != uvm.pagedaemon_lwp);
-#endif
 		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
 		memcpy(&psopr->psopr_pf, pf, sizeof(*pf));
 		psopr->psopr_sopreq = PUFFS_SOPREQ_FLUSH;
@@ -986,9 +979,7 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 
 		DPRINTF(("dispatch: unmount 0x%x\n", preq->preq_optype));
 
-#ifdef DIAGNOSTIC
 		KASSERT(curlwp != uvm.pagedaemon_lwp);
-#endif
 		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
 		psopr->psopr_preq = *preq;
 		psopr->psopr_sopreq = PUFFS_SOPREQ_UNMOUNT;
