@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.67 2011/04/08 13:56:51 sborrill Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.68 2011/10/19 01:48:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.67 2011/04/08 13:56:51 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.68 2011/10/19 01:48:30 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -469,24 +469,6 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCINITIFADDR:
-		if (ifv->ifv_p != NULL) {
-			ifp->if_flags |= IFF_UP;
-
-			switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-			case AF_INET:
-				arp_ifinit(ifp, ifa);
-				break;
-#endif
-			default:
-				break;
-			}
-		} else {
-			error = EINVAL;
-		}
-		break;
-
 	case SIOCSIFMTU:
 		if (ifv->ifv_p == NULL)
 			error = EINVAL;
@@ -569,6 +551,19 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
 			error = 0;
 		break;
+	case SIOCINITIFADDR:
+		if (ifv->ifv_p == NULL) {
+			error = EINVAL;
+			break;
+		}
+
+		ifp->if_flags |= IFF_UP;
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit(ifp, ifa);
+#endif
+		break;
+
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 	}
