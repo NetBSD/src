@@ -118,7 +118,6 @@
 /* FreeBSD includes: */
 #if !defined(sun)
 
-#include <sys/callout.h>
 #include <sys/ctype.h>
 #include <sys/limits.h>
 //#include <sys/kdb.h>
@@ -250,10 +249,6 @@ int		dtrace_in_probe;	/* non-zero if executing a probe */
 #if defined(__i386__) || defined(__amd64__)
 uintptr_t	dtrace_in_probe_addr;	/* Address of invop when already in probe */
 #endif
-
-void *dtrace_deadman_wchan; 
-int dtrace_deadman_alive; 			/* deadman thread keep alive */
-lwp_t *dtrace_deadman_proc;
 #endif
 
 /*
@@ -12836,7 +12831,6 @@ dtrace_vstate_fini(dtrace_vstate_t *vstate)
 	}
 }
 
-#if defined(sun)
 static void
 dtrace_state_clean(dtrace_state_t *state)
 {
@@ -12873,72 +12867,11 @@ dtrace_state_deadman(dtrace_state_t *state)
 	dtrace_membar_producer();
 	state->dts_alive = now;
 }
-#else
-static void
-dtrace_state_clean(void *arg)
-{
-	dtrace_state_t *state = arg;
-	dtrace_optval_t *opt = state->dts_options;
 
-	if (state->dts_activity == DTRACE_ACTIVITY_INACTIVE)
-		return;
-
-	dtrace_dynvar_clean(&state->dts_vstate.dtvs_dynvars);
-	dtrace_speculation_clean(state);
-
-	callout_reset(&state->dts_cleaner, ((dtrace_optval_t)hz * opt[DTRACEOPT_CLEANRATE]) / NANOSEC,
-	    dtrace_state_clean, state);
-}
-
-static void
-dtrace_state_deadman(void *arg)
-{
-	dtrace_state_t *state = arg;
-	hrtime_t now;
-	int res;
-	kmutex_t dtrace_deadman_mutex;
-
-	mutex_init(&dtrace_deadman_mutex, NULL, MUTEX_DEFAULT, NULL);
-
-	while (dtrace_deadman_alive) {
-	    mutex_enter(&dtrace_deadman_mutex);
-	    res = mtsleep(&dtrace_deadman_wchan, PRI_BIO, "dtrace_deadman", 
-		    ((dtrace_optval_t)hz * dtrace_deadman_interval) / NANOSEC,
-		    &dtrace_deadman_mutex);
-	    mutex_exit(&dtrace_deadman_mutex);
-
-	    if (!dtrace_deadman_alive) {
-		break;
-	    }
-
-	    dtrace_sync();
-
-	    dtrace_debug_output();
-
-	    now = dtrace_gethrtime();
-
-	    if (state != dtrace_anon.dta_state &&
-		now - state->dts_laststatus >= dtrace_deadman_user)
-		    continue;
-
-	    /*
-	     * We must be sure that dts_alive never appears to be less than the
-	     * value upon entry to dtrace_state_deadman(), and because we lack a
-	     * dtrace_cas64(), we cannot store to it atomically.  We thus instead
-	     * store INT64_MAX to it, followed by a memory barrier, followed by
-	     * the new value.  This assures that dts_alive never appears to be
-	     * less than its true value, regardless of the order in which the
-	     * stores to the underlying storage are issued.
-	     */
-	    state->dts_alive = INT64_MAX;
-	    dtrace_membar_producer();
-	    state->dts_alive = now;
-	}
-
-	mutex_destroy(&dtrace_deadman_mutex);
-
-	kthread_exit(0);
-}
+#if !defined(sun)
+struct dtrace_state_worker *dtrace_state_worker_add(void (*)(dtrace_state_t *),
+    dtrace_state_t *, hrtime_t);
+void dtrace_state_worker_remove(struct dtrace_state_worker *);
 #endif
 
 static dtrace_state_t *
@@ -13015,7 +12948,8 @@ dtrace_state_create(dev_t dev, cred_t *cr)
 	state->dts_cleaner = CYCLIC_NONE;
 	state->dts_deadman = CYCLIC_NONE;
 #else
-	callout_init(&state->dts_cleaner, CALLOUT_MPSAFE);
+	state->dts_cleaner = NULL;
+	state->dts_deadman = NULL;
 #endif
 	state->dts_vstate.dtvs_state = state;
 
@@ -13503,19 +13437,10 @@ dtrace_state_go(dtrace_state_t *state, processorid_t *xcpu)
 
 	state->dts_deadman = cyclic_add(&hdlr, &when);
 #else
-	callout_reset(&state->dts_cleaner,
-	    ((dtrace_optval_t)hz * opt[DTRACEOPT_CLEANRATE]) / NANOSEC,
-	    dtrace_state_clean, state);
-
-	dtrace_deadman_wchan = &dtrace_deadman_wchan;
-	dtrace_deadman_alive = 1;
-
-	if ((rval = kthread_create(PRI_BIO, KTHREAD_MPSAFE,
-			    NULL, dtrace_state_deadman, state,
-			    &dtrace_deadman_proc, "dtrace_deadman")) != 0) {
-		printf("failed to create deadman thread, error=%d\n", rval);
-		goto out;
-	}
+	state->dts_cleaner = dtrace_state_worker_add(
+	    dtrace_state_clean, state, opt[DTRACEOPT_CLEANRATE]);
+	state->dts_deadman = dtrace_state_worker_add(
+	    dtrace_state_deadman, state, dtrace_deadman_interval);
 #endif
 
 	state->dts_activity = DTRACE_ACTIVITY_WARMUP;
@@ -13789,13 +13714,11 @@ dtrace_state_destroy(dtrace_state_t *state)
 	if (state->dts_deadman != CYCLIC_NONE)
 		cyclic_remove(state->dts_deadman);
 #else
-	callout_stop(&state->dts_cleaner);
+	if (state->dts_cleaner != NULL)
+		dtrace_state_worker_remove(state->dts_cleaner);
 
-	if (dtrace_deadman_alive) {
-	    /* tell the deadman thread to exit */
-	    dtrace_deadman_alive = 0;
-	    wakeup(dtrace_deadman_wchan);
-	}
+	if (state->dts_deadman != NULL)
+		dtrace_state_worker_remove(state->dts_deadman);
 #endif
 
 	dtrace_dstate_fini(&vstate->dtvs_dynvars);
@@ -16690,4 +16613,75 @@ MODULE_VERSION(dtrace, 1);
 MODULE_DEPEND(dtrace, cyclic, 1, 1, 1);
 MODULE_DEPEND(dtrace, opensolaris, 1, 1, 1);
 #endif
+#endif
+
+#if !defined(sun)
+#undef mutex_init
+
+struct dtrace_state_worker {
+	kmutex_t lock;
+	kcondvar_t cv;
+	void (*fn)(dtrace_state_t *);
+	dtrace_state_t *state;
+	int interval;
+	lwp_t *lwp;
+	bool exiting;
+};
+
+static void
+dtrace_state_worker_thread(void *vp)
+{
+	struct dtrace_state_worker *w = vp;
+
+	mutex_enter(&w->lock);
+	while (!w->exiting) {
+		int error;
+
+		error = cv_timedwait(&w->cv, &w->lock, w->interval);
+		if (error == EWOULDBLOCK) {
+			mutex_exit(&w->lock);
+			w->fn(w->state);
+			mutex_enter(&w->lock);
+		}
+	}
+	mutex_exit(&w->lock);
+	kthread_exit(0);
+}
+
+struct dtrace_state_worker *
+dtrace_state_worker_add(void (*fn)(dtrace_state_t *), dtrace_state_t *state,
+    hrtime_t interval)
+{
+	struct dtrace_state_worker *w;
+	int error;
+
+	w = kmem_alloc(sizeof(*w), KM_SLEEP);
+	mutex_init(&w->lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&w->cv, "dtrace");
+	w->interval = ((uintmax_t)hz * interval) / NANOSEC,
+	w->fn = fn;
+	w->state = state;
+	w->exiting = false;
+	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE|KTHREAD_MUSTJOIN, NULL,
+	    dtrace_state_worker_thread, w, &w->lwp, "dtrace-state-worker");
+	KASSERT(error == 0); /* XXX */
+	return w;
+}
+
+void
+dtrace_state_worker_remove(struct dtrace_state_worker *w)
+{
+	int error;
+
+	KASSERT(!w->exiting);
+	mutex_enter(&w->lock);
+	w->exiting = true;
+	cv_signal(&w->cv);
+	mutex_exit(&w->lock);
+	error = kthread_join(w->lwp);
+	KASSERT(error == 0);
+	cv_destroy(&w->cv);
+	mutex_destroy(&w->lock);
+	kmem_free(w, sizeof(*w));
+}
 #endif
