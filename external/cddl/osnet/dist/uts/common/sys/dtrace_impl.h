@@ -1135,8 +1135,8 @@ struct dtrace_state {
 	cyclic_id_t dts_cleaner;		/* cleaning cyclic */
 	cyclic_id_t dts_deadman;		/* deadman cyclic */
 #else
-	struct callout dts_cleaner;		/* Cleaning callout. */
-	struct callout dts_deadman;		/* Deadman callout. */
+	struct dtrace_state_worker *dts_cleaner;/* cleaning cyclic */
+	struct dtrace_state_worker *dts_deadman;/* deadman cyclic */
 #endif
 	hrtime_t dts_alive;			/* time last alive */
 	char dts_speculates;			/* boolean: has speculations */
