@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.253 2011/10/19 01:46:43 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.254 2011/10/19 21:29:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.253 2011/10/19 01:46:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.254 2011/10/19 21:29:51 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.253 2011/10/19 01:46:43 dyoung Exp $");
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -170,8 +171,8 @@ static kauth_listener_t if_listener;
 
 static int ifioctl_attach(struct ifnet *);
 static void ifioctl_detach(struct ifnet *);
-static void ifioctl_enter(struct ifnet *);
-static void ifioctl_exit(struct ifnet *);
+static void ifnet_lock_enter(struct ifnet_lock *);
+static void ifnet_lock_exit(struct ifnet_lock *);
 static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
@@ -296,7 +297,7 @@ int
 if_nullioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 
-	cv_signal(&ifp->if_ioctl_emptied);
+	cv_signal(&ifp->if_ioctl_lock->il_emptied);
 	return ENXIO;
 }
 
@@ -1697,19 +1698,21 @@ ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 }
 
 static void
-ifioctl_enter(struct ifnet *ifp)
+ifnet_lock_enter(struct ifnet_lock *il)
 {
-	uint64_t *nenter = percpu_getref(ifp->if_ioctl_nenter);
+	uint64_t *nenter;
+
+	nenter = percpu_getref(il->il_nenter);
 	(*nenter)++;
-	percpu_putref(ifp->if_ioctl_nenter);
-	mutex_enter(&ifp->if_ioctl_lock);
+	percpu_putref(il->il_nenter);
+	mutex_enter(&il->il_lock);
 }
 
 static void
-ifioctl_exit(struct ifnet *ifp)
+ifnet_lock_exit(struct ifnet_lock *il)
 {
-	ifp->if_ioctl_nexit++;
-	mutex_exit(&ifp->if_ioctl_lock);
+	il->il_nexit++;
+	mutex_exit(&il->il_lock);
 }
 
 /*
@@ -1820,7 +1823,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	oif_flags = ifp->if_flags;
 
-	ifioctl_enter(ifp);
+	ifnet_lock_enter(ifp->if_ioctl_lock);
 	error = (*ifp->if_ioctl)(ifp, cmd, data);
 	if (error != ENOTTY)
 		;
@@ -1850,12 +1853,12 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		ifreqn2o(oifr, ifr);
 #endif
 
-	ifioctl_exit(ifp);
+	ifnet_lock_exit(ifp->if_ioctl_lock);
 	return error;
 }
 
 static void
-ifioctl_sum(void *p, void *arg, struct cpu_info *ci)
+ifnet_lock_sum(void *p, void *arg, struct cpu_info *ci)
 {
 	uint64_t *sum = arg, *nenter = p;
 
@@ -1863,11 +1866,11 @@ ifioctl_sum(void *p, void *arg, struct cpu_info *ci)
 }
 
 static uint64_t
-ifioctl_entrances(struct ifnet *ifp)
+ifnet_lock_entrances(struct ifnet_lock *il)
 {
 	uint64_t sum = 0;
 
-	percpu_foreach(ifp->if_ioctl_nenter, ifioctl_sum, &sum);
+	percpu_foreach(il->il_nenter, ifnet_lock_sum, &sum);
 
 	return sum;
 }
@@ -1875,15 +1878,24 @@ ifioctl_entrances(struct ifnet *ifp)
 static int
 ifioctl_attach(struct ifnet *ifp)
 {
+	struct ifnet_lock *il;
+
 	if (ifp->if_ioctl == NULL)
 		ifp->if_ioctl = ifioctl_common;
 
-	ifp->if_ioctl_nenter = percpu_alloc(sizeof(uint64_t));
-	if (ifp->if_ioctl_nenter == NULL)
+	if ((il = kmem_zalloc(sizeof(*il), KM_SLEEP)) == NULL)
 		return ENOMEM;
 
-	mutex_init(&ifp->if_ioctl_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&ifp->if_ioctl_emptied, ifp->if_xname);
+	il->il_nenter = percpu_alloc(sizeof(uint64_t));
+	if (il->il_nenter == NULL) {
+		kmem_free(il, sizeof(*il));
+		return ENOMEM;
+	}
+
+	mutex_init(&il->il_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&il->il_emptied, ifp->if_xname);
+
+	ifp->if_ioctl_lock = il;
 
 	return 0;
 }
@@ -1891,11 +1903,16 @@ ifioctl_attach(struct ifnet *ifp)
 static void
 ifioctl_detach(struct ifnet *ifp)
 {
-	mutex_enter(&ifp->if_ioctl_lock);
+	struct ifnet_lock *il;
+
+	il = ifp->if_ioctl_lock;
+	mutex_enter(&il->il_lock);
 	ifp->if_ioctl = if_nullioctl;
-	while (ifioctl_entrances(ifp) != ifp->if_ioctl_nexit)
-		cv_wait(&ifp->if_ioctl_emptied, &ifp->if_ioctl_lock);
-	mutex_exit(&ifp->if_ioctl_lock);
+	while (ifnet_lock_entrances(il) != il->il_nexit)
+		cv_wait(&il->il_emptied, &il->il_lock);
+	mutex_exit(&il->il_lock);
+	ifp->if_ioctl_lock = NULL;
+	kmem_free(il, sizeof(*il));
 }
 
 /*
