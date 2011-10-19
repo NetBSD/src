@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.4 2008/11/19 18:07:20 cube Exp $
+#	$NetBSD: dot.cshrc,v 1.5 2011/10/19 10:14:35 tsutsui Exp $
 #
 # This is the default .cshrc file.
 # Users are expected to edit it to meet their own needs.
@@ -9,17 +9,9 @@
 # See csh(1) for details.
 #
 
-alias h		history 25
-alias j		jobs -l
-alias la	ls -a
-alias lf	ls -FA
-alias ll	ls -lA
-alias su	su -m
-
-setenv	EDITOR	vi
-setenv	VISUAL	${EDITOR}
-setenv	EXINIT	'set autoindent'
-setenv	PAGER	more
+#setenv	EDITOR	vi
+#setenv	VISUAL	${EDITOR}
+#setenv	PAGER	more
 
 set path = (~/bin /bin /sbin /usr/{bin,sbin,X11R7/bin,X11R6/bin,pkg/{,s}bin,games} \
 	    /usr/local/{,s}bin)
