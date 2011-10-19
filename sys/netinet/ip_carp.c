@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.45 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.46 2011/10/19 01:52:22 dyoung Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.45 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.46 2011/10/19 01:52:22 dyoung Exp $");
 
 /*
  * TODO:
@@ -2151,7 +2151,7 @@ carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 	memcpy(&mc->mc_addr, sa, sa->sa_len);
 	LIST_INSERT_HEAD(&sc->carp_mc_listhead, mc, mc_entries);
 
-	error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, ifr);
+	error = if_mcast_op(ifp, SIOCADDMULTI, sa);
 	if (error != 0)
 		goto ioctl_failed;
 
@@ -2203,7 +2203,7 @@ carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 		return (error);
 
 	/* We no longer use this multicast address.  Tell parent so. */
-	error = (*ifp->if_ioctl)(ifp, SIOCDELMULTI, ifr);
+	error = if_mcast_op(ifp, SIOCDELMULTI, sa);
 	if (error == 0) {
 		/* And forget about this address. */
 		LIST_REMOVE(mc, mc_entries);
@@ -2222,22 +2222,12 @@ carp_ether_purgemulti(struct carp_softc *sc)
 {
 	struct ifnet *ifp = sc->sc_carpdev;		/* Parent. */
 	struct carp_mc_entry *mc;
-	union {
-		struct ifreq ifreq;
-		struct {
-			char ifr_name[IFNAMSIZ];
-			struct sockaddr_storage ifr_ss;
-		} ifreq_storage;
-	} u;
-	struct ifreq *ifr = &u.ifreq;
 
 	if (ifp == NULL)
 		return;
 
-	memcpy(ifr->ifr_name, ifp->if_xname, IFNAMSIZ);
 	while ((mc = LIST_FIRST(&sc->carp_mc_listhead)) != NULL) {
-		memcpy(&ifr->ifr_addr, &mc->mc_addr, mc->mc_addr.ss_len);
-		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, ifr);
+		(void)if_mcast_op(ifp, SIOCDELMULTI, sstosa(&mc->mc_addr));
 		LIST_REMOVE(mc, mc_entries);
 		free(mc, M_DEVBUF);
 	}

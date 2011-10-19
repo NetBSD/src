@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.53 2011/08/31 18:31:03 plunky Exp $	*/
+/*	$NetBSD: mld6.c,v 1.54 2011/10/19 01:53:07 dyoung Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.53 2011/08/31 18:31:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.54 2011/10/19 01:53:07 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -616,7 +616,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 	int *errorp, int timer)
 {
 	struct	in6_ifaddr *ia;
-	struct	in6_ifreq ifr;
+	struct	sockaddr_in6 sin6;
 	struct	in6_multi *in6m;
 	int	s = splsoftnet();
 
@@ -663,8 +663,8 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		 * Ask the network driver to update its multicast reception
 		 * filter appropriately for the new address.
 		 */
-		sockaddr_in6_init(&ifr.ifr_addr, maddr6, 0, 0, 0);
-		*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr);
+		sockaddr_in6_init(&sin6, maddr6, 0, 0, 0);
+		*errorp = if_mcast_op(ifp, SIOCADDMULTI, sin6tosa(&sin6));
 		if (*errorp) {
 			LIST_REMOVE(in6m, in6m_entry);
 			free(in6m, M_IPMADDR);
@@ -700,7 +700,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 void
 in6_delmulti(struct in6_multi *in6m)
 {
-	struct	in6_ifreq ifr;
+	struct	sockaddr_in6 sin6;
 	struct	in6_ifaddr *ia;
 	int	s = splsoftnet();
 
@@ -738,8 +738,8 @@ in6_delmulti(struct in6_multi *in6m)
 		 * Notify the network driver to update its multicast
 		 * reception filter.
 		 */
-		sockaddr_in6_init(&ifr.ifr_addr, &in6m->in6m_addr, 0, 0, 0);
-		(*in6m->in6m_ifp->if_ioctl)(in6m->in6m_ifp, SIOCDELMULTI, &ifr);
+		sockaddr_in6_init(&sin6, &in6m->in6m_addr, 0, 0, 0);
+		if_mcast_op(in6m->in6m_ifp, SIOCDELMULTI, sin6tosa(&sin6));
 		callout_destroy(&in6m->in6m_timer_ch);
 		free(in6m, M_IPMADDR);
 	}

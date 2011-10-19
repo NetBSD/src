@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.138 2010/05/15 05:02:46 oki Exp $	*/
+/*	$NetBSD: in.c,v 1.139 2011/10/19 01:52:22 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.138 2010/05/15 05:02:46 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.139 2011/10/19 01:52:22 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -454,7 +454,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			return (EINVAL);
 		oldaddr = ia->ia_dstaddr;
 		ia->ia_dstaddr = *satocsin(ifreq_getdstaddr(cmd, ifr));
-		if ((error = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR, ia)) != 0) {
+		if ((error = if_addr_init(ifp, &ia->ia_ifa, false)) != 0) {
 			ia->ia_dstaddr = oldaddr;
 			return error;
 		}
@@ -813,7 +813,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	if ((error = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ia)) != 0)
+	if ((error = if_addr_init(ifp, &ia->ia_ifa, true)) != 0)
 		goto bad;
 	splx(s);
 	if (scrub) {
@@ -1045,7 +1045,6 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 {
 	struct sockaddr_in sin;
 	struct in_multi *inm;
-	struct ifreq ifr;
 	int s = splsoftnet();
 
 	/*
@@ -1078,8 +1077,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		 * filter appropriately for the new address.
 		 */
 		sockaddr_in_init(&sin, ap, 0);
-		ifreq_setaddr(SIOCADDMULTI, &ifr, sintosa(&sin));
-		if ((*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr) != 0) {
+		if (if_mcast_op(ifp, SIOCADDMULTI, sintosa(&sin)) != 0) {
 			LIST_REMOVE(inm, inm_list);
 			pool_put(&inmulti_pool, inm);
 			splx(s);
@@ -1107,7 +1105,6 @@ void
 in_delmulti(struct in_multi *inm)
 {
 	struct sockaddr_in sin;
-	struct ifreq ifr;
 	int s = splsoftnet();
 
 	if (--inm->inm_refcount == 0) {
@@ -1126,8 +1123,7 @@ in_delmulti(struct in_multi *inm)
 		 * filter.
 		 */
 		sockaddr_in_init(&sin, &inm->inm_addr, 0);
-		ifreq_setaddr(SIOCDELMULTI, &ifr, sintosa(&sin));
-		(*inm->inm_ifp->if_ioctl)(inm->inm_ifp, SIOCDELMULTI, &ifr);
+		if_mcast_op(inm->inm_ifp, SIOCDELMULTI, sintosa(&sin));
 		pool_put(&inmulti_pool, inm);
 	}
 	splx(s);
