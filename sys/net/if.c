@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.252 2011/10/19 01:34:37 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.253 2011/10/19 01:46:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.252 2011/10/19 01:34:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.253 2011/10/19 01:46:43 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -170,6 +170,8 @@ static kauth_listener_t if_listener;
 
 static int ifioctl_attach(struct ifnet *);
 static void ifioctl_detach(struct ifnet *);
+static void ifioctl_enter(struct ifnet *);
+static void ifioctl_exit(struct ifnet *);
 static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
@@ -1694,6 +1696,22 @@ ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	}
 }
 
+static void
+ifioctl_enter(struct ifnet *ifp)
+{
+	uint64_t *nenter = percpu_getref(ifp->if_ioctl_nenter);
+	(*nenter)++;
+	percpu_putref(ifp->if_ioctl_nenter);
+	mutex_enter(&ifp->if_ioctl_lock);
+}
+
+static void
+ifioctl_exit(struct ifnet *ifp)
+{
+	ifp->if_ioctl_nexit++;
+	mutex_exit(&ifp->if_ioctl_lock);
+}
+
 /*
  * Interface ioctls.
  */
@@ -1802,10 +1820,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	oif_flags = ifp->if_flags;
 
-	uint64_t *nenter = percpu_getref(ifp->if_ioctl_nenter);
-	(*nenter)++;
-	percpu_putref(ifp->if_ioctl_nenter);
-	mutex_enter(&ifp->if_ioctl_lock);
+	ifioctl_enter(ifp);
 	error = (*ifp->if_ioctl)(ifp, cmd, data);
 	if (error != ENOTTY)
 		;
@@ -1835,8 +1850,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		ifreqn2o(oifr, ifr);
 #endif
 
-	ifp->if_ioctl_nexit++;
-	mutex_exit(&ifp->if_ioctl_lock);
+	ifioctl_exit(ifp);
 	return error;
 }
 
