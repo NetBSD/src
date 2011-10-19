@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.145 2011/05/24 16:37:49 joerg Exp $ */
+/*	$NetBSD: if_gre.c,v 1.146 2011/10/19 21:59:38 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.145 2011/05/24 16:37:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.146 2011/10/19 21:59:38 dyoung Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -266,14 +266,6 @@ greintr(void *arg)
 
 /* Caller must hold sc->sc_mtx. */
 static void
-gre_wait(struct gre_softc *sc)
-{
-	sc->sc_waiters++;
-	cv_wait(&sc->sc_condvar, &sc->sc_mtx);
-	sc->sc_waiters--;
-}
-
-static void
 gre_fp_wait(struct gre_softc *sc)
 {
 	sc->sc_fp_waiters++;
@@ -362,7 +354,6 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
 	bpf_attach(&sc->sc_if, DLT_NULL, sizeof(uint32_t));
-	sc->sc_state = GRE_S_IDLE;
 	return 0;
 }
 
@@ -378,23 +369,6 @@ gre_clone_destroy(struct ifnet *ifp)
 	s = splnet();
 	if_detach(ifp);
 
-	/* Some LWPs may still wait in gre_ioctl_lock(), however,
-	 * no new LWP will enter gre_ioctl_lock(), because ifunit()
-	 * cannot locate the interface any longer.
-	 */
-	mutex_enter(&sc->sc_mtx);
-	GRE_DPRINTF(sc, "\n");
-	while (sc->sc_state != GRE_S_IDLE)
-		gre_wait(sc);
-	GRE_DPRINTF(sc, "\n");
-	sc->sc_state = GRE_S_DIE;
-	cv_broadcast(&sc->sc_condvar);
-	while (sc->sc_waiters > 0)
-		cv_wait(&sc->sc_condvar, &sc->sc_mtx);
-	/* At this point, no other LWP will access the gre_softc, so
-	 * we can release the mutex.
-	 */
-	mutex_exit(&sc->sc_mtx);
 	GRE_DPRINTF(sc, "\n");
 	/* Note that we must not hold the mutex while we call gre_reconf(). */
 	gre_reconf(sc, NULL);
@@ -1242,39 +1216,6 @@ gre_clearconf(struct gre_soparm *sp, bool force)
 }
 
 static int
-gre_ioctl_lock(struct gre_softc *sc)
-{
-	mutex_enter(&sc->sc_mtx);
-
-	while (sc->sc_state == GRE_S_IOCTL)
-		gre_wait(sc);
-
-	if (sc->sc_state != GRE_S_IDLE) {
-		cv_signal(&sc->sc_condvar);
-		mutex_exit(&sc->sc_mtx);
-		GRE_DPRINTF(sc, "\n");
-		return ENXIO;
-	}
-
-	sc->sc_state = GRE_S_IOCTL;
-
-	mutex_exit(&sc->sc_mtx);
-	return 0;
-}
-
-static void
-gre_ioctl_unlock(struct gre_softc *sc)
-{
-	mutex_enter(&sc->sc_mtx);
-
-	KASSERT(sc->sc_state == GRE_S_IOCTL);
-	sc->sc_state = GRE_S_IDLE;
-	cv_signal(&sc->sc_condvar);
-
-	mutex_exit(&sc->sc_mtx);
-}
-
-static int
 gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 {
 	struct ifreq *ifr;
@@ -1308,10 +1249,6 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		break;
 	}
 
-	if ((error = gre_ioctl_lock(sc)) != 0) {
-		GRE_DPRINTF(sc, "\n");
-		return error;
-	}
 	s = splnet();
 
 	sp0 = sc->sc_soparm;
@@ -1549,7 +1486,6 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 out:
 	GRE_DPRINTF(sc, "\n");
 	splx(s);
-	gre_ioctl_unlock(sc);
 	return error;
 }
 
