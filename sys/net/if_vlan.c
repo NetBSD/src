@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.68 2011/10/19 01:48:30 dyoung Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.69 2011/10/19 22:07:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.68 2011/10/19 01:48:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.69 2011/10/19 22:07:09 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -286,11 +286,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 			 */
 			ec->ec_capenable |= ETHERCAP_VLAN_MTU;
 			if (p->if_flags & IFF_UP) {
-				struct ifreq ifr;
-
-				ifr.ifr_flags = p->if_flags;
-				error = (*p->if_ioctl)(p, SIOCSIFFLAGS,
-				    (void *) &ifr);
+				error = if_flags_set(p, p->if_flags);
 				if (error) {
 					if (ec->ec_nvlans-- == 1)
 						ec->ec_capenable &=
@@ -382,11 +378,8 @@ vlan_unconfig(struct ifnet *ifp)
 			 */
 			ec->ec_capenable &= ~ETHERCAP_VLAN_MTU;
 			if (ifv->ifv_p->if_flags & IFF_UP) {
-				struct ifreq ifr;
-
-				ifr.ifr_flags = ifv->ifv_p->if_flags;
-				(void) (*ifv->ifv_p->if_ioctl)(ifv->ifv_p,
-				    SIOCSIFFLAGS, (void *) &ifr);
+				(void)if_flags_set(ifv->ifv_p,
+				    ifv->ifv_p->if_flags);
 			}
 		}
 
@@ -608,8 +601,7 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	memcpy(&mc->mc_addr, sa, sa->sa_len);
 	LIST_INSERT_HEAD(&ifv->ifv_mc_listhead, mc, mc_entries);
 
-	error = (*ifv->ifv_p->if_ioctl)(ifv->ifv_p, SIOCADDMULTI,
-	    (void *)ifr);
+	error = if_mcast_op(ifv->ifv_p, SIOCADDMULTI, sa);
 	if (error != 0)
 		goto ioctl_failed;
 	return (error);
@@ -644,8 +636,7 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 		return (error);
 
 	/* We no longer use this multicast address.  Tell parent so. */
-	error = (*ifv->ifv_p->if_ioctl)(ifv->ifv_p, SIOCDELMULTI,
-	    (void *)ifr);
+	error = if_mcast_op(ifv->ifv_p, SIOCDELMULTI, sa);
 	if (error == 0) {
 		/* And forget about this address. */
 		for (mc = LIST_FIRST(&ifv->ifv_mc_listhead); mc != NULL;
@@ -671,20 +662,10 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 {
 	struct ifnet *ifp = ifv->ifv_p;		/* Parent. */
 	struct vlan_mc_entry *mc;
-	union {
-		struct ifreq ifreq;
-		struct {
-			char ifr_name[IFNAMSIZ];
-			struct sockaddr_storage ifr_ss;
-		} ifreq_storage;
-	} ifreq;
-	struct ifreq *ifr = &ifreq.ifreq;
 
-	memcpy(ifr->ifr_name, ifp->if_xname, IFNAMSIZ);
 	while ((mc = LIST_FIRST(&ifv->ifv_mc_listhead)) != NULL) {
-		ifreq_setaddr(SIOCDELMULTI, ifr,
+		(void)if_mcast_op(ifp, SIOCDELMULTI,
 		    (const struct sockaddr *)&mc->mc_addr);
-		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)ifr);
 		LIST_REMOVE(mc, mc_entries);
 		free(mc, M_DEVBUF);
 	}
