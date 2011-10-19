@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.159 2011/10/18 15:39:09 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.160 2011/10/19 01:39:29 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.159 2011/10/18 15:39:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.160 2011/10/19 01:39:29 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1243,9 +1243,7 @@ puffs_vnop_readdir(void *v)
 
 	/* provide cookies to caller if so desired */
 	if (ap->a_cookies) {
-#ifdef DIAGNOSTIC
 		KASSERT(curlwp != uvm.pagedaemon_lwp);
-#endif
 		*ap->a_cookies = malloc(readdir_msg->pvnr_ncookies*CSIZE,
 		    M_TEMP, M_WAITOK);
 		*ap->a_ncookies = readdir_msg->pvnr_ncookies;
@@ -2268,10 +2266,7 @@ puffs_vnop_strategy(void *v)
 
 	cansleep = (curlwp == uvm.pagedaemon_lwp || dofaf) ? 0 : 1;
 
-#ifdef DIAGNOSTIC
-		if (curlwp == uvm.pagedaemon_lwp)
-			KASSERT(dofaf || BIOASYNC(bp));
-#endif
+	KASSERT(curlwp != uvm.pagedaemon_lwp || dofaf || BIOASYNC(bp));
 
 	/* allocate transport structure */
 	tomove = PUFFS_TOMOVE(bp->b_bcount, pmp);
@@ -2537,10 +2532,7 @@ puffs_vnop_getpages(void *v)
 #ifdef notnowjohn
 		/* allocate worst-case memory */
 		runsizes = ((npages / 2) + 1) * sizeof(struct puffs_cacherun);
-#ifdef DIAGNOSTIC
-		if (curlwp == uvm.pagedaemon_lwp)
-			KASSERT(locked);
-#endif
+		KASSERT(curlwp != uvm.pagedaemon_lwp || locked);
 		pcinfo = kmem_zalloc(sizeof(struct puffs_cacheinfo) + runsize,
 		    locked ? KM_NOSLEEP : KM_SLEEP);
 
