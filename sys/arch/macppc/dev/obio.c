@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.35 2011/08/01 22:40:21 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.36 2011/10/19 21:12:50 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.35 2011/08/01 22:40:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.36 2011/10/19 21:12:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.35 2011/08/01 22:40:21 macallan Exp $");
 #include <macppc/dev/obiovar.h>
 
 #include <powerpc/cpu.h>
+#include <sys/cpufreq.h>
 
 #include "opt_obio.h"
 
@@ -72,6 +73,7 @@ struct obio_softc {
 	int sc_voltage;
 	int sc_busspeed;
 	int sc_spd_hi, sc_spd_lo;
+	struct cpufreq sc_cf;
 #endif
 };
 
@@ -84,7 +86,8 @@ static int  obio_get_cpu_speed(struct obio_softc *);
 static int  sysctl_cpuspeed_temp(SYSCTLFN_ARGS);
 static int  sysctl_cpuspeed_cur(SYSCTLFN_ARGS);
 static int  sysctl_cpuspeed_available(SYSCTLFN_ARGS);
-
+static void obio_get_freq(void *, void *);
+static void obio_set_freq(void *, void *);
 static const char *keylargo[] = {"Keylargo",
 				 "AAPL,Keylargo",
 				 NULL};
@@ -333,10 +336,22 @@ uint8_t obio_read_1(int offset)
 #ifdef OBIO_SPEED_CONTROL
 
 static void
+obio_setup_cpufreq(device_t dev)
+{
+	struct obio_softc *sc = device_private(dev);
+	int ret;
+
+	ret = cpufreq_register(&sc->sc_cf);
+	if (ret != 0)
+		aprint_error_dev(sc->sc_dev, "cpufreq_register() failed, error %d\n", ret);
+}
+
+static void
 obio_setup_gpios(struct obio_softc *sc, int node)
 {
 	uint32_t gpio_base, reg[6];
 	const struct sysctlnode *sysctl_node, *me, *freq;
+	struct cpufreq *cf = &sc->sc_cf;
 	char name[32];
 	int child, use_dfs, cpunode, hiclock;
 
@@ -394,7 +409,10 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 	hiclock = 0;
 	cpunode = OF_finddevice("/cpus/@0");
 	OF_getprop(cpunode, "clock-frequency", &hiclock, 4);
-	printf("hiclock: %d\n", (hiclock + 500000) / 1000000);
+	if (hiclock != 0)
+		sc->sc_spd_hi = (hiclock + 500000) / 1000000;
+	printf("hiclock: %d\n", sc->sc_spd_hi);
+	
 	sysctl_node = NULL;
 
 	if (sysctl_createv(NULL, 0, NULL, 
@@ -436,6 +454,22 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 	} else
 		printf("couldn't create 'available' node\n");
 	printf("speed: %d\n", curcpu()->ci_khz);
+
+	/* support cpufreq */
+	snprintf(cf->cf_name, CPUFREQ_NAME_MAX, "Intrepid");
+	cf->cf_state[0].cfs_freq = sc->sc_spd_hi;
+	cf->cf_state[1].cfs_freq = sc->sc_spd_lo;
+	cf->cf_state_count = 2;
+	cf->cf_mp = FALSE;
+	cf->cf_cookie = sc;
+	cf->cf_get_freq = obio_get_freq;
+	cf->cf_set_freq = obio_set_freq;
+	/* 
+	 * XXX
+	 * cpufreq_register() calls xc_broadcast() which relies on kthreads
+	 * running so we need to postpone it
+	 */
+	config_interrupts(sc->sc_dev, obio_setup_cpufreq);
 }
 
 static void
@@ -495,6 +529,34 @@ obio_get_cpu_speed(struct obio_softc *sc)
 		return cpu_get_dfs() == 1;
 
 	return 0;
+}
+
+static void
+obio_get_freq(void *cookie, void *spd)
+{
+	struct obio_softc *sc = cookie;
+	uint32_t *freq;
+
+	freq = spd;
+	if (obio_get_cpu_speed(sc) == 0) {
+		*freq = sc->sc_spd_lo;
+	} else
+		*freq = sc->sc_spd_hi;
+}
+
+static void
+obio_set_freq(void *cookie, void *spd)
+{
+	struct obio_softc *sc = cookie;
+	uint32_t *freq;
+
+	freq = spd;
+	if (*freq == sc->sc_spd_lo) {
+		obio_set_cpu_speed(sc, 0);
+	} else if (*freq == sc->sc_spd_hi) {
+		obio_set_cpu_speed(sc, 1);
+	} else
+		aprint_error_dev(sc->sc_dev, "%s(%d) bogus CPU speed\n", __func__, *freq);
 }
 
 static int
