@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.157 2011/02/06 19:12:55 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.158 2011/10/19 01:53:07 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.157 2011/02/06 19:12:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.158 2011/10/19 01:53:07 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1753,8 +1753,8 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 
 	ia->ia_addr = *sin6;
 
-	if (ifacount <= 1 && 
-	    (error = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ia)) != 0) {
+	if (ifacount <= 1 &&
+	    (error = if_addr_init(ifp, &ia->ia_ifa, true)) != 0) {
 		splx(s);
 		return error;
 	}

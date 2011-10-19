@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.57 2009/08/07 14:04:34 wiz Exp $	*/
+/*	$NetBSD: iso.c,v 1.58 2011/10/19 01:53:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.57 2009/08/07 14:04:34 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.58 2011/10/19 01:53:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -649,7 +649,7 @@ iso_ifinit(struct ifnet *ifp, struct iso_ifaddr *ia, struct sockaddr_iso *siso,
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	if ((error = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ia)) != 0) {
+	if ((error = if_addr_init(ifp, &ia->ia_ifa, true)) != 0) {
 		splx(s);
 		ia->ia_addr = oldaddr;
 		return (error);
