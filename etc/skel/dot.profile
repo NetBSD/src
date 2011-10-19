@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.7 2011/10/19 11:27:26 dholland Exp $
+#	$NetBSD: dot.profile,v 1.8 2011/10/19 14:42:37 christos Exp $
 #
 # This is the default .profile file.
 # Users are expected to edit it to meet their own needs.
@@ -14,6 +14,9 @@
 # emacs or nano or whatever other editor you may prefer, but of course
 # those editors must be installed before you can use them.
 export EDITOR=vi
+
+# vi settings: set show-match auto-indent always-redraw shift-width=4
+#export EXINIT="se sm ai redraw sw=4"
 
 # VISUAL sets the "visual" editor, i.e., vi rather than ed, which if
 # set will be run by preference to $EDITOR by some software. It is
