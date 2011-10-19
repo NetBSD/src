@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.2 2011/10/01 17:46:10 christos Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.3 2011/10/19 15:27:16 njoly Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -310,6 +310,27 @@ TEST(fpsetmask_unmasked, float)
 TEST(fpsetmask_unmasked, double)
 TEST(fpsetmask_unmasked, long_double)
 
+ATF_TC(fpsetmask_basic);
+ATF_TC_HEAD(fpsetmask_basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of fpsetmask(3)");
+}
+
+ATF_TC_BODY(fpsetmask_basic, tc)
+{
+	size_t i;
+	fp_except_t msk, lst[] = { FP_X_INV, FP_X_DZ, FP_X_OFL, FP_X_UFL };
+
+	msk = fpgetmask();
+	for (i = 0; i < __arraycount(lst); i++) {
+		fpsetmask(msk | lst[i]);
+		ATF_CHECK((fpgetmask() & lst[i]) != 0);
+		fpsetmask(msk & lst[i]);
+		ATF_CHECK((fpgetmask() & lst[i]) == 0);
+	}
+
+}
+
 #endif /* defined(_FLOAT_IEEE754) */
 
 ATF_TP_ADD_TCS(tp)
@@ -318,6 +339,7 @@ ATF_TP_ADD_TCS(tp)
 #ifndef _FLOAT_IEEE754
 	ATF_TP_ADD_TC(tp, no_test);
 #else
+	ATF_TP_ADD_TC(tp, fpsetmask_basic);
 	ATF_TP_ADD_TC(tp, fpsetmask_masked_float);
 	ATF_TP_ADD_TC(tp, fpsetmask_masked_double);
 	ATF_TP_ADD_TC(tp, fpsetmask_masked_long_double);
