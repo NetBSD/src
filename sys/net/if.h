@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.151 2011/08/12 22:09:17 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.152 2011/10/19 01:34:37 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -63,6 +63,10 @@
 #ifndef _NET_IF_H_
 #define _NET_IF_H_
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <stdbool.h>
+#endif
+
 #include <sys/featuretest.h>
 
 /*
@@ -75,6 +79,7 @@
 
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/percpu.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <net/dlt.h>
@@ -296,6 +301,14 @@ typedef struct ifnet {
 					 * same, they are the same ifnet.
 					 */
 	struct sysctllog	*if_sysctl_log;
+	int (*if_initaddr)(struct ifnet *, struct ifaddr *, bool);
+	int (*if_mcastop)(struct ifnet *, const unsigned long,
+	    const struct sockaddr *);
+	int (*if_setflags)(struct ifnet *, const short);
+	kmutex_t if_ioctl_lock;
+	uint64_t if_ioctl_nexit;
+	percpu_t *if_ioctl_nenter;
+	kcondvar_t if_ioctl_emptied;
 } ifnet_t;
 
 #define	if_mtu		if_data.ifi_mtu
@@ -850,6 +863,9 @@ int	ifioctl(struct socket *, u_long, void *, struct lwp *);
 int	ifioctl_common(struct ifnet *, u_long, void *);
 int	ifpromisc(struct ifnet *, int);
 struct	ifnet *ifunit(const char *);
+int	if_addr_init(ifnet_t *, struct ifaddr *, bool);
+int	if_mcast_op(ifnet_t *, const unsigned long, const struct sockaddr *);
+int	if_flags_set(struct ifnet *, const short);
 
 void ifa_insert(struct ifnet *, struct ifaddr *);
 void ifa_remove(struct ifnet *, struct ifaddr *);
