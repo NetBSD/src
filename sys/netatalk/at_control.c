@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.33 2010/01/30 21:48:30 is Exp $	 */
+/*	$NetBSD: at_control.c,v 1.34 2011/10/19 01:50:27 dyoung Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.33 2010/01/30 21:48:30 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.34 2011/10/19 01:50:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,7 +575,7 @@ at_ifinit(struct ifnet *ifp, struct at_ifaddr *aa, const struct sockaddr_at *sat
 	 * Now that we have selected an address, we need to tell the
 	 * interface about it, just in case it needs to adjust something.
 	 */
-	if ((error = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, aa)) != 0) {
+	if ((error = if_addr_init(ifp, &aa->aa_ifa, true)) != 0) {
 		/*
 		 * of course this could mean that it objects violently
 		 * so if it does, we back out again..
