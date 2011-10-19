@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.152 2011/10/19 01:34:37 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.153 2011/10/19 21:29:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,9 +77,6 @@
 
 #if defined(_NETBSD_SOURCE)
 
-#include <sys/mutex.h>
-#include <sys/condvar.h>
-#include <sys/percpu.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <net/dlt.h>
@@ -204,6 +201,21 @@ struct ifqueue {
 	int	ifq_drops;
 };
 
+struct ifnet_lock;
+
+#ifdef _KERNEL
+#include <sys/mutex.h>
+#include <sys/condvar.h>
+#include <sys/percpu.h>
+
+struct ifnet_lock {
+	kmutex_t il_lock;
+	uint64_t il_nexit;
+	percpu_t *il_nenter;
+	kcondvar_t il_emptied;
+};
+#endif /* _KERNEL */
+
 /*
  * Structure defining a queue for a network interface.
  *
@@ -305,12 +317,9 @@ typedef struct ifnet {
 	int (*if_mcastop)(struct ifnet *, const unsigned long,
 	    const struct sockaddr *);
 	int (*if_setflags)(struct ifnet *, const short);
-	kmutex_t if_ioctl_lock;
-	uint64_t if_ioctl_nexit;
-	percpu_t *if_ioctl_nenter;
-	kcondvar_t if_ioctl_emptied;
+	struct ifnet_lock *if_ioctl_lock;
 } ifnet_t;
-
+ 
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
 #define	if_addrlen	if_data.ifi_addrlen
