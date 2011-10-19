@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.163 2011/08/31 16:04:39 christos Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.164 2011/10/19 10:51:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.163 2011/08/31 16:04:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.164 2011/10/19 10:51:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -317,6 +317,7 @@ lwp0_init(void)
 	kauth_cred_hold(proc0.p_cred);
 	l->l_cred = proc0.p_cred;
 
+	kdtrace_thread_ctor(NULL, l);
 	lwp_initspecific(l);
 
 	SYSCALL_TIME_LWP_INIT(l);
