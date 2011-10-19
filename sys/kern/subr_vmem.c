@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.63 2011/10/15 19:02:27 rmind Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.64 2011/10/19 11:12:37 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.63 2011/10/15 19:02:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.64 2011/10/19 11:12:37 yamt Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.63 2011/10/15 19:02:27 rmind Exp $")
 #include <errno.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define	UNITTEST
 #define	KASSERT(a)		assert(a)
@@ -119,6 +120,8 @@ typedef struct qcache qcache_t;
 #define	QC_POOL_TO_QCACHE(pool)	((qcache_t *)(pool->pr_qcache))
 #endif /* defined(QCACHE) */
 
+#define	VMEM_NAME_MAX	16
+
 /* vmem arena */
 struct vmem {
 	LOCK_DECL(vm_lock);
@@ -134,7 +137,7 @@ struct vmem {
 	struct vmem_hashlist *vm_hashlist;
 	size_t vm_quantum_mask;
 	int vm_quantum_shift;
-	const char *vm_name;
+	char vm_name[VMEM_NAME_MAX+1];
 	LIST_ENTRY(vmem) vm_alllist;
 
 #if defined(QCACHE)
@@ -769,7 +772,7 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
 	}
 
 	VMEM_LOCK_INIT(vm, ipl);
-	vm->vm_name = name;
+	strlcpy(vm->vm_name, name, sizeof(vm->vm_name));
 	vm->vm_quantum_mask = quantum - 1;
 	vm->vm_quantum_shift = SIZE2ORDER(quantum);
 	KASSERT(ORDER2SIZE(vm->vm_quantum_shift) == quantum);
@@ -1199,6 +1202,8 @@ vmem_rehash_all(struct work *wk, void *dummy)
 			desired = VMEM_HASHSIZE_MIN;
 		}
 		if (desired > current * 2 || desired * 2 < current) {
+			printf("vmem %s rehash %zu -> %zu\n",
+			    vm->vm_name, current, desired);
 			vmem_rehash(vm, desired, VM_NOSLEEP);
 		}
 	}
