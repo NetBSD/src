@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.29 2010/08/11 11:47:29 pgoyette Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.30 2011/10/19 01:49:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.29 2010/08/11 11:47:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.30 2011/10/19 01:49:50 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -235,7 +235,6 @@ agr_vlan_add(struct agr_port *port, void *arg)
 {
 	struct ifnet *ifp = port->port_ifp;
 	struct ethercom *ec_port = (void *)ifp;
-	struct ifreq ifr;
 	int error=0;
 
 	if (ec_port->ec_nvlans++ == 0 &&
@@ -246,9 +245,7 @@ agr_vlan_add(struct agr_port *port, void *arg)
 		 */
 		ec_port->ec_capenable |= ETHERCAP_VLAN_MTU;
 		if (p->if_flags & IFF_UP) {
-			ifr.ifr_flags = p->if_flags;
-			error = (*p->if_ioctl)(p, SIOCSIFFLAGS,
-			    (void *) &ifr);
+			error = if_flags_set(p, p->if_flags);
 			if (error) {
 				if (ec_port->ec_nvlans-- == 1)
 					ec_port->ec_capenable &=
@@ -268,7 +265,6 @@ static int
 agr_vlan_del(struct agr_port *port, void *arg)
 {
 	struct ethercom *ec_port = (void *)port->port_ifp;
-	struct ifreq ifr;
 
 	/* Disable vlan support */
 	if (ec_port->ec_nvlans-- == 1) {
@@ -277,9 +273,8 @@ agr_vlan_del(struct agr_port *port, void *arg)
 		 */
 		ec_port->ec_capenable &= ~ETHERCAP_VLAN_MTU;
 		if (port->port_ifp->if_flags & IFF_UP) {
-			ifr.ifr_flags = port->port_ifp->if_flags;
-			(void) (*port->port_ifp->if_ioctl)(port->port_ifp,
-			    SIOCSIFFLAGS, (void *) &ifr);
+			(void)if_flags_set(port->port_ifp,
+			    port->port_ifp->if_flags);
 		}
 	}
 
@@ -641,10 +636,10 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	 * of each port to that of the first port. No need for arps 
 	 * since there are no inet addresses assigned to the ports.
 	 */
-	error = (*ifp_port->if_ioctl)(ifp_port, SIOCINITIFADDR, ifp->if_dl);
+	error = if_addr_init(ifp_port, ifp->if_dl, true);
 
 	if (error) {
-		printf("%s: SIOCINITIFADDR error %d\n", __func__, error);
+		printf("%s: if_addr_init error %d\n", __func__, error);
 		goto cleanup;
 	}
 	port->port_flags |= AGRPORT_LADDRCHANGED;
