@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.13 2011/08/29 14:34:59 joerg Exp $ */
+/* $NetBSD: drvctl.c,v 1.14 2011/10/19 22:13:46 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -200,8 +200,11 @@ main(int argc, char **argv)
 
 		if (argc == 1) {
 			xml = prop_dictionary_externalize(data_dict);
-			printf("Properties for device `%s':\n%s",
-			       argv[0], xml);
+			if (!nflag) {
+				printf("Properties for device `%s':\n",
+				    argv[0]);
+			}
+			printf("%s", xml);
 			free(xml);
 		} else {
 			for (i = 1; i < argc; i++)
