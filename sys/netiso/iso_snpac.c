@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.53 2009/04/16 21:37:17 elad Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.54 2011/10/19 01:53:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.53 2009/04/16 21:37:17 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.54 2011/10/19 01:53:35 dyoung Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -275,18 +275,18 @@ iso_setmcasts(struct ifnet *ifp, int req)
 {
 	static const char * const addrlist[] =
 	{all_es_snpa, all_is_snpa, all_l1is_snpa, all_l2is_snpa, 0};
-	struct ifreq ifr;
+	struct sockaddr sa;
 	const char *const *cpp;
 
-	(void)memset(&ifr, 0, sizeof(ifr));
+	(void)memset(&sa, 0, sizeof(sa));
 	for (cpp = addrlist; *cpp; cpp++) {
-		(void)memcpy(ifr.ifr_addr.sa_data, *cpp, 6);
+		(void)memcpy(sa.sa_data, *cpp, 6);
 		if (req == RTM_ADD && 
-		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr) != 0)
+		    if_mcast_op(ifp, SIOCADDMULTI, &sa) != 0)
 			printf("iso_setmcasts: %s unable to add mcast\n",
 			    ifp->if_xname);
 		else if (req == RTM_DELETE && 
-		    (*ifp->if_ioctl)(ifp, SIOCDELMULTI, &ifr) != 0)
+		    if_mcast_op(ifp, SIOCDELMULTI, &sa) != 0)
 			printf("iso_setmcasts: %s unable to delete mcast\n",
 			    ifp->if_xname);
 	}
