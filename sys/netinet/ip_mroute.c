@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.120 2011/08/31 18:31:03 plunky Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.121 2011/10/19 01:52:22 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.120 2011/08/31 18:31:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.121 2011/10/19 01:52:22 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -787,7 +787,6 @@ add_vif(struct vifctl *vifcp)
 	struct vif *vifp;
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
-	struct ifreq ifr;
 	int error, s;
 	struct sockaddr_in sin;
 
@@ -867,8 +866,7 @@ add_vif(struct vifctl *vifcp)
 
 		/* Enable promiscuous reception of all IP multicasts. */
 		sockaddr_in_init(&sin, &zeroin_addr, 0);
-		ifreq_setaddr(SIOCADDMULTI, &ifr, sintosa(&sin));
-		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr);
+		error = if_mcast_op(ifp, SIOCADDMULTI, sintosa(&sin));
 		if (error)
 			return (error);
 	}
@@ -926,7 +924,6 @@ reset_vif(struct vif *vifp)
 {
 	struct mbuf *m, *n;
 	struct ifnet *ifp;
-	struct ifreq ifr;
 	struct sockaddr_in sin;
 
 	callout_stop(&vifp->v_repq_ch);
@@ -951,9 +948,8 @@ reset_vif(struct vif *vifp)
 #endif
 	} else {
 		sockaddr_in_init(&sin, &zeroin_addr, 0);
-		ifreq_setaddr(SIOCDELMULTI, &ifr, sintosa(&sin));
 		ifp = vifp->v_ifp;
-		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, &ifr);
+		if_mcast_op(ifp, SIOCDELMULTI, sintosa(&sin));
 	}
 	memset((void *)vifp, 0, sizeof(*vifp));
 }
