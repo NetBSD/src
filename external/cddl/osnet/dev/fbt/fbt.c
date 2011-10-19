@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.9 2011/08/31 21:57:16 christos Exp $	*/
+/*	$NetBSD: fbt.c,v 1.10 2011/10/19 10:55:50 yamt Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -267,6 +267,21 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 
 	if (name[0] == '_' && name[1] == '_')
 		return (0);
+
+	/*
+	 * Exclude some more symbols which can be called from probe context.
+	 */
+	if (strcmp(name, "x86_curcpu") == 0 /* CPU */
+	    || strcmp(name, "x86_curlwp") == 0 /* curproc, curlwp, curthread */
+	    || strcmp(name, "cpu_index") == 0 /* cpu_number, curcpu_id */
+	    || strncmp(name, "db_", 3) == 0 /* debugger */
+	    || strncmp(name, "ddb_", 4) == 0 /* debugger */
+	    || strncmp(name, "kdb_", 4) == 0 /* debugger */
+	    || strncmp(name, "lockdebug_", 10) == 0 /* lockdebug XXX for now */
+	    || strncmp(name, "kauth_", 5) == 0 /* CRED XXX for now */
+	    ) {
+		return 0;
+	}
 
 	instr = (u_int8_t *) value;
 	limit = (u_int8_t *) value + symsize;
