@@ -505,12 +505,7 @@ dt_status(dtrace_hdl_t *dtp, processorid_t cpu)
 #if defined(sun)
 		return (p_online(cpu, P_STATUS));
 #else
-		int maxid = 0;
-		size_t len = sizeof(maxid);
-		if (sysctlbyname("kern.smp.maxid", &maxid, &len, NULL, 0) != 0)
-			return (cpu == 0 ? 1 : -1);
-		else
-			return (cpu <= maxid ? 1 : -1);
+		return 1;
 #endif
 	}
 
