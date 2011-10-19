@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrether.c,v 1.8 2009/06/09 22:26:49 yamt Exp $	*/
+/*	$NetBSD: if_agrether.c,v 1.9 2011/10/19 01:49:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.8 2009/06/09 22:26:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.9 2011/10/19 01:49:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -175,9 +175,7 @@ agrether_portinit(struct agr_softc *sc, struct agr_port *port)
 		 */
 		ec_port->ec_capenable |= ETHERCAP_VLAN_MTU;
 		if (p->if_flags & IFF_UP) {
-			ifr.ifr_flags = p->if_flags;
-			error = (*p->if_ioctl)(p, SIOCSIFFLAGS,
-			    (void *) &ifr);
+			error = if_flags_set(p, p->if_flags);
 			if (error) {
 				if (ec_port->ec_nvlans-- == 1)
 					ec_port->ec_capenable &=
@@ -234,9 +232,8 @@ agrether_portfini(struct agr_softc *sc, struct agr_port *port)
 		 */
 		ec_port->ec_capenable &= ~ETHERCAP_VLAN_MTU;
 		if (port->port_ifp->if_flags & IFF_UP) {
-			ifr.ifr_flags = port->port_ifp->if_flags;
-			(void) (*port->port_ifp->if_ioctl)(port->port_ifp,
-			    SIOCSIFFLAGS, (void *) &ifr);
+			(void)if_flags_set(port->port_ifp,
+			    port->port_ifp->if_flags);
 		}
 	}
 
