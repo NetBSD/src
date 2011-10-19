@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.6 2011/10/19 11:27:26 dholland Exp $
+#	$NetBSD: dot.cshrc,v 1.7 2011/10/19 14:42:37 christos Exp $
 #
 # This is the default .cshrc file.
 # Users are expected to edit it to meet their own needs.
@@ -15,6 +15,9 @@
 # those editors must be installed before you can use them.
 setenv	EDITOR	vi
 
+# vi settings: set show-match auto-indent always-redraw shift-width=4
+#setenv	EXINIT	"se sm ai redraw sw=4"
+
 # VISUAL sets the "visual" editor, i.e., vi rather than ed, which if
 # set will be run by preference to $EDITOR by some software. It is
 # mostly historical and usually does not need to be set.
@@ -26,7 +29,7 @@ setenv	EDITOR	vi
 #setenv	PAGER	more
 
 # Set your default printer, if desired.
-#setenv PRINTER change-this-to-a-printer
+#setenv	PRINTER	change-this-to-a-printer
 
 # Set the search path for programs.
 set path = (~/bin /bin /sbin /usr/{bin,sbin,X11R7/bin,X11R6/bin,pkg/{,s}bin,games} \
