@@ -1,4 +1,4 @@
-.\"	$NetBSD: mstohz.9,v 1.9 2011/04/08 07:55:04 jruoho Exp $
+.\"	$NetBSD: mstohz.9,v 1.10 2011/10/20 09:31:00 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 Manuel Bouyer.
 .\"
@@ -24,7 +24,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd April 8, 2011
+.Dd October 20, 2011
 .Dt MSTOHZ 9
 .Os
 .Sh NAME
@@ -61,7 +61,8 @@ The return value is either the number of clock ticks or milliseconds
 for the specified value.
 .Sh SEE ALSO
 .Xr param 3 ,
-.Xr callout 9
+.Xr callout 9 ,
+.Xr tvtohz 9
 .Sh BUGS
 Neither
 .Fn mstohz
