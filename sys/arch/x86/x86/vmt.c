@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.5 2011/10/18 21:41:25 jmcneill Exp $ */
+/* $NetBSD: vmt.c,v 1.6 2011/10/20 20:13:55 jmcneill Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -151,14 +151,15 @@ union vm_reg {
 } __packed;
 
 /* A register frame. */
+/* XXX 'volatile' as a workaround because BACKDOOR_OP is likely broken */
 struct vm_backdoor {
-	union vm_reg eax;
-	union vm_reg ebx;
-	union vm_reg ecx;
-	union vm_reg edx;
-	union vm_reg esi;
-	union vm_reg edi;
-	union vm_reg ebp;
+	volatile union vm_reg eax;
+	volatile union vm_reg ebx;
+	volatile union vm_reg ecx;
+	volatile union vm_reg edx;
+	volatile union vm_reg esi;
+	volatile union vm_reg edi;
+	volatile union vm_reg ebp;
 } __packed;
 
 /* RPC context. */
