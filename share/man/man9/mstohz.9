@@ -1,4 +1,4 @@
-.\"	$NetBSD: mstohz.9,v 1.10 2011/10/20 09:31:00 jruoho Exp $
+.\"	$NetBSD: mstohz.9,v 1.11 2011/10/20 10:36:42 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Manuel Bouyer.
 .\"
@@ -50,11 +50,11 @@ Conversely,
 converts system clock ticks to milliseconds.
 .Pp
 These macros are defined in the
-.Em \*[Lt]sys/param.h\*[Gt]
+.Aq Em sys/param.h
 header.
 Individual ports can have a processor-specific, more efficient
 version implemented in their
-.Em \*[Lt]machine/param.h\*[Gt]
+.Aq Em machine/param.h
 header as a define.
 .Sh RETURN VALUES
 The return value is either the number of clock ticks or milliseconds
