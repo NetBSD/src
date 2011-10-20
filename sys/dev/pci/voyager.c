@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.5 2011/10/18 17:57:40 macallan Exp $	*/
+/*	$NetBSD: voyager.c,v 1.6 2011/10/20 22:04:10 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.5 2011/10/18 17:57:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.6 2011/10/20 22:04:10 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.5 2011/10/18 17:57:40 macallan Exp $")
 #include <sys/bitops.h>
 
 #include <dev/pci/voyagervar.h>
+
+#include "opt_voyager.h"
 
 #ifdef VOYAGER_DEBUG
 #define DPRINTF aprint_normal
