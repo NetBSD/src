@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.7 2008/04/30 13:10:59 martin Exp $
+.\"	$NetBSD: usbdi.9,v 1.8 2011/10/20 12:14:12 njoly Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,8 +34,8 @@
 .Nm usbdi
 .Nd USB device drivers interface
 .Sh SYNOPSIS
-.Cd "#include \*[Lt]dev/usb/usb.h\*[Gt]"
-.Cd "#include \*[Lt]dev/usb/usbdi.h\*[Gt]"
+.In dev/usb/usb.h
+.In dev/usb/usbdi.h
 .Sh DESCRIPTION
 Device driver access to the USB bus centers around transfers.
 A transfer describes a communication with a USB device.
