@@ -1,4 +1,4 @@
-.\" $NetBSD: cpufreq.9,v 1.4 2011/09/30 04:21:17 jruoho Exp $ */
+.\" $NetBSD: cpufreq.9,v 1.5 2011/10/20 06:48:24 jruoho Exp $ */
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen.iki.fi>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 30, 2011
+.Dd October 20, 2011
 .Dt CPUFREQ 9
 .Os
 .Sh NAME
@@ -115,7 +115,7 @@ a machine-dependent backend with the framework.
 Only one backend can be registered.
 Upon successful completion,
 .Fn cpufreq_register
-returns 0 and sets the frequency to the maximum available level.
+returns 0.
 .Pp
 The following elements in
 .Vt struct cpufreq
@@ -277,6 +277,7 @@ while calling the functions.
 This, and the use of
 .Xr xcall 9 ,
 implies that no memory can be allocated in the backend during the calls.
+Nor should the functions be called from interrupt context.
 .Sh CODE REFERENCES
 The
 .Nm
