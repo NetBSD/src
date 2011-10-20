@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.45 2011/10/18 05:08:24 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.46 2011/10/20 06:57:23 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.45 2011/10/18 05:08:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.46 2011/10/20 06:57:23 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -249,24 +249,18 @@ acpicpu_once_attach(void)
 static int
 acpicpu_once_detach(void)
 {
-	struct cpu_info *ci = curcpu();
 	struct acpicpu_softc *sc;
 
 	if (acpicpu_count != 0)
 		return EDEADLK;
 
+	cpufreq_deregister();
+
 	if (acpicpu_log != NULL)
 		sysctl_teardown(&acpicpu_log);
 
-	if (acpicpu_sc != NULL) {
-
-		sc = acpicpu_sc[ci->ci_acpiid];
-
-		if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
-			cpufreq_deregister();
-
+	if (acpicpu_sc != NULL)
 		kmem_free(acpicpu_sc, maxcpus * sizeof(*sc));
-	}
 
 	return 0;
 }
@@ -333,6 +327,12 @@ acpicpu_start(device_t self)
 
 		if (cpufreq_register(&cf) != 0)
 			aprint_error_dev(self, "failed to register cpufreq\n");
+		else {
+			/*
+			 * Initialize the states to P0.
+			 */
+			cpufreq_set_all(sc->sc_pstate[0].ps_freq);
+		}
 	}
 }
 
