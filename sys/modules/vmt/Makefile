@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/10/17 22:39:23 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2 2011/10/20 20:13:54 jmcneill Exp $
 
 .include "../Makefile.inc"
 
@@ -7,7 +7,6 @@
 KMOD=	vmt	
 IOCONF=	vmt.ioconf
 SRCS=	vmt.c
-COPTS.vmt.c=	-O0
 
 WARNS=	4
 
