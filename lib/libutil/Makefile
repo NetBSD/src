@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 2011/10/21 01:37:59 christos Exp $
+#	$NetBSD: Makefile,v 1.68 2011/10/21 02:05:36 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -27,7 +27,7 @@ MAN=	efun.3 getbootfile.3 getlabelsector.3 getmaxpartitions.3 \
 	login.3 login_cap.3 loginx.3 \
 	disklabel_dkcksum.3 disklabel_scan.3 \
 	opendisk.3 openpty.3 parsedate.3 pidfile.3 pidlock.3 \
-	pw_getconf.3 pw_init.3 pw_lock.3 secure_path.3 \
+	proc_compare.3 pw_getconf.3 pw_init.3 pw_lock.3 secure_path.3 \
 	raise_default_signal.3 \
 	snprintb.3 sockaddr_snprintf.3 stat_flags.3 strpct.3 ttyaction.3 \
 	ttymsg.3 util.3
