@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.196 2011/10/12 23:04:22 dholland Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.197 2011/10/21 02:07:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1219,6 +1219,8 @@ int	sysctlbyname(const char *, void *, size_t *, const void *, size_t);
 int	sysctlgetmibinfo(const char *, int *, u_int *,
 			 char *, size_t *, struct sysctlnode **, int);
 int	sysctlnametomib(const char *, int *, size_t *);
+int	proc_compare(const struct kinfo_proc2 *, const struct kinfo_lwp *,
+    const struct kinfo_proc2 *, const struct kinfo_lwp *);
 __END_DECLS
 
 #endif	/* !_KERNEL */

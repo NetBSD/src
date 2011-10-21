@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.310 2011/09/02 20:10:19 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.311 2011/10/21 02:07:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -507,6 +507,8 @@ void	proc_initspecific(struct proc *);
 void	proc_finispecific(struct proc *);
 void *	proc_getspecific(struct proc *, specificdata_key_t);
 void	proc_setspecific(struct proc *, specificdata_key_t, void *);
+int	proc_compare(const struct proc *, const struct lwp *,
+    const struct proc *, const struct lwp *);
 
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);
