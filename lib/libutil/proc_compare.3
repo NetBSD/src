@@ -1,4 +1,4 @@
-.\"     $NetBSD: proc_compare.3,v 1.1 2011/10/21 12:10:31 christos Exp $
+.\"     $NetBSD: proc_compare.3,v 1.2 2011/10/21 12:58:53 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Os
 .Sh NAME
 .Nm proc_compare
-.Nd compare two processes interactivity
+.Nd compare two processes' interactivity
 .Sh LIBRARY
 .Lb libutil
 .Sh SYNOPSIS
@@ -65,22 +65,22 @@ The algorithm used is as follows:
 .It
 If one of them is runnable, it is preferred.
 .It
-If both are runnable, the one with the largest cpu percent is preferred.
+If both are runnable, the one with the largest CPU percent is preferred.
 .It
-In a cpu percent tie, the one started more recently wins.
-.It 
-If none are runnable, and one of them is a zombie, the non zombie is preferred
+In a CPU percent tie, the one started more recently wins.
+.It
+If none are runnable, and one of them is a zombie, the non-zombie is preferred
 .It
 If both are zombies, the one started more recently wins.
 .It
 If neither is a zombie, the one with the smaller sleep time wins.
 .It
-In a tie, and one is sleeping in non interruptible sleep, we prefer that one.
+In a tie, and one is sleeping in non-interruptible sleep, prefer that one.
 .It
 If both are in the same state, the one started more recently is preferred.
 .El
 In all cases where the most recently started wins, if there was no winner,
-the one with the largest pid wins.
+the one with the largest PID wins.
 .Sh RETURN VALUES
 The
 .Fn proc_compare
@@ -99,6 +99,9 @@ is to be preferred.
 .Sh HISTORY
 The
 .Fn proc_compare
-was extracted from src/sys/kern/tty.c and src/usr.bin/w/proc_compare.c
+was extracted from
+.Pa src/sys/kern/tty.c
+and
+.Pa src/usr.bin/w/proc_compare.c
 and merged in
-.Nx 6.
+.Nx 6.0 .
