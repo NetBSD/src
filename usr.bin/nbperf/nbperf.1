@@ -1,4 +1,4 @@
-.\"	$NetBSD: nbperf.1,v 1.2 2010/03/03 01:55:04 joerg Exp $
+.\"	$NetBSD: nbperf.1,v 1.3 2011/10/21 23:47:11 joerg Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 3, 2010
+.Dd October 20, 2011
 .Dt NBPERF 1
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nd compute a perfect hash function
 .Sh SYNOPSIS
 .Nm
-.Op Fl s
+.Op Fl ps
 .Op Fl a Ar algorithm
 .Op Fl c Ar utilisation
 .Op Fl h Ar hash
@@ -124,9 +124,16 @@ flag is specified, it will be static.
 After each failing iteration, a dot is written to stderr.
 .Pp
 .Nm
-checks for duplicate keys on the first iteration that passed basic hash distribution
-tests.
+checks for duplicate keys on the first iteration that passed
+basic hash distribution tests.
 In that case, an error message is printed and the program terminates.
+.Pp
+If the
+.Fl p
+flag is specified, the hash function is seeded in a stable way.
+This may take longer than the normal random seed, but ensures
+that the output is the same for repeated invocations as long as
+the input is constant.
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
