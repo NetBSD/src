@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.6 2011/10/20 20:13:55 jmcneill Exp $ */
+/* $NetBSD: vmt.c,v 1.7 2011/10/21 10:10:28 jmcneill Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
+#include <sys/timetc.h>
 #include <sys/module.h>
 
 #include <net/if.h>
@@ -191,10 +192,6 @@ struct vmt_softc {
 
 	struct callout		sc_tick;
 	struct callout		sc_tclo_tick;
-#if notyet
-	struct ksensordev	sc_sensordev;
-	struct ksensor		sc_sensor;
-#endif
 
 	struct vmt_event	sc_ev_power;
 	struct vmt_event	sc_ev_reset;
@@ -229,6 +226,7 @@ static void vmt_do_shutdown(struct vmt_softc *);
 
 static void vmt_update_guest_info(struct vmt_softc *);
 static void vmt_update_guest_uptime(struct vmt_softc *);
+static void vmt_sync_guest_clock(struct vmt_softc *);
 
 static void vmt_tick(void *);
 static void vmt_tclo_tick(void *);
@@ -325,17 +323,6 @@ vmt_attach(device_t parent, device_t self, void *aux)
 
 	pmf_device_register1(self, NULL, NULL, vmt_shutdown);
 
-#if notyet
-	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
-	    sizeof(sc->sc_sensordev.xname));
-
-	sc->sc_sensor.type = SENSOR_TIMEDELTA;
-	sc->sc_sensor.status = SENSOR_S_UNKNOWN;
-
-	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
-	sensordev_install(&sc->sc_sensordev);
-#endif
-
 	sysmon_task_queue_init();
 
 	sc->sc_ev_power.ev_smpsw.smpsw_type = PSWITCH_TYPE_POWER;
@@ -358,6 +345,8 @@ vmt_attach(device_t parent, device_t self, void *aux)
 	callout_setfunc(&sc->sc_tclo_tick, vmt_tclo_tick, sc);
 	callout_schedule(&sc->sc_tclo_tick, hz);
 	sc->sc_tclo_ping = 1;
+
+	vmt_sync_guest_clock(sc);
 
 	return;
 
@@ -444,16 +433,10 @@ vmt_update_guest_info(struct vmt_softc *sc)
 }
 
 static void
-vmt_tick(void *xarg)
+vmt_sync_guest_clock(struct vmt_softc *sc)
 {
-	struct vmt_softc *sc = xarg;
 	struct vm_backdoor frame;
-#if notyet
-	struct timeval *guest = &sc->sc_sensor.tv;
-	struct timeval host, diff;
-
-	microtime(guest);
-#endif
+	struct timespec ts;
 
 	memset(&frame, 0, sizeof(frame));
 	frame.eax.word = VM_MAGIC;
@@ -462,21 +445,16 @@ vmt_tick(void *xarg)
 	vm_cmd(&frame);
 
 	if (frame.eax.word != 0xffffffff) {
-#if notyet
-		host.tv_sec = ((uint64_t)frame.esi.word << 32) | frame.edx.word;
-		host.tv_usec = frame.ebx.word;
-
-		timersub(guest, &host, &diff);
-
-		sc->sc_sensor.value = (u_int64_t)diff.tv_sec * 1000000000LL +
-		    (u_int64_t)diff.tv_usec * 1000LL;
-		sc->sc_sensor.status = SENSOR_S_OK;
-#endif
-	} else {
-#if notyet
-		sc->sc_sensor.status = SENSOR_S_UNKNOWN;
-#endif
+		ts.tv_sec = ((uint64_t)frame.esi.word << 32) | frame.edx.word;
+		ts.tv_nsec = frame.ebx.word * 1000;
+		tc_setclock(&ts);
 	}
+}
+
+static void
+vmt_tick(void *xarg)
+{
+	struct vmt_softc *sc = xarg;
 
 	vmt_update_guest_info(sc);
 	vmt_update_guest_uptime(sc);
@@ -518,6 +496,8 @@ static void
 vmt_do_resume(struct vmt_softc *sc)
 {
 	device_printf(sc->sc_dev, "guest resuming from suspended state\n");
+
+	vmt_sync_guest_clock(sc);
 
 	/* force guest info update */
 	sc->sc_hostname[0] = '\0';
