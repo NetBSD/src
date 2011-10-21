@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 2003/08/07 11:17:12 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 2011/10/21 02:26:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,4 +36,3 @@ void	fmt_puts(char *, int *);
 void	fmt_putc(int, int *);
 void	pr_attime(time_t *, time_t *);
 void	pr_idle(time_t);
-int	proc_compare(struct kinfo_proc2 *, struct kinfo_proc2 *);
