@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.248 2011/09/24 00:05:38 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.249 2011/10/21 02:08:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.248 2011/09/24 00:05:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.249 2011/10/21 02:08:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ static void	ttyecho(int, struct tty *);
 static void	ttyrubo(struct tty *, int);
 static void	ttyprintf_nolock(struct tty *, const char *fmt, ...)
     __attribute__((__format__(__printf__,2,3)));
-static int	proc_compare(struct proc *, struct proc *);
+static int	proc_compare_wrapper(struct proc *, struct proc *);
 static void	ttysigintr(void *);
 
 /* Symbolic sleep message strings. */
@@ -2488,7 +2488,7 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 			} else
 				mutex_enter(p->p_lock);
 			oldpick = pick;
-			if (proc_compare(pick, p))
+			if (proc_compare_wrapper(pick, p))
 				pick = p;
 			mutex_exit(p->p_lock);
 			if (p->p_lock != oldpick->p_lock)
@@ -2594,26 +2594,11 @@ ttyputinfo(struct tty *tp, char *buf)
 }
 
 /*
- * Returns 1 if p2 is "better" than p1
- *
- * The algorithm for picking the "interesting" process is thus:
- *
- *	1) Only foreground processes are eligible - implied.
- *	2) Runnable processes are favored over anything else.  The runner
- *	   with the highest CPU utilization is picked (l_pctcpu).  Ties are
- *	   broken by picking the highest pid.
- *	3) The sleeper with the shortest sleep time is next.  With ties,
- *	   we pick out just "short-term" sleepers (P_SINTR == 0).
- *	4) Further ties are broken by picking the highest pid.
+ * Returns 1 if p2 has a better chance being the active foreground process
+ * in a terminal instead of p1.
  */
-#define	ISRUN(p)	((p)->p_nrlwps > 0)
-#define	TESTAB(a, b)	((a)<<1 | (b))
-#define	ONLYA	2
-#define	ONLYB	1
-#define	BOTH	3
-
 static int
-proc_compare(struct proc *p1, struct proc *p2)
+proc_compare_wrapper(struct proc *p1, struct proc *p2)
 {
 	lwp_t *l1, *l2;
 
@@ -2621,51 +2606,12 @@ proc_compare(struct proc *p1, struct proc *p2)
 	KASSERT(mutex_owned(p2->p_lock));
 
 	if ((l1 = LIST_FIRST(&p1->p_lwps)) == NULL)
-		return (1);
+		return 1;
+
 	if ((l2 = LIST_FIRST(&p2->p_lwps)) == NULL)
-		return (0);
-	/*
-	 * see if at least one of them is runnable
-	 */
-	switch (TESTAB(ISRUN(p1), ISRUN(p2))) {
-	case ONLYA:
-		return (0);
-	case ONLYB:
-		return (1);
-	case BOTH:
-		/*
-		 * tie - favor one with highest recent CPU utilization
-		 */
-		if (l2->l_pctcpu > l1->l_pctcpu)
-			return (1);
-		return (p2->p_pid > p1->p_pid);	/* tie - return highest pid */
-	}
-	/*
- 	 * weed out zombies
-	 */
-	switch (TESTAB(P_ZOMBIE(p1), P_ZOMBIE(p2))) {
-	case ONLYA:
-		return (1);
-	case ONLYB:
-		return (0);
-	case BOTH:
-		return (p2->p_pid > p1->p_pid);	/* tie - return highest pid */
-	}
-	/*
-	 * pick the one with the smallest sleep time
-	 */
-	if (l2->l_slptime > l2->l_slptime)
-		return (0);
-	if (l2->l_slptime > l2->l_slptime)
-		return (1);
-	/*
-	 * favor one sleeping in a non-interruptible sleep
-	 */
-	if (l2->l_flag & LW_SINTR && (l2->l_flag & LW_SINTR) == 0)
-		return (1);
-	if (l2->l_flag & LW_SINTR && (l2->l_flag & LW_SINTR) == 0)
-		return (0);
-	return (p2->p_pid > p1->p_pid);		/* tie - return highest pid */
+		return 0;
+
+	return proc_compare(p1, l1, p2, l2);
 }
 
 /*
