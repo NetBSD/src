@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1694 2011/10/17 14:20:54 chs Exp $
+#	$NetBSD: mi,v 1.1695 2011/10/21 02:11:18 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8172,6 +8172,7 @@
 ./usr/share/man/cat3/ppath_set_object.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ppath_set_uint64.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ppath_subpath.0		comp-c-catman		.cat
+./usr/share/man/cat3/proc_compare.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_add.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_capacity.0	comp-c-catman		.cat
@@ -14350,6 +14351,7 @@
 ./usr/share/man/html3/ppath_set_object.html	comp-c-htmlman		html
 ./usr/share/man/html3/ppath_set_uint64.html	comp-c-htmlman		html
 ./usr/share/man/html3/ppath_subpath.html	comp-c-htmlman		html
+./usr/share/man/html3/proc_compare.html		comp-c-htmlman		html
 ./usr/share/man/html3/prop_array.html		comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_add.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_capacity.html	comp-c-htmlman		html
@@ -20520,6 +20522,7 @@
 ./usr/share/man/man3/ppath_set_object.3		comp-c-man		.man
 ./usr/share/man/man3/ppath_set_uint64.3		comp-c-man		.man
 ./usr/share/man/man3/ppath_subpath.3		comp-c-man		.man
+./usr/share/man/man3/proc_compare.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array_add.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array_capacity.3	comp-c-man		.man
