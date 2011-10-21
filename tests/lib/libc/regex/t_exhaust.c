@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exhaust.c,v 1.1 2011/10/09 18:21:08 christos Exp $	*/
+/*	$NetBSD: t_exhaust.c,v 1.2 2011/10/21 00:41:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_exhaust.c,v 1.1 2011/10/09 18:21:08 christos Exp $");
+__RCSID("$NetBSD: t_exhaust.c,v 1.2 2011/10/21 00:41:34 christos Exp $");
 
 #include <stdio.h>
 #include <regex.h>
@@ -178,12 +178,12 @@ ATF_TC_BODY(regcomp_too_big, tc)
 		char *d = (*patterns[i])(9999);
 		e = regcomp(&re, d, i == 6 ? REG_BASIC : REG_EXTENDED);
 		free(d);
-		if (e != 0)
+		if (e) {
 			ATF_REQUIRE_MSG(e == REG_ESPACE,
 			    "regcomp returned %d for pattern %zu", e, i);
-		if (e)
 			continue;
-		e = regexec(&re, "aaaaaaaa", 0, NULL, 0);
+		}
+		(void)regexec(&re, "aaaaaaaa", 0, NULL, 0);
 		regfree(&re);
 	}
 }
