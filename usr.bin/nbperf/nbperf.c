@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.c,v 1.3 2010/03/03 01:55:04 joerg Exp $	*/
+/*	$NetBSD: nbperf.c,v 1.4 2011/10/21 23:47:11 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,8 +31,12 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf.c,v 1.3 2010/03/03 01:55:04 joerg Exp $");
+__RCSID("$NetBSD: nbperf.c,v 1.4 2011/10/21 23:47:11 joerg Exp $");
 
 #include <sys/endian.h>
 #include <err.h>
@@ -45,20 +49,30 @@ __RCSID("$NetBSD: nbperf.c,v 1.3 2010/03/03 01:55:04 joerg Exp $");
 
 #include "nbperf.h"
 
+static int predictable;
+
 static __dead
 void usage(void)
 {
 	fprintf(stderr,
-	    "%s [-s] [-c utilisation] [-i iterations] [-n name] "
+	    "%s [-ps] [-c utilisation] [-i iterations] [-n name] "
 	    "[-o output] input\n",
 	    getprogname());
 	exit(1);
 }
 
+#if HAVE_NBTOOL_CONFIG_H && !defined(__NetBSD__)
+#define	arc4random() rand()
+#endif
+
 static void
 mi_vector_hash_seed_hash(struct nbperf *nbperf)
 {
-	nbperf->seed[0] = arc4random();
+	static uint32_t predictable_counter;
+	if (predictable)
+		nbperf->seed[0] = predictable_counter++;
+	else
+		nbperf->seed[0] = arc4random();
 }
 
 static void
@@ -107,7 +121,8 @@ main(int argc, char **argv)
 	FILE *input;
 	size_t curlen = 0, curalloc = 0;
 	char *line, *eos;
-	size_t line_len;
+	ssize_t line_len;
+	size_t line_allocated;
 	const void **keys = NULL;
 	size_t *keylens = NULL;
 	uint32_t max_iterations = 0xffffffU;
@@ -117,7 +132,7 @@ main(int argc, char **argv)
 
 	set_hash(&nbperf, "mi_vector_hash");
 
-	while ((ch = getopt(argc, argv, "a:c:h:i:m:n:o:s")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:h:i:m:n:o:ps")) != -1) {
 		switch (ch) {
 		case 'a':
 			if (strcmp(optarg, "chm") == 0)
@@ -164,6 +179,9 @@ main(int argc, char **argv)
 			if (nbperf.output == NULL)
 				err(2, "cannot open output file");
 			break;
+		case 'p':
+			predictable = 1;
+			break;
 		case 's':
 			nbperf.static_hash = 1;
 			break;
@@ -188,7 +206,9 @@ main(int argc, char **argv)
 	if (nbperf.output == NULL)
 		nbperf.output = stdout;
 
-	while ((line = fgetln(input, &line_len)) != NULL) {
+	line = NULL;
+	line_allocated = 0;
+	while ((line_len = getline(&line, &line_allocated, input)) != -1) {
 		if (line_len && line[line_len - 1] == '\n')
 			--line_len;
 		if (curlen == curalloc) {
@@ -209,6 +229,7 @@ main(int argc, char **argv)
 		keylens[curlen] = line_len;
 		++curlen;
 	}
+	free(line);
 
 	if (input != stdin)
 		fclose(input);

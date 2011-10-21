@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-chm.c,v 1.2 2009/08/24 17:12:46 joerg Exp $	*/
+/*	$NetBSD: nbperf-chm.c,v 1.3 2011/10/21 23:47:11 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,9 +30,12 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-chm.c,v 1.2 2009/08/24 17:12:46 joerg Exp $");
+__RCSID("$NetBSD: nbperf-chm.c,v 1.3 2011/10/21 23:47:11 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>

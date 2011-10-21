@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-bdz.c,v 1.3 2010/03/01 21:46:58 joerg Exp $	*/
+/*	$NetBSD: nbperf-bdz.c,v 1.4 2011/10/21 23:47:11 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,8 +31,12 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-bdz.c,v 1.3 2010/03/01 21:46:58 joerg Exp $");
+__RCSID("$NetBSD: nbperf-bdz.c,v 1.4 2011/10/21 23:47:11 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
