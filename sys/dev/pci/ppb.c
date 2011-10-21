@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.46 2011/08/17 00:59:47 dyoung Exp $	*/
+/*	$NetBSD: ppb.c,v 1.47 2011/10/21 21:35:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.46 2011/08/17 00:59:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.47 2011/10/21 21:35:28 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,6 +206,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 	pba.pba_pc = pc;
 	pba.pba_flags = pa->pa_flags & ~PCI_FLAGS_MRM_OKAY;
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(busdata);
+	pba.pba_sub = PPB_BUSINFO_SUBORDINATE(busdata);
 	pba.pba_bridgetag = &sc->sc_tag;
 	pba.pba_intrswiz = pa->pa_intrswiz;
 	pba.pba_intrtag = pa->pa_intrtag;
