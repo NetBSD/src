@@ -1,3 +1,5 @@
+#include <machine/asm.h>
+
 .file	"x86cpuid.s"
 .text
 .globl	OPENSSL_ia32_cpuid
@@ -285,7 +287,9 @@ OPENSSL_cleanse:
 .size	OPENSSL_cleanse,.-.L_OPENSSL_cleanse_begin
 .comm	OPENSSL_ia32cap_P,4,4
 .section	.init
-	call	OPENSSL_cpuid_setup
+	PIC_PROLOGUE
+	call	PIC_PLT(_C_LABEL(OPENSSL_cpuid_setup))
+	PIC_EPILOGUE
 	jmp	.Linitalign
 .align	16
 .Linitalign:
