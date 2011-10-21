@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2011/08/16 10:33:17 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2011/10/21 02:09:00 christos Exp $
 .PATH.c: ${.PARSEDIR}
-SRCS+=	snprintb.c
+SRCS+=	snprintb.c proc_compare.c
 COPTS.snprintb.c = -Wno-format-nonliteral
