@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.66 2011/08/30 12:39:52 bouyer Exp $
+#	$NetBSD: Makefile,v 1.67 2011/10/21 01:37:59 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -10,7 +10,7 @@ USE_SHLIBDIR=	yes
 WARNS=	4
 LIB=	util
 CPPFLAGS+=-DLIBC_SCCS -I${.CURDIR}
-SRCS=	efun.c getbootfile.c getlabelsector.c getmaxpartitions.c \
+SRCS+=	efun.c getbootfile.c getlabelsector.c getmaxpartitions.c \
 	getmntopts.c getrawpartition.c \
 	disklabel_dkcksum.c disklabel_scan.c \
 	if_media.c \
@@ -18,7 +18,7 @@ SRCS=	efun.c getbootfile.c getlabelsector.c getmaxpartitions.c \
 	logwtmp.c logwtmpx.c opendisk.c parsedate.y \
 	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
 	raise_default_signal.c \
-	secure_path.c snprintb.c sockaddr_snprintf.c stat_flags.c \
+	secure_path.c sockaddr_snprintf.c stat_flags.c \
 	strpct.c ttyaction.c ttymsg.c
 
 MAN=	efun.3 getbootfile.3 getlabelsector.3 getmaxpartitions.3 \
