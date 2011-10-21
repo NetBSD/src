@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.95 2011/08/24 20:27:36 dyoung Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.96 2011/10/21 21:35:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -104,6 +104,14 @@ struct pcibus_attach_args {
 	int		pba_flags;	/* flags; see below */
 
 	int		pba_bus;	/* PCI bus number */
+	int		pba_sub;	/* pba_bus >= pba_sub: no
+					 * buses are subordinate to
+					 * pba_bus.
+					 *
+					 * pba_bus < pba_sub: buses
+					 * [pba_bus + 1, pba_sub] are
+					 * subordinate to pba_bus.
+					 */
 
 	/*
 	 * Pointer to the pcitag of our parent bridge.  If there is no
