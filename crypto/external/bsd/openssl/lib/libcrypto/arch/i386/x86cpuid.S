@@ -287,9 +287,13 @@ OPENSSL_cleanse:
 .size	OPENSSL_cleanse,.-.L_OPENSSL_cleanse_begin
 .comm	OPENSSL_ia32cap_P,4,4
 .section	.init
+#ifdef PIC
 	PIC_PROLOGUE
 	call	PIC_PLT(_C_LABEL(OPENSSL_cpuid_setup))
 	PIC_EPILOGUE
+#else
+	call	_C_LABEL(OPENSSL_cpuid_setup)
+#endif
 	jmp	.Linitalign
 .align	16
 .Linitalign:
