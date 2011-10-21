@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.50.2.2 2011/06/23 14:19:49 cherry Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.50.2.3 2011/10/21 18:08:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.50.2.2 2011/06/23 14:19:49 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.50.2.3 2011/10/21 18:08:44 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -201,7 +201,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 			return;
 		if (x86_cpu_idle_ipi != false) {
 #ifdef XEN
-			xen_send_ipi(ci, XEN_IPI_KICK);
+			(void)xen_send_ipi(ci, XEN_IPI_KICK);
 #else /* XEN */
 			x86_send_ipi(ci, 0);
 #endif /* XEN */
@@ -227,7 +227,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	}
 	if ((flags & RESCHED_IMMED) != 0) {
 #ifdef XEN
-		xen_send_ipi(ci, XEN_IPI_KICK);
+		(void)xen_send_ipi(ci, XEN_IPI_KICK);
 #else /* XEN */
 		x86_send_ipi(ci, 0);
 #endif /* XEN */
@@ -242,7 +242,7 @@ cpu_signotify(struct lwp *l)
 	aston(l, X86_AST_GENERIC);
 	if (l->l_cpu != curcpu())
 #ifdef XEN
-		xen_send_ipi(l->l_cpu, XEN_IPI_KICK);
+		(void)xen_send_ipi(l->l_cpu, XEN_IPI_KICK);
 #else /* XEN */
 		x86_send_ipi(l->l_cpu, 0);
 #endif /* XEN */

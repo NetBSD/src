@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.34.2.1 2011/06/03 13:27:37 cherry Exp $	*/
+/*	$NetBSD: fpu.c,v 1.34.2.2 2011/10/21 18:08:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.34.2.1 2011/06/03 13:27:37 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.34.2.2 2011/10/21 18:08:44 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -407,7 +407,7 @@ fpusave_lwp(struct lwp *l, bool save)
 		}
 		splx(s);
 #ifdef XEN
-		xen_send_ipi(oci, XEN_IPI_SYNCH_FPU);
+		(void)xen_send_ipi(oci, XEN_IPI_SYNCH_FPU);
 #else /* XEN */
 		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
 #endif

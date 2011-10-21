@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.26.2.11 2011/09/20 18:57:53 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.26.2.12 2011/10/21 18:08:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.11 2011/09/20 18:57:53 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26.2.12 2011/10/21 18:08:44 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -165,9 +165,7 @@ void xpq_debug_dump(void);
 static mmu_update_t xpq_queue_array[MAXCPUS][XPQUEUE_SIZE];
 static int xpq_idx_array[MAXCPUS];
 
-#ifdef MULTIPROCESSOR
 extern struct cpu_info * (*xpq_cpu)(void);
-#endif /* MULTIPROCESSOR */
 
 void
 xpq_flush_queue(void)
