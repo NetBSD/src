@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2010/11/21 07:20:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2011/10/22 22:23:50 jmcneill Exp $
 
 SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap ccmakedep \
 	cleanlinks cxpm editres \
@@ -19,6 +19,7 @@ SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap ccmakedep \
 	xvinfo xwd xwininfo xwud xdriinfo sessreg
 
 SUBDIR+=ssh-askpass
+SUBDIR+=xsetwallpaper
 
 # bring back from xfree:
 #	lndir
