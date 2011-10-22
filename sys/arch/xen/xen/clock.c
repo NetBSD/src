@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54.6.4 2011/09/18 18:54:32 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.54.6.5 2011/10/22 19:26:16 bouyer Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.4 2011/09/18 18:54:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.5 2011/10/22 19:26:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -94,7 +94,7 @@ static volatile uint64_t vcpu_system_time[MAXCPUS];
  * back to maintain the illusion that hardclock(9) was called when it
  * was supposed to be, not when Xen got around to scheduling us.
  */
-static volatile uint64_t xen_clock_bias;
+static volatile uint64_t xen_clock_bias[MAXCPUS];
 
 #ifdef DOM0OPS
 /* If we're dom0, send our time to Xen every minute or so. */
@@ -416,9 +416,10 @@ u_int
 xen_get_timecount(struct timecounter *tc)
 {
 	uint64_t ns;
+	struct cpu_info *ci = curcpu();
 
 	mutex_enter(&tmutex);
-	ns = get_system_time() - xen_clock_bias;
+	ns = get_vcpu_time(ci) - xen_clock_bias[ci->ci_cpuid];
 	mutex_exit(&tmutex);
 
 	return (u_int)ns;
@@ -439,12 +440,10 @@ xen_initclocks(void)
 	int err, evtch;
 	static bool tcdone = false;
 
-	struct vcpu_set_periodic_timer hardclock_period = { NS_PER_TICK };
-
 	struct cpu_info *ci = curcpu();
 	volatile struct shadow *shadow = &ci_shadow[ci->ci_cpuid];
 
-	xen_clock_bias = 0;
+	xen_clock_bias[ci->ci_cpuid] = 0;
 
 	evcnt_attach_dynamic(&hardclock_called[ci->ci_cpuid],
 			     EVCNT_TYPE_INTR,
@@ -468,11 +467,18 @@ xen_initclocks(void)
 	}
 	/* The splhigh requirements start here. */
 
-	/* Set hardclock() frequency */
-	err = HYPERVISOR_vcpu_op(VCPUOP_set_periodic_timer,
+	/*
+	 * The periodic timer looks buggy, we stop receiving events
+	 * after a while. Use the one-shot timer every NS_PER_TICK
+	 * and rearm it from the event handler.
+	 */
+	err = HYPERVISOR_vcpu_op(VCPUOP_stop_periodic_timer,
 				 ci->ci_cpuid,
-				 &hardclock_period);
+				 NULL);
 
+	KASSERT(err == 0);
+	err = HYPERVISOR_set_timer_op(
+	    vcpu_system_time[ci->ci_cpuid] + NS_PER_TICK);
 	KASSERT(err == 0);
 
 	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
@@ -504,25 +510,34 @@ xen_timer_handler(void *arg, struct intrframe *regs)
 	int64_t delta;
 	struct cpu_info *ci = curcpu();
 	KASSERT(arg == ci);
+	int err;
+again:
 	mutex_enter(&tmutex);
-
 	delta = (int64_t)(get_vcpu_time(ci) - vcpu_system_time[ci->ci_cpuid]);
-
 	mutex_exit(&tmutex);
 
 	/* Several ticks may have passed without our being run; catch up. */
 	while (delta >= (int64_t)NS_PER_TICK) {
 		mutex_enter(&tmutex);
 		vcpu_system_time[ci->ci_cpuid] += NS_PER_TICK;
-		xen_clock_bias = (delta -= NS_PER_TICK);
+		xen_clock_bias[ci->ci_cpuid] = (delta -= NS_PER_TICK);
 		mutex_exit(&tmutex);
 		hardclock((struct clockframe *)regs);
 		hardclock_called[ci->ci_cpuid].ev_count++;
 	}
+
+	/*
+	 * rearm the timer. If it fails it's probably because the date
+	 * is in the past, update our local time and try again.
+	 */
+	err = HYPERVISOR_set_timer_op(
+	    vcpu_system_time[ci->ci_cpuid] + NS_PER_TICK);
+	if (err)
+		goto again;
 	
-	if (xen_clock_bias) {
+	if (xen_clock_bias[ci->ci_cpuid]) {
 		mutex_enter(&tmutex);
-		xen_clock_bias = 0;
+		xen_clock_bias[ci->ci_cpuid] = 0;
 		mutex_exit(&tmutex);
 	}
 
@@ -537,6 +552,18 @@ setstatclockrate(int arg)
 void
 idle_block(void)
 {
+#ifdef MULTIPROCESSOR
 	HYPERVISOR_yield();
 	__sti();
+#else
+	struct cpu_info *ci = curcpu();
+	int r;
+
+	r = HYPERVISOR_set_timer_op(
+	    vcpu_system_time[ci->ci_cpuid] + NS_PER_TICK);
+	if (r == 0)
+		HYPERVISOR_block();
+	else
+		__sti();
+#endif
 }
