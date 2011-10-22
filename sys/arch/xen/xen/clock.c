@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54.6.5 2011/10/22 19:26:16 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.54.6.6 2011/10/22 21:16:59 bouyer Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.5 2011/10/22 19:26:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.6 2011/10/22 21:16:59 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -552,18 +552,6 @@ setstatclockrate(int arg)
 void
 idle_block(void)
 {
-#ifdef MULTIPROCESSOR
-	HYPERVISOR_yield();
-	__sti();
-#else
-	struct cpu_info *ci = curcpu();
-	int r;
-
-	r = HYPERVISOR_set_timer_op(
-	    vcpu_system_time[ci->ci_cpuid] + NS_PER_TICK);
-	if (r == 0)
-		HYPERVISOR_block();
-	else
-		__sti();
-#endif
+	KASSERT(curcpu()->ci_ipending == 0);
+	HYPERVISOR_block();
 }
