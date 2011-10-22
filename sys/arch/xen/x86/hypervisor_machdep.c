@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.14.2.5 2011/09/18 18:46:40 cherry Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.14.2.6 2011/10/22 19:21:57 bouyer Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.14.2.5 2011/09/18 18:46:40 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.14.2.6 2011/10/22 19:21:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,7 @@ evt_iterate_bits(struct cpu_info *ci, volatile unsigned long *pendingl1,
 		l1 &= ~(1UL << l1i);
 
 		l2 = pendingl2[l1i] & (mask != NULL ? ~mask[l1i] : -1UL);
+		l2 &= ci->ci_evtmask[l1i];
 
 		if (mask != NULL) xen_atomic_setbits_l(&mask[l1i], l2);
 		xen_atomic_clearbits_l(&pendingl2[l1i], l2);
@@ -405,6 +406,13 @@ hypervisor_set_ipending(struct cpu_info *ci, uint32_t iplmask, int l1, int l2)
 	KASSERT(ci->ci_isources[ipl] != NULL);
 	ci->ci_isources[ipl]->ipl_evt_mask1 |= 1UL << l1;
 	ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1UL << l2;
+	if (__predict_false(ci != curcpu())) {
+		if (xen_send_ipi(ci, XEN_IPI_HVCB)) {
+			panic("hypervisor_set_ipending: "
+			    "xen_send_ipi(cpu%d, XEN_IPI_HVCB) failed\n",
+			    (int) ci->ci_cpuid);
+		}
+	}
 }
 
 void
