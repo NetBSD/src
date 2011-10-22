@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/08/02 09:11:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/10/22 14:40:41 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -102,6 +102,7 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.hw/xfree86/dixmods/fb} \
 	${DPADD.hw/xfree86/fb} \
 	${DPADD.hw/xfree86/init} \
+	${DPADD.hw/xfree86/common} \
 	${DPADD.hw/xfree86/loader} \
 	${DPADD.hw/xfree86/xf86config} \
 	${DPADD.hw/xfree86/dixmods} \
