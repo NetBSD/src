@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1615 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1616 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -975,6 +975,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	mips: add TLS (thread local storage) support.  [matt 20110314]
 	mips: add MIPS32R2 and MIPS64R2 support.  [matt 20110314]
 	shmif_dumpbus(1): Make endian-independent.  [pooka 20110314]
+	sparc64: Add initial support for Fujitsu SPARC64 systems, not yet
+		stable.  Mostly from OpenBSD.  [mrg 20110315]
 	hppa: add TLS support.  [skrll 20110317]
 	gdtoa: Import the latest [christos 20110319]
 	sandpoint: D-Link DSM-G600 support. [phx 20110319]
@@ -1087,6 +1089,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	openssh: Import 5.8. [christos 20110724]
 	mips: Add support for ralink RT3883 SoC from CradlePoint Technologies.
 		[matt 20110729]
+	sparc64: Add support for Enterprise systems (Ex[45]00) systems, from
+		OpenBSD.  [mrg 20110729]
 	postfix(1): Import version 2.8.4 [tron 20110731]
 	sparc64: Switch to GCC 4.5.3  [mrg 20110802]
 	mips: Switch to GCC 4.5.3  [matt 20110804]
