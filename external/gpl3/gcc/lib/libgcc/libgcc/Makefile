@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/10/17 14:20:54 chs Exp $
+#	$NetBSD: Makefile,v 1.8 2011/10/22 10:41:50 tron Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -40,6 +40,8 @@ BUILDSYMLINKS+=	${GNUHOSTDIST}/gcc/config/rs6000/${file:S/.S$/.asm/} ${file}
 # Force building libgcc.a.  It will be PIC from -DPIC above and also
 # the -fpic/-FPIC present in ${G_LIBGCC2_CFLAGS}.
 MKPIC:= no
+
+COPTS.unwind-dw2.c = -Wno-stack-protector
 
 .include <bsd.lib.mk>
 
