@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54.6.6 2011/10/22 21:16:59 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.54.6.7 2011/10/22 22:42:20 bouyer Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.6 2011/10/22 21:16:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.6.7 2011/10/22 22:42:20 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -79,10 +79,11 @@ struct shadow {
 	struct timespec ts;
 };
 
+/* Protects volatile variables ci_shadow & xen_clock_bias */
+static kmutex_t tmutex;
+
 /* Per CPU shadow time values */
 static volatile struct shadow ci_shadow[MAXCPUS];
-
-static kmutex_t tmutex; /* Protects volatile variables, below */
 
 /* The time when the last hardclock(9) call should have taken place,
  * per cpu.
@@ -116,6 +117,7 @@ get_time_values_from_xen(struct cpu_info *ci)
 	volatile struct vcpu_time_info *t = &ci->ci_vcpu->time;
 	uint32_t tversion;
 
+	KASSERT(mutex_owned(&tmutex));
 	do {
 		shadow->time_version = t->version;
 		xen_rmb();
@@ -142,9 +144,11 @@ static inline int
 time_values_up_to_date(struct cpu_info *ci)
 {
 	int rv;
-	KASSERT(ci != NULL);
-
 	volatile struct shadow *shadow = &ci_shadow[ci->ci_cpuid];
+
+	KASSERT(ci != NULL);
+	KASSERT(mutex_owned(&tmutex));
+
 
 	xen_rmb();
 	rv = shadow->time_version == ci->ci_vcpu->time.version;
@@ -187,6 +191,7 @@ get_tsc_offset_ns(struct cpu_info *ci)
 	uint64_t tsc_delta, offset;
 	volatile struct shadow *shadow = &ci_shadow[ci->ci_cpuid];
 
+	KASSERT(mutex_owned(&tmutex));
 	tsc_delta = cpu_counter() - shadow->tsc_stamp;
 	offset = scale_delta(tsc_delta, shadow->freq_mul,
 	    shadow->freq_shift);
@@ -212,53 +217,36 @@ get_vcpu_time(struct cpu_info *ci)
 	uint64_t offset, stime;
 	volatile struct shadow *shadow = &ci_shadow[ci->ci_cpuid];
 	
-	for (;;) {
+	KASSERT(mutex_owned(&tmutex));
+	do {
+		get_time_values_from_xen(ci);
 		offset = get_tsc_offset_ns(ci);
 		stime = shadow->system_time + offset;
 		
 		/* if the timestamp went stale before we used it, refresh */
-		if (time_values_up_to_date(ci)) {
-			/*
-			 * Work around an intermittent Xen2 bug where, for
-			 * a period of 1<<32 ns, currently running domains
-			 * don't get their timer events as usual (and also
-			 * aren't preempted in favor of other runnable
-			 * domains).  Setting the timer into the past in
-			 * this way causes it to fire immediately.
-			 */
-			break;
-		}
-		get_time_values_from_xen(ci);
-	}
+	} while (!time_values_up_to_date(ci));
 
 	return stime;
-}
-
-/*
- * SMP note: system time always derives from Boot Processor.
- * Must be called at splhigh. See comment above on get_vcpu_time()
- */
-static uint64_t
-get_system_time(void)
-{
-	return get_vcpu_time(&cpu_info_primary);
-
 }
 
 static void
 xen_wall_time(struct timespec *wt)
 {
 	uint64_t nsec;
-	struct cpu_info *ci = &cpu_info_primary;
+	struct cpu_info *ci = curcpu();
 	volatile struct shadow *shadow = &ci_shadow[ci->ci_cpuid];
 
 	mutex_enter(&tmutex);
-	get_time_values_from_xen(ci);
-	*wt = shadow->ts;
-	nsec = wt->tv_nsec;
+	do {
+		/*
+		 * Under Xen3, shadow->ts is the wall time less system time
+		 * get_vcpu_time() will update shadow
+		 */
+		nsec = get_vcpu_time(curcpu());
+		*wt = shadow->ts;
+		nsec += wt->tv_nsec;
 
-	/* Under Xen3, this is the wall time less system time */
-	nsec += get_system_time();
+	} while (!time_values_up_to_date(ci));
 	mutex_exit(&tmutex);
 	wt->tv_sec += nsec / 1000000000L;
 	wt->tv_nsec = nsec % 1000000000L;
@@ -300,7 +288,7 @@ xen_rtc_set(todr_chip_handle_t todr, struct timeval *tvp)
 		op.u.settime.secs	 = tvp->tv_sec;
 		op.u.settime.nsecs	 = tvp->tv_usec * 1000;
 		mutex_enter(&tmutex);
-		op.u.settime.system_time = get_system_time();
+		op.u.settime.system_time = get_vcpu_time(curcpu());
 		mutex_exit(&tmutex);
 #if __XEN_INTERFACE_VERSION__ < 0x00030204
 		return HYPERVISOR_dom0_op(&op);
@@ -363,6 +351,7 @@ xen_delay(unsigned int n)
 		when = shadow->system_time + n * 1000;
 		while (shadow->system_time < when) {
 			mutex_exit(&tmutex);
+			HYPERVISOR_yield();
 			mutex_enter(&tmutex);
 			get_time_values_from_xen(ci);
 		}
@@ -459,10 +448,14 @@ xen_initclocks(void)
 	evtch = bind_virq_to_evtch(VIRQ_TIMER);
 	aprint_verbose("Xen clock: using event channel %d\n", evtch);
 
-	get_time_values_from_xen(ci);
-	vcpu_system_time[ci->ci_cpuid] = shadow->system_time;
 	if (!tcdone) { /* Do this only once */
 		mutex_init(&tmutex, MUTEX_DEFAULT, IPL_CLOCK);
+	}
+	mutex_enter(&tmutex);
+	get_time_values_from_xen(ci);
+	vcpu_system_time[ci->ci_cpuid] = shadow->system_time;
+	mutex_exit(&tmutex);
+	if (!tcdone) { /* Do this only once */
 		tc_init(&xen_timecounter);
 	}
 	/* The splhigh requirements start here. */
