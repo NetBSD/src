@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2011/06/09 05:25:21 spz Exp $
+# $NetBSD: Makefile,v 1.8 2011/10/22 21:13:25 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -26,5 +26,11 @@ TESTS_SH+=	t_libcrypto
 TESTS_SH+=	t_pubkey
 
 .include <bsd.test.mk>
+
+.else
+
+NOPROG=
+
+.include <bsd.prog.mk>
 
 .endif
