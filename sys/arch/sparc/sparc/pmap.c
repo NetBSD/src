@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.346 2011/09/01 08:47:56 martin Exp $ */
+/*	$NetBSD: pmap.c,v 1.347 2011/10/22 21:00:40 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.346 2011/09/01 08:47:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.347 2011/10/22 21:00:40 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -604,6 +604,11 @@ void 		(*pmap_rmu_p)(struct pmap *, vaddr_t, vaddr_t, int, int);
 static void
 sp_tlb_flush(int va, int ctx, int lvl)
 {
+	/*
+	 * XXX convert %o3 (oldpsr), %o4 (SRMMU_CXR) and %o5 (old context)
+	 * into generically named registers.  right now we're assuming that
+	 * gcc doesn't do anything funny with these registers.
+	 */
 
 	/* Traps off */
 	__asm("rd	%psr, %o3");
