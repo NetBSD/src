@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.132 2011/05/20 16:02:22 plunky Exp $
+#	$NetBSD: sets.subr,v 1.133 2011/10/22 00:05:17 jmcneill Exp $
 #
 
 #
@@ -159,7 +159,11 @@ nlists="base comp etc games man misc $modset $testset text"
 xlists="xbase xcomp xetc xfont xserver"
 extlists="extbase extcomp extetc"
 
-OSRELEASE=`${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh`
+OSRELEASE=`${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -n`
+# for release branches, use X.Y version, for -current use X.Y.Z
+if [ ! "${OSRELEASE%.99}" = "${OSRELEASE}" ]; then
+	OSRELEASE=`${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh`
+fi
 MODULEDIR="stand/${MACHINE}/${OSRELEASE}/modules"
 SUBST="s#@MODULEDIR@#${MODULEDIR}#g"
 SUBST="${SUBST};s#@OSRELEASE@#${OSRELEASE}#g"
@@ -172,7 +176,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.132 2011/05/20 16:02:22 plunky Exp $
+# 	# $NetBSD: sets.subr,v 1.133 2011/10/22 00:05:17 jmcneill Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
