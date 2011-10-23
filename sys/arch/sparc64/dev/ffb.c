@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.46 2011/08/18 12:53:25 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.47 2011/10/23 06:06:24 jdc Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.46 2011/08/18 12:53:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.47 2011/10/23 06:06:24 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1355,32 +1355,21 @@ ffb_set_vmode(struct ffb_softc *sc, struct videomode *mode, int btype,
 	}
 
 	/* DAC Control and Timing Generator Control */
-	if (mode->flags & VID_PVSYNC) {
-		dcl = FFB_DAC_DAC_CTRL_POS_SYNC;
-		if (mode->flags & VID_NHSYNC) {
-#if 0
-/* XXX */
-			dcl |= FFB_DAC_DAC_CTRL_VSYNC_REV;
-#endif
-			tgc = 0;
-		} else {
-			tgc = FFB_DAC_TGC_EQUAL_DISABLE;
-		}
-	} else {
+	if (mode->flags & VID_PVSYNC)
+		dcl = FFB_DAC_DAC_CTRL_POS_VSYNC;
+	else
 		dcl = 0;
-		if (mode->flags & VID_PVSYNC) {
-			dcl |= FFB_DAC_DAC_CTRL_VSYNC_REV;
-			tgc = 0;
-		} else {
-			tgc = FFB_DAC_TGC_EQUAL_DISABLE;
-		}
-	}
+	tgc = 0;
 #define EDID_VID_INP	sc->sc_edid_info.edid_video_input
-
-	if (!(EDID_VID_INP & EDID_VIDEO_INPUT_COMPOSITE_SYNC)) {
+	if ((EDID_VID_INP & EDID_VIDEO_INPUT_COMPOSITE_SYNC)) {
+		dcl |= FFB_DAC_DAC_CTRL_VSYNC_DIS;
+		tgc = FFB_DAC_TGC_EQUAL_DISABLE;
+	} else {
 		dcl |= FFB_DAC_DAC_CTRL_SYNC_G;
 		if (EDID_VID_INP & EDID_VIDEO_INPUT_SEPARATE_SYNCS)
 			tgc |= FFB_DAC_TGC_VSYNC_DISABLE;
+		else
+			tgc = FFB_DAC_TGC_EQUAL_DISABLE;
 	}
 	if (EDID_VID_INP & EDID_VIDEO_INPUT_BLANK_TO_BLACK)
 		dcl |= FFB_DAC_DAC_CTRL_PED_ENABLE;
