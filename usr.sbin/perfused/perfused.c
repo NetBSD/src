@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.15 2011/09/09 15:45:28 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.16 2011/10/23 05:03:37 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -381,7 +381,7 @@ main(int argc, char **argv)
 	s = parse_options(argc, argv);
 
 	if (perfuse_diagflags & PDF_SYSLOG)
-		openlog("perfused", 0, LOG_DAEMON);
+		openlog("perfused", LOG_NDELAY, LOG_DAEMON);
 
 	if (!(perfuse_diagflags & PDF_FOREGROUND))
 		if (daemon(0, 0) != 0)
