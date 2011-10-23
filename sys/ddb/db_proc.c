@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.5 2011/04/12 17:46:38 nakayama Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.6 2011/10/23 13:30:20 jym Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.5 2011/04/12 17:46:38 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.6 2011/10/23 13:30:20 jym Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -237,13 +237,16 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 				} else {
 					wbuf[0] = '\0';
 				}
+				run = (l.l_stat == LSONPROC ||
+				    (l.l_pflag & LP_RUNNING) != 0);
 				db_read_bytes((db_addr_t)&p.p_emul->e_name,
 				    sizeof(ename), (char *)&ename);
 				db_read_bytes((db_addr_t)ename,
 				    sizeof(db_nbuf), db_nbuf);
 				db_printf(
-				    "%4d %16s %8s %4d %-12s %-18lx\n",
-				    l.l_lid, p.p_comm, db_nbuf,
+				    "%c%4d %16s %8s %4d %-12s %-18lx\n",
+				    (run ? '>' : ' '), l.l_lid,
+				    p.p_comm, db_nbuf,
 				    l.l_priority, wbuf, (long)l.l_wchan);
 				lp = LIST_NEXT((&l), l_sibling);
 				if (lp != NULL) {
