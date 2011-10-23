@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.21 2011/10/18 15:47:32 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.22 2011/10/23 05:01:00 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -34,6 +34,7 @@
 #include <puffs.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/extattr.h>
 #include <sys/un.h>
@@ -399,6 +400,22 @@ perfuse_init(pc, pmi)
 	unsigned int puffs_flags;
 	struct puffs_node *pn_root;
 	struct puffs_pathobj *po_root;
+	struct rlimit rl;
+
+	/*
+	 * perfused can grow quite large, let assume there's enough ram ...
+	 */
+	if (getrlimit(RLIMIT_DATA, &rl) < 0) {
+		DERR(EX_OSERR, "%s: getrlimit failed: %s", __func__,
+		    strerror(errno));
+	} else {
+		rl.rlim_cur = rl.rlim_max;
+		if (setrlimit(RLIMIT_DATA, &rl) < 0) {
+			DERR(EX_OSERR, "%s: setrlimit failed: %s", __func__,
+			    strerror(errno));
+		}
+	}
+		
 
 	ps = init_state();
 	ps->ps_owner_uid = pmi->pmi_uid;
