@@ -1,0 +1,19 @@
+# $NetBSD: files.iscsi,v 1.1 2011/10/23 21:15:02 agc Exp $
+#
+# Configuration file for iSCSI initiator
+
+defpseudodev	iscsi : scsi
+
+defflag	  	ISCSI_DEBUG
+defflag	  	ISCSI_PERFTEST
+defflag	  	ISCSI_TEST_MODE
+
+file	dev/iscsi/base64.c		iscsi
+file	dev/iscsi/iscsi_ioctl.c		iscsi
+file	dev/iscsi/iscsi_main.c		iscsi
+file	dev/iscsi/iscsi_profile.c	iscsi
+file	dev/iscsi/iscsi_rcv.c		iscsi
+file	dev/iscsi/iscsi_send.c		iscsi
+file	dev/iscsi/iscsi_test.c		iscsi
+file	dev/iscsi/iscsi_text.c		iscsi
+file	dev/iscsi/iscsi_utils.c
