@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.145 2011/08/29 22:01:47 jym Exp $
+.\"	$NetBSD: ddb.4,v 1.146 2011/10/23 13:20:59 jym Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd August 29, 2011
+.Dd October 23, 2011
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -568,21 +568,24 @@ show process information in a
 .Xr ps 1
 style format.
 Information printed includes: process ID, parent process ID,
-process group, UID, process status, process flags, process
+process group, UID, process status, process flags, number of LWPs,
 command name, and process wait channel message.
 .It Cm /a
-show the kernel virtual addresses of each process'
-proc structure, u-area, and vmspace structure.
+show each process ID, command name, kernel virtual addresses of
+each process' proc structure, u-area, and vmspace structure.
 The vmspace address is also the address of the process'
 vm_map structure, and can be used in the
 .Ic show map
 command.
 .It Cm /w
-show each process' PID, command, system call emulation, wait channel
-address, and wait channel message.
+show each LWP ID, process ID, command name, system call emulation,
+priority, wait channel message and wait channel address.
+LWPs currently running on a CPU are marked with the '\&>' sign.
 .It Cm /l
-show each process' associated LWP information, including each LWP's
-LID, flags, kernel LWP structure address, u-area, and wait channel.
+show each LWP ID, process ID, process status, CPU ID the LWP runs on,
+process flags, kernel virtual address of LWP structure,
+command name and wait channel message.
+LWPs currently running on a CPU are marked with the '\&>' sign.
 This is the default.
 .El
 .It Ic show arptab
@@ -693,6 +696,22 @@ Print the cachelist and its statistics for this pool.
 Print the log entries for this pool.
 .It Cm /p
 Print the pagelist for this pool.
+.El
+.It Ic show proc Ns Oo Cm /ap Oc Ar address | pid
+Show information about a process and its LWPs.
+LWPs currently running on a CPU are marked with the '\&>' sign.
+.Bl -tag -width 4n -compact
+.It Cm /a
+The argument passed is the kernel virtual address
+of LWP structure.
+.It Cm /p
+The argument passed is a PID.
+Note that
+.Ar pid
+is interpreted using the current radix (see
+.Cm trace/t
+command for details).
+This is the default.
 .El
 .It Ic show registers Ns Op Cm /u
 Display the register set.
