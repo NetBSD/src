@@ -1,4 +1,4 @@
-/*	$NetBSD: longrun.c,v 1.3 2008/02/27 20:18:56 xtraeme Exp $	*/
+/*	$NetBSD: longrun.c,v 1.4 2011/10/23 13:02:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tamotsu Hattori.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: longrun.c,v 1.3 2008/02/27 20:18:56 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: longrun.c,v 1.4 2011/10/23 13:02:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,11 @@ void
 tmx86_init_longrun(void)
 {
 	const struct sysctlnode *mnode;
+	uint64_t msr;
+
+	/* PR #32894, make sure the longrun MSR is present */
+	if (rdmsr_safe(MSR_TMx86_LONGRUN, &msr) == EFAULT)
+		return;
 
 	/* create the sysctl machdep.tm_longrun_* nodes */
         sysctl_createv(NULL, 0, NULL, &mnode, CTLFLAG_PERMANENT,
