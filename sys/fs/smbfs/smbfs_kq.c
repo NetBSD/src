@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.23 2011/06/12 03:35:54 rmind Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.24 2011/10/23 08:42:06 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.23 2011/06/12 03:35:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.24 2011/10/23 08:42:06 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,9 @@ smbfs_kqpoll(void *arg)
 			/* save v_size, smbfs_getattr() updates it */
 			osize = ke->vp->v_size;
 
+			vn_lock(ke->vp, LK_SHARED | LK_RETRY);
 			error = VOP_GETATTR(ke->vp, &attr, l->l_cred);
+			VOP_UNLOCK(ke->vp);
 			if (error) {
 				/* relock and proceed with next */
 				mutex_enter(&smbkq_lock);
@@ -458,7 +460,9 @@ smbfs_kqfilter(void *v)
 	 * held. This is likely cheap due to attrcache, so do it now.
 	 */
 	memset(&attr, 0, sizeof(attr));
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	(void) VOP_GETATTR(vp, &attr, l->l_cred);
+	VOP_UNLOCK(vp);
 
 	/* ensure the handler is running */
 	/* XXX this is unreliable. */
