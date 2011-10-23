@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.152 2011/08/13 22:24:24 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.153 2011/10/23 21:06:07 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.152 2011/08/13 22:24:24 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.153 2011/10/23 21:06:07 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1532,6 +1532,7 @@ _rtld_exclusive_enter(sigset_t *mask)
 	sigset_t blockmask;
 
 	sigfillset(&blockmask);
+	sigdelset(&blockmask, SIGTRAP);	/* Allow the debugger */
 	sigprocmask(SIG_BLOCK, &blockmask, mask);
 
 	membar_enter();
