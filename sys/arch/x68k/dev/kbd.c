@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.36 2009/01/17 03:26:31 isaki Exp $	*/
+/*	$NetBSD: kbd.c,v 1.37 2011/10/23 13:21:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.36 2009/01/17 03:26:31 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37 2011/10/23 13:21:54 tsutsui Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -350,7 +350,7 @@ kbdintr(void *arg)
 	fe->value = KEY_UP(c) ? VKEY_UP : VKEY_DOWN;
 	firm_gettime(fe);
 	sc->sc_events.ev_put = put;
-	EV_WAKEUP(&sc->sc_events);
+	softint_schedule(sc->sc_softintr_cookie);
 
 	return 0;
 }
@@ -358,9 +358,13 @@ kbdintr(void *arg)
 void
 kbdsoftint(void *arg)			/* what if ite is not configured? */
 {
+	struct kbd_softc *sc = arg;
 	int s;
 
 	s = spltty();
+
+	if (sc->sc_event_mode)
+		EV_WAKEUP(&sc->sc_events);
 
 	while(kbdgetoff < kbdputoff)
 		ite_filter(kbdbuf[kbdgetoff++ & KBDBUFMASK]);
