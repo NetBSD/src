@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.31 2011/07/27 14:35:34 uebayasi Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.32 2011/10/23 21:41:23 jym Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.31 2011/07/27 14:35:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.32 2011/10/23 21:41:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -58,7 +58,7 @@ struct workqueue {
 	void *wq_arg;
 	int wq_flags;
 
-	const char *wq_name;
+	char wq_name[MAXCOMLEN];
 	pri_t wq_prio;
 	void *wq_ptr;
 };
@@ -142,8 +142,9 @@ workqueue_init(struct workqueue *wq, const char *name,
     pri_t prio, int ipl)
 {
 
+	strncpy(wq->wq_name, name, sizeof(wq->wq_name));
+
 	wq->wq_prio = prio;
-	wq->wq_name = name;
 	wq->wq_func = callback_func;
 	wq->wq_arg = callback_arg;
 }
