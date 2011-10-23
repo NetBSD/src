@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_main.c,v 1.1 2011/10/23 21:11:23 agc Exp $	*/
+/*	$NetBSD: iscsic_main.c,v 1.2 2011/10/23 23:41:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -441,7 +441,7 @@ get_response(int temp)
 
 	if (temp) {
 		if (NULL == (pbuf = (int *) malloc(len + sizeof(int))))
-			gen_error("Can't allocate response buffer (%d bytes)",
+			gen_error("Can't allocate response buffer (%zu bytes)",
 				len + sizeof(int));
 
 		rsp = (iscsid_response_t *) & pbuf[1];
