@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.61 2011/10/24 15:56:17 jakllsch Exp $	*/
+/*	$NetBSD: atactl.c,v 1.62 2011/10/24 19:13:03 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.61 2011/10/24 15:56:17 jakllsch Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.62 2011/10/24 19:13:03 jakllsch Exp $");
 #endif
 
 
@@ -102,14 +102,14 @@ struct bitinfo {
 
 __dead static void	usage(void);
 static void	ata_command(struct atareq *);
-static void	print_bitinfo(const char *, const char *, u_int, struct bitinfo *);
-static void	print_bitinfo2(const char *, const char *, u_int, u_int, struct bitinfo *);
+static void	print_bitinfo(const char *, const char *, u_int, const struct bitinfo *);
+static void	print_bitinfo2(const char *, const char *, u_int, u_int, const struct bitinfo *);
 static void	print_smart_status(void *, void *);
-static void	print_error_entry(int, struct ata_smart_error *);
-static void	print_selftest_entry(int, struct ata_smart_selftest *);
+static void	print_error_entry(int, const struct ata_smart_error *);
+static void	print_selftest_entry(int, const struct ata_smart_selftest *);
 
-static void	print_error(void *);
-static void	print_selftest(void *);
+static void	print_error(const void *);
+static void	print_selftest(const void *);
 
 static struct ataparams *getataparams(void);
 
@@ -129,9 +129,9 @@ static void	device_checkpower(int, char *[]);
 static void	device_smart(int, char *[]);
 static void	device_security(int, char *[]);
 
-static void	device_smart_temp(struct ata_smart_attr *, uint64_t);
+static void	device_smart_temp(const struct ata_smart_attr *, uint64_t);
 
-static struct command device_commands[] = {
+static const struct command device_commands[] = {
 	{ "identify",	"",			device_identify },
 	{ "setidle",	"idle-timer",		device_setidle },
 	{ "apm",	"disable|set #",	device_apm },
@@ -148,7 +148,7 @@ static struct command device_commands[] = {
 
 static void	bus_reset(int, char *[]);
 
-static struct command bus_commands[] = {
+static const struct command bus_commands[] = {
 	{ "reset",	"",			bus_reset },
 	{ NULL,		NULL,			NULL },
 };
@@ -158,7 +158,7 @@ static struct command bus_commands[] = {
  * device identification.
  */
 
-static struct bitinfo ata_caps[] = {
+static const struct bitinfo ata_caps[] = {
 	{ WDC_CAP_DMA, "DMA" },
 	{ WDC_CAP_LBA, "LBA" },
 	{ ATA_CAP_STBY, "ATA standby timer values" },
@@ -167,7 +167,7 @@ static struct bitinfo ata_caps[] = {
 	{ 0, NULL },
 };
 
-static struct bitinfo ata_vers[] = {
+static const struct bitinfo ata_vers[] = {
 	{ WDC_VER_ATA1,	"ATA-1" },
 	{ WDC_VER_ATA2,	"ATA-2" },
 	{ WDC_VER_ATA3,	"ATA-3" },
@@ -178,7 +178,7 @@ static struct bitinfo ata_vers[] = {
 	{ 0, NULL },
 };
 
-static struct bitinfo ata_cmd_set1[] = {
+static const struct bitinfo ata_cmd_set1[] = {
 	{ WDC_CMD1_NOP, "NOP command" },
 	{ WDC_CMD1_RB, "READ BUFFER command" },
 	{ WDC_CMD1_WB, "WRITE BUFFER command" },
@@ -196,7 +196,7 @@ static struct bitinfo ata_cmd_set1[] = {
 	{ 0, NULL },
 };
 
-static struct bitinfo ata_cmd_set2[] = {
+static const struct bitinfo ata_cmd_set2[] = {
 	{ ATA_CMD2_FCE, "FLUSH CACHE EXT command" },
 	{ WDC_CMD2_FC, "FLUSH CACHE command" },
 	{ WDC_CMD2_DCO, "Device Configuration Overlay feature set" },
@@ -213,7 +213,7 @@ static struct bitinfo ata_cmd_set2[] = {
 	{ 0, NULL },
 };
 
-static struct bitinfo ata_cmd_ext[] = {
+static const struct bitinfo ata_cmd_ext[] = {
 	{ ATA_CMDE_TLCONT, "Time-limited R/W feature set R/W Continuous mode" },
 	{ ATA_CMDE_TL, "Time-limited Read/Write" },
 	{ ATA_CMDE_URGW, "URG bit for WRITE STREAM DMA/PIO" },
@@ -230,7 +230,7 @@ static struct bitinfo ata_cmd_ext[] = {
 	{ 0, NULL },
 };
 
-static struct bitinfo ata_sata_caps[] = {
+static const struct bitinfo ata_sata_caps[] = {
 	{ SATA_SIGNAL_GEN1, "1.5Gb/s signaling" },
 	{ SATA_SIGNAL_GEN2, "3.0Gb/s signaling" },
 	{ SATA_NATIVE_CMDQ, "Native Command Queuing" },
@@ -239,7 +239,7 @@ static struct bitinfo ata_sata_caps[] = {
 	{ 0, NULL },
 };
 
-static struct bitinfo ata_sata_feat[] = {
+static const struct bitinfo ata_sata_feat[] = {
 	{ SATA_NONZERO_OFFSETS, "Non-zero Offset DMA" },
 	{ SATA_DMA_SETUP_AUTO, "DMA Setup Auto Activate" },
 	{ SATA_DRIVE_PWR_MGMT, "Device-Initiated Interface Power Managment" },
@@ -251,7 +251,7 @@ static struct bitinfo ata_sata_feat[] = {
 static const struct {
 	const int	id;
 	const char	*name;
-	void (*special)(struct ata_smart_attr *, uint64_t);
+	void (*special)(const struct ata_smart_attr *, uint64_t);
 } smart_attrs[] = {
 	{   1,		"Raw read error rate", NULL },
 	{   2,		"Throughput performance", NULL },
@@ -304,7 +304,7 @@ static const struct {
 	{   0,		"Unknown", NULL },
 };
 
-static struct bitinfo ata_sec_st[] = {
+static const struct bitinfo ata_sec_st[] = {
 	{ WDC_SEC_SUPP,		"supported" },
 	{ WDC_SEC_EN,		"enabled" },
 	{ WDC_SEC_LOCKED,	"locked" },
@@ -319,7 +319,7 @@ int
 main(int argc, char *argv[])
 {
 	int i;
-	struct command *commands = NULL;
+	const struct command *commands = NULL;
 
 	/* Must have at least: device command */
 	if (argc < 3)
@@ -446,7 +446,7 @@ ata_command(struct atareq *req)
  */
 
 static void
-print_bitinfo(const char *bf, const char *af, u_int bits, struct bitinfo *binfo)
+print_bitinfo(const char *bf, const char *af, u_int bits, const struct bitinfo *binfo)
 {
 
 	for (; binfo->bitmask != 0; binfo++)
@@ -455,7 +455,7 @@ print_bitinfo(const char *bf, const char *af, u_int bits, struct bitinfo *binfo)
 }
 
 static void
-print_bitinfo2(const char *bf, const char *af, u_int bits, u_int enables, struct bitinfo *binfo)
+print_bitinfo2(const char *bf, const char *af, u_int bits, u_int enables, const struct bitinfo *binfo)
 {
 
 	for (; binfo->bitmask != 0; binfo++)
@@ -471,7 +471,7 @@ print_bitinfo2(const char *bf, const char *af, u_int bits, u_int enables, struct
  */
 
 static void
-device_smart_temp(struct ata_smart_attr *attr, uint64_t raw_value)
+device_smart_temp(const struct ata_smart_attr *attr, uint64_t raw_value)
 {
 	printf("%" PRIu8, attr->raw[0]);
 	if (attr->raw[0] != raw_value)
@@ -487,9 +487,9 @@ device_smart_temp(struct ata_smart_attr *attr, uint64_t raw_value)
 static void
 print_smart_status(void *vbuf, void *tbuf)
 {
-	struct ata_smart_attributes *value_buf = vbuf;
-	struct ata_smart_thresholds *threshold_buf = tbuf;
-	struct ata_smart_attr *attr;
+	const struct ata_smart_attributes *value_buf = vbuf;
+	const struct ata_smart_thresholds *threshold_buf = tbuf;
+	const struct ata_smart_attr *attr;
 	uint64_t raw_value;
 	int flags;
 	int i, j;
@@ -497,14 +497,14 @@ print_smart_status(void *vbuf, void *tbuf)
 	u_int8_t checksum;
 
 	for (i = checksum = 0; i < 512; i++)
-		checksum += ((u_int8_t *) value_buf)[i];
+		checksum += ((const u_int8_t *) value_buf)[i];
 	if (checksum != 0) {
 		fprintf(stderr, "SMART attribute values checksum error\n");
 		return;
 	}
 
 	for (i = checksum = 0; i < 512; i++)
-		checksum += ((u_int8_t *) threshold_buf)[i];
+		checksum += ((const u_int8_t *) threshold_buf)[i];
 	if (checksum != 0) {
 		fprintf(stderr, "SMART attribute thresholds checksum error\n");
 		return;
@@ -556,7 +556,7 @@ print_smart_status(void *vbuf, void *tbuf)
 	}
 }
 
-static struct {
+static const struct {
 	int number;
 	const char *name;
 } selftest_name[] = {
@@ -590,7 +590,7 @@ static const char *selftest_status[] = {
 };
 
 static void
-print_error_entry(int num, struct ata_smart_error *le)
+print_error_entry(int num, const struct ata_smart_error *le)
 {
 	int i;
 
@@ -644,14 +644,14 @@ print_error_entry(int num, struct ata_smart_error *le)
 }
 
 static void
-print_error(void *buf)
+print_error(const void *buf)
 {
-	struct ata_smart_errorlog *erlog = buf;
+	const struct ata_smart_errorlog *erlog = buf;
 	u_int8_t checksum;
 	int i;
 
 	for (i = checksum = 0; i < 512; i++)
-		checksum += ((u_int8_t *) buf)[i];
+		checksum += ((const u_int8_t *) buf)[i];
 	if (checksum != 0) {
 		fprintf(stderr, "SMART error log checksum error\n");
 		return;
@@ -681,13 +681,13 @@ print_error(void *buf)
 }
 
 static void
-print_selftest_entry(int num, struct ata_smart_selftest *le)
+print_selftest_entry(int num, const struct ata_smart_selftest *le)
 {
-	unsigned char *p;
+	const unsigned char *p;
 	size_t i;
 
 	/* check if all zero */
-	for (p = (void *)le, i = 0; i < sizeof(*le); i++)
+	for (p = (const void *)le, i = 0; i < sizeof(*le); i++)
 		if (p[i] != 0)
 			break;
 	if (i == sizeof(*le))
@@ -714,14 +714,14 @@ print_selftest_entry(int num, struct ata_smart_selftest *le)
 }
 
 static void
-print_selftest(void *buf)
+print_selftest(const void *buf)
 {
-	struct ata_smart_selftestlog *stlog = buf;
+	const struct ata_smart_selftestlog *stlog = buf;
 	u_int8_t checksum;
 	int i;
 
 	for (i = checksum = 0; i < 512; i++)
-		checksum += ((u_int8_t *) buf)[i];
+		checksum += ((const u_int8_t *) buf)[i];
 	if (checksum != 0) {
 		fprintf(stderr, "SMART selftest log checksum error\n");
 		return;
