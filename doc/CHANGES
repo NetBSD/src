@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1616 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1617 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1141,3 +1141,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	zoneinfo: Import tzdata2011l. [apb 20111010]
 	sqlite: Import of pre-release of SQLite 3.6.9 [joerg 20111013]
 	vmt(4): Add a VMware Tools driver, from OpenBSD. [jmcneill 20111017]
+	zoneinfo: Import tzdata2011m. [apb 20111024]
