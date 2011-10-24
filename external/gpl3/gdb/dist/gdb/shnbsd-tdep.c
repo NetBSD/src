@@ -260,7 +260,7 @@ shnbsd_displacement_12 (unsigned short insn)
 }
 
 static CORE_ADDR
-shnbsd_get_next_pc (CORE_ADDR pc)
+shnbsd_get_next_pc (struct regcache *regcache, CORE_ADDR pc)
 {
   unsigned short insn;
   ULONGEST sr;
@@ -285,7 +285,7 @@ shnbsd_get_next_pc (CORE_ADDR pc)
   /* BT, BF, BT/S, BF/S */
   if (CONDITIONAL_BRANCH_P(insn))
     {
-      sr = read_register (SR_REGNUM);
+      regcache_cooked_read_unsigned (regcache, SR_REGNUM, &sr);
 
       delay_slot = CONDITIONAL_BRANCH_SLOT_P(insn);
       if (!CONDITIONAL_BRANCH_TAKEN_P(insn, sr))
@@ -310,8 +310,8 @@ shnbsd_get_next_pc (CORE_ADDR pc)
   /* BRAF, BSRF */
   else if (BRANCH_FAR_P(insn))
     {
-      displacement = read_register (BRANCH_FAR_REG(insn));
-
+      regcache_cooked_read_unsigned (regcache, BRANCH_FAR_REG(insn),
+	  &displacement);
       next_pc = pc + 4 + displacement;
       delay_slot = 1;
     }
@@ -319,21 +319,21 @@ shnbsd_get_next_pc (CORE_ADDR pc)
   /* JMP, JSR */
   else if (JUMP_P(insn))
     {
-      next_pc = read_register (JUMP_REG(insn));
+      regcache_cooked_read_unsigned (regcache, JUMP_REG(insn), &next_pc);
       delay_slot = 1;
     }
 
   /* RTS */
   else if (insn == RTS_INSN)
     {
-      next_pc = read_register (PR_REGNUM);
+      regcache_cooked_read_unsigned (regcache, PR_REGNUM, &next_pc);
       delay_slot = 1;
     }
 
   /* RTE - XXX: privileged */
   else if (insn == RTE_INSN)
     {
-      next_pc = read_register (SPC_REGNUM);
+      regcache_cooked_read_unsigned (regcache, SPC_REGNUM, &next_pc);
       delay_slot = 1;
     }
 
@@ -356,28 +356,20 @@ shnbsd_get_next_pc (CORE_ADDR pc)
    instruction and setting a breakpoint on the "next" instruction
    which would be executed.
  */
-void
-shnbsd_software_single_step (struct gdbarch *gdbarch,
-			     enum target_signal sig,
-			     int insert_breakpoints_p)
+int
+shnbsd_software_single_step (struct frame_info *frame)
 {
   static CORE_ADDR next_pc;
-  CORE_ADDR pc;
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+  struct address_space *aspace = get_frame_address_space (frame);
+  struct regcache  *regcache= get_current_regcache ();
+  CORE_ADDR pc = regcache_read_pc (regcache);
 
-  if (insert_breakpoints_p)
-    {
-      pc = read_pc ();
+  if (pc != next_pc)
+    next_pc = shnbsd_get_next_pc (regcache, pc);
 
-      /* If inferior was signalled before it had a chance to execute
-	 the single step breakpoint, keep the breakpoint where it
-	 was */
-      if (sig == 0 || pc != next_pc)
-	next_pc = shnbsd_get_next_pc (pc);
-
-      insert_single_step_breakpoint (gdbarch, next_pc);
-    }
-  else
-      remove_single_step_breakpoints ();
+  insert_single_step_breakpoint (gdbarch, aspace, next_pc);
+  return 1;
 }
 
 /* SH register sets.  */
@@ -458,7 +450,8 @@ shnbsd_sigtramp_cache_init (const struct tramp_frame *self,
 {
   struct gdbarch *gdbarch = get_frame_arch (next_frame);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  CORE_ADDR sp = get_frame_register_unsigned (next_frame, SP_REGNUM);
+  int sp_regnum = gdbarch_sp_regnum (gdbarch);
+  CORE_ADDR sp = get_frame_register_unsigned (next_frame, sp_regnum);
   CORE_ADDR base;
   const int *reg_offset;
   int num_regs;
