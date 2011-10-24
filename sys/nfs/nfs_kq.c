@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.24 2011/06/12 03:35:59 rmind Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.25 2011/10/24 11:43:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.24 2011/06/12 03:35:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.25 2011/10/24 11:43:30 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,10 @@ nfs_kqpoll(void *arg)
 			/* save v_size, nfs_getattr() updates it */
 			osize = ke->vp->v_size;
 
+			memset(&attr, 0, sizeof(attr));
+			vn_lock(ke->vp, LK_SHARED | LK_RETRY);
 			(void) VOP_GETATTR(ke->vp, &attr, l->l_cred);
+			VOP_UNLOCK(ke->vp);
 
 			/* following is a bit fragile, but about best
 			 * we can get */
@@ -318,7 +321,9 @@ nfs_kqfilter(void *v)
 	 * held. This is likely cheap due to attrcache, so do it now.
 	 */
 	memset(&attr, 0, sizeof(attr));
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	(void) VOP_GETATTR(vp, &attr, l->l_cred);
+	VOP_UNLOCK(vp);
 
 	mutex_enter(&nfskq_lock);
 
