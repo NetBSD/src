@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1695 2011/10/21 02:11:18 christos Exp $
+#	$NetBSD: mi,v 1.1696 2011/10/24 07:33:26 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10649,6 +10649,7 @@
 ./usr/share/man/cat9/ubc_release.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_uiomove.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ucom.0			comp-sys-catman		.cat
+./usr/share/man/cat9/ucas.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uiomove.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ungetnewvnode.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/untimeout.0		comp-sys-catman		.cat
@@ -16715,6 +16716,7 @@
 ./usr/share/man/html9/ubc_release.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ubc_uiomove.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ucom.html			comp-sys-htmlman	html
+./usr/share/man/html9/ucas.html			comp-sys-htmlman	html
 ./usr/share/man/html9/uiomove.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ungetnewvnode.html	comp-sys-htmlman	html
 ./usr/share/man/html9/untimeout.html		comp-sys-htmlman	html
@@ -22994,6 +22996,7 @@
 ./usr/share/man/man9/ubc_release.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc_uiomove.9		comp-sys-man		.man
 ./usr/share/man/man9/ucom.9			comp-sys-man		.man
+./usr/share/man/man9/ucas.9			comp-sys-man		.man
 ./usr/share/man/man9/uiomove.9			comp-sys-man		.man
 ./usr/share/man/man9/ungetnewvnode.9		comp-sys-man		.man
 ./usr/share/man/man9/untimeout.9		comp-sys-man		.man
