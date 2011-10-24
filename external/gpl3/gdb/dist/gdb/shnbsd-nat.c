@@ -41,7 +41,6 @@
 || (regno) == gdbarch_pc_regnum (gdbarch) || (regno) == PR_REGNUM \
 || (regno) == MACH_REGNUM || (regno) == MACL_REGNUM \
 || (regno) == SR_REGNUM || (regno) == GBR_REGNUM)
-|| (regno) == SR_REGNUM)
 
 /* Sizeof `struct reg' in <machine/reg.h>.  */
 #define SHNBSD_SIZEOF_GREGS	(21 * 4)
