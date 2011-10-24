@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.39 2011/10/24 16:09:58 jakllsch Exp $	*/
+/*	$NetBSD: atareg.h,v 1.40 2011/10/24 20:52:34 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -367,6 +367,7 @@ struct ataparams {
     uint16_t	atap_sata_caps;		/* 76: */
 #define SATA_SIGNAL_GEN1	0x02
 #define SATA_SIGNAL_GEN2	0x04
+#define SATA_SIGNAL_GEN3	0x08
 #define SATA_NATIVE_CMDQ	0x0100
 #define SATA_HOST_PWR_MGMT	0x0200
 #define SATA_PHY_EVNT_CNT	0x0400
