@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.60 2011/08/27 16:12:54 joerg Exp $	*/
+/*	$NetBSD: atactl.c,v 1.61 2011/10/24 15:56:17 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.60 2011/08/27 16:12:54 joerg Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.61 2011/10/24 15:56:17 jakllsch Exp $");
 #endif
 
 
@@ -475,7 +475,7 @@ device_smart_temp(struct ata_smart_attr *attr, uint64_t raw_value)
 {
 	printf("%" PRIu8, attr->raw[0]);
 	if (attr->raw[0] != raw_value)
-		printf(" Lifetime min/max %" PRIu8 "/%" PRIu8, 
+		printf(" Lifetime min/max %" PRIu8 "/%" PRIu8,
 		    attr->raw[2], attr->raw[4]);
 }
 
@@ -531,8 +531,8 @@ print_smart_status(void *vbuf, void *tbuf)
 		if (attr->value == 0||attr->value == 0xFE||attr->value == 0xFF)
 			continue;
 
-		for (aid = 0; 
-		     smart_attrs[aid].id != i && smart_attrs[aid].id != 0; 
+		for (aid = 0;
+		     smart_attrs[aid].id != i && smart_attrs[aid].id != 0;
 		     aid++)
 			;
 
@@ -667,12 +667,12 @@ print_error(void *buf)
 		printf("No errors have been logged\n");
 		return;
 	}
-		
+
 	if (erlog->mostrecenterror > 5) {
 		fprintf(stderr, "Most recent error is too large\n");
 		return;
 	}
-	
+
 	for (i = erlog->mostrecenterror; i < 5; i++)
 		print_error_entry(i, &erlog->log_entries[i]);
 	for (i = 0; i < erlog->mostrecenterror; i++)
@@ -737,12 +737,12 @@ print_selftest(void *buf)
 		printf("No self-tests have been logged\n");
 		return;
 	}
-		
+
 	if (stlog->mostrecenttest > 22) {
 		fprintf(stderr, "Most recent test is too large\n");
 		return;
 	}
-	
+
 	for (i = stlog->mostrecenttest; i < 22; i++)
 		print_selftest_entry(i, &stlog->log_entries[i]);
 	for (i = 0; i < stlog->mostrecenttest; i++)
@@ -957,13 +957,13 @@ device_identify(int argc, char *argv[])
 	humanize_number(hnum, sizeof(hnum), capacity, "bytes",
 		HN_AUTOSCALE, HN_DIVISOR_1000);
 
-	printf("Capacity %s, %" PRIu64 " sectors, %" PRIu32 " bytes/sector\n", 
+	printf("Capacity %s, %" PRIu64 " sectors, %" PRIu32 " bytes/sector\n",
 		       hnum, sectors, secsize);
 
 	printf("Cylinders: %d, heads: %d, sec/track: %d\n",
 		inqbuf->atap_cylinders, inqbuf->atap_heads,
 		inqbuf->atap_sectors);
-	
+
 	lb_per_pb = 1;
 
 	if ((inqbuf->atap_secsz & ATA_SECSZ_VALID_MASK) == ATA_SECSZ_VALID) {
@@ -1083,22 +1083,22 @@ device_apm(int argc, char *argv[])
 	if (argc >= 1) {
 		req.command = SET_FEATURES;
 		req.timeout = 1000;
-		
+
 		if (strcmp(argv[0], "disable") == 0)
 			req.features = WDSF_APM_DS;
 		else if (strcmp(argv[0], "set") == 0 && argc >= 2 &&
 		         (l = strtol(argv[1], NULL, 0)) >= 0 && l <= 253) {
-			
+
 			req.features = WDSF_APM_EN;
 			req.sec_count = l + 1;
 		} else
 			usage();
 	} else
 		usage();
-	
+
 	ata_command(&req);
 }
-	
+
 
 /*
  * Set the idle timer on the disk.  Set it for either idle mode or
@@ -1244,7 +1244,7 @@ device_smart(int argc, char *argv[])
 		req.command = WDCC_SMART;
 		req.cylinder = WDSMART_CYL;
 		req.timeout = 1000;
-	
+
 		ata_command(&req);
 
 		if (req.cylinder != WDSMART_CYL) {
@@ -1266,7 +1266,7 @@ device_smart(int argc, char *argv[])
 		req.datalen = sizeof(inbuf);
 		req.cylinder = WDSMART_CYL;
 		req.timeout = 1000;
-	
+
 		ata_command(&req);
 
 		memset(&inbuf2, 0, sizeof(inbuf2));
@@ -1309,7 +1309,7 @@ device_smart(int argc, char *argv[])
 
 		memset(&inbuf, 0, sizeof(inbuf));
 		memset(&req, 0, sizeof(req));
-		
+
 		req.flags = ATACMD_READ;
 		req.features = WDSM_RD_LOG;
 		req.sec_count = 1;
@@ -1319,9 +1319,9 @@ device_smart(int argc, char *argv[])
 		req.datalen = sizeof(inbuf);
 		req.cylinder = WDSMART_CYL;
 		req.timeout = 1000;
-		
+
 		ata_command(&req);
-		
+
 		print_error(inbuf);
 	} else if (strcmp(argv[0], "selftest-log") == 0) {
 		if (!is_smart()) {
@@ -1331,7 +1331,7 @@ device_smart(int argc, char *argv[])
 
 		memset(&inbuf, 0, sizeof(inbuf));
 		memset(&req, 0, sizeof(req));
-		
+
 		req.flags = ATACMD_READ;
 		req.features = WDSM_RD_LOG;
 		req.sec_count = 1;
@@ -1341,9 +1341,9 @@ device_smart(int argc, char *argv[])
 		req.datalen = sizeof(inbuf);
 		req.cylinder = WDSMART_CYL;
 		req.timeout = 1000;
-		
+
 		ata_command(&req);
-		
+
 		print_selftest(inbuf);
 
 	} else {
