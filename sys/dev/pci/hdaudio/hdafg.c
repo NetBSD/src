@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.8 2011/09/07 20:34:58 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.9 2011/10/24 02:08:22 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.8 2011/09/07 20:34:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.9 2011/10/24 02:08:22 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3801,7 +3801,7 @@ hdafg_round_blocksize(void *opaque, int blksize, int mode,
 {
 	struct hdaudio_audiodev *ad = opaque;
 	struct hdaudio_stream *st;
-	int bufsize;
+	int bufsize, nblksize;
 
 	st = (mode == AUMODE_PLAY) ? ad->ad_playback : ad->ad_capture;
 	if (st == NULL) {
@@ -3810,19 +3810,24 @@ hdafg_round_blocksize(void *opaque, int blksize, int mode,
 		return 128;
 	}
 
-	/* Multiple of 128 */
-	blksize &= ~127;
-	if (blksize <= 0)
+	if (blksize > 8192)
+		blksize = 8192;
+	else if (blksize < 0)
 		blksize = 128;
 
+	/* HD audio wants a multiple of 128, and OSS wants a power of 2 */
+	for (nblksize = 128; nblksize < blksize; nblksize <<= 1)
+		;
+
+	/* Make sure there are enough BDL descriptors */
 	bufsize = st->st_data.dma_size;
-	if (bufsize > HDAUDIO_BDL_MAX * blksize) {
+	if (bufsize > HDAUDIO_BDL_MAX * nblksize) {
 		blksize = bufsize / HDAUDIO_BDL_MAX;
-		if (blksize & 127)
-			blksize = (blksize + 127) & ~127;
+		for (nblksize = 128; nblksize < blksize; nblksize <<= 1)
+			;
 	}
 
-	return blksize;
+	return nblksize;
 }
 
 static int
