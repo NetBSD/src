@@ -1,64 +1,62 @@
-$NetBSD: README,v 1.54 2011/01/27 19:09:06 pooka Exp $
+$NetBSD: README,v 1.55 2011/10/24 16:49:02 christos Exp $
 
-acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
-acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
-algor:		Algorithmics, Ltd. MIPS evaluation boards (mips, 20010528)
-alpha:		Compaq (formerly Digital Equipment Corp.) Alpha (alpha, 19950213)
-amd64:		AMD's x86 64 bit architecture (x86_64, 20010619)
-amiga:		Commodore et al. Amiga (m68k, 19930902)
-amigappc:	Phase 5 Amiga (powerpc, 20000525)
-arc:		MIPS Advanced Risc Computing spec machines (mips, 20000123)
-atari:		Atari TT30, Falcon, and Hades (m68k, 19950326)
-bebox:		Be Inc. BeBox (powerpc, 19971014)
-cats:		Chalice Technologies, CATS motherboard (arm, 19981005)
-cesfic:		FIC8234 VME processor board (m68k, 20010514)
-cobalt:		Cobalt Networks Microservers (mips, 20000319)
-dreamcast:	SEGA Dreamcast (sh3, 20010107)
-emips:		Machines based on Extensible MIPS (mips, 20110126)
-evbarm:		ARM-based eval boards (arm, 20010905)
-evbmips:	MIPS-based eval boards (mips, 20020307)
-evbppc:		PowerPC-based eval boards (powerpc, 20021209)
-evbsh3:		Hitachi SuperH(TM) sh3 and sh4 eval boards (sh3, 20010206)
-ews4800mips:	NEC's MIPS based EWS4800 workstations (ews4800mips, 20051229)
-hp300:		Hewlett Packard 300- and 400-series machines (m68k, 19930512)
-hp700:		Hewlett Packard 700-series machines (hppa, 20020606)
-hpcarm:		ARM based handheld PCs (arm, 20010220)
-hpcmips:	MIPS based handheld PCs (mips, 19990925)
-hpcsh:		Hitachi SuperH(TM) based handheld PCs (sh3, 20010117)
-i386:		Intel/AMD etc. x86 processor line (i386, 19930321)
-ia64:		Intel Itanium/Itanium2 processor based workstations (ia64, -)
-ibmnws:		IBM Network Station Thin Clients (powerpc, -)
-iyonix:		Castle Technology xscale based workstations (arm, 20040713)
-landisk:	SH4 processor based NAS appliances by I-O DATA (sh3, 20060901)
-luna68k:	LUNA product line of OMRON Tateishi Electric (m68k, 20000105)
-mac68k:		Apple Macintosh (m68k, 19930929)
-macppc:		Apple Power Macintosh and clones (powerpc, 19980515)
-mipsco:		MIPS Corp Magnum 3000 computers (mips, 20000812)
-mmeye:		Hitachi SuperH(TM) computer controlled camera (sh3)
-mvme68k:	Motorola's VMEbus 68K based single board computers (m68k, 19950725)
-mvmeppc:	Motorola's PowerPC machines running older PPCBUG
-		(powerpc, 20020227)
-netwinder:	StrongARM based Netwinder machines (arm, 20010609)
-news68k:	Sony's m68k based NET WORK STATION (m68k, 19991209)
-newsmips:	Sony's MIPS based NET WORK STATION (mips, 19980218)
-next68k:	NeXT Computer's cubes and slabs (m68k, 19980609)
-ofppc:		Open Firmware based PowerPC machines (powerpc, 19980528)
-pmax:		Digital Equipment Corp. MIPS based machines (mips, 19931012)
-prep:		PowerPC Reference Platform machines (powerpc, 20000229)
-sandpoint:	Motorola Sandpoint reference platform and DINK32 machines
-		(powerpc, 20010211)
-sbmips:		Broadcom's SiByte processor evaluation boards (mips, 20020306)
-sgimips:	MIPS based Silicon Graphics machines (mips, 20000614)
-shark:		Digital Network Appliance Reference Design ("Shark") (arm, 19960131)
-sparc:		Sun Microsystems SPARC (sun4, sun4c, sun4m) 32 bit machines
-		(sparc, 19931002)
-sparc64:	Sun Microsystems UltraSPARC 64 bit machines (sparc64/sparc, 19980620)
-sun2:		Sun m68010 based machines (m68k, 20010328)
-sun3:		Sun m680[23]0 based machines (m68k, 19930625)
-vax:		Digital Equipment Corp. VAX machines (vax, 19940802)
-x68k:		Sharp X68000, X68030 (m68k, 19960505)
-xen:		Xen virtual machine monitor (xen, 20040311)
-zaurus:		Sharp Zaurus C3x00 PDAs (arm, 20061217)
+acorn26	arm	20000509	Acorn ARM2- and ARM3-based machines
+acorn32	arm	20011118	Acorn computers Ltd. ARM 6/7/SA based machines
+algor	mips	20010528	Algorithmics, Ltd. MIPS evaluation boards
+alpha	alpha	19950213	Compaq (formerly Digital Equipment Corp.) Alpha
+amd64	x86_64	20010619	AMD's x86 64 bit architecture
+amiga	m68k	19930902	Commodore et al. Amiga
+amigappc	powerpc	20000525	Phase 5 Amiga
+arc	mips	20000123	MIPS Advanced Risc Computing spec machines
+atari	m68k	19950326	Atari TT30, Falcon, and Hades
+bebox	powerpc	19971014	Be Inc. BeBox
+cats	arm	19981005	Chalice Technologies, CATS motherboard
+cesfic	m68k	20010514	FIC8234 VME processor board
+cobalt	mips	20000319	Cobalt Networks Microservers
+dreamcast	sh3	20010107	SEGA Dreamcast
+emips	mips	20110126	Machines based on Extensible MIPS
+evbarm	armeb	20010905	ARM-based eval boards
+evbmips	mips64el	20020307	MIPS-based eval boards
+evbppc	powerpc	20021209	PowerPC-based eval boards
+evbsh3	sh3	20010206	Hitachi SuperH(TM) sh3 and sh4 eval boards
+ews4800mips	mips	20051229	NEC's MIPS based EWS4800 workstations
+hp300	m68k	19930512	Hewlett Packard 300- and 400-series machines
+hp700	hppa	20020606	Hewlett Packard 700-series machines
+hpcarm	arm	20010220	ARM based handheld PCs
+hpcmips	mips	19990925	MIPS based handheld PCs
+hpcsh	sh3el	20010117	Hitachi SuperH(TM) based handheld PCs
+i386	i386	19930321	Intel/AMD etc. x86 processor line
+ia64	ia64	00000000	Intel Itanium/Itanium2 processor based workstations
+ibmnws	powerpc	00000000	IBM Network Station Thin Clients
+iyonix	arm	20040713	Castle Technology xscale based workstations
+landisk	sh3	20060901	SH4 processor based NAS appliances by I-O DATA
+luna68k	m68k	20000105	LUNA product line of OMRON Tateishi Electric
+mac68k	m68k	19930929	Apple Macintosh
+macppc	powerpc	19980515	Apple Power Macintosh and clones
+mipsco	mips	20000812	MIPS Corp Magnum 3000 computers
+mmeye	sh3eb	19990913	Hitachi SuperH(TM) computer controlled camera
+mvme68k	m68k	19950725	Motorola's VMEbus 68K based single board computers
+mvmeppc	powerpc	20020227	Motorola's PowerPC machines running older PPCBUG
+netwinder	arm	20010609	StrongARM based Netwinder machines
+news68k	m68k	19991209	Sony's m68k based NET WORK STATION
+newsmips	mipseb	19980218	Sony's MIPS based NET WORK STATION
+next68k	m68k	19980609	NeXT Computer's cubes and slabs
+ofppc	powerpc	19980528	Open Firmware based PowerPC machines
+pmax	mipsel	19931012	Digital Equipment Corp. MIPS based machines
+prep	powerpc	20000229	PowerPC Reference Platform machines
+rs6000	powerpc	20071217	MCA-based IBM RS/6000 wokstations
+sandpoint	powerpc	20010211	Motorola Sandpoint reference platform and DINK32 machines
+sbmips	mips	20020306	Broadcom's SiByte processor evaluation boards
+sgimips	mips64eb	20000614	MIPS based Silicon Graphics machines
+shark	arm	19960131	Digital Network Appliance Reference Design ("Shark")
+sparc	sparc	19931002	Sun Microsystems SPARC (sun4, sun4c, sun4m) 32 bit machines
+sparc64	sparc64/sparc	19980620	Sun Microsystems UltraSPARC 64 bit machines
+sun2	m68000	20010328	Sun m68010 based machines
+sun3	m68k	19930625	Sun m680[23]0 based machines
+vax	vax	19940802	Digital Equipment Corp. VAX machines
+x68k	m68k	19960505	Sharp X68000, X68030
+xen	xen	20040311	Xen virtual machine monitor
+zaurus	arm	20061217	Sharp Zaurus C3x00 PDAs
 
 Generic cpu features shared among multiple ports
 arm:		ARM CPU based platform files
