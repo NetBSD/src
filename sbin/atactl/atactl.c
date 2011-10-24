@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.62 2011/10/24 19:13:03 jakllsch Exp $	*/
+/*	$NetBSD: atactl.c,v 1.63 2011/10/24 19:15:42 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.62 2011/10/24 19:13:03 jakllsch Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.63 2011/10/24 19:15:42 jakllsch Exp $");
 #endif
 
 
@@ -55,38 +55,38 @@ __RCSID("$NetBSD: atactl.c,v 1.62 2011/10/24 19:13:03 jakllsch Exp $");
 
 struct ata_smart_error {
 	struct {
-		u_int8_t device_control;
-		u_int8_t features;
-		u_int8_t sector_count;
-		u_int8_t sector_number;
-		u_int8_t cylinder_low;
-		u_int8_t cylinder_high;
-		u_int8_t device_head;
-		u_int8_t command;
-		u_int8_t timestamp[4];
+		uint8_t device_control;
+		uint8_t features;
+		uint8_t sector_count;
+		uint8_t sector_number;
+		uint8_t cylinder_low;
+		uint8_t cylinder_high;
+		uint8_t device_head;
+		uint8_t command;
+		uint8_t timestamp[4];
 	} command[5];
 	struct {
-		u_int8_t reserved;
-		u_int8_t error;
-		u_int8_t sector_count;
-		u_int8_t sector_number;
-		u_int8_t cylinder_low;
-		u_int8_t cylinder_high;
-		u_int8_t device_head;
-		u_int8_t status;
-		u_int8_t extended_error[19];
-		u_int8_t state;
-		u_int8_t lifetime[2];
+		uint8_t reserved;
+		uint8_t error;
+		uint8_t sector_count;
+		uint8_t sector_number;
+		uint8_t cylinder_low;
+		uint8_t cylinder_high;
+		uint8_t device_head;
+		uint8_t status;
+		uint8_t extended_error[19];
+		uint8_t state;
+		uint8_t lifetime[2];
 	} error_data;
 } __packed;
 
 struct ata_smart_errorlog {
-	u_int8_t		data_structure_revision;
-	u_int8_t		mostrecenterror;
+	uint8_t			data_structure_revision;
+	uint8_t			mostrecenterror;
 	struct ata_smart_error	log_entries[5];
-	u_int16_t		device_error_count;
-	u_int8_t		reserved[57];
-	u_int8_t		checksum;
+	uint16_t		device_error_count;
+	uint8_t			reserved[57];
+	uint8_t			checksum;
 } __packed;
 
 struct command {
@@ -494,17 +494,17 @@ print_smart_status(void *vbuf, void *tbuf)
 	int flags;
 	int i, j;
 	int aid;
-	u_int8_t checksum;
+	uint8_t checksum;
 
 	for (i = checksum = 0; i < 512; i++)
-		checksum += ((const u_int8_t *) value_buf)[i];
+		checksum += ((const uint8_t *) value_buf)[i];
 	if (checksum != 0) {
 		fprintf(stderr, "SMART attribute values checksum error\n");
 		return;
 	}
 
 	for (i = checksum = 0; i < 512; i++)
-		checksum += ((const u_int8_t *) threshold_buf)[i];
+		checksum += ((const uint8_t *) threshold_buf)[i];
 	if (checksum != 0) {
 		fprintf(stderr, "SMART attribute thresholds checksum error\n");
 		return;
@@ -566,7 +566,7 @@ static const struct {
 	{ 127, "Abort off-line test" },
 	{ 129, "Short captive" },
 	{ 130, "Extended captive" },
-	{ 256, "Unknown test" }, /* larger then u_int8_t */
+	{ 256, "Unknown test" }, /* larger then uint8_t */
 	{ 0, NULL }
 };
 
@@ -647,11 +647,11 @@ static void
 print_error(const void *buf)
 {
 	const struct ata_smart_errorlog *erlog = buf;
-	u_int8_t checksum;
+	uint8_t checksum;
 	int i;
 
 	for (i = checksum = 0; i < 512; i++)
-		checksum += ((const u_int8_t *) buf)[i];
+		checksum += ((const uint8_t *) buf)[i];
 	if (checksum != 0) {
 		fprintf(stderr, "SMART error log checksum error\n");
 		return;
@@ -717,11 +717,11 @@ static void
 print_selftest(const void *buf)
 {
 	const struct ata_smart_selftestlog *stlog = buf;
-	u_int8_t checksum;
+	uint8_t checksum;
 	int i;
 
 	for (i = checksum = 0; i < 512; i++)
-		checksum += ((const u_int8_t *) buf)[i];
+		checksum += ((const uint8_t *) buf)[i];
 	if (checksum != 0) {
 		fprintf(stderr, "SMART selftest log checksum error\n");
 		return;
