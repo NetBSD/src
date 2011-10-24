@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_need_resched.9,v 1.8 2010/07/31 02:12:20 jruoho Exp $
+.\"     $NetBSD: cpu_need_resched.9,v 1.9 2011/10/24 07:30:29 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,6 +49,17 @@ This event may occur if a higher priority LWP appears on the run
 queue or if the current LWP has exceeded its time slice.
 .Pp
 If
+.Dv RESCHED_KPREEMPT
+flag is specified in
+.Fa flags
+and
+.Dv __HAVE_PREEMPTION
+C pre-processor macro is defined in
+.In machine/intr.h ,
+machine-dependent code should make a context switch happen as soon as possible
+even if the cpu is running the kernel code.
+.Pp
+If
 .Dv RESCHED_IMMED
 flag is specified in
 .Fa flags ,
@@ -60,7 +71,7 @@ is not the current processor,
 typically issues an inter processor call to the processor to make it
 notice the need of a context switch as soon as possible.
 .Pp
-Specifically, the
+Typically, the
 .Fn cpu_need_resched
 function will perform the following operations:
 .Bl -bullet -offset indent
