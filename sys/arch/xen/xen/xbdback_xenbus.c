@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.46 2011/08/24 20:49:34 jym Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.47 2011/10/24 18:13:50 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.46 2011/08/24 20:49:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.47 2011/10/24 18:13:50 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -628,12 +628,31 @@ err:
 	return -1;
 }
 
+static int
+xbdback_disconnect(struct xbdback_instance *xbdi)
+{
+	int s;
+	
+	hypervisor_mask_event(xbdi->xbdi_evtchn);
+	event_remove_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
+	    xbdi);
+	xbdi->xbdi_status = DISCONNECTING;
+	s = splbio();
+	xbdi_put(xbdi);
+	while (xbdi->xbdi_status != DISCONNECTED) {
+		tsleep(&xbdi->xbdi_status, PRIBIO, "xbddis", 0);
+	}
+	splx(s);
+	xenbus_switch_state(xbdi->xbdi_xbusd, NULL, XenbusStateClosing);
+
+	return 0;
+}
+
 static void
 xbdback_frontend_changed(void *arg, XenbusState new_state)
 {
 	struct xbdback_instance *xbdi = arg;
 	struct xenbus_device *xbusd = xbdi->xbdi_xbusd;
-	int s;
 
 	XENPRINTF(("xbdback %s: new state %d\n", xbusd->xbusd_path, new_state));
 	switch(new_state) {
@@ -646,17 +665,7 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 		xbdback_connect(xbdi);
 		break;
 	case XenbusStateClosing:
-		hypervisor_mask_event(xbdi->xbdi_evtchn);
-		event_remove_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
-		    xbdi);
-		xbdi->xbdi_status = DISCONNECTING;
-		s = splbio();
-		xbdi_put(xbdi);
-		while (xbdi->xbdi_status != DISCONNECTED) {
-			tsleep(&xbdi->xbdi_status, PRIBIO, "xbddis", 0);
-		}
-		splx(s);
-		xenbus_switch_state(xbusd, NULL, XenbusStateClosing);
+		xbdback_disconnect(xbdi);
 		break;
 	case XenbusStateClosed:
 		/* otherend_changed() should handle it for us */
