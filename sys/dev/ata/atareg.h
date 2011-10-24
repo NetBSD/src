@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.38 2010/01/25 00:39:51 jakllsch Exp $	*/
+/*	$NetBSD: atareg.h,v 1.39 2011/10/24 16:09:58 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -194,7 +194,11 @@ atacmd_tostatq(int cmd32)
 #define	WDSF_SET_MODE		0x03
 #define	WDSF_REASSIGN_EN	0x04
 #define	WDSF_APM_EN		0x05
+#define	WDSF_PUIS_EN		0x06
+#define	WDSF_PUIS_SPIN_UP	0x07
+#define	WDSF_SATA_EN		0x10
 #define	WDSF_RETRY_DS		0x33
+#define	WDSF_AAM_EN		0x42
 #define	WDSF_SET_CACHE_SGMT	0x54
 #define	WDSF_READAHEAD_DS	0x55
 #define	WDSF_POD_DS		0x66
@@ -202,12 +206,23 @@ atacmd_tostatq(int cmd32)
 #define	WDSF_WRITE_CACHE_DS	0x82
 #define	WDSF_REASSIGN_DS	0x84
 #define	WDSF_APM_DS		0x85
+#define	WDSF_PUIS_DS		0x86
 #define	WDSF_ECC_EN		0x88
+#define	WDSF_SATA_DS		0x90
 #define	WDSF_RETRY_EN		0x99
 #define	WDSF_SET_CURRENT	0x9a
 #define	WDSF_READAHEAD_EN	0xaa
 #define	WDSF_PREFETCH_SET	0xab
+#define	WDSF_AAM_DS		0xc2
 #define	WDSF_POD_EN		0xcc
+
+/* Subcommands for WDSF_SATA (count register) */
+#define	WDSF_SATA_NONZERO_OFFSETS	0x01
+#define	WDSF_SATA_DMA_SETUP_AUTO	0x02
+#define	WDSF_SATA_DRIVE_PWR_MGMT	0x03
+#define	WDSF_SATA_IN_ORDER_DATA		0x04
+#define	WDSF_SATA_ASYNC_NOTIFY		0x05
+#define	WDSF_SATA_SW_STTNGS_PRS		0x06
 
 /* Subcommands for SMART (features register) */
 #define	WDSM_RD_DATA		0xd0
