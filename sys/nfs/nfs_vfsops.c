@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.219 2011/10/07 09:35:06 hannken Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.220 2011/10/24 11:43:30 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.219 2011/10/07 09:35:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.220 2011/10/24 11:43:30 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -387,7 +387,9 @@ nfs_mountroot(void)
 	vfs_unbusy(mp, false, NULL);
 
 	/* Get root attributes (for the time). */
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	error = VOP_GETATTR(vp, &attr, l->l_cred);
+	VOP_UNLOCK(vp);
 	if (error)
 		panic("nfs_mountroot: getattr for root");
 	n = attr.va_atime.tv_sec;
