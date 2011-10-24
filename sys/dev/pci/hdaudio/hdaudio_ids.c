@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_ids.c,v 1.4 2011/10/06 22:25:00 jmcneill Exp $ */
+/* $NetBSD: hdaudio_ids.c,v 1.5 2011/10/24 22:20:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.4 2011/10/06 22:25:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.5 2011/10/24 22:20:59 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -241,6 +241,9 @@ static const struct hdaudio_id {
 	{ HDA_VENDOR_SIGMATEL2, 0x76d4, "92HD83C1C5" },
 	{ HDA_VENDOR_SIGMATEL2, 0x76d5, "92HD81B1C5" },
 	{ HDA_VENDOR_SIGMATEL2, HDA_PRODUCT_ANY, "Sigmatel" },
+	/* VMware */
+	{ HDA_VENDOR_VMWARE, 0x1975, "Virtual HDA" },
+	{ HDA_VENDOR_VMWARE, HDA_PRODUCT_ANY, "VMware" },
 };
 
 void
