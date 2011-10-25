@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.684 2011/10/11 13:54:00 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.685 2011/10/25 05:54:15 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -79,7 +79,11 @@ USE_COMPILERCRTSTUFF?=	yes
 # Platforms using GDB 7
 #
 .if ${MACHINE_ARCH} == "i386"     || \
-    ${MACHINE_ARCH} == "x86_64"
+    ${MACHINE_ARCH} == "x86_64"   || \
+    ${MACHINE_ARCH} == "sparc64"  || \
+    ${MACHINE_ARCH} == "sparc"    || \
+    ${MACHINE_ARCH} == "arm"      || \
+    ${MACHINE_ARCH} == "powerpc"
 HAVE_GDB?= 7
 .else
 # default to GDB6
