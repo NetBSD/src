@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1697 2011/10/25 05:03:55 jruoho Exp $
+#	$NetBSD: mi,v 1.1698 2011/10/25 05:41:33 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10859,6 +10859,7 @@
 ./usr/share/man/cat9/x86/nmi_establish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/rdmsr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/rdmsr_safe.0		comp-sys-catman		.cat
+./usr/share/man/cat9/x86/rdtsc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/tsc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/tsc_sync_ap.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/tsc_sync_bp.0		comp-sys-catman		.cat
@@ -16907,6 +16908,7 @@
 ./usr/share/man/html9/x86/nmi_establish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/x86/rdmsr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/x86/rdmsr_safe.html	comp-sys-htmlman	html
+./usr/share/man/html9/x86/rdtsc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/x86/tsc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/x86/tsc_sync_ap.html	comp-sys-htmlman	html
 ./usr/share/man/html9/x86/tsc_sync_bp.html	comp-sys-htmlman	html
@@ -23212,6 +23214,7 @@
 ./usr/share/man/man9/x86/nmi_establish.9	comp-sys-man		.man
 ./usr/share/man/man9/x86/rdmsr.9		comp-sys-man		.man
 ./usr/share/man/man9/x86/rdmsr_safe.9		comp-sys-man		.man
+./usr/share/man/man9/x86/rdtsc.9		comp-sys-man		.man
 ./usr/share/man/man9/x86/tsc.9			comp-sys-man		.man
 ./usr/share/man/man9/x86/tsc_sync_ap.9		comp-sys-man		.man
 ./usr/share/man/man9/x86/tsc_sync_bp.9		comp-sys-man		.man
