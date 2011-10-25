@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.254 2011/10/19 21:29:51 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.255 2011/10/25 22:26:18 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.254 2011/10/19 21:29:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.255 2011/10/25 22:26:18 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -297,6 +297,9 @@ int
 if_nullioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 
+	/* Wake ifioctl_detach(), who may wait for all threads to
+	 * quit the critical section.
+	 */
 	cv_signal(&ifp->if_ioctl_lock->il_emptied);
 	return ENXIO;
 }
@@ -504,7 +507,8 @@ if_attach(struct ifnet *ifp)
 	TAILQ_INIT(&ifp->if_addrlist);
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
 
-	ifioctl_attach(ifp);	/* XXX ifioctl_attach can fail! */ 
+	if (ifioctl_attach(ifp) != 0)
+		panic("%s: ifioctl_attach() failed", __func__);
 
 	mutex_enter(&index_gen_mtx);
 	ifp->if_index_gen = index_gen++;
@@ -1702,6 +1706,11 @@ ifnet_lock_enter(struct ifnet_lock *il)
 {
 	uint64_t *nenter;
 
+	/* Before trying to acquire the mutex, increase the count of threads
+	 * who have entered or who wait to enter the critical section.
+	 * Avoid one costly locked memory transaction by keeping a count for
+	 * each CPU.
+	 */
 	nenter = percpu_getref(il->il_nenter);
 	(*nenter)++;
 	percpu_putref(il->il_nenter);
@@ -1711,6 +1720,9 @@ ifnet_lock_enter(struct ifnet_lock *il)
 static void
 ifnet_lock_exit(struct ifnet_lock *il)
 {
+	/* Increase the count of threads who have exited the critical
+	 * section.  Increase while we still hold the lock.
+	 */
 	il->il_nexit++;
 	mutex_exit(&il->il_lock);
 }
@@ -1857,6 +1869,10 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	return error;
 }
 
+/* This callback adds to the sum in `arg' the number of
+ * threads on `ci' who have entered or who wait to enter the
+ * critical section.
+ */
 static void
 ifnet_lock_sum(void *p, void *arg, struct cpu_info *ci)
 {
@@ -1865,6 +1881,9 @@ ifnet_lock_sum(void *p, void *arg, struct cpu_info *ci)
 	*sum += *nenter;
 }
 
+/* Return the number of threads who have entered or who wait
+ * to enter the critical section on all CPUs.
+ */
 static uint64_t
 ifnet_lock_entrances(struct ifnet_lock *il)
 {
@@ -1880,9 +1899,13 @@ ifioctl_attach(struct ifnet *ifp)
 {
 	struct ifnet_lock *il;
 
+	/* If the driver has not supplied its own if_ioctl, then
+	 * supply the default.
+	 */
 	if (ifp->if_ioctl == NULL)
 		ifp->if_ioctl = ifioctl_common;
 
+	/* Create an ifnet_lock for synchronizing ifioctls. */
 	if ((il = kmem_zalloc(sizeof(*il), KM_SLEEP)) == NULL)
 		return ENOMEM;
 
@@ -1900,6 +1923,11 @@ ifioctl_attach(struct ifnet *ifp)
 	return 0;
 }
 
+/*
+ * This must not be called until after `ifp' has been withdrawn from the
+ * ifnet tables so that ifioctl() cannot get a handle on it by calling
+ * ifunit().
+ */
 static void
 ifioctl_detach(struct ifnet *ifp)
 {
@@ -1907,11 +1935,25 @@ ifioctl_detach(struct ifnet *ifp)
 
 	il = ifp->if_ioctl_lock;
 	mutex_enter(&il->il_lock);
+	/* Install if_nullioctl to make sure that any thread that
+	 * subsequently enters the critical section will quit it
+	 * immediately and signal the condition variable that we
+	 * wait on, below.
+	 */
 	ifp->if_ioctl = if_nullioctl;
+	/* Sleep while threads are still in the critical section or
+	 * wait to enter it.
+	 */
 	while (ifnet_lock_entrances(il) != il->il_nexit)
 		cv_wait(&il->il_emptied, &il->il_lock);
+	/* At this point, we are the only thread still in the critical
+	 * section, and no new thread can get a handle on the ifioctl
+	 * lock, so it is safe to free its memory.
+	 */
 	mutex_exit(&il->il_lock);
 	ifp->if_ioctl_lock = NULL;
+	percpu_free(il->il_nenter, sizeof(uint64_t));
+	il->il_nenter = NULL;
 	kmem_free(il, sizeof(*il));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.153 2011/10/19 21:29:51 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.154 2011/10/25 22:26:18 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -209,10 +209,22 @@ struct ifnet_lock;
 #include <sys/percpu.h>
 
 struct ifnet_lock {
-	kmutex_t il_lock;
-	uint64_t il_nexit;
-	percpu_t *il_nenter;
-	kcondvar_t il_emptied;
+	kmutex_t il_lock;	/* Protects the critical section. */
+	uint64_t il_nexit;	/* Counts threads across all CPUs who
+				 * have exited the critical section.
+				 * Access to il_nexit is synchronized
+				 * by il_lock.
+				 */
+	percpu_t *il_nenter;	/* Counts threads on each CPU who have
+				 * entered or who wait to enter the
+				 * critical section protected by il_lock.
+				 * Synchronization is not required.
+				 */
+	kcondvar_t il_emptied;	/* The ifnet_lock user must arrange for
+				 * the last threads in the critical
+				 * section to signal this condition variable
+				 * before they leave.
+				 */
 };
 #endif /* _KERNEL */
 
