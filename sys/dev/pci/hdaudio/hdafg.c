@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.9 2011/10/24 02:08:22 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.10 2011/10/25 00:00:13 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.9 2011/10/24 02:08:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.10 2011/10/25 00:00:13 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3840,6 +3840,34 @@ static int
 hdafg_halt_output(void *opaque)
 {
 	struct hdaudio_audiodev *ad = opaque;
+	struct hdafg_softc *sc = ad->ad_sc;
+	struct hdaudio_assoc *as = ad->ad_sc->sc_assocs;
+	struct hdaudio_widget *w;
+	uint16_t dfmt;
+	int i, j;
+
+	/* Disable digital outputs */
+	for (i = 0; i < sc->sc_nassocs; i++) {
+		if (as[i].as_enable == false)
+			continue;
+		if (as[i].as_dir != HDAUDIO_PINDIR_OUT)
+			continue;
+		for (j = 0; j < HDAUDIO_MAXPINS; j++) {
+			if (as[i].as_dacs[j] == 0)
+				continue;
+			w = hdafg_widget_lookup(sc, as[i].as_dacs[j]);
+			if (w == NULL || w->w_enable == false)
+				continue;
+			if (w->w_p.aw_cap & COP_AWCAP_DIGITAL) {
+				dfmt = hdaudio_command(sc->sc_codec, w->w_nid,
+				    CORB_GET_DIGITAL_CONVERTER_CONTROL, 0) &
+				    0xff;
+				dfmt &= ~COP_DIGITAL_CONVCTRL1_DIGEN;
+				hdaudio_command(sc->sc_codec, w->w_nid,
+				    CORB_SET_DIGITAL_CONVERTER_CONTROL_1, dfmt);
+			}
+		}
+	}
 
 	hdaudio_stream_stop(ad->ad_playback);
 
