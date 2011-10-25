@@ -1,4 +1,4 @@
-.\"	$NetBSD: glob.3,v 1.39 2010/11/30 21:03:07 jruoho Exp $
+.\"	$NetBSD: glob.3,v 1.40 2011/10/25 09:28:17 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Sh SYNOPSIS
 .In glob.h
 .Ft int
-.Fn glob "const char * restrict pattern" "int flags" "const int (*errfunc)(const char *, int)" "glob_t * restrict pglob"
+.Fn glob "const char * restrict pattern" "int flags" "int (*errfunc)(const char *, int)" "glob_t * restrict pglob"
 .Ft void
 .Fn globfree "glob_t *pglob"
 .Ft int
