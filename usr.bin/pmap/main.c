@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2011/10/18 20:54:56 jym Exp $ */
+/*	$NetBSD: main.c,v 1.23 2011/10/25 22:13:22 jym Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.22 2011/10/18 20:54:56 jym Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2011/10/25 22:13:22 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -118,6 +118,7 @@ main(int argc, char *argv[])
 {
 	kvm_t *kd;
 	pid_t pid;
+	uid_t uid;
 	int which, many, ch, rc;
 	char errbuf[_POSIX2_LINE_MAX + 1];
 	struct kinfo_proc2 *kproc;
@@ -308,31 +309,34 @@ main(int argc, char *argv[])
 			}
 		}
 
-		/*
-		 * Only print mappings for processes we can send a signal(7)
-		 * to, or kernel mappings if we are root
-		 */
-		if (kill(pid, 0) == -1 ||
-		   (pid == 0 && getuid() != 0)) {
-			errno = EPERM;
+		uid = getuid();
+
+		errno = 0;
+		/* find the process id */
+		if (pid == 0) {
+			kproc = NULL;
+			if (uid != 0) {
+				/* only root can print kernel mappings */
+				errno = EPERM;
+			}
+		} else {
+			kproc = kvm_getproc2(kd, KERN_PROC_PID, pid,
+				sizeof(struct kinfo_proc2), &rc);
+			if (kproc == NULL || rc == 0) {
+				errno = ESRCH;
+			} else if (uid != 0 && uid != kproc->p_uid) {
+				/*
+				 * only the real owner of the process and
+				 * root can print process mappings
+				 */
+				errno = EPERM;
+			}
+		}
+
+		if (errno != 0) {
 			warn("%d", pid);
 			pid = -1;
 			continue;
-
-		}
-
-		/* find the process id */
-		if (pid == 0)
-			kproc = NULL;
-		else {
-			kproc = kvm_getproc2(kd, KERN_PROC_PID, pid,
-					     sizeof(struct kinfo_proc2), &rc);
-			if (kproc == NULL || rc == 0) {
-				errno = ESRCH;
-				warn("%d", pid);
-				pid = -1;
-				continue;
-			}
 		}
 
 		/* dump it */
