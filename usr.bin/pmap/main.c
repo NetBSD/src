@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2011/10/25 22:13:22 jym Exp $ */
+/*	$NetBSD: main.c,v 1.24 2011/10/25 23:45:19 jym Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.23 2011/10/25 22:13:22 jym Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2011/10/25 23:45:19 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -289,6 +289,8 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
+	uid = getuid();
+
 	do {
 		if (pid == -1) {
 			if (argc == 0)
@@ -309,8 +311,6 @@ main(int argc, char *argv[])
 			}
 		}
 
-		uid = getuid();
-
 		errno = 0;
 		/* find the process id */
 		if (pid == 0) {
@@ -321,7 +321,7 @@ main(int argc, char *argv[])
 			}
 		} else {
 			kproc = kvm_getproc2(kd, KERN_PROC_PID, pid,
-				sizeof(struct kinfo_proc2), &rc);
+			    sizeof(struct kinfo_proc2), &rc);
 			if (kproc == NULL || rc == 0) {
 				errno = ESRCH;
 			} else if (uid != 0 && uid != kproc->p_uid) {
@@ -341,7 +341,7 @@ main(int argc, char *argv[])
 
 		/* dump it */
 		if (many) {
-			if (kproc)
+			if (kproc != NULL)
 				printf("process %d:\n", kproc->p_pid);
 			else
 				printf("kernel:\n");
