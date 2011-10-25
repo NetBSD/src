@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1696 2011/10/24 07:33:26 yamt Exp $
+#	$NetBSD: mi,v 1.1697 2011/10/25 05:03:55 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10857,11 +10857,14 @@
 ./usr/share/man/cat9/x86/nmi.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/nmi_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/nmi_establish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/x86/rdmsr.0		comp-sys-catman		.cat
+./usr/share/man/cat9/x86/rdmsr_safe.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/tsc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/tsc_sync_ap.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/tsc_sync_bp.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/tsc_sync_drift.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/tsc_tc_init.0		comp-sys-catman		.cat
+./usr/share/man/cat9/x86/wrmsr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/x86_msr_xcall.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/xc_broadcast.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/xc_unicast.0		comp-sys-catman		.cat
@@ -16902,11 +16905,14 @@
 ./usr/share/man/html9/x86/nmi.html		comp-sys-htmlman	html
 ./usr/share/man/html9/x86/nmi_disestablish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/x86/nmi_establish.html	comp-sys-htmlman	html
+./usr/share/man/html9/x86/rdmsr.html		comp-sys-htmlman	html
+./usr/share/man/html9/x86/rdmsr_safe.html	comp-sys-htmlman	html
 ./usr/share/man/html9/x86/tsc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/x86/tsc_sync_ap.html	comp-sys-htmlman	html
 ./usr/share/man/html9/x86/tsc_sync_bp.html	comp-sys-htmlman	html
 ./usr/share/man/html9/x86/tsc_sync_drift.html	comp-sys-htmlman	html
 ./usr/share/man/html9/x86/tsc_tc_init.html	comp-sys-htmlman	html
+./usr/share/man/html9/x86/wrmsr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/x86/x86_msr_xcall.html	comp-sys-htmlman	html
 ./usr/share/man/html9/xc_broadcast.html		comp-sys-htmlman	html
 ./usr/share/man/html9/xc_unicast.html		comp-sys-htmlman	html
@@ -23204,11 +23210,14 @@
 ./usr/share/man/man9/x86/nmi.9			comp-sys-man		.man
 ./usr/share/man/man9/x86/nmi_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/x86/nmi_establish.9	comp-sys-man		.man
+./usr/share/man/man9/x86/rdmsr.9		comp-sys-man		.man
+./usr/share/man/man9/x86/rdmsr_safe.9		comp-sys-man		.man
 ./usr/share/man/man9/x86/tsc.9			comp-sys-man		.man
 ./usr/share/man/man9/x86/tsc_sync_ap.9		comp-sys-man		.man
 ./usr/share/man/man9/x86/tsc_sync_bp.9		comp-sys-man		.man
 ./usr/share/man/man9/x86/tsc_sync_drift.9	comp-sys-man		.man
 ./usr/share/man/man9/x86/tsc_tc_init.9		comp-sys-man		.man
+./usr/share/man/man9/x86/wrmsr.9		comp-sys-man		.man
 ./usr/share/man/man9/x86/x86_msr_xcall.9	comp-sys-man		.man
 ./usr/share/man/man9/xc_broadcast.9		comp-sys-man		.man
 ./usr/share/man/man9/xc_unicast.9		comp-sys-man		.man
