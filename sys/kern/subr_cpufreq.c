@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpufreq.c,v 1.6 2011/10/25 11:35:49 jruoho Exp $ */
+/*	$NetBSD: subr_cpufreq.c,v 1.7 2011/10/25 18:26:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.6 2011/10/25 11:35:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.7 2011/10/25 18:26:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -156,7 +156,7 @@ static int
 cpufreq_latency(void)
 {
 	struct cpufreq *cf = cf_backend;
-	struct timeval nta, ntb;
+	struct timespec nta, ntb;
 	const uint32_t n = 10;
 	uint32_t i, j, l, m;
 	uint64_t s;
@@ -182,22 +182,20 @@ cpufreq_latency(void)
 				cpufreq_set_all_raw(m);
 			}
 
-			nta.tv_sec = nta.tv_usec = 0;
-			ntb.tv_sec = ntb.tv_usec = 0;
-
-			microtime(&nta);
+			nanotime(&nta);
 			cpufreq_set_all_raw(cf->cf_state[i].cfs_freq);
-			microtime(&ntb);
-			timersub(&ntb, &nta, &ntb);
+			nanotime(&ntb);
+			timespecsub(&ntb, &nta, &ntb);
 
 			if (ntb.tv_sec != 0 ||
-			    ntb.tv_usec > CPUFREQ_LATENCY_MAX)
+			    ntb.tv_nsec > CPUFREQ_LATENCY_MAX)
 				continue;
 
 			if (s >= UINT64_MAX - CPUFREQ_LATENCY_MAX)
 				break;
 
-			s += ntb.tv_usec;
+			/* Convert to microseconds to prevent overflow */
+			s += ntb.tv_nsec / 1000;
 		}
 
 		/*
