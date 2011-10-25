@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.51 2011/07/30 12:15:44 jmcneill Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.52 2011/10/25 16:12:02 aymeric Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.51 2011/07/30 12:15:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.52 2011/10/25 16:12:02 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,6 +267,26 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		if (data[0x56] == 0x19 && data[0x57] == 0x01 &&
 		    data[0x58] == 0x2a && data[0x59] == 0x8c)
 			data[0x57] = 0x00;
+	}
+
+	/*
+	 * Enable the Six Axis and DualShock 3 controllers.
+	 * See http://ps3.jim.sh/sixaxis/usb/
+	 */
+	if (uaa->vendor == USB_VENDOR_SONY &&
+	    uaa->product == USB_PRODUCT_SONY_PS3CONTROLLER) {
+		usb_device_request_t req;
+		char data[17];
+		int actlen;
+
+		req.bmRequestType = UT_READ_CLASS_INTERFACE;
+		req.bRequest = 1;
+		USETW(req.wValue, 0x3f2);
+		USETW(req.wIndex, 0);
+		USETW(req.wLength, sizeof data);
+
+		usbd_do_request_flags(sc->sc_udev, &req, data,
+			USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
 	}
 
 	sc->sc_repdesc = desc;
