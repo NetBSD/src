@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.h,v 1.4 2011/10/14 19:42:14 yamt Exp $	*/
+/*	$NetBSD: radixtree.h,v 1.5 2011/10/25 14:11:27 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -83,5 +83,6 @@ unsigned int radix_tree_gang_lookup_tagged_node(struct radix_tree *, uint64_t,
     void **, unsigned int, radix_tree_tagid_t);
 unsigned int radix_tree_gang_lookup_tagged_node_reverse(struct radix_tree *,
     uint64_t, void **, unsigned int, radix_tree_tagid_t);
+bool radix_tree_empty_tagged_tree_p(struct radix_tree *, radix_tree_tagid_t);
 
 #endif /* !defined(_SYS_RADIXTREE_H_) */
