@@ -1,4 +1,4 @@
-/*	$NetBSD: isns_pdu.c,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $	*/
+/*	$NetBSD: isns_pdu.c,v 1.2 2011/10/25 00:02:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isns_pdu.c,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $");
+__RCSID("$NetBSD: isns_pdu.c,v 1.2 2011/10/25 00:02:30 christos Exp $");
 
 
 #include <sys/types.h>
@@ -576,7 +576,7 @@ int
 isns_add_string(ISNS_TRANS trans, uint32_t tag, const char *s)
 {
 	/* Add string, including required NULL. */
-	return isns_add_tlv(trans, tag, (int)strlen(s)+1, s);
+	return isns_add_tlv(trans, tag, (uint32_t)strlen(s) + 1, s);
 }
 
 
@@ -584,7 +584,8 @@ isns_add_string(ISNS_TRANS trans, uint32_t tag, const char *s)
  * isns_add_tlv - adds a TLV to an existing transaction
  */
 int
-isns_add_tlv(ISNS_TRANS trans, uint32_t tag, int data_len, const void *data_p)
+isns_add_tlv(ISNS_TRANS trans, uint32_t tag, uint32_t data_len,
+    const void *data_p)
 {
 	struct isns_trans_s *trans_p;
 	uint8_t tlv_buf[ISNS_TLV_HDR_SIZE];
@@ -629,8 +630,8 @@ isns_add_tlv(ISNS_TRANS trans, uint32_t tag, int data_len, const void *data_p)
  *   ENOMEM - could not allocate storage for spanning TLV data
  */
 int
-isns_get_tlv(ISNS_TRANS trans, int which_tlv, uint32_t *tag_p, int *data_len_p,
-    void **data_pp)
+isns_get_tlv(ISNS_TRANS trans, int which_tlv, uint32_t *tag_p,
+    uint32_t *data_len_p, void **data_pp)
 {
 	struct isns_trans_s *trans_p;
 	struct isns_get_tlv_info_s *info_p;
