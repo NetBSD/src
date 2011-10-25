@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.15 2011/10/14 19:42:15 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.16 2011/10/25 14:11:27 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.15 2011/10/14 19:42:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.16 2011/10/25 14:11:27 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.15 2011/10/14 19:42:15 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.15 2011/10/14 19:42:15 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.16 2011/10/25 14:11:27 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -222,6 +222,14 @@ radix_tree_empty_tree_p(struct radix_tree *t)
 {
 
 	return t->t_root == NULL;
+}
+
+bool
+radix_tree_empty_tagged_tree_p(struct radix_tree *t, radix_tree_tagid_t tagid)
+{
+	const unsigned int tagmask = tagid_to_mask(tagid);
+
+	return (entry_tagmask(t->t_root) & tagmask) == 0;
 }
 
 static void
@@ -1012,8 +1020,12 @@ test1(void)
 	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 1000, results, 3,
 	    0) == 0);
 	assert(radix_tree_empty_tree_p(t));
+	assert(radix_tree_empty_tagged_tree_p(t, 0));
+	assert(radix_tree_empty_tagged_tree_p(t, 1));
 	assert(radix_tree_insert_node(t, 0, (void *)0xdeadbea0) == 0);
 	assert(!radix_tree_empty_tree_p(t));
+	assert(radix_tree_empty_tagged_tree_p(t, 0));
+	assert(radix_tree_empty_tagged_tree_p(t, 1));
 	assert(radix_tree_lookup_node(t, 0) == (void *)0xdeadbea0);
 	assert(radix_tree_lookup_node(t, 1000) == NULL);
 	memset(results, 0, sizeof(results));
@@ -1052,9 +1064,13 @@ test1(void)
 	    == 0);
 	assert(!radix_tree_get_tag(t, 1000, 0));
 	assert(!radix_tree_get_tag(t, 1000, 1));
+	assert(radix_tree_empty_tagged_tree_p(t, 0));
+	assert(radix_tree_empty_tagged_tree_p(t, 1));
 	radix_tree_set_tag(t, 1000, 1);
 	assert(!radix_tree_get_tag(t, 1000, 0));
 	assert(radix_tree_get_tag(t, 1000, 1));
+	assert(radix_tree_empty_tagged_tree_p(t, 0));
+	assert(!radix_tree_empty_tagged_tree_p(t, 1));
 	radix_tree_dump(t);
 	assert(radix_tree_lookup_node(t, 1000) == (void *)0xdeadbea0);
 	assert(radix_tree_insert_node(t, 0, (void *)0xbea0) == 0);
@@ -1403,6 +1419,9 @@ test2(const char *title, bool dense)
 	gettimeofday(&etv, NULL);
 	printops(title, "ganglookup+remove", 0, nnodes - removed, &stv, &etv);
 
+	assert(radix_tree_empty_tree_p(t));
+	assert(radix_tree_empty_tagged_tree_p(t, 0));
+	assert(radix_tree_empty_tagged_tree_p(t, 1));
 	radix_tree_fini_tree(t);
 	free(nodes);
 }
