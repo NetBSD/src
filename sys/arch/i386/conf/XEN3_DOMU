@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.36 2011/08/07 10:04:41 tron Exp $
+# $NetBSD: XEN3_DOMU,v 1.37 2011/10/25 15:01:46 jakllsch Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -44,6 +44,9 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks

@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.55 2011/08/18 20:55:20 jakllsch Exp $
+#	$NetBSD: XEN3_DOM0,v 1.56 2011/10/25 15:01:46 jakllsch Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -58,6 +58,9 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
