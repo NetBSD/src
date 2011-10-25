@@ -1,4 +1,4 @@
-/*	$NetBSD: isns.h,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $	*/
+/*	$NetBSD: isns.h,v 1.2 2011/10/25 00:02:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@ void isns_stop(ISNS_HANDLE);
 ISNS_TRANS isns_new_trans(ISNS_HANDLE, uint16_t, uint16_t);
 void isns_free_trans(ISNS_TRANS);
 int isns_send_trans(ISNS_TRANS, const struct timespec *, uint32_t *);
-int isns_add_tlv(ISNS_TRANS, uint32_t, int, const void *);
-int isns_get_tlv(ISNS_TRANS, int, uint32_t *, int *, void **);
+int isns_add_tlv(ISNS_TRANS, uint32_t, uint32_t, const void *);
+int isns_get_tlv(ISNS_TRANS, int, uint32_t *, uint32_t *, void **);
 
 int	isns_add_string(ISNS_TRANS, uint32_t, const char *);
 
