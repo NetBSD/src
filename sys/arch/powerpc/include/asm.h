@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.38 2011/06/08 05:11:07 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.39 2011/10/26 01:46:11 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,20 +38,20 @@
 
 /* ppc64 is always PIC, r2 is always the TOC */
 
-#define	PIC_PLT(x)	.x
+# define PIC_PLT(x)	.x
 
 #else
 
-#ifdef PIC
-#define PIC_PROLOGUE	XXX
-#define PIC_EPILOGUE	XXX
-#define PIC_PLT(x)	x+32768@plt
-#ifdef __STDC__
-#define	PIC_TOCNAME(name) 	.LCTOC_##name
-#else
-#define	PIC_TOCNAME(name) 	.LCTOC_/**/name
-#endif
-#define	PIC_TOCSETUP(name, reg)						\
+# ifdef PIC
+#  define PIC_PROLOGUE	XXX
+#  define PIC_EPILOGUE	XXX
+#  define PIC_PLT(x)	x+32768@plt
+#  ifdef __STDC__
+#   define PIC_TOCNAME(name) 	.LCTOC_##name
+#  else
+#   define PIC_TOCNAME(name) 	.LCTOC_/**/name
+#  endif /* __STDC __*/
+#  define PIC_TOCSETUP(name, reg)						\
 		.pushsection ".got2","aw"				;\
 	PIC_TOCNAME(name) = . + 32768					;\
 		.popsection						;\
@@ -59,29 +59,29 @@
 	1001:	mflr	reg						;\
 		addis	reg,reg,PIC_TOCNAME(name)-1001b@ha		;\
 		addi	reg,reg,PIC_TOCNAME(name)-1001b@l
-#define	PIC_GOTSETUP(reg)						\
+#  define PIC_GOTSETUP(reg)						\
 		bcl	20,31,2002f					;\
 	2002:	mflr	reg						;\
 		addis	reg,reg,_GLOBAL_OFFSET_TABLE_-2002b@ha		;\
 		addi	reg,reg,_GLOBAL_OFFSET_TABLE_-2002b@l
-#ifdef	__STDC__
-#define PIC_GOT(x)	XXX
-#define PIC_GOTOFF(x)	XXX
-#else	/* not __STDC__ */
-#define PIC_GOT(x)	XXX
-#define PIC_GOTOFF(x)	XXX
-#endif	/* __STDC__ */
-#else
-#define PIC_PROLOGUE
-#define PIC_EPILOGUE
-#define PIC_PLT(x)	x
-#define PIC_GOT(x)	x
-#define PIC_GOTOFF(x)	x
-#define	PIC_GOTSETUP(r)
-#define	PIC_TOCSETUP(n, r)
-#endif
+#  ifdef __STDC__
+#   define PIC_GOT(x)	XXX
+#   define PIC_GOTOFF(x)	XXX
+#  else	/* not __STDC__ */
+#   define PIC_GOT(x)	XXX
+#   define PIC_GOTOFF(x)	XXX
+#  endif /* __STDC__ */
+# else /* !PIC */
+#  define PIC_PROLOGUE
+#  define PIC_EPILOGUE
+#  define PIC_PLT(x)	x
+#  define PIC_GOT(x)	x
+#  define PIC_GOTOFF(x)	x
+#  define PIC_GOTSETUP(r)
+#  define PIC_TOCSETUP(n, r)
+# endif /* PIC */
 
-#endif
+#endif /* __LP64__ */
 
 #define	_C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
@@ -97,16 +97,16 @@
 
 #ifdef _LP64
 
-#define	SF_HEADER_SZ	48
-#define	SF_PARAM_SZ	64
-#define	SF_SZ		(SF_HEADER_SZ + SF_PARAM_SZ)
+# define SF_HEADER_SZ	48
+# define SF_PARAM_SZ	64
+# define SF_SZ		(SF_HEADER_SZ + SF_PARAM_SZ)
 
-#define	SF_SP		 0
-#define	SF_CR		 8
-#define	SF_LR		16
-#define	SF_PARAM	SF_HEADER_SZ
+# define SF_SP		 0
+# define SF_CR		 8
+# define SF_LR		16
+# define SF_PARAM	SF_HEADER_SZ
 
-#define	ENTRY(y)			\
+# define ENTRY(y)			\
 	.globl	y;			\
 	.section ".opd","aw";		\
 	.align	3;			\
@@ -118,27 +118,29 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	.align	3;			\
 .y:
 
-#define	CALL(y)				\
+# define END(y)
+
+# define CALL(y)			\
 	bl	.y;			\
 	nop
 
-#define	ENTRY_NOPROFILE(y)	ENTRY(y)
-#define	ASENTRY(y)		ENTRY(y)
-#else
+# define ENTRY_NOPROFILE(y)	ENTRY(y)
+# define ASENTRY(y)		ENTRY(y)
+#else /* !_LP64 */
 
-#define _ENTRY(x) \
+# define _ENTRY(x) \
 	.text; .align 2; .globl x; .type x,@function; x:
 
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
-#define	END(y)		.size _C_LABEL(y),.-_C_LABEL(y)
+# define ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
 
-#define	ENTRY_NOPROFILE(y) _ENTRY(_C_LABEL(y))
+# define END(y)		.size _C_LABEL(y),.-_C_LABEL(y)
 
-#define	CALL(y)				\
+# define CALL(y)			\
 	bl	y
 
-#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
-#endif
+# define ENTRY_NOPROFILE(y) _ENTRY(_C_LABEL(y))
+# define ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#endif /* __LP64__ */
 
 #define	GLOBAL(y)	_GLOBAL(_C_LABEL(y))
 
@@ -149,10 +151,10 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 #define	__RCSID(x)	.pushsection .ident; .asciz x; .popsection
 
 #ifdef __ELF__
-#define	WEAK_ALIAS(alias,sym)						\
+# define WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-#endif
+#endif /* __ELF__ */
 /*
  * STRONG_ALIAS: create a strong alias.
  */
@@ -161,12 +163,12 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	alias = sym
 
 #ifdef __STDC__
-#define	WARN_REFERENCES(sym,msg)					\
+# define WARN_REFERENCES(sym,msg)					\
 	.pushsection .gnu.warning. ## sym;				\
 	.ascii msg;							\
 	.popsection
 #else
-#define	WARN_REFERENCES(sym,msg)					\
+# define WARN_REFERENCES(sym,msg)					\
 	.pushsection .gnu.warning./**/sym;				\
 	.ascii msg;							\
 	.popsection
@@ -176,7 +178,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 /*
  * Get cpu_info pointer for current processor.  Always in SPRG0. *ALWAYS*
  */
-#define	GET_CPUINFO(r)		mfsprg r,0
+# define GET_CPUINFO(r)		mfsprg r,0
 /*
  * IN:
  *	R4[er] = first free byte beyond end/esym.
@@ -186,18 +188,18 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
  *	R4[er] = kernelend
  */
 
-#ifdef CI_INTSTK
-#define	INIT_CPUINFO_INTSTK(er,tmp1)					\
+# ifdef CI_INTSTK
+#  define INIT_CPUINFO_INTSTK(er,tmp1)					\
 	addi	er,er,INTSTK;						\
 	stptr	er,CI_INTSTK(tmp1)
-#else
-#define	INIT_CPUINFO_INTSTK(er,tmp1)	/* nothing */
-#endif
+# else
+#  define INIT_CPUINFO_INTSTK(er,tmp1)	/* nothing */
+# endif /* CI_INTSTK */
 
 /*
  * We use lis/ori instead of lis/addi in case tmp2 is r0.
  */
-#define	INIT_CPUINFO(er,sp,tmp1,tmp2) 					\
+# define INIT_CPUINFO(er,sp,tmp1,tmp2) 					\
 	li	tmp1,PAGE_MASK;						\
 	add	er,er,tmp1;						\
 	andc	er,er,tmp1;		/* page align */		\
@@ -223,166 +225,156 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	stptr	tmp2,-CALLFRAMELEN(er);	/* end of stack chain */	\
 	stptru	tmp2,-CALLFRAMELEN(sp)	/* end of stack chain */
 
-#endif
+#endif /* _KERNEL */
 
-/* Condition Register Bit Fields */
 
-#if defined(_REGNAMES)
-#if defined(_KERNEL) || defined(_STANDALONE)
-#define cr0     0
-#define cr1     1
-#define cr2     2
-#define cr3     3
-#define cr4     4
-#define cr5     5
-#define cr6     6
-#define cr7     7
-#endif
-
-/* General Purpose Registers (GPRs) */
-
-#if defined(_KERNEL) || defined(_STANDALONE)
-#define r0      0
-#define r1      1
-#define r2      2
-#define r3      3
-#define r4      4
-#define r5      5
-#define r6      6
-#define r7      7
-#define r8      8
-#define r9      9
-#define r10     10
-#define r11     11
-#define r12     12
-#define r13     13
-#define r14     14
-#define r15     15
-#define r16     16
-#define r17     17
-#define r18     18
-#define r19     19
-#define r20     20
-#define r21     21
-#define r22     22
-#define r23     23
-#define r24     24
-#define r25     25
-#define r26     26
-#define r27     27
-#define r28     28
-#define r29     29
-#define r30     30
-#define r31     31
-#endif
-
-/* Floating Point Registers (FPRs) */
-
-#if defined(_KERNEL) || defined(_STANDALONE)
-#define fr0     0
-#define fr1     1
-#define fr2     2
-#define fr3     3
-#define fr4     4
-#define fr5     5
-#define fr6     6
-#define fr7     7
-#define fr8     8
-#define fr9     9
-#define fr10    10
-#define fr11    11
-#define fr12    12
-#define fr13    13
-#define fr14    14
-#define fr15    15
-#define fr16    16
-#define fr17    17
-#define fr18    18
-#define fr19    19
-#define fr20    20
-#define fr21    21
-#define fr22    22
-#define fr23    23
-#define fr24    24
-#define fr25    25
-#define fr26    26
-#define fr27    27
-#define fr28    28
-#define fr29    29
-#define fr30    30
-#define fr31    31
-#endif
-#endif /* _REGNAMES */
+#if defined(_REGNAMES) && (defined(_KERNEL) || defined(_STANDALONE))
+  /* Condition Register Bit Fields */
+# define cr0	 0
+# define cr1	 1
+# define cr2	 2
+# define cr3	 3
+# define cr4	 4
+# define cr5	 5
+# define cr6	 6
+# define cr7	 7
+  /* General Purpose Registers (GPRs) */
+# define r0	 0
+# define r1	 1
+# define r2	 2
+# define r3	 3
+# define r4	 4
+# define r5	 5
+# define r6	 6
+# define r7	 7
+# define r8	 8
+# define r9	 9
+# define r10	10
+# define r11	11
+# define r12	12
+# define r13	13
+# define r14	14
+# define r15	15
+# define r16	16
+# define r17	17
+# define r18	18
+# define r19	19
+# define r20	20
+# define r21	21
+# define r22	22
+# define r23	23
+# define r24	24
+# define r25	25
+# define r26	26
+# define r27	27
+# define r28	28
+# define r29	29
+# define r30	30
+# define r31	31
+  /* Floating Point Registers (FPRs) */
+# define fr0	 0
+# define fr1	 1
+# define fr2	 2
+# define fr3	 3
+# define fr4	 4
+# define fr5	 5
+# define fr6	 6
+# define fr7	 7
+# define fr8	 8
+# define fr9	 9
+# define fr10	10
+# define fr11	11
+# define fr12	12
+# define fr13	13
+# define fr14	14
+# define fr15	15
+# define fr16	16
+# define fr17	17
+# define fr18	18
+# define fr19	19
+# define fr20	20
+# define fr21	21
+# define fr22	22
+# define fr23	23
+# define fr24	24
+# define fr25	25
+# define fr26	26
+# define fr27	27
+# define fr28	28
+# define fr29	29
+# define fr30	30
+# define fr31	31
+#endif /* _REGNAMES && (_KERNEL || _STANDALONE) */
 
 /*
  * Add some psuedo instructions to made sharing of assembly versions of
  * ILP32 and LP64 code possible.
  */
-#define ldint	lwz		/* not needed but for completeness */
-#define ldintu	lwzu		/* not needed but for completeness */
-#define stint	stw		/* not needed but for completeness */
-#define stintu	stwu		/* not needed but for completeness */
+#define ldint		lwz	/* not needed but for completeness */
+#define ldintu		lwzu	/* not needed but for completeness */
+#define stint		stw	/* not needed but for completeness */
+#define stintu		stwu	/* not needed but for completeness */
 
 #ifndef _LP64
 
-#define ldlong	lwz		/* load "C" long */
-#define ldlongu	lwzu		/* load "C" long with udpate */
-#define stlong	stw		/* load "C" long */
-#define stlongu	stwu		/* load "C" long with udpate */
-#define ldptr	lwz		/* load "C" pointer */
-#define ldptru	lwzu		/* load "C" pointer with udpate */
-#define stptr	stw		/* load "C" pointer */
-#define stptru	stwu		/* load "C" pointer with udpate */
-#define	ldreg	lwz		/* load PPC general register */
-#define	ldregu	lwzu		/* load PPC general register with udpate */
-#define	streg	stw		/* load PPC general register */
-#define	stregu	stwu		/* load PPC general register with udpate */
-#define	SZREG	4		/* 4 byte registers */
+# define ldlong		lwz	/* load "C" long */
+# define ldlongu	lwzu	/* load "C" long with udpate */
+# define stlong		stw	/* load "C" long */
+# define stlongu	stwu	/* load "C" long with udpate */
+# define ldptr		lwz	/* load "C" pointer */
+# define ldptru		lwzu	/* load "C" pointer with udpate */
+# define stptr		stw	/* load "C" pointer */
+# define stptru		stwu	/* load "C" pointer with udpate */
+# define ldreg		lwz	/* load PPC general register */
+# define ldregu		lwzu	/* load PPC general register with udpate */
+# define streg		stw	/* load PPC general register */
+# define stregu		stwu	/* load PPC general register with udpate */
+# define SZREG		4	/* 4 byte registers */
 
-#define	lptrarx	lwarx		/* load "C" pointer with reservation */
-#define	llongarx lwarx		/* load "C" long with reservation */
-#define	lregarx	lwarx		/* load PPC general register with reservation */
+# define lptrarx	lwarx	/* load "C" pointer with reservation */
+# define llongarx	lwarx	/* load "C" long with reservation */
+# define lregarx	lwarx	/* load PPC general register with reservation */
 
-#define	stptrcx  stwcx		/* store "C" pointer conditional */
-#define	stlongcx stwcx		/* store "C" long conditional */
-#define	stregcx  stwcx		/* store PPC general register conditional */
+# define stptrcx	stwcx	/* store "C" pointer conditional */
+# define stlongcx	stwcx	/* store "C" long conditional */
+# define stregcx	stwcx	/* store PPC general register conditional */
 
-#define	clrrptri  clrrwi	/* clear right "C" pointer immediate */
-#define	clrrlongi clrrwi	/* clear right "C" long immediate */
-#define	clrrregi  clrrwi	/* clear right PPC general register immediate */
+# define clrrptri	clrrwi	/* clear right "C" pointer immediate */
+# define clrrlongi	clrrwi	/* clear right "C" long immediate */
+# define clrrregi	clrrwi	/* clear right PPC general register immediate */
 
-#else
+#else /* __LP64__ */
 
-#define ldlong	ld		/* load "C" long */
-#define ldlongu	ldu		/* load "C" long with update */
-#define stlong	std		/* store "C" long */
-#define stlongu	stdu		/* store "C" long with update */
-#define ldptr	ld		/* load "C" pointer */
-#define ldptru	ldu		/* load "C" pointer with update */
-#define stptr	std		/* store "C" pointer */
-#define stptru	stdu		/* store "C" pointer with update */
-#define	ldreg	ld		/* load PPC general register */
-#define	ldregu	ldu		/* load PPC general register with update */
-#define	streg	std		/* store PPC general register */
-#define	stregu	stdu		/* store PPC general register with update */
+# define ldlong		ld	/* load "C" long */
+# define ldlongu	ldu	/* load "C" long with update */
+# define stlong		std	/* store "C" long */
+# define stlongu	stdu	/* store "C" long with update */
+# define ldptr		ld	/* load "C" pointer */
+# define ldptru		ldu	/* load "C" pointer with update */
+# define stptr		std	/* store "C" pointer */
+# define stptru		stdu	/* store "C" pointer with update */
+# define ldreg		ld	/* load PPC general register */
+# define ldregu		ldu	/* load PPC general register with update */
+# define streg		std	/* store PPC general register */
+# define stregu		stdu	/* store PPC general register with update */
 /* redefined this to force an error on PPC64 to catch their use.  */
-#define	lmw	lmd		/* load multiple PPC general registers */
-#define	stmw	stmd		/* store multiple PPC general registers */
-#define	SZREG	8		/* 8 byte registers */
+# define lmw		lmd	/* load multiple PPC general registers */
+# define stmw		stmd	/* store multiple PPC general registers */
+# define SZREG		8	/* 8 byte registers */
 
-#define	lptrarx	ldarx		/* load "C" pointer with reservation */
-#define	llongarx ldarx		/* load "C" long with reservation */
-#define	lregarx	ldarx		/* load PPC general register with reservation */
+# define lptrarx	ldarx	/* load "C" pointer with reservation */
+# define llongarx	ldarx	/* load "C" long with reservation */
+# define lregarx	ldarx	/* load PPC general register with reservation */
 
-#define	stptrcx  stdcx		/* store "C" pointer conditional */
-#define	stlongcx stdcx		/* store "C" long conditional */
-#define	stregax  stdcx		/* store PPC general register conditional */
+# define stptrcx	stdcx	/* store "C" pointer conditional */
+# define stlongcx	stdcx	/* store "C" long conditional */
+# define stregax	stdcx	/* store PPC general register conditional */
 
-#define	clrrptri  clrrdi	/* clear right "C" pointer immediate */
-#define	clrrlongi clrrdi	/* clear right "C" long immediate */
-#define	clrrregi  clrrdi	/* clear right PPC general register immediate */
+# define clrrptri	clrrdi	/* clear right "C" pointer immediate */
+# define clrrlongi	clrrdi	/* clear right "C" long immediate */
+# define clrrregi	clrrdi	/* clear right PPC general register immediate */
 
-#endif
+#endif /* __LP64__ */
 
 #ifdef _LOCORE
 .macro	stmd	r,dst
@@ -400,6 +392,6 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	i = i + 1
     .endr
 .endm
-#endif
+#endif /* _LOCORE */
 
 #endif /* !_PPC_ASM_H_ */
