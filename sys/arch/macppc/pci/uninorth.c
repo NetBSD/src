@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.15 2011/06/30 00:52:58 matt Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.16 2011/10/26 04:56:23 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.15 2011/06/30 00:52:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.16 2011/10/26 04:56:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.15 2011/06/30 00:52:58 matt Exp $");
 #include <machine/pio.h>
 
 struct uninorth_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct genppc_pci_chipset sc_pc;
 	struct powerpc_bus_space sc_iot;
 	struct powerpc_bus_space sc_memt;
@@ -53,7 +53,7 @@ static int uninorth_match(device_t, cfdata_t, void *);
 static pcireg_t uninorth_conf_read(void *, pcitag_t, int);
 static void uninorth_conf_write(void *, pcitag_t, int, pcireg_t);
 
-CFATTACH_DECL(uninorth, sizeof(struct uninorth_softc),
+CFATTACH_DECL_NEW(uninorth, sizeof(struct uninorth_softc),
     uninorth_match, uninorth_attach, NULL, NULL);
 
 static int
@@ -89,6 +89,7 @@ uninorth_attach(device_t parent, device_t self, void *aux)
 	} ranges[6], *rp = ranges;
 
 	printf("\n");
+	sc->sc_dev = self;
 
 	/* UniNorth address */
 	if (OF_getprop(node, "reg", reg, sizeof(reg)) < 8)

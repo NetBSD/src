@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.29 2011/06/30 00:52:58 matt Exp $	*/
+/*	$NetBSD: bandit.c,v 1.30 2011/10/26 04:56:23 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.29 2011/06/30 00:52:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.30 2011/10/26 04:56:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.29 2011/06/30 00:52:58 matt Exp $");
 #include <machine/pio.h>
 
 struct bandit_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct genppc_pci_chipset sc_pc;
 	struct powerpc_bus_space sc_iot;
 	struct powerpc_bus_space sc_memt;
@@ -56,7 +56,7 @@ static void bandit_conf_write(void *, pcitag_t, int, pcireg_t);
 
 static void bandit_init(struct bandit_softc *);
 
-CFATTACH_DECL(bandit, sizeof(struct bandit_softc),
+CFATTACH_DECL_NEW(bandit, sizeof(struct bandit_softc),
     bandit_match, bandit_attach, NULL, NULL);
 
 static int
@@ -87,6 +87,7 @@ bandit_attach(device_t parent, device_t self, void *aux)
 	} ranges[6], *rp = ranges;
 
 	aprint_normal("\n");
+	sc->sc_dev = self;
 
 	/* Bandit address */
 	if (OF_getprop(node, "reg", reg, sizeof(reg)) < 8)
