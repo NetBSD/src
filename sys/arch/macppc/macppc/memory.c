@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.c,v 1.4 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: memory.c,v 1.5 2011/10/26 13:54:18 macallan Exp $	*/
 /*	$OpenBSD: mem.c,v 1.15 2007/10/14 17:29:04 kettenis Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.4 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.5 2011/10/26 13:54:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.4 2011/06/18 08:08:28 matt Exp $");
 #include <dev/ofw/openfirm.h>
 
 struct memory_softc {
-	struct device	 sc_dev;
+	device_t	 sc_dev;
 
 	u_char		*sc_buf;
 	int		 sc_len;
@@ -72,7 +72,7 @@ struct memory_softc {
 int	memory_match(device_t, cfdata_t, void *);
 void	memory_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(memory, sizeof(struct memory_softc), memory_match, memory_attach,
+CFATTACH_DECL_NEW(memory, sizeof(struct memory_softc), memory_match, memory_attach,
               NULL, NULL);
 
 int	memory_i2c_acquire_bus(void *, int);
@@ -98,6 +98,7 @@ memory_attach(device_t parent, device_t self, void *aux)
 	struct i2c_controller ic;
 	struct i2c_attach_args ia;
 
+	sc->sc_dev = self;
 	sc->sc_len = OF_getproplen(ca->ca_node, "dimm-info");
 	if (sc->sc_len > 0) {
 		sc->sc_buf = malloc(sc->sc_len, M_DEVBUF, M_NOWAIT);
