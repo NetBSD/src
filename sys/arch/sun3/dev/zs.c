@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.85 2010/06/26 01:48:57 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.86 2011/10/26 00:56:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.85 2010/06/26 01:48:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.86 2011/10/26 00:56:59 mrg Exp $");
 
 #include "opt_kgdb.h"
 
@@ -259,7 +259,7 @@ zs_attach(device_t parent, device_t self, void *aux)
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
-	int s, zs_unit, channel;
+	int zs_unit, channel;
 
 	zsc->zsc_dev = self;
 	zs_unit = device_unit(self);
@@ -323,9 +323,9 @@ zs_attach(device_t parent, device_t self, void *aux)
 			/* No sub-driver.  Just reset it. */
 			uint8_t reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
-			s = splhigh();
+			zs_lock_chan(cs);
 			zs_write_reg(cs,  9, reset);
-			splx(s);
+			zs_unlock_chan(cs);
 		}
 	}
 
@@ -342,12 +342,12 @@ zs_attach(device_t parent, device_t self, void *aux)
 	 * (common to both channels, do it on A)
 	 */
 	cs = zsc->zsc_cs[0];
-	s = splhigh();
+	zs_lock_chan(cs);
 	/* interrupt vector */
 	zs_write_reg(cs, 2, zs_init_reg[2]);
 	/* master interrupt control (enable) */
 	zs_write_reg(cs, 9, zs_init_reg[9]);
-	splx(s);
+	zs_unlock_chan(cs);
 
 	/*
 	 * XXX: L1A hack - We would like to be able to break into
@@ -442,7 +442,6 @@ zs_set_speed(struct zs_chanstate *cs, int bps)
 int 
 zs_set_modes(struct zs_chanstate *cs, int cflag	/* bits per second */)
 {
-	int s;
 
 	/*
 	 * Output hardware flow control on the chip is horrendous:
@@ -451,7 +450,7 @@ zs_set_modes(struct zs_chanstate *cs, int cflag	/* bits per second */)
 	 * Therefore, NEVER set the HFC bit, and instead use the
 	 * status interrupt to detect CTS changes.
 	 */
-	s = splzs();
+	zs_lock_chan(cs);
 	cs->cs_rr0_pps = 0;
 	if ((cflag & (CLOCAL | MDMBUF)) != 0) {
 		cs->cs_rr0_dcd = 0;
@@ -472,7 +471,7 @@ zs_set_modes(struct zs_chanstate *cs, int cflag	/* bits per second */)
 		cs->cs_wr5_rts = 0;
 		cs->cs_rr0_cts = 0;
 	}
-	splx(s);
+	zs_unlock_chan(cs);
 
 	/* Caller will stuff the pending registers. */
 	return (0);
