@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.144 2011/10/12 20:57:55 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.145 2011/10/26 09:02:20 apb Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1203,7 +1203,7 @@ tty[0-9]|tty0[0-9])
 	lndev dtyZ$unit dty0${unit}
 	;;
 
-tty0*|tty1*|tty[0-9])
+tty[0-9]*)
 	unit=${i#tty}
 	ounit=00$unit
 	ounit=${ounit#${ounit%??}}
