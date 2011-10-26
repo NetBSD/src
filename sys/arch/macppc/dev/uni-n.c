@@ -1,4 +1,4 @@
-/*	$NetBSD: uni-n.c,v 1.5 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: uni-n.c,v 1.6 2011/10/26 13:54:18 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.5 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.6 2011/10/26 13:54:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,11 +47,11 @@ static int uni_n_match(device_t, cfdata_t, void *);
 static int uni_n_print(void *, const char *);
 
 struct uni_n_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	int sc_node;
 };
 
-CFATTACH_DECL(uni_n, sizeof(struct uni_n_softc),
+CFATTACH_DECL_NEW(uni_n, sizeof(struct uni_n_softc),
     uni_n_match, uni_n_attach, NULL, NULL);
 
 int
@@ -84,6 +84,7 @@ uni_n_attach(device_t parent, device_t self, void *aux)
 	int intr[6];
 	char name[32];
 
+	sc->sc_dev = self;
 	node = OF_finddevice("/uni-n");
 	sc->sc_node = node;
 	printf(" address 0x%08x\n",our_ca->ca_reg[0]);
