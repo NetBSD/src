@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.169 2011/07/27 14:35:34 uebayasi Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.170 2011/10/27 16:12:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.169 2011/07/27 14:35:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.170 2011/10/27 16:12:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -99,6 +99,7 @@ struct pool ptimer_pool, ptimers_pool;
 CTASSERT(ITIMER_REAL == CLOCK_REALTIME);
 CTASSERT(ITIMER_VIRTUAL == CLOCK_VIRTUAL);
 CTASSERT(ITIMER_PROF == CLOCK_PROF);
+CTASSERT(ITIMER_MONOTONIC == CLOCK_MONOTONIC);
 
 /*
  * Initialize timekeeping.
@@ -500,9 +501,9 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
  * All timers are kept in an array pointed to by p_timers, which is
  * allocated on demand - many processes don't use timers at all. The
  * first three elements in this array are reserved for the BSD timers:
- * element 0 is ITIMER_REAL, element 1 is ITIMER_VIRTUAL, and element
- * 2 is ITIMER_PROF. The rest may be allocated by the timer_create()
- * syscall.
+ * element 0 is ITIMER_REAL, element 1 is ITIMER_VIRTUAL, element
+ * 2 is ITIMER_PROF, and element 3 is ITIMER_MONOTONIC. The rest may be
+ * allocated by the timer_create() syscall.
  *
  * Realtime timers are kept in the ptimer structure as an absolute
  * time; virtual time timers are kept as a linked list of deltas.
@@ -543,8 +544,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 
 	p = l->l_proc;
 
-	if (id != CLOCK_REALTIME && id != CLOCK_VIRTUAL &&
-	    id != CLOCK_PROF && id != CLOCK_MONOTONIC)
+	if ((u_int)id > CLOCK_MONOTONIC)
 		return (EINVAL);
 
 	if ((pts = p->p_timers) == NULL)
@@ -1063,7 +1063,7 @@ dogetitimer(struct proc *p, int which, struct itimerval *itvp)
 	struct ptimer *pt;
 	struct itimerspec its;
 
-	if ((u_int)which > ITIMER_PROF)
+	if ((u_int)which > ITIMER_MONOTONIC)
 		return (EINVAL);
 
 	mutex_spin_enter(&timer_lock);
@@ -1099,7 +1099,7 @@ sys___setitimer50(struct lwp *l, const struct sys___setitimer50_args *uap,
 	struct itimerval aitv;
 	int error;
 
-	if ((u_int)which > ITIMER_PROF)
+	if ((u_int)which > ITIMER_MONOTONIC)
 		return (EINVAL);
 	itvp = SCARG(uap, itv);
 	if (itvp &&
@@ -1124,8 +1124,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 	struct ptimers *pts;
 	struct ptimer *pt, *spare;
 
-	KASSERT(which == CLOCK_REALTIME || which == CLOCK_VIRTUAL ||
-	    which == CLOCK_PROF);
+	KASSERT((u_int)which <= CLOCK_MONOTONIC);
 	if (itimerfix(&itvp->it_value) || itimerfix(&itvp->it_interval))
 		return (EINVAL);
 
@@ -1165,6 +1164,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 
 		switch (which) {
 		case ITIMER_REAL:
+		case ITIMER_MONOTONIC:
 			pt->pt_ev.sigev_signo = SIGALRM;
 			break;
 		case ITIMER_VIRTUAL:
@@ -1180,11 +1180,23 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 	TIMEVAL_TO_TIMESPEC(&itvp->it_value, &pt->pt_time.it_value);
 	TIMEVAL_TO_TIMESPEC(&itvp->it_interval, &pt->pt_time.it_interval);
 
-	if ((which == ITIMER_REAL) && timespecisset(&pt->pt_time.it_value)) {
+	if (timespecisset(&pt->pt_time.it_value)) {
 		/* Convert to absolute time */
 		/* XXX need to wrap in splclock for timecounters case? */
-		getnanotime(&now);
-		timespecadd(&pt->pt_time.it_value, &now, &pt->pt_time.it_value);
+		switch (which) {
+		case ITIMER_REAL:
+			getnanotime(&now);
+			timespecadd(&pt->pt_time.it_value, &now,
+			    &pt->pt_time.it_value);
+			break;
+		case ITIMER_MONOTONIC:
+			getnanouptime(&now);
+			timespecadd(&pt->pt_time.it_value, &now,
+			    &pt->pt_time.it_value);
+			break;
+		default:
+			break;
+		}
 	}
 	timer_settime(pt);
 	mutex_spin_exit(&timer_lock);
