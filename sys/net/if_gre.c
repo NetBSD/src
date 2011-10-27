@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.146 2011/10/19 21:59:38 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.147 2011/10/27 20:04:57 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.146 2011/10/19 21:59:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.147 2011/10/27 20:04:57 dyoung Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -993,6 +993,10 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 
+	/* Clear checksum-offload flags. */
+	m->m_pkthdr.csum_flags = 0;
+	m->m_pkthdr.csum_data = 0;
+
 	/* send it off */
 	if ((error = gre_bufq_enqueue(&sc->sc_snd, m)) != 0) {
 		sc->sc_oflow_ev.ev_count++;
@@ -1265,8 +1269,6 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		gre_clearconf(sp, false);
 		ifp->if_flags |= IFF_UP;
 		goto mksocket;
-	case SIOCSIFDSTADDR:
-		break;
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
