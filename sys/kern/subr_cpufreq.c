@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpufreq.c,v 1.7 2011/10/25 18:26:09 christos Exp $ */
+/*	$NetBSD: subr_cpufreq.c,v 1.8 2011/10/27 05:25:07 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.7 2011/10/25 18:26:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.8 2011/10/27 05:25:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/cpufreq.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/time.h>
@@ -62,8 +63,11 @@ cpufreq_init(void)
 int
 cpufreq_register(struct cpufreq *cf)
 {
-	uint32_t c, i, j, k;
+	uint32_t c, i, j, k, m;
 	int rv;
+
+	if (cold != 0)
+		return EBUSY;
 
 	KASSERT(cf != NULL);
 	KASSERT(cf_backend != NULL);
@@ -138,6 +142,8 @@ cpufreq_register(struct cpufreq *cf)
 		return rv;
 	}
 
+	m = cpufreq_get_max();
+	cpufreq_set_all_raw(m);
 	mutex_exit(&cpufreq_lock);
 
 	return 0;

@@ -1,4 +1,4 @@
-.\" $NetBSD: cpufreq.9,v 1.5 2011/10/20 06:48:24 jruoho Exp $ */
+.\" $NetBSD: cpufreq.9,v 1.6 2011/10/27 05:25:08 jruoho Exp $ */
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen.iki.fi>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 20, 2011
+.Dd October 27, 2011
 .Dt CPUFREQ 9
 .Os
 .Sh NAME
@@ -115,7 +115,11 @@ a machine-dependent backend with the framework.
 Only one backend can be registered.
 Upon successful completion,
 .Fn cpufreq_register
-returns 0.
+returns 0 and sets the frequency of all processors
+to the maximum available level.
+Note that the registration can be done
+only after interrupts have been enabled; cf.
+.Xr config_interrupts 9 .
 .Pp
 The following elements in
 .Vt struct cpufreq

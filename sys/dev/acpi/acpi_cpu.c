@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.46 2011/10/20 06:57:23 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.47 2011/10/27 05:25:07 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.46 2011/10/20 06:57:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.47 2011/10/27 05:25:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -327,12 +327,6 @@ acpicpu_start(device_t self)
 
 		if (cpufreq_register(&cf) != 0)
 			aprint_error_dev(self, "failed to register cpufreq\n");
-		else {
-			/*
-			 * Initialize the states to P0.
-			 */
-			cpufreq_set_all(sc->sc_pstate[0].ps_freq);
-		}
 	}
 }
 
