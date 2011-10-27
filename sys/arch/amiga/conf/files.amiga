@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.148 2011/09/19 19:15:29 rkujawa Exp $
+#	$NetBSD: files.amiga,v 1.149 2011/10/27 22:12:23 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -469,6 +469,11 @@ file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
 # Buddha wdc
 attach	wdc at zbus with wdc_buddha
 file	arch/amiga/dev/wdc_buddha.c	wdc_buddha
+
+# FastATA 
+device  efa: ata,wdc_common
+attach  efa at mainbus
+file    arch/amiga/dev/efa.c		efa
 
 # Compatibility modules
 
