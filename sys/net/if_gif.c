@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.78 2010/04/05 07:22:23 joerg Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.79 2011/10/27 20:04:57 dyoung Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.78 2010/04/05 07:22:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.79 2011/10/27 20:04:57 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -312,6 +312,10 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 	*mtod(m, int *) = dst->sa_family;
 
+	/* Clear checksum-offload flags. */
+	m->m_pkthdr.csum_flags = 0;
+	m->m_pkthdr.csum_data = 0;
+
 	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
 	if (error) {
@@ -491,9 +495,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
-		break;
-
-	case SIOCSIFDSTADDR:
 		break;
 
 	case SIOCADDMULTI:
