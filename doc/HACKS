@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.116 2011/08/15 02:29:38 mrg Exp $
+# $NetBSD: HACKS,v 1.117 2011/10/27 17:21:27 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -663,4 +663,18 @@ port	powerpc
 	file	src/gnu/dist/gcc4/gcc/config/rs6000/netbsd.h
 	descr
 		see above
+	kcah
+
+port	powerpc64
+
+	hack	include _errno.c in libposix so that __errno resolves. It
+		should resolve from libc's errno, but somehow it does not.
+		Linker bug?
+	cdate	Thu Oct 27 13:19:47 EDT 2011
+	who	christos
+	file	src/lib/libposix/Makefile: 1.15
+	descr
+		workaround for:
+		    libposix_pic.a(cerror.pico)(.text+0x14): unresolvable \
+		    R_PPC64_REL24 relocation against symbol `.__errno'
 	kcah
