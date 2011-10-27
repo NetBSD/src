@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.64 2009/03/27 11:06:26 drochner Exp $	*/
+/*	$NetBSD: time.h,v 1.65 2011/10/27 16:12:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -227,10 +227,12 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 /*
  * Names of the interval timers, and structure
  * defining a timer setting.
+ * NB: Must match the CLOCK_ constants below.
  */
-#define	ITIMER_REAL	0
-#define	ITIMER_VIRTUAL	1
-#define	ITIMER_PROF	2
+#define	ITIMER_REAL		0
+#define	ITIMER_VIRTUAL		1
+#define	ITIMER_PROF		2
+#define	ITIMER_MONOTONIC	3
 
 struct	itimerval {
 	struct	timeval it_interval;	/* timer interval */
