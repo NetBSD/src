@@ -1,4 +1,4 @@
-.\"	$NetBSD: getitimer.2,v 1.27 2011/10/03 15:49:02 njoly Exp $
+.\"	$NetBSD: getitimer.2,v 1.28 2011/10/27 16:10:37 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getitimer.2	8.3 (Berkeley) 5/16/95
 .\"
-.Dd October 3, 2011
+.Dd October 27, 2011
 .Dt GETITIMER 2
 .Os
 .Sh NAME
@@ -93,9 +93,13 @@ is non-zero).
 The
 .Fa which
 parameter specifies the type of the timer:
-.Bl -tag -width "ITIMER_VIRTUAL " -offset indent
+.Bl -tag -width "ITIMER_MONOTONIC " -offset indent
 .It Dv ITIMER_REAL
 timer decrements in real time.
+This timer is affected by
+.Xr adjtime 2
+and
+.Xr settimeofday 2 .
 A
 .Dv SIGALRM
 signal is
@@ -121,6 +125,16 @@ delivered.
 Because this signal may interrupt in-progress
 system calls, programs using this timer must be prepared to
 restart interrupted system calls.
+.It Dv ITIMER_MONOTONIC
+timer decrements in monotonic time.
+This timer is not affected by
+.Xr adjtime 2
+and
+.Xr settimeofday 2 .
+A
+.Dv SIGALRM
+signal is
+delivered when this timer expires.
 .El
 Note that:
 .Bl -bullet -offset indent
@@ -179,3 +193,7 @@ The
 .Fn getitimer
 function call appeared in
 .Bx 4.2 .
+The
+.Dv ITIMER_MONOTONIC
+functionality appeared in
+.Nx 6.0 .
