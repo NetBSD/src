@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.48 2011/09/17 17:06:47 rkujawa Exp $
+.\"	$NetBSD: hardware,v 1.49 2011/10/27 22:30:11 rkujawa Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -35,7 +35,12 @@ place your swap partition onto a old small (and normally slow) disk!
 .
 .Ss2 Supported devices
 .(bullet -offset indent
+IDE controllers
+.(bullet -compact
 A4000/A1200 IDE controller, including ATAPI devices
+.It
+ELBOX FastATA 1200 Mk-III/Mk-IV
+.bullet)
 .It
 SCSI host adapters
 .(bullet -compact
