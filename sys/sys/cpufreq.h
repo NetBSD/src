@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufreq.h,v 1.4 2011/10/25 11:35:49 jruoho Exp $ */
+/*	$NetBSD: cpufreq.h,v 1.5 2011/10/27 05:13:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #define CPUFREQ_NAME_MAX	 16
 #define CPUFREQ_STATE_MAX	 32
-#define CPUFREQ_LATENCY_MAX	 UINT16_MAX
+#define CPUFREQ_LATENCY_MAX	 UINT32_MAX
 
 #define CPUFREQ_STATE_ENABLED	 UINT32_MAX
 #define CPUFREQ_STATE_DISABLED	 UINT32_MAX - 1
