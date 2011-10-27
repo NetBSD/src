@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1618 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1619 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1149,3 +1149,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	sparc64: Switch to GDB 7.3.1.  [mrg 20111024]
 	arm: Switch to GDB 7.3.1.  [mrg 20111024]
 	powerpc: Switch to GDB 7.3.1.  [mrg 20111024]
+	efa(4): Add driver for ELBOX FastATA 1200. [rkujawa 20111028]
