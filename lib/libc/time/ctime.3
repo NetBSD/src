@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.43 2011/10/16 17:59:32 christos Exp $
+.\" $NetBSD: ctime.3,v 1.44 2011/10/27 14:47:59 christos Exp $
 .\"
-.\" XXX: Lincense missing?
+.\" XXX: License missing?
 .\"
-.Dd October 16, 2011
+.Dd October 27, 2011
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -401,9 +401,12 @@ is absent, UTC leap seconds are loaded from
 The described functions may fail with
 .Bl -tag -width Er
 .It Bq Er EINVAL
-The result cannot be represented.
+The result cannot be represented because a parameter is incorrect, or
+the conversion failed because no such time exists (for example a time
+in the DST gap).
 .It Bq Er EOVERFLOW
-The result cannot be represented.
+The result cannot be represented because the time requested is out of bounds
+and the time calculation resulted in overflow.
 .El
 .Pp
 All functions that return values, except their

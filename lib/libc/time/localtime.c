@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.59 2011/10/16 17:59:32 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.60 2011/10/27 14:48:00 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.59 2011/10/16 17:59:32 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.60 2011/10/27 14:48:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1801,25 +1801,25 @@ time2sub(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 	yourtm = *tmp;
 	if (do_norm_secs) {
 		if (normalize_overflow(&yourtm.tm_min, &yourtm.tm_sec,
-			SECSPERMIN))
-				return WRONG;
+		    SECSPERMIN))
+			goto overflow;
 	}
 	if (normalize_overflow(&yourtm.tm_hour, &yourtm.tm_min, MINSPERHOUR))
-		return WRONG;
+		goto overflow;
 	if (normalize_overflow(&yourtm.tm_mday, &yourtm.tm_hour, HOURSPERDAY))
-		return WRONG;
+		goto overflow;
 	y = yourtm.tm_year;
 	if (long_normalize_overflow(&y, &yourtm.tm_mon, MONSPERYEAR))
-		return WRONG;
+		goto overflow;
 	/*
 	** Turn y into an actual year number for now.
 	** It is converted back to an offset from TM_YEAR_BASE later.
 	*/
 	if (long_increment_overflow(&y, TM_YEAR_BASE))
-		return WRONG;
+		goto overflow;
 	while (yourtm.tm_mday <= 0) {
 		if (long_increment_overflow(&y, -1))
-			return WRONG;
+			goto overflow;
 		li = y + (1 < yourtm.tm_mon);
 		yourtm.tm_mday += year_lengths[isleap(li)];
 	}
@@ -1827,7 +1827,7 @@ time2sub(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 		li = y + (1 < yourtm.tm_mon);
 		yourtm.tm_mday -= year_lengths[isleap(li)];
 		if (long_increment_overflow(&y, 1))
-			return WRONG;
+			goto overflow;
 	}
 	for ( ; ; ) {
 		i = mon_lengths[isleap(y)][yourtm.tm_mon];
@@ -1837,14 +1837,14 @@ time2sub(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 		if (++yourtm.tm_mon >= MONSPERYEAR) {
 			yourtm.tm_mon = 0;
 			if (long_increment_overflow(&y, 1))
-				return WRONG;
+				goto overflow;
 		}
 	}
 	if (long_increment_overflow(&y, -TM_YEAR_BASE))
-		return WRONG;
+		goto overflow;
 	yourtm.tm_year = y;
 	if (yourtm.tm_year != y)
-		return WRONG;
+		goto overflow;
 	if (yourtm.tm_sec >= 0 && yourtm.tm_sec < SECSPERMIN)
 		saved_seconds = 0;
 	else if (y + TM_YEAR_BASE < EPOCH_YEAR) {
@@ -1857,7 +1857,7 @@ time2sub(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 		** which is a safer assumption than using 58 would be.
 		*/
 		if (increment_overflow(&yourtm.tm_sec, 1 - SECSPERMIN))
-			return WRONG;
+			goto overflow;
 		saved_seconds = yourtm.tm_sec;
 		yourtm.tm_sec = SECSPERMIN - 1;
 	} else {
@@ -1904,12 +1904,12 @@ time2sub(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 			if (t == lo) {
 				++t;
 				if (t <= lo)
-					return WRONG;
+					goto overflow;
 				++lo;
 			} else if (t == hi) {
 				--t;
 				if (t >= hi)
-					return WRONG;
+					goto overflow;
 				--hi;
 			}
 #ifdef NO_ERROR_IN_DST_GAP
@@ -1934,7 +1934,7 @@ time2sub(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 			}
 #endif
 			if (lo > hi)
-				return WRONG;
+				goto invalid;
 			if (dir > 0)
 				hi = t;
 			else	lo = t;
@@ -1949,7 +1949,7 @@ time2sub(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 		** gets checked.
 		*/
 		if (sp == NULL)
-			return WRONG;
+			goto invalid;
 		for (i = sp->typecnt - 1; i >= 0; --i) {
 			if (sp->ttis[i].tt_isdst != yourtm.tm_isdst)
 				continue;
@@ -1971,18 +1971,23 @@ time2sub(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 				goto label;
 			}
 		}
-		return WRONG;
+		goto invalid;
 	}
 label:
 	newt = t + saved_seconds;
 	if ((newt < t) != (saved_seconds < 0))
-		return WRONG;
+		goto overflow;
 	t = newt;
 	if ((*funcp)(sp, &t, offset, tmp)) {
 		*okayp = TRUE;
 		return t;
-	} else
-		return WRONG;
+	}
+overflow:
+	errno = EOVERFLOW;
+	return WRONG;
+invalid:
+	errno = EINVAL;
+	return WRONG;
 }
 
 static time_t
@@ -2039,8 +2044,10 @@ time1(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 	** We try to divine the type they started from and adjust to the
 	** type they need.
 	*/
-	if (sp == NULL)
+	if (sp == NULL) {
+		errno = EINVAL;
 		return WRONG;
+	}
 	for (i = 0; i < sp->typecnt; ++i)
 		seen[i] = FALSE;
 	nseen = 0;
@@ -2068,6 +2075,7 @@ time1(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 			tmp->tm_isdst = !tmp->tm_isdst;
 		}
 	}
+	errno = EOVERFLOW;
 	return WRONG;
 }
 
@@ -2079,8 +2087,6 @@ mktime_z(const timezone_t sp, struct tm *tmp)
 		t = time1(NULL, tmp, gmtsub, 0L);
 	else
 		t = time1(sp, tmp, localsub, 0L);
-	if (t == WRONG)
-		errno = EOVERFLOW;
 	return t;
 }
 
