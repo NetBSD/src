@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2011/10/27 17:18:09 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2011/10/27 19:56:50 christos Exp $
 
 LIB=	posix
 
@@ -21,6 +21,5 @@ SRCS+= _errno.c
 .endif
 
 .include "${.CURDIR}/sys/Makefile.inc"
-SRCS+=_errno.c
 
 .include <bsd.lib.mk>
