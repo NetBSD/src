@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.117 2011/10/27 17:21:27 christos Exp $
+# $NetBSD: HACKS,v 1.118 2011/10/27 18:46:43 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -673,6 +673,7 @@ port	powerpc64
 	cdate	Thu Oct 27 13:19:47 EDT 2011
 	who	christos
 	file	src/lib/libposix/Makefile: 1.15
+	file	src/lib/librt/Makefile: 1.14
 	descr
 		workaround for:
 		    libposix_pic.a(cerror.pico)(.text+0x14): unresolvable \
