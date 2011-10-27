@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.388 2011/10/05 03:40:18 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.389 2011/10/27 13:07:37 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.388 2011/10/05 03:40:18 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.389 2011/10/27 13:07:37 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -199,7 +199,7 @@ static void bad144intern(struct wd_softc *);
 
 /*
  * Quirk table for IDE drives.  Put more-specific matches first, since
- * a simple globbing routine is used for matching.
+ * a simple globing routine is used for matching.
  */
 static const struct wd_quirk {
 	const char *wdq_match;		/* inquiry pattern to match */
@@ -216,10 +216,17 @@ static const struct wd_quirk {
 	 * XXX more model numbers.  If you have trouble with such transfers
 	 * XXX (8K is the most common) on Seagate S-ATA drives, please
 	 * XXX notify thorpej@NetBSD.org.
+	 *
+	 * The ST360015AS has not yet been confirmed to have this
+	 * issue, however, it is the only other drive in the
+	 * Seagate Barracuda Serial ATA V family.
+	 *
 	 */
 	{ "ST3120023AS",
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ "ST380023AS",
+	  WD_QUIRK_SPLIT_MOD15_WRITE },
+	{ "ST360015AS",	
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ NULL,
 	  0 }
