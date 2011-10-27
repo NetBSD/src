@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.13 2010/06/07 07:26:21 jruoho Exp $
+#	$NetBSD: Makefile,v 1.14 2011/10/27 18:45:44 christos Exp $
 #
 
-WARNS=	2
+.include <bsd.own.mk>
+
+WARNS=	4
 
 LIB=	rt
 SRCS=	sem.c
@@ -37,12 +39,18 @@ MLINKS+=	sched.3 sched_get_priority_min.3
 MLINKS+=	sched.3 sched_rr_get_interval.3
 MLINKS+=	sched.3 sched_yield.3
 
-.include <bsd.own.mk>
 
 .include "${.CURDIR}/../libc/libcincludes.mk"
 
 AFLAGS+=-I${ARCHDIR}
 
 .include "${.CURDIR}/sys/Makefile.inc"
+
+.if ${MACHINE_ARCH} == "powerpc64"
+# XXX: How come it does not resolve from libc?
+CPPFLAGS+=-I${NETBSDSRCDIR}/lib/libc/include
+.PATH.c: ${NETBSDSRCDIR}/lib/libc/gen
+SRCS+= _errno.c
+.endif
 
 .include <bsd.lib.mk>
