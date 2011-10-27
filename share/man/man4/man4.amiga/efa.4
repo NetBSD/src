@@ -1,4 +1,4 @@
-.\" $NetBSD: efa.4,v 1.1 2011/10/27 22:12:24 rkujawa Exp $
+.\" $NetBSD: efa.4,v 1.2 2011/10/27 22:56:25 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,27 +43,29 @@ The
 driver provides support for the FastATA 1200 family of IDE controllers and
 provides the interface with the hardware for the
 .Xr ata 4
-driver. PIO modes 0, 3, 4 and 5 are supported.
+driver.
+PIO modes 0, 3, 4 and 5 are supported.
 .\".Pp
 .\"The following kernel configuration options are available:
 .\".Bl -ohang
 .\".It Cd options EFA_32BIT_IO
-.\"Use 32-bit data port. 
+.\"Use 32-bit data port.
 .\".It Cd options EFA_GAYLE_COMPAT
-.\"Drive FastATA in Gayle IDE compatibility mode. Use if the driver does not 
-.\"work correctly in native (default) mode. Limits operation to PIO0 mode.
+.\"Drive FastATA in Gayle IDE compatibility mode.
+.\"Use if the driver does not work correctly in native (default) mode.
+.\"Limits operation to PIO0 mode.
 .\".El
 .Sh HARDWARE
 The
 .Nm
 driver supports the following hardware:
 .Bl -tag -width "ELBOX FastATA 1200 Mk-IV" -offset indent
-.It Em ELBOX FastATA 1200 Mk-III 
-.It Em ELBOX FastATA 1200 Mk-IV 
+.It Em ELBOX FastATA 1200 Mk-III
+.It Em ELBOX FastATA 1200 Mk-IV
 .El
 .Sh SEE ALSO
 .Xr ata 4 ,
-.Xr wdc 4 
+.Xr wdc 4
 .Sh HISTORY
 The
 .Nm
@@ -85,26 +87,27 @@ Older versions of FastATA 1200 are NOT supported:
 .El
 .Pp
 These devices do not generate hardware interrupts and need to be driven in
-non-standard polling mode. Code needed to support it is present in driver
-but does not work correctly.
+non-standard polling mode.
+Code needed to support it is present in driver but does not work correctly.
 .Pp
 Some of the above devices were also marketed under PowerFlyer and Winner brands.
 .Pp
 The
 .Nm
-driver can not coexist with 
+driver can not coexist with
 .Xr wdc 4
 driver attached to
-.Xr mainbus 4 , 
-because FastATA 1200 hardware uses portions of the on-board Gayle IDE 
-controller. These 
-drivers should not be enabled in the same kernel.
+.Xr mainbus 4 ,
+because FastATA 1200 hardware uses portions of the on-board Gayle IDE
+controller.
+These drivers should not be enabled in the same kernel.
 .Pp
 DMA modes are not supported, this is a hardware limitation.
 .Sh BUGS
 Performance is worse than with official AmigaOS driver from ELBOX.
 .Pp
-Disks paritioned in split mode, which is specific to official AmigaOS FastATA
-driver, are not recognized in NetBSD.
+Disks partitioned in split mode, which is specific to official AmigaOS FastATA
+driver, are not recognized in
+.Nx .
 .Pp
 Improved probe procedure should be written.
