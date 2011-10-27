@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1350 2011/10/18 10:19:11 wiz Exp $
+# $NetBSD: mi,v 1.1351 2011/10/27 22:12:24 rkujawa Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -728,6 +728,7 @@
 ./usr/share/man/cat4/amiga/bppcsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/console.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/ed.0			man-sys-catman		.cat
+./usr/share/man/cat4/amiga/efa.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/es.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/fdc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/grf.0		man-sys-catman		.cat
@@ -3604,6 +3605,7 @@
 ./usr/share/man/html4/amiga/bppcsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/console.html	man-sys-htmlman		html
 ./usr/share/man/html4/amiga/ed.html		man-sys-htmlman		html
+./usr/share/man/html4/amiga/efa.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/es.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/fdc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/grf.html		man-sys-htmlman		html
@@ -6177,6 +6179,7 @@
 ./usr/share/man/man4/amiga/bppcsc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/console.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/ed.4			man-sys-man		.man
+./usr/share/man/man4/amiga/efa.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/es.4			man-sys-man		.man
 ./usr/share/man/man4/amiga/fdc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/grf.4		man-sys-man		.man
