@@ -16648,3 +16648,36 @@ Apologies for any names omitted.
 	Bugfix: allow for Milters that send an SMTP server reply
 	without RFC 3463 enhanced status code. Reported by Vladimir
 	Vassiliev.  File: milter/milter8.c.
+
+20110903
+
+	Bugfix: master daemon panic with "master_spawn: at process
+	limit" error, when "postfix reload" reduced the process
+	limit from (a value larger than the current process count
+	for some service) to (a value <= the current process count),
+	and then a new connection was made to that service.  This
+	is the smallest change that eliminates the problem. The
+	final solution involves structural change, and goes into
+	the development release. File: master/master_avail.c.
+
+20110921
+
+	Bugfix (introduced: Postfix 1.1): smtpd(8) did not sanitize
+	newline characters in cleanup(8) REJECT messages, causing
+	them to be sent out via SMTP as bare newline characters.
+	This happened when a REJECT pattern matched multi-line
+	header text.  Discovered by Kevin Locke.  File: smtpd/smtpd.c.
+
+20110922
+
+	Bugfix (introduced: Postfix 2.1): smtpd(8) sent multi-line
+	responses from a before-queue content filter as text with
+	bare <LF> instead of <CR><LF>.  Found during code maintenance.
+	File: smtpd/smtpd_proxy.c.
+
+20111020
+
+	EAI Future-proofing: don't apply strict_mime_encoding_domain
+	checks to unknown message subtypes such as message/global*.
+	File: global/mime_state.c.
+
