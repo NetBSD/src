@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/08/15 09:19:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/10/28 02:28:01 christos Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -22,13 +22,14 @@ LDFLAGS+=	-nodefaultlibs
 LDFLAGS+=	-Wl,--version-script=${.OBJDIR}/libgcc.map
 
 # XXX handle this better?
-.if ${MACHINE_CPU} == "mips" && !(${MKSOFTFLOAT} != "no")
-G_LIB2ADD+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
-		${GNUHOSTDIST}/gcc/config/floatunsisf.c
+.if ${MACHINE} == "emips" || (${MACHINE_CPU} == "mips" && !(${MKSOFTFLOAT} != "no"))
+G_LIB2ADD_HACK+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
+			${GNUHOSTDIST}/gcc/config/floatunsisf.c
 .endif
 
 SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
-		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
+		${G_LIB2ADD:T:S/.asm/.S/} ${G_LIB2ADD_HACK:T:S/.asm/.S/} \
+		${LIB1ASMFUNCS}
 
 COPTS.unwind-dw2.c = -Wno-stack-protector
 
