@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.122 2011/09/05 12:19:09 rjs Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.123 2011/10/28 22:08:14 dyoung Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.122 2011/09/05 12:19:09 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.123 2011/10/28 22:08:14 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1045,7 +1045,6 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 	switch (cmd) {
-	case SIOCSIFDSTADDR:
 	case SIOCINITIFADDR:
 		break;
 
