@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.79 2011/10/27 20:04:57 dyoung Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.80 2011/10/28 16:42:52 dyoung Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.79 2011/10/27 20:04:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.80 2011/10/28 16:42:52 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.79 2011/10/27 20:04:57 dyoung Exp $");
 #include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/protosw.h>
-#include <sys/kauth.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
 
@@ -470,27 +469,10 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 int
 gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct lwp *l = curlwp;	/* XXX */
 	struct gif_softc *sc  = ifp->if_softc;
 	struct ifreq     *ifr = (struct ifreq*)data;
 	int error = 0, size;
 	struct sockaddr *dst, *src;
-
-	switch (cmd) {
-	case SIOCSIFMTU:
-	case SIOCSLIFPHYADDR:
-#ifdef SIOCDIFPHYADDR
-	case SIOCDIFPHYADDR:
-#endif
-		if ((error = kauth_authorize_network(l->l_cred,
-		    KAUTH_NETWORK_INTERFACE,
-		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
-		    NULL)) != 0)
-			return (error);
-		/* FALLTHROUGH */
-	default:
-		break;
-	}
 
 	switch (cmd) {
 	case SIOCINITIFADDR:
