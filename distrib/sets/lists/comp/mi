@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1698 2011/10/25 05:41:33 jruoho Exp $
+#	$NetBSD: mi,v 1.1699 2011/10/28 07:23:16 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10854,6 +10854,7 @@
 ./usr/share/man/cat9/wsmouse.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wsmouse_input.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/wsmousedevprint.0		comp-sys-catman		.cat
+./usr/share/man/cat9/x86/msr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/nmi.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/nmi_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/nmi_establish.0	comp-sys-catman		.cat
@@ -16903,6 +16904,7 @@
 ./usr/share/man/html9/wsmouse.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wsmouse_input.html	comp-sys-htmlman	html
 ./usr/share/man/html9/wsmousedevprint.html	comp-sys-htmlman	html
+./usr/share/man/html9/x86/msr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/x86/nmi.html		comp-sys-htmlman	html
 ./usr/share/man/html9/x86/nmi_disestablish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/x86/nmi_establish.html	comp-sys-htmlman	html
@@ -23209,6 +23211,7 @@
 ./usr/share/man/man9/wsmouse.9			comp-sys-man		.man
 ./usr/share/man/man9/wsmouse_input.9		comp-sys-man		.man
 ./usr/share/man/man9/wsmousedevprint.9		comp-sys-man		.man
+./usr/share/man/man9/x86/msr.9			comp-sys-man		.man
 ./usr/share/man/man9/x86/nmi.9			comp-sys-man		.man
 ./usr/share/man/man9/x86/nmi_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/x86/nmi_establish.9	comp-sys-man		.man
