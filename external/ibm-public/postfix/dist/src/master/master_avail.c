@@ -1,4 +1,4 @@
-/*	$NetBSD: master_avail.c,v 1.1.1.2 2010/06/17 18:06:54 tron Exp $	*/
+/*	$NetBSD: master_avail.c,v 1.1.1.3 2011/10/28 07:09:53 tron Exp $	*/
 
 /*++
 /* NAME
@@ -87,7 +87,9 @@ static void master_avail_event(int event, char *context)
 
     if (event == 0)				/* XXX Can this happen? */
 	return;
-    if (MASTER_THROTTLED(serv)) {		/* XXX interface botch */
+    /* XXX Should check these when the process or service status is changed. */
+    if (!MASTER_LIMIT_OK(serv->max_proc, serv->total_proc)
+	|| MASTER_THROTTLED(serv)) {		/* XXX interface botch */
 	for (n = 0; n < serv->listen_fd_count; n++)
 	    event_disable_readwrite(serv->listen_fd[n]);
     } else {
