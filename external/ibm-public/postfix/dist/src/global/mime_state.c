@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_state.c,v 1.1.1.2 2011/03/02 19:32:17 tron Exp $	*/
+/*	$NetBSD: mime_state.c,v 1.1.1.3 2011/10/28 07:09:49 tron Exp $	*/
 
 /*++
 /* NAME
@@ -927,7 +927,9 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 		    if (state->curr_domain != MIME_ENC_7BIT)
 			REPORT_ERROR(state, MIME_ERR_ENCODING_DOMAIN,
 				 mime_state_enc_name(state->curr_encoding));
-		} else {
+		}
+		/* EAI: message/global allows non-identity encoding. */
+		else if (state->curr_stype == MIME_STYPE_RFC822) {
 		    if (state->curr_encoding != state->curr_domain)
 			REPORT_ERROR(state, MIME_ERR_ENCODING_DOMAIN,
 				 mime_state_enc_name(state->curr_encoding));
