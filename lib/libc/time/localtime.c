@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.60 2011/10/27 14:48:00 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.61 2011/10/28 13:53:06 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.60 2011/10/27 14:48:00 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.61 2011/10/28 13:53:06 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1792,6 +1792,9 @@ time2sub(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 	long			li;
 	time_t			lo;
 	time_t			hi;
+#ifdef NO_ERROR_IN_DST_GAP
+	time_t			ilo;
+#endif
 	long				y;
 	time_t				newt;
 	time_t				t;
@@ -1886,6 +1889,9 @@ time2sub(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 			lo *= 2;
 		hi = -(lo + 1);
 	}
+#ifdef NO_ERROR_IN_DST_GAP
+	ilo = lo;
+#endif
 	for ( ; ; ) {
 		t = lo / 2 + hi / 2;
 		if (t < lo)
@@ -1913,7 +1919,7 @@ time2sub(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 				--hi;
 			}
 #ifdef NO_ERROR_IN_DST_GAP
-			if (lo - 1 == hi && yourtm.tm_isdst < 0) {
+			if (ilo != lo && lo - 1 == hi && yourtm.tm_isdst < 0) {
 				time_t off = 0;
 				for (i = sp->typecnt - 1; i >= 0; --i) {
 					for (j = sp->typecnt - 1; j >= 0; --j) {
