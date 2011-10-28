@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.76 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.77 2011/10/28 20:13:32 dyoung Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.76 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.77 2011/10/28 20:13:32 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.76 2011/07/17 20:54:52 joerg Exp $");
 #include <sys/protosw.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
-#include <sys/kauth.h>
 
 #include <sys/cpu.h>
 
@@ -661,7 +660,6 @@ stf_rtrequest(int cmd, struct rtentry *rt,
 static int
 stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct lwp		*l = curlwp;	/* XXX */
 	struct ifaddr		*ifa;
 	struct ifreq		*ifr = data;
 	struct sockaddr_in6	*sin6;
@@ -694,12 +692,6 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFMTU:
-		error = kauth_authorize_network(l->l_cred,
-		    KAUTH_NETWORK_INTERFACE,
-		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
-		    NULL);
-		if (error)
-			break;
 		if (ifr->ifr_mtu < STF_MTU_MIN || ifr->ifr_mtu > STF_MTU_MAX)
 			return EINVAL;
 		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)

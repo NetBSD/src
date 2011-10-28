@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.134 2011/08/07 13:51:37 rmind Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.135 2011/10/28 20:13:32 dyoung Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.134 2011/08/07 13:51:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.135 2011/10/28 20:13:32 dyoung Exp $");
 
 #include "ppp.h"
 
@@ -734,7 +734,6 @@ pppioctl(struct ppp_softc *sc, u_long cmd, void *data, int flag,
 static int
 pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-    struct lwp *l = curlwp;	/* XXX */
     struct ppp_softc *sc = ifp->if_softc;
     struct ifaddr *ifa = (struct ifaddr *)data;
     struct ifreq *ifr = (struct ifreq *)data;
@@ -834,12 +833,6 @@ pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
 	break;
 #endif /* PPP_COMPRESS */
 
-    case SIOCSIFMTU:
-	if ((error = kauth_authorize_network(l->l_cred,
-	    KAUTH_NETWORK_INTERFACE, KAUTH_REQ_NETWORK_INTERFACE_SETPRIV,
-	    ifp, (void *)cmd, NULL)) != 0)
-	    break;
-	/*FALLTHROUGH*/
     default:
 	if ((error = ifioctl_common(&sc->sc_if, cmd, data)) == ENETRESET)
 		error = 0;
