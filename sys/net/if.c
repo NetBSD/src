@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.255 2011/10/25 22:26:18 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.256 2011/10/28 20:11:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.255 2011/10/25 22:26:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.256 2011/10/28 20:11:58 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -2154,14 +2154,24 @@ int
 if_flags_set(ifnet_t *ifp, const short flags)
 {
 	int rc;
-	struct ifreq ifr;
 
 	if (ifp->if_setflags != NULL)
 		rc = (*ifp->if_setflags)(ifp, flags);
 	else {
+		short cantflags;
+		struct ifreq ifr;
+
 		memset(&ifr, 0, sizeof(ifr));
-		ifr.ifr_flags = flags;
+
+		cantflags = (ifp->if_flags ^ flags) & IFF_CANTCHANGE;
+		if (cantflags != 0)
+			ifp->if_flags ^= cantflags;
+
+		ifr.ifr_flags = flags & ~IFF_CANTCHANGE;
 		rc = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, &ifr);
+
+		if (rc != 0 && cantflags != 0)
+			ifp->if_flags ^= cantflags;
 	}
 
 	return rc;
