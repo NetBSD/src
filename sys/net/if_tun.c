@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.113 2010/04/05 07:22:24 joerg Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.114 2011/10/28 22:08:14 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.113 2010/04/05 07:22:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.114 2011/10/28 22:08:14 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -441,10 +441,6 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCINITIFADDR:
 		tuninit(tp);
 		TUNDEBUG("%s: address set\n", ifp->if_xname);
-		break;
-	case SIOCSIFDSTADDR:
-		tuninit(tp);
-		TUNDEBUG("%s: destination address set\n", ifp->if_xname);
 		break;
 	case SIOCSIFBRDADDR:
 		TUNDEBUG("%s: broadcast address set\n", ifp->if_xname);
