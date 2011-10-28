@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.30 2010/05/19 20:41:59 christos Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.31 2011/10/28 16:10:12 dyoung Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.30 2010/05/19 20:41:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.31 2011/10/28 16:10:12 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.30 2010/05/19 20:41:59 christos Exp
 #include <sys/time.h>
 #include <sys/sysctl.h>
 #include <sys/queue.h>
-#include <sys/kauth.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/intr.h>
