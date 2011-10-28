@@ -29,23 +29,28 @@
 
 #include <powerpc/asm.h>
 
-__RCSID("$NetBSD: gprsavrest.S,v 1.3 2011/08/12 14:48:00 matt Exp $")
+__RCSID("$NetBSD: gprsavrest.S,v 1.4 2011/10/28 02:00:50 christos Exp $")
 
 #ifndef RESTGPR
-#define RESTGPR(n)	RESTOREXGPR(_restgpr_,n,_x)
-#define RESTGPR_END(n)	RESTOREXGPR_END(_restgpr_,n,_x)
-#define SAVEGPR(n)	SAVEXGPR(_savegpr_,n,)
-#define SAVEGPR_END(n)	SAVEXGPR_END(_savegpr_,n,)
+# define RESTGPR(n)	RESTOREXGPR(_restgpr_,n,_x)
+# define RESTGPR_END(n)	RESTOREXGPR_END(_restgpr_,n,_x)
+# define SAVEGPR(n)	SAVEXGPR(_savegpr_,n,)
+# define SAVEGPR_END(n)	SAVEXGPR_END(_savegpr_,n,)
 #endif
 
 #define RESTOREXGPR(a,n,b) \
 	.hidden a##n##b; ENTRY_NOPROFILE(a##n##b); lwz	n,(-4*(32-n))(11)
-#define RESTOREXGPR_END(a,n,b) \
-	.size a##n##b,.-a##n##b
 #define SAVEXGPR(a,n,b) \
 	.hidden a##n##b; ENTRY_NOPROFILE(a##n##b); stw	n,(-4*(32-n))(11)
-#define SAVEXGPR_END(a,n,b) \
+#ifdef _LP64
+# define SAVEXGPR_END(a,n,b) 
+# define RESTOREXGPR_END(a,n,b) 
+#else
+# define SAVEXGPR_END(a,n,b) \
 	.size a##n##b,.-a##n##b
+# define RESTOREXGPR_END(a,n,b) \
+	.size a##n##b,.-a##n##b
+#endif
 
 	RESTGPR(14)
 	RESTGPR(15)
