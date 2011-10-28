@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.147 2011/10/27 20:04:57 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.148 2011/10/28 16:42:52 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.147 2011/10/27 20:04:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.148 2011/10/28 16:42:52 dyoung Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -1234,15 +1234,11 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 	GRE_DPRINTF(sc, "cmd %lu\n", cmd);
 
 	switch (cmd) {
-	case SIOCSIFFLAGS:
-	case SIOCSIFMTU:
 	case GRESPROTO:
 	case GRESADDRD:
 	case GRESADDRS:
 	case GRESSOCK:
 	case GREDSOCK:
-	case SIOCSLIFPHYADDR:
-	case SIOCDIFPHYADDR:
 		if (kauth_authorize_network(curlwp->l_cred,
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
