@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.c,v 1.3 2011/03/04 04:53:28 jruoho Exp $ */
+/*	$NetBSD: powernow.c,v 1.4 2011/10/29 09:58:23 jnemeth Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.3 2011/03/04 04:53:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.4 2011/10/29 09:58:23 jnemeth Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -418,8 +418,8 @@ powernow_k7_init(device_t self)
 	for (i = 0; i < sc->sc_state->n_states; i++) {
 
 		/* Skip duplicated matches. */
-		if (sc->sc_state->state_table[i].freq ==
-		    sc->sc_state->state_table[i - 1].freq)
+		if (i > 0 && (sc->sc_state->state_table[i].freq ==
+		    sc->sc_state->state_table[i - 1].freq))
 			continue;
 
 		DPRINTF(("%s: cstate->state_table.freq=%d\n",
