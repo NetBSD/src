@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.33 2011/06/03 17:03:52 tsutsui Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.34 2011/10/29 18:26:19 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -189,29 +189,6 @@ struct pv_entry {
 	vaddr_t		pv_va;		/* virtual address for mapping */
 	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
-};
-
-struct pv_page;
-
-struct pv_page_info {
-	TAILQ_ENTRY(pv_page) pgi_list;
-	struct pv_entry *pgi_freelist;
-	int pgi_nfree;
-};
-
-/*
- * This is basically:
- * ((PAGE_SIZE - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
- */
-#if PAGE_SIZE == 8192
-#define	NPVPPG	340
-#else
-#define	NPVPPG	170
-#endif
-
-struct pv_page {
-	struct pv_page_info pvp_pgi;
-	struct pv_entry pvp_pv[NPVPPG];
 };
 
 #define	active_pmap(pm) \
