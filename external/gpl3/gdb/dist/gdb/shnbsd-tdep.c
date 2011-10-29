@@ -264,7 +264,7 @@ shnbsd_get_next_pc (struct regcache *regcache, CORE_ADDR pc)
 {
   unsigned short insn;
   ULONGEST sr;
-  int displacement;
+  LONGEST displacement;
   int reg;
   CORE_ADDR next_pc;
   int delay_slot;
@@ -310,7 +310,7 @@ shnbsd_get_next_pc (struct regcache *regcache, CORE_ADDR pc)
   /* BRAF, BSRF */
   else if (BRANCH_FAR_P(insn))
     {
-      regcache_cooked_read_unsigned (regcache, BRANCH_FAR_REG(insn),
+      regcache_cooked_read_signed (regcache, BRANCH_FAR_REG(insn),
 	  &displacement);
       next_pc = pc + 4 + displacement;
       delay_slot = 1;
