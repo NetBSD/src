@@ -1,4 +1,4 @@
-/*	$NetBSD: efa.c,v 1.2 2011/10/29 11:16:19 rkujawa Exp $ */
+/*	$NetBSD: efa.c,v 1.3 2011/10/29 19:25:19 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include <amiga/dev/efareg.h>
 #include <amiga/dev/efavar.h>
 
-/* #define EFA_32BIT_IO 1 */
+#define EFA_32BIT_IO 1
 /* #define EFA_NO_INTR 1 */
 /* #define EFA_DEBUG 1 */
 
@@ -154,11 +154,11 @@ efa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = efa_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
 
 	if (sc->sc_32bit_io)
-		sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA32;
-	else	
-		sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA32;
+
 	/*
 	 * The following should work for polling mode, but it does not.
 	 * if (sc->sc_no_intr) 
@@ -324,6 +324,7 @@ efa_mapbase(struct efa_softc *sc)
 	for (i = 0; i < FATA1_CHANNELS; i++) {
 		for (j = 0; j < PIO_COUNT; j++) {
 			sc->sc_ports[i].wdr[j].cmd_iot = &fata_cmd_iot;
+			sc->sc_ports[i].wdr[j].data32iot = &fata_cmd_iot;
 			sc->sc_ports[i].wdr[j].ctl_iot = &gayle_cmd_iot;
 		}
 	}
@@ -454,11 +455,10 @@ efa_fata_subregion_pion(struct wdc_regs *wdr_fata, bool data32)
 {
 	if (data32)
 		bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-		    FATA1_PION_OFF_DATA32, 8, &wdr_fata->cmd_iohs[wd_data]);
-	else
-		bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    	    FATA1_PION_OFF_DATA, 4, &wdr_fata->cmd_iohs[wd_data]);
+		    FATA1_PION_OFF_DATA32, 8, &wdr_fata->data32ioh);
 
+	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
+    	    FATA1_PION_OFF_DATA, 4, &wdr_fata->cmd_iohs[wd_data]);
 	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
 	    FATA1_PION_OFF_ERROR, 1, &wdr_fata->cmd_iohs[wd_error]);
 	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
