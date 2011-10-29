@@ -1,4 +1,4 @@
-/*	$NetBSD: efareg.h,v 1.1 2011/10/27 22:12:23 rkujawa Exp $ */
+/*	$NetBSD: efareg.h,v 1.2 2011/10/29 11:16:19 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #define FATA1_BASE		0xDA2000
 
 /* Offsets. Stride of 4 is used, so multiply any offset by 4. */
-#define FATA1_PIO0_OFF		0x0 // XXX 0
+#define FATA1_PIO0_OFF		0x0 
 #define FATA1_PIO3_OFF		0x4000
 #define FATA1_PIO4_OFF		0x5000
 #define FATA1_PIO5_OFF		0x4800

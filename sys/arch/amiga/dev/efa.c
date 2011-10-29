@@ -1,4 +1,4 @@
-/*	$NetBSD: efa.c,v 1.1 2011/10/27 22:12:23 rkujawa Exp $ */
+/*	$NetBSD: efa.c,v 1.2 2011/10/29 11:16:19 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -111,10 +111,12 @@ static const unsigned int	wdr_offsets_pion32[] =
 int
 efa_probe(device_t parent, cfdata_t cfp, void *aux)
 {
-	/* FastATA 1200 uses portions of Gayle IDE interface, and efa driver 
+	/*
+	 * FastATA 1200 uses portions of Gayle IDE interface, and efa driver 
 	 * can't coexist with wdc_amiga. Match "wdc" on an A1200, because 
-         * FastATA 1200 does not autoconfigure. */
-	if( !matchname(aux, "wdc") || !is_a1200() )
+	 * FastATA 1200 does not autoconfigure. 
+	 */
+	if ( !matchname(aux, "wdc") || !is_a1200() )
 		return(0);
 
 	return 100;
@@ -134,15 +136,15 @@ efa_attach(device_t parent, device_t self, void *aux)
 
 	efa_set_opts(sc);
 
-	if(!efa_mapbase(sc)) {
+	if (!efa_mapbase(sc)) {
 		aprint_error_dev(self, "couldn't map base addresses\n");
 		return;
 	}
-	if(!efa_mapreg_gayle(sc)) {
+	if (!efa_mapreg_gayle(sc)) {
 		aprint_error_dev(self, "couldn't map Gayle registers\n");
 		return;
 	}
-	if(!efa_mapreg_native(sc)) {
+	if (!efa_mapreg_native(sc)) {
 		aprint_error_dev(self, "couldn't map FastATA regsters\n");
 		return;
 	}
@@ -153,13 +155,13 @@ efa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
 
-	if(sc->sc_32bit_io)
+	if (sc->sc_32bit_io)
 		sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA32;
 	else	
 		sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
 	/*
 	 * The following should work for polling mode, but it does not.
-	 * if(sc->sc_no_intr) 
+	 * if (sc->sc_no_intr) 
 	 *	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_NOIRQ;
 	 */
 
@@ -167,11 +169,10 @@ efa_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_intreg = &gayle.intreq;
 
-	for(i = 0; i < FATA1_CHANNELS; i++) {
+	for (i = 0; i < FATA1_CHANNELS; i++) 
 		efa_attach_channel(sc, i);
-	}
 
-	if(sc->sc_no_intr) {
+	if (sc->sc_no_intr) {
 		sc->sc_fata_softintr = softint_establish(SOFTINT_BIO,
 		    (void (*)(void *))efa_intr_soft, sc);
 		if (sc->sc_fata_softintr == NULL) {
@@ -203,7 +204,7 @@ efa_attach_channel(struct efa_softc *sc, int chnum)
 	sc->sc_ports[chnum].chan.ch_queue = &sc->sc_ports[chnum].queue;
 	sc->sc_ports[chnum].chan.ch_ndrive = 2;
 
-	if(!sc->sc_32bit_io)
+	if (!sc->sc_32bit_io)
 		efa_select_regset(sc, chnum, 0); /* Start in PIO0. */
 	else
 		efa_select_regset(sc, chnum, 3); 
@@ -224,7 +225,7 @@ efa_poll_kthread(void *arg)
 {
 	struct efa_softc *sc = arg;
 
-	for(;;) {
+	for (;;) {
 		/* TODO: actually check if interrupt status register is set */
 		softint_schedule(sc->sc_fata_softintr);
 		/* TODO: convert to kpause */
@@ -247,10 +248,10 @@ efa_set_opts(struct efa_softc *sc)
 	sc->sc_no_intr = false;
 #endif /* EFA_NO_INTR */
 
-	if(sc->sc_no_intr)
+	if (sc->sc_no_intr)
 		aprint_verbose_dev(sc->sc_dev, "hardware interrupt disabled\n");
 
-	if(sc->sc_32bit_io)
+	if (sc->sc_32bit_io)
 		aprint_verbose_dev(sc->sc_dev, "32-bit I/O enabled\n");
 }
 
@@ -277,10 +278,11 @@ int
 efa_intr(void *arg)
 {
 	struct efa_softc *sc = (struct efa_softc *)arg;
-	int r1, r2;
+	int r1, r2, ret;
+	u_char intreq;
 
-	u_char intreq = *sc->sc_intreg;
-	int ret = 0;
+	intreq = *sc->sc_intreg;
+	ret = 0;
 
 	if (intreq & GAYLE_INT_IDE) {
 		gayle.intreq = 0x7c | (intreq & 0x03);
@@ -311,16 +313,16 @@ efa_mapbase(struct efa_softc *sc)
 	    GAYLE_IDE_BASE, gayle_cmd_iot.base, FATA1_BASE, fata_cmd_iot.base);
 #endif
 
-	if(!gayle_cmd_iot.base)
+	if (!gayle_cmd_iot.base)
 		return false;
-	if(!fata_cmd_iot.base)
+	if (!fata_cmd_iot.base)
 		return false;
 
 	sc->sc_gayle_wdc_regs.cmd_iot = &gayle_cmd_iot;
 	sc->sc_gayle_wdc_regs.ctl_iot = &gayle_cmd_iot;
 
-	for(i = 0; i < FATA1_CHANNELS; i++) {
-		for(j = 0; j < PIO_COUNT; j++) {
+	for (i = 0; i < FATA1_CHANNELS; i++) {
+		for (j = 0; j < PIO_COUNT; j++) {
 			sc->sc_ports[i].wdr[j].cmd_iot = &fata_cmd_iot;
 			sc->sc_ports[i].wdr[j].ctl_iot = &gayle_cmd_iot;
 		}
@@ -339,7 +341,7 @@ efa_mapreg_gayle(struct efa_softc *sc)
 	struct wdc_regs *wdr = &sc->sc_gayle_wdc_regs;
 
 	if (bus_space_map(wdr->cmd_iot, 0, 0x40, 0,
-			  &wdr->cmd_baseioh)) {
+	    &wdr->cmd_baseioh)) {
 		return false;
 	}
 
@@ -363,19 +365,20 @@ efa_mapreg_gayle(struct efa_softc *sc)
 
 /* Native FastATA register mapping, suitable for PIO modes 0 to 5. */
 static bool
-efa_mapreg_native(struct efa_softc *sc) {
+efa_mapreg_native(struct efa_softc *sc) 
+{
 	int i,j;
 	struct wdc_regs *wdr_gayle = &sc->sc_gayle_wdc_regs;
 	struct wdc_regs *wdr_fata;
 
-	for(i = 0; i < FATA1_CHANNELS; i++) {
+	for (i = 0; i < FATA1_CHANNELS; i++) {
 
-		for(j = 0; j < PIO_COUNT; j++) {
+		for (j = 0; j < PIO_COUNT; j++) {
 
 			wdr_fata = &sc->sc_ports[i].wdr[j];
 			sc->sc_ports[i].mode_ok[j] = false;
 
-			if(pio_offsets[j] == PIO_NSUPP) {
+			if (pio_offsets[j] == PIO_NSUPP) {
 #ifdef EFA_DEBUG
 				aprint_normal_dev(sc->sc_dev, 
 				    "Skipping mapping for PIO mode %x\n", j);
@@ -383,7 +386,7 @@ efa_mapreg_native(struct efa_softc *sc) {
 				continue;
 			}
 
-			if(bus_space_map(wdr_fata->cmd_iot, 
+			if (bus_space_map(wdr_fata->cmd_iot, 
 			    pio_offsets[j] + FATA1_CHAN_SIZE * i, 
 			    FATA1_CHAN_SIZE, 0, &wdr_fata->cmd_baseioh)) {
 			    return false;
@@ -398,10 +401,10 @@ efa_mapreg_native(struct efa_softc *sc) {
 
 			sc->sc_ports[i].mode_ok[j] = true;
 
-			if(j == 0)
+			if (j == 0)
 				efa_fata_subregion_pio0(wdr_fata);
 			else {
-				if(sc->sc_32bit_io) 
+				if (sc->sc_32bit_io) 
 					efa_fata_subregion_pion(wdr_fata, 
 					    true);
 				else 
@@ -414,7 +417,7 @@ efa_mapreg_native(struct efa_softc *sc) {
 			}
 
 			/* No 32-bit register for PIO0 ... */
-			if(j == 0 && sc->sc_32bit_io)
+			if (j == 0 && sc->sc_32bit_io)
 				sc->sc_ports[i].mode_ok[j] = false;
 			
 			wdr_fata->ctl_ioh = wdr_gayle->ctl_ioh; 
@@ -449,7 +452,7 @@ efa_fata_subregion_pio0(struct wdc_regs *wdr_fata)
 static void
 efa_fata_subregion_pion(struct wdc_regs *wdr_fata, bool data32) 
 {
-	if(data32)
+	if (data32)
 		bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
 		    FATA1_PION_OFF_DATA32, 8, &wdr_fata->cmd_iohs[wd_data]);
 	else
@@ -502,7 +505,7 @@ efa_setup_channel(struct ata_channel *chp)
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue; /* nothing to see here */
 
-		if(drvp->PIO_cap < mode);
+		if (drvp->PIO_cap < mode);
 			mode = drvp->PIO_cap;
 
 		/* TODO: check if sc_ports->mode_ok */
