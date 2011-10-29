@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.h,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: iscsi_ioctl.h,v 1.2 2011/10/29 16:04:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -41,19 +41,19 @@ typedef struct {
 	uint32_t status;
 	int socket;
 	struct {
-		int HeaderDigest:1;
-		int DataDigest:1;
-		int MaxConnections:1;
-		int DefaultTime2Wait:1;
-		int DefaultTime2Retain:1;
-		int MaxRecvDataSegmentLength:1;
-		int auth_info:1;
-		int user_name:1;
-		int password:1;
-		int target_password:1;
-		int TargetName:1;
-		int TargetAlias:1;
-		int ErrorRecoveryLevel:1;
+		unsigned int HeaderDigest:1;
+		unsigned int DataDigest:1;
+		unsigned int MaxConnections:1;
+		unsigned int DefaultTime2Wait:1;
+		unsigned int DefaultTime2Retain:1;
+		unsigned int MaxRecvDataSegmentLength:1;
+		unsigned int auth_info:1;
+		unsigned int user_name:1;
+		unsigned int password:1;
+		unsigned int target_password:1;
+		unsigned int TargetName:1;
+		unsigned int TargetAlias:1;
+		unsigned int ErrorRecoveryLevel:1;
 	} is_present;
 	iscsi_auth_info_t auth_info;
 	iscsi_login_session_type_t login_type;
@@ -205,7 +205,7 @@ typedef struct {
 	uint32_t session_id;
 	uint32_t connection_id;
 	struct {
-		int immediate:1;
+		unsigned int immediate:1;
 	} options;
 	uint64_t lun;
 	scsireq_t req;

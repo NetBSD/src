@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi.h,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: iscsi.h,v 1.2 2011/10/29 16:04:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004,2006,2011 The NetBSD Foundation, Inc.
@@ -55,9 +55,9 @@ typedef enum {
 */
 
 typedef struct {
-	int			mutual_auth:1;
-	int			is_secure:1;
-	int			auth_number:4;
+	unsigned int		mutual_auth:1;
+	unsigned int		is_secure:1;
+	unsigned int		auth_number:4;
 	iscsi_auth_types_t	auth_type[ISCSI_AUTH_OPTIONS];
 } iscsi_auth_info_t;
 
