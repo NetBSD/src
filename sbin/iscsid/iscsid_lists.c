@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_lists.c,v 1.1 2011/10/23 21:11:23 agc Exp $	*/
+/*	$NetBSD: iscsid_lists.c,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ find_id(generic_list_t * head, uint32_t id)
 		return NULL;
 
 	TAILQ_FOREACH(curr, head, link)
-		if (curr->sid.id == (int)id)
+		if (curr->sid.id == id)
 			break;
 
 	return curr;
@@ -197,12 +197,12 @@ find_target(iscsid_list_kind_t lst, iscsid_sym_id_t * sid)
 {
 	target_t *targ;
 
-	if ((targ = (target_t *)find_sym_id (&list [lst].list, sid)) != NULL)
+	if ((targ = (target_t *)(void *)find_sym_id (&list [lst].list, sid)) != NULL)
 		return targ;
 	if (lst == TARGET_LIST) {
 		portal_t *portal;
 
-		if ((portal = find_portal (sid)) != NULL)
+		if ((portal = (void *)find_portal (sid)) != NULL)
 			return portal->target;
 	}
 	return NULL;
@@ -222,17 +222,20 @@ target_t *
 find_TargetName(iscsid_list_kind_t lst, uint8_t * name)
 {
 	generic_entry_t *curr;
+	target_t *t = NULL;
 
 	if (lst == PORTAL_LIST)
 		lst = TARGET_LIST;
 
-	TAILQ_FOREACH(curr, &list[lst].list, link)
-		if (strcmp((char *)((target_t *) curr)->TargetName, (char *)name) == 0)
+	TAILQ_FOREACH(curr, &list[lst].list, link) {
+		t = (void *)curr;
+		if (strcmp((char *)t->TargetName, (char *)name) == 0)
 			break;
+	}
 
-	DEB(10, ("Find_TagetName returns %x\n", (int) curr));
+	DEB(10, ("Find_TagetName returns %p\n", curr));
 
-	return (target_t *) curr;
+	return t;
 }
 
 
@@ -249,21 +252,23 @@ portal_t *
 find_portal_by_addr(target_t * target, iscsi_portal_address_t * addr)
 {
 	generic_entry_t *curr;
+	portal_t *p = NULL;
 
 	TAILQ_FOREACH(curr, &list[PORTAL_LIST].list, link) {
+		p = (void *)curr;
 		DEB(10, ("Find_portal_by_addr - addr %s port %d target %x\n",
-				 ((portal_t *) curr)->addr.address,
-				 ((portal_t *) curr)->addr.port,
-				 (int) ((portal_t *) curr)->target));
+				 p->addr.address,
+				 p->addr.port,
+				 (int) p->target));
 
-		if (strcmp((char *)((portal_t *) curr)->addr.address, (char *)addr->address) == 0 &&
-			(!addr->port || ((portal_t *) curr)->addr.port == addr->port) &&
-			((portal_t *) curr)->target == target)
+		if (strcmp((char *)p->addr.address, (char *)addr->address) == 0 &&
+			(!addr->port || p->addr.port == addr->port) &&
+			p->target == target)
 			break;
 	}
 
-	DEB(10, ("Find_portal_by_addr returns %x\n", (int) curr));
-	return (portal_t *) curr;
+	DEB(10, ("Find_portal_by_addr returns %p\n", curr));
+	return p;
 }
 
 
@@ -280,15 +285,17 @@ send_target_t *
 find_send_target_by_addr(iscsi_portal_address_t * addr)
 {
 	generic_entry_t *curr;
+	send_target_t *t = NULL;
 
 	TAILQ_FOREACH(curr, &list[SEND_TARGETS_LIST].list, link) {
-		if (strcmp((char *)((send_target_t *) curr)->addr.address, (char *)addr->address) == 0 &&
-			(!addr->port || ((send_target_t *) curr)->addr.port == addr->port))
+		t = (void *)curr;
+		if (strcmp((char *)t->addr.address, (char *)addr->address) == 0 &&
+			(!addr->port || t->addr.port == addr->port))
 			break;
 	}
 
-	DEB(10, ("Find_send_target_by_addr returns %x\n", (int) curr));
-	return (send_target_t *) curr;
+	DEB(10, ("Find_send_target_by_addr returns %p\n", curr));
+	return t;
 }
 
 
@@ -340,7 +347,7 @@ get_list(iscsid_get_list_req_t * par, iscsid_response_t ** prsp, int *prsp_temp)
 		return;
 	}
 	/* copy the ID of all list entries */
-	res = (iscsid_get_list_rsp_t *) rsp->parameter;
+	res = (iscsid_get_list_rsp_t *)(void *)rsp->parameter;
 	res->num_entries = num;
 	idp = res->id;
 
@@ -403,13 +410,13 @@ search_list(iscsid_search_list_req_t * par, iscsid_response_t ** prsp,
 		case TARGET_LIST:
 		case PORTAL_LIST:
 		case SEND_TARGETS_LIST:
-			elem = (generic_entry_t *) find_TargetName(par->list_kind,
+			elem = (void *)find_TargetName(par->list_kind,
 														par->strval);
 			break;
 
 		case SESSION_LIST:
 			TAILQ_FOREACH(elem, &list[SESSION_LIST].list, link)
-				if (strcmp((char *)((session_t *) elem)->target.TargetName,
+				if (strcmp((char *)((session_t *)(void *)elem)->target.TargetName,
 							(char *)par->strval) == 0)
 					break;
 			break;
@@ -424,27 +431,30 @@ search_list(iscsid_search_list_req_t * par, iscsid_response_t ** prsp,
 		switch (par->list_kind) {
 		case PORTAL_LIST:
 			TAILQ_FOREACH(elem, &list[PORTAL_LIST].list, link) {
-				if (strcmp((char *)((portal_t *) elem)->addr.address, (char *)par->strval) == 0 &&
+				portal_t *p = (void *)elem;
+				if (strcmp((char *)p->addr.address, (char *)par->strval) == 0 &&
 					(!par->intval ||
-					 ((portal_t *) elem)->addr.port == par->intval))
+					 p->addr.port == par->intval))
 					break;
 			}
 			break;
 
 		case SEND_TARGETS_LIST:
 			TAILQ_FOREACH(elem, &list[SEND_TARGETS_LIST].list, link) {
-				if (strcmp((char *)((send_target_t *) elem)->addr.address,
+				send_target_t *t = (void *)elem;
+				if (strcmp((char *)t->addr.address,
 							(char *)par->strval) == 0 &&
 					(!par->intval ||
-					 ((send_target_t *) elem)->addr.port == par->intval))
+					 t->addr.port == par->intval))
 					break;
 			}
 			break;
 
 		case ISNS_LIST:
 			TAILQ_FOREACH(elem, &list[ISNS_LIST].list, link) {
-				if (strcmp((char *)((isns_t *) elem)->address, (char *)par->strval) == 0 &&
-					(!par->intval || ((isns_t *) elem)->port == par->intval))
+				isns_t *i = (void *)elem;
+				if (strcmp((char *)i->address, (char *)par->strval) == 0 &&
+					(!par->intval || i->port == par->intval))
 					break;
 			}
 			break;
@@ -523,13 +533,13 @@ get_session_list(iscsid_response_t ** prsp, int *prsp_temp)
 		return;
 	}
 	/* copy the ID of all list entries */
-	res = (iscsid_get_session_list_rsp_t *) rsp->parameter;
+	res = (iscsid_get_session_list_rsp_t *)(void *)rsp->parameter;
 	res->num_entries = num;
 	ent = res->session;
 
 	TAILQ_FOREACH(curr, plist, link) {
-		sess = (session_t *) curr;
-		conn = (connection_t *) TAILQ_FIRST(&sess->connections);
+		sess = (session_t *)(void *)curr;
+		conn = (connection_t *)(void *)TAILQ_FIRST(&sess->connections);
 
 		ent->session_id = sess->entry.sid;
 		ent->first_connection_id = conn->entry.sid.id;
@@ -582,12 +592,12 @@ get_connection_list(iscsid_sym_id_t *req, iscsid_response_t **prsp,
 		return;
 	}
 	/* copy the ID of all list entries */
-	res = (iscsid_get_connection_list_rsp_t *) rsp->parameter;
+	res = (iscsid_get_connection_list_rsp_t *)(void *)rsp->parameter;
 	res->num_connections = num;
 	ent = res->connection;
 
 	TAILQ_FOREACH(curr, &sess->connections, link) {
-		conn = (connection_t *) curr;
+		conn = (connection_t *)(void *)curr;
 		ent->connection_id = conn->entry.sid;
 		ent->target_portal_id = conn->portal.sid;
 		ent->target_portal = conn->portal.addr;
@@ -628,7 +638,7 @@ get_connection_info(iscsid_get_connection_info_req_t * req,
 		return;
 	}
 	if (!req->connection_id.id && !req->connection_id.name[0]) {
-		conn = (connection_t *) TAILQ_FIRST(&sess->connections);
+		conn = (connection_t *)(void *)TAILQ_FIRST(&sess->connections);
 	} else if ((conn = find_connection(sess, &req->connection_id)) == NULL) {
 		UNLOCK_SESSIONS;
 		rsp->status = ISCSID_STATUS_INVALID_CONNECTION_ID;
@@ -644,7 +654,7 @@ get_connection_info(iscsid_get_connection_info_req_t * req,
 	if (conn->initiator_id)
 		init = find_initiator_id(conn->initiator_id);
 
-	res = (iscsid_get_connection_info_rsp_t *) rsp->parameter;
+	res = (iscsid_get_connection_info_rsp_t *)(void *)rsp->parameter;
 
 	res->session_id = sess->entry.sid;
 	res->connection_id = conn->entry.sid;
@@ -677,13 +687,16 @@ STATIC initiator_t *
 find_initiator_by_addr(uint8_t * addr)
 {
 	generic_entry_t *curr;
+	initiator_t *i = NULL;
 
-	TAILQ_FOREACH(curr, &list[INITIATOR_LIST].list, link)
-		if (strcmp((char *)((initiator_t *) curr)->address, (char *)addr) == 0)
+	TAILQ_FOREACH(curr, &list[INITIATOR_LIST].list, link) {
+		i = (void *)curr;
+		if (strcmp((char *)i->address, (char *)addr) == 0)
 			break;
+	}
 
-	DEB(9, ("Find_initiator_by_addr returns %x\n", (int) curr));
-	return (initiator_t *) curr;
+	DEB(9, ("Find_initiator_by_addr returns %p\n", curr));
+	return i;
 }
 
 
@@ -742,7 +755,7 @@ add_initiator_portal(iscsid_add_initiator_req_t *par, iscsid_response_t **prsp,
 	list[INITIATOR_LIST].num_entries++;
 	UNLOCK_SESSIONS;
 
-	res = (iscsid_add_initiator_rsp_t *) rsp->parameter;
+	res = (iscsid_add_initiator_rsp_t *)(void *)rsp->parameter;
 	res->portal_id = init->entry.sid.id;
 }
 
@@ -809,7 +822,7 @@ get_initiator_portal(iscsid_sym_id_t *par, iscsid_response_t **prsp,
 	if (rsp == NULL)
 		return;
 
-	res = (iscsid_get_initiator_rsp_t *) rsp->parameter;
+	res = (iscsid_get_initiator_rsp_t *)(void *)rsp->parameter;
 	res->portal_id = init->entry.sid;
 	strlcpy((char *)res->address, (char *)init->address, sizeof(res->address));
 }
@@ -837,9 +850,10 @@ select_initiator(void)
 		return NULL;
 
 	TAILQ_FOREACH(curr, &list[INITIATOR_LIST].list, link) {
-		if ((((initiator_t *) curr)->active_connections < ccnt)) {
-			ccnt = ((initiator_t *) curr)->active_connections;
-			imin = (initiator_t *) curr;
+		initiator_t *i = (void *)curr;
+		if ((i->active_connections < ccnt)) {
+			ccnt = i->active_connections;
+			imin = i;
 		}
 	}
 	return imin;
@@ -878,7 +892,7 @@ event_kill_session(uint32_t sid)
 
 	UNLOCK_SESSIONS;
 
-	while ((conn = (connection_t *) TAILQ_FIRST(&sess->connections)) != NULL) {
+	while ((conn = (connection_t *)(void *)TAILQ_FIRST(&sess->connections)) != NULL) {
 		TAILQ_REMOVE(&sess->connections, &conn->entry, link);
 
 		portal = find_portal_id(conn->portal.sid.id);

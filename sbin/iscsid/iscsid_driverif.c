@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_driverif.c,v 1.1 2011/10/23 21:11:23 agc Exp $	*/
+/*	$NetBSD: iscsid_driverif.c,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,6 @@ uint32_t
 set_node_name(iscsid_set_node_name_req_t * par)
 {
 	iscsi_set_node_name_parameters_t snp;
-	int rc;
 
 	(void) memset(&snp, 0x0, sizeof(snp));
 	if (!par->InitiatorName[0])
@@ -84,7 +83,7 @@ set_node_name(iscsid_set_node_name_req_t * par)
 
 	DEB(10, ("Setting Node Name: %s (%s)\n",
 			 snp.InitiatorName, snp.InitiatorAlias));
-	rc = ioctl(driver, ISCSI_SET_NODE_NAME, &snp);
+	(void)ioctl(driver, ISCSI_SET_NODE_NAME, &snp);
 	return snp.status;
 }
 
@@ -119,8 +118,8 @@ bind_socket(int sock, uint8_t * addr)
 	serverAddress.sin_len = host->h_length;
 	memcpy(&serverAddress.sin_addr, host->h_addr_list[0], host->h_length);
 
-	return bind(sock, (struct sockaddr *) &serverAddress,
-				sizeof(serverAddress)) >= 0;
+	return bind(sock, (struct sockaddr *)(void *)&serverAddress,
+				(socklen_t)sizeof(serverAddress)) >= 0;
 }
 
 
@@ -207,7 +206,7 @@ make_connection(session_t * sess, iscsid_login_req_t * req,
 			return NULL;
 		}
 		addr = &starget->addr;
-		target = (target_t *) starget;
+		target = (target_t *)(void *)starget;
 	} else {
 		if (NO_ID(&req->portal_id)
 			|| (portal = find_portal(&req->portal_id)) == NULL) {
@@ -216,8 +215,8 @@ make_connection(session_t * sess, iscsid_login_req_t * req,
 			/* if no ID was specified, use target from existing session */
 			if (NO_ID(&req->portal_id)) {
 				if (!sess->num_connections ||
-					((target =
-						find_target_id(TARGET_LIST, sess->target.sid.id)) == NULL)) {
+					((target = find_target_id(TARGET_LIST,
+					sess->target.sid.id)) == NULL)) {
 					res->status = ISCSID_STATUS_INVALID_PORTAL_ID;
 					return NULL;
 				}
@@ -236,7 +235,8 @@ make_connection(session_t * sess, iscsid_login_req_t * req,
 			/* if it's a second connection, use an available portal in the same */
 			/* portal group */
 			else {
-				conn = (connection_t *) TAILQ_FIRST(&sess->connections);
+				conn = (connection_t *)(void *)
+				    TAILQ_FIRST(&sess->connections);
 
 				if (conn == NULL ||
 					(portal = find_portal_id(conn->portal.sid.id)) == NULL) {
@@ -333,8 +333,8 @@ make_connection(session_t * sess, iscsid_login_req_t * req,
 	}
 
 	DEB(8, ("Connecting socket\n"));
-	if (connect(sock, (struct sockaddr *) &serverAddress,
-		sizeof(serverAddress)) < 0) {
+	if (connect(sock, (struct sockaddr *)(void *)&serverAddress,
+		(socklen_t)sizeof(serverAddress)) < 0) {
 		close(sock);
 		free(conn);
 		res->status = ISCSID_STATUS_CONNECT_ERROR;
@@ -343,7 +343,7 @@ make_connection(session_t * sess, iscsid_login_req_t * req,
 		return NULL;
 	}
 	/* speed up socket processing */
-	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &yes, sizeof(yes));
+	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &yes, (socklen_t)sizeof(yes));
 
 	/* setup login parameter structure */
 	loginp.socket = sock;
@@ -462,7 +462,8 @@ make_connection(session_t * sess, iscsid_login_req_t * req,
 	conn->session = sess;
 
 	if (stid == NULL) {
-		iscsid_login_rsp_t *rsp = (iscsid_login_rsp_t *) res->parameter;
+		iscsid_login_rsp_t *rsp = (iscsid_login_rsp_t *)(void *)
+		    res->parameter;
 
 		sess->entry.sid.id = loginp.session_id;
 		TAILQ_INSERT_TAIL(&sess->connections, &conn->entry, link);
@@ -579,14 +580,14 @@ event_recover_connection(uint32_t sid, uint32_t cid)
 		}
 	}
 
-	if (connect(sock, (struct sockaddr *) &serverAddress,
-		sizeof(serverAddress)) < 0) {
+	if (connect(sock, (struct sockaddr *)(void *)&serverAddress,
+		(socklen_t)sizeof(serverAddress)) < 0) {
 		DEB(1, ("Connecting to socket failed (error %d)\n", errno));
 		close(sock);
 		return;
 	}
 	/* speed up socket processing */
-	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &yes, sizeof(yes));
+	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &yes, (socklen_t)sizeof(yes));
 
 	conn->loginp.socket = sock;
 	conn->loginp.status = 0;
@@ -842,7 +843,7 @@ get_version(iscsid_response_t ** prsp, int *prsp_temp)
 	rsp = make_rsp(sizeof(iscsid_get_version_rsp_t), prsp, prsp_temp);
 	if (rsp == NULL)
 		return;
-	ver = (iscsid_get_version_rsp_t *) rsp->parameter;
+	ver = (iscsid_get_version_rsp_t *)(void *)rsp->parameter;
 
 	ver->interface_version = INTERFACE_VERSION;
 	ver->major = VERSION_MAJOR;
@@ -910,6 +911,7 @@ deregister_event_handler(void)
  */
 
 void *
+/*ARGSUSED*/
 event_handler(void *par)
 {
 	iscsi_wait_event_parameters_t evtp;

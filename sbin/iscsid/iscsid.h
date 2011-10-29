@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid.h,v 1.1 2011/10/23 21:11:23 agc Exp $	*/
+/*	$NetBSD: iscsid.h,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004,2006,2011 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ typedef enum {
 /* ==== Symbolic or numeric ID ==== */
 
 typedef struct {
-	int	id;
+	uint32_t id;
 	uint8_t	name[ISCSI_STRING_LENGTH];
 } iscsid_sym_id_t;
 
@@ -137,9 +137,9 @@ typedef struct {
 
 typedef struct {
 	struct {
-		int	HeaderDigest:1;
-		int	DataDigest:1;
-		int	MaxRecvDataSegmentLength:1;
+		unsigned int	HeaderDigest:1;
+		unsigned int	DataDigest:1;
+		unsigned int	MaxRecvDataSegmentLength:1;
 	} is_present;
 	iscsi_digest_t	HeaderDigest;
 	iscsi_digest_t	DataDigest;
@@ -280,13 +280,13 @@ typedef struct {
 	iscsid_list_kind_t	list_kind;
 	iscsid_sym_id_t		target_id;
 	struct {
-		int		HeaderDigest:1;
-		int		DataDigest:1;
-		int		MaxConnections:1;
-		int		DefaultTime2Wait:1;
-		int		DefaultTime2Retain:1;
-		int		MaxRecvDataSegmentLength:1;
-		int		ErrorRecoveryLevel:1;
+		unsigned int	HeaderDigest:1;
+		unsigned int	DataDigest:1;
+		unsigned int	MaxConnections:1;
+		unsigned int	DefaultTime2Wait:1;
+		unsigned int	DefaultTime2Retain:1;
+		unsigned int	MaxRecvDataSegmentLength:1;
+		unsigned int	ErrorRecoveryLevel:1;
 	} is_present;
 	iscsi_digest_t		HeaderDigest;
 	iscsi_digest_t		DataDigest;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_discover.c,v 1.1 2011/10/23 21:11:23 agc Exp $	*/
+/*	$NetBSD: iscsid_discover.c,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -66,22 +66,24 @@ ISNS_HANDLE isns_handle = ISNS_INVALID_HANDLE;
  */
 
 STATIC void
-xlate_ip(uint8_t * dest, size_t size, uint8_t * data)
+xlate_ip(uint8_t *dest, size_t size, void *data)
 {
 	uint16_t *wdt = (uint16_t *) data;
 	size_t	cc;
 	int i;
+	char *dst = (char *)dest;
+	char *dt = data;
 
 	for (i = 0; i < 5 && !wdt[i]; i++) {
 	}
 	if (i == 5 && wdt[5] == 0xffff) {
-		snprintf((char *)dest, size, "%d.%d.%d.%d",
-			data[12], data[13], data[14], data[15]);
+		snprintf(dst, size, "%d.%d.%d.%d",
+			dt[12], dt[13], dt[14], dt[15]);
 	} else {
 		for (cc = 0, i = 0; i < 7; i++) {
-			cc += snprintf((char *)&dest[cc], size - cc, "%x:", wdt[i]);
+			cc += snprintf(&dst[cc], size - cc, "%x:", wdt[i]);
 		}
-		snprintf((char *)&dest[cc], size - cc, "%x", wdt[7]);
+		snprintf(&dst[cc], size - cc, "%x", wdt[7]);
 	}
 }
 
@@ -102,7 +104,7 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 	int retval;
 	ISNS_TRANS t;
 	uint32_t tag;
-	int32_t data_len;
+	uint32_t data_len;
 	void *data_p;
 	uint32_t u32;
 	struct timespec tout = { 5, 0 };
@@ -112,9 +114,9 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 	char alias[ISCSI_STRING_LENGTH];
 	iscsi_portal_address_t addr;
 
-	if (ISNS_INVALID_TRANS == (t = isns_new_trans(isns_handle, isnsp_DevAttrQry,
-		MY_FLAGS))) {
-		DEBOUT(("get_targets iscsi_new_trans failed\n"));
+	t = isns_new_trans(isns_handle, isnsp_DevAttrQry, MY_FLAGS);
+	if (ISNS_INVALID_TRANS == t) {
+		DEBOUT(("%s: get_targets iscsi_new_trans failed\n", __func__));
 		return ISCSID_STATUS_NO_RESOURCES;
 	}
 	isns_add_string(t, isnst_iSCSIName, (char *)isns->reg_iscsi_name);
@@ -340,9 +342,9 @@ deregister_isns_server(isns_t * isns)
 	isns_add_string(t, isnst_iSCSIName, (char *)isns->reg_iscsi_name);
 	isns_add_tlv(t, isnst_Delimiter, 0, NULL);
 	isns_add_string(t, isnst_EID, (char *)isns->reg_entity_id);
-	isns_add_tlv(t, isnst_PortalIPAddr, sizeof(isns->reg_ip_addr),
+	isns_add_tlv(t, isnst_PortalIPAddr, (uint32_t)sizeof(isns->reg_ip_addr),
 				 isns->reg_ip_addr);
-	isns_add_tlv(t, isnst_PortalPort, sizeof(isns->reg_ip_port),
+	isns_add_tlv(t, isnst_PortalPort, (uint32_t)sizeof(isns->reg_ip_port),
 				 &isns->reg_ip_port);
 	isns_add_string(t, isnst_iSCSIName, (char *)isns->reg_iscsi_name);
 
@@ -381,14 +383,14 @@ register_isns_server(isns_t * isns)
 	isns_add_tlv(t, isnst_Delimiter, 0, NULL);
 	isns_add_string(t, isnst_EID, (char *)isns->reg_entity_id);
 	u32 = htonl(2);
-	isns_add_tlv(t, isnst_EntProtocol, sizeof(u32), &u32);
-	isns_add_tlv(t, isnst_PortalIPAddr, sizeof(isns->reg_ip_addr),
+	isns_add_tlv(t, isnst_EntProtocol, (uint32_t)sizeof(u32), &u32);
+	isns_add_tlv(t, isnst_PortalIPAddr, (uint32_t)sizeof(isns->reg_ip_addr),
 				 isns->reg_ip_addr);
-	isns_add_tlv(t, isnst_PortalPort, sizeof(isns->reg_ip_port),
+	isns_add_tlv(t, isnst_PortalPort, (uint32_t)sizeof(isns->reg_ip_port),
 				 &isns->reg_ip_port);
 	isns_add_string(t, isnst_iSCSIName, (char *)isns->reg_iscsi_name);	/*tag=32 */
 	u32 = htonl(2);
-	isns_add_tlv(t, isnst_iSCSINodeType, sizeof(u32), &u32);
+	isns_add_tlv(t, isnst_iSCSINodeType, (uint32_t)sizeof(u32), &u32);
 		/*tag=33 (node type = intiator) */
 
 	retval = isns_send_trans(t, &tout, &status);
@@ -424,15 +426,16 @@ get_registration_info(isns_t * isns)
 
 	/*Get our source IP and port numbers */
 	n = sizeof(sa);
-	if (getsockname(isns->sock, (struct sockaddr *) &sa, &n)) {
+	if (getsockname(isns->sock, (struct sockaddr *)(void *)&sa, &n)) {
 		DEBOUT(("Getsockname returned error %d\n", errno));
 		return ISCSID_STATUS_GENERAL_ERROR;
 	}
 	switch (sa.ss_family) {
 	case AF_INET:
 		{
-			struct sockaddr_in *si = (struct sockaddr_in *) &sa;
-			uint32_t *u32 = (uint32_t *) isns->reg_ip_addr;
+			struct sockaddr_in *si =
+			    (struct sockaddr_in *)(void *)&sa;
+			uint32_t *u32 = (uint32_t *)(void *)isns->reg_ip_addr;
 
 			u32[0] = u32[1] = 0;
 			u32[2] = htonl(0xffff);
@@ -443,7 +446,8 @@ get_registration_info(isns_t * isns)
 
 	case AF_INET6:
 		{
-			struct sockaddr_in6 *si = (struct sockaddr_in6 *) &sa;
+			struct sockaddr_in6 *si =
+			    (struct sockaddr_in6 *)(void *) &sa;
 
 			memcpy(isns->reg_ip_addr, &si->sin6_addr,
 					sizeof(isns->reg_ip_addr));
@@ -509,30 +513,31 @@ iscsi_isns_serverconn(isns_t * isns)
 	}
 
 	for (addr = ai; addr != NULL; addr = addr->ai_next) {
-		sock = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+		sock = socket(addr->ai_family, addr->ai_socktype,
+		    addr->ai_protocol);
 
-		if (sock < 0) {
-			DEBOUT(("iscsi_isns_serverconn: socket call FAILED!\n"));
+		if (sock == -1) {
+			DEBOUT(("%s: socket call FAILED!\n", __func__));
 			freeaddrinfo(ai);
-			return -1;
+			return (uint32_t)-1;
 		}
 
-		if (!connect(sock, addr->ai_addr, addr->ai_addrlen))
+		if (connect(sock, addr->ai_addr, addr->ai_addrlen) == -1)
 			break;
 
-		DEB(1, ("iscsi_isns_serverconn: connect call FAILED!\n"));
+		DEB(1, ("%s: connect call FAILED!\n", __func__));
 		close(sock);
 		sock = -1;
 	}
 
 	if (addr == NULL) {
-		DEBOUT(("isns_serverconn: couldn't connect!\n"));
+		DEBOUT(("%s: couldn't connect!\n", __func__));
 		freeaddrinfo(ai);
 		return ISCSID_STATUS_GENERAL_ERROR;
 	}
 
 	if (isns_add_servercon(isns_handle, sock, addr)) {
-		DEBOUT(("isns_serverconn FAILED!\n"));
+		DEBOUT(("%s: FAILED!\n", __func__));
 		close(sock);
 		freeaddrinfo(ai);
 		return ISCSID_STATUS_GENERAL_ERROR;
@@ -568,7 +573,7 @@ update_isns_server_info(isns_t * isns)
 	int retval;
 	ISNS_TRANS t;
 	uint32_t tag;
-	int32_t data_len;
+	uint32_t data_len;
 	void *data_p;
 	uint32_t u32;
 	struct timespec tout = { 5, 0 };
@@ -734,7 +739,7 @@ add_isns_server(iscsid_add_isns_server_req_t * req, iscsid_response_t ** prsp,
 		return;
 	}
 
-	res = (iscsid_add_isns_server_rsp_t *) rsp->parameter;
+	res = (iscsid_add_isns_server_rsp_t *)(void *)rsp->parameter;
 
 	/*
 	 * First, allocate the isns server structure to put on the list
@@ -794,9 +799,10 @@ get_isns_server(iscsid_sym_id_t * preq, iscsid_response_t ** prsp,
 		DEB(9, ("OUT get_isns_server: make_rsp FAILED!\n"));
 		return;
 	}
-	res = (iscsid_get_isns_server_rsp_t *) rsp->parameter;
+	res = (iscsid_get_isns_server_rsp_t *)(void *)rsp->parameter;
 
-	strlcpy((char *)res->address, (char *)isns->address, sizeof(res->address));
+	strlcpy((char *)res->address, (char *)isns->address,
+	    sizeof(res->address));
 	res->port = isns->port;
 	res->server_id = isns->entry.sid;
 	DEB(9, ("OUT get_isns_server: id = %d, address = %s\n",
@@ -834,9 +840,9 @@ refresh_isns_server(uint32_t id)
 		return ISCSID_STATUS_INVALID_ISNS_ID;
 
 	TAILQ_FOREACH(curr, &list[PORTAL_LIST].list, link) {
-		if (((portal_t *) curr)->portaltype == PORTAL_TYPE_ISNS &&
-			((portal_t *) curr)->discoveryid == id)
-			((portal_t *) curr)->portaltype = PORTAL_TYPE_REFRESHING;
+		portal_t *p = (portal_t *)(void *)curr;
+		if (p->portaltype == PORTAL_TYPE_ISNS && p->discoveryid == id)
+			p->portaltype = PORTAL_TYPE_REFRESHING;
 	}
 
 	rc = update_isns_server_info(isns);
@@ -849,9 +855,10 @@ refresh_isns_server(uint32_t id)
 
 	for (curr = TAILQ_FIRST(&list[PORTAL_LIST].list); curr != NULL;
 		 curr = next) {
+		portal_t *p = (portal_t *)(void *)curr;
 		next = TAILQ_NEXT(curr, link);
-		if (((portal_t *) curr)->portaltype == PORTAL_TYPE_REFRESHING)
-			delete_portal((portal_t *) curr, TRUE);
+		if (p->portaltype == PORTAL_TYPE_REFRESHING)
+			delete_portal(p, TRUE);
 	}
 
 	return rc;
@@ -894,9 +901,9 @@ remove_isns_server(iscsid_sym_id_t * preq)
 	free(isns);
 
 	TAILQ_FOREACH(curr, &list[PORTAL_LIST].list, link) {
-		if (((portal_t *) curr)->portaltype == PORTAL_TYPE_ISNS &&
-			((portal_t *) curr)->discoveryid == id)
-			((portal_t *) curr)->discoveryid = 0; /* mark deleted */
+		portal_t *p = (portal_t *)(void *)curr;
+		if (p->portaltype == PORTAL_TYPE_ISNS && p->discoveryid == id)
+			p->discoveryid = 0; /* mark deleted */
 	}
 
 	return ISCSID_STATUS_SUCCESS;
@@ -915,7 +922,7 @@ dereg_all_isns_servers(void)
 
 	plist = &list[ISNS_LIST].list;
 	TAILQ_FOREACH(curr, plist, link)
-		deregister_isns_server((isns_t *) curr);
+		deregister_isns_server((isns_t *)(void *)curr);
 }
 
 #endif
