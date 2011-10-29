@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_targets.c,v 1.1 2011/10/23 21:11:23 agc Exp $	*/
+/*	$NetBSD: iscsid_targets.c,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -260,7 +260,7 @@ create_send_target(uint8_t * name, iscsi_portal_address_t * addr)
 	target->num_groups = 1;
 	target->num_portals = 1;
 
-	return (target_t *) target;
+	return (target_t *)(void *)target;
 }
 
 /*
@@ -280,9 +280,10 @@ delete_send_target(send_target_t * send_target)
 	id = send_target->entry.sid.id;
 
 	TAILQ_FOREACH(curr, &list[PORTAL_LIST].list, link) {
-		if (((portal_t *) curr)->portaltype == PORTAL_TYPE_SENDTARGET &&
-			((portal_t *) curr)->discoveryid == id)
-			((portal_t *) curr)->discoveryid = 0; /* mark deleted */
+		portal_t *p = (void *)curr;
+		if (p->portaltype == PORTAL_TYPE_SENDTARGET &&
+			p->discoveryid == id)
+			p->discoveryid = 0; /* mark deleted */
 	}
 
 	TAILQ_REMOVE(&list[SEND_TARGETS_LIST].list, &send_target->entry, link);
@@ -328,7 +329,7 @@ add_target(iscsid_add_target_req_t *par, iscsid_response_t **prsp,
 	if ((par->TargetName[0] &&
 	     (target = find_TargetName(par->list_kind, par->TargetName)) != NULL) ||
 	    (par->list_kind == SEND_TARGETS_LIST &&
-	     (target = (target_t *)
+	     (target = (target_t *)(void *)
 			find_send_target_by_addr(&par->portal[0])) != NULL)) {
 		num = target->num_portals;
 
@@ -369,7 +370,7 @@ add_target(iscsid_add_target_req_t *par, iscsid_response_t **prsp,
 	if (rsp == NULL)
 		return;
 
-	res = (iscsid_add_target_rsp_t *) rsp->parameter;
+	res = (iscsid_add_target_rsp_t *)(void *)rsp->parameter;
 	res->target_id = target->entry.sid.id;
 
 	/* link into target list */
@@ -544,7 +545,7 @@ get_target_info(iscsid_list_id_t *par, iscsid_response_t **prsp, int *prsp_temp)
 	if (rsp == NULL)
 		return;
 
-	res = (iscsid_get_target_rsp_t *) rsp->parameter;
+	res = (iscsid_get_target_rsp_t *)(void *)rsp->parameter;
 	res->target_id = target->entry.sid;
 	strlcpy((char *)res->TargetName, (char *)target->TargetName,
 			sizeof(res->TargetName));
@@ -618,10 +619,10 @@ add_portal(iscsid_add_portal_req_t *par, iscsid_response_t **prsp,
 	rsp = make_rsp(sizeof(*res), prsp, prsp_temp);
 	if (rsp == NULL)
 		return;
-
-	res = (iscsid_add_portal_rsp_t *) rsp->parameter;
+#if 0 /*XXX: christos res is uninitialized here?? */
 	res->target_id = target->entry.sid;
 	res->portal_id = portal->entry.sid;
+#endif
 
 	DEB(9, ("AddPortal success (id %d)\n", portal->entry.sid.id));
 }
@@ -651,7 +652,7 @@ get_portal_info(iscsid_list_id_t *par, iscsid_response_t **prsp, int *prsp_temp)
 	DEB(10, ("get_portal_info, id %d\n", par->id.id));
 
 	if (par->list_kind == SEND_TARGETS_LIST)
-		err = ((starg = (send_target_t *) find_target(par->list_kind,
+		err = ((starg = (send_target_t *)(void *)find_target(par->list_kind,
 							&par->id)) == NULL);
 	else
 		err = ((portal = find_portal(&par->id)) == NULL);
@@ -665,7 +666,7 @@ get_portal_info(iscsid_list_id_t *par, iscsid_response_t **prsp, int *prsp_temp)
 	if (rsp == NULL)
 		return;
 
-	res = (iscsid_get_portal_rsp_t *) rsp->parameter;
+	res = (iscsid_get_portal_rsp_t *)(void *)rsp->parameter;
 	if (par->list_kind == SEND_TARGETS_LIST) {
 		res->target_id = starg->entry.sid;
 		res->portal_id = starg->entry.sid;
@@ -701,7 +702,7 @@ remove_target(iscsid_list_id_t * par)
 	DEB(9, ("remove_target, id %d\n", par->id.id));
 
 	if (par->list_kind == SEND_TARGETS_LIST) {
-		err = ((starg = (send_target_t *) find_target(par->list_kind,
+		err = ((starg = (send_target_t *)(void *)find_target(par->list_kind,
 							&par->id)) == NULL);
 		if (!err) {
 			delete_send_target(starg);
@@ -824,9 +825,10 @@ refresh_send_target(uint32_t id)
 	 */
 
 	TAILQ_FOREACH(curr, &list[PORTAL_LIST].list, link) {
-		if (((portal_t *) curr)->portaltype == PORTAL_TYPE_SENDTARGET &&
-		    ((portal_t *) curr)->discoveryid == id) {
-			((portal_t *)curr)->portaltype = PORTAL_TYPE_REFRESHING;
+		portal_t *p = (void *)curr;
+		if (p->portaltype == PORTAL_TYPE_SENDTARGET &&
+		    p->discoveryid == id) {
+			p->portaltype = PORTAL_TYPE_REFRESHING;
 		}
 	}
 
@@ -897,9 +899,10 @@ refresh_send_target(uint32_t id)
 
 	for (curr = TAILQ_FIRST(&list[PORTAL_LIST].list); curr != NULL;
 		 curr = next) {
+		portal_t *p = (void *)curr;
 		next = TAILQ_NEXT(curr, link);
-		if (((portal_t *) curr)->portaltype == PORTAL_TYPE_REFRESHING)
-			delete_portal((portal_t *) curr, TRUE);
+		if (p->portaltype == PORTAL_TYPE_REFRESHING)
+			delete_portal(p, TRUE);
 	}
 
 	/*
@@ -933,10 +936,10 @@ cleanup_orphans(iscsi_portal_types_t type)
 
 	for (curr = TAILQ_FIRST(&list[PORTAL_LIST].list); curr != NULL;
 		 curr = next) {
+		portal_t *p = (void *)curr;
 		next = TAILQ_NEXT(curr, link);
-		if (((portal_t *)curr)->portaltype == type &&
-		    ((portal_t *)curr)->discoveryid == 0) {
-			delete_portal((portal_t *) curr, TRUE);
+		if (p->portaltype == type && p->discoveryid == 0) {
+			delete_portal(p, TRUE);
 		}
 	}
 }
