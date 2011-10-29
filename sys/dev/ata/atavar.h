@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.82 2011/04/30 00:34:03 jakllsch Exp $	*/
+/*	$NetBSD: atavar.h,v 1.83 2011/10/29 18:43:58 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -229,10 +229,10 @@ struct ata_bio {
  *
  * This structure defines the interface between the ATA/ATAPI device driver
  * and the controller for short commands. It contains the command's parameter,
- * the len of data's to read/write (if any), and a function to call upon
+ * the length of data to read/write (if any), and a function to call upon
  * completion.
  * If no sleep is allowed, the driver can poll for command completion.
- * Once the command completed, if the error registed is valid, the flag
+ * Once the command completed, if the error registered is valid, the flag
  * AT_ERROR is set and the error register value is copied to r_error .
  * A separate interface is needed for read/write or ATAPI packet commands
  * (which need multiple interrupts per commands).
