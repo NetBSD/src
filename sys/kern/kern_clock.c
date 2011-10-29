@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.128 2011/07/27 14:35:33 uebayasi Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.129 2011/10/29 15:58:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.128 2011/07/27 14:35:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.129 2011/10/29 15:58:38 christos Exp $");
 
 #include "opt_ntp.h"
 #include "opt_perfctrs.h"
@@ -429,7 +429,32 @@ statclock(struct clockframe *frame)
 	}
 	spc->spc_pscnt = psdiv;
 
+        /*
+         * If the CPU is currently scheduled to a non-idle process, then charge
+         * that process with the appropriate VM resource utilization for a tick.
+         *
+         * Assume that the current process has been running the entire last
+         * tick, and account for VM use regardless of whether in user mode or
+         * system mode (XXX or interrupt mode?).
+         *
+         * rusage VM stats are expressed in kilobytes * ticks-of-execution.
+         */
+        /* based on code from 4.3BSD kern_clock.c and from FreeBSD */
+ 
 	if (p != NULL) {
+		struct vmspace *vm = p->p_vmspace;
+		struct rusage *ru = &p->p_stats->p_ru;
+		long rss;
+ 
+#define pg2kb(n)	(((n) * PAGE_SIZE) / 1024)
+		ru->ru_idrss += pg2kb(vm->vm_dsize); /* unshared data */
+		ru->ru_isrss += pg2kb(vm->vm_ssize); /* unshared stack */
+		ru->ru_ixrss += pg2kb(vm->vm_tsize); /* "shared" text? */
+ 
+		rss = pg2kb(vm_resident_count(vm));
+		if (rss > ru->ru_maxrss)
+			ru->ru_maxrss = rss;
+
 		atomic_inc_uint(&l->l_cpticks);
 		mutex_spin_exit(&p->p_stmutex);
 	}
