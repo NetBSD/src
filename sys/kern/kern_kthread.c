@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.36 2011/08/07 14:03:16 rmind Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.37 2011/10/29 20:11:08 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.36 2011/08/07 14:03:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.37 2011/10/29 20:11:08 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ kthread_join(lwp_t *l)
 
 	/*
 	 * - Wait if some other thread has occupied the target.
-	 * - Speicfy our kthread as a target and notify it.
+	 * - Specify our kthread as a target and notify it.
 	 * - Wait for the target kthread to notify us.
 	 */
 	mutex_enter(&kthread_lock);
