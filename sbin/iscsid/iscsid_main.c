@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_main.c,v 1.1 2011/10/23 21:11:23 agc Exp $	*/
+/*	$NetBSD: iscsid_main.c,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -143,8 +143,8 @@ init_daemon(void)
 	req.request = ISCSID_DAEMON_TEST;
 	req.parameter_length = 0;
 
-	i = sendto(sock, &req, sizeof(req), 0, (struct sockaddr *) &name,
-				sizeof(struct sockaddr_un));
+	i = sendto(sock, &req, sizeof(req), 0, (struct sockaddr *)(void *)&name,
+				(socklen_t)sizeof(struct sockaddr_un));
 	if (i == sizeof(req)) {
 		printf("Daemon already loaded!\n");
 		close(sock);
@@ -152,7 +152,7 @@ init_daemon(void)
 	}
 
 	unlink(ISCSID_SOCK_NAME);
-	if (bind(sock, (struct sockaddr *) &name, sizeof(struct sockaddr_un))) {
+	if (bind(sock, (struct sockaddr *)(void *)&name, (socklen_t)sizeof(struct sockaddr_un))) {
 		perror("binding name to socket");
 		return -1;
 	}
@@ -201,7 +201,7 @@ init_daemon(void)
  */
 
 iscsid_response_t *
-make_rsp(int len, iscsid_response_t ** prsp, int *prsp_temp)
+make_rsp(size_t len, iscsid_response_t ** prsp, int *prsp_temp)
 {
 	iscsid_response_t *rsp;
 
@@ -216,7 +216,7 @@ make_rsp(int len, iscsid_response_t ** prsp, int *prsp_temp)
 		rsp = *prsp;
 
 	memset (rsp, 0, len + sizeof(iscsid_response_t));
-	rsp->parameter_length = len;
+	rsp->parameter_length = (uint32_t)len;
 	return rsp;
 }
 
@@ -236,9 +236,10 @@ STATIC void
 process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 {
 	iscsid_response_t *rsp;
+	void *p = req->parameter;
 
 	*prsp_temp = FALSE;
-	*prsp = rsp = (iscsid_response_t *) rsp_buf;
+	*prsp = rsp = (iscsid_response_t *)(void *)rsp_buf;
 	rsp->parameter_length = 0;
 	rsp->status = ISCSID_STATUS_SUCCESS;
 
@@ -248,7 +249,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		add_target((iscsid_add_target_req_t *) req->parameter, prsp, prsp_temp);
+		add_target((iscsid_add_target_req_t *)p, prsp, prsp_temp);
 		break;
 
 	case ISCSID_ADD_PORTAL:
@@ -256,7 +257,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		add_portal((iscsid_add_portal_req_t *) req->parameter, prsp, prsp_temp);
+		add_portal((iscsid_add_portal_req_t *)p, prsp, prsp_temp);
 		break;
 
 	case ISCSID_SET_TARGET_OPTIONS:
@@ -264,8 +265,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		rsp->status = set_target_options((iscsid_get_set_target_options_t *)
-											req->parameter);
+		rsp->status = set_target_options((iscsid_get_set_target_options_t *)p);
 		break;
 
 	case ISCSID_GET_TARGET_OPTIONS:
@@ -282,8 +282,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		rsp->status = set_target_auth((iscsid_set_target_authentication_req_t *)
-										req->parameter);
+		rsp->status = set_target_auth((iscsid_set_target_authentication_req_t *)p);
 		break;
 
 	case ISCSID_SLP_FIND_TARGETS:
@@ -295,7 +294,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		rsp->status = refresh_targets((iscsid_refresh_req_t *) req->parameter);
+		rsp->status = refresh_targets((iscsid_refresh_req_t *)p);
 		break;
 
 	case ISCSID_REMOVE_TARGET:
@@ -303,7 +302,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		rsp->status = remove_target((iscsid_list_id_t *) req->parameter);
+		rsp->status = remove_target((iscsid_list_id_t *)p);
 		break;
 
 	case ISCSID_SEARCH_LIST:
@@ -311,8 +310,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		search_list((iscsid_search_list_req_t *) req->parameter,
-					prsp, prsp_temp);
+		search_list((iscsid_search_list_req_t *)p, prsp, prsp_temp);
 		break;
 
 	case ISCSID_GET_LIST:
@@ -320,7 +318,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		get_list((iscsid_get_list_req_t *) req->parameter, prsp, prsp_temp);
+		get_list((iscsid_get_list_req_t *)p, prsp, prsp_temp);
 		break;
 
 	case ISCSID_GET_TARGET_INFO:
@@ -328,7 +326,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		get_target_info((iscsid_list_id_t *) req->parameter, prsp, prsp_temp);
+		get_target_info((iscsid_list_id_t *)p, prsp, prsp_temp);
 		break;
 
 	case ISCSID_GET_PORTAL_INFO:
@@ -336,7 +334,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		get_portal_info((iscsid_list_id_t *) req->parameter, prsp, prsp_temp);
+		get_portal_info((iscsid_list_id_t *)p, prsp, prsp_temp);
 		break;
 
 #ifndef ISCSI_MINIMAL
@@ -345,7 +343,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		add_isns_server((iscsid_add_isns_server_req_t *) req->parameter,
+		add_isns_server((iscsid_add_isns_server_req_t *)p,
 						prsp, prsp_temp);
 		break;
 
@@ -354,7 +352,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		get_isns_server((iscsid_sym_id_t *) req->parameter, prsp, prsp_temp);
+		get_isns_server((iscsid_sym_id_t *)p, prsp, prsp_temp);
 		break;
 
 	case ISCSID_SLP_FIND_ISNS_SERVERS:
@@ -366,7 +364,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		rsp->status = remove_isns_server((iscsid_sym_id_t *) req->parameter);
+		rsp->status = remove_isns_server((iscsid_sym_id_t *)p);
 		break;
 #endif
 
@@ -375,7 +373,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		add_initiator_portal((iscsid_add_initiator_req_t *) req->parameter,
+		add_initiator_portal((iscsid_add_initiator_req_t *)p,
 							prsp, prsp_temp);
 		break;
 
@@ -384,8 +382,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		get_initiator_portal((iscsid_sym_id_t *) req->parameter,
-								prsp, prsp_temp);
+		get_initiator_portal((iscsid_sym_id_t *)p, prsp, prsp_temp);
 		break;
 
 	case ISCSID_REMOVE_INITIATOR_PORTAL:
@@ -393,8 +390,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		rsp->status = remove_initiator_portal((iscsid_sym_id_t *)
-												req->parameter);
+		rsp->status = remove_initiator_portal((iscsid_sym_id_t *)p);
 		break;
 
 	case ISCSID_LOGIN:
@@ -402,7 +398,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		login((iscsid_login_req_t *) req->parameter, rsp);
+		login((iscsid_login_req_t *)p, rsp);
 		break;
 
 	case ISCSID_ADD_CONNECTION:
@@ -410,7 +406,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		add_connection((iscsid_login_req_t *) req->parameter, rsp);
+		add_connection((iscsid_login_req_t *)p, rsp);
 		break;
 
 	case ISCSID_LOGOUT:
@@ -418,7 +414,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		rsp->status = logout((iscsid_sym_id_t *) req->parameter);
+		rsp->status = logout((iscsid_sym_id_t *)p);
 		break;
 
 	case ISCSID_REMOVE_CONNECTION:
@@ -426,8 +422,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		rsp->status = remove_connection((iscsid_remove_connection_req_t *)
-										req->parameter);
+		rsp->status = remove_connection((iscsid_remove_connection_req_t *)p);
 		break;
 
 	case ISCSID_GET_SESSION_LIST:
@@ -439,8 +434,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		get_connection_list((iscsid_sym_id_t *) req->parameter,
-							prsp, prsp_temp);
+		get_connection_list((iscsid_sym_id_t *)p, prsp, prsp_temp);
 		break;
 
 	case ISCSID_GET_CONNECTION_INFO:
@@ -448,7 +442,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		get_connection_info((iscsid_get_connection_info_req_t *) req->parameter,
+		get_connection_info((iscsid_get_connection_info_req_t *)p,
 							prsp, prsp_temp);
 		break;
 
@@ -457,8 +451,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		rsp->status = set_node_name((iscsid_set_node_name_req_t *)
-									req->parameter);
+		rsp->status = set_node_name((iscsid_set_node_name_req_t *)p);
 		break;
 
 	case ISCSID_GET_VERSION:
@@ -505,10 +498,12 @@ exit_daemon(void)
  */
 
 int
+/*ARGSUSED*/
 main(int argc, char **argv)
 {
 	int req_temp, rsp_temp;
-	int ret, len;
+	ssize_t ret;
+	size_t len;
 	struct sockaddr_un from;
 	socklen_t fromlen;
 	iscsid_request_t *req;
@@ -528,7 +523,7 @@ main(int argc, char **argv)
 #ifndef ISCSI_NOTHREAD
 	ret = pthread_create(&event_thread, NULL, event_handler, NULL);
 	if (ret) {
-		printf("Thread creation failed (%d)\n", ret);
+		printf("Thread creation failed (%zd)\n", ret);
 		close(client_sock);
 		unlink(ISCSID_SOCK_NAME);
 		deregister_event_handler();
@@ -543,7 +538,7 @@ main(int argc, char **argv)
 
 	for (;;) {
 		/* First, get size of request */
-		req = (iscsid_request_t *) req_buf;
+		req = (iscsid_request_t *)(void *)req_buf;
 		fromlen = sizeof(from);
 		len = sizeof(iscsid_request_t);
 
@@ -556,10 +551,10 @@ main(int argc, char **argv)
 		} while (ret == -1 && errno == EAGAIN);
 #else
 		ret = recvfrom(client_sock, req, len, MSG_PEEK | MSG_WAITALL,
-					 (struct sockaddr *) &from, &fromlen);
+					 (struct sockaddr *)(void *)&from, &fromlen);
 #endif
 
-		if (ret != len) {
+		if ((size_t)ret != len) {
 			perror("Receiving from socket");
 			break;
 		}
@@ -574,15 +569,15 @@ main(int argc, char **argv)
 		if (req_temp) {
 			req = malloc(len);
 			if (!req) {
-				printf("Can't alloc %d bytes\n", len);
+				printf("Can't alloc %zu bytes\n", len);
 				break;
 			}
 		}
 		/* read the complete request */
 		fromlen = sizeof(from);
 		ret = recvfrom(client_sock, req, len, MSG_WAITALL,
-						(struct sockaddr *) &from, &fromlen);
-		if (ret != len) {
+						(struct sockaddr *)(void *)&from, &fromlen);
+		if ((size_t)ret != len) {
 			DEBOUT(("Error receiving from socket!\n"));
 			if (req_temp)
 				free(req);
@@ -615,8 +610,8 @@ main(int argc, char **argv)
 		/* send the response */
 		len = sizeof(iscsid_response_t) + rsp->parameter_length;
 		ret = sendto(client_sock, rsp, len, 0,
-					(struct sockaddr *) &from, fromlen);
-		if (len != ret) {
+					(struct sockaddr *)(void *)&from, fromlen);
+		if (len != (size_t)ret) {
 			DEBOUT(("Error sending reply!\n"));
 		}
 		/* free temp buffers if we needed them */
