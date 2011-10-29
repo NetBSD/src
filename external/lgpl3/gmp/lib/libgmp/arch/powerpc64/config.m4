@@ -28,7 +28,7 @@ changequote(`,')
 ifdef(`__CONFIG_M4_INCLUDED__',,`
 include(CONFIG_TOP_SRCDIR`/mpn/asm-defs.m4')
 include_mpn(`powerpc32/powerpc-defs.m4')
-include_mpn(`powerpc32/elf.m4')
+include_mpn(`powerpc64/elf.m4')
 define_not_for_expansion(`HAVE_HOST_CPU_powerpc64')
 define_not_for_expansion(`HAVE_ABI_mode32')
 define_not_for_expansion(`HAVE_LIMB_BIG_ENDIAN')
