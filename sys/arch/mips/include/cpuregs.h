@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.87 2011/09/22 05:08:52 macallan Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.88 2011/10/29 18:56:49 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -904,6 +904,11 @@
 #define	MIPS_24KE	0x96	/* MIPS 24KEc			ISA 32  Rel 2 */
 #define	MIPS_74K	0x97	/* MIPS 74Kc/74Kf		ISA 32  Rel 2 */
 #define	MIPS_1004K	0x99	/* MIPS 1004Kc/1004Kf		ISA 32  Rel 2 */
+
+/*
+ * CPU processor revision IDs for company ID == 2 (Broadcom)
+ */
+#define	MIPS_BCM3302	0x90	/* MIPS 4KEc_R2-like?		ISA 32  Rel 2 */
 
 /*
  * Alchemy (company ID 3) use the processor ID field to donote the CPU core
