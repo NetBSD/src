@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.6 2011/08/16 06:58:15 matt Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.7 2011/10/29 20:55:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.6 2011/08/16 06:58:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.7 2011/10/29 20:55:36 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -109,8 +109,8 @@ mips_fpu_state_save(lwp_t *l)
 		___STRING(COP0_HAZARD_FPUENABLE)
 		"cfc1	%1, $31"	"\n\t"
 		"cfc1	%1, $31"	"\n\t"
+		".set at"		"\n\t"
 		".set reorder"		"\n\t"
-		".set at"
 	    :	"=&r" (status), "=r"(fpcsr)
 	    :	"r"(tf->tf_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR|MIPS_SR_KX|MIPS_SR_INT_IE)),
 		"n"(MIPS_COP_0_STATUS));
@@ -236,8 +236,8 @@ mips_fpu_state_load(lwp_t *l, bool used)
 		"mfc0	%0, $%2" 			"\n\t"
 		"mtc0	%1, $%2"			"\n\t"
 		___STRING(COP0_HAZARD_FPUENABLE)
+		".set at"				"\n\t"
 		".set reorder"				"\n\t"
-		".set at"
 	    : "=&r"(status)
 	    : "r"(tf->tf_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR|MIPS_SR_KX|MIPS_SR_INT_IE)), "n"(MIPS_COP_0_STATUS));
 
@@ -334,9 +334,10 @@ mips_fpu_state_load(lwp_t *l, bool used)
 		".set noreorder"	"\n\t"
 		".set noat"		"\n\t"
 		"ctc1	%0, $31"	"\n\t"
+		"nop"			"\n\t"	/* XXX: Hack */
 		"mtc0	%1, $%2"	"\n\t"
+		".set at"		"\n\t"
 		".set reorder"		"\n\t"
-		".set at"
 	    ::	"r"(fpcsr &~ MIPS_FPU_EXCEPTION_BITS), "r"(status),
 		"n"(MIPS_COP_0_STATUS));
 }
