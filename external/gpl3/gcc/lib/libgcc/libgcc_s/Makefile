@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/10/28 02:28:01 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2011/10/29 17:14:12 christos Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -22,7 +22,7 @@ LDFLAGS+=	-nodefaultlibs
 LDFLAGS+=	-Wl,--version-script=${.OBJDIR}/libgcc.map
 
 # XXX handle this better?
-.if ${MACHINE} == "emips" || (${MACHINE_CPU} == "mips" && !(${MKSOFTFLOAT} != "no"))
+.if ${MACHINE} == "emips"
 G_LIB2ADD_HACK+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
 			${GNUHOSTDIST}/gcc/config/floatunsisf.c
 .endif
