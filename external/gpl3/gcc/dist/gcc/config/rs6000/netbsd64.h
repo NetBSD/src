@@ -160,7 +160,6 @@ extern int dot_symbols;
     %{mcall-freebsd: -mbig} \
     %{mcall-i960-old: -mlittle} \
     %{mcall-linux: -mbig} \
-    %{mcall-netbsd: -mbig} \
     %{mcall-gnu: -mbig} \
     %{mcall-netbsd: -mbig} \
 }}}}"
@@ -287,7 +286,7 @@ extern int dot_symbols;
 	  builtin_define ("__PPC64__");			\
 	  builtin_define ("__powerpc__");		\
 	  builtin_define ("__powerpc64__");		\
-	  builtin_define ("__PIC__");			\
+	  builtin_define_with_int_value ("__PIC__", 2);	\
 	  builtin_assert ("cpu=powerpc64");		\
 	  builtin_assert ("machine=powerpc64");		\
 	}						\
