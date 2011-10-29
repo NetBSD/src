@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_globals.h,v 1.1 2011/10/23 21:11:23 agc Exp $	*/
+/*	$NetBSD: iscsid_globals.h,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -417,7 +417,7 @@ int debug_level;				/* How much info to display */
 
 /* iscsid_main.c */
 
-iscsid_response_t *make_rsp(int, iscsid_response_t **, int *);
+iscsid_response_t *make_rsp(size_t, iscsid_response_t **, int *);
 void exit_daemon(void);
 
 /* iscsid_lists.c */
@@ -431,38 +431,42 @@ target_t *find_TargetName(iscsid_list_kind_t, uint8_t *);
 portal_t *find_portal_by_addr(target_t *, iscsi_portal_address_t *);
 send_target_t *find_send_target_by_addr(iscsi_portal_address_t *);
 
-#define find_isns_id(id) (isns_t *)find_id (&list [ISNS_LIST].list, id)
-#define find_session_id(id) (session_t *)find_id (&list [SESSION_LIST].list, id)
+#define find_isns_id(id) \
+   (isns_t *)(void *)find_id(&list [ISNS_LIST].list, id)
+#define find_session_id(id) \
+   (session_t *)(void *)find_id(&list [SESSION_LIST].list, id)
 #define find_connection_id(session, id) \
-				(connection_t *)find_id (&session->connections, id)
+   (connection_t *)(void *)find_id(&session->connections, id)
 #define find_portal_id(id) \
-				(portal_t *)find_id (&list [PORTAL_LIST].list, id)
-#define find_target_id(lst, id) (target_t *)find_id (&list [lst].list, id)
+   (portal_t *)(void *)find_id(&list [PORTAL_LIST].list, id)
+#define find_target_id(lst, id) \
+   (target_t *)(void *)find_id(&list [lst].list, id)
 #define find_send_target_id(id) \
-				(send_target_t *)find_id (&list [SEND_TARGETS_LIST].list, id)
+   (send_target_t *)(void *)find_id(&list [SEND_TARGETS_LIST].list, id)
 #define find_initiator_id(id) \
-				(initiator_t *)find_id (&list [INITIATOR_LIST].list, id)
-
-#define find_isns_name(name) (isns_t *)find_name (&list [ISNS_LIST].list, name)
+   (initiator_t *)(void *)find_id(&list [INITIATOR_LIST].list, id)
+#define find_isns_name(name) \
+   (isns_t *)(void *)find_name(&list [ISNS_LIST].list, name)
 #define find_session_name(name) \
-				(session_t *)find_name (&list [SESSION_LIST].list, name)
+   (session_t *)(void *)find_name(&list [SESSION_LIST].list, name)
 #define find_connection_name(session, name) \
-				(connection_t *)find_name (&session->connections, name)
+   (connection_t *)(void *)find_name(&session->connections, name)
 #define find_portal_name(name) \
-				(portal_t *)find_name (&list [PORTAL_LIST].list, name)
+   (portal_t *)(void *)find_name(&list [PORTAL_LIST].list, name)
 #define find_target_symname(lst, name) \
-				(target_t *)find_name (&list [lst].list, name)
+   (target_t *)(void *)find_name(&list [lst].list, name)
 #define find_initiator_name(name) \
-				(initiator_t *)find_name (&list [INITIATOR_LIST].list, name)
-
-#define find_isns(sid) (isns_t *)find_sym_id (&list [ISNS_LIST].list, sid)
+   (initiator_t *)(void *)find_name(&list [INITIATOR_LIST].list, name)
+#define find_isns(sid) \
+   (isns_t *)(void *)find_sym_id(&list [ISNS_LIST].list, sid)
 #define find_session(sid) \
-				(session_t *)find_sym_id (&list [SESSION_LIST].list, sid)
+   (session_t *)(void *)find_sym_id(&list [SESSION_LIST].list, sid)
 #define find_connection(session, sid) \
-				(connection_t *)find_sym_id (&session->connections, sid)
-#define find_portal(sid) (portal_t *)find_sym_id (&list [PORTAL_LIST].list, sid)
+   (connection_t *)(void *)find_sym_id(&session->connections, sid)
+#define find_portal(sid) \
+   (portal_t *)(void *)find_sym_id(&list [PORTAL_LIST].list, sid)
 #define find_initiator(sid) \
-				(initiator_t *)find_sym_id (&list [INITIATOR_LIST].list, sid)
+   (initiator_t *)(void *)find_sym_id(&list [INITIATOR_LIST].list, sid)
 
 void get_list(iscsid_get_list_req_t *, iscsid_response_t **, int *);
 void search_list(iscsid_search_list_req_t *, iscsid_response_t **, int *);
