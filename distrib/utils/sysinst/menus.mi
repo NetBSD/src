@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.42 2011/04/17 12:33:42 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.43 2011/10/30 00:30:56 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -344,19 +344,20 @@ menu localdirsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Set_dir, set_dir, 60); };
 
 menu namesrv6, title MSG_Select_IPv6_DNS_server;
-	option "ns-wide.wide.ad.jp", exit, action
+	option "google-public-dns-a.google.com", exit, action
 		{
 #ifdef INET6
-		  strlcpy(net_namesvr6, "2001:200:0:1::f", sizeof(net_namesvr6));
+		  strlcpy(net_namesvr6, "2001:4860:4860::8888",
+		      sizeof(net_namesvr6));
 		  yesno = 1;
 #else
 		  yesno = 0;
 #endif
 		}; 
-	option "light.imasy.or.jp", exit, action
+	option "google-public-dns-b.google.com", exit, action
 		{
 #ifdef INET6
-		  strlcpy(net_namesvr6, "2001:200:300:1:2a0:c9ff:fe61:6521",
+		  strlcpy(net_namesvr6, "2001:4860:4860::8844",
 		      sizeof(net_namesvr6));
 		  yesno = 1;
 #else
