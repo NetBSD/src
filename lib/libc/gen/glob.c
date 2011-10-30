@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.30 2011/05/14 22:44:06 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.31 2011/10/30 21:53:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.30 2011/05/14 22:44:06 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.31 2011/10/30 21:53:43 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -180,8 +180,8 @@ static void	 qprintf(const char *, Char *);
 #endif
 
 int
-glob(const char *pattern, int flags, int (*errfunc)(const char *, int),
-    glob_t *pglob)
+glob(const char * __restrict pattern, int flags, int (*errfunc)(const char *,
+    int), glob_t * __restrict pglob)
 {
 	const u_char *patnext;
 	int c;
