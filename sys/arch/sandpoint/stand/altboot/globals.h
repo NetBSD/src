@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.12 2011/03/26 17:55:05 phx Exp $ */
+/* $NetBSD: globals.h,v 1.13 2011/10/30 21:08:33 phx Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -49,7 +49,9 @@ void read_mac_from_flash(uint8_t *);
 /* PPC processor ctl */
 void __syncicache(void *, size_t);
 
-/* byte swap access */
+/* i/o access */
+void out8(unsigned, unsigned);
+unsigned in8(unsigned);
 void out16rb(unsigned, unsigned);
 void out32rb(unsigned, unsigned);
 unsigned in16rb(unsigned);
