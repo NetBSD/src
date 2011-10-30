@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.686 2011/10/28 06:28:48 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.687 2011/10/30 08:50:14 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -49,13 +49,14 @@ TOOLCHAIN_MISSING?=	no
 #
 # Platforms using GCC 4.5
 #
-.if ${MACHINE_ARCH} == "hppa"	  || \
-    ${MACHINE_ARCH} == "i386"     || \
-    ${MACHINE_CPU}  == "mips"     || \
-    ${MACHINE_ARCH} == "powerpc"  || \
-    ${MACHINE_CPU}  == "sh3"      || \
-    ${MACHINE_ARCH} == "sparc"    || \
-    ${MACHINE_ARCH} == "sparc64"  || \
+.if ${MACHINE_ARCH} == "hppa"	   || \
+    ${MACHINE_ARCH} == "i386"      || \
+    ${MACHINE_CPU}  == "mips"      || \
+    ${MACHINE_ARCH} == "powerpc"   || \
+    ${MACHINE_ARCH} == "powerpc64" || \
+    ${MACHINE_CPU}  == "sh3"       || \
+    ${MACHINE_ARCH} == "sparc"     || \
+    ${MACHINE_ARCH} == "sparc64"   || \
     ${MACHINE_ARCH} == "x86_64"
 HAVE_GCC?=    45
 .endif
@@ -78,12 +79,13 @@ USE_COMPILERCRTSTUFF?=	yes
 #
 # Platforms using GDB 7
 #
-.if ${MACHINE_ARCH} == "i386"     || \
-    ${MACHINE_ARCH} == "x86_64"   || \
-    ${MACHINE_ARCH} == "sparc64"  || \
-    ${MACHINE_ARCH} == "sparc"    || \
-    ${MACHINE_ARCH} == "arm"      || \
-    ${MACHINE_ARCH} == "powerpc"  || \
+.if ${MACHINE_ARCH} == "i386"      || \
+    ${MACHINE_ARCH} == "x86_64"    || \
+    ${MACHINE_ARCH} == "sparc64"   || \
+    ${MACHINE_ARCH} == "sparc"     || \
+    ${MACHINE_ARCH} == "arm"       || \
+    ${MACHINE_ARCH} == "powerpc"   || \
+    ${MACHINE_ARCH} == "powerpc64" || \
     ${MACHINE_CPU}  == "m68k"
 HAVE_GDB?= 7
 .else
