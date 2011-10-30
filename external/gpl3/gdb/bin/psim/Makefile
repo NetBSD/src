@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/10/09 01:59:31 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2011/10/30 00:11:28 christos Exp $
 
 NOMAN=	# defined
 
@@ -44,8 +44,8 @@ LIBIBERTYDIR!=	cd ${.CURDIR}/../../lib/libiberty && ${PRINTOBJDIR}
 LDADD+=		-L${LIBIBERTYDIR} -liberty
 DPADD+=		${LIBIBERTYDIR}/libiberty.a
 
-LDADD+=		-lintl
-DPADD+=		${LIBINTL}
+LDADD+=		-lintl -lz
+DPADD+=		${LIBINTL} ${LIBZ}
 
 CLEANFILES+=	version.c
 
