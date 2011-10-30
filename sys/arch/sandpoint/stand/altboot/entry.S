@@ -1,4 +1,4 @@
-/* $NetBSD: entry.S,v 1.3 2011/03/13 15:23:43 phx Exp $ */
+/* $NetBSD: entry.S,v 1.4 2011/10/30 20:42:09 phx Exp $ */
 
 #include <powerpc/psl.h>
 #include <powerpc/spr.h>
@@ -20,13 +20,20 @@ _start:
 	mr	28,6
 	mr	29,7
 
+	/* Disable interrupts and everything except the MMU. */
+	mfmsr	3
+	andi.	3,3,PSL_DR|PSL_IR
+	mtmsr	3
+	isync
+
 	/*
 	 * U-Boot/PPCBoot forgets to flush the cache when using the "bootm"
 	 * command, so we have to do that now.
 	 */
 	lis	11,_start@ha
 	addi	11,11,_start@l
-	andi.	11,11,~31@l
+	li	10,-32
+	and	11,11,10
 	lis	12,(_edata+31)@ha
 	addi	12,12,(_edata+31)@l
 	bl	syncicache
@@ -41,8 +48,8 @@ _start:
 	mfmsr	0
 	andi.	0,0,PSL_DR
 	beq	2f
-	lis	5, 0xfec00000@ha	/* CONFIG_ADDR of PCI */
-	lis	6, 0xfee00000@ha	/* CONFIG_DATA of PCI */
+	lis	5,0xfec00000@ha		/* CONFIG_ADDR of PCI */
+	lis	6,0xfee00000@ha		/* CONFIG_DATA of PCI */
 	mfspr	3,SPR_DBAT0U
 	mfspr	4,SPR_DBAT0L
 	bl	dbat_sanity_check
@@ -104,13 +111,18 @@ _start:
 	b	5b
 
 6:
-	/* prepare stack at +1MB from _start. */
-	lis	1,_start@h
-	ori	1,1,_start@l
-	addis	1,1,0x10
-	addi	1,1,-4
+	/* prepare stack at +1MB from _start, 16-byte aligned */
+	lis	1,_start@ha
+	addi	1,1,_start@l
+	addis	1,1,0x100000@ha
+	li	10,-16
+	and	1,1,10
+	stw	0,0(1)
 
 	bl	brdsetup
+#ifdef DEBUG
+	bl	init_vectors
+#endif
 	mr	3,30
 	mr	4,31
 	mr	5,28
@@ -152,7 +164,7 @@ dbat_sanity_check:
  */
 	.globl	run
 run:
-	mtctr	7 	/* hat trick jump to entry point */
+	mtctr	7			/* hat trick jump to entry point */
 	bctr
 
 /*
@@ -198,37 +210,114 @@ newaltboot_end:
 /*
  * reverse endian access to mimic outw/outl/inw/inl
  */
-	.globl out16rb
-	.globl iohtole16
+	.globl	out16rb
+	.globl	iohtole16
 out16rb:
 iohtole16:
 	sthbrx	4,0,3
 	eieio
 	blr 
 
-	.globl out32rb
-	.globl iohtole32
+	.globl	out32rb
+	.globl	iohtole32
 out32rb:
 iohtole32:
 	stwbrx	4,0,3
 	eieio
 	blr
 
-	.global in16rb
-	.global iole16toh
+	.globl	in16rb
+	.globl	iole16toh
 in16rb:
 iole16toh:
 	lhbrx	3,0,3
 	eieio
 	blr
 
-	.global in32rb
-	.global iole32toh
+	.globl	in32rb
+	.globl	iole32toh
 in32rb:
 iole32toh:
 	lwbrx	3,0,3
 	eieio
 	blr
+
+#ifdef DEBUG
+	/*
+	 * Call an exception handler, which prints out all information
+	 * about the type of exception, cpu registers, stack frame
+	 * backtrace, etc.
+	 * Use a new stack at 0x2000 and make room for 32 GPRs, and 15
+	 * special registers. The layout will be:
+	 * 0x00: link area
+	 * 0x10: R0
+	 * ...
+	 * 0x8c: R31
+	 * 0x90: CR, XER, LR, CTR
+	 * 0xa0: SRR0, SRR1, DAR, DSISR
+	 * 0xb0: DMISS, DCMP, HASH1, HASH2
+	 * 0xc0: IMISS, ICMP, RPA
+	 *
+	 */
+	.globl	trap
+trap:
+	mtsprg1	1
+	mfmsr	1
+	andis.	1,1,PSL_TGPR@h
+	beq	1f
+	andi.	1,1,0xffff		/* make sure TGPR is disabled */
+	mtmsr	1
+	isync
+	mtsprg1	1			/* and save the real r1 again */
+1:	li	1,0x2000-16-(32*4+15*4)
+	stmw	2,24(1)			/* save r2..r31 */
+	stw	0,16(1)			/* save r0 */
+	mfsprg1	3
+	stw	3,20(1)			/* and finally r1 */
+	mfcr	3
+	stw	3,0x90(1)
+	mfxer	3
+	stw	3,0x94(1)
+	mflr	3
+	stw	3,0x98(1)
+	mfctr	3
+	stw	3,0x9c(1)
+	mfsrr0	3
+	stw	3,0xa0(1)
+	mfsrr1	3
+	stw	3,0xa4(1)
+	mfdar	3
+	stw	3,0xa8(1)
+	mfdsisr	3
+	stw	3,0xac(1)
+	mfspr	3,976
+	stw	3,0xb0(1)
+	mfspr	3,977
+	stw	3,0xb4(1)
+	mfspr	3,978
+	stw	3,0xb8(1)
+	mfspr	3,979
+	stw	3,0xbc(1)
+	mfspr	3,980
+	stw	3,0xc0(1)
+	mfspr	3,981
+	stw	3,0xc4(1)
+	mfspr	3,982
+	stw	3,0xc8(1)
+	bl	call_handler
+call_handler:
+	lis	11,exception_handler@ha
+	addi	11,11,exception_handler@l
+	mtsrr0	11
+	li	0,PSL_DR|PSL_IR
+	mtsrr1	0
+	mflr	3
+	subi	3,3,call_handler-trap
+	addi	4,1,16
+	rfi
+	.globl	trap_end
+trap_end:
+#endif
 
 	.data
 #define	xBATL(pa, wimg, pp)						\
