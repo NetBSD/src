@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_daemonif.c,v 1.1 2011/10/23 21:11:23 agc Exp $	*/
+/*	$NetBSD: iscsic_daemonif.c,v 1.2 2011/10/30 18:40:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ do_add_target(int argc, char **argv, iscsid_list_kind_t kind)
 	if (rsp->status) {
 		status_error(rsp->status);
 	}
-	res = (iscsid_add_target_rsp_t *) rsp->parameter;
+	res = (iscsid_add_target_rsp_t *)(void *)rsp->parameter;
 	tid = res->target_id;
 
 	if (kind == SEND_TARGETS_LIST) {
@@ -269,6 +269,7 @@ remove_target(int argc, char **argv)
  */
 
 int
+/*ARGSUSED*/
 slp_find_targets(int argc, char **argv)
 {
 	printf("Not implemented\n");
@@ -324,7 +325,7 @@ add_portal(int argc, char **argv)
 	if (rsp->status) {
 		status_error(rsp->status);
 	}
-	res = (iscsid_add_portal_rsp_t *) rsp->parameter;
+	res = (iscsid_add_portal_rsp_t *)(void *)rsp->parameter;
 
 	printf("Added Portal %d to Target %d\n",
 		res->portal_id.id, res->target_id.id);
@@ -361,7 +362,7 @@ show_target(uint32_t id, iscsid_list_kind_t kind)
 	if (trsp->status) {
 		status_error(trsp->status);
 	}
-	targ = (iscsid_get_target_rsp_t *) trsp->parameter;
+	targ = (iscsid_get_target_rsp_t *)(void *)trsp->parameter;
 
 	/* display basic target info */
 	printf("%6d", targ->target_id.id);
@@ -382,7 +383,7 @@ show_target(uint32_t id, iscsid_list_kind_t kind)
 		if (prsp->status) {
 			status_error(prsp->status);
 		}
-		port = (iscsid_get_portal_rsp_t *) prsp->parameter;
+		port = (iscsid_get_portal_rsp_t *)(void *)prsp->parameter;
 
 		printf("   %6d", port->portal_id.id);
 		if (port->portal_id.name[0]) {
@@ -427,7 +428,7 @@ do_list_targets(int argc, char **argv, iscsid_list_kind_t kind)
 	if (rsp->status) {
 		status_error(rsp->status);
 	}
-	list = (iscsid_get_list_rsp_t *) rsp->parameter;
+	list = (iscsid_get_list_rsp_t *)(void *)rsp->parameter;
 
 	/* display all targets */
 	for (i = 0; i < list->num_entries; i++) {
@@ -530,7 +531,7 @@ add_isns_server(int argc, char **argv)
 	if (rsp->status) {
 		status_error(rsp->status);
 	}
-	res = (iscsid_add_isns_server_rsp_t *) rsp->parameter;
+	res = (iscsid_add_isns_server_rsp_t *)(void *)rsp->parameter;
 
 	printf("Added iSNS Server ID %d\n", res->server_id);
 
@@ -595,6 +596,7 @@ remove_isns_server(int argc, char **argv)
  */
 
 int
+/*ARGSUSED*/
 find_isns_servers(int argc, char **argv)
 {
 	printf("Not implemented\n");
@@ -631,7 +633,7 @@ list_isns_servers(int argc, char **argv)
 	if (rsp->status) {
 		status_error(rsp->status);
 	}
-	list = (iscsid_get_list_rsp_t *) rsp->parameter;
+	list = (iscsid_get_list_rsp_t *)(void *)rsp->parameter;
 
 	/* display all servers */
 	for (i = 0; i < list->num_entries; i++) {
@@ -641,7 +643,7 @@ list_isns_servers(int argc, char **argv)
 		if (prsp->status)
 			status_error(prsp->status);
 
-		isns = (iscsid_get_isns_server_rsp_t *) prsp->parameter;
+		isns = (iscsid_get_isns_server_rsp_t *)(void *)prsp->parameter;
 		printf("%6d: %s\n", list->id[i], isns->address);
 		free_response(prsp);
 	}
@@ -694,7 +696,7 @@ add_initiator(int argc, char **argv)
 	if (rsp->status) {
 		status_error(rsp->status);
 	}
-	res = (iscsid_add_initiator_rsp_t *) rsp->parameter;
+	res = (iscsid_add_initiator_rsp_t *)(void *)rsp->parameter;
 	printf("Added Initiator Portal %d\n", res->portal_id);
 
 	free_response(rsp);
@@ -763,7 +765,7 @@ list_initiators(int argc, char **argv)
 	if (rsp->status) {
 		status_error(rsp->status);
 	}
-	list = (iscsid_get_list_rsp_t *) rsp->parameter;
+	list = (iscsid_get_list_rsp_t *)(void *)rsp->parameter;
 
 	/* display all servers */
 	for (i = 0; i < list->num_entries; i++) {
@@ -773,7 +775,7 @@ list_initiators(int argc, char **argv)
 		if (prsp->status) {
 			status_error(prsp->status);
 		}
-		init = (iscsid_get_initiator_rsp_t *) prsp->parameter;
+		init = (iscsid_get_initiator_rsp_t *)(void *)prsp->parameter;
 		printf("%6d", init->portal_id.id);
 		if (init->portal_id.name[0]) {
 			printf("[%s]", init->portal_id.name);
@@ -908,7 +910,7 @@ login(int argc, char **argv)
 	if (rsp->status) {
 		status_error(rsp->status);
 	}
-	res = (iscsid_login_rsp_t *) rsp->parameter;
+	res = (iscsid_login_rsp_t *)(void *)rsp->parameter;
 	printf("Created Session %d, Connection %d\n",
 		res->session_id.id, res->connection_id.id);
 
@@ -1057,7 +1059,7 @@ list_sessions(int argc, char **argv)
 	if (lrsp->status) {
 		status_error(lrsp->status);
 	}
-	list = (iscsid_get_session_list_rsp_t *) lrsp->parameter;
+	list = (iscsid_get_session_list_rsp_t *)(void *)lrsp->parameter;
 
 	for (i = 0, ent = list->session; i < list->num_entries; i++, ent++) {
 		creq.session_id.id = ent->session_id.id;
@@ -1066,7 +1068,7 @@ list_sessions(int argc, char **argv)
 		if (rsp->status) {
 			status_error(rsp->status);
 		}
-		info = (iscsid_get_connection_info_rsp_t *) rsp->parameter;
+		info = (iscsid_get_connection_info_rsp_t *)(void *)rsp->parameter;
 
 		printf("Session %d", info->session_id.id);
 		if (info->session_id.name[0]) {
@@ -1085,7 +1087,7 @@ list_sessions(int argc, char **argv)
 			if (rsp->status) {
 				status_error(rsp->status);
 			}
-			clinfo = (iscsid_get_connection_list_rsp_t *) rsp->parameter;
+			clinfo = (iscsid_get_connection_list_rsp_t *)(void *)rsp->parameter;
 
 			for (j = 0, clent = clinfo->connection;
 				 j < clinfo->num_connections; j++, clent++) {
@@ -1152,6 +1154,7 @@ set_node_name(int argc, char **argv)
  */
 
 int
+/*ARGSUSED*/
 get_version(int argc, char **argv)
 {
 	iscsid_response_t *rsp;
@@ -1162,7 +1165,7 @@ get_version(int argc, char **argv)
 	if (rsp->status) {
 		status_error(rsp->status);
 	}
-	ver = (iscsid_get_version_rsp_t *)rsp->parameter;
+	ver = (iscsid_get_version_rsp_t *)(void *)rsp->parameter;
 	printf("%s\n%s\n%s\n", VERSION_STRING, ver->version_string,
 		   ver->driver_version_string);
 
