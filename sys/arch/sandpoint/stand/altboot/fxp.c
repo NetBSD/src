@@ -1,4 +1,4 @@
-/* $NetBSD: fxp.c,v 1.2 2011/01/27 17:38:04 phx Exp $ */
+/* $NetBSD: fxp.c,v 1.3 2011/10/30 21:08:33 phx Exp $ */
 
 /*
  * most of the following code was imported from dev/ic/i82557.c; the
@@ -86,8 +86,8 @@
  * - no vtophys() translation, vaddr_t == paddr_t. 
  * - PIPT writeback cache aware.
  */
-#define CSR_WRITE_1(l, r, v)	*(volatile uint8_t *)((l)->iobase+(r)) = (v)
-#define CSR_READ_1(l, r)	*(volatile uint8_t *)((l)->iobase+(r))
+#define CSR_WRITE_1(l, r, v)	out8((l)->iobase+(r), (v))
+#define CSR_READ_1(l, r)	in8((l)->iobase+(r))
 #define CSR_WRITE_2(l, r, v)	out16rb((l)->iobase+(r), (v))
 #define CSR_READ_2(l, r)	in16rb((l)->iobase+(r))
 #define CSR_WRITE_4(l, r, v) 	out32rb((l)->iobase+(r), (v))
