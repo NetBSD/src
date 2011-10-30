@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.160 2011/10/19 01:39:29 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.161 2011/10/30 13:24:13 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.160 2011/10/19 01:39:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.161 2011/10/30 13:24:13 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -848,6 +848,9 @@ puffs_vnop_getattr(void *v)
 	 * data is replaced by zeroes). This can be removed if
 	 * we decide one day that VOP_GETATTR must operate on 
 	 * a locked vnode.
+	 *
+	 * XXX Should be useless now that VOP_GETATTR has been
+	 *     fixed to always require a shared lock at least.
 	 */
 	mutex_enter(&pn->pn_sizemtx);
 
