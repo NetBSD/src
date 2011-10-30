@@ -18427,7 +18427,7 @@ rs6000_savres_routine_name (rs6000_stack_t *info, int regno,
     }
   else if (DEFAULT_ABI == ABI_AIX)
     {
-#ifndef POWERPC_LINUX
+#if !defined(POWERPC_LINUX) && !defined(POWERPC_NETBSD)
       /* No out-of-line save/restore routines for GPRs on AIX.  */
       gcc_assert (!TARGET_AIX || !gpr);
 #endif
@@ -18437,7 +18437,7 @@ rs6000_savres_routine_name (rs6000_stack_t *info, int regno,
 	prefix = (savep
 		  ? (lr ? "_savegpr0_" : "_savegpr1_")
 		  : (lr ? "_restgpr0_" : "_restgpr1_"));
-#ifdef POWERPC_LINUX
+#if defined(POWERPC_LINUX) || defined(POWERPC_NETBSD)
       else if (lr)
 	prefix = (savep ? "_savefpr_" : "_restfpr_");
 #endif
@@ -18701,7 +18701,7 @@ rs6000_savres_strategy (rs6000_stack_t *info, bool savep,
   strategy = (using_multiple_p
 	      | (savres_fprs_inline << 1)
 	      | (savres_gprs_inline << 2));
-#ifdef POWERPC_LINUX
+#if defined(POWERPC_LINUX) || defined(POWERPC_NETBSD)
   if (TARGET_64BIT)
     {
       if (!savres_fprs_inline)
