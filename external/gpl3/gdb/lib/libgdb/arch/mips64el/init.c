@@ -21,7 +21,6 @@ extern initialize_file_ftype _initialize_remote;
 extern initialize_file_ftype _initialize_dcache;
 extern initialize_file_ftype _initialize_tracepoint;
 extern initialize_file_ftype _initialize_ax_gdb;
-extern initialize_file_ftype _initialize_remote_sim;
 extern initialize_file_ftype _initialize_elfread;
 extern initialize_file_ftype _initialize_ada_exp;
 extern initialize_file_ftype _initialize_annotate;
@@ -145,7 +144,6 @@ initialize_all_files (void)
   _initialize_dcache ();
   _initialize_tracepoint ();
   _initialize_ax_gdb ();
-  _initialize_remote_sim ();
   _initialize_elfread ();
   _initialize_ada_exp ();
   _initialize_annotate ();
