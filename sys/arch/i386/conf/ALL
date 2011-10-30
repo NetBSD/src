@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.324 2011/10/17 22:40:31 jmcneill Exp $
+# $NetBSD: ALL,v 1.325 2011/10/30 12:12:21 hannken Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.324 $"
+#ident 		"ALL-$Revision: 1.325 $"
 
 maxusers	64		# estimated number of users
 
@@ -1595,6 +1595,12 @@ satlink0 at isa? port 0x300 drq 1
 # Middle Digital, Inc. PCI-Weasel serial console board control
 # devices (watchdog timer, etc.)
 weasel* at pci?
+
+# Virtio devices
+virtio*	at pci? dev ? function ?	# Virtio PCI device
+viomb*	at virtio?			# Virtio memory balloon device
+ld*	at virtio?			# Virtio disk device
+vioif*	at virtio?			# Virtio network device
 
 # Flash subsystem
 flash* at flashbus?

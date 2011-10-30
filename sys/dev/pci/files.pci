@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.349 2011/10/08 00:19:14 kiyohara Exp $
+#	$NetBSD: files.pci,v 1.350 2011/10/30 12:12:21 hannken Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1085,3 +1085,19 @@ file	dev/pci/pwdog.c		pwdog
 device  sisfb: wsemuldisplaydev, rasops8, rasops15, rasops16, rasops32, vcons
 attach  sisfb at pci
 file    dev/pci/sisfb.c		sisfb	needs-flag
+
+# VirtIO
+device	virtio {}
+attach	virtio at pci
+file	dev/pci/virtio.c	virtio
+
+attach	ld at virtio with ld_virtio
+file	dev/pci/ld_virtio.c	ld_virtio
+
+device	viomb
+attach	viomb at virtio
+file	dev/pci/viomb.c		viomb
+
+device	vioif
+attach	vioif at virtio
+file	dev/pci/if_vioif.c	vioif
