@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.48 2011/08/27 17:46:34 joerg Exp $	*/
+/*	$NetBSD: rshd.c,v 1.49 2011/10/30 16:54:58 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.48 2011/08/27 17:46:34 joerg Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.49 2011/10/30 16:54:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -457,7 +457,7 @@ doit(struct sockaddr *fromp)
 	}
 
 	if ((pam_err = pam_set_item(pamh, PAM_RUSER, remuser)) != PAM_SUCCESS ||
-	    (pam_err = pam_set_item(pamh, PAM_RHOST, hostname) != PAM_SUCCESS)){
+	    (pam_err = pam_set_item(pamh, PAM_RHOST, hostname)) != PAM_SUCCESS){
 		syslog(LOG_ERR|LOG_AUTH, "pam_set_item(): %s",
 		    pam_strerror(pamh, pam_err));
 		rshd_errx(EXIT_FAILURE, incorrect);
