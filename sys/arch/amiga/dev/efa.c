@@ -1,4 +1,4 @@
-/*	$NetBSD: efa.c,v 1.3 2011/10/29 19:25:19 rkujawa Exp $ */
+/*	$NetBSD: efa.c,v 1.4 2011/10/30 11:10:42 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ static void	efa_attach_channel(struct efa_softc *sc, int i);
 static void	efa_select_regset(struct efa_softc *sc, int chnum, 
 		    uint8_t piomode);
 static void	efa_poll_kthread(void *arg);
+static bool	efa_compare_status(void);
 #ifdef EFA_DEBUG
 static void	efa_debug_print_regmapping(struct wdc_regs *wdr_fata);
 #endif /* EFA_DEBUG */
@@ -116,8 +117,15 @@ efa_probe(device_t parent, cfdata_t cfp, void *aux)
 	 * can't coexist with wdc_amiga. Match "wdc" on an A1200, because 
 	 * FastATA 1200 does not autoconfigure. 
 	 */
-	if ( !matchname(aux, "wdc") || !is_a1200() )
+	if (!matchname(aux, "wdc") || !is_a1200())
 		return(0);
+
+	if (!efa_compare_status())
+		return(0);
+
+#ifdef EFA_DEBUG
+	aprint_normal("efa_probe succeeded\n");
+#endif /* EFA_DEBUG */
 
 	return 100;
 }
@@ -237,7 +245,7 @@ static void
 efa_set_opts(struct efa_softc *sc)
 {
 #ifdef EFA_32BIT_IO 
-	sc->sc_32bit_io = true;		/* XXX: bus_space_read_multi_stream_4 */
+	sc->sc_32bit_io = true;	
 #else
 	sc->sc_32bit_io = false;
 #endif /* EFA_32BIT_IO */
@@ -558,4 +566,54 @@ efa_debug_print_regmapping(struct wdc_regs *wdr_fata)
 	aprint_normal("\n");
 }
 #endif /* EFA_DEBUG */
+
+/* Compare the values of (status) command register in PIO0, PIO3 sets. */
+static bool
+efa_compare_status(void) 
+{
+	uint8_t cmd0, cmd3;
+	struct bus_space_tag fata_bst;
+	bus_space_tag_t fata_iot;
+	bus_space_handle_t cmd0_ioh, cmd3_ioh;
+	bool rv;
+
+	rv = false;
+
+	fata_bst.base = (bus_addr_t) ztwomap(FATA1_BASE);
+	fata_bst.absm = &amiga_bus_stride_4swap;
+
+	fata_iot = &fata_bst;
+
+	if (bus_space_map(fata_iot, pio_offsets[0], FATA1_CHAN_SIZE, 0, 
+	    &cmd0_ioh))
+		return false;
+	if (bus_space_map(fata_iot, pio_offsets[3], FATA1_CHAN_SIZE, 0, 
+	    &cmd3_ioh))
+		return false;
+
+#ifdef EFA_DEBUG
+	aprint_normal("probing for FastATA at %x, %x: ", (bus_addr_t) cmd0_ioh,
+	    (bus_addr_t) cmd3_ioh);
+#endif /* EFA_DEBUG */
+
+	cmd0 = bus_space_read_1(fata_iot, cmd0_ioh, FATA1_PIO0_OFF_COMMAND);
+	cmd3 = bus_space_read_1(fata_iot, cmd3_ioh, FATA1_PION_OFF_COMMAND);
+
+	if (cmd0 == cmd3)
+		rv = true;
+
+	if ( (cmd0 == 0xFF) || (cmd0 == 0x00) ) {
+		/* Assume there's nothing there... */
+		rv = false;
+	}
+
+#ifdef EFA_DEBUG
+	aprint_normal("cmd0 %x, cmd3 %x\n", cmd0, cmd3);
+#endif /* EFA_DEBUG */
+
+	bus_space_unmap(fata_iot, pio_offsets[0], FATA1_CHAN_SIZE);
+	bus_space_unmap(fata_iot, pio_offsets[3], FATA1_CHAN_SIZE);
+
+	return rv;
+}
 
