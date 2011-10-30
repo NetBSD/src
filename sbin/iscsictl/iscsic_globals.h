@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_globals.h,v 1.2 2011/10/23 23:41:56 christos Exp $	*/
+/*	$NetBSD: iscsic_globals.h,v 1.3 2011/10/30 18:40:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ static __inline void
 hton6(uint8_t * d, uint64_t x)
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
-	uint8_t *s = ((uint8_t *) & x) + 5;
+	uint8_t *s = ((uint8_t *)(void *)&x) + 5;
 	*d++ = *s--;
 	*d++ = *s--;
 	*d++ = *s--;
@@ -125,7 +125,7 @@ static __inline uint64_t
 ntohq(uint64_t x)
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
-	uint8_t *s = (uint8_t *) & x;
+	uint8_t *s = (uint8_t *)(void *)&x;
 
 	return (uint64_t) ((uint64_t) s[0] << 56 | (uint64_t) s[1] << 48 |
 			(uint64_t) s[2] << 40 | (uint64_t) s[3] << 32 |
@@ -160,7 +160,7 @@ void check_extra_args(int, char **);
 void status_error(unsigned);
 void status_error_slist(unsigned);
 
-void send_request(unsigned, unsigned par_len, void *);
+void send_request(unsigned, size_t, void *);
 iscsid_response_t *get_response(int);
 void free_response(iscsid_response_t *);
 
@@ -196,7 +196,7 @@ int kill_daemon(int, char **);
 /* iscsic_driverif.c */
 
 uint32_t get_sessid(int, char **, int);
-void dump_data(const char *, void *, int);
+void dump_data(const char *, const void *, size_t);
 int do_ioctl(iscsi_iocommand_parameters_t *, int);
 int set_node_name(int, char **);
 int inquiry(int, char **);
