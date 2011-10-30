@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.22 2011/10/23 05:01:00 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.23 2011/10/30 05:11:37 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -511,8 +511,11 @@ perfuse_init(pc, pmi)
 	 * immediatly to the filesystem, and we get a huge performance gain
 	 * because much less requests are sent. A test case for the above
 	 * mentioned bug got its execution time slashed by factor 50.
+	 *
+	 * PUFFS_KFLAG_NOCACHE_NAME is required so that we can see changes
+	 * done by other machines in networked filesystems.
 	 */
-	puffs_flags = 0;
+	puffs_flags = PUFFS_KFLAG_NOCACHE_NAME;
 
 	if (perfuse_diagflags & PDF_PUFFS)
 		puffs_flags |= PUFFS_FLAG_OPDUMP;
@@ -526,7 +529,7 @@ perfuse_init(pc, pmi)
 	 * Setup filesystem root
 	 */
 	pn_root = perfuse_new_pn(pu, "", NULL);
-	PERFUSE_NODE_DATA(pn_root)->pnd_ino = FUSE_ROOT_ID; 
+	PERFUSE_NODE_DATA(pn_root)->pnd_nodeid = FUSE_ROOT_ID; 
 	PERFUSE_NODE_DATA(pn_root)->pnd_parent = pn_root;
 	puffs_setroot(pu, pn_root);
 	ps->ps_fsid = pn_root->pn_va.va_fsid;
@@ -541,6 +544,7 @@ perfuse_init(pc, pmi)
 	puffs_vattr_null(&pn_root->pn_va);
 	pn_root->pn_va.va_type = VDIR;
 	pn_root->pn_va.va_mode = 0755;
+	pn_root->pn_va.va_fileid = FUSE_ROOT_ID;
 	
 	ps->ps_root = pn_root;
 
@@ -616,11 +620,11 @@ perfuse_mainloop(pu)
 
 /* ARGSUSED0 */
 uint64_t
-perfuse_get_ino(pu, opc)
+perfuse_get_nodeid(pu, opc)
 	struct puffs_usermount *pu;
 	puffs_cookie_t opc;
 {
-	return PERFUSE_NODE_DATA(opc)->pnd_ino;
+	return PERFUSE_NODE_DATA(opc)->pnd_nodeid;
 }
 
 int

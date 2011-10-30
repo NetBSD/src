@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.22 2011/09/09 15:45:28 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.23 2011/10/30 05:11:37 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -92,7 +92,7 @@ struct perfuse_cc_queue {
 struct perfuse_node_data {
 	uint64_t pnd_rfh;
 	uint64_t pnd_wfh;
-	uint64_t pnd_ino;			/* inode */
+	uint64_t pnd_nodeid;			/* nodeid, this is not inode */
 	uint64_t pnd_nlookup;			/* vnode refcount */
 	uint64_t pnd_lock_owner;
 	struct dirent *pnd_dirent;		/* native buffer for readdir */
@@ -121,6 +121,8 @@ struct perfuse_node_data {
 	puffs_cookie_t pnd_pn;
 	char pnd_name[MAXPATHLEN];	/* node name */
 	TAILQ_HEAD(,perfuse_node_data) pnd_children;
+	struct timespec pnd_entry_expire;
+	struct timespec pnd_attr_expire;
 };
 
 #define PERFUSE_NODE_DATA(opc)	\
