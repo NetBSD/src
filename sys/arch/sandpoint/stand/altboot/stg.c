@@ -1,4 +1,4 @@
-/* $NetBSD: stg.c,v 1.5 2011/03/12 16:41:23 phx Exp $ */
+/* $NetBSD: stg.c,v 1.6 2011/10/30 21:08:33 phx Exp $ */
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -38,8 +38,8 @@
 
 #include "globals.h"
 
-#define CSR_WRITE_1(l, r, v)	*(volatile uint8_t *)((l)->csr+(r)) = (v)
-#define CSR_READ_1(l, r)	*(volatile uint8_t *)((l)->csr+(r))
+#define CSR_WRITE_1(l, r, v)	out8((l)->csr+(r), (v))
+#define CSR_READ_1(l, r)	in8((l)->csr+(r))
 #define CSR_WRITE_2(l, r, v)	out16rb((l)->csr+(r), (v))
 #define CSR_READ_2(l, r)	in16rb((l)->csr+(r))
 #define CSR_WRITE_4(l, r, v)	out32rb((l)->csr+(r), (v))

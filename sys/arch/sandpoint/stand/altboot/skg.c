@@ -1,4 +1,4 @@
-/* $NetBSD: skg.c,v 1.3 2011/05/29 18:06:45 phx Exp $ */
+/* $NetBSD: skg.c,v 1.4 2011/10/30 21:08:33 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -43,8 +43,8 @@
  * - no vtophys() translation, vaddr_t == paddr_t.
  * - PIPT writeback cache aware.
  */
-#define CSR_WRITE_1(l, r, v)	*(volatile uint8_t *)((l)->csr+(r)) = (v)
-#define CSR_READ_1(l, r)	*(volatile uint8_t *)((l)->csr+(r))
+#define CSR_WRITE_1(l, r, v)	out8((l)->csr+(r), (v))
+#define CSR_READ_1(l, r)	in8((l)->csr+(r))
 #define CSR_WRITE_2(l, r, v)	out16rb((l)->csr+(r), (v))
 #define CSR_READ_2(l, r)	in16rb((l)->csr+(r))
 #define CSR_WRITE_4(l, r, v)	out32rb((l)->csr+(r), (v))

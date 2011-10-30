@@ -1,4 +1,4 @@
-/* $NetBSD: entry.S,v 1.4 2011/10/30 20:42:09 phx Exp $ */
+/* $NetBSD: entry.S,v 1.5 2011/10/30 21:08:33 phx Exp $ */
 
 #include <powerpc/psl.h>
 #include <powerpc/spr.h>
@@ -206,6 +206,20 @@ syncicache:
 	blr
 	.globl	newaltboot_end
 newaltboot_end:
+
+
+/* 8-bit i/o access */
+	.globl	out8
+out8:
+	stb	4,0(3)
+	eieio
+	blr
+
+	.globl	in8
+in8:
+	lbz	3,0(3)
+	eieio
+	blr
 
 /*
  * reverse endian access to mimic outw/outl/inw/inl

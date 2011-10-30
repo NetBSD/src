@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.18 2011/05/29 18:06:45 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.19 2011/10/30 21:08:33 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -172,8 +172,8 @@ unsigned uart2base;	/* optional satellite processor */
 #define  LSR_THRE	0x20
 #define  LSR_DRDY	0x01
 #define DCR		0x11
-#define UART_READ(base, r)	*(volatile char *)(base + (r))
-#define UART_WRITE(base, r, v)	*(volatile char *)(base + (r)) = (v)
+#define UART_READ(base, r)	in8(base + (r))
+#define UART_WRITE(base, r, v)	out8(base + (r), (v))
 
 void brdsetup(void);	/* called by entry.S */
 
