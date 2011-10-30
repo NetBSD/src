@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.16 2011/08/30 20:17:01 joerg Exp $ */
+/*  $NetBSD: msg.c,v 1.17 2011/10/30 05:17:41 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -180,7 +180,10 @@ perfuse_new_pb (struct puffs_usermount *pu, puffs_cookie_t opc, int opcode,
 		DERR(EX_OSERR, "puffs_framebuf_make failed");
 
 	len = payload_len + sizeof(*fih);
-	nodeid = (opc != 0) ? perfuse_get_ino(pu, opc) : PERFUSE_UNKNOWN_INO;
+	if (opc != 0)
+		nodeid = perfuse_get_nodeid(pu, opc);
+	else
+		nodeid = PERFUSE_UNKNOWN_NODEID;
 
 	if (puffs_framebuf_reserve_space(pb, len) != 0)
 		DERR(EX_OSERR, "puffs_framebuf_reserve_space failed");
