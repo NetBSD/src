@@ -1,4 +1,4 @@
-/* $NetBSD: amiga_bus_simple_4.c,v 1.9 2011/10/29 19:25:19 rkujawa Exp $ */
+/* $NetBSD: amiga_bus_simple_4.c,v 1.10 2011/10/30 08:33:43 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_4.c,v 1.9 2011/10/29 19:25:19 rkujawa Exp $");
+__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_4.c,v 1.10 2011/10/30 08:33:43 rkujawa Exp $");
 
 #define AMIGA_SIMPLE_BUS_STRIDE 4		/* 1 byte per long */
 #define AMIGA_SIMPLE_BUS_WORD_METHODS
@@ -40,9 +40,9 @@ __KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_4.c,v 1.9 2011/10/29 19:25:19 rkuja
 
 /*
  * Little-endian word methods.
- * Stream access does not swap, used for 16-bit wide transfers of byte streams.
- * Non-stream access swaps bytes.
- * XXX Only *_multi_2 transfers currently swap bytes XXX
+ * Stream access does not swap, used for 16-bit and 32-bit wide transfers 
+ * of byte streams. Non-stream access swaps bytes.
+ * XXX Only *_multi_2 and *_multi_4 transfers currently swap bytes XXX
  */
 
 bsrm(oabs(bsrm2_swap_), u_int16_t);
