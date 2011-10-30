@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_driverif.c,v 1.1 2011/10/23 21:11:23 agc Exp $	*/
+/*	$NetBSD: iscsic_driverif.c,v 1.2 2011/10/30 18:40:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -286,10 +286,10 @@ get_sessid(int argc, char **argv, int optional)
  */
 
 void
-dump_data(const char *title, void *buffer, int len)
+dump_data(const char *title, const void *buffer, size_t len)
 {
-	uint8_t *bp = (uint8_t *) buffer;
-	int i, nelem;
+	const uint8_t *bp = buffer;
+	size_t i, nelem;
 
 	printf("%s\n", title);
 
@@ -581,7 +581,7 @@ report_luns(int argc, char **argv)
 {
 	iscsi_iocommand_parameters_t io;
 	int rc;
-	uint32_t llen;
+	size_t llen;
 	uint32_t n;
 	uint16_t n2;
 	uint64_t *lp;
@@ -611,7 +611,7 @@ report_luns(int argc, char **argv)
 	if (llen + 8 > sizeof(buf))
 		printf("Partial ");
 	printf("LUN List:\n");
-	lp = (uint64_t *) & buf[8];
+	lp = (uint64_t *)(void *) &buf[8];
 
 	for (llen = min(llen, sizeof(buf) - 8) / 8; llen; llen--) {
 		printf("  0x%" PRIx64 "\n", ntohq(*lp));
