@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.16 2011/09/09 15:45:28 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.17 2011/10/30 05:11:37 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -35,6 +35,7 @@
 #define FUSE_COMMFD_ENV "_FUSE_COMMFD" 
 #define PERFUSE_MOUNT_MAGIC "noFuseRq"
 #define PERFUSE_UNKNOWN_INO 0xffffffff
+#define PERFUSE_UNKNOWN_NODEID 0xffffffff
 
 /* 
  * Diagnostic flags. This global is used only for DPRINTF/DERR/DWARN
@@ -199,7 +200,7 @@ struct puffs_usermount *perfuse_init(struct perfuse_callbacks *,
 void perfuse_setspecific(struct puffs_usermount *, void *);
 void *perfuse_getspecific(struct puffs_usermount *);
 uint64_t perfuse_next_unique(struct puffs_usermount *);
-uint64_t perfuse_get_ino(struct puffs_usermount *, puffs_cookie_t);
+uint64_t perfuse_get_nodeid(struct puffs_usermount *, puffs_cookie_t);
 int perfuse_inloop(struct puffs_usermount *);
 const char *perfuse_opname(int);
 void perfuse_fs_init(struct puffs_usermount *);
