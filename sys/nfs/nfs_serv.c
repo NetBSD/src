@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.160 2011/08/08 16:04:07 dholland Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.161 2011/10/30 12:00:27 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.160 2011/08/08 16:04:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.161 2011/10/30 12:00:27 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,8 +454,11 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	}
 
 	if (dirp) {
-		if (v3)
+		if (v3) {
+			vn_lock(dirp, LK_SHARED | LK_RETRY);
 			dirattr_ret = VOP_GETATTR(dirp, &dirattr, cred);
+			VOP_UNLOCK(dirp);
+		}
 		vrele(dirp);
 	}
 
@@ -1582,7 +1585,9 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 				error = EEXIST;
 		}
 		if (dirp) {
+			vn_lock(dirp, LK_SHARED | LK_RETRY);
 			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
+			VOP_UNLOCK(dirp);
 		}
 	}
 	if (dirp) {
@@ -1741,7 +1746,9 @@ out:
 		vput(vp);
 	}
 	if (dirp) {
+		vn_lock(dirp, LK_SHARED | LK_RETRY);
 		diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
+		VOP_UNLOCK(dirp);
 		vrele(dirp);
 		dirp = NULL;
 	}
@@ -1810,8 +1817,12 @@ nfsrv_remove(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
 	error = nfs_namei(&nd, &nsfh, len, slp, nam, &md, &dpos,
 		&dirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
-	if (dirp && v3) {
+	if (error == 0 && dirp && v3) {
+		if (nd.ni_dvp == nd.ni_vp)
+			vn_lock(dirp, LK_SHARED | LK_RETRY);
 		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred);
+		if (nd.ni_dvp == nd.ni_vp)
+			VOP_UNLOCK(dirp);
 	}
 	if (!error) {
 		vp = nd.ni_vp;
@@ -1845,7 +1856,9 @@ out:
 	}
 	if (dirp) {
 		if (v3) {
+			vn_lock(dirp, LK_SHARED | LK_RETRY);
 			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
+			VOP_UNLOCK(dirp);
 		}
 		vrele(dirp);
 	}
@@ -1902,8 +1915,12 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	fromnd.ni_cnd.cn_flags = LOCKPARENT | INRENAME;
 	error = nfs_namei(&fromnd, &fnsfh, len, slp, nam, &md,
 		&dpos, &fdirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
-	if (fdirp && v3) {
+	if (error == 0 && fdirp && v3) {
+		if (fromnd.ni_dvp == fromnd.ni_vp)
+			vn_lock(fdirp, LK_SHARED | LK_RETRY);
 		fdirfor_ret = VOP_GETATTR(fdirp, &fdirfor, cred);
+		if (fromnd.ni_dvp == fromnd.ni_vp)
+			VOP_UNLOCK(fdirp);
 	}
 	if (error) {
 		nfsm_reply(2 * NFSX_WCCDATA(v3));
@@ -2070,14 +2087,18 @@ out:
 out1:
 	if (fdirp) {
 		if (v3) {
+			vn_lock(fdirp, LK_SHARED | LK_RETRY);
 			fdiraft_ret = VOP_GETATTR(fdirp, &fdiraft, cred);
+			VOP_UNLOCK(fdirp);
 		}
 		vrele(fdirp);
 		fdirp = NULL;
 	}
 	if (tdirp) {
 		if (v3) {
+			vn_lock(tdirp, LK_SHARED | LK_RETRY);
 			tdiraft_ret = VOP_GETATTR(tdirp, &tdiraft, cred);
+			VOP_UNLOCK(tdirp);
 		}
 		vrele(tdirp);
 		tdirp = NULL;
@@ -2192,11 +2213,16 @@ out:
 			vrele(nd.ni_vp);
 	}
 out1:
-	if (v3)
+	if (v3) {
+		vn_lock(vp, LK_SHARED | LK_RETRY);
 		getret = VOP_GETATTR(vp, &at, cred);
+		VOP_UNLOCK(vp);
+	}
 	if (dirp) {
 		if (v3) {
+			vn_lock(dirp, LK_SHARED | LK_RETRY);
 			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
+			VOP_UNLOCK(dirp);
 		}
 		vrele(dirp);
 	}
@@ -2315,7 +2341,9 @@ out:
 		free(pathcp, M_TEMP);
 	if (dirp) {
 		if (v3) {
+			vn_lock(dirp, LK_SHARED | LK_RETRY);
 			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
+			VOP_UNLOCK(dirp);
 		}
 		vrele(dirp);
 		dirp = NULL;
@@ -2436,7 +2464,9 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 out:
 	if (dirp) {
 		if (v3) {
+			vn_lock(dirp, LK_SHARED | LK_RETRY);
 			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
+			VOP_UNLOCK(dirp);
 		}
 		vrele(dirp);
 		dirp = NULL;
@@ -2559,7 +2589,9 @@ out:
 	}
 	if (dirp) {
 		if (v3) {
+			vn_lock(dirp, LK_SHARED | LK_RETRY);
 			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
+			VOP_UNLOCK(dirp);
 		}
 		vrele(dirp);
 	}
