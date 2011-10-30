@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.42 2011/09/10 10:06:10 tron Exp $ */
+/*  $NetBSD: ops.c,v 1.43 2011/10/30 05:11:37 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -44,6 +44,10 @@
 
 extern int perfuse_diagflags;
 
+static void set_expire(puffs_cookie_t, struct fuse_entry_out *, 
+   struct fuse_attr_out *);
+static int attr_expired(puffs_cookie_t);
+static int entry_expired(puffs_cookie_t);
 static int xchg_msg(struct puffs_usermount *, puffs_cookie_t, 
     perfuse_msg_t *, size_t, enum perfuse_xchg_pb_reply); 
 static int mode_access(puffs_cookie_t, const struct puffs_cred *, mode_t);
@@ -153,8 +157,8 @@ perfuse_node_close_common(pu, opc, mode)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
-			 __func__, (void *)opc, pnd->pnd_ino, fri->fh);
+		DPRINTF("%s: opc = %p, nodeid = 0x%"PRIx64", fh = 0x%"PRIx64"\n",
+			 __func__, (void *)opc, pnd->pnd_nodeid, fri->fh);
 #endif
 
 	if ((error = xchg_msg(pu, opc, pm,
@@ -193,8 +197,9 @@ xchg_msg(pu, opc, pm, len, wait)
 
 #ifdef PERFUSE_DEBUG
 	if ((perfuse_diagflags & PDF_FILENAME) && (opc != 0))
-		DPRINTF("file = \"%s\" flags = 0x%x\n", 
-			perfuse_node_path(opc),
+		DPRINTF("file = \"%s\", ino = %"PRIu64" flags = 0x%x\n", 
+			perfuse_node_path(opc), 
+			((struct puffs_node *)opc)->pn_va.va_fileid,
 			PERFUSE_NODE_DATA(opc)->pnd_flags);
 #endif
 	if (pnd)
@@ -309,6 +314,74 @@ fuse_attr_to_vap(ps, vap, fa)
 	return;
 }
 
+static void 
+set_expire(opc, feo, fao)
+	puffs_cookie_t opc;
+	struct fuse_entry_out *feo;
+	struct fuse_attr_out *fao;
+{
+	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
+	struct timespec entry_ts;
+	struct timespec attr_ts;
+	struct timespec now;
+
+	if ((feo == NULL) && (fao == NULL))
+		DERRX(EX_SOFTWARE, "%s: feo and fao NULL", __func__);
+
+	if ((feo != NULL) && (fao != NULL))
+		DERRX(EX_SOFTWARE, "%s: feo and fao != NULL", __func__);
+
+	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
+		DERR(EX_OSERR, "clock_gettime failed");
+
+	if (feo != NULL) {
+		entry_ts.tv_sec = (time_t)feo->entry_valid;
+		entry_ts.tv_nsec = (long)feo->entry_valid_nsec;
+
+		timespecadd(&now, &entry_ts, &pnd->pnd_entry_expire);
+
+		attr_ts.tv_sec = (time_t)feo->attr_valid;
+		attr_ts.tv_nsec = (long)feo->attr_valid_nsec;
+
+		timespecadd(&now, &attr_ts, &pnd->pnd_attr_expire);
+	} 
+
+	if (fao != NULL) {
+		attr_ts.tv_sec = (time_t)fao->attr_valid;
+		attr_ts.tv_nsec = (long)fao->attr_valid_nsec;
+
+		timespecadd(&now, &attr_ts, &pnd->pnd_attr_expire);
+	} 
+
+	return;
+}
+
+static int
+attr_expired(opc)
+	puffs_cookie_t opc;
+{
+	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
+	struct timespec now;
+
+	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
+		DERR(EX_OSERR, "clock_gettime failed");
+
+	return timespeccmp(&pnd->pnd_attr_expire, &now, <);
+}
+
+static int
+entry_expired(opc)
+	puffs_cookie_t opc;
+{
+	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
+	struct timespec now;
+
+	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
+		DERR(EX_OSERR, "clock_gettime failed");
+
+	return timespeccmp(&pnd->pnd_entry_expire, &now, <);
+}
+
 
 /* 
  * Lookup name in directory opc
@@ -323,12 +396,8 @@ node_lookup_dir_nodot(pu, opc, name, namelen, pnp)
 	size_t namelen;
 	struct puffs_node **pnp;
 {
-	char *path;
-	struct puffs_node *dpn = (struct puffs_node *)opc;
-	int error;
-
 	/*
-	 *  is easy as we already know it
+	 * "dot" is easy as we already know it
 	 */
 	if (strncmp(name, ".", namelen) == 0) {
 		*pnp = (struct puffs_node *)opc;
@@ -336,22 +405,14 @@ node_lookup_dir_nodot(pu, opc, name, namelen, pnp)
 	}
 
 	/*
-	 * For .. we just forget the name part
+	 * "dotdot" is also known
 	 */
-	if (strncmp(name, "..", namelen) == 0)
-		namelen = 0;
+	if (strncmp(name, "..", namelen) == 0) {
+		*pnp = PERFUSE_NODE_DATA(opc)->pnd_parent;
+		return 0;
+	}
 
-	namelen = PNPLEN(dpn) + 1 + namelen + 1;
-	if ((path = malloc(namelen)) == NULL)
-		DERR(EX_OSERR, "%s: malloc failed", __func__);
-	(void)snprintf(path, namelen, "%s/%s", 
-		       perfuse_node_path((puffs_cookie_t)dpn), name);
-
-	error = node_lookup_common(pu, opc, path, NULL, pnp);
-	
-	free(path);
-
-	return error;
+	return node_lookup_common(pu, opc, name, NULL, pnp);
 }
 
 static int
@@ -363,12 +424,15 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 	struct puffs_node **pnp;
 {
 	struct perfuse_state *ps;
-	struct perfuse_node_data *pnd;
+	struct perfuse_node_data *oldpnd;
 	perfuse_msg_t *pm;
 	struct fuse_entry_out *feo;
 	struct puffs_node *pn;
 	size_t len;
 	int error;
+
+	if (pnp == NULL)
+		DERRX(EX_SOFTWARE, "pnp must be != NULL");
 
 	ps = puffs_getspecific(pu);
 
@@ -380,24 +444,27 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 	/*
 	 * Is the node already known?
 	 */
-	TAILQ_FOREACH(pnd, &PERFUSE_NODE_DATA(opc)->pnd_children, pnd_next) {
-		if ((pnd->pnd_flags & PND_REMOVED) ||
-		    (strcmp(pnd->pnd_name, path) != 0))
+	TAILQ_FOREACH(oldpnd, &PERFUSE_NODE_DATA(opc)->pnd_children, pnd_next) {
+		if ((oldpnd->pnd_flags & PND_REMOVED) ||
+		    (strcmp(oldpnd->pnd_name, path) != 0))
 			continue;
-
-		/*
-		 * We have a match
-		 */
-		if (pnp != NULL)
-			*pnp = (struct puffs_node *)(pnd->pnd_pn);
 
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_FILENAME)
 			DPRINTF("%s: opc = %p, file = \"%s\" found "
-				"cookie = %p, ino = %"PRId64" for \"%s\"\n",
+				"cookie = %p, nodeid = 0x%"PRIx64" for \"%s\"\n",
 				__func__, (void *)opc, perfuse_node_path(opc), 
-				(void *)pnd->pnd_pn, pnd->pnd_ino, path);
+				(void *)oldpnd->pnd_pn, oldpnd->pnd_nodeid,	
+				path);
 #endif
+		break;
+	}
+
+	/*
+	 * Check for cached name
+	 */
+	if ((oldpnd != NULL) && !entry_expired(oldpnd->pnd_pn)) {
+		*pnp = oldpnd->pnd_pn;
 		return 0;
 	}
 
@@ -406,26 +473,64 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 	pm = ps->ps_new_msg(pu, opc, FUSE_LOOKUP, len, pcr);
 	(void)strlcpy(_GET_INPAYLOAD(ps, pm, char *), path, len);
 
-	if ((error = xchg_msg(pu, opc, pm, sizeof(*feo), wait_reply)) != 0)
+	error = xchg_msg(pu, opc, pm, sizeof(*feo), wait_reply);
+
+	switch (error) {
+	case 0:
+		break;
+	case ENOENT:
+		if (oldpnd != NULL) {
+			oldpnd->pnd_flags |= PND_REMOVED;
+#ifdef PERFUSE_DEBUG
+			if (perfuse_diagflags & PDF_FILENAME)
+				DPRINTF("%s: opc = %p nodeid = 0x%"PRIx64" "
+					"file = \"%s\" removed\n", __func__, 
+					oldpnd->pnd_pn, oldpnd->pnd_nodeid,
+					oldpnd->pnd_name);
+#endif
+		}
+		/* FALLTHROUGH */
+	default:
 		goto out;
+		/* NOTREACHED */
+		break;
+	}
 
 	feo = GET_OUTPAYLOAD(ps, pm, fuse_entry_out);
 
+	if (oldpnd != NULL) {
+		if (oldpnd->pnd_nodeid == feo->nodeid) {
+			oldpnd->pnd_nlookup++;
+			*pnp = oldpnd->pnd_pn;
+			goto out;
+		} else {
+			oldpnd->pnd_flags |= PND_REMOVED;
+#ifdef PERFUSE_DEBUG
+			if (perfuse_diagflags & PDF_FILENAME)
+				DPRINTF("%s: opc = %p nodeid = 0x%"PRIx64" "
+					"file = \"%s\" replaced\n", __func__, 
+					oldpnd->pnd_pn, oldpnd->pnd_nodeid,
+					oldpnd->pnd_name);
+#endif
+		}
+	}
+
 	pn = perfuse_new_pn(pu, path, opc);
-	PERFUSE_NODE_DATA(pn)->pnd_ino = feo->nodeid;
+	PERFUSE_NODE_DATA(pn)->pnd_nodeid = feo->nodeid;
 
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	pn->pn_va.va_gen = (u_long)(feo->generation);
+	set_expire((puffs_cookie_t)pn, feo, NULL);
 
-	if (pnp != NULL)
-		*pnp = pn;
+	*pnp = pn;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FILENAME)
-		DPRINTF("%s: opc = %p, looked up opc = %p, ino = %"PRId64" "
-			"file = \"%s\"\n", __func__, (void *)opc, pn, 
-			feo->nodeid, path);
+		DPRINTF("%s: opc = %p, looked up opc = %p, "
+			"nodeid = 0x%"PRIx64" file = \"%s\"\n", __func__, 
+			(void *)opc, pn, feo->nodeid, path);
 #endif
+	
 out: 
 	ps->ps_destroy_msg(pm);
 
@@ -458,21 +563,22 @@ node_mk_common(pu, opc, pni, pcn, pm)
 		goto out;
 
 	feo = GET_OUTPAYLOAD(ps, pm, fuse_entry_out);
-	if (feo->nodeid == PERFUSE_UNKNOWN_INO)
-		DERRX(EX_SOFTWARE, "%s: no ino", __func__);
+	if (feo->nodeid == PERFUSE_UNKNOWN_NODEID)
+		DERRX(EX_SOFTWARE, "%s: no nodeid", __func__);
 
 	pn = perfuse_new_pn(pu, pcn->pcn_name, opc);
-	PERFUSE_NODE_DATA(pn)->pnd_ino = feo->nodeid;
+	PERFUSE_NODE_DATA(pn)->pnd_nodeid = feo->nodeid;
 
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	pn->pn_va.va_gen = (u_long)(feo->generation);
+	set_expire((puffs_cookie_t)pn, feo, NULL);
 
 	puffs_newinfo_setcookie(pni, pn);
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FILENAME)
 		DPRINTF("%s: opc = %p, file = \"%s\", flags = 0x%x "
-			"ino = %"PRId64"\n",
+			"nodeid = 0x%"PRIx64"\n",
 			__func__, (void *)pn, pcn->pcn_name,
 			PERFUSE_NODE_DATA(pn)->pnd_flags, feo->nodeid);
 #endif
@@ -530,6 +636,7 @@ node_mk_common_final(pu, opc, pn, pcn)
 
 	fao = GET_OUTPAYLOAD(ps, pm, fuse_attr_out);
 	fuse_attr_to_vap(ps, &pn->pn_va, &fao->attr);
+	set_expire((puffs_cookie_t)pn, NULL, fao);
 
 	/*
 	 * The parent directory needs a sync
@@ -624,17 +731,16 @@ fuse_to_dirent(pu, opc, fd, fd_len)
 		/*
 		 * Filesystem was mounted without -o use_ino
 		 * Perform a lookup to find it.
-		 * XXX still broken
 		 */
 		if (fd->ino == PERFUSE_UNKNOWN_INO) {
 			struct puffs_node *pn;
 
 			if (node_lookup_dir_nodot(pu, opc, fd->name, 
-						  fd->namelen, &pn) != 0) 
-				DERRX(EX_SOFTWARE, 
-				     "node_lookup_dir_nodot failed");
-
-			fd->ino = PERFUSE_NODE_DATA(pn)->pnd_ino;
+						  fd->namelen, &pn) != 0) {
+				DWARNX("node_lookup_dir_nodot failed");
+			} else {
+				fd->ino = pn->pn_va.va_fileid;
+			}
 		}
 
 		dents->d_fileno = fd->ino;
@@ -645,7 +751,7 @@ fuse_to_dirent(pu, opc, fd, fd_len)
 
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_READDIR)
-			DPRINTF("%s: translated \"%s\" ino = %"PRId64"\n",
+			DPRINTF("%s: translated \"%s\" ino = %"PRIu64"\n",
 				__func__, dents->d_name, dents->d_fileno);
 #endif
 
@@ -1196,8 +1302,8 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 
 	feo = GET_OUTPAYLOAD(ps, pm, fuse_entry_out);
 	foo = (struct fuse_open_out *)(void *)(feo + 1);
-	if (feo->nodeid == PERFUSE_UNKNOWN_INO)
-		DERRX(EX_SOFTWARE, "%s: no ino", __func__);
+	if (feo->nodeid == PERFUSE_UNKNOWN_NODEID)
+		DERRX(EX_SOFTWARE, "%s: no nodeid", __func__);
 	
 	/*
 	 * Save the file handle and inode in node private data 
@@ -1205,19 +1311,21 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	 */
 	pn = perfuse_new_pn(pu, name, opc);
 	perfuse_new_fh((puffs_cookie_t)pn, foo->fh, FWRITE);
-	PERFUSE_NODE_DATA(pn)->pnd_ino = feo->nodeid;
+	PERFUSE_NODE_DATA(pn)->pnd_nodeid = feo->nodeid;
 
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	pn->pn_va.va_gen = (u_long)(feo->generation);
+	set_expire((puffs_cookie_t)pn, feo, NULL);
 		
 	puffs_newinfo_setcookie(pni, pn);
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & (PDF_FH|PDF_FILENAME))
 		DPRINTF("%s: opc = %p, file = \"%s\", flags = 0x%x "
-			"ino = %"PRId64", wfh = 0x%"PRIx64"\n",
+			"nodeid = 0x%"PRIx64", wfh = 0x%"PRIx64"\n",
 			__func__, (void *)pn, pcn->pcn_name,
-			PERFUSE_NODE_DATA(pn)->pnd_flags, feo->nodeid, foo->fh);
+			PERFUSE_NODE_DATA(pn)->pnd_flags, feo->nodeid, 
+			foo->fh);
 #endif
 
 	ps->ps_destroy_msg(pm);
@@ -1383,9 +1491,9 @@ perfuse_node_open(pu, opc, mode, pcr)
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & (PDF_FH|PDF_FILENAME))
 		DPRINTF("%s: opc = %p, file = \"%s\", "
-			"ino = %"PRId64", %s%sfh = 0x%"PRIx64"\n",
+			"nodeid = 0x%"PRIx64", %s%sfh = 0x%"PRIx64"\n",
 			__func__, (void *)opc, perfuse_node_path(opc),
-			pnd->pnd_ino, mode & FREAD ? "r" : "",
+			pnd->pnd_nodeid, mode & FREAD ? "r" : "",
 			mode & FWRITE ? "w" : "", foo->fh);
 #endif
 
@@ -1485,12 +1593,12 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	struct vattr *vap;
 	const struct puffs_cred *pcr;
 {
-	perfuse_msg_t *pm;
+	perfuse_msg_t *pm = NULL;
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
 	struct fuse_getattr_in *fgi;
 	struct fuse_attr_out *fao;
-	int error;
+	int error = 0;
 	
 	if (pnd->pnd_flags & PND_REMOVED)
 		return ENOENT;
@@ -1503,6 +1611,16 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	pnd->pnd_flags |= PND_INRESIZE;
 
 	ps = puffs_getspecific(pu);
+		
+	/*
+	 * Check for cached attributes
+	 * This still require serialized access to size.
+	 */ 
+	if (!attr_expired(opc)) {
+		(void)memcpy(vap, puffs_pn_getvap((struct puffs_node *)opc), 
+			     sizeof(*vap));
+		goto out;
+	}
 
 	/*
 	 * FUSE_GETATTR_FH must be set in fgi->flags 
@@ -1537,17 +1655,16 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 #endif
 
 	/* 
-	 * The message from filesystem has a cache timeout
-	 * XXX this is ignored yet, is that right?
-	 * 
-	 * We also set birthtime, flags, filerev,vaflags to 0. 
+	 * We set birthtime, flags, filerev,vaflags to 0. 
 	 * This seems the best bet, since the information is
 	 * not available from filesystem.
 	 */
 	fuse_attr_to_vap(ps, vap, &fao->attr);
+	set_expire(opc, NULL, fao);
 
 out:
-	ps->ps_destroy_msg(pm);
+	if (pm != NULL)
+		ps->ps_destroy_msg(pm);
 
 	pnd->pnd_flags &= ~PND_INRESIZE;
 	(void)dequeue_requests(ps, opc, PCQ_RESIZE, DEQUEUE_ALL);
@@ -1762,6 +1879,8 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 #endif
 
 	fuse_attr_to_vap(ps, old_va, &fao->attr);
+	set_expire(opc, NULL, fao);
+
 out:
 	if (pm != NULL)
 		ps->ps_destroy_msg(pm);
@@ -1806,9 +1925,9 @@ perfuse_node_poll(pu, opc, events)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
+		DPRINTF("%s: opc = %p, nodeid = 0x%"PRIx64", fh = 0x%"PRIx64"\n",
 			__func__, (void *)opc,	
-			PERFUSE_NODE_DATA(opc)->pnd_ino, fpi->fh);
+			PERFUSE_NODE_DATA(opc)->pnd_nodeid, fpi->fh);
 #endif
 	if ((error = xchg_msg(pu, opc, pm, sizeof(*fpo), wait_reply)) != 0)
 		goto out;
@@ -1917,9 +2036,9 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
+		DPRINTF("%s: opc = %p, nodeid = 0x%"PRIx64", fh = 0x%"PRIx64"\n",
 			__func__, (void *)opc,
-			PERFUSE_NODE_DATA(opc)->pnd_ino, ffi->fh);
+			PERFUSE_NODE_DATA(opc)->pnd_nodeid, ffi->fh);
 #endif
 
 	if ((error = xchg_msg(pu, opc, pm, 
@@ -2023,8 +2142,8 @@ perfuse_node_remove(pu, opc, targ, pcn)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FILENAME)
-		DPRINTF("%s: remove nodeid = %"PRId64" file = \"%s\"\n",
-			__func__, PERFUSE_NODE_DATA(targ)->pnd_ino,
+		DPRINTF("%s: remove nodeid = 0x%"PRIx64" file = \"%s\"\n",
+			__func__, PERFUSE_NODE_DATA(targ)->pnd_nodeid,
 			pcn->pcn_name);
 #endif
 out:
@@ -2058,7 +2177,7 @@ perfuse_node_link(pu, opc, targ, pcn)
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_LINK, len, pcn->pcn_cred);
 	fli = GET_INPAYLOAD(ps, pm, fuse_link_in);
-	fli->oldnodeid = PERFUSE_NODE_DATA(pn)->pnd_ino;
+	fli->oldnodeid = PERFUSE_NODE_DATA(pn)->pnd_nodeid;
 	(void)strlcpy((char *)(void *)(fli + 1), name, len - sizeof(*fli));
 
 	error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply);
@@ -2116,7 +2235,7 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 	len = sizeof(*fri) + oldname_len + newname_len;
 	pm = ps->ps_new_msg(pu, opc, FUSE_RENAME, len, pcn_targ->pcn_cred);
 	fri = GET_INPAYLOAD(ps, pm, fuse_rename_in);
-	fri->newdir = PERFUSE_NODE_DATA(targ_dir)->pnd_ino;
+	fri->newdir = PERFUSE_NODE_DATA(targ_dir)->pnd_nodeid;
 	np = (char *)(void *)(fri + 1);
 	(void)strlcpy(np, oldname, oldname_len);
 	np += oldname_len;
@@ -2154,12 +2273,12 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FILENAME)
-		DPRINTF("%s: nodeid = %"PRId64" file = \"%s\" renamed \"%s\" "
-			"nodeid = %"PRId64" -> nodeid = %"PRId64" \"%s\"\n",
-	 		__func__, PERFUSE_NODE_DATA(src)->pnd_ino,
+		DPRINTF("%s: nodeid = 0x%"PRIx64" file = \"%s\" renamed \"%s\" "
+			"nodeid = 0x%"PRIx64" -> nodeid = 0x%"PRIx64" \"%s\"\n",
+	 		__func__, PERFUSE_NODE_DATA(src)->pnd_nodeid,
 			pcn_src->pcn_name, pcn_targ->pcn_name,
-			PERFUSE_NODE_DATA(opc)->pnd_ino,
-			PERFUSE_NODE_DATA(targ_dir)->pnd_ino,
+			PERFUSE_NODE_DATA(opc)->pnd_nodeid,
+			PERFUSE_NODE_DATA(targ_dir)->pnd_nodeid,
 			perfuse_node_path(targ_dir));
 #endif
 
@@ -2250,8 +2369,8 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FILENAME)
-		DPRINTF("%s: remove nodeid = %"PRId64" file = \"%s\"\n",
-			__func__, PERFUSE_NODE_DATA(targ)->pnd_ino,
+		DPRINTF("%s: remove nodeid = 0x%"PRIx64" file = \"%s\"\n",
+			__func__, PERFUSE_NODE_DATA(targ)->pnd_nodeid,
 			perfuse_node_path(targ));
 #endif
 out:
@@ -2368,9 +2487,9 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %"PRId64", rfh = 0x%"PRIx64"\n",
+		DPRINTF("%s: opc = %p, nodeid = 0x%"PRIx64", rfh = 0x%"PRIx64"\n",
 			__func__, (void *)opc,
-			PERFUSE_NODE_DATA(opc)->pnd_ino, fh);
+			PERFUSE_NODE_DATA(opc)->pnd_nodeid, fh);
 #endif
 
 	pnd->pnd_all_fd = NULL;
@@ -2542,7 +2661,7 @@ perfuse_node_reclaim(pu, opc)
 	/*
 	 * Never forget the root.
 	 */
-	if (pnd->pnd_ino == FUSE_ROOT_ID)
+	if (pnd->pnd_nodeid == FUSE_ROOT_ID)
 		return 0;
 
 	pnd->pnd_flags |= PND_RECLAIMED;
@@ -2550,7 +2669,7 @@ perfuse_node_reclaim(pu, opc)
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
 		DPRINTF("%s (nodeid %"PRId64") reclaimed\n", 
-			perfuse_node_path(opc), pnd->pnd_ino);
+			perfuse_node_path(opc), pnd->pnd_nodeid);
 #endif
 
 	pn_root = puffs_getroot(pu);
@@ -2564,7 +2683,7 @@ perfuse_node_reclaim(pu, opc)
 	if (perfuse_diagflags & PDF_RECLAIM)
 		DPRINTF("%s (nodeid %"PRId64") is %sreclaimed, "
 			"has childcount %d %s%s%s%s, pending ops:%s%s%s\n", 
-		        perfuse_node_path((puffs_cookie_t)pn), pnd->pnd_ino,
+		        perfuse_node_path((puffs_cookie_t)pn), pnd->pnd_nodeid,
 		        pnd->pnd_flags & PND_RECLAIMED ? "" : "not ",
 		        pnd->pnd_childcount,
 			pnd->pnd_flags & PND_OPEN ? "open " : "not open",
@@ -2755,9 +2874,9 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
+		DPRINTF("%s: opc = %p, nodeid = 0x%"PRIx64", fh = 0x%"PRIx64"\n",
 			__func__, (void *)opc,
-			PERFUSE_NODE_DATA(opc)->pnd_ino, fli->fh);
+			PERFUSE_NODE_DATA(opc)->pnd_nodeid, fli->fh);
 #endif
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
@@ -2860,8 +2979,8 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
-			__func__, (void *)opc, pnd->pnd_ino, fri->fh);
+		DPRINTF("%s: opc = %p, nodeid = 0x%"PRIx64", fh = 0x%"PRIx64"\n",
+			__func__, (void *)opc, pnd->pnd_nodeid, fri->fh);
 #endif
 		error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply);
 
@@ -3006,9 +3125,9 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_FH)
-			DPRINTF("%s: opc = %p, ino = %"PRId64", "
+			DPRINTF("%s: opc = %p, nodeid = 0x%"PRIx64", "
 				"fh = 0x%"PRIx64"\n", __func__, 
-				(void *)opc, pnd->pnd_ino, fwi->fh);
+				(void *)opc, pnd->pnd_nodeid, fwi->fh);
 #endif
 		if ((error = xchg_msg(pu, opc, pm, 
 				      sizeof(*fwo), wait_reply)) != 0)
