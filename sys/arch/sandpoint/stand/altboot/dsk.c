@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.8 2011/07/17 20:54:46 joerg Exp $ */
+/* $NetBSD: dsk.c,v 1.9 2011/10/30 21:08:33 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -56,8 +56,8 @@
  */
 #define CSR_READ_4(r)		in32rb(r)
 #define CSR_WRITE_4(r,v)	out32rb(r,v)
-#define CSR_READ_1(r)		*(volatile uint8_t *)(r)
-#define CSR_WRITE_1(r,v)	*(volatile uint8_t *)(r)=(v)
+#define CSR_READ_1(r)		in8(r)
+#define CSR_WRITE_1(r,v)	out8(r,v)
 
 struct dskdv {
 	char *name;
