@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_main.c,v 1.2 2011/10/23 23:41:56 christos Exp $	*/
+/*	$NetBSD: iscsic_main.c,v 1.3 2011/10/30 18:40:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -414,18 +414,19 @@ status_error_slist(unsigned n)
 iscsid_response_t *
 get_response(int temp)
 {
-	int ret, len;
+	ssize_t ret;
+	size_t len;
 	iscsid_response_t *rsp;
 	int *pbuf;
 
-	pbuf = (int *) buf;
-	rsp = (iscsid_response_t *) & pbuf[1];
+	pbuf = (int *)(void *)buf;
+	rsp = (iscsid_response_t *)(void *)&pbuf[1];
 	*pbuf = 0;
 
 	/* get size of response */
 	len = sizeof(iscsid_response_t);
 	ret = recv(sock, rsp, len, MSG_PEEK | MSG_WAITALL);
-	if (ret != len)
+	if ((size_t)ret != len)
 		io_error("Receiving daemon data");
 
 	DEB(9, ("Status %d, parlen %d\n", rsp->status, rsp->parameter_length));
@@ -444,13 +445,13 @@ get_response(int temp)
 			gen_error("Can't allocate response buffer (%zu bytes)",
 				len + sizeof(int));
 
-		rsp = (iscsid_response_t *) & pbuf[1];
+		rsp = (iscsid_response_t *)(void *)&pbuf[1];
 		*pbuf = 1;
 	}
 	/* get the complete response */
 
 	ret = recv(sock, rsp, len, MSG_WAITALL);
-	if (ret != len)
+	if ((size_t)ret != len)
 		io_error("Receiving daemon data");
 
 	return rsp;
@@ -472,7 +473,7 @@ free_response(iscsid_response_t * rsp)
 {
 	int *pbuf;
 
-	pbuf = ((int *) rsp) - 1;
+	pbuf = ((int *)(void *)rsp) - 1;
 	if (*pbuf)
 		free(pbuf);
 }
@@ -489,33 +490,35 @@ free_response(iscsid_response_t * rsp)
  */
 
 void
-send_request(unsigned request, unsigned par_len, void *par)
+send_request(unsigned request, size_t par_len, void *par)
 {
 	iscsid_request_t *req;
-	int len, ret, req_temp;
+	size_t len;
+	ssize_t ret;
+	int req_temp;
 
 	len = sizeof(iscsid_request_t) + par_len;
 
 	/* alloc buffer if static one is too small to hold request */
-	req_temp = len > (int)sizeof(buf);
+	req_temp = len > sizeof(buf);
 
 	if (req_temp) {
 		req = malloc(len);
 		if (req == NULL)
-			gen_error("Out of memory allocating %d bytes\n", len);
+			gen_error("Out of memory allocating %zu bytes\n", len);
 	} else
-		req = (iscsid_request_t *) buf;
+		req = (iscsid_request_t *)(void *)buf;
 
 	/* setup request */
 	req->request = request;
-	req->parameter_length = par_len;
+	req->parameter_length = (uint32_t)par_len;
 	if (par_len)
 		memcpy(req->parameter, par, par_len);
 
 	/* and send it out */
-	ret = sendto(sock, req, len, 0, (struct sockaddr *) &daemon_name,
-				 sizeof(struct sockaddr_un));
-	if (ret != len) {
+	ret = sendto(sock, req, len, 0, (struct sockaddr *)(void *)&daemon_name,
+				 (socklen_t)sizeof(struct sockaddr_un));
+	if ((size_t)ret != len) {
 		io_error("Sending daemon message");
 	}
 	if (req_temp)
@@ -584,7 +587,8 @@ main(int argc, char **argv)
 	}
 	myname.sun_family = AF_UNIX;
 	(void) snprintf(myname.sun_path, sizeof(myname.sun_path), "%s/socket", sockdir);
-	if (bind(sock, (struct sockaddr *) &myname, sizeof(struct sockaddr_un)) < 0) {
+	if (bind(sock, (struct sockaddr *)(void *)&myname,
+	    (socklen_t)sizeof(struct sockaddr_un)) < 0) {
 		io_error("Binding name to datagram socket");
 	}
 	daemon_name.sun_family = AF_UNIX;

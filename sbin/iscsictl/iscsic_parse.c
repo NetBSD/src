@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_parse.c,v 1.1 2011/10/23 21:11:23 agc Exp $	*/
+/*	$NetBSD: iscsic_parse.c,v 1.2 2011/10/30 18:40:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include "iscsic_globals.h"
 
 #include <ctype.h>
+#include <assert.h>
 
 /*
  * get_address:
@@ -200,10 +201,11 @@ cl_get_target(iscsid_add_target_req_t ** ptarg, int argc, char **argv, int nreq)
 {
 	iscsid_add_target_req_t *targ;
 	char *sp;
-	int num, i, len, name;
+	size_t num, len, name;
+	int i, p;
 
 	/* count number of addreses first, so we know how much memory to allocate */
-	for (i = num = name = 0; i < argc; i++) {
+	for (i = (int)(num = name = 0); i < argc; i++) {
 		if (!argv[i] || argv[i][0] != '-')
 			continue;
 		if (argv[i][1] == 'a')
@@ -219,10 +221,10 @@ cl_get_target(iscsid_add_target_req_t ** ptarg, int argc, char **argv, int nreq)
 		num * sizeof(iscsi_portal_address_t);
 
 	if (NULL == (targ = calloc(1, len)))
-		gen_error("Can't allocate %d bytes of memory", len);
+		gen_error("Can't allocate %zu bytes of memory", len);
 
 	*ptarg = targ;
-	num = -1;
+	p = -1;
 
 	for (i = 0; i < argc; i++) {
 		if (!argv[i] || argv[i][0] != '-')
@@ -236,15 +238,17 @@ cl_get_target(iscsid_add_target_req_t ** ptarg, int argc, char **argv, int nreq)
 			break;
 
 		case 'a':				/* target address */
-			get_address(&targ->portal[++num], sp, argv[i]);
+			get_address(&targ->portal[++p], sp, argv[i]);
 			break;
 
 		case 'p':				/* port */
-			targ->portal[num].port = get_short_int(sp, argv[i], "Port");
+			assert(p >= 0);
+			targ->portal[p].port = get_short_int(sp, argv[i], "Port");
 			break;
 
 		case 'g':				/* group tag */
-			targ->portal[num].group_tag = get_short_int(sp, argv[i],
+			assert(p >= 0);
+			targ->portal[p].group_tag = get_short_int(sp, argv[i],
 														"Group tag");
 			break;
 
@@ -256,10 +260,10 @@ cl_get_target(iscsid_add_target_req_t ** ptarg, int argc, char **argv, int nreq)
 
 		argv[i] = NULL;
 	}
-	targ->num_portals = num + 1;
+	targ->num_portals = p + 1;
 
-	DEB(9, ("cl_get_target returns %d\n", len));
-	return len;
+	DEB(9, ("cl_get_target returns %zu\n", len));
+	return (int)len;
 }
 
 
@@ -838,6 +842,7 @@ cl_get_int(char ident, int argc, char **argv)
  *                Aborts app on bad parameter.
  */
 
+#if 0
 int
 cl_get_uint(char ident, int argc, char **argv)
 {
@@ -871,6 +876,7 @@ cl_get_uint(char ident, int argc, char **argv)
 
 	return val;
 }
+#endif
 
 
 /*
