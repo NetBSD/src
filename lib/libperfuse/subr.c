@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.13 2011/08/13 23:12:15 christos Exp $ */
+/*  $NetBSD: subr.c,v 1.14 2011/10/30 05:11:37 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -66,7 +66,7 @@ perfuse_new_pn(pu, name, parent)
 	(void)memset(pnd, 0, sizeof(*pnd));
 	pnd->pnd_rfh = FUSE_UNKNOWN_FH;
 	pnd->pnd_wfh = FUSE_UNKNOWN_FH;
-	pnd->pnd_ino = PERFUSE_UNKNOWN_INO;
+	pnd->pnd_nodeid = PERFUSE_UNKNOWN_NODEID;
 	pnd->pnd_nlookup = 1;
 	pnd->pnd_parent = parent;
 	pnd->pnd_pn = (puffs_cookie_t)pn;
