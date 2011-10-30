@@ -1,4 +1,4 @@
-.\" $NetBSD: efa.4,v 1.3 2011/10/30 11:10:43 rkujawa Exp $
+.\" $NetBSD: efa.4,v 1.4 2011/10/30 14:31:05 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,13 +90,13 @@ Code needed to support it is present in driver but does not work correctly.
 .Pp
 Some of the above devices were also marketed under PowerFlyer and Winner brands.
 .Pp
-On board Gayle IDE controller can not be used when FastATA is installed and
-therefore, the 
+The onboard Gayle IDE controller can not be used when FastATA is installed and
+therefore, the
 .Nm
 driver will not coexist with
 .Xr wdc 4
 driver attached to
-.Xr mainbus 4 . 
+.Xr mainbus 4 .
 Both
 .Nm
 and
