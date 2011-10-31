@@ -1,4 +1,4 @@
-/* $NetBSD: hpetreg.h,v 1.3 2008/02/15 22:14:10 jmcneill Exp $ */
+/* $NetBSD: hpetreg.h,v 1.4 2011/10/31 12:47:15 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -36,6 +36,7 @@
 #define HPET_INFO		0x00
 #define HPET_INFO_64BITS 		0x2000
 #define HPET_PERIOD		0x04
+#define HPET_PERIOD_MAX			100000000
 #define HPET_CONFIG		0x10
 #define HPET_CONFIG_ENABLE		0x0001
 #define HPET_CONFIG_LEGRTCNF		0x0002
