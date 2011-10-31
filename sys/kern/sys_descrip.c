@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.22 2011/06/26 16:42:42 christos Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.23 2011/10/31 21:31:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.22 2011/06/26 16:42:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.23 2011/10/31 21:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -759,5 +759,8 @@ sys_pipe2(struct lwp *l, const struct sys_pipe2_args *uap, register_t *retval)
 		return error;
 	fd[0] = retval[0];
 	fd[1] = retval[1];
-	return copyout(fd, SCARG(uap, fildes), sizeof(fd));
+	if ((error = copyout(fd, SCARG(uap, fildes), sizeof(fd))) != 0)
+		return error;
+	retval[0] = 0;
+	return 0;
 }
