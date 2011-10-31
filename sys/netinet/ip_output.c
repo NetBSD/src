@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.209 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.210 2011/10/31 13:16:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.209 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.210 2011/10/31 13:16:01 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1008,12 +1008,19 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_pkthdr.len = mhlen + len;
 		m->m_pkthdr.rcvif = (struct ifnet *)0;
 		mhip->ip_sum = 0;
+		KASSERT((m->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0);
 		if (sw_csum & M_CSUM_IPv4) {
 			mhip->ip_sum = in_cksum(m, mhlen);
-			KASSERT((m->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0);
 		} else {
-			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			/*
+			 * checksum is hw-offloaded or not necessary.
+			 */
+			m->m_pkthdr.csum_flags |=
+			    m0->m_pkthdr.csum_flags & M_CSUM_IPv4;
 			m->m_pkthdr.csum_data |= mhlen << 16;
+			KASSERT(!(ifp != NULL &&
+			    IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4))
+			    || (m->m_pkthdr.csum_flags & M_CSUM_IPv4) != 0);
 		}
 		IP_STATINC(IP_STAT_OFRAGMENTS);
 		fragments++;
@@ -1028,19 +1035,17 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	ip->ip_len = htons((u_int16_t)m->m_pkthdr.len);
 	ip->ip_off |= htons(IP_MF);
 	ip->ip_sum = 0;
-	/*
-	 * We may not use checksums on loopback interfaces
-	 */
-	if (__predict_false(ifp == NULL) ||
-	    IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4)) {
-		if (sw_csum & M_CSUM_IPv4) {
-			ip->ip_sum = in_cksum(m, hlen);
-			m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
-		} else {
-			KASSERT(m->m_pkthdr.csum_flags & M_CSUM_IPv4);
-			KASSERT(M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data) >=
-				sizeof(struct ip));
-		}
+	if (sw_csum & M_CSUM_IPv4) {
+		ip->ip_sum = in_cksum(m, hlen);
+		m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
+	} else {
+		/*
+		 * checksum is hw-offloaded or not necessary.
+		 */
+		KASSERT(!(ifp != NULL && IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4))
+		   || (m->m_pkthdr.csum_flags & M_CSUM_IPv4) != 0);
+		KASSERT(M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data) >=
+			sizeof(struct ip));
 	}
 sendorfree:
 	/*
