@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.411 2011/10/16 08:25:40 jruoho Exp $
+# $NetBSD: mi,v 1.412 2011/10/31 15:37:17 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -513,6 +513,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_msync.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_nanosleep.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_pipe.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_pipe2.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_poll.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_posix_fadvise.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_revoke.debug		tests-lib-debug		debug,atf
@@ -2136,6 +2137,7 @@
 ./usr/tests/lib/libc/sys/t_msync		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_nanosleep		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_pipe			tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_pipe2		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_poll			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_posix_fadvise	tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_revoke		tests-lib-tests		atf
