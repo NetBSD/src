@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.52 2011/10/09 14:34:39 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53 2011/10/31 12:49:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.52 2011/10/09 14:34:39 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53 2011/10/31 12:49:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1641,7 +1641,7 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 
 	/*
 	 * If the vnode is mapped, we would need to get the getpages lock
-	 * to stabilize the bmap, but then we would get into trouble whil e
+	 * to stabilize the bmap, but then we would get into trouble while
 	 * locking the pages if the pages belong to this same vnode (or a
 	 * multi-vnode cascade to the same effect).  Just fall back to
 	 * buffered I/O if the vnode is mapped to avoid this mess.
