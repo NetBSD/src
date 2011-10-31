@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.43 2011/09/03 10:28:33 christos Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.44 2011/10/31 12:18:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.43 2011/09/03 10:28:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.44 2011/10/31 12:18:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -422,26 +422,16 @@ sleepq_abort(kmutex_t *mtx, int unlock)
 }
 
 /*
- * sleepq_changepri:
+ * sleepq_reinsert:
  *
- *	Adjust the priority of an LWP residing on a sleepq.  This method
- *	will only alter the user priority; the effective priority is
- *	assumed to have been fixed at the time of insertion into the queue.
+ *	Move the possition of the lwp in the sleep queue after a possible
+ *	change of the lwp's effective priority.
  */
-void
-sleepq_changepri(lwp_t *l, pri_t pri)
+static void
+sleepq_reinsert(sleepq_t *sq, lwp_t *l)
 {
-	sleepq_t *sq = l->l_sleepq;
-	pri_t opri;
 
-	KASSERT(lwp_locked(l, NULL));
-
-	opri = lwp_eprio(l);
-	l->l_priority = pri;
-
-	if (lwp_eprio(l) == opri) {
-		return;
-	}
+	KASSERT(l->l_sleepq == sq);
 	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) == 0) {
 		return;
 	}
@@ -459,33 +449,34 @@ sleepq_changepri(lwp_t *l, pri_t pri)
 	sleepq_insert(sq, l, l->l_syncobj);
 }
 
+/*
+ * sleepq_changepri:
+ *
+ *	Adjust the priority of an LWP residing on a sleepq.
+ */
+void
+sleepq_changepri(lwp_t *l, pri_t pri)
+{
+	sleepq_t *sq = l->l_sleepq;
+
+	KASSERT(lwp_locked(l, NULL));
+
+	l->l_priority = pri;
+	sleepq_reinsert(sq, l);
+}
+
+/*
+ * sleepq_changepri:
+ *
+ *	Adjust the lended priority of an LWP residing on a sleepq.
+ */
 void
 sleepq_lendpri(lwp_t *l, pri_t pri)
 {
 	sleepq_t *sq = l->l_sleepq;
-	pri_t opri;
 
 	KASSERT(lwp_locked(l, NULL));
 
-	opri = lwp_eprio(l);
 	l->l_inheritedprio = pri;
-
-	if (lwp_eprio(l) == opri) {
-		return;
-	}
-	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) == 0) {
-		return;
-	}
-
-	/*
-	 * Don't let the sleep queue become empty, even briefly.
-	 * cv_signal() and cv_broadcast() inspect it without the
-	 * sleep queue lock held and need to see a non-empty queue
-	 * head if there are waiters.
-	 */
-	if (TAILQ_FIRST(sq) == l && TAILQ_NEXT(l, l_sleepchain) == NULL) {
-		return;
-	}
-	TAILQ_REMOVE(sq, l, l_sleepchain);
-	sleepq_insert(sq, l, l->l_syncobj);
+	sleepq_reinsert(sq, l);
 }
