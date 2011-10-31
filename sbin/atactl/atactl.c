@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.63 2011/10/24 19:15:42 jakllsch Exp $	*/
+/*	$NetBSD: atactl.c,v 1.64 2011/10/31 14:44:07 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.63 2011/10/24 19:15:42 jakllsch Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.64 2011/10/31 14:44:07 jakllsch Exp $");
 #endif
 
 
@@ -102,8 +102,10 @@ struct bitinfo {
 
 __dead static void	usage(void);
 static void	ata_command(struct atareq *);
-static void	print_bitinfo(const char *, const char *, u_int, const struct bitinfo *);
-static void	print_bitinfo2(const char *, const char *, u_int, u_int, const struct bitinfo *);
+static void	print_bitinfo(const char *, const char *, u_int,
+    const struct bitinfo *);
+static void	print_bitinfo2(const char *, const char *, u_int, u_int,
+    const struct bitinfo *);
 static void	print_smart_status(void *, void *);
 static void	print_error_entry(int, const struct ata_smart_error *);
 static void	print_selftest_entry(int, const struct ata_smart_selftest *);
@@ -119,7 +121,7 @@ static int	fd;				/* file descriptor for device */
 static const	char *dvname;			/* device name */
 static char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 static const	char *cmdname;			/* command user issued */
-static const	char *argnames;			/* helpstring: expected arguments */
+static const	char *argnames;		/* helpstring: expected arguments */
 
 static void	device_identify(int, char *[]);
 static void	device_setidle(int, char *[]);
@@ -140,7 +142,8 @@ static const struct command device_commands[] = {
 	{ "standby",	"",			device_idle },
 	{ "sleep",	"",			device_idle },
 	{ "checkpower",	"",			device_checkpower },
-	{ "smart",	"enable|disable|status|offline #|error-log|selftest-log",
+	{ "smart",
+		"enable|disable|status|offline #|error-log|selftest-log",
 						device_smart },
 	{ "security",	"freeze|status",	device_security },
 	{ NULL,		NULL,			NULL },
@@ -446,7 +449,8 @@ ata_command(struct atareq *req)
  */
 
 static void
-print_bitinfo(const char *bf, const char *af, u_int bits, const struct bitinfo *binfo)
+print_bitinfo(const char *bf, const char *af, u_int bits,
+    const struct bitinfo *binfo)
 {
 
 	for (; binfo->bitmask != 0; binfo++)
@@ -455,7 +459,8 @@ print_bitinfo(const char *bf, const char *af, u_int bits, const struct bitinfo *
 }
 
 static void
-print_bitinfo2(const char *bf, const char *af, u_int bits, u_int enables, const struct bitinfo *binfo)
+print_bitinfo2(const char *bf, const char *af, u_int bits, u_int enables,
+    const struct bitinfo *binfo)
 {
 
 	for (; binfo->bitmask != 0; binfo++)
@@ -510,7 +515,8 @@ print_smart_status(void *vbuf, void *tbuf)
 		return;
 	}
 
-	printf("id value thresh crit collect reliability description\t\t\traw\n");
+	printf("id value thresh crit collect reliability description"
+	    "\t\t\traw\n");
 	for (i = 0; i < 256; i++) {
 		int thresh = 0;
 
@@ -597,7 +603,8 @@ print_error_entry(int num, const struct ata_smart_error *le)
 	printf("Log entry: %d\n", num);
 
 	for (i = 0; i < 5; i++)
-		printf("\tCommand %d: dc=%02x sf=%02x sc=%02x sn=%02x cl=%02x ch=%02x dh=%02x cmd=%02x time=%02x%02x%02x%02x\n", i,
+		printf("\tCommand %d: dc=%02x sf=%02x sc=%02x sn=%02x cl=%02x "
+		    "ch=%02x dh=%02x cmd=%02x time=%02x%02x%02x%02x\n", i,
 		    le->command[i].device_control,
 		    le->command[i].features,
 		    le->command[i].sector_count,
@@ -610,7 +617,8 @@ print_error_entry(int num, const struct ata_smart_error *le)
 		    le->command[i].timestamp[2],
 		    le->command[i].timestamp[1],
 		    le->command[i].timestamp[0]);
-	printf("\tError: err=%02x sc=%02x sn=%02x cl=%02x ch=%02x dh=%02x status=%02x state=%02x lifetime=%02x%02x\n",
+	printf("\tError: err=%02x sc=%02x sn=%02x cl=%02x ch=%02x dh=%02x "
+	    "status=%02x state=%02x lifetime=%02x%02x\n",
 	    le->error_data.error,
 	    le->error_data.sector_count,
 	    le->error_data.sector_number,
@@ -621,7 +629,8 @@ print_error_entry(int num, const struct ata_smart_error *le)
 	    le->error_data.state,
 	    le->error_data.lifetime[1],
 	    le->error_data.lifetime[0]);
-	printf("\tExtended: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	printf("\tExtended: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x "
+	    "%02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
 	    le->error_data.extended_error[0],
 	    le->error_data.extended_error[1],
 	    le->error_data.extended_error[2],
