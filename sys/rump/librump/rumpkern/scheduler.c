@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.26 2011/03/21 16:41:09 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.27 2011/10/31 13:17:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.26 2011/03/21 16:41:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.27 2011/10/31 13:17:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -219,6 +219,10 @@ lwp0rele(void)
 	rumpuser_mutex_exit(lwp0mtx);
 }
 
+/*
+ * rump_schedule: ensure that the calling host thread has a valid lwp context.
+ * ie. ensure that rumpuser_get_curlwp() != NULL.
+ */
 void
 rump_schedule()
 {
