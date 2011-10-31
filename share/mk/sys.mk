@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.106 2011/05/20 14:27:48 joerg Exp $
+#	$NetBSD: sys.mk,v 1.107 2011/10/31 14:20:12 chs Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -20,29 +20,16 @@ COMPILE.S?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} ${_ASM_TRADITIONAL_CPP}
 LINK.S?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} ${LDFLAGS}
 
 CC?=		cc
-.if ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "armeb" || \
-    ${MACHINE_ARCH} == "hppa" || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "m68k" || \
-    ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
-    ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb" || \
-    ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64"
-DBG?=	-O2
-.elif ${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
+.if ${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
 # -O2 is too -falign-* zealous for low-memory sh3 machines
 DBG?=	-Os -freorder-blocks
+.elif ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68000"
+# see src/doc/HACKS for details
+DBG?=	-Os
 .elif ${MACHINE_ARCH} == "vax"
 DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
-.elif ${MACHINE_ARCH} == "m68000"
-# see src/doc/HACKS for details
-DBG?=	-O1
 .else
-DBG?=	-O
+DBG?=	-O2
 .endif
 CFLAGS?=	${DBG}
 LDFLAGS?=
