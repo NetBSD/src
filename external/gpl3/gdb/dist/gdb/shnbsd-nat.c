@@ -43,7 +43,7 @@
 || (regno) == SR_REGNUM || (regno) == GBR_REGNUM)
 
 /* Sizeof `struct reg' in <machine/reg.h>.  */
-#define SHNBSD_SIZEOF_GREGS	(21 * 4)
+#define SHNBSD_SIZEOF_GREGS	(22 * 4)
 
 static void
 shnbsd_fetch_inferior_registers (struct target_ops *ops,
