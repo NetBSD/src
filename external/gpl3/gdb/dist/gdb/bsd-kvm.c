@@ -70,6 +70,7 @@ bsd_kvm_open (char *filename, int from_tty)
   char errbuf[_POSIX2_LINE_MAX];
   char *execfile = NULL;
   kvm_t *temp_kd;
+  struct inferior *inf;
 
   target_preopen (from_tty);
 
@@ -96,6 +97,10 @@ bsd_kvm_open (char *filename, int from_tty)
   unpush_target (&bsd_kvm_ops);
   core_kd = temp_kd;
   push_target (&bsd_kvm_ops);
+
+  inf = add_inferior_silent (PIDGET(bsd_kvm_ptid));
+  inf->aspace = maybe_new_address_space ();
+  inf->pspace = add_program_space (inf->aspace);
 
   add_thread_silent (bsd_kvm_ptid);
   inferior_ptid = bsd_kvm_ptid;
