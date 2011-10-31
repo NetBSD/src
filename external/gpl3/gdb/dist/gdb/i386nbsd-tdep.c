@@ -448,10 +448,9 @@ i386nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tramp_frame_prepend_unwinder (gdbarch, &i386nbsd_sigtramp_si2);
   tramp_frame_prepend_unwinder (gdbarch, &i386nbsd_sigtramp_si31);
   tramp_frame_prepend_unwinder (gdbarch, &i386nbsd_sigtramp_si4);
-#ifdef notyet
+
   /* Unwind kernel trap frames correctly.  */
   frame_unwind_prepend_unwinder (gdbarch, &i386nbsd_trapframe_unwind);
-#endif
 }
 
 /* NetBSD ELF.  */
