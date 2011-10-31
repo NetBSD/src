@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.167 2011/08/31 18:52:37 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.168 2011/10/31 12:42:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2011/08/31 18:52:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2011/10/31 12:42:36 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1182,6 +1182,7 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 		pmap_update(pmap_kernel());
 
 		error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
+		pmap_kremove(dumpspace, n * PAGE_SIZE);
 		if (error)
 			return error;
 		maddr += n;
