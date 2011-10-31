@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbvar.h,v 1.11 2011/06/03 03:20:39 christos Exp $	*/
+/*	$NetBSD: ffbvar.h,v 1.12 2011/10/31 08:28:46 jdc Exp $	*/
 /*	$OpenBSD: creatorvar.h,v 1.6 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -86,4 +86,4 @@ struct ffb_softc {
 #define	FBC_READ(sc,r) \
     bus_space_read_4((sc)->sc_bt, (sc)->sc_fbc_h, (r))
 
-void	ffb_attach(struct ffb_softc *);
+void	ffb_attach(device_t);
