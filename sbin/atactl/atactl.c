@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.64 2011/10/31 14:44:07 jakllsch Exp $	*/
+/*	$NetBSD: atactl.c,v 1.65 2011/10/31 14:50:10 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.64 2011/10/31 14:44:07 jakllsch Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.65 2011/10/31 14:50:10 jakllsch Exp $");
 #endif
 
 
@@ -121,7 +121,6 @@ static int	fd;				/* file descriptor for device */
 static const	char *dvname;			/* device name */
 static char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 static const	char *cmdname;			/* command user issued */
-static const	char *argnames;		/* helpstring: expected arguments */
 
 static void	device_identify(int, char *[]);
 static void	device_setidle(int, char *[]);
@@ -377,8 +376,6 @@ main(int argc, char *argv[])
 	}
 	if (commands == NULL)
 		errx(1, "unknown command: %s", cmdname);
-
-	argnames = commands->arg_names;
 
 	(*commands->cmd_func)(argc, argv);
 	exit(0);
