@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.17 2011/09/16 15:39:26 joerg Exp $ */
+/*	$NetBSD: iconv.c,v 1.18 2011/10/31 13:27:51 yamt Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.17 2011/09/16 15:39:26 joerg Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.18 2011/10/31 13:27:51 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -89,6 +89,7 @@ show_codesets(void)
 
 #define INBUFSIZE 1024
 #define OUTBUFSIZE (INBUFSIZE * 2)
+/*ARGSUSED*/
 static void
 do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
     int hide_invalid)
