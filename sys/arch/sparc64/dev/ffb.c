@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.47 2011/10/23 06:06:24 jdc Exp $	*/
+/*	$NetBSD: ffb.c,v 1.48 2011/10/31 08:28:46 jdc Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.47 2011/10/23 06:06:24 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.48 2011/10/31 08:28:46 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.47 2011/10/23 06:06:24 jdc Exp $");
 
 #include <dev/wsfont/wsfont.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+
+#include <prop/proplib.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>
@@ -188,8 +190,9 @@ int ffb_set_vmode(struct ffb_softc *, struct videomode *, int, int *, int *);
 
 
 void
-ffb_attach(struct ffb_softc *sc)
+ffb_attach(device_t self)
 {
+	struct ffb_softc *sc = device_private(self);
 	struct wsemuldisplaydev_attach_args waa;
 	struct rasops_info *ri;
 	long defattr;
@@ -200,6 +203,7 @@ ffb_attach(struct ffb_softc *sc)
 	u_int blank = WSDISPLAYIO_VIDEO_ON;
 	char buf[6+1];
 	int i, try_edid;
+	prop_data_t data;
 
 	printf(":");
 		
@@ -306,6 +310,10 @@ ffb_attach(struct ffb_softc *sc)
 		DPRINTF(("\n"));
 		if (ffb_debug)
 			edid_print(&sc->sc_edid_info);
+
+		data = prop_data_create_data(sc->sc_edid_data, EDID_DATA_LEN);
+		prop_dictionary_set(device_properties(self), "EDID", data);
+		prop_object_release(data);
 
 		if (try_edid)
 			for (i = 0; i < sc->sc_edid_info.edid_nmodes; i++) {
@@ -493,6 +501,11 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
 		return EIO; /* not supported yet */
+		break;
+	case WSDISPLAYIO_GET_EDID: {
+		struct wsdisplayio_edid_info *d = data;
+		return wsdisplayio_get_edid(sc->sc_dev, d);
+	}
 	default:
 		return EPASSTHROUGH;
 	}
