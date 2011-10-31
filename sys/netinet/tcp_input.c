@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.316 2011/08/31 18:31:03 plunky Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.317 2011/10/31 13:01:42 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.316 2011/08/31 18:31:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.317 2011/10/31 13:01:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2926,7 +2926,6 @@ dodata:							/* XXX */
 			m_adj(m, hdroptlen);
 			tiflags = tcp_reass(tp, th, m, &tlen);
 			tp->t_flags |= TF_ACKNOW;
-			TCP_REASS_UNLOCK(tp);
 		}
 
 		/*
