@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.13 2011/10/02 18:34:17 christos Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.14 2011/10/31 18:37:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bitops.c,v 1.13 2011/10/02 18:34:17 christos Exp $");
+__RCSID("$NetBSD: t_bitops.c,v 1.14 2011/10/31 18:37:01 pgoyette Exp $");
 
 #include <atf-c.h>
 
@@ -183,7 +183,7 @@ ATF_TC_BODY(ilog2_log2, tc)
 
 		if (fabs(floor(x) - y) > 1.0e-40) {
 			atf_tc_expect_fail("PR misc/44767");
-			atf_tc_fail_nonfatal("log2(%"PRIu64") != "
+			atf_tc_fail("log2(%"PRIu64") != "
 			    "ilog2(%"PRIu64")", i, i);
 		}
 	}
