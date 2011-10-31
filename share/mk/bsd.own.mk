@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.687 2011/10/30 08:50:14 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.688 2011/10/31 08:14:44 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -47,25 +47,16 @@ NEED_OWN_INSTALL_TARGET?=	yes
 TOOLCHAIN_MISSING?=	no
 
 #
-# Platforms using GCC 4.5
+# Platforms still using GCC 4.1
 #
-.if ${MACHINE_ARCH} == "hppa"	   || \
-    ${MACHINE_ARCH} == "i386"      || \
-    ${MACHINE_CPU}  == "mips"      || \
-    ${MACHINE_ARCH} == "powerpc"   || \
-    ${MACHINE_ARCH} == "powerpc64" || \
-    ${MACHINE_CPU}  == "sh3"       || \
-    ${MACHINE_ARCH} == "sparc"     || \
-    ${MACHINE_ARCH} == "sparc64"   || \
-    ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "alpha"	|| \
+    ${MACHINE_CPU}  == "arm"	|| \
+    ${MACHINE_CPU}  == "m68k"	|| \
+    ${MACHINE_CPU}  == "vax"
+HAVE_GCC?=    4
+.else
+# Otherwise, default to GCC4.5
 HAVE_GCC?=    45
-.endif
-
-#
-# Otherwise, default to GCC4.1
-#
-.if !defined(HAVE_GCC) && !defined(HAVE_PCC)
-HAVE_GCC=	4
 .endif
 
 .if \
@@ -76,26 +67,21 @@ USE_COMPILERCRTSTUFF?=	no
 .endif
 USE_COMPILERCRTSTUFF?=	yes
 
+
 #
-# Platforms using GDB 7
+# Platforms still using GDB 6
 #
-.if ${MACHINE_ARCH} == "i386"      || \
-    ${MACHINE_ARCH} == "x86_64"    || \
-    ${MACHINE_ARCH} == "sparc64"   || \
-    ${MACHINE_ARCH} == "sparc"     || \
-    ${MACHINE_ARCH} == "arm"       || \
-    ${MACHINE_ARCH} == "powerpc"   || \
-    ${MACHINE_ARCH} == "powerpc64" || \
-    ${MACHINE_CPU}  == "m68k"
-HAVE_GDB?= 7
+.if ${MACHINE_ARCH} == "alpha"	|| \
+    ${MACHINE_ARCH} == "hppa"	|| \
+    ${MACHINE_CPU}  == "mips"	|| \
+    ${MACHINE_CPU}  == "sh3"	|| \
+    ${MACHINE_ARCH} == "vax"
+HAVE_GDB?= 6
 .else
-# default to GDB6
-HAVE_GDB?=	6
+# Otherwise, default to GDB7
+HAVE_GDB?=	7
 .endif
 
-
-# default to binutils 2.19
-HAVE_BINUTILS?=	219
 
 .if empty(.MAKEFLAGS:M-V*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
