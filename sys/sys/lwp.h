@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.155 2011/08/07 21:13:06 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.156 2011/10/31 12:18:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -392,7 +392,11 @@ lwp_changepri(lwp_t *l, pri_t pri)
 {
 	KASSERT(mutex_owned(l->l_mutex));
 
+	if (l->l_priority == pri)
+		return;
+
 	(*l->l_syncobj->sobj_changepri)(l, pri);
+	KASSERT(l->l_priority == pri);
 }
 
 static inline void
@@ -404,6 +408,7 @@ lwp_lendpri(lwp_t *l, pri_t pri)
 		return;
 
 	(*l->l_syncobj->sobj_lendpri)(l, pri);
+	KASSERT(l->l_inheritedprio == pri);
 }
 
 static inline pri_t
