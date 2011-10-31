@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.65 2011/10/31 14:50:10 jakllsch Exp $	*/
+/*	$NetBSD: atactl.c,v 1.66 2011/10/31 15:26:11 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.65 2011/10/31 14:50:10 jakllsch Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.66 2011/10/31 15:26:11 jakllsch Exp $");
 #endif
 
 
@@ -113,7 +113,7 @@ static void	print_selftest_entry(int, const struct ata_smart_selftest *);
 static void	print_error(const void *);
 static void	print_selftest(const void *);
 
-static struct ataparams *getataparams(void);
+static const struct ataparams *getataparams(void);
 
 static int	is_smart(void);
 
@@ -755,7 +755,7 @@ print_selftest(const void *buf)
 		print_selftest_entry(i, &stlog->log_entries[i]);
 }
 
-static struct ataparams *
+static const struct ataparams *
 getataparams(void)
 {
 	struct atareq req;
@@ -788,7 +788,7 @@ static int
 is_smart(void)
 {
 	int retval = 0;
-	struct ataparams *inqbuf;
+	const struct ataparams *inqbuf;
 	const char *status;
 
 	inqbuf = getataparams();
@@ -824,7 +824,7 @@ is_smart(void)
  */
 static void
 extract_string(char *buf, size_t bufmax,
-	       uint8_t *bytes, unsigned numbytes,
+	       const uint8_t *bytes, size_t numbytes,
 	       int needswap)
 {
 	unsigned i;
@@ -862,7 +862,7 @@ extract_string(char *buf, size_t bufmax,
 static void
 device_identify(int argc, char *argv[])
 {
-	struct ataparams *inqbuf;
+	const struct ataparams *inqbuf;
 	char model[sizeof(inqbuf->atap_model)+1];
 	char revision[sizeof(inqbuf->atap_revision)+1];
 	char serial[sizeof(inqbuf->atap_serial)+1];
@@ -884,7 +884,7 @@ device_identify(int argc, char *argv[])
 	if ((inqbuf->atap_integrity & WDC_INTEGRITY_MAGIC_MASK) ==
 	    WDC_INTEGRITY_MAGIC) {
 		for (i = checksum = 0; i < 512; i++)
-			checksum += ((uint8_t *)inqbuf)[i];
+			checksum += ((const uint8_t *)inqbuf)[i];
 		if (checksum != 0)
 			puts("IDENTIFY DEVICE data checksum invalid\n");
 	}
@@ -1362,7 +1362,7 @@ static void
 device_security(int argc, char *argv[])
 {
 	struct atareq req;
-	struct ataparams *inqbuf;
+	const struct ataparams *inqbuf;
 
 	/* need subcommand */
 	if (argc < 1)
