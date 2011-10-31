@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe.c,v 1.2 2011/10/20 18:20:30 njoly Exp $ */
+/* $NetBSD: t_pipe.c,v 1.3 2011/10/31 15:41:31 christos Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_pipe.c,v 1.2 2011/10/20 18:20:30 njoly Exp $");
+__RCSID("$NetBSD: t_pipe.c,v 1.3 2011/10/31 15:41:31 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -155,34 +155,9 @@ ATF_TC_BODY(pipe_restart, tc)
 	}
 }
 
-ATF_TC(pipe2_cloexec);
-ATF_TC_HEAD(pipe2_cloexec, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Check pipe2(2) with O_CLOEXEC");
-}
-
-ATF_TC_BODY(pipe2_cloexec, tc)
-{
-	int flag, fildes[2];
-
-	ATF_REQUIRE(pipe2(fildes, O_CLOEXEC) != -1);
-
-	flag = fcntl(fildes[0], F_GETFD);
-	ATF_REQUIRE(flag != -1);
-	ATF_CHECK((flag & FD_CLOEXEC) != 0);
-
-	flag = fcntl(fildes[1], F_GETFD);
-	ATF_REQUIRE(flag != -1);
-	ATF_CHECK((flag & FD_CLOEXEC) != 0);
-
-	ATF_REQUIRE(close(fildes[0]) != -1);
-	ATF_REQUIRE(close(fildes[1]) != -1);
-}
-
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, pipe_restart);
-	ATF_TP_ADD_TC(tp, pipe2_cloexec);
 
 	return atf_no_error();
 }
