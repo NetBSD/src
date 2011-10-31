@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.136 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.137 2011/10/31 12:50:50 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.136 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.137 2011/10/31 12:50:50 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -350,7 +350,7 @@ COMPATNAME(route_output)(struct mbuf *m, ...)
 			info.rti_info[RTAX_DST] = rt_getkey(rt);
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-			info.rti_info[RTAX_TAG] = (struct sockaddr*)rt_gettag(rt);
+			info.rti_info[RTAX_TAG] = rt_gettag(rt);
 			if ((rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) == 0)
 				;
 			else if ((ifp = rt->rt_ifp) != NULL) {
