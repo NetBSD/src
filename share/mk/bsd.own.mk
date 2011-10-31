@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.688 2011/10/31 08:14:44 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.689 2011/10/31 14:20:11 chs Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -49,10 +49,7 @@ TOOLCHAIN_MISSING?=	no
 #
 # Platforms still using GCC 4.1
 #
-.if ${MACHINE_ARCH} == "alpha"	|| \
-    ${MACHINE_CPU}  == "arm"	|| \
-    ${MACHINE_CPU}  == "m68k"	|| \
-    ${MACHINE_CPU}  == "vax"
+.if ${MACHINE_CPU}  == "vax"
 HAVE_GCC?=    4
 .else
 # Otherwise, default to GCC4.5
@@ -1089,7 +1086,6 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 	s3 s3virge savage siliconmotion sis suncg14 \
 	suncg6 sunffb sunleo suntcx \
 	tdfx tga trident tseng vesa vga via vmware wsfb
-	
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
 
