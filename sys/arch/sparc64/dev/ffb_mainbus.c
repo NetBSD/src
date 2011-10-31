@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.11 2011/07/01 18:48:36 dyoung Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.12 2011/10/31 08:28:46 jdc Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.11 2011/07/01 18:48:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.12 2011/10/31 08:28:46 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -114,7 +114,7 @@ ffb_mainbus_attach(device_t parent, device_t self, void *aux)
 	if (strcmp(ma->ma_name, "SUNW,afb") == 0)
 		sc->sc_type = FFB_AFB;
 
-	ffb_attach(sc);
+	ffb_attach(self);
 
 	return;
 
