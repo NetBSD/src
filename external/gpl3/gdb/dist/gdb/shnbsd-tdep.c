@@ -359,14 +359,11 @@ shnbsd_get_next_pc (struct regcache *regcache, CORE_ADDR pc)
 int
 shnbsd_software_single_step (struct frame_info *frame)
 {
-  static CORE_ADDR next_pc;
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct address_space *aspace = get_frame_address_space (frame);
   struct regcache  *regcache= get_current_regcache ();
   CORE_ADDR pc = regcache_read_pc (regcache);
-
-  if (pc != next_pc)
-    next_pc = shnbsd_get_next_pc (regcache, pc);
+  CORE_ADDR next_pc = shnbsd_get_next_pc (regcache, pc);
 
   insert_single_step_breakpoint (gdbarch, aspace, next_pc);
   return 1;
