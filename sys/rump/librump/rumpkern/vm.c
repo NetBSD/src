@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.119 2011/09/02 10:18:38 christos Exp $	*/
+/*	$NetBSD: vm.c,v 1.120 2011/10/31 13:23:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.119 2011/09/02 10:18:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.120 2011/10/31 13:23:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -97,7 +97,7 @@ static unsigned long dddlim;		/* 90% of memory limit used */
 /*
  * Try to free two pages worth of pages from objects.
  * If this succesfully frees a full page cache page, we'll
- * free the released page plus PAGE_SIZE²/sizeof(vm_page).
+ * free the released page plus PAGE_SIZE/sizeof(vm_page).
  */
 #define PAGEDAEMON_OBJCHUNK (2*PAGE_SIZE / sizeof(struct vm_page))
 
