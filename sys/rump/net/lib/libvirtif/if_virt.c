@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.24 2011/08/07 14:03:16 rmind Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.25 2011/10/31 13:25:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.24 2011/08/07 14:03:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.25 2011/10/31 13:25:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -279,7 +279,7 @@ virtif_receiver(void *arg)
 				goto again;
 			}
 
-			printf("%s: read from /dev/tap failed. host if down?\n",
+			printf("%s: read from /dev/tap failed. host is down?\n",
 			    ifp->if_xname);
 			mutex_enter(&sc->sc_mtx);
 			/* could check if need go, done soon anyway */
