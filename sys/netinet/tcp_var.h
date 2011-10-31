@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.167 2011/05/25 23:17:44 gdt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.168 2011/10/31 12:52:19 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -408,6 +408,7 @@ tcp_reass_unlock(struct tcpcb *tp)
 	int s;
 
 	s = splvm();
+	KASSERT((tp->t_flags & TF_REASSEMBLING) != 0);
 	tp->t_flags &= ~TF_REASSEMBLING;
 	splx(s);
 }
