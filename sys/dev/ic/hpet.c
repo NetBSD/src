@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.12 2011/07/29 19:19:14 jakllsch Exp $ */
+/* $NetBSD: hpet.c,v 1.13 2011/10/31 12:47:15 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.12 2011/07/29 19:19:14 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.13 2011/10/31 12:47:15 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -71,7 +71,9 @@ hpet_attach_subr(device_t dv)
 {
 	struct hpet_softc *sc = device_private(dv);
 	struct timecounter *tc;
+	uint64_t tmp;
 	uint32_t val;
+	int i;
 
 	tc = &sc->sc_tc;
 
@@ -83,12 +85,27 @@ hpet_attach_subr(device_t dv)
 
 	/* Get frequency */
 	val = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_PERIOD);
-	if (val == 0) {
+	if (val == 0 || val > HPET_PERIOD_MAX) {
 		aprint_error_dev(dv, "invalid timer period\n");
 		return;
 	}
-	val = (1000000000000000ULL * 2) / val;
-	tc->tc_frequency = (val / 2) + (val & 1);
+
+	/*
+	 * The following loop is a workaround for AMD SB700 based systems.
+	 * http://kerneltrap.org/mailarchive/git-commits-head/2008/8/17/2964724
+	 * http://git.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=a6825f1c1fa83b1e92b6715ee5771a4d6524d3b9
+	 */
+	for (i = 0; bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_CONFIG)
+	    == 0xffffffff; i++) {
+		if (i >= 1000) {
+			aprint_error_dev(dv,
+			    "HPET_CONFIG value = 0xffffffff\n");
+			return;
+		}
+	}
+
+	tmp = (1000000000000000ULL * 2) / val;
+	tc->tc_frequency = (tmp / 2) + (tmp & 1);
 
 	/* Enable timer */
 	val = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_CONFIG);
