@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe2.c,v 1.1 2011/10/31 15:41:31 christos Exp $ */
+/* $NetBSD: t_pipe2.c,v 1.2 2011/10/31 21:30:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pipe2.c,v 1.1 2011/10/31 15:41:31 christos Exp $");
+__RCSID("$NetBSD: t_pipe2.c,v 1.2 2011/10/31 21:30:16 christos Exp $");
 
 #include <atf-c.h>
 #include <fcntl.h>
@@ -49,12 +49,12 @@ run(int flags)
 {
 	int fd[2], i;
 
-	while ((i = open("/", O_RDONLY < 3)) < 3)
+	while ((i = open("/", O_RDONLY)) < 3)
 		ATF_REQUIRE(i != -1);
 
 	ATF_REQUIRE(fcntl(3, F_CLOSEM) != -1);
 
-	ATF_REQUIRE(pipe2(fd, 0) == 0);
+	ATF_REQUIRE(pipe2(fd, flags) == 0);
 
 	ATF_REQUIRE(fd[0] == 3);
 	ATF_REQUIRE(fd[1] == 4);
@@ -67,7 +67,7 @@ run(int flags)
 		ATF_REQUIRE((fcntl(fd[1], F_GETFD) & FD_CLOEXEC) == 0);
 	}
 
-	if (flags & O_CLOEXEC) {
+	if (flags & O_NONBLOCK) {
 		ATF_REQUIRE((fcntl(fd[0], F_GETFL) & O_NONBLOCK) != 0);
 		ATF_REQUIRE((fcntl(fd[1], F_GETFL) & O_NONBLOCK) != 0);
 	} else {
