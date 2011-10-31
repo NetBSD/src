@@ -1,0 +1,136 @@
+/* $NetBSD: t_pipe2.c,v 1.1 2011/10/31 15:41:31 christos Exp $ */
+
+/*-
+ * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Christos Zoulas.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_pipe2.c,v 1.1 2011/10/31 15:41:31 christos Exp $");
+
+#include <atf-c.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+
+static void
+run(int flags)
+{
+	int fd[2], i;
+
+	while ((i = open("/", O_RDONLY < 3)) < 3)
+		ATF_REQUIRE(i != -1);
+
+	ATF_REQUIRE(fcntl(3, F_CLOSEM) != -1);
+
+	ATF_REQUIRE(pipe2(fd, 0) == 0);
+
+	ATF_REQUIRE(fd[0] == 3);
+	ATF_REQUIRE(fd[1] == 4);
+
+	if (flags & O_CLOEXEC) {
+		ATF_REQUIRE((fcntl(fd[0], F_GETFD) & FD_CLOEXEC) != 0);
+		ATF_REQUIRE((fcntl(fd[1], F_GETFD) & FD_CLOEXEC) != 0);
+	} else {
+		ATF_REQUIRE((fcntl(fd[0], F_GETFD) & FD_CLOEXEC) == 0);
+		ATF_REQUIRE((fcntl(fd[1], F_GETFD) & FD_CLOEXEC) == 0);
+	}
+
+	if (flags & O_CLOEXEC) {
+		ATF_REQUIRE((fcntl(fd[0], F_GETFL) & O_NONBLOCK) != 0);
+		ATF_REQUIRE((fcntl(fd[1], F_GETFL) & O_NONBLOCK) != 0);
+	} else {
+		ATF_REQUIRE((fcntl(fd[0], F_GETFL) & O_NONBLOCK) == 0);
+		ATF_REQUIRE((fcntl(fd[1], F_GETFL) & O_NONBLOCK) == 0);
+	}
+
+	ATF_REQUIRE(close(fd[0]) != -1);
+	ATF_REQUIRE(close(fd[1]) != -1);
+}
+
+ATF_TC(pipe2_basic);
+ATF_TC_HEAD(pipe2_basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of pipe2(2)");
+}
+
+ATF_TC_BODY(pipe2_basic, tc)
+{
+	run(0);
+}
+
+ATF_TC(pipe2_nonblock);
+ATF_TC_HEAD(pipe2_nonblock, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A non-blocking test of pipe2(2)");
+}
+
+ATF_TC_BODY(pipe2_nonblock, tc)
+{
+	run(O_NONBLOCK);
+}
+
+ATF_TC(pipe2_cloexec);
+ATF_TC_HEAD(pipe2_cloexec, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A close-on-exec of pipe2(2)");
+}
+
+ATF_TC_BODY(pipe2_cloexec, tc)
+{
+	run(O_CLOEXEC);
+}
+
+ATF_TC(pipe2_einval);
+ATF_TC_HEAD(pipe2_einval, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A error check of pipe2(2)");
+}
+
+ATF_TC_BODY(pipe2_einval, tc)
+{
+	int fd[2];
+	ATF_REQUIRE_ERRNO(EINVAL, pipe2(fd, O_ASYNC) == -1);
+}
+
+ATF_TP_ADD_TCS(tp)
+{
+
+	ATF_TP_ADD_TC(tp, pipe2_basic);
+	ATF_TP_ADD_TC(tp, pipe2_nonblock);
+	ATF_TP_ADD_TC(tp, pipe2_cloexec);
+	ATF_TP_ADD_TC(tp, pipe2_einval);
+
+	return atf_no_error();
+}
