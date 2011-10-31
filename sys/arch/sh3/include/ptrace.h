@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.9 2011/01/28 21:06:07 uwe Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.10 2011/10/31 19:08:45 uwe Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -45,6 +45,11 @@
 
 #define	PT_GETREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETREGS	(PT_FIRSTMACH + 4)
+
+#if 0 /* XXX: not yet, but reserve the numbers "leaked" to readelf(1). */
+#define	PT_GETFPREGS	(PT_FIRSTMACH + 5)
+#define	PT_SETFPREGS	(PT_FIRSTMACH + 6)
+#endif
 
 #define PT_MACHDEP_STRINGS \
 	"PT_STEP", \
