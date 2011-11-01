@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.481 2011/09/10 19:07:57 marino Exp $
+.\"	$NetBSD: main,v 1.482 2011/11/01 02:04:43 tcort Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1118,6 +1118,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Julian Coleman Ta Mt jdc@NetBSD.org
 .It Ta Marcus Comstedt Ta Mt marcus@NetBSD.org
 .It Ta Jeremy Cooper Ta Mt jeremy@NetBSD.org
+.It Ta Thomas Cort Ta Mt tcort@NetBSD.org
 .It Ta Chuck Cranor Ta Mt chuck@NetBSD.org
 .It Ta Alistair Crooks Ta Mt agc@NetBSD.org
 .It Ta Johan Danielsson Ta Mt joda@NetBSD.org
