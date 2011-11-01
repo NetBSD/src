@@ -521,11 +521,14 @@ sh_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr, int *lenptr)
 static CORE_ADDR
 sh_analyze_prologue (struct gdbarch *gdbarch,
 		     CORE_ADDR pc, CORE_ADDR current_pc,
-		     struct sh_frame_cache *cache, ULONGEST fpscr)
+		     struct sh_frame_cache *cache,
+		     struct frame_info *fpscr_frame)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   ULONGEST inst;
   CORE_ADDR opc;
+  ULONGEST fpscr = 0;
+  int have_fpscr = (fpscr_frame == NULL);
   int offset;
   int sav_offset = 0;
   int r3_val = 0;
@@ -631,6 +634,12 @@ sh_analyze_prologue (struct gdbarch *gdbarch,
 	}
       else if (IS_FPUSH (inst))
 	{
+	  if (!have_fpscr)
+	    {
+	      fpscr = get_frame_register_unsigned (fpscr_frame, FPSCR_REGNUM);
+	      have_fpscr = 1;
+	    }
+
 	  if (fpscr & FPSCR_SZ)
 	    {
 	      cache->sp_offset += 8;
@@ -745,7 +754,7 @@ sh_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
     return max (pc, start_pc);
 
   cache.sp_offset = -4;
-  pc = sh_analyze_prologue (gdbarch, start_pc, (CORE_ADDR) -1, &cache, 0);
+  pc = sh_analyze_prologue (gdbarch, start_pc, (CORE_ADDR) -1, &cache, NULL);
   if (!cache.uses_fp)
     return start_pc;
 
@@ -2563,11 +2572,7 @@ sh_frame_cache (struct frame_info *this_frame, void **this_cache)
   cache->pc = get_frame_func (this_frame);
   current_pc = get_frame_pc (this_frame);
   if (cache->pc != 0)
-    {
-      ULONGEST fpscr;
-      fpscr = get_frame_register_unsigned (this_frame, FPSCR_REGNUM);
-      sh_analyze_prologue (gdbarch, cache->pc, current_pc, cache, fpscr);
-    }
+    sh_analyze_prologue (gdbarch, cache->pc, current_pc, cache, this_frame);
 
   if (!cache->uses_fp)
     {
