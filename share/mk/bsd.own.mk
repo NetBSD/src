@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.689 2011/10/31 14:20:11 chs Exp $
+#	$NetBSD: bsd.own.mk,v 1.690 2011/11/01 21:16:29 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -309,7 +309,7 @@ TOOL_MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
 TOOL_MKUBOOTIMAGE=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkubootimage
 TOOL_MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
 TOOL_MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
-TOOL_NBPERF=		${TOOLDIR}/bin/${_TOOL_PREFIX}nbperf
+TOOL_NBPERF=		${TOOLDIR}/bin/${_TOOL_PREFIX}perf
 TOOL_PAX=		${TOOLDIR}/bin/${_TOOL_PREFIX}pax
 TOOL_PIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}pic
 TOOL_PIGZ=		${TOOLDIR}/bin/${_TOOL_PREFIX}pigz
