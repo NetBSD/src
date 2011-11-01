@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1701 2011/11/01 13:35:38 yamt Exp $
+#	$NetBSD: mi,v 1.1702 2011/11/01 13:37:32 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10518,6 +10518,7 @@
 ./usr/share/man/cat9/simple_lock_try.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/simple_lock_unlock.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/simple_unlock.0		comp-sys-catman		.cat
+./usr/share/man/cat9/skpc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/sleep.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/snprintf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/sockopt.0			comp-sys-catman		.cat
@@ -16597,6 +16598,7 @@
 ./usr/share/man/html9/simple_lock_init.html	comp-sys-htmlman	html
 ./usr/share/man/html9/simple_lock_try.html	comp-sys-htmlman	html
 ./usr/share/man/html9/simple_unlock.html	comp-sys-htmlman	html
+./usr/share/man/html9/skpc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/snprintf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sockopt.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sockopt_destroy.html	comp-sys-htmlman	html
@@ -22877,6 +22879,7 @@
 ./usr/share/man/man9/simple_lock_try.9		comp-sys-man		.man
 ./usr/share/man/man9/simple_lock_unlock.9	comp-obsolete		obsolete
 ./usr/share/man/man9/simple_unlock.9		comp-sys-man		.man
+./usr/share/man/man9/skpc.9			comp-sys-man		.man
 ./usr/share/man/man9/sleep.9			comp-obsolete		obsolete
 ./usr/share/man/man9/snprintf.9			comp-sys-man		.man
 ./usr/share/man/man9/sockopt.9			comp-sys-man		.man
