@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2010/05/19 21:59:34 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2011/11/01 13:59:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.2 2010/05/19 21:59:34 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2011/11/01 13:59:00 christos Exp $");
 
 #include <stdio.h>
 #include <ctype.h>
@@ -49,24 +49,25 @@ __RCSID("$NetBSD: main.c,v 1.2 2010/05/19 21:59:34 christos Exp $");
 
 int ether_aton_r(u_char *dest, size_t len, const char *str);
 
+static const struct {
+	u_char res[ETHER_ADDR_LEN];
+	const char *str;
+	int error;
+} tests[] = {
+	{ { 0x01, 0x23, 0x45, 0x67, 0x89, 0xab }, "01:23:45:67:89:ab", 0 },
+	{ { 0x00, 0x01, 0x22, 0x03, 0x14, 0x05 }, "0:1:22-3:14:05", 0 },
+	{ { 0x00, 0x01, 0x22, 0x03, 0x14, 0x05 }, "000122031405", 0 },
+	{ { 0x0a, 0x0B, 0xcc, 0xdD, 0xEE, 0x0f }, "0a0BccdDEE0f", 0 },
+#define ZERO { 0, 0, 0, 0, 0, 0 }
+	{ ZERO,	"0:1:2-3:04:05:06", ENAMETOOLONG },
+	{ ZERO,	"0:1:2-3:04:", ENOBUFS },
+	{ ZERO,	"0:1:2-3:04:x7", EINVAL },
+	{ ZERO,	"1:x-3:04:05:7", EINVAL },
+	{ ZERO,	NULL, 0 },
+};
 int
 main(int argc, char *argv[])
 {
-	static const struct {
-		u_char res[ETHER_ADDR_LEN];
-		const char *str;
-		int error;
-	} tests[] = {
-#define ZERO { 0, 0, 0, 0, 0, 0 }
-	    { { 0, 1, 0x22, 3, 0x14, 5 }, "0:1:22-3:14:05", 0 },
-	    { { 0, 1, 0x22, 3, 0x14, 5 }, "000122031405", 0 },
-	    { { 0xa, 0xB, 0xcc, 0xdD, 0xEE, 0xf }, "0a0BccdDEE0f", 0 },
-	    { ZERO,			  "0:1:2-3:04:05:06", ENAMETOOLONG },
-	    { ZERO,			  "0:1:2-3:04:", ENOBUFS },
-	    { ZERO,			  "0:1:2-3:04:x7", EINVAL },
-	    { ZERO,			  "1:x-3:04:05:7", EINVAL },
-	    { ZERO,			  NULL, 0 },
-	};
 	u_char dest[ETHER_ADDR_LEN];
 	size_t t;
 	int e, r;
