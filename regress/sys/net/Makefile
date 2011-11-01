@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2010/05/19 21:55:35 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2011/11/01 23:07:34 pgoyette Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR= bpf ether_aton_r
+SUBDIR= bpf
 
 .include <bsd.subdir.mk>
