@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1700 2011/11/01 13:34:33 yamt Exp $
+#	$NetBSD: mi,v 1.1701 2011/11/01 13:35:38 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10470,6 +10470,7 @@
 ./usr/share/man/cat9/rw_tryupgrade.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rw_write_held.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rwlock.0			comp-sys-catman		.cat
+./usr/share/man/cat9/scanc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/sched_4bsd.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sched_lock_idle.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/sched_m2.0			comp-sys-catman		.cat
@@ -16554,6 +16555,7 @@
 ./usr/share/man/html9/rw_tryupgrade.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rw_write_held.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rwlock.html		comp-sys-htmlman	html
+./usr/share/man/html9/scanc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sched_4bsd.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sched_m2.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sched_psignal.html	comp-obsolete		obsolete
@@ -22827,6 +22829,7 @@
 ./usr/share/man/man9/rw_tryupgrade.9		comp-sys-man		.man
 ./usr/share/man/man9/rw_write_held.9		comp-sys-man		.man
 ./usr/share/man/man9/rwlock.9			comp-sys-man		.man
+./usr/share/man/man9/scanc.9			comp-sys-man		.man
 ./usr/share/man/man9/sched_4bsd.9		comp-sys-man		.man
 ./usr/share/man/man9/sched_lock_idle.9		comp-obsolete		obsolete
 ./usr/share/man/man9/sched_m2.9			comp-sys-man		.man
