@@ -1,4 +1,4 @@
-.\"	$NetBSD: scanc.9,v 1.1 2011/11/01 13:33:05 yamt Exp $
+.\"	$NetBSD: scanc.9,v 1.2 2011/11/01 23:18:07 wiz Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ------------------------------------------------------------
 .Sh NAME
 .Nm scanc
-.Nd Scan characters
+.Nd use byte string as lookup table index
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .In lib/libkern/libkern.h
@@ -51,7 +51,7 @@ A character in the string is used as an index in the 256-byte
 .Fa table .
 If a bitwise-AND of the byte from the table and
 .Fa mask
-isn't zero or the string is exausted, the scan stops.
+isn't zero or the string is exhausted, the scan stops.
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
 The
