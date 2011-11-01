@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2011/10/17 22:38:01 jmcneill Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 2011/11/01 21:21:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -274,6 +274,9 @@ struct cpu_info {
 #define	CPUF_PAUSE	0x4000		/* CPU is paused in DDB */
 #define	CPUF_GO		0x8000		/* CPU should start running */
 
+#endif /* _KERNEL || __KMEMUSER */
+
+#ifdef _KERNEL
 /*
  * We statically allocate the CPU info for the primary CPU (or,
  * the only CPU on uniprocessors), and the primary CPU is the
@@ -454,8 +457,10 @@ void kgdb_port_init(void);
 void x86_bus_space_init(void);
 void x86_bus_space_mallocok(void);
 
-#include <machine/psl.h>	/* Must be after struct cpu_info declaration */
+#endif /* _KERNEL */
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+#include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 #endif /* _KERNEL || __KMEMUSER */
 
 /*
