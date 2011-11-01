@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.56 2011/08/25 17:39:58 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.57 2011/11/01 09:26:37 martin Exp $
 #
 # Makefile for sysinst
 
@@ -42,7 +42,7 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\" \
 		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH}
 
-.if defined(SMALLPROG_INET6) && (${USE_INET6} != "no")
+.if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
 .endif
 
