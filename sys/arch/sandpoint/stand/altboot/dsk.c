@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.9 2011/10/30 21:08:33 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.10 2011/11/01 16:32:57 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@ dskdv_init(void *self)
 	return 0;
   found:
 	pci->drv = (*dv->init)(tag, NULL);
+	if (pci->drv == NULL)
+		return 0;
 	disk_scan(pci->drv);
 	return 1;
 }

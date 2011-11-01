@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.19 2011/10/30 21:08:33 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.20 2011/11/01 16:32:57 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -454,25 +454,20 @@ encpcifix(struct brdprop *brd)
 	/*
 	 * //// IDE fixup ////
 	 * - "native mode" (ide 0x09)
-	 * - use primary only (ide 0x40)
 	 */
+
 	/* ide: 0x09 - programming interface; 1000'SsPp */
 	val = pcicfgread(ide, 0x08) & 0xffff00ff;
 	pcicfgwrite(ide, 0x08, val | (0x8f << 8));
 
 	/* ide: 0x10-20 - leave them PCI memory space assigned */
-
-	/* ide: 0x40 - use primary only */
-	val = pcicfgread(ide, 0x40) &~ 03;
-	val |= 02;
-	pcicfgwrite(ide, 0x40, val);
 #else
 	/*
 	 * //// IDE fixup ////
 	 * - "compatiblity mode" (ide 0x09)
-	 * - use primary only (ide 0x40)
 	 * - remove PCI pin assignment (ide 0x3d)
 	 */
+
 	/* ide: 0x09 - programming interface; 1000'SsPp */
 	val = pcicfgread(ide, 0x08) & 0xffff00ff;
 	val |= (0x8a << 8);
@@ -480,22 +475,17 @@ encpcifix(struct brdprop *brd)
 
 	/* ide: 0x10-20 */
 	/*
-	experiment shows writing ide: 0x09 changes these
-	register behaviour. The pcicfgwrite() above writes
-	0x8a at ide: 0x09 to make sure legacy IDE.  Then
-	reading BAR0-3 is to return value 0s even though
-	pcisetup() has written range assignments.  Value
-	overwrite makes no effect. Having 0x8f for native
-	PCIIDE doesn't change register values and brings no
-	weirdness.
+	 * experiment shows writing ide: 0x09 changes these
+	 * register behaviour. The pcicfgwrite() above writes
+	 * 0x8a at ide: 0x09 to make sure legacy IDE.  Then
+	 * reading BAR0-3 is to return value 0s even though
+	 * pcisetup() has written range assignments.  Value
+	 * overwrite makes no effect. Having 0x8f for native
+	 * PCIIDE doesn't change register values and brings no
+	 * weirdness.
 	 */
 
-	/* ide: 0x40 - use primary only */
-	val = pcicfgread(ide, 0x40) &~ 03;
-	val |= 02;
-	pcicfgwrite(ide, 0x40, val);
-
-		/* ide: 0x3d/3c - turn off PCI pin */
+	/* ide: 0x3d/3c - turn off PCI pin */
 	val = pcicfgread(ide, 0x3c) & 0xffff00ff;
 	pcicfgwrite(ide, 0x3c, val);
 #endif

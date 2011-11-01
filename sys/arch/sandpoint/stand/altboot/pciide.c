@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.7 2011/04/25 18:30:18 phx Exp $ */
+/* $NetBSD: pciide.c,v 1.8 2011/11/01 16:32:57 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include "globals.h"
 
 static int cmdidefix(struct dkdev_ata *);
+static int apoidefix(struct dkdev_ata *);
 
 static uint32_t pciiobase = PCI_XIOBASE;
 
@@ -45,6 +46,7 @@ struct myops {
 };
 static struct myops defaultops = { NULL, NULL };
 static struct myops cmdideops = { cmdidefix, NULL };
+static struct myops apoideops = { apoidefix, NULL };
 static struct myops *myops;
 
 int
@@ -57,9 +59,12 @@ pciide_match(unsigned tag, void *data)
 	case PCI_DEVICE(0x1095, 0x0680): /* SiI 0680 IDE */
 		myops = &cmdideops;
 		return 1;
-	case PCI_DEVICE(0x1283, 0x8211): /* ITE 8211 IDE */
+	case PCI_DEVICE(0x1106, 0x0571): /* VIA 82C586A IDE */
 	case PCI_DEVICE(0x1106, 0x1571): /* VIA 82C586 IDE */
-	case PCI_DEVICE(0x1106, 0x3164): /* VIA VT6410 */
+	case PCI_DEVICE(0x1106, 0x3164): /* VIA VT6410 RAID IDE */
+		myops = &apoideops;
+		return 1;
+	case PCI_DEVICE(0x1283, 0x8211): /* ITE 8211 IDE */
 	case PCI_DEVICE(0x10ad, 0x0105): /* Symphony Labs 82C105 IDE */
 	case PCI_DEVICE(0x10b8, 0x5229): /* ALi IDE */
 	case PCI_DEVICE(0x1191, 0x0008): /* ACARD ATP865 */
@@ -82,9 +87,15 @@ pciide_init(unsigned tag, void *data)
 	l->iobuf = allocaligned(512, 16);
 	l->tag = tag;
 
+	/* chipset specific fixes */
+	if (myops->chipfix)
+		if (!(*myops->chipfix)(l))
+			return NULL;
+
 	val = pcicfgread(tag, PCI_CLASS_REG);
 	native = PCI_CLASS(val) != PCI_CLASS_IDE ||
 	    (PCI_INTERFACE(val) & 05) != 0;
+
 	if (native) {
 		/* native, use BAR 01234 */
 		l->bar[0] = pciiobase + (pcicfgread(tag, 0x10) &~ 01);
@@ -124,17 +135,13 @@ pciide_init(unsigned tag, void *data)
 			printf("channel %d present\n", n);
 	}
 
-	/* make sure to have PIO0 */
-	if (myops->chipfix)
-		(*myops->chipfix)(l);
-
 	return l;
 }
 
 static int
 cmdidefix(struct dkdev_ata *l)
 {
-	int v;
+	unsigned v;
 
 	v = pcicfgread(l->tag, 0x80);
 	pcicfgwrite(l->tag, 0x80, (v & ~0xff) | 0x01);
@@ -144,6 +151,18 @@ cmdidefix(struct dkdev_ata *l)
 	pcicfgwrite(l->tag, 0xa4, (v & ~0xffff) | 0x328a);
 	v = pcicfgread(l->tag, 0xb4);
 	pcicfgwrite(l->tag, 0xb4, (v & ~0xffff) | 0x328a);
+
+	return 1;
+}
+
+static int
+apoidefix(struct dkdev_ata *l)
+{
+	unsigned v;
+
+	/* enable primary and secondary channel */
+	v = pcicfgread(l->tag, 0x40) & ~0x03;
+	pcicfgwrite(l->tag, 0x40, v | 0x03);
 
 	return 1;
 }
