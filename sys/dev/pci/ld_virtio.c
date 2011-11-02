@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.2 2011/11/02 14:34:09 hannken Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.1 2011/10/30 12:12:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.2 2011/11/02 14:34:09 hannken Exp $");
 
 #include "rnd.h"
 
@@ -194,7 +194,8 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 		}
 		r = bus_dmamap_create(sc->sc_virtio->sc_dmat,
 				      ld->sc_maxxfer,
-				      ld->sc_maxxfer / NBPG, ld->sc_maxxfer,
+				      (ld->sc_maxxfer / NBPG) + 1,
+				      ld->sc_maxxfer,
 				      0,
 				      BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 				      &vr->vr_payload);
