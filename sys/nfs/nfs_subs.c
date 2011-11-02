@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.221 2011/06/12 03:35:59 rmind Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.221.2.1 2011/11/02 21:53:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.221 2011/06/12 03:35:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.221.2.1 2011/11/02 21:53:59 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1754,8 +1754,6 @@ nfs_clearcommit(struct mount *mp)
 			continue;
 		}
 		np = VTONFS(vp);
-		np->n_pushlo = np->n_pushhi = np->n_pushedlo =
-		    np->n_pushedhi = 0;
 		np->n_commitflags &=
 		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
 		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq.queue) {
@@ -1776,19 +1774,7 @@ nfs_merge_commit_ranges(struct vnode *vp)
 	struct nfsnode *np = VTONFS(vp);
 
 	KASSERT(np->n_commitflags & NFS_COMMIT_PUSH_VALID);
-
-	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID)) {
-		np->n_pushedlo = np->n_pushlo;
-		np->n_pushedhi = np->n_pushhi;
-		np->n_commitflags |= NFS_COMMIT_PUSHED_VALID;
-	} else {
-		if (np->n_pushlo < np->n_pushedlo)
-			np->n_pushedlo = np->n_pushlo;
-		if (np->n_pushhi > np->n_pushedhi)
-			np->n_pushedhi = np->n_pushhi;
-	}
-
-	np->n_pushlo = np->n_pushhi = 0;
+	nfs_add_committed_range(vp, np->n_pushlo, np->n_pushhi - np->n_pushlo);
 	np->n_commitflags &= ~NFS_COMMIT_PUSH_VALID;
 
 #ifdef NFS_DEBUG_COMMIT
@@ -1839,11 +1825,15 @@ nfs_add_committed_range(struct vnode *vp, off_t off, off_t len)
 		np->n_pushedhi = hi;
 		np->n_commitflags |= NFS_COMMIT_PUSHED_VALID;
 	} else {
-		if (hi > np->n_pushedhi)
+		/*
+		 * note that it's unsafe to add more than requested.
+		 */
+		if (hi > np->n_pushedhi && lo <= np->n_pushedhi)
 			np->n_pushedhi = hi;
-		if (lo < np->n_pushedlo)
+		if (lo < np->n_pushedlo && hi >= np->n_pushedlo)
 			np->n_pushedlo = lo;
 	}
+	KASSERT(np->n_pushedhi >= np->n_pushedlo);
 #ifdef NFS_DEBUG_COMMIT
 	printf("add: committed: %u - %u\n", (unsigned)np->n_pushedlo,
 	    (unsigned)np->n_pushedhi);
@@ -1879,6 +1869,9 @@ nfs_del_committed_range(struct vnode *vp, off_t off, off_t len)
 		else
 			np->n_pushedlo = hi;
 	}
+	if (np->n_pushedhi <= np->n_pushedlo) {
+		np->n_commitflags &= ~NFS_COMMIT_PUSHED_VALID;
+	}
 #ifdef NFS_DEBUG_COMMIT
 	printf("del: committed: %u - %u\n", (unsigned)np->n_pushedlo,
 	    (unsigned)np->n_pushedhi);
@@ -1904,6 +1897,7 @@ nfs_add_tobecommitted_range(struct vnode *vp, off_t off, off_t len)
 		if (hi > np->n_pushhi)
 			np->n_pushhi = hi;
 	}
+	KASSERT(np->n_pushhi >= np->n_pushlo);
 #ifdef NFS_DEBUG_COMMIT
 	printf("add: tobecommitted: %u - %u\n", (unsigned)np->n_pushlo,
 	    (unsigned)np->n_pushhi);
@@ -1931,6 +1925,10 @@ nfs_del_tobecommitted_range(struct vnode *vp, off_t off, off_t len)
 		np->n_pushhi = lo;
 	else {
 		/*
+		 * following can cause a lot of small (eg. 64KB) commit rpcs.
+		 */
+#if 0
+		/*
 		 * XXX There's only one range. If the deleted range
 		 * is in the middle, pick the largest of the
 		 * contiguous ranges that it leaves.
@@ -1939,6 +1937,10 @@ nfs_del_tobecommitted_range(struct vnode *vp, off_t off, off_t len)
 			np->n_pushhi = lo;
 		else
 			np->n_pushlo = hi;
+#endif
+	}
+	if (np->n_pushhi <= np->n_pushlo) {
+		np->n_commitflags &= ~NFS_COMMIT_PUSH_VALID;
 	}
 #ifdef NFS_DEBUG_COMMIT
 	printf("del: tobecommitted: %u - %u\n", (unsigned)np->n_pushlo,

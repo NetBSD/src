@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137 2011/10/18 23:43:06 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137.2.1 2011/11/02 21:53:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137 2011/10/18 23:43:06 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.1 2011/11/02 21:53:58 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -553,8 +553,8 @@ extern vaddr_t pentium_idt_vaddr;
  * local prototypes
  */
 
-static struct vm_page	*pmap_get_ptp(struct pmap *, vaddr_t,
-				      pd_entry_t * const *);
+static int		 pmap_get_ptp(struct pmap *, vaddr_t,
+				      pd_entry_t * const *, struct vm_page **);
 static struct vm_page	*pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
 static void		 pmap_freepage(struct pmap *, struct vm_page *, int);
 static void		 pmap_free_ptp(struct pmap *, struct vm_page *,
@@ -789,6 +789,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		atomic_and_32(&curpmap->pm_kernel_cpus, ~cpumask);
 		ci->ci_pmap = pmap;
 		ci->ci_tlbstate = TLBSTATE_VALID;
+		ci->ci_want_pmapload = 0;
 		atomic_or_32(&pmap->pm_cpus, cpumask);
 		atomic_or_32(&pmap->pm_kernel_cpus, cpumask);
 		cpu_load_pmap(pmap);
@@ -832,8 +833,15 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	 * If the pmap was already installed, we are done.
 	 */
 	ci = curcpu();
-	ci->ci_tlbstate = TLBSTATE_LAZY;
-	ci->ci_want_pmapload = (mypmap != pmap_kernel());
+	if (ci->ci_tlbstate == TLBSTATE_VALID) {
+		ci->ci_tlbstate = TLBSTATE_LAZY;
+		ci->ci_want_pmapload = (mypmap != pmap_kernel());
+	} else {
+		/*
+		 * This can happen when undoing after pmap_get_ptp blocked.
+		 */ 
+		printf("%s: already non-valid %u\n", __func__, ci->ci_tlbstate);
+	}
 	mutex_exit(pmap->pm_lock);
 	if (pmap == pmap2) {
 		return;
@@ -1873,8 +1881,9 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
  * => preemption should be disabled
  */
 
-static struct vm_page *
-pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
+static int
+pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes,
+    struct vm_page **resultp)
 {
 	struct vm_page *ptp, *pptp;
 	int i;
@@ -1895,6 +1904,9 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 	 * add a new page to that level.
 	 */
 	for (i = PTP_LEVELS; i > 1; i--) {
+		lwp_t *l;
+		uint64_t ncsw;
+
 		/*
 		 * Save values from previous round.
 		 */
@@ -1911,13 +1923,29 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 		}
 
 		obj = &pmap->pm_obj[i-2];
+		l = curlwp;
 		PMAP_SUBOBJ_LOCK(pmap, i - 2);
+		ncsw = l->l_ncsw;
 		ptp = uvm_pagealloc(obj, ptp_va2o(va, i - 1), NULL,
 		    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
+		if (__predict_false(ncsw != l->l_ncsw)) {
+			/*
+			 * radix_tree_insert_node, which is used by
+			 * uvm_pagealloc, can block.
+			 */
+			printf("%s: uvm_pagealloc blocked\n", __func__);
+			if (ptp != NULL) {
+				uvm_pagefree(ptp);
+			}
+			PMAP_SUBOBJ_UNLOCK(pmap, i - 2);
+			/* XXX shut up the assertion in pmap_unmap_ptes */
+			pmap->pm_ncsw = l->l_ncsw;
+			return EAGAIN;
+		}
 		PMAP_SUBOBJ_UNLOCK(pmap, i - 2);
 
 		if (ptp == NULL)
-			return NULL;
+			return ENOMEM;
 
 		ptp->flags &= ~PG_BUSY; /* never busy */
 		ptp->wire_count = 1;
@@ -1969,7 +1997,8 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 	}
 
 	pmap->pm_ptphint[0] = ptp;
-	return(ptp);
+	*resultp = ptp;
+	return 0;
 }
 
 /*
@@ -2949,15 +2978,22 @@ pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
  */
 
 vaddr_t
-pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
+pmap_map(vaddr_t sva, paddr_t spa, paddr_t epa, vm_prot_t prot)
 {
-	while (spa < epa) {
-		pmap_kenter_pa(va, spa, prot, 0);
-		va += PAGE_SIZE;
-		spa += PAGE_SIZE;
+	paddr_t pa;
+	vaddr_t va;
+
+	KASSERT((prot & ~VM_PROT_ALL) == 0);
+	for (pa = spa, va = sva; pa < epa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+		pt_entry_t *pte = kvtopte(va);
+		pt_entry_t npte;
+
+		npte = pmap_pa2pte(pa);
+		npte |= protection_codes[prot] | PG_k | PG_V;
+		pmap_pte_set(pte, npte);
+		pmap_update_pg(va);
 	}
-	pmap_update(pmap_kernel());
-	return va;
+	return sva;
 }
 
 /*
@@ -3862,6 +3898,11 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
 	if (flags & VM_PROT_ALL) {
+#if defined(DIAGNOSTIC)
+		if (((flags & VM_PROT_ALL) & ~prot) != 0) {
+			printf("%s: %x %x\n", __func__, flags, prot);
+		}
+#endif /* defined(DIAGNOSTIC) */
 		npte |= PG_U;
 		if (flags & VM_PROT_WRITE) {
 			KASSERT((npte & PG_RW) != 0);
@@ -3895,16 +3936,19 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	}
 
 	kpreempt_disable();
+retry:
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
 	if (pmap == pmap_kernel()) {
 		ptp = NULL;
 	} else {
-		ptp = pmap_get_ptp(pmap, va, pdes);
-		if (ptp == NULL) {
+		error = pmap_get_ptp(pmap, va, pdes, &ptp);
+		if (error != 0) {
 			pmap_unmap_ptes(pmap, pmap2);
 			if (flags & PMAP_CANFAIL) {
-				error = ENOMEM;
 				goto out;
+			}
+			if (error == EAGAIN) {
+				goto retry;
 			}
 			panic("pmap_enter: get ptp failed");
 		}

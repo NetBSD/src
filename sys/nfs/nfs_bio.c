@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.188 2011/09/27 01:07:38 christos Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.188.2.1 2011/11/02 21:53:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.188 2011/09/27 01:07:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.188.2.1 2011/11/02 21:53:59 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1031,6 +1031,8 @@ again:
 					nfs_merge_commit_ranges(vp);
 				} else {
 					nfs_add_committed_range(vp, off, cnt);
+					nfs_del_tobecommitted_range(vp, off,
+					    cnt);
 				}
 			}
 		} else {
@@ -1072,6 +1074,7 @@ again:
 		 */
 		mutex_enter(&np->n_commitlock);
 		nfs_add_tobecommitted_range(vp, off, cnt);
+		nfs_del_committed_range(vp, off, cnt);
 		/*
 		 * if there can be too many uncommitted pages, commit them now.
 		 */
@@ -1094,7 +1097,8 @@ again:
 			 */
 			mutex_enter(uobj->vmobjlock);
 			for (i = 0; i < npages; i++) {
-				pgs[i]->flags &= ~PG_CLEAN;
+				uvm_pagemarkdirty(pgs[i],
+				    UVM_PAGE_STATUS_DIRTY);
 			}
 			mutex_exit(uobj->vmobjlock);
 		}
@@ -1106,7 +1110,7 @@ again:
 		 * pages are now on stable storage.
 		 */
 		mutex_enter(&np->n_commitlock);
-		nfs_del_committed_range(vp, off, cnt);
+		nfs_del_tobecommitted_range(vp, off, cnt);
 		mutex_exit(&np->n_commitlock);
 		mutex_enter(uobj->vmobjlock);
 		for (i = 0; i < npages; i++) {

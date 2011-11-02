@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.107 2011/10/11 23:57:07 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.107.2.1 2011/11/02 21:54:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.107 2011/10/11 23:57:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.107.2.1 2011/11/02 21:54:01 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -387,7 +387,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 					pg->flags &= ~PG_PAGEOUT;
 					pageout_done++;
 				}
-				pg->flags &= ~PG_CLEAN;
+				uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 				uvm_pageactivate(pg);
 				slot = 0;
 			} else
@@ -412,8 +412,6 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 		/*
 		 * if the page is PG_FAKE, this must have been a read to
 		 * initialize the page.  clear PG_FAKE and activate the page.
-		 * we must also clear the pmap "modified" flag since it may
-		 * still be set from the page's previous identity.
 		 */
 
 		if (pg->flags & PG_FAKE) {
@@ -424,8 +422,8 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 			uvm_ra_total.ev_count++;
 #endif /* defined(READAHEAD_STATS) */
 			KASSERT((pg->flags & PG_CLEAN) != 0);
+			KASSERT(uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN);
 			uvm_pageenqueue(pg);
-			pmap_clear_modify(pg);
 		}
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178 2011/10/06 12:26:03 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.1 2011/11/02 21:54:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178 2011/10/06 12:26:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.1 2011/11/02 21:54:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -79,12 +79,15 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178 2011/10/06 12:26:03 uebayasi Exp 
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/radixtree.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
 #include <uvm/uvm_pdpolicy.h>
+
+CTASSERT(UVM_PAGE_DIRTY_TAG < RADIX_TREE_TAG_ID_MAX);
 
 /*
  * global vars... XXXCDC: move to uvm. structure.
@@ -148,48 +151,8 @@ vaddr_t uvm_zerocheckkva;
  * local prototypes
  */
 
-static void uvm_pageinsert(struct uvm_object *, struct vm_page *);
+static int uvm_pageinsert(struct uvm_object *, struct vm_page *);
 static void uvm_pageremove(struct uvm_object *, struct vm_page *);
-
-/*
- * per-object tree of pages
- */
-
-static signed int
-uvm_page_compare_nodes(void *ctx, const void *n1, const void *n2)
-{
-	const struct vm_page *pg1 = n1;
-	const struct vm_page *pg2 = n2;
-	const voff_t a = pg1->offset;
-	const voff_t b = pg2->offset;
-
-	if (a < b)
-		return -1;
-	if (a > b)
-		return 1;
-	return 0;
-}
-
-static signed int
-uvm_page_compare_key(void *ctx, const void *n, const void *key)
-{
-	const struct vm_page *pg = n;
-	const voff_t a = pg->offset;
-	const voff_t b = *(const voff_t *)key;
-
-	if (a < b)
-		return -1;
-	if (a > b)
-		return 1;
-	return 0;
-}
-
-const rb_tree_ops_t uvm_page_tree_ops = {
-	.rbto_compare_nodes = uvm_page_compare_nodes,
-	.rbto_compare_key = uvm_page_compare_key,
-	.rbto_node_offset = offsetof(struct vm_page, rb_node),
-	.rbto_context = NULL
-};
 
 /*
  * inline functions
@@ -239,23 +202,38 @@ uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
 }
 
 
-static inline void
+static inline int
 uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
 {
-	struct vm_page *ret;
+	const uint64_t idx = pg->offset >> PAGE_SHIFT;
+	int error;
 
 	KASSERT(uobj == pg->uobject);
-	ret = rb_tree_insert_node(&uobj->rb_tree, pg);
-	KASSERT(ret == pg);
+	error = radix_tree_insert_node(&uobj->uo_pages, idx, pg);
+	if (error != 0) {
+		return error;
+	}
+	if ((pg->flags & PG_CLEAN) == 0) {
+		radix_tree_set_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG);
+	}
+	KASSERT(((pg->flags & PG_CLEAN) == 0) ==
+	    radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
+	return 0;
 }
 
-static inline void
+static inline int
 uvm_pageinsert(struct uvm_object *uobj, struct vm_page *pg)
 {
+	int error;
 
 	KDASSERT(uobj != NULL);
-	uvm_pageinsert_tree(uobj, pg);
+	error = uvm_pageinsert_tree(uobj, pg);
+	if (error != 0) {
+		KASSERT(error == ENOMEM);
+		return error;
+	}
 	uvm_pageinsert_list(uobj, pg, NULL);
+	return 0;
 }
 
 /*
@@ -298,9 +276,11 @@ uvm_pageremove_list(struct uvm_object *uobj, struct vm_page *pg)
 static inline void
 uvm_pageremove_tree(struct uvm_object *uobj, struct vm_page *pg)
 {
+	struct vm_page *opg;
 
 	KASSERT(uobj == pg->uobject);
-	rb_tree_remove_node(&uobj->rb_tree, pg);
+	opg = radix_tree_remove_node(&uobj->uo_pages, pg->offset >> PAGE_SHIFT);
+	KASSERT(pg == opg);
 }
 
 static inline void
@@ -1329,17 +1309,31 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	pg->uobject = obj;
 	pg->uanon = anon;
 	pg->flags = PG_BUSY|PG_CLEAN|PG_FAKE;
+	/*
+	 * clear PQ_FREE before releasing uvm_fpageqlock.
+	 * otherwise we race with uvm_pglistalloc.
+	 */
+	pg->pqflags = 0;
+	mutex_spin_exit(&uvm_fpageqlock);
 	if (anon) {
 		anon->an_page = pg;
 		pg->pqflags = PQ_ANON;
 		atomic_inc_uint(&uvmexp.anonpages);
 	} else {
 		if (obj) {
-			uvm_pageinsert(obj, pg);
+			int error;
+
+			error = uvm_pageinsert(obj, pg);
+			if (error != 0) {
+#if 1
+				printf("page insertion failed %p\n", pg);
+#endif
+				pg->uobject = NULL;
+				uvm_pagefree(pg);
+				return NULL;
+			}
 		}
-		pg->pqflags = 0;
 	}
-	mutex_spin_exit(&uvm_fpageqlock);
 
 #if defined(UVM_PAGE_TRKOWN)
 	pg->owner_tag = NULL;
@@ -1351,7 +1345,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 		 * A zero'd page is not clean.  If we got a page not already
 		 * zero'd, then we have to zero it ourselves.
 		 */
-		pg->flags &= ~PG_CLEAN;
+		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 		if (zeroit)
 			pmap_zero_page(VM_PAGE_TO_PHYS(pg));
 	}
@@ -1373,6 +1367,8 @@ void
 uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 {
 	struct uvm_object *uobj = oldpg->uobject;
+	struct vm_page *pg;
+	uint64_t idx;
 
 	KASSERT((oldpg->flags & PG_TABLED) != 0);
 	KASSERT(uobj != NULL);
@@ -1382,9 +1378,18 @@ uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 
 	newpg->uobject = uobj;
 	newpg->offset = oldpg->offset;
-
-	uvm_pageremove_tree(uobj, oldpg);
-	uvm_pageinsert_tree(uobj, newpg);
+	idx = newpg->offset >> PAGE_SHIFT;
+	pg = radix_tree_replace_node(&uobj->uo_pages, idx, newpg);
+	KASSERT(pg == oldpg);
+	if (((oldpg->flags ^ newpg->flags) & PG_CLEAN) != 0) {
+		if ((newpg->flags & PG_CLEAN) != 0) {
+			radix_tree_clear_tag(&uobj->uo_pages, idx,
+			    UVM_PAGE_DIRTY_TAG);
+		} else {
+			radix_tree_set_tag(&uobj->uo_pages, idx,
+			    UVM_PAGE_DIRTY_TAG);
+		}
+	}
 	uvm_pageinsert_list(uobj, newpg, oldpg);
 	uvm_pageremove_list(uobj, oldpg);
 }
@@ -1411,9 +1416,10 @@ uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 	 */
 
 	if (newobj) {
-		pg->uobject = newobj;
-		pg->offset = newoff;
-		uvm_pageinsert(newobj, pg);
+		/*
+		 * XXX we have no in-tree users of this functionality
+		 */
+		panic("uvm_pagerealloc: no impl");
 	}
 }
 
@@ -1506,7 +1512,7 @@ uvm_pagefree(struct vm_page *pg)
 
 		if (pg->uobject != NULL) {
 			uvm_pageremove(pg->uobject, pg);
-			pg->flags &= ~PG_CLEAN;
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 		} else if (pg->uanon != NULL) {
 			if ((pg->pqflags & PQ_ANON) == 0) {
 				pg->loan_count--;
@@ -1829,7 +1835,7 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 
 	KASSERT(mutex_owned(obj->vmobjlock));
 
-	pg = rb_tree_find_node(&obj->rb_tree, &off);
+	pg = radix_tree_lookup_node(&obj->uo_pages, off >> PAGE_SHIFT);
 
 	KASSERT(pg == NULL || obj->uo_npages != 0);
 	KASSERT(pg == NULL || (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
@@ -1946,6 +1952,7 @@ uvm_pageenqueue(struct vm_page *pg)
 {
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
+	KASSERT(uvm_page_locked_p(pg));
 	if (pg->wire_count != 0) {
 		return;
 	}
@@ -1962,7 +1969,8 @@ uvm_pageenqueue(struct vm_page *pg)
 void
 uvm_pagezero(struct vm_page *pg)
 {
-	pg->flags &= ~PG_CLEAN;
+
+	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 	pmap_zero_page(VM_PAGE_TO_PHYS(pg));
 }
 
@@ -1977,7 +1985,7 @@ void
 uvm_pagecopy(struct vm_page *src, struct vm_page *dst)
 {
 
-	dst->flags &= ~PG_CLEAN;
+	uvm_pagemarkdirty(dst, UVM_PAGE_STATUS_DIRTY);
 	pmap_copy_page(VM_PAGE_TO_PHYS(src), VM_PAGE_TO_PHYS(dst));
 }
 
@@ -2022,6 +2030,58 @@ uvm_page_locked_p(struct vm_page *pg)
 		return mutex_owned(pg->uanon->an_lock);
 	}
 	return true;
+}
+
+static kmutex_t *
+uvm_page_getlock(struct vm_page *pg)
+{
+
+	if (pg->uobject != NULL) {
+		return pg->uobject->vmobjlock;
+	}
+	if (pg->uanon != NULL) {
+		return pg->uanon->an_lock;
+	}
+	return NULL;
+}
+
+/*
+ * uvm_page_samelock_p: return if the given pages share the same lock.
+ *
+ * for a stable result, the caller should hold appropriate lock.
+ */
+
+bool
+uvm_page_samelock_p(struct vm_page *pg1, struct vm_page *pg2)
+{
+
+	if (pg1 == pg2) { /* easy case */
+		return true;
+	}
+	return uvm_page_getlock(pg1) == uvm_page_getlock(pg2);
+}
+
+/*
+ * uvm_pagereadonly_p: return if the page should be mapped read-only
+ */
+
+bool
+uvm_pagereadonly_p(struct vm_page *pg)
+{
+	struct uvm_object * const uobj = pg->uobject;
+
+	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
+	KASSERT(uobj != NULL || mutex_owned(pg->uanon->an_lock));
+	if ((pg->flags & (PG_RDONLY|PG_HOLE)) != 0) {
+		return true;
+	}
+	if (uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN) {
+		return true;
+	}
+	if (uobj == NULL) {
+		return false;
+	}
+	return UVM_OBJ_NEEDS_WRITEFAULT(uobj);
 }
 
 #if defined(DDB) || defined(DEBUGPRINT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.116 2011/09/06 16:41:55 matt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.116.2.1 2011/11/02 21:54:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.116 2011/09/06 16:41:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.116.2.1 2011/11/02 21:54:00 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -748,7 +748,8 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		}
 		if (stop > (aobj->u_pages << PAGE_SHIFT)) {
 			printf("uao_flush: strange, got an out of range "
-			    "flush (fixed)\n");
+			    "flush (fixed) %"PRIu64" -> %"PRIu64"\n",
+			    aobj->u_pages << PAGE_SHIFT, stop);
 			stop = aobj->u_pages << PAGE_SHIFT;
 		}
 		by_list = (uobj->uo_npages <=
@@ -965,8 +966,10 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				    NULL, UVM_FLAG_COLORMATCH|UVM_PGA_ZERO);
 				if (ptmp) {
 					/* new page */
-					ptmp->flags &= ~(PG_FAKE);
 					ptmp->pqflags |= PQ_AOBJ;
+					ptmp->flags &= ~PG_FAKE;
+					uvm_pagemarkdirty(ptmp,
+					    UVM_PAGE_STATUS_UNKNOWN);
 					goto gotpage;
 				}
 			}
@@ -987,6 +990,8 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			 * useful page: busy/lock it and plug it in our
 			 * result array
 			 */
+			KASSERT(uvm_pagegetdirty(ptmp) !=
+			    UVM_PAGE_STATUS_CLEAN);
 
 			/* caller must un-busy this page */
 			ptmp->flags |= PG_BUSY;
@@ -1103,6 +1108,8 @@ gotpage:
 			 * loop).
  			 */
 
+			KASSERT(uvm_pagegetdirty(ptmp) !=
+			    UVM_PAGE_STATUS_CLEAN);
 			/* we own it, caller must un-busy */
 			ptmp->flags |= PG_BUSY;
 			UVM_PAGE_OWN(ptmp, "uao_get2");
@@ -1185,10 +1192,11 @@ gotpage:
 #endif /* defined(VMSWAP) */
 		}
 
-		if ((access_type & VM_PROT_WRITE) == 0) {
-			ptmp->flags |= PG_CLEAN;
-			pmap_clear_modify(ptmp);
-		}
+		/*
+		 * note that we will allow the page being writably-mapped
+		 * (!PG_RDONLY) regardless of access_type.
+		 */
+		uvm_pagemarkdirty(ptmp, UVM_PAGE_STATUS_UNKNOWN);
 
 		/*
  		 * we got the page!   clear the fake flag (indicates valid
@@ -1200,7 +1208,8 @@ gotpage:
  		 * => unbusy the page
  		 * => activate the page
  		 */
-
+		KASSERT(uvm_pagegetdirty(ptmp) != UVM_PAGE_STATUS_CLEAN);
+		KASSERT((ptmp->flags & PG_FAKE) != 0);
 		ptmp->flags &= ~PG_FAKE;
 		pps[lcv] = ptmp;
 	}
@@ -1451,7 +1460,8 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	if (pg->flags & PG_WANTED) {
 		wakeup(pg);
 	}
-	pg->flags &= ~(PG_WANTED|PG_BUSY|PG_CLEAN|PG_FAKE);
+	pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
+	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 	UVM_PAGE_OWN(pg, NULL);
 
 	return false;

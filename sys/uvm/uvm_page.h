@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.73.2.1 2011/11/02 21:54:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -79,10 +79,6 @@
  *	page, indexed by page number.  Each structure
  *	is an element of several lists:
  *
- *		A red-black tree rooted with the containing
- *		object is used to quickly perform object+
- *		offset lookups
- *
  *		A list of all pages for a given object,
  *		so they can be quickly deactivated at
  *		time of deallocation.
@@ -113,16 +109,16 @@
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pglist.h>
 
-#include <sys/rbtree.h>
-
 struct vm_page {
-	struct rb_node		rb_node;	/* tree of pages in obj (O) */
-
 	union {
 		TAILQ_ENTRY(vm_page) queue;
 		LIST_ENTRY(vm_page) list;
 	} pageq;				/* queue info for FIFO
 						 * queue or free list (P) */
+
+	/*
+	 * listq.list is used for per-cpu freelist.
+	 */
 	union {
 		TAILQ_ENTRY(vm_page) queue;
 		LIST_ENTRY(vm_page) list;
@@ -164,24 +160,30 @@ struct vm_page {
  * PG_ZERO is used to indicate that a page has been pre-zero'd.  This flag
  * is only set when the page is on no queues, and is cleared when the page
  * is placed on the free list.
+ *
+ * PG_RDONLY and PG_HOLE acts like a "read-only count".  ie. either of
+ * them is set, the page should not be mapped writably.  typically
+ * they are set by pgo_get to inform the fault handler.
  */
 
 #define	PG_BUSY		0x0001		/* page is locked */
 #define	PG_WANTED	0x0002		/* someone is waiting for page */
 #define	PG_TABLED	0x0004		/* page is in VP table  */
-#define	PG_CLEAN	0x0008		/* page has not been modified */
+#define	PG_CLEAN	0x0008		/* page is known clean */
 #define	PG_PAGEOUT	0x0010		/* page to be freed for pagedaemon */
 #define PG_RELEASED	0x0020		/* page to be freed when unbusied */
 #define	PG_FAKE		0x0040		/* page is not yet initialized */
 #define	PG_RDONLY	0x0080		/* page must be mapped read-only */
 #define	PG_ZERO		0x0100		/* page is pre-zero'd */
 #define	PG_MARKER	0x0200		/* dummy marker page */
+#define	PG_DIRTY	0x0400		/* page is known dirty */
+#define	PG_HOLE		0x0800		/* XXX */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 
 #define	UVM_PGFLAGBITS \
 	"\20\1BUSY\2WANTED\3TABLED\4CLEAN\5PAGEOUT\6RELEASED\7FAKE\10RDONLY" \
-	"\11ZERO\12MARKER\15PAGER1"
+	"\11ZERO\12MARKER\13DIRTY\15PAGER1"
 
 #define PQ_FREE		0x0001		/* page is on free list */
 #define PQ_ANON		0x0002		/* page is part of an anon, rather
@@ -286,7 +288,24 @@ void uvm_pageunwire(struct vm_page *);
 void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
 bool uvm_pageismanaged(paddr_t);
+unsigned int uvm_pagegetdirty(struct vm_page *);
+void uvm_pagemarkdirty(struct vm_page *, unsigned int);
+bool uvm_pagecheckdirty(struct vm_page *, bool);
+bool uvm_pagereadonly_p(struct vm_page *);
 bool uvm_page_locked_p(struct vm_page *);
+bool uvm_page_samelock_p(struct vm_page *, struct vm_page *);
+
+/*
+ * page dirtiness status for uvm_pagegetdirty and uvm_pagemarkdirty
+ *
+ * UNKNOWN means that we need to consult pmap to know if the page is
+ * dirty or not.
+ * basically, UVM_PAGE_STATUS_CLEAN implies that the page has no writable
+ * mapping.
+ */
+#define	UVM_PAGE_STATUS_DIRTY	(PG_DIRTY)
+#define	UVM_PAGE_STATUS_UNKNOWN	0
+#define	UVM_PAGE_STATUS_CLEAN	(PG_CLEAN)
 
 int uvm_page_lookup_freelist(struct vm_page *);
 

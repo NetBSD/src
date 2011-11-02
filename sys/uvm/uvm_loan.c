@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81 2011/08/06 17:25:03 rmind Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.1 2011/11/02 21:54:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81 2011/08/06 17:25:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.1 2011/11/02 21:54:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1061,9 +1061,9 @@ ulz_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	 * just reactivate or dequeue it.
 	 */
 
-	pg = TAILQ_FIRST(&uobj->memq);
+	pg = uvm_pagelookup(uobj, 0);
 	KASSERT(pg != NULL);
-	KASSERT(TAILQ_NEXT(pg, listq.queue) == NULL);
+	KASSERT(uobj->uo_npages == 1);
 
 	mutex_enter(&uvm_pageqlock);
 	if (pg->uanon)
@@ -1132,12 +1132,15 @@ uvm_loanbreak(struct vm_page *uobjpage)
 	uvm_pagecopy(uobjpage, pg);	/* old -> new */
 	pg->flags &= ~PG_FAKE;
 	pmap_page_protect(uobjpage, VM_PROT_NONE);
-	if ((uobjpage->flags & PG_CLEAN) != 0 && !pmap_clear_modify(uobjpage)) {
-		pmap_clear_modify(pg);
-		pg->flags |= PG_CLEAN;
+	if (uvm_pagegetdirty(uobjpage) == UVM_PAGE_STATUS_UNKNOWN &&
+	    !pmap_clear_modify(uobjpage)) {
+		uvm_pagemarkdirty(uobjpage, UVM_PAGE_STATUS_CLEAN);
+	}
+	if (uvm_pagegetdirty(uobjpage) == UVM_PAGE_STATUS_CLEAN) {
+		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_CLEAN);
 	} else {
 		/* uvm_pagecopy marked it dirty */
-		KASSERT((pg->flags & PG_CLEAN) == 0);
+		KASSERT(uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_DIRTY);
 		/* a object with a dirty page should be dirty. */
 		KASSERT(!UVM_OBJ_IS_CLEAN(uobj));
 	}
