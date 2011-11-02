@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.198 2011/06/09 12:04:29 cegger Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.199 2011/11/02 16:26:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.198 2011/06/09 12:04:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.199 2011/11/02 16:26:30 yamt Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -169,6 +169,7 @@ static const struct bge_load_rx_thresh {
 	int rx_ticks;
 	int rx_max_bds; }
 bge_rx_threshes[] = {
+	{ 16,   1 },	/* rx_max_bds = 1 disables interrupt mitigation */
 	{ 32,   2 },
 	{ 50,   4 },
 	{ 100,  8 },
