@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.129.4.10 2011/09/17 18:53:30 bouyer Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.129.4.11 2011/11/02 20:11:12 riz Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.4.10 2011/09/17 18:53:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.4.11 2011/11/02 20:11:12 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1258,6 +1258,7 @@ puffs_vnop_readdir(void *v)
 
 	/* provide cookies to caller if so desired */
 	if (ap->a_cookies) {
+		KASSERT(curlwp != uvm.pagedaemon_lwp);
 		*ap->a_cookies = malloc(readdir_msg->pvnr_ncookies*CSIZE,
 		    M_TEMP, M_WAITOK);
 		*ap->a_ncookies = readdir_msg->pvnr_ncookies;
@@ -2243,12 +2244,13 @@ puffs_vnop_strategy(void *v)
 	struct buf *bp;
 	size_t argsize;
 	size_t tomove, moved;
-	int error, dofaf, dobiodone;
+	int error, dofaf, cansleep, dobiodone;
 
 	pmp = MPTOPUFFSMP(vp->v_mount);
 	bp = ap->a_bp;
 	error = 0;
 	dofaf = 0;
+	cansleep = 0;
 	pn = VPTOPP(vp);
 	park_rw = NULL; /* explicit */
 	dobiodone = 1;
@@ -2278,16 +2280,14 @@ puffs_vnop_strategy(void *v)
 		mutex_exit(&vp->v_interlock);
 	}
 
-#ifdef DIAGNOSTIC
-		if (curlwp == uvm.pagedaemon_lwp)
-			KASSERT(dofaf || BIOASYNC(bp));
-#endif
+	cansleep = (curlwp == uvm.pagedaemon_lwp || dofaf) ? 0 : 1;
+	KASSERT(curlwp != uvm.pagedaemon_lwp || dofaf || BIOASYNC(bp));
 
 	/* allocate transport structure */
 	tomove = PUFFS_TOMOVE(bp->b_bcount, pmp);
 	argsize = sizeof(struct puffs_vnmsg_rw);
 	error = puffs_msgmem_alloc(argsize + tomove, &park_rw,
-	    (void *)&rw_msg, dofaf ? 0 : 1);
+	    (void *)&rw_msg, cansleep);
 	if (error)
 		goto out;
 	RWARGS(rw_msg, 0, tomove, bp->b_blkno << DEV_BSHIFT, FSCRED);
@@ -2547,6 +2547,7 @@ puffs_vnop_getpages(void *v)
 #ifdef notnowjohn
 		/* allocate worst-case memory */
 		runsizes = ((npages / 2) + 1) * sizeof(struct puffs_cacherun);
+		KASSERT(curlwp != uvm.pagedaemon_lwp || locked);
 		pcinfo = kmem_zalloc(sizeof_puffs_cacheinfo) + runsize,
 		    locked ? KM_NOSLEEP : KM_SLEEP);
 
