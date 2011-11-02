@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.20.4.6 2011/08/12 20:48:47 riz Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.20.4.7 2011/11/02 20:30:41 riz Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.20.4.6 2011/08/12 20:48:47 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.20.4.7 2011/11/02 20:30:41 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -674,10 +674,16 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	 */
 	if (err)
 		return;
-	if (xbdi->xbdi_status == CONNECTED && xbdi->xbdi_dev != dev) {
-		printf("xbdback %s: changing physical device from 0x%x to "
-		    "0x%lx not supported\n", xbusd->xbusd_path, xbdi->xbdi_dev,
-		    dev);
+	/*
+	 * we can also fire up after having opened the device, don't try
+	 * to do it twice.
+	 */
+	if (xbdi->xbdi_vp != NULL) {
+		if (xbdi->xbdi_status == CONNECTED && xbdi->xbdi_dev != dev) {
+			printf("xbdback %s: changing physical device from "
+			    "0x%x to 0x%lx not supported\n",
+			    xbusd->xbusd_path, xbdi->xbdi_dev, dev);
+		}
 		return;
 	}
 	xbdi->xbdi_dev = dev;
