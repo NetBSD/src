@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_proxy.c,v 1.1.1.1.2.4 2011/01/07 01:24:14 riz Exp $	*/
+/*	$NetBSD: smtpd_proxy.c,v 1.1.1.1.2.5 2011/11/02 20:39:02 riz Exp $	*/
 
 /*++
 /* NAME
@@ -779,7 +779,7 @@ static int smtpd_proxy_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
 	 */
 	if (LEN(proxy->buffer) < var_line_limit) {
 	    if (VSTRING_LEN(proxy->buffer))
-		VSTRING_ADDCH(proxy->buffer, '\n');
+		vstring_strcat(proxy->buffer, "\r\n");
 	    vstring_strcat(proxy->buffer, STR(buffer));
 	}
 
