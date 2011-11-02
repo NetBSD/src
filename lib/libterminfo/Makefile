@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2011/11/02 17:48:53 christos Exp $
+#	$NetBSD: Makefile,v 1.20 2011/11/02 20:39:41 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -44,9 +44,9 @@ term.c: compiled_terms.c
 termcap.c: termcap_hash.c
 
 # Generate our man pages
-terminfo.5: terminfo.5.in term.h termcap_map.c
+terminfo.5: genman terminfo.5.in term.h termcap_map.c
 		@echo "Generating terminfo man pages"
-		cd ${.CURDIR} && ${HOST_SH} ./genman >${.OBJDIR}/$@
+		${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=	terminfo.5
 
