@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.hash,v 1.1 2011/11/02 17:48:53 christos Exp $
+#	$NetBSD: Makefile.hash,v 1.2 2011/11/02 20:30:00 christos Exp $
 
 PARSEDIR:=${.PARSEDIR}
 # Generate our string and hash tables
 hash.c: genhash term.h
 		@echo "Generating terminfo hash"
-		${HOST_SH} ${.ALLSRC} > ${.TARGET}
+		TOOL_NBPERF=${TOOL_NBPERF} TOOL_AWK=${TOOL_AWK} \
+		    TOOL_SED=${TOOL_SED} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
 
 termcap_hash.c: genthash termcap_map.c
 		@echo "Generating termcap hash"
