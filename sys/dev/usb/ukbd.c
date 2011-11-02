@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.111 2011/11/02 08:20:02 macallan Exp $        */
+/*      $NetBSD: ukbd.c,v 1.112 2011/11/02 08:49:08 macallan Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.111 2011/11/02 08:20:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.112 2011/11/02 08:49:08 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +93,11 @@ struct ukbd_data {
 #define CODEMASK 0x0ff
 
 struct ukbd_keycodetrans {
-	u_int8_t	from;
-	u_int8_t	to;
+	u_int16_t	from;
+	u_int16_t	to;
 };
+
+#define IS_PMF	0x8000
 
 Static const struct ukbd_keycodetrans trtab_apple_fn[] = {
 	{ 0x0c, 0x5d },	/* i -> KP 5 */
@@ -148,14 +150,16 @@ Static const struct ukbd_keycodetrans trtab_gdium_fn[] = {
 		{ 58, 0 },	/* F1 -> toggle camera */
 		{ 59, 0 },	/* F2 -> toggle wireless */
 #endif
-		{ 60, 127 },	/* F3 -> audio mute */
-		{ 61, 128 },	/* F4 -> audio raise */
-		{ 62, 129 },	/* F5 -> audio lower */
+		{ 60, IS_PMF | PMFE_AUDIO_VOLUME_TOGGLE },
+		{ 61, IS_PMF | PMFE_AUDIO_VOLUME_UP },
+		{ 62, IS_PMF | PMFE_AUDIO_VOLUME_DOWN },
 #ifdef notyet
 		{ 63, 0 },	/* F6 -> toggle ext. video */
 		{ 64, 0 },	/* F7 -> toggle mouse */
-		{ 65, 0 },	/* F8 -> brightness up */
-		{ 66, 0 },	/* F9 -> brightness down */
+#endif
+		{ 65, IS_PMF | PMFE_DISPLAY_BRIGHTNESS_UP },
+		{ 66, IS_PMF | PMFE_DISPLAY_BRIGHTNESS_DOWN },
+#ifdef notyet
 		{ 67, 0 },	/* F10 -> suspend */
 		{ 68, 0 },	/* F11 -> user1 */
 		{ 69, 0 },	/* F12 -> user2 */
@@ -586,7 +590,13 @@ ukbd_translate_keycodes(struct ukbd_softc *sc, struct ukbd_data *ud,
 		if (key)
 			for (tp = tab; tp->from; tp++)
 				if (tp->from == key) {
-					ud->keycode[i] = tp->to;
+					if (tp->to & IS_PMF) {
+						pmf_event_inject(
+						    sc->sc_hdev.sc_dev,
+						    tp->to & 0xff);
+						ud->keycode[i] = 0;
+					} else
+						ud->keycode[i] = tp->to;
 					break;
 				}
 	}
