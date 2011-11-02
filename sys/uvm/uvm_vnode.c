@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.97 2011/09/06 16:41:55 matt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.97.2.1 2011/11/02 21:54:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97 2011/09/06 16:41:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.1 2011/11/02 21:54:01 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -130,7 +130,6 @@ uvn_detach(struct uvm_object *uobj)
  *
  * => object must be locked on entry!   VOP_PUTPAGES must unlock it.
  * => flags: PGO_SYNCIO -- use sync. I/O
- * => note: caller must set PG_CLEAN and pmap_clear_modify (if needed)
  */
 
 static int
@@ -285,17 +284,16 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 			continue;
 		}
 
-		/* skip PG_RDONLY pages if requested */
-		if ((flags & UFP_NORDONLY) && (pg->flags & PG_RDONLY)) {
+		/* skip PG_RDONLY and PG_HOLE pages if requested */
+		if ((flags & UFP_NORDONLY) &&
+		    (pg->flags & (PG_RDONLY|PG_HOLE))) {
 			UVMHIST_LOG(ubchist, "nordonly",0,0,0,0);
 			return 0;
 		}
 
 		/* stop on clean pages if requested */
 		if (flags & UFP_DIRTYONLY) {
-			dirty = pmap_clear_modify(pg) ||
-				(pg->flags & PG_CLEAN) == 0;
-			pg->flags |= PG_CLEAN;
+			dirty = uvm_pagecheckdirty(pg, false);
 			if (!dirty) {
 				UVMHIST_LOG(ubchist, "dirtonly", 0,0,0,0);
 				return 0;

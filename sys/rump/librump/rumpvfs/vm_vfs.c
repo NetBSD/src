@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.32 2011/06/19 18:28:24 hannken Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.32.2.1 2011/11/02 21:53:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.32 2011/06/19 18:28:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.32.2.1 2011/11/02 21:53:59 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -139,7 +139,9 @@ ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 			start = (uint8_t *)pg->uanon + chunkoff;
 
 			memset(start, 0, chunklen);
-			pg->flags &= ~PG_CLEAN;
+			mutex_enter(pguobj->vmobjlock);
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
+			mutex_exit(pguobj->vmobjlock);
 
 			off += chunklen;
 			len -= chunklen;
@@ -216,8 +218,12 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 				mutex_exit(pguobj->vmobjlock);
 				goto out;
 			}
-			if (uio->uio_rw == UIO_WRITE)
-				pg->flags &= ~(PG_CLEAN | PG_FAKE);
+			if (uio->uio_rw == UIO_WRITE) {
+				mutex_enter(pguobj->vmobjlock);
+				pg->flags &= ~PG_FAKE;
+				uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
+				mutex_exit(pguobj->vmobjlock);
+			}
 			todo -= xfersize;
 		}
 		mutex_enter(pguobj->vmobjlock);

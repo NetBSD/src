@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.436 2011/09/28 15:52:47 jruoho Exp $	*/
+/*	$NetBSD: init_main.c,v 1.436.2.1 2011/11/02 21:53:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436 2011/09/28 15:52:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.1 2011/11/02 21:53:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -152,6 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436 2011/09/28 15:52:47 jruoho Exp $
 #include <sys/percpu.h>
 #include <sys/pserialize.h>
 #include <sys/pset.h>
+#include <sys/radixtree.h>
 #include <sys/sysctl.h>
 #include <sys/reboot.h>
 #include <sys/event.h>
@@ -456,6 +457,7 @@ main(void)
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
+	radix_tree_init(); /* used for page cache */
 	vfsinit();
 	lf_init();
 

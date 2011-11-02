@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.31 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.31.2.1 2011/11/02 21:54:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/queue.h>
-#include <sys/rbtree.h>
+#include <sys/radixtree.h>
 #include <uvm/uvm_pglist.h>
 
 /*
@@ -48,9 +48,15 @@ struct uvm_object {
 	struct pglist		memq;		/* pages in this object */
 	int			uo_npages;	/* # of pages in memq */
 	unsigned		uo_refs;	/* reference count */
-	struct rb_tree		rb_tree;	/* tree of pages */
+	struct radix_tree	uo_pages;	/* tree of pages */
 	LIST_HEAD(,ubc_map)	uo_ubc;		/* ubc mappings */
 };
+
+/*
+ * uo_pages
+ */
+
+#define	UVM_PAGE_DIRTY_TAG	0	/* might be dirty (!PG_CLEAN) */
 
 /*
  * UVM_OBJ_KERN is a 'special' uo_refs value which indicates that the
@@ -100,8 +106,6 @@ extern const struct uvm_pagerops aobj_pager;
 
 #define	UVM_OBJ_IS_AOBJ(uobj)						\
 	((uobj)->pgops == &aobj_pager)
-
-extern const rb_tree_ops_t uvm_page_tree_ops;
 
 #endif /* _KERNEL */
 
