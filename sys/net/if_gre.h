@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.40 2010/06/01 22:13:30 mjf Exp $ */
+/*	$NetBSD: if_gre.h,v 1.41 2011/11/02 01:17:59 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <sys/condvar.h>
 #include <sys/malloc.h>
 #include <sys/mallocvar.h>
+#include <sys/pcq.h>
 
 #ifdef _KERNEL
 struct gre_soparm {
@@ -64,15 +65,9 @@ enum gre_state {
 };
 
 struct gre_bufq {
-	volatile int	bq_prodidx;
-	volatile int	bq_considx;
-	size_t		bq_len __aligned(CACHE_LINE_SIZE);
-	size_t		bq_lenmask;
+	pcq_t		*bq_q;
 	volatile int	bq_drops;
-	struct mbuf	**bq_buf;
 };
-
-MALLOC_DECLARE(M_GRE_BUFQ);
 
 enum gre_msg {
 	  GRE_M_NONE = 0
