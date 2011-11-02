@@ -1,20 +1,25 @@
-#	$NetBSD: Makefile.hash,v 1.2 2011/11/02 20:30:00 christos Exp $
+#	$NetBSD: Makefile.hash,v 1.3 2011/11/02 20:39:41 yamt Exp $
+
+SCRIPT_ENV=	\
+	TOOL_AWK=${TOOL_AWK:Q} \
+	TOOL_NBPERF=${TOOL_NBPERF:Q} \
+	TOOL_SED=${TOOL_SED:Q} \
+	TOOL_SORT=${TOOL_SORT:Q} \
+	TOOL_TIC=${TOOL_TIC:Q}
 
 PARSEDIR:=${.PARSEDIR}
 # Generate our string and hash tables
 hash.c: genhash term.h
 		@echo "Generating terminfo hash"
-		TOOL_NBPERF=${TOOL_NBPERF} TOOL_AWK=${TOOL_AWK} \
-		    TOOL_SED=${TOOL_SED} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
+		${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
 
 termcap_hash.c: genthash termcap_map.c
 		@echo "Generating termcap hash"
-		${HOST_SH} ${.ALLSRC} > ${.TARGET}
-
+		${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
 
 # Allow terminfo descriptions to be compiled into libterminfo
 compiled_terms.c: genterms term.h ${NETBSDSRCDIR}/share/terminfo/terminfo
 		@echo "Generating compiled terminfo descriptions"
-		${HOST_SH} ${.ALLSRC} > ${.TARGET}
+		${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=	hash.c termcap_hash.c compiled_terms.c
