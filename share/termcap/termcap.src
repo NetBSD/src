@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.101 2008/03/11 18:47:57 agc Exp $
+#	$NetBSD: termcap.src,v 1.101.8.1 2011/11/02 20:03:53 riz Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1815,7 +1815,7 @@ xterm-xf86-v40|xterm terminal emulator (XFree86 4.0 Window System):\
 	:tc=xterm-xf86-v333:
 # This is one of the variants from XFree86 3.3 (T.Dickey)
 xterm-16color|xterm with 16 colors like aixterm:\
-	:Co#16:NC#32:pa#256:ut:\
+	:Co#16:NC#32:pa#56:ut:\
 	:AB=\E[4%dm:AF=\E[3%dm:op=\E[m:\
 	:tc=xterm-xf86-v33:
 
@@ -2067,6 +2067,9 @@ emu|emu native mode:\
 	:oc=\Es0;\Er0;:r2=\ES\Es0;\Er0;:se=\ES:sf=\EG:so=\ES\ET:\
 	:sr=\EF:st=\Eh:ta=^I:ue=\ES:up=\EA:us=\ES\EV:ve=\Ea:vi=\EZ:\
 	:vs=\Ea:
+
+xterm-256color|xterm for MacOS Lion:\
+	:Co#256:AF=\E[38;5;%dm:AB=\E[48;5;%dm:tc=rxvt:
 
 ######## MGR
 #
