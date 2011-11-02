@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.21.2.1 2009/01/15 04:30:19 snj Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.21.2.2 2011/11/02 19:43:03 riz Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -332,6 +332,9 @@
 
 /* Define if you have the <machine/endian.h> header file. */
 #undef HAVE_MACHINE_ENDIAN_H
+
+/* Define if you have the <sys/endian.h> header file. */
+#undef HAVE_SYS_ENDIAN_H
 
 /* Define if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
