@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
+/*	$NetBSD: virtio.c,v 1.2 2011/11/02 15:18:46 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.1 2011/10/30 12:12:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.2 2011/11/02 15:18:46 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,10 @@ virtio_match(device_t parent, cfdata_t match, void *aux)
 	pa = (struct pci_attach_args *)aux;
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_QUMRANET:
-		if ((0x1000 <= PCI_PRODUCT(pa->pa_id)) &&
-		    (PCI_PRODUCT(pa->pa_id) <= 0x103f))
+		if ((PCI_PRODUCT_QUMRANET_VIRTIO_1000 <=
+		     PCI_PRODUCT(pa->pa_id)) &&
+		    (PCI_PRODUCT(pa->pa_id) <=
+		     PCI_PRODUCT_QUMRANET_VIRTIO_103f))
 			return 1;
 		break;
 	}
