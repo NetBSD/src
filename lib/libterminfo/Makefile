@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.17 2011/10/04 11:01:14 roy Exp $
+#	$NetBSD: Makefile,v 1.18 2011/11/02 12:09:25 roy Exp $
+
+.include <bsd.own.mk>
 
 USE_SHLIBDIR=	yes
 
@@ -11,6 +13,8 @@ SRCS=		term.c ti.c setupterm.c curterm.c tparm.c tputs.c
 SRCS+=		compile.c hash.c
 INCS=		term.h
 INCSDIR=	/usr/include
+
+COPTS.tparm.c = -Wno-format-nonliteral
 
 MAN=		terminfo.3 terminfo.5
 MLINKS=		terminfo.3 setupterm.3 \
@@ -31,12 +35,28 @@ MAN+=		termcap.3
 MLINKS+=	termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
 		termcap.3 tgetstr.3 termcap.3 tgoto.3
 
+CPPFLAGS+=	-I${.OBJDIR}
+
 # Generate our string and hash tables
-hash:
+hash.c: genhash term.h
 		@echo "Generating terminfo hash"
-		cd ${.CURDIR} && ${HOST_SH} ./genhash >hash.c
+		cd ${.CURDIR} && ${HOST_SH} ./genhash >${.OBJDIR}/$@
+
+termcap_hash.c: genthash term.h
 		@echo "Generating termcap hash"
-		cd ${.CURDIR} && ${HOST_SH} ./genthash >termcap_hash.c
+		cd ${.CURDIR} && ${HOST_SH} ./genthash >${.OBJDIR}/$@
+
+
+# Allow terminfo descriptions to be compiled into libterminfo
+compiled_terms.c: genterms term.h ${NETBSDSRCDIR}/share/terminfo/terminfo
+		@echo "Generating compiled terminfo descriptions"
+		cd ${.CURDIR} && ${HOST_SH} ./genterms >${.OBJDIR}/$@
+
+CLEANFILES+=	hash.c termcap_hash.c compiled_terms.c
+
+term.c: compiled_terms.c
+
+termcap.c: termcap_hash.c
 
 # Generate our man pages
 terminfo.5: terminfo.5.in term.h termcap_map.c
@@ -45,17 +65,8 @@ terminfo.5: terminfo.5.in term.h termcap_map.c
 
 CLEANFILES+=	terminfo.5
 
-# Allow terminfo descriptions to be compiled into libterminfo
-compiled_terms:
-		@echo "Generating compiled terminfo descriptions"
-		cd ${.CURDIR} && ${HOST_SH} ./genterms >compiled_terms.c
-
-COPTS.tparm.c = -Wno-format-nonliteral
 man: terminfo.5
 
-gen: hash compiled_terms man
-
-.include <bsd.own.mk>
 .include <bsd.shlib.mk>
 
 .if ${MKLINKLIB} != "no"
