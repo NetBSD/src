@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.44 2011/10/27 14:47:59 christos Exp $
+.\" $NetBSD: ctime.3,v 1.45 2011/11/02 19:59:40 apb Exp $
 .\"
 .\" XXX: License missing?
 .\"
-.Dd October 27, 2011
+.Dd November 2, 2011
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -101,7 +101,7 @@ and returns a pointer to a string with the format described above.
 Years requiring fewer than four characters are padded with leading zeroes.
 For years longer than four characters, the string is of the form
 .Bd -literal -offset indent
-.D1 Thu Nov 24 18:22:48     81986\en\e0
+.D1 "Thu Nov 24 18:22:48     81986\en\e0"
 .Ed
 .Pp
 with five spaces before the year.
