@@ -1,4 +1,4 @@
-/* $NetBSD: satafisreg.h,v 1.2 2010/04/07 17:51:16 jakllsch Exp $ */
+/* $NetBSD: satafisreg.h,v 1.3 2011/11/02 18:41:58 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Jonathan A. Kollasch.
@@ -40,7 +40,7 @@
 #define rhd_cyl_lo 5 /* wd_cyl_lo */
 #define rhd_cyl_hi 6 /* wd_cyl_hi */
 #define rhd_dh 7 /* wd_sdh */
-#define rhd_sector_exp 8 
+#define rhd_sector_exp 8
 #define rhd_cyl_lo_exp 9
 #define rhd_cyl_hi_exp 10
 #define rhd_features_exp 11
