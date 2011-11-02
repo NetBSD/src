@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.36 2011/11/02 20:24:31 riz Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.37 2011/11/02 20:31:52 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -2545,4 +2545,11 @@ sys/conf/osrelease.sh				1.116-1.117
 
 	Fix module path logic for release branches.
 	[jmcneill, ticket #1681]
+
+sys/arch/xen/xen/xbdback_xenbus.c		1.45 via patch
+
+	Guard against spurious xbdback_backend_changed() calls which
+	would result in the block device being opened twice, and a
+	panic. PR#45158.
+	[bouyer, ticket #1682]
 
