@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.32 2006/01/05 10:41:03 yamt Exp $
+.\"	$NetBSD: mountd.8,v 1.33 2011/11/02 18:09:43 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mountd.8	8.4 (Berkeley) 4/28/95
 .\"
-.Dd January 5, 2006
+.Dd November 2, 2011
 .Dt MOUNTD 8
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 mount requests
 .Sh SYNOPSIS
 .Nm
-.Op Fl dNn
+.Op Fl dN
 .Op Fl P Ar policy
 .Op Fl p Ar port
 .Op Ar exportsfile
@@ -73,12 +73,6 @@ on every export.
 See
 .Xr exports 5
 for more information.
-.It Fl n
-This flag used to indicate that clients were required to make requests
-from reserved ports, but it is now no longer functional. It
-is only provided for backwards compatibility. Requests
-are checked for reserved ports on a per-export basis, see
-.Xr exports 5 .
 .It Fl P Ar policy
 IPsec
 .Ar policy
