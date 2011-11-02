@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.2.2.5 2011/03/24 19:54:08 riz Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.2.2.6 2011/11/02 20:39:02 riz Exp $	*/
 
 /*++
 /* NAME
@@ -3007,6 +3007,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	if (state->err == 0) {
 	    why = vstring_alloc(10);
 	    state->err = mail_stream_finish(state->dest, why);
+	    printable(STR(why), ' ');
 	} else
 	    mail_stream_cleanup(state->dest);
 	state->dest = 0;
