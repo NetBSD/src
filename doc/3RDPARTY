@@ -1,4 +1,4 @@
-#      $NetBSD: 3RDPARTY,v 1.647.2.6.2.3 2010/01/22 22:05:42 snj Exp $
+#      $NetBSD: 3RDPARTY,v 1.647.2.6.2.4 2011/11/02 18:16:15 riz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -924,13 +924,15 @@ License:	BSD (4-clause)
 Notes:
 
 Package:	tz
-Version:	tzcode2004a / tzdata2008i
-Current Vers:	tzcode2008h / tzdata2008i
+Version:	tzcode2011i / tzdata2011l
+Current Vers:	tzcode2011i / tzdata2011l
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
+Maintainer:	Robert Elz <kre@munnari.oz.au>
 Archive Site:	ftp://elsie.nci.nih.gov/pub/
+Archive Site:	ftp://munnari.oz.au/pub/oldtz/
 Home Page:
-Mailing List:	tz@elsie.nci.nih.gov
-Responsible:	kleink
+Mailing List:	tz@iana.org
+Responsible:	kleink, christos
 License:	Public domain
 Notes:
 Use src/lib/libc/time/tzcode2netbsd to prepare the source tree
