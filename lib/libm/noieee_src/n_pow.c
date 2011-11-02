@@ -1,4 +1,4 @@
-/*      $NetBSD: n_pow.c,v 1.7 2003/08/07 16:44:52 agc Exp $ */
+/*      $NetBSD: n_pow.c,v 1.8 2011/11/02 02:34:56 christos Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -176,7 +176,7 @@ static double
 pow_P(double x, double y)
 {
 	struct Double s, t;
-	double  huge = 1e300, tiny = 1e-300;
+	double  huge = _HUGE, tiny = _TINY;
 
 	if (x == zero) {
 		if (y > zero)

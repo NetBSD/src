@@ -1,4 +1,4 @@
-/*	$NetBSD: cprojf.c,v 1.4 2011/03/02 13:24:43 christos Exp $	*/
+/*	$NetBSD: cprojf.c,v 1.5 2011/11/02 02:34:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cprojf.c,v 1.4 2011/03/02 13:24:43 christos Exp $");
+__RCSID("$NetBSD: cprojf.c,v 1.5 2011/11/02 02:34:56 christos Exp $");
 
 #include <complex.h>
 #include <math.h>
@@ -51,9 +51,10 @@ cprojf(float complex z)
 {
 	float_complex w = { .z = z };
 
+	/*CONSTCOND*/
 	if (isinf(crealf(z)) || isinf(cimagf(z))) {
 #ifdef __INFINITY
-		REAL_PART(w) = __INFINITY;
+		REAL_PART(w) = HUGE_VAL;
 #else
 		REAL_PART(w) = INFINITY;
 #endif
