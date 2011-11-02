@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.690 2011/11/01 21:16:29 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.691 2011/11/02 00:10:08 uwe Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -71,7 +71,6 @@ USE_COMPILERCRTSTUFF?=	yes
 .if ${MACHINE_ARCH} == "alpha"	|| \
     ${MACHINE_ARCH} == "hppa"	|| \
     ${MACHINE_CPU}  == "mips"	|| \
-    ${MACHINE_CPU}  == "sh3"	|| \
     ${MACHINE_ARCH} == "vax"
 HAVE_GDB?= 6
 .else
