@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.14 2009/01/19 14:54:28 yamt Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.15 2011/11/02 15:14:49 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004,2005,2006,2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.14 2009/01/19 14:54:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.15 2011/11/02 15:14:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.14 2009/01/19 14:54:28 yamt Exp
 TAILQ_HEAD(bqhead, buf);
 struct cscan_queue {
 	struct bqhead cq_head[2];	/* actual lists of buffers */
-	int cq_idx;			/* current list index */
+	unsigned int cq_idx;		/* current list index */
 	int cq_lastcylinder;		/* b_cylinder of the last request */
 	daddr_t cq_lastrawblkno;	/* b_rawblkno of the last request */
 };
@@ -65,7 +65,7 @@ cscan_put(struct cscan_queue *q, struct buf *bp, int sortby)
 	struct buf tmp;
 	struct buf *it;
 	struct bqhead *bqh;
-	int idx;
+	unsigned int idx;
 
 	tmp.b_cylinder = q->cq_lastcylinder;
 	tmp.b_rawblkno = q->cq_lastrawblkno;
@@ -90,7 +90,7 @@ cscan_put(struct cscan_queue *q, struct buf *bp, int sortby)
 static struct buf *
 cscan_get(struct cscan_queue *q, int remove)
 {
-	int idx = q->cq_idx;
+	unsigned int idx = q->cq_idx;
 	struct bqhead *bqh;
 	struct buf *bp;
 
@@ -138,7 +138,7 @@ cscan_init(struct cscan_queue *q)
 
 struct priocscan_queue {
 	struct cscan_queue q_queue;
-	int q_burst;
+	unsigned int q_burst;
 };
 
 struct bufq_priocscan {
@@ -204,77 +204,108 @@ bufq_priocscan_get(struct bufq_state *bufq, int remove)
 {
 	struct bufq_priocscan *q = bufq->bq_private;
 	struct priocscan_queue *pq, *npq;
-	struct priocscan_queue *first; /* first non-empty queue */
+	struct priocscan_queue *first; /* highest priority non-empty queue */
 	const struct priocscan_queue *epq;
-	const struct cscan_queue *cq;
 	struct buf *bp;
 	bool single; /* true if there's only one non-empty queue */
 
+	/*
+	 * find the highest priority non-empty queue.
+	 */
 	pq = &q->bq_queue[0];
 	epq = pq + PRIOCSCAN_NQUEUE;
 	for (; pq < epq; pq++) {
-		cq = &pq->q_queue;
-		if (!cscan_empty(cq))
+		if (!cscan_empty(&pq->q_queue)) {
 			break;
+		}
 	}
 	if (pq == epq) {
-		/* there's no requests */
+		/*
+		 * all our queues are empty.  there's nothing to serve.
+		 */
 		return NULL;
 	}
-
 	first = pq;
+
+	/*
+	 * scan the rest of queues.
+	 *
+	 * if we have two or more non-empty queues, we serve the highest
+	 * priority one with non-zero burst count.
+	 */
 	single = true;
-	for (npq = first + 1; npq < epq; npq++) {
-		cq = &npq->q_queue;
-		if (!cscan_empty(cq)) {
+	for (npq = pq + 1; npq < epq; npq++) {
+		if (!cscan_empty(&npq->q_queue)) {
+			/*
+			 * we found another non-empty queue.
+			 * it means that a queue needs to consume its burst
+			 * count to be served.
+			 */
 			single = false;
-			if (pq->q_burst > 0)
+
+			/*
+			 * check if our current candidate queue has already
+			 * exhausted its burst count.
+			 */
+			if (pq->q_burst > 0) {
 				break;
+			}
 			pq = npq;
 		}
 	}
 	if (single) {
 		/*
-		 * there's only a non-empty queue.  just serve it.
+		 * there's only a non-empty queue.
+		 * just serve it without consuming its burst count.
 		 */
-		pq = first;
-	} else if (pq->q_burst > 0) {
+		KASSERT(pq == first);
+	} else {
 		/*
+		 * there are two or more non-empty queues.
+		 */
+		if (pq->q_burst == 0) {
+			/*
+			 * no queues can be served because they have already
+			 * exhausted their burst count.
+			 */
+			unsigned int i;
+#ifdef DEBUG
+			for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {
+				pq = &q->bq_queue[i];
+				if (!cscan_empty(&pq->q_queue) && pq->q_burst) {
+					panic("%s: inconsist", __func__);
+				}
+			}
+#endif /* DEBUG */
+			/*
+			 * reset burst counts.
+			 */
+			if (remove) {
+				for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {
+					pq = &q->bq_queue[i];
+					pq->q_burst = priocscan_burst[i];
+				}
+			}
+
+			/*
+			 * serve the highest priority non-empty queue.
+			 */
+			pq = first;
+		}
+		/*
+		 * consume the burst count.
+		 *
 		 * XXX account only by number of requests.  is it good enough?
 		 */
+		KASSERT(pq->q_burst > 0);
 		if (remove) {
 			pq->q_burst--;
 		}
-	} else {
-		/*
-		 * no queue was selected due to burst counts
-		 */
-		int i;
-#ifdef DEBUG
-		for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {
-			pq = &q->bq_queue[i];
-			cq = &pq->q_queue;
-			if (!cscan_empty(cq) && pq->q_burst)
-				panic("%s: inconsist", __func__);
-		}
-#endif /* DEBUG */
-
-		/*
-		 * reset burst counts
-		 */
-		if (remove) {
-			for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {
-				pq = &q->bq_queue[i];
-				pq->q_burst = priocscan_burst[i];
-			}
-		}
-
-		/*
-		 * serve first non-empty queue.
-		 */
-		pq = first;
 	}
 
+	/*
+	 * finally, get a request from the selected queue.
+	 */
 	KDASSERT(!cscan_empty(&pq->q_queue));
 	bp = cscan_get(&pq->q_queue, remove);
 	KDASSERT(bp != NULL);
@@ -287,7 +318,7 @@ static struct buf *
 bufq_priocscan_cancel(struct bufq_state *bufq, struct buf *bp)
 {
 	struct bufq_priocscan * const q = bufq->bq_private;
-	int i, j;
+	unsigned int i, j;
 
 	for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {
 		struct cscan_queue * const cq = &q->bq_queue[i].q_queue;
@@ -318,7 +349,7 @@ static void
 bufq_priocscan_init(struct bufq_state *bufq)
 {
 	struct bufq_priocscan *q;
-	int i;
+	unsigned int i;
 
 	bufq->bq_get = bufq_priocscan_get;
 	bufq->bq_put = bufq_priocscan_put;
