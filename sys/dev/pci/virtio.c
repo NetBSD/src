@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.2 2011/11/02 15:18:46 jakllsch Exp $	*/
+/*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.2 2011/11/02 15:18:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ virtio_match(device_t parent, cfdata_t match, void *aux)
 		if ((PCI_PRODUCT_QUMRANET_VIRTIO_1000 <=
 		     PCI_PRODUCT(pa->pa_id)) &&
 		    (PCI_PRODUCT(pa->pa_id) <=
-		     PCI_PRODUCT_QUMRANET_VIRTIO_103f))
+		     PCI_PRODUCT_QUMRANET_VIRTIO_103F))
 			return 1;
 		break;
 	}
