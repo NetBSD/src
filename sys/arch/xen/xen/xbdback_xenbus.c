@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.20.4.7 2011/11/02 20:30:41 riz Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.20.4.8 2011/11/02 20:34:52 riz Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.20.4.7 2011/11/02 20:30:41 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.20.4.8 2011/11/02 20:34:52 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -981,7 +981,7 @@ xbdback_co_cache_flush(struct xbdback_instance *xbdi, void *obj)
 		/* Some I/Os are required for this instance. Process them. */
 		KASSERT(xbdi->xbdi_io->xio_operation == BLKIF_OP_READ ||
 		    xbdi->xbdi_io->xio_operation == BLKIF_OP_WRITE);
-		KASSERT(xbdi->xbdi_pendingreqs == 0);
+		KASSERT(xbdi->xbdi_pendingreqs > 0);
 		xbdi->xbdi_cont = xbdback_co_flush;
 		xbdi->xbdi_cont_aux = xbdback_co_cache_flush2;
 	} else {
