@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.8 2011/11/01 16:32:57 phx Exp $ */
+/* $NetBSD: pciide.c,v 1.9 2011/11/02 04:10:33 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ pciide_match(unsigned tag, void *data)
 	case PCI_DEVICE(0x1095, 0x0680): /* SiI 0680 IDE */
 		myops = &cmdideops;
 		return 1;
-	case PCI_DEVICE(0x1106, 0x0571): /* VIA 82C586A IDE */
+	case PCI_DEVICE(0x1106, 0x0571): /* VIA 82C586A/B/686A/B IDE */
 	case PCI_DEVICE(0x1106, 0x1571): /* VIA 82C586 IDE */
 	case PCI_DEVICE(0x1106, 0x3164): /* VIA VT6410 RAID IDE */
 		myops = &apoideops;
