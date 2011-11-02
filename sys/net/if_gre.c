@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.148 2011/10/28 16:42:52 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.149 2011/11/02 01:17:59 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.148 2011/10/28 16:42:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.149 2011/11/02 01:17:59 dyoung Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -136,7 +136,6 @@ int gre_debug = 0;
 #endif /* GRE_DEBUG */
 
 int ip_gre_ttl = GRE_TTL;
-MALLOC_DEFINE(M_GRE_BUFQ, "gre_bufq", "gre mbuf queue");
 
 static int gre_clone_create(struct if_clone *, int);
 static int gre_clone_destroy(struct ifnet *);
@@ -163,60 +162,18 @@ static bool gre_fp_send(struct gre_softc *, enum gre_msg, file_t *);
 static bool gre_fp_recv(struct gre_softc *);
 static void gre_fp_recvloop(void *);
 
-static int
-nearest_pow2(size_t len0)
-{
-	size_t len, mid;
-
-	if (len0 == 0)
-		return 1;
-
-	for (len = len0; (len & (len - 1)) != 0; len &= len - 1)
-		;
-
-	mid = len | (len >> 1);
-
-	/* avoid overflow */
-	if ((len << 1) < len)
-		return len;
-	if (len0 >= mid)
-		return len << 1;
-	return len;
-}
-
-static struct gre_bufq *
+static void
 gre_bufq_init(struct gre_bufq *bq, size_t len0)
 {
-	size_t len;
-
-	len = nearest_pow2(len0);
-
 	memset(bq, 0, sizeof(*bq));
-	bq->bq_buf = malloc(len * sizeof(struct mbuf *), M_GRE_BUFQ, M_WAITOK);
-	bq->bq_len = len;
-	bq->bq_lenmask = len - 1;
-
-	return bq;
-}
-
-static bool
-gre_bufq_empty(struct gre_bufq *bq)
-{
-	return bq->bq_prodidx == bq->bq_considx;
+	bq->bq_q = pcq_create(len0, KM_SLEEP);
+	KASSERT(bq->bq_q != NULL);
 }
 
 static struct mbuf *
 gre_bufq_dequeue(struct gre_bufq *bq)
 {
-	struct mbuf *m;
-
-	if (gre_bufq_empty(bq))
-		return NULL;
-
-	m = bq->bq_buf[bq->bq_considx];
-	bq->bq_considx = (bq->bq_considx + 1) & bq->bq_lenmask;
-
-	return m;
+	return pcq_get(bq->bq_q);
 }
 
 static void
@@ -228,20 +185,22 @@ gre_bufq_purge(struct gre_bufq *bq)
 		m_freem(m);
 }
 
+static void
+gre_bufq_destroy(struct gre_bufq *bq)
+{
+	gre_bufq_purge(bq);
+	pcq_destroy(bq->bq_q);
+}
+
 static int
 gre_bufq_enqueue(struct gre_bufq *bq, struct mbuf *m)
 {
-	int next;
+	KASSERT(bq->bq_q != NULL);
 
-	next = (bq->bq_prodidx + 1) & bq->bq_lenmask;
-
-	if (next == bq->bq_considx) {
+	if (!pcq_put(bq->bq_q, m)) {
 		bq->bq_drops++;
 		return ENOBUFS;
 	}
-
-	bq->bq_buf[bq->bq_prodidx] = m;
-	bq->bq_prodidx = next;
 	return 0;
 }
 
@@ -385,6 +344,7 @@ gre_clone_destroy(struct ifnet *ifp)
 	cv_destroy(&sc->sc_condvar);
 	cv_destroy(&sc->sc_fp_condvar);
 	mutex_destroy(&sc->sc_mtx);
+	gre_bufq_destroy(&sc->sc_snd);
 	gre_evcnt_detach(sc);
 	free(sc, M_DEVBUF);
 
