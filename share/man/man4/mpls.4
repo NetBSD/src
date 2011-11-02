@@ -1,4 +1,4 @@
-.\" $NetBSD: mpls.4,v 1.7.2.1 2011/11/02 21:53:58 yamt Exp $
+.\" $NetBSD: mpls.4,v 1.7.2.2 2011/11/02 21:58:07 yamt Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -181,8 +181,7 @@ Create an MPLS interface and set an IP address:
 # ifconfig mpls0 inet 192.168.0.1/32
 .Ed
 .It
-Route IP packets for the subnet (10.0.0.0/8) into MPLS domain with
-a specific tag (25) and the next hop LSR (192.168.1.100).
+Route IP packets into MPLS domain with a specific tag
 .Bd -literal
 # route add 10.0.0.0/8 -ifp mpls0 -tag 25 -inet 192.168.1.100
 .Ed
