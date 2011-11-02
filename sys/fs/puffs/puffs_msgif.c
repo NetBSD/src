@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.72.4.4 2011/07/15 23:41:13 riz Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.72.4.5 2011/11/02 20:11:12 riz Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.72.4.4 2011/07/15 23:41:13 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.72.4.5 2011/11/02 20:11:12 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.72.4.4 2011/07/15 23:41:13 riz Exp
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/atomic.h>
+
+#include <uvm/uvm.h>
 
 #include <dev/putter/putter_sys.h>
 
@@ -132,6 +134,7 @@ puffs_msgpark_alloc(int waitok)
 {
 	struct puffs_msgpark *park;
 
+	KASSERT(curlwp != uvm.pagedaemon_lwp || !waitok);
 	park = pool_cache_get(parkpc, waitok ? PR_WAITOK : PR_NOWAIT);
 	if (park == NULL)
 		return park;
@@ -228,6 +231,7 @@ puffs_msgmem_alloc(size_t len, struct puffs_msgpark **ppark, void **mem,
 	struct puffs_msgpark *park;
 	void *m;
 
+	KASSERT(curlwp != uvm.pagedaemon_lwp || !cansleep);
 	m = kmem_zalloc(len, cansleep ? KM_SLEEP : KM_NOSLEEP);
 	if (m == NULL) {
 		KASSERT(cansleep == 0);
@@ -935,6 +939,7 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 	struct componentname *pf_cn;
 	char *name;
 		/* get comfortab^Wcomponentname */
+		KASSERT(curlwp != uvm.pagedaemon_lwp);
 		pf_cn = kmem_alloc(componentname);
 		memset(pf_cn, 0, sizeof(struct componentname));
 		break;
@@ -1011,6 +1016,7 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		}
 		pf = (struct puffs_flush *)preq;
 
+		KASSERT(curlwp != uvm.pagedaemon_lwp);
 		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
 		memcpy(&psopr->psopr_pf, pf, sizeof(*pf));
 		psopr->psopr_sopreq = PUFFS_SOPREQ_FLUSH;

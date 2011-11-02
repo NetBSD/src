@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.81.8.2 2011/07/17 15:36:03 riz Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.81.8.3 2011/11/02 20:11:12 riz Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.81.8.2 2011/07/17 15:36:03 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.81.8.3 2011/11/02 20:11:12 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.81.8.2 2011/07/17 15:36:03 riz Ex
 #include <sys/proc.h>
 #include <sys/module.h>
 #include <sys/kthread.h>
+
+#include <uvm/uvm.h>
 
 #include <dev/putter/putter_sys.h>
 
@@ -219,6 +221,7 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	copy_statvfs_info(&args->pa_svfsb, mp);
 	(void)memcpy(&mp->mnt_stat, &args->pa_svfsb, sizeof(mp->mnt_stat));
 
+	KASSERT(curlwp != uvm.pagedaemon_lwp);
 	pmp = kmem_zalloc(sizeof(struct puffs_mount), KM_SLEEP);
 
 	mp->mnt_fs_bshift = DEV_BSHIFT;
@@ -376,6 +379,7 @@ puffs_vfsop_unmount(struct mount *mp, int mntflags)
 		 * Release kernel thread now that there is nothing
 		 * it would be wanting to lock.
 		 */
+		KASSERT(curlwp != uvm.pagedaemon_lwp);
 		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
 		psopr->psopr_sopreq = PUFFS_SOPREQ_EXIT;
 		mutex_enter(&pmp->pmp_sopmtx);
@@ -468,7 +472,7 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 {
 	struct puffs_node *pn;
 	struct vnode *vp, *mvp;
-	int error, rv;
+	int error, rv, fsyncwait;
 
 	KASSERT(((waitfor == MNT_WAIT) && suspending) == 0);
 	KASSERT((suspending == 0)
@@ -476,6 +480,7 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 	      && fstrans_getstate(mp) == FSTRANS_SUSPENDING));
 
 	error = 0;
+	fsyncwait = (waitfor == MNT_WAIT) ? FSYNC_WAIT : 0;
 
 	/* Allocate a marker vnode. */
 	if ((mvp = vnalloc(mp)) == NULL)
@@ -557,7 +562,7 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 			pn->pn_stat |= PNODE_SUSPEND;
 			mutex_exit(&vp->v_interlock);
 		}
-		rv = VOP_FSYNC(vp, cred, waitfor, 0, 0);
+		rv = VOP_FSYNC(vp, cred, fsyncwait, 0, 0);
 		if (suspending || waitfor == MNT_LAZY) {
 			mutex_enter(&vp->v_interlock);
 			pn->pn_stat &= ~PNODE_SUSPEND;

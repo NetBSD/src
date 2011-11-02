@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.13.10.2 2011/09/17 18:53:30 bouyer Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.13.10.3 2011/11/02 20:11:12 riz Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.13.10.2 2011/09/17 18:53:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.13.10.3 2011/11/02 20:11:12 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.13.10.2 2011/09/17 18:53:30 bouyer 
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+
+#include <uvm/uvm.h>
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
@@ -228,6 +230,8 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 			return EPROTO;
 		}
 	}
+
+	KASSERT(curlwp != uvm.pagedaemon_lwp);
 	pnc = kmem_alloc(sizeof(struct puffs_newcookie), KM_SLEEP);
 	pnc->pnc_cookie = ck;
 	LIST_INSERT_HEAD(&pmp->pmp_newcookie, pnc, pnc_entries);
