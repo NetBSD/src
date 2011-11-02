@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.153 2011/11/02 20:36:41 christos Exp $
+#	$NetBSD: Makefile,v 1.154 2011/11/02 23:47:07 njoly Exp $
 
 .include <bsd.own.mk>
 
@@ -65,7 +65,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		.WAIT paxctl \
 		.WAIT fdisk \
 		.WAIT installboot \
-		pwd_mkdb stat strfile sunlabel zic tic
+		pwd_mkdb stat strfile sunlabel zic
 
 .if ${MKLLVM} != "no"
 SUBDIR+= \
