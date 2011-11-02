@@ -1,4 +1,4 @@
-/* $NetBSD: t_mkfifo.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/* $NetBSD: t_mkfifo.c,v 1.2 2011/11/02 06:04:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mkfifo.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
+__RCSID("$NetBSD: t_mkfifo.c,v 1.2 2011/11/02 06:04:48 jruoho Exp $");
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -72,12 +72,11 @@ ATF_TC_HEAD(mkfifo_block, tc)
 
 ATF_TC_BODY(mkfifo_block, tc)
 {
-	int fd[2], sta;
+	int sta, fd = -1;
 	pid_t pid;
 
 	support();
 
-	fd[0] = fd[1] = -1;
 	ATF_REQUIRE(mkfifo(path, 0600) == 0);
 
 	pid = fork();
@@ -90,16 +89,13 @@ ATF_TC_BODY(mkfifo_block, tc)
 		 * the call should block until another process
 		 * opens the FIFO for writing (reading).
 		 */
-		fd[0] = open(path, O_RDONLY);
+		fd = open(path, O_RDONLY);
 
-		(void)pause();
-
-		_exit(EXIT_SUCCESS); /* NOTREACHED */
+		_exit(EXIT_FAILURE); /* NOTREACHED */
 	}
 
 	(void)sleep(1);
 
-	fd[1] = open(path, O_WRONLY);
 	ATF_REQUIRE(kill(pid, SIGKILL) == 0);
 
 	(void)wait(&sta);
@@ -107,7 +103,7 @@ ATF_TC_BODY(mkfifo_block, tc)
 	if (WIFSIGNALED(sta) == 0 || WTERMSIG(sta) != SIGKILL)
 		atf_tc_fail("FIFO did not block");
 
-	(void)close(fd[0]);
+	(void)close(fd);
 	(void)unlink(path);
 }
 
