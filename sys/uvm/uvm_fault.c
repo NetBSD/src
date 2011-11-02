@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.190 2011/08/06 17:25:03 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.190.2.1 2011/11/02 21:54:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.190 2011/08/06 17:25:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.190.2.1 2011/11/02 21:54:00 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -373,7 +373,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				uvmfault_unlockall(ufi, amap, NULL);
 
 				/*
-				 * Pass a PG_BUSY+PG_FAKE+PG_CLEAN page into
+				 * Pass a PG_BUSY+PG_FAKE clean page into
 				 * the uvm_swap_get() function with all data
 				 * structures unlocked.  Note that it is OK
 				 * to read an_swslot here, because we hold
@@ -485,6 +485,7 @@ released:
 			uvm_pageactivate(pg);
 			mutex_exit(&uvm_pageqlock);
 			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_UNKNOWN);
 			UVM_PAGE_OWN(pg, NULL);
 #else
 			panic("%s: we_own", __func__);
@@ -655,6 +656,7 @@ nomem:
 	if (opg) {
 		uvm_pagecopy(opg, pg);
 	}
+	KASSERT(uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_DIRTY);
 
 	amap_add(&ufi->entry->aref, ufi->orig_rvaddr - ufi->entry->start, anon,
 	    oanon != NULL);
@@ -741,7 +743,7 @@ static inline void	uvm_fault_lower_lookup(
 			    struct vm_page **);
 static inline void	uvm_fault_lower_neighbor(
 			    struct uvm_faultinfo *, const struct uvm_faultctx *,
-			    vaddr_t, struct vm_page *, bool);
+			    vaddr_t, struct vm_page *);
 static inline int	uvm_fault_lower_io(
 			    struct uvm_faultinfo *, const struct uvm_faultctx *,
 			    struct uvm_object **, struct vm_page **);
@@ -1528,12 +1530,11 @@ uvm_fault_upper_done(
 		/*
 		 * since the now-wired page cannot be paged out,
 		 * release its swap resources for others to use.
-		 * since an anon with no swap cannot be PG_CLEAN,
-		 * clear its clean flag now.
+		 * since an anon with no swap cannot be clean,
+		 * mark it dirty now.
 		 */
 
-		pg->flags &= ~(PG_CLEAN);
-
+		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 	} else {
 		uvm_pageactivate(pg);
 	}
@@ -1659,7 +1660,7 @@ uvm_fault_lower(
 	KASSERT(uobjpage != NULL);
 	KASSERT(uobj == NULL || uobj == uobjpage->uobject);
 	KASSERT(uobj == NULL || !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
-	    (uobjpage->flags & PG_CLEAN) != 0);
+	    uvm_pagegetdirty(uobjpage) == UVM_PAGE_STATUS_CLEAN);
 
 	if (!flt->promote) {
 		error = uvm_fault_lower_direct(ufi, flt, uobj, uobjpage);
@@ -1729,12 +1730,7 @@ uvm_fault_lower_lookup(
 			    "(0x%x) with locked get",
 			    curpg, 0,0,0);
 		} else {
-			bool readonly = (curpg->flags & PG_RDONLY)
-			    || (curpg->loan_count > 0)
-			    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
-
-			uvm_fault_lower_neighbor(ufi, flt,
-			    currva, curpg, readonly);
+			uvm_fault_lower_neighbor(ufi, flt, currva, curpg);
 		}
 	}
 	pmap_update(ufi->orig_map->pmap);
@@ -1747,8 +1743,9 @@ uvm_fault_lower_lookup(
 static void
 uvm_fault_lower_neighbor(
 	struct uvm_faultinfo *ufi, const struct uvm_faultctx *flt,
-	vaddr_t currva, struct vm_page *pg, bool readonly)
+	vaddr_t currva, struct vm_page *pg)
 {
+	const bool readonly = uvm_pagereadonly_p(pg) || pg->loan_count > 0;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap(if there), uobj */
@@ -1777,7 +1774,8 @@ uvm_fault_lower_neighbor(
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
 	KASSERT((pg->flags & PG_RELEASED) == 0);
 	KASSERT((pg->flags & PG_WANTED) == 0);
-	KASSERT(!UVM_OBJ_IS_CLEAN(pg->uobject) || (pg->flags & PG_CLEAN) != 0);
+	KASSERT(!UVM_OBJ_IS_CLEAN(pg->uobject) ||
+	    uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN);
 	pg->flags &= ~(PG_BUSY);
 	UVM_PAGE_OWN(pg, NULL);
 
@@ -1951,8 +1949,7 @@ uvm_fault_lower_direct(
 	 */
 
 	uvmexp.flt_obj++;
-	if (UVM_ET_ISCOPYONWRITE(ufi->entry) ||
-	    UVM_OBJ_NEEDS_WRITEFAULT(uobjpage->uobject))
+	if (UVM_ET_ISCOPYONWRITE(ufi->entry))
 		flt->enter_prot &= ~VM_PROT_WRITE;
 	pg = uobjpage;		/* map in the actual object */
 
@@ -2124,6 +2121,7 @@ uvm_fault_lower_enter(
 	struct vm_anon *anon, struct vm_page *pg)
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
+	const bool readonly = uvm_pagereadonly_p(pg);
 	int error;
 	UVMHIST_FUNC("uvm_fault_lower_enter"); UVMHIST_CALLED(maphist);
 
@@ -2148,12 +2146,16 @@ uvm_fault_lower_enter(
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
 	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, flt->promote);
-	KASSERT((flt->access_type & VM_PROT_WRITE) == 0 ||
-		(pg->flags & PG_RDONLY) == 0);
+	KASSERTMSG((flt->access_type & VM_PROT_WRITE) == 0 || !readonly,
+	    "promote=%u cow_now=%u access_type=%x enter_prot=%x cow=%u "
+	    "entry=%p map=%p orig_rvaddr=%p pg=%p",
+	    flt->promote, flt->cow_now, flt->access_type, flt->enter_prot,
+	    UVM_ET_ISCOPYONWRITE(ufi->entry), ufi->entry, ufi->orig_map,
+	    (void *)ufi->orig_rvaddr, pg);
+	KASSERT((flt->access_type & VM_PROT_WRITE) == 0 || !readonly);
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr,
 	    VM_PAGE_TO_PHYS(pg),
-	    (pg->flags & PG_RDONLY) != 0 ?
-	    flt->enter_prot & ~VM_PROT_WRITE : flt->enter_prot,
+	    readonly ? flt->enter_prot & ~VM_PROT_WRITE : flt->enter_prot,
 	    flt->access_type | PMAP_CANFAIL |
 	    (flt->wire_mapping ? PMAP_WIRED : 0)) != 0) {
 
@@ -2239,12 +2241,12 @@ uvm_fault_lower_done(
 			/*
 			 * since the now-wired page cannot be paged out,
 			 * release its swap resources for others to use.
-			 * since an aobj page with no swap cannot be PG_CLEAN,
-			 * clear its clean flag now.
+			 * since an aobj page with no swap cannot be clean,
+			 * mark it dirty now.
 			 */
 
 			KASSERT(uobj != NULL);
-			pg->flags &= ~(PG_CLEAN);
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 			dropswap = true;
 		}
 	} else {

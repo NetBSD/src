@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1702 2011/11/01 13:37:32 yamt Exp $
+#	$NetBSD: mi,v 1.1702.2.1 2011/11/02 21:53:56 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2466,6 +2466,7 @@
 ./usr/include/sys/queue.h			comp-c-include
 ./usr/include/sys/quota.h			comp-c-include
 ./usr/include/sys/radioio.h			comp-c-include
+./usr/include/sys/radixtree.h			comp-c-include
 ./usr/include/sys/ras.h				comp-c-include
 ./usr/include/sys/rb.h				comp-obsolete		obsolete
 ./usr/include/sys/rbtree.h			comp-c-include

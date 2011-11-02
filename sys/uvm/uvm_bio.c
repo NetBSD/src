@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.79 2011/09/27 01:02:39 jym Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.79.2.1 2011/11/02 21:54:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.79 2011/09/27 01:02:39 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.79.2.1 2011/11/02 21:54:00 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -265,17 +265,18 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 
 	/*
 	 * Note that a page whose backing store is partially allocated
-	 * is marked as PG_RDONLY.
+	 * is marked as PG_HOLE.
+	 *
+	 * it's a responsibility of ubc_alloc's caller to allocate backing
+	 * blocks before writing to the window.
 	 */
 
-	KASSERT((pg->flags & PG_RDONLY) == 0 ||
+	KASSERT((pg->flags & PG_HOLE) == 0 ||
 	    (access_type & VM_PROT_WRITE) == 0 ||
 	    pg->offset < umap->writeoff ||
 	    pg->offset + PAGE_SIZE > umap->writeoff + umap->writelen);
 
-	rdonly = ((access_type & VM_PROT_WRITE) == 0 &&
-	    (pg->flags & PG_RDONLY) != 0) ||
-	    UVM_OBJ_NEEDS_WRITEFAULT(uobj);
+	rdonly = uvm_pagereadonly_p(pg);
 	mask = rdonly ? ~VM_PROT_WRITE : VM_PROT_ALL;
 
 	error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
@@ -652,7 +653,9 @@ ubc_release(void *va, int flags)
 			    umapva + slot_offset + (i << PAGE_SHIFT), &pa);
 			KASSERT(rv);
 			pgs[i] = PHYS_TO_VM_PAGE(pa);
-			pgs[i]->flags &= ~(PG_FAKE|PG_CLEAN);
+			pgs[i]->flags &= ~PG_FAKE;
+			KASSERT(uvm_pagegetdirty(pgs[i]) ==
+			    UVM_PAGE_STATUS_DIRTY);
 			KASSERT(pgs[i]->loan_count == 0);
 			uvm_pageactivate(pgs[i]);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.11 2011/08/27 09:11:53 christos Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.11.2.1 2011/11/02 21:54:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.11 2011/08/27 09:11:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.11.2.1 2011/11/02 21:54:01 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -72,7 +72,7 @@ uvm_obj_init(struct uvm_object *uo, const struct uvm_pagerops *ops,
 	LIST_INIT(&uo->uo_ubc);
 	uo->uo_npages = 0;
 	uo->uo_refs = refs;
-	rb_tree_init(&uo->rb_tree, &uvm_page_tree_ops);
+	radix_tree_init_tree(&uo->uo_pages);
 }
 
 /*
@@ -82,7 +82,7 @@ void
 uvm_obj_destroy(struct uvm_object *uo, bool dlock)
 {
 
-	KASSERT(rb_tree_iterate(&uo->rb_tree, NULL, RB_DIR_LEFT) == NULL);
+	KASSERT(radix_tree_empty_tree_p(&uo->uo_pages));
 
 	/* Purge any UBC entries associated with this object. */
 	ubc_purge(uo);
@@ -91,6 +91,7 @@ uvm_obj_destroy(struct uvm_object *uo, bool dlock)
 	if (dlock) {
 		mutex_obj_free(uo->vmobjlock);
 	}
+	radix_tree_fini_tree(&uo->uo_pages);
 }
 
 /*
@@ -169,7 +170,8 @@ uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end,
 			}
 
 			if (pgs[i]->pqflags & PQ_AOBJ) {
-				pgs[i]->flags &= ~(PG_CLEAN);
+				uvm_pagemarkdirty(pgs[i],
+				    UVM_PAGE_STATUS_DIRTY);
 				uao_dropswap(uobj, i);
 			}
 		}
