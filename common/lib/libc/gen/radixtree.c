@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.16 2011/10/25 14:11:27 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.17 2011/11/02 13:49:43 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,21 +27,48 @@
  */
 
 /*
- * radix tree
+ * radixtree.c
  *
+ * this is an implementation of radix tree, whose keys are uint64_t and leafs
+ * are user provided pointers.
+ *
+ * leaf nodes are just void * and this implementation doesn't care about
+ * what they actually point to.  however, this implementation has an assumption
+ * about their alignment.  specifically, this implementation assumes that their
+ * 2 LSBs are zero and uses them internally.
+ *
+ * intermediate nodes are automatically allocated and freed internally and
+ * basically users don't need to care about them.  only radix_tree_insert_node
+ * function can allocate memory for intermediate nodes and thus can fail for
+ * ENOMEM.
+ *
+ * efficiency:
  * it's designed to work efficiently with dense index distribution.
  * the memory consumption (number of necessary intermediate nodes)
  * heavily depends on index distribution.  basically, more dense index
  * distribution consumes less nodes per item.
  * approximately,
- * the best case: about RADIX_TREE_PTR_PER_NODE items per node.
- * the worst case: RADIX_TREE_MAX_HEIGHT nodes per item.
+ * the best case: about RADIX_TREE_PTR_PER_NODE items per intermediate node.
+ * the worst case: RADIX_TREE_MAX_HEIGHT intermediate nodes per item.
+ *
+ * gang lookup:
+ * this implementation provides a way to lookup many nodes quickly via
+ * radix_tree_gang_lookup_node function and its varients.
+ *
+ * tags:
+ * this implementation provides tagging functionality to allow quick
+ * scanning of a subset of leaf nodes.  leaf nodes are untagged when
+ * inserted into the tree and can be tagged by radix_tree_set_tag function.
+ * radix_tree_gang_lookup_tagged_node function and its variants returns
+ * only leaf nodes with the given tag.  to reduce amount of nodes to visit for
+ * these functions, this implementation keeps tagging information in internal
+ * intermediate nodes and quickly skips uninterested parts of a tree.
  */
 
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.16 2011/10/25 14:11:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17 2011/11/02 13:49:43 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -51,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.16 2011/10/25 14:11:27 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.16 2011/10/25 14:11:27 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.17 2011/11/02 13:49:43 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -473,7 +500,7 @@ radix_tree_lookup_ptr(struct radix_tree *t, uint64_t idx,
  * otherwise, this function returns 0.
  *
  * note that inserting a node can involves memory allocation for intermediate
- * nodes.  if _KERNEL, it's done with non-blocking IPL_NONE memory allocation.
+ * nodes.  if _KERNEL, it's done with no-sleep IPL_NONE memory allocation.
  *
  * for the newly inserted node, all tags are cleared.
  */
