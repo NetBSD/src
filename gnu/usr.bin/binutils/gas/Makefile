@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2006/11/09 21:27:58 christos Exp $
+#	$NetBSD: Makefile,v 1.8.24.1 2011/11/02 20:15:42 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ COPTS.dwarf2dbg.c = -Wno-stack-protector
 COPTS.symbols.c = -Wno-stack-protector
 COPTS.stabs.c = -Wno-stack-protector
 COPTS.macro.c = -Wno-stack-protector
+COPTS.tc-arm.c = -Wno-stack-protector
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 CPPFLAGS+=	-I${DIST}/gas -I${DIST}/gas/config
