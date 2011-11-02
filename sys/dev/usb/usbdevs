@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.598 2011/10/25 16:09:14 aymeric Exp $
+$NetBSD: usbdevs,v 1.599 2011/11/02 04:59:51 macallan Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1077,6 +1077,7 @@ product CYPRESS KBDHUB		0x0101	Keyboard/Hub
 product CYPRESS FMRADIO		0x1002	FM Radio
 product CYPRESS USBRS232	0x5500	USB-RS232 Interface
 product CYPRESS HUB2		0x6560	USB2 Hub
+product CYPRESS LPRDK		0xe001	CY4636 LP RDK Bridge
 
 /* Daisy Technology products */
 product DAISY DMC		0x6901	PhotoClip USBMediaReader
