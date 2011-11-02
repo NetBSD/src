@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.34 2011/11/02 18:12:54 christos Exp $
+.\"	$NetBSD: mountd.8,v 1.35 2011/11/02 20:26:56 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,15 +81,17 @@ string,
 as described in
 .Xr ipsec_set_policy 3 .
 Multiple IPsec policy strings may be specified by using a semicolon as
-a separator. If conflicting policy strings are found in a single line,
-the last string will take effect. If an invalid IPsec policy string is used
+a separator.
+If conflicting policy strings are found in a single line,
+the last string will take effect.
+If an invalid IPsec policy string is used
 .Nm
 logs an error message and terminates itself.
 .It Fl p Ar port
 Force
 .Nm
-to bind to the given port. If this
-option is not given,
+to bind to the given port.
+If this option is not given,
 .Nm
 may bind to every anonymous port
 (in the range 600-1023) which causes trouble when trying to use
