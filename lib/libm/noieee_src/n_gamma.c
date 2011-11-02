@@ -1,4 +1,4 @@
-/*      $NetBSD: n_gamma.c,v 1.6 2006/11/24 21:15:54 wiz Exp $ */
+/*      $NetBSD: n_gamma.c,v 1.7 2011/11/02 02:34:56 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -119,7 +119,7 @@ static struct Double ratfun_gam (double, double);
 #define Pa6	 5.69394463439411649408050664078e-03
 #define Pa7	-1.44705562421428915453880392761e-02
 
-static const double zero = 0., one = 1.0, tiny = 1e-300;
+static const double zero = 0., one = 1.0, tiny = _TINY;
 /*
  * TRUNC sets trailing bits in a floating-point number to zero.
  * is a temporary variable.
