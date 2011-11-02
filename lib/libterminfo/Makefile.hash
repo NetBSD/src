@@ -1,0 +1,19 @@
+#	$NetBSD: Makefile.hash,v 1.1 2011/11/02 17:48:53 christos Exp $
+
+PARSEDIR:=${.PARSEDIR}
+# Generate our string and hash tables
+hash.c: genhash term.h
+		@echo "Generating terminfo hash"
+		${HOST_SH} ${.ALLSRC} > ${.TARGET}
+
+termcap_hash.c: genthash termcap_map.c
+		@echo "Generating termcap hash"
+		${HOST_SH} ${.ALLSRC} > ${.TARGET}
+
+
+# Allow terminfo descriptions to be compiled into libterminfo
+compiled_terms.c: genterms term.h ${NETBSDSRCDIR}/share/terminfo/terminfo
+		@echo "Generating compiled terminfo descriptions"
+		${HOST_SH} ${.ALLSRC} > ${.TARGET}
+
+CLEANFILES+=	hash.c termcap_hash.c compiled_terms.c
