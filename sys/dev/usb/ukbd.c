@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.110 2011/01/02 12:36:41 mbalmer Exp $        */
+/*      $NetBSD: ukbd.c,v 1.111 2011/11/02 08:20:02 macallan Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.110 2011/01/02 12:36:41 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.111 2011/11/02 08:20:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,29 @@ Static const struct ukbd_keycodetrans trtab_apple_iso[] = {
 	{ 0x00, 0x00 }
 };
 
+Static const struct ukbd_keycodetrans trtab_gdium_fn[] = {	
+#ifdef notyet
+		{ 58, 0 },	/* F1 -> toggle camera */
+		{ 59, 0 },	/* F2 -> toggle wireless */
+#endif
+		{ 60, 127 },	/* F3 -> audio mute */
+		{ 61, 128 },	/* F4 -> audio raise */
+		{ 62, 129 },	/* F5 -> audio lower */
+#ifdef notyet
+		{ 63, 0 },	/* F6 -> toggle ext. video */
+		{ 64, 0 },	/* F7 -> toggle mouse */
+		{ 65, 0 },	/* F8 -> brightness up */
+		{ 66, 0 },	/* F9 -> brightness down */
+		{ 67, 0 },	/* F10 -> suspend */
+		{ 68, 0 },	/* F11 -> user1 */
+		{ 69, 0 },	/* F12 -> user2 */
+		{ 70, 0 },	/* print screen -> sysrq */
+#endif
+		{ 76, 71 },	/* delete -> scroll lock */
+		{ 81, 78 },	/* down -> page down */
+		{ 82, 75 }	/* up -> page up */
+};
+
 #if defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD)
 #define NN 0			/* no translation */
 /*
@@ -217,6 +240,7 @@ struct ukbd_softc {
 #define FLAG_DEBOUNCE		0x0004	/* for quirk handling */
 #define FLAG_APPLE_FIX_ISO	0x0008
 #define FLAG_APPLE_FN		0x0010
+#define FLAG_GDIUM_FN		0x0020
 #define FLAG_FN_PRESSED		0x0100	/* FN key is held down */
 #define FLAG_FN_ALT		0x0200	/* Last Alt key was FN-Alt = AltGr */
 
@@ -395,6 +419,10 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	if (qflags & UQ_APPLE_ISO)
 		sc->sc_flags |= FLAG_APPLE_FIX_ISO;
 
+	if (uha->uaa->vendor == USB_VENDOR_CYPRESS &&
+	    uha->uaa->product == USB_PRODUCT_CYPRESS_LPRDK)
+		sc->sc_flags = FLAG_GDIUM_FN;
+
 #ifdef DIAGNOSTIC
 	aprint_normal(": %d modifier keys, %d key codes", sc->sc_nmod,
 	       sc->sc_nkeycode);
@@ -402,6 +430,8 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(", apple fn key");
 	if (sc->sc_flags & FLAG_APPLE_FIX_ISO)
 		aprint_normal(", fix apple iso");
+	if (sc->sc_flags & FLAG_GDIUM_FN)
+		aprint_normal(", Gdium fn key");
 #endif
 	aprint_normal("\n");
 
@@ -614,6 +644,12 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		else
 			sc->sc_flags &= ~FLAG_FN_PRESSED;
 	}
+	
+	if (sc->sc_flags & FLAG_GDIUM_FN) {
+		if (sc->sc_flags & FLAG_FN_PRESSED) {
+			ukbd_translate_keycodes(sc, ud, trtab_gdium_fn);
+		}
+	}
 
 	if ((sc->sc_flags & FLAG_DEBOUNCE) && !(sc->sc_flags & FLAG_POLLING)) {
 		/*
@@ -712,6 +748,12 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 				if (key == ud->keycode[j])
 					goto rfound;
 			DPRINTFN(3,("ukbd_intr: relse key=0x%02x\n", key));
+			if (sc->sc_flags & FLAG_GDIUM_FN) {
+				if (key == 0x82) {
+					sc->sc_flags &= ~FLAG_FN_PRESSED;
+					goto rfound;
+				}
+			}
 			ADDKEY(key | RELEASE);
 		rfound:
 			;
@@ -726,6 +768,12 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 				if (key == sc->sc_odata.keycode[j])
 					goto pfound;
 			DPRINTFN(2,("ukbd_intr: press key=0x%02x\n", key));
+			if (sc->sc_flags & FLAG_GDIUM_FN) {
+				if (key == 0x82) {
+					sc->sc_flags |= FLAG_FN_PRESSED;
+					goto pfound;
+				}
+			}
 			ADDKEY(key | PRESS);
 		pfound:
 			;
