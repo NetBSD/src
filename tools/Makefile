@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.152 2011/11/02 20:33:18 yamt Exp $
+#	$NetBSD: Makefile,v 1.153 2011/11/02 20:36:41 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -53,6 +53,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	.WAIT texinfo \
 	.WAIT yacc \
 	.WAIT awk \
+	.WAIT tic \
 	.WAIT lex \
 	.WAIT pax \
 	.WAIT ${TOOLCHAIN_BITS} \
