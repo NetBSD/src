@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.102 2011/06/07 09:24:17 cegger Exp $
+$NetBSD: miidevs,v 1.103 2011/11/02 19:55:57 jakllsch Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ model xxBROADCOM BCM5214	0x0028 BCM5214 Quad 10/100 media interface
 model xxBROADCOM BCM5221	0x001e BCM5221 10/100 media interface
 model xxBROADCOM BCM5222	0x0032 BCM5222 Dual 10/100 media interface
 model xxBROADCOM BCM4401	0x0036 BCM4401 10/100 media interface
+model xxBROADCOM BCM5365	0x0037 BCM5365 10/100 5-port PHY switch
 model BROADCOM BCM5400		0x0004 BCM5400 1000BASE-T media interface
 model BROADCOM BCM5401		0x0005 BCM5401 1000BASE-T media interface
 model BROADCOM BCM5411		0x0007 BCM5411 1000BASE-T media interface
@@ -164,6 +165,7 @@ model BROADCOM BCM54K2		0x002e BCM54K2 1000BASE-T media interface
 model BROADCOM BCM5714		0x0034 BCM5714 1000BASE-T media interface
 model BROADCOM BCM5780		0x0035 BCM5780 1000BASE-T media interface
 model BROADCOM BCM5708C		0x0036 BCM5708C 1000BASE-T media interface
+model BROADCOM2 BCM5325		0x0003 BCM5325 10/100 5-port PHY switch
 model BROADCOM2 BCM5906		0x0004 BCM5906 10/100baseTX media interface
 model BROADCOM2 BCM5481		0x000a BCM5481 1000BASE-T media interface
 model BROADCOM2 BCM5482		0x000b BCM5482 1000BASE-T media interface
