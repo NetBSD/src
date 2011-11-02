@@ -7615,9 +7615,18 @@ SQLITE_PRIVATE void sqlite3HashClear(Hash*);
 # define SQLITE_OMIT_TRACE 1
 # undef SQLITE_MIXED_ENDIAN_64BIT_FLOAT
 # undef SQLITE_HAVE_ISNAN
+#else
+# ifdef __vax__
+#  include <float.h>
+#  define SQLITE_BIG_DBL DBL_MAX
+#  define SQLITE_HUGE_DBL DBL_MAX
+# endif
 #endif
 #ifndef SQLITE_BIG_DBL
 # define SQLITE_BIG_DBL (1e99)
+#endif
+#ifndef SQLITE_HUGE_DBL
+# define SQLITE_HUGE_DBL (1.0e+308)
 #endif
 
 /*
@@ -21000,10 +21009,10 @@ do_atof_calc:
         while( e%308 ) { scale *= 1.0e+1; e -= 1; }
         if( esign<0 ){
           result = s / scale;
-          result /= 1.0e+308;
+          result /= SQLITE_HUGE_DBL;
         }else{
           result = s * scale;
-          result *= 1.0e+308;
+          result *= SQLITE_HUGE_DBL;
         }
       }else{
         /* 1.0e+22 is the largest power of 10 than can be 
@@ -130632,7 +130641,7 @@ SQLITE_API int sqlite3_extension_init(
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: sqlite3.c,v 1.1.1.1 2011/10/13 21:38:52 joerg Exp $
+** $Id: sqlite3.c,v 1.2 2011/11/02 23:19:48 christos Exp $
 **
 ** This file implements an integration between the ICU library 
 ** ("International Components for Unicode", an open-source library 
