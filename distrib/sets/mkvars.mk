@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.5 2011/10/31 08:14:43 mrg Exp $
+# $NetBSD: mkvars.mk,v 1.6 2011/11/02 14:42:43 he Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -13,6 +13,7 @@ MKEXTRAVARS= \
 	MKMANZ \
 	MKBFD \
 	MKCOMPAT \
+	MKCOMPATMODULES \
 	MKDYNAMICROOT \
 	MKMANPAGES \
 	MKXORG \
