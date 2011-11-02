@@ -1,4 +1,4 @@
-.\"	$NetBSD: tftpd.8,v 1.21 2003/08/07 09:46:53 agc Exp $
+.\"	$NetBSD: tftpd.8,v 1.21.38.1 2011/11/02 19:58:23 riz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)tftpd.8	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 11, 2003
+.Dd January 8, 2010
 .Dt TFTPD 8
 .Os
 .Sh NAME
@@ -39,10 +39,9 @@
 Internet Trivial File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm
-.Op Fl d
+.Op Fl dln
 .Op Fl g Ar group
-.Op Fl l
-.Op Fl n
+.Op Fl p Ar pathsep
 .Op Fl s Ar directory
 .Op Fl u Ar user
 .Op Ar directory ...
@@ -66,8 +65,11 @@ does not require an account or password on the remote system.
 Due to the lack of authentication information,
 .Nm
 will allow only publicly readable files to be accessed.
-Filenames beginning in ``\|\fB.\|.\fP\|/'' or
-containing ``/\|\fB.\|.\fP\|/'' are not allowed.
+Filenames beginning in
+.Dq Pa ../
+or containing
+.Dq Pa /../
+are not allowed.
 Files may be written to only if they already exist and are publicly writable.
 .Pp
 Note that this extends the concept of
@@ -89,7 +91,7 @@ The given directories are also treated as a search path for
 relative filename requests.
 .Pp
 The options are:
-.Bl -tag -width "directory"
+.Bl -tag -width "XsXdirectoryX"
 .It Fl d
 Enable verbose debugging messages to
 .Xr syslogd 8 .
@@ -107,6 +109,11 @@ Logs all requests using
 .It Fl n
 Suppresses negative acknowledgement of requests for nonexistent
 relative filenames.
+.It Fl p Ar pathsep
+All occurances of the single character
+.Ar pathsep
+(path separator) in the requested filename are replaced with
+.Sq / .
 .It Fl s Ar directory
 .Nm
 will
@@ -193,11 +200,16 @@ TFTP options were implemented by Wasabi Systems, Inc., in 2003,
 and first appeared in
 .Nx 2.0 .
 .Sh BUGS
-Files larger than 33488896 octets (65535 blocks) cannot be transferred
-without client and server supporting blocksize negotiation (RFCs
-2347 and 2348).
+Files larger than 33,553,919 octets (65535 blocks, last one less than 512
+octets) cannot be correctly transferred without client and server
+supporting blocksize negotiation (RFCs 2347 and 2348).
+As a kludge,
+.Nm
+accepts a sequence of block numbers which wrap to zero after 65535.
 .Pp
-Many tftp clients will not transfer files over 16744448 octets (32767 blocks).
+Many tftp clients will not transfer files over 16,776,703 octets
+(32767 blocks), as they incorrectly count the block number using
+a signed rather than unsigned 16-bit integer.
 .Sh SECURITY CONSIDERATIONS
 You are
 .Em strongly
