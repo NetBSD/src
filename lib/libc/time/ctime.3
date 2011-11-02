@@ -1,4 +1,4 @@
-.\" $NetBSD: ctime.3,v 1.45 2011/11/02 19:59:40 apb Exp $
+.\" $NetBSD: ctime.3,v 1.46 2011/11/02 23:06:08 christos Exp $
 .\"
 .\" XXX: License missing?
 .\"
@@ -436,9 +436,11 @@ functions conform to
 Rest of the functions conform to
 .St -p1003.1-2008 .
 .Sh CAVEATS
-The return values point to static data; the data is overwritten by
+The functions that do not take an explicit
+.Ft timezone_t
+argument return values point to static data; the data is overwritten by
 each call.
-The
+For the above functions the
 .Fa tm_zone
 field of a returned
 .Va "struct tm"
@@ -446,6 +448,18 @@ points to a static array of characters, which
 will also be overwritten at the next call
 (and by calls to
 .Xr tzset 3 ) .
+The functions that do take an explicit
+.Ft timezone_t
+argument and set the fields of a supplied
+.Va "struct tm"
+should not call
+.Fn tzfree
+since the
+.Fa tm_zone
+field of the
+.Va "struct tm"
+points to data allocated by
+.Fn tzalloc .
 .Pp
 The
 .Fn asctime
