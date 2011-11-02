@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.25 2011/03/04 09:47:47 yamt Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.26 2011/11/02 16:43:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.25 2011/03/04 09:47:47 yamt Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.26 2011/11/02 16:43:04 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -78,6 +78,14 @@ puffs_cc_yield(struct puffs_cc *pcc)
 
 	assert(puffs_fakecc == 0);
 
+	if ((~pcc->pcc_flags & (PCC_BORROWED|PCC_DONE)) == 0) {
+		pcc->pcc_flags &= ~(PCC_BORROWED|PCC_DONE);
+		/*
+		 * see the XXX comment in puffs__cc_cont
+		 */
+		puffs__cc_destroy(pcc, 1);
+		setcontext(&pcc->pcc_uc_ret);
+	}
 	pcc->pcc_flags &= ~PCC_BORROWED;
 
 	/* romanes eunt domus */
