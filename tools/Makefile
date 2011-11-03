@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.154 2011/11/02 23:47:07 njoly Exp $
+#	$NetBSD: Makefile,v 1.155 2011/11/03 07:42:56 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -68,10 +68,12 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		pwd_mkdb stat strfile sunlabel zic
 
 .if ${MKLLVM} != "no"
+# .WAIT between llvm-tblgen and llvm-clang-tblgen ensures install
+# rules works correctly
 SUBDIR+= \
 	llvm .WAIT \
 	llvm-lib/libLLVMSupport llvm-lib/libLLVMTableGen .WAIT \
-	llvm-tblgen llvm-clang-tblgen .WAIT \
+	llvm-tblgen .WAIT llvm-clang-tblgen .WAIT \
 	llvm-include .WAIT \
 	llvm-lib .WAIT \
 	llvm-clang
