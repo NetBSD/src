@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.10 2010/02/22 23:05:39 roy Exp $ */
+/* $NetBSD: tic.c,v 1.11 2011/11/03 10:12:57 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.10 2010/02/22 23:05:39 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.11 2011/11/03 10:12:57 roy Exp $");
 
 #include <sys/types.h>
 
@@ -357,7 +357,7 @@ merge_use(int flags)
 				cap += sizeof(uint16_t) + num;
 				memn = rtic->extras.bufpos -
 				    (cap - rtic->extras.buf);
-				memcpy(scap, cap, memn);
+				memmove(scap, cap, memn);
 				rtic->extras.bufpos -= cap - scap;
 				cap = scap;
 				rtic->extras.entries--;
