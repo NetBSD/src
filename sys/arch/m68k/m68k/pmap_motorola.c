@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.63 2011/10/29 18:26:19 tsutsui Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.64 2011/11/03 14:39:05 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.63 2011/10/29 18:26:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.64 2011/11/03 14:39:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,7 +547,7 @@ pmap_init(void)
 	 * Initialize the pv_entry pools.
 	 */
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
-	    &pool_allocator_nointr, IPL_NONE);
+	    &pool_allocator_meta, IPL_NONE);
 
 	/*
 	 * Now that this is done, mark the pages shared with the
