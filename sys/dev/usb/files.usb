@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.115 2011/10/02 16:30:58 jmcneill Exp $
+#	$NetBSD: files.usb,v 1.116 2011/11/03 02:41:29 macallan Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -79,6 +79,8 @@ file	dev/usb/uhid.c			uhid			needs-flag
 
 # Keyboards
 defparam	UKBD_LAYOUT
+# Gdium's Fn key needs software translation
+defflag		opt_ukbd.h 	GDIUM_KEYBOARD_HACK
 device	ukbd: hid, wskbddev
 attach	ukbd at uhidbus
 file	dev/usb/ukbd.c			ukbd			needs-flag
