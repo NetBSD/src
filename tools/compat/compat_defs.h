@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.81 2011/09/05 07:38:52 jdc Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.82 2011/11/03 14:13:53 joerg Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -274,6 +274,11 @@ int flock(int, int);
 # define FPARSELN_UNESCREST	0x08
 # define FPARSELN_UNESCALL	0x0f
 char *fparseln(FILE *, size_t *, size_t *, const char [3], int);
+#endif
+
+#if !HAVE_GETLINE
+ssize_t getdelim(char **, size_t *, int, FILE *);
+ssize_t getline(char **, size_t *, FILE *);
 #endif
 
 #if !HAVE_ISSETUGID
