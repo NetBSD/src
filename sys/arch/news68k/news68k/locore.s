@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.57 2011/11/03 14:56:39 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.58 2011/11/03 14:57:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -184,11 +184,11 @@ ASENTRY_NOPROFILE(start)
 
 	/* news1200 */
 	/* XXX Are these needed?*/
-	sf	0xe1100000		| AST disable (???)
-	sf	0xe10c0000		| level2 interrupt disable (???)
-	moveb	#0x03,0xe1140002	| timer set (???)
-	moveb	#0xd0,0xe1140003	| timer set (???)
-	sf	0xe1140000		| timer interrupt disable (???)
+	sf	0xe1100000		| AST disable (?)
+	sf	0xe10c0000		| level2 interrupt disable (?)
+	moveb	#0x03,0xe1140002	| timer set (?)
+	moveb	#0xd0,0xe1140003	| timer set (?)
+	sf	0xe1140000		| timer interrupt disable (?)
 	/* XXX */
 
 	RELOC(systype,%a0)
@@ -222,11 +222,11 @@ Lnot1200:
 
 	/* news1400/1500/1600/1700 */
 	/* XXX Are these needed?*/
-	sf	0xe1280000		| AST disable (???)
-	sf	0xe1180000		| level2 interrupt disable (???)
-	st	0xe1300000		| L2 cache enable (???)
-	st	0xe1900000		| L2 cache clear (???)
-	sf	0xe1000000		| timer interrupt disable (???)
+	sf	0xe1280000		| AST disable (?)
+	sf	0xe1180000		| level2 interrupt disable (?)
+	st	0xe1300000		| L2 cache enable (?)
+	st	0xe1900000		| L2 cache clear (?)
+	sf	0xe1000000		| timer interrupt disable (?)
 	moveb	#0x36,0xe0c80000	| XXX reset FDC for PWS-1560
 	/* XXX */
 
