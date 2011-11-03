@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2011/10/11 13:53:58 joerg Exp $
+# $NetBSD: Makefile,v 1.17 2011/11/03 17:52:53 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ SUBDIR=	\
 	libLLVMInstrumentation \
 	libLLVMipa \
 	libLLVMipo \
+	libLLVMLinker \
 	libLLVMMC \
 	libLLVMMCDisassembler \
 	libLLVMMCParser \
@@ -74,7 +75,6 @@ SUBDIR+= \
 	libLLVMHello \
 	libLLVMInterpreter \
 	libLLVMJIT \
-	libLLVMLinker \
 	libLLVMMCJIT \
 	libLLVMObject \
 	libLLVMRuntimeDyld
