@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.78 2011/08/29 14:09:01 alnsn Exp $
+.\"	$NetBSD: installboot.8,v 1.79 2011/11/03 20:09:18 martin Exp $
 .\"
 .\" Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -747,8 +747,8 @@ already present:
 .Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx /boot
 .
 .Ss Nx Ns Tn /sparc64
-Install the Berkeley Fast File System primary bootstrap on to disk
-.Sq wd0 :
+Install the primary bootstrap on to disk
+.Sq sd0 :
 .Dl Ic installboot /dev/rsd0c /usr/mdec/bootblk
 .Pp
 The secondary
