@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.5 2011/09/02 22:42:27 macallan Exp $
+# $NetBSD: LOONGSON,v 1.6 2011/11/03 02:44:36 macallan Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.5 $"
+#ident 		"GDIUM-$Revision: 1.6 $"
 
 maxusers	16
 
@@ -239,6 +239,7 @@ wsmouse*	at ums? mux 0
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
+options	GDIUM_KEYBOARD_HACK	# support Fn key on Gdium
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
