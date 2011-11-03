@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.54 2011/08/27 13:23:52 bouyer Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.55 2011/11/03 18:27:07 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2050,7 +2050,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	bne	t1, t2, 1b
 	 nop
 
-	_MFC0	t0, MIPS_COP_0_TLB_HI		# restore PID.
+	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID.
 	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
 
