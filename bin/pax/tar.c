@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.67 2009/02/14 08:10:06 lukem Exp $	*/
+/*	$NetBSD: tar.c,v 1.68 2011/11/03 21:59:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.67 2009/02/14 08:10:06 lukem Exp $");
+__RCSID("$NetBSD: tar.c,v 1.68 2011/11/03 21:59:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1386,11 +1386,15 @@ tar_gnutar_X_compat(path)
 	int lineno = 0;
 	size_t len;
 
-	fp = fopen(path, "r");
-	if (fp == NULL) {
-		tty_warn(1, "cannot open %s: %s", path,
-		    strerror(errno));
-		return -1;
+	if (path[0] == '-' && path[1] == '\0')
+		fp = stdin;
+	else {
+		fp = fopen(path, "r");
+		if (fp == NULL) {
+			tty_warn(1, "cannot open %s: %s", path,
+			    strerror(errno));
+			return -1;
+		}
 	}
 
 	while ((line = fgetln(fp, &len))) {
@@ -1400,7 +1404,9 @@ tar_gnutar_X_compat(path)
 			    lineno, path);
 		}
 		if (tar_gnutar_exclude_one(line, len))
-			return (-1);
+			return -1;
 	}
-	return (0);
+	if (fp != stdin)
+		fclose(fp);
+	return 0;
 }
