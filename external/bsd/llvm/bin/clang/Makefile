@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2011/08/09 12:30:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2011/11/03 17:52:53 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -73,6 +73,7 @@ LLVM_LIBS+= \
 	MCDisassembler \
 	MCParser \
 	MC \
+	Linker \
 	TransformsUtils \
 	ipa \
 	Core \
