@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.112 2011/11/02 08:49:08 macallan Exp $        */
+/*      $NetBSD: ukbd.c,v 1.113 2011/11/03 02:41:29 macallan Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.112 2011/11/02 08:49:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.113 2011/11/03 02:41:29 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.112 2011/11/02 08:49:08 macallan Exp $");
 #include <dev/wscons/wsksymvar.h>
 
 #ifdef _KERNEL_OPT
+#include "opt_ukbd.h"
 #include "opt_ukbd_layout.h"
 #include "opt_wsdisplay_compat.h"
 #include "opt_ddb.h"
@@ -145,6 +146,7 @@ Static const struct ukbd_keycodetrans trtab_apple_iso[] = {
 	{ 0x00, 0x00 }
 };
 
+#ifdef GDIUM_KEYBOARD_HACK
 Static const struct ukbd_keycodetrans trtab_gdium_fn[] = {	
 #ifdef notyet
 		{ 58, 0 },	/* F1 -> toggle camera */
@@ -169,6 +171,7 @@ Static const struct ukbd_keycodetrans trtab_gdium_fn[] = {
 		{ 81, 78 },	/* down -> page down */
 		{ 82, 75 }	/* up -> page up */
 };
+#endif
 
 #if defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD)
 #define NN 0			/* no translation */
@@ -423,9 +426,11 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	if (qflags & UQ_APPLE_ISO)
 		sc->sc_flags |= FLAG_APPLE_FIX_ISO;
 
+#ifdef GDIUM_KEYBOARD_HACK
 	if (uha->uaa->vendor == USB_VENDOR_CYPRESS &&
 	    uha->uaa->product == USB_PRODUCT_CYPRESS_LPRDK)
 		sc->sc_flags = FLAG_GDIUM_FN;
+#endif
 
 #ifdef DIAGNOSTIC
 	aprint_normal(": %d modifier keys, %d key codes", sc->sc_nmod,
@@ -654,12 +659,14 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		else
 			sc->sc_flags &= ~FLAG_FN_PRESSED;
 	}
-	
+
+#ifdef GDIUM_KEYBOARD_HACK
 	if (sc->sc_flags & FLAG_GDIUM_FN) {
 		if (sc->sc_flags & FLAG_FN_PRESSED) {
 			ukbd_translate_keycodes(sc, ud, trtab_gdium_fn);
 		}
 	}
+#endif
 
 	if ((sc->sc_flags & FLAG_DEBOUNCE) && !(sc->sc_flags & FLAG_POLLING)) {
 		/*
@@ -758,12 +765,14 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 				if (key == ud->keycode[j])
 					goto rfound;
 			DPRINTFN(3,("ukbd_intr: relse key=0x%02x\n", key));
+#ifdef GDIUM_KEYBOARD_HACK
 			if (sc->sc_flags & FLAG_GDIUM_FN) {
 				if (key == 0x82) {
 					sc->sc_flags &= ~FLAG_FN_PRESSED;
 					goto rfound;
 				}
 			}
+#endif
 			ADDKEY(key | RELEASE);
 		rfound:
 			;
@@ -778,12 +787,14 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 				if (key == sc->sc_odata.keycode[j])
 					goto pfound;
 			DPRINTFN(2,("ukbd_intr: press key=0x%02x\n", key));
+#ifdef GDIUM_KEYBOARD_HACK
 			if (sc->sc_flags & FLAG_GDIUM_FN) {
 				if (key == 0x82) {
 					sc->sc_flags |= FLAG_FN_PRESSED;
 					goto pfound;
 				}
 			}
+#endif
 			ADDKEY(key | PRESS);
 		pfound:
 			;
