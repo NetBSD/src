@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.159 2011/03/06 14:51:21 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.160 2011/11/03 15:13:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1364,11 +1364,7 @@ ENTRY_NOPROFILE(_delay)
 	 * operations and that the loop will run from a single cache
 	 * half-line.
 	 */
-#ifdef __ELF__
 	.align	8
-#else
-	.align	3
-#endif
 L_delay:
 	subl	%d1,%d0
 	jgt	L_delay
