@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.26 2011/08/14 20:25:01 apb Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.27 2011/11/03 14:13:53 joerg Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -266,6 +266,9 @@
 
 /* Define if you have the `futimes' function. */
 #undef HAVE_FUTIMES
+
+/* Define if you have the `getline' function. */
+#undef HAVE_GETLINE
 
 /* Define if you have the `getopt' function. */
 #undef HAVE_GETOPT
