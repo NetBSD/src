@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.35 2011/08/31 13:32:37 joerg Exp $	*/
+/*	$NetBSD: installboot.c,v 1.36 2011/11/03 20:46:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.35 2011/08/31 13:32:37 joerg Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.36 2011/11/03 20:46:41 martin Exp $");
 #endif	/* !__lint */
 
 #include <sys/ioctl.h>
@@ -488,7 +488,7 @@ machine_usage(void)
 #ifdef TIOCGWINSZ
 	struct winsize win;
 
-	if (ioctl(fileno(stderr), TIOCGWINSZ, &win) == 0)
+	if (ioctl(fileno(stderr), TIOCGWINSZ, &win) == 0 && win.ws_col > 0)
 		wincol = win.ws_col;
 #endif
 
@@ -533,6 +533,7 @@ getfstype(ib_params *param, const char *fstype, const char *provider)
 static void
 fstype_usage(void)
 {
+#ifndef NO_STAGE2
 	const char *prefix;
 	int	i;
 
@@ -546,6 +547,7 @@ fstype_usage(void)
 		prefix=", ";
 	}
 	fputs("\n", stderr);
+#endif
 }
 
 static void
