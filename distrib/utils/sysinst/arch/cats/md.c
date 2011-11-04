@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 2011/04/04 08:30:20 mbalmer Exp $ */
+/*	$NetBSD: md.c,v 1.24 2011/11/04 11:27:01 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -199,4 +199,10 @@ md_update(void)
 {
 	md_post_newfs();
 	return 1;
+}
+
+int
+md_pre_mount()
+{
+	return 0;
 }

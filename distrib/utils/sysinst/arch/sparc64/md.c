@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.27 2011/04/04 08:30:44 mbalmer Exp $	*/
+/*	$NetBSD: md.c,v 1.28 2011/11/04 11:27:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,6 +53,7 @@
 #include "menu_defs.h"
 
 static void install_bootblocks(void);
+static void install_ofwboot(void);
 
 void
 md_init(void)
@@ -145,6 +146,7 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
+	install_bootblocks();
 	return 0;
 }
 
@@ -156,7 +158,7 @@ md_post_disklabel(void)
 int
 md_post_newfs(void)
 {
-	install_bootblocks();
+	install_ofwboot();
 	return 0;
 }
 
@@ -192,8 +194,26 @@ md_update(void)
 static void
 install_bootblocks(void)
 {
-	/* Install boot blocks now that we have a full system ... */
+	/* Install boot blocks before mounting the target disk */
 	msg_display(MSG_dobootblks, diskdev);
 	run_program(RUN_DISPLAY, "/sbin/disklabel -W %s", diskdev);
-	run_program(RUN_DISPLAY, "/usr/mdec/binstall ffs %s", targetroot_mnt);
+	run_program(RUN_DISPLAY, "/usr/sbin/installboot /dev/r%sc"
+	    " /usr/mdec/bootblk", diskdev);
+}
+
+/* install/update secondary bootstrap */
+static void
+install_ofwboot(void)
+{
+	/* copy secondary bootstrap now that the target is mounted */
+	msg_display(MSG_doofwboot, targetroot_mnt);
+	run_program(RUN_DISPLAY, "/bin/cp -p /usr/mdec/ofwboot %s",
+	    targetroot_mnt);
+}
+
+int
+md_pre_mount()
+{
+	install_bootblocks();
+	return 0;
 }

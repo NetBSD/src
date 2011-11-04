@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.116 2011/08/21 15:06:41 phx Exp $ */
+/*	$NetBSD: disks.c,v 1.117 2011/11/04 11:27:00 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -628,6 +628,8 @@ make_filesystems(void)
 		if (error != 0)
 			return error;
 
+		md_pre_mount();
+
 		if (lbl->pi_flags & PIF_MOUNT && mnt_opts != NULL) {
 			make_target_dir(lbl->pi_mount);
 			error = target_mount(mnt_opts, diskdev, ptn,
@@ -918,6 +920,8 @@ mount_root(void)
 	error = fsck_preen(diskdev, rootpart, "ffs");
 	if (error != 0)
 		return error;
+
+	md_pre_mount();
 
 	/* Mount /dev/<diskdev>a on target's "".
 	 * If we pass "" as mount-on, Prefixing will DTRT.
