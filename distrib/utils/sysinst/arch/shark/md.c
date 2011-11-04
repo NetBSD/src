@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26 2011/04/04 08:30:42 mbalmer Exp $	*/
+/*	$NetBSD: md.c,v 1.27 2011/11/04 11:27:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -226,3 +226,9 @@ clear_mbr(const char *disk, char *diskpath, size_t diskpathlen)
 	return 0;
 }
 
+
+int
+md_pre_mount()
+{
+	return 0;
+}

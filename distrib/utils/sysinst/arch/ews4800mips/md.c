@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 2011/04/04 08:30:27 mbalmer Exp $	*/
+/*	$NetBSD: md.c,v 1.10 2011/11/04 11:27:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -224,4 +224,10 @@ int
 ews4800mips_sysvbfs_size(void)
 {
 	return (8 * 1024 * 1024) / 512;	/* 8MB */
+}
+
+int
+md_pre_mount()
+{
+	return 0;
 }
