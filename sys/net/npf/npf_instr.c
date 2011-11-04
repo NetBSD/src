@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.5 2011/01/18 20:33:45 rmind Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.6 2011/11/04 01:00:27 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.5 2011/01/18 20:33:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.6 2011/11/04 01:00:27 zoltan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,11 +93,10 @@ again:
  * npf_match_ip4table: match IPv4 address against NPF table.
  */
 int
-npf_match_ip4table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
+npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
     const int sd, const u_int tid)
 {
-	struct ip *ip = &npc->npc_ip.v4;
-	in_addr_t ip4addr;
+	npf_addr_t *addr;
 
 	if (!npf_iscached(npc, NPC_IP46)) {
 		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
@@ -105,21 +104,20 @@ npf_match_ip4table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 		}
 		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
-	ip4addr = sd ? ip->ip_src.s_addr : ip->ip_dst.s_addr;
+	addr = sd ? npc->npc_srcip : npc->npc_dstip;
 
 	/* Match address against NPF table. */
-	return npf_table_match_v4addr(tid, ip4addr);
+	return npf_table_match_addr(tid, addr);
 }
 
 /*
- * npf_match_ip4mask: match IPv4 address against netaddr/subnet.
+ * npf_match_ipmask: match an address against netaddr/mask.
  */
 int
-npf_match_ip4mask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
-    const int sd, in_addr_t netaddr, in_addr_t subnet)
+npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
+    const int sd, const npf_addr_t *netaddr, npf_netmask_t omask)
 {
-	struct ip *ip = &npc->npc_ip.v4;
-	in_addr_t ip4addr;
+	npf_addr_t *addr1, addr2;
 
 	if (!npf_iscached(npc, NPC_IP46)) {
 		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
@@ -127,9 +125,15 @@ npf_match_ip4mask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 		}
 		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
-	ip4addr = sd ? ip->ip_src.s_addr : ip->ip_dst.s_addr;
+	if (omask == 0)
+		return 0;
 
-	return (ip4addr & subnet) == netaddr ? 0 : -1;
+	addr1 = sd ? npc->npc_srcip : npc->npc_dstip;
+	npf_calculate_masked_addr(&addr2, netaddr, omask);
+	if (memcmp(addr1, &addr2, npc->npc_ipsz)) {
+		return -1;
+	}
+	return 0;
 }
 
 /*
