@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parser.c,v 1.6 2011/02/02 02:20:25 rmind Exp $	*/
+/*	$NetBSD: npf_parser.c,v 1.7 2011/11/04 01:00:28 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_parser.c,v 1.6 2011/02/02 02:20:25 rmind Exp $");
+__RCSID("$NetBSD: npf_parser.c,v 1.7 2011/11/04 01:00:28 zoltan Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -161,7 +161,9 @@ npfctl_val_interface(var_t *v, char *p, bool reqaddr)
 	char *iface = npfctl_val_single(v, p);
 	u_int if_idx;
 
-	if (iface == NULL || npfctl_getif(iface, &if_idx, reqaddr) == NULL) {
+	if (iface == NULL ||
+		((npfctl_getif(iface, &if_idx, reqaddr, AF_INET) == NULL) &&
+		 (npfctl_getif(iface, &if_idx, reqaddr, AF_INET6) == NULL))) {
 		errx(EXIT_FAILURE, "invalid interface '%s'", iface);
 	}
 	return if_idx;
@@ -269,6 +271,7 @@ npfctl_parserule(char *buf, nl_rule_t *parent)
 	u_int if_idx = 0;
 	int ret, attr = 0;
 	nl_rule_t *rl;
+	sa_family_t addrfamily = AF_UNSPEC;
 
 	DPRINTF(("rule\t|%s|\n", buf));
 
@@ -324,10 +327,11 @@ npfctl_parserule(char *buf, nl_rule_t *parent)
 		PARSE_NEXT_TOKEN();
 	}
 
-	/* inet, inet6 (TODO) */
 	if (strcmp(p, "inet") == 0) {
+		addrfamily = AF_INET;
 		PARSE_NEXT_TOKEN();
 	} else if (strcmp(p, "inet6") == 0) {
+		addrfamily = AF_INET6;
 		PARSE_NEXT_TOKEN();
 	}
 
@@ -361,6 +365,8 @@ npfctl_parserule(char *buf, nl_rule_t *parent)
 	/* from <addr> port <port | range> */
 	if (strcmp(p, "from") == 0) {
 		PARSE_NEXT_TOKEN();
+		if (addrfamily == AF_UNSPEC)
+			addrfamily = npfctl_get_addrfamily(p);
 		from_v = npfctl_parsevalue(p);
 
 		PARSE_NEXT_TOKEN_NOCHECK();
@@ -375,6 +381,8 @@ npfctl_parserule(char *buf, nl_rule_t *parent)
 	/* to <addr> port <port | range> */
 	if (p && strcmp(p, "to") == 0) {
 		PARSE_NEXT_TOKEN();
+		if (addrfamily == AF_UNSPEC)
+			addrfamily = npfctl_get_addrfamily(p);
 		to_v = npfctl_parsevalue(p);
 
 		PARSE_NEXT_TOKEN_NOCHECK();
@@ -454,7 +462,7 @@ last:
 	 */
 	rl = npf_rule_create(NULL, attr, if_idx);
 	npfctl_rule_ncode(rl, proto, tcp_flags, icmp_type, icmp_code,
-	    from_v, fports, to_v, tports);
+	    from_v, addrfamily, fports, to_v, tports);
 	if (rproc && npf_rule_setproc(npf_conf, rl, rproc) != 0) {
 		errx(EXIT_FAILURE, "procedure '%s' is not defined", rproc);
 	}
@@ -574,18 +582,15 @@ npfctl_parsetable(char *buf)
 		return PARSE_ERR();
 	}
 	PARSE_NEXT_TOKEN_NOCHECK();
-	if (p == NULL || *p != '"') {
+	if (p == NULL) {
 		return PARSE_ERR();
 	}
-	if (strcmp(p, "hash")) {
+	if (strcmp(p, "hash") == 0) {
 		type = NPF_TABLE_HASH;
-	} else if (strcmp(p, "tree")) {
+	} else if (strcmp(p, "tree") == 0) {
 		type = NPF_TABLE_RBTREE;
 	} else {
 		errx(EXIT_FAILURE, "invalid table type '%s'", p);
-	}
-	if ((p = strchr(++p, '"')) == NULL) {
-		return PARSE_ERR();
 	}
 	*p = '\0';
 
@@ -631,8 +636,8 @@ npfctl_parse_nat(char *buf)
 	var_t *ifvar, *from_v, *to_v, *raddr_v;
 	var_t *tports = NULL, *rport_v = NULL;
 	char *p, *sptr, *raddr_s, *rport_s;
-	in_addr_t raddr4, _dummy;
 	npf_addr_t raddr;
+	npf_netmask_t dummy;
 	bool binat, rdr;
 	nl_nat_t *nat;
 	u_int if_idx;
@@ -702,8 +707,7 @@ npfctl_parse_nat(char *buf)
 	PARSE_NEXT_TOKEN();
 	raddr_v = npfctl_parsevalue(p);
 	raddr_s = npfctl_val_single(raddr_v, p);
-	npfctl_parse_cidr(raddr_s, &raddr4, &_dummy);
-	memcpy(&raddr, &raddr4, sizeof(struct in_addr)); /* XXX IPv6 */
+	npfctl_parse_cidr(raddr_s, npfctl_get_addrfamily(raddr_s), &raddr, &dummy);
 
 	if (rdr) {
 		PARSE_NEXT_TOKEN();
@@ -739,7 +743,7 @@ npfctl_parse_nat(char *buf)
 		nat = npf_nat_create(NPF_NATIN, NPF_NAT_PORTS,
 		    if_idx, &raddr, AF_INET, rport);
 	}
-	npfctl_rule_ncode(nat, NULL, NULL, -1, -1, from_v, NULL, to_v, tports);
+	npfctl_rule_ncode(nat, NULL, NULL, -1, -1, from_v, AF_INET, NULL, to_v, tports);
 	(void)npf_nat_insert(npf_conf, nat, NPF_PRI_NEXT);
 
 	/*
@@ -751,15 +755,13 @@ npfctl_parse_nat(char *buf)
 	 */
 	if (binat) {
 		char *taddr_s = npfctl_val_single(from_v, NULL);
-		in_addr_t taddr4;
 		npf_addr_t taddr;
 		nl_nat_t *bn;
 
-		npfctl_parse_cidr(taddr_s, &taddr4, &_dummy);
-		memcpy(&taddr, &taddr4, sizeof(struct in_addr)); /* XXX IPv6 */
+		npfctl_parse_cidr(taddr_s, npfctl_get_addrfamily(taddr_s), &taddr, &dummy);
 		bn = npf_nat_create(NPF_NATIN, 0, if_idx, &taddr, AF_INET, 0);
 		npfctl_rule_ncode(bn, NULL, NULL, -1, -1,
-		    to_v, NULL, raddr_v, NULL);
+		    to_v, AF_INET, NULL, raddr_v, NULL);
 		(void)npf_nat_insert(npf_conf, bn, NPF_PRI_NEXT);
 	}
 	return 0;

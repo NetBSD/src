@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.6 2011/08/31 13:32:38 joerg Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.7 2011/11/04 01:00:28 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.6 2011/08/31 13:32:38 joerg Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.7 2011/11/04 01:00:28 zoltan Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -252,7 +252,8 @@ npfctl(int action, int argc, char **argv)
 			tbl.nct_action = 0;
 			arg = argv[3];
 		}
-		if (!npfctl_parse_v4mask(arg,
+		if (!npfctl_parse_cidr(arg,
+		    npfctl_get_addrfamily(arg),
 		    &tbl.nct_addr, &tbl.nct_mask)) {
 			errx(EXIT_FAILURE, "invalid CIDR '%s'", arg);
 		}
@@ -276,7 +277,7 @@ npfctl(int action, int argc, char **argv)
 		}
 		break;
 	}
-	if (ret == -1) {
+	if (ret) {
 		err(EXIT_FAILURE, "ioctl");
 	}
 	close(fd);
