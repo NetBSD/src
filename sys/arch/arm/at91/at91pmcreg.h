@@ -1,4 +1,4 @@
-/*	$Id: at91pmcreg.h,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
+/*	$Id: at91pmcreg.h,v 1.3 2011/11/04 17:20:54 aymeric Exp $	*/
 
 #ifndef	_AT91PMCREG_H_
 #define	_AT91PMCREG_H_	1
@@ -24,12 +24,15 @@
 #define	PMC_IDR		0x64U		/* 64: Interrupt Disable Reg	*/
 #define	PMC_SR		0x68U		/* 68: Status Register		*/
 #define	PMC_IMR		0x6CU		/* 6C: Interrupt Mask Reg	*/
+#define	PMC_PLLICPR	0x80U		/* 80: PLL Charge Pump Current Reg */
 
 /* System Clock Enable Register bits: */
 #define	PMC_SCSR_PCK3	0x0800U
 #define	PMC_SCSR_PCK2	0x0400U
 #define	PMC_SCSR_PCK1	0x0200U
 #define	PMC_SCSR_PCK0	0x0100U
+#define PMC_SCSR_SAM_UDP 0x0080U
+#define PMC_SCSR_SAM_UHP 0x0040U
 #define	PMC_SCSR_UHP	0x0010U		/* 1 = Enable USB Host Port clks */
 #define	PMC_SCSR_MCKUDP	0x0004U		/* 1 = enable Master Clock dis	*/
 #define	PMC_SCSR_UDP	0x0002U		/* 1 = enable USB Device Port clk */
@@ -112,6 +115,10 @@
 #define	PMC_SR_LOCKB		0x0004U
 #define	PMC_SR_LOCKA		0x0002U
 #define	PMC_SR_MOSCS		0x0001U
+
+/* PLL Charge Pump Current Reg bits: */
+#define	PMC_PLLICPR_ICPPLLA	0x00000001U
+#define	PMC_PLLICPR_ICPPLLB	0x00010000U
 
 #define	PMCREG(offset)		*((volatile uint32_t*)(0xfffffc00UL + (offset)))
 

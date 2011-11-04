@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.11 2011/07/01 19:31:16 dyoung Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.12 2011/11/04 17:20:54 aymeric Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.11 2011/07/01 19:31:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.12 2011/11/04 17:20:54 aymeric Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -149,7 +149,8 @@ static int	at91bus_submatch(device_t, cfdata_t,
 				 const int *, void *);
 
 
-CFATTACH_DECL(at91bus, sizeof(struct at91bus_softc), at91bus_match, at91bus_attach, NULL, NULL);
+CFATTACH_DECL_NEW(at91bus, sizeof(struct at91bus_softc),
+	at91bus_match, at91bus_attach, NULL, NULL);
 
 struct at91bus_clocks at91bus_clocks = {0};
 struct at91bus_softc *at91bus_sc = NULL;
@@ -158,6 +159,10 @@ struct at91bus_softc *at91bus_sc = NULL;
 
 #ifdef	AT91RM9200
 #include <arm/at91/at91rm9200busvar.h>
+#endif
+
+#ifdef	AT91SAM9260
+#include <arm/at91/at91sam9260busvar.h>
 #endif
 
 #ifdef	AT91SAM9261
@@ -179,6 +184,9 @@ static const struct {
 	{
 		DBGU_CIDR_AT91SAM9260,
 		"AT91SAM9260"
+#ifdef	AT91SAM9260
+		, &at91sam9260bus
+#endif
 	},
 	{
 		DBGU_CIDR_AT91SAM9260,
@@ -188,7 +196,7 @@ static const struct {
 #endif
 	},
 	{
-		DBGU_CIDR_AT91SAM9260,
+		DBGU_CIDR_AT91SAM9263,
 		"AT91SAM9263"
 	},
 	{
@@ -592,7 +600,7 @@ at91bus_found(device_t self, bus_addr_t addr, int pid)
 	locs[AT91BUSCF_ADDR] = addr;
 	locs[AT91BUSCF_PID]  = pid;
 
-	sc = (struct at91bus_softc*) self;
+	sc = device_private(self);
 	sa.sa_iot = sc->sc_iot;
 	sa.sa_dmat = sc->sc_dmat;
 	sa.sa_addr = addr;
@@ -611,7 +619,7 @@ at91bus_attach(device_t parent, device_t self, void *aux)
 	if (at91_chip_ndx < 0)
 		panic("%s: at91bus_init() has not been called!", __FUNCTION__);
 
-	sc = (struct at91bus_softc*) self;
+	sc = device_private(self);
 
         /* initialize bus space and bus dma things... */
 	sc->sc_iot = &at91_bs_tag;
