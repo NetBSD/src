@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.154 2011/06/30 20:09:15 wiz Exp $	*/
+/*	$NetBSD: defs.h,v 1.155 2011/11/04 11:27:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -326,6 +326,7 @@ int	md_make_bsd_partitions(void);
 int	md_check_partitions(void);
 int	md_pre_disklabel(void);
 int	md_post_disklabel(void);
+int	md_pre_mount(void);
 int	md_post_newfs(void);
 int	md_post_extract(void);
 void	md_cleanup_install(void);

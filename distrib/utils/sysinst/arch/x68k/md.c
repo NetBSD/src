@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.40 2011/04/04 08:30:45 mbalmer Exp $ */
+/*	$NetBSD: md.c,v 1.41 2011/11/04 11:27:05 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -327,3 +327,8 @@ md_newdisk(void)
 	    "/usr/mdec/newdisk -v %s", diskdev);
 }
 
+
+int
+md_pre_mount()
+{
+}

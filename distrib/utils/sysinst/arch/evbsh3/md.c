@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2011/04/04 08:30:27 mbalmer Exp $	*/
+/*	$NetBSD: md.c,v 1.4 2011/11/04 11:27:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -183,6 +183,12 @@ md_init_set_status(int flags)
 
 int
 md_post_extract(void)
+{
+	return 0;
+}
+
+int
+md_pre_mount()
 {
 	return 0;
 }

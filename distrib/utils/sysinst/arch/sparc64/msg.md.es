@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.8 2011/04/04 08:30:44 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.9 2011/11/04 11:27:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,6 +46,10 @@ message md_may_remove_boot_medium
 
 message dobootblks
 {Instalando bloques de arranque en %s....
+}
+
+message doofwboot
+{Instalando /ofwboot en %s....
 }
 
 message set_kernel_1

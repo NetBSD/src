@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.30 2011/04/04 08:30:28 mbalmer Exp $ */
+/*	$NetBSD: md.c,v 1.31 2011/11/04 11:27:02 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -244,4 +244,10 @@ hp300_boot_size(void)
 		i = dlcylsize * sectorsize * 2;
 
 	return i;
+}
+
+int
+md_pre_mount()
+{
+	return 0;
 }
