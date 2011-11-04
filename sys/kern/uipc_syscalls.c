@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.147 2011/09/21 18:10:25 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.148 2011/11/04 02:13:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.147 2011/09/21 18:10:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.148 2011/11/04 02:13:08 christos Exp $");
 
 #include "opt_pipe.h"
 
@@ -400,8 +400,32 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 	return (error);
 }
 
+static int
+makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
+    int domain, int proto, struct socket *soo)
+{
+	int error;
+	struct socket *so;
+	int fnonblock = (flags & SOCK_NONBLOCK) ? FNONBLOCK : 0; 
+
+	if ((error = socreate(domain, &so, type, proto, l, soo)) != 0)
+		return error;
+
+	if ((error = fd_allocfile(fp, fd)) != 0) {
+		soclose(so);
+		return error;
+	}
+	fd_set_exclose(l, *fd, (flags & SOCK_CLOEXEC) != 0);
+	(*fp)->f_flag = FREAD|FWRITE|fnonblock;
+	(*fp)->f_type = DTYPE_SOCKET;
+	(*fp)->f_ops = &socketops;
+	(*fp)->f_data = so;
+	return 0;
+}
+
 int
-sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap, register_t *retval)
+sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)		domain;
@@ -415,57 +439,46 @@ sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap, register_t 
 	proc_t		*p;
 	int		flags = SCARG(uap, type) & SOCK_FLAGS_MASK;
 	int		type = SCARG(uap, type) & ~SOCK_FLAGS_MASK;
-	int		fnonblock = (flags & SOCK_NONBLOCK) ? FNONBLOCK : 0; 
+	int		domain = SCARG(uap, domain);
+	int		proto = SCARG(uap, protocol);
 
 	p = curproc;
-	error = socreate(SCARG(uap, domain), &so1, type,
-	    SCARG(uap, protocol), l, NULL);
+
+	error = makesocket(l, &fp1, &fd, flags, type, domain, proto, NULL);
 	if (error)
-		return (error);
-	error = socreate(SCARG(uap, domain), &so2, type,
-	    SCARG(uap, protocol), l, so1);
-	if (error)
-		goto free1;
-	if ((error = fd_allocfile(&fp1, &fd)) != 0)
-		goto free2;
-	fd_set_exclose(l, fd, (flags & SOCK_CLOEXEC) != 0);
+		return error;
+	so1 = fp1->f_data;
 	sv[0] = fd;
-	fp1->f_flag = FREAD|FWRITE|fnonblock;
-	fp1->f_type = DTYPE_SOCKET;
-	fp1->f_ops = &socketops;
-	fp1->f_data = so1;
-	if ((error = fd_allocfile(&fp2, &fd)) != 0)
-		goto free3;
-	fd_set_exclose(l, fd, (flags & SOCK_CLOEXEC) != 0);
-	fp2->f_flag = FREAD|FWRITE|fnonblock;
-	fp2->f_type = DTYPE_SOCKET;
-	fp2->f_ops = &socketops;
-	fp2->f_data = so2;
+
+	error = makesocket(l, &fp2, &fd, flags, type, domain, proto, so1);
+	if (error)
+		goto out;
+	so2 = fp2->f_data;
 	sv[1] = fd;
+
 	solock(so1);
 	error = soconnect2(so1, so2);
-	if (error == 0 && SCARG(uap, type) == SOCK_DGRAM) {
+	if (error == 0 && type == SOCK_DGRAM) {
 		/*
 		 * Datagram socket connection is asymmetric.
 		 */
 		error = soconnect2(so2, so1);
 	}
 	sounlock(so1);
+
 	if (error == 0)
-		error = copyout(sv, SCARG(uap, rsv), 2 * sizeof(int));
+		error = copyout(sv, SCARG(uap, rsv), sizeof(sv));
 	if (error == 0) {
 		fd_affix(p, fp2, sv[1]);
 		fd_affix(p, fp1, sv[0]);
-		return (0);
+		return 0;
 	}
 	fd_abort(p, fp2, sv[1]);
- free3:
-	fd_abort(p, fp1, sv[0]);
- free2:
 	(void)soclose(so2);
- free1:
+out:
+	fd_abort(p, fp1, sv[0]);
 	(void)soclose(so1);
-	return (error);
+	return error;
 }
 
 int
