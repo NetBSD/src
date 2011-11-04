@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.6 2011/01/18 20:33:45 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.7 2011/11/04 01:00:27 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.6 2011/01/18 20:33:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.7 2011/11/04 01:00:27 zoltan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -119,7 +119,8 @@ npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 	struct ip *ip = &npc->npc_ip.v4;
 	in_port_t dport;
 
-	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_LAYER4));
+	KASSERT(npf_iscached(npc, NPC_IP46));
+	KASSERT(npf_iscached(npc, NPC_LAYER4));
 
 	/* Check for low TTL. */
 	if (ip->ip_ttl > TR_MAX_TTL) {
@@ -247,10 +248,10 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, void *keyptr)
 	KASSERT(npf_iscached(npc, NPC_ICMP));
 
 	/* Advance to ICMP header. */
-	struct ip *ip = &npc->npc_ip.v4;
 	void *n_ptr = nbuf_dataptr(nbuf);
+	const size_t hlen = npf_cache_hlen(npc, nbuf);
 
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, ip->ip_hl << 2)) == NULL) {
+	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, hlen)) == NULL) {
 		return false;
 	}
 
@@ -297,7 +298,8 @@ npfa_icmp_natin(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 		return false;
 	}
 	/* XXX: Restore inversion (inefficient). */
-	KASSERT(npf_iscached(&enpc, NPC_IP46 | NPC_LAYER4));
+	KASSERT(npf_iscached(&enpc, NPC_IP46));
+	KASSERT(npf_iscached(&enpc, NPC_LAYER4));
 	npfa_srcdst_invert(&enpc);
 
 	/*
@@ -306,7 +308,7 @@ npfa_icmp_natin(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 	 * embedded packet changes, while data is not rewritten in the cache.
 	 */
 	const int proto = npf_cache_ipproto(&enpc);
-	const struct ip * const ip = &npc->npc_ip.v4, *eip = &enpc.npc_ip.v4;
+	const struct ip *eip = &enpc.npc_ip.v4;
 	const struct icmp * const ic = &npc->npc_l4.icmp;
 	uint16_t cksum = ic->icmp_cksum, ecksum = eip->ip_sum, l4cksum;
 	npf_nat_t *nt = ntptr;
@@ -331,7 +333,7 @@ npfa_icmp_natin(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 	 * to the embedded IP header after ICMP header.
 	 */
 	void *n_ptr = nbuf_dataptr(nbuf), *cnbuf = nbuf, *cnptr = n_ptr;
-	u_int offby = (ip->ip_hl << 2) + offsetof(struct icmp, icmp_ip);
+	u_int offby = npf_cache_hlen(npc, nbuf) + offsetof(struct icmp, icmp_ip);
 
 	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL) {
 		return false;
@@ -365,7 +367,7 @@ npfa_icmp_natin(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 	}
 	cksum = npf_fixup16_cksum(cksum, ecksum, eip->ip_sum);
 
-	offby = (ip->ip_hl << 2) + offsetof(struct icmp, icmp_cksum);
+	offby = npf_cache_hlen(npc, nbuf) + offsetof(struct icmp, icmp_cksum);
 	if (nbuf_advstore(&cnbuf, &cnptr, offby, sizeof(uint16_t), &cksum)) {
 		return false;
 	}

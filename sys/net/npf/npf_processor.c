@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.4 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.5 2011/11/04 01:00:27 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.4 2010/12/18 01:07:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.5 2011/11/04 01:00:27 zoltan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -146,6 +146,8 @@ npf_ncode_process(npf_cache_t *npc, const void *ncode,
 	uint32_t	regs[NPF_NREGS];
 	/* Local, state variables. */
 	uint32_t d, i, n;
+	npf_addr_t addr;
+	uint32_t mask;
 	u_int lcount;
 	int cmpval;
 
@@ -284,13 +286,20 @@ cisc_like:
 	case NPF_OPCODE_IP4MASK:
 		/* Source/destination, network address, subnet mask. */
 		i_ptr = nc_fetch_word(i_ptr, &d);
-		i_ptr = nc_fetch_double(i_ptr, &n, &i);
-		cmpval = npf_match_ip4mask(npc, nbuf, n_ptr, d, n, i);
+		i_ptr = nc_fetch_double(i_ptr, &addr.s6_addr32[0], &mask);
+		cmpval = npf_match_ipmask(npc, nbuf, n_ptr, d, &addr, (npf_netmask_t)mask);
 		break;
-	case NPF_OPCODE_IP4TABLE:
+	case NPF_OPCODE_IP6MASK:
+		i_ptr = nc_fetch_word(i_ptr, &d);
+		i_ptr = nc_fetch_double(i_ptr, &addr.s6_addr32[0], &addr.s6_addr32[1]);
+		i_ptr = nc_fetch_double(i_ptr, &addr.s6_addr32[2], &addr.s6_addr32[3]);
+		i_ptr = nc_fetch_word(i_ptr, &mask);
+		cmpval = npf_match_ipmask(npc, nbuf, n_ptr, d, &addr, (npf_netmask_t)mask);
+		break;
+	case NPF_OPCODE_TABLE:
 		/* Source/destination, NPF table ID. */
 		i_ptr = nc_fetch_double(i_ptr, &n, &i);
-		cmpval = npf_match_ip4table(npc, nbuf, n_ptr, n, i);
+		cmpval = npf_match_table(npc, nbuf, n_ptr, n, i);
 		break;
 	case NPF_OPCODE_TCP_PORTS:
 		/* Source/destination, port range. */
@@ -441,7 +450,10 @@ jmp_check:
 	case NPF_OPCODE_IP4MASK:
 		error = nc_ptr_check(&iptr, nc, sz, 3, NULL, 0);
 		break;
-	case NPF_OPCODE_IP4TABLE:
+	case NPF_OPCODE_IP6MASK:
+		error = nc_ptr_check(&iptr, nc, sz, 6, NULL, 0);
+		break;
+	case NPF_OPCODE_TABLE:
 		error = nc_ptr_check(&iptr, nc, sz, 2, NULL, 0);
 		break;
 	case NPF_OPCODE_TCP_PORTS:

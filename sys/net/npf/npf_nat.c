@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.6 2011/02/02 02:20:25 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.7 2011/11/04 01:00:27 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.6 2011/02/02 02:20:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.7 2011/11/04 01:00:27 zoltan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -419,7 +419,8 @@ npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np)
 	const int proto = npf_cache_ipproto(npc);
 	npf_nat_t *nt;
 
-	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_LAYER4));
+	KASSERT(npf_iscached(npc, NPC_IP46));
+	KASSERT(npf_iscached(npc, NPC_LAYER4));
 
 	/* New NAT association. */
 	nt = pool_cache_get(nat_cache, PR_NOWAIT);
@@ -531,7 +532,7 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
 	switch (npf_cache_ipproto(npc)) {
 	case IPPROTO_TCP:
 	case IPPROTO_UDP:
-		KASSERT(npf_iscached(npc, NPC_TCP | NPC_UDP));
+		KASSERT(npf_iscached(npc, NPC_TCP) || npf_iscached(npc, NPC_UDP));
 		/* Rewrite source/destination port. */
 		if (!npf_rwrport(npc, nbuf, n_ptr, di, port)) {
 			return EINVAL;

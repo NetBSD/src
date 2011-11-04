@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.8 2011/02/02 23:01:34 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.9 2011/11/04 01:00:27 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -55,8 +55,11 @@
  * Public declarations and definitions.
  */
 
-/* Storage of address (both for IPv4 and IPv6). */
+/* Storage of address (both for IPv4 and IPv6) and netmask */
 typedef struct in6_addr		npf_addr_t;
+typedef uint_fast8_t		npf_netmask_t;
+
+#define	NPF_NO_NETMASK		(npf_netmask_t)~0
 
 #if defined(_KERNEL) || defined(_NPF_TESTING)
 
@@ -80,7 +83,7 @@ typedef struct npf_hook		npf_hook_t;
 
 #define	NPC_IP4		0x01	/* Indicates fetched IPv4 header. */
 #define	NPC_IP6		0x02	/* Indicates IPv6 header. */
-#define	NPC_IPFRAG	0x04	/* IPv4 fragment. */
+#define	NPC_IPFRAG	0x04	/* IPv4/IPv6 fragment. */
 #define	NPC_LAYER4	0x08	/* Layer 4 has been fetched. */
 
 #define	NPC_TCP		0x10	/* TCP header. */
@@ -98,6 +101,8 @@ typedef struct {
 	npf_addr_t *		npc_dstip;
 	/* Size (v4 or v6) of IP addresses. */
 	int			npc_ipsz;
+	size_t			npc_hlen;
+	int			npc_next_proto;
 	/* IPv4, IPv6. */
 	union {
 		struct ip	v4;
@@ -111,6 +116,71 @@ typedef struct {
 	} npc_l4;
 } npf_cache_t;
 
+/* Max length is 32 for IPv4 and 128 for IPv6 */
+static inline void
+npf_generate_mask(npf_addr_t *dst, const npf_netmask_t omask)
+{
+	uint_fast8_t length = omask;
+
+	KASSERT(length <= 128);
+	memset(dst, 0, sizeof(npf_addr_t));
+	for (int i = 0; i < 4; i++) {
+		if (length >= 32) {
+			dst->s6_addr32[i] = htonl(0xffffffff);
+			length -= 32;
+		} else {
+			dst->s6_addr32[i] = htonl(0xffffffff << (32 - length));
+			length = 0;
+		}  
+	}
+}
+
+static inline void
+npf_calculate_masked_addr(npf_addr_t *dst, const npf_addr_t *src, const npf_netmask_t omask)
+{
+	npf_addr_t mask;
+
+	npf_generate_mask(&mask, omask);
+	for (int i = 0; i < 4; i++) {
+		dst->s6_addr32[i] =
+			src->s6_addr32[i] & mask.s6_addr32[i];
+	}
+}
+
+/*
+ * compare two addresses, either v4 or v6
+ * if the mask is NULL, ignore it
+ */
+static inline int
+npf_compare_cidr(const npf_addr_t *addr1, const npf_netmask_t mask1,
+		 const npf_addr_t *addr2, const npf_netmask_t mask2)
+{
+	npf_addr_t realmask1, realmask2;
+
+	if (mask1 != NPF_NO_NETMASK) {
+		npf_generate_mask(&realmask1, mask1);
+	}
+	if (mask2 != NPF_NO_NETMASK) {
+		npf_generate_mask(&realmask2, mask2);
+	}
+	for (int i = 0; i < 4; i++) {
+		const uint32_t x = mask1 != NPF_NO_NETMASK ?
+				addr1->s6_addr32[i] & realmask1.s6_addr32[i] : 
+				addr1->s6_addr32[i];
+		const uint32_t y = mask2 != NPF_NO_NETMASK ?
+				addr2->s6_addr32[i] & realmask2.s6_addr32[i] :
+				addr2->s6_addr32[i];
+		if (x < y) {
+			return -1;
+		}
+		if (x > y) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static inline bool
 npf_iscached(const npf_cache_t *npc, const int inf)
 {
@@ -121,10 +191,15 @@ npf_iscached(const npf_cache_t *npc, const int inf)
 static inline int
 npf_cache_ipproto(const npf_cache_t *npc)
 {
-	const struct ip *ip = &npc->npc_ip.v4;
-
 	KASSERT(npf_iscached(npc, NPC_IP46));
-	return ip->ip_p;
+	return npc->npc_next_proto;
+}
+
+static inline int
+npf_cache_hlen(const npf_cache_t *npc, nbuf_t *nbuf)
+{
+	KASSERT(npf_iscached(npc, NPC_IP46));
+	return npc->npc_hlen;
 }
 
 /* Network buffer interface. */
@@ -190,8 +265,8 @@ void		npf_hook_unregister(npf_rule_t *, npf_hook_t *);
 typedef struct npf_ioctl_table {
 	int			nct_action;
 	u_int			nct_tid;
-	in_addr_t		nct_addr;
-	in_addr_t		nct_mask;
+	npf_addr_t		nct_addr;
+	npf_netmask_t		nct_mask;
 	int			_reserved;
 } npf_ioctl_table_t;
 

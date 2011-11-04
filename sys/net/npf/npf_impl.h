@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.7 2011/02/02 02:20:25 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.8 2011/11/04 01:00:27 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ uint16_t	npf_fixup16_cksum(uint16_t, uint16_t, uint16_t);
 uint16_t	npf_fixup32_cksum(uint16_t, uint32_t, uint32_t);
 uint16_t	npf_addr_cksum(uint16_t, int, npf_addr_t *, npf_addr_t *);
 uint32_t	npf_addr_sum(const int, const npf_addr_t *, const npf_addr_t *);
-int		npf_tcpsaw(npf_cache_t *, tcp_seq *, tcp_seq *, uint32_t *);
+int		npf_tcpsaw(npf_cache_t *, nbuf_t *, tcp_seq *, tcp_seq *, uint32_t *);
 bool		npf_fetch_tcpopts(const npf_cache_t *, nbuf_t *,
 		    uint16_t *, int *);
 bool		npf_normalize(npf_cache_t *, nbuf_t *, bool, bool, u_int, u_int);
@@ -169,10 +169,10 @@ void		npf_return_block(npf_cache_t *, nbuf_t *, const int);
 
 /* Complex instructions. */
 int		npf_match_ether(nbuf_t *, int, int, uint16_t, uint32_t *);
-int		npf_match_ip4table(npf_cache_t *, nbuf_t *, void *,
+int		npf_match_table(npf_cache_t *, nbuf_t *, void *,
 		    const int, const u_int);
-int		npf_match_ip4mask(npf_cache_t *, nbuf_t *, void *,
-		    const int, in_addr_t, in_addr_t);
+int		npf_match_ipmask(npf_cache_t *, nbuf_t *, void *,
+		    const int, const npf_addr_t *, const npf_netmask_t);
 int		npf_match_tcp_ports(npf_cache_t *, nbuf_t *, void *,
 		    const int, const uint32_t);
 int		npf_match_udp_ports(npf_cache_t *, nbuf_t *, void *,
@@ -197,11 +197,11 @@ void		npf_table_unref(npf_table_t *);
 npf_table_t *	npf_table_get(npf_tableset_t *, u_int);
 void		npf_table_put(npf_table_t *);
 int		npf_table_check(npf_tableset_t *, u_int, int);
-int		npf_table_add_v4cidr(npf_tableset_t *, u_int,
-		    in_addr_t, in_addr_t);
-int		npf_table_rem_v4cidr(npf_tableset_t *, u_int,
-		    in_addr_t, in_addr_t);
-int		npf_table_match_v4addr(u_int, in_addr_t);
+int		npf_table_add_cidr(npf_tableset_t *, u_int,
+		    const npf_addr_t *, const npf_netmask_t);
+int		npf_table_rem_cidr(npf_tableset_t *, u_int,
+		    const npf_addr_t *, const npf_netmask_t);
+int		npf_table_match_addr(u_int, const npf_addr_t *);
 
 /* Ruleset interface. */
 npf_ruleset_t *	npf_ruleset_create(void);

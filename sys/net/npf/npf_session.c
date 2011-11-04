@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.8 2011/02/02 02:20:25 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.9 2011/11/04 01:00:27 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.8 2011/02/02 02:20:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.9 2011/11/04 01:00:27 zoltan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -506,7 +506,8 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	if (!sess_tracking) {
 		return NULL;
 	}
-	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_LAYER4));
+	KASSERT(npf_iscached(npc, NPC_IP46));
+	KASSERT(npf_iscached(npc, NPC_LAYER4));
 
 	/* Allocate and initialise new state. */
 	se = pool_cache_get(sess_cache, PR_NOWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.4 2010/12/18 01:07:26 rmind Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.5 2011/11/04 01:00:28 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_ncgen.c,v 1.4 2010/12/18 01:07:26 rmind Exp $");
+__RCSID("$NetBSD: npf_ncgen.c,v 1.5 2011/11/04 01:00:28 zoltan Exp $");
 
 #include <sys/types.h>
+#include <string.h>
 
 #include "npfctl.h"
 
@@ -54,11 +55,13 @@ npfctl_calc_ncsize(int nblocks[])
 	 * - 5 words each by npfctl_gennc_ports/tbl(), stored in nblocks[0].
 	 * - 6 words each by npfctl_gennc_v4cidr(), stored in nblocks[1].
 	 * - 4 words by npfctl_gennc_{icmp,tcpfl}(), stored in nblocks[2].
+	 * - 9 words each by npfctl_gennc_v6cidr(), stored in nblocks[3].
 	 * - 4 words by npfctl_gennc_complete(), single last fragment.
 	 */
 	return nblocks[0] * 5 * sizeof(uint32_t) +
 	    nblocks[1] * 6 * sizeof(uint32_t) +
 	    nblocks[2] * 4 * sizeof(uint32_t) +
+	    nblocks[3] * 9 * sizeof(uint32_t) +
 	    4 * sizeof(uint32_t);
 }
 
@@ -68,7 +71,7 @@ npfctl_calc_ncsize(int nblocks[])
 size_t
 npfctl_failure_offset(int nblocks[])
 {
-	size_t tblport_blocks, v4cidr_blocks, icmp_tcpfl;
+	size_t tblport_blocks, v4cidr_blocks, v6cidr_blocks, icmp_tcpfl;
 	/*
 	 * Take into account all blocks (plus 2 words for comparison each),
 	 * and additional 4 words to skip the last comparison and success path.
@@ -76,7 +79,8 @@ npfctl_failure_offset(int nblocks[])
 	tblport_blocks = (3 + 2) * nblocks[0];
 	v4cidr_blocks = (4 + 2) * nblocks[1];
 	icmp_tcpfl = (2 + 2) * nblocks[2];
-	return tblport_blocks + v4cidr_blocks + icmp_tcpfl + 4;
+	v6cidr_blocks = (7 + 2) * nblocks[3];
+	return tblport_blocks + v4cidr_blocks + v6cidr_blocks + icmp_tcpfl + 4;
 }
 
 #if 0
@@ -115,20 +119,46 @@ npfctl_gennc_ether(void **ncptr, int foff, uint16_t ethertype)
 }
 #endif
 
+void
+npfctl_gennc_v6cidr(void **ncptr, int foff,
+    const npf_addr_t *netaddr, const npf_netmask_t mask, bool sd)
+{
+	uint32_t *nc = *ncptr;
+	const uint32_t *addr = (const uint32_t *)netaddr;
+
+	/* OP, direction, netaddr/subnet (10 words) */
+	*nc++ = NPF_OPCODE_IP6MASK;
+	*nc++ = (sd ? 0x01 : 0x00);
+	*nc++ = addr[0];
+	*nc++ = addr[1];
+	*nc++ = addr[2];
+	*nc++ = addr[3];
+	*nc++ = mask;
+
+	/* If not equal, jump to failure block, continue otherwise (2 words). */
+	*nc++ = NPF_OPCODE_BNE;
+	*nc++ = foff;
+
+	/* + 9 words. */
+	*ncptr = (void *)nc;
+}
+
+
 /*
  * npfctl_gennc_v4cidr: fragment to match IPv4 CIDR.
  */
 void
 npfctl_gennc_v4cidr(void **ncptr, int foff,
-    in_addr_t netaddr, in_addr_t subnet, bool sd)
+    const npf_addr_t *netaddr, const npf_netmask_t mask, bool sd)
 {
 	uint32_t *nc = *ncptr;
+	const uint32_t *addr = (const uint32_t *)netaddr;
 
 	/* OP, direction, netaddr/subnet (4 words) */
 	*nc++ = NPF_OPCODE_IP4MASK;
 	*nc++ = (sd ? 0x01 : 0x00);
-	*nc++ = netaddr;
-	*nc++ = subnet;
+	*nc++ = addr[0];
+	*nc++ = mask;
 
 	/* If not equal, jump to failure block, continue otherwise (2 words). */
 	*nc++ = NPF_OPCODE_BNE;
@@ -200,7 +230,7 @@ npfctl_gennc_tbl(void **ncptr, int foff, u_int tid, bool sd)
 	uint32_t *nc = *ncptr;
 
 	/* OP, direction, table ID (3 words). */
-	*nc++ = NPF_OPCODE_IP4TABLE;
+	*nc++ = NPF_OPCODE_TABLE;
 	*nc++ = (sd ? 0x01 : 0x00);
 	*nc++ = tid;
 
