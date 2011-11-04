@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.7 2011/11/04 01:00:27 zoltan Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.8 2011/11/04 02:57:28 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.7 2011/11/04 01:00:27 zoltan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.8 2011/11/04 02:57:28 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -121,7 +121,7 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables)
 		eit = prop_array_iterator(entries);
 		while ((ent = prop_object_iterator_next(eit)) != NULL) {
 			const npf_addr_t *addr;
-			npf_netmask_t mask;
+			uint8_t mask; /* XXX should be npf_netmask_t */
 
 			/* Get address and mask.  Add a table entry. */
 			addr = (const npf_addr_t *)prop_data_data_nocopy(prop_dictionary_get(ent, "addr"));
