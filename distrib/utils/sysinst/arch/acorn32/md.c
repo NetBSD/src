@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.28 2011/09/14 12:35:19 christos Exp $ */
+/*	$NetBSD: md.c,v 1.29 2011/11/04 11:27:01 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -347,4 +347,10 @@ filecore_checksum(u_char *bootblock)
 		return (-1);
 
 	return (sum - ((sum - 1) / 255) * 255);
+}
+
+int
+md_pre_mount()
+{
+	return 0;
 }
