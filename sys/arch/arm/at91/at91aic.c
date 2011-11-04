@@ -1,5 +1,5 @@
-/*	$Id: at91aic.c,v 1.7 2011/07/01 19:31:16 dyoung Exp $	*/
-/*	$NetBSD: at91aic.c,v 1.7 2011/07/01 19:31:16 dyoung Exp $	*/
+/*	$Id: at91aic.c,v 1.8 2011/11/04 17:16:38 aymeric Exp $	*/
+/*	$NetBSD: at91aic.c,v 1.8 2011/11/04 17:16:38 aymeric Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -89,7 +89,13 @@ at91aic_match(device_t parent, cfdata_t match, void *aux)
 static void
 at91aic_attach(device_t parent, device_t self, void *aux)
 {
+	int i;
+
 	(void)parent; (void)self; (void)aux;
+	for (i = 0; i < NIRQ; i++) {
+		evcnt_attach_dynamic(&intrq[i].iq_ev, EVCNT_TYPE_INTR,
+				     NULL, "aic", intrq[i].iq_name);
+	}
 	printf("\n");
 }
 
@@ -246,8 +252,6 @@ at91aic_init(void)
 		TAILQ_INIT(&iq->iq_list);
 
 		sprintf(iq->iq_name, "irq %d", i);
-		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
-				     NULL, "aic", iq->iq_name);
 	}
 
 	/* All interrupts should use IRQ not FIQ */
