@@ -908,6 +908,13 @@
 /*
  * CPU processor IDs for company ID == 12 (RMI)
  */
+#define	MIPS_XLP832	0x10	/* RMI XLP832	 		ISA 64  Rel 2 */
+#define	MIPS_XLP816	0x14	/* RMI XLP816	 		ISA 64  Rel 2 */
+#define	MIPS_XLP432	0x90	/* RMI XLP432	 		ISA 64  Rel 2 */
+#define	MIPS_XLP416	0x94	/* RMI XLP416	 		ISA 64  Rel 2 */
+#define	MIPS_XLP316	0xd4	/* RMI XLP316	 		ISA 64  Rel 2 */
+#define	MIPS_XLP308	0xd5	/* RMI XLP308	 		ISA 64  Rel 2 */
+#define	MIPS_XLP304	0xd7	/* RMI XLP304	 		ISA 64  Rel 2 */
 #define	MIPS_XLR308B	0x06	/* RMI XLR308-B	 		ISA 64  */
 #define	MIPS_XLR508B	0x07	/* RMI XLR508-B	 		ISA 64  */
 #define	MIPS_XLR516B	0x08	/* RMI XLR516-B	 		ISA 64  */
