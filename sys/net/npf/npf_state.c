@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state.c,v 1.4 2011/04/25 22:16:21 yamt Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.5 2011/11/04 01:00:27 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.4 2011/04/25 22:16:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.5 2011/11/04 01:00:27 zoltan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	uint32_t win;
 
 	KASSERT(npf_iscached(npc, NPC_TCP));
-	tcpdlen = npf_tcpsaw(__UNCONST(npc), &seq, &ack, &win);
+	tcpdlen = npf_tcpsaw(__UNCONST(npc), nbuf, &seq, &ack, &win);
 	end = seq + tcpdlen;
 	if (tcpfl & TH_SYN) {
 		end++;
@@ -326,7 +326,8 @@ npf_state_init(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
 {
 	const int proto = npf_cache_ipproto(npc);
 
-	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_LAYER4));
+	KASSERT(npf_iscached(npc, NPC_IP46));
+	KASSERT(npf_iscached(npc, NPC_LAYER4));
 
 	mutex_init(&nst->nst_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 
