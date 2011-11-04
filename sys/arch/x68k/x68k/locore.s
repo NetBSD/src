@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.104 2011/10/09 08:51:56 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.105 2011/11/04 17:51:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -253,7 +253,7 @@ Lisberr:
 #include "opt_fpu_emulate.h"
 ENTRY_NOPROFILE(fpfline)
 #if defined(M68040)
-	cmpl	#FPU_68040,_C_LABEL(fputype) | 64040 FPU?
+	cmpl	#FPU_68040,_C_LABEL(fputype) | 68040 FPU?
 	jne	Lfp_unimp		| no, skip FPSP
 	cmpw	#0x202c,%sp@(6)		| format type 2?
 	jne	_C_LABEL(illinst)	| no, not an FP emulation
