@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.160 2011/11/03 15:13:02 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.161 2011/11/04 17:53:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -566,11 +566,11 @@ Lehighcode:
  * Should be running mapped from this point on
  */
 Lenab1:
-	lea	_ASM_LABEL(tmpstk),%sp		| temporary stack
+	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
 /* call final pmap setup */
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
-	movl	_C_LABEL(lwp0uarea),%a1	|
+	movl	_C_LABEL(lwp0uarea),%a1	| get lwp0 uarea
 	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
@@ -630,7 +630,7 @@ ENTRY_NOPROFILE(addrerr4060)
 	movl	%a0,%sp@(FR_SP)		|   in the savearea
 	movl	%sp@(FR_HW+8),%sp@-
 	clrl	%sp@-			| dummy code
-	movl	#T_ADDRERR,%sp@-		| mark address error
+	movl	#T_ADDRERR,%sp@-	| mark address error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 #endif
 
@@ -780,7 +780,7 @@ Lismerr:
 Lmightnotbemerr:
 	btst	#3,%d1			| write protect bit set?
 	jeq	Lisberr1		| no: must be bus error
-	movl	%sp@,%d0			| ssw into low word of %d0
+	movl	%sp@,%d0		| ssw into low word of %d0
 	andw	#0xc0,%d0		| Write protect is set on page:
 	cmpw	#0x40,%d0		| was it read cycle?
 	jne	Lismerr			| no, was not WPE, must be MMU fault
@@ -982,7 +982,7 @@ Lkbrkpt: | Kernel-mode breakpoint or trace trap. (%d0=trap_type)
 	jls	Lbrkpt2			| already on tmpstk
 	| Copy frame to the temporary stack
 	movl	%sp,%a0			| %a0=src
-	lea	_ASM_LABEL(tmpstk)-96,%a1 | a1=dst
+	lea	_ASM_LABEL(tmpstk)-96,%a1 | %a1=dst
 	movl	%a1,%sp			| %sp=new frame
 	moveq	#FR_SIZE,%d1
 Lbrkpt1:
@@ -1258,7 +1258,7 @@ Lslerr:
 	moveq	#-1,%d0
 Lsldone:
 	movl	_C_LABEL(curpcb),%a1	| current pcb
-	clrl	%a1@(PCB_ONFAULT) 	| clear fault address
+	clrl	%a1@(PCB_ONFAULT)	| clear fault address
 	rts
 #endif
 
@@ -1379,7 +1379,7 @@ ENTRY(m68881_save)
 	tstb	%a0@			| null state frame?
 	jeq	Lm68881sdone		| yes, all done
 	fmovem	%fp0-%fp7,%a0@(FPF_REGS) | save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR)	| save FP control registers
+	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR) | save FP control registers
 Lm68881sdone:
 	rts
 
@@ -1387,7 +1387,7 @@ ENTRY(m68881_restore)
 	movl	%sp@(4),%a0		| save area pointer
 	tstb	%a0@			| null state frame?
 	jeq	Lm68881rdone		| yes, easy
-	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi	| restore FP control registers
+	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi | restore FP control registers
 	fmovem	%a0@(FPF_REGS),%fp0-%fp7 | restore FP general registers
 Lm68881rdone:
 	frestore %a0@			| restore state
