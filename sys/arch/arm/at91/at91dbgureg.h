@@ -1,4 +1,4 @@
-/*	$NetBSD: at91dbgureg.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
+/*	$NetBSD: at91dbgureg.h,v 1.4 2011/11/04 17:17:50 aymeric Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -172,7 +172,7 @@
 #define	DBGU_CIDR_VERSION	0x0000001F	/* version of the device */
 
 #define	DBGU_CIDR_AT91RM9200	0x09290781
-#define	DBGU_CIDR_AT91SAM9260	0x019803A0
+#define	DBGU_CIDR_AT91SAM9260	0x019803A2
 #define	DBGU_CIDR_AT91SAM9261	0x019703A0
 #define	DBGU_CIDR_AT91SAM9263	0x019607A0
 
