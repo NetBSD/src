@@ -1,9 +1,10 @@
-#	$Id: files.at91,v 1.2 2008/07/03 01:15:39 matt Exp $
+#	$Id: files.at91,v 1.3 2011/11/04 17:20:54 aymeric Exp $
 
 #
 # Configuration info for AT91 based CPUs
 #
 defflag opt_at91types.h			AT91RM9200
+defflag opt_at91types.h			AT91SAM9260
 defflag opt_at91types.h			AT91SAM9261
 
 file	arch/arm/arm32/irq_dispatch.S
@@ -22,6 +23,7 @@ file	arch/arm/at91/at91bus.c		at91bus needs-flag
 
 # chips:
 file	arch/arm/at91/at91rm9200bus.c	at91rm9200
+file	arch/arm/at91/at91sam9260bus.c	at91sam9260
 file	arch/arm/at91/at91sam9261bus.c	at91sam9261
 
 # AT91 Advanced Interrupt controller:
@@ -45,7 +47,7 @@ attach	at91tctmr at at91bus
 file	arch/arm/at91/at91tctmr.c	at91tctmr needs-flag
 
 # AT91 Power Management Controller
-file	arch/arm/at91/at91pmc.c		at91rm9200 | at91sam9261
+file	arch/arm/at91/at91pmc.c		at91rm9200 | at91sam9260 | at91sam9261
 
 # AT91 serial port
 device	at91usart: tty
