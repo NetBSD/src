@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.413 2011/11/01 22:37:42 pgoyette Exp $
+# $NetBSD: mi,v 1.414 2011/11/04 02:25:31 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -679,6 +679,7 @@
 ./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/sys/t_listen.debug			tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/sys/t_rfc6056.debug			tests-net-debug		debug,atf
+./usr/libdata/debug/usr/tests/net/sys/t_socketpair.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/rump					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/modautoload				tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/modautoload/t_modautoload.debug	tests-syscall-debug	debug,atf
@@ -2479,6 +2480,7 @@
 ./usr/tests/net/sys/t_connect			tests-net-tests		atf
 ./usr/tests/net/sys/t_listen			tests-net-tests		atf
 ./usr/tests/net/sys/t_rfc6056			tests-net-tests		atf
+./usr/tests/net/sys/t_socketpair		tests-net-tests		atf
 ./usr/tests/rump				tests-rump-tests
 ./usr/tests/rump/Atffile			tests-rump-tests	atf
 ./usr/tests/rump/modautoload			tests-rump-tests
