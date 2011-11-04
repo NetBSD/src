@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.6 2011/07/01 19:31:17 dyoung Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.6 2011/07/01 19:31:17 dyoung Exp $ */
+/*	$Id: at91dbgu.c,v 1.7 2011/11/04 17:23:05 aymeric Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.7 2011/11/04 17:23:05 aymeric Exp $ */
 
 /*
  *
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.6 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.7 2011/11/04 17:23:05 aymeric Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -167,7 +167,7 @@ static struct at91dbgu_cons_softc {
 
 static struct cnm_state at91dbgu_cnm_state;
 
-CFATTACH_DECL(at91dbgu, sizeof(struct at91dbgu_softc),
+CFATTACH_DECL_NEW(at91dbgu, sizeof(struct at91dbgu_softc),
 	      at91dbgu_match, at91dbgu_attach, NULL, NULL);
 
 extern struct cfdriver at91dbgu_cd;
