@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.15 2011/09/06 10:48:28 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.16 2011/11/04 15:32:34 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.15 2011/09/06 10:48:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.16 2011/11/04 15:32:34 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1477,6 +1477,8 @@ hdaudio_dispatch_fgrp_ioctl(struct hdaudio_softc *sc, u_long cmd,
 	fg = hdaudioioctl_fgrp_lookup(sc, codecid, nid);
 	if (fg == NULL)
 		return ENODEV;
+	if (fg->fg_device == NULL)
+		return ENXIO;
 	fgrp_sc = device_private(fg->fg_device);
 	fgrp_dict = device_properties(fg->fg_device);
 
