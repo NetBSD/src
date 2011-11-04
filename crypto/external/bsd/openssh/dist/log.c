@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.6 2011/09/16 15:36:00 joerg Exp $	*/
+/*	$NetBSD: log.c,v 1.7 2011/11/04 11:54:46 joerg Exp $	*/
 /* $OpenBSD: log.c,v 1.42 2011/06/17 21:44:30 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.6 2011/09/16 15:36:00 joerg Exp $");
+__RCSID("$NetBSD: log.c,v 1.7 2011/11/04 11:54:46 joerg Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -375,12 +375,13 @@ do_log(LogLevel level, const char *fmt, va_list args)
 	msgbufp = msgbuf;
 	if (txt != NULL && log_handler == NULL) {
 		len2 = strlen(txt);
-		if (len2 >= len)
-			len2 = len - 1;
+		if (len2 > len - 2)
+			len2 = len - 2;
 		memcpy(msgbufp, txt, len2);
 		msgbufp += len2;
-		*msgbufp++ = '\0';
-		len -= len2 + 1;
+		*msgbufp++ = ':';
+		*msgbufp++ = ' ';
+		len -= len2 + 2;
 	}
 	vsnprintf(msgbufp, len, fmt, args);
 	len3 = strnvis(visbuf, sizeof(visbuf), msgbuf, VIS_SAFE|VIS_OCTAL);
