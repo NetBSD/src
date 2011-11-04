@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.128 2011/04/04 08:30:32 mbalmer Exp $ */
+/*	$NetBSD: md.c,v 1.129 2011/11/04 11:27:03 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -631,3 +631,9 @@ get_bootmodel(void)
 	return SET_KERNEL_GENERIC;
 }
 
+
+int
+md_pre_mount()
+{
+	return 0;
+}
