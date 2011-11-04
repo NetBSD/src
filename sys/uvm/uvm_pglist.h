@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.h,v 1.7.16.2 2011/06/03 07:56:08 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.h,v 1.7.16.3 2011/11/04 15:32:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -31,6 +31,10 @@
 
 #ifndef _UVM_UVM_PGLIST_H_
 #define _UVM_UVM_PGLIST_H_
+
+#ifndef VM_NFREELIST
+#include <machine/vmparam.h>
+#endif
 
 /*
  * This defines the type of a page queue, e.g. active list, inactive
