@@ -135,7 +135,8 @@ mips_fixup_exceptions(mips_fixup_callback_t callback)
 	}
 
 	if (fixed)
-		mips_icache_sync_range((vaddr_t)start, end - start);
+		mips_icache_sync_range((vaddr_t)start,
+		    sizeof(start[0]) * (end - start));
 		
 	return fixed;
 }
