@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.269 2011/10/16 01:24:05 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.270 2011/11/05 22:56:31 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -180,6 +180,7 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	stdcxx \
 	supcxx \
 	terminfo \
+	tre \
 	usbhid \
 	util \
 	wind \
