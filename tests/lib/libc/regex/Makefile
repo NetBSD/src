@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.4 2011/10/11 23:04:21 dholland Exp $
+# $NetBSD: Makefile,v 1.5 2011/11/05 23:33:15 christos Exp $
 
 MKMAN=	no
 
 .include <bsd.own.mk>
 
-TESTSDIR=	${TESTSBASE}/lib/libc/regex
+TESTSDIR?=	${TESTSBASE}/lib/libc/regex
 
 BINDIR=		${TESTSDIR}
 PROGS+=		h_regex
@@ -37,7 +37,7 @@ FILES+=		data/word_bound.in
 FILES+=		data/zero.in
 
 t_regex.sh: t_regex.awk t_regex.in
-	${TOOL_AWK} -f ${.CURDIR}/t_regex.awk ${.CURDIR}/t_regex.in > ${.TARGET}
+	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+= t_regex.sh
 
