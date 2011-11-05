@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.88 2011/10/09 20:30:19 chs Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.89 2011/11/05 09:27:06 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -230,6 +230,12 @@
 #define	__noinline	__attribute__((__noinline__))
 #else
 #define	__noinline	/* nothing */
+#endif
+
+#if __GNUC_PREREQ__(4, 1)
+#define	__returns_twice	__attribute__((__returns_twice__))
+#else
+#define	__returns_twice	/* nothing */
 #endif
 
 #if __GNUC_PREREQ__(4, 5)
