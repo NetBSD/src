@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.161 2011/11/04 17:53:51 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.162 2011/11/05 15:21:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -988,7 +988,7 @@ Lkbrkpt: | Kernel-mode breakpoint or trace trap. (%d0=trap_type)
 Lbrkpt1:
 	movl	%a0@+,%a1@+
 	subql	#4,%d1
-	bgt	Lbrkpt1
+	jgt	Lbrkpt1
 
 Lbrkpt2:
 	| Call the trap handler for the kernel debugger.
