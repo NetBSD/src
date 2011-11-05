@@ -1,4 +1,4 @@
-/* $NetBSD: t_socketpair.c,v 1.1 2011/11/04 02:23:39 christos Exp $ */
+/* $NetBSD: t_socketpair.c,v 1.1 2011/11/05 18:19:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_socketpair.c,v 1.1 2011/11/04 02:23:39 christos Exp $");
+__RCSID("$NetBSD: t_socketpair.c,v 1.1 2011/11/05 18:19:02 jruoho Exp $");
 
 #include <atf-c.h>
 #include <fcntl.h>
