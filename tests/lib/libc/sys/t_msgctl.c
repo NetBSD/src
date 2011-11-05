@@ -1,4 +1,4 @@
-/* $NetBSD: t_msgctl.c,v 1.1 2011/11/05 07:45:41 jruoho Exp $ */
+/* $NetBSD: t_msgctl.c,v 1.2 2011/11/05 08:47:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msgctl.c,v 1.1 2011/11/05 07:45:41 jruoho Exp $");
+__RCSID("$NetBSD: t_msgctl.c,v 1.2 2011/11/05 08:47:54 jruoho Exp $");
 
 #include <sys/msg.h>
 #include <sys/stat.h>
@@ -278,7 +278,7 @@ ATF_TC_BODY(msgctl_set, tc)
 		atf_tc_fail("root failed to change the GID of message queue");
 
 	/*
-	 * Note setting the qbytes to zero fails even as root.
+	 * Note: setting the qbytes to zero fails even as root.
 	 */
 	msgds.msg_qbytes = 1;
 	msgds.msg_perm.gid = getgid();
@@ -297,7 +297,7 @@ ATF_TC_CLEANUP(msgctl_set, tc)
 ATF_TC_WITH_CLEANUP(msgctl_time);
 ATF_TC_HEAD(msgctl_time, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test msgctl(2) updates times");
+	atf_tc_set_md_var(tc, "descr", "Test that access times are updated");
 }
 
 ATF_TC_BODY(msgctl_time, tc)
@@ -332,7 +332,7 @@ ATF_TC_BODY(msgctl_time, tc)
 		atf_tc_fail("time of last msgrcv(2) was not updated");
 
 	/*
-	 * Note that this is non-zero even after the memset(3).
+	 * Note: this is non-zero even after the memset(3).
 	 */
 	if (msgds.msg_stime == 0)
 		atf_tc_fail("time of last msgsnd(2) was updated incorrectly");
