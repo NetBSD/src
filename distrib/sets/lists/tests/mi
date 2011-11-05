@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.416 2011/11/05 18:07:15 jruoho Exp $
+# $NetBSD: mi,v 1.417 2011/11/05 18:19:02 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -492,6 +492,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_chroot.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_clock_gettime.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_clone.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_connect.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_context.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_dup.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_fsync.debug		tests-lib-debug		debug,atf
@@ -506,6 +507,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_issetugid.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_kill.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_link.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_listen.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mincore.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkdir.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkfifo.debug		tests-lib-debug		debug,atf
@@ -528,6 +530,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_setuid.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigaction.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigqueue.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_socketpair.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_stat.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_timer_create.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_truncate.debug		tests-lib-debug		debug,atf
@@ -681,10 +684,10 @@
 ./usr/libdata/debug/usr/tests/net/net/t_raw.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/net/t_unix.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/sys					tests-net-debug
-./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-net-debug		debug,atf
-./usr/libdata/debug/usr/tests/net/sys/t_listen.debug			tests-net-debug		debug,atf
+./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/net/sys/t_listen.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/net/sys/t_rfc6056.debug			tests-net-debug		debug,atf
-./usr/libdata/debug/usr/tests/net/sys/t_socketpair.debug		tests-net-debug		debug,atf
+./usr/libdata/debug/usr/tests/net/sys/t_socketpair.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/rump					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/modautoload				tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/modautoload/t_modautoload.debug	tests-syscall-debug	debug,atf
@@ -2123,6 +2126,7 @@
 ./usr/tests/lib/libc/sys/t_chroot		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_clock_gettime	tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_clone		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_connect		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_context		tests-obsolete		obsolete
 ./usr/tests/lib/libc/sys/t_dup			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_fsync		tests-lib-tests		atf
@@ -2137,6 +2141,7 @@
 ./usr/tests/lib/libc/sys/t_issetugid		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_kill			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_link			tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_listen		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mincore		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mkdir		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mkfifo		tests-lib-tests		atf
@@ -2159,6 +2164,7 @@
 ./usr/tests/lib/libc/sys/t_setuid		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_sigaction		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_sigqueue		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_socketpair		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_stat			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_timer_create		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_truncate		tests-lib-tests		atf
@@ -2487,10 +2493,10 @@
 ./usr/tests/net/route/t_change		tests-net-tests		atf
 ./usr/tests/net/sys				tests-net-tests
 ./usr/tests/net/sys/Atffile			tests-net-tests		atf
-./usr/tests/net/sys/t_connect			tests-net-tests		atf
-./usr/tests/net/sys/t_listen			tests-net-tests		atf
+./usr/tests/net/sys/t_connect			tests-obsolete		obsolete
+./usr/tests/net/sys/t_listen			tests-obsolete		obsolete
 ./usr/tests/net/sys/t_rfc6056			tests-net-tests		atf
-./usr/tests/net/sys/t_socketpair		tests-net-tests		atf
+./usr/tests/net/sys/t_socketpair		tests-obsolete		obsolete
 ./usr/tests/rump				tests-rump-tests
 ./usr/tests/rump/Atffile			tests-rump-tests	atf
 ./usr/tests/rump/modautoload			tests-rump-tests
