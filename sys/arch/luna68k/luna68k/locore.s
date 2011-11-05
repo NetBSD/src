@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.39 2011/11/05 15:23:38 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.40 2011/11/05 15:27:51 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -954,17 +954,6 @@ ENTRY(ecacheon)
 	rts
 
 ENTRY(ecacheoff)
-	rts
-
-/*
- * Get callers current SP value.
- * Note that simply taking the address of a local variable in a C function
- * doesn't work because callee saved registers may be outside the stack frame
- * defined by %A6 (e.g. GCC generated code).
- */
-ENTRY(getsp)
-	movl	%sp,%d0			| get current SP
-	addql	#4,%d0			| compensate for return address
 	rts
 
 ENTRY_NOPROFILE(getsfc)
