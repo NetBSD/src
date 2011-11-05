@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.414 2011/11/04 02:25:31 christos Exp $
+# $NetBSD: mi,v 1.415 2011/11/05 07:45:40 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -511,6 +511,10 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mknod.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mmap.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mprotect.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_msgctl.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_msgget.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_msgrcv.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_msgsnd.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_msync.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_nanosleep.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_pipe.debug			tests-lib-debug		debug,atf
@@ -2137,6 +2141,10 @@
 ./usr/tests/lib/libc/sys/t_mknod		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mmap			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mprotect		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_msgctl		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_msgget		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_msgrcv		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_msgsnd		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_msync		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_nanosleep		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_pipe			tests-lib-tests		atf
