@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.9 2011/09/27 11:24:21 jruoho Exp $ */
+/*	$NetBSD: t_paths.c,v 1.10 2011/11/05 08:49:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.9 2011/09/27 11:24:21 jruoho Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.10 2011/11/05 08:49:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: t_paths.c,v 1.9 2011/09/27 11:24:21 jruoho Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -127,6 +128,8 @@ ATF_TC_BODY(paths, tc)
 	uid = getuid();
 
 	for (i = 0; i < __arraycount(paths); i++) {
+
+		(void)fprintf(stderr, "testing '%s'\n", paths[i].path);
 
 		errno = 0;
 		fd = open(paths[i].path, O_RDONLY);
