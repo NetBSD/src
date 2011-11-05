@@ -1,10 +1,7 @@
-.\"	$NetBSD: ld.4,v 1.19 2011/11/05 09:22:44 hannken Exp $
+.\"	$NetBSD: virtio.4,v 1.1 2011/11/05 09:22:44 hannken Exp $
 .\"
-.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
-.\"
-.\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Andrew Doran.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -28,61 +25,39 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd November 5, 2011
-.Dt LD 4
+.Dt VIRTIO 4
 .Os
 .Sh NAME
-.Nm ld
-.Nd logical disk driver
+.Nm virtio
+.Nd Para-virtualized I/O in a virtual machine.
 .Sh SYNOPSIS
-.Cd "ld* at aac? unit ?"
-.Cd "ld* at amr? unit ?"
-.Cd "ld* at ataraid? vendtype ? unit ?"
-.Cd "ld* at cac? unit ?"
-.Cd "ld* at icp? unit ?"
-.Cd "ld* at iop? tid ?"
-.Cd "ld* at mlx? unit ?"
-.Cd "ld* at sdmmc?"
-.Cd "ld* at twa? unit ?"
-.Cd "ld* at twe? unit ?"
+.Cd "virtio* at pci? dev ? function ?"
 .Cd "ld* at virtio?"
+.Cd "vioif* at virtio?"
+.Cd "viomb* at virtio?"
 .Sh DESCRIPTION
+.Nm
+defines an interface for efficient, standard and extensible I/O between the
+hypervisor and the virtual machine.
 The
 .Nm
-driver provides support for simple block devices, usually presented by a disk
-array controller.
-.Sh FILES
-.Bl -tag -width /dev/rcaXXXXX -compact
-.It Pa /dev/ld Ns Ar u Ns Ar p
-block mode disk unit
-.Ar u ,
-partition
-.Ar p
-.It Pa /dev/rld Ns Ar u Ns Ar p
-raw mode disk unit
-.Ar u ,
-partition
-.Ar p
+device driver represents an emulated PCI device that the hypervisor makes
+available to the virtual machine.
+.Pp
+.Nm
+supports the following devices:
+.Bl -tag -width xxxxx
+.It Nm ld
+A Disk device.
+.It Nm vioif
+An Ethernet device.
+.It Nm viomb
+A pseudo-device to release memory back to the hypervisor.
 .El
 .Sh SEE ALSO
-.Xr aac 4 ,
-.Xr amr 4 ,
-.Xr cac 4 ,
-.Xr icp 4 ,
-.Xr intro 4 ,
-.Xr iop 4 ,
-.Xr mlx 4 ,
-.Xr sdmmc 4 ,
-.Xr twa 4 ,
-.Xr twe 4 ,
-.Xr virtio 4
+.Xr ld 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Nx 1.5.3 .
-.Sh BUGS
-The capacity and geometry of units as accessed through the
-.Nm
-driver may be different than when accessed through some other
-medium (e.g.
-.Tn SCSI ) .
+.Nx 6.0 .
