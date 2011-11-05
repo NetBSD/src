@@ -34,22 +34,7 @@
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#ifdef TRE_USE_ALLOCA
-/* AIX requires this to be the first thing in the file.	 */
-#ifndef __GNUC__
-# if HAVE_ALLOCA_H
-#  include <alloca.h>
-# else
-#  ifdef _AIX
- #pragma alloca
-#  else
-#   ifndef alloca /* predefined by HP cc +Olibcalls */
-char *alloca ();
-#   endif
-#  endif
-# endif
-#endif
-#endif /* TRE_USE_ALLOCA */
+#include "tre-alloca.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -114,7 +99,7 @@ typedef struct tre_backtrack_struct {
 #ifdef TRE_USE_ALLOCA
 #define tre_bt_mem_new		  tre_mem_newa
 #define tre_bt_mem_alloc	  tre_mem_alloca
-#define tre_bt_mem_destroy(obj)	  do { } while (0)
+#define tre_bt_mem_destroy(obj)	  do { } while (/*CONSTCOND*/0)
 #else /* !TRE_USE_ALLOCA */
 #define tre_bt_mem_new		  tre_mem_new
 #define tre_bt_mem_alloc	  tre_mem_alloc
@@ -125,7 +110,7 @@ typedef struct tre_backtrack_struct {
 #define BT_STACK_PUSH(_pos, _str_byte, _str_wide, _state, _state_id, _next_c, _tags, _mbstate) \
   do									      \
     {									      \
-      int i;								      \
+      size_t i;								      \
       if (!stack->next)							      \
 	{								      \
 	  tre_backtrack_t s;						      \
@@ -176,7 +161,7 @@ typedef struct tre_backtrack_struct {
 #define BT_STACK_POP()							      \
   do									      \
     {									      \
-      int i;								      \
+      size_t i;								      \
       assert(stack->prev);						      \
       pos = stack->item.pos;						      \
       if (type == STR_USER)                                                   \
@@ -214,7 +199,7 @@ tre_tnfa_run_backtrack(const tre_tnfa_t *tnfa, const void *string,
   int reg_notbol = eflags & REG_NOTBOL;
   int reg_noteol = eflags & REG_NOTEOL;
   int reg_newline = tnfa->cflags & REG_NEWLINE;
-  int str_user_end = 0;
+  size_t str_user_end = 0;
 
   /* These are used to remember the necessary values of the above
      variables to return to the position where the current search
@@ -301,7 +286,7 @@ tre_tnfa_run_backtrack(const tre_tnfa_t *tnfa, const void *string,
 
  retry:
   {
-    int i;
+    size_t i;
     for (i = 0; i < tnfa->num_tags; i++)
       {
 	tags[i] = -1;
@@ -385,7 +370,7 @@ tre_tnfa_run_backtrack(const tre_tnfa_t *tnfa, const void *string,
 		  && tre_tag_order(tnfa->num_tags, tnfa->tag_directions,
 				   tags, match_tags)))
 	    {
-	      int i;
+	      size_t i;
 	      /* This match wins the previous match. */
 	      DPRINT(("	 win previous\n"));
 	      match_eo = pos;
