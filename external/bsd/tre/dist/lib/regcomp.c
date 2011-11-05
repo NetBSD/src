@@ -18,11 +18,6 @@
 #include "tre-internal.h"
 #include "xmalloc.h"
 
-#ifdef __weak_alias
-__weak_alias(regcomp,_regcomp)
-__weak_alias(regfree,_regfree)
-#endif
-
 int
 tre_regncomp(regex_t *preg, const char *regex, size_t n, int cflags)
 {
@@ -55,7 +50,7 @@ tre_regncomp(regex_t *preg, const char *regex, size_t n, int cflags)
 #if TRE_MULTIBYTE
   else
     {
-      int consumed;
+      size_t consumed;
       tre_char_t *wcptr = wregex;
 #ifdef HAVE_MBSTATE_T
       mbstate_t state;
@@ -76,11 +71,11 @@ tre_regncomp(regex_t *preg, const char *regex, size_t n, int cflags)
 		  return REG_BADPAT;
 		}
 	      break;
-	    case -1:
+	    case (size_t)-1:
 	      DPRINT(("mbrtowc: error %d: %s.\n", errno, strerror(errno)));
 	      xfree(wregex);
 	      return REG_BADPAT;
-	    case -2:
+	    case (size_t)-2:
 	      /* The last character wasn't complete.  Let's not call it a
 		 fatal error. */
 	      consumed = n;
