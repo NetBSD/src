@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.127 2011/08/08 12:08:53 manu Exp $	*/
+/*	$NetBSD: unistd.h,v 1.128 2011/11/05 09:27:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ void	 sync(void);
 useconds_t ualarm(useconds_t, useconds_t);
 int	 usleep(useconds_t);
 #ifndef __LIBC12_SOURCE__
-pid_t	 vfork(void) __RENAME(__vfork14);
+pid_t	 vfork(void) __RENAME(__vfork14) __returns_twice;
 #endif
 
 #ifndef __AUDIT__
