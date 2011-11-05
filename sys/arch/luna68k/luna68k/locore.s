@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.38 2011/11/05 15:08:36 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.39 2011/11/05 15:23:38 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,11 +39,11 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_compat_sunos.h"
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
-#include "opt_compat_sunos.h"
 #include "opt_fpu_emulate.h"
 #include "opt_m68k_arch.h"
 
@@ -569,7 +569,7 @@ ENTRY_NOPROFILE(fpfault)
 	movb	%a0@(1),%d0		| get frame size
 	bset	#3,%a0@(0,%d0:w)	| set exc_pend bit of BIU
 Lfptnull:
-	fmovem	%fpsr,%sp@-		| push fpsr as code argument
+	fmovem	%fpsr,%sp@-		| push %fpsr as code argument
 	frestore %a0@			| restore state
 	movl	#T_FPERR,%sp@-		| push type arg
 	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack cleanup
