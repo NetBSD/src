@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.40 2011/11/05 15:27:51 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.41 2011/11/05 15:33:18 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1023,17 +1023,27 @@ ENTRY(getsr)
 	rts
 
 /*
- * _delay(unsigned N)
+ * _delay(u_int N)
  *
  * Delay for at least (N/256) microseconds.
  * This routine depends on the variable:  delay_divisor
  * which should be set based on the CPU clock rate.
  */
-GLOBAL(_delay)
+ENTRY_NOPROFILE(_delay)
 	| %d0 = arg = (usecs << 8)
 	movl	%sp@(4),%d0
 	| %d1 = delay_divisor
 	movl	_C_LABEL(delay_divisor),%d1
+	jra	L_delay			/* Jump into the loop! */
+
+	/*
+	 * Align the branch target of the loop to a half-line (8-byte)
+	 * boundary to minimize cache effects.  This guarantees both
+	 * that there will be no prefetch stalls due to cache line burst
+	 * operations and that the loop will run from a single cache
+	 * half-line.
+	 */
+	.align	8
 L_delay:
 	subl	%d1,%d0
 	jgt	L_delay
