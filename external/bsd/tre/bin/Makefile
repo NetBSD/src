@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/02/25 08:06:43 agc Exp $
+#	$NetBSD: Makefile,v 1.1 2011/11/05 22:39:13 christos Exp $
 
 TREDIST=	${.CURDIR}/../dist
 
@@ -7,9 +7,11 @@ TREDIST=	${.CURDIR}/../dist
 CPPFLAGS+=	-I${TREDIST}/lib -I${.CURDIR}/../libtre
 CPPFLAGS+=	-DHAVE_CONFIG_H=1
 
+BINDIR=		/usr/bin
 PROG=		agrep
 SRCS=		agrep.c
 LDADD+=		-ltre
+DPADD+=		${LIBTRE}
 
 WARNS=	4
 
