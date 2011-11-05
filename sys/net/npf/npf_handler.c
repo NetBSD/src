@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.8 2011/11/04 01:00:27 zoltan Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.9 2011/11/05 10:23:26 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.8 2011/11/04 01:00:27 zoltan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.9 2011/11/05 10:23:26 zoltan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,14 +110,17 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 			struct ip *ip = nbuf_dataptr(*mp);
 		 	/* Pass to IPv4 reassembly mechanism. */
 			ret = ip_reass_packet(mp, ip);
-		} else if (npf_iscached(&npc, NPC_IP6)) {
+		} else {
+			KASSERT(npf_iscached(&npc, NPC_IP6));
+#ifdef INET6
 			/* frag6_input's offset is the start of the fragment header */
 			size_t hlen = npf_cache_hlen(&npc, nbuf);
 
 			/* Pass to IPv6 reassembly mechanism. */
 			ret = ip6_reass_packet(mp, hlen);
-		} else {
+#else
 			KASSERT(false);
+#endif
 		}
 
 		if (ret != 0) {

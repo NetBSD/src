@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.5 2011/11/04 01:00:27 zoltan Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.6 2011/11/05 10:23:26 zoltan Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.5 2011/11/04 01:00:27 zoltan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.6 2011/11/05 10:23:26 zoltan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,10 +79,12 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 	}
 
 	/* Create and setup a network buffer. */
-	if (npc->npc_info & NPC_IP4)
+	if (npf_iscached(npc, NPC_IP4))
 		len = sizeof(struct ip) + sizeof(struct tcphdr);
-	else
+	else {
+		KASSERT(npf_iscached(npc, NPC_IP6));
 		len = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
+	}
 
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m == NULL) {
@@ -92,7 +94,7 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 	m->m_len = len;
 	m->m_pkthdr.len = len;
 
-	if (npc->npc_info & NPC_IP4) {
+	if (npf_iscached(npc, NPC_IP4)) {
 		struct ip *oip = &npc->npc_ip.v4;
 		ip = mtod(m, struct ip *);
 		memset(ip, 0, len);
@@ -108,6 +110,7 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 
 		th = (struct tcphdr *)(ip + 1);
 	} else {
+		KASSERT(npf_iscached(npc, NPC_IP6));
 		struct ip6_hdr *oip = &npc->npc_ip.v6;
 		ip6 = mtod(m, struct ip6_hdr *);
 		memset(ip6, 0, len);
@@ -133,7 +136,7 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 	th->th_off = sizeof(struct tcphdr) >> 2;
 	th->th_flags = TH_ACK | TH_RST;
 
-	if (npc->npc_info & NPC_IP4) {
+	if (npf_iscached(npc, NPC_IP4)) {
 		th->th_sum = in_cksum(m, len);
 
 		 /* Second fill of IPv4 header, fill correct IP length. */
@@ -143,14 +146,24 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 		ip->ip_len = htons(len);
 		ip->ip_ttl = DEFAULT_IP_TTL;
 	} else {
+		KASSERT(npf_iscached(npc, NPC_IP6));
+#ifdef INET6
 		th->th_sum = in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr), sizeof(struct tcphdr));
+#else
+		KASSERT(false);
+#endif
 	}
 
 	/* Pass to IP layer. */
 	if (npc->npc_info & NPC_IP4) {
 		return ip_output(m, NULL, NULL, IP_FORWARDING, NULL, NULL);
 	} else {
+#ifdef INET6
 		return ip6_output(m, NULL, NULL, IPV6_FORWARDING, NULL, NULL, NULL);
+#else
+		KASSERT(false);
+		return 0;
+#endif
 	}
 }
 
@@ -166,7 +179,11 @@ npf_return_icmp(npf_cache_t *npc, nbuf_t *nbuf)
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT, 0, 0);
 	} else {
 		KASSERT(npf_iscached(npc, NPC_IP6));
+#ifdef INET6
 		icmp6_error(m, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN, 0);
+#else
+		KASSERT(false);
+#endif
 	}
 	return 0;
 }
