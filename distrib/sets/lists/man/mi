@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1352 2011/11/05 09:22:43 hannken Exp $
+# $NetBSD: mi,v 1.1353 2011/11/05 22:55:23 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -41,6 +41,7 @@
 ./usr/share/info/vi.info			man-sys-info		doc,info
 ./usr/share/man/cat1/Mail.0			man-mail-catman		.cat
 ./usr/share/man/cat1/[.0			man-util-catman		.cat
+./usr/share/man/cat1/agrep.0			man-util-catman		.cat
 ./usr/share/man/cat1/alias.0			man-util-catman		.cat
 ./usr/share/man/cat1/altqstat.0			man-router-catman	.cat
 ./usr/share/man/cat1/amq.0			man-obsolete		obsolete
@@ -2962,6 +2963,7 @@
 ./usr/share/man/cat9/boot.0			man-obsolete		obsolete
 ./usr/share/man/html1/Mail.html			man-mail-htmlman	html
 ./usr/share/man/html1/[.html			man-util-htmlman	html
+./usr/share/man/html1/agrep.html		man-util-htmlman	html
 ./usr/share/man/html1/alias.html		man-util-htmlman	html
 ./usr/share/man/html1/altqstat.html		man-router-htmlman	html
 ./usr/share/man/html1/apply.html		man-util-htmlman	html
@@ -5494,6 +5496,7 @@
 ./usr/share/man/html8/zzz.html			man-sysutil-htmlman	html
 ./usr/share/man/man1/Mail.1			man-mail-man		.man
 ./usr/share/man/man1/[.1			man-util-man		.man
+./usr/share/man/man1/agrep.1			man-util-man		.man
 ./usr/share/man/man1/alias.1			man-util-man		.man
 ./usr/share/man/man1/altqstat.1			man-router-man		.man
 ./usr/share/man/man1/amq.1			man-obsolete		obsolete

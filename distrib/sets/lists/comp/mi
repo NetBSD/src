@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1702 2011/11/01 13:37:32 yamt Exp $
+#	$NetBSD: mi,v 1.1703 2011/11/05 22:55:21 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3291,6 +3291,8 @@
 ./usr/lib/libterminfo_p.a			comp-c-proflib		profile
 ./usr/lib/libtermlib.a				comp-c-lib
 ./usr/lib/libtermlib_p.a			comp-c-proflib		profile
+./usr/lib/libtre.a				comp-c-lib
+./usr/lib/libtre_p.a				comp-c-proflib		profile
 ./usr/lib/libukfs.a				comp-c-lib
 ./usr/lib/libukfs_g.a				-unknown-		debuglib
 ./usr/lib/libukfs_p.a				comp-c-proflib		profile

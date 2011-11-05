@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.969 2011/10/15 13:00:59 mbalmer Exp $
+# $NetBSD: mi,v 1.970 2011/11/05 22:55:20 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -365,6 +365,7 @@
 ./usr						base-sys-root
 ./usr/bin					base-sys-usr
 ./usr/bin/Mail					base-mail-bin
+./usr/bin/agrep					base-util-bin
 ./usr/bin/apply					base-util-bin
 ./usr/bin/apropos				base-man-bin
 ./usr/bin/arpaname				base-bind-bin
