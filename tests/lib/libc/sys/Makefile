@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2011/11/05 07:45:41 jruoho Exp $
+# $NetBSD: Makefile,v 1.19 2011/11/05 18:19:01 jruoho Exp $
 
 MKMAN=	no
 
@@ -12,6 +12,7 @@ TESTS_C+=		t_access
 TESTS_C+=		t_chroot
 TESTS_C+=		t_clock_gettime
 TESTS_C+=		t_clone
+TESTS_C+=		t_connect
 TESTS_C+=		t_dup
 TESTS_C+=		t_fsync
 TESTS_C+=		t_getcontext
@@ -25,6 +26,7 @@ TESTS_C+=		t_gettimeofday
 TESTS_C+=		t_issetugid
 TESTS_C+=		t_kill
 TESTS_C+=		t_link
+TESTS_C+=		t_listen
 TESTS_C+=		t_mincore
 TESTS_C+=		t_mkdir
 TESTS_C+=		t_mkfifo
@@ -47,6 +49,7 @@ TESTS_C+=		t_setrlimit
 TESTS_C+=		t_setuid
 TESTS_C+=		t_sigaction
 TESTS_C+=		t_sigqueue
+TESTS_C+=		t_socketpair
 TESTS_C+=		t_stat
 TESTS_C+=		t_timer_create
 TESTS_C+=		t_truncate
