@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.250 2011/09/30 10:23:03 mrg Exp $	*/
+/*	$NetBSD: systm.h,v 1.251 2011/11/05 09:27:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -420,7 +420,7 @@ int	uiomove(void *, size_t, struct uio *);
 int	uiomove_frombuf(void *, size_t, struct uio *);
 
 #ifdef _KERNEL
-int	setjmp(label_t *);
+int	setjmp(label_t *) __returns_twice;
 void	longjmp(label_t *) __dead;
 #endif
 
