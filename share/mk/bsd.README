@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.289 2011/10/16 01:28:35 christos Exp $
+#	$NetBSD: bsd.README,v 1.290 2011/11/05 22:56:30 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1485,6 +1485,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBSTDCXX?=	${DESTDIR}/usr/lib/libstdc++.a
 		LIBSUPCXX?=	${DESTDIR}/usr/lib/libsupc++.a
 		LIBTERMINFO?=	${DESTDIR}/usr/lib/libterminfo.a
+		LIBTRE?=	${DESTDIR}/usr/lib/libtre.a
 		LIBUSBHID?=	${DESTDIR}/usr/lib/libusbhid.a
 		LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
 		LIBWIND?=	${DESTDIR}/usr/lib/libwind.a
