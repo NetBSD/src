@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.885 2011/11/05 19:08:22 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.886 2011/11/05 23:03:20 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1235,3 +1235,15 @@ Mailing List:	http://gmplib.org/mailman/listinfo/gmp-announce
 Responsible:	mrg
 License:	LGPL3
 Notes:
+
+Package:	tre
+Version:	0.8.0
+Current Vers:	0.8.0
+Maintainer:	http://laurikari.net/tre
+Archive Site:	http://laurikari.net/tre
+Home Page:	http://laurikari.net/tre
+Mailing List:	http://laurikari.net/mailman/listinfo/tre-general
+Responsible:	agc, christos
+License:	BSD
+Notes:
+		Need to feed back local changes
