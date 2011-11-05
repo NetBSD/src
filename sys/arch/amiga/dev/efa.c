@@ -1,4 +1,4 @@
-/*	$NetBSD: efa.c,v 1.4 2011/10/30 11:10:42 rkujawa Exp $ */
+/*	$NetBSD: efa.c,v 1.5 2011/11/05 17:44:25 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -102,10 +102,6 @@ static const unsigned int	wdr_offsets_pio0[] =
       FATA1_PIO0_OFF_SDH, FATA1_PIO0_OFF_COMMAND };
 static const unsigned int	wdr_offsets_pion[] =
     { FATA1_PION_OFF_DATA, FATA1_PION_OFF_ERROR, FATA1_PION_OFF_SECCNT,
-      FATA1_PION_OFF_SECTOR, FATA1_PION_OFF_CYL_LO, FATA1_PION_OFF_CYL_HI,
-      FATA1_PION_OFF_SDH, FATA1_PION_OFF_COMMAND };
-static const unsigned int	wdr_offsets_pion32[] =
-    { FATA1_PION_OFF_DATA32, FATA1_PION_OFF_ERROR, FATA1_PION_OFF_SECCNT,
       FATA1_PION_OFF_SECTOR, FATA1_PION_OFF_CYL_LO, FATA1_PION_OFF_CYL_HI,
       FATA1_PION_OFF_SDH, FATA1_PION_OFF_COMMAND };
 
@@ -439,48 +435,27 @@ efa_mapreg_native(struct efa_softc *sc)
 static void
 efa_fata_subregion_pio0(struct wdc_regs *wdr_fata) 
 {
+	int i;
 
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PIO0_OFF_DATA, 4, &wdr_fata->cmd_iohs[wd_data]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PIO0_OFF_ERROR, 1, &wdr_fata->cmd_iohs[wd_error]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PIO0_OFF_SECCNT, 1, &wdr_fata->cmd_iohs[wd_seccnt]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PIO0_OFF_SECTOR, 1, &wdr_fata->cmd_iohs[wd_sector]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PIO0_OFF_CYL_LO, 1, &wdr_fata->cmd_iohs[wd_cyl_lo]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PIO0_OFF_CYL_HI, 1, &wdr_fata->cmd_iohs[wd_cyl_hi]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PIO0_OFF_SDH, 1, &wdr_fata->cmd_iohs[wd_sdh]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PIO0_OFF_COMMAND, 1, &wdr_fata->cmd_iohs[wd_command]);
+	for (i = 0; i < WDC_NREG; i++) 
+		bus_space_subregion(wdr_fata->cmd_iot,
+		    wdr_fata->cmd_baseioh, wdr_offsets_pio0[i], 
+		    i == 0 ? 4 : 1, &wdr_fata->cmd_iohs[i]);
 }
 
 static void
 efa_fata_subregion_pion(struct wdc_regs *wdr_fata, bool data32) 
 {
+	int i;
+
 	if (data32)
 		bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
 		    FATA1_PION_OFF_DATA32, 8, &wdr_fata->data32ioh);
 
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-    	    FATA1_PION_OFF_DATA, 4, &wdr_fata->cmd_iohs[wd_data]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PION_OFF_ERROR, 1, &wdr_fata->cmd_iohs[wd_error]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PION_OFF_SECCNT, 1, &wdr_fata->cmd_iohs[wd_seccnt]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PION_OFF_SECTOR, 1, &wdr_fata->cmd_iohs[wd_sector]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PION_OFF_CYL_LO, 1, &wdr_fata->cmd_iohs[wd_cyl_lo]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PION_OFF_CYL_HI, 1, &wdr_fata->cmd_iohs[wd_cyl_hi]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PION_OFF_SDH, 1, &wdr_fata->cmd_iohs[wd_sdh]);
-	bus_space_subregion(wdr_fata->cmd_iot, wdr_fata->cmd_baseioh, 
-	    FATA1_PION_OFF_COMMAND, 1, &wdr_fata->cmd_iohs[wd_command]);
+	for (i = 0; i < WDC_NREG; i++) 
+		bus_space_subregion(wdr_fata->cmd_iot,
+		    wdr_fata->cmd_baseioh, wdr_offsets_pion[i], 
+		    i == 0 ? 4 : 1, &wdr_fata->cmd_iohs[i]);
 }
 
 static void
