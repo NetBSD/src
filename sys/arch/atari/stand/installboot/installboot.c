@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.24 2009/03/14 21:04:07 dsl Exp $	*/
+/*	$NetBSD: installboot.c,v 1.25 2011/11/05 00:34:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -78,7 +78,7 @@ static int		secpertrack = 0;
 static int		milan = 0;
 
 static void
-usage ()
+usage(void)
 {
 	fprintf(stderr,
 		"usage: installboot [options] device\n"
@@ -92,7 +92,7 @@ usage ()
 }
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
 	struct disklabel dl;
 	char		 *dn;
@@ -176,10 +176,12 @@ main (int argc, char *argv[])
 }
 
 static void
-oscheck ()
+oscheck(void)
 {
-	struct nlist	kbv[] = { { "_bootversion" },
-				  { NULL } };
+	struct nlist kbv[] = {
+		{ .n_name = "_bootversion" },
+		{ .n_name = NULL }
+	};
 	kvm_t		*kd_kern;
 	char		errbuf[_POSIX2_LINE_MAX];
 	u_short		kvers;
@@ -197,17 +199,16 @@ oscheck ()
 		errx(EXIT_FAILURE, "kvm_nlist: %s", kvm_geterr(kd_kern));
 	if (kbv[0].n_value == 0)
 		errx(EXIT_FAILURE, "%s not in namelist", kbv[0].n_name);
-	if (kvm_read(kd_kern, kbv[0].n_value, (char *)&kvers,
-						sizeof(kvers)) == -1)
+	if (kvm_read(kd_kern, kbv[0].n_value, &kvers, sizeof(kvers)) == -1)
 		errx(EXIT_FAILURE, "kvm_read: %s", kvm_geterr(kd_kern));
 	kvm_close(kd_kern);
 	if (kvers != BOOTVERSION)
 		errx(EXIT_FAILURE, "Kern bootversion: %d, expected: %d",
-					kvers, BOOTVERSION);
+		    kvers, BOOTVERSION);
 }
 
 static void
-install_fd (char *devnm, struct disklabel *label)
+install_fd(char *devnm, struct disklabel *label)
 {
 	const char	 *machpath;
 	char		 *xxboot, *bootxx;
@@ -261,7 +262,7 @@ install_fd (char *devnm, struct disklabel *label)
 }
 
 static void
-install_sd (char *devnm, struct disklabel *label)
+install_sd(char *devnm, struct disklabel *label)
 {
 	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
@@ -316,16 +317,17 @@ install_sd (char *devnm, struct disklabel *label)
 		if (write(fd, &bootarea, sizeof(bootarea)) != sizeof(bootarea))
 			err(EXIT_FAILURE, "%s", devnm);
 		if (verbose)
-			printf("Boot block installed on %s (sector %d)\n", devnm,
-								    bbsec);
+			printf("Boot block installed on %s (sector %d)\n",
+			    devnm, bbsec);
 		if (xxb00t) {
 			if (lseek(fd, (off_t)0, SEEK_SET) != 0)
 				err(EXIT_FAILURE, "%s", devnm);
-			if (write(fd, &ahdiboot, sizeof(ahdiboot)) != sizeof(ahdiboot))
+			if (write(fd, &ahdiboot, sizeof(ahdiboot)) !=
+			    sizeof(ahdiboot))
 				err(EXIT_FAILURE, "%s", devnm);
 			if (verbose)
 				printf("AHDI root  installed on %s (0)\n",
-								devnm);
+				    devnm);
 		}
 		if (close(fd))
 			err(EXIT_FAILURE, "%s", devnm);
@@ -333,7 +335,7 @@ install_sd (char *devnm, struct disklabel *label)
 }
 
 static void
-install_wd (char *devnm, struct disklabel *label)
+install_wd(char *devnm, struct disklabel *label)
 {
 	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
@@ -388,8 +390,8 @@ install_wd (char *devnm, struct disklabel *label)
 		if (write(fd, &bootarea, sizeof(bootarea)) != sizeof(bootarea))
 			err(EXIT_FAILURE, "%s", devnm);
 		if (verbose)
-			printf("Boot block installed on %s (sector %d)\n", devnm,
-								    bbsec);
+			printf("Boot block installed on %s (sector %d)\n",
+			    devnm, bbsec);
 		if (xxb00t) {
 			if (lseek(fd, (off_t)0, SEEK_SET) != 0)
 				err(EXIT_FAILURE, "%s", devnm);
@@ -397,8 +399,8 @@ install_wd (char *devnm, struct disklabel *label)
 							!= sizeof(ahdiboot))
 				err(EXIT_FAILURE, "%s", devnm);
 			if (verbose)
-				printf("AHDI root  installed on %s (sector 0)\n",
-									devnm);
+				printf("AHDI root installed on %s (sector 0)\n",
+				    devnm);
 		}
 		if (close(fd))
 			err(EXIT_FAILURE, "%s", devnm);
@@ -406,11 +408,8 @@ install_wd (char *devnm, struct disklabel *label)
 }
 
 static void
-mkahdiboot (newroot, xxb00t, devnm, bbsec)
-	struct ahdi_root *newroot;
-	char		 *xxb00t,
-			 *devnm;
-	u_int32_t	 bbsec;
+mkahdiboot(struct ahdi_root *newroot, char *xxb00t, char *devnm,
+    u_int32_t bbsec)
 {
 	struct ahdi_root tmproot;
 	struct ahdi_part *pd;
@@ -455,12 +454,8 @@ gotit:	/* copy code from prototype and set new checksum */
 }
 
 static void
-mkbootblock (bb, xxb, bxx, label, magic)
-	struct bootblock *bb;
-	char		 *xxb,
-			 *bxx;
-	u_int		 magic;
-	struct disklabel *label;
+mkbootblock(struct bootblock *bb, char *xxb, char *bxx,
+    struct disklabel *label, u_int magic)
 {
 	int		 fd;
 
@@ -546,7 +541,7 @@ setIDEpar (u_int8_t *start, size_t size)
 }
 
 static void
-setNVpref ()
+setNVpref(void)
 {
 	static const u_char	bootpref = BOOTPREF_NETBSD;
 	static const char	nvrdev[] = PATH_NVRAM;
