@@ -1,6 +1,6 @@
-/*	$NetBSD: t_connect.c,v 1.4 2010/11/03 16:10:25 christos Exp $	*/
+/*	$NetBSD: t_listen.c,v 1.1 2011/11/05 18:19:02 jruoho Exp $	*/
 /*
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,68 +31,44 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <arpa/inet.h>
 #include <netinet/in.h>
 
 #include <atf-c.h>
 
-ATF_TC(low_port);
-ATF_TC_HEAD(low_port, tc)
+ATF_TC(listen_low_port);
+ATF_TC_HEAD(listen_low_port, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks that low-port allocation "
 	    "works");
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
-ATF_TC_BODY(low_port, tc)
+ATF_TC_BODY(listen_low_port, tc)
 {
-	struct sockaddr_in sin, sinlist;
-	int sd, val, slist;
-	socklen_t slen;
+	int sd, val;
 
-	slist = socket(AF_INET, SOCK_STREAM, 0);
 	sd = socket(AF_INET, SOCK_STREAM, 0);
-
-	/* bind listening socket */
-	memset(&sinlist, 0, sizeof(sinlist));
-	sinlist.sin_family = AF_INET;
-	sinlist.sin_port = htons(31522);
-	sinlist.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-	ATF_REQUIRE_EQ(bind(slist,
-	    (struct sockaddr *)&sinlist, sizeof(sinlist)), 0);
-	ATF_REQUIRE_EQ(listen(slist, 1), 0);
 
 	val = IP_PORTRANGE_LOW;
 	if (setsockopt(sd, IPPROTO_IP, IP_PORTRANGE, &val,
 	    sizeof(val)) == -1)
 		atf_tc_fail("setsockopt failed: %s", strerror(errno));
 
-	memset(&sin, 0, sizeof(sin));
-
-	sin.sin_port = htons(31522);
-	sin.sin_addr.s_addr = inet_addr("127.0.0.1");
-	sin.sin_family = AF_INET;
-
-	if (connect(sd, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
+	if (listen(sd, 5) == -1) {
 		int serrno = errno;
-		atf_tc_fail("connect failed: %s%s",
+		atf_tc_fail("listen failed: %s%s",
 		    strerror(serrno),
 		    serrno != EACCES ? "" :
 		    " (see http://mail-index.netbsd.org/"
 		    "source-changes/2007/12/16/0011.html)");
 	}
 
-	slen = sizeof(sin);
-	ATF_REQUIRE_EQ(getsockname(sd, (struct sockaddr *)&sin, &slen), 0);
-	ATF_REQUIRE_EQ(slen, sizeof(sin));
-	ATF_REQUIRE(ntohs(sin.sin_port) <= IPPORT_RESERVEDMAX);
-
 	close(sd);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, low_port);
 
-	return atf_no_error();
+	ATF_TP_ADD_TC(tp, listen_low_port);
+
+	return 0;
 }
