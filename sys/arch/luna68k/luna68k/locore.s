@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.41 2011/11/05 15:33:18 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.42 2011/11/05 15:37:17 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -147,7 +147,7 @@ ASENTRY_NOPROFILE(start)
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
 
 /* determine our CPU/MMU combo - check for all regardless of kernel config */
-	movl	#0x200,%d0		| data freeze bit
+	movl	#DC_FREEZE,%d0		| data freeze bit
 	movc	%d0,%cacr		|   only exists on 68030
 	movc	%cacr,%d0		| read it back
 	tstl	%d0			| zero?
@@ -252,7 +252,7 @@ Lmotommu0:
 	RELOC(proto040tc,%a0)
 	movl	%a0@,%d0
 	.long	0x4e7b0003		| movc %d0,%tc
-	movl	#0x80008000,%d0
+	movl	#CACHE40_ON,%d0
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1
 Lmotommu1:
