@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.884 2011/11/02 05:24:12 apb Exp $
+#	$NetBSD: 3RDPARTY,v 1.885 2011/11/05 19:08:22 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -357,14 +357,14 @@ for GCC 4.5:
 		gcc/testsuite/gnat.dg
 
 Package:	gdb
-Version:	6.5
-Current Vers:	7.2
+Version:	6.5/7.3.1
+Current Vers:	7.3.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
 Mailing List:	bug-gdb@gnu.org
-Responsible:	thorpej
-License:	GPLv2, LGPLv2
+Responsible:	christos
+License:	GPLv3, LGPLv3.1
 Notes:
 When updating GDB, it is imperative to test that:
 	- Debugging of kernel cores ("target kvm") works correctly
@@ -410,7 +410,8 @@ Use src/gnu/dist/grep/grep2netbsd for preparing the source tree
 for the import.
 A non-gnu grep was imported into src/usr.bin/grep on 2 Jan 2004. It
 needs some tuning before it can replace gnu grep.
-	(cf.	http://www.vocito.com/downloads/software/grep/)
+	(cf.	https://github.com/howardjp/freegrep
+		http://www.monkey.org/openbsd/archive/tech/0306/msg00129.html)
 
 Package:	groff
 Version:	1.19.2
