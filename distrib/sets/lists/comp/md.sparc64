@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.128 2011/10/17 14:20:54 chs Exp $
+# $NetBSD: md.sparc64,v 1.129 2011/11/05 22:55:21 christos Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -814,6 +814,11 @@
 ./usr/lib/sparc/libtermlib_g.a			obsolete		compat,obsolete
 ./usr/lib/sparc/libtermlib_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libtermlib_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libtre.a			comp-c-lib		compat
+./usr/lib/sparc/libtre.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libtre_g.a			obsolete		compat,obsolete
+./usr/lib/sparc/libtre_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libtre_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libukfs.a			comp-c-lib		compat
 ./usr/lib/sparc/libukfs.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libukfs_g.a			-unknown-		compat,debuglib
