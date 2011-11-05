@@ -1,7 +1,7 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.294 2011/08/03 14:44:38 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.295 2011/11/05 16:40:35 erh Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.294 2011/08/03 14:44:38 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.295 2011/11/05 16:40:35 erh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -307,11 +307,17 @@ int rf_have_enough_components(RF_ConfigSet_t *);
 int rf_auto_config_set(RF_ConfigSet_t *, int *);
 static void rf_fix_old_label_size(RF_ComponentLabel_t *, uint64_t);
 
-static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
-				  allow autoconfig to take place.
-				  Note that this is overridden by having
-				  RAID_AUTOCONFIG as an option in the
-				  kernel config file.  */
+/*
+ * Debugging, mostly.  Set to 0 to not allow autoconfig to take place.
+ * Note that this is overridden by having RAID_AUTOCONFIG as an option
+ * in the kernel config file.
+ */
+#ifdef RAID_AUTOCONFIG
+int raidautoconfig = 1;
+#else
+int raidautoconfig = 0;
+#endif
+static bool raidautoconfigdone = false;
 
 struct RF_Pools_s rf_pools;
 
@@ -385,9 +391,7 @@ raidattach(int num)
 		aprint_error("raidattach: config_cfattach_attach failed?\n");
 	}
 
-#ifdef RAID_AUTOCONFIG
-	raidautoconfig = 1;
-#endif
+	raidautoconfigdone = false;
 
 	/*
 	 * Register a finalizer which will be used to auto-config RAID
@@ -403,11 +407,11 @@ rf_autoconfig(device_t self)
 	RF_AutoConfig_t *ac_list;
 	RF_ConfigSet_t *config_sets;
 
-	if (raidautoconfig == 0)
+	if (!raidautoconfig || raidautoconfigdone == true)
 		return (0);
 
 	/* XXX This code can only be run once. */
-	raidautoconfig = 0;
+	raidautoconfigdone = true;
 
 	/* 1. locate all RAID components on the system */
 	aprint_debug("Searching for RAID components...\n");
@@ -510,7 +514,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 				rootID = raidID;
 			}
 		}
- 
+
 		if (num_root == 1) {
 			booted_device = raid_softc[rootID].sc_dev;
 		} else {
