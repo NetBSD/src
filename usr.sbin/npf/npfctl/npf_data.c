@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.8 2011/11/04 01:00:28 zoltan Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.9 2011/11/05 19:19:29 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.8 2011/11/04 01:00:28 zoltan Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.9 2011/11/05 19:19:29 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -173,8 +173,8 @@ npfctl_get_addrfamily(const char *ostr)
 		family = AF_UNSPEC;
 	} else {
 		family = res->ai_family;
+		freeaddrinfo(res);
 	}
-	freeaddrinfo(res);
 	free(str);
 	return family;
 }
