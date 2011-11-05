@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2011/09/30 17:44:58 christos Exp $
+# $NetBSD: Makefile,v 1.32 2011/11/05 18:07:15 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,7 @@ TESTS_C+=	t_setdomainname
 TESTS_C+=	t_sethostname
 TESTS_C+=	t_siginfo
 TESTS_C+=	t_syslog
+TESTS_C+=	t_time
 TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
 
