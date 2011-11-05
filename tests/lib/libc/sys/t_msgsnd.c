@@ -1,4 +1,4 @@
-/* $NetBSD: t_msgsnd.c,v 1.1 2011/11/05 07:45:41 jruoho Exp $ */
+/* $NetBSD: t_msgsnd.c,v 1.2 2011/11/05 08:47:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msgsnd.c,v 1.1 2011/11/05 07:45:41 jruoho Exp $");
+__RCSID("$NetBSD: t_msgsnd.c,v 1.2 2011/11/05 08:47:54 jruoho Exp $");
 
 #include <sys/msg.h>
 #include <sys/stat.h>
@@ -71,7 +71,7 @@ clean(void)
 ATF_TC_WITH_CLEANUP(msgsnd_block);
 ATF_TC_HEAD(msgsnd_block, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test msgsnd(2) blocks");
+	atf_tc_set_md_var(tc, "descr", "Test that msgsnd(2) blocks");
 	atf_tc_set_md_var(tc, "timeout", "10");
 }
 
