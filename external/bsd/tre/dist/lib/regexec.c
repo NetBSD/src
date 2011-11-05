@@ -10,22 +10,7 @@
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#ifdef TRE_USE_ALLOCA
-/* AIX requires this to be the first thing in the file.	 */
-#ifndef __GNUC__
-# if HAVE_ALLOCA_H
-#  include <alloca.h>
-# else
-#  ifdef _AIX
- #pragma alloca
-#  else
-#   ifndef alloca /* predefined by HP cc +Olibcalls */
-char *alloca ();
-#   endif
-#  endif
-# endif
-#endif
-#endif /* TRE_USE_ALLOCA */
+#include "tre-alloca.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -47,10 +32,6 @@ char *alloca ();
 #include "tre-internal.h"
 #include "tre.h"
 #include "xmalloc.h"
-
-#ifdef __weak_alias
-__weak_alias(regexec,_regexec)
-#endif
 
 /* Fills the POSIX.2 regmatch_t array according to the TNFA tag and match
    endpoint values. */

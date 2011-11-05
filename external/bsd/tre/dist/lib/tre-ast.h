@@ -44,8 +44,8 @@ typedef struct {
   void *obj;             /* Pointer to actual node. */
   int nullable;
   int submatch_id;
-  int num_submatches;
-  int num_tags;
+  size_t num_submatches;
+  size_t num_tags;
   tre_pos_and_tags_t *firstpos;
   tre_pos_and_tags_t *lastpos;
 } tre_ast_node_t;
@@ -55,8 +55,8 @@ typedef struct {
    tags, matching parameter settings, and all expressions that match one
    character. */
 typedef struct {
-  long code_min;
-  long code_max;
+  int code_min;
+  int code_max;
   int position;
   union {
     tre_ctype_t class;

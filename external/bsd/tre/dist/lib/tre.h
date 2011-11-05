@@ -24,10 +24,10 @@
    system regex. */
 #include TRE_SYSTEM_REGEX_H_PATH
 #ifdef __weak_alias
-#define tre_regcomp  _regcomp
-#define tre_regexec  _regexec
-#define tre_regerror _regerror
-#define tre_regfree  _regfree
+__weak_alias(regcomp, tre_regcomp)
+__weak_alias(regexec, tre_regexec)
+__weak_alias(regerror, tre_regerror)
+__weak_alias(regfree, tre_regfree)
 #else
 #define tre_regcomp  regcomp
 #define tre_regexec  regexec

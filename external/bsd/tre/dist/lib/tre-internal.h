@@ -230,19 +230,19 @@ typedef struct tnfa tre_tnfa_t;
 
 struct tnfa {
   tre_tnfa_transition_t *transitions;
-  unsigned int num_transitions;
+  size_t num_transitions;
   tre_tnfa_transition_t *initial;
   tre_tnfa_transition_t *final;
   tre_submatch_data_t *submatch_data;
   char *firstpos_chars;
   int first_char;
-  unsigned int num_submatches;
+  size_t num_submatches;
   tre_tag_direction_t *tag_directions;
   int *minimal_tags;
-  int num_tags;
-  int num_minimals;
+  size_t num_tags;
+  size_t num_minimals;
   int end_tag;
-  int num_states;
+  size_t num_states;
   int cflags;
   int have_backrefs;
   int have_approx;

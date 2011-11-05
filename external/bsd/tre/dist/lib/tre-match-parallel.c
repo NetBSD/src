@@ -27,22 +27,7 @@
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#ifdef TRE_USE_ALLOCA
-/* AIX requires this to be the first thing in the file.	 */
-#ifndef __GNUC__
-# if HAVE_ALLOCA_H
-#  include <alloca.h>
-# else
-#  ifdef _AIX
- #pragma alloca
-#  else
-#   ifndef alloca /* predefined by HP cc +Olibcalls */
-char *alloca ();
-#   endif
-#  endif
-# endif
-#endif
-#endif /* TRE_USE_ALLOCA */
+#include "tre-alloca.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -123,14 +108,14 @@ tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, int len,
   int reg_notbol = eflags & REG_NOTBOL;
   int reg_noteol = eflags & REG_NOTEOL;
   int reg_newline = tnfa->cflags & REG_NEWLINE;
-  int str_user_end = 0;
+  size_t str_user_end = 0;
 
   char *buf;
   tre_tnfa_transition_t *trans_i;
   tre_tnfa_reach_t *reach, *reach_next, *reach_i, *reach_next_i;
   tre_reach_pos_t *reach_pos;
   int *tag_i;
-  int num_tags, i;
+  size_t num_tags, i;
 
   int match_eo = -1;	   /* end offset of match (-1 if no match found yet) */
   int new_match = 0;
@@ -153,7 +138,7 @@ tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, int len,
      everything in a single large block from the stack frame using alloca()
      or with malloc() if alloca is unavailable. */
   {
-    int tbytes, rbytes, pbytes, xbytes, total_bytes;
+    size_t tbytes, rbytes, pbytes, xbytes, total_bytes;
     char *tmp_buf;
     /* Compute the length of the block we need. */
     tbytes = sizeof(*tmp_tags) * num_tags;
@@ -221,7 +206,7 @@ tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, int len,
       if (str_byte >= orig_str + 1)
 	prev_c = (unsigned char)*(str_byte - 1);
       next_c = (unsigned char)*str_byte;
-      pos = str_byte - orig_str;
+      pos = (int)(str_byte - orig_str);
       if (len < 0 || pos < len)
 	str_byte++;
     }
@@ -296,7 +281,7 @@ tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, int len,
 		  if (tag_i)
 		    while (*tag_i >= 0)
 		      {
-			if (*tag_i < num_tags)
+			if ((size_t)*tag_i < num_tags)
 			  reach_next_i->tags[*tag_i] = pos;
 			tag_i++;
 		      }
@@ -369,7 +354,7 @@ tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, int len,
 		  int end = tnfa->minimal_tags[i];
 		  int start = tnfa->minimal_tags[i + 1];
 		  DPRINT(("  Minimal start %d, end %d\n", start, end));
-		  if (end >= num_tags)
+		  if ((size_t)end >= num_tags)
 		    {
 		      DPRINT(("	 Throwing %p out.\n", reach_i->state));
 		      skip = 1;
@@ -428,7 +413,7 @@ tre_tnfa_run_parallel(const tre_tnfa_t *tnfa, const void *string, int len,
 		  if (tag_i != NULL)
 		    while (*tag_i >= 0)
 		      {
-			if (*tag_i < num_tags)
+			if ((size_t)*tag_i < num_tags)
 			  tmp_tags[*tag_i] = pos;
 			tag_i++;
 		      }

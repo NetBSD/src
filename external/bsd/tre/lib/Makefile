@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile,v 1.1 2010/02/25 07:46:14 agc Exp $
+#	$NetBSD: Makefile,v 1.1 2011/11/05 22:39:13 christos Exp $
 
 # for information:
 # the configure script is run as:
 #	./configure --prefix=/usr --without-alloca
 
+.include <bsd.own.mk>
 TREDIST=	${.CURDIR}/../dist
 
 # external tre sources
 .PATH: ${TREDIST}/lib
 
-CPPFLAGS+=	-I${TREDIST} -I${TREDIST}/lib -I${.CURDIR}
-CPPFLAGS+=	-DHAVE_CONFIG_H=1
+CPPFLAGS+=	-I${.CURDIR}
 
 LIB=	tre
 
