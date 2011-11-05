@@ -17,31 +17,29 @@
 #define GET_NEXT_WCHAR()						      \
   do {									      \
     prev_c = next_c;							      \
-    if (type == STR_BYTE)						      \
-      {									      \
+    switch (type) {							      \
+      case STR_BYTE:						      	      \
 	pos++;								      \
 	if (len >= 0 && pos >= len)					      \
 	  next_c = '\0';						      \
 	else								      \
 	  next_c = (unsigned char)(*str_byte++);			      \
-      }									      \
-    else if (type == STR_WIDE)						      \
-      {									      \
+	break;							              \
+      case STR_WIDE:						      	      \
 	pos++;								      \
 	if (len >= 0 && pos >= len)					      \
 	  next_c = L'\0';						      \
 	else								      \
 	  next_c = *str_wide++;						      \
-      }									      \
-    else if (type == STR_MBS)						      \
-      {									      \
+        break;								      \
+      case STR_MBS:						      	      \
         pos += pos_add_next;					      	      \
 	if (str_byte == NULL)						      \
 	  next_c = L'\0';						      \
 	else								      \
 	  {								      \
 	    size_t w;							      \
-	    int max;							      \
+	    long max;							      \
 	    if (len >= 0)						      \
 	      max = len - pos;						      \
 	    else							      \
@@ -64,18 +62,18 @@
 		  }							      \
 		else							      \
 		  {							      \
-		    pos_add_next = w;					      \
+		    pos_add_next = (unsigned int)w;			      \
 		    str_byte += w;					      \
 		  }							      \
 	      }								      \
-	  }								      \
-      }									      \
-    else if (type == STR_USER)						      \
-      {									      \
+	  } 								      \
+        break;								      \
+      case STR_USER:						      	      \
         pos += pos_add_next;					      	      \
 	str_user_end = str_source->get_next_char(&next_c, &pos_add_next,      \
-                                                 str_source->context);	      \
-      }									      \
+                                                 str_source->context);        \
+        break;								      \
+    }									      \
   } while(/*CONSTCOND*/0)
 
 #else /* !TRE_MULTIBYTE */
@@ -85,28 +83,27 @@
 #define GET_NEXT_WCHAR()						      \
   do {									      \
     prev_c = next_c;							      \
-    if (type == STR_BYTE)						      \
-      {									      \
+    switch (type) {							      \
+      case STR_BYTE:							      \
 	pos++;								      \
 	if (len >= 0 && pos >= len)					      \
 	  next_c = '\0';						      \
 	else								      \
 	  next_c = (unsigned char)(*str_byte++);			      \
-      }									      \
-    else if (type == STR_WIDE)						      \
-      {									      \
+        break;								      \
+      case STR_WIDE:							      \
 	pos++;								      \
 	if (len >= 0 && pos >= len)					      \
 	  next_c = L'\0';						      \
 	else								      \
 	  next_c = *str_wide++;						      \
-      }									      \
-    else if (type == STR_USER)						      \
-      {									      \
+        break;								      \
+      case STR_USER:							      \
         pos += pos_add_next;					      	      \
 	str_user_end = str_source->get_next_char(&next_c, &pos_add_next,      \
                                                  str_source->context);	      \
-      }									      \
+        break;								      \
+    }									      \
   } while(/*CONSTCOND*/0)
 
 #endif /* !TRE_MULTIBYTE */
@@ -118,20 +115,20 @@
 #define GET_NEXT_WCHAR()						      \
   do {									      \
     prev_c = next_c;							      \
-    if (type == STR_BYTE)						      \
-      {									      \
+    switch (type) {							      \
+      case STR_BYTE:							      \
 	pos++;								      \
 	if (len >= 0 && pos >= len)					      \
 	  next_c = '\0';						      \
 	else								      \
 	  next_c = (unsigned char)(*str_byte++);			      \
-      }									      \
-    else if (type == STR_USER)						      \
-      {									      \
+        break;								      \
+      case STR_USER:						      	      \
 	pos += pos_add_next;						      \
 	str_user_end = str_source->get_next_char(&next_c, &pos_add_next,      \
 						 str_source->context);	      \
-      }									      \
+        break;								      \
+    }									      \
   } while(/*CONSTCOND*/0)
 
 #endif /* !TRE_WCHAR */
@@ -175,10 +172,10 @@
 
 /* Returns 1 if `t1' wins `t2', 0 otherwise. */
 inline static int
-tre_tag_order(int num_tags, tre_tag_direction_t *tag_directions,
+tre_tag_order(size_t num_tags, tre_tag_direction_t *tag_directions,
 	      int *t1, int *t2)
 {
-  int i;
+  size_t i;
   for (i = 0; i < num_tags; i++)
     {
       if (tag_directions[i] == TRE_TAG_MINIMIZE)

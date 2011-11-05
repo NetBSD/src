@@ -196,20 +196,20 @@ tre_add_tags(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree,
     }
 
   STACK_PUSH(stack, voidptr, node);
-  STACK_PUSH(stack, int, ADDTAGS_RECURSE);
+  STACK_PUSH(stack, long, ADDTAGS_RECURSE);
 
   while (tre_stack_num_objects(stack) > bottom)
     {
       if (status != REG_OK)
 	break;
 
-      symbol = (tre_addtags_symbol_t)tre_stack_pop_int(stack);
+      symbol = (tre_addtags_symbol_t)tre_stack_pop_long(stack);
       switch (symbol)
 	{
 
 	case ADDTAGS_SET_SUBMATCH_END:
 	  {
-	    int id = tre_stack_pop_int(stack);
+	    int id = (int)tre_stack_pop_long(stack);
 	    int i;
 
 	    /* Add end of this submatch to regset. */
@@ -259,8 +259,8 @@ tre_add_tags(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree,
 
 	      /* Add end of this submatch to regset after processing this
 		 node. */
-	      STACK_PUSHX(stack, int, node->submatch_id);
-	      STACK_PUSHX(stack, int, ADDTAGS_SET_SUBMATCH_END);
+	      STACK_PUSHX(stack, long, node->submatch_id);
+	      STACK_PUSHX(stack, long, ADDTAGS_SET_SUBMATCH_END);
 	    }
 
 	  switch (node->type)
@@ -324,14 +324,14 @@ tre_add_tags(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree,
 
 		/* After processing right child. */
 		STACK_PUSHX(stack, voidptr, node);
-		STACK_PUSHX(stack, int, ADDTAGS_AFTER_CAT_RIGHT);
+		STACK_PUSHX(stack, long, ADDTAGS_AFTER_CAT_RIGHT);
 
 		/* Process right child. */
 		STACK_PUSHX(stack, voidptr, right);
-		STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
+		STACK_PUSHX(stack, long, ADDTAGS_RECURSE);
 
 		/* After processing left child. */
-		STACK_PUSHX(stack, int, next_tag + left->num_tags);
+		STACK_PUSHX(stack, long, (long)(next_tag + left->num_tags));
 		DPRINT(("  Pushing %d for after left\n",
 			next_tag + left->num_tags));
 		if (left->num_tags > 0 && right->num_tags > 0)
@@ -342,12 +342,12 @@ tre_add_tags(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree,
 		    reserved_tag = next_tag;
 		    next_tag++;
 		  }
-		STACK_PUSHX(stack, int, reserved_tag);
-		STACK_PUSHX(stack, int, ADDTAGS_AFTER_CAT_LEFT);
+		STACK_PUSHX(stack, long, reserved_tag);
+		STACK_PUSHX(stack, long, ADDTAGS_AFTER_CAT_LEFT);
 
 		/* Process left child. */
 		STACK_PUSHX(stack, voidptr, left);
-		STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
+		STACK_PUSHX(stack, long, ADDTAGS_RECURSE);
 
 		}
 	      break;
@@ -358,18 +358,18 @@ tre_add_tags(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree,
 
 		if (first_pass)
 		  {
-		    STACK_PUSHX(stack, int, regset[0] >= 0 || iter->minimal);
+		    STACK_PUSHX(stack, long, regset[0] >= 0 || iter->minimal);
 		  }
 		else
 		  {
-		    STACK_PUSHX(stack, int, tag);
-		    STACK_PUSHX(stack, int, iter->minimal);
+		    STACK_PUSHX(stack, long, tag);
+		    STACK_PUSHX(stack, long, iter->minimal);
 		  }
 		STACK_PUSHX(stack, voidptr, node);
-		STACK_PUSHX(stack, int, ADDTAGS_AFTER_ITERATION);
+		STACK_PUSHX(stack, long, ADDTAGS_AFTER_ITERATION);
 
 		STACK_PUSHX(stack, voidptr, iter->arg);
-		STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
+		STACK_PUSHX(stack, long, ADDTAGS_RECURSE);
 
 		/* Regset is not empty, so add a tag here. */
 		if (regset[0] >= 0 || iter->minimal)
@@ -426,25 +426,25 @@ tre_add_tags(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree,
 		DPRINT(("Union\n"));
 
 		/* After processing right child. */
-		STACK_PUSHX(stack, int, right_tag);
-		STACK_PUSHX(stack, int, left_tag);
+		STACK_PUSHX(stack, long, right_tag);
+		STACK_PUSHX(stack, long, left_tag);
 		STACK_PUSHX(stack, voidptr, regset);
-		STACK_PUSHX(stack, int, regset[0] >= 0);
+		STACK_PUSHX(stack, long, regset[0] >= 0);
 		STACK_PUSHX(stack, voidptr, node);
 		STACK_PUSHX(stack, voidptr, right);
 		STACK_PUSHX(stack, voidptr, left);
-		STACK_PUSHX(stack, int, ADDTAGS_AFTER_UNION_RIGHT);
+		STACK_PUSHX(stack, long, ADDTAGS_AFTER_UNION_RIGHT);
 
 		/* Process right child. */
 		STACK_PUSHX(stack, voidptr, right);
-		STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
+		STACK_PUSHX(stack, long, ADDTAGS_RECURSE);
 
 		/* After processing left child. */
-		STACK_PUSHX(stack, int, ADDTAGS_AFTER_UNION_LEFT);
+		STACK_PUSHX(stack, long, ADDTAGS_AFTER_UNION_LEFT);
 
 		/* Process left child. */
 		STACK_PUSHX(stack, voidptr, left);
-		STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
+		STACK_PUSHX(stack, long, ADDTAGS_RECURSE);
 
 		/* Regset is not empty, so add a tag here. */
 		if (regset[0] >= 0)
@@ -505,7 +505,7 @@ tre_add_tags(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree,
 	    if (first_pass)
 	      {
 		node->num_tags = ((tre_iteration_t *)node->obj)->arg->num_tags
-		  + tre_stack_pop_int(stack);
+		  + tre_stack_pop_long(stack);
 		minimal_tag = -1;
 	      }
 	    else
@@ -667,7 +667,7 @@ tre_copy_ast(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *ast,
   tre_copyast_symbol_t symbol;
 
   STACK_PUSH(stack, voidptr, ast);
-  STACK_PUSH(stack, int, COPY_RECURSE);
+  STACK_PUSH(stack, long, COPY_RECURSE);
 
   while (status == REG_OK && tre_stack_num_objects(stack) > bottom)
     {
@@ -675,7 +675,7 @@ tre_copy_ast(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *ast,
       if (status != REG_OK)
 	break;
 
-      symbol = (tre_copyast_symbol_t)tre_stack_pop_int(stack);
+      symbol = (tre_copyast_symbol_t)tre_stack_pop_long(stack);
       switch (symbol)
 	{
 	case COPY_SET_RESULT_PTR:
@@ -733,11 +733,11 @@ tre_copy_ast(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *ast,
 		tmp = (*result)->obj;
 		result = &tmp->left;
 		STACK_PUSHX(stack, voidptr, uni->right);
-		STACK_PUSHX(stack, int, COPY_RECURSE);
+		STACK_PUSHX(stack, long, COPY_RECURSE);
 		STACK_PUSHX(stack, voidptr, &tmp->right);
-		STACK_PUSHX(stack, int, COPY_SET_RESULT_PTR);
+		STACK_PUSHX(stack, long, COPY_SET_RESULT_PTR);
 		STACK_PUSHX(stack, voidptr, uni->left);
-		STACK_PUSHX(stack, int, COPY_RECURSE);
+		STACK_PUSHX(stack, long, COPY_RECURSE);
 		break;
 	      }
 	    case CATENATION:
@@ -756,18 +756,18 @@ tre_copy_ast(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *ast,
 		result = &tmp->left;
 
 		STACK_PUSHX(stack, voidptr, cat->right);
-		STACK_PUSHX(stack, int, COPY_RECURSE);
+		STACK_PUSHX(stack, long, COPY_RECURSE);
 		STACK_PUSHX(stack, voidptr, &tmp->right);
-		STACK_PUSHX(stack, int, COPY_SET_RESULT_PTR);
+		STACK_PUSHX(stack, long, COPY_SET_RESULT_PTR);
 		STACK_PUSHX(stack, voidptr, cat->left);
-		STACK_PUSHX(stack, int, COPY_RECURSE);
+		STACK_PUSHX(stack, long, COPY_RECURSE);
 		break;
 	      }
 	    case ITERATION:
 	      {
 		tre_iteration_t *iter = node->obj;
 		STACK_PUSHX(stack, voidptr, iter->arg);
-		STACK_PUSHX(stack, int, COPY_RECURSE);
+		STACK_PUSHX(stack, long, COPY_RECURSE);
 		*result = tre_ast_new_iter(mem, iter->arg, iter->min,
 					   iter->max, iter->minimal);
 		if (*result == NULL)
@@ -818,7 +818,7 @@ tre_expand_ast(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *ast,
     params[i] = TRE_PARAM_DEFAULT;
 
   STACK_PUSHR(stack, voidptr, ast);
-  STACK_PUSHR(stack, int, EXPAND_RECURSE);
+  STACK_PUSHR(stack, long, EXPAND_RECURSE);
   while (status == REG_OK && tre_stack_num_objects(stack) > bottom)
     {
       tre_ast_node_t *node;
@@ -829,7 +829,7 @@ tre_expand_ast(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *ast,
 
       DPRINT(("pos_add %d\n", pos_add));
 
-      symbol = (tre_expand_ast_symbol_t)tre_stack_pop_int(stack);
+      symbol = (tre_expand_ast_symbol_t)tre_stack_pop_long(stack);
       node = tre_stack_pop_voidptr(stack);
       switch (symbol)
 	{
@@ -851,28 +851,28 @@ tre_expand_ast(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *ast,
 	      {
 		tre_union_t *uni = node->obj;
 		STACK_PUSHX(stack, voidptr, uni->right);
-		STACK_PUSHX(stack, int, EXPAND_RECURSE);
+		STACK_PUSHX(stack, long, EXPAND_RECURSE);
 		STACK_PUSHX(stack, voidptr, uni->left);
-		STACK_PUSHX(stack, int, EXPAND_RECURSE);
+		STACK_PUSHX(stack, long, EXPAND_RECURSE);
 		break;
 	      }
 	    case CATENATION:
 	      {
 		tre_catenation_t *cat = node->obj;
 		STACK_PUSHX(stack, voidptr, cat->right);
-		STACK_PUSHX(stack, int, EXPAND_RECURSE);
+		STACK_PUSHX(stack, long, EXPAND_RECURSE);
 		STACK_PUSHX(stack, voidptr, cat->left);
-		STACK_PUSHX(stack, int, EXPAND_RECURSE);
+		STACK_PUSHX(stack, long, EXPAND_RECURSE);
 		break;
 	      }
 	    case ITERATION:
 	      {
 		tre_iteration_t *iter = node->obj;
-		STACK_PUSHX(stack, int, pos_add);
+		STACK_PUSHX(stack, long, pos_add);
 		STACK_PUSHX(stack, voidptr, node);
-		STACK_PUSHX(stack, int, EXPAND_AFTER_ITER);
+		STACK_PUSHX(stack, long, EXPAND_AFTER_ITER);
 		STACK_PUSHX(stack, voidptr, iter->arg);
-		STACK_PUSHX(stack, int, EXPAND_RECURSE);
+		STACK_PUSHX(stack, long, EXPAND_RECURSE);
 		/* If we are going to expand this node at EXPAND_AFTER_ITER
 		   then don't increase the `pos' fields of the nodes now, it
 		   will get done when expanding. */
@@ -1321,14 +1321,14 @@ tre_compute_nfl(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree)
   int bottom = tre_stack_num_objects(stack);
 
   STACK_PUSHR(stack, voidptr, tree);
-  STACK_PUSHR(stack, int, NFL_RECURSE);
+  STACK_PUSHR(stack, long, NFL_RECURSE);
 
   while (tre_stack_num_objects(stack) > bottom)
     {
       tre_nfl_stack_symbol_t symbol;
       tre_ast_node_t *node;
 
-      symbol = (tre_nfl_stack_symbol_t)tre_stack_pop_int(stack);
+      symbol = (tre_nfl_stack_symbol_t)tre_stack_pop_long(stack);
       node = tre_stack_pop_voidptr(stack);
       switch (symbol)
 	{
@@ -1390,31 +1390,31 @@ tre_compute_nfl(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree)
 	      /* Compute the attributes for the two subtrees, and after that
 		 for this node. */
 	      STACK_PUSHR(stack, voidptr, node);
-	      STACK_PUSHR(stack, int, NFL_POST_UNION);
+	      STACK_PUSHR(stack, long, NFL_POST_UNION);
 	      STACK_PUSHR(stack, voidptr, ((tre_union_t *)node->obj)->right);
-	      STACK_PUSHR(stack, int, NFL_RECURSE);
+	      STACK_PUSHR(stack, long, NFL_RECURSE);
 	      STACK_PUSHR(stack, voidptr, ((tre_union_t *)node->obj)->left);
-	      STACK_PUSHR(stack, int, NFL_RECURSE);
+	      STACK_PUSHR(stack, long, NFL_RECURSE);
 	      break;
 
 	    case CATENATION:
 	      /* Compute the attributes for the two subtrees, and after that
 		 for this node. */
 	      STACK_PUSHR(stack, voidptr, node);
-	      STACK_PUSHR(stack, int, NFL_POST_CATENATION);
+	      STACK_PUSHR(stack, long, NFL_POST_CATENATION);
 	      STACK_PUSHR(stack, voidptr, ((tre_catenation_t *)node->obj)->right);
-	      STACK_PUSHR(stack, int, NFL_RECURSE);
+	      STACK_PUSHR(stack, long, NFL_RECURSE);
 	      STACK_PUSHR(stack, voidptr, ((tre_catenation_t *)node->obj)->left);
-	      STACK_PUSHR(stack, int, NFL_RECURSE);
+	      STACK_PUSHR(stack, long, NFL_RECURSE);
 	      break;
 
 	    case ITERATION:
 	      /* Compute the attributes for the subtree, and after that for
 		 this node. */
 	      STACK_PUSHR(stack, voidptr, node);
-	      STACK_PUSHR(stack, int, NFL_POST_ITERATION);
+	      STACK_PUSHR(stack, long, NFL_POST_ITERATION);
 	      STACK_PUSHR(stack, voidptr, ((tre_iteration_t *)node->obj)->arg);
-	      STACK_PUSHR(stack, int, NFL_RECURSE);
+	      STACK_PUSHR(stack, long, NFL_RECURSE);
 	      break;
 	    }
 	  break; /* end case: NFL_RECURSE */
