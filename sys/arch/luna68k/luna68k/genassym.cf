@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.19 2011/01/14 02:06:27 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.20 2011/11/05 15:37:17 tsutsui Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -149,6 +149,8 @@ define	SPL6			PSL_S | PSL_IPL6
 # magic
 define	FC_USERD		FC_USERD
 define	FC_SUPERD		FC_SUPERD
+define	DC_FREEZE		DC_FREEZE
+define	CACHE40_ON		CACHE40_ON
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
 define	CACHE_CLR		CACHE_CLR
