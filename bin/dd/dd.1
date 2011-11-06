@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.23 2010/12/22 09:42:53 enami Exp $
+.\"	$NetBSD: dd.1,v 1.24 2011/11/06 21:22:23 jym Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd December 22, 2010
+.Dd November 6, 2011
 .Dt DD 1
 .Os
 .Sh NAME
@@ -97,6 +97,74 @@ Seek on the input file
 blocks.
 This is synonymous with
 .Cm skip= Ns Ar n .
+.It Cm msgfmt= Ns Ar fmt
+Specify the message format
+.Ar fmt
+to be used when writing information to standard output.
+Possible values are:
+.Bl -tag -width xxxxx -offset indent -compact
+.It quiet
+turns off information summary report except for errors and
+.Cm progress .
+.It posix
+default information summary report as specified by POSIX.
+.It human
+default information summary report extended with human-readable
+values.
+.El
+.Pp
+When
+.Ar fmt
+does not correspond to any value given above,
+it contains a string that will be used as format specifier
+for the information summary output.
+Each conversion specification is introduced by the character
+.Cm % .
+The following ones are available:
+.Bl -tag -width xx -offset indent -compact
+.It b
+total number of bytes transferred
+.It B
+total number of bytes transferred in
+.Xr humanize_number 3
+format
+.It e
+speed transfer
+.It E
+speed transfer in
+.Xr humanize_number 3
+format
+.It i
+number of partial input block(s)
+.It I
+number of full input block(s)
+.It o
+number of partial output block(s)
+.It O
+number of full output block(s)
+.It s
+time elapsed since the beginning in
+.Do seconds.ms Dc
+format
+.It p
+number of sparse output blocks
+.It t
+number of truncated blocks
+.It w
+number of odd-length swab blocks
+.It P
+singular/plural of
+.Do block Dc
+depending on number of sparse blocks
+.It T
+singular/plural of
+.Do block Dc
+depending on number of truncated blocks
+.It W
+singular/plural of
+.Do block Dc
+depending on number of swab blocks
+.El
 .It Cm obs= Ns Ar n
 Set the output block size to
 .Va n
@@ -370,6 +438,18 @@ will exit.
 The
 .Nm
 utility exits 0 on success and \*[Gt]0 if an error occurred.
+.Sh EXAMPLES
+To print summary information in human-readable form:
+.Pp
+.Dl dd if=/dev/zero of=/dev/null count=1 msgfmt=human
+.Pp
+To customize the information summary output and print it through
+.Xr unvis 3 :
+.Pp
+.Bd -literal -offset indent
+dd if=/dev/zero of=/dev/null count=1 \e
+     msgfmt='speed:%E, in %s seconds\en' 2\*[Gt]\*[Am]1 | unvis
+.Ed
 .Sh SEE ALSO
 .Xr cp 1 ,
 .Xr mt 1 ,
@@ -382,7 +462,9 @@ utility is expected to be a superset of the
 standard.
 The
 .Cm files
-operand and the
+and
+.Cm msgfmt
+operands and the
 .Cm ascii ,
 .Cm ebcdic ,
 .Cm ibm ,
