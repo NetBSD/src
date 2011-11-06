@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.6 2011/10/18 23:43:06 jym Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.7 2011/11/06 11:40:47 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.6 2011/10/18 23:43:06 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.7 2011/11/06 11:40:47 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -278,7 +278,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	    pmap_pte2pa(opde) != pmap_pdirpa(pmap, 0)) {
 		int i;
 		s = splvm();
-		xpq_queue_lock();
 		/* Make recursive entry usable in user PGD */
 		for (i = 0; i < PDP_SIZE; i++) {
 			npde = pmap_pa2pte(
@@ -298,7 +297,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		}
 		if (pmap_valid_entry(opde))
 			pmap_apte_flush(ourpmap);
-		xpq_queue_unlock();
 		splx(s);
 	}
 	*pmap2 = ourpmap;
