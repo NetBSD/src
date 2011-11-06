@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.20 2011/09/30 18:59:04 christos Exp $	*/
+/*	$NetBSD: u3g.c,v 1.21 2011/11/06 02:29:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.20 2011/09/30 18:59:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.21 2011/11/06 02:29:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -506,7 +506,7 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 		break;
 
 	case USB_VENDOR_4GSYSTEMS:
-		if (uaa->product == USB_PRODUCT_4GSYSTEMS_XSSTICK_P14)
+		if (uaa->product == USB_PRODUCT_4GSYSTEMS_XSSTICK_P14_INSTALLER)
 			return u3g_4gsystems_reinit(uaa->device);
 		break;
 
