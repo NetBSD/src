@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.35 2011/09/16 16:06:23 joerg Exp $	*/
+/*	$NetBSD: args.c,v 1.36 2011/11/06 21:22:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.35 2011/09/16 16:06:23 joerg Exp $");
+__RCSID("$NetBSD: args.c,v 1.36 2011/11/06 21:22:23 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,15 +56,22 @@ __RCSID("$NetBSD: args.c,v 1.35 2011/09/16 16:06:23 joerg Exp $");
 #include "extern.h"
 
 static int	c_arg(const void *, const void *);
-#ifndef	NO_CONV
+
+#ifdef NO_MSGFMT
+static void	f_msgfmt(char *) __dead;
+#else
+static void	f_msgfmt(char *);
+#endif /* NO_MSGFMT */
+
+#ifdef NO_CONV
+static void	f_conv(char *) __dead;
+#else
+static void	f_conv(char *);
 static int	c_conv(const void *, const void *);
-#endif
+#endif /* NO_CONV */
+
 static void	f_bs(char *);
 static void	f_cbs(char *);
-#ifdef	NO_CONV
-__dead
-#endif
-static void	f_conv(char *);
 static void	f_count(char *);
 static void	f_files(char *);
 static void	f_ibs(char *);
@@ -90,6 +97,7 @@ static const struct arg {
 	{ "ibs",	f_ibs,		C_IBS,	 C_BS|C_IBS },
 	{ "if",		f_if,		C_IF,	 C_IF },
 	{ "iseek",	f_skip,		C_SKIP,	 C_SKIP },
+	{ "msgfmt",	f_msgfmt,	C_SKIP,	 C_SKIP },
 	{ "obs",	f_obs,		C_OBS,	 C_BS|C_OBS },
 	{ "of",		f_of,		C_OF,	 C_OF },
 	{ "oseek",	f_seek,		C_SEEK,	 C_SEEK },
@@ -251,6 +259,24 @@ f_if(char *arg)
 
 	in.name = arg;
 }
+
+#ifdef NO_MSGFMT
+/* Build a small version (i.e. for a ramdisk root) */
+static void
+f_msgfmt(char *arg)
+{
+
+	errx(EXIT_FAILURE, "msgfmt option disabled");
+	/* NOTREACHED */
+}
+#else	/* NO_MSGFMT */
+static void
+f_msgfmt(char *arg)
+{
+
+	msgfmt = arg;
+}
+#endif	/* NO_MSGFMT */
 
 static void
 f_obs(char *arg)

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 2011/09/16 16:06:23 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.21 2011/11/06 21:22:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -74,3 +74,4 @@ extern const u_char	a2e_32V[], a2e_POSIX[];
 extern const u_char	e2a_32V[], e2a_POSIX[];
 extern const u_char	a2ibm_32V[], a2ibm_POSIX[];
 extern u_char		casetab[];
+extern const char	*msgfmt;
