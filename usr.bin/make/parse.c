@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.179 2011/08/31 16:24:57 plunky Exp $	*/
+/*	$NetBSD: parse.c,v 1.180 2011/11/06 19:46:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.179 2011/08/31 16:24:57 plunky Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.180 2011/11/06 19:46:56 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.179 2011/08/31 16:24:57 plunky Exp $");
+__RCSID("$NetBSD: parse.c,v 1.180 2011/11/06 19:46:56 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2213,23 +2213,27 @@ ParseDoInclude(char *line)
 static void
 ParseSetParseFile(const char *filename)
 {
-    char *slash;
-    char *dirname;
+    char *slash, *dirname;
+    const char *pd, *pf;
     int len;
 
     slash = strrchr(filename, '/');
     if (slash == NULL) {
-	Var_Set(".PARSEDIR", curdir, VAR_GLOBAL, 0);
-	Var_Set(".PARSEFILE", filename, VAR_GLOBAL, 0);
+	Var_Set(".PARSEDIR", pd = curdir, VAR_GLOBAL, 0);
+	Var_Set(".PARSEFILE", pf = filename, VAR_GLOBAL, 0);
+	dirname= NULL;
     } else {
 	len = slash - filename;
 	dirname = bmake_malloc(len + 1);
 	memcpy(dirname, filename, len);
-	dirname[len] = 0;
-	Var_Set(".PARSEDIR", dirname, VAR_GLOBAL, 0);
-	Var_Set(".PARSEFILE", slash+1, VAR_GLOBAL, 0);
-	free(dirname);
+	dirname[len] = '\0';
+	Var_Set(".PARSEDIR", pd = dirname, VAR_GLOBAL, 0);
+	Var_Set(".PARSEFILE", pf = slash + 1, VAR_GLOBAL, 0);
     }
+    if (DEBUG(PARSE))
+	fprintf(debug_file, "ParseSetParseFile: ${.PARSEDIR} = `%s' "
+	    "${.PARSEFILE} = `%s'\n", pd, pf);
+    free(dirname);
 }
 
 /*
