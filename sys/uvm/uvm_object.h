@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.31.2.1 2011/11/02 21:54:01 yamt Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.31.2.2 2011/11/06 22:05:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -43,10 +43,9 @@
  */
 
 struct uvm_object {
-	kmutex_t *		vmobjlock;	/* lock on memq */
+	kmutex_t *		vmobjlock;	/* lock on uo_pages */
 	const struct uvm_pagerops *pgops;	/* pager ops */
-	struct pglist		memq;		/* pages in this object */
-	int			uo_npages;	/* # of pages in memq */
+	int			uo_npages;	/* # of pages in uo_pages */
 	unsigned		uo_refs;	/* reference count */
 	struct radix_tree	uo_pages;	/* tree of pages */
 	LIST_HEAD(,ubc_map)	uo_ubc;		/* ubc mappings */

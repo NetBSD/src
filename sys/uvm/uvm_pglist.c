@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.62 2011/09/27 01:02:39 jym Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.62.2.1 2011/11/06 22:05:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.62 2011/09/27 01:02:39 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.62.2.1 2011/11/06 22:05:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 		panic("uvm_pglistalloc: page not on freelist");
 #endif
 	LIST_REMOVE(pg, pageq.list);	/* global */
-	LIST_REMOVE(pg, listq.list);	/* cpu */
+	LIST_REMOVE(pg, u.cpulist);	/* cpu */
 	uvmexp.free--;
 	if (pg->flags & PG_ZERO)
 		uvmexp.zeropages--;
@@ -581,7 +581,7 @@ uvm_pglistfree(struct pglist *list)
 		LIST_INSERT_HEAD(&uvm.page_free[index].pgfl_buckets[color].
 		    pgfl_queues[queue], pg, pageq.list);
 		LIST_INSERT_HEAD(&ucpu->page_free[index].pgfl_buckets[color].
-		    pgfl_queues[queue], pg, listq.list);
+		    pgfl_queues[queue], pg, u.cpulist);
 		uvmexp.free++;
 		if (iszero)
 			uvmexp.zeropages++;

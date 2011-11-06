@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178.2.1 2011/11/02 21:54:01 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.2 2011/11/06 22:05:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.1 2011/11/02 21:54:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.2 2011/11/06 22:05:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -192,11 +192,6 @@ uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
 	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
 		atomic_inc_uint(&uvmexp.anonpages);
 	}
-
-	if (where)
-		TAILQ_INSERT_AFTER(&uobj->memq, where, pg, listq.queue);
-	else
-		TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
 	pg->flags |= PG_TABLED;
 	uobj->uo_npages++;
 }
@@ -268,7 +263,6 @@ uvm_pageremove_list(struct uvm_object *uobj, struct vm_page *pg)
 
 	/* object should be locked */
 	uobj->uo_npages--;
-	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 	pg->flags &= ~PG_TABLED;
 	pg->uobject = NULL;
 }
@@ -1014,13 +1008,13 @@ uvm_page_recolor(int newncolors)
 				    lcv].pgfl_buckets[color].pgfl_queues[i]))
 				    != NULL) {
 					LIST_REMOVE(pg, pageq.list); /* global */
-					LIST_REMOVE(pg, listq.list); /* cpu */
+					LIST_REMOVE(pg, u.cpulist); /* cpu */
 					LIST_INSERT_HEAD(&gpgfl.pgfl_buckets[
 					    VM_PGCOLOR_BUCKET(pg)].pgfl_queues[
 					    i], pg, pageq.list);
 					LIST_INSERT_HEAD(&pgfl.pgfl_buckets[
 					    VM_PGCOLOR_BUCKET(pg)].pgfl_queues[
-					    i], pg, listq.list);
+					    i], pg, u.cpulist);
 				}
 			}
 		}
@@ -1133,7 +1127,7 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int flist, int try1, int try2,
 
  gotit:
 	LIST_REMOVE(pg, pageq.list);	/* global list */
-	LIST_REMOVE(pg, listq.list);	/* per-cpu list */
+	LIST_REMOVE(pg, u.cpulist);	/* per-cpu list */
 	uvmexp.free--;
 
 	/* update zero'd page count */
@@ -1600,7 +1594,7 @@ uvm_pagefree(struct vm_page *pg)
 	ucpu = curcpu()->ci_data.cpu_uvm;
 	pg->offset = (uintptr_t)ucpu;
 	pgfl = &ucpu->page_free[index].pgfl_buckets[color].pgfl_queues[queue];
-	LIST_INSERT_HEAD(pgfl, pg, listq.list);
+	LIST_INSERT_HEAD(pgfl, pg, u.cpulist);
 	ucpu->pages[queue]++;
 	if (ucpu->pages[PGFL_ZEROS] < ucpu->pages[PGFL_UNKNOWN]) {
 		ucpu->page_idle_zero = vm_page_zero_enable;
@@ -1759,7 +1753,7 @@ uvm_pageidlezero(void)
 					goto quit;
 				}
 				LIST_REMOVE(pg, pageq.list); /* global list */
-				LIST_REMOVE(pg, listq.list); /* per-cpu list */
+				LIST_REMOVE(pg, u.cpulist); /* per-cpu list */
 				ucpu->pages[PGFL_UNKNOWN]--;
 				uvmexp.free--;
 				KASSERT(pg->pqflags == PQ_FREE);
@@ -1782,7 +1776,7 @@ uvm_pageidlezero(void)
 					    PGFL_UNKNOWN], pg, pageq.list);
 					LIST_INSERT_HEAD(&pgfl->pgfl_buckets[
 					    nextbucket].pgfl_queues[
-					    PGFL_UNKNOWN], pg, listq.list);
+					    PGFL_UNKNOWN], pg, u.cpulist);
 					ucpu->pages[PGFL_UNKNOWN]++;
 					uvmexp.free++;
 					uvmexp.zeroaborts++;
@@ -1805,7 +1799,7 @@ uvm_pageidlezero(void)
 				    pg, pageq.list);
 				LIST_INSERT_HEAD(&pgfl->pgfl_buckets[
 				    nextbucket].pgfl_queues[PGFL_ZEROS],
-				    pg, listq.list);
+				    pg, u.cpulist);
 				ucpu->pages[PGFL_ZEROS]++;
 				uvmexp.free++;
 				uvmexp.zeropages++;
@@ -2135,11 +2129,7 @@ uvm_page_printit(struct vm_page *pg, bool full,
 			uobj = pg->uobject;
 			if (uobj) {
 				(*pr)("  checking object list\n");
-				TAILQ_FOREACH(tpg, &uobj->memq, listq.queue) {
-					if (tpg == pg) {
-						break;
-					}
-				}
+				tpg = uvm_pagelookup(uobj, pg->offset);
 				if (tpg)
 					(*pr)("  page found on object list\n");
 				else

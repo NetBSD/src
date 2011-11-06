@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73.2.1 2011/11/02 21:54:01 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.73.2.2 2011/11/06 22:05:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -116,16 +116,15 @@ struct vm_page {
 	} pageq;				/* queue info for FIFO
 						 * queue or free list (P) */
 
-	/*
-	 * listq.list is used for per-cpu freelist.
-	 */
 	union {
-		TAILQ_ENTRY(vm_page) queue;
-		LIST_ENTRY(vm_page) list;
-	} listq;				/* pages in same object (O)*/
-
-	struct vm_anon		*uanon;		/* anon (O,P) */
-	struct uvm_object	*uobject;	/* object (O,P) */
+		struct {
+			struct vm_anon *o_anon;	/* anon (O,P) */
+			struct uvm_object *o_object; /* object (O,P) */
+		} owner;
+#define uanon	u.owner.o_anon
+#define	uobject	u.owner.o_object
+		LIST_ENTRY(vm_page) cpulist;
+	} u;
 	voff_t			offset;		/* offset into object (O,P) */
 	uint16_t		flags;		/* object flags [O] */
 	uint16_t		loan_count;	/* number of active loans

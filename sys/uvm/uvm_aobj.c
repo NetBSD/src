@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.116.2.2 2011/11/06 10:15:11 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.116.2.3 2011/11/06 22:05:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.116.2.2 2011/11/06 10:15:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.116.2.3 2011/11/06 22:05:00 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -147,7 +147,7 @@ static struct pool uao_swhash_elt_pool;
  */
 
 struct uvm_aobj {
-	struct uvm_object u_obj; /* has: lock, pgops, memq, #pages, #refs */
+	struct uvm_object u_obj; /* has: lock, pgops, #pages, #refs */
 	pgoff_t u_pages;	 /* number of pages in entire object */
 	int u_flags;		 /* the flags (see uvm_aobj.h) */
 	int *u_swslots;		 /* array of offset->swapslot mappings */
@@ -664,16 +664,8 @@ uao_detach_locked(struct uvm_object *uobj)
 
 	uvm_page_array_init(&a);
 	mutex_enter(&uvm_pageqlock);
-	while (/*CONSTCOND*/true) {
-		pg = uvm_page_array_peek(&a);
-		if (pg == NULL) {
-			int error = uvm_page_array_fill(&a, uobj, 0, false);
-			if (error != 0) {
-				break;
-			}
-			pg = uvm_page_array_peek(&a);
-			KASSERT(pg != NULL);
-		}
+	while ((pg = uvm_page_array_fill_and_peek(&a, uobj, 0, false))
+	    != NULL) {
 		uvm_page_array_advance(&a);
 		pmap_page_protect(pg, VM_PROT_NONE);
 		if (pg->flags & PG_BUSY) {
@@ -712,30 +704,12 @@ uao_detach_locked(struct uvm_object *uobj)
  *	or block.
  * => if PGO_ALLPAGE is set, then all pages in the object are valid targets
  *	for flushing.
- * => NOTE: we rely on the fact that the object's memq is a TAILQ and
- *	that new pages are inserted on the tail end of the list.  thus,
- *	we can make a complete pass through the object in one go by starting
- *	at the head and working towards the tail (new pages are put in
- *	front of us).
  * => NOTE: we are allowed to lock the page queues, so the caller
  *	must not be holding the lock on them [e.g. pagedaemon had
  *	better not call us with the queues locked]
  * => we return 0 unless we encountered some sort of I/O error
  *	XXXJRT currently never happens, as we never directly initiate
  *	XXXJRT I/O
- *
- * note on page traversal:
- *	we can traverse the pages in an object either by going down the
- *	linked list in "uobj->memq", or we can go over the address range
- *	by page doing hash table lookups for each address.  depending
- *	on how many pages are in the object it may be cheaper to do one
- *	or the other.  we set "by_list" to true if we are using memq.
- *	if the cost of a hash lookup was equal to the cost of the list
- *	traversal we could compare the number of pages in the start->stop
- *	range to the total number of pages in the object.  however, it
- *	seems that a hash table lookup is more expensive than the linked
- *	list traversal, so we multiply the number of pages in the
- *	start->stop range by a penalty which we define below.
  */
 
 static int
@@ -783,16 +757,8 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	/* locked: uobj */
 	uvm_page_array_init(&a);
 	curoff = start;
-	while (curoff < stop) {
-		pg = uvm_page_array_peek(&a);
-		if (pg == NULL) {
-			int error = uvm_page_array_fill(&a, uobj, curoff,
-			    false);
-			if (error != 0) {
-				break;
-			}
-			pg = uvm_page_array_peek(&a);
-		}
+	while ((pg = uvm_page_array_fill_and_peek(&a, uobj, curoff, false)) !=
+	    NULL) {
 		if (pg->offset >= stop) {
 			break;
 		}

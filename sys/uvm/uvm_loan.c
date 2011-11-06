@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81.2.1 2011/11/02 21:54:01 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.2 2011/11/06 22:05:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.1 2011/11/02 21:54:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.2 2011/11/06 22:05:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -845,8 +845,8 @@ again:
 	 * first, get ahold of our single zero page.
 	 */
 
-	if (__predict_false((pg =
-			     TAILQ_FIRST(&uvm_loanzero_object.memq)) == NULL)) {
+	pg = uvm_pagelookup(&uvm_loanzero_object, 0);
+	if (__predict_false(pg == NULL)) {
 		while ((pg = uvm_pagealloc(&uvm_loanzero_object, 0, NULL,
 					   UVM_PGA_ZERO)) == NULL) {
 			mutex_exit(uvm_loanzero_object.vmobjlock);
