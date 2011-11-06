@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.6 2011/11/04 01:00:27 zoltan Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.7 2011/11/06 02:49:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.6 2011/11/04 01:00:27 zoltan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.7 2011/11/06 02:49:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -125,15 +125,13 @@ npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 		}
 		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
-	if (omask == 0)
+	if (omask == 0) {
 		return 0;
+	}
 
 	addr1 = sd ? npc->npc_srcip : npc->npc_dstip;
 	npf_calculate_masked_addr(&addr2, netaddr, omask);
-	if (memcmp(addr1, &addr2, npc->npc_ipsz)) {
-		return -1;
-	}
-	return 0;
+	return memcmp(addr1, &addr2, npc->npc_ipsz) ? -1 : 0;
 }
 
 /*

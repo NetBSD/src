@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.9 2011/11/05 10:23:26 zoltan Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.10 2011/11/06 02:49:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.9 2011/11/05 10:23:26 zoltan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.10 2011/11/06 02:49:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,29 +101,29 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	rp = NULL;
 	ret = 0;
 
-	/* Cache everything.  Determine whether it is an IPv4 fragment. */
-	/* Cache IP information */
+	/* Cache everything.  Determine whether it is an IP fragment. */
 	npf_cache_all(&npc, nbuf);
 
 	if (npf_iscached(&npc, NPC_IPFRAG)) {
+		/* Pass to IPv4 or IPv6 reassembly mechanism. */
 		if (npf_iscached(&npc, NPC_IP4)) {
 			struct ip *ip = nbuf_dataptr(*mp);
-		 	/* Pass to IPv4 reassembly mechanism. */
 			ret = ip_reass_packet(mp, ip);
 		} else {
 			KASSERT(npf_iscached(&npc, NPC_IP6));
 #ifdef INET6
-			/* frag6_input's offset is the start of the fragment header */
+			/*
+			 * Note: frag6_input() offset is the start of the
+			 * fragment header.
+			 */
 			size_t hlen = npf_cache_hlen(&npc, nbuf);
-
-			/* Pass to IPv6 reassembly mechanism. */
 			ret = ip6_reass_packet(mp, hlen);
 #else
-			KASSERT(false);
+			ret = -1;
 #endif
 		}
 
-		if (ret != 0) {
+		if (ret) {
 			error = EINVAL;
 			se = NULL;
 			goto out;
@@ -132,13 +132,12 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 			/* More fragments should come; return. */
 			return 0;
 		}
-		/* Reassembly is complete, we have the final packet. */
-		nbuf = (nbuf_t *)*mp;
 
 		/*
-		 * Before reassembly, we can't cache anything above layer3,
-		 * but at this point, it's reassembled - let's cache it again
+		 * Reassembly is complete, we have the final packet.
+		 * Cache again, since layer 3 daya is accessible now.
 		 */
+		nbuf = (nbuf_t *)*mp;
 		npc.npc_info = 0;
 		npf_cache_all(&npc, nbuf);
 	}

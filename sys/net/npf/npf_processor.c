@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.5 2011/11/04 01:00:27 zoltan Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.6 2011/11/06 02:49:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.5 2011/11/04 01:00:27 zoltan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.6 2011/11/06 02:49:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -287,14 +287,18 @@ cisc_like:
 		/* Source/destination, network address, subnet mask. */
 		i_ptr = nc_fetch_word(i_ptr, &d);
 		i_ptr = nc_fetch_double(i_ptr, &addr.s6_addr32[0], &mask);
-		cmpval = npf_match_ipmask(npc, nbuf, n_ptr, d, &addr, (npf_netmask_t)mask);
+		cmpval = npf_match_ipmask(npc, nbuf, n_ptr, d, &addr,
+		    (npf_netmask_t)mask);
 		break;
 	case NPF_OPCODE_IP6MASK:
 		i_ptr = nc_fetch_word(i_ptr, &d);
-		i_ptr = nc_fetch_double(i_ptr, &addr.s6_addr32[0], &addr.s6_addr32[1]);
-		i_ptr = nc_fetch_double(i_ptr, &addr.s6_addr32[2], &addr.s6_addr32[3]);
+		i_ptr = nc_fetch_double(i_ptr,
+		    &addr.s6_addr32[0], &addr.s6_addr32[1]);
+		i_ptr = nc_fetch_double(i_ptr,
+		    &addr.s6_addr32[2], &addr.s6_addr32[3]);
 		i_ptr = nc_fetch_word(i_ptr, &mask);
-		cmpval = npf_match_ipmask(npc, nbuf, n_ptr, d, &addr, (npf_netmask_t)mask);
+		cmpval = npf_match_ipmask(npc, nbuf, n_ptr, d,
+		    &addr, (npf_netmask_t)mask);
 		break;
 	case NPF_OPCODE_TABLE:
 		/* Source/destination, NPF table ID. */
