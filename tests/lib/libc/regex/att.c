@@ -1,4 +1,4 @@
-/*	$NetBSD: att.c,v 1.3 2011/11/06 16:02:08 christos Exp $	*/
+/*	$NetBSD: att.c,v 1.4 2011/11/06 16:08:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: att.c,v 1.3 2011/11/06 16:02:08 christos Exp $");
+__RCSID("$NetBSD: att.c,v 1.4 2011/11/06 16:08:28 christos Exp $");
 
 #include <stdio.h>
 #include <regex.h>
@@ -115,6 +115,12 @@ bug(const char *pattern, const char *input, size_t lineno) {
 		{ "(a*)*(x)",  "axa" },			// nullsubexpression.dat
 		{ "(a*)+(x)",  "ax" },			// nullsubexpression.dat
 		{ "(a*)+(x)",  "axa" },			// nullsubexpression.dat
+		{ "((a|ab)(c|bcd))(d*)", "abcd" },	// forcedassoc.dat
+		{ "((a|ab)(bcd|c))(d*)", "abcd" },	// forcedassoc.dat
+		{ "((ab|a)(c|bcd))(d*)", "abcd" },	// forcedassoc.dat
+		{ "((ab|a)(bcd|c))(d*)", "abcd" },	// forcedassoc.dat
+		{ "((a*)(b|abc))(c*)", "abc" },		// forcedassoc.dat
+		{ "((a*)(abc|b))(c*)", "abc" },		// forcedassoc.dat
 #endif
 	};
 
