@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.c,v 1.1.2.1 2011/11/02 21:55:39 yamt Exp $	*/
+/*	$NetBSD: uvm_page_array.c,v 1.1.2.2 2011/11/06 22:04:07 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.1.2.1 2011/11/02 21:55:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.1.2.2 2011/11/06 22:04:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,4 +160,30 @@ uvm_page_array_fill(struct uvm_page_array *ar, struct uvm_object *uobj,
 	}
 #endif /* defined(DEBUG) */
 	return 0;
+}
+
+/*
+ * uvm_page_array_fill_and_peek:
+ * same as uvm_page_array_peek except that, if the array is empty, try to fill
+ * it first.
+ */
+
+struct vm_page *
+uvm_page_array_fill_and_peek(struct uvm_page_array *a, struct uvm_object *uobj,
+    voff_t off, bool dirtyonly)
+{
+	struct vm_page *pg;
+	int error;
+
+	pg = uvm_page_array_peek(a);
+	if (pg != NULL) {
+		return pg;
+	}
+	error = uvm_page_array_fill(a, uobj, off, dirtyonly);
+	if (error != 0) {
+		return NULL;
+	}
+	pg = uvm_page_array_peek(a);
+	KASSERT(pg != NULL);
+	return pg;
 }
