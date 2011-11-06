@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.13 2011/10/30 21:08:33 phx Exp $ */
+/* $NetBSD: globals.h,v 1.14 2011/11/06 20:20:57 phx Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -43,6 +43,11 @@ extern uint32_t cpuclock, busclock;
 /* board specific support code */
 struct brdprop *brd_lookup(int);
 int tstchar(void);
+#ifdef DEBUG
+void sat_write(char *, int);
+int sat_getch(void);
+int sat_tstch(void);
+#endif
 unsigned mpc107memsize(void);
 void read_mac_from_flash(uint8_t *);
 
