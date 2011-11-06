@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.13 2011/10/29 11:52:15 mrg Exp $
+# $NetBSD: md.evbppc,v 1.14 2011/11/06 11:51:42 tron Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -96,6 +96,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/nfsserver/nfsserver.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/nilfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/nilfs/nilfs.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/npf/npf.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ntfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ntfs/ntfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/null				base-kernel-modules	kmod,compatmodules
@@ -259,6 +261,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/nfsserver/nfsserver.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/nilfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/nilfs/nilfs.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/npf				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/npf/npf.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/ntfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/ntfs/ntfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/null				base-kernel-modules	kmod,compatmodules
