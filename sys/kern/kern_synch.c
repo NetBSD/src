@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.295 2011/10/05 20:37:40 njoly Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.296 2011/11/06 14:11:00 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.295 2011/10/05 20:37:40 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.296 2011/11/06 14:11:00 dholland Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1198,7 +1198,7 @@ sched_pstats(void)
 	PROCLIST_FOREACH(p, &allproc) {
 		struct lwp *l;
 		struct rlimit *rlim;
-		long runtm;
+		time_t runtm;
 		int sig;
 
 		/* Increment sleep time (if sleeping), ignore overflow. */
