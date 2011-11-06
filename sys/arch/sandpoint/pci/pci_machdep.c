@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.29 2011/07/01 19:16:41 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.30 2011/11/06 00:28:12 phx Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.29 2011/07/01 19:16:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.30 2011/11/06 00:28:12 phx Exp $");
 
 #include "opt_pci.h"
 
@@ -339,7 +339,7 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		*ihp = 2;
 		break;
 	case BRD_KUROBOX:
-		/* map line 11,12,13,14 to EPIC IRQ0,1,4,3 */
+		/* map line 11,12,13,14 to EPIC IRQ 0,1,4,3 */
 		*ihp = (line == 13) ? 4 : line - 11;
 		break;
 	case BRD_QNAPTS:
@@ -347,11 +347,11 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		*ihp = line - 13;
 		break;
 	case BRD_SYNOLOGY:
-		/* map line 12,13-15 to EPIC IRQ4,0-2 */
+		/* map line 12,13-15 to EPIC IRQ 4,0-2 */
 		*ihp = (line == 12) ? 4 : line - 13;
 		break;
 	case BRD_DLINKDSM:
-		/* map line 13,14,15,16 to EPIC IRQ0,1,3,4 */
+		/* map line 13,14A,14B,14C,15,16 to EPIC IRQ 0,1,1,2,3,4 */
 		*ihp = (line < 15) ? line - 13 : line - 12;
 		if (line == 14 && pin == 3)
 			*ihp += 1;	/* USB pin C (EHCI) uses next IRQ */
@@ -363,8 +363,13 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 			(line == 14) ? 3 : 0;
 		break;
 	case BRD_STORCENTER:
+		/* map line 13,14A,14B,14C,15 to EPIC IRQ 1,2,3,4,0 */
+		*ihp =	(line == 15) ? 0 : 1;
+		if (line == 14)
+			*ihp += pin;
+		break;
 	default:
-		/* map line 12-15 to EPIC IRQ0-3 */
+		/* simply map line 12-15 to EPIC IRQ0-3 */
 		*ihp = line - 12;
 		break;
 	}
