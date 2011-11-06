@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.36 2011/03/18 09:07:20 martin Exp $	*/
+/*	$NetBSD: unvis.c,v 1.37 2011/11/06 03:42:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.36 2011/03/18 09:07:20 martin Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.37 2011/11/06 03:42:33 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,18 +63,19 @@ __weak_alias(strnunvisx,_strnunvisx)
 #define	S_CTRL		4	/* control char started (^) */
 #define	S_OCTAL2	5	/* octal digit 2 */
 #define	S_OCTAL3	6	/* octal digit 3 */
-#define	S_HEX1		7	/* http hex digit */
-#define	S_HEX2		8	/* http hex digit 2 */
-#define S_MIME1		9	/* mime hex digit 1 */
-#define S_MIME2		10	/* mime hex digit 2 */
-#define S_EATCRNL	11	/* mime eating CRNL */
-#define S_AMP		12	/* seen & */
-#define S_NUMBER	13	/* collecting number */
-#define S_STRING	14	/* collecting string */
+#define	S_HEX		7	/* mandatory hex digit */
+#define	S_HEX1		8	/* http hex digit */
+#define	S_HEX2		9	/* http hex digit 2 */
+#define	S_MIME1		10	/* mime hex digit 1 */
+#define	S_MIME2		11	/* mime hex digit 2 */
+#define	S_EATCRNL	12	/* mime eating CRNL */
+#define	S_AMP		13	/* seen & */
+#define	S_NUMBER	14	/* collecting number */
+#define	S_STRING	15	/* collecting string */
 
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
-#define xtod(c)		(isdigit(c) ? (c - '0') : ((tolower(c) - 'a') + 10))
-#define XTOD(c)		(isdigit(c) ? (c - '0') : ((c - 'A') + 10))
+#define	xtod(c)		(isdigit(c) ? (c - '0') : ((tolower(c) - 'a') + 10))
+#define	XTOD(c)		(isdigit(c) ? (c - '0') : ((c - 'A') + 10))
 
 /*
  * RFC 1866
@@ -297,6 +298,9 @@ unvis(char *cp, int c, int *astate, int flag)
 			*cp = '\033';
 			*astate = SS(0, S_GROUND);
 			return UNVIS_VALID;
+		case 'x':
+			*astate = SS(0, S_HEX);
+			return UNVIS_NOCHAR;
 		case '\n':
 			/*
 			 * hidden newline
@@ -360,6 +364,10 @@ unvis(char *cp, int c, int *astate, int flag)
 		 */
 		return UNVIS_VALIDPUSH;
 
+	case S_HEX:
+		if (!isxdigit(uc))
+			goto bad;
+		/*FALLTHROUGH*/
 	case S_HEX1:
 		if (isxdigit(uc)) {
 			*cp = xtod(uc);
