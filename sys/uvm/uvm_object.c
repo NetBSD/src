@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.11.2.1 2011/11/02 21:54:01 yamt Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.11.2.2 2011/11/06 22:05:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.11.2.1 2011/11/02 21:54:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.11.2.2 2011/11/06 22:05:00 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.11.2.1 2011/11/02 21:54:01 yamt Exp
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
+#include <uvm/uvm_page_array.h>
 
 /* Page count to fetch per single step. */
 #define	FETCH_PAGECOUNT			16
@@ -68,7 +69,6 @@ uvm_obj_init(struct uvm_object *uo, const struct uvm_pagerops *ops,
 		uo->vmobjlock = NULL;
 	}
 	uo->pgops = ops;
-	TAILQ_INIT(&uo->memq);
 	LIST_INIT(&uo->uo_ubc);
 	uo->uo_npages = 0;
 	uo->uo_refs = refs;
@@ -238,8 +238,10 @@ void
 uvm_object_printit(struct uvm_object *uobj, bool full,
     void (*pr)(const char *, ...))
 {
+	struct uvm_page_array a;
 	struct vm_page *pg;
 	int cnt = 0;
+	voff_t off;
 
 	(*pr)("OBJECT %p: locked=%d, pgops=%p, npages=%d, ",
 	    uobj, mutex_owned(uobj->vmobjlock), uobj->pgops, uobj->uo_npages);
@@ -252,16 +254,22 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 		return;
 	}
 	(*pr)("  PAGES <pg,offset>:\n  ");
-	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
+	uvm_page_array_init(&a);
+	off = 0;
+	while ((pg = uvm_page_array_fill_and_peek(&a, uobj, off, false))
+	    != NULL) {
 		cnt++;
 		(*pr)("<%p,0x%llx> ", pg, (long long)pg->offset);
 		if ((cnt % 3) == 0) {
 			(*pr)("\n  ");
 		}
+		off = pg->offset + PAGE_SIZE;
+		uvm_page_array_advance(&a);
 	}
 	if ((cnt % 3) != 0) {
 		(*pr)("\n");
 	}
+	uvm_page_array_fini(&a);
 }
 
 #endif /* DDB || DEBUGPRINT */
