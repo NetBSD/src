@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.14 2011/04/25 18:29:33 phx Exp $ */
+/* $NetBSD: main.c,v 1.15 2011/11/06 20:20:57 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -106,6 +106,9 @@ static int check_bootname(char *);
 static int input_cmdline(char **, int);
 static int parse_cmdline(char **, int, char *, char *);
 static int is_space(char);
+#ifdef DEBUG
+static void sat_test(void);
+#endif
 
 #define	BNAME_DEFAULT "wd0:"
 #define MAX_ARGS 10
@@ -206,7 +209,17 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 			printf("Hit any key to enter interactive mode: %d\r",
 			    n / 100);
 		if (tstchar()) {
+#ifdef DEBUG
+			if (toupper(getchar()) == 'C') {
+				/* controller test terminal */
+				sat_test();
+				n = 200;
+				continue;
+			}
+#else
 			(void)getchar();
+#endif
+			/* enter command line */
 			argv = new_argv;
 			argc = input_cmdline(argv, MAX_ARGS);
 			break;
@@ -617,5 +630,60 @@ parse_cmdline(char **argv, int maxargc, char *p, char *end)
 static int
 is_space(char c)
 {
+
 	return c > '\0' && c <= ' ';
 }
+
+#ifdef DEBUG
+static void
+sat_test(void)
+{
+	char buf[1024];
+	int i, j, n, pos;
+	unsigned char c;
+
+	putchar('\n');
+	for (;;) {
+		do {
+			for (pos = 0; pos < 1024 && sat_tstch() != 0; pos++)
+				buf[pos] = sat_getch();
+			if (pos > 1023)
+				break;
+			delay(100000);
+		} while (sat_tstch());
+
+		for (i = 0; i < pos; i += 16) {
+			if ((n = i + 16) > pos)
+				n = pos;
+			for (j = 0; j < n; j++)
+				printf("%02x ", (unsigned)buf[i + j]);
+			for (; j < 16; j++)
+				printf("   ");
+			putchar('\"');
+			for (j = 0; j < n; j++) {
+				c = buf[i + j];
+				putchar((c >= 0x20 && c <= 0x7e) ? c : '.');
+			}
+			printf("\"\n");
+		}
+
+		printf("controller> ");
+		gets(buf);
+		if (buf[0] == '*' && buf[1] == 'X')
+			break;
+
+		if (buf[0] == '0' && tolower((unsigned)buf[1]) == 'x') {
+			for (i = 2, n = 0, c = 0; buf[i]; i++) {
+				c <<= 4;
+				c |= hex2nibble(buf[i]);
+				if (i & 1)
+					buf[n++] = c;
+			}
+		} else
+			n = strlen(buf);
+
+		if (n > 0)
+			sat_write(buf, n);
+	}
+}
+#endif
