@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.138 2011/11/06 15:18:18 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.139 2011/11/06 20:21:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138 2011/11/06 15:18:18 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139 2011/11/06 20:21:05 christos Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -210,6 +210,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138 2011/11/06 15:18:18 cherry Exp $");
 #include <xen/xen3-public/xen.h>
 #include <xen/hypervisor.h>
 #endif
+
+/* If this is not needed anymore it should be GC'ed */
+#define	PG_k	0
 
 /*
  * general info:
