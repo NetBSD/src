@@ -1,4 +1,4 @@
-/*	$NetBSD: att.c,v 1.6 2011/11/06 16:43:25 christos Exp $	*/
+/*	$NetBSD: att.c,v 1.7 2011/11/06 18:32:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: att.c,v 1.6 2011/11/06 16:43:25 christos Exp $");
+__RCSID("$NetBSD: att.c,v 1.7 2011/11/06 18:32:17 christos Exp $");
 
 #include <stdio.h>
 #include <regex.h>
@@ -74,7 +74,7 @@ bug(const char *pattern, const char *input, size_t lineno) {
 		const char *p;
 		const char *i;
 	} b[] = {
-#ifdef REGEX_SPENCER
+#if defined(REGEX_SPENCER)
 		/*
 		 * The default libc implementation by Henry Spencer
 		 */
@@ -159,6 +159,19 @@ bug(const char *pattern, const char *input, size_t lineno) {
 		{ "(ab|a|c|bcd){3,10}(d*)", "ababcd" },	// repetition.dat
 		{ "(ab|a|c|bcd)*(d*)", "ababcd" },	// repetition.dat
 		{ "(ab|a|c|bcd)+(d*)", "ababcd" },	// repetition.dat
+#elif defined(REGEX_TRE)
+		{ "a[-]?c", "ac" },			// basic.dat
+		{ "a\\(b\\)*\\1", "a" },		// categorization.dat
+		{ "a\\(b\\)*\\1", "abab" },		// categorization.dat
+		{ "\\(a\\(b\\)*\\)*\\2", "abab" },	// categorization.dat
+		{ "\\(a*\\)*\\(x\\)\\(\\1\\)", "ax" },	// categorization.dat
+		{ "\\(a*\\)*\\(x\\)\\(\\1\\)\\(x\\)", "axxa" },	// ""
+		{ "((..)|(.))*", "aa" },		// repetition.dat
+		{ "((..)|(.))*", "aaa" },		// repetition.dat
+		{ "((..)|(.))*", "aaaaa" },		// repetition.dat
+		{ "X(.?){7,}Y", "X1234567Y" },		// repetition.dat
+#else
+		{ "", "" }
 #endif
 	};
 
@@ -210,6 +223,7 @@ static int
 unsupported(const char *s)
 {
 	static const char *we[] = {
+#if defined(REGEX_SPENCER)
 		"ASSOCIATIVITY=left",		// have right associativity
 		"SUBEXPRESSION=precedence",	// have grouping subexpression
 		"REPEAT_LONGEST=last",		// have first repeat longest
@@ -222,6 +236,19 @@ unsupported(const char *s)
 		"BUG=repeat-null",		// don't have it
 		"BUG=repeat-artifact",		// don't have it
 		"BUG=subexpression-first",	// don't have it
+#elif defined(REGEX_TRE)
+		"ASSOCIATIVITY=right",		// have left associativity
+		"SUBEXPRESSION=grouping",	// have precedence subexpression
+		"REPEAT_LONGEST=first",		// have last repeat longest
+		"LENGTH=first",			// have last length
+		"BUG=alternation-order",	// don't have it
+		"BUG=first-match",		// don't have it
+		"BUG=range-null",		// don't have it
+		"BUG=repeat-null",		// don't have it
+		"BUG=repeat-artifact",		// don't have it
+		"BUG=subexpression-first",	// don't have it
+		"BUG=repeat-short",		// don't have it
+#endif
 	};
 
 	if (s == NULL)
@@ -324,6 +351,13 @@ getmatches(const char *s)
 		continue;
 	ATF_REQUIRE_MSG(i != 0, "No parentheses found");
 	return i;
+}
+
+static void
+checkcomment(const char *s, size_t lineno)
+{
+	if (s && strstr(s, "BUG") != NULL)
+		fprintf(stderr, "Expected %s at line %zu\n", s, lineno);
 }
 
 static void
@@ -485,6 +519,7 @@ ATF_TC_BODY(regex_att, tc)
 			ATF_REQUIRE_MSG(e == exec, "Expected error %d,"
 			    " got %d at line %zu", exec, e, lineno);
 			checkmatches(matches, nm, pm, lineno);
+			checkcomment(comment, lineno);
 			regfree(&re);
 		}
 		free(pm);
