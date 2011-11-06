@@ -1,4 +1,4 @@
-/*	$NetBSD: att.c,v 1.1 2011/11/06 14:23:04 christos Exp $	*/
+/*	$NetBSD: att.c,v 1.2 2011/11/06 15:19:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,15 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: att.c,v 1.1 2011/11/06 14:23:04 christos Exp $");
+__RCSID("$NetBSD: att.c,v 1.2 2011/11/06 15:19:31 christos Exp $");
 
 #include <stdio.h>
 #include <regex.h>
 #include <string.h>
 #include <stdlib.h>
 #include <vis.h>
+#include <ctype.h>
 #include <atf-c.h>
-
 
 ATF_TC(regex_att);
 
@@ -58,6 +58,7 @@ ATF_TC_HEAD(regex_att, tc)
 }
 
 static const char sep[] = "\r\n\t";
+static const char delim[3] = "\\\\\0";
 
 static const struct {
 	const char *n;
@@ -66,6 +67,7 @@ static const struct {
 #define COMP 1
 #define EXEC 2
 } nv[] = {
+	{ "OK", 0, COMP|EXEC },
 #define _DO(a, b)	{ # a, REG_ ## a, b },
 	_DO(NOMATCH, EXEC)
 	_DO(BADPAT, COMP)
@@ -86,6 +88,70 @@ static const struct {
 	_DO(ENOSYS, COMP)
 #undef _DO
 };
+
+static void
+fail(const char *pattern, const char *input, size_t lineno) {
+	fprintf(stderr,
+	    "skipping failed test at line %zu (pattern=%s, input=%s)\n",
+	    lineno, pattern, input);
+}
+
+static int
+bug(const char *pattern, const char *input, size_t lineno) {
+	static const struct {
+		const char *p;
+		const char *i;
+	} b[] = {
+#ifdef REGEX_SPENCER
+		/*
+		 * The default libc implementation by Henry Spencer
+		 */
+		{ "a[-]?c", "ac" },		// basic.dat
+		{ "(a*)*", "a" },		// categorization.dat
+		{ "(aba|a*b)*", "ababa" },	// categorization.dat
+		{ "\\(a\\(b\\)*\\)*\\2", "abab" },// categorization.dat
+#endif
+	};
+
+	for (size_t i = 0; i < __arraycount(b); i++) {
+		if (strcmp(pattern, b[i].p) == 0 &&
+		    strcmp(input, b[i].i) == 0) {
+			fail(pattern, input, lineno);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static int
+unsupported(const char *s)
+{
+	static const char *we[] = {
+		"ASSOCIATIVITY=left",		// have right associativity
+		"SUBEXPRESSION=precedence",	// have grouping subexpression
+		"REPEAT_LONGEST=last",		// have first repeat longest
+		"BUG=alternation-order",	// don't have it
+		"BUG=first-match",		// don't have it
+		"BUG=nomatch-match",		// don't have it
+		"BUG=repeat-any",		// don't have it
+		"BUG=range-null",		// don't have it
+		"BUG=repeat-null-unknown",	// don't have it
+		"BUG=repeat-null",		// don't have it
+		"BUG=repeat-artifact",		// don't have it
+		"BUG=subexpression-first",	// don't have it
+	};
+
+	if (s == NULL)
+		return 0;
+
+	while (*s == '#' || isspace((unsigned char)*s))
+		s++;
+
+	for (size_t i = 0; i < __arraycount(we); i++)
+		if (strcmp(we[i], s) == 0)
+			return 1;
+	return 0;
+}
 
 static void
 geterror(const char *s, int *comp, int *exec)
@@ -150,7 +216,8 @@ getmatches(const char *s)
 }
 
 static void
-checkmatches(const char *matches, size_t nm, const regmatch_t *pm)
+checkmatches(const char *matches, size_t nm, const regmatch_t *pm,
+    size_t lineno)
 {
 	if (nm == 0)
 		return;
@@ -170,7 +237,7 @@ checkmatches(const char *matches, size_t nm, const regmatch_t *pm)
 		    " cur=%d, max=%zu", res, l, len - off);
 		off += l;
 	}
-	ATF_REQUIRE_STREQ(res, matches);
+	ATF_REQUIRE_STREQ_MSG(res, matches, " at line %zu", lineno);
 	free(res);
 }
 
@@ -180,9 +247,9 @@ ATF_TC_BODY(regex_att, tc)
 	char *line;
 	size_t len, lineno = 0;
 
-	for (; (line = fparseln(stdin, &len, &lineno, NULL, 0))
+	for (; (line = fparseln(stdin, &len, &lineno, delim, 0))
 	    != NULL; free(line)) {
-		char *name, *pattern, *input, *matches;
+		char *name, *pattern, *input, *matches, *comment;
 		regmatch_t *pm;
 		size_t nm;
 
@@ -190,13 +257,9 @@ ATF_TC_BODY(regex_att, tc)
 		if ((name = strtok(line, sep)) == NULL)
 			continue;
 
-		if (strcmp(name, "NOTE") == 0)
+		if (*name == ';' || *name == '}' || strcmp(name, "NOTE") == 0)
 			continue;
 
-		if (*name == '{')
-			name++;
-		if (*name == '}')
-			continue;
 
 		ATF_REQUIRE_MSG((pattern = strtok(NULL, sep)) != NULL,
 			"Missing pattern at line %zu", lineno);
@@ -214,6 +277,29 @@ ATF_TC_BODY(regex_att, tc)
 		ATF_REQUIRE_MSG((matches = strtok(NULL, sep)) != NULL,
 			"Missing matches at line %zu", lineno);
 
+		comment = strtok(NULL, sep);
+		switch (*name) {
+		case '{':	/* Begin optional implementation */
+			name++;	/* We have it, so ignore */
+			break;
+		case '}':	/* End optional implementation */
+			continue;
+		case '?':	/* Optional */
+		case '|':	/* Alternative */
+			if (unsupported(comment))
+				continue;
+			name++;	/* We have it, so ignore */
+			break;
+		case ';':	/* Bug */
+			continue;
+		default:
+			break;
+		}
+
+		/* XXX: Our bug */
+		if (bug(pattern, input, lineno))
+			continue;
+
 		int comp, exec;
 		if (*matches != '(') {
 			geterror(matches, &comp, &exec);
@@ -225,7 +311,8 @@ ATF_TC_BODY(regex_att, tc)
 			ATF_REQUIRE((pm = calloc(nm, sizeof(*pm))) != NULL);
 		}
 
-		int fail = 0;
+
+
 		int iflags = getflags(name);
 		for (; *name; name++) {
 			int flags;
@@ -239,9 +326,6 @@ ATF_TC_BODY(regex_att, tc)
 			case 'L':
 				flags = REG_NOSPEC;
 				break;
-			case 'F':
-				fail++;
-				continue;
 			default:
 				ATF_REQUIRE_MSG(0, "Bad name %c", *name);
 				continue;
@@ -253,15 +337,9 @@ ATF_TC_BODY(regex_att, tc)
 			if (c)
 				continue;
 			int e = regexec(&re, input, nm, pm, 0);
-			if (fail)
-				fprintf(stderr,
-				    "skipping failed test at line %zu\n",
-				    lineno);
-			else {
-				ATF_REQUIRE_MSG(e == exec, "Expected error %d,"
-				    " got %d at line %zu", exec, e, lineno);
-				checkmatches(matches, nm, pm);
-			}
+			ATF_REQUIRE_MSG(e == exec, "Expected error %d,"
+			    " got %d at line %zu", exec, e, lineno);
+			checkmatches(matches, nm, pm, lineno);
 			regfree(&re);
 		}
 		free(pm);
