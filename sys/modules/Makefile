@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.96 2011/11/06 11:51:23 tron Exp $
+#	$NetBSD: Makefile,v 1.97 2011/11/06 13:26:54 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -45,6 +45,7 @@ SUBDIR+=	nfs
 SUBDIR+=	nfsserver
 SUBDIR+=	nilfs
 SUBDIR+=	npf
+SUBDIR+=	npf_alg_icmp
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	onewire
