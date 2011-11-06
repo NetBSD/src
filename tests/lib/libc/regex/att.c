@@ -1,4 +1,4 @@
-/*	$NetBSD: att.c,v 1.4 2011/11/06 16:08:28 christos Exp $	*/
+/*	$NetBSD: att.c,v 1.5 2011/11/06 16:26:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: att.c,v 1.4 2011/11/06 16:08:28 christos Exp $");
+__RCSID("$NetBSD: att.c,v 1.5 2011/11/06 16:26:54 christos Exp $");
 
 #include <stdio.h>
 #include <regex.h>
@@ -121,6 +121,44 @@ bug(const char *pattern, const char *input, size_t lineno) {
 		{ "((ab|a)(bcd|c))(d*)", "abcd" },	// forcedassoc.dat
 		{ "((a*)(b|abc))(c*)", "abc" },		// forcedassoc.dat
 		{ "((a*)(abc|b))(c*)", "abc" },		// forcedassoc.dat
+		{ "((..)|(.)){2}", "aaa" },		// repetition.dat
+		{ "((..)|(.)){3}", "aaa" },		// repetition.dat
+		{ "((..)|(.)){3}", "aaaa" },		// repetition.dat
+		{ "((..)|(.)){3}", "aaaaa" },		// repetition.dat
+		{ "X(.?){0,}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){1,}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){2,}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){3,}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){4,}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){5,}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){6,}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){7,}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){0,8}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){1,8}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){2,8}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){3,8}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){4,8}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){5,8}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){6,8}Y", "X1234567Y" },		// repetition.dat
+		{ "X(.?){7,8}Y", "X1234567Y" },		// repetition.dat
+		{ "(a|ab|c|bcd){0,}(d*)", "ababcd" },	// repetition.dat
+		{ "(a|ab|c|bcd){1,}(d*)", "ababcd" },	// repetition.dat
+		{ "(a|ab|c|bcd){2,}(d*)", "ababcd" },	// repetition.dat
+		{ "(a|ab|c|bcd){3,}(d*)", "ababcd" },	// repetition.dat
+		{ "(a|ab|c|bcd){1,10}(d*)", "ababcd" },	// repetition.dat
+		{ "(a|ab|c|bcd){2,10}(d*)", "ababcd" },	// repetition.dat
+		{ "(a|ab|c|bcd){3,10}(d*)", "ababcd" },	// repetition.dat
+		{ "(a|ab|c|bcd)*(d*)", "ababcd" },	// repetition.dat
+		{ "(a|ab|c|bcd)+(d*)", "ababcd" },	// repetition.dat
+		{ "(ab|a|c|bcd){0,}(d*)", "ababcd" },	// repetition.dat
+		{ "(ab|a|c|bcd){1,}(d*)", "ababcd" },	// repetition.dat
+		{ "(ab|a|c|bcd){2,}(d*)", "ababcd" },	// repetition.dat
+		{ "(ab|a|c|bcd){3,}(d*)", "ababcd" },	// repetition.dat
+		{ "(ab|a|c|bcd){1,10}(d*)", "ababcd" },	// repetition.dat
+		{ "(ab|a|c|bcd){2,10}(d*)", "ababcd" },	// repetition.dat
+		{ "(ab|a|c|bcd){3,10}(d*)", "ababcd" },	// repetition.dat
+		{ "(ab|a|c|bcd)*(d*)", "ababcd" },	// repetition.dat
+		{ "(ab|a|c|bcd)+(d*)", "ababcd" },	// repetition.dat
 #endif
 	};
 
@@ -342,8 +380,15 @@ ATF_TC_BODY(regex_att, tc)
 		}
 		if (skipping)
 			continue;
-		if (*name == ';' || strcmp(name, "NOTE") == 0)
+		if (*name == ';' || *name == '#' || strcmp(name, "NOTE") == 0)
 			continue;
+		if (*name == ':') {
+			/* Skip ":HA#???:" prefix */
+			while (*++name && *name != ':')
+				continue;
+			if (*name)
+				name++;
+		}
 
 		ATF_REQUIRE_MSG((pattern = strtok(NULL, sep)) != NULL,
 			"Missing pattern at line %zu", lineno);
@@ -388,6 +433,7 @@ ATF_TC_BODY(regex_att, tc)
 				continue;
 			name++;	/* We have it, so ignore */
 			break;
+		case '#':	/* Comment */
 		case ';':	/* Skip */
 			continue;
 		default:
