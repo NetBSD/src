@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.20 2011/04/21 13:39:54 phx Exp $
+$NetBSD: README.NAS,v 1.21 2011/11/06 00:28:12 phx Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -42,15 +42,16 @@ PCI line/pin and EPIC IRQ assignments
 Kurobox		11, 12, 13, 14	-> 0, 1, 4, 3
 Synology	12, 13, 14, 15	-> 4, 0, 1, 2
 QNAP		13, 14, 15, 16	-> 0, 1, 2, 3
-StorCenter	12, 13, 14, 15  -> 0, 1, 2, 3
-DLink		13, 14, 15, 16	-> 0, 1, 3, 4
+StorCenter	13, 14, 15      -> 1, *, 0
+DLink		13, 14, 15, 16	-> 0, *, 3, 4
 NH230		13, 14, 15, 16	-> 0, 3, 1, 2
 
-- USB EHCI is a multiple function PCI device which has
-  pin assignment A, B and C. Special cases:
-
-		IDSEL	Pin		   EPIC IRQ
-  DLink		14	A, B, C		-> 1, 1, 2
+- USB is a multiple function PCI device which has
+  pin assignment A (OHCI), B (OHCI) and C (EHCI).
+  Special cases (*):
+		IDSEL	Pin	   EPIC IRQ
+  DLink		14	A, B, C	-> 1, 1, 2
+  StorCenter	14	A, B, C	-> 2, 3, 4
 
 
 //// e300 NAS products ////
