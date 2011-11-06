@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.35 2011/11/06 11:51:42 tron Exp $
+# $NetBSD: mi,v 1.36 2011/11/06 13:27:25 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -105,6 +105,8 @@
 ./@MODULEDIR@/nilfs/nilfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/npf				base-kernel-modules	kmod
 ./@MODULEDIR@/npf/npf.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/npf_alg_icmp			base-kernel-modules	kmod
+./@MODULEDIR@/npf_alg_icmp/npf_alg_icmp.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/ntfs				base-kernel-modules	kmod
 ./@MODULEDIR@/ntfs/ntfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/null				base-kernel-modules	kmod
