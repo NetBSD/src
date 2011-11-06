@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.418 2011/11/06 17:05:02 christos Exp $
+# $NetBSD: mi,v 1.419 2011/11/06 18:53:00 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -644,6 +644,9 @@
 ./usr/libdata/debug/usr/tests/lib/librumphijack/h_netget.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libskey				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms.debug		tests-lib-debug		debug,atf,skey
+./usr/libdata/debug/usr/tests/lib/libtre				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libtre/h_regex_att.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libtre/t_exhaust.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libutil				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libutil/t_efun.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libutil/t_parsedate.debug		tests-lib-debug		debug,atf
@@ -2428,6 +2431,39 @@
 ./usr/tests/lib/libskey				tests-lib-tests		atf
 ./usr/tests/lib/libskey/Atffile			tests-lib-tests		atf,skey
 ./usr/tests/lib/libskey/t_algorithms		tests-lib-tests		atf,skey
+./usr/tests/lib/libtre				tests-lib-tests		atf
+./usr/tests/lib/libtre/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libtre/h_regex_att		tests-lib-tests		atf
+./usr/tests/lib/libtre/t_exhaust		tests-lib-tests		atf
+./usr/tests/lib/libtre/t_regex_att		tests-lib-tests		atf
+./usr/tests/lib/libtre/data			tests-lib-tests		atf
+./usr/tests/lib/libtre/data/README		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/anchor.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/backref.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/basic.dat		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/basic.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/bracket.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/c_comments.in	tests-lib-tests		atf
+./usr/tests/lib/libtre/data/categorization.dat	tests-lib-tests		atf
+./usr/tests/lib/libtre/data/complex.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/error.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/forcedassoc.dat	tests-lib-tests		atf
+./usr/tests/lib/libtre/data/leftassoc.dat	tests-lib-tests		atf
+./usr/tests/lib/libtre/data/meta.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/nospec.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/nullsubexpr.dat	tests-lib-tests		atf
+./usr/tests/lib/libtre/data/paren.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/regress.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/repet_bounded.in	tests-lib-tests		atf
+./usr/tests/lib/libtre/data/repet_multi.in	tests-lib-tests		atf
+./usr/tests/lib/libtre/data/repet_ordinary.in	tests-lib-tests		atf
+./usr/tests/lib/libtre/data/repetition.dat	tests-lib-tests		atf
+./usr/tests/lib/libtre/data/rightassoc.dat	tests-lib-tests		atf
+./usr/tests/lib/libtre/data/startend.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/subexp.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/subtle.in		tests-lib-tests		atf
+./usr/tests/lib/libtre/data/word_bound.in	tests-lib-tests		atf
+./usr/tests/lib/libtre/data/zero.in		tests-lib-tests		atf
 ./usr/tests/lib/libutil				tests-lib-tests		atf
 ./usr/tests/lib/libutil/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libutil/t_efun			tests-lib-tests		atf
