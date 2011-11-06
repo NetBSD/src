@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1703 2011/11/05 22:55:21 christos Exp $
+#	$NetBSD: mi,v 1.1704 2011/11/06 02:11:16 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4404,6 +4404,7 @@
 ./usr/libdata/lint/llib-ltelnet.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-ltermcap.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lterminfo.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-ltre.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lukfs.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lusb.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lusbhid.ln		comp-c-lintlib		lint
