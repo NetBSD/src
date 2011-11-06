@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.20 2011/11/01 16:32:57 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.21 2011/11/06 20:20:57 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -695,7 +695,7 @@ iomegabrdfix(struct brdprop *brd)
 
 	init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
 	/* illuminate LEDs */
-	(void)send_iomega('b', 'd', 2, 'a', 60, 50, NULL);
+	if (0) (void)send_iomega('b', 'd', 2, 'a', 60, 50, NULL);
 }
 
 void
@@ -950,6 +950,7 @@ getchar(void)
 int
 tstchar(void)
 {
+
 	return (UART_READ(uart1base, LSR) & LSR_DRDY) != 0;
 }
 
@@ -1101,3 +1102,35 @@ read_mac_from_flash(uint8_t *mac)
 	/* set to 00:00:00:00:00:00 in case of error */
 	memset(mac, 0, 6);
 }
+
+#ifdef DEBUG
+void
+sat_write(char *p, int len)
+{
+	unsigned savedbase;
+
+	savedbase = uart1base;
+	uart1base = uart2base;
+	while (len--)
+		putchar(*p++);
+	uart1base = savedbase;
+}
+
+int
+sat_getch(void)
+{
+	unsigned lsr;
+
+	do {
+		lsr = UART_READ(uart2base, LSR);
+	} while ((lsr & LSR_DRDY) == 0);
+	return UART_READ(uart2base, RBR);
+}
+
+int
+sat_tstch(void)
+{
+
+	return (UART_READ(uart2base, LSR) & LSR_DRDY) != 0;
+}
+#endif /* DEBUG */
