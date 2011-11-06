@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gdb,v 1.4 2011/10/09 02:03:30 christos Exp $
+#	$NetBSD: mknative-gdb,v 1.5 2011/11/06 19:46:12 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/gdb
@@ -127,7 +127,7 @@ get_gdb_libgdb () {
 	local _LIBSIM=$_GDB/lib/libsim
 	case $MACHINE_ARCH in
 	powerpc*)
-		mkdir -p $_LIBSIM/arch/$MACHINE_ARCH
+		mkdir -p $_TOP/$_LIBSIM/arch/$MACHINE_ARCH
 		write_c $_LIBSIM/arch/$MACHINE_ARCH/config.h \
 			<$_TMPDIR/sim/ppc/config.h
 		write_c $_LIBSIM/arch/$MACHINE_ARCH/build-config.h \
@@ -135,8 +135,8 @@ get_gdb_libgdb () {
 		write_c $_LIBSIM/arch/$MACHINE_ARCH/cconfig.h \
 			<$_TMPDIR/sim/common/cconfig.h
 		;;
-	xxmips*)
-		mkdir -p $_LIBSIM/arch/$MACHINE_ARCH
+	xxmips*)	# Disabled for now
+		mkdir -p $_TOP/$_LIBSIM/arch/$MACHINE_ARCH
 		write_c $_LIBSIM/arch/$MACHINE_ARCH/config.h \
 			<$_TMPDIR/sim/mips/config.h
 		write_c $_LIBSIM/arch/$MACHINE_ARCH/cconfig.h \
