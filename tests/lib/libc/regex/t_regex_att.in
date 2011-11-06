@@ -1,5 +1,5 @@
 #! /usr/bin/atf-sh
-# $NetBSD: t_regex_att.in,v 1.1 2011/11/06 17:02:33 christos Exp $
+# $NetBSD: t_regex_att.in,v 1.2 2011/11/06 18:31:30 christos Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@ h_check()
 tc:basic:Tests basic functionality
 tc:categorization:Tests implementation categorization
 tc:nullsubexpr:Tests (...)*
-# tc:leftassoc:Tests left-associative implementations
+tc:leftassoc:Tests left-associative implementations
 tc:rightassoc:Tests right-associative implementations
 tc:forcedassoc:Tests subexpression grouping to force association
 tc:repetition:Tests implicit vs. explicit repetition
