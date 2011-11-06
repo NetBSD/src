@@ -1,4 +1,4 @@
-/*	$NetBSD: att.c,v 1.5 2011/11/06 16:26:54 christos Exp $	*/
+/*	$NetBSD: att.c,v 1.6 2011/11/06 16:43:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: att.c,v 1.5 2011/11/06 16:26:54 christos Exp $");
+__RCSID("$NetBSD: att.c,v 1.6 2011/11/06 16:43:25 christos Exp $");
 
 #include <stdio.h>
 #include <regex.h>
@@ -364,8 +364,9 @@ ATF_TC_BODY(regex_att, tc)
 		char *name, *pattern, *input, *matches, *comment;
 		regmatch_t *pm;
 		size_t nm;
-
+#ifdef DEBUG
 		fprintf(stderr, "[%s]\n", line);
+#endif
 		if ((name = strtok(line, sep)) == NULL)
 			continue;
 
