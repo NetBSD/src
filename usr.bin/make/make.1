@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.195 2011/08/28 03:54:07 sjg Exp $
+.\"	$NetBSD: make.1,v 1.196 2011/11/06 19:50:46 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd August 28, 2011
+.Dd November 6, 2011
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -922,6 +922,9 @@ This variable and
 are both set only while the
 .Ql Pa Makefiles
 are being parsed.
+If you want to retain their current values, assign them to a variable
+using assignment with expansion:
+.Pq Ql Cm \&:= .
 .It Va .PATH
 A variable that represents the list of directories that
 .Nm
