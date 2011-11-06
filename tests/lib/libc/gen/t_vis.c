@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vis.c,v 1.3 2011/07/07 10:02:53 jruoho Exp $	*/
+/*	$NetBSD: t_vis.c,v 1.4 2011/11/06 03:38:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,9 +65,9 @@ ATF_TC_BODY(strvis_basic, tc)
 	char *srcbuf, *dstbuf, *visbuf;
 	unsigned int i, j;
 
-	dstbuf = malloc(SIZE);
-	srcbuf = malloc(SIZE);
-	visbuf = malloc(SIZE * 4 + 1);
+	ATF_REQUIRE((dstbuf = malloc(SIZE)) != NULL);
+	ATF_REQUIRE((srcbuf = malloc(SIZE)) != NULL);
+	ATF_REQUIRE((visbuf = malloc(SIZE * 4 + 1)) != NULL);
 
 	for (i = 0; i < SIZE; i++)
 		srcbuf[i] = (char)i;
@@ -80,12 +80,44 @@ ATF_TC_BODY(strvis_basic, tc)
 				atf_tc_fail_nonfatal("Failed for style %x, "
 				    "char %d [%d]", styles[i], j, dstbuf[j]);
 	}
+	free(dstbuf);
+	free(srcbuf);
+	free(visbuf);
+}
+
+ATF_TC(strunvis_hex);
+ATF_TC_HEAD(strunvis_hex, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test strunvis(3) \\xXX");
+}
+
+ATF_TC_BODY(strunvis_hex, tc)
+{
+	static const struct {
+		const char *e;
+		const char *d;
+		int error;
+	} ed[] = {
+		{ "\\xff", "\xff", 1 },
+		{ "\\x1", "\x1", 1 },
+		{ "\\x1\\x02", "\x1\x2", 2 },
+		{ "\\x1x", "\x1x", 2 },
+		{ "\\xx", "", -1 },
+	};
+	char uv[10];
+
+	for (size_t i = 0; i < __arraycount(ed); i++) {
+		ATF_REQUIRE(strunvis(uv, ed[i].e) == ed[i].error);
+		if (ed[i].error > 0)
+			ATF_REQUIRE(memcmp(ed[i].d, uv, ed[i].error) == 0);
+	}
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, strvis_basic);
+	ATF_TP_ADD_TC(tp, strunvis_hex);
 
 	return atf_no_error();
 }
