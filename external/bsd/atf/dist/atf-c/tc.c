@@ -156,28 +156,22 @@ static atf_error_t
 write_resfile(const int fd, const char *result, const int arg,
               const atf_dynstr_t *reason)
 {
-    char buffer[1024];
-    int ret;
-
     if (arg == -1 && reason == NULL) {
-        if (snprintf(buffer, sizeof(buffer), "%s\n", result) <= 0)
+        if (dprintf(fd, "%s\n", result) <= 0)
             goto err;
     } else if (arg == -1 && reason != NULL) {
-        if (snprintf(buffer, sizeof(buffer), "%s: %s\n", result,
-                     atf_dynstr_cstring(reason)) <= 0)
+        if (dprintf(fd, "%s: %s\n", result,
+                     atf_dynstr_cstring(reason)) < 0)
             goto err;
     } else if (arg != -1 && reason != NULL) {
-        if (snprintf(buffer, sizeof(buffer), "%s(%d): %s\n", result,
-                     arg, atf_dynstr_cstring(reason)) <= 0)
+        if (dprintf(fd, "%s(%d): %s\n", result,
+                     arg, atf_dynstr_cstring(reason)) < 0)
             goto err;
     } else {
         UNREACHABLE;
     }
 
-    while ((ret = write(fd, buffer, strlen(buffer))) == -1 && errno == EINTR)
-        ; /* Retry. */
-    if (ret != -1)
-        return atf_no_error();
+    return atf_no_error();
 
 err:
     return atf_libc_error(
