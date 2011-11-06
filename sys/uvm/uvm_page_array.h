@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.h,v 1.1.2.1 2011/11/02 21:55:39 yamt Exp $	*/
+/*	$NetBSD: uvm_page_array.h,v 1.1.2.2 2011/11/06 22:04:07 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,10 +41,11 @@
  *	struct uvm_page_array ar;
  *
  *	uvm_page_array_init(&ar);
- *	for (uvm_page_array_fill(&ar, ...), pg = uvm_page_array_peek(&ar);
- *	    pg != NULL;
- *	    uvm_page_array_advance(&ar), pg = uvm_page_array_peek(&ar)) {
+ *	while ((pg = uvm_page_array_fill_and_peek(&ar, uobj, off, ....))
+ *	    != NULL) {
+ *		nextoff = pg->offset + PAGE_SIZE;
  *		do_something(pg);
+ *		uvm_page_array_advance(&ar);
  *	}
  *	uvm_page_array_fini(&it);
  */
@@ -64,5 +65,7 @@ struct vm_page *uvm_page_array_peek(struct uvm_page_array *);
 void uvm_page_array_advance(struct uvm_page_array *);
 int uvm_page_array_fill(struct uvm_page_array *, struct uvm_object *,
     voff_t, bool);
+struct vm_page *uvm_page_array_fill_and_peek(struct uvm_page_array *,
+    struct uvm_object *, voff_t, bool);
 
 #endif /* defined(_UVM_UVM_ARRAY_H_) */
