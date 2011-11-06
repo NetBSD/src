@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exhaust.c,v 1.3 2011/11/04 15:48:10 christos Exp $	*/
+/*	$NetBSD: t_exhaust.c,v 1.4 2011/11/06 18:34:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_exhaust.c,v 1.3 2011/11/04 15:48:10 christos Exp $");
+__RCSID("$NetBSD: t_exhaust.c,v 1.4 2011/11/06 18:34:48 christos Exp $");
 
 #include <stdio.h>
 #include <regex.h>
@@ -46,6 +46,9 @@ __RCSID("$NetBSD: t_exhaust.c,v 1.3 2011/11/04 15:48:10 christos Exp $");
 #include <err.h>
 #include <atf-c.h>
 
+#ifndef REGEX_MAXSIZE
+#define REGEX_MAXSIZE	9999
+#endif
 
 static char *
 mkstr(const char *str, size_t len)
@@ -179,14 +182,18 @@ ATF_TC_BODY(regcomp_too_big, tc)
 	int e;
 
 	for (size_t i = 0; i < __arraycount(tests); i++) {
-		char *d = (*tests[i].pattern)(9999);
+		char *d = (*tests[i].pattern)(REGEX_MAXSIZE);
 		e = regcomp(&re, d, tests[i].type);
-		free(d);
 		if (e) {
+			char ebuf[1024];
+			(void)regerror(e, &re, ebuf, sizeof(ebuf));
 			ATF_REQUIRE_MSG(e == REG_ESPACE,
-			    "regcomp returned %d for pattern %zu", e, i);
+			    "regcomp returned %d (%s) for pattern %zu [%s]", e, ebuf,
+			    i, d);
+			free(d);
 			continue;
 		}
+		free(d);
 		(void)regexec(&re, "aaaaaaaaaaa", 0, NULL, 0);
 		regfree(&re);
 	}
