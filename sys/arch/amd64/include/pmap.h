@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 2011/11/06 11:40:46 cherry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.28 2011/11/06 15:18:18 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -192,7 +192,8 @@
 #define AL4_BASE ((pd_entry_t *)((char *)AL3_BASE + L4_SLOT_PTE * NBPD_L1))
 
 #define PDP_PDE		(L4_BASE + PDIR_SLOT_PTE)
-#define APDP_PDE	(L4_BASE + PDIR_SLOT_APTE)
+#define APDP_PDE	(&curcpu()->ci_kpm_pdir[PDIR_SLOT_APTE])
+#define APDP_PDE_SHADOW	(L4_BASE + PDIR_SLOT_APTE)
 
 #define PDP_BASE	L4_BASE
 #define APDP_BASE	AL4_BASE
