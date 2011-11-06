@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.69 2011/11/06 11:40:47 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.70 2011/11/06 15:18:19 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69 2011/11/06 11:40:47 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70 2011/11/06 15:18:19 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -915,7 +915,7 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci,
 	 * Use pmap_kernel() L4 PD directly, until we setup the
 	 * per-cpu L4 PD in pmap_cpu_init_late()
 	 */
-	initctx->ctrlreg[3] = xpmap_ptom(pcb->pcb_cr3);
+	initctx->ctrlreg[3] = xen_pfn_to_cr3(x86_btop(xpmap_ptom(ci->ci_kpm_pdirpa)));
 	initctx->ctrlreg[4] = CR4_PAE | CR4_OSFXSR | CR4_OSXMMEXCPT;
 
 
@@ -1015,11 +1015,11 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci,
 	initctx->ctrlreg[0] = pcb->pcb_cr0;
 	initctx->ctrlreg[1] = 0; /* "resuming" from kernel - no User cr3. */
 	initctx->ctrlreg[2] = pcb->pcb_cr2; /* XXX: */
-	/* 
-	 * Use pmap_kernel() L4 PD directly, until we setup the
-	 * per-cpu L4 PD in pmap_cpu_init_late()
-	 */
-	initctx->ctrlreg[3] = xpmap_ptom(pcb->pcb_cr3);
+#ifdef PAE
+	initctx->ctrlreg[3] = xen_pfn_to_cr3(x86_btop(xpmap_ptom(ci->ci_pae_l3_pdirpa)));
+#else /* PAE */
+	initctx->ctrlreg[3] = xen_pfn_to_cr3(x86_btop(xpmap_ptom(pcb->pcb_cr3)));
+#endif /* PAE */
 	initctx->ctrlreg[4] = /* CR4_PAE |  */CR4_OSFXSR | CR4_OSXMMEXCPT;
 
 
@@ -1058,7 +1058,7 @@ mp_cpu_start(struct cpu_info *ci, vaddr_t target)
 
 	/* Start it up */
 
-	/* First bring it down - the Xen documentation conveniently omits this slight detail. */
+	/* First bring it down */
 	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_down, ci->ci_cpuid, NULL))) {
 		aprint_error(": VCPUOP_down hypervisor command failed. errno = %d\n", hyperror);
 		return hyperror;
@@ -1196,32 +1196,145 @@ cpu_load_pmap(struct pmap *pmap)
 
 #ifdef __x86_64__
 	int i, s;
-	pd_entry_t *old_pgd, *new_pgd;
-	paddr_t addr;
+	pd_entry_t *new_pgd;
 	struct cpu_info *ci;
+	paddr_t l4_pd_ma;
 
-	/* kernel pmap always in cr3 and should never go in user cr3 */
-	if (pmap_pdirpa(pmap, 0) != pmap_pdirpa(pmap_kernel(), 0)) {
-		ci = curcpu();
-		/*
-		 * Map user space address in kernel space and load
-		 * user cr3
-		 */
-		s = splvm();
-		new_pgd = pmap->pm_pdir;
-		old_pgd = pmap_kernel()->pm_pdir;
-		addr = xpmap_ptom(pmap_pdirpa(pmap_kernel(), 0));
-		for (i = 0; i < PDIR_SLOT_PTE;
-		    i++, addr += sizeof(pd_entry_t)) {
-			if ((new_pgd[i] & PG_V) || (old_pgd[i] & PG_V))
-				xpq_queue_pte_update(addr, new_pgd[i]);
-		}
+	ci = curcpu();
+	l4_pd_ma = xpmap_ptom_masked(ci->ci_kpm_pdirpa);
+
+	/*
+	 * Map user space address in kernel space and load
+	 * user cr3
+	 */
+	s = splvm();
+	new_pgd = pmap->pm_pdir;
+
+	/* Copy user pmap L4 PDEs (in user addr. range) to per-cpu L4 */
+	for (i = 0; i < PDIR_SLOT_PTE; i++) {
+		xpq_queue_pte_update(l4_pd_ma + i * sizeof(pd_entry_t), new_pgd[i]);
+	}
+
+	if (__predict_true(pmap != pmap_kernel())) {
 		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
 		ci->ci_xen_current_user_pgd = pmap_pdirpa(pmap, 0);
-		tlbflush();
-		splx(s);
 	}
+	else {
+		xpq_queue_pt_switch(l4_pd_ma);
+		ci->ci_xen_current_user_pgd = 0;
+	}
+
+	tlbflush();
+	splx(s);
+
 #endif /* __x86_64__ */
+}
+
+ /*
+  * pmap_cpu_init_late: perform late per-CPU initialization.
+  * Short note about percpu PDIR pages:
+  * Both the PAE and __x86_64__ architectures have per-cpu PDIR
+  * tables. This is to get around Xen's pagetable setup constraints for
+  * PAE (multiple L3[3]s cannot point to the same L2 - Xen
+  * will refuse to pin a table setup this way.) and for multiple cpus
+  * to map in different user pmaps on __x86_64__ (see: cpu_load_pmap())
+  *
+  * What this means for us is that the PDIR of the pmap_kernel() is
+  * considered to be a canonical "SHADOW" PDIR with the following
+  * properties: 
+  * - Its recursive mapping points to itself
+  * - per-cpu recurseive mappings point to themselves
+  * - per-cpu L4 pages' kernel entries are expected to be in sync with
+  *   the shadow
+  * - APDP_PDE_SHADOW accesses the shadow pdir
+  * - APDP_PDE accesses the per-cpu pdir
+  * - alternate mappings are considered per-cpu - however, x86 pmap
+  *   currently partially consults the shadow - this works because the
+  *   shadow PDE is updated together with the per-cpu entry (see:
+  *   xen_pmap.c: pmap_map_ptes(), and the pmap is locked while the
+  * alternate ptes are mapped in.
+  */
+
+void
+pmap_cpu_init_late(struct cpu_info *ci)
+{
+#if defined(PAE) || defined(__x86_64__)
+	/*
+	 * The BP has already its own PD page allocated during early
+	 * MD startup.
+	 */
+
+	if (ci == &cpu_info_primary)
+		return;
+
+	KASSERT(ci != NULL);
+
+#if defined(PAE)
+	ci->ci_pae_l3_pdir = (paddr_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_NOWAIT);
+
+	if (ci->ci_pae_l3_pdir == NULL) {
+		panic("%s: failed to allocate L3 per-cpu PD for CPU %d\n",
+		      __func__, cpu_index(ci));
+	}
+	ci->ci_pae_l3_pdirpa = vtophys((vaddr_t) ci->ci_pae_l3_pdir);
+	KASSERT(ci->ci_pae_l3_pdirpa != 0);
+
+	/* Initialise L2 entries 0 - 2: Point them to pmap_kernel() */
+	ci->ci_pae_l3_pdir[0] =
+	    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[0]) | PG_V;
+	ci->ci_pae_l3_pdir[1] =
+	    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[1]) | PG_V;
+	ci->ci_pae_l3_pdir[2] =
+	    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[2]) | PG_V;
+#endif /* PAE */
+
+	ci->ci_kpm_pdir = (pd_entry_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_NOWAIT);
+
+	if (ci->ci_kpm_pdir == NULL) {
+		panic("%s: failed to allocate L4 per-cpu PD for CPU %d\n",
+		      __func__, cpu_index(ci));
+	}
+	ci->ci_kpm_pdirpa = vtophys((vaddr_t) ci->ci_kpm_pdir);
+	KASSERT(ci->ci_kpm_pdirpa != 0);
+
+#if defined(__x86_64__)
+	/*
+	 * Copy over the pmap_kernel() shadow L4 entries 
+	 */
+
+	memcpy(ci->ci_kpm_pdir, pmap_kernel()->pm_pdir, PAGE_SIZE);
+
+	/* Recursive kernel mapping */
+	ci->ci_kpm_pdir[PDIR_SLOT_PTE] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PG_k | PG_V;
+#elif defined(PAE)
+	/* Copy over the pmap_kernel() shadow L2 entries that map the kernel */
+	memcpy(ci->ci_kpm_pdir, pmap_kernel()->pm_pdir + PDIR_SLOT_KERN, nkptp[PTP_LEVELS - 1] * sizeof(pd_entry_t));
+#endif /* __x86_64__ else PAE */
+
+	/* Xen wants R/O */
+	pmap_kenter_pa((vaddr_t)ci->ci_kpm_pdir, ci->ci_kpm_pdirpa,
+	    VM_PROT_READ, 0);
+
+#if defined(PAE)
+	/* Initialise L3 entry 3. This mapping is shared across all
+	 * pmaps and is static, ie; loading a new pmap will not update
+	 * this entry.
+	 */
+	
+	ci->ci_pae_l3_pdir[3] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PG_k | PG_V;
+
+	/* Mark L3 R/O (Xen wants this) */
+	pmap_kenter_pa((vaddr_t)ci->ci_pae_l3_pdir, ci->ci_pae_l3_pdirpa,
+		VM_PROT_READ, 0);
+
+	xpq_queue_pin_l3_table(xpmap_ptom_masked(ci->ci_pae_l3_pdirpa));
+
+#elif defined(__x86_64__)	
+	xpq_queue_pin_l4_table(xpmap_ptom_masked(ci->ci_kpm_pdirpa));
+#endif /* PAE */
+#endif /* defined(PAE) || defined(__x86_64__) */
 }
 
 /*
