@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2011/11/06 17:02:33 christos Exp $
+# $NetBSD: Makefile,v 1.7 2011/11/06 18:35:22 christos Exp $
 
 MKMAN=	no
 
@@ -6,6 +6,7 @@ MKMAN=	no
 
 TESTSDIR?=	${TESTSBASE}/lib/libc/regex
 IMPLEMENTATION?=	-DREGEX_SPENCER
+SKIPASSOC?=	left
 
 BINDIR=		${TESTSDIR}
 PROGS+=		h_regex h_regex_att
@@ -51,7 +52,7 @@ t_regex.sh: t_regex.awk t_regex.in
 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
 
 t_regex_att.sh: t_regex.awk t_regex_att.in
-	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
+	${TOOL_AWK} -v skipassoc=${SKIPASSOC} -f ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+= t_regex.sh t_regex_att.sh
 
