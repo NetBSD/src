@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.83 2011/10/18 12:25:31 jmcneill Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.84 2011/11/06 12:40:04 tron Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.83 2011/10/18 12:25:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.84 2011/11/06 12:40:04 tron Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1233,7 +1233,7 @@ module_fetch_info(module_t *mod)
 	}
 	if (size != sizeof(modinfo_t **)) {
 		module_error("`link_set_modules' section wrong size");
-		return error;
+		return ENOEXEC;
 	}
 	mod->mod_info = *(modinfo_t **)addr;
 
