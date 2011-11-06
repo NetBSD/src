@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.47 2011/02/04 19:42:12 pooka Exp $	*/
+/*	$NetBSD: dd.c,v 1.48 2011/11/06 21:22:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.47 2011/02/04 19:42:12 pooka Exp $");
+__RCSID("$NetBSD: dd.c,v 1.48 2011/11/06 21:22:23 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ u_int		files_cnt = 1;		/* # of files to copy */
 uint64_t	progress = 0;		/* display sign of life */
 const u_char	*ctab;			/* conversion table */
 sigset_t	infoset;		/* a set blocking SIGINFO */
+const char	*msgfmt = "posix";	/* default summary() message format */
 
 /*
  * Ops for stdin/stdout and crunch'd dd.  These are always host ops.
