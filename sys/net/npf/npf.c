@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.5 2011/04/25 22:16:21 yamt Exp $	*/
+/*	$NetBSD: npf.c,v 1.6 2011/11/06 13:08:04 tron Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.5 2011/04/25 22:16:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.6 2011/11/06 13:08:04 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.5 2011/04/25 22:16:21 yamt Exp $");
 /*
  * Module and device structures.
  */
-MODULE(MODULE_CLASS_MISC, npf, NULL);
+MODULE(MODULE_CLASS_DRIVER, npf, NULL);
 
 void		npfattach(int);
 
