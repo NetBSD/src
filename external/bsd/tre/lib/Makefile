@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/11/05 22:39:13 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2011/11/06 10:55:27 tron Exp $
 
 # for information:
 # the configure script is run as:
@@ -22,3 +22,5 @@ SRCS+=	tre-parse.c tre-stack.c xmalloc.c
 WARNS=	4
 
 .include <bsd.lib.mk>
+
+CFLAGS+=	-Wno-stack-protector
