@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.6 2011/11/04 01:00:27 zoltan Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.7 2011/11/06 02:49:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.6 2011/11/04 01:00:27 zoltan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.7 2011/11/06 02:49:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -165,7 +165,7 @@ table_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 	const npf_tblent_t * const te2 = n2;
 
 	return npf_compare_cidr(&te1->te_addr, te1->te_mask,
-				&te2->te_addr, te2->te_mask);
+	    &te2->te_addr, te2->te_mask);
 }
 
 static signed int
@@ -368,14 +368,11 @@ npf_table_add_cidr(npf_tableset_t *tset, u_int tid,
 		htbl = table_hash_bucket(t, &val, sizeof(npf_addr_t));
 		/* Lookup to check for duplicates. */
 		LIST_FOREACH(it, htbl, te_entry.hashq) {
-			if (it->te_mask == mask) {
-				const uint32_t *addr1 = it->te_addr.s6_addr32;
-				const uint32_t *addr2 = addr->s6_addr32;
-				const size_t len = sizeof(npf_addr_t);
-
-				if (memcmp(addr1, addr2, len) == 0) {
-					break;
-				}
+			if (it->te_mask != mask) {
+				continue;
+			}
+			if (!memcmp(&it->te_addr, addr, sizeof(npf_addr_t))) {
+				break;
 			}
 		}
 		/* If no duplicate - insert entry. */
@@ -429,14 +426,11 @@ npf_table_rem_cidr(npf_tableset_t *tset, u_int tid,
 		npf_calculate_masked_addr(&val, addr, mask);
 		htbl = table_hash_bucket(t, &val, sizeof(npf_addr_t));
 		LIST_FOREACH(e, htbl, te_entry.hashq) {
-			if (e->te_mask == mask) {
-				const uint32_t *addr1 = e->te_addr.s6_addr32;
-				const uint32_t *addr2 = addr->s6_addr32;
-				const size_t len = sizeof(npf_addr_t);
-
-				if (memcmp(addr1, addr2, len) == 0) {
-					break;
-				}
+			if (e->te_mask != mask) {
+				continue;
+			}
+			if (!memcmp(&e->te_addr, addr, sizeof(npf_addr_t))) {
+				break;
 			}
 		}
 		if (__predict_true(e != NULL)) {
@@ -487,15 +481,15 @@ npf_table_match_addr(u_int tid, const npf_addr_t *addr)
 	case NPF_TABLE_HASH:
 		htbl = table_hash_bucket(t, addr, sizeof(npf_addr_t));
 		LIST_FOREACH(e, htbl, te_entry.hashq) {
-			if (npf_compare_cidr(addr, e->te_mask, &e->te_addr, NPF_NO_NETMASK) == 0)
-				break;			
+			if (npf_compare_cidr(addr, e->te_mask, &e->te_addr,
+			    NPF_NO_NETMASK) == 0)
+				break;
 		}
 		break;
 	case NPF_TABLE_RBTREE:
 		e = rb_tree_find_node(&t->t_rbtree, addr);
-		if (e != NULL) {
-			KASSERT(npf_compare_cidr(addr, e->te_mask, &e->te_addr, NPF_NO_NETMASK) == 0);
-		}
+		KASSERT(e && npf_compare_cidr(addr, e->te_mask, &e->te_addr,
+		    NPF_NO_NETMASK) == 0);
 		break;
 	default:
 		KASSERT(false);

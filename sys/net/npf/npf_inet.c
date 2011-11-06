@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.7 2011/11/04 01:00:27 zoltan Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.8 2011/11/06 02:49:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.7 2011/11/04 01:00:27 zoltan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.8 2011/11/06 02:49:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -126,28 +126,27 @@ npf_addr_sum(const int sz, const npf_addr_t *a1, const npf_addr_t *a2)
  * Returns all values in host byte-order.
  */
 int
-npf_tcpsaw(npf_cache_t *npc, nbuf_t *nbuf, tcp_seq *seq, tcp_seq *ack, uint32_t *win)
+npf_tcpsaw(npf_cache_t *npc, nbuf_t *nbuf, tcp_seq *seq, tcp_seq *ack,
+    uint32_t *win)
 {
 	struct tcphdr *th = &npc->npc_l4.tcp;
+	u_int thlen;
 
 	KASSERT(npf_iscached(npc, NPC_TCP));
 
 	*seq = ntohl(th->th_seq);
 	*ack = ntohl(th->th_ack);
 	*win = (uint32_t)ntohs(th->th_win);
+	thlen = th->th_off << 2;
 
-	/*
-	 * total length of packet - header length - tcp header length
-	 */
 	if (npf_iscached(npc, NPC_IP4)) {
 		struct ip *ip = &npc->npc_ip.v4;
-		return ntohs(ip->ip_len) - npf_cache_hlen(npc, nbuf) - (th->th_off << 2);
+		return ntohs(ip->ip_len) - npf_cache_hlen(npc, nbuf) - thlen;
 	} else {
 		KASSERT(npf_iscached(npc, NPC_IP6));
 		struct ip6_hdr *ip6 = &npc->npc_ip.v6;
-		return ntohs(ip6->ip6_plen) - (th->th_off << 2);
+		return ntohs(ip6->ip6_plen) - thlen;
 	}
-
 	return 0;
 }
 
@@ -276,16 +275,20 @@ npf_fetch_ip(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 			return false;
 		}
 
-		struct ip6_ext ip6e;
 		size_t toskip = sizeof(struct ip6_hdr);
 		bool processing_ends = false;
 		npc->npc_next_proto = ip6->ip6_nxt;
-		npc->npc_hlen = 0; 
+		npc->npc_hlen = 0;
 
 		do {
-			/* advance the length of the previous known header,
-			   and fetch the next extension header's length */
-			if (nbuf_advfetch(&nbuf, &n_ptr, toskip, sizeof(struct ip6_ext), &ip6e)) {
+			struct ip6_ext ip6e;
+
+			/*
+			 * Advance by the length of the previous known header
+			 * and fetch the next extension header's length.
+			 */
+			if (nbuf_advfetch(&nbuf, &n_ptr, toskip,
+			    sizeof(struct ip6_ext), &ip6e)) {
 				return false;
 			}
 
@@ -307,7 +310,7 @@ npf_fetch_ip(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 			}
 
 			npc->npc_hlen += toskip;
-			
+
 			if (!processing_ends) {
 				npc->npc_next_proto = ip6e.ip6e_nxt;
 			}
@@ -318,7 +321,6 @@ npf_fetch_ip(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 		npc->npc_dstip = (npf_addr_t *)&ip6->ip6_dst;
 		npc->npc_info |= NPC_IP6;
 		break;
-
 	default:
 		return false;
 	}
@@ -340,7 +342,8 @@ npf_fetch_tcp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 	th = &npc->npc_l4.tcp;
 
 	/* Fetch TCP header. */
-	if (nbuf_advfetch(&nbuf, &n_ptr, npf_cache_hlen(npc, nbuf), sizeof(struct tcphdr), th)) {
+	if (nbuf_advfetch(&nbuf, &n_ptr, npf_cache_hlen(npc, nbuf),
+	    sizeof(struct tcphdr), th)) {
 		return false;
 	}
 
