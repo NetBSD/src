@@ -1,4 +1,4 @@
-# $NetBSD: t_regex.awk,v 1.1 2011/01/08 18:10:31 pgoyette Exp $
+# $NetBSD: t_regex.awk,v 1.2 2011/11/06 18:32:39 christos Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,6 +48,8 @@ BEGIN {
 
 /^tc_list/ {
 	for (i = 0; i < count; i++) {
+		if (skipassoc != "" && index(tcs[i], skipassoc) != 0)
+			continue;
 		printf("	atf_add_test_case %s\n", tcs[i]);
 	}
 
