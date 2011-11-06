@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.95 2011/10/18 00:33:47 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.96 2011/11/06 11:51:23 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -44,6 +44,7 @@ SUBDIR+=	nandemulator
 SUBDIR+=	nfs
 SUBDIR+=	nfsserver
 SUBDIR+=	nilfs
+SUBDIR+=	npf
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	onewire
