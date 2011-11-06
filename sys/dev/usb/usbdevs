@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.599 2011/11/02 04:59:51 macallan Exp $
+$NetBSD: usbdevs,v 1.600 2011/11/06 02:29:33 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -576,6 +576,7 @@ product 3COMUSR USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
 /* 4G Systems products */
 product 4GSYSTEMS XSSTICK_P14	0x9605	4G Systems XSStick P14
+product 4GSYSTEMS XSSTICK_P14_INSTALLER	0xf000	4G Systems XSStick P14 - Windows driver
 
 /* ACDC products */
 product ACDC HUB		0x2315	USB Pen Drive HUB
