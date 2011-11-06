@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67 2011/10/05 20:39:24 njoly Exp $	*/
+/*	$NetBSD: trap.c,v 1.68 2011/11/06 15:53:04 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2011/10/05 20:39:24 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.68 2011/11/06 15:53:04 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -275,7 +275,7 @@ trap(struct trapframe *frame)
 		else
 			printf("unknown trap %ld", (u_long)frame->tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2"
+		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 "
 		       " %lx cpl %x rsp %lx\n",
 		    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
 		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
@@ -733,7 +733,7 @@ frame_dump(struct trapframe *tf)
 	    (void *)tf->tf_r13, (void *)tf->tf_r14, (void *)tf->tf_r15);
 	printf("rbp %p  rbx %p  rax %p\n",
 	    (void *)tf->tf_rbp, (void *)tf->tf_rbx, (void *)tf->tf_rax);
-	printf("cs %p  ds %p  es %p  fs %p  gs %p  ss %p\n",
+	printf("cs %lx  ds %lx  es %lx  fs %lx  gs %lx  ss %lx\n",
 		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
 		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
 	
