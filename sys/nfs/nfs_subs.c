@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.221.2.1 2011/11/02 21:53:59 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.221.2.2 2011/11/06 22:05:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.221.2.1 2011/11/02 21:53:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.221.2.2 2011/11/06 22:05:01 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.221.2.1 2011/11/02 21:53:59 yamt Exp 
 #include <sys/atomic.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_page_array.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -1745,6 +1746,9 @@ nfs_clearcommit(struct mount *mp)
 	rw_enter(&nmp->nm_writeverflock, RW_WRITER);
 	mutex_enter(&mntvnode_lock);
 	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		struct uvm_page_array a;
+		voff_t off;
+
 		KASSERT(vp->v_mount == mp);
 		if (vp->v_type != VREG)
 			continue;
@@ -1756,9 +1760,15 @@ nfs_clearcommit(struct mount *mp)
 		np = VTONFS(vp);
 		np->n_commitflags &=
 		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq.queue) {
+		uvm_page_array_init(&a);
+		off = 0;
+		while ((pg = uvm_page_array_fill_and_peek(&a, &vp->v_uobj, off,
+		    false)) != NULL) {
 			pg->flags &= ~PG_NEEDCOMMIT;
+			uvm_page_array_advance(&a);
+			off = pg->offset + PAGE_SIZE;
 		}
+		uvm_page_array_fini(&a);
 		mutex_exit(vp->v_interlock);
 	}
 	mutex_exit(&mntvnode_lock);
