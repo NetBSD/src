@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.21 2007/10/05 07:23:09 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.22 2011/11/06 21:22:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.21 2007/10/05 07:23:09 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.22 2011/11/06 21:22:23 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,41 @@ __RCSID("$NetBSD: misc.c,v 1.21 2007/10/05 07:23:09 lukem Exp $");
 
 #define	tv2mS(tv) ((tv).tv_sec * 1000LL + ((tv).tv_usec + 500) / 1000)
 
+static void posix_summary(void);
+#ifndef NO_MSGFMT
+static void custom_summary(void);
+static void human_summary(void);
+static void quiet_summary(void);
+
+static void buffer_write(const char *, size_t, int);
+static int  dd_write_msg(const char *);
+#endif /* NO_MSGFMT */
+
 void
 summary(void)
+{
+
+	if (progress)
+		(void)write(STDERR_FILENO, "\n", 1);
+
+#ifdef NO_MSGFMT
+	return posix_summary();
+#else /* NO_MSGFMT */
+	if (strncmp(msgfmt, "human", sizeof("human")) == 0)
+		return human_summary();
+
+	if (strncmp(msgfmt, "posix", sizeof("posix")) == 0)
+		return posix_summary();
+
+	if (strncmp(msgfmt, "quiet", sizeof("quiet")) == 0)
+		return quiet_summary();
+
+	return custom_summary();
+#endif /* NO_MSGFMT */
+}
+
+static void
+posix_summary(void)
 {
 	char buf[100];
 	int64_t mS;
@@ -73,6 +106,7 @@ summary(void)
 	mS = tv2mS(tv) - tv2mS(st.start);
 	if (mS == 0)
 		mS = 1;
+
 	/* Use snprintf(3) so that we don't reenter stdio(3). */
 	(void)snprintf(buf, sizeof(buf),
 	    "%llu+%llu records in\n%llu+%llu records out\n",
@@ -123,3 +157,174 @@ terminate(int signo)
 	(void)raise_default_signal(signo);
 	_exit(127);
 }
+
+#ifndef NO_MSGFMT
+/*
+ * Buffer write(2) calls
+ */
+static void
+buffer_write(const char *str, size_t size, int flush)
+{
+	static char wbuf[128];
+	static size_t cnt = 0; /* Internal counter to allow wbuf to wrap */
+	
+	unsigned int i;
+
+	for (i = 0; i < size; i++) {
+		wbuf[cnt++] = str[i];
+		if (cnt >= sizeof(wbuf) || flush == 1) {
+			(void)write(STDERR_FILENO, wbuf, cnt);
+			cnt = 0;
+		}
+	}
+}
+
+static int
+dd_write_msg(const char *fmt)
+{
+	char hbuf[7], nbuf[32];
+	const char *ptr;
+	int64_t mS;
+        struct timeval tv;
+
+	(void)gettimeofday(&tv, NULL);
+	mS = tv2mS(tv) - tv2mS(st.start);
+	if (mS == 0)
+		mS = 1;
+
+#define ADDC(c) do { buffer_write(&c, 1, 0); } \
+	while (/*CONSTCOND*/0)
+#define ADDS(p) do { buffer_write(p, strlen(p), 0); } \
+	while (/*CONSTCOND*/0)
+
+	for (ptr = fmt; *ptr; ptr++) {
+		if (*ptr != '%') {
+			ADDC(*ptr);
+			continue;
+		}
+
+ 		switch (*++ptr) {
+		case 'b':
+			(void)snprintf(nbuf, sizeof(nbuf), "%llu",
+			    (unsigned long long)st.bytes);
+			ADDS(nbuf);
+			break;
+		case 'B':
+			if (humanize_number(hbuf, sizeof(hbuf),
+			    st.bytes, "B",
+			    HN_AUTOSCALE, HN_DECIMAL) == -1)
+				warnx("humanize_number (bytes transferred)");
+			ADDS(hbuf);
+			break;
+		case 'e':
+			(void)snprintf(nbuf, sizeof(nbuf), "%llu",
+			    (unsigned long long) (st.bytes * 1000LL / mS));
+			ADDS(nbuf);
+			break;
+		case 'E':
+			if (humanize_number(hbuf, sizeof(hbuf),
+			    st.bytes * 1000LL / mS, "B",
+			    HN_AUTOSCALE, HN_DECIMAL) == -1)
+				warnx("humanize_number (bytes per second)");
+			ADDS(hbuf); ADDS("/sec");
+			break;
+		case 'i':
+			(void)snprintf(nbuf, sizeof(nbuf), "%llu",
+			    (unsigned long long)st.in_part);
+			ADDS(nbuf);
+			break;
+		case 'I':
+			(void)snprintf(nbuf, sizeof(nbuf), "%llu",
+			    (unsigned long long)st.in_full);
+			ADDS(nbuf);
+			break;
+		case 'o':
+			(void)snprintf(nbuf, sizeof(nbuf), "%llu",
+			    (unsigned long long)st.out_part);
+			ADDS(nbuf);
+			break;
+		case 'O':
+			(void)snprintf(nbuf, sizeof(nbuf), "%llu",
+			    (unsigned long long)st.out_full);
+			ADDS(nbuf);
+			break;
+		case 's':
+			(void)snprintf(nbuf, sizeof(nbuf), "%li.%03d",
+			    (long) (mS / 1000), (int) (mS % 1000));
+			ADDS(nbuf);
+			break;
+		case 'p':
+			(void)snprintf(nbuf, sizeof(nbuf), "%llu",
+			    (unsigned long long)st.sparse);
+			ADDS(nbuf);
+			break;
+		case 't':
+			(void)snprintf(nbuf, sizeof(nbuf), "%llu",
+			    (unsigned long long)st.trunc);
+			ADDS(nbuf);
+			break;
+		case 'w':
+			(void)snprintf(nbuf, sizeof(nbuf), "%llu",
+			    (unsigned long long)st.swab);
+			ADDS(nbuf);
+			break;
+		case 'P':
+			ADDS("block");
+			if (st.sparse != 1) ADDS("s");
+			break;
+		case 'T':
+			ADDS("block");
+			if (st.trunc != 1) ADDS("s");
+			break;
+		case 'W':
+			ADDS("block");
+			if (st.swab != 1) ADDS("s");
+			break;
+		default:
+			ADDS("%");
+			if (*ptr == '\0')
+				goto done;
+			/*FALLTHROUGH*/
+		case '%':
+			ADDC(*ptr);
+			break;
+		}
+	}
+
+done:
+	/* flush buffer */
+	buffer_write("\0", 1, 1);
+	return 0;
+}
+
+static void
+custom_summary(void)
+{
+
+	dd_write_msg(msgfmt);
+}
+
+static void
+human_summary(void)
+{
+	(void)dd_write_msg("%I+%i records in\n%O+%o records out\n");
+	if (st.swab) {
+		(void)dd_write_msg("%w odd length swab %W\n");
+	}
+	if (st.trunc) {
+		(void)dd_write_msg("%t truncated %T\n");
+	}
+	if (st.sparse) {
+		(void)dd_write_msg("%p sparse output %P\n");
+	}
+	(void)dd_write_msg("%b bytes (%B) transferred in %s secs "
+	    "(%e bytes/sec - %E)\n");
+}
+
+static void
+quiet_summary(void)
+{
+
+	/* stay quiet */
+}
+#endif /* NO_MSGFMT */
