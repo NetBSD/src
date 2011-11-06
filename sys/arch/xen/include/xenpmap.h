@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.29 2011/08/13 11:41:57 cherry Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.30 2011/11/06 11:40:47 cherry Exp $	*/
 
 /*
  *
@@ -34,17 +34,14 @@
 #include "opt_xen.h"
 #endif
 
-#define	INVALID_P2M_ENTRY	(~0UL)
+/* flag to be used for kernel mappings: PG_u on Xen/amd64, 0 otherwise */
+#if defined(XEN) && defined(__x86_64__)
+#define PG_k PG_u
+#else
+#define PG_k 0
+#endif
 
-#ifdef MULTIPROCESSOR
-void xpq_queue_lock(void);
-void xpq_queue_unlock(void);
-bool xpq_queue_locked(void);
-#else /* MULTIPROCESSOR */
-#define xpq_queue_lock() do {} while(0) /* nothing */
-#define xpq_queue_unlock() do {} while(0) /* nothing */
-#define xpq_queue_locked() (true) /* Always true for UP */
-#endif /* MULTIPROCESSOR */
+#define	INVALID_P2M_ENTRY	(~0UL)
 
 void xpq_queue_machphys_update(paddr_t, paddr_t);
 void xpq_queue_invlpg(vaddr_t);
