@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.9 2011/11/04 01:00:27 zoltan Exp $	*/
+/*	$NetBSD: npf.h,v 1.10 2011/11/06 02:49:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #include "testing.h"
 #endif
 
-#define	NPF_VERSION		2
+#define	NPF_VERSION		3
 
 /*
  * Public declarations and definitions.
@@ -57,9 +57,9 @@
 
 /* Storage of address (both for IPv4 and IPv6) and netmask */
 typedef struct in6_addr		npf_addr_t;
-typedef uint_fast8_t		npf_netmask_t;
+typedef uint8_t			npf_netmask_t;
 
-#define	NPF_NO_NETMASK		(npf_netmask_t)~0
+#define	NPF_NO_NETMASK		((npf_netmask_t)~0)
 
 #if defined(_KERNEL) || defined(_NPF_TESTING)
 
@@ -116,14 +116,14 @@ typedef struct {
 	} npc_l4;
 } npf_cache_t;
 
-/* Max length is 32 for IPv4 and 128 for IPv6 */
 static inline void
 npf_generate_mask(npf_addr_t *dst, const npf_netmask_t omask)
 {
 	uint_fast8_t length = omask;
 
+	/* Note: maximum length is 32 for IPv4 and 128 for IPv6. */
 	KASSERT(length <= 128);
-	memset(dst, 0, sizeof(npf_addr_t));
+
 	for (int i = 0; i < 4; i++) {
 		if (length >= 32) {
 			dst->s6_addr32[i] = htonl(0xffffffff);
@@ -131,29 +131,30 @@ npf_generate_mask(npf_addr_t *dst, const npf_netmask_t omask)
 		} else {
 			dst->s6_addr32[i] = htonl(0xffffffff << (32 - length));
 			length = 0;
-		}  
+		}
 	}
 }
 
 static inline void
-npf_calculate_masked_addr(npf_addr_t *dst, const npf_addr_t *src, const npf_netmask_t omask)
+npf_calculate_masked_addr(npf_addr_t *dst, const npf_addr_t *src,
+    const npf_netmask_t omask)
 {
 	npf_addr_t mask;
 
 	npf_generate_mask(&mask, omask);
 	for (int i = 0; i < 4; i++) {
-		dst->s6_addr32[i] =
-			src->s6_addr32[i] & mask.s6_addr32[i];
+		dst->s6_addr32[i] = src->s6_addr32[i] & mask.s6_addr32[i];
 	}
 }
 
 /*
- * compare two addresses, either v4 or v6
- * if the mask is NULL, ignore it
+ * npf_compare_cidr: compare two addresses, either IPv4 or IPv6.
+ *
+ * => If the mask is NULL, ignore it.
  */
 static inline int
 npf_compare_cidr(const npf_addr_t *addr1, const npf_netmask_t mask1,
-		 const npf_addr_t *addr2, const npf_netmask_t mask2)
+    const npf_addr_t *addr2, const npf_netmask_t mask2)
 {
 	npf_addr_t realmask1, realmask2;
 
@@ -165,11 +166,11 @@ npf_compare_cidr(const npf_addr_t *addr1, const npf_netmask_t mask1,
 	}
 	for (int i = 0; i < 4; i++) {
 		const uint32_t x = mask1 != NPF_NO_NETMASK ?
-				addr1->s6_addr32[i] & realmask1.s6_addr32[i] : 
-				addr1->s6_addr32[i];
+		    addr1->s6_addr32[i] & realmask1.s6_addr32[i] :
+		    addr1->s6_addr32[i];
 		const uint32_t y = mask2 != NPF_NO_NETMASK ?
-				addr2->s6_addr32[i] & realmask2.s6_addr32[i] :
-				addr2->s6_addr32[i];
+		    addr2->s6_addr32[i] & realmask2.s6_addr32[i] :
+		    addr2->s6_addr32[i];
 		if (x < y) {
 			return -1;
 		}
@@ -267,7 +268,6 @@ typedef struct npf_ioctl_table {
 	u_int			nct_tid;
 	npf_addr_t		nct_addr;
 	npf_netmask_t		nct_mask;
-	int			_reserved;
 } npf_ioctl_table_t;
 
 typedef enum {

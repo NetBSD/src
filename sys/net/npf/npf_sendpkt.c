@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.6 2011/11/05 10:23:26 zoltan Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.7 2011/11/06 02:49:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.6 2011/11/05 10:23:26 zoltan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.7 2011/11/06 02:49:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,13 +96,14 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 
 	if (npf_iscached(npc, NPC_IP4)) {
 		struct ip *oip = &npc->npc_ip.v4;
+
 		ip = mtod(m, struct ip *);
 		memset(ip, 0, len);
 
 		/*
-	 	* First fill of IPv4 header, for TCP checksum.
-	 	* Note: IP length contains TCP header length.
-	 	*/
+		 * First fill of IPv4 header, for TCP checksum.
+		 * Note: IP length contains TCP header length.
+		 */
 		ip->ip_p = IPPROTO_TCP;
 		ip->ip_src.s_addr = oip->ip_dst.s_addr;
 		ip->ip_dst.s_addr = oip->ip_src.s_addr;
@@ -110,15 +111,16 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 
 		th = (struct tcphdr *)(ip + 1);
 	} else {
-		KASSERT(npf_iscached(npc, NPC_IP6));
 		struct ip6_hdr *oip = &npc->npc_ip.v6;
+
+		KASSERT(npf_iscached(npc, NPC_IP6));
 		ip6 = mtod(m, struct ip6_hdr *);
 		memset(ip6, 0, len);
 
 		ip6->ip6_nxt = IPPROTO_TCP;
 		ip6->ip6_hlim = IPV6_DEFHLIM;
 		memcpy(&ip6->ip6_src, &oip->ip6_dst, sizeof(struct in6_addr));
-		memcpy(&ip6->ip6_dst, &oip->ip6_src, sizeof(struct in6_addr));		
+		memcpy(&ip6->ip6_dst, &oip->ip6_src, sizeof(struct in6_addr));
 		ip6->ip6_plen = htons(len);
 		ip6->ip6_vfc = IPV6_VERSION;
 
@@ -139,7 +141,7 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 	if (npf_iscached(npc, NPC_IP4)) {
 		th->th_sum = in_cksum(m, len);
 
-		 /* Second fill of IPv4 header, fill correct IP length. */
+		/* Second fill of IPv4 header, fill correct IP length. */
 		ip->ip_v = IPVERSION;
 		ip->ip_hl = sizeof(struct ip) >> 2;
 		ip->ip_tos = IPTOS_LOWDELAY;
@@ -148,7 +150,8 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 	} else {
 		KASSERT(npf_iscached(npc, NPC_IP6));
 #ifdef INET6
-		th->th_sum = in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr), sizeof(struct tcphdr));
+		th->th_sum = in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr),
+		    sizeof(struct tcphdr));
 #else
 		KASSERT(false);
 #endif
@@ -161,7 +164,6 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 #ifdef INET6
 		return ip6_output(m, NULL, NULL, IPV6_FORWARDING, NULL, NULL, NULL);
 #else
-		KASSERT(false);
 		return 0;
 #endif
 	}
@@ -181,8 +183,6 @@ npf_return_icmp(npf_cache_t *npc, nbuf_t *nbuf)
 		KASSERT(npf_iscached(npc, NPC_IP6));
 #ifdef INET6
 		icmp6_error(m, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN, 0);
-#else
-		KASSERT(false);
 #endif
 	}
 	return 0;
