@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.709 2011/08/13 12:09:38 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.710 2011/11/06 11:40:46 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.709 2011/08/13 12:09:38 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.710 2011/11/06 11:40:46 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -539,6 +539,9 @@ i386_proc0_tss_ldt_init(void)
 }
 
 #ifdef XEN
+/* Shim for curcpu() until %fs is ready */
+extern struct cpu_info	* (*xpq_cpu)(void);
+
 /*
  * Switch context:
  * - honor CR0_TS in saved CR0 and request DNA exception on FPU use
@@ -565,6 +568,12 @@ i386_switch_context(lwp_t *l)
 			  (union descriptor *) &pcb->pcb_fsd);
 	update_descriptor(&ci->ci_gdt[GUGS_SEL], 
 			  (union descriptor *) &pcb->pcb_gsd);
+
+	/* setup curcpu() to use %fs now */
+	/* XXX: find a way to do this, just once */
+	if (__predict_false(xpq_cpu != x86_curcpu)) {
+		xpq_cpu = x86_curcpu;
+	}
 
 	physop.cmd = PHYSDEVOP_SET_IOPL;
 	physop.u.set_iopl.iopl = pcb->pcb_iopl;
@@ -1194,10 +1203,8 @@ initgdt(union descriptor *tgdt)
 		npte = pmap_pa2pte((vaddr_t)gdt - KERNBASE);
 		npte |= PG_RO | pg_nx | PG_V;
 
-		xpq_queue_lock();
 		xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
 		xpq_flush_queue();
-		xpq_queue_unlock();
 	}
 
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,

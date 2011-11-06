@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.68 2011/10/20 13:21:11 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.69 2011/11/06 11:40:47 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68 2011/10/20 13:21:11 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69 2011/11/06 11:40:47 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1097,6 +1097,13 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 
 }
 
+/* curcpu() uses %fs - shim for until cpu_init_msrs(), below */
+static struct cpu_info *cpu_primary(void)
+{
+	return &cpu_info_primary;
+}
+struct cpu_info	* (*xpq_cpu)(void) = cpu_primary;
+
 void
 cpu_init_msrs(struct cpu_info *ci, bool full)
 {
@@ -1105,6 +1112,7 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 		HYPERVISOR_set_segment_base (SEGBASE_FS, 0);
 		HYPERVISOR_set_segment_base (SEGBASE_GS_KERNEL, (uint64_t) ci);
 		HYPERVISOR_set_segment_base (SEGBASE_GS_USER, 0);
+		xpq_cpu = x86_curcpu;
 	}
 #endif	/* __x86_64__ */
 
@@ -1172,7 +1180,6 @@ cpu_load_pmap(struct pmap *pmap)
 	struct cpu_info *ci;
 
 	s = splvm(); /* just to be safe */
-	xpq_queue_lock();
 	ci = curcpu();
 	paddr_t l3_pd = xpmap_ptom_masked(ci->ci_pae_l3_pdirpa);
 	/* don't update the kernel L3 slot */
@@ -1180,7 +1187,6 @@ cpu_load_pmap(struct pmap *pmap)
 		xpq_queue_pte_update(l3_pd + i * sizeof(pd_entry_t),
 		    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
 	}
-	xpq_queue_unlock();
 	splx(s);
 	tlbflush();
 #else /* PAE */

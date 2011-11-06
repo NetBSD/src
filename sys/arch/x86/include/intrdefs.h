@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.16 2010/06/22 18:29:02 rmind Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.17 2011/11/06 11:40:47 cherry Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
@@ -56,6 +56,8 @@
 #define IDT_INTR_LOW	(0x20 + NUM_LEGACY_IRQS)
 #define IDT_INTR_HIGH	0xef
 
+#ifndef XEN
+
 #define X86_IPI_HALT			0x00000001
 #define X86_IPI_MICROSET		0x00000002
 #define X86_IPI__UNUSED1		0x00000004
@@ -72,6 +74,7 @@
 			 "FPU synch IPI", "MTRR update IPI", \
 			 "GDT update IPI", "xcall IPI", \
 			 "ACPI CPU sleep IPI", "kpreempt IPI" }
+#endif /* XEN */
 
 #define IREENT_MAGIC	0x18041969
 
