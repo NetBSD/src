@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.15 2011/11/02 15:14:49 yamt Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.16 2011/11/07 08:44:16 hannken Exp $	*/
 
 /*-
  * Copyright (c)2004,2005,2006,2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.15 2011/11/02 15:14:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.16 2011/11/07 08:44:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,8 +297,8 @@ bufq_priocscan_get(struct bufq_state *bufq, int remove)
 		 *
 		 * XXX account only by number of requests.  is it good enough?
 		 */
-		KASSERT(pq->q_burst > 0);
 		if (remove) {
+			KASSERT(pq->q_burst > 0);
 			pq->q_burst--;
 		}
 	}
