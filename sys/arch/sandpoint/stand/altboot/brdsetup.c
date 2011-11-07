@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.21 2011/11/06 20:20:57 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.22 2011/11/07 21:11:55 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ static struct brdprop brdlist[] = {
 	BRD_STORCENTER,
 	0,
 	"eumb", 0x4500, 115200,
-	NULL, iomegabrdfix, NULL, NULL },
+	NULL, iomegabrdfix, NULL, iomegareset },
     {
 	"dlink",
 	"D-Link DSM-G600",
@@ -141,7 +141,7 @@ static uint32_t ticks_per_sec, ns_per_tick;
 
 static void brdfixup(void);
 static void setup(void);
-static int send_iomega(int, int, int, int, int, int, uint8_t *);
+static int send_iomega(int, int, int, int, int, int);
 static inline uint32_t mfmsr(void);
 static inline void mtmsr(uint32_t);
 static inline uint32_t cputype(void);
@@ -694,8 +694,16 @@ iomegabrdfix(struct brdprop *brd)
 {
 
 	init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
-	/* illuminate LEDs */
-	if (0) (void)send_iomega('b', 'd', 2, 'a', 60, 50, NULL);
+	/* LED flashing blue, fan auto, turn on at 60C, turn off at 50C */
+	(void)send_iomega('b', 'd', 2, 'a', 60, 50);
+}
+
+void
+iomegareset()
+{
+
+	(void)send_iomega('g', 0, 0, 0, 0, 0);
+	/*NOTREACHED*/
 }
 
 void
@@ -880,44 +888,87 @@ send_sat(char *msg)
 	uart1base = savedbase;
 }
 
-static int
-send_iomega(int power, int led, int rate, int fan, int high, int low,
-    uint8_t *st)
+#ifdef DEBUG
+static void
+iomega_debug(const char *txt, uint8_t buf[])
 {
-	unsigned i, savedbase;
-	static uint8_t cur_state[IOMEGA_PACKETSIZE];
-	uint8_t buf[IOMEGA_PACKETSIZE];
+	int i;
 
-	buf[IOMEGA_POWER] =
-	    power >= 0 ? power : cur_state[IOMEGA_POWER];
-	buf[IOMEGA_LED] =
-	    led >= 0 ? led : cur_state[IOMEGA_LED];
-	buf[IOMEGA_FLASH_RATE] =
-	    rate >= 0 ? rate : cur_state[IOMEGA_FLASH_RATE];
-	buf[IOMEGA_FAN] =
-	    fan >= 0 ? fan : cur_state[IOMEGA_FAN];
-	buf[IOMEGA_HIGH_TEMP] =
-	    high >= 0 ? high : cur_state[IOMEGA_HIGH_TEMP];
-	buf[IOMEGA_LOW_TEMP] =
-	    low >= 0 ? low : cur_state[IOMEGA_LOW_TEMP];
+	printf("%s:", txt);
+	for (i = 0; i < IOMEGA_PACKETSIZE; i++)
+		printf(" %02x", buf[i]);
+	putchar('\n');
+}
+#endif /* DEBUG */
+
+static int
+send_iomega(int power, int led, int rate, int fan, int high, int low)
+{
+	uint8_t buf[IOMEGA_PACKETSIZE];
+	unsigned i, savedbase;
+
+	savedbase = uart1base;
+	uart1base = uart2base;
+
+	/* first flush the receive buffer */
+  again:
+	while (tstchar())
+		(void)getchar();
+	delay(20000);
+	if (tstchar())
+		goto again;
+	/*
+	 * Now synchronize the transmitter by sending 0x00
+	 * until we receive a status reply.
+	 */
+	do {
+		putchar(0);
+		delay(25000);
+	} while (!tstchar());
+
+	for (i = 0; i < IOMEGA_PACKETSIZE; i++)
+		buf[i] = getchar();
+#ifdef DEBUG
+	uart1base = savedbase;
+	iomega_debug("68HC908 status", buf);
+	uart1base = uart2base;
+#endif
+
+	/* send command */
+	if (power >= 0)
+		buf[IOMEGA_POWER] = power;
+	if (led >= 0)
+		buf[IOMEGA_LED] = led;
+	if (rate >= 0)
+		buf[IOMEGA_FLASH_RATE] = rate;
+	if (fan >= 0)
+		buf[IOMEGA_FAN] = fan;
+	if (high >= 0)
+		buf[IOMEGA_HIGH_TEMP] = high;
+	if (low >= 0)
+		buf[IOMEGA_LOW_TEMP] = low;
 	buf[IOMEGA_ID] = 7;	/* host id */
 	buf[IOMEGA_CHECKSUM] = (buf[IOMEGA_POWER] + buf[IOMEGA_LED] +
 	    buf[IOMEGA_FLASH_RATE] + buf[IOMEGA_FAN] +
 	    buf[IOMEGA_HIGH_TEMP] + buf[IOMEGA_LOW_TEMP] +
 	    buf[IOMEGA_ID]) & 0x7f;
-
-	savedbase = uart1base;
+#ifdef DEBUG
+	uart1base = savedbase;
+	iomega_debug("G2 sending", buf);
 	uart1base = uart2base;
+#endif
 	for (i = 0; i < IOMEGA_PACKETSIZE; i++)
 		putchar(buf[i]);
+
+	/* receive the reply */
 	for (i = 0; i < IOMEGA_PACKETSIZE; i++)
 		buf[i] = getchar();
-	uart1base = savedbase;
-	for (i = 0; i < IOMEGA_PACKETSIZE; i++)
-		printf("%02x", buf[i]);
-	printf("\n");
 
-	return 0;
+	uart1base = savedbase;
+#ifdef DEBUG
+	iomega_debug("68HC908 reply", buf);
+#endif
+	return buf[0] != '#';  /* error? */
 }
 
 void
