@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.5 2011/09/27 01:02:37 jym Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.6 2011/11/07 15:51:31 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5 2011/09/27 01:02:37 jym Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.6 2011/11/07 15:51:31 cherry Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5 2011/09/27 01:02:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.6 2011/11/07 15:51:31 cherry Exp $");
 
 #include <sys/types.h>
 
@@ -72,13 +72,15 @@ static void xen_ipi_halt(struct cpu_info *, struct intrframe *);
 static void xen_ipi_synch_fpu(struct cpu_info *, struct intrframe *);
 static void xen_ipi_ddb(struct cpu_info *, struct intrframe *);
 static void xen_ipi_xcall(struct cpu_info *, struct intrframe *);
+static void xen_ipi_hvcb(struct cpu_info *, struct intrframe *);
 
 static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 {	/* In order of priority (see: xen/include/intrdefs.h */
 	xen_ipi_halt,
 	xen_ipi_synch_fpu,
 	xen_ipi_ddb,
-	xen_ipi_xcall
+	xen_ipi_xcall,
+	xen_ipi_hvcb
 };
 
 static void
@@ -139,9 +141,9 @@ static inline u_int max_cpus(void)
 static inline bool /* helper */
 valid_ipimask(uint32_t ipimask)
 {
-	uint32_t masks =  XEN_IPI_XCALL | XEN_IPI_DDB | 
-		XEN_IPI_SYNCH_FPU | XEN_IPI_HALT | 
-		XEN_IPI_KICK;
+	uint32_t masks =  XEN_IPI_HVCB | XEN_IPI_XCALL |
+		 XEN_IPI_DDB | XEN_IPI_SYNCH_FPU |
+		 XEN_IPI_HALT | XEN_IPI_KICK;
 
 	if (ipimask & ~masks) {
 		return false;
@@ -295,4 +297,17 @@ xc_send_ipi(struct cpu_info *ci)
 	} else {
 		xen_broadcast_ipi(XEN_IPI_XCALL);
 	}
+}
+
+static void
+xen_ipi_hvcb(struct cpu_info *ci, struct intrframe *intrf)
+{
+	KASSERT(ci != NULL);
+	KASSERT(intrf != NULL);
+
+	volatile struct vcpu_info *vci = ci->ci_vcpu;
+
+	KASSERT(ci == curcpu());
+	KASSERT(!vci->evtchn_upcall_mask);
+	hypervisor_force_callback();
 }
