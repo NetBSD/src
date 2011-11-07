@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.21 2011/11/06 21:22:23 jym Exp $	*/
+/*	$NetBSD: extern.h,v 1.22 2011/11/07 22:24:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -48,6 +48,11 @@ void block_close(void);
 void unblock(void);
 void unblock_close(void);
 #endif
+
+#ifndef NO_MSGFMT
+int dd_write_msg(const char *, int);
+#endif
+
 void dd_out(int);
 void def(void);
 void def_close(void);
