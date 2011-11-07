@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.22 2011/11/06 21:22:23 jym Exp $	*/
+/*	$NetBSD: misc.c,v 1.23 2011/11/07 22:24:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.22 2011/11/06 21:22:23 jym Exp $");
+__RCSID("$NetBSD: misc.c,v 1.23 2011/11/07 22:24:23 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,6 @@ static void human_summary(void);
 static void quiet_summary(void);
 
 static void buffer_write(const char *, size_t, int);
-static int  dd_write_msg(const char *);
 #endif /* NO_MSGFMT */
 
 void
@@ -171,30 +170,42 @@ buffer_write(const char *str, size_t size, int flush)
 	unsigned int i;
 
 	for (i = 0; i < size; i++) {
-		wbuf[cnt++] = str[i];
-		if (cnt >= sizeof(wbuf) || flush == 1) {
+		if (str != NULL) {
+			wbuf[cnt++] = str[i];
+		}
+		if (cnt >= sizeof(wbuf)) {
 			(void)write(STDERR_FILENO, wbuf, cnt);
 			cnt = 0;
 		}
 	}
+
+	if (flush != 0) {
+		(void)write(STDERR_FILENO, wbuf, cnt);
+		cnt = 0;
+	}
 }
 
-static int
-dd_write_msg(const char *fmt)
+/*
+ * Write summary to stderr according to format 'fmt'. If 'enable' is 0, it
+ * will not attempt to write anything. Can be used to validate the
+ * correctness of the 'fmt' string.
+ */
+int
+dd_write_msg(const char *fmt, int enable)
 {
 	char hbuf[7], nbuf[32];
 	const char *ptr;
 	int64_t mS;
-        struct timeval tv;
+	struct timeval tv;
 
 	(void)gettimeofday(&tv, NULL);
 	mS = tv2mS(tv) - tv2mS(st.start);
 	if (mS == 0)
 		mS = 1;
 
-#define ADDC(c) do { buffer_write(&c, 1, 0); } \
+#define ADDC(c) do { if (enable != 0) buffer_write(&c, 1, 0); } \
 	while (/*CONSTCOND*/0)
-#define ADDS(p) do { buffer_write(p, strlen(p), 0); } \
+#define ADDS(p) do { if (enable != 0) buffer_write(p, strlen(p), 0); } \
 	while (/*CONSTCOND*/0)
 
 	for (ptr = fmt; *ptr; ptr++) {
@@ -280,20 +291,21 @@ dd_write_msg(const char *fmt)
 			ADDS("block");
 			if (st.swab != 1) ADDS("s");
 			break;
-		default:
-			ADDS("%");
-			if (*ptr == '\0')
-				goto done;
-			/*FALLTHROUGH*/
 		case '%':
 			ADDC(*ptr);
 			break;
+		default:
+			if (*ptr == '\0')
+				goto done;
+			errx(EXIT_FAILURE, "unknown specifier '%c' in "
+			    "msgfmt string", *ptr);
+			/* NOTREACHED */
 		}
 	}
 
 done:
 	/* flush buffer */
-	buffer_write("\0", 1, 1);
+	buffer_write(NULL, 0, 1);
 	return 0;
 }
 
@@ -301,24 +313,24 @@ static void
 custom_summary(void)
 {
 
-	dd_write_msg(msgfmt);
+	dd_write_msg(msgfmt, 1);
 }
 
 static void
 human_summary(void)
 {
-	(void)dd_write_msg("%I+%i records in\n%O+%o records out\n");
+	(void)dd_write_msg("%I+%i records in\n%O+%o records out\n", 1);
 	if (st.swab) {
-		(void)dd_write_msg("%w odd length swab %W\n");
+		(void)dd_write_msg("%w odd length swab %W\n", 1);
 	}
 	if (st.trunc) {
-		(void)dd_write_msg("%t truncated %T\n");
+		(void)dd_write_msg("%t truncated %T\n", 1);
 	}
 	if (st.sparse) {
-		(void)dd_write_msg("%p sparse output %P\n");
+		(void)dd_write_msg("%p sparse output %P\n", 1);
 	}
 	(void)dd_write_msg("%b bytes (%B) transferred in %s secs "
-	    "(%e bytes/sec - %E)\n");
+	    "(%e bytes/sec - %E)\n", 1);
 }
 
 static void
