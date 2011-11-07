@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2011/07/21 03:01:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2011/11/07 23:21:32 njoly Exp $
 
 LIBISPRIVATE=	yes
 
@@ -304,6 +304,10 @@ cgraphunit.d cgraphunit.o: gcov-io.h
 vec.lo: gtype-desc.h
 gtype-desc.d gtype-desc.o: insn-constants.h
 insn-emit.d insn-emit.o: tm-constrs.h
+
+.if ${MACHINE_ARCH} == "alpha"
+alpha.d alpha.o: tm-constrs.h tm_p.h
+.endif
 
 .if ${MACHINE_CPU} == "arm"
 arm.d arm.o: insn-constants.h tm_p.h
