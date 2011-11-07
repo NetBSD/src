@@ -9338,109 +9338,13 @@
    (set_attr "length" "4,8,8")]
 )
 
-(define_insn "*arith_adjacentmem"
-  [(set (match_operand:SI 0 "s_register_operand" "=r")
-	(match_operator:SI 1 "shiftable_operator"
-	 [(match_operand:SI 2 "memory_operand" "m")
-	  (match_operand:SI 3 "memory_operand" "m")]))
-   (clobber (match_scratch:SI 4 "=r"))]
-  "TARGET_ARM && adjacent_mem_locations (operands[2], operands[3])"
-  "*
-  {
-    rtx ldm[3];
-    rtx arith[4];
-    rtx base_reg;
-    HOST_WIDE_INT val1 = 0, val2 = 0;
 
-    if (REGNO (operands[0]) > REGNO (operands[4]))
-      {
-	ldm[1] = operands[4];
-	ldm[2] = operands[0];
-      }
-    else
-      {
-	ldm[1] = operands[0];
-	ldm[2] = operands[4];
-      }
-
-    base_reg = XEXP (operands[2], 0);
-
-    if (!REG_P (base_reg))
-      {
-	val1 = INTVAL (XEXP (base_reg, 1));
-	base_reg = XEXP (base_reg, 0);
-      }
-
-    if (!REG_P (XEXP (operands[3], 0)))
-      val2 = INTVAL (XEXP (XEXP (operands[3], 0), 1));
-
-    arith[0] = operands[0];
-    arith[3] = operands[1];
-
-    if (val1 < val2)
-      {
-	arith[1] = ldm[1];
-	arith[2] = ldm[2];
-      }
-    else
-      {
-	arith[1] = ldm[2];
-	arith[2] = ldm[1];
-      }
-
-    ldm[0] = base_reg;
-    if (val1 !=0 && val2 != 0)
-      {
-	rtx ops[3];
-
-	if (val1 == 4 || val2 == 4)
-	  /* Other val must be 8, since we know they are adjacent and neither
-	     is zero.  */
-	  output_asm_insn (\"ldm%?ib\\t%0, {%1, %2}\", ldm);
-	else if (const_ok_for_arm (val1) || const_ok_for_arm (-val1))
-	  {
-	    ldm[0] = ops[0] = operands[4];
-	    ops[1] = base_reg;
-	    ops[2] = GEN_INT (val1);
-	    output_add_immediate (ops);
-	    if (val1 < val2)
-	      output_asm_insn (\"ldm%?ia\\t%0, {%1, %2}\", ldm);
-	    else
-	      output_asm_insn (\"ldm%?da\\t%0, {%1, %2}\", ldm);
-	  }
-	else
-	  {
-	    /* Offset is out of range for a single add, so use two ldr.  */
-	    ops[0] = ldm[1];
-	    ops[1] = base_reg;
-	    ops[2] = GEN_INT (val1);
-	    output_asm_insn (\"ldr%?\\t%0, [%1, %2]\", ops);
-	    ops[0] = ldm[2];
-	    ops[2] = GEN_INT (val2);
-	    output_asm_insn (\"ldr%?\\t%0, [%1, %2]\", ops);
-	  }
-      }
-    else if (val1 != 0)
-      {
-	if (val1 < val2)
-	  output_asm_insn (\"ldm%?da\\t%0, {%1, %2}\", ldm);
-	else
-	  output_asm_insn (\"ldm%?ia\\t%0, {%1, %2}\", ldm);
-      }
-    else
-      {
-	if (val1 < val2)
-	  output_asm_insn (\"ldm%?ia\\t%0, {%1, %2}\", ldm);
-	else
-	  output_asm_insn (\"ldm%?da\\t%0, {%1, %2}\", ldm);
-      }
-    output_asm_insn (\"%I3%?\\t%0, %1, %2\", arith);
-    return \"\";
-  }"
-  [(set_attr "length" "12")
-   (set_attr "predicable" "yes")
-   (set_attr "type" "load1")]
-)
+;-----
+;arith_adjacentmem removed as a quick fix, suggested by rearnsha@
+;broken at least in gcc 4.1.3 - 4.4
+;known fixed in 4.5.3 (is@)
+;known fixed in post-4.6 trunk (rearnsha@)
+;-----
 
 ; This pattern is never tried by combine, so do it as a peephole
 
