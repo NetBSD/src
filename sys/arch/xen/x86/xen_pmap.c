@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.7 2011/11/06 11:40:47 cherry Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.8 2011/11/08 17:16:52 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.7 2011/11/06 11:40:47 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.8 2011/11/08 17:16:52 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -140,13 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.7 2011/11/06 11:40:47 cherry Exp $");
 #ifdef XEN
 #include <xen/xen3-public/xen.h>
 #include <xen/hypervisor.h>
-#endif
-
-/* flag to be used for kernel mappings: PG_u on Xen/amd64, 0 otherwise */
-#if defined(XEN) && defined(__x86_64__)
-#define PG_k PG_u
-#else
-#define PG_k 0
 #endif
 
 #define COUNT(x)	/* nothing */
