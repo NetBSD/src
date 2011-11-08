@@ -528,8 +528,10 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <io.h> header file. */
 /* #undef HAVE_IO_H */
 
+#if 0
 /* Define if you have IPv6. */
 #define HAVE_IPV6 1
+#endif
 
 /* Define if you have the function `iruserok'. */
 #define HAVE_IRUSEROK 1
