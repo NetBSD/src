@@ -29,6 +29,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -156,24 +157,40 @@ static atf_error_t
 write_resfile(const int fd, const char *result, const int arg,
               const atf_dynstr_t *reason)
 {
-    if (arg == -1 && reason == NULL) {
-        if (dprintf(fd, "%s\n", result) <= 0)
-            goto err;
-    } else if (arg == -1 && reason != NULL) {
-        if (dprintf(fd, "%s: %s\n", result,
-                     atf_dynstr_cstring(reason)) < 0)
-            goto err;
-    } else if (arg != -1 && reason != NULL) {
-        if (dprintf(fd, "%s(%d): %s\n", result,
-                     arg, atf_dynstr_cstring(reason)) < 0)
-            goto err;
-    } else {
-        UNREACHABLE;
+    static char NL[] = "\n", CS[] = ": ";
+    char buf[64];
+    const char *r;
+    struct iovec iov[5];
+    ssize_t ret;
+    int count = 0;
+
+    INV(arg == -1 && reason != NULL);
+
+    iov[count].iov_base = __UNCONST(result);
+    iov[count++].iov_len = strlen(result);
+
+    if (reason != NULL) {
+	if (arg != -1) {
+	    iov[count].iov_base = buf;
+	    iov[count++].iov_len = snprintf(buf, sizeof(buf), "(%d)", arg);
+	}
+
+	iov[count].iov_base = CS;
+	iov[count++].iov_len = sizeof(CS) - 1;
+
+	r = atf_dynstr_cstring(reason);
+	iov[count].iov_base = __UNCONST(r);
+	iov[count++].iov_len = strlen(r);
     }
 
-    return atf_no_error();
+    iov[count].iov_base = NL;
+    iov[count++].iov_len = sizeof(NL) - 1;
 
-err:
+    while ((ret = writev(fd, iov, count)) == -1 && errno == EINTR)
+        continue; /* Retry. */
+    if (ret != -1)
+        return atf_no_error();
+
     return atf_libc_error(
         errno, "Failed to write results file; result %s, reason %s", result,
         reason == NULL ? "null" : atf_dynstr_cstring(reason));
