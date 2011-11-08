@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2011/10/15 10:46:24 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.5 2011/11/08 01:52:05 joerg Exp $
 
 .include <bsd.own.mk>
 
-.if ${MACHINE_ARCH} != "m68000"
+.if ${MKPIC} != "no"
 # No support for shared libraries and pic code.
 SUBDIR+=	gpio sqlite
 .endif
