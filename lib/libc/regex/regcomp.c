@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.31 2011/10/09 22:14:17 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.32 2011/11/08 19:25:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.31 2011/10/09 22:14:17 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.32 2011/11/08 19:25:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -761,7 +761,6 @@ p_bracket(
 {
 	cset *cs;
 	int invert = 0;
-
 	_DIAGASSERT(p != NULL);
 
 	cs = allocset(p);
@@ -1561,6 +1560,9 @@ isinsets(
 	unsigned uc = (unsigned char)c;
 
 	_DIAGASSERT(g != NULL);
+
+	if (g->setbits == NULL)
+		return 0;
 
 	ncols = (g->ncsets+(CHAR_BIT-1)) / CHAR_BIT;
 
