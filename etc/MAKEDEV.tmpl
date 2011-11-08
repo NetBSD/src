@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.145 2011/10/26 09:02:20 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.146 2011/11/08 19:11:19 apb Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -382,7 +382,7 @@ nooutput()
 	local junk
 	case "$flags" in
 	"-1")	junk="$( "$@" )" ;;
-	"-2")	exec 4>&1 ; junk="$( { "$@" ; } 2>&1 1>&4 )" ; exec 4>&- ;;
+	"-2")	junk="$( exec 4>&1 ; { "$@" ; } 2>&1 1>&4 )" ;;
 	"-12")	junk="$( { "$@" ; } 2>&1 )" ;;
 	*)	warn "Incorrect use of nooutput" ;;
 	esac
