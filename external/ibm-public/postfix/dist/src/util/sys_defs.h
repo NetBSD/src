@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.1.1.6 2011/07/31 10:03:06 tron Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.2 2011/11/08 22:21:30 joerg Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -1275,6 +1275,7 @@ extern int dup2_pass_on_exec(int oldd, int newd);
  /*
   * Defaults for systems that pre-date IPv6 support.
   */
+#ifndef __NetBSD__
 #ifndef HAS_IPV6
 #define EMULATE_IPV4_ADDRINFO
 #define MISSING_INET_PTON
@@ -1282,6 +1283,7 @@ extern int dup2_pass_on_exec(int oldd, int newd);
 extern const char *inet_ntop(int, const void *, char *, size_t);
 extern int inet_pton(int, const char *, void *);
 
+#endif
 #endif
 
  /*
