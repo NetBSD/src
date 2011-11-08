@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.8 2011/11/08 06:56:07 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.9 2011/11/08 07:05:06 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.8 2011/11/08 06:56:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.9 2011/11/08 07:05:06 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,7 +359,7 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		wdf = (void *)data;
 		wdf->height = ms->scr_ri.ri_height;
 		wdf->width = ms->scr_ri.ri_width;
-		wdf->depth = ms->scr_ri.ri_depth;
+		wdf->depth = 32;
 		wdf->cmsize = 256;
 		return 0;
 
@@ -380,8 +380,13 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		if (new_mode != sc->sc_mode) {
 			sc->sc_mode = new_mode;
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+				sc->sc_depth = 8;
+				voyagerfb_init(sc);
 				voyagerfb_restore_palette(sc);
 				vcons_redraw_screen(ms);
+			} else {
+				sc->sc_depth = 32;
+				voyagerfb_init(sc);
 			}
 		}
 		}
