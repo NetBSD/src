@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.91 2011/04/28 12:22:35 wiz Exp $
+.\" $NetBSD: kauth.9,v 1.92 2011/11/08 00:55:53 jym Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 10, 2009
+.Dd November 8, 2011
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -77,11 +77,21 @@ the requested operation, and possibly other information as well.
 .Pp
 Every listener examines the passed information and returns its decision
 regarding the requested operation.
-It can either allow, deny, or defer the operation -- in which case, the
-decision is left to the other listeners.
+It can either return:
 .Pp
-For an operation to be allowed, all listeners must not return any deny
-or defer decisions.
+.Bl -tag -width KAUTH_RESULT_ALLOW -compact
+.It Dv KAUTH_RESULT_ALLOW
+The listener allows the operation.
+.It Dv KAUTH_RESULT_DENY
+The listener denies the operation.
+.It Dv KAUTH_RESULT_DEFER
+The listener defers the decision to other listeners.
+.El
+.Pp
+For an operation to be allowed, at least one listener has to return
+.Dv KAUTH_RESULT_ALLOW
+while no other listener returned
+.Dv KAUTH_RESULT_DENY .
 .Pp
 Scopes manage listeners that operate in the same aspect of the system.
 .Ss Kernel Programming Interface
@@ -104,12 +114,14 @@ It is declared as
 .Ft int Fn kauth_authorize_action "kauth_scope_t scope" "kauth_cred_t cred" \
 "kauth_action_t op" "void *arg0" "void *arg1" "void *arg2" "void *arg3"
 .Pp
-An authorization request can return one of two possible values.
-Zero indicates success -- the operation is allowed;
-.Er EPERM
-(see
-.Xr errno 2 )
-indicates failure -- the operation is denied.
+An authorization request can return one of two possible values:
+.Bl -tag -width ".It Dv 0 Po zero Pc" -compact
+.It Dv 0 Po zero Pc
+indicates success; operation is allowed.
+.It Dv EPERM
+indicates failure; operation is denied. See
+.Xr errno 2 .
+.El 
 .Pp
 Each scope has its own authorization wrapper, to make it easy to call from various
 places by eliminating the need to specify the scope and/or cast values.
