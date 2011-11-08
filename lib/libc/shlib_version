@@ -1,10 +1,11 @@
-#	$NetBSD: shlib_version,v 1.224 2011/09/18 23:57:06 christos Exp $
+#	$NetBSD: shlib_version,v 1.225 2011/11/08 16:25:25 joerg Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
 # - libc/net/rcmd.c: make __ivaliduser() and __ivaliduser_sa() static
 # - libc/net: resolver update to BIND8/9?
 # - md2, md4, md5, rmd160 & sha1 functions should take the same arguments AFAP
+# - Crypto hashes have name overlap with libcrypto, rename them
 # - libc/gen/assert.c: __{diag,}assert13() -> __{diag,}assert()
 # - libc/gen/times.c: remove; __times13() -> times()
 # - libc/gen/timezone.c: remove; __timezone13 -> timezone
