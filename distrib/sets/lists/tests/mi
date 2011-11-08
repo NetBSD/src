@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.419 2011/11/06 18:53:00 christos Exp $
+# $NetBSD: mi,v 1.420 2011/11/08 05:47:00 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -358,11 +358,13 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_assert.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_basedirname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_closefrom.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_cpuset.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_dir.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fmtcheck.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpclassify.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_ftok.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fmtcheck.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_getcwd.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_getgrent.debug		tests-lib-debug		debug,atf
@@ -1919,11 +1921,13 @@
 ./usr/tests/lib/libc/gen/t_assert		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_basedirname		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_closefrom		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_cpuset		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_dir			tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fmtcheck		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fpclassify		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fpsetmask		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fpsetround		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_ftok			tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_getcwd		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_getgrent		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_glob			tests-lib-tests		atf
