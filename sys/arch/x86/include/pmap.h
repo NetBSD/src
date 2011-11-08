@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.44 2011/11/06 11:40:47 cherry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.45 2011/11/08 17:16:52 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -171,6 +171,16 @@ struct pmap {
 #else
 #define pmap_pdirpa(pmap, index) \
 	((pmap)->pm_pdirpa[0] + (index) * sizeof(pd_entry_t))
+#endif
+
+/* 
+ * flag to be used for kernel mappings: PG_u on Xen/amd64, 
+ * 0 otherwise.
+ */
+#if defined(XEN) && defined(__x86_64__)
+#define PG_k PG_u
+#else
+#define PG_k 0
 #endif
 
 /*
