@@ -1,4 +1,4 @@
-/*	$NetBSD: sm502reg.h,v 1.3 2011/09/28 02:33:20 macallan Exp $	*/
+/*	$NetBSD: sm502reg.h,v 1.4 2011/11/08 06:56:36 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -147,7 +147,7 @@
 #define		SM502_PWM_CLOCK_HIGH_SHIFT	20
 
 /* Video Controller Registers */
-#define SM502_PANEL_DISP_CRTL			0x080000
+#define SM502_PANEL_DISP_CTRL			0x080000
 #define		SM502_PDC_8BIT			0x00000000
 #define		SM502_PDC_16BIT			0x00000001
 #define		SM502_PDC_32BIT			0x00000002
