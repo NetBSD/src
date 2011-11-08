@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.199 2011/11/05 22:55:23 christos Exp $
+# $NetBSD: shl.mi,v 1.200 2011/11/08 10:52:20 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -410,6 +410,7 @@
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libtre.so.0.8.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug	comp-sys-debug	debug
