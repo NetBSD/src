@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1704 2011/11/06 02:11:16 agc Exp $
+#	$NetBSD: mi,v 1.1705 2011/11/08 10:49:41 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3492,6 +3492,7 @@
 ./usr/libdata/debug/sbin/zpool.debug		comp-zfs-debug		zfs,debug
 ./usr/libdata/debug/usr/bin/addftinfo.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/addr2line.debug	comp-debug-debug	binutils,debug
+./usr/libdata/debug/usr/bin/agrep.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/apply.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/apropos.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/bin/ar.debug		comp-util-debug		binutils,debug
