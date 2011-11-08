@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.87 2011/08/31 16:50:32 njoly Exp $
+	$NetBSD: syscalls.master,v 1.88 2011/11/08 10:59:12 njoly Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -973,3 +973,4 @@
 			    netbsd32_voidp pref); }
 453	STD		{ int|netbsd32||pipe2(netbsd32_intp fildes, int flags); }
 454	STD		{ int|netbsd32||dup3(int from, int to, int flags); }
+455	STD		{ int|netbsd32||kqueue1(int flags); }
