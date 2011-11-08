@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.30 2011/11/06 11:40:47 cherry Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.31 2011/11/08 17:16:52 cherry Exp $	*/
 
 /*
  *
@@ -32,13 +32,6 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
-#endif
-
-/* flag to be used for kernel mappings: PG_u on Xen/amd64, 0 otherwise */
-#if defined(XEN) && defined(__x86_64__)
-#define PG_k PG_u
-#else
-#define PG_k 0
 #endif
 
 #define	INVALID_P2M_ENTRY	(~0UL)
