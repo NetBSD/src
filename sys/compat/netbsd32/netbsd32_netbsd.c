@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.173 2011/08/31 16:50:32 njoly Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.174 2011/11/08 10:59:12 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.173 2011/08/31 16:50:32 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.174 2011/11/08 10:59:12 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2603,6 +2603,19 @@ netbsd32_dup3(struct lwp *l, const struct netbsd32_dup3_args *uap,
 	NETBSD32TO64_UAP(flags);
 
 	return sys_dup3(l, &ua, retval);
+}
+
+int
+netbsd32_kqueue1(struct lwp *l, const struct netbsd32_kqueue1_args *uap,
+		 register_t *retval)
+{
+	/* {
+		syscallarg(int) flags;
+	} */
+	struct sys_kqueue1_args ua;
+
+	NETBSD32TO64_UAP(flags);
+	return sys_kqueue1(l, &ua, retval);
 }
 
 /*
