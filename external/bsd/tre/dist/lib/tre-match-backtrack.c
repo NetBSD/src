@@ -585,12 +585,14 @@ tre_tnfa_run_backtrack(const tre_tnfa_t *tnfa, const void *string,
 	  if (stack->prev)
 	    {
 	      DPRINT(("	 backtracking\n"));
-	      if (stack->item.state->assertions && ASSERT_BACKREF)
+#if ASSERT_BACKREF
+	      if (stack->item.state->assertions)
 		{
 		  DPRINT(("  states_seen[%d] = 0\n",
 			  stack->item.state_id));
 		  states_seen[stack->item.state_id] = 0;
 		}
+#endif
 
 	      BT_STACK_POP();
 	    }
