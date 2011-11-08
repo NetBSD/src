@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.32 2011/11/05 18:07:15 jruoho Exp $
+# $NetBSD: Makefile,v 1.33 2011/11/08 05:47:00 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -8,11 +8,13 @@ TESTS_C+=	t_alarm
 TESTS_C+=	t_assert
 TESTS_C+=	t_basedirname
 TESTS_C+=	t_closefrom
+TESTS_C+=	t_cpuset
 TESTS_C+=	t_dir
 TESTS_C+=	t_fmtcheck
 TESTS_C+=	t_fpclassify
 TESTS_C+=	t_fpsetmask
 TESTS_C+=	t_fpsetround
+TESTS_C+=	t_ftok
 TESTS_C+=	t_getcwd
 TESTS_C+=	t_getgrent
 TESTS_C+=	t_glob
