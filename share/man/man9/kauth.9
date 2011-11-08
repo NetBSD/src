@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.92 2011/11/08 00:55:53 jym Exp $
+.\" $NetBSD: kauth.9,v 1.93 2011/11/08 10:56:59 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -119,9 +119,10 @@ An authorization request can return one of two possible values:
 .It Dv 0 Po zero Pc
 indicates success; operation is allowed.
 .It Dv EPERM
-indicates failure; operation is denied. See
+indicates failure; operation is denied.
+See
 .Xr errno 2 .
-.El 
+.El
 .Pp
 Each scope has its own authorization wrapper, to make it easy to call from various
 places by eliminating the need to specify the scope and/or cast values.
