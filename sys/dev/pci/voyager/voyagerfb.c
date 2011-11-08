@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.7 2011/10/18 17:59:01 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.8 2011/11/08 06:56:07 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.7 2011/10/18 17:59:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.8 2011/11/08 06:56:07 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dataport = bus_space_vaddr(sc->sc_memt, sc->sc_regh);
 	sc->sc_dataport += SM502_DATAPORT;
 
-	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CRTL);
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CTRL);
 	switch (reg & SM502_PDC_DEPTH_MASK) {
 		case SM502_PDC_8BIT:
 			sc->sc_depth = 8;
@@ -277,6 +277,7 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	voyagerfb_setup_backlight(sc);
 
 	/* init engine here */
+	sc->sc_depth = 8;
 	voyagerfb_init(sc);
 
 	ri = &sc->sc_console_screen.scr_ri;
@@ -639,6 +640,7 @@ voyagerfb_putpalreg(struct voyagerfb_softc *sc, int idx, uint8_t r,
 static void
 voyagerfb_init(struct voyagerfb_softc *sc)
 {
+	int reg;
 
 	voyagerfb_wait(sc);
 	/* disable colour compare */
@@ -657,21 +659,35 @@ voyagerfb_init(struct voyagerfb_softc *sc)
 	/* window is screen width */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_WINDOW_WIDTH,
 	    sc->sc_width | (sc->sc_width << 16));
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CTRL);
+	reg &= ~SM502_PDC_DEPTH_MASK;
+	
 	switch (sc->sc_depth) {
 		case 8:
 			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
 			    SM502_STRETCH, SM502_STRETCH_8BIT);
+			sc->sc_stride = sc->sc_width;
+			reg |= SM502_PDC_8BIT;
 			break;
 		case 16:
 			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
 			    SM502_STRETCH, SM502_STRETCH_16BIT);
+			sc->sc_stride = sc->sc_width << 1;
+			reg |= SM502_PDC_16BIT;
 			break;
 		case 24:
 		case 32:
 			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
 			    SM502_STRETCH, SM502_STRETCH_32BIT);
+			sc->sc_stride = sc->sc_width << 2;
+			reg |= SM502_PDC_32BIT;
 			break;
 	}
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_FB_OFFSET,
+	    (sc->sc_stride << 16) | sc->sc_stride);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CTRL,
+	    reg);
+
 	/* put the cursor at the end of video memory */
 	sc->sc_cursor_addr = 16 * 1024 * 1024 - 16 * 64;	/* XXX */
 	DPRINTF("%s: %08x\n", __func__, sc->sc_cursor_addr); 
