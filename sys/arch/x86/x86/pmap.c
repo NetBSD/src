@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.139 2011/11/06 20:21:05 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.140 2011/11/08 12:44:29 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139 2011/11/06 20:21:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.140 2011/11/08 12:44:29 njoly Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -212,7 +212,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139 2011/11/06 20:21:05 christos Exp $");
 #endif
 
 /* If this is not needed anymore it should be GC'ed */
+#ifndef PG_k
 #define	PG_k	0
+#endif
 
 /*
  * general info:
