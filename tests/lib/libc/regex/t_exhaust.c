@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exhaust.c,v 1.4 2011/11/06 18:34:48 christos Exp $	*/
+/*	$NetBSD: t_exhaust.c,v 1.5 2011/11/09 15:14:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_exhaust.c,v 1.4 2011/11/06 18:34:48 christos Exp $");
+__RCSID("$NetBSD: t_exhaust.c,v 1.5 2011/11/09 15:14:44 christos Exp $");
 
 #include <stdio.h>
 #include <regex.h>
@@ -174,6 +174,8 @@ ATF_TC_HEAD(regcomp_too_big, tc)
 
 	atf_tc_set_md_var(tc, "descr", "Check that large patterns don't"
 	    " crash, but return a proper error code");
+	// libtre needs it.
+	atf_tc_set_md_var(tc, "timeout", "600");
 }
 
 ATF_TC_BODY(regcomp_too_big, tc)
