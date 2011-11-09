@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.25 2011/05/23 22:49:59 joerg Exp $	*/
+/*	$NetBSD: factor.c,v 1.26 2011/11/09 20:17:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.25 2011/05/23 22:49:59 joerg Exp $");
+__RCSID("$NetBSD: factor.c,v 1.26 2011/11/09 20:17:44 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,9 +79,6 @@ __RCSID("$NetBSD: factor.c,v 1.25 2011/05/23 22:49:59 joerg Exp $");
 typedef long	BIGNUM;
 typedef u_long	BN_ULONG;
 static int BN_dec2bn(BIGNUM **a, const char *str);
-#define BN_new()		((BIGNUM *)calloc(sizeof(BIGNUM), 1))
-#define BN_is_zero(v)		(*(v) == 0)
-#define BN_is_one(v)		(*(v) == 1)
 #define BN_new()		((BIGNUM *)calloc(sizeof(BIGNUM), 1))
 #define BN_is_zero(v)		(*(v) == 0)
 #define BN_is_one(v)		(*(v) == 1)
