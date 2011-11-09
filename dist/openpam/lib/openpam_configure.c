@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: openpam_configure.c,v 1.5 2008/01/27 01:22:59 christos Exp $
+ * $Id: openpam_configure.c,v 1.6 2011/11/09 20:26:41 drochner Exp $
  */
 
 #include <ctype.h>
@@ -288,6 +288,12 @@ openpam_load_chain(pam_handle_t *pamh,
 	char *filename;
 	size_t len;
 	int r;
+
+	/* don't allow to escape from policy_path */
+	if (strchr(service, '/')) {
+		openpam_log(PAM_LOG_ERROR, "illegal service \"%s\"", service);
+		return (-PAM_SYSTEM_ERR);
+	}
 
 	for (path = openpam_policy_path; *path != NULL; ++path) {
 		len = strlen(*path);
