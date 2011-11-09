@@ -16681,3 +16681,17 @@ Apologies for any names omitted.
 	checks to unknown message subtypes such as message/global*.
 	File: global/mime_state.c.
 
+20111025
+
+	Workaround: postscreen sent non-compliant SMTP responses
+	(220- followed by 421) when it could not give a connection
+	to a real smtpd process, causing some remote SMTP clients
+	to bounce mail. The workaround is to hang up without sending
+	the 421 reply (which is harmless); the complete fix involves
+	too much change for a stable release.  Problem reported by
+	Ralf Hildebrandt.  File: postscreen/postscreen_send.c.
+
+20111102
+
+	Portability: OpenBSD 5.x is supported. Files: makedefs,
+	util/sys_defs.h.
