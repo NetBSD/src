@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.56 2011/08/30 19:27:37 joerg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.57 2011/11/09 12:45:58 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.56 2011/08/30 19:27:37 joerg Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.57 2011/11/09 12:45:58 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,6 +133,7 @@ static void		startup(void);
 static void		chkhost(struct sockaddr *, int);
 __dead static void	usage(void);
 static struct pollfd	*socksetup(int, int, const char *, int *);
+static void		chkplushost(int, FILE *, char*);
 
 uid_t	uid, euid;
 int child_count;
@@ -360,6 +361,35 @@ main(int argc, char **argv)
 		}
 		(void)close(s);
 	}
+}
+
+/*
+ * If there was a forward/backward name resolution mismatch, check
+ * that there's a '+' entry in fhost.
+ */
+
+void
+chkplushost(int good, FILE *fhost, char *hst)
+{
+	int c1, c2, c3;
+
+	if (good) {
+		return;
+	}
+
+	rewind(fhost);
+	while (EOF != (c1 = fgetc(fhost))) {
+		if (c1 == '+') {
+			c2 = fgetc(fhost);
+			if (c2 == ' ' || c2 == '\t' || c2 == '\n') {
+				return;
+			}
+		}
+		do {
+			c3 = fgetc(fhost);
+		} while (c3 != EOF && c3 != '\n');
+	}
+	fatal("address for your hostname (%s) not matched", hst);
 }
 
 static void
@@ -606,25 +636,23 @@ chkhost(struct sockaddr *f, int check_opts)
 		fatal("Cannot print address");
 
 	/* Check for spoof, ala rlogind */
+	good = 0;
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 	error = getaddrinfo(fromb, NULL, &hints, &res);
-	if (error) {
-		fatal("hostname for your address (%s) unknown: %s", hst,
-		    gai_strerror(error));
+	if (!error) {
+		for (r = res; good == 0 && r; r = r->ai_next) {
+			error = getnameinfo(r->ai_addr, r->ai_addrlen,
+				    ip, sizeof(ip), NULL, 0, NI_NUMERICHOST);
+			if (!error && !strcmp(hst, ip))
+				good = 1;
+		}
+		if (res)
+			freeaddrinfo(res);
 	}
-	good = 0;
-	for (r = res; good == 0 && r; r = r->ai_next) {
-		error = getnameinfo(r->ai_addr, r->ai_addrlen, ip, sizeof(ip),
-				    NULL, 0, NI_NUMERICHOST);
-		if (!error && !strcmp(hst, ip))
-			good = 1;
-	}
-	if (res)
-		freeaddrinfo(res);
-	if (good == 0)
-		fatal("address for your hostname (%s) not matched", hst);
+
+	/* complain about !good later in chkplushost if needed. */
 
 	setproctitle("serving %s", from);
 
@@ -639,6 +667,7 @@ chkhost(struct sockaddr *f, int check_opts)
 	hostf = fopen(_PATH_HOSTSEQUIV, "r");
 	if (hostf) {
 		if (__ivaliduser_sa(hostf, f, f->sa_len, DUMMY, DUMMY) == 0) {
+			chkplushost(good, hostf, hst);
 			(void)fclose(hostf);
 			return;
 		}
@@ -647,6 +676,7 @@ chkhost(struct sockaddr *f, int check_opts)
 	hostf = fopen(_PATH_HOSTSLPD, "r");
 	if (hostf) {
 		if (__ivaliduser_sa(hostf, f, f->sa_len, DUMMY, DUMMY) == 0) {
+			chkplushost(good, hostf, hst);
 			(void)fclose(hostf);
 			return;
 		}
