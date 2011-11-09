@@ -164,7 +164,7 @@ write_resfile(const int fd, const char *result, const int arg,
     ssize_t ret;
     int count = 0;
 
-    INV(arg == -1 && reason != NULL);
+    INV(arg == -1 || reason != NULL);
 
     iov[count].iov_base = __UNCONST(result);
     iov[count++].iov_len = strlen(result);
