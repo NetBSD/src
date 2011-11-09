@@ -1,4 +1,4 @@
-/* $NetBSD: time.c,v 1.18 2011/08/28 07:49:16 christos Exp $ */
+/* $NetBSD: time.c,v 1.19 2011/11/09 19:16:01 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.18 2011/08/28 07:49:16 christos Exp $");
+__RCSID("$NetBSD: time.c,v 1.19 2011/11/09 19:16:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ settimes(void)
 {
     struct rusage ruch;
 
-    (void)gettimeofday(&time0, NULL);
+    (void)clock_gettime(CLOCK_MONOTONIC, &time0);
     (void)getrusage(RUSAGE_SELF, &ru0);
     (void)getrusage(RUSAGE_CHILDREN, &ruch);
     ruadd(&ru0, &ruch);
@@ -73,12 +73,12 @@ void
 dotime(Char **v, struct command *t)
 {
     struct rusage ru1, ruch;
-    struct timeval timedol;
+    struct timespec timedol;
 
     (void)getrusage(RUSAGE_SELF, &ru1);
     (void)getrusage(RUSAGE_CHILDREN, &ruch);
     ruadd(&ru1, &ruch);
-    (void)gettimeofday(&timedol, NULL);
+    (void)clock_gettime(CLOCK_MONOTONIC, &timedol);
     prusage(cshout, &ru0, &ru1, &timedol, &time0);
 }
 
@@ -127,8 +127,8 @@ ruadd(struct rusage *ru, struct rusage *ru2)
 #endif /* NOT_CSH */
 
 void
-prusage(FILE *fp, struct rusage *r0, struct rusage *r1, struct timeval *e,
-        struct timeval *b)
+prusage(FILE *fp, struct rusage *r0, struct rusage *r1, struct timespec *e,
+        struct timespec *b)
 {
 #ifndef NOT_CSH
     struct varent *vp;
@@ -139,7 +139,7 @@ prusage(FILE *fp, struct rusage *r0, struct rusage *r1, struct timeval *e,
     int ms;
 
     cp = "%Uu %Ss %E %P %X+%Dk %I+%Oio %Fpf+%Ww";
-    ms = (e->tv_sec - b->tv_sec) * 100 + (e->tv_usec - b->tv_usec) / 10000;
+    ms = (e->tv_sec - b->tv_sec) * 100 + (e->tv_nsec - b->tv_nsec) / 10000000;
     t = (r1->ru_utime.tv_sec - r0->ru_utime.tv_sec) * 100 +
         (r1->ru_utime.tv_usec - r0->ru_utime.tv_usec) / 10000 +
         (r1->ru_stime.tv_sec - r0->ru_stime.tv_sec) * 100 +
