@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.34 2007/07/16 18:26:10 christos Exp $ */
+/* $NetBSD: proc.c,v 1.35 2011/11/09 19:16:01 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.34 2007/07/16 18:26:10 christos Exp $");
+__RCSID("$NetBSD: proc.c,v 1.35 2011/11/09 19:16:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ found:
     }
     else {
 	if (pp->p_flags & (PTIME | PPTIME) || adrof(STRtime))
-	    (void)gettimeofday(&pp->p_etime, NULL);
+	    (void)clock_gettime(CLOCK_MONOTONIC, &pp->p_etime);
 
 	pp->p_rusage = ru;
 	if (WIFSIGNALED(w)) {
@@ -500,7 +500,7 @@ palloc(int pid, struct command *t)
     }
     pp->p_next = proclist.p_next;
     proclist.p_next = pp;
-    (void)gettimeofday(&pp->p_btime, NULL);
+    (void)clock_gettime(CLOCK_MONOTONIC, &pp->p_btime);
 }
 
 static void
@@ -800,9 +800,9 @@ static void
 ptprint(struct process *tp)
 {
     static struct rusage zru;
-    static struct timeval ztime;
+    static struct timespec ztime;
     struct rusage ru;
-    struct timeval tetime, diff;
+    struct timespec tetime, diff;
     struct process *pp;
 
     pp = tp;
@@ -810,8 +810,8 @@ ptprint(struct process *tp)
     tetime = ztime;
     do {
 	ruadd(&ru, &pp->p_rusage);
-	timersub(&pp->p_etime, &pp->p_btime, &diff);
-	if (timercmp(&diff, &tetime, >))
+	timespecsub(&pp->p_etime, &pp->p_btime, &diff);
+	if (timespeccmp(&diff, &tetime, >))
 	    tetime = diff;
     } while ((pp = pp->p_friends) != tp);
     prusage(cshout, &zru, &ru, &tetime, &ztime);

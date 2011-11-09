@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.12 2007/07/16 18:26:10 christos Exp $ */
+/* $NetBSD: proc.h,v 1.13 2011/11/09 19:16:01 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -52,8 +52,8 @@ struct process {
     pid_t p_pid;
     pid_t p_jobid;		/* pid of job leader */
     /* if a job is stopped/background p_jobid gives its pgrp */
-    struct timeval p_btime;	/* begin time */
-    struct timeval p_etime;	/* end time */
+    struct timespec p_btime;	/* begin time */
+    struct timespec p_etime;	/* end time */
     struct rusage p_rusage;
     Char *p_command;		/* first PMAXLEN chars of command */
 };

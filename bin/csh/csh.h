@@ -1,4 +1,4 @@
-/* $NetBSD: csh.h,v 1.21 2007/07/16 18:26:09 christos Exp $ */
+/* $NetBSD: csh.h,v 1.22 2011/11/09 19:16:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -141,7 +141,7 @@ Char *shtemp;			/* Temp name for << shell files in /tmp */
 #include <sys/time.h>
 #include <sys/types.h>
 
-struct timeval time0;		/* Time at which the shell started */
+struct timespec time0;		/* Time at which the shell started */
 struct rusage ru0;
 
 /*
