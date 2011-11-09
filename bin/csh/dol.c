@@ -1,4 +1,4 @@
-/* $NetBSD: dol.c,v 1.27 2011/08/29 14:51:17 joerg Exp $ */
+/* $NetBSD: dol.c,v 1.28 2011/11/09 19:16:01 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dol.c,v 1.27 2011/08/29 14:51:17 joerg Exp $");
+__RCSID("$NetBSD: dol.c,v 1.28 2011/11/09 19:16:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -815,7 +815,7 @@ void
 heredoc(Char *term)
 {
     Char obuf[BUFSIZE], lbuf[BUFSIZE], mbuf[BUFSIZE];
-    struct timeval tv;
+    struct timespec tv;
     Char *Dv[2], *lbp, *obp, *mbp, **vp;
     char *tmp;
     int c, ocnt, lcnt, mcnt;
@@ -826,9 +826,9 @@ again:
     if (open(tmp, O_RDWR | O_CREAT | O_TRUNC | O_EXCL, 0600) < 0) {
 	if (errno == EEXIST) {
 	    if (unlink(tmp) == -1) {
-		(void)gettimeofday(&tv, NULL);
+		(void)clock_gettime(CLOCK_MONOTONIC, &tv);
 		mbp = putn((((int)tv.tv_sec) ^ 
-		    ((int)tv.tv_usec) ^ ((int)getpid())) & 0x00ffffff);
+		    ((int)tv.tv_nsec) ^ ((int)getpid())) & 0x00ffffff);
 		shtemp = Strspl(STRtmpsh, mbp);
 		xfree((ptr_t)mbp);
 	    }
