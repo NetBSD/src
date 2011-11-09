@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.28 2011/07/22 12:46:18 manu Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.29 2011/11/09 18:29:28 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.28 2011/07/22 12:46:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.29 2011/11/09 18:29:28 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -786,6 +786,8 @@ xattr_native(const char *key) {
 }
 #undef MATCH_NS
 
+#define XATTR_ERRNO(e) ((e) == EOPNOTSUPP ? ENOTSUP : (e))
+
 int
 sys_setxattr(struct lwp *l, const struct sys_setxattr_args *uap, register_t *retval)
 {
@@ -821,7 +823,7 @@ sys_setxattr(struct lwp *l, const struct sys_setxattr_args *uap, register_t *ret
 	vrele(vp);
 out:
 	*retval = (error == 0) ? 0 : -1;
-	return (error);
+	return (XATTR_ERRNO(error));
 }
 
 int
@@ -859,7 +861,7 @@ sys_lsetxattr(struct lwp *l, const struct sys_lsetxattr_args *uap, register_t *r
 	vrele(vp);
 out:
 	*retval = (error == 0) ? 0 : -1;
-	return (error);
+	return (XATTR_ERRNO(error));
 }
 
 int
@@ -898,7 +900,7 @@ sys_fsetxattr(struct lwp *l, const struct sys_fsetxattr_args *uap, register_t *r
 	fd_putfile(SCARG(uap, fd));
 out:
 	*retval = (error == 0) ? 0 : -1;
-	return (error);
+	return (XATTR_ERRNO(error));
 }
 
 int
@@ -931,7 +933,7 @@ sys_getxattr(struct lwp *l, const struct sys_getxattr_args *uap, register_t *ret
 	    attrname, SCARG(uap, value), SCARG(uap, size), l, retval);
 
 	vrele(vp);
-	return (error);
+	return (XATTR_ERRNO(error));
 }
 
 int
@@ -964,7 +966,7 @@ sys_lgetxattr(struct lwp *l, const struct sys_lgetxattr_args *uap, register_t *r
 	    attrname, SCARG(uap, value), SCARG(uap, size), l, retval);
 
 	vrele(vp);
-	return (error);
+	return (XATTR_ERRNO(error));
 }
 
 int
@@ -998,7 +1000,7 @@ sys_fgetxattr(struct lwp *l, const struct sys_fgetxattr_args *uap, register_t *r
 	    attrname, SCARG(uap, value), SCARG(uap, size), l, retval);
 
 	fd_putfile(SCARG(uap, fd));
-	return (error);
+	return (XATTR_ERRNO(error));
 }
 
 int
@@ -1051,7 +1053,7 @@ sys_listxattr(struct lwp *l, const struct sys_listxattr_args *uap, register_t *r
 
 out:
 	vrele(vp);
-	return (error);
+	return (XATTR_ERRNO(error));
 }
 
 int
@@ -1102,7 +1104,7 @@ sys_llistxattr(struct lwp *l, const struct sys_llistxattr_args *uap, register_t 
 	*retval = listsize_usr + listsize_sys; 	
 out:
 	vrele(vp);
-	return (error);
+	return (XATTR_ERRNO(error));
 }
 
 int
@@ -1156,7 +1158,7 @@ sys_flistxattr(struct lwp *l, const struct sys_flistxattr_args *uap, register_t 
 out:
 
 	fd_putfile(SCARG(uap, fd));
-	return (error);
+	return (XATTR_ERRNO(error));
 }
 
 int
@@ -1186,7 +1188,7 @@ sys_removexattr(struct lwp *l, const struct sys_removexattr_args *uap, register_
 	error = extattr_delete_vp(vp, namespace, attrname, l);
 
 	vrele(vp);
-	return (error);
+	return (XATTR_ERRNO(error));
 }
 
 int
@@ -1216,7 +1218,7 @@ sys_lremovexattr(struct lwp *l, const struct sys_lremovexattr_args *uap, registe
 	error = extattr_delete_vp(vp, namespace, attrname, l);
 
 	vrele(vp);
-	return (error);
+	return (XATTR_ERRNO(error));
 }
 
 int
@@ -1247,5 +1249,5 @@ sys_fremovexattr(struct lwp *l, const struct sys_fremovexattr_args *uap, registe
 	error = extattr_delete_vp(vp, namespace, attrname, l);
 
 	fd_putfile(SCARG(uap, fd));
-	return (error);
+	return (XATTR_ERRNO(error));
 }
