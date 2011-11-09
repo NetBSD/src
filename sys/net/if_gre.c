@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.149 2011/11/02 01:17:59 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.150 2011/11/09 19:43:22 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.149 2011/11/02 01:17:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.150 2011/11/09 19:43:22 christos Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -235,14 +235,14 @@ gre_fp_wait(struct gre_softc *sc)
 static void
 gre_evcnt_detach(struct gre_softc *sc)
 {
-	evcnt_detach(&sc->sc_unsupp_ev);
-	evcnt_detach(&sc->sc_pullup_ev);
-	evcnt_detach(&sc->sc_error_ev);
-	evcnt_detach(&sc->sc_block_ev);
 	evcnt_detach(&sc->sc_recv_ev);
+	evcnt_detach(&sc->sc_block_ev);
+	evcnt_detach(&sc->sc_error_ev);
+	evcnt_detach(&sc->sc_pullup_ev);
+	evcnt_detach(&sc->sc_unsupp_ev);
 
-	evcnt_detach(&sc->sc_oflow_ev);
 	evcnt_detach(&sc->sc_send_ev);
+	evcnt_detach(&sc->sc_oflow_ev);
 }
 
 static void
@@ -277,7 +277,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	    (any = sockaddr_any_by_family(AF_INET6)) == NULL)
 		return -1;
 
-	sc = malloc(sizeof(struct gre_softc), M_DEVBUF, M_WAITOK|M_ZERO);
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_SOFTNET);
 	cv_init(&sc->sc_condvar, "gre wait");
 	cv_init(&sc->sc_fp_condvar, "gre fp");
