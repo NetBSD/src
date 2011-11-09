@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.22 2011/06/20 20:16:19 pgoyette Exp $	*/
+/*	$NetBSD: lm75.c,v 1.23 2011/11/09 05:47:54 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,12 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.22 2011/06/20 20:16:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.23 2011/11/09 05:47:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -49,11 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.22 2011/06/20 20:16:19 pgoyette Exp $");
 #include <dev/i2c/lm75reg.h>
 
 struct lmtemp_softc {
+	device_t sc_dev;
 	i2c_tag_t sc_tag;
 	int sc_address;
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor;
+	int sc_tmax;
 
 	uint32_t (*sc_lmtemp_decode)(const uint8_t *);
 };
@@ -67,10 +70,13 @@ CFATTACH_DECL_NEW(lmtemp, sizeof(struct lmtemp_softc),
 static void	lmtemp_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static int	lmtemp_config_write(struct lmtemp_softc *, uint8_t);
+static int	lmtemp_temp_write(struct lmtemp_softc *, int, uint16_t);
 static uint32_t lmtemp_decode_lm75(const uint8_t *);
 static uint32_t lmtemp_decode_ds75(const uint8_t *);
 static uint32_t lmtemp_decode_lm77(const uint8_t *);
 
+static void	lmtemp_setup_sysctl(struct lmtemp_softc *);
+static int	sysctl_lm75_temp(SYSCTLFN_ARGS);
 
 static const char * lmtemp_compats[] = {
 	"i2c-lm75",
@@ -143,6 +149,7 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int i;
 
+	sc->sc_dev = self;
 	if (ia->ia_name == NULL) {
 		for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
 			if (lmtemptbl[i].lmtemp_type ==
@@ -165,9 +172,17 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 			lmtemptbl[i].lmtemp_name);
 	}
 
+	/*
+	 * according to the LM75 data sheet 80C is the default, so leave it
+	 * there to avoid unexpected behaviour
+	 */
+	sc->sc_tmax = 80;
+	if (i == lmtemp_lm75)
+		lmtemp_setup_sysctl(sc);
+
 	/* Set the configuration of the LM75 to defaults. */
 	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
-	if (lmtemp_config_write(sc, 0) != 0) {
+	if (lmtemp_config_write(sc, LM75_CONFIG_FAULT_QUEUE_4) != 0) {
 		aprint_error_dev(self, "unable to write config register\n");
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
 		return;
@@ -209,6 +224,19 @@ lmtemp_config_write(struct lmtemp_softc *sc, uint8_t val)
 
 	return iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 	    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL);
+}
+
+static int
+lmtemp_temp_write(struct lmtemp_softc *sc, int reg, uint16_t val)
+{
+	uint8_t cmdbuf[3];
+
+	cmdbuf[0] = reg;
+	cmdbuf[1] = (val >> 1) & 0xff;
+	cmdbuf[2] = (val & 1) << 7;
+
+	return iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+	    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 2, I2C_F_POLL);
 }
 
 static int
@@ -315,4 +343,72 @@ lmtemp_decode_lm77(const uint8_t *buf)
 
 	return val;
 }
+
+static void
+lmtemp_setup_sysctl(struct lmtemp_softc *sc)
+{
+	const struct sysctlnode *me = NULL, *node = NULL;
+
+	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+	lmtemp_temp_write(sc, LM75_REG_THYST_SET_POINT, (sc->sc_tmax - 5) * 2);
+	lmtemp_temp_write(sc, LM75_REG_TOS_SET_POINT, sc->sc_tmax * 2);
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(NULL, 0, NULL, &node,
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_INT, "temp", "Threshold temperature",
+	    sysctl_lm75_temp, 1, sc, 0,
+	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+}
+
+static int
+sysctl_lm75_temp(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct lmtemp_softc *sc = node.sysctl_data;
+	int temp;
+
+	if (newp) {
+
+		/* we're asked to write */	
+		node.sysctl_data = &sc->sc_tmax;
+		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+
+			temp = *(int *)node.sysctl_data;
+			sc->sc_tmax = temp;
+			iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+			lmtemp_temp_write(sc, LM75_REG_THYST_SET_POINT,
+			    (sc->sc_tmax - 5) * 2);
+			lmtemp_temp_write(sc, LM75_REG_TOS_SET_POINT,
+			    sc->sc_tmax * 2);
+			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			return 0;
+		}
+		return EINVAL;
+	} else {
+
+		node.sysctl_data = &sc->sc_tmax;
+		node.sysctl_size = 4;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_lmtemp_setup, "sysctl lmtemp subtree setup")
+{
+
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+}
+
 
