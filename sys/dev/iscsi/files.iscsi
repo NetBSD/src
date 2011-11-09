@@ -1,4 +1,4 @@
-# $NetBSD: files.iscsi,v 1.1 2011/10/23 21:15:02 agc Exp $
+# $NetBSD: files.iscsi,v 1.2 2011/11/09 00:51:00 riz Exp $
 #
 # Configuration file for iSCSI initiator
 
@@ -16,4 +16,4 @@ file	dev/iscsi/iscsi_rcv.c		iscsi
 file	dev/iscsi/iscsi_send.c		iscsi
 file	dev/iscsi/iscsi_test.c		iscsi
 file	dev/iscsi/iscsi_text.c		iscsi
-file	dev/iscsi/iscsi_utils.c
+file	dev/iscsi/iscsi_utils.c		iscsi
