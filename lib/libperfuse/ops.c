@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.43 2011/10/30 05:11:37 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.44 2011/11/10 16:21:09 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -2954,6 +2954,13 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 	vap = puffs_pn_getvap((struct puffs_node *)opc);
 	pm = NULL;
 
+	/*
+	 * NetBSD turns that into a getdents(2) output
+	 * We just do a EISDIR as this feature is of little use.
+	 */
+	if (vap->va_type == VDIR)
+		return EISDIR;
+
 	if ((u_quad_t)offset + *resid > vap->va_size)
 		DWARNX("%s %p read %lld@%zu beyond EOF %" PRIu64 "\n",
 		       __func__, (void *)opc, (long long)offset,
@@ -3048,7 +3055,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	pm = NULL;
 
 	if (vap->va_type == VDIR) 
-		return EBADF;
+		return EISDIR;
 
 	/*
 	 * We need to queue write requests in order to avoid
