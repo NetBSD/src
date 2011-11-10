@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41 2011/11/06 15:18:18 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42 2011/11/10 00:12:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -362,9 +362,9 @@ extern int cpu;
 extern int cpuid_level;
 extern int cpu_class;
 extern char cpu_brand_string[];
+extern int use_pae;
 
 extern int i386_use_fxsave;
-extern int i386_use_pae;
 extern int i386_has_sse;
 extern int i386_has_sse2;
 
