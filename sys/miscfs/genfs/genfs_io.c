@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.1 2011/11/02 21:53:59 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.2 2011/11/10 14:37:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.1 2011/11/02 21:53:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.2 2011/11/10 14:37:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -869,10 +869,10 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	struct genfs_node * const gp = VTOG(vp);
 	int flags;
 	int dirtygen;
-	bool modified;
+	bool modified;		/* if we write out any pages */
 	bool need_wapbl;
 	bool has_trans;
-	bool cleanall;
+	bool cleanall;		/* try to pull off from the syncer's list */
 	bool onworklst;
 	const bool dirtyonly = (origflags & (PGO_DEACTIVATE|PGO_FREE)) == 0;
 
@@ -894,7 +894,9 @@ retry:
 	flags = origflags;
 	KASSERT((vp->v_iflag & VI_ONWORKLST) != 0 ||
 	    (vp->v_iflag & VI_WRMAPDIRTY) == 0);
-	if (uobj->uo_npages == 0) {
+	if (uobj->uo_npages == 0 || (dirtyonly &&
+	    radix_tree_empty_tagged_tree_p(&uobj->uo_pages,
+	    UVM_PAGE_DIRTY_TAG))) {
 		if (vp->v_iflag & VI_ONWORKLST) {
 			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
@@ -947,7 +949,7 @@ retry:
 
 	if ((vp->v_iflag & VI_ONWORKLST) == 0) {
 #if !defined(DEBUG)
-		if ((flags & (PGO_FREE|PGO_DEACTIVATE)) == 0) {
+		if (dirtyonly) {
 			goto skip_scan;
 		}
 #endif /* !defined(DEBUG) */
@@ -1177,6 +1179,7 @@ retry:
 					break;
 				}
 				nextpg->flags |= PG_BUSY;
+				UVM_PAGE_OWN(nextpg, "genfs_putpages2");
 				pgs[npages] = nextpg;
 				uvm_page_array_advance(&ar);
 			}
@@ -1254,6 +1257,16 @@ retry:
 	}
 	uvm_page_array_fini(&ar);
 
+	/*
+	 * update ctime/mtime if the modification we started writing out might
+	 * be from mmap'ed write.
+	 *
+	 * this is necessary when an application keeps a file mmaped and
+	 * repeatedly modifies it via the window.  note that, because we
+	 * don't always write-protect pages when cleaning, such modifications
+	 * might not involve any page faults.
+	 */
+
 	if (modified && (vp->v_iflag & VI_WRMAPDIRTY) != 0 &&
 	    (vp->v_type != VBLK ||
 	    (vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)) {
@@ -1268,20 +1281,6 @@ retry:
 
 	if (cleanall && wasclean && gp->g_dirtygen == dirtygen &&
 	    (vp->v_iflag & VI_ONWORKLST) != 0) {
-#if defined(DEBUG)
-		TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
-			if ((pg->flags & (PG_FAKE | PG_MARKER)) != 0) {
-				continue;
-			}
-			if (uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_DIRTY) {
-				printf("%s: %p: dirty\n", __func__, pg);
-			}
-			if (uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_UNKNOWN) {
-				printf("%s: %p: unknown\n", __func__, pg);
-			}
-		}
-#endif /* defined(DEBUG) */
-
 		KASSERT(radix_tree_empty_tagged_tree_p(&uobj->uo_pages,
 		    UVM_PAGE_DIRTY_TAG));
 		vp->v_iflag &= ~VI_WRMAPDIRTY;
