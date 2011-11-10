@@ -106,7 +106,7 @@ tre_mem_alloc_impl(tre_mem_t mem, int provided, void *provided_block,
 	}
       else
 	{
-	  unsigned block_size;
+	  size_t block_size;
 	  if (size * 8 > TRE_MEM_BLOCK_SIZE)
 	    block_size = size * 8;
 	  else

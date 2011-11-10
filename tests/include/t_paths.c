@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.9 2011/09/27 11:24:21 jruoho Exp $ */
+/*	$NetBSD: t_paths.c,v 1.9.2.1 2011/11/10 14:31:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.9 2011/09/27 11:24:21 jruoho Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.9.2.1 2011/11/10 14:31:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -37,10 +37,12 @@ __RCSID("$NetBSD: t_paths.c,v 1.9 2011/09/27 11:24:21 jruoho Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <atf-c.h>
+#include <atf-c/config.h>
 
 #define PATH_DEV	__BIT(0)	/* A device node	*/
 #define PATH_DIR	__BIT(1)	/* A directory		*/
@@ -118,15 +120,23 @@ ATF_TC_HEAD(paths, tc)
 
 ATF_TC_BODY(paths, tc)
 {
+	const char *arch;
 	struct stat st;
 	uid_t uid;
 	mode_t m;
 	size_t i;
 	int fd;
 
+	arch = atf_config_get("atf_arch");
+
+	if (strcmp(arch, "sparc") == 0)
+		atf_tc_skip("PR port-sparc/45580");
+
 	uid = getuid();
 
 	for (i = 0; i < __arraycount(paths); i++) {
+
+		(void)fprintf(stderr, "testing '%s'\n", paths[i].path);
 
 		errno = 0;
 		fd = open(paths[i].path, O_RDONLY);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43 2011/10/18 23:14:28 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.1 2011/11/10 14:31:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -171,6 +171,16 @@ struct pmap {
 #else
 #define pmap_pdirpa(pmap, index) \
 	((pmap)->pm_pdirpa[0] + (index) * sizeof(pd_entry_t))
+#endif
+
+/* 
+ * flag to be used for kernel mappings: PG_u on Xen/amd64, 
+ * 0 otherwise.
+ */
+#if defined(XEN) && defined(__x86_64__)
+#define PG_k PG_u
+#else
+#define PG_k 0
 #endif
 
 /*
@@ -446,10 +456,8 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 {
         int s = splvm();
 
-	xpq_queue_lock();
         xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
         xpq_flush_queue();
-	xpq_queue_unlock();
         splx(s);
 }
 

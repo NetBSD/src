@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.33 2011/04/04 08:30:40 mbalmer Exp $	*/
+/*	$NetBSD: md.c,v 1.33.4.1 2011/11/10 14:31:20 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -283,3 +283,9 @@ md_mbr_use_wholedisk(mbr_info_t *mbri)
 	return 1;
 }
 
+
+int
+md_pre_mount()
+{
+	return 0;
+}

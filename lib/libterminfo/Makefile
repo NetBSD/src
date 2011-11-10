@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2011/11/02 12:09:25 roy Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2011/11/10 14:31:37 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -37,31 +37,12 @@ MLINKS+=	termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
 
 CPPFLAGS+=	-I${.OBJDIR}
 
-# Generate our string and hash tables
-hash.c: genhash term.h
-		@echo "Generating terminfo hash"
-		cd ${.CURDIR} && ${HOST_SH} ./genhash >${.OBJDIR}/$@
-
-termcap_hash.c: genthash term.h
-		@echo "Generating termcap hash"
-		cd ${.CURDIR} && ${HOST_SH} ./genthash >${.OBJDIR}/$@
-
-
-# Allow terminfo descriptions to be compiled into libterminfo
-compiled_terms.c: genterms term.h ${NETBSDSRCDIR}/share/terminfo/terminfo
-		@echo "Generating compiled terminfo descriptions"
-		cd ${.CURDIR} && ${HOST_SH} ./genterms >${.OBJDIR}/$@
-
-CLEANFILES+=	hash.c termcap_hash.c compiled_terms.c
-
-term.c: compiled_terms.c
-
-termcap.c: termcap_hash.c
+.include <Makefile.hash>
 
 # Generate our man pages
-terminfo.5: terminfo.5.in term.h termcap_map.c
+terminfo.5: genman terminfo.5.in term.h termcap_map.c
 		@echo "Generating terminfo man pages"
-		cd ${.CURDIR} && ${HOST_SH} ./genman >${.OBJDIR}/$@
+		${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=	terminfo.5
 

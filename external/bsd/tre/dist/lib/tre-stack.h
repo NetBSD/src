@@ -37,7 +37,7 @@ tre_stack_num_objects(tre_stack_t *s);
   reg_errcode_t tre_stack_push_ ## typetag(tre_stack_t *s, type value)
 
 declare_pushf(voidptr, void *);
-declare_pushf(int, int);
+declare_pushf(long, long);
 
 /* Each tre_stack_pop_*(tre_stack_t *s) function pops the topmost
    element off of stack `s' and returns it.  The stack must not be
@@ -46,7 +46,9 @@ declare_pushf(int, int);
   type tre_stack_pop_ ## typetag(tre_stack_t *s)
 
 declare_popf(voidptr, void *);
-declare_popf(int, int);
+declare_popf(long, long);
+
+#define tre_stack_pop_int(stack)	(int)tre_stack_pop_long(stack)
 
 /* Just to save some typing. */
 #define STACK_PUSH(s, typetag, value)					      \

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.110 2011/08/13 12:09:38 cherry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.110.2.1 2011/11/10 14:31:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -277,7 +277,7 @@
  * mapping, because it points to the shadow PD. Use the kernel PD instead,
  * which is static
  */
-#define APDP_PDE	(&pmap_kl2pd[l2tol2(PDIR_SLOT_APTE)])
+#define APDP_PDE	(&curcpu()->ci_kpm_pdir[l2tol2(PDIR_SLOT_APTE)])
 #define APDP_PDE_SHADOW	(L2_BASE + PDIR_SLOT_APTE)
 #else /* PAE && XEN */
 #define APDP_PDE	(L2_BASE + PDIR_SLOT_APTE)
@@ -369,9 +369,7 @@ static __inline void
 pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
 {
 	int s = splvm();
-	xpq_queue_lock();
 	xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
-	xpq_queue_unlock();
 	splx(s);
 }
 
@@ -379,14 +377,12 @@ static __inline pt_entry_t
 pmap_pte_cas(volatile pt_entry_t *ptep, pt_entry_t o, pt_entry_t n)
 {
 	int s = splvm();
-	xpq_queue_lock();
 	pt_entry_t opte = *ptep;
 
 	if (opte == o) {
 		xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(ptep)), n);
 		xpq_flush_queue();
 	}
-	xpq_queue_unlock();
 	splx(s);
 	return opte;
 }
@@ -395,12 +391,10 @@ static __inline pt_entry_t
 pmap_pte_testset(volatile pt_entry_t *pte, pt_entry_t npte)
 {
 	int s = splvm();
-	xpq_queue_lock();
 	pt_entry_t opte = *pte;
 	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)),
 	    npte);
 	xpq_flush_queue();
-	xpq_queue_unlock();
 	splx(s);
 	return opte;
 }
@@ -409,10 +403,8 @@ static __inline void
 pmap_pte_setbits(volatile pt_entry_t *pte, pt_entry_t bits)
 {
 	int s = splvm();
-	xpq_queue_lock();
 	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)), (*pte) | bits);
 	xpq_flush_queue();
-	xpq_queue_unlock();
 	splx(s);
 }
 
@@ -420,11 +412,9 @@ static __inline void
 pmap_pte_clearbits(volatile pt_entry_t *pte, pt_entry_t bits)
 {	
 	int s = splvm();
-	xpq_queue_lock();
 	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)),
 	    (*pte) & ~bits);
 	xpq_flush_queue();
-	xpq_queue_unlock();
 	splx(s);
 }
 
@@ -432,20 +422,11 @@ static __inline void
 pmap_pte_flush(void)
 {
 	int s = splvm();
-	xpq_queue_lock();
 	xpq_flush_queue();
-	xpq_queue_unlock();
 	splx(s);
 }
 
 #endif
-
-#ifdef PAE
-/* Address of the static kernel's L2 page */
-pd_entry_t *pmap_kl2pd;
-paddr_t pmap_kl2paddr;
-#endif
-
 
 struct trapframe;
 
