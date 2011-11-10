@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2011/11/07 23:21:32 njoly Exp $
+#	$NetBSD: Makefile,v 1.14 2011/11/10 09:28:25 yamt Exp $
 
 LIBISPRIVATE=	yes
 
@@ -162,6 +162,8 @@ tm_p.h: Makefile tm-preds.h
 	TARGET_CPU_DEFAULT="" \
 	HEADERS="$(G_tm_p_include_list)" DEFINES="" \
 	${HOST_SH} ${GNUHOSTDIST}/gcc/mkconfig.sh ${.TARGET}
+
+${G_OBJS} ${G_OBJS:.o=.d}:	tm_p.h		# XXX crude
 
 CLEANFILES+=	options.h options.c optionlist
 optionlist: ${G_ALL_OPT_FILES} ${GCCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
