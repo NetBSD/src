@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2011/08/16 10:36:30 christos Exp $
+#	$NetBSD: Makefile,v 1.73 2011/11/10 14:01:11 yamt Exp $
 #
 
 WARNS=	4
@@ -105,6 +105,7 @@ MAN+=	affinity.3 pthread.3 \
 	pthread_cancel.3 pthread_cleanup_push.3 \
 	pthread_cond.3 pthread_condattr.3 \
 	pthread_create.3 pthread_detach.3 pthread_equal.3 \
+	pthread_curcpu_np.3 \
 	pthread_exit.3 \
 	pthread_getname_np.3 \
 	pthread_getspecific.3 pthread_join.3 \
