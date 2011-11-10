@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.45 2011/07/01 06:00:20 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.46 2011/11/10 00:37:38 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,12 +82,6 @@
 #define	MCOUNT _KERN_MCOUNT
 #else
 #define	MCOUNT
-#endif
-
-#ifdef __NO_LEADING_UNDERSCORES__
-# define _C_LABEL(x)	x
-#else
-# define _C_LABEL(x)	__CONCAT(_,x)
 #endif
 
 #ifdef USE_AENT
