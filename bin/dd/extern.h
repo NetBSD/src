@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 2011/09/16 16:06:23 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.20.2.1 2011/11/10 14:31:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -48,6 +48,11 @@ void block_close(void);
 void unblock(void);
 void unblock_close(void);
 #endif
+
+#ifndef NO_MSGFMT
+int dd_write_msg(const char *, int);
+#endif
+
 void dd_out(int);
 void def(void);
 void def_close(void);
@@ -74,3 +79,4 @@ extern const u_char	a2e_32V[], a2e_POSIX[];
 extern const u_char	e2a_32V[], e2a_POSIX[];
 extern const u_char	a2ibm_32V[], a2ibm_POSIX[];
 extern u_char		casetab[];
+extern const char	*msgfmt;

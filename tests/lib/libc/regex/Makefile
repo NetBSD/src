@@ -1,17 +1,22 @@
-# $NetBSD: Makefile,v 1.4 2011/10/11 23:04:21 dholland Exp $
+# $NetBSD: Makefile,v 1.4.2.1 2011/11/10 14:31:52 yamt Exp $
 
 MKMAN=	no
 
 .include <bsd.own.mk>
 
-TESTSDIR=	${TESTSBASE}/lib/libc/regex
+TESTSDIR?=	${TESTSBASE}/lib/libc/regex
+IMPLEMENTATION?=	-DREGEX_SPENCER
+SKIPASSOC?=	left
 
 BINDIR=		${TESTSDIR}
-PROGS+=		h_regex
+PROGS?=		h_regex
+PROGS+=		h_regex_att
+SRCS.h_regex_att=	att.c
 SRCS.h_regex=	main.c split.c debug.c
-CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/regex
+CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/regex ${IMPLEMENTATION}
 
-TESTS_SH=	t_regex
+TESTS_SH?=	t_regex
+TESTS_SH+=	t_regex_att
 TESTS_C=	t_exhaust
 
 FILESDIR=	${TESTSDIR}/data
@@ -35,10 +40,21 @@ FILES+=		data/subexp.in
 FILES+=		data/subtle.in
 FILES+=		data/word_bound.in
 FILES+=		data/zero.in
+#FILES+=		data/att/README
+FILES+=		data/att/basic.dat
+FILES+=		data/att/categorization.dat
+FILES+=		data/att/forcedassoc.dat
+FILES+=		data/att/leftassoc.dat
+FILES+=		data/att/nullsubexpr.dat
+FILES+=		data/att/repetition.dat
+FILES+=		data/att/rightassoc.dat
 
 t_regex.sh: t_regex.awk t_regex.in
-	${TOOL_AWK} -f ${.CURDIR}/t_regex.awk ${.CURDIR}/t_regex.in > ${.TARGET}
+	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
 
-CLEANFILES+= t_regex.sh
+t_regex_att.sh: t_regex.awk t_regex_att.in
+	${TOOL_AWK} -v skipassoc=${SKIPASSOC} -f ${.ALLSRC} > ${.TARGET}
+
+CLEANFILES+= t_regex.sh t_regex_att.sh
 
 .include <bsd.test.mk>

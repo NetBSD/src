@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.33 2011/09/20 00:12:23 jym Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.33.2.1 2011/11/10 14:31:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -129,6 +129,7 @@ extern volatile shared_info_t *HYPERVISOR_shared_info;
 
 /* hypervisor.c */
 struct intrframe;
+struct cpu_info;
 void do_hypervisor_callback(struct intrframe *regs);
 void hypervisor_enable_event(unsigned int);
 

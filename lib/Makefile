@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.179 2011/10/13 22:08:20 joerg Exp $
+#	$NetBSD: Makefile,v 1.179.2.1 2011/11/10 14:31:36 yamt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -58,6 +58,7 @@ SUBDIR+=	../external/bsd/atf/lib
 .endif
 
 SUBDIR+=	../external/bsd/flex/lib
+SUBDIR+=	../external/bsd/tre/lib
 SUBDIR+=	../external/bsd/libdwarf/lib
 SUBDIR+=	../external/bsd/libelf/lib
 SUBDIR+=	../external/bsd/libevent/lib

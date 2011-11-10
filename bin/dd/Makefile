@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2011/02/04 19:42:12 pooka Exp $
+#	$NetBSD: Makefile,v 1.15.4.1 2011/11/10 14:31:10 yamt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 RUMPPRG=dd
@@ -8,7 +8,7 @@ DPADD+=	${LIBUTIL}
 LDADD+=	-lutil
 
 .ifdef SMALLPROG
-CPPFLAGS+=	-DNO_CONV -DSMALL
+CPPFLAGS+=	-DNO_CONV -DNO_MSGFMT -DSMALL
 .else
 SRCS+=		conv_tab.c
 .ifndef CRUNCHEDPROG

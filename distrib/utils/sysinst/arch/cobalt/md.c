@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2011/04/04 08:30:21 mbalmer Exp $ */
+/*	$NetBSD: md.c,v 1.8.4.1 2011/11/10 14:31:16 yamt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -411,4 +411,10 @@ md_mbr_use_wholedisk(mbr_info_t *mbri)
 	bootstart = part[0].mbrp_start;
 	bootsize = part[0].mbrp_size;
 	return 1;
+}
+
+int
+md_pre_mount()
+{
+	return 0;
 }

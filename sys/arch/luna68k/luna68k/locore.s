@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.37 2011/02/08 20:20:16 rmind Exp $ */
+/* $NetBSD: locore.s,v 1.37.4.1 2011/11/10 14:31:41 yamt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,11 +39,11 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_compat_sunos.h"
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
-#include "opt_compat_sunos.h"
 #include "opt_fpu_emulate.h"
 #include "opt_m68k_arch.h"
 
@@ -147,7 +147,7 @@ ASENTRY_NOPROFILE(start)
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
 
 /* determine our CPU/MMU combo - check for all regardless of kernel config */
-	movl	#0x200,%d0		| data freeze bit
+	movl	#DC_FREEZE,%d0		| data freeze bit
 	movc	%d0,%cacr		|   only exists on 68030
 	movc	%cacr,%d0		| read it back
 	tstl	%d0			| zero?
@@ -197,8 +197,8 @@ Lstart0:
 Lstart2:
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc			|   as source
-	movc	%d0,%dfc			|   and destination of transfers
+	movc	%d0,%sfc		|   as source
+	movc	%d0,%dfc		|   and destination of transfers
 /* initialize memory sizes (for pmap_bootstrap) */
 	RELOC(memavail,%a0)
 	movl	%a0@,%d1
@@ -208,6 +208,7 @@ Lstart2:
 	movl	%d1,%a0@		| save as maxmem
 	RELOC(physmem,%a0)
 	movl	%d1,%a0@		| and physmem
+
 /* configure kernel and lwp0 VA space so we can get going */
 #if NKSYMS || defined(DDB) || defined(LKM)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
@@ -251,7 +252,7 @@ Lmotommu0:
 	RELOC(proto040tc,%a0)
 	movl	%a0@,%d0
 	.long	0x4e7b0003		| movc %d0,%tc
-	movl	#0x80008000,%d0
+	movl	#CACHE40_ON,%d0
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1
 Lmotommu1:
@@ -288,7 +289,7 @@ Lenab1:
 	addql	#4,%sp
 Lenab2:
 	pflusha				| flush entire ATC 
-	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jeq	Lenab3			| yes, cache already on
 	tstl	_C_LABEL(mmutype)
 	jpl	Lenab3			| 68851 implies no d-cache
@@ -312,9 +313,10 @@ Lenab3:
 	clrl	%sp@-			| PC - filled in by "execve"
 	movw	#PSL_USER,%sp@-		| in user mode
 	clrl	%sp@-			| stack adjust count and padding
-	lea	%sp@(-64),%sp		| construct space for %D0-%D7/%A0-%A7
+	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
 	lea	_C_LABEL(lwp0),%a0	| save pointer to frame
 	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.l_md.md_regs
+
 	jra	_C_LABEL(main)		| main()
 	PANIC("main() returned")
 	/* NOTREACHED */
@@ -348,7 +350,7 @@ ENTRY_NOPROFILE(buserr60)
 	movl	%a0,%sp@(FR_SP)		|   in the savearea
 	movel	%sp@(FR_HW+12),%d0	| FSLW
 	btst	#2,%d0			| branch prediction error?
-	jeq	Lnobpe			
+	jeq	Lnobpe
 	movc	%cacr,%d2
 	orl	#IC60_CABC,%d2		| clear all branch cache entries
 	movc	%d2,%cacr
@@ -548,29 +550,29 @@ Lfp_unsupp:
  * after the trap call.
  */
 ENTRY_NOPROFILE(fpfault)
-	clrl	%sp@-		| stack adjust count
-	moveml	#0xFFFF,%sp@-	| save user registers
-	movl	%usp,%a0	| and save
-	movl	%a0,%sp@(FR_SP)	|   the user stack pointer
-	clrl	%sp@-		| no VA arg
-	movl	_C_LABEL(curpcb),%a0 | current pcb
-	lea	%a0@(PCB_FPCTX),%a0 | address of FP savearea
-	fsave	%a0@		| save state
+	clrl	%sp@-			| stack adjust count
+	moveml	#0xFFFF,%sp@-		| save user registers
+	movl	%usp,%a0		| and save
+	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
+	clrl	%sp@-			| no VA arg
+	movl	_C_LABEL(curpcb),%a0	| current pcb
+	lea	%a0@(PCB_FPCTX),%a0	| address of FP savearea
+	fsave	%a0@			| save state
 #if defined(M68040) || defined(M68060)
 	/* always null state frame on 68040, 68060 */
 	cmpl	#FPU_68040,_C_LABEL(fputype)
 	jge	Lfptnull
 #endif
-	tstb	%a0@		| null state frame?
-	jeq	Lfptnull	| yes, safe
-	clrw	%d0		| no, need to tweak BIU
-	movb	%a0@(1),%d0	| get frame size
-	bset	#3,%a0@(0,%d0:w) | set exc_pend bit of BIU
+	tstb	%a0@			| null state frame?
+	jeq	Lfptnull		| yes, safe
+	clrw	%d0			| no, need to tweak BIU
+	movb	%a0@(1),%d0		| get frame size
+	bset	#3,%a0@(0,%d0:w)	| set exc_pend bit of BIU
 Lfptnull:
-	fmovem	%fpsr,%sp@-	| push fpsr as code argument
-	frestore %a0@		| restore state
-	movl	#T_FPERR,%sp@-	| push type arg
-	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
+	fmovem	%fpsr,%sp@-		| push %fpsr as code argument
+	frestore %a0@			| restore state
+	movl	#T_FPERR,%sp@-		| push type arg
+	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack cleanup
 
 /*
  * Other exceptions only cause four and six word stack frame and require
@@ -616,7 +618,7 @@ Ltrap1:
  */
 ENTRY_NOPROFILE(trap12)
 	movl	_C_LABEL(curlwp),%a0
-	movl	%a0@(L_PROC),%sp@-	| push curproc pointer
+	movl	%a0@(L_PROC),%sp@-	| push current proc pointer
 	movl	%d1,%sp@-		| push length
 	movl	%a1,%sp@-		| push addr
 	movl	%d0,%sp@-		| push command
@@ -675,7 +677,7 @@ Lkbrkpt: | Kernel-mode breakpoint or trace trap. (%d0=trap_type)
 	| Copy frame to the temporary stack
 	movl	%sp,%a0			| %a0=src
 	lea	_ASM_LABEL(tmpstk)-96,%a1 | %a1=dst
-	movl	%a1,%sp			| sp=new frame
+	movl	%a1,%sp			| %sp=new frame
 	moveq	#FR_SIZE,%d1
 Lbrkpt1:
 	movl	%a0@+,%a1@+
@@ -719,13 +721,13 @@ Lbrkpt3:
 	| so push the hardware frame at the current sp
 	| before restoring registers and returning.
 
-	movl	%sp@(FR_SP),%a0		| modified sp
+	movl	%sp@(FR_SP),%a0		| modified %sp
 	lea	%sp@(FR_SIZE),%a1	| end of our frame
 	movl	%a1@-,%a0@-		| copy 2 longs with
 	movl	%a1@-,%a0@-		| ... predecrement
-	movl	%a0,%sp@(FR_SP)		| sp = h/w frame
-	moveml	%sp@+,#0x7FFF		| restore all but sp
-	movl	%sp@,%sp		| ... and sp
+	movl	%a0,%sp@(FR_SP)		| %sp = h/w frame
+	moveml	%sp@+,#0x7FFF		| restore all but %sp
+	movl	%sp@,%sp		| ... and %sp
 	rte				| all done
 
 /* Use common m68k sigreturn */
@@ -916,7 +918,7 @@ Ldorte:
 /*
  * Use common m68k process/lwp switch and context save subroutines.
  */
-#define FPCOPROC	/* XXX: Temp. Reqd. */
+#define FPCOPROC	/* XXX: Temp. reqd. */
 #include <m68k/m68k/switch_subr.s>
 
 
@@ -948,22 +950,10 @@ Lsldone:
 	rts
 #endif
 
-
 ENTRY(ecacheon)
 	rts
 
 ENTRY(ecacheoff)
-	rts
-
-/*
- * Get callers current SP value.
- * Note that simply taking the address of a local variable in a C function
- * doesn't work because callee saved registers may be outside the stack frame
- * defined by %A6 (e.g. GCC generated code).
- */
-ENTRY(getsp)
-	movl	%sp,%d0			| get current SP
-	addql	#4,%d0			| compensate for return address
 	rts
 
 ENTRY_NOPROFILE(getsfc)
@@ -979,12 +969,12 @@ ENTRY_NOPROFILE(getdfc)
  */
 ENTRY(loadustp)
 	movl	%sp@(4),%d0		| new USTP
-	moveq	#PGSHIFT, %d1
+	moveq	#PGSHIFT,%d1
 	lsll	%d1,%d0			| convert to addr
 #if defined(M68040)
-	cmpl    #MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne     LmotommuC               | no, skip
-	.long   0x4e7b0806              | movc %d0,%urp
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
+	jne	LmotommuC		| no, skip
+	.long	0x4e7b0806		| movc %d0,%urp
 	rts
 LmotommuC:
 #endif
@@ -1033,17 +1023,27 @@ ENTRY(getsr)
 	rts
 
 /*
- * _delay(unsigned N)
+ * _delay(u_int N)
  *
  * Delay for at least (N/256) microseconds.
  * This routine depends on the variable:  delay_divisor
  * which should be set based on the CPU clock rate.
  */
-GLOBAL(_delay)
+ENTRY_NOPROFILE(_delay)
 	| %d0 = arg = (usecs << 8)
 	movl	%sp@(4),%d0
 	| %d1 = delay_divisor
 	movl	_C_LABEL(delay_divisor),%d1
+	jra	L_delay			/* Jump into the loop! */
+
+	/*
+	 * Align the branch target of the loop to a half-line (8-byte)
+	 * boundary to minimize cache effects.  This guarantees both
+	 * that there will be no prefetch stalls due to cache line burst
+	 * operations and that the loop will run from a single cache
+	 * half-line.
+	 */
+	.align	8
 L_delay:
 	subl	%d1,%d0
 	jgt	L_delay

@@ -18,7 +18,7 @@
 
 union tre_stack_item {
   void *voidptr_value;
-  int int_value;
+  long long_value;
 };
 
 struct tre_stack_rec {
@@ -111,7 +111,7 @@ tre_stack_push(tre_stack_t *s, union tre_stack_item value)
     return tre_stack_push(s, item);  \
 }
 
-define_pushf(int, int)
+define_pushf(long, long)
 define_pushf(voidptr, void *)
 
 #define define_popf(typetag, type)		    \
@@ -119,7 +119,7 @@ define_pushf(voidptr, void *)
     return s->stack[--s->ptr].typetag ## _value;    \
   }
 
-define_popf(int, int)
+define_popf(long, long)
 define_popf(voidptr, void *)
 
 /* EOF */

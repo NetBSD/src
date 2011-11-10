@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.3 2011/09/24 18:34:18 christos Exp $
+# $NetBSD: Makefile,v 1.3.2.1 2011/11/10 14:31:53 yamt Exp $
+
+# NOTE: please add all syscall-tests to tests/lib/libc/sys.
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/net/sys
 
-TESTS_C=	t_connect
-TESTS_C+=	t_listen
 TESTS_C+=	t_rfc6056
 
 .include <bsd.test.mk>

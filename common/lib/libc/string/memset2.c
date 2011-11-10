@@ -49,11 +49,11 @@
 
 #ifdef _FORTIFY_SOURCE
 #undef bzero
-#undef memset
 #endif
+#undef memset
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: memset2.c,v 1.2 2009/12/14 00:39:01 matt Exp $");    
+__RCSID("$NetBSD: memset2.c,v 1.2.6.1 2011/11/10 14:31:10 yamt Exp $");    
 #endif /* LIBC_SCCS and not lint */
 
 /*

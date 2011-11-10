@@ -1,4 +1,4 @@
-/*	$NetBSD: md5hl.c,v 1.2 2009/06/30 02:44:52 agc Exp $	*/
+/*	$NetBSD: md5hl.c,v 1.2.6.1 2011/11/10 14:31:22 yamt Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@netbsd.org>, April 29, 1997.
@@ -18,7 +18,7 @@
 #define _DIAGASSERT(cond)	assert(cond)
 #endif
 
-/*	$NetBSD: md5hl.c,v 1.2 2009/06/30 02:44:52 agc Exp $	*/
+/*	$NetBSD: md5hl.c,v 1.2.6.1 2011/11/10 14:31:22 yamt Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -84,7 +84,7 @@ MDNAME(File)(filename, buf)
 	unsigned char buffer[BUFSIZ];
 	MDNAME(_CTX) ctx;
 	int f, j;
-	size_t i;
+	ssize_t i;
 
 	_DIAGASSERT(filename != 0);
 	/* buf may be NULL */

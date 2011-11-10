@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncode.h,v 1.4 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf_ncode.h,v 1.4.10.1 2011/11/10 14:31:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -114,8 +114,9 @@ int	npf_ncode_validate(const void *, size_t, int *);
 #define	NPF_OPCODE_ETHER		0x80
 
 #define	NPF_OPCODE_IP4MASK		0x90
-#define	NPF_OPCODE_IP4TABLE		0x91
+#define	NPF_OPCODE_TABLE		0x91
 #define	NPF_OPCODE_ICMP4		0x92
+#define	NPF_OPCODE_IP6MASK		0x93
 
 #define	NPF_OPCODE_TCP_PORTS		0xa0
 #define	NPF_OPCODE_UDP_PORTS		0xa1

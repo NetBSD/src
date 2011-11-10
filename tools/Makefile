@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.151 2011/11/01 23:11:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.151.2.1 2011/11/10 14:31:53 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -48,11 +48,12 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT mktemp .WAIT sed .WAIT \
 		cap_mkdb crunchgen ctags genassym gencat hexdump join \
 		${LINT_BITS} \
-		lorder makewhatis mkdep mtree nbperf rpcgen tic tsort \
+		lorder makewhatis mkdep mtree nbperf .WAIT rpcgen tsort \
 		uudecode m4 \
 	.WAIT texinfo \
 	.WAIT yacc \
 	.WAIT awk \
+	.WAIT tic \
 	.WAIT lex \
 	.WAIT pax \
 	.WAIT ${TOOLCHAIN_BITS} \
@@ -67,10 +68,12 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		pwd_mkdb stat strfile sunlabel zic
 
 .if ${MKLLVM} != "no"
+# .WAIT between llvm-tblgen and llvm-clang-tblgen ensures install
+# rules works correctly
 SUBDIR+= \
 	llvm .WAIT \
 	llvm-lib/libLLVMSupport llvm-lib/libLLVMTableGen .WAIT \
-	llvm-tblgen llvm-clang-tblgen .WAIT \
+	llvm-tblgen .WAIT llvm-clang-tblgen .WAIT \
 	llvm-include .WAIT \
 	llvm-lib .WAIT \
 	llvm-clang

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1702.2.1 2011/11/02 21:53:56 yamt Exp $
+#	$NetBSD: mi,v 1.1702.2.2 2011/11/10 14:31:12 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3292,6 +3292,8 @@
 ./usr/lib/libterminfo_p.a			comp-c-proflib		profile
 ./usr/lib/libtermlib.a				comp-c-lib
 ./usr/lib/libtermlib_p.a			comp-c-proflib		profile
+./usr/lib/libtre.a				comp-c-lib
+./usr/lib/libtre_p.a				comp-c-proflib		profile
 ./usr/lib/libukfs.a				comp-c-lib
 ./usr/lib/libukfs_g.a				-unknown-		debuglib
 ./usr/lib/libukfs_p.a				comp-c-proflib		profile
@@ -3491,6 +3493,7 @@
 ./usr/libdata/debug/sbin/zpool.debug		comp-zfs-debug		zfs,debug
 ./usr/libdata/debug/usr/bin/addftinfo.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/addr2line.debug	comp-debug-debug	binutils,debug
+./usr/libdata/debug/usr/bin/agrep.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/apply.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/apropos.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/bin/ar.debug		comp-util-debug		binutils,debug
@@ -4403,6 +4406,7 @@
 ./usr/libdata/lint/llib-ltelnet.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-ltermcap.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lterminfo.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-ltre.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lukfs.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lusb.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lusbhid.ln		comp-c-lintlib		lint
