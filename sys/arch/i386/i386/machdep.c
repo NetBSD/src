@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.711 2011/11/06 15:35:29 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.712 2011/11/10 00:12:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.711 2011/11/06 15:35:29 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.712 2011/11/10 00:12:04 jym Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -246,12 +246,12 @@ struct mtrr_funcs *mtrr_funcs;
 int	physmem;
 
 int	cpu_class;
+int	use_pae;
 int	i386_fpu_present;
 int	i386_fpu_exception;
 int	i386_fpu_fdivbug;
 
 int	i386_use_fxsave;
-int	i386_use_pae = 0;
 int	i386_has_sse;
 int	i386_has_sse2;
 
@@ -713,7 +713,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "pae", 
 		       SYSCTL_DESCR("Whether the kernel uses PAE"),
-		       NULL, 0, &i386_use_pae, 0,
+		       NULL, 0, &use_pae, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
@@ -1348,7 +1348,9 @@ init386(paddr_t first_avail)
 	cpu_init_msrs(&cpu_info_primary, true);
 
 #ifdef PAE
-	i386_use_pae = 1;
+	use_pae = 1;
+#else
+	use_pae = 0;
 #endif
 
 #ifdef XEN
