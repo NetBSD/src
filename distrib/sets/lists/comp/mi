@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1705 2011/11/08 10:49:41 njoly Exp $
+#	$NetBSD: mi,v 1.1706 2011/11/10 14:03:02 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8395,6 +8395,7 @@
 ./usr/share/man/cat3/pthread_condattr_destroy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_condattr_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_create.0		comp-c-catman		.cat
+./usr/share/man/cat3/pthread_curcpu_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_detach.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_equal.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_exit.0		comp-c-catman		.cat
@@ -14580,6 +14581,7 @@
 ./usr/share/man/html3/pthread_condattr_destroy.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_condattr_init.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_create.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_curcpu_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_detach.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_equal.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_exit.html		comp-c-htmlman		html
@@ -20761,6 +20763,7 @@
 ./usr/share/man/man3/pthread_condattr_destroy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_condattr_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_create.3		comp-c-man		.man
+./usr/share/man/man3/pthread_curcpu_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_detach.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_equal.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_exit.3		comp-c-man		.man
