@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.32 2006/01/05 10:41:03 yamt Exp $
+.\"	$NetBSD: mountd.8,v 1.32.42.1 2011/11/10 14:31:55 yamt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mountd.8	8.4 (Berkeley) 4/28/95
 .\"
-.Dd January 5, 2006
+.Dd November 2, 2011
 .Dt MOUNTD 8
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 mount requests
 .Sh SYNOPSIS
 .Nm
-.Op Fl dNn
+.Op Fl dN
 .Op Fl P Ar policy
 .Op Fl p Ar port
 .Op Ar exportsfile
@@ -73,12 +73,7 @@ on every export.
 See
 .Xr exports 5
 for more information.
-.It Fl n
-This flag used to indicate that clients were required to make requests
-from reserved ports, but it is now no longer functional. It
-is only provided for backwards compatibility. Requests
-are checked for reserved ports on a per-export basis, see
-.Xr exports 5 .
+Some operating systems (notably Mac OS X) require this option.
 .It Fl P Ar policy
 IPsec
 .Ar policy
@@ -86,15 +81,17 @@ string,
 as described in
 .Xr ipsec_set_policy 3 .
 Multiple IPsec policy strings may be specified by using a semicolon as
-a separator. If conflicting policy strings are found in a single line,
-the last string will take effect. If an invalid IPsec policy string is used
+a separator.
+If conflicting policy strings are found in a single line,
+the last string will take effect.
+If an invalid IPsec policy string is used
 .Nm
 logs an error message and terminates itself.
 .It Fl p Ar port
 Force
 .Nm
-to bind to the given port. If this
-option is not given,
+to bind to the given port.
+If this option is not given,
 .Nm
 may bind to every anonymous port
 (in the range 600-1023) which causes trouble when trying to use

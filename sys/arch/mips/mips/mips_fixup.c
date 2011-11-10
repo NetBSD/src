@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.9 2011/08/27 13:23:52 bouyer Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.9.2.1 2011/11/10 14:31:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.9 2011/08/27 13:23:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.9.2.1 2011/11/10 14:31:42 yamt Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -138,7 +138,8 @@ mips_fixup_exceptions(mips_fixup_callback_t callback)
 	}
 
 	if (fixed)
-		mips_icache_sync_range((vaddr_t)start, end - start);
+		mips_icache_sync_range((vaddr_t)start,
+		   sizeof(start[0]) * (end - start));
 		
 	return fixed;
 }

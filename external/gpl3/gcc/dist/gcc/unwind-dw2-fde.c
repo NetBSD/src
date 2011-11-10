@@ -209,7 +209,9 @@ __deregister_frame_info_bases (const void *begin)
 
  out:
   __gthread_mutex_unlock (&object_mutex);
+#if 0
   gcc_assert (ob);
+#endif
   return (void *) ob;
 }
 

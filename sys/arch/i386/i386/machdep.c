@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.709 2011/08/13 12:09:38 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.709.2.1 2011/11/10 14:31:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.709 2011/08/13 12:09:38 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.709.2.1 2011/11/10 14:31:40 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -246,12 +246,12 @@ struct mtrr_funcs *mtrr_funcs;
 int	physmem;
 
 int	cpu_class;
+int	use_pae;
 int	i386_fpu_present;
 int	i386_fpu_exception;
 int	i386_fpu_fdivbug;
 
 int	i386_use_fxsave;
-int	i386_use_pae = 0;
 int	i386_has_sse;
 int	i386_has_sse2;
 
@@ -539,6 +539,9 @@ i386_proc0_tss_ldt_init(void)
 }
 
 #ifdef XEN
+/* Shim for curcpu() until %fs is ready */
+extern struct cpu_info	* (*xpq_cpu)(void);
+
 /*
  * Switch context:
  * - honor CR0_TS in saved CR0 and request DNA exception on FPU use
@@ -565,6 +568,12 @@ i386_switch_context(lwp_t *l)
 			  (union descriptor *) &pcb->pcb_fsd);
 	update_descriptor(&ci->ci_gdt[GUGS_SEL], 
 			  (union descriptor *) &pcb->pcb_gsd);
+
+	/* setup curcpu() to use %fs now */
+	/* XXX: find a way to do this, just once */
+	if (__predict_false(xpq_cpu != x86_curcpu)) {
+		xpq_cpu = x86_curcpu;
+	}
 
 	physop.cmd = PHYSDEVOP_SET_IOPL;
 	physop.u.set_iopl.iopl = pcb->pcb_iopl;
@@ -704,7 +713,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "pae", 
 		       SYSCTL_DESCR("Whether the kernel uses PAE"),
-		       NULL, 0, &i386_use_pae, 0,
+		       NULL, 0, &use_pae, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
@@ -1194,10 +1203,8 @@ initgdt(union descriptor *tgdt)
 		npte = pmap_pa2pte((vaddr_t)gdt - KERNBASE);
 		npte |= PG_RO | pg_nx | PG_V;
 
-		xpq_queue_lock();
 		xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
 		xpq_flush_queue();
-		xpq_queue_unlock();
 	}
 
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
@@ -1341,7 +1348,9 @@ init386(paddr_t first_avail)
 	cpu_init_msrs(&cpu_info_primary, true);
 
 #ifdef PAE
-	i386_use_pae = 1;
+	use_pae = 1;
+#else
+	use_pae = 0;
 #endif
 
 #ifdef XEN
@@ -1433,7 +1442,7 @@ init386(paddr_t first_avail)
 	avail_start = first_avail;
 	avail_end = ctob(xen_start_info.nr_pages) + XPMAP_OFFSET;
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
-	pmap_pa_end = avail_end;
+	pmap_pa_end = pmap_pa_start + ctob(xen_start_info.nr_pages);
 	mem_clusters[0].start = avail_start;
 	mem_clusters[0].size = avail_end - avail_start;
 	mem_cluster_cnt++;

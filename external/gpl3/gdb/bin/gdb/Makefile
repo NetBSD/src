@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/10/12 03:57:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2011/11/10 14:31:25 yamt Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -31,7 +31,7 @@ gdb-cfg.texi: ${DIST}/gdb/doc/all-cfg.texi
 	${TOOL_CAT} ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+= GDBvn.texi gdb-cfg.texi
-gdb.info: gdb-cfg.texi GDBvn.texi
+gdbint.info stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
 
 .include "../../Makefile.inc"
 .include <bsd.info.mk>

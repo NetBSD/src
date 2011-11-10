@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2011/09/30 17:44:58 christos Exp $
+# $NetBSD: Makefile,v 1.31.2.1 2011/11/10 14:31:52 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -8,11 +8,13 @@ TESTS_C+=	t_alarm
 TESTS_C+=	t_assert
 TESTS_C+=	t_basedirname
 TESTS_C+=	t_closefrom
+TESTS_C+=	t_cpuset
 TESTS_C+=	t_dir
 TESTS_C+=	t_fmtcheck
 TESTS_C+=	t_fpclassify
 TESTS_C+=	t_fpsetmask
 TESTS_C+=	t_fpsetround
+TESTS_C+=	t_ftok
 TESTS_C+=	t_getcwd
 TESTS_C+=	t_getgrent
 TESTS_C+=	t_glob
@@ -26,6 +28,7 @@ TESTS_C+=	t_setdomainname
 TESTS_C+=	t_sethostname
 TESTS_C+=	t_siginfo
 TESTS_C+=	t_syslog
+TESTS_C+=	t_time
 TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
 

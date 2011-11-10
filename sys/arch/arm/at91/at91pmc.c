@@ -1,5 +1,5 @@
-/*	$Id: at91pmc.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $	*/
-/*	$NetBSD: at91pmc.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$Id: at91pmc.c,v 1.4.2.1 2011/11/10 14:31:39 yamt Exp $	*/
+/*	$NetBSD: at91pmc.c,v 1.4.2.1 2011/11/10 14:31:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -69,6 +69,8 @@ at91pmc_get_clocks(struct at91bus_clocks *clocks)
 	} else if (((mclk / 1000) % 1000) <= 10) {
 	  mclk -= (mclk % 1000000U);
 	}
+
+	PMCREG(PMC_PLLICPR) = PMC_PLLICPR_ICPPLLA | PMC_PLLICPR_ICPPLLB;
 
 	reg = PMCREG(PMC_PLLAR); pllaclk = 0;
 	if (reg & PMC_PLL_DIV) {

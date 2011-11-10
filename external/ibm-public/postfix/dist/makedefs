@@ -152,6 +152,8 @@ case "$SYSTEM.$RELEASE" in
 		;;
   OpenBSD.4*)	SYSTYPE=OPENBSD4
 		;;
+  OpenBSD.5*)	SYSTYPE=OPENBSD5
+		;;
   ekkoBSD.1*)	SYSTYPE=EKKOBSD1
 		;;
    NetBSD.1*)	SYSTYPE=NETBSD1

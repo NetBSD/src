@@ -14,7 +14,7 @@
 /* #undef ENABLE_NLS */
 
 /* Define to 1 if you have `alloca', as a function or macro. */
-/* #undef HAVE_ALLOCA */
+#define HAVE_ALLOCA 1
 
 /* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
    */
@@ -48,7 +48,7 @@
 #define HAVE_ICONV 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-/* #undef HAVE_INTTYPES_H */
+#define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the `isascii' function. */
 #define HAVE_ISASCII 1
@@ -60,31 +60,31 @@
 /* #undef HAVE_ISWASCII */
 
 /* Define to 1 if you have the `iswblank' function or macro. */
-/* #undef HAVE_ISWBLANK */
+#define HAVE_ISWBLANK 1
 
 /* Define to 1 if you have the `iswctype' function or macro. */
-/* #undef HAVE_ISWCTYPE */
+#define HAVE_ISWCTYPE 1
 
 /* Define to 1 if you have the `iswlower' function or macro. */
-/* #undef HAVE_ISWLOWER */
+#define HAVE_ISWLOWER 1
 
 /* Define to 1 if you have the `iswupper' function or macro. */
-/* #undef HAVE_ISWUPPER */
+#define HAVE_ISWUPPER 1
 
 /* Define to 1 if you have the <libutf8.h> header file. */
 /* #undef HAVE_LIBUTF8_H */
 
 /* Define to 1 if you have the `mbrtowc' function or macro. */
-/* #undef HAVE_MBRTOWC */
+#define HAVE_MBRTOWC 1
 
 /* Define to 1 if the system has the type `mbstate_t'. */
-/* #undef HAVE_MBSTATE_T */
+#define HAVE_MBSTATE_T 1
 
 /* Define to 1 if you have the `mbtowc' function or macro. */
-/* #undef HAVE_MBTOWC */
+#define HAVE_MBTOWC 1
 
 /* Define to 1 if you have the <memory.h> header file. */
-/* #undef HAVE_MEMORY_H */
+#define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the <regex.h> header file. */
 #define HAVE_REGEX_H 1
@@ -93,64 +93,64 @@
 /* #undef HAVE_REG_ERRCODE_T */
 
 /* Define to 1 if you have the <stdint.h> header file. */
-/* #undef HAVE_STDINT_H */
+#define HAVE_STDINT_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-/* #undef HAVE_STDLIB_H */
+#define HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the <strings.h> header file. */
-/* #undef HAVE_STRINGS_H */
+#define HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
-/* #undef HAVE_STRING_H */
+#define HAVE_STRING_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-/* #undef HAVE_SYS_STAT_H */
+#define HAVE_SYS_STAT_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the `towlower' function or macro. */
-/* #undef HAVE_TOWLOWER */
+#define HAVE_TOWLOWER 1
 
 /* Define to 1 if you have the `towupper' function or macro. */
-/* #undef HAVE_TOWUPPER */
+#define HAVE_TOWUPPER 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-/* #undef HAVE_UNISTD_H */
+#define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the <wchar.h> header file. */
-/* #undef HAVE_WCHAR_H */
+#define HAVE_WCHAR_H 1
 
 /* Define to 1 if the system has the type `wchar_t'. */
-/* #undef HAVE_WCHAR_T */
+#define HAVE_WCHAR_T 1
 
 /* Define to 1 if you have the `wcschr' function or macro. */
-/* #undef HAVE_WCSCHR */
+#define HAVE_WCSCHR 1
 
 /* Define to 1 if you have the `wcscpy' function or macro. */
-/* #undef HAVE_WCSCPY */
+#define HAVE_WCSCPY 1
 
 /* Define to 1 if you have the `wcslen' function or macro. */
-/* #undef HAVE_WCSLEN */
+#define HAVE_WCSLEN 1
 
 /* Define to 1 if you have the `wcsncpy' function or macro. */
-/* #undef HAVE_WCSNCPY */
+#define HAVE_WCSNCPY 1
 
 /* Define to 1 if you have the `wcsrtombs' function or macro. */
-/* #undef HAVE_WCSRTOMBS */
+#define HAVE_WCSRTOMBS 1
 
 /* Define to 1 if you have the `wcstombs' function or macro. */
-/* #undef HAVE_WCSTOMBS */
+#define HAVE_WCSTOMBS 1
 
 /* Define to 1 if you have the `wctype' function or macro. */
-/* #undef HAVE_WCTYPE */
+#define HAVE_WCTYPE 1
 
 /* Define to 1 if you have the <wctype.h> header file. */
-/* #undef HAVE_WCTYPE_H */
+#define HAVE_WCTYPE_H 1
 
 /* Define to 1 if the system has the type `wint_t'. */
-/* #undef HAVE_WINT_T */
+#define HAVE_WINT_T 1
 
 /* Define if you want to disable debug assertions. */
 #define NDEBUG 1
@@ -188,27 +188,27 @@
 #define STDC_HEADERS 1
 
 /* Define if you want to enable approximate matching functionality. */
-/* #undef TRE_APPROX */
+#define TRE_APPROX 1
 
 /* Define if you want TRE to print debug messages to stdout. */
 /* #undef TRE_DEBUG */
 
 /* Define to enable multibyte character set support. */
-/* #undef TRE_MULTIBYTE */
+#define TRE_MULTIBYTE 1
 
 /* Define to a field in the regex_t struct where TRE should store a pointer to
    the internal tre_tnfa_t structure */
 #define TRE_REGEX_T_FIELD re_g
 
 /* Define to the absolute path to the system regex.h */
-#define TRE_SYSTEM_REGEX_H_PATH "../../../include/regex.h"
+/* #undef TRE_SYSTEM_REGEX_H_PATH */
 
 /* Define if you want TRE to use alloca() instead of malloc() when allocating
    memory needed for regexec operations. */
-/* #undef TRE_USE_ALLOCA */
+#define TRE_USE_ALLOCA 1
 
 /* Define to include the system regex.h from TRE regex.h */
-#define TRE_USE_SYSTEM_REGEX_H 1
+/* #undef TRE_USE_SYSTEM_REGEX_H */
 
 /* TRE version string. */
 #define TRE_VERSION "0.8.0"
@@ -223,7 +223,7 @@
 #define TRE_VERSION_3 0
 
 /* Define to enable wide character (wchar_t) support. */
-/* #undef TRE_WCHAR */
+#define TRE_WCHAR 1
 
 /* Version number of package */
 #define VERSION "0.8.0"
@@ -232,7 +232,7 @@
 /* #undef WCHAR_MAX */
 
 /* Define if wchar_t is signed */
-/* #undef WCHAR_T_SIGNED */
+#define WCHAR_T_SIGNED 1
 
 /* Define if wchar_t is unsigned */
 /* #undef WCHAR_T_UNSIGNED */
@@ -247,7 +247,7 @@
 /* #undef _LARGE_FILES */
 
 /* Define on IRIX */
-#define _REGCOMP_INTERNAL 1
+/* #undef _REGCOMP_INTERNAL */
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

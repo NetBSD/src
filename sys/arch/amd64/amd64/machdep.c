@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.168 2011/10/31 12:42:36 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.168.2.1 2011/11/10 14:31:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2011/10/31 12:42:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168.2.1 2011/11/10 14:31:38 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -242,7 +242,7 @@ int	physmem;
 uint64_t	dumpmem_low;
 uint64_t	dumpmem_high;
 int	cpu_class;
-
+int	use_pae;
 
 #ifndef NO_SPARSE_DUMP
 int sparse_dump = 0;
@@ -568,10 +568,10 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       NULL, 0, &tsc_freq, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "pae",
 		       SYSCTL_DESCR("Whether the kernel uses PAE"),
-		       NULL, 1, NULL, 0,
+		       NULL, 0, &use_pae, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 #ifndef NO_SPARSE_DUMP
 	/* XXXjld Does this really belong under machdep, and not e.g. kern? */
@@ -1646,6 +1646,8 @@ init_x86_64(paddr_t first_avail)
 
 	pcb = lwp_getpcb(&lwp0);
 
+	use_pae = 1; /* PAE always enabled in long mode */
+
 #ifdef XEN
 	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
@@ -1684,8 +1686,8 @@ init_x86_64(paddr_t first_avail)
 	/* Determine physical address space */
 	avail_start = first_avail;
 	avail_end = ctob(xen_start_info.nr_pages);
-	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
-	pmap_pa_end = avail_end;
+	pmap_pa_start = XPMAP_OFFSET;
+	pmap_pa_end = pmap_pa_start + ctob(xen_start_info.nr_pages);
 	__PRINTK(("pmap_pa_start 0x%lx avail_start 0x%lx avail_end 0x%lx\n",
 	    pmap_pa_start, avail_start, avail_end));
 #endif	/* !XEN */

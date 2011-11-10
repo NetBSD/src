@@ -5,27 +5,11 @@
   See the file LICENSE for details and copyright.
 
 */
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-/* AIX requires this to be the first thing in the file.	 */
-#ifdef TRE_USE_ALLOCA
-#ifndef __GNUC__
-# if HAVE_ALLOCA_H
-#  include <alloca.h>
-# else
-#  ifdef _AIX
- #pragma alloca
-#  else
-#   ifndef alloca /* predefined by HP cc +Olibcalls */
-char *alloca ();
-#   endif
-#  endif
-# endif
-#endif
-#endif /* TRE_USE_ALLOCA */
+#include "tre-alloca.h"
 
 #define __USE_STRING_INLINES
 #undef __NO_INLINE__
@@ -82,7 +66,7 @@ typedef struct {
 /* Prints the `reach' array in a readable fashion with DPRINT. */
 static void
 tre_print_reach(const tre_tnfa_t *tnfa, tre_tnfa_approx_reach_t *reach,
-		int pos, int num_tags)
+		int pos, size_t num_tags)
 {
   int id;
 
@@ -220,12 +204,12 @@ tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, int len,
   int reg_notbol = eflags & REG_NOTBOL;
   int reg_noteol = eflags & REG_NOTEOL;
   int reg_newline = tnfa->cflags & REG_NEWLINE;
-  int str_user_end = 0;
+  size_t str_user_end = 0;
 
   int prev_pos;
 
   /* Number of tags. */
-  int num_tags;
+  size_t num_tags;
   /* The reach tables. */
   tre_tnfa_approx_reach_t *reach, *reach_next;
   /* Tag array for temporary use. */
@@ -239,7 +223,7 @@ tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, int len,
   /* Space for temporary data required for matching. */
   unsigned char *buf;
 
-  int i, id;
+  size_t i, id;
 
   if (!match_tags)
     num_tags = 0;
@@ -267,11 +251,11 @@ tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, int len,
   {
     unsigned char *buf_cursor;
     /* Space needed for one array of tags. */
-    int tag_bytes = sizeof(*tmp_tags) * num_tags;
+    size_t tag_bytes = sizeof(*tmp_tags) * num_tags;
     /* Space needed for one reach table. */
-    int reach_bytes = sizeof(*reach_next) * tnfa->num_states;
+    size_t reach_bytes = sizeof(*reach_next) * tnfa->num_states;
     /* Total space needed. */
-    int total_bytes = reach_bytes * 2 + (tnfa->num_states * 2 + 1 ) * tag_bytes;
+    size_t total_bytes = reach_bytes * 2 + (tnfa->num_states * 2 + 1 ) * tag_bytes;
     /* Add some extra to make sure we can align the pointers.  The multiplier
        used here must be equal to the number of ALIGN calls below. */
     total_bytes += (sizeof(long) - 1) * 3;
@@ -357,7 +341,7 @@ tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, int len,
 
 		  if (trans->tags)
 		    for (i = 0; trans->tags[i] >= 0; i++)
-		      if (trans->tags[i] < num_tags)
+		      if ((size_t)trans->tags[i] < num_tags)
 			reach_next[stateid].tags[trans->tags[i]] = pos;
 
 		  /* Set the parameters, depth, and costs. */
@@ -546,7 +530,7 @@ tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, int len,
 		  tmp_tags[i] = reach_p->tags[i];
 		if (trans->tags)
 		  for (i = 0; trans->tags[i] >= 0; i++)
-		    if (trans->tags[i] < num_tags)
+		    if ((size_t)trans->tags[i] < num_tags)
 		      tmp_tags[trans->tags[i]] = pos;
 
 		/* If another path has also reached this state, choose the one
@@ -729,7 +713,7 @@ tre_tnfa_run_approx(const tre_tnfa_t *tnfa, const void *string, int len,
 		tmp_tags[i] = reach[id].tags[i];
 	      if (trans->tags)
 		for (i = 0; trans->tags[i] >= 0; i++)
-		  if (trans->tags[i] < num_tags)
+		  if ((size_t)trans->tags[i] < num_tags)
 		    tmp_tags[trans->tags[i]] = pos;
 
 	      /* If another path has also reached this state, choose the

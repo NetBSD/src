@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.54 2010/02/03 15:34:44 roy Exp $
+#	$NetBSD: Makefile,v 1.54.6.1 2011/11/10 14:31:53 yamt Exp $
 
 HOSTLIB=	nbcompat
 
 SRCS=		atoll.c basename.c dirname.c fgetln.c flock.c fparseln.c \
-		fpurge.c getmode.c getopt_long.c gettemp.c heapsort.c \
+		fpurge.c getline.c getmode.c getopt_long.c gettemp.c \
+		heapsort.c \
 		issetugid.c lchflags.c lchmod.c lchown.c libyywrap.c \
 		md2.c md2hl.c md4c.c md4hl.c md5c.c md5hl.c \
 		mi_vector_hash.c mkdtemp.c \

@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.10 2010/02/22 23:05:39 roy Exp $ */
+/* $NetBSD: tic.c,v 1.10.6.1 2011/11/10 14:31:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.10 2010/02/22 23:05:39 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.10.6.1 2011/11/10 14:31:54 yamt Exp $");
 
 #include <sys/types.h>
 
@@ -357,7 +357,7 @@ merge_use(int flags)
 				cap += sizeof(uint16_t) + num;
 				memn = rtic->extras.bufpos -
 				    (cap - rtic->extras.buf);
-				memcpy(scap, cap, memn);
+				memmove(scap, cap, memn);
 				rtic->extras.bufpos -= cap - scap;
 				cap = scap;
 				rtic->extras.entries--;
@@ -443,7 +443,8 @@ main(int argc, char **argv)
 	char *source, *p, *buf, *ofile;
 	FILE *f;
 	DBM *db;
-	size_t len, buflen, nterm, nalias;
+	size_t buflen, nterm, nalias;
+	ssize_t len;
 	TBUF tbuf;
 	TERM *term;
 
@@ -506,12 +507,13 @@ main(int argc, char **argv)
 	} else
 		db = NULL; /* satisfy gcc warning */
 
-	tbuf.buflen = tbuf.bufpos = 0;	
-	while ((buf = fgetln(f, &buflen)) != NULL) {
+	buf = NULL;
+	buflen = tbuf.buflen = tbuf.bufpos = 0;	
+	while ((len = getline(&buf, &buflen, f)) != -1) {
 		/* Skip comments */
 		if (*buf == '#')
 			continue;
-		if (buf[buflen - 1] != '\n') {
+		if (buf[len - 1] != '\n') {
 			process_entry(&tbuf, flags);
 			dowarn("last line is not a comment"
 			    " and does not end with a newline");
@@ -525,10 +527,10 @@ main(int argc, char **argv)
 			process_entry(&tbuf, flags);
 		
 		/* Grow the buffer if needed */
-		grow_tbuf(&tbuf, buflen);
+		grow_tbuf(&tbuf, len);
 		/* Append the string */
-		memcpy(tbuf.buf + tbuf.bufpos, buf, buflen);
-		tbuf.bufpos += buflen;
+		memcpy(tbuf.buf + tbuf.bufpos, buf, len);
+		tbuf.bufpos += len;
 	}
 	/* Process the last entry if not done already */
 	process_entry(&tbuf, flags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.59 2011/04/04 08:30:34 mbalmer Exp $ */
+/*	$NetBSD: md.c,v 1.59.4.1 2011/11/10 14:31:18 yamt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1193,3 +1193,9 @@ md_debug_dump(title)
 	return(yesno);
 }
 #endif /* MD_DEBUG_SORT_MERGE */
+
+int
+md_pre_mount()
+{
+	return 0;
+}

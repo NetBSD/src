@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exhaust.c,v 1.2 2011/10/21 00:41:34 christos Exp $	*/
+/*	$NetBSD: t_exhaust.c,v 1.2.2.1 2011/11/10 14:31:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_exhaust.c,v 1.2 2011/10/21 00:41:34 christos Exp $");
+__RCSID("$NetBSD: t_exhaust.c,v 1.2.2.1 2011/11/10 14:31:52 yamt Exp $");
 
 #include <stdio.h>
 #include <regex.h>
@@ -46,14 +46,16 @@ __RCSID("$NetBSD: t_exhaust.c,v 1.2 2011/10/21 00:41:34 christos Exp $");
 #include <err.h>
 #include <atf-c.h>
 
+#ifndef REGEX_MAXSIZE
+#define REGEX_MAXSIZE	9999
+#endif
 
 static char *
 mkstr(const char *str, size_t len)
 {
 	size_t slen = strlen(str);
 	char *p = malloc(slen * len + 1);
-	if (p == NULL)
-		err(1, "malloc");
+	ATF_REQUIRE(p != NULL);
 	for (size_t i = 0; i < len; i++)
 		strcpy(&p[i * slen], str);
 	return p;
@@ -65,6 +67,8 @@ concat(const char *d, const char *s)
 	size_t dlen = strlen(d);
 	size_t slen = strlen(s);
 	char *p = malloc(dlen + slen + 1);
+
+	ATF_REQUIRE(p != NULL);
 	strcpy(p, d);
 	strcpy(p + dlen, s);
 	return p;
@@ -150,14 +154,17 @@ p6(size_t len)
 	return d;
 }
 
-static char *(*patterns[])(size_t) = {
-	p0,
-	p1,
-	p2,
-	p3,
-	p4,
-	p5,
-	p6,
+static const struct {
+	char *(*pattern)(size_t);
+	int type;
+} tests[] = {
+	{ p0, REG_EXTENDED },
+	{ p1, REG_EXTENDED },
+	{ p2, REG_EXTENDED },
+	{ p3, REG_EXTENDED },
+	{ p4, REG_EXTENDED },
+	{ p5, REG_EXTENDED },
+	{ p6, REG_BASIC },
 };
 
 ATF_TC(regcomp_too_big);
@@ -167,6 +174,8 @@ ATF_TC_HEAD(regcomp_too_big, tc)
 
 	atf_tc_set_md_var(tc, "descr", "Check that large patterns don't"
 	    " crash, but return a proper error code");
+	// libtre needs it.
+	atf_tc_set_md_var(tc, "timeout", "600");
 }
 
 ATF_TC_BODY(regcomp_too_big, tc)
@@ -174,16 +183,20 @@ ATF_TC_BODY(regcomp_too_big, tc)
 	regex_t re;
 	int e;
 
-	for (size_t i = 0; i < __arraycount(patterns); i++) {
-		char *d = (*patterns[i])(9999);
-		e = regcomp(&re, d, i == 6 ? REG_BASIC : REG_EXTENDED);
-		free(d);
+	for (size_t i = 0; i < __arraycount(tests); i++) {
+		char *d = (*tests[i].pattern)(REGEX_MAXSIZE);
+		e = regcomp(&re, d, tests[i].type);
 		if (e) {
+			char ebuf[1024];
+			(void)regerror(e, &re, ebuf, sizeof(ebuf));
 			ATF_REQUIRE_MSG(e == REG_ESPACE,
-			    "regcomp returned %d for pattern %zu", e, i);
+			    "regcomp returned %d (%s) for pattern %zu [%s]", e, ebuf,
+			    i, d);
+			free(d);
 			continue;
 		}
-		(void)regexec(&re, "aaaaaaaa", 0, NULL, 0);
+		free(d);
+		(void)regexec(&re, "aaaaaaaaaaa", 0, NULL, 0);
 		regfree(&re);
 	}
 }

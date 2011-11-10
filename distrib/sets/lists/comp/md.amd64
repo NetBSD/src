@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.143 2011/10/17 14:20:54 chs Exp $
+# $NetBSD: md.amd64,v 1.143.2.1 2011/11/10 14:31:12 yamt Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -958,6 +958,10 @@
 ./usr/lib/i386/libtermlib.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libtermlib_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libtermlib_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libtre.a				comp-c-lib		compat
+./usr/lib/i386/libtre.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libtre_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libtre_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libukfs.a			comp-c-lib		compat
 ./usr/lib/i386/libukfs.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libukfs_g.a			comp-c-proflib		compat,debuglib
@@ -1137,6 +1141,7 @@
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libterminfo.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libtre.so.0.8.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libukfs.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libusbhid.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libutil.so.7.19.debug	comp-compat-shlib	compat,pic,debug

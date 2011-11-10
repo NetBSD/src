@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.7 2011/02/02 02:20:25 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.7.6.1 2011/11/10 14:31:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.7 2011/02/02 02:20:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.7.6.1 2011/11/10 14:31:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.7 2011/02/02 02:20:25 rmind Exp $"
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
 
 #include "npf_impl.h"
 
@@ -57,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.7 2011/02/02 02:20:25 rmind Exp $"
  */
 static struct pfil_head *	npf_ph_if = NULL;
 static struct pfil_head *	npf_ph_inet = NULL;
+static struct pfil_head *	npf_ph_inet6 = NULL;
 
 static bool			default_pass = true;
 
@@ -86,7 +89,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	npf_ruleset_t *rlset;
 	npf_rule_t *rl;
 	npf_rproc_t *rp;
-	int retfl, error;
+	int retfl, error, ret;
 
 	/*
 	 * Initialise packet information cache.
@@ -96,15 +99,31 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	error = 0;
 	retfl = 0;
 	rp = NULL;
+	ret = 0;
 
-	/* Cache everything.  Determine whether it is an IPv4 fragment. */
-	if (npf_cache_all(&npc, nbuf) && npf_iscached(&npc, NPC_IPFRAG)) {
-		struct ip *ip = nbuf_dataptr(*mp);
-		/*
-		 * Pass to IPv4 reassembly mechanism.
-		 */
-		if (ip_reass_packet(mp, ip) != 0) {
-			/* Failed; invalid fragment(s) or packet. */
+	/* Cache everything.  Determine whether it is an IP fragment. */
+	npf_cache_all(&npc, nbuf);
+
+	if (npf_iscached(&npc, NPC_IPFRAG)) {
+		/* Pass to IPv4 or IPv6 reassembly mechanism. */
+		if (npf_iscached(&npc, NPC_IP4)) {
+			struct ip *ip = nbuf_dataptr(*mp);
+			ret = ip_reass_packet(mp, ip);
+		} else {
+			KASSERT(npf_iscached(&npc, NPC_IP6));
+#ifdef INET6
+			/*
+			 * Note: frag6_input() offset is the start of the
+			 * fragment header.
+			 */
+			size_t hlen = npf_cache_hlen(&npc, nbuf);
+			ret = ip6_reass_packet(mp, hlen);
+#else
+			ret = -1;
+#endif
+		}
+
+		if (ret) {
 			error = EINVAL;
 			se = NULL;
 			goto out;
@@ -113,8 +132,14 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 			/* More fragments should come; return. */
 			return 0;
 		}
-		/* Reassembly is complete, we have the final packet. */
+
+		/*
+		 * Reassembly is complete, we have the final packet.
+		 * Cache again, since layer 3 daya is accessible now.
+		 */
 		nbuf = (nbuf_t *)*mp;
+		npc.npc_info = 0;
+		npf_cache_all(&npc, nbuf);
 	}
 
 	/* Inspect the list of sessions. */
@@ -230,6 +255,7 @@ npf_register_pfil(void)
 	/* Capture point of any activity in interfaces and IP layer. */
 	npf_ph_if = pfil_head_get(PFIL_TYPE_IFNET, 0);
 	npf_ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+	npf_ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
 	if (npf_ph_if == NULL || npf_ph_inet == NULL) {
 		npf_ph_if = NULL;
 		error = ENOENT;
@@ -246,6 +272,9 @@ npf_register_pfil(void)
 	    PFIL_WAITOK | PFIL_ALL, npf_ph_inet);
 	KASSERT(error == 0);
 
+	error = pfil_add_hook(npf_packet_handler, NULL,
+	    PFIL_WAITOK | PFIL_ALL, npf_ph_inet6);
+	KASSERT(error == 0);
 fail:
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
@@ -264,6 +293,8 @@ npf_unregister_pfil(void)
 	KERNEL_LOCK(1, NULL);
 
 	if (npf_ph_if) {
+		(void)pfil_remove_hook(npf_packet_handler, NULL,
+		    PFIL_ALL, npf_ph_inet6);
 		(void)pfil_remove_hook(npf_packet_handler, NULL,
 		    PFIL_ALL, npf_ph_inet);
 		(void)pfil_remove_hook(npf_ifhook, NULL,

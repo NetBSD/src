@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.59 2011/10/17 14:20:54 chs Exp $
+# $NetBSD: ad.mips64el,v 1.59.2.1 2011/11/10 14:31:12 yamt Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -611,6 +611,10 @@
 ./usr/lib/64/libtermlib.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libtermlib_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/libtermlib_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/libtre.a				comp-c-lib		compat
+./usr/lib/64/libtre.so				base-sys-shlib		compat,pic
+./usr/lib/64/libtre_p.a				comp-c-proflib		compat,profile
+./usr/lib/64/libtre_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libukfs.a				comp-c-lib		compat
 ./usr/lib/64/libukfs.so				base-sys-shlib		compat,pic
 ./usr/lib/64/libukfs_p.a			comp-c-proflib		compat,profile
@@ -1192,6 +1196,10 @@
 ./usr/lib/o32/libtermlib.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libtermlib_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/libtermlib_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/libtre.a				comp-c-lib		compat
+./usr/lib/o32/libtre.so				base-sys-shlib		compat,pic
+./usr/lib/o32/libtre_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/libtre_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libukfs.a				comp-c-lib		compat
 ./usr/lib/o32/libukfs.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libukfs_p.a			comp-c-proflib		compat,profile
@@ -1366,6 +1374,7 @@
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat
 ./usr/libdata/debug/usr/lib/64/libterminfo.so.1.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libtre.so.0.8.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libukfs.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libumem.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/64/libusbhid.so.1.0.debug	comp-sys-debug	debug,compat
@@ -1517,6 +1526,7 @@
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libterminfo.so.1.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libtre.so.0.8.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libukfs.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libumem.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libusbhid.so.1.0.debug	comp-sys-debug	debug,compat
