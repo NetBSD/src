@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.169 2011/11/06 15:51:09 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.170 2011/11/10 00:12:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2011/11/06 15:51:09 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2011/11/10 00:12:04 jym Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -242,7 +242,7 @@ int	physmem;
 uint64_t	dumpmem_low;
 uint64_t	dumpmem_high;
 int	cpu_class;
-
+int	use_pae;
 
 #ifndef NO_SPARSE_DUMP
 int sparse_dump = 0;
@@ -568,10 +568,10 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       NULL, 0, &tsc_freq, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "pae",
 		       SYSCTL_DESCR("Whether the kernel uses PAE"),
-		       NULL, 1, NULL, 0,
+		       NULL, 0, &use_pae, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 #ifndef NO_SPARSE_DUMP
 	/* XXXjld Does this really belong under machdep, and not e.g. kern? */
@@ -1645,6 +1645,8 @@ init_x86_64(paddr_t first_avail)
 	cpu_init_msrs(&cpu_info_primary, true);
 
 	pcb = lwp_getpcb(&lwp0);
+
+	use_pae = 1; /* PAE always enabled in long mode */
 
 #ifdef XEN
 	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
