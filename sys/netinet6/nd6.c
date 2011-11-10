@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.136 2010/07/15 19:15:30 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.137 2011/11/10 17:10:00 seanb Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.136 2010/07/15 19:15:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.137 2011/11/10 17:10:00 seanb Exp $");
 
 #include "opt_ipsec.h"
 
@@ -524,7 +524,6 @@ nd6_timer(void *ignored_arg)
 	struct nd_defrouter *next_dr, *dr;
 	struct nd_prefix *next_pr, *pr;
 	struct in6_ifaddr *ia6, *nia6;
-	struct in6_addrlifetime *lt6;
 
 	callout_reset(&nd6_timer_ch, nd6_prune * hz,
 	    nd6_timer, NULL);
@@ -551,7 +550,6 @@ nd6_timer(void *ignored_arg)
 	for (ia6 = in6_ifaddr; ia6; ia6 = nia6) {
 		nia6 = ia6->ia_next;
 		/* check address lifetime */
-		lt6 = &ia6->ia6_lifetime;
 		if (IFA6_IS_INVALID(ia6)) {
 			int regen = 0;
 
