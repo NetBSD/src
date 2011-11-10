@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137.2.2 2011/11/10 14:31:44 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137.2.3 2011/11/10 14:32:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.2 2011/11/10 14:31:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.3 2011/11/10 14:32:36 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1805,7 +1805,7 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 	if (lidx != 0)
 		mutex_enter(obj->vmobjlock);
 	if (pmap->pm_ptphint[lidx] == ptp)
-		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&obj->memq);
+		pmap->pm_ptphint[lidx] = NULL;
 	ptp->wire_count = 0;
 	uvm_pagerealloc(ptp, NULL, 0);
 	l = curlwp;
@@ -2366,7 +2366,6 @@ pmap_destroy(struct pmap *pmap)
 
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
 		KASSERT(pmap->pm_obj[i].uo_npages == 0);
-		KASSERT(TAILQ_EMPTY(&pmap->pm_obj[i].memq));
 	}
 
 	/*

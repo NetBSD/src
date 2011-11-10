@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.14 2011/10/07 09:35:06 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.14.2.1 2011/11/10 14:32:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.14 2011/10/07 09:35:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.14.2.1 2011/11/10 14:32:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -329,7 +329,7 @@ try_nextlist:
 
 	KASSERT(vp->v_data == NULL);
 	KASSERT(vp->v_uobj.uo_npages == 0);
-	KASSERT(TAILQ_EMPTY(&vp->v_uobj.memq));
+	KASSERT(radix_tree_empty_tree_p(&vp->v_uobj.uo_pages));
 	KASSERT(vp->v_numoutput == 0);
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 
@@ -386,7 +386,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	uobj = &vp->v_uobj;
 	KASSERT(uobj->pgops == &uvm_vnodeops);
 	KASSERT(uobj->uo_npages == 0);
-	KASSERT(TAILQ_FIRST(&uobj->memq) == NULL);
+	KASSERT(radix_tree_empty_tree_p(&vp->v_uobj.uo_pages));
 	vp->v_size = vp->v_writesize = VSIZENOTSET;
 
 	/* Share the vnode_t::v_interlock, if requested. */
