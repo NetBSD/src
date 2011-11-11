@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.120 2011/11/11 22:57:27 jakllsch Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.121 2011/11/11 23:01:59 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.120 2011/11/11 22:57:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.121 2011/11/11 23:01:59 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1357,7 +1357,7 @@ static void
 tlp_pci_phobos_21140_reset(struct tulip_softc *sc)
 {
 
-	TULIP_WRITE(sc, CSR_GPP, 0x1fd);
+	TULIP_WRITE(sc, CSR_GPP, GPP_GPC | 0xfd);
 	delay(10);
 	TULIP_WRITE(sc, CSR_GPP, 0xfd);
 	delay(10);
