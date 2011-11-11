@@ -1,4 +1,4 @@
-/* $NetBSD: t_msgctl.c,v 1.2 2011/11/05 08:47:54 jruoho Exp $ */
+/* $NetBSD: t_msgctl.c,v 1.3 2011/11/11 05:06:01 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msgctl.c,v 1.2 2011/11/05 08:47:54 jruoho Exp $");
+__RCSID("$NetBSD: t_msgctl.c,v 1.3 2011/11/11 05:06:01 jruoho Exp $");
 
 #include <sys/msg.h>
 #include <sys/stat.h>
@@ -105,7 +105,7 @@ ATF_TC_CLEANUP(msgctl_err, tc)
 ATF_TC_WITH_CLEANUP(msgctl_perm);
 ATF_TC_HEAD(msgctl_perm, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test permissiosn with msgctl(2)");
+	atf_tc_set_md_var(tc, "descr", "Test permissions with msgctl(2)");
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
