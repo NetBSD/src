@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73.2.2 2011/11/06 22:05:00 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.73.2.3 2011/11/11 10:34:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -163,26 +163,29 @@ struct vm_page {
  * PG_RDONLY and PG_HOLE acts like a "read-only count".  ie. either of
  * them is set, the page should not be mapped writably.  typically
  * they are set by pgo_get to inform the fault handler.
+ *
+ * if you want to renumber PG_CLEAN and PG_DIRTY, check __CTASSERTs in
+ * uvm_page_status.c first.
  */
 
-#define	PG_BUSY		0x0001		/* page is locked */
-#define	PG_WANTED	0x0002		/* someone is waiting for page */
-#define	PG_TABLED	0x0004		/* page is in VP table  */
-#define	PG_CLEAN	0x0008		/* page is known clean */
+#define	PG_CLEAN	0x0001		/* page is known clean */
+#define	PG_DIRTY	0x0002		/* page is known dirty */
+#define	PG_BUSY		0x0004		/* page is locked */
+#define	PG_WANTED	0x0008		/* someone is waiting for page */
 #define	PG_PAGEOUT	0x0010		/* page to be freed for pagedaemon */
 #define PG_RELEASED	0x0020		/* page to be freed when unbusied */
 #define	PG_FAKE		0x0040		/* page is not yet initialized */
 #define	PG_RDONLY	0x0080		/* page must be mapped read-only */
 #define	PG_ZERO		0x0100		/* page is pre-zero'd */
-#define	PG_MARKER	0x0200		/* dummy marker page */
-#define	PG_DIRTY	0x0400		/* page is known dirty */
-#define	PG_HOLE		0x0800		/* XXX */
+#define	PG_TABLED	0x0200		/* page is in VP table  */
+#define	PG_HOLE		0x0400		/* XXX */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 
 #define	UVM_PGFLAGBITS \
-	"\20\1BUSY\2WANTED\3TABLED\4CLEAN\5PAGEOUT\6RELEASED\7FAKE\10RDONLY" \
-	"\11ZERO\12MARKER\13DIRTY\15PAGER1"
+	"\20\1CLEAN\2DIRTY\3BUSY\4WANTED" \
+	"\5PAGEOUT\6RELEASED\7FAKE\10RDONLY" \
+	"\11ZERO\12TABLED\13HOLE"
 
 #define PQ_FREE		0x0001		/* page is on free list */
 #define PQ_ANON		0x0002		/* page is part of an anon, rather
@@ -301,10 +304,14 @@ bool uvm_page_samelock_p(struct vm_page *, struct vm_page *);
  * dirty or not.
  * basically, UVM_PAGE_STATUS_CLEAN implies that the page has no writable
  * mapping.
+ *
+ * if you want to renumber these, check __CTASSERTs in
+ * uvm_page_status.c first.
  */
-#define	UVM_PAGE_STATUS_DIRTY	(PG_DIRTY)
 #define	UVM_PAGE_STATUS_UNKNOWN	0
-#define	UVM_PAGE_STATUS_CLEAN	(PG_CLEAN)
+#define	UVM_PAGE_STATUS_CLEAN	1
+#define	UVM_PAGE_STATUS_DIRTY	2
+#define	UVM_PAGE_NUM_STATUS	3
 
 int uvm_page_lookup_freelist(struct vm_page *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178.2.2 2011/11/06 22:05:00 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.3 2011/11/11 10:34:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.2 2011/11/06 22:05:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.3 2011/11/11 10:34:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -423,7 +423,15 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 			if (atop(paddr) >= seg->avail_start &&
 			    atop(paddr) < seg->avail_end) {
 				uvmexp.npages++;
-				/* add page to free pool */
+				/*
+				 * add page to free pool
+				 *
+				 * adjust pagestate[] so that it won't go
+				 * negative.
+				 */
+				KASSERT(uvm_pagegetdirty(&seg->pgs[i])
+				    == UVM_PAGE_STATUS_UNKNOWN);
+				boot_cpu.pagestate[UVM_PAGE_STATUS_UNKNOWN]++;
 				uvm_pagefree(&seg->pgs[i]);
 			}
 		}
@@ -1308,6 +1316,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	 * otherwise we race with uvm_pglistalloc.
 	 */
 	pg->pqflags = 0;
+	ucpu->pagestate[UVM_PAGE_STATUS_CLEAN]++;
 	mutex_spin_exit(&uvm_fpageqlock);
 	if (anon) {
 		anon->an_page = pg;
@@ -1470,6 +1479,7 @@ uvm_pagefree(struct vm_page *pg)
 	struct pgflist *pgfl;
 	struct uvm_cpu *ucpu;
 	int index, color, queue;
+	unsigned int status;
 	bool iszero;
 
 #ifdef DEBUG
@@ -1568,6 +1578,7 @@ uvm_pagefree(struct vm_page *pg)
 	color = VM_PGCOLOR_BUCKET(pg);
 	queue = (iszero ? PGFL_ZEROS : PGFL_UNKNOWN);
 
+	status = uvm_pagegetdirty(pg);
 #ifdef DEBUG
 	pg->uobject = (void *)0xdeadbeef;
 	pg->uanon = (void *)0xdeadbeef;
@@ -1599,6 +1610,7 @@ uvm_pagefree(struct vm_page *pg)
 	if (ucpu->pages[PGFL_ZEROS] < ucpu->pages[PGFL_UNKNOWN]) {
 		ucpu->page_idle_zero = vm_page_zero_enable;
 	}
+	ucpu->pagestate[status]--;
 
 	mutex_spin_exit(&uvm_fpageqlock);
 }
