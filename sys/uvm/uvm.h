@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.62 2011/05/17 04:18:07 mrg Exp $	*/
+/*	$NetBSD: uvm.h,v 1.62.4.1 2011/11/11 10:34:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -81,6 +81,8 @@ struct uvm_cpu {
 					   pages in the idle loop */
 	int pages[PGFL_NQUEUES];	/* total of pages in page_free */
 	u_int emap_gen;			/* emap generation number */
+
+	int64_t pagestate[UVM_PAGE_NUM_STATUS];
 };
 
 /*
