@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.45 2011/07/17 23:46:53 dholland Exp $
+.\"	$NetBSD: route.8,v 1.46 2011/11/11 15:09:32 gdt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -295,6 +295,7 @@ by indicating the following corresponding modifiers:
 -proto1       RTF_PROTO1     - set protocol specific routing flag #1
 -proto2       RTF_PROTO2     - set protocol specific routing flag #2
 -llinfo       RTF_LLINFO     - validly translates proto addr to link addr
+-proxy        RTF_ANNOUNCE   - make entry a link level proxy
 .Ed
 .Pp
 The optional modifiers

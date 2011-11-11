@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.14 2011/06/21 19:42:45 kefren Exp $	*/
+/*	$NetBSD: show.c,v 1.15 2011/11/11 15:09:33 gdt Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -90,6 +90,7 @@ static const struct bits bits[] = {
 	/* { RTF_PROTO3,	'3' }, */
 	{ RTF_CLONED,	'c' },
 	/* { RTF_JUMBO,	'J' }, */
+	{ RTF_ANNOUNCE,	'p' },
 	{ 0, 0 }
 };
 
