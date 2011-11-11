@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.79 2011/03/31 19:40:52 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.80 2011/11/11 15:09:32 gdt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -154,6 +154,7 @@ struct ortentry {
 #define RTF_PROTO2	0x4000		/* protocol specific routing flag */
 #define RTF_PROTO1	0x8000		/* protocol specific routing flag */
 #define RTF_SRC		0x10000		/* route has fixed source address */
+#define	RTF_ANNOUNCE	0x20000		/* announce new arp or ndp entry */
 
 
 /*
