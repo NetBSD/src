@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.119 2011/11/10 20:12:48 jakllsch Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.120 2011/11/11 22:57:27 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.119 2011/11/10 20:12:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.120 2011/11/11 22:57:27 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1341,7 +1341,7 @@ tlp_pci_phobos_21140_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 	struct tulip_softc *sc = &psc->sc_tulip;
 
 	/*
-	 * Phobo boards just use MII-on_SIO.
+	 * Phobos boards just use MII-on-SIO.
 	 */
 	sc->sc_mediasw = &tlp_sio_mii_mediasw;
 	sc->sc_reset = tlp_pci_phobos_21140_reset;
@@ -1653,7 +1653,7 @@ tlp_pci_netwinder_21142_quirks(struct tulip_pci_softc *psc,
 	struct tulip_softc *sc = &psc->sc_tulip;
 
 	/*
-	 * Netwinders just use MII-on_SIO.
+	 * Netwinders just use MII-on-SIO.
 	 */
 	sc->sc_mediasw = &tlp_sio_mii_mediasw;
 	sc->sc_reset = tlp_pci_netwinder_21142_reset;
@@ -1682,7 +1682,7 @@ tlp_pci_phobos_21142_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 	struct tulip_softc *sc = &psc->sc_tulip;
 
 	/*
-	 * Phobo boards just use MII-on_SIO.
+	 * Phobos boards just use MII-on-SIO.
 	 */
 	sc->sc_mediasw = &tlp_sio_mii_mediasw;
 	sc->sc_reset = tlp_pci_phobos_21142_reset;
