@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.43 2011/02/04 14:31:23 martin Exp $	*/
+/*	$NetBSD: show.c,v 1.44 2011/11/11 15:09:32 gdt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.43 2011/02/04 14:31:23 martin Exp $");
+__RCSID("$NetBSD: show.c,v 1.44 2011/11/11 15:09:32 gdt Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: show.c,v 1.43 2011/02/04 14:31:23 martin Exp $");
  * Definitions for showing gateway flags.
  */
 struct bits {
-	short	b_mask;
+	int	b_mask;
 	char	b_val;
 };
 static const struct bits bits[] = {
@@ -90,6 +90,7 @@ static const struct bits bits[] = {
 	{ RTF_CLONED,	'c' },
 	{ RTF_PROTO1,	'1' },
 	{ RTF_PROTO2,	'2' },
+	{ RTF_ANNOUNCE,	'p' },
 	{ 0, '\0' }
 };
 
