@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_status.c,v 1.1.2.1 2011/11/02 21:55:39 yamt Exp $	*/
+/*	$NetBSD: uvm_page_status.c,v 1.1.2.2 2011/11/11 10:34:24 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.1 2011/11/02 21:55:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.2 2011/11/11 10:34:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,15 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.1 2011/11/02 21:55:39 yamt
  *
  * separated from uvm_page.c mainly for rump
  */
+
+/*
+ * these constants are chosen to match so that we can convert between
+ * them quickly.
+ */
+
+__CTASSERT(UVM_PAGE_STATUS_UNKNOWN == 0);
+__CTASSERT(UVM_PAGE_STATUS_DIRTY == PG_DIRTY);
+__CTASSERT(UVM_PAGE_STATUS_CLEAN == PG_CLEAN);
 
 /*
  * uvm_pagegetdirty: return the dirtiness status (one of UVM_PAGE_STATUS_
@@ -58,24 +67,38 @@ uvm_pagegetdirty(struct vm_page *pg)
 	return pg->flags & (PG_CLEAN|PG_DIRTY);
 }
 
+static void
+stat_update(unsigned int oldstatus, unsigned int newstatus)
+{
+	struct uvm_cpu *ucpu;
+
+	KASSERT(oldstatus != newstatus);
+	kpreempt_disable();
+	ucpu = curcpu()->ci_data.cpu_uvm;
+	ucpu->pagestate[oldstatus]--;
+	ucpu->pagestate[newstatus]++;
+	kpreempt_enable();
+}
+
 /*
  * uvm_pagemarkdirty: set the dirtiness status (one of UVM_PAGE_STATUS_ values)
  * of the page.
  */
 
 void
-uvm_pagemarkdirty(struct vm_page *pg, unsigned int status)
+uvm_pagemarkdirty(struct vm_page *pg, unsigned int newstatus)
 {
 	struct uvm_object * const uobj = pg->uobject;
 	const uint64_t idx = pg->offset >> PAGE_SHIFT;
+	const unsigned int oldstatus = uvm_pagegetdirty(pg);
 
-	KASSERT((~status & (PG_CLEAN|PG_DIRTY)) != 0);
-	KASSERT((status & ~(PG_CLEAN|PG_DIRTY)) == 0);
+	KASSERT((~newstatus & (PG_CLEAN|PG_DIRTY)) != 0);
+	KASSERT((newstatus & ~(PG_CLEAN|PG_DIRTY)) == 0);
 	KASSERT(uvm_page_locked_p(pg));
 	KASSERT(uobj == NULL || ((pg->flags & PG_CLEAN) == 0) ==
 	    radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
 
-	if (uvm_pagegetdirty(pg) == status) {
+	if (oldstatus == newstatus) {
 		return;
 	}
 	/*
@@ -83,7 +106,7 @@ uvm_pagemarkdirty(struct vm_page *pg, unsigned int status)
 	 * find possibly-dirty pages quickly.
 	 */
 	if (uobj != NULL) {
-		if (status == UVM_PAGE_STATUS_CLEAN) {
+		if (newstatus == UVM_PAGE_STATUS_CLEAN) {
 			radix_tree_clear_tag(&uobj->uo_pages, idx,
 			    UVM_PAGE_DIRTY_TAG);
 		} else {
@@ -91,16 +114,17 @@ uvm_pagemarkdirty(struct vm_page *pg, unsigned int status)
 			    UVM_PAGE_DIRTY_TAG);
 		}
 	}
-	if (status == UVM_PAGE_STATUS_UNKNOWN) {
+	if (newstatus == UVM_PAGE_STATUS_UNKNOWN) {
 		/*
 		 * start relying on pmap-level dirtiness tracking.
 		 */
 		pmap_clear_modify(pg);
 	}
 	pg->flags &= ~(PG_CLEAN|PG_DIRTY);
-	pg->flags |= status;
+	pg->flags |= newstatus;
 	KASSERT(uobj == NULL || ((pg->flags & PG_CLEAN) == 0) ==
 	    radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
+	stat_update(oldstatus, newstatus);
 }
 
 /*
