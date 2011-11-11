@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.42 2011/05/24 18:07:11 spz Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.43 2011/11/11 15:09:32 gdt Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -640,8 +640,6 @@ struct icmp6_filter {
 	{ 0, 0 }, \
 	{ "nd6_maxqueuelen", CTLTYPE_INT }, \
 }
-
-#define RTF_PROBEMTU	RTF_PROTO1
 
 #ifdef _KERNEL
 struct	rtentry;

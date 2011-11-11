@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.42 2009/02/18 13:17:50 yamt Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.43 2011/11/11 15:09:33 gdt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -51,12 +51,6 @@ struct sockaddr_inarp {
 	u_int16_t sin_other;
 #define SIN_PROXY 1
 };
-
-/*
- * IP and ethernet specific routing flags
- */
-#define	RTF_USETRAILERS	RTF_PROTO1	/* use trailers */
-#define	RTF_ANNOUNCE	RTF_PROTO2	/* announce new arp entry */
 
 #ifdef _KERNEL
 extern struct ifqueue arpintrq;
