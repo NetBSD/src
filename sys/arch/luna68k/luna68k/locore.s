@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.42 2011/11/05 15:37:17 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.43 2011/11/12 13:44:26 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -244,11 +244,11 @@ Lmotommu0:
 	.long	0x4e7b0004		| movc %d0,%itt0
 	.long	0x4e7b0006		| movc %d0,%dtt0
 	RELOC(proto040tt1,%a0)
-	movl	%a0@,%d0		| tt1 range 8000.0000-feff.ffff
+	movl	%a0@,%d0		| tt1 range 8000.0000-ffff.ffff
 	.long	0x4e7b0005		| movc %d0,%itt1
 	.long	0x4e7b0007		| movc %d0,%dtt1
 	.word	0xf4d8			| cinva bc
-	pflusha				| flush entire ATC
+	.word	0xf518			| pflusha
 	RELOC(proto040tc,%a0)
 	movl	%a0@,%d0
 	.long	0x4e7b0003		| movc %d0,%tc
@@ -288,7 +288,7 @@ Lenab1:
 	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill %a1)
 	addql	#4,%sp
 Lenab2:
-	pflusha				| flush entire ATC 
+	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jeq	Lenab3			| yes, cache already on
 	tstl	_C_LABEL(mmutype)
@@ -974,16 +974,18 @@ ENTRY(loadustp)
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	LmotommuC		| no, skip
+	.word	0xf518			| yes, pflusha
 	.long	0x4e7b0806		| movc %d0,%urp
 	rts
 LmotommuC:
 #endif
+	pflusha				| flush entire TLB
 	lea	_C_LABEL(protocrp),%a0	| %crp prototype
 	movl	%d0,%a0@(4)		| stash USTP
 	pmove	%a0@,%crp		| load root pointer
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr		| invalidate on-chip d-cache
-	rts				|   since pmove flushes ATC
+	movl	#CACHE_CLR,%d0
+	movc	%d0,%cacr		| invalidate cache(s)
+	rts
 
 ENTRY(ploadw)
 #if defined(M68040)
@@ -1153,8 +1155,8 @@ GLOBAL(proto040tc)
 	.long	0x8000		| %tc (4KB page)
 GLOBAL(proto040tt0)		| tt0 0x4000.0000-0x7fff.ffff
 	.long	0x403fa040	| kernel only, cache inhebit, serialized
-GLOBAL(proto040tt1)		| tt1 0x8000.0000-0xfeff.ffff
-	.long	0x807ea040	| kernel only, cache inhebit, serialized
+GLOBAL(proto040tt1)		| tt1 0x8000.0000-0xffff.ffff
+	.long	0x807fa040	| kernel only, cache inhebit, serialized
 nullrp:
 	.long	0x7fff0001	| do-nothing MMU root pointer
 
