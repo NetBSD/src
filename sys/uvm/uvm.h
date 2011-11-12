@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.62.4.1 2011/11/11 10:34:24 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.62.4.2 2011/11/12 02:54:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -82,7 +82,12 @@ struct uvm_cpu {
 	int pages[PGFL_NQUEUES];	/* total of pages in page_free */
 	u_int emap_gen;			/* emap generation number */
 
-	int64_t pagestate[UVM_PAGE_NUM_STATUS];
+	/*
+	 * pagestate
+	 * 	[0] non-anonymous
+	 * 	[1] anonymous (PQ_SWAPBACKED)
+	 */
+	int64_t pagestate[2][UVM_PAGE_NUM_STATUS];
 };
 
 /*
