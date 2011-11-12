@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.22 2011/11/07 21:11:55 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.23 2011/11/12 23:52:54 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ static uint32_t ticks_per_sec, ns_per_tick;
 
 static void brdfixup(void);
 static void setup(void);
-static int send_iomega(int, int, int, int, int, int);
+static void send_iomega(int, int, int, int, int, int);
 static inline uint32_t mfmsr(void);
 static inline void mtmsr(uint32_t);
 static inline uint32_t cputype(void);
@@ -694,15 +694,15 @@ iomegabrdfix(struct brdprop *brd)
 {
 
 	init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
-	/* LED flashing blue, fan auto, turn on at 60C, turn off at 50C */
-	(void)send_iomega('b', 'd', 2, 'a', 60, 50);
+	/* LED flashing blue, fan auto, turn on at 50C, turn off at 45C */
+	send_iomega('b', 'd', 2, 'a', 50, 45);
 }
 
 void
 iomegareset()
 {
 
-	(void)send_iomega('g', 0, 0, 0, 0, 0);
+	send_iomega('g', 0, 0, 0, 0, 0);
 	/*NOTREACHED*/
 }
 
@@ -901,7 +901,7 @@ iomega_debug(const char *txt, uint8_t buf[])
 }
 #endif /* DEBUG */
 
-static int
+static void
 send_iomega(int power, int led, int rate, int fan, int high, int low)
 {
 	uint8_t buf[IOMEGA_PACKETSIZE];
@@ -923,7 +923,7 @@ send_iomega(int power, int led, int rate, int fan, int high, int low)
 	 */
 	do {
 		putchar(0);
-		delay(25000);
+		delay(50000);
 	} while (!tstchar());
 
 	for (i = 0; i < IOMEGA_PACKETSIZE; i++)
@@ -935,18 +935,12 @@ send_iomega(int power, int led, int rate, int fan, int high, int low)
 #endif
 
 	/* send command */
-	if (power >= 0)
-		buf[IOMEGA_POWER] = power;
-	if (led >= 0)
-		buf[IOMEGA_LED] = led;
-	if (rate >= 0)
-		buf[IOMEGA_FLASH_RATE] = rate;
-	if (fan >= 0)
-		buf[IOMEGA_FAN] = fan;
-	if (high >= 0)
-		buf[IOMEGA_HIGH_TEMP] = high;
-	if (low >= 0)
-		buf[IOMEGA_LOW_TEMP] = low;
+	buf[IOMEGA_POWER] = power;
+	buf[IOMEGA_LED] = led;
+	buf[IOMEGA_FLASH_RATE] = rate;
+	buf[IOMEGA_FAN] = fan;
+	buf[IOMEGA_HIGH_TEMP] = high;
+	buf[IOMEGA_LOW_TEMP] = low;
 	buf[IOMEGA_ID] = 7;	/* host id */
 	buf[IOMEGA_CHECKSUM] = (buf[IOMEGA_POWER] + buf[IOMEGA_LED] +
 	    buf[IOMEGA_FLASH_RATE] + buf[IOMEGA_FAN] +
@@ -963,12 +957,15 @@ send_iomega(int power, int led, int rate, int fan, int high, int low)
 	/* receive the reply */
 	for (i = 0; i < IOMEGA_PACKETSIZE; i++)
 		buf[i] = getchar();
-
-	uart1base = savedbase;
 #ifdef DEBUG
+	uart1base = savedbase;
 	iomega_debug("68HC908 reply", buf);
+	uart1base = uart2base;
 #endif
-	return buf[0] != '#';  /* error? */
+
+	if (buf[0] == '#')
+		goto again;  /* try again on error */
+	uart1base = savedbase;
 }
 
 void
