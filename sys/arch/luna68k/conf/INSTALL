@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.1 2011/07/16 15:52:21 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.2 2011/11/12 13:44:26 tsutsui Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -9,8 +9,8 @@ makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 maxusers	4
 
 options 	M68030
-#options 	M68040
-#options 	FPSP	# on m68040 to emulate some missing FP instructions
+options 	M68040
+options 	FPSP	# on m68040 to emulate some missing FP instructions
 
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
@@ -139,7 +139,7 @@ ws0	at sio0			# port for keyboard and mouse
 le0	at mainbus0
 # MB89532 SPC
 spc0	at mainbus0
-#spc1	at mainbus0		# 2nd SCSI on LUNA-II
+spc1	at mainbus0		# 2nd SCSI on LUNA-II
 # framebuffer
 fb0	at mainbus0		# 16 or 256 pseudo color
 
