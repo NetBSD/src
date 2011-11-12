@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2011/07/19 15:11:49 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2011/11/12 04:39:19 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2011/07/19 15:11:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2011/11/12 04:39:19 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -713,7 +713,7 @@ initarm(void *arg)
 		zaurus_gpioconf = pxa27x_zaurus_gpioconf;
 	} else {
 		zaurusmod = ZAURUS_C860;		/* SL-C7x0/860 */
-		if (cputype == CPU_ID_PXA250A) {
+		if (cputype == CPU_ID_PXA250B) {
 			/* SL-C700 */
 			memsize =  0x02000000;		/* 32MB */
 		}
