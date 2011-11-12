@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.55 2011/11/07 13:39:54 njoly Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.56 2011/11/12 01:19:40 jmmv Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -134,6 +134,7 @@
 ./usr/tests/dev/raidframe
 ./usr/tests/dev/scsipi
 ./usr/tests/dev/sysmon
+./usr/tests/examples
 ./usr/tests/fs
 ./usr/tests/fs/ffs
 ./usr/tests/fs/hfs
