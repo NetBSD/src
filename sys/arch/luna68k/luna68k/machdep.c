@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.84 2011/10/17 14:19:28 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.85 2011/11/12 13:44:26 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2011/10/17 14:19:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2011/11/12 13:44:26 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -145,7 +145,7 @@ extern void syscnattach(int);
  * XXX -- is the above formula correct?
  */
 int	cpuspeed = 25;		/* only used for printing later */
-int	delay_divisor = 300;	/* for delay() loop count */
+int	delay_divisor = 30;	/* for delay() loop count */
 
 /*
  * Early initialization, before main() is called.
@@ -304,7 +304,8 @@ identifycpu(void)
 		machtype = LUNA_II;
 		/* 25MHz 68040 */
 		cpuspeed = 25;
-		delay_divisor = 300;
+		delay_divisor = 30;
+		/* hz = 100 on LUNA-II */
 		break;
 #endif
 	default:

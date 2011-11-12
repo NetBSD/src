@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93 2011/07/16 15:52:21 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.94 2011/11/12 13:44:26 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,13 +22,13 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.93 $"
+#ident 		"GENERIC-$Revision: 1.94 $"
 
 maxusers	8
 
 options 	M68030
-#options 	M68040
-#options 	FPSP	# on m68040 to emulate some missing FP instructions
+options 	M68040
+options 	FPSP	# on m68040 to emulate some missing FP instructions
 
 # Needs to be set per system.  i.e change these as you see fit
 
@@ -153,7 +153,7 @@ ws0	at sio0			# port for keyboard and mouse
 le0	at mainbus0
 # MB89532 SPC
 spc0	at mainbus0
-#spc1	at mainbus0		# 2nd SCSI on LUNA-II
+spc1	at mainbus0		# 2nd SCSI on LUNA-II
 # framebuffer
 fb0	at mainbus0		# 16 or 256 pseudo color
 
