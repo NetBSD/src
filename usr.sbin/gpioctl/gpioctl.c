@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.16 2011/10/03 11:16:48 mbalmer Exp $ */
+/* $NetBSD: gpioctl.c,v 1.17 2011/11/12 15:44:36 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2008, 2010, 2011 Marc Balmer <mbalmer@NetBSD.org>
@@ -330,10 +330,10 @@ gpiopulse(int pin, char *gp_name, double freq, double dc)
 		return;
 
 	if (gp_name)
-		printf("pin %s: pulse at %.f Hz with a %.f%% duty cylce\n",
+		printf("pin %s: pulse at %.f Hz with a %.f%% duty cyclce\n",
 		    gp_name, freq, dc);
 	else
-		printf("pin %d: pulse at %.f Hz with a %.f%% duty cylce\n",
+		printf("pin %d: pulse at %.f Hz with a %.f%% duty cyclce\n",
 		    pin, freq, dc);
 }
 
