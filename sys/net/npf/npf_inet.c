@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.8 2011/11/06 02:49:03 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.9 2011/11/12 14:51:41 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.8 2011/11/06 02:49:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.9 2011/11/12 14:51:41 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -374,7 +374,7 @@ npf_fetch_udp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 		return false;
 	}
 
-	/* Cache: layer 4 - ICMP. */
+	/* Cache: layer 4 - UDP. */
 	npc->npc_info |= (NPC_LAYER4 | NPC_UDP);
 	return true;
 }
