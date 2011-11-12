@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.9 2011/11/02 04:10:33 nisimura Exp $ */
+/* $NetBSD: pciide.c,v 1.10 2011/11/12 16:56:12 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 
 static int cmdidefix(struct dkdev_ata *);
 static int apoidefix(struct dkdev_ata *);
+static int iteidefix(struct dkdev_ata *);
 
 static uint32_t pciiobase = PCI_XIOBASE;
 
@@ -47,6 +48,7 @@ struct myops {
 static struct myops defaultops = { NULL, NULL };
 static struct myops cmdideops = { cmdidefix, NULL };
 static struct myops apoideops = { apoidefix, NULL };
+static struct myops iteideops = { iteidefix, NULL };
 static struct myops *myops;
 
 int
@@ -65,6 +67,8 @@ pciide_match(unsigned tag, void *data)
 		myops = &apoideops;
 		return 1;
 	case PCI_DEVICE(0x1283, 0x8211): /* ITE 8211 IDE */
+		myops = &iteideops;
+		return 1;
 	case PCI_DEVICE(0x10ad, 0x0105): /* Symphony Labs 82C105 IDE */
 	case PCI_DEVICE(0x10b8, 0x5229): /* ALi IDE */
 	case PCI_DEVICE(0x1191, 0x0008): /* ACARD ATP865 */
@@ -127,10 +131,10 @@ pciide_init(unsigned tag, void *data)
 	for (n = 0; n < 2; n++) {
 		if (myops->presense && (*myops->presense)(l, n) == 0)
 			l->presense[n] = 0; /* found not exist */
-		else {
+		else
 			/* check to see whether soft reset works */
 			l->presense[n] = perform_atareset(l, n);
-		}
+
 		if (l->presense[n])
 			printf("channel %d present\n", n);
 	}
@@ -163,6 +167,22 @@ apoidefix(struct dkdev_ata *l)
 	/* enable primary and secondary channel */
 	v = pcicfgread(l->tag, 0x40) & ~0x03;
 	pcicfgwrite(l->tag, 0x40, v | 0x03);
+
+	return 1;
+}
+
+static int
+iteidefix(struct dkdev_ata *l)
+{
+	unsigned v;
+
+	/* set PCI mode and 66Mhz reference clock, disable IT8212 RAID */
+	v = pcicfgread(l->tag, 0x50);
+	pcicfgwrite(l->tag, 0x50, v & ~0x83);
+
+	/* i/o configuration, enable channels, cables, IORDY */
+	v = pcicfgread(l->tag, 0x40);
+	pcicfgwrite(l->tag, 0x40, (v & ~0xffffff) | 0x36a0f3);
 
 	return 1;
 }

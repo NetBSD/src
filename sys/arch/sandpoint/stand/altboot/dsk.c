@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.10 2011/11/01 16:32:57 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.11 2011/11/12 16:56:12 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ perform_atareset(struct dkdev_ata *l, int n)
 	delay(10);
 	CSR_WRITE_1(chan->ctl, ATA_DREQ);
 
-	return spinwait_unbusy(l, n, 150, NULL);
+	return spinwait_unbusy(l, n, 250, NULL);
 }
 
 int
