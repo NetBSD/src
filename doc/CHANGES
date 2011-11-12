@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1623 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1624 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1162,3 +1162,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		regex.h and provide more tre_ -> libc names aliases.
 		[christos 20111105]
 	postfix(1): Import version 2.8.7 [tron 20111109]
+	asm: Add assembly language examples in share/examples/asm/.
+		These provide the end user with some ready-to-use sample
+		code for a variety of platforms, showcasing how to interact
+		with NetBSD system calls, APIs and binaries.  [jmmv 20111111]
