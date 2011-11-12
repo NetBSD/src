@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.93 2011/10/15 13:00:59 mbalmer Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.94 2011/11/12 01:19:40 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -317,6 +317,8 @@
 ./usr/share/examples
 ./usr/share/examples/amd
 ./usr/share/examples/apm
+./usr/share/examples/asm
+./usr/share/examples/asm/hello
 ./usr/share/examples/atf
 ./usr/share/examples/dhcp
 ./usr/share/examples/emul
