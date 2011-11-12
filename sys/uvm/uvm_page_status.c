@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_status.c,v 1.1.2.2 2011/11/11 10:34:24 yamt Exp $	*/
+/*	$NetBSD: uvm_page_status.c,v 1.1.2.3 2011/11/12 02:54:04 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.2 2011/11/11 10:34:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.3 2011/11/12 02:54:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,15 +68,15 @@ uvm_pagegetdirty(struct vm_page *pg)
 }
 
 static void
-stat_update(unsigned int oldstatus, unsigned int newstatus)
+stat_update(bool isanon, unsigned int oldstatus, unsigned int newstatus)
 {
 	struct uvm_cpu *ucpu;
 
 	KASSERT(oldstatus != newstatus);
 	kpreempt_disable();
 	ucpu = curcpu()->ci_data.cpu_uvm;
-	ucpu->pagestate[oldstatus]--;
-	ucpu->pagestate[newstatus]++;
+	ucpu->pagestate[isanon][oldstatus]--;
+	ucpu->pagestate[isanon][newstatus]++;
 	kpreempt_enable();
 }
 
@@ -92,6 +92,7 @@ uvm_pagemarkdirty(struct vm_page *pg, unsigned int newstatus)
 	const uint64_t idx = pg->offset >> PAGE_SHIFT;
 	const unsigned int oldstatus = uvm_pagegetdirty(pg);
 
+	KASSERT(uobj != NULL || pg->uanon != NULL);
 	KASSERT((~newstatus & (PG_CLEAN|PG_DIRTY)) != 0);
 	KASSERT((newstatus & ~(PG_CLEAN|PG_DIRTY)) == 0);
 	KASSERT(uvm_page_locked_p(pg));
@@ -124,7 +125,16 @@ uvm_pagemarkdirty(struct vm_page *pg, unsigned int newstatus)
 	pg->flags |= newstatus;
 	KASSERT(uobj == NULL || ((pg->flags & PG_CLEAN) == 0) ==
 	    radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
-	stat_update(oldstatus, newstatus);
+	if (uobj != NULL) {
+		const bool isvnode = UVM_OBJ_IS_VNODE(uobj);
+		const bool isaobj = UVM_OBJ_IS_AOBJ(uobj);
+
+		if (isvnode || isaobj) {
+			stat_update(isaobj, oldstatus, newstatus);
+		}
+	} else {
+		stat_update(true, oldstatus, newstatus);
+	}
 }
 
 /*

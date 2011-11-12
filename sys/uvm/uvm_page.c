@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178.2.3 2011/11/11 10:34:24 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.4 2011/11/12 02:54:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.3 2011/11/11 10:34:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.4 2011/11/12 02:54:04 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -162,15 +162,15 @@ static void uvm_pageremove(struct uvm_object *, struct vm_page *);
  * uvm_pageinsert: insert a page in the object.
  *
  * => caller must lock object
- * => caller must lock page queues
  * => call should have already set pg's object and offset pointers
- *    and bumped the version counter
  */
 
 static inline void
 uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
     struct vm_page *where)
 {
+	const bool isvnode = UVM_OBJ_IS_VNODE(uobj);
+	const bool isaobj = UVM_OBJ_IS_AOBJ(uobj);
 
 	KASSERT(uobj == pg->uobject);
 	KASSERT(mutex_owned(uobj->vmobjlock));
@@ -178,24 +178,32 @@ uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
 	KASSERT(where == NULL || (where->flags & PG_TABLED));
 	KASSERT(where == NULL || (where->uobject == uobj));
 
-	if (UVM_OBJ_IS_VNODE(uobj)) {
-		if (uobj->uo_npages == 0) {
-			struct vnode *vp = (struct vnode *)uobj;
+	if (isvnode || isaobj) {
+		struct uvm_cpu *ucpu;
+		const unsigned int status = uvm_pagegetdirty(pg);
 
-			vholdl(vp);
-		}
-		if (UVM_OBJ_IS_VTEXT(uobj)) {
-			atomic_inc_uint(&uvmexp.execpages);
+		kpreempt_disable();
+		ucpu = curcpu()->ci_data.cpu_uvm;
+		ucpu->pagestate[isaobj][status]++;
+		kpreempt_enable();
+		if (isvnode) {
+			if (uobj->uo_npages == 0) {
+				struct vnode *vp = (struct vnode *)uobj;
+
+				vholdl(vp);
+			}
+			if (UVM_OBJ_IS_VTEXT(uobj)) {
+				atomic_inc_uint(&uvmexp.execpages);
+			} else {
+				atomic_inc_uint(&uvmexp.filepages);
+			}
 		} else {
-			atomic_inc_uint(&uvmexp.filepages);
+			atomic_inc_uint(&uvmexp.anonpages);
 		}
-	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
-		atomic_inc_uint(&uvmexp.anonpages);
 	}
 	pg->flags |= PG_TABLED;
 	uobj->uo_npages++;
 }
-
 
 static inline int
 uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
@@ -203,7 +211,6 @@ uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
 	const uint64_t idx = pg->offset >> PAGE_SHIFT;
 	int error;
 
-	KASSERT(uobj == pg->uobject);
 	error = radix_tree_insert_node(&uobj->uo_pages, idx, pg);
 	if (error != 0) {
 		return error;
@@ -222,6 +229,7 @@ uvm_pageinsert(struct uvm_object *uobj, struct vm_page *pg)
 	int error;
 
 	KDASSERT(uobj != NULL);
+	KASSERT(uobj == pg->uobject);
 	error = uvm_pageinsert_tree(uobj, pg);
 	if (error != 0) {
 		KASSERT(error == ENOMEM);
@@ -235,33 +243,41 @@ uvm_pageinsert(struct uvm_object *uobj, struct vm_page *pg)
  * uvm_page_remove: remove page from object.
  *
  * => caller must lock object
- * => caller must lock page queues
  */
 
 static inline void
 uvm_pageremove_list(struct uvm_object *uobj, struct vm_page *pg)
 {
+	const bool isvnode = UVM_OBJ_IS_VNODE(uobj);
+	const bool isaobj = UVM_OBJ_IS_AOBJ(uobj);
 
 	KASSERT(uobj == pg->uobject);
 	KASSERT(mutex_owned(uobj->vmobjlock));
 	KASSERT(pg->flags & PG_TABLED);
 
-	if (UVM_OBJ_IS_VNODE(uobj)) {
-		if (uobj->uo_npages == 1) {
-			struct vnode *vp = (struct vnode *)uobj;
+	if (isvnode || isaobj) {
+		struct uvm_cpu *ucpu;
+		const unsigned int status = uvm_pagegetdirty(pg);
 
-			holdrelel(vp);
-		}
-		if (UVM_OBJ_IS_VTEXT(uobj)) {
-			atomic_dec_uint(&uvmexp.execpages);
+		kpreempt_disable();
+		ucpu = curcpu()->ci_data.cpu_uvm;
+		ucpu->pagestate[isaobj][status]--;
+		kpreempt_enable();
+		if (isvnode) {
+			if (uobj->uo_npages == 1) {
+				struct vnode *vp = (struct vnode *)uobj;
+
+				holdrelel(vp);
+			}
+			if (UVM_OBJ_IS_VTEXT(uobj)) {
+				atomic_dec_uint(&uvmexp.execpages);
+			} else {
+				atomic_dec_uint(&uvmexp.filepages);
+			}
 		} else {
-			atomic_dec_uint(&uvmexp.filepages);
+			atomic_dec_uint(&uvmexp.anonpages);
 		}
-	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
-		atomic_dec_uint(&uvmexp.anonpages);
 	}
-
-	/* object should be locked */
 	uobj->uo_npages--;
 	pg->flags &= ~PG_TABLED;
 	pg->uobject = NULL;
@@ -272,7 +288,6 @@ uvm_pageremove_tree(struct uvm_object *uobj, struct vm_page *pg)
 {
 	struct vm_page *opg;
 
-	KASSERT(uobj == pg->uobject);
 	opg = radix_tree_remove_node(&uobj->uo_pages, pg->offset >> PAGE_SHIFT);
 	KASSERT(pg == opg);
 }
@@ -282,8 +297,9 @@ uvm_pageremove(struct uvm_object *uobj, struct vm_page *pg)
 {
 
 	KDASSERT(uobj != NULL);
-	uvm_pageremove_tree(uobj, pg);
+	KASSERT(uobj == pg->uobject);
 	uvm_pageremove_list(uobj, pg);
+	uvm_pageremove_tree(uobj, pg);
 }
 
 static void
@@ -423,15 +439,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 			if (atop(paddr) >= seg->avail_start &&
 			    atop(paddr) < seg->avail_end) {
 				uvmexp.npages++;
-				/*
-				 * add page to free pool
-				 *
-				 * adjust pagestate[] so that it won't go
-				 * negative.
-				 */
-				KASSERT(uvm_pagegetdirty(&seg->pgs[i])
-				    == UVM_PAGE_STATUS_UNKNOWN);
-				boot_cpu.pagestate[UVM_PAGE_STATUS_UNKNOWN]++;
+				/* add page to free pool */
 				uvm_pagefree(&seg->pgs[i]);
 			}
 		}
@@ -1316,7 +1324,9 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	 * otherwise we race with uvm_pglistalloc.
 	 */
 	pg->pqflags = 0;
-	ucpu->pagestate[UVM_PAGE_STATUS_CLEAN]++;
+	if (anon) {
+		ucpu->pagestate[1][UVM_PAGE_STATUS_CLEAN]++;
+	}
 	mutex_spin_exit(&uvm_fpageqlock);
 	if (anon) {
 		anon->an_page = pg;
@@ -1348,7 +1358,9 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 		 * A zero'd page is not clean.  If we got a page not already
 		 * zero'd, then we have to zero it ourselves.
 		 */
-		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
+		if (obj != NULL || anon != NULL) {
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
+		}
 		if (zeroit)
 			pmap_zero_page(VM_PAGE_TO_PHYS(pg));
 	}
@@ -1523,6 +1535,11 @@ uvm_pagefree(struct vm_page *pg)
 			} else {
 				pg->pqflags &= ~PQ_ANON;
 				atomic_dec_uint(&uvmexp.anonpages);
+				status = uvm_pagegetdirty(pg);
+				kpreempt_disable();
+				ucpu = curcpu()->ci_data.cpu_uvm;
+				ucpu->pagestate[1][status]--;
+				kpreempt_enable();
 			}
 			pg->uanon->an_page = NULL;
 			pg->uanon = NULL;
@@ -1552,6 +1569,11 @@ uvm_pagefree(struct vm_page *pg)
 	} else if (pg->uanon != NULL) {
 		pg->uanon->an_page = NULL;
 		atomic_dec_uint(&uvmexp.anonpages);
+		status = uvm_pagegetdirty(pg);
+		kpreempt_disable();
+		ucpu = curcpu()->ci_data.cpu_uvm;
+		ucpu->pagestate[1][status]--;
+		kpreempt_enable();
 	}
 
 	/*
@@ -1578,7 +1600,6 @@ uvm_pagefree(struct vm_page *pg)
 	color = VM_PGCOLOR_BUCKET(pg);
 	queue = (iszero ? PGFL_ZEROS : PGFL_UNKNOWN);
 
-	status = uvm_pagegetdirty(pg);
 #ifdef DEBUG
 	pg->uobject = (void *)0xdeadbeef;
 	pg->uanon = (void *)0xdeadbeef;
@@ -1610,7 +1631,6 @@ uvm_pagefree(struct vm_page *pg)
 	if (ucpu->pages[PGFL_ZEROS] < ucpu->pages[PGFL_UNKNOWN]) {
 		ucpu->page_idle_zero = vm_page_zero_enable;
 	}
-	ucpu->pagestate[status]--;
 
 	mutex_spin_exit(&uvm_fpageqlock);
 }
