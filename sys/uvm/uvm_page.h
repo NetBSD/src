@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73.2.3 2011/11/11 10:34:24 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.73.2.4 2011/11/13 01:18:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -194,6 +194,8 @@ struct vm_page {
 					   uvm_object */
 #define PQ_SWAPBACKED	(PQ_ANON|PQ_AOBJ)
 #define PQ_READAHEAD	0x0008	/* read-ahead but has not been "hit" yet */
+#define	PQ_FILE		0x0010		/* file backed (non-anonymous) */
+#define	PQ_STAT		(PQ_ANON|PQ_AOBJ|PQ_FILE)
 
 #define PQ_PRIVATE1	0x0100
 #define PQ_PRIVATE2	0x0200
@@ -205,7 +207,7 @@ struct vm_page {
 #define PQ_PRIVATE8	0x8000
 
 #define	UVM_PQFLAGBITS \
-	"\20\1FREE\2ANON\3AOBJ\4READAHEAD" \
+	"\20\1FREE\2ANON\3AOBJ\4READAHEAD\5FILE" \
 	"\11PRIVATE1\12PRIVATE2\13PRIVATE3\14PRIVATE4" \
 	"\15PRIVATE5\16PRIVATE6\17PRIVATE7\20PRIVATE8"
 
