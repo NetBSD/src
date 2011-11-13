@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.5 2010/08/11 13:26:25 pgoyette Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.6 2011/11/13 17:22:51 dholland Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.5 2010/08/11 13:26:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.6 2011/11/13 17:22:51 dholland Exp $");
 #endif /* not lint */
 
 
@@ -635,6 +635,9 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	cv_init(&nilfsdev->sync_cv, "nilfssyn");
 	STAILQ_INIT(&nilfsdev->mounts);
 
+	/* register nilfs_device in list */
+	SLIST_INSERT_HEAD(&nilfs_devices, nilfsdev, next_device);
+
 	/* get our device's size */
 	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED);
 	if (error) {
@@ -643,9 +646,6 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 		return EINVAL;
 	}
 	nilfsdev->devsize = dpart.part->p_size * dpart.disklab->d_secsize;
-
-	/* register nilfs_device in list */
-	SLIST_INSERT_HEAD(&nilfs_devices, nilfsdev, next_device);
 
 	/* connect to the head for most recent files XXX really pass mp and args? */
 	error = nilfs_mount_base(nilfsdev, mp, args);
