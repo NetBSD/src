@@ -1,4 +1,4 @@
-/* $NetBSD: gpiopwm.c,v 1.1 2011/11/13 12:33:01 mbalmer Exp $ */
+/* $NetBSD: gpiopwm.c,v 1.2 2011/11/13 13:16:33 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -150,6 +150,7 @@ gpiopwm_detach(device_t self, int flags)
 
 	callout_halt(&sc->sc_pulse, NULL);
 	callout_destroy(&sc->sc_pulse);
+	gpio_pin_write(sc->sc_gpio, &sc->sc_map, 0, GPIO_PIN_LOW);
 
 	pmf_device_deregister(self);
 	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
