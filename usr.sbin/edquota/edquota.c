@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.37 2011/11/13 15:41:34 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.38 2011/11/13 15:42:35 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.37 2011/11/13 15:41:34 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.38 2011/11/13 15:42:35 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,6 @@ __RCSID("$NetBSD: edquota.c,v 1.37 2011/11/13 15:41:34 dholland Exp $");
 #include "pathnames.h"
 
 static const char *quotagroup = QUOTAGROUP;
-static char tmpfil[] = _PATH_TMPFILE;
 
 #define MAX_TMPSTR	(100+MAXPATHLEN)
 
@@ -108,7 +107,6 @@ static void	usage(void) __dead;
 
 static int Hflag = 0;
 static int Dflag = 0;
-static int dflag = 0;
 
 /* more compact form of constants */
 #define QL_BLK QUOTA_LIMIT_BLOCK
@@ -446,7 +444,7 @@ putprivs2(uint32_t id, int quotaclass, struct quotause *qup)
  * Collect the requested quota information.
  */
 static struct quotalist *
-getprivs(long id, int quotaclass, const char *filesys, int defaultq)
+getprivs(long id, int defaultq, int quotaclass, const char *filesys)
 {
 	struct statvfs *fst;
 	int nfst, i;
@@ -682,8 +680,8 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 	(void)ftruncate(outfd, 0);
 	(void)lseek(outfd, (off_t)0, SEEK_SET);
 	if ((fd = fdopen(dup(outfd), "w")) == NULL)
-		errx(1, "fdopen `%s'", tmpfil);
-	if (dflag) {
+		errx(1, "fdopen");
+	if (name == NULL) {
 		fprintf(fd, "Default %s quotas:\n",
 		    ufs_quota_class_names[quotaclass]);
 	} else {
@@ -741,7 +739,7 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
  * Merge changes to an ASCII file into a quotause list.
  */
 static int
-readprivs(struct quotalist *qlist, int infd)
+readprivs(struct quotalist *qlist, int infd, int dflag)
 {
 	struct quotause *qup;
 	FILE *fd;
@@ -979,6 +977,179 @@ out:
 }
 
 ////////////////////////////////////////////////////////////
+// actions
+
+static void
+replicate(const char *fs, int quotaclass, const char *protoname,
+	  char **names, int numnames)
+{
+	long protoid, id;
+	struct quotalist *protoprivs;
+	struct quotause *qup;
+	int i;
+
+	if ((protoid = getidbyname(protoname, quotaclass)) == -1)
+		exit(1);
+	protoprivs = getprivs(protoid, 0, quotaclass, fs);
+	for (qup = protoprivs->head; qup; qup = qup->next) {
+		qup->qe[QL_BLK].ufsqe_time = 0;
+		qup->qe[QL_FL].ufsqe_time = 0;
+	}
+	for (i=0; i<numnames; i++) {
+		id = getidbyname(names[i], quotaclass);
+		if (id < 0)
+			continue;
+		putprivs(id, quotaclass, protoprivs);
+	}
+	/* XXX */
+	/* quotalist_destroy(protoprivs); */
+}
+
+static void
+assign(const char *fs, int quotaclass,
+       char *soft, char *hard, char *grace,
+       char **names, int numnames)
+{
+	struct quotalist *curprivs;
+	struct quotause *lqup;
+	u_int64_t softb, hardb, softi, hardi;
+	time_t  graceb, gracei;
+	char *str;
+	long id;
+	int dflag;
+	int i;
+
+	if (soft) {
+		str = strsep(&soft, "/");
+		if (str[0] == '\0' || soft == NULL || soft[0] == '\0')
+			usage();
+
+		if (intrd(str, &softb, HN_B) != 0)
+			errx(1, "%s: bad number", str);
+		if (intrd(soft, &softi, 0) != 0)
+			errx(1, "%s: bad number", soft);
+	}
+	if (hard) {
+		str = strsep(&hard, "/");
+		if (str[0] == '\0' || hard == NULL || hard[0] == '\0')
+			usage();
+
+		if (intrd(str, &hardb, HN_B) != 0)
+			errx(1, "%s: bad number", str);
+		if (intrd(hard, &hardi, 0) != 0)
+			errx(1, "%s: bad number", hard);
+	}
+	if (grace) {
+		str = strsep(&grace, "/");
+		if (str[0] == '\0' || grace == NULL || grace[0] == '\0')
+			usage();
+
+		if (timeprd(str, &graceb) != 0)
+			errx(1, "%s: bad number", str);
+		if (timeprd(grace, &gracei) != 0)
+			errx(1, "%s: bad number", grace);
+	}
+	for (i=0; i<numnames; i++) {
+		if (names[i] == NULL) {
+			id = 0;
+			dflag = 1;
+		} else {
+			id = getidbyname(names[i], quotaclass);
+			if (id == -1)
+				continue;
+			dflag = 0;
+		}
+
+		curprivs = getprivs(id, dflag, quotaclass, fs);
+		for (lqup = curprivs->head; lqup; lqup = lqup->next) {
+			struct ufs_quota_entry *q = lqup->qe;
+			if (soft) {
+				if (!dflag && softb &&
+				    q[QL_BLK].ufsqe_cur >= softb &&
+				    (q[QL_BLK].ufsqe_softlimit == 0 ||
+				     q[QL_BLK].ufsqe_cur <
+				     q[QL_BLK].ufsqe_softlimit))
+					q[QL_BLK].ufsqe_time = 0;
+				if (!dflag && softi &&
+				    q[QL_FL].ufsqe_cur >= softb &&
+				    (q[QL_FL].ufsqe_softlimit == 0 ||
+				     q[QL_FL].ufsqe_cur <
+				     q[QL_FL].ufsqe_softlimit))
+					q[QL_FL].ufsqe_time = 0;
+				q[QL_BLK].ufsqe_softlimit = softb;
+				q[QL_FL].ufsqe_softlimit = softi;
+			}
+			if (hard) {
+				q[QL_BLK].ufsqe_hardlimit = hardb;
+				q[QL_FL].ufsqe_hardlimit = hardi;
+			}
+			if (grace) {
+				q[QL_BLK].ufsqe_grace = graceb;
+				q[QL_FL].ufsqe_grace = gracei;
+			}
+		}
+		putprivs(id, quotaclass, curprivs);
+		quotalist_destroy(curprivs);
+	}
+}
+
+static void
+clear(const char *fs, int quotaclass, char **names, int numnames)
+{
+	clearpriv(numnames, names, fs, quotaclass);
+}
+
+static void
+editone(const char *fs, int quotaclass, const char *name,
+	int tmpfd, const char *tmppath)
+{
+	struct quotalist *curprivs;
+	long id;
+	int dflag;
+
+	if (name == NULL) {
+		id = 0;
+		dflag = 1;
+	} else {
+		id = getidbyname(name, quotaclass);
+		if (id == -1)
+			return;
+		dflag = 0;
+	}
+	curprivs = getprivs(id, dflag, quotaclass, fs);
+
+	if (writeprivs(curprivs, tmpfd, name, quotaclass) == 0)
+		goto fail;
+
+	if (editit(tmppath) == 0)
+		goto fail;
+
+	if (readprivs(curprivs, tmpfd, dflag) == 0)
+		goto fail;
+
+	putprivs(id, quotaclass, curprivs);
+fail:
+	quotalist_destroy(curprivs);
+}
+
+static void
+edit(const char *fs, int quotaclass, char **names, int numnames)
+{
+	char tmppath[] = _PATH_TMPFILE;
+	int tmpfd, i;
+
+	tmpfd = mkstemp(tmppath);
+	fchown(tmpfd, getuid(), getgid());
+
+	for (i=0; i<numnames; i++) {
+		editone(fs, quotaclass, names[i], tmpfd, tmppath);
+	}
+
+	close(tmpfd);
+	unlink(tmppath);
+}
+
+////////////////////////////////////////////////////////////
 // main
 
 static void
@@ -1003,16 +1174,14 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct quotause *qup;
-	struct quotalist *protoprivs, *curprivs;
-	long id, protoid;
-	int quotaclass, tmpfd;
+	int quotaclass;
 	char *protoname;
 	char *soft = NULL, *hard = NULL, *grace = NULL;
 	char *fs = NULL;
 	int ch;
 	int pflag = 0;
 	int cflag = 0;
+	int dflag = 0;
 
 	if (argc < 2)
 		usage();
@@ -1066,143 +1235,25 @@ main(int argc, char *argv[])
 	if (pflag) {
 		if (soft || hard || grace || dflag || cflag)
 			usage();
-		if ((protoid = getidbyname(protoname, quotaclass)) == -1)
-			return 1;
-		protoprivs = getprivs(protoid, quotaclass, fs, 0);
-		for (qup = protoprivs->head; qup; qup = qup->next) {
-			qup->qe[QL_BLK].ufsqe_time = 0;
-			qup->qe[QL_FL].ufsqe_time = 0;
-		}
-		while (argc-- > 0) {
-			if ((id = getidbyname(*argv++, quotaclass)) < 0)
-				continue;
-			putprivs(id, quotaclass, protoprivs);
-		}
-		/* XXX */
-		/* quotalist_destroy(protoprivs); */
-		return 0;
-	}
-	if (soft || hard || grace) {
-		struct quotause *lqup;
-		u_int64_t softb, hardb, softi, hardi;
-		time_t  graceb, gracei;
-		char *str;
-
+		replicate(fs, quotaclass, protoname, argv, argc);
+	} else if (soft || hard || grace) {
 		if (cflag)
 			usage();
-		if (soft) {
-			str = strsep(&soft, "/");
-			if (str[0] == '\0' || soft == NULL || soft[0] == '\0')
-				usage();
-			    
-			if (intrd(str, &softb, HN_B) != 0)
-				errx(1, "%s: bad number", str);
-			if (intrd(soft, &softi, 0) != 0)
-				errx(1, "%s: bad number", soft);
-		}
-		if (hard) {
-			str = strsep(&hard, "/");
-			if (str[0] == '\0' || hard == NULL || hard[0] == '\0')
-				usage();
-			    
-			if (intrd(str, &hardb, HN_B) != 0)
-				errx(1, "%s: bad number", str);
-			if (intrd(hard, &hardi, 0) != 0)
-				errx(1, "%s: bad number", hard);
-		}
-		if (grace) {
-			str = strsep(&grace, "/");
-			if (str[0] == '\0' || grace == NULL || grace[0] == '\0')
-				usage();
-			    
-			if (timeprd(str, &graceb) != 0)
-				errx(1, "%s: bad number", str);
-			if (timeprd(grace, &gracei) != 0)
-				errx(1, "%s: bad number", grace);
-		}
 		if (dflag) {
-			curprivs = getprivs(0, quotaclass, fs, 1);
-			for (lqup = curprivs->head; lqup; lqup = lqup->next) {
-				struct ufs_quota_entry *q = lqup->qe;
-				if (soft) {
-					q[QL_BLK].ufsqe_softlimit = softb;
-					q[QL_FL].ufsqe_softlimit = softi;
-				}
-				if (hard) {
-					q[QL_BLK].ufsqe_hardlimit = hardb;
-					q[QL_FL].ufsqe_hardlimit = hardi;
-				}
-				if (grace) {
-					q[QL_BLK].ufsqe_grace = graceb;
-					q[QL_FL].ufsqe_grace = gracei;
-				}
-			}
-			putprivs(0, quotaclass, curprivs);
-			quotalist_destroy(curprivs);
-			return 0;
+			/* use argv[argc], which is null, to mean 'default' */
+			argc++;
 		}
-		for ( ; argc > 0; argc--, argv++) {
-			if ((id = getidbyname(*argv, quotaclass)) == -1)
-				continue;
-			curprivs = getprivs(id, quotaclass, fs, 0);
-			for (lqup = curprivs->head; lqup; lqup = lqup->next) {
-				struct ufs_quota_entry *q = lqup->qe;
-				if (soft) {
-					if (softb &&
-					    q[QL_BLK].ufsqe_cur >= softb &&
-					    (q[QL_BLK].ufsqe_softlimit == 0 ||
-					    q[QL_BLK].ufsqe_cur <
-					    q[QL_BLK].ufsqe_softlimit))
-						q[QL_BLK].ufsqe_time = 0;
-					if (softi &&
-					    q[QL_FL].ufsqe_cur >= softb &&
-					    (q[QL_FL].ufsqe_softlimit == 0 ||
-					    q[QL_FL].ufsqe_cur <
-					    q[QL_FL].ufsqe_softlimit))
-						q[QL_FL].ufsqe_time = 0;
-					q[QL_BLK].ufsqe_softlimit = softb;
-					q[QL_FL].ufsqe_softlimit = softi;
-				}
-				if (hard) {
-					q[QL_BLK].ufsqe_hardlimit = hardb;
-					q[QL_FL].ufsqe_hardlimit = hardi;
-				}
-				if (grace) {
-					q[QL_BLK].ufsqe_grace = graceb;
-					q[QL_FL].ufsqe_grace = gracei;
-				}
-			}
-			putprivs(id, quotaclass, curprivs);
-			quotalist_destroy(curprivs);
-		}
-		return 0;
-	}
-	if (cflag) {
+		assign(fs, quotaclass, soft, hard, grace, argv, argc);
+	} else if (cflag) {
 		if (dflag)
 			usage();
-		clearpriv(argc, argv, fs, quotaclass);
-		return 0;
+		clear(fs, quotaclass, argv, argc);
+	} else {
+		if (dflag) {
+			/* use argv[argc], which is null, to mean 'default' */
+			argc++;
+		}
+		edit(fs, quotaclass, argv, argc);
 	}
-	tmpfd = mkstemp(tmpfil);
-	fchown(tmpfd, getuid(), getgid());
-	if (dflag) {
-		curprivs = getprivs(0, quotaclass, fs, 1);
-		if (writeprivs(curprivs, tmpfd, NULL, quotaclass) &&
-		    editit(tmpfil) && readprivs(curprivs, tmpfd))
-			putprivs(0, quotaclass, curprivs);
-		quotalist_destroy(curprivs);
-	}
-	for ( ; argc > 0; argc--, argv++) {
-		if ((id = getidbyname(*argv, quotaclass)) == -1)
-			continue;
-		curprivs = getprivs(id, quotaclass, fs, 0);
-		if (writeprivs(curprivs, tmpfd, *argv, quotaclass) == 0)
-			continue;
-		if (editit(tmpfil) && readprivs(curprivs, tmpfd))
-			putprivs(id, quotaclass, curprivs);
-		quotalist_destroy(curprivs);
-	}
-	close(tmpfd);
-	unlink(tmpfil);
 	return 0;
 }
