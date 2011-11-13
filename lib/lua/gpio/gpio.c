@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.5 2011/11/13 13:37:24 mbalmer Exp $ */
+/*	$NetBSD: gpio.c,v 1.6 2011/11/13 16:56:15 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -247,8 +247,6 @@ static const struct constant gpio_constant[] = {
 	{ "PIN_INVOUT",		GPIO_PIN_INVOUT },
 	{ "PIN_USER",		GPIO_PIN_USER },
 	{ "PIN_PULSATE",	GPIO_PIN_PULSATE },
-	{ "PIN_INTR",		GPIO_PIN_INTR },
-	{ "PIN_INTR_HIGH",	GPIO_PIN_INTR_HIGH },
 	{ "PIN_SET",		GPIO_PIN_SET },
 	{ NULL,			0 }
 };
