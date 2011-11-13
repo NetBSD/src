@@ -1,5 +1,4 @@
-.\"	$NetBSD: getfstypename.3,v 1.1 2011/11/13 22:03:34 christos Exp $
-.\"
+.\"	$NetBSD: getfstypename.3,v 1.2 2011/11/13 23:49:39 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm getfstypename
-.Nd convert a partition file system type integer to a wedge partition type name.
+.Nd convert a partition file system type integer to a wedge partition type name
 .Sh LIBRARY
 .Lb libutil
 .Sh SYNOPSIS
@@ -55,7 +54,7 @@ argument as specified in
 .In sys/disk.h
 or
 .Dv DKW_PTYPE_UNKNOWN
-if one is not found.
+if none is found.
 .Sh HISTORY
 The
 .Fn getfstypename
