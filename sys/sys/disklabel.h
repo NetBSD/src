@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.110 2011/11/13 22:07:00 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.111 2011/11/13 22:19:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -462,7 +462,7 @@ const char *convertdisklabel(struct disklabel *, void (*)(struct buf *),
     struct buf *, uint32_t);
 int	 bounds_check_with_label(struct disk *, struct buf *, int);
 int	 bounds_check_with_mediasize(struct buf *, int, uint64_t);
-const char *getfstypeinfo(int);
+const char *getfstypename(int);
 #endif
 #endif /* _LOCORE */
 
