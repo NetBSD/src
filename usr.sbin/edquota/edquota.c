@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.36 2011/09/30 22:08:19 jym Exp $ */
+/*      $NetBSD: edquota.c,v 1.37 2011/11/13 15:41:34 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.36 2011/09/30 22:08:19 jym Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.37 2011/11/13 15:41:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: edquota.c,v 1.36 2011/09/30 22:08:19 jym Exp $");
 #include <grp.h>
 #include <ctype.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,6 +84,13 @@ __RCSID("$NetBSD: edquota.c,v 1.36 2011/09/30 22:08:19 jym Exp $");
 static const char *quotagroup = QUOTAGROUP;
 static char tmpfil[] = _PATH_TMPFILE;
 
+#define MAX_TMPSTR	(100+MAXPATHLEN)
+
+/* flags for quotause */
+#define	FOUND	0x01
+#define	QUOTA2	0x02
+#define	DEFAULT	0x04
+
 struct quotause {
 	struct	quotause *next;
 	long	flags;
@@ -90,24 +98,13 @@ struct quotause {
 	char	fsname[MAXPATHLEN + 1];
 	char	*qfname;
 };
-#define	FOUND	0x01
-#define	QUOTA2	0x02
-#define	DEFAULT	0x04
 
-#define MAX_TMPSTR	(100+MAXPATHLEN)
+struct quotalist {
+	struct quotause *head;
+	struct quotause *tail;
+};
 
 static void	usage(void) __dead;
-static struct quotause * getprivs(long, int, const char *, int);
-static struct quotause * getprivs2(long, int, const char *, int);
-static struct quotause * getprivs1(long, int, const char *);
-static void	putprivs(uint32_t, int, struct quotause *);
-static void	putprivs2(uint32_t, int, struct quotause *);
-static void	putprivs1(uint32_t, int, struct quotause *);
-static int	editit(const char *);
-static int	writeprivs(struct quotause *, int, const char *, int);
-static int	readprivs(struct quotause *, int);
-static void	freeprivs(struct quotause *);
-static void clearpriv(int, char **, const char *, int);
 
 static int Hflag = 0;
 static int Dflag = 0;
@@ -156,6 +153,28 @@ getidbyname(const char *name, int quotaclass)
 // quotause operations
 
 /*
+ * Create an empty quotause structure.
+ */
+static struct quotause *
+quotause_create(void)
+{
+	struct quotause *qup;
+
+	qup = malloc(sizeof(*qup));
+	if (qup == NULL) {
+		err(1, "malloc");
+	}
+
+	qup->next = NULL;
+	qup->flags = 0;
+	memset(qup->qe, 0, sizeof(qup->qe));
+	qup->fsname[0] = '\0';
+	qup->qfname = NULL;
+
+	return qup;
+}
+
+/*
  * Free a quotause structure.
  */
 static void
@@ -165,18 +184,61 @@ quotause_destroy(struct quotause *qup)
 	free(qup);
 }
 
+////////////////////////////////////////////////////////////
+// quotalist operations
+
+/*
+ * Create a quotause list.
+ */
+static struct quotalist *
+quotalist_create(void)
+{
+	struct quotalist *qlist;
+
+	qlist = malloc(sizeof(*qlist));
+	if (qlist == NULL) {
+		err(1, "malloc");
+	}
+
+	qlist->head = NULL;
+	qlist->tail = NULL;
+
+	return qlist;
+}
+
 /*
  * Free a list of quotause structures.
  */
 static void
-freeprivs(struct quotause *quplist)
+quotalist_destroy(struct quotalist *qlist)
 {
 	struct quotause *qup, *nextqup;
 
-	for (qup = quplist; qup; qup = nextqup) {
+	for (qup = qlist->head; qup; qup = nextqup) {
 		nextqup = qup->next;
 		quotause_destroy(qup);
 	}
+	free(qlist);
+}
+
+static bool
+quotalist_empty(struct quotalist *qlist)
+{
+	return qlist->head == NULL;
+}
+
+static void
+quotalist_append(struct quotalist *qlist, struct quotause *qup)
+{
+	/* should not already be on a list */
+	assert(qup->next == NULL);
+
+	if (qlist->head == NULL) {
+		qlist->head = qup;
+	} else {
+		qlist->tail->next = qup;
+	}
+	qlist->tail = qup;
 }
 
 ////////////////////////////////////////////////////////////
@@ -227,8 +289,8 @@ getprivs1(long id, int quotaclass, const char *filesys)
 	if (!hasquota(qfpathname, sizeof(qfpathname), fs,
 	    ufsclass2qtype(quotaclass)))
 		return NULL;
-	if ((qup = malloc(sizeof(*qup))) == NULL)
-		err(1, "out of memory");
+
+	qup = quotause_create();
 	strcpy(qup->fsname, fs->fs_file);
 	if ((fd = open(qfpathname, O_RDONLY)) < 0) {
 		fd = open(qfpathname, O_RDWR|O_CREAT, 0640);
@@ -279,9 +341,7 @@ getprivs2(long id, int quotaclass, const char *filesys, int defaultq)
 	struct quotause *qup;
 	int8_t version;
 
-	if ((qup = malloc(sizeof(*qup))) == NULL)
-		err(1, "out of memory");
-	memset(qup, 0, sizeof(*qup));
+	qup = quotause_create();
 	strcpy(qup->fsname, filesys);
 	if (defaultq)
 		qup->flags |= DEFAULT;
@@ -385,13 +445,15 @@ putprivs2(uint32_t id, int quotaclass, struct quotause *qup)
 /*
  * Collect the requested quota information.
  */
-static struct quotause *
+static struct quotalist *
 getprivs(long id, int quotaclass, const char *filesys, int defaultq)
 {
 	struct statvfs *fst;
 	int nfst, i;
-	struct quotause *qup, *quptail = NULL;
-	struct quotause *quphead = NULL;
+	struct quotalist *qlist;
+	struct quotause *qup;
+
+	qlist = quotalist_create();
 
 	nfst = getmntinfo(&fst, MNT_WAIT);
 	if (nfst == 0)
@@ -400,46 +462,55 @@ getprivs(long id, int quotaclass, const char *filesys, int defaultq)
 	for (i = 0; i < nfst; i++) {
 		if ((fst[i].f_flag & ST_QUOTA) == 0)
 			continue;
-		if (filesys && strcmp(fst[i].f_mntonname, filesys) != 0 &&
+		if (filesys &&
+		    strcmp(fst[i].f_mntonname, filesys) != 0 &&
 		    strcmp(fst[i].f_mntfromname, filesys) != 0)
 			continue;
 		qup = getprivs2(id, quotaclass, fst[i].f_mntonname, defaultq);
-		if (qup == NULL)
-			return NULL;
-		if (quphead == NULL)
-			quphead = qup;
-		else
-			quptail->next = qup;
-		quptail = qup;
-		qup->next = 0;
+		if (qup == NULL) {
+			/*
+			 * XXX: returning NULL is totally wrong. On
+			 * serious error, abort; on minor error, warn
+			 * and continue.
+			 *
+			 * Note: we cannot warn unconditionally here
+			 * because this case apparently includes "no
+			 * quota entry on this volume" and that causes
+			 * the atf tests to fail. Bletch.
+			 */
+			/*return NULL;*/
+			/*warnx("getprivs2 failed");*/
+			continue;
+		}
+
+		quotalist_append(qlist, qup);
 	}
 
-	if (filesys && quphead == NULL) {
+	if (filesys && quotalist_empty(qlist)) {
 		if (defaultq)
 			errx(1, "no default quota for version 1");
 		/* if we get there, filesys is not mounted. try the old way */
 		qup = getprivs1(id, quotaclass, filesys);
-		if (qup == NULL)
-			return NULL;
-		if (quphead == NULL)
-			quphead = qup;
-		else
-			quptail->next = qup;
-		quptail = qup;
-		qup->next = 0;
+		if (qup == NULL) {
+			/* XXX. see above */
+			/*return NULL;*/
+			/*warnx("getprivs1 failed");*/
+			return qlist;
+		}
+		quotalist_append(qlist, qup);
 	}
-	return quphead;
+	return qlist;
 }
 
 /*
  * Store the requested quota information.
  */
-void
-putprivs(uint32_t id, int quotaclass, struct quotause *quplist)
+static void
+putprivs(uint32_t id, int quotaclass, struct quotalist *qlist)
 {
 	struct quotause *qup;
 
-        for (qup = quplist; qup; qup = qup->next) {
+        for (qup = qlist->head; qup; qup = qup->next) {
 		if (qup->qfname == NULL)
 			putprivs2(id, quotaclass, qup);
 		else
@@ -601,7 +672,7 @@ top:
  * Convert a quotause list to an ASCII file.
  */
 static int
-writeprivs(struct quotause *quplist, int outfd, const char *name,
+writeprivs(struct quotalist *qlist, int outfd, const char *name,
     int quotaclass)
 {
 	struct quotause *qup;
@@ -619,7 +690,7 @@ writeprivs(struct quotause *quplist, int outfd, const char *name,
 		fprintf(fd, "Quotas for %s %s:\n",
 		    ufs_quota_class_names[quotaclass], name);
 	}
-	for (qup = quplist; qup; qup = qup->next) {
+	for (qup = qlist->head; qup; qup = qup->next) {
 		struct ufs_quota_entry *q = qup->qe;
 		fprintf(fd, "%s (version %d):\n",
 		     qup->fsname, (qup->flags & QUOTA2) ? 2 : 1);
@@ -670,7 +741,7 @@ writeprivs(struct quotause *quplist, int outfd, const char *name,
  * Merge changes to an ASCII file into a quotause list.
  */
 static int
-readprivs(struct quotause *quplist, int infd)
+readprivs(struct quotalist *qlist, int infd)
 {
 	struct quotause *qup;
 	FILE *fd;
@@ -837,7 +908,7 @@ readprivs(struct quotause *quplist, int infd)
 				}
 			}
 		}
-		for (qup = quplist; qup; qup = qup->next) {
+		for (qup = qlist->head; qup; qup = qup->next) {
 			struct ufs_quota_entry *q = qup->qe;
 			char b1[32], b2[32];
 			if (strcmp(fsp, qup->fsname))
@@ -891,7 +962,7 @@ out:
 	/*
 	 * Disable quotas for any filesystems that have not been found.
 	 */
-	for (qup = quplist; qup; qup = qup->next) {
+	for (qup = qlist->head; qup; qup = qup->next) {
 		struct ufs_quota_entry *q = qup->qe;
 		if (qup->flags & FOUND) {
 			qup->flags &= ~FOUND;
@@ -932,7 +1003,8 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct quotause *qup, *protoprivs, *curprivs;
+	struct quotause *qup;
+	struct quotalist *protoprivs, *curprivs;
 	long id, protoid;
 	int quotaclass, tmpfd;
 	char *protoname;
@@ -997,7 +1069,7 @@ main(int argc, char *argv[])
 		if ((protoid = getidbyname(protoname, quotaclass)) == -1)
 			return 1;
 		protoprivs = getprivs(protoid, quotaclass, fs, 0);
-		for (qup = protoprivs; qup; qup = qup->next) {
+		for (qup = protoprivs->head; qup; qup = qup->next) {
 			qup->qe[QL_BLK].ufsqe_time = 0;
 			qup->qe[QL_FL].ufsqe_time = 0;
 		}
@@ -1006,6 +1078,8 @@ main(int argc, char *argv[])
 				continue;
 			putprivs(id, quotaclass, protoprivs);
 		}
+		/* XXX */
+		/* quotalist_destroy(protoprivs); */
 		return 0;
 	}
 	if (soft || hard || grace) {
@@ -1048,7 +1122,7 @@ main(int argc, char *argv[])
 		}
 		if (dflag) {
 			curprivs = getprivs(0, quotaclass, fs, 1);
-			for (lqup = curprivs; lqup; lqup = lqup->next) {
+			for (lqup = curprivs->head; lqup; lqup = lqup->next) {
 				struct ufs_quota_entry *q = lqup->qe;
 				if (soft) {
 					q[QL_BLK].ufsqe_softlimit = softb;
@@ -1064,14 +1138,14 @@ main(int argc, char *argv[])
 				}
 			}
 			putprivs(0, quotaclass, curprivs);
-			freeprivs(curprivs);
+			quotalist_destroy(curprivs);
 			return 0;
 		}
 		for ( ; argc > 0; argc--, argv++) {
 			if ((id = getidbyname(*argv, quotaclass)) == -1)
 				continue;
 			curprivs = getprivs(id, quotaclass, fs, 0);
-			for (lqup = curprivs; lqup; lqup = lqup->next) {
+			for (lqup = curprivs->head; lqup; lqup = lqup->next) {
 				struct ufs_quota_entry *q = lqup->qe;
 				if (soft) {
 					if (softb &&
@@ -1099,7 +1173,7 @@ main(int argc, char *argv[])
 				}
 			}
 			putprivs(id, quotaclass, curprivs);
-			freeprivs(curprivs);
+			quotalist_destroy(curprivs);
 		}
 		return 0;
 	}
@@ -1116,7 +1190,7 @@ main(int argc, char *argv[])
 		if (writeprivs(curprivs, tmpfd, NULL, quotaclass) &&
 		    editit(tmpfil) && readprivs(curprivs, tmpfd))
 			putprivs(0, quotaclass, curprivs);
-		freeprivs(curprivs);
+		quotalist_destroy(curprivs);
 	}
 	for ( ; argc > 0; argc--, argv++) {
 		if ((id = getidbyname(*argv, quotaclass)) == -1)
@@ -1126,7 +1200,7 @@ main(int argc, char *argv[])
 			continue;
 		if (editit(tmpfil) && readprivs(curprivs, tmpfd))
 			putprivs(id, quotaclass, curprivs);
-		freeprivs(curprivs);
+		quotalist_destroy(curprivs);
 	}
 	close(tmpfd);
 	unlink(tmpfil);
