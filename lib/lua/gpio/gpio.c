@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.3 2011/10/10 20:41:05 christos Exp $ */
+/*	$NetBSD: gpio.c,v 1.4 2011/11/13 09:46:11 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -112,7 +112,7 @@ gpio_get_pin(lua_State *L, int n, struct gpio_req *req)
 {
 	switch (lua_type(L, n)) {
 	case LUA_TNUMBER:
-		req->gp_pin = (int)lua_tointeger(L, n) - 1;	/* 1 based! */
+		req->gp_pin = (int)lua_tointeger(L, n);	/* not 1 based! */
 		break;
 	case LUA_TSTRING:
 		strlcpy(req->gp_name, lua_tostring(L, n), sizeof(req->gp_name));
