@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1625 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1626 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1166,5 +1166,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		These provide the end user with some ready-to-use sample
 		code for a variety of platforms, showcasing how to interact
 		with NetBSD system calls, APIs and binaries.  [jmmv 20111111]
+	luna68k: Finally complete LUNA-II support. [tsutsui 20111112]
 	gpiopwm(4): A new driver to pulse GPIO pins in software.
 		[mbalmer 20111113]
