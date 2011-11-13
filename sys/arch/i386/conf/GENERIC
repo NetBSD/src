@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1056 2011/11/13 09:41:46 mbalmer Exp $
+# $NetBSD: GENERIC,v 1.1057 2011/11/13 12:47:54 mbalmer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1056 $"
+#ident 		"GENERIC-$Revision: 1.1057 $"
 
 maxusers	64		# estimated number of users
 
@@ -721,6 +721,9 @@ iic*		at gpioiic?
 
 # Keylock support
 gpiolock*	at gpio?
+
+# Software pulsing GPIO pins
+gpiopwm*	at gpio?
 
 # SCSI Controllers and Devices
 
