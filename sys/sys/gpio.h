@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.h,v 1.11 2011/10/03 11:16:47 mbalmer Exp $ */
+/* $NetBSD: gpio.h,v 1.12 2011/11/13 13:20:02 mbalmer Exp $ */
 /*	$OpenBSD: gpio.h,v 1.7 2008/11/26 14:51:20 mbalmer Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Marc Balmer <marc@msys.ch>
@@ -25,7 +25,6 @@
 /* GPIO pin states */
 #define GPIO_PIN_LOW		0x00	/* low level (logical 0) */
 #define GPIO_PIN_HIGH		0x01	/* high level (logical 1) */
-#define GPIO_PIN_PULSE		0x02	/* pulsing, or-ed with state */
 
 /* Max name length of a pin */
 #define GPIOMAXNAME		64
@@ -59,14 +58,6 @@ struct gpio_req {
 	int		gp_value;		/* value */
 };
 
-/* GPIO pulse request */
-struct gpio_pulse {
-	char		gp_name[GPIOMAXNAME];	/* pin name */
-	int		gp_pin;			/* pin number */
-	struct timeval	gp_pulse_on;		/* "on" period */
-	struct timeval	gp_pulse_off;		/* "off" period */
-};
-
 /* GPIO pin configuration */
 struct gpio_set {
 	char	gp_name[GPIOMAXNAME];
@@ -92,7 +83,6 @@ struct gpio_attach {
 #define GPIOWRITE		_IOWR('G', 8, struct gpio_req)
 #define GPIOTOGGLE		_IOWR('G', 9, struct gpio_req)
 #define GPIOATTACH		_IOWR('G', 10, struct gpio_attach)
-#define GPIOPULSE		_IOWR('G', 12, struct gpio_pulse)
 
 #ifdef COMPAT_50
 /* Old structure to attach/detach devices */
