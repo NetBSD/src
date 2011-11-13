@@ -36,17 +36,19 @@
 #include <sys/cdefs.h>
 #ifndef _KERNEL
 # if !defined(lint)
-__RCSID("$NetBSD: getfstypename.c,v 1.1 2011/11/13 21:56:53 christos Exp $");
+__RCSID("$NetBSD: getfstypename.c,v 1.2 2011/11/13 22:21:29 christos Exp $");
 # endif
 #else
-__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.1 2011/11/13 21:56:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.2 2011/11/13 22:21:29 christos Exp $");
 #endif
 
 #define FSTYPE_ENUMNAME fstype_enum
 #include <sys/types.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+#ifndef _KERNEL
 #include <util.h>
+#endif
 
 const char *
 getfstypename(int fstype)
