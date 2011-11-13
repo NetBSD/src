@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.4 2011/11/13 09:46:11 mbalmer Exp $ */
+/*	$NetBSD: gpio.c,v 1.5 2011/11/13 13:37:24 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -224,56 +224,6 @@ gpio_attach(lua_State *L)
 	return 0;
 }
 
-static int
-gpio_pulse(lua_State *L)
-{
-	struct gpio_pulse pulse;
-	suseconds_t period, on, off, sec;
-	double freq, dc;
-	int *fd;
-
-	fd = luaL_checkudata(L, 1, GPIO_METATABLE);
-	freq = luaL_checknumber(L, 3);
-	dc = luaL_checknumber(L, 4);
-
-	if (freq < 0.0 || (dc < 0.0 || dc >= 100.0))
-		gpio_error(L, "%.f Hz, %.f%% duty cycle: invalid value",
-		    freq, dc);
-
-	memset(&pulse, 0, sizeof(pulse));
-	gpio_get_pin(L, 2, (void *)&pulse);
-
-	if (freq > 0.0 && dc > 0.0) {
-		period = 1000000 / freq;
-		on = period * dc / 100;
-		off = period - on;
-
-		if (on >= 1000000) {
-			pulse.gp_pulse_on.tv_sec = sec = on / 1000000;
-			on -= sec * 1000000;
-			pulse.gp_pulse_on.tv_usec = on;
-		} else {
-			pulse.gp_pulse_on.tv_sec = 0;
-			pulse.gp_pulse_on.tv_usec = on;
-		}
-		if (off >= 1000000) {
-			pulse.gp_pulse_off.tv_sec = sec = off / 1000000;
-			off -= sec * 1000000;
-			pulse.gp_pulse_off.tv_usec = off;
-		} else {
-			pulse.gp_pulse_off.tv_sec = 0;
-			pulse.gp_pulse_off.tv_usec = off;
-		}
-	} else {	/* gpio(4) defaults */
-		freq = 1.0;
-		dc = 50.0;
-	}
-
-	if (ioctl(*fd, GPIOPULSE, &pulse) == -1)
-		gpio_error(L, "GPIOPULSE");
-	return 0;
-}
-
 struct constant {
 	const char *name;
 	int value;
@@ -283,7 +233,6 @@ static const struct constant gpio_constant[] = {
 	/* GPIO pin states */
 	{ "PIN_LOW",		GPIO_PIN_LOW },
 	{ "PIN_HIGH",		GPIO_PIN_HIGH },
-	{ "PIN_PULSE",		GPIO_PIN_PULSE },
 
 	/* GPIO pin configuration flags */
 	{ "PIN_INPUT",		GPIO_PIN_INPUT },
@@ -314,7 +263,7 @@ gpio_set_info(lua_State *L)
 	lua_pushliteral(L, "GPIO interface for Lua");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_VERSION");
-	lua_pushliteral(L, "gpio 1.0.0");
+	lua_pushliteral(L, "gpio 1.0.1");
 	lua_settable(L, -3);
 }
 
@@ -336,7 +285,6 @@ luaopen_gpio(lua_State* L)
 		{ "write",	gpio_write },
 		{ "toggle",	gpio_toggle },
 		{ "attach",	gpio_attach },
-		{ "pulse",	gpio_pulse },
 		{ NULL,		NULL }
 	};
 	int n;
