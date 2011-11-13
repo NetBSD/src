@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.59 2011/08/30 12:39:52 bouyer Exp $	*/
+/*	$NetBSD: util.h,v 1.60 2011/11/13 21:57:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -73,6 +73,7 @@ int		getlabelsector(void);
 int		getlabelusesmbr(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
+const char     *getfstypename(int);
 #ifndef __LIBC12_SOURCE__
 void		login(const struct utmp *) __RENAME(__login50);
 void		loginx(const struct utmpx *) __RENAME(__loginx50);
