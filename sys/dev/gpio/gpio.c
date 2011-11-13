@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.47 2011/11/13 13:20:02 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.48 2011/11/13 14:02:01 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.47 2011/11/13 13:20:02 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.48 2011/11/13 14:02:01 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -479,7 +479,6 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 	struct gpio_req *req;
 	struct gpio_name *nm;
 	struct gpio_set *set;
-	struct gpio_pin *gpin;
 #ifdef COMPAT_50
 	struct gpio_dev *gdev;
 #endif
