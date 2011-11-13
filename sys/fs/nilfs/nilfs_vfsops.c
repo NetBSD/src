@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.6 2011/11/13 17:22:51 dholland Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.7 2011/11/13 18:29:08 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.6 2011/11/13 17:22:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.7 2011/11/13 18:29:08 christos Exp $");
 #endif /* not lint */
 
 
@@ -563,7 +563,8 @@ static int
 nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *args,
 	struct nilfs_device **nilfsdev_p)
 {
-	struct partinfo dpart;
+	uint64_t psize;
+	unsigned secsize;
 	struct nilfs_device *nilfsdev;
 	struct lwp *l = curlwp;
 	int openflags, accessmode, error;
@@ -624,11 +625,9 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	}
 
 	/* opened ok, try mounting */
-	nilfsdev = malloc(sizeof(struct nilfs_device), M_NILFSMNT, M_WAITOK);
-	KASSERT(nilfsdev);
+	nilfsdev = malloc(sizeof(*nilfsdev), M_NILFSMNT, M_WAITOK | M_ZERO);
 
 	/* initialise */
-	memset(nilfsdev, 0, sizeof(struct nilfs_device));
 	nilfsdev->refcnt        = 1;
 	nilfsdev->devvp         = devvp;
 	nilfsdev->uncomitted_bl = 0;
@@ -639,13 +638,14 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	SLIST_INSERT_HEAD(&nilfs_devices, nilfsdev, next_device);
 
 	/* get our device's size */
-	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED);
+	error = getdisksize(devvp, &psize, &secsize);
 	if (error) {
 		/* remove all our information */
 		nilfs_unmount_device(nilfsdev);
 		return EINVAL;
 	}
-	nilfsdev->devsize = dpart.part->p_size * dpart.disklab->d_secsize;
+
+	nilfsdev->devsize = psize * secsize;
 
 	/* connect to the head for most recent files XXX really pass mp and args? */
 	error = nilfs_mount_base(nilfsdev, mp, args);
