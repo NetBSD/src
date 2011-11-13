@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.269 2011/10/07 09:35:07 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.270 2011/11/13 23:10:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.269 2011/10/07 09:35:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.270 2011/11/13 23:10:34 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.269 2011/10/07 09:35:07 hannken Exp
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/disk.h>
 #include <sys/mbuf.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
@@ -614,7 +615,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	void *space;
 	struct buf *bp;
 	struct fs *fs, *newfs;
-	struct partinfo dpart;
+	struct dkwedge_info dkw;
 	int i, bsize, blks, error;
 	int32_t *lp;
 	struct ufsmount *ump;
@@ -683,10 +684,9 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	/* First check to see if this is tagged as an Apple UFS filesystem
 	 * in the disklabel
 	 */
-	if ((VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred) == 0) &&
-		(dpart.part->p_fstype == FS_APPLEUFS)) {
+	if (getdiskinfo(devvp, &dkw) == 0 &&
+	    strcmp(dkw.dkw_ptype, DKW_PTYPE_APPLEUFS) == 0)
 		ump->um_flags |= UFS_ISAPPLEUFS;
-	}
 #ifdef APPLE_UFS
 	else {
 		/* Manually look for an apple ufs label, and if a valid one
@@ -852,7 +852,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct buf *bp;
 	struct fs *fs;
 	dev_t dev;
-	struct partinfo dpart;
+	struct dkwedge_info dkw;
 	void *space;
 	daddr_t sblockloc, fsblockloc;
 	int blks, fstype;
@@ -1061,10 +1061,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* First check to see if this is tagged as an Apple UFS filesystem
 	 * in the disklabel
 	 */
-	if ((VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred) == 0) &&
-		(dpart.part->p_fstype == FS_APPLEUFS)) {
+	if (getdiskinfo(devvp, &dkw) == 0 &&
+	    strcmp(dkw.dkw_ptype, DKW_PTYPE_APPLEUFS) == 0)
 		ump->um_flags |= UFS_ISAPPLEUFS;
-	}
 #ifdef APPLE_UFS
 	else {
 		/* Manually look for an apple ufs label, and if a valid one
