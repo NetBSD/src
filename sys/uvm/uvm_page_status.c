@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_status.c,v 1.1.2.3 2011/11/12 02:54:04 yamt Exp $	*/
+/*	$NetBSD: uvm_page_status.c,v 1.1.2.4 2011/11/13 01:18:02 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.3 2011/11/12 02:54:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.4 2011/11/13 01:18:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,15 +125,9 @@ uvm_pagemarkdirty(struct vm_page *pg, unsigned int newstatus)
 	pg->flags |= newstatus;
 	KASSERT(uobj == NULL || ((pg->flags & PG_CLEAN) == 0) ==
 	    radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
-	if (uobj != NULL) {
-		const bool isvnode = UVM_OBJ_IS_VNODE(uobj);
-		const bool isaobj = UVM_OBJ_IS_AOBJ(uobj);
-
-		if (isvnode || isaobj) {
-			stat_update(isaobj, oldstatus, newstatus);
-		}
-	} else {
-		stat_update(true, oldstatus, newstatus);
+	if ((pg->pqflags & PQ_STAT) != 0) {
+		stat_update((pg->pqflags & PQ_SWAPBACKED) != 0,
+		    oldstatus, newstatus);
 	}
 }
 

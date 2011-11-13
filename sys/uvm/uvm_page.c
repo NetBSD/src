@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178.2.4 2011/11/12 02:54:04 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.5 2011/11/13 01:18:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.4 2011/11/12 02:54:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.5 2011/11/13 01:18:02 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -169,8 +169,6 @@ static inline void
 uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
     struct vm_page *where)
 {
-	const bool isvnode = UVM_OBJ_IS_VNODE(uobj);
-	const bool isaobj = UVM_OBJ_IS_AOBJ(uobj);
 
 	KASSERT(uobj == pg->uobject);
 	KASSERT(mutex_owned(uobj->vmobjlock));
@@ -178,15 +176,17 @@ uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
 	KASSERT(where == NULL || (where->flags & PG_TABLED));
 	KASSERT(where == NULL || (where->uobject == uobj));
 
-	if (isvnode || isaobj) {
+	if ((pg->pqflags & PQ_STAT) != 0) {
 		struct uvm_cpu *ucpu;
 		const unsigned int status = uvm_pagegetdirty(pg);
+		const bool isaobj = (pg->pqflags & PQ_AOBJ) != 0;
 
 		kpreempt_disable();
 		ucpu = curcpu()->ci_data.cpu_uvm;
 		ucpu->pagestate[isaobj][status]++;
 		kpreempt_enable();
-		if (isvnode) {
+		if (!isaobj) {
+			KASSERT((pg->pqflags & PQ_FILE) != 0);
 			if (uobj->uo_npages == 0) {
 				struct vnode *vp = (struct vnode *)uobj;
 
@@ -248,22 +248,22 @@ uvm_pageinsert(struct uvm_object *uobj, struct vm_page *pg)
 static inline void
 uvm_pageremove_list(struct uvm_object *uobj, struct vm_page *pg)
 {
-	const bool isvnode = UVM_OBJ_IS_VNODE(uobj);
-	const bool isaobj = UVM_OBJ_IS_AOBJ(uobj);
 
 	KASSERT(uobj == pg->uobject);
 	KASSERT(mutex_owned(uobj->vmobjlock));
 	KASSERT(pg->flags & PG_TABLED);
 
-	if (isvnode || isaobj) {
+	if ((pg->pqflags & PQ_STAT) != 0) {
 		struct uvm_cpu *ucpu;
 		const unsigned int status = uvm_pagegetdirty(pg);
+		const bool isaobj = (pg->pqflags & PQ_AOBJ) != 0;
 
 		kpreempt_disable();
 		ucpu = curcpu()->ci_data.cpu_uvm;
 		ucpu->pagestate[isaobj][status]--;
 		kpreempt_enable();
-		if (isvnode) {
+		if (!isaobj) {
+			KASSERT((pg->pqflags & PQ_FILE) != 0);
 			if (uobj->uo_npages == 1) {
 				struct vnode *vp = (struct vnode *)uobj;
 
@@ -1324,18 +1324,27 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	 * otherwise we race with uvm_pglistalloc.
 	 */
 	pg->pqflags = 0;
-	if (anon) {
-		ucpu->pagestate[1][UVM_PAGE_STATUS_CLEAN]++;
-	}
 	mutex_spin_exit(&uvm_fpageqlock);
 	if (anon) {
 		anon->an_page = pg;
 		pg->pqflags = PQ_ANON;
 		atomic_inc_uint(&uvmexp.anonpages);
+		kpreempt_disable();
+		ucpu = curcpu()->ci_data.cpu_uvm;
+		ucpu->pagestate[1][UVM_PAGE_STATUS_CLEAN]++;
+		kpreempt_enable();
 	} else {
 		if (obj) {
 			int error;
 
+			/*
+			 * set PQ_FILE|PQ_AOBJ before the first uvm_pageinsert.
+			 */
+			if (UVM_OBJ_IS_VNODE(obj)) {
+				pg->pqflags |= PQ_FILE;
+			} else {
+				pg->pqflags |= PQ_AOBJ;
+			}
 			error = uvm_pageinsert(obj, pg);
 			if (error != 0) {
 #if 1
