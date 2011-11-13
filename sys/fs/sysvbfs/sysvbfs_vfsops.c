@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.37 2011/07/13 19:51:29 njoly Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.38 2011/11/13 23:07:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.37 2011/07/13 19:51:29 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.38 2011/11/13 23:07:11 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.37 2011/07/13 19:51:29 njoly Ex
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
-#include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
@@ -163,7 +162,6 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 {
 	kauth_cred_t cred = l->l_cred;
 	struct sysvbfs_mount *bmp;
-	struct partinfo dpart;
 	int error, oflags;
 	bool devopen = false;
 
@@ -180,16 +178,7 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		goto out;
 	devopen = true;
 
-	/* Get partition information */
-	if ((error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred)) != 0) {
-		goto out;
-	}
-
-	bmp = malloc(sizeof(struct sysvbfs_mount), M_SYSVBFS_VFS, M_WAITOK);
-	if (bmp == NULL) {
-		error = ENOMEM;
-		goto out;
-	}
+	bmp = malloc(sizeof(*bmp), M_SYSVBFS_VFS, M_WAITOK | M_ZERO);
 	bmp->devvp = devvp;
 	bmp->mountp = mp;
 	if ((error = sysvbfs_bfs_init(&bmp->bfs, devvp)) != 0) {
@@ -206,10 +195,6 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = BFS_BSHIFT;
 	mp->mnt_fs_bshift = BFS_BSHIFT;
-
-	DPRINTF("%s: fstype=%d dtype=%d bsize=%d\n", __func__,
-	    dpart.part->p_fstype, dpart.disklab->d_type,
-	    dpart.disklab->d_secsize);
 
  out:
 	if (devopen && error)
