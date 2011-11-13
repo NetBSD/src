@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.48 2011/10/25 17:25:47 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.49 2011/11/13 23:02:06 christos Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.48 2011/10/25 17:25:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.49 2011/11/13 23:02:06 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.48 2011/10/25 17:25:47 bouyer E
 #include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
-#include <sys/disklabel.h>
+#include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
@@ -760,27 +760,12 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 
 	/* dk device; get wedge data */
 	struct dkwedge_info wi;
-	if ((err = VOP_IOCTL(xbdi->xbdi_vp, DIOCGWEDGEINFO, &wi,
-		    FREAD, NOCRED)) == 0) {
+	if ((err = getdiskinfo(xbdi->xbdi_vp, &wi)) == 0) {
 		xbdi->xbdi_size = wi.dkw_size;
 		printf("xbd backend: attach device %s (size %" PRIu64 ") "
 		    "for domain %d\n", wi.dkw_devname, xbdi->xbdi_size,
 		    xbdi->xbdi_domid);
-       	} else {
-		/* disk device, get partition data */
-		struct partinfo dpart;
-		if ((err = VOP_IOCTL(xbdi->xbdi_vp, DIOCGPART, &dpart,
-			    FREAD, 0)) == 0) {
-		xbdi->xbdi_size = dpart.part->p_size;
-		printf("xbd backend: attach device %s%"PRId32
-		    "%c (size %" PRIu64 ") for domain %d\n",
-		    devname, DISKUNIT(xbdi->xbdi_dev),
-		    (char)DISKPART(xbdi->xbdi_dev) + 'a', xbdi->xbdi_size,
-		    xbdi->xbdi_domid);
-		}
-	}
-
-	if (err != 0) {
+	} else {
 		/* If both Ioctls failed set device size to 0 and return */
 		printf("xbdback %s: can't DIOCGWEDGEINFO device "
 		    "0x%"PRIx64": %d\n", xbusd->xbusd_path,
