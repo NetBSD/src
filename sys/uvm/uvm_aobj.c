@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.116.2.3 2011/11/06 22:05:00 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.116.2.4 2011/11/13 01:18:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.116.2.3 2011/11/06 22:05:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.116.2.4 2011/11/13 01:18:02 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -909,7 +909,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				    NULL, UVM_FLAG_COLORMATCH|UVM_PGA_ZERO);
 				if (ptmp) {
 					/* new page */
-					ptmp->pqflags |= PQ_AOBJ;
 					ptmp->flags &= ~PG_FAKE;
 					uvm_pagemarkdirty(ptmp,
 					    UVM_PAGE_STATUS_UNKNOWN);
@@ -1016,13 +1015,6 @@ gotpage:
 					mutex_enter(uobj->vmobjlock);
 					continue;
 				}
-
-				/*
-				 * safe with PQ's unlocked: because we just
-				 * alloc'd the page
-				 */
-
-				ptmp->pqflags |= PQ_AOBJ;
 
 				/*
 				 * got new page ready for I/O.  break pps while
