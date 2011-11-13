@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.10 2011/11/12 16:56:12 phx Exp $ */
+/* $NetBSD: pciide.c,v 1.11 2011/11/13 00:06:54 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,14 +35,14 @@
 
 #include "globals.h"
 
-static int cmdidefix(struct dkdev_ata *);
-static int apoidefix(struct dkdev_ata *);
-static int iteidefix(struct dkdev_ata *);
+static void cmdidefix(struct dkdev_ata *);
+static void apoidefix(struct dkdev_ata *);
+static void iteidefix(struct dkdev_ata *);
 
 static uint32_t pciiobase = PCI_XIOBASE;
 
 struct myops {
-	int (*chipfix)(struct dkdev_ata *);
+	void (*chipfix)(struct dkdev_ata *);
 	int (*presense)(struct dkdev_ata *, int);
 };
 static struct myops defaultops = { NULL, NULL };
@@ -93,8 +93,7 @@ pciide_init(unsigned tag, void *data)
 
 	/* chipset specific fixes */
 	if (myops->chipfix)
-		if (!(*myops->chipfix)(l))
-			return NULL;
+		(*myops->chipfix)(l);
 
 	val = pcicfgread(tag, PCI_CLASS_REG);
 	native = PCI_CLASS(val) != PCI_CLASS_IDE ||
@@ -142,7 +141,7 @@ pciide_init(unsigned tag, void *data)
 	return l;
 }
 
-static int
+static void
 cmdidefix(struct dkdev_ata *l)
 {
 	unsigned v;
@@ -155,11 +154,9 @@ cmdidefix(struct dkdev_ata *l)
 	pcicfgwrite(l->tag, 0xa4, (v & ~0xffff) | 0x328a);
 	v = pcicfgread(l->tag, 0xb4);
 	pcicfgwrite(l->tag, 0xb4, (v & ~0xffff) | 0x328a);
-
-	return 1;
 }
 
-static int
+static void
 apoidefix(struct dkdev_ata *l)
 {
 	unsigned v;
@@ -167,11 +164,9 @@ apoidefix(struct dkdev_ata *l)
 	/* enable primary and secondary channel */
 	v = pcicfgread(l->tag, 0x40) & ~0x03;
 	pcicfgwrite(l->tag, 0x40, v | 0x03);
-
-	return 1;
 }
 
-static int
+static void
 iteidefix(struct dkdev_ata *l)
 {
 	unsigned v;
@@ -183,6 +178,4 @@ iteidefix(struct dkdev_ata *l)
 	/* i/o configuration, enable channels, cables, IORDY */
 	v = pcicfgread(l->tag, 0x40);
 	pcicfgwrite(l->tag, 0x40, (v & ~0xffffff) | 0x36a0f3);
-
-	return 1;
 }
