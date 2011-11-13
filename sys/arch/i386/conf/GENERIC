@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1055 2011/10/30 12:12:21 hannken Exp $
+# $NetBSD: GENERIC,v 1.1056 2011/11/13 09:41:46 mbalmer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1055 $"
+#ident 		"GENERIC-$Revision: 1.1056 $"
 
 maxusers	64		# estimated number of users
 
@@ -679,7 +679,7 @@ iic*	at piixpm?			# SMBus on PIIX4
 #smscmon*	at iic? addr 0x2d	# (alternate address)
 
 # PC87366 hardware monitor
-#nsclpcsio*	at isa?
+nsclpcsio*	at isa?
 
 # Abit uGuru Hardware system monitor
 #ug0	at isa? port 0xe0
@@ -704,23 +704,23 @@ ld*	at iop? tid ?			# block devices
 dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 # GPIO devices
-#gpio*	at gpiobus?
+gpio*	at gpiobus?
 
 # 1-Wire support
 #gpioow* 	at gpio? offset ? mask ?	# 1-wire bitbanging via gpio
-#gpioow* 	at gpio?
-#onewire*	at gpioow?
+gpioow* 	at gpio?
+onewire*	at gpioow?
 
 # 1-Wire devices
-#owtemp* 	at onewire?			# Temperature sensors
+owtemp* 	at onewire?			# Temperature sensors
 
 # i2c support
-#gpioiic*	at gpio? offset ? mask ? flag 0x00	# flag 0x01 reverses
+gpioiic*	at gpio? offset ? mask ? flag 0x00	# flag 0x01 reverses
 							# SCA and SCL signals
-#iic*		at gpioiic?
+iic*		at gpioiic?
 
 # Keylock support
-#gpiolock*	at gpio?
+gpiolock*	at gpio?
 
 # SCSI Controllers and Devices
 
