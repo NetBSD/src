@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.176.2.2 2011/11/12 02:54:04 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.176.2.3 2011/11/14 14:24:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -456,10 +456,10 @@ struct uvmexp_sysctl {
 	int64_t colorhit;
 	int64_t colormiss;
 	int64_t ncolors;
-	int64_t mightdirtypages;
+	int64_t possiblydirtypages;
 	int64_t cleanpages;
 	int64_t dirtypages;
-	int64_t mightdirtyanonpages;
+	int64_t possiblydirtyanonpages;
 	int64_t cleananonpages;
 	int64_t dirtyanonpages;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.56.4.3 2011/11/13 01:36:25 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.56.4.4 2011/11/14 14:24:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.56.4.3 2011/11/13 01:36:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.56.4.4 2011/11/14 14:24:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,11 +179,11 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		struct uvm_cpu *ucpu = ci->ci_data.cpu_uvm;
 
-		u.mightdirtypages +=
+		u.possiblydirtypages +=
 		    ucpu->pagestate[0][UVM_PAGE_STATUS_UNKNOWN];
 		u.cleanpages += ucpu->pagestate[0][UVM_PAGE_STATUS_CLEAN];
 		u.dirtypages += ucpu->pagestate[0][UVM_PAGE_STATUS_DIRTY];
-		u.mightdirtyanonpages +=
+		u.possiblydirtyanonpages +=
 		    ucpu->pagestate[1][UVM_PAGE_STATUS_UNKNOWN];
 		u.cleananonpages += ucpu->pagestate[1][UVM_PAGE_STATUS_CLEAN];
 		u.dirtyanonpages += ucpu->pagestate[1][UVM_PAGE_STATUS_DIRTY];

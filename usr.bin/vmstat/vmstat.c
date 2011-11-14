@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.186.2.1 2011/11/12 04:12:52 yamt Exp $ */
+/* $NetBSD: vmstat.c,v 1.186.2.2 2011/11/14 14:27:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.186.2.1 2011/11/12 04:12:52 yamt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.186.2.2 2011/11/14 14:27:53 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -894,14 +894,14 @@ dosum(void)
 		(void)printf("%9" PRIu64 " pages inactive\n", uvmexp2.inactive);
 		(void)printf("%9" PRIu64 " file pages known clean\n",
 		    uvmexp2.cleanpages);
-		(void)printf("%9" PRIu64 " file pages might dirty\n",
-		    uvmexp2.mightdirtypages);
+		(void)printf("%9" PRIu64 " file pages possibly dirty\n",
+		    uvmexp2.possiblydirtypages);
 		(void)printf("%9" PRIu64 " file pages known dirty\n",
 		    uvmexp2.dirtypages);
 		(void)printf("%9" PRIu64 " anonymous pages known clean\n",
 		    uvmexp2.cleananonpages);
-		(void)printf("%9" PRIu64 " anonymous pages might dirty\n",
-		    uvmexp2.mightdirtyanonpages);
+		(void)printf("%9" PRIu64 " anonymous pages possibly dirty\n",
+		    uvmexp2.possiblydirtyanonpages);
 		(void)printf("%9" PRIu64 " anonymous pages known dirty\n",
 		    uvmexp2.dirtyanonpages);
 	}
