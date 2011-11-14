@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.270 2011/11/13 23:10:34 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.271 2011/11/14 18:35:14 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.270 2011/11/13 23:10:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.271 2011/11/14 18:35:14 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -429,7 +429,9 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			xflags = FREAD;
 		else
 			xflags = FREAD | FWRITE;
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_OPEN(devvp, xflags, FSCRED);
+		VOP_UNLOCK(devvp);
 		if (error)
 			goto fail;
 		error = ffs_mountfs(devvp, mp, l);
