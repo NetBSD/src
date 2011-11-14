@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.61 2011/09/27 01:13:16 christos Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.62 2011/11/14 18:35:14 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.61 2011/09/27 01:13:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.62 2011/11/14 18:35:14 hannken Exp $");
 #endif /* not lint */
 
 
@@ -395,7 +395,9 @@ udf_mount(struct mount *mp, const char *path,
 	} else {
 		openflags = FREAD | FWRITE;
 	}
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(devvp, openflags, FSCRED);
+	VOP_UNLOCK(devvp);
 	if (error == 0) {
 		/* opened ok, try mounting */
 		error = udf_mountfs(devvp, mp, l, args);

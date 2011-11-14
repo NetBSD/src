@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.7 2011/11/13 18:29:08 christos Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.8 2011/11/14 18:35:13 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.7 2011/11/13 18:29:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.8 2011/11/14 18:35:13 hannken Exp $");
 #endif /* not lint */
 
 
@@ -618,7 +618,9 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	 * Open device read-write; TODO how about upgrading later when needed?
 	 */
 	openflags = FREAD | FWRITE;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(devvp, openflags, FSCRED);
+	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
 		return error;

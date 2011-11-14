@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.16 2011/11/13 23:03:55 christos Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.17 2011/11/14 18:35:13 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.16 2011/11/13 23:03:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.17 2011/11/14 18:35:13 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,8 +178,10 @@ hfs_libcb_opendev(
 	
 	/* Open the device node. */
 	mode = vol->readonly ? FREAD : FREAD|FWRITE;
-	if ((result = VOP_OPEN(args->devvp, mode,
-		FSCRED)) != 0)
+	vn_lock(args->devvp, LK_EXCLUSIVE | LK_RETRY);
+	result = VOP_OPEN(args->devvp, mode, FSCRED);
+	VOP_UNLOCK(args->devvp);
+	if (result != 0)
 		goto error;
 
 	/* Flush out any old buffers remaining from a previous use. */
