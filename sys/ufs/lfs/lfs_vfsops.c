@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.290 2011/07/11 08:27:40 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.291 2011/11/14 18:35:14 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.290 2011/07/11 08:27:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.291 2011/11/14 18:35:14 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -670,7 +670,9 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			flags = FREAD;
 		else
 			flags = FREAD|FWRITE;
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_OPEN(devvp, flags, FSCRED);
+		VOP_UNLOCK(devvp);
 		if (error)
 			goto fail;
 		error = lfs_mountfs(devvp, mp, l);		/* LFS */
