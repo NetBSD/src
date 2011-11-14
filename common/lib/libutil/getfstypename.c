@@ -1,3 +1,5 @@
+/*	$NetBSD: getfstypename.c,v 1.4 2011/11/14 14:37:13 christos Exp $	*/
+
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,10 +38,10 @@
 #include <sys/cdefs.h>
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 # if !defined(lint)
-__RCSID("$NetBSD: getfstypename.c,v 1.3 2011/11/14 14:36:40 christos Exp $");
+__RCSID("$NetBSD: getfstypename.c,v 1.4 2011/11/14 14:37:13 christos Exp $");
 # endif
 #else
-__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.3 2011/11/14 14:36:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.4 2011/11/14 14:37:13 christos Exp $");
 #endif
 
 #define FSTYPE_ENUMNAME fstype_enum
