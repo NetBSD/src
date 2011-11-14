@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.h,v 1.1.2.2 2011/11/06 22:04:07 yamt Exp $	*/
+/*	$NetBSD: uvm_page_array.h,v 1.1.2.3 2011/11/14 14:22:28 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
  *	uvm_page_array_init(&ar);
  *	while ((pg = uvm_page_array_fill_and_peek(&ar, uobj, off, ....))
  *	    != NULL) {
- *		nextoff = pg->offset + PAGE_SIZE;
+ *		off = pg->offset + PAGE_SIZE;
  *		do_something(pg);
  *		uvm_page_array_advance(&ar);
  *	}
