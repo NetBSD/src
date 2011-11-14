@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.62 2011/06/12 03:35:52 rmind Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.63 2011/11/14 18:35:12 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.62 2011/06/12 03:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.63 2011/11/14 18:35:12 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -176,9 +176,13 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/*
 	 * open blkdev and read root block
 	 */
-	if ((error = VOP_OPEN(devvp, FREAD, NOCRED)) != 0)
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	if ((error = VOP_OPEN(devvp, FREAD, NOCRED)) != 0) {
+		VOP_UNLOCK(devvp);
 		return (error);
+	}
 	error = VOP_IOCTL(devvp, DIOCGDINFO, &dl, FREAD, NOCRED);
+	VOP_UNLOCK(devvp);
 	if (error)
 		goto fail;
 
