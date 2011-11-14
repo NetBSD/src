@@ -34,25 +34,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 # if !defined(lint)
-__RCSID("$NetBSD: getfstypename.c,v 1.2 2011/11/13 22:21:29 christos Exp $");
+__RCSID("$NetBSD: getfstypename.c,v 1.3 2011/11/14 14:36:40 christos Exp $");
 # endif
 #else
-__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.2 2011/11/13 22:21:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.3 2011/11/14 14:36:40 christos Exp $");
 #endif
 
 #define FSTYPE_ENUMNAME fstype_enum
 #include <sys/types.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <util.h>
 #endif
 
 const char *
 getfstypename(int fstype)
 {
+	/*
+	 * The cast is so that the compiler can check that we
+	 * cover all the enum values
+	 */
 	switch ((enum fstype_enum)fstype) {
 	case FS_UNUSED:
 		return DKW_PTYPE_UNUSED;
@@ -115,6 +119,6 @@ getfstypename(int fstype)
 	case FSMAXTYPES:
 		return DKW_PTYPE_UNKNOWN;
 	}
-	/* Stupid gcc */
+	/* Stupid gcc, should know it is impossible to get here */
 	return DKW_PTYPE_UNKNOWN;
 }
