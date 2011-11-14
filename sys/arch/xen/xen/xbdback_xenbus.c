@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.49 2011/11/13 23:02:06 christos Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.50 2011/11/14 16:04:29 hannken Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.49 2011/11/13 23:02:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.50 2011/11/14 16:04:29 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.49 2011/11/13 23:02:06 christos
 #include <sys/conf.h>
 #include <sys/disk.h>
 #include <sys/device.h>
+#include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
