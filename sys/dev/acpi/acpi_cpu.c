@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.47 2011/10/27 05:25:07 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.48 2011/11/14 02:44:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.47 2011/10/27 05:25:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.48 2011/11/14 02:44:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -98,8 +98,8 @@ acpicpu_match(device_t parent, cfdata_t match, void *aux)
 	if (acpi_softc == NULL)
 		return 0;
 
-	manu = pmf_get_platform("system-manufacturer");
-	prod = pmf_get_platform("system-product-name");
+	manu = pmf_get_platform("system-vendor");
+	prod = pmf_get_platform("system-product");
 	vers = pmf_get_platform("system-version");
 
 	if (manu != NULL && prod != NULL && vers != NULL) {
