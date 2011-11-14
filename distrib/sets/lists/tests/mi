@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.422 2011/11/12 19:39:01 riz Exp $
+# $NetBSD: mi,v 1.423 2011/11/14 20:25:15 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2898,6 +2898,7 @@
 ./usr/tests/util/sh/t_exit			tests-util-tests
 ./usr/tests/util/sh/t_exitstatus		tests-obsolete	obsolete
 ./usr/tests/util/sh/t_expand			tests-util-tests
+./usr/tests/util/sh/t_evaltested		tests-util-tests
 ./usr/tests/util/sh/t_fsplit			tests-util-tests
 ./usr/tests/util/sh/t_here			tests-util-tests
 ./usr/tests/util/sh/t_set_e			tests-util-tests
