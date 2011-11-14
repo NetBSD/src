@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.190.2.1 2011/11/02 21:54:00 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.190.2.2 2011/11/14 14:23:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.190.2.1 2011/11/02 21:54:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.190.2.2 2011/11/14 14:23:16 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1186,7 +1186,10 @@ uvm_fault_upper_neighbor(
 	UVMHIST_FUNC("uvm_fault_upper_neighbor"); UVMHIST_CALLED(maphist);
 
 	/* locked: amap, anon */
-
+	KASSERT(pg->uobject == NULL);
+	KASSERT(pg->uanon != NULL);
+	KASSERT(mutex_owned(pg->uanon->an_lock));
+	KASSERT(uvm_pagegetdirty(pg) != UVM_PAGE_STATUS_CLEAN);
 	mutex_enter(&uvm_pageqlock);
 	uvm_pageenqueue(pg);
 	mutex_exit(&uvm_pageqlock);
@@ -1462,6 +1465,7 @@ uvm_fault_upper_enter(
 	KASSERT(anon->an_lock == amap->am_lock);
 	KASSERT(oanon->an_lock == amap->am_lock);
 	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
+	KASSERT(uvm_pagegetdirty(pg) != UVM_PAGE_STATUS_CLEAN);
 
 	/*
 	 * now map the page in.
