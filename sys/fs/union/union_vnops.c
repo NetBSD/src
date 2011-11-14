@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.47 2011/10/18 09:22:53 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.48 2011/11/14 18:42:57 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.47 2011/10/18 09:22:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.48 2011/11/14 18:42:57 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,6 @@ int union_getpages(void *);
 int union_putpages(void *);
 int union_kqfilter(void *);
 
-static void union_fixup(struct union_node *);
 static int union_lookup1(struct vnode *, struct vnode **,
 			      struct vnode **, struct componentname *);
 
@@ -190,22 +189,11 @@ const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 const struct vnodeopv_desc union_vnodeop_opv_desc =
 	{ &union_vnodeop_p, union_vnodeop_entries };
 
-#define FIXUP(un) { \
-	if (((un)->un_flags & UN_ULOCK) == 0) { \
-		union_fixup(un); \
-	} \
-}
+#define FIXUP(un) \
+	KASSERT(((un)->un_flags & UN_ULOCK) == UN_ULOCK)
 #define NODE_IS_SPECIAL(vp) \
 	((vp)->v_type == VBLK || (vp)->v_type == VCHR || \
 	(vp)->v_type == VSOCK || (vp)->v_type == VFIFO)
-
-static void
-union_fixup(struct union_node *un)
-{
-
-	vn_lock(un->un_uppervp, LK_EXCLUSIVE | LK_RETRY);
-	un->un_flags |= UN_ULOCK;
-}
 
 static int
 union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
@@ -1248,6 +1236,9 @@ union_link(void *v)
 			}
 			error = union_copyup(un, 1, cnp->cn_cred, curlwp);
 			if (dun->un_uppervp == un->un_dirvp) {
+				vn_lock(dun->un_uppervp,
+				    LK_EXCLUSIVE | LK_RETRY);
+				dun->un_flags |= UN_ULOCK;
 				/*
 				 * During copyup, we dropped the lock on the
 				 * dir and invalidated any saved namei lookup
@@ -1583,24 +1574,11 @@ union_abortop(void *v)
 		struct vnode *a_dvp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	int error;
-	struct vnode *vp = OTHERVP(ap->a_dvp);
-	struct union_node *un = VTOUNION(ap->a_dvp);
-	int islocked = un->un_flags & UN_LOCKED;
-	int dolock = (vp == LOWERVP(ap->a_dvp));
 
-	if (islocked) {
-		if (dolock)
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		else
-			FIXUP(VTOUNION(ap->a_dvp));
-	}
-	ap->a_dvp = vp;
-	error = VCALL(vp, VOFFSET(vop_abortop), ap);
-	if (islocked && dolock)
-		VOP_UNLOCK(vp);
+	KASSERT(UPPERVP(ap->a_dvp) != NULL);
 
-	return (error);
+	ap->a_dvp = UPPERVP(ap->a_dvp);
+	return VCALL(ap->a_dvp, VOFFSET(vop_abortop), ap);
 }
 
 int
