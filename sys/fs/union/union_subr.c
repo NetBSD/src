@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.51 2011/10/18 09:22:53 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.52 2011/11/14 18:38:13 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.51 2011/10/18 09:22:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.52 2011/11/14 18:38:13 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -638,11 +638,6 @@ union_copyfile(struct vnode *fvp, struct vnode *tvp, kauth_cred_t cred,
 	uio.uio_offset = 0;
 	UIO_SETUP_SYSSPACE(&uio);
 
-	VOP_UNLOCK(fvp);			/* XXX */
-	vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
-	VOP_UNLOCK(tvp);			/* XXX */
-	vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
-
 	tbuf = malloc(MAXBSIZE, M_TEMP, M_WAITOK);
 
 	/* ugly loop follows... */
@@ -961,6 +956,7 @@ union_removed_upper(struct union_node *un)
 {
 	int hash;
 
+	KASSERT((un->un_flags & UN_ULOCK) == 0);
 #if 1
 	/*
 	 * We do not set the uppervp to NULLVP here, because lowervp
@@ -984,11 +980,6 @@ union_removed_upper(struct union_node *un)
 		LIST_REMOVE(un, un_cache);
 	}
 	mutex_exit(&unheadlock[hash]);
-
-	if (un->un_flags & UN_ULOCK) {
-		un->un_flags &= ~UN_ULOCK;
-		VOP_UNLOCK(un->un_uppervp);
-	}
 }
 
 #if 0
