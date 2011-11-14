@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.251 2011/10/18 23:47:26 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.252 2011/11/14 02:44:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.251 2011/10/18 23:47:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.252 2011/11/14 02:44:59 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -306,7 +306,7 @@ acpi_probe(void)
 
 		aprint_normal("ACPI: BIOS is too old (%s). "
 		    "Set acpi_force_load to use.\n",
-		    pmf_get_platform("firmware-date"));
+		    pmf_get_platform("bios-date"));
 
 		acpi_unmap_rsdt(rsdt);
 		goto fail;
