@@ -1,4 +1,4 @@
-/*	$NetBSD: getfstypename.c,v 1.4 2011/11/14 14:37:13 christos Exp $	*/
+/*	$NetBSD: getfstypename.c,v 1.5 2011/11/14 16:21:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,22 +35,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-# if !defined(lint)
-__RCSID("$NetBSD: getfstypename.c,v 1.4 2011/11/14 14:37:13 christos Exp $");
-# endif
-#else
-__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.4 2011/11/14 14:37:13 christos Exp $");
-#endif
+#ifndef _STANDALONE
+# include <sys/cdefs.h>
+# ifndef _KERNEL
+#  if !defined(lint)
+__RCSID("$NetBSD: getfstypename.c,v 1.5 2011/11/14 16:21:44 christos Exp $");
+#  endif
+# else
+__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.5 2011/11/14 16:21:44 christos Exp $");
+# endif /* _KERNEL */
 
-#define FSTYPE_ENUMNAME fstype_enum
-#include <sys/types.h>
-#include <sys/disk.h>
-#include <sys/disklabel.h>
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-#include <util.h>
-#endif
+# define FSTYPE_ENUMNAME fstype_enum
+# include <sys/types.h>
+# include <sys/disk.h>
+# include <sys/disklabel.h>
+# ifndef _KERNEL
+#  include <util.h>
+# endif
 
 const char *
 getfstypename(int fstype)
@@ -124,3 +125,4 @@ getfstypename(int fstype)
 	/* Stupid gcc, should know it is impossible to get here */
 	return DKW_PTYPE_UNKNOWN;
 }
+#endif /* !_STANDALONE */
