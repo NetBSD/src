@@ -1,4 +1,4 @@
-/* $NetBSD: platform.c,v 1.12 2011/11/14 02:44:59 jmcneill Exp $ */
+/* $NetBSD: platform.c,v 1.13 2011/11/14 11:29:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "isa.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.12 2011/11/14 02:44:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.13 2011/11/14 11:29:48 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -242,6 +242,7 @@ platform_add_date(struct smbtable *tbl, const char *key, int idx)
 		year += 1900;
 	sprintf(datestr, "%04u%02u%02u", year, month, day);
 	pmf_set_platform(key, datestr);
+	platform_create_sysctl(key);
 }
 
 static void
