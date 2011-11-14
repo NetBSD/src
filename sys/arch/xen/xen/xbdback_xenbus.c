@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.50 2011/11/14 16:04:29 hannken Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.51 2011/11/14 21:34:50 christos Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.50 2011/11/14 16:04:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.51 2011/11/14 21:34:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.50 2011/11/14 16:04:29 hannken 
 #include <sys/conf.h>
 #include <sys/disk.h>
 #include <sys/device.h>
-#include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
@@ -477,11 +476,14 @@ xbdback_xenbus_destroy(void *arg)
 	}
 	/* close device */
 	if (xbdi->xbdi_size) {
-		printf("xbd backend: detach device %s%"PRId32"%c for domain %d\n",
-		    devsw_blk2name(major(xbdi->xbdi_dev)),
-		    DISKUNIT(xbdi->xbdi_dev),
-		    (char)DISKPART(xbdi->xbdi_dev) + 'a',
-		    xbdi->xbdi_domid);
+		const char *name;
+		struct dkwedge_info wi;
+		if (getdiskinfo(xbdi->xbdi_vp, &wi) == 0)
+			name = wi.dkw_devname;
+		else
+			name = "*unknown*";
+		printf("xbd backend: detach device %s for domain %d\n",
+		    name, xbdi->xbdi_domid);
 		vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
 	}
 	SLIST_REMOVE(&xbdback_instances, xbdi, xbdback_instance, next);
