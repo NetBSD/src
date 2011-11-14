@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73.2.4 2011/11/13 01:18:02 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.73.2.5 2011/11/14 14:21:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -324,8 +324,6 @@ paddr_t uvm_vm_page_to_phys(const struct vm_page *);
 /*
  * macros
  */
-
-#define UVM_PAGE_TREE_PENALTY	4	/* XXX: a guess */
 
 #define VM_PAGE_TO_PHYS(entry)	uvm_vm_page_to_phys(entry)
 
