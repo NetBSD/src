@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.15 2009/03/18 10:22:24 cegger Exp $	*/
+/*	$NetBSD: fpu_machdep.c,v 1.1 2011/11/15 12:23:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,12 +30,11 @@
  */
 
 /*
- * Floating Point Unit (MC68881/882/040)
- * Probe for the FPU at autoconfig time.
+ * Floating Point Unit (MC68881/882/040) initialization.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.15 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_machdep.c,v 1.1 2011/11/15 12:23:21 tsutsui Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -54,14 +53,16 @@ extern int *nofault;
 
 static const char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
-	" emulated ", 		/* 0 */
+	[FPU_NONE] = " emulated ",
 #else
-	" no ",			/* 0 */
+	[FPU_NONE] = " no ",
 #endif
-	" mc68881 ",		/* 1 */
-	" mc68882 ",		/* 2 */
-	"/",			/* 3 68040 internal */
-	"??? " };
+	[FPU_68881] = " mc68881 ",
+	[FPU_68882] = " mc68882 ",
+	[FPU_68040] = "/",
+	[FPU_68060] = "/",
+	[FPU_UNKNOWN] = "??? "
+};
 
 const char *
 fpu_describe(int type)
@@ -70,69 +71,5 @@ fpu_describe(int type)
 
 	if ((type < 0) || (type > maxtype))
 		type = 0;
-	return(fpu_descr[type]);
-}
-
-int
-fpu_probe(void)
-{
-	/*
-	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.
-	 * We, of course, need to have enough room for either.
-	 */
-	struct	fpframe	fpframe;
-	label_t		faultbuf;
-	u_char		b;
-
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(0);
-	}
-
-	/*
-	 * Synchronize FPU or cause a fault.
-	 * This should leave the 881/882 in the IDLE state,
-	 * state, so we can determine which we have by
-	 * examining the size of the FP state frame
-	 */
-	__asm("fnop");
-
-	nofault = (int *) 0;
-
-	/*
-	 * Presumably, if we're an 040 and did not take exception
-	 * above, we have an FPU.  Don't bother probing.
-	 */
-	if (mmutype == MMU_68040) {
-		return 3;
-	}
-
-	/*
-	 * Presumably, this will not cause a fault--the fnop should
-	 * have if this will.  We save the state in order to get the
-	 * size of the frame.
-	 */
-	__asm("movl %0, %%a0; fsave %%a0@" : : "a" (&fpframe) : "a0" );
-
-	b = fpframe.fpf_fsize;
-
-	/*
-	 * Now, restore a NULL state to reset the FPU.
-	 */
-	fpframe.fpf_null = 0;
-	fpframe.fpf_idle.fpf_ccr = 0;	/* XXX: really needed? */
-	m68881_restore(&fpframe);
-
-	/*
-	 * The size of a 68881 IDLE frame is 0x18
-	 *         and a 68882 frame is 0x38
-	 */
-	if (b == 0x18) return 1;
-	if (b == 0x38) return 2;
-
-	/*
-	 * If it's not one of the above, we have no clue what it is.
-	 */
-	return 4;
+	return fpu_descr[type];
 }

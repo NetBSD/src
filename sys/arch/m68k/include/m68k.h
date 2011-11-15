@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.19 2011/05/16 13:22:53 tsutsui Exp $	*/
+/*	$NetBSD: m68k.h,v 1.20 2011/11/15 12:23:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -117,6 +117,9 @@ void	setfunc_trampoline(void);
 /* w16copy.s */
 void	w16zero(void *, u_int);
 void	w16copy(const void *, void *, u_int);
+
+/* fpu.c */
+int	fpu_probe(void);
 
 #ifdef MAPPEDCOPY
 /* mappedcopy.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.14 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: fpu.c,v 1.1 2011/11/15 12:23:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,11 +31,11 @@
 
 /*
  * Floating Point Unit (MC68881/882/040/060)
- * Probe for the FPU at autoconfig time.
+ * Probe for the FPU at early bootstrap.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.14 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1 2011/11/15 12:23:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,12 +57,12 @@ fpu_probe(void)
 	 * We, of course, need to have enough room for either.
 	 */
 	struct fpframe fpframe;
-	label_t	faultbuf;
-	u_char	b;
+	label_t faultbuf;
+	uint8_t b;
 
-	nofault = (int *) &faultbuf;
+	nofault = (int *)&faultbuf;
 	if (setjmp(&faultbuf)) {
-		nofault = (int *) 0;
+		nofault = (int *)0;
 		return FPU_NONE;
 	}
 
@@ -80,11 +80,10 @@ fpu_probe(void)
 	 * Presumably, if we're an 040/060 and did not take exception
 	 * above, we have an FPU.  Don't bother probing.
 	 */
-	if (cputype == CPU_68060) {
+	if (cputype == CPU_68060)
 		return FPU_68060;
-	} else if (cputype == CPU_68040) {
+	if (cputype == CPU_68040)
 		return FPU_68040;
-	}
 
 	/*
 	 * Presumably, this will not cause a fault--the fnop should
@@ -106,8 +105,10 @@ fpu_probe(void)
 	 * The size of a 68881 IDLE frame is 0x18
 	 *         and a 68882 frame is 0x38
 	 */
-	if (b == 0x18) return FPU_68881;
-	if (b == 0x38) return FPU_68882;
+	if (b == 0x18)
+		return FPU_68881;
+	if (b == 0x38)
+		return FPU_68882;
 
 	/*
 	 * If it's not one of the above, we have no clue what it is.
