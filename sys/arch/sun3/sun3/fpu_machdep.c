@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.25 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: fpu_machdep.c,v 1.1 2011/11/15 12:23:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,12 +30,11 @@
  */
 
 /*
- * Floating Point Unit (MC68881/882)
- * Probe for the FPU at autoconfig time.
+ * Floating Point Unit (MC68881/882) initialization.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.25 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD");
 
 #include "opt_fpu_emulate.h"
 
@@ -46,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.25 2008/04/28 20:23:38 martin Exp $");
 #include <machine/frame.h>
 
 #include <sun3/sun3/machdep.h>
-
-static int fpu_probe(void);
 
 static const char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
@@ -83,57 +80,4 @@ initfpu(void)
 		enable_fpu(0);
 	} else
 		m68k_make_fpu_idle_frame();
-}
-
-static int 
-fpu_probe(void)
-{
-	label_t	faultbuf;
-	struct fpframe fpframe;
-	u_char b;
-
-	nofault = &faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return FPU_NONE;
-	}
-
-	/*
-	 * Synchronize FPU or cause a fault.
-	 * This should leave the 881/882 in the IDLE state,
-	 * so we can determine which we have by
-	 * examining the size of the FP state frame.
-	 */
-	__asm("fnop");
-
-	nofault = NULL;
-
-	/* Presumably, this will not cause a fault--the fnop should
-	 * have if this will. We save the state in order to get the
-	 * size of the frame.
-	 */
-	__asm("fsave %0@" : : "a" (&fpframe) : "memory");
-
-	b = fpframe.fpf_fsize;
-
-	/*
-	 * Now, restore a NULL state to reset the FPU.
-	 */
-	fpframe.fpf_null = 0;
-	fpframe.fpf_idle.fpf_ccr = 0;
-	m68881_restore(&fpframe);
-
-	/*
-	 * The size of a 68881 IDLE frame is 0x18
-	 *           and 68882 frame is 0x38
-	 */
-	if (b == 0x18)
-		return FPU_68881;
-	if (b == 0x38)
-		return FPU_68882;
-
-	/*
-	 * If it's not one of the above, we have no clue what it is.
-	 */
-	return FPU_UNKNOWN;
 }
