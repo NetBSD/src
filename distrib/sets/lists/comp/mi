@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1709 2011/11/15 00:50:55 jym Exp $
+#	$NetBSD: mi,v 1.1710 2011/11/15 16:50:44 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -461,6 +461,10 @@
 ./usr/include/dev/isapnp/if_levar.h		comp-obsolete		obsolete
 ./usr/include/dev/isapnp/isapnpreg.h		comp-obsolete		obsolete
 ./usr/include/dev/isapnp/isapnpvar.h		comp-obsolete		obsolete
+./usr/include/dev/iscsi/iscsi.h			comp-c-include		iscsi
+./usr/include/dev/iscsi/iscsi_ioctl.h		comp-c-include		iscsi
+./usr/include/dev/iscsi/iscsi_perf.h		comp-c-include		iscsi
+./usr/include/dev/iscsi/iscsi_test.h		comp-c-include		iscsi
 ./usr/include/dev/keylock.h			comp-c-include
 ./usr/include/dev/kttcpio.h			comp-c-include
 ./usr/include/dev/lockstat.h			comp-c-include

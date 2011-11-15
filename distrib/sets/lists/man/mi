@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1354 2011/11/13 12:35:40 mbalmer Exp $
+# $NetBSD: mi,v 1.1355 2011/11/15 16:50:45 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2390,6 +2390,8 @@
 ./usr/share/man/cat8/irdaattach.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/iscsi-initiator.0		man-iscsi-catman	iscsi,.cat
 ./usr/share/man/cat8/iscsi-target.0		man-iscsi-catman	iscsi,.cat
+./usr/share/man/cat8/iscsictl.0			man-iscsi-catman	iscsi,.cat
+./usr/share/man/cat8/iscsid.0			man-iscsi-catman	iscsi,.cat
 ./usr/share/man/cat8/isdnd.0			man-isdn-catman		.cat
 ./usr/share/man/cat8/isdnmonitor.0		man-isdn-catman		.cat
 ./usr/share/man/cat8/isdntel.0			man-isdn-catman		.cat
@@ -5044,6 +5046,8 @@
 ./usr/share/man/html8/irdaattach.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/iscsi-initiator.html	man-iscsi-htmlman	iscsi,html
 ./usr/share/man/html8/iscsi-target.html		man-iscsi-htmlman	iscsi,html
+./usr/share/man/html8/iscsictl.html		man-iscsi-htmlman	iscsi,html
+./usr/share/man/html8/iscsid.html		man-iscsi-htmlman	iscsi,html
 ./usr/share/man/html8/isdnd.html		man-isdn-htmlman	html
 ./usr/share/man/html8/isdnmonitor.html		man-isdn-htmlman	html
 ./usr/share/man/html8/isdntel.html		man-isdn-htmlman	html
@@ -7847,6 +7851,8 @@
 ./usr/share/man/man8/irdaattach.8		man-sysutil-man		.man
 ./usr/share/man/man8/iscsi-initiator.8		man-iscsi-man		iscsi,.man
 ./usr/share/man/man8/iscsi-target.8		man-iscsi-man		iscsi,.man
+./usr/share/man/man8/iscsictl.8			man-iscsi-man		iscsi,.man
+./usr/share/man/man8/iscsid.8			man-iscsi-man		iscsi,.man
 ./usr/share/man/man8/isdnd.8			man-isdn-man		.man
 ./usr/share/man/man8/isdnmonitor.8		man-isdn-man		.man
 ./usr/share/man/man8/isdntel.8			man-isdn-man		.man
