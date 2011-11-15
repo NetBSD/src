@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.25 2010/12/27 15:39:07 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.26 2011/11/15 10:57:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -988,14 +988,6 @@ Lsldone:
 	clrl	%a1@(PCB_ONFAULT) 	| clear fault address
 	rts
 #endif
-
-ENTRY_NOPROFILE(getsfc)
-	movc	%sfc,%d0
-	rts
-
-ENTRY_NOPROFILE(getdfc)
-	movc	%dfc,%d0
-	rts
 
 /*
  * Load a new user segment table pointer.
