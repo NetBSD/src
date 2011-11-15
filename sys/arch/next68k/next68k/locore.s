@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.58 2010/12/27 15:39:07 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.59 2011/11/15 10:57:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -1154,14 +1154,6 @@ ENTRY(ecacheoff)
 Lnocache8:
 	rts
 #endif
-
-ENTRY_NOPROFILE(getsfc)
-	movc	%sfc,%d0
-	rts
-
-ENTRY_NOPROFILE(getdfc)
-	movc	%dfc,%d0
-	rts
 
 /*
  * Load a new user segment table pointer.
