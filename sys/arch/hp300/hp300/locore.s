@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.162 2011/11/05 15:21:43 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.163 2011/11/15 10:57:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1276,14 +1276,6 @@ ENTRY(ecacheoff)
 	MMUADDR(%a0)
 	andl	#~MMU_CEN,%a0@(MMUCMD)
 Lnocache8:
-	rts
-
-ENTRY_NOPROFILE(getsfc)
-	movc	%sfc,%d0
-	rts
-
-ENTRY_NOPROFILE(getdfc)
-	movc	%dfc,%d0
 	rts
 
 /*

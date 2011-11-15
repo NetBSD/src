@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.105 2011/11/04 17:51:54 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.106 2011/11/15 10:57:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1017,14 +1017,6 @@ ENTRY(ecacheon)
 	rts
 
 ENTRY(ecacheoff)
-	rts
-
-ENTRY_NOPROFILE(getsfc)
-	movc	%sfc,%d0
-	rts
-
-ENTRY_NOPROFILE(getdfc)
-	movc	%dfc,%d0
 	rts
 
 /*
