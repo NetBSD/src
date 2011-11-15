@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1708 2011/11/15 00:19:42 jym Exp $
+#	$NetBSD: mi,v 1.1709 2011/11/15 00:50:55 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10389,6 +10389,9 @@
 ./usr/share/man/cat9/pool_cache_get_paddr.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_invalidate.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pool_cache_sethiwat.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pool_cache_setlowat.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pool_cache_sethardlimit.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_invalidate_local.0	comp-obsolete	obsolete
 ./usr/share/man/cat9/pool_cache_put.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_put_paddr.0	comp-sys-catman		.cat
@@ -16489,6 +16492,9 @@
 ./usr/share/man/html9/pool_cache_get_paddr.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_init.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_invalidate.html	comp-sys-htmlman	html
+./usr/share/man/html9/pool_cache_sethiwat.html	comp-sys-htmlman	html
+./usr/share/man/html9/pool_cache_setlowat.html	comp-sys-htmlman	html
+./usr/share/man/html9/pool_cache_sethardlimit.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_invalidate_local.html	comp-obsolete	obsolete
 ./usr/share/man/html9/pool_cache_put.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_put_paddr.html	comp-sys-htmlman	html
@@ -22756,6 +22762,9 @@
 ./usr/share/man/man9/pool_cache_get_paddr.9	comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_init.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_invalidate.9	comp-sys-man		.man
+./usr/share/man/man9/pool_cache_sethiwat.9	comp-sys-man		.man
+./usr/share/man/man9/pool_cache_setlowat.9	comp-sys-man		.man
+./usr/share/man/man9/pool_cache_sethardlimit.9	comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_invalidate_local.9	comp-obsolete	obsolete
 ./usr/share/man/man9/pool_cache_put.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_put_paddr.9	comp-sys-man		.man
