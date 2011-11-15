@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.24 2011/08/19 05:36:47 tteras Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.25 2011/11/15 13:51:23 tteras Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -226,6 +226,7 @@ hexstring	0x{hexdigit}+
 <S_LDAP>version		{ YYD; return(LDAP_PVER); }
 <S_LDAP>host		{ YYD; return(LDAP_HOST); }
 <S_LDAP>port		{ YYD; return(LDAP_PORT); }
+<S_LDAP>tls		{ YYD; return(LDAP_TLS); }
 <S_LDAP>base		{ YYD; return(LDAP_BASE); }
 <S_LDAP>subtree		{ YYD; return(LDAP_SUBTREE); }
 <S_LDAP>bind_dn		{ YYD; return(LDAP_BIND_DN); }
