@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 2011/05/16 13:22:55 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55 2011/11/15 12:23:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,9 +126,6 @@ extern int astpending;		/* need to trap before returning to user mode */
 extern int machineid;
 extern uint8_t *intiobase;
 extern uint8_t *intiolimit;
-
-/* fpu.c functions */
-int	fpu_probe(void);
 
 /* machdep.c functions */
 void	dumpsys(void);
