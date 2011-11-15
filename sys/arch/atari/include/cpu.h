@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.67 2011/05/16 13:22:52 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68 2011/11/15 12:23:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -160,7 +160,6 @@ void	config_console(void);
  * Prototypes from fpu.c
  */
 const char *fpu_describe(int);
-int	fpu_probe(void);
 
 /*
  * Prototypes from locore.s
