@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.36 2011/11/06 13:27:25 tron Exp $
+# $NetBSD: mi,v 1.37 2011/11/15 16:50:46 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -75,6 +75,8 @@
 ./@MODULEDIR@/hfs/hfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/iic				base-kernel-modules	kmod
 ./@MODULEDIR@/iic/iic.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/iscsi				base-kernel-modules	kmod,iscsi
+./@MODULEDIR@/iscsi/iscsi.kmod			base-kernel-modules	kmod,iscsi
 ./@MODULEDIR@/kernfs				base-kernel-modules	kmod
 ./@MODULEDIR@/kernfs/kernfs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/ksem				base-kernel-modules	kmod
