@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.93 2010/10/15 15:55:53 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.94 2011/11/15 10:57:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -643,16 +643,6 @@ ENTRY(DCIU)
 GLOBAL(getsp)
 	movl	%sp,%d0			| get current SP
 	addql	#4,%d0			| compensate for return address
-	movl	%d0,%a0
-	rts
-
-ENTRY(getsfc)
-	movc	%sfc,%d0
-	movl	%d0,%a0
-	rts
-
-ENTRY(getdfc)
-	movc	%dfc,%d0
 	movl	%d0,%a0
 	rts
 
