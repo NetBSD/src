@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.58 2011/11/03 14:57:43 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.59 2011/11/15 10:57:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -999,14 +999,6 @@ ENTRY(ecacheoff)
 	movl	_C_LABEL(cache_ctl),%a0
 	sf	%a0@			| NEWS-OS does `sf 0xe1300000'
 Lnocache8:
-	rts
-
-ENTRY_NOPROFILE(getsfc)
-	movc	%sfc,%d0
-	rts
-
-ENTRY_NOPROFILE(getdfc)
-	movc	%dfc,%d0
 	rts
 
 /*
