@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.121 2011/08/29 11:38:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.122 2011/11/15 16:50:43 riz Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -56,6 +56,10 @@ SUBDIR+= cgdconfig
 
 .if (${USE_INET6} != "no")
 SUBDIR+= ping6 rtsol
+.endif
+
+.if (${MKISCSI} != "no")
+SUBDIR+= iscsictl iscsid
 .endif
 
 # IPsec
