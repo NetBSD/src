@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.85 2011/11/12 13:44:26 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.86 2011/11/15 13:25:44 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2011/11/12 13:44:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2011/11/15 13:25:44 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2011/11/12 13:44:26 tsutsui Exp $")
  * Info for CTL_HW
  */
 char	machine[] = MACHINE;
-char	cpu_model[60];
+char	cpu_model[120];
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -284,13 +284,28 @@ void
 identifycpu(void)
 {
 	extern int cputype;
-	const char *cpu, *model;
+	const char *model, *fpu;
 
 	memset(cpu_model, 0, sizeof(cpu_model));
 	switch (cputype) {
 	case CPU_68030:
 		model ="LUNA-I";
-		cpu = "MC68030 CPU+MMU, MC68881 FPU";
+		switch (fputype) {
+		case FPU_68881:
+			fpu = "MC68881";
+			break;
+		case FPU_68882:
+			fpu = "MC68882";
+			break;
+		case FPU_NONE:
+			fpu = "no";
+			break;
+		default:
+			fpu = "unknown";
+			break;
+		}
+		snprintf(cpu_model, sizeof(cpu_model),
+		    "%s (MC68030 CPU+MMU, %s FPU)", model, fpu);
 		machtype = LUNA_I;
 		/* 20MHz 68030 */
 		cpuspeed = 20;
@@ -300,7 +315,9 @@ identifycpu(void)
 #if defined(M68040)
 	case CPU_68040:
 		model ="LUNA-II";
-		cpu = "MC68040 CPU+MMU+FPU, 4k on-chip physical I/D caches";
+		snprintf(cpu_model, sizeof(cpu_model),
+		    "%s (MC68040 CPU+MMU+FPU, 4k on-chip physical I/D caches)",
+		    model);
 		machtype = LUNA_II;
 		/* 25MHz 68040 */
 		cpuspeed = 25;
@@ -311,8 +328,7 @@ identifycpu(void)
 	default:
 		panic("unknown CPU type");
 	}
-	strcpy(cpu_model, cpu);
-	printf("%s (%s)\n", model, cpu);
+	printf("%s\n", cpu_model);
 }
 
 /*
