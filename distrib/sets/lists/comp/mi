@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1710 2011/11/15 16:50:44 riz Exp $
+#	$NetBSD: mi,v 1.1711 2011/11/15 22:02:19 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3410,6 +3410,8 @@
 ./usr/libdata/debug/sbin/ifconfig.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/init.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/ipf.debug		comp-ipf-debug		ipfilter,debug
+./usr/libdata/debug/sbin/iscsictl.debug		comp-iscsi-debug	iscsi,debug
+./usr/libdata/debug/sbin/iscsid.debug		comp-iscsi-debug	iscsi,debug
 ./usr/libdata/debug/sbin/lvm.debug		comp-sysutil-debug	lvm,debug
 ./usr/libdata/debug/sbin/mbrlabel.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mknod.debug		comp-sysutil-debug	debug
