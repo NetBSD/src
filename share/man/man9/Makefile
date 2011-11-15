@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.358 2011/11/15 00:19:42 jym Exp $
+#       $NetBSD: Makefile,v 1.359 2011/11/15 00:50:55 jym Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -636,7 +636,10 @@ MLINKS+=pool_cache.9 pool_cache_init.9 \
 	pool_cache.9 pool_cache_put_paddr.9 \
 	pool_cache.9 pool_cache_put.9 \
 	pool_cache.9 pool_cache_destruct_object.9 \
-	pool_cache.9 pool_cache_invalidate.9
+	pool_cache.9 pool_cache_invalidate.9 \
+	pool_cache.9 pool_cache_sethiwat.9 \
+	pool_cache.9 pool_cache_setlowat.9 \
+	pool_cache.9 pool_cache_sethardlimit.9
 MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=preempt.9 yield.9
 MLINKS+=pserialize.9 pserialize_create.9 \
