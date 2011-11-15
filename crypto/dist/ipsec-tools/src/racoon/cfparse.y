@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.43 2011/08/19 05:36:47 tteras Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.44 2011/11/15 13:51:23 tteras Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -267,7 +267,7 @@ static int process_rmconf()
 	/* listen */
 %token LISTEN X_ISAKMP X_ISAKMP_NATT X_ADMIN STRICT_ADDRESS ADMINSOCK DISABLED
 	/* ldap config */
-%token LDAPCFG LDAP_HOST LDAP_PORT LDAP_PVER LDAP_BASE LDAP_BIND_DN LDAP_BIND_PW LDAP_SUBTREE
+%token LDAPCFG LDAP_HOST LDAP_PORT LDAP_TLS LDAP_PVER LDAP_BASE LDAP_BIND_DN LDAP_BIND_PW LDAP_SUBTREE
 %token LDAP_ATTR_USER LDAP_ATTR_ADDR LDAP_ATTR_MASK LDAP_ATTR_GROUP LDAP_ATTR_MEMBER
 	/* radius config */
 %token RADCFG RAD_AUTH RAD_ACCT RAD_TIMEOUT RAD_RETRIES
@@ -716,6 +716,15 @@ ldapcfg_stmt
 #ifdef ENABLE_HYBRID
 #ifdef HAVE_LIBLDAP
 			xauth_ldap_config.port = $2;
+#endif
+#endif
+		}
+		EOS
+	|	LDAP_TLS SWITCH
+		{
+#ifdef ENABLE_HYBRID
+#ifdef HAVE_LIBLDAP
+			xauth_ldap_config.tls = $2;
 #endif
 #endif
 		}

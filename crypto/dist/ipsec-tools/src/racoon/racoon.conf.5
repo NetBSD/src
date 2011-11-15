@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.62 2011/08/19 05:36:47 tteras Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.63 2011/11/15 13:51:23 tteras Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -1350,6 +1350,10 @@ The default is
 The port that the ldap server is configured to listen on.
 The default is
 .Ic 389 .
+.It Ic tls (on | off) ;
+Use TLS with the ldap server.
+The default is
+.Ic off .
 .It Ic base Ar distinguished name ;
 The ldap search base.
 This option has no default value.
