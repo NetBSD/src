@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.970 2011/11/05 22:55:20 christos Exp $
+# $NetBSD: mi,v 1.971 2011/11/15 16:50:43 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -255,6 +255,8 @@
 ./sbin/init					base-sysutil-root
 ./sbin/ipf					base-ipf-root		ipfilter
 ./sbin/ipppctl					base-netutil-root
+./sbin/iscsictl					base-iscsi-bin		iscsi
+./sbin/iscsid					base-iscsi-bin		iscsi
 ./sbin/ispppcontrol				base-obsolete		obsolete
 ./sbin/lmcctl					base-obsolete		obsolete
 ./sbin/lvm					base-lvm-root		lvm
@@ -783,6 +785,7 @@
 ./usr/include/dev/ir				base-c-usr
 ./usr/include/dev/isa				base-c-usr
 ./usr/include/dev/isapnp			base-obsolete		obsolete
+./usr/include/dev/iscsi				base-c-usr		iscsi
 ./usr/include/dev/microcode			base-obsolete		obsolete
 ./usr/include/dev/microcode/aic7xxx		base-obsolete		obsolete
 ./usr/include/dev/microcode/isp			base-obsolete		obsolete
