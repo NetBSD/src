@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.9 2011/11/15 23:54:14 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.10 2011/11/16 01:45:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -105,11 +105,11 @@
 
 #define Strtol(p,e,b)   wcstol(p,e,b)
 
-static inline size_t
+static inline int
 Width(wchar_t c)
 {
 	int w = wcwidth(c);
-	return (w < 0) ? 0 : (size_t)w;
+	return w < 0 ? 0 : w;
 }
 
 #else /* NARROW */
