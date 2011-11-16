@@ -106,6 +106,13 @@ bool to_bool(const std::string&);
 std::string to_lower(const std::string&);
 
 //!
+//! \brief Converts the given string to a number
+//!
+//! The string should be of the form ^[0-9]+[KMGT]$ or ^[0-9]$
+//!
+int64_t to_number(const std::string&);
+
+//!
 //! \brief Converts the given object to a string.
 //!
 //! Returns a string with the representation of the given object.  There

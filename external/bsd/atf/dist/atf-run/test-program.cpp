@@ -418,6 +418,7 @@ detail::atf_tp_reader::validate_and_insert(const std::string& name,
 
     const std::string ident_regex = "^[_A-Za-z0-9]+$";
     const std::string integer_regex = "^[0-9]+$";
+    const std::string memory_regex = "^[0-9]+[KMGT]$";
 
     if (name == "descr") {
         // Any non-empty value is valid.
@@ -438,6 +439,12 @@ detail::atf_tp_reader::validate_and_insert(const std::string& name,
     } else if (name == "require.machine") {
     } else if (name == "require.progs") {
     } else if (name == "require.user") {
+    } else if (name == "require.memory") {
+        if (!atf::text::match(value, integer_regex) &&
+	    !atf::text::match(value, memory_regex))
+            throw parse_error(lineno, "The require.memory property requires"
+			      " an integer value or a string of the form"
+			      " <number>[KMGT]");
     } else if (name == "timeout") {
         if (!atf::text::match(value, integer_regex))
             throw parse_error(lineno, "The timeout property requires an integer"

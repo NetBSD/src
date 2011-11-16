@@ -33,6 +33,7 @@ extern "C" {
 
 #include <cctype>
 #include <cstring>
+#include <cstdlib>
 
 extern "C" {
 #include "../../atf-c/error.h"
@@ -133,3 +134,12 @@ impl::to_bool(const std::string& str)
 
     return b;
 }
+
+int64_t
+impl::to_number(const std::string& str)
+{
+	int64_t num;
+	::dehumanize_number(str.c_str(), &num);
+	return num;
+}
+    
