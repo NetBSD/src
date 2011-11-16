@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.44 2011/11/10 16:21:09 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.45 2011/11/16 04:52:40 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -2825,8 +2825,6 @@ perfuse_node_pathconf(pu, opc, name, retval)
 	return 0;
 }
 
-/* id is unused */
-/* ARGSUSED2 */
 int
 perfuse_node_advlock(pu, opc, id, op, fl, flags)
 	struct puffs_usermount *pu;
@@ -2839,6 +2837,7 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 	struct perfuse_state *ps;
 	int fop;
 	perfuse_msg_t *pm;
+	uint64_t fh;
 	struct fuse_lk_in *fli;
 	struct fuse_out_header *foh;
 	struct fuse_lk_out *flo;
@@ -2846,6 +2845,20 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 	size_t len;
 	int error;
 	
+	/*
+	 * Make sure we do have a filehandle, as the FUSE filesystem
+	 * expect one. E.g.: if we provide none, GlusterFS logs an error
+	 * "0-glusterfs-fuse: xl is NULL"
+	 *
+	 * We need the read file handle if the file is open read only,
+	 * in order to support shared locks on read-only files.
+	 * NB: The kernel always sends advlock for read-only
+	 * files at exit time when the process used lock, see
+	 * sys_exit -> exit1 -> fd_free -> fd_close -> VOP_ADVLOCK
+	 */
+	if ((fh = perfuse_get_fh(opc, FREAD)) == FUSE_UNKNOWN_FH)
+		return EBADF;
+
 	ps = puffs_getspecific(pu);
 
 	if (op == F_GETLK)
@@ -2862,15 +2875,15 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 	 */
 	pm = ps->ps_new_msg(pu, opc, fop, sizeof(*fli), NULL);
 	fli = GET_INPAYLOAD(ps, pm, fuse_lk_in);
-	fli->fh = perfuse_get_fh(opc, FWRITE);
-	fli->owner = fl->l_pid;
+	fli->fh = fh;
+	fli->owner = (uint64_t)(vaddr_t)id;
 	fli->lk.start = fl->l_start;
 	fli->lk.end = fl->l_start + fl->l_len;
 	fli->lk.type = fl->l_type;
 	fli->lk.pid = fl->l_pid;
 	fli->lk_flags = (flags & F_FLOCK) ? FUSE_LK_FLOCK : 0;
 
-	owner = fl->l_pid;
+	owner = (uint64_t)(vaddr_t)id;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
