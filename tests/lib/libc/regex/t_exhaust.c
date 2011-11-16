@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exhaust.c,v 1.6 2011/11/16 17:47:19 christos Exp $	*/
+/*	$NetBSD: t_exhaust.c,v 1.7 2011/11/16 18:37:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_exhaust.c,v 1.6 2011/11/16 17:47:19 christos Exp $");
+__RCSID("$NetBSD: t_exhaust.c,v 1.7 2011/11/16 18:37:31 christos Exp $");
 
 #include <stdio.h>
 #include <regex.h>
@@ -176,7 +176,7 @@ ATF_TC_HEAD(regcomp_too_big, tc)
 	    " crash, but return a proper error code");
 	// libtre needs it.
 	atf_tc_set_md_var(tc, "timeout", "600");
-	atf_tc_set_md_var(tc, "require.memory", "500M");
+	atf_tc_set_md_var(tc, "require.memory", "120M");
 }
 
 ATF_TC_BODY(regcomp_too_big, tc)
