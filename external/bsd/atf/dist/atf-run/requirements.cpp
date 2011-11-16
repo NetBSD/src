@@ -29,6 +29,14 @@
 
 // TODO: We probably don't want to raise std::runtime_error for the errors
 // detected in this file.
+extern "C" {
+#include <sys/param.h>
+#include <sys/sysctl.h>
+};
+
+#include <cstdlib>
+#include <cstring>
+#include <cerrno>
 #include <stdexcept>
 
 #include "atf-c++/config.hpp"
@@ -185,6 +193,36 @@ check_user(const std::string& user, const atf::tests::vars_map& config)
                                  "require.user");
 }
 
+static
+std::string
+check_memory(const std::string& memory)
+{
+    // Make sure we have enough memory 
+    int64_t memneed = atf::text::to_number(memory);
+    int64_t memavail;
+    size_t len = sizeof(memavail);
+
+    if (::sysctlbyname("hw.usermem64", &memavail, &len, NULL, 0) == -1) {
+	const char *e = ::strerror(errno);
+	std::stringstream ss;
+	ss << "sysctl hw.usermem64 failed (" << e << ")";
+	return ss.str();
+    }
+
+    if (memavail < memneed) {
+	char avail[6], need[6];
+	::humanize_number(avail, sizeof(avail), memavail, "", HN_AUTOSCALE,
+	    HN_B | HN_NOSPACE);
+	::humanize_number(need, sizeof(need), memneed, "", HN_AUTOSCALE,
+	    HN_B | HN_NOSPACE);
+	std::stringstream ss;
+	ss << "available memory (" << avail <<
+	    ") is less than required (" << need << ")";
+	return ss.str();
+    }
+    return "";
+}
+
 } // anonymous namespace
 
 std::string
@@ -211,6 +249,8 @@ impl::check_requirements(const atf::tests::vars_map& metadata,
             failure_reason = check_progs(value);
         else if (name == "require.user")
             failure_reason = check_user(value, config);
+	else if (name == "require.memory")
+            failure_reason = check_memory(value);
         else {
             // Unknown require.* properties are forbidden by the
             // application/X-atf-tp parser.
