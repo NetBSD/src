@@ -1,3 +1,7 @@
+3218.	[security]	Cache lookup could return RRSIG data associated with
+			nonexistent records, leading to an assertion
+			failure. [RT #26590]
+
 	--- 9.9.0a1 released ---
 
 3146.   [test]		Fixed gcc4.6.0 errors in ATF. [RT #25598]
