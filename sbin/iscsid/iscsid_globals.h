@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_globals.h,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
+/*	$NetBSD: iscsid_globals.h,v 1.3 2011/11/17 16:20:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -418,7 +418,7 @@ int debug_level;				/* How much info to display */
 /* iscsid_main.c */
 
 iscsid_response_t *make_rsp(size_t, iscsid_response_t **, int *);
-void exit_daemon(void);
+void exit_daemon(void) __dead;
 
 /* iscsid_lists.c */
 
