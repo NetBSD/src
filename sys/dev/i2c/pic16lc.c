@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.17 2011/11/17 13:47:27 jakllsch Exp $ */
+/* $NetBSD: pic16lc.c,v 1.18 2011/11/17 16:04:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.17 2011/11/17 13:47:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.18 2011/11/17 16:04:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +56,9 @@ void		pic16lc_reboot(void);
 void		pic16lc_poweroff(void);
 void		pic16lc_setled(uint8_t);
 
-#define XBOX_SENSOR_CPU        0
-#define XBOX_SENSOR_BOARD  1
-#define XBOX_NSENSORS      2
+#define	XBOX_SENSOR_CPU		0
+#define	XBOX_SENSOR_BOARD	1
+#define	XBOX_NSENSORS		2
 
 struct pic16lc_softc {
 	device_t	sc_dev;
@@ -188,22 +188,28 @@ pic16lc_read_1(struct pic16lc_softc *sc, uint8_t cmd, uint8_t *valp)
 static void
 pic16lc_update(struct pic16lc_softc *sc, envsys_data_t *edata)
 {
-	uint8_t cputemp, boardtemp;
+	uint8_t temp, sensor;
+
+	switch (edata->sensor) {
+	case XBOX_SENSOR_CPU:
+		sensor = PIC16LC_REG_CPUTEMP;
+		break;
+	case XBOX_SENSOR_BOARD:
+		sensor = PIC16LC_REG_BOARDTEMP;
+		break;
+	default:
+		aprint_error(": invalid sensor %u\n", edata->sensor);
+		return;
+	}
 
 	if (iic_acquire_bus(sc->sc_tag, 0) != 0) {
 		aprint_error(": unable to acquire i2c bus\n");
 		return;
 	}
 
-	if (edata->sensor == XBOX_SENSOR_CPU) {
-		pic16lc_read_1(sc, PIC16LC_REG_CPUTEMP, &cputemp);
-		edata->state = ENVSYS_SVALID;
-		edata->value_cur = (int)cputemp * 1000000 + 273150000;
-	} else {
-		pic16lc_read_1(sc, PIC16LC_REG_BOARDTEMP, &boardtemp);
-		edata->state = ENVSYS_SVALID;
-		edata->value_cur = (int)boardtemp * 1000000 + 273150000;
-	}
+	pic16lc_read_1(sc, sensor, &temp);
+	edata->state = ENVSYS_SVALID;
+	edata->value_cur = (unsigned int)temp * 1000000 + 273150000;
 
 	iic_release_bus(sc->sc_tag, 0);
 
