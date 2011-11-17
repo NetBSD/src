@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.423 2011/11/14 20:25:15 christos Exp $
+# $NetBSD: mi,v 1.424 2011/11/17 01:22:30 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -508,6 +508,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getsid.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_gettimeofday.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_issetugid.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_kevent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_kill.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_link.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_listen.debug		tests-lib-debug		debug,atf
@@ -2159,6 +2160,7 @@
 ./usr/tests/lib/libc/sys/t_getsid		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_gettimeofday		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_issetugid		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_kevent		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_kill			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_link			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_listen		tests-lib-tests		atf
