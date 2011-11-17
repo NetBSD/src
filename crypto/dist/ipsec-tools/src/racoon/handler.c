@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.39 2011/03/14 17:18:12 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.39.2.1 2011/11/17 14:46:31 vanhu Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -611,9 +611,11 @@ getph2byid(src, dst, spid)
 	struct sockaddr *src, *dst;
 	u_int32_t spid;
 {
-	struct ph2handle *p;
+	struct ph2handle *p, *next;
 
-	LIST_FOREACH(p, &ph2tree, chain) {
+	for (p = LIST_FIRST(&ph2tree); p; p = next) {
+		next = LIST_NEXT(p, chain);
+
 		if (spid == p->spid &&
 		    cmpsaddr(src, p->src) <= CMPSADDR_WILDPORT_MATCH &&
 		    cmpsaddr(dst, p->dst) <= CMPSADDR_WILDPORT_MATCH){
@@ -985,9 +987,11 @@ void
 remcontacted(remote)
 	struct sockaddr *remote;
 {
-	struct contacted *p;
+	struct contacted *p, *next;
 
-	LIST_FOREACH(p, &ctdtree, chain) {
+	for (p = LIST_FIRST(&ctdtree); p; p = next) {
+		next = LIST_NEXT(p, chain);
+
 		if (cmpsaddr(remote, p->remote) <= CMPSADDR_WILDPORT_MATCH) {
 			LIST_REMOVE(p, chain);
 			racoon_free(p->remote);
@@ -1555,10 +1559,12 @@ int
 purgeph1bylogin(login)
 	char *login;
 {
-	struct ph1handle *p;
+	struct ph1handle *p, *next;
 	int found = 0;
 
-	LIST_FOREACH(p, &ph1tree, chain) {
+	for (p = LIST_FIRST(&ph1tree); p; p = next) {
+		next = LIST_NEXT(p, chain);
+
 		if (p->mode_cfg == NULL)
 			continue;
 		if (strncmp(p->mode_cfg->login, login, LOGINLEN) == 0) {
