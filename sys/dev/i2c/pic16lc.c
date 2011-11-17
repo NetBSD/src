@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.16 2011/06/20 20:16:19 pgoyette Exp $ */
+/* $NetBSD: pic16lc.c,v 1.17 2011/11/17 13:47:27 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.16 2011/06/20 20:16:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.17 2011/11/17 13:47:27 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,10 @@ void		pic16lc_reboot(void);
 void		pic16lc_poweroff(void);
 void		pic16lc_setled(uint8_t);
 
+#define XBOX_SENSOR_CPU        0
+#define XBOX_SENSOR_BOARD  1
+#define XBOX_NSENSORS      2
+
 struct pic16lc_softc {
 	device_t	sc_dev;
 
@@ -63,15 +67,11 @@ struct pic16lc_softc {
 	i2c_addr_t	sc_addr;
 	void *		sc_ih;
 
-	envsys_data_t sc_sensor[1];
+	envsys_data_t sc_sensor[XBOX_NSENSORS];
 	struct sysmon_envsys *sc_sme;
 };
 
 static struct pic16lc_softc *pic16lc = NULL;
-
-#define XBOX_SENSOR_CPU		0
-#define XBOX_SENSOR_BOARD	1
-#define XBOX_NSENSORS		2
 
 static void	pic16lc_update(struct pic16lc_softc *, envsys_data_t *);
 static void	pic16lc_refresh(struct sysmon_envsys *, envsys_data_t *);
