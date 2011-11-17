@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.28 2011/08/27 15:33:59 joerg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.29 2011/11/17 22:09:12 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.176 2010/09/20 22:26:28 mrg Exp $	*/
 
@@ -563,14 +563,26 @@ bozo_read_request(bozohttpd_t *httpd)
 	if (addr != NULL)
 		request->hr_remoteaddr = bozostrdup(request->hr_httpd, addr);
 	slen = sizeof(ss);
-	if (getsockname(0, (struct sockaddr *)(void *)&ss, &slen) < 0)
-		port = NULL;
-	else {
-		if (getnameinfo((struct sockaddr *)(void *)&ss, slen, NULL, 0,
-				bufport, sizeof bufport, NI_NUMERICSERV) == 0)
-			port = bufport;
+
+	/*
+	 * Override the bound port from the request value, so it works even
+	 * if passed through a proxy that doesn't rewrite the port.
+	 */
+	if (httpd->bindport) {
+		if (strcmp(httpd->bindport, "80") != 0)
+			port = httpd->bindport;
 		else
 			port = NULL;
+	} else {
+		if (getsockname(0, (struct sockaddr *)(void *)&ss, &slen) < 0)
+			port = NULL;
+		else {
+			if (getnameinfo((struct sockaddr *)(void *)&ss, slen, NULL, 0,
+					bufport, sizeof bufport, NI_NUMERICSERV) == 0)
+				port = bufport;
+			else
+				port = NULL;
+		}
 	}
 	if (port != NULL)
 		request->hr_serverport = bozostrdup(request->hr_httpd, port);
