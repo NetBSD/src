@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.153 2011/10/23 21:06:07 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.154 2011/11/17 16:20:11 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.153 2011/10/23 21:06:07 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.154 2011/11/17 16:20:11 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -642,13 +642,12 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	}
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-	dbg(("initializing initial Thread Local Storage"));
+	dbg(("initializing initial Thread Local Storage offsets"));
 	/*
 	 * All initial objects get the TLS space from the static block.
 	 */
 	for (obj = _rtld_objlist; obj != NULL; obj = obj->next)
 		_rtld_tls_offset_allocate(obj);
-	_rtld_tls_initial_allocation();
 #endif
 
 	dbg(("relocating objects"));
@@ -658,6 +657,16 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	dbg(("doing copy relocations"));
 	if (_rtld_do_copy_relocations(_rtld_objmain) == -1)
 		_rtld_die();
+
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+	dbg(("initializing Thread Local Storage for main thread"));
+	/*
+	 * Set up TLS area for the main thread.
+	 * This has to be done after all relocations are processed,
+	 * since .tdata may contain relocations.
+	 */
+	_rtld_tls_initial_allocation();
+#endif
 
 	/*
 	 * Set the __progname,  environ and, __mainprog_obj before

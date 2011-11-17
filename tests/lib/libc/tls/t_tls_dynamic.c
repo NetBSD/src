@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_dynamic.c,v 1.1 2011/03/09 23:10:07 joerg Exp $	*/
+/*	$NetBSD: t_tls_dynamic.c,v 1.2 2011/11/17 16:20:11 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_tls_dynamic.c,v 1.1 2011/03/09 23:10:07 joerg Exp $");
+__RCSID("$NetBSD: t_tls_dynamic.c,v 1.2 2011/11/17 16:20:11 joerg Exp $");
 
 #include <atf-c.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include <sys/tls.h>
 
@@ -55,6 +56,11 @@ void testf_dso_helper(int, int);
 
 extern __thread int var1;
 extern __thread int var2;
+extern __thread pid_t (*dso_var1)(void);
+
+__thread int *var3 = &optind;
+int var4_helper;
+__thread int *var4 = &var4_helper;
 
 static void *
 testf(void *dummy)
@@ -67,6 +73,9 @@ testf(void *dummy)
 	testf_dso_helper(3, 3);
 	ATF_CHECK_EQ(var1, 3);
 	ATF_CHECK_EQ(var2, 3);
+	ATF_CHECK_EQ(var3, &optind);
+	ATF_CHECK_EQ(var4, &var4_helper);
+	ATF_CHECK_EQ(dso_var1, getpid);
 
 	return NULL;
 }
