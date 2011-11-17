@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2011/08/27 15:33:59 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2011/11/17 22:09:12 mrg Exp $	*/
 
 /*	$eterna: main.c,v 1.4 2010/07/11 00:34:28 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -198,12 +198,15 @@ main(int argc, char **argv)
 			bozo_set_pref(&prefs, "index.html", optarg);
 			break;
 
+		case 'I':
+			bozo_set_pref(&prefs, "port number", optarg);
+			break;
+
 #ifdef NO_DAEMON_MODE
 		case 'b':
 		case 'e':
 		case 'f':
 		case 'i':
-		case 'I':
 		case 'P':
 			bozo_err(&httpd, 1, "Daemon mode is not enabled");
 			/* NOTREACHED */
@@ -233,9 +236,6 @@ main(int argc, char **argv)
 			bozo_set_pref(&prefs, "bind address", optarg);
 			break;
 
-		case 'I':
-			bozo_set_pref(&prefs, "port number", optarg);
-			break;
 		case 'P':
 			bozo_set_pref(&prefs, "pid file", optarg);
 			break;
