@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.234 2011/06/12 03:35:38 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.235 2011/11/17 07:45:53 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2011/06/12 03:35:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2011/11/17 07:45:53 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,9 +216,6 @@ cpu_startup(void)
 #endif
 	vaddr_t minaddr, maxaddr;
 
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
-
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
@@ -249,6 +246,11 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	banner();
+
+	/*
+	 * Get MMU/FPU type from bootstrap
+	 */
+	identifycpu();
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
