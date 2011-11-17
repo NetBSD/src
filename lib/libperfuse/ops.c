@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.45 2011/11/16 04:52:40 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.46 2011/11/17 02:28:21 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -374,12 +374,13 @@ entry_expired(opc)
 	puffs_cookie_t opc;
 {
 	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
+	struct timespec expire = pnd->pnd_entry_expire;
 	struct timespec now;
 
 	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
 		DERR(EX_OSERR, "clock_gettime failed");
 
-	return timespeccmp(&pnd->pnd_entry_expire, &now, <);
+	return timespeccmp(&expire, &now, <);
 }
 
 
