@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.29 2011/04/24 07:18:59 jmmv Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.30 2011/11/17 22:09:12 mrg Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.99 2010/09/20 22:26:28 mrg Exp $
 .\"
@@ -135,14 +135,18 @@ Also see
 .Fl X .
 .It Fl I Ar port
 Causes
+.Nm
+to use
 .Ar port
-to use used as the port to bind daemon mode.
-The default is the
+instead of the default
 .Dq http
 port.
-This option is only valid with the
+When used with the
 .Fl b
-option.
+option, it changes the bound port.
+Otherwise it forces redirections to use this port instead of the
+value obtained via
+.Xr getsockname 2 .
 .It Fl i Ar address
 Causes
 .Ar address
