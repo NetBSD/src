@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_main.c,v 1.3 2011/10/30 18:40:06 christos Exp $	*/
+/*	$NetBSD: iscsic_main.c,v 1.4 2011/11/17 16:20:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ int debug_level = ISCSI_DEBUG;			/* How much info to display */
  *    Cleanup and exit. Does not return.
 */
 
-static void
+__dead static void
 bye(void)
 {
 	close(sock);
