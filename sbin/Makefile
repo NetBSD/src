@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.112 2008/07/27 19:31:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.112.2.1 2011/11/18 22:35:44 sborrill Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -20,7 +20,7 @@ SUBDIR+= modstat
 
 # support for various file systems
 SUBDIR+= newfs_ext2fs fsck_ext2fs
-SUBDIR+= newfs fsck_ffs fsdb dump restore clri tunefs
+SUBDIR+= newfs fsck_ffs fsdb dump restore clri tunefs resize_ffs
 SUBDIR+= newfs_lfs fsck_lfs dump_lfs resize_lfs
 SUBDIR+= newfs_msdos fsck_msdos
 SUBDIR+= newfs_sysvbfs
