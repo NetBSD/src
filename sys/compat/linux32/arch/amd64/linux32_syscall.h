@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscall.h,v 1.63 2011/05/30 21:37:40 alnsn Exp $ */
+/* $NetBSD: linux32_syscall.h,v 1.64 2011/11/18 04:08:56 christos Exp $ */
 
 /*
  * System call numbers.
@@ -444,6 +444,9 @@
 
 /* syscall: "rt_sigpending" ret: "int" args: "linux32_sigsetp_t" "netbsd32_size_t" */
 #define	LINUX32_SYS_rt_sigpending	176
+
+/* syscall: "rt_sigtimedwait" ret: "int" args: "const linux32_sigset_t *" "linux32_siginfo_t *" "const struct linux_timespec32 *" */
+#define	LINUX32_SYS_rt_sigtimedwait	177
 
 /* syscall: "rt_queueinfo" ret: "int" args: "int" "int" "linux32_siginfop_t" */
 #define	LINUX32_SYS_rt_queueinfo	178
