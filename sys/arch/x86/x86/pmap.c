@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137.2.3 2011/11/10 14:32:36 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137.2.4 2011/11/18 00:51:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.3 2011/11/10 14:32:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.4 2011/11/18 00:51:28 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -322,24 +322,6 @@ struct pmap_head pmaps;
 kmutex_t pmaps_lock;
 
 static vaddr_t pmap_maxkvaddr;
-
-/*
- * XXX kludge: dummy locking to make KASSERTs in uvm_page.c comfortable.
- * actual locking is done by pm_lock.
- */
-#if defined(DIAGNOSTIC)
-#define	PMAP_SUBOBJ_LOCK(pm, idx) \
-	KASSERT(mutex_owned((pm)->pm_lock)); \
-	if ((idx) != 0) \
-		mutex_enter((pm)->pm_obj[(idx)].vmobjlock)
-#define	PMAP_SUBOBJ_UNLOCK(pm, idx) \
-	KASSERT(mutex_owned((pm)->pm_lock)); \
-	if ((idx) != 0) \
-		mutex_exit((pm)->pm_obj[(idx)].vmobjlock)
-#else /* defined(DIAGNOSTIC) */
-#define	PMAP_SUBOBJ_LOCK(pm, idx)	/* nothing */
-#define	PMAP_SUBOBJ_UNLOCK(pm, idx)	/* nothing */
-#endif /* defined(DIAGNOSTIC) */
 
 /*
  * Misc. event counters.
@@ -1224,10 +1206,10 @@ pmap_bootstrap(vaddr_t kva_start)
 	 */
 
 	kpm = pmap_kernel();
+	mutex_init(kpm->pm_lock, MUTEX_DEFAULT, IPL_NONE);
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		mutex_init(&kpm->pm_obj_lock[i], MUTEX_DEFAULT, IPL_NONE);
 		uvm_obj_init(&kpm->pm_obj[i], NULL, false, 1);
-		uvm_obj_setlock(&kpm->pm_obj[i], &kpm->pm_obj_lock[i]);
+		uvm_obj_setlock(&kpm->pm_obj[i], kpm->pm_lock);
 		kpm->pm_ptphint[i] = NULL;
 	}
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
@@ -1781,10 +1763,7 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 	    pa == VM_PAGE_TO_PHYS(pmap->pm_ptphint[lidx])) {
 		return (pmap->pm_ptphint[lidx]);
 	}
-	PMAP_SUBOBJ_LOCK(pmap, lidx);
 	pg = uvm_pagelookup(&pmap->pm_obj[lidx], ptp_va2o(va, level));
-	PMAP_SUBOBJ_UNLOCK(pmap, lidx);
-
 	KASSERT(pg == NULL || pg->wire_count >= 1);
 	return pg;
 }
@@ -1944,7 +1923,6 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes,
 
 		obj = &pmap->pm_obj[i-2];
 		l = curlwp;
-		PMAP_SUBOBJ_LOCK(pmap, i - 2);
 		ncsw = l->l_ncsw;
 		ptp = uvm_pagealloc(obj, ptp_va2o(va, i - 1), NULL,
 		    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
@@ -1957,13 +1935,10 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes,
 			if (ptp != NULL) {
 				uvm_pagefree(ptp);
 			}
-			PMAP_SUBOBJ_UNLOCK(pmap, i - 2);
 			/* XXX shut up the assertion in pmap_unmap_ptes */
 			pmap->pm_ncsw = l->l_ncsw;
 			return EAGAIN;
 		}
-		PMAP_SUBOBJ_UNLOCK(pmap, i - 2);
-
 		if (ptp == NULL)
 			return ENOMEM;
 
@@ -2218,10 +2193,10 @@ pmap_create(void)
 	pmap = pool_cache_get(&pmap_cache, PR_WAITOK);
 
 	/* init uvm_object */
+	mutex_init(pmap->pm_lock, MUTEX_DEFAULT, IPL_NONE);
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		mutex_init(&pmap->pm_obj_lock[i], MUTEX_DEFAULT, IPL_NONE);
 		uvm_obj_init(&pmap->pm_obj[i], NULL, false, 1);
-		uvm_obj_setlock(&pmap->pm_obj[i], &pmap->pm_obj_lock[i]);
+		uvm_obj_setlock(&pmap->pm_obj[i], pmap->pm_lock);
 		pmap->pm_ptphint[i] = NULL;
 	}
 	pmap->pm_stats.wired_count = 0;
@@ -2393,8 +2368,8 @@ pmap_destroy(struct pmap *pmap)
 
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
 		uvm_obj_destroy(&pmap->pm_obj[i], false);
-		mutex_destroy(&pmap->pm_obj_lock[i]);
 	}
+	mutex_destroy(pmap->pm_lock);
 	pool_cache_put(&pmap_cache, pmap);
 }
 

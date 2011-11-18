@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43.2.1 2011/11/10 14:31:43 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.2 2011/11/18 00:51:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,9 +130,7 @@ extern kmutex_t pmaps_lock;    /* protects pmaps */
  * note that the pm_obj contains the lock pointer, the reference count,
  * page list, and number of PTPs within the pmap.
  *
- * pm_lock is the same as the lock for vm object 0.  Changes to
- * the other objects may only be made if that lock has been taken
- * (the other object locks are only used when uvm_pagealloc is called)
+ * pm_lock is shared among vm objects.
  *
  * XXX If we ever support processor numbers higher than 31, we'll have
  * XXX to rethink the CPU mask.
@@ -140,8 +138,7 @@ extern kmutex_t pmaps_lock;    /* protects pmaps */
 
 struct pmap {
 	struct uvm_object pm_obj[PTP_LEVELS-1]; /* objects for lvl >= 1) */
-#define	pm_lock	pm_obj[0].vmobjlock
-	kmutex_t pm_obj_lock[PTP_LEVELS-1];	/* locks for pm_objs */
+	kmutex_t pm_lock[1];		/* lock for pm_objs */
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
 	paddr_t pm_pdirpa[PDP_SIZE];	/* PA of PDs (read-only after create) */
