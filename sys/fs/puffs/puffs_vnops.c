@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.161 2011/10/30 13:24:13 hannken Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.162 2011/11/18 21:18:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.161 2011/10/30 13:24:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.162 2011/11/18 21:18:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1967,6 +1967,8 @@ puffs_vnop_write(void *v)
 
 		origoff = uio->uio_offset;
 		while (uio->uio_resid > 0) {
+			if (vp->v_mount->mnt_flag & MNT_RELATIME)
+				uflags |= PUFFS_UPDATEATIME;
 			uflags |= PUFFS_UPDATECTIME;
 			uflags |= PUFFS_UPDATEMTIME;
 			oldoff = uio->uio_offset;

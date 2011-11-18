@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.100 2011/07/12 16:59:48 dholland Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.101 2011/11/18 21:18:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.100 2011/07/12 16:59:48 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.101 2011/11/18 21:18:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,8 +431,11 @@ ext2fs_setattr(void *v)
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
 				ip->i_flag |= IN_ACCESS;
-		if (vap->va_mtime.tv_sec != VNOVAL)
+		if (vap->va_mtime.tv_sec != VNOVAL) {
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
+			if (vp->v_mount->mnt_flag & MNT_RELATIME)
+				ip->i_flag |= IN_ACCESS;
+		}
 		error = ext2fs_update(vp, &vap->va_atime, &vap->va_mtime,
 			UPDATE_WAIT);
 		if (error)
@@ -1282,6 +1285,8 @@ ext2fs_symlink(void *v)
 		if (error)
 			goto bad;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		if (vp->v_mount->mnt_flag & MNT_RELATIME)
+			ip->i_flag |= IN_ACCESS;
 		uvm_vnp_setsize(vp, len);
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,

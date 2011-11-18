@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.92 2011/09/27 01:32:21 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.93 2011/11/18 21:18:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.92 2011/09/27 01:32:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.93 2011/11/18 21:18:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -2465,8 +2465,11 @@ tmpfs_getpages(void *v)
 		if ((vp->v_mount->mnt_flag & MNT_NOATIME) == 0)
 			node->tn_status |= TMPFS_NODE_ACCESSED;
 
-		if ((access_type & VM_PROT_WRITE) != 0)
+		if ((access_type & VM_PROT_WRITE) != 0) {
 			node->tn_status |= TMPFS_NODE_MODIFIED;
+			if (vp->v_mount->mnt_flag & MNT_RELATIME)
+				node->tn_status |= TMPFS_NODE_ACCESSED;
+		}
 	}
 
 	/*
