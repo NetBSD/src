@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.325 2011/10/30 12:12:21 hannken Exp $
+# $NetBSD: ALL,v 1.326 2011/11/18 22:18:07 jmcneill Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.325 $"
+#ident 		"ALL-$Revision: 1.326 $"
 
 maxusers	64		# estimated number of users
 
@@ -38,9 +38,6 @@ padlock0	at cpu0		# VIA PadLock
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 viac7temp*	at cpu?		# VIA C7 temperature sensor
 vmt0		at cpu0		# VMware Tools
-
-# XBOX support
-options 	XBOX
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -576,9 +573,6 @@ voodoofb*	at pci? dev ? function ?
 wcfb*	at pci? dev ? function ?
 wsdisplay*	at wsemuldisplaydev?
 
-# XBOX framebuffer console
-xboxfb0 	at pci? dev ? function ?
-
 # DRI driver
 i915drm*	at drm?		# Intel i915, i945 DRM driver
 mach64drm*	at drm?		# mach64 (3D Rage Pro, Rage) DRM driver
@@ -703,9 +697,6 @@ lm0	at iic?	addr 0x2e flags 0x0
 # SMSC LPC47M192 hardware monitor
 smscmon*	at iic? addr 0x2c
 #smscmon*	at iic? addr 0x2d	# (alternate address)
-
-pic16lc*	at iic? addr 0x10	# XBOX PIC16LC
-xbseeprom*	at iic? addr 0x54	# XBOX serial EEPROM
 
 # IBM Thinkpad Active Protection System
 aps0	at isa? port 0x1600
