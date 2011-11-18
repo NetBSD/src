@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.712 2011/11/10 00:12:04 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.713 2011/11/18 22:18:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.712 2011/11/10 00:12:04 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.713 2011/11/18 22:18:08 jmcneill Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.712 2011/11/10 00:12:04 jym Exp $");
 #include "opt_realmem.h"
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
-#include "opt_xbox.h"
 #include "opt_xen.h"
 #include "isa.h"
 #include "pci.h"
@@ -177,13 +176,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.712 2011/11/10 00:12:04 jym Exp $");
 
 #ifdef VM86
 #include <machine/vm86.h>
-#endif
-
-#ifdef XBOX
-#include <machine/xbox.h>
-
-int arch_i386_is_xbox = 0;
-uint32_t arch_i386_xbox_memsize = 0;
 #endif
 
 #include "acpica.h"
@@ -439,10 +431,6 @@ cpu_startup(void)
 	 * we'll give them one more chance here...
 	 */
 	consinit();
-
-#ifdef XBOX
-	xbox_startup();
-#endif
 
 	/*
 	 * Initialize error message buffer (et end of core).
@@ -934,12 +922,6 @@ haltsys:
 		HYPERVISOR_shutdown();
 		for (;;);
 #endif
-#ifdef XBOX
-		if (arch_i386_is_xbox) {
-			xbox_poweroff();
-			for (;;);
-		}
-#endif
 #if NACPICA > 0
 		if (s != IPL_NONE)
 			splx(s);
@@ -1372,31 +1354,6 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_pae_l3_pdir = (pd_entry_t *)(rcr3() + KERNBASE);
 #endif /* PAE && !XEN */
 
-#ifdef XBOX
-	/*
-	 * From Rink Springer @ FreeBSD:
-	 *
-	 * The following code queries the PCI ID of 0:0:0. For the XBOX,
-	 * This should be 0x10de / 0x02a5.
-	 *
-	 * This is exactly what Linux does.
-	 */
-	outl(0xcf8, 0x80000000);
-	if (inl(0xcfc) == 0x02a510de) {
-		arch_i386_is_xbox = 1;
-		xbox_lcd_init();
-		xbox_lcd_writetext("NetBSD/i386 ");
-
-		/*
-		 * We are an XBOX, but we may have either 64MB or 128MB of
-		 * memory. The PCI host bridge should be programmed for this,
-		 * so we just query it. 
-		 */
-		outl(0xcf8, 0x80000084);
-		arch_i386_xbox_memsize = (inl(0xcfc) == 0x7FFFFFF) ? 128 : 64;
-	}
-#endif /* XBOX */
-
 #if NISA > 0 || NPCI > 0
 	x86_bus_space_init();
 #endif
@@ -1685,12 +1642,6 @@ cpu_reset(void)
 	struct region_descriptor region;
 
 	x86_disable_intr();
-#ifdef XBOX
-	if (arch_i386_is_xbox) {
-		xbox_reboot();
-		for (;;);
-	}
-#endif
 
 	/*
 	 * Ensure the NVRAM reset byte contains something vaguely sane.
