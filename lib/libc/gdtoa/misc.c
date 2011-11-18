@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.8 2011/11/18 02:38:17 christos Exp $ */
+/* $NetBSD: misc.c,v 1.9 2011/11/18 04:17:23 christos Exp $ */
 
 /****************************************************************
 
@@ -415,8 +415,10 @@ pow5mult
 		ACQUIRE_DTOA_LOCK(1);
 		if (!(p5 = p5s)) {
 			p5 = p5s = i2b(625);
-			if (p5 == NULL)
+			if (p5 == NULL) {
+				FREE_DTOA_LOCK(1);
 				return NULL;
+			}
 			p5->next = 0;
 			}
 		FREE_DTOA_LOCK(1);
