@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.21 2011/11/02 18:16:02 riz Exp $
+# $NetBSD: mi,v 1.780.2.22 2011/11/18 22:35:43 sborrill Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -268,6 +268,7 @@
 ./sbin/rdump					base-sysutil-root
 ./sbin/rdump_lfs				base-sysutil-root
 ./sbin/reboot					base-sysutil-root
+./sbin/resize_ffs				base-sysutil-root
 ./sbin/resize_lfs				base-sysutil-root
 ./sbin/restore					base-sysutil-root
 ./sbin/rndctl					base-sysutil-root
