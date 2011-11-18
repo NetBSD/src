@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.60.6.2 2010/01/09 01:08:39 snj Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.60.6.3 2011/11/18 23:17:53 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.60.6.2 2010/01/09 01:08:39 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.60.6.3 2011/11/18 23:17:53 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -571,6 +571,8 @@ filt_timerexpire(void *knx)
 	knote_activate(kn);
 	if ((kn->kn_flags & EV_ONESHOT) == 0) {
 		tticks = mstohz(kn->kn_sdata);
+		if (tticks <= 0)
+			tticks = 1;
 		callout_schedule((callout_t *)kn->kn_hook, tticks);
 	}
 	mutex_exit(&kqueue_misc_lock);
