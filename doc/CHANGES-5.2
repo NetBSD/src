@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.111 2011/11/18 21:37:06 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.112 2011/11/18 22:36:37 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5764,4 +5764,17 @@ gnu/dist/gcc4/gcc/config/arm/arm.md		1.1.1.2-1.2
 	Remove pattern for arith_adjacentmem in arm.md, thus fixing
 	PR toolchain/45576 at a very small run-time cost.
 	[is, ticket #1689]
+
+distrib/sets/lists/base/mi			patch
+distrib/sets/lists/man/mi			patch
+sbin/Makefile					patch
+sbin/resize_ffs/Makefile			patch
+sbin/resize_ffs/TODO				patch
+sbin/resize_ffs/resize_ffs.8			patch
+sbin/resize_ffs/resize_ffs.c			patch
+
+	Fix resize_ffs(8) so that growing and shrinking all FFSv1
+	(including byteswapped) and growing FFSv2 file systems is supported.
+	Also, cause resize_ffs(8) to be built.
+	[riz, ticket #1690]
 
