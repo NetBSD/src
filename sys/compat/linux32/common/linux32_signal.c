@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.14 2011/11/18 04:08:56 christos Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.15 2011/11/18 15:46:29 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.14 2011/11/18 04:08:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.15 2011/11/18 15:46:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -438,7 +438,6 @@ fetchss(const void *u, void *s, size_t len)
 	int error;
 	linux32_sigset_t lss;
 	
-	KASSERT(len == sizeof(lss));
 	if ((error = copyin(u, &lss, sizeof(lss))) != 0)
 		return error;
 
@@ -452,7 +451,6 @@ fetchts(const void *u, void *s, size_t len)
 	int error;
 	struct linux32_timespec lts;
 	
-	KASSERT(len == sizeof(lts));
 	if ((error = copyin(u, &lts, sizeof(lts))) != 0)
 		return error;
 
@@ -472,7 +470,6 @@ storeinfo(const void *s, void *u, size_t len)
 {
 	linux32_siginfo_t lsi;
 
-	KASSERT(len == sizeof(lsi));
 
 	native_to_linux32_siginfo(&lsi, &((const siginfo_t *)s)->_info);
 	return copyout(&lsi, u, sizeof(lsi));
