@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.11 2011/10/14 09:23:31 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.12 2011/11/18 21:17:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.11 2011/10/14 09:23:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.12 2011/11/18 21:17:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -696,11 +696,7 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	 *
 	 * Set the mount level flags.
 	 */
-	mp->mnt_flag = flags &
-	   (MNT_FORCE | MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG | MNT_IGNORE | MNT_RDONLY);
+	mp->mnt_flag = flags & (MNT_BASIC_FLAGS | MNT_FORCE | MNT_IGNORE);
 
 	mutex_enter(&mp->mnt_updating);
 	error = VFS_MOUNT(mp, path, data, data_len);
