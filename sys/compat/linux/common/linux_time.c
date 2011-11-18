@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.34 2010/07/12 12:01:53 njoly Exp $ */
+/*	$NetBSD: linux_time.c,v 1.35 2011/11/18 04:07:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.34 2010/07/12 12:01:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.35 2011/11/18 04:07:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.34 2010/07/12 12:01:53 njoly Exp $"
 
 #include <compat/common/compat_util.h>
 
-void native_to_linux_timespec(struct linux_timespec *, struct timespec *);
-void linux_to_native_timespec(struct timespec *, struct linux_timespec *);
 /*
  * This is not implemented for alpha yet
  */
