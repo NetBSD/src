@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.108 2011/11/03 17:54:02 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.109 2011/11/18 21:11:25 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5745,4 +5745,9 @@ external/ibm-public/postfix/dist/src/smtpd/smtpd_proxy.c	patch
 
 	Update Postfix to version 2.7.7.
 	[tron, ticket #1686]
+
+sys/arch/i386/i386/vector.S			1.54
+
+	Keep interrupts disabled in NMI handler. Addresses PR/43007.
+	[dholland, ticket #1687]
 
