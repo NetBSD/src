@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73.2.5 2011/11/14 14:21:41 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.73.2.6 2011/11/18 00:57:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -297,6 +297,7 @@ void uvm_pagemarkdirty(struct vm_page *, unsigned int);
 bool uvm_pagecheckdirty(struct vm_page *, bool);
 bool uvm_pagereadonly_p(struct vm_page *);
 bool uvm_page_locked_p(struct vm_page *);
+kmutex_t *uvm_page_getlock(struct vm_page *);
 bool uvm_page_samelock_p(struct vm_page *, struct vm_page *);
 
 /*

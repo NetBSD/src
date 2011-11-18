@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.103.2.1 2011/11/02 21:54:01 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.103.2.2 2011/11/18 00:57:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.103.2.1 2011/11/02 21:54:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.103.2.2 2011/11/18 00:57:34 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -416,23 +416,14 @@ kmutex_t *
 uvmpd_trylockowner(struct vm_page *pg)
 {
 	struct uvm_object *uobj = pg->uobject;
-	kmutex_t *slock;
+	kmutex_t *lock;
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
-
-	if (uobj != NULL) {
-		slock = uobj->vmobjlock;
-	} else {
-		struct vm_anon *anon = pg->uanon;
-
-		KASSERT(anon != NULL);
-		slock = anon->an_lock;
-	}
-
-	if (!mutex_tryenter(slock)) {
+	lock = uvm_page_getlock(pg);
+	KASSERT(lock != NULL);
+	if (!mutex_tryenter(lock)) {
 		return NULL;
 	}
-
 	if (uobj == NULL) {
 
 		/*
@@ -447,7 +438,7 @@ uvmpd_trylockowner(struct vm_page *pg)
 		}
 	}
 
-	return slock;
+	return lock;
 }
 
 #if defined(VMSWAP)
@@ -739,10 +730,8 @@ uvmpd_scan_queue(void)
 			 */
 			lockownerfail++;
 			if (lockownerfail > UVMPD_NUMTRYLOCKOWNER) {
-				mutex_exit(&uvm_pageqlock);
-				/* XXX Better than yielding but inadequate. */
-				kpause("livelock", false, 1, NULL);
-				mutex_enter(&uvm_pageqlock);
+				mutex_obj_pause(uvm_page_getlock(p),
+				    &uvm_pageqlock);
 				lockownerfail = 0;
 			}
 			continue;
