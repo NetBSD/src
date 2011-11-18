@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_siginfo.h,v 1.15 2011/11/18 04:07:44 christos Exp $	*/
+/* 	$NetBSD: linux_siginfo.h,v 1.16 2011/11/18 09:17:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include <compat/linux/arch/arm/linux_siginfo.h>
 #elif defined(__amd64__)
 #include <compat/linux/arch/amd64/linux_siginfo.h>
+#else
+#define linux_siginfo_t siginfo_t
 #endif
 
 /* si_code values for non signal */
