@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.35 2011/05/29 22:14:53 christos Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.36 2011/11/18 03:34:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.35 2011/05/29 22:14:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.36 2011/11/18 03:34:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -365,7 +365,7 @@ sys_____sigtimedwait50(struct lwp *l,
     const struct sys_____sigtimedwait50_args *uap, register_t *retval)
 {
 
-	return sigtimedwait1(l, uap, retval, copyout, copyin, copyout);
+	return sigtimedwait1(l, uap, retval, copyin, copyout, copyin, copyout);
 }
 
 int
@@ -697,7 +697,8 @@ sigaltstack1(struct lwp *l, const struct sigaltstack *nss,
 
 int
 sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
-    register_t *retval, copyout_t storeinf, copyin_t fetchts, copyout_t storets)
+    register_t *retval, copyin_t fetchss, copyout_t storeinf, copyin_t fetchts,
+    copyout_t storets)
 {
 	/* {
 		syscallarg(const sigset_t *) set;
@@ -734,7 +735,7 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 		timo = 0;
 	}
 
-	error = copyin(SCARG(uap, set), &l->l_sigwaitset,
+	error = (*fetchss)(SCARG(uap, set), &l->l_sigwaitset,
 	    sizeof(l->l_sigwaitset));
 	if (error)
 		return error;
