@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_sysent.c,v 1.63 2011/05/30 21:37:40 alnsn Exp $ */
+/* $NetBSD: linux32_sysent.c,v 1.64 2011/11/18 04:08:56 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.63 2011/05/30 21:37:40 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.64 2011/11/18 04:08:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -391,8 +391,8 @@ struct sysent linux32_sysent[] = {
 	    (sy_call_t *)linux32_sys_rt_sigprocmask },/* 175 = rt_sigprocmask */
 	{ ns(struct linux32_sys_rt_sigpending_args), 0,
 	    (sy_call_t *)linux32_sys_rt_sigpending },/* 176 = rt_sigpending */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 177 = unimplemented rt_sigtimedwait */
+	{ ns(struct linux32_sys_rt_sigtimedwait_args), 0,
+	    (sy_call_t *)linux32_sys_rt_sigtimedwait },/* 177 = rt_sigtimedwait */
 	{ ns(struct linux32_sys_rt_queueinfo_args), 0,
 	    (sy_call_t *)linux32_sys_rt_queueinfo },/* 178 = rt_queueinfo */
 	{ ns(struct linux32_sys_rt_sigsuspend_args), 0,
