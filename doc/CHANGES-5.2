@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.114 2011/11/18 23:07:43 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.115 2011/11/18 23:19:21 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5789,4 +5789,11 @@ dist/bind/lib/dns/rbtdb.c			patch
 	Cache lookup could return RRSIG data associated with nonexistent
 	records, leading to an assertion failure.  Fixes CVE-2011-4313.
 	[christos, ticket #1692]
+
+sys/kern/kern_event.c				1.73
+
+	PR/45618: Motoyuki OHMORI: kqueue EVFILT_TIMER with smaller
+	timeout value makes DIAGNOSTIC kernel panic. If the computed
+	ticks are <= 0 set it to 1.
+	[christos, ticket #1693]
 
