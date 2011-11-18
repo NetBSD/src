@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.74 2011/11/18 15:45:47 christos Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.75 2011/11/18 17:36:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.74 2011/11/18 15:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.75 2011/11/18 17:36:06 christos Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -553,6 +553,7 @@ linux_sys_rt_sigsuspend(struct lwp *l, const struct linux_sys_rt_sigsuspend_args
 
 	return (sigsuspend1(l, &bss));
 }
+
 static int
 fetchss(const void *u, void *s, size_t len)
 {
@@ -590,8 +591,6 @@ static int
 storeinfo(const void *s, void *u, size_t len)
 {
 	struct linux_siginfo lsi;
-
-	KASSERT(len == sizeof(lsi));
 
 	native_to_linux_siginfo(&lsi, &((const siginfo_t *)s)->_info);
 	return copyout(&lsi, u, sizeof(lsi));
