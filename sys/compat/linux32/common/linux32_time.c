@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.35 2010/07/12 12:01:53 njoly Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.36 2011/11/18 04:08:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.35 2010/07/12 12:01:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.36 2011/11/18 04:08:56 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.35 2010/07/12 12:01:53 njoly Exp 
 #include <compat/linux32/common/linux32_machdep.h>
 #include <compat/linux32/common/linux32_sysctl.h>
 #include <compat/linux32/common/linux32_socketcall.h>
+#include <compat/linux32/common/linux32_sched.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
 extern struct timezone linux_sys_tz;
