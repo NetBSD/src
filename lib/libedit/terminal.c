@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.11 2011/11/18 20:25:48 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.12 2011/11/18 20:32:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.11 2011/11/18 20:25:48 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.12 2011/11/18 20:32:00 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -330,6 +330,7 @@ terminal_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 	char **tlist = el->el_terminal.t_str;
 	char **tmp, **str = &tlist[t - tstr];
 
+	(void) memset(termbuf, 0, sizeof(termbuf));
 	if (cap == NULL || *cap == '\0') {
 		*str = NULL;
 		return;
@@ -877,7 +878,7 @@ terminal_set(EditLine *el, const char *term)
 	if (strcmp(term, "emacs") == 0)
 		el->el_flags |= EDIT_DISABLED;
 
-	memset(el->el_terminal.t_cap, 0, TC_BUFSIZE);
+	(void) memset(el->el_terminal.t_cap, 0, TC_BUFSIZE);
 
 	i = tgetent(el->el_terminal.t_cap, term);
 
