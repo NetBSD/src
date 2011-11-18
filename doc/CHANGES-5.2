@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.112 2011/11/18 22:36:37 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.113 2011/11/18 22:43:53 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5777,4 +5777,9 @@ sbin/resize_ffs/resize_ffs.c			patch
 	(including byteswapped) and growing FFSv2 file systems is supported.
 	Also, cause resize_ffs(8) to be built.
 	[riz, ticket #1690]
+
+sys/uvm/uvm_meter.c				1.57
+
+	Dereference correct variable and thus stop a sysctl crash.
+	[christos, ticket #1691]
 
