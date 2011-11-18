@@ -1,9 +1,9 @@
-/*	$NetBSD: ssl-bozo.c,v 1.12 2011/08/27 15:33:59 joerg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.13 2011/11/18 09:51:31 mrg Exp $	*/
 
-/*	$eterna: ssl-bozo.c,v 1.13 2010/05/12 12:24:58 rtr Exp $	*/
+/*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2010 Matthew R. Green
+ * Copyright (c) 1997-2011 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
