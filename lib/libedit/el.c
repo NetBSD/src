@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.68 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.69 2011/11/18 20:22:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.68 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.69 2011/11/18 20:22:03 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -423,17 +423,8 @@ FUN(el,get)(EditLine *el, int op, ...)
 			if ((argv[i] = va_arg(ap, char *)) == NULL)
 				break;
 
-		switch (op) {
-		case EL_GETTC:
-			argv[0] = name;
-			rv = terminal_gettc(el, i, argv);
-			break;
-
-		default:
-			rv = -1;
-			EL_ABORT((el->el_errfile, "Bad op %d\n", op));
-			break;
-		}
+		argv[0] = name;
+		rv = terminal_gettc(el, i, argv);
 		break;
 	}
 
