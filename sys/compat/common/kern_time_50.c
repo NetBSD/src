@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.19 2011/03/04 01:36:56 christos Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.20 2011/11/18 03:34:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.19 2011/03/04 01:36:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.20 2011/11/18 03:34:13 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -480,8 +480,8 @@ compat_50_sys___sigtimedwait(struct lwp *l,
 	int res;
 
 	res = sigtimedwait1(l,
-	    (const struct sys_____sigtimedwait50_args *)uap, retval, copyout,
-	    tscopyin, tscopyout);
+	    (const struct sys_____sigtimedwait50_args *)uap, retval, copyin,
+	    copyout, tscopyin, tscopyout);
 	if (!res)
 		*retval = 0; /* XXX NetBSD<=5 was not POSIX compliant */
 	return res;
