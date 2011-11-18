@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.52 2011/10/18 23:43:36 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.53 2011/11/18 22:18:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.52 2011/10/18 23:43:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.53 2011/11/18 22:18:08 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -138,13 +138,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.52 2011/10/18 23:43:36 dyoung Exp 
 #include <machine/mpconfig.h>
 
 #include "opt_pci_conf_mode.h"
-
-#ifdef __i386__
-#include "opt_xbox.h"
-#ifdef XBOX
-#include <machine/xbox.h>
-#endif
-#endif
 
 #ifdef PCI_CONF_MODE
 #if (PCI_CONF_MODE == 1) || (PCI_CONF_MODE == 2)
@@ -389,20 +382,6 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 int
 pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
-
-#if defined(__i386__) && defined(XBOX)
-	/*
-	 * Scanning above the first device is fatal on the Microsoft Xbox.
-	 * If busno=1, only allow for one device.
-	 */
-	if (arch_i386_is_xbox) {
-		if (busno == 1)
-			return 1;
-		else if (busno > 1)
-			return 0;
-	}
-#endif
-
 	/*
 	 * Bus number is irrelevant.  If Configuration Mechanism 2 is in
 	 * use, can only have devices 0-15 on any bus.  If Configuration
@@ -500,15 +479,6 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 		return (*ipc->pc_ov->ov_conf_read)(ipc->pc_ctx, pc, tag, reg);
 	}
 
-#if defined(__i386__) && defined(XBOX)
-	if (arch_i386_is_xbox) {
-		int bus, dev, fn;
-		pci_decompose_tag(pc, tag, &bus, &dev, &fn);
-		if (bus == 0 && dev == 0 && (fn == 1 || fn == 2))
-			return (pcireg_t)-1;
-	}
-#endif
-
 	pci_conf_lock(&ocl, pci_conf_selector(tag, reg));
 	data = inl(pci_conf_port(tag, reg));
 	pci_conf_unlock(&ocl);
@@ -530,15 +500,6 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 		    data);
 		return;
 	}
-
-#if defined(__i386__) && defined(XBOX)
-	if (arch_i386_is_xbox) {
-		int bus, dev, fn;
-		pci_decompose_tag(pc, tag, &bus, &dev, &fn);
-		if (bus == 0 && dev == 0 && (fn == 1 || fn == 2))
-			return;
-	}
-#endif
 
 	pci_conf_lock(&ocl, pci_conf_selector(tag, reg));
 	outl(pci_conf_port(tag, reg), data);
