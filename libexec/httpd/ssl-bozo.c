@@ -1,7 +1,7 @@
-/*	$eterna: ssl-bozo.c,v 1.13 2010/05/12 12:24:58 rtr Exp $	*/
+/*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2010 Matthew R. Green
+ * Copyright (c) 1997-2011 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,7 @@ typedef struct sslinfo_t {
  * the error provided by the caller at the point of error it pops and
  * prints all errors from the SSL error queue.
  */
-static void
+BOZO_DEAD static void
 bozo_ssl_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
 {
         va_list ap;
@@ -77,7 +77,7 @@ bozo_ssl_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
 
 	unsigned int sslcode = ERR_get_error();
 	do {
-		const char *sslfmt = "SSL Error: %s:%s:%s";
+		static const char sslfmt[] = "SSL Error: %s:%s:%s";
 
 		if (httpd->logstderr || isatty(STDERR_FILENO)) {
 			fprintf(stderr, sslfmt,

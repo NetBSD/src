@@ -1,7 +1,7 @@
-/*	$eterna: bozohttpd.h,v 1.37 2010/09/20 22:26:28 mrg Exp $	*/
+/*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2010 Matthew R. Green
+ * Copyright (c) 1997-2011 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,6 +73,7 @@ typedef struct bozohttpd_t {
 	int		 logstderr;	/* log to stderr (even if not tty) */
 	int		 background;	/* drop into daemon mode */
 	int		 foreground;	/* keep daemon mode in foreground */
+	char		*pidfile;	/* path to the pid file, if any */
 	size_t		 page_size;	/* page size */
 	char		*slashdir;	/* www slash directory */
 	char		*bindport;	/* bind port; default "http" */
@@ -168,11 +169,16 @@ void	debug__(bozohttpd_t *, int, const char *, ...)
 #define	debug(x)	
 #endif /* NO_DEBUG */
 
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define BOZO_PRINTFLIKE(x,y) __attribute__((__format__(__printf__, x,y)))
+#define BOZO_DEAD __attribute__((__noreturn__))
+#endif
+
 void	bozo_warn(bozohttpd_t *, const char *, ...)
-		__attribute__((__format__(__printf__, 2, 3)));
+		BOZO_PRINTFLIKE(2, 3);
 void	bozo_err(bozohttpd_t *, int, const char *, ...)
-		__attribute__((__format__(__printf__, 3, 4)))
-		__attribute__((__noreturn__));
+		BOZO_PRINTFLIKE(3, 4)
+		BOZO_DEAD;
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
 
 int	bozo_check_special_files(bozo_httpreq_t *, const char *);
@@ -188,10 +194,10 @@ char	*bozostrdup(bozohttpd_t *, const char *);
 
 /* ssl-bozo.c */
 #ifdef NO_SSL_SUPPORT
-#define bozo_ssl_set_opts(w, x, y)	/* nothing */
-#define bozo_ssl_init(x)		/* nothing */
-#define bozo_ssl_accept(x)		/* nothing */
-#define bozo_ssl_destroy(x)		/* nothing */
+#define bozo_ssl_set_opts(w, x, y)	do { /* nothing */ } while (0)
+#define bozo_ssl_init(x)		do { /* nothing */ } while (0)
+#define bozo_ssl_accept(x)		do { /* nothing */ } while (0)
+#define bozo_ssl_destroy(x)		do { /* nothing */ } while (0)
 #else
 void	bozo_ssl_set_opts(bozohttpd_t *, const char *, const char *);
 void	bozo_ssl_init(bozohttpd_t *);
@@ -211,11 +217,11 @@ void	bozo_auth_cgi_setenv(bozo_httpreq_t *, char ***);
 int	bozo_auth_cgi_count(bozo_httpreq_t *);
 #else
 #define	bozo_auth_check(x, y)			0
-#define	bozo_auth_cleanup(x)			/* nothing */
+#define	bozo_auth_cleanup(x)			do { /* nothing */ } while (0)
 #define	bozo_auth_check_headers(y, z, a, b)	0
 #define	bozo_auth_check_special_files(x, y)	0
-#define	bozo_auth_check_401(x, y)		/* nothing */
-#define	bozo_auth_cgi_setenv(x, y)		/* nothing */
+#define	bozo_auth_check_401(x, y)		do { /* nothing */ } while (0)
+#define	bozo_auth_cgi_setenv(x, y)		do { /* nothing */ } while (0)
 #define	bozo_auth_cgi_count(x)			0
 #endif /* DO_HTPASSWD */
 
@@ -233,9 +239,9 @@ void	bozo_add_content_map_cgi(bozohttpd_t *, const char *, const char *);
 
 /* daemon-bozo.c */
 #ifdef NO_DAEMON_MODE
-#define bozo_daemon_init(x)				/* nothing */
+#define bozo_daemon_init(x)				do { /* nothing */ } while (0)
 #define bozo_daemon_fork(x)				0
-#define bozo_daemon_closefds(x)				/* nothing */
+#define bozo_daemon_closefds(x)				do { /* nothing */ } while (0)
 #else
 void	bozo_daemon_init(bozohttpd_t *);
 int	bozo_daemon_fork(bozohttpd_t *);

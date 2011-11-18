@@ -1,7 +1,7 @@
-/*	$eterna: daemon-bozo.c,v 1.22 2010/06/21 06:45:45 mrg Exp $	*/
+/*	$eterna: daemon-bozo.c,v 1.24 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2010 Matthew R. Green
+ * Copyright (c) 1997-2011 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,11 @@
 
 #include <netinet/in.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <netdb.h>
 #include <poll.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -59,12 +61,61 @@ static	void	sigchild(int);	/* SIGCHLD handler */
 #define INFTIM -1
 #endif
 
+static const char* pidfile_path = NULL;
+static pid_t pidfile_pid = 0;
+
 /* ARGSUSED */
 static void
 sigchild(int signo)
 {
 	while (waitpid(-1, NULL, WNOHANG) > 0) {
 	}
+}
+
+/* Signal handler to exit in a controlled manner.  This ensures that
+ * any atexit(3) handlers are properly executed. */
+/* ARGSUSED */
+BOZO_DEAD static void
+controlled_exit(int signo)
+{
+
+	exit(EXIT_SUCCESS);
+}
+
+static void
+remove_pidfile(void)
+{
+
+	if (pidfile_path != NULL && pidfile_pid == getpid()) {
+		(void)unlink(pidfile_path);
+		pidfile_path = NULL;
+	}
+}
+
+static void
+create_pidfile(bozohttpd_t *httpd)
+{
+	FILE *file;
+
+	assert(pidfile_path == NULL);
+
+	if (httpd->pidfile == NULL)
+		return;
+
+	if (atexit(remove_pidfile) == -1)
+		bozo_err(httpd, 1, "Failed to install pidfile handler");
+
+	if ((file = fopen(httpd->pidfile, "w")) == NULL)
+		bozo_err(httpd, 1, "Failed to create pidfile '%s'",
+		    httpd->pidfile);
+	(void)fprintf(file, "%d\n", getpid());
+	(void)fclose(file);
+
+	pidfile_path = httpd->pidfile;
+	pidfile_pid = getpid();
+
+	debug((httpd, DEBUG_FAT, "Created pid file '%s' for pid %d",
+	    pidfile_path, pidfile_pid));
 }
 
 void
@@ -77,12 +128,7 @@ bozo_daemon_init(bozohttpd_t *httpd)
 	if (!httpd->background)
 		return;
 
-	if (httpd->foreground == 0)
-		daemon(1, 0);
-
 	portnum = (httpd->bindport) ? httpd->bindport : "http";
-	bozo_warn(httpd, "started in daemon mode as `%s' port `%s' root `%s'",
-	    httpd->virthostname, portnum, httpd->slashdir);
 	
 	memset(&h, 0, sizeof(h));
 	h.ai_family = PF_UNSPEC;
@@ -118,6 +164,18 @@ bozo_daemon_init(bozohttpd_t *httpd)
 		bozo_err(httpd, 1, "could not find any addresses to bind");
 	httpd->nsock = i;
 	freeaddrinfo(r0);
+
+	if (httpd->foreground == 0)
+		daemon(1, 0);
+
+	create_pidfile(httpd);
+
+	bozo_warn(httpd, "started in daemon mode as `%s' port `%s' root `%s'",
+	    httpd->virthostname, portnum, httpd->slashdir);
+
+	signal(SIGHUP, controlled_exit);
+	signal(SIGINT, controlled_exit);
+	signal(SIGTERM, controlled_exit);
 
 	signal(SIGCHLD, sigchild);
 }

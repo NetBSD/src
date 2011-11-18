@@ -1,7 +1,7 @@
-/*	$eterna: cgi-bozo.c,v 1.38 2010/09/20 22:25:00 mrg Exp $	*/
+/*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2010 Matthew R. Green
+ * Copyright (c) 1997-2011 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -406,6 +406,12 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	if (request->hr_remoteaddr && *request->hr_remoteaddr)
 		bozo_setenv(httpd, "REMOTE_ADDR", request->hr_remoteaddr,
 				curenvp++);
+	/*
+	 * XXX Apache does this when invoking content handlers, and PHP
+	 * XXX 5.3 requires it as a "security" measure.
+	 */
+	if (cgihandler)
+		bozo_setenv(httpd, "REDIRECT_STATUS", "200", curenvp++);
 	bozo_auth_cgi_setenv(request, &curenvp);
 
 	free(file);

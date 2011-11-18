@@ -1,4 +1,4 @@
-.\"	$eterna: bozohttpd.8,v 1.99 2010/09/20 22:26:28 mrg Exp $
+.\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
 .\" Copyright (c) 1997-2010 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 20, 2010
+.Dd November 17, 2011
 .Dt BOZOHTTPD 8
 .Os BOZOS
 .Sh NAME
@@ -36,6 +36,7 @@
 .Op Fl C Ar suffix cgihandler
 .Op Fl I Ar port
 .Op Fl M Ar suffix type encoding encoding11
+.Op Fl P Ar pidfile
 .Op Fl S Ar server_software
 .Op Fl c Ar cgibin
 .Op Fl i Ar address
@@ -76,12 +77,12 @@ hopefully increasing its security.
 The following options are available:
 .Bl -tag -width xxxcgibin
 .It Fl b
-This option enables daemon mode, where
+Enables daemon mode, where
 .Nm
 detaches from the current terminal, running in the background and
 servicing HTTP requests.
 .It Fl C Ar suffix cgihandler
-This option adds a new CGI handler program for a particular file type.
+Adds a new CGI handler program for a particular file type.
 The
 .Ar suffix
 should be any normal file suffix, and the
@@ -93,7 +94,7 @@ Multiple
 .Fl C
 options may be passed.
 .It Fl c Ar cgibin
-This option enables the CGI/1.1 interface.
+Enables the CGI/1.1 interface.
 The
 .Ar cgibin
 directory is expected to contain the CGI programs to be used.
@@ -111,7 +112,7 @@ Note that the CGI/1.1 interface is not available with
 .Em ~user
 translation.
 .It Fl e
-This option causes
+Causes
 .Nm
 to not clear the environment when used with either the
 .Fl t
@@ -119,32 +120,29 @@ or
 .Fl U
 options.
 .It Fl f
-This option stops the
+Stops the
 .Fl b
 flag from
 .Nm
 detaching from the tty and going into the background.
 .It Fl H
-This option causes directory index mode to hide files and directories
+Causes directory index mode to hide files and directories
 that start with a period, except for
 .Pa .. .
 Also see
 .Fl X .
 .It Fl I Ar port
-This option is only valid with the
-.Fl b
-option.
-It causes
+Causes
 .Ar port
 to use used as the port to bind daemon mode.
 The default is the
 .Dq http
 port.
-.It Fl i Ar address
 This option is only valid with the
 .Fl b
 option.
-It causes
+.It Fl i Ar address
+Causes
 .Ar address
 to use used as the address to bind daemon mode.
 If otherwise unspecified, the address used to bind is derived from the
@@ -154,8 +152,11 @@ which defaults to the name returned by
 Only the last
 .Fl i
 option is used.
+This option is only valid with the
+.Fl b
+option.
 .It Fl M Ar suffix type encoding encoding11
-This option adds a new entry to the table that converts file suffixes to
+Adds a new entry to the table that converts file suffixes to
 content type and encoding.
 This option takes four additional arguments containing
 the file prefix, its
@@ -171,7 +172,7 @@ Multiple
 .Fl M
 options may be passed.
 .It Fl n
-This option stops
+Stops
 .Nm
 from doing IP address to name resolution of hosts for setting the
 .Ev REMOTE_HOST
@@ -179,15 +180,23 @@ variable before running a CGI program.
 This option has no effect without the
 .Fl c
 option.
+.It Fl P Ar pidfile
+Causes
+.Nm
+to create a pid file in
+.Ar pidfile
+when run in daemon mode with the
+.Fl b
+option.
 .It Fl p Ar pubdir
-This option changes the default user directory for
+Changes the default user directory for
 .Em /~user/
 translations from
 .Dq public_html
 to
 .Ar pubdir .
 .It Fl r
-This option forces pages besides the
+Forces pages besides the
 .Dq index.html
 (see the
 .Fl X
@@ -196,14 +205,14 @@ refer to this web server, otherwise a redirect to the
 .Dq index.html
 page will be returned instead.
 .It Fl S Ar server_software
-This option sets the internal server version to
+Sets the internal server version to
 .Ar server_software .
 .It Fl s
-This option forces logging to be set to stderr always.
+Forces logging to be set to stderr always.
 .It Fl t Ar chrootdir
-When this option is used,
+Makes
 .Nm
-will chroot to the specified directory
+chroot to the specified directory
 before answering requests.
 Every other path should be specified relative
 to the new root, if this option is used.
@@ -212,7 +221,7 @@ is normally replaced with an empty environment with this option, unless the
 .Fl e
 option is also used.
 .It Fl U Ar username
-This option causes
+Causes
 .Nm
 to switch to the user and the groups of
 .Ar username
@@ -225,7 +234,7 @@ to clear the environment unless the
 .Fl e
 option is given.
 .It Fl u
-This option enables the transformation of Uniform Resource Locators of
+Enables the transformation of Uniform Resource Locators of
 the form
 .Em /~user/
 into the the directory
@@ -234,7 +243,7 @@ into the the directory
 .Fl p
 option above).
 .It Fl V
-This option sets the default virtual host directory to
+Sets the default virtual host directory to
 .Ar slashdir .
 If no directory exists in
 .Ar virtualroot
@@ -243,7 +252,7 @@ for the request, then
 will be used.
 The default behaviour is to return 404 (Not Found.)
 .It Fl v Ar virtualroot
-This option enables virtual hosting support.
+Enables virtual hosting support.
 Directories in
 .Ar virtualroot
 will be searched for a matching virtual host name, when parsing
@@ -257,17 +266,17 @@ See the
 .Sx EXAMPLES
 section for an example of using this option.
 .It Fl X
-This option enables directory indexing.
+Enables directory indexing.
 A directory index will be generated only when the default file (i.e.
 .Pa index.html
 normally) is not present.
 .It Fl x Ar index
-This option changes the default file read for directories from
+Changes the default file read for directories from
 .Dq index.html
 to
 .Ar index .
 .It Fl Z Ar certificate_path privatekey_path
-This option sets the path to the server certificate file and the private key file
+Sets the path to the server certificate file and the private key file
 in pem format.
 It also causes
 .Nm
@@ -438,7 +447,7 @@ To use
 with PHP, one must use the
 .Fl C
 option to specify a CGI handler for a particular file type.
-Typically this, this will be like:
+Typically this will be like:
 .Bd -literal
 bozohttpd -C .php /usr/pkg/bin/php /var/www
 .Ed
@@ -475,7 +484,7 @@ provided Range: header support
 .It
 Sean Boudreau
 .Aq seanb@NetBSD.org
-provided an security fix for virtual hosting
+provided a security fix for virtual hosting
 .It
 Julian Coleman
 .Aq jdc@coris.org.uk
@@ -577,6 +586,8 @@ provided http authorisation fixes
 provided chroot and change-to-user support, and other various fixes
 .It
 Coyote Point provided various CGI fixes
+.It
+Julio Merino added pidfile support and provided some man page fixes
 .El
 .Pp
 There are probably others I have forgotten (let me know if you care)
@@ -588,4 +599,4 @@ to
 for inclusion in future releaases.
 .Sh BUGS
 .Nm
-does not handled HTTP/1.1 chunked input from the client yet.
+does not handle HTTP/1.1 chunked input from the client yet.

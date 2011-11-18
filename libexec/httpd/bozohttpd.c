@@ -1,7 +1,7 @@
-/*	$eterna: bozohttpd.c,v 1.176 2010/09/20 22:26:28 mrg Exp $	*/
+/*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2010 Matthew R. Green
+ * Copyright (c) 1997-2011 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -107,7 +107,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20100920"
+#define SERVER_SOFTWARE		"bozohttpd/20111118"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -151,10 +151,6 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
-
-#ifndef __attribute__
-#define __attribute__(x)
-#endif /* __attribute__ */
 
 #include "bozohttpd.h"
 
@@ -565,14 +561,26 @@ bozo_read_request(bozohttpd_t *httpd)
 	if (addr != NULL)
 		request->hr_remoteaddr = bozostrdup(request->hr_httpd, addr);
 	slen = sizeof(ss);
-	if (getsockname(0, (struct sockaddr *)(void *)&ss, &slen) < 0)
-		port = NULL;
-	else {
-		if (getnameinfo((struct sockaddr *)(void *)&ss, slen, NULL, 0,
-				bufport, sizeof bufport, NI_NUMERICSERV) == 0)
-			port = bufport;
+
+	/*
+	 * Override the bound port from the request value, so it works even
+	 * if passed through a proxy that doesn't rewrite the port.
+	 */
+	if (httpd->bindport) {
+		if (strcmp(httpd->bindport, "80") != 0)
+			port = httpd->bindport;
 		else
 			port = NULL;
+	} else {
+		if (getsockname(0, (struct sockaddr *)(void *)&ss, &slen) < 0)
+			port = NULL;
+		else {
+			if (getnameinfo((struct sockaddr *)(void *)&ss, slen, NULL, 0,
+					bufport, sizeof bufport, NI_NUMERICSERV) == 0)
+				port = bufport;
+			else
+				port = NULL;
+		}
 	}
 	if (port != NULL)
 		request->hr_serverport = bozostrdup(request->hr_httpd, port);
@@ -1410,9 +1418,10 @@ bozo_process_request(bozo_httpreq_t *request)
 		request->hr_first_byte_pos = 0;
 		request->hr_last_byte_pos = sb.st_size - 1;
 	}
-	debug((httpd, DEBUG_FAT, "have_range %d first_pos %qd last_pos %qd",
+	debug((httpd, DEBUG_FAT, "have_range %d first_pos %lld last_pos %lld",
 	    request->hr_have_range,
-	    request->hr_first_byte_pos, request->hr_last_byte_pos));
+	    (long long)request->hr_first_byte_pos,
+	    (long long)request->hr_last_byte_pos));
 	if (request->hr_have_range)
 		bozo_printf(httpd, "%s 206 Partial Content\r\n",
 				request->hr_proto);
@@ -1726,7 +1735,8 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		size = 0;
 
 	bozo_printf(httpd, "%s %s\r\n", proto, header);
-	bozo_auth_check_401(request, code);
+	if (request)
+		bozo_auth_check_401(request, code);
 
 	bozo_printf(httpd, "Content-Type: text/html\r\n");
 	bozo_printf(httpd, "Content-Length: %d\r\n", size);
@@ -1845,7 +1855,7 @@ bozodgetln(bozohttpd_t *httpd, int fd, ssize_t *lenp,
 
 	}
 	httpd->getln_buffer[len] = '\0';
-	debug((httpd, DEBUG_OBESE, "bozodgetln returns: ``%s'' with len %d",
+	debug((httpd, DEBUG_OBESE, "bozodgetln returns: ``%s'' with len %zd",
 	       httpd->getln_buffer, len));
 	*lenp = len;
 	return httpd->getln_buffer;
@@ -1993,6 +2003,9 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	if ((cp = bozo_get_pref(prefs, "foreground")) != NULL &&
 	    strcmp(cp, "true") == 0) {
 		httpd->foreground = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "pid file")) != NULL) {
+		httpd->pidfile = strdup(cp);
 	}
 	if ((cp = bozo_get_pref(prefs, "unknown slash")) != NULL &&
 	    strcmp(cp, "true") == 0) {

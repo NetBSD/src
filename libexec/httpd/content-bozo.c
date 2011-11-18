@@ -1,7 +1,7 @@
-/*	$eterna: content-bozo.c,v 1.15 2010/05/10 02:51:28 mrg Exp $	*/
+/*	$eterna: content-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2010 Matthew R. Green
+ * Copyright (c) 1997-2011 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -161,6 +161,7 @@ static bozo_content_map_t static_content_map[] = {
 	{ ".mpeg",	5, "video/mpeg",		"",		"", NULL },
 	{ ".mpg",	4, "video/mpeg",		"",		"", NULL },
 	{ ".mpe",	4, "video/mpeg",		"",		"", NULL },
+	{ ".mp4",	4, "video/mp4",			"",		"", NULL },
 	{ ".qt",	3, "video/quicktime",		"",		"", NULL },
 	{ ".mov",	4, "video/quicktime",		"",		"", NULL },
 	{ ".avi",	4, "video/x-msvideo",		"",		"", NULL },

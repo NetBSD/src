@@ -1,7 +1,7 @@
-/*	$eterna: dir-index-bozo.c,v 1.18 2010/09/20 22:26:29 mrg Exp $	*/
+/*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2010 Matthew R. Green
+ * Copyright (c) 1997-2011 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -143,6 +143,10 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirname, int isindex)
 		} else if (S_ISDIR(sb.st_mode)) {
 			bozo_printf(httpd, "<a href=\"%s/\">", name);
 			l += bozo_printf(httpd, "%s/", name);
+		} else if (strchr(name, ':') != NULL) {
+			/* RFC 3986 4.2 */
+			bozo_printf(httpd, "<a href=\"./%s\">", name);
+			l += bozo_printf(httpd, "%s", name);
 		} else {
 			bozo_printf(httpd, "<a href=\"%s\">", name);
 			l += bozo_printf(httpd, "%s", name);
