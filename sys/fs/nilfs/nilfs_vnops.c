@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.15 2011/10/16 12:41:45 hannken Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.16 2011/11/18 21:18:50 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.15 2011/10/16 12:41:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.16 2011/11/18 21:18:50 christos Exp $");
 #endif /* not lint */
 
 
@@ -280,6 +280,8 @@ return EIO;
 
 	/* mark node changed and request update */
 	nilfs_node->i_flags |= IN_CHANGE | IN_UPDATE;
+	if (vp->v_mount->mnt_flag & MNT_RELATIME)
+		nilfs_node->i_flags |= IN_ACCESS;
 
 	/*
 	 * XXX TODO FFS has code here to reset setuid & setgid when we're not

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.99 2011/07/11 08:27:41 hannken Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.100 2011/11/18 21:18:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.99 2011/07/11 08:27:41 hannken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.100 2011/11/18 21:18:52 christos Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -507,6 +507,8 @@ WRITE(void *v)
 	 */
 out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+	if (vp->v_mount->mnt_flag & MNT_RELATIME)
+		ip->i_flag |= IN_ACCESS;
 	if (resid > uio->uio_resid && ap->a_cred &&
 	    kauth_authorize_generic(ap->a_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		ip->i_mode &= ~(ISUID | ISGID);
