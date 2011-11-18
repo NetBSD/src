@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscalls.c,v 1.63 2011/05/30 21:37:40 alnsn Exp $ */
+/* $NetBSD: linux32_syscalls.c,v 1.64 2011/11/18 04:08:56 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscalls.c,v 1.63 2011/05/30 21:37:40 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscalls.c,v 1.64 2011/11/18 04:08:56 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <sys/param.h>
@@ -212,7 +212,7 @@ const char *const linux32_syscallnames[] = {
 	/* 174 */	"rt_sigaction",
 	/* 175 */	"rt_sigprocmask",
 	/* 176 */	"rt_sigpending",
-	/* 177 */	"#177 (unimplemented rt_sigtimedwait)",
+	/* 177 */	"rt_sigtimedwait",
 	/* 178 */	"rt_queueinfo",
 	/* 179 */	"rt_sigsuspend",
 	/* 180 */	"pread",
