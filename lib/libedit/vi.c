@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.41 2011/10/04 15:27:04 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.42 2011/11/18 20:24:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.41 2011/10/04 15:27:04 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.42 2011/11/18 20:24:21 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1026,7 +1026,7 @@ vi_histedit(EditLine *el, Int c __attribute__((__unused__)))
 		close(fd);
 		return CC_ERROR;
 	}
-	line = el_malloc(len * sizeof(*line));
+	line = el_malloc(len * sizeof(*line) + 1);
 	if (line == NULL) {
 		el_free(cp);
 		return CC_ERROR;
