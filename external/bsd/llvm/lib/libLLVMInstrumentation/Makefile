@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/05/12 14:56:23 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/11/18 15:56:54 joerg Exp $
 
 LIB=	LLVMInstrumentation
 
@@ -6,7 +6,8 @@ LIB=	LLVMInstrumentation
 
 .PATH: ${LLVM_SRCDIR}/lib/Transforms/Instrumentation
 
-SRCS+=	EdgeProfiling.cpp \
+SRCS+=	AddressSanitizer.cpp \
+	EdgeProfiling.cpp \
 	GCOVProfiling.cpp \
 	Instrumentation.cpp \
 	OptimalEdgeProfiling.cpp \

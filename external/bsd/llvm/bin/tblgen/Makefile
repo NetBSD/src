@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/10/11 13:53:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2011/11/18 15:56:53 joerg Exp $
 
 PROG_CXX=	llvm-tblgen
 NOMAN=		yes
@@ -7,8 +7,7 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/utils/TableGen
 
-SRCS=	ARMDecoderEmitter.cpp \
-	AsmMatcherEmitter.cpp \
+SRCS=	AsmMatcherEmitter.cpp \
 	AsmWriterEmitter.cpp \
 	AsmWriterInst.cpp \
 	CallingConvEmitter.cpp \

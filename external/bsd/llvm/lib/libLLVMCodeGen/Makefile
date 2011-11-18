@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/11/03 17:52:53 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2011/11/18 15:56:53 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -78,7 +78,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	RegAllocBasic.cpp \
 	RegAllocFast.cpp \
 	RegAllocGreedy.cpp \
-	RegAllocLinearScan.cpp \
 	RegAllocPBQP.cpp \
 	RegisterClassInfo.cpp \
 	RegisterCoalescer.cpp \
@@ -104,8 +103,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	TargetLoweringObjectFileImpl.cpp \
 	TwoAddressInstructionPass.cpp \
 	UnreachableBlockElim.cpp \
-	VirtRegMap.cpp \
-	VirtRegRewriter.cpp
+	VirtRegMap.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
