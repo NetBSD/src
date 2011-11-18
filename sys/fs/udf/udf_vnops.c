@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.68 2011/10/18 20:20:29 hannken Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.69 2011/11/18 21:18:51 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.68 2011/10/18 20:20:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.69 2011/11/18 21:18:51 christos Exp $");
 #endif /* not lint */
 
 
@@ -376,6 +376,8 @@ udf_write(void *v)
 
 	/* mark node changed and request update */
 	udf_node->i_flags |= IN_CHANGE | IN_UPDATE;
+	if (vp->v_mount->mnt_flag & MNT_RELATIME)
+		udf_node->i_flags |= IN_ACCESS;
 
 	/*
 	 * XXX TODO FFS has code here to reset setuid & setgid when we're not
@@ -977,6 +979,8 @@ udf_chown(struct vnode *vp, uid_t new_uid, gid_t new_gid,
 
 	/* mark node changed */
 	udf_node->i_flags |= IN_CHANGE;
+	if (vp->v_mount->mnt_flag & MNT_RELATIME)
+		udf_node->i_flags |= IN_ACCESS;
 
 	return 0;
 }
@@ -1013,6 +1017,8 @@ udf_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred)
 
 	/* mark node changed */
 	udf_node->i_flags |= IN_CHANGE;
+	if (vp->v_mount->mnt_flag & MNT_RELATIME)
+		udf_node->i_flags |= IN_ACCESS;
 
 	return 0;
 }
@@ -1063,6 +1069,8 @@ udf_chsize(struct vnode *vp, u_quad_t newsize, kauth_cred_t cred)
 	if (error == 0) {
 		/* mark change */
 		udf_node->i_flags |= IN_CHANGE | IN_MODIFY;
+		if (vp->v_mount->mnt_flag & MNT_RELATIME)
+			udf_node->i_flags |= IN_ACCESS;
 		VN_KNOTE(vp, NOTE_ATTRIB | (extended ? NOTE_EXTEND : 0));
 		udf_update(vp, NULL, NULL, NULL, 0);
 	}
@@ -1116,8 +1124,11 @@ udf_chtimes(struct vnode *vp,
 	if (atime->tv_sec != VNOVAL)
 		if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
 			udf_node->i_flags |= IN_ACCESS;
-	if ((mtime->tv_sec != VNOVAL) || (birthtime->tv_sec != VNOVAL))
+	if ((mtime->tv_sec != VNOVAL) || (birthtime->tv_sec != VNOVAL)) {
 		udf_node->i_flags |= IN_CHANGE | IN_UPDATE;
+		if (vp->v_mount->mnt_flag & MNT_RELATIME)
+			udf_node->i_flags |= IN_ACCESS;
+	}
 
 	return udf_update(vp, atime, mtime, birthtime, 0);
 }
