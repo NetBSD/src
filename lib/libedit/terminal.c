@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.10 2011/10/04 15:27:04 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.11 2011/11/18 20:25:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.10 2011/10/04 15:27:04 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.11 2011/11/18 20:25:48 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1262,6 +1262,8 @@ terminal_writec(EditLine *el, Int c)
 {
 	Char visbuf[VISUAL_WIDTH_MAX +1];
 	ssize_t vcnt = ct_visual_char(visbuf, VISUAL_WIDTH_MAX, c);
+	if (vcnt < 0)
+		vcnt = 0;
 	visbuf[vcnt] = '\0';
 	terminal_overwrite(el, visbuf, (size_t)vcnt);
 	terminal__flush(el);
