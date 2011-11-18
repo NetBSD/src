@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex_obj.c,v 1.5 2011/09/27 01:02:38 jym Exp $	*/
+/*	$NetBSD: kern_mutex_obj.c,v 1.5.2.1 2011/11/18 00:57:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.5 2011/09/27 01:02:38 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.5.2.1 2011/11/18 00:57:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -134,10 +134,56 @@ mutex_obj_free(kmutex_t *lock)
 	    "%s: lock %p: mo->mo_refcnt (%#x) == 0",
 	     __func__, mo, mo->mo_refcnt);
 
-	if (atomic_dec_uint_nv(&mo->mo_refcnt) > 0) {
+	/*
+	 * if mo_refcnt is 1, no one except us have a reference to it and
+	 * thus it's stable.
+	 */
+	if (mo->mo_refcnt != 1 && atomic_dec_uint_nv(&mo->mo_refcnt) > 0) {
 		return false;
 	}
 	mutex_destroy(&mo->mo_lock);
 	pool_cache_put(mutex_obj_cache, mo);
 	return true;
 }
+
+/*
+ * mutex_obj_pause:
+ *
+ *	Pause until lock1 is available.
+ *	Temporarily release and reacquire lock2.
+ *
+ *	Typically used when we need to acquire locks in a reversed order
+ *	and trylock failed.
+ */
+void
+mutex_obj_pause(kmutex_t *lock1, kmutex_t *lock2)
+{
+
+	KASSERT(mutex_owned(lock2));
+	mutex_obj_hold(lock1);
+	mutex_exit(lock2);
+	mutex_enter(lock1);
+	mutex_exit(lock1);
+	mutex_obj_free(lock1);
+	mutex_enter(lock2);
+}
+
+/*
+ * mutex_obj_alloc_kernel_obj_lock:
+ *
+ *	mutex_obj_alloc for kernel object lock.
+ *	used for bootstrap.
+ */
+kmutex_t *
+mutex_obj_alloc_kernel_obj_lock(kmutex_type_t type, int ipl)
+{
+	static struct kmutexobj kernel_obj_lock;
+	struct kmutexobj *mo = &kernel_obj_lock;
+
+	KASSERT(mo->mo_refcnt == 0);
+	mutex_obj_ctor(NULL, mo, 0);
+	mutex_init(&mo->mo_lock, type, ipl);
+	mo->mo_refcnt = 1;
+	return (kmutex_t *)mo;
+}
+

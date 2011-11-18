@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.20 2010/02/08 09:54:27 skrll Exp $	*/
+/*	$NetBSD: mutex.h,v 1.20.10.1 2011/11/18 00:57:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -210,6 +210,8 @@ void	mutex_obj_init(void);
 kmutex_t *mutex_obj_alloc(kmutex_type_t, int);
 void	mutex_obj_hold(kmutex_t *);
 bool	mutex_obj_free(kmutex_t *);
+void	mutex_obj_pause(kmutex_t *, kmutex_t *);
+kmutex_t *mutex_obj_alloc_kernel_obj_lock(kmutex_type_t, int);
 
 #endif /* _KERNEL */
 

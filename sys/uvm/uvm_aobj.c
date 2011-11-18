@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.116.2.4 2011/11/13 01:18:02 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.116.2.5 2011/11/18 00:57:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.116.2.4 2011/11/13 01:18:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.116.2.5 2011/11/18 00:57:33 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -437,7 +437,6 @@ struct uvm_object *
 uao_create(vsize_t size, int flags)
 {
 	static struct uvm_aobj kernel_object_store;
-	static kmutex_t kernel_object_lock;
 	static int kobj_alloced = 0;
 	pgoff_t pages = round_page(size) >> PAGE_SHIFT;
 	struct uvm_aobj *aobj;
@@ -506,8 +505,8 @@ uao_create(vsize_t size, int flags)
 	uvm_obj_init(&aobj->u_obj, &aobj_pager, !kernobj, refs);
 	if (__predict_false(kernobj)) {
 		/* Initialisation only once, for UAO_FLAG_KERNOBJ. */
-		mutex_init(&kernel_object_lock, MUTEX_DEFAULT, IPL_NONE);
-		uvm_obj_setlock(&aobj->u_obj, &kernel_object_lock);
+		uvm_obj_setlock(&aobj->u_obj, 
+		    mutex_obj_alloc_kernel_obj_lock(MUTEX_DEFAULT, IPL_NONE));
 	}
 
 	/*
@@ -1195,8 +1194,8 @@ uao_swap_off(int startslot, int endslot)
 	 * walk the list of all aobjs.
 	 */
 
-restart:
 	mutex_enter(&uao_list_lock);
+restart:
 	for (aobj = LIST_FIRST(&uao_list);
 	     aobj != NULL;
 	     aobj = nextaobj) {
@@ -1208,9 +1207,7 @@ restart:
 		 */
 
 		if (!mutex_tryenter(aobj->u_obj.vmobjlock)) {
-			mutex_exit(&uao_list_lock);
-			/* XXX Better than yielding but inadequate. */
-			kpause("livelock", false, 1, NULL);
+			mutex_obj_pause(aobj->u_obj.vmobjlock, &uao_list_lock);
 			goto restart;
 		}
 
