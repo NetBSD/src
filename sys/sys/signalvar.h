@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.81 2011/05/28 15:33:41 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.82 2011/11/18 03:34:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -180,7 +180,7 @@ void	ksiginfo_queue_drain0(ksiginfoq_t *);
 
 struct sys_____sigtimedwait50_args;
 int	sigtimedwait1(struct lwp *, const struct sys_____sigtimedwait50_args *,
-		      register_t *, copyout_t, copyin_t, copyout_t);
+    register_t *, copyin_t, copyout_t, copyin_t, copyout_t);
 
 void	signotify(struct lwp *);
 int	sigispending(struct lwp *, int);
