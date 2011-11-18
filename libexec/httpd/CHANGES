@@ -1,4 +1,13 @@
-$eterna: CHANGES,v 1.77 2010/09/20 22:26:28 mrg Exp $
+$eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
+
+changes since bozohttpd 20100920:
+	o  add -P <pidfile> option, from jmmv@netbsd.org
+	o  avoid crashes with http basic auth, from pooka@netbsd.org
+	o  add support for REDIRECT_STATUS variable, from tls@netbsd.org
+	o  support .mp4 files in the default map
+	o  directory indexes with files with : are now displayed properly, from
+	   reed@netbsd.org
+	o  allow -I option to be useful in non-inetd mode as well
 
 changes since bozohttpd 20100617:
 	o  properly fully disable multi-file mode for now
