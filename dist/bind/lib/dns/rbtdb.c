@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.1.1.6.4.5 2011/07/07 12:44:25 sborrill Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.1.1.6.4.6 2011/11/18 23:03:22 sborrill Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -4824,7 +4824,7 @@ cache_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 			      rdataset);
 		if (need_headerupdate(found, search.now))
 			update = found;
-		if (foundsig != NULL) {
+		if (!NEGATIVE(found) && foundsig != NULL) {
 			bind_rdataset(search.rbtdb, node, foundsig, search.now,
 				      sigrdataset);
 			if (need_headerupdate(foundsig, search.now))
@@ -5453,7 +5453,7 @@ cache_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	}
 	if (found != NULL) {
 		bind_rdataset(rbtdb, rbtnode, found, now, rdataset);
-		if (foundsig != NULL)
+		if (!NEGATIVE(found) && foundsig != NULL)
 			bind_rdataset(rbtdb, rbtnode, foundsig, now,
 				      sigrdataset);
 	}
