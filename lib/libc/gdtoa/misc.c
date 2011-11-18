@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.7 2011/03/21 04:52:09 christos Exp $ */
+/* $NetBSD: misc.c,v 1.8 2011/11/18 02:38:17 christos Exp $ */
 
 /****************************************************************
 
@@ -432,6 +432,7 @@ pow5mult
 			b1 = mult(b, p5);
 			if (b1 == NULL)
 				return NULL;
+			Bfree(b);
 			b = b1;
 			}
 		if (!(k = (unsigned int)k >> 1))
