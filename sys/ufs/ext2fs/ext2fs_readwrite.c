@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.57 2011/06/12 03:36:00 rmind Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.58 2011/11/18 21:18:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.57 2011/06/12 03:36:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.58 2011/11/18 21:18:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,6 +374,8 @@ ext2fs_write(void *v)
 
 out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+	if (vp->v_mount->mnt_flag & MNT_RELATIME)
+		ip->i_flag |= IN_ACCESS;
 	if (resid > uio->uio_resid && ap->a_cred &&
 	    kauth_authorize_generic(ap->a_cred, KAUTH_GENERIC_ISSUSER, NULL))
 		ip->i_e2fs_mode &= ~(ISUID | ISGID);
