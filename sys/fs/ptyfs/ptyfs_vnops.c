@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.36 2011/09/16 18:43:44 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.37 2011/11/18 21:18:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.36 2011/09/16 18:43:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.37 2011/11/18 21:18:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,8 +426,11 @@ ptyfs_setattr(void *v)
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
 				ptyfs->ptyfs_flag |= PTYFS_ACCESS;
-		if (vap->va_mtime.tv_sec != VNOVAL)
+		if (vap->va_mtime.tv_sec != VNOVAL) {
 			ptyfs->ptyfs_flag |= PTYFS_CHANGE | PTYFS_MODIFY;
+			if (vp->v_mount->mnt_flag & MNT_RELATIME)
+				ptyfs->ptyfs_flag |= PTYFS_ACCESS;
+		}
 		if (vap->va_birthtime.tv_sec != VNOVAL)
 			ptyfs->ptyfs_birthtime = vap->va_birthtime;
 		ptyfs->ptyfs_flag |= PTYFS_CHANGE;

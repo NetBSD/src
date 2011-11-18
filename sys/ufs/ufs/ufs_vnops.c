@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.205 2011/09/27 02:10:32 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.206 2011/11/18 21:18:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.205 2011/09/27 02:10:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.206 2011/11/18 21:18:52 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -638,8 +638,11 @@ ufs_setattr(void *v)
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
 				ip->i_flag |= IN_ACCESS;
-		if (vap->va_mtime.tv_sec != VNOVAL)
+		if (vap->va_mtime.tv_sec != VNOVAL) {
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
+			if (vp->v_mount->mnt_flag & MNT_RELATIME)
+				ip->i_flag |= IN_ACCESS;
+		}
 		if (vap->va_birthtime.tv_sec != VNOVAL &&
 		    ip->i_ump->um_fstype == UFS2) {
 			ip->i_ffs2_birthtime = vap->va_birthtime.tv_sec;
@@ -2092,7 +2095,7 @@ ufs_mkdir(void *v)
 		goto bad;
 	ip->i_size = dirblksiz;
 	DIP_ASSIGN(ip, size, dirblksiz);
-	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	uvm_vnp_setsize(tvp, ip->i_size);
 	memcpy((void *)bp->b_data, (void *)&dirtemplate, sizeof dirtemplate);
 
@@ -2286,6 +2289,8 @@ ufs_symlink(void *v)
 		DIP_ASSIGN(ip, size, len);
 		uvm_vnp_setsize(vp, ip->i_size);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		if (vp->v_mount->mnt_flag & MNT_RELATIME)
+			ip->i_flag |= IN_ACCESS;
 		UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
