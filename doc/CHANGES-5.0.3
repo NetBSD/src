@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.52 2011/11/03 17:56:27 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.53 2011/11/18 22:48:42 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2850,4 +2850,9 @@ sys/arch/xen/xen/xbdback_xenbus.c		1.45 via patch
 	would result in the block device being opened twice, and a
 	panic. PR#45158.
 	[bouyer, ticket #1682]
+
+sys/uvm/uvm_meter.c				1.57
+
+	Dereference correct variable and thus stop a sysctl crash.
+	[christos, ticket #1691]
 
