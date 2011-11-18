@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.99 2011/08/16 16:25:15 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.100 2011/11/18 20:38:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.99 2011/08/16 16:25:15 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.100 2011/11/18 20:38:42 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -887,7 +887,7 @@ history_expand(char *str, char **output)
 	*output = NULL;
 	if (str[0] == history_subst_char) {
 		/* ^foo^foo2^ is equivalent to !!:s^foo^foo2^ */
-		*output = el_malloc((strlen(str) + 4 + 1) * sizeof(*output));
+		*output = el_malloc((strlen(str) + 4 + 1) * sizeof(**output));
 		if (*output == NULL)
 			return 0;
 		(*output)[0] = (*output)[1] = history_expansion_char;
