@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.73 2011/11/18 04:07:44 christos Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.74 2011/11/18 15:45:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.73 2011/11/18 04:07:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.74 2011/11/18 15:45:47 christos Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -559,7 +559,6 @@ fetchss(const void *u, void *s, size_t len)
 	int error;
 	linux_sigset_t lss;
 	
-	KASSERT(len == sizeof(lss));
 	if ((error = copyin(u, &lss, sizeof(lss))) != 0)
 		return error;
 
@@ -573,7 +572,6 @@ fetchts(const void *u, void *s, size_t len)
 	int error;
 	struct linux_timespec lts;
 	
-	KASSERT(len == sizeof(lts));
 	if ((error = copyin(u, &lts, sizeof(lts))) != 0)
 		return error;
 
