@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.115 2011/11/18 23:19:21 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.116 2011/11/18 23:27:59 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5796,4 +5796,19 @@ sys/kern/kern_event.c				1.73
 	timeout value makes DIAGNOSTIC kernel panic. If the computed
 	ticks are <= 0 set it to 1.
 	[christos, ticket #1693]
+
+sys/dev/pci/if_age.c				1.40 via patch
+
+	- age_init() is called from age_watchdog() which is in interrupt
+	context; we can't sleep here or we get a DIAGNOSTIC panic when
+	age_watchdog() fires.
+	- More correct bus_dma(9) usage in age_encap()
+	- Introduce a age_shutdown() to be called by pmf(9) at shutdown time,
+	to stop the DMA engine.
+	- Be consistent in WAIT/NOWAIT use in init routines
+	- Use BUS_DMA_COHERENT where appropriate
+	- Rework the interrupt routine a bit, and ACK but do not disable
+	interrupts here. There seems to be a race where interrupts would
+	not be properly reenabled after this, leading do watchdog timeouts.
+	[bouyer, ticket #1694]
 
