@@ -1,6 +1,6 @@
-.\"	$NetBSD: bozohttpd.8,v 1.31 2011/11/17 23:19:30 wiz Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.32 2011/11/18 09:51:31 mrg Exp $
 .\"
-.\"	$eterna: bozohttpd.8,v 1.99 2010/09/20 22:26:28 mrg Exp $
+.\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
 .\" Copyright (c) 1997-2010 Matthew R. Green
 .\" All rights reserved.
@@ -34,19 +34,19 @@
 .Nd hyper text transfer protocol version 1.1 daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl befHnrsuVX
+.Op Fl CIMPSZciptvx
 .Op Fl C Ar suffix cgihandler
-.Op Fl c Ar cgibin
 .Op Fl I Ar port
-.Op Fl i Ar address
 .Op Fl M Ar suffix type encoding encoding11
 .Op Fl P Ar pidfile
-.Op Fl p Ar pubdir
 .Op Fl S Ar server_software
+.Op Fl Z Ar cert privkey
+.Op Fl c Ar cgibin
+.Op Fl i Ar address
+.Op Fl p Ar pubdir
 .Op Fl t Ar chrootdir
 .Op Fl v Ar virtualroot
 .Op Fl x Ar index
-.Op Fl Z Ar cert privkey
 .Ar slashdir
 .Op Ar myname
 .Sh DESCRIPTION
