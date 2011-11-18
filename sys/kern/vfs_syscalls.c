@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.440 2011/10/14 09:23:31 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.441 2011/11/18 21:17:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.440 2011/10/14 09:23:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.441 2011/11/18 21:17:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -221,7 +221,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	mutex_enter(&mp->mnt_updating);
 
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
-	mp->mnt_flag |= flags & (MNT_RELOAD | MNT_FORCE | MNT_UPDATE);
+	mp->mnt_flag |= flags & MNT_OP_FLAGS;
 
 	/*
 	 * Set the mount level flags.
@@ -230,17 +230,8 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		mp->mnt_flag |= MNT_RDONLY;
 	else if (mp->mnt_flag & MNT_RDONLY)
 		mp->mnt_iflag |= IMNT_WANTRDWR;
-	mp->mnt_flag &=
-	  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG | MNT_EXTATTR);
-	mp->mnt_flag |= flags &
-	   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG | MNT_EXTATTR | MNT_IGNORE);
-
+	mp->mnt_flag &= ~MNT_BASIC_FLAGS;
+	mp->mnt_flag |= flags & MNT_BASIC_FLAGS;
 	error = VFS_MOUNT(mp, path, data, data_len);
 
 	if (error && data != NULL) {
