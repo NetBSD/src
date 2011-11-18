@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81.2.2 2011/11/06 22:05:00 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.3 2011/11/18 00:57:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.2 2011/11/06 22:05:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.3 2011/11/18 00:57:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -983,8 +983,7 @@ uvm_unloanpage(struct vm_page **ploans, int npages)
 			if (mutex_tryenter(slock)) {
 				break;
 			}
-			/* XXX Better than yielding but inadequate. */
-			kpause("livelock", false, 1, &uvm_pageqlock);
+			mutex_obj_pause(slock, &uvm_pageqlock);
 			slock = NULL;
 		}
 

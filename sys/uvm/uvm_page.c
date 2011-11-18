@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178.2.5 2011/11/13 01:18:02 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.6 2011/11/18 00:57:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.5 2011/11/13 01:18:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.6 2011/11/18 00:57:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2057,17 +2057,12 @@ uvm_page_lookup_freelist(struct vm_page *pg)
 bool
 uvm_page_locked_p(struct vm_page *pg)
 {
+	kmutex_t * const lock = uvm_page_getlock(pg);
 
-	if (pg->uobject != NULL) {
-		return mutex_owned(pg->uobject->vmobjlock);
-	}
-	if (pg->uanon != NULL) {
-		return mutex_owned(pg->uanon->an_lock);
-	}
-	return true;
+	return lock == NULL || mutex_owned(lock);
 }
 
-static kmutex_t *
+kmutex_t *
 uvm_page_getlock(struct vm_page *pg)
 {
 
