@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.42.6.3 2010/05/20 05:51:59 snj Exp $	*/
+/*	$NetBSD: vector.S,v 1.42.6.4 2011/11/18 21:09:24 sborrill Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.6.3 2010/05/20 05:51:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.6.4 2011/11/18 21:09:24 sborrill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -841,7 +841,10 @@ IDTVEC(trap00)
 IDTVEC(trap01)
 	BPTTRAP(T_TRCTRAP)
 IDTVEC(trap02)
-	ZTRAP(T_NMI)
+	pushl $0
+	pushl $(T_NMI)
+	INTRENTRY
+	jmp _C_LABEL(calltrap)
 IDTVEC(trap03)
 	BPTTRAP(T_BPTFLT)
 IDTVEC(trap04)
