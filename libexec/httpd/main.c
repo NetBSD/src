@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.4 2011/11/17 22:09:12 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2011/11/18 09:51:31 mrg Exp $	*/
 
-/*	$eterna: main.c,v 1.4 2010/07/11 00:34:28 mrg Exp $	*/
+/*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
 
 /*
- * Copyright (c) 1997-2010 Matthew R. Green
+ * Copyright (c) 1997-2011 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,12 +79,12 @@ usage(bozohttpd_t *httpd, char *progname)
 	bozo_warn(httpd,
 		"   -c cgibin\t\tenable cgi-bin support in this directory");
 #endif
+	bozo_warn(httpd, "   -I port\t\tbind or use on this port");
 #ifndef NO_DAEMON_MODE
 	bozo_warn(httpd, "   -b\t\t\tbackground and go into daemon mode");
 	bozo_warn(httpd, "   -f\t\t\tkeep daemon mode in the foreground");
 	bozo_warn(httpd,
 		"   -i address\t\tbind on this address (daemon mode only)");
-	bozo_warn(httpd, "   -I port\t\tbind on this port (daemon mode only)");
 	bozo_warn(httpd, "   -P pidfile\t\tpath to the pid file to create");
 #endif
 	bozo_warn(httpd, "   -S version\t\tset server version string");
