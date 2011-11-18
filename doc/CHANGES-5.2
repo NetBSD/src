@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.109 2011/11/18 21:11:25 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.110 2011/11/18 21:23:20 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5750,4 +5750,10 @@ sys/arch/i386/i386/vector.S			1.54
 
 	Keep interrupts disabled in NMI handler. Addresses PR/43007.
 	[dholland, ticket #1687]
+
+sys/kern/kern_module.c				1.84
+	Return ENOEXEC instead of 0 if the info of a kernel module
+	doesn't have the expected size. This prevents kernel panics
+	when loading broken modules.
+	[tron, ticket #1688]
 
