@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.207 2011/08/28 08:41:01 jnemeth Exp $
+$NetBSD: acronyms,v 1.208 2011/11/19 17:38:58 mbalmer Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -104,7 +104,9 @@ DTRT	do the right thing
 DTWT	do the wrong thing
 DYK	do you know?
 DWIM	do what I mean
+ECR	electronic cash register
 EDS	eternal downward spiral
+EFT	electronic funds transfer
 EG	evil grin
 EIE	enough is enough
 EMSG	email message
@@ -373,6 +375,7 @@ POC	proof of concept
 POLA	principle of least astonishment
 POLS	principle of least surprise
 POS	piece of shit
+POS	point of sale
 POV	point of view
 PPL	people
 PPL	pretty please
