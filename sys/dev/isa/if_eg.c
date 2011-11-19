@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.82 2010/04/05 07:20:24 joerg Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.83 2011/11/19 22:51:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.82 2010/04/05 07:20:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.83 2011/11/19 22:51:23 tls Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -114,7 +114,7 @@ struct eg_softc {
 	void *	eg_outbuf;		/* Outgoing packet buffer */
 
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 };
 

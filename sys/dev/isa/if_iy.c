@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.88 2010/04/05 07:20:24 joerg Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.89 2011/11/19 22:51:23 tls Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.88 2010/04/05 07:20:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.89 2011/11/19 22:51:23 tls Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -129,7 +129,7 @@ struct iy_softc {
 #endif
 
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 };
 

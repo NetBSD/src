@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.329 2011/09/16 21:02:28 reinoud Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.330 2011/11/19 22:51:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.329 2011/09/16 21:02:28 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.330 2011/11/19 22:51:25 tls Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.329 2011/09/16 21:02:28 reinoud Exp 
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
 #include <sys/sdt.h>
+#include <sys/cprng.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -780,7 +781,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 #ifdef PAX_ASLR
 	if (pax_aslr_active(l))
-		len += (arc4random() % PAGE_SIZE);
+		len += (cprng_fast32() % PAGE_SIZE);
 #endif /* PAX_ASLR */
 
 #ifdef STACKALIGN	/* arm, etc. */

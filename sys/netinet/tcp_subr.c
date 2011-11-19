@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.242 2011/10/31 12:56:45 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.243 2011/11/19 22:51:26 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,14 +91,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.242 2011/10/31 12:56:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.243 2011/11/19 22:51:26 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_tcp_compat_42.h"
 #include "opt_inet_csum.h"
 #include "opt_mbuftrace.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -111,10 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.242 2011/10/31 12:56:45 yamt Exp $");
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/pool.h>
-#if NRND > 0
 #include <sys/md5.h>
-#include <sys/rnd.h>
-#endif
+#include <sys/cprng.h>
 
 #include <net/route.h>
 #include <net/if.h>
@@ -174,9 +171,7 @@ int 	tcp_mssdflt = TCP_MSS;
 int	tcp_minmss = TCP_MINMSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;	/* window scaling / timestamps (obsolete) */
-#if NRND > 0
 int	tcp_do_rfc1948 = 0;	/* ISS by cryptographic hash */
-#endif
 int	tcp_do_sack = 1;	/* selective acknowledgement */
 int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
 int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
@@ -2179,9 +2174,7 @@ tcp_rmx_rtt(struct tcpcb *tp)
 }
 
 tcp_seq	 tcp_iss_seq = 0;	/* tcp initial seq # */
-#if NRND > 0
 u_int8_t tcp_iss_secret[16];	/* 128 bits; should be plenty */
-#endif
 
 /*
  * Get a new sequence value given a tcp control block
@@ -2219,7 +2212,6 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 {
 	tcp_seq tcp_iss;
 
-#if NRND > 0
 	static bool tcp_iss_gotten_secret;
 
 	/*
@@ -2227,8 +2219,8 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 	 * hash secret.
 	 */
 	if (tcp_iss_gotten_secret == false) {
-		rnd_extract_data(tcp_iss_secret, sizeof(tcp_iss_secret),
-		    RND_EXTRACT_ANY);
+		cprng_strong(kern_cprng,
+			     tcp_iss_secret, sizeof(tcp_iss_secret));
 		tcp_iss_gotten_secret = true;
 	}
 
@@ -2269,17 +2261,11 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 #ifdef TCPISS_DEBUG
 		printf("new ISS 0x%08x\n", tcp_iss);
 #endif
-	} else
-#endif /* NRND > 0 */
-	{
+	} else {
 		/*
 		 * Randomize.
 		 */
-#if NRND > 0
-		rnd_extract_data(&tcp_iss, sizeof(tcp_iss), RND_EXTRACT_ANY);
-#else
-		tcp_iss = arc4random();
-#endif
+		tcp_iss = cprng_fast32();
 
 		/*
 		 * If we were asked to add some amount to a known value,

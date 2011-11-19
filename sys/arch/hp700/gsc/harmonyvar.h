@@ -1,4 +1,4 @@
-/*	$NetBSD: harmonyvar.h,v 1.4 2008/04/25 08:17:52 mjf Exp $	*/
+/*	$NetBSD: harmonyvar.h,v 1.5 2011/11/19 22:51:20 tls Exp $	*/
 
 /*	$OpenBSD: harmonyvar.h,v 1.8 2003/08/15 13:25:53 mickey Exp $	*/
 
@@ -105,7 +105,7 @@ struct harmony_softc {
 	int sc_teleshare;
 
 #if NRND > 0
-	rndsource_element_t sc_rnd_source;
+	krndsource_t sc_rnd_source;
 	struct callout sc_acc_tmo;
 	uint32_t sc_acc, sc_acc_num, sc_acc_cnt;
 #endif

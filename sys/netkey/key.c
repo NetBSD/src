@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.179 2011/07/17 20:54:54 joerg Exp $	*/
+/*	$NetBSD: key.c,v 1.180 2011/11/19 22:51:30 tls Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.179 2011/07/17 20:54:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.180 2011/11/19 22:51:30 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -96,10 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.179 2011/07/17 20:54:54 joerg Exp $");
 
 #include <miscfs/kernfs/kernfs.h>
 
-#include "rnd.h"
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
+#include <sys/cprng.h>
 
 #include <net/net_osdep.h>
 
@@ -4975,20 +4972,7 @@ key_random(void)
 void
 key_randomfill(void *p, size_t l)
 {
-#if NRND == 0
-	static int warn = 1;
-#endif
-
-	arc4randbytes(p, l);
-
-#if NRND == 0
-	/* the arc4 generator is keyed with junk. */
-	if (warn) {
-		printf("WARNING: pseudo-random number generator "
-		    "used for IPsec processing\n");
-		warn = 0;
-	}
-#endif
+	cprng_fast(p, l);
 }
 
 /*

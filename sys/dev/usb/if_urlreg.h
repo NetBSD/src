@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.6 2010/11/03 22:30:50 dyoung Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.7 2011/11/19 22:51:24 tls Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -176,7 +176,7 @@ struct url_softc {
 	int			sc_link;
 #define	sc_media url_mii.mii_media
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 	struct url_cdata	sc_cdata;
 

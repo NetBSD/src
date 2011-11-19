@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacvar.h,v 1.9 2005/12/11 12:21:27 christos Exp $ */
+/*      $NetBSD: lemacvar.h,v 1.10 2011/11/19 22:51:22 tls Exp $ */
 
 /*
  * Copyright (c) 1997 Matt Thomas <matt@3am-software.com>
@@ -80,7 +80,7 @@ typedef struct {
     char sc_prodname[LEMAC_EEP_PRDNMSZ+1]; /* product name DE20x-xx */
     u_int8_t sc_eeprom[LEMAC_EEP_SIZE];	/* local copy eeprom */
 #if NRND > 0
-    rndsource_element_t rnd_source;
+    krndsource_t rnd_source;
 #endif
 } lemac_softc_t;
 

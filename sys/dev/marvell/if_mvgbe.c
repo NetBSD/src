@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.14 2011/11/19 17:01:38 jakllsch Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.15 2011/11/19 22:51:23 tls Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.14 2011/11/19 17:01:38 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.15 2011/11/19 22:51:23 tls Exp $");
 
 #include "rnd.h"
 
@@ -216,7 +216,7 @@ struct mvgbe_softc {
 	SIMPLEQ_HEAD(__mvgbe_txmaphead, mvgbe_txmap_entry) sc_txmap_head;
 
 #if NRND > 0
-	rndsource_element_t sc_rnd_source;
+	krndsource_t sc_rnd_source;
 #endif
 };
 

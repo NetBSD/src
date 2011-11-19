@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.38 2009/12/17 21:03:10 bouyer Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.39 2011/11/19 22:51:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -67,7 +67,7 @@ struct wd_softc {
 	u_int sc_bscount;
 #endif
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 };
 

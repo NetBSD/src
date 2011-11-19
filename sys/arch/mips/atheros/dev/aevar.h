@@ -1,4 +1,4 @@
-/*	$NetBSD: aevar.h,v 1.3 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: aevar.h,v 1.4 2011/11/19 22:51:20 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ struct ae_softc {
 	int	sc_rxptr;		/* next ready RX descriptor/descsoft */
 
 #if NRND > 0
-	rndsource_element_t sc_rnd_source; /* random source */
+	krndsource_t sc_rnd_source; /* random source */
 #endif
 };
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.39 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.40 2011/11/19 22:51:20 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.39 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.40 2011/11/19 22:51:20 tls Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -87,7 +87,7 @@ struct gmac_softc {
 	char sc_laddr[6];
 
 #if NRND > 0
-	rndsource_element_t sc_rnd_source; /* random source */
+	krndsource_t sc_rnd_source; /* random source */
 #endif
 };
 

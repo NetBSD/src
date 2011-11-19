@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.86 2010/04/05 07:20:24 joerg Exp $	*/
+/*	$NetBSD: if_el.c,v 1.87 2011/11/19 22:51:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.86 2010/04/05 07:20:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.87 2011/11/19 22:51:23 tls Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -80,7 +80,7 @@ struct el_softc {
 	bus_space_handle_t sc_ioh;	/* i/o handle */
 
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 };
 

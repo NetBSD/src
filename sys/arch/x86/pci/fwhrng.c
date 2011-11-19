@@ -1,4 +1,4 @@
-/*	$NetBSD: fwhrng.c,v 1.3 2011/07/01 18:22:08 dyoung Exp $	*/
+/*	$NetBSD: fwhrng.c,v 1.4 2011/11/19 22:51:21 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.3 2011/07/01 18:22:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.4 2011/11/19 22:51:21 tls Exp $");
 
 #include "rnd.h"        
                             
@@ -54,7 +54,7 @@ struct fwhrng_softc {
 	bus_space_handle_t sc_sh;
 
 	struct callout sc_rnd_ch;
-	rndsource_element_t sc_rnd_source;
+	krndsource_t sc_rnd_source;
 
 	int sc_rnd_i;
 	uint32_t sc_rnd_ax;
