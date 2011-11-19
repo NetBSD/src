@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.7.4.1 2011/11/19 23:31:26 jmcneill Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.7.4.2 2011/11/19 23:36:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.7.4.1 2011/11/19 23:31:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.7.4.2 2011/11/19 23:36:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +151,7 @@ static int gcscaudio_trigger_output(void *, void *, void *, int,
 static int gcscaudio_trigger_input(void *, void *, void *, int,
                                    void (*)(void *), void *,
                                    const audio_params_t *);
+static void gcscaudio_get_locks(void *, kmutex_t **, kmutex_t **);
 static bool gcscaudio_resume(device_t, const pmf_qual_t *);
 static int gcscaudio_intr(void *);
 
@@ -211,7 +212,8 @@ static const struct audio_hw_if gcscaudio_hw_if = {
 	.trigger_output		= gcscaudio_trigger_output,
 	.trigger_input		= gcscaudio_trigger_input,
 	.dev_ioctl		= NULL,
-	.powerstate		= NULL
+	.powerstate		= NULL,
+	.get_locks		= gcscaudio_get_locks,
 };
 
 static const struct audio_format gcscaudio_formats_2ch = {
@@ -1185,6 +1187,17 @@ gcscaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	    ACC_BMx_CMD_BM_CTL_ENABLE);
 
 	return 0;
+}
+
+static void
+gcscaudio_get_locks(void *arg, kmutex_t **intr, kmutex_t **thread)
+{
+	struct gcscaudio_softc *sc;
+
+	sc = (struct gcscaudio_softc *)arg;
+
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
 }
 
 static int
