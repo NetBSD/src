@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.2 2011/11/19 12:32:54 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.1 2011/10/30 12:12:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.2 2011/11/19 12:32:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -675,8 +675,12 @@ vioif_start(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	while (IFQ_POLL(&ifp->if_snd, m), m != NULL) {
+	for (;;) {
 		int slot, r;
+
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
 
 		r = virtio_enqueue_prep(vsc, vq, &slot);
 		if (r == EAGAIN) {
