@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.10 2011/06/19 16:20:09 nonaka Exp $
+# $NetBSD: INSTALL,v 1.11 2011/11/19 17:17:41 nonaka Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -17,6 +17,8 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 # - see src/sys/arch/zaurus/stand/zbsdmod/zbsdmod.c:bsdimage[]
 
 makeoptions		COPTS="-Os"
+
+no options 		KLOADER
 
 no options 		INSECURE
 
