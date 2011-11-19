@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.155 2011/03/17 13:26:51 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.156 2011/11/19 12:27:43 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.155 $"
+#ident 		"GENERIC-$Revision: 1.156 $"
 
 maxusers	8
 
@@ -252,7 +252,6 @@ kbd0	at mfp0				# standard keyboard
 ite0	at grf0 grfaddr 0		# internal terminal emulator
 options 	ITE_KERNEL_ATTR=4	# bold for kernel messages
 					# see /sys/arch/x68k/dev/itevar.h
-pow0	at mfp0				# software power switch
 
 ## floppy disks
 fdc0	at intio0 addr 0xe94000 intr 96 dma 0 dmaintr 100 # floppy controller
