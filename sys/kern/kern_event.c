@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.60.6.2 2010/01/09 01:08:39 snj Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.60.6.2.2.1 2011/11/19 22:22:56 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.60.6.2 2010/01/09 01:08:39 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.60.6.2.2.1 2011/11/19 22:22:56 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -866,18 +866,16 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 		return (EINVAL);
 	}
 
- 	mutex_enter(&fdp->fd_lock);
-
 	/* search if knote already exists */
 	if (kfilter->filtops->f_isfd) {
 		/* monitoring a file descriptor */
 		fd = kev->ident;
 		if ((fp = fd_getfile(fd)) == NULL) {
-		 	mutex_exit(&fdp->fd_lock);
 			rw_exit(&kqueue_filter_lock);
 			kmem_free(newkn, sizeof(*newkn));
 			return EBADF;
 		}
+		mutex_enter(&fdp->fd_lock);
 		ff = fdp->fd_ofiles[fd];
 		if (fd <= fdp->fd_lastkqfile) {
 			SLIST_FOREACH(kn, &ff->ff_knlist, kn_link) {
@@ -891,6 +889,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 		 * not monitoring a file descriptor, so
 		 * lookup knotes in internal hash table
 		 */
+		mutex_enter(&fdp->fd_lock);
 		if (fdp->fd_knhashmask != 0) {
 			list = &fdp->fd_knhash[
 			    KN_HASH((u_long)kev->ident, fdp->fd_knhashmask)];
