@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.116 2011/11/18 23:27:59 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.117 2011/11/19 14:00:18 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5811,4 +5811,16 @@ sys/dev/pci/if_age.c				1.40 via patch
 	interrupts here. There seems to be a race where interrupts would
 	not be properly reenabled after this, leading do watchdog timeouts.
 	[bouyer, ticket #1694]
+
+dist/openpam/lib/openpam_configure.c		1.6
+
+	Don't allow '/' characters in the "service" argument to pam_start()
+	The "service" is blindly appended to config directories ("/etc/pam.d/"),
+	and if a user can control the "service" it can get PAM to read config
+	files from any location.
+	This is not a problem with most software because the "service" is
+	usually a constant string. The check protects 3rd party software
+	from being abused.
+	(CVE-2011-4122)
+	[drochner, ticket #1696]
 
