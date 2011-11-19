@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.20 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.21 2011/11/19 22:51:19 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.20 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.21 2011/11/19 22:51:19 tls Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -127,7 +127,7 @@ struct npe_softc {
 	bus_addr_t	sc_stats_phys;	/* phys addr of sc_stats */
 	int		sc_if_flags;	/* keep last if_flags */
 #if NRND > 0
-	rndsource_element_t rnd_source; /* random source */
+	krndsource_t rnd_source; /* random source */
 #endif
 };
 

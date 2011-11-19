@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpmvar.h,v 1.6 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: amdpmvar.h,v 1.7 2011/11/19 22:51:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ struct amdpm_softc {
 	void *sc_ih;
 
 	struct callout sc_rnd_ch;
-	rndsource_element_t sc_rnd_source;
+	krndsource_t sc_rnd_source;
 #ifdef AMDPM_RND_COUNTERS
 	struct evcnt sc_rnd_hits;
 	struct evcnt sc_rnd_miss;

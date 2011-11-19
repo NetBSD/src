@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.29 2009/10/19 18:41:16 bouyer Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.30 2011/11/19 22:51:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -48,6 +48,6 @@ struct cd_softc {
 	struct callout sc_callout;
 
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 };

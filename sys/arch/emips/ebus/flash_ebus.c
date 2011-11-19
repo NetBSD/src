@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.2 2011/06/12 03:29:33 tsutsui Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.2 2011/06/12 03:29:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -202,7 +202,7 @@ struct eflash_softc {
 	int retries; /* number of xfer retry */
 
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 
     /* flash-specific state */
@@ -1306,7 +1306,7 @@ static int eflash_write_at (struct eflash_softc *sc,
 /* Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: flash_ebus.c,v 1.2 2011/06/12 03:29:33 tsutsui Exp $ */
+/*	$NetBSD: flash_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.

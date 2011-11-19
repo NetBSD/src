@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.150 2011/10/15 19:50:20 dholland Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.151 2011/11/19 22:51:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.150 2011/10/15 19:50:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.151 2011/11/19 22:51:23 tls Exp $");
 
 #include "rnd.h"
 
@@ -355,7 +355,7 @@ struct sip_softc {
 	void (*sc_rxintr)(struct sip_softc *);
 
 #if NRND > 0
-	rndsource_element_t rnd_source;	/* random source */
+	krndsource_t rnd_source;	/* random source */
 #endif
 };
 

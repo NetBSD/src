@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.14 2009/10/19 18:41:15 bouyer Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.15 2011/11/19 22:51:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -85,7 +85,7 @@ struct tl_softc {
 	int oerr_mcopy;
 #endif
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 };
 #define tl_if            tl_ec.ec_if

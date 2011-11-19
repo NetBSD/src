@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.33 2010/11/13 13:52:05 uebayasi Exp $	 */
+/* $NetBSD: if_bce.c,v 1.34 2011/11/19 22:51:23 tls Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.33 2010/11/13 13:52:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.34 2011/11/19 22:51:23 tls Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -139,7 +139,7 @@ struct bce_softc {
 	int			bce_txsnext;	/* next available tx slot */
 	callout_t		bce_timeout;
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.12 2011/01/25 13:12:39 tsutsui Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.13 2011/11/19 22:51:20 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -157,7 +157,7 @@ struct sq_softc {
 	struct evcnt		sq_intrcnt;	/* count interrupts */
 
 #if NRND > 0
-	rndsource_element_t	rnd_source;	/* random source */
+	krndsource_t	rnd_source;	/* random source */
 #endif
 	struct hpc_values       *hpc_regs;      /* HPC register definitions */
 
