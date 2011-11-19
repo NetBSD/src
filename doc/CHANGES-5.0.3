@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.55 2011/11/19 14:00:19 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.56 2011/11/19 22:26:58 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2874,4 +2874,10 @@ dist/openpam/lib/openpam_configure.c		1.6
 	from being abused.
 	(CVE-2011-4122)
 	[drochner, ticket #1696]
+
+sys/kern/kern_event.c				1.74
+
+	kqueue_register: avoid calling fd_getfile() with
+	filedesc_t::fd_lock held. Fixes PR/45479 by KOGULE Ryo.
+	[rmind, ticket #1695]
 
