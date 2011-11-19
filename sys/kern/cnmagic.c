@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.11 2010/01/31 00:43:37 hubertf Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.12 2011/11/19 16:11:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.11 2010/01/31 00:43:37 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.12 2011/11/19 16:11:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,16 +61,19 @@ cn_destroy_magic(cnm_state_t *cnm)
  * machine table.
  */
 int
-cn_set_magic(const char *magic)
+cn_set_magic(const char *smagic)
 {
-	unsigned int i, c, n;
+	const unsigned char *magic = (const unsigned char *)smagic;
+	unsigned short i, c, n;
 	unsigned short m[CNS_LEN];
 
 	for (i = 0; i < CNS_LEN; i++) {
-		c = (*magic++) & 0xff;
-		n = *magic ? i+1 : CNS_TERM;
+		c = *magic++;
+		if (c == '\0')
+			return EINVAL;
+		n = *magic ? i + 1 : CNS_TERM;
 		switch (c) {
-		case 0:
+		case '\0':
 			/* End of string */
 			if (i == 0) {
 				/* empty string? */
@@ -78,18 +81,21 @@ cn_set_magic(const char *magic)
 #ifdef DEBUG
 				printf("cn_set_magic(): empty!\n");
 #endif
-				return (0);
+				return 0;
 			}
-			do {
+			do
 				cn_magic[i] = m[i];
-			} while (i--);
-			return(0);
-		case 0x27:
+			while (i--);
+			return 0;
+
+		case '\'':
 			/* Escape sequence */
-			c = (*magic++) & 0xff;
-			n = *magic ? i+1 : CNS_TERM;
+			c = *magic++;
+			if (c == '\0')
+				return EINVAL;
+			n = *magic ? i + 1 : CNS_TERM;
 			switch (c) {
-			case 0x27:
+			case '\'':
 				break;
 			case 0x01:
 				/* BREAK */
@@ -97,10 +103,10 @@ cn_set_magic(const char *magic)
 				break;
 			case 0x02:
 				/* NUL */
-				c = 0;
+				c = '\0';
 				break;
 			}
-			/* FALLTHROUGH */
+			/*FALLTHROUGH*/
 		default:
 			/* Transition to the next state. */
 #ifdef DEBUG
@@ -111,7 +117,7 @@ cn_set_magic(const char *magic)
 			break;
 		}
 	}
-	return (EINVAL);
+	return EINVAL;
 }
 
 /*
