@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.90 2011/11/02 18:30:16 riz Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.91 2011/11/19 14:40:08 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1272,4 +1272,30 @@ share/zoneinfo/zone.tab			patch
 
 	Update to tzdata2011n.
 	[apb, ticket #1435]
+
+sys/uvm/uvm_meter.c				1.57 via patch
+
+	if you are going to dereference a variable, check the variable itself,
+	not it cousin.
+	[christos, ticket #1436]
+
+sys/kern/kern_event.c				1.73
+
+	PR/45618: Motoyuki OHMORI: kqueue EVFILT_TIMER with smaller timeout
+	value makes DIAGNOSTIC kernel panic:  
+		KASSERT((c->c_flags & CALLOUT_PENDING) !=3D 0);
+	If the computed ticks are <= 0 set it to 1
+	[christos, ticket #1438]
+
+dist/openpam/lib/openpam_configure.c		1.6
+
+	Don't allow '/' characters in the "service" argument to pam_start()
+	The "service" is blindly appended to config directories ("/etc/pam.d/"),
+	and if a user can control the "service" it can get PAM to read config
+	files from any location.
+	This is not a problem with most software because the "service" is
+	usually a constant string. The check protects 3rd party software
+	from being abused.
+	(CVE-2011-4122)
+	[drochner, ticket #1439]
 
