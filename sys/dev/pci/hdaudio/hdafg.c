@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.10 2011/10/25 00:00:13 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.10.4.1 2011/11/19 23:40:07 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.10 2011/10/25 00:00:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.10.4.1 2011/11/19 23:40:07 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -285,6 +285,8 @@ struct hdaudio_audiodev {
 
 struct hdafg_softc {
 	device_t			sc_dev;
+	kmutex_t			sc_lock;
+	kmutex_t			sc_intr_lock;
 	struct hdaudio_softc		*sc_host;
 	struct hdaudio_codec		*sc_codec;
 	struct hdaudio_function_group	*sc_fg;
@@ -361,8 +363,8 @@ static int	hdafg_halt_input(void *);
 static int	hdafg_set_port(void *, mixer_ctrl_t *);
 static int	hdafg_get_port(void *, mixer_ctrl_t *);
 static int	hdafg_query_devinfo(void *, mixer_devinfo_t *);
-static void *	hdafg_allocm(void *, int, size_t, struct malloc_type *, int);
-static void	hdafg_freem(void *, void *, struct malloc_type *);
+static void *	hdafg_allocm(void *, int, size_t);
+static void	hdafg_freem(void *, void *, size_t);
 static int	hdafg_getdev(void *, struct audio_device *);
 static size_t	hdafg_round_buffersize(void *, int, size_t);
 static paddr_t	hdafg_mappage(void *, void *, off_t, int);
@@ -373,6 +375,7 @@ static int	hdafg_trigger_output(void *, void *, void *, int,
 static int	hdafg_trigger_input(void *, void *, void *, int,
 				      void (*)(void *), void *,
 				      const audio_params_t *);
+static void	hdafg_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if hdafg_hw_if = {
 	.query_encoding		= hdafg_query_encoding,
@@ -392,6 +395,7 @@ static const struct audio_hw_if hdafg_hw_if = {
 	.get_props		= hdafg_get_props,
 	.trigger_output		= hdafg_trigger_output,
 	.trigger_input		= hdafg_trigger_input,
+	.get_locks		= hdafg_get_locks,
 };
 
 static int
@@ -3545,6 +3549,9 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_dev = self;
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+
 	callout_init(&sc->sc_jack_callout, 0);
 	callout_setfunc(&sc->sc_jack_callout,
 	    hdafg_hp_switch_handler, sc);
@@ -3712,6 +3719,9 @@ hdafg_detach(device_t self, int flags)
 		kmem_free(ctl, sc->sc_nctls * sizeof(*ctl));
 	if (mx)
 		kmem_free(mx, sc->sc_nmixers * sizeof(*mx));
+
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_intr_lock);
 
 	pmf_device_deregister(self);
 
@@ -4032,8 +4042,7 @@ hdafg_query_devinfo(void *opaque, mixer_devinfo_t *di)
 }
 
 static void *
-hdafg_allocm(void *opaque, int direction, size_t size,
-    struct malloc_type *type, int flags)
+hdafg_allocm(void *opaque, int direction, size_t size)
 {
 	struct hdaudio_audiodev *ad = opaque;
 	struct hdaudio_stream *st;
@@ -4056,7 +4065,7 @@ hdafg_allocm(void *opaque, int direction, size_t size,
 }
 
 static void
-hdafg_freem(void *opaque, void *addr, struct malloc_type *type)
+hdafg_freem(void *opaque, void *addr, size_t size)
 {
 	struct hdaudio_audiodev *ad = opaque;
 	struct hdaudio_stream *st;
@@ -4165,6 +4174,15 @@ hdafg_trigger_input(void *opaque, void *start, void *end, int blksize,
 	hdaudio_stream_start(ad->ad_capture, blksize, dmasize, param);
 
 	return 0;
+}
+
+static void
+hdafg_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread)
+{
+	struct hdaudio_audiodev *ad = opaque;
+
+	*intr = &ad->ad_sc->sc_intr_lock;
+	*thread = &ad->ad_sc->sc_lock;
 }
 
 static int
