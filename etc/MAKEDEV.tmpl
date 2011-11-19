@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.147 2011/11/08 19:36:30 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.148 2011/11/19 16:41:55 agc Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -289,6 +289,9 @@
 #	wsfont*	console font control
 #	wsmux*	wscons event multiplexor
 #	xenevt	Xen event interface
+#
+# iSCSI communication devices
+#	iscsi*	iSCSI driver and /sbin/iscsid communication
 
 
 #
@@ -2090,6 +2093,11 @@ putter)
 zfs)
 	mkdev zfs c %zfs_chr% 0 600
 	makedir zpool 755
+	;;
+
+iscsi[0-9]*)
+	unit=${i#iscsi}
+	mkdev iscsi${unit} c %iscsi_chr% 0 600
 	;;
 
 midevend)
