@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.34 2011/11/06 11:40:47 cherry Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.35 2011/11/19 17:13:39 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -134,6 +134,7 @@ void do_hypervisor_callback(struct intrframe *regs);
 void hypervisor_enable_event(unsigned int);
 
 /* hypervisor_machdep.c */
+void hypervisor_send_event(struct cpu_info *, unsigned int);
 void hypervisor_unmask_event(unsigned int);
 void hypervisor_mask_event(unsigned int);
 void hypervisor_clear_event(unsigned int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.16 2011/09/20 00:12:24 jym Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.17 2011/11/19 17:13:39 cherry Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.16 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.17 2011/11/19 17:13:39 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,7 @@ evt_iterate_bits(struct cpu_info *ci, volatile unsigned long *pendingl1,
 		l1 &= ~(1UL << l1i);
 
 		l2 = pendingl2[l1i] & (mask != NULL ? ~mask[l1i] : -1UL);
+		l2 &= ci->ci_evtmask[l1i];
 
 		if (mask != NULL) xen_atomic_setbits_l(&mask[l1i], l2);
 		xen_atomic_clearbits_l(&pendingl2[l1i], l2);
@@ -140,8 +141,8 @@ evt_set_pending(struct cpu_info *ci, unsigned int port, unsigned int l1i,
 	int *ret = args;
 
 	if (evtsource[port]) {
-		hypervisor_set_ipending(ci, evtsource[port]->ev_imask,
-		    l1i, l2i);
+		hypervisor_set_ipending(evtsource[port]->ev_cpu,
+		    evtsource[port]->ev_imask, l1i, l2i);
 		evtsource[port]->ev_evcnt.ev_count++;
 		if (*ret == 0 && ci->ci_ilevel <
 		    evtsource[port]->ev_maxlevel)
@@ -281,6 +282,36 @@ do_hypervisor_callback(struct intrframe *regs)
 }
 
 void
+hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
+{
+	KASSERT(ci != NULL);
+
+	volatile shared_info_t *s = HYPERVISOR_shared_info;
+	volatile struct vcpu_info *vci = ci->ci_vcpu;
+
+#ifdef PORT_DEBUG
+	if (ev == PORT_DEBUG)
+		printf("hypervisor_send_event %d\n", ev);
+#endif
+
+	xen_atomic_set_bit(&s->evtchn_pending[0], ev);
+	xen_atomic_set_bit(&vci->evtchn_pending_sel,
+			   ev >> LONG_SHIFT);
+
+	xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
+
+	xen_atomic_clear_bit(&s->evtchn_mask[0], ev);
+
+	if (__predict_true(ci == curcpu())) {
+		hypervisor_force_callback();
+	} else {
+		if (xen_send_ipi(ci, XEN_IPI_HVCB)) {
+			panic("xen_send_ipi(cpu%d, XEN_IPI_HVCB) failed\n", (int) ci->ci_cpuid);
+		}
+	}
+}
+
+void
 hypervisor_unmask_event(unsigned int ev)
 {
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
@@ -375,6 +406,13 @@ hypervisor_set_ipending(struct cpu_info *ci, uint32_t iplmask, int l1, int l2)
 	KASSERT(ci->ci_isources[ipl] != NULL);
 	ci->ci_isources[ipl]->ipl_evt_mask1 |= 1UL << l1;
 	ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1UL << l2;
+	if (__predict_false(ci != curcpu())) {
+		if (xen_send_ipi(ci, XEN_IPI_HVCB)) {
+			panic("hypervisor_set_ipending: "
+			    "xen_send_ipi(cpu%d, XEN_IPI_HVCB) failed\n",
+			    (int) ci->ci_cpuid);
+		}
+	}
 }
 
 void

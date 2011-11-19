@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42 2011/11/10 00:12:05 jym Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43 2011/11/19 17:13:39 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -126,6 +126,7 @@ struct cpu_info {
 
 #ifdef XEN
 	struct iplsource  *ci_isources[NIPL];
+	u_long ci_evtmask[NR_EVENT_CHANNELS]; /* events allowed on this CPU */
 #else
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 #endif
