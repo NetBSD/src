@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.7 2011/11/04 01:00:27 zoltan Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.8 2011/11/19 22:51:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.7 2011/11/04 01:00:27 zoltan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.8 2011/11/19 22:51:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.7 2011/11/04 01:00:27 zoltan Exp $");
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
+#include <sys/cprng.h>
+
 #include <net/pfil.h>
 #include <netinet/in.h>
 
@@ -319,7 +321,7 @@ npf_nat_getport(npf_natpolicy_t *np)
 	u_int n = PORTMAP_SIZE, idx, bit;
 	uint32_t map, nmap;
 
-	idx = arc4random() % PORTMAP_SIZE;
+	idx = cprng_fast32() % PORTMAP_SIZE;
 	for (;;) {
 		KASSERT(idx < PORTMAP_SIZE);
 		map = pm->p_bitmap[idx];

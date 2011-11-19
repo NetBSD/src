@@ -1,7 +1,5 @@
-#	$NetBSD: files.rijndael,v 1.5 2005/12/11 12:20:52 christos Exp $
+#	$NetBSD: files.rijndael,v 1.6 2011/11/19 22:51:22 tls Exp $
 
-define	rijndael
-
-file	crypto/rijndael/rijndael-alg-fst.c	rijndael
-file	crypto/rijndael/rijndael-api-fst.c	rijndael
-file	crypto/rijndael/rijndael.c		rijndael
+file	crypto/rijndael/rijndael-alg-fst.c
+file	crypto/rijndael/rijndael-api-fst.c
+file	crypto/rijndael/rijndael.c	

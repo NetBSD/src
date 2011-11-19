@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.32 2011/08/27 17:53:21 reinoud Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.33 2011/11/19 22:51:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.32 2011/08/27 17:53:21 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.33 2011/11/19 22:51:25 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.32 2011/08/27 17:53:21 reinoud Exp $"
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #include <sys/bitops.h>
+#include <sys/cprng.h>
 
 #include <sys/cpu.h>
 #include <machine/reg.h>
@@ -134,7 +135,7 @@ elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 
 		pax_align = align;
 
-		r = arc4random();
+		r = cprng_fast32();
 
 		if (pax_align == 0)
 			pax_align = PGSHIFT;

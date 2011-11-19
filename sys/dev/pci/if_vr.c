@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.107 2010/12/16 17:07:44 jakllsch Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.108 2011/11/19 22:51:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.107 2010/12/16 17:07:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.108 2011/11/19 22:51:23 tls Exp $");
 
 #include "rnd.h"
 
@@ -234,7 +234,7 @@ struct vr_softc {
 	uint32_t	vr_save_irq;
 
 #if NRND > 0
-	rndsource_element_t rnd_source;	/* random source */
+	krndsource_t rnd_source;	/* random source */
 #endif
 };
 

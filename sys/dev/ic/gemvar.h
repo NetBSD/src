@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.21 2010/02/24 22:37:58 dyoung Exp $ */
+/*	$NetBSD: gemvar.h,v 1.22 2011/11/19 22:51:22 tls Exp $ */
 
 /*
  *
@@ -217,7 +217,7 @@ struct gem_softc {
 	void	(*sc_hwinit)(struct gem_softc *);
 
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 
 	struct evcnt sc_ev_intr;

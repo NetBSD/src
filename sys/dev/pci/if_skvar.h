@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.15 2008/09/08 21:20:03 christos Exp $ */
+/* $NetBSD: if_skvar.h,v 1.16 2011/11/19 22:51:23 tls Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@ struct sk_softc {
 	bus_dma_tag_t		sc_dmatag;
 	struct sk_if_softc	*sk_if[2];
 #if NRND > 0
-	rndsource_element_t     rnd_source;
+	krndsource_t     rnd_source;
 #endif
 };
 

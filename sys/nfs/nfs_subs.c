@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.221 2011/06/12 03:35:59 rmind Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.222 2011/11/19 22:51:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.221 2011/06/12 03:35:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.222 2011/11/19 22:51:30 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.221 2011/06/12 03:35:59 rmind Exp $")
 #include <sys/once.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
+#include <sys/cprng.h>
 
 #include <uvm/uvm.h>
 
@@ -1488,7 +1489,7 @@ nfs_init0(void)
 	nfs_ticks = (hz * NFS_TICKINTVL + 500) / 1000;
 	if (nfs_ticks < 1)
 		nfs_ticks = 1;
-	nfs_xid = arc4random();
+	nfs_xid = cprng_fast32();
 	nfsdreq_init();
 
 	/*

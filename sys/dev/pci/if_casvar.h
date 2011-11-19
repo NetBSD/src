@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casvar.h,v 1.2 2010/01/18 18:09:22 jdc Exp $ */
+/*	$NetBSD: if_casvar.h,v 1.3 2011/11/19 22:51:23 tls Exp $ */
 /*	$OpenBSD: if_casvar.h,v 1.6 2009/06/13 12:18:58 kettenis Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ struct cas_softc {
 	void			*sc_sh;		/* shutdownhook cookie */
 
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 
 	struct evcnt		sc_ev_intr;

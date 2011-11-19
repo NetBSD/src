@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.28 2011/02/08 20:20:27 rmind Exp $ */
+/*	$NetBSD: rd.c,v 1.29 2011/11/19 22:51:22 tls Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.28 2011/02/08 20:20:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.29 2011/11/19 22:51:22 tls Exp $");
 
 #include "rnd.h"
 
@@ -143,7 +143,7 @@ struct	rd_softc {
 	struct	callout sc_restart_ch;
 
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 };
 

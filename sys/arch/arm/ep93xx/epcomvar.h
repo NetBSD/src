@@ -1,4 +1,4 @@
-/*      $NetBSD: epcomvar.h,v 1.4 2009/10/23 00:39:30 snj Exp $        */
+/*      $NetBSD: epcomvar.h,v 1.5 2011/11/19 22:51:19 tls Exp $        */
 /*-
  * Copyright (c) 2004 Jesse Off
  *
@@ -83,7 +83,7 @@ struct epcom_softc {
 
 	int			enabled;
 #if NRND > 0 && defined(RND_COM)
-	rndsource_element_t  rnd_source;
+	krndsource_t  rnd_source;
 #endif
 };
 
