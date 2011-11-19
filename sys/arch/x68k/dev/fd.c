@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.94 2011/04/10 15:23:06 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.95 2011/11/19 22:51:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.94 2011/04/10 15:23:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.95 2011/11/19 22:51:21 tls Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -245,7 +245,7 @@ struct fd_softc {
 #define	SEC_P11	0x03		/* both part */
 
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 };
 

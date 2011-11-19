@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.87 2011/04/24 16:27:01 rmind Exp $	*/
+/*	$NetBSD: ucom.c,v 1.88 2011/11/19 22:51:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.87 2011/04/24 16:27:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.88 2011/11/19 22:51:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ struct ucom_softc {
 	u_char			sc_dying;	/* disconnecting */
 
 #if defined(__NetBSD__) && NRND > 0
-	rndsource_element_t	sc_rndsource;	/* random source */
+	krndsource_t	sc_rndsource;	/* random source */
 #endif
 };
 

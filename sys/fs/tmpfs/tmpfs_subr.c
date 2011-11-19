@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.77 2011/08/27 15:32:28 hannken Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.78 2011/11/19 22:51:24 tls Exp $	*/
 
 /*
  * Copyright (c) 2005-2011 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.77 2011/08/27 15:32:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.78 2011/11/19 22:51:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -124,7 +124,7 @@ tmpfs_alloc_node(tmpfs_mount_t *tmp, enum vtype type, uid_t uid, gid_t gid,
 	 * for applications that do not understand 64-bit ino_t.
 	 */
 	nnode->tn_id = (ino_t)((uintptr_t)nnode / sizeof(*nnode));
-	nnode->tn_gen = TMPFS_NODE_GEN_MASK & arc4random();
+	nnode->tn_gen = TMPFS_NODE_GEN_MASK & random();
 
 	/* Generic initialization. */
 	nnode->tn_type = type;

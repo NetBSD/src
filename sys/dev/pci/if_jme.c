@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.17 2011/03/30 18:11:37 bouyer Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.18 2011/11/19 22:51:23 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.17 2011/03/30 18:11:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.18 2011/11/19 22:51:23 tls Exp $");
 
 
 #include <sys/param.h>
@@ -168,7 +168,7 @@ struct jme_softc {
 	uint32_t jme_txcsr;		/* TX config register */
 	uint32_t jme_rxcsr;		/* RX config register */
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 	/* interrupt coalition parameters */
 	struct sysctllog *jme_clog;

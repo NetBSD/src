@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.2 2011/06/18 17:47:20 tsutsui Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.2 2011/06/18 17:47:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $");
 
 #include "rnd.h"
 
@@ -193,7 +193,7 @@ struct ace_softc {
 	int retries; /* number of xfer retry */
 
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 };
 
@@ -1467,7 +1467,7 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: ace_ebus.c,v 1.2 2011/06/18 17:47:20 tsutsui Exp $ */
+/*	$NetBSD: ace_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.

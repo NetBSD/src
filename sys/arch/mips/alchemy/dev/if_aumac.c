@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.31 2011/07/10 23:13:23 matt Exp $ */
+/* $NetBSD: if_aumac.c,v 1.32 2011/11/19 22:51:20 tls Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.31 2011/07/10 23:13:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.32 2011/11/19 22:51:20 tls Exp $");
 
 #include "rnd.h"
 
@@ -143,7 +143,7 @@ struct aumac_softc {
 	int sc_rxptr;			/* next ready Rx descriptor */
 
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 
 #ifdef AUMAC_EVENT_COUNTERS

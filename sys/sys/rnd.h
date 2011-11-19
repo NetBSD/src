@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.21 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: rnd.h,v 1.22 2011/11/19 22:51:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,6 +43,10 @@
 #include <sys/queue.h>
 #endif
 
+#ifdef _KERNEL
+#include <sys/rngtest.h>
+#endif
+
 #define	RND_DEV_RANDOM	0	/* minor devices for random and kinda random */
 #define	RND_DEV_URANDOM	1
 
@@ -82,25 +86,13 @@ typedef struct
 	uint32_t	generated;
 } rndpoolstat_t;
 
-
-typedef struct {
-	uint32_t	cursor;		/* current add point in the pool */
-	uint32_t	rotate;		/* how many bits to rotate by */
-	rndpoolstat_t	stats;		/* current statistics */
-	uint32_t	pool[RND_POOLWORDS]; /* random pool data */
-} rndpool_t;
-
+/* Sanitized random source view for userspace */
 typedef struct {
 	char		name[16];	/* device name */
-	uint32_t	last_time;	/* last time recorded */
-	uint32_t	last_delta;	/* last delta value */
-	uint32_t	last_delta2;	/* last delta2 value */
 	uint32_t	total;		/* entropy from this source */
 	uint32_t	type;		/* type */
 	uint32_t	flags;		/* flags */
-	void		*state;		/* state informaiton */
 } rndsource_t;
-
 
 /*
  * Flags to control the source.  Low byte is type, upper bits are flags.
@@ -118,12 +110,36 @@ typedef struct {
 #define	RND_TYPE_MAX		5	/* last type id used */
 
 #ifdef _KERNEL
-typedef struct __rndsource_element rndsource_element_t;
 
-struct __rndsource_element {
-	LIST_ENTRY(__rndsource_element) list; /* the linked list */
-	rndsource_t	data;		/* the actual data */
-};
+typedef struct krndsource {
+	LIST_ENTRY(krndsource) list;	/* the linked list */
+        char            name[16];       /* device name */
+        uint32_t        last_time;      /* last time recorded */
+        uint32_t        last_delta;     /* last delta value */
+        uint32_t        last_delta2;    /* last delta2 value */
+        uint32_t        total;          /* entropy from this source */
+        uint32_t        type;           /* type */
+        uint32_t        flags;          /* flags */
+        void            *state;         /* state informaiton */
+        size_t          test_cnt;       /* how much test data accumulated? */
+        rngtest_t	*test;          /* test data for RNG type sources */
+} krndsource_t;
+
+typedef struct rndsink {
+        TAILQ_ENTRY(rndsink) tailq;     /* the queue */
+        void            (*cb)(void *);  /* callback function when ready */
+        void            *arg;           /* callback function argument */
+        char            name[16];       /* sink name */
+        size_t          len;            /* how many bytes wanted/supplied */
+        uint8_t         data[64];       /* random data returned here */
+} rndsink_t;
+
+typedef struct {
+        uint32_t        cursor;         /* current add point in the pool */
+        uint32_t        rotate;         /* how many bits to rotate by */
+        rndpoolstat_t   stats;          /* current statistics */
+        uint32_t        pool[RND_POOLWORDS]; /* random pool data */
+} rndpool_t;
 
 /*
  * Used by rnd_extract_data() and rndpool_extract_data() to describe how
@@ -134,7 +150,7 @@ struct __rndsource_element {
 				      (short read ok) */
 
 #define RND_ENABLED(rp) \
-        (((rp)->data.flags & RND_FLAG_NO_COLLECT) == 0)
+        (((rp)->flags & RND_FLAG_NO_COLLECT) == 0)
 
 void		rndpool_init(rndpool_t *);
 void		rndpool_init_global(void);
@@ -144,17 +160,18 @@ void		rndpool_increment_entropy_count(rndpool_t *, uint32_t);
 uint32_t	*rndpool_get_pool(rndpool_t *);
 uint32_t	rndpool_get_poolsize(void);
 void		rndpool_add_data(rndpool_t *, void *, uint32_t, uint32_t);
-uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t,
-		    uint32_t);
-
+uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t, uint32_t);
 void		rnd_init(void);
-void		rnd_add_uint32(rndsource_element_t *, uint32_t);
-void		rnd_add_data(rndsource_element_t *, void *, uint32_t,
+void		rnd_add_uint32(krndsource_t *, uint32_t);
+void		rnd_add_data(krndsource_t *, const void *const, uint32_t,
 		    uint32_t);
 uint32_t	rnd_extract_data(void *, uint32_t, uint32_t);
-void		rnd_attach_source(rndsource_element_t *, const char *,
+void		rnd_attach_source(krndsource_t *, const char *,
 		    uint32_t, uint32_t);
-void		rnd_detach_source(rndsource_element_t *);
+void		rnd_detach_source(krndsource_t *);
+
+void		rndsink_attach(rndsink_t *);
+void		rndsink_detach(rndsink_t *);
 
 #endif /* _KERNEL */
 

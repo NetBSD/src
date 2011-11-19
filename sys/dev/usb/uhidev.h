@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.10 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.11 2011/11/19 22:51:24 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct uhidev {
 #define	UHIDEV_OPEN	0x01	/* device is open */
 	void (*sc_intr)(struct uhidev *, void *, u_int);
 #if NRND > 0
-        rndsource_element_t     rnd_source;
+        krndsource_t     rnd_source;
 #endif
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.16 2009/05/12 14:25:18 cegger Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.17 2011/11/19 22:51:22 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct smc91cxx_softc {
 	uint8_t		sc_intmask;
 	uint8_t		sc_txpacketno;		/* cached packetno */
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.140 2011/10/28 22:23:54 dyoung Exp $	*/
+/*	$NetBSD: in.c,v 1.141 2011/11/19 22:51:25 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.140 2011/10/28 22:23:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.141 2011/11/19 22:51:25 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -109,6 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.140 2011/10/28 22:23:54 dyoung Exp $");
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
+
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -401,7 +403,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 				ia->ia_broadaddr.sin_family = AF_INET;
 			}
 			ia->ia_ifp = ifp;
-			ia->ia_idsalt = arc4random() % 65535;
+			ia->ia_idsalt = cprng_fast32() % 65535;
 			LIST_INIT(&ia->ia_multiaddrs);
 			newifaddr = 1;
 		}

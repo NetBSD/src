@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.73 2011/05/23 21:52:54 joerg Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.74 2011/11/19 22:51:25 tls Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.73 2011/05/23 21:52:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.74 2011/11/19 22:51:25 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.73 2011/05/23 21:52:54 joerg Exp $")
 #include <sys/pool.h>
 #include <sys/kauth.h>
 #include <sys/cpu.h>
+#include <sys/cprng.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -1848,7 +1849,7 @@ bridge_rtable_init(struct bridge_softc *sc)
 	for (i = 0; i < BRIDGE_RTHASH_SIZE; i++)
 		LIST_INIT(&sc->sc_rthash[i]);
 
-	sc->sc_rthash_key = arc4random();
+	sc->sc_rthash_key = cprng_fast32();
 
 	LIST_INIT(&sc->sc_rtlist);
 

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.8 2009/12/24 18:27:32 christos Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.9 2011/11/19 22:51:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ struct sk_softc {
 	int			sk_status_idx;
 	int			sk_status_own_idx;
 #if NRND > 0
-	rndsource_element_t     rnd_source;
+	krndsource_t     rnd_source;
 #endif
 };
 

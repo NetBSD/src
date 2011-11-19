@@ -1,7 +1,7 @@
-#	$NetBSD: files.ipsec,v 1.5 2006/10/27 21:20:48 christos Exp $
+#	$NetBSD: files.ipsec,v 1.6 2011/11/19 22:51:26 tls Exp $
 
-defflag opt_ipsec.h		IPSEC: rijndael
-defflag opt_ipsec.h		IPSEC_ESP: des, blowfish, cast128, rijndael
+defflag opt_ipsec.h		IPSEC
+defflag opt_ipsec.h		IPSEC_ESP: des, blowfish, cast128
 defflag opt_ipsec.h		IPSEC_NAT_T
 
 file	netinet6/ah_aesxcbcmac.c	ipsec

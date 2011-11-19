@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.20 2011/02/08 20:20:13 rmind Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.21 2011/11/19 22:51:19 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,7 +81,7 @@ struct	rd_softc {
 	int	sc_errcnt;
 	struct	rdstats sc_stats;
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 };
 

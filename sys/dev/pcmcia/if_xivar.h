@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xivar.h,v 1.6 2009/12/06 23:05:39 dyoung Exp $	*/
+/*	$NetBSD: if_xivar.h,v 1.7 2011/11/19 22:51:24 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -45,7 +45,7 @@ struct xi_softc {
 	u_int8_t	sc_rev;			/* Chip revision */
 
 #if NRND > 0
-	rndsource_element_t	sc_rnd_source;
+	krndsource_t	sc_rnd_source;
 #endif
 };
 

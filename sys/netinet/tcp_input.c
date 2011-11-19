@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.317 2011/10/31 13:01:42 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.318 2011/11/19 22:51:25 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.317 2011/10/31 13:01:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.318 2011/11/19 22:51:25 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -171,6 +171,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.317 2011/10/31 13:01:42 yamt Exp $")
 #include <sys/md5.h>
 #endif
 #include <sys/lwp.h> /* for lwp0 */
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -3710,8 +3711,8 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	 * the hash secrets.
 	 */
 	if (syn_cache_count == 0) {
-		syn_hash1 = arc4random();
-		syn_hash2 = arc4random();
+		syn_hash1 = cprng_fast32();
+		syn_hash2 = cprng_fast32();
 	}
 
 	SYN_HASHALL(sc->sc_hash, &sc->sc_src.sa, &sc->sc_dst.sa);

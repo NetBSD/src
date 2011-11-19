@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.436 2011/09/28 15:52:47 jruoho Exp $	*/
+/*	$NetBSD: init_main.c,v 1.437 2011/11/19 22:51:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436 2011/09/28 15:52:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.437 2011/11/19 22:51:25 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -186,9 +186,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436 2011/09/28 15:52:47 jruoho Exp $
 #endif
 #include <sys/domain.h>
 #include <sys/namei.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 #include <sys/pipe.h>
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
@@ -204,6 +202,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436 2011/09/28 15:52:47 jruoho Exp $
 #ifdef PTRACE
 #include <sys/ptrace.h>
 #endif /* PTRACE */
+#include <sys/cprng.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -259,6 +258,8 @@ int	cold = 1;			/* still working on startup */
 struct timespec boottime;	        /* time at system startup - will only follow settime deltas */
 
 int	start_init_exec;		/* semaphore for start_init() */
+
+cprng_strong_t	*kern_cprng;
 
 static void check_console(struct lwp *l);
 static void start_init(void *);
@@ -375,9 +376,9 @@ main(void)
 	/*
 	 * The following things must be done before autoconfiguration.
 	 */
-#if NRND > 0
-	rnd_init();		/* initialize random number generator */
-#endif
+	rnd_init();		/* initialize entropy pool */
+
+	cprng_init();		/* initialize cryptographic PRNG */
 
 	/* Initialize process and pgrp structures. */
 #ifdef KERN_SA
@@ -501,6 +502,10 @@ main(void)
 	/* Initialize the disk wedge subsystem. */
 	dkwedge_init();
 
+	/* Initialize the kernel strong PRNG. */
+	kern_cprng = cprng_strong_create("kernel", IPL_VM,
+					 CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
+					 
 	/* Initialize interfaces. */
 	ifinit1();
 
@@ -508,7 +513,6 @@ main(void)
 
 	/* Initialize sockets thread(s) */
 	soinit1();
-
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();

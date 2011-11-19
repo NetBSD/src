@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.46 2010/11/13 13:52:05 uebayasi Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.47 2011/11/19 22:51:23 tls Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,14 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.46 2010/11/13 13:52:05 uebayasi Exp $");
-
-#include "rnd.h"
-
-#if NRND == 0
-#error hifn7751 requires rnd pseudo-devices
-#endif
-
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.47 2011/11/19 22:51:23 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.46 2010/11/13 13:52:05 uebayasi Exp $
 #include <dev/rndvar.h>
 #else
 #include <opencrypto/cryptodev.h>
-#include <sys/rnd.h>
+#include <sys/cprng.h>
 #endif
 
 #include <dev/pci/pcireg.h>
@@ -2077,7 +2070,7 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 			   to generate IVs has been FIPS140-2
 			   certified by several labs. */
 #ifdef __NetBSD__
-			arc4randbytes(sc->sc_sessions[i].hs_iv,
+			cprng_fast(sc->sc_sessions[i].hs_iv,
 			    c->cri_alg == CRYPTO_AES_CBC ?
 				HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH);
 #else	/* FreeBSD and OpenBSD have get_random_bytes */

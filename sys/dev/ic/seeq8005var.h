@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005var.h,v 1.5 2001/11/07 20:01:58 bjh21 Exp $ */
+/* $NetBSD: seeq8005var.h,v 1.6 2011/11/19 22:51:22 tls Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -86,7 +86,7 @@ struct seeq8005_softc {
 	int sc_flags;
 #define SF_8BIT		0x01
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 };
 

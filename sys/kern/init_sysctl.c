@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.183 2011/08/30 12:39:59 bouyer Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.184 2011/11/19 22:51:25 tls Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.183 2011/08/30 12:39:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.184 2011/11/19 22:51:25 tls Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.183 2011/08/30 12:39:59 bouyer Exp
 #include "opt_sa.h"
 #include "opt_posix.h"
 #include "pty.h"
-#include "rnd.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.183 2011/08/30 12:39:59 bouyer Exp
 #include <sys/kernel.h>
 #include <sys/unistd.h>
 #include <sys/disklabel.h>
-#include <sys/rnd.h>
+#include <sys/cprng.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -1395,12 +1394,9 @@ sysctl_kern_sbmax(SYSCTLFN_ARGS)
 static int
 sysctl_kern_urnd(SYSCTLFN_ARGS)
 {
-#if NRND > 0
 	int v, rv;
 
-	KERNEL_LOCK(1, NULL);
-	rv = rnd_extract_data(&v, sizeof(v), RND_EXTRACT_ANY);
-	KERNEL_UNLOCK_ONE(NULL);
+	rv = cprng_strong(sysctl_prng, &v, sizeof(v));
 	if (rv == sizeof(v)) {
 		struct sysctlnode node = *rnode;
 		node.sysctl_data = &v;
@@ -1408,9 +1404,6 @@ sysctl_kern_urnd(SYSCTLFN_ARGS)
 	}
 	else
 		return (EIO);	/*XXX*/
-#else
-	return (EOPNOTSUPP);
-#endif
 }
 
 /*
@@ -1420,7 +1413,6 @@ sysctl_kern_urnd(SYSCTLFN_ARGS)
 static int
 sysctl_kern_arnd(SYSCTLFN_ARGS)
 {
-#if NRND > 0
 	int error;
 	void *v;
 	struct sysctlnode node = *rnode;
@@ -1431,15 +1423,12 @@ sysctl_kern_arnd(SYSCTLFN_ARGS)
 		return E2BIG;
 
 	v = kmem_alloc(*oldlenp, KM_SLEEP);
-	arc4randbytes(v, *oldlenp);
+	cprng_fast(v, *oldlenp);
 	node.sysctl_data = v;
 	node.sysctl_size = *oldlenp;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	kmem_free(v, *oldlenp);
 	return error;
-#else
-	return (EOPNOTSUPP);
-#endif
 }
 /*
  * sysctl helper routine to do kern.lwp.* work.

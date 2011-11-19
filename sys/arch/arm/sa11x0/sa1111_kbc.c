@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111_kbc.c,v 1.12 2010/03/13 11:13:31 bsh Exp $ */
+/*      $NetBSD: sa1111_kbc.c,v 1.13 2011/11/19 22:51:19 tls Exp $ */
 
 /*
  * Copyright (c) 2004  Ben Harris.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.12 2010/03/13 11:13:31 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.13 2011/11/19 22:51:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ struct sackbc_softc {
 	int	poll_data;	/* status read from intr handler if polling */
 
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 	pckbport_tag_t pt;
 };

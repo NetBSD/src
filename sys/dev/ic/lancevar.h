@@ -1,4 +1,4 @@
-/*	$NetBSD: lancevar.h,v 1.13 2009/09/04 16:21:24 tsutsui Exp $	*/
+/*	$NetBSD: lancevar.h,v 1.14 2011/11/19 22:51:22 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ struct lance_softc {
 	uint8_t sc_enaddr[ETHER_ADDR_LEN];
 	uint8_t sc_pad[2];
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 
 	void (*sc_meminit)(struct lance_softc *);

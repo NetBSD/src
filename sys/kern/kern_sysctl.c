@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.232 2011/10/05 13:24:09 apb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.233 2011/11/19 22:51:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.232 2011/10/05 13:24:09 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.233 2011/11/19 22:51:25 tls Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.232 2011/10/05 13:24:09 apb Exp $"
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
+#include <sys/cprng.h>
 
 #define	MAXDESCLEN	1024
 MALLOC_DEFINE(M_SYSCTLNODE, "sysctlnode", "sysctl node structures");
@@ -157,6 +158,8 @@ long hostid;
 #define	DEFCORENAME	"%n.core"
 #endif
 char defcorename[MAXPATHLEN] = DEFCORENAME;
+
+cprng_strong_t *sysctl_prng;
 
 /*
  * ********************************************************************
@@ -245,12 +248,16 @@ sysctl_init(void)
  * trees that claim to be readonly at the root now are, and if
  * the main tree is readonly, *everything* is.
  *
+ * Also starts up the PRNG used for the "random" sysctl: it's
+ * better to start it later than sooner.
+ *
  * Call this at the end of kernel init.
  */
 void
 sysctl_finalize(void)
 {
-
+        sysctl_prng = cprng_strong_create("sysctl", IPL_NONE,
+					  CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
 	sysctl_root.sysctl_flags |= CTLFLAG_PERMANENT;
 }
 

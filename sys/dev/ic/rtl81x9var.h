@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.50 2010/07/27 21:02:00 jakllsch Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.51 2011/11/19 22:51:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -226,7 +226,7 @@ struct rtk_softc {
 	int	(*sc_enable)	(struct rtk_softc *);
 	void	(*sc_disable)	(struct rtk_softc *);
 #if NRND > 0
-	rndsource_element_t     rnd_source;
+	krndsource_t     rnd_source;
 #endif
 };
 

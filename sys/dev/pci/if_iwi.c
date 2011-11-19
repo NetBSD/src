@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.87 2011/05/23 15:37:36 drochner Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.88 2011/11/19 22:51:23 tls Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.87 2011/05/23 15:37:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.88 2011/11/19 22:51:23 tls Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.87 2011/05/23 15:37:36 drochner Exp $")
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
+#include <sys/cprng.h>
 
 #include <sys/bus.h>
 #include <machine/endian.h>
@@ -2386,7 +2387,8 @@ iwi_config(struct iwi_softc *sc)
 			return error;
 	}
 
-	data = htole32(arc4random());
+	cprng_fast(&data, sizeof(data));
+	data = htole32(data);
 	DPRINTF(("Setting initialization vector to %u\n", le32toh(data)));
 	error = iwi_cmd(sc, IWI_CMD_SET_IV, &data, sizeof data, 0);
 	if (error != 0)

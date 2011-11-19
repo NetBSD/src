@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1031 2011/11/15 16:50:43 riz Exp $
+#	$NetBSD: files,v 1.1032 2011/11/19 22:51:21 tls Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -165,9 +165,11 @@ include "crypto/cast128/files.cast128"
 include "crypto/rijndael/files.rijndael"
 include "crypto/skipjack/files.skipjack"
 include "crypto/camellia/files.camellia"
-
 # General-purpose crypto processing framework.
 include "opencrypto/files.opencrypto"
+
+# NIST SP800.90 CTR DRBG
+include "crypto/nist_ctr_drbg/files.nist_ctr_drbg"
 
 #
 # Kernel history/tracing. Old UVMHIST depends upon this.
@@ -392,7 +394,7 @@ define	hippi
 define	ieee1394
 define	token
 define	sppp
-define	wlan: rijndael
+define	wlan
 define	crypto
 
 # devices ARPing IPv4 pull this in:
@@ -1280,7 +1282,7 @@ file	dev/ic/dm9000.c			dme
 defpseudodev vnd:	disk
 defflag opt_vnd.h	VND_COMPRESSION
 defpseudo ccd:		disk
-defpseudodev cgd:	disk, des, blowfish, cast128, rijndael
+defpseudodev cgd:	disk, des, blowfish, cast128
 defpseudodev md:	disk
 defpseudodev fss:	disk
 
@@ -1525,6 +1527,7 @@ file	kern/subr_autoconf.c
 file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c
 file	kern/subr_callback.c
+file	kern/subr_cprng.c
 file	kern/subr_cpufreq.c
 file	kern/subr_copy.c
 file	kern/subr_debug.c		debug

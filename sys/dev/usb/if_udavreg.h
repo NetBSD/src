@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.6 2010/11/03 22:30:50 dyoung Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.7 2011/11/19 22:51:24 tls Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -190,7 +190,7 @@ struct udav_softc {
 	int			sc_link;
 #define	sc_media udav_mii.mii_media
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 	struct udav_cdata	sc_cdata;
 

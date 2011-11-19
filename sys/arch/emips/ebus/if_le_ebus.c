@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.2 2011/06/12 14:31:31 tsutsui Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.2 2011/06/12 14:31:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -115,7 +115,7 @@ struct enic_softc {
 	uint8_t sc_enaddr[ETHER_ADDR_LEN];
 	uint8_t sc_pad[2];
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.51 2010/08/08 09:33:05 isaki Exp $ */
+/* $NetBSD: pckbc.c,v 1.52 2011/11/19 22:51:22 tls Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.51 2010/08/08 09:33:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.52 2011/11/19 22:51:22 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ struct pckbc_slotdata {
 	int poll_data;	/* data read from inr handler if polling */
 	int poll_stat;	/* status read from inr handler if polling */
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 };
 

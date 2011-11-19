@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.1 2011/08/12 21:55:29 dyoung Exp $*/
+/*$NetBSD: ixgbe.c,v 1.2 2011/11/19 22:51:24 tls Exp $*/
 
 #include "opt_inet.h"
 
@@ -4160,7 +4160,7 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 		reta = 0;
 
 		/* set up random bits */
-		arc4randbytes(&r, sizeof(r));
+		cprng_fast(&r, sizeof(r));
 
 		/* Set up the redirection table */
 		for (i = 0, j = 0; i < 128; i++, j++) {

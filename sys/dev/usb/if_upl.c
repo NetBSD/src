@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.38 2010/11/03 22:28:31 dyoung Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.39 2011/11/19 22:51:24 tls Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.38 2010/11/03 22:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.39 2011/11/19 22:51:24 tls Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -135,7 +135,7 @@ struct upl_softc {
 
 	struct ifnet		sc_if;
 #if NRND > 0
-	rndsource_element_t	sc_rnd_source;
+	krndsource_t	sc_rnd_source;
 #endif
 
 	struct callout		sc_stat_ch;

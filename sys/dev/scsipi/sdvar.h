@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.32 2009/04/10 17:36:42 dyoung Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.33 2011/11/19 22:51:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ struct sd_softc {
 	char name[16]; /* product name, for default disklabel */
 
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 };
 

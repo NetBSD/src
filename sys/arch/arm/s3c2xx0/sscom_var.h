@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_var.h,v 1.8 2011/07/01 20:31:39 dyoung Exp $ */
+/* $NetBSD: sscom_var.h,v 1.9 2011/11/19 22:51:19 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -172,7 +172,7 @@ struct sscom_softc {
 #endif
 
 #if NRND > 0 && defined(RND_COM)
-	rndsource_element_t  rnd_source;
+	krndsource_t  rnd_source;
 #endif
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(SSCOM_MPLOCK)
 	struct simplelock	sc_lock;

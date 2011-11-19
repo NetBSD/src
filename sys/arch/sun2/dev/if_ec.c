@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.18 2010/04/05 07:19:32 joerg Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.19 2011/11/19 22:51:21 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.18 2010/04/05 07:19:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.19 2011/11/19 22:51:21 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -102,7 +102,7 @@ struct ec_softc {
 	uint32_t sc_backoff_seed;	/* seed for the backoff PRNG */
 
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 };
 

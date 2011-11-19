@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.31 2010/11/13 13:52:06 uebayasi Exp $ */
+/*	$NetBSD: if_dge.c,v 1.32 2011/11/19 22:51:23 tls Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.31 2010/11/13 13:52:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.32 2011/11/19 22:51:23 tls Exp $");
 
 #include "rnd.h"
 
@@ -334,7 +334,7 @@ struct dge_softc {
 	uint16_t sc_eeprom[EEPROM_SIZE];
 
 #if NRND > 0
-	rndsource_element_t rnd_source; /* random source */
+	krndsource_t rnd_source; /* random source */
 #endif
 #ifdef DGE_OFFBYONE_RXBUG
 	void *sc_bugbuf;

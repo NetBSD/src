@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.229 2011/09/30 22:17:50 jym Exp $
+$NetBSD: UPDATING,v 1.230 2011/11/19 22:51:18 tls Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,14 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20111119:
+	A problem with the datastructures used by the rndctl(8)
+	utility (pointers in datastructures in an array, making 32->64
+	bit compatibility very painful) has been fixed in a
+	non-backwards-compatible way.  If you replace your kernel,
+	replace your rndctl executable too.
+	
 20111001:
 	the prop_*_send_syscall() functions from proplib(3) have been
 	changed and their new version is not backward compatible with the old
@@ -463,7 +471,7 @@ Hints for a more successful build:
  
 What to do if things don't work:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-When things don't work there is usually a few things that commonly
+When things don't work there are usually a few things that commonly
 should be done.
     1)	make includes
 	This should be done automatically by make build.

@@ -1,4 +1,4 @@
-/* $NetBSD: fdvar.h,v 1.6 2008/04/28 20:23:52 martin Exp $ */
+/* $NetBSD: fdvar.h,v 1.7 2011/11/19 22:51:22 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,6 @@ struct fd_softc {
 	int sc_active;		/* number of active I/O operations */
 
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 };

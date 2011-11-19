@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.71 2010/11/13 15:35:50 uebayasi Exp $	*/
+/*	$NetBSD: comvar.h,v 1.72 2011/11/19 22:51:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -228,7 +228,7 @@ struct com_softc {
 	struct pps_state sc_pps_state;	/* pps state */
 
 #if NRND > 0 && defined(RND_COM)
-	rndsource_element_t  rnd_source;
+	krndsource_t  rnd_source;
 #endif
 	kmutex_t		sc_lock;
 };

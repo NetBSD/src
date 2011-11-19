@@ -1,4 +1,4 @@
-/* $NetBSD: xbdvar.h,v 1.12 2009/10/23 02:32:33 snj Exp $ */
+/* $NetBSD: xbdvar.h,v 1.13 2011/11/19 22:51:21 tls Exp $ */
 
 /*
  *
@@ -40,7 +40,7 @@ struct xbd_softc {
 	struct simplelock	sc_slock;	/* our lock */
 	int			sc_shutdown;	/* about to be removed */
 #if NRND > 0
-	rndsource_element_t	sc_rnd_source;
+	krndsource_t	sc_rnd_source;
 #endif
 };
 

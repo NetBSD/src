@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.46 2011/07/01 18:53:47 dyoung Exp $ */
+/* $NetBSD: if_mec.c,v 1.47 2011/11/19 22:51:20 tls Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.46 2011/07/01 18:53:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.47 2011/11/19 22:51:20 tls Exp $");
 
 #include "opt_ddb.h"
 #include "rnd.h"
@@ -317,7 +317,7 @@ struct mec_softc {
 	int sc_rxptr;			/* next ready RX buffer */
 
 #if NRND > 0
-	rndsource_element_t sc_rnd_source; /* random source */
+	krndsource_t sc_rnd_source; /* random source */
 #endif
 #ifdef MEC_EVENT_COUNTERS
 	struct evcnt sc_ev_txpkts;	/* TX packets queued total */

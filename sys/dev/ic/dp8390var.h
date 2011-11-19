@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.30 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.31 2011/11/19 22:51:22 tls Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -72,7 +72,7 @@ struct dp8390_softc {
 	int	sc_enabled;	/* boolean; power enabled on interface */
 
 #if NRND > 0
-	rndsource_element_t rnd_source; /* random source */
+	krndsource_t rnd_source; /* random source */
 #endif
 
 	int	(*test_mem)(struct dp8390_softc *);

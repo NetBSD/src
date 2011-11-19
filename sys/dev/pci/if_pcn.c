@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.52 2010/11/13 13:52:06 uebayasi Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.53 2011/11/19 22:51:23 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.52 2010/11/13 13:52:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.53 2011/11/19 22:51:23 tls Exp $");
 
 #include "rnd.h"
 
@@ -313,7 +313,7 @@ struct pcn_softc {
 	uint32_t sc_mode;		/* prototype MODE register */
 
 #if NRND > 0
-	rndsource_element_t rnd_source;	/* random source */
+	krndsource_t rnd_source;	/* random source */
 #endif
 };
 

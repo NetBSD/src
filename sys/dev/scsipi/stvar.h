@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.21 2009/12/06 22:48:17 dyoung Exp $ */
+/*	$NetBSD: stvar.h,v 1.22 2011/11/19 22:51:24 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ struct st_softc {
 	struct io_stats *stats;		/* statistics for the drive */
 
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 };
 

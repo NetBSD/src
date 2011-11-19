@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.53 2011/09/26 21:44:09 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.54 2011/11/19 22:51:21 tls Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.53 2011/09/26 21:44:09 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.54 2011/11/19 22:51:21 tls Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -203,7 +203,7 @@ struct xennet_xenbus_softc {
 #define FEATURE_RX_FLIP		0
 #define FEATURE_RX_COPY		1
 #if NRND > 0
-	rndsource_element_t     sc_rnd_source;
+	krndsource_t     sc_rnd_source;
 #endif
 };
 #define SC_NLIVEREQ(sc) ((sc)->sc_rx_ring.req_prod_pvt - \
