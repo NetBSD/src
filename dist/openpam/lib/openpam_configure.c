@@ -288,6 +288,12 @@ openpam_load_chain(pam_handle_t *pamh,
 	size_t len;
 	int r;
 
+	/* don't allow to escape from policy_path */
+	if (strchr(service, '/')) {
+		openpam_log(PAM_LOG_ERROR, "illegal service \"%s\"", service);
+		return (-PAM_SYSTEM_ERR);
+	}
+
 	for (path = openpam_policy_path; *path != NULL; ++path) {
 		len = strlen(*path);
 		if ((*path)[len - 1] == '/') {
