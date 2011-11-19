@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.59.14.1 2011/11/19 21:49:42 jmcneill Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.59.14.2 2011/11/19 23:19:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,16 +49,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.59.14.1 2011/11/19 21:49:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.59.14.2 2011/11/19 23:19:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/audioio.h>
 #include <sys/select.h>
 #include <sys/mutex.h>
+#include <sys/kmem.h>
+#include <sys/malloc.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
@@ -81,18 +82,16 @@ static int	emuxki_detach(device_t, int);
 
 /* DMA mem mgmt */
 static struct dmamem *dmamem_alloc(bus_dma_tag_t, size_t, bus_size_t,
-		int, struct malloc_type *, int);
-static void	dmamem_free(struct dmamem *, struct malloc_type *);
+		int);
+static void	dmamem_free(struct dmamem *);
 
 /* Emu10k1 init & shutdown */
 static int	emuxki_init(struct emuxki_softc *);
 static void	emuxki_shutdown(struct emuxki_softc *);
 
 /* Emu10k1 mem mgmt */
-static void	*emuxki_pmem_alloc(struct emuxki_softc *, size_t,
-		struct malloc_type *,int);
-static void	*emuxki_rmem_alloc(struct emuxki_softc *, size_t,
-		struct malloc_type *,int);
+static void	*emuxki_pmem_alloc(struct emuxki_softc *, size_t);
+static void	*emuxki_rmem_alloc(struct emuxki_softc *, size_t);
 
 /*
  * Emu10k1 channels funcs : There is no direct access to channels, everything
@@ -154,8 +153,8 @@ static int	emuxki_set_port(void *, mixer_ctrl_t *);
 static int	emuxki_get_port(void *, mixer_ctrl_t *);
 static int	emuxki_query_devinfo(void *, mixer_devinfo_t *);
 
-static void    *emuxki_allocm(void *, int, size_t, struct malloc_type *, int);
-static void	emuxki_freem(void *, void *, struct malloc_type *);
+static void    *emuxki_allocm(void *, int, size_t);
+static void	emuxki_freem(void *, void *, size_t);
 
 static paddr_t	emuxki_mappage(void *, void *, off_t, int);
 static int	emuxki_get_props(void *);
@@ -241,22 +240,20 @@ static const struct audio_format emuxki_formats[EMUXKI_NFORMATS] = {
  */
 
 static void
-dmamem_delete(struct dmamem *mem, struct malloc_type *type)
+dmamem_delete(struct dmamem *mem)
 {
 
-	free(mem->segs, type);
-	free(mem, type);
+	kmem_free(mem->segs, mem->nsegs * sizeof(*(mem->segs)));
+	kmem_free(mem, sizeof(*mem));
 }
 
 static struct dmamem *
-dmamem_alloc(bus_dma_tag_t dmat, size_t size, bus_size_t align,
-	     int nsegs, struct malloc_type *type, int flags)
+dmamem_alloc(bus_dma_tag_t dmat, size_t size, bus_size_t align, int nsegs)
 {
 	struct dmamem	*mem;
-	int		bus_dma_flags;
 
 	/* Allocate memory for structure */
-	if ((mem = malloc(sizeof(*mem), type, flags)) == NULL)
+	if ((mem = kmem_alloc(sizeof(*mem), KM_SLEEP)) == NULL)
 		return NULL;
 	mem->dmat = dmat;
 	mem->size = size;
@@ -264,41 +261,40 @@ dmamem_alloc(bus_dma_tag_t dmat, size_t size, bus_size_t align,
 	mem->nsegs = nsegs;
 	mem->bound = 0;
 
-	mem->segs = malloc(mem->nsegs * sizeof(*(mem->segs)), type, flags);
+	mem->segs = kmem_alloc(mem->nsegs * sizeof(*(mem->segs)), KM_SLEEP);
 	if (mem->segs == NULL) {
-		free(mem, type);
+		kmem_free(mem, sizeof(*mem));
 		return NULL;
 	}
 
-	bus_dma_flags = (flags & M_NOWAIT) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK;
 	if (bus_dmamem_alloc(dmat, mem->size, mem->align, mem->bound,
 			     mem->segs, mem->nsegs, &(mem->rsegs),
-			     bus_dma_flags)) {
-		dmamem_delete(mem, type);
+			     BUS_DMA_WAITOK)) {
+		dmamem_delete(mem);
 		return NULL;
 	}
 
 	if (bus_dmamem_map(dmat, mem->segs, mem->nsegs, mem->size,
-			   &(mem->kaddr), bus_dma_flags | BUS_DMA_COHERENT)) {
+			   &(mem->kaddr), BUS_DMA_WAITOK | BUS_DMA_COHERENT)) {
 		bus_dmamem_free(dmat, mem->segs, mem->nsegs);
-		dmamem_delete(mem, type);
+		dmamem_delete(mem);
 		return NULL;
 	}
 
 	if (bus_dmamap_create(dmat, mem->size, mem->nsegs, mem->size,
-			      mem->bound, bus_dma_flags, &(mem->map))) {
+			      mem->bound, BUS_DMA_WAITOK, &(mem->map))) {
 		bus_dmamem_unmap(dmat, mem->kaddr, mem->size);
 		bus_dmamem_free(dmat, mem->segs, mem->nsegs);
-		dmamem_delete(mem, type);
+		dmamem_delete(mem);
 		return NULL;
 	}
 
 	if (bus_dmamap_load(dmat, mem->map, mem->kaddr,
-			    mem->size, NULL, bus_dma_flags)) {
+			    mem->size, NULL, BUS_DMA_WAITOK)) {
 		bus_dmamap_destroy(dmat, mem->map);
 		bus_dmamem_unmap(dmat, mem->kaddr, mem->size);
 		bus_dmamem_free(dmat, mem->segs, mem->nsegs);
-		dmamem_delete(mem, type);
+		dmamem_delete(mem);
 		return NULL;
 	}
 
@@ -306,14 +302,14 @@ dmamem_alloc(bus_dma_tag_t dmat, size_t size, bus_size_t align,
 }
 
 static void
-dmamem_free(struct dmamem *mem, struct malloc_type *type)
+dmamem_free(struct dmamem *mem)
 {
 
 	bus_dmamap_unload(mem->dmat, mem->map);
 	bus_dmamap_destroy(mem->dmat, mem->map);
 	bus_dmamem_unmap(mem->dmat, mem->kaddr, mem->size);
 	bus_dmamem_free(mem->dmat, mem->segs, mem->nsegs);
-	dmamem_delete(mem, type);
+	dmamem_delete(mem);
 }
 
 
@@ -589,7 +585,6 @@ emuxki_read(struct emuxki_softc *sc, uint16_t chano, uint32_t reg)
 {
 	uint32_t ptr, mask;
 	uint8_t  size, offset;
-	int s;
 
 	mask = 0xffffffff;
 	offset = 0;
@@ -603,11 +598,11 @@ emuxki_read(struct emuxki_softc *sc, uint16_t chano, uint32_t reg)
 		mask = ((1 << size) - 1) << offset;
 	}
 
-	s = splaudio();
+	mutex_spin_enter(&sc->sc_intr_lock);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_PTR, ptr);
 	ptr = (bus_space_read_4(sc->sc_iot, sc->sc_ioh, EMU_DATA) & mask)
 		>> offset;
-	splx(s);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return ptr;
 }
@@ -618,7 +613,6 @@ emuxki_write(struct emuxki_softc *sc, uint16_t chano,
 {
 	uint32_t ptr, mask;
 	uint8_t size, offset;
-	int s;
 
 	ptr = ((((u_int32_t) reg) << 16) &
 		(sc->sc_type & EMUXKI_AUDIGY ?
@@ -632,10 +626,10 @@ emuxki_write(struct emuxki_softc *sc, uint16_t chano,
 			(emuxki_read(sc, chano, reg & 0xffff) & ~mask);
 	}
 
-	s = splaudio();
+	mutex_spin_enter(&sc->sc_intr_lock);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_PTR, ptr);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_DATA, data);
-	splx(s);
+	mutex_spin_exit(&sc->sc_intr_lock);
 }
 
 /* Microcode should this go in /sys/dev/microcode ? */
@@ -858,14 +852,13 @@ emuxki_init(struct emuxki_softc *sc)
 	/* Here is our Page Table */
 	if ((sc->ptb = dmamem_alloc(sc->sc_dmat,
 	    EMU_MAXPTE * sizeof(u_int32_t),
-	    EMU_DMA_ALIGN, EMU_DMAMEM_NSEG,
-	    M_DEVBUF, M_WAITOK)) == NULL)
+	    EMU_DMA_ALIGN, EMU_DMAMEM_NSEG)) == NULL)
 		return ENOMEM;
 
 	/* This is necessary unless you like Metallic noise... */
 	if ((sc->silentpage = dmamem_alloc(sc->sc_dmat, EMU_PTESIZE,
-	    EMU_DMA_ALIGN, EMU_DMAMEM_NSEG, M_DEVBUF, M_WAITOK))==NULL){ 
-		dmamem_free(sc->ptb, M_DEVBUF);
+	    EMU_DMA_ALIGN, EMU_DMAMEM_NSEG))==NULL){ 
+		dmamem_free(sc->ptb);
 		return ENOMEM;
 	}
 
@@ -960,41 +953,39 @@ emuxki_shutdown(struct emuxki_softc *sc)
 
 	emuxki_write(sc, 0, EMU_DBG, 0x8000);	/* necessary ? */
 
-	dmamem_free(sc->silentpage, M_DEVBUF);
-	dmamem_free(sc->ptb, M_DEVBUF);
+	dmamem_free(sc->silentpage);
+	dmamem_free(sc->ptb);
 }
 
 /* Emu10k1 Memory management */
 
 static struct emuxki_mem *
-emuxki_mem_new(struct emuxki_softc *sc, int ptbidx,
-	       size_t size, struct malloc_type *type, int flags)
+emuxki_mem_new(struct emuxki_softc *sc, int ptbidx, size_t size)
 {
 	struct emuxki_mem *mem;
 
-	if ((mem = malloc(sizeof(*mem), type, flags)) == NULL)
+	if ((mem = kmem_alloc(sizeof(*mem), KM_SLEEP)) == NULL)
 		return NULL;
 
 	mem->ptbidx = ptbidx;
 	if ((mem->dmamem = dmamem_alloc(sc->sc_dmat, size, EMU_DMA_ALIGN,
-	    EMU_DMAMEM_NSEG, type, flags)) == NULL) {
-		free(mem, type);
+	    EMU_DMAMEM_NSEG)) == NULL) {
+		kmem_free(mem, sizeof(*mem));
 		return NULL;
 	}
 	return mem;
 }
 
 static void
-emuxki_mem_delete(struct emuxki_mem *mem, struct malloc_type *type)
+emuxki_mem_delete(struct emuxki_mem *mem, size_t size)
 {
 
-	dmamem_free(mem->dmamem, type);
-	free(mem, type);
+	dmamem_free(mem->dmamem);
+	kmem_free(mem, sizeof(*mem));
 }
 
 static void *
-emuxki_pmem_alloc(struct emuxki_softc *sc, size_t size,
-    struct malloc_type *type, int flags)
+emuxki_pmem_alloc(struct emuxki_softc *sc, size_t size)
 {
 	int i, j;
 	size_t numblocks;
@@ -1018,7 +1009,7 @@ emuxki_pmem_alloc(struct emuxki_softc *sc, size_t size,
 			if (j == numblocks) {
 				mutex_spin_exit(&sc->sc_intr_lock);
 				if ((mem = emuxki_mem_new(sc, i,
-						size, type, flags)) == NULL) {
+						size)) == NULL) {
 					return NULL;
 				}
 				mutex_spin_enter(&sc->sc_intr_lock);
@@ -1038,12 +1029,11 @@ emuxki_pmem_alloc(struct emuxki_softc *sc, size_t size,
 }
 
 static void *
-emuxki_rmem_alloc(struct emuxki_softc *sc, size_t size,
-    struct malloc_type *type, int flags)
+emuxki_rmem_alloc(struct emuxki_softc *sc, size_t size)
 {
 	struct emuxki_mem *mem;
 
-	mem = emuxki_mem_new(sc, EMU_RMEM, size, type, flags);
+	mem = emuxki_mem_new(sc, EMU_RMEM, size);
 	if (mem == NULL)
 		return NULL;
 
@@ -1492,7 +1482,7 @@ emuxki_voice_new(struct emuxki_softc *sc, uint8_t use)
 
 	if (!voice) {
 		mutex_exit(&sc->sc_lock);
-		voice = malloc(sizeof(*voice), M_DEVBUF, M_WAITOK);
+		voice = kmem_alloc(sizeof(*voice), KM_SLEEP);
 		mutex_enter(&sc->sc_lock);
 		if (!voice)
 			return NULL;
@@ -1545,7 +1535,7 @@ emuxki_voice_delete(struct emuxki_voice *voice)
 	if (lvoice) {
 		mutex_exit(&sc->sc_lock);
 		emuxki_voice_dataloc_destroy(lvoice);
-		free(lvoice, M_DEVBUF);
+		kmem_free(lvoice, sizeof(*lvoice));
 		mutex_enter(&sc->sc_lock);
 	}
 }
@@ -2289,17 +2279,16 @@ emuxki_query_devinfo(void *addr, mixer_devinfo_t *minfo)
 }
 
 static void *
-emuxki_allocm(void *addr, int direction, size_t size,
-    struct malloc_type *type, int flags)
+emuxki_allocm(void *addr, int direction, size_t size)
 {
 	if (direction == AUMODE_PLAY)
-		return emuxki_pmem_alloc(addr, size, type, flags);
+		return emuxki_pmem_alloc(addr, size);
 	else
-		return emuxki_rmem_alloc(addr, size, type, flags);
+		return emuxki_rmem_alloc(addr, size);
 }
 
 static void
-emuxki_freem(void *addr, void *ptr, struct malloc_type *type)
+emuxki_freem(void *addr, void *ptr, size_t size)
 {
 	struct emuxki_softc *sc;
 	struct emuxki_mem *mem;
@@ -2326,7 +2315,7 @@ emuxki_freem(void *addr, void *ptr, struct malloc_type *type)
 		LIST_REMOVE(mem, next);
 		mutex_spin_exit(&sc->sc_intr_lock);
 
-		emuxki_mem_delete(mem, type);
+		emuxki_mem_delete(mem, size);
 		break;
 	}
 }
