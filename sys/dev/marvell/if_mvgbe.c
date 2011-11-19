@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.13 2011/09/06 19:38:23 rjs Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.14 2011/11/19 17:01:38 jakllsch Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.13 2011/09/06 19:38:23 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.14 2011/11/19 17:01:38 jakllsch Exp $");
 
 #include "rnd.h"
 
@@ -1517,6 +1517,7 @@ mvgbe_encap(struct mvgbe_softc *sc, struct mbuf *m_head,
 	bus_dmamap_t txmap;
 	uint32_t first, current, last, cmdsts = 0;
 	int m_csumflags, i;
+	bool needs_defrag = false;
 
 	DPRINTFN(3, ("mvgbe_encap\n"));
 
@@ -1535,6 +1536,16 @@ mvgbe_encap(struct mvgbe_softc *sc, struct mbuf *m_head,
 	 */
 	m_csumflags = m_head->m_pkthdr.csum_flags;
 
+do_defrag:
+	if (__predict_false(needs_defrag == true)) {
+		/* A small unaligned segment was detected. */
+		struct mbuf *m_new;
+		m_new = m_defrag(m_head, M_DONTWAIT);
+		if (m_new == NULL)
+			return EFBIG;
+		m_head = m_new;
+	}
+
 	/*
 	 * Start packing the mbufs in this chain into
 	 * the fragment pointers. Stop when we run out
@@ -1543,6 +1554,25 @@ mvgbe_encap(struct mvgbe_softc *sc, struct mbuf *m_head,
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, txmap, m_head, BUS_DMA_NOWAIT)) {
 		DPRINTFN(1, ("mvgbe_encap: dmamap failed\n"));
 		return ENOBUFS;
+	}
+
+	txseg = txmap->dm_segs;
+
+	if (__predict_true(needs_defrag == false)) {
+		/*
+		 * Detect rarely encountered DMA limitation.
+		 */
+		for (i = 0; i < txmap->dm_nsegs; i++) {
+			if (((txseg[i].ds_addr & 7) != 0) &&
+			    (txseg[i].ds_len <= 8) &&
+			    (txseg[i].ds_len >= 1)
+			    ) {
+				txseg = NULL;
+				bus_dmamap_unload(sc->sc_dmat, txmap);
+				needs_defrag = true;
+				goto do_defrag;
+			}
+		}
 	}
 
 	/* Sync the DMA map. */
@@ -1556,7 +1586,6 @@ mvgbe_encap(struct mvgbe_softc *sc, struct mbuf *m_head,
 		return ENOBUFS;
 	}
 
-	txseg = txmap->dm_segs;
 
 	DPRINTFN(2, ("mvgbe_encap: dm_nsegs=%d\n", txmap->dm_nsegs));
 
