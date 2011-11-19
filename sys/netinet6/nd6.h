@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.55 2011/11/11 15:09:33 gdt Exp $	*/
+/*	$NetBSD: nd6.h,v 1.56 2011/11/19 22:51:29 tls Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -255,7 +255,7 @@ struct	in6_ndifreq {
 #define TEMPADDR_REGEN_ADVANCE		5	/* sec */
 #define MAX_TEMP_DESYNC_FACTOR		600	/* 10 min */
 #define ND_COMPUTE_RTIME(x) \
-		(((MIN_RANDOM_FACTOR * (x >> 10)) + (arc4random() & \
+		(((MIN_RANDOM_FACTOR * (x >> 10)) + (cprng_fast32() & \
 		((MAX_RANDOM_FACTOR - MIN_RANDOM_FACTOR) * (x >> 10)))) /1000)
 
 TAILQ_HEAD(nd_drhead, nd_defrouter);

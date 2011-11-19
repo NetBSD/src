@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_appleufs.c,v 1.11 2011/06/22 04:01:33 mrg Exp $	*/
+/*	$NetBSD: ffs_appleufs.c,v 1.12 2011/11/19 22:51:31 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Darrin B. Jewell
@@ -26,13 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.11 2011/06/22 04:01:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.12 2011/11/19 22:51:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
 #if defined(_KERNEL)
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/cprng.h>
 #endif
 
 #include <ufs/ufs/dinode.h>
@@ -136,9 +137,7 @@ ffs_appleufs_set(struct appleufslabel *appleufs, const char *name, time_t t,
 	}
 	if (uuid == 0) {
 #if defined(_KERNEL) && !defined(STANDALONE)
-		uuid = arc4random();
-		uuid <<= 32;
-		uuid |= arc4random();
+		uuid = cprng_fast64();
 #endif
 	}
 	namelen = strlen(name);

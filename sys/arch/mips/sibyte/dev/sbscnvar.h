@@ -1,4 +1,4 @@
-/* $NetBSD: sbscnvar.h,v 1.4 2011/02/01 03:16:54 matt Exp $ */
+/* $NetBSD: sbscnvar.h,v 1.5 2011/11/19 22:51:20 tls Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -157,7 +157,7 @@ struct sbscn_channel {
 	u_char		ch_o_dtr_pin, ch_o_rts_pin;
 
 #if NRND > 0 && defined(RND_SBSCN)
-	rndsource_element_t  ch_rnd_source;
+	krndsource_t  ch_rnd_source;
 #endif
 };
 

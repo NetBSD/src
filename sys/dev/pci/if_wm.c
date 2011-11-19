@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.223 2011/07/01 07:45:39 matt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.224 2011/11/19 22:51:23 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.223 2011/07/01 07:45:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.224 2011/11/19 22:51:23 tls Exp $");
 
 #include "rnd.h"
 
@@ -379,7 +379,7 @@ struct wm_softc {
 	int sc_mchash_type;		/* multicast filter offset */
 
 #if NRND > 0
-	rndsource_element_t rnd_source;	/* random source */
+	krndsource_t rnd_source;	/* random source */
 #endif
 };
 

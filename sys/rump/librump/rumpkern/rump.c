@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.234 2011/03/22 15:16:23 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.235 2011/11/19 22:51:30 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.234 2011/03/22 15:16:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.235 2011/11/19 22:51:30 tls Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.234 2011/03/22 15:16:23 pooka Exp $");
 #include <sys/vmem.h>
 #include <sys/xcall.h>
 #include <sys/simplelock.h>
+#include <sys/cprng.h>
 
 #include <rump/rumpuser.h>
 
@@ -288,7 +289,7 @@ rump__init(int rump_version)
 	 * implementation.
 	 */
 	messthestack();
-	arc4random();
+	cprng_fast32();
 
 	if (rump_version != RUMP_VERSION) {
 		printf("rump version mismatch, %d vs. %d\n",

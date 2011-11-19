@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.15 2011/05/24 18:59:21 drochner Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.16 2011/11/19 22:51:21 tls Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.15 2011/05/24 18:59:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.16 2011/11/19 22:51:21 tls Exp $");
 
 #ifdef _KERNEL_OPT
 # include "rnd.h"
@@ -258,8 +258,7 @@ via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 				C3_CRYPT_CWLO_KEYGEN_SW |
 				C3_CRYPT_CWLO_NORMAL;
 
-			rnd_extract_data(ses->ses_iv, sizeof(ses->ses_iv),
-			    RND_EXTRACT_ANY);
+			arc4randbytes(ses->ses_iv, sizeof(ses->ses_iv));
 			ses->ses_klen = c->cri_klen;
 			ses->ses_cw0 = cw0;
 

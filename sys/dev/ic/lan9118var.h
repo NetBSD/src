@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118var.h,v 1.2 2009/11/28 08:44:00 kiyohara Exp $	*/
+/*	$NetBSD: lan9118var.h,v 1.3 2011/11/19 22:51:22 tls Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -76,7 +76,7 @@ struct lan9118_softc {
 #define LAN9118_FLAGS_NO_EEPROM	0x00000002
 
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 };
 

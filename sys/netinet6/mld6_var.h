@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6_var.h,v 1.9 2007/11/01 20:33:58 dyoung Exp $	*/
+/*	$NetBSD: mld6_var.h,v 1.10 2011/11/19 22:51:29 tls Exp $	*/
 /*	$KAME: mld6_var.h,v 1.4 2000/03/25 07:23:54 sumikawa Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 
-#define MLD_RANDOM_DELAY(X)	(arc4random() % (X) + 1)
+#define MLD_RANDOM_DELAY(X)	(cprng_fast32() % (X) + 1)
 
 /*
  * States for MLD stop-listening processing

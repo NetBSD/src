@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.137 2011/11/10 17:10:00 seanb Exp $	*/
+/*	$NetBSD: nd6.c,v 1.138 2011/11/19 22:51:29 tls Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.137 2011/11/10 17:10:00 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.138 2011/11/19 22:51:29 tls Exp $");
 
 #include "opt_ipsec.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.137 2011/11/10 17:10:00 seanb Exp $");
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

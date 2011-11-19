@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.11 2010/04/24 19:58:13 dbj Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.12 2011/11/19 22:51:20 tls Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -72,7 +72,7 @@ struct mb8795_softc {
 	struct ifmedia sc_media;
 
 #if NRND > 0
-	rndsource_element_t     rnd_source;
+	krndsource_t     rnd_source;
 #endif /* NRND */
 
 };

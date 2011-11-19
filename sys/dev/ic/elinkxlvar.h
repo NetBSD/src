@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.22 2010/03/22 23:03:30 dyoung Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.23 2011/11/19 22:51:22 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ struct ex_softc {
 #define EX_FLAGS_ATTACHED		0x4000	/* attach has succeeded */
 
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 
 	/* power management hooks */

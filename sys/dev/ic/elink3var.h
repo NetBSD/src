@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.36 2009/09/05 12:30:59 tsutsui Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.37 2011/11/19 22:51:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -102,7 +102,7 @@ struct ep_softc {
 	int ep_pktlenshift;		/* scale factor for pkt lengths */
 
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 
 	/* power management hooks */

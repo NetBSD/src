@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.48 2011/09/20 00:12:24 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.49 2011/11/19 22:51:21 tls Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.48 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.49 2011/11/19 22:51:21 tls Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -155,7 +155,7 @@ struct xbd_xenbus_softc {
 	u_long sc_handle; /* from backend */
 	int sc_cache_flush; /* backend supports BLKIF_OP_FLUSH_DISKCACHE */
 #if NRND > 0
-	rndsource_element_t     sc_rnd_source;
+	krndsource_t     sc_rnd_source;
 #endif
 };
 
