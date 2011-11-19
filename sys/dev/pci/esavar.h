@@ -1,4 +1,4 @@
-/* $NetBSD: esavar.h,v 1.10 2008/03/27 14:13:34 jmcneill Exp $ */
+/* $NetBSD: esavar.h,v 1.10.40.1 2011/11/19 21:49:43 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -102,6 +102,8 @@ struct esa_softc
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_iob;
 	bus_size_t		sc_ios;
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
 
 	pcitag_t		sc_tag;
 	pci_chipset_tag_t	sc_pct;
@@ -133,4 +135,5 @@ struct esa_softc
 	int			delay1, delay2;
 
 	uint16_t		*savemem;
+	size_t			savememsz;
 };

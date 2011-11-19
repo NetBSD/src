@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.22 2009/04/07 17:55:55 dyoung Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.22.14.1 2011/11/19 21:49:35 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifndef _SYS_DEV_MIDI_IF_H_
 #define _SYS_DEV_MIDI_IF_H_
 
+#include <sys/mutex.h>
+
 struct midi_info {
 	const char *name;		/* Name of MIDI hardware */
 	int	props;
@@ -51,6 +53,7 @@ struct midi_hw_if {
 	int	(*output)(void *, int);	/* output a byte */
 	void	(*getinfo)(void *, struct midi_info *);
 	int	(*ioctl)(void *, u_long, void *, int, struct lwp *);
+	void	(*get_locks)(void *, kmutex_t **, kmutex_t **);
 };
 
 /*

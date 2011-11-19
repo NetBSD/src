@@ -1,4 +1,0 @@
-Name: SQLite
-Description: SQL database engine
-Version: 3.7.9
-Libs: -lsqlite3

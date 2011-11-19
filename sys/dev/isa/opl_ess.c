@@ -1,7 +1,7 @@
-/*	$NetBSD: opl_ess.c,v 1.16 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: opl_ess.c,v 1.16.36.1 2011/11/19 21:49:38 jmcneill Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_ess.c,v 1.16 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_ess.c,v 1.16.36.1 2011/11/19 21:49:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ opl_ess_attach(device_t parent, device_t self, void *aux)
 	sc->offs = 0;
 	sc->spkrctl = ess_speaker_ctl;
 	sc->spkrarg = ssc;
+	sc->lock = &ssc->sc_intr_lock;
 	strcpy(sc->syn.name, "ESS ");
 
 	opl_attach(sc);
