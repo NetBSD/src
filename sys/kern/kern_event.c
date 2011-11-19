@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.33 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.33.2.1 2011/11/19 14:37:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.33 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.33.2.1 2011/11/19 14:37:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -505,6 +505,8 @@ filt_timerexpire(void *knx)
 
 	if ((kn->kn_flags & EV_ONESHOT) == 0) {
 		tticks = mstohz(kn->kn_sdata);
+		if (tticks <= 0)
+			tticks = 1;
 		callout_schedule((struct callout *)kn->kn_hook, tticks);
 	}
 }
