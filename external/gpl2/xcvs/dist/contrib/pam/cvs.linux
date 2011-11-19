@@ -1,9 +1,0 @@
-# This is a sample PAM configuration for Linux
-# which does standard unix authentication against
-# the password in /etc/passwd or /etc/shadow.
-# The contents of this file should be copied to
-# /etc/pam.d/cvs
-
-auth      required    pam_unix.so
-account   required    pam_unix.so
-session   required    pam_unix.so

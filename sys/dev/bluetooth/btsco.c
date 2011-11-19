@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.24 2011/03/16 21:38:54 plunky Exp $	*/
+/*	$NetBSD: btsco.c,v 1.24.6.1 2011/11/19 21:49:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.24 2011/03/16 21:38:54 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.24.6.1 2011/11/19 21:49:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.24 2011/03/16 21:38:54 plunky Exp $");
 #include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/socketvar.h>
@@ -97,6 +97,7 @@ struct btsco_softc {
 	device_t		 sc_audio;	/* MI audio device */
 	void			*sc_intr;	/* interrupt cookie */
 	kcondvar_t		 sc_connect;	/* connect wait */
+	kmutex_t		 sc_intr_lock;	/* for audio */
 
 	/* Bluetooth */
 	bdaddr_t		 sc_laddr;	/* local address */
@@ -161,10 +162,11 @@ static int btsco_setfd(void *, int);
 static int btsco_set_port(void *, mixer_ctrl_t *);
 static int btsco_get_port(void *, mixer_ctrl_t *);
 static int btsco_query_devinfo(void *, mixer_devinfo_t *);
-static void *btsco_allocm(void *, int, size_t, struct malloc_type *, int);
-static void btsco_freem(void *, void *, struct malloc_type *);
+static void *btsco_allocm(void *, int, size_t);
+static void btsco_freem(void *, void *, size_t);
 static int btsco_get_props(void *);
 static int btsco_dev_ioctl(void *, u_long, void *, int, struct lwp *);
+static void btsco_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if btsco_if = {
 	btsco_open,		/* open */
@@ -195,6 +197,7 @@ static const struct audio_hw_if btsco_if = {
 	NULL,			/* trigger_input */
 	btsco_dev_ioctl,	/* dev_ioctl */
 	NULL,			/* powerstate */
+	btsco_get_locks,	/* get_locks */
 };
 
 static const struct audio_device btsco_device = {
@@ -293,6 +296,7 @@ btsco_attach(device_t parent, device_t self, void *aux)
 	sc->sc_state = BTSCO_CLOSED;
 	sc->sc_name = device_xname(self);
 	cv_init(&sc->sc_connect, "connect");
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
 	 * copy in our configuration info
@@ -388,6 +392,7 @@ btsco_detach(device_t self, int flags)
 	}
 
 	cv_destroy(&sc->sc_connect);
+	mutex_destroy(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -432,7 +437,6 @@ static void
 btsco_sco_disconnected(void *arg, int err)
 {
 	struct btsco_softc *sc = arg;
-	int s;
 
 	DPRINTF("%s sc_state %d\n", sc->sc_name, sc->sc_state);
 
@@ -455,7 +459,7 @@ btsco_sco_disconnected(void *arg, int err)
 		 * has completed so that when it tries to send more, we
 		 * can indicate an error.
 		 */
-		s = splaudio();
+		mutex_spin_enter(&sc->sc_intr_lock);
 		if (sc->sc_tx_pending > 0) {
 			sc->sc_tx_pending = 0;
 			(*sc->sc_tx_intr)(sc->sc_tx_intrarg);
@@ -464,7 +468,7 @@ btsco_sco_disconnected(void *arg, int err)
 			sc->sc_rx_want = 0;
 			(*sc->sc_rx_intr)(sc->sc_rx_intrarg);
 		}
-		splx(s);
+		mutex_spin_exit(&sc->sc_intr_lock);
 		break;
 
 	default:
@@ -495,17 +499,16 @@ static void
 btsco_sco_complete(void *arg, int count)
 {
 	struct btsco_softc *sc = arg;
-	int s;
 
 	DPRINTFN(10, "%s count %d\n", sc->sc_name, count);
 
-	s = splaudio();
+	mutex_spin_enter(&sc->sc_intr_lock);
 	if (sc->sc_tx_pending > 0) {
 		sc->sc_tx_pending -= count;
 		if (sc->sc_tx_pending == 0)
 			(*sc->sc_tx_intr)(sc->sc_tx_intrarg);
 	}
-	splx(s);
+	mutex_spin_exit(&sc->sc_intr_lock);
 }
 
 static void
@@ -520,11 +523,11 @@ static void
 btsco_sco_input(void *arg, struct mbuf *m)
 {
 	struct btsco_softc *sc = arg;
-	int len, s;
+	int len;
 
 	DPRINTFN(10, "%s len=%d\n", sc->sc_name, m->m_pkthdr.len);
 
-	s = splaudio();
+	mutex_spin_enter(&sc->sc_intr_lock);
 	if (sc->sc_rx_want == 0) {
 		m_freem(m);
 	} else {
@@ -550,7 +553,7 @@ btsco_sco_input(void *arg, struct mbuf *m)
 		if (sc->sc_rx_want == 0)
 			(*sc->sc_rx_intr)(sc->sc_rx_intrarg);
 	}
-	splx(s);
+	mutex_spin_exit(&sc->sc_intr_lock);
 }
 
 
@@ -773,9 +776,9 @@ btsco_round_blocksize(void *hdl, int bs, int mode,
 /*
  * Start Output
  *
- * We dont want to be calling the network stack at splaudio() so make
- * a note of what is to be sent, and schedule an interrupt to bundle
- * it up and queue it.
+ * We dont want to be calling the network stack with sc_intr_lock held
+ * so make a note of what is to be sent, and schedule an interrupt to
+ * bundle it up and queue it.
  */
 static int
 btsco_start_output(void *hdl, void *block, int blksize,
@@ -1012,17 +1015,16 @@ btsco_query_devinfo(void *hdl, mixer_devinfo_t *di)
  * Allocate Ring Buffers.
  */
 static void *
-btsco_allocm(void *hdl, int direction, size_t size,
-		struct malloc_type *type, int flags)
+btsco_allocm(void *hdl, int direction, size_t size)
 {
 	struct btsco_softc *sc = hdl;
 	void *addr;
 
 	DPRINTF("%s: size %d direction %d\n", sc->sc_name, size, direction);
 
-	addr = malloc(size, type, flags);
+	addr = kmem_alloc(size, KM_SLEEP);
 
-	if (direction == AUMODE_PLAY) {
+	if (addr != NULL && direction == AUMODE_PLAY) {
 		sc->sc_tx_buf = addr;
 		sc->sc_tx_refcnt = 0;
 	}
@@ -1040,7 +1042,7 @@ btsco_allocm(void *hdl, int direction, size_t size,
  * This would be a memory leak but at least there is a warning..
  */
 static void
-btsco_freem(void *hdl, void *addr, struct malloc_type *type)
+btsco_freem(void *hdl, void *addr, size_t size)
 {
 	struct btsco_softc *sc = hdl;
 	int count = hz / 2;
@@ -1051,7 +1053,7 @@ btsco_freem(void *hdl, void *addr, struct malloc_type *type)
 		sc->sc_tx_buf = NULL;
 
 		while (sc->sc_tx_refcnt> 0 && count-- > 0)
-			tsleep(sc, PWAIT, "drain", 1);
+			kpause("drain", false, 1, NULL);
 
 		if (sc->sc_tx_refcnt > 0) {
 			aprint_error("%s: ring buffer unreleased!\n", sc->sc_name);
@@ -1059,7 +1061,7 @@ btsco_freem(void *hdl, void *addr, struct malloc_type *type)
 		}
 	}
 
-	free(addr, type);
+	kmem_free(addr, size);
 }
 
 static int
@@ -1067,6 +1069,15 @@ btsco_get_props(void *hdl)
 {
 
 	return AUDIO_PROP_FULLDUPLEX;
+}
+
+static void
+btsco_get_locks(void *hdl, kmutex_t **intr, kmutex_t **thread)
+{
+	struct btsco_softc *sc = hdl;
+
+	*intr = &sc->sc_intr_lock;
+	*thread = bt_lock;
 }
 
 /*

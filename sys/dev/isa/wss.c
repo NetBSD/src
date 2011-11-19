@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.69 2011/06/02 13:02:40 nonaka Exp $	*/
+/*	$NetBSD: wss.c,v 1.69.4.1 2011/11/19 21:49:39 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,18 +36,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.69 2011/06/02 13:02:40 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.69.4.1 2011/11/19 21:49:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
-
 #include <sys/audioio.h>
+
 #include <dev/audio_if.h>
 
 #include <dev/isa/isavar.h>
@@ -113,6 +112,7 @@ const struct audio_hw_if wss_hw_if = {
 	ad1848_isa_trigger_input,
 	NULL,
 	NULL,	/* powerstate */
+	ad1848_get_locks,
 };
 
 /*
@@ -128,10 +128,13 @@ wssattach(struct wss_softc *sc)
 #endif
 
 	ac = &sc->sc_ad1848.sc_ad1848;
+
+	ad1848_init_locks(ac, IPL_SCHED);
+
 	madattach(sc);
 
 	sc->sc_ad1848.sc_ih = isa_intr_establish(sc->wss_ic, sc->wss_irq,
-	    IST_EDGE, IPL_AUDIO, ad1848_isa_intr, &sc->sc_ad1848);
+	    IST_EDGE, IPL_SCHED, ad1848_isa_intr, &sc->sc_ad1848);
 
 	ad1848_isa_attach(&sc->sc_ad1848);
 
@@ -388,7 +391,6 @@ mad_read(struct wss_softc *sc, int port)
 {
 	u_int tmp;
 	int pwd;
-	int s;
 
 	switch (sc->mad_chip_type) {	/* Output password */
 	case MAD_82C928:
@@ -404,10 +406,8 @@ mad_read(struct wss_softc *sc, int port)
 	default:
 		panic("mad_read: Bad chip type=%d", sc->mad_chip_type);
 	}
-	s = splaudio();		/* don't want an interrupt between outb&inb */
 	bus_space_write_1(sc->sc_iot, sc->mad_ioh, MC_PASSWD_REG, pwd);
 	tmp = bus_space_read_1(sc->sc_iot, sc->mad_ioh, port);
-	splx(s);
 	return tmp;
 }
 
@@ -415,7 +415,6 @@ void
 mad_write(struct wss_softc *sc, int port, int value)
 {
 	int pwd;
-	int s;
 
 	switch (sc->mad_chip_type) {	/* Output password */
 	case MAD_82C928:
@@ -431,10 +430,8 @@ mad_write(struct wss_softc *sc, int port, int value)
 	default:
 		panic("mad_write: Bad chip type=%d", sc->mad_chip_type);
 	}
-	s = splaudio();
 	bus_space_write_1(sc->sc_iot, sc->mad_ioh, MC_PASSWD_REG, pwd);
 	bus_space_write_1(sc->sc_iot, sc->mad_ioh, port, value & 0xff);
-	splx(s);
 }
 
 void

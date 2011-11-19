@@ -1,4 +1,4 @@
-/* $NetBSD: pcppivar.h,v 1.10 2011/05/03 04:27:13 mrg Exp $ */
+/* $NetBSD: pcppivar.h,v 1.10.6.1 2011/11/19 21:49:38 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -61,5 +61,6 @@ int pcppi_detach(device_t, int);
 #define	PCPPI_BELL_POLL		0x02	/* synchronous; poll for complete */
 
 void pcppi_bell(pcppi_tag_t, int, int, int);
+void pcppi_bell_locked(pcppi_tag_t, int, int, int);
 
 #endif /* ! _PCPPIVAR_H_ */
