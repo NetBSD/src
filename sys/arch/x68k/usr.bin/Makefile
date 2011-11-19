@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1996/05/05 12:17:17 oki Exp $
+#	$NetBSD: Makefile,v 1.2 2011/11/19 12:27:44 isaki Exp $
 
-SUBDIR+= loadfont loadkmap palette rtcalarm tvctrl bellctrl
+SUBDIR+= loadfont loadkmap palette tvctrl bellctrl
 
 .include <bsd.subdir.mk>
