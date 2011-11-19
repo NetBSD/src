@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.21 2009/09/18 12:40:15 tsutsui Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.22 2011/11/19 22:51:22 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ struct hme_softc {
 	void	(*sc_hwinit)(struct hme_softc *);
 
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 };
 

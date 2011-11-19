@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.43 2011/09/02 22:25:08 dyoung Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.44 2011/11/19 22:51:31 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.43 2011/09/02 22:25:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44 2011/11/19 22:51:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.43 2011/09/02 22:25:08 dyoung Exp $")
 #include <sys/kthread.h>
 #include <sys/lock.h>
 #include <sys/vmem.h>
+#include <sys/cprng.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -152,7 +153,7 @@ allocif(int unit, struct shmif_sc **scp)
 	uint32_t randnum;
 	int error;
 
-	randnum = arc4random();
+	randnum = cprng_fast32();
 	memcpy(&enaddr[2], &randnum, sizeof(randnum));
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);

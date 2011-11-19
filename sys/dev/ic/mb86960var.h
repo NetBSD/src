@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.37 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.38 2011/11/19 22:51:22 tls Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -162,7 +162,7 @@ struct mb86960_softc {
 	uint8_t sc_enaddr[ETHER_ADDR_LEN];
 
 #if NRND > 0
-	rndsource_element_t rnd_source;
+	krndsource_t rnd_source;
 #endif
 
 	uint32_t sc_stat;	/* driver status */

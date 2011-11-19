@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.18 2010/09/20 06:54:06 kiyohara Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.19 2011/11/19 22:51:22 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ struct ld_softc {
 	struct	bufq_state *sc_bufq;
 	kmutex_t sc_mutex;
 #if NRND > 0
-	rndsource_element_t	sc_rnd_source;
+	krndsource_t	sc_rnd_source;
 #endif
 	int	sc_queuecnt;		/* current h/w queue depth */
 	int	sc_ncylinders;		/* # cylinders */

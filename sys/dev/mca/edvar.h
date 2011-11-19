@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.13 2008/05/04 13:11:14 martin Exp $	*/
+/*	$NetBSD: edvar.h,v 1.14 2011/11/19 22:51:23 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,6 +61,6 @@ struct ed_softc {
 	u_int32_t rba;		/* # of RBAs */
 
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	krndsource_t	rnd_source;
 #endif
 };

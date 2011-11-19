@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.48 2010/02/25 23:40:39 dyoung Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.49 2011/11/19 22:51:22 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -242,7 +242,7 @@ struct fxp_softc {
 
 	int	sc_eeprom_size;		/* log2 size of EEPROM */
 #if NRND > 0
-	rndsource_element_t rnd_source;	/* random source */
+	krndsource_t rnd_source;	/* random source */
 #endif
 
 };

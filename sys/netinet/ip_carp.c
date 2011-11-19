@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.46 2011/10/19 01:52:22 dyoung Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.47 2011/11/19 22:51:25 tls Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.46 2011/10/19 01:52:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.47 2011/11/19 22:51:25 tls Exp $");
 
 /*
  * TODO:
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.46 2011/10/19 01:52:22 dyoung Exp $");
 #include <sys/ucred.h>
 #include <sys/syslog.h>
 #include <sys/acct.h>
+#include <sys/cprng.h>
 
 #include <sys/cpu.h>
 
@@ -877,9 +878,7 @@ carp_prepare_ad(struct mbuf *m, struct carp_softc *sc,
 {
 	if (sc->sc_init_counter) {
 		/* this could also be seconds since unix epoch */
-		sc->sc_counter = arc4random();
-		sc->sc_counter = sc->sc_counter << 32;
-		sc->sc_counter += arc4random();
+		sc->sc_counter = cprng_fast64();
 	} else
 		sc->sc_counter++;
 

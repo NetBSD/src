@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.20 2011/07/19 16:05:10 dyoung Exp $ */
+/* $NetBSD: arckbd.c,v 1.21 2011/11/19 22:51:18 tls Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.20 2011/07/19 16:05:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.21 2011/11/19 22:51:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -139,7 +139,7 @@ struct arckbd_softc {
 	struct irq_handler	*sc_rirq;
 	struct evcnt		sc_rev;
 #if NRND > 0
-	rndsource_element_t	sc_rnd_source;
+	krndsource_t	sc_rnd_source;
 #endif
 };
 
