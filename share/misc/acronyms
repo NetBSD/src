@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.208 2011/11/19 17:38:58 mbalmer Exp $
+$NetBSD: acronyms,v 1.209 2011/11/19 17:40:19 mbalmer Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -72,6 +72,7 @@ BOHICA	bend over here it comes again
 BOT	back on topic
 BRB	[I'll] be right back
 BS	bullshit
+BSD	booze, sex, drugs
 BTDT	been there, done that
 BTFT	been there, fixed that
 BTTH	boot to the head
