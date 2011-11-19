@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.40 2011/11/18 23:09:48 sborrill Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.41 2011/11/19 14:00:14 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -2558,4 +2558,16 @@ dist/bind/lib/dns/rbtdb.c			patch
 	Cache lookup could return RRSIG data associated with nonexistent
 	records, leading to an assertion failure.  Fixes CVE-2011-4313.
 	[christos, ticket #1692]
+
+dist/openpam/lib/openpam_configure.c		1.6
+
+	Don't allow '/' characters in the "service" argument to pam_start()
+	The "service" is blindly appended to config directories ("/etc/pam.d/"),
+	and if a user can control the "service" it can get PAM to read config
+	files from any location.
+	This is not a problem with most software because the "service" is
+	usually a constant string. The check protects 3rd party software
+	from being abused.
+	(CVE-2011-4122)
+	[drochner, ticket #1696]
 
