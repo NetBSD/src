@@ -1,4 +1,0 @@
-#	$NetBSD: list,v 1.3 2003/11/13 02:34:24 sekiya Exp $
-
-COPY	${OBJDIR}/netbsd-INSTALL32_IP2x.gz	netbsd
-COPY	${OBJDIR}/netbsd-INSTALL32_IP3x.gz	netbsd

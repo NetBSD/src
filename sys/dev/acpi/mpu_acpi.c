@@ -1,4 +1,4 @@
-/* $NetBSD: mpu_acpi.c,v 1.10 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: mpu_acpi.c,v 1.10.12.1 2011/11/19 21:49:36 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_acpi.c,v 1.10 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_acpi.c,v 1.10.12.1 2011/11/19 21:49:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,7 +122,7 @@ mpu_acpi_attach(device_t parent, device_t self, void *aux)
 
 	sc->arg = isa_intr_establish(aa->aa_ic, irq->ar_irq,
 	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
-	    IPL_AUDIO, mpu_intr, sc);
+	    IPL_SCHED, mpu_intr, sc);
 
  out:
 	acpi_resource_cleanup(&res);

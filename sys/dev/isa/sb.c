@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.88 2008/03/15 21:09:02 cube Exp $	*/
+/*	$NetBSD: sb.c,v 1.88.40.1 2011/11/19 21:49:39 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.88 2008/03/15 21:09:02 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.88.40.1 2011/11/19 21:49:39 jmcneill Exp $");
 
 #include "midi.h"
 
@@ -69,6 +69,7 @@ const struct midi_hw_if sb_midi_hw_if = {
 	sbdsp_midi_output,
 	sbdsp_midi_getinfo,
 	0,			/* ioctl */
+	sbdsp_get_locks,
 };
 #endif
 
@@ -107,6 +108,7 @@ const struct audio_hw_if sb_hw_if = {
 	sbdsp_trigger_input,
 	NULL,
 	NULL,
+	sbdsp_get_locks,
 };
 
 /*
