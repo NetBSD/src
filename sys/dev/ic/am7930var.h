@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930var.h,v 1.12 2011/06/04 01:27:57 tsutsui Exp $	*/
+/*	$NetBSD: am7930var.h,v 1.12.4.1 2011/11/20 10:56:18 mrg Exp $	*/
 
 struct am7930_softc;
 
@@ -24,6 +24,9 @@ struct am7930_softc {
 	uint8_t	sc_mic_mute;
 
 	struct am7930_glue *sc_glue;
+
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 };
 
 extern int     am7930debug;
