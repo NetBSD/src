@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.134.12.2 2011/11/20 19:26:05 jmcneill Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.134.12.3 2011/11/20 19:44:50 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.134.12.2 2011/11/20 19:26:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.134.12.3 2011/11/20 19:44:50 jmcneill Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -1095,7 +1095,11 @@ sbdsp_rdsp(struct sbdsp_softc *sc)
 void
 sbdsp_pause(struct sbdsp_softc *sc)
 {
-	delay(100000);	/* 1/10th of a second */
+
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+	mutex_spin_exit(&sc->sc_intr_lock);
+	(void)kpause("sbpause", false, hz/8, &sc->sc_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
 }
 
 /*
