@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.22 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.23 2011/11/20 15:37:31 para Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -133,7 +133,9 @@ arc4_randrekey(void *arg)
 	u_int8_t key[256];
 	int n, ask_for_more = 0;
 #ifdef _KERNEL
+#ifdef DIAGNOSTIC
 	rngtest_t rt;
+#endif
 #endif
 #if NRND > 0
 	static int callback_pending;
