@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.28 2011/10/18 12:25:30 jmcneill Exp $	*/
+/*	$NetBSD: module.h,v 1.29 2011/11/20 23:37:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -141,8 +141,10 @@ int	module_find_section(const char *, void **, size_t *);
 void	module_thread_kick(void);
 void	module_load_vfs_init(void);
 
-void	module_whatis(uintptr_t, void (*)(const char *, ...));
-void	module_print_list(void (*)(const char *, ...));
+void	module_whatis(uintptr_t, void (*)(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2))));
+void	module_print_list(void (*)(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2))));
 
 #ifdef _MODULE_INTERNAL
 extern

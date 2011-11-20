@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.233 2011/06/27 11:52:24 uch Exp $	*/
+/*	$NetBSD: vnode.h,v 1.234 2011/11/20 23:37:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -618,8 +618,10 @@ void	vfs_getnewfsid(struct mount *);
 int	vfs_drainvnodes(long);
 void	vfs_timestamp(struct timespec *);
 #if defined(DDB) || defined(DEBUGPRINT)
-void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
-void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...));
+void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2))));
+void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2))));
 #endif /* DDB */
 
 #endif /* _KERNEL */
