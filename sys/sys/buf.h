@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.116 2011/04/27 09:47:25 hannken Exp $ */
+/*     $NetBSD: buf.h,v 1.117 2011/11/20 23:37:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -290,7 +290,8 @@ u_long	buf_memcalc(void);
 int	buf_drain(int);
 int	buf_setvalimit(vsize_t);
 #if defined(DDB) || defined(DEBUGPRINT)
-void	vfs_buf_print(buf_t *, int, void (*)(const char *, ...));
+void	vfs_buf_print(buf_t *, int, void (*)(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2))));
 #endif
 buf_t	*getiobuf(struct vnode *, bool);
 void	putiobuf(buf_t *);

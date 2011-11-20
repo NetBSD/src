@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.70 2010/06/03 10:40:17 pooka Exp $	*/
+/*	$NetBSD: pool.h,v 1.71 2011/11/20 23:37:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -302,8 +302,9 @@ bool		pool_drain_end(struct pool *, uint64_t);
  */
 void		pool_print(struct pool *, const char *);
 void		pool_printit(struct pool *, const char *,
-		    void (*)(const char *, ...));
-void		pool_printall(const char *, void (*)(const char *, ...));
+    void (*)(const char *, ...) __attribute__((__format__(__printf__, 1, 2))));
+void		pool_printall(const char *, void (*)(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2))));
 int		pool_chk(struct pool *, const char *);
 
 /*
@@ -333,7 +334,8 @@ void		pool_cache_cpu_init(struct cpu_info *);
 #define		pool_cache_put(pc, o) pool_cache_put_paddr((pc), (o), \
 				          POOL_PADDR_INVALID)
 
-void 		pool_whatis(uintptr_t, void (*)(const char *, ...));
+void 		pool_whatis(uintptr_t, void (*)(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2))));
 #endif /* _KERNEL */
 
 #endif /* _SYS_POOL_H_ */
