@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_status.c,v 1.1.2.4 2011/11/13 01:18:02 yamt Exp $	*/
+/*	$NetBSD: uvm_page_status.c,v 1.1.2.5 2011/11/20 10:52:35 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.4 2011/11/13 01:18:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.5 2011/11/20 10:52:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,11 +73,10 @@ stat_update(bool isanon, unsigned int oldstatus, unsigned int newstatus)
 	struct uvm_cpu *ucpu;
 
 	KASSERT(oldstatus != newstatus);
-	kpreempt_disable();
-	ucpu = curcpu()->ci_data.cpu_uvm;
+	ucpu = uvm_cpu_get();
 	ucpu->pagestate[isanon][oldstatus]--;
 	ucpu->pagestate[isanon][newstatus]++;
-	kpreempt_enable();
+	uvm_cpu_put(ucpu);
 }
 
 /*
@@ -92,7 +91,6 @@ uvm_pagemarkdirty(struct vm_page *pg, unsigned int newstatus)
 	const uint64_t idx = pg->offset >> PAGE_SHIFT;
 	const unsigned int oldstatus = uvm_pagegetdirty(pg);
 
-	KASSERT(uobj != NULL || pg->uanon != NULL);
 	KASSERT((~newstatus & (PG_CLEAN|PG_DIRTY)) != 0);
 	KASSERT((newstatus & ~(PG_CLEAN|PG_DIRTY)) == 0);
 	KASSERT(uvm_page_locked_p(pg));
@@ -180,4 +178,21 @@ uvm_pagecheckdirty(struct vm_page *pg, bool protected)
 		uvm_pagemarkdirty(pg, newstatus);
 	}
 	return modified;
+}
+
+struct uvm_cpu *
+uvm_cpu_get(void)
+{
+
+	kpreempt_disable();
+	return curcpu()->ci_data.cpu_uvm;
+}
+
+void
+uvm_cpu_put(struct uvm_cpu *ucpu)
+{
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu()->ci_data.cpu_uvm == ucpu);
+	kpreempt_enable();
 }

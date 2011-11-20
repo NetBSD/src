@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.176.2.3 2011/11/14 14:24:54 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.176.2.4 2011/11/20 10:52:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -456,12 +456,26 @@ struct uvmexp_sysctl {
 	int64_t colorhit;
 	int64_t colormiss;
 	int64_t ncolors;
+
 	int64_t possiblydirtypages;
 	int64_t cleanpages;
 	int64_t dirtypages;
 	int64_t possiblydirtyanonpages;
 	int64_t cleananonpages;
 	int64_t dirtyanonpages;
+
+	int64_t loan_obj;	/* O->K loan */
+	int64_t unloan_obj;	/* O->K unloan */
+	int64_t loanbreak_obj;	/* O->K loan resolved on write */
+	int64_t loanfree_obj;	/* O->K loan resolved on free */
+
+	int64_t loan_anon;	/* A->K loan */
+	int64_t unloan_anon;	/* A->K unloan */
+	int64_t loanbreak_anon;	/* A->K loan resolved on write */
+	int64_t loanfree_anon;	/* A->K loan resolved on free */
+
+	int64_t loan_zero;	/* O->K loan (zero) */
+	int64_t unloan_zero;	/* O->K unloan (zero) */
 };
 
 #ifdef _KERNEL

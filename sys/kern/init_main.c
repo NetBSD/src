@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.436.2.1 2011/11/02 21:53:59 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.436.2.2 2011/11/20 10:52:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.1 2011/11/02 21:53:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.2 2011/11/20 10:52:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -323,10 +323,6 @@ main(void)
 	kprintf_init();
 
 	percpu_init();
-
-	/* Initialize lock caches. */
-	mutex_obj_init();
-	rw_obj_init();
 
 	/* Passive serialization. */
 	pserialize_init();
