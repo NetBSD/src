@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.14 2011/11/10 03:45:40 riz Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.15 2011/11/20 18:41:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.14 2011/11/10 03:45:40 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.15 2011/11/20 18:41:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,7 +668,6 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 		pmap_update(pmap_kernel());
 
 		error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
-		pmap_kremove(dumpspace, n * PAGE_SIZE);
 		if (error)
 			return error;
 		maddr += n;
