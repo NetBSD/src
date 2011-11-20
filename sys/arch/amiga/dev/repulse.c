@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.17.4.1 2011/11/20 10:27:36 mrg Exp $ */
+/*	$NetBSD: repulse.c,v 1.17.4.2 2011/11/20 11:43:55 mrg Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.17.4.1 2011/11/20 10:27:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.17.4.2 2011/11/20 11:43:55 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -965,6 +965,9 @@ rep_intr(void *tag)
 	foundone = 0;
 
 	sc = tag;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	bp = sc->sc_boardp;
 	status = bp->rhw_status;
 
@@ -983,6 +986,8 @@ rep_intr(void *tag)
 			sc->sc_captflags);
 		(*sc->sc_captmore)(sc->sc_captarg);
 	}
+
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return foundone;
 }

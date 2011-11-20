@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.48.4.1 2011/11/20 09:40:19 mrg Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.48.4.2 2011/11/20 11:41:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.48.4.1 2011/11/20 09:40:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.48.4.2 2011/11/20 11:41:53 mrg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -516,6 +516,8 @@ cs4231_sbus_intr(void *arg)
 	if ((csr & APC_INTR_MASK) == 0)	/* any interrupt pedning? */
 		return 0;
 
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
+
 	/* write back DMA status to clear interrupt */
 	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
 	++sc->sc_intrcnt.ev_count;
@@ -596,6 +598,8 @@ cs4231_sbus_intr(void *arg)
 		/* evcnt? */
 	}
 
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
+
 	return 1;
 }
 
@@ -605,11 +609,11 @@ cs4231_sbus_pint(void *cookie)
 	struct cs4231_softc *sc = cookie;
 	struct cs_transfer *t;
 
-	KERNEL_LOCK(1, NULL);
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
 	t = &sc->sc_playback;
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
-	KERNEL_UNLOCK_ONE(NULL);
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
 	return 0;
 }
 
@@ -619,11 +623,11 @@ cs4231_sbus_rint(void *cookie)
 	struct cs4231_softc *sc = cookie;
 	struct cs_transfer *t;
 
-	KERNEL_LOCK(1, NULL);
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
 	t = &sc->sc_capture;
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
-	KERNEL_UNLOCK_ONE(NULL);
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
 	return 0;
 }
 
