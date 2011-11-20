@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.34.4.1 2011/11/20 09:40:19 mrg Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.34.4.2 2011/11/20 11:41:53 mrg Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.34.4.1 2011/11/20 09:40:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.34.4.2 2011/11/20 11:41:53 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sparc_arch.h"
@@ -542,6 +542,8 @@ cs4231_ebus_intr(void *arg)
 
 	ebsc = arg;
 	sc = &ebsc->sc_cs4231;
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
+
 	status = ADREAD(&sc->sc_ad1848, AD1848_STATUS);
 
 #ifdef AUDIO_DEBUG
@@ -582,6 +584,7 @@ cs4231_ebus_intr(void *arg)
 		ret = 1;
 	}
 
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
 
 	return ret;
 }
@@ -592,10 +595,10 @@ cs4231_ebus_pint(void *cookie)
 	struct cs4231_softc *sc = cookie;
 	struct cs_transfer *t = &sc->sc_playback;
 
-	KERNEL_LOCK(1, NULL);
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
-	KERNEL_UNLOCK_ONE(NULL);
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
 	return 0;
 }
 
@@ -605,9 +608,9 @@ cs4231_ebus_rint(void *cookie)
 	struct cs4231_softc *sc = cookie;
 	struct cs_transfer *t = &sc->sc_capture;
 
-	KERNEL_LOCK(1, NULL);
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
-	KERNEL_UNLOCK_ONE(NULL);
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
 	return 0;
 }
