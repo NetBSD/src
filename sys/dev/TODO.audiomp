@@ -3,7 +3,7 @@ driver				status		tested
 arch/amiga/dev/aucc.c		done
 arch/amiga/dev/repulse.c	done
 arch/amiga/dev/toccata.c	done
-arch/arm/iomd/vidcaudio.c
+arch/arm/iomd/vidcaudio.c	done
 arcm/arm/xscale/pxa2x0_ac97.c
 arch/dreamcast/dev/g2/aica.c
 arch/hp700/gsc/harmony.c
