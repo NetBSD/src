@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.77 2011/04/24 18:46:24 rmind Exp $	*/
+/*	$NetBSD: namei.h,v 1.78 2011/11/20 23:37:00 christos Exp $	*/
 
 
 /*
@@ -271,7 +271,8 @@ void	nchinit(void);
 void	nchreinit(void);
 void	cache_cpu_init(struct cpu_info *);
 void	cache_purgevfs(struct mount *);
-void	namecache_print(struct vnode *, void (*)(const char *, ...));
+void	namecache_print(struct vnode *, void (*)(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2))));
 
 #endif
 
