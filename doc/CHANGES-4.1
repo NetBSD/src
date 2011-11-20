@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.230 2011/11/19 14:40:07 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.231 2011/11/20 13:05:03 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4559,4 +4559,18 @@ dist/openpam/lib/openpam_configure.c		1.6
 	from being abused.
 	(CVE-2011-4122)
 	[drochner, ticket #1439]
+
+src/dist/bind/CHANGES                                           patch  
+src/dist/bind/bin/named/query.c                                 patch
+src/dist/bind/bin/nsupdate/nsupdate.8                           patch
+src/dist/bind/lib/dns/master.c                                  patch
+src/dist/bind/lib/dns/rbtdb.c                                   patch
+src/dist/bind/lib/isc/nothreads/condition.c                     patch
+src/dist/bind/lib/isc/nothreads/mutex.c                         patch
+src/dist/bind/lib/isc/unix/time.c                               patch
+src/dist/bind/lib/lwres/include/lwres/lwres.h                   patch
+
+	Cache lookup could return RRSIG data associated with nonexistent
+	records, leading to an assertion failure.  Fixes CVE-2011-4313.
+	[christos, ticket #1437]
 
