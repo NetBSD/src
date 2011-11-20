@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.22 2011/07/23 21:12:57 jakllsch Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.23 2011/11/20 04:18:57 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 maxusers	32		# estimated number of users
 
@@ -93,7 +93,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-Os -g"	# compile full symbol table
-options     SYMTAB_SPACE=450000
+options     SYMTAB_SPACE="(1024 * 606)"
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
@@ -311,7 +311,7 @@ gpio*		at mpcsa_leds?
 # On-chip I2C
 at91twi0	at at91bus0 addr 0xfffb8000 size 0x4000 pid 12
 iic0		at at91twi?
-ds1672rtc*	at iic0 addr 0x68
+#ds1672rtc*	at iic0 addr 0x68
 seeprom*	at iic0 addr 0x50 size 4096
 
 # Console Devices
