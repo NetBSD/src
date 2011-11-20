@@ -1,4 +1,4 @@
-driver				status
+driver				status		tested
 ===============================================================================
 arch/amiga/dev/aucc.c
 arch/amiga/dev/repulse.c	done
@@ -23,7 +23,7 @@ dev/ic/mpu.c			done
 dev/ic/opl.c			done
 dev/ic/tms320av110.c
 dev/isa/aria.c			done
-dev/isa/ess.c			done
+dev/isa/ess.c			done		port-shark
 dev/isa/gus.c			done
 dev/isa/pas.c			done
 dev/isa/sb.c			done
@@ -50,7 +50,7 @@ dev/pci/gcscaudio.c		done
 dev/pci/neo.c			done
 dev/pci/sv.c			done
 dev/pci/yds.c			done
-dev/pci/hdaudio/hdafg.c		done
+dev/pci/hdaudio/hdafg.c		done		port-amd64
 dev/sbus/cs4231_sbus.c		done
 dev/sbus/dbri.c			done
 dev/tc/bba.c			done
