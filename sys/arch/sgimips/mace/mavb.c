@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.7.4.1 2011/11/20 12:27:21 jmcneill Exp $ */
+/* $NetBSD: mavb.c,v 1.7.4.2 2011/11/20 16:07:27 jmcneill Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -235,7 +235,7 @@ mavb_dtor(stream_filter_t *this)
 {
 
 	if (this != NULL)
-		kmem_free(this, sizeof(*this));
+		kmem_free(this, sizeof(struct mavb_codecvar));
 }
 
 typedef uint64_t ad1843_addr_t;
