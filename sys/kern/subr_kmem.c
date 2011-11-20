@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.37 2011/11/20 21:27:26 apb Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.38 2011/11/20 22:58:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.37 2011/11/20 21:27:26 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.38 2011/11/20 22:58:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -472,23 +472,21 @@ kmem_size_check(const void *p, size_t sz)
 char *
 kmem_asprintf(const char *fmt, ...)
 {
-	int size, str_len;
-	va_list va, va2;
+	int size, len;
+	va_list va;
 	char *str;
-	char buf[1];
 	
 	va_start(va, fmt);
-	va_copy(va2, va);
-	str_len = vsnprintf(buf, sizeof(buf), fmt, va) + 1;
+	len = vsnprintf(NULL, 0, fmt, va);
 	va_end(va);
 
-	str = kmem_alloc(str_len, KM_SLEEP);
+	str = kmem_alloc(len + 1, KM_SLEEP);
 
-	if ((size = vsnprintf(str, str_len, fmt, va2)) == -1) {
-		kmem_free(str, str_len);
-		return NULL;
-	}
-	va_end(va2);
+	va_start(va, fmt);
+	size = vsnprintf(str, len + 1, fmt, va);
+	va_end(va);
+
+	KASSERT(size == len);
 
 	return str;
 }
