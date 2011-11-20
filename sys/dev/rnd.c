@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.84 2011/11/20 00:28:51 tls Exp $	*/
+/*	$NetBSD: rnd.c,v 1.85 2011/11/20 00:45:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.84 2011/11/20 00:28:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.85 2011/11/20 00:45:15 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.84 2011/11/20 00:28:51 tls Exp $");
 #include <sys/kauth.h>
 #include <sys/once.h>
 #include <sys/rngtest.h>
+#include <sys/cpu.h>	/* XXX temporary, see rnd_detach_source */
 
 #if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
 #include <machine/cpu_counter.h>
@@ -968,13 +969,15 @@ rnd_detach_source(krndsource_t *source)
 
 	mutex_spin_exit(&rnd_mtx);
 
-	if (source->state) {
-		rnd_sample_free(source->state);
-		source->state = NULL;
-	}
+	if (!cpu_softintr_p()) {	/* XXX XXX very temporary "fix" */
+		if (source->state) {
+			rnd_sample_free(source->state);
+			source->state = NULL;
+		}
 
-	if (source->test) {
-		kmem_free(source->test, sizeof(rngtest_t));
+		if (source->test) {
+			kmem_free(source->test, sizeof(rngtest_t));
+		}
 	}
 
 #ifdef RND_VERBOSE
