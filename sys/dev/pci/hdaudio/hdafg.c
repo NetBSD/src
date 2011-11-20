@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.10.4.1 2011/11/19 23:40:07 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.10.4.2 2011/11/20 11:09:25 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.10.4.1 2011/11/19 23:40:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.10.4.2 2011/11/20 11:09:25 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3166,15 +3166,16 @@ hdafg_stream_intr(struct hdaudio_stream *st)
 	hda_write1(ad->ad_sc->sc_host, HDAUDIO_SD_STS(st->st_shift),
 	    HDAUDIO_STS_DESE | HDAUDIO_STS_FIFOE | HDAUDIO_STS_BCIS);
 
-	//if (sts & HDAUDIO_STS_BCIS) {
-		if (st == ad->ad_playback && ad->ad_playbackintr) {
-			ad->ad_playbackintr(ad->ad_playbackintrarg);
-			handled = 1;
-		} else if (st == ad->ad_capture && ad->ad_captureintr) {
-			ad->ad_captureintr(ad->ad_captureintrarg);
-			handled = 1;
-		}
-	//}
+	mutex_spin_enter(&ad->ad_sc->sc_intr_lock);
+	/* XXX test (sts & HDAUDIO_STS_BCIS)? */
+	if (st == ad->ad_playback && ad->ad_playbackintr) {
+		ad->ad_playbackintr(ad->ad_playbackintrarg);
+		handled = 1;
+	} else if (st == ad->ad_capture && ad->ad_captureintr) {
+		ad->ad_captureintr(ad->ad_captureintrarg);
+		handled = 1;
+	}
+	mutex_spin_exit(&ad->ad_sc->sc_intr_lock);
 
 	return handled;
 }
