@@ -2095,7 +2095,7 @@ arc_kmem_reap_now(arc_reclaim_strategy_t strat)
 }
 
 static void
-arc_reclaim_thread(void)
+arc_reclaim_thread(void *unused __unused)
 {
 	clock_t			growtime = 0;
 	arc_reclaim_strategy_t	last_reclaim = ARC_RECLAIM_CONS;
@@ -4473,7 +4473,7 @@ l2arc_write_buffers(spa_t *spa, l2arc_dev_t *dev, uint64_t target_sz)
  * heart of the L2ARC.
  */
 static void
-l2arc_feed_thread(void)
+l2arc_feed_thread(void *unused __unused)
 {
 	callb_cpr_t cpr;
 	l2arc_dev_t *dev;
