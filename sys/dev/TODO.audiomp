@@ -26,7 +26,7 @@ dev/isa/aria.c			done
 dev/isa/ess.c			done		port-shark
 dev/isa/gus.c			done
 dev/isa/pas.c			done
-dev/isa/sb.c			done
+dev/isa/sb.c			done		port-i386
 dev/isa/wss.c			done
 dev/isa/ym.c			done
 dev/isapnp/mpu_isapnp.c		done
