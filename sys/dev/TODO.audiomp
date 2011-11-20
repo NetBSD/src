@@ -10,7 +10,7 @@ arch/hp700/gsc/harmony.c	done
 arch/hpcmips/vr/vraiu.c		done
 arch/macppc/dev/awacs.c
 arch/macppc/dev/snapper.c
-arch/prep/isa/paud_isa.c	toolchain-fails
+arch/prep/isa/paud_isa.c	done
 arch/sgimips/hpc/haltwo.c	done
 arch/sgimips/mace/mavb.c	done
 arch/sparc/dev/audioamd.c	done
