@@ -1,4 +1,4 @@
-/* $NetBSD: haltwovar.h,v 1.7 2011/01/25 13:31:41 tsutsui Exp $ */
+/* $NetBSD: haltwovar.h,v 1.7.6.1 2011/11/20 12:07:27 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -61,6 +61,8 @@ struct haltwo_codec {
 
 struct haltwo_softc {
 	device_t sc_dev;
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 
 	bus_space_tag_t sc_st;
 
