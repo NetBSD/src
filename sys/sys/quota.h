@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.4 2011/06/07 14:56:13 bouyer Exp $ */
+/* $NetBSD: quota.h,v 1.5 2011/11/20 21:43:34 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,25 +28,13 @@
 #ifndef _SYS_QUOTA_H_
 #define _SYS_QUOTA_H_
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-__BEGIN_DECLS
-int quotactl(const char *, struct plistref *) __RENAME(__quotactl50);
-__END_DECLS
-#endif
-
-/* strings used in dictionary for the different quota class */
-#define QUOTADICT_CLASS_USER "user"
-#define QUOTADICT_CLASS_GROUP "group"
-
-/* strings used in dictionary for the different limit types */
-#define QUOTADICT_LTYPE_BLOCK "block"
-#define QUOTADICT_LTYPE_FILE "file"
-
-/* strings used in dictionary for the different limit and usage values */
-#define QUOTADICT_LIMIT_SOFT "soft"
-#define QUOTADICT_LIMIT_HARD "hard"
-#define QUOTADICT_LIMIT_GTIME "grace time"
-#define QUOTADICT_LIMIT_USAGE "usage"
-#define QUOTADICT_LIMIT_ETIME "expire time"
+/* structure used to describe a UFS-like quota entry */
+struct ufs_quota_entry {
+        uint64_t ufsqe_hardlimit; /* absolute limit */
+	uint64_t ufsqe_softlimit; /* overflowable limit */
+	uint64_t ufsqe_cur; /* current usage */
+	int64_t ufsqe_time; /* grace expiration date for softlimit overflow */
+	int64_t ufsqe_grace; /* allowed time for softlimit overflow */
+};
 
 #endif /* _SYS_QUOTA_H_ */
