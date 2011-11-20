@@ -7,7 +7,7 @@ arch/arm/iomd/vidcaudio.c	done
 arcm/arm/xscale/pxa2x0_ac97.c	done
 arch/dreamcast/dev/g2/aica.c
 arch/hp700/gsc/harmony.c
-arch/hpcmips/vr/vraiu.c
+arch/hpcmips/vr/vraiu.c		done
 arch/macppc/dev/awacs.c
 arch/macppc/dev/snapper.c
 arch/prep/isa/paud_isa.c	toolchain-fails
