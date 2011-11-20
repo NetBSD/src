@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.9.4.1 2011/11/20 13:13:43 mrg Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.9.4.2 2011/11/20 13:47:07 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -679,28 +679,28 @@ acu_malloc(void *arg, int direction, size_t size)
 		return (NULL);
 
 	/* XXX */
-	if ((ad->ad_dx = pxa2x0_dmac_allocate_xfer(M_NOWAIT)) == NULL)
+	if ((ad->ad_dx = pxa2x0_dmac_allocate_xfer()) == NULL)
 		goto error;
 
 	ad->ad_size = size;
 
 	error = bus_dmamem_alloc(sc->sc_dmat, size, 16, 0, ad->ad_segs,
-	    ACU_N_SEGS, &ad->ad_nsegs, BUS_DMA_NOWAIT);
+	    ACU_N_SEGS, &ad->ad_nsegs, BUS_DMA_WAITOK);
 	if (error)
 		goto free_xfer;
 
 	error = bus_dmamem_map(sc->sc_dmat, ad->ad_segs, ad->ad_nsegs, size,
-	    &ad->ad_addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
+	    &ad->ad_addr, BUS_DMA_WAITOK | BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
 	if (error)
 		goto free_dmamem;
 
 	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
-	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ad->ad_map);
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ad->ad_map);
 	if (error)
 		goto unmap_dmamem;
 
 	error = bus_dmamap_load(sc->sc_dmat, ad->ad_map, ad->ad_addr, size,
-	    NULL, BUS_DMA_NOWAIT);
+	    NULL, BUS_DMA_WAITOK);
 	if (error) {
 		bus_dmamap_destroy(sc->sc_dmat, ad->ad_map);
 unmap_dmamem:	bus_dmamem_unmap(sc->sc_dmat, ad->ad_addr, size);
