@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsquota.c,v 1.2 2011/08/30 17:06:20 plunky Exp $	*/
+/*	$NetBSD: getnfsquota.c,v 1.3 2011/11/20 21:43:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: getnfsquota.c,v 1.2 2011/08/30 17:06:20 plunky Exp $");
+__RCSID("$NetBSD: getnfsquota.c,v 1.3 2011/11/20 21:43:35 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: getnfsquota.c,v 1.2 2011/08/30 17:06:20 plunky Exp $");
 #include <unistd.h>
 
 #include <quota/quota.h>
+#include <quota/quotaprop.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
