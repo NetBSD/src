@@ -1,3 +1,7 @@
+3218.   [security]      Cache lookup could return RRSIG data associated with
+                        nonexistent records, leading to an assertion
+                        failure. [RT #26590]
+
 	--- 9.4-ESV-R4-P1 released ---
 
 3121.   [security]      An authoritative name server sending a negative
