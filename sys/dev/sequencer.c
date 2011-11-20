@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.52.14.1 2011/11/19 21:49:35 jmcneill Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.52.14.2 2011/11/20 20:00:15 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.52.14.1 2011/11/19 21:49:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.52.14.2 2011/11/20 20:00:15 jmcneill Exp $");
 
 #include "sequencer.h"
 
@@ -268,17 +268,22 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	SEQ_QINIT(&sc->outq);
 	sc->lowat = SEQ_MAXQ / 2;
 
-	mutex_exit(&sc->lock);
-	sc->devs = kmem_alloc(sc->ndevs * sizeof(struct midi_dev *), KM_SLEEP);
-	for (unit = 0; unit < sc->ndevs; unit++) {
-		md = midiseq_open(unit, flags);
-		if (md) {
-			sc->devs[sc->nmidi++] = md;
-			md->seq = sc;
-			md->doingsysex = 0;
+	if (sc->ndevs > 0) {
+		mutex_exit(&sc->lock);
+		sc->devs = kmem_alloc(sc->ndevs * sizeof(struct midi_dev *),
+		    KM_SLEEP);
+		for (unit = 0; unit < sc->ndevs; unit++) {
+			md = midiseq_open(unit, flags);
+			if (md) {
+				sc->devs[sc->nmidi++] = md;
+				md->seq = sc;
+				md->doingsysex = 0;
+			}
 		}
+		mutex_enter(&sc->lock);
+	} else {
+		sc->devs = NULL;
 	}
-	mutex_enter(&sc->lock);
 
 	/* Only now redirect input from MIDI devices. */
 	for (unit = 0; unit < sc->nmidi; unit++) {
@@ -385,7 +390,11 @@ sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 
 	for (unit = 0; unit < sc->nmidi; unit++)
 		midiseq_close(sc->devs[unit]);
-	kmem_free(sc->devs, sc->ndevs * sizeof(struct midi_dev *));
+	if (sc->devs != NULL) {
+		KASSERT(sc->ndevs > 0);
+		kmem_free(sc->devs, sc->ndevs * sizeof(struct midi_dev *));
+		sc->devs = NULL;
+	}
 
 	mutex_enter(&sc->lock);
 	sc->isopen = 0;
