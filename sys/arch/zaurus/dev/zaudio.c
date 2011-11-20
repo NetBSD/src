@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.15.4.1 2011/11/20 13:30:46 jmcneill Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.15.4.2 2011/11/20 13:47:07 jmcneill Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.15.4.1 2011/11/20 13:30:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.15.4.2 2011/11/20 13:47:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,8 +215,8 @@ static int zaudio_getdev(void *, struct audio_device *);
 static int zaudio_set_port(void *, struct mixer_ctrl *);
 static int zaudio_get_port(void *, struct mixer_ctrl *);
 static int zaudio_query_devinfo(void *, struct mixer_devinfo *);
-static void *zaudio_allocm(void *, int, size_t, struct malloc_type *, int);
-static void zaudio_freem(void  *, void *, struct malloc_type *);
+static void *zaudio_allocm(void *, int, size_t);
+static void zaudio_freem(void  *, void *, size_t);
 static size_t zaudio_round_buffersize(void *, int, size_t);
 static paddr_t zaudio_mappage(void *, void *, off_t, int);
 static int zaudio_get_props(void *);
@@ -351,6 +351,7 @@ zaudio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2s.sc_iot = &pxa2x0_bs_tag;
 	sc->sc_i2s.sc_dmat = &pxa2x0_bus_dma_tag;
 	sc->sc_i2s.sc_size = PXA2X0_I2S_SIZE;
+	sc->sc_i2s.sc_intr_lock = &sc->sc_intr_lock;
 	if (pxa2x0_i2s_attach_sub(&sc->sc_i2s)) {
 		aprint_error_dev(self, "unable to attach I2S\n");
 		goto fail_i2s;
@@ -894,9 +895,7 @@ zaudio_halt_output(void *hdl)
 	struct zaudio_softc *sc = hdl;
 	int rv;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
 	rv = pxa2x0_i2s_halt_output(&sc->sc_i2s);
-	mutex_spin_exit(&sc->sc_intr_lock);
 	if (!sc->sc_recording)
 		zaudio_standby(sc);
 	sc->sc_playing = 0;
@@ -910,9 +909,7 @@ zaudio_halt_input(void *hdl)
 	struct zaudio_softc *sc = hdl;
 	int rv;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
 	rv = pxa2x0_i2s_halt_input(&sc->sc_i2s);
-	mutex_spin_exit(&sc->sc_intr_lock);
 	if (!sc->sc_playing)
 		zaudio_standby(sc);
 	sc->sc_recording = 0;
@@ -1227,20 +1224,19 @@ mute:
 }
 
 static void *
-zaudio_allocm(void *hdl, int direction, size_t size, struct malloc_type *type,
-    int flags)
+zaudio_allocm(void *hdl, int direction, size_t size)
 {
 	struct zaudio_softc *sc = hdl;
 
-	return pxa2x0_i2s_allocm(&sc->sc_i2s, direction, size, type, flags);
+	return pxa2x0_i2s_allocm(&sc->sc_i2s, direction, size);
 }
 
 static void
-zaudio_freem(void *hdl, void *ptr, struct malloc_type *type)
+zaudio_freem(void *hdl, void *ptr, size_t size)
 {
 	struct zaudio_softc *sc = hdl;
 
-	return pxa2x0_i2s_freem(&sc->sc_i2s, ptr, type);
+	return pxa2x0_i2s_freem(&sc->sc_i2s, ptr, size);
 }
 
 static size_t
@@ -1280,10 +1276,7 @@ zaudio_start_output(void *hdl, void *block, int bsize, void (*intr)(void *),
 	}
 
 	/* Start DMA via I2S */
-	mutex_spin_enter(&sc->sc_intr_lock);
 	rv = pxa2x0_i2s_start_output(&sc->sc_i2s, block, bsize, intr, intrarg);
-	mutex_spin_exit(&sc->sc_intr_lock);
-
 	if (rv) {
 		if (!sc->sc_recording)
 			zaudio_standby(sc);
@@ -1307,10 +1300,7 @@ zaudio_start_input(void *hdl, void *block, int bsize, void (*intr)(void *),
 	}
 
 	/* Start DMA via I2S */
-	mutex_spin_enter(&sc->sc_intr_lock);
 	rv = pxa2x0_i2s_start_input(&sc->sc_i2s, block, bsize, intr, intrarg);
-	mutex_spin_exit(&sc->sc_intr_lock);
-
 	if (rv) {
 		if (!sc->sc_playing)
 			zaudio_standby(sc);
