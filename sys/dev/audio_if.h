@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.66.14.1 2011/11/19 21:49:34 jmcneill Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.66.14.2 2011/11/20 09:37:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -172,7 +172,6 @@ typedef struct stream_filter_list {
 	} filters[AUDIO_MAX_FILTERS];
 } stream_filter_list_t;
 
-struct malloc_type;
 struct audio_hw_if {
 	int	(*open)(void *, int);	/* open hardware */
 	void	(*close)(void *);	/* close hardware */
