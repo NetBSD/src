@@ -1,0 +1,58 @@
+driver				status
+===============================================================================
+arch/amiga/dev/aucc.c
+arch/amiga/dev/repulse.c	done
+arch/amiga/dev/toccata.c
+arch/arm/iomd/vidcaudio.c
+arcm/arm/xscale/pxa2x0_ac97.c
+arch/dreamcast/dev/g2/aica.c
+arch/hp700/gsc/harmony.c
+arch/hpcmips/vr/vraiu.c
+arch/macppc/dev/awacs.c
+arch/macppc/dev/snapper.c
+arch/prep/isa/paud_isa.c
+arch/sgimips/hpc/haltwo.c
+arch/sgimips/mace/mavb.c
+arch/sparc/dev/audioamd.c	done
+arch/x68k/dev/vs.c
+arch/zaurus/dev/zaudio.c
+dev/bluetooth/btsco.c		done
+dev/ebus/cs4231_ebus.c		done
+dev/ic/interwave.c		done
+dev/ic/mpu.c			done
+dev/ic/opl.c			done
+dev/ic/tms320av110.c
+dev/isa/aria.c			done
+dev/isa/ess.c			done
+dev/isa/gus.c			done
+dev/isa/pas.c			done
+dev/isa/sb.c			done
+dev/isa/wss.c			done
+dev/isa/ym.c			done
+dev/isapnp/mpu_isapnp.c		done
+dev/pad/pad.c			done
+dev/pci/auacer.c		done
+dev/pci/auich.c			done
+dev/pci/auixp.c			done
+dev/pci/autri.c			done
+dev/pci/auvia.c			done
+dev/pci/azalia.c		done
+dev/pci/cmpci.c			done
+dev/pci/cs4280.c		done
+dev/pci/cs4281.c		done
+dev/pci/eap.c			done
+dev/pci/emuxki.c		done
+dev/pci/esa.c			done
+dev/pci/esm.c			done
+dev/pci/eso.c			done
+dev/pci/fms.c			done
+dev/pci/gcscaudio.c		done
+dev/pci/neo.c			done
+dev/pci/sv.c			done
+dev/pci/yds.c			done
+dev/pci/hdaudio/hdafg.c		done
+dev/sbus/cs4231_sbus.c		done
+dev/sbus/dbri.c			done
+dev/tc/bba.c			done
+dev/usb/uaudio.c
+dev/usb/umidi.c
