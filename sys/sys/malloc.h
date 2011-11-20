@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.107 2010/04/23 19:09:15 rmind Exp $	*/
+/*	$NetBSD: malloc.h,v 1.108 2011/11/20 23:37:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -108,7 +108,8 @@ int	debug_malloc(unsigned long, struct malloc_type *, int, void **);
 int	debug_free(void *, struct malloc_type *);
 
 void	debug_malloc_print(void);
-void	debug_malloc_printit(void (*)(const char *, ...), vaddr_t);
+void	debug_malloc_printit(void (*)(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)), vaddr_t));
 #endif /* MALLOC_DEBUG */
 
 void	*kern_realloc(void *, unsigned long, struct malloc_type *, int);
