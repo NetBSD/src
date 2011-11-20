@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.50.56.1 2011/11/20 10:56:18 mrg Exp $	*/
+/*	$NetBSD: am7930.c,v 1.50.56.2 2011/11/20 12:04:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.50.56.1 2011/11/20 10:56:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.50.56.2 2011/11/20 12:04:14 mrg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -191,8 +191,7 @@ am7930_init(struct am7930_softc *sc, int flag)
 	}
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	/* We used to take splaudio() in commit_settings */
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 }
 
 int
