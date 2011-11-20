@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.7.4.2 2011/11/19 23:36:38 jmcneill Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.7.4.3 2011/11/20 11:10:16 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.7.4.2 2011/11/19 23:36:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.7.4.3 2011/11/20 11:10:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1210,9 +1210,12 @@ gcscaudio_intr(void *arg)
 
 	nintr = 0;
 	sc = (struct gcscaudio_softc *)arg;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	intr = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ACC_IRQ_STATUS);
 	if (intr == 0)
-		return 0;
+		goto done;
 
 	/* Front output */
 	if (intr & ACC_IRQ_STATUS_BM0_IRQ_STS) {
@@ -1288,6 +1291,9 @@ gcscaudio_intr(void *arg)
 	if (intr & ACC_IRQ_STATUS_BM5_IRQ_STS)
 		aprint_normal_dev(&sc->sc_dev, "Audio Bus Master 5 IRQ Status\n");
 #endif
+
+done:
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return nintr ? 1 : 0;
 }
