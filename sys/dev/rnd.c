@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.83 2011/11/19 22:51:22 tls Exp $	*/
+/*	$NetBSD: rnd.c,v 1.84 2011/11/20 00:28:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.83 2011/11/19 22:51:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.84 2011/11/20 00:28:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -954,15 +954,6 @@ rnd_detach_source(krndsource_t *source)
 
 	LIST_REMOVE(source, list);
 
-	if (source->state) {
-		rnd_sample_free(source->state);
-		source->state = NULL;
-	}
-
-	if (source->test) {
-		kmem_free(source->test, sizeof(rngtest_t));
-	}
-
 	/*
 	 * If there are samples queued up "remove" them from the sample queue
 	 * by setting the source to the no-collect pseudosource.
@@ -976,6 +967,16 @@ rnd_detach_source(krndsource_t *source)
 	}
 
 	mutex_spin_exit(&rnd_mtx);
+
+	if (source->state) {
+		rnd_sample_free(source->state);
+		source->state = NULL;
+	}
+
+	if (source->test) {
+		kmem_free(source->test, sizeof(rngtest_t));
+	}
+
 #ifdef RND_VERBOSE
 	printf("rnd: %s detached as an entropy source\n", source->name);
 #endif
@@ -1133,9 +1134,17 @@ rnd_hwrng_test(rnd_sample_t *sample)
 	v1 = (uint8_t *)sample->values;
 	v2 = (uint8_t *)sample->values + cmplen;
 
-	if (__predict_false(memcmp(v1, v2, cmplen))) {
-		printf("rnd: source \"%s\" failed continuous-output test.",
+	if (__predict_false(!memcmp(v1, v2, cmplen))) {
+		int *dump;
+		printf("rnd: source \"%s\" failed continuous-output test.\n",
 		       source->name);
+		printf("rnd: bad buffer: ");
+		for (dump = (int *)sample->values;
+		     dump < (int *)((uint8_t *)sample->values +
+		     sizeof(sample->values)); dump += sizeof(int)) {
+			printf("%x ", *dump);
+		}
+		printf("\n");
 		return 1;
 	}
 
