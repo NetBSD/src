@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.8 2011/11/08 17:16:52 cherry Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.9 2011/11/20 19:41:27 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.8 2011/11/08 17:16:52 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.9 2011/11/20 19:41:27 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -434,13 +434,12 @@ pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 
 /*
  * Flush all APDP entries found in pmaps
- * Required during Xen save/restore operations, as it does not
+ * Required during Xen save/restore operations, as Xen does not
  * handle alternative recursive mappings properly
  */
 void
-pmap_unmap_all_apdp_pdes(void)
+pmap_xen_suspend(void)
 {
-
 	int i;
 	int s;
 	struct pmap *pm;
@@ -470,6 +469,17 @@ pmap_unmap_all_apdp_pdes(void)
 
 	splx(s);
 
+#ifdef PAE
+	pmap_unmap_recursive_entries();
+#endif
+}
+
+void
+pmap_xen_resume(void)
+{
+#ifdef PAE
+	pmap_map_recursive_entries();
+#endif
 }
 
 #ifdef PAE
@@ -486,12 +496,10 @@ pmap_unmap_all_apdp_pdes(void)
 void
 pmap_map_recursive_entries(void)
 {
-
 	int i;
 	struct pmap *pm;
 
 	mutex_enter(&pmaps_lock);
-
 	LIST_FOREACH(pm, &pmaps, pm_list) {
 		for (i = 0; i < PDP_SIZE; i++) {
 			xpq_queue_pte_update(
@@ -499,7 +507,6 @@ pmap_map_recursive_entries(void)
 			    xpmap_ptom((pm)->pm_pdirpa[i]) | PG_V);
 		}
 	}
-
 	mutex_exit(&pmaps_lock);
 
 	for (i = 0; i < PDP_SIZE; i++) {
@@ -514,21 +521,24 @@ pmap_map_recursive_entries(void)
 void
 pmap_unmap_recursive_entries(void)
 {
-
 	int i;
 	struct pmap *pm;
 
-	pmap_invalidate_pool_caches();
+	/*
+	 * Invalidate pmap_pdp_cache as it contains L2-pinned objects with
+	 * recursive entries.
+	 * XXX jym@ : find a way to drain per-CPU caches to. pool_cache_inv
+	 * does not do that.
+	 */
+	pool_cache_invalidate(&pmap_pdp_cache);
 
 	mutex_enter(&pmaps_lock);
-
 	LIST_FOREACH(pm, &pmaps, pm_list) {
 		for (i = 0; i < PDP_SIZE; i++) {
 			xpq_queue_pte_update(
 			    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_PTE + i)), 0);
 		}
 	}
-
 	mutex_exit(&pmaps_lock);
 
 	/* do it for pmap_kernel() too! */
