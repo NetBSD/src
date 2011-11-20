@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.8 2011/03/24 17:05:44 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.9 2011/11/20 21:43:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.8 2011/03/24 17:05:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.9 2011/11/20 21:43:35 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.8 2011/03/24 17:05:44 bouyer E
 #include <sys/syscallargs.h>
 
 #include <ufs/lfs/lfs_extern.h>
+
+#include <sys/quota.h>
+#include <quota/quotaprop.h>
+#include <ufs/ufs/quota1.h>
 
 #include <compat/common/compat_util.h>
 #include <compat/sys/time.h>
@@ -312,9 +316,6 @@ compat_50_sys_mknod(struct lwp *l,
 	return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
 	    SCARG(uap, dev), retval, UIO_USERSPACE);
 }
-
-#include <ufs/ufs/quota1.h>
-#include <quota/quotaprop.h>
 
 /* ARGSUSED */
 int   

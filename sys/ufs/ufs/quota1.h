@@ -1,4 +1,4 @@
-/*	$NetBSD: quota1.h,v 1.3 2011/03/24 17:05:45 bouyer Exp $	*/
+/*	$NetBSD: quota1.h,v 1.4 2011/11/20 21:43:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,6 +36,8 @@
 
 #ifndef	_UFS_UFS_QUOTA1_H_
 #define	_UFS_UFS_QUOTA1_H_
+
+#include <sys/quota.h>
 #include <ufs/ufs/quota.h>
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: quotaprop.h,v 1.2 2011/06/07 14:56:12 bouyer Exp $ */
+/* $NetBSD: quotaprop.h,v 1.3 2011/11/20 21:43:34 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -25,33 +25,25 @@
   * POSSIBILITY OF SUCH DAMAGE.
   */
 
-#ifndef _QUOTA_QUOTAPROP_H
-#define _QUOTA_QUOTAPROP_H
+#ifndef _QUOTA_QUOTAPROP_H_
+#define _QUOTA_QUOTAPROP_H_
+
 #include <prop/proplib.h>
-#include <sys/quota.h>
 
-int quotaprop_dict_get_uint64(prop_dictionary_t, uint64_t[],
-    const char *[], int, bool);
-int proptoquota64(prop_dictionary_t, uint64_t *[], const char *[], int,
-    const char *[], int);
+/* strings used in dictionary for the different quota class */
+#define QUOTADICT_CLASS_USER "user"
+#define QUOTADICT_CLASS_GROUP "group"
 
-int quota_get_cmds(prop_dictionary_t, prop_array_t *);
-prop_dictionary_t quota_prop_create(void);
-bool quota_prop_add_command(prop_array_t, const char *, const char *,
-    prop_array_t);
+/* strings used in dictionary for the different limit types */
+#define QUOTADICT_LTYPE_BLOCK "block"
+#define QUOTADICT_LTYPE_FILE "file"
 
-prop_dictionary_t limits64toprop(uint64_t[], const char *[], int);
-prop_dictionary_t quota64toprop(uid_t, int, uint64_t *[], const char *[], int,
-    const char *[], int);
-
-/* structure used to describe a UFS-like quota entry */
-struct ufs_quota_entry {
-        uint64_t ufsqe_hardlimit; /* absolute limit */
-	uint64_t ufsqe_softlimit; /* overflowable limit */
-	uint64_t ufsqe_cur; /* current usage */
-	int64_t ufsqe_time; /* grace expiration date for softlimit overflow */
-	int64_t ufsqe_grace; /* allowed time for softlimit overflow */
-};
+/* strings used in dictionary for the different limit and usage values */
+#define QUOTADICT_LIMIT_SOFT "soft"
+#define QUOTADICT_LIMIT_HARD "hard"
+#define QUOTADICT_LIMIT_GTIME "grace time"
+#define QUOTADICT_LIMIT_USAGE "usage"
+#define QUOTADICT_LIMIT_ETIME "expire time"
 
 /* array of strings for the above */
 #define UFS_QUOTA_ENTRY_NAMES \
@@ -78,4 +70,24 @@ extern const char *ufs_quota_class_names[];
 #define QUOTA_NCLASS 2
 #define QUOTA_CLASS_NAMES { QUOTADICT_CLASS_USER, QUOTADICT_CLASS_GROUP }
 
-#endif /* _QUOTA_QUOTAPROP_H */
+int quotaprop_dict_get_uint64(prop_dictionary_t, uint64_t[],
+    const char *[], int, bool);
+int proptoquota64(prop_dictionary_t, uint64_t *[], const char *[], int,
+    const char *[], int);
+
+int quota_get_cmds(prop_dictionary_t, prop_array_t *);
+prop_dictionary_t quota_prop_create(void);
+bool quota_prop_add_command(prop_array_t, const char *, const char *,
+    prop_array_t);
+
+prop_dictionary_t limits64toprop(uint64_t[], const char *[], int);
+prop_dictionary_t quota64toprop(uid_t, int, uint64_t *[], const char *[], int,
+    const char *[], int);
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+__BEGIN_DECLS
+int quotactl(const char *, struct plistref *) __RENAME(__quotactl50);
+__END_DECLS
+#endif
+
+#endif /* _QUOTA_QUOTAPROP_H_ */
