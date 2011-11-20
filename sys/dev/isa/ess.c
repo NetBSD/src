@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.78.10.1 2011/11/19 21:49:37 jmcneill Exp $	*/
+/*	$NetBSD: ess.c,v 1.78.10.2 2011/11/20 08:40:52 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.78.10.1 2011/11/19 21:49:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.78.10.2 2011/11/20 08:40:52 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1075,6 +1075,8 @@ essattach(struct ess_softc *sc, int enablejoy)
 	if (essdebug > 0)
 		ess_printsc(sc);
 #endif
+
+	return;
 
  fail:
 	callout_destroy(&sc->sc_poll1_ch);
