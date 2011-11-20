@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.7.4.2 2011/11/20 16:07:27 jmcneill Exp $ */
+/* $NetBSD: mavb.c,v 1.7.4.3 2011/11/20 18:25:46 jmcneill Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -909,8 +909,6 @@ mavb_trigger_output(void *hdl, void *start, void *end, int blksize,
 
 	sc->sc_count = 0;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
-
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL2_CONTROL,
 	    MAVB_CHANNEL_RESET);
 	delay(1000);
@@ -920,8 +918,6 @@ mavb_trigger_output(void *hdl, void *start, void *end, int blksize,
 
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL2_CONTROL,
 	    MAVB_CHANNEL_DMA_ENABLE | MAVB_CHANNEL_INT_50);
-
-	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return 0;
 }
