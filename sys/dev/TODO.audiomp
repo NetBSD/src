@@ -11,7 +11,7 @@ arch/hpcmips/vr/vraiu.c
 arch/macppc/dev/awacs.c
 arch/macppc/dev/snapper.c
 arch/prep/isa/paud_isa.c
-arch/sgimips/hpc/haltwo.c
+arch/sgimips/hpc/haltwo.c	done
 arch/sgimips/mace/mavb.c
 arch/sparc/dev/audioamd.c	done
 arch/x68k/dev/vs.c
