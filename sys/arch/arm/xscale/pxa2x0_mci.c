@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.8 2011/02/05 15:29:16 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.8.6.1 2011/11/20 13:47:07 jmcneill Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.8 2011/02/05 15:29:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.8.6.1 2011/11/20 13:47:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -253,7 +253,7 @@ pxamci_attach_sub(device_t self, struct pxaip_attach_args *pxa)
 
 		sc->sc_rxdr.ds_addr = PXA2X0_MMC_BASE + MMC_RXFIFO;
 		sc->sc_rxdr.ds_len = 1;
-		sc->sc_rxdx = pxa2x0_dmac_allocate_xfer(M_NOWAIT);
+		sc->sc_rxdx = pxa2x0_dmac_allocate_xfer();
 		if (sc->sc_rxdx == NULL) {
 			aprint_error_dev(sc->sc_dev,
 			    "couldn't alloc rx dma xfer\n");
@@ -274,7 +274,7 @@ pxamci_attach_sub(device_t self, struct pxaip_attach_args *pxa)
 
 		sc->sc_txdr.ds_addr = PXA2X0_MMC_BASE + MMC_TXFIFO;
 		sc->sc_txdr.ds_len = 1;
-		sc->sc_txdx = pxa2x0_dmac_allocate_xfer(M_NOWAIT);
+		sc->sc_txdx = pxa2x0_dmac_allocate_xfer();
 		if (sc->sc_txdx == NULL) {
 			aprint_error_dev(sc->sc_dev,
 			    "couldn't alloc tx dma xfer\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.c,v 1.8 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.c,v 1.8.4.1 2011/11/20 13:47:07 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 
 #include <uvm/uvm_param.h>	/* For PAGE_SIZE */
@@ -741,11 +741,11 @@ dmac_dmover_done(struct dmac_xfer *dx, int error)
 #endif
 
 struct dmac_xfer *
-pxa2x0_dmac_allocate_xfer(int flags)
+pxa2x0_dmac_allocate_xfer(void)
 {
 	struct dmac_xfer_state *dxs;
 
-	dxs = malloc(sizeof(struct dmac_xfer_state), M_DEVBUF, flags);
+	dxs = kmem_alloc(sizeof(*dxs), KM_SLEEP);
 
 	return ((struct dmac_xfer *)dxs);
 }
@@ -753,12 +753,13 @@ pxa2x0_dmac_allocate_xfer(int flags)
 void
 pxa2x0_dmac_free_xfer(struct dmac_xfer *dx)
 {
+	struct dmac_xfer_state *dxs = (struct dmac_xfer_state *)dx;
 
 	/*
 	 * XXX: Should verify the DMAC is not actively using this
 	 * structure before freeing...
 	 */
-	free(dx, M_DEVBUF);
+	kmem_free(dxs, sizeof(*dxs));
 }
 
 static inline int
