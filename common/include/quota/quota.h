@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.2 2011/06/07 14:56:12 bouyer Exp $ */
+/* $NetBSD: quota.h,v 1.3 2011/11/20 21:43:34 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -25,14 +25,16 @@
   * POSSIBILITY OF SUCH DAMAGE.
   */
 
-#ifndef _QUOTA_QUOTA_H
-#define _QUOTA_QUOTA_H
-#include <sys/types.h>
-#include <quota/quotaprop.h>
+#ifndef _QUOTA_QUOTA_H_
+#define _QUOTA_QUOTA_H_
 
-/* check a quota usage against limits (assumes UFS semantic) */
-int quota_check_limit(uint64_t, uint64_t,  uint64_t, uint64_t, time_t, time_t);
-/* return values for above */
+#include <sys/types.h>
+#include <sys/quota.h>
+
+/*
+ * Return codes for quota_check_limit()
+ */
+
 #define QL_S_ALLOW_OK	0x00 /* below soft limit */
 #define QL_S_ALLOW_SOFT	0x01 /* over soft limit */
 #define QL_S_DENY_GRACE	0x02 /* over soft limit, grace time expired */
@@ -42,6 +44,9 @@ int quota_check_limit(uint64_t, uint64_t,  uint64_t, uint64_t, time_t, time_t);
 
 #define QL_STATUS(x)	((x) & 0x0f)
 #define QL_FLAGS(x)	((x) & 0xf0)
+
+/* check a quota usage against limits (assumes UFS semantic) */
+int quota_check_limit(uint64_t, uint64_t,  uint64_t, uint64_t, time_t, time_t);
 
 /*
  * retrieve quotas with ufs semantics from vfs, for the given id and class.
@@ -56,4 +61,4 @@ int getnfsquota(const char *, struct ufs_quota_entry *, uid_t, const char *);
 /* call one of the above, if appropriate, after a statvfs(2) */
 int getfsquota(const char *, struct ufs_quota_entry *, uid_t, const char *);
 
-#endif /* _QUOTA_QUOTA_H */
+#endif /* _QUOTA_QUOTA_H_ */
