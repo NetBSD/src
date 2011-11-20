@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.184 2011/11/19 22:51:25 tls Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.185 2011/11/20 01:09:14 tls Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.184 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.185 2011/11/20 01:09:14 tls Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -1419,7 +1419,22 @@ sysctl_kern_arnd(SYSCTLFN_ARGS)
 
 	if (*oldlenp == 0)
 		return 0;
-	if (*oldlenp > 8192)
+	/*
+	 * This code used to allow sucking 8192 bytes at a time out
+	 * of the kernel arc4random generator.  Evidently there is some
+	 * very old OpenBSD application code that may try to do this.
+	 *
+	 * Note that this node is documented as type "INT" -- 4 or 8
+	 * bytes, not 8192.
+	 *
+	 * We continue to support this abuse of the "len" pointer here
+	 * but only 256 bytes at a time, as, anecdotally, the actual
+	 * application use here was to generate RC4 keys in userspace.
+	 *
+	 * Support for such large requests will probably be removed
+	 * entirely in the future.
+	 */
+	if (*oldlenp > 256)
 		return E2BIG;
 
 	v = kmem_alloc(*oldlenp, KM_SLEEP);
