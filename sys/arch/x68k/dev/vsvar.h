@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.10 2011/10/16 03:10:18 isaki Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.10.4.1 2011/11/20 16:18:15 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -76,6 +76,8 @@ struct vs_dma {
 
 struct vs_softc {
 	device_t sc_dev;
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
