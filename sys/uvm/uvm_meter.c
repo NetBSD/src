@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.56.4.4 2011/11/14 14:24:54 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.56.4.5 2011/11/20 10:52:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.56.4.4 2011/11/14 14:24:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.56.4.5 2011/11/20 10:52:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,10 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.colormiss = uvmexp.colormiss;
 	u.cpuhit = uvmexp.cpuhit;
 	u.cpumiss = uvmexp.cpumiss;
+	/*
+	 * XXX should use xcall
+	 * XXX should be an array
+	 */
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		struct uvm_cpu *ucpu = ci->ci_data.cpu_uvm;
 
@@ -187,6 +191,19 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 		    ucpu->pagestate[1][UVM_PAGE_STATUS_UNKNOWN];
 		u.cleananonpages += ucpu->pagestate[1][UVM_PAGE_STATUS_CLEAN];
 		u.dirtyanonpages += ucpu->pagestate[1][UVM_PAGE_STATUS_DIRTY];
+
+		u.loan_obj += ucpu->loan_obj;
+		u.unloan_obj += ucpu->unloan_obj;
+		u.loanbreak_obj += ucpu->loanbreak_obj;
+		u.loanfree_obj += ucpu->loanfree_obj;
+
+		u.loan_anon += ucpu->loan_anon;
+		u.unloan_anon += ucpu->unloan_anon;
+		u.loanbreak_anon += ucpu->loanbreak_anon;
+		u.loanfree_anon += ucpu->loanfree_anon;
+
+		u.loan_zero += ucpu->loan_zero;
+		u.unloan_zero += ucpu->unloan_zero;
 	}
 	node = *rnode;
 	node.sysctl_data = &u;

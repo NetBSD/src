@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.62.4.2 2011/11/12 02:54:04 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.62.4.3 2011/11/20 10:52:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -88,6 +88,19 @@ struct uvm_cpu {
 	 * 	[1] anonymous (PQ_SWAPBACKED)
 	 */
 	int64_t pagestate[2][UVM_PAGE_NUM_STATUS];
+
+	int64_t loan_obj;	/* O->K loan */
+	int64_t unloan_obj;	/* O->K unloan */
+	int64_t loanbreak_obj;	/* O->K loan resolved on write */
+	int64_t loanfree_obj;	/* O->K loan resolved on free */
+
+	int64_t loan_anon;	/* A->K loan */
+	int64_t unloan_anon;	/* A->K unloan */
+	int64_t loanbreak_anon;	/* A->K loan resolved on write */
+	int64_t loanfree_anon;	/* A->K loan resolved on free */
+
+	int64_t loan_zero;	/* O->K loan (zero) */
+	int64_t unloan_zero;	/* O->K unloan (zero) */
 };
 
 /*
