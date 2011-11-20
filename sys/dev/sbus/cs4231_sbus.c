@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.48 2011/06/02 00:23:28 christos Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.48.4.1 2011/11/20 09:40:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.48 2011/06/02 00:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.48.4.1 2011/11/20 09:40:19 mrg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -125,6 +125,7 @@ const struct audio_hw_if audiocs_sbus_hw_if = {
 	cs4231_sbus_trigger_input,
 	NULL,			/* dev_ioctl */
 	NULL,			/* powerstate */
+	ad1848_get_locks,
 };
 
 
