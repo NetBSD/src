@@ -1,4 +1,4 @@
-/* $NetBSD: quota1_subr.c,v 1.4 2011/06/07 14:56:13 bouyer Exp $ */
+/* $NetBSD: quota1_subr.c,v 1.5 2011/11/20 21:43:35 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,11 +26,12 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.4 2011/06/07 14:56:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.5 2011/11/20 21:43:35 dholland Exp $");
 
 #include <sys/types.h>
 #include <machine/limits.h>
 
+#include <sys/quota.h>
 #include <quota/quotaprop.h>
 #include <ufs/ufs/quota1.h>
 
