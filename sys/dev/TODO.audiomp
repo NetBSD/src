@@ -15,7 +15,7 @@ arch/sgimips/hpc/haltwo.c	done
 arch/sgimips/mace/mavb.c	done
 arch/sparc/dev/audioamd.c	done
 arch/x68k/dev/vs.c
-arch/zaurus/dev/zaudio.c
+arch/zaurus/dev/zaudio.c	done
 dev/bluetooth/btsco.c		done
 dev/ebus/cs4231_ebus.c		done
 dev/ic/interwave.c		done
