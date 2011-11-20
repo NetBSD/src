@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.3 2009/03/15 02:23:52 nonaka Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.4 2011/11/20 04:07:50 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.3 2009/03/15 02:23:52 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.4 2011/11/20 04:07:50 nonaka Exp $");
 
 #include "debug_kloader.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/disklabel.h>
 
 #include <machine/kloader.h>
