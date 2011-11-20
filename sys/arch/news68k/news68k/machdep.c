@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2011/06/12 03:35:45 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96 2011/11/20 15:38:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2011/06/12 03:35:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2011/11/20 15:38:00 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2011/06/12 03:35:45 rmind Exp $");
 #include "ms.h"
 #include "si.h"
 #include "ksyms.h"
+#include "romcons.h"
 /* XXX etc. etc. */
 
 /* the following is used externally (sysctl_hw) */
@@ -795,15 +796,15 @@ news1700_init(void)
 	uint8_t *q;
 	u_int i;
 
-	dip_switch	= (uint8_t *)IIOV(0xe1c00100);
-	int_status	= (uint8_t *)IIOV(0xe1c00200);
+	dip_switch	= (uint8_t *)(0xe1c00100);
+	int_status	= (uint8_t *)(0xe1c00200);
 
-	idrom_addr	= (uint8_t *)IIOV(0xe1c00000);
-	ctrl_ast	= (uint8_t *)IIOV(0xe1280000);
-	ctrl_int2	= (uint8_t *)IIOV(0xe1180000);
-	ctrl_led	= (uint8_t *)IIOV(ctrl_led_phys);
+	idrom_addr	= (uint8_t *)(0xe1c00000);
+	ctrl_ast	= (uint8_t *)(0xe1280000);
+	ctrl_int2	= (uint8_t *)(0xe1180000);
+	ctrl_led	= (uint8_t *)(ctrl_led_phys);
 
-	sccport0a	= IIOV(0xe0d40002);
+	sccport0a	= (0xe0d40002);
 	lance_mem_phys	= 0xe0e00000;
 
 	p = idrom_addr;
@@ -824,9 +825,9 @@ news1700_init(void)
 	strcat(cpu_model, t);
 	news_machine_id = (idrom.id_serial[0] << 8) + idrom.id_serial[1];
 
-	ctrl_parity	= (uint8_t *)IIOV(0xe1080000);
-	ctrl_parity_clr	= (uint8_t *)IIOV(0xe1a00000);
-	parity_vector	= (uint8_t *)IIOV(0xe1c00200);
+	ctrl_parity	= (uint8_t *)(0xe1080000);
+	ctrl_parity_clr	= (uint8_t *)(0xe1a00000);
+	parity_vector	= (uint8_t *)(0xe1c00200);
 
 	parityenable();
 
@@ -981,20 +982,26 @@ intrhand_lev4(void)
 #define SW_AUTOSEL	0x07
 
 struct consdev *cn_tab = NULL;
-extern struct consdev consdev_bm, consdev_zs;
+extern struct consdev consdev_rom, consdev_zs;
 
 int tty00_is_console = 0;
 
 void
 consinit(void)
 {
+	uint8_t dipsw;
 
-	int dipsw = *dip_switch;
+	dipsw = *dip_switch;
 
-	dipsw &= ~SW_CONSOLE;
+	dipsw = ~dipsw;
 
 	switch (dipsw & SW_CONSOLE) {
-	default: /* XXX no fb support yet */
+	default: /* XXX no real fb support yet */
+#if NROMCONS > 0
+		cn_tab = &consdev_rom;
+		(*cn_tab->cn_init)(cn_tab);
+		break;
+#endif
 	case 0:
 		tty00_is_console = 1;
 		cn_tab = &consdev_zs;

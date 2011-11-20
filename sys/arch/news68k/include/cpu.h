@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2011/05/16 13:22:54 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 2011/11/20 15:38:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -162,6 +162,7 @@ extern u_int extiobase_phys, extiotop_phys;
 extern u_int intrcnt[];
 
 extern void (*vectab[])(void);
+extern void *romcallvec;
 
 struct frame;
 
