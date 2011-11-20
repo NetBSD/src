@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141 2011/11/08 17:16:52 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.142 2011/11/20 19:41:27 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2011/11/08 17:16:52 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2011/11/20 19:41:27 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -508,17 +508,14 @@ static char *csrcp, *cdstp, *zerop, *ptpp, *early_zerop;
 
 int pmap_enter_default(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 
-/*
- * pool and cache that PDPs are allocated from
- */
-
-static struct pool_cache pmap_pdp_cache;
-int	pmap_pdp_ctor(void *, void *, int);
-void	pmap_pdp_dtor(void *, void *);
+/* PDP pool_cache(9) and its callbacks */
+struct pool_cache pmap_pdp_cache;
+static int  pmap_pdp_ctor(void *, void *, int);
+static void pmap_pdp_dtor(void *, void *);
 #ifdef PAE
 /* need to allocate items of 4 pages */
-void *pmap_pdp_alloc(struct pool *, int);
-void pmap_pdp_free(struct pool *, void *);
+static void *pmap_pdp_alloc(struct pool *, int);
+static void pmap_pdp_free(struct pool *, void *);
 static struct pool_allocator pmap_pdp_allocator = {
 	.pa_alloc = pmap_pdp_alloc,
 	.pa_free = pmap_pdp_free,
@@ -2014,7 +2011,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 /*
  * pmap_pdp_ctor: constructor for the PDP cache.
  */
-int
+static int
 pmap_pdp_ctor(void *arg, void *v, int flags)
 {
 	pd_entry_t *pdir = v;
@@ -2121,7 +2118,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
  * pmap_pdp_dtor: destructor for the PDP cache.
  */
 
-void
+static void
 pmap_pdp_dtor(void *arg, void *v)
 {
 #ifdef XEN
@@ -2152,7 +2149,7 @@ pmap_pdp_dtor(void *arg, void *v)
 
 /* pmap_pdp_alloc: Allocate a page for the pdp memory pool. */
 
-void *
+static void *
 pmap_pdp_alloc(struct pool *pp, int flags)
 {
 	return (void *)uvm_km_alloc(kernel_map,
@@ -2165,7 +2162,7 @@ pmap_pdp_alloc(struct pool *pp, int flags)
  * pmap_pdp_free: free a PDP
  */
 
-void
+static void
 pmap_pdp_free(struct pool *pp, void *v)
 {
 	uvm_km_free(kernel_map, (vaddr_t)v, PAGE_SIZE * PDP_SIZE,
@@ -4465,20 +4462,4 @@ x86_mmap_flags(paddr_t mdpgno)
 		pflag |= PMAP_WRITE_COMBINE;
 
 	return pflag;
-}
-
-/*
- * Invalidates pool_cache(9) used by pmap(9).
- */
-void
-pmap_invalidate_pool_caches(void)
-{
-#ifdef XEN
-	/*
-	 * We must invalidate all shadow pages found inside the pmap_pdp_cache.
-	 * They are technically considered by Xen as L2 pages, although they
-	 * are not currently found inside pmaps list.
-	 */
-	pool_cache_invalidate(&pmap_pdp_cache);
-#endif
 }

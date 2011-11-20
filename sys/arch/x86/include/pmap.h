@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.45 2011/11/08 17:16:52 cherry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.46 2011/11/20 19:41:27 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -123,6 +123,11 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
  */
 extern struct pmap_head pmaps;
 extern kmutex_t pmaps_lock;    /* protects pmaps */
+
+/*
+ * pool_cache(9) that PDPs are allocated from 
+ */
+extern struct pool_cache pmap_pdp_cache;
 
 /*
  * the pmap structure
@@ -260,8 +265,6 @@ int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
 u_int		x86_mmap_flags(paddr_t);
 
 bool		pmap_is_curpmap(struct pmap *);
-
-void		pmap_invalidate_pool_caches(void);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -411,15 +414,7 @@ vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 void	pmap_cpu_init_late(struct cpu_info *);
 bool	sse2_idlezero_page(void *);
 
-
 #ifdef XEN
-
-void	pmap_unmap_all_apdp_pdes(void);
-#ifdef PAE
-void	pmap_map_recursive_entries(void);
-void	pmap_unmap_recursive_entries(void);
-#endif /* PAE */
-
 #include <sys/bitops.h>
 
 #define XPTE_MASK	L1_FRAME
@@ -468,8 +463,16 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 paddr_t	vtomach(vaddr_t);
 #define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)
 
+void	pmap_xen_resume(void);
+void	pmap_xen_suspend(void);
+
 void	pmap_apte_flush(struct pmap *);
 void	pmap_unmap_apdp(void);
+
+#ifdef PAE
+void	pmap_map_recursive_entries(void);
+void	pmap_unmap_recursive_entries(void);
+#endif /* PAE */
 
 #endif	/* XEN */
 
