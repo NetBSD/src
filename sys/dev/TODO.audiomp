@@ -40,7 +40,7 @@ dev/pci/azalia.c		done
 dev/pci/cmpci.c			done
 dev/pci/cs4280.c		done
 dev/pci/cs4281.c		done
-dev/pci/eap.c			done
+dev/pci/eap.c			done		port-i386
 dev/pci/emuxki.c		done
 dev/pci/esa.c			done
 dev/pci/esm.c			done
@@ -50,7 +50,7 @@ dev/pci/gcscaudio.c		done
 dev/pci/neo.c			done
 dev/pci/sv.c			done
 dev/pci/yds.c			done
-dev/pci/hdaudio/hdafg.c		done		port-amd64
+dev/pci/hdaudio/hdafg.c		done		port-i386
 dev/sbus/cs4231_sbus.c		done
 dev/sbus/dbri.c			done
 dev/tc/bba.c			done
