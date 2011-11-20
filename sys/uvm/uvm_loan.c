@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81.2.3 2011/11/18 00:57:33 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.4 2011/11/20 10:52:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.3 2011/11/18 00:57:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.4 2011/11/20 10:52:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,6 +340,7 @@ int
 uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
     struct vm_anon *anon)
 {
+	struct uvm_cpu *ucpu;
 	struct vm_page *pg;
 	int error;
 
@@ -428,6 +429,11 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 	/* unlock and return success */
 	if (pg->uobject)
 		mutex_exit(pg->uobject->vmobjlock);
+
+	ucpu = uvm_cpu_get();
+	ucpu->loan_anon++;
+	uvm_cpu_put(ucpu);
+
 	UVMHIST_LOG(loanhist, "->K done", 0,0,0,0);
 	return (1);
 }
@@ -444,6 +450,7 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 static int
 uvm_loanpage(struct vm_page **pgpp, int npages)
 {
+	struct uvm_cpu *ucpu;
 	int i;
 	int error = 0;
 
@@ -475,15 +482,20 @@ uvm_loanpage(struct vm_page **pgpp, int npages)
 
 	uvm_page_unbusy(pgpp, npages);
 
-	if (error) {
-		/*
-		 * backout what we've done
-		 */
-		kmutex_t *slock = pgpp[0]->uobject->vmobjlock;
+	if (i > 0) {
+		ucpu = uvm_cpu_get();
+		ucpu->loan_obj += i;
+		uvm_cpu_put(ucpu);
+		if (error) {
+			/*
+			 * backout what we've done
+			 */
+			kmutex_t *slock = pgpp[0]->uobject->vmobjlock;
 
-		mutex_exit(slock);
-		uvm_unloan(pgpp, i, UVM_LOAN_TOPAGE);
-		mutex_enter(slock);
+			mutex_exit(slock);
+			uvm_unloan(pgpp, i, UVM_LOAN_TOPAGE);
+			mutex_enter(slock);
+		}
 	}
 
 	UVMHIST_LOG(loanhist, "done %d", error,0,0,0);
@@ -829,7 +841,6 @@ fail:
  */
 
 static struct uvm_object uvm_loanzero_object;
-static kmutex_t uvm_loanzero_lock;
 
 static int
 uvm_loanzero(struct uvm_faultinfo *ufi, void ***output, int flags)
@@ -871,12 +882,17 @@ again:
 	}
 
 	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loaning to kernel-page */
+		struct uvm_cpu *ucpu;
+
 		mutex_enter(&uvm_pageqlock);
 		pg->loan_count++;
 		mutex_exit(&uvm_pageqlock);
 		mutex_exit(uvm_loanzero_object.vmobjlock);
 		**output = pg;
 		(*output)++;
+		ucpu = uvm_cpu_get();
+		ucpu->loan_zero++;
+		uvm_cpu_put(ucpu);
 		return (1);
 	}
 
@@ -965,6 +981,10 @@ uvm_unloanpage(struct vm_page **ploans, int npages)
 
 	mutex_enter(&uvm_pageqlock);
 	while (npages-- > 0) {
+		struct uvm_object *obj;
+		struct vm_anon *anon;
+		struct uvm_cpu *ucpu;
+
 		pg = *ploans++;
 
 		/*
@@ -998,22 +1018,35 @@ uvm_unloanpage(struct vm_page **ploans, int npages)
 		 * an anon) or free it (if the page is now unowned).
 		 */
 
+		obj = pg->uobject;
+		anon = pg->uanon;
 		KASSERT(pg->loan_count > 0);
 		pg->loan_count--;
-		if (pg->uobject == NULL && pg->uanon != NULL &&
+		if (obj == NULL && anon != NULL &&
 		    (pg->pqflags & PQ_ANON) == 0) {
 			KASSERT(pg->loan_count > 0);
 			pg->loan_count--;
 			pg->pqflags |= PQ_ANON;
 		}
-		if (pg->loan_count == 0 && pg->uobject == NULL &&
-		    pg->uanon == NULL) {
+		if (pg->loan_count == 0 && obj == NULL && anon == NULL) {
 			KASSERT((pg->flags & PG_BUSY) == 0);
 			uvm_pagefree(pg);
 		}
 		if (slock != NULL) {
 			mutex_exit(slock);
 		}
+		ucpu = uvm_cpu_get();
+		if (obj != NULL) {
+			KASSERT(anon == NULL); /* XXX no O->A loan */
+			if (obj == &uvm_loanzero_object) {
+				ucpu->unloan_zero++;
+			} else {
+				ucpu->unloan_obj++;
+			}
+		} else if (anon != NULL) {
+			ucpu->unloan_anon++;
+		}
+		uvm_cpu_put(ucpu);
 	}
 	mutex_exit(&uvm_pageqlock);
 }
@@ -1087,10 +1120,7 @@ void
 uvm_loan_init(void)
 {
 
-	mutex_init(&uvm_loanzero_lock, MUTEX_DEFAULT, IPL_NONE);
-	uvm_obj_init(&uvm_loanzero_object, &ulz_pager, false, 0);
-	uvm_obj_setlock(&uvm_loanzero_object, &uvm_loanzero_lock);
-
+	uvm_obj_init(&uvm_loanzero_object, &ulz_pager, true, 0);
 	UVMHIST_INIT(loanhist, 300);
 }
 
@@ -1105,14 +1135,17 @@ uvm_loan_init(void)
 struct vm_page *
 uvm_loanbreak(struct vm_page *uobjpage)
 {
+	struct uvm_cpu *ucpu;
 	struct vm_page *pg;
 #ifdef DIAGNOSTIC
 	struct uvm_object *uobj = uobjpage->uobject;
 #endif
+	const unsigned int count = uobjpage->loan_count;
 
 	KASSERT(uobj != NULL);
 	KASSERT(mutex_owned(uobj->vmobjlock));
 	KASSERT(uobjpage->flags & PG_BUSY);
+	KASSERT(count > 0);
 
 	/* alloc new un-owned page */
 	pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -1124,38 +1157,29 @@ uvm_loanbreak(struct vm_page *uobjpage)
 	 * one and clear the fake flags on the new page (keep it busy).
 	 * force a reload of the old page by clearing it from all
 	 * pmaps.
-	 * transfer dirtiness of the old page to the new page.
 	 * then lock the page queues to rename the pages.
 	 */
 
 	uvm_pagecopy(uobjpage, pg);	/* old -> new */
 	pg->flags &= ~PG_FAKE;
+	KASSERT(uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_DIRTY);
 	pmap_page_protect(uobjpage, VM_PROT_NONE);
-	if (uvm_pagegetdirty(uobjpage) == UVM_PAGE_STATUS_UNKNOWN &&
-	    !pmap_clear_modify(uobjpage)) {
-		uvm_pagemarkdirty(uobjpage, UVM_PAGE_STATUS_CLEAN);
-	}
-	if (uvm_pagegetdirty(uobjpage) == UVM_PAGE_STATUS_CLEAN) {
-		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_CLEAN);
-	} else {
-		/* uvm_pagecopy marked it dirty */
-		KASSERT(uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_DIRTY);
-		/* a object with a dirty page should be dirty. */
-		KASSERT(!UVM_OBJ_IS_CLEAN(uobj));
-	}
 	if (uobjpage->flags & PG_WANTED)
 		wakeup(uobjpage);
 	/* uobj still locked */
 	uobjpage->flags &= ~(PG_WANTED|PG_BUSY);
 	UVM_PAGE_OWN(uobjpage, NULL);
 
-	mutex_enter(&uvm_pageqlock);
-
 	/*
 	 * replace uobjpage with new page.
+	 *
+	 * this will update the page dirtiness statistics.
 	 */
 
 	uvm_pagereplace(uobjpage, pg);
+
+	mutex_enter(&uvm_pageqlock);
+	KASSERT(uobjpage->uanon == NULL); /* XXX no O->A loan */
 
 	/*
 	 * if the page is no longer referenced by
@@ -1179,16 +1203,23 @@ uvm_loanbreak(struct vm_page *uobjpage)
 	 * PG_BUSY.   it can now replace uobjpage.
 	 */
 
+	ucpu = uvm_cpu_get();
+	ucpu->loanbreak_obj += count;
+	uvm_cpu_put(ucpu);
 	return pg;
 }
 
 int
 uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 {
+	struct uvm_cpu *ucpu;
 	struct vm_page *pg;
+	unsigned int oldstatus;
+	const unsigned int count = anon->an_page->loan_count;
 
 	KASSERT(mutex_owned(anon->an_lock));
 	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
+	KASSERT(count > 0);
 
 	/* get new un-owned replacement page */
 	pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -1198,15 +1229,18 @@ uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 
 	/* copy old -> new */
 	uvm_pagecopy(anon->an_page, pg);
+	KASSERT(uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_DIRTY);
 
 	/* force reload */
 	pmap_page_protect(anon->an_page, VM_PROT_NONE);
+	oldstatus = uvm_pagegetdirty(anon->an_page);
 	mutex_enter(&uvm_pageqlock);	  /* KILL loan */
 
 	anon->an_page->uanon = NULL;
 	/* in case we owned */
 	anon->an_page->pqflags &= ~PQ_ANON;
 
+	KASSERT(uobj == NULL); /* XXX O->A loan is currently broken */
 	if (uobj) {
 		/* if we were receiver of loan */
 		anon->an_page->loan_count--;
@@ -1234,6 +1268,12 @@ uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 	UVM_PAGE_OWN(pg, NULL);
 
 	/* done! */
-
+	if (uobj == NULL) {
+		ucpu = uvm_cpu_get();
+		ucpu->loanbreak_anon += count;
+		ucpu->pagestate[1][oldstatus]--;
+		ucpu->pagestate[1][UVM_PAGE_STATUS_DIRTY]++;
+		uvm_cpu_put(ucpu);
+	}
 	return 0;
 }

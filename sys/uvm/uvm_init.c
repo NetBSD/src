@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.41 2011/04/24 03:56:50 rmind Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.41.4.1 2011/11/20 10:52:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.41 2011/04/24 03:56:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.41.4.1 2011/11/20 10:52:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.41 2011/04/24 03:56:50 rmind Exp $");
 #include <sys/resourcevar.h>
 #include <sys/kmem.h>
 #include <sys/mman.h>
+#include <sys/mutex.h>
+#include <sys/rwlock.h>
 #include <sys/vnode.h>
 
 #include <uvm/uvm.h>
@@ -157,7 +159,15 @@ uvm_init(void)
 	kmem_init();
 
 	/*
+	 * Initialize lock caches.
+	 */
+
+	mutex_obj_init();
+	rw_obj_init();
+
+	/*
 	 * Initialize the uvm_loan() facility.
+	 * REQUIRE: mutex_obj_init
 	 */
 
 	uvm_loan_init();

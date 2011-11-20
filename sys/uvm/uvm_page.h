@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73.2.6 2011/11/18 00:57:34 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.73.2.7 2011/11/20 10:52:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -299,6 +299,10 @@ bool uvm_pagereadonly_p(struct vm_page *);
 bool uvm_page_locked_p(struct vm_page *);
 kmutex_t *uvm_page_getlock(struct vm_page *);
 bool uvm_page_samelock_p(struct vm_page *, struct vm_page *);
+
+struct uvm_cpu;
+struct uvm_cpu *uvm_cpu_get(void);
+void uvm_cpu_put(struct uvm_cpu *);
 
 /*
  * page dirtiness status for uvm_pagegetdirty and uvm_pagemarkdirty
