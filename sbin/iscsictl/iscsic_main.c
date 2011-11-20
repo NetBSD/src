@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_main.c,v 1.4 2011/11/17 16:20:47 joerg Exp $	*/
+/*	$NetBSD: iscsic_main.c,v 1.5 2011/11/20 01:14:17 agc Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -596,7 +596,7 @@ main(int argc, char **argv)
 		sizeof(daemon_name.sun_path));
 
 	/* dispatch command */
-	res = (*c->proc)(optind + 1, &argv[optind + 1]);
+	res = (*c->proc)(argc - optind - 1, &argv[optind + 1]);
 
 	/* cleanup */
 	close(sock);
