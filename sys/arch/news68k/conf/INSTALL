@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.53 2011/03/13 12:58:02 he Exp $
+# 	$NetBSD: INSTALL,v 1.54 2011/11/20 15:38:00 tsutsui Exp $
 
 #	config for bootable floppy kernel
 #
@@ -145,6 +145,9 @@ scsibus* at si0
 sd*	at scsibus? target ? lun ?		# SCSI disks
 st*	at scsibus? target ? lun ?		# SCSI tapes
 cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
+
+# PROM console support
+#romcons0 at mainbus0
 
 # Misc.
 pseudo-device	loop			# loopback interface; required

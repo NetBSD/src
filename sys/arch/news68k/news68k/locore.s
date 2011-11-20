@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.59 2011/11/15 10:57:03 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.60 2011/11/20 15:38:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,6 +148,7 @@ ASENTRY_NOPROFILE(start)
 
 	movc %vbr,%a0
 	movl %a0@(188),_ASM_LABEL(monitor)| save trap #15 to return PROM monitor
+	movl %a0@(128),_ASM_LABEL(romcallvec)| save trap #0 to use PROM calls
 
 	RELOC(esym, %a0)
 #if NKSYMS || defined(DDB) || defined(LKM)
@@ -395,11 +396,15 @@ Lstploaddone:
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
-#if 0 /* XXX use %tt0 register to map I/O space temporary */
+	/* Use %tt0 register to map I/O space */
 	RELOC(protott0, %a0)
-	movl	#0xe01f8550,%a0@	| use %tt0 (0xe0000000-0xffffffff)
+	movl	#0xe01f8543,%a0@	| use %tt0 (0xe0000000-0xffffffff)
 	.long	0xf0100800		| pmove %a0@,%tt0
-#endif
+	/* Use %tt1 register to map RAM  to use PROM calls */
+	RELOC(protott1, %a0)
+	movl	#0xc01f8143,%a0@	| use %tt1 (0xc0000000-0xdfffffff)
+	.long	0xf0100c00		| pmove %a0@,%tt1
+
 	RELOC(prototc, %a2)
 #if PGSHIFT == 13
 	movl	#0x82d08b00,%a2@	| value to load TC with
@@ -1220,6 +1225,9 @@ GLOBAL(cache_ctl)
 
 GLOBAL(cache_clr)
 	.long	0		| KVA of external cache clear port
+
+GLOBAL(romcallvec)
+	.long	0
 
 
 /* interrupt counters */
