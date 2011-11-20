@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.33.6.1 2011/11/20 10:48:54 mrg Exp $	*/
+/*	$NetBSD: dbri.c,v 1.33.6.2 2011/11/20 12:07:13 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.33.6.1 2011/11/20 10:48:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.33.6.2 2011/11/20 12:07:13 mrg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -472,6 +472,8 @@ dbri_intr(void *hdl)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int x;
 
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	/* clear interrupt */
 	x = bus_space_read_4(iot, ioh, DBRI_REG1);
 	if (x & (DBRI_MRR | DBRI_MLE | DBRI_LBG | DBRI_MBE)) {
@@ -505,6 +507,8 @@ dbri_intr(void *hdl)
 #endif
 
 	dbri_process_interrupt_buffer(sc);
+
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return (1);
 }
@@ -598,9 +602,8 @@ dbri_command_send(struct dbri_softc *sc, volatile uint32_t *cmd)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	bus_space_tag_t iot = sc->sc_iot;
 	int maxloops = 1000000;
-	int x;
 
-	x = splsched();
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	sc->sc_locked--;
 
@@ -638,7 +641,7 @@ dbri_command_send(struct dbri_softc *sc, volatile uint32_t *cmd)
 		}
 	}
 
-	splx(x);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return;
 }
@@ -1266,7 +1269,7 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		void (*callback)(void *), void *callback_args)
 {
 	volatile uint32_t *cmd;
-	int x, i;
+	int i;
 	int td;
 	int td_first, td_last;
 	bus_addr_t dmabuf, dmabase;
@@ -1316,7 +1319,7 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	dd->callback = callback;
 	dd->callback_args = callback_args;
 
-	x = splsched();
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	/* the pipe shouldn't be active */
 	if (pipe_active(sc, pipe)) {
@@ -1352,7 +1355,7 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		DPRINTF("%s: starting DMA\n", __func__);
 	}
 
-	splx(x);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return;
 }
@@ -1362,7 +1365,7 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		void (*callback)(void *), void *callback_args)
 {
 	volatile uint32_t *cmd;
-	int x, i;
+	int i;
 	int td_first, td_last;
 	bus_addr_t dmabuf, dmabase;
 	struct dbri_desc *dd = &sc->sc_desc[which];
@@ -1407,7 +1410,7 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	dd->callback = callback;
 	dd->callback_args = callback_args;
 
-	x = splsched();
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	/* the pipe shouldn't be active */
 	if (pipe_active(sc, pipe)) {
@@ -1443,7 +1446,7 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		DPRINTF("%s: starting DMA\n", __func__);
 	}
 
-	splx(x);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return;
 }
@@ -2211,10 +2214,9 @@ dbri_resume(device_t self, const pmf_qual_t *qual)
 	aprint_verbose("resume: %d\n", sc->sc_refcount);
 	if (sc->sc_playing) {
 		volatile uint32_t *cmd;
-		int s;
 
 		dbri_bring_up(sc);
-		s = splsched();
+		mutex_spin_enter(&sc->sc_intr_lock);
 		cmd = dbri_command_lock(sc);
 		*(cmd++) = DBRI_CMD(DBRI_COMMAND_SDP,
 		    0, sc->sc_pipe[4].sdp |
@@ -2223,7 +2225,7 @@ dbri_resume(device_t self, const pmf_qual_t *qual)
 		*(cmd++) = sc->sc_dmabase +
 		    dbri_dma_off(xmit, 0);
 		dbri_command_send(sc, cmd);
-		splx(s);
+		mutex_spin_exit(&sc->sc_intr_lock);
 	}
 	return true;
 }
