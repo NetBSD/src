@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.143 2011/09/29 20:52:39 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.144 2011/11/20 23:01:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.143 2011/09/29 20:52:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.144 2011/11/20 23:01:18 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -1024,8 +1024,9 @@ sprintf(char *bf, const char *fmt, ...)
 	va_start(ap, fmt);
 	retval = kprintf(fmt, TOBUFONLY, NULL, bf, ap);
 	va_end(ap);
-	*(bf + retval) = 0;	/* null terminate */
-	return(retval);
+	if (bf)
+		bf[retval] = '\0';	/* nul terminate */
+	return retval;
 }
 
 /*
@@ -1038,8 +1039,9 @@ vsprintf(char *bf, const char *fmt, va_list ap)
 	int retval;
 
 	retval = kprintf(fmt, TOBUFONLY, NULL, bf, ap);
-	*(bf + retval) = 0;	/* null terminate */
-	return (retval);
+	if (bf)
+		bf[retval] = '\0';	/* nul terminate */
+	return retval;
 }
 
 /*
@@ -1052,14 +1054,13 @@ snprintf(char *bf, size_t size, const char *fmt, ...)
 	va_list ap;
 	char *p;
 
-	if (size < 1)
-		return (-1);
-	p = bf + size - 1;
+	p = bf + size;
 	va_start(ap, fmt);
 	retval = kprintf(fmt, TOBUFONLY, &p, bf, ap);
 	va_end(ap);
-	*(p) = 0;	/* null terminate */
-	return(retval);
+	if (bf && p < bf + size)
+		*p = '\0';	/* nul terminate */
+	return retval;
 }
 
 /*
@@ -1071,12 +1072,11 @@ vsnprintf(char *bf, size_t size, const char *fmt, va_list ap)
 	int retval;
 	char *p;
 
-	if (size < 1)
-		return (-1);
-	p = bf + size - 1;
+	p = bf + size;
 	retval = kprintf(fmt, TOBUFONLY, &p, bf, ap);
-	*(p) = 0;	/* null terminate */
-	return(retval);
+	if (bf && p < bf + size)
+		*p = '\0';	/* nul terminate */
+	return retval;
 }
 
 /*
@@ -1134,13 +1134,10 @@ vsnprintf(char *bf, size_t size, const char *fmt, va_list ap)
 
 #define KPRINTF_PUTCHAR(C) {						\
 	if (oflags == TOBUFONLY) {					\
-		if ((vp != NULL) && (sbuf == tailp)) {			\
-			ret += 1;		/* indicate error */	\
-			goto overflow;					\
-		}							\
-		*sbuf++ = (C);						\
+		if ((vp == NULL) || (sbuf < tailp)) 			\
+			*sbuf++ = (C);					\
 	} else {							\
-		putchar((C), oflags, (struct tty *)vp);			\
+		putchar((C), oflags, vp);				\
 	}								\
 }
 
@@ -1181,9 +1178,10 @@ kprintf(const char *fmt0, int oflags, void *vp, char *sbuf, va_list ap)
 	char bf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
 	char *tailp;		/* tail pointer for snprintf */
 
-	tailp = NULL;	/* XXX: shutup gcc */
 	if (oflags == TOBUFONLY && (vp != NULL))
 		tailp = *(char **)vp;
+	else
+		tailp = NULL;
 
 	cp = NULL;	/* XXX: shutup gcc */
 	size = 0;	/* XXX: shutup gcc */
@@ -1526,7 +1524,5 @@ done:
 	if ((oflags == TOBUFONLY) && (vp != NULL))
 		*(char **)vp = sbuf;
 	(*v_flush)();
-overflow:
-	return (ret);
-	/* NOTREACHED */
+	return ret;
 }
