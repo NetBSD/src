@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.37.14.1 2011/11/19 21:49:37 jmcneill Exp $	*/
+/*	$NetBSD: opl.c,v 1.37.14.2 2011/11/20 08:39:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.37.14.1 2011/11/19 21:49:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.37.14.2 2011/11/20 08:39:59 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ opl_command(struct opl_softc *sc, int offs, int addr, int data)
 	DPRINTFN(4, ("opl_command: sc=%p, offs=%d addr=0x%02x data=0x%02x\n",
 		     sc, offs, addr, data));
 
-	KASSERT(mutex_owned(sc->lock));
+	KASSERT(!sc->lock || mutex_owned(sc->lock));
 
 	offs += sc->offs;
 	bus_space_write_1(sc->iot, sc->ioh, OPL_ADDR+offs, addr);
