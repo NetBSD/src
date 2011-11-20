@@ -1,4 +1,4 @@
-/*        $NetBSD: rbtdb.c,v 1.1.1.4.4.1.2.4 2011/07/16 00:44:45 riz Exp $      */
+/*        $NetBSD: rbtdb.c,v 1.1.1.4.4.1.2.5 2011/11/20 13:02:16 bouyer Exp $      */
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -2438,7 +2438,7 @@ find_closest_nsec(rbtdb_search_t *search, dns_dbnode_t **nodep,
 					bind_rdataset(search->rbtdb, node,
 						      found, search->now,
 						      rdataset);
-					if (foundsig != NULL)
+					if (!NEGATIVE(found) && foundsig != NULL)
 						bind_rdataset(search->rbtdb,
 							      node,
 							      foundsig,
@@ -2940,7 +2940,7 @@ zone_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 
 	if (type != dns_rdatatype_any) {
 		bind_rdataset(search.rbtdb, node, found, 0, rdataset);
-		if (foundsig != NULL)
+		if (!NEGATIVE(found) && foundsig != NULL)
 			bind_rdataset(search.rbtdb, node, foundsig, 0,
 				      sigrdataset);
 	}
@@ -3243,7 +3243,7 @@ find_deepest_zonecut(rbtdb_search_t *search, dns_rbtnode_t *node,
 			}
 			bind_rdataset(search->rbtdb, node, found, search->now,
 				      rdataset);
-			if (foundsig != NULL)
+			if (!NEGATIVE(found) && foundsig != NULL)
 				bind_rdataset(search->rbtdb, node, foundsig,
 					      search->now, sigrdataset);
 		}
@@ -3361,7 +3361,7 @@ find_coveringnsec(rbtdb_search_t *search, dns_dbnode_t **nodep,
 				goto unlock_node;
 			bind_rdataset(search->rbtdb, node, found,
 				      now, rdataset);
-			if (foundsig != NULL)
+			if (!NEGATIVE(found) && foundsig != NULL)
 				bind_rdataset(search->rbtdb, node, foundsig,
 					      now, sigrdataset);
 			new_reference(search->rbtdb, node);
@@ -3669,7 +3669,7 @@ cache_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 	    result == DNS_R_NCACHENXRRSET) {
 		bind_rdataset(search.rbtdb, node, found, search.now,
 			      rdataset);
-		if (foundsig != NULL)
+		if (!NEGATIVE(found) && foundsig != NULL)
 			bind_rdataset(search.rbtdb, node, foundsig, search.now,
 				      sigrdataset);
 	}
@@ -3837,7 +3837,7 @@ cache_findzonecut(dns_db_t *db, dns_name_t *name, unsigned int options,
 	}
 
 	bind_rdataset(search.rbtdb, node, found, search.now, rdataset);
-	if (foundsig != NULL)
+	if (!NEGATIVE(found) && foundsig != NULL)
 		bind_rdataset(search.rbtdb, node, foundsig, search.now,
 			      sigrdataset);
 
@@ -4166,7 +4166,7 @@ zone_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	}
 	if (found != NULL) {
 		bind_rdataset(rbtdb, rbtnode, found, now, rdataset);
-		if (foundsig != NULL)
+		if (!NEGATIVE(found) && foundsig != NULL)
 			bind_rdataset(rbtdb, rbtnode, foundsig, now,
 				      sigrdataset);
 	}
@@ -4255,7 +4255,7 @@ cache_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	}
 	if (found != NULL) {
 		bind_rdataset(rbtdb, rbtnode, found, now, rdataset);
-		if (foundsig != NULL)
+		if (!NEGATIVE(found) && foundsig != NULL)
 			bind_rdataset(rbtdb, rbtnode, foundsig, now,
 				      sigrdataset);
 	}

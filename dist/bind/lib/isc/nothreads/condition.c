@@ -1,4 +1,4 @@
-/*	$NetBSD: condition.c,v 1.1.1.3.4.1 2007/05/17 00:42:41 jdc Exp $	*/
+/*	$NetBSD: condition.c,v 1.1.1.3.4.1.2.1 2011/11/20 13:02:16 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
@@ -23,4 +23,6 @@
 
 #include <isc/util.h>
 
+#if 0
 EMPTY_TRANSLATION_UNIT
+#endif
