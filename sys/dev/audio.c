@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.253.4.1 2011/11/19 21:49:34 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.253.4.2 2011/11/20 10:58:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.253.4.1 2011/11/19 21:49:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.253.4.2 2011/11/20 10:58:10 mrg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -430,7 +430,9 @@ audioattach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = parent;
 	sc->sc_lastinfovalid = false;
 
+	mutex_enter(sc->sc_lock);
 	props = audio_get_props(sc);
+	mutex_exit(sc->sc_lock);
 
 	if (props & AUDIO_PROP_FULLDUPLEX)
 		aprint_normal(": full duplex");
@@ -449,6 +451,14 @@ audioattach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	/*
+	 * XXX  Would like to not hold the sc_lock around this whole block
+	 * escpially for audio_alloc_ring(), except that the latter calls
+	 * ->round_blocksize() which demands the thread lock to be taken.
+	 *
+	 * Revisit.
+	 */
+	mutex_enter(sc->sc_lock);
 	if (audio_can_playback(sc)) {
 		error = audio_alloc_ring(sc, &sc->sc_pr,
 		    AUMODE_PLAY, AU_RING_SIZE);
@@ -472,7 +482,6 @@ audioattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_lastgain = 128;
 
-	mutex_enter(sc->sc_lock);
 	error = audio_set_defaults(sc, 0);
 	mutex_exit(sc->sc_lock);
 	if (error != 0) {
@@ -1663,9 +1672,11 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	sc->sc_eof = 0;
 	sc->sc_playdrop = 0;
 
+	mutex_enter(sc->sc_intr_lock);
 	sc->sc_full_duplex = 
 		(flags & (FWRITE|FREAD)) == (FWRITE|FREAD) &&
 		(audio_get_props(sc) & AUDIO_PROP_FULLDUPLEX);
+	mutex_exit(sc->sc_intr_lock);
 
 	mode = 0;
 	if (flags & FREAD) {
@@ -4416,10 +4427,10 @@ audio_get_props(struct audio_softc *sc)
 	const struct audio_hw_if *hw;
 	int props;
 
+	KASSERT(mutex_owned(sc->sc_lock));
+
 	hw = sc->hw_if;
-	mutex_enter(sc->sc_lock);
 	props = hw->get_props(sc->hw_hdl);
-	mutex_exit(sc->sc_lock);
 
 	/*
 	 * if neither playback nor capture properties are reported,
