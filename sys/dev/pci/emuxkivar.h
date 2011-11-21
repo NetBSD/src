@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkivar.h,v 1.12.14.1 2011/11/19 21:49:42 jmcneill Exp $	*/
+/*	$NetBSD: emuxkivar.h,v 1.12.14.2 2011/11/21 21:39:44 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -235,6 +235,8 @@ struct emuxki_softc {
 	void			*sc_ih;		/* interrupt handler */
 	kmutex_t		sc_intr_lock;
 	kmutex_t		sc_lock;
+	kmutex_t		sc_index_lock;
+	kmutex_t		sc_ac97_index_lock;
 
 	/* EMU10K1 device structures */
 	LIST_HEAD(, emuxki_mem) mem;
