@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.161 2011/10/30 12:00:27 hannken Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.162 2011/11/21 09:07:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.161 2011/10/30 12:00:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.162 2011/11/21 09:07:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,21 +453,20 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 		}
 	}
 
-	if (dirp) {
-		if (v3) {
-			vn_lock(dirp, LK_SHARED | LK_RETRY);
-			dirattr_ret = VOP_GETATTR(dirp, &dirattr, cred);
-			VOP_UNLOCK(dirp);
-		}
-		vrele(dirp);
-	}
-
 	if (error) {
 		if (nd.ni_pathbuf != NULL) {
 			pathbuf_destroy(nd.ni_pathbuf);
 		}
 		if (ipb != NULL) {
 			pathbuf_destroy(ipb);
+		}
+		if (dirp) {
+			if (v3) {
+				vn_lock(dirp, LK_SHARED | LK_RETRY);
+				dirattr_ret = VOP_GETATTR(dirp, &dirattr, cred);
+				vput(dirp);
+			} else
+				vrele(dirp);
 		}
 		nfsm_reply(NFSX_POSTOPATTR(v3));
 		nfsm_srvpostop_attr(dirattr_ret, &dirattr);
@@ -484,6 +483,14 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	if (!error)
 		error = VOP_GETATTR(vp, &va, cred);
 	vput(vp);
+	if (dirp) {
+		if (v3) {
+			vn_lock(dirp, LK_SHARED | LK_RETRY);
+			dirattr_ret = VOP_GETATTR(dirp, &dirattr, cred);
+			vput(dirp);
+		} else
+			vrele(dirp);
+	}
 	nfsm_reply(NFSX_SRVFH(&nsfh, v3) + NFSX_POSTOPORFATTR(v3) +
 	    NFSX_POSTOPATTR(v3));
 	if (error) {
