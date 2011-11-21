@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ibcs2.8,v 1.5 2001/09/05 23:47:15 wiz Exp $
+.\"	$NetBSD: compat_ibcs2.8,v 1.6 2011/11/21 14:27:41 njoly Exp $
 .\"
 .\" Copyright (c) 1998 Scott Bartram
 .\" Copyright (c) 1995 Frank van der Linden
@@ -56,7 +56,7 @@ iBCS2 supports COFF, ELF, and x.out (XENIX) binary formats.
 Binaries from SCO OpenServer (version 5.x) are the only ELF binaries
 that have been tested.
 Most programs should work, but not ones that use or depend on:
-.sp
+.Pp
 .Bl -item -compact -offset indent
 .It
 kernel internal data structures
@@ -67,7 +67,7 @@ local X displays (uses a STREAMS pipe)
 .It
 virtual 8086 mode
 .El
-.sp
+.Pp
 The iBCS2 compatibility feature is active for kernels compiled with
 the
 .Dv COMPAT_IBCS2
@@ -122,28 +122,25 @@ will need to be root on your
 .Nx
 system to do the necessary
 installation steps).
-.Pp
 .Bl -tag -width "COFF binaries"
 .It COFF binaries
 You can simply copy all of the available shared libraries since they
 are fairly small in size. The COFF shared libraries are typically
 found in /shlib and can be obtained from the following sources:
-.sp
-.nf
+.Bd -literal
 SCO UNIX version 3.x (aka ODT)
 SCO UNIX version 5.x (aka OpenServer)
 SCO UnixWare
 Many versions of SVR4.2/x86
-.fi
-.sp
+.Ed
+.Pp
 After copying the shared libraries, you should have at least the
 following files on your system:
-.Pp
-.nf
+.Bd -literal
 .Pa /emul/ibcs2/shlib/libc_s
 .Pa /emul/ibcs2/shlib/libnsl_s
 .Pa /emul/ibcs2/shlib/protlib_s
-.fi
+.Ed
 .It ELF binaries
 You can simply copy all of the available shared libraries from the
 source system or distribution or use
@@ -152,13 +149,12 @@ to determine the libraries required by a specific binary.
 .Pp
 After copying the shared libraries, you should have at least the
 following files on your system:
-.Pp
-.nf
+.Bd -literal
 .Pa /emul/ibcs2/usr/lib/libc.so.1
 .Pa /emul/ibcs2/usr/lib/libcrypt.so
 .Pa /emul/ibcs2/usr/lib/libndbm.so
 .Pa /emul/ibcs2/usr/lib/libsocket.so.1
-.fi
+.Ed
 .Pp
 .El
 If you don't have access to a SCO system, you will need to get the
@@ -170,10 +166,9 @@ mounted and used to copy the necessary files.
 .Pp
 Run the following script to copy the basic set of files from a SCO
 distribution directory mounted somewhere locally:
-.Pp
-.nf
+.Bd -literal
 /usr/share/examples/emul/ibcs2/ibcs2-setup [directory]
-.fi
+.Ed
 .Pp
 You should now be set up for SCO binaries which only need standard
 shared libs.

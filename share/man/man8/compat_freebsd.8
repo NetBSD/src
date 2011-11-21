@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_freebsd.8,v 1.13 2002/02/13 08:18:21 ross Exp $
+.\"	$NetBSD: compat_freebsd.8,v 1.14 2011/11/21 14:27:41 njoly Exp $
 .\"	from: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -128,18 +128,15 @@ Put it on the
 system you have access to, and check which shared libraries it
 needs by running
 .Sq ldd sim :
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It me@freebsd% ldd /usr/local/lib/SimCity/res/sim
-.nf
+.Bd -literal -offset indent
+me@freebsd% ldd /usr/local/lib/SimCity/res/sim
 /usr/local/lib/SimCity/res/sim:
 	-lXext.6 =\*[Gt] /usr/X11R6/lib/libXext.so.6.0 (0x100c1000)
 	-lX11.6 =\*[Gt] /usr/X11R6/lib/libX11.so.6.0 (0x100c9000)
 	-lc.2 =\*[Gt] /usr/lib/libc.so.2.1 (0x10144000)
 	-lm.2 =\*[Gt] /usr/lib/libm.so.2.0 (0x101a7000)
 	-lgcc.261 =\*[Gt] /usr/lib/libgcc.so.261.0 (0x101bf000)
-.fi
-.El
+.Ed
 .Pp
 You would need go get all the files from the last column, and
 put them under
@@ -179,10 +176,9 @@ So, if you have these libraries on your system:
 .Pp
 and you find that the ldd output for a new binary you want to
 install is:
-.Pp
-.nf
+.Bd -literal
 \-lc.2 =\*[Gt] /usr/lib/libc.so.2.1 (0x10144000)
-.fi
+.Ed
 .Pp
 You won't need to worry about copying
 .Pa /usr/lib/libc.so.2.1
@@ -259,12 +255,11 @@ ldconfig program with directory arguments in which the
 runtime linker should look for shared libs.
 .Pa /usr/lib
 are standard, you could run like the following:
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It me@netbsd% mkdir -p /emul/freebsd/var/run
-.It me@netbsd% touch /emul/freebsd/var/run/ld.so.hints
-.It me@netbsd% ldconfig-freebsd /usr/X11R6/lib /usr/local/lib
-.El
+.Bd -literal -offset indent
+me@netbsd% mkdir -p /emul/freebsd/var/run
+me@netbsd% touch /emul/freebsd/var/run/ld.so.hints
+me@netbsd% ldconfig-freebsd /usr/X11R6/lib /usr/local/lib
+.Ed
 .Pp
 Note that argument directories of ldconfig are
 mapped to
@@ -298,14 +293,11 @@ You can test this by running the
 on itself.  Suppose that you have it installed as
 .Ic ldd-freebsd ,
 it should produce something like:
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It me@netbsd% ldd-freebsd `which ldd-freebsd`
-.nf
+.Bd -literal -offset indent
+me@netbsd% ldd-freebsd `which ldd-freebsd`
 /usr/local/bin/ldd-freebsd:
 	-lc.2 =\*[Gt] /usr/lib/libc.so.2.1 (0x1001a000)
-.fi
-.El
+.Ed
 .Pp
 This being done, you are ready to install new
 .Fx
@@ -397,7 +389,6 @@ retrieve files
 too.  The way to look something up is to retrieve all the files in the
 distribution, and ``tar ztvf'' through them for the file you need.
 Here is an example of a list of files that you might need.
-.Pp
 .Bd -literal -offset indent
 Needed                 Files
 
