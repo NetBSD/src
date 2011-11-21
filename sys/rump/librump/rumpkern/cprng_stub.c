@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_stub.c,v 1.1 2011/11/19 22:51:30 tls Exp $ */
+/*	$NetBSD: cprng_stub.c,v 1.2 2011/11/21 13:42:37 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,8 +37,6 @@
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/rngtest.h>
-
-#include <machine/cpu_counter.h>
 
 #include <sys/cprng.h>
 
