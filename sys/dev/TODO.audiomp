@@ -36,7 +36,7 @@ dev/pci/auich.c			done
 dev/pci/auixp.c			done
 dev/pci/autri.c			done
 dev/pci/auvia.c			done
-dev/pci/azalia.c		done
+dev/pci/azalia.c		done		port-i386
 dev/pci/cmpci.c			done
 dev/pci/cs4280.c		done
 dev/pci/cs4281.c		done
