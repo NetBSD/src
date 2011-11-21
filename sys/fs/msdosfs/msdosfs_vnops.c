@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.78 2011/07/20 11:52:00 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.79 2011/11/21 10:46:56 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.78 2011/07/20 11:52:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.79 2011/11/21 10:46:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,8 +499,10 @@ msdosfs_read(void *v)
 		lbn = de_cluster(pmp, uio->uio_offset);
 		on = uio->uio_offset & pmp->pm_crbomask;
 		n = MIN(pmp->pm_bpcluster - on, uio->uio_resid);
-		if (uio->uio_offset >= dep->de_FileSize)
+		if (uio->uio_offset >= dep->de_FileSize) {
+			fstrans_done(vp->v_mount);
 			return (0);
+		}
 		/* file size (and hence diff) may be up to 4GB */
 		diff = dep->de_FileSize - uio->uio_offset;
 		if (diff < n)
