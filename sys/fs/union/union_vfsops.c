@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.64 2011/08/28 08:27:57 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.65 2011/11/21 18:29:22 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.64 2011/08/28 08:27:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.65 2011/11/21 18:29:22 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,8 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		error = EINVAL;
 		goto bad;
 	}
+
+	mp->mnt_iflag |= IMNT_MPSAFE;
 
 	/*
 	 * Unless the mount is readonly, ensure that the top layer
