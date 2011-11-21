@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.251 2011/11/05 09:27:06 joerg Exp $	*/
+/*	$NetBSD: systm.h,v 1.252 2011/11/21 04:36:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -176,69 +176,50 @@ int	seltrue(dev_t, int, struct lwp *);
 int	sys_nosys(struct lwp *, const void *, register_t *);
 int	sys_nomodule(struct lwp *, const void *, register_t *);
 
-void	aprint_normal(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
-void	aprint_error(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
-void	aprint_naive(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
-void	aprint_verbose(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
-void	aprint_debug(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
+void	aprint_normal(const char *, ...) __printflike(1, 2);
+void	aprint_error(const char *, ...) __printflike(1, 2);
+void	aprint_naive(const char *, ...) __printflike(1, 2);
+void	aprint_verbose(const char *, ...) __printflike(1, 2);
+void	aprint_debug(const char *, ...) __printflike(1, 2);
 
-void device_printf(device_t, const char *fmt, ...)
-    __attribute__((__format__(__printf__,2,3)));
+void device_printf(device_t, const char *fmt, ...) __printflike(2, 3);
 
-void	aprint_normal_dev(device_t, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
-void	aprint_error_dev(device_t, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
-void	aprint_naive_dev(device_t, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
-void	aprint_verbose_dev(device_t, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
-void	aprint_debug_dev(device_t, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
+void	aprint_normal_dev(device_t, const char *, ...) __printflike(2, 3);
+void	aprint_error_dev(device_t, const char *, ...) __printflike(2, 3);
+void	aprint_naive_dev(device_t, const char *, ...) __printflike(2, 3);
+void	aprint_verbose_dev(device_t, const char *, ...) __printflike(2, 3);
+void	aprint_debug_dev(device_t, const char *, ...) __printflike(2, 3);
 
 struct ifnet;
 
 void	aprint_normal_ifnet(struct ifnet *, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
+    __printflike(2, 3);
 void	aprint_error_ifnet(struct ifnet *, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
+    __printflike(2, 3);
 void	aprint_naive_ifnet(struct ifnet *, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
+    __printflike(2, 3);
 void	aprint_verbose_ifnet(struct ifnet *, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
+    __printflike(2, 3);
 void	aprint_debug_ifnet(struct ifnet *, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
+    __printflike(2, 3);
 
 int	aprint_get_error_count(void);
 
-void	printf_tolog(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
+void	printf_tolog(const char *, ...) __printflike(1, 2);
 
-void	printf_nolog(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
+void	printf_nolog(const char *, ...) __printflike(1, 2);
 
-void	printf(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
+void	printf(const char *, ...) __printflike(1, 2);
 
-int	sprintf(char *, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
+int	sprintf(char *, const char *, ...) __printflike(2, 3);
 
-int	snprintf(char *, size_t, const char *, ...)
-    __attribute__((__format__(__printf__,3,4)));
+int	snprintf(char *, size_t, const char *, ...) __printflike(3, 4);
 
-void	vprintf(const char *, va_list)
-    __attribute__((__format__(__printf__,1,0)));
+void	vprintf(const char *, va_list) __printflike(1, 0);
 
-int	vsprintf(char *, const char *, va_list)
-    __attribute__((__format__(__printf__,2,0)));
+int	vsprintf(char *, const char *, va_list) __printflike(2, 0);
 
-int	vsnprintf(char *, size_t, const char *, va_list)
-    __attribute__((__format__(__printf__,3,0)));
+int	vsnprintf(char *, size_t, const char *, va_list) __printflike(3, 0);
 
 int	humanize_number(char *, size_t, uint64_t, const char *, int);
 
@@ -246,16 +227,11 @@ void	twiddle(void);
 void	banner(void);
 #endif /* _KERNEL */
 
-void	panic(const char *, ...)
-    __dead __attribute__((__format__(__printf__,1,2)));
-void	vpanic(const char *, va_list)
-    __dead __attribute__((__format__(__printf__,1,0)));
-void	uprintf(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
-void	uprintf_locked(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
-void	ttyprintf(struct tty *, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
+void	panic(const char *, ...) __dead __printflike(1, 2);
+void	vpanic(const char *, va_list) __dead __printflike(1, 0);
+void	uprintf(const char *, ...) __printflike(1, 2);
+void	uprintf_locked(const char *, ...) __printflike(1, 2);
+void	ttyprintf(struct tty *, const char *, ...) __printflike(2, 3);
 
 int	format_bytes(char *, size_t, uint64_t);
 

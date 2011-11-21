@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.157 2011/11/20 23:37:00 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.158 2011/11/21 04:36:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -356,8 +356,7 @@ int	lwp_park(struct timespec *, const void *);
 int	lwp_unpark(lwpid_t, const void *);
 
 /* DDB. */
-void	lwp_whatis(uintptr_t, void (*)(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2))));
+void	lwp_whatis(uintptr_t, void (*)(const char *, ...) __printflike(1, 2));
 
 /*
  * Lock an LWP. XXX _MODULE
