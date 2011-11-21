@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.144 2011/11/20 23:01:18 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.145 2011/11/21 01:44:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.144 2011/11/20 23:01:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.145 2011/11/21 01:44:26 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -348,15 +348,18 @@ log(int level, const char *fmt, ...)
 void
 vlog(int level, const char *fmt, va_list ap)
 {
+	va_list cap;
 
+	va_copy(cap, ap);
 	kprintf_lock();
 
 	klogpri(level);		/* log the level first */
 	kprintf(fmt, TOLOG, NULL, NULL, ap);
 	if (!log_open)
-		kprintf(fmt, TOCONS, NULL, NULL, ap);
+		kprintf(fmt, TOCONS, NULL, NULL, cap);
 
 	kprintf_unlock();
+	va_end(cap);
 
 	logwakeup();		/* wake up anyone waiting for log msgs */
 }
@@ -627,11 +630,14 @@ db_printf(const char *fmt, ...)
 void
 db_vprintf(const char *fmt, va_list ap)
 {
+	va_list cap;
 
+	va_copy(cap, ap);
 	/* No mutex needed; DDB pauses all processors. */
 	kprintf(fmt, TODDB, NULL, NULL, ap);
 	if (db_tee_msgbuf)
-		kprintf(fmt, TOLOG, NULL, NULL, ap);
+		kprintf(fmt, TOLOG, NULL, NULL, cap);
+	va_end(cap);
 }
 
 #endif /* DDB */
@@ -1052,14 +1058,11 @@ snprintf(char *bf, size_t size, const char *fmt, ...)
 {
 	int retval;
 	va_list ap;
-	char *p;
 
-	p = bf + size;
 	va_start(ap, fmt);
-	retval = kprintf(fmt, TOBUFONLY, &p, bf, ap);
+	retval = vsnprintf(bf, size, fmt, ap);
 	va_end(ap);
-	if (bf && p < bf + size)
-		*p = '\0';	/* nul terminate */
+
 	return retval;
 }
 
@@ -1074,8 +1077,13 @@ vsnprintf(char *bf, size_t size, const char *fmt, va_list ap)
 
 	p = bf + size;
 	retval = kprintf(fmt, TOBUFONLY, &p, bf, ap);
-	if (bf && p < bf + size)
-		*p = '\0';	/* nul terminate */
+	if (bf && size > 0) {
+		/* nul terminate */
+		if (p < bf + size)
+			*p = '\0';
+		else
+			*--p = '\0';
+	}
 	return retval;
 }
 
