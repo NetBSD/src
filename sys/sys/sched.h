@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.74 2011/11/20 23:37:00 christos Exp $	*/
+/*	$NetBSD: sched.h,v 1.75 2011/11/21 04:36:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ void		sched_setrunnable(struct lwp *);
 
 struct cpu_info *sched_takecpu(struct lwp *);
 void		sched_print_runqueue(void (*pr)(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2))));
+    __printflike(1, 2));
 
 /* Dispatching */
 bool		kpreempt(uintptr_t);
