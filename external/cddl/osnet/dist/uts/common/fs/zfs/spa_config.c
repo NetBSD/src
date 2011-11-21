@@ -179,7 +179,7 @@ spa_config_write(spa_config_dirent_t *dp, nvlist_t *nvl)
 		    VOP_FSYNC(vp, FSYNC, kcred, NULL) == 0) {
 			(void) vn_rename(temp, dp->scd_path, UIO_SYSSPACE);
 		}
-		vn_close(vp, FWRITE, kcred);
+		(void) VOP_CLOSE(vp, oflags, 1, 0, kcred, NULL);
 	}
 
 	(void) vn_remove(temp, UIO_SYSSPACE, RMFILE);
