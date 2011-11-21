@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.59.14.2 2011/11/19 23:19:00 jmcneill Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.59.14.3 2011/11/21 21:39:44 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.59.14.2 2011/11/19 23:19:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.59.14.3 2011/11/21 21:39:44 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -416,6 +416,8 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_index_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_ac97_index_lock, MUTEX_DEFAULT, IPL_SCHED);
 
 	if (pci_mapreg_map(pa, EMU_PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &(sc->sc_iot), &(sc->sc_ioh), &(sc->sc_iob),
@@ -511,6 +513,8 @@ emuxki_detach(device_t self, int flags)
 
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
+	mutex_destroy(&sc->sc_index_lock);
+	mutex_destroy(&sc->sc_ac97_index_lock);
 
 	return 0;
 }
@@ -598,11 +602,11 @@ emuxki_read(struct emuxki_softc *sc, uint16_t chano, uint32_t reg)
 		mask = ((1 << size) - 1) << offset;
 	}
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_spin_enter(&sc->sc_index_lock);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_PTR, ptr);
 	ptr = (bus_space_read_4(sc->sc_iot, sc->sc_ioh, EMU_DATA) & mask)
 		>> offset;
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&sc->sc_index_lock);
 
 	return ptr;
 }
@@ -626,10 +630,10 @@ emuxki_write(struct emuxki_softc *sc, uint16_t chano,
 			(emuxki_read(sc, chano, reg & 0xffff) & ~mask);
 	}
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_spin_enter(&sc->sc_index_lock);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_PTR, ptr);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_DATA, data);
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&sc->sc_index_lock);
 }
 
 /* Microcode should this go in /sys/dev/microcode ? */
@@ -1245,7 +1249,7 @@ emuxki_channel_commit_parms(struct emuxki_channel *chan)
 		(voice->stereo ? 28 : 30) * (voice->b16 + 1);
 	mapval = DMAADDR(sc->silentpage) << 1 | EMU_CHAN_MAP_PTI_MASK;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	emuxki_write(sc, chano, EMU_CHAN_CPF_STEREO, voice->stereo);
 
 	emuxki_channel_commit_fx(chan);
@@ -1290,7 +1294,6 @@ emuxki_channel_commit_parms(struct emuxki_channel *chan)
 	emuxki_write(sc, chano, EMU_CHAN_PEFE,
 		(chan->pitch.envelope_amount << 8) |
 		chan->filter.envelope_amount);
-	mutex_spin_exit(&sc->sc_intr_lock);
 }
 
 static void
@@ -1308,7 +1311,7 @@ emuxki_channel_start(struct emuxki_channel *chan)
 	sample = voice->b16 ? 0x00000000 : 0x80808080;
 	cache_invalid_size = (voice->stereo ? 28 : 30) * (voice->b16 + 1);
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	while (cache_sample--) {
 		emuxki_write(sc, chano, EMU_CHAN_CD0 + cache_sample,
 			sample);
@@ -1338,7 +1341,6 @@ emuxki_channel_start(struct emuxki_channel *chan)
 	emuxki_write(sc, chano, EMU_CHAN_CPF_PITCH,
 		chan->pitch.current);
 	emuxki_write(sc, chano, EMU_CHAN_IP, chan->pitch.initial);
-	mutex_spin_exit(&sc->sc_intr_lock);
 }
 
 static void
@@ -1349,14 +1351,13 @@ emuxki_channel_stop(struct emuxki_channel *chan)
 
 	sc = chan->voice->sc;
 	chano = chan->num;
-	mutex_spin_enter(&sc->sc_intr_lock);
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	emuxki_write(sc, chano, EMU_CHAN_PTRX_PITCHTARGET, 0);
 	emuxki_write(sc, chano, EMU_CHAN_CPF_PITCH, 0);
 	emuxki_write(sc, chano, EMU_CHAN_IFATN_ATTENUATION, 0xff);
 	emuxki_write(sc, chano, EMU_CHAN_VTFT_VOLUMETARGET, 0);
 	emuxki_write(sc, chano, EMU_CHAN_CVCF_CURRVOL, 0);
 	emuxki_write(sc, chano, EMU_CHAN_IP, 0);
-	mutex_spin_exit(&sc->sc_intr_lock);
 }
 
 /*
@@ -1477,19 +1478,21 @@ emuxki_voice_new(struct emuxki_softc *sc, uint8_t use)
 {
 	struct emuxki_voice *voice;
 
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
 	voice = sc->lvoice;
 	sc->lvoice = NULL;
 
 	if (!voice) {
-		mutex_exit(&sc->sc_lock);
+		mutex_exit(&sc->sc_intr_lock);
 		voice = kmem_alloc(sizeof(*voice), KM_SLEEP);
-		mutex_enter(&sc->sc_lock);
+		mutex_enter(&sc->sc_intr_lock);
 		if (!voice)
 			return NULL;
 	} else if (voice->use != use) {
-		mutex_exit(&sc->sc_lock);
+		mutex_exit(&sc->sc_intr_lock);
 		emuxki_voice_dataloc_destroy(voice);
-		mutex_enter(&sc->sc_lock);
+		mutex_enter(&sc->sc_intr_lock);
 	} else
 		goto skip_initialize;
 
@@ -1511,9 +1514,7 @@ emuxki_voice_new(struct emuxki_softc *sc, uint8_t use)
 	voice->use = use;
 
 skip_initialize:
-	mutex_spin_enter(&sc->sc_intr_lock);
 	LIST_INSERT_HEAD((&sc->voices), voice, next);
-	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return voice;
 }
@@ -1771,7 +1772,7 @@ emuxki_resched_timer(struct emuxki_softc *sc)
 
 	timerate = 1024;
 	active = 0;
-	mutex_spin_enter(&sc->sc_intr_lock);
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	LIST_FOREACH(voice, &sc->voices, next) {
 		if ((voice->state & EMU_VOICE_STATE_STARTED) == 0)
 			continue;
@@ -1779,7 +1780,6 @@ emuxki_resched_timer(struct emuxki_softc *sc)
 		if (voice->timerate < timerate)
 			timerate = voice->timerate;
 	}
-	mutex_spin_exit(&sc->sc_intr_lock);
 
 	if (timerate & ~EMU_TIMER_RATE_MASK)
 		timerate = 0;
@@ -1900,11 +1900,10 @@ emuxki_voice_start(struct emuxki_voice *voice,
 		case EMU_RECSRC_FX:
 		case EMU_RECSRC_MIC:
 			/* DMA completion interrupt is useless; use timer */
-			mutex_spin_enter(&sc->sc_intr_lock);
+			KASSERT(mutex_owned(&sc->sc_intr_lock));
 			val = emu_rd(sc, INTE, 4);
 			val |= emuxki_recsrc_intrmasks[voice->dataloc.source];
 			emu_wr(sc, INTE, val, 4);
-			mutex_spin_exit(&sc->sc_intr_lock);
 			break;
 		default:
 			break;
@@ -1948,11 +1947,10 @@ emuxki_voice_halt(struct emuxki_voice *voice)
 			    emuxki_recsrc_szreg[voice->dataloc.source],
 			    EMU_RECBS_BUFSIZE_NONE);
 #if 0
-			mutex_spin_enter(&sc->sc_intr_lock);
+			KASSERT(mutex_owned(&sc->sc_intr_lock));
 			val = emu_rd(sc, INTE, 4);
 			val &= ~emuxki_recsrc_intrmasks[voice->dataloc.source];
 			emu_wr(sc, INTE, val, 4);
-			mutex_spin_exit(&sc->sc_intr_lock);
 #endif
 			break;
 		default:
@@ -2484,10 +2482,10 @@ emuxki_ac97_read(void *arg, uint8_t reg, uint16_t *val)
 	struct emuxki_softc *sc;
 
 	sc = arg;
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_spin_enter(&sc->sc_ac97_index_lock);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, EMU_AC97ADDR, reg);
 	*val = bus_space_read_2(sc->sc_iot, sc->sc_ioh, EMU_AC97DATA);
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&sc->sc_ac97_index_lock);
 
 	return 0;
 }
@@ -2498,10 +2496,10 @@ emuxki_ac97_write(void *arg, uint8_t reg, uint16_t val)
 	struct emuxki_softc *sc;
 
 	sc = arg;
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_spin_enter(&sc->sc_ac97_index_lock);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, EMU_AC97ADDR, reg);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EMU_AC97DATA, val);
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&sc->sc_ac97_index_lock);
 
 	return 0;
 }

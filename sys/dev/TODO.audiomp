@@ -41,7 +41,7 @@ dev/pci/cmpci.c			done
 dev/pci/cs4280.c		done
 dev/pci/cs4281.c		done
 dev/pci/eap.c			done		port-i386
-dev/pci/emuxki.c		done
+dev/pci/emuxki.c		done		port-amd64
 dev/pci/esa.c			done
 dev/pci/esm.c			done
 dev/pci/eso.c			done
