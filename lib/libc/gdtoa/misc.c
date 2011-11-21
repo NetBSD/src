@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.10 2011/11/18 08:20:13 martin Exp $ */
+/* $NetBSD: misc.c,v 1.11 2011/11/21 09:46:19 mlelstv Exp $ */
 
 /****************************************************************
 
@@ -76,8 +76,10 @@ Balloc
 		else
 			rv = (Bigint*)MALLOC(len*sizeof(double));
 #endif
-		if (rv == NULL)
+		if (rv == NULL) {
+			FREE_DTOA_LOCK(0);
 			return NULL;
+		}
 		rv->k = k;
 		rv->maxwds = x;
 		}
