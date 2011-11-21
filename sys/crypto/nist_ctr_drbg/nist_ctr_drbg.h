@@ -1,4 +1,4 @@
-/*	$NetBSD: nist_ctr_drbg.h,v 1.1 2011/11/19 22:51:22 tls Exp $ */
+/*	$NetBSD: nist_ctr_drbg.h,v 1.2 2011/11/21 23:48:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 typedef struct {
 	unsigned int reseed_counter;
 	NIST_Key ctx;
-	unsigned int V[NIST_BLOCK_OUTLEN_INTS];
+	unsigned int V[NIST_BLOCK_OUTLEN_INTS] __attribute__ ((aligned(8)));
 } NIST_CTR_DRBG;
 
 int nist_ctr_initialize(void);
