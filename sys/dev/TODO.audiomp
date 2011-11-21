@@ -32,7 +32,7 @@ dev/isa/ym.c			done
 dev/isapnp/mpu_isapnp.c		done
 dev/pad/pad.c			done
 dev/pci/auacer.c		done
-dev/pci/auich.c			done
+dev/pci/auich.c			done		port-amd64
 dev/pci/auixp.c			done
 dev/pci/autri.c			done
 dev/pci/auvia.c			done
