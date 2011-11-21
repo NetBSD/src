@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ibcs2.8,v 1.6 2011/11/21 14:27:41 njoly Exp $
+.\"	$NetBSD: compat_ibcs2.8,v 1.7 2011/11/21 15:11:45 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Scott Bartram
 .\" Copyright (c) 1995 Frank van der Linden
@@ -71,15 +71,17 @@ virtual 8086 mode
 The iBCS2 compatibility feature is active for kernels compiled with
 the
 .Dv COMPAT_IBCS2
-option enabled.  If support for iBCS2 ELF executables is desired,
-the
+option enabled.
+If support for iBCS2 ELF executables is desired, the
 .Dv EXEC_ELF32
 option should be enabled in addition to
 .Dv COMPAT_IBCS2 .
 .Pp
 Many COFF-format programs and most ELF-format programs are dynamically
-linked. This means that you will also need the shared libraries that
-the program depends on.  Also, you will need to create a
+linked.
+This means that you will also need the shared libraries that
+the program depends on.
+Also, you will need to create a
 .Dq shadow root
 directory for iBCS2 binaries on your
 .Nx
@@ -98,7 +100,8 @@ will first try to open
 and if that does not exist open the
 .Sq real
 .Pa /etc/passwd
-file. It is recommended that you install iBCS2 packages
+file.
+It is recommended that you install iBCS2 packages
 that include configuration files, etc. under
 .Pa /emul/ibcs2 ,
 to avoid naming conflicts with possible
@@ -125,7 +128,8 @@ installation steps).
 .Bl -tag -width "COFF binaries"
 .It COFF binaries
 You can simply copy all of the available shared libraries since they
-are fairly small in size. The COFF shared libraries are typically
+are fairly small in size.
+The COFF shared libraries are typically
 found in /shlib and can be obtained from the following sources:
 .Bd -literal
 SCO UNIX version 3.x (aka ODT)
@@ -158,7 +162,8 @@ following files on your system:
 .Pp
 .El
 If you don't have access to a SCO system, you will need to get the
-extra files you need from a SCO distribution. As of January 1998, SCO
+extra files you need from a SCO distribution.
+As of January 1998, SCO
 sells a copy of SCO OpenServer (iBCS2) and/or SCO UnixWare (SVR4) for
 personal/non-commercial use for only the cost of shipping (about $20US).
 The distribution comes on an ISO9660-format CDROM which can be

@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_freebsd.8,v 1.14 2011/11/21 14:27:41 njoly Exp $
+.\"	$NetBSD: compat_freebsd.8,v 1.15 2011/11/21 15:11:45 wiz Exp $
 .\"	from: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -52,18 +52,19 @@ with the
 .Dv COMPAT_FREEBSD
 option enabled.
 .Pp
-A lot of programs are dynamically linked. This means, that you will
-also need the
+A lot of programs are dynamically linked.
+This means, that you will also need the
 .Fx
 shared libraries that the program depends on, and the runtime
-linker.  Also, you will need to create a
+linker.
+Also, you will need to create a
 .Dq shadow root
 directory for
 .Fx
 binaries on your
 .Nx
-system. This directory
-is named
+system.
+This directory is named
 .Pa /emul/freebsd .
 Any file operations done by
 .Fx
@@ -88,8 +89,8 @@ packages that include configuration files, etc under
 .Pa /emul/freebsd ,
 to avoid naming conflicts with possible
 .Nx
-counterparts. Shared
-libraries should also be installed in the shadow tree.
+counterparts.
+Shared libraries should also be installed in the shadow tree.
 .Pp
 Generally, you will need to look for the shared libraries that
 .Fx
@@ -97,7 +98,8 @@ binaries depend on only the first few times that you install a
 .Fx
 program on your
 .Nx
-system. After a while, you will have a sufficient set of
+system.
+After a while, you will have a sufficient set of
 .Fx
 shared libraries on your system to be able to run newly imported
 .Fx
@@ -209,10 +211,11 @@ tree):
 .It
 You don't have access to a
 .Fx
-system. In that case, you
-should get the extra files you need from various ftp sites.
+system.
+In that case, you should get the extra files you need from various ftp sites.
 Information on where to look for the various files is appended
-below. For now, let's assume you know where to get the files.
+below.
+For now, let's assume you know where to get the files.
 .Pp
 Retrieve the following files (from _one_ ftp site to avoid
 any version mismatches), and install them under
@@ -237,8 +240,8 @@ and
 .Ic ldd
 don't necessarily need to be under
 .Pa /emul/freebsd ,
-you can install them elsewhere in the system too. Just make sure
-they don't conflict with their
+you can install them elsewhere in the system too.
+Just make sure they don't conflict with their
 .Nx
 counterparts.
 A good idea would be to install them in
@@ -290,7 +293,8 @@ binaries which only need a shared libc.
 You can test this by running the
 .Fx
 .Ic ldd
-on itself.  Suppose that you have it installed as
+on itself.
+Suppose that you have it installed as
 .Ic ldd-freebsd ,
 it should produce something like:
 .Bd -literal -offset indent
@@ -342,7 +346,8 @@ For example,
 X server software needs
 .Fx
 .Pa /dev/ttyv0
-for ioctls.  In this case, create a symbolic link from
+for ioctls.
+In this case, create a symbolic link from
 .Pa /emul/freebsd/dev/ttyv0
 to a
 .Xr wscons 4
@@ -386,7 +391,8 @@ This distribution consists of a number of tar-ed and gzipped files,
 Normally, they're controlled by an install program, but you can
 retrieve files
 .Dq by hand
-too.  The way to look something up is to retrieve all the files in the
+too.
+The way to look something up is to retrieve all the files in the
 distribution, and ``tar ztvf'' through them for the file you need.
 Here is an example of a list of files that you might need.
 .Bd -literal -offset indent
