@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.34.4.1 2011/11/20 16:18:15 jmcneill Exp $	*/
+/*	$NetBSD: vs.c,v 1.34.4.2 2011/11/22 22:47:04 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.34.4.1 2011/11/20 16:18:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.34.4.2 2011/11/22 22:47:04 jmcneill Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -136,7 +136,6 @@ static const struct audio_hw_if vs_hw_if = {
 	vs_get_props,
 	vs_trigger_output,
 	vs_trigger_input,
-	NULL,
 	NULL,
 	vs_get_locks,
 };

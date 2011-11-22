@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.7.4.3 2011/11/20 11:10:16 jmcneill Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.7.4.4 2011/11/22 22:47:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.7.4.3 2011/11/20 11:10:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.7.4.4 2011/11/22 22:47:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,6 @@ static const struct audio_hw_if gcscaudio_hw_if = {
 	.trigger_output		= gcscaudio_trigger_output,
 	.trigger_input		= gcscaudio_trigger_input,
 	.dev_ioctl		= NULL,
-	.powerstate		= NULL,
 	.get_locks		= gcscaudio_get_locks,
 };
 

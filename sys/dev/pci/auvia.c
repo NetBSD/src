@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.73.10.1 2011/11/19 21:49:41 jmcneill Exp $	*/
+/*	$NetBSD: auvia.c,v 1.73.10.2 2011/11/22 22:47:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.73.10.1 2011/11/19 21:49:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.73.10.2 2011/11/22 22:47:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,6 @@ static const struct audio_hw_if auvia_hw_if = {
 	auvia_trigger_output,
 	auvia_trigger_input,
 	NULL, /* dev_ioctl */
-	NULL, /* powerstate */
 	auvia_get_locks,
 };
 

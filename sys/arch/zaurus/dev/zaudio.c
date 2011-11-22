@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.15.4.2 2011/11/20 13:47:07 jmcneill Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.15.4.3 2011/11/22 22:47:04 jmcneill Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.15.4.2 2011/11/20 13:47:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.15.4.3 2011/11/22 22:47:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,6 @@ struct audio_hw_if wm8750_hw_if = {
 	.trigger_output		= NULL,
 	.trigger_input		= NULL,
 	.dev_ioctl		= NULL,
-	.powerstate		= NULL,
 	.get_locks		= zaudio_get_locks,
 };
 

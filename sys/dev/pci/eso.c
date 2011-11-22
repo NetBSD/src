@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.57.14.1 2011/11/19 21:49:43 jmcneill Exp $	*/
+/*	$NetBSD: eso.c,v 1.57.14.2 2011/11/22 22:47:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.57.14.1 2011/11/19 21:49:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.57.14.2 2011/11/22 22:47:09 jmcneill Exp $");
 
 #include "mpu.h"
 
@@ -184,7 +184,6 @@ static const struct audio_hw_if eso_hw_if = {
 	eso_trigger_output,
 	eso_trigger_input,
 	NULL,			/* dev_ioctl */
-	NULL,			/* powerstate */
 	eso_get_locks,
 };
 

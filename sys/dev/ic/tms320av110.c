@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.21.36.1 2011/11/20 15:48:52 jmcneill Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.21.36.2 2011/11/22 22:47:05 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.21.36.1 2011/11/20 15:48:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.21.36.2 2011/11/22 22:47:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,6 @@ const struct audio_hw_if tav_audio_if = {
 	0, /* trigger_output */
 	0, /* trigger_input */
 	0, /* dev_ioctl */		/* optional */
-	0, /* powerhook */		/* optional */
 	tav_get_locks,
 };
 

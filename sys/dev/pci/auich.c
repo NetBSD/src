@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.138.10.1 2011/11/19 21:49:40 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.138.10.2 2011/11/22 22:47:07 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.138.10.1 2011/11/19 21:49:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.138.10.2 2011/11/22 22:47:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,6 @@ static int	auich_trigger_output(void *, void *, void *, int,
 		    void (*)(void *), void *, const audio_params_t *);
 static int	auich_trigger_input(void *, void *, void *, int,
 		    void (*)(void *), void *, const audio_params_t *);
-static int	auich_powerstate(void *, int);
 static void	auich_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static int	auich_alloc_cdata(struct auich_softc *);
@@ -330,7 +329,6 @@ static const struct audio_hw_if auich_hw_if = {
 	auich_trigger_output,
 	auich_trigger_input,
 	NULL,			/* dev_ioctl */
-	auich_powerstate,
 	auich_get_locks,
 };
 
@@ -1479,12 +1477,6 @@ auich_trigger_input(void *v, void *start, void *end, int blksize,
 	    sc->sc_cddma + ICH_PCMI_OFF(0));
 	auich_trigger_pipe(sc, ICH_PCMI, &sc->pcmi);
 
-	return 0;
-}
-
-static int
-auich_powerstate(void *v, int state)
-{
 	return 0;
 }
 

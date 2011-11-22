@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.77.4.1 2011/11/19 21:49:41 jmcneill Exp $	*/
+/*	$NetBSD: azalia.c,v 1.77.4.2 2011/11/22 22:47:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.77.4.1 2011/11/19 21:49:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.77.4.2 2011/11/22 22:47:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -260,7 +260,6 @@ static const struct audio_hw_if azalia_hw_if = {
 	azalia_trigger_output,
 	azalia_trigger_input,
 	NULL,			/* dev_ioctl */
-	NULL,			/* powerstate */
 	azalia_get_locks,
 };
 
