@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.52.14.3 2011/11/22 07:57:23 mrg Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.52.14.4 2011/11/22 11:50:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.52.14.3 2011/11/22 07:57:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.52.14.4 2011/11/22 11:50:02 mrg Exp $");
 
 #include "sequencer.h"
 
@@ -240,7 +240,7 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 
 	if ((error = sequencer_enter(dev, &sc)) != 0)
 		return error;
-	sc = &seqdevs[unit];
+	KASSERT(sc == &seqdevs[unit]);
 	if (sc->isopen != 0) {
 		sequencer_exit(sc);
 		return EBUSY;
@@ -296,7 +296,7 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	seq_reset(sc);
 	sequencer_exit(sc);
 
-	DPRINTF(("sequenceropen: mode=%d, nmidi=%d\n", sc->mode, sc->nmidi));
+	DPRINTF(("%s: mode=%d, nmidi=%d\n", __func__, sc->mode, sc->nmidi));
 	return 0;
 }
 
@@ -310,7 +310,7 @@ seq_drain(struct sequencer_softc *sc)
 	DPRINTFN(3, ("seq_drain: %p, len=%d\n", sc, SEQ_QLEN(&sc->outq)));
 	seq_startoutput(sc);
 	error = 0;
-	while(!SEQ_QEMPTY(&sc->outq) && !error)
+	while (!SEQ_QEMPTY(&sc->outq) && !error)
 		error = cv_timedwait_sig(&sc->wchan, &sc->lock, 60*hz);
 	return (error);
 }
@@ -357,7 +357,7 @@ seq_startoutput(struct sequencer_softc *sc)
 	if (sc->timeout)
 		return;
 	DPRINTFN(4, ("seq_startoutput: %p, len=%d\n", sc, SEQ_QLEN(q)));
-	while(!SEQ_QEMPTY(q) && !sc->timeout) {
+	while (!SEQ_QEMPTY(q) && !sc->timeout) {
 		SEQ_QGET(q, cmd);
 		seq_do_command(sc, &cmd);
 	}
@@ -410,7 +410,6 @@ static int
 seq_input_event(struct sequencer_softc *sc, seq_event_t *cmd)
 {
 	struct sequencer_queue *q;
-	proc_t *p;
 
 	KASSERT(mutex_owned(&sc->lock));
 
@@ -427,6 +426,8 @@ seq_input_event(struct sequencer_softc *sc, seq_event_t *cmd)
 	cv_broadcast(&sc->rchan);
 	selnotify(&sc->rsel, 0, NOTE_SUBMIT);
 	if (sc->async != 0) {
+		proc_t *p;
+
 		mutex_enter(proc_lock);
 		if ((p = proc_find(sc->async)) != NULL)
 			psignal(p, SIGIO);
@@ -448,6 +449,7 @@ seq_softintr(void *addr)
 	sc = addr;
 
 	mutex_enter(&sc->lock);
+
 	qi.qi_ptr = pcq_get(sc->pcq);
 	if (qi.qi_ptr == NULL) {
 		mutex_exit(&sc->lock);
@@ -516,9 +518,10 @@ sequencerread(dev_t dev, struct uio *uio, int ioflag)
 	DPRINTFN(20, ("sequencerread: %"PRIx64", count=%d, ioflag=%x\n",
 	   dev, (int)uio->uio_resid, ioflag));
 
-	q = &sc->inq;
 	if ((error = sequencer_enter(dev, &sc)) != 0)
 		return error;
+	q = &sc->inq;
+
 	if (sc->mode == SEQ_OLD) {
 		sequencer_exit(sc);
 		DPRINTFN(-1,("sequencerread: old read\n"));
@@ -563,22 +566,24 @@ sequencerwrite(dev_t dev, struct uio *uio, int ioflag)
 	DPRINTFN(2, ("sequencerwrite: %"PRIx64", count=%d\n", dev,
 	    (int)uio->uio_resid));
 
-	q = &sc->outq;
-
 	if ((error = sequencer_enter(dev, &sc)) != 0)
 		return error;
+	q = &sc->outq;
+
 	size = sc->mode == SEQ_NEW ? sizeof cmdbuf : SEQOLD_CMDSIZE;
 	while (uio->uio_resid >= size && error == 0) {
 		mutex_exit(&sc->lock);
 		error = uiomove(&cmdbuf, size, uio);
 		if (error == 0) {
 			if (sc->mode == SEQ_OLD && seq_to_new(&cmdbuf, uio)) {
+				mutex_enter(&sc->lock);
 				continue;
 			}
 			if (cmdbuf.tag == SEQ_FULLSIZE) {
 				/* We do it like OSS does, asynchronously */
 				error = seq_do_fullsize(sc, &cmdbuf, uio);
 				if (error == 0) {
+					mutex_enter(&sc->lock);
 					continue;
 				}
 			}
@@ -1296,6 +1301,9 @@ midiseq_in(struct midi_dev *md, u_char *msg, int len)
 {
 	struct sequencer_softc *sc;
 	sequencer_pcqitem_t qi;
+
+	DPRINTFN(2, ("midiseq_in: %p %02x %02x %02x\n",
+		     md, msg[0], msg[1], msg[2]));
 
 	sc = md->seq;
 
