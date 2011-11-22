@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.74 2011/10/25 15:01:45 jakllsch Exp $
+# $NetBSD: XEN3_DOM0,v 1.75 2011/11/22 21:24:55 tls Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -816,7 +816,6 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 

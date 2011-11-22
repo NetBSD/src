@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.135 2011/06/30 20:09:21 wiz Exp $
+# $NetBSD: GENERIC,v 1.136 2011/11/22 21:25:02 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -584,7 +584,6 @@ pseudo-device   accf_http		# "httpready" accept filter
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sequencer	1	# MIDI sequencer
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 
