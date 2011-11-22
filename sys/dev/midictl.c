@@ -1,4 +1,4 @@
-/* $NetBSD: midictl.c,v 1.6.32.1 2011/11/19 21:49:35 jmcneill Exp $ */
+/* $NetBSD: midictl.c,v 1.6.32.2 2011/11/22 06:11:12 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.6.32.1 2011/11/19 21:49:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.6.32.2 2011/11/22 06:11:12 mrg Exp $");
 
 /*
  * See midictl.h for an overview of the purpose and use of this module.
@@ -206,13 +206,15 @@ void
 midictl_close(midictl *mc)
 {
 	midictl_store *s;
+	kmutex_t *lock;
 
 	s = mc->store;
+	lock = s->lock;
 
-	mutex_enter(s->lock);
+	mutex_enter(lock);
 	s->destroy = true;
 	cv_broadcast(&s->cv);
-	mutex_exit(s->lock);
+	mutex_exit(lock);
 }
 
 void
