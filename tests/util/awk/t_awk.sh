@@ -1,4 +1,4 @@
-# $NetBSD: t_awk.sh,v 1.6 2011/05/02 08:30:21 jruoho Exp $
+# $NetBSD: t_awk.sh,v 1.7 2011/11/22 20:22:10 cheusov Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -98,6 +98,16 @@ period_body()
 	h_check period -v x=0.5
 }
 
+atf_test_case assign_NF
+assign_NF_head()
+{
+	atf_set "descr" 'Checks that assign to NF changes $0 and $n (PR/44063)'
+}
+assign_NF_body()
+{
+	h_check assign_NF
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case big_regexp
@@ -105,4 +115,5 @@ atf_init_test_cases()
 	atf_add_test_case string1
 	atf_add_test_case multibyte
 	atf_add_test_case period
+	atf_add_test_case assign_NF
 }
