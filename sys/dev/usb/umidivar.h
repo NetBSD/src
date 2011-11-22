@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.14 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.14.10.1 2011/11/22 07:56:15 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -119,4 +119,7 @@ struct umidi_softc {
 	struct umidi_endpoint	*sc_in_ep;
 	struct umidi_endpoint	*sc_endpoints;
 	int			cblnums_global;
+
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
 };
