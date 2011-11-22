@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.9.4.2 2011/11/20 13:47:07 jmcneill Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.9.4.3 2011/11/22 22:47:02 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -182,7 +182,6 @@ struct audio_hw_if acu_hw_if = {
 	acu_get_props,
 	acu_trigger_output,
 	acu_trigger_input,
-	NULL,
 	NULL,
 	acu_get_locks,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.26.4.2 2011/11/20 12:04:42 mrg Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.26.4.3 2011/11/22 22:47:04 jmcneill Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.26.4.2 2011/11/20 12:04:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.26.4.3 2011/11/22 22:47:04 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -175,7 +175,6 @@ const struct audio_hw_if sa_hw_if = {
 	0,
 	0,
 	am7930_get_props,
-	0,
 	0,
 	0,
 	0,

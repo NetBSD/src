@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.14.4.1 2011/11/20 12:41:59 mrg Exp $ */
+/* $NetBSD: toccata.c,v 1.14.4.2 2011/11/22 22:47:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.14.4.1 2011/11/20 12:41:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.14.4.2 2011/11/22 22:47:02 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -206,7 +206,6 @@ const struct audio_hw_if audiocs_hw_if = {
 	0,	/* mappage */
 	toccata_get_props,
 	0,	/* trigger_output */
-	0,
 	0,
 	0,
 	toccata_get_locks,

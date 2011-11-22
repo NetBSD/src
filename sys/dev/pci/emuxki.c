@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.59.14.3 2011/11/21 21:39:44 jakllsch Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.59.14.4 2011/11/22 22:47:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.59.14.3 2011/11/21 21:39:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.59.14.4 2011/11/22 22:47:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -204,7 +204,6 @@ static const struct audio_hw_if emuxki_hw_if = {
 	emuxki_trigger_output,
 	emuxki_trigger_input,
 	NULL,			/* dev_ioctl */
-	NULL,			/* powerstate */
 	emuxki_get_locks,
 };
 

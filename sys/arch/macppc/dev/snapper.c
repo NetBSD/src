@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.36.10.1 2011/11/22 05:54:54 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.36.10.2 2011/11/22 22:47:03 jmcneill Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.36.10.1 2011/11/22 05:54:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.36.10.2 2011/11/22 22:47:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -302,7 +302,6 @@ const struct audio_hw_if snapper_hw_if = {
 	snapper_get_props,
 	snapper_trigger_output,
 	snapper_trigger_input,
-	NULL,
 	NULL,
 	snapper_get_locks,
 };

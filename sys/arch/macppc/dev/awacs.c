@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.40.6.1 2011/11/22 00:48:48 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.40.6.2 2011/11/22 22:47:03 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.40.6.1 2011/11/22 00:48:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.40.6.2 2011/11/22 22:47:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -189,7 +189,6 @@ const struct audio_hw_if awacs_hw_if = {
 	awacs_get_props,
 	awacs_trigger_output,
 	awacs_trigger_input,
-	NULL,
 	NULL,
 	awacs_get_locks,
 };

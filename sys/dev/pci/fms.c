@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.38.10.1 2011/11/19 21:49:43 jmcneill Exp $	*/
+/*	$NetBSD: fms.c,v 1.38.10.2 2011/11/22 22:47:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.38.10.1 2011/11/19 21:49:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.38.10.2 2011/11/22 22:47:10 jmcneill Exp $");
 
 #include "mpu.h"
 
@@ -136,7 +136,6 @@ static const struct audio_hw_if fms_hw_if = {
 	fms_get_props,
 	fms_trigger_output,
 	fms_trigger_input,
-	NULL,
 	NULL,
 	fms_get_locks,
 };

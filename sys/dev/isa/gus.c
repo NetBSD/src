@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.106.4.1 2011/11/19 21:49:38 jmcneill Exp $	*/
+/*	$NetBSD: gus.c,v 1.106.4.2 2011/11/22 22:47:06 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.106.4.1 2011/11/19 21:49:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.106.4.2 2011/11/22 22:47:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,7 +601,6 @@ const struct audio_hw_if gus_hw_if = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
 	ad1848_get_locks,
 };
 
@@ -630,7 +629,6 @@ static const struct audio_hw_if gusmax_hw_if = {
 	ad1848_isa_round_buffersize,
 	ad1848_isa_mappage,
 	gusmax_get_props,
-	NULL,
 	NULL,
 	NULL,
 	NULL,
