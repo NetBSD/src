@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2011/08/13 21:04:05 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2011/11/22 16:56:29 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2011/08/13 21:04:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2011/11/22 16:56:29 phx Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -230,13 +230,15 @@ mem_regions(struct mem_region **mem, struct mem_region **avail)
 void
 cpu_startup(void)
 {
-	int msr;
+	struct btinfo_prodfamily *bi_prod;
 	void *baseaddr;
+	int msr;
 
 	/*
 	 * Do common startup.
 	 */
-	oea_startup(NULL);
+	bi_prod = lookup_bootinfo(BTINFO_PRODFAMILY);
+	oea_startup(bi_prod != NULL ? bi_prod->name : NULL);
 
 	/*
 	 * Prepare EPIC and install external interrupt handler.
