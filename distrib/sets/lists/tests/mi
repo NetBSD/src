@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.425 2011/11/21 23:50:44 joerg Exp $
+# $NetBSD: mi,v 1.426 2011/11/22 20:22:09 cheusov Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2713,6 +2713,9 @@
 ./usr/tests/util/Atffile			tests-util-tests
 ./usr/tests/util/awk				tests-util-tests
 ./usr/tests/util/awk/Atffile			tests-util-tests
+./usr/tests/util/awk/d_assign_NF.awk		tests-util-tests
+./usr/tests/util/awk/d_assign_NF.in		tests-util-tests
+./usr/tests/util/awk/d_assign_NF.out		tests-util-tests
 ./usr/tests/util/awk/d_big_regexp.awk		tests-util-tests
 ./usr/tests/util/awk/d_big_regexp.in		tests-util-tests
 ./usr/tests/util/awk/d_big_regexp.out		tests-util-tests

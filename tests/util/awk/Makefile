@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/04/30 11:24:14 alnsn Exp $
+# $NetBSD: Makefile,v 1.3 2011/11/22 20:22:10 cheusov Exp $
 
 NOMAN=		# defined
 
@@ -29,5 +29,8 @@ FILES+=		d_tolower.out
 FILES+=		d_toupper.awk
 FILES+=		d_toupper.in
 FILES+=		d_toupper.out
+FILES+=		d_assign_NF.awk
+FILES+=		d_assign_NF.in
+FILES+=		d_assign_NF.out
 
 .include <bsd.test.mk>
