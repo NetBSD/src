@@ -51,7 +51,7 @@ dev/pci/neo.c			done
 dev/pci/sv.c			done
 dev/pci/yds.c			done
 dev/pci/hdaudio/hdafg.c		done		port-i386, port-amd64
-dev/sbus/cs4231_sbus.c		done
+dev/sbus/cs4231_sbus.c		done		port-sparc, port-sparc64
 dev/sbus/dbri.c			done		port-sparc
 dev/tc/bba.c			done
 dev/usb/uaudio.c		done		port-amd64
