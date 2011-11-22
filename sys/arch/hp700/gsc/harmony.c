@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.23.4.1 2011/11/20 15:23:46 jmcneill Exp $	*/
+/*	$NetBSD: harmony.c,v 1.23.4.2 2011/11/22 22:47:03 jmcneill Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -145,7 +145,6 @@ const struct audio_hw_if harmony_sa_hw_if = {
 	harmony_get_props,
 	harmony_trigger_output,
 	harmony_trigger_input,
-	NULL,
 	NULL,
 	harmony_get_locks,
 };

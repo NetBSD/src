@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.40.104.1 2011/11/20 12:41:59 mrg Exp $ */
+/*	$NetBSD: aucc.c,v 1.40.104.2 2011/11/22 22:47:02 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -53,7 +53,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.40.104.1 2011/11/20 12:41:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.40.104.2 2011/11/22 22:47:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,6 @@ const struct audio_hw_if sa_hw_if = {
 	NULL,
 	NULL,
 	aucc_get_props,
-	NULL,
 	NULL,
 	NULL,
 	NULL,

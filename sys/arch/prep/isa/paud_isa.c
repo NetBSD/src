@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.14.4.1 2011/11/20 16:34:08 jmcneill Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.14.4.2 2011/11/22 22:47:03 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.14.4.1 2011/11/20 16:34:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.14.4.2 2011/11/22 22:47:03 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -120,7 +120,6 @@ static const struct audio_hw_if paud_hw_if = {
 	ad1848_isa_get_props,
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
-	NULL,
 	NULL,
 	ad1848_get_locks,
 };

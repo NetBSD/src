@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.41.4.1 2011/11/19 21:49:39 jmcneill Exp $	*/
+/*	$NetBSD: ym.c,v 1.41.4.2 2011/11/22 22:47:07 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.41.4.1 2011/11/19 21:49:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.41.4.2 2011/11/22 22:47:07 jmcneill Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -195,7 +195,6 @@ const struct audio_hw_if ym_hw_if = {
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
 	NULL,
-	NULL,	/* powerstate */
 	ad1848_get_locks,
 };
 

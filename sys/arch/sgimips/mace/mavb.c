@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.7.4.3 2011/11/20 18:25:46 jmcneill Exp $ */
+/* $NetBSD: mavb.c,v 1.7.4.4 2011/11/22 22:47:03 jmcneill Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -298,7 +298,6 @@ struct audio_hw_if mavb_sa_hw_if = {
 	mavb_get_props,
 	mavb_trigger_output,
 	mavb_trigger_input,
-	NULL,
 	NULL,
 	mavb_get_locks,
 };

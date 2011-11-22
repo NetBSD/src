@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.20.4.1 2011/11/20 12:07:27 jmcneill Exp $ */
+/* $NetBSD: haltwo.c,v 1.20.4.2 2011/11/22 22:47:03 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.20.4.1 2011/11/20 12:07:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.20.4.2 2011/11/22 22:47:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,6 @@ static const struct audio_hw_if haltwo_hw_if = {
 	haltwo_trigger_output,
 	haltwo_trigger_input,
 	NULL, /* dev_ioctl */
-	NULL, /* powerstate */
 	haltwo_get_locks,
 };
 

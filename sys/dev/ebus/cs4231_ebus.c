@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.34.4.2 2011/11/20 11:41:53 mrg Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.34.4.3 2011/11/22 22:47:05 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.34.4.2 2011/11/20 11:41:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.34.4.3 2011/11/22 22:47:05 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sparc_arch.h"
@@ -123,7 +123,6 @@ const struct audio_hw_if audiocs_ebus_hw_if = {
 	cs4231_ebus_trigger_output,
 	cs4231_ebus_trigger_input,
 	NULL,			/* dev_ioctl */
-	NULL,			/* powerstate */
 	ad1848_get_locks,
 };
 

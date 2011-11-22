@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.33.10.1 2011/11/19 21:49:37 jmcneill Exp $	*/
+/*	$NetBSD: aria.c,v 1.33.10.2 2011/11/22 22:47:06 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.33.10.1 2011/11/19 21:49:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.33.10.2 2011/11/22 22:47:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,6 @@ const struct audio_hw_if aria_hw_if = {
 	NULL,
 	NULL,
 	aria_get_props,
-	NULL,
 	NULL,
 	NULL,
 	NULL,

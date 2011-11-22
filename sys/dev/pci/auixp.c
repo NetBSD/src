@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.34.12.1 2011/11/19 21:49:40 jmcneill Exp $ */
+/* $NetBSD: auixp.c,v 1.34.12.2 2011/11/22 22:47:07 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.34.12.1 2011/11/19 21:49:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.34.12.2 2011/11/22 22:47:07 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -234,7 +234,6 @@ static const struct audio_hw_if auixp_hw_if = {
 	auixp_trigger_output,
 	auixp_trigger_input,
 	NULL,			/* dev_ioctl */
-	NULL,			/* powerstate */
 	auixp_get_locks,
 };
 

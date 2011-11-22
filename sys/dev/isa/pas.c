@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.68.10.1 2011/11/19 21:49:38 jmcneill Exp $	*/
+/*	$NetBSD: pas.c,v 1.68.10.2 2011/11/22 22:47:06 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.68.10.1 2011/11/19 21:49:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.68.10.2 2011/11/22 22:47:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,6 @@ const struct audio_hw_if pas_hw_if = {
 	sbdsp_trigger_output,
 	sbdsp_trigger_input,
 	0,
-	NULL,
 	sbdsp_get_locks,
 };
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.53.12.1 2011/11/19 21:49:43 jmcneill Exp $      */
+/*      $NetBSD: esm.c,v 1.53.12.2 2011/11/22 22:47:09 jmcneill Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.53.12.1 2011/11/19 21:49:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.53.12.2 2011/11/22 22:47:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,6 @@ const struct audio_hw_if esm_hw_if = {
 	esm_get_props,
 	esm_trigger_output,
 	esm_trigger_input,
-	NULL,
 	NULL,
 	esm_get_locks,
 };

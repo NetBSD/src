@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.35.14.1 2011/11/19 21:49:39 jmcneill Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.35.14.2 2011/11/22 22:47:07 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.35.14.1 2011/11/19 21:49:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.35.14.2 2011/11/22 22:47:07 jmcneill Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -91,7 +91,6 @@ static const struct audio_hw_if guspnp_hw_if = {
 	NULL,			/* trigger_output */
 	NULL,			/* trigger_input */
 	NULL,			/* dev_ioctl */
-	NULL,			/* powerstate */
 	iw_get_locks,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.24.6.1 2011/11/19 21:49:36 jmcneill Exp $	*/
+/*	$NetBSD: btsco.c,v 1.24.6.2 2011/11/22 22:47:05 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.24.6.1 2011/11/19 21:49:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.24.6.2 2011/11/22 22:47:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -196,7 +196,6 @@ static const struct audio_hw_if btsco_if = {
 	NULL,			/* trigger_output */
 	NULL,			/* trigger_input */
 	btsco_dev_ioctl,	/* dev_ioctl */
-	NULL,			/* powerstate */
 	btsco_get_locks,	/* get_locks */
 };
 

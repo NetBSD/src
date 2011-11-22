@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.28.10.1 2011/11/19 21:49:40 jmcneill Exp $	*/
+/*	$NetBSD: auacer.c,v 1.28.10.2 2011/11/22 22:47:07 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.28.10.1 2011/11/19 21:49:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.28.10.2 2011/11/22 22:47:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,6 @@ static struct audio_hw_if auacer_hw_if = {
 	auacer_trigger_output,
 	auacer_trigger_input,
 	NULL,			/* dev_ioctl */
-	NULL,			/* powerstate */
 	auacer_get_locks,
 };
 

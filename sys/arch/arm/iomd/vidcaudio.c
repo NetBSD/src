@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.46.40.1 2011/11/20 12:58:45 mrg Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.46.40.2 2011/11/22 22:47:02 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.46.40.1 2011/11/20 12:58:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.46.40.2 2011/11/22 22:47:02 jmcneill Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -193,7 +193,6 @@ static const struct audio_hw_if vidcaudio_hw_if = {
 	vidcaudio_get_props,
 	vidcaudio_trigger_output,
 	vidcaudio_trigger_input,
-	NULL,
 	NULL,
 	vidcaudio_get_locks,
 };

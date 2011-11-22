@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.38.4.1 2011/11/20 10:56:19 mrg Exp $ */
+/* $NetBSD: bba.c,v 1.38.4.2 2011/11/22 22:47:11 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.38.4.1 2011/11/20 10:56:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.38.4.2 2011/11/22 22:47:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,6 @@ static const struct audio_hw_if sa_hw_if = {
 	bba_get_props,
 	bba_trigger_output,		/* md */
 	bba_trigger_input,		/* md */
-	0,
 	0,
 	bba_get_locks,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.21.4.1 2011/11/20 15:00:35 jmcneill Exp $	*/
+/*	$NetBSD: aica.c,v 1.21.4.2 2011/11/22 22:47:02 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.21.4.1 2011/11/20 15:00:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.21.4.2 2011/11/22 22:47:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,6 @@ const struct audio_hw_if aica_hw_if = {
 	aica_trigger_output,
 	aica_trigger_input,
 	NULL,				/* aica_dev_ioctl */
-	NULL,				/* aica_powerstate */
 	aica_get_locks,
 };
 
