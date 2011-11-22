@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.72.10.1 2011/11/19 21:49:35 jmcneill Exp $	*/
+/*	$NetBSD: midi.c,v 1.72.10.2 2011/11/22 07:54:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.72.10.1 2011/11/19 21:49:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.72.10.2 2011/11/22 07:54:45 mrg Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -838,10 +838,10 @@ midiclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	struct midi_softc *sc;
 	const struct midi_hw_if *hw;
 
-	DPRINTFN(3,("midiclose %p\n", sc));
-
 	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));
 	hw = sc->hw_if;
+
+	DPRINTFN(3,("midiclose %p\n", sc));
 
 	mutex_enter(sc->lock);
 	/* midi_start_output(sc); anything buffered => pbus already set! */
@@ -869,12 +869,12 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 	MIDI_BUF_DECLARE(idx);
 	MIDI_BUF_DECLARE(buf);
 
-	DPRINTFN(6,("midiread: %p, count=%lu\n", sc,
-	    (unsigned long)uio->uio_resid));
-
 	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));
 	mb = &sc->inbuf;
 	first = 1;
+
+	DPRINTFN(6,("midiread: %p, count=%lu\n", sc,
+	    (unsigned long)uio->uio_resid));
 
 	mutex_enter(sc->lock);
 	if (sc->dying) {
@@ -1261,7 +1261,7 @@ midi_intr_out(struct midi_softc *sc)
 		softint_schedule(sc->sih);
 	}
 	if (error) {
-		DPRINTF(("midi_intr_output error %d\n", error))
+		DPRINTF(("midi_intr_output error %d\n", error));
 	}
 	return error;
 }
@@ -1393,10 +1393,11 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 	size_t xfrcount;
 	int pollout = 0;
 
+	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));
+
 	DPRINTFN(6,("midiwrite: %p, unit=%d, count=%lu\n", sc, (int)minor(dev),
 	    (unsigned long)uio->uio_resid));
 
-	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));
 	mutex_enter(sc->lock);
 	if (sc->dying) {
 		mutex_exit(sc->lock);
@@ -1527,13 +1528,13 @@ midiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	int error;
 	MIDI_BUF_DECLARE(buf);
 
-	DPRINTFN(5,("midiioctl: %p cmd=0x%08lx\n", sc, cmd));
-
 	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));;
 	if (sc->dying)
 		return EIO;
 	hw = sc->hw_if;
 	error = 0;
+
+	DPRINTFN(5,("midiioctl: %p cmd=0x%08lx\n", sc, cmd));
 
 	switch (cmd) {
 	case FIONBIO:
@@ -1611,10 +1612,10 @@ midipoll(dev_t dev, int events, struct lwp *l)
 	MIDI_BUF_DECLARE(idx);
 	MIDI_BUF_DECLARE(buf);
 
-	DPRINTFN(6,("midipoll: %p events=0x%x\n", sc, events));
-
 	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));
 	revents = 0;
+
+	DPRINTFN(6,("midipoll: %p events=0x%x\n", sc, events));
 
 	mutex_enter(sc->lock);
 	if (sc->dying) {
