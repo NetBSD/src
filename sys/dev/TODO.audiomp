@@ -9,7 +9,7 @@ arch/dreamcast/dev/g2/aica.c	done
 arch/hp700/gsc/harmony.c	done
 arch/hpcmips/vr/vraiu.c		done
 arch/macppc/dev/awacs.c		done		port-macppc
-arch/macppc/dev/snapper.c
+arch/macppc/dev/snapper.c	done		port-macppc, TAS3004 only
 arch/prep/isa/paud_isa.c	done
 arch/sgimips/hpc/haltwo.c	done
 arch/sgimips/mace/mavb.c	done
