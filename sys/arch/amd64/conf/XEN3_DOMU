@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.32 2011/11/10 22:16:56 riz Exp $
+# $NetBSD: XEN3_DOMU,v 1.33 2011/11/22 21:24:55 tls Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -225,7 +225,6 @@ options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 
