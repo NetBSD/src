@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.46 2011/11/22 12:11:39 he Exp $
+#	$NetBSD: TWINTAIL,v 1.47 2011/11/22 21:25:10 tls Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -407,7 +407,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 
 # wscons pseudo-devices

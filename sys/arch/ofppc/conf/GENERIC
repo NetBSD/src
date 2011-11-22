@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.137 2011/10/08 00:56:54 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.138 2011/11/22 21:25:31 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.137 $"
+#ident 		"GENERIC-$Revision: 1.138 $"
 
 maxusers	32
 
@@ -445,7 +445,6 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	ksyms			# /dev/ksyms

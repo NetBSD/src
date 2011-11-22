@@ -254,6 +254,5 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor

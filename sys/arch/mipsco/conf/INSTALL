@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.25 2010/04/16 13:48:33 pooka Exp $
+# 	$NetBSD: INSTALL,v 1.26 2011/11/22 21:25:26 tls Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -95,4 +95,3 @@ pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 
-pseudo-device	rnd			# /dev/random and in-kernel generator

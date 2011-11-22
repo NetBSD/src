@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2430,v 1.17 2011/06/30 20:09:23 wiz Exp $
+#	$NetBSD: TISDP2430,v 1.18 2011/11/22 21:25:09 tls Exp $
 #
 #	TISDP2430 -- TI OMAP 2430 Eval Board Kernel
 #
@@ -256,7 +256,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options	RND_COM
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
