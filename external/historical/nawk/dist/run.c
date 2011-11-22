@@ -37,6 +37,7 @@ THIS SOFTWARE.
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdint.h>
 #include "awk.h"
 #include "awkgram.h"
 
@@ -882,12 +883,15 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		case 'd': case 'i':
 			flag = 'd';
 			if(*(s-1) == 'l') break;
-			*(t-1) = 'l';
+			*(t-1) = 'j';
 			*t = 'd';
 			*++t = '\0';
 			break;
 		case 'o': case 'x': case 'X': case 'u':
 			flag = *(s-1) == 'l' ? 'd' : 'u';
+			*(t-1) = 'j';
+			*t = *s;
+			*++t = '\0';
 			break;
 		case 's':
 			flag = 's';
@@ -920,8 +924,8 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			snprintf(p, BUFSZ(p), "%s", t);
 			break;
 		case 'f':	snprintf(p, BUFSZ(p), fmt, getfval(x)); break;
-		case 'd':	snprintf(p, BUFSZ(p), fmt, (long) getfval(x)); break;
-		case 'u':	snprintf(p, BUFSZ(p), fmt, (int) getfval(x)); break;
+		case 'd':	snprintf(p, BUFSZ(p), fmt, (intmax_t) getfval(x)); break;
+		case 'u':	snprintf(p, BUFSZ(p), fmt, (uintmax_t) getfval(x)); break;
 		case 's':
 			t = getsval(x);
 			n = strlen(t);
