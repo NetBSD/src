@@ -1,4 +1,4 @@
-/* $NetBSD: midictl.c,v 1.6.32.2 2011/11/22 06:11:12 mrg Exp $ */
+/* $NetBSD: midictl.c,v 1.6.32.3 2011/11/22 08:55:44 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.6.32.2 2011/11/22 06:11:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.6.32.3 2011/11/22 08:55:44 mrg Exp $");
 
 /*
  * See midictl.h for an overview of the purpose and use of this module.
@@ -188,9 +188,9 @@ midictl_open(midictl *mc)
 		return ENOMEM;
 	}
 	s->lock = mc->lock;
-	cv_init(&s->cv, "midictl");
+	cv_init(&s->cv, "midictlv");
 	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, store_thread, 
-	    s, NULL, "midictl");
+	    s, NULL, "midictlt");
 	if (error != 0) {
 		printf("midictl: cannot create kthread, error = %d\n", error);
 		cv_destroy(&s->cv);
@@ -225,6 +225,7 @@ midictl_change(midictl *mc, uint_fast8_t chan, uint8_t *ctlval)
 	_Bool islsb, present;
 
 	KASSERT(mutex_owned(mc->lock));
+	KASSERT(!mc->store->destroy);
 		
 	switch ( ctlval[0] ) {
 	/*
@@ -352,6 +353,7 @@ midictl_read(midictl *mc, uint_fast8_t chan, uint_fast8_t ctlr,
 	_Bool islsb, present;
 
 	KASSERT(mutex_owned(mc->lock));
+	KASSERT(!mc->store->destroy);
 	
 	key = ctlr;
 	c = classify(&key, &islsb);
@@ -388,6 +390,7 @@ midictl_rpn_read(midictl *mc, uint_fast8_t chan, uint_fast16_t ctlr,
 {
 
 	KASSERT(mutex_owned(mc->lock));
+	KASSERT(!mc->store->destroy);
 
 	return read14(mc, chan, RPN, ctlr, dflt);
 }
@@ -398,6 +401,7 @@ midictl_nrpn_read(midictl *mc, uint_fast8_t chan, uint_fast16_t ctlr,
 {
 
 	KASSERT(mutex_owned(mc->lock));
+	KASSERT(!mc->store->destroy);
 
 	return read14(mc, chan, NRPN, ctlr, dflt);
 }
@@ -550,7 +554,7 @@ store_thread(void *arg)
 			cv_destroy(&s->cv);
 			kmem_free(s->table, sizeof(*s->table)<<s->lgcapacity);
 			kmem_free(s, sizeof(*s));
-			return;
+			kthread_exit(0);
 		} else if (NEED_REHASH(s)) {
 			store_rehash(s);
 		} else {
@@ -689,20 +693,28 @@ store_rehash(midictl_store *s)
 	mutex_enter(s->lock);
 
 	if (newtbl == NULL) {
-		kpause("midictl", false, hz, s->lock);
+		kpause("midictls", false, hz, s->lock);
 		return;
 	}
+	/*
+	 * If s->lgcapacity is changed from what we saved int oldlgcap
+	 * then someone else has already done this for us.
+	 * XXXMRG but only function changes s->lgcapacity from its
+	 * initial value, and it is called singled threaded from the
+	 * main store_thread(), so this code seems dead to me.
+	 */
 	if (oldlgcap != s->lgcapacity) {
+		KASSERT(FALSE);
 		mutex_exit(s->lock);
 		kmem_free(newtbl, sizeof(*newtbl) << newlgcap);
 		mutex_enter(s->lock);
 		return;
 	}
 			
-	for ( oidx = 1<<s->lgcapacity ; oidx --> 0 ; ) {
-		if (!(s->table[oidx] & IS_USED) )
+	for (oidx = 1 << s->lgcapacity ; oidx-- > 0 ; ) {
+		if (!(s->table[oidx] & IS_USED))
 			continue;
-		if ( s->table[oidx] & IS_CTL7 )
+		if (s->table[oidx] & IS_CTL7)
 			mask = 0xffff;
 		else
 			mask = 0x3fffff;
