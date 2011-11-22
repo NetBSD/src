@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96 2011/11/20 15:38:00 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97 2011/11/22 14:31:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2011/11/20 15:38:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2011/11/22 14:31:02 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -888,15 +888,15 @@ news1200_init(void)
 	uint8_t *q;
 	int i;
 
-	dip_switch	= (uint8_t *)IIOV(0xe1680000);
-	int_status	= (uint8_t *)IIOV(0xe1200000);
+	dip_switch	= (uint8_t *)0xe1680000;
+	int_status	= (uint8_t *)0xe1200000;
 
-	idrom_addr	= (uint8_t *)IIOV(0xe1400000);
-	ctrl_ast	= (uint8_t *)IIOV(0xe1100000);
-	ctrl_int2	= (uint8_t *)IIOV(0xe10c0000);
-	ctrl_led	= (uint8_t *)IIOV(ctrl_led_phys);
+	idrom_addr	= (uint8_t *)0xe1400000;
+	ctrl_ast	= (uint8_t *)0xe1100000;
+	ctrl_int2	= (uint8_t *)0xe10c0000;
+	ctrl_led	= (uint8_t *)ctrl_led_phys;
 
-	sccport0a	= IIOV(0xe1780002);
+	sccport0a	= 0xe1780002;
 	lance_mem_phys	= 0xe1a00000;
 
 	p = idrom_addr;
