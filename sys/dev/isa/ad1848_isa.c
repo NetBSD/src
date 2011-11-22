@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.37.4.1 2011/11/19 21:49:37 jmcneill Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.37.4.2 2011/11/22 03:02:53 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.37.4.1 2011/11/19 21:49:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.37.4.2 2011/11/22 03:02:53 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,9 +502,8 @@ ad1848_isa_open(void *addr, int flags)
 #ifndef AUDIO_NO_POWER_CTL
 	/* Power-up chip */
 	if (isc->powerctl) {
-		mutex_spin_enter(&sc->sc_intr_lock);
+		KASSERT(mutex_owned(&sc->sc_intr_lock));
 		isc->powerctl(isc->powerarg, flags);
-		mutex_spin_exit(&sc->sc_intr_lock);
 	}
 #endif
 
@@ -515,9 +514,8 @@ ad1848_isa_open(void *addr, int flags)
 	if (error) {
 #ifndef AUDIO_NO_POWER_CTL
 		if (isc->powerctl) {
-			mutex_spin_enter(&sc->sc_intr_lock);
+			KASSERT(mutex_owned(&sc->sc_intr_lock));
 			isc->powerctl(isc->powerarg, 0);
-			mutex_spin_exit(&sc->sc_intr_lock);
 		}
 #endif
 		goto bad;
@@ -549,9 +547,8 @@ ad1848_isa_close(void *addr)
 #ifndef AUDIO_NO_POWER_CTL
 	/* Power-down chip */
 	if (isc->powerctl) {
-		mutex_spin_enter(&sc->sc_intr_lock);
+		KASSERT(mutex_owned(&sc->sc_intr_lock));
 		isc->powerctl(isc->powerarg, 0);
-		mutex_spin_exit(&sc->sc_intr_lock);
 	}
 #endif
 
