@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.41 2011/06/30 20:09:24 wiz Exp $
+#	$NetBSD: ZAO425,v 1.42 2011/11/22 21:25:10 tls Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -257,7 +257,6 @@ pseudo-device	kttcp			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.62 2011/06/30 20:09:23 wiz Exp $
+#	$NetBSD: INTEGRATOR,v 1.63 2011/11/22 21:25:07 tls Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -244,6 +244,5 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

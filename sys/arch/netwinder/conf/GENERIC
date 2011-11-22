@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.108 2011/10/04 17:38:00 christos Exp $
+# $NetBSD: GENERIC,v 1.109 2011/11/22 21:25:28 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -308,7 +308,6 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
