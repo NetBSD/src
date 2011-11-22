@@ -34,7 +34,7 @@ dev/pad/pad.c			done
 dev/pci/auacer.c		done
 dev/pci/auich.c			done		port-amd64
 dev/pci/auixp.c			done
-dev/pci/autri.c			done
+dev/pci/autri.c			done		port-sparc64
 dev/pci/auvia.c			done
 dev/pci/azalia.c		done		port-i386
 dev/pci/cmpci.c			done
