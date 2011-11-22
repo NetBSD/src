@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1629 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1630 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1173,3 +1173,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	x68k: Remove pow(4) and rtcalarm(8) [isaki 20111119]
 	news68k: Add preliminary PROM function based framebuffer text console
 		support. [tsutsui 20111120]
+	arm: Add TLS (thread local storage) support.  [joerg 20111118]
+	m68k: Add TLS (thread local storage) support.  [joerg 20111122]
