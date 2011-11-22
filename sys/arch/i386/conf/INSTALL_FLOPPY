@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.13 2011/05/28 13:01:50 ryo Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.14 2011/11/22 21:25:20 tls Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -770,7 +770,6 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 options NO_DEV_PTM
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 # a pseudo device needed for Coda	# also needs CODA (above)

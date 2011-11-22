@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.92 2011/11/19 12:27:43 isaki Exp $
+#	$NetBSD: INSTALL,v 1.93 2011/11/22 21:25:41 tls Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.92 $"
+#ident 		"INSTALL-$Revision: 1.93 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -279,4 +279,3 @@ pseudo-device	md			# boot floppy image
 pseudo-device	loop
 pseudo-device	sl		
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
-pseudo-device	rnd

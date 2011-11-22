@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.44 2011/06/30 20:09:23 wiz Exp $
+#	$NetBSD: SMDK2410,v 1.45 2011/11/22 21:25:09 tls Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -361,7 +361,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 
 # wscons pseudo-devices

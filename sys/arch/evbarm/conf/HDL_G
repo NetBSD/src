@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.23 2011/06/30 20:09:23 wiz Exp $
+# $NetBSD: HDL_G,v 1.24 2011/11/22 21:25:07 tls Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -435,7 +435,6 @@ pseudo-device	pflog			# PF log if
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sequencer		# MIDI sequencer
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 

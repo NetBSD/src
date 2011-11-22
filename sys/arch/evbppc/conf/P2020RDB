@@ -1,4 +1,4 @@
-#	$NetBSD: P2020RDB,v 1.10 2011/08/02 00:27:42 matt Exp $
+#	$NetBSD: P2020RDB,v 1.11 2011/11/22 21:25:12 tls Exp $
 #
 #	P2020RBD -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020RBD-$Revision: 1.10 $"
+ident 		"P2020RBD-$Revision: 1.11 $"
 
 maxusers	32
 
@@ -217,7 +217,6 @@ sd*		at scsibus? target ? lun ?
 
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	pty			# pseudo-terminals

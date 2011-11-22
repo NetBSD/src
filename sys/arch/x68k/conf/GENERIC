@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.156 2011/11/19 12:27:43 isaki Exp $
+# $NetBSD: GENERIC,v 1.157 2011/11/22 21:25:41 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.156 $"
+#ident 		"GENERIC-$Revision: 1.157 $"
 
 maxusers	8
 
@@ -517,7 +517,6 @@ pseudo-device	pty			# pseudo-terminals
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
 
-pseudo-device	rnd
 
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
