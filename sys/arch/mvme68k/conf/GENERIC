@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.81 2011/06/30 20:09:33 wiz Exp $
+# $NetBSD: GENERIC,v 1.82 2011/11/22 21:25:27 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.81 $"
+#ident 		"GENERIC-$Revision: 1.82 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -157,7 +157,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # random number generator pseudo-device
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 # Veriexec

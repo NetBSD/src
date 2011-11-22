@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.55 2011/06/30 20:09:35 wiz Exp $
+#	$NetBSD: INSTALL,v 1.56 2011/11/22 21:25:33 tls Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -272,5 +272,4 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well
