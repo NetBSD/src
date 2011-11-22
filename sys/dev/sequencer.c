@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.52.14.2 2011/11/20 20:00:15 jmcneill Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.52.14.3 2011/11/22 07:57:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.52.14.2 2011/11/20 20:00:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.52.14.3 2011/11/22 07:57:23 mrg Exp $");
 
 #include "sequencer.h"
 
@@ -370,7 +370,7 @@ sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	struct midi_softc *msc;
 	int unit, error;
 
-	DPRINTF(("sequencerclose: %d\n", dev));
+	DPRINTF(("sequencerclose: %"PRIx64"\n", dev));
 
 	if ((error = sequencer_enter(dev, &sc)) != 0)
 		return error;
@@ -389,7 +389,8 @@ sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	mutex_exit(&sc->lock);
 
 	for (unit = 0; unit < sc->nmidi; unit++)
-		midiseq_close(sc->devs[unit]);
+		if (sc->devs[unit] != NULL)
+			midiseq_close(sc->devs[unit]);
 	if (sc->devs != NULL) {
 		KASSERT(sc->ndevs > 0);
 		kmem_free(sc->devs, sc->ndevs * sizeof(struct midi_dev *));
@@ -399,6 +400,8 @@ sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	mutex_enter(&sc->lock);
 	sc->isopen = 0;
 	sequencer_exit(sc);
+
+	DPRINTF(("sequencerclose: %"PRIx64" done\n", dev));
 
 	return (0);
 }
@@ -510,7 +513,7 @@ sequencerread(dev_t dev, struct uio *uio, int ioflag)
 	seq_event_t ev;
 	int error;
 
-	DPRINTFN(20, ("sequencerread: %d, count=%d, ioflag=%x\n",
+	DPRINTFN(20, ("sequencerread: %"PRIx64", count=%d, ioflag=%x\n",
 	   dev, (int)uio->uio_resid, ioflag));
 
 	q = &sc->inq;
@@ -557,7 +560,7 @@ sequencerwrite(dev_t dev, struct uio *uio, int ioflag)
 	seq_event_t cmdbuf;
 	int size;
 	
-	DPRINTFN(2, ("sequencerwrite: %d, count=%d\n", dev,
+	DPRINTFN(2, ("sequencerwrite: %"PRIx64", count=%d\n", dev,
 	    (int)uio->uio_resid));
 
 	q = &sc->outq;
@@ -620,7 +623,7 @@ sequencerioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct timeval now;
 	u_long tx;
 
-	DPRINTFN(2, ("sequencerioctl: %d cmd=0x%08lx\n", dev, cmd));
+	DPRINTFN(2, ("sequencerioctl: %"PRIx64" cmd=0x%08lx\n", dev, cmd));
 
 	if ((error = sequencer_enter(dev, &sc)) != 0)
 		return error;
