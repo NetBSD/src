@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.54 2011/11/20 15:38:00 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.55 2011/11/22 21:25:29 tls Exp $
 
 #	config for bootable floppy kernel
 #
@@ -156,4 +156,3 @@ pseudo-device	md			# memory disk device
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	sl			# SLIP interfaces
 
-pseudo-device	rnd			# /dev/random and in-kernel generator

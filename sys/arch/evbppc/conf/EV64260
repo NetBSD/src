@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.49 2011/08/03 22:19:31 he Exp $
+#	$NetBSD: EV64260,v 1.50 2011/11/22 21:25:11 tls Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -275,7 +275,6 @@ pseudo-device	bpfilter		# packet filter
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsmux			# ick
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

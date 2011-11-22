@@ -1,10 +1,10 @@
-#	$NetBSD: RB433UAH,v 1.1 2011/07/07 05:06:44 matt Exp $
+#	$NetBSD: RB433UAH,v 1.2 2011/11/22 21:25:11 tls Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"RB433UAH-$Revision: 1.1 $"
+#ident 		"RB433UAH-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -204,7 +204,6 @@ pseudo-device	loop				# network loopback
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
-pseudo-device	rnd				# /dev/random & kernel generator
 pseudo-device	clockctl			# user control of clock subsystem
 pseudo-device	ksyms				# /dev/ksyms
 

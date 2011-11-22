@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.47 2010/11/24 13:53:34 hauke Exp $
+#	$NetBSD: INSTALL,v 1.48 2011/11/22 21:25:24 tls Exp $
 #
 # INSTALL
 
@@ -205,4 +205,3 @@ pseudo-device	sl		 	# Serial Line IP
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
-pseudo-device	rnd			# /dev/random and in-kernel generator

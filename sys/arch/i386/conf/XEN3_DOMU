@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.37 2011/10/25 15:01:46 jakllsch Exp $
+# $NetBSD: XEN3_DOMU,v 1.38 2011/11/22 21:25:21 tls Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -239,7 +239,6 @@ pseudo-device	accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud

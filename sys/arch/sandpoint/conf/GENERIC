@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.60 2011/08/11 20:56:34 phx Exp $
+# $NetBSD: GENERIC,v 1.61 2011/11/22 21:25:34 tls Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.60 $"
+#ident 		"GENERIC-$Revision: 1.61 $"
 
 maxusers	32
 
@@ -152,7 +152,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	loop
 
 # miscellaneous pseudo-devices
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	vnd		
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	cgd		4	# cryptographic disk devices

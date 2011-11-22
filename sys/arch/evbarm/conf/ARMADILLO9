@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.30 2011/06/30 20:09:23 wiz Exp $
+#	$NetBSD: ARMADILLO9,v 1.31 2011/11/22 21:25:06 tls Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -293,7 +293,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

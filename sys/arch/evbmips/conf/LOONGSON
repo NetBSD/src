@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.6 2011/11/03 02:44:36 macallan Exp $
+# $NetBSD: LOONGSON,v 1.7 2011/11/22 21:25:11 tls Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.6 $"
+#ident 		"GDIUM-$Revision: 1.7 $"
 
 maxusers	16
 
@@ -294,7 +294,6 @@ pseudo-device	vnd			# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
 pseudo-device	fss			# file system snapshot device
 #pseudo-device	cgd		4	# cryptographic disks
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor

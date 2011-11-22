@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8548CDS,v 1.7 2011/06/30 20:09:29 wiz Exp $
+#	$NetBSD: MPC8548CDS,v 1.8 2011/11/22 21:25:12 tls Exp $
 #
 #	MPC8548CDS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8548CDS-$Revision: 1.7 $"
+ident 		"MPC8548CDS-$Revision: 1.8 $"
 
 maxusers	32
 
@@ -208,7 +208,6 @@ wd*		at atabus? drive ?
 
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	pty			# pseudo-terminals

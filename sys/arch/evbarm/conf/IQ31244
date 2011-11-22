@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.53 2011/06/30 20:09:23 wiz Exp $
+#	$NetBSD: IQ31244,v 1.54 2011/11/22 21:25:07 tls Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -220,7 +220,6 @@ pseudo-device	kttcp			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 

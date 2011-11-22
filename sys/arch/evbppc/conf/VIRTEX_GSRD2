@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD2,v 1.13 2011/06/30 20:09:29 wiz Exp $
+#	$NetBSD: VIRTEX_GSRD2,v 1.14 2011/11/22 21:25:12 tls Exp $
 #
 # VIRTEX_GSRD2
 #
@@ -173,7 +173,6 @@ pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device 	wsmux
 pseudo-device 	wsfont

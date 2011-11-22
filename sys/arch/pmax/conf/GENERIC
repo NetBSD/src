@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.169 2011/06/30 20:09:34 wiz Exp $
+# $NetBSD: GENERIC,v 1.170 2011/11/22 21:25:32 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.169 $"
+#ident		"GENERIC-$Revision: 1.170 $"
 
 maxusers	64
 
@@ -314,7 +314,6 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss		 	# file system snapshot device
 pseudo-device	putter			# for puffs and pud
 
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter

@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.13 2011/09/02 22:19:35 macallan Exp $
+# $NetBSD: GDIUM,v 1.14 2011/11/22 21:25:11 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.13 $"
+#ident 		"GDIUM-$Revision: 1.14 $"
 
 maxusers	16
 
@@ -245,7 +245,6 @@ pseudo-device	vnd			# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
 pseudo-device	fss			# file system snapshot device
 #pseudo-device	cgd		4	# cryptographic disks
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor

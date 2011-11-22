@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.54 2011/06/30 20:09:23 wiz Exp $
+#	$NetBSD: ADI_BRH,v 1.55 2011/11/22 21:25:06 tls Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -222,6 +222,5 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

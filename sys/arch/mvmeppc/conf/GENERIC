@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.13 2011/06/30 20:09:33 wiz Exp $
+# $NetBSD: GENERIC,v 1.14 2011/11/22 21:25:28 tls Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.13 $"
+ident		"GENERIC-$Revision: 1.14 $"
 
 maxusers	8
 
@@ -247,7 +247,6 @@ pseudo-device   accf_http		# "httpready" accept filter
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well
 pseudo-device	clockctl		# user control of clock subsystem
 

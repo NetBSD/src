@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.50 2011/03/06 17:08:28 bouyer Exp $
+# 	$NetBSD: NEWS1200,v 1.51 2011/11/22 21:25:30 tls Exp $
 
 #	news1200 config file
 #
@@ -150,6 +150,5 @@ pseudo-device	ipfilter		# ip filter
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem

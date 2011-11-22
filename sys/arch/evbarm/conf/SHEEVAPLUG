@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.10 2011/11/14 00:12:37 sekiya Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.11 2011/11/22 21:25:09 tls Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -483,7 +483,6 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.47 2011/06/30 20:09:36 wiz Exp $
+#	$NetBSD: INSTALL,v 1.48 2011/11/22 21:25:36 tls Exp $
 #
 #	Shark installation kernel
 #
@@ -256,7 +256,6 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	rnd			# /dev/random and /dev/urandom
 
 pseudo-device	md			# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device

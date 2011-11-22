@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.9 2011/06/30 20:09:23 wiz Exp $
+#	$NetBSD: OVERO,v 1.10 2011/11/22 21:25:09 tls Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo platforms kernel
 #
@@ -285,7 +285,6 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
-pseudo-device	rnd			# /dev/random and in-kernel generator
 options 	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.7 2011/07/15 19:41:28 cliff Exp $
+#	$NetBSD: XLSATX,v 1.8 2011/11/22 21:25:11 tls Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.7 $"
+#ident 		"XLSATX-$Revision: 1.8 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -217,7 +217,6 @@ pseudo-device	kttcp				# kernel ttcp
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer	1		# MIDI sequencer
-pseudo-device	rnd				# /dev/random & kernel generator
 pseudo-device	clockctl			# user control of clock subsystem
 pseudo-device	ksyms				# /dev/ksyms
 

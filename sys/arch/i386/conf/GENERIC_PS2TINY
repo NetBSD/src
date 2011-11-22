@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.62 2011/05/28 13:01:49 ryo Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.63 2011/11/22 21:25:20 tls Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -222,7 +222,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	md			# memory disk device (ramdisk)
 # rnd works; RND_COM does not on port i386 yet.
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	fss			# file system snapshot device

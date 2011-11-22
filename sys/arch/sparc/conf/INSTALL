@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.78 2011/03/06 17:08:31 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.79 2011/11/22 21:25:37 tls Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -594,7 +594,6 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
 
-pseudo-device	rnd
 #pseudo-device	fss			# file system snapshot device
 
 pseudo-device	wsmux			# mouse and keyboard multiplexor

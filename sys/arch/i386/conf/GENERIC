@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1057 2011/11/13 12:47:54 mbalmer Exp $
+# $NetBSD: GENERIC,v 1.1058 2011/11/22 21:25:19 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1057 $"
+#ident 		"GENERIC-$Revision: 1.1058 $"
 
 maxusers	64		# estimated number of users
 
@@ -1607,7 +1607,6 @@ pseudo-device	accf_http		# "httpready" accept filter
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

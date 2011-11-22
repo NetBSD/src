@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS600,v 1.5 2011/06/30 20:09:29 wiz Exp $
+#	$NetBSD: OPENBLOCKS600,v 1.6 2011/11/22 21:25:12 tls Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs600"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS600-$Revision: 1.5 $"
+#ident 		"OPENBLOCKS600-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -207,7 +207,6 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud

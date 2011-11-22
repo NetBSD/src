@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.43 2011/03/06 17:08:29 bouyer Exp $
+# $NetBSD: SLAB,v 1.44 2011/11/22 21:25:31 tls Exp $
 #
 # deberg's development machine
 #
@@ -201,7 +201,6 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 # rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 
 pseudo-device	pty			# pseudo-terminals

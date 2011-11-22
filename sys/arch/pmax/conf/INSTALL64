@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL64,v 1.3 2010/04/16 13:48:35 pooka Exp $
+# 	$NetBSD: INSTALL64,v 1.4 2011/11/22 21:25:32 tls Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -153,6 +153,5 @@ pseudo-device	bpfilter		# packet filter ports
 pseudo-device	loop
 pseudo-device	ccd		 4	# concatenated disks
 #pseudo-device	fss		 	# file system snapshot device
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsfont			# wsfont control device
 pseudo-device	wsmux			# wsmux control device

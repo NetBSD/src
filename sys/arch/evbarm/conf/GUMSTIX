@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.60 2011/09/30 04:05:07 he Exp $
+#	$NetBSD: GUMSTIX,v 1.61 2011/11/22 21:25:07 tls Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -398,7 +398,6 @@ pseudo-device	bridge			# simple inter-network bridging
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
-pseudo-device	rnd			# /dev/random and in-kernel generator
 options 	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
