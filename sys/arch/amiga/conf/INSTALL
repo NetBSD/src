@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.96 2011/10/30 11:19:56 rkujawa Exp $
+# $NetBSD: INSTALL,v 1.97 2011/11/22 21:24:57 tls Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.96 $"
+#ident 		"GENERIC-$Revision: 1.97 $"
 
 makeoptions	COPTS="-Os"
 
@@ -496,7 +496,6 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 pseudo-device   bcsp                    # BlueCore Serial Protocol
