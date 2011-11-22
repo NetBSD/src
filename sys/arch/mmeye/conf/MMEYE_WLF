@@ -1,4 +1,4 @@
-# $NetBSD: MMEYE_WLF,v 1.3 2011/06/30 20:09:33 wiz Exp $
+# $NetBSD: MMEYE_WLF,v 1.4 2011/11/22 21:25:26 tls Exp $
 #
 # MMEYE_WLF -- Brains Inc. MMEYE-WLF platforms kernel
 #
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.3 $"
+#ident 		"GENERIC-$Revision: 1.4 $"
 
 maxusers	16		# estimated number of users
 
@@ -263,7 +263,6 @@ pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 #pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	clockctl		# user control of clock subsystem

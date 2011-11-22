@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.21 2011/06/30 20:09:30 wiz Exp $
+#	$NetBSD: WZERO3,v 1.22 2011/11/22 21:25:16 tls Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 # estimated number of users
 maxusers	32
@@ -305,7 +305,6 @@ pseudo-device	vnd			# disk-like interface to files
 pseudo-device	biconsdev 1		# build-in console device
 
 pseudo-device	md			# Ramdisk driver
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	bcsp			# BlueCore Serial Protocol

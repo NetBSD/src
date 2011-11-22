@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.45 2011/06/30 20:09:23 wiz Exp $
+#	$NetBSD: TS7200,v 1.46 2011/11/22 21:25:10 tls Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -454,7 +454,6 @@ pseudo-device	kttcp			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

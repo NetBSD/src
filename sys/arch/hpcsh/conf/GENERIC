@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93 2011/01/03 06:07:43 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.94 2011/11/22 21:25:18 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -364,7 +364,6 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	ksyms			# kernel symbol table interface

@@ -1,4 +1,4 @@
-#	$NetBSD: T_SH7706LSR,v 1.5 2011/02/05 16:42:42 nonaka Exp $
+#	$NetBSD: T_SH7706LSR,v 1.6 2011/11/22 21:25:13 tls Exp $
 #
 #	TAC T-SH7706LSR Rev.1 config file
 #
@@ -116,7 +116,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 

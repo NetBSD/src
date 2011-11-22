@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.5 2011/06/30 20:09:23 wiz Exp $
+#	$NetBSD: NETWALKER,v 1.6 2011/11/22 21:25:08 tls Exp $
 #
 #	NETWALKER -- Sharp
 #
@@ -270,7 +270,6 @@ pseudo-device	ppp			# Point-to-Point Protocol
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	clockctl		# NTP clockctl
 

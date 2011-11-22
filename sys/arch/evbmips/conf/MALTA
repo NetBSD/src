@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.61 2011/06/30 20:09:29 wiz Exp $
+#	$NetBSD: MALTA,v 1.62 2011/11/22 21:25:11 tls Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.61 $"
+#ident 		"MALTA-$Revision: 1.62 $"
 
 maxusers	32
 
@@ -326,7 +326,6 @@ pseudo-device	bridge				# simple inter-network bridging
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer	1		# MIDI sequencer
-pseudo-device	rnd				# /dev/random & kernel generator
 pseudo-device	clockctl			# user control of clock subsystem
 pseudo-device	ksyms				# /dev/ksyms
 

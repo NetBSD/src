@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.8 2010/06/30 17:49:32 phx Exp $
+# $NetBSD: ENCPP1,v 1.9 2011/11/22 21:25:34 tls Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.8 $"
+#ident 		"ENCPP1-$Revision: 1.9 $"
 
 maxusers	32
 
@@ -113,7 +113,6 @@ pseudo-device	loop
 #pseudo-device	wsmux
 
 # miscellaneous pseudo-devices
-#pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vnd		
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	cgd		4	# cryptographic disk devices
