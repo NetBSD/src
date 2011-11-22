@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.56 2011/07/19 15:07:43 dyoung Exp $	*/
+/*	$NetBSD: ofw.c,v 1.56.4.1 2011/11/22 08:58:48 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.56 2011/07/19 15:07:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.56.4.1 2011/11/22 08:58:48 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,8 +332,8 @@ ofw_boot(int howto, char *bootstr)
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
 	    irqmasks[IPL_VM]);
-	printf("ipl_audio=%08x ipl_clock=%08x ipl_none=%08x\n",
-	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_NONE]);
+	printf("ipl_clock=%08x ipl_none=%08x\n",
+	    irqmasks[IPL_CLOCK], irqmasks[IPL_NONE]);
 
 	dump_spl_masks();
 #endif
