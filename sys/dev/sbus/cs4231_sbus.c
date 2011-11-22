@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.48.4.2 2011/11/20 11:41:53 mrg Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.48.4.3 2011/11/22 17:36:01 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.48.4.2 2011/11/20 11:41:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.48.4.3 2011/11/22 17:36:01 macallan Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -161,9 +161,9 @@ cs4231_sbus_attach(device_t parent, device_t self, void *aux)
 	sbsc->sc_bt = sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
 
-	sbsc->sc_pint = sparc_softintr_establish(IPL_VM,
+	sbsc->sc_pint = sparc_softintr_establish(IPL_SCHED,
 	    (void *)cs4231_sbus_pint, sc);
-	sbsc->sc_rint = sparc_softintr_establish(IPL_VM,
+	sbsc->sc_rint = sparc_softintr_establish(IPL_SCHED,
 	    (void *)cs4231_sbus_rint, sc);
 
 	/*
@@ -188,6 +188,7 @@ cs4231_sbus_attach(device_t parent, device_t self, void *aux)
 	cs4231_common_attach(sc, self, bh);
 	printf("\n");
 
+	ad1848_init_locks(&sc->sc_ad1848, IPL_SCHED);
 	/* Establish interrupt channel */
 	if (sa->sa_nintr)
 		bus_intr_establish(sa->sa_bustag,
