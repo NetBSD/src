@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.77 2010/12/12 09:58:29 tsutsui Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.78 2011/11/22 21:25:01 tls Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -94,7 +94,6 @@ pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
 pseudo-device ccd 4 # concatenating disk driver
 pseudo-device fss # file system snapshot device
 pseudo-device ipfilter # IP filtering device
-pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem
 pseudo-device ksyms # /dev/ksyms
 exphy* at mii? phy ? # 3Com internal PHYs
