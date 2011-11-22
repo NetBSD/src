@@ -28,7 +28,7 @@ dev/isa/gus.c			done
 dev/isa/pas.c			done
 dev/isa/sb.c			done		port-i386
 dev/isa/wss.c			done
-dev/isa/ym.c			done
+dev/isa/ym.c			done		port-i386
 dev/isapnp/mpu_isapnp.c		done
 dev/pad/pad.c			done
 dev/pci/auacer.c		done
