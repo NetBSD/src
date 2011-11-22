@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.31 2011/06/30 20:09:19 wiz Exp $
+# $NetBSD: NULL,v 1.32 2011/11/22 21:24:58 tls Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.31 $"
+#ident          "GENERIC-$Revision: 1.32 $"
 
 maxusers	8
 
@@ -429,7 +429,6 @@ pseudo-device	clockctl		# user control of clock subsystem
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
