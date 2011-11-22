@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.44 2011/10/07 19:41:03 jakllsch Exp $	*/
+/*	$NetBSD: umidi.c,v 1.44.4.1 2011/11/22 07:56:15 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.44 2011/10/07 19:41:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.44.4.1 2011/11/22 07:56:15 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,6 +79,7 @@ static int umidi_commonmsg(void *, int, u_char *, int);
 static int umidi_sysex(void *, u_char *, int);
 static int umidi_rtmsg(void *, int);
 static void umidi_getinfo(void *, struct midi_info *);
+static void umidi_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static usbd_status alloc_pipe(struct umidi_endpoint *);
 static void free_pipe(struct umidi_endpoint *);
@@ -127,11 +128,11 @@ static void out_solicit(void *); /* struct umidi_endpoint* for softintr */
 
 
 const struct midi_hw_if umidi_hw_if = {
-	umidi_open,
-	umidi_close,
-	umidi_rtmsg,
-	umidi_getinfo,
-	0,		/* ioctl */
+	.open = umidi_open,
+	.close = umidi_close,
+	.output = umidi_rtmsg,
+	.getinfo = umidi_getinfo,
+	.get_locks = umidi_get_locks,
 };
 
 struct midi_hw_if_ext umidi_hw_if_ext = {
@@ -200,6 +201,8 @@ umidi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "");
 	umidi_print_quirk(sc->sc_quirk);
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 
 	err = alloc_all_endpoints(sc);
 	if (err!=USBD_NORMAL_COMPLETION) {
@@ -296,6 +299,9 @@ umidi_detach(device_t self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
+
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -436,6 +442,15 @@ umidi_getinfo(void *addr, struct midi_info *mi)
 	midi_register_hw_if_ext(mm? &umidi_hw_if_mm : &umidi_hw_if_ext);
 }
 
+static void
+umidi_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
+{
+	struct umidi_mididev *mididev = addr;
+	struct umidi_softc *sc = mididev->sc;
+
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
+}
 
 /*
  * each endpoint stuffs
@@ -1547,6 +1562,7 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 {
 	int cn, len, i;
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
+	struct umidi_softc *sc = ep->sc;
 	struct umidi_jack *jack;
 	unsigned char *packet;
 	umidi_packet_bufp slot;
@@ -1557,6 +1573,7 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	if (ep->sc->sc_dying || !ep->num_open)
 		return;
 
+	mutex_enter(&sc->sc_intr_lock);
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
         if ( 0 == count % UMIDI_PACKET_SIZE ) {
 		DPRINTFN(200,("%s: input endpoint %p transfer length %u\n",
@@ -1588,6 +1605,7 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 				 (unsigned)data[0],
 				 (unsigned)data[1],
 				 (unsigned)data[2]));
+			mutex_exit(&sc->sc_intr_lock);
 			return;
 		}
 
@@ -1610,6 +1628,7 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	}
 
 	(void)start_input_transfer(ep);
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static void
@@ -1623,6 +1642,7 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	if (sc->sc_dying)
 		return;
 
+	mutex_enter(&sc->sc_intr_lock);
 #ifdef UMIDI_DEBUG
 	if ( umididebug >= 200 )
 		microtime(&umidi_tv);
@@ -1657,6 +1677,7 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		ep->soliciting = 1;
 		out_solicit(ep);
 	}
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 /*
