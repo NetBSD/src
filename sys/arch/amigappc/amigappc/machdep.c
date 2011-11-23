@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.48 2011/07/17 20:54:36 joerg Exp $ */
+/* $NetBSD: machdep.c,v 1.49 2011/11/23 23:07:28 jmcneill Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2011/07/17 20:54:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2011/11/23 23:07:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -241,7 +241,7 @@ amigappc_install_handlers(void)
 	intr_establish(1, IST_LEVEL, IPL_BIO, lev1_intr, NULL);
 	intr_establish(2, IST_LEVEL, IPL_BIO, ports_intr, &isr_ports);
 	intr_establish(3, IST_LEVEL, IPL_TTY, lev3_intr, NULL);
-	intr_establish(4, IST_LEVEL, IPL_AUDIO, lev4_intr, NULL);
+	intr_establish(4, IST_LEVEL, IPL_SCHED, lev4_intr, NULL);
 	intr_establish(5, IST_LEVEL, IPL_SERIAL, lev5_intr, NULL);
 	intr_establish(6, IST_LEVEL, IPL_SERIAL, exter_intr, &isr_exter);
 }
