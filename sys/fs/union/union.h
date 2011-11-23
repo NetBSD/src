@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.22 2011/11/21 18:29:22 hannken Exp $	*/
+/*	$NetBSD: union.h,v 1.23 2011/11/23 19:39:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -175,6 +175,7 @@ int union_readdirhook(struct vnode **, struct file *, struct lwp *);
 extern int (**union_vnodeop_p)(void *);
 
 void union_init(void);
+void union_reinit(void);
 void union_done(void);
 int union_freevp(struct vnode *);
 
