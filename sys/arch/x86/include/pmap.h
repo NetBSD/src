@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.47 2011/11/23 00:56:56 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.48 2011/11/23 01:16:55 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -438,22 +438,6 @@ xpmap_ptetomach(pt_entry_t *pte)
 	up_pte = (pt_entry_t *) va;
 
 	return (paddr_t) (((*up_pte) & PG_FRAME) + (((vaddr_t) pte) & (~PG_FRAME & ~VA_SIGN_MASK)));
-}
-
-/*
- * xpmap_update()
- * Update an active pt entry with Xen
- * Equivalent to *pte = npte
- */
-
-static __inline void
-xpmap_update (pt_entry_t *pte, pt_entry_t npte)
-{
-        int s = splvm();
-
-        xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
-        xpq_flush_queue();
-        splx(s);
 }
 
 /* Xen helpers to change bits of a pte */
