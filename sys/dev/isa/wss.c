@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.69.4.2 2011/11/22 22:47:07 jmcneill Exp $	*/
+/*	$NetBSD: wss.c,v 1.69.4.3 2011/11/23 15:47:38 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.69.4.2 2011/11/22 22:47:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.69.4.3 2011/11/23 15:47:38 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ struct audio_device wss_device = {
 	"WSS"
 };
 
+int	wss_intr(void *);
 int	wss_getdev(void *, struct audio_device *);
 
 int	wss_mixer_set_port(void *, mixer_ctrl_t *);
@@ -133,7 +134,7 @@ wssattach(struct wss_softc *sc)
 	madattach(sc);
 
 	sc->sc_ad1848.sc_ih = isa_intr_establish(sc->wss_ic, sc->wss_irq,
-	    IST_EDGE, IPL_SCHED, ad1848_isa_intr, &sc->sc_ad1848);
+	    IST_EDGE, IPL_SCHED, wss_intr, &sc->sc_ad1848);
 
 	ad1848_isa_attach(&sc->sc_ad1848);
 
@@ -172,6 +173,23 @@ wssattach(struct wss_softc *sc)
 		arg.hdl = 0;
 		(void)config_found(ac->sc_dev, &arg, audioprint);
 	}
+}
+
+int
+wss_intr(void *addr)
+{
+	struct ad1848_isa_softc *sc;
+	int handled;
+
+	sc = addr;
+
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
+
+	handled = ad1848_isa_intr(sc);
+
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
+
+	return handled;
 }
 
 int
