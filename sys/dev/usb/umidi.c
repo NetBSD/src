@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.45 2011/11/23 23:07:36 jmcneill Exp $	*/
+/*	$NetBSD: umidi.c,v 1.46 2011/11/23 23:50:46 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.45 2011/11/23 23:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.46 2011/11/23 23:50:46 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -204,6 +204,7 @@ umidi_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 
+	KERNEL_LOCK(1, curlwp);
 	err = alloc_all_endpoints(sc);
 	if (err!=USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(self,
@@ -236,6 +237,7 @@ umidi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self,
 		    "attach_all_mididevs failed. (err=%d)\n", err);
 	}
+	KERNEL_UNLOCK_ONE(curlwp);
 
 #ifdef UMIDI_DEBUG
 	dump_sc(sc);
@@ -291,6 +293,7 @@ umidi_detach(device_t self, int flags)
 
 	DPRINTFN(1,("umidi_detach\n"));
 
+	KERNEL_LOCK(1, curlwp);
 	sc->sc_dying = 1;
 	detach_all_mididevs(sc, flags);
 	free_all_mididevs(sc);
@@ -299,6 +302,7 @@ umidi_detach(device_t self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
@@ -354,16 +358,13 @@ bad:
 void
 umidi_close(void *addr)
 {
-	int s;
 	struct umidi_mididev *mididev = addr;
 
-	s = splusb();
 	if ((mididev->flags & FWRITE) && mididev->out_jack)
 		close_out_jack(mididev->out_jack);
 	if ((mididev->flags & FREAD) && mididev->in_jack)
 		close_in_jack(mididev->in_jack);
 	mididev->opened = 0;
-	splx(s);
 }
 
 int
@@ -539,7 +540,7 @@ alloc_all_endpoints(struct umidi_softc *sc)
 	} else {
 		err = alloc_all_endpoints_genuine(sc);
 	}
-	if (err!=USBD_NORMAL_COMPLETION)
+	if (err != USBD_NORMAL_COMPLETION)
 		return err;
 
 	ep = sc->sc_endpoints;
@@ -560,8 +561,9 @@ static void
 free_all_endpoints(struct umidi_softc *sc)
 {
 	int i;
+
 	for (i=0; i<sc->sc_in_num_endpoints+sc->sc_out_num_endpoints; i++)
-	    free_pipe(&sc->sc_endpoints[i]);
+		free_pipe(&sc->sc_endpoints[i]);
 	if (sc->sc_endpoints != NULL)
 		free(sc->sc_endpoints, M_USBDEV);
 	sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
@@ -967,14 +969,13 @@ alloc_all_jacks(struct umidi_softc *sc)
 static void
 free_all_jacks(struct umidi_softc *sc)
 {
-	int s;
 
-	s = splaudio();
+	mutex_spin_enter(&sc->sc_intr_lock);
 	if (sc->sc_out_jacks) {
 		free(sc->sc_jacks, M_USBDEV);
 		sc->sc_jacks = sc->sc_in_jacks = sc->sc_out_jacks = NULL;
 	}
-	splx(s);
+	mutex_spin_exit(&sc->sc_intr_lock);
 }
 
 static usbd_status
@@ -1076,8 +1077,8 @@ static usbd_status
 open_out_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *))
 {
 	struct umidi_endpoint *ep = jack->endpoint;
+	struct umidi_softc *sc = ep->sc;
 	umidi_packet_bufp end;
-	int s;
 	int err;
 
 	if (jack->opened)
@@ -1087,7 +1088,7 @@ open_out_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *))
 	jack->u.out.intr = intr;
 	jack->midiman_ppkt = NULL;
 	end = ep->buffer + ep->buffer_size / sizeof *ep->buffer;
-	s = splusb();
+	mutex_spin_enter(&sc->sc_intr_lock);
 	jack->opened = 1;
 	ep->num_open++;
 	/*
@@ -1101,11 +1102,11 @@ open_out_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *))
 		if ( err ) {
 			ep->num_open--;
 			jack->opened = 0;
-			splx(s);
+			mutex_spin_exit(&sc->sc_intr_lock);
 			return USBD_IOERROR;
 		}
 	}
-	splx(s);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return USBD_NORMAL_COMPLETION;
 }
@@ -1137,14 +1138,15 @@ static void
 close_out_jack(struct umidi_jack *jack)
 {
 	struct umidi_endpoint *ep;
-	int s;
+	struct umidi_softc *sc;
 	u_int16_t mask;
 	int err;
 
 	if (jack->opened) {
 		ep = jack->endpoint;
+		sc = ep->sc;
 		mask = 1 << (jack->cable_number);
-		s = splusb();
+		mutex_spin_enter(&sc->sc_intr_lock);
 		while ( mask & (ep->this_schedule | ep->next_schedule) ) {
 			err = tsleep(ep, PWAIT|PCATCH, "umi dr", mstohz(10));
 			if ( err )
@@ -1154,7 +1156,7 @@ close_out_jack(struct umidi_jack *jack)
 		jack->endpoint->num_open--;
 		ep->this_schedule &= ~mask;
 		ep->next_schedule &= ~mask;
-		splx(s);
+		mutex_spin_exit(&sc->sc_intr_lock);
 	}
 }
 
@@ -1428,11 +1430,13 @@ start_output_transfer(struct umidi_endpoint *ep)
 	length = (ep->next_slot - ep->buffer) * sizeof *ep->buffer;
 	DPRINTFN(200,("umidi out transfer: start %p end %p length %u\n",
 	    ep->buffer, ep->next_slot, length));
+	KERNEL_LOCK(1, curlwp);
 	usbd_setup_xfer(ep->xfer, ep->pipe,
 			(usbd_private_handle)ep,
 			ep->buffer, length,
 			USBD_NO_COPY, USBD_NO_TIMEOUT, out_intr);
 	rv = usbd_transfer(ep->xfer);
+	KERNEL_UNLOCK_ONE(curlwp);
 	
 	/*
 	 * Once the transfer is scheduled, no more adding to partial
@@ -1485,7 +1489,6 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	struct umidi_endpoint *ep = out_jack->endpoint;
 	struct umidi_softc *sc = ep->sc;
 	unsigned char *packet;
-	int s;
 	int plen;
 	int poff;
 
@@ -1503,7 +1506,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	    umidi_tv.tv_sec%100, (uint64_t)umidi_tv.tv_usec,
 	    ep, out_jack->cable_number, len, cin));
 	
-	s = splusb();
+	mutex_spin_enter(&sc->sc_intr_lock);
 	packet = *ep->next_slot++;
 	KASSERT(ep->buffer_size >=
 	    (ep->next_slot - ep->buffer) * sizeof *ep->buffer);
@@ -1551,7 +1554,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 		ep->soliciting = 1;
 		softint_schedule(ep->solicit_cookie);
 	}
-	splx(s);
+	mutex_spin_exit(&sc->sc_intr_lock);
 	
 	return 0;
 }
@@ -1670,7 +1673,7 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	wakeup(ep);
 	/*
 	 * Do not want anyone else to see armed <- 0 before soliciting <- 1.
-	 * Running at splusb so the following should happen to be safe.
+	 * Running at IPL_USB so the following should happen to be safe.
 	 */
 	ep->armed = 0;
 	if ( !ep->soliciting ) {
@@ -1700,7 +1703,7 @@ static void
 out_solicit(void *arg)
 {
 	struct umidi_endpoint *ep = arg;
-	int s;
+	struct umidi_softc *sc = ep->sc;
 	umidi_packet_bufp end;
 	u_int16_t which;
 	struct umidi_jack *jack;
@@ -1708,12 +1711,12 @@ out_solicit(void *arg)
 	end = ep->buffer + ep->buffer_size / sizeof *ep->buffer;
 	
 	for ( ;; ) {
-		s = splusb();
+		mutex_spin_enter(&sc->sc_intr_lock);
 		if ( end - ep->next_slot <= ep->num_open - ep->num_scheduled )
-			break; /* at splusb */
+			break; /* at IPL_USB */
 		if ( ep->this_schedule == 0 ) {
 			if ( ep->next_schedule == 0 )
-				break; /* at splusb */
+				break; /* at IPL_USB */
 			ep->this_schedule = ep->next_schedule;
 			ep->next_schedule = 0;
 		}
@@ -1732,7 +1735,7 @@ out_solicit(void *arg)
 		which &= (~which)+1; /* now mask of least set bit */
 		ep->this_schedule &= ~which;
 		-- ep->num_scheduled;
-		splx(s);
+		mutex_spin_exit(&sc->sc_intr_lock);
 
 		-- which; /* now 1s below mask - count 1s to get index */
 		which -= ((which >> 1) & 0x5555);/* SWAR credit aggregate.org */
@@ -1741,13 +1744,15 @@ out_solicit(void *arg)
 		which +=  (which >> 8);
 		which &= 0x1f; /* the bit index a/k/a jack number */
 		
+		KERNEL_LOCK(1, curlwp);
 		jack = ep->jacks[which];
 		if (jack->u.out.intr)
 			(*jack->u.out.intr)(jack->arg);
+		KERNEL_UNLOCK_ONE(curlwp);
 	}
-	/* splusb at loop exit */
+	/* intr lock held at loop exit */
 	if ( !ep->armed  &&  ep->next_slot > ep->buffer )
 		ep->armed = (USBD_IN_PROGRESS == start_output_transfer(ep));
 	ep->soliciting = 0;
-	splx(s);
+	mutex_spin_exit(&sc->sc_intr_lock);
 }
