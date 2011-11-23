@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.34.4.3 2011/11/22 22:47:05 jmcneill Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.34.4.4 2011/11/23 16:53:57 macallan Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.34.4.3 2011/11/22 22:47:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.34.4.4 2011/11/23 16:53:57 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sparc_arch.h"
@@ -247,6 +247,8 @@ cs4231_ebus_attach(device_t parent, device_t self, void *aux)
 		printf(": unable to map capture DMA registers\n");
 		return;
 	}
+
+	ad1848_init_locks(&sc->sc_ad1848, IPL_SCHED);
 
 	/* establish interrupt channels */
 	for (i = 0; i < ea->ea_nintr; ++i)
