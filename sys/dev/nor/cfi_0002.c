@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi_0002.c,v 1.4 2011/07/23 06:26:26 cliff Exp $	*/
+/*	$NetBSD: cfi_0002.c,v 1.5 2011/11/23 21:02:28 phx Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "opt_flash.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.4 2011/07/23 06:26:26 cliff Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.5 2011/11/23 21:02:28 phx Exp $"); 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,8 +335,6 @@ cfi_0002_erase_all(device_t self)
 	KASSERT(sc->sc_nor_if != NULL);
 	struct cfi *cfi = (struct cfi * const)sc->sc_nor_if->private;
 	KASSERT(cfi != NULL);
-	struct nor_chip * const chip = &sc->sc_chip;
-	KASSERT(chip != NULL);
 
 	CFI_0002_STATS_INC(cfi, erase_all);
 
@@ -364,12 +362,6 @@ cfi_0002_erase_block(device_t self, flash_off_t offset)
 	KASSERT(sc->sc_nor_if != NULL);
 	struct cfi *cfi = (struct cfi * const)sc->sc_nor_if->private;
 	KASSERT(cfi != NULL);
-	struct nor_chip * const chip = &sc->sc_chip;
-	KASSERT(chip != NULL);
-	KASSERT(chip->nc_block_mask != 0);
-	KASSERT((offset & ~chip->nc_block_mask) == 0);
-	KASSERT(chip->nc_block_size != 0);
-	KASSERT((chip->nc_block_size & ((1 << cfi->cfi_portwidth) - 1)) == 0);
 
 	CFI_0002_STATS_INC(cfi, erase_block);
 
