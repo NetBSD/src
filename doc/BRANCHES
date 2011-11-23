@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.312 2011/11/23 22:57:24 jmcneill Exp $
+#	$NetBSD: BRANCHES,v 1.313 2011/11/23 23:12:48 jmcneill Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -821,9 +821,9 @@ Notes:
 
 Branch:		jmcneill-audiomp3
 Description:	Add MP locking to the audio drivers
-Status:		Active
+Status:		Terminated; merged before NetBSD 6.0
 Start Date:	19 Nov 2011
-End Date:	
+End Date:	23 Nov 2011
 Base Tag:	jmcneill-audiomp3-base
 Maintainer:	Jared D. McNeill <jmcneill@NetBSD.org>
 Scope:		kernel
