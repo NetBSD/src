@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.7 2011/03/21 14:53:03 tnozaki Exp $ */
+/*	$NetBSD: ex.c,v 1.8 2011/11/23 14:14:43 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1842,7 +1842,7 @@ ex_line(SCR *sp, EXCMD *ecp, MARK *mp, int *isaddrp, int *errp)
 	F_CLR(ecp, E_DELTA);
 
 	/* No addresses permitted until a file has been read in. */
-	if (sp->ep == NULL && STRCHR(L"$0123456789'\\/?.+-^", *ecp->cp)) {
+	if (sp->ep == NULL && STRCHR(L("$0123456789'\\/?.+-^"), *ecp->cp)) {
 		ex_badaddr(sp, NULL, A_EMPTY, NUM_OK);
 		*errp = 1;
 		return (0);
