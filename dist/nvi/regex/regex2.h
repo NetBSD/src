@@ -1,4 +1,4 @@
-/*	$NetBSD: regex2.h,v 1.4 2011/11/19 17:45:11 tnozaki Exp $ */
+/*	$NetBSD: regex2.h,v 1.5 2011/11/23 15:43:39 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -170,5 +170,5 @@ struct re_guts {
 };
 
 /* misc utilities */
-#define OUT	WEOF	/* a non-character value */
+#define OUT	REOF	/* a non-character value */
 #define	ISWORD(c) ((c) == '_' || (ISGRAPH((UCHAR_T)c) && !ISPUNCT((UCHAR_T)c)))
