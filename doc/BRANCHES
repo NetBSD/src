@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.311 2011/11/05 14:35:34 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.312 2011/11/23 22:57:24 jmcneill Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -265,9 +265,9 @@ Notes:		Making the audio drivers MP safe is necessary before efforts
 
 Branch:		ad-audiomp2
 Description:	Add MP locking to the audio drivers
-Status:		Active
+Status:		Terminated
 Start Date:	7 December 2008
-End Date:	
+End Date:	19 November 2011
 Base Tag:	ad-audiomp2-base
 Maintainer:	Andrew Doran <ad@NetBSD.org>
 Scope:		kernel
@@ -818,6 +818,16 @@ Base Tag:	jmcneill-pm-base
 Maintainer:	Jared D. McNeill <jmcneill@NetBSD.org>
 Scope:		kernel
 Notes:		
+
+Branch:		jmcneill-audiomp3
+Description:	Add MP locking to the audio drivers
+Status:		Active
+Start Date:	19 Nov 2011
+End Date:	
+Base Tag:	jmcneill-audiomp3-base
+Maintainer:	Jared D. McNeill <jmcneill@NetBSD.org>
+Scope:		kernel
+Notes:		Resurrect ad-audiomp2, make the audio drivers MP safe.
 
 Branch:		kenh-if-detach
 Description:	Interface detach support.
