@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.22 2011/11/19 22:51:31 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.23 2011/11/23 10:47:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ typedef struct {
 typedef struct {
 	uint32_t	len;
 	uint32_t	entropy;
-	u_char		data[RND_POOLWORDS * 4];
+	u_char		data[RND_POOLWORDS * sizeof(uint32_t)];
 } rnddata_t;
 
 #define	RNDGETENTCNT	_IOR('R',  101, uint32_t) /* get entropy count */

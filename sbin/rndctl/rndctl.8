@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndctl.8,v 1.18 2011/10/01 02:55:00 pgoyette Exp $
+.\"	$NetBSD: rndctl.8,v 1.19 2011/11/23 10:47:49 tls Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -39,6 +39,10 @@
 .Nm
 .Fl ls
 .Op Fl d Ar devname | Fl t Ar devtype
+.Nm
+.Fl L Ar save-file
+.Nm
+.Fl S Ar save-file
 .Sh DESCRIPTION
 The
 .Nm
@@ -104,6 +108,17 @@ Terminal, mouse, or other user input devices.
 .It Ic rng
 Random number generators.
 .El
+.It Fl L
+Load saved entropy from file
+.Ar save-file ,
+which will be overwritten and deleted before the entropy is loaded into
+the kernel.
+.It Fl S
+Save entropy pool to file
+.Ar save-file .
+The file format is specific to
+.Nm
+and includes an estimate of the amount of saved entropy and a checksum.
 .El
 .Sh FILES
 .Bl -tag -width /dev/urandomx -compact
