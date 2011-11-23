@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.305 2011/09/27 01:02:39 jym Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.306 2011/11/23 01:00:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.305 2011/09/27 01:02:39 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.306 2011/11/23 01:00:52 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4710,8 +4710,13 @@ again:
 	 * for simplicity, always allocate one page chunk of them at once.
 	 */
 
+#ifdef PMAP_ALLOC_POOLPAGE
+	pg = PMAP_ALLOC_POOLPAGE(
+	    (flags & UVM_KMF_NOWAIT) != 0 ? UVM_PGA_USERESERVE : 0);
+#else
 	pg = uvm_pagealloc(NULL, 0, NULL,
 	    (flags & UVM_KMF_NOWAIT) != 0 ? UVM_PGA_USERESERVE : 0);
+#endif
 	if (__predict_false(pg == NULL)) {
 		if (flags & UVM_FLAG_NOWAIT)
 			return NULL;
