@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.85 2011/11/20 00:45:15 tls Exp $	*/
+/*	$NetBSD: rnd.c,v 1.86 2011/11/23 10:47:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.85 2011/11/20 00:45:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.86 2011/11/23 10:47:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -509,7 +509,15 @@ int
 rndwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	u_int8_t *bf;
-	int n, ret;
+	int n, ret = 0, estimate_ok = 0, estimate = 0, added = 0;
+
+	ret = kauth_authorize_device(curlwp->l_cred,
+	    KAUTH_DEVICE_RND_ADDDATA, NULL, NULL, NULL, NULL);
+	if (ret) {
+		return (ret);
+	}
+	estimate_ok = !kauth_authorize_device(curlwp->l_cred,
+	    KAUTH_DEVICE_RND_ADDDATA_ESTIMATE, NULL, NULL, NULL, NULL);
 
 	DPRINTF(RND_DEBUG_WRITE,
 	    ("Random: Write of %zu requested\n", uio->uio_resid));
@@ -519,19 +527,43 @@ rndwrite(dev_t dev, struct uio *uio, int ioflag)
 	ret = 0;
 	bf = kmem_alloc(RND_TEMP_BUFFER_SIZE, KM_SLEEP);
 	while (uio->uio_resid > 0) {
+		/*
+		 * Don't flood the pool.
+		 */
+		if (added > RND_POOLWORDS * sizeof(int)) {
+			printf("rnd: added %d already, adding no more.\n",
+			       added);
+			break;
+		}
 		n = min(RND_TEMP_BUFFER_SIZE, uio->uio_resid);
 
 		ret = uiomove((void *)bf, n, uio);
 		if (ret != 0)
 			break;
 
+		if (estimate_ok) {
+			/*
+			 * Don't cause samples to be discarded by taking
+			 * the pool's entropy estimate to the max.
+			 */
+			if (added > RND_POOLWORDS / 2)
+				estimate = 0;
+			else
+				estimate = n * NBBY / 2;
+			printf("rnd: adding on write, %d bytes, estimate %d\n",
+			       n, estimate);
+		} else {
+			printf("rnd: kauth says no entropy.\n");
+		}
+
 		/*
 		 * Mix in the bytes.
 		 */
 		mutex_spin_enter(&rndpool_mtx);
-		rndpool_add_data(&rnd_pool, bf, n, 0);
+		rndpool_add_data(&rnd_pool, bf, n, estimate);
 		mutex_spin_exit(&rndpool_mtx);
 
+		added += n;
 		DPRINTF(RND_DEBUG_WRITE, ("Random: Copied in %d bytes\n", n));
 	}
 	kmem_free(bf, RND_TEMP_BUFFER_SIZE);
@@ -558,9 +590,8 @@ rndioctl(dev_t dev, u_long cmd, void *addr, int flag,
 	rndctl_t *rctl;
 	rnddata_t *rnddata;
 	u_int32_t count, start;
-	int ret;
-
-	ret = 0;
+	int ret = 0;
+	int estimate_ok = 0, estimate = 0;
 
 	switch (cmd) {
 	case FIONBIO:
@@ -589,6 +620,8 @@ rndioctl(dev_t dev, u_long cmd, void *addr, int flag,
 		    KAUTH_DEVICE_RND_ADDDATA, NULL, NULL, NULL, NULL);
 		if (ret)
 			return (ret);
+		estimate_ok = !kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_RND_ADDDATA_ESTIMATE, NULL, NULL, NULL, NULL);
 		break;
 
 	default:
@@ -720,9 +753,23 @@ rndioctl(dev_t dev, u_long cmd, void *addr, int flag,
 		if (rnddata->len > sizeof(rnddata->data))
 			return EINVAL;
 
+		if (estimate_ok) {
+			/*
+			 * Do not accept absurd entropy estimates, and
+			 * do not flood the pool with entropy such that
+			 * new samples are discarded henceforth.
+			 */
+			estimate = MIN((rnddata->len * NBBY) / 2,
+				       MIN(rnddata->entropy,
+					   RND_POOLWORDS * sizeof(int) *
+					   NBBY / 2));
+		} else {
+			estimate = 0;
+		}
+
 		mutex_spin_enter(&rndpool_mtx);
 		rndpool_add_data(&rnd_pool, rnddata->data, rnddata->len,
-		    rnddata->entropy);
+				 estimate);
 		mutex_spin_exit(&rndpool_mtx);
 
 		rnd_wakeup_readers();

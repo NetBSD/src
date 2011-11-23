@@ -1,0 +1,91 @@
+#!/bin/sh
+#
+# $NetBSD: random_seed,v 1.1 2011/11/23 10:47:48 tls Exp $
+#
+
+# PROVIDE: random_seed
+# REQUIRE: mountcritlocal
+# BEFORE: securelevel
+# KEYWORD: shutdown
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="random_seed"
+rcvar=$name
+start_cmd="random_load"
+stop_cmd="random_save"
+
+random_file=${random_file:-/var/db/entropy-file}
+
+fs_safe()
+{
+	#
+	# Enforce that the file's on a local filesystem.
+	# Include only the types we can actually write.
+	#
+	fstype=$(df -G $1 | awk '$2 == "fstype" {print $1}')
+	case $fstype in
+	    ffs)
+		return 0
+		;;
+	    lfs)
+		return 0
+		;;
+	    ext2fs)
+		return 0;
+		;;
+	    msdosfs)
+		return 0;
+		;;
+	    v7fs)
+		return 0;
+		;;
+	 esac
+	 return 1
+}
+
+random_load()
+{
+	if [ -f $random_file ]; then
+
+		if ! fs_safe $(dirname ${random_file}); then
+			return 1
+		fi
+
+		eval $(stat -s ${random_file})
+
+		# The file must be owned by root,
+		if [ "$st_uid" != "0" ]; then
+			return 1
+		fi
+		# and root read/write only.
+		if [ "$(echo $st_mode | tail -c4)" != "600" ]; then
+			return 1
+		fi
+
+		if rndctl -L ${random_file}; then
+			echo "Loaded entropy from disk."
+		fi
+		
+	fi
+}
+
+random_save()
+{
+	oum=$(umask)
+	umask 077
+
+	rm -Pf ${random_file}
+
+	if ! fs_safe $(dirname ${random_file}); then
+		return 1
+	fi
+
+	if rndctl -S ${random_file}; then
+		echo "Saved entropy to disk."
+	fi
+}
+
+
+load_rc_config $name
+run_rc_command "$1"
