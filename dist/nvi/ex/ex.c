@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.8 2011/11/23 14:14:43 tnozaki Exp $ */
+/*	$NetBSD: ex.c,v 1.9 2011/11/23 19:25:28 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1051,7 +1051,7 @@ end_case23:		break;
 			 * not a two-line deletion.
 			 */
 			if (!ISDIGIT((UCHAR_T)ecp->cp[0])) {
-				ecp->buffer = *ecp->cp;
+				ecp->buffer = (UCHAR_T)*ecp->cp;
 				++ecp->cp;
 				--ecp->clen;
 				FL_SET(ecp->iflags, E_C_BUFFER);
@@ -2356,7 +2356,7 @@ ex_comlog(sp, ecp)
 	if (ecp->flags)
 		vtrace(sp, " flags 0x%x", ecp->flags);
 	if (F_ISSET(&exc, E_BUFFER))
-		vtrace(sp, " buffer %c", ecp->buffer);
+		vtrace(sp, " buffer "WC, ecp->buffer);
 	if (ecp->argc)
 		for (cnt = 0; cnt < ecp->argc; ++cnt)
 			vtrace(sp, " arg %d: {%s}", cnt, ecp->argv[cnt]->bp);
