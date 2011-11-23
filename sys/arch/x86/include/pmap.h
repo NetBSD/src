@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.46 2011/11/20 19:41:27 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.47 2011/11/23 00:56:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -456,24 +456,14 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
         splx(s);
 }
 
-
 /* Xen helpers to change bits of a pte */
 #define XPMAP_UPDATE_DIRECT	1	/* Update direct map entry flags too */
 
 paddr_t	vtomach(vaddr_t);
 #define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)
 
-void	pmap_xen_resume(void);
-void	pmap_xen_suspend(void);
-
 void	pmap_apte_flush(struct pmap *);
 void	pmap_unmap_apdp(void);
-
-#ifdef PAE
-void	pmap_map_recursive_entries(void);
-void	pmap_unmap_recursive_entries(void);
-#endif /* PAE */
-
 #endif	/* XEN */
 
 /* pmap functions with machine addresses */
