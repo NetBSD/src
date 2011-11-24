@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.35 2011/11/24 03:35:57 mrg Exp $	*/
+/*	$NetBSD: aria.c,v 1.36 2011/11/24 16:07:28 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.35 2011/11/24 03:35:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.36 2011/11/24 16:07:28 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1668,7 +1668,7 @@ mute:
 	return 0;
 }
 
-static void
+void
 aria_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
 {
 	struct aria_softc *sc;
