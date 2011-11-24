@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.13 2011/11/23 23:07:29 jmcneill Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.14 2011/11/24 03:35:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.13 2011/11/23 23:07:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.14 2011/11/24 03:35:56 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = &vrdcu_bus_dma_tag;
 	sc->sc_volume = 127;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	if (!sc->sc_cc) {
 		printf(" not configured: cmu not found\n");
@@ -216,7 +216,7 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 
 	/* install interrupt handler and enable interrupt */
 	if (!(sc->sc_handler = vrip_intr_establish(va->va_vc, va->va_unit,
-	    0, IPL_SCHED, vraiu_intr, sc))) {
+	    0, IPL_AUDIO, vraiu_intr, sc))) {
 		printf(": can't map interrupt line.\n");
 		return;
 	}

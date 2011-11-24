@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.46 2011/11/23 23:07:36 jmcneill Exp $	*/
+/*	$NetBSD: neo.c,v 1.47 2011/11/24 03:35:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.46 2011/11/23 23:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.47 2011/11/24 03:35:59 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -606,10 +606,10 @@ neo_attach(device_t parent, device_t self, void *aux)
 	}
 
 	mutex_init(&sc->lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	intrstr = pci_intr_string(pc, ih);
-	sc->ih = pci_intr_establish(pc, ih, IPL_SCHED, neo_intr, sc);
+	sc->ih = pci_intr_establish(pc, ih, IPL_AUDIO, neo_intr, sc);
 
 	if (sc->ih == NULL) {
 		aprint_error_dev(&sc->dev, "couldn't establish interrupt");
