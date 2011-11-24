@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.69 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: pas.c,v 1.70 2011/11/24 03:35:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.69 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.70 2011/11/24 03:35:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,12 +473,12 @@ pasattach(device_t parent, device_t self, void *aux)
 	}
 
 	mutex_init(&sc->sc_sbdsp.sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_sbdsp.sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_sbdsp.sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	sc->sc_sbdsp.sc_ic = ia->ia_ic;
 	sc->sc_sbdsp.sc_iobase = iobase;
 	sc->sc_sbdsp.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-	    IST_EDGE, IPL_SCHED, sbdsp_intr, &sc->sc_sbdsp);
+	    IST_EDGE, IPL_AUDIO, sbdsp_intr, &sc->sc_sbdsp);
 
 	aprint_normal(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model],
 	    sc->rev);

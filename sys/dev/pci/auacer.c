@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.29 2011/11/23 23:07:33 jmcneill Exp $	*/
+/*	$NetBSD: auacer.c,v 1.30 2011/11/24 03:35:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.29 2011/11/23 23:07:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.30 2011/11/24 03:35:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ auacer_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmamap_flags = BUS_DMA_COHERENT;	/* XXX remove */
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	/* enable bus mastering */
 	v = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -291,7 +291,7 @@ auacer_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_SCHED,
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO,
 	    auacer_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "can't establish interrupt");
