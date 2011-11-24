@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.18 2011/11/24 01:11:04 jmcneill Exp $ */
+/* $NetBSD: pad.c,v 1.19 2011/11/24 01:54:08 agc Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.18 2011/11/24 01:11:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.19 2011/11/24 01:54:08 agc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -654,7 +654,7 @@ static int
 pad_modcmd(modcmd_t cmd, void *arg)
 {
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
-	int error, s;
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
