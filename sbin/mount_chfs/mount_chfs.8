@@ -1,3 +1,5 @@
+.\" $NetBSD: mount_chfs.8,v 1.2 2011/11/24 16:20:35 wiz Exp $
+.\"
 .\" Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -44,19 +46,18 @@ please use a regular file system.
 The file system will be created during the first mount.
 CHFS stands for Chip File System.
 .Sh EXAMPLES
-mount_chfs /dev/flash0 /mnt
+.Dl mount_chfs /dev/flash0 /mnt
 .Sh SEE ALSO
+.Xr flash 4 ,
 .Xr fstab 5 ,
 .Xr mount 8 ,
-.Xr flash 9 ,
-.Xr flash 4
+.Xr flash 9
 .Sh HISTORY
 CHFS was originally called ChewieFS during development.
 The name was changed to avoid legal issues and to have a more
 neutral name.
-.Sh BUGS
-CHFS has a few known bugs as of 2011.
 .Sh AUTHORS
 CHFS was developed at the Department of Software Engineering,
-University of Szeged, Hungary
-
+University of Szeged, Hungary.
+.Sh BUGS
+CHFS has a few known bugs as of 2011.
