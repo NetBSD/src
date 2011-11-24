@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.971 2011/11/15 16:50:43 riz Exp $
+# $NetBSD: mi,v 1.972 2011/11/24 21:44:19 ahoka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -268,6 +268,7 @@
 ./sbin/mount					base-sysutil-root
 ./sbin/mount_ados				base-adosfs-root
 ./sbin/mount_cd9660				base-sysutil-root
+./sbin/mount_chfs				base-sysutil-root
 ./sbin/mount_efs				base-efs-root
 ./sbin/mount_ext2fs				base-ext2fs-root
 ./sbin/mount_fdesc				base-miscfs-root
