@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.15 2011/11/23 23:07:36 jmcneill Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.16 2011/11/24 22:12:52 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -121,5 +121,5 @@ struct umidi_softc {
 	int			cblnums_global;
 
 	kmutex_t		sc_lock;
-	kmutex_t		sc_intr_lock;
+	kcondvar_t		sc_cv;
 };
