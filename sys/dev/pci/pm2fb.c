@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.9 2011/11/24 05:53:05 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.10 2011/11/24 05:57:17 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.9 2011/11/24 05:53:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.10 2011/11/24 05:57:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -926,7 +926,7 @@ pm2_setup_i2c(struct pm2fb_softc *sc)
 	while (sc->sc_edid_data[1] == 0 && i++ < 3)
 		ddc_read_edid(&sc->sc_i2c, sc->sc_edid_data, 128);
 #ifdef PM2FB_DEBUG
-	if (edid_parse(&edid_data[0], &ei) != -1) {
+	if (edid_parse(&sc->sc_edid_data[0], &ei) != -1) {
 		edid_print(&ei);
 	}
 #endif
