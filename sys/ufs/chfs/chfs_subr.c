@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_subr.c,v 1.1 2011/11/24 15:51:31 ahoka Exp $	*/
+/*	$NetBSD: chfs_subr.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -279,7 +279,8 @@ chfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred)
 		}
 
 		/* create the new data */
-		dbg("create new data vap%llu ip%llu\n", size, ip->size);
+		dbg("create new data vap%llu ip%llu\n",
+			(unsigned long long)size, (unsigned long long)ip->size);
 		append = size - ip->size;
 		if (append > 0) {
 			memcpy(buf, bp->b_data, ip->size);

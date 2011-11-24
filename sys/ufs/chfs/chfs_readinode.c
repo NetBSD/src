@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_readinode.c,v 1.1 2011/11/24 15:51:31 ahoka Exp $	*/
+/*	$NetBSD: chfs_readinode.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -391,8 +391,11 @@ chfs_add_tmp_dnode_to_tree(struct chfs_mount *chmp,
 				tmp_td->node->ofs + tmp_td->node->size >= end_ofs) {
 				/* New node entirely overlapped by 'this' */
 				if (!chfs_check_td_node(chmp, tmp_td)) {
-					dbg("this version: %llu\n", tmp_td->version);
-					dbg("this ofs: %llu, size: %u\n", tmp_td->node->ofs, tmp_td->node->size);
+					dbg("this version: %llu\n",
+						(unsigned long long)tmp_td->version);
+					dbg("this ofs: %llu, size: %u\n",
+						(unsigned long long)tmp_td->node->ofs,
+						tmp_td->node->size);
 					dbg("calling kill td 4\n");
 					chfs_kill_td(chmp, newtd);
 					return 0;
@@ -895,7 +898,7 @@ chfs_build_fragtree(struct chfs_mount *chmp, struct chfs_inode *ip,
 				} else {
 					if (tmp_td->version > high_ver) {
 						high_ver = tmp_td->version;
-						dbg("highver: %llu\n", high_ver);
+						dbg("highver: %llu\n", (unsigned long long)high_ver);
 						rii->latest_ref = tmp_td->node->nref;
 					}
 
@@ -959,8 +962,10 @@ retry:
 		break;
 	case VNO_STATE_PRESENT:
 	case VNO_STATE_READING:
-		chfs_err("Reading inode #%llu in state %d!\n", vc->vno, vc->state);
-		chfs_err("wants to read a nonexistent ino %llu\n", vc->vno);
+		chfs_err("Reading inode #%llu in state %d!\n",
+			(unsigned long long)vc->vno, vc->state);
+		chfs_err("wants to read a nonexistent ino %llu\n",
+			(unsigned long long)vc->vno);
 		return ENOENT;
 	default:
 		panic("BUG() Bad vno cache state.");

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_gc.c,v 1.1 2011/11/24 15:51:31 ahoka Exp $	*/
+/*	$NetBSD: chfs_gc.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -208,7 +208,7 @@ chfs_gc_fetch_inode(struct chfs_mount *chmp, ino_t vno,
 	struct vnode *vp = NULL;
 	struct chfs_vnode_cache *vc;
 	struct chfs_inode *ip;
-	dbg_gc("fetch inode %llu\n", vno);
+	dbg_gc("fetch inode %llu\n", (unsigned long long)vno);
 
 	if (unlinked) {
 		dbg_gc("unlinked\n");
@@ -439,14 +439,16 @@ chfs_gcollect_pass(struct chfs_mount *chmp)
 			mutex_exit(&chmp->chm_lock_sizes);
 			mutex_exit(&chmp->chm_lock_mountfields);
 			dbg_gc("checked_vno (#%llu) > max_vno (#%llu)\n",
-			    chmp->chm_checked_vno, chmp->chm_max_vno);
+			    (unsigned long long)chmp->chm_checked_vno,
+			    (unsigned long long)chmp->chm_max_vno);
 			return ENOSPC;
 		}
 
 		mutex_exit(&chmp->chm_lock_sizes);
 
 		mutex_enter(&chmp->chm_lock_vnocache);
-		dbg_gc("checking vno #%llu\n", chmp->chm_checked_vno);
+		dbg_gc("checking vno #%llu\n",
+			(unsigned long long)chmp->chm_checked_vno);
 		dbg_gc("get vnode cache\n");
 		vc = chfs_vnode_cache_get(chmp, chmp->chm_checked_vno++);
 
@@ -600,7 +602,7 @@ chfs_gcollect_pass(struct chfs_mount *chmp)
 		mutex_exit(&chmp->chm_lock_mountfields);
 		panic("CHFS BUG - vc state unchecked,"
 		    " checking or gc (vno #%llu, num #%d)\n",
-		    vc->vno, vc->state);
+		    (unsigned long long)vc->vno, vc->state);
 
         case VNO_STATE_READING:
 		mutex_exit(&chmp->chm_lock_vnocache);
@@ -896,7 +898,8 @@ chfs_gcollect_live(struct chfs_mount *chmp,
 	} else {
 		dbg_gc("Nref at leb #%u offset 0x%08x wasn't in node list"
 		    " for ino #%llu\n",
-		    nref->nref_lnr, CHFS_GET_OFS(nref->nref_offset), ip->ino);
+		    nref->nref_lnr, CHFS_GET_OFS(nref->nref_offset),
+		    (unsigned long long)ip->ino);
 		if (CHFS_REF_OBSOLETE(nref)) {
 			dbg_gc("But it's obsolete so we don't mind"
 			    " too much.\n");

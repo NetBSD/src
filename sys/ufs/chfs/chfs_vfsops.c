@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.1 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -477,7 +477,7 @@ chfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct chfs_node_ref* nref = NULL;
 	struct buf *bp;
 
-	dbg("vget() | ino: %llu\n", ino);
+	dbg("vget() | ino: %llu\n", (unsigned long long)ino);
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
@@ -583,7 +583,8 @@ retry:
 		case VREG:
 		case VSOCK:
 			//build the fragtree of the vnode
-			dbg("read_inode_internal | ino: %llu\n", ip->ino);
+			dbg("read_inode_internal | ino: %llu\n",
+				(unsigned long long)ip->ino);
 			error = chfs_read_inode(chmp, ip);
 			if (error) {
 				vput(vp);
@@ -594,7 +595,8 @@ retry:
 			break;
 		case VLNK:
 			//build the fragtree of the vnode
-			dbg("read_inode_internal | ino: %llu\n", ip->ino);
+			dbg("read_inode_internal | ino: %llu\n",
+				(unsigned long long)ip->ino);
 			error = chfs_read_inode_internal(chmp, ip);
 			if (error) {
 				vput(vp);
@@ -603,7 +605,7 @@ retry:
 				return (error);
 			}
 
-			dbg("size: %llu\n", ip->size);
+			dbg("size: %llu\n", (unsigned long long)ip->size);
 			bp = getiobuf(vp, true);
 			bp->b_blkno = 0;
 			bp->b_bufsize = bp->b_resid =
@@ -622,7 +624,8 @@ retry:
 		case VBLK:
 		case VFIFO:
 			//build the fragtree of the vnode
-			dbg("read_inode_internal | ino: %llu\n", ip->ino);
+			dbg("read_inode_internal | ino: %llu\n",
+				(unsigned long long)ip->ino);
 			error = chfs_read_inode_internal(chmp, ip);
 			if (error) {
 				vput(vp);

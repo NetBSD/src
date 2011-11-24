@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_write.c,v 1.1 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: chfs_write.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -309,7 +309,8 @@ chfs_write_flash_dnode(struct chfs_mount *chmp, struct vnode *vp,
 	dnode->node_crc = htole32(crc32(0, (uint8_t *)dnode,
 		sizeof(*dnode) - 4));
 
-	dbg("dnode @%llu %ub v%llu\n", dnode->offset, dnode->data_length, dnode->version);
+	dbg("dnode @%llu %ub v%llu\n", (unsigned long long)dnode->offset,
+		dnode->data_length, (unsigned long long)dnode->version);
 
 	if (CHFS_PAD(size) - sizeof(*dnode)) {
 		tmpbuf = kmem_zalloc(CHFS_PAD(size)

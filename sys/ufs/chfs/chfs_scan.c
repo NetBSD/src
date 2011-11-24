@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_scan.c,v 1.1 2011/11/24 15:51:31 ahoka Exp $	*/
+/*	$NetBSD: chfs_scan.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -415,7 +415,7 @@ chfs_scan_check_dirent_node(struct chfs_mount *chmp,
 
 	fd->nref->nref_offset = ofs;
 
-	dbg("add dirent to #%llu\n", vc->vno);
+	dbg("add dirent to #%llu\n", (unsigned long long)vc->vno);
 	chfs_add_node_to_list(chmp, vc, fd->nref, &vc->dirents);
 	/*tmp = vc->dirents;
 	  dbg("START|vno: %d dirents dump\n", vc->vno);
