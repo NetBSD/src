@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37 2011/11/15 16:50:46 riz Exp $
+# $NetBSD: mi,v 1.38 2011/11/24 21:46:15 ahoka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -23,6 +23,8 @@
 ./@MODULEDIR@/bpf/bpf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/cd9660				base-kernel-modules	kmod
 ./@MODULEDIR@/cd9660/cd9660.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/chfs				base-kernel-modules	kmod
+./@MODULEDIR@/chfs/chfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coda				base-kernel-modules	kmod
 ./@MODULEDIR@/coda/coda.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coda5				base-kernel-modules	kmod
