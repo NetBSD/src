@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_wbuf.c,v 1.1 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: chfs_wbuf.c,v 1.2 2011/11/24 20:50:33 agc Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -176,7 +176,8 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 	//dbg("3. wbuf ofs: %zu, len: %zu\n", chmp->chm_wbuf_ofs, chmp->chm_wbuf_len);
 
 	if (to != PAD(chmp->chm_wbuf_ofs + chmp->chm_wbuf_len)) {
-		dbg("to: %llu != %zu\n", to, PAD(chmp->chm_wbuf_ofs + chmp->chm_wbuf_len));
+		dbg("to: %llu != %zu\n", (unsigned long long)to,
+			PAD(chmp->chm_wbuf_ofs + chmp->chm_wbuf_len));
 		dbg("Non-contiguous write\n");
 		panic("BUG\n");
 	}
