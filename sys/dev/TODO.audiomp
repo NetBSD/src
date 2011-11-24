@@ -4,7 +4,7 @@ arch/amiga/dev/aucc.c		done
 arch/amiga/dev/repulse.c	done
 arch/amiga/dev/toccata.c	done
 arch/arm/iomd/vidcaudio.c	done
-arcm/arm/xscale/pxa2x0_ac97.c	done
+arch/arm/xscale/pxa2x0_ac97.c	done
 arch/dreamcast/dev/g2/aica.c	done
 arch/hp700/gsc/harmony.c	done
 arch/hpcmips/vr/vraiu.c		done
@@ -25,6 +25,7 @@ dev/ic/tms320av110.c		done
 dev/isa/aria.c			done
 dev/isa/ess.c			done		port-shark
 dev/isa/gus.c			done
+dev/isa/midi_pcppi.c		done		port-amd64
 dev/isa/pas.c			done
 dev/isa/sb.c			done		port-i386
 dev/isa/wss.c			done		port-i386
@@ -47,10 +48,10 @@ dev/pci/esm.c			done
 dev/pci/eso.c			done
 dev/pci/fms.c			done
 dev/pci/gcscaudio.c		done
+dev/pci/hdaudio/hdafg.c		done		port-i386, port-amd64
 dev/pci/neo.c			done
 dev/pci/sv.c			done
 dev/pci/yds.c			done
-dev/pci/hdaudio/hdafg.c		done		port-i386, port-amd64
 dev/sbus/cs4231_sbus.c		done		port-sparc, port-sparc64
 dev/sbus/dbri.c			done		port-sparc
 dev/tc/bba.c			done
