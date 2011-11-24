@@ -56,4 +56,4 @@ dev/sbus/cs4231_sbus.c		done		port-sparc, port-sparc64
 dev/sbus/dbri.c			done		port-sparc
 dev/tc/bba.c			done
 dev/usb/uaudio.c		done		port-amd64
-dev/usb/umidi.c			done
+dev/usb/umidi.c			done		midi1 @ umidi plays out midi0 @ pcppi, and then crashes at close
