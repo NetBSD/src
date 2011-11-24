@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.73 2011/11/23 23:07:31 jmcneill Exp $	*/
+/*	$NetBSD: midi.c,v 1.74 2011/11/24 02:54:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.73 2011/11/23 23:07:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.74 2011/11/24 02:54:32 mrg Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -81,6 +81,7 @@ int	mididebug = 0;
 #endif
 
 static	struct midi_softc *hwif_softc = NULL;
+static	kmutex_t hwif_softc_lock;
 
 static void	midi_in(void *, int);
 static void	midi_out(void *);
@@ -242,6 +243,12 @@ midi_attach(struct midi_softc *sc, device_t parent)
 {
 	struct midi_info mi;
 	kmutex_t *dummy;
+	static int first = 1;
+
+	if (first) {
+		mutex_init(&hwif_softc_lock, MUTEX_DEFAULT, IPL_NONE);
+		first = 0;
+	}
 
 	sc->hw_if->get_locks(sc->hw_hdl, &sc->lock, &dummy);
 
@@ -260,9 +267,13 @@ midi_attach(struct midi_softc *sc, device_t parent)
 	sc->isopen = 0;
 	sc->sc_dev = parent;
 
+	mutex_enter(&hwif_softc_lock);
 	mutex_enter(sc->lock);
+	hwif_softc = sc;
 	sc->hw_if->getinfo(sc->hw_hdl, &mi);
+	hwif_softc = NULL;
 	mutex_exit(sc->lock);
+	mutex_exit(&hwif_softc_lock);
 
 	sc->props = mi.props;
 
