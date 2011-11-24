@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.313 2011/11/23 23:12:48 jmcneill Exp $
+#	$NetBSD: BRANCHES,v 1.314 2011/11/24 15:27:10 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -593,7 +593,7 @@ Description:	page cache related changes
 Status:		Active
 Start Date:	Wed Nov 2 2011
 End Date:	
-Base Tag:	yamt-pagecache-base
+Base Tag:	yamt-pagecache-base3
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src
 Notes:		- maintain object pages in radix tree rather than rb tree.
@@ -604,6 +604,18 @@ Notes:		- maintain object pages in radix tree rather than rb tree.
 		  dirtiness more  precisely in uvm layer.
 		- fix nfs commit range tracking.
 		- fix nfs write clustering.  XXX hack
+
+		tested: i386, amd64, nfs, ffs
+
+		sparc64 pmap
+			some mechanical changes are necessary.
+			stop using uvm_object.  a TAILQ linked with
+			pageq.queue should be enough.
+			remove PG_MARKER assertion.
+
+		hppa pmap
+			some mechanical changes are necessary.
+			use uvm_page_array_* instead of TAILQ_FOREACH memq.
 
 Branch:		reinoud-bufcleanup
 Description:	implement and evaluate struct buf usage cleanup strategies.
