@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.55 2011/11/23 23:07:35 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.56 2011/11/24 03:35:59 mrg Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.55 2011/11/23 23:07:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.56 2011/11/24 03:35:59 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1049,7 +1049,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	/* Map and establish an interrupt */
 	if (pci_intr_map(pa, &ih)) {
@@ -1059,7 +1059,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, esa_intr, sc);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, esa_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.35 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: interwave.c,v 1.36 2011/11/24 03:35:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.35 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.36 2011/11/24 03:35:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ iwattach(struct iw_softc *sc)
 	sc->sc_dma_flags = 0;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	/*
 	 * We can only use a few selected irqs, see if we got one from pnp
@@ -201,7 +201,7 @@ iwattach(struct iw_softc *sc)
 
 	if (sc->sc_irq > 0) {
 		sc->sc_ih = isa_intr_establish(sc->sc_p2xr_ic,
-		    sc->sc_irq, IST_EDGE, IPL_SCHED, iwintr, sc);
+		    sc->sc_irq, IST_EDGE, IPL_AUDIO, iwintr, sc);
 		got_irq = 1;
 	}
 	if (!got_irq) {

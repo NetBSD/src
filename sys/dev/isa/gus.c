@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.107 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: gus.c,v 1.108 2011/11/24 03:35:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.107 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.108 2011/11/24 03:35:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -820,7 +820,7 @@ gusattach(device_t parent, device_t self, void *aux)
 	sc = (void *) self;
 	ia = aux;
 	callout_init(&sc->sc_dmaout_ch, CALLOUT_MPSAFE);
-	ad1848_init_locks(&sc->sc_codec.sc_ad1848, IPL_SCHED);
+	ad1848_init_locks(&sc->sc_codec.sc_ad1848, IPL_AUDIO);
 
 	sc->sc_iot = iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
@@ -1036,7 +1036,7 @@ gusattach(device_t parent, device_t self, void *aux)
 	 */
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-	    IST_EDGE, IPL_SCHED, gusintr, sc /* sc->sc_gusdsp */);
+	    IST_EDGE, IPL_AUDIO, gusintr, sc /* sc->sc_gusdsp */);
 
 	/*
 	 * Set some default values
