@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.1 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -146,7 +146,8 @@ chfs_lookup(void *v)
 				goto out;
 			}
 
-			dbg("vno@allocating new vnode: %llu\n", fd->vno);
+			dbg("vno@allocating new vnode: %llu\n",
+				(unsigned long long)fd->vno);
 			error = VFS_VGET(dvp->v_mount, fd->vno, vpp);
 		}
 	}
@@ -610,7 +611,7 @@ chfs_read(void *v)
 	ioflag = ap->a_ioflag;
 	error = 0;
 
-	dbg("ip->size:%llu\n", ip->size);
+	dbg("ip->size:%llu\n", (unsigned long long)ip->size);
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
@@ -756,8 +757,8 @@ chfs_write(void *v)
 	uio = ap->a_uio;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	//dbg("file size (vp): %llu\n", vp->v_size);
-	//dbg("file size (ip): %llu\n", ip->i_size);
+	//dbg("file size (vp): %llu\n", (unsigned long long)vp->v_size);
+	//dbg("file size (ip): %llu\n", (unsigned long long)ip->i_size);
 	ump = ip->ump;
 
 	//dbg("uio->resid: %d\n", uio->uio_resid);
@@ -788,9 +789,9 @@ chfs_write(void *v)
 	    uio->uio_resid > ump->um_maxfilesize) {
 		dbg("uio->uio_offset = %lld | uio->uio_offset + "
 		    "uio->uio_resid (%llu) > ump->um_maxfilesize (%lld)\n",
-		    uio->uio_offset,
-		    (u_int64_t)uio->uio_offset + uio->uio_resid,
-		    ump->um_maxfilesize);
+		    (long long)uio->uio_offset,
+		    (uint64_t)uio->uio_offset + uio->uio_resid,
+		    (long long)ump->um_maxfilesize);
 		return (EFBIG);
 	}
 	/*
@@ -979,8 +980,8 @@ out:
 	chfs_set_vnode_size(vp, vp->v_size);
 
 
-	//dbg("end file size (vp): %llu\n", vp->v_size);
-	//dbg("end file size (ip): %llu\n", ip->i_size);
+	//dbg("end file size (vp): %llu\n", (unsigned long long)vp->v_size);
+	//dbg("end file size (ip): %llu\n", (unsigned long long)ip->i_size);
 	KASSERT(vp->v_size == ip->size);
 	fstrans_done(vp->v_mount);
 
@@ -1450,7 +1451,7 @@ chfs_inactive(void *v)
 	struct vnode *vp = ((struct vop_inactive_args *) v)->a_vp;
 	struct chfs_inode *ip = VTOI(vp);
 	struct chfs_vnode_cache *chvc;
-	dbg("inactive | vno: %llu\n", ip->ino);
+	dbg("inactive | vno: %llu\n", (unsigned long long)ip->ino);
 
 	KASSERT(VOP_ISLOCKED(vp));
 
@@ -1478,7 +1479,7 @@ chfs_reclaim(void *v)
 	struct chfs_mount *chmp = ip->chmp;
 	struct chfs_dirent *fd;
 
-	//dbg("reclaim() | ino: %llu\n", ip->ino);
+	//dbg("reclaim() | ino: %llu\n", (unsigned long long)ip->ino);
 	//mutex_enter(&ip->inode_lock);
 
 	mutex_enter(&chmp->chm_lock_vnocache);
@@ -1551,7 +1552,7 @@ chfs_strategy(void *v)
 /*	dbg("bp dump:\n");
 	dbg("	->b_bcount: %d\n", bp->b_bcount);
 	dbg("	->b_resid:  %d\n", bp->b_resid);
-	dbg("	->b_blkno:  %llu\n", bp->b_blkno);
+	dbg("	->b_blkno:  %llu\n", (unsigned long long)bp->b_blkno);
 	dbg("	->b_error:  %d\n", bp->b_error);*/
 	if (read) {
 		err = chfs_read_data(chmp, vp, bp);

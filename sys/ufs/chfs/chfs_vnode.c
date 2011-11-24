@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.1 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -66,7 +66,7 @@ chfs_readvnode(struct mount* mp, ino_t ino, struct vnode** vpp)
 	char* buf;
 	size_t retlen, len;
 	struct vnode* vp = NULL;
-	dbg("readvnode | ino: %llu\n", ino);
+	dbg("readvnode | ino: %llu\n", (unsigned long long)ino);
 
 	len = sizeof(struct chfs_flash_vnode);
 
