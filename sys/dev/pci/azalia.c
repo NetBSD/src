@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.78 2011/11/23 23:07:34 jmcneill Exp $	*/
+/*	$NetBSD: azalia.c,v 1.79 2011/11/24 03:35:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.78 2011/11/23 23:07:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.79 2011/11/24 03:35:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -331,12 +331,12 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	mutex_init(&sc->lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	sc->pc = pa->pa_pc;
 	sc->tag = pa->pa_tag;
 	intrrupt_str = pci_intr_string(pa->pa_pc, ih);
-	sc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_SCHED, azalia_intr, sc);
+	sc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, azalia_intr, sc);
 	if (sc->ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrrupt_str != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.47 2011/11/23 23:07:28 jmcneill Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.48 2011/11/24 03:35:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.47 2011/11/23 23:07:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.48 2011/11/24 03:35:56 mrg Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -247,12 +247,12 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 		aprint_normal(": 8-bit internal DAC\n");
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	/* Install the irq handler for the DMA interrupt */
 	sc->sc_ih.ih_func = vidcaudio_intr;
 	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_SCHED;
+	sc->sc_ih.ih_level = IPL_AUDIO;
 	sc->sc_ih.ih_name = self->dv_xname;
 
 	if (irq_claim(sc->sc_dma_intr, &sc->sc_ih) != 0) {

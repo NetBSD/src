@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.70 2011/11/23 23:07:33 jmcneill Exp $	*/
+/*	$NetBSD: wss.c,v 1.71 2011/11/24 03:35:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.70 2011/11/23 23:07:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.71 2011/11/24 03:35:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,12 +129,12 @@ wssattach(struct wss_softc *sc)
 
 	ac = &sc->sc_ad1848.sc_ad1848;
 
-	ad1848_init_locks(ac, IPL_SCHED);
+	ad1848_init_locks(ac, IPL_AUDIO);
 
 	madattach(sc);
 
 	sc->sc_ad1848.sc_ih = isa_intr_establish(sc->wss_ic, sc->wss_irq,
-	    IST_EDGE, IPL_SCHED, wss_intr, &sc->sc_ad1848);
+	    IST_EDGE, IPL_AUDIO, wss_intr, &sc->sc_ad1848);
 
 	ad1848_isa_attach(&sc->sc_ad1848);
 

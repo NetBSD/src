@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.15 2011/11/23 23:07:30 jmcneill Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.16 2011/11/24 03:35:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.15 2011/11/23 23:07:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.16 2011/11/24 03:35:57 mrg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -161,7 +161,7 @@ paud_attach_isa(device_t parent, device_t self, void *aux)
 	sc->sc_ic = ia->ia_ic;
 
 	mutex_init(&sc->sc_ad1848.sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_ad1848.sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_ad1848.sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	if (ad1848_isa_mapprobe(sc, ia->ia_io[0].ir_addr) == 0) {
 		aprint_error(": attach failed\n");
@@ -170,7 +170,7 @@ paud_attach_isa(device_t parent, device_t self, void *aux)
 	sc->sc_playdrq = ia->ia_drq[0].ir_drq;
 	sc->sc_recdrq = ia->ia_drq[1].ir_drq;
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-	    IST_EDGE, IPL_SCHED, paud_intr, sc);
+	    IST_EDGE, IPL_AUDIO, paud_intr, sc);
 	ad1848_isa_attach(sc);
 	aprint_normal("\n");
 	audio_attach_mi(&paud_hw_if, &sc->sc_ad1848, self);

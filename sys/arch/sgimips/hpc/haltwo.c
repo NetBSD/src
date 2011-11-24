@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.21 2011/11/23 23:07:30 jmcneill Exp $ */
+/* $NetBSD: haltwo.c,v 1.22 2011/11/24 03:35:57 mrg Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.21 2011/11/23 23:07:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.22 2011/11/24 03:35:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ haltwo_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dma_tag = haa->ha_dmat;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	if (bus_space_subregion(haa->ha_st, haa->ha_sh, haa->ha_devoff,
 	    HPC3_PBUS_CH0_DEVREGS_SIZE, &sc->sc_ctl_sh)) {
@@ -330,7 +330,7 @@ haltwo_attach(device_t parent, device_t self, void *aux)
 
 	rev = haltwo_read(sc, ctl, HAL2_REG_CTL_REV);
 
-	if (cpu_intr_establish(haa->ha_irq, IPL_SCHED, haltwo_intr, sc)
+	if (cpu_intr_establish(haa->ha_irq, IPL_AUDIO, haltwo_intr, sc)
 	    == NULL) {
 		aprint_error(": unable to establish interrupt\n");
 		return;

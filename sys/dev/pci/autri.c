@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.47 2011/11/23 23:07:34 jmcneill Exp $	*/
+/*	$NetBSD: autri.c,v 1.48 2011/11/24 03:35:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.47 2011/11/23 23:07:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.48 2011/11/24 03:35:58 mrg Exp $");
 
 #include "midi.h"
 
@@ -544,7 +544,7 @@ autri_attach(device_t parent, device_t self, void *aux)
 	}
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	/* map and establish the interrupt */
 	if (pci_intr_map(pa, &ih)) {
@@ -552,7 +552,7 @@ autri_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, autri_intr, sc);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, autri_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)

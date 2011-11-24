@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.43 2011/11/23 23:07:35 jmcneill Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.44 2011/11/24 03:35:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.43 2011/11/23 23:07:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.44 2011/11/24 03:35:58 mrg Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -414,7 +414,7 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	/* interrupt */
 	if (pci_intr_map(pa, &ih)) {
@@ -422,7 +422,7 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	strintr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_SCHED, cmpci_intr,
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, cmpci_intr,
 	    sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "failed to establish interrupt");

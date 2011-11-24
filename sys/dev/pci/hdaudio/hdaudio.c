@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.17 2011/11/23 23:07:36 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.18 2011/11/24 03:35:59 mrg Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.17 2011/11/23 23:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.18 2011/11/24 03:35:59 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -778,8 +778,8 @@ hdaudio_attach(device_t dev, struct hdaudio_softc *sc)
 	KASSERT(sc->sc_memvalid == true);
 
 	sc->sc_dev = dev;
-	mutex_init(&sc->sc_corb_mtx, MUTEX_DEFAULT, IPL_SCHED);
-	mutex_init(&sc->sc_stream_mtx, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_corb_mtx, MUTEX_DEFAULT, IPL_AUDIO);
+	mutex_init(&sc->sc_stream_mtx, MUTEX_DEFAULT, IPL_AUDIO);
 
 	hdaudio_init(sc);
 

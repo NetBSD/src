@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.41 2011/11/23 23:07:29 jmcneill Exp $	*/
+/*	$NetBSD: awacs.c,v 1.42 2011/11/24 03:35:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.41 2011/11/23 23:07:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.42 2011/11/24 03:35:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -380,11 +380,11 @@ awacs_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intr_establish(cirq, cirq_type, IPL_BIO, awacs_status_intr, sc);
-	intr_establish(oirq, oirq_type, IPL_SCHED, awacs_intr, sc);
-	intr_establish(iirq, iirq_type, IPL_SCHED, awacs_intr, sc);
+	intr_establish(oirq, oirq_type, IPL_AUDIO, awacs_intr, sc);
+	intr_establish(iirq, iirq_type, IPL_AUDIO, awacs_intr, sc);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	cv_init(&sc->sc_event, "awacs_wait");
 

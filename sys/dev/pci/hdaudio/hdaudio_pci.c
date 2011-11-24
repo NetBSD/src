@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.9 2011/11/23 23:07:36 jmcneill Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.10 2011/11/24 03:35:59 mrg Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.9 2011/11/23 23:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.10 2011/11/24 03:35:59 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -141,7 +141,7 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_SCHED,
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO,
 	    hdaudio_pci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

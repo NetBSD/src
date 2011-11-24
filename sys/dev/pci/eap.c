@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.93 2011/11/23 23:07:35 jmcneill Exp $	*/
+/*	$NetBSD: eap.c,v 1.94 2011/11/24 03:35:58 mrg Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.93 2011/11/23 23:07:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.94 2011/11/24 03:35:58 mrg Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -542,7 +542,7 @@ eap_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": Audio controller\n");
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	/* Stash this away for detach */
 	sc->sc_pc = pc;
@@ -600,7 +600,7 @@ eap_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, eap_intr, sc);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, eap_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
