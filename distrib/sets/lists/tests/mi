@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.426 2011/11/22 20:22:09 cheusov Exp $
+# $NetBSD: mi,v 1.427 2011/11/24 01:49:39 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -332,6 +332,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_pty.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_sigaction.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/kernel/t_subr_prf.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-obsolete		obsolete
@@ -1894,6 +1895,7 @@
 ./usr/tests/kernel/t_pty			tests-kernel-tests		atf
 ./usr/tests/kernel/t_rnd			tests-kernel-tests		atf
 ./usr/tests/kernel/t_sigaction			tests-obsolete			obsolete
+./usr/tests/kernel/t_subr_prf			tests-kernel-tests		atf
 ./usr/tests/kernel/t_time			tests-obsolete			obsolete
 ./usr/tests/kernel/t_ucontext			tests-obsolete			obsolete
 ./usr/tests/kernel/t_umount			tests-kernel-tests		atf
