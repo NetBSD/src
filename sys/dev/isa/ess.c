@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.79 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: ess.c,v 1.80 2011/11/24 03:35:57 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.79 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.80 2011/11/24 03:35:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -926,12 +926,12 @@ essattach(struct ess_softc *sc, int enablejoy)
 	callout_init(&sc->sc_poll1_ch, CALLOUT_MPSAFE);
 	callout_init(&sc->sc_poll2_ch, CALLOUT_MPSAFE);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	sc->sc_audio1.polled = sc->sc_audio1.irq == -1;
 	if (!sc->sc_audio1.polled) {
 		sc->sc_audio1.ih = isa_intr_establish(sc->sc_ic,
-		    sc->sc_audio1.irq, sc->sc_audio1.ist, IPL_SCHED,
+		    sc->sc_audio1.irq, sc->sc_audio1.ist, IPL_AUDIO,
 		    ess_audio1_intr, sc);
 		aprint_normal_dev(sc->sc_dev,
 		    "audio1 interrupting at irq %d\n", sc->sc_audio1.irq);
@@ -956,7 +956,7 @@ essattach(struct ess_softc *sc, int enablejoy)
 		sc->sc_audio2.polled = sc->sc_audio2.irq == -1;
 		if (!sc->sc_audio2.polled) {
 			sc->sc_audio2.ih = isa_intr_establish(sc->sc_ic,
-			    sc->sc_audio2.irq, sc->sc_audio2.ist, IPL_SCHED,
+			    sc->sc_audio2.irq, sc->sc_audio2.ist, IPL_AUDIO,
 			    ess_audio2_intr, sc);
 			aprint_normal_dev(sc->sc_dev,
 			    "audio2 interrupting at irq %d\n",

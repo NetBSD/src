@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.8 2011/11/23 23:07:35 jmcneill Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.9 2011/11/24 03:35:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.8 2011/11/23 23:07:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.9 2011/11/24 03:35:59 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ gcscaudio_attach(device_t parent, device_t self, void *aux)
 	LIST_INIT(&sc->sc_dmalist);
 	sc->sc_mch_split_buf = NULL;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	aprint_normal(": AMD Geode CS5536 Audio\n");
 
@@ -291,7 +291,7 @@ gcscaudio_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(sc->sc_pc, ih);
 
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_SCHED,
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_AUDIO,
 	    gcscaudio_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");

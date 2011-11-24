@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.37 2011/11/23 23:07:30 jmcneill Exp $	*/
+/*	$NetBSD: snapper.c,v 1.38 2011/11/24 03:35:57 mrg Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.37 2011/11/23 23:07:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.38 2011/11/24 03:35:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -786,14 +786,14 @@ snapper_attach(device_t parent, device_t self, void *aux)
 	oirq_type = intr[3] ? IST_LEVEL : IST_EDGE;
 	iirq_type = intr[5] ? IST_LEVEL : IST_EDGE;
 
-	/* intr_establish(cirq, cirq_type, IPL_BIO, snapper_intr, sc); */
-	intr_establish(oirq, oirq_type, IPL_SCHED, snapper_intr, sc);
-	intr_establish(iirq, iirq_type, IPL_SCHED, snapper_intr, sc);
+	/* intr_establish(cirq, cirq_type, IPL_AUDIO, snapper_intr, sc); */
+	intr_establish(oirq, oirq_type, IPL_AUDIO, snapper_intr, sc);
+	intr_establish(iirq, iirq_type, IPL_AUDIO, snapper_intr, sc);
 
 	aprint_normal(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	/* PMF event handler */
 	pmf_device_register(sc->sc_dev, NULL, NULL);
@@ -2115,7 +2115,7 @@ snapper_init(struct snapper_softc *sc, int node)
 	DPRINTF(" audio-hw-reset %p\n", audio_hw_reset);
 
 	if (headphone_detect_intr != -1)
-		intr_establish(headphone_detect_intr, IST_EDGE, IPL_SCHED,
+		intr_establish(headphone_detect_intr, IST_EDGE, IPL_AUDIO,
 		    snapper_cint, sc);
 
 	sc->sc_rate = 44100;	/* default rate */

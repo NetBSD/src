@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.24 2011/11/23 23:07:29 jmcneill Exp $	*/
+/*	$NetBSD: harmony.c,v 1.25 2011/11/24 03:35:56 mrg Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -213,7 +213,7 @@ harmony_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = ga->ga_dmatag;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	if (bus_space_map(sc->sc_bt, ga->ga_hpa, HARMONY_NREGS, 0,
 	    &sc->sc_bh) != 0) {
@@ -289,7 +289,7 @@ harmony_attach(device_t parent, device_t self, void *aux)
 	    offsetof(struct harmony_empty, playback[0][0]),
 	    PLAYBACK_EMPTYS * HARMONY_BUFSIZE, BUS_DMASYNC_PREWRITE);
 
-	(void) hp700_intr_establish(IPL_SCHED, harmony_intr, sc, ga->ga_ir,
+	(void) hp700_intr_establish(IPL_AUDIO, harmony_intr, sc, ga->ga_ir,
 	     ga->ga_irq);
 
 	/* set defaults */

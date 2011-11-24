@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.54 2011/11/23 23:07:35 jmcneill Exp $      */
+/*      $NetBSD: esm.c,v 1.55 2011/11/24 03:35:59 mrg Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.54 2011/11/23 23:07:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.55 2011/11/24 03:35:59 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1613,7 +1613,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
 	mutex_init(&ess->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&ess->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&ess->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	/* Enable the device. */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
@@ -1650,7 +1650,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	ess->ih = pci_intr_establish(pc, ih, IPL_SCHED, esm_intr, self);
+	ess->ih = pci_intr_establish(pc, ih, IPL_AUDIO, esm_intr, self);
 	if (ess->ih == NULL) {
 		aprint_error_dev(ess->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
