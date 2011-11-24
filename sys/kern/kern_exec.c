@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.330 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.331 2011/11/24 17:09:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.330 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.331 2011/11/24 17:09:14 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -376,8 +376,9 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 			if (epp->ep_entry > epp->ep_vm_maxaddr) {
 #ifdef DIAGNOSTIC
 				printf("%s: rejecting %p due to "
-					"too high entry address\n",
-					 __func__, (void *) epp->ep_entry);
+				    "too high entry address (> %p)\n",
+					 __func__, (void *)epp->ep_entry,
+					 (void *)epp->ep_vm_maxaddr);
 #endif
 				error = ENOEXEC;
 				break;
@@ -386,8 +387,9 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 			if (epp->ep_entry < epp->ep_vm_minaddr) {
 #ifdef DIAGNOSTIC
 				printf("%s: rejecting %p due to "
-					"too low entry address\n",
-					 __func__, (void *) epp->ep_entry);
+				    "too low entry address (< %p)\n",
+				     __func__, (void *)epp->ep_entry,
+				     (void *)epp->ep_vm_minaddr);
 #endif
 				error = ENOEXEC;
 				break;
@@ -399,7 +401,12 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 						    [RLIMIT_DATA].rlim_cur)) {
 #ifdef DIAGNOSTIC
 				printf("%s: rejecting due to "
-					"limits\n", __func__);
+				    "limits (t=%llu > %llu || d=%llu > %llu)\n",
+				    __func__,
+				    (unsigned long long)epp->ep_tsize,
+				    (unsigned long long)MAXTSIZ,
+				    (unsigned long long)epp->ep_dsize,
+				    (unsigned long long)l->l_proc->p_rlimit);
 #endif
 				error = ENOMEM;
 				break;
