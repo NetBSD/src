@@ -93,6 +93,13 @@ for d in $DOMAINS; do
 	done
 done
 
+# Try to ensure that config dirs exist
+if type config_mkdirs >/dev/null 2>&1; then
+	config_mkdirs "$dnsmasq_conf" "$dnsmasq_resolv"
+else
+	@PREFIX@/sbin/resolvconf -D "$dnsmasq_conf" "$dnsmasq_resolv"
+fi
+
 changed=false
 if [ -n "$dnsmasq_conf" ]; then
 	if [ ! -f "$dnsmasq_conf" ] || \
