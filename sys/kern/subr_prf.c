@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.147 2011/11/24 01:14:19 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.148 2011/11/24 01:45:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.147 2011/11/24 01:14:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.148 2011/11/24 01:45:39 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -1079,7 +1079,7 @@ vsnprintf(char *bf, size_t size, const char *fmt, va_list ap)
 	retval = kprintf(fmt, TOBUFONLY, &p, bf, ap);
 	if (bf && size > 0) {
 		/* nul terminate */
-		if (size <= retval)
+		if (size <= (size_t)retval)
 			bf[size - 1] = '\0';
 		else
 			bf[retval] = '\0';
@@ -1142,10 +1142,8 @@ vsnprintf(char *bf, size_t size, const char *fmt, va_list ap)
 
 #define KPRINTF_PUTCHAR(C) {						\
 	if (oflags == TOBUFONLY) {					\
-		if ((vp == NULL) || (sbuf < tailp)) 			\
+		if (sbuf && ((vp == NULL) || (sbuf < tailp))) 		\
 			*sbuf++ = (C);					\
-		else							\
-			sbuf++;						\
 	} else {							\
 		putchar((C), oflags, vp);				\
 	}								\
