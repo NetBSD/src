@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.235 2011/11/21 04:36:06 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.236 2011/11/24 15:51:30 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ enum vtagtype	{
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
 	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS, VT_ZFS,
-	VT_RUMP, VT_NILFS, VT_V7FS
+	VT_RUMP, VT_NILFS, VT_V7FS, VT_CHFS
 };
 
 #define	VNODE_TAGS \
@@ -114,7 +114,7 @@ enum vtagtype	{
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
     "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS", "VT_EFS", \
-    "VT_ZFS", "VT_RUMP", "VT_NILFS", "VT_V7FS"
+    "VT_ZFS", "VT_RUMP", "VT_NILFS", "VT_V7FS", "VT_CHFS"
 
 struct vnode;
 struct buf;
@@ -223,7 +223,7 @@ typedef struct vnode vnode_t;
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
     "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO" \
-    "\30INACTNOW\31DIROP" 
+    "\30INACTNOW\31DIROP"
 
 #define	VSIZENOTSET	((voff_t)-1)
 
