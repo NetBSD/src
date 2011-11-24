@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.146 2011/11/22 21:25:04 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.147 2011/11/24 01:14:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.146 2011/11/22 21:25:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.147 2011/11/24 01:14:19 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -1079,10 +1079,10 @@ vsnprintf(char *bf, size_t size, const char *fmt, va_list ap)
 	retval = kprintf(fmt, TOBUFONLY, &p, bf, ap);
 	if (bf && size > 0) {
 		/* nul terminate */
-		if (p < bf + size)
-			*p = '\0';
+		if (size <= retval)
+			bf[size - 1] = '\0';
 		else
-			*--p = '\0';
+			bf[retval] = '\0';
 	}
 	return retval;
 }
@@ -1205,9 +1205,9 @@ kprintf(const char *fmt0, int oflags, void *vp, char *sbuf, va_list ap)
 	 * Scan the format for conversions (`%' character).
 	 */
 	for (;;) {
-		while (*fmt != '%' && *fmt) {
+		for (; *fmt != '%' && *fmt; fmt++) {
 			ret++;
-			KPRINTF_PUTCHAR(*fmt++);
+			KPRINTF_PUTCHAR(*fmt);
 		}
 		if (*fmt == 0)
 			goto done;
@@ -1520,8 +1520,8 @@ number:			if ((dprec = prec) >= 0)
 			KPRINTF_PUTCHAR('0');
 
 		/* the string or number proper */
-		while (size--)
-			KPRINTF_PUTCHAR(*cp++);
+		for (; size--; cp++)
+			KPRINTF_PUTCHAR(*cp);
 		/* left-adjusting padding (always blank) */
 		if (flags & LADJUST) {
 			n = width - realsz;
