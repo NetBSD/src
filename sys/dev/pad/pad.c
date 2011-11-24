@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.17 2011/11/23 23:07:33 jmcneill Exp $ */
+/* $NetBSD: pad.c,v 1.18 2011/11/24 01:11:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.17 2011/11/23 23:07:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.18 2011/11/24 01:11:04 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -672,9 +672,7 @@ pad_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 
-		s = splaudio();
 		error = config_cfdata_attach(pad_cfdata, 1);
-		splx(s);
 		if (error) {
 			config_cfattach_detach(pad_cd.cd_name, &pad_ca);
 			config_cfdriver_detach(&pad_cd);
