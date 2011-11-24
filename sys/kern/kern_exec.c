@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.331 2011/11/24 17:09:14 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.332 2011/11/24 19:55:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.331 2011/11/24 17:09:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.332 2011/11/24 19:55:22 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -406,7 +406,8 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 				    (unsigned long long)epp->ep_tsize,
 				    (unsigned long long)MAXTSIZ,
 				    (unsigned long long)epp->ep_dsize,
-				    (unsigned long long)l->l_proc->p_rlimit);
+				    (unsigned long long)
+				    l->l_proc->p_rlimit[RLIMIT_DATA].rlim_cur);
 #endif
 				error = ENOMEM;
 				break;
@@ -963,7 +964,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 */
 	if (pathstring[0] == '/')
 		(void)strlcpy(pack.ep_path = dp, pathstring, MAXPATHLEN);
-#ifdef notyet
+#ifndef notyet
 	/*
 	 * Although this works most of the time [since the entry was just
 	 * entered in the cache] we don't use it because it theoretically
@@ -975,7 +976,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		pack.ep_path = dp;
 #endif
 	else {
-#ifdef notyet
+#ifndef notyet
 		printf("Cannot get path for pid %d [%s] (error %d)",
 		    (int)p->p_pid, p->p_comm, error);
 #endif
