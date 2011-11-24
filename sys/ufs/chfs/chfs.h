@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs.h,v 1.1 2011/11/24 15:51:31 ahoka Exp $	*/
+/*	$NetBSD: chfs.h,v 1.2 2011/11/24 19:14:30 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -528,7 +528,8 @@ chfs_nref_to_vc(struct chfs_node_ref *nref)
 	//dbg("NREF_TO_VC: GET IT\n");
 	//dbg("nref_next: %p, lnr: %u, ofs: %u\n", nref->nref_next, nref->nref_lnr, nref->nref_offset);
 	struct chfs_vnode_cache *vc = (struct chfs_vnode_cache *) nref;
-	dbg("vno: %llu, pvno: %llu, hv: %llu, nlink: %u\n", vc->vno, vc->pvno, vc->highest_version, vc->nlink);
+	dbg("vno: %ju, pvno: %ju, hv: %ju, nlink: %u\n", (intmax_t )vc->vno,
+	    (intmax_t )vc->pvno, (intmax_t )vc->highest_version, vc->nlink);
 	//return ((struct chfs_vnode_cache *)nref);
 	return vc;
 }
