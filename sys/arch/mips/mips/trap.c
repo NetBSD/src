@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.233 2011/08/18 21:04:23 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.234 2011/11/24 04:17:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.233 2011/08/18 21:04:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.234 2011/11/24 04:17:46 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -258,7 +258,8 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			pte = kvtopte(vaddr);
 			pt_entry = pte->pt_entry;
 			if (!mips_pg_v(pt_entry)) {
-				panic("ktlbmod: invalid pte");
+				panic("ktlbmod: %#"PRIxVADDR": invalid pte",
+				    vaddr);
 			}
 			if (pt_entry & mips_pg_ro_bit()) {
 				/* write to read only page in the kernel */
