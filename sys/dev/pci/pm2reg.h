@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2reg.h,v 1.4 2010/03/16 21:27:02 macallan Exp $	*/
+/*	$NetBSD: pm2reg.h,v 1.5 2011/11/24 03:23:08 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -60,6 +60,20 @@
 
 #define PM2_SCREEN_BASE		0x00003000 /* in 64bit units */
 #define PM2_SCREEN_STRIDE	0x00003008 /* in 64bit units */
+
+#define PM2_DISPLAY_DATA	0x00003068
+#define		PM2_DD_SDA_IN		0x00000001
+#define		PM2_DD_SCL_IN		0x00000002
+#define		PM2_DD_SDA_OUT		0x00000004
+#define		PM2_DD_SCL_OUT		0x00000008
+#define		PM2_DD_LATCHED_DATA	0x00000010
+#define		PM2_DD_DATA_VALID	0x00000020	/* clear by 1 */
+#define		PM2_DD_START		0x00000040	/* START detected */
+#define		PM2_DD_STOP		0x00000080	/* STOP detected */
+#define		PM2_DD_INSERT_WAITS	0x00000100
+#define		PM2_DD_USE_MONID	0x00000200	/* DDC2 otherwise */
+#define		PM2_DD_MONID_IN_MASK	0x00001c00
+#define		PM2_DD_MONID_OUT_MASK	0x0000e000
 
 /* RAMDAC */
 #define PM2_DAC_PAL_WRITE_IDX	0x00004000
