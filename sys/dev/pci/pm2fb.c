@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.8 2011/11/24 05:51:17 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.9 2011/11/24 05:53:05 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.8 2011/11/24 05:51:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.9 2011/11/24 05:53:05 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.8 2011/11/24 05:51:17 macallan Exp $");
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>
 #include <dev/videomode/edidreg.h>
+
+#include "opt_pm2fb.h"
 
 #ifdef PM2FB_DEBUG
 #define DPRINTF aprint_error
