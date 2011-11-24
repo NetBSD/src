@@ -71,6 +71,13 @@ for d in $DOMAINS; do
 	newzones="$newzones	};$NL};$NL"
 done
 
+# Try to ensure that config dirs exist
+if type config_mkdirs >/dev/null 2>&1; then
+	config_mkdirs "$named_options" "$named_zones"
+else
+	@PREFIX@/sbin/resolvconf -D "$named_options" "$named_zones"
+fi
+
 # No point in changing files or reloading bind if the end result has not
 # changed
 changed=false
