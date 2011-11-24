@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_build.c,v 1.1 2011/11/24 15:51:31 ahoka Exp $	*/
+/*	$NetBSD: chfs_build.c,v 1.2 2011/11/24 21:22:39 agc Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -91,7 +91,8 @@ chfs_build_set_vnodecache_nlink(struct chfs_mount *chmp,
 			if (child_vc->pvno) {
 				chfs_err("found a hard link: child dir: %s"
 				    ", (vno: %llu) of dir vno: %llu\n",
-				    fd->name, fd->vno, vc->vno);
+				    fd->name, (unsigned long long)fd->vno,
+				    (unsigned long long)vc->vno);
 			} else {
 				//dbg("child_vc->pvno =
 				//	vc->vno; pvno = %d\n", child_vc->pvno);
@@ -119,7 +120,7 @@ chfs_build_remove_unlinked_vnode(struct chfs_mount *chmp,
 	struct chfs_dirent *fd, *tmpfd;
 
 	dbg("START\n");
-	dbg("vno: %llu\n", vc->vno);
+	dbg("vno: %llu\n", (unsigned long long)vc->vno);
 
 	nref = vc->dnode;
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
@@ -144,8 +145,8 @@ chfs_build_remove_unlinked_vnode(struct chfs_mount *chmp,
 			struct chfs_vnode_cache *child_vc;
 //			fd = vc->scan_dirents;
 			dbg("dirent dump:\n");
-			dbg(" ->vno:     %llu\n", fd->vno);
-			dbg(" ->version: %llu\n", fd->version);
+			dbg(" ->vno:     %llu\n", (unsigned long long)fd->vno);
+			dbg(" ->version: %llu\n", (unsigned long long)fd->version);
 			dbg(" ->nhash:   0x%x\n", fd->nhash);
 			dbg(" ->nsize:   %d\n", fd->nsize);
 			dbg(" ->name:    %s\n", fd->name);
@@ -310,7 +311,7 @@ chfs_build_filesystem(struct chfs_mount *chmp)
 	for (i = 0; i < VNODECACHE_SIZE; i++) {
 		vc = chmp->chm_vnocache_hash[i];
 		while (vc) {
-			dbg("vc->vno: %llu\n", vc->vno);
+			dbg("vc->vno: %llu\n", (unsigned long long)vc->vno);
 			if (!TAILQ_EMPTY(&vc->scan_dirents))
 				chfs_build_set_vnodecache_nlink(chmp, vc);
 			vc = vc->next;
