@@ -56,6 +56,13 @@ if [ -n "$NAMESERVERS" ]; then
 	done
 fi
 
+# Try to ensure that config dirs exist
+if type config_mkdirs >/dev/null 2>&1; then
+	config_mkdirs "$unbound_conf"
+else
+	@PREFIX@/sbin/resolvconf -D "$unbound_conf"
+fi
+
 if [ ! -f "$unbound_conf" ] || \
 	[ "$(cat "$unbound_conf")" != "$(printf %s "$newconf")" ]
 then
