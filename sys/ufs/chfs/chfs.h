@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs.h,v 1.2 2011/11/24 19:14:30 ahoka Exp $	*/
+/*	$NetBSD: chfs.h,v 1.3 2011/11/24 21:38:44 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -38,8 +38,10 @@
 #ifndef __CHFS_H__
 #define __CHFS_H__
 
+#if 0
 #define DBG_MSG
 #define DBG_MSG_GC
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
