@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.47 2010/01/12 18:42:38 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.48 2011/11/24 01:59:25 manu Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -215,9 +215,9 @@ asked to resolve can be found from there.
 .It Dv PUFFS_FLAG_BUILDPATH
 The framework will build a complete path name, which is supplied
 with each operation and can be found from the
-.Va pn_po.po_full_pcn
+.Va pcn_po_full.po_path
 field in a
-.Vt struct puffs_node .
+.Vt struct puffs_cn .
 The option assumes that the framework can map a cookie to a
 .Vt struct puffs_node .
 See
