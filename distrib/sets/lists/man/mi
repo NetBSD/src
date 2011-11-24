@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1356 2011/11/19 12:27:42 isaki Exp $
+# $NetBSD: mi,v 1.1357 2011/11/24 21:42:08 ahoka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2489,6 +2489,7 @@
 ./usr/share/man/cat8/mount_9p.0			man-puffs-catman	.cat
 ./usr/share/man/cat8/mount_ados.0		man-adosfs-catman	.cat
 ./usr/share/man/cat8/mount_cd9660.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/mount_chfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_efs.0		man-efs-catman		.cat
 ./usr/share/man/cat8/mount_ext2fs.0		man-ext2fs-catman	.cat
 ./usr/share/man/cat8/mount_fdesc.0		man-miscfs-catman	.cat
@@ -5128,6 +5129,7 @@
 ./usr/share/man/html8/mount_9p.html		man-puffs-htmlman	html
 ./usr/share/man/html8/mount_ados.html		man-adosfs-htmlman	html
 ./usr/share/man/html8/mount_cd9660.html		man-sysutil-htmlman	html
+./usr/share/man/html8/mount_chfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_efs.html		man-efs-htmlman		html
 ./usr/share/man/html8/mount_ext2fs.html		man-ext2fs-htmlman	html
 ./usr/share/man/html8/mount_fdesc.html		man-miscfs-htmlman	html
@@ -7950,6 +7952,7 @@
 ./usr/share/man/man8/mount_9p.8			man-puffs-man		.man
 ./usr/share/man/man8/mount_ados.8		man-adosfs-man		.man
 ./usr/share/man/man8/mount_cd9660.8		man-sysutil-man		.man
+./usr/share/man/man8/mount_chfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_efs.8		man-efs-man		.man
 ./usr/share/man/man8/mount_ext2fs.8		man-ext2fs-man		.man
 ./usr/share/man/man8/mount_fdesc.8		man-miscfs-man		.man
