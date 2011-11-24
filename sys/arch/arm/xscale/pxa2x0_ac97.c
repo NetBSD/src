@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.10 2011/11/23 23:07:29 jmcneill Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.11 2011/11/24 03:35:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -281,7 +281,7 @@ pxaacu_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_irqcookie = pxa2x0_intr_establish(pxa->pxa_intr, IPL_SCHED,
+	sc->sc_irqcookie = pxa2x0_intr_establish(pxa->pxa_intr, IPL_AUDIO,
 	    acu_intr, sc);
 	KASSERT(sc->sc_irqcookie != NULL);
 

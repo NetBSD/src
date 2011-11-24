@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.139 2011/11/23 23:07:34 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.140 2011/11/24 03:35:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.139 2011/11/23 23:07:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.140 2011/11/24 03:35:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -526,7 +526,7 @@ map_done:
 	    v | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_BACKTOBACK_ENABLE);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &sc->intrh)) {
@@ -534,7 +534,7 @@ map_done:
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, sc->intrh);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, sc->intrh, IPL_SCHED,
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, sc->intrh, IPL_AUDIO,
 	    auich_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");

@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.58 2011/11/23 23:07:35 jmcneill Exp $	*/
+/*	$NetBSD: eso.c,v 1.59 2011/11/24 03:35:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.58 2011/11/23 23:07:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.59 2011/11/24 03:35:59 mrg Exp $");
 
 #include "mpu.h"
 
@@ -382,10 +382,10 @@ eso_attach(device_t parent, device_t self, void *aux)
 	}
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	intrstring = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_SCHED, eso_intr, sc);
+	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, eso_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstring != NULL)

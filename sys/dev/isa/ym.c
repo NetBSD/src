@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.42 2011/11/23 23:07:33 jmcneill Exp $	*/
+/*	$NetBSD: ym.c,v 1.43 2011/11/24 03:35:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.42 2011/11/23 23:07:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.43 2011/11/24 03:35:58 mrg Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -214,7 +214,7 @@ ym_attach(struct ym_softc *sc)
 	ac = &sc->sc_ad1848.sc_ad1848;
 	callout_init(&sc->sc_powerdown_ch, CALLOUT_MPSAFE);
 	cv_init(&sc->sc_cv, "ym");
-	ad1848_init_locks(ac, IPL_SCHED);
+	ad1848_init_locks(ac, IPL_AUDIO);
 
 	/* Mute the output to reduce noise during initialization. */
 	ym_mute(sc, SA3_VOL_L, 1);
@@ -224,7 +224,7 @@ ym_attach(struct ym_softc *sc)
 	ac->chip_name = YM_IS_SA3(sc) ? "OPL3-SA3" : "OPL3-SA2";
 
 	sc->sc_ad1848.sc_ih = isa_intr_establish(sc->sc_ic, sc->ym_irq,
-	    IST_EDGE, IPL_SCHED, ym_intr, sc);
+	    IST_EDGE, IPL_AUDIO, ym_intr, sc);
 
 #ifndef AUDIO_NO_POWER_CTL
 	sc->sc_ad1848.powerctl = ym_codec_power_ctl;

@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.35 2011/11/23 23:07:34 jmcneill Exp $ */
+/* $NetBSD: auixp.c,v 1.36 2011/11/24 03:35:58 mrg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.35 2011/11/23 23:07:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.36 2011/11/24 03:35:58 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1169,10 +1169,10 @@ auixp_attach(device_t parent, device_t self, void *aux)
 	intrstr = pci_intr_string(pc, ih);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
-	/* establish interrupt routine hookup at IPL_SCHED level */
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, auixp_intr, self);
+	/* establish interrupt routine hookup at IPL_AUDIO level */
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, auixp_intr, self);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)

@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_isapnp.c,v 1.18 2011/11/23 23:07:33 jmcneill Exp $	*/
+/*	$NetBSD: mpu_isapnp.c,v 1.19 2011/11/24 03:35:58 mrg Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.18 2011/11/23 23:07:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.19 2011/11/24 03:35:58 mrg Exp $");
 
 #include "midi.h"
 
@@ -65,7 +65,7 @@ mpu_isapnp_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	sc->sc_mpu.iot = ipa->ipa_iot;
 	sc->sc_mpu.ioh = ipa->ipa_io[0].h;
@@ -85,5 +85,5 @@ mpu_isapnp_attach(device_t parent, device_t self, void *aux)
 	midi_attach_mi(&mpu_midi_hw_if, &sc->sc_mpu, self);
 
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
-	    ipa->ipa_irq[0].type, IPL_SCHED, mpu_intr, &sc->sc_mpu);
+	    ipa->ipa_irq[0].type, IPL_AUDIO, mpu_intr, &sc->sc_mpu);
 }
