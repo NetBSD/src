@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.23 2011/11/23 23:07:31 jmcneill Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.24 2011/11/24 21:59:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,22 @@ struct midi_info {
 #define MIDI_PROP_OUT_INTR  1
 #define MIDI_PROP_CAN_INPUT 2
 #define MIDI_PROP_NO_OUTPUT 4
+
+/*
+ * XXX expand
+ *
+ * List of hardware interface methods, and when locks are held by each
+ * called by this module:
+ *
+ *	METHOD			INTR	NOTES
+ *	----------------------- ------- -------------------------
+ *	open 			-	
+ *	close 			-	
+ *	output 			-	
+ *	getinfo 		-	Called at attach time
+ *	ioctl 			-	
+ *	get_locks 		-	Called at attach time
+ */
 
 struct midi_softc;
 
