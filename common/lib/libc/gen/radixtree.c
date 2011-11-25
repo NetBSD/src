@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.17 2011/11/02 13:49:43 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.17.2.1 2011/11/25 13:58:11 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -68,7 +68,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17 2011/11/02 13:49:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.1 2011/11/25 13:58:11 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17 2011/11/02 13:49:43 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.17 2011/11/02 13:49:43 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.17.2.1 2011/11/25 13:58:11 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -511,7 +511,7 @@ radix_tree_insert_node(struct radix_tree *t, uint64_t idx, void *p)
 	void **vpp;
 
 	KASSERT(p != NULL);
-	KASSERT(entry_compose(p, 0) == p);
+	KASSERT(entry_tagmask(entry_compose(p, 0)) == 0);
 	vpp = radix_tree_lookup_ptr(t, idx, NULL, true, 0);
 	if (vpp == NULL) {
 		return ENOMEM;
@@ -538,7 +538,7 @@ radix_tree_replace_node(struct radix_tree *t, uint64_t idx, void *p)
 	void *oldp;
 
 	KASSERT(p != NULL);
-	KASSERT(entry_compose(p, 0) == p);
+	KASSERT(entry_tagmask(entry_compose(p, 0)) == 0);
 	vpp = radix_tree_lookup_ptr(t, idx, NULL, false, 0);
 	KASSERT(vpp != NULL);
 	oldp = *vpp;
@@ -665,8 +665,8 @@ gang_lookup_init(struct radix_tree *t, uint64_t idx,
 static inline unsigned int
 __attribute__((__always_inline__))
 gang_lookup_scan(struct radix_tree *t, struct radix_tree_path *path,
-    void **results, unsigned int maxresults, const unsigned int tagmask,
-    bool reverse)
+    void **results, const unsigned int maxresults, const unsigned int tagmask,
+    const bool reverse, const bool dense)
 {
 
 	/*
@@ -696,7 +696,10 @@ gang_lookup_scan(struct radix_tree *t, struct radix_tree_path *path,
 	   !entry_match_p(*path_pptr(t, path, lastidx), tagmask));
 	nfound = 0;
 	if (lastidx == RADIX_TREE_INVALID_HEIGHT) {
-		if (reverse) {
+		/*
+		 * requested idx is beyond the right-most node.
+		 */
+		if (reverse && !dense) {
 			lastidx = 0;
 			vpp = path_pptr(t, path, lastidx);
 			goto descend;
@@ -718,6 +721,8 @@ gang_lookup_scan(struct radix_tree *t, struct radix_tree_path *path,
 			if (nfound == maxresults) {
 				return nfound;
 			}
+		} else if (dense) {
+			return nfound;
 		}
 scan_siblings:
 		/*
@@ -784,24 +789,34 @@ descend:
  * returns the number of nodes found, up to maxresults.
  * returning less than maxresults means there are no more nodes.
  *
+ * if dense == true, this function stops scanning when it founds a hole of
+ * indexes.  ie. an index for which radix_tree_lookup_node would returns NULL.
+ * if dense == false, this function skips holes and continue scanning until
+ * maxresults nodes are found or it reaches the limit of the index range.
+ *
  * the result of this function is semantically equivalent to what could be
  * obtained by repeated calls of radix_tree_lookup_node with increasing index.
- * but this function is much faster when node indexes are distributed sparsely.
+ * but this function is expected to be computationally cheaper when looking up
+ * multiple nodes at once.  especially, it's expected to be much cheaper when
+ * node indexes are distributed sparsely.
  *
- * note that this function doesn't return exact values of node indexes of
- * found nodes.  if they are important for a caller, it's the caller's
- * responsibility to check them, typically by examinining the returned nodes
- * using some caller-specific knowledge about them.
+ * note that this function doesn't return index values of found nodes.
+ * thus, in the case of dense == false, if index values are important for
+ * a caller, it's the caller's responsibility to check them, typically
+ * by examinining the returned nodes using some caller-specific knowledge
+ * about them.
+ * in the case of dense == true, a node returned via results[N] is always for
+ * the index (idx + N).
  */
 
 unsigned int
 radix_tree_gang_lookup_node(struct radix_tree *t, uint64_t idx,
-    void **results, unsigned int maxresults)
+    void **results, unsigned int maxresults, bool dense)
 {
 	struct radix_tree_path path;
 
 	gang_lookup_init(t, idx, &path, 0);
-	return gang_lookup_scan(t, &path, results, maxresults, 0, false);
+	return gang_lookup_scan(t, &path, results, maxresults, 0, false, dense);
 }
 
 /*
@@ -813,12 +828,12 @@ radix_tree_gang_lookup_node(struct radix_tree *t, uint64_t idx,
 
 unsigned int
 radix_tree_gang_lookup_node_reverse(struct radix_tree *t, uint64_t idx,
-    void **results, unsigned int maxresults)
+    void **results, unsigned int maxresults, bool dense)
 {
 	struct radix_tree_path path;
 
 	gang_lookup_init(t, idx, &path, 0);
-	return gang_lookup_scan(t, &path, results, maxresults, 0, true);
+	return gang_lookup_scan(t, &path, results, maxresults, 0, true, dense);
 }
 
 /*
@@ -830,13 +845,15 @@ radix_tree_gang_lookup_node_reverse(struct radix_tree *t, uint64_t idx,
 
 unsigned int
 radix_tree_gang_lookup_tagged_node(struct radix_tree *t, uint64_t idx,
-    void **results, unsigned int maxresults, radix_tree_tagid_t tagid)
+    void **results, unsigned int maxresults, bool dense,
+    radix_tree_tagid_t tagid)
 {
 	struct radix_tree_path path;
 	const unsigned int tagmask = tagid_to_mask(tagid);
 
 	gang_lookup_init(t, idx, &path, tagmask);
-	return gang_lookup_scan(t, &path, results, maxresults, tagmask, false);
+	return gang_lookup_scan(t, &path, results, maxresults, tagmask, false,
+	    dense);
 }
 
 /*
@@ -848,13 +865,15 @@ radix_tree_gang_lookup_tagged_node(struct radix_tree *t, uint64_t idx,
 
 unsigned int
 radix_tree_gang_lookup_tagged_node_reverse(struct radix_tree *t, uint64_t idx,
-    void **results, unsigned int maxresults, radix_tree_tagid_t tagid)
+    void **results, unsigned int maxresults, bool dense,
+    radix_tree_tagid_t tagid)
 {
 	struct radix_tree_path path;
 	const unsigned int tagmask = tagid_to_mask(tagid);
 
 	gang_lookup_init(t, idx, &path, tagmask);
-	return gang_lookup_scan(t, &path, results, maxresults, tagmask, true);
+	return gang_lookup_scan(t, &path, results, maxresults, tagmask, true,
+	    dense);
 }
 
 /*
@@ -868,6 +887,10 @@ bool
 radix_tree_get_tag(struct radix_tree *t, uint64_t idx,
     radix_tree_tagid_t tagid)
 {
+	/*
+	 * the following two implementations should behave same.
+	 * the former one was chosen because it seems faster.
+	 */
 #if 1
 	const unsigned int tagmask = tagid_to_mask(tagid);
 	void **vpp;
@@ -1036,16 +1059,34 @@ test1(void)
 	radix_tree_dump(t);
 	assert(radix_tree_lookup_node(t, 0) == NULL);
 	assert(radix_tree_lookup_node(t, 1000) == NULL);
-	assert(radix_tree_gang_lookup_node(t, 0, results, 3) == 0);
-	assert(radix_tree_gang_lookup_node(t, 1000, results, 3) == 0);
-	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3) == 0);
-	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3) == 0);
-	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, 0) == 0);
-	assert(radix_tree_gang_lookup_tagged_node(t, 1000, results, 3, 0) == 0);
-	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3, 0)
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, false) == 0);
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, true) == 0);
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3, false) == 0);
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3, true) == 0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3, false) ==
+	    0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3, true) ==
+	    0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3, false)
 	    == 0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3, true)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, false, 0)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, true, 0)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 1000, results, 3, false, 0)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 1000, results, 3, true, 0)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3,
+	    false, 0) == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3,
+	    true, 0) == 0);
 	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 1000, results, 3,
-	    0) == 0);
+	    false, 0) == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 1000, results, 3,
+	    true, 0) == 0);
 	assert(radix_tree_empty_tree_p(t));
 	assert(radix_tree_empty_tagged_tree_p(t, 0));
 	assert(radix_tree_empty_tagged_tree_p(t, 1));
@@ -1056,19 +1097,35 @@ test1(void)
 	assert(radix_tree_lookup_node(t, 0) == (void *)0xdeadbea0);
 	assert(radix_tree_lookup_node(t, 1000) == NULL);
 	memset(results, 0, sizeof(results));
-	assert(radix_tree_gang_lookup_node(t, 0, results, 3) == 1);
-	assert(results[0] == (void *)0xdeadbea0);
-	assert(radix_tree_gang_lookup_node(t, 1000, results, 3) == 0);
-	memset(results, 0, sizeof(results));
-	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3) == 1);
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, false) == 1);
 	assert(results[0] == (void *)0xdeadbea0);
 	memset(results, 0, sizeof(results));
-	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3) == 1);
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, true) == 1);
 	assert(results[0] == (void *)0xdeadbea0);
-	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, 0)
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3, false) == 0);
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3, true) == 0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3, false) ==
+	    1);
+	assert(results[0] == (void *)0xdeadbea0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3, true) ==
+	    1);
+	assert(results[0] == (void *)0xdeadbea0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3, false)
+	    == 1);
+	assert(results[0] == (void *)0xdeadbea0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3, true)
 	    == 0);
-	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3, 0)
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, false, 0)
 	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, true, 0)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3,
+	    false, 0) == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3,
+	    true, 0) == 0);
 	assert(radix_tree_insert_node(t, 1000, (void *)0xdeadbea0) == 0);
 	assert(radix_tree_remove_node(t, 0) == (void *)0xdeadbea0);
 	assert(!radix_tree_empty_tree_p(t));
@@ -1076,19 +1133,34 @@ test1(void)
 	assert(radix_tree_lookup_node(t, 0) == NULL);
 	assert(radix_tree_lookup_node(t, 1000) == (void *)0xdeadbea0);
 	memset(results, 0, sizeof(results));
-	assert(radix_tree_gang_lookup_node(t, 0, results, 3) == 1);
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, false) == 1);
+	assert(results[0] == (void *)0xdeadbea0);
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, true) == 0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3, false) == 1);
 	assert(results[0] == (void *)0xdeadbea0);
 	memset(results, 0, sizeof(results));
-	assert(radix_tree_gang_lookup_node(t, 1000, results, 3) == 1);
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3, true) == 1);
 	assert(results[0] == (void *)0xdeadbea0);
-	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3) == 0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3, false)
+	    == 0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3, true)
+	    == 0);
 	memset(results, 0, sizeof(results));
-	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3) == 1);
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3, false)
+	    == 1);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3, true)
+	    == 1);
 	assert(results[0] == (void *)0xdeadbea0);
-	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, 0)
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, false, 0)
 	    == 0);
-	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3, 0)
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, true, 0)
 	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3,
+	    false, 0) == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3,
+	    true, 0) == 0);
 	assert(!radix_tree_get_tag(t, 1000, 0));
 	assert(!radix_tree_get_tag(t, 1000, 1));
 	assert(radix_tree_empty_tagged_tree_p(t, 0));
@@ -1132,27 +1204,68 @@ test1(void)
 	    (void *)0xdeadbea0);
 	assert(!radix_tree_get_tag(t, 1000, 0));
 	assert(radix_tree_get_tag(t, 1000, 1));
-	assert(radix_tree_gang_lookup_node(t, 0, results, 3) == 3);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, false) == 3);
 	assert(results[0] == (void *)0xbea0);
 	assert(results[1] == (void *)0x12345678);
 	assert(results[2] == (void *)0xdea0);
-	assert(radix_tree_gang_lookup_node(t, 1, results, 3) == 2);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, true) == 1);
+	assert(results[0] == (void *)0xbea0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 1, results, 3, false) == 2);
 	assert(results[0] == (void *)0x12345678);
 	assert(results[1] == (void *)0xdea0);
-	assert(radix_tree_gang_lookup_node(t, 1001, results, 3) == 1);
+	assert(radix_tree_gang_lookup_node(t, 1, results, 3, true) == 0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 1001, results, 3, false) == 1);
 	assert(results[0] == (void *)0xdea0);
-	assert(radix_tree_gang_lookup_node(t, UINT64_C(10000000001), results, 3)
-	    == 0);
+	assert(radix_tree_gang_lookup_node(t, 1001, results, 3, true) == 0);
+	assert(radix_tree_gang_lookup_node(t, UINT64_C(10000000001), results, 3,
+	    false) == 0);
+	assert(radix_tree_gang_lookup_node(t, UINT64_C(10000000001), results, 3,
+	    true) == 0);
 	assert(radix_tree_gang_lookup_node(t, UINT64_C(1000000000000), results,
-	    3) == 0);
-	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 100, 1) == 1);
+	    3, false) == 0);
+	assert(radix_tree_gang_lookup_node(t, UINT64_C(1000000000000), results,
+	    3, true) == 0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 100, false, 1)
+	    == 1);
 	assert(results[0] == (void *)0x12345678);
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 100, true, 1)
+	    == 0);
 	assert(entry_tagmask(t->t_root) != 0);
 	assert(radix_tree_remove_node(t, 1000) == (void *)0x12345678);
 	assert(entry_tagmask(t->t_root) == 0);
 	radix_tree_dump(t);
+	assert(radix_tree_insert_node(t, UINT64_C(10000000001), (void *)0xfff0)
+	    == 0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, UINT64_C(10000000000), results, 3,
+	    false) == 2);
+	assert(results[0] == (void *)0xdea0);
+	assert(results[1] == (void *)0xfff0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, UINT64_C(10000000000), results, 3,
+	    true) == 2);
+	assert(results[0] == (void *)0xdea0);
+	assert(results[1] == (void *)0xfff0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, UINT64_C(10000000001),
+	    results, 3, false) == 3);
+	assert(results[0] == (void *)0xfff0);
+	assert(results[1] == (void *)0xdea0);
+	assert(results[2] == (void *)0xbea0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, UINT64_C(10000000001),
+	    results, 3, true) == 2);
+	assert(results[0] == (void *)0xfff0);
+	assert(results[1] == (void *)0xdea0);
 	assert(radix_tree_remove_node(t, UINT64_C(10000000000)) ==
 	    (void *)0xdea0);
+	assert(radix_tree_remove_node(t, UINT64_C(10000000001)) ==
+	    (void *)0xfff0);
 	radix_tree_dump(t);
 	assert(radix_tree_remove_node(t, 0) == (void *)0xbea0);
 	radix_tree_dump(t);
@@ -1302,7 +1415,7 @@ test2(const char *title, bool dense)
 		nextidx = 0;
 		total = 0;
 		while ((nfound = radix_tree_gang_lookup_node(t, nextidx,
-		    (void *)results, __arraycount(results))) > 0) {
+		    (void *)results, __arraycount(results), false)) > 0) {
 			nextidx = results[nfound - 1]->idx + 1;
 			total += nfound;
 			if (nextidx == 0) {
@@ -1324,7 +1437,7 @@ test2(const char *title, bool dense)
 		nextidx = UINT64_MAX;
 		total = 0;
 		while ((nfound = radix_tree_gang_lookup_node_reverse(t, nextidx,
-		    (void *)results, __arraycount(results))) > 0) {
+		    (void *)results, __arraycount(results), false)) > 0) {
 			nextidx = results[nfound - 1]->idx - 1;
 			total += nfound;
 			if (nextidx == UINT64_MAX) {
@@ -1348,7 +1461,7 @@ test2(const char *title, bool dense)
 			total = 0;
 			while ((nfound = radix_tree_gang_lookup_tagged_node(t,
 			    nextidx, (void *)results, __arraycount(results),
-			    tag)) > 0) {
+			    false, tag)) > 0) {
 				nextidx = results[nfound - 1]->idx + 1;
 				total += nfound;
 			}
@@ -1372,7 +1485,7 @@ test2(const char *title, bool dense)
 			while ((nfound =
 			    radix_tree_gang_lookup_tagged_node_reverse(t,
 			    nextidx, (void *)results, __arraycount(results),
-			    tag)) > 0) {
+			    false, tag)) > 0) {
 				nextidx = results[nfound - 1]->idx - 1;
 				total += nfound;
 				if (nextidx == UINT64_MAX) {
@@ -1400,7 +1513,7 @@ test2(const char *title, bool dense)
 			nextidx = 0;
 			while ((nfound = radix_tree_gang_lookup_tagged_node(t,
 			    nextidx, (void *)results, __arraycount(results),
-			    tag)) > 0) {
+			    false, tag)) > 0) {
 				for (i = 0; i < nfound; i++) {
 					radix_tree_remove_node(t,
 					    results[i]->idx);
@@ -1430,7 +1543,7 @@ test2(const char *title, bool dense)
 		nextidx = 0;
 		total = 0;
 		while ((nfound = radix_tree_gang_lookup_node(t, nextidx,
-		    (void *)results, __arraycount(results))) > 0) {
+		    (void *)results, __arraycount(results), false)) > 0) {
 			for (i = 0; i < nfound; i++) {
 				assert(results[i] == radix_tree_remove_node(t,
 				    results[i]->idx));
