@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.37 2011/11/24 01:58:52 manu Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.38 2011/11/25 15:02:02 manu Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.37 2011/11/24 01:58:52 manu Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.38 2011/11/25 15:02:02 manu Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -512,17 +512,8 @@ dispatch(struct puffs_cc *pcc)
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
 
-			if (buildpath) {
-				error = puffs_path_pcnbuild(pu, &pcn, opcookie);
-				if (error)
-					break;
-			}
-
 			error = pops->puffs_node_remove(pu,
 			    opcookie, auxt->pvnr_cookie_targ, &pcn);
-
-			pu->pu_pathfree(pu, &pcn.pcn_po_full);
-
 			break;
 		}
 
@@ -670,17 +661,8 @@ dispatch(struct puffs_cc *pcc)
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
 
-			if (buildpath) {
-				error = puffs_path_pcnbuild(pu, &pcn, opcookie);
-				if (error)
-					break;
-			}
-
 			error = pops->puffs_node_rmdir(pu,
 			    opcookie, auxt->pvnr_cookie_targ, &pcn);
-
-			pu->pu_pathfree(pu, &pcn.pcn_po_full);
-
 			break;
 		}
 
