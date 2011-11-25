@@ -1,4 +1,4 @@
-/*	$NetBSD: rngtest.c,v 1.1 2011/11/19 22:51:25 tls Exp $ */
+/*	$NetBSD: rngtest.c,v 1.2 2011/11/25 12:45:00 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -142,11 +142,11 @@ the GNU Public License.
 #include <lib/libkern/libkern.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rngtest.c,v 1.1 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rngtest.c,v 1.2 2011/11/25 12:45:00 joerg Exp $");
 
 #ifndef _KERNEL
 static inline int
-printf(const char *restrict format, ...)
+printf(const char * __restrict format, ...)
 {
 	return 0;	/* XXX no standard way to do output in libkern? */
 }
