@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.303 2011/05/20 09:23:37 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.304 2011/11/25 12:39:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.303 2011/05/20 09:23:37 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.304 2011/11/25 12:39:55 joerg Exp $");
 
 #include "rnd.h"
 
@@ -1354,10 +1354,10 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 #ifdef __HAVE_OLD_DISKLABEL
 		if (cmd == ODIOCSDINFO || cmd == ODIOCWDINFO) {
-			newlabel = malloc(sizeof (*newlabel), M_TEMP, M_WAITOK);
+			newlabel = malloc(sizeof (*newlabel), M_TEMP,
+			    M_WAITOK | M_ZERO);
 			if (newlabel == NULL)
 				return (EIO);
-			memset(newlabel, 0, sizeof newlabel);
 			memcpy(newlabel, addr, sizeof (struct olddisklabel));
 			lp = newlabel;
 		} else
