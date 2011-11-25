@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.112 2011/11/20 22:27:39 gavan Exp $	*/
+/*	$NetBSD: ugen.c,v 1.113 2011/11/25 02:59:54 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.112 2011/11/20 22:27:39 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.113 2011/11/25 02:59:54 jakllsch Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -1866,6 +1866,9 @@ ugenpoll(dev_t dev, int events, struct lwp *l)
 	if (sc->sc_dying)
 		return (POLLHUP);
 
+	if (UGENENDPOINT(dev) == USB_CONTROL_ENDPOINT)
+		return ENODEV;
+
 	sce_in = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
 	sce_out = &sc->sc_endpoints[UGENENDPOINT(dev)][OUT];
 	if (sce_in == NULL && sce_out == NULL)
@@ -2052,6 +2055,9 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 
 	if (sc->sc_dying)
 		return (ENXIO);
+
+	if (UGENENDPOINT(dev) == USB_CONTROL_ENDPOINT)
+		return ENODEV;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
