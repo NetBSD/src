@@ -1,4 +1,4 @@
-/*	$NetBSD: getufsquota.c,v 1.3 2011/09/30 22:08:19 jym Exp $ */
+/*	$NetBSD: getufsquota.c,v 1.4 2011/11/25 16:55:05 dholland Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -27,7 +27,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getufsquota.c,v 1.3 2011/09/30 22:08:19 jym Exp $");
+__RCSID("$NetBSD: getufsquota.c,v 1.4 2011/11/25 16:55:05 dholland Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: getufsquota.c,v 1.3 2011/09/30 22:08:19 jym Exp $");
 
 /* retrieve quotas with ufs semantics from vfs, for the given user id */
 int
-getufsquota(const char *mp, struct ufs_quota_entry *qv, uid_t id,
+getufsquota(const char *mp, struct quotaval *qv, uid_t id,
     const char *class)
 {
 	prop_dictionary_t dict, data, cmd;
@@ -151,9 +151,9 @@ getufsquota(const char *mp, struct ufs_quota_entry *qv, uid_t id,
 			goto end_dict;
 		}
 		values[QUOTA_LIMIT_BLOCK] =
-		    &qv[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit;
+		    &qv[QUOTA_LIMIT_BLOCK].qv_hardlimit;
 		values[QUOTA_LIMIT_FILE] =
-		    &qv[QUOTA_LIMIT_FILE].ufsqe_hardlimit;
+		    &qv[QUOTA_LIMIT_FILE].qv_hardlimit;
 
 		errno = proptoquota64(data, values, ufs_quota_entry_names,
 		    UFS_QUOTA_NENTRIES, ufs_quota_limit_names, QUOTA_NLIMITS);
