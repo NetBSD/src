@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.254 2011/11/23 23:07:31 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.255 2011/11/25 03:13:06 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.254 2011/11/23 23:07:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.255 2011/11/25 03:13:06 jakllsch Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -4322,12 +4322,12 @@ audio_suspend(device_t dv, const pmf_qual_t *qual)
 
 	mutex_enter(sc->sc_lock);
 	audio_mixer_capture(sc);
-	mutex_enter(sc->sc_lock);
+	mutex_enter(sc->sc_intr_lock);
 	if (sc->sc_pbus == true)
 		hwp->halt_output(sc->hw_hdl);
 	if (sc->sc_rbus == true)
 		hwp->halt_input(sc->hw_hdl);
-	mutex_exit(sc->sc_lock);
+	mutex_exit(sc->sc_intr_lock);
 #ifdef AUDIO_PM_IDLE
 	callout_halt(&sc->sc_idle_counter, sc->sc_lock);
 #endif
