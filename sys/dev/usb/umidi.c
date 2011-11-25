@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.47 2011/11/24 22:12:51 mrg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.48 2011/11/25 13:45:09 jmcneill Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.47 2011/11/24 22:12:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.48 2011/11/25 13:45:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1710,12 +1710,11 @@ static void
 out_solicit_locked(void *arg)
 {
 	struct umidi_endpoint *ep = arg;
-	struct umidi_softc *sc = ep->sc;
 	umidi_packet_bufp end;
 	u_int16_t which;
 	struct umidi_jack *jack;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(mutex_owned(&ep->sc->sc_lock));
 	
 	end = ep->buffer + ep->buffer_size / sizeof *ep->buffer;
 	
