@@ -47,7 +47,7 @@ dev/pci/esa.c			done
 dev/pci/esm.c			done
 dev/pci/eso.c			done
 dev/pci/fms.c			done
-dev/pci/gcscaudio.c		done
+dev/pci/gcscaudio.c		done		port-i386
 dev/pci/hdaudio/hdafg.c		done		port-i386, port-amd64
 dev/pci/neo.c			done
 dev/pci/sv.c			done
