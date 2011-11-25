@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.54 2011/11/23 19:39:11 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.55 2011/11/25 11:19:10 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.54 2011/11/23 19:39:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.55 2011/11/25 11:19:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,6 +404,18 @@ loop:
 				lflag = LK_EXCLUSIVE;
 			vp = UNIONTOV(un);
 			mutex_enter(vp->v_interlock);
+			/*
+			 * If this node being cleaned out and our caller
+			 * holds a lock, then ignore it and continue.  To
+			 * allow the cleaning to succeed the current thread
+			 * must make progress.  For a brief time the cache
+			 * may contain more than one vnode referring to
+			 * a lower node.
+			 */
+			if ((vp->v_iflag & VI_XLOCK) != 0 && lflag == 0) {
+				mutex_exit(vp->v_interlock);
+				continue;
+			}
 			mutex_exit(&uhash_lock);
 			if (vget(vp, lflag))
 				goto loop;
@@ -484,7 +496,7 @@ found:
 		if (lowervp)
 			vrele(lowervp);
 
-		goto out;
+		return error;
 	}
 
 	if (docache) {
@@ -493,6 +505,17 @@ found:
 			if (un1->un_lowervp == lowervp &&
 			    un1->un_uppervp == uppervp &&
 			    UNIONTOV(un1)->v_mount == mp) {
+				vp = UNIONTOV(un1);
+				mutex_enter(vp->v_interlock);
+				/*
+				 * Ignore nodes being cleaned out.
+				 * See the cache lookup above.
+				 */
+				if ((vp->v_iflag & VI_XLOCK) != 0) {
+					mutex_exit(vp->v_interlock);
+					continue;
+				}
+				mutex_exit(vp->v_interlock);
 				/*
 				 * Another thread beat us, push back freshly
 				 * allocated vnode and retry.
@@ -569,7 +592,6 @@ found:
 	if (xlowervp)
 		vrele(xlowervp);
 
-out:
 	if (docache)
 		mutex_exit(&uhash_lock);
 
