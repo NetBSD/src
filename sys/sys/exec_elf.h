@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.117 2011/08/03 00:22:05 enami Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.118 2011/11/25 14:34:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -417,6 +417,7 @@ typedef struct {
 #define	SHT_NUM		19
 
 #define	SHT_LOOS	0x60000000	/* Operating system specific range */
+#define	SHT_GNU_HASH	0x6ffffff6	/* GNU style symbol hash table */
 #define	SHT_SUNW_move	0x6ffffffa
 #define	SHT_SUNW_syminfo 0x6ffffffc
 #define	SHT_SUNW_verdef	0x6ffffffd	/* Versions defined by file */
