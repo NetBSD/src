@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.38 2011/11/23 23:07:32 jmcneill Exp $ */
+/* $NetBSD: pcppi.c,v 1.39 2011/11/25 14:31:44 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.38 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.39 2011/11/25 14:31:44 jakllsch Exp $");
 
 #include "attimer.h"
 
@@ -355,12 +355,12 @@ pcppi_pckbd_bell(void *arg, u_int pitch, u_int period, u_int volume,
     int poll)
 {
 
-	KASSERT(mutex_owned(&tty_lock));
+	KASSERT(!mutex_owned(&tty_lock));
 
 	/*
 	 * Comes in as ms, goes out at ticks; volume ignored.
 	 */
-	pcppi_bell_locked(arg, pitch, (period * hz) / 1000,
+	pcppi_bell(arg, pitch, (period * hz) / 1000,
 	    poll ? PCPPI_BELL_POLL : 0);
 }
 #endif /* NPCKBD > 0 */
