@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.35 2009/10/19 18:41:14 bouyer Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.36 2011/11/25 23:31:53 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.35 2009/10/19 18:41:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.36 2011/11/25 23:31:53 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,9 @@ static const struct mii_phydesc nsphyters[] = {
 
 	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83847,
 	  MII_STR_xxNATSEMI_DP83847 },
+
+	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83849,
+	  MII_STR_xxNATSEMI_DP83849 },
 
 	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83815,
 	  MII_STR_xxNATSEMI_DP83815 },
