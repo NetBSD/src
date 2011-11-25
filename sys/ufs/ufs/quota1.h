@@ -1,4 +1,4 @@
-/*	$NetBSD: quota1.h,v 1.4 2011/11/20 21:43:35 dholland Exp $	*/
+/*	$NetBSD: quota1.h,v 1.5 2011/11/25 16:55:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -105,6 +105,7 @@ struct dqblk {
 
 /* quota1_subr.c */
 struct quota2_entry;
-void dqblk2ufsqe(const struct dqblk *, struct ufs_quota_entry *);
-void ufsqe2dqblk(const struct ufs_quota_entry *, struct dqblk *);
+void dqblk_to_quotaval(const struct dqblk *, struct quotaval *);
+void quotaval_to_dqblk(const struct quotaval *, struct dqblk *);
+
 #endif /* !_UFS_UFS_QUOTA1_H_ */

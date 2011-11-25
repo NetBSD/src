@@ -1,4 +1,4 @@
-/*	$NetBSD: getvfsquota.c,v 1.8 2011/09/30 22:08:19 jym Exp $ */
+/*	$NetBSD: getvfsquota.c,v 1.9 2011/11/25 16:55:05 dholland Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -27,7 +27,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getvfsquota.c,v 1.8 2011/09/30 22:08:19 jym Exp $");
+__RCSID("$NetBSD: getvfsquota.c,v 1.9 2011/11/25 16:55:05 dholland Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: getvfsquota.c,v 1.8 2011/09/30 22:08:19 jym Exp $");
 
 /* private version of getufsquota() */
 int
-getvfsquota(const char *mp, struct ufs_quota_entry *qv, int8_t *versp,
+getvfsquota(const char *mp, struct quotaval *qv, int8_t *versp,
     uint32_t id, int type, int defaultq, int debug)
 {
 	prop_dictionary_t dict, data, cmd;
@@ -149,9 +149,9 @@ getvfsquota(const char *mp, struct ufs_quota_entry *qv, int8_t *versp,
 				err(1, "prop_array_get(data)");
 
 			values[QUOTA_LIMIT_BLOCK] =
-			    &qv[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit;
+			    &qv[QUOTA_LIMIT_BLOCK].qv_hardlimit;
 			values[QUOTA_LIMIT_FILE] =
-			    &qv[QUOTA_LIMIT_FILE].ufsqe_hardlimit;
+			    &qv[QUOTA_LIMIT_FILE].qv_hardlimit;
 
 			errno = proptoquota64(data, values,
 			     ufs_quota_entry_names, UFS_QUOTA_NENTRIES,

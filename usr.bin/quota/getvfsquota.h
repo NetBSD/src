@@ -1,4 +1,4 @@
-/*	$NetBSD: getvfsquota.h,v 1.4 2011/03/24 17:05:46 bouyer Exp $ */
+/*	$NetBSD: getvfsquota.h,v 1.5 2011/11/25 16:55:05 dholland Exp $ */
 
-int getvfsquota(const char *, struct ufs_quota_entry *, int8_t *,
+int getvfsquota(const char *, struct quotaval *, int8_t *,
     uint32_t, int, int, int);
