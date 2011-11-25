@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.107 2011/11/12 11:11:07 sekiya Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.108 2011/11/25 23:29:28 jakllsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.103 2011/11/02 19:55:57 jakllsch Exp
+ *	NetBSD: miidevs,v 1.105 2011/11/25 23:28:14 jakllsch Exp
  */
 
 /*-
@@ -370,6 +370,8 @@
 #define	MII_STR_xxNATSEMI_DP83861	"DP83861 1000BASE-T media interface"
 #define	MII_MODEL_xxNATSEMI_DP83865	0x0007
 #define	MII_STR_xxNATSEMI_DP83865	"DP83865 1000BASE-T media interface"
+#define	MII_MODEL_xxNATSEMI_DP83849	0x000a
+#define	MII_STR_xxNATSEMI_DP83849	"DP83849 10/100 media interface"
 
 /* PMC Sierra PHYs */
 #define	MII_MODEL_xxPMCSIERRA_PM8351	0x0000
