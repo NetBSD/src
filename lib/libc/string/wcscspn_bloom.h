@@ -1,4 +1,4 @@
-/*	$NetBSD: wcscspn_bloom.h,v 1.1 2011/11/24 18:44:25 joerg Exp $	*/
+/*	$NetBSD: wcscspn_bloom.h,v 1.2 2011/11/25 09:00:51 tron Exp $	*/
 
 /*-
  * Copyright (c) 2011 Joerg Sonnenberger,
@@ -50,8 +50,8 @@ wcscspn_bloom1(size_t x)
 static inline size_t
 wcscspn_bloom2(size_t x)
 {
-	return (uint32_t)(x * 2654435761U) /
-	    (0x100000000ULL / (BLOOM_MASK + 1));
+	return (size_t)((uint32_t)(x * 2654435761U) /
+	    (0x100000000ULL / (BLOOM_MASK + 1)));
 }
 
 static inline void
@@ -62,9 +62,9 @@ wcsspn_bloom_init(size_t *bloom, const wchar_t *charset)
 	memset(bloom, 0, BLOOM_SIZE);
 	do {
 		val = wcscspn_bloom1((size_t)*charset);
-		bloom[val / BLOOM_DIV] |= 1ULL << (val % BLOOM_DIV);
+		bloom[val / BLOOM_DIV] |= (size_t)(1ULL << (val % BLOOM_DIV));
 		val = wcscspn_bloom2((size_t)*charset);
-		bloom[val / BLOOM_DIV] |= 1ULL << (val % BLOOM_DIV);
+		bloom[val / BLOOM_DIV] |= (size_t)(1ULL << (val % BLOOM_DIV));
 	}
 	while (*++charset);
 }
