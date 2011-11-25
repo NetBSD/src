@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.c,v 1.1 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: ebh.c,v 1.2 2011/11/25 11:15:24 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1369,16 +1369,17 @@ nand_process_eb(struct chfs_ebh *ebh, struct chfs_scan_info *si,
 {
 	int err, erase_cnt, leb_status;
 	uint64_t max_serial;
-	bool isbad;
+	/* isbad() is defined on some ancient platforms, heh */
+	bool is_bad;
 
 	/* Check block is bad */
 	err = flash_block_isbad(ebh->flash_dev,
-	    pebnr * ebh->flash_if->erasesize, &isbad);
+	    pebnr * ebh->flash_if->erasesize, &is_bad);
 	if (err) {
 		chfs_err("checking block is bad failed\n");
 		return err;
 	}
-	if (isbad) {
+	if (is_bad) {
 		si->bad_peb_cnt++;
 		return 0;
 	}
