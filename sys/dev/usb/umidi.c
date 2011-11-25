@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.48 2011/11/25 13:45:09 jmcneill Exp $	*/
+/*	$NetBSD: umidi.c,v 1.49 2011/11/25 13:58:41 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.48 2011/11/25 13:45:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.49 2011/11/25 13:58:41 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1120,9 +1120,8 @@ open_in_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *, int))
 {
 	usbd_status err = USBD_NORMAL_COMPLETION;
 	struct umidi_endpoint *ep = jack->endpoint;
-	struct umidi_softc *sc = ep->sc;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(mutex_owned(&ep->sc->sc_lock));
 
 	if (jack->opened)
 		return USBD_IN_USE;
