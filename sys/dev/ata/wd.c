@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.389 2011/10/27 13:07:37 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.390 2011/11/25 13:55:40 joerg Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.389 2011/10/27 13:07:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.390 2011/11/25 13:55:40 joerg Exp $");
 
 #include "opt_ata.h"
 
@@ -1276,10 +1276,10 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 
 #ifdef __HAVE_OLD_DISKLABEL
 		if (xfer == ODIOCSDINFO || xfer == ODIOCWDINFO) {
-			newlabel = malloc(sizeof *newlabel, M_TEMP, M_WAITOK);
+			newlabel = malloc(sizeof *newlabel, M_TEMP,
+			    M_WAITOK | M_ZERO);
 			if (newlabel == NULL)
 				return EIO;
-			memset(newlabel, 0, sizeof newlabel);
 			memcpy(newlabel, addr, sizeof (struct olddisklabel));
 			lp = newlabel;
 		} else
