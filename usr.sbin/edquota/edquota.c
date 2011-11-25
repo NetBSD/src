@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.38 2011/11/13 15:42:35 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.39 2011/11/25 16:55:05 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.38 2011/11/13 15:42:35 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.39 2011/11/25 16:55:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ static const char *quotagroup = QUOTAGROUP;
 struct quotause {
 	struct	quotause *next;
 	long	flags;
-	struct	ufs_quota_entry qe[QUOTA_NLIMITS];
+	struct	quotaval qv[QUOTA_NLIMITS];
 	char	fsname[MAXPATHLEN + 1];
 	char	*qfname;
 };
@@ -165,7 +165,7 @@ quotause_create(void)
 
 	qup->next = NULL;
 	qup->flags = 0;
-	memset(qup->qe, 0, sizeof(qup->qe));
+	memset(qup->qv, 0, sizeof(qup->qv));
 	qup->fsname[0] = '\0';
 	qup->qfname = NULL;
 
@@ -248,7 +248,7 @@ putprivs1(uint32_t id, int quotaclass, struct quotause *qup)
 	struct dqblk dqblk;
 	int fd;
 
-	ufsqe2dqblk(qup->qe, &dqblk);
+	quotaval_to_dqblk(qup->qv, &dqblk);
 	assert((qup->flags & DEFAULT) == 0);
 
 	if ((fd = open(qup->qfname, O_WRONLY)) < 0) {
@@ -326,7 +326,7 @@ getprivs1(long id, int quotaclass, const char *filesys)
 	close(fd);
 	qup->qfname = qfpathname;
 	endfsent();
-	dqblk2ufsqe(&dqblk, qup->qe);
+	dqblk_to_quotaval(&dqblk, qup->qv);
 	return qup;
 }
 
@@ -343,10 +343,10 @@ getprivs2(long id, int quotaclass, const char *filesys, int defaultq)
 	strcpy(qup->fsname, filesys);
 	if (defaultq)
 		qup->flags |= DEFAULT;
-	if (!getvfsquota(filesys, qup->qe, &version,
+	if (!getvfsquota(filesys, qup->qv, &version,
 	    id, quotaclass, defaultq, Dflag)) {
 		/* no entry, get default entry */
-		if (!getvfsquota(filesys, qup->qe, &version,
+		if (!getvfsquota(filesys, qup->qv, &version,
 		    id, quotaclass, 1, Dflag)) {
 			free(qup);
 			return NULL;
@@ -368,9 +368,9 @@ putprivs2(uint32_t id, int quotaclass, struct quotause *qup)
 	uint64_t *valuesp[QUOTA_NLIMITS];
 
 	valuesp[QL_BLK] =
-	    &qup->qe[QL_BLK].ufsqe_hardlimit;
+	    &qup->qv[QL_BLK].qv_hardlimit;
 	valuesp[QL_FL] =
-	    &qup->qe[QL_FL].ufsqe_hardlimit;
+	    &qup->qv[QL_FL].qv_hardlimit;
 
 	data = quota64toprop(id, (qup->flags & DEFAULT) ? 1 : 0,
 	    valuesp, ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
@@ -689,17 +689,17 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 		    ufs_quota_class_names[quotaclass], name);
 	}
 	for (qup = qlist->head; qup; qup = qup->next) {
-		struct ufs_quota_entry *q = qup->qe;
+		struct quotaval *q = qup->qv;
 		fprintf(fd, "%s (version %d):\n",
 		     qup->fsname, (qup->flags & QUOTA2) ? 2 : 1);
 		if ((qup->flags & DEFAULT) == 0 || (qup->flags & QUOTA2) != 0) {
 			fprintf(fd, "\tblocks in use: %s, "
 			    "limits (soft = %s, hard = %s",
-			    intprt(b1, 21, q[QL_BLK].ufsqe_cur,
+			    intprt(b1, 21, q[QL_BLK].qv_usage,
 			    HN_NOSPACE | HN_B, Hflag), 
-			    intprt(b2, 21, q[QL_BLK].ufsqe_softlimit,
+			    intprt(b2, 21, q[QL_BLK].qv_softlimit,
 			    HN_NOSPACE | HN_B, Hflag),
-			    intprt(b3, 21, q[QL_BLK].ufsqe_hardlimit,
+			    intprt(b3, 21, q[QL_BLK].qv_hardlimit,
 				HN_NOSPACE | HN_B, Hflag));
 			if (qup->flags & QUOTA2)
 				fprintf(fd, ", ");
@@ -708,17 +708,17 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 			
 		if (qup->flags & (QUOTA2|DEFAULT)) {
 		    fprintf(fd, "grace = %s",
-			timepprt(b0, 21, q[QL_BLK].ufsqe_grace, Hflag));
+			timepprt(b0, 21, q[QL_BLK].qv_grace, Hflag));
 		}
 		fprintf(fd, ")\n");
 		if ((qup->flags & DEFAULT) == 0 || (qup->flags & QUOTA2) != 0) {
 			fprintf(fd, "\tinodes in use: %s, "
 			    "limits (soft = %s, hard = %s",
-			    intprt(b1, 21, q[QL_FL].ufsqe_cur,
+			    intprt(b1, 21, q[QL_FL].qv_usage,
 			    HN_NOSPACE, Hflag),
-			    intprt(b2, 21, q[QL_FL].ufsqe_softlimit,
+			    intprt(b2, 21, q[QL_FL].qv_softlimit,
 			    HN_NOSPACE, Hflag),
-			    intprt(b3, 21, q[QL_FL].ufsqe_hardlimit,
+			    intprt(b3, 21, q[QL_FL].qv_hardlimit,
 			     HN_NOSPACE, Hflag));
 			if (qup->flags & QUOTA2)
 				fprintf(fd, ", ");
@@ -727,7 +727,7 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 
 		if (qup->flags & (QUOTA2|DEFAULT)) {
 		    fprintf(fd, "grace = %s",
-			timepprt(b0, 21, q[QL_FL].ufsqe_grace, Hflag));
+			timepprt(b0, 21, q[QL_FL].qv_grace, Hflag));
 		}
 		fprintf(fd, ")\n");
 	}
@@ -907,21 +907,21 @@ readprivs(struct quotalist *qlist, int infd, int dflag)
 			}
 		}
 		for (qup = qlist->head; qup; qup = qup->next) {
-			struct ufs_quota_entry *q = qup->qe;
+			struct quotaval *q = qup->qv;
 			char b1[32], b2[32];
 			if (strcmp(fsp, qup->fsname))
 				continue;
 			if (version == 1 && dflag) {
-				q[QL_BLK].ufsqe_grace = graceb;
-				q[QL_FL].ufsqe_grace = gracei;
+				q[QL_BLK].qv_grace = graceb;
+				q[QL_FL].qv_grace = gracei;
 				qup->flags |= FOUND;
 				continue;
 			}
 
-			if (strcmp(intprt(b1, 21, q[QL_BLK].ufsqe_cur,
+			if (strcmp(intprt(b1, 21, q[QL_BLK].qv_usage,
 			    HN_NOSPACE | HN_B, Hflag),
 			    scurb) != 0 ||
-			    strcmp(intprt(b2, 21, q[QL_FL].ufsqe_cur,
+			    strcmp(intprt(b2, 21, q[QL_FL].qv_usage,
 			    HN_NOSPACE, Hflag),
 			    scuri) != 0) {
 				warnx("%s: cannot change current allocation",
@@ -934,24 +934,24 @@ readprivs(struct quotalist *qlist, int infd, int dflag)
 			 * or were under it, but now have a soft limit
 			 * and are over it.
 			 */
-			if (q[QL_BLK].ufsqe_cur &&
-			    q[QL_BLK].ufsqe_cur >= softb &&
-			    (q[QL_BLK].ufsqe_softlimit == 0 ||
-			     q[QL_BLK].ufsqe_cur < q[QL_BLK].ufsqe_softlimit))
-				q[QL_BLK].ufsqe_time = 0;
-			if (q[QL_FL].ufsqe_cur &&
-			    q[QL_FL].ufsqe_cur >= softi &&
-			    (q[QL_FL].ufsqe_softlimit == 0 ||
-			     q[QL_FL].ufsqe_cur < q[QL_FL].ufsqe_softlimit))
-				q[QL_FL].ufsqe_time = 0;
-			q[QL_BLK].ufsqe_softlimit = softb;
-			q[QL_BLK].ufsqe_hardlimit = hardb;
+			if (q[QL_BLK].qv_usage &&
+			    q[QL_BLK].qv_usage >= softb &&
+			    (q[QL_BLK].qv_softlimit == 0 ||
+			     q[QL_BLK].qv_usage < q[QL_BLK].qv_softlimit))
+				q[QL_BLK].qv_expiretime = 0;
+			if (q[QL_FL].qv_usage &&
+			    q[QL_FL].qv_usage >= softi &&
+			    (q[QL_FL].qv_softlimit == 0 ||
+			     q[QL_FL].qv_usage < q[QL_FL].qv_softlimit))
+				q[QL_FL].qv_expiretime = 0;
+			q[QL_BLK].qv_softlimit = softb;
+			q[QL_BLK].qv_hardlimit = hardb;
 			if (version == 2)
-				q[QL_BLK].ufsqe_grace = graceb;
-			q[QL_FL].ufsqe_softlimit  = softi;
-			q[QL_FL].ufsqe_hardlimit  = hardi;
+				q[QL_BLK].qv_grace = graceb;
+			q[QL_FL].qv_softlimit  = softi;
+			q[QL_FL].qv_hardlimit  = hardi;
 			if (version == 2)
-				q[QL_FL].ufsqe_grace = gracei;
+				q[QL_FL].qv_grace = gracei;
 			qup->flags |= FOUND;
 		}
 	}
@@ -961,17 +961,17 @@ out:
 	 * Disable quotas for any filesystems that have not been found.
 	 */
 	for (qup = qlist->head; qup; qup = qup->next) {
-		struct ufs_quota_entry *q = qup->qe;
+		struct quotaval *q = qup->qv;
 		if (qup->flags & FOUND) {
 			qup->flags &= ~FOUND;
 			continue;
 		}
-		q[QL_BLK].ufsqe_softlimit = UQUAD_MAX;
-		q[QL_BLK].ufsqe_hardlimit = UQUAD_MAX;
-		q[QL_BLK].ufsqe_grace = 0;
-		q[QL_FL].ufsqe_softlimit = UQUAD_MAX;
-		q[QL_FL].ufsqe_hardlimit = UQUAD_MAX;
-		q[QL_FL].ufsqe_grace = 0;
+		q[QL_BLK].qv_softlimit = UQUAD_MAX;
+		q[QL_BLK].qv_hardlimit = UQUAD_MAX;
+		q[QL_BLK].qv_grace = 0;
+		q[QL_FL].qv_softlimit = UQUAD_MAX;
+		q[QL_FL].qv_hardlimit = UQUAD_MAX;
+		q[QL_FL].qv_grace = 0;
 	}
 	return 1;
 }
@@ -992,8 +992,8 @@ replicate(const char *fs, int quotaclass, const char *protoname,
 		exit(1);
 	protoprivs = getprivs(protoid, 0, quotaclass, fs);
 	for (qup = protoprivs->head; qup; qup = qup->next) {
-		qup->qe[QL_BLK].ufsqe_time = 0;
-		qup->qe[QL_FL].ufsqe_time = 0;
+		qup->qv[QL_BLK].qv_expiretime = 0;
+		qup->qv[QL_FL].qv_expiretime = 0;
 	}
 	for (i=0; i<numnames; i++) {
 		id = getidbyname(names[i], quotaclass);
@@ -1062,30 +1062,30 @@ assign(const char *fs, int quotaclass,
 
 		curprivs = getprivs(id, dflag, quotaclass, fs);
 		for (lqup = curprivs->head; lqup; lqup = lqup->next) {
-			struct ufs_quota_entry *q = lqup->qe;
+			struct quotaval *q = lqup->qv;
 			if (soft) {
 				if (!dflag && softb &&
-				    q[QL_BLK].ufsqe_cur >= softb &&
-				    (q[QL_BLK].ufsqe_softlimit == 0 ||
-				     q[QL_BLK].ufsqe_cur <
-				     q[QL_BLK].ufsqe_softlimit))
-					q[QL_BLK].ufsqe_time = 0;
+				    q[QL_BLK].qv_usage >= softb &&
+				    (q[QL_BLK].qv_softlimit == 0 ||
+				     q[QL_BLK].qv_usage <
+				     q[QL_BLK].qv_softlimit))
+					q[QL_BLK].qv_expiretime = 0;
 				if (!dflag && softi &&
-				    q[QL_FL].ufsqe_cur >= softb &&
-				    (q[QL_FL].ufsqe_softlimit == 0 ||
-				     q[QL_FL].ufsqe_cur <
-				     q[QL_FL].ufsqe_softlimit))
-					q[QL_FL].ufsqe_time = 0;
-				q[QL_BLK].ufsqe_softlimit = softb;
-				q[QL_FL].ufsqe_softlimit = softi;
+				    q[QL_FL].qv_usage >= softb &&
+				    (q[QL_FL].qv_softlimit == 0 ||
+				     q[QL_FL].qv_usage <
+				     q[QL_FL].qv_softlimit))
+					q[QL_FL].qv_expiretime = 0;
+				q[QL_BLK].qv_softlimit = softb;
+				q[QL_FL].qv_softlimit = softi;
 			}
 			if (hard) {
-				q[QL_BLK].ufsqe_hardlimit = hardb;
-				q[QL_FL].ufsqe_hardlimit = hardi;
+				q[QL_BLK].qv_hardlimit = hardb;
+				q[QL_FL].qv_hardlimit = hardi;
 			}
 			if (grace) {
-				q[QL_BLK].ufsqe_grace = graceb;
-				q[QL_FL].ufsqe_grace = gracei;
+				q[QL_BLK].qv_grace = graceb;
+				q[QL_FL].qv_grace = gracei;
 			}
 		}
 		putprivs(id, quotaclass, curprivs);

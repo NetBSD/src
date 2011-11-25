@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.3 2011/11/20 21:43:34 dholland Exp $ */
+/* $NetBSD: quota.h,v 1.4 2011/11/25 16:55:05 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -50,15 +50,15 @@ int quota_check_limit(uint64_t, uint64_t,  uint64_t, uint64_t, time_t, time_t);
 
 /*
  * retrieve quotas with ufs semantics from vfs, for the given id and class.
- * second argument points to a struct ufs_quota_entry array of QUOTA_NLIMITS
+ * second argument points to a struct quotaval array of QUOTA_NLIMITS
  * elements.
  */
-int getufsquota(const char *, struct ufs_quota_entry *, uid_t, const char *);
+int getufsquota(const char *, struct quotaval *, uid_t, const char *);
 
 /* same as above, but for NFS */
-int getnfsquota(const char *, struct ufs_quota_entry *, uid_t, const char *);
+int getnfsquota(const char *, struct quotaval *, uid_t, const char *);
 
 /* call one of the above, if appropriate, after a statvfs(2) */
-int getfsquota(const char *, struct ufs_quota_entry *, uid_t, const char *);
+int getfsquota(const char *, struct quotaval *, uid_t, const char *);
 
 #endif /* _QUOTA_QUOTA_H_ */
