@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.9 2011/11/24 03:35:59 mrg Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.10 2011/11/25 12:31:55 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.9 2011/11/24 03:35:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.10 2011/11/25 12:31:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,6 +328,8 @@ gcscaudio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_nformats = 0;
 	gcscaudio_append_formats(sc, &gcscaudio_formats_2ch);
+
+	mutex_enter(&sc->sc_lock);
 	if (AC97_IS_4CH(sc->codec_if))
 		gcscaudio_append_formats(sc, &gcscaudio_formats_4ch);
 	if (AC97_IS_6CH(sc->codec_if))
@@ -338,6 +340,7 @@ gcscaudio_attach(device_t parent, device_t self, void *aux)
 			sc->sc_formats[i].frequency[0] = 48000;
 		}
 	}
+	mutex_exit(&sc->sc_lock);
 
 	if ((rc = auconv_create_encodings(sc->sc_formats, sc->sc_nformats,
 	    &sc->sc_encodings)) != 0) {
