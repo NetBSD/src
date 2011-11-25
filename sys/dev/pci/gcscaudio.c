@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.10 2011/11/25 12:31:55 jmcneill Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.11 2011/11/25 12:50:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.10 2011/11/25 12:31:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.11 2011/11/25 12:50:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,6 @@ gcscaudio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	audio_attach_mi(&gcscaudio_hw_if, sc, &sc->sc_dev);
-	sc->codec_if->vtbl->unlock(sc->codec_if);
 	return;
 
 attach_failure_codec:
