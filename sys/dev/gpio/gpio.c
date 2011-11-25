@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.49 2011/11/14 07:45:54 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.50 2011/11/25 13:49:43 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.49 2011/11/14 07:45:54 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.50 2011/11/25 13:49:43 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -442,8 +442,7 @@ gpioclose(dev_t dev, int flag, int mode, struct lwp *l)
 	struct gpio_softc *sc;
 
 	sc = device_lookup_private(&gpio_cd, minor(dev));
-	gpiobus_close(sc->sc_gc, sc->sc_dev);
-	return 0;
+	return gpiobus_close(sc->sc_gc, sc->sc_dev);
 }
 
 static int
