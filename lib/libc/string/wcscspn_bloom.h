@@ -1,4 +1,4 @@
-/*	$NetBSD: wcscspn_bloom.h,v 1.2 2011/11/25 09:00:51 tron Exp $	*/
+/*	$NetBSD: wcscspn_bloom.h,v 1.3 2011/11/25 16:46:56 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2011 Joerg Sonnenberger,
@@ -36,22 +36,24 @@
  * multiplication.
  */
 
+#include <limits.h>
+
 #define	BLOOM_SIZE		64
 #define	BLOOM_ARRAY_SIZE	(BLOOM_SIZE / sizeof(size_t))
-#define	BLOOM_MASK		(BLOOM_SIZE * 8 - 1)
-#define	BLOOM_DIV		(sizeof(size_t) * 8)
+#define	BLOOM_BITS		(BLOOM_SIZE * CHAR_BIT)
+#define	BLOOM_DIV		(sizeof(size_t) * CHAR_BIT)
 
 static inline size_t
 wcscspn_bloom1(size_t x)
 {
-	return x & BLOOM_MASK;
+	return x % BLOOM_BITS;
 }
 
 static inline size_t
 wcscspn_bloom2(size_t x)
 {
 	return (size_t)((uint32_t)(x * 2654435761U) /
-	    (0x100000000ULL / (BLOOM_MASK + 1)));
+	    (0x100000000ULL / BLOOM_BITS));
 }
 
 static inline void
