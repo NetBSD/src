@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1711 2011/11/15 22:02:19 njoly Exp $
+#	$NetBSD: mi,v 1.1712 2011/11/25 07:50:36 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3421,6 +3421,7 @@
 ./usr/libdata/debug/sbin/mount.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_ados.debug	comp-adosfs-debug	debug
 ./usr/libdata/debug/sbin/mount_cd9660.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/mount_chfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_efs.debug	comp-efs-debug		debug
 ./usr/libdata/debug/sbin/mount_ext2fs.debug	comp-ext2fs-debug	debug
 ./usr/libdata/debug/sbin/mount_fdesc.debug	comp-miscfs-debug	debug
