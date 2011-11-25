@@ -1,4 +1,4 @@
-/*	$NetBSD: getfsquota.c,v 1.2 2011/06/07 14:56:12 bouyer Exp $ */
+/*	$NetBSD: getfsquota.c,v 1.3 2011/11/25 16:55:05 dholland Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -27,7 +27,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getfsquota.c,v 1.2 2011/06/07 14:56:12 bouyer Exp $");
+__RCSID("$NetBSD: getfsquota.c,v 1.3 2011/11/25 16:55:05 dholland Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: getfsquota.c,v 1.2 2011/06/07 14:56:12 bouyer Exp $");
 
 /* retrieve quotas with ufs semantics from vfs, for the given user id */
 int
-getfsquota(const char *path, struct ufs_quota_entry *qv, uid_t id,
+getfsquota(const char *path, struct quotaval *qv, uid_t id,
     const char *class)
 {
 	struct statvfs v;

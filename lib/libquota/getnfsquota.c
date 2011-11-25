@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsquota.c,v 1.3 2011/11/20 21:43:35 dholland Exp $	*/
+/*	$NetBSD: getnfsquota.c,v 1.4 2011/11/25 16:55:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: getnfsquota.c,v 1.3 2011/11/20 21:43:35 dholland Exp $");
+__RCSID("$NetBSD: getnfsquota.c,v 1.4 2011/11/25 16:55:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ callaurpc(const char *host, rpcprog_t prognum, rpcvers_t versnum,
 }
 
 int
-getnfsquota(const char *mp, struct ufs_quota_entry *qv,
+getnfsquota(const char *mp, struct quotaval *qv,
     uint32_t id, const char *class)
 {
 	struct getquota_args gq_args;
@@ -178,29 +178,30 @@ getnfsquota(const char *mp, struct ufs_quota_entry *qv,
 		gettimeofday(&tv, NULL);
 
 		/* blocks*/
-		qv[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit = rqlim2qlim(
+		qv[QUOTA_LIMIT_BLOCK].qv_hardlimit = rqlim2qlim(
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bhardlimit *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE));
-		qv[QUOTA_LIMIT_BLOCK].ufsqe_softlimit = rqlim2qlim(
+		qv[QUOTA_LIMIT_BLOCK].qv_softlimit = rqlim2qlim(
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsoftlimit *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE));
-		qv[QUOTA_LIMIT_BLOCK].ufsqe_cur =
+		qv[QUOTA_LIMIT_BLOCK].qv_usage =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curblocks *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
-		qv[QUOTA_LIMIT_BLOCK].ufsqe_time = (tv.tv_sec +
+		qv[QUOTA_LIMIT_BLOCK].qv_expiretime = (tv.tv_sec +
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_btimeleft);
 
 		/* inodes */
-		qv[QUOTA_LIMIT_FILE].ufsqe_hardlimit = rqlim2qlim(
+		qv[QUOTA_LIMIT_FILE].qv_hardlimit = rqlim2qlim(
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit);
-		qv[QUOTA_LIMIT_FILE].ufsqe_softlimit = rqlim2qlim(
+		qv[QUOTA_LIMIT_FILE].qv_softlimit = rqlim2qlim(
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_fsoftlimit);
-		qv[QUOTA_LIMIT_FILE].ufsqe_cur =
+		qv[QUOTA_LIMIT_FILE].qv_usage =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curfiles;
-		qv[QUOTA_LIMIT_FILE].ufsqe_time = (int)(tv.tv_sec +
+		qv[QUOTA_LIMIT_FILE].qv_expiretime = (int)(tv.tv_sec +
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft);
-		qv[QUOTA_LIMIT_BLOCK].ufsqe_grace =
-		    qv[QUOTA_LIMIT_FILE].ufsqe_grace = 0;
+
+		qv[QUOTA_LIMIT_BLOCK].qv_grace =
+		    qv[QUOTA_LIMIT_FILE].qv_grace = 0;
 		return 1;
 	default:
 		/* XXX sert errno and return -1 ? */

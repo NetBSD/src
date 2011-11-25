@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.5 2011/10/07 09:35:07 hannken Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.6 2011/11/25 16:55:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.5 2011/10/07 09:35:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.6 2011/11/25 16:55:05 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -497,12 +497,12 @@ quota1_handle_cmd_get(struct ufsmount *ump, int type, int id,
     int defaultq, prop_array_t replies)
 {
 	struct dquot *dq;
-	struct ufs_quota_entry qe[QUOTA_NLIMITS];
+	struct quotaval qv[QUOTA_NLIMITS];
 	prop_dictionary_t dict;
 	int error;
 	uint64_t *valuesp[QUOTA_NLIMITS];
-	valuesp[QUOTA_LIMIT_BLOCK] = &qe[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit;
-	valuesp[QUOTA_LIMIT_FILE] = &qe[QUOTA_LIMIT_FILE].ufsqe_hardlimit;
+	valuesp[QUOTA_LIMIT_BLOCK] = &qv[QUOTA_LIMIT_BLOCK].qv_hardlimit;
+	valuesp[QUOTA_LIMIT_FILE] = &qv[QUOTA_LIMIT_FILE].qv_hardlimit;
 
 
 	if (ump->um_quotas[type] == NULLVP)
@@ -516,19 +516,19 @@ quota1_handle_cmd_get(struct ufsmount *ump, int type, int id,
 		if ((error = dqget(NULLVP, id, ump, type, &dq)) != 0)
 			return error;
 	}
-	dqblk2ufsqe(&dq->dq_un.dq1_dqb, qe);
+	dqblk_to_quotaval(&dq->dq_un.dq1_dqb, qv);
 	dqrele(NULLVP, dq);
 	if (defaultq) {
-		if (qe[QUOTA_LIMIT_BLOCK].ufsqe_time > 0)
-			qe[QUOTA_LIMIT_BLOCK].ufsqe_grace =
-			    qe[QUOTA_LIMIT_BLOCK].ufsqe_time;
+		if (qv[QUOTA_LIMIT_BLOCK].qv_expiretime > 0)
+			qv[QUOTA_LIMIT_BLOCK].qv_grace =
+			    qv[QUOTA_LIMIT_BLOCK].qv_expiretime;
 		else
-			qe[QUOTA_LIMIT_BLOCK].ufsqe_grace = MAX_DQ_TIME;
-		if (qe[QUOTA_LIMIT_FILE].ufsqe_time > 0)
-			qe[QUOTA_LIMIT_FILE].ufsqe_grace =
-			    qe[QUOTA_LIMIT_FILE].ufsqe_time;
+			qv[QUOTA_LIMIT_BLOCK].qv_grace = MAX_DQ_TIME;
+		if (qv[QUOTA_LIMIT_FILE].qv_expiretime > 0)
+			qv[QUOTA_LIMIT_FILE].qv_grace =
+			    qv[QUOTA_LIMIT_FILE].qv_expiretime;
 		else
-			qe[QUOTA_LIMIT_FILE].ufsqe_grace = MAX_DQ_TIME;
+			qv[QUOTA_LIMIT_FILE].qv_grace = MAX_DQ_TIME;
 	}
 	dict = quota64toprop(id, defaultq, valuesp,
 	    ufs_quota_entry_names, UFS_QUOTA_NENTRIES,

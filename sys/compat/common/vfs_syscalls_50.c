@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.9 2011/11/20 21:43:35 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.10 2011/11/25 16:55:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.9 2011/11/20 21:43:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.10 2011/11/25 16:55:05 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,11 +336,11 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 	prop_array_t cmds, datas;
 	char *bufpath;
 	struct dqblk dqblk;
-	struct ufs_quota_entry qe[QUOTA_NLIMITS];
+	struct quotaval qv[QUOTA_NLIMITS];
 	uint64_t *values[QUOTA_NLIMITS];
 
-	values[QUOTA_LIMIT_BLOCK] = &qe[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit;
-	values[QUOTA_LIMIT_FILE] = &qe[QUOTA_LIMIT_FILE].ufsqe_hardlimit;
+	values[QUOTA_LIMIT_BLOCK] = &qv[QUOTA_LIMIT_BLOCK].qv_hardlimit;
+	values[QUOTA_LIMIT_FILE] = &qv[QUOTA_LIMIT_FILE].qv_hardlimit;
 
 	error = namei_simple_user(SCARG(uap, path),
 				NSM_FOLLOW_TRYEMULROOT, &vp);
@@ -452,7 +452,7 @@ do_quotaonoff:
 		    ufs_quota_limit_names, QUOTA_NLIMITS);
 		if (error)
 			goto out_dict;
-		ufsqe2dqblk(qe, &dqblk);
+		quotaval_to_dqblk(qv, &dqblk);
 		error = copyout(&dqblk, SCARG(uap, arg), sizeof(dqblk));
 		goto out_dict;
 		
@@ -460,7 +460,7 @@ do_quotaonoff:
 		error = copyin(SCARG(uap, arg), &dqblk, sizeof(dqblk));
 		if (error)
 			goto out_datas;
-		dqblk2ufsqe(&dqblk, qe);
+		dqblk_to_quotaval(&dqblk, qv);
 
 		error = ENOMEM;
 		data = quota64toprop(SCARG(uap, uid), 0, values,

@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.5 2011/11/20 21:43:34 dholland Exp $ */
+/* $NetBSD: quota.h,v 1.6 2011/11/25 16:55:05 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,13 +28,15 @@
 #ifndef _SYS_QUOTA_H_
 #define _SYS_QUOTA_H_
 
-/* structure used to describe a UFS-like quota entry */
-struct ufs_quota_entry {
-        uint64_t ufsqe_hardlimit; /* absolute limit */
-	uint64_t ufsqe_softlimit; /* overflowable limit */
-	uint64_t ufsqe_cur; /* current usage */
-	int64_t ufsqe_time; /* grace expiration date for softlimit overflow */
-	int64_t ufsqe_grace; /* allowed time for softlimit overflow */
+/*
+ * Structure used to describe the value part of a quota record.
+ */
+struct quotaval {
+        uint64_t qv_hardlimit;	/* absolute limit */
+	uint64_t qv_softlimit;	/* overflowable limit */
+	uint64_t qv_usage;	/* current usage */
+	time_t qv_expiretime;	/* time when softlimit grace expires */
+	time_t qv_grace;	/* allowed time for overflowing soft limit */
 };
 
 #endif /* _SYS_QUOTA_H_ */

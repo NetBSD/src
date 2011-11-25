@@ -1,4 +1,4 @@
-/* $NetBSD: quota1_subr.c,v 1.5 2011/11/20 21:43:35 dholland Exp $ */
+/* $NetBSD: quota1_subr.c,v 1.6 2011/11/25 16:55:05 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.5 2011/11/20 21:43:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.6 2011/11/25 16:55:05 dholland Exp $");
 
 #include <sys/types.h>
 #include <machine/limits.h>
@@ -54,38 +54,42 @@ q2e2dqblk_limit(uint64_t lim)
 }
 
 void
-dqblk2ufsqe(const struct dqblk *dqblk, struct ufs_quota_entry *qe)
+dqblk_to_quotaval(const struct dqblk *dqblk, struct quotaval *qv)
 {
-	qe[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit =
-	    dqblk2q2e_limit(dqblk->dqb_bhardlimit);
-	qe[QUOTA_LIMIT_BLOCK].ufsqe_softlimit =
-	    dqblk2q2e_limit(dqblk->dqb_bsoftlimit);
-	qe[QUOTA_LIMIT_BLOCK].ufsqe_cur       = dqblk->dqb_curblocks;
-	qe[QUOTA_LIMIT_BLOCK].ufsqe_time      = dqblk->dqb_btime;
+	/* XXX is qv_grace getting handled correctly? */
 
-	qe[QUOTA_LIMIT_FILE].ufsqe_hardlimit =
+	qv[QUOTA_LIMIT_BLOCK].qv_hardlimit =
+	    dqblk2q2e_limit(dqblk->dqb_bhardlimit);
+	qv[QUOTA_LIMIT_BLOCK].qv_softlimit =
+	    dqblk2q2e_limit(dqblk->dqb_bsoftlimit);
+	qv[QUOTA_LIMIT_BLOCK].qv_usage       = dqblk->dqb_curblocks;
+	qv[QUOTA_LIMIT_BLOCK].qv_expiretime      = dqblk->dqb_btime;
+
+	qv[QUOTA_LIMIT_FILE].qv_hardlimit =
 	    dqblk2q2e_limit(dqblk->dqb_ihardlimit);
-	qe[QUOTA_LIMIT_FILE].ufsqe_softlimit =
+	qv[QUOTA_LIMIT_FILE].qv_softlimit =
 	    dqblk2q2e_limit(dqblk->dqb_isoftlimit);
-	qe[QUOTA_LIMIT_FILE].ufsqe_cur       = dqblk->dqb_curinodes;
-	qe[QUOTA_LIMIT_FILE].ufsqe_time      = dqblk->dqb_itime;
+	qv[QUOTA_LIMIT_FILE].qv_usage       = dqblk->dqb_curinodes;
+	qv[QUOTA_LIMIT_FILE].qv_expiretime      = dqblk->dqb_itime;
 }
 
 void
-ufsqe2dqblk(const struct ufs_quota_entry *qe, struct dqblk *dqblk)
+quotaval_to_dqblk(const struct quotaval *qv, struct dqblk *dqblk)
 {
+	/* XXX is qv_grace getting handled correctly? */
+
 	dqblk->dqb_bhardlimit =
-	    q2e2dqblk_limit(qe[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit);
+	    q2e2dqblk_limit(qv[QUOTA_LIMIT_BLOCK].qv_hardlimit);
 	dqblk->dqb_bsoftlimit =
-	    q2e2dqblk_limit(qe[QUOTA_LIMIT_BLOCK].ufsqe_softlimit);
-	dqblk->dqb_curblocks  = qe[QUOTA_LIMIT_BLOCK].ufsqe_cur;
-	dqblk->dqb_btime      = qe[QUOTA_LIMIT_BLOCK].ufsqe_time;
+	    q2e2dqblk_limit(qv[QUOTA_LIMIT_BLOCK].qv_softlimit);
+	dqblk->dqb_curblocks  = qv[QUOTA_LIMIT_BLOCK].qv_usage;
+	dqblk->dqb_btime      = qv[QUOTA_LIMIT_BLOCK].qv_expiretime;
 
 	dqblk->dqb_ihardlimit =
-	    q2e2dqblk_limit(qe[QUOTA_LIMIT_FILE].ufsqe_hardlimit);
+	    q2e2dqblk_limit(qv[QUOTA_LIMIT_FILE].qv_hardlimit);
 	dqblk->dqb_isoftlimit =
-	    q2e2dqblk_limit(qe[QUOTA_LIMIT_FILE].ufsqe_softlimit);
-	dqblk->dqb_curinodes  = qe[QUOTA_LIMIT_FILE].ufsqe_cur;
-	dqblk->dqb_itime      = qe[QUOTA_LIMIT_FILE].ufsqe_time;
+	    q2e2dqblk_limit(qv[QUOTA_LIMIT_FILE].qv_softlimit);
+	dqblk->dqb_curinodes  = qv[QUOTA_LIMIT_FILE].qv_usage;
+	dqblk->dqb_itime      = qv[QUOTA_LIMIT_FILE].qv_expiretime;
 }
 
