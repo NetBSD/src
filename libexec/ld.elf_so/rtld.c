@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.154 2011/11/17 16:20:11 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.155 2011/11/25 21:27:15 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.154 2011/11/17 16:20:11 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.155 2011/11/25 21:27:15 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1047,13 +1047,12 @@ hackish_return_address(void)
 #endif
 
 static void *
-do_dlsym(void *handle, const char *name, const Ver_Entry *ventry)
+do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 {
 	const Obj_Entry *obj;
 	unsigned long hash;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	void *retaddr;
 	DoneList donelist;
 	const u_int flags = SYMLOOK_DLSYM | SYMLOOK_IN_PLT;
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
@@ -1071,11 +1070,6 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry)
 	case (intptr_t)RTLD_NEXT:
 	case (intptr_t)RTLD_DEFAULT:
 	case (intptr_t)RTLD_SELF:
-#ifdef __powerpc__
-		retaddr = hackish_return_address();
-#else
-		retaddr = __builtin_return_address(0);
-#endif
 		if ((obj = _rtld_obj_from_addr(retaddr)) == NULL) {
 			_rtld_error("Cannot determine caller's shared object");
 			lookup_mutex_exit();
@@ -1165,10 +1159,16 @@ __strong_alias(__dlsym,dlsym)
 void *
 dlsym(void *handle, const char *name)
 {
+	void *retaddr;
 
 	dbg(("dlsym of %s in %p", name, handle));
 
-	return do_dlsym(handle, name, NULL);
+#ifdef __powerpc__
+	retaddr = hackish_return_address();
+#else
+	retaddr = __builtin_return_address(0);
+#endif
+	return do_dlsym(handle, name, NULL, retaddr);
 }
 
 __strong_alias(__dlvsym,dlvsym)
@@ -1177,6 +1177,7 @@ dlvsym(void *handle, const char *name, const char *version)
 {
 	Ver_Entry *ventry = NULL;
 	Ver_Entry ver_entry;
+	void *retaddr;
 
 	dbg(("dlvsym of %s@%s in %p", name, version ? version : NULL, handle));
 
@@ -1187,7 +1188,12 @@ dlvsym(void *handle, const char *name, const char *version)
 		ver_entry.flags = 0;
 		ventry = &ver_entry;
 	}
-	return do_dlsym(handle, name, ventry);
+#ifdef __powerpc__
+	retaddr = hackish_return_address();
+#else
+	retaddr = __builtin_return_address(0);
+#endif
+	return do_dlsym(handle, name, ventry, retaddr);
 }
 
 __strong_alias(__dladdr,dladdr)
