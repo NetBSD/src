@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.314 2011/11/24 15:27:10 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.315 2011/11/26 11:04:21 skrll Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -473,7 +473,7 @@ Notes:
 
 Branch:		nick-net80211-sync
 Description:	sync of net80211 with FreeBSD
-Status:		Active
+Status:		Dormant
 Start Date:	21 February 2008
 End Date:
 Base Tag:	nick-net80211-base
