@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.24 2011/11/26 13:53:37 enami Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.25 2011/11/26 14:04:20 enami Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -282,7 +282,7 @@ arc4_randbyte(void)
 u_int32_t
 arc4random(void)
 {
-	int ret;
+	u_int32_t ret;
 	u_int8_t *retc;
 
 	retc = (u_int8_t *)&ret;
