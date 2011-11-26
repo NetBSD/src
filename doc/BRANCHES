@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.315 2011/11/26 11:04:21 skrll Exp $
+#	$NetBSD: BRANCHES,v 1.316 2011/11/26 15:55:18 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -601,7 +601,7 @@ Notes:		- maintain object pages in radix tree rather than rb tree.
 		  object has a ton of pages cached but only a few of them
 		  are dirty.
 		- reduce the number of pmap operations by tracking page
-		  dirtiness more  precisely in uvm layer.
+		  dirtiness more precisely in uvm layer.
 		- fix nfs commit range tracking.
 		- fix nfs write clustering.  XXX hack
 
