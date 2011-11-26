@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.52 2011/11/26 13:22:09 mrg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.53 2011/11/26 13:31:52 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.52 2011/11/26 13:22:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.53 2011/11/26 13:31:52 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -298,15 +298,13 @@ umidi_detach(device_t self, int flags)
 
 	DPRINTFN(1,("umidi_detach\n"));
 
-	mutex_enter(&sc->sc_lock);
 	sc->sc_dying = 1;
+	KERNEL_LOCK(1, curlwp);
 	detach_all_mididevs(sc, flags);
 	free_all_mididevs(sc);
 	free_all_jacks(sc);
 	free_all_endpoints(sc);
-	mutex_exit(&sc->sc_lock);
 
-	KERNEL_LOCK(1, curlwp);
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 	KERNEL_UNLOCK_ONE(curlwp);
