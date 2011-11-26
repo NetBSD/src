@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.23 2011/11/23 10:47:49 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.24 2011/11/26 01:17:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #endif /* !_KERNEL */
 
 #include <sys/types.h>
+#include <sys/sha1.h>
 
 #ifdef _KERNEL
 #include <sys/queue.h>
@@ -50,6 +51,7 @@
 #define	RND_DEV_RANDOM	0	/* minor devices for random and kinda random */
 #define	RND_DEV_URANDOM	1
 
+#ifdef _KERNEL
 /*
  * Size of entropy pool in 32-bit words.  This _MUST_ be a power of 2.  Don't
  * change this unless you really know what you are doing...
@@ -72,6 +74,20 @@
 #ifndef RND_EVENTQSIZE
 #define	RND_EVENTQSIZE	128
 #endif
+
+#endif	/* _KERNEL */
+
+/*
+ * Exposed "size" of entropy pool, for convenience in load/save
+ * from userspace.  Do not assume this is the same as the actual in-kernel
+ * pool size!
+ */
+#define RND_SAVEWORDS	128
+typedef struct {
+	uint32_t entropy;
+	uint8_t data[RND_SAVEWORDS * sizeof(uint32_t)];
+	uint8_t digest[SHA1_DIGEST_LENGTH];
+} rndsave_t;
 
 typedef struct
 {
@@ -209,7 +225,7 @@ typedef struct {
 typedef struct {
 	uint32_t	len;
 	uint32_t	entropy;
-	u_char		data[RND_POOLWORDS * sizeof(uint32_t)];
+	u_char		data[RND_SAVEWORDS * sizeof(uint32_t)];
 } rnddata_t;
 
 #define	RNDGETENTCNT	_IOR('R',  101, uint32_t) /* get entropy count */
