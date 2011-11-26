@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.138 2011/05/27 09:28:42 plunky Exp $
+#	$NetBSD: special,v 1.139 2011/11/26 01:17:17 tls Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -252,6 +252,7 @@
 ./etc/rc.d/racoon		type=file mode=0555
 ./etc/rc.d/raidframe		type=file mode=0555
 ./etc/rc.d/raidframeparity	type=file mode=0555
+./etc/rc.d/random_seed		type=file mode=0555
 ./etc/rc.d/rarpd		type=file mode=0555
 ./etc/rc.d/rbootd		type=file mode=0555
 ./etc/rc.d/rndctl		type=file mode=0555

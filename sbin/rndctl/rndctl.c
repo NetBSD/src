@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.21 2011/11/23 10:47:49 tls Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.22 2011/11/26 01:17:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -33,7 +33,7 @@
 #include <sha1.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.21 2011/11/23 10:47:49 tls Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.22 2011/11/26 01:17:17 tls Exp $");
 #endif
 
 
@@ -49,12 +49,6 @@ __RCSID("$NetBSD: rndctl.c,v 1.21 2011/11/23 10:47:49 tls Exp $");
 #include <errno.h>
 #include <err.h>
 #include <string.h>
-
-typedef struct {
-	uint32_t entropy;
-	uint8_t data[RND_POOLWORDS * sizeof(uint32_t)];
-	uint8_t digest[SHA1_DIGEST_LENGTH];
-} rndsave_t;
 
 typedef struct {
 	const char *a_name;
