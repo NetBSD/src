@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2011/04/14 16:25:58 yamt Exp $
+#	$NetBSD: Makefile,v 1.4 2011/11/26 16:15:09 yamt Exp $
 
 PROG=	tpfmt
-NOMAN=	
 
 CPPFLAGS+= -I${NETBSDSRCDIR}/sys/
 SRCS=	tpfmt.c sym.c
