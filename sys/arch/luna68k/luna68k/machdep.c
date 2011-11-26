@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.86 2011/11/15 13:25:44 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.87 2011/11/26 04:31:19 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2011/11/15 13:25:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2011/11/26 04:31:19 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -731,6 +731,8 @@ nmihand(struct frame frame)
 	innmihand = 1;
 
 	luna68k_abort("ABORT SWITCH");
+
+	innmihand = 0;
 }
 
 /*
