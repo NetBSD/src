@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.21 2011/11/06 02:29:33 christos Exp $	*/
+/*	$NetBSD: u3g.c,v 1.22 2011/11/26 18:36:48 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.21 2011/11/06 02:29:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.22 2011/11/26 18:36:48 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,6 +191,7 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_MERLIN, USB_PRODUCT_MERLIN_V620 },
 	/* OEM: Novatel */
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_ES620 },
+	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_EU8X0D },
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_MC950D },
 #if 0
 	/* These are matched in u3ginit_match() */
