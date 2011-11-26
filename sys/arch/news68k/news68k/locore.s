@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.60 2011/11/20 15:38:00 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.61 2011/11/26 14:05:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -405,6 +405,7 @@ Lmotommu2:
 	movl	#0xc01f8143,%a0@	| use %tt1 (0xc0000000-0xdfffffff)
 	.long	0xf0100c00		| pmove %a0@,%tt1
 
+	pflusha
 	RELOC(prototc, %a2)
 #if PGSHIFT == 13
 	movl	#0x82d08b00,%a2@	| value to load TC with
