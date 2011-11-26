@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtio.4,v 1.3 2011/11/26 15:04:45 minoura Exp $
+.\"	$NetBSD: virtio.4,v 1.4 2011/11/26 22:36:14 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,18 +48,18 @@ available to the virtual machine.
 driver itself provides the core infrastructure to communicate
 with the hypervisor (called virtqueues) and supports the following devices:
 .Bl -tag -width xxxxx
-.It Nm ld
+.It Xr ld 4
 A Disk device.
-.It Nm vioif
+.It Xr vioif 4
 An Ethernet device.
-.It Nm viomb
+.It Xr viomb 4
 A pseudo-device to release memory back to the hypervisor.
 .El
 .Sh SEE ALSO
-.Xr pci 4 ,
-.Xr viomb 4 ,
 .Xr ld 4 ,
-.Xr vioif 4
+.Xr pci 4 ,
+.Xr vioif 4 ,
+.Xr viomb 4
 .Pp
 .Rs
 .%A Rusty Russell, IBM Corporation

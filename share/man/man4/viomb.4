@@ -1,4 +1,4 @@
-.\"	$NetBSD: viomb.4,v 1.1 2011/11/26 15:04:45 minoura Exp $
+.\"	$NetBSD: viomb.4,v 1.2 2011/11/26 22:36:14 wiz Exp $
 .\"
 .\" Copyright (C) 2011 Minoura Makoto.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd
+.Dd November 26, 2011
 .Dt VIOMB 4
 .Os
 .Sh NAME
@@ -34,8 +34,10 @@
 .Cd "virtio* at pci? dev ? function ?"
 .Cd "viomb*  at virtio?"
 .Sh DESCRIPTION
-VirtIO defines an interface for efficient, standard and extensible I/O between
-the hypervisor and the virtual machine. The
+.Xr virtio 4
+defines an interface for efficient, standard, and extensible I/O between
+the hypervisor and the virtual machine.
+The
 .Nm
 driver supports the virtio-compliant memory ballooning device.
 .Pp
@@ -60,9 +62,11 @@ device tells the hypervisor the guest physical memory address of the
 allocated memory via VirtIO memory ballooning device.
 .El
 .Pp
-The sysctl node hw.viomb.npages shows the requested number of memory pages
-to return to the hypervisor, while hw.viomb.actual shows the actual
-number of memory pages that is already returned to the hypervisor.
+The sysctl node
+.Li hw.viomb.npages
+shows the requested number of memory pages to return to the hypervisor, while
+.Li hw.viomb.actual
+shows the actual number of memory pages that are already returned to the hypervisor.
 .Sh SEE ALSO
 .Xr virtio 4 ,
 .Xr sysctl 8
@@ -77,5 +81,5 @@ The
 .Nm
 device driver appeared in
 .Nx 6.0 .
-.Sh BUG
+.Sh BUGS
 The userland interface should be same as the Xen ballooning device.
