@@ -1,4 +1,4 @@
-/*	$NetBSD: sym.c,v 1.2 2010/11/24 13:17:56 christos Exp $	*/
+/*	$NetBSD: sym.c,v 1.3 2011/11/26 05:04:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sym.c,v 1.2 2010/11/24 13:17:56 christos Exp $");
+__RCSID("$NetBSD: sym.c,v 1.3 2011/11/26 05:04:09 yamt Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -135,9 +135,28 @@ elffail:
 const char *
 ksymlookup(uint64_t value, uint64_t *offset)
 {
+	size_t hi;
+	size_t lo;
 	size_t i;
 
-	for (i = 0; i < nsyms; i++) {
+	/*
+	 * find the smallest i for which syms[i]->value <= value.
+	 * syms[] is ordered with value in the descending order.
+	 */
+
+	hi = nsyms - 1;
+	lo = 0;
+	while (lo < hi) {
+		const size_t mid = (lo + hi) / 2;
+		const struct sym *sym = syms[mid];
+
+		if (sym->value <= value) {
+			hi = mid;
+			continue;
+		}
+		lo = mid + 1;
+	}
+	for (i = lo; i < nsyms; i++) {
 		const struct sym *sym = syms[i];
 
 		if (sym->value <= value) {
