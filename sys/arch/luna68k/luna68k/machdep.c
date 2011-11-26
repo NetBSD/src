@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.87 2011/11/26 04:31:19 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.88 2011/11/26 04:32:46 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2011/11/26 04:31:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 2011/11/26 04:32:46 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -172,9 +172,8 @@ luna68k_init(void)
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
+		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
