@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.1 2011/11/26 05:02:44 yamt Exp $
+.\"	$NetBSD: tprof.8,v 1.2 2011/11/26 22:49:37 wiz Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -32,7 +32,6 @@
 .Sh NAME
 .Nm tprof
 .Nd record tprof profiling samples
-.Dt LS 1
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .Nm
@@ -43,7 +42,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-is a simpling based profiler.
+is a sampling based profiler.
 .Pp
 .Nm
 utility makes the kernel driver start profiling,
@@ -53,7 +52,7 @@ and reports statistics to the standard error.
 .Pp
 The
 .Nm tprof
-pseudo driver and its suitable backend should be loaded beforehand.
+pseudo driver and a suitable backend should be loaded beforehand.
 .Pp
 The
 .Nm
@@ -62,7 +61,8 @@ utility accepts the following options.
 .It Fl o Ar file
 Write the collected samples to the file named
 .Ar file .
-The default is "tprof.out".
+The default is
+.Dq Pa tprof.out .
 .It Fl c
 Write the collected samples to the standard output.
 Note that the output is a binary stream.
@@ -89,12 +89,12 @@ The number of samples dropped because the per-CPU buffer was full.
 .It buf
 The number of buffers successfully prepared for userland consumption.
 .It emptybuf
-The number of buffers which has been dropped because they were empty.
+The number of buffers which have been dropped because they were empty.
 .It dropbuf
 The number of buffers dropped because the number of buffers kept in the kernel
 exceeds the limit.
 .It dropbuf_samples
-The number of samples dropped because the buffer contained the samples
+The number of samples dropped because the buffers containing the samples
 were dropped.
 .El
 .\" ------------------------------------------------------------
@@ -104,12 +104,12 @@ were dropped.
 .\utility first appeared in
 .\.Nx XXX .
 .\" ------------------------------------------------------------
+.Sh SEE ALSO
+.Xr tpfmt 1 ,
+.Xr tprof 4
+.\" ------------------------------------------------------------
 .Sh AUTHORS
 The
 .Nm
 utility is written by
 .An YAMAMOTO Takashi .
-.\" ------------------------------------------------------------
-.Sh SEE ALSO
-.Xr tpfmt 1 ,
-.Xr tprof 4
