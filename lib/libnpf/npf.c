@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.4 2011/11/26 23:11:19 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.5 2011/11/26 23:42:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.4 2011/11/26 23:11:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.5 2011/11/26 23:42:27 christos Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -79,7 +79,7 @@ npf_config_create(void)
 {
 	nl_config_t *ncf;
 
-	ncf = malloc(sizeof(nl_config_t));
+	ncf = malloc(sizeof(*ncf));
 	if (ncf == NULL) {
 		return NULL;
 	}
@@ -168,7 +168,7 @@ npf_rule_create(const char *name, uint32_t attr, u_int if_idx)
 	prop_dictionary_t rldict;
 	nl_rule_t *rl;
 
-	rl = malloc(sizeof(nl_rule_t));
+	rl = malloc(sizeof(*rl));
 	if (rl == NULL) {
 		return NULL;
 	}
@@ -294,7 +294,8 @@ npf_rproc_exists_p(nl_config_t *ncf, const char *name)
 }
 
 int
-_npf_rproc_setnorm(nl_rproc_t *rp, bool rnd, bool no_df, int minttl, int maxmss)
+_npf_rproc_setnorm(nl_rproc_t *rp, bool rnd, bool no_df, u_int minttl,
+    u_int maxmss)
 {
 	prop_dictionary_t rpdict = rp->nrp_dict;
 	uint32_t fl;
@@ -343,7 +344,7 @@ npf_rproc_insert(nl_config_t *ncf, nl_rproc_t *rp)
  */
 
 nl_nat_t *
-npf_nat_create(int type, int flags, u_int if_idx,
+npf_nat_create(int type, u_int flags, u_int if_idx,
     npf_addr_t *addr, int af, in_port_t port)
 {
 	nl_rule_t *rl;
@@ -409,13 +410,13 @@ npf_nat_insert(nl_config_t *ncf, nl_nat_t *nt, pri_t pri)
  */
 
 nl_table_t *
-npf_table_create(int id, int type)
+npf_table_create(u_int id, int type)
 {
 	prop_dictionary_t tldict;
 	prop_array_t tblents;
 	nl_table_t *tl;
 
-	tl = malloc(sizeof(nl_table_t));
+	tl = malloc(sizeof(*tl));
 	if (tl == NULL) {
 		return NULL;
 	}
@@ -509,7 +510,8 @@ npf_table_destroy(nl_table_t *tl)
  */
 
 int
-npf_update_rule(int fd, char *rname, nl_rule_t *rl)
+/*ARGSUSED*/
+npf_update_rule(int fd, const char *rname __unused, nl_rule_t *rl)
 {
 	prop_dictionary_t rldict = rl->nrl_dict;
 	int error;
