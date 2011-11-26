@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.116.2.5 2011/11/18 00:57:33 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.116.2.6 2011/11/26 15:19:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.116.2.5 2011/11/18 00:57:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.116.2.6 2011/11/26 15:19:06 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -663,7 +663,7 @@ uao_detach_locked(struct uvm_object *uobj)
 
 	uvm_page_array_init(&a);
 	mutex_enter(&uvm_pageqlock);
-	while ((pg = uvm_page_array_fill_and_peek(&a, uobj, 0, false))
+	while ((pg = uvm_page_array_fill_and_peek(&a, uobj, 0, 0, 0))
 	    != NULL) {
 		uvm_page_array_advance(&a);
 		pmap_page_protect(pg, VM_PROT_NONE);
@@ -756,7 +756,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	/* locked: uobj */
 	uvm_page_array_init(&a);
 	curoff = start;
-	while ((pg = uvm_page_array_fill_and_peek(&a, uobj, curoff, false)) !=
+	while ((pg = uvm_page_array_fill_and_peek(&a, uobj, curoff, 0, 0)) !=
 	    NULL) {
 		if (pg->offset >= stop) {
 			break;

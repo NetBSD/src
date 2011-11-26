@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.c,v 1.1.2.2 2011/11/06 22:04:07 yamt Exp $	*/
+/*	$NetBSD: uvm_page_array.c,v 1.1.2.3 2011/11/26 15:19:06 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.1.2.2 2011/11/06 22:04:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.1.2.3 2011/11/26 15:19:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,9 @@ uvm_page_array_advance(struct uvm_page_array *ar)
  * return 0 on success.  in that case, cache the result in the array
  * so that they will be picked by later uvm_page_array_peek.
  *
+ * nwant is a number of pages to fetch.  a caller should consider it a hint.
+ * nwant == 0 means a caller have no specific idea.
+ *
  * return ENOENT if no pages are found.
  *
  * called with object lock held.
@@ -122,25 +125,33 @@ uvm_page_array_advance(struct uvm_page_array *ar)
 
 int
 uvm_page_array_fill(struct uvm_page_array *ar, struct uvm_object *uobj,
-    voff_t off, bool dirtyonly)
+    voff_t off, unsigned int nwant, unsigned int flags)
 {
 	unsigned int npages;
 #if defined(DEBUG)
 	unsigned int i;
 #endif /* defined(DEBUG) */
-	const unsigned int maxpages = __arraycount(ar->ar_pages);
+	unsigned int maxpages = __arraycount(ar->ar_pages);
+	const bool dense = (flags & UVM_PAGE_ARRAY_FILL_DENSE) != 0;
+	const bool backward = (flags & UVM_PAGE_ARRAY_FILL_BACKWARD) != 0;
 
+	if (nwant != 0 && nwant < maxpages) {
+		maxpages = nwant;
+	}
 	KASSERT(mutex_owned(uobj->vmobjlock));
 	KASSERT(uvm_page_array_peek(ar) == NULL);
-	if (dirtyonly) {
-		npages = radix_tree_gang_lookup_tagged_node(
-		    &uobj->uo_pages, off >> PAGE_SHIFT,
-		    (void **)ar->ar_pages, maxpages,
-		    UVM_PAGE_DIRTY_TAG);
+	if ((flags & UVM_PAGE_ARRAY_FILL_DIRTYONLY) != 0) {
+		npages =
+		    (backward ? radix_tree_gang_lookup_tagged_node_reverse :
+		    radix_tree_gang_lookup_tagged_node)(
+		    &uobj->uo_pages, off >> PAGE_SHIFT, (void **)ar->ar_pages,
+		    maxpages, dense, UVM_PAGE_DIRTY_TAG);
 	} else {
-		npages = radix_tree_gang_lookup_node(
-		    &uobj->uo_pages, off >> PAGE_SHIFT,
-		    (void **)ar->ar_pages, maxpages);
+		npages =
+		    (backward ? radix_tree_gang_lookup_node_reverse :
+		    radix_tree_gang_lookup_node)(
+		    &uobj->uo_pages, off >> PAGE_SHIFT, (void **)ar->ar_pages,
+		    maxpages, dense);
 	}
 	if (npages == 0) {
 		uvm_page_array_clear(ar);
@@ -170,7 +181,7 @@ uvm_page_array_fill(struct uvm_page_array *ar, struct uvm_object *uobj,
 
 struct vm_page *
 uvm_page_array_fill_and_peek(struct uvm_page_array *a, struct uvm_object *uobj,
-    voff_t off, bool dirtyonly)
+    voff_t off, unsigned int nwant, unsigned int flags)
 {
 	struct vm_page *pg;
 	int error;
@@ -179,7 +190,7 @@ uvm_page_array_fill_and_peek(struct uvm_page_array *a, struct uvm_object *uobj,
 	if (pg != NULL) {
 		return pg;
 	}
-	error = uvm_page_array_fill(a, uobj, off, dirtyonly);
+	error = uvm_page_array_fill(a, uobj, off, nwant, flags);
 	if (error != 0) {
 		return NULL;
 	}
