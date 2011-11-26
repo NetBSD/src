@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.45 2011/11/15 13:25:44 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.46 2011/11/26 14:05:52 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -266,6 +266,7 @@ Lmotommu1:
 	.long	0xf0100800		| pmove %a0@,mmutt0
 	RELOC(protott1,%a0)		| tt1 range 8000.0000-ffff.ffff
 	.long	0xf0100c00		| pmove %a0@,mmutt1
+	pflusha
 	RELOC(prototc,%a0)		| %tc: SRP,CRP,4KB page,A=10bit,B=10bit
 	pmove	%a0@,%tc
 /*
