@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.235 2011/11/19 22:51:30 tls Exp $	*/
+/*	$NetBSD: rump.c,v 1.236 2011/11/26 21:41:02 njoly Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.235 2011/11/19 22:51:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.236 2011/11/26 21:41:02 njoly Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -283,14 +283,6 @@ rump__init(int rump_version)
 	initmsgbuf(rump_msgbuf, sizeof(rump_msgbuf));
 	aprint_verbose("%s%s", copyright, version);
 
-	/*
-	 * Seed arc4random() with a "reasonable" amount of randomness.
-	 * Yes, this is a quick kludge which depends on the arc4random
-	 * implementation.
-	 */
-	messthestack();
-	cprng_fast32();
-
 	if (rump_version != RUMP_VERSION) {
 		printf("rump version mismatch, %d vs. %d\n",
 		    rump_version, RUMP_VERSION);
@@ -334,6 +326,14 @@ rump__init(int rump_version)
 	loginit();
 
 	kauth_init();
+
+	/*
+	 * Seed arc4random() with a "reasonable" amount of randomness.
+	 * Yes, this is a quick kludge which depends on the arc4random
+	 * implementation.
+	 */
+	messthestack();
+	cprng_fast32();
 
 	procinit();
 	proc0_init();
