@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.601 2011/11/20 12:26:49 nonaka Exp $
+$NetBSD: usbdevs,v 1.602 2011/11/26 18:34:17 nonaka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2052,10 +2052,11 @@ product NOVATEL2 S720		0x1130	S720
 product NOVATEL2 MERLINU740	0x1400	Novatel Merlin U740
 product NOVATEL2 U740_2		0x1410	Merlin U740
 product NOVATEL2 U870		0x1420	Merlin U870
-product NOVATEL2 XU870		0x1430	XU870
+product NOVATEL2 XU870		0x1430	Merlin XU870
 product NOVATEL2 X950D		0x1450	Merlin X950D
 product NOVATEL2 ES620		0x2100	ES620 CDMA
 product NOVATEL2 U720		0x2110	U720
+product NOVATEL2 EU8X0D		0x2420	Expedite EU850D/EU860D/EU870D
 product NOVATEL2 U727		0x4100	U727
 product NOVATEL2 MC950D		0x4400	Novatel Wireless HSUPA Modem
 product NOVATEL2 MC950D_DRIVER	0x5010	Novatel Wireless HSUPA Modem Windows Driver
