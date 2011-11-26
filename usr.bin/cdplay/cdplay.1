@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdplay.1,v 1.22 2007/04/23 11:47:55 tron Exp $
+.\"	$NetBSD: cdplay.1,v 1.23 2011/11/26 23:20:41 christos Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" from FreeBSD: cdcontrol.1,v 1.16.2.2 1999/01/31 15:36:01 billf Exp
 .\"
-.Dd April 23, 2007
+.Dd November 26, 2011
 .Dt CDPLAY 1
 .Os
 .Sh NAME
@@ -183,6 +183,8 @@ stereo samples).
 Audio data are read and written in groups of
 .Ar n
 frames (5 by default, or 1/15 seconds).
+.It Cm analog
+Switch from digital back to analog mode.
 .It Cm help
 Print the list of available commands.
 .It Cm reset
