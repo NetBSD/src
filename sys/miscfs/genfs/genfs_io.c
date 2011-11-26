@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.3 2011/11/20 10:49:20 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.4 2011/11/26 15:19:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.3 2011/11/20 10:49:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.4 2011/11/26 15:19:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -967,7 +967,8 @@ retry:
 	for (;;) {
 		bool protected;
 
-		pg = uvm_page_array_fill_and_peek(&a, uobj, off, dirtyonly);
+		pg = uvm_page_array_fill_and_peek(&a, uobj, off, 0,
+		    dirtyonly ? UVM_PAGE_ARRAY_FILL_DIRTYONLY : 0);
 		if (pg == NULL) {
 			break;
 		}
@@ -1093,7 +1094,7 @@ retry:
 			pg->flags |= PG_BUSY;
 			UVM_PAGE_OWN(pg, "genfs_putpages");
 
-#if 0 /* XXX notyet */
+#if 1 /* XXX notyet */
 			/*
 			 * first look backward.
 			 */
@@ -1139,7 +1140,10 @@ retry:
 				 */
 
 				nextpg = uvm_page_array_fill_and_peek(&a, uobj,
-				    pgs[npages - 1]->offset + PAGE_SIZE, true);
+				    pgs[npages - 1]->offset + PAGE_SIZE,
+				    maxpages - npages,
+				    UVM_PAGE_ARRAY_FILL_DIRTYONLY |
+				    UVM_PAGE_ARRAY_FILL_DENSE);
 				if (nextpg == NULL) {
 					break;
 				}
