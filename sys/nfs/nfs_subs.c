@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.221.2.2 2011/11/06 22:05:01 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.221.2.3 2011/11/26 15:37:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.221.2.2 2011/11/06 22:05:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.221.2.3 2011/11/26 15:37:50 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1763,7 +1763,7 @@ nfs_clearcommit(struct mount *mp)
 		uvm_page_array_init(&a);
 		off = 0;
 		while ((pg = uvm_page_array_fill_and_peek(&a, &vp->v_uobj, off,
-		    false)) != NULL) {
+		    0, 0)) != NULL) {
 			pg->flags &= ~PG_NEEDCOMMIT;
 			uvm_page_array_advance(&a);
 			off = pg->offset + PAGE_SIZE;
