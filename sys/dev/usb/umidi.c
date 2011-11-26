@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.50 2011/11/26 03:14:25 joerg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.51 2011/11/26 03:19:42 joerg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.50 2011/11/26 03:14:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.51 2011/11/26 03:19:42 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1148,11 +1148,11 @@ close_out_jack(struct umidi_jack *jack)
 	u_int16_t mask;
 	int err;
 
-	KASSERT(mutex_owned(&ep->sc->sc_lock));
 
 	if (jack->opened) {
 		ep = jack->endpoint;
 		sc = ep->sc;
+		KASSERT(mutex_owned(&sc->sc_lock));
 		mask = 1 << (jack->cable_number);
 		while (mask & (ep->this_schedule | ep->next_schedule)) {
 			err = cv_timedwait_sig(&sc->sc_cv, &sc->sc_lock,
