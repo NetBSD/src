@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.230 2011/11/19 22:51:18 tls Exp $
+$NetBSD: UPDATING,v 1.231 2011/11/26 01:20:25 tls Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20111125:
+	The "rnd" pseudodevice has been added to sys/conf/std, which
+	means it should no longer be explicitly listed in kernel
+	configuration files.  The line "pseudo-device rnd" should be
+	removed from any custom kernel config files users may have.
 
 20111119:
 	A problem with the datastructures used by the rndctl(8)
