@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.95 2011/11/22 21:25:23 tls Exp $
+# $NetBSD: GENERIC,v 1.96 2011/11/26 04:58:42 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.95 $"
+#ident 		"GENERIC-$Revision: 1.96 $"
 
 maxusers	8
 
@@ -51,7 +51,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Debugging options
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	SYMTAB_SPACE=72000	# place DDB symbols in data segment
+#options 	SYMTAB_SPACE=448000	# place DDB symbols in data segment
 #options 	DEBUG			# extra kernel debugging support
 #options 	DIAGNOSTIC		# extra kernel sanity checking
 #options 	SCSIVERBOSE		# Verbose SCSI errors
