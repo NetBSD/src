@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.51 2011/11/26 03:19:42 joerg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.52 2011/11/26 13:22:09 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.51 2011/11/26 03:19:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.52 2011/11/26 13:22:09 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
@@ -69,6 +69,10 @@ int	umididebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+#define UMIDI_ENDPOINT_SIZE(sc)	(sizeof(*(sc)->sc_out_ep) * \
+				 (sc->sc_out_num_endpoints + \
+				  sc->sc_in_num_endpoints))
 
 
 static int umidi_open(void *, int,
@@ -111,7 +115,7 @@ static void free_all_mididevs(struct umidi_softc *);
 static usbd_status attach_all_mididevs(struct umidi_softc *);
 static usbd_status detach_all_mididevs(struct umidi_softc *, int);
 static void deactivate_all_mididevs(struct umidi_softc *);
-static char *describe_mididev(struct umidi_mididev *);
+static void describe_mididev(struct umidi_mididev *);
 
 #ifdef UMIDI_DEBUG
 static void dump_sc(struct umidi_softc *);
@@ -547,12 +551,12 @@ alloc_all_endpoints(struct umidi_softc *sc)
 		return err;
 
 	ep = sc->sc_endpoints;
-	for (i=sc->sc_out_num_endpoints+sc->sc_in_num_endpoints; i>0; i--) {
+	for (i = sc->sc_out_num_endpoints+sc->sc_in_num_endpoints; i > 0; i--) {
 		err = alloc_pipe(ep++);
-		if (err!=USBD_NORMAL_COMPLETION) {
-			for (; ep!=sc->sc_endpoints; ep--)
+		if (err != USBD_NORMAL_COMPLETION) {
+			for (; ep != sc->sc_endpoints; ep--)
 				free_pipe(ep-1);
-			free(sc->sc_endpoints, M_USBDEV);
+			kmem_free(sc->sc_endpoints, sc->sc_endpoints_len);
 			sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
 			break;
 		}
@@ -568,7 +572,7 @@ free_all_endpoints(struct umidi_softc *sc)
 	for (i=0; i<sc->sc_in_num_endpoints+sc->sc_out_num_endpoints; i++)
 		free_pipe(&sc->sc_endpoints[i]);
 	if (sc->sc_endpoints != NULL)
-		free(sc->sc_endpoints, M_USBDEV);
+		kmem_free(sc->sc_endpoints, sc->sc_endpoints_len);
 	sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
 }
 
@@ -587,20 +591,18 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 	sc->sc_in_num_jacks = 0;
 	sc->sc_out_num_endpoints = fp->num_out_ep;
 	sc->sc_in_num_endpoints = fp->num_in_ep;
-	sc->sc_endpoints = malloc(sizeof(*sc->sc_out_ep)*
-				  (sc->sc_out_num_endpoints+
-				   sc->sc_in_num_endpoints),
-				  M_USBDEV, M_WAITOK);
-	if (!sc->sc_endpoints) {
+	sc->sc_endpoints_len = UMIDI_ENDPOINT_SIZE(sc);
+	sc->sc_endpoints = kmem_zalloc(sc->sc_endpoints_len, KM_SLEEP);
+	if (!sc->sc_endpoints)
 		return USBD_NOMEM;
-	}
+
 	sc->sc_out_ep = sc->sc_out_num_endpoints ? sc->sc_endpoints : NULL;
 	sc->sc_in_ep =
 	    sc->sc_in_num_endpoints ?
 		sc->sc_endpoints+sc->sc_out_num_endpoints : NULL;
 
 	ep = &sc->sc_out_ep[0];
-	for (i=0; i<sc->sc_out_num_endpoints; i++) {
+	for (i = 0; i < sc->sc_out_num_endpoints; i++) {
 		epd = usbd_interface2endpoint_descriptor(
 			sc->sc_iface,
 			fp->out_ep[i].ep);
@@ -623,11 +625,10 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 		ep->num_jacks = fp->out_ep[i].num_jacks;
 		sc->sc_out_num_jacks += fp->out_ep[i].num_jacks;
 		ep->num_open = 0;
-		memset(ep->jacks, 0, sizeof(ep->jacks));
 		ep++;
 	}
 	ep = &sc->sc_in_ep[0];
-	for (i=0; i<sc->sc_in_num_endpoints; i++) {
+	for (i = 0; i < sc->sc_in_num_endpoints; i++) {
 		epd = usbd_interface2endpoint_descriptor(
 			sc->sc_iface,
 			fp->in_ep[i].ep);
@@ -665,13 +666,12 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 		ep->num_jacks = fp->in_ep[i].num_jacks;
 		sc->sc_in_num_jacks += fp->in_ep[i].num_jacks;
 		ep->num_open = 0;
-		memset(ep->jacks, 0, sizeof(ep->jacks));
 		ep++;
 	}
 
 	return USBD_NORMAL_COMPLETION;
 error:
-	free(sc->sc_endpoints, M_USBDEV);
+	kmem_free(sc->sc_endpoints, UMIDI_ENDPOINT_SIZE(sc));
 	sc->sc_endpoints = NULL;
 	return err;
 }
@@ -713,19 +713,19 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 		(size_t)udesc->bLength;
 	udesc = (umidi_cs_descriptor_t *)NEXT_D(udesc);
 
-	while (remain>=sizeof(usb_descriptor_t)) {
+	while (remain >= sizeof(usb_descriptor_t)) {
 		descsize = udesc->bLength;
 		if (descsize>remain || descsize==0)
 			break;
-		if (udesc->bDescriptorType==UDESC_CS_INTERFACE &&
-		    remain>=UMIDI_JACK_DESCRIPTOR_SIZE) {
-			if (udesc->bDescriptorSubtype==UMIDI_OUT_JACK)
+		if (udesc->bDescriptorType == UDESC_CS_INTERFACE &&
+		    remain >= UMIDI_JACK_DESCRIPTOR_SIZE) {
+			if (udesc->bDescriptorSubtype == UMIDI_OUT_JACK)
 				sc->sc_out_num_jacks++;
-			else if (udesc->bDescriptorSubtype==UMIDI_IN_JACK)
+			else if (udesc->bDescriptorSubtype == UMIDI_IN_JACK)
 				sc->sc_in_num_jacks++;
 		}
 		udesc = (umidi_cs_descriptor_t *)NEXT_D(udesc);
-		remain-=descsize;
+		remain -= descsize;
 	}
 
 	/* validate some parameters */
@@ -745,10 +745,8 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 		sc->sc_in_num_endpoints = 0;
 		sc->sc_in_num_jacks = 0;
 	}
-	sc->sc_endpoints = malloc(sizeof(struct umidi_endpoint)*
-				  (sc->sc_out_num_endpoints+
-				   sc->sc_in_num_endpoints),
-				  M_USBDEV, M_WAITOK);
+	sc->sc_endpoints_len = UMIDI_ENDPOINT_SIZE(sc);
+	sc->sc_endpoints = kmem_zalloc(sc->sc_endpoints_len, KM_SLEEP);
 	if (!sc->sc_endpoints)
 		return USBD_NOMEM;
 	if (sc->sc_out_num_endpoints) {
@@ -757,7 +755,6 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 		sc->sc_out_ep->addr = out_addr;
 		sc->sc_out_ep->num_jacks = sc->sc_out_num_jacks;
 		sc->sc_out_ep->num_open = 0;
-		memset(sc->sc_out_ep->jacks, 0, sizeof(sc->sc_out_ep->jacks));
 	} else
 		sc->sc_out_ep = NULL;
 
@@ -767,7 +764,6 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 		sc->sc_in_ep->addr = in_addr;
 		sc->sc_in_ep->num_jacks = sc->sc_in_num_jacks;
 		sc->sc_in_ep->num_open = 0;
-		memset(sc->sc_in_ep->jacks, 0, sizeof(sc->sc_in_ep->jacks));
 	} else
 		sc->sc_in_ep = NULL;
 
@@ -787,8 +783,8 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 
 	interface_desc = usbd_get_interface_descriptor(sc->sc_iface);
 	num_ep = interface_desc->bNumEndpoints;
-	sc->sc_endpoints = p = malloc(sizeof(struct umidi_endpoint) * num_ep,
-				      M_USBDEV, M_WAITOK);
+	sc->sc_endpoints_len = sizeof(struct umidi_endpoint) * num_ep;
+	sc->sc_endpoints = p = kmem_zalloc(sc->sc_endpoints_len, KM_SLEEP);
 	if (!p)
 		return USBD_NOMEM;
 
@@ -903,10 +899,8 @@ alloc_all_jacks(struct umidi_softc *sc)
 		cn_spec = NULL;
 
 	/* allocate/initialize structures */
-	sc->sc_jacks =
-	    malloc(sizeof(*sc->sc_out_jacks)*(sc->sc_in_num_jacks+
-					      sc->sc_out_num_jacks),
-		   M_USBDEV, M_WAITOK);
+	sc->sc_jacks = kmem_zalloc(sizeof(*sc->sc_out_jacks)*(sc->sc_in_num_jacks+
+						      sc->sc_out_num_jacks), KM_SLEEP);
 	if (!sc->sc_jacks)
 		return USBD_NOMEM;
 	sc->sc_out_jacks =
@@ -975,12 +969,15 @@ free_all_jacks(struct umidi_softc *sc)
 	struct umidi_jack *jacks;
 
 	mutex_enter(&sc->sc_lock);
-	jacks = sc->sc_out_jacks;
+	if (sc->sc_out_jacks)
+		jacks = sc->sc_out_jacks;
+	else
+		jacks = sc->sc_in_jacks;
 	sc->sc_jacks = sc->sc_in_jacks = sc->sc_out_jacks = NULL;
 	mutex_exit(&sc->sc_lock);
 
 	if (jacks)
-		free(jacks, M_USBDEV);
+		kmem_free(jacks, sizeof(*sc->sc_out_jacks)*(sc->sc_in_num_jacks+sc->sc_out_num_jacks));
 }
 
 static usbd_status
@@ -1186,7 +1183,7 @@ attach_mididev(struct umidi_softc *sc, struct umidi_mididev *mididev)
 
 	mididev->sc = sc;
 	
-	mididev->label = describe_mididev(mididev);
+	describe_mididev(mididev);
 
 	mididev->mdev = midi_attach_mi(&umidi_hw_if, mididev, sc->sc_dev);
 
@@ -1208,7 +1205,7 @@ detach_mididev(struct umidi_mididev *mididev, int flags)
 		config_detach(mididev->mdev, flags);
 	
 	if (NULL != mididev->label) {
-		free(mididev->label, M_USBDEV);
+		kmem_free(mididev->label, mididev->label_len);
 		mididev->label = NULL;
 	}
 
@@ -1230,8 +1227,7 @@ static usbd_status
 alloc_all_mididevs(struct umidi_softc *sc, int nmidi)
 {
 	sc->sc_num_mididevs = nmidi;
-	sc->sc_mididevs = malloc(sizeof(*sc->sc_mididevs)*nmidi,
-				 M_USBDEV, M_WAITOK|M_ZERO);
+	sc->sc_mididevs = kmem_zalloc(sizeof(*sc->sc_mididevs)*nmidi, KM_SLEEP);
 	if (!sc->sc_mididevs)
 		return USBD_NOMEM;
 
@@ -1241,9 +1237,10 @@ alloc_all_mididevs(struct umidi_softc *sc, int nmidi)
 static void
 free_all_mididevs(struct umidi_softc *sc)
 {
-	sc->sc_num_mididevs = 0;
 	if (sc->sc_mididevs)
-		free(sc->sc_mididevs, M_USBDEV);
+		kmem_free(sc->sc_mididevs,
+			  sizeof(*sc->sc_mididevs)*sc->sc_num_mididevs);
+	sc->sc_num_mididevs = 0;
 }
 
 static usbd_status
@@ -1302,7 +1299,7 @@ deactivate_all_mididevs(struct umidi_softc *sc)
  * address in hex also. That should not be necessary when using iJack values
  * or a quirk array.
  */
-static char *
+void
 describe_mididev(struct umidi_mididev *md)
 {
 	char in_label[16];
@@ -1340,12 +1337,13 @@ describe_mididev(struct umidi_mididev *md)
 	
 	len = strlen(in_label) + strlen(out_label) + strlen(unit_label) + 4;
 	
-	final_label = malloc(len, M_USBDEV, M_WAITOK);
+	final_label = kmem_alloc(len, KM_SLEEP);
 	
 	snprintf(final_label, len, "%s%son %s",
 	    in_label, out_label, unit_label);
 
-	return final_label;
+	md->label = final_label;
+	md->label_len = len;
 }
 
 #ifdef UMIDI_DEBUG
