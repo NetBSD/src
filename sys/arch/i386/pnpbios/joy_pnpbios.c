@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_pnpbios.c,v 1.14 2011/11/23 23:07:29 jmcneill Exp $	*/
+/*	$NetBSD: joy_pnpbios.c,v 1.15 2011/11/26 14:06:44 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.14 2011/11/23 23:07:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.15 2011/11/26 14:06:44 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.14 2011/11/23 23:07:29 jmcneill Ex
 struct joy_pnpbios_softc {
 	struct joy_softc sc_joy;
 	kmutex_t sc_lock;
-}
+};
 
 static int	joy_pnpbios_match(device_t, cfdata_t, void *);
 static void	joy_pnpbios_attach(device_t, device_t, void *);
