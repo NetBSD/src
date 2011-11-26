@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.23 2011/11/20 15:37:31 para Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.24 2011/11/26 13:53:37 enami Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -160,9 +160,9 @@ arc4_randrekey(void *arg)
 		if (callback_pending) {
 			if (arc4_numbytes > ARC4_HARDMAX) {
 				printf("arc4random: WARNING, hit 2^29 bytes, "
-				       "forcibly rekeying.\n");
+				    "forcibly rekeying.\n");
 				r = rnd_extract_data(key, ARC4_KEYBYTES,
-						     RND_EXTRACT_ANY);
+				    RND_EXTRACT_ANY);
 				rndsink_detach(&rs);
 				callback_pending = 0;
 				goto got_entropy;
@@ -195,7 +195,7 @@ got_entropy:
 		rs.cb = arc4_randrekey;
 		rs.arg = &rs;
 		rs.len = ARC4_KEYBYTES;
-               	rndsink_attach(&rs);
+		rndsink_attach(&rs);
 	}
 #endif
 	/*
@@ -282,13 +282,13 @@ arc4_randbyte(void)
 u_int32_t
 arc4random(void)
 {
-    int ret;
-    u_int8_t *retc;
+	int ret;
+	u_int8_t *retc;
 
-    retc = (u_int8_t *)&ret;
+	retc = (u_int8_t *)&ret;
 
-    arc4randbytes(retc, sizeof(u_int32_t));
-    return ret;
+	arc4randbytes(retc, sizeof(u_int32_t));
+	return ret;
 }
 
 static inline void
@@ -307,7 +307,7 @@ arc4randbytes(void *p, size_t len)
 	/* Initialize array if needed. */
 	if (!arc4_initialized) {
 		arc4_init();
-                /* avoid conditionalizing locking */
+		/* avoid conditionalizing locking */
 		return arc4randbytes_unlocked(p, len);
 	}
 	mutex_spin_enter(&arc4_mtx);
