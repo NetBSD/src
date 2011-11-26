@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.164 2011/11/15 10:57:03 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.165 2011/11/26 14:05:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -298,6 +298,7 @@ LnokillTT:
 	movl	%a1,%a0@(4)		| + segtable address
 	pmove	%a0@,%srp		| load the supervisor root pointer
 	movl	#0x80000002,%a0@	| reinit upper half for CRP loads
+	pflusha
 	lea	_ASM_LABEL(longscratch),%a2
 #if PGSHIFT == 13
 	movl	#0x82d08b00,%a2@	| value to load %TC with

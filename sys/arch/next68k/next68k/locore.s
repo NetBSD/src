@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.59 2011/11/15 10:57:03 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.60 2011/11/26 14:05:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -430,6 +430,7 @@ Lmotommu2:
 	movl	#MMU_IEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD
 					| enable 68881 and i-cache
 #endif
+	pflusha
 	RELOC(prototc, %a2)
 	movl	#0x82c0aa00,%a2@	| value to load TC with
 	pmove	%a2@,%tc		| load it

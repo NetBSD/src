@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.26 2011/11/15 10:57:02 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.27 2011/11/26 14:05:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -307,6 +307,7 @@ Lstploaddone:
 	jmp	Lenab1:l		| avoid pc-relative
 Lmotommu2:
 	/* XXX do TT here */
+	pflusha
 	RELOC(prototc, %a2)
 	movl	#0x82c0aa00,%a2@	| value to load TC with
 	pmove	%a2@,%tc		| load it

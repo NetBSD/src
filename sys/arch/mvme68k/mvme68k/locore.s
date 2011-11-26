@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.108 2011/11/15 10:57:03 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.109 2011/11/26 14:05:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -614,6 +614,7 @@ Lnot060cache:
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
+	pflusha
 	movl	#0x82c0aa00,%sp@-	| value to load TC with
 	pmove	%sp@,%tc		| load it
 

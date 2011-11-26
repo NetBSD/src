@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.95 2011/01/02 18:48:05 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.96 2011/11/26 14:05:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.95 2011/01/02 18:48:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.96 2011/11/26 14:05:52 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -559,6 +559,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 		 * A = 8 bits, B = 11 bits
 		 */
 		tc = 0x82d08b00;
+		__asm volatile ("pflusha" : : );
 		__asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
 	}
 

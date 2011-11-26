@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.163 2011/11/15 10:57:02 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.164 2011/11/26 14:05:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -544,6 +544,7 @@ Lhighcode:
 Lmotommu2:
 	movl	#MMU_IEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD
 					| enable 68881 and i-cache
+	pflusha
 	RELOC(prototc, %a2)
 #if PGSHIFT == 13
 	movl	#0x82d08b00,%a2@	| value to load TC with

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.153 2011/11/15 10:57:00 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.154 2011/11/26 14:05:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -969,6 +969,7 @@ LMMUenable_start:
 	jmp	LMMUenable_end:l
 #endif /* M68040 || M68060 */
 Lenable030:
+	pflusha
 	lea	Ltc,%a0
 	pmove	%a0@,%tc
 	jmp	LMMUenable_end:l
