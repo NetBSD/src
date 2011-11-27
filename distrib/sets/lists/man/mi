@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1358 2011/11/26 15:39:49 tsutsui Exp $
+# $NetBSD: mi,v 1.1359 2011/11/27 09:00:32 isaki Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1826,6 +1826,7 @@
 ./usr/share/man/cat4/x68k/mfp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x68k/neptune.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x68k/pow.0			man-obsolete		obsolete
+./usr/share/man/cat4/x68k/powsw.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x68k/vs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/amdpcib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/apic.0			man-sys-catman		.cat
@@ -4592,6 +4593,7 @@
 ./usr/share/man/html4/x68k/mfp.html		man-sys-htmlman		html
 ./usr/share/man/html4/x68k/neptune.html		man-sys-htmlman		html
 ./usr/share/man/html4/x68k/pow.html		man-obsolete		obsolete
+./usr/share/man/html4/x68k/powsw.html		man-sys-htmlman		html
 ./usr/share/man/html4/x68k/vs.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/amdpcib.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/apic.html		man-sys-htmlman		html
@@ -7293,6 +7295,7 @@
 ./usr/share/man/man4/x68k/mfp.4			man-sys-man		.man
 ./usr/share/man/man4/x68k/neptune.4		man-sys-man		.man
 ./usr/share/man/man4/x68k/pow.4			man-obsolete		obsolete
+./usr/share/man/man4/x68k/powsw.4		man-sys-man		.man
 ./usr/share/man/man4/x68k/vs.4			man-sys-man		.man
 ./usr/share/man/man4/x86/amdpcib.4		man-sys-man		.man
 ./usr/share/man/man4/x86/apic.4			man-sys-man		.man
