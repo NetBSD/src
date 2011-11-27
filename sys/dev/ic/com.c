@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.301 2011/05/28 19:30:19 matt Exp $ */
+/* $NetBSD: com.c,v 1.302 2011/11/27 15:28:26 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.301 2011/05/28 19:30:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.302 2011/11/27 15:28:26 jakllsch Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -183,7 +183,7 @@ void	comcnputc(dev_t, int);
 void	comcnpollc(dev_t, int);
 
 #define	integrate	static inline
-void 	comsoft(void *);
+void	comsoft(void *);
 integrate void com_rxsoft(struct com_softc *, struct tty *);
 integrate void com_txsoft(struct com_softc *, struct tty *);
 integrate void com_stsoft(struct com_softc *, struct tty *);
@@ -424,12 +424,12 @@ com_attach_subr(struct com_softc *sc)
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		goto fifodelay;
 
- 	case COM_TYPE_OMAP:
- 		sc->sc_fifolen = 64;
- 		fifo_msg = "OMAP UART, working fifo";
- 		SET(sc->sc_hwflags, COM_HW_FIFO);
- 		goto fifodelay;
-  	}
+	case COM_TYPE_OMAP:
+		sc->sc_fifolen = 64;
+		fifo_msg = "OMAP UART, working fifo";
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		goto fifodelay;
+	}
 
 	sc->sc_fifolen = 1;
 	/* look for a NS 16550AF UART with FIFOs */
