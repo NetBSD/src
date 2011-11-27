@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.122 2011/11/27 04:10:38 mrg Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.123 2011/11/27 04:32:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.122 2011/11/27 04:10:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.123 2011/11/27 04:32:41 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2664,10 +2664,12 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	ch->arg = arg;
 
 	KERNEL_LOCK(1, curlwp);
+	mutex_spin_exit(&sc->sc_intr_lock);
 	s = splusb();
 	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX */
 		uaudio_chan_ptransfer(ch);
 	splx(s);
+	mutex_spin_enter(&sc->sc_intr_lock);
 	KERNEL_UNLOCK_ONE(curlwp);
 
 	return 0;
