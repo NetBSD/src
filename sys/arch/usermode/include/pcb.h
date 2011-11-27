@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.12 2011/09/08 19:37:01 reinoud Exp $ */
+/* $NetBSD: pcb.h,v 1.13 2011/11/27 21:38:17 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -41,13 +41,16 @@
 
 struct pcb {
 	ucontext_t	 pcb_ucp;		/* lwp switchframe */
-	ucontext_t	 pcb_userland_ucp;	/* userland switchframe */
-	ucontext_t	 pcb_syscall_ucp;	/* to switch to for syscall */
+	ucontext_t	 pcb_syscall_ucp;	/* syscall context */
+	ucontext_t	 pcb_userret_ucp;	/* reutn to userland context */
+	ucontext_t	 pcb_pagefault_ucp;	/* pagefault context */
+	ucontext_t	 pcb_trapret_ucp;
 
 	bool		 pcb_needfree;
 	void *		 pcb_onfault;		/* on fault handler */
 
 	int		 pcb_errno;		/* save/restore place */
+	vaddr_t		 pcb_fault_addr;	/* save place for fault addr */
 };
 
 #endif /* !_ARCH_USERMODE_INCLUDE_PCB_H */
