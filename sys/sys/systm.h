@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.252 2011/11/21 04:36:06 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.253 2011/11/27 03:24:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -489,6 +489,7 @@ void scdebug_ret(register_t, int, const register_t[]);
 void	kernel_lock_init(void);
 void	_kernel_lock(int);
 void	_kernel_unlock(int, int *);
+bool	_kernel_locked_p(void);
 
 #ifdef _KERNEL
 void	kernconfig_lock_init(void);
@@ -504,9 +505,11 @@ do {						\
 		_kernel_lock((count));	\
 } while (/* CONSTCOND */ 0)
 #define	KERNEL_UNLOCK(all, lwp, p)	_kernel_unlock((all), (p))
+#define	KERNEL_LOCKED_P()		_kernel_locked_p()
 #else
 #define	KERNEL_LOCK(count, lwp)		do {(void)(count); (void)(lwp);} while (/* CONSTCOND */ 0) /*NOP*/
 #define	KERNEL_UNLOCK(all, lwp, ptr)	do {(void)(all); (void)(lwp); (void)(ptr);} while (/* CONSTCOND */ 0) /*NOP*/
+#define	KERNEL_LOCKED_P()		do { } while (/* CONSTCOND */ 0) /*NOP*/
 #endif
 
 #define	KERNEL_UNLOCK_LAST(l)		KERNEL_UNLOCK(-1, (l), NULL)
