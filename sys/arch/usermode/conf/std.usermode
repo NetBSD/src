@@ -1,4 +1,4 @@
-# $NetBSD: std.usermode,v 1.6 2011/09/03 12:28:45 jmcneill Exp $
+# $NetBSD: std.usermode,v 1.7 2011/11/27 20:06:26 reinoud Exp $
 
 machine usermode
 include "conf/std"
@@ -13,6 +13,7 @@ options 	URKELVISOR
 # Defaults
 options		NKMEMPAGES=2048
 #options		NKMEMPAGES_MAX_DEFAULT=2048
+options		syscall_debug
 
 defflag opt_xen.h	DO_NOT_DEFINE
 defflag opt_kernbase.h	DO_NOT_DEFINE2
