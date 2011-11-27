@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.157 2011/11/22 21:25:41 tls Exp $
+# $NetBSD: GENERIC,v 1.158 2011/11/27 09:00:32 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.157 $"
+#ident 		"GENERIC-$Revision: 1.158 $"
 
 maxusers	8
 
@@ -287,6 +287,9 @@ par0	at intio0 addr 0xe8c000 	# Builtin printer port
 
 sram0	at intio0 addr 0xed0000		# battery-backuped static RAM
 pseudo-device	bell			# OPM bell
+
+powsw0	at mfp0				# Front switch
+#powsw1	at mfp0				# External power switch
 
 xcom0	at mainbus0			# NS16550 fast serial
 xcom1	at mainbus0
