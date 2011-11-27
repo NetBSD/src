@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.76 2011/11/19 12:27:43 isaki Exp $
+#	$NetBSD: files.x68k,v 1.77 2011/11/27 09:00:32 isaki Exp $
 #
 # new style config file for x68k architecture
 #
@@ -95,6 +95,10 @@ file	arch/x68k/x68k/clock.c		clock needs-flag
 device kbd: event
 attach	kbd at mfp
 file	arch/x68k/dev/kbd.c		kbd needs-flag
+
+device powsw: sysmon_power, sysmon_taskq
+attach	powsw at mfp
+file	arch/x68k/dev/powsw.c		powsw
 
 device rtc
 attach	rtc at intio
