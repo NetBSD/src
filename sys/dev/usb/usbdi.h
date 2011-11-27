@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.79 2009/09/04 17:53:12 dyoung Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.80 2011/11/27 14:36:21 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -273,13 +273,9 @@ struct usbif_attach_arg {
 /* No match */
 #define UMATCH_NONE					 0
 
-/* XXX Perhaps USB should have its own levels? */
 #define splusb splsoftnet
 #define splhardusb splbio
 #define IPL_USB IPL_BIO
-#define splsoftusb splusb
 #define IPL_SOFTUSB IPL_SOFTNET
-#define IPL_HARDUSB IPL_USB
-
 
 #endif /* _USBDI_H_ */
