@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.73 2011/09/19 12:52:32 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.74 2011/11/27 21:33:19 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2011/09/19 12:52:32 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2011/11/27 21:33:19 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -550,6 +550,7 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 			pmap_update_page(ppn);
 			return true;
 		}
+		panic("pmap: page not readable but marked referenced?");
 		return false;
 	}
 
@@ -579,6 +580,7 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 				return true;
 			}
 		}
+		panic("pmap: page not writable but marked modified?");
 		return false;
 	}
 
