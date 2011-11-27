@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.38 2011/11/25 16:55:05 dholland Exp $	*/
+/*	$NetBSD: quota.c,v 1.39 2011/11/27 13:23:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.38 2011/11/25 16:55:05 dholland Exp $");
+__RCSID("$NetBSD: quota.c,v 1.39 2011/11/27 13:23:50 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,11 +85,11 @@ struct quotause {
 #define	FOUND	0x01
 #define	QUOTA2	0x02
 
-static struct quotause	*getprivs(uint32_t, int);
-static void	heading(int, uint32_t, const char *, const char *);
+static struct quotause	*getprivs(id_t, int);
+static void	heading(int, id_t, const char *, const char *);
 static void	showgid(gid_t);
 static void	showgrpname(const char *);
-static void	showquotas(int, uint32_t, const char *);
+static void	showquotas(int, id_t, const char *);
 static void	showuid(uid_t);
 static void	showusrname(const char *);
 static void	usage(void) __attribute__((__noreturn__));
@@ -314,7 +314,7 @@ showgrpname(const char *name)
 }
 
 static void
-showquotas(int type, uint32_t id, const char *name)
+showquotas(int type, id_t id, const char *name)
 {
 	struct quotause *qup;
 	struct quotause *quplist;
@@ -435,7 +435,7 @@ showquotas(int type, uint32_t id, const char *name)
 }
 
 static void
-heading(int type, uint32_t id, const char *name, const char *tag)
+heading(int type, id_t id, const char *name, const char *tag)
 {
 	if (dflag)
 		printf("Default %s disk quotas: %s\n",
@@ -464,7 +464,7 @@ heading(int type, uint32_t id, const char *name, const char *tag)
  * Collect the requested quota information.
  */
 static struct quotause *
-getprivs(uint32_t id, int quotatype)
+getprivs(id_t id, int quotatype)
 {
 	struct quotause *qup, *quptail;
 	struct quotause *quphead;
