@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.123 2011/11/27 04:32:41 mrg Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.124 2011/11/27 07:36:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.123 2011/11/27 04:32:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.124 2011/11/27 07:36:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.123 2011/11/27 04:32:41 mrg Exp $");
 			printf("%s[%d:%d]: "x, __func__, l->l_proc->p_pid, l->l_lid, y); \
 		} \
 	} while (0)
-int	uaudiodebug = 5;
+int	uaudiodebug = 6;
 #else
 #define DPRINTF(x,y...)
 #define DPRINTFN_CLEAN(n,x...)
@@ -2475,6 +2475,7 @@ Static void
 uaudio_ctl_set(struct uaudio_softc *sc, int which, struct mixerctl *mc,
 	       int chan, int val)
 {
+
 	val = uaudio_bsd2value(mc, val);
 	KERNEL_LOCK(1, curlwp);
 	uaudio_set(sc, which, UT_WRITE_CLASS_INTERFACE, mc->wValue[chan],
@@ -2612,10 +2613,12 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	ch->arg = arg;
 
 	KERNEL_LOCK(1, curlwp);
+	mutex_spin_exit(&sc->sc_intr_lock);
 	s = splusb();
 	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX -1 shouldn't be needed */
 		uaudio_chan_rtransfer(ch);
 	splx(s);
+	mutex_spin_enter(&sc->sc_intr_lock);
 	KERNEL_UNLOCK_ONE(curlwp);
 
 	return 0;
@@ -2836,7 +2839,7 @@ uaudio_chan_ptransfer(struct chan *ch)
 	}
 #endif
 
-	DPRINTFN(5, "ptransfer xfer=%p\n", cb->xfer);
+	//DPRINTFN(5, "ptransfer xfer=%p\n", cb->xfer);
 	/* Fill the request */
 	usbd_setup_isoc_xfer(cb->xfer, ch->pipe, cb, cb->sizes,
 			     UAUDIO_NFRAMES, USBD_NO_COPY,
