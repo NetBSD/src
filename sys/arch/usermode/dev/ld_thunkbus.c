@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.17 2011/11/27 20:08:23 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.18 2011/11/27 20:57:28 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.17 2011/11/27 20:08:23 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.18 2011/11/27 20:57:28 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -95,6 +95,9 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	struct ld_thunkbus_softc *sc = device_private(self);
 	struct ld_softc *ld = &sc->sc_ld;
 	struct thunkbus_attach_args *taa = opaque;
+#ifdef LD_USE_AIO
+	struct sigaction sa;
+#endif
 	const char *path = taa->u.diskimage.path;
 	ssize_t size, blksize;
 
@@ -126,8 +129,6 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	    ld_thunkbus_complete, sc);
 
 #ifdef LD_USE_AIO
-	struct sigaction sa;
-
 	sa.sa_flags = SA_RESTART | SA_SIGINFO;
 	sa.sa_sigaction = ld_thunkbus_sig;
 	thunk_sigemptyset(&sa.sa_mask);
