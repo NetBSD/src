@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.10 2011/09/15 12:26:51 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.11 2011/11/27 21:38:17 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2011/09/15 12:26:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11 2011/11/27 21:38:17 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,6 +69,8 @@ child_return(void *arg)
 	ktrsysret(SYS_fork, 0, 0);
 }
 
+extern const char *const syscallnames[];
+
 void
 syscall(void)
 {	
@@ -76,11 +78,11 @@ syscall(void)
 	const struct proc * const p = l->l_proc;
 	const struct sysent *callp;
 	struct pcb *pcb = lwp_getpcb(l);
-	ucontext_t *ucp = &pcb->pcb_userland_ucp;
+	ucontext_t *ucp = &pcb->pcb_userret_ucp;
 	register_t copyargs[2+SYS_MAXSYSARGS];
 	register_t *args;
 	register_t rval[2];
-	uint32_t code;
+	uint32_t code, opcode;
 	uint nargs, argsize;
 	int error;
 
@@ -89,6 +91,7 @@ syscall(void)
 	LWP_CACHE_CREDS(l, l->l_proc);
 
 	/* XXX do we want do do emulation? */
+	md_syscall_get_opcode(ucp, &opcode);
 	md_syscall_get_syscallnumber(ucp, &code);
 	code &= (SYS_NSYSENT -1);
 
@@ -100,51 +103,41 @@ syscall(void)
 	rval[0] = rval[1] = 0;
 	error = md_syscall_getargs(l, ucp, nargs, argsize, args);
 
+	if (code != 4) {
+		printf("code %3d, nargs %d, argsize %3d\t%s(", 
+			code, nargs, argsize, syscallnames[code]);
+		for (int i = 0; i < nargs; i++)
+			printf("%"PRIx32", ", (uint) args[i]);
+		if (nargs)
+			printf("\b\b");
+		printf(") ");
+	}
 #if 0
 	aprint_debug("syscall no. %d, ", code);
 	aprint_debug("nargs %d, argsize %d =>  ", nargs, argsize);
 	dprintf_debug("syscall no. %d, ", code);
 	dprintf_debug("nargs %d, argsize %d =>  ", nargs, argsize);
 #endif
+#if 0
 	if ((code == 4)) {
 		dprintf_debug("[us] %s", (char *) args[1]);
 		printf("[us] %s", (char *) args[1]);
 	}
-
-	if (code == 5)
-		aprint_debug("open('%s', %d,...) => ", (char *) (args[0]),
-			(int) (args[1]));
-#if 0
-
-	if (code == 3)
-		aprint_debug("read(%d, %p, %d) => ", (int) args[0],
-			(void *) args[1], (int) args[2]);
-#if 0
-	if (code == 4)
-		aprint_debug("write(%d, %p ('%s'), %d) => ",
-			(int) args[0], (void *) args[1],
-			(char *) args[1], (int) args[2]);
-	if (code == 5)
-		aprint_debug("open('%s', %d,...) => ", (char *) (args[0]),
-			(int) (args[1]));
 #endif
 	if (code == 440)
-		aprint_debug("stat(%d, %p) => ", (uint32_t) args[0],
+		printf("stat(%d, %p) ", (uint32_t) args[0],
 			(void *) args[1]);
-#endif
+
+	md_syscall_inc_pc(ucp, opcode);
 
 	if (!error) 
 		error = (*callp->sy_call)(l, args, rval);
 
-	if (code == 5)
-		aprint_debug("%s\n", error ? "error":"OK");
-#if 0
-	if (code ==3)
-		aprint_debug("{'%s'} => ", (char *) args[1]);
-	aprint_debug("error = %d, rval[0] = 0x%"PRIx32", retval[1] = 0x%"PRIx32"\n",
-		error, (uint) (rval[0]), (uint) (rval[1]));
-#endif
+	if (code != 4)
+		printf("=> %s: %d, (%"PRIx32", %"PRIx32")\n",
+			error?"ERROR":"OK", error, (uint) (rval[0]), (uint) (rval[1]));
 
+//out:
 	switch (error) {
 	default:
 		/* fall trough */
@@ -152,14 +145,14 @@ syscall(void)
 		md_syscall_set_returnargs(l, ucp, error, rval);
 		/* fall trough */
 	case EJUSTRETURN:
-		md_syscall_inc_pc(ucp);
 		break;
 	case ERESTART:
+		md_syscall_dec_pc(ucp, opcode);
 		/* nothing to do */
 		break;
 	}
-
-//	aprint_debug("end of syscall : return to userland\n");
+	//dprintf_debug("end of syscall : return to userland\n");
+//if (code != 4) printf("userret() code %d\n", code);
 	userret(l);
 }
 

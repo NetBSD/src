@@ -1,4 +1,4 @@
-/* $NetBSD: urkelvisor.c,v 1.8 2011/09/06 09:55:04 jmcneill Exp $ */
+/* $NetBSD: urkelvisor.c,v 1.9 2011/11/27 21:38:17 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: urkelvisor.c,v 1.8 2011/09/06 09:55:04 jmcneill Exp $");
+__RCSID("$NetBSD: urkelvisor.c,v 1.9 2011/11/27 21:38:17 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -121,8 +121,8 @@ handle_syscall(struct reg_struct *puregs, pid_t urkel_pid)
 	pc = (vaddr_t)R_PC(puregs);
 	inkernel = !(pc >= kmem_user_start && pc < kmem_user_end);
 
-	//fprintf(stderr, "%s: pid=%d pc=%p inkernel=%d\n",
-	//    __func__, urkel_pid, (void *)R_PC(puregs), inkernel);
+//	fprintf(stderr, "%s: pid=%d pc=%p inkernel=%d\n",
+//	    __func__, urkel_pid, (void *)R_PC(puregs), inkernel);
 
 	if (!inkernel) {
 		fprintf(stderr, "caught syscall %d\n", (int)R_SYSCALL(puregs));
