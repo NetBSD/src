@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.18 2011/11/27 20:57:28 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.19 2011/11/27 21:22:28 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.18 2011/11/27 20:57:28 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.19 2011/11/27 21:22:28 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -50,7 +50,7 @@ static int	ld_thunkbus_ldstart(struct ld_softc *, struct buf *);
 static int	ld_thunkbus_lddump(struct ld_softc *, void *, int, int);
 static int	ld_thunkbus_ldflush(struct ld_softc *, int);
 
-//#define LD_USE_AIO
+#define LD_USE_AIO
 
 #ifdef LD_USE_AIO
 static void	ld_thunkbus_sig(int, siginfo_t *, void *);
