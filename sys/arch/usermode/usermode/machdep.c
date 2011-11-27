@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.32 2011/09/16 16:26:19 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.33 2011/11/27 21:38:17 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -32,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2011/09/16 16:26:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2011/11/27 21:38:17 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -176,7 +176,7 @@ void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct pcb *pcb = lwp_getpcb(l);
-	ucontext_t *ucp = &pcb->pcb_userland_ucp;
+	ucontext_t *ucp = &pcb->pcb_userret_ucp;
 	uint *reg, i;
 
 #ifdef DEBUG_EXEC
@@ -187,10 +187,10 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		pcb->pcb_ucp.uc_stack.ss_sp);
 	printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n",
 		(int) pcb->pcb_ucp.uc_stack.ss_size);
-	printf("\tpcb->pcb_userland_ucp.uc_stack.ss_sp   = %p\n",
-		pcb->pcb_userland_ucp.uc_stack.ss_sp);
-	printf("\tpcb->pcb_userland_ucp.uc_stack.ss_size = %d\n",
-		(int) pcb->pcb_userland_ucp.uc_stack.ss_size);
+	printf("\tpcb->pcb_userret_ucp.uc_stack.ss_sp   = %p\n",
+		pcb->pcb_userret_ucp.uc_stack.ss_sp);
+	printf("\tpcb->pcb_userret_ucp.uc_stack.ss_size = %d\n",
+		(int) pcb->pcb_userret_ucp.uc_stack.ss_size);
 #endif
 
 	reg = (int *) &ucp->uc_mcontext;
@@ -213,10 +213,10 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		pcb->pcb_ucp.uc_stack.ss_sp);
 	printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n",
 		(int) pcb->pcb_ucp.uc_stack.ss_size);
-	printf("\tpcb->pcb_userland_ucp.uc_stack.ss_sp   = %p\n",
-		pcb->pcb_userland_ucp.uc_stack.ss_sp);
-	printf("\tpcb->pcb_userland_ucp.uc_stack.ss_size = %d\n",
-		(int) pcb->pcb_userland_ucp.uc_stack.ss_size);
+	printf("\tpcb->pcb_userret_ucp.uc_stack.ss_sp   = %p\n",
+		pcb->pcb_userret_ucp.uc_stack.ss_sp);
+	printf("\tpcb->pcb_userret_ucp.uc_stack.ss_size = %d\n",
+		(int) pcb->pcb_userret_ucp.uc_stack.ss_size);
 	printf("\tpack->ep_entry                = %p\n",
 		(void *) pack->ep_entry);
 #endif
@@ -226,7 +226,6 @@ void
 md_syscall_get_syscallnumber(ucontext_t *ucp, uint32_t *code)
 {
 	uint *reg = (int *) &ucp->uc_mcontext;
-
 	*code = reg[11];			/* EAX */
 }
 
@@ -240,16 +239,6 @@ md_syscall_getargs(lwp_t *l, ucontext_t *ucp, int nargs, int argsize,
 
 	//dump_regs(reg);
 	ret = copyin(sp + 1, args, argsize);
-
-#if 0
-	for (i = 0; i < nargs+4; i++)
-		printf("stack[%02d] = %"PRIx32"\n", i, (uint) sp[i]);
-#endif
-#if 0
-	for (int i = 0; i < nargs; i++)
-		printf("arg[%02d] = %"PRIx32", ", i, (uint) args[i]);
-	printf("\n");
-#endif
 
 	return ret;
 }
@@ -287,26 +276,52 @@ md_syscall_check_opcode(void *ptr)
 		return 1;
 
 	/* TODO int $80 and sysenter */
-
 	return 0;
 }
 
 void
-md_syscall_inc_pc(ucontext_t *ucp)
+md_syscall_get_opcode(ucontext_t *ucp, uint32_t *opcode)
 {
 	uint *reg = (int *) &ucp->uc_mcontext;
-	uint16_t *p16;
+//	uint8_t  *p8  = (uint8_t *) (reg[14]);
+	uint16_t *p16 = (uint16_t*) (reg[14]);
+
+	*opcode = 0;
+
+	if (*p16 == 0xff0f)
+		*opcode = *p16;
+	if (*p16 == 0xff0b)
+		*opcode = *p16;
+
+	/* TODO int $80 and sysenter */
+}
+
+void
+md_syscall_inc_pc(ucontext_t *ucp, uint32_t opcode)
+{
+	uint *reg = (int *) &ucp->uc_mcontext;
 
 	/* advance program counter */
-	p16 = (uint16_t *) reg[14];
-	if (*p16 == 0xff0f)
+	if (opcode == 0xff0f)
 		reg[14] += 2;	/* EIP */
-	if (*p16 == 0xff0b)
+	if (opcode == 0xff0b)
 		reg[14] += 2;	/* EIP */
 
 	/* TODO int $80 and sysenter */
+}
 
-	// printf("jump back to %p\n", (void *) reg[14]);
+void
+md_syscall_dec_pc(ucontext_t *ucp, uint32_t opcode)
+{
+	uint *reg = (int *) &ucp->uc_mcontext;
+
+	/* advance program counter */
+	if (opcode == 0xff0f)
+		reg[14] -= 2;	/* EIP */
+	if (opcode == 0xff0b)
+		reg[14] -= 2;	/* EIP */
+
+	/* TODO int $80 and sysenter */
 }
 
 
