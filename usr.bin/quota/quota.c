@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.39 2011/11/27 13:23:50 dholland Exp $	*/
+/*	$NetBSD: quota.c,v 1.40 2011/11/27 13:24:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.39 2011/11/27 13:23:50 dholland Exp $");
+__RCSID("$NetBSD: quota.c,v 1.40 2011/11/27 13:24:32 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ static void	showgrpname(const char *);
 static void	showquotas(int, id_t, const char *);
 static void	showuid(uid_t);
 static void	showusrname(const char *);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 
 static int	qflag = 0;
 static int	vflag = 0;
