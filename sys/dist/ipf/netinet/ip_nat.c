@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.43 2011/02/12 21:23:31 christos Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.44 2011/11/27 10:53:07 mbalmer Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -120,7 +120,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.43 2011/02/12 21:23:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.44 2011/11/27 10:53:07 mbalmer Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.130 2010/03/16 02:24:52 darrenr Exp";
@@ -4660,7 +4660,7 @@ int icmptype;
 	 * does not keep track of the icmptype, and a single NAT structure
 	 * is used for all icmp types with the same src, dest and id, we
 	 * simply define the replies as queries as well. The funny thing is,
-	 * altough it seems silly to call a reply a query, this is exactly
+	 * although it seems silly to call a reply a query, this is exactly
 	 * as it is defined in the IPv4 specification
 	 */
 
