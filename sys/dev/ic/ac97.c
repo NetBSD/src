@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.92 2011/11/23 23:07:31 jmcneill Exp $ */
+/*      $NetBSD: ac97.c,v 1.93 2011/11/27 15:08:04 mbalmer Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.92 2011/11/23 23:07:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.93 2011/11/27 15:08:04 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -632,6 +632,8 @@ static const struct ac97_codecid {
 	  0xffffffff,			"Avance Logic ALC250", NULL,	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x60),
 	  0xfffffff0,			"Avance Logic ALC655", NULL,	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 0x70),
+	  0xffffffff,			"Avance Logic ALC203", NULL,	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x80),
 	  0xfffffff0,			"Avance Logic ALC658", NULL,	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x90),
@@ -1319,7 +1321,7 @@ ac97_attach_type(struct ac97_host_if *host_if, device_t sc_dev, int type, kmutex
 	for (i = 0; ; i++) {
 		if (ac97codecid[i].id == 0) {
 			char pnp[4];
-	
+
 			AC97_GET_CODEC_ID(id, pnp);
 #define ISASCII(c) ((c) >= ' ' && (c) < 0x7f)
 			if (ISASCII(pnp[0]) && ISASCII(pnp[1]) &&
@@ -1421,7 +1423,7 @@ ac97_attach_type(struct ac97_host_if *host_if, device_t sc_dev, int type, kmutex
 				if (rate != 44100) {
 					/* We can't believe ext_id */
 					as->ext_id = 0;
-					aprint_normal_dev(sc_dev, 
+					aprint_normal_dev(sc_dev,
 					    "Ignore these capabilities.\n");
 				}
 				/* restore the default value */
