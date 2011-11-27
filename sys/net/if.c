@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.257 2011/11/16 06:09:37 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.258 2011/11/27 14:55:57 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.257 2011/11/16 06:09:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.258 2011/11/27 14:55:57 jakllsch Exp $");
 
 #include "opt_inet.h"
 
@@ -1954,6 +1954,7 @@ ifioctl_detach(struct ifnet *ifp)
 	ifp->if_ioctl_lock = NULL;
 	percpu_free(il->il_nenter, sizeof(uint64_t));
 	il->il_nenter = NULL;
+	cv_destroy(&il->il_emptied);
 	mutex_destroy(&il->il_lock);
 	kmem_free(il, sizeof(*il));
 }
