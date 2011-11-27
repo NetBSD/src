@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.133 2011/07/30 20:05:36 jmcneill Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134 2011/11/27 03:25:00 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.133 2011/07/30 20:05:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134 2011/11/27 03:25:00 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -260,6 +260,9 @@ usbd_transfer(usbd_xfer_handle xfer)
 
 	DPRINTFN(5,("usbd_transfer: xfer=%p, flags=%#x, pipe=%p, running=%d\n",
 		    xfer, xfer->flags, pipe, pipe->running));
+
+	KASSERT(KERNEL_LOCKED_P());
+
 #ifdef USB_DEBUG
 	if (usbdebug > 5)
 		usbd_dump_queue(pipe);
@@ -753,6 +756,9 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 	DPRINTFN(5, ("usb_transfer_complete: pipe=%p xfer=%p status=%d "
 		     "actlen=%d\n", pipe, xfer, xfer->status, xfer->actlen));
+
+	KASSERT(KERNEL_LOCKED_P());
+
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_ONQU) {
 		printf("usb_transfer_complete: xfer=%p not busy 0x%08x\n",
@@ -849,6 +855,9 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 
 	DPRINTFN(5,("usb_insert_transfer: pipe=%p running=%d timeout=%d\n",
 		    pipe, pipe->running, xfer->timeout));
+
+	KASSERT(KERNEL_LOCKED_P());
+
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_BUSY) {
 		printf("usb_insert_transfer: xfer=%p not busy 0x%08x\n",
