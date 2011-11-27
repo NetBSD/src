@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.25 2011/11/26 14:04:20 enami Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.26 2011/11/27 00:09:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -134,7 +134,9 @@ arc4_randrekey(void *arg)
 	int n, ask_for_more = 0;
 #ifdef _KERNEL
 #ifdef DIAGNOSTIC
+#if 0	/* XXX rngtest_t is too large and could cause stack overflow */
 	rngtest_t rt;
+#endif
 #endif
 #endif
 #if NRND > 0
@@ -225,6 +227,7 @@ got_entropy:
 		arc4_numbytes = 0;
 #ifdef _KERNEL
 #ifdef DIAGNOSTIC
+#if 0	/* XXX rngtest_t is too large and could cause stack overflow */
 		/*
 		 * Perform the FIPS 140-2 statistical RNG test; warn if our
 		 * output has such poor quality as to fail the test.
@@ -237,6 +240,7 @@ got_entropy:
 			arc4_numbytes = ARC4_MAXBYTES;
 			/* XXX should keep old context around, *NOT* use new */
 		}
+#endif
 #endif
 #endif
 	}
