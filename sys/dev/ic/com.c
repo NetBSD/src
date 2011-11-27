@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.302 2011/11/27 15:28:26 jakllsch Exp $ */
+/* $NetBSD: com.c,v 1.303 2011/11/27 18:17:08 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.302 2011/11/27 15:28:26 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.303 2011/11/27 18:17:08 jakllsch Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -641,7 +641,7 @@ com_detach(device_t self, int flags)
 	if (ISSET(sc->sc_hwflags, COM_HW_KGDB))
 		return EBUSY;
 
-        if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE) &&
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE) &&
 	    (flags & DETACH_SHUTDOWN) != 0)
 		return EBUSY;
 
@@ -650,7 +650,7 @@ com_detach(device_t self, int flags)
 		sc->enabled = 0;
 	}
 
-        if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		comconsattached = 0;
 		cn_tab = NULL;
 	}
@@ -2012,7 +2012,7 @@ again:	do {
 	    /*
 	     * Since some device (e.g., ST16C1550) doesn't clear IIR_TXRDY
 	     * by IIR read, so we can't do this way: `process all interrupts,
-	     * then do TX if possble'.
+	     * then do TX if possible'.
 	     */
 	    (iir & IIR_IMASK) != IIR_TXRDY);
 
