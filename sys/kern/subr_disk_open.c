@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.5 2011/11/25 17:53:20 christos Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.6 2011/11/27 00:38:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.5 2011/11/25 17:53:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.6 2011/11/27 00:38:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.5 2011/11/25 17:53:20 christos 
 #include <sys/vnode.h>
 #include <miscfs/specfs/specdev.h>
 
-#ifndef _RUMPKERNEL
 struct vnode *
 opendisk(struct device *dv)
 {
@@ -110,7 +109,6 @@ getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned *secsizep)
 
 	return error;
 }
-#endif
 
 int
 getdiskinfo(struct vnode *vp, struct dkwedge_info *dkw)
