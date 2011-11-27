@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.30 2011/10/17 13:06:08 isaki Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.31 2011/11/27 14:36:20 rmind Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.30 2011/10/17 13:06:08 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.31 2011/11/27 14:36:20 rmind Exp $");
 
 #include "opt_slhci.h"
 
@@ -881,9 +881,9 @@ slhci_transfer(struct usbd_xfer *xfer)
 	 * so start it first.
 	 */
 
-	/* Start next is always done at splsoftusb, so we do this here so 
+	/* Start next is always done at splusb, so we do this here so 
 	 * start functions are always called at softusb. XXX */
-	s = splsoftusb();
+	s = splusb();
 	error = xfer->pipe->methods->start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 	splx(s);
 
@@ -1269,7 +1269,7 @@ slhci_abort(struct usbd_xfer *xfer)
 
 callback:
 	xfer->status = USBD_CANCELLED;
-	/* Abort happens at splsoftusb. */
+	/* Abort happens at splusb. */
 	usb_transfer_complete(xfer);
 }
 
@@ -1382,7 +1382,7 @@ slhci_lock_call(struct slhci_softc *sc, LockCallFunc lcf, struct slhci_pipe
 	usbd_status ret;
 	int x, s;
 
-	x = splsoftusb(); 
+	x = splusb();
 	s = splhardusb();
 	simple_lock(&sc->sc_lock);
 	ret = (*lcf)(sc, spipe, xfer);
@@ -1431,7 +1431,7 @@ slhci_callback_entry(void *arg)
 
 	sc = (struct slhci_softc *)arg;
 
-	x = splsoftusb();
+	x = splusb();
 	s = splhardusb();
 	simple_lock(&sc->sc_lock);
 	t = &sc->sc_transfers;
@@ -2328,8 +2328,8 @@ slhci_dotransfer(struct slhci_softc *sc)
 	}
 }
 
-/* slhci_callback is called after the lock is taken from splsoftusb.
- * s is pointer to old spl (splsoftusb). */
+/* slhci_callback is called after the lock is taken from splusb.
+ * s is pointer to old spl (splusb). */
 static void
 slhci_callback(struct slhci_softc *sc, int *s)
 {
@@ -2495,7 +2495,7 @@ slhci_do_callback_schedule(struct slhci_softc *sc)
 }
 
 #if 0
-/* must be called with lock taken from splsoftusb */
+/* must be called with lock taken from splusb */
 /* XXX static */ void
 slhci_pollxfer(struct slhci_softc *sc, struct usbd_xfer *xfer, int *s)
 {
