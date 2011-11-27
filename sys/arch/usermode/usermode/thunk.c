@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.39 2011/09/15 20:25:23 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.40 2011/11/27 21:23:47 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.39 2011/09/15 20:25:23 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.40 2011/11/27 21:23:47 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -446,6 +446,12 @@ thunk_sigaddset(sigset_t *sa_mask, int sig)
 		perror("%s: bad signal added");
 		abort();
 	}
+}
+
+int
+thunk_sigprocmask(int how, const sigset_t * set, sigset_t *oset)
+{
+	return sigprocmask(how, set, oset);
 }
 
 int
