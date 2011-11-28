@@ -1,9 +1,9 @@
-#       $NetBSD: Makefile,v 1.359 2011/11/15 00:50:55 jym Exp $
+#       $NetBSD: Makefile,v 1.360 2011/11/28 20:19:28 tls Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	accept_filter.9 accf_data.9 accf_http.9 \
-	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
+	altq.9 arp.9 audio.9 autoconf.9 \
 	bcdtobin.9 bcmp.9 bcopy.9 bintime_add.9 bluetooth.9 boothowto.9 bpf.9 \
 	buffercache.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 bzero.9 \
 	callback.9 callout.9 cardbus.9 cnmagic.9 condvar.9 config.9 \
@@ -63,6 +63,19 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 MAN+=	boothowto.9
 MLINKS+=boothowto.9 BOOT_FLAG.9
 
+MAN+=	cprng.9
+MLINKS+=cprng.9	cprng_strong.9 \
+	cprng.9 cprng_strong_create.9 \
+	cprng.9	cprng_strong_destroy.9 \
+	cprng.9 cprng_strong_getflags.9 \
+	cprng.9 cprng_strong_setflags.9 \
+	cprng.9 cprng_strong32.9 \
+	cprng.9 cprng_strong64.9 \
+	cprng.9 cprng_fast.9 \
+	cprng.9 cprng_fast32.9 \
+	cprng.9 cprng_fast64.9 \
+	cprng.9 arc4random.9
+	
 MAN+=	deviter.9
 MLINKS+=deviter.9 deviter_first.9 \
 	deviter.9 deviter_init.9 \
