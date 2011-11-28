@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44.c,v 1.13 2009/10/02 18:50:13 elad Exp $ */
+/* $NetBSD: secmodel_bsd44.c,v 1.14 2011/11/28 22:28:33 jym Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.13 2009/10/02 18:50:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.14 2011/11/28 22:28:33 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,26 +79,19 @@ sysctl_security_bsd44_setup(struct sysctllog **clog)
 void
 secmodel_bsd44_init(void)
 {
-	secmodel_suser_init();
-	secmodel_securelevel_init();
+
 }
 
 void
 secmodel_bsd44_start(void)
 {
-	secmodel_suser_start();
-	secmodel_securelevel_start();
 
-	/* secmodel_register(); */
 }
 
 void
 secmodel_bsd44_stop(void)
 {
-	secmodel_suser_stop();
-	secmodel_securelevel_stop();
 
-	/* secmodel_deregister(); */
 }
 
 static int
