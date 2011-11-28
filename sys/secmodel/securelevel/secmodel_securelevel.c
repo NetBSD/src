@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.21 2011/11/23 10:47:48 tls Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.22 2011/11/28 20:57:51 jym Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -28,14 +28,14 @@
 
 /*
  * This file contains kauth(9) listeners needed to implement the traditional
- * NetBSD securelevel. 
+ * NetBSD securelevel.
  *
  * The securelevel is a system-global indication on what operations are
  * allowed or not. It affects all users, including root.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.21 2011/11/23 10:47:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.22 2011/11/28 20:57:51 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -71,7 +71,7 @@ static struct sysctllog *securelevel_sysctl_log;
  */
 int
 secmodel_securelevel_sysctl(SYSCTLFN_ARGS)
-{       
+{
 	int newsecurelevel, error;
 	struct sysctlnode node;
 
@@ -81,7 +81,7 @@ secmodel_securelevel_sysctl(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
-        
+
 	if ((newsecurelevel < securelevel) && (l->l_proc != initproc))
 		return (EPERM);
 
@@ -424,7 +424,7 @@ secmodel_securelevel_network_cb(kauth_cred_t cred, kauth_action_t action,
 	return (result);
 }
 
-/*              
+/*
  * kauth(9) listener
  *
  * Security model: Traditional NetBSD
@@ -462,7 +462,7 @@ secmodel_securelevel_machdep_cb(kauth_cred_t cred, kauth_action_t action,
  * kauth(9) listener
  *
  * Security model: Traditional NetBSD
- * Scope: Device 
+ * Scope: Device
  * Responsibility: Securelevel
  */
 int
