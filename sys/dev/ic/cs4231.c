@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.27 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.28 2011/11/28 11:46:54 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.27 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.28 2011/11/28 11:46:54 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -221,7 +221,7 @@ fail3:
 fail2:
 	bus_dmamap_destroy(dmatag, p->dmamap);
 fail1:
-	kmem_free(p, size);
+	kmem_free(p, sizeof(*p));
 	return NULL;
 }
 
@@ -242,7 +242,7 @@ cs4231_free(void *addr, void *ptr, size_t size)
 		bus_dmamem_free(dmatag, p->segs, p->nsegs);
 		bus_dmamap_destroy(dmatag, p->dmamap);
 		*pp = p->next;
-		kmem_free(p, size);
+		kmem_free(p, sizeof(*p));
 		return;
 	}
 	printf("cs4231_free: rogue pointer\n");
