@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.17 2008/09/16 23:29:49 jmcneill Exp $
+.\"	$NetBSD: rnd.9,v 1.18 2011/11/28 20:19:28 tls Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -173,7 +173,8 @@ These functions are declared in src/sys/sys/rnd.h and defined in
 src/sys/dev/rnd.c.
 .Sh SEE ALSO
 .Xr rnd 4 ,
-.Xr rndctl 8
+.Xr rndctl 8 ,
+.Xr cprng 9
 .Sh HISTORY
 The random device was introduced in
 .Nx 1.3 .
