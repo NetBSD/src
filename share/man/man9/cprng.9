@@ -1,4 +1,4 @@
-.\"	$NetBSD: cprng.9,v 1.1 2011/11/28 20:19:28 tls Exp $
+.\"	$NetBSD: cprng.9,v 1.2 2011/11/28 23:27:59 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Nm cprng_strong64 ,
 .Nm cprng_strong_getflags ,
 .Nm cprng_strong_setflags ,
-.Nm cprng_strong_destroy , 
+.Nm cprng_strong_destroy ,
 .Nm cprng_fast ,
 .Nm cprng_fast32 ,
 .Nm cprng_fast64 ,
@@ -46,13 +46,13 @@
 .Sh SYNOPSIS
 .In sys/cprng.h
 .Ft cprng_strong_t
-.Fn cprng_strong_create "const char *const name, int ipl, int flags"
+.Fn cprng_strong_create "const char *const name" "int ipl" "int flags"
 .Ft void
 .Fn cprng_strong_destroy "cprng_strong_t *cprng"
 .Ft size_t
-.Fn cprng_strong "cprng_strong_t *const cprng, void *buf, size_t len"
+.Fn cprng_strong "cprng_strong_t *const cprng" "void *buf" "size_t len"
 .Ft size_t
-.Fn cprng_fast "void *buf, size_t len"
+.Fn cprng_fast "void *buf" "size_t len"
 .Ft uint32_t
 .Fn cprng_strong32 "void"
 .Ft uint64_t
@@ -64,7 +64,7 @@
 .Ft int
 .Fn cprng_strong_getflags "cprng_strong_t *const cprng"
 .Ft void
-.Fn cprng_strong_setflags "cprng_strong_t *const cprng, int flags"
+.Fn cprng_strong_setflags "cprng_strong_t *const cprng" "int flags"
 .Bd -literal
 #define CPRNG_MAX_LEN   524288
 
@@ -78,20 +78,22 @@ typedef struct _cprng_strong {
         rndsink_t     reseed;
 } cprng_strong_t;
 .Ed
-.Pp
 .Sh DESCRIPTION
 The
 .Nm
 family of functions supply randomness to callers within the
 .Nx
-kernel.  They replace the
+kernel.
+They replace the
 .Xr arc4random 9
 and
 .Xr rnd_extract_data 9
-functions for this purpose.  The
+functions for this purpose.
+The
 .Nm
 functions provide stream generators automatically keyed (and if
-necessary rekeyed) from the kernel entropy pool.  The
+necessary rekeyed) from the kernel entropy pool.
+The
 .Nx
 kernel no longer supports direct reading from the kernel entropy pool; all
 access is mediated by the
@@ -101,7 +103,8 @@ functions.
 The
 .Dq strong
 family of functions supply cryptographically strong random numbers
-suitable for keying cryptosystems and similar purposes.  Calls to
+suitable for keying cryptosystems and similar purposes.
+Calls to
 .Xr rnd_extract_data 9
 should be replaced with calls to
 .Nm cprng_strong .
@@ -111,7 +114,8 @@ The
 family of functions supply less strong random numbers, suitable for
 initialization vectors, nonces in certain protocols, and other
 similar purposes, using a faster but less secure stream-cipher generator.
-stream-cipher generator.  Calls to
+stream-cipher generator.
+Calls to
 .Xr arc4random 9
 should be replaced with calls to
 .Nm cprng_fast32 ,
@@ -136,7 +140,8 @@ generator can also be created by calling
 .Bl -tag -width abcd
 .It Fn cprng_strong_create "name" "ipl" "flags"
 .Pp
-Create an instance of the cprng_strong generator.  This generator
+Create an instance of the cprng_strong generator.
+This generator
 implements the NIST SP 800-90 CTR_DRBG with AES128 as the block transform.
 The
 .Fa name
@@ -147,7 +152,7 @@ The
 .Fa ipl
 argument specifies the interrupt priority level for the mutex which will
 serialize access to the new instance of the generator (see
-.Xr spl 9 ).
+.Xr spl 9 ) .
 The
 .Fa flags
 argument controls the behavior of the generator:
@@ -168,7 +173,8 @@ the generator is successfully rekeyed.
 .El
 .Pp
 Creation will succeed even if key material for the generator is not
-available.  In this case, the first request to read from the generator
+available.
+In this case, the first request to read from the generator
 may cause rekeying.
 .It Fn cprng_strong_destroy "cprng"
 .Pp
@@ -177,13 +183,14 @@ Destroy an instance of the cprng_strong generator.
 .Pp
 Fill memory location
 .Fa buf
-with 
+with
 .Fa len
 bytes from the generator
 .Fa cprng .
 If less than
 .Fa len
-bytes are returned, the generator requires rekeying.  If the
+bytes are returned, the generator requires rekeying.
+If the
 .Dv CPRNG_USE_CV
 flag is set on the generator, the caller can wait on
 .Dv cprng->cv
@@ -235,8 +242,8 @@ generator uses the arc4random implementation in
 .Pa sys/lib/libkern/arc4random.c .
 .Sh SEE ALSO
 .Xr condvar 9 ,
-.Xr spl 9 ,
-.Xr rnd 9
+.Xr rnd 9 ,
+.Xr spl 9
 .Pp
 .Rs
 .%A Elaine Barker
