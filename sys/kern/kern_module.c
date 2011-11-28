@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.84 2011/11/06 12:40:04 tron Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.85 2011/11/28 03:13:31 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.84 2011/11/06 12:40:04 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.85 2011/11/28 03:13:31 jnemeth Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1121,6 +1121,7 @@ module_do_unload(const char *name, bool load_requires_force)
 	u_int i;
 
 	KASSERT(kernconfig_is_held());
+	KASSERT(name != NULL);
 
 	mod = module_lookup(name);
 	if (mod == NULL) {
@@ -1156,6 +1157,7 @@ module_do_unload(const char *name, bool load_requires_force)
 	for (i = 0; i < mod->mod_nrequired; i++) {
 		mod->mod_required[i]->mod_refcnt--;
 	}
+	module_print("unloaded module `%s'", name);
 	if (mod->mod_kobj != NULL) {
 		kobj_unload(mod->mod_kobj);
 	}
@@ -1170,7 +1172,6 @@ module_do_unload(const char *name, bool load_requires_force)
 	}
 	module_gen++;
 
-	module_print("unloaded module `%s'", name);
 	return 0;
 }
 
