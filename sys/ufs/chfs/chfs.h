@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs.h,v 1.3 2011/11/24 21:38:44 ahoka Exp $	*/
+/*	$NetBSD: chfs.h,v 1.4 2011/11/28 12:50:07 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -310,7 +310,8 @@ struct chfs_eraseblock
 	struct chfs_node_ref *first_node;
 	struct chfs_node_ref *last_node;
 
-	struct chfs_node_ref *gc_node;     /* Next block to be garbage collected */
+	/* Next block to be garbage collected */
+	struct chfs_node_ref *gc_node;
 };
 
 TAILQ_HEAD(chfs_eraseblock_queue, chfs_eraseblock);
@@ -349,21 +350,15 @@ struct garbage_collector_thread {
  * @very_dirty_queue: queue of very dirty eraseblocks
  * @erase_pending_queue: queue of eraseblocks waiting for erasing
  * @erasable_pending_wbuf_queue: queue of eraseblocks waiting for erasing and
- * 								 have data to write to them
+ * 			      	 have data to write to them
  * @nextblock: next eraseblock to write to
- *
  * @nr_free_blocks: number of free blocks on the free_queue
  * @nr_erasable_blocks: number of blocks that can be erased and are on the
- * 						erasable_queue
- *
+ *			erasable_queue
  */
 struct chfs_mount {
 	struct mount *chm_fsmp;
-//	dev_t dev;
-//	struct vnode *devvp;
-
 	struct chfs_ebh *chm_ebh;
-//	int chm_fl_index;
 	int chm_fs_version;
 	uint64_t chm_gbl_version;
 	ino_t chm_max_vno;
@@ -448,30 +443,15 @@ struct chfs_mount {
 	krwlock_t chm_lock_wbuf;
 };
 
-#define sleep_on_spinunlock(s)						      \
-	do {								      \
-		kmutex_t sleep_mtx;					      \
-		kcondvar_t sleep_cnd;					      \
-		cv_init(&sleep_cnd, "sleep_cnd");			      \
-		mutex_init(&sleep_mtx, MUTEX_DEFAULT, IPL_NONE);	      \
-		mutex_spin_exit(s);					      \
-		mutex_enter(&sleep_mtx);				      \
-		cv_timedwait(&sleep_cnd, &sleep_mtx, mstohz(50));	      \
-		mutex_exit(&sleep_mtx);					      \
-		mutex_destroy(&sleep_mtx);				      \
-		cv_destroy(&sleep_cnd);					      \
-	} while (0)
-#undef sleep_on_spinunlock
-
 /*
  * TODO we should move here all of these from the bottom of the file
  * Macros/functions to convert from generic data structures to chfs
  * specific ones.
  */
 
-#define	CHFS_OFFSET_DOT	0
+#define	CHFS_OFFSET_DOT		0
 #define	CHFS_OFFSET_DOTDOT	1
-#define CHFS_OFFSET_EOF	2
+#define CHFS_OFFSET_EOF		2
 #define CHFS_OFFSET_FIRST	3
 
 
@@ -480,21 +460,32 @@ struct chfs_mount {
 /* chfs_build.c */
 void chfs_calc_trigger_levels(struct chfs_mount *);
 int chfs_build_filesystem(struct chfs_mount *);
-void chfs_build_set_vnodecache_nlink(struct chfs_mount *chmp,struct chfs_vnode_cache *vc);
-void chfs_build_remove_unlinked_vnode(struct chfs_mount *chmp,struct chfs_vnode_cache *vc, struct chfs_dirent_list *unlinked);
+void chfs_build_set_vnodecache_nlink(struct chfs_mount *,
+    struct chfs_vnode_cache *);
+void chfs_build_remove_unlinked_vnode(struct chfs_mount *,
+    struct chfs_vnode_cache *, struct chfs_dirent_list *);
 
 /* chfs_scan.c */
 int chfs_scan_eraseblock(struct chfs_mount *, struct chfs_eraseblock *);
-struct chfs_vnode_cache *chfs_scan_make_vnode_cache(struct chfs_mount *chmp, ino_t vno);
-int chfs_scan_check_node_hdr(struct chfs_flash_node_hdr *nhdr);
-int chfs_scan_check_vnode(struct chfs_mount *chmp, struct chfs_eraseblock *cheb, void *buf, off_t ofs);
-int chfs_scan_mark_dirent_obsolete(struct chfs_mount *chmp,struct chfs_vnode_cache *vc, struct chfs_dirent *fd);
-void chfs_add_fd_to_list(struct chfs_mount *chmp,struct chfs_dirent *new, struct chfs_vnode_cache *pvc);
-int chfs_scan_check_dirent_node(struct chfs_mount *chmp, struct chfs_eraseblock *cheb, void *buf, off_t ofs);
-int chfs_scan_check_data_node(struct chfs_mount *chmp, struct chfs_eraseblock *cheb, void *buf, off_t ofs);
-int chfs_scan_classify_cheb(struct chfs_mount *chmp,struct chfs_eraseblock *cheb);
+struct chfs_vnode_cache *chfs_scan_make_vnode_cache(struct chfs_mount *,
+    ino_t);
+int chfs_scan_check_node_hdr(struct chfs_flash_node_hdr *);
+int chfs_scan_check_vnode(struct chfs_mount *,
+    struct chfs_eraseblock *, void *, off_t);
+int chfs_scan_mark_dirent_obsolete(struct chfs_mount *,
+    struct chfs_vnode_cache *, struct chfs_dirent *);
+void chfs_add_fd_to_list(struct chfs_mount *,
+    struct chfs_dirent *, struct chfs_vnode_cache *);
+int chfs_scan_check_dirent_node(struct chfs_mount *,
+    struct chfs_eraseblock *, void *, off_t);
+int chfs_scan_check_data_node(struct chfs_mount *,
+    struct chfs_eraseblock *, void *, off_t);
+int chfs_scan_classify_cheb(struct chfs_mount *,
+    struct chfs_eraseblock *);
+
 /* chfs_nodeops.c */
-int chfs_update_eb_dirty(struct chfs_mount *, struct chfs_eraseblock *, uint32_t);
+int chfs_update_eb_dirty(struct chfs_mount *,
+    struct chfs_eraseblock *, uint32_t);
 void chfs_add_node_to_list(struct chfs_mount *, struct chfs_vnode_cache *,
     struct chfs_node_ref *, struct chfs_node_ref **);
 void chfs_add_fd_to_inode(struct chfs_mount *,
@@ -544,7 +535,7 @@ struct chfs_vnode_cache* chfs_vnode_cache_alloc(ino_t);
 void chfs_vnode_cache_free(struct chfs_vnode_cache *);
 struct chfs_node_ref* chfs_alloc_node_ref(
 	struct chfs_eraseblock *);
-void chfs_free_node_refs(struct chfs_eraseblock *cheb);
+void chfs_free_node_refs(struct chfs_eraseblock *);
 struct chfs_dirent* chfs_alloc_dirent(int);
 void chfs_free_dirent(struct chfs_dirent *);
 struct chfs_flash_vnode* chfs_alloc_flash_vnode(void);
@@ -556,9 +547,9 @@ void chfs_free_flash_dnode(struct chfs_flash_data_node *);
 struct chfs_node_frag* chfs_alloc_node_frag(void);
 void chfs_free_node_frag(struct chfs_node_frag *);
 struct chfs_node_ref* chfs_alloc_refblock(void);
-void chfs_free_refblock(struct chfs_node_ref *nref);
+void chfs_free_refblock(struct chfs_node_ref *);
 struct chfs_full_dnode* chfs_alloc_full_dnode(void);
-void chfs_free_full_dnode(struct chfs_full_dnode *fd);
+void chfs_free_full_dnode(struct chfs_full_dnode *);
 struct chfs_tmp_dnode * chfs_alloc_tmp_dnode(void);
 void chfs_free_tmp_dnode(struct chfs_tmp_dnode *);
 struct chfs_tmp_dnode_info * chfs_alloc_tmp_dnode_info(void);
@@ -577,7 +568,7 @@ int chfs_read_data(struct chfs_mount*, struct vnode *,
     struct buf *);
 
 /* chfs_erase.c */
-int chfs_remap_leb(struct chfs_mount *chmp);
+int chfs_remap_leb(struct chfs_mount *);
 
 /* chfs_ihash.c */
 void chfs_ihashinit(void);
@@ -600,8 +591,8 @@ void chfs_gc_thread_stop(struct chfs_mount *);
 int chfs_gcollect_pass(struct chfs_mount *);
 
 /* chfs_vfsops.c*/
-int chfs_gop_alloc(struct vnode *vp, off_t off, off_t len,  int flags,kauth_cred_t cred);
-int chfs_mountfs(struct vnode *devvp, struct mount *mp);
+int chfs_gop_alloc(struct vnode *, off_t, off_t,  int, kauth_cred_t);
+int chfs_mountfs(struct vnode *, struct mount *);
 
 /* chfs_vnops.c */
 extern int (**chfs_vnodeop_p)(void *);
@@ -658,16 +649,13 @@ struct chfs_vnode_cache **chfs_vnocache_hash_init(void);
 void chfs_vnocache_hash_destroy(struct chfs_vnode_cache **);
 void chfs_vnode_cache_set_state(struct chfs_mount *,
     struct chfs_vnode_cache *, int);
-struct chfs_vnode_cache* chfs_vnode_cache_get(
-	struct chfs_mount *, ino_t);
-void chfs_vnode_cache_add(struct chfs_mount *,
-    struct chfs_vnode_cache *);
-void chfs_vnode_cache_remove(struct chfs_mount *,
-    struct chfs_vnode_cache *);
+struct chfs_vnode_cache* chfs_vnode_cache_get(struct chfs_mount *, ino_t);
+void chfs_vnode_cache_add(struct chfs_mount *, struct chfs_vnode_cache *);
+void chfs_vnode_cache_remove(struct chfs_mount *, struct chfs_vnode_cache *);
 
 /* chfs_wbuf.c */
-int chfs_write_wbuf(struct chfs_mount*, const struct iovec *, long,
-    off_t, size_t *);
+int chfs_write_wbuf(struct chfs_mount*,
+    const struct iovec *, long, off_t, size_t *);
 int chfs_flush_pending_wbuf(struct chfs_mount *);
 
 /* chfs_write.c */
@@ -676,8 +664,10 @@ int chfs_write_flash_dirent(struct chfs_mount *, struct chfs_inode *,
     struct chfs_inode *, struct chfs_dirent *, ino_t, int);
 int chfs_write_flash_dnode(struct chfs_mount *, struct vnode *,
     struct buf *, struct chfs_full_dnode *);
-int chfs_do_link(struct chfs_inode *, struct chfs_inode *, const char *, int, enum vtype);
-int chfs_do_unlink(struct chfs_inode *, struct chfs_inode *, const char *, int);
+int chfs_do_link(struct chfs_inode *,
+    struct chfs_inode *, const char *, int, enum vtype);
+int chfs_do_unlink(struct chfs_inode *,
+    struct chfs_inode *, const char *, int);
 
 /* chfs_subr.c */
 size_t chfs_mem_info(bool);
@@ -728,7 +718,8 @@ chfs_read_leb(struct chfs_mount *chmp, int lnr, char *buf,
 
 	err = ebh_read_leb(chmp->chm_ebh, lnr, buf, offset, len, retlen);
 	if (err)
-		chfs_err("read leb %d:%d failed, error: %d\n",lnr, offset, err);
+		chfs_err("read leb %d:%d failed, error: %d\n",
+		    lnr, offset, err);
 
 	return err;
 }
@@ -739,7 +730,8 @@ static inline int chfs_write_leb(struct chfs_mount *chmp, int lnr, char *buf,
 	int err;
 	err = ebh_write_leb(chmp->chm_ebh, lnr, buf, offset, len, retlen);
 	if (err)
-		chfs_err("write leb %d:%d failed, error: %d\n",lnr, offset, err);
+		chfs_err("write leb %d:%d failed, error: %d\n",
+		    lnr, offset, err);
 
 	return err;
 }
@@ -768,146 +760,9 @@ CHFS_PAGES_MAX(struct chfs_mount *chmp)
 #define	CHFS_ITIMES(ip, acc, mod, cre)				      \
 	while ((ip)->iflag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
 		chfs_itimes(ip, acc, mod, cre)
-/* used for KASSERTs */
 
+/* used for KASSERTs */
 #define IMPLIES(a, b) (!(a) || (b))
 #define IFF(a, b) (IMPLIES(a, b) && IMPLIES(b, a))
 
-/*
-  struct chfs_node;
-*/
-/*
- * Internal representation of a dummyfs directory entry.
- */
-/*
-  struct chfs_dirent {
-  TAILQ_ENTRY(chfs_dirent)	chd_entries;
-  uint16_t			chd_namelen;
-  char *				chd_name;
-  struct chfs_node *		chd_node;
-  };
-
-  TAILQ_HEAD(chfs_dir, chfs_dirent);
-
-
-*/
-/*
- * Internal representation of a dummyfs file system node.
- */
-/*
-  struct chfs_node {
-  LIST_ENTRY(chfs_node)	chn_entries;
-  enum vtype		chn_type;
-  ino_t			chn_id;
-  int			chn_status;
-  #define	CHFS_NODE_ACCESSED	(1 << 1)
-  #define	CHFS_NODE_MODIFIED	(1 << 2)
-  #define	CHFS_NODE_CHANGED	(1 << 3)
-
-  off_t			chn_size;
-
-  uid_t			chn_uid;
-  gid_t			chn_gid;
-  mode_t			chn_mode;
-  int			chn_flags;
-  nlink_t			chn_links;
-  struct timespec		chn_atime;
-  struct timespec		chn_mtime;
-  struct timespec		chn_ctime;
-  struct timespec		chn_birthtime;
-  unsigned long		chn_gen;
-
-  struct lockf *		chn_lockf;
-
-  kmutex_t		chn_vlock;
-  struct vnode *		chn_vnode;
-
-  union {
-  struct {
-  dev_t			chn_rdev;
-  } chn_dev;
-
-  struct {
-  struct chfs_node *	chn_parent;
-
-  struct chfs_dir	chn_dir;
-
-  off_t			chn_readdir_lastn;
-  struct chfs_dirent *	chn_readdir_lastp;
-  } chn_dir;
-
-  struct chn_lnk {
-  char *			chn_link;
-  } chn_lnk;
-
-  struct chn_reg {
-  struct uvm_object *	chn_aobj;
-  size_t			chn_aobj_pages;
-  } chn_reg;
-  } chn_spec;
-  };
-*/
-/*
-  LIST_HEAD(chfs_node_list, chfs_node);
-
-  #define VTOCHN(vp)		((struct chfs_node *)(vp)->v_data)
-  #define CHNTOV(chnp)	((chnp)->chn_vnode)
-
-*/
-/*
- * Ensures that the node pointed by 'node' is a directory and that its
- * contents are consistent with respect to directories.
- */
-/*
-  #ifdef someonefixthisplease
-  #define CHFS_VALIDATE_DIR(node) \
-  KASSERT((node)->chn_type == VDIR); \
-  KASSERT((node)->chn_size % sizeof(struct chfs_dirent) == 0); \
-  KASSERT((node)->chn_spec.chn_dir.chn_readdir_lastp == NULL || \
-  chfs_dircookie((node)->chn_spec.chn_dir.chn_readdir_lastp) == \
-  (node)->chn_spec.chn_dir.chn_readdir_lastn);
-  #else
-  #define CHFS_VALIDATE_DIR(node) \
-  KASSERT((node)->chn_type == VDIR); \
-  KASSERT((node)->chn_size % sizeof(struct chfs_dirent) == 0);
-  #endif
-
-*/
-
-/* Returns the available space for the given file system. */
-/*
-  #define CHFS_PAGES_AVAIL(dmp)		\
-  ((ssize_t)(CHFS_PAGES_MAX(dmp) - (dmp)->chm_pages_used))
-
-
-
-  static __inline
-  struct chfs_node *
-  VP_TO_CHFS_NODE(struct vnode *vp)
-  {
-  struct chfs_node *node;
-
-  #ifdef KASSERT
-  KASSERT((vp) != NULL && (vp)->v_data != NULL);
-  #endif
-  node = (struct chfs_node *)vp->v_data;
-  return node;
-  }
-
-
-  static __inline
-  struct chfs_node *
-  VP_TO_CHFS_DIR(struct vnode *vp)
-  {
-  struct chfs_node *node;
-
-  node = VP_TO_CHFS_NODE(vp);
-  #ifdef KASSERT
-  CHFS_VALIDATE_DIR(node);
-  #endif
-  return node;
-  }
-
-
-*/
 #endif /* __CHFS_H__ */
