@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.972 2011/11/24 21:44:19 ahoka Exp $
+# $NetBSD: mi,v 1.973 2011/11/28 16:22:14 tron Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1066,7 +1066,7 @@
 ./usr/libexec/postfix/postfix-script		base-postfix-bin	postfix
 ./usr/libexec/postfix/postfix-wrapper		base-postfix-bin	postfix
 ./usr/libexec/postfix/postmulti-script		base-postfix-bin	postfix
-./usr/libexec/postfix/postscreen		base-postfix-bin	postfix
+./usr/libexec/postfix/postscreen		base-postfix-bin	postfix,crypto
 ./usr/libexec/postfix/proxymap			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmgr			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmqpd			base-obsolete		obsolete

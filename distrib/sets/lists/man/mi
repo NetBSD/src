@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1359 2011/11/27 09:00:32 isaki Exp $
+# $NetBSD: mi,v 1.1360 2011/11/28 16:22:17 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2651,7 +2651,7 @@
 ./usr/share/man/cat8/pmppc/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/portmap.0			man-obsolete		obsolete
 ./usr/share/man/cat8/postinstall.0		man-sys-catman		.cat
-./usr/share/man/cat8/postscreen.0		man-postfix-catman	postfix,.cat
+./usr/share/man/cat8/postscreen.0		man-postfix-catman	postfix,crypto,.cat
 ./usr/share/man/cat8/powerd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/poweroff.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pppd.0			man-ppp-catman		.cat
@@ -5252,7 +5252,7 @@
 ./usr/share/man/html8/pipe.html			man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/pmax/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/postinstall.html		man-sys-htmlman		html
-./usr/share/man/html8/postscreen.html		man-postfix-htmlman	postfix,html
+./usr/share/man/html8/postscreen.html		man-postfix-htmlman	postfix,crypto,html
 ./usr/share/man/html8/powerd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/poweroff.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/pppd.html			man-ppp-htmlman		html
@@ -8120,7 +8120,7 @@
 ./usr/share/man/man8/pmppc/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/portmap.8			man-obsolete		obsolete
 ./usr/share/man/man8/postinstall.8		man-sys-man		.man
-./usr/share/man/man8/postscreen.8		man-postfix-man		postfix,.man
+./usr/share/man/man8/postscreen.8		man-postfix-man		postfix,crypto,.man
 ./usr/share/man/man8/powerd.8			man-sysutil-man		.man
 ./usr/share/man/man8/poweroff.8			man-sysutil-man		.man
 ./usr/share/man/man8/pppd.8			man-ppp-man		.man
