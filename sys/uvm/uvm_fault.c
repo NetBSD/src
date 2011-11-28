@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.190 2011/08/06 17:25:03 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.191 2011/11/28 14:06:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.190 2011/08/06 17:25:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.191 2011/11/28 14:06:59 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -690,16 +690,47 @@ done:
 #define UVM_FAULT_MAXPROT	(1 << 1)
 
 struct uvm_faultctx {
+
+	/*
+	 * the following members are set up by uvm_fault_check() and
+	 * read-only after that.
+	 *
+	 * note that narrow is used by uvm_fault_check() to change
+	 * the behaviour after ERESTART.
+	 *
+	 * most of them might change after RESTART if the underlying
+	 * map entry has been changed behind us.  an exception is
+	 * wire_paging, which does never change.
+	 */
 	vm_prot_t access_type;
-	vm_prot_t enter_prot;
 	vaddr_t startva;
 	int npages;
 	int centeridx;
+	bool narrow;		/* work on a single requested page only */
+	bool wire_mapping;	/* request a PMAP_WIRED mapping
+				   (UVM_FAULT_WIRE or VM_MAPENT_ISWIRED) */
+	bool wire_paging;	/* request uvm_pagewire
+				   (true for UVM_FAULT_WIRE) */
+	bool cow_now;		/* VM_PROT_WRITE is actually requested
+				   (ie. should break COW and page loaning) */
+
+	/*
+	 * enter_prot is set up by uvm_fault_check() and clamped
+	 * (ie. drop the VM_PROT_WRITE bit) in various places in case
+	 * of !cow_now.
+	 */
+	vm_prot_t enter_prot;	/* prot at which we want to enter pages in */
+
+	/*
+	 * the following member is for uvmfault_promote() and ERESTART.
+	 */
 	struct vm_anon *anon_spare;
-	bool wire_mapping;
-	bool narrow;
-	bool wire_paging;
-	bool cow_now;
+
+	/*
+	 * the folloing is actually a uvm_fault_lower() internal.
+	 * it's here merely for debugging.
+	 * (or due to the mechanical separation of the function?)
+	 */
 	bool promote;
 };
 
