@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1712 2011/11/25 07:50:36 njoly Exp $
+#	$NetBSD: mi,v 1.1713 2011/11/28 16:22:15 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3995,7 +3995,7 @@
 ./usr/libdata/debug/usr/libexec/postfix/oqmgr.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/pickup.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/pipe.debug	comp-postfix-debug	postfix,debug
-./usr/libdata/debug/usr/libexec/postfix/postscreen.debug	comp-postfix-debug	postfix,debug
+./usr/libdata/debug/usr/libexec/postfix/postscreen.debug	comp-postfix-debug	postfix,crypto,debug
 ./usr/libdata/debug/usr/libexec/postfix/proxymap.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/qmgr.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/scache.debug	comp-postfix-debug	postfix,debug
