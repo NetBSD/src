@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_overlay.c,v 1.10 2009/10/02 18:50:13 elad Exp $ */
+/* $NetBSD: secmodel_overlay.c,v 1.11 2011/11/28 22:28:34 jym Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.10 2009/10/02 18:50:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.11 2011/11/28 22:28:34 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,8 +123,6 @@ secmodel_overlay_init(void)
 	    secmodel_suser_device_cb, NULL);
 	kauth_listen_scope(OVERLAY_ISCOPE_DEVICE,
 	    secmodel_securelevel_device_cb, NULL);
-
-	secmodel_bsd44_init();
 }
 
 void
@@ -178,8 +176,6 @@ secmodel_overlay_start(void)
 	    secmodel_overlay_device_cb, NULL);
 	l_vnode = kauth_listen_scope(KAUTH_SCOPE_VNODE,
 	    secmodel_overlay_vnode_cb, NULL);
-
-	/* secmodel_register(); */
 }
 
 /*
@@ -205,7 +201,8 @@ secmodel_overlay_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		secmodel_overlay_init();
-		secmodel_bsd44_stop();
+		secmodel_suser_stop();
+		secmodel_securelevel_stop();
 		secmodel_overlay_start();
 		sysctl_security_overlay_setup(&sysctl_overlay_log);
 		break;
