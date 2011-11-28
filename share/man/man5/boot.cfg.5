@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.cfg.5,v 1.22 2011/05/26 04:25:26 uebayasi Exp $
+.\"	$NetBSD: boot.cfg.5,v 1.23 2011/11/28 07:56:53 tls Exp $
 .\"
 .\" Copyright (c) 2007 Stephen Borrill
 .\" All rights reserved.
@@ -147,6 +147,15 @@ time limit for the user to choose an option.
 Passes a
 .Xr userconf 4
 command to the kernel at boot time .
+.It Sy rndseed
+Takes the path to a random-seed file as written by the -S flag to
+.Xr rndctl 8
+as an argument.  This file is used to seed the
+kernel entropy pool
+.Xr rnd 9
+very early in kernel startup, so that high quality randomness is
+available to all kernel modules.  This argument should be supplied
+before any "load" commands that may load executable modules.
 .El
 .Sh EXAMPLES
 Here is an example
