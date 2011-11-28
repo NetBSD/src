@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.24 2011/11/26 01:17:17 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.25 2011/11/28 08:00:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -188,6 +188,8 @@ void		rnd_detach_source(krndsource_t *);
 
 void		rndsink_attach(rndsink_t *);
 void		rndsink_detach(rndsink_t *);
+
+void		rnd_seed(void *, size_t);
 
 #endif /* _KERNEL */
 
