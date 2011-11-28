@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.46 2011/11/17 02:28:21 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.47 2011/11/28 05:33:33 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -44,6 +44,9 @@
 
 extern int perfuse_diagflags;
 
+#if 0
+static void print_node(const char *, puffs_cookie_t);
+#endif
 static void set_expire(puffs_cookie_t, struct fuse_entry_out *, 
    struct fuse_attr_out *);
 static int attr_expired(puffs_cookie_t);
@@ -102,6 +105,27 @@ const int vttoif_tab[9] = {
 #define IFTOVT(mode) (iftovt_tab[((mode) & S_IFMT) >> 12])
 #define VTTOIF(indx) (vttoif_tab[(int)(indx)])
 
+#if 0
+static void 
+print_node(func, opc)
+	const char *func;
+	puffs_cookie_t opc;
+{
+	struct puffs_node *pn;
+	struct perfuse_node_data *pnd;
+	struct vattr *vap;
+
+	pn = (struct puffs_node *)opc;
+	pnd = PERFUSE_NODE_DATA(opc);
+	vap = &pn->pn_va;
+
+	printf("%s: \"%s\", opc = %p, nodeid = 0x%"PRIx64" ino = %"PRIu64"\n",
+	       func, pnd->pnd_name, opc, pnd->pnd_nodeid, vap->va_fileid);
+
+	return;
+}
+#endif /* PERFUSE_DEBUG */
+	
 int
 perfuse_node_close_common(pu, opc, mode)
 	struct puffs_usermount *pu;
@@ -432,6 +456,12 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 	size_t len;
 	int error;
 
+	/*
+	 * Prevent further lookups if the parent was removed
+	 */
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
+		return ESTALE;
+
 	if (pnp == NULL)
 		DERRX(EX_SOFTWARE, "pnp must be != NULL");
 
@@ -453,8 +483,9 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_FILENAME)
 			DPRINTF("%s: opc = %p, file = \"%s\" found "
-				"cookie = %p, nodeid = 0x%"PRIx64" for \"%s\"\n",
-				__func__, (void *)opc, perfuse_node_path(opc), 
+				"cookie = %p, nodeid = 0x%"PRIx64" "
+				"for \"%s\"\n", __func__, 
+				(void *)opc, perfuse_node_path(opc), 
 				(void *)oldpnd->pnd_pn, oldpnd->pnd_nodeid,	
 				path);
 #endif
@@ -1178,6 +1209,15 @@ perfuse_node_lookup(pu, opc, pni, pcn)
 					   pcn->pcn_name, pcn->pcn_cred, &pn);
 	if (error != 0)
 		return error;
+
+	/*
+	 * Kernel would kill us if the filesystem returned the parent
+	 * itself. If we want to live, hide that!
+	 */
+	if ((opc == (puffs_cookie_t)pn) && (strcmp(pcn->pcn_name, ".") != 0)) {
+		DWARNX("lookup returned parent");
+		return ESTALE;
+	}
 
 	/*
 	 * Removed node
@@ -2337,7 +2377,9 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 	int error;
 	
 	pnd = PERFUSE_NODE_DATA(opc);
-	if (pnd->pnd_flags & PND_REMOVED)
+
+	if ((pnd->pnd_flags & PND_REMOVED) ||
+	    (PERFUSE_NODE_DATA(targ)->pnd_flags & PND_REMOVED))
 		return ENOENT;
 
 	/*
@@ -2884,7 +2926,7 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 	fli->lk.pid = fl->l_pid;
 	fli->lk_flags = (flags & F_FLOCK) ? FUSE_LK_FLOCK : 0;
 
-	owner = (uint64_t)(vaddr_t)id;
+	owner = (uint32_t)(vaddr_t)id;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
