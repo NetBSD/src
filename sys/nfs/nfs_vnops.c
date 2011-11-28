@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.292 2011/09/27 01:05:08 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.293 2011/11/28 08:05:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.292 2011/09/27 01:05:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.293 2011/11/28 08:05:06 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.292 2011/09/27 01:05:08 christos Exp
 #include <sys/stat.h>
 #include <sys/unistd.h>
 #include <sys/kauth.h>
+#include <sys/cprng.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
@@ -1638,8 +1639,8 @@ again:
 		if (excl_mode == NFSV3CREATE_EXCLUSIVE) {
 			*tl = txdr_unsigned(NFSV3CREATE_EXCLUSIVE);
 			nfsm_build(tl, u_int32_t *, NFSX_V3CREATEVERF);
-			*tl++ = arc4random();
-			*tl = arc4random();
+			*tl++ = cprng_fast32();
+			*tl = cprng_fast32();
 		} else {
 			*tl = txdr_unsigned(excl_mode);
 			nfsm_v3attrbuild(vap, false);

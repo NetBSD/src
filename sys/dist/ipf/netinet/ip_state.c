@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.36 2010/04/17 21:00:44 darrenr Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.37 2011/11/28 08:05:05 tls Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -115,7 +115,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.36 2010/04/17 21:00:44 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.37 2011/11/28 08:05:05 tls Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.100 2010/01/31 16:22:55 darrenr Exp";
@@ -228,7 +228,7 @@ int fr_stateinit()
 		 * XXX - ips_seed[X] should be a random number of sorts.
 		 */
 #if !defined(NEED_LOCAL_RAND) && defined(_KERNEL)
-		ips_seed[i] = arc4random();
+		ips_seed[i] = cprng_fast32();
 #else
 		ips_seed[i] = ((u_long)ips_seed + i) * fr_statesize;
 		ips_seed[i] += tv.tv_sec;

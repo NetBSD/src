@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.103 2011/10/01 16:06:24 chs Exp $	*/
+/*	$NetBSD: libkern.h,v 1.104 2011/11/28 08:05:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -313,8 +313,6 @@ char	*intoa(u_int32_t);
 void	*memchr(const void *, int, size_t);
 void	*memmove(void *, const void *, size_t);
 int	 pmatch(const char *, const char *, const char **);
-u_int32_t arc4random(void);
-void	 arc4randbytes(void *, size_t);
 #ifndef SMALL_RANDOM
 void	 srandom(unsigned long);
 char	*initstate(unsigned long, char *, size_t);

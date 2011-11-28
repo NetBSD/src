@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_stub.c,v 1.2 2011/11/21 13:42:37 tsutsui Exp $ */
+/*	$NetBSD: cprng_stub.c,v 1.3 2011/11/28 08:05:07 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #include <sys/rngtest.h>
 
 #include <sys/cprng.h>
+
+#include <rump/rumpuser.h>
 
 /*
  * This is all stubbed out because of rump build dependency issues I
@@ -88,4 +90,42 @@ void cprng_strong_destroy(cprng_strong_t *c)
 	cv_destroy(&c->cv);
 	memset(c, 0, sizeof(*c));
 	kmem_free(c, sizeof(*c));
+}
+
+size_t
+cprng_fast(void *p, size_t len)
+{
+	uint8_t *resp, *pchar = (uint8_t *)p;
+	uint32_t res;
+	size_t i;
+
+	do {
+		res = rumpuser_arc4random();
+		resp = (uint8_t *)&res;
+
+		for (i = 0; i < sizeof(res); i++) {
+		    *pchar++ = resp[i];
+		    if (pchar == (uint8_t *)p + len) {
+			return len;
+		    }
+		}
+	} while(1);
+}
+
+uint32_t
+cprng_fast32(void)
+{
+	return rumpuser_arc4random();
+}
+
+uint64_t
+cprng_fast64(void)
+{
+	uint64_t ret;
+	uint32_t *ret32;
+
+	ret32 = (uint32_t *)&ret;
+	ret32[0] = rumpuser_arc4random();
+	ret32[1] = rumpuser_arc4random();
+	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.1 2011/11/19 22:51:31 tls Exp $ */
+/*	$NetBSD: cprng.h,v 1.2 2011/11/28 08:05:07 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -42,26 +42,38 @@
  */
 #define CPRNG_MAX_LEN	524288
 
+#ifndef _RUMPKERNEL
+/*
+ * We do not want an arc4random() prototype available to anyone.
+ */
+void _arc4randbytes(void *, size_t);
+uint32_t _arc4random(void);
+
 static inline size_t
 cprng_fast(void *p, size_t len)
 {
-	arc4randbytes(p, len);
+	_arc4randbytes(p, len);
 	return len;
 }
 
 static inline uint32_t
 cprng_fast32(void)
 {
-	return arc4random();
+	return _arc4random();
 }
 
 static inline uint64_t
 cprng_fast64(void)
 {
 	uint64_t r;
-	arc4randbytes(&r, sizeof(r));
+	_arc4randbytes(&r, sizeof(r));
 	return r;
 }
+#else
+size_t cprng_fast(void *, size_t);
+uint32_t cprng_fast32(void);
+uint64_t cprng_fast64(void);
+#endif
 
 typedef struct _cprng_strong {
 	kmutex_t      mtx;

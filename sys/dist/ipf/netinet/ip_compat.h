@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.29 2010/06/01 08:53:20 plunky Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.30 2011/11/28 08:05:05 tls Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -216,7 +216,7 @@ typedef unsigned int	u_32_t;
 
 # ifdef _KERNEL
 #  define	NEED_LOCAL_RAND	1
-#  define	ipf_random		arc4random
+#  define	ipf_random		cprng_fast32
 #  define	KRWLOCK_T		krwlock_t
 #  define	KMUTEX_T		kmutex_t
 
@@ -582,7 +582,8 @@ typedef struct {
 
 # ifdef _KERNEL
 #  define	NEED_LOCAL_RAND	1
-#  define	ipf_random		arc4random
+#include <sys/cprng.h>
+#  define	ipf_random		cprng_fast32
 #  define	ATOMIC_INC(x)		{ MUTEX_ENTER(&ipf_rw); \
 					  (x)++; MUTEX_EXIT(&ipf_rw); }
 #  define	ATOMIC_DEC(x)		{ MUTEX_ENTER(&ipf_rw); \
@@ -806,7 +807,9 @@ typedef unsigned int    u_32_t;
 #  endif
 # endif
 
+#ifndef _KERNEL
 # define	ipf_random	arc4random
+#endif
 
 # if (__NetBSD_Version__ >= 499000000)
 #  ifdef _KERNEL
@@ -834,7 +837,8 @@ typedef unsigned int    u_32_t;
 # endif
 
 # ifdef _KERNEL
-#  define	ipf_random	arc4random
+#  include <sys/cprng.h>
+#  define	ipf_random	cprng_fast32
 #  if (__NetBSD_Version__ >= 399001400)
 #   define	KMALLOCS(a, b, c)	(a) = (b)malloc((c), _M_IPF, M_NOWAIT)
 #  endif
