@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.86 2011/11/23 10:47:48 tls Exp $	*/
+/*	$NetBSD: rnd.c,v 1.87 2011/11/28 07:56:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.86 2011/11/23 10:47:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.87 2011/11/28 07:56:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -184,6 +184,7 @@ static int		rnd_tested = 0;
 
 LIST_HEAD(, krndsource)	rnd_sources;
 
+static rndsave_t	*boot_rsp;
 /*
  * Generate a 32-bit counter.  This should be more machine dependent,
  * using cycle counters and the like when possible.
@@ -406,6 +407,23 @@ rnd_init(void)
 	printf("rnd: initialised (%u)%s", RND_POOLBITS,
 	       c ? " with counter\n" : "\n");
 #endif
+	if (boot_rsp != NULL) {
+		mutex_spin_enter(&rndpool_mtx);
+			rndpool_add_data(&rnd_pool, boot_rsp->data,
+					 sizeof(boot_rsp->data),
+					 MIN(boot_rsp->entropy,
+					     RND_POOLBITS / 2));
+		if (rndpool_get_entropy_count(&rnd_pool) >
+		    RND_ENTROPY_THRESHOLD * 8) {
+                	rnd_have_entropy = 1;
+		}
+                mutex_spin_exit(&rndpool_mtx);
+#ifdef RND_VERBOSE
+		printf("rnd: seeded with %d bits\n",
+		       MIN(boot_rsp->entropy, RND_POOLBITS / 2));
+#endif
+		memset(boot_rsp, 0, sizeof(*boot_rsp));
+	}
 }
 
 int
@@ -748,32 +766,41 @@ rndioctl(dev_t dev, u_long cmd, void *addr, int flag,
 		break;
 
 	case RNDADDDATA:
-		rnddata = (rnddata_t *)addr;
+		/*
+		 * Don't seed twice if our bootloader has
+		 * seed loading support.
+		 */
+		if (!boot_rsp) {
+			rnddata = (rnddata_t *)addr;
 
-		if (rnddata->len > sizeof(rnddata->data))
-			return EINVAL;
+			if (rnddata->len > sizeof(rnddata->data))
+				return EINVAL;
 
-		if (estimate_ok) {
-			/*
-			 * Do not accept absurd entropy estimates, and
-			 * do not flood the pool with entropy such that
-			 * new samples are discarded henceforth.
-			 */
-			estimate = MIN((rnddata->len * NBBY) / 2,
-				       MIN(rnddata->entropy,
-					   RND_POOLWORDS * sizeof(int) *
-					   NBBY / 2));
-		} else {
-			estimate = 0;
+			if (estimate_ok) {
+				/*
+				 * Do not accept absurd entropy estimates, and
+				 * do not flood the pool with entropy such that
+				 * new samples are discarded henceforth.
+				 */
+				estimate = MIN((rnddata->len * NBBY) / 2,
+					       MIN(rnddata->entropy,
+						   RND_POOLBITS / 2));
+			} else {
+				estimate = 0;
+			}
+
+			mutex_spin_enter(&rndpool_mtx);
+			rndpool_add_data(&rnd_pool, rnddata->data,
+					 rnddata->len, estimate);
+			mutex_spin_exit(&rndpool_mtx);
+
+			rnd_wakeup_readers();
 		}
-
-		mutex_spin_enter(&rndpool_mtx);
-		rndpool_add_data(&rnd_pool, rnddata->data, rnddata->len,
-				 estimate);
-		mutex_spin_exit(&rndpool_mtx);
-
-		rnd_wakeup_readers();
-
+#ifdef RND_VERBOSE
+		else {
+			printf("rnd: already seeded by boot loader\n");
+		}
+#endif
 		break;
 
 	default:
@@ -1440,4 +1467,48 @@ rndsink_detach(rndsink_t *rs)
 		}
 	}
 	mutex_spin_exit(&rndpool_mtx);
+}
+
+void
+rnd_seed(void *base, size_t len)
+{
+	SHA1_CTX s;
+	uint8_t digest[SHA1_DIGEST_LENGTH];
+
+	if (len != sizeof(*boot_rsp)) {
+		aprint_error("rnd: bad seed length %d\n", (int)len);
+		return;
+	}
+
+	boot_rsp = (rndsave_t *)base;
+	SHA1Init(&s);
+	SHA1Update(&s, (uint8_t *)&boot_rsp->entropy,
+		   sizeof(boot_rsp->entropy));
+	SHA1Update(&s, boot_rsp->data, sizeof(boot_rsp->data));
+	SHA1Final(digest, &s);
+
+	if (memcmp(digest, boot_rsp->digest, sizeof(digest))) {
+		aprint_error("rnd: bad seed checksum\n");
+		return;
+	}
+
+	/*
+	 * It's not really well-defined whether bootloader-supplied
+	 * modules run before or after rnd_init().  Handle both cases.
+	 */
+	if (rnd_ready) {
+#ifdef RND_VERBOSE
+		printf("rnd: ready, feeding in seed data directly.\n");
+#endif
+		mutex_spin_enter(&rndpool_mtx);
+		rndpool_add_data(&rnd_pool, boot_rsp->data,
+				 sizeof(boot_rsp->data),
+				 MIN(boot_rsp->entropy, RND_POOLBITS / 2));
+		memset(boot_rsp, 0, sizeof(*boot_rsp));
+		mutex_spin_exit(&rndpool_mtx);
+	} else {
+#ifdef RND_VERBOSE
+		printf("rnd: not ready, deferring seed feed.\n");
+#endif
+	}
 }
