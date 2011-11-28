@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.26 2011/11/27 00:09:04 tsutsui Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.27 2011/11/28 08:05:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -112,7 +112,8 @@ kmutex_t	arc4_mtx;
 
 static inline u_int8_t arc4_randbyte(void);
 static inline void arc4randbytes_unlocked(void *, size_t);
-
+void _arc4randbytes(void *, size_t);
+uint32_t _arc4random(void);
 
 static inline void
 arc4_swap(u_int8_t *a, u_int8_t *b)
@@ -283,18 +284,6 @@ arc4_randbyte(void)
 	return arc4_sbox[arc4_t];
 }
 
-u_int32_t
-arc4random(void)
-{
-	u_int32_t ret;
-	u_int8_t *retc;
-
-	retc = (u_int8_t *)&ret;
-
-	arc4randbytes(retc, sizeof(u_int32_t));
-	return ret;
-}
-
 static inline void
 arc4randbytes_unlocked(void *p, size_t len)
 {
@@ -306,7 +295,7 @@ arc4randbytes_unlocked(void *p, size_t len)
 }
 
 void
-arc4randbytes(void *p, size_t len)
+_arc4randbytes(void *p, size_t len)
 {
 	/* Initialize array if needed. */
 	if (!arc4_initialized) {
@@ -322,4 +311,16 @@ arc4randbytes(void *p, size_t len)
 	    (time_uptime > arc4_nextreseed)) {
 		arc4_randrekey(NULL);
 	}
+}
+
+u_int32_t
+_arc4random(void)
+{
+        u_int32_t ret;
+        u_int8_t *retc;
+
+        retc = (u_int8_t *)&ret;
+
+        _arc4randbytes(retc, sizeof(u_int32_t));
+        return ret;
 }
