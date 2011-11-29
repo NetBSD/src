@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.25 2010/11/14 04:31:02 uebayasi Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.26 2011/11/29 07:43:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -199,7 +199,7 @@ extern int *uvmexp_pageshift;
  */
 #ifdef _KERNEL
 #define	atop(x)		(((paddr_t)(x)) >> PAGE_SHIFT)
-#define	ptoa(x)		((vaddr_t)((vaddr_t)(x) << PAGE_SHIFT))
+#define	ptoa(x)		(((paddr_t)(x)) << PAGE_SHIFT)
 
 /*
  * Round off or truncate to the nearest page.  These will work
