@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.360 2011/11/28 20:19:28 tls Exp $
+#       $NetBSD: Makefile,v 1.361 2011/11/29 03:40:41 tls Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -74,7 +74,9 @@ MLINKS+=cprng.9	cprng_strong.9 \
 	cprng.9 cprng_fast.9 \
 	cprng.9 cprng_fast32.9 \
 	cprng.9 cprng_fast64.9 \
-	cprng.9 arc4random.9
+	cprng.9 arc4random.9 \
+	cprng.9 arc4randbytes.9 \
+	cprng.9 rnd_extract_data.9
 	
 MAN+=	deviter.9
 MLINKS+=deviter.9 deviter_first.9 \
