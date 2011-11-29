@@ -1,4 +1,4 @@
-/*	$NetBSD: md5crypt.c,v 1.10 2011/11/29 13:18:52 drochner Exp $	*/
+/*	$NetBSD: md5crypt.c,v 1.11 2011/11/29 17:27:10 drochner Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -15,38 +15,22 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: md5crypt.c,v 1.10 2011/11/29 13:18:52 drochner Exp $");
+__RCSID("$NetBSD: md5crypt.c,v 1.11 2011/11/29 17:27:10 drochner Exp $");
 #endif /* not lint */
-
-/*
- * NOTE: We are also built for inclusion in libcrypto; when built for that
- * environment, use the libcrypto versions of the MD5 routines, so save
- * having to pull two versions into the same program.
- */
 
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef libcrypto
-#include <openssl/md5.h>
-#else
 #include <md5.h>
-#endif
 
 #include "crypt.h"
 
 #define MD5_MAGIC	"$1$"
 #define MD5_MAGIC_LEN	3
 
-#ifdef libcrypto
-#define	INIT(x)			MD5_Init((x))
-#define	UPDATE(x, b, l)		MD5_Update((x), (b), (l))
-#define	FINAL(v, x)		MD5_Final((v), (x))
-#else
 #define	INIT(x)			MD5Init((x))
 #define	UPDATE(x, b, l)		MD5Update((x), (b), (l))
 #define	FINAL(v, x)		MD5Final((v), (x))
-#endif
 
 
 /*
@@ -117,8 +101,7 @@ __md5crypt(const char *pw, const char *salt)
 
 	FINAL(final, &ctx);
 
-	/* Don't leave anything around in vm they could use. */
-	memset(&ctx, 0, sizeof(ctx));
+	/* memset(&ctx, 0, sizeof(ctx)); done by MD5Final() */
 
 	/*
 	 * And now, just to make sure things don't run too fast. On a 60 MHz
@@ -147,8 +130,7 @@ __md5crypt(const char *pw, const char *salt)
 		FINAL(final, &ctx1);
 	}
 
-	/* Don't leave anything around in vm they could use. */
-	memset(&ctx1, 0, sizeof(ctx1));
+	/* memset(&ctx1, 0, sizeof(ctx1)); done by MD5Final() */
 
 	p = passwd + sl + MD5_MAGIC_LEN + 1;
 
