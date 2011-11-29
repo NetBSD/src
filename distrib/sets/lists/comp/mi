@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1714 2011/11/28 20:19:25 tls Exp $
+#	$NetBSD: mi,v 1.1715 2011/11/29 03:40:42 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9576,6 +9576,7 @@
 ./usr/share/man/cat9/aprint_verbose_dev.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_verbose_ifnet.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/arc4random.0		comp-sys-catman		.cat
+./usr/share/man/cat9/arc4randbytes.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/arp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/arp_ifinit.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/arpintr.0			comp-sys-catman		.cat
@@ -10475,6 +10476,7 @@
 ./usr/share/man/cat9/rnd_add_uint32.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_attach_source.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_detach_source.0	comp-sys-catman		.cat
+./usr/share/man/cat9/rnd_extract_data.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rounddown.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/roundup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/roundup2.0			comp-sys-catman		.cat
@@ -15719,6 +15721,7 @@
 ./usr/share/man/html9/aprint_verbose_dev.html	comp-sys-htmlman	html
 ./usr/share/man/html9/aprint_verbose_ifnet.html	comp-sys-htmlman	html
 ./usr/share/man/html9/arc4random.html		comp-sys-htmlman	html
+./usr/share/man/html9/arc4randbytes.html	comp-sys-htmlman	html
 ./usr/share/man/html9/arp.html			comp-sys-htmlman	html
 ./usr/share/man/html9/arp_ifinit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/arpintr.html		comp-sys-htmlman	html
@@ -16579,6 +16582,7 @@
 ./usr/share/man/html9/rnd_add_uint32.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rnd_attach_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rnd_detach_source.html	comp-sys-htmlman	html
+./usr/share/man/html9/rnd_extract_data.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rounddown.html		comp-sys-htmlman	html
 ./usr/share/man/html9/roundup.html		comp-sys-htmlman	html
 ./usr/share/man/html9/roundup2.html		comp-sys-htmlman	html
@@ -21971,6 +21975,7 @@
 ./usr/share/man/man9/aprint_verbose_dev.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_verbose_ifnet.9	comp-sys-man		.man
 ./usr/share/man/man9/arc4random.9		comp-sys-man		.man
+./usr/share/man/man9/arc4randbytes.9		comp-sys-man		.man
 ./usr/share/man/man9/arp.9			comp-sys-man		.man
 ./usr/share/man/man9/arp_ifinit.9		comp-sys-man		.man
 ./usr/share/man/man9/arpintr.9			comp-sys-man		.man
@@ -22870,6 +22875,7 @@
 ./usr/share/man/man9/rnd_add_uint32.9		comp-sys-man		.man
 ./usr/share/man/man9/rnd_attach_source.9	comp-sys-man		.man
 ./usr/share/man/man9/rnd_detach_source.9	comp-sys-man		.man
+./usr/share/man/man9/rnd_extract_data.9		comp-sys-man		.man
 ./usr/share/man/man9/rounddown.9		comp-sys-man		.man
 ./usr/share/man/man9/roundup.9			comp-sys-man		.man
 ./usr/share/man/man9/roundup2.9			comp-sys-man		.man
