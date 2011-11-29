@@ -445,6 +445,13 @@ kvtophys(vaddr_t kva)
 		if (kva >= VM_MAX_KERNEL_ADDRESS)
 			goto overrun;
 
+#ifdef ENABLE_MIPS_KSEGX
+		if (VM_KSEGX_ADDRESS <= kva
+		    && kva < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE) {
+			return mips_ksegx_start + kva - VM_KSEGX_ADDRESS;
+		}
+#endif
+
 		pte = kvtopte(kva);
 		if ((size_t) (pte - Sysmap) >= Sysmapsize)  {
 			printf("oops: Sysmap overrun, max %d index %zd\n",
