@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.25 2011/11/28 08:00:48 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.26 2011/11/29 03:50:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,32 +51,6 @@
 #define	RND_DEV_RANDOM	0	/* minor devices for random and kinda random */
 #define	RND_DEV_URANDOM	1
 
-#ifdef _KERNEL
-/*
- * Size of entropy pool in 32-bit words.  This _MUST_ be a power of 2.  Don't
- * change this unless you really know what you are doing...
- */
-#ifndef RND_POOLWORDS
-#define	RND_POOLWORDS	128
-#endif
-#define	RND_POOLBITS	(RND_POOLWORDS * 32)
-
-/*
- * Number of bytes returned per hash.  This value is used in both
- * rnd.c and rndpool.c to decide when enough entropy exists to do a
- * hash to extract it.
- */
-#define	RND_ENTROPY_THRESHOLD	10
-
-/*
- * Size of the event queue.  This _MUST_ be a power of 2.
- */
-#ifndef RND_EVENTQSIZE
-#define	RND_EVENTQSIZE	128
-#endif
-
-#endif	/* _KERNEL */
-
 /*
  * Exposed "size" of entropy pool, for convenience in load/save
  * from userspace.  Do not assume this is the same as the actual in-kernel
@@ -126,6 +100,14 @@ typedef struct {
 #define	RND_TYPE_MAX		5	/* last type id used */
 
 #ifdef _KERNEL
+/*
+ * Size of entropy pool in 32-bit words.  This _MUST_ be a power of 2.  Don't
+ * change this unless you really know what you are doing...
+ */
+#ifndef RND_POOLWORDS
+#define RND_POOLWORDS	128
+#endif
+#define RND_POOLBITS	(RND_POOLWORDS * 32)
 
 typedef struct krndsource {
 	LIST_ENTRY(krndsource) list;	/* the linked list */
@@ -157,14 +139,6 @@ typedef struct {
         uint32_t        pool[RND_POOLWORDS]; /* random pool data */
 } rndpool_t;
 
-/*
- * Used by rnd_extract_data() and rndpool_extract_data() to describe how
- * "good" the data has to be.
- */
-#define	RND_EXTRACT_ANY		0  /* extract anything, even if no entropy */
-#define	RND_EXTRACT_GOOD	1  /* return as many good bytes
-				      (short read ok) */
-
 #define RND_ENABLED(rp) \
         (((rp)->flags & RND_FLAG_NO_COLLECT) == 0)
 
@@ -181,7 +155,6 @@ void		rnd_init(void);
 void		rnd_add_uint32(krndsource_t *, uint32_t);
 void		rnd_add_data(krndsource_t *, const void *const, uint32_t,
 		    uint32_t);
-uint32_t	rnd_extract_data(void *, uint32_t, uint32_t);
 void		rnd_attach_source(krndsource_t *, const char *,
 		    uint32_t, uint32_t);
 void		rnd_detach_source(krndsource_t *);

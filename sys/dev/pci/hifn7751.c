@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.47 2011/11/19 22:51:23 tls Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.48 2011/11/29 03:50:31 tls Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.47 2011/11/19 22:51:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.48 2011/11/29 03:50:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.47 2011/11/19 22:51:23 tls Exp $");
 #else
 #include <opencrypto/cryptodev.h>
 #include <sys/cprng.h>
+#include <sys/rnd.h>
+#include <sys/sha1.h>
 #endif
 
 #include <dev/pci/pcireg.h>
@@ -544,7 +546,7 @@ hifn_rng(void *vsc)
 {
 	struct hifn_softc *sc = vsc;
 #ifdef __NetBSD__
-	u_int32_t num[HIFN_RNG_BITSPER * RND_ENTROPY_THRESHOLD];
+	u_int32_t num[HIFN_RNG_BITSPER * SHA1_DIGEST_LENGTH];
 #else
 	u_int32_t num[2];
 #endif

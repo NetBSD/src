@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.20 2008/04/28 20:23:47 martin Exp $        */
+/*      $NetBSD: rndpool.c,v 1.21 2011/11/29 03:50:31 tls Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,13 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.20 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.21 2011/11/29 03:50:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sha1.h>
 
 #include <sys/rnd.h>
+#include <dev/rnd_private.h>
 
 /*
  * The random pool "taps"
@@ -64,7 +65,7 @@ rndpool_init(rndpool_t *rp)
 	rp->stats.threshold = RND_ENTROPY_THRESHOLD;
 	rp->stats.maxentropy = RND_POOLBITS;
 
-	KASSERT(RND_ENTROPY_THRESHOLD*2 <= 20); /* XXX sha knowledge */
+	KASSERT(RND_ENTROPY_THRESHOLD * 2 <= SHA1_DIGEST_LENGTH);
 }
 
 u_int32_t
@@ -250,7 +251,7 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 {
 	u_int i;
 	SHA1_CTX hash;
-	u_char digest[20];	/* XXX SHA knowledge */
+	u_char digest[SHA1_DIGEST_LENGTH];
 	u_int32_t remain, deltae, count;
 	u_int8_t *buf;
 	int good;
@@ -263,7 +264,7 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 	else
 		good = (rp->stats.curentropy >= (8 * RND_ENTROPY_THRESHOLD));
 
-	KASSERT(RND_ENTROPY_THRESHOLD*2 <= 20); /* XXX SHA knowledge */
+	KASSERT(RND_ENTROPY_THRESHOLD * 2 <= sizeof(digest));
 
 	while (good && (remain != 0)) {
 		/*
