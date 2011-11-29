@@ -1,4 +1,4 @@
-.\"	$NetBSD: npf.conf.5,v 1.5 2011/03/22 07:31:42 jruoho Exp $
+.\"	$NetBSD: npf.conf.5,v 1.6 2011/11/29 01:12:09 riz Exp $
 .\"
 .\" Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -177,8 +177,8 @@ int_if = "wm1"
 services_tcp = "{ http, https, smtp, domain, 6000 }"
 services_udp = "{ domain, ntp, 6000 }"
 
-table "1" type "hash" file "/etc/npf_blacklist"
-table "2" type "tree" dynamic
+table "1" type hash file "/etc/npf_blacklist"
+table "2" type tree dynamic
 
 nat $ext_if from 192.168.0.0/24 to any -> $ext_if
 
