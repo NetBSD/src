@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.79 2011/11/29 19:17:03 bouyer Exp $	*/
+/*	$NetBSD: fss.c,v 1.80 2011/11/29 20:56:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.79 2011/11/29 19:17:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.80 2011/11/29 20:56:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,6 +304,7 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct fss_set *fss = (struct fss_set *)data;
 	struct fss_set50 *fss50 = (struct fss_set50 *)data;
 	struct fss_get *fsg = (struct fss_get *)data;
+	struct fss_get50 *fsg50 = (struct fss_get50 *)data;
 
 	switch (cmd) {
 	case FSSIOCSET50:
@@ -334,6 +335,32 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			error = ENXIO;
 		else
 			error = fss_delete_snapshot(sc, l);
+		mutex_exit(&sc->sc_lock);
+		break;
+
+	case FSSIOCGET50:
+		mutex_enter(&sc->sc_lock);
+		switch (sc->sc_flags & (FSS_PERSISTENT | FSS_ACTIVE)) {
+		case FSS_ACTIVE:
+			memcpy(fsg50->fsg_mount, sc->sc_mntname, MNAMELEN);
+			fsg50->fsg_csize = FSS_CLSIZE(sc);
+			timeval_to_timeval50(&sc->sc_time, &fsg50->fsg_time);
+			fsg50->fsg_mount_size = sc->sc_clcount;
+			fsg50->fsg_bs_size = sc->sc_clnext;
+			error = 0;
+			break;
+		case FSS_PERSISTENT | FSS_ACTIVE:
+			memcpy(fsg50->fsg_mount, sc->sc_mntname, MNAMELEN);
+			fsg50->fsg_csize = 0;
+			timeval_to_timeval50(&sc->sc_time, &fsg50->fsg_time);
+			fsg50->fsg_mount_size = 0;
+			fsg50->fsg_bs_size = 0;
+			error = 0;
+			break;
+		default:
+			error = ENXIO;
+			break;
+		}
 		mutex_exit(&sc->sc_lock);
 		break;
 
