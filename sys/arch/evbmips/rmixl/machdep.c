@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp");
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/intr.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/extent.h>
@@ -117,6 +118,7 @@ __KERNEL_RCSID(0, "machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp");
 #include <mips/psl.h>
 #include <mips/cache.h>
 #include <mips/mips_opcode.h>
+#include <mips/pte.h>
 
 #include "com.h"
 #if NCOM == 0
@@ -125,8 +127,6 @@ __KERNEL_RCSID(0, "machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp");
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
-
-#include <mips/include/intr.h>
 
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
@@ -163,6 +163,10 @@ bus_addr_t	comcnaddr  = (bus_addr_t)CONSADDR;
 
 struct rmixl_config rmixl_configuration;
 
+#ifdef ENABLE_MIPS_KSEGX
+pt_entry_t mips_ksegx_pte;
+paddr_t mips_ksegx_start;
+#endif
 
 /*
  * array of tested firmware versions
@@ -244,6 +248,8 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	void *kernend;
 	uint64_t memsize;
 	extern char edata[], end[];
+	size_t fl_count = 0;
+	struct mips_vmfreelist fl[1];
 
 	rmixl_pcr_init_core();
 
@@ -365,7 +371,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
 		0x1FC00000, 0x1FC00000+NBPG);
 
-#ifdef MULTIPROCEESOR
+#ifdef MULTIPROCESSOR
 	/* reserve the cpu_wakeup_info area */
 	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
 		(u_quad_t)trunc_page(rcp->rc_cpu_wakeup_info),
@@ -376,6 +382,31 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	/* reserve everything >= MEMLIMIT */
 	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
 		(u_quad_t)MEMLIMIT, (u_quad_t)~0);
+#endif
+
+#ifdef ENABLE_MIPS_KSEGX
+	/*
+	 * Now we need to reserve an aligned block of memory for pre-init
+	 * allocations so we don't deplete KSEG0.
+	 */
+	for (u_int i=0; i < mem_cluster_cnt; i++) {
+		u_quad_t finish = round_page(
+			mem_clusters[i].start + mem_clusters[i].size);
+		u_quad_t start = roundup2(mem_clusters[i].start, VM_KSEGX_SIZE);
+		if (start > MIPS_PHYS_MASK && start + VM_KSEGX_SIZE <= finish) {
+			mips_ksegx_start = start;
+			mips_ksegx_pte.pt_entry = mips_paddr_to_tlbpfn(start)
+			    | MIPS3_PG_D | MIPS3_PG_CACHED
+			    | MIPS3_PG_V | MIPS3_PG_G;
+			fl[0].fl_start = start;
+			fl[0].fl_end = start + VM_KSEGX_SIZE;
+			fl[0].fl_freelist = VM_FREELIST_FIRST512M;
+			fl_count++;
+			DPRINTF(("mips_ksegx_start %#"PRIxPADDR"\n",
+			    fl[0].fl_start));
+			break;
+		}
+	}
 #endif
 
 	/* get maximum RAM address from the VM clusters */
@@ -392,7 +423,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	 * Load mem_clusters[] into the VM system.
 	 */
 	mips_page_physload(MIPS_KSEG0_START, (vaddr_t) kernend,
-	    mem_clusters, mem_cluster_cnt, NULL, 0);
+	    mem_clusters, mem_cluster_cnt, fl, fl_count);
 
 	/*
 	 * Initialize error message buffer (at end of core).

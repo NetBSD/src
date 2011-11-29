@@ -91,6 +91,10 @@ struct cpu_info cpu_info_store
 #endif
 };
 
+#ifdef ENABLE_MIPS_KSEGX
+struct vm_map *mips_ksegx_map;
+#endif
+
 #ifdef MULTIPROCESSOR
 
 volatile __cpuset_t cpus_running = 1;
@@ -302,7 +306,23 @@ cpu_startup_common(void)
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
+#ifdef ENABLE_MIPS_KSEGSX
+	if (mips_virtual_end > KM_KSEGX_ADDRESS) {
+		KASSERT(mips_virtual_end > KM_KSEGX_ADDRESS + VM_KSEGX_SIZE);
+		minaddr = VM_KSEGX_ADDRESS;
+		maxaddr = VM_KSEGX_ADDRESS;
+		/*
+		 * Allocate a submap for ksegx.
+		 */
+		mips_ksegx_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+		    VM_KSEGX_SIZE, 0, FALSE, NULL);
+		KASSERT(mips_ksegx_map);
+		KASSERT(mips_ksegx_map->header.start == VM_KSEGX_ADDRESS);
+	}
+#endif
+
 	minaddr = 0;
+	maxaddr = VM_MAX_KERNEL_ADDRESS;
 	/*
 	 * Allocate a submap for physio.
 	 */

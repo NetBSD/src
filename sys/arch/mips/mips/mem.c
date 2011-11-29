@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35.38.6 2011/04/29 08:26:27 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.35.38.7 2011/11/29 07:48:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.6 2011/04/29 08:26:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.7 2011/11/29 07:48:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -143,10 +143,19 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			if (v < MIPS_KSEG0_START)
 				return (EFAULT);
 			if (v > MIPS_PHYS_TO_KSEG0(mips_avail_end +
-					mips_round_page(MSGBUFSIZE) - c) &&
-			    (v < MIPS_KSEG2_START ||
-			    !uvm_kernacc((void *)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
+					mips_round_page(MSGBUFSIZE) - c)
+			    && (v < MIPS_KSEG2_START
+				|| (
+#ifdef ENABLE_MIPS_KSEGX
+				    (v < VM_KSEGX_ADDRESS
+				     || v >= VM_KSEGX_ADDRESS + VM_KSEGX_SIZE)
+#else
+				    true
+#endif
+				    && !uvm_kernacc((void *)v, c,
+					uio->uio_rw == UIO_READ
+					    ? B_READ
+					    : B_WRITE))))
 				return (EFAULT);
 #endif
 			error = uiomove((void *)v, c, uio);

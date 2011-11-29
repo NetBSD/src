@@ -493,6 +493,25 @@ pmap_bootstrap(void)
 
 	pmap_tlb_info_init(&pmap_tlb0_info);		/* init the lock */
 
+#ifdef ENABLE_MIPS_KSEGX
+	const vaddr_t kva_inc = 1 << ((VM_KSEGX_SHIFT - 1) & ~1);
+	const uint32_t tlb_mask = (2 * kva_inc - 1) & 0x1ffffc00;
+	for (vaddr_t kva = 0; kva < VM_KSEGX_SIZE; kva += 2 * kva_inc) {
+		extern pt_entry_t mips_ksegx_pte;
+		struct tlbmask tlb = {
+		    .tlb_hi = VM_KSEGX_ADDRESS + kva,
+		    .tlb_lo0 = mips_ksegx_pte.pt_entry
+			+ mips_paddr_to_tlbpfn(kva),
+		    .tlb_lo1 = mips_ksegx_pte.pt_entry
+			+ mips_paddr_to_tlbpfn(kva + kva_inc),
+		    .tlb_mask = tlb_mask,
+		};
+		tlb_write_indexed(pmap_tlb0_info.ti_wired, &tlb);
+		pmap_tlb0_info.ti_wired++;
+	}
+	mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
+#endif
+
 	/*
 	 * Compute the number of pages kmem_map will have.
 	 */
@@ -546,6 +565,17 @@ pmap_bootstrap(void)
 	mips_virtual_end = VM_MIN_KERNEL_ADDRESS + (vaddr_t)Sysmapsize * NBPG;
 
 #ifndef _LP64
+#ifdef ENABLE_MIPS_KSEGX
+	/*
+	 * This wastes 256MB / 1024 or 256KB to bypass the reserved space
+	 * for KSEGX.  If the kernel used a 2-level page table, we'd only
+	 * waste 1K or less.
+	 */
+	if (mips_virtual_end > VM_KSEGX_ADDRESS) {
+		mips_virtual_end += VM_KSEGX_SIZE / NBPG;
+	}
+#endif
+ 
 	if (mips_virtual_end > VM_MAX_KERNEL_ADDRESS) {
 		mips_virtual_end = VM_MAX_KERNEL_ADDRESS;
 		Sysmapsize =
@@ -2648,11 +2678,16 @@ mips_pmap_map_poolpage(paddr_t pa)
 	KASSERT(mips_options.mips3_xkphys_cached);
 	va = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
 #else
+#ifdef ENABLE_MIPS_KSEGX
+	if (pa >= mips_ksegx_start && pa < mips_ksegx_start + VM_KSEGX_SIZE) {
+		va = VM_KSEGX_ADDRESS + pa - mips_ksegx_start;
+	} else
+#endif
 	if (pa > MIPS_PHYS_MASK)
 		panic("mips_pmap_map_poolpage: "
 		    "pa #%"PRIxPADDR" can not be mapped into KSEG0", pa);
-
-	va = MIPS_PHYS_TO_KSEG0(pa);
+	else
+		va = MIPS_PHYS_TO_KSEG0(pa);
 #endif
 #endif
 #if !defined(_LP64) || defined(PMAP_POOLPAGE_DEBUG)
@@ -2685,8 +2720,15 @@ mips_pmap_unmap_poolpage(vaddr_t va)
 	KASSERT(MIPS_XKPHYS_P(va));
 	pa = MIPS_XKPHYS_TO_PHYS(va);
 #else
-	KASSERT(MIPS_KSEG0_P(va));
-	pa = MIPS_KSEG0_TO_PHYS(va);
+#ifdef ENABLE_MIPS_KSEGX
+	if (VM_KSEGX_ADDRESS <= va && va < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE) {
+		pa = mips_ksegx_start + va - VM_KSEGX_ADDRESS;
+	} else
+#endif
+	{
+		KASSERT(MIPS_KSEG0_P(va));
+		pa = MIPS_KSEG0_TO_PHYS(va);
+	}
 #endif
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 	KASSERT(pg);
