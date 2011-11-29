@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.2 2011/11/21 13:44:38 tsutsui Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.3 2011/11/29 03:50:31 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <sys/mutex.h>
 #include <sys/rngtest.h>
 #include <sys/rnd.h>
+#include <dev/rnd_private.h>
 
 #if defined(__HAVE_CPU_COUNTER)
 #include <machine/cpu_counter.h>
@@ -45,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.2 2011/11/21 13:44:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.3 2011/11/29 03:50:31 tls Exp $");
 
 void
 cprng_init(void)

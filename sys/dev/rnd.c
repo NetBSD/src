@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.87 2011/11/28 07:56:54 tls Exp $	*/
+/*	$NetBSD: rnd.c,v 1.88 2011/11/29 03:50:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.87 2011/11/28 07:56:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.88 2011/11/29 03:50:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.87 2011/11/28 07:56:54 tls Exp $");
 #include <sys/once.h>
 #include <sys/rngtest.h>
 #include <sys/cpu.h>	/* XXX temporary, see rnd_detach_source */
+
+#include <dev/rnd_private.h>
 
 #if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
 #include <machine/cpu_counter.h>
