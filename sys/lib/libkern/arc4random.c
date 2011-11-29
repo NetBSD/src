@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.28 2011/11/29 03:50:32 tls Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.29 2011/11/29 13:16:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include <sys/rnd.h>
 #include <dev/rnd_private.h>
 
-rndsink_t	rs;
+static rndsink_t	rs;
 
 #endif
 
