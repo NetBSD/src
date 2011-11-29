@@ -1,4 +1,4 @@
-/*	$NetBSD: md5crypt.c,v 1.9 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: md5crypt.c,v 1.10 2011/11/29 13:18:52 drochner Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: md5crypt.c,v 1.9 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: md5crypt.c,v 1.10 2011/11/29 13:18:52 drochner Exp $");
 #endif /* not lint */
 
 /*
@@ -117,6 +117,9 @@ __md5crypt(const char *pw, const char *salt)
 
 	FINAL(final, &ctx);
 
+	/* Don't leave anything around in vm they could use. */
+	memset(&ctx, 0, sizeof(ctx));
+
 	/*
 	 * And now, just to make sure things don't run too fast. On a 60 MHz
 	 * Pentium this takes 34 msec, so you would need 30 seconds to build
@@ -143,6 +146,9 @@ __md5crypt(const char *pw, const char *salt)
 
 		FINAL(final, &ctx1);
 	}
+
+	/* Don't leave anything around in vm they could use. */
+	memset(&ctx1, 0, sizeof(ctx1));
 
 	p = passwd + sl + MD5_MAGIC_LEN + 1;
 
