@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.142.4 2010/01/06 04:24:38 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.142.5 2011/11/29 07:48:32 matt Exp $	*/
 
 #ifndef _EVBMIPS_VMPARAM_H_
 #define _EVBMIPS_VMPARAM_H_
@@ -15,5 +15,8 @@
 #if !defined(_LP64)
 #define	VM_FREELIST_FIRST512M	1
 #endif
+
+#define	VM_FREELIST_NORMALOK_P(lcv) \
+	((lcv) == VM_FREELIST_DEFAULT || (lcv) != mips_poolpage_vmfreelist)
  
 #endif	/* !_EVBMIPS_VMPARAM_H_ */

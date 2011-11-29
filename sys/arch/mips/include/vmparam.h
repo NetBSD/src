@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.20 2011/04/29 08:26:22 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.21 2011/11/29 07:48:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -173,6 +173,12 @@
 #endif
 #define VM_MAXUSER32_ADDRESS	((vaddr_t)(1UL << 31))/* 0x0000000080000000 */
 
+#ifdef ENABLE_MIPS_KSEGX
+#define VM_KSEGX_ADDRESS	((vaddr_t)-0x20000000)	/* 0x...E0000000 */
+#define	VM_KSEGX_SHIFT		28
+#define	VM_KSEGX_SIZE		(1 << VM_KSEGX_SHIFT)
+#endif
+
 /*
  * The address to which unspecified mapping requests default
  */
@@ -198,6 +204,9 @@
 #ifdef _KERNEL
 #define	UVM_KM_VMFREELIST	mips_poolpage_vmfreelist
 extern int mips_poolpage_vmfreelist;
+#ifdef ENABLE_MIPS_KSEGX
+extern paddr_t mips_ksegx_start;
+#endif
 #endif
 
 #define	__HAVE_VM_PAGE_MD
