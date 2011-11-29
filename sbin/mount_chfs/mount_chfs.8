@@ -1,11 +1,7 @@
-.\" $NetBSD: mount_chfs.8,v 1.2 2011/11/24 16:20:35 wiz Exp $
+.\" $NetBSD: mount_chfs.8,v 1.3 2011/11/29 13:27:50 ahoka Exp $
 .\"
-.\" Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
-.\"
-.\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Julio M. Merino Vidal, developed as part of Google's Summer of Code
-.\" 2005 program.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -28,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 24, 2011
+.Dd November 29, 2011
 .Dt MOUNT_CHFS 8
 .Os
 .Sh NAME
@@ -61,3 +57,6 @@ CHFS was developed at the Department of Software Engineering,
 University of Szeged, Hungary.
 .Sh BUGS
 CHFS has a few known bugs as of 2011.
+Writing the FS full can cause problems.
+Truncating a file and growing it again can cause the new bytes
+not having all zeroes, but filled with the old content instead.
