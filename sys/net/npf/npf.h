@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.10 2011/11/06 02:49:03 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.11 2011/11/29 20:05:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 typedef struct in6_addr		npf_addr_t;
 typedef uint8_t			npf_netmask_t;
 
+#define	NPF_MAX_NETMASK		(128)
 #define	NPF_NO_NETMASK		((npf_netmask_t)~0)
 
 #if defined(_KERNEL) || defined(_NPF_TESTING)
@@ -101,7 +102,7 @@ typedef struct {
 	npf_addr_t *		npc_dstip;
 	/* Size (v4 or v6) of IP addresses. */
 	int			npc_ipsz;
-	size_t			npc_hlen;
+	u_int			npc_hlen;
 	int			npc_next_proto;
 	/* IPv4, IPv6. */
 	union {
@@ -122,7 +123,7 @@ npf_generate_mask(npf_addr_t *dst, const npf_netmask_t omask)
 	uint_fast8_t length = omask;
 
 	/* Note: maximum length is 32 for IPv4 and 128 for IPv6. */
-	KASSERT(length <= 128);
+	KASSERT(length <= NPF_MAX_NETMASK);
 
 	for (int i = 0; i < 4; i++) {
 		if (length >= 32) {
@@ -196,8 +197,8 @@ npf_cache_ipproto(const npf_cache_t *npc)
 	return npc->npc_next_proto;
 }
 
-static inline int
-npf_cache_hlen(const npf_cache_t *npc, nbuf_t *nbuf)
+static inline u_int
+npf_cache_hlen(const npf_cache_t *npc)
 {
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	return npc->npc_hlen;
