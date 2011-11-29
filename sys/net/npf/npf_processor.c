@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.6 2011/11/06 02:49:03 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.7 2011/11/29 20:05:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.6 2011/11/06 02:49:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.7 2011/11/29 20:05:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -147,7 +147,6 @@ npf_ncode_process(npf_cache_t *npc, const void *ncode,
 	/* Local, state variables. */
 	uint32_t d, i, n;
 	npf_addr_t addr;
-	uint32_t mask;
 	u_int lcount;
 	int cmpval;
 
@@ -286,9 +285,9 @@ cisc_like:
 	case NPF_OPCODE_IP4MASK:
 		/* Source/destination, network address, subnet mask. */
 		i_ptr = nc_fetch_word(i_ptr, &d);
-		i_ptr = nc_fetch_double(i_ptr, &addr.s6_addr32[0], &mask);
+		i_ptr = nc_fetch_double(i_ptr, &addr.s6_addr32[0], &n);
 		cmpval = npf_match_ipmask(npc, nbuf, n_ptr, d, &addr,
-		    (npf_netmask_t)mask);
+		    (npf_netmask_t)n);
 		break;
 	case NPF_OPCODE_IP6MASK:
 		i_ptr = nc_fetch_word(i_ptr, &d);
@@ -296,9 +295,9 @@ cisc_like:
 		    &addr.s6_addr32[0], &addr.s6_addr32[1]);
 		i_ptr = nc_fetch_double(i_ptr,
 		    &addr.s6_addr32[2], &addr.s6_addr32[3]);
-		i_ptr = nc_fetch_word(i_ptr, &mask);
+		i_ptr = nc_fetch_word(i_ptr, &n);
 		cmpval = npf_match_ipmask(npc, nbuf, n_ptr, d,
-		    &addr, (npf_netmask_t)mask);
+		    &addr, (npf_netmask_t)n);
 		break;
 	case NPF_OPCODE_TABLE:
 		/* Source/destination, NPF table ID. */
@@ -452,10 +451,22 @@ jmp_check:
 		error = nc_ptr_check(&iptr, nc, sz, 3, NULL, 0);
 		break;
 	case NPF_OPCODE_IP4MASK:
-		error = nc_ptr_check(&iptr, nc, sz, 3, NULL, 0);
+		error = nc_ptr_check(&iptr, nc, sz, 3, &val, 1);
+		if (error) {
+			return error;
+		}
+		if (/* XXX !val ||*/ (val > NPF_MAX_NETMASK && val != NPF_NO_NETMASK)) {
+			return NPF_ERR_INVAL;
+		}
 		break;
 	case NPF_OPCODE_IP6MASK:
-		error = nc_ptr_check(&iptr, nc, sz, 6, NULL, 0);
+		error = nc_ptr_check(&iptr, nc, sz, 6, &val, 1);
+		if (error) {
+			return error;
+		}
+		if (/* XXX !val ||*/ (val > NPF_MAX_NETMASK && val != NPF_NO_NETMASK)) {
+			return NPF_ERR_INVAL;
+		}
 		break;
 	case NPF_OPCODE_TABLE:
 		error = nc_ptr_check(&iptr, nc, sz, 2, NULL, 0);
@@ -502,8 +513,9 @@ nc_jmp_check(const void *nc, size_t sz, const uintptr_t jaddr)
 	KASSERT(iaddr != jaddr);
 	do {
 		error = nc_insn_check(iaddr, nc, sz, &adv, &_jmp, &_ret);
-		if (error)
+		if (error) {
 			break;
+		}
 		iaddr += adv;
 
 	} while (iaddr != jaddr);
