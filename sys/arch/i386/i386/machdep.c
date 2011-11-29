@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.713 2011/11/18 22:18:08 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.714 2011/11/29 11:12:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.713 2011/11/18 22:18:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714 2011/11/29 11:12:26 martin Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1622,7 +1622,7 @@ init386(paddr_t first_avail)
 		       "have %lu bytes, want %lu bytes\n"
 		       "running in degraded mode\n"
 		       "press a key to confirm\n\n",
-		       ptoa(physmem), 2*1024*1024UL);
+		       (unsigned long)ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
 
