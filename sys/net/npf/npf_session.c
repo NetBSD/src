@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.9 2011/11/04 01:00:27 zoltan Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.10 2011/11/29 20:05:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.9 2011/11/04 01:00:27 zoltan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10 2011/11/29 20:05:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -400,18 +400,17 @@ npf_session_tracking(bool track)
  * => If found, we will hold a reference for caller.
  */
 npf_session_t *
-npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di)
+npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 {
 	npf_sehash_t *sh;
 	npf_sentry_t *sen;
 	npf_session_t *se;
 
-	/* Attempt to fetch and cache all relevant IPv4 data. */
-	if (!sess_tracking || !npf_cache_all(npc, nbuf)) {
+	/* Layer 3 and 4 should be already cached for session tracking. */
+	if (!sess_tracking || !npf_iscached(npc, NPC_IP46) ||
+	    !npf_iscached(npc, NPC_LAYER4)) {
 		return NULL;
 	}
-	KASSERT(npf_iscached(npc, NPC_IP46));
-	KASSERT(npf_iscached(npc, NPC_LAYER4));
 
 	/*
 	 * Construct a key for hash and tree lookup.  Execute ALG session
@@ -481,6 +480,8 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 		getnanouptime(&se->s_atime);
 		atomic_inc_uint(&se->s_refcnt);
 	} else {
+		/* Silently block invalid packets. */
+		*error = ENETUNREACH;
 		se = NULL;
 	}
 	rw_exit(&sh->sh_lock);

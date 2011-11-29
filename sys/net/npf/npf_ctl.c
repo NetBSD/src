@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.9 2011/11/06 02:49:03 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.10 2011/11/29 20:05:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.9 2011/11/06 02:49:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.10 2011/11/29 20:05:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -392,23 +392,26 @@ npfctl_reload(u_long cmd, void *data)
 	nset = npf_ruleset_create();
 	natlist = prop_dictionary_get(dict, "translation");
 	error = npf_mk_natlist(nset, natlist);
-	if (error)
+	if (error) {
 		goto fail;
+	}
 
 	/* Tables. */
 	tblset = npf_tableset_create();
 	tables = prop_dictionary_get(dict, "tables");
 	error = npf_mk_tables(tblset, tables);
-	if (error)
+	if (error) {
 		goto fail;
+	}
 
 	/* Rules and rule procedures. */
 	rlset = npf_ruleset_create();
 	rprocs = prop_dictionary_get(dict, "rprocs");
 	rules = prop_dictionary_get(dict, "rules");
 	error = npf_mk_rules(rlset, rules, rprocs);
-	if (error)
+	if (error) {
 		goto fail;
+	}
 
 	/*
 	 * Finally - reload ruleset, tableset and NAT policies.
@@ -597,24 +600,23 @@ int
 npfctl_table(void *data)
 {
 	npf_ioctl_table_t *nct = data;
+	npf_tableset_t *tblset;
 	int error;
 
 	npf_core_enter(); /* XXXSMP */
+	tblset = npf_core_tableset();
 	switch (nct->nct_action) {
 	case NPF_IOCTL_TBLENT_ADD:
-		error = npf_table_add_cidr(NULL, nct->nct_tid,
+		error = npf_table_add_cidr(tblset, nct->nct_tid,
 		    &nct->nct_addr, nct->nct_mask);
 		break;
 	case NPF_IOCTL_TBLENT_REM:
-		error = npf_table_rem_cidr(NULL, nct->nct_tid,
+		error = npf_table_rem_cidr(tblset, nct->nct_tid,
 		    &nct->nct_addr, nct->nct_mask);
 		break;
 	default:
-		/* XXX */
-		error = npf_table_match_addr(nct->nct_tid, &nct->nct_addr);
-		if (error) {
-			error = EINVAL;
-		}
+		error = npf_table_match_addr(tblset, nct->nct_tid,
+		    &nct->nct_addr);
 	}
 	npf_core_exit(); /* XXXSMP */
 	return error;

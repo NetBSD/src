@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.8 2011/11/04 01:00:27 zoltan Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.9 2011/11/29 20:05:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -100,11 +100,14 @@ typedef bool (*npf_algfunc_t)(npf_cache_t *, nbuf_t *, void *);
  * SESSION STATE STRUCTURES
  */
 
+#define	NPF_FLOW_FORW		0
+#define	NPF_FLOW_BACK		1
+
 typedef struct {
-	uint32_t	nst_seqend;	/* SEQ number + length. */
-	uint32_t	nst_ackend;	/* ACK sequence number + window. */
-	uint32_t	nst_maxwin;	/* Maximum window seen. */
-	int		nst_wscale;	/* Window Scale. */
+	uint32_t	nst_end;
+	uint32_t	nst_maxend;
+	uint32_t	nst_maxwin;
+	int		nst_wscale;
 } npf_tcpstate_t;
 
 typedef struct {
@@ -148,7 +151,7 @@ bool		npf_fetch_ip(npf_cache_t *, nbuf_t *, void *);
 bool		npf_fetch_tcp(npf_cache_t *, nbuf_t *, void *);
 bool		npf_fetch_udp(npf_cache_t *, nbuf_t *, void *);
 bool		npf_fetch_icmp(npf_cache_t *, nbuf_t *, void *);
-bool		npf_cache_all(npf_cache_t *, nbuf_t *);
+int		npf_cache_all(npf_cache_t *, nbuf_t *);
 
 bool		npf_rwrip(npf_cache_t *, nbuf_t *, void *, const int,
 		    npf_addr_t *);
@@ -161,7 +164,7 @@ uint16_t	npf_fixup16_cksum(uint16_t, uint16_t, uint16_t);
 uint16_t	npf_fixup32_cksum(uint16_t, uint32_t, uint32_t);
 uint16_t	npf_addr_cksum(uint16_t, int, npf_addr_t *, npf_addr_t *);
 uint32_t	npf_addr_sum(const int, const npf_addr_t *, const npf_addr_t *);
-int		npf_tcpsaw(npf_cache_t *, nbuf_t *, tcp_seq *, tcp_seq *, uint32_t *);
+int		npf_tcpsaw(npf_cache_t *, tcp_seq *, tcp_seq *, uint32_t *);
 bool		npf_fetch_tcpopts(const npf_cache_t *, nbuf_t *,
 		    uint16_t *, int *);
 bool		npf_normalize(npf_cache_t *, nbuf_t *, bool, bool, u_int, u_int);
@@ -201,7 +204,8 @@ int		npf_table_add_cidr(npf_tableset_t *, u_int,
 		    const npf_addr_t *, const npf_netmask_t);
 int		npf_table_rem_cidr(npf_tableset_t *, u_int,
 		    const npf_addr_t *, const npf_netmask_t);
-int		npf_table_match_addr(u_int, const npf_addr_t *);
+int		npf_table_match_addr(npf_tableset_t *, u_int,
+		    const npf_addr_t *);
 
 /* Ruleset interface. */
 npf_ruleset_t *	npf_ruleset_create(void);
@@ -237,7 +241,7 @@ npf_sehash_t *	sess_htable_create(void);
 void		sess_htable_destroy(npf_sehash_t *);
 void		sess_htable_reload(npf_sehash_t *);
 
-npf_session_t *	npf_session_inspect(npf_cache_t *, nbuf_t *, const int);
+npf_session_t *	npf_session_inspect(npf_cache_t *, nbuf_t *, const int, int *);
 npf_session_t *	npf_session_establish(const npf_cache_t *, nbuf_t *, const int);
 void		npf_session_release(npf_session_t *);
 void		npf_session_expire(npf_session_t *);
@@ -255,6 +259,9 @@ bool		npf_state_inspect(const npf_cache_t *, nbuf_t *, npf_state_t *,
 		    const bool);
 int		npf_state_etime(const npf_state_t *, const int);
 void		npf_state_destroy(npf_state_t *);
+
+bool		npf_state_tcp(const npf_cache_t *, nbuf_t *, npf_state_t *, int);
+int		npf_state_tcp_timeout(const npf_state_t *);
 
 /* NAT. */
 void		npf_nat_sysinit(void);

@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_tableset.c,v 1.7 2011/11/06 02:49:03 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.8 2011/11/29 20:05:30 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.7 2011/11/06 02:49:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.8 2011/11/29 20:05:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -294,14 +294,14 @@ npf_table_unref(npf_table_t *t)
 npf_table_t *
 npf_table_get(npf_tableset_t *tset, u_int tid)
 {
-	npf_tableset_t *rtset;
 	npf_table_t *t;
+
+	KASSERT(tset != NULL);
 
 	if ((u_int)tid >= NPF_TABLE_SLOTS) {
 		return NULL;
 	}
-	rtset = tset ? tset : npf_core_tableset();
-	t = rtset[tid];
+	t = tset[tid];
 	if (t != NULL) {
 		rw_enter(&t->t_lock, RW_READER);
 	}
@@ -350,14 +350,16 @@ npf_table_add_cidr(npf_tableset_t *tset, u_int tid,
 	npf_addr_t val;
 	int error = 0;
 
-	/* Allocate and setup entry. */
+	if (mask > NPF_MAX_NETMASK) {
+		return EINVAL;
+	}
 	e = pool_cache_get(tblent_cache, PR_WAITOK);
 	memcpy(&e->te_addr, addr, sizeof(npf_addr_t));
 	e->te_mask = mask;
 
-	/* Locks the table. */
+	/* Get the table (acquire the lock). */
 	t = npf_table_get(tset, tid);
-	if (__predict_false(t == NULL)) {
+	if (t == NULL) {
 		pool_cache_put(tblent_cache, e);
 		return EINVAL;
 	}
@@ -393,7 +395,7 @@ npf_table_add_cidr(npf_tableset_t *tset, u_int tid,
 	}
 	npf_table_put(t);
 
-	if (__predict_false(error)) {
+	if (error) {
 		pool_cache_put(tblent_cache, e);
 	}
 	return error;
@@ -412,14 +414,17 @@ npf_table_rem_cidr(npf_tableset_t *tset, u_int tid,
 	npf_addr_t val;
 	int error;
 
-	e = NULL;
+	if (mask > NPF_MAX_NETMASK) {
+		return EINVAL;
+	}
 
-	/* Locks the table. */
+	/* Get the table (acquire the lock). */
 	t = npf_table_get(tset, tid);
 	if (__predict_false(t == NULL)) {
 		return EINVAL;
 	}
-	/* Lookup & remove. */
+	e = NULL;
+
 	switch (t->t_type) {
 	case NPF_TABLE_HASH:
 		/* Generate hash value from: (address & mask). */
@@ -454,11 +459,11 @@ npf_table_rem_cidr(npf_tableset_t *tset, u_int tid,
 	}
 	npf_table_put(t);
 
-	/* Free table the entry. */
-	if (__predict_true(e != NULL)) {
-		pool_cache_put(tblent_cache, e);
+	if (e == NULL) {
+		return ENOENT;
 	}
-	return e ? 0 : -1;
+	pool_cache_put(tblent_cache, e);
+	return 0;
 }
 
 /*
@@ -466,14 +471,14 @@ npf_table_rem_cidr(npf_tableset_t *tset, u_int tid,
  * match the contents with specified IPv4 address.
  */
 int
-npf_table_match_addr(u_int tid, const npf_addr_t *addr)
+npf_table_match_addr(npf_tableset_t *tset, u_int tid, const npf_addr_t *addr)
 {
 	struct npf_hashl *htbl;
 	npf_tblent_t *e = NULL;
 	npf_table_t *t;
 
-	/* Locks the table. */
-	t = npf_table_get(NULL, tid);
+	/* Get the table (acquire the lock). */
+	t = npf_table_get(tset, tid);
 	if (__predict_false(t == NULL)) {
 		return EINVAL;
 	}
@@ -496,5 +501,5 @@ npf_table_match_addr(u_int tid, const npf_addr_t *addr)
 	}
 	npf_table_put(t);
 
-	return e ? 0 : -1;
+	return e ? 0 : ENOENT;
 }

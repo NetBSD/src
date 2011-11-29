@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.7 2011/11/06 02:49:03 rmind Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.8 2011/11/29 20:05:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.7 2011/11/06 02:49:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.8 2011/11/29 20:05:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,6 +98,8 @@ npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 {
 	npf_addr_t *addr;
 
+	KASSERT(npf_core_locked());
+
 	if (!npf_iscached(npc, NPC_IP46)) {
 		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
 			return -1;
@@ -107,7 +109,7 @@ npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 	addr = sd ? npc->npc_srcip : npc->npc_dstip;
 
 	/* Match address against NPF table. */
-	return npf_table_match_addr(tid, addr);
+	return npf_table_match_addr(npf_core_tableset(), tid, addr) ? -1 : 0;
 }
 
 /*
@@ -115,9 +117,9 @@ npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
  */
 int
 npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
-    const int sd, const npf_addr_t *netaddr, npf_netmask_t omask)
+    const int sd, const npf_addr_t *netaddr, npf_netmask_t mask)
 {
-	npf_addr_t *addr1, addr2;
+	npf_addr_t *addr, cmpaddr;
 
 	if (!npf_iscached(npc, NPC_IP46)) {
 		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
@@ -125,13 +127,17 @@ npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 		}
 		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
-	if (omask == 0) {
+#if 1	/* XXX */
+	if (mask == 0) {
 		return 0;
 	}
-
-	addr1 = sd ? npc->npc_srcip : npc->npc_dstip;
-	npf_calculate_masked_addr(&addr2, netaddr, omask);
-	return memcmp(addr1, &addr2, npc->npc_ipsz) ? -1 : 0;
+#endif
+	addr = sd ? npc->npc_srcip : npc->npc_dstip;
+	if (mask != NPF_NO_NETMASK) {
+		npf_calculate_masked_addr(&cmpaddr, addr, mask);
+		addr = &cmpaddr;
+	}
+	return memcmp(netaddr, addr, npc->npc_ipsz) ? -1 : 0;
 }
 
 /*

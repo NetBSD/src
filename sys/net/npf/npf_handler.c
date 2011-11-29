@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.10 2011/11/06 02:49:03 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.11 2011/11/29 20:05:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.10 2011/11/06 02:49:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.11 2011/11/29 20:05:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,9 +102,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	ret = 0;
 
 	/* Cache everything.  Determine whether it is an IP fragment. */
-	npf_cache_all(&npc, nbuf);
-
-	if (npf_iscached(&npc, NPC_IPFRAG)) {
+	if (npf_cache_all(&npc, nbuf) & NPC_IPFRAG) {
 		/* Pass to IPv4 or IPv6 reassembly mechanism. */
 		if (npf_iscached(&npc, NPC_IP4)) {
 			struct ip *ip = nbuf_dataptr(*mp);
@@ -116,7 +114,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 			 * Note: frag6_input() offset is the start of the
 			 * fragment header.
 			 */
-			size_t hlen = npf_cache_hlen(&npc, nbuf);
+			const u_int hlen = npf_cache_hlen(&npc);
 			ret = ip6_reass_packet(mp, hlen);
 #else
 			ret = -1;
@@ -135,20 +133,22 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 
 		/*
 		 * Reassembly is complete, we have the final packet.
-		 * Cache again, since layer 3 daya is accessible now.
+		 * Cache again, since layer 4 data is accessible now.
 		 */
 		nbuf = (nbuf_t *)*mp;
 		npc.npc_info = 0;
-		npf_cache_all(&npc, nbuf);
+		(void)npf_cache_all(&npc, nbuf);
 	}
 
 	/* Inspect the list of sessions. */
-	se = npf_session_inspect(&npc, nbuf, di);
+	se = npf_session_inspect(&npc, nbuf, di, &error);
 
 	/* If "passing" session found - skip the ruleset inspection. */
 	if (se && npf_session_pass(se, &rp)) {
 		npf_stats_inc(NPF_STAT_PASS_SESSION);
 		goto pass;
+	} else if (error) {
+		goto block;
 	}
 
 	/* Acquire the lock, inspect the ruleset using this packet. */
