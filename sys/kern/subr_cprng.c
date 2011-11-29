@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.3 2011/11/29 03:50:31 tls Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.4 2011/11/29 21:48:22 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.3 2011/11/29 03:50:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.4 2011/11/29 21:48:22 njoly Exp $");
 
 void
 cprng_init(void)
@@ -99,7 +99,7 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 {
 	cprng_strong_t *c;
 	uint8_t key[NIST_BLOCK_KEYLEN_BYTES];
-	int r, getmore = 0;;
+	int r, getmore = 0;
 	uint32_t cc;
 
 	c = kmem_alloc(sizeof(*c), KM_NOSLEEP);
