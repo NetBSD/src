@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.80 2011/11/29 20:56:12 bouyer Exp $	*/
+/*	$NetBSD: fss.c,v 1.81 2011/11/30 09:51:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.80 2011/11/29 20:56:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.81 2011/11/30 09:51:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,7 +304,9 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct fss_set *fss = (struct fss_set *)data;
 	struct fss_set50 *fss50 = (struct fss_set50 *)data;
 	struct fss_get *fsg = (struct fss_get *)data;
+#ifndef _LP64
 	struct fss_get50 *fsg50 = (struct fss_get50 *)data;
+#endif
 
 	switch (cmd) {
 	case FSSIOCSET50:
@@ -338,6 +340,7 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		mutex_exit(&sc->sc_lock);
 		break;
 
+#ifndef _LP64
 	case FSSIOCGET50:
 		mutex_enter(&sc->sc_lock);
 		switch (sc->sc_flags & (FSS_PERSISTENT | FSS_ACTIVE)) {
@@ -363,6 +366,7 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 		mutex_exit(&sc->sc_lock);
 		break;
+#endif /* _LP64 */
 
 	case FSSIOCGET:
 		mutex_enter(&sc->sc_lock);
