@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.41 2011/11/30 16:07:28 dholland Exp $	*/
+/*	$NetBSD: quota.c,v 1.42 2011/11/30 16:09:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.41 2011/11/30 16:07:28 dholland Exp $");
+__RCSID("$NetBSD: quota.c,v 1.42 2011/11/30 16:09:29 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: quota.c,v 1.41 2011/11/30 16:07:28 dholland Exp $");
 #include <sys/mount.h>
 #include <sys/socket.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -85,14 +86,20 @@ struct quotause {
 #define	FOUND	0x01
 #define	QUOTA2	0x02
 
+static int	anyusage(struct quotaval *, unsigned);
+static int	anyover(struct quotaval *, unsigned, time_t);
+static const char *getovermsg(struct quotaval *, const char *, time_t);
 static struct quotause	*getprivs(id_t, int);
 static void	heading(int, id_t, const char *, const char *);
+static int	isover(struct quotaval *qv, time_t now);
+static void	printqv(struct quotaval *, int, int, time_t);
 static void	showgid(gid_t);
 static void	showgrpname(const char *);
 static void	showonequota(int, id_t, const char *, struct quotause *);
 static void	showquotas(int, id_t, const char *);
 static void	showuid(uid_t);
 static void	showusrname(const char *);
+static int	unlimited(struct quotaval *qvs, unsigned numqvs);
 static void	usage(void) __dead;
 
 static int	qflag = 0;
@@ -316,7 +323,7 @@ showgrpname(const char *name)
 }
 
 static void
-showquotas(int type, id_t id, const char *name)
+showquotas(int type, id_t id, const char *idname)
 {
 	struct quotause *qup;
 	struct quotause *quplist;
@@ -325,131 +332,81 @@ showquotas(int type, id_t id, const char *name)
 
 	quplist = getprivs(id, type);
 	for (qup = quplist; qup; qup = qup->next) {
-		showonequota(type, id, name, qup);
+		showonequota(type, id, idname, qup);
 	}
 	if (!qflag) {
 		/* In case nothing printed, issue a header saying "none" */
-		heading(type, id, name, "none");
+		heading(type, id, idname, "none");
 	}
 }
 
 static void
-showonequota(int type, id_t id, const char *name, struct quotause *qup)
+showonequota(int type, id_t id, const char *idname, struct quotause *qup)
 {
-	char b0[20], b1[20], b2[20], b3[20];
-	const char *msgi, *msgb, *nam, *timemsg;
-	int ql_stat;
-	struct quotaval *q = qup->qv;
+	static const int isbytes[QUOTA_NLIMITS] = {
+		[QUOTA_LIMIT_BLOCK] = 1, 
+		[QUOTA_LIMIT_FILE] = 0,
+	};
 	static time_t now;
+	struct quotaval *qvs;
+	unsigned numqvs, i;
+	const char *msg;
+	int isquota2;
+
+	qvs = qup->qv;
+	numqvs = QUOTA_NLIMITS;
 
 	if (now == 0) {
 		time(&now);
 	}
 
-	if (!vflag &&
-	    q[QUOTA_LIMIT_BLOCK].qv_softlimit == UQUAD_MAX &&
-	    q[QUOTA_LIMIT_BLOCK].qv_hardlimit == UQUAD_MAX &&
-	    q[QUOTA_LIMIT_FILE].qv_softlimit == UQUAD_MAX &&
-	    q[QUOTA_LIMIT_FILE].qv_hardlimit == UQUAD_MAX)
+	if (!vflag && unlimited(qvs, numqvs)) {
 		return;
-	ql_stat = quota_check_limit(q[QUOTA_LIMIT_FILE].qv_usage, 1,
-				    q[QUOTA_LIMIT_FILE].qv_softlimit,
-				    q[QUOTA_LIMIT_FILE].qv_hardlimit,
-				    q[QUOTA_LIMIT_FILE].qv_expiretime, now);
-	switch(QL_STATUS(ql_stat)) {
-	    case QL_S_DENY_HARD:
-		msgi = "File limit reached on";
-		break;
-	    case QL_S_DENY_GRACE:
-		msgi = "Over file quota on";
-		break;
-	    case QL_S_ALLOW_SOFT:
-		msgi = "In file grace period on";
-		break;
-	    default:
-		msgi = NULL;
 	}
-	ql_stat = quota_check_limit(q[QUOTA_LIMIT_BLOCK].qv_usage, 1,
-				    q[QUOTA_LIMIT_BLOCK].qv_softlimit,
-				    q[QUOTA_LIMIT_BLOCK].qv_hardlimit,
-				    q[QUOTA_LIMIT_BLOCK].qv_expiretime, now);
-	switch(QL_STATUS(ql_stat)) {
-	    case QL_S_DENY_HARD:
-		msgb = "Block limit reached on";
-		break;
-	    case QL_S_DENY_GRACE:
-		msgb = "Over block quota on";
-		break;
-	    case QL_S_ALLOW_SOFT:
-		msgb = "In block grace period on";
-		break;
-	    default:
-		msgb = NULL;
-	}
+
 	if (qflag) {
-		if (msgi != NULL) {
-			heading(type, id, name, "");
-			printf("\t%s %s\n", msgi, qup->fsname);
-		}
-		if (msgb != NULL) {
-			heading(type, id, name, "");
-			printf("\t%s %s\n", msgb, qup->fsname);
+		for (i=0; i<numqvs; i++) {
+			msg = getovermsg(&qvs[i], ufs_quota_limit_names[i],
+					 now);
+			if (msg != NULL) {
+				heading(type, id, idname, "");
+				printf("\t%s %s\n", msg, qup->fsname);
+			}
 		}
 		return;
 	}
-	if (vflag || dflag || msgi || msgb ||
-	    q[QUOTA_LIMIT_BLOCK].qv_usage ||
-	    q[QUOTA_LIMIT_FILE].qv_usage) {
-		heading(type, id, name, "");
-		nam = qup->fsname;
+
+	/*
+	 * XXX: anyover can in fact be true if anyusage is not true,
+	 * if there's a quota of zero set on some volume. This is
+	 * because the check we do checks if adding one more thing
+	 * will go over. That is reasonable, I suppose, but Arguably
+	 * the resulting behavior with usage 0 is a bug. (Also, what
+	 * reason do we have to believe that the reported grace expire
+	 * time is valid if we aren't in fact over yet?)
+	 */
+
+	if (vflag || dflag || anyover(qvs, numqvs, now) || 
+	    anyusage(qvs, numqvs)) {
+		heading(type, id, idname, "");
 		if (strlen(qup->fsname) > 4) {
 			printf("%s\n", qup->fsname);
-			nam = "";
-		} 
-		if (msgb)
-			timemsg = timeprt(b0, 9, now,
-					  q[QUOTA_LIMIT_BLOCK].qv_expiretime);
-		else if ((qup->flags & QUOTA2) != 0 && vflag)
-			timemsg = timeprt(b0, 9, 0,
-					  q[QUOTA_LIMIT_BLOCK].qv_grace);
-		else
-			timemsg = "";
-				
-		printf("%12s%9s%c%8s%9s%8s",
-		       nam,
-		       intprt(b1, 9, q[QUOTA_LIMIT_BLOCK].qv_usage,
-			      HN_B, hflag),
-		       (msgb == NULL) ? ' ' : '*',
-		       intprt(b2, 9, q[QUOTA_LIMIT_BLOCK].qv_softlimit,
-			      HN_B, hflag),
-		       intprt(b3, 9, q[QUOTA_LIMIT_BLOCK].qv_hardlimit,
-			      HN_B, hflag),
-		       timemsg);
+			printf("%12s", "");
+		} else {
+			printf("%12s", qup->fsname);
+		}
 
-		if (msgi)
-			timemsg = timeprt(b0, 9, now, 
-					  q[QUOTA_LIMIT_FILE].qv_expiretime);
-		else if ((qup->flags & QUOTA2) != 0 && vflag)
-			timemsg = timeprt(b0, 9, 0,
-					  q[QUOTA_LIMIT_FILE].qv_grace);
-		else
-			timemsg = "";
-				
-		printf("%8s%c%7s%8s%8s\n",
-		       intprt(b1, 8, q[QUOTA_LIMIT_FILE].qv_usage, 0,
-			      hflag),
-		       (msgi == NULL) ? ' ' : '*',
-		       intprt(b2, 8, q[QUOTA_LIMIT_FILE].qv_softlimit,
-			      0, hflag),
-		       intprt(b3, 8, q[QUOTA_LIMIT_FILE].qv_hardlimit,
-			      0, hflag),
-		       timemsg);
-		return;
+		isquota2 = (qup->flags & QUOTA2) != 0;
+
+		for (i=0; i<numqvs; i++) {
+			printqv(&qvs[i], isquota2, isbytes[i], now);
+		}
+		printf("\n");
 	}
 }
 
 static void
-heading(int type, id_t id, const char *name, const char *tag)
+heading(int type, id_t id, const char *idname, const char *tag)
 {
 	if (needheading == 0)
 		return;
@@ -460,7 +417,7 @@ heading(int type, id_t id, const char *name, const char *tag)
 		    ufs_quota_class_names[type], tag);
 	else
 		printf("Disk quotas for %s %s (%cid %u): %s\n",
-		    ufs_quota_class_names[type], name,
+		    ufs_quota_class_names[type], idname,
 		    *ufs_quota_class_names[type], id, tag);
 
 	if (!qflag && tag[0] == '\0') {
@@ -476,6 +433,45 @@ heading(int type, id_t id, const char *name, const char *tag)
 		    , "grace"
 		);
 	}
+}
+
+static void
+printqv(struct quotaval *qv, int isquota2, int isbytes, time_t now)
+{
+	char buf[20];
+	const char *str;
+	int intprtflags, over, width;
+
+	/*
+	 * The assorted finagling of width is to match the previous
+	 * open-coded formatting for exactly two quota object types,
+	 * which was chosen to make the default report fit in 80
+	 * columns.
+	 */
+
+	width = isbytes ? 9 : 8;
+	intprtflags = isbytes ? HN_B : 0;
+	over = isover(qv, now);
+
+	str = intprt(buf, width, qv->qv_usage, intprtflags, hflag);
+	printf("%*s", width, str);
+
+	printf("%c", over ? '*' : ' ');
+
+	str = intprt(buf, width, qv->qv_softlimit, intprtflags, hflag);
+	printf("%*s", width-1, str);
+
+	str = intprt(buf, width, qv->qv_hardlimit, intprtflags, hflag);
+	printf("%*s", width, str);
+
+	if (over) {
+		str = timeprt(buf, 9, now, qv->qv_expiretime);
+	} else if (isquota2 && vflag) {
+		str = timeprt(buf, 9, 0, qv->qv_grace);
+	} else {
+		str = "";
+	}
+	printf("%8s", str);
 }
 
 /*
@@ -526,4 +522,91 @@ getprivs(id_t id, int quotatype)
 	}
 	free(qup);
 	return quphead;
+}
+
+static int
+unlimited(struct quotaval *qvs, unsigned numqvs)
+{
+	unsigned i;
+
+	for (i=0; i<numqvs; i++) {
+		if (qvs[i].qv_softlimit != UQUAD_MAX ||
+		    qvs[i].qv_hardlimit != UQUAD_MAX) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static int
+anyusage(struct quotaval *qvs, unsigned numqvs)
+{
+	unsigned i;
+
+	for (i=0; i<numqvs; i++) {
+		if (qvs[i].qv_usage > 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static int
+anyover(struct quotaval *qvs, unsigned numqvs, time_t now)
+{
+	unsigned i;
+
+	for (i=0; i<numqvs; i++) {
+		if (isover(&qvs[i], now)) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static int
+isover(struct quotaval *qv, time_t now)
+{
+	int ql_stat;
+
+	ql_stat = quota_check_limit(qv->qv_usage, 1,
+				    qv->qv_softlimit,
+				    qv->qv_hardlimit,
+				    qv->qv_expiretime, now);
+	switch(QL_STATUS(ql_stat)) {
+	    case QL_S_DENY_HARD:
+	    case QL_S_DENY_GRACE:
+	    case QL_S_ALLOW_SOFT:
+		return 1;
+	    default:
+		break;
+	}
+	return 0;
+}
+
+static const char *
+getovermsg(struct quotaval *qv, const char *what, time_t now)
+{
+	static char buf[64];
+	int ql_stat;
+
+	ql_stat = quota_check_limit(qv->qv_usage, 1,
+				    qv->qv_softlimit,
+				    qv->qv_hardlimit,
+				    qv->qv_expiretime, now);
+	switch(QL_STATUS(ql_stat)) {
+	    case QL_S_DENY_HARD:
+		snprintf(buf, sizeof(buf), "%c%s limit reached on",
+			 toupper((unsigned char)what[0]), what+1);
+		break;
+	    case QL_S_DENY_GRACE:
+		snprintf(buf, sizeof(buf), "Over %s quota on", what);
+		break;
+	    case QL_S_ALLOW_SOFT:
+		snprintf(buf, sizeof(buf), "In %s grace period on", what);
+		break;
+	    default:
+		return NULL;
+	}
+	return buf;
 }
