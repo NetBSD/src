@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.158 2011/09/01 18:24:19 matt Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.159 2011/11/30 10:27:46 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.158 2011/09/01 18:24:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.159 2011/11/30 10:27:46 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,8 +603,8 @@ ktr_sysret(register_t code, int error, register_t *retval)
 	ktp->ktr_code = code;
 	ktp->ktr_eosys = 0;			/* XXX unused */
 	ktp->ktr_error = error;
-	ktp->ktr_retval = retval ? retval[0] : 0;
-	ktp->ktr_retval_1 = retval ? retval[1] : 0;
+	ktp->ktr_retval = retval && error == 0 ? retval[0] : 0;
+	ktp->ktr_retval_1 = retval && error == 0 ? retval[1] : 0;
 
 	ktraddentry(l, kte, KTA_WAITOK);
 }
