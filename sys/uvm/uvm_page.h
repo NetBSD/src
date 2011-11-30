@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73.2.7 2011/11/20 10:52:34 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.73.2.8 2011/11/30 14:33:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -181,11 +181,13 @@ struct vm_page {
 #define	PG_HOLE		0x0400		/* XXX */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
+#define PG_PAGER2	0x2000		/* pager-specific flag */
 
 #define	UVM_PGFLAGBITS \
 	"\20\1CLEAN\2DIRTY\3BUSY\4WANTED" \
 	"\5PAGEOUT\6RELEASED\7FAKE\10RDONLY" \
-	"\11ZERO\12TABLED\13HOLE"
+	"\11ZERO\12TABLED\13HOLE" \
+	"\15PAGER1\16PAGER2"
 
 #define PQ_FREE		0x0001		/* page is on free list */
 #define PQ_ANON		0x0002		/* page is part of an anon, rather

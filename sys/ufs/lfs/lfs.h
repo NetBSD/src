@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.134 2011/07/11 08:27:40 hannken Exp $	*/
+/*	$NetBSD: lfs.h,v 1.134.2.1 2011/11/30 14:33:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 
 /* Misc. definitions */
 #define BW_CLEAN	1		/* Flag for lfs_bwrite_ext() */
-#define PG_DELWRI	PG_PAGER1	/* Local def for delayed pageout */
+#define PG_DELWRI	PG_PAGER2	/* Local def for delayed pageout */
 
 /* Resource limits */
 #define	LFS_MAX_RESOURCE(x, u)	(((x) >> 2) - 10 * (u))
