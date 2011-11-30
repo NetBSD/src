@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.42 2011/11/30 16:09:29 dholland Exp $	*/
+/*	$NetBSD: quota.c,v 1.43 2011/11/30 16:12:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.42 2011/11/30 16:09:29 dholland Exp $");
+__RCSID("$NetBSD: quota.c,v 1.43 2011/11/30 16:12:32 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,8 @@ struct quotause {
 	struct	quotause *next;
 	long	flags;
 	uid_t	id;
-	struct	quotaval qv[QUOTA_NLIMITS];
+	struct	quotaval *qvs;
+	unsigned numqvs;
 	char	fsname[MAXPATHLEN + 1];
 };
 #define	FOUND	0x01
@@ -353,8 +354,8 @@ showonequota(int type, id_t id, const char *idname, struct quotause *qup)
 	const char *msg;
 	int isquota2;
 
-	qvs = qup->qv;
-	numqvs = QUOTA_NLIMITS;
+	qvs = qup->qvs;
+	numqvs = qup->numqvs;
 
 	if (now == 0) {
 		time(&now);
@@ -399,7 +400,8 @@ showonequota(int type, id_t id, const char *idname, struct quotause *qup)
 		isquota2 = (qup->flags & QUOTA2) != 0;
 
 		for (i=0; i<numqvs; i++) {
-			printqv(&qvs[i], isquota2, isbytes[i], now);
+			printqv(&qvs[i], isquota2, 
+				i >= QUOTA_NLIMITS ? 0 : isbytes[i], now);
 		}
 		printf("\n");
 	}
@@ -494,16 +496,26 @@ getprivs(id_t id, int quotatype)
 	for (i = 0; i < nfst; i++) {
 		if (qup == NULL) {
 			if ((qup = malloc(sizeof *qup)) == NULL)
-				err(1, "out of memory");
+				err(1, "Out of memory");
 		}
 		if (strncmp(fst[i].f_fstypename, "nfs", 
 		    sizeof(fst[i].f_fstypename)) == 0) {
 			version = 0;
+			qup->numqvs = QUOTA_NLIMITS;
+			qup->qvs = malloc(qup->numqvs * sizeof(qup->qvs[0]));
+			if (qup->qvs == NULL) {
+				err(1, "Out of memory");
+			}
 			if (getnfsquota(fst[i].f_mntfromname,
-			    qup->qv, id, ufs_quota_class_names[quotatype]) != 1)
+			    qup->qvs, id, ufs_quota_class_names[quotatype]) != 1)
 				continue;
 		} else if ((fst[i].f_flag & ST_QUOTA) != 0) {
-			if (getvfsquota(fst[i].f_mntonname, qup->qv, &version,
+			qup->numqvs = QUOTA_NLIMITS;
+			qup->qvs = malloc(qup->numqvs * sizeof(qup->qvs[0]));
+			if (qup->qvs == NULL) {
+				err(1, "Out of memory");
+			}
+			if (getvfsquota(fst[i].f_mntonname, qup->qvs, &version,
 			    id, quotatype, dflag, Dflag) != 1)
 				continue;
 		} else
