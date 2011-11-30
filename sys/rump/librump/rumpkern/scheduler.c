@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.27 2011/10/31 13:17:22 yamt Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.27.2.1 2011/11/30 14:36:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.27 2011/10/31 13:17:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.27.2.1 2011/11/30 14:36:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -510,6 +510,13 @@ kpreempt_enable(void)
 {
 
 	KPREEMPT_ENABLE(curlwp);
+}
+
+bool
+kpreempt_disabled(void)
+{
+
+	return true;
 }
 
 void
