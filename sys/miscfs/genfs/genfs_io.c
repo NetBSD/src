@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.4 2011/11/26 15:19:06 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.5 2011/11/30 14:31:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.4 2011/11/26 15:19:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.5 2011/11/30 14:31:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1094,9 +1094,12 @@ retry:
 			pg->flags |= PG_BUSY;
 			UVM_PAGE_OWN(pg, "genfs_putpages");
 
-#if 1 /* XXX notyet */
 			/*
 			 * first look backward.
+			 *
+			 * XXX implement PG_PAGER1 incompatibility check.
+			 * probably it's better to make PG_NEEDCOMMIT a first
+			 * level citizen for uvm/genfs.
 			 */
 
 			npages = MIN(maxpages >> 1, off >> PAGE_SHIFT);
@@ -1113,9 +1116,6 @@ retry:
 					memset(&pgs[npages - nback], 0,
 					    nback * sizeof(pgs[0]));
 			}
-#else
-			nback = 0;
-#endif
 
 			/*
 			 * then plug in our page of interest.
