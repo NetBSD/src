@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.40 2011/11/27 13:24:32 dholland Exp $	*/
+/*	$NetBSD: quota.c,v 1.41 2011/11/30 16:07:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.40 2011/11/27 13:24:32 dholland Exp $");
+__RCSID("$NetBSD: quota.c,v 1.41 2011/11/30 16:07:28 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ static struct quotause	*getprivs(id_t, int);
 static void	heading(int, id_t, const char *, const char *);
 static void	showgid(gid_t);
 static void	showgrpname(const char *);
+static void	showonequota(int, id_t, const char *, struct quotause *);
 static void	showquotas(int, id_t, const char *);
 static void	showuid(uid_t);
 static void	showusrname(const char *);
@@ -100,6 +101,7 @@ static int	hflag = 0;
 static int	dflag = 0;
 static int	Dflag = 0;
 static uid_t	myuid;
+static int needheading;
 
 int
 main(int argc, char *argv[])
@@ -318,125 +320,141 @@ showquotas(int type, id_t id, const char *name)
 {
 	struct quotause *qup;
 	struct quotause *quplist;
-	const char *msgi, *msgb, *nam, *timemsg;
-	int lines = 0;
-	static time_t now;
-	char b0[20], b1[20], b2[20], b3[20];
 
-	if (now == 0)
-		time(&now);
+	needheading = 1;
+
 	quplist = getprivs(id, type);
 	for (qup = quplist; qup; qup = qup->next) {
-		int ql_stat;
-		struct quotaval *q = qup->qv;
-		if (!vflag &&
-		    q[QUOTA_LIMIT_BLOCK].qv_softlimit == UQUAD_MAX &&
-		    q[QUOTA_LIMIT_BLOCK].qv_hardlimit == UQUAD_MAX &&
-		    q[QUOTA_LIMIT_FILE].qv_softlimit == UQUAD_MAX &&
-		    q[QUOTA_LIMIT_FILE].qv_hardlimit == UQUAD_MAX)
-			continue;
-		ql_stat = quota_check_limit(q[QUOTA_LIMIT_FILE].qv_usage, 1,
-		    q[QUOTA_LIMIT_FILE].qv_softlimit,
-		    q[QUOTA_LIMIT_FILE].qv_hardlimit,
-		    q[QUOTA_LIMIT_FILE].qv_expiretime, now);
-		switch(QL_STATUS(ql_stat)) {
-		case QL_S_DENY_HARD:
-			msgi = "File limit reached on";
-			break;
-		case QL_S_DENY_GRACE:
-			msgi = "Over file quota on";
-			break;
-		case QL_S_ALLOW_SOFT:
-			msgi = "In file grace period on";
-			break;
-		default:
-			msgi = NULL;
-		}
-		ql_stat = quota_check_limit(q[QUOTA_LIMIT_BLOCK].qv_usage, 1,
-		    q[QUOTA_LIMIT_BLOCK].qv_softlimit,
-		    q[QUOTA_LIMIT_BLOCK].qv_hardlimit,
-		    q[QUOTA_LIMIT_BLOCK].qv_expiretime, now);
-		switch(QL_STATUS(ql_stat)) {
-		case QL_S_DENY_HARD:
-			msgb = "Block limit reached on";
-			break;
-		case QL_S_DENY_GRACE:
-			msgb = "Over block quota on";
-			break;
-		case QL_S_ALLOW_SOFT:
-			msgb = "In block grace period on";
-			break;
-		default:
-			msgb = NULL;
-		}
-		if (qflag) {
-			if ((msgi != NULL || msgb != NULL) &&
-			    lines++ == 0)
-				heading(type, id, name, "");
-			if (msgi != NULL)
-				printf("\t%s %s\n", msgi, qup->fsname);
-			if (msgb != NULL)
-				printf("\t%s %s\n", msgb, qup->fsname);
-			continue;
-		}
-		if (vflag || dflag || msgi || msgb ||
-		    q[QUOTA_LIMIT_BLOCK].qv_usage ||
-		    q[QUOTA_LIMIT_FILE].qv_usage) {
-			if (lines++ == 0)
-				heading(type, id, name, "");
-			nam = qup->fsname;
-			if (strlen(qup->fsname) > 4) {
-				printf("%s\n", qup->fsname);
-				nam = "";
-			} 
-			if (msgb)
-				timemsg = timeprt(b0, 9, now,
-				    q[QUOTA_LIMIT_BLOCK].qv_expiretime);
-			else if ((qup->flags & QUOTA2) != 0 && vflag)
-				timemsg = timeprt(b0, 9, 0,
-				    q[QUOTA_LIMIT_BLOCK].qv_grace);
-			else
-				timemsg = "";
-				
-			printf("%12s%9s%c%8s%9s%8s",
-			    nam,
-			    intprt(b1, 9, q[QUOTA_LIMIT_BLOCK].qv_usage,
-			    HN_B, hflag),
-			    (msgb == NULL) ? ' ' : '*',
-			    intprt(b2, 9, q[QUOTA_LIMIT_BLOCK].qv_softlimit,
-			    HN_B, hflag),
-			    intprt(b3, 9, q[QUOTA_LIMIT_BLOCK].qv_hardlimit,
-			    HN_B, hflag),
-			    timemsg);
-
-			if (msgi)
-				timemsg = timeprt(b0, 9, now, 
-				    q[QUOTA_LIMIT_FILE].qv_expiretime);
-			else if ((qup->flags & QUOTA2) != 0 && vflag)
-				timemsg = timeprt(b0, 9, 0,
-				    q[QUOTA_LIMIT_FILE].qv_grace);
-			else
-				timemsg = "";
-				
-			printf("%8s%c%7s%8s%8s\n",
-			    intprt(b1, 8, q[QUOTA_LIMIT_FILE].qv_usage, 0,
-			     hflag),
-			    (msgi == NULL) ? ' ' : '*',
-			    intprt(b2, 8, q[QUOTA_LIMIT_FILE].qv_softlimit,
-			     0, hflag),
-			    intprt(b3, 8, q[QUOTA_LIMIT_FILE].qv_hardlimit,
-			     0, hflag),
-			    timemsg);
-			continue;
-		}
+		showonequota(type, id, name, qup);
 	}
-	if (!qflag && lines == 0)
+	if (!qflag) {
+		/* In case nothing printed, issue a header saying "none" */
 		heading(type, id, name, "none");
+	}
+}
+
+static void
+showonequota(int type, id_t id, const char *name, struct quotause *qup)
+{
+	char b0[20], b1[20], b2[20], b3[20];
+	const char *msgi, *msgb, *nam, *timemsg;
+	int ql_stat;
+	struct quotaval *q = qup->qv;
+	static time_t now;
+
+	if (now == 0) {
+		time(&now);
+	}
+
+	if (!vflag &&
+	    q[QUOTA_LIMIT_BLOCK].qv_softlimit == UQUAD_MAX &&
+	    q[QUOTA_LIMIT_BLOCK].qv_hardlimit == UQUAD_MAX &&
+	    q[QUOTA_LIMIT_FILE].qv_softlimit == UQUAD_MAX &&
+	    q[QUOTA_LIMIT_FILE].qv_hardlimit == UQUAD_MAX)
+		return;
+	ql_stat = quota_check_limit(q[QUOTA_LIMIT_FILE].qv_usage, 1,
+				    q[QUOTA_LIMIT_FILE].qv_softlimit,
+				    q[QUOTA_LIMIT_FILE].qv_hardlimit,
+				    q[QUOTA_LIMIT_FILE].qv_expiretime, now);
+	switch(QL_STATUS(ql_stat)) {
+	    case QL_S_DENY_HARD:
+		msgi = "File limit reached on";
+		break;
+	    case QL_S_DENY_GRACE:
+		msgi = "Over file quota on";
+		break;
+	    case QL_S_ALLOW_SOFT:
+		msgi = "In file grace period on";
+		break;
+	    default:
+		msgi = NULL;
+	}
+	ql_stat = quota_check_limit(q[QUOTA_LIMIT_BLOCK].qv_usage, 1,
+				    q[QUOTA_LIMIT_BLOCK].qv_softlimit,
+				    q[QUOTA_LIMIT_BLOCK].qv_hardlimit,
+				    q[QUOTA_LIMIT_BLOCK].qv_expiretime, now);
+	switch(QL_STATUS(ql_stat)) {
+	    case QL_S_DENY_HARD:
+		msgb = "Block limit reached on";
+		break;
+	    case QL_S_DENY_GRACE:
+		msgb = "Over block quota on";
+		break;
+	    case QL_S_ALLOW_SOFT:
+		msgb = "In block grace period on";
+		break;
+	    default:
+		msgb = NULL;
+	}
+	if (qflag) {
+		if (msgi != NULL) {
+			heading(type, id, name, "");
+			printf("\t%s %s\n", msgi, qup->fsname);
+		}
+		if (msgb != NULL) {
+			heading(type, id, name, "");
+			printf("\t%s %s\n", msgb, qup->fsname);
+		}
+		return;
+	}
+	if (vflag || dflag || msgi || msgb ||
+	    q[QUOTA_LIMIT_BLOCK].qv_usage ||
+	    q[QUOTA_LIMIT_FILE].qv_usage) {
+		heading(type, id, name, "");
+		nam = qup->fsname;
+		if (strlen(qup->fsname) > 4) {
+			printf("%s\n", qup->fsname);
+			nam = "";
+		} 
+		if (msgb)
+			timemsg = timeprt(b0, 9, now,
+					  q[QUOTA_LIMIT_BLOCK].qv_expiretime);
+		else if ((qup->flags & QUOTA2) != 0 && vflag)
+			timemsg = timeprt(b0, 9, 0,
+					  q[QUOTA_LIMIT_BLOCK].qv_grace);
+		else
+			timemsg = "";
+				
+		printf("%12s%9s%c%8s%9s%8s",
+		       nam,
+		       intprt(b1, 9, q[QUOTA_LIMIT_BLOCK].qv_usage,
+			      HN_B, hflag),
+		       (msgb == NULL) ? ' ' : '*',
+		       intprt(b2, 9, q[QUOTA_LIMIT_BLOCK].qv_softlimit,
+			      HN_B, hflag),
+		       intprt(b3, 9, q[QUOTA_LIMIT_BLOCK].qv_hardlimit,
+			      HN_B, hflag),
+		       timemsg);
+
+		if (msgi)
+			timemsg = timeprt(b0, 9, now, 
+					  q[QUOTA_LIMIT_FILE].qv_expiretime);
+		else if ((qup->flags & QUOTA2) != 0 && vflag)
+			timemsg = timeprt(b0, 9, 0,
+					  q[QUOTA_LIMIT_FILE].qv_grace);
+		else
+			timemsg = "";
+				
+		printf("%8s%c%7s%8s%8s\n",
+		       intprt(b1, 8, q[QUOTA_LIMIT_FILE].qv_usage, 0,
+			      hflag),
+		       (msgi == NULL) ? ' ' : '*',
+		       intprt(b2, 8, q[QUOTA_LIMIT_FILE].qv_softlimit,
+			      0, hflag),
+		       intprt(b3, 8, q[QUOTA_LIMIT_FILE].qv_hardlimit,
+			      0, hflag),
+		       timemsg);
+		return;
+	}
 }
 
 static void
 heading(int type, id_t id, const char *name, const char *tag)
 {
+	if (needheading == 0)
+		return;
+	needheading = 0;
+
 	if (dflag)
 		printf("Default %s disk quotas: %s\n",
 		    ufs_quota_class_names[type], tag);
