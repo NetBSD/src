@@ -1,15 +1,11 @@
-#	$NetBSD: MV2120,v 1.2 2011/11/22 21:25:08 tls Exp $
+#	$NetBSD: MV2120,v 1.3 2011/11/30 20:40:20 jakllsch Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
 include 	"arch/evbarm/conf/std.mv2120"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-
-options         SYMTAB_SPACE=920000
-
-options		DIAGNOSTIC
-options		LOCKDEBUG
+options 	SYMTAB_SPACE="(1024 * 900)"
 
 makeoptions	DEBUG="-g"
 
@@ -18,19 +14,19 @@ makeoptions	DEBUG="-g"
 maxusers	32
 
 # Board Type
-makeoptions     BOARDTYPE="mv2120"
-options         EVBARM_BOARDTYPE=mv2120
+makeoptions	BOARDTYPE="mv2120"
+options 	EVBARM_BOARDTYPE=mv2120
 
 # CPU options
-options		CPU_ARM9E
-makeoptions	CPUFLAGS="-mcpu=arm926ej-s -O2"
+options 	CPU_ARM9E
+makeoptions	CPUFLAGS="-mcpu=arm926ej-s -mtune=arm926ej-s -Os"
 
 # Marvell SoC options
 options 	ORION
 
 # Standard system options
 
-options		MSGBUFSIZE=32768
+options 	MSGBUFSIZE=32768
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
@@ -117,6 +113,7 @@ options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -160,6 +157,7 @@ options 	USERCONF	# userconf(4) support
 
 config		netbsd		root on ? type ?
 config		netbsd-mvgbe0	root on mvgbe0 type nfs
+#config		netbsd-wd0g	root on wd0g type ffs
 
 # The main bus device
 mainbus0 at root
@@ -171,19 +169,22 @@ cpu0	at mainbus?
 mvsoc0	at mainbus?
 
 # On-chip PCI Express Interface
-mvpex*	at mvsoc? offset ? irq ?
+#mvpex*	at mvsoc? offset ? irq ?
 
 # On-chip PCI Interface
-gtpci*	at mvsoc? offset ? irq ?
+#gtpci*	at mvsoc? offset ? irq ?
 
 # PCI bus support
 #options 	PCI_NETBSD_CONFIGURE
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 
-pci*	at mvpex?
-pci*	at gtpci?
+#pci*	at mvpex?
+#pci*	at gtpci?
 
-pchb*	at pci? dev ? function ?	# PCI-Host bridges
+#pchb*	at pci? dev ? function ?	# PCI-Host bridges
+
+# PCI IDE Controller
+#mvsata*	at pci? dev ? function ?	# Marvell SATA Controller
 
 # On-chip Serial-ATA II Host Controller (SATAHC)
 mvsata*	at mvsoc? offset ? irq ?
@@ -206,7 +207,7 @@ iic*	at gttwsi?				# I2C bus
 com*	at mvsoc? offset ? irq ?
 
 # On-chip IDMA Controller
-gtidmac* at mvsoc? offset ? irq ?
+#gtidmac* at mvsoc? offset ? irq ?
 
 # On-chip General Purpose I/O Port Interface
 mvsocgpp* at mvsoc? offset ? irq ?
@@ -220,9 +221,6 @@ pcf8563rtc* at iic? addr 0x51
 
 # MII/PHY support
 makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
-
-# PCI IDE Controller
-mvsata*	at pci? dev ? function ?	# Marvell SATA Controller
 
 # ATA (IDE) bus support
 atabus*	at ata?
@@ -265,7 +263,7 @@ pseudo-device	crypto			# /dev/crypto device
 pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
-pseudo-device	bio			# RAID control device driver
+#pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
@@ -326,8 +324,8 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 # data mover pseudo-devices
-pseudo-device	swdmover		# softare dmover(9) back-end
-pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+#pseudo-device	swdmover		# softare dmover(9) back-end
+#pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 pseudo-device	dm
 
@@ -350,7 +348,6 @@ options 	VERIFIED_EXEC_FP_MD5
 options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 
-pseudo-device kttcp
 pseudo-device drvctl
 
 options DKWEDGE_AUTODISCOVER
