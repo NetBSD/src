@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.127 2011/12/01 00:15:32 dholland Exp $ */
+/* $NetBSD: user.c,v 1.128 2011/12/01 00:26:45 dholland Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,12 +33,13 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.127 2011/12/01 00:15:32 dholland Exp $");
+__RCSID("$NetBSD: user.c,v 1.128 2011/12/01 00:26:45 dholland Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <dirent.h>
@@ -265,8 +266,13 @@ asystem(const char *fmt, ...)
 	if (verbose) {
 		(void)printf("Command: %s\n", buf);
 	}
-	if ((ret = system(buf)) != 0) {
+	ret = system(buf);
+	if (ret == -1) {
 		warn("Error running `%s'", buf);
+	} else if (WIFSIGNALED(ret)) {
+		warnx("Error running `%s': Signal %d", buf, WTERMSIG(ret));
+	} else if (WIFEXITED(ret) && WEXITSTATUS(ret) != 0) {
+		warnx("Error running `%s': Exit %d", buf, WEXITSTATUS(ret));
 	}
 	return ret;
 }
