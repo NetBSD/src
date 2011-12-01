@@ -489,7 +489,8 @@ pmap_bootstrap(void)
 {
 	vsize_t bufsz;
 
-	pmap_page_colormask = (uvmexp.ncolors -1) << PAGE_SHIFT;
+	if (uvmexp.ncolors)
+		pmap_page_colormask = (uvmexp.ncolors - 1) << PAGE_SHIFT;
 
 	pmap_tlb_info_init(&pmap_tlb0_info);		/* init the lock */
 
