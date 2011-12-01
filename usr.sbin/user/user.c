@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.126 2011/01/04 10:30:21 wiz Exp $ */
+/* $NetBSD: user.c,v 1.127 2011/12/01 00:15:32 dholland Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.126 2011/01/04 10:30:21 wiz Exp $");
+__RCSID("$NetBSD: user.c,v 1.127 2011/12/01 00:15:32 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -219,8 +219,7 @@ enum {
 #define UNSET_INACTIVE	"Null (unset)"
 #define UNSET_EXPIRY	"Null (unset)"
 
-static int		asystem(const char *fmt, ...)
-			    __attribute__((__format__(__printf__, 1, 2)));
+static int		asystem(const char *fmt, ...) __printflike(1, 2);
 static int		is_number(const char *);
 static struct group	*find_group_info(const char *);
 static int		verbose;
