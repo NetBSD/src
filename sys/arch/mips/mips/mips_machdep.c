@@ -1,4 +1,4 @@
-/*	mips_machdep.c,v 1.205.4.1.2.1.2.52 2011/04/29 08:26:29 matt Exp	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.54 2011/12/01 02:58:53 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
