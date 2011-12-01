@@ -122,6 +122,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
 
 	bool direct_mapped_p = MIPS_KSEG0_P(ua2);
+#ifdef ENABLE_MIPS_KSEGX
+	if (!direct_mapped_p)
+		direct_mapped_p = VM_KSEGX_ADDRESS <= ua2
+		    && ua2 < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE;
+#endif
 #ifdef _LP64
 	direct_mapped_p = direct_mapped_p || MIPS_XKPHYS_P(ua2);
 #endif
@@ -195,6 +200,16 @@ cpu_uarea_remap(struct lwp *l)
 	 * Grab the starting physical address of the uarea.
 	 */
 	va = (vaddr_t)l->l_addr;
+	if (MIPS_KSEG0_P(va))
+		return;
+#ifdef _LP64
+	if (MIPS_XKPHYS_P(va))
+		return;
+#elif defined(ENABLE_MIPS_KSEGX)
+	if (VM_KSEGX_ADDRESS <= va && va < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE)
+		return;
+#endif
+
 	if (!pmap_extract(pmap_kernel(), va, &pa))
 		panic("%s: pmap_extract(%#"PRIxVADDR") failed", __func__, va);
 
@@ -287,6 +302,20 @@ cpu_swapin(struct lwp *l)
 {
 	pt_entry_t *pte;
 	int i, x;
+	vaddr_t kva = (vaddr_t) lwp_getpcb(l);
+
+#ifdef _LP64
+	if (MIPS_XKPHYS_P(kva))
+		return;
+#else
+	if (MIPS_KSEG0_P(kva))
+		return;
+	
+#ifdef ENABLE_MIPS_KSEGX
+	if (VM_KSEGX_ADDRESS <= kva && kva < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE)
+		return;
+#endif
+#endif
 
 	/*
 	 * Cache the PTEs for the user area in the machine dependent
@@ -296,7 +325,7 @@ cpu_swapin(struct lwp *l)
 	x = (MIPS_HAS_R4K_MMU) ?
 	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
 	    MIPS1_PG_G;
-	pte = kvtopte(l->l_addr);
+	pte = kvtopte(kva);
 	for (i = 0; i < UPAGES; i++)
 		l->l_md.md_upte[i] = pte[i].pt_entry &~ x;
 }
