@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.47 2011/11/03 18:29:27 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.48 2011/12/01 03:50:08 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2404,7 +2404,7 @@ END(MIPSX(setfunc_trampoline))
  * sure TBIS(it) in the case.
  */
 LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
-#if !defined(ENABLE_MIPS_16KB_PAGE) || defined(VMSWAP_UAREA)
+#if PAGE_SIZE < USPACE
 	INT_L	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 	INT_L	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
 	PTR_L	v0, L_PCB(a0)			# va = l->l_addr
@@ -2412,6 +2412,15 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 	li	t0, VM_MIN_KERNEL_ADDRESS	# compute index
 	blt	v0, t0, MIPSX(resume)
 	 nop
+#if defined(ENABLE_MIPS_KSEGX)
+	li	t0, VM_KSEGX_ADDRESS		# below KSEGX?
+	blt	v0, t0, 1f
+	 nop
+	li	t0, VM_KSEGX_ADDRESS+VM_KSEGX_SIZE # within KSEGX?
+	blt	v0, t0, MIPSX(resume)
+	 nop
+1:
+#endif
 #else
 	li	t0, MIPS_KSEG0_START		# above XKSEG?
 	blt	t0, v0, MIPSX(resume)
@@ -2482,7 +2491,7 @@ MIPSX(entry0set):
 	INT_S	zero, 0(a3)			# clear tlb lock
 #endif
 MIPSX(resume):
-#endif /* !ENABLE_MIPS_16KB_PAGE || VMSWAP_UAREA */
+#endif /* PAGE_SIZE < USPACE */
 #if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
 	PTR_L	v0, L_PRIVATE(a0)		# get lwp private
 	_MTC0	v0, MIPS_COP_0_TLB_CONTEXT, 4	# make available for rdhwr
