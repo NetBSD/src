@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.134 2011/08/28 15:46:26 gson Exp $ */
+/*	$NetBSD: fdisk.c,v 1.135 2011/12/01 22:24:29 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.134 2011/08/28 15:46:26 gson Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.135 2011/12/01 22:24:29 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -224,6 +224,7 @@ static char *disk_type = NULL;
 
 static int a_flag;		/* set active partition */
 static int i_flag;		/* init bootcode */
+static int I_flag;		/* ignore errors */
 static int u_flag;		/* update partition data */
 static int v_flag;		/* more verbose */
 static int sh_flag;		/* Output data as shell defines */
@@ -382,6 +383,9 @@ main(int argc, char *argv[])
 			break;
 		case 'i':	/* Always update bootcode */
 			i_flag = 1;
+			break;
+		case 'I':	/* Ignore errors */
+			I_flag = 1;
 			break;
 		case 'l':	/* List known partition types */
 			for (len = 0; len < KNOWN_SYSIDS; len++)
@@ -2156,7 +2160,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		errtext = check_ext_overlap(part, sysid, start, size, 0);
 	else
 		errtext = check_overlap(part, sysid, start, size, 0);
-	if (errtext != NULL) {
+	if (errtext != NULL && !I_flag) {
 		if (f_flag)
 			errx(2, "%s\n", errtext);
 		printf("%s\n", errtext);
@@ -2170,11 +2174,12 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 	 * This also fixes the base of each extended partition if the
 	 * partition itself has moved.
 	 */
-
-	if (extended)
-		errtext = check_ext_overlap(part, sysid, start, size, 1);
-	else
-		errtext = check_overlap(part, sysid, start, size, 1);
+	if (!I_flag) {
+		if (extended)
+			errtext = check_ext_overlap(part, sysid, start, size, 1);
+		else
+			errtext = check_overlap(part, sysid, start, size, 1);
+	}
 
 	if (errtext)
 		errx(1, "%s\n", errtext);
