@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.71 2011/04/25 22:23:47 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.72 2011/12/01 22:24:29 christos Exp $
 .\"
-.Dd April 6, 2010
+.Dd December 1, 2011
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -8,7 +8,7 @@
 .Nd MS-DOS partition maintenance program
 .Sh SYNOPSIS
 .Nm
-.Op Fl aBFfiSuv
+.Op Fl aBFfIiSuv
 .Bk -words
 .Oo
 .Fl 0 | 1 | 2 | 3 | E Ar number
@@ -270,6 +270,14 @@ and
 fields
 .Pq only Ar start No and Ar size No can be specified by Fl s No option .
 They will be automatically computed using the BIOS geometry.
+.It Fl I
+Ignore errors from overlapping partitions.
+Some devices (cameras CHDK) require overlapping partitions to support 
+bigger than 4GB cards.
+The
+.Fl I
+flag ignores overlapping error checks and does not fix them, allowing these
+incorrect configurations to be used.
 .It Fl i
 Explicitly request initialisation of the master boot code
 (similar to what
