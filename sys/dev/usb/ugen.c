@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.113 2011/11/25 02:59:54 jakllsch Exp $	*/
+/*	$NetBSD: ugen.c,v 1.114 2011/12/01 22:42:41 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.113 2011/11/25 02:59:54 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.114 2011/12/01 22:42:41 jakllsch Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -571,7 +571,6 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 		if (sce->ibuf != NULL) {
 			free(sce->ibuf, M_USBDEV);
 			sce->ibuf = NULL;
-			clfree(&sce->q);
 		}
 	}
 	sc->sc_is_open[endpt] = 0;
