@@ -692,7 +692,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		}
 
 #ifndef _LP64
-		if (seg->avail_start + npgs > MIPS_PHYS_MASK + 1) {
+		if (seg->avail_start + npgs > atop(MIPS_PHYS_MASK + 1)) {
 			aprint_debug("%s: seg %u: not enough in KSEG0 for %u pages\n",
 			    __func__, bank, npgs);
 			continue;
