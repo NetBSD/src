@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/07/01 05:07:46 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/12/02 22:28:47 macallan Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -61,7 +61,7 @@ ${OBJS}: ${DPSRCS}
 # Override the default .c -> .o rule.
 .c.o:
 	${_MKTARGET_COMPILE}
-	${CC} ${CPPFLAGS} ${CPPFLAGS.${.TARGET}} ${GCFLAGS} ${CPUFLAGS} -c ${.IMPSRC} -o ${.TARGET}.o
+	${CC} ${CPPFLAGS} ${CPPFLAGS.${.TARGET}} ${GCFLAGS} ${COPTS} ${COPTS.${.TARGET}} ${CPUFLAGS} -c ${.IMPSRC} -o ${.TARGET}.o
 	mv ${.TARGET}.o ${.TARGET}
 
 .if (${MACHINE_ARCH} == "mips64eb") || (${MACHINE_ARCH} == "mips64el")
