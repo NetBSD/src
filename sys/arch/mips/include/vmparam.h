@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.21 2011/11/29 07:48:31 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.22 2011/12/02 00:01:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,7 @@
 #define	_MIPS_VMPARAM_H_
 
 #ifdef _KERNEL_OPT
+#include "opt_cputype.h"
 #include "opt_multiprocessor.h"
 #endif
 
@@ -50,10 +51,18 @@
  */
 
 /*
- * We use a 4K page on MIPS systems.  Override PAGE_* definitions
- * to compile-time constants.
+ * We normally use a 4K page but may use 16K on MIPS systems.
+ * Override PAGE_* definitions to compile-time constants.
  */
+#ifdef ENABLE_MIPS_16KB_PAGE
+#define	PAGE_SHIFT	14
+#elif defined(ENABLE_MIPS_8KB_PAGE)
+#define	PAGE_SHIFT	13
+#elif defined(ENABLE_MIPS_4KB_PAGE) || 1
 #define	PAGE_SHIFT	12
+#else
+#error ENABLE_MIPS_xKB_PAGE not defined
+#endif
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
