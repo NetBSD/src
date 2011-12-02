@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.32 2011/08/07 21:13:05 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.33 2011/12/02 12:31:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.32 2011/08/07 21:13:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.33 2011/12/02 12:31:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -638,6 +638,10 @@ no_migration:
 
 #else
 
+/*
+ * stubs for !MULTIPROCESSOR
+ */
+
 struct cpu_info *
 sched_takecpu(struct lwp *l)
 {
@@ -759,6 +763,10 @@ sched_nextlwp(void)
 
 	return l;
 }
+
+/*
+ * sched_curcpu_runnable_p: return if curcpu() should exit the idle loop.
+ */
 
 bool
 sched_curcpu_runnable_p(void)
