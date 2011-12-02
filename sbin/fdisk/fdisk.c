@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.136 2011/12/02 03:04:11 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.137 2011/12/02 04:05:20 enami Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.136 2011/12/02 03:04:11 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.137 2011/12/02 04:05:20 enami Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -604,7 +604,7 @@ usage(void)
 {
 	int indent = 7 + (int)strlen(getprogname()) + 1;
 
-	(void)fprintf(stderr, "usage: %s [-afiluvBS] "
+	(void)fprintf(stderr, "usage: %s [-aBFfIilSuv] "
 		"[-A ptn_alignment[/ptn_0_offset]] \\\n"
 		"%*s[-b cylinders/heads/sectors] \\\n"
 		"%*s[-0123 | -E num "
