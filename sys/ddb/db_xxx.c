@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.64 2011/06/12 03:35:51 rmind Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.65 2011/12/02 23:57:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.64 2011/06/12 03:35:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.65 2011/12/02 23:57:58 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -106,8 +106,11 @@ db_kill_proc(db_expr_t addr, bool haddr,
 	       db_error("?\n");
 	       /*NOTREACHED*/
 	}
-
+	/* We might stop when the mutex is held or when not */
+	t = mutex_tryenter(proc_lock);
 	p = proc_find((pid_t)pid);
+	if (t)
+		mutex_exit(proc_lock);
 	if (p == NULL) {
 	       db_error("no such proc\n");
 	       /*NOTREACHED*/
