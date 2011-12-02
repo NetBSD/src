@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.135 2011/12/01 22:24:29 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.136 2011/12/02 03:04:11 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.135 2011/12/01 22:24:29 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.136 2011/12/02 03:04:11 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -2179,10 +2179,10 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 			errtext = check_ext_overlap(part, sysid, start, size, 1);
 		else
 			errtext = check_overlap(part, sysid, start, size, 1);
+		if (errtext)
+			errx(1, "%s\n", errtext);
 	}
 
-	if (errtext)
-		errx(1, "%s\n", errtext);
 
 	if (sysid == 0) {
 		/* delete this partition - save info though */
