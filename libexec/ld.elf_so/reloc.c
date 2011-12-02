@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.104 2011/06/25 05:45:12 nonaka Exp $	 */
+/*	$NetBSD: reloc.c,v 1.105 2011/12/02 09:06:49 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.104 2011/06/25 05:45:12 nonaka Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.105 2011/12/02 09:06:49 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -210,10 +210,13 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		obj->magic = RTLD_MAGIC;
 		obj->version = RTLD_VERSION;
 
-		/* Fill in the dynamic linker entry points. */
+		/*
+		 * Fill in the backwards compatibility dynamic linker entry points.
+		 *
+		 * DO NOT ADD TO THIS LIST
+		 */
 		obj->dlopen = dlopen;
 		obj->dlsym = dlsym;
-		obj->dlvsym = dlvsym;
 		obj->dlerror = dlerror;
 		obj->dlclose = dlclose;
 		obj->dladdr = dladdr;
