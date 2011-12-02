@@ -3,6 +3,8 @@
 
 defflag	opt_cputype.h		NOFPU FPEMUL
 				MIPS64_SB1
+				ENABLE_MIPS_16KB_PAGE
+				ENABLE_MIPS_8KB_PAGE
 				ENABLE_MIPS_KSEGX
 				MIPS64_XLP MIPS64_XLR MIPS64_XLS
 					# and the rest...
