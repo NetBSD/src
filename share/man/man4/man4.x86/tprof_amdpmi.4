@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof_amdpmi.4,v 1.1 2011/12/02 12:17:51 yamt Exp $
+.\"	$NetBSD: tprof_amdpmi.4,v 1.2 2011/12/02 14:38:51 wiz Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -42,11 +42,11 @@ The
 driver is a
 .Xr tprof 4
 backend driver, which uses performance-monitoring events available for
-some of AMD processors.
+some AMD processors.
 .Pp
 It programs the processors so that "CPU Clocks not Halted" events
-(event select 0x76) to raise NMIs and the NMI handler collects
-a sample.
+(event select 0x76) to raise NMIs and the NMI handler collect
+samples.
 .\" ------------------------------------------------------------
 .\".Sh EXAMPLES
 .\" ------------------------------------------------------------
