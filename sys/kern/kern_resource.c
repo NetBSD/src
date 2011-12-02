@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.167 2011/06/03 17:58:18 rmind Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.168 2011/12/02 12:33:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.167 2011/06/03 17:58:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.168 2011/12/02 12:33:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -483,6 +483,8 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 	struct lwp *l;
 	struct bintime tm;
 	struct timeval tv;
+
+	KASSERT(p->p_stat == SDEAD || mutex_owned(p->p_lock));
 
 	mutex_spin_enter(&p->p_stmutex);
 	st = p->p_sticks;
