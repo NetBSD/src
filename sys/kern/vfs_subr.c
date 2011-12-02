@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.425 2011/09/01 09:04:08 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.426 2011/12/02 12:32:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.425 2011/09/01 09:04:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.426 2011/12/02 12:32:38 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -166,6 +166,7 @@ vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
 	mutex_enter(&bufcache_lock);
 restart:
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		KASSERT(bp->b_vp == vp);
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error != 0) {
@@ -178,6 +179,7 @@ restart:
 	}
 
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
+		KASSERT(bp->b_vp == vp);
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error != 0) {
@@ -236,6 +238,7 @@ vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch, int slptimeo)
 	mutex_enter(&bufcache_lock);
 restart:
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		KASSERT(bp->b_vp == vp);
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
@@ -250,6 +253,7 @@ restart:
 	}
 
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
+		KASSERT(bp->b_vp == vp);
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
@@ -285,6 +289,7 @@ vflushbuf(struct vnode *vp, int sync)
 loop:
 	mutex_enter(&bufcache_lock);
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		KASSERT(bp->b_vp == vp);
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if ((bp->b_cflags & BC_BUSY))
 			continue;
