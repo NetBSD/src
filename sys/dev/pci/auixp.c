@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.36 2011/11/24 03:35:58 mrg Exp $ */
+/* $NetBSD: auixp.c,v 1.37 2011/12/02 11:58:44 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.36 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.37 2011/12/02 11:58:44 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1813,9 +1813,9 @@ auixp_dumpreg(void)
 static void
 auixp_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
 {
-	struct auixp_softc *sc;
+	struct auixp_codec *co = addr;
+	struct auixp_softc *sc = co->sc;
 
-	sc = addr;
 	*intr = &sc->sc_intr_lock;
 	*proc = &sc->sc_lock;
 }
