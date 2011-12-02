@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.106 2011/06/01 02:22:18 rmind Exp $
+.\"	$NetBSD: uvm.9,v 1.106.4.1 2011/12/02 16:54:32 yamt Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -189,6 +189,11 @@ being lower than
 causes the returned page to be filled with zeroes, either by allocating it
 from a pool of pre-zeroed pages or by zeroing it in-line as necessary.
 .Pp
+While
+.Fn uvm_pagealloc
+does never wait for memory available by itself, it can block for mutexes
+internally.
+.Pp
 .Fn uvm_pagerealloc
 reallocates page
 .Fa pg
@@ -196,6 +201,15 @@ to a new object
 .Fa newobj ,
 at a new offset
 .Fa newoff .
+If the
+.Fa newobj
+is
+.Dv NULL ,
+.Fa newoff
+is ignored and the page
+.Fa pg
+is just detached from the current object.
+Currently, only the latter case is implemented.
 .Pp
 .Fn uvm_pagefree
 frees the physical page
