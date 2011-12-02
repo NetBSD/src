@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.316 2011/11/26 15:55:18 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.317 2011/12/02 16:37:43 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -605,17 +605,15 @@ Notes:		- maintain object pages in radix tree rather than rb tree.
 		- fix nfs commit range tracking.
 		- fix nfs write clustering.  XXX hack
 
+		TODO:
+			- benchmark
+			- test
+			- make the write clustering fix less kludgy and work
+			  for backward clustering
+
 		tested: i386, amd64, nfs, ffs
 
-		sparc64 pmap
-			some mechanical changes are necessary.
-			stop using uvm_object.  a TAILQ linked with
-			pageq.queue should be enough.
-			remove PG_MARKER assertion.
-
-		hppa pmap
-			some mechanical changes are necessary.
-			use uvm_page_array_* instead of TAILQ_FOREACH memq.
+		have good chances to be broken: lfs, sparc64, hp700
 
 Branch:		reinoud-bufcleanup
 Description:	implement and evaluate struct buf usage cleanup strategies.
