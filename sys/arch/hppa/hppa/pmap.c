@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 2011/06/12 03:35:41 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81.2.1 2011/12/02 16:33:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2011/06/12 03:35:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81.2.1 2011/12/02 16:33:59 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2011/06/12 03:35:41 rmind Exp $");
 #include <sys/mutex.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_page_array.h>
 
 #include <machine/reg.h>
 #include <machine/psl.h>
@@ -393,7 +394,7 @@ pmap_pde_release(pmap_t pmap, vaddr_t va, struct vm_page *ptp)
 		pmap_pde_set(pmap, va, 0);
 		pmap->pm_stats.resident_count--;
 		if (pmap->pm_ptphint == ptp)
-			pmap->pm_ptphint = TAILQ_FIRST(&pmap->pm_obj.memq);
+			pmap->pm_ptphint = NULL;
 		ptp->wire_count = 0;
 
 		KASSERT((ptp->flags & PG_BUSY) == 0);
@@ -1087,7 +1088,9 @@ void
 pmap_destroy(pmap_t pmap)
 {
 #ifdef DIAGNOSTIC
+	struct uvm_page_array a;
 	struct vm_page *pg;
+	off_t off;
 #endif
 	int refs;
 
@@ -1101,11 +1104,17 @@ pmap_destroy(pmap_t pmap)
 		return;
 
 #ifdef DIAGNOSTIC
-	while ((pg = TAILQ_FIRST(&pmap->pm_obj.memq))) {
+	uvm_page_array_init(&a);
+	off = 0;
+	mutex_enter(pmap->pm_lock);
+	while ((pg = uvm_page_array_fill_and_peek(&a, &pmap->pm_obj, off, 0, 0))
+	    != NULL) {
 		pt_entry_t *pde, *epde;
 		struct vm_page *sheep;
 		struct pv_entry *haggis;
 
+		off = pg->offset + PAGE_SIZE;
+		uvm_page_array_advance(&a);
 		if (pg == pmap->pm_pdir_pg)
 			continue;
 
@@ -1141,6 +1150,8 @@ pmap_destroy(pmap_t pmap)
 		}
 		DPRINTF(PDB_FOLLOW, ("\n"));
 	}
+	mutex_exit(pmap->pm_lock);
+	uvm_page_array_fini(&a);
 #endif
 	pmap_sdir_set(pmap->pm_space, 0);
 	mutex_enter(pmap->pm_lock);
