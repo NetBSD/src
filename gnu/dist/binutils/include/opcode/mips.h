@@ -445,8 +445,10 @@ struct mips_opcode
 #define INSN_5400		  0x01000000
 /* NEC VR5500 instruction.  */
 #define INSN_5500		  0x02000000
-/* RMI Xlr instruction.  */
+/* NetLogic Xlr instruction.  */
 #define INSN_XLR		  0x00000020
+/* NetLogic Xlp instruction.  */
+#define INSN_XLP		  0x00000040
 
 /* MIPS ISA defines, use instead of hardcoding ISA level.  */
 
@@ -495,6 +497,7 @@ struct mips_opcode
 #define CPU_MIPS64R2	65
 #define CPU_SB1         12310201        /* octal 'SB', 01.  */
 #define CPU_XLR		887682		/* decimal 'XLR'   */
+#define CPU_XLP		887680		/* decimal 'XLP'   */
 
 
 /* Test for membership in an ISA including chip specific ISAs.  INSN
@@ -518,6 +521,7 @@ struct mips_opcode
      || (cpu == CPU_VR5400 && ((insn)->membership & INSN_5400) != 0)	\
      || (cpu == CPU_VR5500 && ((insn)->membership & INSN_5500) != 0)	\
      || (cpu == CPU_XLR && ((insn)->membership & INSN_XLR) != 0)	\
+     || (cpu == CPU_XLP && ((insn)->membership & INSN_XLP) != 0)	\
      || 0)	/* Please keep this term for easier source merging.  */
 
 /* This is a list of macro expanded instructions.

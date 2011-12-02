@@ -249,7 +249,10 @@ case $basic_machine in
 	| mipsisa32 | mipsisa32el \
 	| mipsisa32r2 | mipsisa32r2el \
 	| mipsisa64 | mipsisa64el \
+	| mipsisa64xlr | mipsisa64xlrel \
 	| mipsisa64r2 | mipsisa64r2el \
+	| mipsisa64r2xlp | mipsisa64r2xlpel \
+	| mipsisa64r2nlm | mipsisa64r2nlmel \
 	| mipsisa64sb1 | mipsisa64sb1el \
 	| mipsisa64sr71k | mipsisa64sr71kel \
 	| mipstx39 | mipstx39el \
@@ -322,7 +325,10 @@ case $basic_machine in
 	| mipsisa32-* | mipsisa32el-* \
 	| mipsisa32r2-* | mipsisa32r2el-* \
 	| mipsisa64-* | mipsisa64el-* \
+	| mipsisa64xlr-* | mipsisa64xlrel-* \
 	| mipsisa64r2-* | mipsisa64r2el-* \
+	| mipsisa64r2xlp-* | mipsisa64r2xlpel-* \
+	| mipsisa64r2nlm-* | mipsisa64r2nlmel-* \
 	| mipsisa64sb1-* | mipsisa64sb1el-* \
 	| mipsisa64sr71k-* | mipsisa64sr71kel-* \
 	| mipstx39-* | mipstx39el-* \

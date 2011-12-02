@@ -297,7 +297,7 @@ case ${generic_target} in
   mips*-*-linux*)			fmt=elf em=tmips ;;
   mips-*-sysv4*MP* | mips-*-gnu*)	fmt=elf em=tmips ;;
   mips-*-sysv*)				fmt=ecoff ;;
-  mips-*-elf* | mips-*-rtems*)		fmt=elf ;;
+  mips-*-elf* | mips-*-rtems*)		fmt=elf em=tmips ;;
   mips*-*-netbsd*)			fmt=elf em=tmips ;;
   mips-*-openbsd*)			fmt=elf ;;
 

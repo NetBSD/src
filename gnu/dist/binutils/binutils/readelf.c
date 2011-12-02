@@ -2044,6 +2044,7 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	    case E_MIPS_MACH_SB1:  strcat (buf, ", sb1");  break;
 	    case E_MIPS_MACH_9000: strcat (buf, ", 9000"); break;
 	    case E_MIPS_MACH_XLR:  strcat (buf, ", xlr");  break;
+	    case E_MIPS_MACH_XLP:  strcat (buf, ", xlp");  break;
 	    case 0:
 	    /* We simply ignore the field in this case to avoid confusion:
 	       MIPS ELF does not specify EF_MIPS_MACH, it is a GNU

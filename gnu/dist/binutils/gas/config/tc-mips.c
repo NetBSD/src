@@ -393,6 +393,7 @@ static int mips_32bitmode = 0;
    || mips_opts.arch == CPU_R12000                    \
    || mips_opts.arch == CPU_RM7000                    \
    || mips_opts.arch == CPU_VR5500                    \
+   || mips_opts.arch == CPU_XLP                       \
    )
 
 /* Whether the processor uses hardware interlocks to protect reads
@@ -417,6 +418,7 @@ static int mips_32bitmode = 0;
     && mips_opts.isa != ISA_MIPS2                     \
     && mips_opts.isa != ISA_MIPS3)                    \
    || mips_opts.arch == CPU_R4300                     \
+   || mips_opts.arch == CPU_XLP                       \
    )
 
 /* Whether the processor uses hardware interlocks to protect reads
@@ -13822,8 +13824,11 @@ static const struct mips_cpu_info mips_cpu_info_table[] =
   /* Broadcom SB-1 CPU core */
   { "sb1",            0,      ISA_MIPS64,     CPU_SB1 },
 
-  /* RMI Xlr */
+  /* Netlogic Xlr */
   { "xlr",	      0,      ISA_MIPS64,     CPU_XLR },
+  
+  /* Netlogic Xlp */
+  { "xlp",	      0,      ISA_MIPS64R2,   CPU_XLP },
 
   /* End marker */
   { NULL, 0, 0, 0 }
