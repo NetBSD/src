@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.48 2011/12/01 03:50:08 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.49 2011/12/02 00:01:37 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -367,16 +367,35 @@ MIPSX(tlb_miss_common):
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#0a: k0=bad address (again)
 #if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
 	beqz	k1, MIPSX(nopagetable)		#0b: ==0 -- no page table
+#if (PGSHIFT & 1) == 0
 	 _EXT	k0, k0, PGSHIFT+1, PGSHIFT-3	#0c: k0=VA[13:21]
 	_INS	k1, k0, 3, PGSHIFT-3		#0d: k0=page table index
 						#0d: k1=pte address
 #else
+	 _EXT	k0, k0, PGSHIFT, PGSHIFT-2	#0c: k0=VA[13:21]
+	_INS	k1, k0, 2, PGSHIFT-2		#0d: k0=page table index
+						#0d: k1=pte address
+#endif
+#else
 	beqz	k1, MIPSX(nopagetable)		#0b: ==0 -- no page table
 	 PTR_SRL k0, (PGSHIFT-2)		#0c: k0=VPN (aka va>>10)
+#if (PGSHIFT & 1) == 0
 	andi	k0, (NBPG-8)			#0d: k0=page table offset
+#else
+	andi	k0, (NBPG-4)			#0d: k0=page table offset
+#endif
 	PTR_ADDU k1, k0				#0e: k1=pte address
 #endif
-#if (MIPS64R2 + MIPS64R2_RMIXL) > 0
+#if PGSHIFT & 1
+	INT_L	k0, 0(k1)			#0f: k0=lo0 pte
+#if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
+	_EXT	k0, k0, 0, WIRED_POS		#11: chop top 2 bits
+#else
+	_SLL	k0, WIRED_SHIFT			#11: chop top 2 bits (part 1a)
+	_SRL	k0, WIRED_SHIFT			#12: chop top 2 bits (part 1b)
+#endif
+	INT_ADDU k1, k0, MIPS3_PG_NEXT		#13: k1=lo1 pte
+#elif (MIPS64R2 + MIPS64R2_RMIXL) > 0
 	REG_L	k0, 0(k1)			#0f: load PTEs
 	_EXT	k1, k0, 32*_QUAD_HIGHWORD, WIRED_POS #10: extract lo1 pte
 	_EXT	k0, k0, 32*_QUAD_LOWWORD,  WIRED_POS #11: extract lo0 pte
@@ -1597,11 +1616,14 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	 nop					# - delay slot -
 #endif
 	PTR_L	k1, _C_LABEL(Sysmap)
+#if (PGSHIFT & 1) == 0
 	PTR_SRL	k0, 1
 	PTR_SLL	k0, 3				# compute offset from index
+#else
+	PTR_SLL	k0, 2				# compute offset from index
+#endif
 	PTR_ADDU k1, k0
 	INT_L	k0, 0(k1)			# get PTE entry
-	INT_L	k1, 4(k1)			# get odd PTE entry
 #if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
 	_EXT	k0, k0, 0, WIRED_POS
 #else
@@ -1609,12 +1631,17 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	_SRL	k0, k0, WIRED_SHIFT
 #endif
 	_MTC0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
+#if (PGSHIFT & 1) == 0
+	INT_L	k1, 4(k1)			# get odd PTE entry
 #if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
 	_EXT	k1, k1, 0, WIRED_POS
 #else
 	_SLL	k1, k1, WIRED_SHIFT
 	_SRL	k1, k1, WIRED_SHIFT
 #endif
+#else
+	INT_ADDU k1, k0, MIPS3_PG_NEXT		# point to next page
+#endif /* PGSHIFT & 1) == 0 */
 	_MTC0	k1, MIPS_COP_0_TLB_LO1		# load PTE entry
 	COP0_SYNC
 	tlbwr					# write random TLB
@@ -1695,12 +1722,14 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	bltz	k0, TLB_INVALID_EXCEPTION_EXIT	# ASSERT(TLB entry exists)
 	 nop					# - delay slot -
 
+#if (PGSHIFT & 1) == 0
 	and	k0, k1, 4			# check even/odd page
 #ifdef MIPS3
 	nop					# required for QED 5230
 #endif
 	bnez	k0, MIPSX(kern_tlbi_odd)
 	 nop
+#endif /* (PGSHIFT & 1) == 0 */
 
 	INT_L	k0, 0(k1)			# get PTE entry
 #if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
@@ -1710,6 +1739,10 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	_SRL	k0, k0, WIRED_SHIFT
 #endif
 	_MTC0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
+#if (PGSHIFT & 1) != 0
+	INT_ADDU k0, MIPS3_PG_NEXT
+	_MTC0	k0, MIPS_COP_0_TLB_LO1		# load PTE entry
+#endif
 	COP0_SYNC
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
 #ifdef MIPS3
@@ -1718,6 +1751,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	beqz	k0, TLB_INVALID_EXCEPTION_EXIT	# PTE invalid
 	 nop					# - delay slot -
 
+#if (PGSHIFT & 1) == 0
 	INT_L	k0, 4(k1)			# get odd PTE entry
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
 #if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
@@ -1730,6 +1764,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	or	k1, k1, k0
 	_MTC0	k0, MIPS_COP_0_TLB_LO1		# load PTE entry
 	COP0_SYNC
+#endif /* (PGSHIFT & 1) == 0 */
 	tlbwi					# write TLB
 	COP0_SYNC
 #ifdef MIPS3
@@ -1742,6 +1777,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 #endif
 	eret
 
+#if (PGSHIFT & 1) == 0
 MIPSX(kern_tlbi_odd):
 	INT_L	k0, 0(k1)			# get PTE entry
 #if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
@@ -1782,6 +1818,7 @@ MIPSX(kern_tlbi_odd):
 	INT_S	zero, 0(k1)			# clear lock
 #endif
 	eret
+#endif /* (PGSHIFT & 1) == 0 */
 
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 /*
@@ -1845,7 +1882,9 @@ LEAF(MIPSX(tlb_update_addr))
 	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS	# Disable interrupts
 	COP0_SYNC
+#if (PGSHIFT & 1) == 0
 	and	t1, a0, MIPS3_PG_ODDPG	# t1 = Even/Odd flag
+#endif
 	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
 	and	a0, a0, v0
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save current PID
@@ -1861,10 +1900,12 @@ LEAF(MIPSX(tlb_update_addr))
 	_SRL	a1, a1, WIRED_SHIFT
 #endif
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
+#if (PGSHIFT & 1) == 0
 	bnez	t1, 1f				# Decide even odd
 	 nop
+#endif
 # EVEN
-	bltz	v0, 1f				# index < 0 => !found
+	bltz	v0, 4f				# index < 0 => !found
 	 nop
 #ifdef MIPS3
 	nop					# required for QED5230
@@ -1872,9 +1913,14 @@ LEAF(MIPSX(tlb_update_addr))
 	tlbr					# update, read entry first
 	COP0_SYNC
 	_MTC0	a1, MIPS_COP_0_TLB_LO0		# init low reg0.
+#if (PGSHIFT & 1) != 0
+	INT_ADDU a1, MIPS3_PG_NEXT		# point to next page
+	_MTC0	a1, MIPS_COP_0_TLB_LO1		# init low reg1.
+#endif
 	COP0_SYNC
 	tlbwi					# update slot found
 	COP0_SYNC
+#if (PGSHIFT & 1) == 0
 	b	4f
 	 nop
 1:
@@ -1890,6 +1936,7 @@ LEAF(MIPSX(tlb_update_addr))
 	COP0_SYNC
 	tlbwi					# update slot found
 	COP0_SYNC
+#endif /* (PGSHIFT & 1) == 0 */
 4:
 #ifdef MIPS3
 	nop					# Make sure pipeline
@@ -1972,7 +2019,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# see what we got
 	bltz	v0, 1f				# index < 0 then skip
 	 li	t1, MIPS_KSEG0_START		# invalid address
-	PTR_SLL	v0, PGSHIFT + 1			# PAGE_SHIFT + 1
+	PTR_SLL	v0, (PGSHIFT | 1)		# PAGE_SHIFT | 1
 	PTR_ADDU t1, v0
 	_MTC0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	_MTC0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
@@ -2014,7 +2061,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
 	COP0_SYNC
-	sll	ta0, t1, PGSHIFT + 1		# PAGE_SHIFT + 1
+	sll	ta0, t1, PGSHIFT | 1		# PAGE_SHIFT | 1
 	tlbr					# obtain an entry
 	COP0_SYNC
 	_MFC0	a0, MIPS_COP_0_TLB_LO1
@@ -2071,7 +2118,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_globals))
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
 	COP0_SYNC
-	sll	ta0, t1, PGSHIFT + 1		# PAGE_SHIFT + 1
+	sll	ta0, t1, PGSHIFT | 1		# PAGE_SHIFT | 1
 	tlbr					# obtain an entry
 	COP0_SYNC
 	_MFC0	a0, MIPS_COP_0_TLB_LO1
@@ -2124,7 +2171,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set TLBindex
 	COP0_SYNC
-	sll	ta0, t1, PGSHIFT + 1		# PAGE_SHIFT + 1
+	sll	ta0, t1, PGSHIFT | 1		# PAGE_SHIFT | 1
 	PTR_ADDU ta0, v0
 	_MTC0	ta0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	COP0_SYNC
@@ -2222,13 +2269,17 @@ LEAF(MIPSX(tlb_enter))
 	.set	noat
 	_MFC0	ta0, MIPS_COP_0_TLB_HI		# save EntryHi
 
+#if (PGSHIFT & 1) == 0
 	and	a3, a1, MIPS3_PG_ODDPG		# select odd page bit
 	xor	a3, a1				# clear it.
+#endif
 	_MTC0	a3, MIPS_COP_0_TLB_HI		# set the VA for tlbp
 	COP0_SYNC
 
+#if (PGSHIFT & 1) == 0
 	and	t2, a2, MIPS3_PG_G		# make prototype tlb_lo0
 	and	t3, a2, MIPS3_PG_G		# make prototype tlb_lo1
+#endif
 
 	tlbp					# is va in TLB?
 	COP0_SYNC
@@ -2237,11 +2288,13 @@ LEAF(MIPSX(tlb_enter))
 	bltz	v0, 1f				# nope
 	 nop
 
+#if (PGSHIFT & 1) == 0
 	/*
 	 * Get the existing tlb_lo's because we need to replace one of them.
 	 */
 	mfc0	t2, MIPS_COP_0_TLB_LO0		# save for update
 	mfc0	t3, MIPS_COP_0_TLB_LO1		# save for update
+#endif
 
 	/*
 	 * If it's already where we want, no reason to invalidate it.
@@ -2250,9 +2303,9 @@ LEAF(MIPSX(tlb_enter))
 	 nop					
 
 	/*
-	 * Make an
+	 * Clear the existing TLB entry for it.
 	 */
-	sll	t1, 1 + PGSHIFT			# make a fake addr for the entry
+	sll	t1, v0, (1 | PGSHIFT)		# make a fake addr for the entry
 	lui	v1, %hi(MIPS_KSEG0_START)
 	or	t1, v1
 	_MTC0	t1, MIPS_COP_0_TLB_HI
@@ -2273,6 +2326,7 @@ LEAF(MIPSX(tlb_enter))
 	COP0_SYNC
 
 2:
+#if (PGSHIFT & 1) == 0
 	and	v1, a1, MIPS3_PG_ODDPG		# odd or even page
 	sll	v1, 31 - PGSHIFT		# move to MSB
 	sra	v1, 31				# v1 a mask (0/~0 = even/odd)
@@ -2287,6 +2341,11 @@ LEAF(MIPSX(tlb_enter))
 
 	mtc0	t2, MIPS_COP_0_TLB_LO0		# set tlb_lo0 (even)
 	mtc0	t3, MIPS_COP_0_TLB_LO1		# set tlb_lo1 (odd)
+#else
+	mtc0	a2, MIPS_COP_0_TLB_LO0		# set tlb_lo1 (lower half)
+	INT_ADDU a2, MIPS3_PG_NEXT
+	mtc0	a2, MIPS_COP_0_TLB_LO1		# set tlb_lo1 (upper half)
+#endif
 	COP0_SYNC
 
 	tlbwi					# enter it into the TLB
@@ -2404,9 +2463,13 @@ END(MIPSX(setfunc_trampoline))
  * sure TBIS(it) in the case.
  */
 LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
-#if PAGE_SIZE < USPACE
+#if PAGE_SIZE < USPACE || 1
 	INT_L	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
+#if (PGSHIFT & 1) == 0
 	INT_L	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
+#else
+	INT_ADDU a2, a1, MIPS3_PG_NEXT		# a2 = page following upte[0]
+#endif
 	PTR_L	v0, L_PCB(a0)			# va = l->l_addr
 #if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
 	li	t0, VM_MIN_KERNEL_ADDRESS	# compute index
@@ -2442,11 +2505,13 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 	 nop
 #endif
 
+#if (PGSHIFT & 1) == 0
 	and	t0, v0, MIPS3_PG_ODDPG
 	beqz	t0, MIPSX(entry0)
 	 nop
 
 	PANIC("USPACE sat on odd page boundary")
+#endif
 
 MIPSX(entry0):
 	_MFC0	t3, MIPS_COP_0_TLB_HI		# save TLB_HI
@@ -2459,7 +2524,7 @@ MIPSX(entry0):
 	nop
 #endif
 	bltz	t0, MIPSX(entry0set)
-	sll	t0, t0, PGSHIFT + 1		# PAGE_SHIFT + 1
+	sll	t0, t0, (PGSHIFT | 1)		# (PAGE_SHIFT | 1)
 	PTR_LA	t0, MIPS_KSEG0_START(t0)
 	_MTC0	t0, MIPS_COP_0_TLB_HI
 	_MTC0	zero, MIPS_COP_0_TLB_LO0
