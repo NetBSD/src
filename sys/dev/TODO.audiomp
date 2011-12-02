@@ -34,7 +34,7 @@ dev/isapnp/mpu_isapnp.c		done
 dev/pad/pad.c			done
 dev/pci/auacer.c		done
 dev/pci/auich.c			done		port-amd64
-dev/pci/auixp.c			done		fails ac97.c:1937	KASSERT(mutex_owned(as->lock));
+dev/pci/auixp.c			done		port-i386
 dev/pci/autri.c			done		port-sparc64
 dev/pci/auvia.c			done
 dev/pci/azalia.c		done		port-i386
