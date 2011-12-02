@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.55 2011/10/06 06:55:34 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.55.2.1 2011/12/02 16:33:09 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -118,10 +118,8 @@ extern struct page_size_map page_size_map[];
 #endif
 
 struct pmap {
-	struct uvm_object pm_obj;
-	kmutex_t pm_obj_lock;
-#define pm_lock pm_obj.vmobjlock
-#define pm_refs pm_obj.uo_refs
+	unsigned int pm_refs;
+	TAILQ_HEAD(, vm_page) pm_ptps;
 	LIST_ENTRY(pmap) pm_list[PMAP_LIST_MAXNUMCPU];	/* per cpu ctx used list */
 
 	struct pmap_statistics pm_stats;
