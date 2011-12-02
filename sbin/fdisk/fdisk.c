@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.137 2011/12/02 04:05:20 enami Exp $ */
+/*	$NetBSD: fdisk.c,v 1.138 2011/12/02 15:21:15 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.137 2011/12/02 04:05:20 enami Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.138 2011/12/02 15:21:15 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -155,7 +155,7 @@ static char *boot_path = NULL;			/* name of file we actually opened */
 #define BOOTSEL_OPTIONS	
 #define change_part(e, p, id, st, sz, bm) change__part(e, p, id, st, sz)
 #endif
-#define OPTIONS	BOOTSEL_OPTIONS "0123FSafiluvA:b:c:E:r:s:w:"
+#define OPTIONS	BOOTSEL_OPTIONS "0123FSafiIluvA:b:c:E:r:s:w:"
 
 /*
  * Disk geometry and partition alignment.
@@ -615,6 +615,7 @@ usage(void)
 		"\t-a change active partition\n"
 		"\t-f force - not interactive\n"
 		"\t-i initialise MBR code\n"
+		"\t-I ignore errors about no space or overlapping partitions\n"
 		"\t-l list partition types\n"
 		"\t-u update partition data\n"
 		"\t-v verbose output, -v -v more verbose still\n"
@@ -2065,7 +2066,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 					p = -1;
 				}
 			}
-			if (start >= disksectors) {
+			if (start >= disksectors && !I_flag) {
 				printf("No free space\n");
 				return 0;
 			}
