@@ -3425,19 +3425,12 @@ final_link_relocate (asection *input_section,
     case R_PARISC_DPREL21L:
     case R_PARISC_DPREL14R:
     case R_PARISC_DPREL14F:
-    case R_PARISC_TLS_GD21L:
-    case R_PARISC_TLS_LDM21L:
-    case R_PARISC_TLS_IE21L:
       /* Convert instructions that use the linkage table pointer (r19) to
 	 instructions that use the global data pointer (dp).  This is the
 	 most efficient way of using PIC code in an incomplete executable,
 	 but the user must follow the standard runtime conventions for
 	 accessing data for this to work.  */
-      if (orig_r_type == R_PARISC_DLTIND21L
-	  || (!info->shared
-	      && (r_type == R_PARISC_TLS_GD21L
-		  || r_type == R_PARISC_TLS_LDM21L
-		  || r_type == R_PARISC_TLS_IE21L)))
+      if (orig_r_type == R_PARISC_DLTIND21L)
 	{
 	  /* Convert addil instructions if the original reloc was a
 	     DLTIND21L.  GCC sometimes uses a register other than r19 for
@@ -3488,8 +3481,11 @@ final_link_relocate (asection *input_section,
     case R_PARISC_DLTIND21L:
     case R_PARISC_DLTIND14R:
     case R_PARISC_DLTIND14F:
+    case R_PARISC_TLS_GD21L:
     case R_PARISC_TLS_GD14R:
+    case R_PARISC_TLS_LDM21L:
     case R_PARISC_TLS_LDM14R:
+    case R_PARISC_TLS_IE21L:
     case R_PARISC_TLS_IE14R:
       value -= elf_gp (input_section->output_section->owner);
       break;
