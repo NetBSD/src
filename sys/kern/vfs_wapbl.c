@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.47 2011/09/01 09:03:43 christos Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.48 2011/12/02 12:38:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.47 2011/09/01 09:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.48 2011/12/02 12:38:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1903,11 +1903,49 @@ wapbl_transaction_len(struct wapbl *wl)
 }
 
 /*
+ * wapbl_cache_sync: issue DIOCCACHESYNC
+ */
+static int
+wapbl_cache_sync(struct wapbl *wl, const char *msg)
+{
+	const bool verbose = wapbl_verbose_commit >= 2;
+	struct bintime start_time;
+	int force = 1;
+	int error;
+
+	if (!wapbl_flush_disk_cache) {
+		return 0;
+	}
+	if (verbose) {
+		bintime(&start_time);
+	}
+	error = VOP_IOCTL(wl->wl_devvp, DIOCCACHESYNC, &force,
+	    FWRITE, FSCRED);
+	if (error) {
+		WAPBL_PRINTF(WAPBL_PRINT_ERROR,
+		    ("wapbl_cache_sync: DIOCCACHESYNC on dev 0x%x "
+		    "returned %d\n", wl->wl_devvp->v_rdev, error));
+	}
+	if (verbose) {
+		struct bintime d;
+		struct timespec ts;
+
+		bintime(&d);
+		bintime_sub(&d, &start_time);
+		bintime2timespec(&d, &ts);
+		printf("wapbl_cache_sync: %s: dev 0x%jx %ju.%09lu\n",
+		    msg, (uintmax_t)wl->wl_devvp->v_rdev,
+		    (uintmax_t)ts.tv_sec, ts.tv_nsec);
+	}
+	return error;
+}
+
+/*
  * Perform commit operation
  *
  * Note that generation number incrementation needs to
  * be protected against racing with other invocations
- * of wapbl_commit.  This is ok since this routine
+ * of wapbl_write_commit.  This is ok since this routine
  * is only invoked from wapbl_flush
  */
 static int
@@ -1916,19 +1954,10 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	struct wapbl_wc_header *wc = wl->wl_wc_header;
 	struct timespec ts;
 	int error;
-	int force = 1;
 	daddr_t pbn;
 
-	if (wapbl_flush_disk_cache) {
-		/* XXX Calc checksum here, instead we do this for now */
-		error = VOP_IOCTL(wl->wl_devvp, DIOCCACHESYNC, &force,
-		    FWRITE, FSCRED);
-		if (error) {
-			WAPBL_PRINTF(WAPBL_PRINT_ERROR,
-			    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%x "
-			    "returned %d\n", wl->wl_devvp->v_rdev, error));
-		}
-	}
+	/* XXX Calc checksum here, instead we do this for now */
+	wapbl_cache_sync(wl, "1");
 
 	wc->wc_head = head;
 	wc->wc_tail = tail;
@@ -1955,15 +1984,7 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	if (error)
 		return error;
 
-	if (wapbl_flush_disk_cache) {
-		error = VOP_IOCTL(wl->wl_devvp, DIOCCACHESYNC, &force,
-		    FWRITE, FSCRED);
-		if (error) {
-			WAPBL_PRINTF(WAPBL_PRINT_ERROR,
-			    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%x "
-			    "returned %d\n", wl->wl_devvp->v_rdev, error));
-		}
-	}
+	wapbl_cache_sync(wl, "2");
 
 	/*
 	 * If the generation number was zero, write it out a second time.
