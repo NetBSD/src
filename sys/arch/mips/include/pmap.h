@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.18 2011/04/29 08:26:21 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.19 2011/12/03 01:56:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -202,6 +202,7 @@ struct pmap_tlb_info {
 	uint32_t ti_asid_max;
 	LIST_HEAD(, pmap_asid_info) ti_pais; /* list of active ASIDs */
 #ifdef MULTIPROCESSOR
+	kmutex_t *ti_hwlock;
 	pmap_t ti_victim;
 	uint32_t ti_synci_page_bitmap;	/* page indices needing a syncicache */
 	uint32_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */

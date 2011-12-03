@@ -107,7 +107,9 @@ struct cpu_info {
 	volatile u_int ci_softints;
 	struct evcnt ci_ev_fpu_loads;	/* fpu load counter */
 	struct evcnt ci_ev_fpu_saves;	/* fpu save counter */
-	struct evcnt ci_ev_tlbmisses;
+	struct evcnt ci_ev_kern_tlbmisses;
+	struct evcnt ci_ev_user_tlbmisses;
+	struct evcnt ci_ev_tlblocked;
 
 	/*
 	 * Per-cpu pmap information
