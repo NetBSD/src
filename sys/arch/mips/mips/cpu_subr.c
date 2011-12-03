@@ -242,9 +242,15 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 	evcnt_attach_dynamic(&ci->ci_ev_fpu_saves,
 		EVCNT_TYPE_MISC, NULL, xname,
 		"fpu saves");
-	evcnt_attach_dynamic(&ci->ci_ev_tlbmisses,
+	evcnt_attach_dynamic(&ci->ci_ev_user_tlbmisses,
 		EVCNT_TYPE_TRAP, NULL, xname,
-		"tlb misses");
+		"user tlb misses");
+	evcnt_attach_dynamic(&ci->ci_ev_kern_tlbmisses,
+		EVCNT_TYPE_TRAP, NULL, xname,
+		"kern tlb misses");
+	evcnt_attach_dynamic(&ci->ci_ev_tlblocked,
+		EVCNT_TYPE_MISC, NULL, xname,
+		"tlb locked");
 
 	if (ci == &cpu_info_store)
 		pmap_tlb_info_evcnt_attach(ci->ci_tlb_info);

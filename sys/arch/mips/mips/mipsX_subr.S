@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.49 2011/12/02 00:01:37 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.50 2011/12/03 01:56:55 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -345,7 +345,7 @@
 VECTOR(MIPSX(tlb_miss), unknown)
 	.set	noat
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
-	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	#00: get tlbinfo lock addr
+	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	#00: get tlbinfo hwlock addr
 	li	k0, __SIMPLELOCK_LOCKED		#01: lock value
 	swapw	k0, k1				#02: swap it in place
 	bnez	k0, MIPSX(tlblocked)		#03: a lie
@@ -432,10 +432,10 @@ MIPSX(tlb_miss_common):
 	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	#1a get tlbinfo lock addr
 	INT_S	zero, 0(k1)			#1b clear lock
 #elif (MIPS3 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
-	lui	k1, %hi(CPUVAR(EV_TLBMISSES))	#1a: k1=hi of tlbmisses
-	REG_L	k0, %lo(CPUVAR(EV_TLBMISSES))(k1) #1b
+	lui	k1, %hi(CPUVAR(EV_USER_TLBMISSES))	#1a: k1=hi of tlbmisses
+	REG_L	k0, %lo(CPUVAR(EV_USER_TLBMISSES))(k1) #1b
 	REG_ADDU k0, 1				#1c
-	REG_S	k0, %lo(CPUVAR(EV_TLBMISSES))(k1) #1d
+	REG_S	k0, %lo(CPUVAR(EV_USER_TLBMISSES))(k1) #1d
 #endif
 	eret					#1e: return from exception
 	.set	at
@@ -566,18 +566,28 @@ MIPSX(kernelfault):
 	nop
 MIPSX(nopagetable):
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
-	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	#14: get tlbinfo lock addr
-	 INT_S	zero, 0(k1)			#15: clear lock
+	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	#14: get tlbinfo hwlock addr
+	INT_S	zero, 0(k1)			#15: clear lock
 #endif
 	lui	k1, %hi(CPUVAR(CURLWP))		#16: k1=hi of curlwp
 	j	MIPSX(slowfault)		#17: no page table present
 	 PTR_L	k1, %lo(CPUVAR(CURLWP))(k1)	#18: k1=lo of curlwp
 	nop					#19: branch delay slot
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+/*
+ * If the TLB was locked, then it must have been locked by another thread
+ * context.  If so, that thread is updating the TLB and may be updated the
+ * address we are concerned with.  So the best thing we can do is just return
+ * from the exception and hope the other thread has fixed the reason for this
+ * exception.  If not, another exception will be raised and hopefully then
+ * we'll get the TLB hwlock.
+ */
 MIPSX(tlblocked):
-	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 0	#1a: k1=hi of curlwp
-	j	MIPSX(slowfault)		#1b: no page table present
-	 PTR_L	k1, CPU_INFO_CURLWP(k1)		#1c: k1=lo of curlwp
+	lui	k1, %hi(CPUVAR(EV_TLBLOCKED))	#1a: k1=hi of tlbmisses
+	REG_L	k0, %lo(CPUVAR(EV_TLBLOCKED))(k1) #1b
+	REG_ADDU k0, 1				#1c
+	REG_S	k0, %lo(CPUVAR(EV_TLBLOCKED))(k1) #1d
+	eret					#1e
 #endif
 	.set	at
 _VECTOR_END(MIPSX(exception))
@@ -1650,8 +1660,14 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	nop
 	nop
 #endif
+#if (MIPS3 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	lui	k1, %hi(CPUVAR(EV_KERN_TLBMISSES))
+	REG_L	k0, %lo(CPUVAR(EV_KERN_TLBMISSES))(k1)
+	REG_ADDU k0, 1
+	REG_S	k0, %lo(CPUVAR(EV_KERN_TLBMISSES))(k1)
+#endif
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
-	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlbinfo lock addr
+	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlbinfo hwlock addr
 	INT_S	zero, 0(k1)			# clear lock
 #endif
 	eret
@@ -1660,7 +1676,7 @@ END(MIPSX(kern_tlb_miss))
 
 /*----------------------------------------------------------------------------
  *
- * mipsN_tlb_invalid_exception --
+ * mipsN_kern_tlb_invalid_exception --
  *
  *	Handle a TLB invalid exception from kernel mode in kernel space.
  *	The BaddVAddr, Context, and EntryHi registers contain the failed
@@ -1682,15 +1698,15 @@ END(MIPSX(kern_tlb_miss))
  *
  *----------------------------------------------------------------------------
  */
-LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
+LEAF_NOPROFILE(MIPSX(kern_tlb_invalid_exception))
 	.set	noat
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 #define	TLB_INVALID_EXCEPTION_EXIT	_C_LABEL(MIPSX(tlbunlock_kern_gen_exception))
 	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlblock addr
 	li	k0, __SIMPLELOCK_LOCKED
-1:	swapw	k0, k1				# set it to locked
-	bnez	k0, 1b				# was it locked?
-	 nop					#  if it was, try again
+	swapw	k0, k1				# set it to locked
+	bnez	k0, 99f				# was it locked?
+	 nop					#  if it was, do an eret
 #else
 #define	TLB_INVALID_EXCEPTION_EXIT	_C_LABEL(MIPSX(kern_gen_exception))
 #endif
@@ -1774,6 +1790,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlblock addr
 	INT_S	zero, 0(k1)			# clear lock
+99:
 #endif
 	eret
 
@@ -1826,12 +1843,12 @@ MIPSX(kern_tlbi_odd):
  * we locked.
  */
 MIPSX(tlbunlock_kern_gen_exception):
-	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlblock addr
+	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlb hwlock addr
 	b	_C_LABEL(MIPSX(kern_gen_exception))
 	 INT_S	zero, 0(k1)			# clear lock
 #endif
 
-END(MIPSX(tlb_invalid_exception))
+END(MIPSX(kern_tlb_invalid_exception))
 
 /*
  * Mark where code entered from exception hander jumptable
@@ -1882,6 +1899,13 @@ LEAF(MIPSX(tlb_update_addr))
 	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS	# Disable interrupts
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	_MFC0	ta3, MIPS_COP_0_OSSCRATCH, 2
+1:	li	v0, __SIMPLELOCK_LOCKED	
+	swapw	v0, ta3
+	bnez	v0, 1b
+	 nop
+#endif
 #if (PGSHIFT & 1) == 0
 	and	t1, a0, MIPS3_PG_ODDPG	# t1 = Even/Odd flag
 #endif
@@ -1946,6 +1970,9 @@ LEAF(MIPSX(tlb_update_addr))
 #endif
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	INT_S	zero, 0(ta3)
+#endif
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 	JR_HB_RA
 END(MIPSX(tlb_update_addr))
@@ -1970,6 +1997,13 @@ LEAF(MIPSX(tlb_read_indexed))
 	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	_MFC0	ta3, MIPS_COP_0_OSSCRATCH, 2
+1:	li	v0, __SIMPLELOCK_LOCKED	
+	swapw	v0, ta3
+	bnez	v0, 1b
+	 nop
+#endif
 	mfc0	ta2, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
 #ifdef MIPS3
 	nop
@@ -1987,6 +2021,9 @@ LEAF(MIPSX(tlb_read_indexed))
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	mtc0	ta2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	INT_S	zero, 0(ta3)			# unlock the tlb
+#endif
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 	COP0_SYNC
 	PTR_S	t3, TLBMASK_HI(a1)
@@ -2007,6 +2044,13 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	_MFC0	ta3, MIPS_COP_0_OSSCRATCH, 2
+1:	li	v0, __SIMPLELOCK_LOCKED	
+	swapw	v0, ta3
+	bnez	v0, 1b
+	 nop
+#endif
 
 	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# save current ASID
@@ -2035,6 +2079,9 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore current ASID
 	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	INT_S	zero, 0(ta3)			# unlock the tlb
+#endif
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	JR_HB_RA
 END(MIPSX(tlb_invalidate_addr))
@@ -2050,6 +2097,13 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	_MFC0	ta3, MIPS_COP_0_OSSCRATCH, 2
+1:	li	v0, __SIMPLELOCK_LOCKED	
+	swapw	v0, ta3
+	bnez	v0, 1b
+	 nop
+#endif
 
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save the current PID.
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
@@ -2093,6 +2147,9 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID.
 	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	INT_S	zero, 0(ta3)			# unlock the tlb
+#endif
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	JR_HB_RA				# new ASID will be set soon
 END(MIPSX(tlb_invalidate_asids))
@@ -2107,6 +2164,13 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_globals))
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	_MFC0	ta3, MIPS_COP_0_OSSCRATCH, 2
+1:	li	v0, __SIMPLELOCK_LOCKED	
+	swapw	v0, ta3
+	bnez	v0, 1b
+	 nop
+#endif
 
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# save current ASID
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
@@ -2142,6 +2206,9 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_globals))
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore current ASID
 	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	INT_S	zero, 0(ta3)			# unlock the tlb
+#endif
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	JR_HB_RA
 END(MIPSX(tlb_invalidate_globals))
@@ -2155,6 +2222,13 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	_MFC0	ta3, MIPS_COP_0_OSSCRATCH, 2
+1:	li	v0, __SIMPLELOCK_LOCKED	
+	swapw	v0, ta3
+	bnez	v0, 1b
+	 nop
+#endif
 
 	INT_L	a0, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
 
@@ -2184,6 +2258,9 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore ASID
 	mtc0	t2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	INT_S	zero, 0(ta3)			# unlock the tlb
+#endif
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	JR_HB_RA
 END(MIPSX(tlb_invalidate_all))
@@ -2200,8 +2277,7 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	mfc0	ta0, MIPS_COP_0_TLB_WIRED
 	INT_L	ta1, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
 	move	ta2, zero
-	li	ta3, 1
-	move	v0, zero
+	li	t3, 1
 
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 #ifdef _LP64
@@ -2212,6 +2288,15 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 #endif
 	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	_MFC0	ta3, MIPS_COP_0_OSSCRATCH, 2
+1:	li	v0, __SIMPLELOCK_LOCKED	
+	swapw	v0, ta3
+	bnez	v0, 1b
+	 nop
+#else
+	move	v0, zero
+#endif
 
 	# do {} while (ta0 < ta1)
 1:
@@ -2228,7 +2313,7 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 
 	srl	a2, t0, 3 + LONG_SCALESHIFT	# drop low 5 or 6 bits
 	sll	a2, LONG_SCALESHIFT		# make an index for the bitmap
-	_SLLV	t0, ta3, t0			# t0 is mask (ta3 == 1)
+	_SLLV	t0, t3, t0			# t0 is mask (t3 == 1)
 
 	PTR_ADDU a2, a0				# index into the bitmap 
 	beq	a2, ta2, 3f			# is the desired cell loaded?
@@ -2242,7 +2327,7 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	LONG_L	t2, 0(ta2)			# and load it
 3:
 	and	t1, t2, t0			# t1 = t2 & t0
-	sltu	t1, t1, ta3			# t1 = t1 < 1 (aka t1 == 0)
+	sltu	t1, t1, t3			# t1 = t1 < 1 (aka t1 == 0)
 	addu	v0, t1				# v0 += t1
 	or	t2, t0				# or in the new ASID bits
 4:
@@ -2258,6 +2343,9 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	_MTC0	a3, MIPS_COP_0_TLB_HI		# restore ASID
 	COP0_SYNC
 
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	INT_S	zero, 0(ta3)			# unlock the tlb
+#endif
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	JR_HB_RA
 END(MIPSX(tlb_record_asids))
@@ -2267,6 +2355,15 @@ END(MIPSX(tlb_record_asids))
  */
 LEAF(MIPSX(tlb_enter))
 	.set	noat
+	mfc0	v1, MIPS_COP_0_STATUS		# save status
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interupts
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	_MFC0	ta3, MIPS_COP_0_OSSCRATCH, 2
+1:	li	v0, __SIMPLELOCK_LOCKED	
+	swapw	v0, ta3
+	bnez	v0, 1b
+	 nop
+#endif
 	_MFC0	ta0, MIPS_COP_0_TLB_HI		# save EntryHi
 
 #if (PGSHIFT & 1) == 0
@@ -2306,8 +2403,8 @@ LEAF(MIPSX(tlb_enter))
 	 * Clear the existing TLB entry for it.
 	 */
 	sll	t1, v0, (1 | PGSHIFT)		# make a fake addr for the entry
-	lui	v1, %hi(MIPS_KSEG0_START)
-	or	t1, v1
+	lui	t3, %hi(MIPS_KSEG0_START)
+	or	t1, t3
 	_MTC0	t1, MIPS_COP_0_TLB_HI
 	COP0_SYNC
 
@@ -2327,17 +2424,17 @@ LEAF(MIPSX(tlb_enter))
 
 2:
 #if (PGSHIFT & 1) == 0
-	and	v1, a1, MIPS3_PG_ODDPG		# odd or even page
-	sll	v1, 31 - PGSHIFT		# move to MSB
-	sra	v1, 31				# v1 a mask (0/~0 = even/odd)
-	not	v0, v1				# v0 a mask (~0/0 = even/odd)
+	and	t3, a1, MIPS3_PG_ODDPG		# odd or even page
+	sll	t3, 31 - PGSHIFT		# move to MSB
+	sra	t3, 31				# t3 a mask (0/~0 = even/odd)
+	not	v0, t3				# v0 a mask (~0/0 = even/odd)
 
-	and	ta2, t2, v1
-	and	ta3, a2, v0
-	or	t2, ta2, ta3			# t2 = (v1 & t2) | (~v1 & a2)
-	and	ta2, t3, v0
-	and	ta3, a2, v1
-	or	t3, ta2, ta3			# t3 = (~v1 & t3) | (v1 & a2)
+	and	ta1, t2, t3
+	and	ta2, a2, v0
+	or	t2, ta1, ta2			# t2 = (t3 & t2) | (~t3 & a2)
+	and	ta1, t3, v0
+	and	ta2, a2, t3
+	or	t3, ta1, ta2			# t3 = (~t3 & t3) | (t3 & a2)
 
 	mtc0	t2, MIPS_COP_0_TLB_LO0		# set tlb_lo0 (even)
 	mtc0	t3, MIPS_COP_0_TLB_LO1		# set tlb_lo1 (odd)
@@ -2351,10 +2448,74 @@ LEAF(MIPSX(tlb_enter))
 	tlbwi					# enter it into the TLB
 	COP0_SYNC
 
-	_MTC0	ta1, MIPS_COP_0_TLB_HI		# restore EntryHi
+	_MTC0	ta0, MIPS_COP_0_TLB_HI		# restore EntryHi
+	COP0_SYNC
+
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	INT_S	zero, 0(ta3)			# unlock the tlb
+#endif
+	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	JR_HB_RA
 	.set	at
 END(MIPSX(tlb_enter))
+
+/*--------------------------------------------------------------------------
+ *
+ * mipsN_tlb_write_indexed --
+ *
+ *      Write the given entry into the TLB at the given index.
+ *      Pass full R4000 style TLB info including variable page size mask.
+ *
+ *      mipsN_tlb_write_indexed(size_t tlb_index, const struct tlbmask *tlb)
+ *
+ * Results:
+ *      None.
+ *
+ * Side effects:
+ *      TLB entry set.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MIPSX(tlb_write_indexed))
+	/*
+	 * Fetch the arguments first so we don't need to worry about KX/UX/PX
+	 */
+	INT_L	t0, TLBMASK_LO0(a1)		# fetch tlb->tlb_lo0
+	INT_L	t1, TLBMASK_LO1(a1)		# fetch tlb->tlb_lo1
+	INT_L	t2, TLBMASK_MASK(a1)		# fetch tlb->tlb_mask
+	PTR_L	t3, TLBMASK_HI(a1)		# fetch tlb->tlb_hi
+	mfc0	v1, MIPS_COP_0_STATUS		# save status
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	_MFC0	ta3, MIPS_COP_0_OSSCRATCH, 2
+1:	li	v0, __SIMPLELOCK_LOCKED	
+	swapw	v0, ta3
+	bnez	v0, 1b
+	 nop
+#endif
+	mfc0	ta1, MIPS_COP_0_TLB_PG_MASK	# Save current page mask.
+	_MFC0	ta0, MIPS_COP_0_TLB_HI		# Save the current PID.
+
+	_MTC0	t0, MIPS_COP_0_TLB_LO0		# Set up entry lo0.
+	_MTC0	t1, MIPS_COP_0_TLB_LO1		# Set up entry lo1.
+	COP0_SYNC
+	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index.
+	mtc0	t2, MIPS_COP_0_TLB_PG_MASK	# Set up entry pagemask.
+	_MTC0	t3, MIPS_COP_0_TLB_HI		# Set up entry high.
+	COP0_SYNC
+	tlbwi					# Write the TLB
+	COP0_SYNC
+
+	_MTC0	ta0, MIPS_COP_0_TLB_HI		# Restore the PID.
+	mtc0	ta1, MIPS_COP_0_TLB_PG_MASK	# Restore page mask.
+	COP0_SYNC
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	INT_S	zero, 0(ta3)			# unlock the tlb
+#endif
+	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+	JR_HB_RA
+END(MIPSX(tlb_write_indexed))
 
 /*
  * mipsN_lwp_trampoline()
@@ -2470,52 +2631,62 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 #else
 	INT_ADDU a2, a1, MIPS3_PG_NEXT		# a2 = page following upte[0]
 #endif
-	PTR_L	v0, L_PCB(a0)			# va = l->l_addr
+	PTR_L	a3, L_PCB(a0)			# va = l->l_addr
 #if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
 	li	t0, VM_MIN_KERNEL_ADDRESS	# compute index
-	blt	v0, t0, MIPSX(resume)
+	blt	a3, t0, MIPSX(resume)
 	 nop
 #if defined(ENABLE_MIPS_KSEGX)
 	li	t0, VM_KSEGX_ADDRESS		# below KSEGX?
-	blt	v0, t0, 1f
+	blt	a3, t0, 1f
 	 nop
 	li	t0, VM_KSEGX_ADDRESS+VM_KSEGX_SIZE # within KSEGX?
-	blt	v0, t0, MIPSX(resume)
+	blt	a3, t0, MIPSX(resume)
 	 nop
 1:
 #endif
 #else
 	li	t0, MIPS_KSEG0_START		# above XKSEG?
-	blt	t0, v0, MIPSX(resume)
+	blt	t0, a3, MIPSX(resume)
 	 nop
 	li	t0, VM_MIN_KERNEL_ADDRESS>>32	# below XKSEG?
 	dsll32	t0, t0, 0
-	blt	v0, t0, MIPSX(resume)
+	blt	a3, t0, MIPSX(resume)
 	 nop
 #endif
 
-#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+#ifdef MULTIPROCESSOR
 	/*
-	 * Grab the TLB lock (we could use LL/SC but this is shorter)
+	 * Fetch TLB slot before zeroing status.
 	 */
-	_MFC0	a3, MIPS_COP_0_OSSCRATCH, 2
-	li	v1, __SIMPLELOCK_LOCKED
-1:	swapw	v1, a3
-	bnez	v1, 1b
-	 nop
+	PTR_L	t0, L_CPU(a0)			# get cpu_info
+	INT_L	t1, CPU_INFO_KSP_TLB_SLOT(t0)	# get TLB# for KSP
 #endif
 
 #if (PGSHIFT & 1) == 0
-	and	t0, v0, MIPS3_PG_ODDPG
-	beqz	t0, MIPSX(entry0)
+	and	v0, a3, MIPS3_PG_ODDPG
+	beqz	v0, MIPSX(entry0)
 	 nop
 
 	PANIC("USPACE sat on odd page boundary")
 #endif
 
 MIPSX(entry0):
-	_MFC0	t3, MIPS_COP_0_TLB_HI		# save TLB_HI
-	_MTC0	v0, MIPS_COP_0_TLB_HI		# VPN = va
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	mfc0	v1, MIPS_COP_0_STATUS		# save status
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+	/*
+	 * Grab the TLB lock (we could use LL/SC but this is shorter)
+	 */
+	_MFC0	ta3, MIPS_COP_0_OSSCRATCH, 2
+	li	v0, __SIMPLELOCK_LOCKED
+1:	swapw	v0, ta3
+	bnez	v0, 1b
+	 nop
+#endif
+
+	_MFC0	ta0, MIPS_COP_0_TLB_HI		# save TLB_HI
+	_MTC0	a3, MIPS_COP_0_TLB_HI		# VPN = va
 	COP0_SYNC
 	tlbp					# probe VPN
 	COP0_SYNC
@@ -2524,7 +2695,7 @@ MIPSX(entry0):
 	nop
 #endif
 	bltz	t0, MIPSX(entry0set)
-	sll	t0, t0, (PGSHIFT | 1)		# (PAGE_SHIFT | 1)
+	 sll	t0, (PGSHIFT | 1)		# (PAGE_SHIFT | 1)
 	PTR_LA	t0, MIPS_KSEG0_START(t0)
 	_MTC0	t0, MIPS_COP_0_TLB_HI
 	_MTC0	zero, MIPS_COP_0_TLB_LO0
@@ -2532,12 +2703,10 @@ MIPSX(entry0):
 	COP0_SYNC
 	tlbwi
 	COP0_SYNC
-	_MTC0	v0, MIPS_COP_0_TLB_HI		# set VPN again
+	_MTC0	a3, MIPS_COP_0_TLB_HI		# set VPN again
 	COP0_SYNC
 MIPSX(entry0set):
 #ifdef MULTIPROCESSOR
-	PTR_L	t0, L_CPU(a0)			# get cpu_info
-	INT_L	t1, CPU_INFO_KSP_TLB_SLOT(t0)	# get TLB# for KSP
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# TLB entry (virtual)
 #else
 	mtc0	zero, MIPS_COP_0_TLB_INDEX	# TLB entry #0 (virtual)
@@ -2550,10 +2719,11 @@ MIPSX(entry0set):
 	COP0_SYNC
 	tlbwi					# set TLB entry #0
 	COP0_SYNC
-	_MTC0	t3, MIPS_COP_0_TLB_HI		# restore TLB_HI
+	_MTC0	ta0, MIPS_COP_0_TLB_HI		# restore TLB_HI
 	COP0_SYNC
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
-	INT_S	zero, 0(a3)			# clear tlb lock
+	mtc0	v1, MIPS_COP_0_STATUS		# restore Status register
+	INT_S	zero, 0(ta3)			# clear tlb lock
 #endif
 MIPSX(resume):
 #endif /* PAGE_SIZE < USPACE */
@@ -2564,51 +2734,6 @@ MIPSX(resume):
 	j	ra
 	 nop
 END(MIPSX(cpu_switch_resume))
-
-/*--------------------------------------------------------------------------
- *
- * mipsN_tlb_write_indexed --
- *
- *      Write the given entry into the TLB at the given index.
- *      Pass full R4000 style TLB info including variable page size mask.
- *
- *      mipsN_tlb_write_indexed(size_t tlb_index, const struct tlbmask *tlb)
- *
- * Results:
- *      None.
- *
- * Side effects:
- *      TLB entry set.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(MIPSX(tlb_write_indexed))
-	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
-	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
-	COP0_SYNC
-	INT_L	a2, TLBMASK_LO0(a1)		# fetch tlb->tlb_lo0
-	INT_L	a3, TLBMASK_LO1(a1)		# fetch tlb->tlb_lo1
-	mfc0	v0, MIPS_COP_0_TLB_PG_MASK	# Save current page mask.
-	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save the current PID.
-
-	_MTC0	a2, MIPS_COP_0_TLB_LO0		# Set up entry low0.
-	_MTC0	a3, MIPS_COP_0_TLB_LO1		# Set up entry low1.
-	COP0_SYNC
-	INT_L	a2, TLBMASK_MASK(a1)		# fetch tlb->tlb_mask
-	PTR_L	a3, TLBMASK_HI(a1)		# fetch tlb->tlb_hi
-	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index.
-	mtc0	a2, MIPS_COP_0_TLB_PG_MASK	# Set up entry pagemask.
-	_MTC0	a3, MIPS_COP_0_TLB_HI		# Set up entry high.
-	COP0_SYNC
-	tlbwi					# Write the TLB
-	COP0_SYNC
-
-	_MTC0	t0, MIPS_COP_0_TLB_HI		# Restore the PID.
-	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	# Restore page mask.
-	COP0_SYNC
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-	JR_HB_RA
-END(MIPSX(tlb_write_indexed))
 
 #if defined(MIPS3)
 /*----------------------------------------------------------------------------
@@ -2759,8 +2884,8 @@ MIPSX(excpt_sw):
 	####
 	PTR_WORD _C_LABEL(MIPSX(kern_intr))		#  0 external interrupt
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	#  1 TLB modification
-	PTR_WORD _C_LABEL(MIPSX(tlb_invalid_exception))	#  2 TLB miss (LW/I-fetch)
-	PTR_WORD _C_LABEL(MIPSX(tlb_invalid_exception))	#  3 TLB miss (SW)
+	PTR_WORD _C_LABEL(MIPSX(kern_tlb_invalid_exception))	#  2 TLB miss (LW/I-fetch)
+	PTR_WORD _C_LABEL(MIPSX(kern_tlb_invalid_exception))	#  3 TLB miss (SW)
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	#  4 address error (LW/I-fetch)
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	#  5 address error (SW)
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	#  6 bus error (I-fetch)
