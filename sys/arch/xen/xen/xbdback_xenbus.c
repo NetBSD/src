@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.53 2011/11/24 18:34:56 joerg Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.54 2011/12/03 22:36:28 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.53 2011/11/24 18:34:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.54 2011/12/03 22:36:28 bouyer Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -305,7 +305,7 @@ static void xbdback_backend_changed(struct xenbus_watch *,
 static int  xbdback_evthandler(void *);
 
 static int  xbdback_connect(struct xbdback_instance *);
-static int  xbdback_disconnect(struct xbdback_instance *);
+static void xbdback_disconnect(struct xbdback_instance *);
 static void xbdback_finish_disconnect(struct xbdback_instance *);
 
 static struct xbdback_instance *xbdif_lookup(domid_t, uint32_t);
@@ -662,16 +662,20 @@ err:
 /*
  * Signal a xbdback thread to disconnect. Done in 'xenwatch' thread context.
  */
-static int
+static void
 xbdback_disconnect(struct xbdback_instance *xbdi)
 {
 	
+	mutex_enter(&xbdi->xbdi_lock);
+	if (xbdi->xbdi_status == DISCONNECTED) {
+		mutex_exit(&xbdi->xbdi_lock);
+		return;
+	}
 	hypervisor_mask_event(xbdi->xbdi_evtchn);
 	event_remove_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
 	    xbdi);
 
 	/* signal thread that we want to disconnect, then wait for it */
-	mutex_enter(&xbdi->xbdi_lock);
 	xbdi->xbdi_status = DISCONNECTING;
 	cv_signal(&xbdi->xbdi_cv);
 
@@ -681,8 +685,6 @@ xbdback_disconnect(struct xbdback_instance *xbdi)
 	mutex_exit(&xbdi->xbdi_lock);
 
 	xenbus_switch_state(xbdi->xbdi_xbusd, NULL, XenbusStateClosing);
-
-	return 0;
 }
 
 static void
