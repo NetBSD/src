@@ -171,7 +171,7 @@ NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
 	REG_L		a1, 2*SZREG(s0)		/* XXX ta_cpuinfo */
 	dmtc0		a1, $22, 0		/* MIPS_COP_0_OSSCRATCH */
 	PTR_L		v1, CPU_INFO_TLB_INFO(a1)
-	PTR_L		v1, TI_LOCK(v1)
+	PTR_L		v1, TI_HWLOCK(v1)
 	PTR_ADDU	v1, MTX_LOCK
 	dmtc0		v1, $22, 2
 	j		cpu_trampoline

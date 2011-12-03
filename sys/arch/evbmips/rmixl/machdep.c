@@ -253,6 +253,12 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 
 	rmixl_pcr_init_core();
 
+#ifdef MULTIPROCESSOR
+	__asm __volatile("dmtc0 %0,$%1,2"
+	    ::	"r"(&pmap_tlb0_info.ti_hwlock->mtx_lock),
+		"n"(MIPS_COP_0_OSSCRATCH));
+#endif
+
 	/*
 	 * Clear the BSS segment.
 	 */
@@ -374,8 +380,8 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 #ifdef MULTIPROCESSOR
 	/* reserve the cpu_wakeup_info area */
 	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
-		(u_quad_t)trunc_page(rcp->rc_cpu_wakeup_info),
-		(u_quad_t)round_page(rcp->rc_cpu_wakeup_end));
+		(u_quad_t)trunc_page((vaddr_t)rcp->rc_cpu_wakeup_info),
+		(u_quad_t)round_page((vaddr_t)rcp->rc_cpu_wakeup_end));
 #endif
 
 #ifdef MEMLIMIT
@@ -455,9 +461,6 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	__asm __volatile("dmtc0 %0,$%1"
 		:: "r"(&cpu_info_store), "n"(MIPS_COP_0_OSSCRATCH));
 #ifdef MULTIPROCESSOR
-	__asm __volatile("dmtc0 %0,$%1,2"
-		:: "r"(&pmap_tlb0_info.ti_lock->mtx_lock),
-		    "n"(MIPS_COP_0_OSSCRATCH));
 	mips_fixup_exceptions(rmixl_fixup_cop0_oscratch);
 #endif
 	rmixl_fixup_curcpu();

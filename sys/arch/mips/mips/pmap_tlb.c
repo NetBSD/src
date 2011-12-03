@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.18 2011/05/13 17:36:39 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.19 2011/12/03 01:56:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.18 2011/05/13 17:36:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.19 2011/12/03 01:56:55 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -143,7 +143,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.18 2011/05/13 17:36:39 matt Exp $
 #include <mips/locore.h>
 #include <mips/pte.h>
 
-static kmutex_t pmap_tlb0_mutex __aligned(32);
+static kmutex_t pmap_tlb0_mutex __cacheline_aligned;
+#ifdef MULTIPROCESSOR
+static kmutex_t pmap_tlb0_hwmutex __cacheline_aligned;
+#endif
 
 struct pmap_tlb_info pmap_tlb0_info = {
 	.ti_name = "tlb0",
@@ -156,6 +159,7 @@ struct pmap_tlb_info pmap_tlb0_info = {
 	.ti_lock = &pmap_tlb0_mutex,
 	.ti_pais = LIST_HEAD_INITIALIZER(pmap_tlb_info.ti_pais),
 #ifdef MULTIPROCESSOR
+	.ti_hwlock = &pmap_tlb0_hwmutex,
 	.ti_cpu_mask = 1,
 	.ti_tlbinvop = TLBINV_NOBODY,
 #endif
@@ -252,6 +256,9 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 #endif /* MULTIPROCESSOR */
 		KASSERT(ti == &pmap_tlb0_info);
 		mutex_init(ti->ti_lock, MUTEX_DEFAULT, IPL_SCHED);
+#ifdef MULTIPROCESSOR
+		mutex_init(ti->ti_hwlock, MUTEX_DEFAULT, IPL_SCHED);
+#endif
 		if (!CPUISMIPSNN || !__builtin_constant_p(MIPS_TLB_NUM_PIDS)) {
 			ti->ti_asid_max = mips_options.mips_num_tlb_entries - 1;
 			ti->ti_asids_free = ti->ti_asid_max;
@@ -281,6 +288,7 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 	KASSERT(pmap_tlbs[pmap_ntlbs] == NULL);
 
 	ti->ti_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
+	ti->ti_hwlock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
 	ti->ti_asid_bitmap[0] = 1;
 	ti->ti_asid_hint = 1;
 	ti->ti_asid_max = pmap_tlb0_info.ti_asid_max;
