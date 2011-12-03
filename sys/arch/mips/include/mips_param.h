@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.23.78.7 2011/12/02 00:01:37 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.23.78.8 2011/12/03 01:44:04 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -52,6 +52,10 @@
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
+
+#ifndef COHERENCY_UNIT
+#define COHERENCY_UNIT	32	/* MIPS cachelines are usually 32 bytes */
 #endif
 
 /*
