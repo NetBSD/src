@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.17 2011/11/19 17:13:39 cherry Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.18 2011/12/03 22:41:40 bouyer Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.17 2011/11/19 17:13:39 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.18 2011/12/03 22:41:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,8 +305,9 @@ hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
 	if (__predict_true(ci == curcpu())) {
 		hypervisor_force_callback();
 	} else {
-		if (xen_send_ipi(ci, XEN_IPI_HVCB)) {
-			panic("xen_send_ipi(cpu%d, XEN_IPI_HVCB) failed\n", (int) ci->ci_cpuid);
+		if (__predict_false(xen_send_ipi(ci, XEN_IPI_HVCB))) {
+			panic("xen_send_ipi(cpu%d, XEN_IPI_HVCB) failed\n",
+			    (int) ci->ci_cpuid);
 		}
 	}
 }
@@ -315,7 +316,9 @@ void
 hypervisor_unmask_event(unsigned int ev)
 {
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
-	volatile struct vcpu_info *vci = curcpu()->ci_vcpu;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	volatile struct vcpu_info *vci;
 
 #ifdef PORT_DEBUG
 	if (ev == PORT_DEBUG)
@@ -328,11 +331,28 @@ hypervisor_unmask_event(unsigned int ev)
 	 * 'hw_resend_irq'. Just like a real IO-APIC we 'lose the
 	 * interrupt edge' if the channel is masked.
 	 */
-	if (xen_atomic_test_bit(&s->evtchn_pending[0], ev) && 
-	    !xen_atomic_test_and_set_bit(&vci->evtchn_pending_sel, ev>>LONG_SHIFT)) {
-		xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
-		if (!vci->evtchn_upcall_mask)
-			hypervisor_force_callback();
+	if (!xen_atomic_test_bit(&s->evtchn_pending[0], ev))
+		return;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (!xen_atomic_test_bit(&ci->ci_evtmask[0], ev))
+			continue;
+		vci = ci->ci_vcpu;
+		if (!xen_atomic_test_and_set_bit(&vci->evtchn_pending_sel,
+		    ev>>LONG_SHIFT))
+			xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
+		if (!vci->evtchn_upcall_mask) {
+			if (__predict_true(ci == curcpu())) {
+				hypervisor_force_callback();
+			} else {
+				if (__predict_false(
+				    xen_send_ipi(ci, XEN_IPI_HVCB))) {
+					panic("xen_send_ipi(cpu%d, "
+					    "XEN_IPI_HVCB) failed\n",
+					    (int) ci->ci_cpuid);
+				}
+			}
+		}
 	}
 }
 
