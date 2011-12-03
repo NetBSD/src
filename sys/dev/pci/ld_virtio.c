@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.3 2011/11/23 19:40:42 hannken Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.4 2011/12/03 10:53:09 hannken Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.3 2011/11/23 19:40:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.4 2011/12/03 10:53:09 hannken Exp $");
 
 #include "rnd.h"
 
@@ -272,6 +272,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 					VIRTIO_BLK_CONFIG_BLK_SIZE);
 	}
 	maxxfersize = MAXPHYS;
+#if 0	/* At least genfs_io assumes maxxfer == MAXPHYS. */
 	if (features & VIRTIO_BLK_F_SEG_MAX) {
 		maxxfersize = virtio_read_device_config_4(vsc,
 					VIRTIO_BLK_CONFIG_SEG_MAX)
@@ -279,6 +280,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 		if (maxxfersize > MAXPHYS)
 			maxxfersize = MAXPHYS;
 	}
+#endif
 
 	if (virtio_alloc_vq(vsc, &sc->sc_vq[0], 0,
 			    maxxfersize, maxxfersize / NBPG + 2,
