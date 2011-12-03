@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.56 2011/11/24 03:35:59 mrg Exp $ */
+/* $NetBSD: esa.c,v 1.57 2011/12/03 08:20:12 ryo Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.56 2011/11/24 03:35:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.57 2011/12/03 08:20:12 ryo Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1809,9 +1809,12 @@ esa_mappage(void *addr, void *mem, off_t off, int prot)
 static void
 esa_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
 {
+	struct esa_voice *vc;
 	struct esa_softc *sc;
 
-	sc = addr;
+	vc = addr;
+	sc = device_private(vc->parent);
+
 	*intr = &sc->sc_intr_lock;
 	*proc = &sc->sc_lock;
 }
