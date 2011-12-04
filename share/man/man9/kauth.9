@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.93 2011/11/08 10:56:59 wiz Exp $
+.\" $NetBSD: kauth.9,v 1.94 2011/12/04 21:52:37 jym Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -476,9 +476,9 @@ or
 Checks whether viewing the scheduler affinity is allowed.
 .It Dv KAUTH_PROCESS_SCHEDULER_SETAFFINITY
 Checks whether setting the scheduler affinity is allowed.
-.It Dv KAUTH_PROCESS_SCHEDULER_GETPARAMS
+.It Dv KAUTH_PROCESS_SCHEDULER_GETPARAM
 Checks whether viewing the scheduler policy and parameters is allowed.
-.It Dv KAUTH_PROCESS_SCHEDULER_SETPARAMS
+.It Dv KAUTH_PROCESS_SCHEDULER_SETPARAM
 Checks whether modifying the scheduler policy and parameters is allowed.
 .It Dv KAUTH_PROCESS_SIGNAL
 Checks whether an object with one set of credentials can post signals
