@@ -1,0 +1,5 @@
+# $NetBSD: files.extensions,v 1.1 2011/12/04 19:25:00 jym Exp $
+
+defflag secmodel_extensions
+
+file	secmodel/extensions/secmodel_extensions.c	secmodel_extensions

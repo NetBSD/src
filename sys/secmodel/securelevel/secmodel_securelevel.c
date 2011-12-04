@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.22 2011/11/28 20:57:51 jym Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.23 2011/12/04 19:25:00 jym Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.22 2011/11/28 20:57:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.23 2011/12/04 19:25:00 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.22 2011/11/28 20:57:51 jy
 
 #include <miscfs/specfs/specdev.h>
 
+#include <secmodel/secmodel.h>
 #include <secmodel/securelevel/securelevel.h>
 
 MODULE(MODULE_CLASS_SECMODEL, securelevel, NULL);
@@ -63,6 +64,7 @@ static int securelevel;
 static kauth_listener_t l_system, l_process, l_network, l_machdep, l_device,
     l_vnode;
 
+static secmodel_t securelevel_sm;
 static struct sysctllog *securelevel_sysctl_log;
 
 /*
@@ -116,7 +118,7 @@ sysctl_security_securelevel_setup(struct sysctllog **clog)
 	sysctl_createv(clog, 0, &rnode, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "name", NULL,
-		       NULL, 0, __UNCONST("Traditional NetBSD: Securelevel"), 0,
+		       NULL, 0, __UNCONST(SECMODEL_SECURELEVEL_NAME), 0,
 		       CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, NULL,
@@ -180,12 +182,36 @@ secmodel_securelevel_stop(void)
 }
 
 static int
+securelevel_eval(const char *what, void *arg, void *ret)
+{
+	int error = 0;
+
+	if (strcasecmp(what, "is-securelevel-above") == 0) {
+		int level = (int)(uintptr_t)arg;
+		bool *bp = ret;
+
+		*bp = (securelevel > level);
+	} else {
+		error = ENOENT;
+	}
+
+	return error;
+}
+
+static int
 securelevel_modcmd(modcmd_t cmd, void *arg)
 {
 	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		error = secmodel_register(&securelevel_sm,
+		    SECMODEL_SECURELEVEL_ID, SECMODEL_SECURELEVEL_NAME,
+		    NULL, securelevel_eval, NULL);
+		if (error != 0)
+			printf("securelevel_modcmd::init: secmodel_register "
+			    "returned %d\n", error);
+
 		secmodel_securelevel_init();
 		secmodel_securelevel_start();
 		sysctl_security_securelevel_setup(&securelevel_sysctl_log);
@@ -194,6 +220,12 @@ securelevel_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 		sysctl_teardown(&securelevel_sysctl_log);
 		secmodel_securelevel_stop();
+
+		error = secmodel_deregister(securelevel_sm);
+		if (error != 0)
+			printf("securelevel_modcmd::fini: secmodel_deregister "
+			    "returned %d\n", error);
+
 		break;
 
 	case MODULE_CMD_AUTOUNLOAD:

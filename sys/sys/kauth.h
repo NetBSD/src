@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.65 2011/11/23 10:47:49 tls Exp $ */
+/* $NetBSD: kauth.h,v 1.66 2011/12/04 19:25:01 jym Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -34,6 +34,8 @@
 
 #ifndef _SYS_KAUTH_H_
 #define	_SYS_KAUTH_H_
+
+#include <secmodel/secmodel.h> /* for secmodel_t type */
 
 struct uucred;
 struct ki_ucred;
@@ -402,7 +404,7 @@ int kauth_cred_getgroups(kauth_cred_t, gid_t *, size_t, enum uio_seg);
 /* This is for sys_setgroups() */
 int kauth_proc_setgroups(struct lwp *, kauth_cred_t);
 
-int kauth_register_key(const char *, kauth_key_t *);
+int kauth_register_key(secmodel_t, kauth_key_t *);
 int kauth_deregister_key(kauth_key_t);
 void kauth_cred_setdata(kauth_cred_t, kauth_key_t, void *);
 void *kauth_cred_getdata(kauth_cred_t, kauth_key_t);
@@ -419,8 +421,4 @@ kauth_action_t kauth_mode_to_action(mode_t mode);
 kauth_cred_t kauth_cred_get(void);
 
 void kauth_proc_fork(struct proc *, struct proc *);
-
-void secmodel_register(void);
-void secmodel_deregister(void);
-
 #endif	/* !_SYS_KAUTH_H_ */

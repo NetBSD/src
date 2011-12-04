@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.437 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: init_main.c,v 1.438 2011/12/04 19:24:58 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.437 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.438 2011/12/04 19:24:58 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -210,6 +210,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.437 2011/11/19 22:51:25 tls Exp $");
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 #include <sys/pax.h>
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
+
+#include <secmodel/secmodel.h>
 
 #include <ufs/ufs/quota.h>
 
@@ -345,6 +347,8 @@ main(void)
 
 	/* Initialize the kernel authorization subsystem. */
 	kauth_init();
+
+	secmodel_init();
 
 	spec_init();
 
