@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.332 2011/11/24 19:55:22 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.333 2011/12/04 15:12:07 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.332 2011/11/24 19:55:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.333 2011/12/04 15:12:07 dholland Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -964,7 +964,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 */
 	if (pathstring[0] == '/')
 		(void)strlcpy(pack.ep_path = dp, pathstring, MAXPATHLEN);
-#ifndef notyet
+#ifdef notyet
 	/*
 	 * Although this works most of the time [since the entry was just
 	 * entered in the cache] we don't use it because it theoretically
@@ -976,7 +976,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		pack.ep_path = dp;
 #endif
 	else {
-#ifndef notyet
+#ifdef notyet
 		printf("Cannot get path for pid %d [%s] (error %d)",
 		    (int)p->p_pid, p->p_comm, error);
 #endif
