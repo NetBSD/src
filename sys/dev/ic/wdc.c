@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.265 2011/08/28 10:21:41 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.266 2011/12/04 19:48:36 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.265 2011/08/28 10:21:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.266 2011/12/04 19:48:36 jakllsch Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -745,9 +745,9 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		ATADEBUG_PRINT(("%s:%d:%d: after reset, sc=0x%x sn=0x%x "
 		    "cl=0x%x ch=0x%x\n",
 		    device_xname(chp->ch_atac->atac_dev),
-	    	    chp->ch_channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
+		    chp->ch_channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
 		/*
-		 * sc & sn are supposted to be 0x1 for ATAPI but in some cases
+		 * sc & sn are supposed to be 0x1 for ATAPI but in some cases
 		 * we get wrong values here, so ignore it.
 		 */
 		if (cl == 0x14 && ch == 0xeb) {
@@ -1493,7 +1493,7 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		 * Historically it's what we have always done so keeping it
 		 * here ensure binary backward compatibility.
 		 */
-		 drive_flags = DRIVE_NOSTREAM | 
+		 drive_flags = DRIVE_NOSTREAM |
 				chp->ch_drive[xfer->c_drive].drive_flags;
 	} else {
 		/*
@@ -1521,8 +1521,8 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	/*
 	 * after a ATAPI_SOFT_RESET, the device will have released the bus.
 	 * Reselect again, it doesn't hurt for others commands, and the time
-	 * penalty for the extra regiter write is acceptable,
-	 * wdc_exec_command() isn't called often (mosly for autoconfig)
+	 * penalty for the extra register write is acceptable,
+	 * wdc_exec_command() isn't called often (mostly for autoconfig)
 	 */
 	bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (xfer->c_drive << 4));
