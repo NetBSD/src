@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.94 2011/12/04 21:52:37 jym Exp $
+.\" $NetBSD: kauth.9,v 1.95 2011/12/04 23:59:25 jym Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -155,17 +155,6 @@ Checks whether the credentials belong to the super-user.
 Using this request is strongly discouraged and should only be done as a
 temporary place-holder, as it is breaking the separation between the
 interface for authorization requests from the back-end implementation.
-.It Dv KAUTH_GENERIC_CANSEE
-Checks whether an object with one set of credentials can access
-information about another object, possibly with a different set of
-credentials.
-.Pp
-.Ar arg0
-contains the credentials of the object looked at.
-.Pp
-This request should be issued only in cases where generic credentials
-check is required; otherwise it is recommended to use the object-specific
-routines.
 .El
 .Ss System Scope
 The system scope,
