@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.53 2011/07/30 13:19:21 jmcneill Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.53.6.1 2011/12/04 13:23:16 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.53 2011/07/30 13:19:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.53.6.1 2011/12/04 13:23:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,6 +303,9 @@ ehci_pci_detach(device_t self, int flags)
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
 	}
+
+	mutex_destroy(&sc->sc.sc_lock);
+	mutex_destroy(&sc->sc.sc_intr_lock);
 
 	return 0;
 }

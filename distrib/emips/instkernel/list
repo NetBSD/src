@@ -1,4 +1,0 @@
-#	$NetBSD: list,v 1.1 2011/01/26 01:18:44 pooka Exp $
-
-COPY	${DESTDIR}/usr/mdec/boot.emips	boot.emips
-COPY	${OBJDIR}/netbsd-INSTALL.gz	netbsd

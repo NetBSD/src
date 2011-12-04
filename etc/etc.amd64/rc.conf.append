@@ -1,9 +1,0 @@
-#	$NetBSD: rc.conf.append,v 1.1 2011/08/22 20:48:39 jym Exp $
-#
-# Arch-specific rc.conf(5) configuration.
-
-# powerd(8) is required under Xen to manage save/restore events.
-#
-if /sbin/sysctl -q machdep.xen; then
-	powerd=YES
-fi

@@ -1,3 +1,0 @@
-./cleanup_milter: NOQUEUE: milter-header-reject: header X-SPAM-FLAG: YES from client_name[client_addr]; from=<sender> to=<recipient>: 5.7.1 whatever
-./cleanup_milter: ignoring: add_header X-SPAM-FLAG NO
-./cleanup_milter: errs = message content rejected

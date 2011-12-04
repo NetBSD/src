@@ -1,3 +1,0 @@
-	fsub	#{imm32},{reg}
-	fsub	{reg},{reg}
-	fsub	{mem}.L,{reg}
