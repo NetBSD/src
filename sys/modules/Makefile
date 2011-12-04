@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 2011/11/24 15:52:24 ahoka Exp $
+#	$NetBSD: Makefile,v 1.100 2011/12/04 23:13:54 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -61,6 +61,7 @@ SUBDIR+=	puffs
 SUBDIR+=	putter
 SUBDIR+=	scsiverbose
 SUBDIR+=	secmodel_bsd44
+SUBDIR+=	secmodel_extensions
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
 SUBDIR+=	smbfs
