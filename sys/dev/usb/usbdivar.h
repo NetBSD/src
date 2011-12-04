@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93 2011/05/27 17:19:18 drochner Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.1 2011/12/04 13:23:17 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
  */
 
 #include <sys/callout.h>
+#include <sys/mutex.h>
 
 /* From usb_mem.h */
 struct usb_dma_block;
@@ -58,6 +59,8 @@ struct usbd_bus_methods {
 	void		      (*freem)(struct usbd_bus *, usb_dma_t *);
 	struct usbd_xfer *    (*allocx)(struct usbd_bus *);
 	void		      (*freex)(struct usbd_bus *, struct usbd_xfer *);
+	void		      (*get_locks)(struct usbd_bus *,
+					kmutex_t **, kmutex_t **);
 };
 
 struct usbd_pipe_methods {
@@ -175,6 +178,9 @@ struct usbd_pipe {
 	char			repeat;
 	int			interval;
 
+	kmutex_t		*intr_lock;
+	kmutex_t		*lock;
+
 	/* Filled by HC driver. */
 	const struct usbd_pipe_methods *methods;
 };
@@ -183,6 +189,7 @@ struct usbd_xfer {
 	struct usbd_pipe       *pipe;
 	void		       *priv;
 	void		       *buffer;
+	kcondvar_t		cv;
 	u_int32_t		length;
 	u_int32_t		actlen;
 	u_int16_t		flags;
@@ -217,6 +224,7 @@ struct usbd_xfer {
 	u_int8_t		hcflags; /* private use by the HC driver */
 #define UXFER_ABORTING	0x01	/* xfer is aborting. */
 #define UXFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
+	kcondvar_t		hccv; /* private use by the HC driver */
 
         struct callout timeout_handle;
 };
@@ -258,6 +266,9 @@ int		usb_disconnect_port(struct usbd_port *, device_t, int);
 void		usb_needs_explore(usbd_device_handle);
 void		usb_needs_reattach(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
+
+#define usbd_lock(m)	if (m) { s = -1; mutex_enter(m); } else s = splusb()
+#define usbd_unlock(m)	if (m) { s = -1; mutex_exit(m); } else splx(s)
 
 /*
  * XXX This check is extremely bogus. Bad Bad Bad.

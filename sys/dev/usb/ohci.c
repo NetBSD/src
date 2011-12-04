@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218 2011/08/07 13:45:46 jmcneill Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.1 2011/12/04 13:23:16 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218 2011/08/07 13:45:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.1 2011/12/04 13:23:16 jmcneill Exp $");
 
 #include "opt_usb.h"
 
@@ -274,6 +274,7 @@ Static const struct usbd_bus_methods ohci_bus_methods = {
 	ohci_freem,
 	ohci_allocx,
 	ohci_freex,
+	NULL, /* ohci_get_locks */
 };
 
 Static const struct usbd_pipe_methods ohci_root_ctrl_methods = {

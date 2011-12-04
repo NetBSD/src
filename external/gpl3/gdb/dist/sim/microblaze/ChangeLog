@@ -1,3 +1,0 @@
-2010-04-14  Mike Frysinger  <vapier@gentoo.org>
-
-	* interp.c (sim_write): Add const to buffer arg.
