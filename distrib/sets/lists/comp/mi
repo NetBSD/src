@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1715 2011/11/29 03:40:42 tls Exp $
+#	$NetBSD: mi,v 1.1716 2011/12/04 21:08:37 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10510,7 +10510,11 @@
 ./usr/share/man/cat9/scsipi.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_bsd44.0		comp-sys-catman		.cat
+./usr/share/man/cat9/secmodel_deregister.0	comp-sys-catman		.cat
+./usr/share/man/cat9/secmodel_eval.0		comp-sys-catman		.cat
+./usr/share/man/cat9/secmodel_extensions.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_overlay.0		comp-sys-catman		.cat
+./usr/share/man/cat9/secmodel_register.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_securelevel.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_suser.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/seldestroy.0		comp-sys-catman		.cat
@@ -16612,7 +16616,11 @@
 ./usr/share/man/html9/scsipi.html		comp-sys-htmlman	html
 ./usr/share/man/html9/secmodel.html		comp-sys-htmlman	html
 ./usr/share/man/html9/secmodel_bsd44.html	comp-sys-htmlman	html
+./usr/share/man/html9/secmodel_deregister.html	comp-sys-htmlman	html
+./usr/share/man/html9/secmodel_eval.html	comp-sys-htmlman	html
+./usr/share/man/html9/secmodel_extensions.html	comp-sys-htmlman	html
 ./usr/share/man/html9/secmodel_overlay.html	comp-sys-htmlman	html
+./usr/share/man/html9/secmodel_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/secmodel_securelevel.html	comp-sys-htmlman	html
 ./usr/share/man/html9/secmodel_suser.html	comp-sys-htmlman	html
 ./usr/share/man/html9/seldestroy.html		comp-sys-htmlman	html
@@ -22909,7 +22917,11 @@
 ./usr/share/man/man9/scsipi.9			comp-sys-man		.man
 ./usr/share/man/man9/secmodel.9			comp-sys-man		.man
 ./usr/share/man/man9/secmodel_bsd44.9		comp-sys-man		.man
+./usr/share/man/man9/secmodel_deregister.9	comp-sys-man		.man
+./usr/share/man/man9/secmodel_eval.9		comp-sys-man		.man
+./usr/share/man/man9/secmodel_extensions.9	comp-sys-man		.man
 ./usr/share/man/man9/secmodel_overlay.9		comp-sys-man		.man
+./usr/share/man/man9/secmodel_register.9	comp-sys-man		.man
 ./usr/share/man/man9/secmodel_securelevel.9	comp-sys-man		.man
 ./usr/share/man/man9/secmodel_suser.9		comp-sys-man		.man
 ./usr/share/man/man9/seldestroy.9		comp-sys-man		.man
