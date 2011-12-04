@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.88 2011/06/07 17:24:32 pgoyette Exp $ */
+/* $NetBSD: envstat.c,v 1.89 2011/12/04 19:34:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.88 2011/06/07 17:24:32 pgoyette Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.89 2011/12/04 19:34:22 jmcneill Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -811,7 +811,7 @@ print_sensors(void)
 		if ((strcmp(sensor->type, "Indicator") == 0) ||
 		    (strcmp(sensor->type, "Battery charge") == 0)) {
 
-			(void)printf(":%10s", sensor->cur_value ? "ON" : "OFF");
+			(void)printf(":%10s", sensor->cur_value ? "TRUE" : "FALSE");
 
 /* convert and print a temp value in degC, degF, or Kelvin */
 #define PRINTTEMP(a)						\
