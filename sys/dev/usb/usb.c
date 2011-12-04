@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.125 2011/06/09 19:08:32 matt Exp $	*/
+/*	$NetBSD: usb.c,v 1.125.6.1 2011/12/04 13:23:17 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125 2011/06/09 19:08:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.1 2011/12/04 13:23:17 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -202,6 +202,7 @@ usb_doattach(device_t self)
 	usbd_status err;
 	int speed;
 	struct usb_event *ue;
+	bool mpsafe = sc->sc_bus->methods->get_locks ? true : false;
 
 	if (!usb_selevent_init) {
 		selinit(&usb_selevent);
@@ -228,9 +229,9 @@ usb_doattach(device_t self)
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);
 	usb_add_event(USB_EVENT_CTRLR_ATTACH, ue);
 
-#ifdef USB_USE_SOFTINTR
 	/* XXX we should have our own level */
-	sc->sc_bus->soft = softint_establish(SOFTINT_NET,
+	sc->sc_bus->soft = softint_establish(
+	    SOFTINT_NET | (mpsafe ? SOFTINT_MPSAFE : 0),
 	    sc->sc_bus->methods->soft_intr, sc->sc_bus);
 	if (sc->sc_bus->soft == NULL) {
 		aprint_error("%s: can't register softintr\n",
@@ -238,7 +239,6 @@ usb_doattach(device_t self)
 		sc->sc_dying = 1;
 		return;
 	}
-#endif
 
 	err = usbd_new_device(self, sc->sc_bus, 0, speed, 0,
 		  &sc->sc_port);
@@ -910,15 +910,11 @@ void
 usb_schedsoftintr(usbd_bus_handle bus)
 {
 	DPRINTFN(10,("usb_schedsoftintr: polling=%d\n", bus->use_polling));
-#ifdef USB_USE_SOFTINTR
 	if (bus->use_polling) {
 		bus->methods->soft_intr(bus);
 	} else {
 		softint_schedule(bus->soft);
 	}
-#else
-	bus->methods->soft_intr(bus);
-#endif /* USB_USE_SOFTINTR */
 }
 
 int
@@ -973,12 +969,10 @@ usb_detach(device_t self, int flags)
 	}
 	DPRINTF(("usb_detach: event thread dead\n"));
 
-#ifdef USB_USE_SOFTINTR
 	if (sc->sc_bus->soft != NULL) {
 		softint_disestablish(sc->sc_bus->soft);
 		sc->sc_bus->soft = NULL;
 	}
-#endif
 
 	ue = usb_alloc_event();
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);
