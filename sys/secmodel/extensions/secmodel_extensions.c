@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.1 2011/12/04 19:25:00 jym Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.2 2011/12/04 21:04:51 jym Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.1 2011/12/04 19:25:00 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.2 2011/12/04 21:04:51 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -413,7 +413,10 @@ secmodel_extensions_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 	case KAUTH_PROCESS_SCHEDULER_SETAFFINITY:
 		if (user_set_cpu_affinity != 0) {
-			result = KAUTH_RESULT_ALLOW;
+			struct proc *p = arg0;
+
+			if (kauth_cred_uidmatch(cred, p->p_cred))
+				result = KAUTH_RESULT_ALLOW;
 		}
 		break;
 
