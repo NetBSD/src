@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.54 2011/11/19 22:51:21 tls Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.55 2011/12/04 15:15:41 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.54 2011/11/19 22:51:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.55 2011/12/04 15:15:41 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -188,6 +188,8 @@ struct xennet_xenbus_softc {
 	grant_ref_t sc_tx_ring_gntref;
 	grant_ref_t sc_rx_ring_gntref;
 
+	kmutex_t sc_tx_lock; /* protects free TX list, below */
+	kmutex_t sc_rx_lock; /* protects free RX list, below */
 	struct xennet_txreq sc_txreqs[NET_TX_RING_SIZE];
 	struct xennet_rxreq sc_rxreqs[NET_RX_RING_SIZE];
 	SLIST_HEAD(,xennet_txreq) sc_txreq_head; /* list of free TX requests */
@@ -305,12 +307,14 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_xbusd->xbusd_otherend_changed = xennet_backend_changed;
 
 	/* initialize free RX and RX request lists */
+	mutex_init(&sc->sc_tx_lock, MUTEX_DEFAULT, IPL_NET);
 	SLIST_INIT(&sc->sc_txreq_head);
 	for (i = 0; i < NET_TX_RING_SIZE; i++) {
 		sc->sc_txreqs[i].txreq_id = i;
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, &sc->sc_txreqs[i],
 		    txreq_next);
 	}
+	mutex_init(&sc->sc_rx_lock, MUTEX_DEFAULT, IPL_NET);
 	SLIST_INIT(&sc->sc_rxreq_head);
 	s = splvm();
 	for (i = 0; i < NET_RX_RING_SIZE; i++) {
@@ -680,12 +684,12 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 	RING_IDX i;
 	struct xennet_rxreq *req;
 	struct xen_memory_reservation reservation;
-	int s1, s2, otherend_id;
+	int s, otherend_id;
 	paddr_t pfn;
 
 	otherend_id = sc->sc_xbusd->xbusd_otherend_id;
 
-	s1 = splnet();
+	mutex_enter(&sc->sc_rx_lock);
 	for (i = 0; sc->sc_free_rxreql != 0; i++) {
 		req  = SLIST_FIRST(&sc->sc_rxreq_head);
 		KASSERT(req != NULL);
@@ -734,7 +738,7 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 
 out_loop:
 	if (i == 0) {
-		splx(s1);
+		mutex_exit(&sc->sc_rx_lock);
 		return;
 	}
 
@@ -747,9 +751,9 @@ out_loop:
 		 * outstanding in the page update queue -- make sure we flush
 		 * those first!
 		 */
-		s2 = splvm();
+		s = splvm();
 		xpq_flush_queue();
-		splx(s2);
+		splx(s);
 		/* now decrease reservation */
 		xenguest_handle(reservation.extent_start) = xennet_pages;
 		reservation.nr_extents = i;
@@ -769,7 +773,7 @@ out_loop:
 	sc->sc_rx_ring.req_prod_pvt = req_prod + i;
 	RING_PUSH_REQUESTS(&sc->sc_rx_ring);
 
-	splx(s1);
+	mutex_exit(&sc->sc_rx_lock);
 	return;
 }
 
@@ -805,9 +809,11 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 			 * this req is still granted. Get back the page or
 			 * allocate a new one, and remap it.
 			 */
+			mutex_enter(&sc->sc_rx_lock);
 			SLIST_INSERT_HEAD(&sc->sc_rxreq_head, rxreq,
 			    rxreq_next);
 			sc->sc_free_rxreql++;
+			mutex_exit(&sc->sc_rx_lock);
 
 			switch (sc->sc_rx_feature) {
 			case FEATURE_RX_COPY:
@@ -875,11 +881,13 @@ xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 	struct xennet_rxreq *req = arg;
 	struct xennet_xenbus_softc *sc = req->rxreq_sc;
 
-	int s = splnet();
+	mutex_enter(&sc->sc_rx_lock);
 
 	/* puts back the RX request in the list of free RX requests */
 	SLIST_INSERT_HEAD(&sc->sc_rxreq_head, req, rxreq_next);
 	sc->sc_free_rxreql++;
+
+	mutex_exit(&sc->sc_rx_lock);
 
 	/*
 	 * ring needs more requests to be pushed in, allocate some
@@ -893,7 +901,6 @@ xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 
 	if (m)
 		pool_cache_put(mb_cache, m);
-	splx(s);
 }
 
 /*
@@ -933,7 +940,9 @@ again:
 		xengnt_revoke_access(req->txreq_gntref);
 
 		m_freem(req->txreq_m);
+		mutex_enter(&sc->sc_tx_lock);
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, req, txreq_next);
+		mutex_exit(&sc->sc_tx_lock);
 	}
 	sc->sc_tx_ring.rsp_cons = resp_prod;
 	/* set new event and check for race with rsp_cons update */
@@ -1168,13 +1177,11 @@ xennet_softstart(void *arg)
 	struct xennet_txreq *req;
 	int notify;
 	int do_notify = 0;
-	int s;
 
-	s = splnet();
-
+	mutex_enter(&sc->sc_tx_lock);
 	if (__predict_false(
 	    (ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)) {
-		splx(s);
+		mutex_exit(&sc->sc_tx_lock);
 		return;
 	}
 
@@ -1329,7 +1336,7 @@ xennet_softstart(void *arg)
 		ifp->if_timer = 5;
 	}
 
-	splx(s);
+	mutex_exit(&sc->sc_tx_lock);
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start() done\n",
 	    device_xname(sc->sc_dev)));
@@ -1368,7 +1375,7 @@ int
 xennet_init(struct ifnet *ifp)
 {
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
-	int s = splnet();
+	mutex_enter(&sc->sc_rx_lock);
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_init()\n",
 	    device_xname(sc->sc_dev)));
@@ -1383,7 +1390,7 @@ xennet_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
-	splx(s);
+	mutex_exit(&sc->sc_rx_lock);
 	return 0;
 }
 
@@ -1391,12 +1398,16 @@ void
 xennet_stop(struct ifnet *ifp, int disable)
 {
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
-	int s = splnet();
+	mutex_enter(&sc->sc_tx_lock);
+	mutex_enter(&sc->sc_rx_lock);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	hypervisor_mask_event(sc->sc_evtchn);
 	xennet_reset(sc);
-	splx(s);
+
+	mutex_exit(&sc->sc_rx_lock);
+	mutex_exit(&sc->sc_tx_lock);
+
 }
 
 void
