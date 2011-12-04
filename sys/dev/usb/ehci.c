@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.1 2011/12/04 13:23:16 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.2 2011/12/04 19:22:56 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004-2011 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.1 2011/12/04 13:23:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.2 2011/12/04 19:22:56 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1157,9 +1157,8 @@ ehci_detach(struct ehci_softc *sc, int flags)
 	if (rv != 0)
 		return (rv);
 
-	callout_stop(&sc->sc_tmo_intrlist);
-
-	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
+	callout_halt(&sc->sc_tmo_intrlist, NULL);
+	callout_destroy(&sc->sc_tmo_intrlist);
 
 	/* XXX free other data structures XXX */
 	if (sc->sc_softitds)
