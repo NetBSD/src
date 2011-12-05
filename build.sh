@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.251 2011/10/17 16:22:12 mbalmer Exp $
+#	$NetBSD: build.sh,v 1.252 2011/12/05 23:04:39 jym Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1632,7 +1632,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.251 2011/10/17 16:22:12 mbalmer Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.252 2011/12/05 23:04:39 jym Exp $
 # with these arguments: ${_args}
 #
 
@@ -1830,7 +1830,7 @@ installworld()
 RUMP_LIBSETS='
 	-lrump,
 	-lrumpvfs -lrump,
-	-lrumpdev -lrump,
+	-lrumpvfs -lrumpdev -lrump,
 	-lrumpnet -lrump,
 	-lrumpkern_tty -lrumpvfs -lrump,
 	-lrumpfs_tmpfs -lrumpvfs -lrump,
