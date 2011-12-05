@@ -1,4 +1,4 @@
-.\" $NetBSD: mppb.4,v 1.3 2011/12/03 23:09:42 rkujawa Exp $
+.\" $NetBSD: mppb.4,v 1.4 2011/12/05 10:36:39 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@ Matay Prometheus. Manufacturer 44359, product 1.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It Unable to allocate space in parent map.
-The kernel has ran out of virtual memory space. 
+The kernel has run out of virtual memory space.
 .El
 .Sh SEE ALSO
 .Xr pci 4
@@ -71,16 +71,16 @@ driver was written by
 The hardware does not support DMA to host memory.
 .Pp
 The Prometheus does not support repeating of PCI transations, instead if the
-PCI card demands a retry of transaction, it returns value 0xFFFFFFFF. 
-This is currently not handled by the 
+PCI card demands a retry of transaction, it returns value 0xFFFFFFFF.
+This is currently not handled by the
 .Nm
 driver and will confuse some PCI card drivers.
 .Pp
 The system may run out of kernel virtual memory space if Prometheus is present.
-This is due to fact that m68k-specific 
+This is due to fact that m68k-specific
 .Xr pmap 9
-code places User Page Table base address at statically defined address 
-0x10000000, which does not leave enough kernel space to fit a 512MB board, such 
-as the Prometheus. 
-It is possible to work around this problem, by moving User Page Table base 
+code places User Page Table base address at statically defined address
+0x10000000, which does not leave enough kernel space to fit a 512MB board, such
+as the Prometheus.
+It is possible to work around this problem, by moving User Page Table base
 to higher address.
