@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.38 2011/11/24 21:46:15 ahoka Exp $
+# $NetBSD: mi,v 1.39 2011/12/05 02:04:34 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -143,6 +143,8 @@
 ./@MODULEDIR@/sdt/sdt.kmod			base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/secmodel_bsd44			base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_bsd44/secmodel_bsd44.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/secmodel_extensions		base-kernel-modules	kmod
+./@MODULEDIR@/secmodel_extensions/secmodel_extensions.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_overlay			base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/securelevel			base-kernel-modules	kmod
