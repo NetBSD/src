@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2011/06/12 03:35:41 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 2011/12/05 15:04:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2011/06/12 03:35:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2011/12/05 15:04:27 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2106,7 +2106,24 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 int
 mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
+	extern int kernel_text;
+	extern int __data_start;
+	extern int end;
+
+	const vaddr_t ksro = (vaddr_t) &kernel_text;
+	const vaddr_t ksrw = (vaddr_t) &__data_start;
+	const vaddr_t kend = (vaddr_t) end;
+	const vaddr_t v = (vaddr_t)ptr;
 
 	*handled = false;
-	return mm_md_physacc((paddr_t)ptr, prot);
+	if (v >= ksro && v < kend) {
+		*handled = true;
+		if (v < ksrw && (prot & VM_PROT_WRITE)) {
+			return EFAULT;
+		}
+	} else if (v >= kend && atop((paddr_t)v) < physmem) {
+		*handled = true;
+	}
+
+	return 0;
 }
