@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.23 2011/12/04 19:25:00 jym Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.24 2011/12/05 00:13:30 jym Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.23 2011/12/04 19:25:00 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.24 2011/12/05 00:13:30 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -205,6 +205,7 @@ securelevel_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		secmodel_securelevel_init();
 		error = secmodel_register(&securelevel_sm,
 		    SECMODEL_SECURELEVEL_ID, SECMODEL_SECURELEVEL_NAME,
 		    NULL, securelevel_eval, NULL);
@@ -212,7 +213,6 @@ securelevel_modcmd(modcmd_t cmd, void *arg)
 			printf("securelevel_modcmd::init: secmodel_register "
 			    "returned %d\n", error);
 
-		secmodel_securelevel_init();
 		secmodel_securelevel_start();
 		sysctl_security_securelevel_setup(&securelevel_sysctl_log);
 		break;
