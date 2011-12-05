@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.13 2011/11/23 23:07:33 jmcneill Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.14 2011/12/05 19:20:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.13 2011/11/23 23:07:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.14 2011/12/05 19:20:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,8 @@ joy_isapnp_match(device_t parent, cfdata_t match, void *aux)
 static void
 joy_isapnp_attach(device_t parent, device_t self, void *aux)
 {
-	struct joy_softc *sc = device_private(self);
 	struct joy_isapnp_softc *isc = device_private(self);
+	struct joy_softc *sc = &isc->sc_joy;
 	struct isapnp_attach_args *ipa = aux;
 	bus_space_handle_t ioh;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isa.c,v 1.13 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: joy_isa.c,v 1.14 2011/12/05 19:20:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.13 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.14 2011/12/05 19:20:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.13 2011/11/23 23:07:32 jmcneill Exp $"
 #define JOY_NPORTS    1
 
 struct joy_isa_softc {
-	struct joy_softc	*sc;
+	struct joy_softc	sc_joy;
 	kmutex_t		sc_lock;
 };
 
@@ -101,8 +101,8 @@ joy_isa_probe(device_t parent, cfdata_t match, void *aux)
 static void
 joy_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct joy_softc *sc = device_private(self);
 	struct joy_isa_softc *isc = device_private(self);
+	struct joy_softc *sc = &isc->sc_joy;
 	struct isa_attach_args *ia = aux;
 
 	aprint_normal("\n");

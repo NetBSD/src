@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_pci.c,v 1.18 2011/11/23 23:07:35 jmcneill Exp $	*/
+/*	$NetBSD: joy_pci.c,v 1.19 2011/12/05 19:20:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.18 2011/11/23 23:07:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.19 2011/12/05 19:20:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,8 @@ bar_is_io(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 static void
 joy_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct joy_softc *sc = device_private(self);
 	struct joy_pci_softc *psc = device_private(self);
+	struct joy_softc *sc = &psc->sc_joy;
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	bus_size_t mapsize;
