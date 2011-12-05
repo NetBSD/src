@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.66 2011/12/05 20:55:14 christos Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.67 2011/12/05 21:30:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.66 2011/12/05 20:55:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.67 2011/12/05 21:30:48 christos Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -134,7 +134,7 @@ int		db_symtabsize = SYMTAB_SPACE;
 struct ksyms_hdr ksyms_hdr;
 int ksyms_symsz;
 int ksyms_strsz;
-int ksyms_ctfsz;	/* this is not currently used by savecore(8)
+int ksyms_ctfsz;	/* this is not currently used by savecore(8) */
 TAILQ_HEAD(, ksyms_symtab) ksyms_symtabs =
     TAILQ_HEAD_INITIALIZER(ksyms_symtabs);
 
