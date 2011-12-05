@@ -1,4 +1,4 @@
-.\"	$NetBSD: affinity.3,v 1.7 2011/12/04 21:08:44 jym Exp $
+.\"	$NetBSD: affinity.3,v 1.8 2011/12/05 10:27:40 wiz Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@ must be created and initialized using the
 functions.
 .Sh IMPLEMENTATION NOTES
 Setting CPU
-.Xr affinity 3
+.Nm
 requires super-user privileges.
 Ordinary users can be allowed to control CPU affinity
 of their threads via the
