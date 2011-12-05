@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 2011/06/12 03:35:41 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.82 2011/12/05 07:34:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2011/06/12 03:35:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2011/12/05 07:34:50 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -1247,7 +1247,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (pmap_check_alias(pg, va, pte))
 			pmap_page_remove(pg);
 		pmap_pv_enter(pg, pve, pmap, va, ptp, 0);
-
 	} else if (pve) {
 		pmap_pv_free(pve);
 	}
@@ -1316,7 +1315,6 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			    (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte)))) {
 				struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 
-
 				pve = pmap_pv_remove(pg, pmap, sva);
 				md->pvh_attrs |= pmap_pvh_attrs(pte);
 
@@ -1330,7 +1328,6 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("%s: leaving\n", __func__));
 }
-
 
 void
 pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
@@ -1569,7 +1566,6 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	return false;
 }
 
-
 /*
  * pmap_activate(lwp)
  *
@@ -1591,7 +1587,6 @@ pmap_activate(struct lwp *l)
 	if (p == curproc)
 		mtctl(pmap->pm_pid, CR_PIDR2);
 }
-
 
 static inline void
 pmap_flush_page(struct vm_page *pg, bool purge)
