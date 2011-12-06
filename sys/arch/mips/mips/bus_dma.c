@@ -1013,6 +1013,11 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		if (((mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT) == 0)
 		&&  (flags & BUS_DMA_COHERENT))
 			*kvap = (void *)MIPS_PHYS_TO_KSEG1(segs[0].ds_addr);
+#ifdef ENABLE_MIPS_KSEGX
+		else if (mips_ksegx_start < segs[0].ds_addr
+		    && segs[0].ds_addr < mips_ksegx_start + VM_KSEGX_SIZE)
+			*kvap = (void *)(vaddr_t)(VM_KSEGX_ADDRESS + segs[0].ds_addr);
+#endif
 		else
 			*kvap = (void *)MIPS_PHYS_TO_KSEG0(segs[0].ds_addr);
 		return (0);
@@ -1065,6 +1070,11 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	 */
 	if (MIPS_KSEG0_P(kva) || MIPS_KSEG1_P(kva))
 		return;
+#ifdef ENABLE_MIPS_KSEGX
+	if (VM_KSEGX_ADDRESS <= (vaddr_t)kva
+	    && (vaddr_t)kva < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE)
+		return;
+#endif
 #ifdef _LP64
 	if (MIPS_XKPHYS_P((vaddr_t)kva))
 		return;
