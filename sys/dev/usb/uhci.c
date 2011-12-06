@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.6.2 2011/12/06 05:06:50 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.6.3 2011/12/06 05:26:26 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.2 2011/12/06 05:06:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.3 2011/12/06 05:26:26 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -1323,7 +1323,7 @@ uhci_intr1(uhci_softc_t *sc)
 	}
 #endif
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	status = UREAD2(sc, UHCI_STS) & UHCI_STS_ALLINTRS;
 	if (status == 0)	/* The interrupt was not for us. */
