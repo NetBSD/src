@@ -169,11 +169,11 @@ NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
 	 * jump to common mips cpu_trampoline
 	 */
 	REG_L		a1, 2*SZREG(s0)		/* XXX ta_cpuinfo */
-	dmtc0		a1, $22, 0		/* MIPS_COP_0_OSSCRATCH */
+	dmtc0		a1, MIPS_COP_0_OSSCRATCH, 0
 	PTR_L		v1, CPU_INFO_TLB_INFO(a1)
 	PTR_L		v1, TI_HWLOCK(v1)
 	PTR_ADDU	v1, MTX_LOCK
-	dmtc0		v1, $22, 2
+	dmtc0		v1, MIPS_COP_0_OSSCRATCH, 2
 	j		cpu_trampoline
 	 nop
 
