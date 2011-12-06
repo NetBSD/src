@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.125.6.1 2011/12/04 13:23:17 jmcneill Exp $	*/
+/*	$NetBSD: usb.c,v 1.125.6.2 2011/12/06 02:10:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.1 2011/12/04 13:23:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.2 2011/12/06 02:10:01 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -890,7 +890,9 @@ usb_add_event(int type, struct usb_event *uep)
 	wakeup(&usb_events);
 	selnotify(&usb_selevent, 0, 0);
 	if (usb_async_proc != NULL) {
+		kpreempt_disable();
 		softint_schedule(usb_async_sih);
+		kpreempt_enable();
 	}
 	splx(s);
 }
@@ -913,7 +915,9 @@ usb_schedsoftintr(usbd_bus_handle bus)
 	if (bus->use_polling) {
 		bus->methods->soft_intr(bus);
 	} else {
+		kpreempt_disable();
 		softint_schedule(bus->soft);
+		kpreempt_enable();
 	}
 }
 
