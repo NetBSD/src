@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.2 2011/12/04 21:02:27 jmcneill Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.3 2011/12/06 02:10:01 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2 2011/12/04 21:02:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.3 2011/12/06 02:10:01 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -2020,14 +2020,10 @@ void
 ohci_timeout_task(void *addr)
 {
 	usbd_xfer_handle xfer = addr;
-	ohci_softc_t *sc = xfer->pipe->device->bus->hci_private;
 
 	DPRINTF(("ohci_timeout_task: xfer=%p\n", xfer));
 
-	KASSERT(mutex_owned(&sc->sc_lock));
-	//mutex_enter(&sc->sc_lock);
 	ohci_abort_xfer(xfer, USBD_TIMEOUT);
-	//mutex_exit(&sc->sc_lock);
 }
 
 #ifdef OHCI_DEBUG
@@ -3540,6 +3536,8 @@ ohci_device_isoc_start(usbd_xfer_handle xfer)
 
 	/* XXX anything to do? */
 
+	mutex_exit(&sc->sc_lock);
+
 	return (USBD_IN_PROGRESS);
 }
 
@@ -3551,9 +3549,9 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 	ohci_soft_ed_t *sed;
 	ohci_soft_itd_t *sitd;
 
-	DPRINTFN(1,("ohci_device_isoc_abort: xfer=%p\n", xfer));
+	DPRINTFN(1,("ohci_device_isoc_abort: xfer=%p lock=%p\n", xfer, &sc->sc_lock));
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	mutex_enter(&sc->sc_lock);
 
 	/* Transfer is already done. */
 	if (xfer->status != USBD_NOT_STARTED &&
@@ -3635,9 +3633,11 @@ ohci_device_isoc_close(usbd_pipe_handle pipe)
 	ohci_softc_t *sc = pipe->device->bus->hci_private;
 
 	DPRINTF(("ohci_device_isoc_close: pipe=%p\n", pipe));
+	mutex_enter(&sc->sc_lock);
 	ohci_close_pipe(pipe, sc->sc_isoc_head);
 #ifdef DIAGNOSTIC
 	opipe->tail.itd->isdone = 1;
 #endif
+	mutex_exit(&sc->sc_lock);
 	ohci_free_sitd(sc, opipe->tail.itd);
 }
