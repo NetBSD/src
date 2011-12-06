@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.19 2011/12/03 01:56:55 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.20 2011/12/06 17:49:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.19 2011/12/03 01:56:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.20 2011/12/06 17:49:34 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -287,8 +287,14 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 
 	KASSERT(pmap_tlbs[pmap_ntlbs] == NULL);
 
-	ti->ti_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
-	ti->ti_hwlock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
+	if (ti->ti_lock == NULL)
+		ti->ti_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
+	else
+		mutex_init(ti->ti_lock, MUTEX_DEFAULT, IPL_SCHED);
+	if (ti->ti_hwlock == NULL)
+		ti->ti_hwlock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
+	else
+		mutex_init(ti->ti_hwlock, MUTEX_DEFAULT, IPL_SCHED);
 	ti->ti_asid_bitmap[0] = 1;
 	ti->ti_asid_hint = 1;
 	ti->ti_asid_max = pmap_tlb0_info.ti_asid_max;
