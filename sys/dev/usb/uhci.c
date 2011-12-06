@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.6.3 2011/12/06 05:26:26 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.6.4 2011/12/06 05:40:02 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.3 2011/12/06 05:26:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.4 2011/12/06 05:40:02 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -2524,7 +2524,6 @@ uhci_device_request(usbd_xfer_handle xfer)
 	sqh->qh.qh_elink = htole32(setup->physaddr | UHCI_PTR_TD);
 	/* uhci_add_?s_ctrl() will do usb_syncmem(sqh) */
 
-	mutex_enter(&sc->sc_lock);
 	if (dev->speed == USB_SPEED_LOW)
 		uhci_add_ls_ctrl(sc, sqh);
 	else
@@ -2562,7 +2561,6 @@ uhci_device_request(usbd_xfer_handle xfer)
 			    uhci_timeout, ii);
 	}
 	xfer->status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
 
 	return (USBD_NORMAL_COMPLETION);
 }
