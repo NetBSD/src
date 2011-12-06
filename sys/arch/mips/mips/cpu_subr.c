@@ -133,16 +133,23 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 
 	/*
 	 * If we weren't passed a pmap_tlb_info to use, the caller wants us
-	 * to take care of that for him.  Since we have room left over in the
-	 * page we just allocated, just use a piece of that for it.
+	 * to take care of allocating one for him.  Since we have room left
+	 * over in the page we just allocated, just use a piece of that for
+	 * it and its locks.
 	 */
 	if (ti == NULL) {
-		if (cpu_info_offset >= sizeof(*ti)) {
+		const size_t ti_size = roundup2(sizeof(*ti), COHERENCY_UNIT)
+		    + 2*COHERENCY_UNIT;
+		if (cpu_info_offset >= ti_size) {
 			ti = (void *) va;
 		} else {
-			KASSERT(PAGE_SIZE - cpu_info_offset + sizeof(*ci) >= sizeof(*ti));
-			ti = (struct pmap_tlb_info *)(va + PAGE_SIZE) - 1;
+			KASSERT(PAGE_SIZE - cpu_info_offset + sizeof(*ci) >= ti_size);
+			ti = (struct pmap_tlb_info *)(va + PAGE_SIZE - ti_size);
 		}
+		ti->ti_lock = (kmutex_t *)
+		    roundup2((intptr_t)ti + sizeof(*ti), COHERENCY_UNIT);
+		ti->ti_hwlock = (kmutex_t *)
+		    ((intptr_t)ti->ti_lock + COHERENCY_UNIT);
 		pmap_tlb_info_init(ti);
 	}
 
@@ -946,6 +953,7 @@ cpu_hatch(struct cpu_info *ci)
 	 */
 	if (ci->ci_tlb_slot >= 0) {
 		const uint32_t tlb_lo = MIPS3_PG_G|MIPS3_PG_V
+		    | MIPS3_PG_CACHED | MIPS3_PG_D
 		    | mips3_paddr_to_tlbpfn((vaddr_t)ci);
 
 		tlb_enter(ci->ci_tlb_slot, -PAGE_SIZE, tlb_lo);
