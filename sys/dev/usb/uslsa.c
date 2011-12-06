@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.12 2010/11/03 22:34:24 dyoung Exp $ */
+/* $NetBSD: uslsa.c,v 1.13 2011/12/06 19:05:43 jakllsch Exp $ */
 
 /* from ugensa.c */
 
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.12 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.13 2011/12/06 19:05:43 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,6 @@ int uslsadebug = 0;
 #define USLSA_REQ_GET_DPS	0x04
 
 #define USLSA_REQ_SET_BREAK	0x05
-#define USLSA_REQ_GET_BREAK	0x06
 
 #define USLSA_REQ_SET_FLOW	0x07
 #define USLSA_REQ_GET_FLOW	0x08
@@ -136,8 +135,8 @@ int uslsadebug = 0;
 #define USLSA_DPS_STOP_ONE_FIVE		0x0001
 #define USLSA_DPS_STOP_ONE		0x0000
 
-#define USLSA_BREAK_DISABLE	0x0001
-#define USLSA_BREAK_ENABLE	0x0000
+#define USLSA_BREAK_DISABLE	0x0000
+#define USLSA_BREAK_ENABLE	0x0001
 
 #define USLSA_FLOW_SET_RTS	0x0200
 #define USLSA_FLOW_SET_DTR	0x0100
