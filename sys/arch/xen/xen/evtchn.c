@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.59 2011/12/07 15:47:43 cegger Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.60 2011/12/07 16:26:23 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.59 2011/12/07 15:47:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.60 2011/12/07 16:26:23 cegger Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.59 2011/12/07 15:47:43 cegger Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/reboot.h>
 #include <sys/mutex.h>
@@ -555,14 +554,15 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 	struct pintrhand *ih;
 	physdev_op_t physdev_op;
 
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	ih = kmem_zalloc(sizeof(struct pintrhand),
+	    cold ? KM_NOSLEEP : KM_SLEEP);
 	if (ih == NULL) {
-		printf("pirq_establish: can't malloc handler info\n");
+		printf("pirq_establish: can't allocate handler info\n");
 		return NULL;
 	}
 
 	if (event_set_handler(evtch, pirq_interrupt, ih, level, evname) != 0) {
-		kmem_free(ih, sizeof (struct iplsource));
+		kmem_free(ih, sizeof(struct pintrhand));
 		return NULL;
 	}
 
