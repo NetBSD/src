@@ -1,4 +1,4 @@
-/* $NetBSD: xen.h,v 1.1.1.1 2011/12/07 13:15:46 cegger Exp $ */
+/* $NetBSD: xen.h,v 1.1.1.2 2011/12/07 14:41:17 cegger Exp $ */
 /******************************************************************************
  * arch-x86/xen.h
  * 
@@ -45,10 +45,11 @@
 #define DEFINE_XEN_GUEST_HANDLE(name)   __DEFINE_XEN_GUEST_HANDLE(name, name)
 #define __XEN_GUEST_HANDLE(name)        __guest_handle_ ## name
 #define XEN_GUEST_HANDLE(name)          __XEN_GUEST_HANDLE(name)
-#define set_xen_guest_handle(hnd, val)  do { (hnd).p = val; } while (0)
+#define set_xen_guest_handle_raw(hnd, val)  do { (hnd).p = val; } while (0)
 #ifdef __XEN_TOOLS__
 #define get_xen_guest_handle(val, hnd)  do { val = (hnd).p; } while (0)
 #endif
+#define set_xen_guest_handle(hnd, val) set_xen_guest_handle_raw(hnd, val)
 
 #if defined(__i386__)
 #include "xen-x86_32.h"
@@ -74,12 +75,8 @@ typedef unsigned long xen_pfn_t;
 #define FIRST_RESERVED_GDT_BYTE  (FIRST_RESERVED_GDT_PAGE * 4096)
 #define FIRST_RESERVED_GDT_ENTRY (FIRST_RESERVED_GDT_BYTE / 8)
 
-/* Maximum number of virtual CPUs in multi-processor guests. */
-#define MAX_VIRT_CPUS 32
-
-
-/* Machine check support */
-#include "xen-mca.h"
+/* Maximum number of virtual CPUs in legacy multi-processor guests. */
+#define XEN_LEGACY_MAX_VCPUS 32
 
 #ifndef __ASSEMBLY__
 
