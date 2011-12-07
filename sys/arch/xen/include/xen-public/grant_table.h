@@ -1,4 +1,4 @@
-/* $NetBSD: grant_table.h,v 1.5 2011/12/07 13:24:04 cegger Exp $ */
+/* $NetBSD: grant_table.h,v 1.6 2011/12/07 15:04:18 cegger Exp $ */
 /******************************************************************************
  * grant_table.h
  * 
@@ -29,6 +29,7 @@
 #ifndef __XEN_PUBLIC_GRANT_TABLE_H__
 #define __XEN_PUBLIC_GRANT_TABLE_H__
 
+#include "xen.h"
 
 /***********************************
  * GRANT TABLE REPRESENTATION
@@ -85,12 +86,26 @@
  */
 
 /*
+ * Reference to a grant entry in a specified domain's grant table.
+ */
+typedef uint32_t grant_ref_t;
+
+/*
  * A grant table comprises a packed array of grant entries in one or more
  * page frames shared between Xen and a guest.
  * [XEN]: This field is written by Xen and read by the sharing guest.
  * [GST]: This field is written by the guest and read by Xen.
  */
-struct grant_entry {
+
+/*
+ * Version 1 of the grant table entry structure is maintained purely
+ * for backwards compatibility.  New guests should use version 2.
+ */
+#if __XEN_INTERFACE_VERSION__ < 0x0003020a
+#define grant_entry_v1 grant_entry
+#define grant_entry_v1_t grant_entry_t
+#endif
+struct grant_entry_v1 {
     /* GTF_xxx: various type and flag information.  [XEN,GST] */
     uint16_t flags;
     /* The domain being granted foreign privileges. [GST] */
@@ -101,7 +116,7 @@ struct grant_entry {
      */
     uint32_t frame;
 };
-typedef struct grant_entry grant_entry_t;
+typedef struct grant_entry_v1 grant_entry_v1_t;
 
 /*
  * Type of grant entry.
@@ -109,10 +124,13 @@ typedef struct grant_entry grant_entry_t;
  *  GTF_permit_access: Allow @domid to map/access @frame.
  *  GTF_accept_transfer: Allow @domid to transfer ownership of one page frame
  *                       to this guest. Xen writes the page number to @frame.
+ *  GTF_transitive: Allow @domid to transitively access a subrange of
+ *                  @trans_grant in @trans_domid.  No mappings are allowed.
  */
 #define GTF_invalid         (0U<<0)
 #define GTF_permit_access   (1U<<0)
 #define GTF_accept_transfer (2U<<0)
+#define GTF_transitive      (3U<<0)
 #define GTF_type_mask       (3U<<0)
 
 /*
@@ -121,6 +139,9 @@ typedef struct grant_entry grant_entry_t;
  *  GTF_reading: Grant entry is currently mapped for reading by @domid. [XEN]
  *  GTF_writing: Grant entry is currently mapped for writing by @domid. [XEN]
  *  GTF_PAT, GTF_PWT, GTF_PCD: (x86) cache attribute flags for the grant [GST]
+ *  GTF_sub_page: Grant access to only a subrange of the page.  @domid
+ *                will only be allowed to copy from the grant, and not
+ *                map it. [GST]
  */
 #define _GTF_readonly       (2)
 #define GTF_readonly        (1U<<_GTF_readonly)
@@ -134,6 +155,8 @@ typedef struct grant_entry grant_entry_t;
 #define GTF_PCD             (1U<<_GTF_PCD)
 #define _GTF_PAT            (7)
 #define GTF_PAT             (1U<<_GTF_PAT)
+#define _GTF_sub_page       (8)
+#define GTF_sub_page        (1U<<_GTF_sub_page)
 
 /*
  * Subflags for GTF_accept_transfer:
@@ -150,15 +173,87 @@ typedef struct grant_entry grant_entry_t;
 #define _GTF_transfer_completed (3)
 #define GTF_transfer_completed  (1U<<_GTF_transfer_completed)
 
+/*
+ * Version 2 grant table entries.  These fulfil the same role as
+ * version 1 entries, but can represent more complicated operations.
+ * Any given domain will have either a version 1 or a version 2 table,
+ * and every entry in the table will be the same version.
+ *
+ * The interface by which domains use grant references does not depend
+ * on the grant table version in use by the other domain.
+ */
+#if __XEN_INTERFACE_VERSION__ >= 0x0003020a
+/*
+ * Version 1 and version 2 grant entries share a common prefix.  The
+ * fields of the prefix are documented as part of struct
+ * grant_entry_v1.
+ */
+struct grant_entry_header {
+    uint16_t flags;
+    domid_t  domid;
+};
+typedef struct grant_entry_header grant_entry_header_t;
+
+/*
+ * Version 2 of the grant entry structure.
+ */
+union grant_entry_v2 {
+    grant_entry_header_t hdr;
+
+    /*
+     * This member is used for V1-style full page grants, where either:
+     *
+     * -- hdr.type is GTF_accept_transfer, or
+     * -- hdr.type is GTF_permit_access and GTF_sub_page is not set.
+     *
+     * In that case, the frame field has the same semantics as the
+     * field of the same name in the V1 entry structure.
+     */
+    struct {
+        grant_entry_header_t hdr;
+        uint32_t pad0;
+        uint64_t frame;
+    } full_page;
+
+    /*
+     * If the grant type is GTF_grant_access and GTF_sub_page is set,
+     * @domid is allowed to access bytes [@page_off,@page_off+@length)
+     * in frame @frame.
+     */
+    struct {
+        grant_entry_header_t hdr;
+        uint16_t page_off;
+        uint16_t length;
+        uint64_t frame;
+    } sub_page;
+
+    /*
+     * If the grant is GTF_transitive, @domid is allowed to use the
+     * grant @gref in domain @trans_domid, as if it was the local
+     * domain.  Obviously, the transitive access must be compatible
+     * with the original grant.
+     *
+     * The current version of Xen does not allow transitive grants
+     * to be mapped.
+     */
+    struct {
+        grant_entry_header_t hdr;
+        domid_t trans_domid;
+        uint16_t pad0;
+        grant_ref_t gref;
+    } transitive;
+
+    uint32_t __spacer[4]; /* Pad to a power of two */
+};
+typedef union grant_entry_v2 grant_entry_v2_t;
+
+typedef uint16_t grant_status_t;
+
+#endif /* __XEN_INTERFACE_VERSION__ */
 
 /***********************************
  * GRANT TABLE QUERIES AND USES
  */
-
-/*
- * Reference to a grant entry in a specified domain's grant table.
- */
-typedef uint32_t grant_ref_t;
 
 /*
  * Handle to track a mapping created via a grant reference.
@@ -298,6 +393,8 @@ DEFINE_XEN_GUEST_HANDLE(gnttab_transfer_t);
 #define GNTCOPY_source_gref       (1<<_GNTCOPY_source_gref)
 #define _GNTCOPY_dest_gref        (1)
 #define GNTCOPY_dest_gref         (1<<_GNTCOPY_dest_gref)
+#define _GNTCOPY_can_fail         (2)
+#define GNTCOPY_can_fail          (1<<_GNTCOPY_can_fail) 
 
 #define GNTTABOP_copy                 5
 typedef struct gnttab_copy {
@@ -359,9 +456,66 @@ struct gnttab_unmap_and_replace {
 typedef struct gnttab_unmap_and_replace gnttab_unmap_and_replace_t;
 DEFINE_XEN_GUEST_HANDLE(gnttab_unmap_and_replace_t);
 
+#if __XEN_INTERFACE_VERSION__ >= 0x0003020a
+/*
+ * GNTTABOP_set_version: Request a particular version of the grant
+ * table shared table structure.  This operation can only be performed
+ * once in any given domain.  It must be performed before any grants
+ * are activated; otherwise, the domain will be stuck with version 1.
+ * The only defined versions are 1 and 2.
+ */
+#define GNTTABOP_set_version          8
+struct gnttab_set_version {
+    /* IN/OUT parameters */
+    uint32_t version;
+};
+typedef struct gnttab_set_version gnttab_set_version_t;
+DEFINE_XEN_GUEST_HANDLE(gnttab_set_version_t);
+
 
 /*
- * Bitfield values for update_pin_status.flags.
+ * GNTTABOP_get_status_frames: Get the list of frames used to store grant
+ * status for <dom>. In grant format version 2, the status is separated
+ * from the other shared grant fields to allow more efficient synchronization
+ * using barriers instead of atomic cmpexch operations.
+ * <nr_frames> specify the size of vector <frame_list>.
+ * The frame addresses are returned in the <frame_list>.
+ * Only <nr_frames> addresses are returned, even if the table is larger.
+ * NOTES:
+ *  1. <dom> may be specified as DOMID_SELF.
+ *  2. Only a sufficiently-privileged domain may specify <dom> != DOMID_SELF.
+ */
+#define GNTTABOP_get_status_frames     9
+struct gnttab_get_status_frames {
+    /* IN parameters. */
+    uint32_t nr_frames;
+    domid_t  dom;
+    /* OUT parameters. */
+    int16_t  status;              /* GNTST_* */
+    XEN_GUEST_HANDLE(uint64_t) frame_list;
+};
+typedef struct gnttab_get_status_frames gnttab_get_status_frames_t;
+DEFINE_XEN_GUEST_HANDLE(gnttab_get_status_frames_t);
+
+/*
+ * GNTTABOP_get_version: Get the grant table version which is in
+ * effect for domain <dom>.
+ */
+#define GNTTABOP_get_version          10
+struct gnttab_get_version {
+    /* IN parameters */
+    domid_t dom;
+    uint16_t pad;
+    /* OUT parameters */
+    uint32_t version;
+};
+typedef struct gnttab_get_version gnttab_get_version_t;
+DEFINE_XEN_GUEST_HANDLE(gnttab_get_version_t);
+
+#endif /* __XEN_INTERFACE_VERSION__ */
+
+/*
+ * Bitfield values for gnttab_map_grant_ref.flags.
  */
  /* Map the grant entry for access by I/O devices. */
 #define _GNTMAP_device_map      (0)
@@ -388,6 +542,16 @@ DEFINE_XEN_GUEST_HANDLE(gnttab_unmap_and_replace_t);
 #define _GNTMAP_contains_pte    (4)
 #define GNTMAP_contains_pte     (1<<_GNTMAP_contains_pte)
 
+#define _GNTMAP_can_fail        (5)
+#define GNTMAP_can_fail         (1<<_GNTMAP_can_fail)
+
+/*
+ * Bits to be placed in guest kernel available PTE bits (architecture
+ * dependent; only supported when XENFEAT_gnttab_map_avail_bits is set).
+ */
+#define _GNTMAP_guest_avail0    (16)
+#define GNTMAP_guest_avail_mask ((uint32_t)~0 << _GNTMAP_guest_avail0)
+
 /*
  * Values for error status returns. All errors are -ve.
  */
@@ -403,6 +567,7 @@ DEFINE_XEN_GUEST_HANDLE(gnttab_unmap_and_replace_t);
 #define GNTST_bad_page         (-9) /* Specified page was invalid for op.    */
 #define GNTST_bad_copy_arg    (-10) /* copy arguments cross page boundary.   */
 #define GNTST_address_too_big (-11) /* transfer page address too large.      */
+#define GNTST_eagain          (-12) /* Could not map at the moment. Retry.   */
 
 #define GNTTABOP_error_msgs {                   \
     "okay",                                     \
@@ -416,7 +581,8 @@ DEFINE_XEN_GUEST_HANDLE(gnttab_unmap_and_replace_t);
     "permission denied",                        \
     "bad page",                                 \
     "copy arguments cross page boundary",       \
-    "page address size too large"               \
+    "page address size too large",              \
+    "could not map at the moment, retry"        \
 }
 
 #endif /* __XEN_PUBLIC_GRANT_TABLE_H__ */
