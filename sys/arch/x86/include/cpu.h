@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.43 2011/11/19 17:13:39 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.44 2011/12/07 15:47:42 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,8 +68,8 @@
 #include <sys/device_if.h> /* for device_t */
 
 #ifdef XEN
-#include <xen/xen3-public/xen.h>
-#include <xen/xen3-public/event_channel.h>
+#include <xen/xen-public/xen.h>
+#include <xen/xen-public/event_channel.h>
 #endif /* XEN */
 
 struct intrsource;

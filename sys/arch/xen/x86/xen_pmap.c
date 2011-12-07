@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.10 2011/11/23 00:56:56 jym Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.11 2011/12/07 15:47:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.10 2011/11/23 00:56:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.11 2011/12/07 15:47:43 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -137,7 +137,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.10 2011/11/23 00:56:56 jym Exp $");
 #include <x86/i82489reg.h>
 #include <x86/i82489var.h>
 
-#include <xen/xen3-public/xen.h>
+#include <xen/xen-public/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/xenpmap.h>
 

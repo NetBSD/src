@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.6 2011/11/07 15:51:31 cherry Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.7 2011/12/07 15:47:43 cegger Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.6 2011/11/07 15:51:31 cherry Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.7 2011/12/07 15:47:43 cegger Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.6 2011/11/07 15:51:31 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.7 2011/12/07 15:47:43 cegger Exp $");
 
 #include <sys/types.h>
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.6 2011/11/07 15:51:31 cherry Exp $");
 #include <xen/intr.h>
 #include <xen/intrdefs.h>
 #include <xen/hypervisor.h>
-#include <xen/xen3-public/vcpu.h>
+#include <xen/xen-public/vcpu.h>
 
 #ifdef __x86_64__
 extern void ddb_ipi(struct trapframe);
@@ -116,7 +116,7 @@ xen_ipi_init(void)
 	ci = curcpu();
 
 	vcpu = ci->ci_cpuid;
-	KASSERT(vcpu < MAX_VIRT_CPUS);
+	KASSERT(vcpu < XEN_LEGACY_MAX_VCPUS);
 
 	evtchn = bind_vcpu_to_evtch(vcpu);
 	ci->ci_ipi_evtchn = evtchn;

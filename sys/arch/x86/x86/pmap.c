@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.143 2011/12/04 16:24:13 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.144 2011/12/07 15:47:42 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2011/12/04 16:24:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2011/12/07 15:47:42 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -209,7 +209,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2011/12/04 16:24:13 chs Exp $");
 #include <x86/i82489var.h>
 
 #ifdef XEN
-#include <xen/xen3-public/xen.h>
+#include <xen/xen-public/xen.h>
 #include <xen/hypervisor.h>
 #endif
 

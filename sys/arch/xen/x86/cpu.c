@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.70 2011/11/06 15:18:19 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.71 2011/12/07 15:47:43 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70 2011/11/06 15:18:19 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71 2011/12/07 15:47:43 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -109,7 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70 2011/11/06 15:18:19 cherry Exp $");
 #endif
 
 #include <xen/xen.h>
-#include <xen/xen3-public/vcpu.h>
+#include <xen/xen-public/vcpu.h>
 #include <xen/vcpuvar.h>
 
 #if NLAPIC > 0
