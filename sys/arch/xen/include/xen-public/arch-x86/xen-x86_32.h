@@ -1,4 +1,4 @@
-/* $NetBSD: xen-x86_32.h,v 1.1.1.2 2011/12/07 14:41:17 cegger Exp $ */
+/* $NetBSD: xen-x86_32.h,v 1.2 2011/12/07 15:04:18 cegger Exp $ */
 /******************************************************************************
  * xen-x86_32.h
  * 
@@ -86,9 +86,15 @@
 #define MACH2PHYS_VIRT_END_NONPAE      \
     mk_unsigned_long(__MACH2PHYS_VIRT_END_NONPAE)
 
+#ifdef PAE
 #define __HYPERVISOR_VIRT_START __HYPERVISOR_VIRT_START_PAE
 #define __MACH2PHYS_VIRT_START  __MACH2PHYS_VIRT_START_PAE
 #define __MACH2PHYS_VIRT_END    __MACH2PHYS_VIRT_END_PAE
+#else
+#define __HYPERVISOR_VIRT_START __HYPERVISOR_VIRT_START_NONPAE
+#define __MACH2PHYS_VIRT_START  __MACH2PHYS_VIRT_START_NONPAE
+#define __MACH2PHYS_VIRT_END    __MACH2PHYS_VIRT_END_NONPAE
+#endif
 
 #ifndef HYPERVISOR_VIRT_START
 #define HYPERVISOR_VIRT_START mk_unsigned_long(__HYPERVISOR_VIRT_START)
