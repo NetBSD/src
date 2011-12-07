@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.17 2011/11/29 10:05:28 he Exp $
+# $NetBSD: md.evbppc,v 1.18 2011/12/07 22:14:43 he Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -136,6 +136,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/sdt/sdt.kmod			base-kernel-modules	kmod,compatmodules,dtrace
 ./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_bsd44			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_bsd44/secmodel_bsd44.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_extensions		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_extensions/secmodel_extensions.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_overlay			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/securelevel			base-kernel-modules	kmod,compatmodules
@@ -307,6 +309,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/sdt/sdt.kmod			base-kernel-modules	kmod,compatmodules,dtrace
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_bsd44		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_bsd44/secmodel_bsd44.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_extensions		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_extensions/secmodel_extensions.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_overlay		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/securelevel			base-kernel-modules	kmod,compatmodules
