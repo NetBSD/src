@@ -1,4 +1,4 @@
-/* $NetBSD: platform.h,v 1.1.1.1 2011/12/07 13:15:45 cegger Exp $ */
+/* $NetBSD: platform.h,v 1.1.1.2 2011/12/07 14:41:15 cegger Exp $ */
 /******************************************************************************
  * platform.h
  * 
@@ -98,7 +98,7 @@ DEFINE_XEN_GUEST_HANDLE(xenpf_read_memtype_t);
 #define XENPF_microcode_update    35
 struct xenpf_microcode_update {
     /* IN variables. */
-    XEN_GUEST_HANDLE(void) data;      /* Pointer to microcode data */
+    XEN_GUEST_HANDLE(const_void) data;/* Pointer to microcode data */
     uint32_t length;                  /* Length of microcode data. */
 };
 typedef struct xenpf_microcode_update xenpf_microcode_update_t;
@@ -290,7 +290,7 @@ struct xen_psd_package {
 
 struct xen_processor_performance {
     uint32_t flags;     /* flag for Px sub info type */
-    uint32_t ppc;       /* Platform limitation on freq usage */
+    uint32_t platform_limit;  /* Platform limitation on freq usage */
     struct xen_pct_register control_register;
     struct xen_pct_register status_register;
     uint32_t state_count;     /* total available performance states */
@@ -308,10 +308,53 @@ struct xenpf_set_processor_pminfo {
     union {
         struct xen_processor_power          power;/* Cx: _CST/_CSD */
         struct xen_processor_performance    perf; /* Px: _PPC/_PCT/_PSS/_PSD */
-    };
+    } u;
 };
 typedef struct xenpf_set_processor_pminfo xenpf_set_processor_pminfo_t;
 DEFINE_XEN_GUEST_HANDLE(xenpf_set_processor_pminfo_t);
+
+#define XENPF_get_cpuinfo 55
+struct xenpf_pcpuinfo {
+    /* IN */
+    uint32_t xen_cpuid;
+    /* OUT */
+    /* The maxium cpu_id that is present */
+    uint32_t max_present;
+#define XEN_PCPU_FLAGS_ONLINE   1
+    /* Correponding xen_cpuid is not present*/
+#define XEN_PCPU_FLAGS_INVALID  2
+    uint32_t flags;
+    uint32_t apic_id;
+    uint32_t acpi_id;
+};
+typedef struct xenpf_pcpuinfo xenpf_pcpuinfo_t;
+DEFINE_XEN_GUEST_HANDLE(xenpf_pcpuinfo_t);
+
+#define XENPF_cpu_online    56
+#define XENPF_cpu_offline   57
+struct xenpf_cpu_ol
+{
+    uint32_t cpuid;
+};
+typedef struct xenpf_cpu_ol xenpf_cpu_ol_t;
+DEFINE_XEN_GUEST_HANDLE(xenpf_cpu_ol_t);
+
+#define XENPF_cpu_hotadd    58
+struct xenpf_cpu_hotadd
+{
+	uint32_t apic_id;
+	uint32_t acpi_id;
+	uint32_t pxm;
+};
+
+#define XENPF_mem_hotadd    59
+struct xenpf_mem_hotadd
+{
+    uint64_t spfn;
+    uint64_t epfn;
+    uint32_t pxm;
+    uint32_t flags;
+};
 
 struct xen_platform_op {
     uint32_t cmd;
@@ -328,6 +371,10 @@ struct xen_platform_op {
         struct xenpf_change_freq       change_freq;
         struct xenpf_getidletime       getidletime;
         struct xenpf_set_processor_pminfo set_pminfo;
+        struct xenpf_pcpuinfo          pcpu_info;
+        struct xenpf_cpu_ol            cpu_ol;
+        struct xenpf_cpu_hotadd        cpu_add;
+        struct xenpf_mem_hotadd        mem_add;
         uint8_t                        pad[128];
     } u;
 };
