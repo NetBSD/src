@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.49 2011/11/19 22:51:21 tls Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.50 2011/12/07 15:47:43 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.49 2011/11/19 22:51:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.50 2011/12/07 15:47:43 cegger Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -80,8 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.49 2011/11/19 22:51:21 tls Exp $");
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/granttables.h>
-#include <xen/xen3-public/io/blkif.h>
-#include <xen/xen3-public/io/protocols.h>
+#include <xen/xen-public/io/blkif.h>
+#include <xen/xen-public/io/protocols.h>
 
 #include <xen/xenbus.h>
 #include "locators.h"
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.49 2011/11/19 22:51:21 tls Exp $");
 
 #define GRANT_INVALID_REF -1
 
-#define XBD_RING_SIZE __RING_SIZE((blkif_sring_t *)0, PAGE_SIZE)
+#define XBD_RING_SIZE __CONST_RING_SIZE(blkif, PAGE_SIZE)
 
 #define XEN_BSHIFT      9               /* log2(XEN_BSIZE) */
 #define XEN_BSIZE       (1 << XEN_BSHIFT) 
