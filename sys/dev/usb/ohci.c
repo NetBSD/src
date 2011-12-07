@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.4 2011/12/06 05:05:30 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.5 2011/12/07 05:41:53 macallan Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.4 2011/12/06 05:05:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.5 2011/12/07 05:41:53 macallan Exp $");
 
 #include "opt_usb.h"
 
@@ -1497,7 +1497,9 @@ void
 ohci_device_ctrl_done(usbd_xfer_handle xfer)
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->pipe;
+#ifdef DIAGNOSTIC
 	ohci_softc_t *sc = xfer->pipe->device->bus->hci_private;
+#endif
 	int len = UGETW(xfer->request.wLength);
 	int isread = (xfer->request.bmRequestType & UT_READ);
 
@@ -1573,7 +1575,9 @@ ohci_device_intr_done(usbd_xfer_handle xfer)
 void
 ohci_device_bulk_done(usbd_xfer_handle xfer)
 {
+#ifdef DIAGNOSTIC
 	ohci_softc_t *sc = xfer->pipe->device->bus->hci_private;
+#endif
 	int isread =
 	    (UE_GET_DIR(xfer->pipe->endpoint->edesc->bEndpointAddress) == UE_DIR_IN);
 
