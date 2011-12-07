@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.58 2011/12/07 13:49:04 cegger Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.59 2011/12/07 15:47:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.58 2011/12/07 13:49:04 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.59 2011/12/07 15:47:43 cegger Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -96,10 +96,10 @@ static kmutex_t evtlock[NR_EVENT_CHANNELS];
 static uint8_t evtch_bindcount[NR_EVENT_CHANNELS];
 
 /* event-channel <-> VCPU mapping for IPIs. XXX: redo for SMP. */
-static evtchn_port_t vcpu_ipi_to_evtch[MAX_VIRT_CPUS];
+static evtchn_port_t vcpu_ipi_to_evtch[XEN_LEGACY_MAX_VCPUS];
 
 /* event-channel <-> VCPU mapping for VIRQ_TIMER.  XXX: redo for SMP. */
-static int virq_timer_to_evtch[MAX_VIRT_CPUS];
+static int virq_timer_to_evtch[XEN_LEGACY_MAX_VCPUS];
 
 /* event-channel <-> VIRQ mapping. */
 static int virq_to_evtch[NR_VIRQS];
@@ -149,11 +149,11 @@ events_default_setup(void)
 	int i;
 
 	/* No VCPU -> event mappings. */
-	for (i = 0; i < MAX_VIRT_CPUS; i++)
+	for (i = 0; i < XEN_LEGACY_MAX_VCPUS; i++)
 		vcpu_ipi_to_evtch[i] = -1;
 
 	/* No VIRQ_TIMER -> event mappings. */
-	for (i = 0; i < MAX_VIRT_CPUS; i++)
+	for (i = 0; i < XEN_LEGACY_MAX_VCPUS; i++)
 		virq_timer_to_evtch[i] = -1;
 
 	/* No VIRQ -> event mappings. */
