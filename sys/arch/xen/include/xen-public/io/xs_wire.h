@@ -1,4 +1,4 @@
-/* $NetBSD: xs_wire.h,v 1.1.1.1 2011/12/07 13:15:46 cegger Exp $ */
+/* $NetBSD: xs_wire.h,v 1.1.1.2 2011/12/07 14:41:17 cegger Exp $ */
 /*
  * Details of the "wire" protocol between Xen Store Daemon and client
  * library or guest kernel.
@@ -48,7 +48,8 @@ enum xsd_sockmsg_type
     XS_ERROR,
     XS_IS_DOMAIN_INTRODUCED,
     XS_RESUME,
-    XS_SET_TARGET
+    XS_SET_TARGET,
+    XS_RESTRICT
 };
 
 #define XS_WRITE_NONE "NONE"
@@ -61,6 +62,7 @@ struct xsd_errors
     int errnum;
     const char *errstring;
 };
+#ifdef EINVAL
 #define XSD_ERROR(x) { x, #x }
 /* LINTED: static unused */
 static struct xsd_errors xsd_errors[]
@@ -83,6 +85,7 @@ __attribute__((unused))
     XSD_ERROR(EAGAIN),
     XSD_ERROR(EISCONN)
 };
+#endif
 
 struct xsd_sockmsg
 {
@@ -107,8 +110,8 @@ typedef uint32_t XENSTORE_RING_IDX;
 struct xenstore_domain_interface {
     char req[XENSTORE_RING_SIZE]; /* Requests to xenstore daemon. */
     char rsp[XENSTORE_RING_SIZE]; /* Replies and async watch events. */
-    volatile XENSTORE_RING_IDX req_cons, req_prod;
-    volatile XENSTORE_RING_IDX rsp_cons, rsp_prod;
+    XENSTORE_RING_IDX req_cons, req_prod;
+    XENSTORE_RING_IDX rsp_cons, rsp_prod;
 };
 
 /* Violating this is very bad.  See docs/misc/xenstore.txt. */

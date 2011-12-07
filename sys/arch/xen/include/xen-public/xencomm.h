@@ -1,4 +1,4 @@
-/* $NetBSD: xencomm.h,v 1.1.1.1 2011/12/07 13:15:46 cegger Exp $ */
+/* $NetBSD: xencomm.h,v 1.1.1.2 2011/12/07 14:41:15 cegger Exp $ */
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to

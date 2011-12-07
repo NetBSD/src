@@ -38,7 +38,7 @@ struct hvm_save_header {
     uint32_t version;           /* File format version */
     uint64_t changeset;         /* Version of Xen that saved this file */
     uint32_t cpuid;             /* CPUID[0x01][%eax] on the saving machine */
-    uint32_t pad0;
+    uint32_t gtsc_khz;        /* Guest's TSC frequency in kHz */
 };
 
 DECLARE_HVM_SAVE_TYPE(HEADER, 1, struct hvm_save_header);
@@ -46,6 +46,8 @@ DECLARE_HVM_SAVE_TYPE(HEADER, 1, struct hvm_save_header);
 
 /*
  * Processor
+ *
+ * Compat: Pre-3.4 didn't have msr_tsc_aux
  */
 
 struct hvm_hw_cpu {
@@ -123,9 +125,7 @@ struct hvm_hw_cpu {
     uint32_t tr_arbytes;
     uint32_t ldtr_arbytes;
 
-    uint32_t sysenter_cs;
-    uint32_t padding0;
-
+    uint64_t sysenter_cs;
     uint64_t sysenter_esp;
     uint64_t sysenter_eip;
 
@@ -139,6 +139,7 @@ struct hvm_hw_cpu {
     uint64_t msr_cstar;
     uint64_t msr_syscall_mask;
     uint64_t msr_efer;
+    uint64_t msr_tsc_aux;
 
     /* guest's idea of what rdtsc() would return */
     uint64_t tsc;
@@ -158,8 +159,131 @@ struct hvm_hw_cpu {
     uint32_t error_code;
 };
 
-DECLARE_HVM_SAVE_TYPE(CPU, 2, struct hvm_hw_cpu);
+struct hvm_hw_cpu_compat {
+    uint8_t  fpu_regs[512];
 
+    uint64_t rax;
+    uint64_t rbx;
+    uint64_t rcx;
+    uint64_t rdx;
+    uint64_t rbp;
+    uint64_t rsi;
+    uint64_t rdi;
+    uint64_t rsp;
+    uint64_t r8;
+    uint64_t r9;
+    uint64_t r10;
+    uint64_t r11;
+    uint64_t r12;
+    uint64_t r13;
+    uint64_t r14;
+    uint64_t r15;
+
+    uint64_t rip;
+    uint64_t rflags;
+
+    uint64_t cr0;
+    uint64_t cr2;
+    uint64_t cr3;
+    uint64_t cr4;
+
+    uint64_t dr0;
+    uint64_t dr1;
+    uint64_t dr2;
+    uint64_t dr3;
+    uint64_t dr6;
+    uint64_t dr7;    
+
+    uint32_t cs_sel;
+    uint32_t ds_sel;
+    uint32_t es_sel;
+    uint32_t fs_sel;
+    uint32_t gs_sel;
+    uint32_t ss_sel;
+    uint32_t tr_sel;
+    uint32_t ldtr_sel;
+
+    uint32_t cs_limit;
+    uint32_t ds_limit;
+    uint32_t es_limit;
+    uint32_t fs_limit;
+    uint32_t gs_limit;
+    uint32_t ss_limit;
+    uint32_t tr_limit;
+    uint32_t ldtr_limit;
+    uint32_t idtr_limit;
+    uint32_t gdtr_limit;
+
+    uint64_t cs_base;
+    uint64_t ds_base;
+    uint64_t es_base;
+    uint64_t fs_base;
+    uint64_t gs_base;
+    uint64_t ss_base;
+    uint64_t tr_base;
+    uint64_t ldtr_base;
+    uint64_t idtr_base;
+    uint64_t gdtr_base;
+
+    uint32_t cs_arbytes;
+    uint32_t ds_arbytes;
+    uint32_t es_arbytes;
+    uint32_t fs_arbytes;
+    uint32_t gs_arbytes;
+    uint32_t ss_arbytes;
+    uint32_t tr_arbytes;
+    uint32_t ldtr_arbytes;
+
+    uint64_t sysenter_cs;
+    uint64_t sysenter_esp;
+    uint64_t sysenter_eip;
+
+    /* msr for em64t */
+    uint64_t shadow_gs;
+
+    /* msr content saved/restored. */
+    uint64_t msr_flags;
+    uint64_t msr_lstar;
+    uint64_t msr_star;
+    uint64_t msr_cstar;
+    uint64_t msr_syscall_mask;
+    uint64_t msr_efer;
+    /*uint64_t msr_tsc_aux; COMPAT */
+
+    /* guest's idea of what rdtsc() would return */
+    uint64_t tsc;
+
+    /* pending event, if any */
+    union {
+        uint32_t pending_event;
+        struct {
+            uint8_t  pending_vector:8;
+            uint8_t  pending_type:3;
+            uint8_t  pending_error_valid:1;
+            uint32_t pending_reserved:19;
+            uint8_t  pending_valid:1;
+        };
+    };
+    /* error code for pending event */
+    uint32_t error_code;
+};
+
+static inline int _hvm_hw_fix_cpu(void *h) {
+    struct hvm_hw_cpu *new=h;
+    struct hvm_hw_cpu_compat *old=h;
+
+    /* If we copy from the end backwards, we should
+     * be able to do the modification in-place */
+    new->error_code=old->error_code;
+    new->pending_event=old->pending_event;
+    new->tsc=old->tsc;
+    new->msr_tsc_aux=0;
+
+    return 0;
+}
+
+DECLARE_HVM_SAVE_TYPE_COMPAT(CPU, 2, struct hvm_hw_cpu, \
+                             struct hvm_hw_cpu_compat, _hvm_hw_fix_cpu);
 
 /*
  * PIC
@@ -266,6 +390,7 @@ struct hvm_hw_lapic {
     uint64_t             apic_base_msr;
     uint32_t             disabled; /* VLAPIC_xx_DISABLED */
     uint32_t             timer_divisor;
+    uint64_t             tdt_msr;
 };
 
 DECLARE_HVM_SAVE_TYPE(LAPIC, 5, struct hvm_hw_lapic);
@@ -287,7 +412,7 @@ struct hvm_hw_pci_irqs {
      * Indexed by: device*4 + INTx#.
      */
     union {
-        DECLARE_BITMAP(i, 32*4);
+        unsigned long i[16 / sizeof (unsigned long)]; /* DECLARE_BITMAP(i, 32*4); */
         uint64_t pad[2];
     };
 };
@@ -300,7 +425,7 @@ struct hvm_hw_isa_irqs {
      * Indexed by ISA IRQ (assumes no ISA-device IRQ sharing).
      */
     union {
-        DECLARE_BITMAP(i, 16);
+        unsigned long i[1];  /* DECLARE_BITMAP(i, 16); */
         uint64_t pad[1];
     };
 };
@@ -421,9 +546,43 @@ struct hvm_hw_mtrr {
 
 DECLARE_HVM_SAVE_TYPE(MTRR, 14, struct hvm_hw_mtrr);
 
+/*
+ * Viridian hypervisor context.
+ */
+
+struct hvm_viridian_context {
+    uint64_t hypercall_gpa;
+    uint64_t guest_os_id;
+};
+
+DECLARE_HVM_SAVE_TYPE(VIRIDIAN, 15, struct hvm_viridian_context);
+
+
+/*
+ * The save area of XSAVE/XRSTOR.
+ */
+
+struct hvm_hw_cpu_xsave {
+    uint64_t xfeature_mask;
+    uint64_t xcr0;                 /* Updated by XSETBV */
+    uint64_t xcr0_accum;           /* Updated by XSETBV */
+    struct {
+        struct { char x[512]; } fpu_sse;
+
+        struct {
+            uint64_t xstate_bv;         /* Updated by XRSTOR */
+            uint64_t reserved[7];
+        } xsave_hdr;                    /* The 64-byte header */
+
+        struct { char x[0]; } ymm;    /* YMM */
+    } save_area;
+} __attribute__((packed));
+
+#define CPU_XSAVE_CODE  16
+
 /* 
  * Largest type-code in use
  */
-#define HVM_SAVE_CODE_MAX 14
+#define HVM_SAVE_CODE_MAX 16
 
 #endif /* __XEN_PUBLIC_HVM_SAVE_X86_H__ */

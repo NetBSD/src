@@ -1,4 +1,4 @@
-/* $NetBSD: hvm_op.h,v 1.1.1.1 2011/12/07 13:15:46 cegger Exp $ */
+/* $NetBSD: hvm_op.h,v 1.1.1.2 2011/12/07 14:41:17 cegger Exp $ */
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -21,6 +21,9 @@
 
 #ifndef __XEN_PUBLIC_HVM_HVM_OP_H__
 #define __XEN_PUBLIC_HVM_HVM_OP_H__
+
+#include "../xen.h"
+#include "../trace.h"
 
 /* Get/set subcommands: extra argument == pointer to xen_hvm_param struct. */
 #define HVMOP_set_param           0
@@ -74,6 +77,12 @@ DEFINE_XEN_GUEST_HANDLE(xen_hvm_set_pci_link_route_t);
 /* Flushes all VCPU TLBs: @arg must be NULL. */
 #define HVMOP_flush_tlbs          5
 
+typedef enum {
+    HVMMEM_ram_rw,             /* Normal read/write guest RAM */
+    HVMMEM_ram_ro,             /* Read-only; writes are discarded */
+    HVMMEM_mmio_dm,            /* Reads and write go to the device model */
+} hvmmem_type_t;
+
 /* Following tools-only interfaces may change in future. */
 #if defined(__XEN__) || defined(__XEN_TOOLS__)
 
@@ -107,26 +116,129 @@ typedef struct xen_hvm_modified_memory xen_hvm_modified_memory_t;
 DEFINE_XEN_GUEST_HANDLE(xen_hvm_modified_memory_t);
 
 #define HVMOP_set_mem_type    8
-typedef enum {
-    HVMMEM_ram_rw,             /* Normal read/write guest RAM */
-    HVMMEM_ram_ro,             /* Read-only; writes are discarded */
-    HVMMEM_mmio_dm,            /* Reads and write go to the device model */
-} hvmmem_type_t;
 /* Notify that a region of memory is to be treated in a specific way. */
 struct xen_hvm_set_mem_type {
     /* Domain to be updated. */
     domid_t domid;
     /* Memory type */
-    hvmmem_type_t hvmmem_type;
+    uint16_t hvmmem_type;
+    /* Number of pages. */
+    uint32_t nr;
     /* First pfn. */
     uint64_aligned_t first_pfn;
-    /* Number of pages. */
-    uint64_aligned_t nr;
 };
 typedef struct xen_hvm_set_mem_type xen_hvm_set_mem_type_t;
 DEFINE_XEN_GUEST_HANDLE(xen_hvm_set_mem_type_t);
 
+#endif /* defined(__XEN__) || defined(__XEN_TOOLS__) */
+
+/* Hint from PV drivers for pagetable destruction. */
+#define HVMOP_pagetable_dying        9
+struct xen_hvm_pagetable_dying {
+    /* Domain with a pagetable about to be destroyed. */
+    domid_t  domid;
+    uint16_t pad[3]; /* align next field on 8-byte boundary */
+    /* guest physical address of the toplevel pagetable dying */
+    uint64_t gpa;
+};
+typedef struct xen_hvm_pagetable_dying xen_hvm_pagetable_dying_t;
+DEFINE_XEN_GUEST_HANDLE(xen_hvm_pagetable_dying_t);
+
+/* Get the current Xen time, in nanoseconds since system boot. */
+#define HVMOP_get_time              10
+struct xen_hvm_get_time {
+    uint64_t now;      /* OUT */
+};
+typedef struct xen_hvm_get_time xen_hvm_get_time_t;
+DEFINE_XEN_GUEST_HANDLE(xen_hvm_get_time_t);
+
+#define HVMOP_xentrace              11
+struct xen_hvm_xentrace {
+    uint16_t event, extra_bytes;
+    uint8_t extra[TRACE_EXTRA_MAX * sizeof(uint32_t)];
+};
+typedef struct xen_hvm_xentrace xen_hvm_xentrace_t;
+DEFINE_XEN_GUEST_HANDLE(xen_hvm_xentrace_t);
+
+/* Following tools-only interfaces may change in future. */
+#if defined(__XEN__) || defined(__XEN_TOOLS__)
+
+#define HVMOP_set_mem_access        12
+typedef enum {
+    HVMMEM_access_n,
+    HVMMEM_access_r,
+    HVMMEM_access_w,
+    HVMMEM_access_rw,
+    HVMMEM_access_x,
+    HVMMEM_access_rx,
+    HVMMEM_access_wx,
+    HVMMEM_access_rwx,
+    HVMMEM_access_rx2rw,       /* Page starts off as r-x, but automatically
+                                * change to r-w on a write */
+    HVMMEM_access_default      /* Take the domain default */
+} hvmmem_access_t;
+/* Notify that a region of memory is to have specific access types */
+struct xen_hvm_set_mem_access {
+    /* Domain to be updated. */
+    domid_t domid;
+    /* Memory type */
+    uint16_t hvmmem_access; /* hvm_access_t */
+    /* Number of pages, ignored on setting default access */
+    uint32_t nr;
+    /* First pfn, or ~0ull to set the default access for new pages */
+    uint64_aligned_t first_pfn;
+};
+typedef struct xen_hvm_set_mem_access xen_hvm_set_mem_access_t;
+DEFINE_XEN_GUEST_HANDLE(xen_hvm_set_mem_access_t);
+
+#define HVMOP_get_mem_access        13
+/* Get the specific access type for that region of memory */
+struct xen_hvm_get_mem_access {
+    /* Domain to be queried. */
+    domid_t domid;
+    /* Memory type: OUT */
+    uint16_t hvmmem_access; /* hvm_access_t */
+    /* pfn, or ~0ull for default access for new pages.  IN */
+    uint64_aligned_t pfn;
+};
+typedef struct xen_hvm_get_mem_access xen_hvm_get_mem_access_t;
+DEFINE_XEN_GUEST_HANDLE(xen_hvm_get_mem_access_t);
+
+#define HVMOP_inject_trap            14
+/* Inject a trap into a VCPU, which will get taken up on the next
+ * scheduling of it. Note that the caller should know enough of the
+ * state of the CPU before injecting, to know what the effect of
+ * injecting the trap will be.
+ */
+struct xen_hvm_inject_trap {
+    /* Domain to be queried. */
+    domid_t domid;
+    /* VCPU */
+    uint32_t vcpuid;
+    /* Trap number */
+    uint32_t trap;
+    /* Error code, or -1 to skip */
+    uint32_t error_code;
+    /* CR2 for page faults */
+    uint64_aligned_t cr2;
+};
+typedef struct xen_hvm_inject_trap xen_hvm_inject_trap_t;
+DEFINE_XEN_GUEST_HANDLE(xen_hvm_inject_trap_t);
 
 #endif /* defined(__XEN__) || defined(__XEN_TOOLS__) */
+
+#define HVMOP_get_mem_type    15
+/* Return hvmmem_type_t for the specified pfn. */
+struct xen_hvm_get_mem_type {
+    /* Domain to be queried. */
+    domid_t domid;
+    /* OUT variable. */
+    uint16_t mem_type;
+    uint16_t pad[2]; /* align next field on 8-byte boundary */
+    /* IN variable. */
+    uint64_t pfn;
+};
+typedef struct xen_hvm_get_mem_type xen_hvm_get_mem_type_t;
+DEFINE_XEN_GUEST_HANDLE(xen_hvm_get_mem_type_t);
 
 #endif /* __XEN_PUBLIC_HVM_HVM_OP_H__ */

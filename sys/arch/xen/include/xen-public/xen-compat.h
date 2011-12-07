@@ -1,4 +1,4 @@
-/* $NetBSD: xen-compat.h,v 1.1.1.1 2011/12/07 13:15:45 cegger Exp $ */
+/* $NetBSD: xen-compat.h,v 1.1.1.2 2011/12/07 14:41:16 cegger Exp $ */
 /******************************************************************************
  * xen-compat.h
  * 
@@ -28,7 +28,7 @@
 #ifndef __XEN_PUBLIC_XEN_COMPAT_H__
 #define __XEN_PUBLIC_XEN_COMPAT_H__
 
-#define __XEN_LATEST_INTERFACE_VERSION__ 0x00030209
+#define __XEN_LATEST_INTERFACE_VERSION__ 0x0003020a
 
 #if defined(__XEN__) || defined(__XEN_TOOLS__)
 /* Xen is built with matching headers and implements the latest interface. */

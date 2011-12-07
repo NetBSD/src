@@ -1,4 +1,4 @@
-/* $NetBSD: kbdif.h,v 1.1.1.1 2011/12/07 13:15:46 cegger Exp $ */
+/* $NetBSD: kbdif.h,v 1.1.1.2 2011/12/07 14:41:17 cegger Exp $ */
 /*
  * kbdif.h -- Xen virtual keyboard/mouse
  *
