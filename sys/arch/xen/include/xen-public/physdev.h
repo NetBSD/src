@@ -1,4 +1,4 @@
-/* $NetBSD: physdev.h,v 1.5 2011/12/07 13:24:04 cegger Exp $ */
+/* $NetBSD: physdev.h,v 1.6 2011/12/07 15:04:18 cegger Exp $ */
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,6 +22,8 @@
 #ifndef __XEN_PUBLIC_PHYSDEV_H__
 #define __XEN_PUBLIC_PHYSDEV_H__
 
+#include "xen.h"
+
 /*
  * Prototype for this hypercall is:
  *  int physdev_op(int cmd, void *args)
@@ -40,6 +42,21 @@ struct physdev_eoi {
 };
 typedef struct physdev_eoi physdev_eoi_t;
 DEFINE_XEN_GUEST_HANDLE(physdev_eoi_t);
+
+/*
+ * Register a shared page for the hypervisor to indicate whether the guest
+ * must issue PHYSDEVOP_eoi. The semantics of PHYSDEVOP_eoi change slightly
+ * once the guest used this function in that the associated event channel
+ * will automatically get unmasked. The page registered is used as a bit
+ * array indexed by Xen's PIRQ value.
+ */
+#define PHYSDEVOP_pirq_eoi_gmfn         17
+struct physdev_pirq_eoi_gmfn {
+    /* IN */
+    xen_pfn_t gmfn;
+};
+typedef struct physdev_pirq_eoi_gmfn physdev_pirq_eoi_gmfn_t;
+DEFINE_XEN_GUEST_HANDLE(physdev_pirq_eoi_gmfn_t);
 
 /*
  * Query the status of an IRQ line.
@@ -169,6 +186,31 @@ struct physdev_manage_pci {
 typedef struct physdev_manage_pci physdev_manage_pci_t;
 DEFINE_XEN_GUEST_HANDLE(physdev_manage_pci_t);
 
+#define PHYSDEVOP_restore_msi            19
+struct physdev_restore_msi {
+    /* IN */
+    uint8_t bus;
+    uint8_t devfn;
+};
+typedef struct physdev_restore_msi physdev_restore_msi_t;
+DEFINE_XEN_GUEST_HANDLE(physdev_restore_msi_t);
+
+#define PHYSDEVOP_manage_pci_add_ext     20
+struct physdev_manage_pci_ext {
+    /* IN */
+    uint8_t bus;
+    uint8_t devfn;
+    unsigned is_extfn;
+    unsigned is_virtfn;
+    struct {
+        uint8_t bus;
+        uint8_t devfn;
+    } physfn;
+};
+
+typedef struct physdev_manage_pci_ext physdev_manage_pci_ext_t;
+DEFINE_XEN_GUEST_HANDLE(physdev_manage_pci_ext_t);
+
 /*
  * Argument to physdev_op_compat() hypercall. Superceded by new physdev_op()
  * hypercall since 0x00030202.
@@ -185,6 +227,34 @@ struct physdev_op {
 };
 typedef struct physdev_op physdev_op_t;
 DEFINE_XEN_GUEST_HANDLE(physdev_op_t);
+
+#define PHYSDEVOP_setup_gsi    21
+struct physdev_setup_gsi {
+    int gsi;
+    /* IN */
+    uint8_t triggering;
+    /* IN */
+    uint8_t polarity;
+    /* IN */
+};
+
+typedef struct physdev_setup_gsi physdev_setup_gsi_t;
+DEFINE_XEN_GUEST_HANDLE(physdev_setup_gsi_t);
+
+/* leave PHYSDEVOP 22 free */
+
+/* type is MAP_PIRQ_TYPE_GSI or MAP_PIRQ_TYPE_MSI
+ * the hypercall returns a free pirq */
+#define PHYSDEVOP_get_free_pirq    23
+struct physdev_get_free_pirq {
+    /* IN */ 
+    int type;
+    /* OUT */
+    uint32_t pirq;
+};
+
+typedef struct physdev_get_free_pirq physdev_get_free_pirq_t;
+DEFINE_XEN_GUEST_HANDLE(physdev_get_free_pirq_t);
 
 /*
  * Notify that some PIRQ-bound event channels have been unmasked.

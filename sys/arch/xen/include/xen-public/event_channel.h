@@ -1,4 +1,4 @@
-/* $NetBSD: event_channel.h,v 1.5 2011/12/07 13:24:04 cegger Exp $ */
+/* $NetBSD: event_channel.h,v 1.6 2011/12/07 15:04:18 cegger Exp $ */
 /******************************************************************************
  * event_channel.h
  * 
@@ -27,6 +27,8 @@
 
 #ifndef __XEN_PUBLIC_EVENT_CHANNEL_H__
 #define __XEN_PUBLIC_EVENT_CHANNEL_H__
+
+#include "xen.h"
 
 /*
  * Prototype for this hypercall is:
