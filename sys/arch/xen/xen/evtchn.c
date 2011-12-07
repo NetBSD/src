@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.56 2011/11/19 17:13:39 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.57 2011/12/07 12:31:51 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.56 2011/11/19 17:13:39 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.57 2011/12/07 12:31:51 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.56 2011/11/19 17:13:39 cherry Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/reboot.h>
 #include <sys/mutex.h>
 
@@ -561,7 +561,7 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 	}
 
 	if (event_set_handler(evtch, pirq_interrupt, ih, level, evname) != 0) {
-		free(ih, M_DEVBUF);
+		kmem_free(ih, sizeof (struct iplsource));
 		return NULL;
 	}
 
@@ -659,8 +659,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	printf("event_set_handler evtch %d handler %p level %d\n", evtch,
 	       handler, level);
 #endif
-	ih = malloc(sizeof (struct intrhand), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
+	ih = kmem_zalloc(sizeof (struct intrhand), KM_NOSLEEP);
 	if (ih == NULL)
 		panic("can't allocate fixed interrupt source");
 
@@ -685,8 +684,8 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 
 	/* register handler for event channel */
 	if (evtsource[evtch] == NULL) {
-		evts = malloc(sizeof (struct evtsource),
-		    M_DEVBUF, M_WAITOK|M_ZERO);
+		evts = kmem_zalloc(sizeof (struct evtsource),
+		    KM_NOSLEEP);
 		if (evts == NULL)
 			panic("can't allocate fixed interrupt source");
 
@@ -742,8 +741,8 @@ event_set_iplhandler(struct cpu_info *ci,
 
 	KASSERT(ci == ih->ih_cpu);
 	if (ci->ci_isources[level] == NULL) {
-		ipls = malloc(sizeof (struct iplsource),
-		    M_DEVBUF, M_WAITOK|M_ZERO);
+		ipls = kmem_zalloc(sizeof (struct iplsource),
+		    KM_NOSLEEP);
 		if (ipls == NULL)
 			panic("can't allocate fixed interrupt source");
 		ipls->ipl_recurse = xenev_stubs[level].ist_recurse;
@@ -795,11 +794,11 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	if (ih == NULL)
 		panic("event_remove_handler");
 	*ihp = ih->ih_ipl_next;
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof (struct iplsource));
 	if (evts->ev_handlers == NULL) {
 		xen_atomic_clear_bit(&ci->ci_evtmask[0], evtch);
 		evcnt_detach(&evts->ev_evcnt);
-		free(evts, M_DEVBUF);
+		kmem_free(evts, sizeof (struct evtsource));
 		evtsource[evtch] = NULL;
 	} else {
 		intr_calculatemasks(evts, evtch, ci);
