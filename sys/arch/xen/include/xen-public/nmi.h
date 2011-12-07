@@ -1,4 +1,4 @@
-/* $NetBSD: nmi.h,v 1.1.1.1 2011/12/07 13:15:45 cegger Exp $ */
+/* $NetBSD: nmi.h,v 1.1.1.2 2011/12/07 14:41:15 cegger Exp $ */
 /******************************************************************************
  * nmi.h
  * 
@@ -27,6 +27,8 @@
 
 #ifndef __XEN_PUBLIC_NMI_H__
 #define __XEN_PUBLIC_NMI_H__
+
+#include "xen.h"
 
 /*
  * NMI reason codes:

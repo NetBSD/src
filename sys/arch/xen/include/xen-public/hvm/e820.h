@@ -1,4 +1,4 @@
-/* $NetBSD: e820.h,v 1.1.1.1 2011/12/07 13:15:46 cegger Exp $ */
+/* $NetBSD: e820.h,v 1.1.1.2 2011/12/07 14:41:17 cegger Exp $ */
 
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy

@@ -1,4 +1,4 @@
-/* $NetBSD: blkif.h,v 1.1.1.1 2011/12/07 13:15:46 cegger Exp $ */
+/* $NetBSD: blkif.h,v 1.1.1.2 2011/12/07 14:41:17 cegger Exp $ */
 /******************************************************************************
  * blkif.h
  * 
@@ -77,6 +77,31 @@
  * "feature-flush-cache" node!
  */
 #define BLKIF_OP_FLUSH_DISKCACHE   3
+/*
+ * Used in SLES sources for device specific command packet
+ * contained within the request. Reserved for that purpose.
+ */
+#define BLKIF_OP_RESERVED_1        4
+/*
+ * Recognised only if "feature-trim" is present in backend xenbus info.
+ * The "feature-trim" node contains a boolean indicating whether trim
+ * requests are likely to succeed or fail. Either way, a trim request
+ * may fail at any time with BLKIF_RSP_EOPNOTSUPP if it is unsupported by
+ * the underlying block-device hardware. The boolean simply indicates whether
+ * or not it is worthwhile for the frontend to attempt trim requests.
+ * If a backend does not recognise BLKIF_OP_TRIM, it should *not*
+ * create the "feature-trim" node!
+ * 
+ * Trim operation is a request for the underlying block device to mark
+ * extents to be erased. Trim operations are passed with sector_number as the
+ * sector index to begin trim operations at and nr_sectors as the number of
+ * sectors to be trimmed. The specified sectors should be trimmed if the
+ * underlying block device supports trim operations, or a BLKIF_RSP_EOPNOTSUPP
+ * should be returned. More information about trim operations at:
+ * http://t13.org/Documents/UploadedDocuments/docs2008/
+ *     e07154r6-Data_Set_Management_Proposal_for_ATA-ACS2.doc
+ */
+#define BLKIF_OP_TRIM              5
 
 /*
  * Maximum scatter/gather segments per request.
@@ -85,14 +110,19 @@
  */
 #define BLKIF_MAX_SEGMENTS_PER_REQUEST 11
 
+/* 
+ * NB. first_sect and last_sect in blkif_request_segment, as well as
+ * sector_number in blkif_request, are always expressed in 512-byte units.
+ * However they must be properly aligned to the real sector size of the
+ * physical disk, which is reported in the "sector-size" node in the backend
+ * xenbus info. Also the xenbus "sectors" node is expressed in 512-byte units.
+ */
 struct blkif_request_segment {
     grant_ref_t gref;        /* reference to I/O buffer frame        */
     /* @first_sect: first sector in frame to transfer (inclusive).   */
     /* @last_sect: last sector in frame to transfer (inclusive).     */
     uint8_t     first_sect, last_sect;
 };
-
-/* native-type requests/responses (always used in frontends ) */
 
 struct blkif_request {
     uint8_t        operation;    /* BLKIF_OP_???                         */
@@ -104,50 +134,26 @@ struct blkif_request {
 };
 typedef struct blkif_request blkif_request_t;
 
+/*
+ * Cast to this structure when blkif_request.operation == BLKIF_OP_TRIM
+ * sizeof(struct blkif_request_trim) <= sizeof(struct blkif_request)
+ */
+struct blkif_request_trim {
+    uint8_t        operation;    /* BLKIF_OP_TRIM                        */
+    uint8_t        reserved;     /*                                      */
+    blkif_vdev_t   handle;       /* same as for read/write requests      */
+    uint64_t       id;           /* private guest value, echoed in resp  */
+    blkif_sector_t sector_number;/* start sector idx on disk             */
+    uint64_t       nr_sectors;   /* number of contiguous sectors to trim */
+};
+typedef struct blkif_request_trim blkif_request_trim_t;
+
 struct blkif_response {
     uint64_t        id;              /* copied from request */
     uint8_t         operation;       /* copied from request */
     int16_t         status;          /* BLKIF_RSP_???       */
 };
 typedef struct blkif_response blkif_response_t;
-
-/* i386 requests/responses */
-struct blkif_x86_32_request {
-    uint8_t        operation;    /* BLKIF_OP_???                         */
-    uint8_t        nr_segments;  /* number of segments                   */
-    blkif_vdev_t   handle;       /* only for read/write requests         */
-    uint64_t       id;           /* private guest value, echoed in resp  */
-    blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
-    struct blkif_request_segment seg[BLKIF_MAX_SEGMENTS_PER_REQUEST];
-} __packed;
-typedef struct blkif_x86_32_request blkif_x86_32_request_t;
-
-struct blkif_x86_32_response {
-    uint64_t        id;              /* copied from request */
-    uint8_t         operation;       /* copied from request */
-    uint8_t         _pad; 
-    int16_t         status;          /* BLKIF_RSP_???       */
-} __packed;
-typedef struct blkif_x86_32_response blkif_x86_32_response_t;
-
-/* amd64-type requests/responses (always used in frontends ) */
-
-struct blkif_x86_64_request {
-    uint8_t        operation;    /* BLKIF_OP_???                         */
-    uint8_t        nr_segments;  /* number of segments                   */
-    blkif_vdev_t   handle;       /* only for read/write requests         */
-    uint64_t __attribute__((__aligned__(8))) id;/* private guest value, echoed in resp  */
-    blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
-    struct blkif_request_segment seg[BLKIF_MAX_SEGMENTS_PER_REQUEST];
-};
-typedef struct blkif_x86_64_request blkif_x86_64_request_t;
-
-struct blkif_x86_64_response {
-    uint64_t __attribute__((__aligned__(8))) id; /* copied from request */
-    uint8_t         operation;       /* copied from request */
-    int16_t         status;          /* BLKIF_RSP_???       */
-};
-typedef struct blkif_x86_64_response blkif_x86_64_response_t;
 
 /*
  * STATUS RETURN CODES.
@@ -164,15 +170,6 @@ typedef struct blkif_x86_64_response blkif_x86_64_response_t;
  */
 
 DEFINE_RING_TYPES(blkif, struct blkif_request, struct blkif_response);
-DEFINE_RING_TYPES(blkif_x86_32, struct blkif_x86_32_request, struct blkif_x86_32_response);
-DEFINE_RING_TYPES(blkif_x86_64, struct blkif_x86_64_request, struct blkif_x86_64_response);
-
-union blkif_back_ring_proto {
-	blkif_back_ring_t ring_n; /* native/common members */
-	blkif_x86_32_back_ring_t ring_32;
-	blkif_x86_64_back_ring_t ring_64;
-};
-typedef union blkif_back_ring_proto blkif_back_ring_proto_t;
 
 #define VDISK_CDROM        0x1
 #define VDISK_REMOVABLE    0x2
