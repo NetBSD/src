@@ -4,27 +4,30 @@
  * Copyright (c) 2007 Isaku Yamahata <yamahata at valinux co jp>
  *                    VA Linux Systems Japan K.K.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #ifndef __XEN_PUBLIC_HVM_SAVE_IA64_H__
 #define __XEN_PUBLIC_HVM_SAVE_IA64_H__
 
-#include <public/hvm/save.h>
-#include <public/arch-ia64.h>
+#include "../../hvm/save.h"
+#include "../../arch-ia64.h"
 
 /* 
  * Save/restore header: general info about the save file. 
@@ -106,7 +109,11 @@ DECLARE_HVM_SAVE_TYPE(VTIME, 5, struct hvm_hw_ia64_vtime);
  */
 #define VIOSAPIC_NUM_PINS     48
 
-union viosapic_rte
+/* To share VT-d code which uses vioapic_redir_entry.
+ * Although on ia64 this is for vsapic, but we have to vioapic_redir_entry
+ * instead of viosapic_redir_entry.
+ */
+union vioapic_redir_entry
 {
     uint64_t bits;
     struct {
@@ -124,7 +131,7 @@ union viosapic_rte
 
         uint8_t reserved[3];
         uint16_t dest_id;
-    }; 
+    } fields;
 };
 
 struct hvm_hw_ia64_viosapic {
@@ -134,7 +141,7 @@ struct hvm_hw_ia64_viosapic {
     uint32_t    pad;
     uint64_t    lowest_vcpu_id;
     uint64_t    base_address;
-    union viosapic_rte  redirtbl[VIOSAPIC_NUM_PINS];
+    union vioapic_redir_entry  redirtbl[VIOSAPIC_NUM_PINS];
 };
 DECLARE_HVM_SAVE_TYPE(VIOSAPIC, 6, struct hvm_hw_ia64_viosapic);
   

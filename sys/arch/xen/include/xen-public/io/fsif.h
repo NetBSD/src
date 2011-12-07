@@ -169,7 +169,7 @@ struct fsif_response {
     union {
         uint64_t ret_val;
         struct fsif_stat_response fstat;
-    };
+    } u;
 };
 
 typedef struct fsif_response fsif_response_t;
@@ -185,7 +185,8 @@ DEFINE_RING_TYPES(fsif, struct fsif_request, struct fsif_response);
 
 #define STATE_INITIALISED     "init"
 #define STATE_READY           "ready"
-
+#define STATE_CLOSING         "closing"
+#define STATE_CLOSED          "closed"
 
 
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: elfnote.h,v 1.1.1.1 2011/12/07 13:15:45 cegger Exp $ */
+/* $NetBSD: elfnote.h,v 1.1.1.2 2011/12/07 14:41:15 cegger Exp $ */
 /******************************************************************************
  * elfnote.h
  *
@@ -163,9 +163,26 @@
 #define XEN_ELFNOTE_SUSPEND_CANCEL 14
 
 /*
+ * The (non-default) location the initial phys-to-machine map should be
+ * placed at by the hypervisor (Dom0) or the tools (DomU).
+ * The kernel must be prepared for this mapping to be established using
+ * large pages, despite such otherwise not being available to guests.
+ * The kernel must also be able to handle the page table pages used for
+ * this mapping not being accessible through the initial mapping.
+ * (Only x86-64 supports this at present.)
+ */
+#define XEN_ELFNOTE_INIT_P2M      15
+
+/*
+ * Whether or not the guest can deal with being passed an initrd not
+ * mapped through its initial page tables.
+ */
+#define XEN_ELFNOTE_MOD_START_PFN 16
+
+/*
  * The number of the highest elfnote defined.
  */
-#define XEN_ELFNOTE_MAX XEN_ELFNOTE_SUSPEND_CANCEL
+#define XEN_ELFNOTE_MAX XEN_ELFNOTE_MOD_START_PFN
 
 /*
  * System information exported through crash notes.
