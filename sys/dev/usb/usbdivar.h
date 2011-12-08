@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.2 2011/12/08 02:51:08 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.3 2011/12/08 22:38:47 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ struct usbd_bus {
 	/* Filled by usb driver */
 	kmutex_t		*intr_lock;
 	kmutex_t		*lock;
-	struct usbd_device	*root_hub;
+	struct usbd_device      *root_hub;
 	usbd_device_handle	devices[USB_MAX_DEVICES];
 	char			needs_explore;/* a hub a signalled a change */
 	char			use_polling;
