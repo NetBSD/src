@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.2.2.2 2011/12/08 08:17:30 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.2.2.3 2011/12/08 08:52:25 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2.2.2 2011/12/08 08:17:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2.2.3 2011/12/08 08:52:25 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -1147,7 +1147,7 @@ ohci_intr(void *p)
 		OWRITE4(sc, OHCI_INTERRUPT_STATUS,
 			OREAD4(sc, OHCI_INTERRUPT_STATUS));
 
-		return (0);
+		goto done;
 	}
 
 	ret = ohci_intr1(sc);
