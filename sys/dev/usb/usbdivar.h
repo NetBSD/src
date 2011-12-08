@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.1.2.2 2011/12/08 10:41:28 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.1.2.3 2011/12/08 22:04:56 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -215,9 +215,6 @@ struct usbd_pipe {
 	char			repeat;
 	int			interval;
 
-	kmutex_t		*intr_lock;
-	kmutex_t		*lock;
-
 	/* Filled by HC driver. */
 	const struct usbd_pipe_methods *methods;
 };
@@ -304,8 +301,6 @@ void		usb_needs_explore(usbd_device_handle);
 void		usb_needs_reattach(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
 
-#define usbd_lock(m)	if (m) { s = -1; mutex_enter(m); } else s = splusb()
-#define usbd_unlock(m)	if (m) { s = -1; mutex_exit(m); } else splx(s)
 #define usbd_lock_pipe(p)	do { \
 	if ((p)->device->bus->lock) { \
 		s = -1; \
