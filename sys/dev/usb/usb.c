@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.125.6.1 2011/12/04 13:23:17 jmcneill Exp $	*/
+/*	$NetBSD: usb.c,v 1.125.6.1.2.1 2011/12/08 09:54:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.1 2011/12/04 13:23:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.1.2.1 2011/12/08 09:54:30 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -83,6 +83,7 @@ int	usb_noexplore = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
+#define	usb_noexplore 0
 #endif
 
 struct usb_softc {
@@ -372,17 +373,10 @@ usb_event_thread(void *arg)
 	config_pending_decr();
 
 	while (!sc->sc_dying) {
-#ifdef USB_DEBUG
 		if (usb_noexplore < 2)
-#endif
-		usb_discover(sc);
-#ifdef USB_DEBUG
+			usb_discover(sc);
 		(void)tsleep(&sc->sc_bus->needs_explore, PWAIT, "usbevt",
 		    usb_noexplore ? 0 : hz * 60);
-#else
-		(void)tsleep(&sc->sc_bus->needs_explore, PWAIT, "usbevt",
-		    hz * 60);
-#endif
 		DPRINTFN(2,("usb_event_thread: woke up\n"));
 	}
 	sc->sc_event_thread = NULL;
@@ -777,10 +771,8 @@ usb_discover(struct usb_softc *sc)
 {
 
 	DPRINTFN(2,("usb_discover\n"));
-#ifdef USB_DEBUG
 	if (usb_noexplore > 1)
 		return;
-#endif
 	/*
 	 * We need mutual exclusion while traversing the device tree,
 	 * but this is guaranteed since this function is only called
@@ -890,7 +882,9 @@ usb_add_event(int type, struct usb_event *uep)
 	wakeup(&usb_events);
 	selnotify(&usb_selevent, 0, 0);
 	if (usb_async_proc != NULL) {
+		kpreempt_disable();
 		softint_schedule(usb_async_sih);
+		kpreempt_enable();
 	}
 	splx(s);
 }
@@ -913,7 +907,9 @@ usb_schedsoftintr(usbd_bus_handle bus)
 	if (bus->use_polling) {
 		bus->methods->soft_intr(bus);
 	} else {
+		kpreempt_disable();
 		softint_schedule(bus->soft);
+		kpreempt_enable();
 	}
 }
 
