@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.7 2011/02/02 02:20:25 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.8 2011/12/08 23:36:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.7 2011/02/02 02:20:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.8 2011/12/08 23:36:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -306,7 +306,7 @@ npf_rule_alloc(prop_dictionary_t rldict, npf_rproc_t *rp,
 {
 	npf_rule_t *rl;
 	const char *rname;
-	int errat;
+	int errat __unused;
 
 	/* Allocate a rule structure. */
 	rl = kmem_alloc(sizeof(npf_rule_t), KM_SLEEP);
@@ -316,7 +316,6 @@ npf_rule_alloc(prop_dictionary_t rldict, npf_rproc_t *rp,
 	rl->r_natp = NULL;
 
 	/* N-code. */
-	(void)errat;
 	KASSERT(nc == NULL || npf_ncode_validate(nc, nc_size, &errat) == 0);
 	rl->r_ncode = nc;
 	rl->r_nc_size = nc_size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.2 2011/12/05 00:34:25 rmind Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.3 2011/12/08 23:36:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.2 2011/12/05 00:34:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.3 2011/12/08 23:36:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -115,9 +115,24 @@ npf_tcpfl2case(const int tcpfl)
 {
 	u_int i, c;
 
+	CTASSERT(TH_FIN == 0x01);
+	CTASSERT(TH_SYN == 0x02);
+	CTASSERT(TH_ACK == 0x10);
+
 	/*
-	 * Magic value maps flag combinations to TCPFC case numbers.
-	 * Other cases are zero.  Note: FIN-ACK is mapped to FIN.
+	 * Flags are shifted to use three least significant bits, thus each
+	 * flag combination has a unique number ranging from 0 to 7, e.g.
+	 * TH_SYN | TH_ACK has number 6, since (0x02 | (0x10 >> 2)) == 6.
+	 * However, the requirement is to have number 0 for invalid cases,
+	 * such as TH_SYN | TH_FIN, and to have the same number for TH_FIN
+	 * and TH_FIN|TH_ACK cases.  Thus, we generate a mask assigning 3
+	 * bits for each number, which contains the actual case numbers:
+	 *
+	 * TCPFC_SYNACK	<< (6 << 2) == 0x2000000 (6 - SYN,ACK)
+	 * TCPFC_FIN	<< (5 << 2) == 0x0400000 (5 - FIN,ACK)
+	 * ...
+	 *
+	 * Hence, OR'ed mask value is 0x2430140.
 	 */
 	i = (tcpfl & (TH_SYN | TH_FIN)) | ((tcpfl & TH_ACK) >> 2);
 	c = (0x2430140 >> (i << 2)) & 7;
@@ -291,7 +306,7 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	 *	Rooij G., "Real stateful TCP packet filtering in IP Filter",
 	 *	10th USENIX Security Symposium invited talk, Aug. 2001.
 	 *
-	 * There four boundaries are defined as following:
+	 * There are four boundaries defined as following:
 	 *	I)   SEQ + LEN	<= MAX { SND.ACK + MAX(SND.WIN, 1) }
 	 *	II)  SEQ	>= MAX { SND.SEQ + SND.LEN - MAX(RCV.WIN, 1) }
 	 *	III) ACK	<= MAX { RCV.SEQ + RCV.LEN }
