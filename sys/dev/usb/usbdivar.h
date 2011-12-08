@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.1 2011/12/04 13:23:17 jmcneill Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.1.2.1 2011/12/08 10:22:40 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -33,6 +33,41 @@
 
 #include <sys/callout.h>
 #include <sys/mutex.h>
+
+/*
+ * Discussion about locking in the USB code:
+ *
+ * There are two locks presented by the host controller: the interrupt lock
+ * and the thread lock.  The interrupt lock, either a spin or adaptive mutex,
+ * manages hardware state and anything else touched in an interrupt context.
+ * The thread lock has everything else.  
+ *
+ * List of hardware interface methods, and which locks are held when each
+ * is called by this module:
+ *
+ *	BUS METHOD		INTR	THREAD  NOTES
+ *	----------------------- ------- -------	-------------------------
+ *	open_pipe		-	-	might want to take thread lock?
+ *	soft_intr		-	-	intr lock is taken sometimes, thread lock taken often, but nothing demanded?
+ *	do_poll			-	-	might want to take thread lock?
+ *	allocm			-	-
+ *	freem			-	-
+ *	allocx			-	-
+ *	freex			-	-
+ *	get_locks 		-	-	Called at attach time
+ *
+ *	PIPE METHOD		INTR	THREAD  NOTES
+ *	----------------------- ------- -------	-------------------------
+ *	transfer		-	-
+ *	start			-	-
+ *	abort			-	-
+ *	close			-	x
+ *	cleartoggle		-	-
+ *	done			-	x
+ *
+ * The above semantics are likely to change.
+ * 
+ */
 
 /* From usb_mem.h */
 struct usb_dma_block;
@@ -269,17 +304,3 @@ void		usb_schedsoftintr(struct usbd_bus *);
 
 #define usbd_lock(m)	if (m) { s = -1; mutex_enter(m); } else s = splusb()
 #define usbd_unlock(m)	if (m) { s = -1; mutex_exit(m); } else splx(s)
-
-/*
- * XXX This check is extremely bogus. Bad Bad Bad.
- */
-#if defined(DIAGNOSTIC) && 0
-#define SPLUSBCHECK \
-	do { int _s = splusb(), _su = splusb(); \
-             if (!cold && _s != _su) printf("SPLUSBCHECK failed 0x%x!=0x%x, %s:%d\n", \
-				   _s, _su, __FILE__, __LINE__); \
-	     splx(_s); \
-        } while (0)
-#else
-#define SPLUSBCHECK
-#endif
