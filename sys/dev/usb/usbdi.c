@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.3 2011/12/08 03:10:09 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.4 2011/12/08 22:38:47 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.3 2011/12/08 03:10:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.4 2011/12/08 22:38:47 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -229,6 +229,7 @@ usbd_open_pipe_intr(usbd_interface_handle iface, u_int8_t address,
 usbd_status
 usbd_close_pipe(usbd_pipe_handle pipe)
 {
+
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
 		printf("usbd_close_pipe: pipe==NULL\n");
@@ -762,7 +763,6 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	    xfer->status == USBD_TIMEOUT;
 	int repeat, polling;
 
-
 	DPRINTFN(5, ("usb_transfer_complete: pipe=%p xfer=%p status=%d "
 		     "actlen=%d\n", pipe, xfer, xfer->status, xfer->actlen));
 
@@ -854,11 +854,10 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	}
 
 	if (sync && !polling) {
-		if (pipe->device->bus->lock) {
+		if (pipe->device->bus->lock)
 			cv_broadcast(&xfer->cv);
-		} else {
+		else
 			wakeup(xfer);
-		}
 	}
 
 	if (!repeat) {
