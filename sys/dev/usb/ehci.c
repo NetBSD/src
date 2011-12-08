@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.2 2011/12/04 19:22:56 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.2.2.1 2011/12/08 08:52:24 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2011 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.2 2011/12/04 19:22:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.2.2.1 2011/12/08 08:52:24 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -220,7 +220,8 @@ Static usbd_status	ehci_device_request(usbd_xfer_handle xfer);
 Static usbd_status	ehci_device_setintr(ehci_softc_t *, ehci_soft_qh_t *,
 			    int ival);
 
-Static void		ehci_add_qh(ehci_soft_qh_t *, ehci_soft_qh_t *);
+Static void		ehci_add_qh(ehci_softc_t *, ehci_soft_qh_t *,
+				    ehci_soft_qh_t *);
 Static void		ehci_rem_qh(ehci_softc_t *, ehci_soft_qh_t *,
 				    ehci_soft_qh_t *);
 Static void		ehci_set_qh_qtd(ehci_soft_qh_t *, ehci_soft_qtd_t *);
@@ -261,68 +262,68 @@ Static void		ehci_dump_exfer(struct ehci_xfer *);
 #define ehci_active_intr_list(ex) ((ex)->inext.tqe_prev != NULL)
 
 Static const struct usbd_bus_methods ehci_bus_methods = {
-	ehci_open,
-	ehci_softintr,
-	ehci_poll,
-	ehci_allocm,
-	ehci_freem,
-	ehci_allocx,
-	ehci_freex,
-	ehci_get_locks,
+	.open_pipe =	ehci_open,
+	.soft_intr =	ehci_softintr,
+	.do_poll =	ehci_poll,
+	.allocm =	ehci_allocm,
+	.freem =	ehci_freem,
+	.allocx =	ehci_allocx,
+	.freex =	ehci_freex,
+	.get_locks =	ehci_get_locks,
 };
 
 Static const struct usbd_pipe_methods ehci_root_ctrl_methods = {
-	ehci_root_ctrl_transfer,
-	ehci_root_ctrl_start,
-	ehci_root_ctrl_abort,
-	ehci_root_ctrl_close,
-	ehci_noop,
-	ehci_root_ctrl_done,
+	.transfer =	ehci_root_ctrl_transfer,
+	.start =	ehci_root_ctrl_start,
+	.abort =	ehci_root_ctrl_abort,
+	.close =	ehci_root_ctrl_close,
+	.cleartoggle =	ehci_noop,
+	.done =		ehci_root_ctrl_done,
 };
 
 Static const struct usbd_pipe_methods ehci_root_intr_methods = {
-	ehci_root_intr_transfer,
-	ehci_root_intr_start,
-	ehci_root_intr_abort,
-	ehci_root_intr_close,
-	ehci_noop,
-	ehci_root_intr_done,
+	.transfer =	ehci_root_intr_transfer,
+	.start =	ehci_root_intr_start,
+	.abort =	ehci_root_intr_abort,
+	.close =	ehci_root_intr_close,
+	.cleartoggle =	ehci_noop,
+	.done =		ehci_root_intr_done,
 };
 
 Static const struct usbd_pipe_methods ehci_device_ctrl_methods = {
-	ehci_device_ctrl_transfer,
-	ehci_device_ctrl_start,
-	ehci_device_ctrl_abort,
-	ehci_device_ctrl_close,
-	ehci_noop,
-	ehci_device_ctrl_done,
+	.transfer =	ehci_device_ctrl_transfer,
+	.start =	ehci_device_ctrl_start,
+	.abort =	ehci_device_ctrl_abort,
+	.close =	ehci_device_ctrl_close,
+	.cleartoggle =	ehci_noop,
+	.done =		ehci_device_ctrl_done,
 };
 
 Static const struct usbd_pipe_methods ehci_device_intr_methods = {
-	ehci_device_intr_transfer,
-	ehci_device_intr_start,
-	ehci_device_intr_abort,
-	ehci_device_intr_close,
-	ehci_device_clear_toggle,
-	ehci_device_intr_done,
+	.transfer =	ehci_device_intr_transfer,
+	.start =	ehci_device_intr_start,
+	.abort =	ehci_device_intr_abort,
+	.close =	ehci_device_intr_close,
+	.cleartoggle =	ehci_device_clear_toggle,
+	.done =		ehci_device_intr_done,
 };
 
 Static const struct usbd_pipe_methods ehci_device_bulk_methods = {
-	ehci_device_bulk_transfer,
-	ehci_device_bulk_start,
-	ehci_device_bulk_abort,
-	ehci_device_bulk_close,
-	ehci_device_clear_toggle,
-	ehci_device_bulk_done,
+	.transfer =	ehci_device_bulk_transfer,
+	.start =	ehci_device_bulk_start,
+	.abort =	ehci_device_bulk_abort,
+	.close =	ehci_device_bulk_close,
+	.cleartoggle =	ehci_device_clear_toggle,
+	.done =		ehci_device_bulk_done,
 };
 
 Static const struct usbd_pipe_methods ehci_device_isoc_methods = {
-	ehci_device_isoc_transfer,
-	ehci_device_isoc_start,
-	ehci_device_isoc_abort,
-	ehci_device_isoc_close,
-	ehci_noop,
-	ehci_device_isoc_done,
+	.transfer =	ehci_device_isoc_transfer,
+	.start =	ehci_device_isoc_start,
+	.abort =	ehci_device_isoc_abort,
+	.close =	ehci_device_isoc_close,
+	.cleartoggle =	ehci_noop,
+	.done =		ehci_device_isoc_done,
 };
 
 static const uint8_t revbits[EHCI_MAX_POLLRATE] = {
@@ -652,7 +653,9 @@ ehci_intr1(ehci_softc_t *sc)
 	sc->sc_bus.no_intrs++;
 	if (eintrs & EHCI_STS_IAA) {
 		DPRINTF(("ehci_intr1: door bell\n"));
+		kpreempt_disable();
 		softint_schedule(sc->sc_doorbell_si);
+		kpreempt_enable();
 		eintrs &= ~EHCI_STS_IAA;
 	}
 	if (eintrs & (EHCI_STS_INT | EHCI_STS_ERRINT)) {
@@ -668,7 +671,9 @@ ehci_intr1(ehci_softc_t *sc)
 		/* XXX what else */
 	}
 	if (eintrs & EHCI_STS_PCD) {
+		kpreempt_disable();
 		softint_schedule(sc->sc_pcd_si);
+		kpreempt_enable();
 		eintrs &= ~EHCI_STS_PCD;
 	}
 
@@ -1749,13 +1754,13 @@ ehci_open(usbd_pipe_handle pipe)
 			goto bad;
 		pipe->methods = &ehci_device_ctrl_methods;
 		mutex_enter(&sc->sc_lock);
-		ehci_add_qh(sqh, sc->sc_async_head);
+		ehci_add_qh(sc, sqh, sc->sc_async_head);
 		mutex_exit(&sc->sc_lock);
 		break;
 	case UE_BULK:
 		pipe->methods = &ehci_device_bulk_methods;
 		mutex_enter(&sc->sc_lock);
-		ehci_add_qh(sqh, sc->sc_async_head);
+		ehci_add_qh(sc, sqh, sc->sc_async_head);
 		mutex_exit(&sc->sc_lock);
 		break;
 	case UE_INTERRUPT:
@@ -1811,9 +1816,10 @@ ehci_open(usbd_pipe_handle pipe)
  * Add an ED to the schedule.  Called at splusb().
  */
 Static void
-ehci_add_qh(ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
+ehci_add_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 {
-	SPLUSBCHECK;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	usb_syncmem(&head->dma, head->offs + offsetof(ehci_qh_t, qh_link),
 	    sizeof(head->qh.qh_link), BUS_DMASYNC_POSTWRITE);
@@ -1842,7 +1848,8 @@ ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 {
 	ehci_soft_qh_t *p;
 
-	SPLUSBCHECK;
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	/* XXX */
 	for (p = head; p != NULL && p->next != sqh; p = p->next)
 		;
@@ -3707,7 +3714,7 @@ ehci_device_setintr(ehci_softc_t *sc, ehci_soft_qh_t *sqh, int ival)
 
 	sqh->islot = islot;
 	isp = &sc->sc_islots[islot];
-	ehci_add_qh(sqh, isp->sqh);
+	ehci_add_qh(sc, sqh, isp->sqh);
 
 	return (USBD_NORMAL_COMPLETION);
 }
