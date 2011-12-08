@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.180.6.1.2.1 2011/12/08 09:36:49 mrg Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.180.6.1.2.2 2011/12/08 10:22:40 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.180.6.1.2.1 2011/12/08 09:36:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.180.6.1.2.2 2011/12/08 10:22:40 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -765,11 +765,7 @@ void
 usbd_kill_pipe(usbd_pipe_handle pipe)
 {
 	usbd_abort_pipe(pipe);
-	if (pipe->lock)	
-		mutex_enter(pipe->lock);
 	pipe->methods->close(pipe);
-	if (pipe->lock)	
-		mutex_exit(pipe->lock);
 	pipe->endpoint->refcnt--;
 	free(pipe, M_USB);
 }
