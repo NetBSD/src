@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.2.2.6 2011/12/08 10:22:40 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.2.2.7 2011/12/08 20:21:31 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2.2.6 2011/12/08 10:22:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2.2.7 2011/12/08 20:21:31 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -1900,7 +1900,7 @@ ohci_rem_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
 {
 	ohci_soft_ed_t *p;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(1 || mutex_owned(&sc->sc_lock));
 
 	/* XXX */
 	for (p = head; p != NULL && p->next != sed; p = p->next)
@@ -1969,7 +1969,7 @@ ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 {
 	int h = HASH(sitd->physaddr);
 
-	KASSERT(1 || mutex_owned(&sc->sc_lock));
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(10,("ohci_hash_add_itd: sitd=%p physaddr=0x%08lx\n",
 		    sitd, (u_long)sitd->physaddr));
@@ -2163,7 +2163,9 @@ ohci_open(usbd_pipe_handle pipe)
 			goto bad0;
 		opipe->sed = sed;
 		if (xfertype == UE_ISOCHRONOUS) {
+			mutex_enter(&sc->sc_lock);
 			sitd = ohci_alloc_sitd(sc);
+			mutex_exit(&sc->sc_lock);
 			if (sitd == NULL)
 				goto bad1;
 			opipe->tail.itd = sitd;
@@ -2249,7 +2251,7 @@ ohci_close_pipe(usbd_pipe_handle pipe, ohci_soft_ed_t *head)
 	ohci_softc_t *sc = pipe->device->bus->hci_private;
 	ohci_soft_ed_t *sed = opipe->sed;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(1 || mutex_owned(&sc->sc_lock));
 
 #ifdef DIAGNOSTIC
 	sed->ed.ed_flags |= HTOO32(OHCI_ED_SKIP);
@@ -3433,7 +3435,9 @@ ohci_device_isoc_enter(usbd_xfer_handle xfer)
 		    OHCI_PAGE(buf + noffs) > bp0 + OHCI_PAGE_SIZE) { /* too many page crossings */
 
 			/* Allocate next ITD */
+			mutex_enter(&sc->sc_lock);
 			nsitd = ohci_alloc_sitd(sc);
+			mutex_exit(&sc->sc_lock);
 			if (nsitd == NULL) {
 				/* XXX what now? */
 				printf("%s: isoc TD alloc failed\n",
@@ -3464,7 +3468,9 @@ ohci_device_isoc_enter(usbd_xfer_handle xfer)
 		sitd->itd.itd_offset[ncur] = HTOO16(OHCI_ITD_MK_OFFS(offs));
 		offs = noffs;
 	}
+	mutex_enter(&sc->sc_lock);
 	nsitd = ohci_alloc_sitd(sc);
+	mutex_exit(&sc->sc_lock);
 	if (nsitd == NULL) {
 		/* XXX what now? */
 		printf("%s: isoc TD alloc failed\n",
@@ -3643,11 +3649,11 @@ ohci_device_isoc_close(usbd_pipe_handle pipe)
 	ohci_softc_t *sc = pipe->device->bus->hci_private;
 
 	DPRINTF(("ohci_device_isoc_close: pipe=%p\n", pipe));
-	mutex_enter(&sc->sc_lock);
+	//mutex_enter(&sc->sc_lock);
 	ohci_close_pipe(pipe, sc->sc_isoc_head);
 #ifdef DIAGNOSTIC
 	opipe->tail.itd->isdone = 1;
 #endif
-	mutex_exit(&sc->sc_lock);
+	//mutex_exit(&sc->sc_lock);
 	ohci_free_sitd(sc, opipe->tail.itd);
 }
