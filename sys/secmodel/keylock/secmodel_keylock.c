@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_keylock.c,v 1.6 2011/12/04 19:25:00 jym Exp $ */
+/* $NetBSD: secmodel_keylock.c,v 1.7 2011/12/08 11:01:59 jym Exp $ */
 /*-
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.6 2011/12/04 19:25:00 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.7 2011/12/08 11:01:59 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,9 +70,12 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.6 2011/12/04 19:25:00 jym Exp
 
 #include <miscfs/specfs/specdev.h>
 
+#include <secmodel/secmodel.h>
 #include <secmodel/keylock/keylock.h>
 
 static kauth_listener_t l_system, l_process, l_network, l_machdep, l_device;
+
+static secmodel_t keylock_sm;
 
 SYSCTL_SETUP(sysctl_security_keylock_setup,
     "sysctl security keylock setup")
@@ -142,7 +145,7 @@ secmodel_keylock_stop(void)
 	kauth_unlisten_scope(l_machdep);
 	kauth_unlisten_scope(l_device);
 
-	error = secmodel_deregister(&keylock_sm);
+	error = secmodel_deregister(keylock_sm);
 	if (error != 0)
 		printf("secmodel_keylock_stop: secmodel_deregister "
 		    "returned %d\n", error);
