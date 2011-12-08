@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.1.2.3 2011/12/08 20:21:31 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.1.2.4 2011/12/08 22:04:56 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.1.2.3 2011/12/08 20:21:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.1.2.4 2011/12/08 22:04:56 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -229,7 +229,6 @@ usbd_open_pipe_intr(usbd_interface_handle iface, u_int8_t address,
 usbd_status
 usbd_close_pipe(usbd_pipe_handle pipe)
 {
-	//int s;
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
@@ -238,7 +237,6 @@ usbd_close_pipe(usbd_pipe_handle pipe)
 	}
 #endif
 
-	//usbd_lock_pipe(pipe);
 	if (--pipe->refcnt != 0)
 		return (USBD_NORMAL_COMPLETION);
 	if (! SIMPLEQ_EMPTY(&pipe->queue))
@@ -246,7 +244,6 @@ usbd_close_pipe(usbd_pipe_handle pipe)
 	LIST_REMOVE(pipe, next);
 	pipe->endpoint->refcnt--;
 	pipe->methods->close(pipe);
-	//usbd_lock_pipe(pipe);
 	if (pipe->intrxfer != NULL)
 		usbd_free_xfer(pipe->intrxfer);
 	free(pipe, M_USB);
@@ -319,8 +316,8 @@ usbd_transfer(usbd_xfer_handle xfer)
 		if (pipe->device->bus->use_polling)
 			panic("usbd_transfer: not done");
 
-		if (pipe->lock)
-			cv_wait(&xfer->cv, pipe->lock);
+		if (pipe->device->bus->lock)
+			cv_wait(&xfer->cv, pipe->device->bus->lock);
 		else
 			tsleep(xfer, PRIBIO, "usbsyn", 0);
 	}
@@ -838,9 +835,11 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 	if (repeat) {
 		if (xfer->callback) {
-			if (pipe->lock) mutex_exit(pipe->lock);
+			if (pipe->device->bus->lock)
+				mutex_exit(pipe->device->bus->lock);
 			xfer->callback(xfer, xfer->priv, xfer->status);
-			if (pipe->lock) mutex_enter(pipe->lock);
+			if (pipe->device->bus->lock)
+				mutex_enter(pipe->device->bus->lock);
 		}
 		pipe->methods->done(xfer);
 	} else {
@@ -908,6 +907,8 @@ usbd_start_next(usbd_pipe_handle pipe)
 {
 	usbd_xfer_handle xfer;
 	usbd_status err;
+
+	KASSERT(pipe->device->bus->lock == NULL || mutex_owned(pipe->device->bus->lock));
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
