@@ -1,7 +1,0 @@
-# $NetBSD: MONOLITHIC,v 1.16 2011/08/09 14:18:17 jakllsch Exp $
-#
-# Non MODULAR
-#
-include "arch/i386/conf/GENERIC"
-
-no options	MODULAR

@@ -1,9 +1,0 @@
-#
-# Propox MMnet1002 evaluation board configuration info
-#
-
-# CPU support and integrated peripherals
-include "arch/arm/at91/files.at91"
-
-# board-specific startup source file
-file	arch/evbarm/mmnet/mmnet_machdep.c

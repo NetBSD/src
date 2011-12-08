@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.1 2011/12/04 13:23:17 jmcneill Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.1.2.1 2011/12/08 07:53:56 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.1 2011/12/04 13:23:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.1.2.1 2011/12/08 07:53:56 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -878,7 +878,7 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 	DPRINTFN(5,("usb_insert_transfer: pipe=%p running=%d timeout=%d\n",
 		    pipe, pipe->running, xfer->timeout));
 
-	KASSERT(pipe->lock == NULL || mutex_owned(pipe->lock));
+	//KASSERT(pipe->lock == NULL || mutex_owned(pipe->lock));
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_BUSY) {

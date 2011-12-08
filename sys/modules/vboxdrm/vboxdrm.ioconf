@@ -1,9 +1,0 @@
-#	$NetBSD: vboxdrm.ioconf,v 1.1 2011/02/20 15:40:21 jmcneill Exp $
-
-ioconf vboxdrm
-
-include "conf/files"
-
-pseudo-root drm*
-
-vboxdrm* at drm?

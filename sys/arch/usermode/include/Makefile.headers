@@ -1,4 +1,0 @@
-# $NetBSD: Makefile.headers,v 1.1 2011/09/03 14:23:49 jmcneill Exp $
-
-headers:
-	sh genheaders.sh
