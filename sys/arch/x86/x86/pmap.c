@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.145 2011/12/08 15:35:34 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.146 2011/12/08 22:36:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.145 2011/12/08 15:35:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2011/12/08 22:36:42 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1328,7 +1328,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	pte = PTE_BASE + pl1_i(tmpva);
 
 	/*
-         * Map the direct map.  Use 1GB pages if they are available,
+	 * Map the direct map.  Use 1GB pages if they are available,
 	 * otherwise use 2MB pages.
 	 */
 
@@ -1371,7 +1371,7 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_KW | PG_V | PG_U;
 
-	tlbflush();
+	tlbflushg();
 
 #else
 	if (VM_MIN_KERNEL_ADDRESS != KERNBASE) {
