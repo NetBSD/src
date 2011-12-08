@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.139 2011/11/26 01:17:17 tls Exp $
+#	$NetBSD: special,v 1.140 2011/12/08 01:15:02 taca Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -406,7 +406,7 @@
 ./var/mail			type=dir  mode=1777 ignore
 ./var/preserve			type=dir  mode=0755 ignore
 ./var/run			type=dir  mode=0755
-./var/run/mdnsd			type=dir  mode=0755 optional
+./var/run/mdnsd			type=dir  mode=0755 gname=_mdnsd uname=_mdnsd optional
 ./var/run/utmp			type=file mode=0664 gname=utmp tags=exclude
 ./var/run/utmpx			type=file mode=0664 gname=utmp tags=exclude
 ./var/spool			type=dir  mode=0755
