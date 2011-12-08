@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.2.2.5 2011/12/08 09:36:49 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.2.2.6 2011/12/08 10:22:40 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2.2.5 2011/12/08 09:36:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2.2.6 2011/12/08 10:22:40 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -2961,8 +2961,10 @@ ohci_device_ctrl_close(usbd_pipe_handle pipe)
 	ohci_softc_t *sc = pipe->device->bus->hci_private;
 
 	DPRINTF(("ohci_device_ctrl_close: pipe=%p\n", pipe));
+	mutex_enter(&sc->sc_lock);
 	ohci_close_pipe(pipe, sc->sc_ctrl_head);
 	ohci_free_std(sc, opipe->tail.td);
+	mutex_exit(&sc->sc_lock);
 }
 
 /************************/
@@ -3125,8 +3127,8 @@ ohci_device_bulk_close(usbd_pipe_handle pipe)
 	DPRINTF(("ohci_device_bulk_close: pipe=%p\n", pipe));
 	mutex_enter(&sc->sc_lock);
 	ohci_close_pipe(pipe, sc->sc_bulk_head);
-	mutex_exit(&sc->sc_lock);
 	ohci_free_std(sc, opipe->tail.td);
+	mutex_exit(&sc->sc_lock);
 }
 
 /************************/

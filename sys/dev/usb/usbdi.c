@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.1.2.1 2011/12/08 07:53:56 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.1.2.2 2011/12/08 10:22:40 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.1.2.1 2011/12/08 07:53:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.1.2.2 2011/12/08 10:22:40 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -727,7 +727,6 @@ usbd_ar_pipe(usbd_pipe_handle pipe)
 {
 	usbd_xfer_handle xfer;
 
-	SPLUSBCHECK;
 	KASSERT(pipe->lock == NULL || mutex_owned(pipe->lock));
 
 	DPRINTFN(2,("usbd_ar_pipe: pipe=%p\n", pipe));
@@ -762,8 +761,6 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	int erred = xfer->status == USBD_CANCELLED ||
 	    xfer->status == USBD_TIMEOUT;
 	int repeat, polling;
-
-	SPLUSBCHECK;
 
 	DPRINTFN(5, ("usb_transfer_complete: pipe=%p xfer=%p status=%d "
 		     "actlen=%d\n", pipe, xfer, xfer->status, xfer->actlen));
@@ -906,8 +903,6 @@ usbd_start_next(usbd_pipe_handle pipe)
 {
 	usbd_xfer_handle xfer;
 	usbd_status err;
-
-	SPLUSBCHECK;
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
