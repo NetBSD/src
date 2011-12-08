@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.6.4 2011/12/06 05:40:02 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.6.5 2011/12/08 02:51:08 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.4 2011/12/06 05:40:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.5 2011/12/08 02:51:08 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -284,68 +284,68 @@ UREAD4(uhci_softc_t *sc, bus_size_t r)
 #define UHCI_INTR_ENDPT 1
 
 const struct usbd_bus_methods uhci_bus_methods = {
-	uhci_open,
-	uhci_softintr,
-	uhci_poll,
-	uhci_allocm,
-	uhci_freem,
-	uhci_allocx,
-	uhci_freex,
-	uhci_get_locks,
+	.open_pipe =	uhci_open,
+	.soft_intr =	uhci_softintr,
+	.do_poll =	uhci_poll,
+	.allocm =	uhci_allocm,
+	.freem =	uhci_freem,
+	.allocx =	uhci_allocx,
+	.freex =	uhci_freex,
+	.get_locks =	uhci_get_locks,
 };
 
 const struct usbd_pipe_methods uhci_root_ctrl_methods = {
-	uhci_root_ctrl_transfer,
-	uhci_root_ctrl_start,
-	uhci_root_ctrl_abort,
-	uhci_root_ctrl_close,
-	uhci_noop,
-	uhci_root_ctrl_done,
+	.transfer =	uhci_root_ctrl_transfer,
+	.start =	uhci_root_ctrl_start,
+	.abort =	uhci_root_ctrl_abort,
+	.close =	uhci_root_ctrl_close,
+	.cleartoggle =	uhci_noop,
+	.done =		uhci_root_ctrl_done,
 };
 
 const struct usbd_pipe_methods uhci_root_intr_methods = {
-	uhci_root_intr_transfer,
-	uhci_root_intr_start,
-	uhci_root_intr_abort,
-	uhci_root_intr_close,
-	uhci_noop,
-	uhci_root_intr_done,
+	.transfer =	uhci_root_intr_transfer,
+	.start =	uhci_root_intr_start,
+	.abort =	uhci_root_intr_abort,
+	.close =	uhci_root_intr_close,
+	.cleartoggle =	uhci_noop,
+	.done =		uhci_root_intr_done,
 };
 
 const struct usbd_pipe_methods uhci_device_ctrl_methods = {
-	uhci_device_ctrl_transfer,
-	uhci_device_ctrl_start,
-	uhci_device_ctrl_abort,
-	uhci_device_ctrl_close,
-	uhci_noop,
-	uhci_device_ctrl_done,
+	.transfer =	uhci_device_ctrl_transfer,
+	.start =	uhci_device_ctrl_start,
+	.abort =	uhci_device_ctrl_abort,
+	.close =	uhci_device_ctrl_close,
+	.cleartoggle =	uhci_noop,
+	.done =		uhci_device_ctrl_done,
 };
 
 const struct usbd_pipe_methods uhci_device_intr_methods = {
-	uhci_device_intr_transfer,
-	uhci_device_intr_start,
-	uhci_device_intr_abort,
-	uhci_device_intr_close,
-	uhci_device_clear_toggle,
-	uhci_device_intr_done,
+	.transfer =	uhci_device_intr_transfer,
+	.start =	uhci_device_intr_start,
+	.abort =	uhci_device_intr_abort,
+	.close =	uhci_device_intr_close,
+	.cleartoggle =	uhci_device_clear_toggle,
+	.done =		uhci_device_intr_done,
 };
 
 const struct usbd_pipe_methods uhci_device_bulk_methods = {
-	uhci_device_bulk_transfer,
-	uhci_device_bulk_start,
-	uhci_device_bulk_abort,
-	uhci_device_bulk_close,
-	uhci_device_clear_toggle,
-	uhci_device_bulk_done,
+	.transfer =	uhci_device_bulk_transfer,
+	.start =	uhci_device_bulk_start,
+	.abort =	uhci_device_bulk_abort,
+	.close =	uhci_device_bulk_close,
+	.cleartoggle =	uhci_device_clear_toggle,
+	.done =		uhci_device_bulk_done,
 };
 
 const struct usbd_pipe_methods uhci_device_isoc_methods = {
-	uhci_device_isoc_transfer,
-	uhci_device_isoc_start,
-	uhci_device_isoc_abort,
-	uhci_device_isoc_close,
-	uhci_noop,
-	uhci_device_isoc_done,
+	.transfer =	uhci_device_isoc_transfer,
+	.start =	uhci_device_isoc_start,
+	.abort =	uhci_device_isoc_abort,
+	.close =	uhci_device_isoc_close,
+	.cleartoggle =	uhci_noop,
+	.done =		uhci_device_isoc_done,
 };
 
 #define uhci_add_intr_info(sc, ii) \
@@ -1097,7 +1097,7 @@ uhci_add_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *eqh;
 
-	SPLUSBCHECK;
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(10, ("uhci_add_ctrl: sqh=%p\n", sqh));
 	eqh = sc->sc_hctl_end;
@@ -1124,7 +1124,7 @@ uhci_remove_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *pqh;
 
-	SPLUSBCHECK;
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(10, ("uhci_remove_hs_ctrl: sqh=%p\n", sqh));
 #ifdef UHCI_CTL_LOOP
@@ -1174,7 +1174,7 @@ uhci_add_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *eqh;
 
-	SPLUSBCHECK;
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(10, ("uhci_add_ls_ctrl: sqh=%p\n", sqh));
 	eqh = sc->sc_lctl_end;
@@ -1197,7 +1197,7 @@ uhci_remove_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *pqh;
 
-	SPLUSBCHECK;
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(10, ("uhci_remove_ls_ctrl: sqh=%p\n", sqh));
 	/* See comment in uhci_remove_hs_ctrl() */
@@ -1231,7 +1231,7 @@ uhci_add_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *eqh;
 
-	SPLUSBCHECK;
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(10, ("uhci_add_bulk: sqh=%p\n", sqh));
 	eqh = sc->sc_bulk_end;
@@ -1255,7 +1255,7 @@ uhci_remove_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *pqh;
 
-	SPLUSBCHECK;
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(10, ("uhci_remove_bulk: sqh=%p\n", sqh));
 	uhci_rem_loop(sc);

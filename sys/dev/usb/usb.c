@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.125.6.3 2011/12/07 22:52:17 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.125.6.4 2011/12/08 02:51:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.3 2011/12/07 22:52:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.4 2011/12/08 02:51:08 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -224,6 +224,13 @@ usb_doattach(device_t self)
 		break;
 	default:
 		panic("usb_doattach");
+	}
+
+	if (mpsafe) {
+		sc->sc_bus->methods->get_locks(sc->sc_bus,
+		    &sc->sc_bus->intr_lock, &sc->sc_bus->lock);
+	} else {
+		sc->sc_bus->intr_lock = sc->sc_bus->lock = NULL;
 	}
 
 	ue = usb_alloc_event();

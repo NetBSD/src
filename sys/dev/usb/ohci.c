@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.5 2011/12/07 05:41:53 macallan Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.6 2011/12/08 02:51:07 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.5 2011/12/07 05:41:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.6 2011/12/08 02:51:07 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -120,7 +120,8 @@ Static usbd_status	ohci_device_request(usbd_xfer_handle xfer);
 Static void		ohci_add_ed(ohci_softc_t *, ohci_soft_ed_t *,
 			    ohci_soft_ed_t *);
 
-Static void		ohci_rem_ed(ohci_soft_ed_t *, ohci_soft_ed_t *);
+Static void		ohci_rem_ed(ohci_softc_t *, ohci_soft_ed_t *,
+				    ohci_soft_ed_t *);
 Static void		ohci_hash_add_td(ohci_softc_t *, ohci_soft_td_t *);
 Static void		ohci_hash_rem_td(ohci_softc_t *, ohci_soft_td_t *);
 Static ohci_soft_td_t  *ohci_hash_find_td(ohci_softc_t *, ohci_physaddr_t);
@@ -271,68 +272,68 @@ struct ohci_pipe {
 #define OHCI_INTR_ENDPT 1
 
 Static const struct usbd_bus_methods ohci_bus_methods = {
-	ohci_open,
-	ohci_softintr,
-	ohci_poll,
-	ohci_allocm,
-	ohci_freem,
-	ohci_allocx,
-	ohci_freex,
-	ohci_get_locks,
+	.open_pipe =	ohci_open,
+	.soft_intr =	ohci_softintr,
+	.do_poll =	ohci_poll,
+	.allocm =	ohci_allocm,
+	.freem =	ohci_freem,
+	.allocx =	ohci_allocx,
+	.freex =	ohci_freex,
+	.get_locks =	ohci_get_locks,
 };
 
 Static const struct usbd_pipe_methods ohci_root_ctrl_methods = {
-	ohci_root_ctrl_transfer,
-	ohci_root_ctrl_start,
-	ohci_root_ctrl_abort,
-	ohci_root_ctrl_close,
-	ohci_noop,
-	ohci_root_ctrl_done,
+	.transfer =	ohci_root_ctrl_transfer,
+	.start =	ohci_root_ctrl_start,
+	.abort =	ohci_root_ctrl_abort,
+	.close =	ohci_root_ctrl_close,
+	.cleartoggle =	ohci_noop,
+	.done =		ohci_root_ctrl_done,
 };
 
 Static const struct usbd_pipe_methods ohci_root_intr_methods = {
-	ohci_root_intr_transfer,
-	ohci_root_intr_start,
-	ohci_root_intr_abort,
-	ohci_root_intr_close,
-	ohci_noop,
-	ohci_root_intr_done,
+	.transfer =	ohci_root_intr_transfer,
+	.start =	ohci_root_intr_start,
+	.abort =	ohci_root_intr_abort,
+	.close =	ohci_root_intr_close,
+	.cleartoggle =	ohci_noop,
+	.done =		ohci_root_intr_done,
 };
 
 Static const struct usbd_pipe_methods ohci_device_ctrl_methods = {
-	ohci_device_ctrl_transfer,
-	ohci_device_ctrl_start,
-	ohci_device_ctrl_abort,
-	ohci_device_ctrl_close,
-	ohci_noop,
-	ohci_device_ctrl_done,
+	.transfer =	ohci_device_ctrl_transfer,
+	.start =	ohci_device_ctrl_start,
+	.abort =	ohci_device_ctrl_abort,
+	.close =	ohci_device_ctrl_close,
+	.cleartoggle =	ohci_noop,
+	.done =		ohci_device_ctrl_done,
 };
 
 Static const struct usbd_pipe_methods ohci_device_intr_methods = {
-	ohci_device_intr_transfer,
-	ohci_device_intr_start,
-	ohci_device_intr_abort,
-	ohci_device_intr_close,
-	ohci_device_clear_toggle,
-	ohci_device_intr_done,
+	.transfer =	ohci_device_intr_transfer,
+	.start =	ohci_device_intr_start,
+	.abort =	ohci_device_intr_abort,
+	.close =	ohci_device_intr_close,
+	.cleartoggle =	ohci_device_clear_toggle,
+	.done =		ohci_device_intr_done,
 };
 
 Static const struct usbd_pipe_methods ohci_device_bulk_methods = {
-	ohci_device_bulk_transfer,
-	ohci_device_bulk_start,
-	ohci_device_bulk_abort,
-	ohci_device_bulk_close,
-	ohci_device_clear_toggle,
-	ohci_device_bulk_done,
+	.transfer =	ohci_device_bulk_transfer,
+	.start =	ohci_device_bulk_start,
+	.abort =	ohci_device_bulk_abort,
+	.close =	ohci_device_bulk_close,
+	.cleartoggle =	ohci_device_clear_toggle,
+	.done =		ohci_device_bulk_done,
 };
 
 Static const struct usbd_pipe_methods ohci_device_isoc_methods = {
-	ohci_device_isoc_transfer,
-	ohci_device_isoc_start,
-	ohci_device_isoc_abort,
-	ohci_device_isoc_close,
-	ohci_noop,
-	ohci_device_isoc_done,
+	.transfer =	ohci_device_isoc_transfer,
+	.start =	ohci_device_isoc_start,
+	.abort =	ohci_device_isoc_abort,
+	.close =	ohci_device_isoc_close,
+	.cleartoggle =	ohci_noop,
+	.done =		ohci_device_isoc_done,
 };
 
 int
@@ -1869,12 +1870,13 @@ ohci_device_request(usbd_xfer_handle xfer)
 /*
  * Add an ED to the schedule.  Called at splusb().
  */
-void
+Static void
 ohci_add_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
 {
 	DPRINTFN(8,("ohci_add_ed: sed=%p head=%p\n", sed, head));
 
-	SPLUSBCHECK;
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	usb_syncmem(&head->dma, head->offs + offsetof(ohci_ed_t, ed_nexted),
 	    sizeof(head->ed.ed_nexted),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
@@ -1893,12 +1895,12 @@ ohci_add_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
 /*
  * Remove an ED from the schedule.  Called at splusb().
  */
-void
-ohci_rem_ed(ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
+Static void
+ohci_rem_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
 {
 	ohci_soft_ed_t *p;
 
-	SPLUSBCHECK;
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	/* XXX */
 	for (p = head; p != NULL && p->next != sed; p = p->next)
@@ -1932,7 +1934,7 @@ ohci_hash_add_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
 	int h = HASH(std->physaddr);
 
-	SPLUSBCHECK;
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	LIST_INSERT_HEAD(&sc->sc_hash_tds[h], std, hnext);
 }
@@ -1941,7 +1943,8 @@ ohci_hash_add_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 void
 ohci_hash_rem_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
-	SPLUSBCHECK;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	LIST_REMOVE(std, hnext);
 }
@@ -1966,7 +1969,7 @@ ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 {
 	int h = HASH(sitd->physaddr);
 
-	SPLUSBCHECK;
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(10,("ohci_hash_add_itd: sitd=%p physaddr=0x%08lx\n",
 		    sitd, (u_long)sitd->physaddr));
@@ -1978,7 +1981,7 @@ ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 void
 ohci_hash_rem_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 {
-	SPLUSBCHECK;
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(10,("ohci_hash_rem_itd: sitd=%p physaddr=0x%08lx\n",
 		    sitd, (u_long)sitd->physaddr));
@@ -2271,7 +2274,7 @@ ohci_close_pipe(usbd_pipe_handle pipe, ohci_soft_ed_t *head)
 			printf("ohci_close_pipe: pipe still not empty\n");
 	}
 #endif
-	ohci_rem_ed(sed, head);
+	ohci_rem_ed(sc, sed, head);
 	/* Make sure the host controller is not touching this ED */
 	usb_delay_ms(&sc->sc_bus, 1);
 	pipe->endpoint->datatoggle =
