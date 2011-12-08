@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.144 2011/12/07 15:47:42 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.145 2011/12/08 15:35:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2011/12/07 15:47:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.145 2011/12/08 15:35:34 chs Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1598,7 +1598,14 @@ pmap_prealloc_lowmem_ptps(void)
 	for (;;) {
 		newp = avail_start;
 		avail_start += PAGE_SIZE;
+#ifdef __HAVE_DIRECT_MAP
 		memset((void *)PMAP_DIRECT_MAP(newp), 0, PAGE_SIZE);
+#else
+		pmap_pte_set(early_zero_pte, (newp & PG_FRAME) | PG_V | PG_RW);
+		pmap_pte_flush();
+		pmap_update_pg((vaddr_t)early_zerop);
+		memset(early_zerop, 0, PAGE_SIZE);
+#endif
 		pdes[pl_i(0, level)] = (newp & PG_FRAME) | PG_V | PG_RW;
 		level--;
 		if (level <= 1)
