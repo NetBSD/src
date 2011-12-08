@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.55 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.55.12.1 2011/12/08 03:10:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55.12.1 2011/12/08 03:10:09 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,11 +39,13 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55 2010/11/03 22:34:24 dyoung Exp $
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdi_util.h>
 
 #ifdef USB_DEBUG
@@ -419,7 +421,11 @@ Static void
 usbd_bulk_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		      usbd_status status)
 {
-	wakeup(xfer);
+
+	if (xfer->pipe->device->bus->lock)
+		cv_broadcast(&xfer->cv);
+	else
+		wakeup(xfer);
 }
 
 usbd_status
@@ -433,14 +439,17 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 	usbd_setup_xfer(xfer, pipe, 0, buf, *size,
 			flags, timeout, usbd_bulk_transfer_cb);
 	DPRINTFN(1, ("usbd_bulk_transfer: start transfer %d bytes\n", *size));
-	s = splusb();		/* don't want callback until tsleep() */
+	usbd_lock_pipe(pipe);	/* don't want callback until tsleep() */
 	err = usbd_transfer(xfer);
 	if (err != USBD_IN_PROGRESS) {
-		splx(s);
+		usbd_unlock_pipe(pipe);
 		return (err);
 	}
-	error = tsleep(xfer, PZERO | PCATCH, lbl, 0);
-	splx(s);
+	if (pipe->device->bus->lock)
+		error = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
+	else
+		error = tsleep(xfer, PZERO | PCATCH, lbl, 0);
+	usbd_unlock_pipe(pipe);
 	if (error) {
 		DPRINTF(("usbd_bulk_transfer: tsleep=%d\n", error));
 		usbd_abort_pipe(pipe);
@@ -461,7 +470,11 @@ Static void
 usbd_intr_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		      usbd_status status)
 {
-	wakeup(xfer);
+
+	if (xfer->pipe->device->bus->lock)
+		cv_broadcast(&xfer->cv);
+	else
+		wakeup(xfer);
 }
 
 usbd_status
@@ -475,14 +488,17 @@ usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 	usbd_setup_xfer(xfer, pipe, 0, buf, *size,
 			flags, timeout, usbd_intr_transfer_cb);
 	DPRINTFN(1, ("usbd_intr_transfer: start transfer %d bytes\n", *size));
-	s = splusb();		/* don't want callback until tsleep() */
+	usbd_lock_pipe(pipe);	/* don't want callback until tsleep() */
 	err = usbd_transfer(xfer);
 	if (err != USBD_IN_PROGRESS) {
-		splx(s);
+		usbd_unlock_pipe(pipe);
 		return (err);
 	}
-	error = tsleep(xfer, PZERO | PCATCH, lbl, 0);
-	splx(s);
+	if (pipe->device->bus->lock)
+		error = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
+	else
+		error = tsleep(xfer, PZERO | PCATCH, lbl, 0);
+	usbd_unlock_pipe(pipe);
 	if (error) {
 		DPRINTF(("usbd_intr_transfer: tsleep=%d\n", error));
 		usbd_abort_pipe(pipe);

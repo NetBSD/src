@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.2 2011/12/08 02:51:08 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.3 2011/12/08 03:10:09 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.2 2011/12/08 02:51:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.3 2011/12/08 03:10:09 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -314,11 +314,11 @@ usbd_transfer(usbd_xfer_handle xfer)
 	if (!xfer->done) {
 		if (pipe->device->bus->use_polling)
 			panic("usbd_transfer: not done");
-		if (pipe->device->bus->lock) {
+
+		if (pipe->device->bus->lock)
 			cv_wait(&xfer->cv, pipe->device->bus->lock);
-		} else {
+		else
 			tsleep(xfer, PRIBIO, "usbsyn", 0);
-		}
 	}
 	usbd_unlock_pipe(pipe);
 	return (xfer->status);
