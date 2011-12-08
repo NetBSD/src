@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.2.2.1 2011/12/08 07:53:56 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.2.2.2 2011/12/08 08:17:30 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2.2.1 2011/12/08 07:53:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2.2.2 2011/12/08 08:17:30 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -2020,14 +2020,10 @@ void
 ohci_timeout_task(void *addr)
 {
 	usbd_xfer_handle xfer = addr;
-	ohci_softc_t *sc = xfer->pipe->device->bus->hci_private;
 
 	DPRINTF(("ohci_timeout_task: xfer=%p\n", xfer));
 
-	KASSERT(mutex_owned(&sc->sc_lock));
-	//mutex_enter(&sc->sc_lock);
 	ohci_abort_xfer(xfer, USBD_TIMEOUT);
-	//mutex_exit(&sc->sc_lock);
 }
 
 #ifdef OHCI_DEBUG
@@ -3555,7 +3551,7 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 
 	DPRINTFN(1,("ohci_device_isoc_abort: xfer=%p\n", xfer));
 
-	//KASSERT(mutex_owned(&sc->sc_lock));
+	mutex_enter(&sc->sc_lock);
 
 	/* Transfer is already done. */
 	if (xfer->status != USBD_NOT_STARTED &&
@@ -3589,16 +3585,14 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 #endif
 	}
 
-	//mutex_exit(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 
 	usb_delay_ms(&sc->sc_bus, OHCI_ITD_NOFFSET);
 
-	//mutex_enter(&sc->sc_lock);
+	mutex_enter(&sc->sc_lock);
 
 	/* Run callback. */
-mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
-mutex_exit(&sc->sc_lock);
 
 	sed->ed.ed_headp = HTOO32(sitd->physaddr); /* unlink TDs */
 	sed->ed.ed_flags &= HTOO32(~OHCI_ED_SKIP); /* remove hardware skip */
@@ -3606,7 +3600,7 @@ mutex_exit(&sc->sc_lock);
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
  done: ;
-	//mutex_exit(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 }
 
 void
@@ -3639,9 +3633,11 @@ ohci_device_isoc_close(usbd_pipe_handle pipe)
 	ohci_softc_t *sc = pipe->device->bus->hci_private;
 
 	DPRINTF(("ohci_device_isoc_close: pipe=%p\n", pipe));
+	mutex_enter(&sc->sc_lock);
 	ohci_close_pipe(pipe, sc->sc_isoc_head);
 #ifdef DIAGNOSTIC
 	opipe->tail.itd->isdone = 1;
 #endif
+	mutex_exit(&sc->sc_lock);
 	ohci_free_sitd(sc, opipe->tail.itd);
 }
