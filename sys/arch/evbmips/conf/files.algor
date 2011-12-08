@@ -1,3 +1,0 @@
-#	$NetBSD: files.algor,v 1.1 2011/07/09 16:03:01 matt Exp $
-
-include "arch/algor/conf/files.algor"

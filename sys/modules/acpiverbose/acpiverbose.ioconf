@@ -1,6 +1,0 @@
-# $NetBSD: acpiverbose.ioconf,v 1.1 2011/02/16 08:01:53 jruoho Exp $
-
-ioconf acpiverbose
-
-include "conf/files"
-include "dev/pci/files.pci"

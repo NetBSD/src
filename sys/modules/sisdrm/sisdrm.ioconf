@@ -1,9 +1,0 @@
-#	$NetBSD: sisdrm.ioconf,v 1.1 2011/08/28 16:19:08 jmcneill Exp $
-
-ioconf sisdrm
-
-include "conf/files"
-
-pseudo-root drm*
-
-sisdrm* at drm?

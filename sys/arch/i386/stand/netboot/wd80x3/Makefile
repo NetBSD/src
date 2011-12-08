@@ -1,9 +1,0 @@
-#	$NetBSD: Makefile,v 1.2 2002/03/23 03:45:04 gmcgarry Exp $
-
-USE_NETIF=	wd80x3
-
-CPPFLAGS+= -DSUPPORT_WD80X3
-CPPFLAGS+= -DSUPPORT_SMC_ULTRA  
-#CPPFLAGS+= -DBASEREG=0x340 -DBASEMEM=0xd0000
-
-.include "../Makefile.netboot"

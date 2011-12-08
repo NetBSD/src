@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.2 2011/12/04 21:02:27 jmcneill Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.2.2.1 2011/12/08 07:53:56 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2 2011/12/04 21:02:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2.2.1 2011/12/08 07:53:56 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -2245,7 +2245,7 @@ ohci_close_pipe(usbd_pipe_handle pipe, ohci_soft_ed_t *head)
 	ohci_softc_t *sc = pipe->device->bus->hci_private;
 	ohci_soft_ed_t *sed = opipe->sed;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+//	KASSERT(mutex_owned(&sc->sc_lock));
 
 #ifdef DIAGNOSTIC
 	sed->ed.ed_flags |= HTOO32(OHCI_ED_SKIP);
@@ -3363,15 +3363,15 @@ ohci_device_setintr(ohci_softc_t *sc, struct ohci_pipe *opipe, int ival)
 usbd_status
 ohci_device_isoc_transfer(usbd_xfer_handle xfer)
 {
-	ohci_softc_t *sc = xfer->pipe->device->bus->hci_private;
+	//ohci_softc_t *sc = xfer->pipe->device->bus->hci_private;
 	usbd_status err;
 
 	DPRINTFN(5,("ohci_device_isoc_transfer: xfer=%p\n", xfer));
 
 	/* Put it on our queue, */
-	mutex_enter(&sc->sc_lock);
+	//mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
+	//mutex_exit(&sc->sc_lock);
 
 	/* bail out on error, */
 	if (err && err != USBD_IN_PROGRESS)
@@ -3496,7 +3496,7 @@ ohci_device_isoc_enter(usbd_xfer_handle xfer)
 	}
 #endif
 
-	mutex_enter(&sc->sc_lock);
+	//mutex_enter(&sc->sc_lock);
 	usb_syncmem(&sed->dma, sed->offs, sizeof(sed->ed),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	sed->ed.ed_tailp = HTOO32(nsitd->physaddr);
@@ -3505,7 +3505,7 @@ ohci_device_isoc_enter(usbd_xfer_handle xfer)
 	usb_syncmem(&sed->dma, sed->offs + offsetof(ohci_ed_t, ed_flags),
 	    sizeof(sed->ed.ed_flags),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-	mutex_exit(&sc->sc_lock);
+	//mutex_exit(&sc->sc_lock);
 
 #ifdef OHCI_DEBUG
 	if (ohcidebug > 5) {
@@ -3540,6 +3540,8 @@ ohci_device_isoc_start(usbd_xfer_handle xfer)
 
 	/* XXX anything to do? */
 
+	mutex_exit(&sc->sc_lock);
+
 	return (USBD_IN_PROGRESS);
 }
 
@@ -3553,7 +3555,7 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 
 	DPRINTFN(1,("ohci_device_isoc_abort: xfer=%p\n", xfer));
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	//KASSERT(mutex_owned(&sc->sc_lock));
 
 	/* Transfer is already done. */
 	if (xfer->status != USBD_NOT_STARTED &&
@@ -3587,22 +3589,24 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 #endif
 	}
 
-	mutex_exit(&sc->sc_lock);
+	//mutex_exit(&sc->sc_lock);
 
 	usb_delay_ms(&sc->sc_bus, OHCI_ITD_NOFFSET);
 
-	mutex_enter(&sc->sc_lock);
+	//mutex_enter(&sc->sc_lock);
 
 	/* Run callback. */
+mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
+mutex_exit(&sc->sc_lock);
 
 	sed->ed.ed_headp = HTOO32(sitd->physaddr); /* unlink TDs */
 	sed->ed.ed_flags &= HTOO32(~OHCI_ED_SKIP); /* remove hardware skip */
 	usb_syncmem(&sed->dma, sed->offs, sizeof(sed->ed),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
- done:
-	mutex_exit(&sc->sc_lock);
+ done: ;
+	//mutex_exit(&sc->sc_lock);
 }
 
 void

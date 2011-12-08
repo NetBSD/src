@@ -1,5 +1,0 @@
-$Id: README,v 1.1 2007/04/08 09:36:08 scw Exp $
-
-NetBSD/sh5 was removed from the tree on April 8 2007.
-
-The source is still preserved in the CVS attic, for anyone who cares to look.
