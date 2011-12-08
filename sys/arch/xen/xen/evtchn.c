@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.60 2011/12/07 16:26:23 cegger Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.61 2011/12/08 03:34:44 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.60 2011/12/07 16:26:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.61 2011/12/08 03:34:44 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -795,7 +795,7 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	if (ih == NULL)
 		panic("event_remove_handler");
 	*ihp = ih->ih_ipl_next;
-	kmem_free(ih, sizeof (struct iplsource));
+	kmem_free(ih, sizeof (struct intrhand));
 	if (evts->ev_handlers == NULL) {
 		xen_atomic_clear_bit(&ci->ci_evtmask[0], evtch);
 		evcnt_detach(&evts->ev_evcnt);
