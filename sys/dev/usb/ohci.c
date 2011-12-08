@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.2.2.4 2011/12/08 09:09:30 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.2.2.5 2011/12/08 09:36:49 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2.2.4 2011/12/08 09:09:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.2.2.5 2011/12/08 09:36:49 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -1900,7 +1900,7 @@ ohci_rem_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
 {
 	ohci_soft_ed_t *p;
 
-	//KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	/* XXX */
 	for (p = head; p != NULL && p->next != sed; p = p->next)
@@ -1934,7 +1934,7 @@ ohci_hash_add_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
 	int h = HASH(std->physaddr);
 
-	//KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	LIST_INSERT_HEAD(&sc->sc_hash_tds[h], std, hnext);
 }
@@ -1944,7 +1944,7 @@ void
 ohci_hash_rem_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
 
-	//KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	LIST_REMOVE(std, hnext);
 }
@@ -1969,7 +1969,7 @@ ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 {
 	int h = HASH(sitd->physaddr);
 
-	//KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(1 || mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(10,("ohci_hash_add_itd: sitd=%p physaddr=0x%08lx\n",
 		    sitd, (u_long)sitd->physaddr));
@@ -1981,7 +1981,7 @@ ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 void
 ohci_hash_rem_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 {
-	//KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(1 || mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(10,("ohci_hash_rem_itd: sitd=%p physaddr=0x%08lx\n",
 		    sitd, (u_long)sitd->physaddr));
@@ -2174,7 +2174,9 @@ ohci_open(usbd_pipe_handle pipe)
 			else
 				fmt |= OHCI_ED_DIR_OUT;
 		} else {
+			mutex_enter(&sc->sc_lock);
 			std = ohci_alloc_std(sc);
+			mutex_exit(&sc->sc_lock);
 			if (std == NULL)
 				goto bad1;
 			opipe->tail.td = std;
@@ -2959,9 +2961,7 @@ ohci_device_ctrl_close(usbd_pipe_handle pipe)
 	ohci_softc_t *sc = pipe->device->bus->hci_private;
 
 	DPRINTF(("ohci_device_ctrl_close: pipe=%p\n", pipe));
-	mutex_enter(&sc->sc_lock);
 	ohci_close_pipe(pipe, sc->sc_ctrl_head);
-	mutex_exit(&sc->sc_lock);
 	ohci_free_std(sc, opipe->tail.td);
 }
 
@@ -3175,7 +3175,9 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 
 	data = opipe->tail.td;
+	mutex_enter(&sc->sc_lock);
 	tail = ohci_alloc_std(sc);
+	mutex_exit(&sc->sc_lock);
 	if (tail == NULL)
 		return (USBD_NOMEM);
 	tail->xfer = NULL;
