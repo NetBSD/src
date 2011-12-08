@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.1.2.1 2011/12/08 10:22:40 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.1.2.2 2011/12/08 10:41:28 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -142,7 +142,9 @@ struct usbd_bus {
 	const struct usbd_bus_methods *methods;
 	u_int32_t		pipe_size; /* size of a pipe struct */
 	/* Filled by usb driver */
-	struct usbd_device     *root_hub;
+	kmutex_t		*intr_lock;
+	kmutex_t		*lock;
+	struct usbd_device      *root_hub;
 	usbd_device_handle	devices[USB_MAX_DEVICES];
 	char			needs_explore;/* a hub a signalled a change */
 	char			use_polling;
@@ -304,3 +306,18 @@ void		usb_schedsoftintr(struct usbd_bus *);
 
 #define usbd_lock(m)	if (m) { s = -1; mutex_enter(m); } else s = splusb()
 #define usbd_unlock(m)	if (m) { s = -1; mutex_exit(m); } else splx(s)
+#define usbd_lock_pipe(p)	do { \
+	if ((p)->device->bus->lock) { \
+		s = -1; \
+		mutex_enter((p)->device->bus->lock); \
+	} else \
+		s = splusb(); \
+} while (0)
+
+#define usbd_unlock_pipe(p)	do { \
+	if ((p)->device->bus->lock) { \
+		s = -1; \
+		mutex_exit((p)->device->bus->lock); \
+	} else \
+		splx(s); \
+} while (0)
