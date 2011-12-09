@@ -1,4 +1,4 @@
-/* $NetBSD: xen.h,v 1.1.1.2 2011/12/07 14:41:17 cegger Exp $ */
+/* $NetBSD: xen.h,v 1.2 2011/12/09 10:14:20 cegger Exp $ */
 /******************************************************************************
  * arch-x86/xen.h
  * 
@@ -46,10 +46,14 @@
 #define __XEN_GUEST_HANDLE(name)        __guest_handle_ ## name
 #define XEN_GUEST_HANDLE(name)          __XEN_GUEST_HANDLE(name)
 #define set_xen_guest_handle_raw(hnd, val)  do { (hnd).p = val; } while (0)
-#ifdef __XEN_TOOLS__
-#define get_xen_guest_handle(val, hnd)  do { val = (hnd).p; } while (0)
-#endif
+
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
 #define set_xen_guest_handle(hnd, val) set_xen_guest_handle_raw(hnd, val)
+#define get_xen_guest_handle(val, hnd)  do { val = (hnd).p; } while (0)
+#else
+#define set_xen_guest_handle(hnd, val)  (hnd) = val
+#define get_xen_guest_handle(val, hnd)  val = (hnd)
+#endif
 
 #if defined(__i386__)
 #include "xen-x86_32.h"
