@@ -1,4 +1,4 @@
-.\"	$NetBSD: fincore.1,v 1.1 2011/12/09 15:17:34 yamt Exp $
+.\"	$NetBSD: fincore.1,v 1.2 2011/12/09 19:15:11 wiz Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -45,7 +45,7 @@ utility queries and displays in-core status of specified files.
 .Pp
 Note that the result can already be stale when being output due to other
 activities in the system.
-Thus it should be used only for advisary purposes.
+Thus it should be used only for advisory purposes.
 .Pp
 The
 .Nm
@@ -60,7 +60,11 @@ Only shows number of pages.
 .El
 .\" ------------------------------------------------------------
 .Sh EXAMPLES
-The following example shows that /bin/cat and /bin/cp are fully cached in-core
+The following example shows that
+.Pa /bin/cat
+and
+.Pa /bin/cp
+are fully cached in-core
 while the other executables are not in-core.
 numbers shown in the default output are page indexes in the file of
 each in-core pages.
