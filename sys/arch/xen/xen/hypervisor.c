@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.59 2011/12/07 15:47:43 cegger Exp $ */
+/* $NetBSD: hypervisor.c,v 1.60 2011/12/09 11:47:49 cherry Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.59 2011/12/07 15:47:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.60 2011/12/09 11:47:49 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,6 +217,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	       xen_version & 0x0000ffff);
 
 	xengnt_init();
+	events_init();
 
 	memset(&hac, 0, sizeof(hac));
 	hac.hac_vcaa.vcaa_name = "vcpu";
@@ -248,7 +249,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	}
 
 #endif /* MULTIPROCESSOR */
-	events_init();
 
 #if NXENBUS > 0
 	memset(&hac, 0, sizeof(hac));
