@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.11 2011/11/27 21:38:17 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.12 2011/12/09 17:20:21 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11 2011/11/27 21:38:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12 2011/12/09 17:20:21 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,10 +106,24 @@ syscall(void)
 	if (code != 4) {
 		printf("code %3d, nargs %d, argsize %3d\t%s(", 
 			code, nargs, argsize, syscallnames[code]);
-		for (int i = 0; i < nargs; i++)
-			printf("%"PRIx32", ", (uint) args[i]);
-		if (nargs)
-			printf("\b\b");
+		switch (code) {
+		case 5:
+			printf("\"%s\", %"PRIx32", %"PRIx32"", (char *) (args[0]), (uint) args[1], (uint) args[2]);
+			break;
+		case 33:
+			printf("\"%s\", %"PRIx32"", (char *) (args[0]), (uint) args[1]);
+			break;
+		case 50:
+			printf("\"%s\"", (char *) (args[0]));
+			break;
+		case 58:
+			printf("\"%s\", %"PRIx32", %"PRIx32"", (char *) (args[0]), (uint) (args[1]), (uint) args[2]);
+		default:
+			for (int i = 0; i < nargs; i++)
+				printf("%"PRIx32", ", (uint) args[i]);
+			if (nargs)
+				printf("\b\b");
+		}
 		printf(") ");
 	}
 #if 0
@@ -118,10 +132,10 @@ syscall(void)
 	dprintf_debug("syscall no. %d, ", code);
 	dprintf_debug("nargs %d, argsize %d =>  ", nargs, argsize);
 #endif
-#if 0
+#if 1
 	if ((code == 4)) {
 		dprintf_debug("[us] %s", (char *) args[1]);
-		printf("[us] %s", (char *) args[1]);
+//		printf("[us] %s", (char *) args[1]);
 	}
 #endif
 	if (code == 440)
