@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.5 2011/08/28 21:21:05 jmcneill Exp $ */
+/* $NetBSD: ttycons.c,v 1.6 2011/12/09 09:27:13 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.5 2011/08/28 21:21:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.6 2011/12/09 09:27:13 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -99,8 +99,6 @@ ttycons_consinit(void)
 	cn_tab = &ttycons_consdev;
 	cn_init_magic(&ttycons_cnm_state);
 	cn_set_magic("\047\001");
-
-
 }
 
 int
