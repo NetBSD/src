@@ -36,7 +36,7 @@ dev/pci/auacer.c		done
 dev/pci/auich.c			done		port-amd64, port-i386
 dev/pci/auixp.c			done		port-i386
 dev/pci/autri.c			done		port-sparc64
-dev/pci/auvia.c			done
+dev/pci/auvia.c			done		port-i386
 dev/pci/azalia.c		done		port-i386
 dev/pci/cmpci.c			done
 dev/pci/cs4280.c		done		port-i386
