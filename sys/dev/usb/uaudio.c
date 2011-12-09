@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.124 2011/11/27 07:36:54 mrg Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.125 2011/12/09 05:03:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.124 2011/11/27 07:36:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.125 2011/12/09 05:03:18 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2465,8 +2465,10 @@ uaudio_ctl_get(struct uaudio_softc *sc, int which, struct mixerctl *mc,
 
 	DPRINTFN(5,"which=%d chan=%d\n", which, chan);
 	KERNEL_LOCK(1, curlwp);
+	mutex_exit(&sc->sc_lock);
 	val = uaudio_get(sc, which, UT_READ_CLASS_INTERFACE, mc->wValue[chan],
 			 mc->wIndex, MIX_SIZE(mc->type));
+	mutex_enter(&sc->sc_lock);
 	KERNEL_UNLOCK_ONE(curlwp);
 	return uaudio_value2bsd(mc, val);
 }
@@ -2478,8 +2480,10 @@ uaudio_ctl_set(struct uaudio_softc *sc, int which, struct mixerctl *mc,
 
 	val = uaudio_bsd2value(mc, val);
 	KERNEL_LOCK(1, curlwp);
+	mutex_exit(&sc->sc_lock);
 	uaudio_set(sc, which, UT_WRITE_CLASS_INTERFACE, mc->wValue[chan],
 		   mc->wIndex, MIX_SIZE(mc->type), val);
+	mutex_enter(&sc->sc_lock);
 	KERNEL_UNLOCK_ONE(curlwp);
 }
 
