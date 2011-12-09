@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.146 2011/12/08 22:36:42 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.147 2011/12/09 17:32:51 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2011/12/08 22:36:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2011/12/09 17:32:51 chs Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1365,13 +1365,13 @@ pmap_bootstrap(vaddr_t kva_start)
 
 			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
 			*pde = (dmpd + (i << PAGE_SHIFT)) |
-				PG_RW | PG_V | PG_U | PG_G;
+				PG_RW | PG_V | PG_U;
 		}
 	}
 
 	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_KW | PG_V | PG_U;
 
-	tlbflushg();
+	tlbflush();
 
 #else
 	if (VM_MIN_KERNEL_ADDRESS != KERNBASE) {
