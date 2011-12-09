@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.20 2011/09/17 21:38:15 reinoud Exp $ */
+/* $NetBSD: clock.c,v 1.21 2011/12/09 17:23:33 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,15 +27,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20 2011/09/17 21:38:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2011/12/09 17:23:33 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
+#include <sys/cpu.h>
+#include <sys/malloc.h>
 #include <sys/timetc.h>
 #include <sys/time.h>
 
+#include <machine/pcb.h>
 #include <machine/mainbus.h>
 #include <machine/thunk.h>
 
@@ -44,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20 2011/09/17 21:38:15 reinoud Exp $");
 static int	clock_match(device_t, cfdata_t, void *);
 static void	clock_attach(device_t, device_t, void *);
 
+static void	clock(void);
 static void	clock_signal(int sig, siginfo_t *info, void *ctx);
 static unsigned int clock_getcounter(struct timecounter *);
 
@@ -66,6 +71,8 @@ static struct timecounter clock_timecounter = {
 };
 
 static struct clock_softc *clock_sc;
+
+
 
 CFATTACH_DECL_NEW(clock, sizeof(clock_softc_t),
     clock_match, clock_attach, NULL, NULL);
@@ -102,7 +109,7 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	memset(&sa, 0, sizeof(sa));
 	thunk_sigemptyset(&sa.sa_mask);
 	sa.sa_sigaction = clock_signal;
-	sa.sa_flags = SA_SIGINFO;
+	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 	if (thunk_sigaction(SIGALRM, &sa, NULL) == -1)
 		panic("couldn't register SIGALRM handler : %d",
 		    thunk_geterrno());
@@ -116,16 +123,31 @@ clock_attach(device_t parent, device_t self, void *opaque)
 }
 
 static void
-clock_signal(int sig, siginfo_t *info, void *ctx)
+clock(void)
 {
 	struct clockframe cf;
 
 	curcpu()->ci_idepth++;
-
 	spl_intr(IPL_SOFTCLOCK, (void (*)(void *)) hardclock, &cf);
-	// hardclock(&cf);
-
 	curcpu()->ci_idepth--;
+}
+
+static void
+clock_signal(int sig, siginfo_t *info, void *ctx)
+{
+#if 0
+	ucontext_t *uct = ctx;
+	struct lwp *l;
+	struct pcb *pcb;
+
+	l = curlwp;
+	pcb = lwp_getpcb(l);
+
+	/* copy this state as where the lwp was XXX NEEDED? */
+	memcpy(&pcb->pcb_ucp, uct, sizeof(ucontext_t));
+#endif
+
+	clock();
 }
 
 static unsigned int
