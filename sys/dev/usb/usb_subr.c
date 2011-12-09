@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.180.6.2 2011/12/08 02:51:08 mrg Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.180.6.3 2011/12/09 01:53:00 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.180.6.2 2011/12/08 02:51:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.180.6.3 2011/12/09 01:53:00 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -759,8 +759,12 @@ usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 void
 usbd_kill_pipe(usbd_pipe_handle pipe)
 {
+	int s;
+
 	usbd_abort_pipe(pipe);
+	usbd_lock_pipe(pipe);
 	pipe->methods->close(pipe);
+	usbd_unlock_pipe(pipe);
 	pipe->endpoint->refcnt--;
 	free(pipe, M_USB);
 }
@@ -1280,6 +1284,7 @@ usbd_reload_device_desc(usbd_device_handle dev)
 void
 usbd_remove_device(usbd_device_handle dev, struct usbd_port *up)
 {
+
 	DPRINTF(("usbd_remove_device: %p\n", dev));
 
 	if (dev->default_pipe != NULL)

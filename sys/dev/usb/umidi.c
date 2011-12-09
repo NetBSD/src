@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.53 2011/11/26 13:31:52 mrg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.53.2.1 2011/12/09 01:53:00 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.53 2011/11/26 13:31:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.53.2.1 2011/12/09 01:53:00 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -209,7 +209,6 @@ umidi_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_USB);
 	cv_init(&sc->sc_cv, "umidopcl");
 
-	KERNEL_LOCK(1, curlwp);
 	err = alloc_all_endpoints(sc);
 	if (err != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(self,
@@ -242,7 +241,6 @@ umidi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self,
 		    "attach_all_mididevs failed. (err=%d)\n", err);
 	}
-	KERNEL_UNLOCK_ONE(curlwp);
 
 #ifdef UMIDI_DEBUG
 	dump_sc(sc);
@@ -299,7 +297,6 @@ umidi_detach(device_t self, int flags)
 	DPRINTFN(1,("umidi_detach\n"));
 
 	sc->sc_dying = 1;
-	KERNEL_LOCK(1, curlwp);
 	detach_all_mididevs(sc, flags);
 	free_all_mididevs(sc);
 	free_all_jacks(sc);
@@ -307,7 +304,6 @@ umidi_detach(device_t self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
-	KERNEL_UNLOCK_ONE(curlwp);
 
 	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_cv);
@@ -1433,13 +1429,11 @@ start_output_transfer(struct umidi_endpoint *ep)
 	length = (ep->next_slot - ep->buffer) * sizeof *ep->buffer;
 	DPRINTFN(200,("umidi out transfer: start %p end %p length %u\n",
 	    ep->buffer, ep->next_slot, length));
-	KERNEL_LOCK(1, curlwp);
 	usbd_setup_xfer(ep->xfer, ep->pipe,
 			(usbd_private_handle)ep,
 			ep->buffer, length,
 			USBD_NO_COPY, USBD_NO_TIMEOUT, out_intr);
 	rv = usbd_transfer(ep->xfer);
-	KERNEL_UNLOCK_ONE(curlwp);
 	
 	/*
 	 * Once the transfer is scheduled, no more adding to partial

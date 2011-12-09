@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.4 2011/12/08 22:38:47 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.5 2011/12/09 01:53:00 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.4 2011/12/08 22:38:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.5 2011/12/09 01:53:00 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -229,6 +229,7 @@ usbd_open_pipe_intr(usbd_interface_handle iface, u_int8_t address,
 usbd_status
 usbd_close_pipe(usbd_pipe_handle pipe)
 {
+	int s;
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
@@ -237,13 +238,19 @@ usbd_close_pipe(usbd_pipe_handle pipe)
 	}
 #endif
 
-	if (--pipe->refcnt != 0)
+	usbd_lock_pipe(pipe);
+	if (--pipe->refcnt != 0) {
+		usbd_unlock_pipe(pipe);
 		return (USBD_NORMAL_COMPLETION);
-	if (! SIMPLEQ_EMPTY(&pipe->queue))
+	}
+	if (! SIMPLEQ_EMPTY(&pipe->queue)) {
+		usbd_unlock_pipe(pipe);
 		return (USBD_PENDING_REQUESTS);
+	}
 	LIST_REMOVE(pipe, next);
 	pipe->endpoint->refcnt--;
 	pipe->methods->close(pipe);
+	usbd_unlock_pipe(pipe);
 	if (pipe->intrxfer != NULL)
 		usbd_free_xfer(pipe->intrxfer);
 	free(pipe, M_USB);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.6.5 2011/12/08 02:51:08 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.6.6 2011/12/09 01:53:00 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.5 2011/12/08 02:51:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.6 2011/12/09 01:53:00 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -529,7 +529,7 @@ uhci_init(uhci_softc_t *sc)
 	callout_init(&sc->sc_poll_handle, CALLOUT_MPSAFE);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 	cv_init(&sc->sc_softwake_cv, "uhciab");
 
 	/* Set up the bus struct. */
@@ -2217,6 +2217,8 @@ uhci_device_bulk_close(usbd_pipe_handle pipe)
 	usbd_device_handle dev = upipe->pipe.device;
 	uhci_softc_t *sc = dev->bus->hci_private;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	uhci_free_sqh(sc, upipe->u.bulk.sqh);
 
 	pipe->endpoint->datatoggle = upipe->nexttoggle;
@@ -2407,12 +2409,12 @@ uhci_device_intr_close(usbd_pipe_handle pipe)
 	uhci_softc_t *sc = pipe->device->bus->hci_private;
 	int i, npoll;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	/* Unlink descriptors from controller data structures. */
 	npoll = upipe->u.intr.npoll;
-	mutex_enter(&sc->sc_lock);
 	for (i = 0; i < npoll; i++)
 		uhci_remove_intr(sc, upipe->u.intr.qhs[i]);
-	mutex_exit(&sc->sc_lock);
 
 	/*
 	 * We now have to wait for any activity on the physical
@@ -2792,6 +2794,8 @@ uhci_device_isoc_close(usbd_pipe_handle pipe)
 	struct iso *iso;
 	int i;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	/*
 	 * Make sure all TDs are marked as inactive.
 	 * Wait for completion.
@@ -2800,7 +2804,6 @@ uhci_device_isoc_close(usbd_pipe_handle pipe)
 	 */
 	iso = &upipe->u.iso;
 
-	mutex_enter(&sc->sc_lock);
 	for (i = 0; i < UHCI_VFRAMELIST_COUNT; i++) {
 		std = iso->stds[i];
 		usb_syncmem(&std->dma,
@@ -2839,7 +2842,6 @@ uhci_device_isoc_close(usbd_pipe_handle pipe)
 		    BUS_DMASYNC_PREWRITE);
 		uhci_free_std(sc, std);
 	}
-	mutex_exit(&sc->sc_lock);
 
 	kmem_free(iso->stds, UHCI_VFRAMELIST_COUNT * sizeof (uhci_soft_td_t *));
 }
@@ -3917,6 +3919,8 @@ void
 uhci_root_intr_close(usbd_pipe_handle pipe)
 {
 	uhci_softc_t *sc = pipe->device->bus->hci_private;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	callout_stop(&sc->sc_poll_handle);
 	sc->sc_intr_xfer = NULL;

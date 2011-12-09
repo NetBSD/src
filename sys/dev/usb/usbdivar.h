@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.3 2011/12/08 22:38:47 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.4 2011/12/09 01:53:00 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  *	transfer		-	-
  *	start			-	-
  *	abort			-	-
- *	close			-	-
+ *	close			-	x
  *	cleartoggle		-	-
  *	done			-	x
  *
@@ -146,6 +146,7 @@ struct usbd_bus {
 	kmutex_t		*lock;
 	struct usbd_device      *root_hub;
 	usbd_device_handle	devices[USB_MAX_DEVICES];
+	kcondvar_t              needs_explore_cv;
 	char			needs_explore;/* a hub a signalled a change */
 	char			use_polling;
 	device_t		usbctl;
@@ -301,18 +302,24 @@ void		usb_needs_explore(usbd_device_handle);
 void		usb_needs_reattach(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
 
-#define usbd_lock_pipe(p)	do { \
-	if ((p)->device->bus->lock) { \
+/*
+ * These macros help while not all host controllers are ported to the MP code.
+ */
+#define usbd_mutex_enter(m)	do { \
+	if (m) { \
 		s = -1; \
-		mutex_enter((p)->device->bus->lock); \
+		mutex_enter(m); \
 	} else \
 		s = splusb(); \
 } while (0)
 
-#define usbd_unlock_pipe(p)	do { \
-	if ((p)->device->bus->lock) { \
+#define usbd_mutex_exit(m)	do { \
+	if (m) { \
 		s = -1; \
-		mutex_exit((p)->device->bus->lock); \
+		mutex_exit(m); \
 	} else \
 		splx(s); \
 } while (0)
+
+#define usbd_lock_pipe(p)	usbd_mutex_enter((p)->device->bus->lock)
+#define usbd_unlock_pipe(p)	usbd_mutex_exit((p)->device->bus->lock)
