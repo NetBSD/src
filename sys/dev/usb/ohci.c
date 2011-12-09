@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.7 2011/12/08 22:38:47 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.8 2011/12/09 01:53:00 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.7 2011/12/08 22:38:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.8 2011/12/09 01:53:00 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -665,7 +665,7 @@ ohci_init(ohci_softc_t *sc)
 	callout_init(&sc->sc_tmo_rhsc, CALLOUT_MPSAFE);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 	cv_init(&sc->sc_softwake_cv, "ohciab");
 
 	sc->sc_rhsc_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
@@ -2895,6 +2895,8 @@ ohci_root_intr_close(usbd_pipe_handle pipe)
 {
 	ohci_softc_t *sc = pipe->device->bus->hci_private;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	DPRINTF(("ohci_root_intr_close\n"));
 
 	sc->sc_intrxfer = NULL;
@@ -2962,11 +2964,11 @@ ohci_device_ctrl_close(usbd_pipe_handle pipe)
 	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
 	ohci_softc_t *sc = pipe->device->bus->hci_private;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	DPRINTF(("ohci_device_ctrl_close: pipe=%p\n", pipe));
-	mutex_enter(&sc->sc_lock);
 	ohci_close_pipe(pipe, sc->sc_ctrl_head);
 	ohci_free_std(sc, opipe->tail.td);
-	mutex_exit(&sc->sc_lock);
 }
 
 /************************/
@@ -3126,11 +3128,11 @@ ohci_device_bulk_close(usbd_pipe_handle pipe)
 	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
 	ohci_softc_t *sc = pipe->device->bus->hci_private;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	DPRINTF(("ohci_device_bulk_close: pipe=%p\n", pipe));
-	mutex_enter(&sc->sc_lock);
 	ohci_close_pipe(pipe, sc->sc_bulk_head);
 	ohci_free_std(sc, opipe->tail.td);
-	mutex_exit(&sc->sc_lock);
 }
 
 /************************/
@@ -3262,9 +3264,10 @@ ohci_device_intr_close(usbd_pipe_handle pipe)
 	int j;
 	ohci_soft_ed_t *p, *sed = opipe->sed;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	DPRINTFN(1,("ohci_device_intr_close: pipe=%p nslots=%d pos=%d\n",
 		    pipe, nslots, pos));
-	mutex_enter(&sc->sc_lock);
 	usb_syncmem(&sed->dma, sed->offs,
 	    sizeof(sed->ed), BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	sed->ed.ed_flags |= HTOO32(OHCI_ED_SKIP);
@@ -3286,7 +3289,6 @@ ohci_device_intr_close(usbd_pipe_handle pipe)
 	usb_syncmem(&p->dma, p->offs + offsetof(ohci_ed_t, ed_nexted),
 	    sizeof(p->ed.ed_nexted),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-	mutex_exit(&sc->sc_lock);
 
 	for (j = 0; j < nslots; j++)
 		--sc->sc_bws[(pos * nslots + j) % OHCI_NO_INTRS];
@@ -3648,12 +3650,12 @@ ohci_device_isoc_close(usbd_pipe_handle pipe)
 	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
 	ohci_softc_t *sc = pipe->device->bus->hci_private;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	DPRINTF(("ohci_device_isoc_close: pipe=%p\n", pipe));
-	mutex_enter(&sc->sc_lock);
 	ohci_close_pipe(pipe, sc->sc_isoc_head);
 #ifdef DIAGNOSTIC
 	opipe->tail.itd->isdone = 1;
 #endif
 	ohci_free_sitd(sc, opipe->tail.itd);
-	mutex_exit(&sc->sc_lock);
 }
