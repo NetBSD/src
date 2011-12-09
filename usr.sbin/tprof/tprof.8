@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.2 2011/11/26 22:49:37 wiz Exp $
+.\"	$NetBSD: tprof.8,v 1.3 2011/12/09 15:26:48 yamt Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -98,11 +98,11 @@ The number of samples dropped because the buffers containing the samples
 were dropped.
 .El
 .\" ------------------------------------------------------------
-.\.Sh HISTORY
-.\The
-.\.Nm
-.\utility first appeared in
-.\.Nx XXX .
+.\".Sh HISTORY
+.\"The
+.\".Nm
+.\"utility first appeared in
+.\".Nx XXX .
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr tpfmt 1 ,
@@ -113,3 +113,9 @@ The
 .Nm
 utility is written by
 .An YAMAMOTO Takashi .
+.\" ------------------------------------------------------------
+.Sh CAVEATS
+The contents and representation of recorded samples are undocumented and
+will likely be changed for future releases of
+.Nx
+in an incompatible way.
