@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.53 2011/10/03 17:31:35 njoly Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.54 2011/12/09 10:08:47 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -503,6 +503,8 @@
 /* AMD Family10h MSRs */
 #define	MSR_OSVW_ID_LENGTH		0xc0010140
 #define	MSR_OSVW_STATUS			0xc0010141
+#define	MSR_UCODE_AMD_PATCHLEVEL	0x0000008b
+#define	MSR_UCODE_AMD_PATCHLOADER	0xc0010020
 
 /* X86 MSRs */
 #define	MSR_RDTSCP_AUX			0xc0000103
