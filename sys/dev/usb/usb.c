@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.125.6.4 2011/12/08 02:51:08 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.125.6.5 2011/12/09 01:53:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.4 2011/12/08 02:51:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.5 2011/12/09 01:53:00 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -100,6 +100,8 @@ struct usb_softc {
 
 struct usb_taskq {
 	TAILQ_HEAD(, usb_task) tasks;
+	kmutex_t lock;
+	kcondvar_t cv;
 	struct lwp *task_thread_lwp;
 	const char *name;
 	int taskcreated;	/* task thread exists. */
@@ -232,6 +234,7 @@ usb_doattach(device_t self)
 	} else {
 		sc->sc_bus->intr_lock = sc->sc_bus->lock = NULL;
 	}
+	cv_init(&sc->sc_bus->needs_explore_cv, "usbevt");
 
 	ue = usb_alloc_event();
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);
@@ -308,6 +311,8 @@ usb_create_event_thread(device_t self)
 			continue;
 
 		TAILQ_INIT(&taskq->tasks);
+		mutex_init(&taskq->lock, MUTEX_DEFAULT, IPL_NONE);
+		cv_init(&taskq->cv, "usbtsk");
 		taskq->taskcreated = 1;
 		taskq->name = taskq_names[i];
 		if (kthread_create(PRI_NONE, 0, NULL, usb_task_thread,
@@ -327,10 +332,9 @@ void
 usb_add_task(usbd_device_handle dev, struct usb_task *task, int queue)
 {
 	struct usb_taskq *taskq;
-	int s;
 
 	taskq = &usb_taskq[queue];
-	s = splusb();
+	mutex_enter(&taskq->lock);
 	if (task->queue == -1) {
 		DPRINTFN(2,("usb_add_task: task=%p\n", task));
 		TAILQ_INSERT_TAIL(&taskq->tasks, task, next);
@@ -338,23 +342,22 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task, int queue)
 	} else {
 		DPRINTFN(3,("usb_add_task: task=%p on q\n", task));
 	}
-	wakeup(&taskq->tasks);
-	splx(s);
+	cv_signal(&taskq->cv);
+	mutex_exit(&taskq->lock);
 }
 
 void
 usb_rem_task(usbd_device_handle dev, struct usb_task *task)
 {
 	struct usb_taskq *taskq;
-	int s;
 
 	taskq = &usb_taskq[task->queue];
-	s = splusb();
+	mutex_enter(&taskq->lock);
 	if (task->queue != -1) {
 		TAILQ_REMOVE(&taskq->tasks, task, next);
 		task->queue = -1;
 	}
-	splx(s);
+	mutex_exit(&taskq->lock);
 }
 
 void
@@ -375,21 +378,36 @@ usb_event_thread(void *arg)
 	usb_delay_ms(sc->sc_bus, 500);
 
 	/* Make sure first discover does something. */
+	if (sc->sc_bus->lock)
+		mutex_enter(sc->sc_bus->lock);
 	sc->sc_bus->needs_explore = 1;
 	usb_discover(sc);
+	if (sc->sc_bus->lock)
+		mutex_exit(sc->sc_bus->lock);
 	config_pending_decr();
 
+	if (sc->sc_bus->lock)
+		mutex_enter(sc->sc_bus->lock);
 	while (!sc->sc_dying) {
 		if (usb_noexplore < 2)
 			usb_discover(sc);
-		(void)tsleep(&sc->sc_bus->needs_explore, PWAIT, "usbevt",
-		    usb_noexplore ? 0 : hz * 60);
+
+		if (sc->sc_bus->lock)
+			cv_timedwait(&sc->sc_bus->needs_explore_cv,
+			    sc->sc_bus->lock, usb_noexplore ? 0 : hz * 60);
+		else
+			(void)tsleep(&sc->sc_bus->needs_explore, PWAIT,
+			    "usbevt", usb_noexplore ? 0 : hz * 60);
 		DPRINTFN(2,("usb_event_thread: woke up\n"));
 	}
 	sc->sc_event_thread = NULL;
 
 	/* In case parent is waiting for us to exit. */
-	wakeup(sc);
+	if (sc->sc_bus->lock) {
+		cv_signal(&sc->sc_bus->needs_explore_cv);
+		mutex_exit(sc->sc_bus->lock);
+	} else
+		wakeup(sc);
 
 	DPRINTF(("usb_event_thread: exit\n"));
 	kthread_exit(0);
@@ -400,27 +418,27 @@ usb_task_thread(void *arg)
 {
 	struct usb_task *task;
 	struct usb_taskq *taskq;
-	int s;
 
 	taskq = arg;
 	DPRINTF(("usb_task_thread: start taskq %s\n", taskq->name));
 
-	s = splusb();
+	mutex_enter(&taskq->lock);
 	for (;;) {
 		task = TAILQ_FIRST(&taskq->tasks);
 		if (task == NULL) {
-			tsleep(&taskq->tasks, PWAIT, "usbtsk", 0);
+			cv_wait(&taskq->cv, &taskq->lock);
 			task = TAILQ_FIRST(&taskq->tasks);
 		}
 		DPRINTFN(2,("usb_task_thread: woke up task=%p\n", task));
 		if (task != NULL) {
 			TAILQ_REMOVE(&taskq->tasks, task, next);
 			task->queue = -1;
-			splx(s);
+			mutex_exit(&taskq->lock);
 			task->fun(task->arg);
-			s = splusb();
+			mutex_enter(&taskq->lock);
 		}
 	}
+	mutex_exit(&taskq->lock);
 }
 
 int
@@ -777,6 +795,8 @@ Static void
 usb_discover(struct usb_softc *sc)
 {
 
+	KASSERT(sc->sc_bus->lock == NULL || mutex_owned(sc->sc_bus->lock));
+
 	DPRINTFN(2,("usb_discover\n"));
 	if (usb_noexplore > 1)
 		return;
@@ -784,10 +804,16 @@ usb_discover(struct usb_softc *sc)
 	 * We need mutual exclusion while traversing the device tree,
 	 * but this is guaranteed since this function is only called
 	 * from the event thread for the controller.
+	 *
+	 * Also, we now have sc_bus->lock held for MPSAFE controllers.
 	 */
 	while (sc->sc_bus->needs_explore && !sc->sc_dying) {
 		sc->sc_bus->needs_explore = 0;
+		if (sc->sc_bus->lock)
+			mutex_exit(sc->sc_bus->lock);
 		sc->sc_bus->root_hub->hub->explore(sc->sc_bus->root_hub);
+		if (sc->sc_bus->lock)
+			mutex_enter(sc->sc_bus->lock);
 	}
 }
 
@@ -795,17 +821,29 @@ void
 usb_needs_explore(usbd_device_handle dev)
 {
 	DPRINTFN(2,("usb_needs_explore\n"));
+	if (dev->bus->lock)
+		mutex_enter(dev->bus->lock);
 	dev->bus->needs_explore = 1;
-	wakeup(&dev->bus->needs_explore);
+	if (dev->bus->lock) {
+		cv_signal(&dev->bus->needs_explore_cv);
+		mutex_exit(dev->bus->lock);
+	} else
+		wakeup(&dev->bus->needs_explore);
 }
 
 void
 usb_needs_reattach(usbd_device_handle dev)
 {
 	DPRINTFN(2,("usb_needs_reattach\n"));
+	if (dev->bus->lock)
+		mutex_enter(dev->bus->lock);
 	dev->powersrc->reattach = 1;
 	dev->bus->needs_explore = 1;
-	wakeup(&dev->bus->needs_explore);
+	if (dev->bus->lock) {
+		cv_signal(&dev->bus->needs_explore_cv);
+		mutex_exit(dev->bus->lock);
+	} else
+		wakeup(&dev->bus->needs_explore);
 }
 
 /* Called at splusb() */
@@ -967,8 +1005,16 @@ usb_detach(device_t self, int flags)
 	/* Kill off event thread. */
 	sc->sc_dying = 1;
 	while (sc->sc_event_thread != NULL) {
-		wakeup(&sc->sc_bus->needs_explore);
-		tsleep(sc, PWAIT, "usbdet", hz * 60);
+		if (sc->sc_bus->lock) {
+			mutex_enter(sc->sc_bus->lock);
+			cv_signal(&sc->sc_bus->needs_explore_cv);
+			cv_timedwait(&sc->sc_bus->needs_explore_cv,
+			    sc->sc_bus->lock, hz * 60);
+			mutex_exit(sc->sc_bus->lock);
+		} else {
+			wakeup(&sc->sc_bus->needs_explore);
+			tsleep(sc, PWAIT, "usbdet", hz * 60);
+		}
 	}
 	DPRINTF(("usb_detach: event thread dead\n"));
 

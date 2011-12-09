@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.4 2011/12/08 02:51:07 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.5 2011/12/09 01:52:59 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2011 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.4 2011/12/08 02:51:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.5 2011/12/09 01:52:59 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -352,7 +352,7 @@ ehci_init(ehci_softc_t *sc)
 #endif
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 	cv_init(&sc->sc_softwake_cv, "ehciab");
 	cv_init(&sc->sc_doorbell, "ehcidi");
 
@@ -2616,11 +2616,11 @@ ehci_root_intr_close(usbd_pipe_handle pipe)
 {
 	ehci_softc_t *sc = pipe->device->bus->hci_private;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	DPRINTF(("ehci_root_intr_close\n"));
 
-	mutex_enter(&sc->sc_lock);
 	sc->sc_intrxfer = NULL;
-	mutex_exit(&sc->sc_lock);
 }
 
 Static void
@@ -3346,11 +3346,11 @@ ehci_device_ctrl_close(usbd_pipe_handle pipe)
 	ehci_softc_t *sc = pipe->device->bus->hci_private;
 	/*struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;*/
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	DPRINTF(("ehci_device_ctrl_close: pipe=%p\n", pipe));
 
-	mutex_enter(&sc->sc_lock);
 	ehci_close_pipe(pipe, sc->sc_async_head);
-	mutex_exit(&sc->sc_lock);
 }
 
 Static usbd_status
@@ -3663,11 +3663,11 @@ ehci_device_bulk_close(usbd_pipe_handle pipe)
 	ehci_softc_t *sc = pipe->device->bus->hci_private;
 	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	DPRINTF(("ehci_device_bulk_close: pipe=%p\n", pipe));
-	mutex_enter(&sc->sc_lock);
 	pipe->endpoint->datatoggle = epipe->nexttoggle;
 	ehci_close_pipe(pipe, sc->sc_async_head);
-	mutex_exit(&sc->sc_lock);
 }
 
 Static void
@@ -3847,6 +3847,8 @@ ehci_device_intr_close(usbd_pipe_handle pipe)
 	ehci_softc_t *sc = pipe->device->bus->hci_private;
 	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
 	struct ehci_soft_islot *isp;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	isp = &sc->sc_islots[epipe->sqh->islot];
 	ehci_close_pipe(pipe, isp->sqh);
