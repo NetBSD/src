@@ -1,4 +1,4 @@
-/* $NetBSD: copy.c,v 1.5 2011/08/27 17:57:14 reinoud Exp $ */
+/* $NetBSD: copy.c,v 1.6 2011/12/09 17:24:25 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.5 2011/08/27 17:57:14 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.6 2011/12/09 17:24:25 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.5 2011/08/27 17:57:14 reinoud Exp $");
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
-	aprint_debug("copyin uaddr %p, kaddr %p, len %d\n", uaddr, kaddr, (int) len);
+//	aprint_debug("copyin uaddr %p, kaddr %p, len %d\n", uaddr, kaddr, (int) len);
 	memcpy(kaddr, uaddr, len);
 	return 0;
 }
@@ -46,7 +46,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
-	aprint_debug("copyout kaddr %p, uaddr %p, len %d\n", kaddr, uaddr, (int) len);
+//	aprint_debug("copyout kaddr %p, uaddr %p, len %d\n", kaddr, uaddr, (int) len);
 	memcpy(uaddr, kaddr, len);
 	return 0;
 }
