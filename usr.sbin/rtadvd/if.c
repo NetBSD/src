@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.18 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: if.c,v 1.19 2011/12/10 19:14:29 roy Exp $	*/
 /*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 	(((a) & ((size)-1)) ? (1 + ((a) | ((size)-1))) : (a))
 
 #define NEXT_SA(ap) (ap) = (struct sockaddr *) \
-	((caddr_t)(ap) + ((ap)->sa_len ? ROUNDUP((ap)->sa_len,\
+	((char *)(ap) + ((ap)->sa_len ? ROUNDUP((ap)->sa_len,\
 						 sizeof(u_long)) :\
 			  			 sizeof(u_long)))
 
@@ -63,9 +63,9 @@ int iflist_init_ok;
 size_t ifblock_size;
 char *ifblock;
 
-static void get_iflist __P((char **buf, size_t *size));
-static void parse_iflist __P((struct if_msghdr ***ifmlist_p, char *buf,
-		       size_t bufsize));
+static void get_iflist(char **buf, size_t *size);
+static void parse_iflist(struct if_msghdr ***ifmlist_p, char *buf,
+		       size_t bufsize);
 
 static void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
@@ -140,7 +140,7 @@ if_getmtu(char *name)
 		ifr.ifr_addr.sa_family = AF_INET6;
 		strncpy(ifr.ifr_name, name,
 			sizeof(ifr.ifr_name));
-		if (ioctl(s, SIOCGIFMTU, (caddr_t)&ifr) < 0) {
+		if (ioctl(s, SIOCGIFMTU, &ifr) < 0) {
 			close(s);
 			return(0);
 		}
@@ -167,7 +167,7 @@ if_getflags(int ifindex, int oifflags)
 	}
 
 	if_indextoname(ifindex, ifr.ifr_name);
-	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
+	if (ioctl(s, SIOCGIFFLAGS, &ifr) < 0) {
 		syslog(LOG_ERR, "<%s> ioctl:SIOCGIFFLAGS: failed for %s",
 		       __func__, ifr.ifr_name);
 		close(s);
@@ -355,19 +355,19 @@ get_prefixlen(char *buf)
 {
 	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
-	u_char *p, *lim;
+	unsigned char *p, *lim;
 	
 	sa = (struct sockaddr *)(rtm + 1);
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 	sa = rti_info[RTAX_NETMASK];
 
-	p = (u_char *)(&SIN6(sa)->sin6_addr);
-	lim = (u_char *)sa + sa->sa_len;
+	p = (unsigned char *)(&SIN6(sa)->sin6_addr);
+	lim = (unsigned char *)sa + sa->sa_len;
 	return prefixlen(p, lim);
 }
 
 int
-prefixlen(u_char *p, u_char *lim)
+prefixlen(const unsigned char *p, const unsigned char *lim)
 {
 	int masklen;
 
