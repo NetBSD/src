@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.194 2011/09/16 15:39:26 joerg Exp $	*/
+/*	$NetBSD: fetch.c,v 1.195 2011/12/10 05:53:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.194 2011/09/16 15:39:26 joerg Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.195 2011/12/10 05:53:58 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: fetch.c,v 1.194 2011/09/16 15:39:26 joerg Exp $");
 #include <arpa/ftp.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -1125,6 +1126,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	(void)xsignal(SIGQUIT, psummary);
 	oldintr = xsignal(SIGINT, aborthttp);
 
+	assert(rcvbuf_size > 0);
 	if ((size_t)rcvbuf_size > bufsize) {
 		if (xferbuf)
 			(void)free(xferbuf);
