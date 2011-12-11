@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.12 2011/12/09 17:20:21 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.13 2011/12/11 20:33:52 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12 2011/12/09 17:20:21 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2011/12/11 20:33:52 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,6 +71,12 @@ child_return(void *arg)
 
 extern const char *const syscallnames[];
 
+static void syscall_args_print(int code, int nargs, int argsize,
+	register_t *args);
+static void syscall_retvals_print(int code, int nargs, register_t *args,
+	int error, register_t *rval);
+
+
 void
 syscall(void)
 {	
@@ -103,6 +109,51 @@ syscall(void)
 	rval[0] = rval[1] = 0;
 	error = md_syscall_getargs(l, ucp, nargs, argsize, args);
 
+#if 0
+	aprint_debug("syscall no. %d, ", code);
+	aprint_debug("nargs %d, argsize %d =>  ", nargs, argsize);
+	dprintf_debug("syscall no. %d, ", code);
+	dprintf_debug("nargs %d, argsize %d =>  ", nargs, argsize);
+#endif
+
+	/*
+	 * TODO change the pre and post printing into functions so they can be
+	 * easily adjusted and dont clobber up this space
+	 */
+
+	if (!error)
+		syscall_args_print(code, nargs, argsize, args);
+
+	md_syscall_inc_pc(ucp, opcode);
+
+	if (!error) 
+		error = (*callp->sy_call)(l, args, rval);
+
+	syscall_retvals_print(code, nargs, args, error, rval);
+
+//out:
+	switch (error) {
+	default:
+		/* fall trough */
+	case 0:
+		md_syscall_set_returnargs(l, ucp, error, rval);
+		/* fall trough */
+	case EJUSTRETURN:
+		break;
+	case ERESTART:
+		md_syscall_dec_pc(ucp, opcode);
+		/* nothing to do */
+		break;
+	}
+	//dprintf_debug("end of syscall : return to userland\n");
+//if (code != 4) printf("userret() code %d\n", code);
+	userret(l);
+}
+
+
+static void
+syscall_args_print(int code, int nargs, int argsize, register_t *args)
+{
 	if (code != 4) {
 		printf("code %3d, nargs %d, argsize %3d\t%s(", 
 			code, nargs, argsize, syscallnames[code]);
@@ -126,47 +177,20 @@ syscall(void)
 		}
 		printf(") ");
 	}
-#if 0
-	aprint_debug("syscall no. %d, ", code);
-	aprint_debug("nargs %d, argsize %d =>  ", nargs, argsize);
-	dprintf_debug("syscall no. %d, ", code);
-	dprintf_debug("nargs %d, argsize %d =>  ", nargs, argsize);
-#endif
 #if 1
 	if ((code == 4)) {
 		dprintf_debug("[us] %s", (char *) args[1]);
 //		printf("[us] %s", (char *) args[1]);
 	}
 #endif
-	if (code == 440)
-		printf("stat(%d, %p) ", (uint32_t) args[0],
-			(void *) args[1]);
+}
 
-	md_syscall_inc_pc(ucp, opcode);
 
-	if (!error) 
-		error = (*callp->sy_call)(l, args, rval);
-
+static void
+syscall_retvals_print(int code, int nargs, register_t *args, int error, register_t *rval)
+{
 	if (code != 4)
 		printf("=> %s: %d, (%"PRIx32", %"PRIx32")\n",
 			error?"ERROR":"OK", error, (uint) (rval[0]), (uint) (rval[1]));
-
-//out:
-	switch (error) {
-	default:
-		/* fall trough */
-	case 0:
-		md_syscall_set_returnargs(l, ucp, error, rval);
-		/* fall trough */
-	case EJUSTRETURN:
-		break;
-	case ERESTART:
-		md_syscall_dec_pc(ucp, opcode);
-		/* nothing to do */
-		break;
-	}
-	//dprintf_debug("end of syscall : return to userland\n");
-//if (code != 4) printf("userret() code %d\n", code);
-	userret(l);
 }
 
