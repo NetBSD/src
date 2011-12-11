@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.19 2011/12/10 19:14:29 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.20 2011/12/11 20:44:44 christos Exp $	*/
 /*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 }
 
 struct sockaddr_dl *
-if_nametosdl(char *name)
+if_nametosdl(const char *name)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_dl *sdl;
@@ -111,7 +111,7 @@ if_nametosdl(char *name)
 }
 
 int
-if_getmtu(char *name)
+if_getmtu(const char *name)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct if_data *ifd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.26 2011/12/10 19:14:29 roy Exp $	*/
+/*	$NetBSD: config.c,v 1.27 2011/12/11 20:44:44 christos Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -92,8 +92,7 @@ encode_domain(char *dst, const char *src)
 }
 
 void
-getconfig(intface)
-	char *intface;
+getconfig(const char *intface)
 {
 	int stat, c, i;
 	char tbuf[BUFSIZ];
@@ -123,14 +122,13 @@ getconfig(intface)
      } while (0)
 #define	ELM_MALLOC(p,error_action)					\
 	do {								\
-		p = malloc(sizeof(*p));					\
+		p = calloc(1, sizeof(*p));				\
 		if (p == NULL) {					\
-			syslog(LOG_ERR, "<%s> malloc failed: %s",	\
-			    __func__, strerror(errno));			\
+			syslog(LOG_ERR, "<%s> calloc failed: %m",	\
+			    __func__);					\
 			error_action;					\
 		}							\
-		memset(p, 0, sizeof(*p));				\
-	} while(0)
+	} while(/*CONSTCOND*/0)
 
 
 	if ((stat = agetent(tbuf, intface)) <= 0) {
@@ -143,7 +141,6 @@ getconfig(intface)
 	}
 
 	ELM_MALLOC(tmp, exit(1));
-	memset(tmp, 0, sizeof(*tmp));
 
 	/* check if we are allowed to forward packets (if not determined) */
 	if (forwarding < 0) {
@@ -304,13 +301,12 @@ getconfig(intface)
 			continue;
 
 		/* allocate memory to store prefix information */
-		if ((pfx = malloc(sizeof(struct prefix))) == NULL) {
+		if ((pfx = calloc(1, sizeof(*pfx))) == NULL) {
 			syslog(LOG_ERR,
-			       "<%s> can't allocate enough memory",
+			       "<%s> can't allocate memory: %m",
 			       __func__);
 			exit(1);
 		}
-		memset(pfx, 0, sizeof(*pfx));
 
 		TAILQ_INSERT_TAIL(&tmp->prefix, pfx, next);
 		tmp->pfxs++;
@@ -433,15 +429,14 @@ getconfig(intface)
 		int s;
 
 		if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-			syslog(LOG_ERR, "<%s> socket: %s", __func__,
-			       strerror(errno));
+			syslog(LOG_ERR, "<%s> socket: %m", __func__);
 			exit(1);
 		}
 		memset(&ndi, 0, sizeof(ndi));
 		strncpy(ndi.ifname, intface, IFNAMSIZ);
 		if (ioctl(s, SIOCGIFINFO_IN6, &ndi) < 0) {
-			syslog(LOG_INFO, "<%s> ioctl:SIOCGIFINFO_IN6 at %s: %s",
-			     __func__, intface, strerror(errno));
+			syslog(LOG_INFO, "<%s> ioctl:SIOCGIFINFO_IN6 at %s: %m",
+			     __func__, intface);
 		}
 
 		/* reflect the RA info to the host variables in kernel */
@@ -449,8 +444,8 @@ getconfig(intface)
 		ndi.ndi.retrans = tmp->retranstimer;
 		ndi.ndi.basereachable = tmp->reachabletime;
 		if (ioctl(s, SIOCSIFINFO_IN6, &ndi) < 0) {
-			syslog(LOG_INFO, "<%s> ioctl:SIOCSIFINFO_IN6 at %s: %s",
-			     __func__, intface, strerror(errno));
+			syslog(LOG_INFO, "<%s> ioctl:SIOCSIFINFO_IN6 at %s: %m",
+			     __func__, intface);
 		}
 		close(s);
 	}
@@ -730,13 +725,12 @@ get_prefix(struct rainfo *rai)
 		}
 
 		/* allocate memory to store prefix info. */
-		if ((pp = malloc(sizeof(*pp))) == NULL) {
+		if ((pp = calloc(1, sizeof(*pp))) == NULL) {
 			syslog(LOG_ERR,
 			       "<%s> can't get allocate buffer for prefix",
 			       __func__);
 			exit(1);
 		}
-		memset(pp, 0, sizeof(*pp));
 
 		/* set prefix, sweep bits outside of prefixlen */
 		pp->prefixlen = plen;
@@ -797,12 +791,11 @@ add_prefix(struct rainfo *rai, struct in6_prefixreq *ipr)
 	struct prefix *prefix;
 	char ntopbuf[INET6_ADDRSTRLEN];
 
-	if ((prefix = malloc(sizeof(*prefix))) == NULL) {
+	if ((prefix = calloc(1, sizeof(*prefix))) == NULL) {
 		syslog(LOG_ERR, "<%s> memory allocation failed",
 		       __func__);
 		return;		/* XXX: error or exit? */
 	}
-	memset(prefix, 0, sizeof(*prefix));
 	prefix->prefix = ipr->ipr_prefix.sin6_addr;
 	prefix->prefixlen = ipr->ipr_plen;
 	prefix->validlifetime = ipr->ipr_vltime;
@@ -924,14 +917,12 @@ init_prefix(struct in6_prefixreq *ipr)
 	int s;
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-		syslog(LOG_ERR, "<%s> socket: %s", __func__,
-		       strerror(errno));
+		syslog(LOG_ERR, "<%s> socket: %m", __func__);
 		exit(1);
 	}
 
 	if (ioctl(s, SIOCGIFPREFIX_IN6, ipr) < 0) {
-		syslog(LOG_INFO, "<%s> ioctl:SIOCGIFPREFIX %s", __func__,
-		       strerror(errno));
+		syslog(LOG_INFO, "<%s> ioctl:SIOCGIFPREFIX: %m", __func__);
 
 		ipr->ipr_vltime = DEF_ADVVALIDLIFETIME;
 		ipr->ipr_pltime = DEF_ADVPREFERREDLIFETIME;
@@ -970,8 +961,8 @@ make_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
 	memset(&ipr, 0, sizeof(ipr));
 	if (if_indextoname(ifindex, ipr.ipr_name) == NULL) {
 		syslog(LOG_ERR, "<%s> Prefix added interface No.%d doesn't"
-		       "exist. This should not happen! %s", __func__,
-		       ifindex, strerror(errno));
+		       "exist. This should not happen: %m", __func__,
+		       ifindex);
 		exit(1);
 	}
 	ipr.ipr_prefix.sin6_len = sizeof(ipr.ipr_prefix);
@@ -1038,24 +1029,28 @@ make_packet(struct rainfo *rainfo)
 	}
 
 	/* allocate memory for the packet */
-	if ((buf = malloc(packlen)) == NULL) {
+	if ((buf = realloc(rainfo->ra_data, packlen)) == NULL) {
 		syslog(LOG_ERR,
-		       "<%s> can't get enough memory for an RA packet",
+		       "<%s> can't get enough memory for an RA packet %m",
 		       __func__);
 		exit(1);
-	}
-	if (rainfo->ra_data) {
-		/* free the previous packet */
-		free(rainfo->ra_data);
-		rainfo->ra_data = NULL;
 	}
 	rainfo->ra_data = buf;
 	/* XXX: what if packlen > 576? */
 	rainfo->ra_datalen = packlen;
-
+#define CHECKLEN(size) \
+	do { \
+		if (buf + size > rainfo->ra_data + packlen) { \
+			syslog(LOG_ERR, \
+			    "<%s, %d> RA packet does not fit in %zu",\
+			    __func__, __LINE__, packlen); \
+			exit(1); \
+		} \
+	} while (/*CONSTCOND*/0)
 	/*
 	 * construct the packet
 	 */
+	CHECKLEN(sizeof(*ra));
 	ra = (struct nd_router_advert *)buf;
 	ra->nd_ra_type = ND_ROUTER_ADVERT;
 	ra->nd_ra_code = 0;
@@ -1077,11 +1072,13 @@ make_packet(struct rainfo *rainfo)
 	buf += sizeof(*ra);
 
 	if (rainfo->advlinkopt) {
+		CHECKLEN(sizeof(struct nd_opt_hdr));
 		lladdropt_fill(rainfo->sdl, (struct nd_opt_hdr *)buf);
 		buf += lladdroptlen;
 	}
 
 	if (rainfo->linkmtu) {
+		CHECKLEN(sizeof(*ndopt_mtu));
 		ndopt_mtu = (struct nd_opt_mtu *)buf;
 		ndopt_mtu->nd_opt_mtu_type = ND_OPT_MTU;
 		ndopt_mtu->nd_opt_mtu_len = 1;
@@ -1094,6 +1091,7 @@ make_packet(struct rainfo *rainfo)
 		uint32_t vltime, pltime;
 		struct timeval now;
 
+		CHECKLEN(sizeof(*ndopt_pi));
 		ndopt_pi = (struct nd_opt_prefix_info *)buf;
 		ndopt_pi->nd_opt_pi_type = ND_OPT_PREFIX_INFORMATION;
 		ndopt_pi->nd_opt_pi_len = 4;
@@ -1143,6 +1141,7 @@ make_packet(struct rainfo *rainfo)
 	TAILQ_FOREACH(rti, &rainfo->route, next) {
 		uint8_t psize = (rti->prefixlen + 0x3f) >> 6;
 
+		CHECKLEN(sizeof(*ndopt_rti));
 		ndopt_rti = (struct nd_opt_route_info *)buf;
 		ndopt_rti->nd_opt_rti_type = ND_OPT_ROUTE_INFO;
 		ndopt_rti->nd_opt_rti_len = 1 + psize;
@@ -1154,6 +1153,7 @@ make_packet(struct rainfo *rainfo)
 	}
 
 	TAILQ_FOREACH(rdns, &rainfo->rdnss, next) {
+		CHECKLEN(sizeof(*ndopt_rdnss));
 		ndopt_rdnss = (struct nd_opt_rdnss *)buf;
 		ndopt_rdnss->nd_opt_rdnss_type = ND_OPT_RDNSS;
 		ndopt_rdnss->nd_opt_rdnss_len = 1;
@@ -1162,6 +1162,7 @@ make_packet(struct rainfo *rainfo)
 		buf += sizeof(*ndopt_rdnss);
 	
 		TAILQ_FOREACH(rdnsa, &rdns->list, next) {
+			CHECKLEN(sizeof(rdnsa->addr));
 			memcpy(buf, &rdnsa->addr, sizeof(rdnsa->addr));
 			ndopt_rdnss->nd_opt_rdnss_len += 2;
 			buf += sizeof(rdnsa->addr);
@@ -1169,6 +1170,7 @@ make_packet(struct rainfo *rainfo)
 	}
 
 	TAILQ_FOREACH(dnsl, &rainfo->dnssl, next) {
+		CHECKLEN(sizeof(*ndopt_dnssl));
 		ndopt_dnssl = (struct nd_opt_dnssl *)buf;
 		ndopt_dnssl->nd_opt_dnssl_type = ND_OPT_DNSSL;
 		ndopt_dnssl->nd_opt_dnssl_len = 0;
@@ -1177,16 +1179,19 @@ make_packet(struct rainfo *rainfo)
 		buf += sizeof(*ndopt_dnssl);
 	
 		TAILQ_FOREACH(dnsd, &dnsl->list, next) {
+			CHECKLEN(dnsd->len);
 			memcpy(buf, dnsd->domain, dnsd->len);
 			buf += dnsd->len;
 		}
 		/* Ensure our length is padded correctly */
 		len = buf - (char *)ndopt_dnssl;
 		plen = len % 8 ? 8 - len % 8 : 0;
+		CHECKLEN(plen);
 		memset(buf, 0, plen);
 		buf += plen;
 		ndopt_dnssl->nd_opt_dnssl_len = (len + plen) / 8;
 	}
+	memset(buf, 0, packlen - (buf - rainfo->ra_data));
 }
 
 static int
@@ -1198,13 +1203,12 @@ getinet6sysctl(int code)
 
 	mib[3] = code;
 	size = sizeof(value);
-	if (sysctl(mib, sizeof(mib)/sizeof(mib[0]), &value, &size, NULL, 0)
+	if (sysctl(mib, __arraycount(mib), &value, &size, NULL, 0)
 	    < 0) {
-		syslog(LOG_ERR, "<%s>: failed to get ip6 sysctl(%d): %s",
-		       __func__, code,
-		       strerror(errno));
-		return(-1);
+		syslog(LOG_ERR, "<%s>: failed to get ip6 sysctl(%d): %m",
+		       __func__, code);
+		return -1;
 	}
 	else
-		return(value);
+		return value;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.7 2011/12/10 19:14:29 roy Exp $	*/
+/*	$NetBSD: config.h,v 1.8 2011/12/11 20:44:44 christos Exp $	*/
 /*	$KAME: config.h,v 1.9 2003/08/06 04:19:40 ono Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-extern void getconfig(char *);
+extern void getconfig(const char *);
 extern void delete_prefix(struct prefix *);
 extern void invalidate_prefix(struct prefix *);
 extern void update_prefix(struct prefix *);
