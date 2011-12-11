@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/10/11 13:53:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/12/11 14:58:50 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -68,6 +68,7 @@ CLANG_TABLEGEN_OUTPUT.Diagnostic.td= \
 	clang/Basic/DiagnosticLexKinds.inc|-gen-clang-diags-defs^-clang-component=Lex \
 	clang/Basic/DiagnosticParseKinds.inc|-gen-clang-diags-defs^-clang-component=Parse \
 	clang/Basic/DiagnosticSemaKinds.inc|-gen-clang-diags-defs^-clang-component=Sema \
+	clang/Basic/DiagnosticSerializationKinds.inc|-gen-clang-diags-defs^-clang-component=Serialization \
 	clang/Basic/DiagnosticGroups.inc|-gen-clang-diag-groups \
 	clang/Basic/DiagnosticIndexName.inc|-gen-clang-diags-index-name
 

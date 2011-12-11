@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/11/18 15:56:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2011/12/11 14:58:51 joerg Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -22,6 +22,7 @@ SRCS+=	AdjustedReturnValueChecker.cpp \
 	CheckObjCInstMethSignature.cpp \
 	CheckSecuritySyntaxOnly.cpp \
 	CheckSizeofPointer.cpp \
+	CheckerDocumentation.cpp \
 	ChrootChecker.cpp \
 	DeadStoresChecker.cpp \
 	DebugCheckers.cpp \
@@ -36,6 +37,7 @@ SRCS+=	AdjustedReturnValueChecker.cpp \
 	MacOSXAPIChecker.cpp \
 	MallocChecker.cpp \
 	MallocOverflowSecurityChecker.cpp \
+	MallocSizeofChecker.cpp \
 	NSAutoreleasePoolChecker.cpp \
 	NSErrorChecker.cpp \
 	NoReturnFunctionChecker.cpp \
@@ -51,6 +53,7 @@ SRCS+=	AdjustedReturnValueChecker.cpp \
 	ReturnUndefChecker.cpp \
 	StackAddrEscapeChecker.cpp \
 	StreamChecker.cpp \
+	TaintTesterChecker.cpp \
 	UndefBranchChecker.cpp \
 	UndefCapturedBlockVarChecker.cpp \
 	UndefResultChecker.cpp \
