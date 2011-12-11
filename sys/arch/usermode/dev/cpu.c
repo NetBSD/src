@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.47 2011/11/27 21:38:17 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.48 2011/12/11 20:45:14 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47 2011/11/27 21:38:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2011/12/11 20:45:14 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -273,13 +273,19 @@ cpu_lwp_free2(struct lwp *l)
 		return;
 
 	if (pcb->pcb_needfree) {
+#if 0
 		free(pcb->pcb_ucp.uc_stack.ss_sp, M_TEMP);
 		pcb->pcb_ucp.uc_stack.ss_sp = NULL;
 		pcb->pcb_ucp.uc_stack.ss_size = 0;
+#endif
 
 		free(pcb->pcb_syscall_ucp.uc_stack.ss_sp, M_TEMP);
 		pcb->pcb_syscall_ucp.uc_stack.ss_sp = NULL;
 		pcb->pcb_syscall_ucp.uc_stack.ss_size = 0;
+
+		free(pcb->pcb_pagefault_ucp.uc_stack.ss_sp, M_TEMP);
+		pcb->pcb_pagefault_ucp.uc_stack.ss_sp = NULL;
+		pcb->pcb_pagefault_ucp.uc_stack.ss_size = 0;
 
 		pcb->pcb_needfree = false;
 	}
@@ -330,6 +336,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		panic("getcontext failed");
 
 	/* set up the ucontext for the userland switch */
+	/* XXX BUG TODO when is this stack space freed? */
 	pcb2->pcb_ucp.uc_stack.ss_sp = stack_ucp;
 	pcb2->pcb_ucp.uc_stack.ss_size = stacksize;
 	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
