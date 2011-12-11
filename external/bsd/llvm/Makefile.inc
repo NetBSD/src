@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.25 2011/11/18 15:56:53 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2011/12/11 14:58:50 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
 
 .include <bsd.own.mk>
 
-LLVM_REVISION=	144933
-CLANG_REVISION=	144933
+LLVM_REVISION=	146325
+CLANG_REVISION=	146325
 
 LLVM_SRCDIR:=	${.PARSEDIR}/dist/llvm
 CLANG_SRCDIR:=	${.PARSEDIR}/dist/clang

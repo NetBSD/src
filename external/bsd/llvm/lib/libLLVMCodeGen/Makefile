@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/11/18 15:56:53 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2011/12/11 14:58:50 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -94,7 +94,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	Spiller.cpp \
 	SpillPlacement.cpp \
 	SplitKit.cpp \
-	Splitter.cpp \
 	StackProtector.cpp \
 	StackSlotColoring.cpp \
 	StrongPHIElimination.cpp \
