@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.11 2011/11/23 23:07:36 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.12 2011/12/11 15:13:58 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.11 2011/11/23 23:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.12 2011/12/11 15:13:58 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -241,6 +241,7 @@ struct hdaudio_widget {
 	} w_p;
 	struct {
 		uint32_t		config;
+		uint32_t		biosconfig;
 		uint32_t		cap;
 		uint32_t		ctrl;
 	} w_pin;
@@ -552,6 +553,36 @@ hdafg_widget_pin_dump(struct hdafg_softc *sc)
 	}
 }
 
+static void
+hdafg_widget_setconfig(struct hdaudio_widget *w)
+{
+	struct hdafg_softc *sc = w->w_afg;
+
+	hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_SET_CONFIGURATION_DEFAULT_1, w->w_pin.config & 0xff);
+	hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_SET_CONFIGURATION_DEFAULT_2, (w->w_pin.config >> 8) & 0xff);
+	hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_SET_CONFIGURATION_DEFAULT_3, (w->w_pin.config >> 16) & 0xff);
+	hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_SET_CONFIGURATION_DEFAULT_4, (w->w_pin.config >> 24) & 0xff);
+}
+
+static void
+hdafg_widget_setbiosconfig(struct hdaudio_widget *w)
+{
+	struct hdafg_softc *sc = w->w_afg;
+
+	hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_SET_CONFIGURATION_DEFAULT_1, w->w_pin.biosconfig & 0xff);
+	hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_SET_CONFIGURATION_DEFAULT_2, (w->w_pin.biosconfig >> 8) & 0xff);
+	hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_SET_CONFIGURATION_DEFAULT_3, (w->w_pin.biosconfig >> 16) & 0xff);
+	hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_SET_CONFIGURATION_DEFAULT_4, (w->w_pin.biosconfig >> 24) & 0xff);
+}
+
 static uint32_t
 hdafg_widget_getconfig(struct hdaudio_widget *w)
 {
@@ -593,6 +624,8 @@ hdafg_widget_pin_parse(struct hdaudio_widget *w)
 
 	w->w_pin.cap = hda_get_wparam(w, PIN_CAPABILITIES);
 	w->w_pin.config = hdafg_widget_getconfig(w);
+	w->w_pin.biosconfig = hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_GET_CONFIGURATION_DEFAULT, 0);
 	w->w_pin.ctrl = hdaudio_command(sc->sc_codec, w->w_nid,
 	    CORB_GET_PIN_WIDGET_CONTROL, 0);
 
@@ -732,6 +765,7 @@ hdafg_widget_parse(struct hdaudio_widget *w)
 		break;
 	case COP_AWCAP_TYPE_PIN_COMPLEX:
 		hdafg_widget_pin_parse(w);
+		hdafg_widget_setconfig(w);
 		break;
 	}
 }
@@ -3698,6 +3732,7 @@ hdafg_detach(device_t self, int flags)
 	struct hdaudio_assoc *as = sc->sc_assocs;
 	struct hdaudio_control *ctl = sc->sc_ctls;
 	struct hdaudio_mixer *mx = sc->sc_mixers;
+	int nid;
 
 	callout_halt(&sc->sc_jack_callout, NULL);
 	callout_destroy(&sc->sc_jack_callout);
@@ -3712,6 +3747,15 @@ hdafg_detach(device_t self, int flags)
 		hdaudio_stream_disestablish(sc->sc_audiodev.ad_playback);
 	if (sc->sc_audiodev.ad_capture)
 		hdaudio_stream_disestablish(sc->sc_audiodev.ad_capture);
+
+	/* restore bios pin widget configuration */
+	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
+		w = hdafg_widget_lookup(sc, nid);		
+		if (w == NULL || w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
+			continue;
+		hdafg_widget_setbiosconfig(w);
+	}
+
 	if (w)
 		kmem_free(w, sc->sc_nwidgets * sizeof(*w));
 	if (as)
@@ -3752,14 +3796,22 @@ static bool
 hdafg_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct hdafg_softc *sc = device_private(self);
+	struct hdaudio_widget *w;
 	int nid;
 
 	hdaudio_command(sc->sc_codec, sc->sc_nid,
 	    CORB_SET_POWER_STATE, COP_POWER_STATE_D0);
 	hda_delay(100);
-	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++)
+	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
 		hdaudio_command(sc->sc_codec, nid,
 		    CORB_SET_POWER_STATE, COP_POWER_STATE_D0);
+		w = hdafg_widget_lookup(sc, nid);		
+
+		/* restore pin widget configuration */
+		if (w == NULL || w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
+			continue;
+		hdafg_widget_setconfig(w);
+	}
 	hda_delay(1000);
 
 	hdafg_commit(sc);
