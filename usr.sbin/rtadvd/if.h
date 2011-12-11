@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.8 2011/12/10 19:14:29 roy Exp $	*/
+/*	$NetBSD: if.h,v 1.9 2011/12/11 20:44:44 christos Exp $	*/
 /*	$KAME: if.h,v 1.12 2003/09/21 07:17:03 itojun Exp $	*/
 
 /*
@@ -37,8 +37,8 @@ extern size_t ifblock_size;
 extern char *ifblock;
 
 struct nd_opt_hdr;
-struct sockaddr_dl *if_nametosdl(char *);
-int if_getmtu(char *);
+struct sockaddr_dl *if_nametosdl(const char *);
+int if_getmtu(const char *);
 int if_getflags(int, int);
 int lladdropt_length(struct sockaddr_dl *);
 void lladdropt_fill(struct sockaddr_dl *, struct nd_opt_hdr *);

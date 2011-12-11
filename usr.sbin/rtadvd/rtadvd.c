@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.37 2011/12/11 15:25:52 joerg Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.38 2011/12/11 20:44:44 christos Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -133,11 +133,13 @@ struct sockaddr_in6 sin6_linklocal_allnodes = {
 	.sin6_family =	AF_INET6,
 	.sin6_addr =	IN6ADDR_LINKLOCAL_ALLNODES_INIT,
 };
+#ifdef notdef
 struct sockaddr_in6 sin6_linklocal_allrouters = {
 	.sin6_len =	sizeof(sin6_linklocal_allrouters),
 	.sin6_family =	AF_INET6,
 	.sin6_addr =	IN6ADDR_LINKLOCAL_ALLROUTERS_INIT,
 };
+#endif
 struct sockaddr_in6 sin6_sitelocal_allrouters = {
 	.sin6_len =	sizeof(sin6_sitelocal_allrouters),
 	.sin6_family =	AF_INET6,
