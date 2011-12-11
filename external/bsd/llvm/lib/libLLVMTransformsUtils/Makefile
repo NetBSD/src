@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/11/03 17:52:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/12/11 14:58:50 joerg Exp $
 
 LIB=	LLVMTransformsUtils
 
@@ -21,6 +21,7 @@ SRCS+=	AddrModeMatcher.cpp \
 	Local.cpp \
 	LoopSimplify.cpp \
 	LoopUnroll.cpp \
+	LoopUnrollRuntime.cpp \
 	LowerExpectIntrinsic.cpp \
 	LowerInvoke.cpp \
 	LowerSwitch.cpp \
