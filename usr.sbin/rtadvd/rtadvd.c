@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.36 2011/12/10 19:14:29 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.37 2011/12/11 15:25:52 joerg Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -144,9 +144,8 @@ struct sockaddr_in6 sin6_sitelocal_allrouters = {
 	.sin6_addr =	IN6ADDR_SITELOCAL_ALLROUTERS_INIT,
 };
 
-int main(int, char *[]);
 static void set_die(int);
-static void die(void);
+static void die(void) __dead;
 static void sock_open(void);
 static void rtsock_open(void);
 static void rtadvd_input(void);
