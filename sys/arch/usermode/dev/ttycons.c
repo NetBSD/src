@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.6 2011/12/09 09:27:13 reinoud Exp $ */
+/* $NetBSD: ttycons.c,v 1.7 2011/12/11 20:43:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.6 2011/12/09 09:27:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.7 2011/12/11 20:43:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -58,6 +58,8 @@ struct consdev ttycons_consdev = {
 	.cn_getc = ttycons_cngetc,
 	.cn_putc = ttycons_cnputc,
 	.cn_pollc = ttycons_cnpollc,
+	.cn_dev = NODEV,
+	.cn_pri = CN_NORMAL,
 };
 
 CFATTACH_DECL_NEW(ttycons, sizeof(ttycons_softc_t),
