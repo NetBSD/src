@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.36 2011/12/11 22:33:49 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.37 2011/12/12 16:39:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -92,6 +92,7 @@ int	thunk_swapcontext(ucontext_t *, ucontext_t *);
 int	thunk_tcgetattr(int, struct thunk_termios *);
 int	thunk_tcsetattr(int, int, const struct thunk_termios *);
 
+int	thunk_set_stdin_sigio(int);
 int	thunk_pollchar(void);
 int	thunk_getchar(void);
 void	thunk_putchar(int);

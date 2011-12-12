@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.41 2011/12/11 22:33:49 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.42 2011/12/12 16:39:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.41 2011/12/11 22:33:49 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.42 2011/12/12 16:39:16 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -318,6 +318,21 @@ thunk_tcsetattr(int fd, int action, const struct thunk_termios *tt)
 
 	thunk_to_termios(tt, &t);
 	return tcsetattr(fd, action, &t);
+}
+
+int
+thunk_set_stdin_sigio(int onoff)
+{
+	int flags;
+
+	flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+
+	if (onoff)
+		flags |= O_ASYNC;
+	else
+		flags &= ~O_ASYNC;
+
+	return fcntl(STDIN_FILENO, F_SETFL, flags);
 }
 
 int
