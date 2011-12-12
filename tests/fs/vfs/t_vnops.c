@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.29 2011/10/08 13:08:54 njoly Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.30 2011/12/12 19:11:22 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -827,6 +827,27 @@ access_simple(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+static void
+read_directory(const atf_tc_t *tc, const char *mp)
+{
+	char buf[1024];
+	int fd, res;
+	ssize_t size;
+
+	FSTEST_ENTER();
+	fd = rump_sys_open(".", O_DIRECTORY | O_RDONLY, 0777);
+	ATF_REQUIRE(fd != -1);
+
+	size = rump_sys_pread(fd, buf, sizeof(buf), 0);
+	ATF_CHECK(size != -1 || errno == EISDIR);
+	size = rump_sys_read(fd, buf, sizeof(buf));
+	ATF_CHECK(size != -1 || errno == EISDIR);
+
+	res = rump_sys_close(fd);
+	ATF_REQUIRE(res != -1);
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
@@ -844,6 +865,7 @@ ATF_TC_FSAPPLY(attrs, "check setting attributes works");
 ATF_TC_FSAPPLY(fcntl_lock, "check fcntl F_SETLK");
 ATF_TC_FSAPPLY(fcntl_getlock_pids,"fcntl F_GETLK w/ many procs, PR kern/44494");
 ATF_TC_FSAPPLY(access_simple, "access(2)");
+ATF_TC_FSAPPLY(read_directory, "read(2) on directories");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -865,6 +887,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(fcntl_lock);
 	ATF_TP_FSAPPLY(fcntl_getlock_pids);
 	ATF_TP_FSAPPLY(access_simple);
+	ATF_TP_FSAPPLY(read_directory);
 
 	return atf_no_error();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.103 2011/09/27 14:24:52 mbalmer Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.104 2011/12/12 19:11:22 njoly Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.103 2011/09/27 14:24:52 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.104 2011/12/12 19:11:22 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1283,6 +1283,9 @@ rump_vop_read(void *v)
 	const int advice = IO_ADV_DECODE(ap->a_ioflag);
 	off_t chunk;
 	int error = 0;
+
+	if (vp->v_type == VDIR)
+		return EISDIR;
 
 	/* et op? */
 	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST)
