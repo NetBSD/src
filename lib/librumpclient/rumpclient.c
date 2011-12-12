@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.45 2011/04/30 12:25:05 alnsn Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.46 2011/12/12 15:21:32 joerg Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.45 2011/04/30 12:25:05 alnsn Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.46 2011/12/12 15:21:32 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -745,7 +745,7 @@ __weak_alias(rumphijack_dlsym,rumpclient__dlsym);
 static pid_t init_done = 0;
 
 int
-rumpclient_init()
+rumpclient_init(void)
 {
 	char *p;
 	int error;
@@ -995,7 +995,7 @@ rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
 }
 
 pid_t
-rumpclient_fork()
+rumpclient_fork(void)
 {
 
 	return rumpclient__dofork(fork);
