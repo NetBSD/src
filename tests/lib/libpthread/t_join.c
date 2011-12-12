@@ -1,4 +1,4 @@
-/* $NetBSD: t_join.c,v 1.6 2011/08/22 00:35:07 dholland Exp $ */
+/* $NetBSD: t_join.c,v 1.7 2011/12/12 23:54:18 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_join.c,v 1.6 2011/08/22 00:35:07 dholland Exp $");
+__RCSID("$NetBSD: t_join.c,v 1.7 2011/12/12 23:54:18 joerg Exp $");
 
 #include <errno.h>
 #include <pthread.h>
@@ -101,13 +101,6 @@ threadfunc1(void *arg)
 		rv = pthread_create(&thread[i], NULL, threadfunc2, (void *)i);
 
 		ATF_REQUIRE_EQ(rv, 0);
-
-		/*
-		 * Try to join an invalid thread.
-		 */
-		rv = pthread_join(thread[i + 1], NULL);
-
-		ATF_REQUIRE_EQ(rv, ESRCH);
 
 		/*
 		 * Check join and exit condition.
