@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.14 2011/12/12 12:36:48 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.15 2011/12/12 13:14:23 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2011/12/12 12:36:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2011/12/12 13:14:23 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,10 +59,13 @@ void
 child_return(void *arg)
 {
 	lwp_t *l = arg;
-//	struct pcb *pcb = lwp_getpcb(l);
+	register_t rval[2];
+	struct pcb *pcb = lwp_getpcb(l);
 
-	/* XXX? */
-//	frame->registers[0] = 0;
+	/* return value zero */
+	rval[0] = 0;
+	rval[1] = 0;
+	md_syscall_set_returnargs(l, &pcb->pcb_userret_ucp, 0, rval);
 
 	aprint_debug("child return! lwp %p\n", l);
 	userret(l);
@@ -73,8 +76,8 @@ extern const char *const syscallnames[];
 
 static void syscall_args_print(lwp_t *l, int code, int nargs, int argsize,
 	register_t *args);
-static void syscall_retvals_print(int code, int nargs, register_t *args,
-	int error, register_t *rval);
+static void syscall_retvals_print(lwp_t *l, lwp_t *clwp,
+	int code, int nargs, register_t *args, int error, register_t *rval);
 
 
 void
@@ -129,7 +132,7 @@ syscall(void)
 	if (!error) 
 		error = (*callp->sy_call)(l, args, rval);
 
-	syscall_retvals_print(code, nargs, args, error, rval);
+	syscall_retvals_print(l, curlwp, code, nargs, args, error, rval);
 
 //out:
 	switch (error) {
@@ -188,11 +191,12 @@ syscall_args_print(lwp_t *l, int code, int nargs, int argsize, register_t *args)
 
 
 static void
-syscall_retvals_print(int code, int nargs, register_t *args, int error, register_t *rval)
+syscall_retvals_print(lwp_t *l, lwp_t *clwp, int code, int nargs, register_t *args, int error, register_t *rval)
 {
 //return;
 	if (code != 4)
-		printf("=> %s: %d, (%"PRIx32", %"PRIx32")\n",
-			error?"ERROR":"OK", error, (uint) (rval[0]), (uint) (rval[1]));
+		printf("=> %s%s: %d, (%"PRIx32", %"PRIx32")\n",
+			(l != clwp)?"(FORKED) ":"", error?"ERROR":"OK",
+			error, (uint) (rval[0]), (uint) (rval[1]));
 }
 
