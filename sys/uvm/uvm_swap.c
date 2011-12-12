@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.157 2011/09/02 22:25:08 dyoung Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.158 2011/12/12 19:03:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.157 2011/09/02 22:25:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.158 2011/12/12 19:03:13 mrg Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -819,7 +819,6 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	long addr;
 	vmem_addr_t result;
 	struct vattr va;
-	const struct bdevsw *bdev;
 	dev_t dev;
 	UVMHIST_FUNC("swap_on"); UVMHIST_CALLED(pdhist);
 
@@ -858,9 +857,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	 */
 	switch (vp->v_type) {
 	case VBLK:
-		bdev = bdevsw_lookup(dev);
-		if (bdev == NULL || bdev->d_psize == NULL ||
-		    (nblocks = (*bdev->d_psize)(dev)) == -1) {
+		if ((nblocks = bdev_size(dev)) == -1) {
 			error = ENXIO;
 			goto bad;
 		}
