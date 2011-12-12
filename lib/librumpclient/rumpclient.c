@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.46 2011/12/12 15:21:32 joerg Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.47 2011/12/12 16:53:53 joerg Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.46 2011/12/12 15:21:32 joerg Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.47 2011/12/12 16:53:53 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -733,7 +733,7 @@ doinit(void)
 }
 
 void *rumpclient__dlsym(void *, const char *);
-void *rumphijack_dlsym(void *, const char *);
+void *rumphijack_dlsym(void *, const char *) __attribute__((__weak__));
 void *
 rumpclient__dlsym(void *handle, const char *symbol)
 {
