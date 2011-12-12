@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2011/06/12 03:35:40 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2011/12/12 19:03:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2011/06/12 03:35:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2011/12/12 19:03:09 mrg Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -388,19 +388,11 @@ long	dumplo = 0;		/* blocks */
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		return;
-	}
-	if (bdev->d_psize == NULL)
-		return;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 

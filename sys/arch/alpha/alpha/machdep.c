@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.335 2011/06/12 03:35:37 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.336 2011/12/12 19:03:07 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335 2011/06/12 03:35:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.336 2011/12/12 19:03:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1165,19 +1165,11 @@ cpu_dump(void)
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		goto bad;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		goto bad;
-	}
-	if (bdev->d_psize == NULL)
-		goto bad;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 
@@ -1241,7 +1233,7 @@ dumpsys(void)
 	printf("\ndumping to dev %u,%u offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");

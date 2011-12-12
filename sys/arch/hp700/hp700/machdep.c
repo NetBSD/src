@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 2011/12/05 15:04:27 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 2011/12/12 19:03:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2011/12/05 15:04:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2011/12/12 19:03:09 mrg Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1809,7 +1809,7 @@ dumpsys(void)
 	printf("\ndumping to dev %u,%u offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
