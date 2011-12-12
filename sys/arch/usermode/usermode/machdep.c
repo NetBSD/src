@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.33 2011/11/27 21:38:17 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.34 2011/12/12 19:57:12 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -32,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2011/11/27 21:38:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2011/12/12 19:57:12 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -250,14 +250,14 @@ md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp,
 	register_t *reg = (register_t *) &ucp->uc_mcontext;
 
 	reg[16] &= ~PSL_C;		/* EFL */
-	if (error) {
+	if (error > 0) {
 		rval[0] = error;
 		reg[16] |= PSL_C;	/* EFL */
 	}
 
 	/* set return parameters */
 	reg[11]	= rval[0];		/* EAX */
-	if (!error)
+	if (error == 0)
 		reg[ 9] = rval[1];	/* EDX */
 
 	//dump_regs(reg);
