@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.16 2011/12/12 15:05:36 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.17 2011/12/12 19:59:21 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2011/12/12 15:05:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.17 2011/12/12 19:59:21 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -159,7 +159,7 @@ syscall_args_print(lwp_t *l, int code, int nargs, int argsize, register_t *args)
 {
 	char **argv, **envp;
 
-//return;
+return;
 	if (code != 4) {
 		printf("lwp %p, code %3d, nargs %d, argsize %3d\t%s(", 
 			l, code, nargs, argsize, syscallnames[code]);
@@ -217,10 +217,21 @@ syscall_args_print(lwp_t *l, int code, int nargs, int argsize, register_t *args)
 static void
 syscall_retvals_print(lwp_t *l, lwp_t *clwp, int code, int nargs, register_t *args, int error, register_t *rval)
 {
-//return;
+	char const *errstr;
+
+return;
+	switch (error) {
+	case EJUSTRETURN:
+		errstr = "EJUSTRETURN";
+		break;
+	case EAGAIN:
+		errstr = "EGAIN";
+		break;
+	default:
+		errstr = "OK";
+	}
 	if (code != 4)
-		printf("=> %s%s: %d, (%"PRIx32", %"PRIx32")\n",
-			(l != clwp)?"(FORKED) ":"", error?"ERROR":"OK",
-			error, (uint) (rval[0]), (uint) (rval[1]));
+		printf("=> %s: %d, (%"PRIx32", %"PRIx32")\n",
+			errstr, error, (uint) (rval[0]), (uint) (rval[1]));
 }
 
