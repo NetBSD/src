@@ -1,4 +1,4 @@
-/*	$NetBSD: t_select.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/*	$NetBSD: t_select.c,v 1.2 2011/12/12 10:56:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ ATF_TC_BODY(pselect_timeout, tc)
 	case -1:
 		err(1, "fork");
 	default:
-		usleep(5000);
+		sleep(1);
 		switch (waitpid(pid, &status, WNOHANG)) {
 		case -1:
 			err(1, "wait");
