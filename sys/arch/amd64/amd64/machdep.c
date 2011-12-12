@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.172 2011/12/04 16:24:13 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.173 2011/12/12 19:03:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 2011/12/04 16:24:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 2011/12/12 19:03:08 mrg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1226,7 +1226,7 @@ dodumpsys(void)
 	    (unsigned long long)major(dumpdev),
 	    (unsigned long long)minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -1323,19 +1323,11 @@ failed:
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		goto bad;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		goto bad;
-	}
-	if (bdev->d_psize == NULL)
-		goto bad;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.182 2011/07/03 02:18:21 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.183 2011/12/12 19:03:12 mrg Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2011/07/03 02:18:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183 2011/12/12 19:03:12 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -227,20 +227,15 @@ long	dumplo = 0;
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
-	int		nblks;
+	int	nblks;
 
 	/*
 	 * XXX include the final RAM page which is not included in physmem.
 	 */
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		return;
-	dumpsize = physmem + 1;
-	if (bdev->d_psize != NULL) {
-		nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
+	if (nblks > 0) {
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
