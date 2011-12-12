@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.10 2011/12/12 16:39:16 jmcneill Exp $ */
+/* $NetBSD: ttycons.c,v 1.11 2011/12/12 17:07:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.10 2011/12/12 16:39:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.11 2011/12/12 17:07:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -52,6 +52,7 @@ struct ttycons_softc {
 	device_t	sc_dev;
 	struct tty	*sc_tty;
 	void		*sc_rd_sih;
+	void		*sc_ctrlc_sih;
 };
 
 dev_type_cngetc(ttycons_cngetc);
@@ -100,6 +101,9 @@ static int	ttycons_param(struct tty *, struct termios *);
 static void	ttycons_intr(int);
 static void	ttycons_softintr(void *);
 
+static void	ttycons_ctrlc(int);
+static void	ttycons_softctrlc(void *);
+
 static int
 ttycons_match(device_t parent, cfdata_t match, void *opaque)
 {
@@ -133,9 +137,15 @@ ttycons_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_rd_sih = softint_establish(SOFTINT_SERIAL,
 	    ttycons_softintr, sc);
 	if (sc->sc_rd_sih == NULL)
-		panic("couldn't establish ttycons softint handler\n");
+		panic("couldn't establish ttycons intr handler\n");
+
+	sc->sc_ctrlc_sih = softint_establish(SOFTINT_SERIAL,
+	    ttycons_softctrlc, sc);
+	if (sc->sc_ctrlc_sih == NULL)
+		panic("couldn't establish ttycons ctrlc handler\n");
 
 	thunk_signal(SIGIO, ttycons_intr);
+	thunk_signal(SIGINT, ttycons_ctrlc);
 	if (thunk_set_stdin_sigio(true) != 0)
 		panic("couldn't enable stdin async mode");
 }
@@ -357,4 +367,29 @@ ttycons_softintr(void *priv)
 		cn_check_magic(t->t_dev, ch, ttycons_cnm_state);
 		t->t_linesw->l_rint(ch, t);
 	}
+}
+
+static void
+ttycons_ctrlc(int sig)
+{
+	struct ttycons_softc *sc;
+
+	curcpu()->ci_idepth++;
+	sc = device_lookup_private(&ttycons_cd, minor(cn_tab->cn_dev));
+	if (sc) {
+		spl_intr(IPL_SERIAL, softint_schedule, sc->sc_ctrlc_sih);
+	}
+	curcpu()->ci_idepth--;
+
+}
+
+static void
+ttycons_softctrlc(void *priv)
+{
+	struct ttycons_softc *sc = priv;
+	struct tty *t = sc->sc_tty;
+	unsigned char ch = 3;	/* ETX */
+
+	cn_check_magic(t->t_dev, ch, ttycons_cnm_state);
+	t->t_linesw->l_rint(ch, t);
 }
