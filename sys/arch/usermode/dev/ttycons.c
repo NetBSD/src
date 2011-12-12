@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.9 2011/12/12 16:06:15 jmcneill Exp $ */
+/* $NetBSD: ttycons.c,v 1.10 2011/12/12 16:39:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.9 2011/12/12 16:06:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.10 2011/12/12 16:39:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -136,6 +136,8 @@ ttycons_attach(device_t parent, device_t self, void *opaque)
 		panic("couldn't establish ttycons softint handler\n");
 
 	thunk_signal(SIGIO, ttycons_intr);
+	if (thunk_set_stdin_sigio(true) != 0)
+		panic("couldn't enable stdin async mode");
 }
 
 void
