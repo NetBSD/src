@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.13 2011/12/11 20:33:52 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.14 2011/12/12 12:36:48 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2011/12/11 20:33:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2011/12/12 12:36:48 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,7 +71,7 @@ child_return(void *arg)
 
 extern const char *const syscallnames[];
 
-static void syscall_args_print(int code, int nargs, int argsize,
+static void syscall_args_print(lwp_t *l, int code, int nargs, int argsize,
 	register_t *args);
 static void syscall_retvals_print(int code, int nargs, register_t *args,
 	int error, register_t *rval);
@@ -122,7 +122,7 @@ syscall(void)
 	 */
 
 	if (!error)
-		syscall_args_print(code, nargs, argsize, args);
+		syscall_args_print(l, code, nargs, argsize, args);
 
 	md_syscall_inc_pc(ucp, opcode);
 
@@ -152,11 +152,12 @@ syscall(void)
 
 
 static void
-syscall_args_print(int code, int nargs, int argsize, register_t *args)
+syscall_args_print(lwp_t *l, int code, int nargs, int argsize, register_t *args)
 {
+//return;
 	if (code != 4) {
-		printf("code %3d, nargs %d, argsize %3d\t%s(", 
-			code, nargs, argsize, syscallnames[code]);
+		printf("lwp %p, code %3d, nargs %d, argsize %3d\t%s(", 
+			l, code, nargs, argsize, syscallnames[code]);
 		switch (code) {
 		case 5:
 			printf("\"%s\", %"PRIx32", %"PRIx32"", (char *) (args[0]), (uint) args[1], (uint) args[2]);
@@ -177,10 +178,10 @@ syscall_args_print(int code, int nargs, int argsize, register_t *args)
 		}
 		printf(") ");
 	}
-#if 1
+#if 0
 	if ((code == 4)) {
-		dprintf_debug("[us] %s", (char *) args[1]);
-//		printf("[us] %s", (char *) args[1]);
+//		dprintf_debug("[us] %s", (char *) args[1]);
+		printf("[us] %s", (char *) args[1]);
 	}
 #endif
 }
@@ -189,6 +190,7 @@ syscall_args_print(int code, int nargs, int argsize, register_t *args)
 static void
 syscall_retvals_print(int code, int nargs, register_t *args, int error, register_t *rval)
 {
+//return;
 	if (code != 4)
 		printf("=> %s: %d, (%"PRIx32", %"PRIx32")\n",
 			error?"ERROR":"OK", error, (uint) (rval[0]), (uint) (rval[1]));
