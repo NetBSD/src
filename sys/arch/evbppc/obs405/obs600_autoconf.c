@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_autoconf.c,v 1.4 2011/06/20 17:44:33 matt Exp $	*/
+/*	$NetBSD: obs600_autoconf.c,v 1.5 2011/12/12 11:23:57 kiyohara Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.4 2011/06/20 17:44:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.5 2011/12/12 11:23:57 kiyohara Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -72,11 +72,6 @@ cpu_configure(void)
 	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
 
 	(void)spl0();
-
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	__asm volatile ("wrteei 1");
 }
 
 void
