@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2011/06/18 06:44:28 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2011/12/12 11:23:57 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2011/06/18 06:44:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2011/12/12 11:23:57 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -72,11 +72,6 @@ cpu_configure(void)
 		panic("configure: plb not configured");
 
 	(void)spl0();
-
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	__asm volatile ("wrteei 1");
 }
 
 /*
