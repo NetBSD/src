@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.38 2011/05/19 03:11:58 rmind Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.39 2011/12/12 19:11:21 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.38 2011/05/19 03:11:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.39 2011/12/12 19:11:21 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -378,8 +378,14 @@ sysvbfs_read(void *arg)
 	const int advice = IO_ADV_DECODE(a->a_ioflag);
 
 	DPRINTF("%s: type=%d\n", __func__, v->v_type);
-	if (v->v_type != VREG)
+	switch (v->v_type) {
+	case VREG:
+		break;
+	case VDIR:
+		return EISDIR;
+	default:
 		return EINVAL;
+	}
 
 	while (uio->uio_resid > 0) {
 		if ((sz = MIN(filesz - uio->uio_offset, uio->uio_resid)) == 0)
