@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39 2011/01/23 09:44:58 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.40 2011/12/12 19:03:09 mrg Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39 2011/01/23 09:44:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.40 2011/12/12 19:03:09 mrg Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -293,20 +293,12 @@ hp700_led_blinker(void *arg)
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	extern int dumpsize;
 	int nblks, dumpblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		goto bad;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		goto bad;
-	}
-	if (bdev->d_psize == NULL)
-		goto bad;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 	dumpblks = cpu_dumpsize();

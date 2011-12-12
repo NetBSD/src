@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.60 2011/07/31 10:00:52 kiyohara Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.61 2011/12/12 19:03:11 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.60 2011/07/31 10:00:52 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.61 2011/12/12 19:03:11 mrg Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -280,20 +280,12 @@ long dumplo = -1;			/* blocks */
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks;		/* size of dump device */
 	int skip;
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		return;
-	}
-	if (bdev->d_psize == NULL)
-		return;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 

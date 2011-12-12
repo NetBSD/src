@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.341 2011/06/12 03:35:43 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.342 2011/12/12 19:03:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.341 2011/06/12 03:35:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.342 2011/12/12 19:03:10 mrg Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -639,7 +639,6 @@ cpu_dumpconf(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	const struct bdevsw *bdev;
 	int chdrsize;	/* size of dump header */
 	int nblks;	/* size of dump area */
 	int i;
@@ -647,14 +646,7 @@ cpu_dumpconf(void)
 	if (dumpdev == NODEV)
 		return;
 
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		return;
-	}
-	if (bdev->d_psize == NULL)
-		return;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	chdrsize = cpu_dumpsize();
 
 	dumpsize = 0;
