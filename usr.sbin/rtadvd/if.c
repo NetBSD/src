@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.20 2011/12/11 20:44:44 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.21 2011/12/12 01:11:33 roy Exp $	*/
 /*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
@@ -50,13 +50,11 @@
 #include "rtadvd.h"
 #include "if.h"
 
-#define ROUNDUP(a, size) \
-	(((a) & ((size)-1)) ? (1 + ((a) | ((size)-1))) : (a))
-
-#define NEXT_SA(ap) (ap) = (struct sockaddr *) \
-	((char *)(ap) + ((ap)->sa_len ? ROUNDUP((ap)->sa_len,\
-						 sizeof(u_long)) :\
-			  			 sizeof(u_long)))
+#ifndef RT_ROUNDUP
+#define RT_ROUNDUP(a)							       \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define RT_ADVANCE(x, n) (x += RT_ROUNDUP((n)->sa_len))
+#endif
 
 struct if_msghdr **iflist;
 int iflist_init_ok;
@@ -75,7 +73,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 	for (i = 0; i < RTAX_MAX; i++) {
 		if (addrs & (1 << i)) {
 			rti_info[i] = sa;
-			NEXT_SA(sa);
+			RT_ADVANCE(sa, sa);
 		}
 		else
 			rti_info[i] = NULL;
