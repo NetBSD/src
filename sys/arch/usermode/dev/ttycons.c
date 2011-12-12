@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.8 2011/12/11 22:34:42 jmcneill Exp $ */
+/* $NetBSD: ttycons.c,v 1.9 2011/12/12 16:06:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.8 2011/12/11 22:34:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.9 2011/12/12 16:06:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -333,11 +333,13 @@ ttycons_intr(int sig)
 {
 	struct ttycons_softc *sc;
 
+	curcpu()->ci_idepth++;
 	sc = device_lookup_private(&ttycons_cd, minor(cn_tab->cn_dev));
-	if (sc == NULL)
-		return;
+	if (sc) {
+		spl_intr(IPL_SERIAL, softint_schedule, sc->sc_rd_sih);
+	}
+	curcpu()->ci_idepth--;
 
-	softint_schedule(sc->sc_rd_sih);
 }
 
 static void
