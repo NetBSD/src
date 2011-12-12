@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.137 2011/10/31 12:50:50 yamt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.138 2011/12/12 00:06:39 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.137 2011/10/31 12:50:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.138 2011/12/12 00:06:39 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -868,7 +868,13 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 		case cmdpass(RTM_ADD, 1):
 		case cmdpass(RTM_CHANGE, 1):
 		case cmdpass(RTM_DELETE, 2):
+		case cmdpass(RTM_NEWADDR, 1):
+		case cmdpass(RTM_DELADDR, 1):
+		case cmdpass(RTM_CHGADDR, 1):
 			switch (cmd) {
+			case RTM_ADD:
+				ncmd = RTM_NEWADDR;
+				break;
 			case RTM_DELETE:
 				ncmd = RTM_DELADDR;
 				break;
@@ -876,7 +882,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 				ncmd = RTM_CHGADDR;
 				break;
 			default:
-				ncmd = RTM_NEWADDR;
+				ncmd = cmd;
 			}
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
 			info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
