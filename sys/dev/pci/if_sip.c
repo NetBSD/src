@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.151 2011/11/19 22:51:23 tls Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.152 2011/12/12 02:44:14 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.151 2011/11/19 22:51:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.152 2011/12/12 02:44:14 jakllsch Exp $");
 
 #include "rnd.h"
 
@@ -1133,7 +1133,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_seg, rseg,
 	    sizeof(struct sip_control_data), (void **)&sc->sc_control_data,
-	    BUS_DMA_COHERENT|BUS_DMA_NOCACHE)) != 0) {
+	    BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to map control data, error = %d\n",
 		    error);
 		sipcom_do_detach(self, SIP_ATTACH_ALLOC_MEM);
