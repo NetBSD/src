@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.7 2011/12/07 09:08:00 macallan Exp $	*/
+/*	$NetBSD: voyager.c,v 1.8 2011/12/13 14:41:55 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.7 2011/12/07 09:08:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.8 2011/12/13 14:41:55 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.7 2011/12/07 09:08:00 macallan Exp $")
 #include <dev/pci/voyagervar.h>
 
 #include "opt_voyager.h"
+#include "voyagerfb.h"
+#include "pwmclock.h"
 
 #ifdef VOYAGER_DEBUG
 #define DPRINTF aprint_normal
@@ -218,13 +220,18 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	vaa.vaa_tag = sc->sc_memt;
 	vaa.vaa_pc = sc->sc_pc;
 	vaa.vaa_pcitag = sc->sc_pcitag;
+#if NVOYAGERFB > 0
 	strcpy(vaa.vaa_name, "voyagerfb");
 	config_found_ia(sc->sc_dev, "voyagerbus", &vaa, voyager_print);
+#endif
+#if NPWMCLOCK > 0
 	strcpy(vaa.vaa_name, "pwmclock");
 	config_found_ia(sc->sc_dev, "voyagerbus", &vaa, voyager_print);
+#endif
+#ifdef notyet
 	strcpy(vaa.vaa_name, "vac");
 	config_found_ia(sc->sc_dev, "voyagerbus", &vaa, voyager_print);
-
+#endif
 	/* we use this mutex wether there's an i2c bus or not */
 	mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_NONE);
 
