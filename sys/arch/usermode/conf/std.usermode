@@ -1,4 +1,4 @@
-# $NetBSD: std.usermode,v 1.7 2011/11/27 20:06:26 reinoud Exp $
+# $NetBSD: std.usermode,v 1.8 2011/12/13 20:58:47 reinoud Exp $
 
 machine usermode
 include "conf/std"
@@ -11,7 +11,7 @@ options 	EXEC_SCRIPT
 options 	URKELVISOR
 
 # Defaults
-options		NKMEMPAGES=2048
+options		NKMEMPAGES=4096
 #options		NKMEMPAGES_MAX_DEFAULT=2048
 options		syscall_debug
 
