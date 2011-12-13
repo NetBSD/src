@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.75 2011/12/13 11:11:03 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.76 2011/12/13 12:29:19 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2011/12/13 11:11:03 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2011/12/13 12:29:19 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -52,7 +52,6 @@ struct pv_entry {
 	uint8_t		pv_vflags;	/* per mapping flags */
 #define PV_WIRED	0x01		/* wired mapping */
 #define PV_UNMANAGED	0x02		/* entered by pmap_kenter_ */
-#define PV_MAPPEDIN	0x04		/* is actually mapped */
 	uint8_t		pv_pflags;	/* per phys page flags */
 #define PV_REFERENCED	0x01
 #define PV_MODIFIED	0x02
@@ -66,9 +65,10 @@ struct pmap {
 	struct	pv_entry **pm_entries;
 };
 
-static struct pv_entry *pv_table;
-static struct pmap	pmap_kernel_store;
-struct pmap * const	kernel_pmap_ptr = &pmap_kernel_store;
+static struct pv_entry  *pv_table;	/* physical pages */
+static struct pv_entry **tlb;		/* current tlb mappings */
+static struct pmap	 pmap_kernel_store;
+struct pmap * const	 kernel_pmap_ptr = &pmap_kernel_store;
 
 static pmap_t active_pmap = NULL;
 
@@ -117,7 +117,7 @@ pmap_bootstrap(void)
 	struct pmap *pmap;
 	paddr_t totmem_len;
 	paddr_t fpos, file_len;
-	paddr_t pv_fpos, pm_fpos;
+	paddr_t pv_fpos, pm_fpos, tlb_fpos;
 	paddr_t wlen;
 	paddr_t user_len, barrier_len;
 	paddr_t pv_table_size;
@@ -307,6 +307,25 @@ pmap_bootstrap(void)
 	kmem_ext_cur_start += pm_entries_size;
 	fpos += pm_entries_size;
 
+	/* set up tlb space */
+	tlb = (struct pv_entry **) kmem_ext_cur_start;
+
+	tlb_fpos = fpos;
+	addr = thunk_mmap(tlb, pm_entries_size,
+		THUNK_PROT_READ | THUNK_PROT_WRITE,
+		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
+		mem_fh, tlb_fpos);
+	if (addr != (void *) tlb)
+		panic("pmap_bootstrap: can't map in tlb entries\n");
+
+	memset(tlb, 0, pm_entries_size);	/* test and clear */
+
+	dprintf_debug("kernel tlb entries initialiased correctly\n");
+
+	/* advance */
+	kmem_ext_cur_start += pm_entries_size;
+	fpos += pm_entries_size;
+
 	/* kmem used [kmem_ext_start - kmem_ext_cur_start] */
 	kmem_ext_cur_end = kmem_ext_cur_start;
 
@@ -323,6 +342,12 @@ pmap_bootstrap(void)
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 	dprintf_debug("kernel pmap entries mem added to the kernel pmap\n");
+	for (pg = 0; pg < pm_entries_size; pg += PAGE_SIZE) {
+		pa = tlb_fpos + pg;
+		va = (vaddr_t) tlb + pg;
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
+	}
+	dprintf_debug("kernel tlb entries mem added to the kernel pmap\n");
 
 	/* add file space to uvm's FREELIST */
 	/* XXX really from 0? or from fpos to have better stats */
@@ -519,8 +544,8 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 		return true;
 	}
 
-	/* if its not mapped in, we have a TLB fault */
-	if ((pv->pv_vflags & PV_MAPPEDIN) == 0) {
+	/* check the TLB, if NULL we have a TLB fault */
+	if (tlb[pv->pv_lpn] == NULL) {
 		if (pv->pv_mmap_ppl != THUNK_PROT_NONE) {
 			dprintf_debug("%s: tlb fault page lpn %"PRIiPTR"\n",
 				__func__, pv->pv_lpn);
@@ -606,9 +631,9 @@ pmap_page_activate(struct pv_entry *pv)
 		panic("pmap_page_activate: mmap failed (expected %p got %p): %d",
 		    (void *)va, addr, thunk_geterrno());
 
-	pv->pv_vflags &= ~PV_MAPPEDIN;
+	tlb[pv->pv_lpn] = NULL;
 	if (pv->pv_mmap_ppl != THUNK_PROT_NONE)
-		pv->pv_vflags |= PV_MAPPEDIN;
+		tlb[pv->pv_lpn] = pv;
 }
 
 static void
@@ -625,7 +650,8 @@ pmap_page_deactivate(struct pv_entry *pv)
 		(void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
 	if (addr != (void *) va)
 		panic("pmap_page_deactivate: mmap failed");
-	pv->pv_vflags &= ~PV_MAPPEDIN;
+
+	tlb[pv->pv_lpn] = NULL;
 }
 
 static void
