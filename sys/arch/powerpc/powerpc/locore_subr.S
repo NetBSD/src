@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.46 2011/06/21 05:14:26 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.47 2011/12/13 11:03:52 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -547,7 +547,7 @@ ENTRY(cpu_spinstart)
 	clrldi	%r0,%r0,32
 	mtmsrd	%r0
 	mtspr	SPR_ASR,%r0
-4:	
+4:
 	lis	%r5,_C_LABEL(cpu_spinstart_ack)@ha
 	addi	%r5,%r5,_C_LABEL(cpu_spinstart_ack)@l
 	stw	%r3,0(%r5)
@@ -567,7 +567,7 @@ ENTRY(cpu_spinstart)
 
 /*
  * int do_ucas_32(int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
- */	
+ */
 ENTRY(do_ucas_32)
 1:
 	lwarx	%r10,0,%r3
