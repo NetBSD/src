@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.8 2011/09/16 16:25:44 reinoud Exp $ */
+/* $NetBSD: intr.c,v 1.9 2011/12/13 12:27:06 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2011/09/16 16:25:44 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2011/12/13 12:27:06 reinoud Exp $");
 
 #include <sys/types.h>
 
@@ -74,7 +74,7 @@ spl_intr(int x, void (*func)(void *), void *arg)
 		return;
 	}
 
-	dprintf_debug("spl_intr: queue %d when %d\n", x, usermode_x);
+//	dprintf_debug("spl_intr: queue %d when %d\n", x, usermode_x);
 	spli = &spl_intrs[x][spl_intr_wr[x]];
 	spli->func = func;
 	spli->arg = arg;
@@ -114,7 +114,7 @@ spllower(int x)
 //restart:
 		for (y = usermode_x; y >= x; y--) {
 			while (spl_intr_rd[y] != spl_intr_wr[y]) {
-				dprintf_debug("spl y %d firing\n", y);
+//				dprintf_debug("spl y %d firing\n", y);
 				spli = &spl_intrs[y][spl_intr_rd[y]];
 				if (!spli->func)
 					panic("%s: spli->func is NULL for ipl %d, rd %d, wr %d\n",
