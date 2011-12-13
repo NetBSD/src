@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.74 2011/11/27 21:33:19 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.75 2011/12/13 11:11:03 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2011/11/27 21:33:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2011/12/13 11:11:03 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -519,7 +519,7 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 		return true;
 	}
 
-	/* if its not mapped in, we have a TBL fault */
+	/* if its not mapped in, we have a TLB fault */
 	if ((pv->pv_vflags & PV_MAPPEDIN) == 0) {
 		if (pv->pv_mmap_ppl != THUNK_PROT_NONE) {
 			dprintf_debug("%s: tlb fault page lpn %"PRIiPTR"\n",
