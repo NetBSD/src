@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.20 2011/11/27 21:31:48 reinoud Exp $
+# $NetBSD: GENERIC,v 1.21 2011/12/13 12:24:15 reinoud Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.20 $"
+#ident 		"GENERIC-$Revision: 1.21 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -23,7 +23,7 @@ options 	DEBUG
 #options	DDB			# missing support
 options 	DIAGNOSTIC
 options		LOCKDEBUG
-options 	DEBUG_EXEC
+#options 	DEBUG_EXEC
 options		CPU_DEBUG
 #options	UVMHIST
 #options	UVMHIST_PRINT
@@ -32,6 +32,7 @@ options 	COMPAT_BSDPTY
 options 	COMPAT_50
 
 file-system	FFS
+file-system	MFS
 file-system	FDESC
 file-system	KERNFS
 file-system	PROCFS
