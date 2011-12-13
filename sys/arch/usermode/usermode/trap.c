@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.42 2011/11/27 21:38:17 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.43 2011/12/13 17:54:01 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.42 2011/11/27 21:38:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 2011/12/13 17:54:01 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,6 @@ startlwp(void *arg)
 {
 }
 
-//static int debug_fh;
 void
 setup_signal_handlers(void)
 {
@@ -95,8 +94,6 @@ setup_signal_handlers(void)
 //	thunk_sigaddset(&sa.sa_mask, SIGALRM);
 	if (thunk_sigaction(SIGILL, &sa, NULL) == -1)
 		panic("couldn't register SIGILL handler : %d", thunk_geterrno());
-
-//	debug_fh = thunk_open("/usr/sources/debug", O_RDWR | O_TRUNC | O_CREAT, 0666);
 }
 
 
@@ -258,7 +255,6 @@ pagefault(void)
 	vaddr_t va;
 	void *onfault;
 	int kmem, lwp_errno, rv;
-static vaddr_t old_va, old_old_va = 0;
 
 	l = curlwp;
 	pcb = lwp_getpcb(l);
@@ -275,7 +271,8 @@ static vaddr_t old_va, old_old_va = 0;
 		vm_map = &vm->vm_map;
 	}
 
-dprintf_debug("pagefault : va = %p\n", (void *) va);
+	dprintf_debug("pagefault : va = %p\n", (void *) va);
+
 	/* can pmap handle it? on its own? (r/m) */
 	onfault = pcb->pcb_onfault;
 	rv = 0;
@@ -291,16 +288,6 @@ dprintf_debug("pagefault : va = %p\n", (void *) va);
 		rv = uvm_fault(vm_map, va, atype);
 		pcb->pcb_onfault = onfault;
 	}
-
-#if 0
-if (old_old_va)
-	thunk_pwrite(debug_fh, (void *) old_old_va, PAGE_SIZE, old_old_va);
-if (old_va)
-	thunk_pwrite(debug_fh, (void *) old_va, PAGE_SIZE, old_va);
-thunk_pwrite(debug_fh, (void *) va, PAGE_SIZE, va);
-#endif
-old_old_va = old_va;
-old_va = va;
 
 	if (rv) {
 		dprintf_debug("uvm_fault returned error %d\n", rv);
