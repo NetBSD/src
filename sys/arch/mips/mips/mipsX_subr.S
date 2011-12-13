@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.50 2011/12/03 01:56:55 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.51 2011/12/13 07:14:51 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -229,8 +229,12 @@
 	.set	mips64r2
 #endif
 
-#if defined(MIPS64_RMIXL) || defined(MIPS64R2_RMIXL)
+#if defined(MIPS64_RMIXL)
 	.set	arch=xlr
+#endif
+
+#if defined(MIPS64R2_RMIXL)
+	.set	arch=xlp
 #endif
 
 /*
