@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.54 2011/12/01 02:58:53 matt Exp $	*/
+/*	mips_machdep.c,v 1.205.4.1.2.1.2.54 2011/12/01 02:58:53 matt Exp	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1359,8 +1359,8 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 #ifdef MIPS64R2_RMIXL
 		if (ct->cpu_cid == MIPS_PRID_CID_RMI) {
-			mips64r2_vector_init(splsw);
-			mips_locoresw = mips64r2_locoresw;
+			mips64r2_rmixl_vector_init(splsw);
+			mips_locoresw = mips64r2_rmixl_locoresw;
 			break;
 		}
 #endif
