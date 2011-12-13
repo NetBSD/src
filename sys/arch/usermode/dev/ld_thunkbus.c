@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.22 2011/12/13 15:50:17 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.23 2011/12/13 15:53:47 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.22 2011/12/13 15:50:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.23 2011/12/13 15:53:47 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -129,7 +129,6 @@ ld_thunkbus_ldstart(struct ld_softc *ld, struct buf *bp)
 {
 	struct ld_thunkbus_softc *sc = (struct ld_thunkbus_softc *)ld;
 	struct ld_thunkbus_transfer *tt = &sc->sc_tt;
-	int error;
 
 	tt->tt_sc = sc;
 	tt->tt_bp = bp;
@@ -137,9 +136,8 @@ ld_thunkbus_ldstart(struct ld_softc *ld, struct buf *bp)
 	/* let the softint do the work */
 	sc->busy = true;
 	spl_intr(IPL_BIO, softint_schedule, sc->sc_ih);
-	error = 0;
 
-	return error == -1 ? thunk_geterrno() : 0;
+	return 0;
 }
 
 static void
