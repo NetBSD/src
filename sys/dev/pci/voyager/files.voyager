@@ -9,6 +9,7 @@ file	dev/pci/voyager/voyagerfb.c		voyagerfb needs-flag
 defflag	opt_voyagerfb.h	VOYAGERFB_DEBUG
 
 # a clock timer
+defflag opt_pwmclock.h PWMCLOCK_DEBUG
 device 	pwmclock
 attach 	pwmclock at voyagerbus
 file	dev/pci/voyager/pwmclock.c		pwmclock needs-flag

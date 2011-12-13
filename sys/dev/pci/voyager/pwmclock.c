@@ -1,4 +1,4 @@
-/*	$NetBSD: pwmclock.c,v 1.1 2011/12/13 14:39:37 macallan Exp $	*/
+/*	$NetBSD: pwmclock.c,v 1.2 2011/12/13 14:46:07 macallan Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.1 2011/12/13 14:39:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.2 2011/12/13 14:46:07 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.1 2011/12/13 14:39:37 macallan Exp $"
 #include <mips/locore.h>
 #include <mips/bonito/bonitoreg.h>
 #include <mips/bonito/bonitovar.h>
+
+#include "opt_pwmclock.h"
 
 #ifdef PWMCLOCK_DEBUG
 #define DPRINTF aprint_error
@@ -139,7 +141,7 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	initclocks_ptr = pwmclock_start;
 
 	/* ok, let's see how far the cycle counter gets between interrupts */
-	aprint_normal_dev(sc->sc_dev, "calibrating CPU timer...\n");
+	DPRINTF("calibrating CPU timer...\n");
 	for (clk = 1; clk < 8; clk++) {
 		REGVAL(LS2F_CHIPCFG0) = (REGVAL(LS2F_CHIPCFG0) & ~LS2FCFG_FREQSCALE_MASK) | clk;
 		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PWM1, sc->sc_reg);
@@ -153,9 +155,11 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 		}
 		sc->sc_scale[clk] = (acc >> 4) / 5000;
 	}
+#ifdef PWMCLOCK_DEBUG
 	for (clk = 1; clk < 8; clk++) {
 		aprint_normal_dev(sc->sc_dev, "%d/8: %d\n", clk + 1, sc->sc_scale[clk]);
 	}
+#endif
 	sc->sc_step = 7;
 	sc->sc_step_wanted = 7;
 
