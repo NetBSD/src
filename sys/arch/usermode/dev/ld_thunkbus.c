@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.21 2011/12/13 13:32:15 jmcneill Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.22 2011/12/13 15:50:17 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.21 2011/12/13 13:32:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.22 2011/12/13 15:50:17 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -64,8 +64,6 @@ struct ld_thunkbus_softc {
 
 	int		sc_fd;
 	void		*sc_ih;
-
-	uint8_t		sc_bbuf[MAXBSIZE];
 
 	struct ld_thunkbus_transfer sc_tt;
 	bool		busy;
@@ -152,7 +150,6 @@ ld_thunkbus_complete(void *arg)
 	struct ld_thunkbus_transfer *tt = &sc->sc_tt;
 	struct buf *bp = tt->tt_bp;
 	off_t offset = bp->b_rawblkno * ld->sc_secsize;
-	void *bbuf = sc->sc_bbuf;
 	size_t ret;
 
 	if (!sc->busy)
@@ -170,24 +167,9 @@ ld_thunkbus_complete(void *arg)
 
 	/* read/write the request */
 	if (bp->b_flags & B_READ) {
-		if (bp->b_flags & B_PHYS) {
-			/* read to bounce buffer and copy out */
-			ret = thunk_pread(sc->sc_fd, bbuf, bp->b_bcount, offset);
-			if (ret > 0)
-				copyout(bbuf, bp->b_data, ret);
-		} else {
-			/* just read it */
-			ret = thunk_pread(sc->sc_fd, bp->b_data, bp->b_bcount, offset);
-		}
+		ret = thunk_pread(sc->sc_fd, bp->b_data, bp->b_bcount, offset);
 	} else {
-		if (bp->b_flags & B_PHYS) {
-			/* copy in to bounce buffer and write it */
-			copyin(bp->b_data, bbuf, bp->b_bcount);
-			ret = thunk_pwrite(sc->sc_fd, bbuf, bp->b_bcount, offset);
-		} else {
-			/* just write it */
-			ret = thunk_pwrite(sc->sc_fd, bp->b_data, bp->b_bcount, offset);
-		}
+		ret = thunk_pwrite(sc->sc_fd, bp->b_data, bp->b_bcount, offset);
 	}
 
 	//if (ret == -1)
