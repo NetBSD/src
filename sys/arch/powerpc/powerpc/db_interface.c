@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.47 2011/06/20 05:59:06 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.48 2011/12/13 11:03:52 kiyohara Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.47 2011/06/20 05:59:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.48 2011/12/13 11:03:52 kiyohara Exp $");
 
 #define USERACC
 
@@ -133,7 +133,7 @@ const struct db_command db_machine_command_table[] = {
 	  "Display instruction translation storage buffer information.",
 	  NULL,NULL) },
 #endif /* PPC_BOOKE */
-	{ DDB_ADD_CMD(NULL,	NULL,			0, 
+	{ DDB_ADD_CMD(NULL,	NULL,			0,
 	  NULL,NULL,NULL) }
 };
 
@@ -476,7 +476,7 @@ db_ppc4xx_pv(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	pv = pa_to_pv(addr);
 	db_printf("pv at %p\n", pv);
 	while (pv && pv->pv_pm) {
-		db_printf("next %p va %p pmap %p\n", pv->pv_next, 
+		db_printf("next %p va %p pmap %p\n", pv->pv_next,
 			(void *)pv->pv_va, pv->pv_pm);
 		pv = pv->pv_next;
 	}
@@ -499,7 +499,7 @@ db_ppc4xx_tf(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	if (have_addr) {
 		tf = (struct trapframe *)addr;
 
-		db_printf("r0-r3:  \t%8.8lx %8.8lx %8.8lx %8.8lx\n", 
+		db_printf("r0-r3:  \t%8.8lx %8.8lx %8.8lx %8.8lx\n",
 			tf->tf_fixreg[0], tf->tf_fixreg[1],
 			tf->tf_fixreg[2], tf->tf_fixreg[3]);
 		db_printf("r4-r7:  \t%8.8lx %8.8lx %8.8lx %8.8lx\n",
@@ -567,7 +567,7 @@ db_ppc4xx_dumptlb(db_expr_t addr, bool have_addr, db_expr_t count,
 			"mtpid %4;"
 			"mtmsr %3;"
 			"sync; isync"
-			: "=&r" (tlblo), "=&r" (tlbhi), "=r" (pid), 
+			: "=&r" (tlblo), "=&r" (tlbhi), "=r" (pid),
 			"=&r" (msr), "=&r" (opid) : "r" (i));
 
 		if (strchr(modif, 'v') && !(tlbhi & TLB_VALID))

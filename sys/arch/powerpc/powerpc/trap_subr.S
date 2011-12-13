@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.71 2011/06/21 05:15:44 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.72 2011/12/13 11:03:51 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -976,7 +976,7 @@ intrleave:
 	FRAME_LEAVE(CI_TEMPSAVE)
 	RFI
 
-/* 
+/*
  * Trap handler for syscalls (EXC_SC)
  */
 /* LINTSTUB: Var: int sctrap[1], scsize[1]; */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.88 2011/06/30 00:52:59 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.89 2011/12/13 11:03:52 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -405,7 +405,7 @@ void	oea_init(void (*)(void));
 void	oea_startup(const char *);
 void	oea_dumpsys(void);
 void	oea_install_extint(void (*)(void));
-paddr_t	kvtop(void *); 
+paddr_t	kvtop(void *);
 
 extern paddr_t msgbuf_paddr;
 extern int cpu_altivec;
