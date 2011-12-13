@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.34 2011/12/12 19:57:12 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.35 2011/12/13 20:59:20 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -32,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2011/12/12 19:57:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2011/12/13 20:59:20 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -144,6 +144,16 @@ consinit(void)
 void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+#if 1
+	printf("%s: ", __func__);
+	printf("flags %d, ", (int) ksi->ksi_flags);
+	printf("to lwp %d, signo %d, code %d, errno %d\n",
+		(int) ksi->ksi_lid,
+		ksi->ksi_signo,
+		ksi->ksi_code,
+		ksi->ksi_errno);
+#endif
+
 	panic("%s not implemented", __func__);
 }
 
