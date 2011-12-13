@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.76 2011/12/13 12:29:19 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.77 2011/12/13 15:43:55 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2011/12/13 12:29:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2011/12/13 15:43:55 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -643,6 +643,9 @@ pmap_page_deactivate(struct pv_entry *pv)
 	vaddr_t va = pv->pv_lpn * PAGE_SIZE + VM_MIN_ADDRESS; /* L->V */
 	void *addr;
 
+	if (pv->pv_vflags & PV_WIRED)
+		return;
+
 	addr = thunk_mmap((void *) va, PAGE_SIZE, THUNK_PROT_NONE,
 		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
 		mem_fh, pa);
@@ -918,7 +921,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	struct pv_entry *pv;
 	intptr_t lpn;
 
-	dprintf_debug("pmap_unwire called\n'");
+	dprintf_debug("pmap_unwire called va = %p\n", (void *) va);
 	if (pmap == NULL)
 		return;
 
@@ -931,6 +934,9 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 		return;
 	pmap->pm_stats.wired_count--;
 	pv->pv_vflags &= ~PV_WIRED;
+
+	/* XXX needed? */
+	pmap_update_page(pv->pv_ppn);
 }
 
 bool
