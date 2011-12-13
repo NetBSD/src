@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.21 2011/12/09 17:23:33 reinoud Exp $ */
+/* $NetBSD: clock.c,v 1.22 2011/12/13 22:22:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2011/12/09 17:23:33 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 2011/12/13 22:22:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,7 +63,7 @@ static struct timecounter clock_timecounter = {
 	clock_getcounter,	/* get_timecount */
 	0,			/* no poll_pps */
 	~0u,			/* counter_mask */
-	0,			/* frequency */
+	1000000000ULL,		/* frequency */
 	"CLOCK_MONOTONIC",	/* name */
 	-100,			/* quality */
 	NULL,			/* prev */
@@ -117,7 +117,6 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	tcres = thunk_clock_getres_monotonic();
 	if (tcres > 0) {
 		clock_timecounter.tc_quality = 1000;
-		clock_timecounter.tc_frequency = 1000000000 / tcres;
 	}
 	tc_init(&clock_timecounter);
 }
