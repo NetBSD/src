@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.42 2011/12/12 16:39:16 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.43 2011/12/13 22:22:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.42 2011/12/12 16:39:16 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.43 2011/12/13 22:22:08 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: thunk.c,v 1.42 2011/12/12 16:39:16 jmcneill Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <string.h>
 #include <termios.h>
 #include <time.h>
 #include <ucontext.h>
@@ -211,7 +212,7 @@ thunk_getcounter(void)
 		abort();
 	}
 
-	return (unsigned int)(ts.tv_sec * 1000000000ULL + ts.tv_nsec);
+	return (unsigned int)(ts.tv_nsec % 1000000000ULL);
 }
 
 long
@@ -224,7 +225,7 @@ thunk_clock_getres_monotonic(void)
 	if (error)
 		return -1;
 
-	return res.tv_nsec;
+	return (long)(res.tv_sec * 1000000000ULL + res.tv_nsec);
 }
 
 int
