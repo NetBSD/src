@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.2 2011/11/28 08:05:07 tls Exp $ */
+/*	$NetBSD: cprng.h,v 1.3 2011/12/13 08:00:36 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 #define CPRNG_MAX_LEN	524288
 
-#ifndef _RUMPKERNEL
+#if !defined(_RUMPKERNEL) && !defined(_RUMP_NATIVE_ABI)
 /*
  * We do not want an arc4random() prototype available to anyone.
  */
