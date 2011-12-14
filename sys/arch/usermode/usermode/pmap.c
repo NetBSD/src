@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.77 2011/12/13 15:43:55 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.78 2011/12/14 12:29:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2011/12/13 15:43:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2011/12/14 12:29:59 jmcneill Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2011/12/13 15:43:55 reinoud Exp $");
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <machine/thunk.h>
+#include <machine/machdep.h>
 
 #include <uvm/uvm.h>
 
@@ -369,7 +370,8 @@ pmap_bootstrap(void)
 void
 pmap_init(void)
 {
-	/* All deferred to pmap_create, because malloc() is nice. */
+	/* ensure signal stack is setup after urkelvisor fork */
+	thunk_sigaltstack(usermode_signal_stack(), NULL);
 }
 
 /* return kernel space start and end (including growth) */
