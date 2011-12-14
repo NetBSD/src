@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.43 2011/12/13 17:54:01 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.44 2011/12/14 04:12:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 2011/12/13 17:54:01 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44 2011/12/14 04:12:22 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -313,4 +313,8 @@ pagefault(void)
 	pcb->pcb_errno = lwp_errno;
 }
 
-
+stack_t *
+usermode_signal_stack(void)
+{
+	return &sigstk;
+}
