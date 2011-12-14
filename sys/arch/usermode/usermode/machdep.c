@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.35 2011/12/13 20:59:20 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.36 2011/12/14 18:51:39 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -32,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2011/12/13 20:59:20 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2011/12/14 18:51:39 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -274,15 +274,16 @@ md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp,
 }
 
 int
-md_syscall_check_opcode(void *ptr)
+md_syscall_check_opcode(ucontext_t *ucp)
 {
-	uint16_t *p16;
+	uint32_t opcode;
+
+	md_syscall_get_opcode(ucp, &opcode);
 
 	/* undefined instruction */
-	p16 = (uint16_t *) ptr;
-	if (*p16 == 0xff0f)
+	if (opcode == 0xff0f)
 		return 1;
-	if (*p16 == 0xff0b)
+	if (opcode == 0xff0b)
 		return 1;
 
 	/* TODO int $80 and sysenter */
