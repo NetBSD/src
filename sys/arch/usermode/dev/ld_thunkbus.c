@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.23 2011/12/13 15:53:47 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.24 2011/12/14 21:22:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.23 2011/12/13 15:53:47 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.24 2011/12/14 21:22:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -108,7 +108,7 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	aprint_normal(": %s (%lld)\n", path, (long long)size);
 
 	ld->sc_flags = LDF_ENABLED;
-	ld->sc_maxxfer = blksize;
+	ld->sc_maxxfer = MAXPHYS;
 	ld->sc_secsize = 512;
 	ld->sc_secperunit = size / ld->sc_secsize;
 	ld->sc_maxqueuecnt = 1;
