@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.36 2011/12/14 18:51:39 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.37 2011/12/14 19:40:02 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -32,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2011/12/14 18:51:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2011/12/14 19:40:02 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,18 +167,20 @@ mm_md_physacc(paddr_t pa, vm_prot_t prog)
 #ifdef __i386__
 
 #if 0
-static void dump_regs(ucontext_t *ctx);
+static void dump_regs(register_t *reg);;
 
 static void
 dump_regs(register_t *reg)
 {
+	int i;
+
 	/* register dump before call */
 	const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP",
 		"EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL",
 		"UESP", "SS"};
 
 	for (i =0; i < 19; i++)
-		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
+		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], (uint32_t) reg[i]);
 }
 #endif
 
@@ -277,6 +279,12 @@ int
 md_syscall_check_opcode(ucontext_t *ucp)
 {
 	uint32_t opcode;
+#if 0
+	register_t *reg;
+
+	reg = (register_t *) &ucp->uc_mcontext;
+	dump_regs(reg);
+#endif
 
 	md_syscall_get_opcode(ucp, &opcode);
 
@@ -293,7 +301,7 @@ md_syscall_check_opcode(ucontext_t *ucp)
 void
 md_syscall_get_opcode(ucontext_t *ucp, uint32_t *opcode)
 {
-	uint *reg = (int *) &ucp->uc_mcontext;
+	register_t *reg = (register_t *) &ucp->uc_mcontext;
 //	uint8_t  *p8  = (uint8_t *) (reg[14]);
 	uint16_t *p16 = (uint16_t*) (reg[14]);
 
