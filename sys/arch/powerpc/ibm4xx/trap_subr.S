@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.18 2011/06/28 11:42:51 kiyohara Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.19 2011/12/14 12:41:59 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -81,10 +81,10 @@
 	GET_CPUINFO(rX);	\
 	lwz	rX,CI_CURPCB(rX)
 
-#define	STANDARD_PROLOG(savearea)	\
+#define	STANDARD_PROLOG(savearea)				\
 	mtsprg1	%r1;			/* save SP */ 		\
 	GET_CPUINFO(%r1);					\
-	stmw	%r28,(savearea+CPUSAVE_R28)(%r1); /* free r28-r31 */	\
+	stmw	%r28,(savearea+CPUSAVE_R28)(%r1); /* free r28-r31 */ \
 	mflr	%r28;			/* save LR */		\
 	mfcr	%r29;			/* save CR */		\
 	mfsrr0	%r30;						\
@@ -98,9 +98,9 @@
 1:
 
 #define	ACCESS_PROLOG(savearea)					\
-	mtsprg1	%r1;			/* save SP temporalily */	\
+	mtsprg1	%r1;			/* save SP temporalily */ \
 	GET_CPUINFO(%r1);					\
-	stmw	%r28,(savearea+CPUSAVE_R28)(%r1); /* free r28-r31 */	\
+	stmw	%r28,(savearea+CPUSAVE_R28)(%r1); /* free r28-r31 */ \
 	mflr	%r28;			/* save LR */		\
 	mfcr	%r29;			/* save CR */		\
 	mfdear	%r30;						\
@@ -119,7 +119,7 @@
 #define	CRITICAL_PROLOG(savearea)				\
 	mtsprg1	%r1;			/* save SP */ 		\
 	GET_CPUINFO(%r1);					\
-	stmw	%r28,(savearea+CPUSAVE_R28)(%r1); /* free r28-r31 */	\
+	stmw	%r28,(savearea+CPUSAVE_R28)(%r1); /* free r28-r31 */ \
 	mflr	%r28;			/* save LR */		\
 	mfcr	%r29;			/* save CR */		\
 	mfsrr2	%r30; /* Fake a standard trap */		\
@@ -138,7 +138,7 @@
 	.globl	_C_LABEL(name ## trap),_C_LABEL(name ## size) ;	\
 _C_LABEL(name ## trap):						\
 	STANDARD_PROLOG(CI_TEMPSAVE);				\
-	bla	s_trap  ;					\
+	bla	s_trap;						\
 _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 
 /* Access exceptions also need DEAR and ESR saved */
@@ -146,7 +146,7 @@ _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 	.globl	_C_LABEL(name ## trap),_C_LABEL(name ## size) ;	\
 _C_LABEL(name ## trap):						\
 	ACCESS_PROLOG(CI_TEMPSAVE);				\
-	bla	s_trap  ;					\
+	bla	s_trap;						\
 _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 
 /* Maybe this should call ddb.... */
@@ -154,7 +154,7 @@ _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 	.globl	_C_LABEL(name ## trap),_C_LABEL(name ## size) ;	\
 _C_LABEL(name ## trap):						\
 	CRITICAL_PROLOG(CI_TEMPSAVE);				\
-	bla	s_trap  ;					\
+	bla	s_trap;						\
 _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 
 #define	INTR_PROLOG(tempsave)					\
@@ -208,9 +208,9 @@ _C_LABEL(ddblow):
 	stmw	%r28,CI_DDBSAVE(%r1)	/* free r28-r31 */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
-	mfsrr0	%r30;
-	mfsrr1	%r31;
-	stmw	%r30,(CI_DDBSAVE+CPUSAVE_SRR0)(%r1);	/* save srr0/srr1 */
+	mfsrr0	%r30
+	mfsrr1	%r31
+	stmw	%r30,(CI_DDBSAVE+CPUSAVE_SRR0)(%r1)	/* save srr0/srr1 */
 	lis	%r1,ddbstk+INTSTK-CALLFRAMELEN@ha	/* get new SP */
 	addi	%r1,%r1,ddbstk+INTSTK-CALLFRAMELEN@l
 	bla	ddbtrap
@@ -231,9 +231,9 @@ _C_LABEL(ipkdblow):
 	stmw	%r28,CI_IPKDBSAVE(%r1)	/* free r28-r31 */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
-	mfsrr0	%r30;
-	mfsrr1	%r31;
-	stmw	%r30,(CI_IPKDBSAVE+CPUSAVE_SRR0)(%r1);	/* save srr0/srr1 */
+	mfsrr0	%r30
+	mfsrr1	%r31
+	stmw	%r30,(CI_IPKDBSAVE+CPUSAVE_SRR0)(%r1)	/* save srr0/srr1 */
 	lis	%r1,ipkdbstk+INTSTK-CALLFRAMELEN@ha	/* get new SP */
 	addi	%r1,%r1,ipkdbstk+INTSTK-CALLFRAMELEN@l
 	bla	ipkdbtrap
@@ -248,7 +248,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 
 #define	ENABLE_TRANSLATION(pidreg,tmpreg)				\
 	mfpid	pidreg;							\
-	li	tmpreg, KERNEL_PID;					\
+	li	tmpreg,KERNEL_PID;					\
 	mtpid	tmpreg;							\
 	mfmsr	tmpreg;							\
 	ori	tmpreg,tmpreg,(PSL_DR|PSL_IR)@l;			\
@@ -293,7 +293,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	stw	%r31,FRAME_SRR1(%r1)
 
 #define	FRAME_SAVE_CALLEE						\
-	stmw	%r14, FRAME_R14(%r1)
+	stmw	%r14,FRAME_R14(%r1)
 
 #define	FRAME_RESTORE							\
 	lwz	%r6,FRAME_LR(%r1);					\
@@ -366,7 +366,7 @@ intrleave_to_kernel:
 	ba	.		/* Protect against prefetch */
 
 trapleave_to_user:
-	lmw	%r13, FRAME_R13(%r1)	/* restore callee registers */
+	lmw	%r14, FRAME_R14(%r1)	/* restore callee registers */
 
 intrleave_to_user:
 /* Now restore regs: */
@@ -459,7 +459,7 @@ _C_LABEL(sctrapexit):
 	stw	%r3,FRAME_SRR1(%r1);					\
 /* interrupts are recoverable here, and enable translation */		\
 	ENABLE_TRANSLATION(%r0,%r5);					\
-	stw	%r0,FRAME_PID(%r1);					\
+	stw	%r0,FRAME_PID(%r1);
 
 	.globl	_C_LABEL(extint_call)
 extintr:
