@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.50 2011/12/13 12:25:42 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.51 2011/12/14 04:12:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.50 2011/12/13 12:25:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2011/12/14 04:12:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -302,6 +302,7 @@ cpu_lwp_trampoline(ucontext_t *ucp, void (*func)(void *), void *arg)
 
 	/* actual jump */
 	thunk_makecontext(ucp, (void (*)(void)) func, 1, arg, NULL, NULL);
+	thunk_sigaltstack(usermode_signal_stack(), NULL);
 	thunk_setcontext(ucp);
 }
 
