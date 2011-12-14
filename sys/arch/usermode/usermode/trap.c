@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.44 2011/12/14 04:12:22 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.45 2011/12/14 18:51:39 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44 2011/12/14 04:12:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45 2011/12/14 18:51:39 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -228,7 +228,7 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 	memcpy(&pcb->pcb_userret_ucp, uct, sizeof(ucontext_t));
 
 	/* if its a syscall ... */
-	if (md_syscall_check_opcode(info->si_addr)) {
+	if (md_syscall_check_opcode(uct)) {
 		/* switch to the syscall entry on return from signal */
 		memcpy(uct, &pcb->pcb_syscall_ucp, sizeof(ucontext_t));
 		return;
