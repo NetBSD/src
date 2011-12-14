@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.4 2011/11/27 21:38:17 reinoud Exp $ */
+/* $NetBSD: machdep.h,v 1.5 2011/12/14 04:12:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -40,3 +40,5 @@ void	md_syscall_dec_pc(ucontext_t *ucp, uint32_t opcode);
 void	syscall(void);
 void	pagefault(void);
 
+/* signal stack */
+stack_t *usermode_signal_stack(void);
