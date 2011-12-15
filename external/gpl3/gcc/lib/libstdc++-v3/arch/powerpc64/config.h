@@ -42,7 +42,7 @@
 /* #undef HAVE_CEILL */
 
 /* Define to 1 if you have the <complex.h> header file. */
-/* #undef HAVE_COMPLEX_H */
+#define HAVE_COMPLEX_H 1
 
 /* Define to 1 if you have the `cosf' function. */
 /* #undef HAVE_COSF */
@@ -409,7 +409,7 @@
 /* #undef HAVE_TANL */
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-/* #undef HAVE_TGMATH_H */
+#define HAVE_TGMATH_H 1
 
 /* Define to 1 if the target supports thread-local storage. */
 /* #undef HAVE_TLS */
