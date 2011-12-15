@@ -238,6 +238,42 @@ static void rmixl_wakeup_info_print(volatile rmixlfw_cpu_wakeup_info_t *);
 #endif	/* MULTIPROCESSOR */
 static void rmixl_fixup_curcpu(void);
 
+#if NCOM > 0
+static volatile uint32_t *rmixl_com0addr;
+static int
+rmixl_cngetc(dev_t dv)
+{
+	volatile uint32_t * const com0addr = rmixl_com0addr;
+
+        if ((be32toh(com0addr[com_lsr]) & LSR_RXRDY) == 0)
+		return -1;
+
+	return be32toh(com0addr[com_data]) & 0xff;
+}
+
+static void
+rmixl_cnputc(dev_t dv, int c)
+{               
+	volatile uint32_t * const com0addr = rmixl_com0addr;
+	int timo = 150000;
+
+	while ((be32toh(com0addr[com_lsr]) & LSR_TXRDY) == 0 && --timo > 0)
+		;
+
+	com0addr[com_data] = htobe32(c);
+	__asm __volatile("sync");
+			
+	while ((be32toh(com0addr[com_lsr]) & LSR_TSRE) == 0 && --timo > 0)
+		;
+}
+
+struct consdev rmixl_earlycons = {
+	.cn_putc = rmixl_cnputc,
+	.cn_getc = rmixl_cngetc,
+	.cn_pollc = nullcnpollc,
+};
+#endif
+
 /*
  * Do all the stuff that locore normally does before calling main().
  */
@@ -264,6 +300,11 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	 */
 	kernend = (void *)mips_round_page(end);
 	memset(edata, 0, (char *)kernend - edata);
+
+#if NCOM > 0
+	rmixl_com0addr = (void *)(vaddr_t)(RMIXL_IO_DEV_VBASE + comcnaddr);
+	cn_tab = &rmixl_earlycons;	/* after clearing BSS, not before */
+#endif
 
 	/*
 	 * Set up the exception vectors and CPU-specific function
