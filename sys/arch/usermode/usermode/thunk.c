@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.43 2011/12/13 22:22:08 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.44 2011/12/15 00:40:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.43 2011/12/13 22:22:08 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.44 2011/12/15 00:40:03 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: thunk.c,v 1.43 2011/12/13 22:22:08 jmcneill Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sched.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -586,3 +587,12 @@ thunk_get_vm_min_address(void)
 	return VM_MIN_ADDRESS;
 }
 
+int
+thunk_idle(void)
+{
+	sigset_t sigmask;
+
+	sigemptyset(&sigmask);
+
+	return sigsuspend(&sigmask);
+}

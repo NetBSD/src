@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.52 2011/12/14 12:29:59 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.53 2011/12/15 00:40:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2011/12/14 12:29:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2011/12/15 00:40:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -247,9 +247,7 @@ cpu_idle(void)
 	if (ci->ci_want_resched)
 		return;
 
-#if notyet
-	thunk_usleep(10000);
-#endif
+	thunk_idle();
 }
 
 void
