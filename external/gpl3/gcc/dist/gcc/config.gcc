@@ -1640,7 +1640,7 @@ m68010-*-netbsdelf* | m68k*-*-netbsdelf*)
 	case ${target} in
 	m68010*)
 		target_cpu_default="0"
-		tmake_file=m68k/t-m68kelf
+		tmake_file="m68k/t-m68kelf m68k/t-m68010-netbsd"
 		default_m68k_cpu=68010
 		;;
 	*)
