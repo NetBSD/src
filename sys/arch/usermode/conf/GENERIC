@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.22 2011/12/13 17:48:31 reinoud Exp $
+# $NetBSD: GENERIC,v 1.23 2011/12/15 01:25:41 jmcneill Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.23 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -36,6 +36,7 @@ file-system	MFS
 file-system	FDESC
 file-system	KERNFS
 file-system	PROCFS
+file-system	PTYFS
 file-system	TMPFS
 options		WAPBL
 
@@ -57,6 +58,7 @@ ld0		at mainbus?
 #wsdisplay0	at genfb?
 
 pseudo-device	loop
+pseudo-device	pty
 
 # Pull in optional local configuration
 cinclude "arch/usermode/conf/GENERIC.local"
