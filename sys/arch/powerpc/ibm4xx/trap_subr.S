@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.19 2011/12/14 12:41:59 kiyohara Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.20 2011/12/15 11:01:45 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -387,6 +387,8 @@ intrleave_to_user:
 	 * that had the mtpid code in it and branch to it and avoid
 	 * all this.  (ba foo; foo: mtpid %r31; mfsprg3 %r31; rfi;)
 	 */
+	mtsprg2	%r30
+	mtsprg3	%r31
 	mfmsr	%r30
 	li	%r31,(PSL_DR|PSL_IR)@l
 	andc	%r30,%r30,%r31
