@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.39 2011/12/15 01:04:15 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.40 2011/12/15 01:30:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -135,6 +135,8 @@ int	thunk_idle(void);
 
 char *	thunk_getenv(const char *);
 vaddr_t	thunk_get_vm_min_address(void);
+
+int	thunk_getcpuinfo(char *, int *);
 
 int	thunk_sdl_init(unsigned int, unsigned int, unsigned short);
 void *	thunk_sdl_getfb(size_t);
