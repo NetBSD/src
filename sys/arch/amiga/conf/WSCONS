@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.62 2007/10/17 19:53:14 garbled Exp $
+# $NetBSD: WSCONS,v 1.63 2011/12/15 14:25:12 phx Exp $
 
 # GENERIC with wscons(4)
 #
@@ -21,18 +21,24 @@ no grfrt0	at zbus0
 no grfrh0	at zbus0
 no grfcl*	at zbus0
 no grful0	at zbus0
-no grfcv0	at zbus0
 no grfet*	at zbus0
-no grfcv3d0	at zbus0
+#no grfcv0	at zbus0
+#no grfcv3d0	at zbus0
 
+# Disable grf(4) devices for non-wsdisplay drivers.
 no grf0		at grfcc0
 no grf1		at grfrt0
 no grf2		at grfrh0
 no grf3		at grfcl?
 no grf4		at grful0
-no grf5		at grfcv0
 no grf6		at grfet?
-no grf7		at grfcv3d0
+#no grf5	at grfcv0
+#no grf7	at grfcv3d0
+
+wsdisplay*	at grf5 console ?	# wsdisplay on top of grf (CV64)
+wsdisplay*	at grf7 console ?	# wsdisplay on top of grf (CV64/3D)
+
+# Disable ite(4) for all drivers.
 no ite0		at grf0
 no ite1		at grf1
 no ite2		at grf2

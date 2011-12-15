@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.145 2011/11/22 21:24:55 tls Exp $
+# $NetBSD: DRACO,v 1.146 2011/12/15 14:25:12 phx Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.86 2011/10/30 11:16:05 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.87 2011/11/22 21:24:56 tls Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.145 $"
+#ident 		"GENERIC-$Revision: 1.146 $"
 
 
 maxusers	8
@@ -270,9 +270,7 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 # Don't enable wskbd if you use ite.
 #
 # XXX in std.amiga: kbd0 at mainbus0
-
 #wskbd0		at kbd0 console ?
-
 
 
 
