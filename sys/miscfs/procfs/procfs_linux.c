@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.61 2011/09/04 17:32:10 jmcneill Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.62 2011/12/15 20:55:02 christos Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.61 2011/09/04 17:32:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.62 2011/12/15 20:55:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.61 2011/09/04 17:32:10 jmcneill E
 #include <sys/mount.h>
 #include <sys/conf.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -564,36 +565,39 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 	const char *fsname;
 	size_t len, mtabsz = 0;
 	struct mount *mp, *nmp;
-	struct statvfs *sfs;
-	int error = 0;
+	struct statvfs sfs;
+	int error = 0, suser;
+
+	suser = kauth_authorize_generic(curl->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL) == 0;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_busy(mp, &nmp)) {
+		if (vfs_busy(mp, &nmp))
 			continue;
-		}
 
-		sfs = &mp->mnt_stat;
+		if (dostatvfs(mp, &sfs, curl, MNT_WAIT, suser) != 0)
+			continue;
 
 		/* Linux uses different names for some filesystems */
-		fsname = sfs->f_fstypename;
+		fsname = sfs.f_fstypename;
 		if (strcmp(fsname, "procfs") == 0)
 			fsname = "proc";
 		else if (strcmp(fsname, "ext2fs") == 0)
 			fsname = "ext2";
 
 		len = snprintf(bf, LBFSZ, "%s %s %s %s%s%s%s%s%s 0 0\n",
-			sfs->f_mntfromname,
-			sfs->f_mntonname,
+			sfs.f_mntfromname,
+			sfs.f_mntonname,
 			fsname,
-			(mp->mnt_flag & MNT_RDONLY) ? "ro" : "rw",
-			(mp->mnt_flag & MNT_NOSUID) ? ",nosuid" : "",
-			(mp->mnt_flag & MNT_NOEXEC) ? ",noexec" : "",
-			(mp->mnt_flag & MNT_NODEV) ? ",nodev" : "",
-			(mp->mnt_flag & MNT_SYNCHRONOUS) ? ",sync" : "",
-			(mp->mnt_flag & MNT_NOATIME) ? ",noatime" : ""
+			(sfs.f_flag & ST_RDONLY) ? "ro" : "rw",
+			(sfs.f_flag & ST_NOSUID) ? ",nosuid" : "",
+			(sfs.f_flag & ST_NOEXEC) ? ",noexec" : "",
+			(sfs.f_flag & ST_NODEV) ? ",nodev" : "",
+			(sfs.f_flag & ST_SYNCHRONOUS) ? ",sync" : "",
+			(sfs.f_flag & ST_NOATIME) ? ",noatime" : ""
 			);
 
 		mtab = realloc(mtab, mtabsz + len, M_TEMP, M_WAITOK);
