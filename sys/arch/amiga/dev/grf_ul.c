@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.46 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.47 2011/12/15 14:25:13 phx Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -33,9 +33,10 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.46 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.47 2011/12/15 14:25:13 phx Exp $");
 
 #include "grful.h"
+#include "ite.h"
 #if NGRFUL > 0
 
 /* Graphics routines for the University of Lowell A2410 board,
@@ -529,7 +530,9 @@ grfulattach(struct device *pdp, struct device *dp, void *auxp)
 		gp->g_unit = GRF_ULOWELL_UNIT;
 		gp->g_flags = GF_ALIVE;
 		gp->g_mode = ul_mode;
+#if NITE > 0
 		gp->g_conpri = grful_cnprobe();
+#endif
 		gp->g_data = NULL;
 
 		gup->gus_isr.isr_ipl = 2;
@@ -539,7 +542,9 @@ grfulattach(struct device *pdp, struct device *dp, void *auxp)
 
 		(void)ul_load_code(gp);
 		(void)ul_load_mon(gp, current_mon);
+#if NITE > 0
 		grful_iteinit(gp);
+#endif
 	}
 	if (dp != NULL)
 		printf("\n");
