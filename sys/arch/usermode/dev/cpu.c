@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.53 2011/12/15 00:40:03 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.54 2011/12/15 02:09:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2011/12/15 00:40:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2011/12/15 02:09:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2011/12/15 00:40:03 jmcneill Exp $");
 #include <sys/cpu.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
+#include <sys/kmem.h>
 
 #include <dev/cons.h>
 
@@ -78,7 +79,7 @@ typedef struct cpu_softc {
 } cpu_softc_t;
 
 static struct pcb lwp0pcb;
-static void *msgbuf;
+static void *um_msgbuf;
 
 CFATTACH_DECL_NEW(cpu, sizeof(cpu_softc_t), cpu_match, cpu_attach, NULL, NULL);
 
@@ -374,13 +375,13 @@ cpu_initclocks(void)
 void
 cpu_startup(void)
 {
-	size_t stacksize;
+	size_t stacksize, msgbufsize = 32 * 1024;
 	void *stack_pagefault_ucp;
 
-	msgbuf = thunk_malloc(PAGE_SIZE);
-	if (msgbuf == NULL)
+	um_msgbuf = kmem_zalloc(msgbufsize, KM_SLEEP);
+	if (um_msgbuf == NULL)
 		panic("couldn't allocate msgbuf");
-	initmsgbuf(msgbuf, PAGE_SIZE);
+	initmsgbuf(um_msgbuf, msgbufsize);
 
 	banner();
 
