@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.92 2011/04/24 16:26:52 rmind Exp $ */
+/*	$NetBSD: ite.c,v 1.93 2011/12/15 14:25:13 phx Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.92 2011/04/24 16:26:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.93 2011/12/15 14:25:13 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -253,11 +253,6 @@ getitesp(dev_t dev)
 void
 itecnprobe(struct consdev *cd)
 {
-	/*
-	 * bring graphics layer up.
-	 */
-	config_console();
-
 	/*
 	 * return priority of the best ite (already picked from attach)
 	 * or CN_DEAD.

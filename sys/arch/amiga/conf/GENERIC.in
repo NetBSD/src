@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.87 2011/11/22 21:24:56 tls Exp $
+# $NetBSD: GENERIC.in,v 1.88 2011/12/15 14:25:12 phx Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,6 @@ m4_divert(-1)
 # make DRACO extracts the DRACO configuration file.
 # make GENERIC extracts the GENERIC configuration file.
 # make INSTALL extracts the INSTALL configuration file.
-# make WSCONS extracts the WSCONS configuration file.
 #
 # commit them, too.
 #
@@ -46,10 +45,6 @@ m4_ifelse(M4_Target, `AMIGA', `', `m4_define(`DRACO_CONFIGURATION', `')')
 #
 m4_ifelse(M4_Target, `DRACO', `', `m4_define(`AMIGA_CONFIGURATION', `')')
 
-# If building WSCONS, uncomment various options
-#
-m4_ifdef(`WSCONS_CONFIGURATION', `m4_define(`WSOFF', `wson')', `m4_define(`WSOFF', `wsoff')')
-
 
 m4_divert(0)m4_dnl
 
@@ -57,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.87 $"
+#ident 		"GENERIC-$Revision: 1.88 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -326,22 +321,13 @@ m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 # wscons aware interface to amiga custom chips.
 # If you enable it enable also wskbd.
 #
-m4_ifdef(`WSCONS_CONFIGURATION', `m4_dnl
-amidisplaycc0	at mainbus0		# wscons interface to custom chips
-wsdisplay0	at amidisplaycc0 console ?
-options 	WSEMUL_VT100
-options 	FONT_VT220L8x10
-options 	FONT_VT220ISO8x16
-', `
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
 #options 	WSEMUL_VT100
 #options 	FONT_VT220L8x10
 #options	FONT_VT220ISO8x16
 ')m4_dnl
-')m4_dnl
 
-m4_ifdef(`WSCONS_CONFIGURATION', `', `m4_dnl
 m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
@@ -376,7 +362,9 @@ ite4		at grf4			# terminal emulators for grfs
 ite5		at grf5			# terminal emulators for grfs
 ite6		at grf6			# terminal emulators for grfs
 ite7		at grf7			# terminal emulators for grfs
-')m4_dnl
+
+#wsdisplay*	at grf5 console ?	# wsdisplay on top of grf (CV64)
+#wsdisplay*	at grf7 console ?	# wsdisplay on top of grf (CV64/3D)
 ')m4_dnl
 
 msc0		at zbus0		# A2232 MSC multiport serial.
@@ -408,11 +396,7 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 # Don't enable wskbd if you use ite.
 #
 # XXX in std.amiga: kbd0 at mainbus0
-m4_ifdef(`WSCONS_CONFIGURATION', `m4_dnl
-wskbd0		at kbd0 console ?
-', `
 #wskbd0		at kbd0 console ?
-')m4_dnl
 
 
 m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
@@ -433,11 +417,7 @@ audio*		at aucc?
 ')m4_dnl
 ')m4_dnl
 
-m4_ifdef(`WSCONS_CONFIGURATION', `m4_dnl
-wsmouse*	at ms?
-', `
 #wsmouse*	at ms?
-')m4_dnl
 
 m4_ifdef(`DRACO_CONFIGURATION', `m4_dnl
 #
@@ -656,13 +636,8 @@ pseudo-device	pty			# pseudo-terminals
 ')m4_dnl
 pseudo-device	clockctl		# user control of clock subsystem
 
-m4_ifdef(`WSCONS_CONFIGURATION', `m4_dnl
-pseudo-device	wsfont			# wsfont(4) dynamic font loading support
-pseudo-device	wsmux			# mouse & keyboard multiplexor
-', `m4_dnl
 #pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
-')m4_dnl
 
 pseudo-device	vnd			# vnode pseudo-disks
 #options 	VND_COMPRESSION		# compressed vnd(4)
