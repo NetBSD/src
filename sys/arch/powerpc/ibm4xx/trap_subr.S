@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.20 2011/12/15 11:01:45 kiyohara Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.21 2011/12/15 11:13:25 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -358,10 +358,23 @@ trapleave_to_kernel:
 
 intrleave_to_kernel:
 	FRAME_RESTORE		/* old SP is now in sprg1 */
+
+	mtsprg2	%r30
+	mtsprg3	%r31
+	mfmsr	%r30
+	li	%r31,(PSL_DR|PSL_IR)@l
+	andc	%r30,%r30,%r31
+	lwz	%r31,FRAME_PID(%r1)
+	TRAP_IF_ZERO(%r31)
 	/*
 	 * Now that we are done with the trapframe, we can load the original SP
 	 */
 	mfsprg1	%r1
+	mtmsr	%r30	/* disable translation */
+	isync
+	mtpid	%r31
+	mfsprg3	%r31
+	mfsprg2	%r30
 	rfi
 	ba	.		/* Protect against prefetch */
 
