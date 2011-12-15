@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.44 2011/12/15 00:40:03 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.45 2011/12/15 01:04:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.44 2011/12/15 00:40:03 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.45 2011/12/15 01:04:14 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -408,6 +408,12 @@ ssize_t
 thunk_pwrite(int d, const void *buf, size_t nbytes, off_t offset)
 {
 	return pwrite(d, buf, nbytes, offset);
+}
+
+ssize_t
+thunk_write(int d, const void *buf, size_t nbytes)
+{
+	return write(d, buf, nbytes);
 }
 
 int
