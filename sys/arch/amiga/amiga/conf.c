@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.72 2005/12/11 12:16:26 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.73 2011/12/15 14:25:12 phx Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.72 2005/12/11 12:16:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.73 2011/12/15 14:25:12 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.72 2005/12/11 12:16:26 christos Exp $");
 #include "ser.h"
 #include "ite.h"
 #include "amidisplaycc.h"
+#include "wsdisplay.h"
 
 /*
  * This entire table could be autoconfig()ed but that would mean that
@@ -50,14 +51,18 @@ __KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.72 2005/12/11 12:16:26 christos Exp $");
  * known algorithm unless we see a pressing need otherwise.
  */
 cons_decl(ser);
-cons_decl(ite);
+cons_decl(grf);
 cons_decl(amidisplaycc_);
+cons_decl(ite);
 
 struct	consdev constab[] = {
 #if NSER > 0
 	cons_init(ser),
 #endif
-#if NAMIDISPLAYCC>0
+#if NWSDISPLAY > 0
+	{ dev_init(grf,cnprobe), dev_init(grf,cninit) },
+#endif
+#if NAMIDISPLAYCC > 0
 	cons_init(amidisplaycc_),
 #endif
 #if NITE > 0

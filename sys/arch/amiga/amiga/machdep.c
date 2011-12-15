@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.236 2011/12/12 19:03:08 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.237 2011/12/15 14:25:12 phx Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2011/12/12 19:03:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2011/12/15 14:25:12 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2011/12/12 19:03:08 mrg Exp $");
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
+#include <amiga/amiga/device.h>
 
 #include "fd.h"
 #include "ser.h"
@@ -182,6 +183,10 @@ consinit(void)
 	} else
 #endif
 		custom_chips_init();
+
+	/* preconfigure graphics cards */
+	config_console();
+
 	/*
 	 * Initialize the console before we print anything out.
 	 */
