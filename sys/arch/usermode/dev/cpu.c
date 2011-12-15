@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.54 2011/12/15 02:09:15 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.55 2011/12/15 03:42:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2011/12/15 02:09:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2011/12/15 03:42:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -364,12 +364,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_initclocks(void)
 {
-	struct thunk_itimerval itimer;
+	extern timer_t clock_timerid;
 
-	itimer.it_interval.tv_sec = 0;
-	itimer.it_interval.tv_usec = 1000000 / HZ;
-	itimer.it_value = itimer.it_interval;
-	thunk_setitimer(ITIMER_REAL, &itimer, NULL);
+	thunk_timer_start(clock_timerid, HZ);
 }
 
 void

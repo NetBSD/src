@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.46 2011/12/15 01:30:04 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.47 2011/12/15 03:42:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.46 2011/12/15 01:30:04 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.47 2011/12/15 03:42:33 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -227,6 +227,39 @@ thunk_clock_getres_monotonic(void)
 		return -1;
 
 	return (long)(res.tv_sec * 1000000000ULL + res.tv_nsec);
+}
+
+timer_t
+thunk_timer_attach(void)
+{
+	timer_t timerid;
+	int error;
+
+	error = timer_create(CLOCK_MONOTONIC, NULL, &timerid);
+	if (error) {
+		perror("timer_create CLOCK_MONOTONIC");
+		abort();
+	}
+
+	return timerid;
+}
+
+int
+thunk_timer_start(timer_t timerid, int freq)
+{
+	struct itimerspec tim;
+
+	tim.it_interval.tv_sec = 0;
+	tim.it_interval.tv_nsec = 1000000000 / freq;
+	tim.it_value = tim.it_interval;
+
+	return timer_settime(timerid, TIMER_RELTIME, &tim, NULL);
+}
+
+int
+thunk_timer_getoverrun(timer_t timerid)
+{
+	return timer_getoverrun(timerid);
 }
 
 int

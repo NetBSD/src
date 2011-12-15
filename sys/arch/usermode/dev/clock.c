@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.22 2011/12/13 22:22:08 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.23 2011/12/15 03:42:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_hz.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 2011/12/13 22:22:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 2011/12/15 03:42:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -54,10 +56,10 @@ static unsigned int clock_getcounter(struct timecounter *);
 
 static int	clock_todr_gettime(struct todr_chip_handle *, struct timeval *);
 
-typedef struct clock_softc {
+struct clock_softc {
 	device_t		sc_dev;
 	struct todr_chip_handle	sc_todr;
-} clock_softc_t;
+};
 
 static struct timecounter clock_timecounter = {
 	clock_getcounter,	/* get_timecount */
@@ -70,11 +72,9 @@ static struct timecounter clock_timecounter = {
 	NULL,			/* next */
 };
 
-static struct clock_softc *clock_sc;
+timer_t clock_timerid;
 
-
-
-CFATTACH_DECL_NEW(clock, sizeof(clock_softc_t),
+CFATTACH_DECL_NEW(clock, sizeof(struct clock_softc),
     clock_match, clock_attach, NULL, NULL);
 
 static int
@@ -92,14 +92,10 @@ static void
 clock_attach(device_t parent, device_t self, void *opaque)
 {
 	static struct sigaction sa;
-	clock_softc_t *sc = device_private(self);
-	long tcres;
+	struct clock_softc *sc = device_private(self);
 
 	aprint_naive("\n");
 	aprint_normal("\n");
-
-	KASSERT(clock_sc == NULL);
-	clock_sc = sc;
 
 	sc->sc_dev = self;
 
@@ -109,25 +105,33 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	memset(&sa, 0, sizeof(sa));
 	thunk_sigemptyset(&sa.sa_mask);
 	sa.sa_sigaction = clock_signal;
-	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
+	sa.sa_flags = SA_RESTART | SA_ONSTACK;
 	if (thunk_sigaction(SIGALRM, &sa, NULL) == -1)
 		panic("couldn't register SIGALRM handler : %d",
 		    thunk_geterrno());
 
-	tcres = thunk_clock_getres_monotonic();
-	if (tcres > 0) {
-		clock_timecounter.tc_quality = 1000;
-	}
+	clock_timerid = thunk_timer_attach();
+
+	clock_timecounter.tc_quality = 1000;
 	tc_init(&clock_timecounter);
+}
+
+static void
+clock_intr(void *priv)
+{
+	struct clockframe cf;
+	int nticks = thunk_timer_getoverrun(clock_timerid) + 1;
+
+	while (nticks-- > 0) {
+		hardclock(&cf);
+	};
 }
 
 static void
 clock(void)
 {
-	struct clockframe cf;
-
 	curcpu()->ci_idepth++;
-	spl_intr(IPL_SOFTCLOCK, (void (*)(void *)) hardclock, &cf);
+	spl_intr(IPL_SOFTCLOCK, clock_intr, NULL);
 	curcpu()->ci_idepth--;
 }
 
