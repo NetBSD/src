@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.166 2011/08/30 14:22:22 bouyer Exp $	*/
+/*	$NetBSD: bpf.c,v 1.167 2011/12/15 22:20:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.166 2011/08/30 14:22:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.167 2011/12/15 22:20:26 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -681,8 +681,8 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 	if (mc != NULL) {
 		if (error == 0)
 			(*ifp->if_input)(ifp, mc);
-	} else
 		m_freem(mc);
+	}
 	splx(s);
 	KERNEL_UNLOCK_ONE(NULL);
 	/*
