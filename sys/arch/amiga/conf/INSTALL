@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.97 2011/11/22 21:24:57 tls Exp $
+# $NetBSD: INSTALL,v 1.98 2011/12/15 14:25:12 phx Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.86 2011/10/30 11:16:05 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.87 2011/11/22 21:24:56 tls Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.97 $"
+#ident 		"GENERIC-$Revision: 1.98 $"
 
 makeoptions	COPTS="-Os"
 
@@ -219,7 +219,6 @@ options        KFONT_CONS_ISO8859_1
 # wscons aware interface to amiga custom chips.
 # If you enable it enable also wskbd.
 #
-
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
 #options 	WSEMUL_VT100
@@ -252,6 +251,9 @@ ite5		at grf5			# terminal emulators for grfs
 ite6		at grf6			# terminal emulators for grfs
 ite7		at grf7			# terminal emulators for grfs
 
+#wsdisplay*	at grf5 console ?	# wsdisplay on top of grf (CV64)
+#wsdisplay*	at grf7 console ?	# wsdisplay on top of grf (CV64/3D)
+
 msc0		at zbus0		# A2232 MSC multiport serial.
 mfc0		at zbus0		# MultiFaceCard I/O board
 mfcs0		at mfc0 unit 0		# MFC serial
@@ -281,7 +283,6 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 # Don't enable wskbd if you use ite.
 #
 # XXX in std.amiga: kbd0 at mainbus0
-
 #wskbd0		at kbd0 console ?
 
 
@@ -296,7 +297,6 @@ fdc0		at mainbus0		# Amiga FDC
 fd*		at fdc0 unit ?		# floppy disks on the later
 a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
-
 
 #wsmouse*	at ms?
 

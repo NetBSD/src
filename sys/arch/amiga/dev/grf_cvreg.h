@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.17 2011/05/21 14:49:35 christos Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.18 2011/12/15 14:25:13 phx Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -37,7 +37,7 @@
 #include <machine/cpu.h>
 
 /*
- * This is derived from ciruss driver source
+ * This is derived from Cirrus driver source
  */
 
 /* Extension to grfvideo_mode to support text modes.
@@ -56,10 +56,6 @@ struct grfcvtext_mode {
 	unsigned short	fdstart;
 	unsigned short	fdend;
 };
-
-/* maximum console size */
-#define MAXROWS 200
-#define MAXCOLS 200
 
 
 /* read VGA register */
@@ -443,4 +439,4 @@ RGfx(ba, idx)
 }
 #endif
 
-#endif /* _GRF_RHREG_H */
+#endif /* _GRF_CVREG_H */

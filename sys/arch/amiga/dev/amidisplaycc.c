@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.23 2011/07/17 20:54:36 joerg Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.24 2011/12/15 14:25:13 phx Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.23 2011/07/17 20:54:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.24 2011/12/15 14:25:13 phx Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -377,8 +377,6 @@ amidisplaycc_cninit(struct consdev  * cd)
 	/*
 	 * This will do the basic stuff we also need.
 	 */
-	config_console();
-
 	grfcc_probe();
 
 #if NVIEW>0

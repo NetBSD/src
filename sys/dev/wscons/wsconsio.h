@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.100 2011/07/21 10:33:17 tsutsui Exp $ */
+/* $NetBSD: wsconsio.h,v 1.101 2011/12/15 14:25:13 phx Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -324,6 +324,7 @@ struct wsmouse_repeat {
 #define WSDISPLAY_TYPE_DL	49	/* DisplayLink DL-1x0/DL-1x5 */
 #define WSDISPLAY_TYPE_XVR1000	50	/* Sun XVR-1000 */
 #define WSDISPLAY_TYPE_LUNA	51	/* OMRON SX-9100 LUNA */
+#define WSDISPLAY_TYPE_GRF	52	/* wsdisplay on top of grf(4) */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
