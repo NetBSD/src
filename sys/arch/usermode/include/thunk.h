@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.40 2011/12/15 01:30:04 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.41 2011/12/15 03:42:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -76,6 +76,10 @@ int	thunk_gettimeofday(struct thunk_timeval *, void *);
 unsigned int thunk_getcounter(void);
 long	thunk_clock_getres_monotonic(void);
 int	thunk_usleep(useconds_t);
+
+timer_t	thunk_timer_attach(void);
+int	thunk_timer_start(timer_t, int);
+int	thunk_timer_getoverrun(timer_t);
 
 void	thunk_exit(int);
 void	thunk_abort(void);
