@@ -1,4 +1,4 @@
-/*	$NetBSD: zbsdmod.c,v 1.7 2011/12/11 14:05:39 nonaka Exp $	*/
+/*	$NetBSD: zbsdmod.c,v 1.8 2011/12/16 14:17:41 nonaka Exp $	*/
 /*	$OpenBSD: zbsdmod.c,v 1.7 2005/05/02 02:45:29 uwe Exp $	*/
 
 /*
@@ -94,6 +94,7 @@ static int havesyms;
 /* The maximum size of a kernel image is restricted to 5MB. */
 static u_int bsdimage[5242880/sizeof(u_int)];	/* XXX use kmalloc() */
 static char bootargs[BOOTARGS_BUFSIZ];
+static u_int datacacheclean[65536/sizeof(u_int)] __attribute__((aligned(32)));
 
 /*
  * Boot the loaded BSD kernel image, or return if an error is found.
@@ -265,17 +266,31 @@ elf32bsdboot(void)
 
 	addr = (int *)(elf->e_entry);
 	__asm volatile (
+		/* Clean D-cache */
+		"mov	r0, %1;"
+		"mov	r1, #65536;"
+		"1:"
+		"ldr	r2, [r0], #32;"
+		"subs	r1, r1, #32;"
+		"bne	1b;"
+		"mcr	p15, 0, r1, c7, c10, 4;" /*drain write and fill buffer*/
+		"mrc	p15, 0, r1, c2, c0, 0;" /* CPWAIT */
+		"mov	r1, r1;"
+		"sub	pc, pc, #4;"
+		/* Disable MMU and jump to kernel entry address */
 		"mov	r0, %0;"
-		"mcr	p15, 0, r1, c7, c7, 0;"
-		"mrc	p15, 0, r1, c2, c0, 0;"
+		"mcr	p15, 0, r1, c7, c7, 0;" /* flush I+D cache */
+		"mrc	p15, 0, r1, c2, c0, 0;" /* CPWAIT */
 		"mov	r1, r1;"
 		"sub	pc, pc, #4;"
 		"mov	r1, #(0x00000010 | 0x00000020);"
-		"mcr	p15, 0, r1, c1, c0, 0;"
-		"mcr	p15, 0, r1, c8, c7, 0;"
-		"mrc	p15, 0, r1, c2, c0, 0;"
+		"mcr	p15, 0, r1, c1, c0, 0;" /* Write new control register */
+		"mcr	p15, 0, r1, c8, c7, 0;" /* invalidate I+D TLB */
+		"mcr	p15, 0, r1, c7, c5, 0;" /* invalidate I$ and BTB */
+		"mcr	p15, 0, r1, c7, c10, 4;" /*drain write and fill buffer*/
+		"mrc	p15, 0, r1, c2, c0, 0;" /* CPWAIT_AND_RETURN */
 		"sub	pc, r0, r1, lsr #32;"
-		:: "r" (addr) : "r0", "r1");
+		:: "r" (addr), "r" (datacacheclean) : "r0", "r1", "r2");
 }
 
 /*
@@ -329,7 +344,7 @@ zbsdmod_write(struct file *f, const char *buf, size_t len, loff_t *offp)
 		return 0;
 
 	if (*offp + len >= sizeof(bsdimage))
-		return EFBIG;
+		return -EFBIG;
 
 	memcpy(((char *)bsdimage) + *offp, buf, len);
 
