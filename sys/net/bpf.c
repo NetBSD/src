@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.167 2011/12/15 22:20:26 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.168 2011/12/16 03:05:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.167 2011/12/15 22:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.168 2011/12/16 03:05:23 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1547,12 +1547,13 @@ bpf_hdrlen(struct bpf_d *d)
 #endif
 		return (BPF_WORDALIGN(hdrlen + SIZEOF_BPF_HDR) - hdrlen);
 }
+
 /*
  * Move the packet data from interface memory (pkt) into the
- * store buffer.  Return 1 if it's time to wakeup a listener (buffer full),
- * otherwise 0.  "copy" is the routine called to do the actual data
- * transfer.  memcpy is passed in to copy contiguous chunks, while
- * bpf_mcpy is passed in to copy mbuf chains.  In the latter case,
+ * store buffer. Call the wakeup functions if it's time to wakeup
+ * a listener (buffer full), "cpfn" is the routine called to do the
+ * actual data transfer. memcpy is passed in to copy contiguous chunks,
+ * while bpf_mcpy is passed in to copy mbuf chains.  In the latter case,
  * pkt is really an mbuf.
  */
 static void
