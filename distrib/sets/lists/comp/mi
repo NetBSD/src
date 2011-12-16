@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1716 2011/12/04 21:08:37 jym Exp $
+#	$NetBSD: mi,v 1.1717 2011/12/16 12:46:01 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6402,7 +6402,7 @@
 ./usr/share/man/cat3/expf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/expm1.0			comp-c-catman		.cat
 ./usr/share/man/cat3/expm1f.0			comp-c-catman		.cat
-./usr/share/man/cat3/extattr.0			comp-c-catman		.cat
+./usr/share/man/cat3/extattr.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/extattr_copy_fd.0		comp-c-catman		.cat
 ./usr/share/man/cat3/extattr_copy_file.0	comp-c-catman		.cat
 ./usr/share/man/cat3/extattr_copy_link.0	comp-c-catman		.cat
@@ -12652,7 +12652,7 @@
 ./usr/share/man/html3/expf.html			comp-c-htmlman		html
 ./usr/share/man/html3/expm1.html		comp-c-htmlman		html
 ./usr/share/man/html3/expm1f.html		comp-c-htmlman		html
-./usr/share/man/html3/extattr.html		comp-c-htmlman		html
+./usr/share/man/html3/extattr.html		comp-obsolete		obsolete
 ./usr/share/man/html3/extattr_copy_fd.html	comp-c-htmlman		html
 ./usr/share/man/html3/extattr_copy_file.html	comp-c-htmlman		html
 ./usr/share/man/html3/extattr_copy_link.html	comp-c-htmlman		html
@@ -18814,7 +18814,7 @@
 ./usr/share/man/man3/expf.3			comp-c-man		.man
 ./usr/share/man/man3/expm1.3			comp-c-man		.man
 ./usr/share/man/man3/expm1f.3			comp-c-man		.man
-./usr/share/man/man3/extattr.3			comp-c-man		.man
+./usr/share/man/man3/extattr.3			comp-obsolete		obsolete
 ./usr/share/man/man3/extattr_copy_fd.3		comp-c-man		.man
 ./usr/share/man/man3/extattr_copy_file.3	comp-c-man		.man
 ./usr/share/man/man3/extattr_copy_link.3	comp-c-man		.man
