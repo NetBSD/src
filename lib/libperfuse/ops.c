@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.47 2011/11/28 05:33:33 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.48 2011/12/16 05:34:54 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -187,21 +187,14 @@ perfuse_node_close_common(pu, opc, mode)
 
 	if ((error = xchg_msg(pu, opc, pm,
 			      NO_PAYLOAD_REPLY_LEN, wait_reply)) != 0)
-		goto out;
-
-	ps->ps_destroy_msg(pm);
-
-	error = 0;
-
-out:
-	if (error != 0)
 		DERRX(EX_SOFTWARE, "%s: freed fh = 0x%"PRIx64" but filesystem "
 		      "returned error = %d", __func__, fh, error);
 
-	return error;
+	ps->ps_destroy_msg(pm);
+
+	return 0;
 }
 
-/* ARGSUSED1 */
 static int
 xchg_msg(pu, opc, pm, len, wait)
 	struct puffs_usermount *pu;
@@ -229,7 +222,8 @@ xchg_msg(pu, opc, pm, len, wait)
 	if (pnd)
 		pnd->pnd_flags |= PND_INXCHG;
 
-	error = ps->ps_xchg_msg(pu, pm, len, wait);
+	if ((error = ps->ps_xchg_msg(pu, pm, len, wait)) != 0)
+		ps->ps_destroy_msg(pm);
 
 	if (pnd) {
 		pnd->pnd_flags &= ~PND_INXCHG;
@@ -523,7 +517,7 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 		}
 		/* FALLTHROUGH */
 	default:
-		goto out;
+		return error;
 		/* NOTREACHED */
 		break;
 	}
@@ -534,7 +528,9 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 		if (oldpnd->pnd_nodeid == feo->nodeid) {
 			oldpnd->pnd_nlookup++;
 			*pnp = oldpnd->pnd_pn;
-			goto out;
+
+			ps->ps_destroy_msg(pm);
+			return 0;
 		} else {
 			oldpnd->pnd_flags |= PND_REMOVED;
 #ifdef PERFUSE_DEBUG
@@ -563,10 +559,9 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 			(void *)opc, pn, feo->nodeid, path);
 #endif
 	
-out: 
 	ps->ps_destroy_msg(pm);
 
-	return error;
+	return 0;
 }
 
 
@@ -592,7 +587,7 @@ node_mk_common(pu, opc, pni, pcn, pm)
 	ps =  puffs_getspecific(pu);
 
 	if ((error = xchg_msg(pu, opc, pm, sizeof(*feo), wait_reply)) != 0)
-		goto out;
+		return error;
 
 	feo = GET_OUTPAYLOAD(ps, pm, fuse_entry_out);
 	if (feo->nodeid == PERFUSE_UNKNOWN_NODEID)
@@ -617,11 +612,6 @@ node_mk_common(pu, opc, pni, pcn, pm)
 	ps->ps_destroy_msg(pm);
 
 	return node_mk_common_final(pu, opc, pn, pcn);
-
-out:
-	ps->ps_destroy_msg(pm);
-
-	return error;
 }
 
 /*
@@ -664,7 +654,7 @@ node_mk_common_final(pu, opc, pn, pcn)
 
 	if ((error = xchg_msg(pu, (puffs_cookie_t)pn, pm, 
 			      sizeof(*fao), wait_reply)) != 0)
-		goto out;
+		return error;
 
 	fao = GET_OUTPAYLOAD(ps, pm, fuse_attr_out);
 	fuse_attr_to_vap(ps, &pn->pn_va, &fao->attr);
@@ -675,11 +665,9 @@ node_mk_common_final(pu, opc, pn, pcn)
 	 */
 	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
 
-out:
-	if (pm != NULL)
-		ps->ps_destroy_msg(pm);
+	ps->ps_destroy_msg(pm);
 
-	return error;
+	return 0;
 }
 
 static uint64_t
@@ -1022,7 +1010,11 @@ perfuse_fs_unmount(pu, flags)
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0){
 		DWARN("unmount %s", ps->ps_target);
 		if (!(flags & MNT_FORCE))
-			goto out;
+			return error;
+		else
+			error = 0;
+	} else {
+		ps->ps_destroy_msg(pm);
 	}
 
 	ps->ps_umount(pu);
@@ -1031,10 +1023,6 @@ perfuse_fs_unmount(pu, flags)
 		DPRINTF("%s unmounted, exit\n", ps->ps_target);
 
 	return 0;
-out:
-	ps->ps_destroy_msg(pm);
-	
-	return error;
 }
 
 int
@@ -1058,7 +1046,7 @@ perfuse_fs_statvfs(pu, svfsb)
 	pm = ps->ps_new_msg(pu, opc, FUSE_STATFS, 0, NULL);
 
 	if ((error = xchg_msg(pu, opc, pm, sizeof(*fso), wait_reply)) != 0)
-		goto out;
+		return error;
 
 	fso = GET_OUTPAYLOAD(ps, pm, fuse_statfs_out);
 	svfsb->f_flag = ps->ps_mountflags;
@@ -1097,10 +1085,10 @@ perfuse_fs_statvfs(pu, svfsb)
 		strlcpy(svfsb->f_mntfromname, ps->ps_source, _VFS_NAMELEN);
 	else
 		strlcpy(svfsb->f_mntfromname, _PATH_FUSE, _VFS_NAMELEN);
-out:
+
 	ps->ps_destroy_msg(pm);
-	
-	return error;
+
+	return 0;
 }
 
 int
@@ -1338,8 +1326,18 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	(void)strlcpy((char*)(void *)(fci + 1), name, namelen);
 
 	len = sizeof(*feo) + sizeof(*foo);
-	if ((error = xchg_msg(pu, opc, pm, len, wait_reply)) != 0)
-		goto out;
+	if ((error = xchg_msg(pu, opc, pm, len, wait_reply)) != 0) {
+		/*
+		 * create is unimplmented, remember it for later,
+		 * and start over using mknod and open instead.
+		 */
+		if (error == ENOSYS) {
+			ps->ps_flags |= PS_NO_CREAT;
+			return perfuse_node_create(pu, opc, pni, pcn, vap);
+		}
+
+		return error;
+	}
 
 	feo = GET_OUTPAYLOAD(ps, pm, fuse_entry_out);
 	foo = (struct fuse_open_out *)(void *)(feo + 1);
@@ -1372,20 +1370,6 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	ps->ps_destroy_msg(pm);
 
 	return node_mk_common_final(pu, opc, pn, pcn);
-
-out: 
-	ps->ps_destroy_msg(pm);
-
-	/*
-	 * create is unimplmented, remember it for later,
-	 * and start over using mknod and open instead.
-	 */
-	if (error == ENOSYS) {
-		ps->ps_flags |= PS_NO_CREAT;
-		return perfuse_node_create(pu, opc, pni, pcn, vap);
-	}
-
-	return error;
 }
 
 
@@ -1463,7 +1447,6 @@ perfuse_node_open(pu, opc, mode, pcr)
 	ps = puffs_getspecific(pu);
 	pn = (struct puffs_node *)opc;
 	pnd = PERFUSE_NODE_DATA(opc);
-	pm = NULL;
 	error = 0;
 
 	if (pnd->pnd_flags & PND_REMOVED)
@@ -1492,10 +1475,8 @@ perfuse_node_open(pu, opc, mode, pcr)
 	 */
 	if (((mode & FREAD) && (pnd->pnd_flags & PND_RFH)) ||
 	    ((mode & FREAD) && (pnd->pnd_flags & PND_WFH)) ||
-	    ((mode & FWRITE) && (pnd->pnd_flags & PND_WFH))) {
-		error = 0;
+	    ((mode & FWRITE) && (pnd->pnd_flags & PND_WFH)))
 		goto out;
-	}
 	
 	/*
 	 * Queue open on a node so that we do not open
@@ -1538,9 +1519,8 @@ perfuse_node_open(pu, opc, mode, pcr)
 			mode & FWRITE ? "w" : "", foo->fh);
 #endif
 
+	ps->ps_destroy_msg(pm);
 out:
-	if (pm != NULL)
-		ps->ps_destroy_msg(pm);
 
 	pnd->pnd_flags &= ~PND_INOPEN;
 	(void)dequeue_requests(ps, opc, PCQ_OPEN, DEQUEUE_ALL);
@@ -1703,9 +1683,8 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	fuse_attr_to_vap(ps, vap, &fao->attr);
 	set_expire(opc, NULL, fao);
 
+	ps->ps_destroy_msg(pm);
 out:
-	if (pm != NULL)
-		ps->ps_destroy_msg(pm);
 
 	pnd->pnd_flags &= ~PND_INRESIZE;
 	(void)dequeue_requests(ps, opc, PCQ_RESIZE, DEQUEUE_ALL);
@@ -1735,7 +1714,6 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
-	pm = NULL;
 
 	/*
 	 * The only operation we can do once the file is removed 
@@ -1922,10 +1900,9 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	fuse_attr_to_vap(ps, old_va, &fao->attr);
 	set_expire(opc, NULL, fao);
 
-out:
-	if (pm != NULL)
-		ps->ps_destroy_msg(pm);
+	ps->ps_destroy_msg(pm);
 
+out:
 	if (pnd->pnd_flags & PND_INRESIZE) {
 		pnd->pnd_flags &= ~PND_INRESIZE;
 		(void)dequeue_requests(ps, opc, PCQ_RESIZE, DEQUEUE_ALL);
@@ -1966,19 +1943,19 @@ perfuse_node_poll(pu, opc, events)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, nodeid = 0x%"PRIx64", fh = 0x%"PRIx64"\n",
-			__func__, (void *)opc,	
+		DPRINTF("%s: opc = %p, nodeid = 0x%"PRIx64", "
+			"fh = 0x%"PRIx64"\n", __func__, (void *)opc,	
 			PERFUSE_NODE_DATA(opc)->pnd_nodeid, fpi->fh);
 #endif
 	if ((error = xchg_msg(pu, opc, pm, sizeof(*fpo), wait_reply)) != 0)
-		goto out;
+		return error;
 
 	fpo = GET_OUTPAYLOAD(ps, pm, fuse_poll_out);
 	*events = fpo->revents;
-out:
+
 	ps->ps_destroy_msg(pm);
 
-	return error;
+	return 0;
 }
 
 /* ARGSUSED0 */
@@ -2098,15 +2075,14 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 			__func__, (void*)opc, perfuse_node_path(opc));
 #endif
 
+	ps->ps_destroy_msg(pm);
+
 out:
 	/*
 	 * ENOSYS is not returned to kernel,
 	 */
 	if (error == ENOSYS)
 		error = 0;
-
-	if (pm != NULL)
-		ps->ps_destroy_msg(pm);
 
 	return error;
 }
@@ -2170,7 +2146,7 @@ perfuse_node_remove(pu, opc, targ, pcn)
 	(void)strlcpy(path, name, len);
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		goto out;
+		return error;
 
 	PERFUSE_NODE_DATA(targ)->pnd_flags |= PND_REMOVED;
 	if (!(PERFUSE_NODE_DATA(targ)->pnd_flags & PND_OPEN))
@@ -2187,10 +2163,9 @@ perfuse_node_remove(pu, opc, targ, pcn)
 			__func__, PERFUSE_NODE_DATA(targ)->pnd_nodeid,
 			pcn->pcn_name);
 #endif
-out:
 	ps->ps_destroy_msg(pm);
 
-	return error;
+	return 0;
 }
 
 int
@@ -2221,11 +2196,12 @@ perfuse_node_link(pu, opc, targ, pcn)
 	fli->oldnodeid = PERFUSE_NODE_DATA(pn)->pnd_nodeid;
 	(void)strlcpy((char *)(void *)(fli + 1), name, len - sizeof(*fli));
 
-	error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply);
+	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
+		return error;
 
 	ps->ps_destroy_msg(pm);
 
-	return error;
+	return 0;
 }
 
 int
@@ -2283,7 +2259,7 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 	(void)strlcpy(np, newname, newname_len);
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		goto out;
+		return error;
 
 	if (opc != targ_dir) {
 		struct perfuse_node_data *srcdir_pnd;
@@ -2323,11 +2299,9 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 			perfuse_node_path(targ_dir));
 #endif
 
-out:
-	if (pm != NULL)
-		ps->ps_destroy_msg(pm);
+	ps->ps_destroy_msg(pm);
 
-	return error;
+	return 0;
 }
 
 int
@@ -2399,7 +2373,7 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 	(void)strlcpy(path, name, len);
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		goto out;
+		return error;
 
 	PERFUSE_NODE_DATA(targ)->pnd_flags |= PND_REMOVED;
 	if (!(PERFUSE_NODE_DATA(targ)->pnd_flags & PND_OPEN))
@@ -2416,10 +2390,9 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 			__func__, PERFUSE_NODE_DATA(targ)->pnd_nodeid,
 			perfuse_node_path(targ));
 #endif
-out:
 	ps->ps_destroy_msg(pm);
 
-	return error;
+	return 0;
 }
 
 /* vap is unused */
@@ -2484,7 +2457,6 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 	int error;
 	size_t fd_maxlen;
 	
-	pm = NULL;
 	error = 0;
 	ps = puffs_getspecific(pu);
 
@@ -2530,8 +2502,8 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, nodeid = 0x%"PRIx64", rfh = 0x%"PRIx64"\n",
-			__func__, (void *)opc,
+		DPRINTF("%s: opc = %p, nodeid = 0x%"PRIx64", "
+			"rfh = 0x%"PRIx64"\n", __func__, (void *)opc,
 			PERFUSE_NODE_DATA(opc)->pnd_nodeid, fh);
 #endif
 
@@ -2572,6 +2544,7 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 		 * Empty read: we reached the end of the buffer.
 		 */
 		if (foh_len == sizeof(*foh)) {
+			ps->ps_destroy_msg(pm);
 			*eofflag = 1;
 			break;
 		}
@@ -2580,6 +2553,7 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 		 * Check for corrupted message.
 		 */
 		if (foh_len < sizeof(*foh) + sizeof(*fd)) {
+			ps->ps_destroy_msg(pm);
 			DWARNX("readdir reply too short");
 			error = EIO;
 			goto out;
@@ -2606,7 +2580,6 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 		pnd->pnd_fd_cookie = readdir_last_cookie(fd, fd_len);
 
 		ps->ps_destroy_msg(pm);
-		pm = NULL;
 	} while (1 /* CONSTCOND */);
 
 	if (pnd->pnd_all_fd != NULL) {
@@ -2621,9 +2594,6 @@ out:
 		pnd->pnd_all_fd = NULL;
 		pnd->pnd_all_fd_len = 0;
 	}
-
-	if (pm != NULL)
-		ps->ps_destroy_msg(pm);
 
 	if (error == 0)
 		error = readdir_buffered(opc, dent, readoff, reslen);
@@ -2665,7 +2635,7 @@ perfuse_node_readlink(pu, opc, pcr, linkname, linklen)
 	pm = ps->ps_new_msg(pu, opc, FUSE_READLINK, 0, pcr);
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		goto out;
+		return error;
 
 	foh = GET_OUTHDR(ps, pm);
 	len = foh->len - sizeof(*foh);
@@ -2680,10 +2650,10 @@ perfuse_node_readlink(pu, opc, pcr, linkname, linklen)
 	 */
 	*linklen = len - 1;
 	(void)memcpy(linkname, _GET_OUTPAYLOAD(ps, pm, char *), len);
-out:
+
 	ps->ps_destroy_msg(pm);
 
-	return error;
+	return 0;
 }
 
 int 
@@ -2936,7 +2906,7 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 #endif
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		goto out;
+		return error;
 
 	foh = GET_OUTHDR(ps, pm);
 	len = foh->len - sizeof(*foh);
@@ -2979,11 +2949,10 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 		DERRX(EX_SOFTWARE, "%s: Unexpected op %d", __func__, op);
 		break;
 	}
-	
-out:
+
 	ps->ps_destroy_msg(pm);
 
-	return error;
+	return 0;
 }
 
 int
@@ -3008,7 +2977,6 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
 	vap = puffs_pn_getvap((struct puffs_node *)opc);
-	pm = NULL;
 
 	/*
 	 * NetBSD turns that into a getdents(2) output
@@ -3046,9 +3014,8 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 			__func__, (void *)opc, pnd->pnd_nodeid, fri->fh);
 #endif
 		error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply);
-
 		if (error  != 0)
-			goto out;
+			return error;
 
 		foh = GET_OUTHDR(ps, pm);
 		readen = foh->len - sizeof(*foh);
@@ -3066,7 +3033,6 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 		*resid -= readen;
 
 		ps->ps_destroy_msg(pm);
-		pm = NULL;
 	} while ((*resid != 0) && (readen != 0));
 
 	if (ioflag & (IO_SYNC|IO_DSYNC))
@@ -3074,11 +3040,7 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 	else
 		ps->ps_asyncreads++;
 
-out:
-	if (pm != NULL)
-		ps->ps_destroy_msg(pm);
-
-	return error;
+	return 0;
 }
 
 int
@@ -3108,7 +3070,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	vap = puffs_pn_getvap((struct puffs_node *)opc);
 	written = 0;
 	inresize = 0;
-	pm = NULL;
+	error = 0;
 
 	if (vap->va_type == VDIR) 
 		return EISDIR;
@@ -3143,8 +3105,6 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 
 		offset = vap->va_size;
 	}
-
-	pm = NULL;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RESIZE)
@@ -3208,7 +3168,6 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 		buf += written;
 
 		ps->ps_destroy_msg(pm);
-		pm = NULL;
 	} while (*resid != 0);
 
 	/* 
@@ -3262,10 +3221,8 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 		DPRINTF("%s: DIRTY opc = %p, file = \"%s\"\n", 
 			__func__, (void*)opc, perfuse_node_path(opc));
 #endif
-out:
-	if (pm != NULL)
-		ps->ps_destroy_msg(pm);
 
+out:
 	/*
 	 * If there are no more queued write, we can resume
 	 * an operation awaiting write completion.
@@ -3323,7 +3280,7 @@ perfuse_node_getextattr(pu, opc, attrns, attrname, attrsize, attr, resid, pcr)
 	(void)strlcpy(np, attrname, attrnamelen);
 	
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		goto out;
+		return error;
 
 	/*
 	 * We just get fuse_getattr_out with list size if we requested
@@ -3335,7 +3292,8 @@ perfuse_node_getextattr(pu, opc, attrns, attrname, attrsize, attr, resid, pcr)
 		if (attrsize != NULL)
 			*attrsize = fgo->size;
 
-		goto out;
+		ps->ps_destroy_msg(pm);
+		return 0;
 	}
 
 	/*
@@ -3351,10 +3309,9 @@ perfuse_node_getextattr(pu, opc, attrns, attrname, attrsize, attr, resid, pcr)
 		*resid -= len;
 	}
 	
-out: 
 	ps->ps_destroy_msg(pm);
 
-	return error;
+	return 0;
 }
 
 int
@@ -3392,13 +3349,12 @@ perfuse_node_setextattr(pu, opc, attrns, attrname, attr, resid, pcr)
 
 	if ((error = xchg_msg(pu, opc, pm, 
 			      NO_PAYLOAD_REPLY_LEN, wait_reply)) != 0)
-		goto out;
+		return error;
 
 	*resid = 0;
-out: 
 	ps->ps_destroy_msg(pm);
 
-	return error;
+	return 0;
 }
 
 /* ARGSUSED2 */
@@ -3433,7 +3389,7 @@ perfuse_node_listextattr(pu, opc, attrns, attrsize, attrs, resid, flag, pcr)
 		fgi->size = 0;
 	
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		goto out;
+		return error;
 
 	/*
 	 * We just get fuse_getattr_out with list size if we requested
@@ -3445,7 +3401,9 @@ perfuse_node_listextattr(pu, opc, attrns, attrsize, attrs, resid, flag, pcr)
 		if (attrsize != NULL)
 			*attrsize = fgo->size;
 
-		goto out;
+		ps->ps_destroy_msg(pm);
+
+		return 0;
 	}
 
 	/*
@@ -3479,10 +3437,9 @@ perfuse_node_listextattr(pu, opc, attrns, attrsize, attrs, resid, flag, pcr)
 	if (attrsize != NULL) 
 		*attrsize = puffs_len;
 
-out: 
 	ps->ps_destroy_msg(pm);
 
-	return error;
+	return 0;
 }
 
 int
