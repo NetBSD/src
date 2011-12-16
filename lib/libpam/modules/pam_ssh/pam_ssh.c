@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.18 2011/12/16 17:30:12 drochner Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.19 2011/12/16 17:35:09 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.18 2011/12/16 17:30:12 drochner Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.19 2011/12/16 17:35:09 drochner Exp $");
 #endif
 
 #include <sys/param.h>
@@ -97,7 +97,8 @@ static const char *const pam_ssh_agent_envp[] = { NULL };
  * struct pam_ssh_key containing the key and its comment.
  */
 static struct pam_ssh_key *
-pam_ssh_load_key(const char *dir, const char *kfn, const char *passphrase)
+pam_ssh_load_key(const char *dir, const char *kfn, const char *passphrase,
+    int nullok)
 {
 	struct pam_ssh_key *psk;
 	char fn[PATH_MAX];
@@ -107,7 +108,22 @@ pam_ssh_load_key(const char *dir, const char *kfn, const char *passphrase)
 	if (snprintf(fn, sizeof(fn), "%s/%s", dir, kfn) > (int)sizeof(fn))
 		return (NULL);
 	comment = NULL;
-	key = key_load_private(fn, passphrase, &comment);
+	/*
+	 * If the key is unencrypted, OpenSSL ignores the passphrase, so
+	 * it will seem like the user typed in the right one.  This allows
+	 * a user to circumvent nullok by providing a dummy passphrase.
+	 * Verify that the key really *is* encrypted by trying to load it
+	 * with an empty passphrase, and if the key is not encrypted,
+	 * accept only an empty passphrase.
+	 */
+	key = key_load_private(fn, "", &comment);
+	if (key != NULL && !(*passphrase == '\0' && nullok)) {
+		key_free(key);
+		free(comment);
+		return (NULL);
+	}
+	if (key == NULL)
+		key = key_load_private(fn, passphrase, &comment);
 	if (key == NULL) {
 		openpam_log(PAM_LOG_DEBUG, "failed to load key from %s", fn);
 		if (comment != NULL)
@@ -149,8 +165,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	const void *item;
 	struct passwd *pwd, pwres;
 	struct pam_ssh_key *psk;
-	int nkeys, pam_err, pass;
+	int nkeys, nullok, pam_err, pass;
 	char pwbuf[1024];
+
+	nullok = (openpam_get_option(pamh, "nullok") != NULL);
 
 	/* PEM is not loaded by default */
 	OpenSSL_add_all_algorithms();
@@ -170,6 +188,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	if (pam_err != PAM_SUCCESS)
 		return (pam_err);
 
+	nkeys = 0;
 	pass = (pam_get_item(pamh, PAM_AUTHTOK, &item) == PAM_SUCCESS &&
 	    item != NULL);
  load_keys:
@@ -182,9 +201,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	}
 
 	/* try to load keys from all keyfiles we know of */
-	nkeys = 0;
 	for (kfn = pam_ssh_keyfiles; *kfn != NULL; ++kfn) {
-		psk = pam_ssh_load_key(pwd->pw_dir, *kfn, passphrase);
+		psk = pam_ssh_load_key(pwd->pw_dir, *kfn, passphrase, nullok);
 		if (psk != NULL) {
 			pam_set_data(pamh, *kfn, psk, pam_ssh_free_key);
 			++nkeys;
