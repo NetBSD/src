@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 2011/12/05 07:34:50 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83 2011/12/16 12:45:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2011/12/05 07:34:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2011/12/16 12:45:04 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -504,8 +504,7 @@ pmap_dump_pv(paddr_t pa)
 
 	pg = PHYS_TO_VM_PAGE(pa);
 	md = VM_PAGE_TO_MD(pg);
-	db_printf("pg %p attr 0x%08x aliases %d\n", pg, md->pvh_attrs,
-	    md->pvh_aliases);
+	db_printf("pg %p attr 0x%08x\n", pg, md->pvh_attrs);
 	for (pve = md->pvh_list; pve; pve = pve->pv_next)
 		db_printf("%x:%lx\n", pve->pv_pmap->pm_space,
 		    pve->pv_va & PV_VAMASK);

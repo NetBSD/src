@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30 2011/06/12 03:35:41 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.31 2011/12/16 12:45:04 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -200,14 +200,12 @@ struct pv_entry;
 struct vm_page_md {
 	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
 	u_int		pvh_attrs;	/* to preserve ref/mod */
-	int		pvh_aliases;	/* alias counting */
 };
 
 #define	VM_MDPAGE_INIT(pg) \
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
 	(pg)->mdpage.pvh_attrs = 0;					\
-	(pg)->mdpage.pvh_aliases = 0;					\
 } while (0)
 
 #endif /* _KERNEL */
