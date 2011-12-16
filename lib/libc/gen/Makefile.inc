@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.180 2011/08/25 18:20:22 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.181 2011/12/16 12:46:00 wiz Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -55,7 +55,7 @@ COPTS.syslog.c = -Wno-format-nonliteral
 MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 closefrom.3 \
 	confstr.3 \
 	cpuset.3 ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 \
-	endutxent.3 err.3 exec.3 extattr.3 \
+	endutxent.3 err.3 exec.3 extattr_copy_file.3 extattr_namespace_to_string.3 \
 	fmtcheck.3 fmtmsg.3 fnmatch.3 fpclassify.3 fpgetmask.3 \
 	ftok.3 fts.3 ftw.3 \
 	getbsize.3 cgetcap.3 getcwd.3 getdevmajor.3 \
@@ -93,14 +93,12 @@ MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
         err.3 warnx.3 err.3 vwarnx.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execv.3 \
 	exec.3 execvp.3 exec.3 exect.3
-MLINKS+=extattr.3 extattr_namespace_to_string.3 \
-	extattr.3 extattr_string_to_namespace.3 \
-	extattr.3 extattr_copy_file.3 \
-	extattr.3 extattr_copy_fd.3 \
-	extattr.3 extattr_copy_link.3 \
-	extattr.3 cpxattr.3 \
-	extattr.3 fcpxattr.3 \
-	extattr.3 lcpxattr.3
+MLINKS+=extattr_namespace_to_string.3 extattr_string_to_namespace.3 \
+	extattr_copy_file.3 extattr_copy_fd.3 \
+	extattr_copy_file.3 extattr_copy_link.3 \
+	extattr_copy_file.3 cpxattr.3 \
+	extattr_copy_file.3 fcpxattr.3 \
+	extattr_copy_file.3 lcpxattr.3
 MLINKS+=fpgetmask.3 fpgetround.3 fpgetmask.3 fpgetsticky.3 \
 	fpgetmask.3 fpsetmask.3  fpgetmask.3 fpsetround.3 \
 	fpgetmask.3 fpsetsticky.3 fpgetmask.3 fpgetprec.3 \
