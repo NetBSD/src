@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.19 2011/12/16 17:35:09 drochner Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.20 2011/12/16 17:37:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.19 2011/12/16 17:35:09 drochner Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.20 2011/12/16 17:37:14 drochner Exp $");
 #endif
 
 #include <sys/param.h>
@@ -84,6 +84,7 @@ static const char *pam_ssh_keyfiles[] = {
 	".ssh/identity",	/* SSH1 RSA key */
 	".ssh/id_rsa",		/* SSH2 RSA key */
 	".ssh/id_dsa",		/* SSH2 DSA key */
+	".ssh/id_ecdsa", 	/* SSH2 ECDSA key */
 	NULL
 };
 
