@@ -412,6 +412,10 @@ pmap_map_ephemeral_page(struct vm_page *pg, int prot, pt_entry_t *old_pt_entry_p
 	vaddr_t va;
 	if (pa <= MIPS_PHYS_MASK) {
 		va = MIPS_PHYS_TO_KSEG0(pa);
+#ifdef ENABLE_MIPS_KSEGX
+	} else if (mips_ksegx_start <= pa && pa < mips_ksegx_start + VM_KSEGX_SIZE) {
+		va = VM_KSEGX_ADDRESS + pa - mips_ksegx_start;
+#endif
 	} else {
 		KASSERT(pmap_initialized);
 		/*
@@ -468,6 +472,11 @@ pmap_unmap_ephemeral_page(struct vm_page *pg, vaddr_t va,
 	/*
 	 * If we had to map using a page table entry, unmap it now.
 	 */
+#ifdef ENABLE_MIPS_KSEGX
+	if (VM_KSEGX_ADDRESS <= va && va < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE)
+		return;
+#endif
+
 	if (va >= VM_MIN_KERNEL_ADDRESS) {
 		pmap_kremove(va, PAGE_SIZE);
 		if (mips_pg_v(old_pt_entry.pt_entry)) {
@@ -489,7 +498,7 @@ pmap_bootstrap(void)
 {
 	vsize_t bufsz;
 
-	if (uvmexp.ncolors)
+	if (MIPS_CACHE_VIRTUAL_ALIAS && uvmexp.ncolors)
 		pmap_page_colormask = (uvmexp.ncolors - 1) << PAGE_SHIFT;
 
 	pmap_tlb_info_init(&pmap_tlb0_info);		/* init the lock */
@@ -1569,20 +1578,21 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			pmap->pm_stats.wired_count++;
 			npte |= mips_pg_wired_bit();
 		}
-		if (mips_pg_v(pte->pt_entry)
-		    && mips_tlbpfn_to_paddr(pte->pt_entry) != pa) {
-			pmap_remove(pmap, va, va + NBPG);
-			PMAP_COUNT(kernel_mappings_changed);
-		}
-		bool resident = mips_pg_v(pte->pt_entry);
-		if (!resident)
+		const bool resident_p = mips_pg_v(pte->pt_entry);
+		if (resident_p) {
+			if (mips_tlbpfn_to_paddr(pte->pt_entry) != pa) {
+				pmap_remove(pmap, va, va + NBPG);
+				PMAP_COUNT(kernel_mappings_changed);
+			}
+		} else {
 			pmap->pm_stats.resident_count++;
+		}
 		pte->pt_entry = npte;
 
 		/*
 		 * Update the same virtual address entry.
 		 */
-		pmap_tlb_update_addr(pmap, va, npte, resident);
+		pmap_tlb_update_addr(pmap, va, npte, resident_p);
 		kpreempt_enable();
 		return 0;
 	}
@@ -1645,8 +1655,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	KASSERT(mips_pg_v(npte));
-	bool resident = mips_pg_v(pte->pt_entry);
-	if (!resident)
+	const bool resident_p = mips_pg_v(pte->pt_entry);
+	if (!resident_p)
 		pmap->pm_stats.resident_count++;
 #ifdef PMAP_FAULTINFO
 	if (curpcb->pcb_faultinfo.pfi_faultpte == pte
@@ -1658,7 +1668,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #endif
 	pte->pt_entry = npte;
 
-	pmap_tlb_update_addr(pmap, va, npte, resident);
+	pmap_tlb_update_addr(pmap, va, npte, resident_p);
 	kpreempt_enable();
 
 	if (pg != NULL && (prot == (VM_PROT_READ | VM_PROT_EXECUTE))) {
