@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.50 2011/11/04 00:22:33 zoltan Exp $	*/
+/*	$NetBSD: frag6.c,v 1.51 2011/12/16 00:57:59 jakllsch Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.50 2011/11/04 00:22:33 zoltan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.51 2011/12/16 00:57:59 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -644,10 +644,16 @@ frag6_remque(struct ip6q *p6)
 void
 frag6_fasttimo(void)
 {
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
 	if (frag6_drainwanted) {
 		frag6_drain();
 		frag6_drainwanted = 0;
 	}
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -659,6 +665,9 @@ void
 frag6_slowtimo(void)
 {
 	struct ip6q *q6;
+
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	mutex_enter(&frag6_lock);
 	q6 = ip6q.ip6q_next;
@@ -684,6 +693,9 @@ frag6_slowtimo(void)
 		frag6_freef(ip6q.ip6q_prev);
 	}
 	mutex_exit(&frag6_lock);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 
 #if 0
 	/*
