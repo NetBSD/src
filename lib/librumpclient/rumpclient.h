@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpclient.h,v 1.10 2011/02/16 22:35:41 tron Exp $	*/
+/*	$NetBSD: rumpclient.h,v 1.11 2011/12/16 23:19:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -65,7 +65,7 @@ int rumpclient__closenotify(int *, enum rumpclient_closevariant);
  * vfork needs to be implemented as an inline to make everything
  * run in the caller's stackframe.
  */
-static inline pid_t
+static __attribute__((__always_inline__)) __returns_twice inline pid_t
 rumpclient__dofork(pid_t (*forkfn)(void))
 {
 	struct rumpclient_fork *rf;
