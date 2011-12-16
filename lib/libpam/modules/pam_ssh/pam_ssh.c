@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.17 2011/05/06 17:22:09 drochner Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.18 2011/12/16 17:30:12 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.17 2011/05/06 17:22:09 drochner Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.18 2011/12/16 17:30:12 drochner Exp $");
 #endif
 
 #include <sys/param.h>
@@ -67,6 +67,9 @@ __RCSID("$NetBSD: pam_ssh.c,v 1.17 2011/05/06 17:22:09 drochner Exp $");
 #include "authfd.h"
 #include "authfile.h"
 
+#define ssh_add_identity(auth, key, comment) \
+	ssh_add_identity_constrained(auth, key, comment, 0, 0)
+
 extern char **environ;
 
 struct pam_ssh_key {
@@ -85,8 +88,8 @@ static const char *pam_ssh_keyfiles[] = {
 };
 
 static const char *pam_ssh_agent = "/usr/bin/ssh-agent";
-static const char *pam_ssh_agent_argv[] = { "ssh_agent", "-s", NULL };
-static const char *pam_ssh_agent_envp[] = { NULL };
+static const char *const pam_ssh_agent_argv[] = { "ssh_agent", "-s", NULL };
+static const char *const pam_ssh_agent_envp[] = { NULL };
 
 /*
  * Attempts to load a private key from the specified file in the specified
@@ -94,15 +97,14 @@ static const char *pam_ssh_agent_envp[] = { NULL };
  * struct pam_ssh_key containing the key and its comment.
  */
 static struct pam_ssh_key *
-pam_ssh_load_key(struct passwd *pwd, const char *kfn, const char *passphrase)
+pam_ssh_load_key(const char *dir, const char *kfn, const char *passphrase)
 {
 	struct pam_ssh_key *psk;
 	char fn[PATH_MAX];
 	char *comment;
 	Key *key;
 
-	if (snprintf(fn, sizeof(fn), "%s/%s", pwd->pw_dir, kfn) >
-	    (int)sizeof(fn))
+	if (snprintf(fn, sizeof(fn), "%s/%s", dir, kfn) > (int)sizeof(fn))
 		return (NULL);
 	comment = NULL;
 	key = key_load_private(fn, passphrase, &comment);
@@ -144,6 +146,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
 	const char **kfn, *passphrase, *user;
+	const void *item;
 	struct passwd *pwd, pwres;
 	struct pam_ssh_key *psk;
 	int nkeys, pam_err, pass;
@@ -167,22 +170,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	if (pam_err != PAM_SUCCESS)
 		return (pam_err);
 
-#ifdef notyet
-	for (kfn = pam_ssh_keyfiles; *kfn != NULL; ++kfn) {
-		char path[MAXPATHLEN];
-		(void)snprintf(path, sizeof(path), "%s/%s", pwd->pw_dir, *kfn);
-		if (access(path, R_OK) == 0)
-			break;
-	}
-
-	if (*kfn == NULL) {
-		openpam_restore_cred(pamh);
-		return (PAM_AUTH_ERR);
-	}
-#endif
-
-	pass = (pam_get_item(pamh, PAM_AUTHTOK,
-	    (const void **)__UNCONST(&passphrase)) == PAM_SUCCESS);
+	pass = (pam_get_item(pamh, PAM_AUTHTOK, &item) == PAM_SUCCESS &&
+	    item != NULL);
  load_keys:
 	/* get passphrase */
 	pam_err = pam_get_authtok(pamh, PAM_AUTHTOK,
@@ -195,7 +184,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	/* try to load keys from all keyfiles we know of */
 	nkeys = 0;
 	for (kfn = pam_ssh_keyfiles; *kfn != NULL; ++kfn) {
-		psk = pam_ssh_load_key(pwd, *kfn, passphrase);
+		psk = pam_ssh_load_key(pwd->pw_dir, *kfn, passphrase);
 		if (psk != NULL) {
 			pam_set_data(pamh, *kfn, psk, pam_ssh_free_key);
 			++nkeys;
@@ -376,7 +365,7 @@ pam_ssh_add_keys_to_agent(pam_handle_t *pamh)
 		pam_err = pam_get_data(pamh, *kfn, &vp);
 		psk = vp;
 		if (pam_err == PAM_SUCCESS && psk != NULL) {
-			if (ssh_add_identity_constrained(ac, psk->key, psk->comment, 0, 0))
+			if (ssh_add_identity(ac, psk->key, psk->comment))
 				openpam_log(PAM_LOG_DEBUG,
 				    "added %s to ssh agent", psk->comment);
 			else
