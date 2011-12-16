@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_ssh.8,v 1.5 2005/02/28 10:31:41 wiz Exp $
+.\" $NetBSD: pam_ssh.8,v 1.6 2011/12/16 17:37:14 drochner Exp $
 .\" Copyright (c) 2001 Mark R V Murray
 .\" All rights reserved.
 .\" Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -35,7 +35,7 @@
 .\"
 .\" $FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.8,v 1.13 2004/07/02 23:52:18 ru Exp $
 .\"
-.Dd February 27, 2005
+.Dd December 16, 2011
 .Dt PAM_SSH 8
 .Os
 .Sh NAME
@@ -93,6 +93,10 @@ This option is similar to the
 option,
 except that if the previously obtained password fails,
 the user is prompted for another password.
+.It Cm nullok
+Normally, keys with no passphrase are ignored for authentication purposes.
+If this option is set, keys with no passphrase will be taken into
+consideration, allowing the user to log in with a blank password.
 .El
 .Ss SSH Session Management Module
 The
@@ -130,6 +134,8 @@ SSH1 RSA key
 SSH2 RSA key
 .It Pa $HOME/.ssh/id_dsa
 SSH2 DSA key
+.It Pa $HOME/.ssh/id_ecdsa
+SSH2 ECDSA key
 .El
 .Sh SEE ALSO
 .Xr ssh-agent 1 ,
