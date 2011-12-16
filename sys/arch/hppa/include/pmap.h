@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.31 2011/12/16 12:45:04 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32 2011/12/16 13:38:44 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -164,7 +164,7 @@ static inline int
 pmap_prot(struct pmap *pmap, int prot)
 {
 	extern u_int hppa_prot[];
-	return (hppa_prot[prot] | (pmap == pmap_kernel()? 0 : TLB_USER));
+	return (hppa_prot[prot] | (pmap == pmap_kernel() ? 0 : TLB_USER));
 }
 
 static inline void
