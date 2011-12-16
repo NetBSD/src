@@ -1,4 +1,4 @@
-.\" $NetBSD: perfused.8,v 1.5 2011/05/10 12:16:18 njoly Exp $
+.\" $NetBSD: perfused.8,v 1.6 2011/12/16 10:57:43 manu Exp $
 .\"
 .\" Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
 .\"
@@ -124,6 +124,14 @@ The program logs to the syslog daemon as facility
 For detailed debugging use the
 .Fl d
 (debug) option.
+.Sh BUGS
+When 
+.Nm
+runs in the foreground (using the
+.Fl f
+flag), some processes using the FUSE filesystem will 
+sometime hang on 
+.Sq uvn_fp2 .
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr perfuse_mount 3 ,
