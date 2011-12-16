@@ -1,4 +1,4 @@
-.\"	$NetBSD: extattr_copy_file.3,v 1.1 2011/12/16 12:46:00 wiz Exp $
+.\"	$NetBSD: extattr_copy_file.3,v 1.2 2011/12/16 15:21:13 manu Exp $
 .\"
 .\" Copyright (c) 2001 Dima Dorfman <dd@FreeBSD.org>
 .\" Copyright (c) 2011 Emmanuel Dreyfus <manu@NetBSD.org>
@@ -85,15 +85,10 @@ and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Bl -tag -width Er
-.It Bq Er EINVAL
-The requested namespace could not be identified.
-.El
-.Pp
-Extended attribute copying functions may also raise errors produced by
-.Fn extattr_list_file
+Extended attribute copying functions may raise errors produced by
+.Xr extattr_list_file 2
 and
-.Fn extattr_get_file .
+.Xr extattr_get_file 2 .
 .Sh SEE ALSO
 .Xr getextattr 1 ,
 .Xr extattr_get_file 2 ,
