@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.2 2010/12/21 00:24:14 christos Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.3 2011/12/17 19:07:34 apb Exp $ */
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.2 2010/12/21 00:24:14 christos Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.3 2011/12/17 19:07:34 apb Exp $");
 
 #include <atf-c.h>
 #include <util.h>
@@ -52,6 +52,8 @@ ATF_TC_BODY(dates, tc)
 	ATF_CHECK(parsedate("23jun2001", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("1-sep-06", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("1/11", NULL, NULL) != -1);
+	ATF_CHECK(parsedate("1500-01-02", NULL, NULL) != -1);
+	ATF_CHECK(parsedate("9999-12-21", NULL, NULL) != -1);
 }
 
 ATF_TC(times);
