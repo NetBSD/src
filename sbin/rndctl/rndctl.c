@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.22 2011/11/26 01:17:17 tls Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.23 2011/12/17 13:18:20 apb Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -33,7 +33,7 @@
 #include <sha1.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.22 2011/11/26 01:17:17 tls Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.23 2011/12/17 13:18:20 apb Exp $");
 #endif
 
 
@@ -181,7 +181,7 @@ static void
 do_load(const char *const filename)
 {
 	int fd;
-	rndsave_t rs;
+	rndsave_t rs, rszero;
 	rnddata_t rd;
 	SHA1_CTX s;
 	uint8_t digest[SHA1_DIGEST_LENGTH];
@@ -197,7 +197,8 @@ do_load(const char *const filename)
 		err(1, "read");
 	}
 
-	if (write(fd, &rs, sizeof(rs) != sizeof(rs))) {
+	memset(&rszero, 0, sizeof(rszero));
+	if (write(fd, &rszero, sizeof(rszero) != sizeof(rszero))) {
 		err(1, "overwrite");
 	}
 	fsync_range(fd, FDATASYNC|FDISKSYNC, (off_t)0, (off_t)0);
