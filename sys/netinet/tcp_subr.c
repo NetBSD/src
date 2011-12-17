@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.243 2011/11/19 22:51:26 tls Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.244 2011/12/17 20:05:39 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.243 2011/11/19 22:51:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.244 2011/12/17 20:05:39 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2220,7 +2220,7 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 	 */
 	if (tcp_iss_gotten_secret == false) {
 		cprng_strong(kern_cprng,
-			     tcp_iss_secret, sizeof(tcp_iss_secret));
+			     tcp_iss_secret, sizeof(tcp_iss_secret), 0);
 		tcp_iss_gotten_secret = true;
 	}
 

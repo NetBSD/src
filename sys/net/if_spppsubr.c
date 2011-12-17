@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.124 2011/11/19 22:51:25 tls Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.125 2011/12/17 20:05:39 tls Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.124 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.125 2011/12/17 20:05:39 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4298,7 +4298,7 @@ sppp_chap_scr(struct sppp *sp)
 
 	/* Compute random challenge. */
 	ch = (uint32_t *)sp->myauth.challenge;
-	cprng_strong(kern_cprng, ch, clen);
+	cprng_strong(kern_cprng, ch, clen, 0);
 
 	sp->confid[IDX_CHAP] = ++sp->pp_seq[IDX_CHAP];
 
