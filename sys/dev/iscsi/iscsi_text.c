@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_text.c,v 1.2 2011/11/29 03:50:31 tls Exp $	*/
+/*	$NetBSD: iscsi_text.c,v 1.3 2011/12/17 20:05:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1459,7 +1459,7 @@ assemble_security_parameters(connection_t *conn, ccb_t *ccb, pdu_t *rx_pdu,
 
 			cprng_strong(kern_cprng,
 				     &state->temp_buf[CHAP_MD5_SIZE],
-				     CHAP_CHALLENGE_LEN + 1);
+				     CHAP_CHALLENGE_LEN + 1, 0);
 			set_key_n(state, K_Auth_CHAP_Identifier,
 					  state->temp_buf[CHAP_MD5_SIZE]);
 			cpar = set_key_s(state, K_Auth_CHAP_Challenge,
