@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.21 2011/11/29 03:50:31 tls Exp $        */
+/*      $NetBSD: rndpool.c,v 1.22 2011/12/17 20:05:38 tls Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.21 2011/11/29 03:50:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.22 2011/12/17 20:05:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.21 2011/11/29 03:50:31 tls Exp $");
 #define	TAP3	31
 #define	TAP4	 9
 #define	TAP5	 7
+
+/*
+ * Let others know: the pool is full.
+ */
+int rnd_full;
 
 static inline void rndpool_add_one_word(rndpool_t *, u_int32_t);
 
@@ -173,25 +178,6 @@ rndpool_add_one_word(rndpool_t *rp, u_int32_t  val)
 	}
 }
 
-#if 0
-/*
- * Stir a 32-bit value (with possibly less entropy than that) into the pool.
- * Update entropy estimate.
- */
-void
-rndpool_add_uint32(rndpool_t *rp, u_int32_t  val, u_int32_t  entropy)
-{
-	rndpool_add_one_word(rp, val);
-
-	rp->entropy += entropy;
-	rp->stats.added += entropy;
-	if (rp->entropy > RND_POOLBITS) {
-		rp->stats.discarded += (rp->entropy - RND_POOLBITS);
-		rp->entropy = RND_POOLBITS;
-	}
-}
-#endif
-
 /*
  * Add a buffer's worth of data to the pool.
  */
@@ -230,6 +216,7 @@ rndpool_add_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t entropy)
 	if (rp->stats.curentropy > RND_POOLBITS) {
 		rp->stats.discarded += (rp->stats.curentropy - RND_POOLBITS);
 		rp->stats.curentropy = RND_POOLBITS;
+		rnd_full = 1;
 	}
 }
 
@@ -258,6 +245,8 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 
 	buf = p;
 	remain = len;
+
+	rnd_full = 0;
 
 	if (mode == RND_EXTRACT_ANY)
 		good = 1;

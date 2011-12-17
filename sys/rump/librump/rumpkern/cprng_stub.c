@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_stub.c,v 1.3 2011/11/28 08:05:07 tls Exp $ */
+/*	$NetBSD: cprng_stub.c,v 1.4 2011/12/17 20:05:40 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,11 +59,13 @@ cprng_init(void)
 	return;
 }
 
-cprng_strong_t *cprng_strong_create(const char *const name, int ipl, int flags)
+cprng_strong_t *
+cprng_strong_create(const char *const name, int ipl, int flags)
 {
 	cprng_strong_t *c;
 
-	c = kmem_alloc(sizeof(*c), KM_NOSLEEP);
+	/* zero struct to zero counters we won't ever set with no DRBG */
+	c = kmem_zalloc(sizeof(*c), KM_NOSLEEP);
 	if (c == NULL) {
 		return NULL;
 	}
@@ -72,11 +74,13 @@ cprng_strong_t *cprng_strong_create(const char *const name, int ipl, int flags)
 	if (c->flags & CPRNG_USE_CV) {
 		cv_init(&c->cv, name);
 	}
+	selinit(&c->selq);
 	return c;
 }
 
 
-size_t cprng_strong(cprng_strong_t *c, void *p, size_t len)
+size_t
+cprng_strong(cprng_strong_t *c, void *p, size_t len, int blocking)
 {
 	mutex_enter(&c->mtx);
 	cprng_fast(p, len);		/* XXX! */
@@ -84,7 +88,8 @@ size_t cprng_strong(cprng_strong_t *c, void *p, size_t len)
 	return len;
 }
 
-void cprng_strong_destroy(cprng_strong_t *c)
+void
+cprng_strong_destroy(cprng_strong_t *c)
 {
 	mutex_destroy(&c->mtx);
 	cv_destroy(&c->cv);

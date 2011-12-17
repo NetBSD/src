@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.16 2010/03/22 18:58:31 joerg Exp $
+.\"	$NetBSD: rnd.4,v 1.17 2011/12/17 20:05:38 tls Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -37,93 +37,133 @@
 .Sh DESCRIPTION
 The
 .Nm
-pseudo-device uses event timing information collected from many
-devices, and mixes this into an entropy pool.
-This pool is stirred with a cryptographically strong hash function
-when data is extracted from the pool.
-.Sh INTERNAL ENTROPY POOL MANAGEMENT
-When a hardware event occurs (such as completion of a hard drive
-transfer or an interrupt from a network device) a timestamp is
-generated.
-This timestamp is compared to the previous timestamp
-recorded for the device, and the first, second, and third order
-differentials are calculated.
+pseudo-device has three purposes.  On read, it returns cryptographically
+strong random data from a generator keyed from the kernel entropy pool.
+On write, data may be added to the entropy pool.  By ioctl, the behavior
+of the entropy pool (which sources are used; how their entropy is
+estimated, etc.) may be controlled.
 .Pp
-If any of these differentials is zero, no entropy is assumed to
-have been gathered.
-If all are non-zero, one bit is assumed.
-Next, data is mixed into the entropy pool using an LFSR (linear
-feedback shift register).
+The kernel uses event timing information collected from many
+devices, and mixes this into an entropy pool.  This pool is used to
+key a stream generator (the CTR_DRBG generator specified by NIST
+SP 800-90) which is used to generate values returned to userspace when
+the pseudo-device is read.
 .Pp
-To extract data from the entropy pool, a cryptographically strong hash
-function is used.
-The output of this hash is mixed back into the pool using the LFSR,
-and then folded in half before being returned to the caller.
+The pseudodevice is cloning, which means that each time it is opened,
+a new instance of the stream generator is created.  Interposing a stream
+generator between the entropy pool and readers in this manner protects
+readers from each other (each reader's random stream is generated from a
+unique key) and protects all users of the entropy pool from any attack
+which might correlate its successive outputs to each other, such as
+iterative guessing attacks.
 .Pp
-Mixing the actual hash into the pool causes the next extraction to
-return a different value, even if no timing events were added to the
-pool.
-Folding the data in half prevents the caller to derive the
-actual hash of the pool, preventing some attacks.
 .Sh USER ACCESS
 User code can obtain random values from the kernel in two ways.
 .Pp
 Reading from
 .Pa /dev/random
-will only return values while sufficient entropy exists in the
-internal pool.
-When sufficient entropy does not exist,
+provides information-theoretic properties desirable for some callers:
+it will guarantee that the stream generator never outputs more bits
+than the length of its key, which may in some sense mean that all the
+entropy provided to it by the entropy pool is "preserved" in its output.
+.Pp
+Reading from
+.Pa /dev/random
+may return
 .Er EAGAIN
-is returned for non-blocking reads, or the read will block for
-blocking reads.
+(for non-blocking reads), block, or return less data than requested, if
+the pool does not have sufficient entropy
+to provide a new key for the stream generator when sufficient bits have
+been read to require rekeying.
 .Pp
 Reading from
 .Pa /dev/urandom
-will return as many values as requested, even when the entropy pool is
-empty.
-This data is not as good as reading from
-.Pa /dev/random
-since when the pool is empty, data is still returned, degenerating to a
-pseudo-random generator.
+will return as many values as requested.  The stream generator may be
+initially keyed from the entropy pool even if the pool's estimate of
+its own entropy is less than the number of bits in the stream generator's
+key.  If this occurs, the generator will be rekeyed with fresh entropy
+from the pool as soon as sufficient entropy becomes available.  The
+generator will also be rekeyed whenever the pool's entropy estimate
+exceeds the size of the pool's internal state (when the pool "is full").
 .Pp
-Writing to either device will mix the data written into the pool using
-the LFSR as above, without modifying the entropy estimation for the
-pool.
-.Sh RANDOM SOURCE STRUCTURE
-Each source has a state structure which the kernel uses to hold the
-timing information and other state for that source.
+In some sense, this data is not as good as reading from
+.Pa /dev/random ,
+for at least two reasons.  First, the generator may initially be keyed
+from a pool that has never had as many bits of entropy mixed into it as
+there are bits in the generator's key.  Second, the generator may produce
+many more bits of output than are contained in its own key, though it
+will never produce more output on one key than is allowed by the
+CTR_DRBG specification.
+.Pp
+However, reading large amounts of data from a single opened instance of
+.Pa /dev/urandom
+will
+.Em
+not
+deplete the kernel entropy pool, as it would with some other
+implementations.  This preserves entropy for other callers and will
+produce a more fair distribution of the available entropy over many
+potential readers on the same system.
+.Pp
+Users of these interfaces must carefully consider their application's
+actual security requirements and the characteristics of the system
+on which they are reading from the pseudodevice.  For many applications,
+the depletion of the entropy pool caused by the
+.Pa /dev/random
+pseudodevice's continual rekeying of the stream generator will cause
+application behavior (or, perhaps more precisely, nonbehavior) which
+is less secure than relying on the
+.Pa /dev/urandom
+interface, which is guaranteed to rekey the stream generator as often
+as it can.
+.Pp
+Excessive use of
+.Pa /dev/random
+can deplete the entropy pool (or, at least, its estimate of how many
+bits of entropy it "contains") and reduce security for other consumers
+of randomness both in userspace
+.Em and within the kernel.
+Some system administrators may wish therefore to remove the /dev/random
+device node and replace it with a second copy of the node for the
+nonblocking /dev/urandom device.
+.Pp
+In any event, as the Linux manual page notes, one should
+be very suspicious of any application which attempts to read more than
+32 bytes (256 bits) from the blocking
+.Pa /dev/random
+pseudodevice, since no practical cryptographic algorithm in current
+use is believed to have a security strength greater than 256 bits.
+.Pp
+Writing to either device node will mix the data written into the
+entropy pool, but will have no effect on the pool's entropy estimate.
+The
+.Xr ioctl 2
+interface to the device may be used -- once only, and only when the
+system is in insecure mode at security level 0 or lower -- to add
+data with an explicit entropy estimate.
+.Sh IOCTL INTERFACE
+Various
+.Xr ioctl 2
+functions are available to control device behavior, gather statistics,
+and add data to the entropy pool.
+These are all defined in the
+.In sys/rnd.h
+file, along with the data types and constants.  The structures and
+ioctl functions are also listed below.
+.Sh DATA TYPES
+Each source has a state structure which summarizes the kernel's state
+for that entropy source.
 .Bd -literal -offset indent
 typedef struct {
         char            name[16];
-        uint32_t       last_time;
-        uint32_t       last_delta;
-        uint32_t       last_delta2;
-        uint32_t       total;
-        uint32_t       type;
+        uint32_t	total;
+        uint32_t	type;
 	uint32_t	flags;
 } rndsource_t;
 .Ed
-.Pp
-This structure holds the internal representation of a device's timing
-state.
 The
 .Va name
-field holes the device name, as known to the kernel.
-The
-.Va last_time
-entry is the timestamp of the last time this device generated an
-event.
-It is for internal use only, and not in any specific representation.
-The
-.Va last_delta
-and
-.Va last_delta2
-fields hold the last first- and second-order deltas.
-The
-.Va total
-field holds a count of how many bits this device has potentially
-generated.
-This is not the same as how many bits were used from it.
+field holds the device name, as known to the kernel.
 The
 .Va type
 field holds the device type.
@@ -152,14 +192,6 @@ Do not assume any entropy is in the timing information.
 .It Dv RND_FLAG_NO_COLLECT
 Do not even add timing information to the pool.
 .El
-.Sh IOCTL
-Various
-.Xr ioctl 2
-functions are available to control device behavior, gather statistics,
-and add data to the entropy pool.
-These are all defined in the
-.In sys/rnd.h
-file, along with the data types and constants.
 .Pp
 .Bl -tag -width RNDADDTOENTCNT
 .It Dv RNDGETENTCNT
@@ -248,9 +280,9 @@ are to be set or cleared.
 .Pq Li "rnddata_t"
 .Bd -literal -offset indent
 typedef struct {
-        uint32_t       len;
-        uint32_t       entropy;
-        u_char          data[RND_POOLWORDS * 4];
+        uint32_t	len;
+        uint32_t	entropy;
+        u_char		data[RND_SAVEWORDS * sizeof(uint32_t)];
 } rnddata_t;
 .Ed
 .El
@@ -259,7 +291,7 @@ typedef struct {
 .It Pa /dev/random
 Returns ``good'' values only
 .It Pa /dev/urandom
-Always returns data, degenerates to a pseudo-random generator
+Always returns data.
 .El
 .Sh SEE ALSO
 .Xr rndctl 8 ,
@@ -268,6 +300,6 @@ Always returns data, degenerates to a pseudo-random generator
 The random device was first made available in
 .Nx 1.3 .
 .Sh AUTHORS
-This implementation was written by Michael Graff \*[Lt]explorer@flame.org\*[Gt]
-using ideas and algorithms gathered from many sources, including
-the driver written by Ted Ts'o.
+This implementation was written by Thor Lancelot Simon.  It retains
+some code (particularly for the ioctl interface) from the earlier
+implementation by Michael Graff \*[Lt]explorer@flame.org\*[Gt].

@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.27 2011/12/17 12:59:21 apb Exp $	*/
+/*	$NetBSD: rnd.h,v 1.28 2011/12/17 20:05:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -164,6 +164,8 @@ void		rndsink_attach(rndsink_t *);
 void		rndsink_detach(rndsink_t *);
 
 void		rnd_seed(void *, size_t);
+
+extern int	rnd_full;
 
 #endif /* _KERNEL */
 
