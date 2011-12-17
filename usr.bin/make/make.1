@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.197 2011/11/13 18:18:35 dholland Exp $
+.\"	$NetBSD: make.1,v 1.198 2011/12/17 04:43:45 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd November 6, 2011
+.Dd December 16, 2011
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1256,6 +1256,9 @@ The ODE convention is that
 should start and end with a period.
 For example.
 .Dl ${LINKS:@.LINK.@${LN} ${TARGET} ${.LINK.}@}
+.Pp
+However a single character varaiable is often more readable:
+.Dl ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}
 .It Cm \&:U Ns Ar newval
 If the variable is undefined
 .Ar newval
