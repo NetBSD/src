@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.17 2011/12/17 20:05:38 tls Exp $
+.\"	$NetBSD: rnd.4,v 1.18 2011/12/17 21:21:59 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 22, 2009
+.Dd December 17, 2011
 .Dt RND 4
 .Os
 .Sh NAME
@@ -37,26 +37,28 @@
 .Sh DESCRIPTION
 The
 .Nm
-pseudo-device has three purposes.  On read, it returns cryptographically
+pseudo-device has three purposes.
+On read, it returns cryptographically
 strong random data from a generator keyed from the kernel entropy pool.
-On write, data may be added to the entropy pool.  By ioctl, the behavior
-of the entropy pool (which sources are used; how their entropy is
-estimated, etc.) may be controlled.
+On write, data may be added to the entropy pool.
+By ioctl, the behavior of the entropy pool (which sources are used;
+how their entropy is estimated, etc.) may be controlled.
 .Pp
 The kernel uses event timing information collected from many
-devices, and mixes this into an entropy pool.  This pool is used to
+devices, and mixes this into an entropy pool.
+This pool is used to
 key a stream generator (the CTR_DRBG generator specified by NIST
 SP 800-90) which is used to generate values returned to userspace when
 the pseudo-device is read.
 .Pp
 The pseudodevice is cloning, which means that each time it is opened,
-a new instance of the stream generator is created.  Interposing a stream
+a new instance of the stream generator is created.
+Interposing a stream
 generator between the entropy pool and readers in this manner protects
 readers from each other (each reader's random stream is generated from a
 unique key) and protects all users of the entropy pool from any attack
 which might correlate its successive outputs to each other, such as
 iterative guessing attacks.
-.Pp
 .Sh USER ACCESS
 User code can obtain random values from the kernel in two ways.
 .Pp
@@ -78,19 +80,23 @@ been read to require rekeying.
 .Pp
 Reading from
 .Pa /dev/urandom
-will return as many values as requested.  The stream generator may be
+will return as many values as requested.
+The stream generator may be
 initially keyed from the entropy pool even if the pool's estimate of
 its own entropy is less than the number of bits in the stream generator's
-key.  If this occurs, the generator will be rekeyed with fresh entropy
-from the pool as soon as sufficient entropy becomes available.  The
-generator will also be rekeyed whenever the pool's entropy estimate
+key.
+If this occurs, the generator will be rekeyed with fresh entropy
+from the pool as soon as sufficient entropy becomes available.
+The generator will also be rekeyed whenever the pool's entropy estimate
 exceeds the size of the pool's internal state (when the pool "is full").
 .Pp
 In some sense, this data is not as good as reading from
 .Pa /dev/random ,
-for at least two reasons.  First, the generator may initially be keyed
+for at least two reasons.
+First, the generator may initially be keyed
 from a pool that has never had as many bits of entropy mixed into it as
-there are bits in the generator's key.  Second, the generator may produce
+there are bits in the generator's key.
+Second, the generator may produce
 many more bits of output than are contained in its own key, though it
 will never produce more output on one key than is allowed by the
 CTR_DRBG specification.
@@ -98,17 +104,17 @@ CTR_DRBG specification.
 However, reading large amounts of data from a single opened instance of
 .Pa /dev/urandom
 will
-.Em
-not
+.Em not
 deplete the kernel entropy pool, as it would with some other
-implementations.  This preserves entropy for other callers and will
+implementations.
+This preserves entropy for other callers and will
 produce a more fair distribution of the available entropy over many
 potential readers on the same system.
 .Pp
 Users of these interfaces must carefully consider their application's
 actual security requirements and the characteristics of the system
-on which they are reading from the pseudodevice.  For many applications,
-the depletion of the entropy pool caused by the
+on which they are reading from the pseudodevice.
+For many applications, the depletion of the entropy pool caused by the
 .Pa /dev/random
 pseudodevice's continual rekeying of the stream generator will cause
 application behavior (or, perhaps more precisely, nonbehavior) which
@@ -123,9 +129,11 @@ can deplete the entropy pool (or, at least, its estimate of how many
 bits of entropy it "contains") and reduce security for other consumers
 of randomness both in userspace
 .Em and within the kernel.
-Some system administrators may wish therefore to remove the /dev/random
-device node and replace it with a second copy of the node for the
-nonblocking /dev/urandom device.
+Some system administrators may wish therefore to remove the
+.Pa /dev/random
+device node and replace it with a second copy of the node for the nonblocking
+.Pa /dev/urandom
+device.
 .Pp
 In any event, as the Linux manual page notes, one should
 be very suspicious of any application which attempts to read more than
@@ -148,8 +156,8 @@ functions are available to control device behavior, gather statistics,
 and add data to the entropy pool.
 These are all defined in the
 .In sys/rnd.h
-file, along with the data types and constants.  The structures and
-ioctl functions are also listed below.
+file, along with the data types and constants.
+The structures and ioctl functions are also listed below.
 .Sh DATA TYPES
 Each source has a state structure which summarizes the kernel's state
 for that entropy source.
@@ -300,6 +308,8 @@ Always returns data.
 The random device was first made available in
 .Nx 1.3 .
 .Sh AUTHORS
-This implementation was written by Thor Lancelot Simon.  It retains
+This implementation was written by Thor Lancelot Simon.
+It retains
 some code (particularly for the ioctl interface) from the earlier
-implementation by Michael Graff \*[Lt]explorer@flame.org\*[Gt].
+implementation by Michael Graff
+.Aq explorer@flame.org .
