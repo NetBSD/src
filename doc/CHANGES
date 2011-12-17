@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1635 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1636 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1180,3 +1180,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	resolvconf(8): import openresolv-3.4.5 [roy 20111124]
 	x68k: Add powsw(4), a revised power switch driver [isaki 20111127]
 	rtadvd: Add RDNSS and DNSSL support (RFC6106) [roy 20111210]
+	isibootd(8): Add isibootd(8), a dumb netboot server command for
+		OMRON luna68k machines.  [tsutsui 20111217]
