@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.4 2011/11/29 21:48:22 njoly Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.5 2011/12/17 20:05:39 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.4 2011/11/29 21:48:22 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.5 2011/12/17 20:05:39 tls Exp $");
 
 void
 cprng_init(void)
@@ -72,6 +72,17 @@ cprng_counter(void)
 }
 
 static void
+cprng_strong_sched_reseed(cprng_strong_t *const c)
+{
+	KASSERT(mutex_owned(&c->mtx));
+	if (!(c->reseed_pending)) {
+		c->reseed_pending = 1;
+		c->reseed.len = NIST_BLOCK_KEYLEN_BYTES;
+		rndsink_attach(&c->reseed);
+	}
+}
+
+static void
 cprng_strong_reseed(void *const arg)
 {
 	cprng_strong_t *c = arg;
@@ -91,6 +102,7 @@ cprng_strong_reseed(void *const arg)
 	if (c->flags & CPRNG_USE_CV) {
 		cv_broadcast(&c->cv);
 	}
+	selnotify(&c->selq, 0, 0);
 	mutex_exit(&c->mtx);
 }
 
@@ -99,7 +111,7 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 {
 	cprng_strong_t *c;
 	uint8_t key[NIST_BLOCK_KEYLEN_BYTES];
-	int r, getmore = 0;
+	int r, getmore = 0, hard = 0;
 	uint32_t cc;
 
 	c = kmem_alloc(sizeof(*c), KM_NOSLEEP);
@@ -119,15 +131,19 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 		cv_init(&c->cv, name);
 	}
 
+	selinit(&c->selq);
+
 	r = rnd_extract_data(key, sizeof(key), RND_EXTRACT_GOOD);
 	if (r != sizeof(key)) {
 		if (c->flags & CPRNG_INIT_ANY) {
+#ifdef DEBUG
 			printf("cprng %s: WARNING insufficient "
 			       "entropy at creation.\n", name);
+#endif
 			rnd_extract_data(key + r, sizeof(key - r),
 					 RND_EXTRACT_ANY);
 		} else {
-			return NULL;
+			hard++;
 		}
 		getmore++;
 	}
@@ -138,46 +154,30 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 	}
 
 	if (getmore) {
-		int wr = 0;
-
-		/* Ask for more. */
-		c->reseed_pending = 1;
-		c->reseed.len = sizeof(key);
-		rndsink_attach(&c->reseed);
-		if (c->flags & CPRNG_USE_CV) {
-			mutex_enter(&c->mtx);
-			do {
-				wr = cv_wait_sig(&c->cv, &c->mtx);
-				if (__predict_true(wr == 0)) {
-					break;
-				}
-				if (wr == ERESTART) {
-					continue;
-				} else {
-					cv_destroy(&c->cv);
-					mutex_exit(&c->mtx);
-					mutex_destroy(&c->mtx);
-					kmem_free(c, sizeof(c));
-					return NULL;
-				}
-			} while (1);
-			mutex_exit(&c->mtx);
+		/* Cause readers to wait for rekeying. */
+		if (hard) {
+			c->drbg.reseed_counter =
+			    NIST_CTR_DRBG_RESEED_INTERVAL + 1;
+		} else {
+			c->drbg.reseed_counter =
+			    (NIST_CTR_DRBG_RESEED_INTERVAL / 2) + 1;
 		}
 	}
 	return c;
 }
 
 size_t
-cprng_strong(cprng_strong_t *const c, void *const p, size_t len)
+cprng_strong(cprng_strong_t *const c, void *const p, size_t len, int flags)
 {
 	uint32_t cc = cprng_counter();
-
+#ifdef DEBUG
+	int testfail = 0;
+#endif
 	if (len > CPRNG_MAX_LEN) {	/* XXX should we loop? */
 		len = CPRNG_MAX_LEN;	/* let the caller loop if desired */
 	}
-
 	mutex_enter(&c->mtx);
-again:
+
 	if (nist_ctr_drbg_generate(&c->drbg, p, len, &cc, sizeof(cc))) {
 		/* A generator failure really means we hit the hard limit. */
 		if (c->flags & CPRNG_REKEY_ANY) {
@@ -192,16 +192,15 @@ again:
 				panic("cprng %s: nist_ctr_drbg_reseed "
 				      "failed.", c->name);
 			}
-			if (c->flags & CPRNG_USE_CV) {
-				cv_broadcast(&c->cv);	/* XXX unnecessary? */
-			}
 		} else {
-			if (c->flags & CPRNG_USE_CV) {
+			if (!(flags & FNONBLOCK) && 
+			     (c->flags & CPRNG_USE_CV)) {
 				int wr;
 
+				cprng_strong_sched_reseed(c);
 				do {
-					wr = cv_wait_sig(&c->cv, &c->mtx);	
-					if (wr == EINTR) {
+					wr = cv_wait_sig(&c->cv, &c->mtx);
+					if (wr == ERESTART) {
 						mutex_exit(&c->mtx);
 						return 0;
 					}
@@ -209,49 +208,55 @@ again:
 								len, &cc,
 								sizeof(cc)));
 			} else {
-				mutex_exit(&c->mtx);
-				return 0;
+				len = 0;
 			}
 		}
 	}
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	/*
 	 * If the generator has just been keyed, perform
 	 * the statistical RNG test.
 	 */
 	if (__predict_false(c->drbg.reseed_counter == 1)) {
-		rngtest_t rt;
+		rngtest_t *rt = kmem_alloc(sizeof(*rt), KM_NOSLEEP);
 
-		strncpy(rt.rt_name, c->name, sizeof(rt.rt_name));
+		if (rt) {
 
-		if (nist_ctr_drbg_generate(&c->drbg, rt.rt_b,
-		    sizeof(rt.rt_b), NULL, 0)) {
-			panic("cprng %s: nist_ctr_drbg_generate failed!",
-			      c->name);
+			strncpy(rt->rt_name, c->name, sizeof(rt->rt_name));
+
+			if (nist_ctr_drbg_generate(&c->drbg, rt->rt_b,
+		  	    sizeof(rt->rt_b), NULL, 0)) {
+				panic("cprng %s: nist_ctr_drbg_generate "
+				      "failed!", c->name);
 		
-		}
-		if (rngtest(&rt)) {
-			printf("cprng %s: failed statistical RNG test.\n",
-			      c->name);
-			c->drbg.reseed_counter =
-			    NIST_CTR_DRBG_RESEED_INTERVAL + 1;
-		}
+			}
+			testfail = rngtest(rt);
 
-		memset(&rt, 0, sizeof(rt));
+			if (testfail) {
+				printf("cprng %s: failed statistical RNG "
+				       "test.\n", c->name);
+				c->drbg.reseed_counter =
+				    NIST_CTR_DRBG_RESEED_INTERVAL + 1;
+				len = 0;
+			}
+			memset(rt, 0, sizeof(*rt));
+			kmem_free(rt, sizeof(*rt));
+		}
 	}
 #endif
 	if (__predict_false(c->drbg.reseed_counter >
-			    (NIST_CTR_DRBG_RESEED_INTERVAL / 2))) {
-		if (!(c->reseed_pending)) {
-			c->reseed_pending = 1;
-			c->reseed.len = NIST_BLOCK_KEYLEN_BYTES;
-			rndsink_attach(&c->reseed);
+			     (NIST_CTR_DRBG_RESEED_INTERVAL / 2))) {
+		cprng_strong_sched_reseed(c);
+	}
+
+	if (rnd_full) {
+		if (!c->rekeyed_on_full) {
+			c->rekeyed_on_full++;
+			cprng_strong_sched_reseed(c);
 		}
-		if (__predict_false(c->drbg.reseed_counter >
-				    NIST_CTR_DRBG_RESEED_INTERVAL))  {
-			goto again;	/* statistical test failure */
-		}
+	} else {
+		c->rekeyed_on_full = 0;
 	}
 
 	mutex_exit(&c->mtx);
@@ -261,17 +266,22 @@ again:
 void
 cprng_strong_destroy(cprng_strong_t *c)
 {
-	KASSERT(!mutex_owned(&c->mtx));
+	mutex_enter(&c->mtx);
+
 	if (c->flags & CPRNG_USE_CV) {
 		KASSERT(!cv_has_waiters(&c->cv));
 		cv_destroy(&c->cv);
 	}
+	seldestroy(&c->selq);
 
-	mutex_destroy(&c->mtx);
 	if (c->reseed_pending) {
 		rndsink_detach(&c->reseed);
 	}
 	nist_ctr_drbg_destroy(&c->drbg);
+
+	mutex_exit(&c->mtx);
+	mutex_destroy(&c->mtx);
+
 	memset(c, 0, sizeof(*c));
 	kmem_free(c, sizeof(*c));
 }
@@ -302,6 +312,7 @@ cprng_strong_setflags(cprng_strong_t *const c, int flags)
 			if (c->flags & CPRNG_USE_CV) {
 				cv_broadcast(&c->cv);
 			}
+			selnotify(&c->selq, 0, 0);
 		}
 	}
 	c->flags = flags;
