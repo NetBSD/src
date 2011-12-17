@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1360 2011/11/28 16:22:17 tron Exp $
+# $NetBSD: mi,v 1.1361 2011/12/17 13:27:51 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2400,6 +2400,7 @@
 ./usr/share/man/cat8/isdntel.0			man-isdn-catman		.cat
 ./usr/share/man/cat8/isdntelctl.0		man-isdn-catman		.cat
 ./usr/share/man/cat8/isdntrace.0		man-isdn-catman		.cat
+./usr/share/man/cat8/isibootd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/ispppcontrol.0		man-obsolete		obsolete
 ./usr/share/man/cat8/iteconfig.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/iwictl.0			man-sysutil-catman	.cat
@@ -5060,6 +5061,7 @@
 ./usr/share/man/html8/isdntel.html		man-isdn-htmlman	html
 ./usr/share/man/html8/isdntelctl.html		man-isdn-htmlman	html
 ./usr/share/man/html8/isdntrace.html		man-isdn-htmlman	html
+./usr/share/man/html8/isibootd.html		man-bootserver-htmlman	html
 ./usr/share/man/html8/iteconfig.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/iwictl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/kadmin.html		man-krb5-htmlman	kerberos,html
@@ -7869,6 +7871,7 @@
 ./usr/share/man/man8/isdntel.8			man-isdn-man		.man
 ./usr/share/man/man8/isdntelctl.8		man-isdn-man		.man
 ./usr/share/man/man8/isdntrace.8		man-isdn-man		.man
+./usr/share/man/man8/isibootd.8			man-bootserver-man	.man
 ./usr/share/man/man8/ispppcontrol.8		man-obsolete		obsolete
 ./usr/share/man/man8/iteconfig.8		man-sysutil-man		.man
 ./usr/share/man/man8/iwictl.8			man-sysutil-man		.man

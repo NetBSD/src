@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1717 2011/12/16 12:46:01 wiz Exp $
+#	$NetBSD: mi,v 1.1718 2011/12/17 13:27:50 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4121,6 +4121,7 @@
 ./usr/libdata/debug/usr/sbin/isdntel.debug	comp-isdn-debug		debug
 ./usr/libdata/debug/usr/sbin/isdntelctl.debug	comp-isdn-debug		debug
 ./usr/libdata/debug/usr/sbin/isdntrace.debug	comp-isdn-debug		debug
+./usr/libdata/debug/usr/sbin/isibootd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/iwictl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/kadmin.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/sbin/kcm.debug		comp-krb5-debug		kerberos,debug
