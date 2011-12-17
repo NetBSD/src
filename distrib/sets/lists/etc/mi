@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.226 2011/11/23 10:47:49 tls Exp $
+# $NetBSD: mi,v 1.227 2011/12/17 13:37:49 tsutsui Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -212,6 +212,7 @@
 ./etc/rc.d/irdaattach				etc-sys-rc
 ./etc/rc.d/iscsi_target				etc-iscsi-rc
 ./etc/rc.d/isdnd				etc-isdn-rc
+./etc/rc.d/isibootd				etc-bootserver-rc
 ./etc/rc.d/kdc					etc-krb5-rc
 ./etc/rc.d/kerberos				etc-obsolete		obsolete
 ./etc/rc.d/ldconfig				etc-sys-rc
