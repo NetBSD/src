@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.86 2011/11/23 10:47:48 tls Exp $
+# $NetBSD: Makefile,v 1.87 2011/12/17 13:37:49 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ CONFIGFILES=\
 		gpio \
 		hostapd httpd \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
-		irdaattach iscsi_target isdnd \
+		irdaattach iscsi_target isdnd isibootd \
 		kdc \
 		ldconfig ldpd local lpd lvm \
 		mdnsd mixerctl mopd motd mountall mountcritlocal \
