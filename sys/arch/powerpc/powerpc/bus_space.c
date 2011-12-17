@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.28 2011/06/30 00:53:00 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.29 2011/12/17 19:34:07 phx Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.28 2011/06/30 00:53:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.29 2011/12/17 19:34:07 phx Exp $");
 
 #define _POWERPC_BUS_SPACE_PRIVATE
 
@@ -526,7 +526,7 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	size = _BUS_SPACE_STRIDE(t, size);
 	bpa = _BUS_SPACE_STRIDE(t, bpa);
 
-	if (bpa + size > t->pbs_limit) {
+	if (t->pbs_limit != 0 && bpa + size > t->pbs_limit) {
 #ifdef DEBUG
 		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: EINVAL\n",
 		    t, t->pbs_base, t->pbs_limit, bpa, size);
@@ -702,7 +702,7 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	if (t->pbs_extent == NULL)
 		return ENOMEM;
 
-	if (rstart + size > t->pbs_limit) {
+	if (t->pbs_limit != 0 && rstart + size > t->pbs_limit) {
 #ifdef DEBUG
 		printf("%s(%p[%x:%x], %#x, %#x) failed: EINVAL\n",
 		   __func__, t, t->pbs_base, t->pbs_limit, rstart, size);
