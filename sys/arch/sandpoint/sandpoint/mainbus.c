@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.24 2011/07/01 19:16:06 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.25 2011/12/17 20:20:38 phx Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2011/07/01 19:16:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2011/12/17 20:20:38 phx Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -42,12 +42,13 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2011/07/01 19:16:06 dyoung Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <sys/bus.h>
+#include <machine/autoconf.h>
 #include <machine/isa_machdep.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 
+/* XXX go away! */
 struct conf_args {
 	const char *ca_name;
 };
@@ -78,17 +79,24 @@ void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct conf_args ca;
+	struct mainbus_attach_args mba;
 	struct pcibus_attach_args pba;
 #if defined(PCI_NETBSD_CONFIGURE)
 	struct extent *ioext, *memext;
 #endif
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	ca.ca_name = "cpu";
 	config_found_ia(self, "mainbus", &ca, mainbus_print);
 	ca.ca_name = "eumb";
 	config_found_ia(self, "mainbus", &ca, mainbus_print);
+
+	mba.ma_name = "cfi";
+	mba.ma_bst = &sandpoint_flash_space_tag;
+	mba.ma_addr = 0xffe00000; /* smallest flash is 2 MiB */
+	config_found_ia(self, "mainbus", &mba, mainbus_print);
 
 	/*
 	 * XXX Note also that the presence of a PCI bus should
@@ -125,8 +133,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(cpu, 0,
-    cpu_match, cpu_attach, NULL, NULL);
+CFATTACH_DECL_NEW(cpu, 0, cpu_match, cpu_attach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
 
