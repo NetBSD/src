@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.26 2011/11/29 03:50:32 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.27 2011/12/17 12:59:21 apb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ typedef struct {
 	uint8_t digest[SHA1_DIGEST_LENGTH];
 } rndsave_t;
 
+/* Statistics exposed by RNDGETPOOLSTAT */
 typedef struct
 {
 	uint32_t	poolsize;
@@ -118,7 +119,7 @@ typedef struct krndsource {
         uint32_t        total;          /* entropy from this source */
         uint32_t        type;           /* type */
         uint32_t        flags;          /* flags */
-        void            *state;         /* state informaiton */
+        void            *state;         /* state information */
         size_t          test_cnt;       /* how much test data accumulated? */
         rngtest_t	*test;          /* test data for RNG type sources */
 } krndsource_t;
@@ -197,6 +198,10 @@ typedef struct {
 	uint32_t	mask;		/* mask for the flags we are setting */
 } rndctl_t;
 
+/*
+ * Add entropy to the pool.  len is the data length, in bytes.
+ * entropy is the number of bits of estimated entropy in the data.
+ */
 typedef struct {
 	uint32_t	len;
 	uint32_t	entropy;
@@ -208,6 +213,6 @@ typedef struct {
 #define	RNDGETSRCNAME	_IOWR('R', 103, rndstat_name_t) /* get src by name */
 #define	RNDCTL		_IOW('R',  104, rndctl_t)  /* set/clear source flags */
 #define	RNDADDDATA	_IOW('R',  105, rnddata_t) /* add data to the pool */
-#define	RNDGETPOOLSTAT	_IOR('R',  106, rndpoolstat_t)
+#define	RNDGETPOOLSTAT	_IOR('R',  106, rndpoolstat_t) /* get statistics */
 
 #endif /* !_SYS_RND_H_ */
