@@ -1,4 +1,4 @@
-#	$NetBSD: KZSH401,v 1.29 2010/11/23 11:13:58 hannken Exp $
+#	$NetBSD: KZSH401,v 1.30 2011/12/18 05:49:27 dholland Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -57,7 +57,7 @@ options 	EXEC_COFF	# COFF executables
 # File systems
 file-system 	FFS		# UFS
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 config		netbsd	root on ? type ?
 

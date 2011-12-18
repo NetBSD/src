@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.7 2011/11/22 21:25:11 tls Exp $
+# $NetBSD: LOONGSON,v 1.8 2011/12/18 05:49:26 dholland Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.7 $"
+#ident 		"GDIUM-$Revision: 1.8 $"
 
 maxusers	16
 
@@ -84,7 +84,7 @@ file-system	PTYFS		# /dev/pts/N support
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas

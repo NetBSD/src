@@ -1,5 +1,5 @@
 #
-# $NetBSD: HADES,v 1.98 2011/11/22 21:25:00 tls Exp $
+# $NetBSD: HADES,v 1.99 2011/12/18 05:49:24 dholland Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -41,7 +41,7 @@ file-system PUFFS # Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system EXT2FS # second extended file system (linux)
 file-system PTYFS # /dev/pts/N support
 file-system TMPFS # Efficient memory file-system
-options WAPBL # File system journaling support - Experimental
+options WAPBL # File system journaling support
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger

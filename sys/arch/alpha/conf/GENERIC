@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.342 2011/11/22 21:24:53 tls Exp $
+# $NetBSD: GENERIC,v 1.343 2011/12/18 05:49:23 dholland Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.342 $"
+ident		"GENERIC-$Revision: 1.343 $"
 
 maxusers 32
 
@@ -94,7 +94,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
