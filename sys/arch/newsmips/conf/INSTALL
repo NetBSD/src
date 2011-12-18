@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.39 2011/11/22 21:25:30 tls Exp $
+# 	$NetBSD: INSTALL,v 1.40 2011/12/18 05:49:30 dholland Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -49,7 +49,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 # Filesystem options
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# Internet protocols

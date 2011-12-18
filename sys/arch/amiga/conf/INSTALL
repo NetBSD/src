@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.98 2011/12/15 14:25:12 phx Exp $
+# $NetBSD: INSTALL,v 1.99 2011/12/18 05:49:23 dholland Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.99 $"
 
 makeoptions	COPTS="-Os"
 
@@ -110,7 +110,7 @@ file-system 	KERNFS		# kernel data-structure filesystem
 # Filesystem options
 
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
