@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA820,v 1.24 2011/11/22 21:25:16 tls Exp $
+#	$NetBSD: JORNADA820,v 1.25 2011/12/18 05:49:28 dholland Exp $
 #
 #	JORNADA -- Windows-CE based jornada 820
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.24 $"
+#ident 		"GENERIC-$Revision: 1.25 $"
 
 # estimated number of users
 maxusers	32
@@ -52,7 +52,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	NFSSERVER
 

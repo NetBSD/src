@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.7 2011/11/22 21:25:07 tls Exp $
+#	$NetBSD: IGEPV2,v 1.8 2011/12/18 05:49:25 dholland Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -49,7 +49,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 #options 	SOFTDEP
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

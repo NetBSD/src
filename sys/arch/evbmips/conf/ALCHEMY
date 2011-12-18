@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.39 2011/12/15 16:14:17 oki Exp $
+#	$NetBSD: ALCHEMY,v 1.40 2011/12/18 05:49:26 dholland Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.39 $"
+#ident 		"ALCHEMY-$Revision: 1.40 $"
 
 maxusers	32
 
@@ -88,7 +88,7 @@ file-system	FDESC		# user file descriptor filesystem
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.

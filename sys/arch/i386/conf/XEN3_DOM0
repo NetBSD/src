@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.57 2011/11/22 21:25:21 tls Exp $
+#	$NetBSD: XEN3_DOM0,v 1.58 2011/12/18 05:49:28 dholland Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -132,7 +132,7 @@ file-system 	TMPFS		# Efficient memory file-system
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
