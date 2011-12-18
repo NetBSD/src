@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.25 2011/12/17 20:20:38 phx Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26 2011/12/18 14:28:59 phx Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2011/12/17 20:20:38 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2011/12/18 14:28:59 phx Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -47,11 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2011/12/17 20:20:38 phx Exp $");
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
-
-/* XXX go away! */
-struct conf_args {
-	const char *ca_name;
-};
 
 int	mainbus_match(device_t, cfdata_t, void *);
 void	mainbus_attach(device_t, device_t, void *);
@@ -78,7 +73,6 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
 void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct conf_args ca;
 	struct mainbus_attach_args mba;
 	struct pcibus_attach_args pba;
 #if defined(PCI_NETBSD_CONFIGURE)
@@ -88,10 +82,12 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	ca.ca_name = "cpu";
-	config_found_ia(self, "mainbus", &ca, mainbus_print);
-	ca.ca_name = "eumb";
-	config_found_ia(self, "mainbus", &ca, mainbus_print);
+	mba.ma_name = "cpu";
+	config_found_ia(self, "mainbus", &mba, mainbus_print);
+
+	mba.ma_name = "eumb";
+	mba.ma_bst = &sandpoint_eumb_space_tag;
+	config_found_ia(self, "mainbus", &mba, mainbus_print);
 
 	mba.ma_name = "cfi";
 	mba.ma_bst = &sandpoint_flash_space_tag;
@@ -140,9 +136,9 @@ extern struct cfdriver cpu_cd;
 int
 cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct conf_args *ca = aux;
+	struct mainbus_attach_args *mba = aux;
 
-	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
+	if (strcmp(mba->ma_name, cpu_cd.cd_name) != 0)
 		return 0;
 	if (cpu_info[0].ci_dev != NULL)
 		return 0;
@@ -154,15 +150,15 @@ void
 cpu_attach(device_t parent, device_t self, void *aux)
 {
 
-	(void) cpu_attach_common(self, 0);
+	(void)cpu_attach_common(self, 0);
 }
 
 int
 mainbus_print(void *aux, const char *pnp)
 {
-	struct conf_args *ca = aux;
+	struct mainbus_attach_args *mba = aux;
 
 	if (pnp)
-		aprint_normal("%s at %s", ca->ca_name, pnp);
-	return (UNCONF);
+		aprint_normal("%s at %s", mba->ma_name, pnp);
+	return UNCONF;
 }
