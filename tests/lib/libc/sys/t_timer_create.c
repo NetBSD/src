@@ -1,4 +1,4 @@
-/*	$NetBSD: t_timer_create.c,v 1.2 2011/09/17 18:52:21 jruoho Exp $ */
+/*	$NetBSD: t_timer_create.c,v 1.3 2011/12/18 22:25:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,9 +37,6 @@
 static timer_t t;
 static bool fail = true;
 
-static void	timer_signal_handler(int, siginfo_t *, void *);
-static void	timer_signal_create(clockid_t);
-
 static void
 timer_signal_handler(int signo, siginfo_t *si, void *osi)
 {
@@ -54,7 +51,7 @@ timer_signal_handler(int signo, siginfo_t *si, void *osi)
 }
 
 static void
-timer_signal_create(clockid_t cid)
+timer_signal_create(clockid_t cid, bool expire)
 {
 	struct itimerspec tim;
 	struct sigaction act;
@@ -96,7 +93,7 @@ timer_signal_create(clockid_t cid)
 	/*
 	 * Start the timer. After this, unblock the signal.
 	 */
-	tim.it_value.tv_sec = 1;
+	tim.it_value.tv_sec = expire ? 5 : 1;
 	tim.it_value.tv_nsec = 0;
 
 	ATF_REQUIRE(timer_settime(t, 0, &tim, NULL) == 0);
@@ -104,8 +101,15 @@ timer_signal_create(clockid_t cid)
 	(void)sigprocmask(SIG_UNBLOCK, &set, NULL);
 	(void)sleep(2);
 
-	if (fail != false)
-		atf_tc_fail("timer failed to fire");
+	if (expire) {
+		if (!fail)
+			atf_tc_fail("timer fired too soon");
+	} else {
+		if (fail)
+			atf_tc_fail("timer failed to fire");
+	}
+
+	ATF_REQUIRE(timer_delete(t) == 0);
 }
 
 ATF_TC(timer_create_err);
@@ -145,7 +149,7 @@ ATF_TC_HEAD(timer_create_real, tc)
 
 ATF_TC_BODY(timer_create_real, tc)
 {
-	timer_signal_create(CLOCK_REALTIME);
+	timer_signal_create(CLOCK_REALTIME, false);
 }
 
 ATF_TC(timer_create_mono);
@@ -159,7 +163,35 @@ ATF_TC_HEAD(timer_create_mono, tc)
 
 ATF_TC_BODY(timer_create_mono, tc)
 {
-	timer_signal_create(CLOCK_MONOTONIC);
+	timer_signal_create(CLOCK_MONOTONIC, false);
+}
+
+ATF_TC(timer_create_real_expire);
+ATF_TC_HEAD(timer_create_real_expire, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks timer_create(2) with CLOCK_REALTIME and sigevent(3), "
+	    "SIGEV_SIGNAL, with expiration");
+}
+
+ATF_TC_BODY(timer_create_real_expire, tc)
+{
+	timer_signal_create(CLOCK_REALTIME, true);
+}
+
+ATF_TC(timer_create_mono_expire);
+ATF_TC_HEAD(timer_create_mono_expire, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks timer_create(2) with CLOCK_MONOTONIC and sigevent(3), "
+	    "SIGEV_SIGNAL, with expiration");
+}
+
+ATF_TC_BODY(timer_create_mono_expire, tc)
+{
+	timer_signal_create(CLOCK_MONOTONIC, true);
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -168,6 +200,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, timer_create_err);
 	ATF_TP_ADD_TC(tp, timer_create_real);
 	ATF_TP_ADD_TC(tp, timer_create_mono);
+	ATF_TP_ADD_TC(tp, timer_create_real_expire);
+	ATF_TP_ADD_TC(tp, timer_create_mono_expire);
 
 	return atf_no_error();
 }
