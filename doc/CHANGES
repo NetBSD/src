@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1636 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1637 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1142,7 +1142,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	amd64: Switch to GDB 7.3.1.  [christos 20111008]
 	i386: Switch to GDB 7.3.1.  [christos 20111008]
 	zoneinfo: Import tzdata2011l. [apb 20111010]
+	x68k: Fix bootloader failure on X68030+060turbo. [tsutsui 20111011]
 	sqlite: Import of pre-release of SQLite 3.6.9 [joerg 20111013]
+	m68k: Add hyperbotic and trigonometric functions to m68k FPE.
+		[tsutsui,isaki 20111015]
 	vmt(4): Add a VMware Tools driver, from OpenBSD. [jmcneill 20111017]
 	zoneinfo: Import tzdata2011m. [apb 20111024]
 	sparc: Switch to GDB 7.3.1.  [mrg 20111024]
