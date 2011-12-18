@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.8 2011/01/26 19:15:13 drochner Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.9 2011/12/18 22:30:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.8 2011/01/26 19:15:13 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.9 2011/12/18 22:30:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -129,6 +129,18 @@ tshzto(const struct timespec *tsp)
 	timespecsub(&ts, &now, &ts);
 	return tstohz(&ts);
 }
+
+int
+tshztoup(const struct timespec *tsp)
+{
+	struct timespec now, ts;
+
+	ts = *tsp;	/* Don't modify original tsp. */
+	getnanouptime(&now);
+	timespecsub(&ts, &now, &ts);
+	return tstohz(&ts);
+}
+
 /*
  * Compute number of ticks in the specified amount of time.
  */
