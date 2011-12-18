@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.MP,v 1.16 2011/11/22 21:25:31 tls Exp $
+# $NetBSD: GENERIC.MP,v 1.17 2011/12/18 05:49:31 dholland Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 maxusers	32
 
@@ -111,7 +111,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

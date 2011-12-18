@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.340 2011/11/22 21:24:54 tls Exp $
+# $NetBSD: GENERIC,v 1.341 2011/12/18 05:49:23 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.340 $"
+#ident 		"GENERIC-$Revision: 1.341 $"
 
 maxusers	64		# estimated number of users
 
@@ -157,7 +157,7 @@ file-system	PTYFS		# /dev/ptm support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1059 2011/12/18 02:31:51 dholland Exp $
+# $NetBSD: GENERIC,v 1.1060 2011/12/18 05:49:28 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1059 $"
+#ident 		"GENERIC-$Revision: 1.1060 $"
 
 maxusers	64		# estimated number of users
 
@@ -183,7 +183,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

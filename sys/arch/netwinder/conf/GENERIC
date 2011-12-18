@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.109 2011/11/22 21:25:28 tls Exp $
+# $NetBSD: GENERIC,v 1.110 2011/12/18 05:49:30 dholland Exp $
 #
 # GENERIC machine description file
 # 
@@ -77,7 +77,7 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	NFSSERVER
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options

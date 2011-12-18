@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.66 2011/11/22 21:25:15 tls Exp $
+#	$NetBSD: IPAQ,v 1.67 2011/12/18 05:49:27 dholland Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -50,7 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	NFSSERVER
 
