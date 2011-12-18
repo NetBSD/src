@@ -1,4 +1,4 @@
-/*	$NetBSD: isibootd.c,v 1.1 2011/12/17 13:24:18 tsutsui Exp $	*/
+/*	$NetBSD: isibootd.c,v 1.2 2011/12/18 14:45:23 tsutsui Exp $	*/
 /*	Id: isiboot.c,v 1.2 1999/12/26 14:33:33 nisimura Exp 	*/
 
 /*-
@@ -62,8 +62,8 @@
  * Following data format depends on m68k order, and aligned harmful
  * to RISC processors.
  */
-#define	FRAMETYPE	0x80df
-#define	FRAMELEN	1468
+#define	TRFS_FRAMETYPE	0x80df
+#define	TRFS_FRAMELEN	1468
 struct frame {
 	uint8_t dst[ETHER_ADDR_LEN];
 	uint8_t src[ETHER_ADDR_LEN];
@@ -74,7 +74,7 @@ struct frame {
 	uint8_t pad_1;
 	uint8_t pos[4];
 	uint8_t siz[4];
-	uint8_t data[FRAMELEN - 28];
+	uint8_t data[TRFS_FRAMELEN - 28];
 } __packed;
 
 struct station {
@@ -112,7 +112,7 @@ static char *etheraddr(uint8_t *);
 static int pickif(char *, uint8_t *);
 static __dead void usage(void);
 
-#define	FRAME(buf)	((buf) + ((struct bpf_hdr *)(buf))->bh_hdrlen)
+#define	TRFS_FRAME(buf)	((buf) + ((struct bpf_hdr *)(buf))->bh_hdrlen)
 
 #define	PATH_DEFBOOTDIR	"/tftpboot"
 
@@ -185,7 +185,7 @@ main(int argc, char *argv[])
 	for (;;) {
 		poll(&pollfd, 1, INFTIM);
 		read(pollfd.fd, iobuf, iolen);	/* returns 1468 */
-		fp = (struct frame *)FRAME(iobuf);
+		fp = (struct frame *)TRFS_FRAME(iobuf);
 
 		/* ignore own TX packets */
 		if (memcmp(fp->src, station.addr, ETHER_ADDR_LEN) == 0)
@@ -269,7 +269,7 @@ main(int argc, char *argv[])
 		}
 		memcpy(fp->dst, fp->src, ETHER_ADDR_LEN);
 		memcpy(fp->src, station.addr, ETHER_ADDR_LEN);
-		write(pollfd.fd, fp, FRAMELEN);
+		write(pollfd.fd, fp, TRFS_FRAMELEN);
 	}
 	/* NOTREACHED */
 }
@@ -348,8 +348,8 @@ etheraddr(uint8_t *e)
 
 static struct bpf_insn bpf_insn[] = {
 	{ BPF_LD|BPF_H|BPF_ABS,  0, 0, offsetof(struct frame, type) },
-	{ BPF_JMP|BPF_JEQ|BPF_K, 0, 1, FRAMETYPE },
-	{ BPF_RET|BPF_K,         0, 0, FRAMELEN },
+	{ BPF_JMP|BPF_JEQ|BPF_K, 0, 1, TRFS_FRAMETYPE },
+	{ BPF_RET|BPF_K,         0, 0, TRFS_FRAMELEN },
 	{ BPF_RET|BPF_K,         0, 0, 0x0 }
 };
 static struct bpf_program bpf_pgm = {
