@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.63 2011/12/15 16:06:18 kiyohara Exp $
+#	$NetBSD: P6032,v 1.64 2011/12/18 05:49:22 dholland Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.63 $"
+#ident 		"P6032-$Revision: 1.64 $"
 
 maxusers 32
 
@@ -42,7 +42,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

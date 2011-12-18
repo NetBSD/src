@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.101 2011/11/22 21:24:54 tls Exp $
+# $NetBSD: INSTALL,v 1.102 2011/12/18 05:49:23 dholland Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -50,7 +50,7 @@ file-system	NFS		# Sun NFS-compatible file system client
 # File system options
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

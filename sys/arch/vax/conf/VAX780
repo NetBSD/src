@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.6 2011/11/22 21:25:40 tls Exp $
+# $NetBSD: VAX780,v 1.7 2011/12/18 05:49:33 dholland Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -102,7 +102,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	WAPBL		# File system journaling support - Experimental
+#options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER
 options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp

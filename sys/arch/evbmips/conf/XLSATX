@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.8 2011/11/22 21:25:11 tls Exp $
+#	$NetBSD: XLSATX,v 1.9 2011/12/18 05:49:26 dholland Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.8 $"
+#ident 		"XLSATX-$Revision: 1.9 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -87,7 +87,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP		# FFS soft updates support.
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.

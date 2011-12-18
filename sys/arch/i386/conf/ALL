@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.327 2011/11/22 21:25:18 tls Exp $
+# $NetBSD: ALL,v 1.328 2011/12/18 05:49:28 dholland Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.327 $"
+#ident 		"ALL-$Revision: 1.328 $"
 
 maxusers	64		# estimated number of users
 
@@ -192,7 +192,7 @@ file-system	V7FS		# 7th Edition(V7) File System
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	UFS_EXTATTR
 options 	NFSSERVER	# Network File System server

@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.24 2011/11/22 21:25:07 tls Exp $
+# $NetBSD: HDL_G,v 1.25 2011/12/18 05:49:25 dholland Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -52,7 +52,7 @@ file-system	UNION		# union file system
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

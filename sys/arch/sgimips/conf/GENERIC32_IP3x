@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.90 2011/11/22 21:25:35 tls Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.91 2011/12/18 05:49:32 dholland Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.90 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.91 $"
 
 maxusers	32
 
@@ -110,7 +110,7 @@ file-system	EFS		# Silicon Graphics Extent File System
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.22 2011/11/22 21:25:16 tls Exp $
+#	$NetBSD: WZERO3,v 1.23 2011/12/18 05:49:28 dholland Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 # estimated number of users
 maxusers	32
@@ -54,7 +54,7 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	NFSSERVER
 

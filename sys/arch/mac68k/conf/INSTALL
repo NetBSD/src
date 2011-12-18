@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.48 2011/11/22 21:25:24 tls Exp $
+#	$NetBSD: INSTALL,v 1.49 2011/12/18 05:49:29 dholland Exp $
 #
 # INSTALL
 
@@ -66,7 +66,7 @@ file-system 	KERNFS		# /kern
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
