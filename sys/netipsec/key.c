@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.74 2011/07/17 20:54:54 joerg Exp $	*/
+/*	$NetBSD: key.c,v 1.75 2011/12/19 11:47:16 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.74 2011/07/17 20:54:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.75 2011/12/19 11:47:16 drochner Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.74 2011/07/17 20:54:54 joerg Exp $");
 #include <sys/queue.h>
 #include <sys/syslog.h>
 #include <sys/once.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -137,7 +138,6 @@ static int key_blockacq_lifetime = 20;	/* lifetime for blocking SADB_ACQUIRE.*/
 static int key_prefered_oldsa = 0;	/* prefered old sa rather than new sa.*/
 
 static u_int32_t acq_seq = 0;
-static int key_tick_init_random = 0;
 
 static LIST_HEAD(_sptree, secpolicy) sptree[IPSEC_DIR_MAX];	/* SPD */
 static LIST_HEAD(_sahtree, secashead) sahtree;			/* SAD */
@@ -457,7 +457,6 @@ static int key_cmpsaidx
 
 static int key_sockaddrcmp (const struct sockaddr *, const struct sockaddr *, int);
 static int key_bbcmp (const void *, const void *, u_int);
-static void key_srandom (void);
 static u_int16_t key_satype2proto (u_int8_t);
 static u_int8_t key_proto2satype (u_int16_t);
 
@@ -4723,12 +4722,6 @@ key_timehandler(void* arg)
 	}
     }
 
-	/* initialize random seed */
-	if (key_tick_init_random++ > key_int_random) {
-		key_tick_init_random = 0;
-		key_srandom();
-	}
-
 #ifndef IPSEC_DEBUG2
 	/* do exchange to tick time !! */
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
@@ -4737,20 +4730,6 @@ key_timehandler(void* arg)
 	mutex_exit(softnet_lock);
 	splx(s);
 	return;
-}
-
-#ifdef __NetBSD__
-void srandom(int);
-void srandom(int arg) {return;}
-#endif
-
-/*
- * to initialize a seed for random()
- */
-static void
-key_srandom(void)
-{
-	srandom(time_second);
 }
 
 u_long
@@ -4765,25 +4744,8 @@ key_random(void)
 void
 key_randomfill(void *p, size_t l)
 {
-	size_t n;
-	u_long v;
-	static int warn = 1;
 
-	n = 0;
-	n = (size_t)read_random(p, (u_int)l);
-	/* last resort */
-	while (n < l) {
-		v = random();
-		memcpy((u_int8_t *)p + n, &v,
-		    l - n < sizeof(v) ? l - n : sizeof(v));
-		n += sizeof(v);
-
-		if (warn) {
-			printf("WARNING: pseudo-random number generator "
-			    "used for IPsec processing\n");
-			warn = 0;
-		}
-	}
+	cprng_fast(p, l);
 }
 
 /*
