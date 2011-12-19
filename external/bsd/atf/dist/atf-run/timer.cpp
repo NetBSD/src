@@ -57,10 +57,10 @@ void
 handler(int signo, siginfo_t *si, void *uc)
 {
     impl::timer *timer = static_cast<impl::timer *>(
-#ifndef HAVE_POSIX_TIMER
-	handle
-#else
+#ifdef HAVE_POSIX_TIMER
 	si->si_value.sival_ptr
+#else
+	handle
 #endif
     );
 
@@ -82,7 +82,7 @@ impl::timer::timer(const unsigned int seconds) : m_fired(false)
         throw system_error(IMPL_NAME "::timer::timer",
                            "Failed to set signal handler", errno);
 	
-#ifndef HAVE_POSIX_TIMER
+#ifdef HAVE_POSIX_TIMER
     ::sigevent se;
     se.sigev_notify = SIGEV_SIGNAL;
     se.sigev_signo = SIGALRM;
@@ -112,12 +112,13 @@ impl::timer::timer(const unsigned int seconds) : m_fired(false)
     it.it_interval.tv_usec = 0;
     it.it_value.tv_sec = seconds;
     it.it_value.tv_usec = 0;
-    if (::setitimer(ITIMER_REAL, &it, &oit) == -1)
+    if (::setitimer(ITIMER_REAL, &it, &oit) == -1) {
 	::sigaction(SIGALRM, &m_old_sa, NULL);
         throw system_error(IMPL_NAME "::timer::timer",
                            "Failed to program timer", errno);
     }
-    TIMEVAL_TO_TIMESPEC(&m_old_it, &oit);
+    TIMEVAL_TO_TIMESPEC(&oit.it_interval, &m_old_it.it_interval);
+    TIMEVAL_TO_TIMESPEC(&oit.it_value, &m_old_it.it_value);
     handle = static_cast<void *>(this);
 #endif
 }
@@ -126,11 +127,12 @@ impl::timer::~timer(void)
 {
     int ret;
 #ifdef HAVE_POSIX_TIMER
-    ::itimerval oit;
-    TIMESPEC_TO_TIMEVAL(&oit, &m_old_it);
-    ret = ::setitimer(ITIMER_REAL, &oit, NULL);
-#else
     ret = ::timer_delete(m_timer);
+#else
+    ::itimerval oit;
+    TIMESPEC_TO_TIMEVAL(&oit.it_interval, &m_old_it.it_interval);
+    TIMESPEC_TO_TIMEVAL(&oit.it_value, &m_old_it.it_value);
+    ret = ::setitimer(ITIMER_REAL, &oit, NULL);
 #endif
     INV(ret != -1);
     ret = ::sigaction(SIGALRM, &m_old_sa, NULL);
