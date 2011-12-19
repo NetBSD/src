@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.1 2011/12/17 20:05:39 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.2 2011/12/19 11:10:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.1 2011/12/17 20:05:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.2 2011/12/19 11:10:08 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.1 2011/12/17 20:05:39 tls Exp $");
 
 #ifdef RND_DEBUG
 #define	DPRINTF(l,x)      if (rnd_debug & (l)) printf x
-int	rnd_debug = 0;
+extern int rnd_debug;
 #else
 #define	DPRINTF(l,x)
 #endif
@@ -249,7 +249,7 @@ rnd_read(struct file * fp, off_t *offp, struct uio *uio,
 
 	DPRINTF(RND_DEBUG_READ,
 	    ("Random:  Read of %zu requested, flags 0x%08x\n",
-	    uio->uio_resid, ioflag));
+	    uio->uio_resid, flags));
 
 	if (uio->uio_resid == 0)
 		return (0);
