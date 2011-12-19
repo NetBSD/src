@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.4 2011/08/29 14:35:02 joerg Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.5 2011/12/19 15:36:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.4 2011/08/29 14:35:02 joerg Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.5 2011/12/19 15:36:27 riastradh Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -729,7 +729,6 @@ portal_node_poll(struct puffs_usermount *pu, puffs_cookie_t opc, int *events)
 	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct portal_node *portn = opc;
 	int what;
-	int rv;
 
 	what = 0;
 	if (*events & POLLIN)
@@ -739,10 +738,9 @@ portal_node_poll(struct puffs_usermount *pu, puffs_cookie_t opc, int *events)
 	if (*events & POLLERR)
 		what |= PUFFS_FBIO_ERROR;
 
-	rv = puffs_framev_enqueue_waitevent(pcc, portn->fd, &what);
-	if (rv) {
+	if (puffs_framev_enqueue_waitevent(pcc, portn->fd, &what) == -1) {
 		*events = POLLERR;
-		return rv;
+		return errno;
 	}
 
 	*events = 0;
