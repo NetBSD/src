@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.143 2009/12/30 23:23:58 elad Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.144 2011/12/19 11:59:58 drochner Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.143 2009/12/30 23:23:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.144 2011/12/19 11:59:58 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3514,7 +3514,7 @@ ipsec_clearhist(struct mbuf *m)
 }
 
 /*
- * System control for IPSEC
+ * System control for KAME_IPSEC
  */
 u_char	ipsecctlermap[PRC_NCMDS] = {
 	0,		0,		0,		0,
