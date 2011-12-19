@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.13 2011/12/12 01:25:29 christos Exp $ */
+/* $NetBSD: hdafg.c,v 1.14 2011/12/19 12:19:26 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.13 2011/12/12 01:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.14 2011/12/19 12:19:26 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -675,15 +675,38 @@ hdafg_widget_getcaps(struct hdaudio_widget *w)
 {
 	struct hdafg_softc *sc = w->w_afg;
 	uint32_t wcap, config;
+	bool pcbeep = false;
 
 	wcap = hda_get_wparam(w, AUDIO_WIDGET_CAPABILITIES);
 	config = hdafg_widget_getconfig(w);
 
 	w->w_waspin = false;
 
-	if (sc->sc_has_beepgen == false &&
+	switch (sc->sc_vendor) {
+	case HDA_VENDOR_ANALOG_DEVICES:
+		/*
+		 * help the parser by marking the analog
+		 * beeper as a beep generator
+		 */
+		if (w->w_nid == 0x1a &&
+		    COP_CFG_SEQUENCE(config) == 0x0 &&
+		    COP_CFG_DEFAULT_ASSOCIATION(config) == 0xf &&
+		    COP_CFG_PORT_CONNECTIVITY(config) ==
+		      COP_PORT_FIXED_FUNCTION &&
+		    COP_CFG_DEFAULT_DEVICE(config) ==
+		      COP_DEVICE_OTHER &&
+		    COP_CFG_CONNECTION_TYPE(config) ==
+		      COP_CONN_TYPE_ATAPI_INTERNAL &&
+		    COP_CFG_COLOR(config) == 0x0) {
+			pcbeep = true;
+		}
+		break;
+	}
+
+	if (pcbeep ||
+	    (sc->sc_has_beepgen == false &&
 	    COP_CFG_DEFAULT_DEVICE(config) == COP_DEVICE_SPEAKER &&
-	    (wcap & (COP_AWCAP_INAMP_PRESENT|COP_AWCAP_OUTAMP_PRESENT)) == 0) {
+	    (wcap & (COP_AWCAP_INAMP_PRESENT|COP_AWCAP_OUTAMP_PRESENT)) == 0)) {
 		wcap &= ~COP_AWCAP_TYPE_MASK;
 		wcap |= (COP_AWCAP_TYPE_BEEP_GENERATOR << COP_AWCAP_TYPE_SHIFT);
 		w->w_waspin = true;
