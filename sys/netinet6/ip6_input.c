@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.133 2011/11/19 22:51:29 tls Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.134 2011/12/19 11:59:58 drochner Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.133 2011/11/19 22:51:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.134 2011/12/19 11:59:58 drochner Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -112,7 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.133 2011/11/19 22:51:29 tls Exp $");
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
 #include <netinet6/ipsec_private.h>
 #endif
@@ -279,7 +279,7 @@ ip6_input(struct mbuf *m)
 	int s, error;
 #endif
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	/*
 	 * should the inner packet be considered authentic?
 	 * see comment in ah4_input().
@@ -351,7 +351,7 @@ ip6_input(struct mbuf *m)
 		goto bad;
 	}
 
-#if defined(IPSEC)
+#if defined(KAME_IPSEC)
 	/* IPv6 fast forwarding is not compatible with IPsec. */
 	m->m_flags &= ~M_CANFASTFWD;
 #else
@@ -374,7 +374,7 @@ ip6_input(struct mbuf *m)
 	 * let ipfilter look at packet on the wire,
 	 * not the decapsulated packet.
 	 */
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	if (!ipsec_getnhist(m))
 #elif defined(FAST_IPSEC)
 	if (!ipsec_indone(m))
@@ -785,7 +785,7 @@ ip6_input(struct mbuf *m)
 			}
 		}
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 		/*
 		 * enforce IPsec policy checking if we are seeing last header.
 		 * note that we do not visit this with protocols with pcb layer
