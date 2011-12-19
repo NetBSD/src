@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1033 2011/12/17 20:05:38 tls Exp $
+#	$NetBSD: files,v 1.1034 2011/12/19 16:10:07 drochner Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1676,7 +1676,7 @@ file	net/route.c
 file	net/rtbl.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
-file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
+file	net/zlib.c			(ppp & ppp_deflate) | kame_ipsec | opencrypto | vnd_compression
 file	netinet/accf_data.c		accf_data
 file	netinet/accf_http.c		accf_http
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
@@ -1686,7 +1686,7 @@ file	netinet/in4_cksum.c		inet
 file	netinet/in_cksum.c		inet
 file	netinet/in_gif.c		gif & inet
 file	netinet/ip_carp.c		carp & (inet | inet6)	needs-flag
-file	netinet/ip_ecn.c		ipsec | fast_ipsec | gif | stf
+file	netinet/ip_ecn.c		kame_ipsec | fast_ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
 file	netinet/ip_etherip.c		etherip & inet
 file	netinet6/ip6_etherip.c		etherip & inet6
