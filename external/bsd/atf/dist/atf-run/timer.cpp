@@ -44,11 +44,25 @@ namespace impl = atf::atf_run;
 // Auxiliary functions.
 // ------------------------------------------------------------------------
 
+#ifdef SIGEV_NONE
+#define HAVE_POSIX_TIMER
+#endif
+
+#ifndef HAVE_POSIX_TIMER
+static void *handle;
+#endif
+
 static
 void
 handler(int signo, siginfo_t *si, void *uc)
 {
-    impl::timer *timer = static_cast<impl::timer *>(si->si_value.sival_ptr);
+    impl::timer *timer = static_cast<impl::timer *>(
+#ifndef HAVE_POSIX_TIMER
+	handle
+#else
+	si->si_value.sival_ptr
+#endif
+    );
 
     timer->setfired();
     timer->timeout_callback();
@@ -68,7 +82,7 @@ impl::timer::timer(const unsigned int seconds) : m_fired(false)
         throw system_error(IMPL_NAME "::timer::timer",
                            "Failed to set signal handler", errno);
 	
-
+#ifndef HAVE_POSIX_TIMER
     ::sigevent se;
     se.sigev_notify = SIGEV_SIGNAL;
     se.sigev_signo = SIGALRM;
@@ -92,11 +106,32 @@ impl::timer::timer(const unsigned int seconds) : m_fired(false)
         throw system_error(IMPL_NAME "::timer::timer",
                            "Failed to program timer", errno);
     }
+#else
+    ::itimerval it, oit;
+    it.it_interval.tv_sec = 0;
+    it.it_interval.tv_usec = 0;
+    it.it_value.tv_sec = seconds;
+    it.it_value.tv_usec = 0;
+    if (::setitimer(ITIMER_REAL, &it, &oit) == -1)
+	::sigaction(SIGALRM, &m_old_sa, NULL);
+        throw system_error(IMPL_NAME "::timer::timer",
+                           "Failed to program timer", errno);
+    }
+    TIMEVAL_TO_TIMESPEC(&m_old_it, &oit);
+    handle = static_cast<void *>(this);
+#endif
 }
 
 impl::timer::~timer(void)
 {
-    int ret = ::timer_delete(m_timer);
+    int ret;
+#ifdef HAVE_POSIX_TIMER
+    ::itimerval oit;
+    TIMESPEC_TO_TIMEVAL(&oit, &m_old_it);
+    ret = ::setitimer(ITIMER_REAL, &oit, NULL);
+#else
+    ret = ::timer_delete(m_timer);
+#endif
     INV(ret != -1);
     ret = ::sigaction(SIGALRM, &m_old_sa, NULL);
     INV(ret != -1);
