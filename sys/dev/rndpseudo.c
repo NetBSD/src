@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.2 2011/12/19 11:10:08 drochner Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.3 2011/12/19 21:44:08 apb Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.2 2011/12/19 11:10:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.3 2011/12/19 21:44:08 apb Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -428,7 +428,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 
 	default:
-		return (EINVAL);
+		return (ENOTTY);
 	}
 
 	switch (cmd) {
@@ -597,7 +597,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 
 	default:
-		return (EINVAL);
+		return (ENOTTY);
 	}
 
 	return (ret);
