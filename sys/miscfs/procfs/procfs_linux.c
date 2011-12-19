@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.63 2011/12/16 20:45:07 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.64 2011/12/19 03:02:31 christos Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.63 2011/12/16 20:45:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.64 2011/12/19 03:02:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -593,11 +593,8 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 	char *bf, *mtab = NULL;
 	size_t mtabsz = 0;
 	struct mount *mp, *nmp;
-	int error = 0, suser, root = 0;
+	int error = 0, root = 0;
 	struct cwdinfo *cwdi = curl->l_proc->p_cwdi;
-
-	suser = kauth_authorize_generic(curl->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL) == 0;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
@@ -609,9 +606,9 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 		if (vfs_busy(mp, &nmp))
 			continue;
 
-		if ((error = dostatvfs(mp, &sfs, curl, MNT_WAIT, suser)) == 0)
+		if ((error = dostatvfs(mp, &sfs, curl, MNT_WAIT, 0)) == 0)
 			root |= procfs_format_sfs(&mtab, &mtabsz, bf, LBFSZ,
-			    &sfs, curl, suser);
+			    &sfs, curl, 0);
 
 		vfs_unbusy(mp, false, &nmp);
 	}
