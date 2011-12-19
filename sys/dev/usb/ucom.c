@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.89 2011/12/19 19:30:12 jakllsch Exp $	*/
+/*	$NetBSD: ucom.c,v 1.90 2011/12/19 19:34:52 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.89 2011/12/19 19:30:12 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.90 2011/12/19 19:34:52 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ struct ucom_softc {
 
 	void			*sc_si;
 
-	struct ucom_methods     *sc_methods;
+	const struct ucom_methods *sc_methods;
 	void                    *sc_parent;
 	int			sc_portno;
 
