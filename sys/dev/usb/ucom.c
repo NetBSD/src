@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.88 2011/11/19 22:51:24 tls Exp $	*/
+/*	$NetBSD: ucom.c,v 1.89 2011/12/19 19:30:12 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.88 2011/11/19 22:51:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.89 2011/12/19 19:30:12 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1037,7 +1037,7 @@ ucomstop(struct tty *tp, int flag)
 {
 #if 0
 	/*struct ucom_softc *sc =
-	    device_lookup_private(&ucom_cd, UCOMUNIT(dev));*/
+	    device_lookup_private(&ucom_cd, UCOMUNIT(tp->tp_dev));*/
 	int s;
 
 	s = spltty();
