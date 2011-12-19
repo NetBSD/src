@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.244 2011/12/17 20:05:39 tls Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.245 2011/12/19 11:59:57 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.244 2011/12/17 20:05:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.245 2011/12/19 11:59:57 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -146,10 +146,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.244 2011/12/17 20:05:39 tls Exp $");
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
-#endif /*IPSEC*/
+#endif /*KAME_IPSEC*/
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -2309,7 +2309,7 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 	return (tcp_iss);
 }
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
 /* compute ESP/AH header size for TCP, including outer IP header. */
 size_t
 ipsec4_hdrsiz_tcp(struct tcpcb *tp)

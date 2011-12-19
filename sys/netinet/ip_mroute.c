@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.121 2011/10/19 01:52:22 dyoung Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.122 2011/12/19 11:59:57 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.121 2011/10/19 01:52:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.122 2011/12/19 11:59:57 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -136,7 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.121 2011/10/19 01:52:22 dyoung Exp $
 #endif
 #include <netinet/ip_encap.h>
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #endif

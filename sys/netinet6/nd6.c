@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.138 2011/11/19 22:51:29 tls Exp $	*/
+/*	$NetBSD: nd6.c,v 1.139 2011/12/19 11:59:58 drochner Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.138 2011/11/19 22:51:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.139 2011/12/19 11:59:58 drochner Exp $");
 
 #include "opt_ipsec.h"
 
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.138 2011/11/19 22:51:29 tls Exp $");
 #include <netinet/icmp6.h>
 #include <netinet6/icmp6_private.h>
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
 #endif
 
@@ -2131,7 +2131,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 		goto bad;
 	}
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	/* clean ipsec history once it goes out of the node */
 	ipsec_delaux(m);
 #endif
