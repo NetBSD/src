@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.55 2011/02/07 12:19:35 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.56 2011/12/19 10:56:59 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -394,7 +394,7 @@ LEAF_ENTRY_NOPROFILE(kernel_setup)
 	/*
 	 * set up the dp pointer so that we can do quick references off of it
 	 */
-	ldil	L%$global$,%dp
+	ldil	L%$global$, %dp
 	ldo	R%$global$(%dp), %dp
 
 	/*
