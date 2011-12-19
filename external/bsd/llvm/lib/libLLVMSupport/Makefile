@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/10/11 13:53:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2011/12/19 14:07:40 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -32,6 +32,7 @@ SRCS+=	APFloat.cpp \
 	IntervalMap.cpp \
 	IsInf.cpp \
 	IsNAN.cpp \
+	JSONParser.cpp \
 	ManagedStatic.cpp \
 	MemoryBuffer.cpp \
 	MemoryObject.cpp \
