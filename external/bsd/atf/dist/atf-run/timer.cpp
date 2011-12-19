@@ -128,9 +128,10 @@ impl::child_timer::~child_timer(void)
 void
 impl::child_timer::timeout_callback(void)
 {
+    static const timespec ts = { 1, 0 };
     m_terminate = true;
-
-    // Should use killpg(2) but, according to signal(7), using this system
-    // call in a signal handler context is not safe.
-    ::killpg(-m_pid, SIGKILL);
+    ::kill(-m_pid, SIGTERM);
+    ::nanosleep(&ts, NULL);
+    if (::kill(-m_pid, 0) != -1)
+	::kill(-m_pid, SIGKILL);
 }
