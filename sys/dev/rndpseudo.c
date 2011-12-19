@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.3 2011/12/19 21:44:08 apb Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.4 2011/12/19 21:53:52 apb Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.3 2011/12/19 21:44:08 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.4 2011/12/19 21:53:52 apb Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -46,12 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.3 2011/12/19 21:44:08 apb Exp $");
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
-#include <sys/rnd.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
 #include <sys/cprng.h>
 #include <sys/stat.h>
+
+#include <sys/rnd.h>
+#ifdef COMPAT_50
+#include <compat/sys/rnd.h>
+#endif
 
 #include <dev/rnd_private.h>
 
@@ -428,7 +436,11 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 
 	default:
-		return (ENOTTY);
+#ifdef COMPAT_50
+		return compat_50_rnd_ioctl(fp, cmd, addr);
+#else
+		return ENOTTY;
+#endif
 	}
 
 	switch (cmd) {
@@ -597,7 +609,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 
 	default:
-		return (ENOTTY);
+		return ENOTTY;
 	}
 
 	return (ret);
