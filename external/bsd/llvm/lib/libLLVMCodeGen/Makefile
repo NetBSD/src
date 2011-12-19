@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2011/12/11 14:58:50 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2011/12/19 14:07:40 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -53,6 +53,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineFunctionPass.cpp \
 	MachineFunctionPrinterPass.cpp \
 	MachineInstr.cpp \
+	MachineInstrBundle.cpp \
 	MachineLICM.cpp \
 	MachineLoopInfo.cpp \
 	MachineLoopRanges.cpp \
@@ -98,8 +99,10 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	StackSlotColoring.cpp \
 	StrongPHIElimination.cpp \
 	TailDuplication.cpp \
+	TargetFrameLoweringImpl.cpp \
 	TargetInstrInfoImpl.cpp \
 	TargetLoweringObjectFileImpl.cpp \
+	TargetOptionsImpl.cpp \
 	TwoAddressInstructionPass.cpp \
 	UnreachableBlockElim.cpp \
 	VirtRegMap.cpp

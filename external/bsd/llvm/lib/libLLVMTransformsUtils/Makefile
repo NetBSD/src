@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/12/11 14:58:50 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2011/12/19 14:07:40 joerg Exp $
 
 LIB=	LLVMTransformsUtils
 
@@ -13,6 +13,7 @@ SRCS+=	AddrModeMatcher.cpp \
 	BuildLibCalls.cpp \
 	CloneFunction.cpp \
 	CloneModule.cpp \
+	CmpInstAnalysis.cpp \
 	CodeExtractor.cpp \
 	DemoteRegToStack.cpp \
 	InlineFunction.cpp \
