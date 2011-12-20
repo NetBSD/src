@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.140 2011/12/20 15:39:35 reinoud Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.141 2011/12/20 19:49:36 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.140 2011/12/20 15:39:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.141 2011/12/20 19:49:36 reinoud Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -560,8 +560,12 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 				panic("uvm_setattr failed?");
 		}
 		/* record if we need optimization for system call checking */
-		if (flags & MAP_NOSYSCALLS)
+		if ((flags & MAP_NOSYSCALLS) &&
+				((p->p_flag & PK_CHKNOSYSCALL) == 0)) {
+			mutex_enter(p->p_lock);
 			p->p_flag |= PK_CHKNOSYSCALL;
+			mutex_exit(p->p_lock);
+		}
 	}
 
      	if (fp != NULL)
