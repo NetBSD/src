@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.24 2011/09/16 11:28:36 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.25 2011/12/20 21:01:39 jmcneill Exp $
 
 OPT_CPU_HOST=			%CPU_HOST%
 .if !empty(OPT_CPU_HOST)
@@ -38,7 +38,6 @@ CPPFLAGS+=	-Dusermode
 CPPFLAGS.init_main.c+=	-Dmain=kernmain
 
 OPT_SDL=	%SDL%
-OPT_URKELVISOR=	%URKELVISOR%
 
 .if !empty(OPT_SDL)
 SDL_CFLAGS!=	sdl-config --cflags
@@ -48,7 +47,6 @@ USERMODE_LIBS+=	-Wl,-Bdynamic ${SDL_LIBS}
 
 CPPFLAGS.thunk.c+=	${USERMODE_CPPFLAGS}
 CPPFLAGS.thunk_sdl.c+=	${SDL_CFLAGS} ${USERMODE_CPPFLAGS}
-CPPFLAGS.urkelvisor.c+=	${USERMODE_CPPFLAGS}
 
 ##
 ## (3) libkern and compat
@@ -62,11 +60,6 @@ COMPAT_AS=	library
 MD_OBJS=	thunk.o
 MD_CFILES=	${USERMODE}/usermode/thunk.c
 MD_SFILES=
-
-.if !empty(OPT_URKELVISOR)
-MD_OBJS+=	urkelvisor.o
-MD_CFILES+=	${USERMODE}/usermode/urkelvisor.c
-.endif
 
 .if !empty(OPT_SDL)
 MD_OBJS+=	thunk_sdl.o
@@ -111,13 +104,6 @@ thunk_sdl.d: ${USERMODE}/usermode/thunk.c
 
 thunk_sdl.o: ${USERMODE}/usermode/thunk_sdl.c
 	${CC} ${CPPFLAGS.thunk_sdl.c} -c -o $@ ${USERMODE}/usermode/thunk_sdl.c
-
-urkelvisor.d: ${USERMODE}/usermode/urkelvisor.c
-	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
-	    ${CPPFLAGS.urkelvisor.c} ${USERMODE}/usermode/urkelvisor.c
-
-urkelvisor.o: ${USERMODE}/usermode/urkelvisor.c
-	${CC} ${CPPFLAGS.urkelvisor.c} -c -o $@ ${USERMODE}/usermode/urkelvisor.c
 
 ##
 ## (7) misc settings
