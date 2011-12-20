@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.307 2011/12/20 13:47:38 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.308 2011/12/20 15:39:35 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.307 2011/12/20 13:47:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.308 2011/12/20 15:39:35 reinoud Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1672,6 +1672,7 @@ nomerge:
 		new_entry->protection = prot;
 		new_entry->max_protection = maxprot;
 		new_entry->inheritance = inherit;
+		new_entry->map_attrib = 0;		/* XXX could be passed too */
 		new_entry->wired_count = 0;
 		new_entry->advice = advice;
 		if (flags & UVM_FLAG_OVERLAY) {
@@ -4119,6 +4120,83 @@ uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
 	}
 	return (true);
 }
+
+/*
+ * uvm_map_setattr: set uvm-external mapping attributes in map
+ *
+ * => map must be read or write locked by caller.
+ */
+
+bool
+uvm_map_setattr(struct vm_map *map, vaddr_t start, vaddr_t end,
+    uint32_t map_attrib)
+{
+	struct vm_map_entry *entry;
+	struct vm_map_entry *tmp_entry;
+
+	if (!uvm_map_lookup_entry(map, start, &tmp_entry)) {
+		return (false);
+	}
+	entry = tmp_entry;
+	while (start < end) {
+		if (entry == &map->header) {
+			return (false);
+		}
+
+		/*
+		 * no holes allowed
+		 */
+
+		if (start < entry->start) {
+			return (false);
+		}
+
+		/* set attributes associated with entry */
+
+		entry->map_attrib = map_attrib;
+
+		start = entry->end;
+		entry = entry->next;
+	}
+	return (true);
+}
+
+/*
+ * uvm_map_checkattr: check attribute bits in map
+ *
+ * => check if attribute is present in the region.
+ * => map must be read or write locked by caller.
+ */
+
+bool
+uvm_map_checkattr(struct vm_map *map, vaddr_t start, vaddr_t end,
+    uint32_t map_attrib)
+{
+	struct vm_map_entry *entry;
+	struct vm_map_entry *tmp_entry;
+
+	if (!uvm_map_lookup_entry(map, start, &tmp_entry))
+		return (false);
+
+	entry = tmp_entry;
+	while (start < end) {
+		if (entry == &map->header)
+			return (false);
+
+		/*
+		 * check attribute associated with entry
+		 */
+
+		if ((entry->map_attrib & map_attrib) == map_attrib) {
+			return (true);
+		}
+
+		start = entry->end;
+		entry = entry->next;
+	}
+	return (false);
+}
+
 
 /*
  * uvmspace_alloc: allocate a vmspace structure.
