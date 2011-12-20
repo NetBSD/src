@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.139 2011/10/14 09:23:31 hannken Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.140 2011/12/20 15:39:35 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.139 2011/10/14 09:23:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.140 2011/12/20 15:39:35 reinoud Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -546,6 +546,23 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	if (error == 0)
 		/* remember to add offset */
 		*retval = (register_t)(addr + pageoff);
+
+	/*
+	 * Support for map attributes; XXX preferably given as an
+	 * extra parameter to uvm_map or merged with uvmflag.
+	 * Implemented now as setting parameters after the mapping.
+	 */
+	if (error == 0) {
+		if (flags & MAP_ATTRIB_MASK) {
+			if (!uvm_map_setattr(&p->p_vmspace->vm_map,
+					addr, addr + size,
+					flags & MAP_ATTRIB_MASK))
+				panic("uvm_setattr failed?");
+		}
+		/* record if we need optimization for system call checking */
+		if (flags & MAP_NOSYSCALLS)
+			p->p_flag |= PK_CHKNOSYSCALL;
+	}
 
      	if (fp != NULL)
 		fd_putfile(fd);
