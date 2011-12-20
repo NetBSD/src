@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.45 2011/12/20 15:39:35 reinoud Exp $
+.\"	$NetBSD: mmap.2,v 1.46 2011/12/20 16:43:14 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mmap.2	8.4 (Berkeley) 5/11/95
 .\"
-.Dd October 15, 2011
+.Dd December 20, 2011
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -181,8 +181,8 @@ will be seen.
 .It Dv MAP_SHARED
 Modifications are shared.
 .It Dv MAP_NOSYSCALLS
-No system calls are to be allowed from within this mapped region. They instead
-generate an illegal instruction signal.
+No system calls are to be allowed from within this mapped region.
+They instead generate an illegal instruction signal.
 .El
 .Pp
 The
