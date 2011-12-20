@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.67 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.68 2011/12/20 15:41:01 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -139,6 +139,7 @@ struct vm_map_entry {
 	int			wired_count;	/* can be paged if == 0 */
 	struct vm_aref		aref;		/* anonymous overlay */
 	int			advice;		/* madvise advice */
+	uint32_t		map_attrib;	/* uvm-external map attributes */
 #define uvm_map_entry_stop_copy flags
 	u_int8_t		flags;		/* flags */
 
