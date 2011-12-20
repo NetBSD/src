@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.176.2.4 2011/11/20 10:52:33 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.176.2.5 2011/12/20 13:46:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -210,6 +210,8 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #define UFP_NORDONLY	0x08
 #define UFP_DIRTYONLY	0x10
 #define UFP_BACKWARD	0x20
+#define UFP_ONLYPAGER1	0x40
+#define UFP_NOPAGER1	0x80
 
 /*
  * lockflags that control the locking behavior of various functions.
@@ -775,10 +777,12 @@ int			uvm_grow(struct proc *, vaddr_t);
 void			uvm_deallocate(struct vm_map *, vaddr_t, vsize_t);
 
 /* uvm_vnode.c */
+struct uvm_page_array;
 void			uvm_vnp_setsize(struct vnode *, voff_t);
 void			uvm_vnp_setwritesize(struct vnode *, voff_t);
 int			uvn_findpages(struct uvm_object *, voff_t,
-			    int *, struct vm_page **, int);
+			    unsigned int *, struct vm_page **,
+			    struct uvm_page_array *, unsigned int);
 bool			uvn_text_p(struct uvm_object *);
 bool			uvn_clean_p(struct uvm_object *);
 bool			uvn_needs_writefault_p(struct uvm_object *);

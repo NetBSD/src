@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.97.2.2 2011/11/26 15:19:06 yamt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.97.2.3 2011/12/20 13:46:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.2 2011/11/26 15:19:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.3 2011/12/20 13:46:17 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -77,7 +77,8 @@ static int	uvn_put(struct uvm_object *, voff_t, voff_t, int);
 static void	uvn_reference(struct uvm_object *);
 
 static int	uvn_findpage(struct uvm_object *, voff_t, struct vm_page **,
-			     int, struct uvm_page_array *a, unsigned int);
+			     unsigned int, struct uvm_page_array *a,
+			     unsigned int);
 
 /*
  * master pager structure
@@ -193,18 +194,22 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
  */
 
 int
-uvn_findpages(struct uvm_object *uobj, voff_t offset, int *npagesp,
-    struct vm_page **pgs, int flags)
+uvn_findpages(struct uvm_object *uobj, voff_t offset, unsigned int *npagesp,
+    struct vm_page **pgs, struct uvm_page_array *a, unsigned int flags)
 {
-	int i, count, found, npages, rv;
-	struct uvm_page_array a;
+	unsigned int count, found, npages;
+	int i, rv;
+	struct uvm_page_array a_store;
 
-	uvm_page_array_init(&a);
+	if (a == NULL) {
+		a = &a_store;
+		uvm_page_array_init(a);
+	}
 	count = found = 0;
 	npages = *npagesp;
 	if (flags & UFP_BACKWARD) {
 		for (i = npages - 1; i >= 0; i--, offset -= PAGE_SIZE) {
-			rv = uvn_findpage(uobj, offset, &pgs[i], flags, &a,
+			rv = uvn_findpage(uobj, offset, &pgs[i], flags, a,
 			    npages - i);
 			if (rv == 0) {
 				if (flags & UFP_DIRTYONLY)
@@ -215,7 +220,7 @@ uvn_findpages(struct uvm_object *uobj, voff_t offset, int *npagesp,
 		}
 	} else {
 		for (i = 0; i < npages; i++, offset += PAGE_SIZE) {
-			rv = uvn_findpage(uobj, offset, &pgs[i], flags, &a,
+			rv = uvn_findpage(uobj, offset, &pgs[i], flags, a,
 			    npages - i);
 			if (rv == 0) {
 				if (flags & UFP_DIRTYONLY)
@@ -225,14 +230,16 @@ uvn_findpages(struct uvm_object *uobj, voff_t offset, int *npagesp,
 			count++;
 		}
 	}
-	uvm_page_array_fini(&a);
+	if (a == &a_store) {
+		uvm_page_array_fini(a);
+	}
 	*npagesp = count;
 	return (found);
 }
 
 static int
 uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
-    int flags, struct uvm_page_array *a, unsigned int nleft)
+    unsigned int flags, struct uvm_page_array *a, unsigned int nleft)
 {
 	struct vm_page *pg;
 	bool dirty;
@@ -308,6 +315,20 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 		if ((flags & UFP_NORDONLY) &&
 		    (pg->flags & (PG_RDONLY|PG_HOLE))) {
 			UVMHIST_LOG(ubchist, "nordonly",0,0,0,0);
+			goto skip;
+		}
+
+		/*
+		 * check for PG_PAGER1 requests
+		 */
+		if ((flags & UFP_NOPAGER1) != 0 &&
+		    (pg->flags & PG_PAGER1) != 0) {
+			UVMHIST_LOG(ubchist, "nopager1",0,0,0,0);
+			goto skip;
+		}
+		if ((flags & UFP_ONLYPAGER1) != 0 &&
+		    (pg->flags & PG_PAGER1) == 0) {
+			UVMHIST_LOG(ubchist, "onlypager1",0,0,0,0);
 			goto skip;
 		}
 
