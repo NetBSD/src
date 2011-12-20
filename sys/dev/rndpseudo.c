@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.4 2011/12/19 21:53:52 apb Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.5 2011/12/20 12:45:00 apb Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.4 2011/12/19 21:53:52 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.5 2011/12/20 12:45:00 apb Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
