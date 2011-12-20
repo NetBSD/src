@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.311 2011/10/21 02:07:07 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.312 2011/12/20 15:39:35 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -353,6 +353,7 @@ struct proc {
 #define	PK_NOCLDWAIT	0x00020000 /* No zombies if child dies */
 #define	PK_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
 #define	PK_CLDSIGIGN	0x00080000 /* Process is ignoring SIGCHLD */
+#define PK_CHKNOSYSCALL 0x00100000 /* Process needs NOSYSCALL checking */
 #define	PK_MARKER	0x80000000 /* Is a dummy marker process */
 
 /*
