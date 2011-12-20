@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.64 2011/06/30 22:38:50 dyoung Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.65 2011/12/20 23:56:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.64 2011/06/30 22:38:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.65 2011/12/20 23:56:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,12 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 	switch (cmd) {
 
 	case FIONBIO:
-		/* No reason to lock and this call is made very often. */
-		so->so_nbio = *(int *)data;
+		solock(so);
+		if (*(int *)data)
+			so->so_state |= SS_NBIO;
+		else 
+			so->so_state &= ~SS_NBIO; 
+		sounlock(so);
 		break;
 
 	case FIOASYNC:

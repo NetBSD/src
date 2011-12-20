@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.205 2011/07/02 17:53:50 bouyer Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.206 2011/12/20 23:56:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.205 2011/07/02 17:53:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.206 2011/12/20 23:56:28 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -741,7 +741,8 @@ soclose(struct socket *so)
 				goto drop;
 		}
 		if (so->so_options & SO_LINGER) {
-			if ((so->so_state & SS_ISDISCONNECTING) && so->so_nbio)
+			if ((so->so_state & (SS_ISDISCONNECTING|SS_NBIO)) ==
+			    (SS_ISDISCONNECTING|SS_NBIO))
 				goto drop;
 			while (so->so_state & SS_ISCONNECTED) {
 				error = sowait(so, true, so->so_linger * hz);
@@ -961,7 +962,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 		}
 		if (space < resid + clen &&
 		    (atomic || space < so->so_snd.sb_lowat || space < clen)) {
-			if (so->so_nbio) {
+			if ((so->so_state & SS_NBIO) || (flags & MSG_NBIO)) {
 				error = EWOULDBLOCK;
 				goto release;
 			}
@@ -1257,7 +1258,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		}
 		if (uio->uio_resid == 0)
 			goto release;
-		if (so->so_nbio || (flags & MSG_DONTWAIT)) {
+		if ((so->so_state & SS_NBIO) ||
+		    (flags & (MSG_DONTWAIT|MSG_NBIO))) {
 			error = EWOULDBLOCK;
 			goto release;
 		}

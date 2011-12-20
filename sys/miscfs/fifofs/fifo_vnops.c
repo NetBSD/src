@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.70 2011/08/31 18:31:03 plunky Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.71 2011/12/20 23:56:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.70 2011/08/31 18:31:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.71 2011/12/20 23:56:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +243,7 @@ fifo_read(void *v)
 	} */ *ap = v;
 	struct uio	*uio;
 	struct socket	*rso;
-	int		error;
+	int		error, sflags;
 	size_t		startresid;
 
 	uio = ap->a_uio;
@@ -256,18 +256,14 @@ fifo_read(void *v)
 		return (0);
 	startresid = uio->uio_resid;
 	VOP_UNLOCK(ap->a_vp);
-	if (ap->a_ioflag & IO_NDELAY) {
-		/* XXX Bogus, affects other threads. */
-		rso->so_nbio = 1;
-	}
-	error = (*rso->so_receive)(rso, NULL, uio, NULL, NULL, NULL);
+	sflags = (ap->a_ioflag & IO_NDELAY) ? MSG_NBIO : 0;
+	error = (*rso->so_receive)(rso, NULL, uio, NULL, NULL, &sflags);
 	/*
 	 * Clear EOF indication after first such return.
 	 */
-	if (uio->uio_resid == startresid)
+	if (error != EINTR && uio->uio_resid == startresid)
 		rso->so_state &= ~SS_CANTRCVMORE;
 	if (ap->a_ioflag & IO_NDELAY) {
-		rso->so_nbio = 0;
 		if (error == EWOULDBLOCK &&
 		    ap->a_vp->v_fifoinfo->fi_writers == 0)
 			error = 0;
@@ -290,7 +286,7 @@ fifo_write(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	struct socket	*wso;
-	int		error;
+	int		error, sflags;
 
 	wso = ap->a_vp->v_fifoinfo->fi_writesock;
 #ifdef DIAGNOSTIC
@@ -298,13 +294,8 @@ fifo_write(void *v)
 		panic("fifo_write mode");
 #endif
 	VOP_UNLOCK(ap->a_vp);
-	if (ap->a_ioflag & IO_NDELAY) {
-		/* XXX Bogus, affects other threads. */
-		wso->so_nbio = 1;
-	}
-	error = (*wso->so_send)(wso, NULL, ap->a_uio, 0, NULL, 0, curlwp);
-	if (ap->a_ioflag & IO_NDELAY)
-		wso->so_nbio = 0;
+	sflags = (ap->a_ioflag & IO_NDELAY) ? MSG_NBIO : 0;
+	error = (*wso->so_send)(wso, NULL, ap->a_uio, 0, NULL, sflags, curlwp);
 	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	return (error);
 }

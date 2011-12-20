@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.126 2011/07/02 17:53:51 bouyer Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.127 2011/12/20 23:56:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -128,7 +128,6 @@ struct socket {
 	short		so_options;	/* from socket call, see socket.h */
 	u_short		so_linger;	/* time to linger while closing */
 	short		so_state;	/* internal state flags SS_*, below */
-	int		so_nbio;	/* non-blocking I/O enabled */
 	void		*so_pcb;	/* protocol control block */
 	const struct protosw *so_proto;	/* protocol handle */
 /*
@@ -210,6 +209,7 @@ do {									\
 					 * more data coming
 					 */
 #define	SS_ISAPIPE 		0x1000	/* socket is implementing a pipe */
+#define	SS_NBIO			0x2000	/* socket is in non blocking I/O */
 
 #ifdef _KERNEL
 
