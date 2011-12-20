@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.18 2011/12/15 11:23:52 jmcneill Exp $ */
+/* $NetBSD: syscall.c,v 1.19 2011/12/20 15:45:37 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2011/12/15 11:23:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19 2011/12/20 15:45:37 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,6 +98,8 @@ syscall(void)
 	/* system call accounting */
 	curcpu()->ci_data.cpu_nsyscall++;
 	LWP_CACHE_CREDS(l, l->l_proc);
+
+	/* TODO are we allowed to execute system calls in this memory space? */
 
 	/* XXX do we want do do emulation? */
 	md_syscall_get_opcode(ucp, &opcode);

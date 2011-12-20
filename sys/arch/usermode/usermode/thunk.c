@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.47 2011/12/15 03:42:33 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.48 2011/12/20 15:45:37 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.47 2011/12/15 03:42:33 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.48 2011/12/20 15:45:37 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -165,6 +165,13 @@ thunk_to_native_mapflags(int flags)
 		nflags |= MAP_SHARED;
 	if (flags & THUNK_MAP_PRIVATE)
 		nflags |= MAP_PRIVATE;
+#ifndef MAP_NOSYSCALLS
+#define MAP_NOSYSCALLS (1<<16)		/* XXX alias for now XXX */
+#endif
+#ifdef MAP_NOSYSCALLS
+	if (flags & THUNK_MAP_NOSYSCALLS)
+		nflags |= MAP_NOSYSCALLS;
+#endif
 
 	return nflags;
 }
