@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.5 2011/11/30 14:31:29 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.6 2011/12/20 13:46:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.5 2011/11/30 14:31:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.6 2011/12/20 13:46:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,8 @@ startover:
 		}
 #endif /* defined(DEBUG) */
 		nfound = uvn_findpages(uobj, origoffset, &npages,
-		    ap->a_m, UFP_NOWAIT|UFP_NOALLOC|(memwrite ? UFP_NORDONLY : 0));
+		    ap->a_m, NULL,
+		    UFP_NOWAIT|UFP_NOALLOC|(memwrite ? UFP_NORDONLY : 0));
 		KASSERT(npages == *ap->a_count);
 		if (nfound == 0) {
 			error = EBUSY;
@@ -343,7 +344,7 @@ startover:
 		goto startover;
 	}
 
-	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
+	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx], NULL,
 	    async ? UFP_NOWAIT : UFP_ALL) != orignmempages) {
 		if (!glocked) {
 			genfs_node_unlock(vp);
@@ -430,7 +431,7 @@ startover:
 		UVMHIST_LOG(ubchist, "reset npages start 0x%x end 0x%x",
 		    startoffset, endoffset, 0,0);
 		npgs = npages;
-		if (uvn_findpages(uobj, startoffset, &npgs, pgs,
+		if (uvn_findpages(uobj, startoffset, &npgs, pgs, NULL,
 		    async ? UFP_NOWAIT : UFP_ALL) != npages) {
 			if (!glocked) {
 				genfs_node_unlock(vp);
@@ -856,7 +857,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	off_t off;
 	/* Even for strange MAXPHYS, the shift rounds down to a page */
 #define maxpages (MAXPHYS >> PAGE_SHIFT)
-	int i, error, npages, nback;
+	int i, error;
+	unsigned int npages, nback;
 	int freeflag;
 	struct vm_page *pgs[maxpages], *pg;
 	struct uvm_page_array a;
@@ -1088,6 +1090,9 @@ retry:
 		 */
 
 		if (needs_clean) {
+			unsigned int nforw;
+			unsigned int fpflags;
+
 			KDASSERT((vp->v_iflag & VI_ONWORKLST));
 			wasclean = false;
 			memset(pgs, 0, sizeof(pgs));
@@ -1095,17 +1100,25 @@ retry:
 			UVM_PAGE_OWN(pg, "genfs_putpages");
 
 			/*
-			 * first look backward.
-			 *
-			 * XXX implement PG_PAGER1 incompatibility check.
+			 * XXX PG_PAGER1 incompatibility check.
+			 * this is a kludge for nfs.
 			 * probably it's better to make PG_NEEDCOMMIT a first
 			 * level citizen for uvm/genfs.
 			 */
+			fpflags = UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY;
+			if ((pg->flags & PG_PAGER1) != 0) {
+				fpflags |= UFP_ONLYPAGER1;
+			} else {
+				fpflags |= UFP_NOPAGER1;
+			}
 
+			/*
+			 * first look backward.
+			 */
 			npages = MIN(maxpages >> 1, off >> PAGE_SHIFT);
 			nback = npages;
 			uvn_findpages(uobj, off - PAGE_SIZE, &nback, &pgs[0],
-			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY|UFP_BACKWARD);
+			    NULL, fpflags | UFP_BACKWARD);
 			if (nback) {
 				memmove(&pgs[0], &pgs[npages - nback],
 				    nback * sizeof(pgs[0]));
@@ -1126,58 +1139,15 @@ retry:
 			/*
 			 * then look forward to fill in the remaining space in
 			 * the array of pages.
+			 *
+			 * pass our cached array of pages so that hopefully
+			 * uvn_findpages can find some good pages in it.
 			 */
 
-			for (npages = 1; npages < maxpages; npages++) {
-				struct vm_page *nextpg;
-
-				/*
-				 * regardless of the value of dirtyonly,
-				 * we don't need to care about clean pages here
-				 * as we will drop the object lock to call
-				 * GOP_WRITE and thus need to clear the array
-				 * before the next iteration anyway.
-				 */
-
-				nextpg = uvm_page_array_fill_and_peek(&a, uobj,
-				    pgs[npages - 1]->offset + PAGE_SIZE,
-				    maxpages - npages,
-				    UVM_PAGE_ARRAY_FILL_DIRTYONLY |
-				    UVM_PAGE_ARRAY_FILL_DENSE);
-				if (nextpg == NULL) {
-					break;
-				}
-				KASSERT(nextpg->uobject == pg->uobject);
-				KASSERT(nextpg->offset > pg->offset);
-				KASSERT(nextpg->offset >
-				    pgs[npages - 1]->offset);
-				if (pgs[npages - 1]->offset + PAGE_SIZE !=
-				    nextpg->offset) {
-					break;
-				}
-				if ((nextpg->flags & PG_BUSY) != 0) {
-					break;
-				}
-
-				/*
-				 * don't bother to cluster incompatible pages
-				 * together.
-				 *
-				 * XXX hack for nfs
-				 */
-
-				if (((nextpg->flags ^ pgs[npages - 1]->flags) &
-				    PG_PAGER1) != 0) {
-					break;
-				}
-				if (!uvm_pagecheckdirty(nextpg, false)) {
-					break;
-				}
-				nextpg->flags |= PG_BUSY;
-				UVM_PAGE_OWN(nextpg, "genfs_putpages2");
-				pgs[npages] = nextpg;
-				uvm_page_array_advance(&a);
-			}
+			nforw = maxpages - nback - 1;
+			uvn_findpages(uobj, pg->offset + PAGE_SIZE,
+			    &nforw, &pgs[nback + 1], &a, fpflags);
+			npages = nback + 1 + nforw;
 		} else {
 			pgs[0] = pg;
 			npages = 1;
@@ -1550,7 +1520,7 @@ genfs_compat_getpages(void *v)
 	pgs = ap->a_m;
 
 	if (ap->a_flags & PGO_LOCKED) {
-		uvn_findpages(uobj, origoffset, ap->a_count, ap->a_m,
+		uvn_findpages(uobj, origoffset, ap->a_count, ap->a_m, NULL,
 		    UFP_NOWAIT|UFP_NOALLOC| (memwrite ? UFP_NORDONLY : 0));
 
 		error = ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0;
@@ -1568,7 +1538,7 @@ genfs_compat_getpages(void *v)
 		return 0;
 	}
 	npages = orignpages;
-	uvn_findpages(uobj, origoffset, &npages, pgs, UFP_ALL);
+	uvn_findpages(uobj, origoffset, &npages, pgs, NULL, UFP_ALL);
 	mutex_exit(uobj->vmobjlock);
 	kva = uvm_pagermapin(pgs, npages,
 	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
