@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.100 2011/06/26 16:43:12 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.101 2011/12/20 23:56:29 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -492,6 +492,7 @@ struct msghdr {
 #define	MSG_NOSIGNAL	0x0400		/* do not generate SIGPIPE on EOF */
 #if defined(_NETBSD_SOURCE)
 #define	MSG_CMSG_CLOEXEC 0x0800		/* close on exec receiving fd */
+#define	MSG_NBIO	0x1000		/* use non-blocking I/O */
 #endif
 
 /* Extra flags used internally only */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.110 2011/07/17 23:59:54 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.111 2011/12/20 23:56:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.110 2011/07/17 23:59:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.111 2011/12/20 23:56:28 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1376,7 +1376,7 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 
 	if (error == EISCONN) {
 		struct socket *so;
-		int state, prflags, nbio;
+		int state, prflags;
 
 		/* fd_getsock() will use the descriptor for us */
 	    	if (fd_getsock(SCARG(uap, s), &so) != 0)
@@ -1384,7 +1384,6 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 
 		solock(so);
 		state = so->so_state;
-		nbio = so->so_nbio;
 		prflags = so->so_proto->pr_flags;
 		sounlock(so);
 		fd_putfile(SCARG(uap, s));
@@ -1393,7 +1392,8 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 		 * non-blocking connect; however we don't have
 		 * a convenient place to keep that state..
 		 */
-		if (nbio && (state & SS_ISCONNECTED) &&
+		if ((state & (SS_ISCONNECTED|SS_NBIO)) ==
+		    (SS_ISCONNECTED|SS_NBIO) &&
 		    (prflags & PR_CONNREQUIRED))
 			return 0;
 	}
