@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.12 2011/12/15 01:04:15 jmcneill Exp $ */
+/* $NetBSD: ttycons.c,v 1.13 2011/12/20 21:35:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.12 2011/12/15 01:04:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.13 2011/12/20 21:35:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -302,7 +302,8 @@ static void
 ttycons_start(struct tty *t)
 {
 	u_char buf[80+1];
-	int s, len; //, i;
+	u_char *p = buf;
+	int s, len, brem;
 
 	s = spltty();
 	if (t->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP)) {
@@ -312,8 +313,15 @@ ttycons_start(struct tty *t)
 	t->t_state |= TS_BUSY;
 	splx(s);
 
-	len = q_to_b(&t->t_outq, buf, sizeof(buf) - 1);
-	thunk_write(1, buf, len);
+	brem = q_to_b(&t->t_outq, buf, sizeof(buf) - 1);
+
+	while (brem > 0) {
+		len = thunk_write(1, p, brem);
+		if (len > 0) {
+			p += len;
+			brem -= len;
+		}
+	}
 
 	s = spltty();
 	t->t_state &= ~TS_BUSY;
