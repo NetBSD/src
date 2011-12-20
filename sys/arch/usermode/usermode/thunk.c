@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.48 2011/12/20 15:45:37 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.49 2011/12/20 21:07:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.48 2011/12/20 15:45:37 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.49 2011/12/20 21:07:56 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -381,6 +381,7 @@ int
 thunk_pollchar(void)
 {
 	struct pollfd fds[1];
+	uint8_t c;
 
 	fds[0].fd = STDIN_FILENO;
 	fds[0].events = POLLIN;
@@ -388,7 +389,9 @@ thunk_pollchar(void)
 
 	if (poll(fds, __arraycount(fds), 0) > 0) {
 		if (fds[0].revents & POLLIN) {
-			return getchar();
+			if (read(STDIN_FILENO, &c, 1) != 1)
+				return EOF;
+			return c;
 		}
 	}
 
