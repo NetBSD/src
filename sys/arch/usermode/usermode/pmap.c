@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.80 2011/12/20 15:45:37 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.81 2011/12/20 21:01:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2011/12/20 15:45:37 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2011/12/20 21:01:39 jmcneill Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -370,13 +370,6 @@ pmap_bootstrap(void)
 void
 pmap_init(void)
 {
-	/* 
-	 * XXX Work around a NetBSD fork() bug that doesn't copy the alternate
-	 * signal stack to the child!  so ensure signal stack is setup after
-	 * urkelvisor fork
-	 */
-
-	thunk_sigaltstack(usermode_signal_stack(), NULL);
 }
 
 /* return kernel space start and end (including growth) */

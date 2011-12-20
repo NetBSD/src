@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.38 2011/12/20 15:43:51 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.39 2011/12/20 21:01:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -29,10 +29,9 @@
 
 #include "opt_memsize.h"
 #include "opt_sdl.h"
-#include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2011/12/20 15:43:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2011/12/20 21:01:39 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,10 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2011/12/20 15:43:51 reinoud Exp $")
 #include <dev/mm.h>
 #include <machine/machdep.h>
 #include <machine/thunk.h>
-
-#if defined(URKELVISOR)
-#include <machine/urkelvisor.h>
-#endif
 
 char machine[] = "usermode";
 char machine_arch[] = "usermode";
@@ -105,10 +100,6 @@ main(int argc, char *argv[])
 	uvmexp.ncolors = 2;
 
 	pmap_bootstrap();
-
-#if defined(URKELVISOR)
-	urkelvisor_init();
-#endif
 
 	splinit();
 	splraise(IPL_HIGH);
