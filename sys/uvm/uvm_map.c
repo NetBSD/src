@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.306 2011/11/23 01:00:52 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.307 2011/12/20 13:47:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.306 2011/11/23 01:00:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.307 2011/12/20 13:47:38 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1236,6 +1236,13 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	return error;
 }
 
+/*
+ * uvm_map_prepare:
+ *
+ * called with map unlocked.
+ * on success, returns the map locked.
+ */
+
 int
 uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
     struct uvm_object *uobj, voff_t uoffset, vsize_t align, uvm_flag_t flags,
@@ -1372,6 +1379,13 @@ retry:
 	return 0;
 }
 
+/*
+ * uvm_map_enter:
+ *
+ * called with map locked.
+ * unlock the map before returning.
+ */
+
 int
 uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
     struct vm_map_entry *new_entry)
@@ -1407,6 +1421,7 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 	UVMHIST_LOG(maphist, "  uobj/offset 0x%x/%d", uobj, uoffset,0,0);
 
 	KASSERT(map->hint == prev_entry); /* bimerge case assumes this */
+	KASSERT(vm_map_locked_p(map));
 
 	if (flags & UVM_FLAG_QUANTUM) {
 		KASSERT(new_entry);
@@ -4958,6 +4973,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	bool copying;
 	int newetype;
 
+	KASSERT(vm_map_locked_p(map));
 	if (VM_MAP_USE_KMAPENT(map)) {
 		return 0;
 	}
