@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.50 2011/12/20 21:26:37 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.51 2011/12/20 22:48:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,14 +28,13 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.50 2011/12/20 21:26:37 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.51 2011/12/20 22:48:59 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/reboot.h>
 #include <sys/poll.h>
-#include <sys/utsname.h>
 #include <sys/sysctl.h>
 #include <machine/vmparam.h>
 
@@ -668,25 +667,24 @@ thunk_getcpuinfo(char *cp, int *len)
 }
 
 int
-thunk_getmachine(char *buf, size_t buflen)
+thunk_getmachine(char *machine, size_t machinelen,
+    char *machine_arch, size_t machine_archlen)
 {
-#ifdef __NetBSD__
-	size_t len = buflen - 1;
+	size_t len;
 
-	memset(buf, 0, buflen);
-	if (sysctlbyname("hw.machine_arch", buf, &len, NULL, 0) != 0) {
+	memset(machine, 0, machinelen);
+	len = machinelen - 1;
+	if (sysctlbyname("hw.machine", machine, &len, NULL, 0) != 0) {
+		perror("sysctlbyname hw.machine failed");
+		abort();
+	}
+
+	memset(machine_arch, 0, machine_archlen);
+	len = machine_archlen - 1;
+	if (sysctlbyname("hw.machine_arch", machine_arch, &len, NULL, 0) != 0) {
 		perror("sysctlbyname hw.machine_arch failed");
-		return -1;
-	}
-#else
-	struct utsname uts;
-
-	if (uname(&uts) != 0) {
-		perror("uname failed");
-		return -1;
+		abort();
 	}
 
-	strlcpy(buf, uts.machine, buflen);
-#endif
 	return 0;
 }

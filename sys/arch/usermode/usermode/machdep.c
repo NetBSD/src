@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.40 2011/12/20 21:26:37 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.41 2011/12/20 22:48:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -31,7 +31,7 @@
 #include "opt_sdl.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2011/12/20 21:26:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2011/12/20 22:48:59 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,8 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2011/12/20 21:26:37 jmcneill Exp $"
 #include <machine/machdep.h>
 #include <machine/thunk.h>
 
-char machine[] = "usermode";
+char machine[_SYS_NMLN] = "";
 char machine_arch[_SYS_NMLN] = "";
+char module_machine_usermode[_SYS_NMLN] = "";
 
 static char **saved_argv;
 char *usermode_root_image_path = NULL;
@@ -73,7 +74,12 @@ main(int argc, char *argv[])
 
 	saved_argv = argv;
 
-	thunk_getmachine(machine_arch, sizeof(machine_arch));
+	/* Get machine and machine_arch from host */
+	thunk_getmachine(machine, sizeof(machine),
+	    machine_arch, sizeof(machine_arch));
+	/* Override module_machine to be ${machine}usermode */
+	snprintf(module_machine_usermode, sizeof(module_machine_usermode),
+	    "%susermode", machine);
 
 #if defined(SDL)
 	if (genfb_thunkbus_cnattach() == 0)
