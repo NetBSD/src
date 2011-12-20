@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.1 2011/12/19 21:53:52 apb Exp $	*/
+/*	$NetBSD: rnd.h,v 1.2 2011/12/20 16:38:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997,2011 The NetBSD Foundation, Inc.
@@ -46,8 +46,6 @@
 #endif /* COMPAT_NETBSD32 */
 
 #include <sys/rnd.h>
-
-#ifdef COMPAT_50
 
 /*
  * NetBSD-5 used "void *state" in the rndsource_t struct.  rndsource_t
@@ -148,7 +146,5 @@ int compat_50_rnd_ioctl(struct file *, u_long, void *);
 #define	RNDGETSRCNUM50_32	_IOWR('R', 102, rndstat50_32_t)
 #define	RNDGETSRCNAME50_32	_IOWR('R', 103, rndstat_name50_32_t)
 #endif /* COMPAT_NETBSD32 */
-
-#endif /* COMPAT_50 */
 
 #endif /* !_COMPAT_SYS_RND_H_ */
