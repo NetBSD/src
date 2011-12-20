@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.28 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.29 2011/12/20 23:56:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.28 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.29 2011/12/20 23:56:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -237,7 +237,7 @@ kttcp_sosend(struct socket *so, unsigned long long slen,
 		if ((atomic && resid > so->so_snd.sb_hiwat))
 			snderr(EMSGSIZE);
 		if (space < resid && (atomic || space < so->so_snd.sb_lowat)) {
-			if (so->so_nbio)
+			if (so->so_state & SS_NBIO)
 				snderr(EWOULDBLOCK);
 			SBLASTRECORDCHK(&so->so_rcv,
 			    "kttcp_soreceive sbwait 1");
@@ -427,7 +427,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 		}
 		if (resid == 0)
 			goto release;
-		if (so->so_nbio || (flags & MSG_DONTWAIT)) {
+		if ((so->so_so_state & SS_NBIO) || (flags & MSG_DONTWAIT|MSG_NBIO)) {
 			error = EWOULDBLOCK;
 			goto release;
 		}
