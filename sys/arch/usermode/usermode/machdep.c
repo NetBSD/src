@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.37 2011/12/14 19:40:02 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.38 2011/12/20 15:43:51 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -32,7 +32,7 @@
 #include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2011/12/14 19:40:02 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2011/12/20 15:43:51 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -279,23 +279,18 @@ int
 md_syscall_check_opcode(ucontext_t *ucp)
 {
 	uint32_t opcode;
-#if 0
-	register_t *reg;
-
-	reg = (register_t *) &ucp->uc_mcontext;
-	dump_regs(reg);
-#endif
 
 	md_syscall_get_opcode(ucp, &opcode);
 
-	/* undefined instruction */
-	if (opcode == 0xff0f)
+	switch (opcode) {
+	case 0xff0f:	/* UD1      */
+	case 0xff0b:	/* UD2      */
+	case 0x80cd:	/* int $80  */
+	case 0x340f:	/* sysenter */
 		return 1;
-	if (opcode == 0xff0b)
-		return 1;
-
-	/* TODO int $80 and sysenter */
-	return 0;
+	default:
+		return 0;
+	}
 }
 
 void
@@ -305,14 +300,16 @@ md_syscall_get_opcode(ucontext_t *ucp, uint32_t *opcode)
 //	uint8_t  *p8  = (uint8_t *) (reg[14]);
 	uint16_t *p16 = (uint16_t*) (reg[14]);
 
-	*opcode = 0;
-
-	if (*p16 == 0xff0f)
+	switch (*p16) {
+	case 0xff0f:	/* UD1      */
+	case 0xff0b:	/* UD2      */
+	case 0x80cd:	/* int $80  */
+	case 0x340f:	/* sysenter */
 		*opcode = *p16;
-	if (*p16 == 0xff0b)
-		*opcode = *p16;
-
-	/* TODO int $80 and sysenter */
+		break;
+	default:
+		*opcode = 0;
+	}
 }
 
 void
@@ -321,12 +318,17 @@ md_syscall_inc_pc(ucontext_t *ucp, uint32_t opcode)
 	uint *reg = (int *) &ucp->uc_mcontext;
 
 	/* advance program counter */
-	if (opcode == 0xff0f)
+	switch (opcode) {
+	case 0xff0f:	/* UD1      */
+	case 0xff0b:	/* UD2      */
+	case 0x80cd:	/* int $80  */
+	case 0x340f:	/* sysenter */
 		reg[14] += 2;	/* EIP */
-	if (opcode == 0xff0b)
-		reg[14] += 2;	/* EIP */
-
-	/* TODO int $80 and sysenter */
+		break;
+	default:
+		panic("%s, unknown illegal instruction: opcode = %x\n",
+			__func__, (uint32_t) opcode);
+	}
 }
 
 void
@@ -334,13 +336,17 @@ md_syscall_dec_pc(ucontext_t *ucp, uint32_t opcode)
 {
 	uint *reg = (int *) &ucp->uc_mcontext;
 
-	/* advance program counter */
-	if (opcode == 0xff0f)
+	switch (opcode) {
+	case 0xff0f:	/* UD1      */
+	case 0xff0b:	/* UD2      */
+	case 0x80cd:	/* int $80  */
+	case 0x340f:	/* sysenter */
 		reg[14] -= 2;	/* EIP */
-	if (opcode == 0xff0b)
-		reg[14] -= 2;	/* EIP */
-
-	/* TODO int $80 and sysenter */
+		break;
+	default:
+		panic("%s, unknown illegal instruction: opcode = %x\n",
+			__func__, (uint32_t) opcode);
+	}
 }
 
 
