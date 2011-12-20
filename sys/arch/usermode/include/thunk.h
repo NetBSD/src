@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.41 2011/12/15 03:42:32 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.42 2011/12/20 15:45:36 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -61,6 +61,7 @@ struct thunk_termios {
 #define THUNK_MAP_FILE		0x0004
 #define THUNK_MAP_SHARED	0x0010
 #define THUNK_MAP_PRIVATE	0x0020
+#define THUNK_MAP_NOSYSCALLS	0x0040
 
 #define THUNK_PROT_NONE		0x00
 #define THUNK_PROT_READ		0x01
