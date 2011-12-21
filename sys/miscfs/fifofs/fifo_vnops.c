@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.71 2011/12/20 23:56:29 christos Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.72 2011/12/21 15:27:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.71 2011/12/20 23:56:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.72 2011/12/21 15:27:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ fifo_read(void *v)
 	/*
 	 * Clear EOF indication after first such return.
 	 */
-	if (error != EINTR && uio->uio_resid == startresid)
+	if (error == 0 && uio->uio_resid == startresid)
 		rso->so_state &= ~SS_CANTRCVMORE;
 	if (ap->a_ioflag & IO_NDELAY) {
 		if (error == EWOULDBLOCK &&
