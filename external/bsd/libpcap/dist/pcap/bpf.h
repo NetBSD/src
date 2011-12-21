@@ -39,7 +39,7 @@
  *
  * @(#) Header: /tcpdump/master/libpcap/pcap/bpf.h,v 1.32 2008-12-23 20:13:29 guy Exp (LBL)
  */
-
+#error "This is not used in NetBSD, we use <net/bpf.h>"
 /*
  * This is libpcap's cut-down version of bpf.h; it includes only
  * the stuff needed for the code generator and the userland BPF
