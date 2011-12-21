@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.429 2011/12/21 01:57:55 christos Exp $
+# $NetBSD: mi,v 1.430 2011/12/21 07:36:02 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1428,6 +1428,7 @@
 ./usr/tests/fs/ffs/t_snapshot_log		tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_snapshot_v2		tests-fs-tests		atf
 ./usr/tests/fs/fifofs				tests-fs-tests
+./usr/tests/fs/fifofs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/fifofs/t_fifo			tests-fs-tests		atf
 ./usr/tests/fs/hfs				tests-fs-tests
 ./usr/tests/fs/hfs/Atffile			tests-fs-tests		atf
