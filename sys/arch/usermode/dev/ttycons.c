@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.14 2011/12/21 10:02:45 reinoud Exp $ */
+/* $NetBSD: ttycons.c,v 1.15 2011/12/21 11:53:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.14 2011/12/21 10:02:45 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.15 2011/12/21 11:53:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -53,6 +53,7 @@ struct ttycons_softc {
 	struct tty	*sc_tty;
 	void		*sc_rd_sih;
 	void		*sc_ctrlc_sih;
+	u_char		sc_buf[1024];
 };
 
 dev_type_cngetc(ttycons_cngetc);
@@ -129,6 +130,7 @@ ttycons_attach(device_t parent, device_t self, void *opaque)
 	tty_attach(sc->sc_tty);
 	sc->sc_tty->t_oproc = ttycons_start;
 	sc->sc_tty->t_param = ttycons_param;
+	sc->sc_tty->t_sc = sc;
 
 	maj = cdevsw_lookup_major(&ttycons_cdevsw);
 	cn_tab->cn_dev = makedev(maj, device_unit(self));
@@ -301,8 +303,8 @@ ttycons_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 static void
 ttycons_start(struct tty *t)
 {
-	u_char buf[1024+1];
-	u_char *p = buf;
+	struct ttycons_softc *sc = t->t_sc;
+	u_char *p = sc->sc_buf;
 	int s, len, brem;
 
 	s = spltty();
@@ -313,7 +315,7 @@ ttycons_start(struct tty *t)
 	t->t_state |= TS_BUSY;
 	splx(s);
 
-	brem = q_to_b(&t->t_outq, buf, sizeof(buf) - 1);
+	brem = q_to_b(&t->t_outq, sc->sc_buf, sizeof(sc->sc_buf));
 
 	while (brem > 0) {
 		len = thunk_write(1, p, brem);
