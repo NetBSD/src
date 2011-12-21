@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.127 2011/12/20 23:56:29 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.128 2011/12/21 19:27:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ struct socket {
 	short		so_options;	/* from socket call, see socket.h */
 	u_short		so_linger;	/* time to linger while closing */
 	short		so_state;	/* internal state flags SS_*, below */
+	int		so_unused;	/* used to be so_nbio */
 	void		*so_pcb;	/* protocol control block */
 	const struct protosw *so_proto;	/* protocol handle */
 /*
