@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.149 2011/12/20 23:56:28 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.150 2011/12/21 15:26:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.149 2011/12/20 23:56:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.150 2011/12/21 15:26:57 christos Exp $");
 
 #include "opt_pipe.h"
 
@@ -367,7 +367,8 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 	error = soconnect(so, nam, l);
 	if (error)
 		goto bad;
-	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING) != 0) {
+	if ((so->so_state & (SS_NBIO|SS_ISCONNECTING)) ==
+	    (SS_NBIO|SS_ISCONNECTING)) {
 		error = EINPROGRESS;
 		goto out;
 	}
