@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.13 2011/12/20 21:35:16 jmcneill Exp $ */
+/* $NetBSD: ttycons.c,v 1.14 2011/12/21 10:02:45 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.13 2011/12/20 21:35:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.14 2011/12/21 10:02:45 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -301,7 +301,7 @@ ttycons_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 static void
 ttycons_start(struct tty *t)
 {
-	u_char buf[80+1];
+	u_char buf[1024+1];
 	u_char *p = buf;
 	int s, len, brem;
 
