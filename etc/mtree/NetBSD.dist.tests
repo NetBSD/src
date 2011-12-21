@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.56 2011/11/12 01:19:40 jmmv Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.57 2011/12/21 01:58:46 christos Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -20,6 +20,7 @@
 ./usr/libdata/debug/usr/tests/dev/sysmon
 ./usr/libdata/debug/usr/tests/fs
 ./usr/libdata/debug/usr/tests/fs/ffs
+./usr/libdata/debug/usr/tests/fs/fifofs
 ./usr/libdata/debug/usr/tests/fs/hfs
 ./usr/libdata/debug/usr/tests/fs/kernfs
 ./usr/libdata/debug/usr/tests/fs/lfs
@@ -137,6 +138,7 @@
 ./usr/tests/examples
 ./usr/tests/fs
 ./usr/tests/fs/ffs
+./usr/tests/fs/fifofs
 ./usr/tests/fs/hfs
 ./usr/tests/fs/kernfs
 ./usr/tests/fs/lfs
