@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.14 2011/12/19 12:19:26 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.15 2011/12/21 02:16:57 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.14 2011/12/19 12:19:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.15 2011/12/21 02:16:57 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -694,10 +694,7 @@ hdafg_widget_getcaps(struct hdaudio_widget *w)
 		    COP_CFG_PORT_CONNECTIVITY(config) ==
 		      COP_PORT_FIXED_FUNCTION &&
 		    COP_CFG_DEFAULT_DEVICE(config) ==
-		      COP_DEVICE_OTHER &&
-		    COP_CFG_CONNECTION_TYPE(config) ==
-		      COP_CONN_TYPE_ATAPI_INTERNAL &&
-		    COP_CFG_COLOR(config) == 0x0) {
+		      COP_DEVICE_OTHER) {
 			pcbeep = true;
 		}
 		break;
