@@ -3,10 +3,10 @@
 define voyagerbus {}
 
 # the graphics part
-device	voyagerfb: wsemuldisplaydev, rasops8, rasops16, vcons, videomode, iic, i2c_bitbang
+device	voyagerfb: wsemuldisplaydev, rasops8, rasops16, rasops32, vcons, videomode, iic, i2c_bitbang
 attach	voyagerfb at voyagerbus
 file	dev/pci/voyager/voyagerfb.c		voyagerfb needs-flag
-defflag	opt_voyagerfb.h	VOYAGERFB_DEBUG
+defflag	opt_voyagerfb.h	VOYAGERFB_DEBUG VOYAGERFB_ANTIALIAS
 
 # a clock timer
 defflag opt_pwmclock.h PWMCLOCK_DEBUG
