@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.177 2011/12/20 15:39:35 reinoud Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.178 2011/12/22 13:12:50 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -680,7 +680,7 @@ void			uvmspace_unshare(struct lwp *);
 
 void			uvm_whatis(uintptr_t, void (*)(const char *, ...));
 
-bool			uvm_map_setattr(struct vm_map *, vaddr_t,
+void			uvm_map_setattr(struct vm_map *, vaddr_t,
 			    vaddr_t, uint32_t);
 bool			uvm_map_checkattr(struct vm_map *, vaddr_t,
 			    vaddr_t, uint32_t);
