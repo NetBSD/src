@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.11 2010/11/04 01:58:07 dyoung Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.12 2011/12/22 20:07:01 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.11 2010/11/04 01:58:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.12 2011/12/22 20:07:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ Static  usbd_status e220_init(usbd_device_handle);
 #endif
 
 struct	uhmodem_softc {
-	struct ubsa_softc	sc_ubsa;	
+	struct ubsa_softc	sc_ubsa;
 };
 
 struct	ucom_methods uhmodem_methods = {
@@ -174,7 +174,7 @@ extern struct cfdriver uhmodem_cd;
 CFATTACH_DECL2_NEW(uhmodem, sizeof(struct uhmodem_softc), uhmodem_match,
     uhmodem_attach, uhmodem_detach, uhmodem_activate, NULL, uhmodem_childdet);
 
-int 
+int
 uhmodem_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
@@ -187,7 +187,7 @@ uhmodem_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_NONE);
 }
 
-void 
+void
 uhmodem_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhmodem_softc *sc = device_private(self);
@@ -219,7 +219,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 	if ((uaa->ifaceno == 0) && (uaa->class != 255)) {
 		err = e220_modechange_request(dev);
 		if (err) {
-			aprint_error_dev(self, "failed to change mode: %s\n", 
+			aprint_error_dev(self, "failed to change mode: %s\n",
 				usbd_errstr(err));
 			sc->sc_ubsa.sc_dying = 1;
 			goto error;
@@ -359,13 +359,13 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 		uca.arg = &sc->sc_ubsa;
 		uca.info = comname;
 		DPRINTF(("uhmodem: int#=%d, in = 0x%x, out = 0x%x, intr = 0x%x\n",
-	    		i, uca.bulkin, uca.bulkout, sc->sc_ubsa.sc_intr_number));
+			i, uca.bulkin, uca.bulkout, sc->sc_ubsa.sc_intr_number));
 		sc->sc_ubsa.sc_subdevs[i] = config_found_sm_loc(self, "ucombus", NULL,
 				 &uca, ucomprint, ucomsubmatch);
 
 		/* issue endpoint halt to each interface */
 		err = uhmodem_endpointhalt(&sc->sc_ubsa, i);
-		if (err) 
+		if (err)
 			aprint_error("%s: endpointhalt fail\n", __func__);
 		else
 			usbd_delay_ms(sc->sc_ubsa.sc_udev, 50);
@@ -394,7 +394,7 @@ uhmodem_childdet(device_t self, device_t child)
 	sc->sc_ubsa.sc_subdevs[i] = NULL;
 }
 
-int 
+int
 uhmodem_detach(device_t self, int flags)
 {
 	struct uhmodem_softc *sc = device_private(self);
@@ -448,7 +448,7 @@ uhmodem_open(void *addr, int portno)
 	DPRINTF(("%s: sc = %p\n", __func__, sc));
 
 	err = uhmodem_endpointhalt(sc, 0);
-	if (err) 
+	if (err)
 		aprint_error("%s: endpointhalt fail\n", __func__);
 	else
 		usbd_delay_ms(sc->sc_udev, 50);
@@ -497,7 +497,7 @@ uhmodem_open(void *addr, int portno)
  * Hauwei E220 needs special request to enable modem function.
  * -- DEVICE_REMOTE_WAKEUP ruquest to endpoint 2.
  */
-Static  usbd_status 
+Static  usbd_status
 e220_modechange_request(usbd_device_handle dev)
 {
 #define E220_MODE_CHANGE_REQUEST 0x2
@@ -521,7 +521,7 @@ e220_modechange_request(usbd_device_handle dev)
 #undef E220_MODE_CHANGE_REQUEST
 }
 
-Static  usbd_status 
+Static  usbd_status
 uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 {
 	usb_device_request_t req;
@@ -535,7 +535,7 @@ uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface[iface], i);
-		if (ed == NULL)	
+		if (ed == NULL)
 			return (EIO);
 
 		if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -547,7 +547,7 @@ uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 			USETW(req.wLength, 0);
 			err = usbd_do_request(sc->sc_udev, &req, 0);
 			if (err) {
-				DPRINTF(("%s: ENDPOINT_HALT to EP:%d fail\n", 
+				DPRINTF(("%s: ENDPOINT_HALT to EP:%d fail\n",
 					__func__, ed->bEndpointAddress));
 				return (EIO);
 			}
@@ -570,7 +570,7 @@ uhmodem_regwrite(usbd_device_handle dev, uint8_t *data, size_t len)
 	USETW(req.wIndex, 0x0000);
 	USETW(req.wLength, len);
 	err = usbd_do_request(dev, &req, data);
-	if (err) 
+	if (err)
 		return err;
 
 	return 0;
@@ -616,7 +616,7 @@ uhmodem_regsetup(usbd_device_handle dev, uint16_t cmd)
 }
 #endif
 
-Static  usbd_status 
+Static  usbd_status
 a2502_init(usbd_device_handle dev)
 {
 	uint8_t data[8];
@@ -638,7 +638,7 @@ a2502_init(usbd_device_handle dev)
 		return EIO;
 	}
 
-	if (uhmodem_regread(dev, data, 7)) { 
+	if (uhmodem_regread(dev, data, 7)) {
 		DPRINTF(("%s: read fail\n", __func__));
 		return EIO;
 	}
@@ -654,12 +654,12 @@ a2502_init(usbd_device_handle dev)
 
 
 #if 0
-/* 
+/*
  * Windows device driver send these sequens of USB requests.
  * However currently I can't understand what the messege is,
  * disable this code when I get more information about it.
- */ 
-Static  usbd_status 
+ */
+Static  usbd_status
 e220_init(usbd_device_handle dev)
 {
 	uint8_t data[8];
@@ -678,7 +678,7 @@ e220_init(usbd_device_handle dev)
 		goto error;
 
 	/* vendor specific unknown sequence */
-	if(uhmodem_regsetup(dev, 0x1)) 
+	if(uhmodem_regsetup(dev, 0x1))
 		goto error;
 
 	if (uhmodem_regread(dev, data, 7))

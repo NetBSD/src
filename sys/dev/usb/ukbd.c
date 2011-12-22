@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.113 2011/11/03 02:41:29 macallan Exp $        */
+/*      $NetBSD: ukbd.c,v 1.114 2011/12/22 20:07:01 jakllsch Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.113 2011/11/03 02:41:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.114 2011/12/22 20:07:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ Static const struct ukbd_keycodetrans trtab_apple_iso[] = {
 };
 
 #ifdef GDIUM_KEYBOARD_HACK
-Static const struct ukbd_keycodetrans trtab_gdium_fn[] = {	
+Static const struct ukbd_keycodetrans trtab_gdium_fn[] = {
 #ifdef notyet
 		{ 58, 0 },	/* F1 -> toggle camera */
 		{ 59, 0 },	/* F2 -> toggle wireless */

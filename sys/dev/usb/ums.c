@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.81 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: ums.c,v 1.82 2011/12/22 20:07:02 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.81 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.82 2011/12/22 20:07:02 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,12 +221,12 @@ ums_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Try the wheel first as the Z activator since it's tradition. */
-	hl = hid_locate(desc, 
-			size, 
-			HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL), 
-			uha->reportid, 
-			hid_input, 
-			&sc->sc_loc_z, 
+	hl = hid_locate(desc,
+			size,
+			HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL),
+			uha->reportid,
+			hid_input,
+			&sc->sc_loc_z,
 			&flags);
 
 	zloc = &sc->sc_loc_z;
@@ -245,8 +245,8 @@ ums_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	hl = hid_locate(desc, 
-			size, 
+	hl = hid_locate(desc,
+			size,
 			HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
 			uha->reportid,
 			hid_input,
@@ -259,9 +259,9 @@ ums_attach(device_t parent, device_t self, void *aux)
 	 * any Z then check that.
 	 */
 	if (!hl) {
-		hl = hid_locate(desc, 
-				size, 
-				HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN), 
+		hl = hid_locate(desc,
+				size,
+				HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN),
 				uha->reportid,
 				hid_input,
 				zloc,
@@ -288,7 +288,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (uha->uaa->vendor == USB_VENDOR_MICROSOFT &&
 	    (uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR10 ||
-	     uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR20)) {	
+	     uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR20)) {
 		if ((sc->flags & UMS_Z) && sc->sc_loc_z.pos == 0)
 			sc->sc_loc_z.pos = 24;
 		if ((sc->flags & UMS_W) && sc->sc_loc_w.pos == 0)

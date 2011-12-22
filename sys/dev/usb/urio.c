@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.35 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: urio.c,v 1.36 2011/12/22 20:07:02 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.35 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.36 2011/12/22 20:07:02 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ int             urio_activate(device_t, enum devact);
 extern struct cfdriver urio_cd;
 CFATTACH_DECL_NEW(urio, sizeof(struct urio_softc), urio_match, urio_attach, urio_detach, urio_activate);
 
-int 
+int
 urio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -158,7 +158,7 @@ urio_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 urio_attach(device_t parent, device_t self, void *aux)
 {
 	struct urio_softc *sc = device_private(self);
@@ -236,7 +236,7 @@ urio_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 urio_detach(device_t self, int flags)
 {
 	struct urio_softc *sc = device_private(self);

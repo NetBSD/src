@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.18 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.19 2011/12/22 20:07:00 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.18 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.19 2011/12/22 20:07:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ extern struct cfdriver udsbr_cd;
 CFATTACH_DECL2_NEW(udsbr, sizeof(struct udsbr_softc), udsbr_match,
     udsbr_attach, udsbr_detach, udsbr_activate, NULL, udsbr_childdet);
 
-int 
+int
 udsbr_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -118,7 +118,7 @@ udsbr_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_VENDOR_PRODUCT);
 }
 
-void 
+void
 udsbr_attach(device_t parent, device_t self, void *aux)
 {
 	struct udsbr_softc *sc = device_private(self);
@@ -161,7 +161,7 @@ udsbr_childdet(device_t self, device_t child)
 {
 }
 
-int 
+int
 udsbr_detach(device_t self, int flags)
 {
 	struct udsbr_softc *sc = device_private(self);

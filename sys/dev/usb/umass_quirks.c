@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.90 2011/09/20 19:35:46 jakllsch Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.91 2011/12/22 20:07:02 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.90 2011/09/20 19:35:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.91 2011/12/22 20:07:02 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -213,13 +213,13 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 	{ { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_I_BEAD100 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  0, 
+	  0,
 	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
-	  UMATCH_VENDOR_PRODUCT,  
+	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
 	{ { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_I_BEAD150 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
 	  UMATCH_VENDOR_PRODUCT,
@@ -266,7 +266,7 @@ Static const struct umass_quirk umass_quirks[] = {
 
 	/* Meizu M6 doesn't like synchronize-cache, see PR 40442 */
 	{ { USB_VENDOR_MEIZU, USB_PRODUCT_MEIZU_M6_SL },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NOSYNCCACHE,
 	  UMATCH_VENDOR_PRODUCT,
@@ -279,7 +279,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	 * this is does not cause the device firmware to stop responding.
 	 */
 	{ { USB_VENDOR_SANDISK, USB_PRODUCT_SANDISK_SANSA_CLIP },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NOSYNCCACHE,
 	  UMATCH_VENDOR_PRODUCT,
@@ -288,7 +288,7 @@ Static const struct umass_quirk umass_quirks[] = {
 
 	/* Kingston USB pendrives don't like being told to lock the door */
 	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DT101_II },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK,
 	  UMATCH_VENDOR_PRODUCT,
@@ -296,7 +296,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DT101_G2 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK,
 	  UMATCH_VENDOR_PRODUCT,
@@ -304,7 +304,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DT102_G2 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK,
 	  UMATCH_VENDOR_PRODUCT,
@@ -312,7 +312,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DTMINI10 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK,
 	  UMATCH_VENDOR_PRODUCT,

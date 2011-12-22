@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.13 2011/10/14 13:12:41 njoly Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.14 2011/12/22 20:07:01 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.13 2011/10/14 13:12:41 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.14 2011/12/22 20:07:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ int             ukyopon_activate(device_t, enum devact);
 extern struct cfdriver ukyopon_cd;
 CFATTACH_DECL_NEW(ukyopon, sizeof(struct ukyopon_softc), ukyopon_match, ukyopon_attach, ukyopon_detach, ukyopon_activate);
 
-int 
+int
 ukyopon_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
@@ -117,7 +117,7 @@ ukyopon_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_NONE);
 }
 
-void 
+void
 ukyopon_attach(device_t parent, device_t self, void *aux)
 {
 	struct ukyopon_softc *sc = device_private(self);
@@ -184,7 +184,7 @@ ukyopon_activate(device_t self, enum devact act)
 	return umodem_common_activate(&sc->sc_umodem, act);
 }
 
-int 
+int
 ukyopon_detach(device_t self, int flags)
 {
 	struct ukyopon_softc *sc = device_private(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.30 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.31 2011/12/22 20:07:03 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.30 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.31 2011/12/22 20:07:03 jakllsch Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -155,7 +155,7 @@ CFATTACH_DECL2_NEW(usscanner, sizeof(struct usscanner_softc),
     usscanner_match, usscanner_attach, usscanner_detach, usscanner_activate,
     NULL, usscanner_childdet);
 
-int 
+int
 usscanner_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -169,7 +169,7 @@ usscanner_match(device_t parent, cfdata_t match, void *aux)
 		return (UMATCH_NONE);
 }
 
-void 
+void
 usscanner_attach(device_t parent, device_t self, void *aux)
 {
 	struct usscanner_softc *sc = device_private(self);
@@ -351,7 +351,7 @@ usscanner_childdet(device_t self, device_t child)
 	sc->sc_child = NULL;
 }
 
-int 
+int
 usscanner_detach(device_t self, int flags)
 {
 	struct usscanner_softc *sc = device_private(self);

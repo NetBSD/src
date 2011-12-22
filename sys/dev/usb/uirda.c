@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.34 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: uirda.c,v 1.35 2011/12/22 20:07:01 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.34 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.35 2011/12/22 20:07:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ extern struct cfdriver uirda_cd;
 CFATTACH_DECL2_NEW(uirda, sizeof(struct uirda_softc), uirda_match,
     uirda_attach, uirda_detach, uirda_activate, NULL, uirda_childdet);
 
-int 
+int
 uirda_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
@@ -168,7 +168,7 @@ uirda_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_NONE);
 }
 
-void 
+void
 uirda_attach(device_t parent, device_t self, void *aux)
 {
 	struct uirda_softc *sc = device_private(self);
@@ -291,7 +291,7 @@ uirda_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 uirda_detach(device_t self, int flags)
 {
 	struct uirda_softc *sc = device_private(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.5 2011/10/17 16:44:02 mbalmer Exp $ */
+/*	$NetBSD: uyurex.c,v 1.6 2011/12/22 20:07:03 jakllsch Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -112,7 +112,7 @@ extern struct cfdriver uyurex_cd;
 CFATTACH_DECL_NEW(uyurex, sizeof(struct uyurex_softc),
     uyurex_match, uyurex_attach, uyurex_detach, uyurex_activate);
 
-int 
+int
 uyurex_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -124,7 +124,7 @@ uyurex_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_VENDOR_PRODUCT);
 }
 
-void 
+void
 uyurex_attach(device_t parent, device_t self, void *aux)
 {
 	struct uyurex_softc *sc = device_private(self);
@@ -197,7 +197,7 @@ uyurex_attach(device_t parent, device_t self, void *aux)
 	uyurex_set_mode(sc, 0);
 }
 
-int 
+int
 uyurex_detach(device_t self, int flags)
 {
 	struct uyurex_softc *sc = device_private(self);

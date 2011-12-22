@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_verbose.c,v 1.4 2010/08/07 21:09:48 christos Exp $ */
+/*	$NetBSD: usb_verbose.c,v 1.5 2011/12/22 20:07:02 jakllsch Exp $ */
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_verbose.c,v 1.4 2010/08/07 21:09:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_verbose.c,v 1.5 2011/12/22 20:07:02 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -60,7 +60,7 @@ void get_usb_vendor_real(char *, size_t, usb_vendor_id_t);
 void get_usb_product_real(char *, size_t, usb_vendor_id_t, usb_product_id_t);
 
 MODULE(MODULE_CLASS_MISC, usbverbose, NULL);
-  
+
 static int
 usbverbose_modcmd(modcmd_t cmd, void *arg)
 {
@@ -82,7 +82,7 @@ usbverbose_modcmd(modcmd_t cmd, void *arg)
 		usb_verbose_loaded = 0;
 		return 0;
 	default:
-		return ENOTTY;  
+		return ENOTTY;
 	}
 }
 

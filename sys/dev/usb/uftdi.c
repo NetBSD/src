@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.48 2011/07/11 20:22:50 matt Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.49 2011/12/22 20:07:00 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.48 2011/07/11 20:22:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.49 2011/12/22 20:07:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ struct ucom_methods uftdi_methods = {
 	uftdi_write,
 };
 
-/* 
+/*
  * The devices default to UFTDI_TYPE_8U232AM.
  * Remember to update uftdi_attach() if it should be UFTDI_TYPE_SIO instead
  */
@@ -165,7 +165,7 @@ extern struct cfdriver uftdi_cd;
 CFATTACH_DECL2_NEW(uftdi, sizeof(struct uftdi_softc), uftdi_match,
     uftdi_attach, uftdi_detach, uftdi_activate, NULL, uftdi_childdet);
 
-int 
+int
 uftdi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -177,7 +177,7 @@ uftdi_match(device_t parent, cfdata_t match, void *aux)
                 UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 uftdi_attach(device_t parent, device_t self, void *aux)
 {
 	struct uftdi_softc *sc = device_private(self);

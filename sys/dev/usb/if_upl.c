@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.39 2011/11/19 22:51:24 tls Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.40 2011/12/22 20:06:59 jakllsch Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.39 2011/11/19 22:51:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.40 2011/12/22 20:06:59 jakllsch Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -203,7 +203,7 @@ Static void upl_input(struct ifnet *, struct mbuf *);
 /*
  * Probe for a Prolific chip.
  */
-int 
+int
 upl_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -216,7 +216,7 @@ upl_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_NONE);
 }
 
-void 
+void
 upl_attach(device_t parent, device_t self, void *aux)
 {
 	struct upl_softc *sc = device_private(self);
@@ -326,7 +326,7 @@ upl_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 upl_detach(device_t self, int flags)
 {
 	struct upl_softc *sc = device_private(self);
