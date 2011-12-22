@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.50 2010/07/22 13:23:02 tsutsui Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.51 2011/12/22 05:01:15 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.50 2010/07/22 13:23:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.51 2011/12/22 05:01:15 macallan Exp $");
 
 #include "opt_wsfont.h"
 
@@ -115,6 +115,18 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.50 2010/07/22 13:23:02 tsutsui Exp $");
 #include <dev/wsfont/omron12x20.h>
 #endif
 
+#ifdef FONT_DEJAVU_SANS_MONO12x22
+#include <dev/wsfont/DejaVu_Sans_Mono_12x22.h>
+#endif
+
+#ifdef FONT_DROID_SANS_MONO12x22
+#include <dev/wsfont/Droid_Sans_Mono_12x22.h>
+#endif
+
+#ifdef FONT_FREEMONO12x22
+#include <dev/wsfont/FreeMono_12x22.h>
+#endif
+
 /* Make sure we always have at least one font. */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
@@ -195,13 +207,23 @@ static struct font builtin_fonts[] = {
 #ifdef FONT_OMRON12x20
 	{ { NULL, NULL }, &omron12x20, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
-#ifdef FONT_TERMINUS8x16
-	{ { NULL, NULL }, &terminus8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, NULL, 0, 0, 0 },
+};
+static struct font builtin_aa_fonts[] = {
+#ifdef FONT_DEJAVU_SANS_MONO12x22
+	{ { NULL, NULL }, &DejaVu_Sans_Mono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_DROID_SANS_MONO12x22
+	{ { NULL, NULL }, &Droid_Sans_Mono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_FREEMONO12x22
+	{ { NULL, NULL }, &FreeMono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ { NULL, NULL }, NULL, 0, 0, 0 },
 };
 
 static TAILQ_HEAD(,font)	list;
+static TAILQ_HEAD(,font)	aa_list;
 static int	ident;
 
 /* Reverse the bit order in a byte */
@@ -511,6 +533,16 @@ wsfont_init(void)
 		    ent->font->bitorder, ent->font->byteorder);
 		TAILQ_INSERT_TAIL(&list, ent, chain);
 	}
+
+	TAILQ_INIT(&aa_list);
+	ent = builtin_aa_fonts;
+
+	for (i = 0; builtin_aa_fonts[i].font != NULL; i++, ent++) {
+		ident += (1 << WSFONT_IDENT_SHIFT);
+		ent->cookie = wsfont_make_cookie(ident,
+		    ent->font->bitorder, ent->font->byteorder);
+		TAILQ_INSERT_TAIL(&aa_list, ent, chain);
+	}
 }
 
 static struct font *
@@ -519,6 +551,11 @@ wsfont_find0(int cookie, int mask)
 	struct font *ent;
 
 	TAILQ_FOREACH(ent, &list, chain) {
+		if ((ent->cookie & mask) == (cookie & mask))
+			return (ent);
+	}
+
+	TAILQ_FOREACH(ent, &aa_list, chain) {
 		if ((ent->cookie & mask) == (cookie & mask))
 			return (ent);
 	}
@@ -552,6 +589,19 @@ wsfont_find(const char *name, int width, int height, int stride, int bito, int b
 	struct font *ent;
 
 	TAILQ_FOREACH(ent, &list, chain) {
+		if (wsfont_matches(ent->font, name, width, height, stride))
+			return (wsfont_make_cookie(ent->cookie, bito, byteo));
+	}
+
+	return (-1);
+}
+
+int
+wsfont_find_aa(const char *name, int width, int height, int stride, int bito, int byteo)
+{
+	struct font *ent;
+
+	TAILQ_FOREACH(ent, &aa_list, chain) {
 		if (wsfont_matches(ent->font, name, width, height, stride))
 			return (wsfont_make_cookie(ent->cookie, bito, byteo));
 	}
