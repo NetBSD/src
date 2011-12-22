@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.13 2011/12/06 19:05:43 jakllsch Exp $ */
+/* $NetBSD: uslsa.c,v 1.14 2011/12/22 02:13:08 jakllsch Exp $ */
 
 /* from ugensa.c */
 
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.13 2011/12/06 19:05:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.14 2011/12/22 02:13:08 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ static void uslsa_close(void *, int);
 static int uslsa_request_set(struct uslsa_softc *, uint8_t, uint16_t);
 static void uslsa_set_flow(struct uslsa_softc *, tcflag_t, tcflag_t);
 
-struct ucom_methods uslsa_methods = {
+static const struct ucom_methods uslsa_methods = {
 	uslsa_get_status,
 	uslsa_set,
 	uslsa_param,
@@ -206,16 +206,16 @@ static const struct usb_devno uslsa_devs[] = {
 };
 #define uslsa_lookup(v, p) usb_lookup(uslsa_devs, v, p)
 
-int uslsa_match(device_t, cfdata_t, void *);
-void uslsa_attach(device_t, device_t, void *);
-void uslsa_childdet(device_t, device_t);
-int uslsa_detach(device_t, int);
-int uslsa_activate(device_t, enum devact);
-extern struct cfdriver uslsa_cd;
+static int uslsa_match(device_t, cfdata_t, void *);
+static void uslsa_attach(device_t, device_t, void *);
+static void uslsa_childdet(device_t, device_t);
+static int uslsa_detach(device_t, int);
+static int uslsa_activate(device_t, enum devact);
+
 CFATTACH_DECL2_NEW(uslsa, sizeof(struct uslsa_softc), uslsa_match,
     uslsa_attach, uslsa_detach, uslsa_activate, NULL, uslsa_childdet);
 
-int 
+static int 
 uslsa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -224,7 +224,7 @@ uslsa_match(device_t parent, cfdata_t match, void *aux)
 	        UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+static void 
 uslsa_attach(device_t parent, device_t self, void *aux)
 {
 	struct uslsa_softc *sc = device_private(self);
@@ -325,7 +325,7 @@ bad:
 	return;
 }
 
-int
+static int
 uslsa_activate(device_t self, enum devact act)
 {
 	struct uslsa_softc *sc = device_private(self);
@@ -339,7 +339,7 @@ uslsa_activate(device_t self, enum devact act)
 	}
 }
 
-void
+static void
 uslsa_childdet(device_t self, device_t child)
 {
 	struct uslsa_softc *sc = device_private(self);
@@ -348,7 +348,7 @@ uslsa_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int 
+static int 
 uslsa_detach(device_t self, int flags)
 {
 	struct uslsa_softc *sc = device_private(self);
@@ -534,7 +534,7 @@ uslsa_open(void *vsc, int portno)
 	return 0;
 }
 
-void
+static void
 uslsa_close(void *vsc, int portno)
 {
 	struct uslsa_softc *sc;
