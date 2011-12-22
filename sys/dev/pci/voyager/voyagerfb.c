@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.10 2011/12/22 05:05:24 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.11 2011/12/22 07:32:33 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.10 2011/12/22 05:05:24 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.11 2011/12/22 07:32:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,7 +387,11 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		if (new_mode != sc->sc_mode) {
 			sc->sc_mode = new_mode;
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+#ifdef VOYAGERFB_ANTIALIAS
+				sc->sc_depth = 32;
+#else
 				sc->sc_depth = 8;
+#endif
 				voyagerfb_init(sc);
 				voyagerfb_restore_palette(sc);
 				vcons_redraw_screen(ms);
