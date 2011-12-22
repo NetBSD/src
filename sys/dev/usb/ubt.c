@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.40 2011/03/16 21:36:55 plunky Exp $	*/
+/*	$NetBSD: ubt.c,v 1.41 2011/12/22 20:07:00 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.40 2011/03/16 21:36:55 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.41 2011/12/22 20:07:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -316,7 +316,7 @@ static const struct usb_devno ubt_ignore[] = {
 	{ USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
 };
 
-int 
+int
 ubt_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -334,7 +334,7 @@ ubt_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void 
+void
 ubt_attach(device_t parent, device_t self, void *aux)
 {
 	struct ubt_softc *sc = device_private(self);
@@ -538,7 +538,7 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 ubt_detach(device_t self, int flags)
 {
 	struct ubt_softc *sc = device_private(self);
@@ -614,7 +614,7 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 
 	err = usbd_set_interface(sc->sc_iface1, sc->sc_config);
 	if (err != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(sc->sc_dev, 
+		aprint_error_dev(sc->sc_dev,
 		    "Could not set config %d on ISOC interface. %s (%d)\n",
 		    sc->sc_config, usbd_errstr(err), err);
 
@@ -1693,7 +1693,7 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 					sc->sc_stats.sco_rx++;
 					if (!hci_input_sco(sc->sc_unit, m))
 						sc->sc_stats.err_rx++;
-						
+
 					m = NULL;
 				}
 			}
