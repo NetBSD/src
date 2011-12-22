@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.46 2011/11/26 14:05:52 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.47 2011/12/22 15:33:30 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1045,29 +1045,6 @@ ENTRY_NOPROFILE(_delay)
 L_delay:
 	subl	%d1,%d0
 	jgt	L_delay
-	rts
-
-/*
- * Save and restore 68881 state.
- */
-ENTRY(m68881_save)
-	movl	%sp@(4),%a0		| save area pointer
-	fsave	%a0@			| save state
-	tstb	%a0@			| null state frame?
-	jeq	Lm68881sdone		| yes, all done
-	fmovem	%fp0-%fp7,%a0@(FPF_REGS) | save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR) | save FP control registers
-Lm68881sdone:
-	rts
-
-ENTRY(m68881_restore)
-	movl	%sp@(4),%a0		| save area pointer
-	tstb	%a0@			| null state frame?
-	jeq	Lm68881rdone		| yes, easy
-	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi | restore FP control registers
-	fmovem	%a0@(FPF_REGS),%fp0-%fp7 | restore FP general registers
-Lm68881rdone:
-	frestore %a0@			| restore state
 	rts
 
 /*
