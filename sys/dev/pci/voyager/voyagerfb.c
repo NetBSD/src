@@ -1,7 +1,7 @@
-/*	$NetBSD: voyagerfb.c,v 1.9 2011/11/08 07:05:06 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.10 2011/12/22 05:05:24 macallan Exp $	*/
 
 /*
- * Copyright (c) 2009 Michael Lorenz
+ * Copyright (c) 2009, 2011 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.9 2011/11/08 07:05:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.10 2011/12/22 05:05:24 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.9 2011/11/08 07:05:06 macallan Exp $
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/pci/voyagervar.h>
+
+#include "opt_voyagerfb.h"
 
 #ifdef VOYAGERFB_DEBUG
 #define DPRINTF aprint_error
@@ -276,8 +278,13 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_gpio_cookie = device_private(parent);
 	voyagerfb_setup_backlight(sc);
 
-	/* init engine here */
+#ifdef VOYAGERFB_ANTIALIAS
+	sc->sc_depth = 32;
+#else
 	sc->sc_depth = 8;
+#endif
+
+	/* init engine here */
 	voyagerfb_init(sc);
 
 	ri = &sc->sc_console_screen.scr_ri;
@@ -538,6 +545,9 @@ voyagerfb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
 	}
+#ifdef VOYAGERFB_ANTIALIAS
+	ri->ri_flg |= RI_ENABLE_ALPHA;
+#endif
 
 	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
@@ -715,7 +725,7 @@ voyagerfb_init(struct voyagerfb_softc *sc)
 #else
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_ADDR,
 	    sc->sc_cursor_addr);
-#endif
+#endif	
 }
 
 static void
@@ -856,9 +866,12 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		y = ri->ri_yorigin + row * he;
 		if (c == 0x20) {
 			voyagerfb_rectfill(sc, x, y, wi, he, bg);
-		} else {
-			uc = c - font->firstchar;
-			data = (uint8_t *)font->data + uc * ri->ri_fontscale;
+			return;
+		}
+		uc = c - font->firstchar;
+		data = (uint8_t *)font->data + uc * ri->ri_fontscale;
+		if (font->stride < font->fontwidth) {
+			/* this is a mono font */
 			cmd = ROP_COPY |
 			      SM502_CTRL_USE_ROP2 |
 			      SM502_CTRL_CMD_HOSTWRT |
@@ -889,6 +902,48 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 				break;
 			
 			}	
+		} else {
+			/*
+			 * alpha font
+			 * we can't accelerate the actual alpha blending but
+			 * we can at least use a host blit to go through the
+			 * pipeline instead of having to sync the engine
+			 */
+			int i, r, g, b, alpha;
+			int rf, gf, bf, rb, gb, bb;
+			uint32_t pixel;
+
+			cmd = ROP_COPY |
+			      SM502_CTRL_USE_ROP2 |
+			      SM502_CTRL_CMD_HOSTWRT |
+			      SM502_CTRL_QUICKSTART_E;
+			voyagerfb_ready(sc);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
+			    SM502_CONTROL, cmd);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
+			    SM502_SRC, 0);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
+			    SM502_DST, (x << 16) | y);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
+			    SM502_DIMENSION, (wi << 16) | he);
+			rf = (fg >> 16) & 0xff;
+			rb = (bg >> 16) & 0xff;
+			gf = (fg >> 8) & 0xff;
+			gb = (bg >> 8) & 0xff;
+			bf =  fg & 0xff;
+			bb =  bg & 0xff;
+			for (i = 0; i < wi * he; i++) {
+				alpha = *data;
+				data++;
+				r = alpha * rf + (255 - alpha) * rb;
+				g = alpha * gf + (255 - alpha) * gb;
+				b = alpha * bf + (255 - alpha) * bb;
+				pixel = (r & 0xff00) << 8 |
+				        (g & 0xff00) |
+				        (b & 0xff00) >> 8;
+				bus_space_write_4(sc->sc_memt, sc->sc_regh,
+				    SM502_DATAPORT, pixel);
+			}
 		}
 	}
 }
