@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.29 2011/12/20 23:56:28 christos Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.30 2011/12/22 02:00:19 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.29 2011/12/20 23:56:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.30 2011/12/22 02:00:19 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -427,7 +427,8 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 		}
 		if (resid == 0)
 			goto release;
-		if ((so->so_so_state & SS_NBIO) || (flags & MSG_DONTWAIT|MSG_NBIO)) {
+		if ((so->so_state & SS_NBIO) ||
+		    (flags & (MSG_DONTWAIT|MSG_NBIO))) {
 			error = EWOULDBLOCK;
 			goto release;
 		}
