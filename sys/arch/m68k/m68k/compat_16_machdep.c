@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.15 2011/02/08 20:20:16 rmind Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.16 2011/12/22 15:47:15 tsutsui Exp $   */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15 2011/02/08 20:20:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16 2011/12/22 15:47:15 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -68,8 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15 2011/02/08 20:20:16 rmind
 #include <machine/frame.h>
 
 extern  short exframesize[];
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
 
 #ifdef DEBUG
 extern int sigdebug;
