@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2011/02/08 20:20:10 rmind Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2011/12/22 15:06:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,8 +100,6 @@ splraiseipl(ipl_cookie_t icookie)
 
 	return _splraise(icookie._psl);
 }
-
-#include <m68k/softintr.h>
 
 #endif /* _KERNEL && !_LOCORE */
 
