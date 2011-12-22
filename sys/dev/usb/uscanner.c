@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.68 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.69 2011/12/22 20:07:02 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.68 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.69 2011/12/22 20:07:02 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ int             uscanner_activate(device_t, enum devact);
 extern struct cfdriver uscanner_cd;
 CFATTACH_DECL_NEW(uscanner, sizeof(struct uscanner_softc), uscanner_match, uscanner_attach, uscanner_detach, uscanner_activate);
 
-int 
+int
 uscanner_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -311,7 +311,7 @@ uscanner_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 uscanner_attach(device_t parent, device_t self, void *aux)
 {
 	struct uscanner_softc *sc = device_private(self);
@@ -645,7 +645,7 @@ uscanner_activate(device_t self, enum devact act)
 }
 #endif
 
-int 
+int
 uscanner_detach(device_t self, int flags)
 {
 	struct uscanner_softc *sc = device_private(self);
