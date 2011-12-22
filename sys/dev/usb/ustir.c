@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.29 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: ustir.c,v 1.30 2011/12/22 20:07:03 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.29 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.30 2011/12/22 20:07:03 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ extern struct cfdriver ustir_cd;
 CFATTACH_DECL2_NEW(ustir, sizeof(struct ustir_softc), ustir_match,
     ustir_attach, ustir_detach, ustir_activate, NULL, ustir_childdet);
 
-int 
+int
 ustir_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -304,7 +304,7 @@ ustir_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void 
+void
 ustir_attach(device_t parent, device_t self, void *aux)
 {
 	struct ustir_softc *sc = device_private(self);
@@ -386,7 +386,7 @@ ustir_childdet(device_t self, device_t child)
 	sc->sc_child = NULL;
 }
 
-int 
+int
 ustir_detach(device_t self, int flags)
 {
 	struct ustir_softc *sc = device_private(self);

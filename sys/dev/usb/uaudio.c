@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.126 2011/12/13 12:26:32 mrg Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.127 2011/12/22 20:07:00 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.126 2011/12/13 12:26:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.127 2011/12/22 20:07:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,7 +393,7 @@ CFATTACH_DECL2_NEW(uaudio, sizeof(struct uaudio_softc),
     uaudio_match, uaudio_attach, uaudio_detach, uaudio_activate, NULL,
     uaudio_childdet);
 
-int 
+int
 uaudio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
@@ -407,7 +407,7 @@ uaudio_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_IFACECLASS_IFACESUBCLASS;
 }
 
-void 
+void
 uaudio_attach(device_t parent, device_t self, void *aux)
 {
 	struct uaudio_softc *sc = device_private(self);

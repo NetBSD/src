@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.16 2011/01/24 17:11:17 mbalmer Exp $	*/
+/*	$NetBSD: uep.c,v 1.17 2011/12/22 20:07:00 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  *  eGalax USB touchpanel controller driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.16 2011/01/24 17:11:17 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.17 2011/12/22 20:07:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ uep_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 		 */
 		 id = (struct wsmouse_id *)data;
 		 if (id->type != WSMOUSE_ID_TYPE_UIDSTR)
-		 	return EINVAL;
+			return EINVAL;
 
 		strcpy(id->data, UIDSTR);
 		id->length = strlen(UIDSTR);

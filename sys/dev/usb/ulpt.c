@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.86 2011/03/29 07:48:13 mbalmer Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.87 2011/12/22 20:07:01 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.86 2011/03/29 07:48:13 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.87 2011/12/22 20:07:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.86 2011/03/29 07:48:13 mbalmer Exp $");
 #define	ULPT_BSIZE	PAGE_SIZE
 
 #define ULPT_READS_PER_SEC 5
-/* XXX Why is 10 us a reasonable value? */ 
+/* XXX Why is 10 us a reasonable value? */
 #define ULPT_READ_TIMO 10
 
 #ifdef ULPT_DEBUG
@@ -205,7 +205,7 @@ extern struct cfdriver ulpt_cd;
 CFATTACH_DECL_NEW(ulpt, sizeof(struct ulpt_softc), ulpt_match, ulpt_attach,
     ulpt_detach, ulpt_activate);
 
-int 
+int
 ulpt_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
@@ -221,7 +221,7 @@ ulpt_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_NONE);
 }
 
-void 
+void
 ulpt_attach(device_t parent, device_t self, void *aux)
 {
 	struct ulpt_softc *sc = device_private(self);
@@ -383,7 +383,7 @@ ulpt_activate(device_t self, enum devact act)
 }
 #endif
 
-int 
+int
 ulpt_detach(device_t self, int flags)
 {
 	struct ulpt_softc *sc = device_private(self);
@@ -735,7 +735,7 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 /*
  * Perform a read operation according to the given uio.
  * This should respect nonblocking I/O status.
- * 
+ *
  * XXX Doing a short read when more data is available seems to be
  * problematic.  See
  * http://www.freebsd.org/cgi/query-pr.cgi?pr=91538&cat= for a fix.
@@ -942,7 +942,7 @@ ulpt_read_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
  * For devices which are not opened for reading, this function is
  * called continuously to start read bulk transfers to avoid the
  * printer overflowing its output buffer.
- * 
+ *
  * XXX This should be adapted for continuous reads to allow select to
  * work; see do_ulpt_read().
  */
