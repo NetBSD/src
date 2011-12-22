@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.26 2010/05/06 04:30:18 macallan Exp $ */
+/* 	$NetBSD: rasops.h,v 1.27 2011/12/22 04:52:45 macallan Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,6 +55,12 @@
  * box drawing characters
  */
 #define	RI_NO_AUTO	0x800	/* do not generate box drawing characters */
+/*
+ * Set this if your driver's putchar() method supports anti-aliased fonts in
+ * the given video mode. Without this flag rasops_init() will only ever pick
+ * monochrome bitmap fonts. 
+ */
+#define RI_ENABLE_ALPHA	0x1000
 
 struct rasops_info {
 	/* These must be filled in by the caller */
