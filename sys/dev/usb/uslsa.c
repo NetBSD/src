@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.14 2011/12/22 02:13:08 jakllsch Exp $ */
+/* $NetBSD: uslsa.c,v 1.15 2011/12/22 20:07:02 jakllsch Exp $ */
 
 /* from ugensa.c */
 
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.14 2011/12/22 02:13:08 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.15 2011/12/22 20:07:02 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ static int uslsa_activate(device_t, enum devact);
 CFATTACH_DECL2_NEW(uslsa, sizeof(struct uslsa_softc), uslsa_match,
     uslsa_attach, uslsa_detach, uslsa_activate, NULL, uslsa_childdet);
 
-static int 
+static int
 uslsa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -224,7 +224,7 @@ uslsa_match(device_t parent, cfdata_t match, void *aux)
 	        UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-static void 
+static void
 uslsa_attach(device_t parent, device_t self, void *aux)
 {
 	struct uslsa_softc *sc = device_private(self);
@@ -348,7 +348,7 @@ uslsa_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-static int 
+static int
 uslsa_detach(device_t self, int flags)
 {
 	struct uslsa_softc *sc = device_private(self);

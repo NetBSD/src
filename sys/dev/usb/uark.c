@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.3 2010/11/04 01:58:07 dyoung Exp $	*/
+/*	$NetBSD: uark.c,v 1.4 2011/12/22 20:07:00 jakllsch Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ int             uark_activate(device_t, enum devact);
 extern struct cfdriver uark_cd;
 CFATTACH_DECL_NEW(uark, sizeof(struct uark_softc), uark_match, uark_attach, uark_detach, uark_activate);
 
-int 
+int
 uark_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -108,7 +108,7 @@ uark_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void 
+void
 uark_attach(device_t parent, device_t self, void *aux)
 {
 	struct uark_softc *sc = device_private(self);
@@ -185,7 +185,7 @@ uark_attach(device_t parent, device_t self, void *aux)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    sc->sc_dev);
-	
+
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
 					    ucomprint, ucomsubmatch);
 
@@ -318,7 +318,7 @@ void
 uark_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 {
 	struct uark_softc *sc = vsc;
-	
+
 	if (msr != NULL)
 		*msr = sc->sc_msr;
 	if (lsr != NULL)

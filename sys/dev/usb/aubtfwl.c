@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.1 2011/07/23 20:52:15 jakllsch Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.2 2011/12/22 20:06:59 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.1 2011/07/23 20:52:15 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.2 2011/12/22 20:06:59 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <dev/usb/usb.h>
@@ -98,7 +98,7 @@ aubtfwl_attach_hook(device_t self)
 	size_t fws;
 	size_t fwo = 0;
 	uint32_t n;
-	
+
 	memset(&req, 0, sizeof(req));
 
 	error = firmware_open("ubt", "ath3k-1.fw", &fwh); /* XXX revisit name */
