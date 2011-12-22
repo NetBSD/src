@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.32 2009/12/10 14:13:50 matt Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.33 2011/12/22 15:47:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.32 2009/12/10 14:13:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.33 2011/12/22 15:47:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.32 2009/12/10 14:13:50 matt Exp $
 #include <machine/vmparam.h>
 
 extern short exframesize[];
-extern void	m68881_restore(struct fpframe *);
-extern void	m68881_save(struct fpframe *);
 static void	svr4_getsiginfo(union svr4_siginfo *, int, unsigned long,
 		    void *);
 
