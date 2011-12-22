@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.11 2011/12/22 07:32:33 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.12 2011/12/22 07:42:43 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.11 2011/12/22 07:32:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.12 2011/12/22 07:42:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,6 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
-	uint32_t		reg;
 	bool			is_console;
 	int i, j;
 
@@ -227,29 +226,23 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dataport = bus_space_vaddr(sc->sc_memt, sc->sc_regh);
 	sc->sc_dataport += SM502_DATAPORT;
 
-	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CTRL);
-	switch (reg & SM502_PDC_DEPTH_MASK) {
-		case SM502_PDC_8BIT:
-			sc->sc_depth = 8;
-			break;
-		case SM502_PDC_16BIT:
-			sc->sc_depth = 16;
-			break;
-		case SM502_PDC_32BIT:
-			sc->sc_depth = 24;
-			break;
-		default:
-			panic("%s: unsupported depth", device_xname(self));
-	}
-	sc->sc_stride = (bus_space_read_4(sc->sc_memt, sc->sc_regh, 	
-		SM502_PANEL_FB_OFFSET) & SM502_FBA_WIN_STRIDE_MASK) >> 16;
 	sc->sc_width = (bus_space_read_4(sc->sc_memt, sc->sc_regh, 	
 		SM502_PANEL_FB_WIDTH) & SM502_FBW_WIN_WIDTH_MASK) >> 16;
 	sc->sc_height = (bus_space_read_4(sc->sc_memt, sc->sc_regh, 	
 		SM502_PANEL_FB_HEIGHT) & SM502_FBH_WIN_HEIGHT_MASK) >> 16;
 
+#ifdef VOYAGERFB_ANTIALIAS
+	sc->sc_depth = 32;
+#else
+	sc->sc_depth = 8;
+#endif
+
+	/* init engine here */
+	voyagerfb_init(sc);
+
 	printf("%s: %d x %d, %d bit, stride %d\n", device_xname(self), 
 		sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
+
 	/*
 	 * XXX yeah, casting the fb address to uint32_t is formally wrong
 	 * but as far as I know there are no SM502 with 64bit BARs
@@ -277,15 +270,6 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	/* backlight control */
 	sc->sc_gpio_cookie = device_private(parent);
 	voyagerfb_setup_backlight(sc);
-
-#ifdef VOYAGERFB_ANTIALIAS
-	sc->sc_depth = 32;
-#else
-	sc->sc_depth = 8;
-#endif
-
-	/* init engine here */
-	voyagerfb_init(sc);
 
 	ri = &sc->sc_console_screen.scr_ri;
 
