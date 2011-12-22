@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.21 2010/05/04 04:53:59 macallan Exp $	*/
+/* 	$NetBSD: wsfont.h,v 1.22 2011/12/22 05:01:15 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ struct wsdisplay_font;
 void	wsfont_init(void);
 int	wsfont_matches(struct wsdisplay_font *, const char *, int, int, int);
 int	wsfont_find(const char *, int, int, int, int, int);
+int	wsfont_find_aa(const char *, int, int, int, int, int);
 int	wsfont_add(struct wsdisplay_font *, int);
 int	wsfont_remove(int);
 void	wsfont_enum(void (*)(const char *, int, int, int));
