@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.21 2011/12/15 11:13:25 kiyohara Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.22 2011/12/22 11:33:54 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -164,11 +164,10 @@ _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 	mflr	%r28;			/* save LR */		\
 	mfcr	%r29;			/* save CR */		\
 	mfxer	%r30;			/* save XER */		\
-	lwz	%r31,CI_IDEPTH(%r1);	/* already running on intstk? */ \
-	addic.	%r31,%r31,1;					\
-	stw	%r31,CI_IDEPTH(%r1);				\
+	mfsrr1	%r31;						\
+	mtcr	%r31;						\
 	lwz	%r1,CI_INTSTK(%r1);	/* get intstk */	\
-	beq	1f;						\
+	bt	MSR_PR,1f;		/* branch if PSL_PR is true */ \
 	mfsprg1	%r1;			/* yes, get old SP */	\
 1:
 
@@ -487,9 +486,6 @@ intr_exit:
 	wrteei	0
 	isync
 	GET_CPUINFO(%r5)
-	lwz	%r4,CI_IDEPTH(%r5)
-	addi	%r4,%r4,-1		/* adjust reentrancy count */
-	stw	%r4,CI_IDEPTH(%r5)
 
 	lwz	%r4,FRAME_SRR1(%r1)
 /* Returning to user mode? */
