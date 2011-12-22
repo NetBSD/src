@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.308 2011/12/20 15:39:35 reinoud Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.309 2011/12/22 13:12:50 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.308 2011/12/20 15:39:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.309 2011/12/22 13:12:50 reinoud Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4127,38 +4127,28 @@ uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
  * => map must be read or write locked by caller.
  */
 
-bool
+void
 uvm_map_setattr(struct vm_map *map, vaddr_t start, vaddr_t end,
     uint32_t map_attrib)
 {
 	struct vm_map_entry *entry;
 	struct vm_map_entry *tmp_entry;
 
-	if (!uvm_map_lookup_entry(map, start, &tmp_entry)) {
-		return (false);
-	}
+	/* safety */
+	if (!uvm_map_lookup_entry(map, start, &tmp_entry))
+		return;
 	entry = tmp_entry;
 	while (start < end) {
-		if (entry == &map->header) {
-			return (false);
-		}
-
-		/*
-		 * no holes allowed
-		 */
-
-		if (start < entry->start) {
-			return (false);
-		}
-
 		/* set attributes associated with entry */
-
 		entry->map_attrib = map_attrib;
+
+		/* empty one */
+		if (entry == &map->header)
+			return;
 
 		start = entry->end;
 		entry = entry->next;
 	}
-	return (true);
 }
 
 /*
