@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32 2011/12/16 13:38:44 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.33 2011/12/23 16:35:00 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -47,6 +47,8 @@
 #include <uvm/uvm_object.h>
 
 #ifdef	_KERNEL
+
+#define PMAP_NEED_PROCWR
 
 struct pmap {
 	struct uvm_object pm_obj;	/* object (lck by object lock) */
@@ -147,6 +149,8 @@ bool pmap_testbit(struct vm_page *, u_int);
 void pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva);
 void pmap_page_remove(struct vm_page *pg);
+
+void pmap_procwr(struct proc *, vaddr_t, size_t);
 
 static inline void
 pmap_deactivate(struct lwp *l)
