@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.28 2011/12/23 19:08:50 christos Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.29 2011/12/23 22:03:00 jmc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -173,6 +173,9 @@ struct icmp {
 #define	ICMP_MOBILE_REGREQUEST	35		/* mobile registration req */
 #define	ICMP_MOBILE_REGREPLY	36		/* mobile registration reply */
 #define	ICMP_PHOTURIS		40		/* security */
+#define		ICMP_PHOTURIS_UNKNOWN_INDEX	1	/* Bad index */
+#define		ICMP_PHOTURIS_AUTH_FAILED	2	/* Auth failed */
+#define		ICMP_PHOTURIS_DECRYPT_FAILED	3	/* Decrypt failed */
 
 #define	ICMP_MAXTYPE		18		/* XXX: for icmp stats */
 
