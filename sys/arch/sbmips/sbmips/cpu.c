@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18.16.9 2010/09/01 01:07:26 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.18.16.10 2011/12/23 23:24:44 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.9 2010/09/01 01:07:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.10 2011/12/23 23:24:44 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -172,7 +172,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	 * Announce ourselves.
 	 */
 	aprint_normal("%s: ", xname);
-	cpu_identify(self);
+	cpu_identify(self, NULL);
 
 	cpu_attach_common(self, ci);
 }

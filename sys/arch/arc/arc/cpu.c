@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.16.14.1 2010/01/13 21:16:13 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16.14.2 2011/12/23 23:24:43 matt Exp $	*/
 /*	$OpenBSD: cpu.c,v 1.8 1997/04/19 17:19:41 pefo Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16.14.1 2010/01/13 21:16:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16.14.2 2011/12/23 23:24:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,5 +79,5 @@ cpuattach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": ");
 
-	cpu_identify(self);
+	cpu_identify(self, NULL);
 }

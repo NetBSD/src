@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21.36.4 2010/12/29 07:15:48 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21.36.5 2011/12/23 23:24:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21.36.4 2010/12/29 07:15:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21.36.5 2011/12/23 23:24:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -95,7 +95,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	self->dv_private = ci;
 
 	aprint_normal(": ");
-	cpu_identify(self);
+	cpu_identify(self, NULL);
 }
 
 /*

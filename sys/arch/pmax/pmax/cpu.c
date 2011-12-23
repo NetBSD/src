@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.24.96.1 2010/01/13 21:16:13 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.24.96.2 2011/12/23 23:24:44 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24.96.1 2010/01/13 21:16:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24.96.2 2011/12/23 23:24:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -68,5 +68,5 @@ cpuattach(device_t parent, device_t self, void *aux)
 	self->dv_private = ci;
 
 	aprint_normal(": ");
-	cpu_identify(self);
+	cpu_identify(self, NULL);
 }
