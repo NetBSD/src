@@ -35,6 +35,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _MIPS_CACHE_H_
+#define _MIPS_CACHE_H_
+
 /*
  * Cache operations.
  *
@@ -207,16 +210,29 @@ struct mips_cache_info {
 	u_int mci_dcache_align_mask;
 
 	u_int mci_cache_prefer_mask;
-#if (MIPS2 + MIPS3 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL | MIPS64R2_RMIXL) > 0
+#if (MIPS2 + MIPS3 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2)
 	u_int mci_cache_alias_mask;
+	u_int mci_icache_alias_mask;
 
 	bool mci_cache_virtual_alias;
+	bool mci_icache_virtual_alias;
 
 #define	MIPS_CACHE_ALIAS_MASK		mips_cache_info.mci_cache_alias_mask
 #define	MIPS_CACHE_VIRTUAL_ALIAS	mips_cache_info.mci_cache_virtual_alias
-#elif defined(MIPS1)
+#define	MIPS_ICACHE_ALIAS_MASK		mips_cache_info.mci_icache_alias_mask
+#define	MIPS_ICACHE_VIRTUAL_ALIAS	mips_cache_info.mci_icache_virtual_alias
+#elif (MIPS1 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 #define	MIPS_CACHE_ALIAS_MASK		0
 #define	MIPS_CACHE_VIRTUAL_ALIAS	false
+#if (MIPS64R2_RMIXL) > 0
+	u_int mci_icache_alias_mask;
+	bool mci_icache_virtual_alias;
+#define	MIPS_ICACHE_ALIAS_MASK		mips_cache_info.mci_icache_alias_mask
+#define	MIPS_ICACHE_VIRTUAL_ALIAS	mips_cache_info.mci_icache_virtual_alias
+#else
+#define	MIPS_ICACHE_ALIAS_MASK		0
+#define	MIPS_ICACHE_VIRTUAL_ALIAS	false
+#endif
 #else
 #error mci_cache screw up
 #endif
@@ -287,3 +303,5 @@ void	mips_config_cache(void);
 void	mips_dcache_compute_align(void);
 
 #include <mips/cache_mipsNN.h>
+
+#endif /* _MIPS_CACHE_H_ */
