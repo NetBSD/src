@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.23 2011/12/22 20:07:00 jakllsch Exp $	*/
+/*	$NetBSD: u3g.c,v 1.24 2011/12/23 00:51:44 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.23 2011/12/22 20:07:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.24 2011/12/23 00:51:44 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,7 @@ u3g_novatel_reinit(usbd_device_handle dev)
 
 	memset(cmd, 0, sizeof(cmd));
 	/* Byte 0..3: Command Block Wrapper (CBW) signature */
-	cmd[0] = 0x55;
+	cmd[0] = 0x55; 
 	cmd[1] = 0x53;
 	cmd[2] = 0x42;
 	cmd[3] = 0x43;
@@ -411,7 +411,7 @@ u3g_huawei_k3765_reinit(usbd_device_handle dev)
 
 	/* magic string adapted from some webpage */
 	memset(cmd, 0, sizeof(cmd));
-	cmd[0] = 0x55;
+	cmd[0] = 0x55; 
 	cmd[1] = 0x53;
 	cmd[2] = 0x42;
 	cmd[3] = 0x43;
@@ -600,7 +600,7 @@ u3g_attach(device_t parent, device_t self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	struct ucom_attach_args uca;
 	usbd_status error;
-	int n, intr_address, intr_size;
+	int n, intr_address, intr_size; 
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -862,7 +862,7 @@ u3g_set(void *arg, int portno, int reg, int onoff)
 }
 
 /*ARGSUSED*/
-static int
+static int 
 u3g_open(void *arg, int portno)
 {
 	struct u3g_softc *sc = arg;
@@ -884,7 +884,7 @@ u3g_open(void *arg, int portno)
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(ih, i);
-		if (ed == NULL)
+		if (ed == NULL)	
 			return (EIO);
 
 		if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -908,7 +908,7 @@ u3g_open(void *arg, int portno)
 }
 
 /*ARGSUSED*/
-static void
+static void 
 u3g_close(void *arg, int portno)
 {
 	struct u3g_softc *sc = arg;
