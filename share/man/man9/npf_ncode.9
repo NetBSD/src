@@ -1,4 +1,4 @@
-.\"	$NetBSD: npf_ncode.9,v 1.7 2011/12/23 20:51:50 rmind Exp $
+.\"	$NetBSD: npf_ncode.9,v 1.8 2011/12/23 20:53:31 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -242,7 +242,7 @@ If comparison is required, the type and code values are represented by
 lower 16 bits.
 The higher 8 bits represent type, and the lower 8 bits code number.
 .\" -
-.It Sy 0x93 NPF_OPCODE_IP4MASK <s/d>, <network address>, <subnet>
+.It Sy 0x93 NPF_OPCODE_IP6MASK <s/d>, <network address>, <subnet>
 Match passed network address with subnet against source or destination
 address in the IPv6 header.
 Address and mask should be in network byte order.
