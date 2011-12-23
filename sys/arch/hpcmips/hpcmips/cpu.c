@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15.28.2 2010/01/13 21:16:13 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15.28.3 2011/12/23 23:24:43 matt Exp $	*/
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
  * Copyright (c) 1999-2001 SATO Kazumi, All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.28.2 2010/01/13 21:16:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.28.3 2011/12/23 23:24:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": ");
 
-	cpu_identify(self);
+	cpu_identify(self, NULL);
 
 	/* install CPU specific idle routine if any. */
 	if (platform.cpu_idle != NULL)

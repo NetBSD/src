@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2.4.3 2010/03/11 08:19:41 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2.4.4 2011/12/23 23:24:43 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.4.3 2010/03/11 08:19:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.4.4 2011/12/23 23:24:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,5 +69,5 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	    ci->ci_cycles_per_hz, ci->ci_divisor_delay);
 
 	aprint_normal("%s: ", device_xname(self));
-	cpu_identify(self);
+	cpu_identify(self, NULL);
 }
