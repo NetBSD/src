@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.5 2011/12/22 20:06:59 jakllsch Exp $ */
+/* $NetBSD: emdtv.c,v 1.6 2011/12/23 00:51:43 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.5 2011/12/22 20:06:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.6 2011/12/23 00:51:43 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,7 +374,7 @@ emdtv_gpio_ctl(struct emdtv_softc *sc, emdtv_gpio_reg_t gpioreg, bool onoff)
 
 	if (sc->sc_board->eb_manual_gpio == false) {
 		val = eeprom_offset + gpioreg;
-		emdtv_write_1(sc, 0x03, 0xa0, val);
+		emdtv_write_1(sc, 0x03, 0xa0, val); 
 		gpio_value = emdtv_read_1(sc, 0x02, 0xa0);
 	} else {
 		const struct emdtv_gpio_regs *r = &eb->eb_gpio_regs;

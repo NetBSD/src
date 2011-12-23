@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.39 2011/12/22 20:07:00 jakllsch Exp $	*/
+/*	$NetBSD: if_url.c,v 1.40 2011/12/23 00:51:44 jakllsch Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.39 2011/12/22 20:07:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.40 2011/12/23 00:51:44 jakllsch Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -167,7 +167,7 @@ static const struct url_type {
 
 
 /* Probe */
-int
+int 
 url_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -176,7 +176,7 @@ url_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 /* Attach */
-void
+void 
 url_attach(device_t parent, device_t self, void *aux)
 {
 	struct url_softc *sc = device_private(self);
@@ -332,7 +332,7 @@ url_attach(device_t parent, device_t self, void *aux)
 }
 
 /* detach */
-int
+int 
 url_detach(device_t self, int flags)
 {
 	struct url_softc *sc = device_private(self);
