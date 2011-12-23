@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.13 2011/04/29 08:26:26 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.14 2011/12/23 23:12:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,21 +104,28 @@ VECTOR(MIPSX(utlb_miss), unknown)
 	andi	k0, (NBPG-4)			#0d: k0=page table offset
 	PTR_ADDU k1, k0				#0e: k1=pte address
 	INT_L	k0, 0(k1)			#0f: k0=lo0 pte
+#if PGSHIFT > MIPS1_PG_SHIFT
+	_MFC0	k1, MIPS_COP_0_BAD_VADDR	#10: k1=bad address (again)
+	beqz	k0, MIPSX(invalidpte)		#11: dont load invalid entries
+	 andi	k1, (NBPG-4096)			#12: intra page offset
+	PTR_ADDU k0, k1				#13: add to pte
+#else
 	nop					#10: load delay
 	beqz	k0, MIPSX(invalidpte)		#11: dont load invalid entries
 	 nop					#12  branch delay
-	mtc0	k0, MIPS_COP_0_TLB_LOW		#13: lo0 is loaded
-	nop					#14: load delay
-	tlbwr					#15: update TLB
+#endif
+	mtc0	k0, MIPS_COP_0_TLB_LOW		#14: lo0 is loaded
+	nop					#15: load delay
+	tlbwr					#16: update TLB
 1:
-	_MFC0	k1, MIPS_COP_0_EXC_PC		#16: get return address
-	nop					#17: load delay
-	j	k1				#18: return from
-	 rfe					#19:    exception
+	_MFC0	k1, MIPS_COP_0_EXC_PC		#17: get return address
+	nop					#18: load delay
+	j	k1				#10: return from
+	 rfe					#1a:    exception
 MIPSX(nopagetable):
 MIPSX(invalidpte):
-	j	MIPSX(slowfault)		#1a: handle the rest
-	 nop					#1b: branch delay
+	j	MIPSX(slowfault)		#1b: handle the rest
+	 nop					#1c: branch delay
 	.set	at
 VECTOR_END(MIPSX(utlb_miss))
 
@@ -1018,6 +1025,12 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	PTR_SLL	k0, 2				# compute offset from index
 	PTR_ADDU k1, k0
 	INT_L	k0, 0(k1)			# get PTE entry
+#if PGSHIFT > MIPS1_PG_SHIFT
+	mfc0	k1, MIPS_COP_0_BAD_VADDR	# get bad address (again)
+	nop					# - delay slot -
+	andi	k1, (NBPG-4096)			# get intrapage offset
+	PTR_ADDU k0, k1				# add to PTE
+#endif
 	_MFC0	k1, MIPS_COP_0_EXC_PC		# get return address
 	mtc0	k0, MIPS_COP_0_TLB_LOW		# save PTE entry
 	and	k0, MIPS1_PG_V			# check for valid PTE entry
@@ -1105,11 +1118,11 @@ END(MIPSX(tlb_set_asid))
 
 /*--------------------------------------------------------------------------
  *
- * mipsN_tlb_update --
+ * mipsN_tlb_update_addr --
  *
  *	Update the TLB if highreg is found; otherwise, do_nothing
  *
- *	int mipsN_tlb_update(vaddr_t va, register_t lowreg)
+ *	int mipsN_tlb_update_addr(vaddr_t va, register_t lowreg)
  *
  * Results:
  *	< 0 if skipped, >= 0 if updated
@@ -1119,12 +1132,16 @@ END(MIPSX(tlb_set_asid))
  *
  *--------------------------------------------------------------------------
  */
-LEAF(MIPSX(tlb_update))
+LEAF(MIPSX(tlb_update_addr))
 	mfc0	v1, MIPS_COP_0_STATUS		# save the status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	nop
 	mfc0	t0, MIPS_COP_0_TLB_HI		# save current PID
 	nop
+#if PGSHIFT > MIPS1_PG_SHIFT
+	li	a2, -NBPG
+#endif
+1:
 	mtc0	a0, MIPS_COP_0_TLB_HI		# set entryhi
 	nop
 	tlbp					# probe the existence
@@ -1134,10 +1151,21 @@ LEAF(MIPSX(tlb_update))
 	 nop
 	tlbwi					# update slot found
 2:
+#if PGSHIFT > MIPS1_PG_SHIFT
+	/*
+	 * Each page could be mapped by multiple TLB entries so we need
+	 * to check each possibile address.
+	 */
+	PTR_ADDU a2, 1 << MIPS1_PG_SHIFT
+	PTR_ADDU a1, 1 << MIPS1_PG_SHIFT
+	bltz	a2, 1b
+	 PTR_ADDU a0, 1 << MIPS1_PG_SHIFT
+#endif
+	
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore current PID
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS
-END(MIPSX(tlb_update))
+END(MIPSX(tlb_update_addr))
 
 /*--------------------------------------------------------------------------
  *
@@ -1217,20 +1245,33 @@ LEAF(MIPSX(tlb_invalidate_addr))
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	mfc0	t0, MIPS_COP_0_TLB_HI		# save current PID
-	nop
-
+	li	t1, MIPS_KSEG0_START		# load invalid address (delay)
+#if PGSHIFT > MIPS1_PG_SHIFT
+	li	a2, -NBPG
+#endif
+1:
 	mtc0	a0, MIPS_COP_0_TLB_HI		# look for addr & PID
 	nop
 	tlbp					# probe the entry in question
-	mfc0	a0, MIPS_COP_0_TLB_INDEX	# see what we got
-	li	t1, MIPS_KSEG0_START		# load invalid address
-	bltz	a0, 1f				# index < 0 then skip
+	mfc0	a1, MIPS_COP_0_TLB_INDEX	# see what we got
+	nop
+	bltz	a1, 2f				# index < 0 then skip
 	 nop
 	mtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entryLo
 	nop
 	tlbwi
-1:
+2:
+#if PGSHIFT > MIPS1_PG_SHIFT
+	/*
+	 * Each page could mapped by multiple TLB entries so we need
+	 * to check every possible address.
+	 */
+	PTR_ADDU a2, 1 << MIPS1_PG_SHIFT
+	bltz	a2, 1b
+	 PTR_ADDU a0, 1 << MIPS1_PG_SHIFT
+#endif
+	
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
 	 mtc0	v1, MIPS_COP_0_STATUS		# restore the status register
@@ -1690,7 +1731,7 @@ _C_LABEL(MIPSX(locore_vec)):
 	PTR_WORD _C_LABEL(nullop)			# tlb_invalidate_globals
 	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_all))
 	PTR_WORD _C_LABEL(MIPSX(tlb_record_asids))
-	PTR_WORD _C_LABEL(MIPSX(tlb_update))
+	PTR_WORD _C_LABEL(MIPSX(tlb_update_addr))
 	PTR_WORD _C_LABEL(MIPSX(tlb_enter))
 	PTR_WORD _C_LABEL(MIPSX(tlb_read_indexed))
 	PTR_WORD _C_LABEL(MIPSX(tlb_write_indexed))
