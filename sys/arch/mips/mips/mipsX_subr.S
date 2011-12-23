@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.51 2011/12/13 07:14:51 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.52 2011/12/23 23:40:00 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1538,14 +1538,21 @@ NESTED_NOPROFILE(MIPSX(cache_exception), KERNFRAME_SIZ, ra)
 	PTR_LA	k0, panic			# return to panic
 	PTR_LA	a0, 9f				# panicstr
 	_MFC0	a1, MIPS_COP_0_ERROR_PC
-#if (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
-	.set	push
-	.set	arch=xlr
+#if (MIPS64_RMIXL) > 0
 	li	k1, 0x309	/* L1D_CACHE_ERROR_LOG */
 	mfcr	a2, k1
 	li	k1, 0x30b	/* L1D_CACHE_INTERRUPT */
 	mfcr	a3, k1
-	.set	pop
+#if defined(__mips_o32)
+#error O32 not supported.
+#endif
+	mfc0	a4, MIPS_COP_0_STATUS
+	mfc0	a5, MIPS_COP_0_CAUSE
+#elif (MIPS64R2_RMIXL) > 0
+	li	k1, 0x308	/* LSU_CERR_LOG0 */
+	mfcr	a3, k1
+	li	k1, 0x309	/* LSU_CERR_LOG1 */
+	mfcr	a2, k1
 #if defined(__mips_o32)
 #error O32 not supported.
 #endif
@@ -1567,8 +1574,8 @@ NESTED_NOPROFILE(MIPSX(cache_exception), KERNFRAME_SIZ, ra)
 
 	eret
 
-#if defined(MIPS64_XLS)
-	MSG("cache error @ EPC %#lx\nL1D_CACHE_ERROR_LOG %#lx\nL1D_CACHE_INTERRUPT %#lx\nstatus %#x, cause %#x");
+#if (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	MSG("cache error @ EPC %#llx\nL1D_CACHE_ERROR_LOG %#llx\nL1D_CACHE_INTERRUPT %#lx\nstatus %#x, cause %#x");
 #else
 	MSG("cache error @ EPC 0x%x ErrCtl 0x%x CacheErr 0x%x");
 #endif
@@ -1915,7 +1922,7 @@ LEAF(MIPSX(tlb_update_addr))
 #endif
 	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
 	and	a0, a0, v0
-	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save current PID
+	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save current ASID
 	_MTC0	a0, MIPS_COP_0_TLB_HI		# Init high reg
 	COP0_SYNC
 	and	a2, a1, MIPS3_PG_G		# Copy global bit
@@ -1972,7 +1979,7 @@ LEAF(MIPSX(tlb_update_addr))
 	nop					# use the TLB.
 	nop
 #endif
-	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID
+	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore ASID
 	COP0_SYNC
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	INT_S	zero, 0(ta3)
@@ -2008,33 +2015,35 @@ LEAF(MIPSX(tlb_read_indexed))
 	bnez	v0, 1b
 	 nop
 #endif
-	mfc0	ta2, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
+	_MFC0	ta0, MIPS_COP_0_TLB_HI		# Get current ASID
+	mfc0	ta1, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
+	mfc0	ta2, MIPS_COP_0_TLB_INDEX	# save the index register
 #ifdef MIPS3
 	nop
 #endif
-	_MFC0	t0, MIPS_COP_0_TLB_HI		# Get current PID
 
 	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index register
 	COP0_SYNC
 	tlbr					# Read from the TLB
 	COP0_SYNC
-	mfc0	t2, MIPS_COP_0_TLB_PG_MASK	# fetch the pgMask
-	_MFC0	t3, MIPS_COP_0_TLB_HI		# fetch the hi entry
-	_MFC0	ta0, MIPS_COP_0_TLB_LO0		# See what we got
-	_MFC0	ta1, MIPS_COP_0_TLB_LO1		# See what we got
-	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID
-	mtc0	ta2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
+	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# fetch the pgMask
+	_MFC0	t2, MIPS_COP_0_TLB_HI		# fetch the hi entry
+	_MFC0	t1, MIPS_COP_0_TLB_LO1		# See what we got
+	_MFC0	t0, MIPS_COP_0_TLB_LO0		# See what we got
+	_MTC0	ta0, MIPS_COP_0_TLB_HI		# restore ASID
+	mtc0	ta1, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
+	mtc0	ta2, MIPS_COP_0_TLB_INDEX	# make sure index is invalid
 	COP0_SYNC
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	INT_S	zero, 0(ta3)			# unlock the tlb
 #endif
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 	COP0_SYNC
-	PTR_S	t3, TLBMASK_HI(a1)
-	INT_S	ta0, TLBMASK_LO0(a1)
-	INT_S	ta1, TLBMASK_LO1(a1)
+	PTR_S	t2, TLBMASK_HI(a1)
+	INT_S	t1, TLBMASK_LO1(a1)
+	INT_S	t0, TLBMASK_LO0(a1)
 	j	ra
-	 INT_S	t2, TLBMASK_MASK(a1)
+	 INT_S	t3, TLBMASK_MASK(a1)
 END(MIPSX(tlb_read_indexed))
 
 /*--------------------------------------------------------------------------
@@ -2057,19 +2066,24 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 #endif
 
 	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
-	_MFC0	t0, MIPS_COP_0_TLB_HI		# save current ASID
-	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
+	_MFC0	ta0, MIPS_COP_0_TLB_HI		# save current ASID
+	mfc0	ta1, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
+	mfc0	ta2, MIPS_COP_0_TLB_INDEX	# see what we got
 	and	a0, v0				# make sure valid entryHi
 	_MTC0	a0, MIPS_COP_0_TLB_HI		# look for the vaddr & ASID
 	COP0_SYNC
 	tlbp					# probe the entry in question
 	COP0_SYNC
-	mfc0	v0, MIPS_COP_0_TLB_INDEX	# see what we got
-	bltz	v0, 1f				# index < 0 then skip
-	 li	t1, MIPS_KSEG0_START		# invalid address
-	PTR_SLL	v0, (PGSHIFT | 1)		# PAGE_SHIFT | 1
-	PTR_ADDU t1, v0
-	_MTC0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	mfc0	t2, MIPS_COP_0_TLB_INDEX	# see what we got
+	bltz	t2, 1f				# index < 0 then skip
+	 li	v0, MIPS_KSEG0_START		# invalid address
+#if (MIPS32R2 + MIPS64R2 + RMIXL_MIPS64R2) > 0
+	_INS	v0, t2, PGSHIFT | 1, 10
+#else
+	PTR_SLL	t2, (PGSHIFT | 1)		# PAGE_SHIFT | 1
+	PTR_ADDU v0, t2
+#endif
+	_MTC0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	_MTC0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
 	_MTC0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
 #if 0
@@ -2080,8 +2094,10 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	tlbwi
 	COP0_SYNC
 1:
-	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore current ASID
-	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
+	_MTC0	ta0, MIPS_COP_0_TLB_HI		# restore current ASID
+	mtc0	ta1, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
+	mtc0	ta2, MIPS_COP_0_TLB_INDEX	# invalidate TLB index
+	
 	COP0_SYNC
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	INT_S	zero, 0(ta3)			# unlock the tlb
@@ -2109,34 +2125,39 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	 nop
 #endif
 
-	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save the current PID.
-	mfc0	t1, MIPS_COP_0_TLB_WIRED
+	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save the current ASID.
+	mfc0	t1, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
+	mfc0	t2, MIPS_COP_0_TLB_WIRED
+	INT_L	t3, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
 	li	v0, MIPS_KSEG0_START		# invalid address
-	INT_L	t2, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
-	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
+#if (MIPS32R2 + MIPS64R2 + RMIXL_MIPS64R2) > 0
+	_INS	v0, t2, PGSHIFT | 1, 10		# insert TLB index as page #
+#else
+	sll	ta0, t2, PGSHIFT | 1		# PAGE_SHIFT | 1
+	PTR_ADDU v0, ta0			# start at first unwired entry
+#endif
+	li	ta0, 1 << (PGSHIFT | 1)		# address increment.
 
-	# do {} while (t1 < t2)
+	# do {} while (t2 < t3)
 1:
-	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
+	mtc0	t2, MIPS_COP_0_TLB_INDEX	# set index
 	COP0_SYNC
-	sll	ta0, t1, PGSHIFT | 1		# PAGE_SHIFT | 1
 	tlbr					# obtain an entry
 	COP0_SYNC
-	_MFC0	a0, MIPS_COP_0_TLB_LO1
-	and	a0, MIPS3_PG_G			# check to see it has G bit
-	bnez	a0, 2f				# yep, skip this one.
+	_MFC0	a2, MIPS_COP_0_TLB_LO1
+	and	a2, MIPS3_PG_G			# check to see it has G bit
+	bnez	a2, 2f				# yep, skip this one.
 	 nop
-	_MFC0	a0, MIPS_COP_0_TLB_HI		# get VA and ASID
-	and	a0, MIPS3_PG_ASID		# focus on ASID
-	sltu	a3, a0, a1			# asid < base?
+	_MFC0	a2, MIPS_COP_0_TLB_HI		# get VA and ASID
+	and	a2, MIPS3_PG_ASID		# focus on ASID
+	sltu	a3, a2, a0			# asid < base?
 	bnez	a3, 2f				# yes, skip this entry.
 	 nop
-	sltu	a3, a0, a2			# asid < limit
+	sltu	a3, a2, a1			# asid < limit
 	beqz	a3, 2f				# nope, skip this entry.
 	 nop
-	PTR_ADDU ta0, v0
 
-	_MTC0	ta0, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	_MTC0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	_MTC0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
 	_MTC0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# zero out mask entry
@@ -2144,12 +2165,14 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	tlbwi					# invalidate the TLB entry
 	COP0_SYNC
 2:
-	addu	t1, 1
-	bne	t1, t2, 1b
-	 nop
+	addu	t2, 1
+	bne	t2, t3, 1b
+	 PTR_ADDU v0, ta0
 
-	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID.
-	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
+	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore ASID.
+	mtc0	t1, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
+	# since v0 has its MSB set, it is an invalid TLB index
+	mtc0	v0, MIPS_COP_0_TLB_INDEX	# invalidate index
 	COP0_SYNC
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	INT_S	zero, 0(ta3)			# unlock the tlb
@@ -2179,6 +2202,13 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_globals))
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# save current ASID
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	li	v0, MIPS_KSEG0_START		# invalid address
+#if (MIPS32R2 + MIPS64R2 + RMIXL_MIPS64R2) > 0
+	_INS	v0, t1, PGSHIFT | 1, 10		# insert TLB index as page #
+#else
+	sll	ta0, t1, PGSHIFT | 1		# PAGE_SHIFT | 1
+	PTR_ADDU v0, ta0			# offset for TLB index
+#endif
+	li	ta0, 1 << (PGSHIFT | 1)
 	INT_L	t2, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
 	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
 
@@ -2186,16 +2216,14 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_globals))
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
 	COP0_SYNC
-	sll	ta0, t1, PGSHIFT | 1		# PAGE_SHIFT | 1
 	tlbr					# obtain an entry
 	COP0_SYNC
 	_MFC0	a0, MIPS_COP_0_TLB_LO1
 	and	a0, MIPS3_PG_G			# check to see it has G bit
 	beqz	a0, 2f				# no, skip this entry
 	 nop
-	PTR_ADDU ta0, v0
 
-	_MTC0	ta0, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	_MTC0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	_MTC0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
 	_MTC0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# zero out mask entry
@@ -2205,10 +2233,11 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_globals))
 2:
 	addu	t1, 1
 	bne	t1, t2, 1b
-	 nop
+	 PTR_ADDU v0, ta0
 
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore current ASID
 	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
+	mtc0	v0, MIPS_COP_0_TLB_INDEX	# invalidate index
 	COP0_SYNC
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	INT_S	zero, 0(ta3)			# unlock the tlb
@@ -2240,6 +2269,13 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# save current ASID
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	mfc0	t2, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
+#if (MIPS32R2 + MIPS64R2 + RMIXL_MIPS64R2) > 0
+	_INS	v0, t1, PGSHIFT | 1, 10		# insert TLB index as page #
+#else
+	sll	ta0, t1, PGSHIFT | 1		# addr for TLB index
+	PTR_ADDU v0, ta0
+#endif
+	li	ta0, 1 << (PGSHIFT | 1)
 
 	_MTC0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
 	_MTC0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
@@ -2249,18 +2285,17 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set TLBindex
 	COP0_SYNC
-	sll	ta0, t1, PGSHIFT | 1		# PAGE_SHIFT | 1
-	PTR_ADDU ta0, v0
-	_MTC0	ta0, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	_MTC0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	COP0_SYNC
 	tlbwi					# clear the entry
 	COP0_SYNC
 	addu	t1, 1				# increment index
 	bne	t1, a0, 1b
-	 nop
+	 PTR_ADDU v0, ta0
 
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore ASID
 	mtc0	t2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
+	mtc0	v0, MIPS_COP_0_TLB_INDEX	# invalidate index
 	COP0_SYNC
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	INT_S	zero, 0(ta3)			# unlock the tlb
@@ -2277,7 +2312,7 @@ END(MIPSX(tlb_invalidate_all))
  */
 LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 
-	_MFC0	a3, MIPS_COP_0_TLB_HI		# Save the current PID.
+	_MFC0	a3, MIPS_COP_0_TLB_HI		# Save the current ASID.
 	mfc0	ta0, MIPS_COP_0_TLB_WIRED
 	INT_L	ta1, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
 	move	ta2, zero
@@ -2368,13 +2403,16 @@ LEAF(MIPSX(tlb_enter))
 	bnez	v0, 1b
 	 nop
 #endif
+	# a0, a1, a3, v0, ta3 in use
 	_MFC0	ta0, MIPS_COP_0_TLB_HI		# save EntryHi
+	mfc0	ta1, MIPS_COP_0_TLB_INDEX	# save TLB index
 
 #if (PGSHIFT & 1) == 0
 	and	a3, a1, MIPS3_PG_ODDPG		# select odd page bit
-	xor	a3, a1				# clear it.
+	xor	a1, a3				# clear it.
+	/* a3 contain ODDPG bit, a1 is now even */
 #endif
-	_MTC0	a3, MIPS_COP_0_TLB_HI		# set the VA for tlbp
+	_MTC0	a1, MIPS_COP_0_TLB_HI		# set the VA for tlbp
 	COP0_SYNC
 
 #if (PGSHIFT & 1) == 0
@@ -2385,8 +2423,8 @@ LEAF(MIPSX(tlb_enter))
 	tlbp					# is va in TLB?
 	COP0_SYNC
 
-	mfc0	v0, MIPS_COP_0_TLB_INDEX	# was it in the TLB?
-	bltz	v0, 1f				# nope
+	mfc0	t0, MIPS_COP_0_TLB_INDEX	# was it in the TLB?
+	bltz	t0, 1f				# nope
 	 nop
 
 #if (PGSHIFT & 1) == 0
@@ -2400,16 +2438,20 @@ LEAF(MIPSX(tlb_enter))
 	/*
 	 * If it's already where we want, no reason to invalidate it.
 	 */
-	beq	v0, a0, 2f			# already where we want it?
+	beq	t0, a0, 2f			# already where we want it?
 	 nop					
 
 	/*
 	 * Clear the existing TLB entry for it.
 	 */
-	sll	t1, v0, (1 | PGSHIFT)		# make a fake addr for the entry
-	lui	t3, %hi(MIPS_KSEG0_START)
-	or	t1, t3
-	_MTC0	t1, MIPS_COP_0_TLB_HI
+	li	v0, MIPS_KSEG0_START
+#if (MIPS32R2 + MIPS64R2 + RMIXL_MIPS64R2) > 0
+	_INS	v0, t0, PGSHIFT | 1, 10		# insert TLB index into addr
+#else
+	sll	t1, t0, PGSHIFT | 1		# make a fake addr for the entry
+	or	v0, t1
+#endif
+	_MTC0	v0, MIPS_COP_0_TLB_HI		# set to KSEG0 addr (invalid)
 	COP0_SYNC
 
 	and	t0, a2, MIPS3_PG_G		# make prototype tlb_lo
@@ -2420,25 +2462,25 @@ LEAF(MIPSX(tlb_enter))
 	tlbwi					# now write the invalid TLB
 	COP0_SYNC
 
-	_MTC0	a3, MIPS_COP_0_TLB_HI		# restore the addr for new TLB
-	COP0_SYNC
+	_MTC0	a1, MIPS_COP_0_TLB_HI		# restore the addr for new TLB
+	COP0_SYNC				# a1 is free for use.
 1:
 	mtc0	a0, MIPS_COP_0_TLB_INDEX	# set the index
-	COP0_SYNC
+	COP0_SYNC				# a0 is free for use.
 
 2:
 #if (PGSHIFT & 1) == 0
-	and	t3, a1, MIPS3_PG_ODDPG		# odd or even page
-	sll	t3, 31 - PGSHIFT		# move to MSB
-	sra	t3, 31				# t3 a mask (0/~0 = even/odd)
-	not	v0, t3				# v0 a mask (~0/0 = even/odd)
+	sll	a3, 31 - PGSHIFT		# move ODDPG to MSB
+	sra	a3, 31				# a3 a mask (0/~0 = even/odd)
+	not	v0, a3				# v0 a mask (~0/0 = even/odd)
 
-	and	ta1, t2, t3
-	and	ta2, a2, v0
-	or	t2, ta1, ta2			# t2 = (t3 & t2) | (~t3 & a2)
-	and	ta1, t3, v0
-	and	ta2, a2, t3
-	or	t3, ta1, ta2			# t3 = (~t3 & t3) | (t3 & a2)
+	/* a0 and a1 are now free for use */
+	and	a0, a3, t2
+	and	a1, v0, a2
+	or	t2, a0, a1			# t2 = (a3 & t2) | (~a3 & a2)
+	and	a0, v0, t3
+	and	a1, a3, a2
+	or	t3, a0, a1			# t3 = (~a3 & t3) | (a3 & a2)
 
 	mtc0	t2, MIPS_COP_0_TLB_LO0		# set tlb_lo0 (even)
 	mtc0	t3, MIPS_COP_0_TLB_LO1		# set tlb_lo1 (odd)
@@ -2453,6 +2495,7 @@ LEAF(MIPSX(tlb_enter))
 	COP0_SYNC
 
 	_MTC0	ta0, MIPS_COP_0_TLB_HI		# restore EntryHi
+	mtc0	ta1, MIPS_COP_0_TLB_INDEX	# restore TLB index
 	COP0_SYNC
 
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
@@ -2498,8 +2541,9 @@ LEAF(MIPSX(tlb_write_indexed))
 	bnez	v0, 1b
 	 nop
 #endif
+	_MFC0	ta0, MIPS_COP_0_TLB_HI		# Save the current ASID.
 	mfc0	ta1, MIPS_COP_0_TLB_PG_MASK	# Save current page mask.
-	_MFC0	ta0, MIPS_COP_0_TLB_HI		# Save the current PID.
+	mfc0	ta2, MIPS_COP_0_TLB_INDEX	# Save current tlb index
 
 	_MTC0	t0, MIPS_COP_0_TLB_LO0		# Set up entry lo0.
 	_MTC0	t1, MIPS_COP_0_TLB_LO1		# Set up entry lo1.
@@ -2511,8 +2555,9 @@ LEAF(MIPSX(tlb_write_indexed))
 	tlbwi					# Write the TLB
 	COP0_SYNC
 
-	_MTC0	ta0, MIPS_COP_0_TLB_HI		# Restore the PID.
+	_MTC0	ta0, MIPS_COP_0_TLB_HI		# Restore the ASID.
 	mtc0	ta1, MIPS_COP_0_TLB_PG_MASK	# Restore page mask.
+	mtc0	ta2, MIPS_COP_0_TLB_INDEX	# Restore TLB index
 	COP0_SYNC
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	INT_S	zero, 0(ta3)			# unlock the tlb
