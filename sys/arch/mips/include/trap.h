@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.15.96.1 2011/04/29 08:26:22 matt Exp $	*/
+/*	$NetBSD: trap.h,v 1.15.96.2 2011/12/23 08:07:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,8 +65,22 @@
 #define	T_TRAP			13	/* Trap instruction */
 #define	T_VCEI			14	/* Virtual coherency exception */
 #define	T_FPE			15	/* Floating point exception */
+#define	T_IMPL0			16	/* Implementation dependent */
+#define	T_IMPL1			17	/* Implementation dependent */
+#define	T_C2E			18	/* Reserved for precise COP2 exception */
+#define	T_TLBRI			19	/* TLB Read-Inhibit exception */
+#define	T_TLBXI			20	/* TLB Execution-Inhibit exception */
+#define	T__RSRVRD21		21	/* Reserved */
+#define	T_MDMX			22	/* MDMX Unusable exception */
 #define	T_WATCH			23	/* Watch address reference */
-#define T_VCED			31	/* Virtual coherency data */
+#define	T_MCHECK		24	/* Machine Check */
+#define	T_THREAD		25	/* Thread (MT ASE) Exceptions */
+#define	T_DSPDIS		26	/* DSP ASE State Disabled */
+#define	T__RSRVRD27		27	/* Reserved */
+#define	T__RSRVRD28		28	/* Reserved */
+#define	T__RSRVRD29		29	/* Reserved */
+#define	T_CACHEERR		30	/* Cache Errror */
+#define	T_VCED			31	/* Virtual coherency data (Reserved) */
 
 #define	T_USER			0x20	/* user-mode flag or'ed with type */
 
