@@ -655,21 +655,25 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 
 /*
  * Handle asynchronous software traps.
- * This is called from MachUserIntr() either to deliver signals or
- * to make involuntary context switch (preemption).
+ * This is called on the return to userspace to flush icache, deliver signals,
+ * or to make involuntary context switch (preemption).  If astpending wasn't
+ * set, we wouldn't have been called so make at least pass through the
+ * function.
  */
 void
 ast(void)
 {
 	struct lwp * const l = curlwp;
-	u_int astpending;
 
-	while ((astpending = l->l_md.md_astpending) != 0) {
-		//uvmexp.softs++;
+	do {
 		l->l_md.md_astpending = 0;
 
 #ifdef MULTIPROCESSOR
-		{
+		/*
+		 * Before returning to userland, if some icache page indicies
+		 * have been marked bad then flush them from the icache.
+		 */
+		if (MIPS_HAS_R4K_MMU) {
 			kpreempt_disable();
 			struct cpu_info * const ci = l->l_cpu;
 			if (ci->ci_tlb_info->ti_synci_page_bitmap != 0)
@@ -691,7 +695,7 @@ ast(void)
 			 */
 			preempt();
 		}
-	}
+	} while (l->l_md.md_astpending != 0);
 }
 
 
