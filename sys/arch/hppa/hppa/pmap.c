@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 2011/12/16 12:45:04 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.84 2011/12/23 16:35:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2011/12/16 12:45:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2011/12/23 16:35:00 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -1585,6 +1585,18 @@ pmap_activate(struct lwp *l)
 
 	if (p == curproc)
 		mtctl(pmap->pm_pid, CR_PIDR2);
+}
+
+void
+pmap_procwr(struct proc *p, vaddr_t va, size_t len)
+{
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+
+	fdcache(pmap->pm_space, va, len);
+	sync_caches();
+	ficache(pmap->pm_space, va, len);
+	sync_caches();
+
 }
 
 static inline void
