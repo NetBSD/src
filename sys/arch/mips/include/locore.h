@@ -146,7 +146,19 @@ void	mips3_cp0_config_write(uint32_t);
 uint32_t mipsNN_cp0_config1_read(void);
 void	mipsNN_cp0_config1_write(uint32_t);
 uint32_t mipsNN_cp0_config2_read(void);
+void	mipsNN_cp0_config2_write(uint32_t);
 uint32_t mipsNN_cp0_config3_read(void);
+void	mipsNN_cp0_config3_write(uint32_t);
+uint32_t mipsNN_cp0_config4_read(void);
+void	mipsNN_cp0_config4_write(uint32_t);
+uint32_t mipsNN_cp0_config5_read(void);
+void	mipsNN_cp0_config5_write(uint32_t);
+uint32_t mipsNN_cp0_config6_read(void);
+void	mipsNN_cp0_config6_write(uint32_t);
+uint32_t mipsNN_cp0_config7_read(void);
+void	mipsNN_cp0_config7_write(uint32_t);
+uint64_t mips64_cp0_config7_read(void);
+void	mips64_cp0_config7_write(uint32_t);
 
 uintptr_t mipsNN_cp0_watchlo_read(u_int);
 void	mipsNN_cp0_watchlo_write(u_int, uintptr_t);
@@ -161,6 +173,8 @@ void	mipsNN_cp0_userlocal_write(void *);
 
 uint32_t mips3_cp0_count_read(void);
 void	mips3_cp0_count_write(uint32_t);
+
+uint32_t mips3_cp0_random_read(void);
 
 uint32_t mips3_cp0_wired_read(void);
 void	mips3_cp0_wired_write(uint32_t);
@@ -560,34 +574,38 @@ struct pridtab {
 # define  CIDFL_RMI_TYPE_XLS		1
 # define  CIDFL_RMI_TYPE_XLP		2
 #define MIPS_CIDFL_RMI_THREADS_MASK	__BITS(6,3)
-# define MIPS_CIDFL_RMI_THREADS_SHIFT	3
 #define MIPS_CIDFL_RMI_CORES_MASK	__BITS(10,7)
-# define MIPS_CIDFL_RMI_CORES_SHIFT	7
 # define LOG2_1	0
 # define LOG2_2	1
 # define LOG2_4	2
 # define LOG2_8	3
 # define MIPS_CIDFL_RMI_CPUS(ncores, nthreads)				\
-		((LOG2_ ## ncores << MIPS_CIDFL_RMI_CORES_SHIFT)	\
-		|(LOG2_ ## nthreads << MIPS_CIDFL_RMI_THREADS_SHIFT))
+		(__SHIFTIN(LOG2_ ## ncores, MIPS_CIDFL_RMI_CORES_MASK)	\
+		|__SHIFTIN(LOG2_ ## nthreads, MIPS_CIDFL_RMI_THREADS_MASK))
 # define MIPS_CIDFL_RMI_NTHREADS(cidfl)					\
-		(1 << (((cidfl) & MIPS_CIDFL_RMI_THREADS_MASK)		\
-			>> MIPS_CIDFL_RMI_THREADS_SHIFT))
+		(1 << __SHIFTOUT((cidfl), MIPS_CIDFL_RMI_THREADS_MASK))
 # define MIPS_CIDFL_RMI_NCORES(cidfl)					\
-		(1 << (((cidfl) & MIPS_CIDFL_RMI_CORES_MASK)		\
-			>> MIPS_CIDFL_RMI_CORES_SHIFT))
+		(1 << __SHIFTOUT((cidfl), MIPS_CIDFL_RMI_CORES_MASK))
 #define MIPS_CIDFL_RMI_L2SZ_MASK	__BITS(14,11)
-# define MIPS_CIDFL_RMI_L2SZ_SHIFT	11
 # define RMI_L2SZ_256KB	 0
 # define RMI_L2SZ_512KB  1
 # define RMI_L2SZ_1MB    2
 # define RMI_L2SZ_2MB    3
 # define RMI_L2SZ_4MB    4
 # define MIPS_CIDFL_RMI_L2(l2sz)					\
-		(RMI_L2SZ_ ## l2sz << MIPS_CIDFL_RMI_L2SZ_SHIFT)
+		__SHIFTIN(RMI_L2SZ_ ## l2sz, MIPS_CIDFL_RMI_L2SZ_MASK)
 # define MIPS_CIDFL_RMI_L2SZ(cidfl)					\
-		((256*1024) << (((cidfl) & MIPS_CIDFL_RMI_L2SZ_MASK)	\
-			>> MIPS_CIDFL_RMI_L2SZ_SHIFT))
+		((256*1024) << __SHIFTOUT((cidfl), MIPS_CIDFL_RMI_L2SZ_MASK))
+#define MIPS_CIDFL_RMI_L3SZ_MASK	__BITS(18,15)
+# define RMI_L3SZ_256KB	 0
+# define RMI_L3SZ_512KB  1
+# define RMI_L3SZ_1MB    2
+# define RMI_L3SZ_2MB    3
+# define RMI_L3SZ_4MB    4
+# define MIPS_CIDFL_RMI_L3(l3sz)					\
+		__SHIFTIN(RMI_L3SZ_ ## l3sz, MIPS_CIDFL_RMI_L3SZ_MASK)
+# define MIPS_CIDFL_RMI_L3SZ(cidfl)					\
+		((256*1024) << __SHIFTOUT((cidfl), MIPS_CIDFL_RMI_L3SZ_MASK))
 
 #endif	/* _KERNEL */
 #endif	/* _MIPS_LOCORE_H */
