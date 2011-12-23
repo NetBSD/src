@@ -3,8 +3,6 @@
 
 defflag	opt_cputype.h		NOFPU FPEMUL
 				MIPS64_SB1
-				ENABLE_MIPS_16KB_PAGE
-				ENABLE_MIPS_8KB_PAGE
 				ENABLE_MIPS_KSEGX
 				MIPS64_XLP MIPS64_XLR MIPS64_XLS
 					# and the rest...
@@ -15,9 +13,10 @@ defflag	opt_cputype.h		NOFPU FPEMUL
 					# ENABLE_MIPS_TX3900
 					# ENABLE_MIPS_R4700
 					# ENABLE_MIPS_R3NKK
-defflag	opt_mips_cache.h		MIPS3_NO_PV_UNCACHED
-					ENABLE_MIPS4_CACHE_R10K
-defflag opt_mips3_wired.h		ENABLE_MIPS3_WIRED_MAP
+defparam opt_cputype.h		MIPS_PAGE_SHIFT
+defflag	opt_mips_cache.h	MIPS3_NO_PV_UNCACHED
+				ENABLE_MIPS4_CACHE_R10K
+defflag opt_mips3_wired.h	ENABLE_MIPS3_WIRED_MAP
 
 defflag	opt_ddb.h		DDB_TRACE
 defflag	opt_ddb.h		MIPS_DDB_WATCH
@@ -47,6 +46,7 @@ file	arch/mips/mips/kgdb_machdep.c		kgdb
 file	arch/mips/mips/mem.c
 file	arch/mips/mips/pmap.c
 file	arch/mips/mips/pmap_segtab.c
+file	arch/mips/mips/pmap_syncicache.c
 file	arch/mips/mips/pmap_tlb.c
 file	arch/mips/mips/trap.c			# trap handlers
 file	arch/mips/mips/syscall.c		# syscall entries
