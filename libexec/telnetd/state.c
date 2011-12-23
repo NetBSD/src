@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.27 2007/02/21 21:14:07 hubertf Exp $	*/
+/*	$NetBSD: state.c,v 1.28 2011/12/23 16:56:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.27 2007/02/21 21:14:07 hubertf Exp $");
+__RCSID("$NetBSD: state.c,v 1.28 2011/12/23 16:56:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1212,7 +1212,7 @@ suboption(void)
 		 * Process suboption buffer of slc's
 		 */
 		start_slc(1);
-		do_opt_slc(subpointer, subend - subpointer);
+		do_opt_slc(subpointer, SB_LEN());
 		(void) end_slc(0);
 		break;
 	} else if (request == LM_MODE) {
