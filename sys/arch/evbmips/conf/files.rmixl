@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.5 2010/02/05 07:39:52 matt Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.6 2011/12/23 23:32:51 matt Exp $
 
 file	arch/evbmips/rmixl/autoconf.c
 file	arch/evbmips/rmixl/machdep.c
@@ -29,6 +29,9 @@ include "dev/pckbport/files.pckbport"
 
 # Machine-independent USB device support
 include "dev/usb/files.usb"
+
+# Machine-independent SD/MMC support
+include "dev/sdmmc/files.sdmmc"
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
