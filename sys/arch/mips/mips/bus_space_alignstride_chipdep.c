@@ -556,6 +556,8 @@ __BS(init)(bus_space_tag_t t, void *v)
 	    (void *)CHIP_EX_STORE(v), CHIP_EX_STORE_SIZE(v), EX_NOWAIT);
 	extent_alloc_region(ex, 0, ~0UL, EX_NOWAIT);
 
+	bool opened = false;
+
 #ifdef CHIP_W1_BUS_START
 	/*
 	 * The window may be disabled.  We notice this by seeing
@@ -563,50 +565,94 @@ __BS(init)(bus_space_tag_t t, void *v)
 	 */
 	if (CHIP_W1_BUS_START(v) == (bus_addr_t) -1) {
 #ifdef EXTENT_DEBUG
-		printf("%s: this space is disabled\n", __S(__BS(init)));
+		printf("%s: window 1 is disabled\n", __S(__BS(init)));
 #endif
-		return;
+	} else {
+#ifdef EXTENT_DEBUG
+		printf("%s: window %d: freeing from %#lx to %#lx\n",
+		    __func_, 1,
+		    (u_long)CHIP_W1_BUS_START(v), (u_long)CHIP_W1_BUS_END(v));
+#endif
+		opened = true;
+		extent_free(ex, CHIP_W1_BUS_START(v),
+		    CHIP_W1_BUS_END(v) - CHIP_W1_BUS_START(v) + 1, EX_NOWAIT);
 	}
-
-#ifdef EXTENT_DEBUG
-	printf("%s: freeing from %#"PRIxBUSADDR" to %#"PRIxBUSADDR"\n",
-	    __S(__BS(init)), (bus_addr_t)CHIP_W1_BUS_START(v),
-	    (bus_addr_t)CHIP_W1_BUS_END(v));
-#endif
-	extent_free(ex, CHIP_W1_BUS_START(v),
-	    CHIP_W1_BUS_END(v) - CHIP_W1_BUS_START(v) + 1, EX_NOWAIT);
-#endif
+#endif /* CHIP_W1_BUS_START */
 #ifdef CHIP_W2_BUS_START
-	if (CHIP_W2_BUS_START(v) != CHIP_W1_BUS_START(v)) {
+	if (CHIP_W2_BUS_START(v) == (bus_addr_t) -1) {
 #ifdef EXTENT_DEBUG
-		printf("xxx: freeing from 0x%lx to 0x%lx\n",
+		printf("%s: window 2 is disabled\n", __func__);
+#endif
+	} else if (CHIP_W2_BUS_START(v) != CHIP_W1_BUS_START(v)) {
+#ifdef EXTENT_DEBUG
+		printf("%s: window %d: freeing from %#lx to %#lx\n",
+		    __func__, 2,
 		    (u_long)CHIP_W2_BUS_START(v), (u_long)CHIP_W2_BUS_END(v));
 #endif
+		opened = true;
 		extent_free(ex, CHIP_W2_BUS_START(v),
 		    CHIP_W2_BUS_END(v) - CHIP_W2_BUS_START(v) + 1, EX_NOWAIT);
 	} else {
 #ifdef EXTENT_DEBUG
-		printf("xxx: window 2 (0x%lx to 0x%lx) overlaps window 1\n",
+		printf("%s: window 2 (0x%lx to 0x%lx) overlaps window 1\n",
+		    __func__,
 		    (u_long)CHIP_W2_BUS_START(v), (u_long)CHIP_W2_BUS_END(v));
 #endif
 	}
-#endif
+#endif /* CHIP_W2_BUS_START */
 #ifdef CHIP_W3_BUS_START
-	if (CHIP_W3_BUS_START(v) != CHIP_W1_BUS_START(v) &&
-	    CHIP_W3_BUS_START(v) != CHIP_W2_BUS_START(v)) {
+	if (CHIP_W3_BUS_START(v) == (bus_addr_t) -1) {
 #ifdef EXTENT_DEBUG
-		printf("xxx: freeing from 0x%lx to 0x%lx\n",
+		printf("%s: window 3 is disabled\n", __func__);
+#endif
+	} else if (CHIP_W3_BUS_START(v) != CHIP_W1_BUS_START(v)
+	    && CHIP_W3_BUS_START(v) != CHIP_W2_BUS_START(v)) {
+#ifdef EXTENT_DEBUG
+		printf("%s: window %d: freeing from %#lx to %#lx\n",
+		    __func__, 3,
 		    (u_long)CHIP_W3_BUS_START(v), (u_long)CHIP_W3_BUS_END(v));
 #endif
+		opened = true;
 		extent_free(ex, CHIP_W3_BUS_START(v),
 		    CHIP_W3_BUS_END(v) - CHIP_W3_BUS_START(v) + 1, EX_NOWAIT);
 	} else {
 #ifdef EXTENT_DEBUG
-		printf("xxx: window 2 (0x%lx to 0x%lx) overlaps window 1\n",
-		    (u_long)CHIP_W2_BUS_START(v), (u_long)CHIP_W2_BUS_END(v));
+		printf("%s: window 3 (0x%lx to 0x%lx) overlaps window 1 or 2\n",
+		    __func__,
+		    (u_long)CHIP_W3_BUS_START(v), (u_long)CHIP_W3_BUS_END(v));
 #endif
 	}
+#endif /* CHIP_W3_BUS_START */
+#ifdef CHIP_W4_BUS_START
+	if (CHIP_W4_BUS_START(v) == (bus_addr_t) -1) {
+#ifdef EXTENT_DEBUG
+		printf("%s: window 4 is disabled\n", __func__);
 #endif
+	} else if (CHIP_W4_BUS_START(v) != CHIP_W1_BUS_START(v)
+	    && CHIP_W4_BUS_START(v) != CHIP_W2_BUS_START(v)
+	    && CHIP_W4_BUS_START(v) != CHIP_W3_BUS_START(v)) {
+#ifdef EXTENT_DEBUG
+		printf("%s: window %d: freeing from %#lx to %#lx\n",
+		    __func__, 5,
+		    (u_long)CHIP_W4_BUS_START(v), (u_long)CHIP_W4_BUS_END(v));
+#endif
+		opened = true;
+		extent_free(ex, CHIP_W3_BUS_START(v),
+		    CHIP_W4_BUS_END(v) - CHIP_W4_BUS_START(v) + 1, EX_NOWAIT);
+	} else {
+#ifdef EXTENT_DEBUG
+		printf("%s: window 4 (0x%lx to 0x%lx) overlaps window 1, 2, or 3\n",
+		    __func__,
+		    (u_long)CHIP_W4_BUS_START(v), (u_long)CHIP_W4_BUS_END(v));
+#endif
+	}
+#endif /* CHIP_W3_BUS_START */
+
+	if (!opened) {
+#ifdef EXTENT_DEBUG
+		printf("%s: this space is disabled\n", __func__);
+#endif
+	}
 
 #ifdef EXTENT_DEBUG
 	extent_print(ex);
@@ -631,33 +677,62 @@ __BS(translate)(void *v, bus_addr_t addr, bus_size_t len, int flags,
 #endif
 
 #ifdef CHIP_W1_BUS_START
-	if (addr >= CHIP_W1_BUS_START(v) && end <= CHIP_W1_BUS_END(v))
+	if (CHIP_W1_BUS_START(v) != (bus_addr_t) -1
+	    && addr >= CHIP_W1_BUS_START(v) && end <= CHIP_W1_BUS_END(v))
 		return (__BS(get_window)(v, 0, mbst));
 #endif
 
 #ifdef CHIP_W2_BUS_START
-	if (addr >= CHIP_W2_BUS_START(v) && end <= CHIP_W2_BUS_END(v))
+	if (CHIP_W2_BUS_START(v) != (bus_addr_t) -1
+	    && addr >= CHIP_W2_BUS_START(v) && end <= CHIP_W2_BUS_END(v))
 		return (__BS(get_window)(v, 1, mbst));
 #endif
 
 #ifdef CHIP_W3_BUS_START
-	if (addr >= CHIP_W3_BUS_START(v) && end <= CHIP_W3_BUS_END(v))
+	if (CHIP_W3_BUS_START(v) != (bus_addr_t) -1
+	    && addr >= CHIP_W3_BUS_START(v) && end <= CHIP_W3_BUS_END(v))
 		return (__BS(get_window)(v, 2, mbst));
+#endif
+
+#ifdef CHIP_W4_BUS_START
+	if (CHIP_W4_BUS_START(v) != (bus_addr_t) -1
+	    && addr >= CHIP_W4_BUS_START(v) && end <= CHIP_W4_BUS_END(v))
+		return (__BS(get_window)(v, 3, mbst));
 #endif
 
 #ifdef EXTENT_DEBUG
 	printf("\n");
 #ifdef CHIP_W1_BUS_START
-	printf("%s: window[1]=0x%lx-0x%lx\n", __S(__BS(map)),
-	    (u_long)CHIP_W1_BUS_START(v), (u_long)CHIP_W1_BUS_END(v));
+	if (CHIP_W1_BUS_START(v) == (bus_addr_t) -1) {
+		printf("%s: window[1]=disabled\n", __S(__BS(map)));
+	} else {
+		printf("%s: window[1]=0x%lx-0x%lx\n", __S(__BS(map)),
+		    (u_long)CHIP_W1_BUS_START(v), (u_long)CHIP_W1_BUS_END(v));
+	}
 #endif
 #ifdef CHIP_W2_BUS_START
-	printf("%s: window[2]=0x%lx-0x%lx\n", __S(__BS(map)),
-	    (u_long)CHIP_W2_BUS_START(v), (u_long)CHIP_W2_BUS_END(v));
+	if (CHIP_W2_BUS_START(v) == (bus_addr_t) -1) {
+		printf("%s: window[2]=disabled\n", __S(__BS(map)));
+	} else {
+		printf("%s: window[2]=0x%lx-0x%lx\n", __S(__BS(map)),
+		    (u_long)CHIP_W2_BUS_START(v), (u_long)CHIP_W2_BUS_END(v));
+	}
 #endif
 #ifdef CHIP_W3_BUS_START
-	printf("%s: window[3]=0x%lx-0x%lx\n", __S(__BS(map)),
-	    (u_long)CHIP_W3_BUS_START(v), (u_long)CHIP_W3_BUS_END(v));
+	if (CHIP_W3_BUS_START(v) == (bus_addr_t) -1) {
+		printf("%s: window[3]=disabled\n", __S(__BS(map)));
+	} else {
+		printf("%s: window[3]=0x%lx-0x%lx\n", __S(__BS(map)),
+		    (u_long)CHIP_W3_BUS_START(v), (u_long)CHIP_W3_BUS_END(v));
+	}
+#endif
+#ifdef CHIP_W4_BUS_START
+	if (CHIP_W4_BUS_START(v) == (bus_addr_t) -1) {
+		printf("%s: window[4]=disabled\n", __S(__BS(map)));
+	} else {
+		printf("%s: window[4]=0x%lx-0x%lx\n", __S(__BS(map)),
+		    (u_long)CHIP_W4_BUS_START(v), (u_long)CHIP_W4_BUS_END(v));
+	}
 #endif
 #endif /* EXTENT_DEBUG */
 	/* No translation. */
@@ -702,9 +777,19 @@ __BS(get_window)(void *v, int window, struct mips_bus_space_translation *mbst)
 		break;
 #endif
 
+#ifdef CHIP_W4_BUS_START
+	case 3:
+		mbst->mbst_bus_start = CHIP_W4_BUS_START(v);
+		mbst->mbst_bus_end = CHIP_W4_BUS_END(v);
+		mbst->mbst_sys_start = CHIP_W4_SYS_START(v);
+		mbst->mbst_sys_end = CHIP_W4_SYS_END(v);
+		mbst->mbst_align_stride = CHIP_ALIGN_STRIDE;
+		mbst->mbst_flags = 0;
+		break;
+#endif
+
 	default:
-		panic(__S(__BS(get_window)) ": invalid window %d",
-		    window);
+		panic("%s: invalid window %d", __func__, window);
 	}
 
 	return (0);
