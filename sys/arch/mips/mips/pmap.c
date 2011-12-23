@@ -279,15 +279,6 @@ vaddr_t mips_virtual_end;	/* VA of last avail page (end of kernel AS) */
 pt_entry_t	*Sysmap;		/* kernel pte table */
 unsigned int	Sysmapsize;		/* number of pte's in Sysmap */
 
-#ifdef PMAP_POOLPAGE_DEBUG
-struct poolpage_info {
-	vaddr_t base;
-	vaddr_t size;
-	vaddr_t hint;
-	pt_entry_t *sysmap;
-} poolpage;
-#endif
-
 static void pmap_pvlist_lock_init(void);
 
 /*
@@ -364,38 +355,6 @@ pmap_set_mdpage_attributes(struct vm_page_md *md, u_int set_attributes)
 	atomic_or_uint(&md->pvh_attrs, set_attributes);
 #else
 	md->pvh_attrs |= set_attributes;
-#endif
-}
-
-static inline void
-pmap_page_syncicache(struct vm_page *pg)
-{
-	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-#ifdef MULTIPROCESSOR
-	pv_entry_t pv = &md->pvh_first;
-	uint32_t onproc = 0;
-	(void)PG_MD_PVLIST_LOCK(md, false);
-	if (pv->pv_pmap != NULL) {
-		for (; pv != NULL; pv = pv->pv_next) {
-			onproc |= pv->pv_pmap->pm_onproc;
-			if (onproc == cpus_running)
-				break;
-		}
-	}
-	PG_MD_PVLIST_UNLOCK(md);
-	kpreempt_disable();
-	pmap_tlb_syncicache(md->pvh_first.pv_va, onproc);
-	kpreempt_enable();
-#else
-	if (MIPS_HAS_R4K_MMU) {
-		if (PG_MD_CACHED_P(md)) {
-			mips_icache_sync_range_index(
-			    md->pvh_first.pv_va, PAGE_SIZE);
-		}
-	} else {
-		mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg)),
-		    PAGE_SIZE);
-	}
 #endif
 }
 
@@ -501,6 +460,8 @@ pmap_bootstrap(void)
 	if (MIPS_CACHE_VIRTUAL_ALIAS && uvmexp.ncolors)
 		pmap_page_colormask = (uvmexp.ncolors - 1) << PAGE_SHIFT;
 
+	KASSERT(uvmexp.ncolors <= 16 - PG_MD_EXECPAGE_SHIFT);
+
 	pmap_tlb_info_init(&pmap_tlb0_info);		/* init the lock */
 
 #ifdef ENABLE_MIPS_KSEGX
@@ -547,10 +508,6 @@ pmap_bootstrap(void)
 #ifdef KSEG2IOBUFSIZE
 	Sysmapsize += (KSEG2IOBUFSIZE >> PGSHIFT);
 #endif
-#ifdef PMAP_POOLPAGE_DEBUG
-	poolpage.size = nkmempages + MCLBYTES * nmbclusters;
-	Sysmapsize += poolpage.size;
-#endif
 #ifdef _LP64
 	/*
 	 * If we are using tmpfs, then we might want to use a great deal of
@@ -586,7 +543,11 @@ pmap_bootstrap(void)
 	}
 #endif
  
-	if (mips_virtual_end > VM_MAX_KERNEL_ADDRESS) {
+	if (mips_virtual_end > VM_MAX_KERNEL_ADDRESS
+	   || mips_virtual_end < VM_MIN_KERNEL_ADDRESS) {
+		printf("%s: chaning last kernel VA from %#"PRIxVADDR
+		    " to %#"PRIxVADDR"\n", __func__,
+		    mips_virtual_end, VM_MAX_KERNEL_ADDRESS);
 		mips_virtual_end = VM_MAX_KERNEL_ADDRESS;
 		Sysmapsize =
 		    (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / NBPG;
@@ -601,11 +562,6 @@ pmap_bootstrap(void)
 	Sysmap = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
 
-#ifdef PMAP_POOLPAGE_DEBUG
-	mips_virtual_end -= poolpage.size;
-	poolpage.base = mips_virtual_end;
-	poolpage.sysmap = Sysmap + atop(poolpage.size);
-#endif
 	/*
 	 * Initialize the pools.
 	 */
@@ -1151,7 +1107,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		 * Do this first so that for each unmapping, pmap_remove_pv
 		 * won't try to sync the icache.
 		 */
-		if (pmap_clear_mdpage_attributes(md, PG_MD_EXECPAGE)) {
+		if (pmap_clear_mdpage_attributes(md, PG_MD_EXECPAGE_ANY)) {
 			PMAP_COUNT(exec_uncached_page_protect);
 		}
 		(void)PG_MD_PVLIST_LOCK(md, false);
@@ -1190,10 +1146,11 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 			    && MIPS_CACHE_VIRTUAL_ALIAS
 			    && PG_MD_CACHED_P(md))
 				mips_dcache_wbinv_range_index(sva, PAGE_SIZE);
-			if (PG_MD_EXECPAGE_P(md)) {
+			if (PG_MD_EXECPAGE_ANY_P(md)) {
 				KASSERT(md->pvh_first.pv_pmap != NULL);
 				if (PG_MD_CACHED_P(md)) {
-					pmap_page_syncicache(pg);
+					pmap_syncicache_page(pg,
+					    PG_MD_EXECPAGES(md));
 					PMAP_COUNT(exec_synced_protect);
 				}
 			}
@@ -1550,10 +1507,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	    && prot == (VM_PROT_READ | VM_PROT_EXECUTE)) {
 		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 		PMAP_COUNT(enter_exec_mapping);
-		if (!PG_MD_EXECPAGE_P(md)) {
+		if (!PG_MD_EXECPAGE_P(md, va)) {
 			mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(pa),
 			    PAGE_SIZE);
-			pmap_set_mdpage_attributes(md, PG_MD_EXECPAGE);
+			pmap_set_mdpage_attributes(md, PG_MD_EXECPAGE(va));
 			PMAP_COUNT(exec_syncicache_entry);
 		}
 	}
@@ -1679,9 +1636,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			    va - NBPG, pa);
 #endif
 		PMAP_COUNT(exec_mappings);
-		if (!PG_MD_EXECPAGE_P(md) && PG_MD_CACHED_P(md)) {
-			pmap_page_syncicache(pg);
-			pmap_set_mdpage_attributes(md, PG_MD_EXECPAGE);
+		if (!PG_MD_EXECPAGE_P(md, va) && PG_MD_CACHED_P(md)) {
+			pmap_set_mdpage_attributes(md, PG_MD_EXECPAGE(va));
+			pmap_syncicache_page(pg, PG_MD_EXECPAGE(va));
 			PMAP_COUNT(exec_synced_mappings);
 		}
 	}
@@ -2061,12 +2018,12 @@ pmap_clear_modify(struct vm_page *pg)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_modify(%#"PRIxPADDR")\n", VM_PAGE_TO_PHYS(pg));
 #endif
-	if (PG_MD_EXECPAGE_P(md)) {
+	if (PG_MD_EXECPAGE_ANY_P(md)) {
 		if (pv->pv_pmap == NULL) {
-			pmap_clear_mdpage_attributes(md, PG_MD_EXECPAGE);
+			pmap_clear_mdpage_attributes(md, PG_MD_EXECPAGE_ANY);
 			PMAP_COUNT(exec_uncached_clear_modify);
 		} else {
-			pmap_page_syncicache(pg);
+			pmap_syncicache_page(pg, PG_MD_EXECPAGES(md));
 			PMAP_COUNT(exec_synced_clear_modify);
 		}
 	}
@@ -2319,7 +2276,7 @@ again:
 			    pmap, va);
 #endif
 		if (__predict_true(apv == NULL)) {
-#if defined(MULTIPROCESSOR) || !defined(_LP64) || defined(PMAP_POOLPAGE_DEBUG) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || !defined(_LP64) || defined(LOCKDEBUG)
 			/*
 			 * To allocate a PV, we have to release the PVLIST lock
 			 * so get the page generation.  We allocate the PV, and
@@ -2330,7 +2287,7 @@ again:
 			apv = (pv_entry_t)pmap_pv_alloc();
 			if (apv == NULL)
 				panic("pmap_enter_pv: pmap_pv_alloc() failed");
-#if defined(MULTIPROCESSOR) || !defined(_LP64) || defined(PMAP_POOLPAGE_DEBUG) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || !defined(_LP64) || defined(LOCKDEBUG)
 #ifdef MULTIPROCESSOR
 			/*
 			 * If the generation has changed, then someone else
@@ -2439,20 +2396,20 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 	 */
 	if (npv)
 		pmap_pv_free(npv);
-	if (PG_MD_EXECPAGE_P(md) && dirty) {
+	if (PG_MD_EXECPAGE_P(md, va) && dirty) {
 		if (last) {
 			/*
 			 * If this was the page's last mapping, we no longer
 			 * care about its execness.
 			 */
-			pmap_clear_mdpage_attributes(md, PG_MD_EXECPAGE);
+			pmap_clear_mdpage_attributes(md, PG_MD_EXECPAGE_ANY);
 			PMAP_COUNT(exec_uncached_remove);
 		} else {
 			/*
 			 * Someone still has it mapped as an executable page
 			 * so we must sync it.
 			 */
-			pmap_page_syncicache(pg);
+			pmap_syncicache_page(pg, PG_MD_EXECPAGES(md));
 			PMAP_COUNT(exec_synced_remove);
 		}
 	}
@@ -2660,31 +2617,6 @@ mips_pmap_map_poolpage(paddr_t pa)
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pmap_set_mdpage_attributes(md, PG_MD_POOLPAGE);
 
-#ifdef PMAP_POOLPAGE_DEBUG
-	KASSERT((poolpage.hint & MIPS_CACHE_ALIAS_MASK) == 0);
-	vaddr_t va_offset = poolpage.hint + mips_cache_indexof(pa);
-	pt_entry_t *pte = poolpage.sysmap + atop(va_offset);
-	const size_t va_inc = MIPS_CACHE_ALIAS_MASK + PAGE_SIZE;
-	const size_t pte_inc = atop(va_inc);
-
-	for (; va_offset < poolpage.size;
-	     va_offset += va_inc, pte += pte_inc) {
-		if (!mips_pg_v(pte->pt_entry))
-			break;
-	}
-	if (va_offset >= poolpage.size) {
-		for (va_offset -= poolpage.size, pte -= atop(poolpage.size);
-		     va_offset < poolpage.hint;
-		     va_offset += va_inc, pte += pte_inc) {
-			if (!mips_pg_v(pte->pt_entry))
-				break;
-		}
-	}
-	KASSERT(!mips_pg_v(pte->pt_entry));
-	va = poolpage.base + va_offset;
-	poolpage.hint = roundup2(va_offset + 1, va_inc);
-	pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PORT_WRITE);
-#else
 #ifdef _LP64
 	KASSERT(mips_options.mips3_xkphys_cached);
 	va = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
@@ -2700,8 +2632,7 @@ mips_pmap_map_poolpage(paddr_t pa)
 	else
 		va = MIPS_PHYS_TO_KSEG0(pa);
 #endif
-#endif
-#if !defined(_LP64) || defined(PMAP_POOLPAGE_DEBUG)
+#if !defined(_LP64)
 	if (MIPS_CACHE_VIRTUAL_ALIAS) {
 		/*
 		 * If this page was last mapped with an address that might
@@ -2724,10 +2655,7 @@ paddr_t
 mips_pmap_unmap_poolpage(vaddr_t va)
 {
 	paddr_t pa;
-#ifdef PMAP_POOLPAGE_DEBUG
-	KASSERT(poolpage.base <= va && va < poolpage.base + poolpage.size);
-	pa = mips_tlbpfn_to_paddr(kvtopte(va)->pt_entry);
-#elif defined(_LP64)
+#if defined(_LP64)
 	KASSERT(MIPS_XKPHYS_P(va));
 	pa = MIPS_XKPHYS_TO_PHYS(va);
 #else
@@ -2751,9 +2679,6 @@ mips_pmap_unmap_poolpage(vaddr_t va)
 		 */
 		mips_dcache_inv_range(va, PAGE_SIZE);
 	}
-#endif
-#ifdef PMAP_POOLPAGE_DEBUG
-	pmap_kremove(va, PAGE_SIZE);
 #endif
 	return pa;
 }

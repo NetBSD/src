@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.19 2011/12/03 01:56:55 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.20 2011/12/23 22:31:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -201,25 +201,26 @@ struct pmap_tlb_info {
 	uint32_t ti_asid_mask;
 	uint32_t ti_asid_max;
 	LIST_HEAD(, pmap_asid_info) ti_pais; /* list of active ASIDs */
+	uint32_t ti_syncicache_bitmap;	/* page indices needing a syncicache */
+	struct evcnt ti_evcnt_syncicache_asts;
+	struct evcnt ti_evcnt_syncicache_all;
+	struct evcnt ti_evcnt_syncicache_pages;
+	struct evcnt ti_evcnt_syncicache_desired;
+	struct evcnt ti_evcnt_syncicache_duplicate;
 #ifdef MULTIPROCESSOR
 	kmutex_t *ti_hwlock;
 	pmap_t ti_victim;
-	uint32_t ti_synci_page_bitmap;	/* page indices needing a syncicache */
 	uint32_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
 	enum tlb_invalidate_op ti_tlbinvop;
 	u_int ti_index;
 #define tlbinfo_index(ti)	((ti)->ti_index)
-	struct evcnt ti_evcnt_synci_asts;
-	struct evcnt ti_evcnt_synci_all;
-	struct evcnt ti_evcnt_synci_pages;
-	struct evcnt ti_evcnt_synci_deferred;
-	struct evcnt ti_evcnt_synci_desired;
-	struct evcnt ti_evcnt_synci_duplicate;
+	struct evcnt ti_evcnt_syncipage_deferred;
 #else
 #define tlbinfo_index(ti)	(0)
 #endif
 	struct evcnt ti_evcnt_asid_reinits;
-	u_long ti_asid_bitmap[256 / (sizeof(u_long) * 8)];
+	struct evcnt ti_evcnt_asid_reclaims;
+	u_long ti_asid_bitmap[1024 / (sizeof(u_long) * 8)];
 };
 
 #ifdef	_KERNEL
@@ -237,6 +238,8 @@ extern struct pmap_tlb_info pmap_tlb0_info;
 extern struct pmap_tlb_info *pmap_tlbs[MAXCPUS];
 extern u_int pmap_ntlbs;
 #endif
+extern u_int pmap_syncipage_page_mask;
+extern u_int pmap_syncipage_map_mask;
 extern paddr_t mips_avail_start;
 extern paddr_t mips_avail_end;
 extern vaddr_t mips_virtual_end;
@@ -261,10 +264,12 @@ void	pmap_procwr(struct proc *, vaddr_t, size_t);
 void	pmap_tlb_shootdown_process(void);
 bool	pmap_tlb_shootdown_bystanders(pmap_t pmap);
 void	pmap_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
-void	pmap_tlb_syncicache_ast(struct cpu_info *);
-void	pmap_tlb_syncicache_wanted(struct cpu_info *);
-void	pmap_tlb_syncicache(vaddr_t, uint32_t);
+void	pmap_syncicache_wanted(struct cpu_info *);
+void	pmap_syncicache(uint32_t, uint32_t);
 #endif
+void	pmap_syncicache_page(struct vm_page *, uint32_t);
+void	pmap_syncicache_init(void);
+void	pmap_syncicache_ast(struct cpu_info *);
 void	pmap_tlb_info_init(struct pmap_tlb_info *);
 void	pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *);
 void	pmap_tlb_asid_acquire(pmap_t pmap, struct lwp *l);
