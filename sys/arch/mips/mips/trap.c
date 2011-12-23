@@ -630,9 +630,9 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	utf->tf_regs[_R_BADVADDR] = vaddr;
 #if defined(DEBUG)
 	printf("trap: cpu%d, pid %d(%s): sig %d: cause=%#x epc=%#"PRIxREGISTER
-	    " va=%#"PRIxVADDR"\n",
+	    " va=%#"PRIxVADDR" (asid %d)\n",
 	    cpu_number(), p->p_pid, p->p_comm, ksi.ksi_signo, cause,
-	    utf->tf_regs[_R_PC], vaddr);
+	    utf->tf_regs[_R_PC], vaddr, curcpu()->ci_pmap_asid_cur);
 	printf("registers:\n");
 	for (size_t i = 0; i < 32; i += 4) {
 		printf(
