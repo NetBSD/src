@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.17 2011/12/22 20:07:01 jakllsch Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.18 2011/12/23 00:51:46 jakllsch Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 
 /*
  * iPAQ driver
- *
+ * 
  * 19 July 2003:	Incorporated changes suggested by Sam Lawrance from
  * 			the uppc module
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.17 2011/12/22 20:07:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.18 2011/12/23 00:51:46 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ extern struct cfdriver uipaq_cd;
 CFATTACH_DECL2_NEW(uipaq, sizeof(struct uipaq_softc), uipaq_match,
     uipaq_attach, uipaq_detach, uipaq_activate, NULL, uipaq_childdet);
 
-int
+int 
 uipaq_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -148,7 +148,7 @@ uipaq_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void
+void 
 uipaq_attach(device_t parent, device_t self, void *aux)
 {
 	struct uipaq_softc *sc = device_private(self);

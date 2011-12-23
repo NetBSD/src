@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.38 2011/12/22 20:06:59 jakllsch Exp $ */
+/*	$NetBSD: if_ural.c,v 1.39 2011/12/23 00:51:44 jakllsch Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.38 2011/12/22 20:06:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.39 2011/12/23 00:51:44 jakllsch Exp $");
 
 
 #include <sys/param.h>
@@ -357,7 +357,7 @@ int             ural_activate(device_t, enum devact);
 extern struct cfdriver ural_cd;
 CFATTACH_DECL_NEW(ural, sizeof(struct ural_softc), ural_match, ural_attach, ural_detach, ural_activate);
 
-int
+int 
 ural_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -366,7 +366,7 @@ ural_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+void 
 ural_attach(device_t parent, device_t self, void *aux)
 {
 	struct ural_softc *sc = device_private(self);
@@ -531,7 +531,7 @@ ural_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+int 
 ural_detach(device_t self, int flags)
 {
 	struct ural_softc *sc = device_private(self);
