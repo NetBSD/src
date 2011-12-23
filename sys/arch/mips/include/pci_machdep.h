@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.4.96.2 2009/09/13 03:29:36 cliff Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.4.96.3 2011/12/23 17:58:20 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -74,6 +74,15 @@ struct mips_pci_chipset {
 	void		(*pc_conf_interrupt)(void *, int, int, int,
 			    int, int *);
 
+#ifdef __PCI_BUS_DEVORDER
+	int		(*pc_bus_devorder)(void *, int, char *);
+#endif
+#ifdef __PCI_DEV_FUNCORDER
+	bool		(*pc_dev_funcorder)(void *, int, int, int, char *);
+#endif
+#ifdef __HAVE_PCI_CONF_HOOK
+	int		(*pc_conf_hook)(void *, int, int, int, pcireg_t);
+#endif
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 	void		*(*pc_pciide_compat_intr_establish)(void *,
 			    device_t, struct pci_attach_args *, int,
@@ -108,6 +117,19 @@ struct mips_pci_chipset {
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #define	pci_conf_interrupt(c, b, d, p, s, lp)				\
     (*(c)->pc_conf_interrupt)((c)->pc_intr_v, (b), (d), (p), (s), (lp))
+#ifdef __PCI_BUS_DEVORDER
+#define	pci_bus_devorder(c, b, d)					\
+    (*(c)->pc_bus_devorder)((c)->pc_intr_v, (b), (d))
+#endif
+#ifdef __PCI_DEV_FUNCORDER
+#define	pci_dev_funcorder(c, b, d, nf, f)				\
+    (*(c)->pc_dev_funcorder)((c)->pc_intr_v, (b), (d), (nf), (f))
+#endif
+#ifdef __HAVE_PCI_CONF_HOOK
+#define	pci_conf_hook(c, b, d, f, id)				\
+    (*(c)->pc_conf_hook)((c)->pc_intr_v, (b), (d), (f), (id))
+#endif
+
 
 /*
  * mips-specific PCI functions.
