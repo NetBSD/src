@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.23.38.7 2011/12/02 00:01:37 matt Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.23.38.8 2011/12/23 18:50:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,6 +78,7 @@
 
 #ifndef _MIPS_MIPS3_PTE_H_
 #define _MIPS_MIPS3_PTE_H_
+
 /*
  * R4000 hardware page table entry
  */
@@ -106,20 +107,28 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 #define MIPS3_PG_WIRED	0x80000000	/* SW */
 #define MIPS3_PG_RO	0x40000000	/* SW */
 
-#ifdef ENABLE_MIPS_16KB_PAGE
-#define	MIPS3_PG_SVPN	0xffffc000	/* Software page no mask */
-#define	MIPS3_PG_HVPN	0xffff8000	/* Hardware page no mask */
-#define	MIPS3_PG_ODDPG	0x00004000	/* Odd even pte entry */
-#elif defined(ENABLE_MIPS_8KB_PAGE)
-#define	MIPS3_PG_SVPN	0xffffe000	/* Software page no mask */
-#define	MIPS3_PG_HVPN	0xffffe000	/* Hardware page no mask */
-#define	MIPS3_PG_NEXT	0x00000040	/* next PFN */
-#elif defined(ENABLE_MIPS_4KB_PAGE) || 1
-#define	MIPS3_PG_SVPN	0xfffff000	/* Software page no mask */
-#define	MIPS3_PG_HVPN	0xffffe000	/* Hardware page no mask */
-#define	MIPS3_PG_ODDPG	0x00001000	/* Odd even pte entry */
+#ifndef PAGE_SHIFT
+#error PAGE_SHIFT is not defined
 #endif
-#define	MIPS3_PG_ASID	0x000000ff	/* Address space ID */
+#define	MIPS3_PG_SVPN	(0xffffffff << PAGE_SHIFT)
+						/* Software page # mask */
+#if PAGE_SHIFT & 1
+#define	MIPS3_PG_HVPN	MIPS3_PG_SVPN		/* Hardware page # mask */
+#if !defined(_LOCORE)
+#define	MIPS3_PG_NEXT	(1U << (PAGE_SHIFT - MIPS3_PG_SHIFT - 1))
+						/* next PFN */
+#elif defined(MIPS_4100)
+#define	MIPS3_PG_NEXT	(1U << (PAGE_SHIFT - MIPS3_4100_PG_SHIFT - 1))
+						/* next PFN */
+#else
+#define	MIPS3_PG_NEXT	(1U << (PAGE_SHIFT - MIPS3_DEFAULT_PG_SHIFT - 1))
+						/* next PFN */
+#endif
+#else
+#define	MIPS3_PG_HVPN	(MIPS3_PG_SVPN << 1)	/* Hardware page # mask */
+#define	MIPS3_PG_ODDPG	(1U << PAGE_SHIFT)	/* Odd even pte entry */
+#endif
+#define	MIPS3_PG_ASID	0x000003ff	/* Address space ID */
 #define	MIPS3_PG_G	0x00000001	/* Global; ignore ASID if in lo0 & lo1 */
 #define	MIPS3_PG_V	0x00000002	/* Valid */
 #define	MIPS3_PG_NV	0x00000000
@@ -214,7 +223,7 @@ CTASSERT(MIPS3_PG_SIZE_TO_MASK(8192) == MIPS3_PG_SIZE_4K);
 #define	MIPS4100_PG_SIZE_MASK_TO_SIZE(pg_mask)	\
     ((((pg_mask) | 0x000007ff) + 1) / 2)
 
-#define	MIPS4100_PG_SIZE_TO_MASK(pg_size)		\
+#define	MIPS4100_PG_SIZE_TO_MASK(pg_size)	\
     ((((pg_size) * 2) - 1) & ~0x000007ff)
 
 #endif /* !_MIPS_MIPS3_PTE_H_ */
