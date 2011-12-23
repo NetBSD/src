@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.27 2011/12/23 15:31:16 christos Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.28 2011/12/23 19:08:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -174,7 +174,7 @@ struct icmp {
 #define	ICMP_MOBILE_REGREPLY	36		/* mobile registration reply */
 #define	ICMP_PHOTURIS		40		/* security */
 
-#define	ICMP_MAXTYPE		40
+#define	ICMP_MAXTYPE		18		/* XXX: for icmp stats */
 
 #define	ICMP_INFOTYPE(type) \
 	((type) == ICMP_ECHOREPLY || (type) == ICMP_ECHO || \
