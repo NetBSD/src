@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.26 2010/06/26 14:24:29 kefren Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.27 2011/12/23 15:31:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -150,6 +150,7 @@ struct icmp {
 #define		ICMP_REDIRECT_HOST	1		/* for host */
 #define		ICMP_REDIRECT_TOSNET	2		/* for tos and net */
 #define		ICMP_REDIRECT_TOSHOST	3		/* for tos and host */
+#define	ICMP_ALTHOSTADDR	6		/* alternative host address */
 #define	ICMP_ECHO		8		/* echo service */
 #define	ICMP_ROUTERADVERT	9		/* router advertisement */
 #define	ICMP_ROUTERSOLICIT	10		/* router solicitation */
@@ -164,8 +165,16 @@ struct icmp {
 #define	ICMP_IREQREPLY		16		/* information reply */
 #define	ICMP_MASKREQ		17		/* address mask request */
 #define	ICMP_MASKREPLY		18		/* address mask reply */
+#define	ICMP_TRACEROUTE		30		/* traceroute */
+#define	ICMP_DATACONVERR	31		/* data conversion error */
+#define	ICMP_MOBILE_REDIRECT	32		/* mobile redirect */
+#define	ICMP_IPV6_WHEREAREYOU	33		/* ipv6 where are you */
+#define	ICMP_IPV6_IAMHERE	34		/* ipv6 i am here */
+#define	ICMP_MOBILE_REGREQUEST	35		/* mobile registration req */
+#define	ICMP_MOBILE_REGREPLY	36		/* mobile registration reply */
+#define	ICMP_PHOTURIS		40		/* security */
 
-#define	ICMP_MAXTYPE		18
+#define	ICMP_MAXTYPE		40
 
 #define	ICMP_INFOTYPE(type) \
 	((type) == ICMP_ECHOREPLY || (type) == ICMP_ECHO || \
