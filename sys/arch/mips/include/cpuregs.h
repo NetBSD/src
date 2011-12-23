@@ -693,7 +693,7 @@
 #define	MIPS1_TLB_PID_SHIFT		6
 
 #define	MIPS3_TLB_VPN2			0xffffe000
-#define	MIPS3_TLB_ASID			0x000000ff
+#define	MIPS3_TLB_ASID			0x000003ff
 
 #define	MIPS1_TLB_VIRT_PAGE_NUM		MIPS1_TLB_VPN
 #define	MIPS3_TLB_VIRT_PAGE_NUM		MIPS3_TLB_VPN2
@@ -732,7 +732,11 @@
 #if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) != 0 && MIPS1 == 0
 #define	MIPS_TLB_PID_SHIFT		0
 #define	MIPS_TLB_PID			MIPS3_TLB_PID
+#if (MIPS3 + MIPS4) != 0
 #define	MIPS_TLB_NUM_PIDS		MIPS3_TLB_NUM_ASIDS
+#else
+#define	MIPS_TLB_NUM_PIDS		mips_options.mips_num_tlb_asids
+#endif
 #endif
 
 
@@ -874,6 +878,7 @@
 #define	MIPS_24KE	0x96	/* MIPS 24KEc			ISA 32  Rel 2 */
 #define	MIPS_74K	0x97	/* MIPS 74Kc/74Kf		ISA 32  Rel 2 */
 #define	MIPS_1004K	0x99	/* MIPS 1004Kc/1004Kf		ISA 32  Rel 2 */
+#define	MIPS_1074K	0x9a	/* MIPS 1074K			ISA 32  Rel 2 */
 
 /*
  * Alchemy (company ID 3) use the processor ID field to donote the CPU core
@@ -908,13 +913,8 @@
 /*
  * CPU processor IDs for company ID == 12 (RMI)
  */
-#define	MIPS_XLP832	0x10	/* RMI XLP832	 		ISA 64  Rel 2 */
-#define	MIPS_XLP816	0x14	/* RMI XLP816	 		ISA 64  Rel 2 */
-#define	MIPS_XLP432	0x90	/* RMI XLP432	 		ISA 64  Rel 2 */
-#define	MIPS_XLP416	0x94	/* RMI XLP416	 		ISA 64  Rel 2 */
-#define	MIPS_XLP316	0xd4	/* RMI XLP316	 		ISA 64  Rel 2 */
-#define	MIPS_XLP308	0xd5	/* RMI XLP308	 		ISA 64  Rel 2 */
-#define	MIPS_XLP304	0xd7	/* RMI XLP304	 		ISA 64  Rel 2 */
+#define	MIPS_XLP8XX	0x10	/* RMI XLP8XX/XLP4XX 		ISA 64  Rel 2 */
+#define	MIPS_XLP3XX	0x11	/* RMI XLP3XX	 		ISA 64  Rel 2 */
 #define	MIPS_XLR308B	0x06	/* RMI XLR308-B	 		ISA 64  */
 #define	MIPS_XLR508B	0x07	/* RMI XLR508-B	 		ISA 64  */
 #define	MIPS_XLR516B	0x08	/* RMI XLR516-B	 		ISA 64  */
@@ -956,9 +956,6 @@
 #endif
 #ifdef MIPS64_SB1
 #include <mips/sb1regs.h>
-#endif
-#if (MIPS64_XLR + MIPS64_XLS + MIPS64_XLP) > 0
-#include <mips/rmi/rmixlreg.h>
 #endif
 
 #endif /* _MIPS_CPUREGS_H_ */
