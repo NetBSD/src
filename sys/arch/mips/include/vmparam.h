@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.22 2011/12/02 00:01:37 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.23 2011/12/23 18:54:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,17 +51,13 @@
  */
 
 /*
- * We normally use a 4K page but may use 16K on MIPS systems.
+ * We normally use a 4K page but may use 8K, 16K, or 32K on MIPS systems.
  * Override PAGE_* definitions to compile-time constants.
  */
-#ifdef ENABLE_MIPS_16KB_PAGE
-#define	PAGE_SHIFT	14
-#elif defined(ENABLE_MIPS_8KB_PAGE)
-#define	PAGE_SHIFT	13
-#elif defined(ENABLE_MIPS_4KB_PAGE) || 1
-#define	PAGE_SHIFT	12
+#ifdef MIPS_PAGE_SHIFT
+#define	PAGE_SHIFT	MIPS_PAGE_SHIFT
 #else
-#error ENABLE_MIPS_xKB_PAGE not defined
+#define	PAGE_SHIFT	12
 #endif
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
@@ -177,7 +173,7 @@
 #ifdef ENABLE_MIPS_TX3900
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x01000000)	/* 0xFFFFFFFFFF000000 */
 #else
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x00004000)	/* 0xFFFFFFFFFFFFC000 */
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x00008000)	/* 0xFFFFFFFFFFF08000 */
 #endif
 #endif
 #define VM_MAXUSER32_ADDRESS	((vaddr_t)(1UL << 31))/* 0x0000000080000000 */
@@ -238,14 +234,21 @@ typedef struct pv_entry {
 #define	PG_MD_MODIFIED		0x0002	/* page has been modified */
 #define	PG_MD_REFERENCED	0x0004	/* page has been recently referenced */
 #define	PG_MD_POOLPAGE		0x0008	/* page is used as a poolpage */
-#define	PG_MD_EXECPAGE		0x0010	/* page is exec mapped */
+#define	PG_MD_EXECPAGE_SHIFT	8
+#define	PG_MD_EXECPAGE(va)	\
+	__BIT(PG_MD_EXECPAGE_SHIFT + atop(va & MIPS_ICACHE_ALIAS_MASK))
+				 	/* page (color) is exec mapped */
+#define	PG_MD_EXECPAGE_ANY	(0xff << PG_MD_EXECPAGE_SHIFT)
+					/* page is exec mapped */
 
 #define	PG_MD_CACHED_P(md)	(((md)->pvh_attrs & PG_MD_UNCACHED) == 0)
 #define	PG_MD_UNCACHED_P(md)	(((md)->pvh_attrs & PG_MD_UNCACHED) != 0)
 #define	PG_MD_MODIFIED_P(md)	(((md)->pvh_attrs & PG_MD_MODIFIED) != 0)
 #define	PG_MD_REFERENCED_P(md)	(((md)->pvh_attrs & PG_MD_REFERENCED) != 0)
 #define	PG_MD_POOLPAGE_P(md)	(((md)->pvh_attrs & PG_MD_POOLPAGE) != 0)
-#define	PG_MD_EXECPAGE_P(md)	(((md)->pvh_attrs & PG_MD_EXECPAGE) != 0)
+#define	PG_MD_EXECPAGE_P(md,va)	(((md)->pvh_attrs & PG_MD_EXECPAGE(va)) != 0)
+#define	PG_MD_EXECPAGES(md)	((md)->pvh_attrs & PG_MD_EXECPAGE_ANY)
+#define	PG_MD_EXECPAGE_ANY_P(md) (PG_MD_EXECPAGES(md) != 0)
 
 struct vm_page_md {
 	struct pv_entry pvh_first;	/* pv_entry first */
