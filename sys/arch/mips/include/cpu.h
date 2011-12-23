@@ -260,6 +260,7 @@ struct mips_options {
 	u_int mips_cpu_mhz; /* CPU speed in MHz, estimated by mc_cpuspeed(). */
 	u_int mips_cpu_flags;
 	u_int mips_num_tlb_entries;
+	u_int mips_num_tlb_asids;
 	mips_prid_t mips_cpu_id;
 	mips_prid_t mips_fpu_id;
 	bool mips_has_r4k_mmu;
@@ -399,8 +400,7 @@ extern struct mips_options mips_options;
 #define	MIPS_HAS_LLADDR		((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 /* This test is ... rather bogus */
-#define	CPUISMIPS3	((mips_options.mips_cpu_arch & \
-	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS32 | CPU_ARCH_MIPS64)) != 0)
+#define	CPUISMIPS3	((mips_options.mips_cpu_arch & (CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS32 | CPU_ARCH_MIPS64 | CPU_ARCH_MIPS32R2 | CPU_ARCH_MIPS64R2 )) != 0)
 
 /* And these aren't much better while the previous test exists as is... */
 #define	CPUISMIPS4	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS4) != 0)
@@ -641,7 +641,7 @@ void	fpusave_cpu(struct cpu_info *);
 /* mips_machdep.c */
 void	dumpsys(void);
 int	savectx(struct pcb *);
-void	cpu_identify(device_t);
+void	cpu_identify(device_t, const char *);
 
 /* locore*.S */
 int	badaddr(void *, size_t);
