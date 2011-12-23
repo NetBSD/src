@@ -234,7 +234,7 @@ END(mips3_cp0_config_write)
 
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	.set push
-#ifdef _LP64
+#if (MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	.set mips64
 #else
 	.set mips32
@@ -249,16 +249,6 @@ LEAF(mipsNN_cp0_config1_read)
 	j	ra
 	 nop
 END(mipsNN_cp0_config1_read)
-
-/*
- * uint32_t mipsNN_cp0_config1_write(uint32_t)
- *
- *	Set the current value of the CP0 Config (Select 1) register.
- */
-LEAF(mipsNN_cp0_config1_write)
-	mtc0	v0, MIPS_COP_0_CONFIG, 1
-	JR_HB_RA
-END(mipsNN_cp0_config1_write)
 
 /*
  * uint32_t mipsNN_cp0_config2_read(void)
@@ -281,6 +271,145 @@ LEAF(mipsNN_cp0_config3_read)
 	j	ra
 	 nop
 END(mipsNN_cp0_config3_read)
+
+/*
+ * uint32_t mipsNN_cp0_config4_read(void)
+ *
+ *	Return the current value of the CP0 Config (Select 4) register.
+ */
+LEAF(mipsNN_cp0_config4_read)
+	mfc0	v0, MIPS_COP_0_CONFIG, 4
+	j	ra
+	 nop
+END(mipsNN_cp0_config4_read)
+
+/*
+ * uint32_t mipsNN_cp0_config5_read(void)
+ *
+ *	Return the current value of the CP0 Config (Select 5) register.
+ */
+LEAF(mipsNN_cp0_config5_read)
+	mfc0	v0, MIPS_COP_0_CONFIG, 5
+	j	ra
+	 nop
+END(mipsNN_cp0_config5_read)
+
+/*
+ * uint32_t mipsNN_cp0_config6_read(void)
+ *
+ *	Return the current value of the CP0 Config (Select 6) register.
+ */
+LEAF(mipsNN_cp0_config6_read)
+	mfc0	v0, MIPS_COP_0_CONFIG, 6
+	j	ra
+	 nop
+END(mipsNN_cp0_config6_read)
+
+/*
+ * uint32_t mipsNN_cp0_config7_read(void)
+ *
+ *	Return the current value of the CP0 Config (Select 7) register.
+ */
+LEAF(mipsNN_cp0_config7_read)
+	mfc0	v0, MIPS_COP_0_CONFIG, 7
+	j	ra
+	 nop
+END(mipsNN_cp0_config7_read)
+
+#if (MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+/*
+ * uint32_t mips64_cp0_config7_read(void)
+ *
+ *	Return the current value of the CP0 Config (Select 7) register.
+ */
+LEAF(mips64_cp0_config7_read)
+	dmfc0	v0, MIPS_COP_0_CONFIG, 7
+	j	ra
+	 nop
+END(mips64_cp0_config7_read)
+#endif
+
+/*
+ * uint32_t mipsNN_cp0_config1_write(uint32_t)
+ *
+ *	Set the current value of the CP0 Config (Select 1) register.
+ */
+LEAF(mipsNN_cp0_config1_write)
+	mtc0	a0, MIPS_COP_0_CONFIG, 1
+	JR_HB_RA
+END(mipsNN_cp0_config1_write)
+
+/*
+ * uint32_t mipsNN_cp0_config2_write(uint32_t)
+ *
+ *	Set the current value of the CP0 Config (Select 2) register.
+ */
+LEAF(mipsNN_cp0_config2_write)
+	mtc0	a0, MIPS_COP_0_CONFIG, 2
+	JR_HB_RA
+END(mipsNN_cp0_config2_write)
+
+/*
+ * uint32_t mipsNN_cp0_config3_write(uint32_t)
+ *
+ *	Set the current value of the CP0 Config (Select 3) register.
+ */
+LEAF(mipsNN_cp0_config3_write)
+	mtc0	a0, MIPS_COP_0_CONFIG, 3
+	JR_HB_RA
+END(mipsNN_cp0_config3_write)
+
+/*
+ * uint32_t mipsNN_cp0_config4_write(uint32_t)
+ *
+ *	Set the current value of the CP0 Config (Select 4) register.
+ */
+LEAF(mipsNN_cp0_config4_write)
+	mtc0	a0, MIPS_COP_0_CONFIG, 4
+	JR_HB_RA
+END(mipsNN_cp0_config4_write)
+
+/*
+ * uint32_t mipsNN_cp0_config5_write(uint32_t)
+ *
+ *	Set the current value of the CP0 Config (Select 5) register.
+ */
+LEAF(mipsNN_cp0_config5_write)
+	mtc0	a0, MIPS_COP_0_CONFIG, 5
+	JR_HB_RA
+END(mipsNN_cp0_config5_write)
+
+/*
+ * uint32_t mipsNN_cp0_config6_write(uint32_t)
+ *
+ *	Set the current value of the CP0 Config (Select 6) register.
+ */
+LEAF(mipsNN_cp0_config6_write)
+	mtc0	a0, MIPS_COP_0_CONFIG, 6
+	JR_HB_RA
+END(mipsNN_cp0_config6_write)
+
+/*
+ * uint32_t mipsNN_cp0_config7_write(uint32_t)
+ *
+ *	Set the current value of the CP0 Config (Select 7) register.
+ */
+LEAF(mipsNN_cp0_config7_write)
+	mtc0	a0, MIPS_COP_0_CONFIG, 7
+	JR_HB_RA
+END(mipsNN_cp0_config7_write)
+
+#if (MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+/*
+ * uint32_t mips64_cp0_config7_write(uint32_t)
+ *
+ *	Set the current value of the CP0 Config (Select 7) register.
+ */
+LEAF(mips64_cp0_config7_write)
+	dmtc0	a0, MIPS_COP_0_CONFIG, 7
+	JR_HB_RA
+END(mips64_cp0_config7_write)
+#endif
 
 /*
  * uintptr_t mipsNN_cp0_watchlo_read(u_int sel)
@@ -445,6 +574,17 @@ LEAF(mips3_cp0_count_write)
 	mtc0	a0, MIPS_COP_0_COUNT
 	JR_HB_RA
 END(mips3_cp0_count_write)
+
+/*
+ * uint32_t mips3_cp0_random_read(void)
+ *
+ *	Return the current value of the CP0 Wired register.
+ */
+LEAF(mips3_cp0_random_read)
+	mfc0	v0, MIPS_COP_0_TLB_RANDOM
+	j	ra
+	 nop
+END(mips3_cp0_random_read)
 
 /*
  * uint32_t mips3_cp0_wired_read(void)
