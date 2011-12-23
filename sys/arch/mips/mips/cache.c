@@ -374,9 +374,10 @@ mips_config_cache_prehistoric(void)
 
 		mips3_get_cache_config(csizebase);
 
-		if (mci->mci_picache_size > PAGE_SIZE ||
-		    mci->mci_pdcache_size > PAGE_SIZE)
-			/* no VCE support if there is no L2 cache */
+		/* no VCE support if there is no L2 cache */
+		if (mci->mci_picache_size > PAGE_SIZE)
+			mci->mci_icache_virtual_alias = true;
+		if (mci->mci_pdcache_size > PAGE_SIZE)
 			mci->mci_cache_virtual_alias = true;
 
 		switch (mci->mci_picache_line_size) {
@@ -452,8 +453,9 @@ primary_cache_is_2way:
 
 		mips3_get_cache_config(csizebase);
 
-		if ((mci->mci_picache_size / mci->mci_picache_ways) > PAGE_SIZE ||
-		    (mci->mci_pdcache_size / mci->mci_pdcache_ways) > PAGE_SIZE)
+		if (mci->mci_picache_size / mci->mci_picache_ways > PAGE_SIZE)
+			mci->mci_icache_virtual_alias = true;
+		if (mci->mci_pdcache_size / mci->mci_pdcache_ways > PAGE_SIZE)
 			mci->mci_cache_virtual_alias = true;
 
 		switch (mci->mci_picache_line_size) {
@@ -582,11 +584,17 @@ primary_cache_is_2way:
 		KASSERT(mci->mci_picache_ways != 0);
 		mci->mci_picache_way_size = (mci->mci_picache_size / mci->mci_picache_ways);
 		mci->mci_picache_way_mask = mci->mci_picache_way_size - 1;
+		if (mci->mci_icache_virtual_alias)
+			mci->mci_icache_alias_mask =
+			   mci->mci_picache_way_mask & -PAGE_SIZE;
 	}
 	if (mci->mci_pdcache_size) {
 		KASSERT(mci->mci_pdcache_ways != 0);
 		mci->mci_pdcache_way_size = (mci->mci_pdcache_size / mci->mci_pdcache_ways);
 		mci->mci_pdcache_way_mask = mci->mci_pdcache_way_size - 1;
+		if (mci->mci_cache_virtual_alias)
+			mci->mci_cache_alias_mask =
+			    mci->mci_picache_way_mask & -PAGE_SIZE;
 	}
 
 	mips_dcache_compute_align();
@@ -621,7 +629,8 @@ primary_cache_is_2way:
 		    (MIPS3_MAX_PCACHE_SIZE - 1) & ~PAGE_MASK;	/* va[14:12] */
 		mci->mci_cache_prefer_mask = MIPS3_MAX_PCACHE_SIZE - 1;
 
-		mci->mci_cache_virtual_alias = 0;
+		mci->mci_icache_virtual_alias = false;
+		mci->mci_cache_virtual_alias = false;
 		/* FALLTHROUGH */
 	case MIPS_R4600:
 #ifdef ENABLE_MIPS_R4700
@@ -825,8 +834,10 @@ mips3_get_cache_config(int csizebase)
 	mci->mci_pdcache_line_size = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
 	    MIPS3_CONFIG_DB);
 
+	mci->mci_icache_alias_mask =
+	    (mci->mci_picache_size / mci->mci_picache_ways - 1) & -PAGE_SHIFT;
 	mci->mci_cache_alias_mask =
-	    ((mci->mci_pdcache_size / mci->mci_pdcache_ways) - 1) & ~PAGE_MASK;
+	    (mci->mci_pdcache_size / mci->mci_pdcache_ways - 1) & -PAGE_SHIFT;
 	mci->mci_cache_prefer_mask =
 	    max(mci->mci_pdcache_size, mci->mci_picache_size) - 1;
 	uvmexp.ncolors = (mci->mci_cache_alias_mask >> PAGE_SHIFT) + 1;
@@ -895,6 +906,7 @@ mips_config_cache_modern(uint32_t cpu_id)
 {
 	struct mips_cache_info * const mci = &mips_cache_info;
 	struct mips_cache_ops * const mco = &mips_cache_ops;
+	struct mips_options * const opts = &mips_options;
 	/* MIPS32/MIPS64, use coprocessor 0 config registers */
 	uint32_t cfg, cfg1;
 
@@ -966,29 +978,29 @@ mips_config_cache_modern(uint32_t cpu_id)
 
 #define CACHE_DEBUG
 #ifdef CACHE_DEBUG
-	printf("MIPS32/64 params: cpu arch: %d\n", mips_options.mips_cpu_arch);
-	printf("MIPS32/64 params: TLB entries: %d\n", mips_options.mips_num_tlb_entries);
+	printf("MIPS32/64 params: cpu arch: %d\n", opts->mips_cpu_arch);
+	printf("MIPS32/64 params: TLB entries: %d\n", opts->mips_num_tlb_entries);
 	if (mci->mci_picache_line_size == 0)
 		printf("MIPS32/64 params: no Icache\n");
 	else {
-		printf("MIPS32/64 params: Icache: line = %d, total = %d, "
-		    "ways = %d\n", mci->mci_picache_line_size,
+		printf("MIPS32/64 params: %s: line=%d, total=%d, "
+		    "ways=%d, sets=%d, colors=%d\n", "Icache",
+		    mci->mci_picache_line_size,
 		    mci->mci_picache_way_size * mci->mci_picache_ways,
-		    mci->mci_picache_ways);
-		printf("\t\t sets = %d\n", (mci->mci_picache_way_size *
-		    mci->mci_picache_ways / mci->mci_picache_line_size) /
-		    mci->mci_picache_ways);
+		    mci->mci_picache_ways,
+		    mci->mci_picache_way_size / mci->mci_picache_line_size,
+		    mci->mci_picache_way_size >> PAGE_SHIFT);
 	}
 	if (mci->mci_pdcache_line_size == 0)
 		printf("MIPS32/64 params: no Dcache\n");
 	else {
-		printf("MIPS32/64 params: Dcache: line = %d, total = %d, "
-		    "ways = %d\n", mci->mci_pdcache_line_size,
+		printf("MIPS32/64 params: %s: line=%d, total=%d, "
+		    "ways=%d, sets=%d, colors=%d\n", "Dcache",
+		    mci->mci_pdcache_line_size,
 		    mci->mci_pdcache_way_size * mci->mci_pdcache_ways,
-		    mci->mci_pdcache_ways);
-		printf("\t\t sets = %d\n", (mci->mci_pdcache_way_size *
-		    mci->mci_pdcache_ways / mci->mci_pdcache_line_size) /
-		    mci->mci_pdcache_ways);
+		    mci->mci_pdcache_ways,
+		    mci->mci_pdcache_way_size / mci->mci_pdcache_line_size,
+		    mci->mci_pdcache_way_size >> PAGE_SHIFT);
 	}
 #endif /* CACHE_DEBUG */
 
@@ -1074,6 +1086,88 @@ mips_config_cache_modern(uint32_t cpu_id)
 		panic("no Dcache ops for %d byte lines",
 		    mci->mci_pdcache_line_size);
 	}
+	if (MIPSNN_CFG1_M & cfg1) {
+		uint32_t cfg2 = mipsNN_cp0_config2_read();
+
+		switch (MIPSNN_GET(CFG2_SL, cfg2)) {
+		case MIPSNN_CFG2_SL_NONE:
+			break;
+		default:
+			mci->mci_scache_unified = true;
+
+			mci->mci_sdcache_line_size = MIPSNN_CFG2_SL(cfg2);
+			mci->mci_sdcache_way_size =
+			    mci->mci_sdcache_line_size * MIPSNN_CFG2_SS(cfg2);
+			mci->mci_sdcache_ways = MIPSNN_CFG2_SA(cfg2) + 1;
+
+			/*
+			 * Compute the total size and "way mask" for the
+			 * secondary Dcache.
+			 */
+			mci->mci_sdcache_size =
+			    mci->mci_sdcache_way_size * mci->mci_sdcache_ways;
+			mci->mci_sdcache_way_mask =
+			    mci->mci_sdcache_way_size - 1;
+
+			/*
+			 * cache is unified so copy data info to inst info.
+			 */
+			mci->mci_sicache_line_size = mci->mci_sdcache_line_size;
+			mci->mci_sicache_way_size = mci->mci_sdcache_way_size;
+			mci->mci_sicache_ways = mci->mci_sdcache_ways;
+			mci->mci_sicache_size = mci->mci_sdcache_size;
+			mci->mci_sicache_way_mask = mci->mci_sdcache_way_mask;
+
+			break;
+		}
+
+#ifdef CACHE_DEBUG
+		if (mci->mci_sdcache_line_size != 0) {
+			printf("MIPS32/64 params: %s: line=%d, total=%d, "
+			    "ways=%d, sets=%d, colors=%d\n",
+			    "SDcache",
+			    mci->mci_sdcache_line_size,
+			    mci->mci_sdcache_way_size * mci->mci_sdcache_ways,
+			    mci->mci_sdcache_ways,
+			    mci->mci_sdcache_way_size
+			        / mci->mci_sdcache_line_size,
+			    mci->mci_sdcache_way_size >> PAGE_SHIFT);
+		}
+#endif
+
+		switch (MIPSNN_GET(CFG2_TL, cfg2)) {
+		case MIPSNN_CFG2_TL_NONE:
+			break;
+		default:
+			mci->mci_tcache_line_size = MIPSNN_CFG2_TL(cfg2);
+			mci->mci_tcache_way_size =
+			    mci->mci_tcache_line_size * MIPSNN_CFG2_TS(cfg2);
+			mci->mci_tcache_ways = MIPSNN_CFG2_TA(cfg2) + 1;
+
+			/*
+			 * Compute the total size and "way mask" for the
+			 * secondary Dcache.
+			 */
+			mci->mci_tcache_size =
+			    mci->mci_tcache_way_size * mci->mci_tcache_ways;
+			mci->mci_tcache_way_mask =
+			    mci->mci_tcache_way_size - 1;
+			break;
+		}
+	}
+
+	/*
+	 * calculate the alias masks and from them set to virtual alias flags.
+	 */
+#if (MIPS32 + MIPS64 + MIPS32R2 + MIPS64R2) != 0
+	mci->mci_cache_alias_mask = mci->mci_pdcache_way_mask & -PAGE_SIZE;
+	mci->mci_cache_virtual_alias = (mci->mci_cache_alias_mask != 0);
+#endif
+
+#if (MIPS32 + MIPS64 + MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) != 0
+	mci->mci_icache_alias_mask = mci->mci_picache_way_mask & -PAGE_SIZE;
+	mci->mci_icache_virtual_alias = (mci->mci_icache_alias_mask != 0);
+#endif
 
 	/*
 	 * RMI (NetLogic/Broadcom) don't support WB (op 6) so we have make
@@ -1083,11 +1177,43 @@ mips_config_cache_modern(uint32_t cpu_id)
 	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_RMI) {
 		mco->mco_pdcache_wb_range = mco->mco_pdcache_wbinv_range;
 		mco->mco_intern_pdcache_wb_range = mco->mco_pdcache_wbinv_range;
+		if (MIPSNN_GET(CFG_AR, cfg) == MIPSNN_CFG_AR_REV2) {
+			mci->mci_pdcache_write_through = true;
+			mci->mci_sdcache_write_through = false;
+			KASSERT(PAGE_SIZE >= mci->mci_picache_way_size
+			    || mci->mci_icache_virtual_alias);
+		} else {
+			KASSERT(mci->mci_icache_virtual_alias == 0);
+			KASSERT(mci->mci_icache_virtual_alias == 0);
+		}
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+	} else if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_MTI) {
+		/*
+		 * All MTI cores share a (mostly) common config7 defintion. 
+		 * Use it to determine if the caches have virtual aliases.
+		 * If the core doesn't have a config7 register, its caches
+		 * are too small or have too many ways to have aliases.
+		 */
+		if (opts->mips_cpu->cpu_cp0flags & MIPS_CP0FL_CONFIG7) {
+			const uint32_t cfg7 = mipsNN_cp0_config7_read();
+			if (cfg7 & MIPSNN_MTI_CFG7_AR) {
+				/* [Data] Alias Removal Present */
+				mci->mci_cache_virtual_alias = false;
+			}
+			if (cfg7 & MIPSNN_MTI_CFG7_IAR) {
+				/* Instruction Alias Removal Present */
+				mci->mci_icache_virtual_alias = false;
+			}
+		} else {
+			KASSERT(mci->mci_pdcache_way_size <= PAGE_SIZE);
+			KASSERT(mci->mci_picache_way_size <= PAGE_SIZE);
+		}
+#endif
 	}
 
 	mipsNN_cache_init(cfg, cfg1);
 
-	if (mips_options.mips_cpu_flags &
+	if (opts->mips_cpu_flags &
 	    (CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_I_D_CACHE_COHERENT)) {
 #ifdef CACHE_DEBUG
 		printf("  Dcache is coherent\n");
@@ -1101,8 +1227,18 @@ mips_config_cache_modern(uint32_t cpu_id)
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 		mco->mco_pdcache_wb_range =
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
+
+		mco->mco_sdcache_wbinv_all = cache_noop;
+		mco->mco_sdcache_wbinv_range =
+		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		mco->mco_sdcache_wbinv_range_index =
+		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		mco->mco_sdcache_inv_range =
+		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		mco->mco_sdcache_wb_range =
+		    (void (*)(vaddr_t, vsize_t))cache_noop;
 	}
-	if (mips_options.mips_cpu_flags & CPU_MIPS_I_D_CACHE_COHERENT) {
+	if (opts->mips_cpu_flags & CPU_MIPS_I_D_CACHE_COHERENT) {
 #ifdef CACHE_DEBUG
 		printf("  Icache is coherent against Dcache\n");
 #endif
