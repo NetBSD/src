@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.8.1.2.9 2010/12/29 00:22:01 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.8.1.2.10 2011/12/23 23:25:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.9 2010/12/29 00:22:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.10 2011/12/23 23:25:42 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -149,14 +149,6 @@ phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
  * that is safe for use on the interrupt stack; it can be made
  * higher to block network software interrupts after panics.
  */
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- * Used as an argument to splx().
- * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
- * disables mips1 FPU interrupts.
- */
-int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
 void	mach_init(int, int32_t *, int, intptr_t, u_int, char *); /* XXX */
 
@@ -284,7 +276,7 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init(NULL);
+	mips_vector_init(NULL, false);
 
 	/*
 	 * We know the CPU type now.  Initialize our DMA tags (might
@@ -505,9 +497,10 @@ lookup_bootinfo(int type)
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	struct pcb * const pcb = lwp_getpcb(curlwp);
 
 	/* take a snap shot before clobbering any registers */
-	savectx(curlwp->l_addr);
+	savectx(pcb);
 
 #ifdef DEBUG
 	if (panicstr)
