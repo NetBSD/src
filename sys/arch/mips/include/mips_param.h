@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.23.78.8 2011/12/03 01:44:04 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.23.78.9 2011/12/23 18:54:50 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -39,16 +39,24 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
-#if defined(ENABLE_MIPS_16KB_PAGE) || defined(ENABLE_MIPS_8KB_PAGE)
-#define	UPAGES		1		/* pages of u-area */
-#define	USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
-#elif defined(ENABLE_MIPS_4KB_PAGE) || 1
-#define	UPAGES		2		/* pages of u-area */
-#define	USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
-#define	USPACE_ALIGN	USPACE		/* make sure it starts on a even VA */
-#else
-#error ENABLE_MIPS_xKB_PAGE not defined
+#ifdef PAGE_SHIFT
+#if MIPS_PAGE_SHIFT != PAGE_SHIFT
+#error MIPS_PAGE_SHIFT != PAGE_SHIFT
 #endif
+#elif defined(MIPS_PAGE_SHIFT)
+#define	PAGE_SHIFT	MIPS_PAGE_SHIFT
+#else
+#define	PAGE_SHIFT	12
+#endif
+
+#if PAGE_SHIFT & 1
+#define	UPAGES		1		/* pages of u-area */
+#else
+#define	UPAGES		2		/* pages of u-area */
+#define	USPACE_ALIGN	USPACE		/* make sure it starts on a even VA */
+#endif
+
+#define	USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
@@ -73,13 +81,7 @@
 #define	ALIGN(p)	(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((uintptr_t)(p)) & (sizeof(t)-1)) == 0)
 
-#ifdef ENABLE_MIPS_16KB_PAGE
-#define	PGSHIFT		14		/* LOG2(NBPG) */
-#elif defined(ENABLE_MIPS_8KB_PAGE)
-#define	PGSHIFT		13		/* LOG2(NBPG) */
-#else
-#define	PGSHIFT		12		/* LOG2(NBPG) */
-#endif
+#define	PGSHIFT		PAGE_SHIFT	/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/4)
