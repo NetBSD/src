@@ -1315,7 +1315,7 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 	switch (opts->mips_cpu_arch) {
 #if defined(MIPS1)
 	case CPU_ARCH_MIPS1:
-		opts->mips_num_tlb_asids = MIPS1_NUM_TLB_PIDS;
+		opts->mips_num_tlb_asids = MIPS1_TLB_NUM_PIDS;
 		(*mips1_locore_vec.ljv_tlb_invalidate_all)();
 		mips1_vector_init(splsw);
 		mips_locoresw = mips1_locoresw;
