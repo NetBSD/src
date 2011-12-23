@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.198 2011/12/17 04:43:45 sjg Exp $
+.\"	$NetBSD: make.1,v 1.199 2011/12/23 05:01:59 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd December 16, 2011
+.Dd December 22, 2011
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1280,6 +1280,8 @@ The path of the node which has the same name as the variable
 is the value.
 If no such node exists or its path is null, then the
 name of the variable is used.
+In order for this modifier to work, the name (node) must at least have 
+appeared on the rhs of a dependency.
 .Sm off
 .It Cm \&:\&! Ar cmd Cm \&!
 .Sm on
