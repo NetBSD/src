@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.54 2011/12/22 20:07:02 jakllsch Exp $	*/
+/*	$NetBSD: umidi.c,v 1.55 2011/12/23 00:51:47 jakllsch Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.54 2011/12/22 20:07:02 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.55 2011/12/23 00:51:47 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,7 +162,7 @@ extern struct cfdriver umidi_cd;
 CFATTACH_DECL2_NEW(umidi, sizeof(struct umidi_softc), umidi_match,
     umidi_attach, umidi_detach, umidi_activate, NULL, umidi_childdet);
 
-int
+int 
 umidi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
@@ -179,7 +179,7 @@ umidi_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void
+void 
 umidi_attach(device_t parent, device_t self, void *aux)
 {
 	usbd_status     err;
@@ -291,7 +291,7 @@ umidi_activate(device_t self, enum devact act)
 	}
 }
 
-int
+int 
 umidi_detach(device_t self, int flags)
 {
 	struct umidi_softc *sc = device_private(self);
@@ -380,7 +380,7 @@ umidi_channelmsg(void *addr, int status, int channel, u_char *msg,
 
 	if (!mididev->out_jack || !mididev->opened)
 		return EIO;
-
+	
 	return out_jack_output(mididev->out_jack, msg, len, (status>>4)&0xf);
 }
 
@@ -399,7 +399,7 @@ umidi_commonmsg(void *addr, int status, u_char *msg, int len)
 	case 3: cin = 3; break;
 	default: return EIO; /* or gcc warns of cin uninitialized */
 	}
-
+	
 	return out_jack_output(mididev->out_jack, msg, len, cin);
 }
 
@@ -418,7 +418,7 @@ umidi_sysex(void *addr, u_char *msg, int len)
 	case 3: cin = (msg[2] == 0xf7) ? 7 : 4; break;
 	default: return EIO; /* or gcc warns of cin uninitialized */
 	}
-
+	
 	return out_jack_output(mididev->out_jack, msg, len, cin);
 }
 
@@ -469,7 +469,7 @@ alloc_pipe(struct umidi_endpoint *ep)
 	struct umidi_softc *sc = ep->sc;
 	usbd_status err;
 	usb_endpoint_descriptor_t *epd;
-
+	
 	epd = usbd_get_endpoint_descriptor(sc->sc_iface, ep->addr);
 	/*
 	 * For output, an improvement would be to have a buffer bigger than
@@ -869,7 +869,7 @@ alloc_all_jacks(struct umidi_softc *sc)
 	struct umidi_endpoint *ep;
 	struct umidi_jack *jack;
 	const unsigned char *cn_spec;
-
+	
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_CN_SEQ_PER_EP))
 		sc->cblnums_global = 0;
 	else if (UMQ_ISTYPE(sc, UMQ_TYPE_CN_SEQ_GLOBAL))
@@ -889,7 +889,7 @@ alloc_all_jacks(struct umidi_softc *sc)
 		 */
 		sc->cblnums_global = 1;
 	}
-
+	
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_CN_FIXED))
 		cn_spec = umidi_get_quirk_data_from_type(sc->sc_quirk,
 					    		 UMQ_TYPE_CN_FIXED);
@@ -1180,7 +1180,7 @@ attach_mididev(struct umidi_softc *sc, struct umidi_mididev *mididev)
 		return USBD_IN_USE;
 
 	mididev->sc = sc;
-
+	
 	describe_mididev(mididev);
 
 	mididev->mdev = midi_attach_mi(&umidi_hw_if, mididev, sc->sc_dev);
@@ -1201,7 +1201,7 @@ detach_mididev(struct umidi_mididev *mididev, int flags)
 
 	if (mididev->mdev != NULL)
 		config_detach(mididev->mdev, flags);
-
+	
 	if (NULL != mididev->label) {
 		kmem_free(mididev->label, mididev->label_len);
 		mididev->label = NULL;
@@ -1308,11 +1308,11 @@ describe_mididev(struct umidi_mididev *md)
 	int show_ep_in;
 	int show_ep_out;
 	size_t len;
-
+	
 	sc = md->sc;
 	show_ep_in  = sc-> sc_in_num_endpoints > 1 && !sc->cblnums_global;
 	show_ep_out = sc->sc_out_num_endpoints > 1 && !sc->cblnums_global;
-
+	
 	if ( NULL == md->in_jack )
 		in_label[0] = '\0';
 	else if ( show_ep_in )
@@ -1321,7 +1321,7 @@ describe_mididev(struct umidi_mididev *md)
 	else
 		snprintf(in_label, sizeof in_label, "<%d ",
 		    md->in_jack->cable_number);
-
+	
 	if ( NULL == md->out_jack )
 		out_label[0] = '\0';
 	else if ( show_ep_out )
@@ -1332,11 +1332,11 @@ describe_mididev(struct umidi_mididev *md)
 		    md->out_jack->cable_number);
 
 	unit_label = device_xname(sc->sc_dev);
-
+	
 	len = strlen(in_label) + strlen(out_label) + strlen(unit_label) + 4;
-
+	
 	final_label = kmem_alloc(len, KM_SLEEP);
-
+	
 	snprintf(final_label, len, "%s%son %s",
 	    in_label, out_label, unit_label);
 
@@ -1429,7 +1429,7 @@ start_output_transfer(struct umidi_endpoint *ep)
 	usbd_status rv;
 	u_int32_t length;
 	int i;
-
+	
 	length = (ep->next_slot - ep->buffer) * sizeof *ep->buffer;
 	DPRINTFN(200,("umidi out transfer: start %p end %p length %u\n",
 	    ep->buffer, ep->next_slot, length));
@@ -1440,7 +1440,7 @@ start_output_transfer(struct umidi_endpoint *ep)
 			USBD_NO_COPY, USBD_NO_TIMEOUT, out_intr);
 	rv = usbd_transfer(ep->xfer);
 	KERNEL_UNLOCK_ONE(curlwp);
-
+	
 	/*
 	 * Once the transfer is scheduled, no more adding to partial
 	 * packets within it.
@@ -1450,7 +1450,7 @@ start_output_transfer(struct umidi_endpoint *ep)
 			if (NULL != ep->jacks[i])
 				ep->jacks[i]->midiman_ppkt = NULL;
 	}
-
+	
 	return rv;
 }
 
@@ -1508,7 +1508,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	DPRINTFN(100, ("umidi out: %"PRIu64".%06"PRIu64"s ep=%p cn=%d len=%d cin=%#x\n",
 	    umidi_tv.tv_sec%100, (uint64_t)umidi_tv.tv_usec,
 	    ep, out_jack->cable_number, len, cin));
-
+	
 	packet = *ep->next_slot++;
 	KASSERT(ep->buffer_size >=
 	    (ep->next_slot - ep->buffer) * sizeof *ep->buffer);
@@ -1556,7 +1556,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 		ep->soliciting = 1;
 		softint_schedule(ep->solicit_cookie);
 	}
-
+	
 	return 0;
 }
 
@@ -1586,12 +1586,12 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
                 DPRINTF(("%s: input endpoint %p odd transfer length %u\n",
                         device_xname(ep->sc->sc_dev), ep, count));
         }
-
+	
 	slot = ep->buffer;
 	end = slot + count / sizeof *slot;
 
 	for (packet = *slot; slot < end; packet = *++slot) {
-
+	
 		if (UMQ_ISTYPE(ep->sc, UMQ_TYPE_MIDIMAN_GARBLE)) {
 			cn = (0xf0&(packet[3]))>>4;
 			len = 0x0f&(packet[3]);
@@ -1661,7 +1661,7 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
                         device_xname(ep->sc->sc_dev), ep, count));
         }
 	count /= UMIDI_PACKET_SIZE;
-
+	
 	/*
 	 * If while the transfer was pending we buffered any new messages,
 	 * move them to the start of the buffer.
@@ -1710,9 +1710,9 @@ out_solicit_locked(void *arg)
 	struct umidi_jack *jack;
 
 	KASSERT(mutex_owned(&ep->sc->sc_lock));
-
+	
 	end = ep->buffer + ep->buffer_size / sizeof *ep->buffer;
-
+	
 	for ( ;; ) {
 		if (end - ep->next_slot <= ep->num_open - ep->num_scheduled)
 			break; /* at IPL_USB */
@@ -1744,7 +1744,7 @@ out_solicit_locked(void *arg)
 		which = (((which >> 4) + which) & 0x0f0f);
 		which +=  (which >> 8);
 		which &= 0x1f; /* the bit index a/k/a jack number */
-
+		
 		jack = ep->jacks[which];
 		if (jack->u.out.intr)
 			(*jack->u.out.intr)(jack->arg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.26 2011/12/22 20:07:03 jakllsch Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.27 2011/12/23 00:51:50 jakllsch Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.26 2011/12/22 20:07:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.27 2011/12/23 00:51:50 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ extern struct cfdriver uvscom_cd;
 CFATTACH_DECL2_NEW(uvscom, sizeof(struct uvscom_softc), uvscom_match,
     uvscom_attach, uvscom_detach, uvscom_activate, NULL, uvscom_childdet);
 
-int
+int 
 uvscom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -250,7 +250,7 @@ uvscom_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void
+void 
 uvscom_attach(device_t parent, device_t self, void *aux)
 {
 	struct uvscom_softc *sc = device_private(self);
@@ -398,7 +398,7 @@ uvscom_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int
+int 
 uvscom_detach(device_t self, int flags)
 {
 	struct uvscom_softc *sc = device_private(self);

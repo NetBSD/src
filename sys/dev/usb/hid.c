@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.33 2011/12/22 20:06:59 jakllsch Exp $	*/
+/*	$NetBSD: hid.c,v 1.34 2011/12/23 00:51:43 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.33 2011/12/22 20:06:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.34 2011/12/23 00:51:43 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,7 +478,7 @@ hid_get_udata(const u_char *buf, const struct hid_location *loc)
  * kind of report is considered. The current HID code that uses this for
  * matching is actually only looking for input reports, so this works
  * for now.
- *
+ * 
  * This function could try all report kinds (input, output and feature)
  * consecutively if necessary, but it may be better to integrate the
  * libusbhid code which can consider multiple report kinds simultaneously

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideoreg.h,v 1.3 2011/12/22 20:07:03 jakllsch Exp $	*/
+/*	$NetBSD: uvideoreg.h,v 1.4 2011/12/23 00:51:49 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -321,7 +321,7 @@ typedef struct {
 #define UVIDEO_GAMMA_FUNCTION_BT470_2_BG      	3
 #define UVIDEO_GAMMA_FUNCTION_SMPTE_170M      	4
 #define UVIDEO_GAMMA_FUNCTION_SMPTE_240M      	5
-#define UVIDEO_GAMMA_FUNCTION_LINEAR		6
+#define UVIDEO_GAMMA_FUNCTION_LINEAR		6	
 #define UVIDEO_GAMMA_FUNCTION_sRGB		7 /* similar to BT709 */
 
 /* bMatrixCoefficients */

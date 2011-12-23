@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.28 2011/12/22 20:07:00 jakllsch Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.29 2011/12/23 00:51:45 jakllsch Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.28 2011/12/22 20:07:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.29 2011/12/23 00:51:45 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ extern struct cfdriver ubsa_cd;
 CFATTACH_DECL2_NEW(ubsa, sizeof(struct ubsa_softc),
     ubsa_match, ubsa_attach, ubsa_detach, ubsa_activate, NULL, ubsa_childdet);
 
-int
+int 
 ubsa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -157,7 +157,7 @@ ubsa_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void
+void 
 ubsa_attach(device_t parent, device_t self, void *aux)
 {
 	struct ubsa_softc *sc = device_private(self);
@@ -325,7 +325,7 @@ ubsa_childdet(device_t self, device_t child)
 		sc->sc_subdevs[i] = NULL;
 }
 
-int
+int 
 ubsa_detach(device_t self, int flags)
 {
 	struct ubsa_softc *sc = device_private(self);

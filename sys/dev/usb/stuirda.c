@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.12 2011/12/22 20:07:00 jakllsch Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.13 2011/12/23 00:51:44 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.12 2011/12/22 20:07:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.13 2011/12/23 00:51:44 jakllsch Exp $");
 
 #include <sys/param.h>
 
@@ -73,7 +73,7 @@ struct stuirda_softc {
 
 int stuirda_fwload(struct uirda_softc *sc);
 
-/*
+/* 
  * These devices need firmware download.
  */
 Static const struct usb_devno stuirda_devs[] = {
@@ -103,7 +103,7 @@ int             stuirda_activate(device_t, enum devact);
 extern struct cfdriver stuirda_cd;
 CFATTACH_DECL_NEW(stuirda, sizeof(struct stuirda_softc), stuirda_match, stuirda_attach, stuirda_detach, stuirda_activate);
 
-int
+int 
 stuirda_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
@@ -118,7 +118,7 @@ stuirda_match(device_t parent, cfdata_t match, void *aux)
 
 void uirda_attach(device_t, device_t, void *);
 
-void
+void 
 stuirda_attach(device_t parent, device_t self, void *aux)
 {
 	struct stuirda_softc *sc = device_private(self);
@@ -169,7 +169,7 @@ stuirda_fwload(struct uirda_softc *sc) {
 
 	printf("%s: Attempting to load firmware %s\n",
 		device_xname(sc->sc_dev), fwname);
-
+	
 	rc = firmware_open("stuirda", fwname, &fh);
 
 	if (rc) {
@@ -257,7 +257,7 @@ stuirda_fwload(struct uirda_softc *sc) {
 			goto giveup4;
 		}
 		printf("%s: written %d\n", device_xname(sc->sc_dev), n);
-		p += n;
+		p += n; 
 		n = (buffer + fwsize - p);
 	}
 	delay(100000);
@@ -265,12 +265,13 @@ stuirda_fwload(struct uirda_softc *sc) {
 	rc = 0;
 	usbd_free_buffer(fwxfer);
 
-	giveup5: usbd_free_xfer(fwxfer);
+	giveup5: usbd_free_xfer(fwxfer);	
 	giveup4: usbd_close_pipe(fwpipe);
 	giveup3: firmware_free(buffer, fwsize);
 	giveup2: firmware_close(fh);
 
 	return rc;
+		
 }
 
 int
