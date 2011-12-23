@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.53 2011/12/22 20:07:01 jakllsch Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.54 2011/12/23 00:51:46 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.53 2011/12/22 20:07:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.54 2011/12/23 00:51:46 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ extern struct cfdriver uhidev_cd;
 CFATTACH_DECL2_NEW(uhidev, sizeof(struct uhidev_softc), uhidev_match,
     uhidev_attach, uhidev_detach, uhidev_activate, NULL, uhidev_childdet);
 
-int
+int 
 uhidev_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
@@ -102,7 +102,7 @@ uhidev_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_IFACECLASS_GENERIC);
 }
 
-void
+void 
 uhidev_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhidev_softc *sc = device_private(self);
@@ -242,11 +242,11 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (uaa->vendor == USB_VENDOR_HOSIDEN &&
+	if (uaa->vendor == USB_VENDOR_HOSIDEN && 
 	    uaa->product == USB_PRODUCT_HOSIDEN_PPP) {
 		static uByte reportbuf[] = { 1 };
 		/*
-		 *  This device was sold by Konami with its ParaParaParadise
+		 *  This device was sold by Konami with its ParaParaParadise 
 		 *  game for PlayStation2.  It needs to be "turned on"
 		 *  before it will send any reports.
 		 */
@@ -423,7 +423,7 @@ uhidev_childdet(device_t self, device_t child)
 	sc->sc_subdevs[i] = NULL;
 }
 
-int
+int 
 uhidev_detach(device_t self, int flags)
 {
 	struct uhidev_softc *sc = device_private(self);
@@ -559,7 +559,7 @@ uhidev_open(struct uhidev *scd)
 	/* Set up input interrupt pipe. */
 	DPRINTF(("uhidev_open: isize=%d, ep=0x%02x\n", sc->sc_isize,
 		 sc->sc_iep_addr));
-
+		
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_iep_addr,
 		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_ibuf,
 		  sc->sc_isize, uhidev_intr, USBD_DEFAULT_INTERVAL);
@@ -595,7 +595,7 @@ uhidev_open(struct uhidev *scd)
 			goto out3;
 		}
 	}
-
+	
 	return (0);
 out3:
 	/* Abort output pipe */
@@ -628,7 +628,7 @@ uhidev_close(struct uhidev *scd)
 
 	if (sc->sc_oxfer != NULL)
 		usbd_free_xfer(sc->sc_oxfer);
-
+	
 	/* Disable interrupts. */
 	if (sc->sc_opipe != NULL) {
 		usbd_abort_pipe(sc->sc_opipe);

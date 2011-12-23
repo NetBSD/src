@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.6 2011/12/22 20:07:00 jakllsch Exp $	*/
+/*	$NetBSD: moscom.c,v 1.7 2011/12/23 00:51:44 jakllsch Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.6 2011/12/22 20:07:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.7 2011/12/23 00:51:44 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,11 +67,11 @@ __KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.6 2011/12/22 20:07:00 jakllsch Exp $");
 
 #define MOSCOM_INT_RXEN		0x01
 #define MOSCOM_INT_TXEN		0x02
-#define MOSCOM_INT_RSEN		0x04
+#define MOSCOM_INT_RSEN		0x04	
 #define MOSCOM_INT_MDMEM	0x08
 #define MOSCOM_INT_SLEEP	0x10
 #define MOSCOM_INT_XOFF		0x20
-#define MOSCOM_INT_RTS		0x40
+#define MOSCOM_INT_RTS		0x40	
 
 #define MOSCOM_FIFO_EN		0x01
 #define MOSCOM_FIFO_RXCLR	0x02
@@ -153,7 +153,7 @@ void	moscom_get_status(void *, int, u_char *, u_char *);
 void	moscom_set(void *, int, int, int);
 int	moscom_param(void *, int, struct termios *);
 int	moscom_open(void *, int);
-int	moscom_cmd(struct moscom_softc *, int, int);
+int	moscom_cmd(struct moscom_softc *, int, int);	
 
 struct ucom_methods moscom_methods = {
 	NULL,
@@ -172,16 +172,16 @@ static const struct usb_devno moscom_devs[] = {
 };
 #define moscom_lookup(v, p) usb_lookup(moscom_devs, v, p)
 
-int moscom_match(device_t, cfdata_t, void *);
-void moscom_attach(device_t, device_t, void *);
+int moscom_match(device_t, cfdata_t, void *); 
+void moscom_attach(device_t, device_t, void *); 
 void moscom_childdet(device_t, device_t);
-int moscom_detach(device_t, int);
-int moscom_activate(device_t, enum devact);
+int moscom_detach(device_t, int); 
+int moscom_activate(device_t, enum devact); 
 
 CFATTACH_DECL2_NEW(moscom, sizeof(struct moscom_softc), moscom_match,
     moscom_attach, moscom_detach, moscom_activate, NULL, moscom_childdet);
 
-int
+int 
 moscom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -190,7 +190,7 @@ moscom_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void
+void 
 moscom_attach(device_t parent, device_t self, void *aux)
 {
 	struct moscom_softc *sc = device_private(self);
@@ -268,7 +268,7 @@ moscom_attach(device_t parent, device_t self, void *aux)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    sc->sc_dev);
-
+	
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
 					    ucomprint, ucomsubmatch);
 
@@ -284,7 +284,7 @@ moscom_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int
+int 
 moscom_detach(device_t self, int flags)
 {
 	struct moscom_softc *sc = device_private(self);
@@ -326,10 +326,10 @@ moscom_open(void *vsc, int portno)
 	/* Purge FIFOs or odd things happen */
 	if (moscom_cmd(sc, MOSCOM_FIFO, 0x00) != 0)
 		return (EIO);
-
+	
 	if (moscom_cmd(sc, MOSCOM_FIFO, MOSCOM_FIFO_EN |
 	    MOSCOM_FIFO_RXCLR | MOSCOM_FIFO_TXCLR |
-	    MOSCOM_FIFO_DMA_BLK | MOSCOM_FIFO_RXLVL_MASK) != 0)
+	    MOSCOM_FIFO_DMA_BLK | MOSCOM_FIFO_RXLVL_MASK) != 0) 
 		return (EIO);
 
 	/* Magic tell device we're ready for data command */
@@ -435,7 +435,7 @@ void
 moscom_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 {
 	struct moscom_softc *sc = vsc;
-
+	
 	if (msr != NULL)
 		*msr = sc->sc_msr;
 	if (lsr != NULL)
@@ -447,7 +447,7 @@ moscom_cmd(struct moscom_softc *sc, int reg, int val)
 {
 	usb_device_request_t req;
 	usbd_status err;
-
+	
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = MOSCOM_WRITE;
 	USETW(req.wValue, val + MOSCOM_UART_REG);

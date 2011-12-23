@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.7 2011/12/22 20:07:03 jakllsch Exp $   */
+/*	$NetBSD: uthum.c,v 1.8 2011/12/23 00:51:49 jakllsch Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -114,7 +114,7 @@ extern struct cfdriver uthum_cd;
 CFATTACH_DECL_NEW(uthum, sizeof(struct uthum_softc), uthum_match, uthum_attach,
     uthum_detach, uthum_activate);
 
-int
+int 
 uthum_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -124,7 +124,7 @@ uthum_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void
+void 
 uthum_attach(device_t parent, device_t self, void *aux)
 {
 	struct uthum_softc *sc = device_private(self);
@@ -214,7 +214,7 @@ uthum_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("uthum_attach: complete\n"));
 }
 
-int
+int 
 uthum_detach(device_t self, int flags)
 {
 	struct uthum_softc *sc = device_private(self);

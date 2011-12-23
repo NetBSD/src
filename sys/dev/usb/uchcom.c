@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.11 2011/12/22 20:07:00 jakllsch Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.12 2011/12/23 00:51:45 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.11 2011/12/22 20:07:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.12 2011/12/23 00:51:45 jakllsch Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -227,7 +227,7 @@ CFATTACH_DECL2_NEW(uchcom,
  * driver entry points
  */
 
-int
+int 
 uchcom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -236,7 +236,7 @@ uchcom_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void
+void 
 uchcom_attach(device_t parent, device_t self, void *aux)
 {
 	struct uchcom_softc *sc = device_private(self);
@@ -318,7 +318,7 @@ uchcom_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int
+int 
 uchcom_detach(device_t self, int flags)
 {
 	struct uchcom_softc *sc = device_private(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.6 2011/12/22 20:07:00 jakllsch Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.7 2011/12/23 00:51:45 jakllsch Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.6 2011/12/22 20:07:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.7 2011/12/23 00:51:45 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ ubsa_request(struct ubsa_softc *sc, int portno, u_int8_t request, u_int16_t valu
 	if (portno > UBSA_MAXCONN) {
 		printf("%s: ubsa_request: invalid port(%d)#\n",
 			device_xname(sc->sc_dev), portno);
-		return USBD_INVAL;
+		return USBD_INVAL; 
 	}
 
 	req.bRequest = request;

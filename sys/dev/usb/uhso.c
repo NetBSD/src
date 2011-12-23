@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.6 2011/12/22 20:07:01 jakllsch Exp $	*/
+/*	$NetBSD: uhso.c,v 1.7 2011/12/23 00:51:46 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.6 2011/12/22 20:07:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.7 2011/12/23 00:51:46 jakllsch Exp $");
 
 #include "opt_inet.h"
 
@@ -607,7 +607,7 @@ uhso_switch_mode(usbd_device_handle udev)
 	xfer = usbd_alloc_xfer(udev);
 	if (xfer == NULL)
 		return ENOMEM;
-
+	
 	USETDW(cmd.dCBWSignature, CBWSIGNATURE);
 	USETDW(cmd.dCBWTag, 1);
 	USETDW(cmd.dCBWDataTransferLength, 0);
