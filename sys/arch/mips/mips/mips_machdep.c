@@ -259,6 +259,8 @@ extern const mips_locore_jumpvec_t mips64r2_rmixl_locore_vec;
 void std_splsw_test(void);
 #endif
 
+CTASSERT(CPU_ARCH_MIPS64R2 / CPU_ARCH_MIPS64 == CPU_ARCH_MIPS32R2 / CPU_ARCH_MIPS32);
+
 mips_locore_jumpvec_t mips_locore_jumpvec;
 
 struct locoresw mips_locoresw;
@@ -471,6 +473,13 @@ static const struct pridtab cputab[] = {
 	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
 	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG7,
 	  0, "34K" },
+	{ MIPS_PRID_CID_MTI, MIPS_1004K, -1, -1,	-1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
+	  MIPS_CP0FL_USE |
+	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
+	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG7,
+	  0, "1004K" },
 	{ MIPS_PRID_CID_MTI, MIPS_74K, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
 	  MIPS_CP0FL_USE |
@@ -478,13 +487,13 @@ static const struct pridtab cputab[] = {
 	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
 	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG6 | MIPS_CP0FL_CONFIG7,
 	  0, "74K" },
-	{ MIPS_PRID_CID_MTI, MIPS_1004K, -1, -1,	-1, 0,
+	{ MIPS_PRID_CID_MTI, MIPS_1074K, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
 	  MIPS_CP0FL_USE |
 	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
 	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
 	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG6 | MIPS_CP0FL_CONFIG7,
-	  0, "1004K" },
+	  0, "1074K" },
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1000, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT, 0, 0,
@@ -615,6 +624,30 @@ static const struct pridtab cputab[] = {
 	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG7,
 	  CIDFL_RMI_TYPE_XLS|MIPS_CIDFL_RMI_CPUS(1,4)|MIPS_CIDFL_RMI_L2(256KB),
 	  "XLS104"		},
+
+	{ MIPS_PRID_CID_RMI, MIPS_XLP3XX, -1, -1, -1, 0,
+	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR |
+	  CPU_MIPS_I_D_CACHE_COHERENT | CPU_MIPS_HAVE_MxCR,
+	  MIPS_CP0FL_USE |
+	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_EIRR | MIPS_CP0FL_EIMR |
+	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
+	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG6 | MIPS_CP0FL_CONFIG7,
+	  CIDFL_RMI_TYPE_XLP | MIPS_CIDFL_RMI_CPUS(1,4) |
+	  MIPS_CIDFL_RMI_L2(512KB) | MIPS_CIDFL_RMI_L3(1MB),
+	  "XLP3XX"		},
+
+	{ MIPS_PRID_CID_RMI, MIPS_XLP8XX, -1, -1, -1, 0,
+	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR |
+	  CPU_MIPS_I_D_CACHE_COHERENT | CPU_MIPS_HAVE_MxCR,
+	  MIPS_CP0FL_USE |
+	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_EIRR | MIPS_CP0FL_EIMR |
+	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
+	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG6 | MIPS_CP0FL_CONFIG7,
+	  CIDFL_RMI_TYPE_XLP | MIPS_CIDFL_RMI_CPUS(8,4) |
+	  MIPS_CIDFL_RMI_L2(512KB) | MIPS_CIDFL_RMI_L3(1MB),
+	  "XLP8XX"		},
 
 	{ 0, 0, 0,				0, 0, 0,
 	  0, 0, 0,				NULL			}
@@ -1176,7 +1209,7 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 		case MIPSNN_CFG_AR_REV1:
 			break;
 		case MIPSNN_CFG_AR_REV2:
-			opts->mips_cpu_arch += CPU_ARCH_MIPS32R2 - CPU_ARCH_MIPS32;
+			opts->mips_cpu_arch *= CPU_ARCH_MIPS32R2 / CPU_ARCH_MIPS32;
 			break;
 		default:
 			printf("WARNING: MIPS32/64 arch revision %d "
@@ -1187,7 +1220,15 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 		/* figure out MMU type (and number of TLB entries) */
 		switch (MIPSNN_GET(CFG_MT, cfg)) {
 		case MIPSNN_CFG_MT_TLB:
-			opts->mips_num_tlb_entries = MIPSNN_CFG1_MS(cfg1);
+			/*
+			 * Use the larger value from TLB random instead or the
+			 * CFG1 value (in case the number of TLB entries
+			 * exceeds what can be encoded in CFG1).
+			 */
+			mips3_cp0_wired_write(0); /* force random to reset */
+			uint32_t cfg_ms = MIPSNN_CFG1_MS(cfg1);
+			uint32_t tlb_random = mips3_cp0_random_read() + 1;
+			opts->mips_num_tlb_entries = MAX(cfg_ms, tlb_random);
 			break;
 		case MIPSNN_CFG_MT_NONE:
 		case MIPSNN_CFG_MT_BAT:
@@ -1274,6 +1315,7 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 	switch (opts->mips_cpu_arch) {
 #if defined(MIPS1)
 	case CPU_ARCH_MIPS1:
+		opts->mips_num_tlb_asids = MIPS1_NUM_TLB_PIDS;
 		(*mips1_locore_vec.ljv_tlb_invalidate_all)();
 		mips1_vector_init(splsw);
 		mips_locoresw = mips1_locoresw;
@@ -1416,6 +1458,12 @@ mips3_tlb_probe(void)
 		opts->mips3_tlb_vpn_mask >>= 2;
 		opts->mips3_tlb_pfn_mask = mips3_cp0_tlb_entry_lo_probe();
 	}
+	if (CPUISMIPSNN) {
+		opts->mips_num_tlb_asids =
+		    (opts->mips3_tlb_vpn_mask & MIPS3_PG_ASID) + 1;
+	} else {
+		opts->mips_num_tlb_asids = opts->mips_num_tlb_entries;
+	}
 }
 #endif
 
@@ -1423,7 +1471,7 @@ mips3_tlb_probe(void)
  * Identify product revision IDs of CPU and FPU.
  */
 void
-cpu_identify(device_t dev)
+cpu_identify(device_t dev, const char *cpuname)
 {
 	const struct mips_options * const opts = &mips_options;
 	const struct mips_cache_info * const mci = &mips_cache_info;
@@ -1445,10 +1493,11 @@ cpu_identify(device_t dev)
 		"write-back",
 		"write-through",
 	};
-	const char *cpuname, *fpuname;
+	const char *fpuname;
 	int i;
 
-	cpuname = opts->mips_cpu->cpu_name;
+	if (cpuname == NULL)
+		cpuname = opts->mips_cpu->cpu_name;
 
 	fpuname = NULL;
 	for (i = 0; i < sizeof(fputab)/sizeof(fputab[0]); i++) {
@@ -1535,7 +1584,8 @@ cpu_identify(device_t dev)
 	case CPU_ARCH_MIPS64R2: {
 		const char *sufx = "KMGTPE";
 		uint32_t pg_mask;
-		aprint_normal_dev(dev, "%d TLB entries", opts->mips_num_tlb_entries);
+		aprint_normal_dev(dev, "%u TLB entries (%u ASIDs)",
+		    opts->mips_num_tlb_entries, opts->mips_num_tlb_asids);
 #if !defined(__mips_o32)
 		if (CPUIS64BITS) {
 			int64_t pfn_mask;
@@ -2107,7 +2157,7 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 		paddr_t segstart = round_page(segs->start);
 		const paddr_t segfinish = trunc_page(segs->start + segs->size);
 
-		printf("phys segment: %#"PRIxPADDR" @ %#"PRIxPADDR"\n",
+		printf("phys segment: %#"PRIxPSIZE" @ %#"PRIxPADDR"\n",
 		    segfinish - segstart, segstart);
 
 		/*
@@ -2127,6 +2177,7 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 				if (segstart >= flp[i].fl_end
 				    || segend <= flp[i].fl_start)
 					continue;
+
 				/*
 				 * If the start of this segment starts before
 				 * the start of the freelist, then limit the
@@ -2135,7 +2186,8 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 				 * freelist matching.
 				 */
 				if (segstart < flp[i].fl_start) {
-					segstart = flp[i].fl_start;
+					segend = flp[i].fl_start;
+					KASSERT(freelist == -1);
 					break;
 				}
 
