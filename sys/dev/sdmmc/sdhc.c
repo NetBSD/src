@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.7.2.2 2010/04/21 00:27:52 matt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.7.2.3 2011/12/24 01:33:58 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.7.2.2 2010/04/21 00:27:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.7.2.3 2011/12/24 01:33:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.7.2.2 2010/04/21 00:27:52 matt Exp $");
 #include <dev/sdmmc/sdmmcvar.h>
 
 #ifdef SDHC_DEBUG
-int sdhcdebug = 1;
+int sdhcdebug = 2;
 #define DPRINTF(n,s)	do { if ((n) <= sdhcdebug) printf s; } while (0)
 void	sdhc_dump_regs(struct sdhc_host *);
 #else
@@ -208,6 +208,8 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	caps = HREAD4(hp, SDHC_CAPABILITIES);
 	mutex_exit(&hp->host_mtx);
 
+	DPRINTF(1,("%s: caps=0x%08x\n", device_xname(sc->sc_dev), caps));
+
 #if notyet
 	/* Use DMA if the host system and the controller support it. */
 	if (ISSET(sc->sc_flags, SDHC_FLAG_FORCE_DMA)
@@ -227,8 +229,9 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		/* The attachment driver must tell us. */
 		aprint_error_dev(sc->sc_dev,"unknown base clock frequency\n");
 		goto err;
-	} else if (hp->clkbase < 10000 || hp->clkbase > 63000) {
+	} else if (hp->clkbase < 10000 || hp->clkbase > 255000) {
 		/* SDHC 1.0 supports only 10-63 MHz. */
+		/* SDHC 1.0 supports only 10-255 MHz. */
 		aprint_error_dev(sc->sc_dev,
 		    "base clock frequency out of range: %u MHz\n",
 		    hp->clkbase / 1000);
@@ -270,6 +273,10 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		hp->maxblklen = 2048;
 		break;
 
+	case SDHC_MAX_BLK_LEN_4096:
+		hp->maxblklen = 4096;
+		break;
+
 	default:
 		aprint_error_dev(sc->sc_dev, "max block length unknown\n");
 		goto err;
@@ -277,6 +284,20 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	DPRINTF(1, ("%s: max block length %u byte%s\n",
 	    device_xname(sc->sc_dev), hp->maxblklen,
 	    hp->maxblklen > 1 ? "s" : ""));
+
+#if 0
+	if (sc->sc_flags & SDHC_FLAG_HAS_CGM) {
+		uint16_t clk = HREAD2(hp, SDHC_CLOCK_CTL);
+		clk |= SDHC_SDCLK_CGM;
+		HWRITE2(hp, SDHC_CLOCK_CTL, clk);
+		clk = HREAD2(hp, SDHC_CLOCK_CTL);
+		if ((clk & SDHC_SDCLK_CGM) == 0) {
+			sc->sc_flags &= ~SDHC_FLAG_HAS_CGM;
+			DPRINTF(1, ("%s: CGM indicated but not supported\n",
+			    device_xname(sc->sc_dev)));
+		}
+	}
+#endif
 
 	/*
 	 * Attach the generic SD/MMC bus driver.  (The bus driver must
@@ -287,9 +308,15 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	saa.saa_sct = &sdhc_functions;
 	saa.saa_sch = hp;
 	saa.saa_dmat = hp->dmat;
-	saa.saa_clkmin = hp->clkbase / 256;
+	if (sc->sc_flags & SDHC_FLAG_HAS_CGM) {
+		saa.saa_clkmin = hp->clkbase / 2046;
+	} else {
+		saa.saa_clkmin = hp->clkbase / 256;
+	}
 	saa.saa_clkmax = hp->clkbase;
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|SMC_CAPS_AUTO_STOP;
+	DPRINTF(1, ("%s: clkmin=%d clkmax=%d\n",
+	    device_xname(sc->sc_dev), saa.saa_clkmin, saa.saa_clkmax));
 #if notyet
 	if (ISSET(hp->flags, SHF_USE_DMA))
 		saa.saa_caps |= SMC_CAPS_DMA;
@@ -536,15 +563,31 @@ out:
  * for the CLOCK_CTL register to produce `freq' (KHz).
  */
 static int
-sdhc_clock_divisor(struct sdhc_host *hp, u_int freq)
+sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, int *divp)
 {
 	int div;
 
-	for (div = 1; div <= 256; div *= 2)
-		if ((hp->clkbase / div) <= freq)
-			return (div / 2);
+	if (hp->sc->sc_flags & SDHC_FLAG_HAS_CGM) {
+		for (div = hp->clkbase / freq; div <= 0x3ff; div++) {
+			if ((hp->clkbase / div) <= freq) {
+				*divp = SDHC_SDCLK_CGM
+				    | ((div & 0x300) << SDHC_SDCLK_XDIV_SHIFT)
+				    | ((div & 0x0ff) << SDHC_SDCLK_DIV_SHIFT);
+				return false;
+			}
+		}
+		/* No divisor found. */
+		return true;
+	}
+	for (div = 1; div <= 256; div *= 2) {
+		if ((hp->clkbase / div) <= freq) {
+			*divp = (div / 2) << SDHC_SDCLK_DIV_SHIFT;
+			return false;
+		}
+	}
+
 	/* No divisor found. */
-	return -1;
+	return true;
 }
 
 /*
@@ -585,7 +628,7 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	/*
 	 * Set the minimum base clock frequency divisor.
 	 */
-	if ((div = sdhc_clock_divisor(hp, freq)) < 0) {
+	if (sdhc_clock_divisor(hp, freq, &div)) {
 		/* Invalid base clock frequency or `freq' value. */
 		error = EINVAL;
 		goto out;
