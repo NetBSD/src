@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.100 2011/10/04 21:12:40 shattered Exp $	*/
+/*	$NetBSD: inet.c,v 1.101 2011/12/24 20:18:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.100 2011/10/04 21:12:40 shattered Exp $");
+__RCSID("$NetBSD: inet.c,v 1.101 2011/12/24 20:18:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: inet.c,v 1.100 2011/10/04 21:12:40 shattered Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
+#define ICMP_STRINGS
 #include <netinet/ip_icmp.h>
 
 #ifdef INET6
@@ -595,28 +596,6 @@ ip_stats(u_long off, const char *name)
 #undef p
 }
 
-static	const char *icmpnames[] = {
-	"echo reply",
-	"#1",
-	"#2",
-	"destination unreachable",
-	"source quench",
-	"routing redirect",
-	"alternate host address",
-	"#7",
-	"echo",
-	"router advertisement",
-	"router solicitation",
-	"time exceeded",
-	"parameter problem",
-	"time stamp",
-	"time stamp reply",
-	"information request",
-	"information request reply",
-	"address mask request",
-	"address mask reply",
-};
-
 /*
  * Dump ICMP statistics.
  */
@@ -651,7 +630,7 @@ icmp_stats(u_long off, const char *name)
 				printf("\tOutput histogram:\n");
 				first = 0;
 			}
-			printf("\t\t%s: %" PRIu64 "\n", icmpnames[i],
+			printf("\t\t%s: %" PRIu64 "\n", icmp_type[i],
 			   icmpstat[ICMP_STAT_OUTHIST + i]);
 		}
 	p(ICMP_STAT_BADCODE, "\t%" PRIu64 " message%s with bad code fields\n");
@@ -666,7 +645,7 @@ icmp_stats(u_long off, const char *name)
 				printf("\tInput histogram:\n");
 				first = 0;
 			}
-			printf("\t\t%s: %" PRIu64 "\n", icmpnames[i],
+			printf("\t\t%s: %" PRIu64 "\n", icmp_type[i],
 			    icmpstat[ICMP_STAT_INHIST + i]);
 		}
 	p(ICMP_STAT_REFLECT, "\t%" PRIu64 " message response%s generated\n");
