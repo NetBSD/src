@@ -1,4 +1,4 @@
-/*	$Id: rmixl_fmnvar.h,v 1.1.2.4 2011/04/29 08:26:32 matt Exp $	*/
+/*	$Id: rmixl_fmnvar.h,v 1.1.2.5 2011/12/24 01:57:54 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -227,6 +227,33 @@ rmixl_cp2_restore(uint32_t ocu)
 }
 
 /*
+ * logical station IDs for RMI XLP
+ */
+#define	RMIXLP_FMN_STID_RESERVED	-1
+#define	RMIXLP_FMN_STID_CORE0		0
+#define	RMIXLP_FMN_STID_CORE1		1
+#define	RMIXLP_FMN_STID_CORE2		2
+#define	RMIXLP_FMN_STID_CORE3		3
+#define	RMIXLP_FMN_STID_CORE4		4
+#define	RMIXLP_FMN_STID_CORE5		5
+#define	RMIXLP_FMN_STID_CORE6		6
+#define	RMIXLP_FMN_STID_CORE7		7
+#define	RMIXLP_FMN_STID_POPQ		8
+#define	RMIXLP_FMN_STID_PCIE0		9
+#define	RMIXLP_FMN_STID_PCIE1		10
+#define	RMIXLP_FMN_STID_PCIE2		11
+#define	RMIXLP_FMN_STID_PCIE3		12
+#define	RMIXLP_FMN_STID_DMA		13
+#define	RMIXLP_FMN_STID_PKE		14
+#define	RMIXLP_FMN_STID_SAE		16
+#define	RMIXLP_FMN_STID_CDE		16
+#define	RMIXLP_FMN_STID_POE		17
+#define	RMIXLP_FMN_STID_NAE0		18
+#define	RMIXLP_FMN_STID_NAE1		19
+#define	RMIXLP_FMN_NSTID		20
+
+
+/*
  * logical station IDs for RMI XLR
  * see Table 13.2 "Addressable Buckets" in the XLR PRM
  */
@@ -264,12 +291,6 @@ rmixl_cp2_restore(uint32_t ocu)
 #define RMIXLS_FMN_STID_SAE			9
 #define RMIXLS_FMN_NSTID			(RMIXLS_FMN_STID_SAE+1)
 #define RMIXLS_FMN_STID_RESERVED		-1
-
-/*
- * logical station IDs for RMI XLP
- * TBD!
- */
-#define RMIXLP_FMN_NSTID			0	/* XXX */
 
 
 #define RMIXL_FMN_NSTID		\

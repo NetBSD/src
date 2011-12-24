@@ -1,11 +1,9 @@
-/*	$NetBSD: rmixl_pci_io_space.c,v 1.1.2.2 2011/12/24 01:57:54 matt Exp $	*/
-
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Matt Thomas of 3am Software Foundry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,37 +27,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Little Endian bus_space(9) support for PCI I/O access
- * on RMI {XLP,XLR,XLS} chips
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pci_io_space.c,v 1.1.2.2 2011/12/24 01:57:54 matt Exp $");
 
-#include <sys/types.h>
+__KERNEL_RCSID(1, "$NetBSD: rmixl_xlnae_obio.c,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $");
+
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/bus.h>
 
-#include <mips/rmi/rmixlreg.h>
-#include <mips/rmi/rmixlvar.h>
+#include "locators.h"
 
-#define	CHIP			rmixl_pci
-#define	CHIP_IO			/* defined */
-#define	CHIP_ACCESS_SIZE	1
-#define CHIP_LITTLE_ENDIAN
+static int xlnae_obio_match(device_t, cfdata_t, void *);
+static void xlnae_obio_attach(device_t, device_t, void *);
 
-#define	CHIP_V(v)		((struct rmixl_config *)(v))
+CFATTACH_DECL_NEW(xlnae_obio, 0,
+    xlnae_obio_match, xlnae_obio_attach, 0, 0);
 
-#define CHIP_EX_MALLOC_SAFE(v)	(CHIP_V(v)->rc_mallocsafe)
-#define CHIP_EXTENT(v)		(CHIP_V(v)->rc_pci_io_ex)
+static int
+xlnae_obio_match(device_t parent, cfdata_t cf, void *aux)
+{
+	return 0;
+}
 
-/* MEM region 1 */
-#define	CHIP_W1_BUS_START(v)	\
-	(CHIP_V(v)->rc_pci_io.r_pbase)
-#define	CHIP_W1_BUS_END(v)	\
-	(CHIP_W1_BUS_START(v) +	CHIP_V(v)->rc_pci_io.r_size - 1)
-#define CHIP_W1_SYS_START(v)	CHIP_W1_BUS_START(v)
-#define CHIP_W1_SYS_END(v)	CHIP_W1_BUS_END(v)
-
-#include <mips/mips/bus_space_alignstride_chipdep.c>
+static void
+xlnae_obio_attach(device_t parent, device_t self, void *aux)
+{
+	aprint_normal("\n");
+}

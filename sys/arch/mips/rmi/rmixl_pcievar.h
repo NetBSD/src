@@ -1,4 +1,4 @@
-/*      $NetBSD: rmixl_pcievar.h,v 1.1.2.8 2010/09/20 19:42:31 cliff Exp $	*/
+/*      $NetBSD: rmixl_pcievar.h,v 1.1.2.9 2011/12/24 01:57:54 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,23 +80,26 @@ typedef struct rmixl_pcie_link_intr {
 #define RMIXL_PCIE_NLINKS_MAX	4
 
 typedef struct rmixl_pcie_softc {
-	device_t                	sc_dev;
-	struct mips_pci_chipset 	sc_pci_chipset;
-	bus_space_tag_t              	sc_pci_cfg_memt;
-	bus_space_tag_t              	sc_pci_ecfg_memt;
-	bus_dma_tag_t			sc_29bit_dmat;
-	bus_dma_tag_t			sc_32bit_dmat;
-	bus_dma_tag_t			sc_64bit_dmat;
+	device_t	 		sc_dev;
+	pci_chipset_tag_t		sc_pc;	 /* in rmixl_configuration */
+	bus_space_tag_t			sc_pci_cfg_memt;
+	bus_space_tag_t			sc_pci_ecfg_memt;
+	bus_space_handle_t		sc_pci_cfg_memh;
+#ifdef _LP64
+	bus_space_handle_t		sc_pci_ecfg_memh;
+#endif
+	bus_dma_tag_t			sc_dmat29;
+	bus_dma_tag_t			sc_dmat32;
+	bus_dma_tag_t			sc_dmat64;
 	rmixl_pcie_lnktab_t		sc_pcie_lnktab;
 	kmutex_t			sc_mutex;
-	int				sc_tmsk;
-	void 			       *sc_fatal_ih;
-	rmixl_pcie_evcnt_t	       *sc_evcnts[RMIXL_PCIE_NLINKS_MAX];
-	rmixl_pcie_link_intr_t	       *sc_link_intr[RMIXL_PCIE_NLINKS_MAX];
+	void *				sc_fatal_ih;
+	rmixl_pcie_evcnt_t *		sc_evcnts[RMIXL_PCIE_NLINKS_MAX];
+	rmixl_pcie_link_intr_t *	sc_link_intr[RMIXL_PCIE_NLINKS_MAX];
 } rmixl_pcie_softc_t;
 
 
-extern void rmixl_physaddr_init_pcie(struct extent *);
+void rmixl_physaddr_init_pcie(struct extent *);
 
 #endif  /* _MIPS_RMI_PCIE_VAR_H_ */
 

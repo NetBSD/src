@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.1.2.9 2011/04/29 08:26:33 matt Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.1.2.10 2011/12/24 01:57:54 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.9 2011/04/29 08:26:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.10 2011/12/24 01:57:54 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -185,37 +185,35 @@ int rmixl_pcix_debug = PCI_DEBUG;
 
 #define RMIXL_PCIXREG_VADDR(o)				\
 	(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(	\
-		rmixl_configuration.rc_io_pbase		\
+		rmixl_configuration.rc_io.r_pbase	\
 		+ RMIXL_PCIXREG_BASE + (o))
 
 #define RMIXL_PCIXREG_READ(o)     (*RMIXL_PCIXREG_VADDR(o))
 #define RMIXL_PCIXREG_WRITE(o,v)  *RMIXL_PCIXREG_VADDR(o) = (v)
 
-
-#define RMIXL_PCIX_CONCAT3(a,b,c) a ## b ## c
-#define RMIXL_PCIX_BAR_INIT(reg, bar, size, align) {			\
+#define RMIXL_PCIX_BAR_INIT(rp, reg, bar, size, align) {		\
 	struct extent *ext = rmixl_configuration.rc_phys_ex;		\
 	u_long region_start;						\
-	uint64_t ba;							\
 	int err;							\
 									\
 	err = extent_alloc(ext, (size), (align), 0UL, EX_NOWAIT,	\
-		&region_start);						\
+	    &region_start);						\
 	if (err != 0)							\
 		panic("%s: extent_alloc(%p, %#lx, %#lx, %#lx, %#x, %p)",\
-			__func__, ext, size, align, 0UL, EX_NOWAIT,	\
-			&region_start);					\
-	ba = (uint64_t)region_start;					\
-	ba *= (1024 * 1024);						\
-	bar = RMIXL_PCIX_CONCAT3(RMIXL_PCIX_,reg,_BAR)(ba, 1);		\
+		    __func__, ext, size, align, 0UL, EX_NOWAIT,		\
+		    &region_start);					\
+	const uint64_t ba = (uint64_t)region_start << 20;		\
+	bar = RMIXL_PCIX_##reg##_BAR(ba, 1);				\
 	DPRINTF(("PCIX %s BAR was not enabled by firmware\n"		\
-		"enabling %s at phys %#" PRIxBUSADDR ", size %lu MB\n",	\
-		__STRING(reg), __STRING(reg), ba, size));		\
-	RMIXL_IOREG_WRITE(RMIXL_IO_DEV_BRIDGE + 			\
-		RMIXL_PCIX_CONCAT3(RMIXLR_SBC_PCIX_,reg,_BAR), bar);	\
-	bar = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE +			\
-		RMIXL_PCIX_CONCAT3(RMIXLR_SBC_PCIX_,reg,_BAR));		\
+	    "enabling %s at phys %#" PRIxBUSADDR ", size %lu MB\n",	\
+	    __STRING(reg), __STRING(reg), ba, size));			\
+	RMIXL_IOREG_WRITE(RMIXL_IO_DEV_BRIDGE 				\
+	    + RMIXLR_SBC_PCIX_##reg##_BAR, bar);			\
+	bar = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE			\
+	    + RMIXLR_SBC_PCIX_##reg##_BAR);				\
 	DPRINTF(("%s: %s BAR %#x\n", __func__, __STRING(reg), bar));	\
+	(rp)->r_pbase = ba;						\
+	(rp)->r_size = (size) << 20;					\
 }
 
 
@@ -236,11 +234,11 @@ static int	rmixl_pcix_bus_maxdevs(void *, int);
 static pcitag_t	rmixl_pcix_make_tag(void *, int, int, int);
 static void	rmixl_pcix_decompose_tag(void *, pcitag_t, int *, int *, int *);
 void		rmixl_pcix_tag_print(const char *restrict, void *, pcitag_t,				int, vaddr_t, u_long);
-static int	rmixl_pcix_conf_setup(rmixl_pcix_softc_t *,
-			pcitag_t, int *, bus_space_tag_t *,
-			bus_space_handle_t *);
 static pcireg_t	rmixl_pcix_conf_read(void *, pcitag_t, int);
 static void	rmixl_pcix_conf_write(void *, pcitag_t, int, pcireg_t);
+#ifdef __PCI_DEV_FUNCORDER
+static bool	rmixl_pcix_dev_funcorder(void *, int, int, int, char *);
+#endif
 
 static int	rmixl_pcix_intr_map(struct pci_attach_args *,
 		    pci_intr_handle_t *);
@@ -309,10 +307,10 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 
 	rmixl_pcix_found = 1;
 	sc->sc_dev = self;
-	sc->sc_29bit_dmat = obio->obio_29bit_dmat;
-	sc->sc_32bit_dmat = obio->obio_32bit_dmat;
-	sc->sc_64bit_dmat = obio->obio_64bit_dmat;
-	sc->sc_tmsk = obio->obio_tmsk;
+	sc->sc_dmat29 = obio->obio_dmat29;
+	sc->sc_dmat32 = obio->obio_dmat32;
+	sc->sc_dmat64 = obio->obio_dmat64;
+	sc->sc_pc = &rcp->rc_pci_chipset;
 
 	aprint_normal(": RMI XLR PCI-X Interface\n");
 
@@ -367,16 +365,16 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 		 * force use of bouce buffers for inaccessible RAM addrs
 		 */
 		if (hbar_size < ((uint64_t)1 << 32)) {
-			error = bus_dmatag_subregion(sc->sc_32bit_dmat,
-				0, (bus_addr_t)hbar_size, &sc->sc_32bit_dmat,
+			error = bus_dmatag_subregion(sc->sc_dmat32,
+				0, (bus_addr_t)hbar_size, &sc->sc_dmat32,
 				BUS_DMA_NOWAIT);
 			if (error)
 				panic("%s: failed to subregion 32-bit dma tag:"
 					 " error %d", __func__, error);
-			sc->sc_64bit_dmat = NULL;
+			sc->sc_dmat64 = NULL;
 		} else {
-			error = bus_dmatag_subregion(sc->sc_64bit_dmat,
-				0, (bus_addr_t)hbar_size, &sc->sc_64bit_dmat,
+			error = bus_dmatag_subregion(sc->sc_dmat64,
+				0, (bus_addr_t)hbar_size, &sc->sc_dmat64,
 				BUS_DMA_NOWAIT);
 			if (error)
 				panic("%s: failed to subregion 64-bit dma tag:"
@@ -404,10 +402,8 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("%s: PCIX_CFG_BAR %#x\n", __func__, bar));
 	if ((bar & RMIXL_PCIX_CFG_BAR_ENB) == 0) {
 		u_long n = RMIXL_PCIX_CFG_SIZE / (1024 * 1024);
-		RMIXL_PCIX_BAR_INIT(CFG, bar, n, n);
+		RMIXL_PCIX_BAR_INIT(&rcp->rc_pci_cfg, CFG, bar, n, n);
 	}
-	rcp->rc_pci_cfg_pbase = (bus_addr_t)RMIXL_PCIX_CFG_BAR_TO_BA(bar);
-	rcp->rc_pci_cfg_size  = (bus_size_t)RMIXL_PCIX_CFG_SIZE;
 
 	/*
 	 * get PCI MEM space base [addr, size] from SBC PCIe MEM BAR
@@ -417,10 +413,8 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("%s: PCIX_MEM_BAR %#x\n", __func__, bar));
 	if ((bar & RMIXL_PCIX_MEM_BAR_ENB) == 0) {
 		u_long n = 256;				/* 256 MB */
-		RMIXL_PCIX_BAR_INIT(MEM, bar, n, n);
+		RMIXL_PCIX_BAR_INIT(&rcp->rc_pci_mem, MEM, bar, n, n);
 	}
-	rcp->rc_pci_mem_pbase = (bus_addr_t)RMIXL_PCIX_MEM_BAR_TO_BA(bar);
-	rcp->rc_pci_mem_size  = (bus_size_t)RMIXL_PCIX_MEM_BAR_TO_SIZE(bar);
 
 	/*
 	 * get PCI IO space base [addr, size] from SBC PCIe IO BAR
@@ -430,16 +424,17 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("%s: PCIX_IO_BAR %#x\n", __func__, bar));
 	if ((bar & RMIXL_PCIX_IO_BAR_ENB) == 0) {
 		u_long n = 32;				/* 32 MB */
-		RMIXL_PCIX_BAR_INIT(IO, bar, n, n);
+		RMIXL_PCIX_BAR_INIT(&rcp->rc_pci_io, IO, bar, n, n);
 	}
-	rcp->rc_pci_io_pbase = (bus_addr_t)RMIXL_PCIX_IO_BAR_TO_BA(bar);
-	rcp->rc_pci_io_size  = (bus_size_t)RMIXL_PCIX_IO_BAR_TO_SIZE(bar);
 
 	/*
 	 * initialize the PCI CFG bus space tag
 	 */
-	rmixl_pci_cfg_bus_mem_init(&rcp->rc_pci_cfg_memt, rcp);
 	sc->sc_pci_cfg_memt = &rcp->rc_pci_cfg_memt;
+	rmixl_pci_cfg_el_bus_mem_init(sc->sc_pci_cfg_memt, rcp);
+	if (bus_space_map(sc->sc_pci_cfg_memt, 0, rcp->rc_pci_cfg.r_size / 2,
+	    0, &sc->sc_pci_cfg_memh))
+		panic("%s: failed to map pci CFG space!\n", __func__);
 
 	/*
 	 * initialize the PCI MEM and IO bus space tags
@@ -463,9 +458,9 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_memt = &rcp->rc_pci_memt;
 	pba.pba_iot =  &rcp->rc_pci_iot;
-	pba.pba_dmat = sc->sc_32bit_dmat;
-	pba.pba_dmat64 = sc->sc_64bit_dmat;
-	pba.pba_pc = &sc->sc_pci_chipset;
+	pba.pba_dmat = sc->sc_dmat32;
+	pba.pba_dmat64 = sc->sc_dmat64;
+	pba.pba_pc = sc->sc_pc;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_intrswiz = 0;
@@ -522,7 +517,7 @@ rmixl_pcix_intcfg(rmixl_pcix_softc_t *sc)
 	/*
 	 * establish PCIX error interrupt handler
 	 */
-	sc->sc_fatal_ih = rmixl_intr_establish(24, sc->sc_tmsk,
+	sc->sc_fatal_ih = rmixl_intr_establish(24,
 		IPL_VM, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
 		rmixl_pcix_error_intr, sc, false);
 	if (sc->sc_fatal_ih == NULL)
@@ -538,10 +533,7 @@ rmixl_pcix_errata(rmixl_pcix_softc_t *sc)
 static void
 rmixl_pcix_init(rmixl_pcix_softc_t *sc)
 {
-	pci_chipset_tag_t pc = &sc->sc_pci_chipset;
-#if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
-	struct extent *ioext, *memext;
-#endif
+	pci_chipset_tag_t pc = sc->sc_pc;
 
 	pc->pc_conf_v = (void *)sc;
 	pc->pc_attach_hook = rmixl_pcix_attach_hook;
@@ -550,6 +542,9 @@ rmixl_pcix_init(rmixl_pcix_softc_t *sc)
 	pc->pc_decompose_tag = rmixl_pcix_decompose_tag;
 	pc->pc_conf_read = rmixl_pcix_conf_read;
 	pc->pc_conf_write = rmixl_pcix_conf_write;
+#ifdef __PCI_DEV_FUNCORDER
+	pc->pc_dev_funcorder = rmixl_pcix_dev_funcorder;
+#endif
 
 	pc->pc_intr_v = (void *)sc;
 	pc->pc_intr_map = rmixl_pcix_intr_map;
@@ -564,17 +559,18 @@ rmixl_pcix_init(rmixl_pcix_softc_t *sc)
 	 * Configure the PCI bus.
 	 */
 	struct rmixl_config *rcp = &rmixl_configuration;
+	struct extent *ioext, *memext;
 
-	aprint_normal_dev(sc->sc_dev, "%s: configuring PCI bus\n");
+	aprint_normal_dev(sc->sc_dev, "configuring PCI bus\n");
 
 	ioext  = extent_create("pciio",
-		rcp->rc_pci_io_pbase,
-		rcp->rc_pci_io_pbase + rcp->rc_pci_io_size - 1,
+		rcp->rc_pci_io.r_pbase,
+		rcp->rc_pci_io.r_pbase + rcp->rc_pci_io.r_size - 1,
 		M_DEVBUF, NULL, 0, EX_NOWAIT);
 
 	memext = extent_create("pcimem",
-		rcp->rc_pci_mem_pbase,
-		rcp->rc_pci_mem_pbase + rcp->rc_pci_mem_size - 1,
+		rcp->rc_pci_mem.r_pbase,
+		rcp->rc_pci_mem.r_pbase + rcp->rc_pci_mem.r_size - 1,
 		M_DEVBUF, NULL, 0, EX_NOWAIT);
 
 	pci_configure_bus(pc, ioext, memext, NULL, 0,
@@ -652,88 +648,36 @@ rmixl_pcix_tag_print(const char *restrict s, void *v, pcitag_t tag, int offset,
 		s, bus, dev, fun, offset, va, r);
 }
 
-static int
-rmixl_pcix_conf_setup(rmixl_pcix_softc_t *sc,
-	pcitag_t tag, int *offp, bus_space_tag_t *bstp,
-	bus_space_handle_t *bshp)
-{
-	struct rmixl_config *rcp = &rmixl_configuration;
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-	pcitag_t mask;
-	bus_addr_t ba;
-	int err;
-	static bus_space_handle_t cfg_bsh;
-	static bus_addr_t cfg_oba = -1;
-
-	/*
-	 * bus space depends on offset
-	 */
-	if ((*offp >= 0) && (*offp < 0x100)) {
-		mask = __BITS(15,0);
-		bst = sc->sc_pci_cfg_memt;
-		ba = rcp->rc_pci_cfg_pbase;
-		ba += (tag & ~mask);
-		*offp += (tag & mask);
-		if (ba != cfg_oba) {
-			size = (bus_size_t)(mask + 1);
-			if (cfg_oba != -1)
-				bus_space_unmap(bst, cfg_bsh, size);
-			err = bus_space_map(bst, ba, size, 0, &cfg_bsh);
-			if (err != 0) {
-#ifdef DEBUG
-				panic("%s: bus_space_map err %d, CFG space",
-					__func__, err);	/* XXX */
-#endif
-				return -1;
-			}
-			cfg_oba = ba;
-		}
-		bsh = cfg_bsh;
-	} else  {
-#ifdef DEBUG
-		panic("%s: offset %#x: unknown", __func__, *offp);
-#endif
-		return -1;
-	}
-
-	*bstp = bst;
-	*bshp = bsh;
-
-	return 0;
-}
-
 pcireg_t
 rmixl_pcix_conf_read(void *v, pcitag_t tag, int offset)
 {
 	rmixl_pcix_softc_t *sc = v;
-	static bus_space_handle_t bsh;
-	bus_space_tag_t bst;
+	bus_space_handle_t bsh = sc->sc_pci_cfg_memh;
+	bus_space_tag_t bst = sc->sc_pci_cfg_memt;
 	pcireg_t rv;
-	uint64_t cfg0;
 
-	mutex_enter(&sc->sc_mutex);
+	if (offset >= 0x100)
+		return -1;
 
-	if (rmixl_pcix_conf_setup(sc, tag, &offset, &bst, &bsh) == 0) {
-		cfg0 = rmixl_cache_err_dis();
-		rv = bus_space_read_4(bst, bsh, (bus_size_t)offset);
-		if (rmixl_cache_err_check() != 0) {
+	if (__predict_true(!cold))
+		mutex_enter(&sc->sc_mutex);
+
+	uint64_t cfg0 = rmixl_cache_err_dis();
+	rv = bus_space_read_4(bst, bsh, (bus_size_t)tag + offset);
+	if (rmixl_cache_err_check() != 0) {
 #ifdef DIAGNOSTIC
-			int bus, dev, fun;
+		int bus, dev, fun;
 
-			rmixl_pcix_decompose_tag(v, tag, &bus, &dev, &fun);
-			printf("%s: %d/%d/%d, offset %#x: bad address\n",
-				__func__, bus, dev, fun, offset);
+		rmixl_pcix_decompose_tag(v, tag, &bus, &dev, &fun);
+		printf("%s: %d/%d/%d, offset %#x: bad address\n",
+			__func__, bus, dev, fun, offset);
 #endif
-			rv = (pcireg_t) -1;
-		}
-		rmixl_cache_err_restore(cfg0);
-	} else {
-		rv = -1;
+		rv = (pcireg_t) -1;
 	}
+	rmixl_cache_err_restore(cfg0);
 
-	mutex_exit(&sc->sc_mutex);
+	if (__predict_true(!cold))
+		mutex_exit(&sc->sc_mutex);
 
 	return rv;
 }
@@ -742,29 +686,40 @@ void
 rmixl_pcix_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 {
 	rmixl_pcix_softc_t *sc = v;
-	static bus_space_handle_t bsh;
-	bus_space_tag_t bst;
-	uint64_t cfg0;
+	bus_space_handle_t bsh = sc->sc_pci_cfg_memh;
+	bus_space_tag_t bst = sc->sc_pci_cfg_memt;
 
-	mutex_enter(&sc->sc_mutex);
+	if (offset >= 0x100)
+		return;
 
-	if (rmixl_pcix_conf_setup(sc, tag, &offset, &bst, &bsh) == 0) {
-		cfg0 = rmixl_cache_err_dis();
-		bus_space_write_4(bst, bsh, (bus_size_t)offset, val);
-		if (rmixl_cache_err_check() != 0) {
+	if (__predict_true(!cold))
+		mutex_enter(&sc->sc_mutex);
+
+	uint64_t cfg0 = rmixl_cache_err_dis();
+	bus_space_write_4(bst, bsh, (bus_size_t)offset, val);
+	if (rmixl_cache_err_check() != 0) {
 #ifdef DIAGNOSTIC
-			int bus, dev, fun;
+		int bus, dev, fun;
 
-			rmixl_pcix_decompose_tag(v, tag, &bus, &dev, &fun);
-			printf("%s: %d/%d/%d, offset %#x: bad address\n",
-				__func__, bus, dev, fun, offset);
+		rmixl_pcix_decompose_tag(v, tag, &bus, &dev, &fun);
+		printf("%s: %d/%d/%d, offset %#x: bad address\n",
+			__func__, bus, dev, fun, offset);
 #endif
-		}
-		rmixl_cache_err_restore(cfg0);
 	}
+	rmixl_cache_err_restore(cfg0);
 
-	mutex_exit(&sc->sc_mutex);
+	if (__predict_true(!cold))
+		mutex_exit(&sc->sc_mutex);
 }
+
+#ifdef __PCI_DEV_FUNCORDER
+bool
+rmixl_pcix_dev_funcorder(void *v, int bus, int device, int nfunctions,
+	char *funcs)
+{
+	return false;
+}
+#endif
 
 int
 rmixl_pcix_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
@@ -797,7 +752,7 @@ rmixl_pcix_intr_string(void *v, pci_intr_handle_t pih)
 		panic("%s: cpu %#x not supported\n",
 			__func__, mips_options.mips_cpu_id);
 
-	return rmixl_intr_string(RMIXL_IRT_VECTOR(irq));
+	return rmixl_irt_string(irq);
 }
 
 const struct evcnt *
@@ -995,7 +950,7 @@ rmixl_pcix_pip_add_1(rmixl_pcix_softc_t *sc, int irq, int ipl)
 		/* initialize the interrupt struct */
 		pip_new->sc = sc;
 		pip_new->ipl = ipl;
-		pip_new->ih = rmixl_intr_establish(irq, sc->sc_tmsk,
+		pip_new->ih = rmixl_intr_establish(irq,
 			ipl, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
 			rmixl_pcix_intr, pip_new, false);
 		if (pip_new->ih == NULL)
@@ -1109,51 +1064,33 @@ rmixl_pcix_error_intr(void *arg)
 /*
  * rmixl_physaddr_init_pcix:
  *	called from rmixl_physaddr_init to get region addrs & sizes
- *	from PCIX CFG, ECFG, IO, MEM BARs
+ *	from PCIX CFG, IO, MEM BARs
  */
 void
 rmixl_physaddr_init_pcix(struct extent *ext)
 {
-	u_long base;
-	u_long size;
+	struct rmixl_config * const rcp = &rmixl_configuration;
 	uint32_t r;
 
 	r = RMIXL_PCIXREG_READ(RMIXLR_SBC_PCIX_CFG_BAR);
 	if ((r & RMIXL_PCIX_CFG_BAR_ENB) != 0) {
-		base = (u_long)(RMIXL_PCIX_CFG_BAR_TO_BA((uint64_t)r)
-			/ (1024 * 1024));
-		size = (u_long)RMIXL_PCIX_CFG_SIZE / (1024 * 1024);
-		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
-			__LINE__, "CFG", r, base * 1024 * 1024, size));
-		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
-			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
-				"failed", __func__, ext, base, size, EX_NOWAIT);
+		rmixl_physaddr_add(ext, "pcicfg", &rcp->rc_pci_cfg,
+		    (bus_addr_t)RMIXL_PCIX_CFG_BAR_TO_BA((uint64_t)r),
+		    (bus_size_t)RMIXL_PCIX_CFG_SIZE);
 	}
 
 	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE + RMIXLR_SBC_PCIX_MEM_BAR);
-	if ((r & RMIXL_PCIX_MEM_BAR_ENB) != 0) {
-		base = (u_long)(RMIXL_PCIX_MEM_BAR_TO_BA((uint64_t)r)
-			/ (1024 * 1024));
-		size = (u_long)(RMIXL_PCIX_MEM_BAR_TO_SIZE((uint64_t)r)
-			/ (1024 * 1024));
-		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
-			__LINE__, "MEM", r, base * 1024 * 1024, size));
-		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
-			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
-				"failed", __func__, ext, base, size, EX_NOWAIT);
+	if ((r & RMIXL_PCIE_MEM_BAR_ENB) != 0) {
+		rmixl_physaddr_add(ext, "pcimem", &rcp->rc_pci_mem,
+		    (bus_addr_t)RMIXL_PCIX_MEM_BAR_TO_BA((uint64_t)r),
+		    (bus_size_t)RMIXL_PCIX_MEM_BAR_TO_SIZE((uint64_t)r));
 	}
 
 	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE + RMIXLR_SBC_PCIX_IO_BAR);
-	if ((r & RMIXL_PCIX_IO_BAR_ENB) != 0) {
-		base = (u_long)(RMIXL_PCIX_IO_BAR_TO_BA((uint64_t)r)
-			/ (1024 * 1024));
-		size = (u_long)(RMIXL_PCIX_IO_BAR_TO_SIZE((uint64_t)r)
-			/ (1024 * 1024));
-		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
-			__LINE__, "IO", r, base * 1024 * 1024, size));
-		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
-			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
-				"failed", __func__, ext, base, size, EX_NOWAIT);
+	if ((r & RMIXL_PCIE_IO_BAR_ENB) != 0) {
+		rmixl_physaddr_add(ext, "pciio", &rcp->rc_pci_io,
+		    (bus_addr_t)RMIXL_PCIX_IO_BAR_TO_BA((uint64_t)r),
+		    (bus_size_t)RMIXL_PCIX_IO_BAR_TO_SIZE((uint64_t)r));
 	}
 }
 
