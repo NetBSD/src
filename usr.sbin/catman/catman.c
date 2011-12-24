@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.33 2011/12/24 23:42:30 christos Exp $       */
+/*      $NetBSD: catman.c,v 1.34 2011/12/24 23:46:11 christos Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -561,10 +561,10 @@ makecat(const char *manpage, const char *catpage, const char *buildcmd,
 {
 	char crunchbuf[1024];
 	char sysbuf[2048];
-	int len;
+	size_t len;
 
 	len = snprintf(sysbuf, sizeof(sysbuf), buildcmd, manpage);
-	if (len < 0 || len > sizeof(sysbuf))
+	if (len > sizeof(sysbuf))
 		errx(1, "snprintf");
 
 	if (*crunchcmd != '\0') {
