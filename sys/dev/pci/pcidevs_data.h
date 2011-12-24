@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.4 2010/05/10 06:55:44 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.5 2011/12/24 01:23:13 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.1.4.4 2010/05/10 06:55:25 matt Exp
+ *	NetBSD: pcidevs,v 1.962.4.1.4.5 2011/12/24 01:22:44 matt Exp
  */
 
 /*
@@ -2248,6 +2248,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Raza Microelectronics Inc.",
 	},
 	{
+	    PCI_VENDOR_NETLOGIC,
+	    "NetLogic Microsystems",
+	},
+	{
 	    PCI_VENDOR_BBELEC,
 	    "B & B Electronics",
 	},
@@ -2404,7 +2408,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 591;
+const int pci_nvendors = 592;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -7780,6 +7784,10 @@ static const struct pci_product pci_products[] = {
 	    "i82567LM-4 LAN Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_QUAD_COPPER,
+	    "82576 quad-1000BaseT Ethernet",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCH_M_LM,
 	    "PCH LAN (82577LM) Controller",
 	},
@@ -10188,12 +10196,112 @@ static const struct pci_product pci_products[] = {
 	    "NCP130 rev A2 Wireless NIC",
 	},
 	{
-	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_5000,
-	    "5000 Ethernet",
-	},
-	{
 	    PCI_VENDOR_NETBOOST, PCI_PRODUCT_NETBOOST_POLICY,
 	    "Policy Accelerator",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_SBC,
+	    "XLP System Bridge controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_ICI,
+	    "XLP Inter-Chip interconnect",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_PIC,
+	    "XLP Programmable Interrupt controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_PCIROOT,
+	    "XLP PCI-Express RootComplex/Endpoint port",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_INTERLAKEN,
+	    "XLP Interlaken LA interface",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_DEVUSB,
+	    "XLP Device USB controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_EHCIUSB,
+	    "XLP EHCI USB controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_OHCIUSB,
+	    "XLP OHCI USB controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_NAE,
+	    "XLP Network Acceleration engine",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_POE,
+	    "XLP Packet Ordering engine",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_FMN,
+	    "XLP Fast Messaging Network",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_RAID,
+	    "XLP Data Transfer and RAID engine",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_SAE,
+	    "XLP Security accelerator",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_PKE,
+	    "XLP RSA/ECC accelerator",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_CDE,
+	    "XLP Compress/Decompression engine",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_UART,
+	    "XLP UART controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_I2C,
+	    "XLP I2C controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_GPIO,
+	    "XLP GPIO controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_SYSTEM,
+	    "XLP System controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_JTAG,
+	    "XLP JTAG interface",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_NOR,
+	    "XLP NOR flash controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_NAND,
+	    "XLP NAND flash controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_SPI,
+	    "XLP SPI controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_SDHC,
+	    "XLP eMMC/SD/SDIO controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_AHCISATA,
+	    "XLP AHCI SATA controller",
+	},
+	{
+	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_5000,
+	    "5000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91CX42,
@@ -14840,4 +14948,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3108;
+const int pci_nproducts = 3134;
