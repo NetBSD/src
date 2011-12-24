@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obiovar.h,v 1.1.2.9 2010/04/13 18:15:16 cliff Exp $	*/
+/*	$NetBSD: rmixl_obiovar.h,v 1.1.2.10 2011/12/24 01:57:54 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,20 +41,19 @@ struct obio_attach_args {
 	bus_addr_t	obio_addr;
 	bus_size_t	obio_size;
 	int		obio_intr;
-	int		obio_tmsk;
 	unsigned int	obio_mult;
-	bus_dma_tag_t	obio_29bit_dmat;
-	bus_dma_tag_t	obio_32bit_dmat;
-	bus_dma_tag_t	obio_64bit_dmat;
+	bus_dma_tag_t	obio_dmat29;
+	bus_dma_tag_t	obio_dmat32;
+	bus_dma_tag_t	obio_dmat64;
 };
 
 typedef struct obio_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_eb_bst;
 	bus_space_tag_t		sc_el_bst;
-	bus_dma_tag_t		sc_29bit_dmat;
-	bus_dma_tag_t		sc_32bit_dmat;
-	bus_dma_tag_t		sc_64bit_dmat;
+	bus_dma_tag_t		sc_dmat29;
+	bus_dma_tag_t		sc_dmat32;
+	bus_dma_tag_t		sc_dmat64;
 	bus_addr_t		sc_base;
 	bus_size_t		sc_size;
 } obio_softc_t;

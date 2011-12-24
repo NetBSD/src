@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.h,v 1.1.2.8 2011/04/29 08:26:32 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.h,v 1.1.2.9 2011/12/24 01:57:54 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,46 +37,30 @@
 
 /*
  * A 'vector' is bit number in EIRR/EIMR
- * - non-IRT-based interrupts use vectors 0..31
- * - IRT-based interrupts use vectors 32..63 
- * - RMIXL_VECTOR_IRT(vec) is used to index into the IRT
- * - IRT entry n always routes to vector RMIXL_IRT_VECTOR(n)
- * - only 1 intrhand_t per vector
+ * - IRT or non-IRT interrupts use vectors 8..63
+ * - vector or dynamically assigned (except for IPI and FMN)
  */
 #define	NINTRVECS	64	/* bit width of the EIRR */
-#define	NIRTS		32	/* #entries in the Interrupt Redirection Table */
-
-/*
- * mapping between IRT index and vector number
- */
-#define RMIXL_VECTOR_IS_IRT(vec)	((vec) >= 32)
-#define RMIXL_IRT_VECTOR(irt)		((irt) + 32)
-#define RMIXL_VECTOR_IRT(vec)		((vec) - 32)
+#define	RMIXLP_NIRTS	160	/* #entries in Interrupt Redirection Table */
+#define	RMIXLR_NIRTS	32	/* #entries in Interrupt Redirection Table */
+#define	RMIXLS_NIRTS	32	/* #entries in Interrupt Redirection Table */
 
 /*
  * vectors (0 <= vec < 8)  are CAUSE[8..15] (including softintrs and count/compare)
- * vectors (8 <= vec < 31) are for other non-IRT based interrupts
- * we use one for FMN, and each IPI currently gets own vector;
- * if NIPIS >= (32 - 8 - 1), then redesign so IPIs share vector(s)
  */
-#if NIPIS >= 23
-# error too many IPIs
-#endif
 #define RMIXL_INTRVEC_IPI	8
 #define RMIXL_INTRVEC_FMN	(RMIXL_INTRVEC_IPI + NIPIS)
 
 typedef enum {
-	RMIXL_TRIG_NONE=0,
+	RMIXL_TRIG_LEVEL=0,
 	RMIXL_TRIG_EDGE,
-	RMIXL_TRIG_LEVEL,
 } rmixl_intr_trigger_t;
 
 typedef enum {
-	RMIXL_POLR_NONE=0,
-	RMIXL_POLR_RISING,
-	RMIXL_POLR_HIGH,
-	RMIXL_POLR_FALLING,
+	RMIXL_POLR_HIGH=0,
 	RMIXL_POLR_LOW,
+	RMIXL_POLR_RISING,
+	RMIXL_POLR_FALLING,
 } rmixl_intr_polarity_t;
 
 
@@ -84,13 +68,21 @@ typedef enum {
  * iv_list and ref count manage sharing of each vector
  */
 typedef struct rmixl_intrhand {
+	LIST_ENTRY(rmixl_intrhand) ih_link;
         int (*ih_func)(void *);
         void *ih_arg; 
-        int ih_mpsafe; 			/* true if does not need kernel lock */
-        int ih_vec;			/* vector is bit number in EIRR/EIMR */
-        int ih_ipl; 			/* interrupt priority */
-        int ih_cpumask; 		/* CPUs which may handle this irpt */
+        bool ih_mpsafe; 		/* true if does not need kernel lock */
+        uint8_t ih_vec;			/* vector is bit number in EIRR/EIMR */
 } rmixl_intrhand_t;
+
+typedef struct rmixl_intrvec {
+	LIST_HEAD(, rmixl_intrhand) iv_hands;
+	TAILQ_ENTRY(rmixl_intrvec) iv_lruq_link;
+	rmixl_intrhand_t iv_intrhand;
+        uint8_t iv_ipl; 		/* interrupt priority */
+} rmixl_intrvec_t;
+
+typedef TAILQ_HEAD(rmixl_intrvecq, rmixl_intrvec) rmixl_intrvecq_t;
 
 /*
  * stuff exported from rmixl_spl.S
@@ -98,18 +90,21 @@ typedef struct rmixl_intrhand {
 extern const struct splsw rmixl_splsw;
 extern uint64_t ipl_eimr_map[];
 
-extern void *rmixl_intr_establish(int, int, int,
-	rmixl_intr_trigger_t, rmixl_intr_polarity_t,
-	int (*)(void *), void *, bool);
-extern void  rmixl_intr_disestablish(void *);
-extern void *rmixl_vec_establish(int, int, int,
-	int (*)(void *), void *, bool);
-extern void  rmixl_vec_disestablish(void *);
-extern const char *rmixl_intr_string(int);
-extern void rmixl_intr_init_cpu(struct cpu_info *);
-extern void rmixl_intr_init_clk(void);
+void *	rmixl_intr_establish(size_t /* irt */, int /* ipl */,
+	    rmixl_intr_trigger_t, rmixl_intr_polarity_t,
+	    int (*)(void *), void *, bool);
+void	rmixl_intr_disestablish(void *);
+void *	rmixl_vec_establish(size_t /* vec */, rmixl_intrhand_t *, int /* ipl */,
+	    int (*)(void *), void *, bool);
+void	rmixl_vec_disestablish(void *);
+const char *
+	rmixl_intr_string(size_t);
+const char *
+	rmixl_irt_string(size_t);
+void	rmixl_intr_init_cpu(struct cpu_info *);
+void	rmixl_intr_init_clk(void);
 #ifdef MULTIPROCESSOR
-extern void rmixl_intr_init_ipi(void);
+void	rmixl_intr_init_ipi(void);
 #endif
 
 #endif	/* _MIPS_RMI_RMIXL_INTR_H_ */

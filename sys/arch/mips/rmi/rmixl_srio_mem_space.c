@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pci_io_space.c,v 1.1.2.2 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixl_srio_mem_space.c,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 /*
- * Little Endian bus_space(9) support for PCI I/O access
+ * Little Endian bus_space(9) support for PCI ECFG space access
  * on RMI {XLP,XLR,XLS} chips
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pci_io_space.c,v 1.1.2.2 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_srio_mem_space.c,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,21 +44,21 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_pci_io_space.c,v 1.1.2.2 2011/12/24 01:57:54 m
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
 
-#define	CHIP			rmixl_pci
-#define	CHIP_IO			/* defined */
+#define	CHIP			rmixl_srio_mem
+#define	CHIP_MEM		/* defined */
 #define	CHIP_ACCESS_SIZE	1
-#define CHIP_LITTLE_ENDIAN
+#define CHIP_BIG_ENDIAN
 
-#define	CHIP_V(v)		((struct rmixl_config *)(v))
+#define CHIP_V(v)		((struct rmixl_config *)(v))
 
 #define CHIP_EX_MALLOC_SAFE(v)	(CHIP_V(v)->rc_mallocsafe)
-#define CHIP_EXTENT(v)		(CHIP_V(v)->rc_pci_io_ex)
+#define CHIP_EXTENT(v)		(CHIP_V(v)->rc_srio_mem_ex)
 
 /* MEM region 1 */
 #define	CHIP_W1_BUS_START(v)	\
-	(CHIP_V(v)->rc_pci_io.r_pbase)
+	(CHIP_V(v))->rc_srio_memg.r_pbase)
 #define	CHIP_W1_BUS_END(v)	\
-	(CHIP_W1_BUS_START(v) +	CHIP_V(v)->rc_pci_io.r_size - 1)
+	(CHIP_W1_BUS_START(v) +	CHIP_V(v)->rc_srio_memg.r_size) - 1)
 #define CHIP_W1_SYS_START(v)	CHIP_W1_BUS_START(v)
 #define CHIP_W1_SYS_END(v)	CHIP_W1_BUS_END(v)
 

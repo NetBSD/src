@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_usbi.c,v 1.1.2.7 2011/04/29 08:26:34 matt Exp $	*/
+/*	$NetBSD: rmixl_usbi.c,v 1.1.2.8 2011/12/24 01:57:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.7 2011/04/29 08:26:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.8 2011/12/24 01:57:54 matt Exp $");
 
 #include "locators.h"
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.7 2011/04/29 08:26:34 matt Exp 
  */
 #define RMIXL_USBI_GEN_VADDR(o)	\
 	(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(	\
-		rmixl_configuration.rc_io_pbase + RMIXL_IO_DEV_USB_B + (o))
+		rmixl_configuration.rc_io.r_pbase + RMIXL_IO_DEV_USB_B + (o))
 #define RMIXL_USBI_GEN_READ(o)     le32toh(*RMIXL_USBI_GEN_VADDR(o))
 #define RMIXL_USBI_GEN_WRITE(o,v)  *RMIXL_USBI_GEN_VADDR(o) = htole32(v)
 
@@ -112,7 +112,7 @@ rmixl_usbi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_el_bst = obio->obio_el_bst;
 	sc->sc_addr = obio->obio_addr;
 	sc->sc_size = obio->obio_size;
-	sc->sc_dmat = obio->obio_32bit_dmat;
+	sc->sc_dmat = obio->obio_dmat32;
 
 	aprint_normal("\n%s", device_xname(self));
 
@@ -153,7 +153,7 @@ rmixl_usbi_attach(device_t parent, device_t self, void *aux)
 
 	/* establish interrupt */
 	if (obio->obio_intr != OBIOCF_INTR_DEFAULT) {
-		ih = rmixl_intr_establish(obio->obio_intr, obio->obio_tmsk,
+		ih = rmixl_intr_establish(obio->obio_intr,
 			IPL_USB, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
 			rmixl_usbi_intr, sc, false);
 		if (ih == NULL)

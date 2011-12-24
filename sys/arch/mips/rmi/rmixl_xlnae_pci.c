@@ -1,11 +1,9 @@
-/*	$NetBSD: rmixl_pci_cfg_space.c,v 1.1.2.1 2010/04/17 07:49:23 cliff Exp $	*/
-
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Matt Thomas of 3am Software Foundry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,37 +27,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Little Endian bus_space(9) support for PCI CFG space access
- * on RMI {XLP,XLR,XLS} chips
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pci_cfg_space.c,v 1.1.2.1 2010/04/17 07:49:23 cliff Exp $");
 
-#include <sys/types.h>
+__KERNEL_RCSID(1, "$NetBSD: rmixl_xlnae_pci.c,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $");
+
 #include <sys/param.h>
+#include <sys/device.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
-#include <mips/rmi/rmixl_obiovar.h>
-#include <mips/rmi/rmixlreg.h>
-#include <mips/rmi/rmixlvar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
-#define	CHIP			rmixl_pci_cfg
-#define	CHIP_MEM		/* defined */
-#define	CHIP_ACCESS_SIZE	1
-#define CHIP_LITTLE_ENDIAN
+#include "locators.h"
 
-#define CHIP_EX_MALLOC_SAFE(v)	(((struct rmixl_config *)(v))->rc_mallocsafe)
-#define CHIP_EXTENT(v)		(((struct rmixl_config *)(v))->rc_pci_cfg_ex)
+static int xlnae_pci_match(device_t, cfdata_t, void *);
+static void xlnae_pci_attach(device_t, device_t, void *);
 
-/* MEM region 1 */
-#define	CHIP_W1_BUS_START(v)	\
-	(((struct rmixl_config *)(v))->rc_pci_cfg_pbase)
-#define	CHIP_W1_BUS_END(v)	\
-	(CHIP_W1_SYS_START(v) +	\
-		(((struct rmixl_config *)(v))->rc_pci_cfg_size) - 1)
-#define CHIP_W1_SYS_START(v)	CHIP_W1_BUS_START(v)
-#define CHIP_W1_SYS_END(v)	CHIP_W1_BUS_END(v)
+CFATTACH_DECL_NEW(xlnae_pci, 0,
+    xlnae_pci_match, xlnae_pci_attach, 0, 0);
 
-#include <mips/mips/bus_space_alignstride_chipdep.c>
+static int
+xlnae_pci_match(device_t parent, cfdata_t cf, void *aux)
+{
+	struct pci_attach_args * const pa = aux;
+
+	if (pa->pa_id == PCI_ID_CODE(PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_NAE))
+		return 1;
+
+        return 0;
+}
+
+static void
+xlnae_pci_attach(device_t parent, device_t self, void *aux)
+{
+	// struct pci_attach_args * const pa = aux;
+
+	aprint_normal(": XLP Network Acceleration Engine\n");
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_comvar.h,v 1.1.2.2 2009/11/13 05:26:42 cliff Exp $	*/
+/*	$NetBSD: rmixl_comvar.h,v 1.1.2.3 2011/12/24 01:57:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,12 +34,13 @@
 
 #include <sys/bus.h>
 
-extern void rmixl_com_cnattach(bus_addr_t addr, int speed, int freq, int type, tcflag_t mode);
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 
-void rmixl_putchar_init(uint64_t);	/* XXX DEBUG */
-void rmixl_putchar(char c);		/* XXX DEBUG */
-void rmixl_puts(const char *restrict);	/* XXX DEBUG */
-void rmixl_puthex32(uint32_t);		/* XXX DEBUG */
-void rmixl_puthex64(uint64_t);		/* XXX DEBUG */
+void rmixl_com_cnattach(bus_addr_t addr, int speed, int freq, int type, tcflag_t mode);
+void com_pci_cnattach(pcitag_t tag, int speed, int freq, int type, tcflag_t mode);
+void com_mainbus_cnattach(bus_addr_t addr, int speed, int freq, int type, tcflag_t mode);
+bool com_pci_ok_p(pci_chipset_tag_t pc, pcitag_t tag, bus_addr_t *basep,
+        bus_size_t *sizep);
 
 #endif /* _MIPS_RMI_RMIXL_COMVAR_H_ */

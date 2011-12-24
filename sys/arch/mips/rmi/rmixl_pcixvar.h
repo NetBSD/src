@@ -1,4 +1,4 @@
-/*      $NetBSD: rmixl_pcixvar.h,v 1.1.2.3 2010/09/20 19:42:31 cliff Exp $	*/
+/*      $NetBSD: rmixl_pcixvar.h,v 1.1.2.4 2011/12/24 01:57:54 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,22 +63,22 @@ typedef struct rmixl_pcix_intr {
 #define RMIXL_PCIX_NINTR	4	/* PCI INT[A,B,C,D] */
 
 typedef struct rmixl_pcix_softc {
-	device_t                	sc_dev;
-	struct mips_pci_chipset 	sc_pci_chipset;
-	bus_space_tag_t              	sc_pci_cfg_memt;
-	bus_space_tag_t              	sc_pci_ecfg_memt;
-	bus_dma_tag_t			sc_29bit_dmat;
-	bus_dma_tag_t			sc_32bit_dmat;
-	bus_dma_tag_t			sc_64bit_dmat;
-	kmutex_t			sc_mutex;
-	int				sc_tmsk;
-	void 			       *sc_fatal_ih;
-        rmixl_pcix_evcnt_t             *sc_evcnts;
-	rmixl_pcix_intr_t	       *sc_intr;
+	device_t		sc_dev;
+	pci_chipset_tag_t	sc_pc;
+	bus_space_tag_t		sc_pci_cfg_memt;
+	bus_space_tag_t		sc_pci_ecfg_memt;
+	bus_space_handle_t	sc_pci_cfg_memh;
+	bus_dma_tag_t		sc_dmat29;
+	bus_dma_tag_t		sc_dmat32;
+	bus_dma_tag_t		sc_dmat64;
+	kmutex_t		sc_mutex;
+	void *			sc_fatal_ih;
+	rmixl_pcix_evcnt_t *	sc_evcnts;
+	rmixl_pcix_intr_t *	sc_intr;
 } rmixl_pcix_softc_t;
 
 
-extern void rmixl_physaddr_init_pcix(struct extent *);
+void rmixl_physaddr_init_pcix(struct extent *);
 
-#endif  /* _MIPS_RMI_PCIX_VAR_H_ */
+#endif /* _MIPS_RMI_PCIX_VAR_H_ */
 

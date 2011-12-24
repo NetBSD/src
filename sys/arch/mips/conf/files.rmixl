@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.13 2010/04/17 07:49:23 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.14 2011/12/24 01:57:53 matt Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -25,30 +25,38 @@ attach	cpu at cpucore with cpu_rmixl
 file	arch/mips/rmi/rmixl_cpu.c		cpu_rmixl
 
 # OBIO: offsets are from System Bridge Controller base
-define obio { [addr=-1], [size=0], [intr=-1], [tmsk=-1], [mult=1] }
+define obio { [addr=-1], [size=0], [intr=-1], [mult=1] }
 device	obio: obio
 attach	obio at cpunode with obio_rmixl
 file	arch/mips/rmi/rmixl_obio.c		obio_rmixl
 file    arch/mips/rmi/rmixl_obio_eb_space.c	obio_rmixl
 file    arch/mips/rmi/rmixl_obio_el_space.c	obio_rmixl
-file    arch/mips/rmi/rmixl_pci_cfg_space.c	rmixl_pcix | rmixl_pcie
-file    arch/mips/rmi/rmixl_pci_ecfg_space.c	rmixl_pcie
-file    arch/mips/rmi/rmixl_pci_io_space.c	rmixl_pcix | rmixl_pcie
-file    arch/mips/rmi/rmixl_pci_mem_space.c	rmixl_pcix | rmixl_pcie
+file    arch/mips/rmi/rmixl_pci_cfg_eb_space.c	rmixlp_pcie
+file    arch/mips/rmi/rmixl_pci_cfg_el_space.c	rmixl_pcix | rmixl_pcie
+file    arch/mips/rmi/rmixl_pci_ecfg_eb_space.c	rmixlp_pcie
+file    arch/mips/rmi/rmixl_pci_ecfg_el_space.c	rmixl_pcie | rmixlp_pcie
+file    arch/mips/rmi/rmixl_pci_io_space.c	rmixl_pcix | rmixl_pcie | rmixlp_pcie
+file    arch/mips/rmi/rmixl_pci_mem_space.c	rmixl_pcix | rmixl_pcie | rmixlp_pcie
 
 # NS16550 compatible serial ports
 attach com at obio with com_rmixl
+attach com at pci with com_pci
+file	arch/mips/rmi/com_pci.c			com_pci
 file	arch/mips/rmi/rmixl_com.c		com_rmixl
 defparam opt_com.h				CONSADDR CONSFREQ CONSPEED CONMODE
 
 # PCIe
 device  rmixl_pcie: pcibus
-attach  rmixl_pcie at obio
+attach  rmixl_pcie at obio			# XLS
 file    arch/mips/rmi/rmixl_pcie.c		rmixl_pcie	needs-flag
+
+device  rmixlp_pcie: pcibus
+attach  rmixlp_pcie at mainbus			# XLP
+file    arch/mips/rmi/rmixlp_pcie.c		rmixlp_pcie	needs-flag
 
 # PCI-X
 device  rmixl_pcix: pcibus
-attach  rmixl_pcix at obio
+attach  rmixl_pcix at obio			# XLR
 file    arch/mips/rmi/rmixl_pcix.c		rmixl_pcix	needs-flag
 
 # On-chip USB interface
@@ -59,9 +67,33 @@ file	arch/mips/rmi/rmixl_usbi.c		rmixl_usbi
 
 # On-chip OHCI USB controller
 attach	ohci at rmixl_usbi with rmixl_ohci
-file	arch/mips/rmi/rmixl_ohci.c		ohci
+file	arch/mips/rmi/rmixl_ohci.c		rmixl_ohci
 
 # On-chip EHCI USB controller
 attach	ehci at rmixl_usbi with rmixl_ehci
-file	arch/mips/rmi/rmixl_ehci.c		ehci
+file	arch/mips/rmi/rmixl_ehci.c		rmixl_ehci
 
+# PCI SDHC controller
+device	xlsdio { [slot=-1] }
+attach	xlsdio at pci
+attach	sdhc at xlsdio with sdhc_xlsdio
+file	arch/mips/rmi/rmixl_sdio.c		xlsdio
+file	arch/mips/rmi/rmixl_sdhc.c		sdhc_xlsdio
+
+# XL NAE controller
+device	xlnae { [port=-1] }
+attach	xlnae at obio with xlnae_obio
+attach	xlnae at pci with xlnae_pci
+device	nae: ether, ifnet, arp, mii
+attach	nae at xlnae
+file	arch/mips/rmi/rmixl_xlnae_obio.c	xlnae_obio
+file	arch/mips/rmi/rmixl_xlnae_pci.c		xlnae_pci
+file	arch/mips/rmi/rmixl_xlnae.c		xlnae
+file	arch/mips/rmi/rmixl_nae.c		nae
+
+# XL I2C controller
+device	xli2c: i2cbus
+attach	xli2c at obio with xli2c_obio
+attach	xli2c at pci with xli2c_pci
+file	arch/mips/rmi/rmixl_i2c_obio.c		xli2c_obio
+file	arch/mips/rmi/rmixl_i2c_pci.c		xli2c_pci

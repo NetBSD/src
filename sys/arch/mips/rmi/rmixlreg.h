@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.12 2010/05/01 17:41:49 cliff Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.13 2011/12/24 01:57:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,8 +30,8 @@
  */
 
 
-#ifndef _MIPS_RMI_RMIXLREGS_H_
-#define _MIPS_RMI_RMIXLREGS_H_
+#ifndef _MIPS_RMI_RMIXLREG_H_
+#define _MIPS_RMI_RMIXLREG_H_
 
 #include <sys/endian.h>
 
@@ -41,7 +41,7 @@
  */
 #define RMIXL_IOREG_VADDR(o)				\
 	(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(	\
-		rmixl_configuration.rc_io_pbase	+ (o))
+		rmixl_configuration.rc_io.r_pbase + (o))
 #define RMIXL_IOREG_READ(o)     be32toh(*RMIXL_IOREG_VADDR(o))
 #define RMIXL_IOREG_WRITE(o,v)  *RMIXL_IOREG_VADDR(o) = htobe32(v)
 
@@ -199,6 +199,90 @@
 
 /* PCR bit defines TBD */
 
+/* XLP Instruction Fetch Unit Registers */
+#define RMIXLP_PCR_IFU_THREAD_EN		0x0000
+#define RMIXLP_PCR_IFU_SW_SLEEP			0x0001
+#define RMIXLP_PCR_IFU_THREAD_SCHED_MODE	0x0002
+#define RMIXLP_PCR_IFU_THREAD_SCHED_COUNTER	0x0003
+#define RMIXLP_PCR_IFU_BHR_PROG_MASK		0x0004
+#define RMIXLP_PCR_IFU_SLEEP_STATE		0x0006
+#define RMIXLP_PCR_IFU_BRUB_RESERVE		0x0007
+
+/* XLP Instruction Cache Unit Registers */
+#define	RMIXLP_PCR_ICU_DEFEATURE		0x0100
+#define	RMIXLP_PCR_ICU_CACHE_ERR_INT		0x0101	/* RW1C */
+#define	RMIXLP_PCR_ICU_ERR_LOG0			0x0110
+#define	RMIXLP_PCR_ICU_ERR_LOG1			0x0111
+#define	RMIXLP_PCR_ICU_ERR_LOG2			0x0112
+#define	RMIXLP_PCR_ICU_ERR_INJECT0		0x0113
+#define	RMIXLP_PCR_ICU_ERR_INJECT1		0x0114
+
+/* XLP Load Store Unit Registers */
+#define	RMIXLP_PCR_LSU_CONFIG0			0x0300
+#define	RMIXLP_PCR_LSU_CONFIG1			0x0301
+#define	RMIXLP_PCR_LSU_DEFEATURE		0x0304
+#define	RMIXLP_PCR_LSU_DEBUG_ADDR		0x0305
+#define	RMIXLP_PCR_LSU_DEBUG_DATA		0x0306
+#define	RMIXLP_PCR_LSU_CERR_LOG0		0x0308
+#define	RMIXLP_PCR_LSU_CERR_LOG1		0x0309
+#define	RMIXLP_PCR_LSU_CERR_INJ0		0x030a
+#define	RMIXLP_PCR_LSU_CERR_INJ1		0x030b
+#define	RMIXLP_PCR_LSU_CERR_INT			0x030c
+
+#define	RMIXLP_PCR_LSE_DEFEATURE_EUL		__BIT(30)
+
+/* XLP MMU Registers */
+#define	RMIXLP_PCR_MMU_SETUP			0x0400
+#define	RMIXLP_PCR_LFSRSEED			0x0401
+#define	RMIXLP_PCR_HPW_NUM_PAGE_LVL		0x0410
+#define	RMIXLP_PCR_PGWKR_PGDBASE		0x0411
+#define	RMIXLP_PCR_PGWKR_PGDSHIFT		0x0412
+#define	RMIXLP_PCR_PGWKR_PGDMASK		0x0413
+#define	RMIXLP_PCR_PGWKR_PUDSHIFT		0x0414
+#define	RMIXLP_PCR_PGWKR_PUDMASK		0x0415
+#define	RMIXLP_PCR_PGWKR_PMDSHIFT		0x0416
+#define	RMIXLP_PCR_PGWKR_PMDMASK		0x0417
+#define	RMIXLP_PCR_PGWKR_PTESHIFT		0x0418
+#define	RMIXLP_PCR_PGWKR_PTEMASK		0x0419
+
+#define	RMIXLP_PCR_MMU_SETUP_HASHFUNCTIONEN	__BIT(13)
+#define	RMIXLP_PCR_MMU_SETUP_LOCCLKGATE		__BIT(3)
+#define	RMIXLP_PCR_MMU_SETUP_TLB_GLOBAL		__BIT(0)
+#define	RMIXLP_PCR_PGWKR_PxxSHIFT_MASK		__BITS(5,0)
+#define	RMIXLP_PCR_PGWKR_PxxMASK_MASK		__BITS(31,0)
+
+/* XLP L2 Cache Registers */
+#define	RMIXLP_PCR_L2_FTR_CTL0			0x800
+#define	RMIXLP_PCR_L2_FTR_CTL1			0x801
+#define	RMIXLP_PCR_L2_CRERR_INT_VID		0x802
+#define	RMIXLP_PCR_L2_DIS_WAY			0x803
+#define	RMIXLP_PCR_L2_ERR_LOG0			0x810
+#define	RMIXLP_PCR_L2_ERR_LOG1			0x811
+#define	RMIXLP_PCR_L2_ERR_LOG2			0x812
+#define	RMIXLP_PCR_L2_ERR_INJ0			0x813
+#define	RMIXLP_PCR_L2_ERR_INJ1			0x814
+
+/* XLP Mapping Unit Registers */
+#define	RMIXLP_PCR_MAP_T0_LRQ_MASK		0x0602
+#define	RMIXLP_PCR_MAP_T1_LRQ_MASK		0x0603
+#define	RMIXLP_PCR_MAP_T2_LRQ_MASK		0x0604
+#define	RMIXLP_PCR_MAP_T3_LRQ_MASK		0x0605
+#define	RMIXLP_PCR_MAP_T0_SRQ_MASK		0x0606
+#define	RMIXLP_PCR_MAP_T1_SRQ_MASK		0x0607
+#define	RMIXLP_PCR_MAP_T2_SRQ_MASK		0x0608
+#define	RMIXLP_PCR_MAP_T3_SRQ_MASK		0x0609
+#define	RMIXLP_PCR_MAP_THREAD_MODE		0x0a00
+#define	RMIXLP_PCR_MAP_EXT_EBASE_ENABLE		0x0a02
+#define	RMIXLP_PCR_MAP_CCD_CONFIG		0x0a02
+#define	RMIXLP_PCR_MAP_T0_DEBUG_MODE		0x0a03
+#define	RMIXLP_PCR_MAP_T1_DEBUG_MODE		0x0a04
+#define	RMIXLP_PCR_MAP_T2_DEBUG_MODE		0x0a05
+#define	RMIXLP_PCR_MAP_T3_DEBUG_MODE		0x0a06
+#define	RMIXLP_PCR_MAP_THREAD_STATE		0x0a10
+#define	RMIXLP_PCR_MAP_T0_CCD_STATUS		0x0a11
+#define	RMIXLP_PCR_MAP_T1_CCD_STATUS		0x0a12
+#define	RMIXLP_PCR_MAP_T2_CCD_STATUS		0x0a13
+#define	RMIXLP_PCR_MAP_T3_CCD_STATUS		0x0a14
 
 /*
  * Memory Distributed Interconnect (MDI) System Memory Map
@@ -289,6 +373,11 @@
  * offset = id * 4
  */
 #define _RMIXL_OFFSET(id)	((id) * 4)
+#define _RMIXL_PCITAG(b,d,f)	((((((b) << 5) | (d)) << 3) | (f)) << 12)
+#define	_RMIXL_PCITAG_BUS(t)	(((t) >> 20) & 255)
+#define	_RMIXL_PCITAG_DEV(t)	(((t) >> 15) & 31)
+#define	_RMIXL_PCITAG_FUNC(t)	(((t) >> 12) & 7)
+#define	_RMIXL_PCITAG_OFFSET(t)	(((t) >>  0) & 4095)
 
 
 /*
@@ -491,6 +580,7 @@
  * lists "Reg ID" values not offsets
  * Offsets are relative to RMIXL_IO_DEV_BRIDGE
  */
+#define	RMIXL_PIC_PCITAG		_RMIXL_PCITAG(0, 0, 4)
 #define	RMIXL_PIC_CONTROL		_RMIXL_OFFSET(0x0)
 #define	RMIXL_PIC_IPIBASE		_RMIXL_OFFSET(0x4)
 #define	RMIXL_PIC_INTRACK		_RMIXL_OFFSET(0x6)
@@ -537,6 +627,11 @@
 #define RMIXL_PIC_IPIBASE_ID_RESV	\
 		(RMIXL_PIC_IPIBASE_ID_RESa|RMIXL_PIC_IPIBASE_ID_RESb	\
 		|RMIXL_PIC_IPIBASE_ID_RESc)
+#define	RMIXL_PIC_IPIBASE_MAKE(nmi, core, thread, tag)		\
+	(__SHIFTIN((nmi), RMIXL_PIC_IPIBASE_NMI)		\
+	 | __SHIFTIN((core), RMIXL_PIC_IPIBASE_ID_CORE)		\
+	 | __SHIFTIN((thread), RMIXL_PIC_IPIBASE_ID_THREAD)	\
+	 | __SHIFTIN((tag), RMIXL_PIC_IPIBASE_VECTORNUM))
 
 /*
  * RMIXL_PIC_IRTENTRYC0 bits
@@ -560,10 +655,138 @@
 #define RMIXL_PIC_IRTENTRYC1_TRG	__BIT(30)	/* 0=Edge; 1=Level */
 #define RMIXL_PIC_IRTENTRYC1_VALID	__BIT(31)	/* 0=Invalid; 1=Valid IRT Entry */
 
+/*
+ * RMI XLP PIC registers (all are 64-bit except when noted)
+ */
+#define	RMIXLP_PIC_CTRL			_RMIXL_OFFSET(0x40)
+#define	RMIXLP_PIC_BYTESWAP		_RMIXL_OFFSET(0x42)
+#define	RMIXLP_PIC_STATUS		_RMIXL_OFFSET(0x44)
+#define	RMIXLP_PIC_INT_TIMEOUT		_RMIXL_OFFSET(0x46)
+#define	RMIXLP_PIC_ICI0_INT_TIMEOUT	_RMIXL_OFFSET(0x48)
+					/* nothing at 0x4a */
+#define	RMIXLP_PIC_IPI_CTRL		_RMIXL_OFFSET(0x4e)
+#define	RMIXLP_PIC_INT_ACK		_RMIXL_OFFSET(0x50)
+#define	RMIXLP_PIC_INT_PENDING0		_RMIXL_OFFSET(0x52) /* IRT 0..63 */
+#define	RMIXLP_PIC_INT_PENDING1		_RMIXL_OFFSET(0x54) /* IRT 64..127 */
+#define	RMIXLP_PIC_INT_PENDING2		_RMIXL_OFFSET(0x56) /* IRT 128..160 */
+#define	RMIXLP_PIC_WATCHDOG0_MAXVAL	_RMIXL_OFFSET(0x58)
+#define	RMIXLP_PIC_WATCHDOG0_COUNT	_RMIXL_OFFSET(0x5a)
+#define	RMIXLP_PIC_WATCHDOG0_ENABLE0	_RMIXL_OFFSET(0x5c)
+					/* nothing at 0x5e */
+#define	RMIXLP_PIC_WATCHDOG0_BEATCMD	_RMIXL_OFFSET(0x60)
+#define	RMIXLP_PIC_WATCHDOG0_BEAT0	_RMIXL_OFFSET(0x62)
+#define	RMIXLP_PIC_WATCHDOG0_BEAT1	_RMIXL_OFFSET(0x64)
+#define	RMIXLP_PIC_WATCHDOG1_MAXVAL	_RMIXL_OFFSET(0x66)
+#define	RMIXLP_PIC_WATCHDOG1_COUNT	_RMIXL_OFFSET(0x68)
+#define	RMIXLP_PIC_WATCHDOG1_ENABLE	_RMIXL_OFFSET(0x6a)
+					/* nothing at 0x6c */
+#define	RMIXLP_PIC_WATCHDOG1_BEATCMD	_RMIXL_OFFSET(0x6e)
+#define	RMIXLP_PIC_WATCHDOG1_BEAT	_RMIXL_OFFSET(0x70)
+					/* nothing at 0x72 */
+#define	RMIXLP_PIC_SYSTEMTIMER_MAXVALUE(n)	_RMIXL_OFFSET(0x74+2*(n))
+#define	RMIXLP_PIC_SYSTEMTIMER_COUNT(n)	_RMIXL_OFFSET(0x84+2*(n))
+#define	RMIXLP_PIC_INT_THREAD_ENABLE01(n) _RMIXL_OFFSET(0x94+4*(n))
+#define	RMIXLP_PIC_INT_THREAD_ENABLE23(n) _RMIXL_OFFSET(0x96+4*(n))
+#define	RMIXLP_PIC_IRTENTRY(n)		_RMIXL_OFFSET(0xb4+2*(n))
+#define	RMIXLP_PIC_INT_BROADCAST_ENABLE	_RMIXL_OFFSET(0x292)	/* 32-bit */
+#define	RMIXLP_PIC_INT_GPIO_PENDING	_RMIXL_OFFSET(0x293)	/* 32-bit */
+
+/*
+ * RMIXLP_PIC_CTRL bits
+ */
+#define	RMIXLP_PIC_CTRL_ITV	__BITS(64,32)	/* Interrupt Timeout Value */
+#define	RMIXLP_PIC_CTRL_STE	__BITS(17,10)	/* System Timer Enable */
+#define	RMIXLP_PIC_CTRL_WWR1	__BITS(9,8)	/* Watchdog Wraparound Reset1 */
+#define	RMIXLP_PIC_CTRL_WWR0	__BITS(7,6)	/* Watchdog Wraparound Reset0 */
+#define	RMIXLP_PIC_CTRL_WWN1	__BITS(5,4)	/* Watchdog Wraparound NMI1 */
+#define	RMIXLP_PIC_CTRL_WWN0	__BITS(3,2)	/* Watchdog Wraparound NMI0 */
+#define	RMIXLP_PIC_CTRL_WTE	__BITS(1,0)	/* Watchdog Timer Enable */
+#define	RMIXLP_PIC_CTRL_WTE1	__BIT(1)	/* Watchdog Timer 1 Enable */
+#define	RMIXLP_PIC_CTRL_WTE0	__BIT(0)	/* Watchdog Timer 0 Enable */
+
+/*
+ * RMIXLP_PIC_STATUS bits
+ */
+#define	RMIXLP_PIC_STATUS_ITE	__BIT(32)	/* Interrupt Timeout */
+#define	RMIXLP_PIC_STATUS_STS	__BITS(11,4)	/* SystemTimer */
+#define	RMIXLP_PIC_STATUS_WNS	__BITS(3,2)	/* Watchdog NMI Interrupt */
+#define	RMIXLP_PIC_STATUS_WIS	__BITS(1,0)	/* Watchdog Interrupt */
+
+/*
+ * RMIXLP_PIC_INT_TIMEOUT and RMIXLP_PIC_ICI0_INT_TIMEOUT bits
+ */
+#define	RMIXLP_PIC_IPI_TIMEOUT_INTPEND		__BITS(51,36)	/* ?? */
+#define	RMIXLP_PIC_IPI_TIMEOUT_INTNUM		__BITS(35,28)	/* IRT # */
+#define	RMIXLP_PIC_IPI_TIMEOUT_INTEN		__BIT(27)	/* Int Enable */
+#define	RMIXLP_PIC_IPI_TIMEOUT_INTVEC		__BITS(25,20)	/* Int Vector */
+#define	RMIXLP_PIC_IPI_TIMEOUT_INTCPU		__BITS(19,16)	/* Dest CPU */
+#define	RMIXLP_PIC_IPI_TIMEOUT_INTDEST		__BITS(15,0)	/* Dest */
+
+/*
+ * RMIXLP_PIC_IPI_CTRL bits
+ */
+#define	RMIXLP_PIC_IPI_CTRL_NMI		__BIT(32)	/* 1=NMI; 0=Maskable */
+#define	RMIXLP_PIC_IPI_CTRL_RIV		__BITS(25,20)	/* Which bit in EIRR */
+#define	RMIXLP_PIC_IPI_CTRL_DT		__BITS(15,0)	/* Dest Thread Enbs */
+#define	RMIXLP_PIC_IPI_CTRL_MAKE(nmi, tmask, tag)		\
+	(__SHIFTIN((nmi), RMIXLP_PIC_IPI_CTRL_NMI)		\
+	 | __SHIFTIN((tag), RMIXL_PIC_IPI_CTRL_RIV)		\
+	 | __SHIFTIN((tmask), RMIXLP_PIC_IPI_CTRL_DT))
+
+/*
+ * RMIXLP_PIC_INT_ACK bits
+ */
+#define	RMIXLP_PIC_INT_ACK_THREAD	__BITS(11,8)	/* Thr # if PicIntBrd */
+#define	RMIXLP_PIC_INT_ACK_ACK		__BITS(7,0)	/* IRT # */
+
+/*
+ * RMIXLP_WATCHDOG_BEATCMD
+ *
+ * write 32 * node + 4 * cpu + thread (e.g. cpu_id) to set heartbeat.
+ */
+
+/*
+ * RMIXLP_PIC_INT_THREAD_ENABLE bits
+ */
+#define	RMIXLP_PIC_INT_ITE	__BITS(15,0)
+
+/*
+ * RMIXLP_PIC_IRTENTRY bits
+ */
+
+/* bits 63-32 are reserved */
+#define	RMIXLP_PIC_IRTENTRY_EN		__BIT(31)	/* 1=Enable; 0=Disable */
+#define	RMIXLP_PIC_IRTENTRY_NMI		__BIT(29)	/* 1=NMI; 0=Maskable */
+#define	RMIXLP_PIC_IRTENTRY_LOCAL	__BIT(28)	/* 1=Local; 0=Global */
+#define RMIXLP_PIC_IRTENTRY_INTVEC	__BITS(25,20)	/* maps to bit# in CPU's EIRR */
+#define	RMIXLP_PIC_IRTENTRY_DT		__BIT(19)	/* 1=ID; 0=ITE */
+#define	RMIXLP_PIC_IRTENTRY_DT_ID	__SHIFTIN(1, RMIXLP_PIC_IRTENTRY_DT)
+#define	RMIXLP_PIC_IRTENTRY_DT_ITE	__SHIFTIN(0, RMIXLP_PIC_IRTENTRY_DT)
+#define RMIXLP_PIC_IRTENTRY_DB		__BITS(18,16)	/* NodeId/CpuID[2]; ITE# */
+#define	RMIXLP_PIC_IRTENTRY_ITE(n)	__SHIFTIN((n), RMIXLP_PIC_IRTENTRY_DB)
+#define RMIXLP_PIC_IRTENTRY_DTE		__BITS(15,0)	/* Destination Thread Enables */
+
+/*
+ * RMIXLP_PIC_INT_BROADCAST_ENABLE bits
+ */
+#define	RMIXLP_PIC_INT_BROADCAST_ENABLE_PICINTBCMOD	__BITS(27,16)
+#define	RMIXLP_PIC_INT_BROADCAST_ENABLE_PICINTBCEN	__BITS(11,0)
+
+/*
+ * RMIXLP_PIC_INT_GPIO_PENDING bits
+ */
+#define	RMIXLP_PIC_INT_GPIO_PENDING_PICPENDB	__BITS(11,0)
+
+/*
+ * RMIXLP Uart
+ */
+#define	RMIXLP_UART1_PCITAG		_RMIXL_PCITAG(0, 6, 0)
+#define	RMIXLP_UART2_PCITAG		_RMIXL_PCITAG(0, 6, 1)
 
 /*
  * GPIO Controller registers
  */
+#define	RMIXLP_GPIO_PCITAG		_RMIXL_PCITAG(0, 6, 4)
 
 /* GPIO Signal Registers */
 #define RMIXL_GPIO_INT_ENB		_RMIXL_OFFSET(0x0)	/* Interrupt Enable register */
@@ -916,6 +1139,251 @@
 #define RMIXL_USB_HOST_RESV		0xc00
 #define RMIXL_USB_HOST_MASK		0xc00
 
+/*
+ * XLP PCIe Host Bridge Registers
+ */
+#define	RMIXLP_SBC_PCITAG		_RMIXL_PCITAG(0, 0, 0)
+#ifndef RMIXLP_SBC_PCIE_ECFG_PBASE
+#define	RMIXLP_SBC_PCIE_ECFG_PBASE	0x18000000
+#endif
+#define	RMIXLP_SBC_PCIE_ECFG_VBASE	MIPS_PHYS_TO_KSEG1(RMIXLP_SBC_PCIE_ECFG_PBASE)
+#define RMIXLP_SBC_NBU_MODE		_RMIXL_OFFSET(0x40)	/* Memory I/O mode */
+#define RMIXLP_SBC_PCIE_CFG_BASE	_RMIXL_OFFSET(0x41)	/* PCI Configuration BAR */
+#define RMIXLP_SBC_PCIE_CFG_LIMIT	_RMIXL_OFFSET(0x42)	/* PCI Configuration Limit */
+#define RMIXLP_SBC_PCIE_ECFG_BASE	_RMIXL_OFFSET(0x43)	/* PCI Extended Configuration BAR */
+#define RMIXLP_SBC_PCIE_ECFG_LIMIT	_RMIXL_OFFSET(0x44)	/* PCI Extended Configuration Limit */
+#define RMIXLP_SBC_BUSNUM_BARn(n)	_RMIXL_OFFSET(0x45+(n))	/* Bus Number BAR reg */
+#define	RMIXLP_SBC_NBUSNUM_BAR		7	/* PCIe: 0-3, ICI: 4-7 */
+#define RMIXLP_SBC_FLASH_BASEn(n)	_RMIXL_OFFSET(0x4c+(n))	/* Flash Memory BAR */
+#define RMIXLP_SBC_FLASH_LIMITn(n)	_RMIXL_OFFSET(0x50+(n))	/* Flash Memory Limit reg */
+#define	RMIXLP_SBC_NFLASH		4
+#define RMIXLP_SBC_DRAM_BASEn(n)	_RMIXL_OFFSET(0x54+(n))	/* DRAM[n] BAR */
+#define RMIXLP_SBC_DRAM_LIMITn(n)	_RMIXL_OFFSET(0x5c+(n))	/* DRAM[n] Limit */
+#define RMIXLP_SBC_DRAM_XLATIONn(n)	_RMIXL_OFFSET(0x6c+(n))	/* DRAM[n] Translation */
+#define	RMIXLP_SBC_NDRAM		8
+#define RMIXLP_SBC_PCIE_MEM_BASEn(n)	_RMIXL_OFFSET(0x74+(n))	/* PCI Memory region BAR */
+#define RMIXLP_SBC_PCIE_MEM_LIMITn(n)	_RMIXL_OFFSET(0x78+(n))	/* PCI Memory region Limit */
+#define	RMIXLP_SBC_NPCIE_MEM		4
+#define RMIXLP_SBC_PCIE_IO_BASEn(n)	_RMIXL_OFFSET(0x7c+(n))	/* PCI IO region BAR */
+#define RMIXLP_SBC_PCIE_IO_LIMITn(n)	_RMIXL_OFFSET(0x80+(n))	/* PCI IO region LimitAR */
+#define	RMIXLP_SBC_NPCIE_IO		4
+
+#define	_RMIXLP_SBC_X_TO_PA(x,r)	\
+		((uint64_t)((r) & RMIXLP_SBC_##x##_MASK) << 8)
+#define	_RMIXLP_SBC_PA_TO_X(x,r)	\
+		(((uint64_t)(r) >> 8) & RMIXLP_SBC_##x##_MASK)
+#define	_RMIXLP_SBC_X_SIZE(x,b,l)	\
+		((l)-(b)+(__LOWEST_SET_BIT(RMIXLP_SBC_##x##_MASK) << 8))
+
+#define	RMIXLP_SBC_DRAM_MASK		__BITS(31,12)	/* phys address bits 39:20 */
+#define	RMIXLP_SBC_PCIE_CFG_MASK	__BITS(31,16)	/* phys address bits 39:24 */
+#define	RMIXLP_SBC_PCIE_ECFG_MASK	__BITS(31,12)	/* phys address bits 39:20 */
+#define	RMIXLP_SBC_PCIE_MEM_MASK	__BITS(31,12)	/* phys address bits 39:20 */
+#define	RMIXLP_SBC_PCIE_IO_MASK		__BITS(31,12)	/* phys address bits 39:20 */
+#define	RMIXLP_SBC_SRIO_MEM_MASK	__BITS(31,12)	/* phys address bits 39:20 */
+
+#define	RMIXLP_SBC_DRAM_SIZE(b,l)	_RMIXLP_SBC_X_SIZE(DRAM,b,l)
+#define	RMIXLP_SBC_PCIE_CFG_SIZE(b,l)	_RMIXLP_SBC_X_SIZE(PCIE_CFG,b,l)
+#define	RMIXLP_SBC_PCIE_ECFG_SIZE(b,l)	_RMIXLP_SBC_X_SIZE(PCIE_ECFG,b,l)
+#define	RMIXLP_SBC_PCIE_MEM_SIZE(b,l)	_RMIXLP_SBC_X_SIZE(PCIE_MEM,b,l)
+#define	RMIXLP_SBC_PCIE_IO_SIZE(b,l)	_RMIXLP_SBC_X_SIZE(PCIE_IO,b,l)
+#define	RMIXLP_SBC_SRIO_MEM_SIZE(b,l)	_RMIXLP_SBC_X_SIZE(SRIO_MEM,b,l)
+
+#define	RMIXLP_SBC_DRAM_TO_PA(r)	_RMIXLP_SBC_X_TO_PA(DRAM,r)
+#define	RMIXLP_SBC_PCIE_CFG_TO_PA(r)	_RMIXLP_SBC_X_TO_PA(PCIE_CFG,r)
+#define	RMIXLP_SBC_PCIE_ECFG_TO_PA(r)	_RMIXLP_SBC_X_TO_PA(PCIE_ECFG,r)
+#define	RMIXLP_SBC_PCIE_MEM_TO_PA(r)	_RMIXLP_SBC_X_TO_PA(PCIE_MEM,r)
+#define	RMIXLP_SBC_PCIE_IO_TO_PA(r)	_RMIXLP_SBC_X_TO_PA(PCIE_IO,r)
+#define	RMIXLP_SBC_SRIO_MEM_TO_PA(r)	_RMIXLP_SBC_X_TO_PA(SRIO_MEM,r)
+
+#define	RMIXLP_SBC_PA_TO_DRAM(r)	_RMIXLP_SBC_PA_TO_X(DRAM,r)
+#define	RMIXLP_SBC_PA_TO_PCIE_CFG(r)	_RMIXLP_SBC_PA_TO_X(PCIE_CFG,r)
+#define	RMIXLP_SBC_PA_TO_PCIE_ECFG(r)	_RMIXLP_SBC_PA_TO_X(PCIE_ECFG,r)
+#define	RMIXLP_SBC_PA_TO_PCIE_MEM(r)	_RMIXLP_SBC_PA_TO_X(PCIE_MEM,r)
+#define	RMIXLP_SBC_PA_TO_PCIE_IO(r)	_RMIXLP_SBC_PA_TO_X(PCIE_IO,r)
+#define	RMIXLP_SBC_PA_TO_SRIO_MEM(r)	_RMIXLP_SBC_PA_TO_X(SRIO_MEM,r)
+
+/*
+ * For each PCIe link, its subordinate buses must be programed into its
+ * BusNum_BAR register.  This is in addition to the normal PCIe registers
+ * on the PCIe link device itself.
+ */
+#define	RMIXLP_SBC_BUSNUM_BAR_ENABLE	__BIT(0)
+#define	RMIXLP_SBC_BUSNUM_BAR_SECBUS	__BITS(15,8)
+#define	RMIXLP_SBC_BUSNUM_BAR_SUBBUS	__BITS(23,16)
+#define	RMIXLP_SBC_BUSNUM_BAR_MASK	__BITS(23,8)
+
+#define	RMIXLP_SBC_EVCNT_CTRL1		_RMIXL_OFFSET(0x90) /* Event Counter 1 Control Register */
+#define	RMIXLP_SBC_EVCNT_LOW1		_RMIXL_OFFSET(0x91) /* Event Counter 1 Low Register */
+#define	RMIXLP_SBC_EVCNT_HIGH1		_RMIXL_OFFSET(0x92) /* Event Counter 1 High Register */
+#define	RMIXLP_SBC_EVCNT_CTRL2		_RMIXL_OFFSET(0x93) /* Event Counter 2 Control Register */
+#define	RMIXLP_SBC_EVCNT_LOW2		_RMIXL_OFFSET(0x94) /* Event Counter 2 Low Register */
+#define	RMIXLP_SBC_EVCNT_HIGH2		_RMIXL_OFFSET(0x95) /* Event Counter 2 High Register */
+
+#define RMIXLP_SBC_TRCBUF_MATCH_RQST0	_RMIXL_OFFSET(0x96) /* Trace Buffer Match Request Register 0 */
+#define RMIXLP_SBC_TRCBUF_MATCH_RQST1	_RMIXL_OFFSET(0x97) /* Trace Buffer MAtch Request Register 1 */
+#define RMIXLP_SBC_TRCBUF_MATCH_ADDRLO	_RMIXL_OFFSET(0x98) /* Trace Buffer Match Request Address Low Register */
+#define RMIXLP_SBC_TRCBUF_MATCH_ADDRHI	_RMIXL_OFFSET(0x99) /* Trace Buffer Match Request Address High Register */
+#define RMIXLP_SBC_TRCBUF_CTRL		_RMIXL_OFFSET(0x9A) /* Trace Buffer Control Register */
+#define RMIXLP_SBC_TRCBUF_INIT		_RMIXL_OFFSET(0x9B) /* Trace Buffer Initialization Register */
+#define RMIXLP_SBC_TRCBUF_ACCESS	_RMIXL_OFFSET(0x9C) /* Trace Buffer Access Register */
+#define RMIXLP_SBC_TRCBUF_READDATA(n)	_RMIXL_OFFSET(0x9D+(n)) /* Trace Buffer Read Data Registers <0-3> */
+#define RMIXLP_SBC_NTRCBUF_READDATA	4
+#define RMIXLP_SBC_TRCBUF_STATUS	_RMIXL_OFFSET(0xA1) /* Trace Buffer Status Register */
+
+#define RMIXLP_SBC_ADDR_ERROR0		_RMIXL_OFFSET(0xA2) /* Address Error Register 0 */
+#define RMIXLP_SBC_ADDR_ERROR1		_RMIXL_OFFSET(0xA3) /* Address Error Register 1 */
+#define RMIXLP_SBC_ADDR_ERROR2		_RMIXL_OFFSET(0xA4) /* Address Error Register 2 */
+#define RMIXLP_SBC_TAGECC_ADDR_ERROR0	_RMIXL_OFFSET(0xA5) /* Tag ECC Address Error Register 0 */
+#define RMIXLP_SBC_TAGECC_ADDR_ERROR1	_RMIXL_OFFSET(0xA6) /* Tag ECC Address Error Register 1 */
+#define RMIXLP_SBC_TAGECC_ADDR_ERROR2	_RMIXL_OFFSET(0xA7) /* Tag ECC Address Error Register 2 */
+#define RMIXLP_SBC_LINE_FLUSH_LOW	_RMIXL_OFFSET(0xA8) /* Line Flush Low Register */
+#define RMIXLP_SBC_LINE_FLUSH_HIGH	_RMIXL_OFFSET(0xA9) /* Line Flush High Register */
+#define RMIXLP_SBC_NODE_ID		_RMIXL_OFFSET(0xAA) /* Node ID Register */
+#define RMIXLP_SBC_ERROR_INT_ENABLE	_RMIXL_OFFSET(0xAB) /* Error Interrupt Enable Register */
+#define RMIXLP_SBC_TIMEOUT_ERROR0	_RMIXL_OFFSET(0xAC) /* Timeout Error Register 0 */
+#define RMIXLP_SBC_TIMEOUT_ERROR1	_RMIXL_OFFSET(0xAD) /* Timeout Error Register 1 */
+#define RMIXLP_SBC_TIMEOUT_ERROR2	_RMIXL_OFFSET(0xAE) /* Timeout Error Register 2 */
+#define RMIXLP_SBC_SRIO_MEM_BASE	_RMIXL_OFFSET(0xAF) /* SRIO Memory Base Address Register */
+#define RMIXLP_SBC_SRIO_MEM_LIMIT	_RMIXL_OFFSET(0xB0) /* SRIO Memory Limit Address Register */
+
+/*
+ * XLP L3 Cache Registers
+ */
+#define RMIXLP_SBC_L3_LINE_LCK0			_RMIXL_OFFSET(0xC0)
+#define RMIXLP_SBC_L3_LINE_LCK1			_RMIXL_OFFSET(0xC1)
+#define RMIXLP_SBC_L3_ACCESS_CMD		_RMIXL_OFFSET(0xC2)
+#define RMIXLP_SBC_L3_ACCESS_ADDR		_RMIXL_OFFSET(0xC3)
+#define RMIXLP_SBC_L3_ACCESS_DATA0		_RMIXL_OFFSET(0xC4)
+#define RMIXLP_SBC_L3_ACCESS_DATA1		_RMIXL_OFFSET(0xC5)
+#define RMIXLP_SBC_L3_ACCESS_DATA2		_RMIXL_OFFSET(0xC6)
+#define RMIXLP_SBC_L3_WAY_PART0			_RMIXL_OFFSET(0xC7)
+#define RMIXLP_SBC_L3_WAY_PART1			_RMIXL_OFFSET(0xC8)
+#define RMIXLP_SBC_L3_WAY_PART4			_RMIXL_OFFSET(0xCB)
+#define RMIXLP_SBC_L3_WAY_PART5			_RMIXL_OFFSET(0xCC)
+#define RMIXLP_SBC_L3_WAY_PART6			_RMIXL_OFFSET(0xCD)
+#define RMIXLP_SBC_L3_PERF_CTL_REG0		_RMIXL_OFFSET(0xCE)
+#define RMIXLP_SBC_L3_PERF_CNT_REG0		_RMIXL_OFFSET(0xCF)
+#define RMIXLP_SBC_L3_PERF_CTL_REG1		_RMIXL_OFFSET(0xD0)
+#define RMIXLP_SBC_L3_PERF_CNT_REG1		_RMIXL_OFFSET(0xD1)
+#define RMIXLP_SBC_L3_PERF_CTL_REG2		_RMIXL_OFFSET(0xD2)
+#define RMIXLP_SBC_L3_PERF_CNT_REG2		_RMIXL_OFFSET(0xD3)
+#define RMIXLP_SBC_L3_PERF_CTL_REG3		_RMIXL_OFFSET(0xD4)
+#define RMIXLP_SBC_L3_PERF_CNT_REG3		_RMIXL_OFFSET(0xD5)
+#define RMIXLP_SBC_L3_ERROR_INJ_CTL_REG0	_RMIXL_OFFSET(0xD6)
+#define RMIXLP_SBC_L3_ERROR_INJ_CTL_REG1	_RMIXL_OFFSET(0xD7)
+#define RMIXLP_SBC_L3_ERROR_INJ_CTL_REG2	_RMIXL_OFFSET(0xD8)
+#define RMIXLP_SBC_L3_ERROR_LOG_REG0		_RMIXL_OFFSET(0xD9)
+#define RMIXLP_SBC_L3_ERROR_LOG_REG1		_RMIXL_OFFSET(0xDA)
+#define RMIXLP_SBC_L3_ERROR_LOG_REG2		_RMIXL_OFFSET(0xDB)
+#define RMIXLP_SBC_L3_INTERRUPT_EN_REG		_RMIXL_OFFSET(0xDC)
+
+/*
+ * XLP Time Slot Weight Registers
+ */
+#define RMIXLP_SBC_PCIE_LINK_TSW(n)	_RMIXL_OFFSET(0x300+(n)) /* PCIe Link 0 Time Slot Weight Register */
+#define	RMIXLP_SBC_NPCIE_LINK_TSW	4
+#define RMIXLP_SBC_USB_TSW		_RMIXL_OFFSET(0x304) /* USB Time Slot Weight Register */
+#define RMIXLP_SBC_POE_TSW		_RMIXL_OFFSET(0x305) /* Packet Ordering Engine Time Slot Weight Register */
+#define RMIXLP_SBC_SATA_TSW		_RMIXL_OFFSET(0x306) /* SATA Weight Register */
+#define RMIXLP_SBC_SRIO_TSW		_RMIXL_OFFSET(0x307) /* SRIO Weight Register */
+#define RMIXLP_SBC_REGEX_TSW		_RMIXL_OFFSET(0x308) /* RegEx Weight Register */
+#define RMIXLP_SBC_GPIO_TSW		_RMIXL_OFFSET(0x309) /* General I/O Time Slot Weight Register */
+#define RMIXLP_SBC_FLASH_TSW		_RMIXL_OFFSET(0x30A) /* Flash Time Slot Weight Register (NAND/NOR/SPI/MMC/SD) */
+#define RMIXLP_SBC_NAE_TSW		_RMIXL_OFFSET(0x30B) /* Network Acceleration Engine Time Slot Weight Register */
+#define RMIXLP_SBC_FNM_TSW		_RMIXL_OFFSET(0x30C) /* Fast Messaging Network Time Slot Weight Register */
+#define RMIXLP_SBC_DMAENG_TSW		_RMIXL_OFFSET(0x30D) /* Data Transfer and RAID Engine Slot Weight Register */
+#define RMIXLP_SBC_SEC_TSW		_RMIXL_OFFSET(0x30E) /* Security Engine Slot Weight Register */
+#define RMIXLP_SBC_RSAECC_TSW		_RMIXL_OFFSET(0x30F) /* RSA/ECC Engine Slot Weight Register */
+#define RMIXLP_SBC_BRIDGE_DATA_COUNTER	_RMIXL_OFFSET(0x310) /* Bridge Data Counter Register */
+#define RMIXLP_SBC_BYTE_SWAP		_RMIXL_OFFSET(0x311) /* Byte Swap Register */
+
+#define	RMIXLP_EHCI0_PCITAG		_RMIXL_PCITAG(0,2,0)
+#define	RMIXLP_OHCI0_PCITAG		_RMIXL_PCITAG(0,2,1)
+#define	RMIXLP_OHCI1_PCITAG		_RMIXL_PCITAG(0,2,2)
+#define	RMIXLP_EHCI1_PCITAG		_RMIXL_PCITAG(0,2,3)
+#define	RMIXLP_OHCI2_PCITAG		_RMIXL_PCITAG(0,2,4)
+#define	RMIXLP_OHCI3_PCITAG		_RMIXL_PCITAG(0,2,5)
+
+#define	RMIXLP_USB_CTL0			_RMIXL_OFFSET(0x41)
+#define	RMIXLP_USB_BYTE_SWAP_DIS	_RMIXL_OFFSET(0x49)
+#define	RMIXLP_USB_PHY0			_RMIXL_OFFSET(0x4A)
+
+#define	RMIXLP_USB_CTL0_BIUTOEN		__BIT(8)
+#define	RMIXLP_USB_CTL0_INCR4		__BIT(7)
+#define	RMIXLP_USB_CTL0_INCR8		__BIT(6)
+#define	RMIXLP_USB_CTL0_INCR16		__BIT(5)
+#define	RMIXLP_USB_CTL0_0HCIINT12	__BIT(4)
+#define	RMIXLP_USB_CTL0_0HCIINT1	__BIT(3)
+#define	RMIXLP_USB_CTL0_0HCISTRTCLK	__BIT(2)
+#define	RMIXLP_USB_CTL0_EHCI64BEN	__BIT(1)
+#define	RMIXLP_USB_CTL0_USBCTLRRST	__BIT(0)
+
+#define	RMIXLP_USB_PHY0_PHYTXBSENH1	__BIT(11)
+#define	RMIXLP_USB_PHY0_PHYTXBSTENH0	__BIT(10)
+#define	RMIXLP_USB_PHY0_PHYTXBSENL1	__BIT(9)
+#define	RMIXLP_USB_PHY0_PHYTXBSENL0	__BIT(8)
+#define	RMIXLP_USB_PHY0_PHYLBEN1	__BIT(7)
+#define	RMIXLP_USB_PHY0_PHYLBEN0	__BIT(6)
+#define	RMIXLP_USB_PHY0_PHYPORTRST1	__BIT(5)
+#define	RMIXLP_USB_PHY0_PHYPORTRST0	__BIT(4)
+#define	RMIXLP_USB_PHY0_PHYREFCLKFREQ	__BITS(3,2)
+#define	RMIXLP_USB_PHY0_PHYDETVBUS	__BIT(1)
+#define	RMIXLP_USB_PHY0_USBPHYRESET	__BIT(0)
+
+#define	RMIXLP_NAE_PCITAG		_RMIXL_PCITAG(0,3,0)
+#define	RMIXLP_POE_PCITAG		_RMIXL_PCITAG(0,3,1)
+#define	RMIXLP_FMN_PCITAG		_RMIXL_PCITAG(0,4,0)
+
+/*
+ * PCI PCIe control (contains the IRT info)
+ */
+#define	PCI_RMIXLP_STATID		_RMIXL_OFFSET(0x3c)
+#define	PCI_RMIXLP_IRTINFO		_RMIXL_OFFSET(0x3d)
+
+/*
+ * XLP System Management Registers
+ */
+#define	RMIXLP_SM_PCITAG		_RMIXL_PCITAG(0, 6, 5)
+#define	RMIXLP_SM_CHIP_RESET		_RMIXL_OFFSET(0x40)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG	_RMIXL_OFFSET(0x41)
+#define	RMIXLP_SM_EFUSE_DEVICE_CFG_STATUS0 _RMIXL_OFFSET(0x42)
+#define	RMIXLP_SM_EFUSE_DEVICE_CFG_STATUS1 _RMIXL_OFFSET(0x43)
+
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_CPLL_DFS	__BITS(31,30)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_I2LR	__BIT(29)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_I1LR	__BIT(28)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_I0LR	__BIT(27)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_TS		__BIT(26)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_UM		__BIT(25)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_PLC	__BITS(24,23)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_PM		__BITS(22,19)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_CDV	__BITS(18,17)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_CDF	__BITS(16,10)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_CDR	__BITS(9,8)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_MC		__BIT(7)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_RB		__BIT(6)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_BE		__BIT(5)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_NORSP	__BIT(4)
+#define	RMIXLP_SM_POWER_ON_RESET_CFG_BD		__BITS(3,0)
+
+#define	RMIXLP_MMC_PCITAG		_RMIXL_PCITAG(0,7,3)
+#define	RMIXLP_MMC_SLOTSIZE		_RMIXL_OFFSET(0x40)
+
+#define	RMIXLP_MMC_SLOT0		_RMIXL_OFFSET(0x40)
+#define	RMIXLP_MMC_SLOT1		_RMIXL_OFFSET(0x80)
+#define	RMIXLP_MMC_SYSCTRL		_RMIXL_OFFSET(0xC0)
+
+#define	RMIXLP_MMC_SYSCTRL_DELAY	__BITS(21,19)
+#define	RMIXLP_MMC_SYSCTRL_RT		__BIT(8)
+#define	RMIXLP_MMC_SYSCTRL_WP1		__BIT(7)
+#define	RMIXLP_MMC_SYSCTRL_WP0		__BIT(6)
+#define	RMIXLP_MMC_SYSCTRL_RD_EX	__BIT(5)
+#define	RMIXLP_MMC_SYSCTRL_CA		__BIT(4)
+#define	RMIXLP_MMC_SYSCTRL_EN1		__BIT(3)
+#define	RMIXLP_MMC_SYSCTRL_EN0		__BIT(2)
+#define	RMIXLP_MMC_SYSCTRL_CLK_DIS	__BIT(1)
+#define	RMIXLP_MMC_SYSCTRL_RST		__BIT(0)
 
 /*
  * FMN non-core station configuration registers
@@ -978,5 +1446,4 @@
 #define RMIXL_FMN_CC_RESV		__BITS(31,8)
 #define RMIXL_FMN_CC_COUNT		__BITS(7,0)
 
-#endif	/* _MIPS_RMI_RMIRMIXLEGS_H_ */
-
+#endif	/* _MIPS_RMI_RMIXLREG_H_ */
