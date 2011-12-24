@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.55 2011/12/15 03:42:32 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.56 2011/12/24 12:23:24 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2011/12/15 03:42:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2011/12/24 12:23:24 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -224,19 +224,26 @@ cpu_signotify(struct lwp *l)
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
-	panic("cpu_getmcontext");
+	struct pcb *pcb = lwp_getpcb(l);
+	ucontext_t *ucp = &pcb->pcb_userret_ucp;
+
 #ifdef CPU_DEBUG
 	dprintf_debug("cpu_getmcontext\n");
 #endif
+	memcpy(mcp, &ucp->uc_mcontext, sizeof(mcontext_t));
+	return;
 }
 
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
-	panic("cpu_setmcontext");
+	struct pcb *pcb = lwp_getpcb(l);
+	ucontext_t *ucp = &pcb->pcb_userret_ucp;
+
 #ifdef CPU_DEBUG
 	dprintf_debug("cpu_setmcontext\n");
 #endif
+	memcpy(&ucp->uc_mcontext, mcp, sizeof(mcontext_t));
 	return 0;
 }
 
