@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.29 2011/12/23 22:03:00 jmc Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.30 2011/12/24 19:53:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -172,10 +172,14 @@ struct icmp {
 #define	ICMP_IPV6_IAMHERE	34		/* ipv6 i am here */
 #define	ICMP_MOBILE_REGREQUEST	35		/* mobile registration req */
 #define	ICMP_MOBILE_REGREPLY	36		/* mobile registration reply */
+#define	ICMP_SKIP		39		/* SKIP */
 #define	ICMP_PHOTURIS		40		/* security */
-#define		ICMP_PHOTURIS_UNKNOWN_INDEX	1	/* Bad index */
-#define		ICMP_PHOTURIS_AUTH_FAILED	2	/* Auth failed */
-#define		ICMP_PHOTURIS_DECRYPT_FAILED	3	/* Decrypt failed */
+#define         ICMP_PHOTURIS_UNKNOWN_INDEX     0       /* unknown sec index */
+#define         ICMP_PHOTURIS_AUTH_FAILED       1       /* auth failed */
+#define         ICMP_PHOTURIS_DECOMPRESS_FAILED 2       /* decompress failed */
+#define         ICMP_PHOTURIS_DECRYPT_FAILED    3       /* decrypt failed */
+#define         ICMP_PHOTURIS_NEED_AUTHN        4       /* no authentication */
+#define         ICMP_PHOTURIS_NEED_AUTHZ        5       /* no authorization */
 
 #define	ICMP_MAXTYPE		18		/* XXX: for icmp stats */
 
