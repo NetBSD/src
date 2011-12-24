@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp");
 
 #define __INTR_PRIVATE
 #define __MUTEX_PRIVATE
+#define _MIPS_BUS_DMA_PRIVATE
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -117,6 +118,7 @@ __KERNEL_RCSID(0, "machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp");
 #include <mips/cpu.h>
 #include <mips/psl.h>
 #include <mips/cache.h>
+#include <mips/mipsNN.h>
 #include <mips/mips_opcode.h>
 #include <mips/pte.h>
 
@@ -128,6 +130,10 @@ __KERNEL_RCSID(0, "machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp");
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pciconf.h>
+
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_intr.h>
@@ -136,11 +142,16 @@ __KERNEL_RCSID(0, "machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp");
 #include <mips/rmi/rmixl_pcievar.h>
 #include <mips/rmi/rmixl_pcixvar.h>
 
+//#define MACHDEP_DEBUG 1
 #ifdef MACHDEP_DEBUG
 int machdep_debug=MACHDEP_DEBUG;
-# define DPRINTF(x)	do { if (machdep_debug) printf x ; } while(0)
+# define DPRINTF(x,...)	do { if (machdep_debug) printf(x, ## __VA_ARGS__); } while(0)
 #else
-# define DPRINTF(x)
+# define DPRINTF(x,...)
+#endif
+
+#ifdef __HAVE_PCI_CONF_HOOK
+static int rmixl_pci_conf_hook(void *, int, int, int, pcireg_t);
 #endif
 
 #ifndef CONSFREQ
@@ -153,7 +164,7 @@ int machdep_debug=MACHDEP_DEBUG;
 # define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8)
 #endif
 #ifndef CONSADDR
-# define CONSADDR RMIXL_IO_DEV_UART_1
+# define CONSADDR 0
 #endif
 
 int		comcnfreq  = CONSFREQ;
@@ -161,7 +172,77 @@ int		comcnspeed = CONSPEED;
 tcflag_t	comcnmode  = CONMODE;
 bus_addr_t	comcnaddr  = (bus_addr_t)CONSADDR;
 
-struct rmixl_config rmixl_configuration;
+struct rmixl_config rmixl_configuration = {
+	.rc_io = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_flash[0] = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_flash[1] = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_flash[2] = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_flash[3] = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_pci_cfg = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_pci_ecfg = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_pci_mem = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_pci_io = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_pci_link_mem[0] = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_pci_link_mem[1] = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_pci_link_mem[2] = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_pci_link_mem[3] = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_pci_link_io[0] = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_pci_link_io[1] = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_pci_link_io[2] = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_pci_link_io[3] = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	.rc_srio_mem = {
+		.r_pbase = (bus_addr_t)-1,
+	},
+	/*
+	 * Staticly initialize the 64-bit dmatag.
+	 */
+	.rc_dmat64 = &rmixl_configuration.rc_dma_tag,
+	.rc_dma_tag = {
+		._cookie = &rmixl_configuration.rc_dma_tag,
+		._dmamap_ops = _BUS_DMAMAP_OPS_INITIALIZER,
+		._dmamem_ops = _BUS_DMAMEM_OPS_INITIALIZER,
+		._dmatag_ops = _BUS_DMATAG_OPS_INITIALIZER,
+	},
+#ifdef __HAVE_PCI_CONF_HOOK
+	.rc_pci_chipset = {
+		.pc_conf_hook = rmixl_pci_conf_hook,
+	}
+#endif
+};
 
 #ifdef ENABLE_MIPS_KSEGX
 pt_entry_t mips_ksegx_pte;
@@ -202,7 +283,7 @@ static u_long rmixl_physaddr_storage[
 /* For sysctl_hw. */
 extern char cpu_model[];
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
@@ -224,9 +305,9 @@ void mach_init(int, int32_t *, void *, int64_t);
 static uint64_t rmixlfw_init(int64_t);
 static uint64_t mem_clusters_init(rmixlfw_mmap_t *, rmixlfw_mmap_t *);
 static void __attribute__((__noreturn__)) rmixl_reset(void);
-static void rmixl_physaddr_init(void);
+static uint64_t rmixl_physaddr_init(void);
 static u_int ram_seg_resv(phys_ram_seg_t *, u_int, u_quad_t, u_quad_t);
-void rmixlfw_mmap_print(rmixlfw_mmap_t *);
+void rmixlfw_mmap_print(const char *, rmixlfw_mmap_t *);
 
 
 #ifdef MULTIPROCESSOR
@@ -240,6 +321,7 @@ static void rmixl_fixup_curcpu(void);
 
 #if NCOM > 0
 static volatile uint32_t *rmixl_com0addr;
+
 static int
 rmixl_cngetc(dev_t dv)
 {
@@ -253,7 +335,7 @@ rmixl_cngetc(dev_t dv)
 
 static void
 rmixl_cnputc(dev_t dv, int c)
-{               
+{
 	volatile uint32_t * const com0addr = rmixl_com0addr;
 	int timo = 150000;
 
@@ -262,7 +344,7 @@ rmixl_cnputc(dev_t dv, int c)
 
 	com0addr[com_data] = htobe32(c);
 	__asm __volatile("sync");
-			
+
 	while ((be32toh(com0addr[com_lsr]) & LSR_TSRE) == 0 && --timo > 0)
 		;
 }
@@ -286,8 +368,22 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	extern char edata[], end[];
 	size_t fl_count = 0;
 	struct mips_vmfreelist fl[1];
+	bool uboot_p = false;
 
-	rmixl_pcr_init_core();
+	const uint32_t cfg0 = mips3_cp0_config_read();
+#if (MIPS64_XLR + MIPS64_XLS) > 0 && (MIPS64_XLP) == 0
+	const bool is_xlp_p = false	/* make sure cfg0 is used */
+	    && MIPSNN_GET(CFG_AR, cfg0) == MIPSNN_CFG_AR_REV2;
+	KASSERT(MIPSNN_GET(CFG_AR, cfg0) == MIPSNN_CFG_AR_REV1);
+#elif (MIPS64_XLR + MIPS64_XLS) == 0 && (MIPS64_XLP) > 0
+	const bool is_xlp_p = true	/* make sure cfg0 is used */
+	    || MIPSNN_GET(CFG_AR, cfg0) == MIPSNN_CFG_AR_REV2;
+	KASSERT(MIPSNN_GET(CFG_AR, cfg0) == MIPSNN_CFG_AR_REV2);
+#else
+	const bool is_xlp_p = (MIPSNN_GET(CFG_AR, cfg0) == MIPSNN_CFG_AR_REV2);
+#endif
+
+	rmixl_pcr_init_core(is_xlp_p);
 
 #ifdef MULTIPROCESSOR
 	__asm __volatile("dmtc0 %0,$%1,2"
@@ -302,8 +398,27 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	memset(edata, 0, (char *)kernend - edata);
 
 #if NCOM > 0
-	rmixl_com0addr = (void *)(vaddr_t)(RMIXL_IO_DEV_VBASE + comcnaddr);
-	cn_tab = &rmixl_earlycons;	/* after clearing BSS, not before */
+	/*
+	 * If no comcnaddr has been set, pick an appropriate one.
+	 */
+	if (comcnaddr == 0) {
+		comcnaddr = is_xlp_p
+		    ? RMIXLP_UART1_PCITAG
+		    : RMIXL_IO_DEV_UART_1;
+	}
+	if (is_xlp_p) {
+#if (MIPS64_XLP) > 0
+		rmixl_com0addr =
+		    (void *)(vaddr_t)(RMIXLP_SBC_PCIE_ECFG_VBASE | comcnaddr | 0x100);
+#endif /* MIPS64_XLP */
+	} else {
+#if (MIPS64_XLR + MIPS64_XLS) > 0
+		rcp->rc_io.r_pbase = RMIXL_IO_DEV_PBASE;
+		rmixl_com0addr =
+		    (void *)(vaddr_t)(RMIXL_IO_DEV_VBASE | comcnaddr);
+#endif /* (MIPS64_XLR + MIPS64_XLS) > 0 */
+	}
+	cn_tab = &rmixl_earlycons;
 #endif
 
 	/*
@@ -321,23 +436,94 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	mips_vector_init(&rmixl_splsw, false);
 #endif
 
+	if (argc < 0) {
+		void *bd = (void *)(intptr_t)argc;
+		void *imgaddr = argv;
+		void *consdev = envp;
+		char *bootargs = (void *)(intptr_t)infop;
+		printf("%s: u-boot: boardinfo=%p, image-addr=%p, consdev=%p, bootargs=%p <%s>\n",
+		    __func__, bd, imgaddr, consdev, bootargs, bootargs);
+		uboot_p = true;
+		printf("%s: u-boot: console baudrate=%d\n", __func__,
+		    *(int *)bd);
+		if (*(int *)bd % 1200 == 0)
+			comcnspeed = *(int *)bd;
+	} else {
+		DPRINTF("%s: argc=%d, argv=%p, envp=%p, info=%#"PRIx64"\n",
+		    __func__, argc, argv, envp, infop);
+	}
+
 	/* mips_vector_init initialized mips_options */
 	strcpy(cpu_model, mips_options.mips_cpu->cpu_name);
 
-	/* get system info from firmware */
-	memsize = rmixlfw_init(infop);
+	if (is_xlp_p) {
+#if (MIPS64_XLP) > 0
+		uint32_t cfg6 = mipsNN_cp0_config6_read();
+		printf("%s: cfg6=%#x "
+		    "<ctlb=%u,vtlb=%u,elvt=%u,epw=%u,eft=%u,pwi=%u,fti=%u>\n",
+		    __func__, cfg6,
+		    MIPSNN_GET(RMIXLP_CFG6_CTLB_SIZE, cfg6),
+		    MIPSNN_GET(RMIXLP_CFG6_VTLB_SIZE, cfg6),
+		    __SHIFTOUT(cfg6, MIPSNN_RMIXLP_CFG6_ELVT),
+		    __SHIFTOUT(cfg6, MIPSNN_RMIXLP_CFG6_EPW),
+		    __SHIFTOUT(cfg6, MIPSNN_RMIXLP_CFG6_EFT),
+		    __SHIFTOUT(cfg6, MIPSNN_RMIXLP_CFG6_PWI),
+		    __SHIFTOUT(cfg6, MIPSNN_RMIXLP_CFG6_FTI));
+		rcp->rc_pci_ecfg.r_pbase = RMIXLP_SBC_PCIE_ECFG_PBASE;
+		rcp->rc_pci_ecfg.r_size = RMIXLP_SBC_PCIE_ECFG_SIZE(
+		    RMIXLP_SBC_PCIE_ECFG_PBASE,
+		    RMIXLP_SBC_PCIE_ECFG_TO_PA(
+			rmixlp_read_4(RMIXLP_SBC_PCITAG,
+			    RMIXLP_SBC_PCIE_ECFG_LIMIT)));
+
+		DPRINTF("%s: ecfg pbase=%#"PRIxBUSADDR" size=%#"PRIxBUSSIZE"\n",
+		    __func__, rcp->rc_pci_ecfg.r_pbase,
+		    rcp->rc_pci_ecfg.r_size);
+
+		rmixl_pci_ecfg_eb_bus_mem_init(&rcp->rc_pci_ecfg_eb_memt, rcp);
+		rmixl_pci_ecfg_el_bus_mem_init(&rcp->rc_pci_ecfg_el_memt, rcp);
+		rcp->rc_pci_ecfg_eb_memh = MIPS_PHYS_TO_KSEG1(rcp->rc_pci_ecfg.r_pbase);
+		rcp->rc_pci_ecfg_el_memh = rcp->rc_pci_ecfg_eb_memh;
+		DPRINTF("%s: pci ecfg bus space done!\n", __func__);
+		rmixlp_pcie_pc_init();
+		DPRINTF("%s: pci chipset init done!\n", __func__);
+#if NCOM > 0
+		comcnfreq = 133333333;
+		com_pci_cnattach(comcnaddr, comcnspeed,
+		    comcnfreq, COM_TYPE_NORMAL, comcnmode);
+		DPRINTF("%s: com@pci console attached!\n", __func__);
+#endif
+#endif /* MIPS64_XLP */
+	}
+
+	/* determine DRAM first */
+	memsize = rmixl_physaddr_init();
+	DPRINTF("%s: physaddr init done (memsize=%"PRIu64"MB)!\n",
+	    __func__, memsize >> 20);
+
+	if (!uboot_p) {
+		/* get system info from firmware */
+		memsize = rmixlfw_init(infop);
+		DPRINTF("%s: firmware init done (memsize=%"PRIu64"MB)!\n",
+		    __func__, memsize >> 20);
+	} else {
+		rcp->rc_psb_info.userapp_cpu_map = 1;
+	}
 
 	/* set the VM page size */
 	uvm_setpagesize();
 
 	physmem = btoc(memsize);
 
-	rmixl_obio_eb_bus_mem_init(&rcp->rc_obio_eb_memt, rcp);
-
+	if (!is_xlp_p) {
+#if (MIPS64_XLR + MIPS64_XLS) > 0
+		rmixl_obio_eb_bus_mem_init(&rcp->rc_obio_eb_memt, rcp);
 #if NCOM > 0
-	rmixl_com_cnattach(comcnaddr, comcnspeed, comcnfreq,
-		COM_TYPE_NORMAL, comcnmode);
+		rmixl_com_cnattach(comcnaddr, comcnspeed, comcnfreq,
+		    COM_TYPE_NORMAL, comcnmode);
 #endif
+#endif /* (MIPS64_XLR + MIPS64_XLS) > 0 */
+	}
 
 	printf("\nNetBSD/rmixl\n");
 	printf("memsize = %#"PRIx64"\n", memsize);
@@ -346,22 +532,22 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 #endif
 
 #if defined(MULTIPROCESSOR) && defined(MACHDEP_DEBUG)
-	rmixl_wakeup_info_print(rcp->rc_cpu_wakeup_info);
-	rmixl_wakeup_info_print(rcp->rc_cpu_wakeup_info + 1);
-	printf("cpu_wakeup_info %p, cpu_wakeup_end %p\n",
-		rcp->rc_cpu_wakeup_info,
-		rcp->rc_cpu_wakeup_end);
-	printf("userapp_cpu_map: %#"PRIx64"\n",
-		rcp->rc_psb_info.userapp_cpu_map);
-	printf("wakeup: %#"PRIx64"\n", rcp->rc_psb_info.wakeup);
+	if (!uboot_p) {
+		rmixl_wakeup_info_print(rcp->rc_cpu_wakeup_info);
+		rmixl_wakeup_info_print(rcp->rc_cpu_wakeup_info + 1);
+		printf("cpu_wakeup_info %p, cpu_wakeup_end %p\n",
+			rcp->rc_cpu_wakeup_info,
+			rcp->rc_cpu_wakeup_end);
+		printf("userapp_cpu_map: %#"PRIx64"\n",
+			rcp->rc_psb_info.userapp_cpu_map);
+		printf("wakeup: %#"PRIx64"\n", rcp->rc_psb_info.wakeup);
+	}
 {
 	register_t sp;
 	asm volatile ("move	%0, $sp\n" : "=r"(sp));
 	printf("sp: %#"PRIx64"\n", sp);
 }
 #endif
-
-	rmixl_physaddr_init();
 
 	/*
 	 * Obtain the cpu frequency
@@ -370,6 +556,50 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	 * Double the Hz if this CPU runs at twice the
          *  external/cp0-count frequency
 	 */
+	if (uboot_p) {
+		/*
+		 * Since u-boot doesn't tell us, we have to figure it out
+		 */
+		if (is_xlp_p) {
+#if (MIPS64_XLP) > 0
+			uint32_t por_cfg = rmixlp_read_4(RMIXLP_SM_PCITAG,
+			    RMIXLP_SM_POWER_ON_RESET_CFG);
+			u_int cdv = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CDV) + 1;
+			u_int cdf = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CDF) + 1;
+			u_int cdr = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CDR) + 1;
+			u_int cpll_dfs = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_CPLL_DFS) + 1;
+
+			uint64_t freq_in = 133333333;
+			uint64_t freq_out = (freq_in / cdr) * cdf / (cdv * cpll_dfs);
+			if (freq_out % 1000 > 900) {
+				freq_out = (freq_out + 99) / 100;
+				freq_out *= 100;
+			}
+			rcp->rc_psb_info.cpu_frequency = freq_out;
+#endif /* MIPS64_XLP > 0 */
+		} else {
+#if (MIPS64_XLR + MIPS64_XLS) > 0
+			const uint32_t por_cfg = RMIXL_IOREG_READ(
+			    RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET_CFG);
+
+			const u_int divq = __SHIFTOUT(por_cfg,
+			    RMIXL_GPIO_RESET_CFG_PLL1_OUT_DIV);
+			const u_int divf = __SHIFTOUT(por_cfg,
+			    RMIXL_GPIO_RESET_CFG_PLL1_FB_DIV) + 1;
+
+			uint64_t freq_in = 66666666;
+			uint64_t freq_out = (freq_in / 4) * divf / divq;
+
+			if (freq_out % 1000 > 900) {
+				freq_out = (freq_out + 99) / 100;
+				freq_out *= 100;
+			}
+			rcp->rc_psb_info.cpu_frequency = freq_out;
+#endif /* (MIPS64_XLR + MIPS64_XLS) > 0 */
+		}
+	}
+	DPRINTF("%s: cpu_freq=%"PRIu64"\n", __func__,
+	    rcp->rc_psb_info.cpu_frequency);
 	curcpu()->ci_cpu_freq = rcp->rc_psb_info.cpu_frequency;
 	curcpu()->ci_cctr_freq = curcpu()->ci_cpu_freq;
 	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
@@ -384,21 +614,25 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	 *   by forcing sign extension in cast to (char *)
 	 */
 	boothowto = RB_AUTOBOOT;
-	for (int i = 1; i < argc; i++) {
-		for (char *cp = (char *)(intptr_t)argv[i]; *cp; cp++) {
-			int howto;
-			/* Ignore superfluous '-', if there is one */
-			if (*cp == '-')
-				continue;
+	// boothowto |= AB_VERBOSE;
+	if (!uboot_p) {
+		for (int i = 1; i < argc; i++) {
+			for (char *cp = (char *)(intptr_t)argv[i]; *cp; cp++) {
+				int howto;
+				/* Ignore superfluous '-', if there is one */
+				if (*cp == '-')
+					continue;
 
-			howto = 0;
-			BOOT_FLAG(*cp, howto);
-			if (howto != 0)
-				boothowto |= howto;
+				howto = 0;
+				BOOT_FLAG(*cp, howto);
+				if (howto != 0)
+					boothowto |= howto;
 #ifdef DIAGNOSTIC
-			else
-				printf("bootflag '%c' not recognised\n", *cp);
+				else
+					printf("bootflag '%c' not recognised\n",
+					     *cp);
 #endif
+			}
 		}
 	}
 #ifdef DIAGNOSTIC
@@ -417,6 +651,10 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	/* should never be in our clusters anyway... */
 	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
 		0x1FC00000, 0x1FC00000+NBPG);
+
+	/* Stop this abomination */
+	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
+		0x18000000, 0x20000000);
 
 #ifdef MULTIPROCESSOR
 	/* reserve the cpu_wakeup_info area */
@@ -449,8 +687,8 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 			fl[0].fl_end = start + VM_KSEGX_SIZE;
 			fl[0].fl_freelist = VM_FREELIST_FIRST512M;
 			fl_count++;
-			DPRINTF(("mips_ksegx_start %#"PRIxPADDR"\n",
-			    fl[0].fl_start));
+			DPRINTF("mips_ksegx_start %#"PRIxPADDR"\n",
+			    fl[0].fl_start);
 			break;
 		}
 	}
@@ -464,7 +702,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 		if (tmp > mem_cluster_maxaddr)
 			mem_cluster_maxaddr = tmp;
 	}
-	DPRINTF(("mem_cluster_maxaddr %#"PRIx64"\n", mem_cluster_maxaddr));
+	DPRINTF("mem_cluster_maxaddr %#"PRIx64"\n", mem_cluster_maxaddr);
 
 	/*
 	 * Load mem_clusters[] into the VM system.
@@ -511,25 +749,60 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
  * set up Processor Control Regs for this core
  */
 void
-rmixl_pcr_init_core()
+rmixl_pcr_init_core(bool is_xlp_p)
 {
 	uint32_t r;
 
-#ifdef MULTIPROCESSOR
-	rmixl_mtcr(RMIXL_PCR_MMU_SETUP, __BITS(2,0));
-						/* enable MMU clock gating */
-						/* 4 threads active -- why needed if Global? */
-						/* enable global TLB mode */
-#else
-	rmixl_mtcr(RMIXL_PCR_THREADEN, 1);	/* disable all threads except #0 */
-	rmixl_mtcr(RMIXL_PCR_MMU_SETUP, 0);	/* enable MMU clock gating */
-						/* set single MMU Thread Mode */
-						/* TLB is partitioned (1 partition) */
-#endif
 
-	r = rmixl_mfcr(RMIXL_PCR_L1D_CONFIG0);
-	r &= ~__BIT(14);			/* disable Unaligned Access */
-	rmixl_mtcr(RMIXL_PCR_L1D_CONFIG0, r);
+	if (is_xlp_p) {
+#if (MIPS64_XLP) > 0
+#ifndef MULTIPROCESSOR
+		rmixl_mtcr(RMIXLP_PCR_IFU_THREAD_EN, 1);
+			/* disable all threads except #0 */
+#endif
+		rmixl_mtcr(RMIXLP_PCR_MMU_SETUP, 1);
+			/* enable MMU clock gating */
+			/* TLB is global */
+#ifdef MIPS_DISABLE_L1_CACHE
+		r = rmixl_mfcr(RMIXLP_PCR_L1D_CONFIG0);
+		r &= ~__BIT(0);				/* disable L1D cache */
+		rmixl_mtcr(RMIXLP_PCR_L1D_CONFIG0, r);
+#endif
+		r = rmixl_mfcr(RMIXLP_PCR_LSU_DEFEATURE);
+		r &= ~RMIXLP_PCR_LSE_DEFEATURE_EUL;
+		rmixl_mtcr(RMIXLP_PCR_LSU_DEFEATURE, r);
+
+		/*
+		 * Enable Large Variable TLB.
+	 	 */
+		uint32_t cfg6 = mipsNN_cp0_config6_read();
+		cfg6 |= MIPSNN_RMIXLP_CFG6_ELVT;
+		mipsNN_cp0_config6_write(cfg6);
+		/*
+		 * Force TLB Random to be rewritten.
+		 */
+		mips3_cp0_wired_write(0);
+#endif /* MIPS64_XLP */
+	} else {
+#if (MIPS64_XLR + MIPS64_XLS) > 0
+#ifdef MULTIPROCESSOR
+		rmixl_mtcr(RMIXL_PCR_MMU_SETUP, __BITS(2,0));
+			/* enable MMU clock gating */
+			/* 4 threads active -- why needed if Global? */
+			/* enable global TLB mode */
+#else
+		rmixl_mtcr(RMIXL_PCR_THREADEN, 1);
+			/* disable all threads except #0 */
+		rmixl_mtcr(RMIXL_PCR_MMU_SETUP, 0);
+			/* enable MMU clock gating */
+			/* set single MMU Thread Mode */
+			/* TLB is partitioned (1 partition) */
+#endif
+		r = rmixl_mfcr(RMIXL_PCR_L1D_CONFIG0);
+		r &= ~__BIT(14);		/* disable Unaligned Access */
+		rmixl_mtcr(RMIXL_PCR_L1D_CONFIG0, r);
+#endif /* (MIPS64_XLR + MIPS64_XLS) > 0 */
+	}
 
 #if defined(DDB) && defined(MIPS_DDB_WATCH)
 	/*
@@ -681,6 +954,201 @@ ram_seg_resv(phys_ram_seg_t *segs, u_int nsegs,
 	return new_nsegs;
 }
 
+#if (MIPS64_XLP) > 0
+static void
+rmixlp_physaddr_pcie_cfg_init(struct extent *ext)
+{
+	struct rmixl_config * const rcp = &rmixl_configuration;
+
+	uint64_t xbase = RMIXLP_SBC_PCIE_CFG_TO_PA(
+	    rmixlp_read_4(RMIXLP_SBC_PCITAG, RMIXLP_SBC_PCIE_CFG_BASE));
+	uint64_t xlimit = RMIXLP_SBC_PCIE_CFG_TO_PA(
+	    rmixlp_read_4(RMIXLP_SBC_PCITAG, RMIXLP_SBC_PCIE_CFG_LIMIT));
+
+	if (xlimit < xbase || xbase == 0)
+		return;	/* not enabled */
+
+	uint64_t xsize = RMIXLP_SBC_PCIE_CFG_SIZE(xbase, xlimit);
+
+	DPRINTF("%s: %s: %#"PRIx64":%"PRIu64" MB\n", __func__,
+	    "pci-cfg", xbase, xsize >> 20);
+
+	rmixl_physaddr_add(ext, "pcicfg", &rcp->rc_pci_cfg, xbase, xsize);
+}
+
+static void
+rmixlp_physaddr_pcie_ecfg_init(struct extent *ext)
+{
+	struct rmixl_config * const rcp = &rmixl_configuration;
+
+	uint64_t xbase = RMIXLP_SBC_PCIE_ECFG_TO_PA(
+	    rmixlp_read_4(RMIXLP_SBC_PCITAG, RMIXLP_SBC_PCIE_ECFG_BASE));
+	uint64_t xlimit = RMIXLP_SBC_PCIE_ECFG_TO_PA(
+	    rmixlp_read_4(RMIXLP_SBC_PCITAG, RMIXLP_SBC_PCIE_ECFG_LIMIT));
+
+	if (xlimit < xbase || xbase == 0)
+		return;	/* not enabled */
+
+	uint64_t xsize = RMIXLP_SBC_PCIE_ECFG_SIZE(xbase, xlimit);
+
+	KASSERT(rcp->rc_pci_ecfg.r_pbase == xbase);
+
+	DPRINTF("%s: %s: %#"PRIx64":%"PRIu64" MB\n", __func__,
+	    "pci-ecfg", xbase, xsize >> 20);
+
+	rmixl_physaddr_add(ext, "pciecfg", &rcp->rc_pci_ecfg, xbase, xsize);
+}
+
+static void
+rmixlp_physaddr_pcie_mem_init(struct extent *ext)
+{
+	struct rmixl_config * const rcp = &rmixl_configuration;
+	for (size_t i = 0; i < RMIXLP_SBC_NPCIE_MEM; i++) {
+		uint64_t xbase = RMIXLP_SBC_PCIE_MEM_TO_PA(
+		    rmixlp_read_4(RMIXLP_SBC_PCITAG,
+			RMIXLP_SBC_PCIE_MEM_BASEn(i)));
+		uint64_t xlimit = RMIXLP_SBC_PCIE_MEM_TO_PA(
+		    rmixlp_read_4(RMIXLP_SBC_PCITAG,
+			RMIXLP_SBC_PCIE_MEM_LIMITn(i)));
+
+		if (xlimit < xbase || xbase == 0)
+			continue;	/* not enabled */
+
+		uint64_t xsize = RMIXLP_SBC_PCIE_MEM_SIZE(xbase, xlimit);
+
+		DPRINTF("%s: %s %zu: %#"PRIx64":%"PRIu64" MB\n", __func__,
+		    "pci-mem", i, xbase, xsize >> 20);
+
+		rmixl_physaddr_add(ext, "pcimem", &rcp->rc_pci_link_mem[i],
+		    xbase, xsize);
+	}
+}
+
+static void
+rmixlp_physaddr_pcie_io_init(struct extent *ext)
+{
+	struct rmixl_config * const rcp = &rmixl_configuration;
+	for (size_t i = 0; i < RMIXLP_SBC_NPCIE_IO; i++) {
+		uint64_t xbase = RMIXLP_SBC_PCIE_IO_TO_PA(
+		    rmixlp_read_4(RMIXLP_SBC_PCITAG,
+			RMIXLP_SBC_PCIE_IO_BASEn(i)));
+		uint64_t xlimit = RMIXLP_SBC_PCIE_IO_TO_PA(
+		    rmixlp_read_4(RMIXLP_SBC_PCITAG,
+			RMIXLP_SBC_PCIE_IO_LIMITn(i)));
+
+		if (xlimit < xbase || xbase == 0)
+			continue;	/* not enabled */
+
+		uint64_t xsize = RMIXLP_SBC_PCIE_IO_SIZE(xbase, xlimit);
+
+		DPRINTF("%s: %s %zu: %#"PRIx64":%"PRIu64" MB\n", __func__,
+		    "pci-io", i, xbase, xsize >> 20);
+
+		rmixl_physaddr_add(ext, "pci-io", &rcp->rc_pci_link_io[i],
+		    xbase, xsize);
+	}
+}
+
+static void
+rmixlp_physaddr_srio_mem_init(struct extent *ext)
+{
+	struct rmixl_config * const rcp = &rmixl_configuration;
+	uint64_t xbase = RMIXLP_SBC_SRIO_MEM_TO_PA(
+	    rmixlp_read_4(RMIXLP_SBC_PCITAG, RMIXLP_SBC_SRIO_MEM_BASE));
+	uint64_t xlimit = RMIXLP_SBC_SRIO_MEM_TO_PA(
+	    rmixlp_read_4(RMIXLP_SBC_PCITAG, RMIXLP_SBC_SRIO_MEM_LIMIT));
+
+	if (xlimit < xbase || xbase == 0)
+	    return;	/* not enabled */
+
+	uint64_t xsize = RMIXLP_SBC_SRIO_MEM_SIZE(xbase, xlimit);
+
+	DPRINTF("%s: %s: %#"PRIx64":%"PRIu64" MB\n", __func__,
+	    "srio-mem", xbase, xsize >> 20);
+
+	rmixl_physaddr_add(ext, "sriomem", &rcp->rc_srio_mem, xbase, xsize);
+}
+
+static uint64_t
+rmixlp_physaddr_dram_init(struct extent *ext)
+{
+	uint64_t memsize = 0;
+	/*
+	 * grab regions per DRAM BARs
+	 */
+	phys_ram_seg_t *mp = mem_clusters;
+	for (u_int i = 0; i < RMIXLP_SBC_NDRAM; i++) {
+		uint64_t xbase =
+		    RMIXLP_SBC_DRAM_TO_PA(
+			rmixlp_read_4(RMIXLP_SBC_PCITAG,
+			    RMIXLP_SBC_DRAM_BASEn(i)));
+		uint64_t xlimit =
+		    RMIXLP_SBC_DRAM_TO_PA(
+			rmixlp_read_4(RMIXLP_SBC_PCITAG,
+			    RMIXLP_SBC_DRAM_LIMITn(i)));
+
+		if (xlimit < xbase)
+			continue;	/* not enabled */
+
+		mp->start = xbase;
+		mp->size = RMIXLP_SBC_DRAM_SIZE(xbase, xlimit);
+
+		memsize += mp->size;
+
+		u_long base = mp->start >> 20;
+		u_long size = mp->size >> 20;
+
+		mp++;
+
+		DPRINTF("%s: dram %u: 0x%05lx00000:%lu MB\n",
+			__func__, i, base, size);
+		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
+			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
+				"failed", __func__, ext, base, size, EX_NOWAIT);
+	}
+
+	mem_cluster_cnt = mp - mem_clusters;
+	return memsize;
+}
+#endif /* MIPS64_XLP */
+
+#if (MIPS64_XLR + MIPS64_XLS) > 0
+static uint64_t
+rmixl_physaddr_dram_init(struct extent *ext)
+{
+	uint64_t memsize = 0;
+	/*
+	 * grab regions per DRAM BARs
+	 */
+	phys_ram_seg_t *mp = mem_clusters;
+	for (u_int i=0; i < RMIXL_SBC_DRAM_NBARS; i++) {
+		uint32_t r = RMIXL_IOREG_READ(RMIXL_SBC_DRAM_BAR(i));
+		if ((r & RMIXL_DRAM_BAR_STATUS) == 0)
+			continue;	/* not enabled */
+
+		mp->start = DRAM_BAR_TO_BASE((uint64_t)r);
+		mp->size  = DRAM_BAR_TO_SIZE((uint64_t)r);
+
+		u_long base = mp->start >> 20;
+		u_long size = mp->size >> 20;
+
+		memsize += mp->size;
+
+		mp++;
+
+		DPRINTF("%s: dram %u: 0x%08x -- 0x%010lx:%lu MB\n",
+			__func__, i, r, base * (1024 * 1024), size);
+		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
+			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
+				"failed", __func__, ext, base, size, EX_NOWAIT);
+	}
+
+	mem_cluster_cnt = mp - mem_clusters;
+
+	return memsize;
+}
+#endif /* (MIPS64_XLR + MIPS64_XLS) > 0 */
+
 /*
  * create an extent for physical address space
  * these are in units of MB for sake of compression (for sake of 32 bit kernels)
@@ -688,15 +1156,14 @@ ram_seg_resv(phys_ram_seg_t *segs, u_int nsegs,
  * what remains can be allocated as needed for other stuff
  * e.g. to configure BARs that are not already initialized and enabled.
  */
-static void
+static uint64_t
 rmixl_physaddr_init(void)
 {
 	struct extent *ext;
 	unsigned long start = 0UL;
-	unsigned long end = (__BIT(40) / (1024 * 1024)) -1;
-	u_long base;
-	u_long size;
-	uint32_t r;
+	unsigned long end = (__BIT(40) / (1024 * 1024)) - 1;
+	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
+	uint64_t memsize;
 
 	ext = extent_create("physaddr", start, end, M_DEVBUF,
 		(void *)rmixl_physaddr_storage, sizeof(rmixl_physaddr_storage),
@@ -705,40 +1172,42 @@ rmixl_physaddr_init(void)
 	if (ext == NULL)
 		panic("%s: extent_create failed", __func__);
 
-	/*
-	 * grab regions per DRAM BARs
-	 */
-	for (u_int i=0; i < RMIXL_SBC_DRAM_NBARS; i++) { 
-		r = RMIXL_IOREG_READ(RMIXL_SBC_DRAM_BAR(i));
-		if ((r & RMIXL_DRAM_BAR_STATUS) == 0)
-			continue;	/* not enabled */
-		base = (u_long)(DRAM_BAR_TO_BASE((uint64_t)r) / (1024 * 1024));
-		size = (u_long)(DRAM_BAR_TO_SIZE((uint64_t)r) / (1024 * 1024));
+	if (is_xlp_p) {
+#if (MIPS64_XLP) > 0
+		memsize = rmixlp_physaddr_dram_init(ext);
+		rmixlp_physaddr_pcie_cfg_init(ext);
+		rmixlp_physaddr_pcie_ecfg_init(ext);
+		rmixlp_physaddr_pcie_mem_init(ext);
+		rmixlp_physaddr_pcie_io_init(ext);
+		rmixlp_physaddr_srio_mem_init(ext);
+#else
+		memsize = 0;
+#endif /* MIPS64_XLP */
+	} else {
+#if (MIPS64_XLR + MIPS64_XLS) > 0
+		memsize = rmixl_physaddr_dram_init(ext);
 
-		DPRINTF(("%s: %d: %d: 0x%08x -- 0x%010lx:%lu MB\n",
-			__func__, __LINE__, i, r, base * (1024 * 1024), size));
-		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
-			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
-				"failed", __func__, ext, base, size, EX_NOWAIT);
-	}
-
-	/*
-	 * get chip-dependent physaddr regions
-	 */
-	switch(cpu_rmixl_chip_type(mips_options.mips_cpu)) {
-	case CIDFL_RMI_TYPE_XLR:
+		/*
+		 * get chip-dependent physaddr regions
+		 */
+		switch(cpu_rmixl_chip_type(mips_options.mips_cpu)) {
+		case CIDFL_RMI_TYPE_XLR:
 #if NRMIXL_PCIX
-		rmixl_physaddr_init_pcix(ext);
+			rmixl_physaddr_init_pcix(ext);
 #endif
-		break;
-	case CIDFL_RMI_TYPE_XLS:
+			break;
+		case CIDFL_RMI_TYPE_XLS:
 #if NRMIXL_PCIE
-		rmixl_physaddr_init_pcie(ext);
+			rmixl_physaddr_init_pcie(ext);
 #endif
-		break;
-	case CIDFL_RMI_TYPE_XLP:
-		/* XXX TBD */
-		panic("%s: RMI XLP not yet supported", __func__);
+			break;
+		default:
+			panic("%s: unknown chip type %d", __func__,
+			    cpu_rmixl_chip_type(mips_options.mips_cpu));
+		}
+#else
+		memsize = 0;
+#endif /* (MIPS64_XLR + MIPS64_XLS) > 0 */
 	}
 
 	/*
@@ -750,12 +1219,14 @@ rmixl_physaddr_init(void)
 #ifdef MACHDEP_DEBUG
 	extent_print(ext);
 #endif
+	return memsize;
 }
 
 static uint64_t
 rmixlfw_init(int64_t infop)
 {
-	struct rmixl_config *rcp = &rmixl_configuration;
+	struct rmixl_config * const rcp = &rmixl_configuration;
+	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
 
 #ifdef MULTIPROCESSOR
 	rmixl_get_wakeup_info(rcp);
@@ -773,13 +1244,19 @@ rmixlfw_init(int64_t infop)
 		}
 	}
 
-	rcp->rc_io_pbase = RMIXL_IO_DEV_PBASE;
-	rmixl_putchar_init(rcp->rc_io_pbase);
+	if (is_xlp_p) {
+#if (MIPS64_XLP) > 0
+		rcp->rc_pci_ecfg.r_pbase = RMIXLP_SBC_PCIE_ECFG_PBASE;
+#endif /* MIPS64_XLP */
+	} else {
+#if (MIPS64_XLR + MIPS64_XLS) > 0
+		rcp->rc_io.r_pbase = RMIXL_IO_DEV_PBASE;
+#endif /* (MIPS64_XLR + MIPS64_XLS) > 0 */
+	}
 
 #ifdef DIAGNOSTIC
-	rmixl_puts("\r\nWARNING: untested psb_version: ");
-	rmixl_puthex64(rcp->rc_psb_info.psb_version);
-	rmixl_puts("\r\n");
+	printf("\nWARNING: untested psb_version: %#"PRIx64"\n",
+	    rcp->rc_psb_info.psb_version);
 #endif
 
 #ifdef MEMSIZE
@@ -789,24 +1266,25 @@ rmixlfw_init(int64_t infop)
 	mem_cluster_cnt = 1;
 	return MEMSIZE;
 #else
-	rmixl_puts("\r\nERROR: configure MEMSIZE\r\n");
+	uint64_t memsize = 0;
+	for (size_t i = 0; i < mem_cluster_cnt; i++) {
+		memsize += mem_clusters[i].size;
+	}
+	if (memsize)
+		return memsize;
+
+	printf("\nERROR: configure MEMSIZE\n");
 	cpu_reboot(RB_HALT, NULL);
 	/* NOTREACHED */
 #endif
 
  found:
-	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(rcp->rc_psb_info.io_base);
-	rmixl_putchar_init(rcp->rc_io_pbase);
-#ifdef MACHDEP_DEBUG
-	rmixl_puts("\r\ninfop: ");
-	rmixl_puthex64((uint64_t)(intptr_t)infop);
-#endif
+	rcp->rc_io.r_pbase = MIPS_KSEG1_TO_PHYS(rcp->rc_psb_info.io_base);
+	DPRINTF("\ninfop: %#"PRIx64"\n", infop);
 #ifdef DIAGNOSTIC
-	rmixl_puts("\r\nrecognized psb_version=");
-	rmixl_puthex64(rcp->rc_psb_info.psb_version);
-	rmixl_puts(", psb_type=");
-	rmixl_puts(rmixlfw_psb_type_name(rcp->rc_psb_type));
-	rmixl_puts("\r\n");
+	printf("\nrecognized psb_version=%#"PRIx64", psb_type=%s\n",
+	    rcp->rc_psb_info.psb_version,
+	    rmixlfw_psb_type_name(rcp->rc_psb_type));
 #endif
 
 	return mem_clusters_init(
@@ -815,18 +1293,13 @@ rmixlfw_init(int64_t infop)
 }
 
 void
-rmixlfw_mmap_print(rmixlfw_mmap_t *map)
+rmixlfw_mmap_print(const char *mapname, rmixlfw_mmap_t *map)
 {
 #ifdef MACHDEP_DEBUG
-	for (uint32_t i=0; i < map->nmmaps; i++) {
-		rmixl_puthex32(i);
-		rmixl_puts(", ");
-		rmixl_puthex64(map->entry[i].start);
-		rmixl_puts(", ");
-		rmixl_puthex64(map->entry[i].size);
-		rmixl_puts(", ");
-		rmixl_puthex32(map->entry[i].type);
-		rmixl_puts("\r\n");
+	for (size_t i=0; i < map->nmmaps; i++) {
+		printf("%s[%zu]: %#"PRIx64", %#"PRIx64", %#x\n",
+		    mapname, i, map->entry[i].start, map->entry[i].size,
+		    map->entry[i].type);
 	}
 #endif
 }
@@ -856,46 +1329,41 @@ mem_clusters_init(
 #endif
 
 #ifdef MACHDEP_DEBUG
-	rmixl_puts("psb_physaddr_map: ");
-	rmixl_puthex64((uint64_t)(intptr_t)psb_physaddr_map);
-	rmixl_puts("\r\n");
+	printf("psb_physaddr_map: %p\n", psb_physaddr_map);
 #endif
 	if (psb_physaddr_map != NULL) {
 		map = psb_physaddr_map;
 		mapname = "psb_physaddr_map";
-		rmixlfw_mmap_print(map);
+		rmixlfw_mmap_print(mapname, map);
 	}
 #ifdef DIAGNOSTIC
 	else {
-		rmixl_puts("WARNING: no psb_physaddr_map\r\n");
+		printf("WARNING: no psb_physaddr_map\n");
 	}
 #endif
 
 #ifdef MACHDEP_DEBUG
-	rmixl_puts("avail_mem_map: ");
-	rmixl_puthex64((uint64_t)(intptr_t)avail_mem_map);
-	rmixl_puts("\r\n");
+	printf("avail_mem_map: %p\n", avail_mem_map);
 #endif
 	if (avail_mem_map != NULL) {
 		map = avail_mem_map;
 		mapname = "avail_mem_map";
-		rmixlfw_mmap_print(map);
+		rmixlfw_mmap_print(mapname, map);
 	}
 #ifdef DIAGNOSTIC
 	else {
-		rmixl_puts("WARNING: no avail_mem_map\r\n");
+		printf("WARNING: no avail_mem_map\n");
 	}
 #endif
 
 	if (map == NULL) {
 #ifndef MEMSIZE
-		rmixl_puts("panic: no firmware memory map, "
+		printf("panic: no firmware memory map, "
 			"must configure MEMSIZE\r\n");
 		for(;;);	/* XXX */
 #else
 #ifdef DIAGNOSTIC
-		rmixl_puts("WARNING: no avail_mem_map, "
-			"using MEMSIZE\r\n");
+		printf("WARNING: no avail_mem_map, using MEMSIZE\n");
 #endif
 
 		mem_clusters[0].start = 0;
@@ -906,12 +1374,10 @@ mem_clusters_init(
 	}
 
 #ifdef DIAGNOSTIC
-	rmixl_puts("using ");
-	rmixl_puts(mapname);
-	rmixl_puts("\r\n");
+	printf("using %s\n", mapname);
 #endif
 #ifdef MACHDEP_DEBUG
-	rmixl_puts("memory clusters:\r\n");
+	printf("memory clusters:\n");
 #endif
 	sum = 0;
 	cnt = 0;
@@ -923,14 +1389,8 @@ mem_clusters_init(
 		sum += sz;
 		mem_clusters[cnt].size = sz;
 #ifdef MACHDEP_DEBUG
-		rmixl_puthex32(i);
-		rmixl_puts(": ");
-		rmixl_puthex64(mem_clusters[cnt].start);
-		rmixl_puts(", ");
-		rmixl_puthex64(sz);
-		rmixl_puts(": ");
-		rmixl_puthex64(sum);
-		rmixl_puts("\r\n");
+		printf("[%u]: %#"PRIx64", %#"PRIx64", %#"PRIx64"\n",
+		    i, mem_clusters[cnt].start, sz, sum);
 #endif
 #ifdef MEMSIZE
 		/*
@@ -976,7 +1436,7 @@ rmixl_get_wakeup_info(struct rmixl_config *rcp)
 	__asm__ volatile(
 		".set push"				"\n"
 		".set noreorder"			"\n"
-		".set mips64"				"\n" 
+		".set mips64"				"\n"
 		"dmfc0	%0, $22, 7"			"\n"
 		".set pop"				"\n"
 			: "=r"(scratch_7));
@@ -1165,10 +1625,26 @@ rmixl_reset(void)
 {
 	uint32_t r;
 
-	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET);
-	r |= RMIXL_GPIO_RESET_RESET;
-	RMIXL_IOREG_WRITE(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET, r);
+	if (MIPSNN_GET(CFG_AR, mips3_cp0_config_read()) == MIPSNN_CFG_AR_REV2) {
+		rmixlp_write_4(RMIXLP_SM_PCITAG, RMIXLP_SM_CHIP_RESET, 1);
+		DELAY(1000000);
+		printf("%s: resorting to plan b!", __func__);
+		*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x18035100) = 1;
+		__asm __volatile("sync");
+	} else {
+		r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET);
+		r |= RMIXL_GPIO_RESET_RESET;
+		RMIXL_IOREG_WRITE(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET, r);
+	}
 
 	printf("soft reset failed, spinning...\n");
 	for (;;);
 }
+
+#ifdef __HAVE_PCI_CONF_HOOK
+int
+rmixl_pci_conf_hook(void *v, int bus, int device, int function, pcireg_t id)
+{
+	return PCI_CONF_MAP_MEM | PCI_CONF_ENABLE_MEM | PCI_CONF_ENABLE_BM;
+}
+#endif
