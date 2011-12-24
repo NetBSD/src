@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.c,v 1.5 2011/06/16 08:27:28 kefren Exp $ */
+/* $NetBSD: ldp_command.c,v 1.6 2011/12/24 23:51:27 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -486,10 +486,9 @@ show_labels(int s, char *recvspace)
 		if (p->state != LDP_PEER_ESTABLISHED)
 			continue;
 		SLIST_FOREACH(lm, &p->label_mapping_head, mappings) {
-			snprintf(sendspace, MAXSEND, "%s:%d",
-			    inet_ntoa(p->ldp_id), lm->label);
-			snprintf(sendspace, MAXSEND, "%s\t%s/%d\n",
-			    sendspace, inet_ntoa(lm->address), lm->prefix);
+			snprintf(sendspace, MAXSEND, "%s:%d\t%s/%d\n",
+			    inet_ntoa(p->ldp_id), lm->label,
+			    inet_ntoa(lm->address), lm->prefix);
 			writestr(s, sendspace);
 		}
 	}
