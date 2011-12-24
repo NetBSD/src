@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.31 2011/12/24 19:54:13 christos Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.32 2011/12/24 20:08:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -144,6 +144,9 @@ struct icmp {
 #define		ICMP_UNREACH_ADMIN_PROHIBIT 13		/* communication
 							   administratively
 							   prohibited */
+#define		ICMP_UNREACH_HOST_PREC	14		/* host precedence
+							   violation */
+#define		ICMP_UNREACH_PREC_CUTOFF 15		/* precedence cutoff */
 #define ICMP_SOURCEQUENCH	4		/* packet lost, slow down */
 #define ICMP_REDIRECT		5		/* shorter route, codes: */
 #define		ICMP_REDIRECT_NET	0		/* for network */
@@ -153,12 +156,16 @@ struct icmp {
 #define ICMP_ALTHOSTADDR	6		/* alternative host address */
 #define ICMP_ECHO		8		/* echo service */
 #define ICMP_ROUTERADVERT	9		/* router advertisement */
+#define		ICMP_ROUTERADVERT_NORMAL 0
+#define		ICMP_ROUTERADVERT_NOROUTE 16
 #define ICMP_ROUTERSOLICIT	10		/* router solicitation */
 #define ICMP_TIMXCEED		11		/* time exceeded, code: */
 #define		ICMP_TIMXCEED_INTRANS	0		/* ttl==0 in transit */
 #define		ICMP_TIMXCEED_REASS	1		/* ttl==0 in reass */
 #define ICMP_PARAMPROB		12		/* ip header bad */
-#define		ICMP_PARAMPROB_OPTABSENT 1		/* req. opt. absent */
+#define		ICMP_PARAMPROB_ERRATPTR 0
+#define		ICMP_PARAMPROB_OPTABSENT 1
+#define		ICMP_PARAMPROB_LENGTH	2
 #define ICMP_TSTAMP		13		/* timestamp request */
 #define ICMP_TSTAMPREPLY	14		/* timestamp reply */
 #define ICMP_IREQ		15		/* information request */
@@ -181,7 +188,46 @@ struct icmp {
 #define		ICMP_PHOTURIS_NEED_AUTHN	4	/* no authentication */
 #define		ICMP_PHOTURIS_NEED_AUTHZ	5	/* no authorization */
 
-#define ICMP_MAXTYPE		18		/* XXX: for icmp stats */
+#define ICMP_MAXTYPE		40
+
+#ifdef ICMP_STRINGS
+static const char *icmp_type[] = {
+	"echoreply", "unassigned_1", "unassigned_2", "unreach",
+	"sourcequench", "redirect", "althostaddr", "unassigned_7",
+	"echo", "routeradvert", "routersolicit", "timxceed",
+	"paramprob", "tstamp", "tstampreply", "ireq",
+	"ireqreply", "maskreq", "maskreply", "reserved_19",
+	"reserved_20", "reserved_21", "reserved_22", "reserved_23",
+	"reserved_24", "reserved_25", "reserved_26", "reserved_27",
+	"reserved_28", "reserved_29", "traceroute", "dataconverr",
+	"mobile_redirect", "ipv6_whereareyou" "ipv6_iamhere",
+	"mobile_regrequest", "mobile_regreply", "reserved_37",
+	"reserved_38", "skip", "photuris", NULL
+};
+static const char *icmp_code_none[] = { "none", NULL };
+static const char *icmp_code_unreach[] = {
+	"net", "host", "oprt", "needfrag", "srcfail", "net_unknown",
+	"host_unknown", "isolated", "net_prohib", "host_prohib",
+	"tosnet", "toshost", "admin_prohibit", "host_prec", "prec_cutoff", NULL
+};
+static const char *icmp_code_redirect[] = {
+	"net", "host", "tosnet", "toshost", NULL
+};
+static const char *icmp_code_routeradvert[] = {
+	"normal", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+	"noroute", NULL
+};
+static const char *icmp_code_timxceed[] = {
+	"intrans", "reass", NULL
+};
+static const char *icmp_code_paramprob[] = {
+	"erratptr", "optabsent", "length", NULL
+};
+static const char *icmp_code_photuris[] = {
+	"unknown_index", "auth_failed", "decompress_failed",
+	"decrypt_failed", "need_authn", "need_authz", NULL
+};
+#endif
 
 #define ICMP_INFOTYPE(type) \
 	((type) == ICMP_ECHOREPLY || (type) == ICMP_ECHO || \
