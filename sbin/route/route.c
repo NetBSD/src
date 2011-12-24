@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.134 2011/11/11 15:09:32 gdt Exp $	*/
+/*	$NetBSD: route.c,v 1.135 2011/12/24 23:48:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.134 2011/11/11 15:09:32 gdt Exp $");
+__RCSID("$NetBSD: route.c,v 1.135 2011/12/24 23:48:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -592,18 +592,24 @@ routename(const struct sockaddr *sa, struct sockaddr *nm, int flags)
 		{
 		union mpls_shim ms;
 		const union mpls_shim *pms;
-		int psize = sizeof(struct sockaddr_mpls);
+		size_t psize = sizeof(struct sockaddr_mpls), len;
 
 		ms.s_addr =((const struct sockaddr_mpls*)sa)->smpls_addr.s_addr;
 		ms.s_addr = ntohl(ms.s_addr);
 
-		snprintf(line, sizeof(line), "%u", ms.shim.label);
+		len = snprintf(line, sizeof(line), "%u", ms.shim.label);
+		if (len > sizeof(line))
+			errx(1, "snprintf");
 		pms = &((const struct sockaddr_mpls*)sa)->smpls_addr;
-		while(psize < sa->sa_len) {
+		while (psize < sa->sa_len) {
+			size_t alen;
 			pms++;
 			ms.s_addr = ntohl(pms->s_addr);
-			snprintf(line, sizeof(line), "%s %u", line,
+			alen = snprintf(line + len, sizeof(line) - len, " %u",
 			    ms.shim.label);
+			if (alen + len > sizeof(line))
+				errx(1, "snprintf");
+			len += alen;
 			psize += sizeof(ms);
 		}
 		break;
