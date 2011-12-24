@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.12 2011/12/22 07:42:43 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.13 2011/12/24 02:28:50 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.12 2011/12/22 07:42:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.13 2011/12/24 02:28:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -897,7 +897,7 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			 * we can at least use a host blit to go through the
 			 * pipeline instead of having to sync the engine
 			 */
-			int i, r, g, b, alpha;
+			int i, r, g, b, aval;
 			int rf, gf, bf, rb, gb, bb;
 			uint32_t pixel;
 
@@ -921,11 +921,11 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			bf =  fg & 0xff;
 			bb =  bg & 0xff;
 			for (i = 0; i < wi * he; i++) {
-				alpha = *data;
+				aval = *data;
 				data++;
-				r = alpha * rf + (255 - alpha) * rb;
-				g = alpha * gf + (255 - alpha) * gb;
-				b = alpha * bf + (255 - alpha) * bb;
+				r = aval * rf + (255 - aval) * rb;
+				g = aval * gf + (255 - aval) * gb;
+				b = aval * bf + (255 - aval) * bb;
 				pixel = (r & 0xff00) << 8 |
 				        (g & 0xff00) |
 				        (b & 0xff00) >> 8;
