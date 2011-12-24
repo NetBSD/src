@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.20 2011/12/22 04:52:45 macallan Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.21 2011/12/24 02:13:21 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.20 2011/12/22 04:52:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.21 2011/12/24 02:13:21 macallan Exp $");
 
 #include "opt_rasops.h"
 
@@ -144,7 +144,7 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		} else {
 			/* this is an alpha map */
-			int x, y, r, g, b, alpha;
+			int x, y, r, g, b, aval;
 			int r1, g1, b1, r0, g0, b0;
 
 			r0 = (clr[0] >> 16) & 0xff;
@@ -157,10 +157,10 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			for (y = 0; y < height; y++) {
 				dp = rp + ri->ri_width * y;
 				for (x = 0; x < width; x++) {
-					alpha = *fr;
-					r = alpha * r1 + (255 - alpha) * r0;
-					g = alpha * g1 + (255 - alpha) * g0;
-					b = alpha * b1 + (255 - alpha) * b0;
+					aval = *fr;
+					r = aval * r1 + (255 - aval) * r0;
+					g = aval * g1 + (255 - aval) * g0;
+					b = aval * b1 + (255 - aval) * b0;
 					*dp = (r & 0xff00) << 8 | 
 					      (g & 0xff00) | 
 					      (b & 0xff00) >> 8;
