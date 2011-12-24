@@ -145,6 +145,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"nop",     "",         0x00000000, 0xffffffff, 0,              	INSN2_ALIAS,	I1      }, /* sll */
 {"ssnop",   "",         0x00000040, 0xffffffff, 0,              	INSN2_ALIAS,	I32|N55	}, /* sll */
 {"ehb",     "",         0x000000c0, 0xffffffff, 0,              	INSN2_ALIAS,	I33	}, /* sll */
+{"pause",     "",       0x00000140, 0xffffffff, 0,              	INSN2_ALIAS,	I33	}, /* sll */
 {"li",      "t,j",      0x24000000, 0xffe00000, WR_t,			INSN2_ALIAS,	I1	}, /* addiu */
 {"li",	    "t,i",	0x34000000, 0xffe00000, WR_t,			INSN2_ALIAS,	I1	}, /* ori */
 {"li",      "t,I",	0,    (int) M_LI,	INSN_MACRO,		0,		I1	},
