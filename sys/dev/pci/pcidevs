@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.962.4.1.4.4 2010/05/10 06:55:25 matt Exp $
+$NetBSD: pcidevs,v 1.962.4.1.4.5 2011/12/24 01:22:44 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -602,6 +602,7 @@ vendor S2IO		0x17d5	S2io Technologies
 vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
 vendor RMI		0x182e	Raza Microelectronics Inc.
+vendor NETLOGIC		0x184e	NetLogic Microsystems
 vendor BBELEC		0x1896	B & B Electronics
 vendor ATTANSIC		0x1969	Attansic Technologies
 vendor EVE		0x1adb	EVE
@@ -2233,6 +2234,7 @@ product INTEL 82801J_D_BM_LM	0x10de	i82567LM-3 LAN Controller
 product INTEL 82801J_D_BM_LF	0x10df	i82567LF-3 LAN Controller
 product INTEL 82575GB_QUAD_COPPER_PM 0x10e2 i82575GB Quad-1000baseT Ethernet (PM)
 product INTEL 82801I_BM		0x10e5	i82567LM-4 LAN Controller
+product INTEL 82576_QUAD_COPPER	0x10e8	82576 quad-1000BaseT Ethernet
 product INTEL PCH_M_LM		0x10ea	PCH LAN (82577LM) Controller
 product INTEL PCH_M_LC		0x10eb	PCH LAN (82577LC) Controller
 product INTEL PCH_D_DM		0x10ef	PCH LAN (82578DM) Controller
@@ -2900,11 +2902,38 @@ product MYSON MTD803	0x0803	MTD803 3-in-1 Fast Ethernet Controller
 product NDC NCP130		0x0130 NCP130 Wireless NIC
 product NDC NCP130A2		0x0131 NCP130 rev A2 Wireless NIC
 
-/* NetVin products - XXX better descriptions */
-product NETVIN 5000	0x5000	5000 Ethernet
-
 /* NetBoost (now Intel) products */
 product NETBOOST POLICY	0x0000	Policy Accelerator
+
+/* NetLogic (now Broadcom?) products */
+product NETLOGIC XLP_SBC	0x1001	XLP System Bridge controller
+product NETLOGIC XLP_ICI	0x1002	XLP Inter-Chip interconnect
+product NETLOGIC XLP_PIC	0x1003	XLP Programmable Interrupt controller
+product NETLOGIC XLP_PCIROOT	0x1004	XLP PCI-Express RootComplex/Endpoint port
+product NETLOGIC XLP_INTERLAKEN	0x1005	XLP Interlaken LA interface
+product NETLOGIC XLP_DEVUSB	0x1006	XLP Device USB controller
+product NETLOGIC XLP_EHCIUSB	0x1007	XLP EHCI USB controller
+product NETLOGIC XLP_OHCIUSB	0x1008	XLP OHCI USB controller
+product NETLOGIC XLP_NAE	0x1009	XLP Network Acceleration engine
+product NETLOGIC XLP_POE	0x100A	XLP Packet Ordering engine
+product NETLOGIC XLP_FMN	0x100B	XLP Fast Messaging Network
+product NETLOGIC XLP_RAID	0x100C	XLP Data Transfer and RAID engine
+product NETLOGIC XLP_SAE	0x100D	XLP Security accelerator
+product NETLOGIC XLP_PKE	0x100E	XLP RSA/ECC accelerator
+product NETLOGIC XLP_CDE	0x100F	XLP Compress/Decompression engine
+product NETLOGIC XLP_UART	0x1010	XLP UART controller
+product NETLOGIC XLP_I2C	0x1011	XLP I2C controller
+product NETLOGIC XLP_GPIO	0x1012	XLP GPIO controller
+product NETLOGIC XLP_SYSTEM	0x1013	XLP System controller
+product NETLOGIC XLP_JTAG	0x1014	XLP JTAG interface
+product NETLOGIC XLP_NOR	0x1015	XLP NOR flash controller
+product NETLOGIC XLP_NAND	0x1016	XLP NAND flash controller
+product NETLOGIC XLP_SPI	0x1017	XLP SPI controller
+product NETLOGIC XLP_SDHC	0x1018	XLP eMMC/SD/SDIO controller
+product NETLOGIC XLP_AHCISATA	0x101a	XLP AHCI SATA controller
+
+/* NetVin products - XXX better descriptions */
+product NETVIN 5000	0x5000	5000 Ethernet
 
 /* Newbridge / Tundra products */
 product NEWBRIDGE CA91CX42		0x0000	Universe VME bridge
