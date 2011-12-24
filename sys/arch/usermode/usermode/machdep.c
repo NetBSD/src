@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.41 2011/12/20 22:48:59 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.42 2011/12/24 12:26:58 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,11 +27,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Note that this machdep.c uses the `dummy' mcontext_t defined for usermode.
+ * This is basicly a blob of PAGE_SIZE big. We might want to switch over to
+ * non-generic mcontext_t's one day, but will this break non-NetBSD hosts?
+ */
+
+
 #include "opt_memsize.h"
 #include "opt_sdl.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2011/12/20 22:48:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2011/12/24 12:26:58 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -141,22 +148,6 @@ consinit(void)
 	printf("NetBSD/usermode startup\n");
 }
 
-void
-sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-#if 1
-	printf("%s: ", __func__);
-	printf("flags %d, ", (int) ksi->ksi_flags);
-	printf("to lwp %d, signo %d, code %d, errno %d\n",
-		(int) ksi->ksi_lid,
-		ksi->ksi_signo,
-		ksi->ksi_code,
-		ksi->ksi_errno);
-#endif
-
-	panic("%s not implemented", __func__);
-}
-
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prog)
 {
@@ -183,6 +174,108 @@ dump_regs(register_t *reg)
 		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], (uint32_t) reg[i]);
 }
 #endif
+
+
+/* from sys/arch/i386/include/frame.h : KEEP IN SYNC */
+
+/*
+ * New-style signal frame
+ */
+struct sigframe_siginfo {
+	int		sf_ra;		/* return address for handler */
+	int		sf_signum;	/* "signum" argument for handler */
+	siginfo_t	*sf_sip;	/* "sip" argument for handler */
+	ucontext_t	*sf_ucp;	/* "ucp" argument for handler */
+	siginfo_t	sf_si;		/* actual saved siginfo */
+	ucontext_t	sf_uc;		/* actual saved ucontext */
+};
+
+
+/*
+ * mcontext extensions to handle signal delivery.
+ */
+#define _UC_SETSTACK	0x00010000
+#define _UC_CLRSTACK	0x00020000
+#define _UC_VM		0x00040000
+#define	_UC_TLSBASE	0x00080000
+
+
+void
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct sigacts *ps = p->p_sigacts;
+	struct sigframe_siginfo *fp, frame;
+	int sig = ksi->ksi_signo;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	ucontext_t *ucp = &pcb->pcb_userret_ucp;
+	register_t *reg = (register_t *) &ucp->uc_mcontext;
+	int onstack, error;
+
+	KASSERT(mutex_owned(p->p_lock));
+
+#if 0
+	printf("%s: ", __func__);
+	printf("flags %d, ", (int) ksi->ksi_flags);
+	printf("to lwp %d, signo %d, code %d, errno %d\n",
+		(int) ksi->ksi_lid,
+		ksi->ksi_signo,
+		ksi->ksi_code,
+		ksi->ksi_errno);
+#endif
+
+	/* do we need to jump onto the signal stack? */
+	onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+
+	fp = (void *) reg[17];	/* ESP */
+	if (onstack)
+		fp = (void *)
+			((char *) l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
+
+	fp--;
+
+	/* set up stack frame */
+	frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
+	frame.sf_signum = sig;
+	frame.sf_sip = &fp->sf_si;
+	frame.sf_ucp = &fp->sf_uc;
+	frame.sf_si._info = ksi->ksi_info;
+
+	/* copy our userret context into sf_uc */
+	memcpy(&frame.sf_uc, ucp, sizeof(ucontext_t));
+	frame.sf_uc.uc_sigmask = *mask;
+	frame.sf_uc.uc_link = l->l_ctxlink; /* XXX ??? */
+	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
+	    ? _UC_SETSTACK : _UC_CLRSTACK;
+	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
+
+	sendsig_reset(l, sig);
+
+	/* copyout our frame to the stackframe */
+	mutex_exit(p->p_lock);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(p->p_lock);
+
+	if (error != 0) {
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	/* set catcher and the new stack pointer */
+	reg[17] = (register_t) fp;	/* ESP */
+	reg[14] = (register_t) catcher;	/* EIP */
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
+}
 
 void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
@@ -298,7 +391,7 @@ md_syscall_get_opcode(ucontext_t *ucp, uint32_t *opcode)
 {
 	register_t *reg = (register_t *) &ucp->uc_mcontext;
 //	uint8_t  *p8  = (uint8_t *) (reg[14]);
-	uint16_t *p16 = (uint16_t*) (reg[14]);
+	uint16_t *p16 = (uint16_t*) (reg[14]);	/* EIP */
 
 	switch (*p16) {
 	case 0xff0f:	/* UD1      */
