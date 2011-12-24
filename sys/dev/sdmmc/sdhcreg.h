@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.1.14.2 2010/04/21 00:27:52 matt Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.1.14.3 2011/12/24 01:33:59 matt Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -87,6 +87,9 @@
 #define SDHC_CLOCK_CTL			0x2c
 #define  SDHC_SDCLK_DIV_SHIFT		8
 #define  SDHC_SDCLK_DIV_MASK		0xff
+#define  SDHC_SDCLK_XDIV_SHIFT		6
+#define  SDHC_SDCLK_XDIV_MASK		0x3
+#define  SDHC_SDCLK_CGM			(1<<5)
 #define  SDHC_SDCLK_ENABLE		(1<<2)
 #define  SDHC_INTCLK_STABLE		(1<<1)
 #define  SDHC_INTCLK_ENABLE		(1<<0)
@@ -127,6 +130,15 @@
 #define SDHC_EINTR_SIGNAL_EN		0x3a
 #define  SDHC_EINTR_SIGNAL_MASK		0x01ff	/* excluding vendor signals */
 #define SDHC_CMD12_ERROR_STATUS		0x3c
+#define SDHC_HOST_CTL2			0x3e
+#define  SDHC_PRESET_VALUE_ENABLE	(1<<15)
+#define  SDHC_ASYNC_INTR_ENABLE		(1<<14)
+#define  SDHC_SAMPLING_CLK_SELECT	(1<<7)
+#define  SDHC_UHS_MODE_SELECT_SDR12	0
+#define  SDHC_UHS_MODE_SELECT_SDR25	1
+#define  SDHC_UHS_MODE_SELECT_SDR50	2
+#define  SDHC_UHS_MODE_SELECT_SHIFT	0
+#define  SDHC_UHS_MODE_SELECT_MASK	0x7
 #define SDHC_CAPABILITIES		0x40
 #define  SDHC_VOLTAGE_SUPP_1_8V		(1<<26)
 #define  SDHC_VOLTAGE_SUPP_3_0V		(1<<25)
@@ -136,10 +148,11 @@
 #define  SDHC_MAX_BLK_LEN_512		0
 #define  SDHC_MAX_BLK_LEN_1024		1
 #define  SDHC_MAX_BLK_LEN_2048		2
+#define  SDHC_MAX_BLK_LEN_4096		3
 #define  SDHC_MAX_BLK_LEN_SHIFT		16
 #define  SDHC_MAX_BLK_LEN_MASK		0x3
 #define  SDHC_BASE_FREQ_SHIFT		8
-#define  SDHC_BASE_FREQ_MASK		0x3f
+#define  SDHC_BASE_FREQ_MASK		0xff
 #define  SDHC_TIMEOUT_FREQ_UNIT		(1<<7)	/* 0=KHz, 1=MHz */
 #define  SDHC_TIMEOUT_FREQ_SHIFT	0
 #define  SDHC_TIMEOUT_FREQ_MASK		0x1f
