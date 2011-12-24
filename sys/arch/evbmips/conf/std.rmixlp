@@ -1,0 +1,11 @@
+# $NetBSD: std.rmixlp,v 1.1.2.1 2011/12/24 01:42:04 matt Exp $
+
+include		"arch/evbmips/conf/std.rmixl"
+
+options 	MIPS64R2_RMIXL
+options 	MIPS64_XLP
+no options 	MIPS64_RMIXL
+no options 	MIPS64_XLR
+no options 	MIPS64_XLS
+makeoptions	CPUFLAGS+="-mips64r2 -mno-dsp"
+makeoptions	AFLAGS+="-mips64r2"
