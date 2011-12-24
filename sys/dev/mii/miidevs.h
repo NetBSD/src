@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.81.10.3 2011/05/20 14:42:20 matt Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.81.10.4 2011/12/24 01:31:39 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.78.10.5 2011/05/20 14:41:01 matt Exp
+ *	NetBSD: miidevs,v 1.78.10.6 2011/12/24 01:31:15 matt Exp
  */
 
 /*-
@@ -290,6 +290,8 @@
 #define	MII_STR_LEVEL1_LXT1000	"LXT1000 1000BASE-T media interface"
 
 /* Marvell Semiconductor PHYs */
+#define	MII_MODEL_MARVELL_E1114	0x0009
+#define	MII_STR_MARVELL_E1114	"Marvell 88E1114 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1011	0x0002
 #define	MII_STR_xxMARVELL_E1011	"Marvell 88E1011 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1000_3	0x0003
