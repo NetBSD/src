@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.32 2011/12/24 20:08:39 christos Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.33 2011/12/24 20:18:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -200,7 +200,7 @@ static const char *icmp_type[] = {
 	"reserved_20", "reserved_21", "reserved_22", "reserved_23",
 	"reserved_24", "reserved_25", "reserved_26", "reserved_27",
 	"reserved_28", "reserved_29", "traceroute", "dataconverr",
-	"mobile_redirect", "ipv6_whereareyou" "ipv6_iamhere",
+	"mobile_redirect", "ipv6_whereareyou", "ipv6_iamhere",
 	"mobile_regrequest", "mobile_regreply", "reserved_37",
 	"reserved_38", "skip", "photuris", NULL
 };
