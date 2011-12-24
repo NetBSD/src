@@ -1,0 +1,17 @@
+# $NetBSD: XLPEVB32,v 1.1.2.1 2011/12/24 01:42:48 matt Exp $
+#
+
+#ident  	"XLSATX32-$Revision: 1.1.2.1 $"
+
+include "arch/evbmips/conf/XLPEVB"
+
+#options 	MEMLIMIT=0x20000000			# 512MB 
+options 	ENABLE_MIPS_KSEGX
+options 	PCI_NETBSD_CONFIGURE
+#options 	PCI_CONFIG_DUMP
+options 	PCI_VERBOSE
+#options 	SDMMC_DEBUG
+
+makeoptions	LP64="no"
+makeoptions	NEED_BINARY="yes"
+makeoptions	NEED_UBOOTIMAGE="yes"
