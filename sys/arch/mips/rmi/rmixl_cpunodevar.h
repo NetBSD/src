@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpunodevar.h,v 1.1.2.2 2010/04/13 18:15:16 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpunodevar.h,v 1.1.2.3 2011/12/24 01:57:54 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,14 +33,19 @@
 
 struct cpunode_softc {
 	device_t	sc_dev;
-	bool		sc_attached;
 	u_int		sc_node;
+	bus_dma_tag_t	sc_29bit_dmat;
+	bus_dma_tag_t	sc_32bit_dmat;
+	bus_dma_tag_t	sc_64bit_dmat;
 };
 
 struct cpunode_attach_args {
 	const char     *na_name;
 	int		na_node;
 	int		na_core;
+	bus_dma_tag_t	na_dmat29;
+	bus_dma_tag_t	na_dmat32;
+	bus_dma_tag_t	na_dmat64;
 };
 
 #endif	/* _ARCH_MIPS_RMI_RMIXL_CPUNODEVAR_H_ */

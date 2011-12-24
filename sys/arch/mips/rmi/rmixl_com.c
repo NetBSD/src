@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.1.2.15 2011/05/11 00:37:20 cliff Exp $ */
+/* $Id: rmixl_com.c,v 1.1.2.16 2011/12/24 01:57:54 matt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.15 2011/05/11 00:37:20 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.16 2011/12/24 01:57:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,85 +153,8 @@ CFATTACH_DECL_NEW(com_rmixl, sizeof(struct rmixl_com_softc),
 #error	COM_REGMAP not defined!
 #endif
 
-volatile int32_t *com0addr = (int32_t *)
-	MIPS_PHYS_TO_KSEG1(RMIXL_IO_DEV_PBASE + RMIXL_IO_DEV_UART_1);
-
 extern int comcnfreq;
 extern int comcnspeed;
-
-void
-rmixl_putchar_init(uint64_t io_pbase)
-{
-	int rate;
-	extern int comspeed(long, long, int);
-
-	com0addr = (uint32_t *)
-		MIPS_PHYS_TO_KSEG1(io_pbase + RMIXL_IO_DEV_UART_1);
-
-	if (comcnfreq != -1) {
-		rate = comspeed(comcnspeed, comcnfreq, COM_TYPE_NORMAL);
-		if (rate < 0)
-			return;					/* XXX */
-
-		com0addr[com_ier] = 0;
-		com0addr[com_lctl] = htobe32(LCR_DLAB);
-		com0addr[com_dlbl] = htobe32(rate & 0xff);
-		com0addr[com_dlbh] = htobe32(rate >> 8);
-		com0addr[com_lctl] = htobe32(LCR_8BITS);	/* XXX */
-		com0addr[com_mcr]  = htobe32(MCR_DTR|MCR_RTS);
-		com0addr[com_fifo] = htobe32(
-			FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_1);
-	}
-}
-
-
-void
-rmixl_putchar(char c)
-{
-	int timo = 150000;
-
-	while ((be32toh(com0addr[com_lsr]) & LSR_TXRDY) == 0)
-		if (--timo == 0)
-			break;
-
-	com0addr[com_data] = htobe32((uint32_t)c);
-
-	while ((be32toh(com0addr[com_lsr]) & LSR_TSRE) == 0)
-		if (--timo == 0)
-			break;
-}
-
-void
-rmixl_puts(const char *restrict s)
-{
-	char c;
-
-	while ((c = *s++) != 0)
-		rmixl_putchar(c);
-}
-
-static char hexc[] = "0123456789abcdef";
-
-#define RMIXL_PUTHEX 						\
-	u_int shift = sizeof(val) * 8;				\
-	rmixl_putchar('0');					\
-	rmixl_putchar('x');					\
-	do {							\
-		shift -= 4;					\
-		rmixl_putchar(hexc[(val >> shift) & 0xf]);	\
-	} while(shift != 0)
-
-void
-rmixl_puthex32(uint32_t val)
-{
-	RMIXL_PUTHEX;
-}
-
-void
-rmixl_puthex64(uint64_t val)
-{
-	RMIXL_PUTHEX;
-}
 
 int
 rmixl_com_match(device_t parent, cfdata_t cf, void *aux)
@@ -291,7 +214,7 @@ rmixl_com_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	rmixl_intr_establish(obio->obio_intr, obio->obio_tmsk,
+	rmixl_intr_establish(obio->obio_intr,
 		IPL_VM, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
 		comintr, sc, true);
 

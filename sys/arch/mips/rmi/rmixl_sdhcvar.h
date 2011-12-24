@@ -1,11 +1,10 @@
-/*	$NetBSD: rmixl_pci_io_space.c,v 1.1.2.2 2011/12/24 01:57:54 matt Exp $	*/
-
+/*	$NetBSD: rmixl_sdhcvar.h,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $	*/
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Matt Thomas of 3am Software Foundry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,37 +28,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Little Endian bus_space(9) support for PCI I/O access
- * on RMI {XLP,XLR,XLS} chips
- */
+#ifndef _MIPS_RMI_RMIXL_SDHCVAR_H_
+#define _MIPS_RMI_RMIXL_SDHCVAR_H_
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pci_io_space.c,v 1.1.2.2 2011/12/24 01:57:54 matt Exp $");
-
-#include <sys/types.h>
-#include <sys/param.h>
 #include <sys/bus.h>
 
-#include <mips/rmi/rmixlreg.h>
-#include <mips/rmi/rmixlvar.h>
+#include <dev/sdmmc/sdhcvar.h>
 
-#define	CHIP			rmixl_pci
-#define	CHIP_IO			/* defined */
-#define	CHIP_ACCESS_SIZE	1
-#define CHIP_LITTLE_ENDIAN
+struct xlsdio_softc {
+	device_t sc_dev;
+	struct sdhc_softc *sc_slots[2];
+};
 
-#define	CHIP_V(v)		((struct rmixl_config *)(v))
+struct xlsdio_attach_args {
+	bus_space_tag_t xa_bst;
+	bus_space_handle_t xa_bsh;
+	bus_dma_tag_t xa_dmat;
+	bus_size_t xa_addr;
+	bus_size_t xa_size;
+	int xa_slot;
+};
 
-#define CHIP_EX_MALLOC_SAFE(v)	(CHIP_V(v)->rc_mallocsafe)
-#define CHIP_EXTENT(v)		(CHIP_V(v)->rc_pci_io_ex)
-
-/* MEM region 1 */
-#define	CHIP_W1_BUS_START(v)	\
-	(CHIP_V(v)->rc_pci_io.r_pbase)
-#define	CHIP_W1_BUS_END(v)	\
-	(CHIP_W1_BUS_START(v) +	CHIP_V(v)->rc_pci_io.r_size - 1)
-#define CHIP_W1_SYS_START(v)	CHIP_W1_BUS_START(v)
-#define CHIP_W1_SYS_END(v)	CHIP_W1_BUS_END(v)
-
-#include <mips/mips/bus_space_alignstride_chipdep.c>
+#endif /* _MIPS_RMI_RMIXL_SDHCVAR_H_ */
