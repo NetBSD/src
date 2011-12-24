@@ -1,12 +1,11 @@
-# $NetBSD: XLSATX32,v 1.1.2.4 2011/12/02 00:02:01 matt Exp $
+# $NetBSD: XLSATX32,v 1.1.2.5 2011/12/24 01:39:47 matt Exp $
 #
 
-#ident  	"XLSATX32-$Revision: 1.1.2.4 $"
+#ident  	"XLSATX32-$Revision: 1.1.2.5 $"
 
 include "arch/evbmips/conf/XLSATX"
 
 #options 	MEMLIMIT=0x20000000			# 512MB 
-options 	ENABLE_MIPS_8KB_PAGE
 options 	ENABLE_MIPS_KSEGX
 
 makeoptions	LP64="no"
