@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.45 2011/12/14 18:51:39 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.46 2011/12/25 21:10:00 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45 2011/12/14 18:51:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.46 2011/12/25 21:10:00 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,7 +147,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 
 #ifdef DIAGNOSTIC
 	/* sanity */
-	if ((va < VM_MIN_ADDRESS) || (va >= VM_MAX_ADDRESS))
+	if ((va < VM_MIN_ADDRESS) || (va >= VM_MAX_KERNEL_ADDRESS))
 		panic("peeing outside the box! (va=%p)", (void *)va);
 
 	/* extra debug for now -> should issue signal */
