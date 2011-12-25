@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.55 2011/08/22 09:43:08 mrg Exp $
+# $NetBSD: Makefile.boot,v 1.56 2011/12/25 06:09:09 tsutsui Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -76,6 +76,7 @@ CPPFLAGS+= -DPASS_MEMMAP
 CPPFLAGS+= -DEPIA_HACK
 #CPPFLAGS+= -DDEBUG_MEMSIZE
 #CPPFLAGS+= -DBOOT_MSG_COM0
+CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
 
 # The biosboot code is linked to 'virtual' address of zero and is
 # loaded at physical address 0x10000.
@@ -113,6 +114,7 @@ LIBI386= ${I386LIB}
 ### find out what to use for libsa
 SA_AS= library
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
+SAMISCMAKEFLAGS+="SA_ENABLE_LS_OP=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
 

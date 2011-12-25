@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2011/06/20 12:39:21 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 2011/12/25 06:09:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -323,7 +323,7 @@ bootcmd_ls(char *arg)
 	const char *save = default_filename;
 
 	default_filename = "/";
-	ufs_ls(arg);
+	ls(arg);
 	default_filename = save;
 }
 
