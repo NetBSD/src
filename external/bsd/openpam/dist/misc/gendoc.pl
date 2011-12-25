@@ -291,6 +291,7 @@ sub parse_source($) {
 	s/\s*=(struct \w+(?: \*)?)\b\s*/\n.Vt $1\n/gs;
 	s/\s*:([a-z_]+)\b\s*/\n.Va $1\n/gs;
 	s/\s*;([a-z_]+)\b\s*/\n.Dv $1\n/gs;
+	s/\s*=cleanup\s*/\n.Ar cleanup\n/gs;
 	while (s/\s*=([a-z_]+)\b\s*/\n.Xr $1 3\n/s) {
 	    ++$xref{3}->{$1};
 	}
@@ -426,7 +427,10 @@ sub gendoc($) {
 
     return if defined($func->{'nodoc'});
 
-    $mdoc = "$COPYRIGHT
+    $mdoc = ".\\\"\t\$".
+"NetBSD\$
+.\\\"
+$COPYRIGHT
 .Dd $TODAY
 .Dt " . uc($func->{'name'}) . " 3
 .Os
