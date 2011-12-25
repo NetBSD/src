@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: cleantags.sh,v 1.1 2011/10/08 19:16:08 christos Exp $
+# $NetBSD: cleantags.sh,v 1.2 2011/12/25 23:31:22 christos Exp $
 # Remove the $'s from rcs tags
 
 PROG="$(basename "$0")"
@@ -8,20 +8,20 @@ verbose=false
 
 dosed() {
 	sed \
-	    -e 's/\$\(Author.*\) \$/\1/' \
-	    -e 's/\$\(Date.*\) \$/\1/' \
-	    -e 's/\$\(CVSHeader.*\) \$/\1/' \
-	    -e 's/\$\(Header.*\) \$/\1/' \
-	    -e 's/\$\(Id.*\) \$/\1/' \
-	    -e 's/\$\(LocalId.*\) \$/\1/' \
-	    -e 's/\$\(Locker.*\) \$/\1/' \
-	    -e 's/\$\(Log.*\) \$/\1/' \
-	    -e 's/\$\(Name.*\) \$/\1/' \
-	    -e 's/\$\(RCSfile.*\) \$/\1/' \
-	    -e 's/\$\(Revision.*\) \$/\1/' \
-	    -e 's/\$\(Source.*\) \$/\1/' \
-	    -e 's/\$\(State.*\) \$/\1/' \
-	    -e 's/\$\(NetBSD.*\) \$/\1/' \
+	    -e 's/\$\(Author.*\)\$/\1/' \
+	    -e 's/\$\(Date.*\)\$/\1/' \
+	    -e 's/\$\(CVSHeader.*\)\$/\1/' \
+	    -e 's/\$\(Header.*\)\$/\1/' \
+	    -e 's/\$\(Id.*\)\$/\1/' \
+	    -e 's/\$\(LocalId.*\)\$/\1/' \
+	    -e 's/\$\(Locker.*\)\$/\1/' \
+	    -e 's/\$\(Log.*\)\$/\1/' \
+	    -e 's/\$\(Name.*\)\$/\1/' \
+	    -e 's/\$\(RCSfile.*\)\$/\1/' \
+	    -e 's/\$\(Revision.*\)\$/\1/' \
+	    -e 's/\$\(Source.*\)\$/\1/' \
+	    -e 's/\$\(State.*\)\$/\1/' \
+	    -e 's/\$\(NetBSD.*\)\$/\1/' \
 	    "$1" > "/tmp/$PROG$$" && mv "/tmp/$PROG$$" "$1"
 	if $verbose
 	then
