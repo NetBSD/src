@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_getenv.c,v 1.1.1.1 2011/12/25 21:42:51 christos Exp $	*/
+/*	$NetBSD: pam_getenv.c,v 1.2 2011/12/25 22:27:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -76,6 +76,7 @@ pam_getenv(pam_handle_t *pamh,
 		}
 	}
 	RETURNS(str);
+	/*NOTREACHED*/
 }
 
 /**

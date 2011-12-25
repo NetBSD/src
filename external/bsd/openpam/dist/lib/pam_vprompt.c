@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_vprompt.c,v 1.1.1.1 2011/12/25 21:42:52 christos Exp $	*/
+/*	$NetBSD: pam_vprompt.c,v 1.2 2011/12/25 22:27:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -79,7 +79,7 @@ pam_vprompt(const pam_handle_t *pamh,
 		openpam_log(PAM_LOG_ERROR, "no conversation function");
 		RETURNC(PAM_SYSTEM_ERR);
 	}
-	vsnprintf(msgbuf, PAM_MAX_MSG_SIZE, fmt, ap);
+	vsnprintf(msgbuf, (size_t)PAM_MAX_MSG_SIZE, fmt, ap);
 	msg.msg_style = style;
 	msg.msg = msgbuf;
 	msgp = &msg;
@@ -88,6 +88,7 @@ pam_vprompt(const pam_handle_t *pamh,
 	*resp = rsp == NULL ? NULL : rsp->resp;
 	FREE(rsp);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*

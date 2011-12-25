@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_impl.h,v 1.1.1.1 2011/12/25 21:42:48 christos Exp $	*/
+/*	$NetBSD: openpam_impl.h,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -159,7 +159,7 @@ pam_module_t	*openpam_static(const char *);
 #endif
 pam_module_t	*openpam_dynamic(const char *);
 
-#define	FREE(p) do { free((p)); (p) = NULL; } while (0)
+#define	FREE(p) do { free((p)); (p) = NULL; } while (/*CONSTCOND*/0)
 
 #include "openpam_constants.h"
 #include "openpam_debug.h"
