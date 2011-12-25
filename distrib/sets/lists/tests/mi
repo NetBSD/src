@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.430 2011/12/21 07:36:02 pgoyette Exp $
+# $NetBSD: mi,v 1.431 2011/12/25 20:15:34 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2956,6 +2956,7 @@
 ./usr/tests/util/xlint/lint1/d_alignof.c			tests-util-tests
 ./usr/tests/util/xlint/lint1/d_c99_complex_num.c		tests-util-tests
 ./usr/tests/util/xlint/lint1/d_c99_decls_after_stmt.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_c99_decls_after_stmt2.c		tests-util-tests
 ./usr/tests/util/xlint/lint1/d_c99_for_loops.c			tests-util-tests
 ./usr/tests/util/xlint/lint1/d_c99_func.c			tests-util-tests
 ./usr/tests/util/xlint/lint1/d_c99_recursive_init.c		tests-util-tests
@@ -2988,5 +2989,6 @@
 ./usr/tests/util/xlint/lint1/d_type_conv1.c			tests-util-tests
 ./usr/tests/util/xlint/lint1/d_type_conv2.c			tests-util-tests
 ./usr/tests/util/xlint/lint1/d_type_conv3.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_typename_as_var.c		tests-util-tests
 ./usr/tests/util/xlint/lint1/d_zero_sized_arrays.c		tests-util-tests
 ./usr/tests/util/xlint/lint1/t_integration	tests-util-tests
