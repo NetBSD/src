@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1637 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1638 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1185,3 +1185,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	rtadvd: Add RDNSS and DNSSL support (RFC6106) [roy 20111210]
 	isibootd(8): Add isibootd(8), a dumb netboot server command for
 		OMRON luna68k machines.  [tsutsui 20111217]
+	libsa: Allow libsa to have a file system dependent ls command and
+		add ls command support for ext2fs.  From Evgeniy Ivanov.
+		[tsutsui 20111225]
