@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.81 2011/12/20 21:01:39 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.82 2011/12/25 21:10:00 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2011/12/20 21:01:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2011/12/25 21:10:00 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -281,7 +281,7 @@ pmap_bootstrap(void)
 	fpos += pv_table_size;
 
 	/* set up kernel pmap */
-	pm_nentries = (VM_MAX_ADDRESS - VM_MIN_ADDRESS) / PAGE_SIZE;
+	pm_nentries = (VM_MAX_KERNEL_ADDRESS - VM_MIN_ADDRESS) / PAGE_SIZE;
 	pm_entries_size = round_page(pm_nentries * sizeof(struct pv_entry *));
 	dprintf_debug("pmap va->pa lookup table is %"PRIu64" KB for %d logical pages\n",
 		pm_entries_size/1024, pm_nentries);
@@ -727,7 +727,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 	ppn = atop(pa);
 	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
 #ifdef DIAGNOSTIC
-	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_ADDRESS))
+	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_KERNEL_ADDRESS))
 		panic("pmap_do_enter: invalid va isued\n");
 #endif
 
@@ -952,7 +952,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 
 	dprintf_debug("pmap_extract: extracting va %p\n", (void *) va);
 #ifdef DIAGNOSTIC
-	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_ADDRESS))
+	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_KERNEL_ADDRESS))
 		panic("pmap_extract: invalid va isued\n");
 #endif
 	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
