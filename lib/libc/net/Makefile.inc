@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.79 2011/12/24 04:59:00 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.80 2011/12/25 12:32:36 tsutsui Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -41,9 +41,9 @@ nslexer.c: nslexer.l nsparser.h
 
 .include "${ARCHDIR}/net/Makefile.inc"
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == "45" && ${MACHINE_CPU} == "arm"   
-COPTS.getaddrinfo.c+=	-fno-tree-ter
-COPTS.gethnamaddr.c+=	-fno-tree-ter
+.if ${HAVE_GCC:U} == "45" && ${MACHINE_CPU} == "arm"
+COPTS.getaddrinfo.c+=	${${ACTIVE_CC} == "gcc" :? -fno-tree-ter :}
+COPTS.gethnamaddr.c+=	${${ACTIVE_CC} == "gcc" :? -fno-tree-ter :}
 .endif
 
 MAN+=	byteorder.3 ethers.3 gethostbyname.3 getifaddrs.3 \
