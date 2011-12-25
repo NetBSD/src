@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_constants.c,v 1.1.1.1 2011/12/25 21:42:49 christos Exp $	*/
+/*	$NetBSD: openpam_constants.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -93,6 +93,8 @@ const char *pam_item_name[PAM_NUM_ITEMS] = {
 	"PAM_AUTHTOK_PROMPT",
 	"PAM_OLDAUTHTOK_PROMPT",
 	"PAM_HOST",
+	"PAM_SOCKADDR",
+	"PAM_NUSER"
 };
 
 const char *pam_facility_name[PAM_NUM_FACILITIES] = {

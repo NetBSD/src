@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_set_data.c,v 1.1.1.1 2011/12/25 21:42:51 christos Exp $	*/
+/*	$NetBSD: pam_set_data.c,v 1.2 2011/12/25 22:27:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -88,6 +88,7 @@ pam_set_data(pam_handle_t *pamh,
 	dp->next = pamh->module_data;
 	pamh->module_data = dp;
 	RETURNC(PAM_SUCCESS);
+	/*NOTREACHED*/
 }
 
 /*
@@ -107,4 +108,6 @@ pam_set_data(pam_handle_t *pamh,
  *
  * This function and its counterpart =pam_get_data are useful for managing
  * data that are meaningful only to a particular service module.
+ *
+ * >openpam_free_data
  */

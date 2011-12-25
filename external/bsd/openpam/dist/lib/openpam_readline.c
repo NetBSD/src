@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_readline.c,v 1.1.1.1 2011/12/25 21:42:50 christos Exp $	*/
+/*	$NetBSD: openpam_readline.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -63,7 +63,7 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 	size_t len, size;
 	int ch;
 
-	if ((line = malloc(MIN_LINE_LENGTH)) == NULL)
+	if ((line = malloc((size_t)MIN_LINE_LENGTH)) == NULL)
 		return (NULL);
 	size = MIN_LINE_LENGTH;
 	len = 0;
@@ -77,7 +77,7 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 	} \
 	line[len++] = ch; \
 	line[len] = '\0'; \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 	for (;;) {
 		ch = fgetc(f);
@@ -108,7 +108,7 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 			break;
 		}
 		/* whitespace */
-		if (isspace(ch)) {
+		if (isspace((unsigned char)ch)) {
 			/* ignore leading whitespace */
 			/* collapse linear whitespace */
 			if (len > 0 && line[len - 1] != ' ')

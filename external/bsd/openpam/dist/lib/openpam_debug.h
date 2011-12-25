@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_debug.h,v 1.1.1.1 2011/12/25 21:42:48 christos Exp $	*/
+/*	$NetBSD: openpam_debug.h,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -48,18 +48,18 @@
 		openpam_log(PAM_LOG_DEBUG, "entering: %s", pam_item_name[i_]); \
 	else \
 		openpam_log(PAM_LOG_DEBUG, "entering: %d", i_); \
-} while (0)
+} while (/*CONSTCOND*/0)
 #define ENTERN(n) do { \
 	int n_ = (n); \
 	openpam_log(PAM_LOG_DEBUG, "entering: %d", n_); \
-} while (0)
+} while (/*CONSTCOND*/0)
 #define ENTERS(s) do { \
 	const char *s_ = (s); \
 	if (s_ == NULL) \
 		openpam_log(PAM_LOG_DEBUG, "entering: NULL"); \
 	else \
 		openpam_log(PAM_LOG_DEBUG, "entering: '%s'", s_); \
-} while (0)
+} while (/*CONSTCOND*/0)
 #define	RETURNV() openpam_log(PAM_LOG_DEBUG, "returning")
 #define RETURNC(c) do { \
 	int c_ = (c); \
@@ -68,12 +68,12 @@
 	else \
 		openpam_log(PAM_LOG_DEBUG, "returning %d!", c_); \
 	return (c_); \
-} while (0)
+} while (/*CONSTCOND*/0)
 #define	RETURNN(n) do { \
 	int n_ = (n); \
 	openpam_log(PAM_LOG_DEBUG, "returning %d", n_); \
 	return (n_); \
-} while (0)
+} while (/*CONSTCOND*/0)
 #define	RETURNP(p) do { \
 	const void *p_ = (p); \
 	if (p_ == NULL) \
@@ -81,7 +81,7 @@
 	else \
 		openpam_log(PAM_LOG_DEBUG, "returning %p", p_); \
 	return (p_); \
-} while (0)
+} while (/*CONSTCOND*/0)
 #define	RETURNS(s) do { \
 	const char *s_ = (s); \
 	if (s_ == NULL) \
@@ -89,7 +89,7 @@
 	else \
 		openpam_log(PAM_LOG_DEBUG, "returning '%s'", s_); \
 	return (s_); \
-} while (0)
+} while (/*CONSTCOND*/0)
 #else
 #define ENTER()
 #define ENTERI(i)

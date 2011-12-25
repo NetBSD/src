@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_configure.c,v 1.1.1.1 2011/12/25 21:42:49 christos Exp $	*/
+/*	$NetBSD: openpam_configure.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -450,7 +450,7 @@ openpam_parse_chain(pam_handle_t *pamh,
 			goto syserr;
 
 		/* allocate new entry */
-		if ((this = calloc(1, sizeof *this)) == NULL)
+		if ((this = calloc((size_t)1, sizeof *this)) == NULL)
 			goto syserr;
 		this->flag = ctlf;
 
@@ -512,8 +512,12 @@ fail:
 static const char *openpam_policy_path[] = {
 	"/etc/pam.d/",
 	"/etc/pam.conf",
+#ifndef __NetBSD__
 	"/usr/local/etc/pam.d/",
 	"/usr/local/etc/pam.conf",
+#else
+	/* Possibly /usr/pkg? */
+#endif
 	NULL
 };
 
@@ -530,6 +534,12 @@ openpam_load_chain(pam_handle_t *pamh,
 	char *filename;
 	size_t len;
 	int ret;
+
+	/* don't allow to escape from policy_path */
+	if (strchr(service, '/')) {
+		openpam_log(PAM_LOG_ERROR, "illegal service \"%s\"", service);
+		return (-PAM_SYSTEM_ERR);
+	}
 
 	for (path = openpam_policy_path; *path != NULL; ++path) {
 		len = strlen(*path);
@@ -577,6 +587,26 @@ openpam_configure(pam_handle_t *pamh,
 		if (openpam_load_chain(pamh, PAM_OTHER, fclt) != PAM_SUCCESS)
 			goto load_err;
 	}
+#ifdef __NetBSD__
+	/*
+	 * On NetBSD we require the AUTH chain to have a binding
+	 * or a required module.
+	 */
+	{
+		pam_chain_t *this = pamh->chains[PAM_AUTH];
+		for (; this != NULL; this = this->next)
+			if (this->flag == PAM_BINDING ||
+			    this->flag == PAM_REQUIRED)
+				break;
+		if (this == NULL) {
+			openpam_log(PAM_LOG_ERROR,
+			    "No required or binding component "
+			    "in service %s, facility %s",
+			    service, _pam_facility_name[PAM_AUTH]);
+			goto load_err;
+		}
+	}
+#endif
 	return (PAM_SUCCESS);
 load_err:
 	openpam_clear_chains(pamh->chains);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_set_item.c,v 1.1.1.1 2011/12/25 21:42:51 christos Exp $	*/
+/*	$NetBSD: pam_set_item.c,v 1.2 2011/12/25 22:27:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -86,6 +86,7 @@ pam_set_item(pam_handle_t *pamh,
 	case PAM_AUTHTOK_PROMPT:
 	case PAM_OLDAUTHTOK_PROMPT:
 	case PAM_HOST:
+	case PAM_NUSER:
 		if (*slot != NULL)
 			osize = strlen(*slot) + 1;
 		if (item != NULL)
@@ -96,6 +97,9 @@ pam_set_item(pam_handle_t *pamh,
 		break;
 	case PAM_CONV:
 		osize = nsize = sizeof(struct pam_conv);
+		break;
+	case PAM_SOCKADDR:
+		osize = nsize = sizeof(struct sockaddr_storage);
 		break;
 	default:
 		RETURNC(PAM_SYMBOL_ERR);
@@ -113,6 +117,7 @@ pam_set_item(pam_handle_t *pamh,
 	}
 	*slot = tmp;
 	RETURNC(PAM_SUCCESS);
+	/*NOTREACHED*/
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_get_option.c,v 1.1.1.1 2011/12/25 21:42:49 christos Exp $	*/
+/*	$NetBSD: openpam_get_option.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -78,6 +78,7 @@ openpam_get_option(pam_handle_t *pamh,
 		}
 	}
 	RETURNS(NULL);
+	/*NOTREACHED*/
 }
 
 /**

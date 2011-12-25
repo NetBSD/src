@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_putenv.c,v 1.1.1.1 2011/12/25 21:42:51 christos Exp $	*/
+/*	$NetBSD: pam_putenv.c,v 1.2 2011/12/25 22:27:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -71,7 +71,8 @@ pam_putenv(pam_handle_t *pamh,
 		RETURNC(PAM_SYSTEM_ERR);
 
 	/* see if the variable is already in the environment */
-	if ((i = openpam_findenv(pamh, namevalue, p - namevalue)) >= 0) {
+	if ((i = openpam_findenv(pamh, namevalue,
+	    (size_t)(p - namevalue))) >= 0) {
 		if ((p = strdup(namevalue)) == NULL)
 			RETURNC(PAM_BUF_ERR);
 		FREE(pamh->env[i]);
@@ -94,6 +95,7 @@ pam_putenv(pam_handle_t *pamh,
 		RETURNC(PAM_BUF_ERR);
 	++pamh->env_count;
 	RETURNC(PAM_SUCCESS);
+	/*NOTREACHED*/
 }
 
 /*

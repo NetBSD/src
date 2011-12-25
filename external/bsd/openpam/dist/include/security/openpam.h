@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam.h,v 1.1.1.1 2011/12/25 21:42:55 christos Exp $	*/
+/*	$NetBSD: openpam.h,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -191,9 +191,9 @@ _openpam_log(int _level,
 #elif defined(__GNUC__) && (__GNUC__ >= 2) && (__GNUC_MINOR__ >= 95)
 #define openpam_log(lvl, fmt...) \
 	_openpam_log((lvl), __func__, ##fmt)
-#elif defined(__GNUC__) && defined(__FUNCTION__)
+#elif defined(__GNUC__) && defined(__func__)
 #define openpam_log(lvl, fmt...) \
-	_openpam_log((lvl), __FUNCTION__, ##fmt)
+	_openpam_log((lvl), __func__, ##fmt)
 #else
 void
 openpam_log(int _level,
@@ -327,7 +327,14 @@ struct pam_module {
 # endif
 /* gcc, static linking */
 # include <sys/cdefs.h>
-# include <linker_set.h>
+# ifdef __FreeBSD__
+#  include <linker_set.h>
+# endif
+# ifdef __NetBSD__
+#  define DATA_SET(a, b) __link_set_add_data(a, b)
+#  define SET_DECLARE(a, b) __link_set_decl(a, b)
+#  define SET_FOREACH(a, b) __link_set_foreach(a, b)
+# endif
 # define PAM_EXTERN static
 # define PAM_MODULE_ENTRY(name)						\
 	static char _pam_name[] = name PAM_SOEXT;			\

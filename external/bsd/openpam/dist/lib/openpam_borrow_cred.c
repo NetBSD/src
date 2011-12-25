@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_borrow_cred.c,v 1.1.1.1 2011/12/25 21:42:48 christos Exp $	*/
+/*	$NetBSD: openpam_borrow_cred.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -79,7 +79,7 @@ openpam_borrow_cred(pam_handle_t *pamh,
 		    (int)geteuid());
 		RETURNC(PAM_PERM_DENIED);
 	}
-	scred = calloc(1, sizeof *scred);
+	scred = calloc((size_t)1, sizeof *scred);
 	if (scred == NULL)
 		RETURNC(PAM_BUF_ERR);
 	scred->euid = geteuid();
@@ -103,6 +103,7 @@ openpam_borrow_cred(pam_handle_t *pamh,
 		RETURNC(PAM_SYSTEM_ERR);
 	}
 	RETURNC(PAM_SUCCESS);
+	/*NOTREACHED*/
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_nullconv.c,v 1.1.1.1 2011/12/25 21:42:50 christos Exp $	*/
+/*	$NetBSD: openpam_nullconv.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -61,11 +61,16 @@ openpam_nullconv(int n,
 {
 
 	ENTER();
+	/*LINTED unused*/
 	(void)n;
+	/*LINTED unused*/
 	(void)msg;
+	/*LINTED unused*/
 	(void)resp;
+	/*LINTED unused*/
 	(void)data;
 	RETURNC(PAM_CONV_ERR);
+	/*NOTREACHED*/
 }
 
 /*

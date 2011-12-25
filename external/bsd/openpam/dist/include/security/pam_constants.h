@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_constants.h,v 1.1.1.1 2011/12/25 21:42:55 christos Exp $	*/
+/*	$NetBSD: pam_constants.h,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -129,6 +129,8 @@ enum {
 	PAM_AUTHTOK_PROMPT		=  11,		/* OpenPAM extension */
 	PAM_OLDAUTHTOK_PROMPT		=  12,		/* OpenPAM extension */
 	PAM_HOST			=  13,		/* OpenPAM extension */
+	PAM_SOCKADDR			=  14,		/* NetBSD extension */
+	PAM_NUSER			=  15,		/* NetBSD extension */
 	PAM_NUM_ITEMS					/* OpenPAM extension */
 };
 

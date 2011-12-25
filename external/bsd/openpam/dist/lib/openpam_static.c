@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_static.c,v 1.1.1.1 2011/12/25 21:42:50 christos Exp $	*/
+/*	$NetBSD: openpam_static.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -60,7 +60,7 @@ SET_DECLARE(openpam_static_modules, pam_module_t);
 pam_module_t *
 openpam_static(const char *path)
 {
-	pam_module_t **module;
+	pam_module_t * const *module;
 
 	SET_FOREACH(module, openpam_static_modules) {
 		if (strcmp((*module)->path, path) == 0)
@@ -69,7 +69,7 @@ openpam_static(const char *path)
 	return (NULL);
 }
 
-#endif
+#endif /* OPENPAM_STATIC_MODULES */
 
 /*
  * NOPARSE

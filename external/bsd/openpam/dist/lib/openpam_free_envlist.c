@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_free_envlist.c,v 1.1.1.1 2011/12/25 21:42:49 christos Exp $	*/
+/*	$NetBSD: openpam_free_envlist.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005-2011 Dag-Erling Smørgrav

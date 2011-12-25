@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_ttyconv.c,v 1.1.1.1 2011/12/25 21:42:50 christos Exp $	*/
+/*	$NetBSD: openpam_ttyconv.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -52,6 +52,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <paths.h>
 
 #include <security/pam_appl.h>
 
@@ -62,44 +63,47 @@ int openpam_ttyconv_timeout = 0;
 static void
 timeout(int sig)
 {
-
+	/*LINTED unused*/
 	(void)sig;
 }
 
 static char *
-prompt(const char *msg)
+prompt(const char *msg, FILE *infp, FILE *outfp, FILE *errfp)
 {
 	char buf[PAM_MAX_RESP_SIZE];
 	struct sigaction action, saved_action;
-	sigset_t saved_sigset, sigset;
+	sigset_t saved_sigset, sigs;
 	unsigned int saved_alarm;
 	int eof, error, fd;
 	size_t len;
 	char *retval;
 	char ch;
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigaddset(&sigset, SIGTSTP);
-	sigprocmask(SIG_SETMASK, &sigset, &saved_sigset);
+	saved_alarm = 0;
+	sigemptyset(&sigs);
+	sigaddset(&sigs, SIGINT);
+	sigaddset(&sigs, SIGTSTP);
+	sigprocmask(SIG_SETMASK, &sigs, &saved_sigset);
 	action.sa_handler = &timeout;
 	action.sa_flags = 0;
 	sigemptyset(&action.sa_mask);
 	sigaction(SIGALRM, &action, &saved_action);
-	fputs(msg, stdout);
-	fflush(stdout);
+
+
+	fputs(msg, outfp);
+	fflush(outfp);
 #ifdef HAVE_FPURGE
-	fpurge(stdin);
+	fpurge(infp);
 #endif
-	fd = fileno(stdin);
+	fd = fileno(infp);
 	buf[0] = '\0';
 	eof = error = 0;
 	saved_alarm = 0;
 	if (openpam_ttyconv_timeout >= 0)
-		saved_alarm = alarm(openpam_ttyconv_timeout);
+		saved_alarm = alarm((unsigned int)openpam_ttyconv_timeout);
 	ch = '\0';
 	for (len = 0; ch != '\n' && !eof && !error; ++len) {
-		switch (read(fd, &ch, 1)) {
+		switch (read(fd, &ch, (size_t)1)) {
 		case 1:
 			if (len < PAM_MAX_RESP_SIZE - 1) {
 				buf[len + 1] = '\0';
@@ -121,9 +125,9 @@ prompt(const char *msg)
 	if (saved_alarm > 0)
 		alarm(saved_alarm);
 	if (error == EINTR)
-		fputs(" timeout!", stderr);
+		fputs(" timeout!", errfp);
 	if (error || eof) {
-		fputs("\n", stderr);
+		fputs("\n", errfp);
 		memset(buf, 0, sizeof(buf));
 		return (NULL);
 	}
@@ -138,14 +142,14 @@ prompt(const char *msg)
 }
 
 static char *
-prompt_echo_off(const char *msg)
+prompt_echo_off(const char *msg, FILE *infp, FILE *outfp, FILE *errfp)
 {
 	struct termios tattr;
 	tcflag_t lflag;
 	char *ret;
 	int fd;
 
-	fd = fileno(stdin);
+	fd = fileno(infp);
 	if (tcgetattr(fd, &tattr) != 0) {
 		openpam_log(PAM_LOG_ERROR, "tcgetattr(): %m");
 		return (NULL);
@@ -156,11 +160,11 @@ prompt_echo_off(const char *msg)
 		openpam_log(PAM_LOG_ERROR, "tcsetattr(): %m");
 		return (NULL);
 	}
-	ret = prompt(msg);
+	ret = prompt(msg, infp, outfp, errfp);
 	tattr.c_lflag = lflag;
 	(void)tcsetattr(fd, TCSANOW, &tattr);
 	if (ret != NULL)
-		fputs("\n", stdout);
+		fputs("\n", outfp);
 	return (ret);
 }
 
@@ -178,43 +182,59 @@ openpam_ttyconv(int n,
 {
 	struct pam_response *aresp;
 	int i;
+	FILE *infp, *outfp, *errfp;
 
 	ENTER();
+	/*LINTED unused*/
 	(void)data;
 	if (n <= 0 || n > PAM_MAX_NUM_MSG)
 		RETURNC(PAM_CONV_ERR);
-	if ((aresp = calloc(n, sizeof *aresp)) == NULL)
+	if ((aresp = calloc((size_t)n, sizeof *aresp)) == NULL)
 		RETURNC(PAM_BUF_ERR);
+
+	/*
+	 * read and write to /dev/tty if possible; else read from
+	 * stdin and write to stderr.
+	 */ 
+	if ((outfp = infp = errfp = fopen(_PATH_TTY, "w+")) == NULL) {
+		errfp = stderr;
+		outfp = stderr;
+		infp = stdin;
+	} 
+
 	for (i = 0; i < n; ++i) {
 		aresp[i].resp_retcode = 0;
 		aresp[i].resp = NULL;
 		switch (msg[i]->msg_style) {
 		case PAM_PROMPT_ECHO_OFF:
-			aresp[i].resp = prompt_echo_off(msg[i]->msg);
+			aresp[i].resp = prompt_echo_off(msg[i]->msg, infp,
+			    outfp, errfp);
 			if (aresp[i].resp == NULL)
 				goto fail;
 			break;
 		case PAM_PROMPT_ECHO_ON:
-			aresp[i].resp = prompt(msg[i]->msg);
+			aresp[i].resp = prompt(msg[i]->msg, infp, outfp, errfp);
 			if (aresp[i].resp == NULL)
 				goto fail;
 			break;
 		case PAM_ERROR_MSG:
-			fputs(msg[i]->msg, stderr);
+			fputs(msg[i]->msg, errfp);
 			if (strlen(msg[i]->msg) > 0 &&
 			    msg[i]->msg[strlen(msg[i]->msg) - 1] != '\n')
-				fputc('\n', stderr);
+				fputc('\n', errfp);
 			break;
 		case PAM_TEXT_INFO:
-			fputs(msg[i]->msg, stdout);
+			fputs(msg[i]->msg, outfp);
 			if (strlen(msg[i]->msg) > 0 &&
 			    msg[i]->msg[strlen(msg[i]->msg) - 1] != '\n')
-				fputc('\n', stdout);
+				fputc('\n', outfp);
 			break;
 		default:
 			goto fail;
 		}
 	}
+	if (infp != stdin)
+		(void)fclose(infp);
 	*resp = aresp;
 	RETURNC(PAM_SUCCESS);
 fail:
@@ -224,10 +244,13 @@ fail:
 			FREE(aresp[i].resp);
 		}
 	}
+	if (infp != stdin)
+		(void)fclose(infp);
 	memset(aresp, 0, n * sizeof *aresp);
 	FREE(aresp);
 	*resp = NULL;
 	RETURNC(PAM_CONV_ERR);
+	/*NOTREACHED*/
 }
 
 /*
@@ -244,6 +267,11 @@ fail:
  * It should be adequate for the needs of most text-based interactive
  * programs.
  *
+ * The =openpam_ttyconv function displays a prompt to, and reads in a
+ * password from /dev/tty. If this file is not accessible, =openpam_ttyconv
+ * displays the prompt on the standard error output and reads from the
+ * standard input.
+ *
  * The =openpam_ttyconv function allows the application to specify a
  * timeout for user input by setting the global integer variable
  * :openpam_ttyconv_timeout to the length of the timeout in seconds.
@@ -251,4 +279,5 @@ fail:
  * >openpam_nullconv
  * >pam_prompt
  * >pam_vprompt
+ * >getpass
  */
