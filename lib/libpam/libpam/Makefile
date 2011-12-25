@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2011/08/17 09:56:03 christos Exp $
+# $NetBSD: Makefile,v 1.14 2011/12/25 23:18:26 christos Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -40,18 +40,20 @@ NOPROFILE=	# Don't build a profiling library
 
 .include <bsd.own.mk>
 
-DIST=   ${NETBSDSRCDIR}/dist/openpam
+DIST=   ${NETBSDSRCDIR}/external/bsd/openpam/dist
 LIB=	pam
 NOPROFILE=
 
-WARNS=	3
+WARNS=	4
 # 233: Struct/union never defined
 LINTFLAGS+= -Sw -X 233
 
-CPPFLAGS+= -DLIB_MAJ=${SHLIB_MAJOR}
+CPPFLAGS+= -DLIB_MAJ=${SHLIB_MAJOR} -DHAVE_STRLCPY
 
 SRCS=	openpam_borrow_cred.c \
+	openpam_check_owner_perms.c \
 	openpam_configure.c \
+	openpam_constants.c \
 	openpam_dispatch.c \
 	openpam_dynamic.c \
 	openpam_findenv.c \
@@ -64,6 +66,7 @@ SRCS=	openpam_borrow_cred.c \
 	openpam_readline.c \
 	openpam_restore_cred.c \
 	openpam_set_option.c \
+	openpam_subst.c \
 	openpam_ttyconv.c \
 	pam_acct_mgmt.c \
 	pam_authenticate.c \
@@ -93,7 +96,8 @@ SRCS=	openpam_borrow_cred.c \
 # Local additions
 SRCS+=	pam_debug_log.c
 
-MAN=	openpam.3 \
+MAN=	\
+	openpam.3 \
 	openpam_borrow_cred.3 \
 	openpam_free_data.3 \
 	openpam_free_envlist.3 \
@@ -103,8 +107,10 @@ MAN=	openpam.3 \
 	openpam_readline.3 \
 	openpam_restore_cred.3 \
 	openpam_set_option.3 \
+	openpam_subst.3 \
 	openpam_ttyconv.3 \
 	pam.3 \
+	pam.conf.5 \
 	pam_acct_mgmt.3 \
 	pam_authenticate.3 \
 	pam_chauthtok.3 \
@@ -191,3 +197,4 @@ openpam_static_modules.o: openpam_static.o ${STATIC_MODULE_LIBS}
 .PATH.h: ${DIST}/include
 .PATH.c: ${DIST}/lib
 .PATH.3: ${DIST}/doc/man
+.PATH.5: ${DIST}/doc/man
