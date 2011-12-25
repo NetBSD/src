@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_set_item.c,v 1.2 2011/12/25 22:27:56 christos Exp $	*/
+/*	$NetBSD: pam_set_item.c,v 1.3 2011/12/25 23:18:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -42,6 +42,7 @@
 #endif
 
 #include <sys/param.h>
+#include <sys/socket.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -75,7 +76,7 @@ pam_set_item(pam_handle_t *pamh,
 		/* set once only, by pam_start() */
 		if (*slot != NULL)
 			RETURNC(PAM_SYSTEM_ERR);
-		/* fall through */
+		/*FALLTHROUGH*/
 	case PAM_USER:
 	case PAM_AUTHTOK:
 	case PAM_OLDAUTHTOK:
