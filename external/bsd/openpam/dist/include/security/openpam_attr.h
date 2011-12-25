@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_attr.h,v 1.1.1.1 2011/12/25 21:42:55 christos Exp $	*/
+/*	$NetBSD: openpam_attr.h,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*
  * Id: openpam_attr.h 405 2007-12-19 11:38:27Z des

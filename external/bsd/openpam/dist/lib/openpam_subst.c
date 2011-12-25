@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_subst.c,v 1.1.1.1 2011/12/25 21:42:50 christos Exp $	*/
+/*	$NetBSD: openpam_subst.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
@@ -42,13 +42,13 @@
 	if (buf && len < *bufsize)		\
 		*buf++ = ch_;			\
 	++len;					\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define subst_string(s) do {			\
 	const char *s_ = (s);			\
 	while (*s_)				\
 		subst_char(*s_++);		\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define subst_item(i) do {			\
 	int i_ = (i);				\
@@ -56,7 +56,7 @@
 	ret = pam_get_item(pamh, i_, &p_);	\
 	if (ret == PAM_SUCCESS && p_ != NULL)	\
 		subst_string(p_);		\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /*
  * OpenPAM internal

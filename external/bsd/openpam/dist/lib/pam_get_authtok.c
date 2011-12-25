@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_get_authtok.c,v 1.1.1.1 2011/12/25 21:42:50 christos Exp $	*/
+/*	$NetBSD: pam_get_authtok.c,v 1.2 2011/12/25 22:27:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -132,21 +132,27 @@ pam_get_authtok(pam_handle_t *pamh,
 	if (twice) {
 		r = pam_prompt(pamh, style, &resp2, "Retype %s", prompt);
 		if (r != PAM_SUCCESS) {
+			memset(resp, 0, strlen(resp));
 			FREE(resp);
 			RETURNC(r);
 		}
-		if (strcmp(resp, resp2) != 0)
+		if (strcmp(resp, resp2) != 0) {
+			memset(resp, 0, strlen(resp));
 			FREE(resp);
+		}
+		memset(resp2, 0, strlen(resp2));
 		FREE(resp2);
 	}
 	if (resp == NULL)
 		RETURNC(PAM_TRY_AGAIN);
 	r = pam_set_item(pamh, item, resp);
+	memset(resp, 0, strlen(resp));
 	FREE(resp);
 	if (r != PAM_SUCCESS)
 		RETURNC(r);
 	r = pam_get_item(pamh, item, (const void **)authtok);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*
