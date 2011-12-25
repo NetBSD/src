@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2011/04/12 14:07:35 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.21 2011/12/25 06:09:09 tsutsui Exp $
 
 NOMAN=		# defined
 
@@ -40,6 +40,7 @@ CPPFLAGS+=	-I$M/stand/libiocs -I${COMMONDIR}
 CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
 CPPFLAGS+=	-DTEXTADDR="0x${TEXT}" 
 CPPFLAGS+=	-DBOOT=\"${BOOT}\" -DBOOT_VERS=\"${VERSION}\"
+CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
 CFLAGS=		-Wno-main -Os -m68020-60
 LINKFLAGS=	-N -static -T ${.CURDIR}/boot.ldscript
 LIBIOCS!=	cd $M/stand/libiocs && ${PRINTOBJDIR}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.75 2011/07/03 15:29:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.76 2011/12/25 06:09:08 tsutsui Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -7,6 +7,7 @@ NOPROFILE=# defined
 SA_USE_CREAD?= no		# Read compressed kernels
 SA_INCLUDE_NET?= yes		# Netboot via TFTP, NFS
 SA_USE_LOADFILE?= no		# Generic executable loading support
+SA_ENABLE_LS_OP?= no		# Filesystems ls operation
 
 #DEBUGCPPFLAGS= -DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
 CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
@@ -45,6 +46,9 @@ SRCS+=	close.c lseek.c open.c read.c write.c
 CPPFLAGS+= -D__INTERNAL_LIBSA_CREAD
 SRCS+=	cread.c
 .endif
+.if (${SA_ENABLE_LS_OP} == "yes")
+SRCS+= ls.c
+.endif
 
 .if (${SA_USE_LOADFILE} == "yes")
 SRCS+=	loadfile.c loadfile_ecoff.c loadfile_elf32.c lookup_elf32.c \
@@ -65,7 +69,7 @@ SRCS+=	bootp.c rarp.c bootparam.c
 SRCS+=	nfs.c tftp.c
 .endif
 
-SRCS+=	ffsv1.c ffsv2.c ufs_ls.c
+SRCS+=	ffsv1.c ffsv2.c
 SRCS+=	lfsv1.c lfsv2.c
 SRCS+=	cd9660.c
 SRCS+=	ustarfs.c

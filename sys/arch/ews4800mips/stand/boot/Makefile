@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2011/07/10 23:35:12 matt Exp $
+#	$NetBSD: Makefile,v 1.15 2011/12/25 06:09:08 tsutsui Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -89,7 +89,8 @@ LIBKERN=	${KERNLIB}
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ=		${ZLIB}
 
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
+CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
+SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes SA_ENABLE_LS_OP=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
