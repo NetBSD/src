@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.52 2011/12/25 01:05:03 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.53 2011/12/25 20:11:22 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.52 2011/12/25 01:05:03 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.53 2011/12/25 20:11:22 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1310,7 +1310,7 @@ labeled_stmnt:
 	;
 
 label:
-	  identifier T_COLON {
+	  T_NAME T_COLON {
 		symtyp = FLAB;
 		label(T_NAME, getsym($1), NULL);
 	  }
@@ -1804,11 +1804,9 @@ identifier:
 	  T_NAME {
 		$$ = $1;
 	  }
-/*
 	| T_TYPENAME {
 		$$ = $1;
 	  }
-*/
 	;
 
 %%
