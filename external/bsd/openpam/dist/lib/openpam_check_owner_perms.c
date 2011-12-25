@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_check_owner_perms.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
+/*	$NetBSD: openpam_check_owner_perms.c,v 1.3 2011/12/25 23:18:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
@@ -97,7 +97,8 @@ openpam_check_path_owner_perms(const char *path)
 	uid_t root, arbitrator;
 	char pathbuf[PATH_MAX];
 	struct stat sb;
-	int len, serrno;
+	size_t len;
+	int serrno;
 
 	root = 0;
 	arbitrator = geteuid();

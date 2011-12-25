@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_configure.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
+/*	$NetBSD: openpam_configure.c,v 1.3 2011/12/25 23:18:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -94,7 +94,7 @@ static int openpam_load_chain(pam_handle_t *, const char *, pam_facility_t);
  * Allowed characters are all characters in the POSIX portable filename
  * character set.
  */
-static int
+static size_t
 parse_service_name(char **line, char **service)
 {
 	char *b, *e;
@@ -144,7 +144,7 @@ parse_facility_name(char **line)
 	if (e == b)
 		return ((pam_facility_t)-1);
 	for (i = 0; i < PAM_NUM_FACILITIES; ++i)
-		if (strlcmp(pam_facility_name[i], b, e - b) == 0)
+		if (strlcmp(pam_facility_name[i], b, (size_t)(e - b)) == 0)
 			break;
 	if (i == PAM_NUM_FACILITIES)
 		return ((pam_facility_t)-1);
@@ -174,7 +174,7 @@ parse_include(char **line)
 		/* nothing */ ;
 	if (e == b)
 		return (0);
-	if (strlcmp("include", b, e - b) != 0)
+	if (strlcmp("include", b, (size_t)(e - b)) != 0)
 		return (0);
 	*line = e;
 	return (1);
@@ -209,7 +209,7 @@ parse_control_flag(char **line)
 	if (e == b)
 		return ((pam_control_t)-1);
 	for (i = 0; i < PAM_NUM_CONTROL_FLAGS; ++i)
-		if (strlcmp(pam_control_flag_name[i], b, e - b) == 0)
+		if (strlcmp(pam_control_flag_name[i], b, (size_t)(e - b)) == 0)
 			break;
 	if (i == PAM_NUM_CONTROL_FLAGS)
 		return ((pam_control_t)-1);
@@ -232,7 +232,7 @@ parse_control_flag(char **line)
  * Allowed characters are all characters in the POSIX portable filename
  * character set, plus the path separator (forward slash).
  */
-static int
+static size_t
 parse_filename(char **line, char **filename)
 {
 	char *b, *e;
@@ -317,10 +317,10 @@ parse_option(char **line)
 		size += (ve - vb) + 1;
 	if ((option = malloc(size)) == NULL)
 		return (NULL);
-	strncpy(option, nb, ne - nb);
+	strncpy(option, nb, (size_t)(ne - nb));
 	if (ve > vb) {
 		option[ne - nb] = '=';
-		strncpy(option + (ne - nb) + 1, vb, ve - vb);
+		strncpy(option + (ne - nb) + 1, vb, (size_t)(ve - vb));
 	}
 	option[size - 1] = '\0';
 	*line = q ? ve + 1 : ve;
@@ -364,7 +364,8 @@ openpam_parse_chain(pam_handle_t *pamh,
 	pam_control_t ctlf;
 	char *line, *str, *name;
 	char *option, **optv;
-	int len, lineno, ret;
+	size_t len;
+	int lineno, ret;
 	FILE *f;
 
 	if ((f = fopen(filename, "r")) == NULL) {
@@ -602,7 +603,7 @@ openpam_configure(pam_handle_t *pamh,
 			openpam_log(PAM_LOG_ERROR,
 			    "No required or binding component "
 			    "in service %s, facility %s",
-			    service, _pam_facility_name[PAM_AUTH]);
+			    service, pam_facility_name[PAM_AUTH]);
 			goto load_err;
 		}
 	}

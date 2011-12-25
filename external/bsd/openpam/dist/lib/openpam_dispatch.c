@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_dispatch.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
+/*	$NetBSD: openpam_dispatch.c,v 1.3 2011/12/25 23:18:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -189,7 +189,7 @@ openpam_dispatch(pam_handle_t *pamh,
 	if (err == PAM_SUCCESS && nsuccess < 1) {
 		openpam_log(PAM_LOG_ERROR,
 		    "all modules were unsuccessful for %s()",
-		    _pam_sm_func_name[primitive]);
+		    pam_sm_func_name[primitive]);
 		err = PAM_SYSTEM_ERR;
 	}
 #endif
