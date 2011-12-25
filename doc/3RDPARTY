@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.892 2011/12/20 11:18:35 drochner Exp $
+#	$NetBSD: 3RDPARTY,v 1.893 2011/12/25 23:29:34 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -750,7 +750,7 @@ Imported into src/external/bsd/openldap/dist/
 
 Package:	OpenPAM
 Version:	20111218 (Lycopsida)
-Current Vers:	20071221 (Hydrangea)
+Current Vers:	20111218 (Hydrangea)
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
