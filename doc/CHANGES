@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1638 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1639 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1188,3 +1188,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	libsa: Allow libsa to have a file system dependent ls command and
 		add ls command support for ext2fs.  From Evgeniy Ivanov.
 		[tsutsui 20111225]
+	openpam: Import lycopsida-20111218 [christos 20111225]
