@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_start.c,v 1.1.1.1 2011/12/25 21:42:51 christos Exp $	*/
+/*	$NetBSD: pam_start.c,v 1.2 2011/12/25 22:27:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -74,7 +74,7 @@ pam_start(const char *service,
 	int r;
 
 	ENTER();
-	if ((ph = calloc(1, sizeof *ph)) == NULL)
+	if ((ph = calloc((size_t)1, sizeof *ph)) == NULL)
 		RETURNC(PAM_BUF_ERR);
 	if ((r = pam_set_item(ph, PAM_SERVICE, service)) != PAM_SUCCESS)
 		goto fail;
@@ -94,6 +94,7 @@ pam_start(const char *service,
 fail:
 	pam_end(ph, r);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*
