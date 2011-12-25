@@ -1,4 +1,33 @@
-/*	$NetBSD: ufs_ls.c,v 1.14 2007/11/24 13:20:58 isaki Exp $	 */
+/* $NetBSD: ls.c,v 1.3 2011/12/25 06:09:08 tsutsui Exp $ */
+
+/*-
+ * Copyright (c) 2011
+ *      The NetBSD Foundation, Inc. All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Martin Husemann.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1993
@@ -55,87 +84,23 @@
  */
 
 
-#include <sys/param.h>
-#include <lib/libkern/libkern.h>
-#include <ufs/ufs/dinode.h>
-#include <ufs/ufs/dir.h>
-
 #include "stand.h"
-#include "ufs.h"
-
-#define NELEM(x) (sizeof (x) / sizeof(*x))
-
-
-typedef uint32_t ino32_t;
-typedef struct entry_t entry_t;
-struct entry_t {
-	entry_t	*e_next;
-	ino32_t	e_ino;
-	uint8_t	e_type;
-	char	e_name[1];
-};
-
-static const char    *const typestr[] = {
-	"unknown",
-	"FIFO",
-	"CHR",
-	0,
-	"DIR",
-	0,
-	"BLK",
-	0,
-	"REG",
-	0,
-	"LNK",
-	0,
-	"SOCK",
-	0,
-	"WHT"
-};
-
-static int
-fn_match(const char *fname, const char *pattern)
-{
-	char fc, pc;
-
-	do {
-		fc = *fname++;
-		pc = *pattern++;
-		if (!fc && !pc)
-			return 1;
-		if (pc == '?' && fc)
-			pc = fc;
-	} while (fc == pc);
-
-	if (pc != '*')
-		return 0;
-	/*
-	 * Too hard (and unnecessary really) too check for "*?name" etc....
-	 * "**" will look for a '*' and "*?" a '?'
-	 */
-	pc = *pattern++;
-	if (!pc)
-		return 1;
-	while ((fname = strchr(fname, pc)))
-		if (fn_match(++fname, pattern))
-			return 1;
-	return 0;
-}
+#include <sys/stat.h>
+#include <lib/libkern/libkern.h>
 
 void
-ufs_ls(const char *path)
+ls(const char *path)
 {
 	int             fd;
 	struct stat     sb;
 	size_t          size;
-	char            dirbuf[DIRBLKSIZ];
 	const char	*fname = 0;
 	char		*p;
-	entry_t		*names = 0, *n, **np;
+	struct open_file *f;
 
 	if ((fd = open(path, 0)) < 0
 	    || fstat(fd, &sb) < 0
-	    || (sb.st_mode & IFMT) != IFDIR) {
+	    || (sb.st_mode & S_IFMT) != S_IFDIR) {
 		/* Path supplied isn't a directory, open parent
 		   directory and list matching files. */
 		if (fd >= 0)
@@ -163,69 +128,34 @@ ufs_ls(const char *path)
 			printf("stat: %s\n", strerror(errno));
 			goto out;
 		}
-		if ((sb.st_mode & IFMT) != IFDIR) {
+		if ((sb.st_mode & S_IFMT) != S_IFDIR) {
 			printf("%s: %s\n", path, strerror(ENOTDIR));
 			goto out;
 		}
 	}
 
-	while ((size = read(fd, dirbuf, DIRBLKSIZ)) == DIRBLKSIZ) {
-		struct direct  *dp, *edp;
+	f = &files[fd];
 
-		dp = (struct direct *)dirbuf;
-		edp = (struct direct *)(dirbuf + size);
-
-		for (; dp < edp; dp = (void *)((char *)dp + dp->d_reclen)) {
-			const char *t;
-			if (dp->d_ino ==  0)
-				continue;
-
-			if (dp->d_type >= NELEM(typestr) ||
-			    !(t = typestr[dp->d_type])) {
-				/*
-				 * This does not handle "old"
-				 * filesystems properly. On little
-				 * endian machines, we get a bogus
-				 * type name if the namlen matches a
-				 * valid type identifier. We could
-				 * check if we read namlen "0" and
-				 * handle this case specially, if
-				 * there were a pressing need...
-				 */
-				printf("bad dir entry\n");
-				goto out;
-			}
-			if (fname && !fn_match(dp->d_name, fname))
-				continue;
-			n = alloc(sizeof *n + strlen(dp->d_name));
-			if (!n) {
-				printf("%d: %s (%s)\n",
-					dp->d_ino, dp->d_name, t);
-				continue;
-			}
-			n->e_ino = dp->d_ino;
-			n->e_type = dp->d_type;
-			strcpy(n->e_name, dp->d_name);
-			for (np = &names; *np; np = &(*np)->e_next) {
-				if (strcmp(n->e_name, (*np)->e_name) < 0)
-					break;
-			}
-			n->e_next = *np;
-			*np = n;
-		}
+#if !defined(LIBSA_NO_FD_CHECKING)
+	if ((unsigned int)fd >= SOPEN_MAX || f->f_flags == 0) {
+		errno = EBADF;
+		goto out;
 	}
+#endif
 
-	if (names) {
-		do {
-			n = names;
-			printf("%d: %s (%s)\n",
-				n->e_ino, n->e_name, typestr[n->e_type]);
-			names = n->e_next;
-			dealloc(n, 0);
-		} while (names);
-	} else {
-		printf( "%s not found\n", path );
+#if !defined(LIBSA_NO_RAW_ACCESS)
+	/* operation not defined on raw devices */
+	if (f->f_flags & F_RAW) {
+		errno = EOPNOTSUPP;
+		goto out;
 	}
+#endif
+
+	if (FS_LS(f->f_ops) != NULL)
+		FS_LS(f->f_ops)(f, fname);
+	else
+		printf("no ls support for this file system\n");
+
 out:
 	close(fd);
 }
