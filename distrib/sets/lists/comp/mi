@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1718 2011/12/17 13:27:50 tsutsui Exp $
+#	$NetBSD: mi,v 1.1719 2011/12/25 23:28:33 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7980,6 +7980,7 @@
 ./usr/share/man/cat3/openpam_readline.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_restore_cred.0	comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_set_option.0	comp-c-catman		.cat,pam
+./usr/share/man/cat3/openpam_subst.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_ttyconv.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpgpsdk.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/openpty.0			comp-c-catman		.cat
@@ -14190,6 +14191,7 @@
 ./usr/share/man/html3/openpam_readline.html	comp-c-htmlman		html,pam
 ./usr/share/man/html3/openpam_restore_cred.html	comp-c-htmlman		html,pam
 ./usr/share/man/html3/openpam_set_option.html	comp-c-htmlman		html,pam
+./usr/share/man/html3/openpam_subst.html	comp-c-htmlman		html,pam
 ./usr/share/man/html3/openpam_ttyconv.html	comp-c-htmlman		html,pam
 ./usr/share/man/html3/openpgpsdk.html		comp-obsolete		obsolete
 ./usr/share/man/html3/openpty.html		comp-c-htmlman		html
@@ -20392,6 +20394,7 @@
 ./usr/share/man/man3/openpam_readline.3		comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_restore_cred.3	comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_set_option.3	comp-c-man		.man,pam
+./usr/share/man/man3/openpam_subst.3		comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_ttyconv.3		comp-c-man		.man,pam
 ./usr/share/man/man3/openpgpsdk.3		comp-obsolete		obsolete
 ./usr/share/man/man3/openpty.3			comp-c-man		.man

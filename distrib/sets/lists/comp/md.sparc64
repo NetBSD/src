@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.130 2011/11/08 10:52:20 njoly Exp $
+# $NetBSD: md.sparc64,v 1.131 2011/12/25 23:28:33 christos Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -953,7 +953,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libopcodes.so.5.0.debug		comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/sparc/libossaudio.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libp2k.so.2.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libpam.so.3.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libpam.so.4.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpcap.so.4.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpci.so.2.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libperfuse.so.0.0.debug			comp-compat-shlib	compat,pic,debug
