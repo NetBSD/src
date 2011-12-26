@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.11 2011/09/20 00:12:24 jym Exp $ */
+/* $NetBSD: balloon.c,v 1.12 2011/12/26 20:26:38 jym Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define BALLOONDEBUG 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.11 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.12 2011/12/26 20:26:38 jym Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -129,18 +129,17 @@ struct balloon_xenbus_softc {
 	device_t sc_dev;
 	struct sysctllog *sc_log;
 
-	kmutex_t balloon_mtx;   /* Protects condvar and target (below) */
+	kmutex_t balloon_mtx;   /* Protects condvar, target and res_min (below) */
 	kcondvar_t balloon_cv;  /* Condvar variable for target (below) */
 	size_t balloon_target;  /* Target domain reservation size in pages. */
-	xen_pfn_t *sc_mfn_list; /* List of MFNs passed from/to balloon */
+	/* Minimum amount of memory reserved by domain, in KiB */
+	uint64_t balloon_res_min;
 
+	xen_pfn_t *sc_mfn_list; /* List of MFNs passed from/to balloon */
 	pool_cache_t bpge_pool; /* pool cache for balloon page entries */
 	/* linked list for tracking pages used by balloon */
 	SLIST_HEAD(, balloon_page_entry) balloon_page_entries;
 	size_t balloon_num_page_entries;
-
-	/* Minimum amount of memory reserved by domain, in KiB */
-	uint64_t balloon_res_min;
 };
 
 static size_t xenmem_get_currentreservation(void);
@@ -607,21 +606,25 @@ balloon_xenbus_watcher(struct xenbus_watch *watch, const char **vec,
 		       unsigned int len)
 {
 	size_t new_target;
-	uint64_t target_kb  = balloon_xenbus_read_target();
-	uint64_t target_min = balloon_sc->balloon_res_min;
-	uint64_t target_max = BALLOON_PAGES_TO_KB(xenmem_get_maxreservation());
+	uint64_t target_kb, target_max, target_min;
 
+	target_kb = balloon_xenbus_read_target();
 	if (target_kb == 0) {
 		/* bogus -- just return */
 		return;
 	}
 
+	mutex_enter(&balloon_sc->balloon_mtx);
+	target_min = balloon_sc->balloon_res_min;
+	mutex_exit(&balloon_sc->balloon_mtx);
 	if (target_kb < target_min) {
 		device_printf(balloon_sc->sc_dev,
 		    "new target %"PRIu64" is below min %"PRIu64"\n",
 		    target_kb, target_min);
 		return;
 	}
+
+	target_max = BALLOON_PAGES_TO_KB(xenmem_get_maxreservation());
 	if (target_kb > target_max) {
 		/*
 		 * Should not happen. Hypervisor should block balloon
@@ -664,7 +667,10 @@ sysctl_kern_xen_balloon_min(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	node.sysctl_data = &newval;
-	newval = *(u_quad_t *)rnode->sysctl_data;
+
+	mutex_enter(&balloon_sc->balloon_mtx);
+	newval = balloon_sc->balloon_res_min;
+	mutex_exit(&balloon_sc->balloon_mtx);
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -678,8 +684,10 @@ sysctl_kern_xen_balloon_min(SYSCTLFN_ARGS)
 		return EPERM;
 	}
 
-	if (*(u_quad_t *)rnode->sysctl_data != newval)
-		atomic_swap_64((u_quad_t *)rnode->sysctl_data, newval);
+	mutex_enter(&balloon_sc->balloon_mtx);
+	if (balloon_sc->balloon_res_min != newval)
+		balloon_sc->balloon_res_min = newval;
+	mutex_exit(&balloon_sc->balloon_mtx);
 
 	return 0;
 }
@@ -729,8 +737,11 @@ sysctl_kern_xen_balloon_target(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	node.sysctl_data = &newval;
-	/* we are just reading the value of target, no lock needed */
-	newval = BALLOON_PAGES_TO_KB(*(u_quad_t*)rnode->sysctl_data);
+
+	mutex_enter(&balloon_sc->balloon_mtx);
+	newval = BALLOON_PAGES_TO_KB(balloon_sc->balloon_target);
+	res_min = balloon_sc->balloon_res_min;
+	mutex_exit(&balloon_sc->balloon_mtx);
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (newp == NULL || error != 0) {
@@ -747,7 +758,6 @@ sysctl_kern_xen_balloon_target(SYSCTLFN_ARGS)
 	 * sorry.
 	 */
 	res_max = BALLOON_PAGES_TO_KB(xenmem_get_maxreservation());
-	res_min = balloon_sc->balloon_res_min;
 	if (newval < res_min || newval > res_max) {
 #if BALLOONDEBUG
 		device_printf(balloon_sc->sc_dev,
@@ -799,16 +809,14 @@ sysctl_kern_xen_balloon_setup(struct balloon_xenbus_softc *sc)
 	    CTLTYPE_QUAD, "current",
 	    SYSCTL_DESCR("Domain's current memory reservation from "
 		"hypervisor, in KiB."),
-	    sysctl_kern_xen_balloon_current, 0,
-	    NULL, 0,
+	    sysctl_kern_xen_balloon_current, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_QUAD, "target",
 	    SYSCTL_DESCR("Target memory reservation for domain, in KiB."),
-	    sysctl_kern_xen_balloon_target, 0,
-	    &sc->balloon_target, 0,
+	    sysctl_kern_xen_balloon_target, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &node, NULL,
@@ -816,8 +824,7 @@ sysctl_kern_xen_balloon_setup(struct balloon_xenbus_softc *sc)
 	    CTLTYPE_QUAD, "min",
 	    SYSCTL_DESCR("Minimum amount of memory the domain "
 		"reserves, in KiB."),
-	    sysctl_kern_xen_balloon_min, 0, 
-	    &sc->balloon_res_min, 0,
+	    sysctl_kern_xen_balloon_min, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &node, NULL,
@@ -825,7 +832,6 @@ sysctl_kern_xen_balloon_setup(struct balloon_xenbus_softc *sc)
 	    CTLTYPE_QUAD, "max",
 	    SYSCTL_DESCR("Maximum amount of memory the domain "
 		"can use, in KiB."),
-	    sysctl_kern_xen_balloon_max, 0,
-	    NULL, 0,
+	    sysctl_kern_xen_balloon_max, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL);
 }
