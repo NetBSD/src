@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.52 2011/12/26 12:39:20 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.53 2011/12/26 14:50:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.52 2011/12/26 12:39:20 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.53 2011/12/26 14:50:27 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -714,7 +714,7 @@ thunk_open_tap(const char *device)
 	int fd, error, enable;
 
 	/* open tap device */
-	fd = open(device, O_RDWR|O_NONBLOCK);
+	fd = open(device, O_RDWR);
 	if (fd == -1)
 		return -1;
 
