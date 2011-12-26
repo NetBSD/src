@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.42 2011/12/24 12:26:58 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.43 2011/12/26 12:39:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -38,7 +38,7 @@
 #include "opt_sdl.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2011/12/24 12:26:58 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2011/12/26 12:39:20 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,6 +64,9 @@ char module_machine_usermode[_SYS_NMLN] = "";
 
 static char **saved_argv;
 char *usermode_root_image_path = NULL;
+static char usermode_tap_devicebuf[PATH_MAX] = "";
+char *usermode_tap_device = NULL;
+char *usermode_tap_eaddr = NULL;
 
 void	main(int argc, char *argv[]);
 void	usermode_reboot(void);
@@ -95,7 +98,27 @@ main(int argc, char *argv[])
 
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
-			usermode_root_image_path = argv[i];
+			if (strncmp(argv[i], "tap=", strlen("tap=")) == 0) {
+				char *tap = argv[i] + strlen("tap=");
+				char *mac = strchr(tap, ',');
+				if (mac == NULL) {
+					printf("bad tap= format\n");
+					return;
+				}
+				*mac++ = '\0';
+				if (*tap != '/')
+					snprintf(usermode_tap_devicebuf,
+					    sizeof(usermode_tap_devicebuf),
+					    "/dev/%s", tap);
+				else
+					snprintf(usermode_tap_devicebuf,
+					    sizeof(usermode_tap_devicebuf),
+					    "%s", tap);
+				usermode_tap_device = usermode_tap_devicebuf;
+				usermode_tap_eaddr = mac;
+			} else {
+				usermode_root_image_path = argv[i];
+			}
 			continue;
 		}
 		for (j = 1; argv[i][j] != '\0'; j++) {
