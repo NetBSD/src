@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.5 2011/12/26 12:29:39 jmcneill Exp $ */
+/* $NetBSD: intr.h,v 1.6 2011/12/26 22:04:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,8 +30,9 @@
 #define _ARCH_USERMODE_INCLUDE_INTR_H
 
 #include <machine/intrdefs.h>
+#include <sys/siginfo.h>
 
-void	sigio_intr_init(void);
+void	sigio_signal_handler(int, siginfo_t *, void *);
 void *	sigio_intr_establish(int (*)(void *), void *);
 
 void	splinit(void);

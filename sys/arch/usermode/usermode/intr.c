@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.10 2011/12/26 12:29:39 jmcneill Exp $ */
+/* $NetBSD: intr.c,v 1.11 2011/12/26 22:04:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2011/12/26 12:29:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2011/12/26 22:04:35 jmcneill Exp $");
 
 #include <sys/types.h>
 
@@ -144,8 +144,8 @@ spllower(int x)
 #endif
 }
 
-static void
-sigio_signal_handler(int sig)
+void
+sigio_signal_handler(int sig, siginfo_t *info, void *ctx)
 {
 	struct intr_handler *sih;
 	unsigned int n;
@@ -155,12 +155,6 @@ sigio_signal_handler(int sig)
 		if (sih->func)
 			sih->func(sih->arg);
 	}
-}
-
-void
-sigio_intr_init(void)
-{
-	thunk_signal(SIGIO, sigio_signal_handler);
 }
 
 void *
