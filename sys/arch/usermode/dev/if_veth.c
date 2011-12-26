@@ -1,4 +1,4 @@
-/* $NetBSD: if_veth.c,v 1.1 2011/12/26 12:39:19 jmcneill Exp $ */
+/* $NetBSD: if_veth.c,v 1.2 2011/12/26 14:51:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.1 2011/12/26 12:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.2 2011/12/26 14:51:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -75,6 +75,7 @@ struct veth_softc {
 	int			sc_tapfd;
 	uint8_t			sc_eaddr[ETHER_ADDR_LEN];
 	uint8_t			sc_rx_buf[4096 + 65536];
+	uint8_t			sc_tx_buf[4096 + 65536];
 	void			*sc_rx_ih;
 	void			*sc_rx_intr;
 	void			*sc_tx_intr;
@@ -269,8 +270,10 @@ veth_start(struct ifnet *ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		bpf_mtap(ifp, m0);
 
+		m_copydata(m0, 0, m0->m_pkthdr.len, sc->sc_tx_buf);
+
 		vethprintf("write %d bytes...\n", m0->m_pkthdr.len);
-		len = thunk_write(sc->sc_tapfd, mtod(m0, void *),
+		len = thunk_write(sc->sc_tapfd, sc->sc_tx_buf,
 		    m0->m_pkthdr.len);
 		vethprintf("write returned %d\n", len);
 		if (len > 0)
