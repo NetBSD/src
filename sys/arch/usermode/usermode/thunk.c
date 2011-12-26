@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.53 2011/12/26 14:50:27 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.54 2011/12/26 21:06:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.53 2011/12/26 14:50:27 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.54 2011/12/26 21:06:42 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: thunk.c,v 1.53 2011/12/26 14:50:27 jmcneill Exp $");
 #include <sys/poll.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
+#include <sys/audioio.h>
 #include <machine/vmparam.h>
 
 #include <net/if.h>
@@ -759,4 +760,87 @@ thunk_pollout_tap(int fd, int timeout)
 	fds[0].revents = 0;
 
 	return poll(fds, __arraycount(fds), timeout);
+}
+
+int
+thunk_audio_open(const char *path)
+{
+	return open(path, O_RDWR);
+}
+
+int
+thunk_audio_close(int fd)
+{
+	return close(fd);
+}
+
+int
+thunk_audio_drain(int fd)
+{
+	return ioctl(fd, AUDIO_DRAIN, 0);
+}
+
+int
+thunk_audio_config(int fd, const thunk_audio_config_t *pconf,
+    const thunk_audio_config_t *rconf)
+{
+	struct audio_info info;
+	int error;
+
+	AUDIO_INITINFO(&info);
+	info.play.sample_rate = pconf->sample_rate;
+	info.play.channels = pconf->channels;
+	info.play.precision = pconf->precision;
+	info.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
+	info.record.sample_rate = rconf->sample_rate;
+	info.record.channels = rconf->channels;
+	info.record.precision = rconf->precision;
+	info.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
+	info.mode = AUMODE_PLAY_ALL|AUMODE_RECORD;
+
+	error = ioctl(fd, AUDIO_SETINFO, &info);
+	if (error)
+		printf("AUDIO_SETINFO failed: %s\n", strerror(errno));
+
+	return error;
+}
+
+int
+thunk_audio_pollout(int fd)
+{
+	struct audio_info info;
+	int error;
+
+	AUDIO_INITINFO(&info);
+	error = ioctl(fd, AUDIO_GETBUFINFO, &info);
+	if (error)
+		return -1;
+
+	return info.play.buffer_size - info.play.seek;
+}
+
+int
+thunk_audio_pollin(int fd)
+{
+	struct audio_info info;
+	int error;
+
+	AUDIO_INITINFO(&info);
+	error = ioctl(fd, AUDIO_GETBUFINFO, &info);
+	if (error)
+		return -1;
+
+	return info.record.seek;
+}
+
+int
+thunk_audio_write(int fd, const void *buf, size_t buflen)
+{
+	return write(fd, buf, buflen);
+}
+
+int
+thunk_audio_read(int fd, void *buf, size_t buflen)
+{
+	return read(fd, buf, buflen);
 }

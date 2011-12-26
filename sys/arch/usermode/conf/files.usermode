@@ -1,4 +1,4 @@
-# $NetBSD: files.usermode,v 1.13 2011/12/26 12:39:19 jmcneill Exp $
+# $NetBSD: files.usermode,v 1.14 2011/12/26 21:06:42 jmcneill Exp $
 
 maxpartitions 8
 maxusers 8 16 64
@@ -30,6 +30,10 @@ file	arch/usermode/dev/ttycons.c		ttycons
 device	veth { } : arp, ether, ifnet
 attach	veth at thunkbus
 file	arch/usermode/dev/if_veth.c		veth
+
+device	vaudio { } : audiobus, auconv, aurateconv, mulaw
+attach	vaudio at thunkbus
+file	arch/usermode/dev/vaudio.c		vaudio
 
 attach	ld at thunkbus with ld_thunkbus
 file	arch/usermode/dev/ld_thunkbus.c		ld_thunkbus

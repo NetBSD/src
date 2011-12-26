@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.43 2011/12/26 12:39:20 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.44 2011/12/26 21:06:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -38,7 +38,7 @@
 #include "opt_sdl.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2011/12/26 12:39:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2011/12/26 21:06:42 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,6 +67,8 @@ char *usermode_root_image_path = NULL;
 static char usermode_tap_devicebuf[PATH_MAX] = "";
 char *usermode_tap_device = NULL;
 char *usermode_tap_eaddr = NULL;
+static char usermode_audio_devicebuf[PATH_MAX] = "";
+char *usermode_audio_device = NULL;
 
 void	main(int argc, char *argv[]);
 void	usermode_reboot(void);
@@ -116,6 +118,19 @@ main(int argc, char *argv[])
 					    "%s", tap);
 				usermode_tap_device = usermode_tap_devicebuf;
 				usermode_tap_eaddr = mac;
+			} else if (strncmp(argv[i], "audio=",
+			    strlen("audio=")) == 0) {
+				char *audio = argv[i] + strlen("audio=");
+				if (*audio != '/')
+					snprintf(usermode_audio_devicebuf,
+					    sizeof(usermode_audio_devicebuf),
+					    "/dev/%s", audio);
+				else
+					snprintf(usermode_audio_devicebuf,
+					    sizeof(usermode_audio_devicebuf),
+					    "%s", audio);
+				usermode_audio_device =
+				    usermode_audio_devicebuf;
 			} else {
 				usermode_root_image_path = argv[i];
 			}
