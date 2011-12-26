@@ -1,4 +1,4 @@
-/* $NetBSD: vaudio.c,v 1.1 2011/12/26 21:09:22 jmcneill Exp $ */
+/* $NetBSD: vaudio.c,v 1.2 2011/12/26 23:50:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vaudio.c,v 1.1 2011/12/26 21:09:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vaudio.c,v 1.2 2011/12/26 23:50:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -167,15 +167,15 @@ vaudio_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	sc->sc_play.st_softc = sc;
-	sc->sc_play.st_sih = softint_establish(SOFTINT_SERIAL,
+	sc->sc_play.st_sih = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
 	    vaudio_softintr_play, &sc->sc_play);
-	callout_init(&sc->sc_play.st_callout, 0);
+	callout_init(&sc->sc_play.st_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_play.st_callout, vaudio_intr, &sc->sc_play);
 
 	sc->sc_record.st_softc = sc;
-	sc->sc_record.st_sih = softint_establish(SOFTINT_SERIAL,
+	sc->sc_record.st_sih = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
 	    vaudio_softintr_record, &sc->sc_record);
-	callout_init(&sc->sc_record.st_callout, 0);
+	callout_init(&sc->sc_record.st_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_record.st_callout, vaudio_intr, &sc->sc_record);
 
 	sc->sc_audiodev = audio_attach_mi(&vaudio_hw_if, sc, self);
