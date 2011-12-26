@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.103.2.2 2011/11/18 00:57:34 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.103.2.3 2011/12/26 16:03:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.103.2.2 2011/11/18 00:57:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.103.2.3 2011/12/26 16:03:11 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -415,7 +415,6 @@ uvm_pageout_done(int npages)
 kmutex_t *
 uvmpd_trylockowner(struct vm_page *pg)
 {
-	struct uvm_object *uobj = pg->uobject;
 	kmutex_t *lock;
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
@@ -424,20 +423,7 @@ uvmpd_trylockowner(struct vm_page *pg)
 	if (!mutex_tryenter(lock)) {
 		return NULL;
 	}
-	if (uobj == NULL) {
-
-		/*
-		 * set PQ_ANON if it isn't set already.
-		 */
-
-		if ((pg->pqflags & PQ_ANON) == 0) {
-			KASSERT(pg->loan_count > 0);
-			pg->loan_count--;
-			pg->pqflags |= PQ_ANON;
-			/* anon now owns it */
-		}
-	}
-
+	uvm_loan_resolve_orphan(pg, true);
 	return lock;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.305 2011/09/27 01:02:39 jym Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.305.2.1 2011/12/26 16:03:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.305 2011/09/27 01:02:39 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.305.2.1 2011/12/26 16:03:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4948,11 +4948,13 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	struct uvm_object *uobj;
 	struct vm_map_entry *next;
 	struct vm_map_entry *prev;
+	struct vm_amap *amap; /* neighbour's amap */
 	vsize_t size;
 	int merged = 0;
 	bool copying;
 	int newetype;
 
+	KASSERT(vm_map_locked_p(map));
 	if (VM_MAP_USE_KMAPENT(map)) {
 		return 0;
 	}
@@ -4969,11 +4971,12 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	newetype = copying ? (entry->etype & ~UVM_ET_NEEDSCOPY) : entry->etype;
 
 	next = entry->next;
+	amap = next->aref.ar_amap;
 	if (next != &map->header &&
 	    next->start == entry->end &&
-	    ((copying && next->aref.ar_amap != NULL &&
-	    amap_refs(next->aref.ar_amap) == 1) ||
-	    (!copying && next->aref.ar_amap == NULL)) &&
+	    ((copying && amap != NULL && amap_refs(amap) == 1 &&
+	      amap->am_obj_lock == NULL) ||
+	    (!copying && amap == NULL)) &&
 	    UVM_ET_ISCOMPATIBLE(next, newetype,
 	    uobj, entry->flags, entry->protection,
 	    entry->max_protection, entry->inheritance, entry->advice,
@@ -5008,10 +5011,11 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	}
 
 	prev = entry->prev;
+	amap = prev->aref.ar_amap;
 	if (prev != &map->header &&
 	    prev->end == entry->start &&
-	    ((copying && !merged && prev->aref.ar_amap != NULL &&
-	    amap_refs(prev->aref.ar_amap) == 1) ||
+	    ((copying && !merged && amap != NULL && amap_refs(amap) == 1 &&
+	      amap->am_obj_lock == NULL) ||
 	    (!copying && prev->aref.ar_amap == NULL)) &&
 	    UVM_ET_ISCOMPATIBLE(prev, newetype,
 	    uobj, entry->flags, entry->protection,
@@ -5186,6 +5190,8 @@ uvm_map_lock_entry(struct vm_map_entry *entry)
 {
 
 	if (entry->aref.ar_amap != NULL) {
+		KASSERT(entry->aref.ar_amap->am_obj_lock == NULL ||
+		    !UVM_ET_ISOBJ(entry));
 		amap_lock(entry->aref.ar_amap);
 	}
 	if (UVM_ET_ISOBJ(entry)) {
