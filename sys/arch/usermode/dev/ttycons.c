@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.15 2011/12/21 11:53:07 jmcneill Exp $ */
+/* $NetBSD: ttycons.c,v 1.16 2011/12/26 12:29:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.15 2011/12/21 11:53:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.16 2011/12/26 12:29:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -99,7 +99,7 @@ const struct cdevsw ttycons_cdevsw = {
 static void	ttycons_start(struct tty *);
 static int	ttycons_param(struct tty *, struct termios *);
 
-static void	ttycons_intr(int);
+static int	ttycons_intr(void *);
 static void	ttycons_softintr(void *);
 
 static void	ttycons_ctrlc(int);
@@ -146,7 +146,7 @@ ttycons_attach(device_t parent, device_t self, void *opaque)
 	if (sc->sc_ctrlc_sih == NULL)
 		panic("couldn't establish ttycons ctrlc handler\n");
 
-	thunk_signal(SIGIO, ttycons_intr);
+	sigio_intr_establish(ttycons_intr, sc);
 	thunk_signal(SIGINT, ttycons_ctrlc);
 	if (thunk_set_stdin_sigio(true) != 0)
 		panic("couldn't enable stdin async mode");
@@ -348,18 +348,16 @@ ttycons_param(struct tty *t, struct termios *c)
 	return 0;
 }
 
-static void
-ttycons_intr(int sig)
+static int
+ttycons_intr(void *priv)
 {
-	struct ttycons_softc *sc;
+	struct ttycons_softc *sc = priv;
 
 	curcpu()->ci_idepth++;
-	sc = device_lookup_private(&ttycons_cd, minor(cn_tab->cn_dev));
-	if (sc) {
-		spl_intr(IPL_SERIAL, softint_schedule, sc->sc_rd_sih);
-	}
+	spl_intr(IPL_SERIAL, softint_schedule, sc->sc_rd_sih);
 	curcpu()->ci_idepth--;
 
+	return 0;
 }
 
 static void

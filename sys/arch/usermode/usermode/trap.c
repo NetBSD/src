@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.46 2011/12/25 21:10:00 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.47 2011/12/26 12:29:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.46 2011/12/25 21:10:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.47 2011/12/26 12:29:39 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.46 2011/12/25 21:10:00 reinoud Exp $");
 #include <machine/pcb.h>
 #include <machine/pmap.h>
 #include <machine/machdep.h>
+#include <machine/intr.h>
 #include <machine/thunk.h>
 
 
@@ -94,6 +95,8 @@ setup_signal_handlers(void)
 //	thunk_sigaddset(&sa.sa_mask, SIGALRM);
 	if (thunk_sigaction(SIGILL, &sa, NULL) == -1)
 		panic("couldn't register SIGILL handler : %d", thunk_geterrno());
+
+	sigio_intr_init();
 }
 
 
