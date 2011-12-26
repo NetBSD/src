@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.135 2011/12/24 23:48:17 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.136 2011/12/26 00:20:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.135 2011/12/24 23:48:17 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.136 2011/12/26 00:20:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -598,7 +598,7 @@ routename(const struct sockaddr *sa, struct sockaddr *nm, int flags)
 		ms.s_addr = ntohl(ms.s_addr);
 
 		len = snprintf(line, sizeof(line), "%u", ms.shim.label);
-		if (len > sizeof(line))
+		if (len >= sizeof(line))
 			errx(1, "snprintf");
 		pms = &((const struct sockaddr_mpls*)sa)->smpls_addr;
 		while (psize < sa->sa_len) {
@@ -607,7 +607,7 @@ routename(const struct sockaddr *sa, struct sockaddr *nm, int flags)
 			ms.s_addr = ntohl(pms->s_addr);
 			alen = snprintf(line + len, sizeof(line) - len, " %u",
 			    ms.shim.label);
-			if (alen + len > sizeof(line))
+			if (alen >= sizeof(line) - len)
 				errx(1, "snprintf");
 			len += alen;
 			psize += sizeof(ms);
