@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.18 2011/12/03 22:41:40 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.19 2011/12/26 18:27:11 cherry Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.18 2011/12/03 22:41:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.19 2011/12/26 18:27:11 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,9 +338,11 @@ hypervisor_unmask_event(unsigned int ev)
 		if (!xen_atomic_test_bit(&ci->ci_evtmask[0], ev))
 			continue;
 		vci = ci->ci_vcpu;
-		if (!xen_atomic_test_and_set_bit(&vci->evtchn_pending_sel,
-		    ev>>LONG_SHIFT))
-			xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
+		if (__predict_true(ci == curcpu())) {
+			if (!xen_atomic_test_and_set_bit(&vci->evtchn_pending_sel,
+				ev>>LONG_SHIFT))
+				xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
+		}
 		if (!vci->evtchn_upcall_mask) {
 			if (__predict_true(ci == curcpu())) {
 				hypervisor_force_callback();
