@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.5 2011/08/25 11:06:29 jmcneill Exp $ */
+/* $NetBSD: mainbus.c,v 1.6 2011/12/26 12:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2011/08/25 11:06:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2011/12/26 12:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,6 +55,8 @@ CFATTACH_DECL_NEW(mainbus, sizeof(mainbus_softc_t),
     mainbus_match, mainbus_attach, NULL, NULL);
 
 extern char *usermode_root_image_path;
+extern char *usermode_tap_device;
+extern char *usermode_tap_eaddr;
 
 static int
 mainbus_match(device_t parent, cfdata_t match, void *opaque)
@@ -87,6 +89,13 @@ mainbus_attach(device_t parent, device_t self, void *opaque)
 
 	taa.taa_type = THUNKBUS_TYPE_TTYCONS;
 	config_found_ia(self, "thunkbus", &taa, mainbus_print);
+
+	if (usermode_tap_device) {
+		taa.taa_type = THUNKBUS_TYPE_VETH;
+		taa.u.veth.device = usermode_tap_device;
+		taa.u.veth.eaddr = usermode_tap_eaddr;
+		config_found_ia(self, "thunkbus", &taa, mainbus_print);
+	}
 
 	if (usermode_root_image_path) {
 		taa.taa_type = THUNKBUS_TYPE_DISKIMAGE;

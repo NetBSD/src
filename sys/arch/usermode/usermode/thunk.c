@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.51 2011/12/20 22:48:59 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.52 2011/12/26 12:39:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.51 2011/12/20 22:48:59 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.52 2011/12/26 12:39:20 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -36,12 +36,19 @@ __RCSID("$NetBSD: thunk.c,v 1.51 2011/12/20 22:48:59 jmcneill Exp $");
 #include <sys/reboot.h>
 #include <sys/poll.h>
 #include <sys/sysctl.h>
+#include <sys/socket.h>
 #include <machine/vmparam.h>
+
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_ether.h>
+#include <net/if_tap.h>
 
 #include <aio.h>
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ifaddrs.h>
 #include <sched.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -455,6 +462,12 @@ thunk_pwrite(int d, const void *buf, size_t nbytes, off_t offset)
 }
 
 ssize_t
+thunk_read(int d, void *buf, size_t nbytes)
+{
+	return read(d, buf, nbytes);
+}
+
+ssize_t
 thunk_write(int d, const void *buf, size_t nbytes)
 {
 	return write(d, buf, nbytes);
@@ -687,4 +700,63 @@ thunk_getmachine(char *machine, size_t machinelen,
 	}
 
 	return 0;
+}
+
+int
+thunk_setown(int fd)
+{
+	return fcntl(fd, F_SETOWN, getpid());
+}
+
+int
+thunk_open_tap(const char *device)
+{
+	int fd, error, enable;
+
+	/* open tap device */
+	fd = open(device, O_RDWR|O_NONBLOCK);
+	if (fd == -1)
+		return -1;
+
+	/* set async mode */
+	enable = 1;
+	error = ioctl(fd, FIOASYNC, &enable);
+	if (error)
+		return -1;
+
+	return fd;
+}
+
+int
+thunk_pollin_tap(int fd, int timeout)
+{
+#if 0
+	struct pollfd fds[1];
+
+	fds[0].fd = fd;
+	fds[0].events = POLLIN|POLLRDNORM;
+	fds[0].revents = 0;
+
+	return poll(fds, __arraycount(fds), timeout);
+#else
+	int error, len;
+
+	error = ioctl(fd, FIONREAD, &len);
+	if (error)
+		return 0;
+
+	return len;
+#endif
+}
+
+int
+thunk_pollout_tap(int fd, int timeout)
+{
+	struct pollfd fds[1];
+
+	fds[0].fd = fd;
+	fds[0].events = POLLOUT|POLLWRNORM;
+	fds[0].revents = 0;
+
+	return poll(fds, __arraycount(fds), timeout);
 }
