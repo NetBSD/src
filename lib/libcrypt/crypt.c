@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.29 2011/12/26 16:03:42 christos Exp $	*/
+/*	$NetBSD: crypt.c,v 1.30 2011/12/26 22:58:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.29 2011/12/26 16:03:42 christos Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.30 2011/12/26 22:58:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -445,8 +445,6 @@ static const unsigned char itoa64[] =		/* 0..63 => ascii-64 */
 /* =====  Tables that are initialized at run time  ==================== */
 
 
-static unsigned char a64toi[128];	/* ascii-64 => 0..63 */
-
 /* Initial key schedule permutation */
 static C_block	PC1ROT[64/CHUNKBITS][1<<CHUNKBITS];
 
@@ -469,6 +467,35 @@ static C_block	CF6464[64/CHUNKBITS][1<<CHUNKBITS];
 static C_block	constdatablock;			/* encryption constant */
 static char	cryptresult[1+4+4+11+1];	/* encrypted result */
 
+/*
+ * We match the behavior of UFC-crypt on systems where "char" is signed by
+ * default (the majority), regardless of char's signedness on our system.
+ */
+static inline int
+ascii_to_bin(char ch)
+{
+	signed char sch = ch;
+	int retval;
+
+	if (sch >= 'a')
+		retval = sch - ('a' - 38);
+	else if (sch >= 'A') 
+		retval = sch - ('A' - 12);
+	else
+		retval = sch - '.';
+
+	return retval & 0x3f;
+}
+#include <stdio.h>
+/*
+ * When we choose to "support" invalid salts, nevertheless disallow those
+ * containing characters that would violate the passwd file format.
+ */
+static inline int
+ascii_is_unsafe(char ch)
+{
+	return !ch || ch == '\n' || ch == ':';
+}
 
 /*
  * Return a pointer to static data consisting of the "setting"
@@ -502,7 +529,7 @@ crypt(const char *key, const char *setting)
 			key++;
 		keyblock.b[i] = t;
 	}
-	if (des_setkey((char *)keyblock.b))	/* also initializes "a64toi" */
+	if (des_setkey((char *)keyblock.b))
 		return (NULL);
 
 	encp = &cryptresult[0];
@@ -529,12 +556,14 @@ crypt(const char *key, const char *setting)
 		/* get iteration count */
 		num_iter = 0;
 		for (i = 4; --i >= 0; ) {
-			if ((t = (unsigned char)setting[i]) == '\0')
-				t = '.';
-			encp[i] = t;
-			num_iter = (num_iter << 6) |
-			    a64toi[t & (sizeof(a64toi) - 1)];
+			int value = ascii_to_bin(setting[i]);
+			if (itoa64[value] != setting[i])
+				return NULL;
+			encp[i] = setting[i];
+			num_iter = (num_iter << 6) | value;
 		}
+		if (num_iter == 0)
+			return NULL;
 		setting += 4;
 		encp += 4;
 		salt_size = 4;
@@ -542,14 +571,17 @@ crypt(const char *key, const char *setting)
 	default:
 		num_iter = 25;
 		salt_size = 2;
+		if (ascii_is_unsafe(setting[0]) || ascii_is_unsafe(setting[1]))
+			return NULL;
 	}
 
 	salt = 0;
 	for (i = salt_size; --i >= 0; ) {
-		if ((t = (unsigned char)setting[i]) == '\0')
-			t = '.';
-		encp[i] = t;
-		salt = (salt<<6) | a64toi[t & (sizeof(a64toi) - 1)];
+		int value = ascii_to_bin(setting[i]);
+		if (salt_size == 4 && itoa64[value] != setting[i])
+			return NULL;
+		encp[i] = setting[i];
+		salt = (salt << 6) | value;
 	}
 	encp += salt_size;
 	if (des_cipher((char *)(void *)&constdatablock,
@@ -750,12 +782,6 @@ init_des(void)
 	int32_t k;
 	int tableno;
 	static unsigned char perm[64], tmp32[32];	/* "static" for speed */
-
-	/*
-	 * table that converts chars "./0-9A-Za-z"to integers 0-63.
-	 */
-	for (i = 0; i < 64; i++)
-		a64toi[itoa64[i]] = i;
 
 	/*
 	 * PC1ROT - bit reverse, then PC1, then Rotate, then PC2.
