@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.104 2011/10/11 23:57:50 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.104.2.1 2011/12/26 16:03:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.104 2011/10/11 23:57:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.104.2.1 2011/12/26 16:03:10 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -178,6 +178,7 @@ amap_alloc1(int slots, int padslots, int flags)
 	}
 	totalslots = amap_roundup_slots(slots + padslots);
 	amap->am_lock = NULL;
+	amap->am_obj_lock = NULL;
 	amap->am_ref = 1;
 	amap->am_flags = 0;
 #ifdef UVM_AMAP_PPREF
@@ -287,6 +288,9 @@ amap_free(struct vm_amap *amap)
 	if (amap->am_lock != NULL) {
 		KASSERT(!mutex_owned(amap->am_lock));
 		mutex_obj_free(amap->am_lock);
+	}
+	if (amap->am_obj_lock != NULL) {
+		mutex_obj_free(amap->am_obj_lock);
 	}
 	slots = amap->am_maxslot;
 	kmem_free(amap->am_slots, slots * sizeof(*amap->am_slots));
@@ -767,6 +771,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 	struct vm_anon *tofree;
 	u_int slots, lcv;
 	vsize_t len;
+	bool have_obj_page;
 
 	UVMHIST_FUNC("amap_copy"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, flags=%d)",
@@ -881,13 +886,22 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 	 */
 
 	UVMHIST_LOG(maphist, "  copying amap now",0, 0, 0, 0);
+	have_obj_page = false;
 	for (lcv = 0 ; lcv < slots; lcv++) {
-		amap->am_anon[lcv] =
+		struct vm_anon * const anon =
 		    srcamap->am_anon[entry->aref.ar_pageoff + lcv];
-		if (amap->am_anon[lcv] == NULL)
+
+		amap->am_anon[lcv] = anon;
+		if (anon == NULL)
 			continue;
-		KASSERT(amap->am_anon[lcv]->an_lock == srcamap->am_lock);
-		KASSERT(amap->am_anon[lcv]->an_ref > 0);
+		if (anon->an_page != NULL && anon->an_page->uobject != NULL) {
+			KASSERT(anon->an_page->loan_count > 0);
+			KASSERT(srcamap->am_obj_lock ==
+			    anon->an_page->uobject->vmobjlock);
+			have_obj_page = true;
+		}
+		KASSERT(anon->an_lock == srcamap->am_lock);
+		KASSERT(anon->an_ref > 0);
 		amap->am_anon[lcv]->an_ref++;
 		amap->am_bckptr[lcv] = amap->am_nused;
 		amap->am_slots[amap->am_nused] = lcv;
@@ -925,6 +939,10 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 	if (amap->am_nused != 0) {
 		amap->am_lock = srcamap->am_lock;
 		mutex_obj_hold(amap->am_lock);
+		if (have_obj_page) {
+			amap->am_obj_lock = srcamap->am_obj_lock;
+			mutex_obj_hold(amap->am_obj_lock);
+		}
 	}
 	uvm_anon_freelst(srcamap, tofree);
 
@@ -1617,4 +1635,46 @@ amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, bool all)
 	amap_adjref_anons(amap, offset, len, -1, all);
 
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
+}
+
+void
+amap_lock(struct vm_amap *amap)
+{
+
+	mutex_enter(amap->am_lock);
+	if (amap->am_obj_lock != NULL) {
+		if (mutex_obj_free_if_last(amap->am_obj_lock)) {
+			amap->am_obj_lock = NULL;
+		} else {
+			mutex_enter(amap->am_obj_lock);
+		}
+	}
+}
+
+int
+amap_lock_try(struct vm_amap *amap)
+{
+
+	if (!mutex_tryenter(amap->am_lock)) {
+		return 0;
+	}
+	if (amap->am_obj_lock != NULL) {
+		if (mutex_obj_free_if_last(amap->am_obj_lock)) {
+			amap->am_obj_lock = NULL;
+		} else if (!mutex_tryenter(amap->am_obj_lock)) {
+			mutex_exit(amap->am_lock);
+			return 0;
+		}
+	}
+	return 1;
+}
+
+void
+amap_unlock(struct vm_amap *amap)
+{
+
+	if (amap->am_obj_lock != NULL) {
+		mutex_exit(amap->am_obj_lock);
+	}
+	mutex_exit(amap->am_lock);
 }

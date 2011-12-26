@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.56.4.5 2011/11/20 10:52:34 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.56.4.6 2011/12/26 16:03:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.56.4.5 2011/11/20 10:52:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.56.4.6 2011/12/26 16:03:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,6 +197,9 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 		u.loanbreak_obj += ucpu->loanbreak_obj;
 		u.loanfree_obj += ucpu->loanfree_obj;
 
+		u.loan_oa += ucpu->loan_oa;
+		u.unloan_oa += ucpu->unloan_oa;
+
 		u.loan_anon += ucpu->loan_anon;
 		u.unloan_anon += ucpu->unloan_anon;
 		u.loanbreak_anon += ucpu->loanbreak_anon;
@@ -204,6 +207,18 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 
 		u.loan_zero += ucpu->loan_zero;
 		u.unloan_zero += ucpu->unloan_zero;
+
+		u.loanbreak_orphaned += ucpu->loanbreak_orphaned;
+		u.loanfree_orphaned += ucpu->loanfree_orphaned;
+		u.loanbreak_orphaned_anon += ucpu->loanbreak_orphaned_anon;
+		u.loanfree_orphaned_anon += ucpu->loanfree_orphaned_anon;
+
+		u.loanbreak_oa_obj += ucpu->loanbreak_oa_obj;
+		u.loanfree_oa_obj += ucpu->loanfree_oa_obj;
+		u.loanbreak_oa_anon += ucpu->loanbreak_oa_anon;
+		u.loanfree_oa_anon += ucpu->loanfree_oa_anon;
+		u.loan_resolve_orphan += ucpu->loan_resolve_orphan;
+		u.loan_obj_read += ucpu->loan_obj_read;
 	}
 	node = *rnode;
 	node.sysctl_data = &u;

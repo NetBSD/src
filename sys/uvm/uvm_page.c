@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178.2.8 2011/11/30 14:33:46 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.9 2011/12/26 16:03:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.8 2011/11/30 14:33:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.9 2011/12/26 16:03:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1537,8 +1537,9 @@ uvm_pagefree(struct vm_page *pg)
 		 */
 
 		if (obj != NULL) {
-			uvm_pageremove(obj, pg);
 			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
+			uvm_pageremove(obj, pg);
+			pg->pqflags &= ~(PQ_FILE|PQ_AOBJ);
 		} else if (pg->uanon != NULL) {
 			if ((pg->pqflags & PQ_ANON) == 0) {
 				pg->loan_count--;
@@ -1561,6 +1562,7 @@ uvm_pagefree(struct vm_page *pg)
 #ifdef UVM_PAGE_TRKOWN
 		pg->owner_tag = NULL;
 #endif
+		KASSERT((pg->pqflags & PQ_STAT) == 0);
 		if (pg->loan_count) {
 			KASSERT(pg->uobject == NULL);
 			if (pg->uanon == NULL) {
@@ -1568,7 +1570,13 @@ uvm_pagefree(struct vm_page *pg)
 			}
 			ucpu = uvm_cpu_get();
 			if (obj != NULL) {
-				ucpu->loanfree_obj += pg->loan_count;
+				if (pg->uanon != NULL) {
+					ucpu->loanfree_oa_obj++;
+					ucpu->loanfree_orphaned +=
+					    pg->loan_count - 1;
+				} else {
+					ucpu->loanfree_obj += pg->loan_count;
+				}
 			} else {
 				ucpu->loanfree_anon += pg->loan_count;
 			}
