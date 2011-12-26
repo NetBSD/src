@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC.common,v 1.3 2011/12/26 21:06:42 jmcneill Exp $
+# $NetBSD: GENERIC.common,v 1.4 2011/12/26 23:57:13 jmcneill Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.3 $"
+#ident 		"GENERIC-$Revision: 1.4 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -60,6 +60,7 @@ audio0		at vaudio0
 pseudo-device	loop
 pseudo-device	pty
 pseudo-device	bpfilter
+pseudo-device	drvctl
 
 # Pull in optional local configuration
 cinclude "arch/usermode/conf/GENERIC.local"
