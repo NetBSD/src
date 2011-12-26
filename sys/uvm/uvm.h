@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.62.4.3 2011/11/20 10:52:33 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.62.4.4 2011/12/26 16:03:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -91,16 +91,35 @@ struct uvm_cpu {
 
 	int64_t loan_obj;	/* O->K loan */
 	int64_t unloan_obj;	/* O->K unloan */
-	int64_t loanbreak_obj;	/* O->K loan resolved on write */
-	int64_t loanfree_obj;	/* O->K loan resolved on free */
+	int64_t loanbreak_obj;	/* O->K loan resolved on write to O */
+	int64_t loanfree_obj;	/* O->K loan resolved on free of O */
 
 	int64_t loan_anon;	/* A->K loan */
 	int64_t unloan_anon;	/* A->K unloan */
-	int64_t loanbreak_anon;	/* A->K loan resolved on write */
-	int64_t loanfree_anon;	/* A->K loan resolved on free */
+	int64_t loanbreak_anon;	/* A->K loan resolved on write to A */
+	int64_t loanfree_anon;	/* A->K loan resolved on free of A */
+
+	int64_t loan_oa;	/* O->A->K loan */
+	int64_t unloan_oa;	/* O->A->K unloan */
 
 	int64_t loan_zero;	/* O->K loan (zero) */
 	int64_t unloan_zero;	/* O->K unloan (zero) */
+
+	int64_t loanbreak_orphaned; /* O->A->K loan turned into A->K loan due to
+					write to O */
+	int64_t loanfree_orphaned; /* O->A->K loan turned into A->K loan due to
+					free of O */
+	int64_t loanbreak_orphaned_anon; /* O->A->K loan turned into O->K loan
+					due to write to A */
+	int64_t loanfree_orphaned_anon; /* O->A->K loan turned into O->K loan
+					due to free of A */
+
+	int64_t loanbreak_oa_obj; /* O->A loan resolved on write to O */
+	int64_t loanfree_oa_obj; /* O->A loan resolved on free of O */
+	int64_t loanbreak_oa_anon; /* O->A loan resolved on write to A */
+	int64_t loanfree_oa_anon; /* O->A loan resolved on free of A */
+	int64_t loan_resolve_orphan; /* O->A loaned page taken over by anon */
+	int64_t loan_obj_read;	/* O->A loan for read(2) */
 };
 
 /*

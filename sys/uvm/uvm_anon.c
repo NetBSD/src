@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.62.2.1 2011/11/02 21:54:00 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.62.2.2 2011/12/26 16:03:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.62.2.1 2011/11/02 21:54:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.62.2.2 2011/12/26 16:03:10 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -134,12 +134,18 @@ uvm_anon_dispose(struct vm_anon *anon)
 		 */
 
 		if (pg->uobject) {
+			struct uvm_cpu *ucpu;
+
 			mutex_enter(&uvm_pageqlock);
 			KASSERT(pg->loan_count > 0);
 			pg->loan_count--;
 			pg->uanon = NULL;
+			anon->an_page = NULL;
 			mutex_exit(&uvm_pageqlock);
-			mutex_exit(pg->uobject->vmobjlock);
+			ucpu = uvm_cpu_get();
+			ucpu->loanfree_orphaned_anon += pg->loan_count;
+			ucpu->loanfree_oa_anon++;
+			uvm_cpu_put(ucpu);
 		} else {
 
 			/*
@@ -261,69 +267,19 @@ struct vm_page *
 uvm_anon_lockloanpg(struct vm_anon *anon)
 {
 	struct vm_page *pg;
-	bool locked = false;
 
 	KASSERT(mutex_owned(anon->an_lock));
-
-	/*
-	 * loop while we have a resident page that has a non-zero loan count.
-	 * if we successfully get our lock, we will "break" the loop.
-	 * note that the test for pg->loan_count is not protected -- this
-	 * may produce false positive results.   note that a false positive
-	 * result may cause us to do more work than we need to, but it will
-	 * not produce an incorrect result.
-	 */
-
-	while (((pg = anon->an_page) != NULL) && pg->loan_count != 0) {
-
-		/*
-		 * quickly check to see if the page has an object before
-		 * bothering to lock the page queues.   this may also produce
-		 * a false positive result, but that's ok because we do a real
-		 * check after that.
-		 */
-
-		if (pg->uobject) {
-			mutex_enter(&uvm_pageqlock);
-			if (pg->uobject) {
-				locked =
-				    mutex_tryenter(pg->uobject->vmobjlock);
-			} else {
-				/* object disowned before we got PQ lock */
-				locked = true;
-			}
-			mutex_exit(&uvm_pageqlock);
-
-			/*
-			 * if we didn't get a lock (try lock failed), then we
-			 * toggle our anon lock and try again
-			 */
-
-			if (!locked) {
-				/*
-				 * someone locking the object has a chance to
-				 * lock us right now
-				 * 
-				 * XXX Better than yielding but inadequate.
-				 */
-				kpause("livelock", false, 1, anon->an_lock);
-				continue;
-			}
-		}
-
-		/*
-		 * If page is un-owned i.e. the object dropped its ownership,
-		 * then we have to take the ownership.
-		 */
-
-		if (pg->uobject == NULL && (pg->pqflags & PQ_ANON) == 0) {
-			mutex_enter(&uvm_pageqlock);
-			pg->pqflags |= PQ_ANON;
-			pg->loan_count--;
-			mutex_exit(&uvm_pageqlock);
-		}
-		break;
+	pg = anon->an_page;
+	if (pg == NULL) {
+		return NULL;
 	}
+	if (pg->uobject) {
+		/*
+		 * locked via amap->am_obj_lock
+		 */
+		KASSERT(mutex_owned(pg->uobject->vmobjlock));
+	}
+	uvm_loan_resolve_orphan(pg, false);
 	return pg;
 }
 

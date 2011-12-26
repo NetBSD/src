@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.190.2.2 2011/11/14 14:23:16 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.190.2.3 2011/12/26 16:03:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.190.2.2 2011/11/14 14:23:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.190.2.3 2011/12/26 16:03:10 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -332,9 +332,12 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 * on the owner of page.
 			 */
 
+			uvmfault_unlockall(ufi, NULL, NULL);
 			if (pg->uobject) {
 				/* Owner of page is UVM object. */
-				uvmfault_unlockall(ufi, amap, NULL);
+				KASSERT(amap->am_obj_lock ==
+				    pg->uobject->vmobjlock);
+				mutex_exit(amap->am_lock); /* XXX */
 				UVMHIST_LOG(maphist, " unlock+wait on uobj",0,
 				    0,0,0);
 				UVM_UNLOCK_AND_WAIT(pg,
@@ -342,7 +345,9 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				    false, "anonget1", 0);
 			} else {
 				/* Owner of page is anon. */
-				uvmfault_unlockall(ufi, NULL, NULL);
+				if (amap->am_obj_lock != NULL) {
+					mutex_exit(amap->am_obj_lock); /* XXX */
+				}
 				UVMHIST_LOG(maphist, " unlock+wait on anon",0,
 				    0,0,0);
 				UVM_UNLOCK_AND_WAIT(pg, anon->an_lock,
@@ -398,7 +403,9 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 		 */
 
 		locked = uvmfault_relock(ufi);
-		if (locked || we_own) {
+		if (locked) {
+			amap_lock(amap);
+		} else if (we_own) {
 			mutex_enter(anon->an_lock);
 		}
 
@@ -448,6 +455,10 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 
 				if (locked) {
 					uvmfault_unlockall(ufi, NULL, NULL);
+					if (amap->am_obj_lock != NULL) {
+						/* XXX */
+						mutex_exit(amap->am_obj_lock);
+					}
 				}
 				mutex_exit(anon->an_lock);
 				UVMHIST_LOG(maphist, "<- ERROR", 0,0,0,0);
@@ -464,6 +475,10 @@ released:
 
 				if (locked) {
 					uvmfault_unlockall(ufi, NULL, NULL);
+					if (amap->am_obj_lock != NULL) {
+						/* XXX */
+						mutex_exit(amap->am_obj_lock);
+					}
 				}
 				uvm_anon_release(anon);
 
@@ -720,17 +735,17 @@ static inline void	uvm_fault_upper_neighbor(
 			    vaddr_t, struct vm_page *, bool);
 static inline int	uvm_fault_upper_loan(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
-			    struct vm_anon *, struct uvm_object **);
+			    struct vm_anon *);
 static inline int	uvm_fault_upper_promote(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
-			    struct uvm_object *, struct vm_anon *);
+			    struct vm_anon *);
 static inline int	uvm_fault_upper_direct(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
-			    struct uvm_object *, struct vm_anon *);
+			    struct vm_anon *);
 static int		uvm_fault_upper_enter(
 			    struct uvm_faultinfo *, const struct uvm_faultctx *,
-			    struct uvm_object *, struct vm_anon *,
-			    struct vm_page *, struct vm_anon *);
+			    struct vm_anon *, struct vm_page *,
+			    struct vm_anon *);
 static inline void	uvm_fault_upper_done(
 			    struct uvm_faultinfo *, const struct uvm_faultctx *,
 			    struct vm_anon *, struct vm_page *);
@@ -1033,6 +1048,7 @@ uvm_fault_check(
 
 	if (amap) {
 		amap_lock(amap);
+		KASSERT(uobj == NULL || amap->am_obj_lock == NULL);
 		amap_lookups(&ufi->entry->aref, eoff, *ranons, flt->npages);
 	} else {
 		*ranons = NULL;	/* to be safe */
@@ -1282,6 +1298,7 @@ uvm_fault_upper(
 	/* locked: maps(read), amap, anon, uobj(if one) */
 	KASSERT(mutex_owned(amap->am_lock));
 	KASSERT(anon->an_lock == amap->am_lock);
+	KASSERT(uobj == NULL || amap->am_obj_lock == uobj->vmobjlock);
 	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
 
 	/*
@@ -1289,7 +1306,7 @@ uvm_fault_upper(
 	 */
 
 	if (anon->an_page->loan_count) {
-		error = uvm_fault_upper_loan(ufi, flt, anon, &uobj);
+		error = uvm_fault_upper_loan(ufi, flt, anon);
 		if (error != 0)
 			return error;
 	}
@@ -1309,9 +1326,9 @@ uvm_fault_upper(
 
 	if (flt->cow_now && anon->an_ref > 1) {
 		flt->promote = true;
-		error = uvm_fault_upper_promote(ufi, flt, uobj, anon);
+		error = uvm_fault_upper_promote(ufi, flt, anon);
 	} else {
-		error = uvm_fault_upper_direct(ufi, flt, uobj, anon);
+		error = uvm_fault_upper_direct(ufi, flt, anon);
 	}
 	return error;
 }
@@ -1326,7 +1343,7 @@ uvm_fault_upper(
 static int
 uvm_fault_upper_loan(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_anon *anon, struct uvm_object **ruobj)
+	struct vm_anon *anon)
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	int error = 0;
@@ -1357,15 +1374,19 @@ uvm_fault_upper_loan(
 
 		/* >1 case is already ok */
 		if (anon->an_ref == 1) {
-			error = uvm_loanbreak_anon(anon, *ruobj);
+			struct uvm_object *uobj = anon->an_page->uobject;
+
+			KASSERT(uobj == NULL ||
+			    uobj->vmobjlock == amap->am_obj_lock);
+			KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
+			error = uvm_loanbreak_anon(anon);
 			if (error != 0) {
-				uvmfault_unlockall(ufi, amap, *ruobj);
+				uvmfault_unlockall(ufi, amap, NULL);
 				uvm_wait("flt_noram2");
 				return ERESTART;
 			}
 			/* if we were a loan reciever uobj is gone */
-			if (*ruobj)
-				*ruobj = NULL;
+			KASSERT(anon->an_page->uobject == NULL);
 		}
 	}
 	return error;
@@ -1383,7 +1404,7 @@ uvm_fault_upper_loan(
 static int
 uvm_fault_upper_promote(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_anon *anon)
+	struct vm_anon *anon)
 {
 	struct vm_anon * const oanon = anon;
 	struct vm_page *pg;
@@ -1423,7 +1444,7 @@ uvm_fault_upper_promote(
 	 * oanon != anon, we'll have to unlock anon, too.
 	 */
 
-	return uvm_fault_upper_enter(ufi, flt, uobj, anon, pg, oanon);
+	return uvm_fault_upper_enter(ufi, flt, anon, pg, oanon);
 }
 
 /*
@@ -1433,7 +1454,7 @@ uvm_fault_upper_promote(
 static int
 uvm_fault_upper_direct(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_anon *anon)
+	struct vm_anon *anon)
 {
 	struct vm_anon * const oanon = anon;
 	struct vm_page *pg;
@@ -1444,7 +1465,7 @@ uvm_fault_upper_direct(
 	if (anon->an_ref > 1)     /* disallow writes to ref > 1 anons */
 		flt->enter_prot = flt->enter_prot & ~VM_PROT_WRITE;
 
-	return uvm_fault_upper_enter(ufi, flt, uobj, anon, pg, oanon);
+	return uvm_fault_upper_enter(ufi, flt, anon, pg, oanon);
 }
 
 /*
@@ -1454,16 +1475,17 @@ uvm_fault_upper_direct(
 static int
 uvm_fault_upper_enter(
 	struct uvm_faultinfo *ufi, const struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_anon *anon, struct vm_page *pg,
-	struct vm_anon *oanon)
+	struct vm_anon *anon, struct vm_page *pg, struct vm_anon *oanon)
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
+	struct uvm_object *uobj __unused = pg->uobject;
 	UVMHIST_FUNC("uvm_fault_upper_enter"); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap, oanon, anon(if different from oanon) */
 	KASSERT(mutex_owned(amap->am_lock));
 	KASSERT(anon->an_lock == amap->am_lock);
 	KASSERT(oanon->an_lock == amap->am_lock);
+	KASSERT(uobj == NULL || amap->am_obj_lock == uobj->vmobjlock);
 	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
 	KASSERT(uvm_pagegetdirty(pg) != UVM_PAGE_STATUS_CLEAN);
 
@@ -1487,7 +1509,7 @@ uvm_fault_upper_enter(
 		 * as the map may change while we're asleep.
 		 */
 
-		uvmfault_unlockall(ufi, amap, uobj);
+		uvmfault_unlockall(ufi, amap, NULL);
 		if (!uvm_reclaimable()) {
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
@@ -1506,7 +1528,7 @@ uvm_fault_upper_enter(
 	 */
 
 	pmap_update(ufi->orig_map->pmap);
-	uvmfault_unlockall(ufi, amap, uobj);
+	uvmfault_unlockall(ufi, amap, NULL);
 	return 0;
 }
 

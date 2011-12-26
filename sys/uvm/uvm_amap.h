@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.37 2011/06/12 03:36:02 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.37.2.1 2011/12/26 16:03:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -82,6 +82,8 @@ void		amap_free	/* free amap */
 			(struct vm_amap *);
 void		amap_lock	/* lock amap */
 			(struct vm_amap *);
+int		amap_lock_try	/* trylock amap */
+			(struct vm_amap *);
 struct vm_anon	*amap_lookup	/* lookup an anon @ offset in amap */
 			(struct vm_aref *, vaddr_t);
 void		amap_lookups	/* lookup multiple anons */
@@ -152,6 +154,7 @@ bool		amap_swap_off
 
 struct vm_amap {
 	kmutex_t *am_lock;	/* lock [locks all vm_amap fields] */
+	kmutex_t *am_obj_lock;	/* uobj which might lend us pages */
 	int am_ref;		/* reference count */
 	int am_flags;		/* flags */
 	int am_maxslot;		/* max # of slots allocated */
@@ -251,10 +254,7 @@ struct vm_amap {
  */
 
 #define amap_flags(AMAP)	((AMAP)->am_flags)
-#define amap_lock(AMAP)		mutex_enter((AMAP)->am_lock)
-#define amap_lock_try(AMAP)	mutex_tryenter((AMAP)->am_lock)
 #define amap_refs(AMAP)		((AMAP)->am_ref)
-#define amap_unlock(AMAP)	mutex_exit((AMAP)->am_lock)
 
 /*
  * if we enable PPREF, then we have a couple of extra functions that
