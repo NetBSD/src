@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.47 2011/12/26 12:29:39 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.48 2011/12/26 22:04:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.47 2011/12/26 12:29:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 2011/12/26 22:04:35 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,27 +76,29 @@ setup_signal_handlers(void)
 	sigstk.ss_size  = SIGSTKSZ;
 	sigstk.ss_flags = 0;
 	if (thunk_sigaltstack(&sigstk, 0) < 0)
-		panic("can't set alternate stacksize : %d",
+		panic("can't set alternate stacksize: %d",
 		    thunk_geterrno());
 
 	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 	sa.sa_sigaction = mem_access_handler;
 	thunk_sigemptyset(&sa.sa_mask);
-//	thunk_sigaddset(&sa.sa_mask, SIGALRM);
 	if (thunk_sigaction(SIGSEGV, &sa, NULL) == -1)
-		panic("couldn't register SIGSEGV handler : %d",
+		panic("couldn't register SIGSEGV handler: %d",
 		    thunk_geterrno());
 	if (thunk_sigaction(SIGBUS, &sa, NULL) == -1)
-		panic("couldn't register SIGBUS handler : %d", thunk_geterrno());
+		panic("couldn't register SIGBUS handler: %d", thunk_geterrno());
 
 	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 	sa.sa_sigaction = illegal_instruction_handler;
 	thunk_sigemptyset(&sa.sa_mask);
-//	thunk_sigaddset(&sa.sa_mask, SIGALRM);
 	if (thunk_sigaction(SIGILL, &sa, NULL) == -1)
-		panic("couldn't register SIGILL handler : %d", thunk_geterrno());
+		panic("couldn't register SIGILL handler: %d", thunk_geterrno());
 
-	sigio_intr_init();
+	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
+	sa.sa_sigaction = sigio_signal_handler;
+	thunk_sigemptyset(&sa.sa_mask);
+	if (thunk_sigaction(SIGIO, &sa, NULL) == -1)
+		panic("couldn't register SIGIO handler: %d", thunk_geterrno());
 }
 
 
