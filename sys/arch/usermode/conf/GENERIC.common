@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC.common,v 1.2 2011/12/26 12:39:19 jmcneill Exp $
+# $NetBSD: GENERIC.common,v 1.3 2011/12/26 21:06:42 jmcneill Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.3 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -50,6 +50,8 @@ clock0		at mainbus?
 ttycons0	at mainbus?
 ld0		at mainbus?
 veth0		at mainbus?
+vaudio0		at mainbus?
+audio0		at vaudio0
 
 #options		SDL
 #genfb0		at thunkbus?
