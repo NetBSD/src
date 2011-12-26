@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.28 2009/05/01 00:28:17 perry Exp $	*/
+/*	$NetBSD: crypt.c,v 1.29 2011/12/26 16:03:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.28 2009/05/01 00:28:17 perry Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.29 2011/12/26 16:03:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -532,7 +532,8 @@ crypt(const char *key, const char *setting)
 			if ((t = (unsigned char)setting[i]) == '\0')
 				t = '.';
 			encp[i] = t;
-			num_iter = (num_iter<<6) | a64toi[t];
+			num_iter = (num_iter << 6) |
+			    a64toi[t & (sizeof(a64toi) - 1)];
 		}
 		setting += 4;
 		encp += 4;
@@ -548,7 +549,7 @@ crypt(const char *key, const char *setting)
 		if ((t = (unsigned char)setting[i]) == '\0')
 			t = '.';
 		encp[i] = t;
-		salt = (salt<<6) | a64toi[t];
+		salt = (salt<<6) | a64toi[t & (sizeof(a64toi) - 1)];
 	}
 	encp += salt_size;
 	if (des_cipher((char *)(void *)&constdatablock,
