@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2009/10/26 04:27:15 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2011/12/26 17:32:28 njoly Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -1579,7 +1579,7 @@ void readin ()
 
 	if (!do_yywrap) {
 		if (!C_plus_plus) {
-			outn ("\n#define yywrap(n) 1");
+			outn ("\n#define yywrap(n) (/*CONSTCOND*/1)");
 		}
 		outn ("#define YY_SKIP_YYWRAP");
 	}
