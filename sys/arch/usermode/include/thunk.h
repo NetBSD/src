@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.45 2011/12/26 12:39:19 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.46 2011/12/26 21:06:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -151,6 +151,23 @@ int	thunk_setown(int);
 int	thunk_open_tap(const char *);
 int	thunk_pollin_tap(int, int);
 int	thunk_pollout_tap(int, int);
+
+typedef struct {
+	unsigned int		sample_rate;
+	unsigned int		precision;
+	unsigned int		validbits;
+	unsigned int		channels;
+} thunk_audio_config_t;
+
+int	thunk_audio_open(const char *);
+int	thunk_audio_close(int);
+int	thunk_audio_drain(int);
+int	thunk_audio_config(int, const thunk_audio_config_t *,
+			   const thunk_audio_config_t *);
+int	thunk_audio_pollout(int);
+int	thunk_audio_pollin(int);
+int	thunk_audio_write(int, const void *, size_t);
+int	thunk_audio_read(int, void *, size_t);
 
 int	thunk_sdl_init(unsigned int, unsigned int, unsigned short);
 void *	thunk_sdl_getfb(size_t);
