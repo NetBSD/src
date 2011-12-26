@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.9 2011/12/13 12:27:06 reinoud Exp $ */
+/* $NetBSD: intr.c,v 1.10 2011/12/26 12:29:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,12 +27,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2011/12/13 12:27:06 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2011/12/26 12:29:39 jmcneill Exp $");
 
 #include <sys/types.h>
 
 #include <machine/intr.h>
 #include <machine/thunk.h>
+
+struct intr_handler {
+	int (*func)(void *);
+	void *arg;
+};
+
+#define SIGIO_MAX_HANDLERS	2
+
+static struct intr_handler sigio_intr_handler[SIGIO_MAX_HANDLERS];
 
 //#define INTR_USE_SIGPROCMASK
 
@@ -133,4 +142,41 @@ spllower(int x)
 		block_sigalrm = false;
 	}
 #endif
+}
+
+static void
+sigio_signal_handler(int sig)
+{
+	struct intr_handler *sih;
+	unsigned int n;
+
+	for (n = 0; n < SIGIO_MAX_HANDLERS; n++) {
+		sih = &sigio_intr_handler[n];
+		if (sih->func)
+			sih->func(sih->arg);
+	}
+}
+
+void
+sigio_intr_init(void)
+{
+	thunk_signal(SIGIO, sigio_signal_handler);
+}
+
+void *
+sigio_intr_establish(int (*func)(void *), void *arg)
+{
+	struct intr_handler *sih;
+	unsigned int n;
+
+	for (n = 0; n < SIGIO_MAX_HANDLERS; n++) {
+		sih = &sigio_intr_handler[n];
+		if (sih->func == NULL) {
+			sih->func = func;
+			sih->arg = arg;
+			return sih;
+		}
+	}
+
+	panic("increase SIGIO_MAX_HANDLERS");
 }
