@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.44 2011/12/20 22:48:59 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.45 2011/12/26 12:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -108,6 +108,7 @@ int	thunk_open(const char *, int, mode_t);
 int	thunk_fstat_getsize(int, ssize_t *, ssize_t *);
 ssize_t	thunk_pread(int, void *, size_t, off_t);
 ssize_t	thunk_pwrite(int, const void *, size_t, off_t);
+ssize_t	thunk_read(int, void *, size_t);
 ssize_t	thunk_write(int, const void *, size_t);
 int	thunk_fsync(int);
 int	thunk_mkstemp(char *);
@@ -144,6 +145,12 @@ vaddr_t	thunk_get_vm_min_address(void);
 int	thunk_getcpuinfo(char *, int *);
 
 int	thunk_getmachine(char *, size_t, char *, size_t);
+
+int	thunk_setown(int);
+
+int	thunk_open_tap(const char *);
+int	thunk_pollin_tap(int, int);
+int	thunk_pollout_tap(int, int);
 
 int	thunk_sdl_init(unsigned int, unsigned int, unsigned short);
 void *	thunk_sdl_getfb(size_t);
