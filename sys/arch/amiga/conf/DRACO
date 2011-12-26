@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.147 2011/12/18 05:49:23 dholland Exp $
+# $NetBSD: DRACO,v 1.148 2011/12/26 13:09:03 mlelstv Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.87 2011/11/22 21:24:56 tls Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.90 2011/12/26 13:07:24 mlelstv Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.147 $"
+#ident 		"GENERIC-$Revision: 1.148 $"
 
 
 maxusers	8
@@ -344,6 +344,7 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	fss			# file system snapshot device
+pseudo-device	putter			# for puffs and pud
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
