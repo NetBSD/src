@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.44 2011/12/26 21:06:42 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.45 2011/12/26 21:22:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -38,7 +38,7 @@
 #include "opt_sdl.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2011/12/26 21:06:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2011/12/26 21:22:23 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,6 +72,20 @@ char *usermode_audio_device = NULL;
 
 void	main(int argc, char *argv[]);
 void	usermode_reboot(void);
+
+static void
+usage(const char *pn)
+{
+	printf("usage: %s [-acdqsvxz]"
+	    " [tap=<dev>,<eaddr>]"
+	    " [audio=<dev>]"
+	    " [<fsimg>]\n",
+	    pn);
+	printf("       (ex. \"%s"
+	    " tap=tap0,00:00:be:ef:ca:fe"
+	    " audio=audio0"
+	    " root.fs\")\n", pn);
+}
 
 void
 main(int argc, char *argv[])
@@ -141,8 +155,7 @@ main(int argc, char *argv[])
 			BOOT_FLAG(argv[i][j], r);
 			if (r == 0) {
 				printf("-%c: unknown flag\n", argv[i][j]);
-				printf("usage: %s [-acdqsvxz]\n", argv[0]);
-				printf("       (ex. \"%s -s\")\n", argv[0]);
+				usage(argv[0]);
 				return;
 			}
 			tmpopt |= r;
