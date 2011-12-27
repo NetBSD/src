@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.23.78.9 2011/12/23 18:54:50 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.23.78.10 2011/12/27 01:56:33 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -39,6 +39,7 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
+#if defined(_KERNEL) && !defined(_MODULE)
 #ifdef PAGE_SHIFT
 #if MIPS_PAGE_SHIFT != PAGE_SHIFT
 #error MIPS_PAGE_SHIFT != PAGE_SHIFT
@@ -48,6 +49,7 @@
 #else
 #define	PAGE_SHIFT	12
 #endif
+#endif /* _KERNEL && !_MODULE */
 
 #if PAGE_SHIFT & 1
 #define	UPAGES		1		/* pages of u-area */

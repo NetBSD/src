@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.11.96.1 2011/12/24 09:51:51 matt Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.11.96.2 2011/12/27 01:56:33 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -334,5 +334,23 @@ void	r4k_sdcache_wbinv_range_index_generic(vaddr_t, vsize_t);
 
 void	r4k_sdcache_inv_range_generic(vaddr_t, vsize_t);
 void	r4k_sdcache_wb_range_generic(vaddr_t, vsize_t);
+
+/* cache_r4k_pcache16.S */
+
+void	cache_r4k_icache_index_inv_16(vaddr_t, vsize_t);
+void	cache_r4k_icache_hit_inv_16(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_index_wb_inv_16(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_hit_inv_16(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_inv_16(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_16(vaddr_t, vsize_t);
+
+/* cache_r4k_pcache32.S */
+
+void	cache_r4k_icache_index_inv_32(vaddr_t, vsize_t);
+void	cache_r4k_icache_hit_inv_32(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_index_wb_inv_32(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_hit_inv_32(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_inv_32(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_32(vaddr_t, vsize_t);
 
 #endif /* !_LOCORE */
