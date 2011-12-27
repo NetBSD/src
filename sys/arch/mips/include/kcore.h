@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.1 1998/02/19 23:06:11 thorpej Exp $	*/
+/*	$NetBSD: kcore.h,v 1.1.174.1 2011/12/27 06:54:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -43,6 +43,10 @@ typedef struct cpu_kcore_hdr {
 	u_int32_t	pg_frame;		/* PTE page frame num mask */
 	u_int32_t	pg_v;			/* PTE valid bit */
 	u_int32_t	nmemsegs;		/* Number of RAM segments */
+	u_int32_t	pg_size;		/* s/w page size */
+	u_int32_t	ksegx_pfn;		/* starting pfn of ksegx */
+	u_int32_t	ksegx_va;		/* starting va of ksegx */
+	u_int32_t	ksegx_size;		/* size of ksegx */
 #if 0
 	phys_ram_seg_t  memsegs[];		/* RAM segments */
 #endif
