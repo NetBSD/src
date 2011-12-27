@@ -138,9 +138,13 @@ struct mips_cache_ops {
 	void	(*mco_pdcache_wb_range)(vaddr_t, vsize_t);
 
 	/* These are called only by the (mipsNN) icache functions. */
-	void	(*mco_intern_pdcache_wbinv_all)(void);
+	void	(*mco_intern_icache_sync_range_index)(vaddr_t, vsize_t);
+	void	(*mco_intern_icache_sync_range)(vaddr_t, vsize_t);
+	void	(*mco_intern_pdcache_sync_all)(void);
+	void	(*mco_intern_pdcache_sync_range_index)(vaddr_t, vsize_t);
+	void	(*mco_intern_pdcache_sync_range)(vaddr_t, vsize_t);
+	/* This is used internally by the (mipsNN) pdcache functions. */
 	void	(*mco_intern_pdcache_wbinv_range_index)(vaddr_t, vsize_t);
-	void	(*mco_intern_pdcache_wb_range)(vaddr_t, vsize_t);
 
 	void	(*mco_sdcache_wbinv_all)(void);
 	void	(*mco_sdcache_wbinv_range)(vaddr_t, vsize_t);
@@ -149,9 +153,12 @@ struct mips_cache_ops {
 	void	(*mco_sdcache_wb_range)(vaddr_t, vsize_t);
 
 	/* These are called only by the (mipsNN) icache functions. */
-	void	(*mco_intern_sdcache_wbinv_all)(void);
+	void	(*mco_intern_sdcache_sync_all)(void);
+	void	(*mco_intern_sdcache_sync_range_index)(vaddr_t, vsize_t);
+	void	(*mco_intern_sdcache_sync_range)(vaddr_t, vsize_t);
+
+	/* This is used internally by the (mipsNN) sdcache functions. */
 	void	(*mco_intern_sdcache_wbinv_range_index)(vaddr_t, vsize_t);
-	void	(*mco_intern_sdcache_wb_range)(vaddr_t, vsize_t);
 };
 
 extern struct mips_cache_ops mips_cache_ops;
@@ -290,14 +297,26 @@ do {									\
  * Private D-cache functions only called from (currently only the
  * mipsNN) I-cache functions.
  */
-#define	mips_intern_dcache_wbinv_all()					\
-	__mco_noargs(intern_, dcache_wbinv_all)
+#define	mips_intern_dcache_sync_all()					\
+	__mco_noargs(intern_, dcache_sync_all)
 
-#define	mips_intern_dcache_wbinv_range_index(v, s)			\
-	__mco_2args(intern_, dcache_wbinv_range_index, (v), (s))
+#define	mips_intern_dcache_sync_range_index(v, s)			\
+	__mco_2args(intern_, dcache_sync_range_index, (v), (s))
 
-#define	mips_intern_dcache_wb_range(v, s)				\
-	__mco_2args(intern_, dcache_wb_range, (v), (s))
+#define	mips_intern_dcache_sync_range(v, s)				\
+	__mco_2args(intern_, dcache_sync_range, (v), (s))
+
+#define	mips_intern_pdcache_wbinv_range_index(v, s)			\
+	(*mips_cache_ops.mco_intern_pdcache_wbinv_range_index)((v), (s))
+
+#define	mips_intern_sdcache_wbinv_range_index(v, s)			\
+	(*mips_cache_ops.mco_intern_sdcache_wbinv_range_index)((v), (s))
+
+#define	mips_intern_icache_sync_range(v, s)				\
+	(*mips_cache_ops.mco_intern_icache_sync_range)((v), (s))
+
+#define	mips_intern_icache_sync_range_index(v, s)			\
+	(*mips_cache_ops.mco_intern_icache_sync_range_index)((v), (s))
 
 void	mips_config_cache(void);
 void	mips_dcache_compute_align(void);
