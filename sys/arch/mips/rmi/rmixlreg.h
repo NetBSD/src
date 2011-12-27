@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.13 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.14 2011/12/27 19:58:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -392,9 +392,9 @@
 #define RMIXL_SBC_DRAM_CHNBD_DTR(n)	_RMIXL_OFFSET(0x010 + (n))
 					/* DRAM Region Channels B,D Address Translation Regs[0-7] */
 #define RMIXL_SBC_DRAM_BRIDGE_CFG	_RMIXL_OFFSET(0x18)	/* SBC DRAM config reg */
+#define RMIXL_SBC_IO_BAR		_RMIXL_OFFSET(0x19)	/* I/O Config Base Addr reg */
+#define RMIXL_SBC_FLASH_BAR		_RMIXL_OFFSET(0x1a)	/* Flash Memory Base Addr reg */
 #if defined(MIPS64_XLR)
-#define RMIXLR_SBC_IO_BAR		_RMIXL_OFFSET(0x19)	/* I/O Config Base Addr reg */
-#define RMIXLR_SBC_FLASH_BAR		_RMIXL_OFFSET(0x1a)	/* Flash Memory Base Addr reg */
 #define RMIXLR_SBC_SRAM_BAR		_RMIXL_OFFSET(0x1b)	/* SRAM Base Addr reg */
 #define RMIXLR_SBC_HTMEM_BAR		_RMIXL_OFFSET(0x1c)	/* HyperTransport Mem Base Addr reg */
 #define RMIXLR_SBC_HTINT_BAR		_RMIXL_OFFSET(0x1d)	/* HyperTransport Interrupt Base Addr reg */
@@ -408,8 +408,6 @@
 #define RMIXLR_SBC_SYS2IO_CREDITS	_RMIXL_OFFSET(0x35)	/* System Bridge I/O Transaction Credits register */
 #endif	/* MIPS64_XLR */
 #if defined(MIPS64_XLS)
-#define RMIXLS_SBC_IO_BAR		_RMIXL_OFFSET(0x19)	/* I/O Config Base Addr reg */
-#define RMIXLS_SBC_FLASH_BAR		_RMIXL_OFFSET(0x20)	/* Flash Memory Base Addr reg */
 #define RMIXLS_SBC_PCIE_CFG_BAR		_RMIXL_OFFSET(0x40)	/* PCI Configuration BAR */
 #define RMIXLS_SBC_PCIE_ECFG_BAR	_RMIXL_OFFSET(0x41)	/* PCI Extended Configuration BAR */
 #define RMIXLS_SBC_PCIE_MEM_BAR		_RMIXL_OFFSET(0x42)	/* PCI Memory region BAR */
@@ -437,6 +435,19 @@
 #define RMIXL_ADDR_ERR_SBE_COUNTS	_RMIXL_OFFSET(0x32)	/* Single Bit Error Counts */
 #define RMIXL_ADDR_ERR_DBE_COUNTS	_RMIXL_OFFSET(0x33)	/* Double Bit Error Counts */
 #define RMIXL_ADDR_ERR_BITERR_INT_EN	_RMIXL_OFFSET(0x33)	/* Bit Error intr enable */
+
+/*
+ * RMIXL_SBC_FLASH_BAR bit defines
+ */
+#define RMIXL_FLASH_BAR_BASE		__BITS(31,16)	/* phys address bits 39:24 */
+#define RMIXL_FLASH_BAR_TO_BA(r)	\
+		(((r) & RMIXL_FLASH_BAR_BASE) << (24 - 16))
+#define RMIXL_FLASH_BAR_MASK		__BITS(15,5)	/* phys address mask bits 34:24 */
+#define RMIXL_FLASH_BAR_TO_MASK(r)	\
+		(((((r) & RMIXL_FLASH_BAR_MASK)) << (24 - 5)) | __BITS(23, 0))
+#define RMIXL_FLASH_BAR_RESV		__BITS(4,1)	/* (reserved) */
+#define RMIXL_FLASH_BAR_ENB		__BIT(0)	/* 1=Enable */
+#define RMIXL_FLASH_BAR_MASK_MAX	RMIXL_FLASH_BAR_TO_MASK(RMIXL_FLASH_BAR_MASK)
 
 /*
  * RMIXL_SBC_DRAM_BAR bit defines
@@ -888,6 +899,86 @@
 								 *  11 = disable
 								 */
 #define RMIXL_GPIO_LOW_PWR_DIS_RESV		__BITS(31,9)
+
+/*
+ * Peripheral I/O bus (Flash/PCMCIA) controller registers
+ */
+#define RMIXL_FLASH_NCS			10			/* number of chip selects */
+#define RMIXL_FLASH_CS_BOOT		0			/* CS0 is boot flash */
+#define RMIXL_FLASH_CS_PCMCIA_CF	6			/* CS6 is PCMCIA compact flash */
+#define RMIXL_FLASH_CSBASE_ADDRn(n)	_RMIXL_OFFSET(0x00+(n))	/* CSn Base Address reg */
+#define RMIXL_FLASH_CSADDR_MASKn(n)	_RMIXL_OFFSET(0x10+(n))	/* CSn Address Mask reg */
+#define RMIXL_FLASH_CSDEV_PARMn(n)	_RMIXL_OFFSET(0x20+(n))	/* CSn Device Parameter reg */
+#define RMIXL_FLASH_CSTIME_PARMAn(n)	_RMIXL_OFFSET(0x30+(n))	/* CSn Timing Parameters A reg */
+#define RMIXL_FLASH_CSTIME_PARMBn(n)	_RMIXL_OFFSET(0x40+(n))	/* CSn Timing Parameters B reg */
+#define RMIXL_FLASH_INT_MASK		_RMIXL_OFFSET(0x50)	/* Flash Interrupt Mask reg */
+#define RMIXL_FLASH_INT_STATUS		_RMIXL_OFFSET(0x60)	/* Flash Interrupt Status reg */
+#define RMIXL_FLASH_ERROR_STATUS	_RMIXL_OFFSET(0x70)	/* Flash Error Status reg */
+#define RMIXL_FLASH_ERROR_ADDR		_RMIXL_OFFSET(0x80)	/* Flash Error Address reg */
+
+/*
+ * RMIXL_FLASH_CSDEV_PARMn bits
+ */
+#define RMIXL_FLASH_CSDEV_RESV		__BITS(31,16)
+#define RMIXL_FLASH_CSDEV_BFN		__BIT(15)		/* Boot From Nand
+								 *  0=Boot from NOR or
+								 *    PCCard Type 1 Flash
+								 *  1=Boot from NAND
+								 */
+#define RMIXL_FLASH_CSDEV_NANDEN	__BIT(14)		/* NAND Flash Enable
+								 *  0=NOR
+								 *  1=NAND
+								 */
+#define RMIXL_FLASH_CSDEV_ADVTYPE	__BIT(13)		/* Add Valid Sensing Type
+								 *  0=level
+								 *  1=pulse
+								 */
+#define RMIXL_FLASH_CSDEV_PARITY_TYPE	__BIT(12)		/* Parity Type
+								 *  0=even
+								 *  1=odd
+								 */
+#define RMIXL_FLASH_CSDEV_PARITY_EN	__BIT(11)		/* Parity Enable */
+#define RMIXL_FLASH_CSDEV_GENIF_EN	__BIT(10)		/* Generic PLD/FPGA interface mode
+								 *  if this bit is set, then
+								 *  GPIO[13:10] cannot be used
+								 *  for interrupts
+								 */
+#define RMIXL_FLASH_CSDEV_PCMCIA_EN	__BIT(9)		/* PCMCIA Interface mode */
+#define RMIXL_FLASH_CSDEV_DWIDTH	__BITS(8,7)		/* Data Bus Width:
+								 *  00: 8 bit
+								 *  01: 16 bit
+								 *  10: 32 bit
+								 *  11: 8 bit
+								 */
+#define RMIXL_FLASH_CSDEV_DWIDTH_SHFT	7
+#define RMIXL_FLASH_CSDEV_MX_ADDR	__BIT(6)		/* Multiplexed Address
+								 *  0: non-muxed
+								 *      AD[31:24] = Data,
+								 *	AD[23:0] = Addr
+								 *  1: muxed
+								 *      External latch required
+								 */
+#define RMIXL_FLASH_CSDEV_WAIT_POL	__BIT(5)		/* WAIT polarity
+								 *  0: Active high
+								 *  1: Active low
+								 */
+#define RMIXL_FLASH_CSDEV_WAIT_EN	__BIT(4)		/* Enable External WAIT Ack mode */
+#define RMIXL_FLASH_CSDEV_BURST		__BITS(3,1)		/* Burst Length:
+								 *  000: 2x
+								 *  001: 4x
+								 *  010: 8x
+								 *  011: 16x
+								 *  100: 32x
+								 */
+#define RMIXL_FLASH_CSDEV_BURST_SHFT	1
+#define RMIXL_FLASH_CSDEV_BURST_EN	__BITS(0)		/* Burst Enable */
+
+
+/*
+ * NAND Flash Memory Control registers
+ */
+#define RMIXL_NAND_CLEn(n)		_RMIXL_OFFSET(0x90+(n))	/* CSn 8-bit CLE command value reg */
+#define RMIXL_NAND_ALEn(n)		_RMIXL_OFFSET(0xa0+(n))	/* CSn 8-bit ALE address phase reg */
 
 
 /*
@@ -1366,6 +1457,158 @@
 #define	RMIXLP_SM_POWER_ON_RESET_CFG_BE		__BIT(5)
 #define	RMIXLP_SM_POWER_ON_RESET_CFG_NORSP	__BIT(4)
 #define	RMIXLP_SM_POWER_ON_RESET_CFG_BD		__BITS(3,0)
+
+#define	RMIXLP_NOR_PCITAG		_RMIXL_PCITAG(0,7,0)
+#define	RMIXLP_NOR_NCS			8
+#define	RMIXLP_NOR_CS_BASEADDRESSn(n)	_RMIXL_OFFSET(0x40+(n))
+#define	RMIXLP_NOR_CS_BASELIMITn(n)	_RMIXL_OFFSET(0x48+(n))
+#define	RMIXLP_NOR_CS_DEVPARAMn(n)	_RMIXL_OFFSET(0x50+(n))
+#define	RMIXLP_NOR_CS_DEVTIME0n(n)	_RMIXL_OFFSET(0x58+2*(n))
+#define	RMIXLP_NOR_CS_DEVTIME1n(n)	_RMIXL_OFFSET(0x59+2*(n))
+#define	RMIXLP_NOR_SYSCTRL		_RMIXL_OFFSET(0x68)
+#define	RMIXLP_NOR_BYTESWAP		_RMIXL_OFFSET(0x69)
+#define	RMIXLP_NOR_ERRLOG0		_RMIXL_OFFSET(0x6a)
+#define	RMIXLP_NOR_ERRLOG1		_RMIXL_OFFSET(0x6b)
+#define	RMIXLP_NOR_ERRLOG2		_RMIXL_OFFSET(0x6c)
+#define	RMIXLP_NOR_ID_TIMEOUT_VAL	_RMIXL_OFFSET(0x6d)
+#define	RMIXLP_NOR_INSTAT		_RMIXL_OFFSET(0x6e)
+#define	RMIXLP_NOR_INTEN		_RMIXL_OFFSET(0x6f)
+#define	RMIXLP_NOR_STATUS		_RMIXL_OFFSET(0x70)
+
+#define	RMIXLP_NOR_CS_ADDRESS_TO_PA(r)	((uint64_t)(r) << 8)
+#define	RMIXLP_NOR_PA_TO_CS_ADDRESS(r)	((uint64_t)(r) >> 8)
+#define	RMIXLP_NOR_CS_SIZE(b,l)		((l)-(b)+256)
+
+	// Interface Byte signal Enable.
+	//   0:	Disables programmable data width selection
+	//   1: Enables programmable data width selection
+#define RMIXLP_NOR_DEVPARAM_BE		__BIT(16)
+	// Little Endian.
+	//   0:Big Endian
+	//   1:Little Endian
+#define RMIXLP_NOR_DEVPARAM_LE		__BIT(13)
+#define RMIXLP_NOR_DEVPARAM_DW		__BITS(12:11) // Device Data Width
+#define RMIXLP_NOR_DEVPARAM_DW_8_BITS	0
+#define RMIXLP_NOR_DEVPARAM_DW_16_BITS	1
+#define RMIXLP_NOR_DEVPARAM_DW_32_BITS	2
+	// Multiplexed/non-multiplexed device data/address mode
+	//   0:Non-multiplexed (only valid if field DW is set to 0)
+	//   1:Multiplexed data and address bus
+#define RMIXLP_NOR_DEVPARAM_MUX		__BIT(10)
+	// Wait/Ready signal Polarity
+	//   0:Wait active high
+	//   1:Wait active low
+#define RMIXLP_NOR_DEVPARAM_WRP		__BIT(9)
+	// Wait/ready signal Write interface Enable.
+	// Enables/disables wait-acknowledge mode during write cycles.
+	//   0: Enable device Wait mode. External IO_WAIT_L signal is used.
+	//   1: Disable Wait mode; external IO_WAIT_L signal is not used.
+#define RMIXLP_NOR_DEVPARAM_WWE		__BIT(8)
+	// Wait/Ready signal Read interface Enable.
+	// Enables/disables wait-acknowledge mode during read cycles.
+	//   0: Enable device Wait mode. External IO_WAIT_L signal is used.
+	//   1: Disable Wait mode; external IO_WAIT_L signal is not used.
+	//	This signal is distinct from the RYBY (Ready/Busy) signal,
+	//	which is shared by all Flash devices.
+#define RMIXLP_NOR_DEVPARAM_WRE		__BIT(7)
+	// Synchronous Read Data Burst Enabled (when set to 1).
+#define RMIXLP_NOR_DEVPARAM_SRDBE	__BIT(5)
+	// Word-align Address.
+	// If set to 1, address bits are word-aligned.
+	// This allows address bits of a 16-bit Flash device to connect to XLP
+	// address bits [24:1] instead of [23:0] or the address bits of a 32-bit
+	// Flash device to connect to XLP address bits [25:2] instead of [23:0].
+#define RMIXLP_NOR_DEVPARAM_WA		__BIT(2)
+#define RMIXLP_NOR_DEVPARAM_FLASH_TYPE	__BITS(1:0)	// Flash Type
+#define	RMIXLP_NOR_DEVPARAM_FLASH_TYPE_NOR	0	//   NOR Flash
+#define	RMIXLP_NOR_DEVPARAM_FLASH_TYPE_ONCHIP	1	//   On-chip ROM
+
+	// CS to CS timing.
+	//   This field indicates the number of clock cycles from the falling
+	//   edge of IO_CSn to the next falling edge of IO_CSn, where n = 0-7.
+#define RMIXLP_NOR_DEVTIME0_CS_TO_CS	__BITS(31,28)
+
+	// WE to CS timing.
+	//   This field indicates the number of clock cycles from the rising
+	//   edge of IO_WE_L to the rising edge of IO_CSn_L.
+#define RMIXLP_NOR_DEVTIME0_WE_TO_CS	__BITS(27,24)
+
+	// OE to CS timing.
+	//   This field indicates the number of clock cycles from the rising
+	//   edge of IO_OE_L to the rising edge of IO_CSn_L.
+#define RMIXLP_NOR_DEVTIME0_OE_TO_CS	__BITS(23,22)
+
+	// CS to WE timing.
+	//   This field indicates the number of clock cycles from the falling
+	//   edge of IO_CSn_L to the falling edge of IO_WE_L
+#define RMIXLP_NOR_DEVTIME0_CS_TO_WE	__BITS(21,19)
+
+	// CS to OE timing.
+	//   This field indicates the number of clock cycles from the falling
+	//   edge of IO_CSn_L to the falling edge of IO_OE_L.
+#define RMIXLP_NOR_DEVTIME0_CS_TO_OE	__BITS(18,16)
+
+	// Wait/Ready to Data timing.
+	//   This field indicates the number of clock cycles from the falling
+	//   edge of IO_WE_L to when data is available on a write, or the
+	//   falling edge of IO_OE_L to when date is available on a read.
+#define RMIXLP_NOR_DEVTIME0_WAIT_TO_DATA __BITS(15,11)
+
+	// OE to Wait timing.
+	//   This field indicates the IO_WE_L to wait time on a write,
+	//   or the IO_OE_L to wait time on a read.
+#define RMIXLP_NOR_DEVTIME0_OE_TO_WAIT	__BITS(10,6)
+
+	// ALE to CS timing.
+	//   This field indicates the number of clock cycles from the falling
+	//   edge of IO_ALE to the falling edge of IO_CSn_L. This field is
+	//   encoded as follows:
+#define RMIXLP_NOR_DEVTIME0_ALE_TO_CS	___BITS(5,3)
+	//	000: IO_CSn_L is one cycle ahead of IO_ALE.
+#define RMIXLP_NOR_DEVTIME0_ALE_TO_CS_AHEAD1	0
+	//	001: IO_CSn_L is aligned with IO_ALE.
+#define RMIXLP_NOR_DEVTIME0_ALE_TO_CS_ALIGNED	1
+	//	010-111: IO_ALE is ahead of IO_CSn_L.
+#define RMIXLP_NOR_DEVTIME0_ALE_TO_CS_BEHIND1	2
+#define RMIXLP_NOR_DEVTIME0_ALE_TO_CS_BEHIND2	3
+#define RMIXLP_NOR_DEVTIME0_ALE_TO_CS_BEHIND3	4
+#define RMIXLP_NOR_DEVTIME0_ALE_TO_CS_BEHIND4	5
+#define RMIXLP_NOR_DEVTIME0_ALE_TO_CS_BEHIND5	6
+#define RMIXLP_NOR_DEVTIME0_ALE_TO_CS_BEHIND6	7
+
+	// ALE pulse width.
+	//   This field indicates the number of clock cycles from the falling
+	//   edge of IO_ALE to the rising edge of IO_ALE.
+#define RMIXLP_NOR_DEVTIME0_ALE_WIDTH	__BITS(2,0)
+
+#define	RMIXLP_NOR_DEVTIME1_WAIT_TIMEOUT	__BITS(26,12)
+	// Wait Timeout.
+	//    If the Interrupt is an error, the Enable bit is set.
+
+	// RDY/BSY signal Polarity:
+	//   0:Ready low, busy high
+	//   1:Ready high, busy low
+	// This signal is shared by all Flash devices. If any of the devices
+	// puts the signal into the busy state, this signal will indicate
+	// not-ready (busy) status.
+#define	RMIXLP_NOR_SYSCTRL_RDYBSY_POL		__BIT(1)
+
+	// Interconnect Timeout Enable (if set to 1).
+#define	RMIXLP_NOR_SYSCTRL_ITE			__BIT(0)
+
+	// RDY/BSY pin transition, if set to 1.
+#define	RMIXLP_NOR_INTSTAT_RDYBSY		__BIT(0)
+
+	// Error Log. Setting this bit enables error logging.
+#define	RMIXLP_NOR_INTEN_EL			__BIT(1)
+	// RYBY Interrupt Enable. Setting this bit enables NOR Flash interrupts.
+#define	RMIXLP_NOR_INTEN_RDYBSY			__BIT(0)
+
+	// RDY/BSY Status. 1: NOR device is ready.
+#define	RMIXLP_NOR_STATUS_RDYBSY		__BIT(0)
+#define	RMIXLP_NAND_PCITAG		_RMIXL_PCITAG(0,7,1)
+
+#define	RMIXLP_SPI_PCITAG		_RMIXL_PCITAG(0,7,2)
 
 #define	RMIXLP_MMC_PCITAG		_RMIXL_PCITAG(0,7,3)
 #define	RMIXLP_MMC_SLOTSIZE		_RMIXL_OFFSET(0x40)

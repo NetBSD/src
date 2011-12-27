@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.14 2011/12/24 01:57:53 matt Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.15 2011/12/27 19:58:18 matt Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -59,6 +59,36 @@ device  rmixl_pcix: pcibus
 attach  rmixl_pcix at obio			# XLR
 file    arch/mips/rmi/rmixl_pcix.c		rmixl_pcix	needs-flag
 
+# XLS/XLR Periperal IO Bus to NOR, NAND, and PCMCIA memory controllers
+define	xliobus { [cs=-1], [addr=-1], [size=-1], [intr=-1] }
+device	xliobus: xliobus
+attach  xliobus at obio with xliobus_obio
+file    arch/mips/rmi/rmixl_iobus_space.c	xliobus_obio
+file    arch/mips/rmi/rmixl_iobus.c		xliobus_obio
+
+# NAND flash controller
+device	xlnand: nandbus 
+attach  xlnand at xliobus with xlnand_iobus 
+attach	xlnand at pci with xlnand_pci
+file    arch/mips/rmi/rmixl_nand_iobus.c	xlnand_iobus
+file    arch/mips/rmi/rmixl_nand_pci.c		xlnand_pci
+
+# NOR controller (XLP equiv of xliobus but for NOR only).
+device	xlnor { [cs=-1] }
+attach	xlnor at pci with xlnor_pci
+file	arch/mips/rmi/rmixl_nor_pci.c		xlnor_pci
+
+device	cfi: norbus
+attach	cfi at xliobus with cfi_iobus
+attach	cfi at xlnor with cfi_xlnor
+file	arch/mips/rmi/rmixl_cfi_iobus.c		cfi_iobus
+file	arch/mips/rmi/rmixl_cfi_xlnor.c		cfi_xlnor
+
+# PCMCIA controller
+device	xlpcic: pcmciabus 
+attach  xlpcic at xliobus
+file    arch/mips/rmi/rmixl_pcic.c		xlpcic
+
 # On-chip USB interface
 define rmixl_usbi { [addr=-1], [size=-1], [intr=-1] }
 device	rmixl_usbi: rmixl_usbi
@@ -97,3 +127,8 @@ attach	xli2c at obio with xli2c_obio
 attach	xli2c at pci with xli2c_pci
 file	arch/mips/rmi/rmixl_i2c_obio.c		xli2c_obio
 file	arch/mips/rmi/rmixl_i2c_pci.c		xli2c_pci
+
+# XL SPI controller
+device	xlspi: spibus
+attach	xlspi at pci with xlspi_pci
+file	arch/mips/rmi/rmixl_spi_pci.c		xlspi_pci
