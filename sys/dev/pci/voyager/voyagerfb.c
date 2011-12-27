@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.13 2011/12/24 02:28:50 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.14 2011/12/27 07:05:53 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.13 2011/12/24 02:28:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.14 2011/12/27 07:05:53 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -923,12 +923,18 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			for (i = 0; i < wi * he; i++) {
 				aval = *data;
 				data++;
-				r = aval * rf + (255 - aval) * rb;
-				g = aval * gf + (255 - aval) * gb;
-				b = aval * bf + (255 - aval) * bb;
-				pixel = (r & 0xff00) << 8 |
-				        (g & 0xff00) |
-				        (b & 0xff00) >> 8;
+				if (aval == 0) {
+					pixel = bg;
+				} else if (aval == 255) {
+					pixel = fg;
+				} else {
+					r = aval * rf + (255 - aval) * rb;
+					g = aval * gf + (255 - aval) * gb;
+					b = aval * bf + (255 - aval) * bb;
+					pixel = (r & 0xff00) << 8 |
+					        (g & 0xff00) |
+					        (b & 0xff00) >> 8;
+				}
 				bus_space_write_4(sc->sc_memt, sc->sc_regh,
 				    SM502_DATAPORT, pixel);
 			}
