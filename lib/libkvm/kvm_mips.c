@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_mips.c,v 1.18.16.2 2011/12/27 06:58:58 matt Exp $ */
+/* $NetBSD: kvm_mips.c,v 1.18.16.3 2011/12/27 16:26:25 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: kvm_mips.c,v 1.18.16.2 2011/12/27 06:58:58 matt Exp $");
+__RCSID("$NetBSD: kvm_mips.c,v 1.18.16.3 2011/12/27 16:26:25 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: kvm_mips.c,v 1.18.16.2 2011/12/27 06:58:58 matt Exp $");
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/kcore.h>
+#include <sys/bitops.h>
 #include <machine/kcore.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -87,13 +88,14 @@ _kvm_initvtop(kd)
  * Translate a kernel virtual address to a physical address.
  */
 int
-_kvm_kvatop(kd, va, pa)
+_kvm_kvatop(kd, uva, pa)
 	kvm_t *kd;
-	u_long va;
+	u_long uva;
 	u_long *pa;
 {
 	cpu_kcore_hdr_t *cpu_kh;
-	u_int page_off;
+	u_long page_off;
+	long va = uva;
 	u_int pte;
 	u_long pte_pa;
 	u_long pfn;
@@ -263,6 +265,7 @@ int
 _kvm_mdopen(kd)
 	kvm_t	*kd;
 {
+#define PAGE_SHIFT	ilog2(kd->nbpg)	/* for _LP64 VM_MAXUSER_ADDRESS */
 
 	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
