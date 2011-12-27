@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.2 2011/12/27 16:22:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.2 2011/12/27 16:22:01 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -331,6 +331,7 @@ rmixlp_pcie_attach(device_t parent, device_t self, void *aux)
 #endif
 }
 
+#ifdef PCI_NETBSD_CONFIGURE
 void
 rmixlp_pcie_bar_alloc(struct rmixl_region *rp,
 	u_long size_mb, u_long align_mb)
@@ -355,6 +356,7 @@ rmixlp_pcie_bar_alloc(struct rmixl_region *rp,
 	rp->r_pbase = pbase;
 	rp->r_size = (uint64_t)size_mb << 20;
 }
+#endif /* PCI_NETBSD_CONFIGURE */
 
 /*
  * rmixlp_pcie_lnkcfg_get - lookup the lnkcfg for this XLP
