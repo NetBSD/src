@@ -877,8 +877,8 @@
 #define	MIPS_34K	0x95	/* MIPS 34K			ISA 32  R2 MT */
 #define	MIPS_24KE	0x96	/* MIPS 24KEc			ISA 32  Rel 2 */
 #define	MIPS_74K	0x97	/* MIPS 74Kc/74Kf		ISA 32  Rel 2 */
-#define	MIPS_1004K	0x99	/* MIPS 1004Kc/1004Kf		ISA 32  Rel 2 */
-#define	MIPS_1074K	0x9a	/* MIPS 1074K			ISA 32  Rel 2 */
+#define	MIPS_1004K	0x99	/* MIPS 1004Kc/1004Kf		ISA 32  R2 MT */
+#define	MIPS_1074K	0x9a	/* MIPS 1074K			ISA 32  R2 MT */
 
 /*
  * Alchemy (company ID 3) use the processor ID field to donote the CPU core
