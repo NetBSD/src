@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.432 2011/12/27 00:49:16 christos Exp $
+# $NetBSD: mi,v 1.433 2011/12/27 17:13:10 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2242,6 +2242,7 @@
 ./usr/tests/lib/libc/t_strptime			tests-obsolete		obsolete
 ./usr/tests/lib/libc/time			tests-lib-tests
 ./usr/tests/lib/libcrypt			tests-lib-tests
+./usr/tests/lib/libcrypt/Atffile		tests-lib-tests
 ./usr/tests/lib/libcrypt/t_crypt		tests-lib-tests
 ./usr/tests/lib/libcurses			tests-lib-tests
 ./usr/tests/lib/libcurses/.terminfo.db		tests-obsolete		obsolete
