@@ -1,0 +1,15 @@
+# $NetBSD: XLPEVB64,v 1.1.2.1 2011/12/27 16:20:51 matt Exp $
+#
+
+include "arch/evbmips/conf/XLPEVB"
+
+#ident		"XLSATX64-$Revision: 1.1.2.1 $"
+
+options 	PCI_NETBSD_CONFIGURE
+#options 	PCI_CONFIG_DUMP
+options		PCI_VERBOSE
+
+
+makeoptions	LP64="yes"
+options 	EXEC_ELF64
+options		COMPAT_NETBSD32
