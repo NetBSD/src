@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.54 2011/12/26 21:06:42 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.55 2011/12/27 20:59:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.54 2011/12/26 21:06:42 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.55 2011/12/27 20:59:24 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -507,7 +507,12 @@ thunk_sigaltstack(const stack_t *ss, stack_t *oss)
 void
 thunk_signal(int sig, void (*func)(int))
 {
-	signal(sig, func);
+	struct sigaction sa;
+
+	sa.sa_flags = SA_RESTART | SA_ONSTACK;
+	sa.sa_sigaction = (void (*)(int, siginfo_t *, void *))func;
+	sigemptyset(&sa.sa_mask);
+	sigaction(sig, &sa, NULL);
 }
 
 int
