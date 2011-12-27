@@ -1842,8 +1842,8 @@ cpu_dump(void)
 	 */
 	cpuhdrp->pg_size = PAGE_SIZE;
 #ifdef ENABLE_MIPS_KSEGX
-	if (mips3_ksegx_start) {
-		cpuhdrp->ksegx_pfn = mips3_ksegx_start >> PAGE_SHIFT;
+	if (mips_ksegx_start) {
+		cpuhdrp->ksegx_pfn = mips_ksegx_start >> PAGE_SHIFT;
 		cpuhdrp->ksegx_va = VM_KSEGX_ADDRESS;
 		cpuhdrp->ksegx_size = VM_KSEGX_SIZE;
 	}
