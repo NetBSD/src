@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_i2c_pci.c,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_i2c_pci.c,v 1.1.2.2 2011/12/27 19:57:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,6 +61,9 @@ static int  xli2c_acquire_bus(void *, int);
 static void xli2c_release_bus(void *, int);
 static int  xli2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		void *, size_t, int);
+#if 0
+static int  xli2c_intr(void *);
+#endif
 static int  xli2c_wait_for_command(struct xli2c_softc *, uint8_t);
 
 static inline uint8_t
@@ -156,6 +159,19 @@ xli2c_pci_attach(device_t parent, device_t self, void *aux)
 	/* MMM MAGIC */
 	xli2c_write_prescale(sc, rmixl_i2c_calc_prescale(133333333, 100000));
 
+#if 0
+	pci_intr_handle_t pcih;
+
+	pci_intr_map(pa, &pcih);
+
+	if (pci_intr_establish(pa->pa_pc, pcih, IPL_VM, xli2c_intr, sc) == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt\n");
+	} else {
+		const char * const intrstr = pci_intr_string(pa->pa_pc, pcih);
+		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
+	}
+#endif
+
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	config_found_ia(self, "i2cbus", &iba, iicbus_print);
@@ -186,7 +202,7 @@ xli2c_release_bus(void *v, int flags)
 }
 
 #if 0
-int
+static int
 xli2c_intr(void *v)
 {
 	struct xli2c_softc * const sc = v;
