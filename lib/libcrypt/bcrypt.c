@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.11 2011/12/26 21:51:53 christos Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.12 2011/12/27 19:36:10 christos Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.11 2011/12/26 21:51:53 christos Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.12 2011/12/27 19:36:10 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,7 +77,6 @@ static void decode_base64(u_int8_t *, u_int16_t, const u_int8_t *);
 char *__bcrypt(const char *, const char *);	/* XXX */
 
 static char    encrypted[_PASSWORD_LEN];
-static char    error[] = ":1";
 
 static const u_int8_t Base64Code[] =
 "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -228,21 +227,20 @@ __bcrypt(key, salt)
 	salt++;
 
 	if (*salt > BCRYPT_VERSION) {
-		/* How do I handle errors ? Return ':' */
-		return error;
+		goto out;
 	}
 
 	/* Check for minor versions */
 	if (salt[1] != '$') {
-		 switch (salt[1]) {
-		 case 'a':
-			 /* 'ab' should not yield the same as 'abab' */
-			 minor = salt[1];
-			 salt++;
-			 break;
-		 default:
-			 return error;
-		 }
+		switch (salt[1]) {
+		case 'a':
+			/* 'ab' should not yield the same as 'abab' */
+			minor = salt[1];
+			salt++;
+			break;
+		default:
+			goto out;
+		}
 	} else
 		 minor = 0;
 
@@ -251,21 +249,21 @@ __bcrypt(key, salt)
 
 	if (salt[2] != '$')
 		/* Out of sync with passwd entry */
-		return error;
+		goto out;
 
 	/* Computer power doesn't increase linear, 2^x should be fine */
 	n = atoi(salt);
 	if (n > 31 || n < 0)
-		return error;
+		goto out;
 	logr = (u_int8_t)n;
 	if ((rounds = (u_int32_t) 1 << logr) < BCRYPT_MINROUNDS)
-		return error;
+		goto out;
 
 	/* Discard num rounds + "$" identifier */
 	salt += 3;
 
 	if (strlen(salt) * 3 / 4 < BCRYPT_MAXSALT)
-		return error;
+		goto out;
 
 	/* We dont want the base64 salt but the raw data */
 	decode_base64(csalt, BCRYPT_MAXSALT, (const u_int8_t *)salt);
@@ -315,6 +313,9 @@ __bcrypt(key, salt)
 	    4 * BCRYPT_BLOCKS - 1);
 	memset(&state, 0, sizeof(state));
 	return encrypted;
+out:
+	/* How do I handle errors ? Return "*0" or "*1" */
+	return __UNCONST(salt[0] == '*' && salt[1] == '\0' ? "*1" : "*0");
 }
 
 static void
