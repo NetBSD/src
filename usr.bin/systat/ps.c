@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.30.18.1 2009/04/01 00:25:23 snj Exp $  */
+/*      $NetBSD: ps.c,v 1.30.18.1.4.1 2011/12/27 16:25:25 matt Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.30.18.1 2009/04/01 00:25:23 snj Exp $");
+__RCSID("$NetBSD: ps.c,v 1.30.18.1.4.1 2011/12/27 16:25:25 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -306,7 +306,9 @@ pmem2float(struct kinfo_proc2 *kp)
 	/* XXX - I don't like this. */
 	if ((kp->p_flag & L_INMEM) == 0)
 	        return (0.0);
-#ifdef USPACE
+#ifdef UPAGES
+	szptudot = UPAGES;
+#elif defined(USPACE)
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = USPACE/getpagesize();
 #endif

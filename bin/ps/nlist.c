@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.26 2008/04/28 20:22:51 martin Exp $	*/
+/*	$NetBSD: nlist.c,v 1.26.12.1 2011/12/27 16:25:25 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.26 2008/04/28 20:22:51 martin Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.26.12.1 2011/12/27 16:25:25 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,7 +185,10 @@ donlist_sysctl(void)
 	mib[1] = VM_USPACE;
 	size = sizeof(uspace);
 	if (sysctl(mib, 2, &uspace, &size, NULL, 0) == -1)
-#ifdef USPACE
+#ifdef UPAGES
+		uspace = UPAGES * getpagesize();
+					/* XXX Hopefully reasonable default */
+#elif defined(USPACE)
 		uspace = USPACE;
 #else
 		uspace = getpagesize();	/* XXX Hopefully reasonable default */
