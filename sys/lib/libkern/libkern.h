@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.82.8.3 2011/04/29 08:10:38 matt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.82.8.4 2011/12/27 19:21:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -345,4 +345,9 @@ uint32_t crc32(uint32_t, const uint8_t *, size_t);
 long long strtoll __P((const char *, char **, int));
 unsigned long long strtoull __P((const char *, char **, int));
 uintmax_t strtoumax __P((const char *, char **, int));
+unsigned int	popcount(unsigned int);
+unsigned int	popcountl(unsigned long);
+unsigned int	popcountll(unsigned long long);
+unsigned int	popcount32(uint32_t);
+unsigned int	popcount64(uint64_t);
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */
