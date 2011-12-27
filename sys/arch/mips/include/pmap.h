@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.21 2011/12/27 01:56:33 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.22 2011/12/27 16:09:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
 #include <mips/cpuregs.h>	/* for KSEG0 below */
 //#include <mips/pte.h>
 
-#if !defined(_MODULE)
+#if !defined(_MODULE) && !defined(_LKM)
 /*
  * The user address space is 2Gb (0x0 - 0x80000000).
  * User programs are laid out in memory as follows:
