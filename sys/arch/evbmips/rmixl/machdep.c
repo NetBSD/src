@@ -1089,7 +1089,7 @@ rmixlp_physaddr_nor_init(struct extent *ext)
 		DPRINTF("%s: %s %zu: %#"PRIx64":%"PRIu64" MB\n", __func__,
 		    "nor", i, xbase, xsize >> 20);
 
-		rmixl_physaddr_add(ext, "nor", &rcp->rc_pci_link_io[i],
+		rmixl_physaddr_add(ext, "nor", &rcp->rc_norflash[i],
 		    xbase, xsize);
 	}
 }
