@@ -1,8 +1,6 @@
-.\" $NetBSD: bpf.4,v 1.47 2011/12/27 21:24:25 christos Exp $
-.\"
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.47 2011/12/27 21:24:25 christos Exp $
+.\"	$NetBSD: bpf.4,v 1.48 2011/12/27 21:47:04 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -316,7 +314,8 @@ compatibility, the two others follow the Get/Set convention.
 .\"direction is set, injected
 Injected
 outgoing packets are not returned by BPF to avoid
-duplication. This flag is initialized to zero by default.
+duplication.
+This flag is initialized to zero by default.
 .El
 .Sh STANDARD IOCTLS
 .Nm
