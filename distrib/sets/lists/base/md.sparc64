@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.140 2011/12/25 23:28:32 christos Exp $
+# $NetBSD: md.sparc64,v 1.141 2011/12/27 16:52:52 christos Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -181,8 +181,8 @@
 ./usr/lib/sparc/libossaudio.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libp2k.so.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libp2k.so.2.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libpam.so.4			base-compat-shlib	compat,pic
-./usr/lib/sparc/libpam.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libpam.so.3			base-compat-shlib	compat,pic
+./usr/lib/sparc/libpam.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libpcap.so.4			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libpcap.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libpci.so.2			base-compat-shlib	compat,pic
@@ -276,28 +276,28 @@
 ./usr/lib/sparc/lua/5.1/gpio.so			base-compat-shlib	compat,pic
 ./usr/lib/sparc/lua/5.1/sqlite.so		base-compat-shlib	compat,pic
 ./usr/lib/sparc/security			base-compat-shlib	compat
-./usr/lib/sparc/security/pam_afslog.so.4	base-compat-shlib	compat,pic,kerberos
-./usr/lib/sparc/security/pam_chroot.so.4	base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_deny.so.4		base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_echo.so.4		base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_exec.so.4		base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_ftpusers.so.4	base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_group.so.4		base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_guest.so.4		base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_krb5.so.4		base-compat-shlib	compat,pic,kerberos
-./usr/lib/sparc/security/pam_ksu.so.4		base-compat-shlib	compat,pic,kerberos
-./usr/lib/sparc/security/pam_lastlog.so.4	base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_login_access.so.4	base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_nologin.so.4	base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_permit.so.4	base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_radius.so.4	base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_rhosts.so.4	base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_rootok.so.4	base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_securetty.so.4	base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_self.so.4		base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_skey.so.4		base-compat-shlib	compat,pic,skey
-./usr/lib/sparc/security/pam_ssh.so.4		base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/security/pam_unix.so.4		base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_afslog.so.3	base-compat-shlib	compat,pic,kerberos
+./usr/lib/sparc/security/pam_chroot.so.3	base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_deny.so.3		base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_echo.so.3		base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_exec.so.3		base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_ftpusers.so.3	base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_group.so.3		base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_guest.so.3		base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_krb5.so.3		base-compat-shlib	compat,pic,kerberos
+./usr/lib/sparc/security/pam_ksu.so.3		base-compat-shlib	compat,pic,kerberos
+./usr/lib/sparc/security/pam_lastlog.so.3	base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_login_access.so.3	base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_nologin.so.3	base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_permit.so.3	base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_radius.so.3	base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_rhosts.so.3	base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_rootok.so.3	base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_securetty.so.3	base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_self.so.3		base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_skey.so.3		base-compat-shlib	compat,pic,skey
+./usr/lib/sparc/security/pam_ssh.so.3		base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/security/pam_unix.so.3		base-compat-shlib	compat,pic
 ./usr/libdata/debug/usr/lib/sparc		base-compat-lib		compat
 ./usr/libdata/debug/usr/lib/sparc/i18n		base-compat-lib		compat
 ./usr/libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
