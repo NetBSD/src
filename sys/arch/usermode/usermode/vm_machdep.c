@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.3 2011/08/10 01:32:44 jmcneill Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.4 2011/12/27 14:55:31 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,21 +27,73 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3 2011/08/10 01:32:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2011/12/27 14:55:31 reinoud Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
+
+
+/*
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().
+ */
+/* This code was originally stolen from the alpha/acorn26 port. */
 
 int
 vmapbuf(struct buf *bp, vsize_t len)
 {
+	vaddr_t faddr, taddr, off;
+	paddr_t pa;
+	struct proc *p;
+	vm_prot_t prot;
+
+	if ((bp->b_flags & B_PHYS) == 0)
+		panic("vmapbuf");
+	p = bp->b_proc;
+	bp->b_saveaddr = bp->b_data;
+	faddr = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - faddr;
+	len = round_page(off + len);
+	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	bp->b_data = (void *)(taddr + off);
+	len = atop(len);
+	prot = bp->b_flags & B_READ ? VM_PROT_READ | VM_PROT_WRITE :
+				      VM_PROT_READ;
+	while (len--) {
+		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr,
+		    &pa) == false)
+			panic("vmapbuf: null page frame");
+		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
+		    prot, prot | PMAP_WIRED);
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
+	}
+	pmap_update(vm_map_pmap(phys_map));
+
 	return 0;
 }
 
+/*
+ * Unmap a previously-mapped user I/O request.
+ */
 void
 vunmapbuf(struct buf *bp, vsize_t len)
 {
+	vaddr_t addr, off;
+
+	if ((bp->b_flags & B_PHYS) == 0)
+		panic("vunmapbuf");
+	addr = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - addr;
+	len = round_page(off + len);
+	pmap_remove(vm_map_pmap(phys_map), addr, addr + len);
+	pmap_update(vm_map_pmap(phys_map));
+	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
+	bp->b_data = bp->b_saveaddr;
+	bp->b_saveaddr = NULL;
 }
+
