@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.45 2011/12/26 21:22:23 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.46 2011/12/27 14:55:31 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -38,7 +38,7 @@
 #include "opt_sdl.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2011/12/26 21:22:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2011/12/27 14:55:31 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2011/12/26 21:22:23 jmcneill Exp $"
 char machine[_SYS_NMLN] = "";
 char machine_arch[_SYS_NMLN] = "";
 char module_machine_usermode[_SYS_NMLN] = "";
+
+struct vm_map *phys_map = NULL;
 
 static char **saved_argv;
 char *usermode_root_image_path = NULL;
