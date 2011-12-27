@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.21 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.22 2011/12/27 19:58:19 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -128,6 +128,7 @@ struct rmixl_config {
 	struct rmixl_region	rc_pci_link_mem[4];
 	struct rmixl_region	rc_pci_link_io[4];
 	struct rmixl_region	rc_srio_mem;
+	struct rmixl_region	rc_norflash[8];		/* XLP 8 CS for NOR */
 	struct mips_bus_space	rc_obio_eb_memt; 	/* DEVIO -eb */
 	struct mips_bus_space	rc_obio_el_memt; 	/* DEVIO -el */
 	struct mips_bus_space	rc_iobus_memt; 		/* Peripherals IO Bus */
