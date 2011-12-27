@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.20 2011/12/23 22:31:30 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.21 2011/12/27 01:56:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,6 +81,7 @@
 #include <mips/cpuregs.h>	/* for KSEG0 below */
 //#include <mips/pte.h>
 
+#if !defined(_MODULE)
 /*
  * The user address space is 2Gb (0x0 - 0x80000000).
  * User programs are laid out in memory as follows:
@@ -120,6 +121,12 @@ union segtab {
 #endif
 	union pt_entry	*seg_tab[PMAP_SEGTABSIZE];
 };
+#else
+/*
+ * Modules don't need to know this.
+ */
+union segtab;
+#endif
 
 /*
  * Structure defining an tlb entry data set.

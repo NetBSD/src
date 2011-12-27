@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.23 2011/12/23 18:54:50 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.24 2011/12/27 01:56:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,7 @@
  * We normally use a 4K page but may use 8K, 16K, or 32K on MIPS systems.
  * Override PAGE_* definitions to compile-time constants.
  */
+#if defined(_KERNEL_OPT) && defined(_KERNEL) && !defined(_MODULE)
 #ifdef MIPS_PAGE_SHIFT
 #define	PAGE_SHIFT	MIPS_PAGE_SHIFT
 #else
@@ -61,6 +62,10 @@
 #endif
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+#else
+#define	MIN_PAGE_SIZE	4096
+#define	MAX_PAGE_SIZE	32768
+#endif /* _KERNEL_OPT && _KERNEL && !_MODULE */
 
 /*
  * USRSTACK is the top (end) of the user stack.
