@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.7.2.3 2011/12/24 01:33:58 matt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.7.2.4 2011/12/27 17:12:47 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.7.2.3 2011/12/24 01:33:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.7.2.4 2011/12/27 17:12:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -226,10 +226,14 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	if (SDHC_BASE_FREQ_KHZ(caps) != 0)
 		hp->clkbase = SDHC_BASE_FREQ_KHZ(caps);
 	if (hp->clkbase == 0) {
-		/* The attachment driver must tell us. */
-		aprint_error_dev(sc->sc_dev,"unknown base clock frequency\n");
-		goto err;
-	} else if (hp->clkbase < 10000 || hp->clkbase > 255000) {
+		if (sc->sc_clkbase == 0) {
+			/* The attachment driver must tell us. */
+			aprint_error_dev(sc->sc_dev,"unknown base clock frequency\n");
+			goto err;
+		}
+		hp->clkbase = sc->sc_clkbase;
+	}
+	if (hp->clkbase < 10000 || hp->clkbase > 10000 * 256) {
 		/* SDHC 1.0 supports only 10-63 MHz. */
 		/* SDHC 1.0 supports only 10-255 MHz. */
 		aprint_error_dev(sc->sc_dev,
@@ -314,6 +318,8 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		saa.saa_clkmin = hp->clkbase / 256;
 	}
 	saa.saa_clkmax = hp->clkbase;
+	if (ISSET(sc->sc_flags, SDHC_FLAG_HAVE_DVS))
+		saa.saa_clkmin /= 16;
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|SMC_CAPS_AUTO_STOP;
 	DPRINTF(1, ("%s: clkmin=%d clkmax=%d\n",
 	    device_xname(sc->sc_dev), saa.saa_clkmin, saa.saa_clkmax));
@@ -579,6 +585,20 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, int *divp)
 		/* No divisor found. */
 		return true;
 	}
+	if (hp->sc->sc_flags & SDHC_FLAG_HAVE_DVS) {
+		int dvs = (hp->clkbase + freq - 1) / freq;
+		div = 1;
+		for (div = 1; div <= 256; div <<= 1, dvs >>= 1) {
+			if (dvs <= 16) {
+				div <<= SDHC_SDCLK_DIV_SHIFT;
+				div |= (dvs - 1) << SDHC_SDCLK_DVS_SHIFT;
+				*divp = div;
+				return false;
+			}
+		}
+		/* No divisor found. */
+		return true;
+	}
 	for (div = 1; div <= 256; div *= 2) {
 		if ((hp->clkbase / div) <= freq) {
 			*divp = (div / 2) << SDHC_SDCLK_DIV_SHIFT;
@@ -633,7 +653,7 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 		error = EINVAL;
 		goto out;
 	}
-	HWRITE2(hp, SDHC_CLOCK_CTL, div << SDHC_SDCLK_DIV_SHIFT);
+	HWRITE2(hp, SDHC_CLOCK_CTL, div);
 
 	/*
 	 * Start internal clock.  Wait 10ms for stabilization.
