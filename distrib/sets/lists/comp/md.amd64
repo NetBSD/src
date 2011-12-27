@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.146 2011/12/25 23:28:33 christos Exp $
+# $NetBSD: md.amd64,v 1.147 2011/12/27 16:52:52 christos Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1104,7 +1104,7 @@
 ./usr/libdata/debug/usr/lib/i386/libopcodes.so.5.0.debug	comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/i386/libossaudio.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libp2k.so.2.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libpam.so.4.0.debug	comp-compat-shlib	compat,pic,pam,debug
+./usr/libdata/debug/usr/lib/i386/libpam.so.3.0.debug	comp-compat-shlib	compat,pic,pam,debug
 ./usr/libdata/debug/usr/lib/i386/libpcap.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libpci.so.2.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug
