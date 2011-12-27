@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.57 2011/12/21 01:58:46 christos Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.58 2011/12/27 14:51:15 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -68,6 +68,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/tls
 ./usr/libdata/debug/usr/tests/lib/libc/ttyio
 ./usr/libdata/debug/usr/tests/lib/libc/time
+./usr/libdata/debug/usr/tests/lib/libcrypt
 ./usr/libdata/debug/usr/tests/lib/libcurses
 ./usr/libdata/debug/usr/tests/lib/libdes
 ./usr/libdata/debug/usr/tests/lib/libevent
@@ -194,6 +195,7 @@
 ./usr/tests/lib/libc/tls
 ./usr/tests/lib/libc/ttyio
 ./usr/tests/lib/libc/time
+./usr/tests/lib/libcrypt
 ./usr/tests/lib/libcurses
 ./usr/tests/lib/libcurses/check_files
 ./usr/tests/lib/libcurses/tests
