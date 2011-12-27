@@ -71,6 +71,8 @@ file	arch/mips/mips/cache_r5k.c		mips3 | mips4
 file	arch/mips/mips/cache_r5k_subr.S		mips3 | mips4
 file	arch/mips/mips/cache_r10k.c	(mips3|mips4) & enable_mips4_cache_r10k
 file	arch/mips/mips/cache_mipsNN.c		mips32|mips32r2|mips64|mips64r2|mips64_rmixl|mips64r2_rmixl
+file	arch/mips/mips/cache_r4k_pcache16.S	mips32|mips32r2|mips64|mips64r2|mips64_rmixl|mips64r2_rmixl
+file	arch/mips/mips/cache_r4k_pcache32.S	mips32|mips32r2|mips64|mips64r2|mips64_rmixl|mips64r2_rmixl
 
 file	arch/mips/mips/mips_fputrap.c		!nofpu | fpemul
 file	arch/mips/mips/mips_emul.c
