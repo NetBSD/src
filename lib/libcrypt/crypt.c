@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.30 2011/12/26 22:58:45 christos Exp $	*/
+/*	$NetBSD: crypt.c,v 1.31 2011/12/27 01:20:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.30 2011/12/26 22:58:45 christos Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.31 2011/12/27 01:20:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -578,7 +578,7 @@ crypt(const char *key, const char *setting)
 	salt = 0;
 	for (i = salt_size; --i >= 0; ) {
 		int value = ascii_to_bin(setting[i]);
-		if (salt_size == 4 && itoa64[value] != setting[i])
+		if (salt_size > 2 && itoa64[value] != setting[i])
 			return NULL;
 		encp[i] = setting[i];
 		salt = (salt << 6) | value;
