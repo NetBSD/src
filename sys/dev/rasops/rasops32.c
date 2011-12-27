@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.21 2011/12/24 02:13:21 macallan Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.22 2011/12/27 06:24:40 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.21 2011/12/24 02:13:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.22 2011/12/27 06:24:40 macallan Exp $");
 
 #include "opt_rasops.h"
 
@@ -158,12 +158,21 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 				dp = rp + ri->ri_width * y;
 				for (x = 0; x < width; x++) {
 					aval = *fr;
-					r = aval * r1 + (255 - aval) * r0;
-					g = aval * g1 + (255 - aval) * g0;
-					b = aval * b1 + (255 - aval) * b0;
-					*dp = (r & 0xff00) << 8 | 
-					      (g & 0xff00) | 
-					      (b & 0xff00) >> 8;
+					if (aval == 0) {
+						*dp = clr[0];
+					} else if (aval == 255) {
+						*dp = clr[1];
+					} else {
+						r = aval * r1 +
+						    (255 - aval) * r0;
+						g = aval * g1 +
+						    (255 - aval) * g0;
+						b = aval * b1 +
+						    (255 - aval) * b0;
+						*dp = (r & 0xff00) << 8 | 
+						      (g & 0xff00) | 
+						      (b & 0xff00) >> 8;
+					}
 					dp++;
 					fr++;
 				}
