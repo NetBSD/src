@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_mips.c,v 1.18.16.1 2010/01/28 17:16:42 matt Exp $ */
+/* $NetBSD: kvm_mips.c,v 1.18.16.2 2011/12/27 06:58:58 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: kvm_mips.c,v 1.18.16.1 2010/01/28 17:16:42 matt Exp $");
+__RCSID("$NetBSD: kvm_mips.c,v 1.18.16.2 2011/12/27 06:58:58 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -76,6 +76,9 @@ int
 _kvm_initvtop(kd)
 	kvm_t *kd;
 {
+	/* fetch NBPG from kernel */
+	cpu_kcore_hdr_t * const cpu_kh = kd->cpu_data;
+	kd->nbpg = cpu_kh->pg_size;
 
 	return (0);
 }
@@ -90,17 +93,18 @@ _kvm_kvatop(kd, va, pa)
 	u_long *pa;
 {
 	cpu_kcore_hdr_t *cpu_kh;
-	int page_off;
+	u_int page_off;
 	u_int pte;
 	u_long pte_pa;
+	u_long pfn;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
-		return((off_t)0);
+		return (0);
 	}
 
 	cpu_kh = kd->cpu_data;
-	page_off = va & PGOFSET;
+	page_off = va & (kd->nbpg - 1);
 
 #ifdef _LP64
 	if (MIPS_XKPHYS_P(va)) {
@@ -108,7 +112,7 @@ _kvm_kvatop(kd, va, pa)
 		 * Direct-mapped cached address: just convert it.
 		 */
 		*pa = MIPS_XKPHYS_TO_PHYS(va);
-		return (NBPG - page_off);
+		return (kd->nbpg - page_off);
 	}
 
 	if (va < MIPS_XKPHYS_START) {
@@ -133,7 +137,7 @@ _kvm_kvatop(kd, va, pa)
 		 * Direct-mapped cached address: just convert it.
 		 */
 		*pa = MIPS_KSEG0_TO_PHYS(va);
-		return (NBPG - page_off);
+		return (kd->nbpg - page_off);
 	}
 
 	if (MIPS_KSEG1_P(va)) {
@@ -141,7 +145,7 @@ _kvm_kvatop(kd, va, pa)
 		 * Direct-mapped uncached address: just convert it.
 		 */
 		*pa = MIPS_KSEG1_TO_PHYS(va);
-		return (NBPG - page_off);
+		return (kd->nbpg - page_off);
 	}
 
 #ifdef _LP64
@@ -165,12 +169,24 @@ _kvm_kvatop(kd, va, pa)
 	 * for the address.
 	 */
 #ifdef _LP64
-	if (va >= (MIPS_XKSEG_START + (cpu_kh->sysmapsize * NBPG))) {
+	if (va >= (MIPS_XKSEG_START + (cpu_kh->sysmapsize * kd->nbpg))) {
 		_kvm_err(kd, 0, "invalid XKSEG address");
 		goto lose;
 	}
 #else
-	if (va >= (MIPS_KSEG2_START + (cpu_kh->sysmapsize * NBPG))) {
+	/*
+	 * If KSEGZ isn't in use, size will be 0 so this comparision will fail.
+	 */
+	if (va - cpu_kh->ksegx_va < cpu_kh->ksegx_size) {
+		pfn = cpu_kh->ksegx_pfn;
+		if (pfn > ~0UL / kd->nbpg) {
+			_kvm_err(kd, 0, "unaccessible physical address");
+			goto lose;
+		}
+		*pa = pfn * kd->nbpg + va - cpu_kh->ksegx_va;
+		return (kd->nbpg - page_off);
+	}
+	if (va >= (MIPS_KSEG2_START + (cpu_kh->sysmapsize * kd->nbpg))) {
 		_kvm_err(kd, 0, "invalid KSEG2 address");
 		goto lose;
 	}
@@ -180,7 +196,7 @@ _kvm_kvatop(kd, va, pa)
 	 * Step 2: Locate and read the PTE.
 	 */
 	pte_pa = cpu_kh->sysmappa +
-	    (((va - MIPS_KSEG2_START) >> PGSHIFT) * sizeof(u_int));
+	    (((va - MIPS_KSEG2_START) / kd->nbpg) * sizeof(u_int));
 	if (_kvm_pread(kd, kd->pmfd, &pte, sizeof(pte),
 	    _kvm_pa2off(kd, pte_pa)) != sizeof(pte)) {
 		_kvm_syserr(kd, 0, "could not read PTE");
@@ -194,9 +210,15 @@ _kvm_kvatop(kd, va, pa)
 		_kvm_err(kd, 0, "invalid translation (invalid PTE)");
 		goto lose;
 	}
-	*pa = (((pte & cpu_kh->pg_frame) >> cpu_kh->pg_shift) << PGSHIFT) +
-	    page_off;
-	return (NBPG - page_off);
+	pfn = (pte & cpu_kh->pg_frame) >> cpu_kh->pg_shift;
+#ifndef _LP64
+	if (pfn > ~0UL / kd->nbpg) {
+		_kvm_err(kd, 0, "unaccessible physical address");
+		goto lose;
+	}
+#endif
+	*pa = pfn * kd->nbpg + page_off;
+	return (kd->nbpg - page_off);
 
  lose:
 	*pa = -1;
