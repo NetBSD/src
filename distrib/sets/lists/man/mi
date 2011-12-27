@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109.2.3.2.1.2.2 2010/04/21 05:20:41 matt Exp $
+# $NetBSD: mi,v 1.1109.2.3.2.1.2.3 2011/12/27 17:35:45 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -909,6 +909,7 @@
 ./usr/share/man/cat4/fd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fea.0			man-sys-catman		.cat
 ./usr/share/man/cat4/finsio.0			man-sys-catman		.cat
+./usr/share/man/cat4/flash.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fmv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fpa.0			man-sys-catman		.cat
@@ -2060,6 +2061,7 @@
 ./usr/share/man/cat8/fdisk.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fingerd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fixmount.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/flashctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/flush.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/fsck.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsck_ext2fs.0		man-ext2fs-catman	.cat
@@ -3455,6 +3457,7 @@
 ./usr/share/man/html4/fd.html			man-sys-htmlman		html
 ./usr/share/man/html4/fea.html			man-sys-htmlman		html
 ./usr/share/man/html4/finsio.html		man-sys-htmlman		html
+./usr/share/man/html4/flash.html		man-sys-htmlman		html
 ./usr/share/man/html4/fms.html			man-sys-htmlman		html
 ./usr/share/man/html4/fmv.html			man-sys-htmlman		html
 ./usr/share/man/html4/fpa.html			man-sys-htmlman		html
@@ -4450,6 +4453,7 @@
 ./usr/share/man/html8/fdisk.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fingerd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fixmount.html		man-sysutil-htmlman	html
+./usr/share/man/html8/flashctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/flush.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/fsck.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/fsck_ext2fs.html		man-ext2fs-htmlman	html
@@ -5779,6 +5783,7 @@
 ./usr/share/man/man4/fd.4			man-sys-man		.man
 ./usr/share/man/man4/fea.4			man-sys-man		.man
 ./usr/share/man/man4/finsio.4			man-sys-man		.man
+./usr/share/man/man4/flash.4			man-sys-man		.man
 ./usr/share/man/man4/fms.4			man-sys-man		.man
 ./usr/share/man/man4/fmv.4			man-sys-man		.man
 ./usr/share/man/man4/fpa.4			man-sys-man		.man
@@ -6929,6 +6934,7 @@
 ./usr/share/man/man8/fdisk.8			man-sysutil-man		.man
 ./usr/share/man/man8/fingerd.8			man-sysutil-man		.man
 ./usr/share/man/man8/fixmount.8			man-sysutil-man		.man
+./usr/share/man/man8/flashctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/flush.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/fsck.8			man-sysutil-man		.man
 ./usr/share/man/man8/fsck_ext2fs.8		man-ext2fs-man		.man

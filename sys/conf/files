@@ -1,5 +1,4 @@
-#	$NetBSD: files,v 1.924.4.1.4.1 2010/04/21 00:27:27 matt Exp $
-
+#	$NetBSD: files,v 1.924.4.1.4.2 2011/12/27 17:35:47 matt Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20080610
@@ -1652,3 +1651,23 @@ include "lib/libx86emu/files.x86emu"
 # "tprof" profiler.
 #
 include	"dev/tprof/files.tprof"
+
+#
+# alternate memory device
+#
+include "dev/altmem/files.altmem"
+
+#
+# Flash subsystem
+#
+include "dev/flash/files.flash"
+
+#
+# NAND subsytem
+#
+include "dev/nand/files.nand"
+
+#
+# NOR subsytem
+#
+include "dev/nor/files.nor"

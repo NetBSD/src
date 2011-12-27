@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.6.2.1.2.2 2010/04/21 05:20:40 matt Exp $
+# $NetBSD: mi,v 1.780.2.6.2.1.2.3 2011/12/27 17:35:41 matt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1363,6 +1363,7 @@
 ./usr/sbin/iprop-log				base-krb5-bin		kerberos
 ./usr/sbin/faithd				base-router-bin		inet6
 ./usr/sbin/fixmount				base-nfsclient-bin
+./usr/sbin/flashctl				base-util-bin
 ./usr/sbin/flush				base-obsolete		obsolete
 ./usr/sbin/fsinfo				base-sysutil-bin
 ./usr/sbin/fssconfig				base-sysutil-bin
