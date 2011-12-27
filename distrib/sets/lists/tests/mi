@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.431 2011/12/25 20:15:34 christos Exp $
+# $NetBSD: mi,v 1.432 2011/12/27 00:49:16 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -572,6 +572,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/time				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/time/t_mktime.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/time/t_strptime.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libcrypt				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libcrypt/t_crypt.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libcurses				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libcurses/director.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libcurses/slave.debug			tests-lib-debug		debug,atf
@@ -2239,6 +2241,8 @@
 ./usr/tests/lib/libc/t_servent			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_strptime			tests-obsolete		obsolete
 ./usr/tests/lib/libc/time			tests-lib-tests
+./usr/tests/lib/libcrypt			tests-lib-tests
+./usr/tests/lib/libcrypt/t_crypt		tests-lib-tests
 ./usr/tests/lib/libcurses			tests-lib-tests
 ./usr/tests/lib/libcurses/.terminfo.db		tests-obsolete		obsolete
 ./usr/tests/lib/libcurses/terminfo.db		tests-lib-tests		atf
