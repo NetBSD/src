@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.371.2.3.4.1 2010/04/21 00:28:15 matt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.371.2.3.4.2 2011/12/27 16:35:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371.2.3.4.1 2010/04/21 00:28:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371.2.3.4.2 2011/12/27 16:35:13 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -295,6 +295,7 @@ main(void)
 	kernel_lock_init();
 	once_init();
 	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
+	kthread_sysinit();
 
 	uvm_init();
 
@@ -476,6 +477,11 @@ main(void)
 	/* Initialize System V style shared memory. */
 	shminit();
 #endif
+
+	vmem_rehash_start();	/* must be before exec_init */
+
+	/* Initialize exec structures */
+	exec_init(1);		/* seminit calls exithook_establish() */
 
 #ifdef SYSVSEM
 	/* Initialize System V style semaphores. */
@@ -660,11 +666,6 @@ main(void)
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
 	    uvm_aiodone_worker, NULL, PRI_VM, IPL_NONE, WQ_MPSAFE))
 		panic("fork aiodoned");
-
-	vmem_rehash_start();
-
-	/* Initialize exec structures */
-	exec_init(1);
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!

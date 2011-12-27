@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.114.4.1.4.3 2011/04/29 08:20:15 matt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.114.4.1.4.4 2011/12/27 16:35:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -194,6 +194,14 @@ struct lwp {
 #define	UAREA_TO_USER(uarea)	((struct user *)((uarea) + UAREA_USER_OFFSET))
 #endif /* !defined(UAREA_TO_USER) */
 
+#ifdef _KERNEL
+static inline void *
+lwp_getpcb(lwp_t *l)
+{
+	return l->l_addr;
+}
+#endif
+
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 #ifdef _KERNEL
@@ -203,13 +211,6 @@ extern struct lwplist alllwp;		/* List of all LWPs. */
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
 
 extern lwp_t lwp0;			/* LWP for proc0 */
-
-static inline void *
-lwp_getpcb(lwp_t *l)
-{
-
-	return l->l_addr;
-}
 #endif
 
 /* These flags are kept in l_flag. */
@@ -242,6 +243,7 @@ lwp_getpcb(lwp_t *l)
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
+#define	LP_JOINABLE	0x00000100 /* Joinable kthread */
 #define	LP_SA_PAGEFAULT	0x00000200 /* SA LWP in pagefault handler */
 #define	LP_SA_NOBLOCK	0x00000400 /* SA don't upcall on block */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */

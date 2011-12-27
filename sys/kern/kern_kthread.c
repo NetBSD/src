@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.24.10.2 2009/02/02 22:02:24 snj Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.24.10.2.4.1 2011/12/27 16:35:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,39 +31,46 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.24.10.2 2009/02/02 22:02:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.24.10.2.4.1 2011/12/27 16:35:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/proc.h>
+#include <sys/mutex.h>
 #include <sys/sched.h>
 #include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
-
-/*
- * note that stdarg.h and the ansi style va_start macro is used for both
- * ansi and traditional c complers.
- * XXX: this requires that stdarg.h define: va_alist and va_dcl
- */
 #include <machine/stdarg.h>
 
+static lwp_t *		kthread_jtarget;
+static kmutex_t		kthread_lock;
+static kcondvar_t	kthread_cv;
+
+void
+kthread_sysinit(void)
+{
+
+	mutex_init(&kthread_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&kthread_cv, "kthrwait");
+	kthread_jtarget = NULL;
+}
+
 /*
- * Fork a kernel thread.  Any process can request this to be done.
+ * kthread_create: create a kernel thread, that is, system-only LWP.
  */
 int
 kthread_create(pri_t pri, int flag, struct cpu_info *ci,
-	       void (*func)(void *), void *arg,
-	       lwp_t **lp, const char *fmt, ...)
+    void (*func)(void *), void *arg, lwp_t **lp, const char *fmt, ...)
 {
 	lwp_t *l;
 	vaddr_t uaddr;
 	bool inmem;
-	int error;
+	int error, lc;
 	va_list ap;
-	int lc;
+
+	KASSERT((flag & KTHREAD_INTR) == 0 || (flag & KTHREAD_MPSAFE) != 0);
 
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (uaddr == 0)
@@ -83,7 +90,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	if (fmt != NULL) {
 		l->l_name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
 		if (l->l_name == NULL) {
-			lwp_exit(l);
+			kthread_destroy(l);
 			return ENOMEM;
 		}
 		va_start(ap, fmt);
@@ -94,10 +101,6 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	/*
 	 * Set parameters.
 	 */
-	if ((flag & KTHREAD_INTR) != 0) {
-		KASSERT((flag & KTHREAD_MPSAFE) != 0);
-	}
-
 	if (pri == PRI_NONE) {
 		if ((flag & KTHREAD_TS) != 0) {
 			/* Maximum user priority level. */
@@ -118,10 +121,17 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 		l->l_pflag |= LP_BOUND;
 		l->l_cpu = ci;
 	}
-	if ((flag & KTHREAD_INTR) != 0)
+
+	if ((flag & KTHREAD_JOINABLE) != 0) {
+		KASSERT(lp != NULL);
+		l->l_pflag |= LP_JOINABLE;
+	}
+	if ((flag & KTHREAD_INTR) != 0) {
 		l->l_pflag |= LP_INTR;
-	if ((flag & KTHREAD_MPSAFE) == 0)
+	}
+	if ((flag & KTHREAD_MPSAFE) == 0) {
 		l->l_pflag &= ~LP_MPSAFE;
+	}
 
 	/*
 	 * Set the new LWP running, unless the caller has requested
@@ -142,10 +152,10 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	mutex_exit(proc0.p_lock);
 
 	/* All done! */
-	if (lp != NULL)
+	if (lp != NULL) {
 		*lp = l;
-
-	return (0);
+	}
+	return 0;
 }
 
 /*
@@ -166,15 +176,20 @@ kthread_exit(int ecode)
 		    name, l->l_lid, ecode);
 	}
 
+	/* Barrier for joining. */
+	if (l->l_pflag & LP_JOINABLE) {
+		mutex_enter(&kthread_lock);
+		while (kthread_jtarget != l) {
+			cv_wait(&kthread_cv, &kthread_lock);
+		}
+		kthread_jtarget = NULL;
+		cv_broadcast(&kthread_cv);
+		mutex_exit(&kthread_lock);
+	}
+
 	/* And exit.. */
 	lwp_exit(l);
-
-	/*
-	 * XXX Fool the compiler.  Making exit1() __noreturn__ is a can
-	 * XXX of worms right now.
-	 */
-	for (;;)
-		;
+	KASSERT(false);
 }
 
 /*
@@ -188,4 +203,32 @@ kthread_destroy(lwp_t *l)
 	KASSERT(l->l_stat == LSIDL);
 
 	lwp_exit(l);
+}
+
+/*
+ * Wait for a kthread to exit, as pthread_join().
+ */
+int
+kthread_join(lwp_t *l)
+{
+
+	KASSERT((l->l_flag & LW_SYSTEM) != 0);
+
+	/*
+	 * - Wait if some other thread has occupied the target.
+	 * - Speicfy our kthread as a target and notify it.
+	 * - Wait for the target kthread to notify us.
+	 */
+	mutex_enter(&kthread_lock);
+	while (kthread_jtarget) {
+		cv_wait(&kthread_cv, &kthread_lock);
+	}
+	kthread_jtarget = l;
+	cv_broadcast(&kthread_cv);
+	while (kthread_jtarget == l) {
+		cv_wait(&kthread_cv, &kthread_lock);
+	}
+	mutex_exit(&kthread_lock);
+
+	return 0;
 }
