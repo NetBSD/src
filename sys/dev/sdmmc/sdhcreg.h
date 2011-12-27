@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.1.14.3 2011/12/24 01:33:59 matt Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.1.14.4 2011/12/27 17:12:48 matt Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -90,6 +90,8 @@
 #define  SDHC_SDCLK_XDIV_SHIFT		6
 #define  SDHC_SDCLK_XDIV_MASK		0x3
 #define  SDHC_SDCLK_CGM			(1<<5)
+#define  SDHC_SDCLK_DVS_SHIFT		4
+#define  SDHC_SDCLK_DVS_MASK		0xf
 #define  SDHC_SDCLK_ENABLE		(1<<2)
 #define  SDHC_INTCLK_STABLE		(1<<1)
 #define  SDHC_INTCLK_ENABLE		(1<<0)

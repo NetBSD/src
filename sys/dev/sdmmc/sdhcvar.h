@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.4.2.3 2011/12/24 01:33:59 matt Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.4.2.4 2011/12/27 17:12:48 matt Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -38,7 +38,9 @@ struct sdhc_softc {
 #define	SDHC_FLAG_USE_DMA	0x0001
 #define	SDHC_FLAG_FORCE_DMA	0x0002
 #define	SDHC_FLAG_NO_PWR0	0x0004
-#define	SDHC_FLAG_HAS_CGM	0x0008
+#define	SDHC_FLAG_HAVE_DVS	0x0008
+#define	SDHC_FLAG_HAS_CGM	0x0010
+	uint32_t		sc_clkbase;
 };
 
 /* Host controller functions called by the attachment driver. */
