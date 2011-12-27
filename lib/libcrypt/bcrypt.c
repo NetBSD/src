@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.13 2011/12/27 22:01:26 christos Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.14 2011/12/27 23:33:41 christos Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.13 2011/12/27 22:01:26 christos Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.14 2011/12/27 23:33:41 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -222,13 +222,13 @@ __bcrypt(key, salt)
 	u_int8_t csalt[BCRYPT_MAXSALT];
 	u_int32_t cdata[BCRYPT_BLOCKS];
 	int n;
+	size_t len;
 
 	/* Discard "$" identifier */
 	salt++;
 
-	if (*salt > BCRYPT_VERSION) {
-		goto out;
-	}
+	if (*salt > BCRYPT_VERSION)
+		return NULL;
 
 	/* Check for minor versions */
 	if (salt[1] != '$') {
@@ -239,7 +239,7 @@ __bcrypt(key, salt)
 			salt++;
 			break;
 		default:
-			goto out;
+			return NULL;
 		}
 	} else
 		 minor = 0;
@@ -249,26 +249,29 @@ __bcrypt(key, salt)
 
 	if (salt[2] != '$')
 		/* Out of sync with passwd entry */
-		goto out;
+		return NULL;
 
 	/* Computer power doesn't increase linear, 2^x should be fine */
 	n = atoi(salt);
 	if (n > 31 || n < 0)
-		goto out;
+		return NULL;
 	logr = (u_int8_t)n;
 	if ((rounds = (u_int32_t) 1 << logr) < BCRYPT_MINROUNDS)
-		goto out;
+		return NULL;
 
 	/* Discard num rounds + "$" identifier */
 	salt += 3;
 
 	if (strlen(salt) * 3 / 4 < BCRYPT_MAXSALT)
-		goto out;
+		return NULL;
 
 	/* We dont want the base64 salt but the raw data */
 	decode_base64(csalt, BCRYPT_MAXSALT, (const u_int8_t *)salt);
 	salt_len = BCRYPT_MAXSALT;
-	key_len = strlen(key) + (minor >= 'a' ? 1 : 0);
+	len = strlen(key);
+	if (len > 253)
+		return NULL;
+	key_len = (uint8_t)len + (minor >= 'a' ? 1 : 0);
 
 	/* Setting up S-Boxes and Subkeys */
 	Blowfish_initstate(&state);
@@ -313,9 +316,6 @@ __bcrypt(key, salt)
 	    4 * BCRYPT_BLOCKS - 1);
 	memset(&state, 0, sizeof(state));
 	return encrypted;
-out:
-	/* How do I handle errors ? Return "*0" or "*1" */
-	return __UNCONST(salt[0] == '*' && salt[1] == '0' ? "*1" : "*0");
 }
 
 static void
