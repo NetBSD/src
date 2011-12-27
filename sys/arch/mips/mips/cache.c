@@ -1191,10 +1191,10 @@ mips_config_cache_modern(uint32_t cpu_id)
 			mci->mci_pdcache_write_through = true;
 			mci->mci_sdcache_write_through = false;
 			KASSERT(PAGE_SIZE >= mci->mci_picache_way_size
-			    || mci->mci_icache_virtual_alias);
+			    || MIPS_ICACHE_VIRTUAL_ALIAS);
 		} else {
-			KASSERT(mci->mci_icache_virtual_alias == 0);
-			KASSERT(mci->mci_icache_virtual_alias == 0);
+			KASSERT(MIPS_CACHE_VIRTUAL_ALIAS == 0);
+			KASSERT(MIPS_ICACHE_VIRTUAL_ALIAS == 0);
 		}
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	} else if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_MTI) {
