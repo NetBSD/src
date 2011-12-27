@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.12 2011/12/27 19:36:10 christos Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.13 2011/12/27 22:01:26 christos Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.12 2011/12/27 19:36:10 christos Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.13 2011/12/27 22:01:26 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -315,7 +315,7 @@ __bcrypt(key, salt)
 	return encrypted;
 out:
 	/* How do I handle errors ? Return "*0" or "*1" */
-	return __UNCONST(salt[0] == '*' && salt[1] == '\0' ? "*1" : "*0");
+	return __UNCONST(salt[0] == '*' && salt[1] == '0' ? "*1" : "*0");
 }
 
 static void
