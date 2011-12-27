@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.24.2 2011/12/24 00:45:00 matt Exp $
+#	$NetBSD: Makefile,v 1.2.24.3 2011/12/27 17:35:41 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -28,6 +28,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 
 MAKEDEVTARGETS= std md0 wd0 wd1 wd2 wd3 cd0 cd1 sd0 sd1 sd2 sd3 st0 pty0 ttyv0
 MAKEDEVTARGETS+= ld0 ld1
+MAKEDEVTARGETS+= flash0 flash1 flash2 flash3
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
