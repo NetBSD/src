@@ -1069,6 +1069,31 @@ rmixlp_physaddr_srio_mem_init(struct extent *ext)
 	rmixl_physaddr_add(ext, "sriomem", &rcp->rc_srio_mem, xbase, xsize);
 }
 
+static void
+rmixlp_physaddr_nor_init(struct extent *ext)
+{
+	struct rmixl_config * const rcp = &rmixl_configuration;
+	for (size_t i = 0; i < RMIXLP_NOR_NCS; i++) {
+		uint64_t xbase = RMIXLP_NOR_CS_ADDRESS_TO_PA(
+		    rmixlp_read_4(RMIXLP_NOR_PCITAG,
+			RMIXLP_NOR_CS_BASEADDRESSn(i)));
+		uint64_t xlimit = RMIXLP_NOR_CS_ADDRESS_TO_PA(
+		    rmixlp_read_4(RMIXLP_NOR_PCITAG,
+			RMIXLP_NOR_CS_BASELIMITn(i)));
+
+		if (xlimit < xbase || xbase == 0)
+			continue;	/* not enabled */
+
+		uint64_t xsize = RMIXLP_NOR_CS_SIZE(xbase, xlimit);
+
+		DPRINTF("%s: %s %zu: %#"PRIx64":%"PRIu64" MB\n", __func__,
+		    "nor", i, xbase, xsize >> 20);
+
+		rmixl_physaddr_add(ext, "nor", &rcp->rc_pci_link_io[i],
+		    xbase, xsize);
+	}
+}
+
 static uint64_t
 rmixlp_physaddr_dram_init(struct extent *ext)
 {
@@ -1180,6 +1205,7 @@ rmixl_physaddr_init(void)
 		rmixlp_physaddr_pcie_mem_init(ext);
 		rmixlp_physaddr_pcie_io_init(ext);
 		rmixlp_physaddr_srio_mem_init(ext);
+		rmixlp_physaddr_nor_init(ext);
 #else
 		memsize = 0;
 #endif /* MIPS64_XLP */
