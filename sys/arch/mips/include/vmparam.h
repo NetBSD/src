@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.24 2011/12/27 01:56:33 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.25 2011/12/27 16:09:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,7 +54,10 @@
  * We normally use a 4K page but may use 8K, 16K, or 32K on MIPS systems.
  * Override PAGE_* definitions to compile-time constants.
  */
-#if defined(_KERNEL_OPT) && defined(_KERNEL) && !defined(_MODULE)
+#if defined(_RUMPKERNEL)
+#define	PAGE_SHIFT	12
+#elif defined(_KERNEL_OPT) && defined(_KERNEL) \
+      && !defined(_MODULE) && !defined(_LKM)
 #ifdef MIPS_PAGE_SHIFT
 #define	PAGE_SHIFT	MIPS_PAGE_SHIFT
 #else
@@ -165,15 +168,14 @@
  * These are negative addresses since MIPS addresses are signed.
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
+#define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #ifdef _LP64
 #define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << (4*PGSHIFT-8))
 							/* 0x0000010000000000 */
-#define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 3L << 62)	/* 0xC000000000000000 */
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t) -1L << 31)	/* 0xFFFFFFFF80000000 */
 #else
-#define VM_MAXUSER_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
-#define VM_MAX_ADDRESS		((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
+#define VM_MAXUSER_ADDRESS	((vaddr_t)0x80000000)	/* 0x0000000080000000 */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)-0x40000000)	/* 0xFFFFFFFFC0000000 */
 #ifdef ENABLE_MIPS_TX3900
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x01000000)	/* 0xFFFFFFFFFF000000 */
