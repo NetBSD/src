@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.18 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.19 2011/12/27 16:07:34 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.18 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.19 2011/12/27 16:07:34 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -388,7 +388,7 @@ rmixl_pcie_attach(device_t parent, device_t self, void *aux)
 		    __func__, rcp->rc_pci_ecfg.r_pbase,
 		    rcp->rc_pci_ecfg.r_size / 2);
 
-	sc->sc_pci_ecfg_memh = rcp->rc_pci_ecfg_memh;
+	sc->sc_pci_ecfg_memh = rcp->rc_pci_ecfg_el_memh;
 #else
 	printf("%s: skipping mapping of pci ECFG LE registers "
 	    "(base=%#"PRIxBUSADDR" size=%#"PRIxBUSSIZE")\n",
