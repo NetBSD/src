@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.82 2011/12/25 21:10:00 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.83 2011/12/27 14:55:31 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2011/12/25 21:10:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2011/12/27 14:55:31 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -647,9 +647,6 @@ pmap_page_deactivate(struct pv_entry *pv)
 	vaddr_t va = pv->pv_lpn * PAGE_SIZE + VM_MIN_ADDRESS; /* L->V */
 	uint32_t map_flags;
 	void *addr;
-
-	if (pv->pv_vflags & PV_WIRED)
-		return;
 
 	map_flags = THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED;
 	addr = thunk_mmap((void *) va, PAGE_SIZE, THUNK_PROT_NONE,

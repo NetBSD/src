@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.56 2011/12/24 12:23:24 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.57 2011/12/27 14:55:31 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2011/12/24 12:23:24 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57 2011/12/27 14:55:31 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -379,16 +379,25 @@ cpu_initclocks(void)
 void
 cpu_startup(void)
 {
+	vaddr_t minaddr, maxaddr;
 	size_t stacksize, msgbufsize = 32 * 1024;
 	void *stack_pagefault_ucp;
 
+	/* get ourself a message buffer */
 	um_msgbuf = kmem_zalloc(msgbufsize, KM_SLEEP);
 	if (um_msgbuf == NULL)
 		panic("couldn't allocate msgbuf");
 	initmsgbuf(um_msgbuf, msgbufsize);
 
+	/* allocate a submap for physio, 1Mb enough? */
+	minaddr = 0;
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   1024 * 1024, 0, false, NULL);
+
+	/* say hi! */
 	banner();
 
+	/* init lwp0 */
 	memset(&lwp0pcb, 0, sizeof(lwp0pcb));
 	if (thunk_getcontext(&lwp0pcb.pcb_ucp))
 		panic("getcontext failed");
