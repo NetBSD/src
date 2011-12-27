@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.20 2011/12/27 07:45:41 cherry Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.21 2011/12/27 07:47:00 cherry Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.20 2011/12/27 07:45:41 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.21 2011/12/27 07:47:00 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
 
 	xen_atomic_set_bit(&s->evtchn_pending[0], ev);
 
-	if (__predict_true(ci == curcpu())) {
+	if (__predict_false(ci == curcpu())) {
 		xen_atomic_set_bit(&vci->evtchn_pending_sel,
 		    ev >> LONG_SHIFT);
 		xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
