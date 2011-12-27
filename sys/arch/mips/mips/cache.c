@@ -1006,18 +1006,22 @@ mips_config_cache_modern(uint32_t cpu_id)
 
 	switch (mci->mci_picache_line_size) {
 	case 16:
-		mco->mco_icache_sync_all = mipsNN_icache_sync_all_16;
-		mco->mco_icache_sync_range =
-		    mipsNN_icache_sync_range_16;
-		mco->mco_icache_sync_range_index =
-		    mipsNN_icache_sync_range_index_16;
+		/* used internally by mipsNN_picache_sync_range */
+		mco->mco_intern_icache_sync_range =
+		    cache_r4k_icache_hit_inv_16;
+
+		/* used internally by mipsNN_picache_sync_range_index */
+		mco->mco_intern_icache_sync_range_index =
+		    cache_r4k_icache_index_inv_16;
 		break;
 	case 32:
-		mco->mco_icache_sync_all = mipsNN_icache_sync_all_32;
-		mco->mco_icache_sync_range =
-		    mipsNN_icache_sync_range_32;
-		mco->mco_icache_sync_range_index =
-		    mipsNN_icache_sync_range_index_32;
+		/* used internally by mipsNN_picache_sync_range */
+		mco->mco_intern_icache_sync_range =
+		    cache_r4k_icache_hit_inv_32;
+
+		/* used internally by mipsNN_picache_sync_range_index */
+		mco->mco_intern_icache_sync_range_index =
+		    cache_r4k_icache_index_inv_32;
 		break;
 #ifdef MIPS_DISABLE_L1_CACHE
 	case 0:
@@ -1033,52 +1037,45 @@ mips_config_cache_modern(uint32_t cpu_id)
 		    mci->mci_picache_line_size);
 	}
 
+	mco->mco_icache_sync_all = mipsNN_picache_sync_all;
+	mco->mco_icache_sync_range = mipsNN_picache_sync_range;
+	mco->mco_icache_sync_range_index = mipsNN_picache_sync_range_index;
+
 	switch (mci->mci_pdcache_line_size) {
 	case 16:
-		mco->mco_pdcache_wbinv_all =
-		    mco->mco_intern_pdcache_wbinv_all =
-		    mipsNN_pdcache_wbinv_all_16;
 		mco->mco_pdcache_wbinv_range =
-		    mipsNN_pdcache_wbinv_range_16;
-		mco->mco_pdcache_wbinv_range_index =
-		    mco->mco_intern_pdcache_wbinv_range_index =
-		    mipsNN_pdcache_wbinv_range_index_16;
+		    cache_r4k_pdcache_hit_wb_inv_16;
 		mco->mco_pdcache_inv_range =
-		    mipsNN_pdcache_inv_range_16;
+		    cache_r4k_pdcache_hit_inv_16;
 		mco->mco_pdcache_wb_range =
-		    mco->mco_intern_pdcache_wb_range =
-		    mipsNN_pdcache_wb_range_16;
+		    cache_r4k_pdcache_hit_wb_16;
+
+		/* used internally by mipsNN_pdcache_wbinv_range_index */
+		mco->mco_intern_pdcache_wbinv_range_index =
+		    cache_r4k_pdcache_index_wb_inv_16;
 		break;
 	case 32:
-		mco->mco_pdcache_wbinv_all =
-		    mco->mco_intern_pdcache_wbinv_all =
-		    mipsNN_pdcache_wbinv_all_32;
 		mco->mco_pdcache_wbinv_range =
-		    mipsNN_pdcache_wbinv_range_32;
-		mco->mco_pdcache_wbinv_range_index =
-		    mco->mco_intern_pdcache_wbinv_range_index =
-		    mipsNN_pdcache_wbinv_range_index_32;
+		    cache_r4k_pdcache_hit_wb_inv_32;
 		mco->mco_pdcache_inv_range =
-		    mipsNN_pdcache_inv_range_32;
+		    cache_r4k_pdcache_hit_inv_32;
 		mco->mco_pdcache_wb_range =
-		    mco->mco_intern_pdcache_wb_range =
-		    mipsNN_pdcache_wb_range_32;
+		    cache_r4k_pdcache_hit_wb_32;
+
+		/* used internally by mipsNN_pdcache_wbinv_range_index */
+		mco->mco_intern_pdcache_wbinv_range_index =
+		    cache_r4k_pdcache_index_wb_inv_32;
 		break;
 #ifdef MIPS_DISABLE_L1_CACHE
 	case 0:
 		mco->mco_pdcache_wbinv_all = cache_noop;
-		mco->mco_intern_pdcache_wbinv_all = cache_noop;
 		mco->mco_pdcache_wbinv_range =
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 		mco->mco_pdcache_wbinv_range_index =
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
-		mco->mco_intern_pdcache_wbinv_range_index =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
 		mco->mco_pdcache_inv_range =
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 		mco->mco_pdcache_wb_range =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
-		mco->mco_intern_pdcache_wb_range =
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 		break;
 #endif
@@ -1086,6 +1083,19 @@ mips_config_cache_modern(uint32_t cpu_id)
 		panic("no Dcache ops for %d byte lines",
 		    mci->mci_pdcache_line_size);
 	}
+
+	mco->mco_pdcache_wbinv_all =
+	    mipsNN_pdcache_wbinv_all;
+	mco->mco_pdcache_wbinv_range_index =
+	    mipsNN_pdcache_wbinv_range_index;
+
+	mco->mco_intern_pdcache_sync_all =
+	    mco->mco_pdcache_wbinv_all;
+	mco->mco_intern_pdcache_sync_range_index =
+	    mco->mco_intern_pdcache_wbinv_range_index;
+	mco->mco_intern_pdcache_sync_range =
+	    mco->mco_pdcache_wb_range;
+
 	if (MIPSNN_CFG1_M & cfg1) {
 		uint32_t cfg2 = mipsNN_cp0_config2_read();
 
@@ -1176,7 +1186,7 @@ mips_config_cache_modern(uint32_t cpu_id)
 	 */
 	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_RMI) {
 		mco->mco_pdcache_wb_range = mco->mco_pdcache_wbinv_range;
-		mco->mco_intern_pdcache_wb_range = mco->mco_pdcache_wbinv_range;
+		mco->mco_intern_pdcache_sync_range = mco->mco_pdcache_wbinv_range;
 		if (MIPSNN_GET(CFG_AR, cfg) == MIPSNN_CFG_AR_REV2) {
 			mci->mci_pdcache_write_through = true;
 			mci->mci_sdcache_write_through = false;
@@ -1204,9 +1214,11 @@ mips_config_cache_modern(uint32_t cpu_id)
 				/* Instruction Alias Removal Present */
 				mci->mci_icache_virtual_alias = false;
 			}
+#if 0
 		} else {
 			KASSERT(mci->mci_pdcache_way_size <= PAGE_SIZE);
 			KASSERT(mci->mci_picache_way_size <= PAGE_SIZE);
+#endif
 		}
 #endif
 	}
@@ -1242,11 +1254,11 @@ mips_config_cache_modern(uint32_t cpu_id)
 #ifdef CACHE_DEBUG
 		printf("  Icache is coherent against Dcache\n");
 #endif
-		mco->mco_intern_pdcache_wbinv_all =
+		mco->mco_intern_pdcache_sync_all =
 		    cache_noop;
-		mco->mco_intern_pdcache_wbinv_range_index =
+		mco->mco_intern_pdcache_sync_range_index =
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
-		mco->mco_intern_pdcache_wb_range =
+		mco->mco_intern_pdcache_sync_range =
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 	}
 }
