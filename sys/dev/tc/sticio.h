@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticio.h,v 1.4 2008/04/28 20:23:58 martin Exp $	*/
+/* 	$NetBSD: sticio.h,v 1.4.18.1 2011/12/27 16:24:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ struct stic_xcomm {
  * whole; the combined size is learnt from stic_xinfo::sxi_buf_size.
  */
 struct stic_xmap {
-	u_int8_t	sxm_stic[NBPG];			/* STIC registers */
+	u_int8_t	sxm_stic[4096];			/* STIC registers */
 	u_int8_t	sxm_poll[0xc0000];		/* poll registers */
 	u_int8_t	sxm_xcomm[256 * 1024];		/* X comms area */
 };
