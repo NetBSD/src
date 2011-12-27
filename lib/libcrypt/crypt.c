@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.31 2011/12/27 01:20:45 christos Exp $	*/
+/*	$NetBSD: crypt.c,v 1.32 2011/12/27 23:34:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.31 2011/12/27 01:20:45 christos Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.32 2011/12/27 23:34:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -486,7 +486,7 @@ ascii_to_bin(char ch)
 
 	return retval & 0x3f;
 }
-#include <stdio.h>
+
 /*
  * When we choose to "support" invalid salts, nevertheless disallow those
  * containing characters that would violate the passwd file format.
@@ -501,8 +501,9 @@ ascii_is_unsafe(char ch)
  * Return a pointer to static data consisting of the "setting"
  * followed by an encryption produced by the "key" and "setting".
  */
+char *__crypt(const char *, const char *);
 char *
-crypt(const char *key, const char *setting)
+__crypt(const char *key, const char *setting)
 {
 	char *encp;
 	int32_t i;
@@ -613,6 +614,15 @@ crypt(const char *key, const char *setting)
 	return (cryptresult);
 }
 
+char *
+crypt(const char *key, const char *salt)
+{
+	char *res = __crypt(key, salt);
+	if (res)
+		return res;
+	/* How do I handle errors ? Return "*0" or "*1" */
+	return __UNCONST(salt[0] == '*' && salt[1] == '0' ? "*1" : "*0");
+}
 
 /*
  * The Key Schedule, filled in by des_setkey() or setkey().
