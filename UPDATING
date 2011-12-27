@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.231 2011/11/26 01:20:25 tls Exp $
+$NetBSD: UPDATING,v 1.232 2011/12/27 16:54:51 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20111227:
+	If you built between 20111225 and 20111227 you need to remove
+	/usr/lib/libpam.so.4* and /usr/lib/security/*.so.4, since the
+	bump has been reverted.
 
 20111125:
 	The "rnd" pseudodevice has been added to sys/conf/std, which
