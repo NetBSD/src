@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.22 2011/12/27 19:58:19 matt Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.23 2011/12/28 05:36:11 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,15 +120,15 @@ struct rmixl_region {
 
 struct rmixl_config {
 	struct rmixl_region	rc_io;	
-	struct rmixl_region	rc_flash[4];		/* FLASH_BAR */
+	struct rmixl_region	rc_flash[RMIXLP_SBC_NFLASH]; /* FLASH_BAR */
 	struct rmixl_region	rc_pci_cfg;
 	struct rmixl_region	rc_pci_ecfg;
 	struct rmixl_region	rc_pci_mem;
 	struct rmixl_region	rc_pci_io;
-	struct rmixl_region	rc_pci_link_mem[4];
-	struct rmixl_region	rc_pci_link_io[4];
+	struct rmixl_region	rc_pci_link_mem[RMIXLP_SBC_NPCIE_MEM];
+	struct rmixl_region	rc_pci_link_io[RMIXLP_SBC_NPCIE_IO];
 	struct rmixl_region	rc_srio_mem;
-	struct rmixl_region	rc_norflash[8];		/* XLP 8 CS for NOR */
+	struct rmixl_region	rc_norflash[RMIXLP_NOR_NCS]; /* XLP */
 	struct mips_bus_space	rc_obio_eb_memt; 	/* DEVIO -eb */
 	struct mips_bus_space	rc_obio_el_memt; 	/* DEVIO -el */
 	struct mips_bus_space	rc_iobus_memt; 		/* Peripherals IO Bus */
@@ -164,9 +164,11 @@ struct rmixl_config {
 extern struct rmixl_config rmixl_configuration;
 extern const char *rmixl_cpuname;
 
+extern void rmixl_flash_eb_bus_mem_init(bus_space_tag_t, void *);
+extern void rmixl_flash_el_bus_mem_init(bus_space_tag_t, void *);
+extern void rmixl_iobus_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_obio_eb_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_obio_el_bus_mem_init(bus_space_tag_t, void *);
-extern void rmixl_iobus_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_pci_cfg_el_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_pci_cfg_eb_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_pci_ecfg_el_bus_mem_init(bus_space_tag_t, void *);

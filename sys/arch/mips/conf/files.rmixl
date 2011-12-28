@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.15 2011/12/27 19:58:18 matt Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.16 2011/12/28 05:36:10 matt Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -77,6 +77,8 @@ file    arch/mips/rmi/rmixl_nand_pci.c		xlnand_pci
 device	xlnor { [cs=-1] }
 attach	xlnor at pci with xlnor_pci
 file	arch/mips/rmi/rmixl_nor_pci.c		xlnor_pci
+file    arch/mips/rmi/rmixl_flash_eb_space.c	xlnor_pci
+file    arch/mips/rmi/rmixl_flash_el_space.c	xlnor_pci
 
 device	cfi: norbus
 attach	cfi at xliobus with cfi_iobus
