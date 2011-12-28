@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.14 2011/12/27 23:33:41 christos Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.15 2011/12/28 03:12:38 christos Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.14 2011/12/27 23:33:41 christos Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.15 2011/12/28 03:12:38 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -269,9 +269,11 @@ __bcrypt(key, salt)
 	decode_base64(csalt, BCRYPT_MAXSALT, (const u_int8_t *)salt);
 	salt_len = BCRYPT_MAXSALT;
 	len = strlen(key);
-	if (len > 253)
-		return NULL;
-	key_len = (uint8_t)len + (minor >= 'a' ? 1 : 0);
+	if (len > 72)
+		key_len = 72;
+	else
+		key_len = (uint8_t)len;
+	key_len += minor >= 'a' ? 1 : 0;
 
 	/* Setting up S-Boxes and Subkeys */
 	Blowfish_initstate(&state);
