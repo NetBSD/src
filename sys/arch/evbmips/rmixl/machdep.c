@@ -615,6 +615,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	 */
 	boothowto = RB_AUTOBOOT;
 	// boothowto |= AB_VERBOSE;
+	// boothowto |= AB_DEBUG;
 	if (!uboot_p) {
 		for (int i = 1; i < argc; i++) {
 			for (char *cp = (char *)(intptr_t)argv[i]; *cp; cp++) {
