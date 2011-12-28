@@ -1,4 +1,4 @@
-/*  $NetBSD: fuse.h,v 1.4 2011/06/28 16:19:16 manu Exp $ */
+/*  $NetBSD: fuse.h,v 1.5 2011/12/28 17:33:53 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -169,6 +169,7 @@ enum fuse_opcode {
 	FUSE_DESTROY       = 38,
 	FUSE_IOCTL         = 39,
 	FUSE_POLL          = 40,
+	FUSE_OPCODE_MAX,
 
 	FUSE_CUSE_INIT     = 4096
 };

@@ -1,4 +1,4 @@
-/*  $NetBSD: debug.c,v 1.5 2010/10/03 05:46:47 manu Exp $ */
+/*  $NetBSD: debug.c,v 1.6 2011/12/28 17:33:52 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -26,9 +26,11 @@
  */ 
 
 #include <puffs.h>
+#include <stdio.h>
 #include <sys/types.h>
 
 #include "perfuse_if.h"
+#include "perfuse_priv.h"
 #include "fuse.h"
 
 struct perfuse_opcode {
@@ -100,4 +102,117 @@ perfuse_opname(opcode)
 	}
 
 	return po->opname; /* "UNKNOWN" */
+}
+
+char *
+perfuse_opdump_in(ps, pm)
+	struct perfuse_state *ps;
+	perfuse_msg_t *pm;
+{
+	struct fuse_in_header *fih;
+	static char buf[BUFSIZ] = "";
+
+	fih = GET_INHDR(ps, pm);
+
+	switch(fih->opcode) {
+	case FUSE_LOOKUP: 
+		(void)snprintf(buf, sizeof(buf), "path = \"%s\"", 
+			       _GET_INPAYLOAD(ps, pm, const char *));
+		break;
+	default:
+		buf[0] = '\0';
+		break;
+	}
+
+	return buf;
+}
+
+void
+perfuse_trace_dump(pu, fp)
+	struct puffs_usermount *pu;
+	FILE *fp;
+{
+	struct perfuse_state *ps;
+	struct perfuse_trace *pt;
+	struct timespec ts_min[FUSE_OPCODE_MAX];
+	struct timespec ts_max[FUSE_OPCODE_MAX];
+	struct timespec ts_total[FUSE_OPCODE_MAX];
+	int count[FUSE_OPCODE_MAX];
+	uint64_t avg;
+	int i;
+
+	if (!(perfuse_diagflags & PDF_TRACE))
+		return;
+
+	ps = puffs_getspecific(pu);
+
+	(void)ftruncate(fileno(fp), 0);
+	(void)fseek(fp, 0, SEEK_SET);
+
+	(void)memset(&ts_min, 0, sizeof(ts_min));
+	(void)memset(&ts_max, 0, sizeof(ts_max));
+	(void)memset(&ts_total, 0, sizeof(ts_total));
+	(void)memset(&count, 0, sizeof(count));
+
+	fprintf(fp, "Last %"PRId64" operations\n", ps->ps_tracecount);
+
+	TAILQ_FOREACH(pt, &ps->ps_trace, pt_list) {
+		const char *quote = pt->pt_path[0] != '\0' ? "\"" : "";
+
+		fprintf(fp, "%lu.%09ld %s %s%s%s %s ",  
+			pt->pt_start.tv_sec, pt->pt_start.tv_nsec,
+			perfuse_opname(pt->pt_opcode),
+			quote, pt->pt_path, quote,
+			pt->pt_extra);
+
+		if (pt->pt_status == done) {
+			struct timespec ts;
+
+			ts.tv_sec = 0;	/* delint */
+			ts.tv_nsec = 0;	/* delint */
+			timespecsub(&pt->pt_end, &pt->pt_start, &ts);
+
+			fprintf(fp, "error = %d elapsed = %lu.%09lu ",
+				pt->pt_error, ts.tv_sec, ts.tv_nsec);
+
+			count[pt->pt_opcode]++;
+			timespecadd(&ts_total[pt->pt_opcode],
+				    &ts,
+				    &ts_total[pt->pt_opcode]);
+
+			if (timespeccmp(&ts, &ts_min[pt->pt_opcode], <) ||
+			    (count[pt->pt_opcode] == 1))
+				ts_min[pt->pt_opcode] = ts;
+
+			if (timespeccmp(&ts, &ts_max[pt->pt_opcode], >))
+				ts_max[pt->pt_opcode] = ts;
+		} else {
+			fprintf(fp, "ongoing ");
+		}
+
+		fprintf(fp, "\n");
+	}
+
+	fprintf(fp, "\nStatistics by operation\n");
+	fprintf(fp, "operation\tcount\tmin\tavg\tmax\n");
+	for (i = 0; i < FUSE_OPCODE_MAX; i++) {
+		time_t min;
+
+		if (count[i] != 0) {
+			avg = timespec2ns(&ts_total[i]) / count[i];
+			min = ts_min[i].tv_sec;
+		} else {
+			avg = 0;
+			min = 0;
+		}
+			
+		fprintf(fp, "%s\t%d\t%ld.%09ld\t%ld.%09ld\t%ld.%09ld\t\n",
+			perfuse_opname(i), count[i],
+			min, ts_min[i].tv_nsec,
+			(time_t)(avg / 1000000000L), (long)(avg % 1000000000L),
+			ts_max[i].tv_sec, ts_max[i].tv_nsec);
+	}	
+	
+	(void)fflush(fp);
+	return;
 }
