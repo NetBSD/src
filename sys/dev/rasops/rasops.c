@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.67 2011/12/22 04:52:45 macallan Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.68 2011/12/28 08:36:46 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.67 2011/12/22 04:52:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.68 2011/12/28 08:36:46 macallan Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -809,9 +809,12 @@ rasops_init_devcmap(struct rasops_info *ri)
 		return;
 
 	case 8:
-		for (i = 0; i < 16; i++)
-			ri->ri_devcmap[i] = i | (i<<8) | (i<<16) | (i<<24);
-		return;
+		if ((ri->ri_flg & RI_8BIT_IS_RGB) == 0) {
+			for (i = 0; i < 16; i++)
+				ri->ri_devcmap[i] =
+				    i | (i<<8) | (i<<16) | (i<<24);
+			return;
+		}
 	}
 
 	p = rasops_cmap;
