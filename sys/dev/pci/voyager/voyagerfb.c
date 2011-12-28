@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.14 2011/12/27 07:05:53 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.15 2011/12/28 18:23:01 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.14 2011/12/27 07:05:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.15 2011/12/28 18:23:01 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -838,49 +838,51 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct voyagerfb_softc *sc = scr->scr_cookie;
 	uint32_t cmd;
+	int fg, bg, uc;
+	uint8_t *data;
+	int x, y, wi, he;
 
-	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
-		int fg, bg, uc;
-		uint8_t *data;
-		int x, y, wi, he;
-		wi = font->fontwidth;
-		he = font->fontheight;
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
+		return;
+		
+	if (!CHAR_IN_FONT(c, font))
+		return;
 
-		if (!CHAR_IN_FONT(c, font))
-			return;
-		bg = ri->ri_devcmap[(attr >> 16) & 0x0f];
-		fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
-		x = ri->ri_xorigin + col * wi;
-		y = ri->ri_yorigin + row * he;
-		if (c == 0x20) {
-			voyagerfb_rectfill(sc, x, y, wi, he, bg);
-			return;
-		}
-		uc = c - font->firstchar;
-		data = (uint8_t *)font->data + uc * ri->ri_fontscale;
-		if (font->stride < font->fontwidth) {
-			/* this is a mono font */
-			cmd = ROP_COPY |
-			      SM502_CTRL_USE_ROP2 |
-			      SM502_CTRL_CMD_HOSTWRT |
-			      SM502_CTRL_HOSTBLT_MONO |
-			      SM502_CTRL_QUICKSTART_E | 
-			      SM502_CTRL_MONO_PACK_32BIT;
-			voyagerfb_ready(sc);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh,
-			    SM502_CONTROL, cmd);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    SM502_FOREGROUND, fg);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    SM502_BACKGROUND, bg);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh,
-			    SM502_SRC, 0);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh,
-			    SM502_DST, (x << 16) | y);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh,
-			    SM502_DIMENSION, (wi << 16) | he);
-			/* now feed the data, padded to 32bit */
-			switch (ri->ri_font->stride) {
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0x0f];
+	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+	if (c == 0x20) {
+		voyagerfb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+	uc = c - font->firstchar;
+	data = (uint8_t *)font->data + uc * ri->ri_fontscale;
+	if (font->stride < font->fontwidth) {
+		/* this is a mono font */
+		cmd = ROP_COPY |
+		      SM502_CTRL_USE_ROP2 |
+		      SM502_CTRL_CMD_HOSTWRT |
+		      SM502_CTRL_HOSTBLT_MONO |
+		      SM502_CTRL_QUICKSTART_E | 
+		      SM502_CTRL_MONO_PACK_32BIT;
+		voyagerfb_ready(sc);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    SM502_CONTROL, cmd);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    SM502_FOREGROUND, fg);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    SM502_BACKGROUND, bg);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_SRC, 0);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    SM502_DST, (x << 16) | y);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    SM502_DIMENSION, (wi << 16) | he);
+		/* now feed the data, padded to 32bit */
+		switch (ri->ri_font->stride) {
 			case 1:
 				voyagerfb_feed8(sc, data, ri->ri_fontscale);
 				break;
@@ -889,38 +891,40 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 				    ri->ri_fontscale);
 				break;
 			
-			}	
-		} else {
-			/*
-			 * alpha font
-			 * we can't accelerate the actual alpha blending but
-			 * we can at least use a host blit to go through the
-			 * pipeline instead of having to sync the engine
-			 */
-			int i, r, g, b, aval;
-			int rf, gf, bf, rb, gb, bb;
-			uint32_t pixel;
+		}	
+	} else {
+		/*
+		 * alpha font
+		 * we can't accelerate the actual alpha blending but
+		 * we can at least use a host blit to go through the
+		 * pipeline instead of having to sync the engine
+		 */
+		int i, j, r, g, b, aval, pad;
+		int rf, gf, bf, rb, gb, bb;
+		uint32_t pixel;
 
-			cmd = ROP_COPY |
-			      SM502_CTRL_USE_ROP2 |
-			      SM502_CTRL_CMD_HOSTWRT |
-			      SM502_CTRL_QUICKSTART_E;
-			voyagerfb_ready(sc);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh,
-			    SM502_CONTROL, cmd);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh,
-			    SM502_SRC, 0);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh,
-			    SM502_DST, (x << 16) | y);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh,
-			    SM502_DIMENSION, (wi << 16) | he);
-			rf = (fg >> 16) & 0xff;
-			rb = (bg >> 16) & 0xff;
-			gf = (fg >> 8) & 0xff;
-			gb = (bg >> 8) & 0xff;
-			bf =  fg & 0xff;
-			bb =  bg & 0xff;
-			for (i = 0; i < wi * he; i++) {
+		cmd = ROP_COPY |
+		      SM502_CTRL_USE_ROP2 |
+		      SM502_CTRL_CMD_HOSTWRT |
+		      SM502_CTRL_QUICKSTART_E;
+		voyagerfb_ready(sc);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    SM502_CONTROL, cmd);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    SM502_SRC, 0);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    SM502_DST, (x << 16) | y);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    SM502_DIMENSION, (wi << 16) | he);
+		rf = (fg >> 16) & 0xff;
+		rb = (bg >> 16) & 0xff;
+		gf = (fg >> 8) & 0xff;
+		gb = (bg >> 8) & 0xff;
+		bf =  fg & 0xff;
+		bb =  bg & 0xff;
+		pad = wi & 1;
+		for (i = 0; i < he; i++) {
+			for (j = 0; j < wi; j++) {
 				aval = *data;
 				data++;
 				if (aval == 0) {
@@ -938,6 +942,9 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 				bus_space_write_4(sc->sc_memt, sc->sc_regh,
 				    SM502_DATAPORT, pixel);
 			}
+			if (pad)
+				bus_space_write_4(sc->sc_memt, sc->sc_regh,
+				    SM502_DATAPORT, 0);
 		}
 	}
 }
