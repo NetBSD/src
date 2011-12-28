@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81.2.6 2011/12/28 13:20:19 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.7 2011/12/28 13:21:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.6 2011/12/28 13:20:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.7 2011/12/28 13:21:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,10 +430,6 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 	mutex_exit(&uvm_pageqlock);
 	**output = pg;
 	(*output)++;
-
-	/* unlock and return success */
-	if (pg->uobject != NULL)
-		mutex_exit(pg->uobject->vmobjlock);
 
 	ucpu = uvm_cpu_get();
 	if (pg->uobject != NULL) {
