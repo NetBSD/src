@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.23 2011/10/30 05:11:37 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.24 2011/12/28 17:33:53 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -37,6 +37,19 @@
 #include "perfuse_if.h"
 #include "fuse.h"
 
+#define PERFUSE_TRACECOUNT_MAX 4096
+#define PERFUSE_TRACEPATH_MAX 256
+struct perfuse_trace {
+	int pt_opcode;
+	char pt_path[PERFUSE_TRACEPATH_MAX];
+	char pt_extra[BUFSIZ];
+	int pt_error;
+	enum { inxchg, done } pt_status;
+	struct timespec pt_start;
+	struct timespec pt_end;
+	TAILQ_ENTRY(perfuse_trace) pt_list;
+};
+
 struct perfuse_state {
 	void *ps_private;	/* Private field for libperfuse user */
 	struct puffs_usermount *ps_pu;
@@ -66,6 +79,8 @@ struct perfuse_state {
 	perfuse_get_outhdr_fn ps_get_outhdr;
 	perfuse_get_outpayload_fn ps_get_outpayload;
 	perfuse_umount_fn ps_umount;
+	TAILQ_HEAD(,perfuse_trace) ps_trace;
+	uint64_t ps_tracecount;
 };
 
 
@@ -236,6 +251,8 @@ int perfuse_node_listextattr(struct puffs_usermount *, puffs_cookie_t,
     int, size_t *, uint8_t *, size_t *, int, const struct puffs_cred *);
 int perfuse_node_deleteextattr(struct puffs_usermount *, puffs_cookie_t,
     int, const char *, const struct puffs_cred *);
+
+char *perfuse_opdump_in(struct perfuse_state *, perfuse_msg_t *);
 
 __END_DECLS
 
