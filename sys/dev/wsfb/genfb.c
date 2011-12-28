@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.43 2011/12/22 04:53:43 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.44 2011/12/28 18:37:58 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.43 2011/12/22 04:53:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.44 2011/12/28 18:37:58 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,6 +266,11 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+
+	if (crow >= ri->ri_rows) {
+		crow = 0;
+		sc->sc_want_clear = 1;
+	}
 
 	if (console)
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, crow,
