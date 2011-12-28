@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.51 2011/12/22 05:01:15 macallan Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.52 2011/12/28 18:29:48 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.51 2011/12/22 05:01:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.52 2011/12/28 18:29:48 macallan Exp $");
 
 #include "opt_wsfont.h"
 
@@ -121,6 +121,10 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.51 2011/12/22 05:01:15 macallan Exp $")
 
 #ifdef FONT_DROID_SANS_MONO12x22
 #include <dev/wsfont/Droid_Sans_Mono_12x22.h>
+#endif
+
+#ifdef FONT_DROID_SANS_MONO9x18
+#include <dev/wsfont/Droid_Sans_Mono_9x18.h>
 #endif
 
 #ifdef FONT_FREEMONO12x22
@@ -215,6 +219,9 @@ static struct font builtin_aa_fonts[] = {
 #endif
 #ifdef FONT_DROID_SANS_MONO12x22
 	{ { NULL, NULL }, &Droid_Sans_Mono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_DROID_SANS_MONO9x18
+	{ { NULL, NULL }, &Droid_Sans_Mono_9x18, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_FREEMONO12x22
 	{ { NULL, NULL }, &FreeMono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
