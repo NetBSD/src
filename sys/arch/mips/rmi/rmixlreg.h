@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.14 2011/12/27 19:58:19 matt Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.15 2011/12/28 05:36:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -1462,7 +1462,7 @@
 #define	RMIXLP_NOR_NCS			8
 #define	RMIXLP_NOR_CS_BASEADDRESSn(n)	_RMIXL_OFFSET(0x40+(n))
 #define	RMIXLP_NOR_CS_BASELIMITn(n)	_RMIXL_OFFSET(0x48+(n))
-#define	RMIXLP_NOR_CS_DEVPARAMn(n)	_RMIXL_OFFSET(0x50+(n))
+#define	RMIXLP_NOR_CS_DEVPARMn(n)	_RMIXL_OFFSET(0x50+(n))
 #define	RMIXLP_NOR_CS_DEVTIME0n(n)	_RMIXL_OFFSET(0x58+2*(n))
 #define	RMIXLP_NOR_CS_DEVTIME1n(n)	_RMIXL_OFFSET(0x59+2*(n))
 #define	RMIXLP_NOR_SYSCTRL		_RMIXL_OFFSET(0x68)
@@ -1482,46 +1482,46 @@
 	// Interface Byte signal Enable.
 	//   0:	Disables programmable data width selection
 	//   1: Enables programmable data width selection
-#define RMIXLP_NOR_DEVPARAM_BE		__BIT(16)
+#define RMIXLP_NOR_CS_DEVPARM_BE		__BIT(16)
 	// Little Endian.
 	//   0:Big Endian
 	//   1:Little Endian
-#define RMIXLP_NOR_DEVPARAM_LE		__BIT(13)
-#define RMIXLP_NOR_DEVPARAM_DW		__BITS(12:11) // Device Data Width
-#define RMIXLP_NOR_DEVPARAM_DW_8_BITS	0
-#define RMIXLP_NOR_DEVPARAM_DW_16_BITS	1
-#define RMIXLP_NOR_DEVPARAM_DW_32_BITS	2
+#define RMIXLP_NOR_CS_DEVPARM_LE		__BIT(13)
+#define RMIXLP_NOR_CS_DEVPARM_DW		__BITS(12,11) // Device Data Width
+#define RMIXLP_NOR_CS_DEVPARM_DW_8_BITS		0
+#define RMIXLP_NOR_CS_DEVPARM_DW_16_BITS	1
+#define RMIXLP_NOR_CS_DEVPARM_DW_32_BITS	2
 	// Multiplexed/non-multiplexed device data/address mode
 	//   0:Non-multiplexed (only valid if field DW is set to 0)
 	//   1:Multiplexed data and address bus
-#define RMIXLP_NOR_DEVPARAM_MUX		__BIT(10)
+#define RMIXLP_NOR_CS_DEVPARM_MUX		__BIT(10)
 	// Wait/Ready signal Polarity
 	//   0:Wait active high
 	//   1:Wait active low
-#define RMIXLP_NOR_DEVPARAM_WRP		__BIT(9)
+#define RMIXLP_NOR_CS_DEVPARM_WRP		__BIT(9)
 	// Wait/ready signal Write interface Enable.
 	// Enables/disables wait-acknowledge mode during write cycles.
 	//   0: Enable device Wait mode. External IO_WAIT_L signal is used.
 	//   1: Disable Wait mode; external IO_WAIT_L signal is not used.
-#define RMIXLP_NOR_DEVPARAM_WWE		__BIT(8)
+#define RMIXLP_NOR_CS_DEVPARM_WWE		__BIT(8)
 	// Wait/Ready signal Read interface Enable.
 	// Enables/disables wait-acknowledge mode during read cycles.
 	//   0: Enable device Wait mode. External IO_WAIT_L signal is used.
 	//   1: Disable Wait mode; external IO_WAIT_L signal is not used.
 	//	This signal is distinct from the RYBY (Ready/Busy) signal,
 	//	which is shared by all Flash devices.
-#define RMIXLP_NOR_DEVPARAM_WRE		__BIT(7)
+#define RMIXLP_NOR_CS_DEVPARM_WRE		__BIT(7)
 	// Synchronous Read Data Burst Enabled (when set to 1).
-#define RMIXLP_NOR_DEVPARAM_SRDBE	__BIT(5)
+#define RMIXLP_NOR_CS_DEVPARM_SRDBE		__BIT(5)
 	// Word-align Address.
 	// If set to 1, address bits are word-aligned.
 	// This allows address bits of a 16-bit Flash device to connect to XLP
 	// address bits [24:1] instead of [23:0] or the address bits of a 32-bit
 	// Flash device to connect to XLP address bits [25:2] instead of [23:0].
-#define RMIXLP_NOR_DEVPARAM_WA		__BIT(2)
-#define RMIXLP_NOR_DEVPARAM_FLASH_TYPE	__BITS(1:0)	// Flash Type
-#define	RMIXLP_NOR_DEVPARAM_FLASH_TYPE_NOR	0	//   NOR Flash
-#define	RMIXLP_NOR_DEVPARAM_FLASH_TYPE_ONCHIP	1	//   On-chip ROM
+#define RMIXLP_NOR_CS_DEVPARM_WA		__BIT(2)
+#define RMIXLP_NOR_CS_DEVPARM_FLASH_TYPE	__BITS(1,0)	// Flash Type
+#define	RMIXLP_NOR_CS_DEVPARM_FLASH_TYPE_NOR	0	//   NOR Flash
+#define	RMIXLP_NOR_CS_DEVPARM_FLASH_TYPE_ONCHIP	1	//   On-chip ROM
 
 	// CS to CS timing.
 	//   This field indicates the number of clock cycles from the falling
