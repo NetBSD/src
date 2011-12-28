@@ -1,7 +1,7 @@
-# $NetBSD: XLPEVB32,v 1.1.2.1 2011/12/24 01:42:48 matt Exp $
+# $NetBSD: XLPEVB32,v 1.1.2.2 2011/12/28 05:38:05 matt Exp $
 #
 
-#ident  	"XLSATX32-$Revision: 1.1.2.1 $"
+#ident  	"XLSATX32-$Revision: 1.1.2.2 $"
 
 include "arch/evbmips/conf/XLPEVB"
 
@@ -11,6 +11,7 @@ options 	PCI_NETBSD_CONFIGURE
 #options 	PCI_CONFIG_DUMP
 options 	PCI_VERBOSE
 #options 	SDMMC_DEBUG
+#options 	CFI_DEBUG_QRY, CFI_DEBUG_JEDEC
 
 makeoptions	LP64="no"
 makeoptions	NEED_BINARY="yes"
