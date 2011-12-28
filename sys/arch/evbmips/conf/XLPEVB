@@ -1,8 +1,8 @@
-#	$NetBSD: XLPEVB,v 1.1.2.2 2011/12/27 20:00:08 matt Exp $
+#	$NetBSD: XLPEVB,v 1.1.2.3 2011/12/28 05:37:26 matt Exp $
 
 include 	"arch/evbmips/conf/std.rmixlp"
 
-#ident 		"XLSATX-$Revision: 1.1.2.2 $"
+#ident 		"XLSATX-$Revision: 1.1.2.3 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -168,7 +168,7 @@ spdmem*		at iic? addr 0x51
 spdmem*		at iic? addr 0x52
 seeprom*	at iic1 addr 0x57 size 2048
 xlnor*		at pci? dev ? function ?
-cfi*		at xlnor? cs ?
+cfi*		at xlnor? cs 0
 nor*		at cfi?
 flash*		at nor?
 xlnand*		at pci? dev ? function ?
