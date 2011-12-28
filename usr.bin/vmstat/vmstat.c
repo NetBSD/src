@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.186.2.2 2011/11/14 14:27:53 yamt Exp $ */
+/* $NetBSD: vmstat.c,v 1.186.2.3 2011/12/28 13:28:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.186.2.2 2011/11/14 14:27:53 yamt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.186.2.3 2011/12/28 13:28:03 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -892,6 +892,7 @@ dosum(void)
 	if (active_kernel) {
 		(void)printf("%9" PRIu64 " pages active\n", uvmexp2.active);
 		(void)printf("%9" PRIu64 " pages inactive\n", uvmexp2.inactive);
+
 		(void)printf("%9" PRIu64 " file pages known clean\n",
 		    uvmexp2.cleanpages);
 		(void)printf("%9" PRIu64 " file pages possibly dirty\n",
@@ -904,6 +905,56 @@ dosum(void)
 		    uvmexp2.possiblydirtyanonpages);
 		(void)printf("%9" PRIu64 " anonymous pages known dirty\n",
 		    uvmexp2.dirtyanonpages);
+
+		(void)printf("%9" PRIu64 " O->K loan\n",
+		    uvmexp2.loan_obj);
+		(void)printf("%9" PRIu64 " O->K unloan\n",
+		    uvmexp2.unloan_obj);
+		(void)printf("%9" PRIu64 " O->K loan resolved on write to O\n",
+		    uvmexp2.loanbreak_obj);
+		(void)printf("%9" PRIu64 " O->K loan resolved on free of O\n",
+		    uvmexp2.loanfree_obj);
+
+		(void)printf("%9" PRIu64 " A->K loan\n",
+		    uvmexp2.loan_anon);
+		(void)printf("%9" PRIu64 " A->K unloan\n",
+		    uvmexp2.unloan_anon);
+		(void)printf("%9" PRIu64 " A->K loan resolved on write to A\n",
+		    uvmexp2.loanbreak_anon);
+		(void)printf("%9" PRIu64 " A->K loan resolved on free of A\n",
+		    uvmexp2.loanfree_anon);
+
+		(void)printf("%9" PRIu64 " O->A->K loan\n",
+		    uvmexp2.loan_oa);
+		(void)printf("%9" PRIu64 " O->A->K unloan\n",
+		    uvmexp2.unloan_oa);
+
+		(void)printf("%9" PRIu64 " O->K loan (zero)\n",
+		    uvmexp2.loan_zero);
+		(void)printf("%9" PRIu64 " O->K unloan (zero)\n",
+		    uvmexp2.unloan_zero);
+
+		(void)printf("%9" PRIu64 " O->A->K loan turned into A->K loan due to write to O\n",
+		    uvmexp2.loanbreak_orphaned);
+		(void)printf("%9" PRIu64 " O->A->K loan turned into A->K loan due to free of O\n",
+		    uvmexp2.loanfree_orphaned);
+		(void)printf("%9" PRIu64 " O->A->K loan turned into O->K loan due to write to A\n",
+		    uvmexp2.loanbreak_orphaned_anon);
+		(void)printf("%9" PRIu64 " O->A->K loan turned into O->K loan due to free of A\n",
+		    uvmexp2.loanfree_orphaned_anon);
+
+		(void)printf("%9" PRIu64 " O->A loan resolved on write to O\n",
+		    uvmexp2.loanbreak_oa_obj);
+		(void)printf("%9" PRIu64 " O->A loan resolved on free of O\n",
+		    uvmexp2.loanfree_oa_obj);
+		(void)printf("%9" PRIu64 " O->A loan resolved on write to A\n",
+		    uvmexp2.loanbreak_oa_anon);
+		(void)printf("%9" PRIu64 " O->A loan resolved on free of A\n",
+		    uvmexp2.loanfree_oa_anon);
+		(void)printf("%9" PRIu64 " O->A loaned page taken over by anon\n",
+		    uvmexp2.loan_resolve_orphan);
+		(void)printf("%9" PRIu64 " O->A loan for read(2)\n",
+		    uvmexp2.loan_obj_read);
 	}
 	(void)printf("%9u pages paging\n", uvmexp.paging);
 	(void)printf("%9u pages wired\n", uvmexp.wired);
