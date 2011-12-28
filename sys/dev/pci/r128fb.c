@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.22 2011/06/29 03:14:36 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.23 2011/12/28 09:29:03 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.22 2011/06/29 03:14:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.23 2011/12/28 09:29:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,14 +274,26 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	ri = &sc->sc_console_screen.scr_ri;
 
 	j = 0;
-	for (i = 0; i < (1 << sc->sc_depth); i++) {
-
-		sc->sc_cmap_red[i] = rasops_cmap[j];
-		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
-		sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
-		r128fb_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1],
-		    rasops_cmap[j + 2]);
-		j += 3;
+	if (sc->sc_depth == 8) {
+		/* generate an r3g3b2 colour map */
+		for (i = 0; i < 256; i++) {
+			sc->sc_cmap_red[i] = i & 0xe0;
+			sc->sc_cmap_green[i] = (i & 0x1c) << 3;
+			sc->sc_cmap_blue[i] = (i & 0x03) << 6;
+			r128fb_putpalreg(sc, i, sc->sc_cmap_red[i],
+				       sc->sc_cmap_green[i],
+				       sc->sc_cmap_blue[i]);
+		}
+	} else {
+		/* steal rasops' ANSI cmap */
+		for (i = 0; i < 256; i++) {
+			sc->sc_cmap_red[i] = rasops_cmap[j];
+			sc->sc_cmap_green[i] = rasops_cmap[j + 1];
+			sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
+			r128fb_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1],
+			    rasops_cmap[j + 2]);
+			j += 3;
+		}
 	}
 
 	if (is_console) {
@@ -504,6 +516,8 @@ r128fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER;
+	if (sc->sc_depth == 8)
+		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 
 	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
@@ -779,72 +793,77 @@ r128fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct r128fb_softc *sc = scr->scr_cookie;
+	void *data;
+	uint32_t fg, bg;
+	int uc, i;
+	int x, y, wi, he, offset;
 
-	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
-		void *data;
-		uint32_t fg, bg;
-		int uc, i;
-		int x, y, wi, he, offset;
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+		return;
 
-		wi = font->fontwidth;
-		he = font->fontheight;
+	if (!CHAR_IN_FONT(c, font))
+		return;
 
-		if (!CHAR_IN_FONT(c, font))
-			return;
-		bg = ri->ri_devcmap[(attr >> 16) & 0xf];
-		fg = ri->ri_devcmap[(attr >> 24) & 0xf];
-		x = ri->ri_xorigin + col * wi;
-		y = ri->ri_yorigin + row * he;
-		if (c == 0x20) {
-			r128fb_rectfill(sc, x, y, wi, he, bg);
-		} else {
-			uc = c - font->firstchar;
-			data = (uint8_t *)font->data + uc * ri->ri_fontscale;
+	wi = font->fontwidth;
+	he = font->fontheight;
 
-			r128fb_wait(sc, 8);
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+	if (c == 0x20) {
+		r128fb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
 
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    R128_DP_GUI_MASTER_CNTL,
-			    R128_GMC_BRUSH_SOLID_COLOR |
-			    R128_GMC_SRC_DATATYPE_MONO_FG_BG |
-			    R128_ROP3_S |
-			    R128_DP_SRC_SOURCE_HOST_DATA |
-			    R128_GMC_DST_CLIPPING |
-			    sc->sc_master_cntl);
+	uc = c - font->firstchar;
+	data = (uint8_t *)font->data + uc * ri->ri_fontscale;
+	if (font->stride < wi) {
+		/* this is a mono bitmap font */
 
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    R128_DP_CNTL, 
-			    R128_DST_Y_TOP_TO_BOTTOM | 
-			    R128_DST_X_LEFT_TO_RIGHT);
+		r128fb_wait(sc, 8);
 
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    R128_DP_SRC_FRGD_CLR, fg);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    R128_DP_SRC_BKGD_CLR, bg);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    R128_DP_GUI_MASTER_CNTL,
+		    R128_GMC_BRUSH_SOLID_COLOR |
+		    R128_GMC_SRC_DATATYPE_MONO_FG_BG |
+		    R128_ROP3_S |
+		    R128_DP_SRC_SOURCE_HOST_DATA |
+		    R128_GMC_DST_CLIPPING |
+		    sc->sc_master_cntl);
 
-			/*
-			 * The Rage 128 doesn't have anything to skip pixels
-			 * when colour expanding but all coordinates
-			 * are signed so we just clip the leading bytes and 
-			 * trailing bits away
-			 */
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    R128_SC_RIGHT, x + wi - 1);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    R128_SC_LEFT, x);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    R128_DP_CNTL, 
+		    R128_DST_Y_TOP_TO_BOTTOM | 
+		    R128_DST_X_LEFT_TO_RIGHT);
 
-			/* needed? */
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    R128_SRC_X_Y, 0);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    R128_DP_SRC_FRGD_CLR, fg);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    R128_DP_SRC_BKGD_CLR, bg);
 
-			offset = 32 - (ri->ri_font->stride << 3);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    R128_DST_X_Y, ((x - offset) << 16) | y);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    R128_DST_WIDTH_HEIGHT, (32 << 16) | he);
+		/*
+		 * The Rage 128 doesn't have anything to skip pixels
+		 * when colour expanding but all coordinates
+		 * are signed so we just clip the leading bytes and 
+		 * trailing bits away
+		 */
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    R128_SC_RIGHT, x + wi - 1);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    R128_SC_LEFT, x);
 
-			r128fb_wait(sc, he);
-			switch (ri->ri_font->stride) {
+		/* needed? */
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_SRC_X_Y, 0);
+
+		offset = 32 - (ri->ri_font->stride << 3);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DST_X_Y,
+		    ((x - offset) << 16) | y);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    R128_DST_WIDTH_HEIGHT, (32 << 16) | he);
+
+		r128fb_wait(sc, he);
+		switch (ri->ri_font->stride) {
 			case 1: {
 				uint8_t *data8 = data;
 				uint32_t reg;
@@ -855,7 +874,7 @@ r128fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 					    R128_HOST_DATA0, reg);
 					data8++;
 				}
-			break;
+				break;
 			}
 			case 2: {
 				uint16_t *data16 = data;
@@ -869,7 +888,87 @@ r128fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 				}
 				break;
 			}
+		}
+	} else {
+		/*
+		 * this is an alpha font
+		 * for now we only support this in 8 bit r3g3b2 colour
+		 */
+		uint32_t latch = 0, bg8, fg8, pixel;
+		int r, g, b, aval;
+		int r1, g1, b1, r0, g0, b0, fgo, bgo;
+		uint8_t *data8 = data;
+
+		r128fb_wait(sc, 5);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    R128_DP_GUI_MASTER_CNTL,
+		    R128_GMC_BRUSH_SOLID_COLOR |
+		    R128_GMC_SRC_DATATYPE_COLOR |
+		    R128_ROP3_S |
+		    R128_DP_SRC_SOURCE_HOST_DATA |
+		    sc->sc_master_cntl);
+
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    R128_DP_CNTL, 
+		    R128_DST_Y_TOP_TO_BOTTOM | 
+		    R128_DST_X_LEFT_TO_RIGHT);
+
+		/* needed? */
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    R128_SRC_X_Y, 0);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    R128_DST_X_Y, (x << 16) | y);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+		    R128_DST_WIDTH_HEIGHT, (wi << 16) | he);
+
+		/*
+		 * we need the RGB colours here, so get offsets into
+		 * rasops_cmap
+		 */
+		fgo = ((attr >> 24) & 0xf) * 3;
+		bgo = ((attr >> 16) & 0xf) * 3;
+
+		r0 = rasops_cmap[bgo];
+		r1 = rasops_cmap[fgo];
+		g0 = rasops_cmap[bgo + 1];
+		g1 = rasops_cmap[fgo + 1];
+		b0 = rasops_cmap[bgo + 2];
+		b1 = rasops_cmap[fgo + 2];
+#define R3G3B2(r, g, b) ((r & 0xe0) | ((g >> 3) & 0x1c) | (b >> 6))
+		bg8 = R3G3B2(r0, g0, b0);
+		fg8 = R3G3B2(r1, g1, b1);
+		for (i = 0; i < ri->ri_fontscale; i++) {
+			aval = *data8;
+			if (aval == 0) {
+				pixel = bg8;
+			} else if (aval == 255) {
+				pixel = fg8;
+			} else {
+				r = aval * r1 + (255 - aval) * r0;
+				g = aval * g1 + (255 - aval) * g0;
+				b = aval * b1 + (255 - aval) * b0;
+				pixel = ((r & 0xe000) >> 8) |
+					((g & 0xe000) >> 11) |
+					((b & 0xc000) >> 14);
 			}
+			latch = (latch << 8) | pixel;
+			/* write in 32bit chunks */
+			if ((i & 3) == 3) {
+				bus_space_write_stream_4(sc->sc_memt,
+				    sc->sc_regh, R128_HOST_DATA0, latch);
+				/*
+				 * not strictly necessary, old data
+				 * should be shifted out 
+				 */
+				latch = 0;
+			}
+			data8++;
+		}
+		/* if we have pixels left in latch write them out */
+		if ((i & 3) != 0) {
+			latch = latch << ((4 - (i & 3)) << 3);	
+			bus_space_write_stream_4(sc->sc_memt, sc->sc_regh,
+					    R128_HOST_DATA0, latch);
 		}
 	}
 }
