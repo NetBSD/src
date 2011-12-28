@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.190.2.3 2011/12/26 16:03:10 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.190.2.4 2011/12/28 13:22:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.190.2.3 2011/12/26 16:03:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.190.2.4 2011/12/28 13:22:47 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -276,6 +276,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 	UVMHIST_FUNC("uvmfault_anonget"); UVMHIST_CALLED(maphist);
 	KASSERT(mutex_owned(anon->an_lock));
 	KASSERT(anon->an_lock == amap->am_lock);
+	KASSERT(amap->am_obj_lock == NULL || mutex_owned(amap->am_obj_lock));
 
 	/* Increment the counters.*/
 	uvmexp.fltanget++;
@@ -297,6 +298,9 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 		 */
 		we_own = false;
 		pg = anon->an_page;
+		KASSERT(pg == NULL || pg->uanon == anon);
+		KASSERT(pg == NULL || pg->uobject == NULL ||
+		    pg->uobject->vmobjlock == amap->am_obj_lock);
 
 		/*
 		 * If there is a resident page and it is loaned, then anon
@@ -1374,7 +1378,8 @@ uvm_fault_upper_loan(
 
 		/* >1 case is already ok */
 		if (anon->an_ref == 1) {
-			struct uvm_object *uobj = anon->an_page->uobject;
+			struct uvm_object * const uobj __unused =
+			    anon->an_page->uobject;
 
 			KASSERT(uobj == NULL ||
 			    uobj->vmobjlock == amap->am_obj_lock);
