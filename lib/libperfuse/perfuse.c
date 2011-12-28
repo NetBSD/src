@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.23 2011/10/30 05:11:37 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.24 2011/12/28 17:33:53 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -64,6 +64,7 @@ init_state(void)
 	(void)memset(ps, 0, sizeof(*ps));
 	ps->ps_max_write = UINT_MAX;
 	ps->ps_max_readahead = UINT_MAX;
+	TAILQ_INIT(&ps->ps_trace);
 	
 	/*
 	 * Most of the time, access() is broken because the filesystem

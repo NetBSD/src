@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.48 2011/12/16 05:34:54 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.49 2011/12/28 17:33:53 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/socket.h>
 #include <sys/socket.h>
 #include <sys/extattr.h>
+#include <sys/time.h>
 #include <machine/vmparam.h>
 
 #include "perfuse_priv.h"
@@ -205,6 +206,8 @@ xchg_msg(pu, opc, pm, len, wait)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
+	struct perfuse_trace *pt = NULL;
+	int opcode;
 	int error;
 
 	ps = puffs_getspecific(pu);
@@ -222,8 +225,61 @@ xchg_msg(pu, opc, pm, len, wait)
 	if (pnd)
 		pnd->pnd_flags |= PND_INXCHG;
 
+	/*
+	 * Record FUSE call start if requested
+	 */
+	opcode = ps->ps_get_inhdr(pm)->opcode;
+	if (perfuse_diagflags & PDF_TRACE) {
+		if ((pt = malloc(sizeof(*pt))) == NULL)
+			DERR(EX_OSERR, "malloc failed");
+
+		pt->pt_opcode = opcode;
+		pt->pt_status = inxchg;
+
+		if (opc == 0)
+			(void)strcpy(pt->pt_path, "");
+		else
+			(void)strlcpy(pt->pt_path, 
+				      perfuse_node_path(opc),
+				      sizeof(pt->pt_path));
+
+		(void)strlcpy(pt->pt_extra,
+			      perfuse_opdump_in(ps, pm),
+			      sizeof(pt->pt_extra));
+
+		if (clock_gettime(CLOCK_REALTIME, &pt->pt_start) != 0)
+			DERR(EX_OSERR, "clock_gettime failed");
+
+		TAILQ_INSERT_TAIL(&ps->ps_trace, pt, pt_list);
+		ps->ps_tracecount++;
+	}
+
+	/*
+	 * Do actual FUSE exchange
+	 */
 	if ((error = ps->ps_xchg_msg(pu, pm, len, wait)) != 0)
 		ps->ps_destroy_msg(pm);
+
+	/*
+	 * Record FUSE call end if requested
+	 */
+	if (perfuse_diagflags & PDF_TRACE) {
+		if (clock_gettime(CLOCK_REALTIME, &pt->pt_end) != 0)
+			DERR(EX_OSERR, "clock_gettime failed");
+
+		pt->pt_status = done;
+		pt->pt_error = error;
+		while (ps->ps_tracecount > PERFUSE_TRACECOUNT_MAX) {
+			struct perfuse_trace *fpt = TAILQ_FIRST(&ps->ps_trace);
+
+			if (fpt->pt_status != done)
+				break;
+
+			TAILQ_REMOVE(&ps->ps_trace, fpt, pt_list);
+			ps->ps_tracecount--;
+			free(fpt);
+		}
+	}
 
 	if (pnd) {
 		pnd->pnd_flags &= ~PND_INXCHG;

@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.16 2011/10/23 05:03:37 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.17 2011/12/28 17:33:53 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -50,10 +50,19 @@
 #include "../../lib/libperfuse/perfuse_if.h"
 #include "perfused.h"
 
+/*
+ * This is used for trace file. of course it will not work if
+ * we ever mount multiple filesystems in a single perfused, 
+ * but it is not sure we will ever want to do that.
+ */
+struct puffs_usermount *perfuse_mount = NULL;
+FILE *perfuse_trace = NULL;
+
 static int access_mount(const char *, uid_t, int);
 static void new_mount(int, int);
 static int parse_debug(char *);
 static void siginfo_handler(int);
+static void sigusr1_handler(int);
 static int parse_options(int, char **);
 static void get_mount_info(int, struct perfuse_mount_info *, int);
 
@@ -267,6 +276,19 @@ new_mount(int fd, int pmnt_flags)
 		DERR(EX_OSERR, "fcntl failed");
 
 	/*
+	 * Setup trace file facility
+	 */
+	perfuse_mount = pu;
+
+	if ((perfuse_trace = fopen(_PATH_VAR_RUN_PERFUSE_TRACE, "w")) == NULL)
+		DERR(EX_OSFILE, 
+		     "could not open \"%s\"",
+		     _PATH_VAR_RUN_PERFUSE_TRACE);
+
+	if (signal(SIGUSR1, sigusr1_handler) != 0)
+		DERR(EX_OSERR, "signal failed");
+
+	/*
 	 * Hand over control to puffs main loop.
 	 */
 	if (perfuse_mainloop(pu) != 0)
@@ -333,6 +355,13 @@ siginfo_handler(int sig)
 	return;
 }
 
+/* ARGSUSED0 */
+static void
+sigusr1_handler(int sig)
+{
+	return perfuse_trace_dump(perfuse_mount, perfuse_trace);
+}
+
 static int
 parse_options(int argc, char **argv)
 {
@@ -341,6 +370,9 @@ parse_options(int argc, char **argv)
 	int retval = -1;
 
 	perfuse_diagflags = PDF_FOREGROUND | PDF_SYSLOG;
+#ifdef PERFUSE_DEBUG
+	perfuse_diagflags |= PDF_TRACE;
+#endif
 
 	while ((ch = getopt(argc, argv, "d:fsi:")) != -1) {
 		switch (ch) {
