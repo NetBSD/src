@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81.2.7 2011/12/28 13:21:27 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.8 2011/12/28 13:24:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.7 2011/12/28 13:21:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.8 2011/12/28 13:24:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1394,6 +1394,23 @@ uvm_loanobj_read(struct vm_map *map, vaddr_t va, size_t len,
 	if (npages > MAXPAGES) {
 		return EINVAL;
 	}
+#if defined(PMAP_PREFER)
+	/*
+	 * avoid creating VAC aliases.
+	 */
+	{
+		const vaddr_t origva = va;
+
+		PMAP_PREFER(off, &va, len, 0);
+		if (va != origva) {
+			/*
+			 * pmap's suggestion was different from the requested
+			 * address.  punt.
+			 */
+			return EINVAL;
+		}
+	}
+#endif /* defined(PMAP_PREFER) */
 retry:
 	vm_map_lock_read(map);
 	if (!uvm_map_lookup_entry(map, va, &entry)) {
