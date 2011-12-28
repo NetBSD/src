@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.20 2005/09/05 03:37:15 hubertf Exp $
+.\"	$NetBSD: crypt.3,v 1.21 2011/12/28 22:15:23 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)crypt.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd September 4, 2005
+.Dd December 28, 2011
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -43,8 +43,8 @@
 .Lb libcrypt
 .Sh SYNOPSIS
 .In unistd.h
-.Ft char
-.Fn *crypt "const char *key" "const char *setting"
+.Ft "char *"
+.Fn crypt "const char *key" "const char *setting"
 .Ft int
 .Fn encrypt "char *block" "int flag"
 .Ft int
@@ -281,7 +281,14 @@ for interpretation.
 .Sh RETURN VALUES
 The function
 .Fn crypt
-returns a pointer to the encrypted value on success and NULL on failure.
+returns a pointer to the encrypted value on success and 
+.Dv *0
+on failure, or
+.Dv *1
+if the
+.Ar setting
+argument was already
+.Dv *0 .
 The functions
 .Fn setkey ,
 .Fn encrypt ,
@@ -352,3 +359,12 @@ a pointer to that object.
 Subsequent calls to
 .Fn crypt
 will modify the same object.
+.Pp
+Before
+.Nx 6
+.Fn crypt
+returned either
+.Dv NULL
+or
+.Dv :
+on error.
