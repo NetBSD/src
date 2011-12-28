@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.2 2011/12/27 16:22:01 matt Exp $	*/
+/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.3 2011/12/28 05:35:06 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.2 2011/12/27 16:22:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.3 2011/12/28 05:35:06 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -118,7 +118,8 @@ static struct rmixlp_pcie_softc {
 
 static int	rmixlp_pcie_match(device_t, cfdata_t, void *);
 static void	rmixlp_pcie_attach(device_t, device_t, void *);
-static void	rmixlp_pcie_bar_alloc(struct rmixl_region *, u_long, u_long);
+static void	rmixlp_pcie_bar_alloc(struct rmixlp_pcie_softc *,
+		    struct rmixl_region *, u_long, u_long);
 static void	rmixlp_pcie_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 
@@ -219,7 +220,7 @@ rmixlp_pcie_attach(device_t parent, device_t self, void *aux)
 	 */
 	rmixlp_pcie_lnkcfg_get(sc);
 
-	aprint_normal_dev(sc->sc_dev, "using link variant %d (system is %d)\n",
+	aprint_debug_dev(sc->sc_dev, "using link variant %d (system is %d)\n",
 	    sc->sc_lnkcfg.lnk_variant, rmixl_xlp_variant);
 	for (size_t port = 0; port < sc->sc_lnkcfg.lnk_ports; port++) {
 		if (sc->sc_lnkcfg.lnk_lanes[port] == 0)
@@ -252,7 +253,7 @@ rmixlp_pcie_attach(device_t parent, device_t self, void *aux)
 			}
 		}
 		if (0)
-			rmixlp_pcie_bar_alloc(&rcp->rc_pci_mem, 256, 1);
+			rmixlp_pcie_bar_alloc(sc, &rcp->rc_pci_mem, 256, 1);
 		rcp->rc_pci_mem.r_pbase = rmixlp_read_4(RMIXLP_EHCI0_PCITAG,
 		    PCI_BAR0) & -8;
 		rcp->rc_pci_mem.r_size = 256 << 20;
@@ -280,7 +281,7 @@ rmixlp_pcie_attach(device_t parent, device_t self, void *aux)
 				rp->r_size = 0;
 			}
 		}
-		// rmixlp_pcie_bar_alloc(&rcp->rc_pci_io, 4, 1);
+		// rmixlp_pcie_bar_alloc(sc, &rcp->rc_pci_io, 4, 1);
 #endif
 		rmixl_pci_bus_io_init(&rcp->rc_pci_iot, rcp);
 	}
@@ -333,7 +334,7 @@ rmixlp_pcie_attach(device_t parent, device_t self, void *aux)
 
 #ifdef PCI_NETBSD_CONFIGURE
 void
-rmixlp_pcie_bar_alloc(struct rmixl_region *rp,
+rmixlp_pcie_bar_alloc(struct rmixlp_pcie_softc *sc, struct rmixl_region *rp,
 	u_long size_mb, u_long align_mb)
 {
 	struct rmixl_config * const rcp = &rmixl_configuration;
@@ -350,7 +351,8 @@ rmixlp_pcie_bar_alloc(struct rmixl_region *rp,
 	const uint64_t pbase = (uint64_t)region_start << 20;
 	const uint64_t limit = pbase + ((uint64_t)(size_mb - 1) << 20);
 
-	printf("%s: pbase=%#"PRIx64" limit=%#"PRIx64" size=%luMB\n",
+	aprint_debug_dev(sc->sc_dev,
+	    "%s: pbase=%#"PRIx64" limit=%#"PRIx64" size=%luMB\n",
 	    __func__, pbase, limit, size_mb);
 
 	rp->r_pbase = pbase;
@@ -424,94 +426,6 @@ rmixlp_pcie_intcfg(struct rmixlp_pcie_softc *sc)
 }
 #endif
 
-#if 0
-static void
-rmixlp_pcie_errata(struct rmixlp_pcie_softc *sc)
-{
-	const mips_prid_t cpu_id = mips_options.mips_cpu_id;
-	u_int rev;
-	u_int lanes;
-	bool e391 = false;
-
-	/*
-	 * 3.9.1 PCIe Link-0 Registers Reset to Incorrect Values
-	 * check if it allies to this CPU implementation and revision
-	 */
-	rev = MIPS_PRID_REV(cpu_id);
-	switch (MIPS_PRID_IMPL(cpu_id)) {
-	case MIPS_XLS104:
-	case MIPS_XLS108:
-		break;
-	case MIPS_XLS204:
-	case MIPS_XLS208:
-		/* stepping A0 is affected */
-		if (rev == 0)
-			e391 = true;
-		break;
-	case MIPS_XLS404LITE:
-	case MIPS_XLS408LITE:
-		break;
-	case MIPS_XLS404:
-	case MIPS_XLS408:
-	case MIPS_XLS416:
-		/* steppings A0 and A1 are affected */
-		if ((rev == 0) || (rev == 1))
-			e391 = true;
-		break;
-	case MIPS_XLS608: 
-	case MIPS_XLS616:
-		break;
-	default:
-		panic("unknown RMI PRID IMPL");
-        }
-
-	/*
-	 * for XLS we only need to check entry #0
-	 * this may need to change for later XL family chips
-	 */
-	lanes = sc->sc_pcie_lnktab.cfg[0].lanes;
-
-	if ((e391 != false) && ((lanes == 2) || (lanes == 4))) {
-		/*
-		 * attempt work around for errata 3.9.1
-		 * "PCIe Link-0 Registers Reset to Incorrect Values"
-		 * the registers are write-once: if the firmware already wrote,
-		 * then our writes are ignored;  hope they did it right.
-		 */
-		uint32_t queuectrl;
-		uint32_t bufdepth;
-#ifdef DIAGNOSTIC
-		uint32_t r;
-#endif
-
-		aprint_normal("%s: attempt work around for errata 3.9.1",
-			device_xname(sc->sc_dev));
-		if (lanes == 4) {
-			queuectrl = 0x00018074;
-			bufdepth  = 0x001901D1;
-		} else {
-			queuectrl = 0x00018036;
-			bufdepth  = 0x001900D9;
-		}
-
-		RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_BE +
-			RMIXL_VC0_POSTED_RX_QUEUE_CTRL, queuectrl);
-		RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_BE +
-			RMIXL_VC0_POSTED_BUFFER_DEPTH, bufdepth);
-
-#ifdef DIAGNOSTIC
-		r = RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_BE +
-			RMIXL_VC0_POSTED_RX_QUEUE_CTRL);
-		printf("\nVC0_POSTED_RX_QUEUE_CTRL %#x\n", r);
-
-		r = RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_BE +
-			RMIXL_VC0_POSTED_BUFFER_DEPTH);
-		printf("VC0_POSTED_BUFFER_DEPTH %#x\n", r);
-#endif
-	}
-}
-#endif
-
 void
 rmixlp_pcie_pc_init(void)
 {
@@ -569,7 +483,8 @@ rmixlp_pcie_link_bar_update(struct rmixlp_pcie_softc *sc, pcitag_t tag)
 	uint32_t iolimit = ((PCI_BRIDGE_GET(STATIO, IOLIMIT, statio) << 12)
 	    | ((PCI_BRIDGE_GET(IOHIGH, LIMIT, iohigh) + 1) << 16)) - 1;
 
-	aprint_normal_dev(sc->sc_dev, "%s[%zu] base=%#x limit=%#x (%s)\n",
+	aprint_verbose_dev(sc->sc_dev,
+	    "%s[%zu] base=%#x limit=%#x (%s)\n",
 	    "pci_io", port, iobase, iolimit,
 	    (iobase <= iolimit ? "enabled" : "disabled"));
 
@@ -586,7 +501,7 @@ rmixlp_pcie_link_bar_update(struct rmixlp_pcie_softc *sc, pcitag_t tag)
 	uint32_t membase = PCI_BRIDGE_GET(MEMORY, BASE, mem) << 20;
 	uint32_t memlimit = ((PCI_BRIDGE_GET(MEMORY, LIMIT, mem) + 1) << 20) - 1;
 
-	aprint_normal_dev(sc->sc_dev, "%s[%zu] base=%#x limit=%#x (%s)\n",
+	aprint_verbose_dev(sc->sc_dev, "%s[%zu] base=%#x limit=%#x (%s)\n",
 	    "pci_mem", port, membase, memlimit,
 	    (membase <= memlimit ? "enabled" : "disabled"));
 
@@ -660,7 +575,7 @@ rmixlp_pcie_configure_bus(struct rmixlp_pcie_softc *sc)
 	 */
 	struct rmixl_config *rcp = &rmixl_configuration;
 
-	aprint_normal_dev(sc->sc_dev, "configuring PCI bus\n");
+	aprint_debug_dev(sc->sc_dev, "configuring PCI bus\n");
 
 	struct extent *ioext = NULL;
 	struct extent *memext = NULL;
