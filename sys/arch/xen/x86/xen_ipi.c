@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.7 2011/12/07 15:47:43 cegger Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.8 2011/12/28 18:59:21 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.7 2011/12/07 15:47:43 cegger Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.8 2011/12/28 18:59:21 cherry Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.7 2011/12/07 15:47:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.8 2011/12/28 18:59:21 cherry Exp $");
 
 #include <sys/types.h>
 
@@ -304,10 +304,8 @@ xen_ipi_hvcb(struct cpu_info *ci, struct intrframe *intrf)
 {
 	KASSERT(ci != NULL);
 	KASSERT(intrf != NULL);
-
-	volatile struct vcpu_info *vci = ci->ci_vcpu;
-
 	KASSERT(ci == curcpu());
-	KASSERT(!vci->evtchn_upcall_mask);
+	KASSERT(!ci->ci_vcpu->evtchn_upcall_mask);
+
 	hypervisor_force_callback();
 }
