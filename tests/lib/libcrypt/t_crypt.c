@@ -1,4 +1,4 @@
-/* $NetBSD: t_crypt.c,v 1.2 2011/12/27 01:24:27 christos Exp $ */
+/* $NetBSD: t_crypt.c,v 1.3 2011/12/28 22:07:40 christos Exp $ */
 
 /*
  * This version is derived from the original implementation of FreeSec
@@ -61,7 +61,7 @@
  *	by now.	 The code requires a 32-bit integer type, though.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_crypt.c,v 1.2 2011/12/27 01:24:27 christos Exp $");
+__RCSID("$NetBSD: t_crypt.c,v 1.3 2011/12/28 22:07:40 christos Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
@@ -125,9 +125,13 @@ ATF_TC_BODY(crypt_salts, tc)
 {
 	for (size_t i = 0; tests[i].hash; i++) {
 		char *hash = crypt(tests[i].pw, tests[i].hash);
-		if (!hash && strlen(tests[i].hash) < 13)
+		if (!hash) {
+			ATF_CHECK_MSG(0, "Test %zu NULL\n", i);
+			continue;
+		}
+		if (strcmp(hash, "*0") == 0 && strlen(tests[i].hash) < 13)
 			continue; /* expected failure */
-		if (!hash || strcmp(hash, tests[i].hash))
+		if (strcmp(hash, tests[i].hash))
 			ATF_CHECK_MSG(0, "Test %zu %s != %s\n",
 			    i, hash, tests[i].hash);
 	}
