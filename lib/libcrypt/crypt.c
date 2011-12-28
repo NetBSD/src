@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.32 2011/12/27 23:34:13 christos Exp $	*/
+/*	$NetBSD: crypt.c,v 1.33 2011/12/28 03:13:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.32 2011/12/27 23:34:13 christos Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.33 2011/12/28 03:13:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -501,8 +501,7 @@ ascii_is_unsafe(char ch)
  * Return a pointer to static data consisting of the "setting"
  * followed by an encryption produced by the "key" and "setting".
  */
-char *__crypt(const char *, const char *);
-char *
+static char *
 __crypt(const char *key, const char *setting)
 {
 	char *encp;
