@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_log.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
+/*	$NetBSD: openpam_log.c,v 1.3 2011/12/28 14:53:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -100,8 +100,8 @@ void
 _openpam_log(int level, const char *func, const char *fmt, ...)
 {
 	va_list ap;
-	char *format;
-	int priority;
+	char *msg;
+	int priority, rv;
 
 	switch (level) {
 	case PAM_LOG_DEBUG:
@@ -120,14 +120,18 @@ _openpam_log(int level, const char *func, const char *fmt, ...)
 		priority = LOG_ERR;
 		break;
 	}
+
 	va_start(ap, fmt);
-	if (asprintf(&format, "in %s(): %s", func, fmt) > 0) {
-		vsyslog(priority, format, ap);
-		FREE(format);
-	} else {
-		vsyslog(priority, fmt, ap);
-	}
+	rv = vasprintf(&msg, fmt, ap);
 	va_end(ap);
+
+	if (rv < 0) {
+		syslog(priority, "Can't format message from %s: %s (%m)",
+		    func, fmt);
+		return;
+	}
+	syslog(priority, "in %s(): %s", func, msg);
+	FREE(msg);
 }
 
 #endif
