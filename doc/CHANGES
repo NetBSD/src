@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1639 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1640 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1189,3 +1189,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		add ls command support for ext2fs.  From Evgeniy Ivanov.
 		[tsutsui 20111225]
 	openpam: Import lycopsida-20111218 [christos 20111225]
+	viaide(4): VT6410 PATA RAID controller support (without RAID).
+		[phx 20111228]
+	sandpoint: Iomega Storcenter support. [phx 20111228]
