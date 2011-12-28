@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.27 2010/05/04 04:57:34 macallan Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.28 2011/12/28 08:36:46 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.27 2010/05/04 04:57:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.28 2011/12/28 08:36:46 macallan Exp $");
 
 #include "opt_rasops.h"
 
@@ -90,6 +90,14 @@ rasops8_init(struct rasops_info *ri)
 	default:
 		ri->ri_ops.putchar = rasops8_putchar;
 		break;
+	}
+	if (ri->ri_flg & RI_8BIT_IS_RGB) {
+		ri->ri_rnum = 3;
+		ri->ri_rpos = 5;
+		ri->ri_gnum = 3;
+		ri->ri_gpos = 2;
+		ri->ri_bnum = 2;
+		ri->ri_bpos = 0;
 	}
 }
 
