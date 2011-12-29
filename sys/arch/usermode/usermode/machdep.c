@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.46 2011/12/27 14:55:31 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.47 2011/12/29 21:22:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -35,12 +35,12 @@
 
 
 #include "opt_memsize.h"
-#include "opt_sdl.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2011/12/27 14:55:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2011/12/29 21:22:49 jmcneill Exp $");
 
 #include <sys/types.h>
+#include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/exec.h>
@@ -71,6 +71,9 @@ char *usermode_tap_device = NULL;
 char *usermode_tap_eaddr = NULL;
 static char usermode_audio_devicebuf[PATH_MAX] = "";
 char *usermode_audio_device = NULL;
+int usermode_vnc_width = 0;
+int usermode_vnc_height = 0;
+int usermode_vnc_port = -1;
 
 void	main(int argc, char *argv[]);
 void	usermode_reboot(void);
@@ -81,20 +84,19 @@ usage(const char *pn)
 	printf("usage: %s [-acdqsvxz]"
 	    " [tap=<dev>,<eaddr>]"
 	    " [audio=<dev>]"
+	    " [vnc=<width>x<height>,<port>]"
 	    " [<fsimg>]\n",
 	    pn);
 	printf("       (ex. \"%s"
 	    " tap=tap0,00:00:be:ef:ca:fe"
 	    " audio=audio0"
+	    " vnc=640x480,5900"
 	    " root.fs\")\n", pn);
 }
 
 void
 main(int argc, char *argv[])
 {
-#if defined(SDL)
-	extern int genfb_thunkbus_cnattach(void);
-#endif
 	extern void ttycons_consinit(void);
 	extern void pmap_bootstrap(void);
 	extern void kernmain(void);
@@ -109,10 +111,7 @@ main(int argc, char *argv[])
 	snprintf(module_machine_usermode, sizeof(module_machine_usermode),
 	    "%susermode", machine);
 
-#if defined(SDL)
-	if (genfb_thunkbus_cnattach() == 0)
-#endif
-		ttycons_consinit();
+	ttycons_consinit();
 
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
@@ -147,6 +146,26 @@ main(int argc, char *argv[])
 					    "%s", audio);
 				usermode_audio_device =
 				    usermode_audio_devicebuf;
+			} else if (strncmp(argv[i], "vnc=",
+			    strlen("vnc=")) == 0) {
+				char *vnc = argv[i] + strlen("vnc=");
+				char *w, *h, *p;
+				w = vnc;
+				h = strchr(w, 'x');
+				if (h == NULL) {
+					printf("bad vnc= format\n");
+					return;
+				}
+				*h++ = '\0';
+				p = strchr(h, ',');
+				if (p == NULL) {
+					printf("bad vnc= format\n");
+					return;
+				}
+				*p++ = '\0';
+				usermode_vnc_width = strtoul(w, NULL, 10);
+				usermode_vnc_height = strtoul(h, NULL, 10);
+				usermode_vnc_port = strtoul(p, NULL, 10);
 			} else {
 				usermode_root_image_path = argv[i];
 			}
