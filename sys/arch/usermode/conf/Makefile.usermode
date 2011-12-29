@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.25 2011/12/20 21:01:39 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.26 2011/12/29 21:22:49 jmcneill Exp $
 
 OPT_CPU_HOST=			%CPU_HOST%
 .if !empty(OPT_CPU_HOST)
@@ -37,16 +37,7 @@ DEFCOPTS=	-fno-omit-frame-pointer
 CPPFLAGS+=	-Dusermode
 CPPFLAGS.init_main.c+=	-Dmain=kernmain
 
-OPT_SDL=	%SDL%
-
-.if !empty(OPT_SDL)
-SDL_CFLAGS!=	sdl-config --cflags
-SDL_LIBS!=	sdl-config --libs
-USERMODE_LIBS+=	-Wl,-Bdynamic ${SDL_LIBS}
-.endif
-
 CPPFLAGS.thunk.c+=	${USERMODE_CPPFLAGS}
-CPPFLAGS.thunk_sdl.c+=	${SDL_CFLAGS} ${USERMODE_CPPFLAGS}
 
 ##
 ## (3) libkern and compat
@@ -60,11 +51,6 @@ COMPAT_AS=	library
 MD_OBJS=	thunk.o
 MD_CFILES=	${USERMODE}/usermode/thunk.c
 MD_SFILES=
-
-.if !empty(OPT_SDL)
-MD_OBJS+=	thunk_sdl.o
-MD_CFILES+=	${USERMODE}/usermode/thunk_sdl.c
-.endif
 
 ##
 ## (5) link settings
@@ -97,13 +83,6 @@ thunk.d: ${USERMODE}/usermode/thunk.c
 
 thunk.o: ${USERMODE}/usermode/thunk.c
 	${CC} ${CPPFLAGS.thunk.c} -c -o $@ ${USERMODE}/usermode/thunk.c
-
-thunk_sdl.d: ${USERMODE}/usermode/thunk.c
-	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
-	    ${CPPFLAGS.thunk_sdl.c} ${USERMODE}/usermode/thunk_sdl.c
-
-thunk_sdl.o: ${USERMODE}/usermode/thunk_sdl.c
-	${CC} ${CPPFLAGS.thunk_sdl.c} -c -o $@ ${USERMODE}/usermode/thunk_sdl.c
 
 ##
 ## (7) misc settings
