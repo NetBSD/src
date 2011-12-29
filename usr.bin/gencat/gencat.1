@@ -1,4 +1,4 @@
-.\" $NetBSD: gencat.1,v 1.12 2009/03/09 19:24:32 joerg Exp $
+.\" $NetBSD: gencat.1,v 1.13 2011/12/29 16:41:38 christos Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" Written by Kee Hinckley <nazgul@somewhere.com>
 .\"
-.Dd November 4, 2008
+.Dd December 29, 2011
 .Dt GENCAT 1
 .Os
 .Sh NAME
@@ -38,14 +38,13 @@
 .Sh SYNOPSIS
 .Nm
 .Ar catfile
-.Ar msgfile
-.Op Ar msgfile ...
+.Op Ar msgfile|- ...
 .Sh DESCRIPTION
 The
 .Nm
 utility generates a formatted message catalog
 .Ar catfile
-from one or more message source text files
+from stdin or one or more message source text files
 .Ar msgfile .
 The file
 .Ar catfile
