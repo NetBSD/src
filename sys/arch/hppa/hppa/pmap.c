@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.85 2011/12/23 16:38:50 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.86 2011/12/29 22:13:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2011/12/23 16:38:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2011/12/29 22:13:23 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -1593,9 +1593,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 	fdcache(pmap->pm_space, va, len);
-	sync_caches();
 	ficache(pmap->pm_space, va, len);
-	sync_caches();
 }
 
 static inline void
