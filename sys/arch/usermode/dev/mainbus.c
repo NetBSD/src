@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.7 2011/12/26 21:06:42 jmcneill Exp $ */
+/* $NetBSD: mainbus.c,v 1.8 2011/12/29 21:22:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,12 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef _KERNEL_OPT
-#include "opt_sdl.h"
-#endif
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2011/12/26 21:06:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2011/12/29 21:22:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -58,6 +54,7 @@ extern char *usermode_root_image_path;
 extern char *usermode_tap_device;
 extern char *usermode_tap_eaddr;
 extern char *usermode_audio_device;
+extern int usermode_vnc_width, usermode_vnc_height, usermode_vnc_port;
 
 static int
 mainbus_match(device_t parent, cfdata_t match, void *opaque)
@@ -80,15 +77,18 @@ mainbus_attach(device_t parent, device_t self, void *opaque)
 	taa.taa_type = THUNKBUS_TYPE_CPU;
 	config_found_ia(self, "thunkbus", &taa, mainbus_print);
 
-#if defined(SDL)
-	taa.taa_type = THUNKBUS_TYPE_GENFB;
+	taa.taa_type = THUNKBUS_TYPE_TTYCONS;
 	config_found_ia(self, "thunkbus", &taa, mainbus_print);
-#endif
+
+	if (usermode_vnc_port > 0 && usermode_vnc_port < 65536) {
+		taa.taa_type = THUNKBUS_TYPE_VNCFB;
+		taa.u.vnc.width = usermode_vnc_width;
+		taa.u.vnc.height = usermode_vnc_height;
+		taa.u.vnc.port = usermode_vnc_port;
+		config_found_ia(self, "thunkbus", &taa, mainbus_print);
+	}
 
 	taa.taa_type = THUNKBUS_TYPE_CLOCK;
-	config_found_ia(self, "thunkbus", &taa, mainbus_print);
-
-	taa.taa_type = THUNKBUS_TYPE_TTYCONS;
 	config_found_ia(self, "thunkbus", &taa, mainbus_print);
 
 	if (usermode_tap_device) {

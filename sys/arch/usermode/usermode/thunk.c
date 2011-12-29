@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.55 2011/12/27 20:59:24 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.56 2011/12/29 21:22:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.55 2011/12/27 20:59:24 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.56 2011/12/29 21:22:49 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -38,15 +38,19 @@ __RCSID("$NetBSD: thunk.c,v 1.55 2011/12/27 20:59:24 jmcneill Exp $");
 #include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <sys/audioio.h>
+#include <sys/shm.h>
 #include <machine/vmparam.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_tap.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <aio.h>
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
@@ -492,6 +496,12 @@ thunk_unlink(const char *path)
 	return unlink(path);
 }
 
+pid_t
+thunk_getpid(void)
+{
+	return getpid();
+}
+
 int
 thunk_sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 {
@@ -848,4 +858,284 @@ int
 thunk_audio_read(int fd, void *buf, size_t buflen)
 {
 	return read(fd, buf, buflen);
+}
+
+int
+thunk_rfb_open(thunk_rfb_t *rfb, uint16_t port)
+{
+	struct sockaddr_in sin;
+
+	rfb->clientfd = -1;
+	rfb->connected = false;
+
+	/* create socket */
+	rfb->sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (rfb->sockfd == -1) {
+		printf("rfb: couldn't create socket: %s\n", strerror(errno));
+		return errno;
+	}
+	/* bind to requested port */
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	sin.sin_port = htons(port);
+	if (bind(rfb->sockfd, (struct sockaddr *)&sin, sizeof(sin)) != 0) {
+		printf("rfb: couldn't bind port %d: %s\n", port,
+		    strerror(errno));
+		close(rfb->sockfd);
+		return errno;
+	}
+	/* listen for connections */
+	if (listen(rfb->sockfd, 1) != 0) {
+		printf("rfb: couldn't listen on socket: %s\n", strerror(errno));
+		close(rfb->sockfd);
+		return errno;
+	}
+
+	return 0;
+}
+
+static int
+thunk_rfb_server_init(thunk_rfb_t *rfb)
+{
+	char msgbuf[80];
+	char *p = msgbuf;
+	uint32_t namelen = strlen(rfb->name);
+
+	*(uint16_t *)p = htons(rfb->width);	p += 2;
+	*(uint16_t *)p = htons(rfb->height);	p += 2;
+	*(uint8_t *)p = rfb->depth;		p += 1;
+	*(uint8_t *)p = rfb->depth;		p += 1;
+	*(uint8_t *)p = 0;			p += 1;	/* endian */
+	*(uint8_t *)p = 1;			p += 1; /* true color */
+	*(uint16_t *)p = htons(0xff);		p += 2;	/* red max */
+	*(uint16_t *)p = htons(0xff);		p += 2;	/* green max */
+	*(uint16_t *)p = htons(0xff);		p += 2;	/* blue max */
+	*(uint8_t *)p = 0;			p += 1;	/* red shift */
+	*(uint8_t *)p = 8;			p += 1;	/* green shift */
+	*(uint8_t *)p = 16;			p += 1;	/* blue shift */
+	*(uint8_t *)p = 0;			p += 1;	/* padding x3 */
+	*(uint8_t *)p = 0;			p += 1;
+	*(uint8_t *)p = 0;			p += 1;
+	*(uint32_t *)p = htonl(namelen);	p += 4;	/* name length */
+	memcpy(p, rfb->name, namelen);		p += namelen;
+
+	return send(rfb->clientfd, msgbuf, p - msgbuf, MSG_NOSIGNAL);
+}
+
+static int
+thunk_rfb_handshake(thunk_rfb_t *rfb)
+{
+	ssize_t len;
+	const char *protover = "RFB 003.003\n";
+	uint32_t security_type;
+	uint8_t shared_flag;
+	char dummy;
+
+	/* send server protocol version */
+	len = send(rfb->clientfd, protover, strlen(protover), MSG_NOSIGNAL);
+	if (len == -1)
+		return errno;
+
+	/* receive client protocol version */
+	do {
+		len = recv(rfb->clientfd, &dummy, sizeof(dummy), MSG_NOSIGNAL);
+		if (len == -1)
+			return errno;
+		if (len == 0)
+			return EIO;
+	} while (dummy != '\n');
+
+	/* send security capabilities */
+	security_type = htonl(1);	/* no security */
+	len = send(rfb->clientfd, &security_type, sizeof(security_type),
+	    MSG_NOSIGNAL);
+	if (len == -1)
+		return errno;
+
+	/* receive client init message */
+	len = recv(rfb->clientfd, &shared_flag, sizeof(shared_flag),
+	    MSG_NOSIGNAL);
+	if (len == -1)
+		return errno;
+
+	/* send server init message */
+	len = thunk_rfb_server_init(rfb);
+	if (len == -1)
+		return errno;
+
+	return 0;
+}
+
+static void
+thunk_rfb_send_pending(thunk_rfb_t *rfb)
+{
+	uint8_t rfb_update[16];
+	uint8_t *p = rfb_update;
+	uint16_t x, y, w, h;
+	ssize_t len;
+
+	if (rfb->connected == false || rfb->update.pending == false)
+		return;
+
+	x = rfb->update.x;
+	y = rfb->update.y;
+	w = rfb->update.w;
+	h = rfb->update.h;
+	rfb->update.pending = false;
+
+	*(uint8_t *)p = 0;		p += 1;		/* FramebufferUpdate */
+	*(uint8_t *)p = 0;		p += 1;		/* padding */
+	*(uint16_t *)p = htons(1);	p += 2;		/* # rects */
+	*(uint16_t *)p = htons(x);	p += 2;
+	*(uint16_t *)p = htons(y);	p += 2;
+	*(uint16_t *)p = htons(w);	p += 2;
+	*(uint16_t *)p = htons(h);	p += 2;
+	*(uint32_t *)p = htonl(0);	p += 4;		/* Raw encoding */
+
+	len = send(rfb->clientfd, rfb_update, sizeof(rfb_update),
+	    MSG_NOSIGNAL);
+	if (len <= 0)
+		goto disco;
+
+	p = rfb->framebuf + (y * rfb->width * (rfb->depth / 8)) +
+	    (x * (rfb->depth / 8));
+	while (h-- > 0) {
+		len = send(rfb->clientfd, p, w * (rfb->depth / 8),
+		    MSG_NOSIGNAL);
+		if (len <= 0)
+			goto disco;
+		p += rfb->width * (rfb->depth / 8);
+	}
+
+	return;
+
+disco:
+	fprintf(stdout, "rfb: client disconnected: %s\n", strerror(errno));
+	close(rfb->clientfd);
+	rfb->clientfd = -1;
+	rfb->connected = false;
+}
+
+int
+thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
+{
+	int error, len, msg_len;
+	uint8_t set_pixel_format[19];
+	uint8_t set_encodings[3];
+	uint8_t framebuffer_update_request[9];
+	uint8_t key_event[7];
+	uint8_t pointer_event[5];
+	uint8_t client_cut_text[7];
+	uint8_t ch;
+
+	if (rfb->clientfd == -1) {
+		struct sockaddr_in sin;
+		struct pollfd fds[1];
+		socklen_t sinlen;
+
+		/* poll for connections */
+		fds[0].fd = rfb->sockfd;
+		fds[0].events = POLLIN;
+		fds[0].revents = 0;
+		if (poll(fds, __arraycount(fds), 0) != 1)
+			return -1;
+
+		sinlen = sizeof(sin);
+		rfb->clientfd = accept(rfb->sockfd, (struct sockaddr *)&sin,
+		    &sinlen);
+		if (rfb->clientfd == -1)
+			return -1;
+
+		fprintf(stdout, "rfb: connection from %s:%d\n",
+		    inet_ntoa(sin.sin_addr), ntohs(sin.sin_port));
+
+		/* rfb handshake */
+		if (thunk_rfb_handshake(rfb) != 0) {
+			fprintf(stdout, "rfb: handshake failed\n");
+			close(rfb->clientfd);
+			rfb->clientfd = -1;
+			return -1;
+		}
+
+		rfb->connected = true;
+		thunk_rfb_update(rfb, 0, 0, rfb->width, rfb->height);
+	}
+
+	thunk_rfb_send_pending(rfb);
+	if (rfb->clientfd == -1)
+		return -1;
+
+	error = ioctl(rfb->clientfd, FIONREAD, &len);
+	if (error) {
+		//printf("rfb: FIONREAD failed: %s\n", strerror(errno));
+		close(rfb->clientfd);
+		rfb->clientfd = -1;
+		return -1;
+	}
+	if (len == 0)
+		return 0;
+
+	recv(rfb->clientfd, &ch, sizeof(ch), MSG_NOSIGNAL);
+
+	event->message_type = ch;
+	switch (ch) {
+	case THUNK_RFB_SET_PIXEL_FORMAT:
+		msg_len = sizeof(set_pixel_format);
+		break;
+	case THUNK_RFB_SET_ENCODINGS:
+		recv(rfb->clientfd, set_encodings, sizeof(set_encodings),
+		    MSG_NOSIGNAL);
+		msg_len = 4 * ntohs(*(uint16_t *)&set_encodings[1]);
+		break;
+	case THUNK_RFB_FRAMEBUFFER_UPDATE_REQUEST:
+		msg_len = sizeof(framebuffer_update_request);
+		break;
+	case THUNK_RFB_KEY_EVENT:
+		recv(rfb->clientfd, key_event, sizeof(key_event), MSG_NOSIGNAL);
+		event->data.key_event.down_flag = key_event[0];
+		event->data.key_event.keysym =
+		    ntohl(*(uint32_t *)&key_event[3]);
+		msg_len = 0;
+		break;
+	case THUNK_RFB_POINTER_EVENT:
+		msg_len = sizeof(pointer_event);
+		break;
+	case THUNK_RFB_CLIENT_CUT_TEXT:
+		recv(rfb->clientfd, client_cut_text, sizeof(client_cut_text),
+		    MSG_NOSIGNAL);
+		msg_len = ntohl(*(uint32_t *)&client_cut_text[3]);
+		break;
+	default:
+		fprintf(stdout, "rfb: unknown message type %d\n", ch);
+		close(rfb->clientfd);
+		rfb->clientfd = -1;
+		return -1;
+	}
+
+	/* discard any remaining bytes */
+	while (msg_len-- > 0) {
+		recv(rfb->clientfd, &ch, sizeof(ch), MSG_NOSIGNAL);
+	}
+
+	return 1;
+}
+
+void
+thunk_rfb_update(thunk_rfb_t *rfb, int x, int y, int w, int h)
+{
+	if (rfb->update.pending) {
+		/* pending update, just redraw the whole screen */
+		rfb->update.x = 0;
+		rfb->update.y = 0;
+		rfb->update.w = rfb->width;
+		rfb->update.h = rfb->height;
+	} else {
+		/* try to only update the requested rectangle */
+		rfb->update.x = x;
+		rfb->update.y = y;
+		rfb->update.w = w;
+		rfb->update.h = h;
+	}
+	rfb->update.pending = true;
 }

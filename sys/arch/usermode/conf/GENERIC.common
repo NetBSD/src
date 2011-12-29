@@ -1,14 +1,14 @@
-# $NetBSD: GENERIC.common,v 1.6 2011/12/27 18:24:41 jmcneill Exp $
+# $NetBSD: GENERIC.common,v 1.7 2011/12/29 21:22:49 jmcneill Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
 
-options 	SYMTAB_SPACE=300000
+options 	SYMTAB_SPACE=310000
 
 options 	RTC_OFFSET=0
 options 	KTRACE
@@ -56,9 +56,13 @@ veth0		at mainbus?
 vaudio0		at mainbus?
 audio0		at vaudio0
 
-#options		SDL
-#genfb0		at thunkbus?
-#wsdisplay0	at genfb?
+vncfb0		at thunkbus?
+wsdisplay0	at vncfb?
+wskbd0		at vncfb?
+options 	WSEMUL_VT100
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options		WSKBD_DEFAULT_KEYREPEAT_DEL1=1000
+options		WSKBD_DEFAULT_KEYREPEAT_DELN=200
 
 pseudo-device	loop
 pseudo-device	pty

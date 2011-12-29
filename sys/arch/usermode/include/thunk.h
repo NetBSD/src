@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.46 2011/12/26 21:06:42 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.47 2011/12/29 21:22:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -113,6 +113,7 @@ ssize_t	thunk_write(int, const void *, size_t);
 int	thunk_fsync(int);
 int	thunk_mkstemp(char *);
 int	thunk_unlink(const char *);
+pid_t	thunk_getpid(void);
 
 int	thunk_sigaction(int, const struct sigaction *, struct sigaction *);
 int	thunk_sigaltstack(const stack_t *, stack_t *);
@@ -169,8 +170,48 @@ int	thunk_audio_pollin(int);
 int	thunk_audio_write(int, const void *, size_t);
 int	thunk_audio_read(int, void *, size_t);
 
-int	thunk_sdl_init(unsigned int, unsigned int, unsigned short);
-void *	thunk_sdl_getfb(size_t);
-int	thunk_sdl_getchar(void);
+typedef enum {
+	/* client -> server */
+	THUNK_RFB_SET_PIXEL_FORMAT = 0,
+	THUNK_RFB_SET_ENCODINGS = 2,
+	THUNK_RFB_FRAMEBUFFER_UPDATE_REQUEST = 3,
+	THUNK_RFB_KEY_EVENT = 4,
+	THUNK_RFB_POINTER_EVENT = 5,
+	THUNK_RFB_CLIENT_CUT_TEXT = 6,
+} thunk_rfb_message_t;
+
+typedef struct {
+	thunk_rfb_message_t	message_type;
+	union {
+		struct {
+			uint8_t		down_flag;
+			uint32_t	keysym;
+		} key_event;
+	} data;
+} thunk_rfb_event_t;
+
+typedef struct {
+	bool			pending;
+	uint16_t		x, y, w, h;
+} thunk_rfb_update_t;
+
+typedef struct {
+	int			sockfd;
+	int			clientfd;
+	thunk_rfb_event_t	event;
+
+	bool			connected;
+
+	uint16_t		width;
+	uint16_t		height;
+	uint8_t			depth;
+	char			name[64];
+	uint8_t			*framebuf;
+	thunk_rfb_update_t	update;
+} thunk_rfb_t;
+
+int	thunk_rfb_open(thunk_rfb_t *, uint16_t);
+int	thunk_rfb_poll(thunk_rfb_t *, thunk_rfb_event_t *);
+void	thunk_rfb_update(thunk_rfb_t *, int, int, int, int);
 
 #endif /* !_ARCH_USERMODE_INCLUDE_THUNK_H */
