@@ -1,4 +1,4 @@
-/*  $NetBSD: debug.c,v 1.7 2011/12/29 01:40:32 riz Exp $ */
+/*  $NetBSD: debug.c,v 1.8 2011/12/29 04:25:49 riz Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -159,9 +159,8 @@ perfuse_trace_dump(pu, fp)
 	TAILQ_FOREACH(pt, &ps->ps_trace, pt_list) {
 		const char *quote = pt->pt_path[0] != '\0' ? "\"" : "";
 
-		fprintf(fp, "%ju.%09jd %s %s%s%s %s ",  
-			(intmax_t)pt->pt_start.tv_sec,
-			(intmax_t)pt->pt_start.tv_nsec,
+		fprintf(fp, "%" PRIu64 ".%09ld %s %s%s%s %s ",  
+			pt->pt_start.tv_sec, pt->pt_start.tv_nsec,
 			perfuse_opname(pt->pt_opcode),
 			quote, pt->pt_path, quote,
 			pt->pt_extra);
@@ -173,8 +172,8 @@ perfuse_trace_dump(pu, fp)
 			ts.tv_nsec = 0;	/* delint */
 			timespecsub(&pt->pt_end, &pt->pt_start, &ts);
 
-			fprintf(fp, "error = %d elapsed = %ju.%09lu ",
-				pt->pt_error, (intmax_t)ts.tv_sec, ts.tv_nsec);
+			fprintf(fp, "error = %d elapsed = %" PRIu64 ".%09lu ",
+				pt->pt_error, ts.tv_sec, ts.tv_nsec);
 
 			count[pt->pt_opcode]++;
 			timespecadd(&ts_total[pt->pt_opcode],
@@ -207,12 +206,12 @@ perfuse_trace_dump(pu, fp)
 			min = 0;
 		}
 			
-		fprintf(fp, "%s\t%d\t%jd.%09ld\t%jd.%09ld\t%jd.%09ld\t\n",
+		fprintf(fp, "%s\t%d\t%" PRId64 ".%09ld\t%" PRId64 
+		    ".%09ld\t%" PRId64 ".%09ld\t\n",
 			perfuse_opname(i), count[i],
-			(intmax_t)min, ts_min[i].tv_nsec,
-			(intmax_t)(avg / 1000000000L),
-			(long)(avg % 1000000000L),
-			(intmax_t)ts_max[i].tv_sec, ts_max[i].tv_nsec);
+			min, ts_min[i].tv_nsec,
+			(time_t)(avg / 1000000000L), (long)(avg % 1000000000L),
+			ts_max[i].tv_sec, ts_max[i].tv_nsec);
 	}	
 	
 	(void)fflush(fp);
