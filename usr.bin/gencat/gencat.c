@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.32 2011/09/21 14:33:35 christos Exp $	*/
+/*	$NetBSD: gencat.c,v 1.33 2011/12/29 16:41:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.32 2011/09/21 14:33:35 christos Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.33 2011/12/29 16:41:38 christos Exp $");
 #endif
 
 /***********************************************************
@@ -163,7 +163,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 2) {
+	if (argc < 1) {
 		usage();
 		/* NOTREACHED */
 	}
@@ -193,8 +193,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (((*argv)[0] == '-') && ((*argv)[1] == '\0')) {
-		if (argc != 2)
+	if (argc < 2 || (((*argv)[0] == '-') && ((*argv)[1] == '\0'))) {
+		if (argc > 2)
 			usage();
 			/* NOTREACHED */
 		MCParse(STDIN_FILENO);
