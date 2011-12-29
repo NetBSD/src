@@ -1,4 +1,4 @@
-/* $NetBSD: com_eumb.c,v 1.7 2011/07/01 19:16:06 dyoung Exp $ */
+/* $NetBSD: com_eumb.c,v 1.8 2011/12/29 10:27:36 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.7 2011/07/01 19:16:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.8 2011/12/29 10:27:36 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,8 +101,9 @@ com_eumb_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	intr_establish(epicirq + 16, IST_LEVEL, IPL_SERIAL, comintr, sc);
-	aprint_normal_dev(self, "interrupting at irq %d\n", epicirq + 16);
+	intr_establish(epicirq + I8259_ICU, IST_LEVEL, IPL_SERIAL, comintr, sc);
+	aprint_normal_dev(self, "interrupting at irq %d\n",
+	    epicirq + I8259_ICU);
 }
 
 int
