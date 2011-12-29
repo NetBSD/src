@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.48 2011/07/14 12:44:10 drochner Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.49 2011/12/29 20:50:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.48 2011/07/14 12:44:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.49 2011/12/29 20:50:06 christos Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -168,7 +168,7 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_W|BPF_ABS:
 			k = pc->k;
-			if (k + sizeof(int32_t) > buflen) {
+			if (k > buflen || sizeof(int32_t) > buflen - k) {
 #ifdef _KERNEL
 				int merr = 0;	/* XXX: GCC */
 
@@ -187,7 +187,7 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_H|BPF_ABS:
 			k = pc->k;
-			if (k + sizeof(int16_t) > buflen) {
+			if (k > buflen || sizeof(int16_t) > buflen - k) {
 #ifdef _KERNEL
 				int merr;
 
@@ -234,7 +234,8 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_W|BPF_IND:
 			k = X + pc->k;
-			if (k + sizeof(int32_t) > buflen) {
+			if (pc->k > buflen || X > buflen - pc->k ||
+			    sizeof(int32_t) > buflen - k) {
 #ifdef _KERNEL
 				int merr = 0;	/* XXX: GCC */
 
@@ -253,7 +254,8 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_H|BPF_IND:
 			k = X + pc->k;
-			if (k + sizeof(int16_t) > buflen) {
+			if (pc->k > buflen || X > buflen - pc->k ||
+			    sizeof(int16_t) > buflen - k) {
 #ifdef _KERNEL
 				int merr = 0;	/* XXX: GCC */
 
