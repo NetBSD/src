@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.46 2011/08/18 02:09:44 christos Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.47 2011/12/29 20:09:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.46 2011/08/18 02:09:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.47 2011/12/29 20:09:14 macallan Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 8
 
@@ -410,7 +410,7 @@ static const struct {
 #define RADEONFB_BACKLIGHT_MAX    255  /* Maximum backlight level. */
 
 
-CFATTACH_DECL(radeonfb, sizeof (struct radeonfb_softc),
+CFATTACH_DECL_NEW(radeonfb, sizeof (struct radeonfb_softc),
     radeonfb_match, radeonfb_attach, NULL, NULL);
 
 static int
@@ -441,6 +441,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	int			i, j, fg, bg, ul, flags;
 	uint32_t		v;
 
+	sc->sc_dev = dev;
 	sc->sc_id = pa->pa_id;
 	for (i = 0; radeonfb_devices[i].devid; i++) {
 		if (PCI_PRODUCT(sc->sc_id) == radeonfb_devices[i].devid)
@@ -510,7 +511,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		bool inverted = 0;
 		/* backlight level is linear */
 		DPRINTF(("found RV* chip, backlight is supposedly linear\n"));
-		prop_dictionary_get_bool(device_properties(&sc->sc_dev),
+		prop_dictionary_get_bool(device_properties(sc->sc_dev),
 		    "backlight_level_reverted", &inverted);
 		if (inverted) {
 			DPRINTF(("nope, it's inverted\n"));
@@ -715,7 +716,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 	/* setup default video mode from devprop (allows PROM override) */
 	sc->sc_defaultmode = radeonfb_default_mode;
-	if (prop_dictionary_get_cstring_nocopy(device_properties(&sc->sc_dev),
+	if (prop_dictionary_get_cstring_nocopy(device_properties(sc->sc_dev),
 	    "videomode", &mptr)) {
 
 		strncpy(sc->sc_modebuf, mptr, sizeof(sc->sc_modebuf));
@@ -836,7 +837,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		dp->rd_vd.init_screen = radeonfb_init_screen;
 
 		dp->rd_console = 0;
-		prop_dictionary_get_bool(device_properties(&sc->sc_dev),
+		prop_dictionary_get_bool(device_properties(sc->sc_dev),
 		    "is_console", &dp->rd_console);
 
 		dp->rd_vscreen.scr_flags |= VCONS_SCREEN_IS_STATIC;
@@ -901,7 +902,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		aa.accessops = &radeonfb_accessops;
 		aa.accesscookie = &dp->rd_vd;
 
-		config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+		config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 		
 		radeonfb_blank(dp, 0);
 		
@@ -1076,7 +1077,7 @@ radeonfb_ioctl(void *v, void *vs,
 		return pci_devioctl(sc->sc_pc, sc->sc_pt, cmd, d, flag, l);
 
 	case WSDISPLAYIO_GET_BUSID:
-		return wsdisplayio_busid_pci(&sc->sc_dev, sc->sc_pc,
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
 		    sc->sc_pt, d);
 
 	default:
@@ -1112,7 +1113,7 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 */
 	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
 	    NULL) != 0) {
-		aprint_error_dev(&sc->sc_dev, "mmap() rejected.\n");
+		aprint_error_dev(sc->sc_dev, "mmap() rejected.\n");
 		return -1;
 	}
 
@@ -1325,7 +1326,7 @@ radeonfb_getprop_num(struct radeonfb_softc *sc, const char *name,
     uintmax_t defval)
 {
 	prop_number_t	pn;
-	pn = prop_dictionary_get(device_properties(&sc->sc_dev), name);
+	pn = prop_dictionary_get(device_properties(sc->sc_dev), name);
 	if (pn == NULL) {
 		return defval;
 	}
@@ -1615,9 +1616,9 @@ nobios:
 		sc->sc_ports[i].rp_edid_valid = 0;
 		/* first look for static EDID data */
 		if ((edid_data = prop_dictionary_get(device_properties(
-		    &sc->sc_dev), "EDID")) != NULL) {
+		    sc->sc_dev), "EDID")) != NULL) {
 
-			aprint_normal_dev(&sc->sc_dev, "using static EDID\n");
+			aprint_normal_dev(sc->sc_dev, "using static EDID\n");
 			memcpy(edid, prop_data_data_nocopy(edid_data), 128);
 			if (edid_parse(edid, eip) == 0) {
 
