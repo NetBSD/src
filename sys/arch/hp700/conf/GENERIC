@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.109 2011/12/18 05:49:27 dholland Exp $
+# $NetBSD: GENERIC,v 1.110 2011/12/30 08:33:49 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.109 $"
+#ident 		"GENERIC-$Revision: 1.110 $"
 
 maxusers	32		# estimated number of users
 
@@ -37,6 +37,7 @@ options 	HP8000_CPU		# PCX-U  (in 32bit mode)
 options 	HP8200_CPU		# PCX-V/U+ (in 32bit mode)
 options 	HP8500_CPU		# PCX-W  (in 32bit mode)
 options 	HP8600_CPU		# PCX-W+ (in 32bit mode)
+options 	HP8700_CPU		# PCX-W2 (in 32bit mode)
 
 # CPU-related options.
 options 	FPEMUL		# floating point emulation XXX DO NOT REMOVE
