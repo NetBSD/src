@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.159 2011/11/30 10:27:46 mbalmer Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.160 2011/12/30 20:33:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.159 2011/11/30 10:27:46 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.160 2011/12/30 20:33:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ struct ktr_desc {
 static int	ktealloc(struct ktrace_entry **, void **, lwp_t *, int,
 			 size_t);
 static void	ktrwrite(struct ktr_desc *, struct ktrace_entry *);
-static int	ktrace_common(lwp_t *, int, int, int, file_t *);
+static int	ktrace_common(lwp_t *, int, int, int, file_t **);
 static int	ktrops(lwp_t *, struct proc *, int, int,
 		    struct ktr_desc *);
 static int	ktrsetchildren(lwp_t *, struct proc *, int, int,
@@ -1045,12 +1045,13 @@ ktr_mib(const int *name, u_int namelen)
 /* Interface and common routines */
 
 int
-ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t *fp)
+ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 {
 	struct proc *curp;
 	struct proc *p;
 	struct pgrp *pg;
 	struct ktr_desc *ktd = NULL;
+	file_t *fp = *fpp;
 	int ret = 0;
 	int error = 0;
 	int descend;
@@ -1112,6 +1113,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t *fp)
 			    ktrace_thread, ktd, &ktd->ktd_lwp, "ktrace");
 			if (error != 0) {
 				kmem_free(ktd, sizeof(*ktd));
+				ktd = NULL;
 				mutex_enter(&fp->f_lock);
 				fp->f_count--;
 				mutex_exit(&fp->f_lock);
@@ -1141,6 +1143,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t *fp)
 	 */
 	if (!facs) {
 		error = EINVAL;
+		*fpp = NULL;
 		goto done;
 	}
 
@@ -1181,6 +1184,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t *fp)
 	mutex_exit(proc_lock);
 	if (error == 0 && !ret)
 		error = EPERM;
+	*fpp = NULL;
 done:
 	if (ktd != NULL) {
 		mutex_enter(&ktrace_lock);
@@ -1222,7 +1226,7 @@ sys_fktrace(struct lwp *l, const struct sys_fktrace_args *uap, register_t *retva
 		error = EBADF;
 	else
 		error = ktrace_common(l, SCARG(uap, ops),
-		    SCARG(uap, facs), SCARG(uap, pid), fp);
+		    SCARG(uap, facs), SCARG(uap, pid), &fp);
 	fd_putfile(fd);
 	return error;
 }
@@ -1290,16 +1294,9 @@ sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 		vp = NULL;
 	}
 	error = ktrace_common(l, SCARG(uap, ops), SCARG(uap, facs),
-	    SCARG(uap, pid), fp);
-	if (fp != NULL) {
-		if (error != 0) {
-			/* File unused. */
-			fd_abort(curproc, fp, fd);
-		} else {
-			/* File was used. */
-			fd_abort(curproc, NULL, fd);
-		}
-	}
+	    SCARG(uap, pid), &fp);
+	if (KTROP(SCARG(uap, ops)) != KTROP_CLEAR)
+		fd_abort(curproc, fp, fd);
 	return (error);
 }
 
