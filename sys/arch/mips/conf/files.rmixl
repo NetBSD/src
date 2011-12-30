@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.16 2011/12/28 05:36:10 matt Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.17 2011/12/30 06:43:39 matt Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -46,17 +46,15 @@ file	arch/mips/rmi/rmixl_com.c		com_rmixl
 defparam opt_com.h				CONSADDR CONSFREQ CONSPEED CONMODE
 
 # PCIe
-device  rmixl_pcie: pcibus
-attach  rmixl_pcie at obio			# XLS
+device  xlpcie: pcibus
+attach  xlpcie at obio with rmixl_pcie		# XLS
+attach  xlpcie at mainbus with rmixlp_pcie	# XLP
 file    arch/mips/rmi/rmixl_pcie.c		rmixl_pcie	needs-flag
-
-device  rmixlp_pcie: pcibus
-attach  rmixlp_pcie at mainbus			# XLP
 file    arch/mips/rmi/rmixlp_pcie.c		rmixlp_pcie	needs-flag
 
 # PCI-X
-device  rmixl_pcix: pcibus
-attach  rmixl_pcix at obio			# XLR
+device  xlpcix: pcibus
+attach  xlpcix at obio with rmixl_pcix		# XLR
 file    arch/mips/rmi/rmixl_pcix.c		rmixl_pcix	needs-flag
 
 # XLS/XLR Periperal IO Bus to NOR, NAND, and PCMCIA memory controllers
@@ -92,17 +90,17 @@ attach  xlpcic at xliobus
 file    arch/mips/rmi/rmixl_pcic.c		xlpcic
 
 # On-chip USB interface
-define rmixl_usbi { [addr=-1], [size=-1], [intr=-1] }
-device	rmixl_usbi: rmixl_usbi
-attach	rmixl_usbi at obio
+define	xlusbi { [addr=-1], [size=-1], [intr=-1] }
+device	xlusbi: xlusbi
+attach	xlusbi at obio with rmixl_usbi
 file	arch/mips/rmi/rmixl_usbi.c		rmixl_usbi
 
 # On-chip OHCI USB controller
-attach	ohci at rmixl_usbi with rmixl_ohci
+attach	ohci at xlusbi with rmixl_ohci
 file	arch/mips/rmi/rmixl_ohci.c		rmixl_ohci
 
 # On-chip EHCI USB controller
-attach	ehci at rmixl_usbi with rmixl_ehci
+attach	ehci at xlusbi with rmixl_ehci
 file	arch/mips/rmi/rmixl_ehci.c		rmixl_ehci
 
 # PCI SDHC controller
@@ -134,3 +132,8 @@ file	arch/mips/rmi/rmixl_i2c_pci.c		xli2c_pci
 device	xlspi: spibus
 attach	xlspi at pci with xlspi_pci
 file	arch/mips/rmi/rmixl_spi_pci.c		xlspi_pci
+
+# XL GPIO controller
+device	xlgpio: gpiobus
+attach	xlgpio at pci with xlgpio_pci
+file	arch/mips/rmi/rmixl_gpio_pci.c		xlgpio_pci
