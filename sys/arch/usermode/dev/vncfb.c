@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.4 2011/12/30 11:06:18 jmcneill Exp $ */
+/* $NetBSD: vncfb.c,v 1.5 2011/12/30 12:54:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.4 2011/12/30 11:06:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.5 2011/12/30 12:54:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,7 @@ static int	vncfb_kbd_ioctl(void *, u_long, void *, int, lwp_t *);
 
 static void	vncfb_kbd_cngetc(void *, u_int *, int *);
 static void	vncfb_kbd_cnpollc(void *, int);
+static void	vncfb_kbd_bell(void *, u_int, u_int, u_int);
 
 static struct vcons_screen vncfb_console_screen;
 
@@ -152,7 +153,7 @@ static struct wskbd_accessops vncfb_kbd_accessops = {
 static const struct wskbd_consops vncfb_kbd_consops = {
 	vncfb_kbd_cngetc,
 	vncfb_kbd_cnpollc,
-	NULL, /* bell */
+	vncfb_kbd_bell,
 };
 
 static int
@@ -506,9 +507,15 @@ vncfb_kbd_set_leds(void *priv, int leds)
 static int
 vncfb_kbd_ioctl(void *priv, u_long cmd, void *data, int flag, lwp_t *l)
 {
+	struct wskbd_bell_data *bd;
+
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_RFB;
+		return 0;
+	case WSKBDIO_COMPLEXBELL:
+		bd = data;
+		vncfb_kbd_bell(priv, bd->pitch, bd->period, bd->volume);
 		return 0;
 	default:
 		return EPASSTHROUGH;
@@ -523,4 +530,13 @@ vncfb_kbd_cngetc(void *priv, u_int *type, int *data)
 static void
 vncfb_kbd_cnpollc(void *priv, int on)
 {
+}
+
+static void
+vncfb_kbd_bell(void *priv, u_int pitch, u_int period, u_int volume)
+{
+	struct vncfb_softc *sc = priv;
+
+	thunk_rfb_bell(&sc->sc_rfb);
+	softint_schedule(sc->sc_sih);
 }

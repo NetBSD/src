@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.50 2011/12/30 12:07:33 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.51 2011/12/30 12:54:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -216,6 +216,7 @@ typedef struct {
 	char			name[64];
 	uint8_t			*framebuf;
 
+	bool			schedule_bell;
 	unsigned int		nupdates;
 	unsigned int		first_mergable;
 	thunk_rfb_update_t	update[THUNK_RFB_QUEUELEN];
@@ -223,6 +224,7 @@ typedef struct {
 
 int	thunk_rfb_open(thunk_rfb_t *, uint16_t);
 int	thunk_rfb_poll(thunk_rfb_t *, thunk_rfb_event_t *);
+void	thunk_rfb_bell(thunk_rfb_t *);
 void	thunk_rfb_update(thunk_rfb_t *, int, int, int, int);
 void	thunk_rfb_copyrect(thunk_rfb_t *, int, int, int, int, int, int);
 
