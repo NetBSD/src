@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.1.2.15 2011/12/27 20:00:08 matt Exp $
+#	$NetBSD: XLSATX,v 1.1.2.16 2011/12/30 06:46:23 matt Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.1.2.15 $"
+#ident 		"XLSATX-$Revision: 1.1.2.16 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -151,10 +151,10 @@ xlnand* 	at xliobus?	addr 0x01800000
 #xlnand* 	at xliobus?	cs 2
 nand*		at xlnand?
 flash*		at nand?
-rmixl_pcix0 	at obio0
-pci*		at rmixl_pcix0
-rmixl_pcie0 	at obio0
-pci*		at rmixl_pcie0
+xlpcix0 	at obio0
+pci*		at xlpcix0
+xlpcie0 	at obio0
+pci*		at xlpcie0
 ppb*		at pci?
 pci*		at ppb?
 wm*		at pci? dev ? function ?	# Intel i82546EB Gig-E
@@ -164,10 +164,10 @@ mskc*		at pci? dev ? function ?
 msk*		at mskc?
 makphy*		at mii? phy ?			# Marvell 88E1000 PHYs
 ukphy*		at mii? phy ?			# unknown PHY
-rmixl_usbi0 	at obio0	addr 0x25000 intr 31
-ohci0		at rmixl_usbi0	addr 0x24400 size 0x400 intr 0
-ohci1		at rmixl_usbi0	addr 0x24800 size 0x400 intr 1
-ehci0		at rmixl_usbi0	addr 0x24000 size 0x400 intr 2
+xlusbi0 	at obio0	addr 0x25000 intr 31
+ohci0		at xlusbi0	addr 0x24400 size 0x400 intr 0
+ohci1		at xlusbi0	addr 0x24800 size 0x400 intr 1
+ehci0		at xlusbi0	addr 0x24000 size 0x400 intr 2
 siisata* 	at pci? dev ? function ?
 atabus*		at ata?
 wd*		at atabus? drive ? flags 0x0000
