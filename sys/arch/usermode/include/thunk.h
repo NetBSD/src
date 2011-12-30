@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.49 2011/12/30 11:32:57 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.50 2011/12/30 12:07:33 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -192,11 +192,12 @@ typedef struct {
 
 
 typedef struct {
-	uint8_t			type;
+	uint8_t			enc;
 	uint16_t		x, y, w, h;
+	uint16_t		srcx, srcy;
 	uint32_t		colour;		/* for RRE clear */
 } thunk_rfb_update_t;
-#define THUNK_RFB_TYPE_UPDATE	0
+#define THUNK_RFB_TYPE_RAW	0
 #define THUNK_RFB_TYPE_COPYRECT	1
 #define THUNK_RFB_TYPE_RRE	2		/* rectangle fill */
 
@@ -223,5 +224,6 @@ typedef struct {
 int	thunk_rfb_open(thunk_rfb_t *, uint16_t);
 int	thunk_rfb_poll(thunk_rfb_t *, thunk_rfb_event_t *);
 void	thunk_rfb_update(thunk_rfb_t *, int, int, int, int);
+void	thunk_rfb_copyrect(thunk_rfb_t *, int, int, int, int, int, int);
 
 #endif /* !_ARCH_USERMODE_INCLUDE_THUNK_H */
