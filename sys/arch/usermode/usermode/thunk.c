@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.58 2011/12/30 11:00:01 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.59 2011/12/30 11:05:07 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.58 2011/12/30 11:00:01 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.59 2011/12/30 11:05:07 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -992,7 +992,7 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 	uint8_t rfb_update[16];
 	uint8_t *p;
 	unsigned int n;
-	unsigned int Bpp;
+	unsigned int bytes_per_pixel;
 	ssize_t stride, line_len, len;
 
 	if (rfb->connected == false || rfb->nupdates == 0)
@@ -1020,8 +1020,8 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 	if (len < 0)
 		goto disco;
 
-	Bpp = rfb->depth / 8;
-	stride = rfb->width * Bpp;
+	bytes_per_pixel = rfb->depth / 8;
+	stride = rfb->width * bytes_per_pixel;
 	for (n = 0; n < rfb->nupdates; n++) {
 		p = rfb_update;
 		update = &rfb->update[n];
@@ -1040,8 +1040,8 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 		if (len < 0)
 			goto disco;
 
-		p = rfb->framebuf + (update->y * stride) + (update->x * Bpp);
-		line_len = update->w * Bpp;
+		p = rfb->framebuf + (update->y * stride) + (update->x * bytes_per_pixel);
+		line_len = update->w * bytes_per_pixel;
 		while (update->h-- > 0) {
 			len = safe_send(rfb->clientfd, p, line_len);
 			if (len < 0)
