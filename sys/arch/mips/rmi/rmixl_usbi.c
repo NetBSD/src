@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_usbi.c,v 1.1.2.8 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixl_usbi.c,v 1.1.2.9 2011/12/30 06:43:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.8 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.9 2011/12/30 06:43:39 matt Exp $");
 
 #include "locators.h"
 
@@ -172,13 +172,13 @@ rmixl_usbi_print(void *aux, const char *pnp)
 {
 	struct rmixl_usbi_attach_args *usbi = aux;
 
-	if (usbi->usbi_addr != RMIXL_USBICF_ADDR_DEFAULT) {
+	if (usbi->usbi_addr != XLUSBICF_ADDR_DEFAULT) {
 		aprint_normal(" addr %#"PRIxBUSADDR, usbi->usbi_addr);
-		if (usbi->usbi_size != RMIXL_USBICF_SIZE_DEFAULT)
+		if (usbi->usbi_size != XLUSBICF_SIZE_DEFAULT)
 			aprint_normal("-%#"PRIxBUSADDR,
 				usbi->usbi_addr + (usbi->usbi_size - 1));
 	}
-	if (usbi->usbi_intr != RMIXL_USBICF_INTR_DEFAULT)
+	if (usbi->usbi_intr != XLUSBICF_INTR_DEFAULT)
 		aprint_normal(" intr %d", usbi->usbi_intr);
 
 	aprint_normal("\n");
@@ -194,9 +194,9 @@ rmixl_usbi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	usbi.usbi_eb_bst = sc->sc_eb_bst;
 	usbi.usbi_el_bst = sc->sc_el_bst;
-	usbi.usbi_addr = cf->cf_loc[RMIXL_USBICF_ADDR];
-	usbi.usbi_size = cf->cf_loc[RMIXL_USBICF_SIZE];
-	usbi.usbi_intr = cf->cf_loc[RMIXL_USBICF_INTR];
+	usbi.usbi_addr = cf->cf_loc[XLUSBICF_ADDR];
+	usbi.usbi_size = cf->cf_loc[XLUSBICF_SIZE];
+	usbi.usbi_intr = cf->cf_loc[XLUSBICF_INTR];
 	usbi.usbi_dmat = sc->sc_dmat;
 
 	if (config_match(parent, cf, &usbi) > 0)

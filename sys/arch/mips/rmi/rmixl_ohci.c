@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ohci.c,v 1.1.2.5 2011/04/29 08:26:33 matt Exp $	*/
+/*	$NetBSD: rmixl_ohci.c,v 1.1.2.6 2011/12/30 06:43:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.1.2.5 2011/04/29 08:26:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.1.2.6 2011/12/30 06:43:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ rmixl_ohci_attach(device_t parent, device_t self, void *aux)
 				OHCI_ALL_INTRS);
 
 	/* establish interrupt */
-	if (usbi->usbi_intr != RMIXL_USBICF_INTR_DEFAULT) {
+	if (usbi->usbi_intr != XLUSBICF_INTR_DEFAULT) {
 		ih = rmixl_usbi_intr_establish(device_private(parent),
 			usbi->usbi_intr, ohci_intr, sc);
 		if (ih == NULL)
