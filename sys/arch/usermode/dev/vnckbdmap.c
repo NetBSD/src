@@ -1,4 +1,4 @@
-/* $NetBSD: vnckbdmap.c,v 1.1 2011/12/29 21:22:49 jmcneill Exp $ */
+/* $NetBSD: vnckbdmap.c,v 1.2 2011/12/30 12:14:44 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1999,2001,2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnckbdmap.c,v 1.1 2011/12/29 21:22:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnckbdmap.c,v 1.2 2011/12/30 12:14:44 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -51,7 +51,7 @@ static const keysym_t vnckbd_keydesc_us[] = {
     KC(0xf13),			KS_Pause,
     KC(0xf14),			KS_Hold_Screen,
 //  KC(0xf15),			KS_SysReq,
-    KC(0xf1b),			KS_Escape,
+    KC(0xf1b),	KS_Cmd_Debugger, KS_Escape,
     KC(0xfff),			KS_Delete,
 
     /* X11 cursor control & motion */
@@ -60,8 +60,8 @@ static const keysym_t vnckbd_keydesc_us[] = {
     KC(0xf52),			KS_Up,
     KC(0xf53),			KS_Right,
     KC(0xf54),			KS_Down,
-    KC(0xf55),			KS_Prior,
-    KC(0xf56),			KS_Next,
+    KC(0xf55),	KS_Cmd_ScrollFastUp, KS_Prior,
+    KC(0xf56),	KS_Cmd_ScrollFastDown, KS_Next,
     KC(0xf57),			KS_End,
 //  KC(0xf58),			KS_Begin,
 
@@ -84,16 +84,36 @@ static const keysym_t vnckbd_keydesc_us[] = {
     /* ... */
 
     /* X11 auxiliary functions */
-    /* ... */
+    KC(0xfbe),	KS_Cmd_Screen0,	KS_F1,
+    KC(0xfbf),	KS_Cmd_Screen1,	KS_F2,
+    KC(0xfc0),	KS_Cmd_Screen2,	KS_F3,
+    KC(0xfc1),	KS_Cmd_Screen3,	KS_F4,
+    KC(0xfc2),	KS_Cmd_Screen4,	KS_F5,
+    KC(0xfc3),	KS_Cmd_Screen5,	KS_F6,
+    KC(0xfc4),	KS_Cmd_Screen6,	KS_F7,
+    KC(0xfc5),	KS_Cmd_Screen7,	KS_F8,
+    KC(0xfc6),	KS_Cmd_Screen8,	KS_F9,
+    KC(0xfc7),	KS_Cmd_Screen9,	KS_F10,
+    KC(0xfc8),			KS_F11,
+    KC(0xfc9),			KS_F12,
+    KC(0xfca),			KS_F13,
+    KC(0xfcb),			KS_F14,
+    KC(0xfcc),			KS_F15,
+    KC(0xfcd),			KS_F16,
+    KC(0xfce),			KS_F17,
+    KC(0xfcf),			KS_F18,
+    KC(0xfd0),			KS_F19,
+    KC(0xfd1),			KS_F20,
+    /* ... F21 - F35 */
 
     /* X11 modifiers */
     KC(0xfe1),			KS_Shift_L,
     KC(0xfe2),			KS_Shift_R,
-    KC(0xfe3),			KS_Control_L,
+    KC(0xfe3),	KS_Cmd1,	KS_Control_L,
     KC(0xfe4),			KS_Control_R,
     KC(0xfe5),			KS_Caps_Lock,
     KC(0xfe6),			KS_Shift_Lock,
-    KC(0xfe7),			KS_Meta_L,
+    KC(0xfe7),	KS_Cmd2,	KS_Meta_L,
     KC(0xfe8),			KS_Meta_R,
     KC(0xfe9),			KS_Alt_L,
     KC(0xfea),			KS_Alt_R,
