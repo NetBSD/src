@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.15 2011/12/28 05:36:11 matt Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.16 2011/12/30 06:48:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -900,6 +900,41 @@
 								 */
 #define RMIXL_GPIO_LOW_PWR_DIS_RESV		__BITS(31,9)
 
+#define RMIXLP_GPIO_PADOE(g) _RMIXL_OFFSET(0x40+(g)) // Pad Output Enable Register 0
+#define RMIXLP_GPIO_PADOE0 _RMIXL_OFFSET(0x40) // Pad Output Enable Register 0
+#define RMIXLP_GPIO_PADOE1 _RMIXL_OFFSET(0x41) // Pad Output Enable Register 1
+#define RMIXLP_GPIO_PADDRV(g) _RMIXL_OFFSET(0x42+(g)) // Pad Drive Register 0
+#define RMIXLP_GPIO_PADDRV0 _RMIXL_OFFSET(0x42) // Pad Drive Register 0
+#define RMIXLP_GPIO_PADDRV1 _RMIXL_OFFSET(0x43) // Pad Drive Register 1
+#define RMIXLP_GPIO_PADSAMPLE(g) _RMIXL_OFFSET(0x44+(g)) // Pad Sample Register 0
+#define RMIXLP_GPIO_PADSAMPLE0 _RMIXL_OFFSET(0x44) // Pad Sample Register 0
+#define RMIXLP_GPIO_PADSAMPLE1 _RMIXL_OFFSET(0x45) // Pad Sample Register 1
+#define RMIXLP_GPIO_INTEN(n,g) _RMIXL_OFFSET(0x46+2*(n)+(g)) // Interrupt 0 Enable Register 0
+#define RMIXLP_GPIO_INTEN0(n) _RMIXL_OFFSET(0x46+2*(n)) // Interrupt 0 Enable Register 0
+#define RMIXLP_GPIO_INTEN1(n) _RMIXL_OFFSET(0x47+2*(n)) // Interrupt 0 Enable Register 0
+#define RMIXLP_GPIO_INTEN00 _RMIXL_OFFSET(0x46) // Interrupt 0 Enable Register 0
+#define RMIXLP_GPIO_INTEN01 _RMIXL_OFFSET(0x47) // Interrupt 0 Enable Register 1
+#define RMIXLP_GPIO_INTEN10 _RMIXL_OFFSET(0x48) // Interrupt 1 Enable Register 0
+#define RMIXLP_GPIO_INTEN11 _RMIXL_OFFSET(0x49) // Interrupt 1 Enable Register 1
+#define RMIXLP_GPIO_INTEN20 _RMIXL_OFFSET(0x4A) // Interrupt 2 Enable Register 0
+#define RMIXLP_GPIO_INTEN21 _RMIXL_OFFSET(0x4B) // Interrupt 2 Enable Register 1
+#define RMIXLP_GPIO_INTEN30 _RMIXL_OFFSET(0x4C) // Interrupt 3 Enable Register 0
+#define RMIXLP_GPIO_INTEN31 _RMIXL_OFFSET(0x4D) // Interrupt 3 Enable Register 1
+#define RMIXLP_GPIO_INTPOL(g) _RMIXL_OFFSET((0x4E)+(g)) // Interrupt Polarity Register 0
+#define RMIXLP_GPIO_INTPOL0 _RMIXL_OFFSET(0x4E) // Interrupt Polarity Register 0
+#define RMIXLP_GPIO_INTPOL1 _RMIXL_OFFSET(0x4F) // Interrupt Polarity Register 1
+#define RMIXLP_GPIO_INTTYPE(g) _RMIXL_OFFSET(0x50+(g)) // Interrupt Type Register 0
+#define RMIXLP_GPIO_INTTYPE0 _RMIXL_OFFSET(0x50) // Interrupt Type Register 0
+#define RMIXLP_GPIO_INTTYPE1 _RMIXL_OFFSET(0x51) // Interrupt Type Register 1
+#define RMIXLP_GPIO_INTSTAT(g) _RMIXL_OFFSET(0x52+(g)) // Interrupt Status Register 0
+#define RMIXLP_GPIO_INTSTAT0 _RMIXL_OFFSET(0x52) // Interrupt Status Register 0
+#define RMIXLP_GPIO_INTSTAT1 _RMIXL_OFFSET(0x53) // Interrupt Status Register 1
+
+#define	RMIXLP_GPIO_8XX_MAXPINS		41	/* 41 GPIO pins */
+#define	RMIXLP_GPIO_4XX_MAXPINS		41	/* 41 GPIO pins */
+#define	RMIXLP_GPIO_3XX_MAXPINS		57	/* 41 GPIO pins */
+#define	RMIXLP_GPIO_3XXL_MAXPINS	44	/* 44 GPIO pins */
+
 /*
  * Peripheral I/O bus (Flash/PCMCIA) controller registers
  */
@@ -1432,6 +1467,12 @@
 #define	PCI_RMIXLP_STATID		_RMIXL_OFFSET(0x3c)
 #define	PCI_RMIXLP_IRTINFO		_RMIXL_OFFSET(0x3d)
 
+#define	PCI_RMIXLP_STATID_BASE(x)	(((x) >> 0) & 0xfff)
+#define	PCI_RMIXLP_STATID_COUNT(x)	(((x) >> 16) & 0xfff)
+
+#define	PCI_RMIXLP_IRTINFO_BASE(x)	(((x) >> 0) & 0xfff)
+#define	PCI_RMIXLP_IRTINFO_COUNT(x)	(((x) >> 16) & 0xfff)
+
 /*
  * XLP System Management Registers
  */
@@ -1608,7 +1649,67 @@
 #define	RMIXLP_NOR_STATUS_RDYBSY		__BIT(0)
 #define	RMIXLP_NAND_PCITAG		_RMIXL_PCITAG(0,7,1)
 
+#define	RMIXLP_NAND_RDYBSY_SEL		_RMIXL_OFFSET(0x81)
+
 #define	RMIXLP_SPI_PCITAG		_RMIXL_PCITAG(0,7,2)
+
+#define	RMIXLP_SPI_CS_CONFIG(n)		_RMIXL_OFFSET(0x40+0x10*(n))
+#define	RMIXLP_SPI_CS_FDIV(n)		_RMIXL_OFFSET(0x41+0x10*(n))
+#define	RMIXLP_SPI_CS_CMD(n)		_RMIXL_OFFSET(0x42+0x10*(n))
+#define	RMIXLP_SPI_CS_STATUS(n)		_RMIXL_OFFSET(0x43+0x10*(n))
+#define	RMIXLP_SPI_CS_INTEN(n)		_RMIXL_OFFSET(0x44+0x10*(n))
+#define	RMIXLP_SPI_CS_FIFO_THRESH(n)	_RMIXL_OFFSET(0x45+0x10*(n))
+#define	RMIXLP_SPI_CS_FIFO_WCNT(n)	_RMIXL_OFFSET(0x46+0x10*(n))
+#define	RMIXLP_SPI_CS_TXDATA_FIFO(n)	_RMIXL_OFFSET(0x47+0x10*(n))
+#define	RMIXLP_SPI_CS_RXDATA_FIFO(n)	_RMIXL_OFFSET(0x48+0x10*(n))
+#define	RMIXLP_SPI_SYSCNTRL		_RMIXL_OFFSET(0x80)
+
+#define	RMIXLP_SPI_CS_CONFIG_RXCAP	__BIT(11) // RX capture on phase drive
+#define	RMIXLP_SPI_CS_CONFIG_LSBFE	__BIT(10) // LSB first enable
+#define	RMIXLP_SPI_CS_CONFIG_CSTODATA	__BITS(9,8) // chip select polarity 1:high
+#define	RMIXLP_SPI_CS_CONFIG_SBPOL	__BIT(6) // start bit polarity 1:high
+#define	RMIXLP_SPI_CS_CONFIG_SBE	__BIT(6) // start bit enable 1:enabled
+#define	RMIXLP_SPI_CS_CONFIG_RXMISO	__BIT(5) // 0: RX MOSI, 1: RX MISO
+#define	RMIXLP_SPI_CS_CONFIG_TXMOSI	__BIT(4) // 1: TX enable for MOSI pin
+#define	RMIXLP_SPI_CS_CONFIG_TXMISO	__BIT(3) // 1: TX enable for MISO pin
+#define	RMIXLP_SPI_CS_CONFIG_CSPOL	__BIT(2) // chip select polarity 1:high
+#define	RMIXLP_SPI_CS_CONFIG_CPOL	__BIT(1) // clock polarity 1:high
+#define	RMIXLP_SPI_CS_CONFIG_CPHA	__BIT(0) // SPI_CLK clock phase select
+
+#define	RMIXLP_SPI_CS_FDIV_CNT		__BITS(15,0) // divisor (min of 16)
+
+#define	RMIXLP_SPI_CS_CMD_XFERBITCNT	__BITS(31,16) // total # of bits - 1
+#define	RMIXLP_SPI_CS_CMD_CONT		__BIT(4)
+#define	RMIXLP_SPI_CS_CMD_CMD		__BITS(3,0)
+#define	RMIXLP_SPI_CS_CMD_IDLE		0
+#define	RMIXLP_SPI_CS_CMD_TX		1
+#define	RMIXLP_SPI_CS_CMD_RX		2
+#define	RMIXLP_SPI_CS_CMD_TXRX		3
+
+#define	RMIXLP_SPI_CS_STATUS_RXOF	__BIT(5) // RX FIFO overflow
+#define	RMIXLP_SPI_CS_STATUS_TXUF	__BIT(4) // TX FIFO underflow
+#define	RMIXLP_SPI_CS_STATUS_RXTHRESH	__BIT(3) // RX FIFO threshold crossed
+#define	RMIXLP_SPI_CS_STATUS_TXTHRESH	__BIT(2) // TX FIFO threshold crossed
+#define	RMIXLP_SPI_CS_STATUS_XFERDONE	__BIT(1) // Transfer is complete (RO)
+#define	RMIXLP_SPI_CS_STATUS_XFERPEND	__BIT(1) // Transfer is pending (RO)
+
+#define	RMIXLP_SPI_CS_INTEN_RXOF	__BIT(4) // RX FIFO overflow
+#define	RMIXLP_SPI_CS_INTEN_TXUF	__BIT(3) // TX FIFO underflow
+#define	RMIXLP_SPI_CS_INTEN_RXTHRESH	__BIT(2) // RX FIFO threshold crossed
+#define	RMIXLP_SPI_CS_INTEN_TXTHRESH	__BIT(1) // TX FIFO threshold crossed
+#define	RMIXLP_SPI_CS_INTEN_XFERDONE	__BIT(0) // Transfer is complete
+
+#define	RMIXLP_SPI_CS_FIFO_THRESH_TXFIFO __BITS(7,4)
+#define	RMIXLP_SPI_CS_FIFO_THRESH_RXFIFO __BITS(3,0)
+
+#define	RMIXLP_SPI_CS_FIFO_WCNT_TXFIFO	__BITS(7,4)
+#define	RMIXLP_SPI_CS_FIFO_WCNT_RXFIFO	__BITS(3,0)
+
+#define	RMIXLP_SPI_SYSCNTRL_PMEN	__BIT(8) // Pin muxing enable
+#define	RMIXLP_SPI_SYSCNTRL_CLKDSI(n)	__BIT(4+(n)) // Clock disable for chan
+#define	RMIXLP_SPI_SYSCNTRL_RESET(n)	__BIT(0+(n)) // Reset SPI channel n
+
+#define	RMIXLP_SPI_GPIO_PINS		__BITS(28,22)
 
 #define	RMIXLP_MMC_PCITAG		_RMIXL_PCITAG(0,7,3)
 #define	RMIXLP_MMC_SLOTSIZE		_RMIXL_OFFSET(0x40)
@@ -1616,6 +1717,10 @@
 #define	RMIXLP_MMC_SLOT0		_RMIXL_OFFSET(0x40)
 #define	RMIXLP_MMC_SLOT1		_RMIXL_OFFSET(0x80)
 #define	RMIXLP_MMC_SYSCTRL		_RMIXL_OFFSET(0xC0)
+#define	RMIXLP_MMC_CAPCFG0_S(n)		_RMIXL_OFFSET(0xC1+5*(n))
+#define	RMIXLP_MMC_CAPCFG1_S(n)		_RMIXL_OFFSET(0xC2+5*(n))
+#define	RMIXLP_MMC_INIT_PRESET_S(n)	_RMIXL_OFFSET(0xC3+5*(n))
+#define	RMIXLP_MMC_DEF_PRESET_S(n)	_RMIXL_OFFSET(0xC4+5*(n))
 
 #define	RMIXLP_MMC_SYSCTRL_DELAY	__BITS(21,19)
 #define	RMIXLP_MMC_SYSCTRL_RT		__BIT(8)
@@ -1625,8 +1730,18 @@
 #define	RMIXLP_MMC_SYSCTRL_CA		__BIT(4)
 #define	RMIXLP_MMC_SYSCTRL_EN1		__BIT(3)
 #define	RMIXLP_MMC_SYSCTRL_EN0		__BIT(2)
+#define	RMIXLP_MMC_SYSCTRL_EN(n)	__BIT(2+(n))
 #define	RMIXLP_MMC_SYSCTRL_CLK_DIS	__BIT(1)
 #define	RMIXLP_MMC_SYSCTRL_RST		__BIT(0)
+
+#define	RMIXLP_MMC_CAPCFG0_S_EMB	__BIT(17) // Extended Media Bus
+
+#define	RMIXLP_MMC_GPIO_PINS0		\
+	(__BITS(10,0) | __BIT(29) | __BIT(31))
+#define	RMIXLP_MMC_GPIO_PINS1		\
+	(__BITS(21,11) | __BIT(28) | __BIT(30))
+#define	RMIXLP_MMC_GPIO_PINS(slot)	\
+	(slot == 0 ? RMIXLP_MMC_GPIO_PINS0 : RMIXLP_MMC_GPIO_PINS1)
 
 /*
  * FMN non-core station configuration registers

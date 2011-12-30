@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_spi_pci.c,v 1.1.2.1 2011/12/27 19:58:19 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_spi_pci.c,v 1.1.2.2 2011/12/30 06:48:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,6 +55,7 @@ int xlspi_debug = 0;
 
 static	int xlspi_pci_match(device_t, cfdata_t, void *);
 static	void xlspi_pci_attach(device_t, device_t, void *);
+static	int xlspi_intr(void *);
 
 struct	xlspi_softc {
 	device_t sc_dev;
@@ -82,7 +83,7 @@ xlspi_pci_attach(device_t parent, device_t self, void *aux)
 	struct rmixl_config * const rcp = &rmixl_configuration;
 	struct pci_attach_args * const pa = aux;
 	struct xlspi_softc * const sc = device_private(self);
-	// struct norbus_attach_args iba;
+	// struct spibus_attach_args iba;
 
 	sc->sc_dev = self;
 	sc->sc_bst = &rcp->rc_pci_ecfg_eb_memt;
@@ -91,10 +92,41 @@ xlspi_pci_attach(device_t parent, device_t self, void *aux)
 	 * Why isn't this accessible via a BAR?
 	 */
 	if (bus_space_subregion(sc->sc_bst, rcp->rc_pci_ecfg_eb_memh,
-		    pa->pa_tag | 0x100, 0, &sc->sc_bsh)) {
+		    pa->pa_tag, 0, &sc->sc_bsh)) {
 		aprint_error(": can't map registers\n");
 		return;
 	}
 
-	aprint_normal(": XLP SPI Controller\n");
+	uint32_t r = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+	    RMIXLP_SPI_SYSCNTRL);
+
+	if ((r & RMIXLP_SPI_SYSCNTRL_PMEN) == 0) {
+		aprint_normal(": XLP SPI Controller%s\n", " (disabled)");
+		return;
+	}
+
+	/*
+	 * Take away the SPI pins
+	 */
+	rcp->rc_gpio_available &= ~RMIXLP_SPI_GPIO_PINS;
+
+	aprint_normal(": XLP SPI Controller%s\n", "");
+
+	pci_intr_handle_t pcih;
+	pci_intr_map(pa, &pcih);
+
+	if (pci_intr_establish(pa->pa_pc, pcih, IPL_VM, xlspi_intr, sc) == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt\n");
+	} else {
+		const char * const intrstr = pci_intr_string(pa->pa_pc, pcih);
+		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
+	}
+}
+
+static int
+xlspi_intr(void *v)
+{
+	struct xlspi_softc * const sc = v;
+
+	panic("%s(%p)", device_xname(sc->sc_dev), v);
 }

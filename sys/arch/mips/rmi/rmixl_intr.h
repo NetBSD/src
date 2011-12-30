@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.h,v 1.1.2.9 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.h,v 1.1.2.10 2011/12/30 06:48:55 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -107,4 +107,8 @@ void	rmixl_intr_init_clk(void);
 void	rmixl_intr_init_ipi(void);
 #endif
 
+void *	gpio_intr_establish(size_t /* pin */, int /* ipl */, int /* ist */,
+	    int (*)(void *), void *, bool);
+
+void	gpio_intr_disestablish(void *);
 #endif	/* _MIPS_RMI_RMIXL_INTR_H_ */
