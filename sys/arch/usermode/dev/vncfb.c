@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.8 2011/12/30 14:22:41 jmcneill Exp $ */
+/* $NetBSD: vncfb.c,v 1.9 2011/12/30 19:32:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,13 +35,15 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.8 2011/12/30 14:22:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.9 2011/12/30 19:32:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/wscons/wsconsio.h>
 
@@ -56,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.8 2011/12/30 14:22:41 jmcneill Exp $");
 
 #include <machine/mainbus.h>
 #include <machine/thunk.h>
+
+#define VNCFB_REFRESH_INTERVAL	33	/* fb refresh interval when mapped */
 
 struct vncfb_fbops {
 	void	(*copycols)(void *, int, int, int, int);
@@ -74,7 +78,10 @@ struct vncfb_softc {
 	unsigned int		sc_height;
 	unsigned int		sc_depth;
 	int			sc_mode;
+	uint8_t *		sc_mem;
+	size_t			sc_memsize;
 	uint8_t *		sc_framebuf;
+	size_t			sc_framebufsize;
 	struct vcons_data	sc_vd;
 	struct vncfb_fbops	sc_ops;
 
@@ -82,6 +89,9 @@ struct vncfb_softc {
 
 	void			*sc_ih;
 	void			*sc_sih;
+
+	callout_t		sc_callout;
+	void			*sc_refresh_sih;
 };
 
 static int	vncfb_match(device_t, cfdata_t, void *);
@@ -107,6 +117,8 @@ static void	vncfb_copyrect(struct vncfb_softc *, int, int, int, int, int, int);
 static void	vncfb_fillrect(struct vncfb_softc *, int, int, int, int, uint32_t);
 static int	vncfb_intr(void *);
 static void	vncfb_softintr(void *);
+static void	vncfb_refresh(void *);
+static void	vncfb_softrefresh(void *);
 
 static int	vncfb_kbd_enable(void *, int);
 static void	vncfb_kbd_set_leds(void *, int);
@@ -187,13 +199,17 @@ vncfb_attach(device_t parent, device_t self, void *priv)
 		panic("couldn't open VNC socket");
 #endif
 
-	sc->sc_framebuf = kmem_zalloc(sc->sc_width * sc->sc_height *
-	    (sc->sc_depth / 8), KM_SLEEP);
-	KASSERT(sc->sc_framebuf != NULL);
+	sc->sc_framebufsize = sc->sc_width * sc->sc_height * (sc->sc_depth / 8);
+	sc->sc_memsize = sc->sc_framebufsize + PAGE_SIZE;
+
+	sc->sc_mem = kmem_zalloc(sc->sc_memsize, KM_SLEEP);
+	sc->sc_framebuf = (void *)round_page((vaddr_t)sc->sc_mem);
 
 	aprint_naive("\n");
 	aprint_normal(": %ux%u %ubpp (port %u)\n",
 	    sc->sc_width, sc->sc_height, sc->sc_depth, taa->u.vnc.port);
+	aprint_normal_dev(self, "mem @ %p\n", sc->sc_mem);
+	aprint_normal_dev(self, "fb  @ %p\n", sc->sc_framebuf);
 
 	sc->sc_rfb.width = sc->sc_width;
 	sc->sc_rfb.height = sc->sc_height;
@@ -209,6 +225,12 @@ vncfb_attach(device_t parent, device_t self, void *priv)
 
 	sc->sc_sih = softint_establish(SOFTINT_SERIAL, vncfb_softintr, sc);
 	sc->sc_ih = sigio_intr_establish(vncfb_intr, sc);
+
+	sc->sc_refresh_sih = softint_establish(SOFTINT_SERIAL,
+	    vncfb_softrefresh, sc);
+
+	callout_init(&sc->sc_callout, 0);
+	callout_setfunc(&sc->sc_callout, vncfb_refresh, sc);
 
 	vcons_init(&sc->sc_vd, sc, &vncfb_defaultscreen, &vncfb_accessops);
 	sc->sc_vd.init_screen = vncfb_init_screen;
@@ -438,12 +460,19 @@ vncfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		wdf->depth = ms->scr_ri.ri_depth;
 		wdf->cmsize = 256;
 		return 0;
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->sc_width * (sc->sc_depth / 8);
+		return 0;
 	case WSDISPLAYIO_SMODE:
 		new_mode = *(int *)data;
 		if (sc->sc_mode != new_mode) {
 			sc->sc_mode = new_mode;
-			if (new_mode == WSDISPLAYIO_MODE_EMUL)
+			if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+				callout_halt(&sc->sc_callout, NULL);
 				vcons_redraw_screen(ms);
+			} else {
+				callout_schedule(&sc->sc_callout, 1);
+			}
 		}
 		return 0;
 	default:
@@ -454,8 +483,26 @@ vncfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 static paddr_t
 vncfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
-	/* TODO */
-	return -1;
+	struct vcons_data *vd = v;
+	struct vncfb_softc *sc = vd->cookie;
+	paddr_t pa;
+	vaddr_t va;
+
+	if (offset < 0 || offset + PAGE_SIZE > sc->sc_framebufsize) {
+		device_printf(sc->sc_dev, "mmap: offset 0x%x, fbsize 0x%x"
+		    " out of range!\n",
+		    (unsigned int)offset, (unsigned int)sc->sc_framebufsize);
+		return -1;
+	}
+
+	va = trunc_page((vaddr_t)sc->sc_framebuf + offset);
+
+	if (pmap_extract(pmap_kernel(), va, &pa) == false) {
+		device_printf(sc->sc_dev, "mmap: pmap_extract failed!\n");
+		return -1;
+	}
+
+	return atop(pa);
 }
 
 static void
@@ -512,6 +559,32 @@ vncfb_softintr(void *priv)
 			break;
 		}
 	}
+}
+
+static void
+vncfb_refresh(void *priv)
+{
+	struct vncfb_softc *sc = priv;
+
+	softint_schedule(sc->sc_refresh_sih);
+}
+
+static void
+vncfb_softrefresh(void *priv)
+{
+	struct vncfb_softc *sc = priv;
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
+		return;
+
+	/* update the screen */
+	vncfb_update(sc, 0, 0, sc->sc_width, sc->sc_height);
+
+	/* flush the pending drawing op */
+	while (thunk_rfb_poll(&sc->sc_rfb, NULL) > 0)
+		;
+
+	callout_schedule(&sc->sc_callout, mstohz(VNCFB_REFRESH_INTERVAL));
 }
 
 static int
