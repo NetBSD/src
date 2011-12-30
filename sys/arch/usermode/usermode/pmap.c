@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.84 2011/12/30 06:59:54 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.85 2011/12/30 19:30:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2011/12/30 06:59:54 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2011/12/30 19:30:59 jmcneill Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -1219,7 +1219,6 @@ pmap_is_referenced(struct vm_page *page)
 paddr_t
 pmap_phys_address(paddr_t cookie)
 {
-	panic("pmap_phys_address not implemented\n");
 	return ptoa(cookie);
 }
 
