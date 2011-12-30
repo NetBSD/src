@@ -237,6 +237,7 @@ struct rmixl_config rmixl_configuration = {
 		._dmamem_ops = _BUS_DMAMEM_OPS_INITIALIZER,
 		._dmatag_ops = _BUS_DMATAG_OPS_INITIALIZER,
 	},
+	.rc_gpio_available = ~(uint64_t)0,	/* all pins by default */
 #ifdef __HAVE_PCI_CONF_HOOK
 	.rc_pci_chipset = {
 		.pc_conf_hook = rmixl_pci_conf_hook,
