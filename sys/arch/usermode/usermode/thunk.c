@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.67 2011/12/30 20:08:00 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.68 2011/12/30 21:14:58 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.67 2011/12/30 20:08:00 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.68 2011/12/30 21:14:58 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1165,9 +1165,10 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		thunk_rfb_update(rfb, 0, 0, rfb->width, rfb->height);
 	}
 
-	thunk_rfb_send_pending(rfb);
 	if (rfb->clientfd == -1)
 		return -1;
+
+	thunk_rfb_send_pending(rfb);
 
 	if (event == NULL)
 		return 0;
@@ -1201,7 +1202,17 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		msg_len = 4 * ntohs(*(uint16_t *)&set_encodings[1]);
 		break;
 	case THUNK_RFB_FRAMEBUFFER_UPDATE_REQUEST:
-		msg_len = sizeof(framebuffer_update_request);
+		recv(rfb->clientfd, framebuffer_update_request,
+			sizeof(framebuffer_update_request), MSG_NOSIGNAL);
+#if 0
+		if (framebuffer_update_request[0] == 0) {
+fprintf(stdout, "complete update request\n");
+			/* complete redraw request -> buffer full */
+			rfb->nupdates = __arraycount(rfb->update);
+		}
+		thunk_rfb_send_pending(rfb);
+#endif
+		msg_len = 0;
 		break;
 	case THUNK_RFB_KEY_EVENT:
 		recv(rfb->clientfd, key_event, sizeof(key_event), MSG_NOSIGNAL);
