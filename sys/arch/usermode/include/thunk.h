@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.48 2011/12/30 09:36:01 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.49 2011/12/30 11:32:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -190,9 +190,15 @@ typedef struct {
 	} data;
 } thunk_rfb_event_t;
 
+
 typedef struct {
+	uint8_t			type;
 	uint16_t		x, y, w, h;
+	uint32_t		colour;		/* for RRE clear */
 } thunk_rfb_update_t;
+#define THUNK_RFB_TYPE_UPDATE	0
+#define THUNK_RFB_TYPE_COPYRECT	1
+#define THUNK_RFB_TYPE_RRE	2		/* rectangle fill */
 
 #define THUNK_RFB_QUEUELEN	128
 
@@ -208,8 +214,10 @@ typedef struct {
 	uint8_t			depth;
 	char			name[64];
 	uint8_t			*framebuf;
-	thunk_rfb_update_t	update[THUNK_RFB_QUEUELEN];
+
 	unsigned int		nupdates;
+	unsigned int		first_mergable;
+	thunk_rfb_update_t	update[THUNK_RFB_QUEUELEN];
 } thunk_rfb_t;
 
 int	thunk_rfb_open(thunk_rfb_t *, uint16_t);
