@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.3 2011/12/30 09:31:44 jmcneill Exp $ */
+/* $NetBSD: vncfb.c,v 1.4 2011/12/30 11:06:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.3 2011/12/30 09:31:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.4 2011/12/30 11:06:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ struct vncfb_softc {
 
 	int			sc_kbd_enable;
 
-	callout_t		sc_callout;
+	void			*sc_ih;
 	void			*sc_sih;
 };
 
@@ -103,7 +103,7 @@ static paddr_t	vncfb_mmap(void *, void *, off_t, int);
 static void	vncfb_init_screen(void *, struct vcons_screen *, int, long *);
 
 static void	vncfb_update(struct vncfb_softc *, int, int, int, int);
-static void	vncfb_poll(void *);
+static int	vncfb_intr(void *);
 static void	vncfb_softintr(void *);
 
 static int	vncfb_kbd_enable(void *, int);
@@ -188,9 +188,6 @@ vncfb_attach(device_t parent, device_t self, void *priv)
 	    (sc->sc_depth / 8), KM_SLEEP);
 	KASSERT(sc->sc_framebuf != NULL);
 
-	callout_init(&sc->sc_callout, 0);
-	callout_setfunc(&sc->sc_callout, vncfb_poll, sc);
-
 	aprint_naive("\n");
 	aprint_normal(": %ux%u %ubpp (port %u)\n",
 	    sc->sc_width, sc->sc_height, sc->sc_depth, taa->u.vnc.port);
@@ -208,7 +205,7 @@ vncfb_attach(device_t parent, device_t self, void *priv)
 		panic("couldn't open rfb server");
 
 	sc->sc_sih = softint_establish(SOFTINT_SERIAL, vncfb_softintr, sc);
-	callout_schedule(&sc->sc_callout, 1);
+	sc->sc_ih = sigio_intr_establish(vncfb_intr, sc);
 
 	vcons_init(&sc->sc_vd, sc, &vncfb_defaultscreen, &vncfb_accessops);
 	sc->sc_vd.init_screen = vncfb_init_screen;
@@ -455,14 +452,17 @@ static void
 vncfb_update(struct vncfb_softc *sc, int x, int y, int w, int h)
 {
 	thunk_rfb_update(&sc->sc_rfb, x, y, w, h);
+	softint_schedule(sc->sc_sih);
 }
 
-static void
-vncfb_poll(void *priv)
+static int
+vncfb_intr(void *priv)
 {
 	struct vncfb_softc *sc = priv;
 
 	softint_schedule(sc->sc_sih);
+
+	return 0;
 }
 
 static void
@@ -486,8 +486,6 @@ vncfb_softintr(void *priv)
 			break;
 		}
 	}
-
-	callout_schedule(&sc->sc_callout, 1);
 }
 
 static int
