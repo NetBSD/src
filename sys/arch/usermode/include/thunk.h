@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.47 2011/12/29 21:22:49 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.48 2011/12/30 09:36:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -191,9 +191,10 @@ typedef struct {
 } thunk_rfb_event_t;
 
 typedef struct {
-	bool			pending;
 	uint16_t		x, y, w, h;
 } thunk_rfb_update_t;
+
+#define THUNK_RFB_QUEUELEN	128
 
 typedef struct {
 	int			sockfd;
@@ -207,7 +208,8 @@ typedef struct {
 	uint8_t			depth;
 	char			name[64];
 	uint8_t			*framebuf;
-	thunk_rfb_update_t	update;
+	thunk_rfb_update_t	update[THUNK_RFB_QUEUELEN];
+	unsigned int		nupdates;
 } thunk_rfb_t;
 
 int	thunk_rfb_open(thunk_rfb_t *, uint16_t);
