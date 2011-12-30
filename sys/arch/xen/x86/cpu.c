@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.72 2011/12/30 16:55:21 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.73 2011/12/30 18:01:20 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72 2011/12/30 16:55:21 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73 2011/12/30 18:01:20 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1271,23 +1271,15 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	KASSERT(ci != NULL);
 
 #if defined(PAE)
-	ci->ci_pae_l3_pdir = (paddr_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-	    UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_NOWAIT);
-
-	if (ci->ci_pae_l3_pdir == NULL) {
-		panic("%s: failed to allocate L3 per-cpu PD for CPU %d\n",
-		      __func__, cpu_index(ci));
-	}
-	ci->ci_pae_l3_pdirpa = vtophys((vaddr_t) ci->ci_pae_l3_pdir);
+	cpu_alloc_l3_page(ci);
 	KASSERT(ci->ci_pae_l3_pdirpa != 0);
 
 	/* Initialise L2 entries 0 - 2: Point them to pmap_kernel() */
-	ci->ci_pae_l3_pdir[0] =
-	    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[0]) | PG_V;
-	ci->ci_pae_l3_pdir[1] =
-	    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[1]) | PG_V;
-	ci->ci_pae_l3_pdir[2] =
-	    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[2]) | PG_V;
+	int i;
+	for (i = 0; i < PTP_LEVELS - 1; i++ ) {
+		ci->ci_pae_l3_pdir[i] =
+		    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[i]) | PG_V;
+	}
 #endif /* PAE */
 
 	ci->ci_kpm_pdir = (pd_entry_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
