@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.2 2011/12/30 08:49:53 jmcneill Exp $ */
+/* $NetBSD: vncfb.c,v 1.3 2011/12/30 09:31:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.2 2011/12/30 08:49:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.3 2011/12/30 09:31:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,10 +359,10 @@ vncfb_copyrows(void *priv, int srcrow, int dstrow, int nrows)
 	w = ri->ri_width;
 	if (srcrow < dstrow) {
 		y = ri->ri_yorigin + (srcrow * ri->ri_font->fontheight);
-		h = (dstrow - srcrow) * ri->ri_font->fontheight;
+		h = (nrows + (dstrow - srcrow)) * ri->ri_font->fontheight;
 	} else {
 		y = ri->ri_yorigin + (dstrow * ri->ri_font->fontheight);
-		h = (srcrow - dstrow) * ri->ri_font->fontheight;
+		h = (nrows + (srcrow - dstrow)) * ri->ri_font->fontheight;
 	}
 
 	vncfb_update(sc, x, y, w, h);
