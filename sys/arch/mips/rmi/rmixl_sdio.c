@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_sdio.c,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_sdio.c,v 1.1.2.2 2011/12/30 06:48:56 matt Exp $");
 
 #include <sys/device.h>
 #include <sys/bus.h>
@@ -91,8 +91,10 @@ xlsdio_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, RMIXLP_MMC_SYSCTRL, r);
 	DELAY(1000);
 	r |= RMIXLP_MMC_SYSCTRL_CA;	/* Cache Allocate */
+#if 0
 	r |= RMIXLP_MMC_SYSCTRL_EN0;	/* Enable Slot 0 */
 	r |= RMIXLP_MMC_SYSCTRL_EN1;	/* Enable Slot 1 */
+#endif
 	r &= ~RMIXLP_MMC_SYSCTRL_CLK_DIS; /* Don't Disable Clock */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, RMIXLP_MMC_SYSCTRL, r);
 
@@ -113,7 +115,15 @@ xlsdio_attach(device_t parent, device_t self, void *aux)
 		pci_conf_write(pa->pa_pc, pa->pa_tag,
 		    offset + SDHC_NINTR_STATUS, 0xffffffff);
 
-		config_found(self, &xaa, xlsdio_print);
+		if (r & RMIXLP_MMC_SYSCTRL_EN(slot)) {
+			/*
+			 * For any SDHC port we are using, we must remove
+			 * the pins used by it from those that GPIO will
+			 * offer to userland.
+			 */
+			rcp->rc_gpio_available &= ~RMIXLP_MMC_GPIO_PINS(slot);
+			config_found(self, &xaa, xlsdio_print);
+		}
 	}
 }
 

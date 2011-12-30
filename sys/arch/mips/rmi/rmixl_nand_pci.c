@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_nand_pci.c,v 1.1.2.1 2011/12/27 19:58:19 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_nand_pci.c,v 1.1.2.2 2011/12/30 06:48:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,6 +57,18 @@ struct	xlnand_softc {
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 };
+
+static inline uint32_t
+xlnand_read_4(struct xlnand_softc *sc, bus_size_t off)
+{
+	return bus_space_read_4(sc->sc_bst, sc->sc_bsh, off);
+}
+
+static inline void
+xlnand_write_4(struct xlnand_softc *sc, bus_size_t off, uint32_t v)
+{
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, off, v);
+}
 
 CFATTACH_DECL_NEW(xlnand_pci, sizeof(struct xlnand_softc),
     xlnand_pci_match, xlnand_pci_attach, NULL, NULL);
@@ -87,10 +99,22 @@ xlnand_pci_attach(device_t parent, device_t self, void *aux)
 	 * Why isn't this accessible via a BAR?
 	 */
 	if (bus_space_subregion(sc->sc_bst, rcp->rc_pci_ecfg_eb_memh,
-		    pa->pa_tag | 0x100, 0, &sc->sc_bsh)) {
+		    pa->pa_tag, 0, &sc->sc_bsh)) {
 		aprint_error(": can't map registers\n");
 		return;
 	}
 
 	aprint_normal(": XLP NAND Controller\n");
+
+	/*
+	 * If a NAND is using non-0 RDY/BSY signals, we need to take control
+	 * of those from GPIO.
+	 */
+	uint32_t r = xlnand_read_4(sc, RMIXLP_NAND_RDYBSY_SEL);
+	for (r >>= 3; r != 0; r >>= 3) {
+		u_int rdybsy = r & 7;
+		if (rdybsy != 0) {
+			rcp->rc_gpio_available &= ~__BIT(33 + rdybsy);
+		}
+	}
 }
