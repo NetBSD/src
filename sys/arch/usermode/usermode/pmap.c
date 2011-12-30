@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.83 2011/12/27 14:55:31 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.84 2011/12/30 06:59:54 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2011/12/27 14:55:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2011/12/30 06:59:54 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -177,12 +177,12 @@ pmap_bootstrap(void)
 
 	/* print summary */
 	aprint_verbose("\nMemory summary\n");
+	aprint_verbose("\tkmem_user_start\t%p\n", (void *) kmem_user_start);
+	aprint_verbose("\tkmem_user_end\t%p\n",   (void *) kmem_user_end);
 	aprint_verbose("\tkmem_k_start\t%p\n",    (void *) kmem_k_start);
 	aprint_verbose("\tkmem_k_end\t%p\n",      (void *) kmem_k_end);
 	aprint_verbose("\tkmem_ext_start\t%p\n",  (void *) kmem_ext_start);
 	aprint_verbose("\tkmem_ext_end\t%p\n",    (void *) kmem_ext_end);
-	aprint_verbose("\tkmem_user_start\t%p\n", (void *) kmem_user_start);
-	aprint_verbose("\tkmem_user_end\t%p\n",   (void *) kmem_user_end);
 
 	aprint_verbose("\ttotmem_len\t%10d\n", (int) totmem_len);
 	aprint_verbose("\tkvmsize\t\t%10d\n", (int) KVMSIZE);
