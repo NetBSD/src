@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.52 2011/12/30 14:20:34 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.53 2011/12/30 20:08:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -187,6 +187,11 @@ typedef struct {
 			uint8_t		down_flag;
 			uint32_t	keysym;
 		} key_event;
+		struct {
+			uint8_t		button_mask;
+			uint16_t	absx;
+			uint16_t	absy;
+		} pointer_event;
 	} data;
 } thunk_rfb_event_t;
 

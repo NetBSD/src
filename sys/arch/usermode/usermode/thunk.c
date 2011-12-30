@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.66 2011/12/30 14:20:34 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.67 2011/12/30 20:08:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.66 2011/12/30 14:20:34 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.67 2011/12/30 20:08:00 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1216,7 +1216,20 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		msg_len = 0;
 		break;
 	case THUNK_RFB_POINTER_EVENT:
-		msg_len = sizeof(pointer_event);
+		recv(rfb->clientfd, pointer_event, sizeof(pointer_event),
+		    MSG_NOSIGNAL);
+		event->data.pointer_event.button_mask = pointer_event[0];
+		event->data.pointer_event.absx =
+		    ntohs(*(uint16_t *)&pointer_event[1]);
+		event->data.pointer_event.absy =
+		    ntohs(*(uint16_t *)&pointer_event[3]);
+#ifdef RFB_DEBUG
+		fprintf(stdout, "rfb: pointer mask %02x abs %dx%d\n",
+		    event->data.pointer_event.button_mask,
+		    event->data.pointer_event.absx,
+		    event->data.pointer_event.absy);
+#endif
+		msg_len = 0;
 		break;
 	case THUNK_RFB_CLIENT_CUT_TEXT:
 		recv(rfb->clientfd, client_cut_text, sizeof(client_cut_text),
