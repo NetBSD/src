@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.148 2011/12/30 16:55:21 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.149 2011/12/30 17:57:49 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2011/12/30 16:55:21 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149 2011/12/30 17:57:49 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1663,33 +1663,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 		return;
 
 #ifdef PAE
-	int ret;
-	struct pglist pg;
-	struct vm_page *vmap;
-
-	/*
-	 * Allocate a page for the per-CPU L3 PD. cr3 being 32 bits, PA musts
-	 * resides below the 4GB boundary.
-	 */
-	ret = uvm_pglistalloc(PAGE_SIZE, 0, 0x100000000ULL, 32, 0, &pg, 1, 0);
-	vmap = TAILQ_FIRST(&pg);
-
-	if (ret != 0 || vmap == NULL)
-		panic("%s: failed to allocate L3 pglist for CPU %d (ret %d)\n",
-			__func__, cpu_index(ci), ret);
-
-	ci->ci_pae_l3_pdirpa = vmap->phys_addr;
-
-	ci->ci_pae_l3_pdir = (paddr_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
-	if (ci->ci_pae_l3_pdir == NULL)
-		panic("%s: failed to allocate L3 PD for CPU %d\n",
-			__func__, cpu_index(ci));
-
-	pmap_kenter_pa((vaddr_t)ci->ci_pae_l3_pdir, ci->ci_pae_l3_pdirpa,
-		VM_PROT_READ | VM_PROT_WRITE, 0);
-
-	pmap_update(pmap_kernel());
+	cpu_alloc_l3_page(ci);
 #endif
 }
 #endif
