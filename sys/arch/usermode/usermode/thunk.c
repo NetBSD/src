@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.57 2011/12/30 09:36:02 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.58 2011/12/30 11:00:01 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.57 2011/12/30 09:36:02 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.58 2011/12/30 11:00:01 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -896,6 +896,25 @@ thunk_rfb_open(thunk_rfb_t *rfb, uint16_t port)
 }
 
 static int
+safe_send(int s, const void *msg, size_t len)
+{
+	const uint8_t *p;
+	int sent_len;
+
+	p = msg;
+	while (len) {
+		assert(len >= 0);
+		sent_len = send(s, p, len, MSG_NOSIGNAL);
+		if (sent_len < 0) 
+			return -1;
+	
+		p   += sent_len;
+		len -= sent_len;
+	}
+	return 0;
+}
+
+static int
 thunk_rfb_server_init(thunk_rfb_t *rfb)
 {
 	char msgbuf[80];
@@ -920,7 +939,7 @@ thunk_rfb_server_init(thunk_rfb_t *rfb)
 	*(uint32_t *)p = htonl(namelen);	p += 4;	/* name length */
 	memcpy(p, rfb->name, namelen);		p += namelen;
 
-	return send(rfb->clientfd, msgbuf, p - msgbuf, MSG_NOSIGNAL);
+	return safe_send(rfb->clientfd, msgbuf, p - msgbuf);
 }
 
 static int
@@ -933,14 +952,14 @@ thunk_rfb_handshake(thunk_rfb_t *rfb)
 	char dummy;
 
 	/* send server protocol version */
-	len = send(rfb->clientfd, protover, strlen(protover), MSG_NOSIGNAL);
-	if (len == -1)
+	len = safe_send(rfb->clientfd, protover, strlen(protover));
+	if (len < 0)
 		return errno;
 
 	/* receive client protocol version */
 	do {
 		len = recv(rfb->clientfd, &dummy, sizeof(dummy), MSG_NOSIGNAL);
-		if (len == -1)
+		if (len < 0)
 			return errno;
 		if (len == 0)
 			return EIO;
@@ -948,20 +967,19 @@ thunk_rfb_handshake(thunk_rfb_t *rfb)
 
 	/* send security capabilities */
 	security_type = htonl(1);	/* no security */
-	len = send(rfb->clientfd, &security_type, sizeof(security_type),
-	    MSG_NOSIGNAL);
-	if (len == -1)
+	len = safe_send(rfb->clientfd, &security_type, sizeof(security_type));
+	if (len < 0)
 		return errno;
 
 	/* receive client init message */
 	len = recv(rfb->clientfd, &shared_flag, sizeof(shared_flag),
-	    MSG_NOSIGNAL);
-	if (len == -1)
+		MSG_NOSIGNAL);
+	if (len <= 0)
 		return errno;
 
 	/* send server init message */
 	len = thunk_rfb_server_init(rfb);
-	if (len == -1)
+	if (len < 0)
 		return errno;
 
 	return 0;
@@ -974,7 +992,8 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 	uint8_t rfb_update[16];
 	uint8_t *p;
 	unsigned int n;
-	ssize_t len;
+	unsigned int Bpp;
+	ssize_t stride, line_len, len;
 
 	if (rfb->connected == false || rfb->nupdates == 0)
 		return;
@@ -997,10 +1016,12 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 	*(uint8_t *)p = 0;		p += 1;		/* padding */
 	*(uint16_t *)p = htons(rfb->nupdates);	p += 2;	/* # rects */
 
-	len = send(rfb->clientfd, rfb_update, 4, MSG_NOSIGNAL);
-	if (len <= 0)
+	len = safe_send(rfb->clientfd, rfb_update, 4);
+	if (len < 0)
 		goto disco;
 
+	Bpp = rfb->depth / 8;
+	stride = rfb->width * Bpp;
 	for (n = 0; n < rfb->nupdates; n++) {
 		p = rfb_update;
 		update = &rfb->update[n];
@@ -1015,18 +1036,17 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 		    n, update->x, update->y, update->w, update->h);
 #endif
 
-		len = send(rfb->clientfd, rfb_update, 12, MSG_NOSIGNAL);
-		if (len <= 0)
+		len = safe_send(rfb->clientfd, rfb_update, 12);
+		if (len < 0)
 			goto disco;
 
-		p = rfb->framebuf + (update->y * rfb->width * (rfb->depth / 8))
-		    + (update->x * (rfb->depth / 8));
+		p = rfb->framebuf + (update->y * stride) + (update->x * Bpp);
+		line_len = update->w * Bpp;
 		while (update->h-- > 0) {
-			len = send(rfb->clientfd, p,
-			    update->w * (rfb->depth / 8), MSG_NOSIGNAL);
-			if (len <= 0)
+			len = safe_send(rfb->clientfd, p, line_len);
+			if (len < 0)
 				goto disco;
-			p += rfb->width * (rfb->depth / 8);
+			p += stride;
 		}
 	}
 
