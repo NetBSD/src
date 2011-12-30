@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.11 2011/02/06 23:25:17 jmcneill Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.12 2011/12/30 14:32:31 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -209,7 +209,7 @@ struct radeon_tmds_pll {
 };
 
 struct radeonfb_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	uint16_t		sc_family;
 	uint16_t		sc_flags;
 	pcireg_t		sc_id;
@@ -343,7 +343,7 @@ struct radeonfb_softc {
 #define	GETBIOS32(sc, r)	\
 	((GETBIOS16(sc, (r) + 2) << 16) | GETBIOS16(sc, (r)))
 
-#define	XNAME(sc)	device_xname(&sc->sc_dev)
+#define	XNAME(sc)	device_xname(sc->sc_dev)
 
 #define	DIVIDE(x,y)	(((x) + (y / 2)) / (y))
 
