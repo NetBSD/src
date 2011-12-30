@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.61 2011/12/30 11:32:57 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.62 2011/12/30 12:07:33 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.61 2011/12/30 11:32:57 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.62 2011/12/30 12:07:33 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1031,11 +1031,15 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 		*(uint16_t *)p = htons(update->y);	p += 2;
 		*(uint16_t *)p = htons(update->w);	p += 2;
 		*(uint16_t *)p = htons(update->h);	p += 2;
-		*(uint32_t *)p = htonl(0);		p += 4;	/* Raw enc */
+		*(uint32_t *)p = htonl(update->enc);	p += 4;	/* Raw enc */
 
 #ifdef RFB_DEBUG
-		fprintf(stdout, "rfb:   [%u] x=%d y=%d w=%d h=%d\n",
-		    n, update->x, update->y, update->w, update->h);
+		fprintf(stdout, "rfb: [%u] enc %d, [%d, %d] - [%d, %d)",
+		    n, update->enc, update->x, update->y, update->w, update->h);
+		if (update->enc == THUNK_RFB_TYPE_COPYRECT)
+			fprintf(stdout, " from [%d, %d]",
+			    update->srcx, update->srcy);
+		fprintf(stdout, "\n");
 #endif
 
 		len = safe_send(rfb->clientfd, rfb_update, 12);
@@ -1202,15 +1206,43 @@ thunk_rfb_update(thunk_rfb_t *rfb, int x, int y, int w, int h)
 	}
 
 #ifdef RFB_DEBUG
-	fprintf(stdout, "rfb: queue slot %d, x=%d y=%d w=%d h=%d\n",
+	fprintf(stdout, "rfb: update queue slot %d, x=%d y=%d w=%d h=%d\n",
 	    rfb->nupdates, x, y, w, h);
 #endif
 
 	/* add the update request to the queue */
 	update = &rfb->update[rfb->nupdates++];
-	update->type = THUNK_RFB_TYPE_UPDATE;
+	update->enc = THUNK_RFB_TYPE_RAW;
 	update->x = x;
 	update->y = y;
 	update->w = w;
 	update->h = h;
+}
+
+void
+thunk_rfb_copyrect(thunk_rfb_t *rfb, int x, int y, int w, int h,
+	int srcx, int srcy)
+{
+	thunk_rfb_update_t *update = NULL;
+
+	/* if the queue is full, just return */
+	if (rfb->nupdates >= __arraycount(rfb->update))
+		return;
+
+#ifdef RFB_DEBUG
+	fprintf(stdout, "rfb: copyrect queue slot %d, x=%d y=%d w=%d h=%d\n",
+	    rfb->nupdates, x, y, w, h);
+#endif
+
+	/* add the update request to the queue */
+	update = &rfb->update[rfb->nupdates++];
+	update->enc = THUNK_RFB_TYPE_COPYRECT;
+	update->x = x;
+	update->y = y;
+	update->w = w;
+	update->h = h;
+	update->srcx = srcx;
+	update->srcy = srcy;
+
+	rfb->first_mergable = rfb->nupdates+1;
 }
