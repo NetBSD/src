@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.59 2011/12/30 11:05:07 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.60 2011/12/30 11:06:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.59 2011/12/30 11:05:07 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.60 2011/12/30 11:06:18 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1077,6 +1077,7 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		struct sockaddr_in sin;
 		struct pollfd fds[1];
 		socklen_t sinlen;
+		int flags;
 
 		/* poll for connections */
 		fds[0].fd = rfb->sockfd;
@@ -1103,6 +1104,19 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		}
 
 		rfb->connected = true;
+
+		/* enable sigio on input */
+		flags = fcntl(rfb->clientfd, F_GETFL, 0);
+		fcntl(rfb->clientfd, F_SETFL, flags | O_ASYNC);
+		error = fcntl(rfb->clientfd, F_SETOWN, getpid());
+		if (error) {
+			fprintf(stdout, "rfb: setown failed: %s\n",
+			    strerror(errno));
+			close(rfb->clientfd);
+			rfb->clientfd = -1;
+			return -1;
+		}
+
 		rfb->nupdates = 0;
 		thunk_rfb_update(rfb, 0, 0, rfb->width, rfb->height);
 	}
