@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.5 2011/12/30 12:54:41 jmcneill Exp $ */
+/* $NetBSD: vncfb.c,v 1.6 2011/12/30 13:08:30 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.5 2011/12/30 12:54:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.6 2011/12/30 13:08:30 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ static paddr_t	vncfb_mmap(void *, void *, off_t, int);
 static void	vncfb_init_screen(void *, struct vcons_screen *, int, long *);
 
 static void	vncfb_update(struct vncfb_softc *, int, int, int, int);
+static void	vncfb_copyrect(struct vncfb_softc *sc, int, int, int, int, int, int);
 static int	vncfb_intr(void *);
 static void	vncfb_softintr(void *);
 
@@ -349,21 +350,21 @@ vncfb_copyrows(void *priv, int srcrow, int dstrow, int nrows)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct vncfb_softc *sc = scr->scr_cookie;
 	struct vncfb_fbops *ops = &sc->sc_ops;
-	int x, y, w, h;
+	int x, y, w, h, srcx, srcy;
+	int fontheight;
 
 	ops->copyrows(ri, srcrow, dstrow, nrows);
 
+	fontheight = ri->ri_font->fontheight;
 	x = ri->ri_xorigin;
+	y = ri->ri_yorigin + dstrow * fontheight;
 	w = ri->ri_width;
-	if (srcrow < dstrow) {
-		y = ri->ri_yorigin + (srcrow * ri->ri_font->fontheight);
-		h = (nrows + (dstrow - srcrow)) * ri->ri_font->fontheight;
-	} else {
-		y = ri->ri_yorigin + (dstrow * ri->ri_font->fontheight);
-		h = (nrows + (srcrow - dstrow)) * ri->ri_font->fontheight;
-	}
+	h = nrows * fontheight;
 
-	vncfb_update(sc, x, y, w, h);
+	srcx = ri->ri_xorigin;
+	srcy = ri->ri_yorigin + srcrow * fontheight;
+
+	vncfb_copyrect(sc, x, y, w, h, srcx, srcy);
 }
 
 static void
@@ -453,6 +454,14 @@ static void
 vncfb_update(struct vncfb_softc *sc, int x, int y, int w, int h)
 {
 	thunk_rfb_update(&sc->sc_rfb, x, y, w, h);
+	softint_schedule(sc->sc_sih);
+}
+
+static void
+vncfb_copyrect(struct vncfb_softc *sc, int x, int y, int w, int h,
+	int srcx, int srcy)
+{
+	thunk_rfb_copyrect(&sc->sc_rfb, x, y, w, h, srcx, srcy);
 	softint_schedule(sc->sc_sih);
 }
 
