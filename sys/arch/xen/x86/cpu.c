@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.71 2011/12/07 15:47:43 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.72 2011/12/30 16:55:21 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71 2011/12/07 15:47:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72 2011/12/30 16:55:21 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1102,6 +1102,7 @@ static struct cpu_info *cpu_primary(void)
 {
 	return &cpu_info_primary;
 }
+/* XXX: rename to something more generic. users other than xpq exist */
 struct cpu_info	* (*xpq_cpu)(void) = cpu_primary;
 
 void
