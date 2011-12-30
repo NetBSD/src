@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.1 2011/12/29 21:22:49 jmcneill Exp $ */
+/* $NetBSD: vncfb.c,v 1.2 2011/12/30 08:49:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.1 2011/12/29 21:22:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.2 2011/12/30 08:49:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ struct vncfb_fbops {
 	void	(*copyrows)(void *, int, int, int);
 	void	(*eraserows)(void *, int, int, long);
 	void	(*putchar)(void *, int, int, u_int, long);
+	void	(*cursor)(void *, int, int, int);
 };
 
 struct vncfb_softc {
@@ -94,6 +95,7 @@ static void	vncfb_copycols(void *, int, int, int, int);
 static void	vncfb_erasecols(void *, int, int, int, long);
 static void	vncfb_copyrows(void *, int, int, int);
 static void	vncfb_eraserows(void *, int, int, long);
+static void	vncfb_cursor(void *, int, int, int);
 
 static int	vncfb_ioctl(void *, void *, u_long, void *, int, lwp_t *);
 static paddr_t	vncfb_mmap(void *, void *, off_t, int);
@@ -269,12 +271,14 @@ vncfb_init_screen(void *priv, struct vcons_screen *scr, int existing,
 	ops->eraserows = ri->ri_ops.eraserows;
 	ops->copycols = ri->ri_ops.copycols;
 	ops->erasecols = ri->ri_ops.erasecols;
+	ops->cursor = ri->ri_ops.cursor;
 
 	ri->ri_ops.copyrows = vncfb_copyrows;
 	ri->ri_ops.copycols = vncfb_copycols;
 	ri->ri_ops.eraserows = vncfb_eraserows;
 	ri->ri_ops.erasecols = vncfb_erasecols;
 	ri->ri_ops.putchar = vncfb_putchar;
+	ri->ri_ops.cursor = vncfb_cursor;
 }
 
 static void
@@ -380,6 +384,30 @@ vncfb_eraserows(void *priv, int row, int nrows, long fillattr)
 	x = ri->ri_xorigin;
 	w = ri->ri_width;
 
+	vncfb_update(sc, x, y, w, h);
+}
+
+static void
+vncfb_cursor(void *priv, int on, int row, int col)
+{
+	struct rasops_info *ri = priv;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct vncfb_softc *sc = scr->scr_cookie;
+	struct vncfb_fbops *ops = &sc->sc_ops;
+	int ox, oy, x, y, w, h;
+
+	w = ri->ri_font->fontwidth;
+	h = ri->ri_font->fontheight;
+
+	ox = ri->ri_ccol * w + ri->ri_xorigin;
+	oy = ri->ri_crow * h + ri->ri_yorigin;
+
+	ops->cursor(ri, on, row, col);
+
+	x = ri->ri_ccol * w + ri->ri_xorigin;
+	y = ri->ri_crow * h + ri->ri_yorigin;
+
+	vncfb_update(sc, ox, oy, w, h);
 	vncfb_update(sc, x, y, w, h);
 }
 
