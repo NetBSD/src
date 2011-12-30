@@ -1,8 +1,8 @@
-#	$NetBSD: XLPEVB,v 1.1.2.3 2011/12/28 05:37:26 matt Exp $
+#	$NetBSD: XLPEVB,v 1.1.2.4 2011/12/30 06:47:09 matt Exp $
 
 include 	"arch/evbmips/conf/std.rmixlp"
 
-#ident 		"XLSATX-$Revision: 1.1.2.3 $"
+#ident 		"XLSATX-$Revision: 1.1.2.4 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -141,8 +141,8 @@ mainbus0 	at root
 cpunode* 	at mainbus? node ?
 cpucore* 	at cpunode? core ?
 cpu*		at cpucore? thread ?
-rmixlp_pcie0	at mainbus?				# XLP
-pci0		at rmixlp_pcie0
+xlpcie0		at mainbus?				# XLP
+pci0		at xlpcie0
 com0		at pci0 dev 6 function 0		# XLP
 options 	COM_REGMAP
 ppb*		at pci?
@@ -153,7 +153,7 @@ ukphy*		at mii? phy ?			# unknown PHY
 com*		at pci? dev ? function ?
 ehci*		at pci? dev ? function 6	# won't match
 ohci*		at pci? dev ? function 7	# won't match
-#ehci*		at pci? dev ? function 6
+#ehci*		at pci? dev ? function ?
 #ohci*		at pci? dev ? function ?
 xlsdio*		at pci? dev ? function ?
 sdhc*		at xlsdio? slot 0
@@ -175,6 +175,8 @@ xlnand*		at pci? dev ? function ?
 nand*		at xlnand?
 flash*		at nand?
 xlspi*		at pci? dev ? function ?
+xlgpio*		at pci? dev ? function ?
+gpio*		at xlgpio?
 ahcisata*	at pci? dev ? function ?
 siisata* 	at pci? dev ? function ?
 atabus*		at ata?
