@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.147 2011/12/09 17:32:51 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.148 2011/12/30 16:55:21 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2011/12/09 17:32:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2011/12/30 16:55:21 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1915,16 +1915,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 			 * Update the per-cpu PD on all cpus the current
 			 * pmap is active on 
 			 */ 
-			CPU_INFO_ITERATOR cii;
-			struct cpu_info *ci;
-			for (CPU_INFO_FOREACH(cii, ci)) {
-				if (ci == NULL) {
-					continue;
-				}
-				if (ci->ci_cpumask & pmap->pm_cpus) {
-					pmap_pte_set(&ci->ci_kpm_pdir[index], 0);
-				}
-			}
+			xen_kpm_sync(pmap, index);
 		}
 #  endif /*__x86_64__ */
 		invaladdr = level == 1 ? (vaddr_t)ptes :
@@ -2029,17 +2020,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 			 * Update the per-cpu PD on all cpus the current
 			 * pmap is active on 
 			 */ 
-			CPU_INFO_ITERATOR cii;
-			struct cpu_info *ci;
-			for (CPU_INFO_FOREACH(cii, ci)) {
-				if (ci == NULL) {
-					continue;
-				}
-				if (ci->ci_cpumask & pmap->pm_cpus) {
-					pmap_pte_set(&ci->ci_kpm_pdir[index],
-						     (pd_entry_t) (pmap_pa2pte(pa) | PG_u | PG_RW | PG_V));
-				}
-			}
+			xen_kpm_sync(pmap, index);
 		}
 #endif /* XEN && __x86_64__ */
 		pmap_pte_flush();
@@ -4247,33 +4228,14 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			pmap_get_physpage(va, level - 1, &pa);
 			pte = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
 #ifdef XEN
-			switch (level) {
-			case PTP_LEVELS: 
+			xpq_queue_pte_update(xpmap_ptetomach(&pdep[i]), pte);
+			if (level == PTP_LEVELS) {
 #if defined(PAE) || defined(__x86_64__)
 				if (i >= PDIR_SLOT_KERN) {
 					/* update per-cpu PMDs on all cpus */
-					CPU_INFO_ITERATOR cii;
-					struct cpu_info *ci;
-					for (CPU_INFO_FOREACH(cii, ci)) {
-						if (ci == NULL) {
-							continue;
-						}
-#ifdef PAE
-						xpq_queue_pte_update(
-							xpmap_ptetomach(&ci->ci_kpm_pdir[l2tol2(i)]), pte);
-#elif defined(__x86_64__)
-						xpq_queue_pte_update(
-							xpmap_ptetomach(&ci->ci_kpm_pdir[i]), pte);
-#endif /* PAE */
-					}
+					xen_kpm_sync(pmap_kernel(), i);
 				}
 #endif /* PAE || __x86_64__ */
-				/* FALLTHROUGH */
-
-			default: /* All other levels */
-				xpq_queue_pte_update(
-					xpmap_ptetomach(&pdep[i]), 
-					pte);
 			}
 #else /* XEN */
 			pdep[i] = pte;

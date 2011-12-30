@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.32 2011/11/23 00:56:56 jym Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.33 2011/12/30 16:55:21 cherry Exp $	*/
 
 /*
  *
@@ -60,6 +60,10 @@ void pmap_xen_suspend(void);
 void	pmap_map_recursive_entries(void);
 void	pmap_unmap_recursive_entries(void);
 #endif /* PAE */
+
+#if defined(PAE) || defined(__x86_64__)
+void xen_kpm_sync(struct pmap *, int);
+#endif /* PAE || __x86_64__ */
 
 #define xpq_queue_pin_l1_table(pa)	\
 	xpq_queue_pin_table(pa, MMUEXT_PIN_L1_TABLE)
