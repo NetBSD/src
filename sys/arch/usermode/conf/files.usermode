@@ -1,4 +1,4 @@
-# $NetBSD: files.usermode,v 1.15 2011/12/29 21:22:49 jmcneill Exp $
+# $NetBSD: files.usermode,v 1.16 2011/12/30 20:08:36 jmcneill Exp $
 
 maxpartitions 8
 maxusers 8 16 64
@@ -37,7 +37,7 @@ file	arch/usermode/dev/vaudio.c		vaudio
 attach	ld at thunkbus with ld_thunkbus
 file	arch/usermode/dev/ld_thunkbus.c		ld_thunkbus
 
-device	vncfb { } : wsemuldisplaydev, rasops32, vcons, wskbddev
+device	vncfb { } : wsemuldisplaydev, rasops32, vcons, wskbddev, wsmousedev
 attach	vncfb at thunkbus
 file	arch/usermode/dev/vncfb.c		vncfb
 file	arch/usermode/dev/vnckbdmap.c		vncfb

@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.9 2011/12/30 19:32:32 jmcneill Exp $ */
+/* $NetBSD: vncfb.c,v 1.10 2011/12/30 20:08:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.9 2011/12/30 19:32:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.10 2011/12/30 20:08:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.9 2011/12/30 19:32:32 jmcneill Exp $");
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
+#include <dev/wscons/wsmousevar.h>
+
 #include <machine/mainbus.h>
 #include <machine/thunk.h>
 
@@ -73,6 +75,7 @@ struct vncfb_fbops {
 struct vncfb_softc {
 	device_t		sc_dev;
 	device_t		sc_wskbddev;
+	device_t		sc_wsmousedev;
 	thunk_rfb_t		sc_rfb;
 	unsigned int		sc_width;
 	unsigned int		sc_height;
@@ -86,6 +89,7 @@ struct vncfb_softc {
 	struct vncfb_fbops	sc_ops;
 
 	int			sc_kbd_enable;
+	int			sc_mouse_enable;
 
 	void			*sc_ih;
 	void			*sc_sih;
@@ -127,6 +131,10 @@ static int	vncfb_kbd_ioctl(void *, u_long, void *, int, lwp_t *);
 static void	vncfb_kbd_cngetc(void *, u_int *, int *);
 static void	vncfb_kbd_cnpollc(void *, int);
 static void	vncfb_kbd_bell(void *, u_int, u_int, u_int);
+
+static int	vncfb_mouse_enable(void *);
+static int	vncfb_mouse_ioctl(void *, u_long, void *, int, lwp_t *);
+static void	vncfb_mouse_disable(void *);
 
 static struct vcons_screen vncfb_console_screen;
 
@@ -170,6 +178,12 @@ static const struct wskbd_consops vncfb_kbd_consops = {
 	vncfb_kbd_bell,
 };
 
+static const struct wsmouse_accessops vncfb_mouse_accessops = {
+	vncfb_mouse_enable,
+	vncfb_mouse_ioctl,
+	vncfb_mouse_disable,
+};
+
 static int
 vncfb_match(device_t parent, cfdata_t match, void *priv)
 {
@@ -185,6 +199,7 @@ vncfb_attach(device_t parent, device_t self, void *priv)
 	struct thunkbus_attach_args *taa = priv;
 	struct wsemuldisplaydev_attach_args waa;
 	struct wskbddev_attach_args kaa;
+	struct wsmousedev_attach_args maa;
 	struct rasops_info *ri;
 	unsigned long defattr;
 
@@ -208,8 +223,6 @@ vncfb_attach(device_t parent, device_t self, void *priv)
 	aprint_naive("\n");
 	aprint_normal(": %ux%u %ubpp (port %u)\n",
 	    sc->sc_width, sc->sc_height, sc->sc_depth, taa->u.vnc.port);
-	aprint_normal_dev(self, "mem @ %p\n", sc->sc_mem);
-	aprint_normal_dev(self, "fb  @ %p\n", sc->sc_framebuf);
 
 	sc->sc_rfb.width = sc->sc_width;
 	sc->sc_rfb.height = sc->sc_height;
@@ -262,6 +275,12 @@ vncfb_attach(device_t parent, device_t self, void *priv)
 
 	sc->sc_wskbddev = config_found_ia(self, "wskbddev", &kaa,
 	    wskbddevprint);
+
+	maa.accessops = &vncfb_mouse_accessops;
+	maa.accesscookie = sc;
+
+	sc->sc_wsmousedev = config_found_ia(self, "wsmousedev", &maa,
+	    wsmousedevprint);
 }
 
 static void
@@ -555,6 +574,15 @@ vncfb_softintr(void *priv)
 			    event.data.key_event.keysym & 0xfff);
 			splx(s);
 			break;
+		case THUNK_RFB_POINTER_EVENT:
+			s = spltty();
+			wsmouse_input(sc->sc_wsmousedev,
+			    event.data.pointer_event.button_mask,
+			    event.data.pointer_event.absx,
+			    event.data.pointer_event.absy,
+			    0, 0, 
+			    WSMOUSE_INPUT_ABSOLUTE_X|WSMOUSE_INPUT_ABSOLUTE_Y);
+			splx(s);
 		default:
 			break;
 		}
@@ -637,4 +665,34 @@ vncfb_kbd_bell(void *priv, u_int pitch, u_int period, u_int volume)
 
 	thunk_rfb_bell(&sc->sc_rfb);
 	softint_schedule(sc->sc_sih);
+}
+
+static int
+vncfb_mouse_enable(void *priv)
+{
+	struct vncfb_softc *sc = priv;
+
+	sc->sc_mouse_enable = 1;
+
+	return 0;
+}
+
+static int
+vncfb_mouse_ioctl(void *priv, u_long cmd, void *data, int flag, lwp_t *l)
+{
+	switch (cmd) {
+	case WSMOUSEIO_GTYPE:
+		*(u_int *)data = WSMOUSE_TYPE_PSEUDO;
+		return 0;
+	default:
+		return EPASSTHROUGH;
+	}
+}
+
+static void
+vncfb_mouse_disable(void *priv)
+{
+	struct vncfb_softc *sc = priv;
+
+	sc->sc_mouse_enable = 0;
 }
