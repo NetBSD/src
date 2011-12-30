@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.63 2011/12/30 12:13:31 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.64 2011/12/30 12:54:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.63 2011/12/30 12:13:31 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.64 2011/12/30 12:54:42 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -75,8 +75,6 @@ __RCSID("$NetBSD: thunk.c,v 1.63 2011/12/30 12:13:31 jmcneill Exp $");
 #ifndef MAP_ANON
 #define MAP_ANON MAP_ANONYMOUS
 #endif
-
-#define RFB_DEBUG
 
 extern int boothowto;
 
@@ -1124,6 +1122,7 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 			return -1;
 		}
 
+		rfb->schedule_bell = false;
 		rfb->nupdates = 0;
 		rfb->first_mergable = 0;
 		thunk_rfb_update(rfb, 0, 0, rfb->width, rfb->height);
@@ -1132,6 +1131,12 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 	thunk_rfb_send_pending(rfb);
 	if (rfb->clientfd == -1)
 		return -1;
+
+	if (rfb->schedule_bell) {
+		uint8_t msg_type = 2;	/* bell */
+		safe_send(rfb->clientfd, &msg_type, sizeof(msg_type));
+		rfb->schedule_bell = false;
+	}
 
 	error = ioctl(rfb->clientfd, FIONREAD, &len);
 	if (error) {
@@ -1222,6 +1227,15 @@ thunk_rfb_update(thunk_rfb_t *rfb, int x, int y, int w, int h)
 	update->y = y;
 	update->w = w;
 	update->h = h;
+}
+
+void
+thunk_rfb_bell(thunk_rfb_t *rfb)
+{
+#ifdef RFB_DEBUG
+	fprintf(stdout, "rfb: schedule bell\n");
+#endif
+	rfb->schedule_bell = true;
 }
 
 void
