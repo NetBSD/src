@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.6 2011/12/30 13:08:30 reinoud Exp $ */
+/* $NetBSD: vncfb.c,v 1.7 2011/12/30 14:20:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.6 2011/12/30 13:08:30 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.7 2011/12/30 14:20:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,8 @@ static paddr_t	vncfb_mmap(void *, void *, off_t, int);
 static void	vncfb_init_screen(void *, struct vcons_screen *, int, long *);
 
 static void	vncfb_update(struct vncfb_softc *, int, int, int, int);
-static void	vncfb_copyrect(struct vncfb_softc *sc, int, int, int, int, int, int);
+static void	vncfb_copyrect(struct vncfb_softc *, int, int, int, int, int, int);
+static void	vncfb_fillrect(struct vncfb_softc *, int, int, int, int, uint32_t);
 static int	vncfb_intr(void *);
 static void	vncfb_softintr(void *);
 
@@ -331,7 +332,7 @@ vncfb_erasecols(void *priv, int row, int startcol, int ncols, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct vncfb_softc *sc = scr->scr_cookie;
 	struct vncfb_fbops *ops = &sc->sc_ops;
-	int x, y, w, h;
+	int x, y, w, h, c;
 
 	ops->erasecols(ri, row, startcol, ncols, fillattr);
 
@@ -339,8 +340,9 @@ vncfb_erasecols(void *priv, int row, int startcol, int ncols, long fillattr)
 	h = ri->ri_font->fontheight;
 	x = ri->ri_xorigin + (startcol * ri->ri_font->fontwidth);
 	w = ncols * ri->ri_font->fontwidth;
+	c = ri->ri_devcmap[(fillattr >> 16) & 0xf] & 0xffffff;
 
-	vncfb_update(sc, x, y, w, h);
+	vncfb_fillrect(sc, x, y, w, h, c);
 }
 
 static void
@@ -352,6 +354,10 @@ vncfb_copyrows(void *priv, int srcrow, int dstrow, int nrows)
 	struct vncfb_fbops *ops = &sc->sc_ops;
 	int x, y, w, h, srcx, srcy;
 	int fontheight;
+
+	/* barrier */
+	while (sc->sc_rfb.nupdates > 0)
+		thunk_rfb_poll(&sc->sc_rfb, NULL);
 
 	ops->copyrows(ri, srcrow, dstrow, nrows);
 
@@ -374,7 +380,7 @@ vncfb_eraserows(void *priv, int row, int nrows, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct vncfb_softc *sc = scr->scr_cookie;
 	struct vncfb_fbops *ops = &sc->sc_ops;
-	int x, y, w, h;
+	int x, y, w, h, c;
 
 	ops->eraserows(ri, row, nrows, fillattr);
 
@@ -382,8 +388,9 @@ vncfb_eraserows(void *priv, int row, int nrows, long fillattr)
 	h = nrows * ri->ri_font->fontheight;
 	x = ri->ri_xorigin;
 	w = ri->ri_width;
+	c = ri->ri_devcmap[(fillattr >> 16) & 0xf] & 0xffffff;
 
-	vncfb_update(sc, x, y, w, h);
+	vncfb_fillrect(sc, x, y, w, h, c);
 }
 
 static void
@@ -462,6 +469,14 @@ vncfb_copyrect(struct vncfb_softc *sc, int x, int y, int w, int h,
 	int srcx, int srcy)
 {
 	thunk_rfb_copyrect(&sc->sc_rfb, x, y, w, h, srcx, srcy);
+	softint_schedule(sc->sc_sih);
+}
+
+static void
+vncfb_fillrect(struct vncfb_softc *sc, int x, int y, int w, int h, uint32_t c)
+{
+
+	thunk_rfb_fillrect(&sc->sc_rfb, x, y, w, h, (uint8_t *)&c);
 	softint_schedule(sc->sc_sih);
 }
 
