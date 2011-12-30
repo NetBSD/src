@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.8 2011/12/28 18:59:21 cherry Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.9 2011/12/30 12:16:19 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.8 2011/12/28 18:59:21 cherry Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.9 2011/12/30 12:16:19 cherry Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.8 2011/12/28 18:59:21 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.9 2011/12/30 12:16:19 cherry Exp $");
 
 #include <sys/types.h>
 
@@ -289,7 +289,6 @@ xc_send_ipi(struct cpu_info *ci)
 
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
-	printf("xc_send_ipi called \n");
 	if (ci) {
 		if (0 != xen_send_ipi(ci, XEN_IPI_XCALL)) {
 			panic("xen_send_ipi(XEN_IPI_XCALL) failed\n");
