@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.7 2011/12/30 14:20:33 jmcneill Exp $ */
+/* $NetBSD: vncfb.c,v 1.8 2011/12/30 14:22:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.7 2011/12/30 14:20:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.8 2011/12/30 14:22:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +357,8 @@ vncfb_copyrows(void *priv, int srcrow, int dstrow, int nrows)
 
 	/* barrier */
 	while (sc->sc_rfb.nupdates > 0)
-		thunk_rfb_poll(&sc->sc_rfb, NULL);
+		if (thunk_rfb_poll(&sc->sc_rfb, NULL) == -1)
+			break;
 
 	ops->copyrows(ri, srcrow, dstrow, nrows);
 
