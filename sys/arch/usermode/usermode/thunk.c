@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.56 2011/12/29 21:22:49 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.57 2011/12/30 09:36:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.56 2011/12/29 21:22:49 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.57 2011/12/30 09:36:02 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -970,43 +970,67 @@ thunk_rfb_handshake(thunk_rfb_t *rfb)
 static void
 thunk_rfb_send_pending(thunk_rfb_t *rfb)
 {
+	thunk_rfb_update_t *update;
 	uint8_t rfb_update[16];
-	uint8_t *p = rfb_update;
-	uint16_t x, y, w, h;
+	uint8_t *p;
+	unsigned int n;
 	ssize_t len;
 
-	if (rfb->connected == false || rfb->update.pending == false)
+	if (rfb->connected == false || rfb->nupdates == 0)
 		return;
 
-	x = rfb->update.x;
-	y = rfb->update.y;
-	w = rfb->update.w;
-	h = rfb->update.h;
-	rfb->update.pending = false;
+	/* If we have too many updates queued, just send a single update */
+	if (rfb->nupdates >= __arraycount(rfb->update)) {
+		rfb->nupdates = 1;
+		rfb->update[0].x = 0;
+		rfb->update[0].y = 0;
+		rfb->update[0].w = rfb->width;
+		rfb->update[0].h = rfb->height;
+	}
 
+#ifdef RFB_DEBUG
+	fprintf(stdout, "rfb: sending %d updates\n", rfb->nupdates);
+#endif
+
+	p = rfb_update;
 	*(uint8_t *)p = 0;		p += 1;		/* FramebufferUpdate */
 	*(uint8_t *)p = 0;		p += 1;		/* padding */
-	*(uint16_t *)p = htons(1);	p += 2;		/* # rects */
-	*(uint16_t *)p = htons(x);	p += 2;
-	*(uint16_t *)p = htons(y);	p += 2;
-	*(uint16_t *)p = htons(w);	p += 2;
-	*(uint16_t *)p = htons(h);	p += 2;
-	*(uint32_t *)p = htonl(0);	p += 4;		/* Raw encoding */
+	*(uint16_t *)p = htons(rfb->nupdates);	p += 2;	/* # rects */
 
-	len = send(rfb->clientfd, rfb_update, sizeof(rfb_update),
-	    MSG_NOSIGNAL);
+	len = send(rfb->clientfd, rfb_update, 4, MSG_NOSIGNAL);
 	if (len <= 0)
 		goto disco;
 
-	p = rfb->framebuf + (y * rfb->width * (rfb->depth / 8)) +
-	    (x * (rfb->depth / 8));
-	while (h-- > 0) {
-		len = send(rfb->clientfd, p, w * (rfb->depth / 8),
-		    MSG_NOSIGNAL);
+	for (n = 0; n < rfb->nupdates; n++) {
+		p = rfb_update;
+		update = &rfb->update[n];
+		*(uint16_t *)p = htons(update->x);	p += 2;
+		*(uint16_t *)p = htons(update->y);	p += 2;
+		*(uint16_t *)p = htons(update->w);	p += 2;
+		*(uint16_t *)p = htons(update->h);	p += 2;
+		*(uint32_t *)p = htonl(0);		p += 4;	/* Raw enc */
+
+#ifdef RFB_DEBUG
+		fprintf(stdout, "rfb:   [%u] x=%d y=%d w=%d h=%d\n",
+		    n, update->x, update->y, update->w, update->h);
+#endif
+
+		len = send(rfb->clientfd, rfb_update, 12, MSG_NOSIGNAL);
 		if (len <= 0)
 			goto disco;
-		p += rfb->width * (rfb->depth / 8);
+
+		p = rfb->framebuf + (update->y * rfb->width * (rfb->depth / 8))
+		    + (update->x * (rfb->depth / 8));
+		while (update->h-- > 0) {
+			len = send(rfb->clientfd, p,
+			    update->w * (rfb->depth / 8), MSG_NOSIGNAL);
+			if (len <= 0)
+				goto disco;
+			p += rfb->width * (rfb->depth / 8);
+		}
 	}
+
+	rfb->nupdates = 0;
 
 	return;
 
@@ -1059,6 +1083,7 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		}
 
 		rfb->connected = true;
+		rfb->nupdates = 0;
 		thunk_rfb_update(rfb, 0, 0, rfb->width, rfb->height);
 	}
 
@@ -1124,18 +1149,29 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 void
 thunk_rfb_update(thunk_rfb_t *rfb, int x, int y, int w, int h)
 {
-	if (rfb->update.pending) {
-		/* pending update, just redraw the whole screen */
-		rfb->update.x = 0;
-		rfb->update.y = 0;
-		rfb->update.w = rfb->width;
-		rfb->update.h = rfb->height;
-	} else {
-		/* try to only update the requested rectangle */
-		rfb->update.x = x;
-		rfb->update.y = y;
-		rfb->update.w = w;
-		rfb->update.h = h;
+	thunk_rfb_update_t *update = NULL;
+	unsigned int n;
+
+	/* if the queue is full, just return */
+	if (rfb->nupdates >= __arraycount(rfb->update))
+		return;
+
+	/* no sense in queueing duplicate updates */
+	for (n = 0; n < rfb->nupdates; n++) {
+		if (rfb->update[n].x == x && rfb->update[n].y == y &&
+		    rfb->update[n].w == w && rfb->update[n].h == h)
+			return;
 	}
-	rfb->update.pending = true;
+
+#ifdef RFB_DEBUG
+	fprintf(stdout, "rfb: queue slot %d, x=%d y=%d w=%d h=%d\n",
+	    rfb->nupdates, x, y, w, h);
+#endif
+
+	/* add the update request to the queue */
+	update = &rfb->update[rfb->nupdates++];
+	update->x = x;
+	update->y = y;
+	update->w = w;
+	update->h = h;
 }
