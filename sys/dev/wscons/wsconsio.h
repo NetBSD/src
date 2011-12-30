@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.101 2011/12/15 14:25:13 phx Exp $ */
+/* $NetBSD: wsconsio.h,v 1.102 2011/12/30 08:20:50 reinoud Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -106,6 +106,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_BLUETOOTH	21	/* Bluetooth keyboard */
 #define	WSKBD_TYPE_ZAURUS	22	/* Sharp Zaurus keyboard */
 #define	WSKBD_TYPE_LUNA		23	/* OMRON SX-9100 LUNA */
+#define	WSKBD_TYPE_RFB		24	/* Usermode vnc remote keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -325,6 +326,7 @@ struct wsmouse_repeat {
 #define WSDISPLAY_TYPE_XVR1000	50	/* Sun XVR-1000 */
 #define WSDISPLAY_TYPE_LUNA	51	/* OMRON SX-9100 LUNA */
 #define WSDISPLAY_TYPE_GRF	52	/* wsdisplay on top of grf(4) */
+#define WSDISPLAY_TYPE_VNC	53	/* Usermode vnc framebuffer */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
