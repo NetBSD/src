@@ -1,4 +1,4 @@
-/*	$NetBSD: slattach.c,v 1.31 2011/08/27 18:55:21 joerg Exp $	*/
+/*	$NetBSD: slattach.c,v 1.32 2011/12/30 03:19:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: slattach.c,v 1.31 2011/08/27 18:55:21 joerg Exp $");
+__RCSID("$NetBSD: slattach.c,v 1.32 2011/12/30 03:19:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: slattach.c,v 1.31 2011/08/27 18:55:21 joerg Exp $");
 #include <netinet/in.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <paths.h>
@@ -135,7 +136,7 @@ main(int argc, char *argv[])
 	cfsetspeed(&tty, speed);
 	if (tcsetattr(fd, TCSADRAIN, &tty) < 0)
 		err(1, "tcsetattr");
-	if (ioctl(fd, TIOCSDTR, 0) < 0)
+	if (ioctl(fd, TIOCSDTR, 0) < 0 && errno != ENOTTY)
 		err(1, "TIOCSDTR");
 	if (ioctl(fd, TIOCSETD, &slipdisc) < 0)
 		err(1, "TIOCSETD");
