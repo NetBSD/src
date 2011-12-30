@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.62 2011/12/30 12:07:33 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.63 2011/12/30 12:13:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.62 2011/12/30 12:07:33 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.63 2011/12/30 12:13:31 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1163,6 +1163,11 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		event->data.key_event.down_flag = key_event[0];
 		event->data.key_event.keysym =
 		    ntohl(*(uint32_t *)&key_event[3]);
+#ifdef RFB_DEBUG
+		fprintf(stdout, "rfb: key %04x %s\n",
+		    event->data.key_event.keysym,
+		    event->data.key_event.down_flag ? "pressed" : "released");
+#endif
 		msg_len = 0;
 		break;
 	case THUNK_RFB_POINTER_EVENT:
