@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.23 2011/12/28 05:36:11 matt Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.24 2011/12/30 06:45:00 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -154,6 +154,7 @@ struct rmixl_config {
 	struct extent *		rc_pci_io_ex;
 	struct extent *		rc_srio_mem_ex;
 	int			rc_mallocsafe;
+	uint64_t		rc_gpio_available;
 	rmixlfw_info_t 		rc_psb_info;
 	rmixlfw_psb_type_t	rc_psb_type;
 	volatile struct rmixlfw_cpu_wakeup_info *
