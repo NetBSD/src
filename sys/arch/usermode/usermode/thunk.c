@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.65 2011/12/30 13:08:30 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.66 2011/12/30 14:20:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.65 2011/12/30 13:08:30 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.66 2011/12/30 14:20:34 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1003,6 +1003,7 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 	/* If we have too many updates queued, just send a single update */
 	if (rfb->nupdates >= __arraycount(rfb->update)) {
 		rfb->nupdates = 1;
+		rfb->update[0].enc = THUNK_RFB_TYPE_RAW;
 		rfb->update[0].x = 0;
 		rfb->update[0].y = 0;
 		rfb->update[0].w = rfb->width;
@@ -1039,6 +1040,10 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 		if (update->enc == THUNK_RFB_TYPE_COPYRECT)
 			fprintf(stdout, " from [%d, %d]",
 			    update->srcx, update->srcy);
+		if (update->enc == THUNK_RFB_TYPE_RRE)
+			fprintf(stdout, " pixel [%02x %02x %02x %02x]",
+			    update->pixel[0], update->pixel[1],
+			    update->pixel[2], update->pixel[3]);
 		fprintf(stdout, "\n");
 #endif
 
@@ -1051,6 +1056,24 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 			*(uint16_t *)p = htons(update->srcx);	p += 2;
 			*(uint16_t *)p = htons(update->srcy);	p += 2;
 			len = safe_send(rfb->clientfd, buf, 4);
+			if (len < 0)
+				goto disco;
+		}
+
+		if (update->enc == THUNK_RFB_TYPE_RRE) {
+			p = buf;
+
+			/* header */
+			*(uint32_t *)p = htonl(1);		p += 4;
+			memcpy(p, update->pixel, 4);		p += 4;
+			/* subrectangle */
+			memcpy(p, update->pixel, 4);		p += 4;
+			*(uint16_t *)p = htons(update->x);	p += 2;
+			*(uint16_t *)p = htons(update->y);	p += 2;
+			*(uint16_t *)p = htons(update->w);	p += 2;
+			*(uint16_t *)p = htons(update->h);	p += 2;
+			/* send it */
+			len = safe_send(rfb->clientfd, buf, 20);
 			if (len < 0)
 				goto disco;
 		}
@@ -1145,6 +1168,9 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 	thunk_rfb_send_pending(rfb);
 	if (rfb->clientfd == -1)
 		return -1;
+
+	if (event == NULL)
+		return 0;
 
 	if (rfb->schedule_bell) {
 		uint8_t msg_type = 2;	/* bell */
@@ -1277,5 +1303,31 @@ thunk_rfb_copyrect(thunk_rfb_t *rfb, int x, int y, int w, int h,
 	update->srcx = srcx;
 	update->srcy = srcy;
 
-	rfb->first_mergable = rfb->nupdates+1;
+	rfb->first_mergable = rfb->nupdates;
+}
+
+void
+thunk_rfb_fillrect(thunk_rfb_t *rfb, int x, int y, int w, int h, uint8_t *pixel)
+{
+	thunk_rfb_update_t *update = NULL;
+
+	/* if the queue is full, just return */
+	if (rfb->nupdates >= __arraycount(rfb->update))
+		return;
+
+#ifdef RFB_DEBUG
+	fprintf(stdout, "rfb: fillrect queue slot %d, x=%d y=%d w=%d h=%d\n",
+	    rfb->nupdates, x, y, w, h);
+#endif
+
+	/* add the update request to the queue */
+	update = &rfb->update[rfb->nupdates++];
+	update->enc = THUNK_RFB_TYPE_RRE;
+	update->x = x;
+	update->y = y;
+	update->w = w;
+	update->h = h;
+	memcpy(update->pixel, pixel, 4);
+
+	rfb->first_mergable = rfb->nupdates;
 }
