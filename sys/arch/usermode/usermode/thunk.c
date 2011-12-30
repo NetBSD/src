@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.64 2011/12/30 12:54:42 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.65 2011/12/30 13:08:30 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.64 2011/12/30 12:54:42 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.65 2011/12/30 13:08:30 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -75,6 +75,8 @@ __RCSID("$NetBSD: thunk.c,v 1.64 2011/12/30 12:54:42 jmcneill Exp $");
 #ifndef MAP_ANON
 #define MAP_ANON MAP_ANONYMOUS
 #endif
+
+//#define RFB_DEBUG
 
 extern int boothowto;
 
@@ -989,7 +991,7 @@ static void
 thunk_rfb_send_pending(thunk_rfb_t *rfb)
 {
 	thunk_rfb_update_t *update;
-	uint8_t rfb_update[16];
+	uint8_t buf[32];
 	uint8_t *p;
 	unsigned int n;
 	unsigned int bytes_per_pixel;
@@ -1011,28 +1013,28 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 	fprintf(stdout, "rfb: sending %d updates\n", rfb->nupdates);
 #endif
 
-	p = rfb_update;
+	p = buf;
 	*(uint8_t *)p = 0;		p += 1;		/* FramebufferUpdate */
 	*(uint8_t *)p = 0;		p += 1;		/* padding */
 	*(uint16_t *)p = htons(rfb->nupdates);	p += 2;	/* # rects */
 
-	len = safe_send(rfb->clientfd, rfb_update, 4);
+	len = safe_send(rfb->clientfd, buf, 4);
 	if (len < 0)
 		goto disco;
 
 	bytes_per_pixel = rfb->depth / 8;
 	stride = rfb->width * bytes_per_pixel;
 	for (n = 0; n < rfb->nupdates; n++) {
-		p = rfb_update;
+		p = buf;
 		update = &rfb->update[n];
 		*(uint16_t *)p = htons(update->x);	p += 2;
 		*(uint16_t *)p = htons(update->y);	p += 2;
 		*(uint16_t *)p = htons(update->w);	p += 2;
 		*(uint16_t *)p = htons(update->h);	p += 2;
-		*(uint32_t *)p = htonl(update->enc);	p += 4;	/* Raw enc */
+		*(uint32_t *)p = htonl(update->enc);	p += 4;	/* encoding */
 
 #ifdef RFB_DEBUG
-		fprintf(stdout, "rfb: [%u] enc %d, [%d, %d] - [%d, %d)",
+		fprintf(stdout, "rfb: [%u] enc %d, [%d, %d] - [%d, %d]",
 		    n, update->enc, update->x, update->y, update->w, update->h);
 		if (update->enc == THUNK_RFB_TYPE_COPYRECT)
 			fprintf(stdout, " from [%d, %d]",
@@ -1040,17 +1042,29 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 		fprintf(stdout, "\n");
 #endif
 
-		len = safe_send(rfb->clientfd, rfb_update, 12);
+		len = safe_send(rfb->clientfd, buf, 12);
 		if (len < 0)
 			goto disco;
 
-		p = rfb->framebuf + (update->y * stride) + (update->x * bytes_per_pixel);
-		line_len = update->w * bytes_per_pixel;
-		while (update->h-- > 0) {
-			len = safe_send(rfb->clientfd, p, line_len);
+		if (update->enc == THUNK_RFB_TYPE_COPYRECT) {
+			p = buf;
+			*(uint16_t *)p = htons(update->srcx);	p += 2;
+			*(uint16_t *)p = htons(update->srcy);	p += 2;
+			len = safe_send(rfb->clientfd, buf, 4);
 			if (len < 0)
 				goto disco;
-			p += stride;
+		}
+
+		if (update->enc == THUNK_RFB_TYPE_RAW) {
+			p = rfb->framebuf + (update->y * stride)
+				+ (update->x * bytes_per_pixel);
+			line_len = update->w * bytes_per_pixel;
+			while (update->h-- > 0) {
+				len = safe_send(rfb->clientfd, p, line_len);
+				if (len < 0)
+					goto disco;
+				p += stride;
+			}
 		}
 	}
 
