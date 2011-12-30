@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.11 2011/12/07 15:47:43 cegger Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.12 2011/12/30 16:55:21 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.11 2011/12/07 15:47:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.12 2011/12/30 16:55:21 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -550,3 +550,123 @@ pmap_unmap_recursive_entries(void)
 
 }
 #endif /* PAE */
+
+#if defined(PAE) || defined(__x86_64__)
+
+extern struct cpu_info	* (*xpq_cpu)(void);
+static __inline void
+pmap_kpm_setpte(struct cpu_info *ci, int index)
+{
+#ifdef PAE
+		xpq_queue_pte_update(
+			xpmap_ptetomach(&ci->ci_kpm_pdir[l2tol2(index)]),
+			pmap_kernel()->pm_pdir[index]);
+#elif defined(__x86_64__)
+		xpq_queue_pte_update(
+			xpmap_ptetomach(&ci->ci_kpm_pdir[index]),
+			pmap_kernel()->pm_pdir[index]);
+#endif /* PAE */
+}
+
+static void
+pmap_kpm_sync_xcall(void *arg1, void *arg2)
+{
+	KASSERT(arg1 != NULL);
+	KASSERT(arg2 != NULL);
+
+	struct pmap *pmap = arg1;
+	int index = *(int *)arg2;
+	struct cpu_info *ci = xpq_cpu();
+
+	if (pmap == pmap_kernel()) {
+		KASSERT(index >= PDIR_SLOT_KERN);
+		pmap_kpm_setpte(ci, index);
+		pmap_pte_flush();
+		return;
+	}
+
+#ifdef PAE
+	KASSERTMSG(false, "%s not allowed for PAE user pmaps", __func__);
+	return;
+#else /* __x86_64__ */
+	
+	if (ci->ci_pmap != pmap) {
+		/* pmap changed. Nothing to do. */
+		return;
+	}
+	
+	pmap_pte_set(&ci->ci_kpm_pdir[index],
+	    pmap_kernel()->pm_pdir[index]);
+	pmap_pte_flush();
+#endif /* PAE || __x86_64__ */
+}
+
+/*
+ * Synchronise shadow pdir with the pmap on all cpus on which it is
+ * loaded.
+ */
+void
+xen_kpm_sync(struct pmap *pmap, int index)
+{
+	uint64_t where;
+	
+	KASSERT(pmap != NULL);
+
+	pmap_pte_flush();
+
+	if (__predict_false(xpq_cpu != &x86_curcpu)) { /* Too early to xcall */
+		CPU_INFO_ITERATOR cii;
+		struct cpu_info *ci;
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			if (ci == NULL) {
+				continue;
+			}
+			if (pmap == pmap_kernel() ||
+			    ci->ci_cpumask & pmap->pm_cpus) {
+				pmap_kpm_setpte(ci, index);
+			}
+		}
+		pmap_pte_flush();
+		return;
+	}
+
+	if (pmap == pmap_kernel()) {
+		where = xc_broadcast(XC_HIGHPRI,
+		    pmap_kpm_sync_xcall, pmap, &index);
+		xc_wait(where);
+	} else {
+		KASSERT(mutex_owned(pmap->pm_lock));
+		KASSERT(kpreempt_disabled());
+
+		CPU_INFO_ITERATOR cii;
+		struct cpu_info *ci;
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			if (ci == NULL) {
+				continue;
+			}
+			while (ci->ci_cpumask & pmap->pm_cpus) {
+#ifdef MULTIPROCESSOR
+#define CPU_IS_CURCPU(ci) __predict_false((ci) == curcpu())
+#else /* MULTIPROCESSOR */
+#define CPU_IS_CURCPU(ci) __predict_true((ci) == curcpu())
+#endif /* MULTIPROCESSOR */
+				if (ci->ci_want_pmapload &&
+				    !CPU_IS_CURCPU(ci)) {
+					/*
+					 * XXX: make this more cpu
+					 *  cycle friendly/co-operate
+					 *  with pmap_load()
+					 */
+					continue;
+				    }
+
+				where = xc_unicast(XC_HIGHPRI, pmap_kpm_sync_xcall,
+				    pmap, &index, ci);
+				xc_wait(where);
+				break;
+			}
+		}
+	}
+}
+
+#endif /* PAE || __x86_64__ */
