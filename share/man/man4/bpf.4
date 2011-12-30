@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.48 2011/12/27 21:47:04 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.49 2011/12/30 14:12:15 alnsn Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -515,6 +515,8 @@ halfword
 .Sy ( BPF_H ) ,
 or byte
 .Sy ( BPF_B ) .
+Arithmetic overflow when calculating a variable offset terminates
+the filter program and the packet is ignored.
 The semantics of all the recognized BPF_LD instructions follow.
 .Bl -column "BPF_LD_BPF_W_BPF_ABS" "A \*[Lt]- P[k:4]" -offset indent
 .It Sy BPF_LD+BPF_W+BPF_ABS Ta A \*[Lt]- P[k:4]
