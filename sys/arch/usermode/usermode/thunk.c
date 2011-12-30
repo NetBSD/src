@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.60 2011/12/30 11:06:18 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.61 2011/12/30 11:32:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.60 2011/12/30 11:06:18 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.61 2011/12/30 11:32:57 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -75,6 +75,8 @@ __RCSID("$NetBSD: thunk.c,v 1.60 2011/12/30 11:06:18 jmcneill Exp $");
 #ifndef MAP_ANON
 #define MAP_ANON MAP_ANONYMOUS
 #endif
+
+#define RFB_DEBUG
 
 extern int boothowto;
 
@@ -1051,6 +1053,7 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 	}
 
 	rfb->nupdates = 0;
+	rfb->first_mergable = 0;
 
 	return;
 
@@ -1118,6 +1121,7 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		}
 
 		rfb->nupdates = 0;
+		rfb->first_mergable = 0;
 		thunk_rfb_update(rfb, 0, 0, rfb->width, rfb->height);
 	}
 
@@ -1191,7 +1195,7 @@ thunk_rfb_update(thunk_rfb_t *rfb, int x, int y, int w, int h)
 		return;
 
 	/* no sense in queueing duplicate updates */
-	for (n = 0; n < rfb->nupdates; n++) {
+	for (n = rfb->first_mergable; n < rfb->nupdates; n++) {
 		if (rfb->update[n].x == x && rfb->update[n].y == y &&
 		    rfb->update[n].w == w && rfb->update[n].h == h)
 			return;
@@ -1204,6 +1208,7 @@ thunk_rfb_update(thunk_rfb_t *rfb, int x, int y, int w, int h)
 
 	/* add the update request to the queue */
 	update = &rfb->update[rfb->nupdates++];
+	update->type = THUNK_RFB_TYPE_UPDATE;
 	update->x = x;
 	update->y = y;
 	update->w = w;
