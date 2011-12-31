@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.5 2011/12/24 01:23:13 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.6 2011/12/31 02:26:21 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.1.4.5 2011/12/24 01:22:44 matt Exp
+ *	NetBSD: pcidevs,v 1.962.4.1.4.6 2011/12/31 02:25:42 matt Exp
  */
 
 /*
@@ -10296,8 +10296,16 @@ static const struct pci_product pci_products[] = {
 	    "XLP eMMC/SD/SDIO controller",
 	},
 	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_RXE,
+	    "XLP Regular Expression accelerator",
+	},
+	{
 	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_AHCISATA,
 	    "XLP AHCI SATA controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_SRIO,
+	    "XLP SRIO (Serial Rapid IO) controller",
 	},
 	{
 	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_5000,
@@ -14948,4 +14956,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3134;
+const int pci_nproducts = 3136;
