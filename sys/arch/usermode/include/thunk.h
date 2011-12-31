@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.53 2011/12/30 20:08:00 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.54 2011/12/31 21:31:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -167,8 +167,8 @@ int	thunk_audio_config(int, const thunk_audio_config_t *,
 			   const thunk_audio_config_t *);
 int	thunk_audio_pollout(int);
 int	thunk_audio_pollin(int);
-int	thunk_audio_write(int, const void *, size_t);
-int	thunk_audio_read(int, void *, size_t);
+ssize_t	thunk_audio_write(int, const void *, size_t);
+ssize_t	thunk_audio_read(int, void *, size_t);
 
 typedef enum {
 	/* client -> server */
