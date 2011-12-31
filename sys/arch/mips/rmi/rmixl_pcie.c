@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.19 2011/12/27 16:07:34 matt Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.20 2011/12/31 08:20:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.19 2011/12/27 16:07:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.20 2011/12/31 08:20:43 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -832,9 +832,8 @@ rmixl_pcie_init_ecfg(struct rmixl_pcie_softc *sc)
 	case MIPS_XLS208:
 	case MIPS_XLS404LITE:
 	case MIPS_XLS408LITE:
-		sc->sc_fatal_ih = rmixl_intr_establish(29,
-			IPL_HIGH, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
-			rmixl_pcie_error_intr, v, false);
+		sc->sc_fatal_ih = rmixl_intr_establish(29, IPL_HIGH,
+		    IST_LEVEL_HIGH, rmixl_pcie_error_intr, v, false);
 		break;
 	default:
 		break;
@@ -1379,8 +1378,7 @@ rmixl_pcie_lip_add_1(rmixl_pcie_softc_t *sc, u_int link, int irq, int ipl)
 		lip_new->sc = sc;
 		lip_new->link = link;
 		lip_new->ipl = ipl;
-		lip_new->ih = rmixl_intr_establish(irq,
-			ipl, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
+		lip_new->ih = rmixl_intr_establish(irq, ipl, IST_LEVEL_HIGH,
 			rmixl_pcie_intr, lip_new, false);
 		if (lip_new->ih == NULL)
 			panic("%s: cannot establish irq %d", __func__, irq);
