@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.319 2011/12/19 11:59:57 drochner Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.320 2011/12/31 20:41:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.319 2011/12/19 11:59:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.320 2011/12/31 20:41:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2261,7 +2261,7 @@ after_listen:
 				tp->rcv_scale = tp->request_r_scale;
 			}
 			TCP_REASS_LOCK(tp);
-			(void) tcp_reass(tp, NULL, (struct mbuf *)0, &tlen);
+			(void) tcp_reass(tp, NULL, NULL, &tlen);
 			/*
 			 * if we didn't have to retransmit the SYN,
 			 * use its rtt as our initial srtt & rtt var.
@@ -2585,7 +2585,7 @@ after_listen:
 			tp->rcv_scale = tp->request_r_scale;
 		}
 		TCP_REASS_LOCK(tp);
-		(void) tcp_reass(tp, NULL, (struct mbuf *)0, &tlen);
+		(void) tcp_reass(tp, NULL, NULL, &tlen);
 		tp->snd_wl1 = th->th_seq - 1;
 		/* fall into ... */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.50 2011/02/21 23:50:08 jmcneill Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.51 2011/12/31 20:41:58 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.50 2011/02/21 23:50:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.51 2011/12/31 20:41:58 christos Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1258,7 +1258,7 @@ ieee80211_add_wme_param(u_int8_t *frm, struct ieee80211_wme_state *wme)
 	int i;
 
 	memcpy(frm, &param, sizeof(param));
-	frm += __offsetof(struct ieee80211_wme_info, wme_info);
+	frm += offsetof(struct ieee80211_wme_info, wme_info);
 	*frm++ = wme->wme_bssChanParams.cap_info;	/* AC info */
 	*frm++ = 0;					/* reserved field */
 	for (i = 0; i < WME_NUM_AC; i++) {

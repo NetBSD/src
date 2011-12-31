@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.245 2011/12/19 11:59:57 drochner Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.246 2011/12/31 20:41:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.245 2011/12/19 11:59:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.246 2011/12/31 20:41:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -829,7 +829,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 		tlen += th->th_off << 2;
 	m->m_len = hlen + tlen;
 	m->m_pkthdr.len = hlen + tlen;
-	m->m_pkthdr.rcvif = (struct ifnet *) 0;
+	m->m_pkthdr.rcvif = NULL;
 	th->th_flags = flags;
 	th->th_urp = 0;
 
@@ -922,8 +922,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, NULL, ro,
-		    (tp && tp->t_mtudisc ? IP_MTUDISC : 0),
-		    (struct ip_moptions *)0, so);
+		    (tp && tp->t_mtudisc ? IP_MTUDISC : 0), NULL, so);
 		break;
 #endif
 #ifdef INET6
@@ -1275,7 +1274,7 @@ tcp_close(struct tcpcb *tp)
 	callout_destroy(&tp->t_delack_ch);
 	pool_put(&tcpcb_pool, tp);
 
-	return ((struct tcpcb *)0);
+	return NULL;
 }
 
 int

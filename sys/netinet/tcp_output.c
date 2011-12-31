@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.172 2011/12/19 11:59:57 drochner Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.173 2011/12/31 20:41:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.172 2011/12/19 11:59:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.173 2011/12/31 20:41:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1288,7 +1288,7 @@ send:
 		m->m_data += max_linkhdr;
 		m->m_len = hdrlen;
 	}
-	m->m_pkthdr.rcvif = (struct ifnet *)0;
+	m->m_pkthdr.rcvif = NULL;
 	switch (af) {
 #ifdef INET
 	case AF_INET:
@@ -1605,8 +1605,7 @@ timer:
 			opts = NULL;
 		error = ip_output(m, opts, ro,
 			(tp->t_mtudisc ? IP_MTUDISC : 0) |
-			(so->so_options & SO_DONTROUTE),
-			(struct ip_moptions *)0, so);
+			(so->so_options & SO_DONTROUTE), NULL, so);
 		break;
 	    }
 #endif
