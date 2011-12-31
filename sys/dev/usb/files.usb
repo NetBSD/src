@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.116 2011/11/03 02:41:29 macallan Exp $
+#	$NetBSD: files.usb,v 1.117 2011/12/31 00:08:48 christos Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -188,6 +188,11 @@ file	dev/usb/emdtv_ir.c		emdtv
 device	urio
 attach	urio at usbdevif
 file	dev/usb/urio.c			urio			needs-flag
+
+# Apple iPad
+device	uipad
+attach	uipad at usbdevif
+file	dev/usb/uipad.c				uipad
 
 # BlackBerries
 device	uberry
