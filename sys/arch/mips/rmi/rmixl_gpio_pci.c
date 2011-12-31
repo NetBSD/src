@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.3 2011/12/31 04:30:52 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.4 2011/12/31 08:20:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -303,8 +303,7 @@ xlgpio_pci_attach(device_t parent, device_t self, void *aux)
 	for (size_t ipl = IPL_VM; ipl <= IPL_HIGH ; ipl++) {
 		const size_t irt = ipl - IPL_VM;
 		if (rmixl_intr_establish(irtstart + irt, ipl,
-		    RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
-		    xlgpio_intrs[irt], sc, true) == NULL)
+		    IST_LEVEL_HIGH, xlgpio_intrs[irt], sc, true) == NULL)
 			panic("%s: failed to establish interrupt %zu",
 			    __func__, irtstart + irt);
 	}

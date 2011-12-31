@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.1.2.10 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.1.2.11 2011/12/31 08:20:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.10 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.11 2011/12/31 08:20:43 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -517,9 +517,8 @@ rmixl_pcix_intcfg(rmixl_pcix_softc_t *sc)
 	/*
 	 * establish PCIX error interrupt handler
 	 */
-	sc->sc_fatal_ih = rmixl_intr_establish(24,
-		IPL_VM, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
-		rmixl_pcix_error_intr, sc, false);
+	sc->sc_fatal_ih = rmixl_intr_establish(24, IPL_VM, IST_LEVEL_HIGH,
+	    rmixl_pcix_error_intr, sc, false);
 	if (sc->sc_fatal_ih == NULL)
 		panic("%s: cannot establish irq %d", __func__, 24);
 }
@@ -950,8 +949,7 @@ rmixl_pcix_pip_add_1(rmixl_pcix_softc_t *sc, int irq, int ipl)
 		/* initialize the interrupt struct */
 		pip_new->sc = sc;
 		pip_new->ipl = ipl;
-		pip_new->ih = rmixl_intr_establish(irq,
-			ipl, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
+		pip_new->ih = rmixl_intr_establish(irq, ipl, IST_LEVEL_HIGH,
 			rmixl_pcix_intr, pip_new, false);
 		if (pip_new->ih == NULL)
 			panic("%s: cannot establish irq %d", __func__, irq);

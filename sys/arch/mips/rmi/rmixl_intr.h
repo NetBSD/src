@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.h,v 1.1.2.10 2011/12/30 06:48:55 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.h,v 1.1.2.11 2011/12/31 08:20:43 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -51,19 +51,6 @@
 #define RMIXL_INTRVEC_IPI	8
 #define RMIXL_INTRVEC_FMN	(RMIXL_INTRVEC_IPI + NIPIS)
 
-typedef enum {
-	RMIXL_TRIG_LEVEL=0,
-	RMIXL_TRIG_EDGE,
-} rmixl_intr_trigger_t;
-
-typedef enum {
-	RMIXL_POLR_HIGH=0,
-	RMIXL_POLR_LOW,
-	RMIXL_POLR_RISING,
-	RMIXL_POLR_FALLING,
-} rmixl_intr_polarity_t;
-
-
 /*
  * iv_list and ref count manage sharing of each vector
  */
@@ -90,8 +77,7 @@ typedef TAILQ_HEAD(rmixl_intrvecq, rmixl_intrvec) rmixl_intrvecq_t;
 extern const struct splsw rmixl_splsw;
 extern uint64_t ipl_eimr_map[];
 
-void *	rmixl_intr_establish(size_t /* irt */, int /* ipl */,
-	    rmixl_intr_trigger_t, rmixl_intr_polarity_t,
+void *	rmixl_intr_establish(size_t /* irt */, int /* ipl */, int /* ist */,
 	    int (*)(void *), void *, bool);
 void	rmixl_intr_disestablish(void *);
 void *	rmixl_vec_establish(size_t /* vec */, rmixl_intrhand_t *, int /* ipl */,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_usbi.c,v 1.1.2.9 2011/12/30 06:43:39 matt Exp $	*/
+/*	$NetBSD: rmixl_usbi.c,v 1.1.2.10 2011/12/31 08:20:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.9 2011/12/30 06:43:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.10 2011/12/31 08:20:43 matt Exp $");
 
 #include "locators.h"
 
@@ -153,9 +153,8 @@ rmixl_usbi_attach(device_t parent, device_t self, void *aux)
 
 	/* establish interrupt */
 	if (obio->obio_intr != OBIOCF_INTR_DEFAULT) {
-		ih = rmixl_intr_establish(obio->obio_intr,
-			IPL_USB, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
-			rmixl_usbi_intr, sc, false);
+		ih = rmixl_intr_establish(obio->obio_intr, IPL_USB,
+		    IST_LEVEL_HIGH, rmixl_usbi_intr, sc, false);
 		if (ih == NULL)
 			panic("%s: couldn't establish interrupt",
 				device_xname(self));
