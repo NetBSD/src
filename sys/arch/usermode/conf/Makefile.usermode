@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.26 2011/12/29 21:22:49 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.27 2011/12/31 21:24:07 christos Exp $
 
 OPT_CPU_HOST=			%CPU_HOST%
 .if !empty(OPT_CPU_HOST)
@@ -82,7 +82,7 @@ thunk.d: ${USERMODE}/usermode/thunk.c
 	    ${CPPFLAGS.thunk.c} ${USERMODE}/usermode/thunk.c
 
 thunk.o: ${USERMODE}/usermode/thunk.c
-	${CC} ${CPPFLAGS.thunk.c} -c -o $@ ${USERMODE}/usermode/thunk.c
+	${CC} ${COPTS} ${CPPFLAGS.thunk.c} -c -o $@ ${USERMODE}/usermode/thunk.c
 
 ##
 ## (7) misc settings
