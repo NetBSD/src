@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.70 2011/12/31 12:57:12 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.71 2011/12/31 21:29:12 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.70 2011/12/31 12:57:12 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.71 2011/12/31 21:29:12 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: thunk.c,v 1.70 2011/12/31 12:57:12 reinoud Exp $");
 #include <aio.h>
 #include <assert.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
@@ -230,8 +231,8 @@ thunk_getcounter(void)
 	int error;
 
 	error = clock_gettime(CLOCK_MONOTONIC, &ts);
-	if (error) {
-		perror("clock_gettime CLOCK_MONOTONIC");
+	if (error == -1) {
+		warn("clock_gettime CLOCK_MONOTONIC");
 		abort();
 	}
 
@@ -245,7 +246,7 @@ thunk_clock_getres_monotonic(void)
 	int error;
 
 	error = clock_getres(CLOCK_MONOTONIC, &res);
-	if (error)
+	if (error == -1)
 		return -1;
 
 	return (long)(res.tv_sec * 1000000000ULL + res.tv_nsec);
@@ -258,8 +259,8 @@ thunk_timer_attach(void)
 	int error;
 
 	error = timer_create(CLOCK_MONOTONIC, NULL, &timerid);
-	if (error) {
-		perror("timer_create CLOCK_MONOTONIC");
+	if (error == -1) {
+		warn("timer_create CLOCK_MONOTONIC");
 		abort();
 	}
 
@@ -344,7 +345,7 @@ thunk_makecontext(ucontext_t *ucp, void (*func)(void),
 		makecontext(ucp, func, 3, arg1, arg2, arg3);
 		break;
 	default:
-		printf("%s: nargs (%d) too big\n", __func__, nargs);
+		warnx("%s: nargs (%d) too big\n", __func__, nargs);
 		abort();
 	}
 }
@@ -362,7 +363,7 @@ thunk_tcgetattr(int fd, struct thunk_termios *tt)
 	int error;
 
 	error = tcgetattr(fd, &t);
-	if (error)
+	if (error == -1)
 		return error;
 	thunk_from_termios(&t, tt);
 	return 0;
@@ -559,8 +560,8 @@ thunk_sigaddset(sigset_t *sa_mask, int sig)
 {
 	int retval;
 	retval = sigaddset(sa_mask, sig);
-	if (retval < 0) {
-		perror("%s: bad signal added");
+	if (retval == -1) {
+		warn("bad signal added");
 		abort();
 	}
 }
@@ -629,8 +630,8 @@ thunk_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 	nflags = thunk_to_native_mapflags(flags);
 
 	a = mmap(addr, len, nprot, nflags, fd, offset);
-	if (a == (void *)-1)
-		perror("mmap");
+	if (a == MAP_FAILED)
+		warn("mmap");
 	return a;
 }
 
@@ -705,15 +706,15 @@ thunk_getmachine(char *machine, size_t machinelen,
 
 	memset(machine, 0, machinelen);
 	len = machinelen - 1;
-	if (sysctlbyname("hw.machine", machine, &len, NULL, 0) != 0) {
-		perror("sysctlbyname hw.machine failed");
+	if (sysctlbyname("hw.machine", machine, &len, NULL, 0) == -1) {
+		warn("sysctlbyname hw.machine failed");
 		abort();
 	}
 
 	memset(machine_arch, 0, machine_archlen);
 	len = machine_archlen - 1;
-	if (sysctlbyname("hw.machine_arch", machine_arch, &len, NULL, 0) != 0) {
-		perror("sysctlbyname hw.machine_arch failed");
+	if (sysctlbyname("hw.machine_arch", machine_arch, &len, NULL, 0) == -1) {
+		warn("sysctlbyname hw.machine_arch failed");
 		abort();
 	}
 
@@ -739,7 +740,7 @@ thunk_open_tap(const char *device)
 	/* set async mode */
 	enable = 1;
 	error = ioctl(fd, FIOASYNC, &enable);
-	if (error)
+	if (error == -1)
 		return -1;
 
 	return fd;
@@ -760,7 +761,7 @@ thunk_pollin_tap(int fd, int timeout)
 	int error, len;
 
 	error = ioctl(fd, FIONREAD, &len);
-	if (error)
+	if (error == -1)
 		return 0;
 
 	return len;
@@ -816,7 +817,7 @@ thunk_audio_config(int fd, const thunk_audio_config_t *pconf,
 	info.mode = AUMODE_PLAY_ALL|AUMODE_RECORD;
 
 	error = ioctl(fd, AUDIO_SETINFO, &info);
-	if (error)
+	if (error == -1)
 		printf("AUDIO_SETINFO failed: %s\n", strerror(errno));
 
 	return error;
@@ -830,7 +831,7 @@ thunk_audio_pollout(int fd)
 
 	AUDIO_INITINFO(&info);
 	error = ioctl(fd, AUDIO_GETBUFINFO, &info);
-	if (error)
+	if (error == -1)
 		return -1;
 
 	return info.play.buffer_size - info.play.seek;
@@ -844,19 +845,19 @@ thunk_audio_pollin(int fd)
 
 	AUDIO_INITINFO(&info);
 	error = ioctl(fd, AUDIO_GETBUFINFO, &info);
-	if (error)
+	if (error == -1)
 		return -1;
 
 	return info.record.seek;
 }
 
-int
+ssize_t
 thunk_audio_write(int fd, const void *buf, size_t buflen)
 {
 	return write(fd, buf, buflen);
 }
 
-int
+ssize_t
 thunk_audio_read(int fd, void *buf, size_t buflen)
 {
 	return read(fd, buf, buflen);
@@ -866,6 +867,7 @@ int
 thunk_rfb_open(thunk_rfb_t *rfb, uint16_t port)
 {
 	struct sockaddr_in sin;
+	int serrno;
 
 	rfb->clientfd = -1;
 	rfb->connected = false;
@@ -873,23 +875,25 @@ thunk_rfb_open(thunk_rfb_t *rfb, uint16_t port)
 	/* create socket */
 	rfb->sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (rfb->sockfd == -1) {
-		printf("rfb: couldn't create socket: %s\n", strerror(errno));
-		return errno;
+		serrno = errno;
+		warn("rfb: couldn't create socket");
+		return serrno;
 	}
 	/* bind to requested port */
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	sin.sin_port = htons(port);
-	if (bind(rfb->sockfd, (struct sockaddr *)&sin, sizeof(sin)) != 0) {
-		printf("rfb: couldn't bind port %d: %s\n", port,
-		    strerror(errno));
+	if (bind(rfb->sockfd, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
+		serrno = errno;
+		warn("rfb: couldn't bind port %d", port);
 		close(rfb->sockfd);
-		return errno;
+		return serrno;
 	}
 	/* listen for connections */
 	if (listen(rfb->sockfd, 1) != 0) {
-		printf("rfb: couldn't listen on socket: %s\n", strerror(errno));
+		serrno = errno;
+		warn("rfb: couldn't listen on socket");
 		close(rfb->sockfd);
 		return errno;
 	}
@@ -901,19 +905,22 @@ static ssize_t
 safe_send(int s, const void *msg, size_t len)
 {
 	const uint8_t *p;
-	int sent_len;
+	ssize_t sent_len;
 
 	p = msg;
 	while (len) {
 		assert(len >= 0);
 		sent_len = send(s, p, len, MSG_NOSIGNAL);
-		if (sent_len < 0) 
+		if (sent_len == -1) {
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
 			return -1;
+		}
 	
 		p   += sent_len;
 		len -= sent_len;
 	}
-	return 0;
+	return len;
 }
 
 static ssize_t
@@ -926,16 +933,18 @@ safe_recv(int s, void *buf, size_t len)
 	while (len) {
 		assert(len >= 0);
 		recv_len = recv(s, p, len, MSG_NOSIGNAL);
-		if (recv_len < 0) 
+		if (recv_len == -1)  {
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
 			return -1;
-	
+		}
 		p   += recv_len;
 		len -= recv_len;
 	}
-	return 0;
+	return len;
 }
 
-static int
+static ssize_t
 thunk_rfb_server_init(thunk_rfb_t *rfb)
 {
 	char msgbuf[80];
@@ -974,30 +983,30 @@ thunk_rfb_handshake(thunk_rfb_t *rfb)
 
 	/* send server protocol version */
 	len = safe_send(rfb->clientfd, protover, strlen(protover));
-	if (len < 0)
+	if (len == -1)
 		return errno;
 
 	/* receive client protocol version */
 	do {
 		len = safe_recv(rfb->clientfd, &dummy, sizeof(dummy));
-		if (len < 0)
+		if (len == -1)
 			return errno;
 	} while (dummy != '\n');
 
 	/* send security capabilities */
 	security_type = htonl(1);	/* no security */
 	len = safe_send(rfb->clientfd, &security_type, sizeof(security_type));
-	if (len < 0)
+	if (len == -1)
 		return errno;
 
 	/* receive client init message */
 	len = safe_recv(rfb->clientfd, &shared_flag, sizeof(shared_flag));
-	if (len < 0)
+	if (len == -1)
 		return errno;
 
 	/* send server init message */
 	len = thunk_rfb_server_init(rfb);
-	if (len < 0)
+	if (len == -1)
 		return errno;
 
 	return 0;
@@ -1036,7 +1045,7 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 	*(uint16_t *)p = htons(rfb->nupdates);	p += 2;	/* # rects */
 
 	len = safe_send(rfb->clientfd, buf, 4);
-	if (len < 0)
+	if (len == -1)
 		goto disco;
 
 	bytes_per_pixel = rfb->depth / 8;
@@ -1064,7 +1073,7 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 #endif
 
 		len = safe_send(rfb->clientfd, buf, 12);
-		if (len < 0)
+		if (len == -1)
 			goto disco;
 
 		if (update->enc == THUNK_RFB_TYPE_COPYRECT) {
@@ -1072,7 +1081,7 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 			*(uint16_t *)p = htons(update->srcx);	p += 2;
 			*(uint16_t *)p = htons(update->srcy);	p += 2;
 			len = safe_send(rfb->clientfd, buf, 4);
-			if (len < 0)
+			if (len == -1)
 				goto disco;
 		}
 
@@ -1090,7 +1099,7 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 			*(uint16_t *)p = htons(update->h);	p += 2;
 			/* send it */
 			len = safe_send(rfb->clientfd, buf, 20);
-			if (len < 0)
+			if (len == -1)
 				goto disco;
 		}
 
@@ -1100,7 +1109,7 @@ thunk_rfb_send_pending(thunk_rfb_t *rfb)
 			line_len = update->w * bytes_per_pixel;
 			while (update->h-- > 0) {
 				len = safe_send(rfb->clientfd, p, line_len);
-				if (len < 0)
+				if (len == -1)
 					goto disco;
 				p += stride;
 			}
@@ -1196,13 +1205,13 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 	}
 
 	error = ioctl(rfb->clientfd, FIONREAD, &len);
-	if (error)
+	if (error == -1)
 		goto discon;
 	if (len == 0)
 		return 0;
 
 	len = safe_recv(rfb->clientfd, &ch, sizeof(ch));
-	if (len < 0)
+	if (len == -1)
 		goto discon;
 
 	event->message_type = ch;
@@ -1213,7 +1222,7 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 	case THUNK_RFB_SET_ENCODINGS:
 		len = safe_recv(rfb->clientfd,
 			set_encodings, sizeof(set_encodings));
-		if (len < 0)
+		if (len == -1)
 			goto discon;
 		msg_len = 4 * ntohs(*(uint16_t *)&set_encodings[1]);
 		break;
@@ -1221,7 +1230,7 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		len = safe_recv(rfb->clientfd,
 			framebuffer_update_request,
 			sizeof(framebuffer_update_request));
-		if (len < 0)
+		if (len == -1)
 			goto discon;
 #ifdef RFB_DEBUG
 		fprintf(stdout, "framebuffer update request: ");
@@ -1242,7 +1251,7 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		break;
 	case THUNK_RFB_KEY_EVENT:
 		len = safe_recv(rfb->clientfd, key_event, sizeof(key_event));
-		if (len < 0)
+		if (len == -1)
 			goto discon;
 		event->data.key_event.down_flag = key_event[0];
 		event->data.key_event.keysym =
@@ -1257,7 +1266,7 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 	case THUNK_RFB_POINTER_EVENT:
 		len = safe_recv(rfb->clientfd,
 			pointer_event, sizeof(pointer_event));
-		if (len < 0)
+		if (len == -1)
 			goto discon;
 		event->data.pointer_event.button_mask = pointer_event[0];
 		event->data.pointer_event.absx =
@@ -1275,7 +1284,7 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 	case THUNK_RFB_CLIENT_CUT_TEXT:
 		len = safe_recv(rfb->clientfd,
 			client_cut_text, sizeof(client_cut_text));
-		if (len < 0)
+		if (len == -1)
 			goto discon;
 		msg_len = ntohl(*(uint32_t *)&client_cut_text[3]);
 		break;
@@ -1284,13 +1293,13 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		goto discon;
 	}
 
-	if (len < 0)
+	if (len == -1)
 		goto discon;
 
 	/* discard any remaining bytes */
 	while (msg_len-- > 0) {
 		len = safe_recv(rfb->clientfd, &ch, sizeof(ch));
-		if (len < 0)
+		if (len == -1)
 			goto discon;
 	}
 
