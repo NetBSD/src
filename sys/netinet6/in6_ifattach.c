@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.86 2011/11/19 22:51:29 tls Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.87 2011/12/31 20:41:59 christos Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.86 2011/11/19 22:51:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.87 2011/12/31 20:41:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -884,7 +884,7 @@ in6_ifdetach(struct ifnet *ifp)
 			rtrequest(RTM_DELETE, (struct sockaddr *)&ia->ia_addr,
 			    (struct sockaddr *)&ia->ia_addr,
 			    (struct sockaddr *)&ia->ia_prefixmask,
-			    rtflags, (struct rtentry **)0);
+			    rtflags, NULL);
 		}
 
 		/* remove from the linked list */

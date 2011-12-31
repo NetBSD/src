@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.126 2011/12/19 11:59:56 drochner Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.127 2011/12/31 20:41:58 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.126 2011/12/19 11:59:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.127 2011/12/31 20:41:58 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1111,8 +1111,7 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 		struct rtentry *nrt;
 
 		error = rtrequest((int) RTM_ADD, dst,
-		    (struct sockaddr *) rt->rt_gateway,
-		    (struct sockaddr *) 0,
+		    (struct sockaddr *) rt->rt_gateway, NULL,
 		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
 		if (error) {
 			rtfree(rt);

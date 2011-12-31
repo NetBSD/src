@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.138 2011/12/12 00:06:39 roy Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.139 2011/12/31 20:41:58 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.138 2011/12/12 00:06:39 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.139 2011/12/31 20:41:58 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -854,11 +854,13 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 	const struct sockaddr *sa;
 	int pass;
 	struct mbuf *m;
-	struct ifnet *ifp = ifa->ifa_ifp;
+	struct ifnet *ifp;
 	struct rt_xmsghdr rtm;
 	struct ifa_xmsghdr ifam;
 	int ncmd;
 
+	KASSERT(ifa != NULL);
+	ifp = ifa->ifa_ifp;
 	COMPATCALL(rt_newaddrmsg, (cmd, ifa, error, rt));
 	if (COMPATNAME(route_info).ri_cb.any_count == 0)
 		return;
@@ -885,6 +887,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 				ncmd = cmd;
 			}
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
+			KASSERT(ifp->if_dl != NULL);
 			info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.51 2011/12/16 00:57:59 jakllsch Exp $	*/
+/*	$NetBSD: frag6.c,v 1.52 2011/12/31 20:41:59 christos Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.51 2011/12/16 00:57:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.52 2011/12/31 20:41:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,10 +71,6 @@ u_int frag6_nfrags;
 struct	ip6q ip6q;	/* ip6 reassemble queue */
 
 static kmutex_t	frag6_lock;
-
-#ifndef offsetof		/* XXX */
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif
 
 /*
  * Initialise reassembly queue and fragment identifier.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.134 2011/12/19 11:59:58 drochner Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.135 2011/12/31 20:41:59 christos Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.134 2011/12/19 11:59:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.135 2011/12/31 20:41:59 christos Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -193,7 +193,7 @@ ip6_init(void)
 	frag6_init();
 	ip6_desync_factor = cprng_fast32() % MAX_TEMP_DESYNC_FACTOR;
 
-	ip6_init2((void *)0);
+	ip6_init2(NULL);
 #ifdef GATEWAY
 	ip6flow_init(ip6_hashsize);
 #endif
