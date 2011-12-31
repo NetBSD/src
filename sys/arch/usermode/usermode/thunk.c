@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.68 2011/12/30 21:14:58 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.69 2011/12/31 12:38:56 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.68 2011/12/30 21:14:58 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.69 2011/12/31 12:38:56 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -897,7 +897,7 @@ thunk_rfb_open(thunk_rfb_t *rfb, uint16_t port)
 	return 0;
 }
 
-static int
+static ssize_t
 safe_send(int s, const void *msg, size_t len)
 {
 	const uint8_t *p;
@@ -912,6 +912,25 @@ safe_send(int s, const void *msg, size_t len)
 	
 		p   += sent_len;
 		len -= sent_len;
+	}
+	return 0;
+}
+
+static ssize_t
+safe_recv(int s, void *buf, size_t len)
+{
+	uint8_t *p;
+	int recv_len;
+
+	p = buf;
+	while (len) {
+		assert(len >= 0);
+		recv_len = recv(s, p, len, MSG_NOSIGNAL);
+		if (recv_len < 0) 
+			return -1;
+	
+		p   += recv_len;
+		len -= recv_len;
 	}
 	return 0;
 }
@@ -960,11 +979,9 @@ thunk_rfb_handshake(thunk_rfb_t *rfb)
 
 	/* receive client protocol version */
 	do {
-		len = recv(rfb->clientfd, &dummy, sizeof(dummy), MSG_NOSIGNAL);
+		len = safe_recv(rfb->clientfd, &dummy, sizeof(dummy));
 		if (len < 0)
 			return errno;
-		if (len == 0)
-			return EIO;
 	} while (dummy != '\n');
 
 	/* send security capabilities */
@@ -974,9 +991,8 @@ thunk_rfb_handshake(thunk_rfb_t *rfb)
 		return errno;
 
 	/* receive client init message */
-	len = recv(rfb->clientfd, &shared_flag, sizeof(shared_flag),
-		MSG_NOSIGNAL);
-	if (len <= 0)
+	len = safe_recv(rfb->clientfd, &shared_flag, sizeof(shared_flag));
+	if (len < 0)
 		return errno;
 
 	/* send server init message */
@@ -1168,10 +1184,10 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 	if (rfb->clientfd == -1)
 		return -1;
 
-	thunk_rfb_send_pending(rfb);
-
 	if (event == NULL)
 		return 0;
+
+	thunk_rfb_send_pending(rfb);
 
 	if (rfb->schedule_bell) {
 		uint8_t msg_type = 2;	/* bell */
@@ -1180,16 +1196,14 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 	}
 
 	error = ioctl(rfb->clientfd, FIONREAD, &len);
-	if (error) {
-		//printf("rfb: FIONREAD failed: %s\n", strerror(errno));
-		close(rfb->clientfd);
-		rfb->clientfd = -1;
-		return -1;
-	}
+	if (error)
+		goto discon;
 	if (len == 0)
 		return 0;
 
-	recv(rfb->clientfd, &ch, sizeof(ch), MSG_NOSIGNAL);
+	len = safe_recv(rfb->clientfd, &ch, sizeof(ch));
+	if (len < 0)
+		goto discon;
 
 	event->message_type = ch;
 	switch (ch) {
@@ -1197,25 +1211,39 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		msg_len = sizeof(set_pixel_format);
 		break;
 	case THUNK_RFB_SET_ENCODINGS:
-		recv(rfb->clientfd, set_encodings, sizeof(set_encodings),
-		    MSG_NOSIGNAL);
+		len = safe_recv(rfb->clientfd,
+			set_encodings, sizeof(set_encodings));
+		if (len < 0)
+			goto discon;
 		msg_len = 4 * ntohs(*(uint16_t *)&set_encodings[1]);
 		break;
 	case THUNK_RFB_FRAMEBUFFER_UPDATE_REQUEST:
-		recv(rfb->clientfd, framebuffer_update_request,
-			sizeof(framebuffer_update_request), MSG_NOSIGNAL);
-#if 0
-		if (framebuffer_update_request[0] == 0) {
-fprintf(stdout, "complete update request\n");
-			/* complete redraw request -> buffer full */
-			rfb->nupdates = __arraycount(rfb->update);
-		}
-		thunk_rfb_send_pending(rfb);
+		len = safe_recv(rfb->clientfd,
+			framebuffer_update_request,
+			sizeof(framebuffer_update_request));
+		if (len < 0)
+			goto discon;
+#ifdef RFB_DEBUG
+		fprintf(stdout, "framebuffer update request: ");
+		fprintf(stdout, "[%d, %d] + [%d, %d] %s\n",
+			framebuffer_update_request[1],
+			framebuffer_update_request[2],
+			framebuffer_update_request[3],
+			framebuffer_update_request[4],
+			framebuffer_update_request[0]?"Incrmental":"Complete");
 #endif
+			
+		if (framebuffer_update_request[0] == 0) {
+			/* complete redraw request -> buffer full */
+			rfb->nupdates = __arraycount(rfb->update) + 1;
+		}
+//		thunk_rfb_send_pending(rfb);
 		msg_len = 0;
 		break;
 	case THUNK_RFB_KEY_EVENT:
-		recv(rfb->clientfd, key_event, sizeof(key_event), MSG_NOSIGNAL);
+		len = safe_recv(rfb->clientfd, key_event, sizeof(key_event));
+		if (len < 0)
+			goto discon;
 		event->data.key_event.down_flag = key_event[0];
 		event->data.key_event.keysym =
 		    ntohl(*(uint32_t *)&key_event[3]);
@@ -1227,8 +1255,10 @@ fprintf(stdout, "complete update request\n");
 		msg_len = 0;
 		break;
 	case THUNK_RFB_POINTER_EVENT:
-		recv(rfb->clientfd, pointer_event, sizeof(pointer_event),
-		    MSG_NOSIGNAL);
+		len = safe_recv(rfb->clientfd,
+			pointer_event, sizeof(pointer_event));
+		if (len < 0)
+			goto discon;
 		event->data.pointer_event.button_mask = pointer_event[0];
 		event->data.pointer_event.absx =
 		    ntohs(*(uint16_t *)&pointer_event[1]);
@@ -1243,23 +1273,35 @@ fprintf(stdout, "complete update request\n");
 		msg_len = 0;
 		break;
 	case THUNK_RFB_CLIENT_CUT_TEXT:
-		recv(rfb->clientfd, client_cut_text, sizeof(client_cut_text),
-		    MSG_NOSIGNAL);
+		len = safe_recv(rfb->clientfd,
+			client_cut_text, sizeof(client_cut_text));
+		if (len < 0)
+			goto discon;
 		msg_len = ntohl(*(uint32_t *)&client_cut_text[3]);
 		break;
 	default:
 		fprintf(stdout, "rfb: unknown message type %d\n", ch);
-		close(rfb->clientfd);
-		rfb->clientfd = -1;
-		return -1;
+		goto discon;
 	}
+
+	if (len < 0)
+		goto discon;
 
 	/* discard any remaining bytes */
 	while (msg_len-- > 0) {
-		recv(rfb->clientfd, &ch, sizeof(ch), MSG_NOSIGNAL);
+		len = safe_recv(rfb->clientfd, &ch, sizeof(ch));
+		if (len < 0)
+			goto discon;
 	}
 
 	return 1;
+
+discon:
+	//printf("rfb: safe_recv failed: %s\n", strerror(errno));
+	close(rfb->clientfd);
+	rfb->clientfd = -1;
+
+	return -1;
 }
 
 void
