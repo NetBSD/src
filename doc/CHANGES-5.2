@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.118 2011/11/19 22:00:28 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.119 2011/12/31 20:02:26 snj Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5829,4 +5829,9 @@ sys/kern/kern_event.c				1.74
 	kqueue_register: avoid calling fd_getfile() with
 	filedesc_t::fd_lock held. Fixes PR/45479 by KOGULE Ryo.
 	[rmind, ticket #1695]
+
+lib/libtelnet/encrypt.c				1.15
+
+	Avoid buffer overflow, reported by Colin Percival at FreeBSD
+	[christos, ticket #1704]
 
