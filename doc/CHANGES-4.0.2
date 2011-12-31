@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.92 2011/11/20 13:04:55 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.93 2011/12/31 20:52:39 snj Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1312,4 +1312,9 @@ src/dist/bind/lib/lwres/include/lwres/lwres.h			patch
 	Cache lookup could return RRSIG data associated with nonexistent
 	records, leading to an assertion failure.  Fixes CVE-2011-4313.
 	[christos, ticket #1437]
+
+lib/libtelnet/encrypt.c				1.15
+
+	Avoid buffer overflow, reported by Colin Percival at FreeBSD
+	[christos, ticket #1440]
 
