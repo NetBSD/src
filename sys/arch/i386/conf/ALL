@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.328 2011/12/18 05:49:28 dholland Exp $
+# $NetBSD: ALL,v 1.329 2011/12/31 00:11:20 christos Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.328 $"
+#ident 		"ALL-$Revision: 1.329 $"
 
 maxusers	64		# estimated number of users
 
@@ -1304,6 +1304,9 @@ ucom*	at uhmodem? portno ?
 
 # RIM BlackBerry
 uberry* at uhub? port ?
+
+# Apple iPad
+uipad* at uhub? port ?
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
