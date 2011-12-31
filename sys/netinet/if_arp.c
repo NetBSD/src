@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.152 2011/08/27 09:05:54 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.153 2011/12/31 20:41:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.152 2011/08/27 09:05:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.153 2011/12/31 20:41:58 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1238,7 +1238,7 @@ reply:
 	arps[ARP_STAT_SNDTOTAL]++;
 	arps[ARP_STAT_SNDREPLY]++;
 	ARP_STAT_PUTREF();
-	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
+	(*ifp->if_output)(ifp, m, &sa, NULL);
 	return;
 }
 
