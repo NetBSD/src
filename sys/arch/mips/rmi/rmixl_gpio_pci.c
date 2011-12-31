@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.1 2011/12/30 06:48:55 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.2 2011/12/31 03:33:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -100,7 +100,7 @@ struct xlgpio_intrpin {
 #define	PINGROUP	(PINMASK+1)
 #define	PIN_GROUP(pin)	((pin) / PINGROUP)
 #define	PIN_SELECT(pin)	((pin) & PINMASK)
-#define	PIN_MASK(pin)	(1 << ((pin) & PINMASK))
+#define	PIN_MASK(pin)	(1 << PIN_SELECT(pin))
 
 struct xlgpio_softc {
 	device_t sc_dev;
@@ -493,7 +493,7 @@ xlgpio_pin_write(void *arg, int pin, int value)
 {
 	struct xlgpio_softc * const sc = arg;
 	struct xlgpio_group * const gg = &sc->sc_groups[PIN_GROUP(pin)];
-	const uint32_t mask = 1 << (pin & PINMASK);
+	const uint32_t mask = PIN_MASK(pin);
 
 	mutex_enter(sc->sc_pin_lock);
 
@@ -515,23 +515,25 @@ static void
 xlgpio_pin_ctl(void *arg, int pin, int flags)
 {
 	struct xlgpio_softc * const sc = arg;
-	const bus_size_t r_padoe = RMIXLP_GPIO_PADOE(pin / PINGROUP);
-	const uint32_t mask = 1 << (pin & PINMASK);
+	struct xlgpio_group * const gg = &sc->sc_groups[PIN_GROUP(pin)];
+	const uint32_t mask = PIN_MASK(pin);
 
 	mutex_enter(sc->sc_pin_lock);
 
 	KASSERT(pin < sc->sc_pincnt);
 
-	const uint32_t old = xlgpio_read_4(sc, r_padoe);
-	uint32_t new;
+	uint32_t new_padoe;
 
 	switch (flags & (GPIO_PIN_INPUT|GPIO_PIN_OUTPUT)) {
-	case GPIO_PIN_INPUT:	new = old | mask; break;
-	case GPIO_PIN_OUTPUT:	new = old & ~mask; break;
-	default:		new = old;
+	case GPIO_PIN_OUTPUT:	new_padoe = gg->gg_padoe | mask; break;
+	case GPIO_PIN_INPUT:	new_padoe = gg->gg_padoe & ~mask; break;
+	default:		new_padoe = gg->gg_padoe;
 	}
-	if (old != new)
-		xlgpio_write_4(sc, r_padoe, new);
+
+	if (gg->gg_padoe != new_padoe) {
+		gg->gg_padoe = new_padoe;
+		xlgpio_write_4(sc, gg->gg_r_padoe, gg->gg_padoe);
+	}
 
 	mutex_exit(sc->sc_pin_lock);
 }
