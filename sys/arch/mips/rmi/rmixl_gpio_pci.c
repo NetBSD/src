@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.2 2011/12/31 03:33:13 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.3 2011/12/31 04:30:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -151,9 +151,9 @@ static struct xlgpio_softc xlgpio_sc = {	/* there can only be one */
 				[2] = RMIXLP_GPIO_INTEN(2, 0),
 				[3] = RMIXLP_GPIO_INTEN(3, 0),
 			},
-			.gg_r_intpol = RMIXLP_GPIO_INTPOL(0),
-			.gg_r_inttype = RMIXLP_GPIO_INTTYPE(0),
-			.gg_r_intstat = RMIXLP_GPIO_INTSTAT(0),
+			.gg_r_intpol = RMIXLP_GPIO_8XX_INTPOL(0),
+			.gg_r_inttype = RMIXLP_GPIO_8XX_INTTYPE(0),
+			.gg_r_intstat = RMIXLP_GPIO_8XX_INTSTAT(0),
 		},
 		[1] = {
 			.gg_pins = xlgpio_sc.sc_pins + PINGROUP,
@@ -166,9 +166,9 @@ static struct xlgpio_softc xlgpio_sc = {	/* there can only be one */
 				[2] = RMIXLP_GPIO_INTEN(2, 1),
 				[3] = RMIXLP_GPIO_INTEN(3, 1),
 			},
-			.gg_r_intpol = RMIXLP_GPIO_INTPOL(1),
-			.gg_r_inttype = RMIXLP_GPIO_INTTYPE(1),
-			.gg_r_intstat = RMIXLP_GPIO_INTSTAT(1),
+			.gg_r_intpol = RMIXLP_GPIO_8XX_INTPOL(1),
+			.gg_r_inttype = RMIXLP_GPIO_8XX_INTTYPE(1),
+			.gg_r_intstat = RMIXLP_GPIO_8XX_INTSTAT(1),
 		},
 	},
 	.sc_gpio_chipset = {
@@ -266,10 +266,18 @@ xlgpio_pci_attach(device_t parent, device_t self, void *aux)
 		KASSERT(gg->gg_inttype == 0);
 
 		/*
+		 * These are at different offsets on the 3xx than the 8xx/4xx.
+		 */
+		if (rmixl_xlp_variant >= RMIXLP_3XX) {
+			gg->gg_r_intpol = RMIXLP_GPIO_3XX_INTPOL(group);
+			gg->gg_r_inttype = RMIXLP_GPIO_3XX_INTTYPE(group);
+			gg->gg_r_intstat = RMIXLP_GPIO_3XX_INTSTAT(group);
+		}
+
+		/*
 		 * Disable all interrupts for group.
 		 * Get shadow copy of registers.
 		 */
-
 		gg->gg_padoe = xlgpio_read_4(sc, gg->gg_r_padoe);
 		gg->gg_paddrv = xlgpio_read_4(sc, gg->gg_r_paddrv);
 		xlgpio_write_4(sc, gg->gg_r_intpol, gg->gg_intpol);
@@ -283,6 +291,7 @@ xlgpio_pci_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * GPIO has 4 interrupts which map 1:1 on IPL_VM to IPL_HIGH
+	 * (12 on 3xx but we only use 4).
 	 */
 	const pcireg_t irtinfo = xlgpio_read_4(sc, PCI_RMIXLP_IRTINFO);
 
@@ -291,8 +300,9 @@ xlgpio_pci_attach(device_t parent, device_t self, void *aux)
 
 	KASSERT(irtcount >= IPL_HIGH - IPL_VM + 1);
 
-	for (size_t irt = 0; irt < irtcount; irt++) {
-		if (rmixl_intr_establish(irtstart + irt, IPL_VM + irt,
+	for (size_t ipl = IPL_VM; ipl <= IPL_HIGH ; ipl++) {
+		const size_t irt = ipl - IPL_VM;
+		if (rmixl_intr_establish(irtstart + irt, ipl,
 		    RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
 		    xlgpio_intrs[irt], sc, true) == NULL)
 			panic("%s: failed to establish interrupt %zu",
@@ -469,7 +479,7 @@ gpio_intr_disestablish(void *v)
 
 	*inten_p &= ~mask;
 	xlgpio_write_4(sc, gg->gg_r_inten[gip->gip_ipl - IPL_VM], *inten_p);
-	xlgpio_write_4(sc, RMIXLP_GPIO_INTSTAT(group), mask); /* ACK it */
+	xlgpio_write_4(sc, gg->gg_r_intstat, mask);	/* ACK it */
 
 	gip->gip_ipl = IPL_NONE;
 	gip->gip_ist = IST_NONE;

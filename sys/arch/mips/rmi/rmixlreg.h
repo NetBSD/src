@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.16 2011/12/30 06:48:56 matt Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.17 2011/12/31 04:30:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -912,23 +912,12 @@
 #define RMIXLP_GPIO_INTEN(n,g) _RMIXL_OFFSET(0x46+2*(n)+(g)) // Interrupt 0 Enable Register 0
 #define RMIXLP_GPIO_INTEN0(n) _RMIXL_OFFSET(0x46+2*(n)) // Interrupt 0 Enable Register 0
 #define RMIXLP_GPIO_INTEN1(n) _RMIXL_OFFSET(0x47+2*(n)) // Interrupt 0 Enable Register 0
-#define RMIXLP_GPIO_INTEN00 _RMIXL_OFFSET(0x46) // Interrupt 0 Enable Register 0
-#define RMIXLP_GPIO_INTEN01 _RMIXL_OFFSET(0x47) // Interrupt 0 Enable Register 1
-#define RMIXLP_GPIO_INTEN10 _RMIXL_OFFSET(0x48) // Interrupt 1 Enable Register 0
-#define RMIXLP_GPIO_INTEN11 _RMIXL_OFFSET(0x49) // Interrupt 1 Enable Register 1
-#define RMIXLP_GPIO_INTEN20 _RMIXL_OFFSET(0x4A) // Interrupt 2 Enable Register 0
-#define RMIXLP_GPIO_INTEN21 _RMIXL_OFFSET(0x4B) // Interrupt 2 Enable Register 1
-#define RMIXLP_GPIO_INTEN30 _RMIXL_OFFSET(0x4C) // Interrupt 3 Enable Register 0
-#define RMIXLP_GPIO_INTEN31 _RMIXL_OFFSET(0x4D) // Interrupt 3 Enable Register 1
-#define RMIXLP_GPIO_INTPOL(g) _RMIXL_OFFSET((0x4E)+(g)) // Interrupt Polarity Register 0
-#define RMIXLP_GPIO_INTPOL0 _RMIXL_OFFSET(0x4E) // Interrupt Polarity Register 0
-#define RMIXLP_GPIO_INTPOL1 _RMIXL_OFFSET(0x4F) // Interrupt Polarity Register 1
-#define RMIXLP_GPIO_INTTYPE(g) _RMIXL_OFFSET(0x50+(g)) // Interrupt Type Register 0
-#define RMIXLP_GPIO_INTTYPE0 _RMIXL_OFFSET(0x50) // Interrupt Type Register 0
-#define RMIXLP_GPIO_INTTYPE1 _RMIXL_OFFSET(0x51) // Interrupt Type Register 1
-#define RMIXLP_GPIO_INTSTAT(g) _RMIXL_OFFSET(0x52+(g)) // Interrupt Status Register 0
-#define RMIXLP_GPIO_INTSTAT0 _RMIXL_OFFSET(0x52) // Interrupt Status Register 0
-#define RMIXLP_GPIO_INTSTAT1 _RMIXL_OFFSET(0x53) // Interrupt Status Register 1
+#define RMIXLP_GPIO_8XX_INTPOL(g) _RMIXL_OFFSET((0x4E)+(g)) // Interrupt Polarity Register 0
+#define RMIXLP_GPIO_8XX_INTTYPE(g) _RMIXL_OFFSET(0x50+(g)) // Interrupt Type Register 0
+#define RMIXLP_GPIO_8XX_INTSTAT(g) _RMIXL_OFFSET(0x52+(g)) // Interrupt Status Register 0
+#define RMIXLP_GPIO_3XX_INTPOL(g) _RMIXL_OFFSET((0x5E)+(g)) // Interrupt Polarity Register 0
+#define RMIXLP_GPIO_3XX_INTTYPE(g) _RMIXL_OFFSET(0x60+(g)) // Interrupt Type Register 0
+#define RMIXLP_GPIO_3XX_INTSTAT(g) _RMIXL_OFFSET(0x62+(g)) // Interrupt Status Register 0
 
 #define	RMIXLP_GPIO_8XX_MAXPINS		41	/* 41 GPIO pins */
 #define	RMIXLP_GPIO_4XX_MAXPINS		41	/* 41 GPIO pins */
