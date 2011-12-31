@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.963.4.1.4.5 2011/12/24 01:23:12 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.963.4.1.4.6 2011/12/31 02:26:21 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.1.4.5 2011/12/24 01:22:44 matt Exp
+ *	NetBSD: pcidevs,v 1.962.4.1.4.6 2011/12/31 02:25:42 matt Exp
  */
 
 /*
@@ -2937,7 +2937,9 @@
 #define	PCI_PRODUCT_NETLOGIC_XLP_NAND	0x1016		/* XLP NAND flash controller */
 #define	PCI_PRODUCT_NETLOGIC_XLP_SPI	0x1017		/* XLP SPI controller */
 #define	PCI_PRODUCT_NETLOGIC_XLP_SDHC	0x1018		/* XLP eMMC/SD/SDIO controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_RXE	0x1019		/* XLP Regular Expression accelerator */
 #define	PCI_PRODUCT_NETLOGIC_XLP_AHCISATA	0x101a		/* XLP AHCI SATA controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_SRIO	0x101b		/* XLP SRIO (Serial Rapid IO) controller */
 
 /* NetVin products - XXX better descriptions */
 #define	PCI_PRODUCT_NETVIN_5000	0x5000		/* 5000 Ethernet */
