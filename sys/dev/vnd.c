@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.187.4.4 2010/01/30 19:00:46 snj Exp $	*/
+/*	$NetBSD: vnd.c,v 1.187.4.5 2011/12/31 22:11:12 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187.4.4 2010/01/30 19:00:46 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187.4.5 2011/12/31 22:11:12 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -574,7 +574,6 @@ static void
 vndthread(void *arg)
 {
 	struct vnd_softc *vnd = arg;
-	bool usestrategy;
 	int s;
 
 	/* Determine whether we can *use* VOP_BMAP and VOP_STRATEGY to
@@ -582,12 +581,14 @@ vndthread(void *arg)
 	 * operations to avoid messing with the local buffer cache.
 	 * Otherwise fall back to regular VOP_READ/VOP_WRITE operations
 	 * which are guaranteed to work with any file system. */
-	usestrategy = vnode_has_strategy(vnd);
+	if ((vnd->sc_flags & VNF_USE_VN_RDWR) == 0 &&
+	    ! vnode_has_strategy(vnd))
+		vnd->sc_flags |= VNF_USE_VN_RDWR;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_INIT)
 		printf("vndthread: vp %p, %s\n", vnd->sc_vp,
-		    usestrategy ?
+		    (vnd->sc_flags & VNF_USE_VN_RDWR) == 0 ?
 		    "using bmap/strategy operations" :
 		    "using read/write operations");
 #endif
@@ -669,7 +670,7 @@ vndthread(void *arg)
 		BIO_COPYPRIO(bp, obp);
 
 		/* Handle the request using the appropriate operations. */
-		if (usestrategy)
+		if ((vnd->sc_flags & VNF_USE_VN_RDWR) == 0)
 			handle_with_strategy(vnd, obp, bp);
 		else
 			handle_with_rdwr(vnd, obp, bp);
@@ -721,11 +722,12 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 {
 	bool doread;
 	off_t offset;
-	size_t resid;
+	size_t len, resid;
 	struct vnode *vp;
 
 	doread = bp->b_flags & B_READ;
 	offset = obp->b_rawblkno * vnd->sc_dkdev.dk_label->d_secsize;
+	len = bp->b_bcount;
 	vp = vnd->sc_vp;
 
 #if defined(DEBUG)
@@ -741,9 +743,17 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	/* Issue the read or write operation. */
 	bp->b_error =
 	    vn_rdwr(doread ? UIO_READ : UIO_WRITE,
-	    vp, bp->b_data, bp->b_bcount, offset,
-	    UIO_SYSSPACE, 0, vnd->sc_cred, &resid, NULL);
+	    vp, bp->b_data, len, offset, UIO_SYSSPACE,
+	    IO_ADV_ENCODE(POSIX_FADV_NOREUSE), vnd->sc_cred, &resid, NULL);
 	bp->b_resid = resid;
+
+	/* Keep mapped pages below threshold. */
+	mutex_enter(&vp->v_interlock);
+	if (vp->v_uobj.uo_npages > 1024*1024 / PAGE_SIZE)
+		(void) VOP_PUTPAGES(vp, 0, 0,
+		    PGO_ALLPAGES | PGO_CLEANIT | PGO_FREE | PGO_SYNCIO);
+	else
+		mutex_exit(&vp->v_interlock);
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
@@ -1035,6 +1045,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_cred);
 		if (!error && nd.ni_vp->v_type != VREG)
 			error = EOPNOTSUPP;
+		if (!error && vattr.va_bytes < vattr.va_size)
+			/* File is definitely sparse, use vn_rdwr() */
+			vnd->sc_flags |= VNF_USE_VN_RDWR;
 		if (error) {
 			VOP_UNLOCK(nd.ni_vp, 0);
 			goto close_and_exit;
