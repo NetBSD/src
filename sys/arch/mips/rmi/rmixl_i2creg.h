@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_i2creg.h,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixl_i2creg.h,v 1.1.2.2 2011/12/31 04:54:28 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,8 +38,8 @@
  * XLP I2C Controller defintions
  */
 
-#define	RMIXLP_I2C0_PCITAG		_RMIXL_PCITAG(0,6,2)
-#define	RMIXLP_I2C1_PCITAG		_RMIXL_PCITAG(0,6,3)
+#define	RMIXLP_I2C1_PCITAG		_RMIXL_PCITAG(0,6,2)
+#define	RMIXLP_I2C2_PCITAG		_RMIXL_PCITAG(0,6,3)
 #define	RMIXLP_I2C_CFG_OFFSET		_RMIXL_OFFSET(0x40)
 #define	RMIXLP_I2C_IOSIZE		_RMIXL_OFFSET(0x40)
 
