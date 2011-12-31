@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.31 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.32 2011/12/31 07:53:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.31 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.32 2011/12/31 07:53:12 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -111,9 +111,9 @@ int iointr_debug = IOINTR_DEBUG;
 
 /* XXX this will need to deal with node */
 #define RMIXLP_PICREG_READ(off) \
-	rmixlp_read_8(RMIXL_PIC_PCITAG, (off))
+	rmixlp_read_8(RMIXLP_PIC_PCITAG, (off))
 #define	RMIXLP_PICREG_WRITE(off, val) \
-	rmixlp_write_8(RMIXL_PIC_PCITAG, (off), (val));
+	rmixlp_write_8(RMIXLP_PIC_PCITAG, (off), (val));
 
 /*
  * do not clear these when acking EIRR
@@ -128,6 +128,7 @@ int iointr_debug = IOINTR_DEBUG;
  * use the right display string table for the CPU that's running.
  */
 
+#ifdef MIPS64_XLR
 /*
  * rmixl_irtnames_xlrxxx
  * - use for XLRxxx
@@ -156,7 +157,7 @@ static const char * const rmixl_irtnames_xlrxxx[RMIXLR_NIRTS] = {
 	"pic int 20 (gmac3)",		/* 20 */
 	"pic int 21 (xgs0)",		/* 21 */
 	"pic int 22 (xgs1)",		/* 22 */
-	"pic int 23 (irq23)",		/* 23 */
+	"pic int 23 (?)",		/* 23 */
 	"pic int 24 (hyper_fatal)",	/* 24 */
 	"pic int 25 (bridge_aerr)",	/* 25 */
 	"pic int 26 (bridge_berr)",	/* 26 */
@@ -166,7 +167,9 @@ static const char * const rmixl_irtnames_xlrxxx[RMIXLR_NIRTS] = {
 	"pic int 30 (gpio_fatal)",	/* 30 */
 	"pic int 31 (reserved)",	/* 31 */
 };
+#endif /* MIPS64_XLR */
 
+#ifdef MIPS64_XLS
 /*
  * rmixl_irtnames_xls2xx
  * - use for XLS2xx
@@ -187,20 +190,20 @@ static const char * const rmixl_irtnames_xls2xx[RMIXLS_NIRTS] = {
 	"pic int 12 (i2c1)",		/* 12 */
 	"pic int 13 (pcmcia)",		/* 13 */
 	"pic int 14 (gpio_a)",		/* 14 */
-	"pic int 15 (irq15)",		/* 15 */
+	"pic int 15 (?)",		/* 15 */
 	"pic int 16 (bridge_tb)",	/* 16 */
 	"pic int 17 (gmac0)",		/* 17 */
 	"pic int 18 (gmac1)",		/* 18 */
 	"pic int 19 (gmac2)",		/* 19 */
 	"pic int 20 (gmac3)",		/* 20 */
-	"pic int 21 (irq21)",		/* 21 */
-	"pic int 22 (irq22)",		/* 22 */
+	"pic int 21 (?)",		/* 21 */
+	"pic int 22 (?)",		/* 22 */
 	"pic int 23 (pcie_link2)",	/* 23 */
 	"pic int 24 (pcie_link3)",	/* 24 */
 	"pic int 25 (bridge_err)",	/* 25 */
 	"pic int 26 (pcie_link0)",	/* 26 */
 	"pic int 27 (pcie_link1)",	/* 27 */
-	"pic int 28 (irq28)",		/* 28 */
+	"pic int 28 (?)",		/* 28 */
 	"pic int 29 (pcie_err)",	/* 29 */
 	"pic int 30 (gpio_b)",		/* 30 */
 	"pic int 31 (usb)",		/* 31 */
@@ -226,20 +229,20 @@ static const char * const rmixl_irtnames_xls1xx[RMIXLS_NIRTS] = {
 	"pic int 12 (i2c1)",		/* 12 */
 	"pic int 13 (pcmcia)",		/* 13 */
 	"pic int 14 (gpio_a)",		/* 14 */
-	"pic int 15 (irq15)",		/* 15 */
+	"pic int 15 (?)",		/* 15 */
 	"pic int 16 (bridge_tb)",	/* 16 */
 	"pic int 17 (gmac0)",		/* 17 */
 	"pic int 18 (gmac1)",		/* 18 */
 	"pic int 19 (gmac2)",		/* 19 */
 	"pic int 20 (gmac3)",		/* 20 */
-	"pic int 21 (irq21)",		/* 21 */
-	"pic int 22 (irq22)",		/* 22 */
-	"pic int 23 (irq23)",		/* 23 */
-	"pic int 24 (irq24)",		/* 24 */
+	"pic int 21 (?)",		/* 21 */
+	"pic int 22 (?)",		/* 22 */
+	"pic int 23 (?)",		/* 23 */
+	"pic int 24 (?)",		/* 24 */
 	"pic int 25 (bridge_err)",	/* 25 */
 	"pic int 26 (pcie_link0)",	/* 26 */
 	"pic int 27 (pcie_link1)",	/* 27 */
-	"pic int 28 (irq28)",		/* 28 */
+	"pic int 28 (?)",		/* 28 */
 	"pic int 29 (pcie_err)",	/* 29 */
 	"pic int 30 (gpio_b)",		/* 30 */
 	"pic int 31 (usb)",		/* 31 */
@@ -265,16 +268,16 @@ static const char * const rmixl_irtnames_xls4xx[RMIXLS_NIRTS] = {
 	"pic int 12 (i2c1)",		/* 12 */
 	"pic int 13 (pcmcia)",		/* 13 */
 	"pic int 14 (gpio_a)",		/* 14 */
-	"pic int 15 (irq15)",		/* 15 */
+	"pic int 15 (?)",		/* 15 */
 	"pic int 16 (bridge_tb)",	/* 16 */
 	"pic int 17 (gmac0)",		/* 17 */
 	"pic int 18 (gmac1)",		/* 18 */
 	"pic int 19 (gmac2)",		/* 19 */
 	"pic int 20 (gmac3)",		/* 20 */
-	"pic int 21 (irq21)",		/* 21 */
-	"pic int 22 (irq22)",		/* 22 */
-	"pic int 23 (irq23)",		/* 23 */
-	"pic int 24 (irq24)",		/* 24 */
+	"pic int 21 (?)",		/* 21 */
+	"pic int 22 (?)",		/* 22 */
+	"pic int 23 (?)",		/* 23 */
+	"pic int 24 (?)",		/* 24 */
 	"pic int 25 (bridge_err)",	/* 25 */
 	"pic int 26 (pcie_link0)",	/* 26 */
 	"pic int 27 (pcie_link1)",	/* 27 */
@@ -283,12 +286,14 @@ static const char * const rmixl_irtnames_xls4xx[RMIXLS_NIRTS] = {
 	"pic int 30 (gpio_b)",		/* 30 */
 	"pic int 31 (usb)",		/* 31 */
 };
+#endif /* MIPS64_XLS */
 
+#ifdef MIPS64_XLP
 /*
  * rmixl_irtnames_xlp:
  * - use for XLP
  */
-static const char * const rmixl_irtnames_xlpxxx[RMIXLP_NIRTS] = {
+static const char * const rmixl_irtnames_xlp8xx[RMIXLP_NIRTS] = {
 	[  0] =	"pic int 0 (watchdog0)",
 	[  1] = "pic int 1 (watchdog1)",
 	[  2] = "pic int 2 (watchdogNMI0)",
@@ -333,8 +338,8 @@ static const char * const rmixl_irtnames_xlpxxx[RMIXLP_NIRTS] = {
 	[ 41] = "pic int 31 (fmn29)",
 	[ 42] = "pic int 42 (fmn30)",
 	[ 43] = "pic int 43 (fmn31)",
-	[ 44] = "pic int 44 (message0)",
-	[ 45] = "pic int 45 (message1)",
+	[ 44] = "pic int 44 (fmnerr0)",
+	[ 45] = "pic int 45 (fmnerr1)",
 	[ 46] = "pic int 46 (pcie_msix0)",
 	[ 47] = "pic int 47 (pcie_msix1)",
 	[ 48] = "pic int 48 (pcie_msix2)",
@@ -371,38 +376,38 @@ static const char * const rmixl_irtnames_xlpxxx[RMIXLP_NIRTS] = {
 	[ 79] = "pic int 79 (pcie_link1)",
 	[ 80] = "pic int 80 (pcie_link2)",
 	[ 81] = "pic int 81 (pcie_link3)",
-	[ 82] = "pic int 82 (na0)",
-	[ 83] = "pic int 83 (na1)",
-	[ 84] = "pic int 84 (na2)",
-	[ 85] = "pic int 85 (na3)",
-	[ 86] = "pic int 86 (na4)",
-	[ 87] = "pic int 87 (na5)",
-	[ 88] = "pic int 88 (na6)",
-	[ 89] = "pic int 89 (na7)",
-	[ 90] = "pic int 90 (na8)",
-	[ 91] = "pic int 91 (na9)",
-	[ 92] = "pic int 92 (na10)",
-	[ 93] = "pic int 93 (na11)",
-	[ 94] = "pic int 94 (na12)",
-	[ 95] = "pic int 95 (na13)",
-	[ 96] = "pic int 96 (na14)",
-	[ 97] = "pic int 97 (na15)",
-	[ 98] = "pic int 98 (na16)",
-	[ 99] = "pic int 99 (na17)",
-	[100] = "pic int 100 (na18)",
-	[101] = "pic int 101 (na19)",
-	[102] = "pic int 102 (na20)",
-	[103] = "pic int 103 (na21)",
-	[104] = "pic int 104 (na22)",
-	[105] = "pic int 105 (na23)",
-	[106] = "pic int 106 (na24)",
-	[107] = "pic int 107 (na25)",
-	[108] = "pic int 108 (na26)",
-	[109] = "pic int 109 (na27)",
-	[110] = "pic int 100 (na28)",
-	[111] = "pic int 111 (na29)",
-	[112] = "pic int 112 (na30)",
-	[113] = "pic int 113 (na31)",
+	[ 82] = "pic int 82 (nae0)",
+	[ 83] = "pic int 83 (nae1)",
+	[ 84] = "pic int 84 (nae2)",
+	[ 85] = "pic int 85 (nae3)",
+	[ 86] = "pic int 86 (nae4)",
+	[ 87] = "pic int 87 (nae5)",
+	[ 88] = "pic int 88 (nae6)",
+	[ 89] = "pic int 89 (nae7)",
+	[ 90] = "pic int 90 (nae8)",
+	[ 91] = "pic int 91 (nae9)",
+	[ 92] = "pic int 92 (nae10)",
+	[ 93] = "pic int 93 (nae11)",
+	[ 94] = "pic int 94 (nae12)",
+	[ 95] = "pic int 95 (nae13)",
+	[ 96] = "pic int 96 (nae14)",
+	[ 97] = "pic int 97 (nae15)",
+	[ 98] = "pic int 98 (nae16)",
+	[ 99] = "pic int 99 (nae17)",
+	[100] = "pic int 100 (nae18)",
+	[101] = "pic int 101 (?)",
+	[102] = "pic int 102 (naecom0)",
+	[103] = "pic int 103 (naecom1)",
+	[104] = "pic int 104 (?)",
+	[105] = "pic int 105 (?)",
+	[106] = "pic int 106 (?)",
+	[107] = "pic int 107 (?)",
+	[108] = "pic int 108 (?)",
+	[109] = "pic int 109 (?)",
+	[110] = "pic int 100 (?)",
+	[111] = "pic int 111 (?)",
+	[112] = "pic int 112 (?)",
+	[113] = "pic int 113 (?)",
 	[114] = "pic int 114 (poe)",
 	[115] = "pic int 115 (ehci0)",
 	[116] = "pic int 116 (ohci0)",
@@ -410,17 +415,17 @@ static const char * const rmixl_irtnames_xlpxxx[RMIXLP_NIRTS] = {
 	[118] = "pic int 118 (ehci1)",
 	[119] = "pic int 119 (ohci2)",
 	[120] = "pic int 120 (ohci3)",
-	[121] = "pic int 121 (data/raid)",
-	[122] = "pic int 122 (security)",
-	[123] = "pic int 123 (rsa/ecc)",
-	[124] = "pic int 124 (compression0)",
-	[125] = "pic int 125 (compression1)",
-	[126] = "pic int 126 (compression2)",
-	[127] = "pic int 127 (compression3)",
-	[128] = "pic int 128 (irq128)",
-	[129] = "pic int 129 (icici0)",
-	[130] = "pic int 130 (icici1)",
-	[131] = "pic int 131 (icici2)",
+	[121] = "pic int 121 (dma)",
+	[122] = "pic int 122 (sae)",
+	[123] = "pic int 123 (pke)",
+	[124] = "pic int 124 (cde0)",
+	[125] = "pic int 125 (cde1)",
+	[126] = "pic int 126 (cde2)",
+	[127] = "pic int 127 (cde3)",
+	[128] = "pic int 128 (?)",
+	[129] = "pic int 129 (ici0)",
+	[130] = "pic int 130 (ici1)",
+	[131] = "pic int 131 (ici2)",
 	[132] = "pic int 132 (kbp)",
 	[133] = "pic int 133 (uart0)",
 	[134] = "pic int 134 (uart1)",
@@ -430,11 +435,11 @@ static const char * const rmixl_irtnames_xlpxxx[RMIXLP_NIRTS] = {
 	[138] = "pic int 138 (sysmgt1)",
 	[139] = "pic int 139 (jtag)",
 	[140] = "pic int 140 (pic)",
-	[141] = "pic int 141 (irq141)",
-	[142] = "pic int 142 (irq142)",
-	[143] = "pic int 143 (irq143)",
-	[144] = "pic int 144 (irq144)",
-	[145] = "pic int 145 (irq145)",
+	[141] = "pic int 141 (?)",
+	[142] = "pic int 142 (?)",
+	[143] = "pic int 143 (?)",
+	[144] = "pic int 144 (?)",
+	[145] = "pic int 145 (?)",
 	[146] = "pic int 146 (gpio0)",
 	[147] = "pic int 147 (gpio1)",
 	[148] = "pic int 148 (gpio2)",
@@ -450,6 +455,175 @@ static const char * const rmixl_irtnames_xlpxxx[RMIXLP_NIRTS] = {
 	[158] = "pic int 158 (dram3_1)",
 	[159] = "pic int 159 (tracebuf)",
 };
+
+/*
+ * rmixl_irtnames_xlp:
+ * - use for XLP
+ */
+static const char * const rmixl_irtnames_xlp3xx[RMIXLP_NIRTS] = {
+	[  0] =	"pic int 0 (watchdog0)",
+	[  1] = "pic int 1 (watchdog1)",
+	[  2] = "pic int 2 (watchdogNMI0)",
+	[  3] = "pic int 3 (watchdogNMI1)",
+	[  4] = "pic int 4 (timer0)",
+	[  5] = "pic int 5 (timer1)",
+	[  6] = "pic int 6 (timer2)",
+	[  7] = "pic int 7 (timer3)",
+	[  8] = "pic int 8 (timer4)",
+	[  9] = "pic int 9 (timer5)",
+	[ 10] = "pic int 10 (timer6)",
+	[ 11] = "pic int 11 (timer7)",
+	[ 12] = "pic int 12 (gpio0)",
+	[ 13] = "pic int 13 (gpio1)",
+	[ 14] = "pic int 14 (gpio2)",
+	[ 15] = "pic int 15 (gpio3)",
+	[ 16] = "pic int 16 (gpio4)",
+	[ 17] = "pic int 17 (gpio5)",
+	[ 18] = "pic int 18 (gpio6)",
+	[ 19] = "pic int 19 (gpio7)",
+	[ 20] = "pic int 20 (gpio8)",
+	[ 21] = "pic int 21 (gpio0)",
+	[ 22] = "pic int 22 (gpio10)",
+	[ 23] = "pic int 23 (gpio11)",
+	[ 24] = "pic int 24 (?)",
+	[ 25] = "pic int 25 (?)",
+	[ 26] = "pic int 26 (?)",
+	[ 27] = "pic int 27 (?)",
+	[ 28] = "pic int 28 (fmn0)",
+	[ 29] = "pic int 29 (fmn1)",
+	[ 30] = "pic int 30 (fmn2)",
+	[ 31] = "pic int 31 (fmn3)",
+	[ 32] = "pic int 22 (fmn4)",
+	[ 33] = "pic int 23 (fmn5)",
+	[ 34] = "pic int 24 (fmn6)",
+	[ 35] = "pic int 25 (fmn7)",
+	[ 36] = "pic int 26 (fmn8)",
+	[ 37] = "pic int 27 (fmn9)",
+	[ 38] = "pic int 28 (fmn10)",
+	[ 39] = "pic int 29 (fmn11)",
+	[ 40] = "pic int 30 (fmn12)",
+	[ 41] = "pic int 31 (fmn13)",
+	[ 42] = "pic int 42 (fmn14)",
+	[ 43] = "pic int 43 (fmn15)",
+	[ 44] = "pic int 44 (fmnerr0)",
+	[ 45] = "pic int 45 (fmnerr1)",
+	[ 46] = "pic int 46 (pcie_msix0)",
+	[ 47] = "pic int 47 (pcie_msix1)",
+	[ 48] = "pic int 48 (pcie_msix2)",
+	[ 49] = "pic int 49 (pcie_msix3)",
+	[ 50] = "pic int 50 (pcie_msix4)",
+	[ 51] = "pic int 51 (pcie_msix5)",
+	[ 52] = "pic int 52 (pcie_msix6)",
+	[ 53] = "pic int 53 (pcie_msix7)",
+	[ 54] = "pic int 54 (pcie_msix8)",
+	[ 55] = "pic int 55 (pcie_msix9)",
+	[ 56] = "pic int 56 (pcie_msix10)",
+	[ 57] = "pic int 57 (pcie_msix11)",
+	[ 58] = "pic int 58 (pcie_msix12)",
+	[ 59] = "pic int 59 (pcie_msix13)",
+	[ 60] = "pic int 60 (pcie_msix14)",
+	[ 61] = "pic int 61 (pcie_msix15)",
+	[ 62] = "pic int 62 (pcie_msix16)",
+	[ 63] = "pic int 63 (pcie_msix17)",
+	[ 64] = "pic int 64 (pcie_msix18)",
+	[ 65] = "pic int 65 (pcie_msix19)",
+	[ 66] = "pic int 66 (pcie_msix20)",
+	[ 67] = "pic int 67 (pcie_msix21)",
+	[ 68] = "pic int 68 (pcie_msix22)",
+	[ 69] = "pic int 69 (pcie_msix23)",
+	[ 70] = "pic int 70 (pcie_msix24)",
+	[ 71] = "pic int 71 (pcie_msix25)",
+	[ 72] = "pic int 72 (pcie_msix26)",
+	[ 73] = "pic int 73 (pcie_msix27)",
+	[ 74] = "pic int 74 (pcie_msix28)",
+	[ 75] = "pic int 75 (pcie_msix29)",
+	[ 76] = "pic int 76 (pcie_msix30)",
+	[ 77] = "pic int 77 (pcie_msix31)",
+	[ 78] = "pic int 78 (pcie_link0)",
+	[ 79] = "pic int 79 (pcie_link1)",
+	[ 80] = "pic int 80 (pcie_link2)",
+	[ 81] = "pic int 81 (pcie_link3)",
+	[ 82] = "pic int 82 (?)",
+	[ 83] = "pic int 83 (?)",
+	[ 84] = "pic int 84 (?)",
+	[ 85] = "pic int 85 (?)",
+	[ 86] = "pic int 86 (?)",
+	[ 87] = "pic int 87 (?)",
+	[ 88] = "pic int 88 (?)",
+	[ 89] = "pic int 89 (?)",
+	[ 90] = "pic int 90 (?)",
+	[ 91] = "pic int 91 (?)",
+	[ 92] = "pic int 92 (?)",
+	[ 93] = "pic int 93 (?)",
+	[ 94] = "pic int 94 (?)",
+	[ 95] = "pic int 95 (?)",
+	[ 96] = "pic int 96 (?)",
+	[ 97] = "pic int 97 (?)",
+	[ 98] = "pic int 98 (nae0)",
+	[ 99] = "pic int 99 (nae1)",
+	[100] = "pic int 100 (nae2)",
+	[101] = "pic int 101 (nae3)",
+	[102] = "pic int 102 (nae4)",
+	[103] = "pic int 103 (nae5)",
+	[104] = "pic int 104 (nae6)",
+	[105] = "pic int 105 (nae7)",
+	[106] = "pic int 106 (nae8)",
+	[107] = "pic int 107 (?)",
+	[108] = "pic int 108 (?)",
+	[109] = "pic int 109 (?)",
+	[110] = "pic int 100 (naecom0)",
+	[111] = "pic int 111 (naecom1)",
+	[112] = "pic int 112 (?)",
+	[113] = "pic int 113 (?)",
+	[114] = "pic int 114 (poe)",
+	[115] = "pic int 115 (ehci0)",
+	[116] = "pic int 116 (ohci0)",
+	[117] = "pic int 117 (ohci1)",
+	[118] = "pic int 118 (ehci1)",
+	[119] = "pic int 119 (ohci2)",
+	[120] = "pic int 120 (ohci3)",
+	[121] = "pic int 121 (dma)",
+	[122] = "pic int 122 (sae)",
+	[123] = "pic int 123 (pke)",
+	[124] = "pic int 124 (?)",
+	[125] = "pic int 125 (?)",
+	[126] = "pic int 126 (?)",
+	[127] = "pic int 127 (?)",
+	[128] = "pic int 128 (?)",
+	[129] = "pic int 129 (?)",
+	[130] = "pic int 130 (?)",
+	[131] = "pic int 131 (?)",
+	[132] = "pic int 132 (?)",
+	[133] = "pic int 133 (uart0)",
+	[134] = "pic int 134 (uart1)",
+	[135] = "pic int 135 (i2c0)",
+	[136] = "pic int 136 (i2c1)",
+	[137] = "pic int 137 (sysmgt0)",
+	[138] = "pic int 138 (sysmgt1)",
+	[139] = "pic int 139 (jtag)",
+	[140] = "pic int 140 (pic)",
+	[141] = "pic int 141 (rxe0)",
+	[142] = "pic int 142 (rxe1)",
+	[143] = "pic int 143 (sata)",
+	[144] = "pic int 144 (srio0)",
+	[145] = "pic int 145 (srio1)",
+	[146] = "pic int 146 (srio2)",
+	[147] = "pic int 147 (srio3)",
+	[148] = "pic int 148 (srio4)",
+	[149] = "pic int 149 (?)",
+	[150] = "pic int 150 (norflash)",
+	[151] = "pic int 151 (nandflash)",
+	[152] = "pic int 152 (spi)",
+	[153] = "pic int 153 (mmc/sd)",
+	[154] = "pic int 154 (mem-io-bridge)",
+	[155] = "pic int 155 (l3)",
+	[156] = "pic int 156 (?)",
+	[157] = "pic int 157 (dram3_0)",
+	[158] = "pic int 158 (dram3_1)",
+	[159] = "pic int 159 (tracebuf)",
+};
+
+#endif /* MIPS64_XLP */
 /*
  * rmixl_vecnames_common:
  * - use for unknown cpu implementation
@@ -592,12 +766,22 @@ evbmips_intr_init(void)
 	 * The number of IRT entries is different for XLP .vs. XLR/XLS.
 	 */
 	if (is_xlp_p) {
-		rmixl_irtnames = rmixl_irtnames_xlpxxx;
-		rmixl_nirts = __arraycount(rmixl_irtnames_xlpxxx);
+#ifdef MIPS64_XLP
+		if (rmixl_xlp_variant >= RMIXLP_3XX) {
+			rmixl_irtnames = rmixl_irtnames_xlp3xx;
+			rmixl_nirts = __arraycount(rmixl_irtnames_xlp3xx);
+		} else {
+			rmixl_irtnames = rmixl_irtnames_xlp8xx;
+			rmixl_nirts = __arraycount(rmixl_irtnames_xlp8xx);
+		}
+#endif
 	} else if (is_xlr_p) {
+#ifdef MIPS64_XLR
 		rmixl_irtnames = rmixl_irtnames_xlrxxx;
 		rmixl_nirts = __arraycount(rmixl_irtnames_xlrxxx);
+#endif
 	} else if (is_xls_p) {
+#ifdef MIPS64_XLS
 		switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 		case MIPS_XLS104:
 		case MIPS_XLS108:
@@ -624,6 +808,7 @@ evbmips_intr_init(void)
 			rmixl_nirts = __arraycount(rmixl_vecnames_common);
 			break;
 		}
+#endif /* MIPS64_XLS */
 	}
 
 #ifdef DIAGNOSTIC
