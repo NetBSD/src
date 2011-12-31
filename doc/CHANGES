@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1640 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1641 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1060,6 +1060,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	userland: Add an 'e' mode character to popen(3), and fopen(3) to set
 		close on exec to opened file descriptors. [christos 20110626]
 	acpi(4): Updated ACPICA to 20110623. [jruoho 20110628]
+	vnd(4): Allow vnd(4) to be backed by a sparse file. [hannken 20110629]
 	less(1): Import version 444. [tron 20110703]
 	mips: Rework Atheros MIPS-based SoC support.  Add initial support
 		for AR71xx (24K) and AR9344 (74K) SoCs.
