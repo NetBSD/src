@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.94 2011/12/19 11:59:58 drochner Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.95 2011/12/31 20:41:59 christos Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.94 2011/12/19 11:59:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.95 2011/12/31 20:41:59 christos Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -136,10 +136,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.94 2011/12/19 11:59:58 drochner Exp 
 #include <netinet6/ip6protosw.h>
 
 #include <net/net_osdep.h>
-
-#ifndef offsetof		/* XXX */
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif
 
 /*
  * TCP/IP protocol family: IP6, ICMP6, UDP, TCP.
@@ -481,7 +477,7 @@ int	ip6_mcast_pmtu = 0;	/* enable pMTU discovery for multicast? */
 int	ip6_v6only = 1;
 
 int	ip6_keepfaith = 0;
-time_t	ip6_log_time = (time_t)0L;
+time_t	ip6_log_time = 0;
 int	ip6_rtadv_maxroutes = 100; /* (arbitrary) initial maximum number of
                                     * routes via rtadv expected to be
                                     * significantly larger than common use.
