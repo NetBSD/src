@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.3 2011/01/22 19:35:48 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.4 2011/12/31 08:34:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.3 2011/01/22 19:35:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4 2011/12/31 08:34:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -43,9 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.3 2011/01/22 19:35:48 skrll Exp $")
 const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("frame",	db_dump_trap,	0,
 	  "Displays the contents of a trapframe",
-	  "[/u] [addr]",
+	  "[/l] [addr]",
 	  "   addr:\tdisplay this trap frame (current kernel frame otherwise)\n"
-	  "   /u:\tdisplay the current userland trap frame") },
+	  "   /l:\tdisplay the trap frame from lwp") },
 	{ DDB_ADD_CMD(NULL,	NULL,		0, NULL, NULL, NULL) }
 };
 
