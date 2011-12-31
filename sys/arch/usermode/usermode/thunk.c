@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.69 2011/12/31 12:38:56 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.70 2011/12/31 12:57:12 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.69 2011/12/31 12:38:56 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.70 2011/12/31 12:57:12 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1181,13 +1181,13 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		thunk_rfb_update(rfb, 0, 0, rfb->width, rfb->height);
 	}
 
+	thunk_rfb_send_pending(rfb);
+
 	if (rfb->clientfd == -1)
 		return -1;
 
 	if (event == NULL)
 		return 0;
-
-	thunk_rfb_send_pending(rfb);
 
 	if (rfb->schedule_bell) {
 		uint8_t msg_type = 2;	/* bell */
