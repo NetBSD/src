@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.19 2010/04/28 06:13:51 plunky Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.20 2011/12/31 01:16:09 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.19 2010/04/28 06:13:51 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.20 2011/12/31 01:16:09 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -919,9 +919,8 @@ bthidev_output(struct bthidev *hidev, uint8_t *report, int rlen)
 	memcpy(mtod(m, uint8_t *) + 2, report, rlen);
 	m->m_pkthdr.len = m->m_len = rlen + 2;
 
-	mutex_enter(bt_lock);
+	KASSERT(mutex_owned(bt_lock));
 	err = l2cap_send(sc->sc_int, m);
-	mutex_exit(bt_lock);
 
 	return err;
 }
