@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.16 2011/02/05 06:31:05 cliff Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.17 2011/12/31 08:18:42 matt Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,6 +60,8 @@
 #define	IST_LEVEL	3		/* level-triggered */
 #define	IST_LEVEL_HIGH	4		/* level triggered, active high */
 #define	IST_LEVEL_LOW	5		/* level triggered, active low */
+#define	IST_EDGE_RISING	6		/* edge-triggered, rising edge */
+#define	IST_EDGE_FALLING 7		/* edge-triggered, falling edge */
 
 #define	IPI_NOP		0		/* do nothing, interrupt only */
 #define	IPI_AST		1		/* force ast */
