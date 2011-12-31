@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.119 2011/12/31 20:02:26 snj Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.120 2011/12/31 22:12:11 snj Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5834,4 +5834,10 @@ lib/libtelnet/encrypt.c				1.15
 
 	Avoid buffer overflow, reported by Colin Percival at FreeBSD
 	[christos, ticket #1704]
+
+sys/dev/vnd.c					1.218
+sys/dev/vndvar.h				1.31
+
+	Make vnd(4) work on sparse files.
+	[riz, ticket #1705]
 
