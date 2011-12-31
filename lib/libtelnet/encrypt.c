@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.c,v 1.14 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: encrypt.c,v 1.14.26.1 2011/12/31 20:04:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)encrypt.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: encrypt.c,v 1.14 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: encrypt.c,v 1.14.26.1 2011/12/31 20:04:38 snj Exp $");
 #endif /* not lint */
 
 /*
@@ -765,6 +765,8 @@ encrypt_keyid(kp, keyid, len)
 		if (ep->keyid)
 			(void)(*ep->keyid)(dir, kp->keyid, &kp->keylen);
 
+	} else if (len > sizeof(kp->keyid)) {
+		return;
 	} else if ((len != kp->keylen) ||
 		   (memcmp(keyid, kp->keyid, len) != 0)) {
 		/*
