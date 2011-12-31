@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.141 2011/12/19 11:59:58 drochner Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.142 2011/12/31 20:41:59 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.141 2011/12/19 11:59:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.142 2011/12/31 20:41:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1120,7 +1120,7 @@ skip_ipsec2:;
 				;
 			mlast->m_next = m_frgpart;
 			m->m_pkthdr.len = len + hlen + sizeof(*ip6f);
-			m->m_pkthdr.rcvif = (struct ifnet *)0;
+			m->m_pkthdr.rcvif = NULL;
 			ip6f->ip6f_reserved = 0;
 			ip6f->ip6f_ident = id;
 			ip6f->ip6f_nxt = nextproto;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_user.h,v 1.2 2010/02/02 09:04:14 tron Exp $	*/
+/*	$NetBSD: db_user.h,v 1.3 2011/12/31 20:41:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -53,11 +53,6 @@
 #define	setjmp(a)	setjmp((void *)(a))
 
 typedef jmp_buf label_t;
-
-#ifndef offsetof
-#define	offsetof(type, member) \
-     ((size_t)(unsigned long)(&(((type *)0)->member)))
-#endif
 
 int	cngetc(void);
 void	cnputc(int);
