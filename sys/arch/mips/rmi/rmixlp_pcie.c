@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.5 2011/12/31 04:54:28 matt Exp $	*/
+/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.6 2011/12/31 08:20:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.5 2011/12/31 04:54:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.6 2011/12/31 08:20:43 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -765,9 +765,8 @@ rmixlp_pcie_init_ecfg(struct rmixlp_pcie_softc *sc)
 	case MIPS_XLS208:
 	case MIPS_XLS404LITE:
 	case MIPS_XLS408LITE:
-		sc->sc_fatal_ih = rmixl_intr_establish(29, sc->sc_tmsk,
-			IPL_HIGH, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
-			rmixlp_pcie_error_intr, v, false);
+		sc->sc_fatal_ih = rmixl_intr_establish(29, IPL_HIGH,
+		    IST_LEVEL_HIGH, rmixlp_pcie_error_intr, v, false);
 		break;
 	default:
 		break;
@@ -1233,8 +1232,7 @@ rmixlp_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	// size_t node = (pih >> 24) & 0x03;
 	if (pin)
 		return NULL;
-	return rmixl_intr_establish(irt, ipl,
-	    RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
+	return rmixl_intr_establish(irt, ipl, IST_LEVEL_HIGH,
 	    func, arg, is_mpsafe_p);
 #endif
 }

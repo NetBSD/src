@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.32 2011/12/31 07:53:12 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.33 2011/12/31 08:20:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.32 2011/12/31 07:53:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.33 2011/12/31 08:20:43 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -726,8 +726,7 @@ static int rmixl_pic_init_done;
 static uint32_t rmixl_irt_thread_mask(__cpuset_t);
 static void rmixl_irt_init(size_t);
 static void rmixl_irt_disestablish(size_t);
-static void rmixl_irt_establish(size_t, size_t,
-		rmixl_intr_trigger_t, rmixl_intr_polarity_t);
+static void rmixl_irt_establish(size_t, size_t, int);
 static size_t rmixl_intr_get_vec(int);
 
 #ifdef MULTIPROCESSOR
@@ -1082,8 +1081,7 @@ rmixl_irt_disestablish(size_t irt)
  * - construct an IRT Entry for irt and write to PIC
  */
 static void
-rmixl_irt_establish(size_t irt, size_t vec, rmixl_intr_trigger_t trigger,
-	rmixl_intr_polarity_t polarity)
+rmixl_irt_establish(size_t irt, size_t vec, int ist)
 {
 	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
 
@@ -1093,22 +1091,14 @@ rmixl_irt_establish(size_t irt, size_t vec, rmixl_intr_trigger_t trigger,
 		panic("%s: bad irt %zu\n", __func__, irt);
 
 	/*
-	 * All XLP interrupt are level.
+	 * All XLP interrupt are level (high).
 	 */
-	if (trigger != RMIXL_TRIG_LEVEL
-	    && (is_xlp_p || trigger != RMIXL_TRIG_EDGE)) {
-		panic("%s: bad trigger %d\n", __func__, trigger);
-	}
-
-	/*
-	 * All XLP interrupt have high (positive) polarity.
-	 */
-	if (polarity != RMIXL_POLR_HIGH
+	if (ist != IST_LEVEL && ist != IST_LEVEL_HIGH
 	    && (is_xlp_p
-		|| (polarity != RMIXL_POLR_RISING
-		    && polarity != RMIXL_POLR_FALLING
-		    && polarity != RMIXL_POLR_LOW))) {
-		panic("%s: bad polarity %d\n", __func__, polarity);
+		|| (ist != IST_EDGE
+		    && ist != IST_EDGE_FALLING
+		    && ist != IST_EDGE_RISING))) {
+		panic("%s: bad ist %d\n", __func__, ist);
 	}
 
 	/*
@@ -1140,12 +1130,13 @@ rmixl_irt_establish(size_t irt, size_t vec, rmixl_intr_trigger_t trigger,
 		irtc1 |= RMIXL_PIC_IRTENTRYC1_GL;	/* local */
 		KASSERT((irtc1 & RMIXL_PIC_IRTENTRYC1_NMI) == 0);
 
-		if (trigger == RMIXL_TRIG_LEVEL)
+		if (ist == IST_LEVEL
+		    || ist == IST_LEVEL_LOW
+		    || ist == IST_LEVEL_HIGH)
 			irtc1 |= RMIXL_PIC_IRTENTRYC1_TRG;
 		KASSERT((irtc1 & RMIXL_PIC_IRTENTRYC1_NMI) == 0);
 
-		if (polarity == RMIXL_POLR_FALLING
-		    || polarity == RMIXL_POLR_LOW)
+		if (ist == IST_LEVEL_LOW || ist == IST_EDGE_FALLING)
 			irtc1 |= RMIXL_PIC_IRTENTRYC1_P;
 		KASSERT((irtc1 & RMIXL_PIC_IRTENTRYC1_NMI) == 0);
 
@@ -1242,8 +1233,7 @@ rmixl_vec_establish(size_t vec, rmixl_intrhand_t *ih, int ipl,
  * - used to establish an IRT-based interrupt only
  */
 void *
-rmixl_intr_establish(size_t irt, int ipl,
-	rmixl_intr_trigger_t trigger, rmixl_intr_polarity_t polarity,
+rmixl_intr_establish(size_t irt, int ipl, int ist,
 	int (*func)(void *), void *arg, bool mpsafe)
 {
 #ifdef DIAGNOSTIC
@@ -1280,7 +1270,7 @@ rmixl_intr_establish(size_t irt, int ipl,
 	/*
 	 * establish IRT Entry
 	 */
-	rmixl_irt_establish(irt, vec, trigger, polarity);
+	rmixl_irt_establish(irt, vec, ist);
 
 	mutex_exit(rmixl_intr_lock);
 
