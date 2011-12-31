@@ -1,4 +1,4 @@
-/*	$NetBSD: db_user.h,v 1.3 2011/12/31 20:41:58 christos Exp $	*/
+/*	$NetBSD: db_user.h,v 1.4 2011/12/31 22:42:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <assert.h>
 #include <setjmp.h>
 
