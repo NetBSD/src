@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.4 2011/12/30 06:42:29 matt Exp $	*/
+/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.5 2011/12/31 04:54:28 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.4 2011/12/30 06:42:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.5 2011/12/31 04:54:28 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -655,7 +655,9 @@ rmixlp_pcie_configure_bus(struct rmixlp_pcie_softc *sc)
 		mem = rmixlp_pcie_set_bus0_bar0(sc, RMIXLP_OHCI3_PCITAG, mem);
 		mem = rmixlp_pcie_set_bus0_bar0(sc, RMIXLP_NAE_PCITAG, mem);
 		mem = rmixlp_pcie_set_bus0_bar0(sc, RMIXLP_POE_PCITAG, mem);
+		mem = rmixlp_pcie_set_bus0_bar0(sc, RMIXLP_AHCI_PCITAG, mem);
 		mem = rmixlp_pcie_set_bus0_bar0(sc, RMIXLP_FMN_PCITAG, mem);
+		mem = rmixlp_pcie_set_bus0_bar0(sc, RMIXLP_SRIO_PCITAG, mem);
 	} else {
 		rmixlp_pcie_print_bus0_bar0(sc, RMIXLP_EHCI0_PCITAG);
 		rmixlp_pcie_print_bus0_bar0(sc, RMIXLP_OHCI0_PCITAG);
@@ -665,7 +667,9 @@ rmixlp_pcie_configure_bus(struct rmixlp_pcie_softc *sc)
 		rmixlp_pcie_print_bus0_bar0(sc, RMIXLP_OHCI3_PCITAG);
 		rmixlp_pcie_print_bus0_bar0(sc, RMIXLP_NAE_PCITAG);
 		rmixlp_pcie_print_bus0_bar0(sc, RMIXLP_POE_PCITAG);
+		rmixlp_pcie_print_bus0_bar0(sc, RMIXLP_AHCI_PCITAG);
 		rmixlp_pcie_print_bus0_bar0(sc, RMIXLP_FMN_PCITAG);
+		rmixlp_pcie_print_bus0_bar0(sc, RMIXLP_SRIO_PCITAG);
 	}
 
 	for (size_t i = 0; i < 4; i++) {
