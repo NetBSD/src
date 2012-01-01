@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmoused.8,v 1.16 2006/04/15 17:53:03 jmmv Exp $
+.\" $NetBSD: wsmoused.8,v 1.17 2012/01/01 19:12:17 rkujawa Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -185,3 +185,12 @@ The
 command was developed by
 .An Julio M. Merino Vidal
 .Aq jmmv@NetBSD.org .
+.Sh CAVEATS
+The
+.Nm
+does work properly only with display drivers, which implement
+WSDISPLAYIO_GETWSCHAR and WSDISPLAYIO_PUTWSCHAR ioctls.  Currently only
+.Xr vga 4
+and drivers utilizing
+.Xr vcons 9
+supports it.
