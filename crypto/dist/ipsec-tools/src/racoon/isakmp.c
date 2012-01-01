@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.73 2011/10/11 14:50:15 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.74 2012/01/01 15:57:31 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -624,7 +624,7 @@ isakmp_main(msg, remote, local)
 		/*
 		 * iph1 must be present for Information message.
 		 * if iph1 is null then trying to get the phase1 status
-		 * as the packet from responder againt initiator's 1st
+		 * as the packet from responder again initiator's 1st
 		 * exchange in phase 1.
 		 * NOTE: We think such informational exchange should be ignored.
 		 */
@@ -2358,7 +2358,7 @@ isakmp_chkph1there(iph2)
 		plog(LLV_ERROR, LOCATION, iph2->dst,
 			"phase2 negotiation failed "
 			"due to time up waiting for phase1. %s\n",
-			sadbsecas2str(iph2->dst, iph2->src,
+			sadbsecas2str(iph2->src, iph2->dst,
 				iph2->satype, 0, 0));
 		plog(LLV_INFO, LOCATION, NULL,
 			"delete phase 2 handler.\n");
@@ -2909,7 +2909,7 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 	struct remoteconf *rmconf;
 	struct sockaddr *remote, *local;
 {
-	u_int16_t port;
+	u_int16_t port = 0;
 
 	/* address portion must be grabbed from real remote address "remote" */
 	iph1->remote = dupsaddr(remote);
@@ -2919,7 +2919,7 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 	/*
 	 * if remote has no port # (in case of initiator - from ACQUIRE msg)
 	 * - if remote.conf specifies port #, use that
-	 * - if remote.conf does not, use 500
+	 * - if remote.conf does not, use lcconf->port_isakmp
 	 * if remote has port # (in case of responder - from recvfrom(2))
 	 * respect content of "remote".
 	 */
@@ -2928,7 +2928,7 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 		if (rmconf != NULL)
 			port = extract_port(rmconf->remote);
 		if (port == 0)
-			port = PORT_ISAKMP;
+			port = lcconf->port_isakmp;
 		set_port(iph1->remote, port);
 	}
 
