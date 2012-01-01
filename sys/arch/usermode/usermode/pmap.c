@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.86 2012/01/01 13:52:13 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.87 2012/01/01 13:52:51 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2012/01/01 13:52:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2012/01/01 13:52:51 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -321,7 +321,7 @@ pmap_bootstrap(void)
 
 	memset(tlb, 0, pm_entries_size);	/* test and clear */
 
-	dprintf_debug("kernel tlb entries initialiased correctly\n");
+	dprintf_debug("kernel tlb entries initialized correctly\n");
 
 	/* advance */
 	kmem_ext_cur_start += pm_entries_size;
