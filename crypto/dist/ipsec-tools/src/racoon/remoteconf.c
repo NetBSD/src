@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.27 2012/01/01 15:29:28 tteras Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.28 2012/01/01 15:57:31 tteras Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -603,6 +603,11 @@ duprmconf_shallow (rmconf)
 	new->inherited_from = rmconf;
 
 	new->proposal = NULL; /* will be filled by set_isakmp_proposal() */
+
+	/* Better to set remote to NULL to avoid that the destination
+	 * rmconf uses the same allocated memory as the source rmconf.
+	 */
+	new->remote = NULL;
 
 	return new;
 }
