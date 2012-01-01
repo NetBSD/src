@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.25 2011/11/15 13:51:23 tteras Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.26 2012/01/01 15:29:28 tteras Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -106,7 +106,7 @@ static int incstackp = 0;
 static int yy_first_time = 1;
 %}
 
-/* common seciton */
+/* common section */
 nl		\n
 ws		[ \t]+
 digit		[0-9]
@@ -676,7 +676,7 @@ no		{ YYD; yylval.num = FALSE; return(BOOLEAN); }
 %%
 
 void
-yyerror(char *s, ...)
+yyerror(const char *s, ...)
 {
 	char fmt[512];
 
@@ -696,7 +696,7 @@ yyerror(char *s, ...)
 }
 
 void
-yywarn(char *s, ...)
+yywarn(const char *s, ...)
 {
 	char fmt[512];
 
