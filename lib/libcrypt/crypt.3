@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.22 2011/12/28 22:41:34 wiz Exp $
+.\"	$NetBSD: crypt.3,v 1.23 2012/01/01 23:18:51 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)crypt.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd December 28, 2011
+.Dd January 1, 2012
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -281,14 +281,46 @@ for interpretation.
 .Sh RETURN VALUES
 The function
 .Fn crypt
-returns a pointer to the encrypted value on success and
-.Dv *0
-on failure, or
-.Dv *1
-if the
-.Ar setting
-argument was already
-.Dv *0 .
+returns a pointer to the encrypted value on success.
+.Pp
+The behavior of
+.Fn crypt
+on errors isn't well standardized.
+Some implementations simply can't fail (unless the process dies, in which
+case they obviously can't return), others return
+.Dv NULL
+or a fixed string.
+Most implementations don't set
+.Va errno ,
+but some do.
+.St -susv2
+specifies
+only returning
+.Dv NULL
+and setting
+.Va errno
+as a valid behavior, and defines
+only one possible error
+.Er ( ENOSYS ,
+.Dq "The functionality is not supported on this implementation." )
+Unfortunately, most existing applications aren't prepared to handle
+.Dv NULL
+returns from
+.Fn crypt .
+The description below corresponds to this implementation of crypt only.
+The behavior may change to match standards, other implementations or existing
+applications.
+.Pp
+.Fn crypt
+may only fail (and return) when passed an invalid or unsupported
+.Fa setting ,
+in which case it returns a pointer to a magic string that is shorter than 13
+haracters and is guaranteed to differ from
+.Fa setting .
+This behavior is safe for older applications which assume that crypt can't
+fail, when both setting new passwords and authenticating against existing
+password hashes.
+.Pp
 The functions
 .Fn setkey ,
 .Fn encrypt ,
