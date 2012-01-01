@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.46 2012/01/01 15:44:06 tteras Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.47 2012/01/01 16:14:11 tteras Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -359,6 +359,8 @@ static const char error_message_dpd_not_compiled_in[] = "DPD support not compile
 %type <val> identifierstring
 %type <saddr> remote_index ike_addrinfo_port
 %type <alg> algorithm
+%type <saddr> ike_addrinfo_port_natt
+%type <num> ike_port_natt
 
 %%
 
@@ -536,7 +538,7 @@ listen_stmt
 			racoon_free($2);
 		}
 		EOS
-	|	X_ISAKMP_NATT ike_addrinfo_port
+	|	X_ISAKMP_NATT ike_addrinfo_port_natt
 		{
 #ifdef ENABLE_NATT
 			myaddr_listen($2, TRUE);
@@ -591,11 +593,36 @@ ike_addrinfo_port
 				ABORT();
 		}
 	;
+ike_addrinfo_port_natt
+	:	ADDRSTRING ike_port_natt
+		{
+			char portbuf[10];
+
+			snprintf(portbuf, sizeof(portbuf), "%ld", $2);
+			$$ = str2saddr($1->v, portbuf);
+			
+			vfree($1);
+			if (!$$)
+				ABORT();
+		}
+	;
 ike_port
 	:	/* nothing */	{	$$ = lcconf->port_isakmp; }
 	|	PORT		{ $$ = $1; } 
 	;
-
+ike_port_natt
+	:	/* nothing */ 
+		{ 
+			$$ = lcconf->port_isakmp_natt;  
+		}
+	|	PORT 
+		{ 
+			$$ = $1; 
+#ifndef ENABLE_NATT
+			yywarn(error_message_natt_not_compiled_in);
+#endif			 
+		}
+	;
 	/* radius configuration */
 radcfg_statement
 	:	RADCFG {
