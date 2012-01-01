@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.23 2012/01/01 23:18:51 christos Exp $
+.\"	$NetBSD: crypt.3,v 1.24 2012/01/01 23:42:03 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -244,7 +244,9 @@ for interpretation.
 .Ss "Blowfish" crypt
 The
 .Tn Blowfish
-version of crypt has 128 bits of
+version of 
+.Fn crypt
+has 128 bits of
 .Fa salt
 in order to make building dictionaries of common passwords space consuming.
 The initial state of the
@@ -307,7 +309,9 @@ Unfortunately, most existing applications aren't prepared to handle
 .Dv NULL
 returns from
 .Fn crypt .
-The description below corresponds to this implementation of crypt only.
+The description below corresponds to this implementation of
+.Fn crypt
+only.
 The behavior may change to match standards, other implementations or existing
 applications.
 .Pp
@@ -315,11 +319,12 @@ applications.
 may only fail (and return) when passed an invalid or unsupported
 .Fa setting ,
 in which case it returns a pointer to a magic string that is shorter than 13
-haracters and is guaranteed to differ from
+characters and is guaranteed to differ from
 .Fa setting .
-This behavior is safe for older applications which assume that crypt can't
-fail, when both setting new passwords and authenticating against existing
-password hashes.
+This behavior is safe for older applications which assume that
+.Fn crypt
+can't fail, when both setting new passwords and authenticating against
+existing password hashes.
 .Pp
 The functions
 .Fn setkey ,
