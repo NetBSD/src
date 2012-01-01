@@ -1,6 +1,6 @@
 /// notes about altboot ///
 
-$NetBSD: README.altboot,v 1.6 2011/11/13 16:22:18 phx Exp $
+$NetBSD: README.altboot,v 1.7 2012/01/01 14:16:41 phx Exp $
 
 Altboot is a functional bridge to fill the gap between a NAS product
 custom bootloader and the NetBSD kernel startup environment.  Altboot
@@ -19,8 +19,8 @@ NetBSD kernels.
 
 Altboot is known working on at least these models:
 
-- KuroBox or LinkStation with a popular U-Boot as the replacement of
-  vendor proprietary
+- KuroBox or LinkStation with a popular U-Boot as replacement of
+  the vendor's proprietary one
 
    U-Boot 1.1.4 LiSt 2.1.0 (Sep 21 2006 - 00:22:56) LinkStation / KuroBox
 
@@ -40,6 +40,10 @@ Altboot is known working on at least these models:
 
    U-Boot 1.1.2 (Aug 28 2005 - 13:37:25) QNAP System, Inc.
 
+- Iomega StorCenter with vendor custom U-Boot
+
+   U-Boot 1.0.0 (Sep  2 2005 - 14:49:11)
+
 The standard use of altboot is to invoke it with a short script from
 U-Boot/PPCboot, where the altboot.bin image is stored in an unoccupied 128KB
 section of the target's HW NOR flash.  Combined with standard
@@ -52,7 +56,7 @@ In case the firmware was crippled by the vendor so that it only boots
 Linux U-Boot images (D-Link), you can still use altboot by uploading
 altboot.img instead of the Linux kernel.
 
-Altboot hands the following bootinfo records to the NetBSD/sandpoint
+Altboot passes the following bootinfo records to the NetBSD/sandpoint
 kernel.
 - processor clock tick value driving MPC8241/8245.
 - serial console selection.
