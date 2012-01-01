@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.45 2012/01/01 15:29:28 tteras Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.46 2012/01/01 15:44:06 tteras Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1267,7 +1267,7 @@ authgroup
 			groupname = racoon_malloc($1->l+1);
 			if (groupname == NULL) {
 				yyerror("unable to allocate auth group name");
-				ABORT_AND_VFREE, $1);
+				ABORT_AND_VFREE($1);
 			}
 
 			memcpy(groupname,$1->v,$1->l);
