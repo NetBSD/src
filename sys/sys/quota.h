@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.6 2011/11/25 16:55:05 dholland Exp $ */
+/* $NetBSD: quota.h,v 1.7 2012/01/01 15:41:16 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -27,6 +27,8 @@
 
 #ifndef _SYS_QUOTA_H_
 #define _SYS_QUOTA_H_
+
+#include <sys/types.h>
 
 /*
  * Structure used to describe the value part of a quota record.
