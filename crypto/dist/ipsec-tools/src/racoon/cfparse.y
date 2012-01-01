@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.44 2011/11/15 13:51:23 tteras Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.45 2012/01/01 15:29:28 tteras Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -137,10 +137,10 @@ static int num2dhgroup[] = {
 	OAKLEY_ATTR_GRP_DESC_MODP8192
 };
 
-static struct remoteconf *cur_rmconf;
-static int tmpalgtype[MAXALGCLASS];
-static struct sainfo *cur_sainfo;
-static int cur_algclass;
+static struct remoteconf *cur_rmconf = NULL;
+static int tmpalgtype[MAXALGCLASS] = {0};
+static struct sainfo *cur_sainfo = NULL;
+static int cur_algclass = 0;
 static int oldloglevel = LLV_BASE;
 
 static struct secprotospec *newspspec __P((void));
@@ -238,10 +238,39 @@ static int process_rmconf()
 	}
 
 	insrmconf(cur_rmconf);
+	cur_rmconf = NULL; 
 
 	return 0;
 }
 
+/* some frequently used warning texts */
+static const char error_message_hybrid_config_not_configured[] = "racoon not configured with --enable-hybrid\n";
+static const char error_message_ldap_config_not_configured[]   = "racoon not configured with --with-libldap\n";
+static const char error_message_admin_port_not_compiled_in[] = "admin port support not compiled in\n";
+static const char error_message_natt_not_compiled_in[] = "NAT-T support not compiled in\n";
+static const char error_message_dpd_not_compiled_in[] = "DPD support not compiled in\n";
+
+/* macros for aborting the parsing with freeing up allocated memory */
+#define ABORT_CLEANUP {delrmconf(cur_rmconf); delsainfo(cur_sainfo); YYABORT;}
+#define ABORT() ABORT_CLEANUP
+
+#define ABORT_AND_VFREE(val0) {\
+	vfree(val0); val0 = NULL;\
+	ABORT_CLEANUP}
+	
+#define ABORT_AND_RACOON_FREE(val0) {\
+	racoon_free(val0); val0 = NULL;\
+	ABORT_CLEANUP}
+
+#define ABORT_AND_VFREE2(val0, val1) {\
+	vfree(val0); val0 = NULL;\
+	vfree(val1); val1 = NULL;\
+	ABORT_CLEANUP}
+
+#define ABORT_AND_RACOON_FREE2(val0, val1) {\
+	racoon_free(val0); val0 = NULL;\
+	racoon_free(val1); val1 = NULL;\
+	ABORT_CLEANUP}
 %}
 
 %union {
@@ -366,47 +395,55 @@ privsep_stmts
 privsep_stmt
 	:	USER QUOTEDSTRING
 		{
-			struct passwd *pw;
+			struct passwd *pw = getpwnam($2->v);
+			vfree($2);
 
-			if ((pw = getpwnam($2->v)) == NULL) {
+			if (pw == NULL) {
 				yyerror("unknown user \"%s\"", $2->v);
-				return -1;
+				ABORT();
 			}
+			
 			lcconf->uid = pw->pw_uid;
 		} 
 		EOS
 	|	USER NUMBER { lcconf->uid = $2; } EOS
 	|	GROUP QUOTEDSTRING
 		{
-			struct group *gr;
+			struct group *gr = getgrnam($2->v);
+			vfree($2);
 
-			if ((gr = getgrnam($2->v)) == NULL) {
+			if (gr == NULL) {
 				yyerror("unknown group \"%s\"", $2->v);
-				return -1;
+				ABORT();
 			}
+
 			lcconf->gid = gr->gr_gid;
 		}
 		EOS
 	|	GROUP NUMBER { lcconf->gid = $2; } EOS
-	|	CHROOT QUOTEDSTRING { lcconf->chroot = $2->v; } EOS
+	|	CHROOT QUOTEDSTRING 
+		{ 
+			lcconf_setchroot(racoon_strdup($2->v));
+			vfree($2);					
+		} EOS
 	;
 
 	/* path */
 path_statement
 	:	PATH PATHTYPE QUOTEDSTRING
 		{
-			if ($2 >= LC_PATHTYPE_MAX) {
+			char * path = racoon_strdup($3->v);
+
+			if (path == NULL) {
+				yyerror("copy string fatal error: %s", $3->v);
+				ABORT_AND_VFREE($3);
+			}
+			
+			if (lcconf_setpath(path, $2) < 0) {
 				yyerror("invalid path type %d", $2);
-				return -1;
+				ABORT_AND_VFREE($3);
 			}
 
-			/* free old pathinfo */
-			if (lcconf->pathinfo[$2])
-				racoon_free(lcconf->pathinfo[$2]);
-
-			/* set new pathinfo */
-			lcconf->pathinfo[$2] = racoon_strdup($3->v);
-			STRDUP_FATAL(lcconf->pathinfo[$2]);
 			vfree($3);
 		}
 		EOS
@@ -427,7 +464,7 @@ include_statement
 				LC_PATHTYPE_INCLUDE, $2->v);
 			vfree($2);
 			if (yycf_switch_buffer(path) != 0)
-				return -1;
+				ABORT();
 		}
 	;
 
@@ -444,8 +481,9 @@ gssenc_statement
 		{
 			if ($2 >= LC_GSSENC_MAX) {
 				yyerror("invalid GSS ID encoding %d", $2);
-				return -1;
+				ABORT();
 			}
+
 			lcconf->gss_id_enc = $2;
 		}
 	;
@@ -502,11 +540,11 @@ listen_stmt
 		{
 #ifdef ENABLE_NATT
 			myaddr_listen($2, TRUE);
-			racoon_free($2);
 #else
-			racoon_free($2);
-			yyerror("NAT-T support not compiled in.");
+
+			yywarn(error_message_natt_not_compiled_in);
 #endif
+			racoon_free($2);
 		}
 		EOS
 	|	ADMINSOCK QUOTEDSTRING QUOTEDSTRING QUOTEDSTRING NUMBER 
@@ -514,8 +552,9 @@ listen_stmt
 #ifdef ENABLE_ADMINPORT
 			adminsock_conf($2, $3, $4, $5);
 #else
-			yywarn("admin port support not compiled in");
+			yywarn(error_message_admin_port_not_compiled_in);
 #endif
+			vfree($2);vfree($3);vfree($4);
 		}
 		EOS
 	|	ADMINSOCK QUOTEDSTRING
@@ -523,8 +562,9 @@ listen_stmt
 #ifdef ENABLE_ADMINPORT
 			adminsock_conf($2, NULL, NULL, -1);
 #else
-			yywarn("admin port support not compiled in");
+			yywarn(error_message_admin_port_not_compiled_in);
 #endif
+			vfree($2);
 		}
 		EOS
 	|	ADMINSOCK DISABLED
@@ -532,7 +572,7 @@ listen_stmt
 #ifdef ENABLE_ADMINPORT
 			adminsock_path = NULL;
 #else
-			yywarn("admin port support not compiled in");
+			yywarn(error_message_admin_port_not_compiled_in);
 #endif
 		}
 		EOS
@@ -545,26 +585,27 @@ ike_addrinfo_port
 
 			snprintf(portbuf, sizeof(portbuf), "%ld", $2);
 			$$ = str2saddr($1->v, portbuf);
+			
 			vfree($1);
 			if (!$$)
-				return -1;
+				ABORT();
 		}
 	;
 ike_port
-	:	/* nothing */	{ $$ = PORT_ISAKMP; }
-	|	PORT		{ $$ = $1; }
+	:	/* nothing */	{	$$ = lcconf->port_isakmp; }
+	|	PORT		{ $$ = $1; } 
 	;
 
 	/* radius configuration */
 radcfg_statement
 	:	RADCFG {
 #ifndef ENABLE_HYBRID
-			yyerror("racoon not configured with --enable-hybrid");
-			return -1;
+			yyerror(error_message_hybrid_config_not_configured);
+			ABORT();
 #endif
 #ifndef HAVE_LIBRADIUS
 			yyerror("racoon not configured with --with-libradius");
-			return -1;
+			ABORT();
 #endif
 #ifdef ENABLE_HYBRID
 #ifdef HAVE_LIBRADIUS
@@ -586,15 +627,16 @@ radcfg_stmt
 			int i = xauth_rad_config.auth_server_count;
 			if (i == RADIUS_MAX_SERVERS) {
 				yyerror("maximum radius auth servers exceeded");
-				return -1;
+				ABORT_AND_VFREE2($2, $3);
 			}
 
 			xauth_rad_config.auth_server_list[i].host = vdup($2);
 			xauth_rad_config.auth_server_list[i].secret = vdup($3);
-			xauth_rad_config.auth_server_list[i].port = 0; // default port
+			xauth_rad_config.auth_server_list[i].port = 0; /* default port */
 			xauth_rad_config.auth_server_count++;
 #endif
 #endif
+			vfree($2); vfree($3);
 		}
 		EOS
 	|	RAD_AUTH QUOTEDSTRING NUMBER QUOTEDSTRING
@@ -604,7 +646,7 @@ radcfg_stmt
 			int i = xauth_rad_config.auth_server_count;
 			if (i == RADIUS_MAX_SERVERS) {
 				yyerror("maximum radius auth servers exceeded");
-				return -1;
+				ABORT_AND_VFREE2($2, $4);
 			}
 
 			xauth_rad_config.auth_server_list[i].host = vdup($2);
@@ -613,6 +655,7 @@ radcfg_stmt
 			xauth_rad_config.auth_server_count++;
 #endif
 #endif
+			vfree($2); vfree($4);
 		}
 		EOS
 	|	RAD_ACCT QUOTEDSTRING QUOTEDSTRING
@@ -622,15 +665,16 @@ radcfg_stmt
 			int i = xauth_rad_config.acct_server_count;
 			if (i == RADIUS_MAX_SERVERS) {
 				yyerror("maximum radius account servers exceeded");
-				return -1;
+				ABORT_AND_VFREE2($2, $3);
 			}
 
 			xauth_rad_config.acct_server_list[i].host = vdup($2);
 			xauth_rad_config.acct_server_list[i].secret = vdup($3);
-			xauth_rad_config.acct_server_list[i].port = 0; // default port
+			xauth_rad_config.acct_server_list[i].port = 0; /* default port */
 			xauth_rad_config.acct_server_count++;
 #endif
 #endif
+			vfree($2); vfree($3);
 		}
 		EOS
 	|	RAD_ACCT QUOTEDSTRING NUMBER QUOTEDSTRING
@@ -640,7 +684,7 @@ radcfg_stmt
 			int i = xauth_rad_config.acct_server_count;
 			if (i == RADIUS_MAX_SERVERS) {
 				yyerror("maximum radius account servers exceeded");
-				return -1;
+				ABORT_AND_VFREE2($2, $4);
 			}
 
 			xauth_rad_config.acct_server_list[i].host = vdup($2);
@@ -649,6 +693,7 @@ radcfg_stmt
 			xauth_rad_config.acct_server_count++;
 #endif
 #endif
+			vfree($2); vfree($4);
 		}
 		EOS
 	|	RAD_TIMEOUT NUMBER
@@ -675,12 +720,12 @@ radcfg_stmt
 ldapcfg_statement
 	:	LDAPCFG {
 #ifndef ENABLE_HYBRID
-			yyerror("racoon not configured with --enable-hybrid");
-			return -1;
+			yyerror(error_message_hybrid_config_not_configured);
+			ABORT();
 #endif
 #ifndef HAVE_LIBLDAP
-			yyerror("racoon not configured with --with-libldap");
-			return -1;
+			yyerror(error_message_ldap_config_not_configured);
+			ABORT();
 #endif
 		} BOC ldapcfg_stmts EOC
 	;
@@ -694,7 +739,8 @@ ldapcfg_stmt
 #ifdef ENABLE_HYBRID
 #ifdef HAVE_LIBLDAP
 			if (($2<2)||($2>3))
-				yyerror("invalid ldap protocol version (2|3)");
+				yywarn("invalid ldap protocol version (2|3)");
+
 			xauth_ldap_config.pver = $2;
 #endif
 #endif
@@ -706,9 +752,11 @@ ldapcfg_stmt
 #ifdef HAVE_LIBLDAP
 			if (xauth_ldap_config.host != NULL)
 				vfree(xauth_ldap_config.host);
+
 			xauth_ldap_config.host = vdup($2);
 #endif
 #endif
+			vfree($2);
 		}
 		EOS
 	|	LDAP_PORT NUMBER
@@ -735,9 +783,11 @@ ldapcfg_stmt
 #ifdef HAVE_LIBLDAP
 			if (xauth_ldap_config.base != NULL)
 				vfree(xauth_ldap_config.base);
+
 			xauth_ldap_config.base = vdup($2);
 #endif
 #endif
+			vfree($2);
 		}
 		EOS
 	|	LDAP_SUBTREE SWITCH
@@ -755,9 +805,11 @@ ldapcfg_stmt
 #ifdef HAVE_LIBLDAP
 			if (xauth_ldap_config.bind_dn != NULL)
 				vfree(xauth_ldap_config.bind_dn);
+
 			xauth_ldap_config.bind_dn = vdup($2);
 #endif
 #endif
+			vfree($2);
 		}
 		EOS
 	|	LDAP_BIND_PW QUOTEDSTRING
@@ -766,9 +818,11 @@ ldapcfg_stmt
 #ifdef HAVE_LIBLDAP
 			if (xauth_ldap_config.bind_pw != NULL)
 				vfree(xauth_ldap_config.bind_pw);
+
 			xauth_ldap_config.bind_pw = vdup($2);
 #endif
 #endif
+			vfree($2);
 		}
 		EOS
 	|	LDAP_ATTR_USER QUOTEDSTRING
@@ -777,9 +831,11 @@ ldapcfg_stmt
 #ifdef HAVE_LIBLDAP
 			if (xauth_ldap_config.attr_user != NULL)
 				vfree(xauth_ldap_config.attr_user);
+
 			xauth_ldap_config.attr_user = vdup($2);
 #endif
 #endif
+			vfree($2);
 		}
 		EOS
 	|	LDAP_ATTR_ADDR QUOTEDSTRING
@@ -788,9 +844,11 @@ ldapcfg_stmt
 #ifdef HAVE_LIBLDAP
 			if (xauth_ldap_config.attr_addr != NULL)
 				vfree(xauth_ldap_config.attr_addr);
+
 			xauth_ldap_config.attr_addr = vdup($2);
 #endif
 #endif
+			vfree($2);
 		}
 		EOS
 	|	LDAP_ATTR_MASK QUOTEDSTRING
@@ -799,9 +857,11 @@ ldapcfg_stmt
 #ifdef HAVE_LIBLDAP
 			if (xauth_ldap_config.attr_mask != NULL)
 				vfree(xauth_ldap_config.attr_mask);
+
 			xauth_ldap_config.attr_mask = vdup($2);
 #endif
 #endif
+			vfree($2);
 		}
 		EOS
 	|	LDAP_ATTR_GROUP QUOTEDSTRING
@@ -810,9 +870,11 @@ ldapcfg_stmt
 #ifdef HAVE_LIBLDAP
 			if (xauth_ldap_config.attr_group != NULL)
 				vfree(xauth_ldap_config.attr_group);
+
 			xauth_ldap_config.attr_group = vdup($2);
 #endif
 #endif
+			vfree($2);
 		}
 		EOS
 	|	LDAP_ATTR_MEMBER QUOTEDSTRING
@@ -821,9 +883,11 @@ ldapcfg_stmt
 #ifdef HAVE_LIBLDAP
 			if (xauth_ldap_config.attr_member != NULL)
 				vfree(xauth_ldap_config.attr_member);
+
 			xauth_ldap_config.attr_member = vdup($2);
 #endif
 #endif
+			vfree($2);
 		}
 		EOS
 	;
@@ -844,8 +908,9 @@ modecfg_stmt
 			     &isakmp_cfg_config.network4) != 1)
 				yyerror("bad IPv4 network address.");
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
+			vfree($2);
 		}
 		EOS
 	|	CFG_MASK4 ADDRSTRING
@@ -855,8 +920,9 @@ modecfg_stmt
 			    &isakmp_cfg_config.netmask4) != 1)
 				yyerror("bad IPv4 netmask address.");
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
+			vfree($2);
 		}
 		EOS
 	|	CFG_DNS4 addrdnslist
@@ -868,7 +934,7 @@ modecfg_stmt
 #ifdef ENABLE_HYBRID
 			isakmp_cfg_config.splitnet_type = UNITY_LOCAL_LAN;
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
 		}
 		EOS
@@ -877,14 +943,14 @@ modecfg_stmt
 #ifdef ENABLE_HYBRID
 			isakmp_cfg_config.splitnet_type = UNITY_SPLIT_INCLUDE;
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
 		}
 		EOS
 	|	CFG_SPLIT_DNS splitdnslist
 		{
 #ifndef ENABLE_HYBRID
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
 		}
 		EOS
@@ -894,10 +960,10 @@ modecfg_stmt
 			strncpy(&isakmp_cfg_config.default_domain[0], 
 			    $2->v, MAXPATHLEN);
 			isakmp_cfg_config.default_domain[MAXPATHLEN] = '\0';
-			vfree($2);
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yyerror(error_message_hybrid_config_not_configured);
 #endif
+			vfree($2);
 		}
 		EOS
 	|	CFG_AUTH_SOURCE CFG_SYSTEM
@@ -905,7 +971,7 @@ modecfg_stmt
 #ifdef ENABLE_HYBRID
 			isakmp_cfg_config.authsource = ISAKMP_CFG_AUTH_SYSTEM;
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
 		}
 		EOS
@@ -918,7 +984,7 @@ modecfg_stmt
 			yyerror("racoon not configured with --with-libradius");
 #endif /* HAVE_LIBRADIUS */
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
@@ -931,7 +997,7 @@ modecfg_stmt
 			yyerror("racoon not configured with --with-libpam");
 #endif /* HAVE_LIBPAM */
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
@@ -941,17 +1007,17 @@ modecfg_stmt
 #ifdef HAVE_LIBLDAP
 			isakmp_cfg_config.authsource = ISAKMP_CFG_AUTH_LDAP;
 #else /* HAVE_LIBLDAP */
-			yyerror("racoon not configured with --with-libldap");
+			yywarn(error_message_ldap_config_not_configured);
 #endif /* HAVE_LIBLDAP */
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
 	|	CFG_AUTH_GROUPS authgrouplist
 		{
 #ifndef ENABLE_HYBRID
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
 		}
 		EOS
@@ -960,7 +1026,7 @@ modecfg_stmt
 #ifdef ENABLE_HYBRID
 			isakmp_cfg_config.groupsource = ISAKMP_CFG_GROUP_SYSTEM;
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
 		}
 		EOS
@@ -970,10 +1036,10 @@ modecfg_stmt
 #ifdef HAVE_LIBLDAP
 			isakmp_cfg_config.groupsource = ISAKMP_CFG_GROUP_LDAP;
 #else /* HAVE_LIBLDAP */
-			yyerror("racoon not configured with --with-libldap");
+			yywarn(error_message_ldap_config_not_configured);
 #endif /* HAVE_LIBLDAP */
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
@@ -982,7 +1048,7 @@ modecfg_stmt
 #ifdef ENABLE_HYBRID
 			isakmp_cfg_config.accounting = ISAKMP_CFG_ACCT_NONE;
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
 		}
 		EOS
@@ -991,7 +1057,7 @@ modecfg_stmt
 #ifdef ENABLE_HYBRID
 			isakmp_cfg_config.accounting = ISAKMP_CFG_ACCT_SYSTEM;
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
 		}
 		EOS
@@ -1004,7 +1070,7 @@ modecfg_stmt
 			yyerror("racoon not configured with --with-libradius");
 #endif /* HAVE_LIBRADIUS */
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
@@ -1017,7 +1083,7 @@ modecfg_stmt
 			yyerror("racoon not configured with --with-libpam");
 #endif /* HAVE_LIBPAM */
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
@@ -1027,7 +1093,7 @@ modecfg_stmt
 			if (isakmp_cfg_resize_pool($2) != 0)
 				yyerror("cannot allocate memory for pool");
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
@@ -1036,7 +1102,7 @@ modecfg_stmt
 #ifdef ENABLE_HYBRID
 			isakmp_cfg_config.pfs_group = $2;
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
@@ -1045,7 +1111,7 @@ modecfg_stmt
 #ifdef ENABLE_HYBRID
 			isakmp_cfg_config.save_passwd = $2;
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
@@ -1054,7 +1120,7 @@ modecfg_stmt
 #ifdef ENABLE_HYBRID
 			isakmp_cfg_config.auth_throttle = $2;
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
@@ -1063,7 +1129,7 @@ modecfg_stmt
 #ifdef ENABLE_HYBRID
 			isakmp_cfg_config.confsource = ISAKMP_CFG_CONF_LOCAL;
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
@@ -1076,7 +1142,7 @@ modecfg_stmt
 			yyerror("racoon not configured with --with-libradius");
 #endif /* HAVE_LIBRADIUS */
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
@@ -1086,10 +1152,10 @@ modecfg_stmt
 #ifdef HAVE_LIBLDAP
 			isakmp_cfg_config.confsource = ISAKMP_CFG_CONF_LDAP;
 #else /* HAVE_LIBLDAP */
-			yyerror("racoon not configured with --with-libldap");
+			yywarn(error_message_ldap_config_not_configured);
 #endif /* HAVE_LIBLDAP */
 #else /* ENABLE_HYBRID */
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif /* ENABLE_HYBRID */
 		}
 		EOS
@@ -1098,10 +1164,10 @@ modecfg_stmt
 #ifdef ENABLE_HYBRID
 			strncpy(&isakmp_cfg_config.motd[0], $2->v, MAXPATHLEN);
 			isakmp_cfg_config.motd[MAXPATHLEN] = '\0';
-			vfree($2);
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
+			vfree($2);
 		}
 		EOS
 	;
@@ -1122,8 +1188,9 @@ addrdns
 			    &icc->dns4[icc->dns4_index++]) != 1)
 				yyerror("bad IPv4 DNS address.");
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
+			vfree($1);
 		}
 	;
 
@@ -1143,8 +1210,9 @@ addrwins
 			    &icc->nbns4[icc->nbns4_index++]) != 1)
 				yyerror("bad IPv4 WINS address.");
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
+			vfree($1);
 		}
 	;
 
@@ -1170,8 +1238,9 @@ splitnet
 			if (splitnet_list_add(&icc->splitnet_list, &network,&icc->splitnet_count))
 				yyerror("Unable to allocate split network");
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
+			vfree($1);
 		}
 	;
 
@@ -1191,13 +1260,14 @@ authgroup
 					sizeof(char**)*(icc->groupcount+1));
 			if (grouplist == NULL) {
 				yyerror("unable to allocate auth group list");
-				return -1;
+				ABORT_AND_VFREE($1);
 			}
+
 
 			groupname = racoon_malloc($1->l+1);
 			if (groupname == NULL) {
 				yyerror("unable to allocate auth group name");
-				return -1;
+				ABORT_AND_VFREE, $1);
 			}
 
 			memcpy(groupname,$1->v,$1->l);
@@ -1206,10 +1276,10 @@ authgroup
 			icc->grouplist = grouplist;
 			icc->groupcount++;
 
-			vfree($1);
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
+			vfree($1);
 		}
 	;
 
@@ -1226,10 +1296,11 @@ splitdns
 			if (!icc->splitdns_len)
 			{
 				icc->splitdns_list = racoon_malloc($1->l);
-				if(icc->splitdns_list == NULL) {
+				if (icc->splitdns_list == NULL) {
 					yyerror("error allocating splitdns list buffer");
-					return -1;
+					ABORT_AND_VFREE($1);
 				}
+
 				memcpy(icc->splitdns_list,$1->v,$1->l);
 				icc->splitdns_len = $1->l;
 			}
@@ -1237,18 +1308,19 @@ splitdns
 			{
 				int len = icc->splitdns_len + $1->l + 1;
 				icc->splitdns_list = racoon_realloc(icc->splitdns_list,len);
-				if(icc->splitdns_list == NULL) {
+				if (icc->splitdns_list == NULL) {
 					yyerror("error allocating splitdns list buffer");
-					return -1;
+					ABORT_AND_VFREE($1);
 				}
+
 				icc->splitdns_list[icc->splitdns_len] = ',';
 				memcpy(icc->splitdns_list + icc->splitdns_len + 1, $1->v, $1->l);
 				icc->splitdns_len = len;
 			}
-			vfree($1);
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
+			vfree($1);
 		}
 	;
 
@@ -1290,12 +1362,12 @@ timer_stmt
 	|	NATT_KA NUMBER unittype_time
 		{
 #ifdef ENABLE_NATT
-        		if (libipsec_opt & LIBIPSEC_OPT_NATT)
+			if (libipsec_opt & LIBIPSEC_OPT_NATT)
 				lcconf->natt_ka_interval = $2 * $3;
 			else
-                		yyerror("libipsec lacks NAT-T support");
+				yyerror("libipsec lacks NAT-T support");
 #else
-			yyerror("NAT-T support not compiled in.");
+			yyerror(error_message_natt_not_compiled_in);
 #endif
 		}
 		EOS
@@ -1305,11 +1377,13 @@ timer_stmt
 sainfo_statement
 	:	SAINFO
 		{
+			delsainfo(cur_sainfo);
 			cur_sainfo = newsainfo();
 			if (cur_sainfo == NULL) {
 				yyerror("failed to allocate sainfo");
-				return -1;
+				ABORT();
 			}
+
 		}
 		sainfo_name sainfo_param BOC sainfo_specs
 		{
@@ -1347,6 +1421,7 @@ sainfo_statement
 			}
 
 			inssainfo(cur_sainfo);
+			cur_sainfo = NULL;
 		}
 		EOC
 	;
@@ -1562,8 +1637,8 @@ sainfo_param
 				return -1;
 			}
 #else
-			yyerror("racoon not configured with --enable-hybrid");
-			return -1;
+			yywarn(error_message_hybrid_config_not_configured);
+			ABORT_AND_VFREE($2);
 #endif
  		}
 	;
@@ -1591,11 +1666,11 @@ sainfo_spec
 		{
 #if 1
 			yyerror("byte lifetime support is deprecated");
-			return -1;
+			ABORT();
 #else
 			cur_sainfo->lifebyte = fix_lifebyte($3 * $4);
 			if (cur_sainfo->lifebyte == 0)
-				return -1;
+				ABORT();
 #endif
 		}
 		EOS
@@ -1624,31 +1699,26 @@ algorithm
 			$$ = newsainfoalg();
 			if ($$ == NULL) {
 				yyerror("failed to get algorithm allocation");
-				return -1;
+				ABORT();
 			}
 
 			$$->alg = algtype2doi(cur_algclass, $1);
 			if ($$->alg == -1) {
 				yyerror("algorithm mismatched");
-				racoon_free($$);
-				$$ = NULL;
-				return -1;
+				ABORT_AND_RACOON_FREE($$);
 			}
 
 			defklen = default_keylen(cur_algclass, $1);
 			if (defklen == 0) {
 				if ($2) {
 					yyerror("keylen not allowed");
-					racoon_free($$);
-					$$ = NULL;
-					return -1;
+					ABORT_AND_RACOON_FREE($$);
 				}
+
 			} else {
 				if ($2 && check_keylen(cur_algclass, $1, $2) < 0) {
 					yyerror("invalid keylen %d", $2);
-					racoon_free($$);
-					$$ = NULL;
-					return -1;
+					ABORT_AND_RACOON_FREE($$);
 				}
 			}
 
@@ -1666,9 +1736,7 @@ algorithm
 					a = IPSECDOI_PROTO_IPSEC_AH;
 				yyerror("algorithm %s not supported by the kernel (missing module?)",
 					s_ipsecdoi_trns(a, b));
-				racoon_free($$);
-				$$ = NULL;
-				return -1;
+				ABORT_AND_RACOON_FREE($$);
 			}
 		}
 	;
@@ -1698,25 +1766,28 @@ remote_statement
 			struct remoteconf *from, *new;
 
 			if (getrmconf_by_name($2->v) != NULL) {
-				yyerror("named remoteconf \"%s\" already exists.");
-				return -1;
+				yyerror("named remoteconf \"%s\" already exists.",
+					$2->v);
+				ABORT_AND_VFREE2($2, $4);
 			}
 
 			from = getrmconf_by_name($4->v);
 			if (from == NULL) {
 				yyerror("named parent remoteconf \"%s\" does not exist.",
 					$4->v);
-				return -1;
+				ABORT_AND_VFREE2($2, $4);
 			}
 
 			new = duprmconf_shallow(from);
 			if (new == NULL) {
 				yyerror("failed to duplicate remoteconf from \"%s\".",
 					$4->v);
-				return -1;
+				ABORT_AND_VFREE2($2, $4);
 			}
 
 			new->name = racoon_strdup($2->v);
+			
+			delrmconf(cur_rmconf);
 			cur_rmconf = new;
 
 			vfree($2);
@@ -1728,16 +1799,20 @@ remote_statement
 			struct remoteconf *new;
 
 			if (getrmconf_by_name($2->v) != NULL) {
-				yyerror("Named remoteconf \"%s\" already exists.");
-				return -1;
+				yyerror("Named remoteconf \"%s\" already exists.",
+					$2->v);
+				ABORT_AND_VFREE($2);
 			}
 
 			new = newrmconf();
 			if (new == NULL) {
 				yyerror("failed to get new remoteconf.");
-				return -1;
+				ABORT_AND_VFREE($2);
 			}
+
 			new->name = racoon_strdup($2->v);
+
+			delrmconf(cur_rmconf);
 			cur_rmconf = new;
 
 			vfree($2);
@@ -1751,18 +1826,19 @@ remote_statement
 			if (from == NULL) {
 				yyerror("failed to get remoteconf for %s.",
 					saddr2str($4));
-				return -1;
+				ABORT_AND_RACOON_FREE2($2, $4);
 			}
 
 			new = duprmconf_shallow(from);
 			if (new == NULL) {
 				yyerror("failed to duplicate remoteconf from %s.",
 					saddr2str($4));
-				return -1;
+				ABORT_AND_RACOON_FREE2($2, $4);
 			}
 
 			racoon_free($4);
 			new->remote = $2;
+			delrmconf(cur_rmconf);
 			cur_rmconf = new;
 		}
 		remote_specs_inherit_block
@@ -1773,10 +1849,11 @@ remote_statement
 			new = newrmconf();
 			if (new == NULL) {
 				yyerror("failed to get new remoteconf.");
-				return -1;
+				ABORT_AND_RACOON_FREE($2);
 			}
 
 			new->remote = $2;
+			delrmconf(cur_rmconf);
 			cur_rmconf = new;
 		}
 		remote_specs_block
@@ -1787,7 +1864,7 @@ remote_specs_inherit_block
 	|	EOS /* inheritance without overriding any settings */
 		{
 			if (process_rmconf() != 0)
-				return -1;
+				ABORT();
 		}
 	;
 
@@ -1795,9 +1872,10 @@ remote_specs_block
 	:	BOC remote_specs EOC
 		{
 			if (process_rmconf() != 0)
-				return -1;
+				ABORT();
 		}
 	;
+
 remote_index
 	:	ANONYMOUS ike_port
 		{
@@ -1809,8 +1887,8 @@ remote_index
 		{
 			$$ = $1;
 			if ($$ == NULL) {
-				yyerror("failed to allocate sockaddr");
-				return -1;
+				yyerror("failed to allocate sockaddr\n");
+				ABORT();
 			}
 		}
 	;
@@ -1822,9 +1900,10 @@ remote_spec
 	:	REMOTE_ADDRESS ike_addrinfo_port
 		{
 			if (cur_rmconf->remote != NULL) {
-				yyerror("remote_address already specified");
-				return -1;
+				yyerror("remote_address already specified\n");
+				ABORT_AND_RACOON_FREE($2);
 			}
+
 			cur_rmconf->remote = $2;
 		}
 		EOS
@@ -1843,14 +1922,14 @@ remote_spec
 
 			if (cur_rmconf->peerscert != NULL) {
 				yyerror("peers_certfile already defined\n");
-				return -1;
+				ABORT_AND_VFREE($2);
 			}
 
 			if (load_x509($2->v, &cur_rmconf->peerscertfile,
-				      &cur_rmconf->peerscert)) {
+					&cur_rmconf->peerscert)) {
 				yyerror("failed to load certificate \"%s\"\n",
 					$2->v);
-				return -1;
+				ABORT_AND_VFREE($2);
 			}
 
 			vfree($2);
@@ -1860,16 +1939,15 @@ remote_spec
 		{
 			if (cur_rmconf->peerscert != NULL) {
 				yyerror("peers_certfile already defined\n");
-				return -1;
+				ABORT_AND_VFREE($3);
 			}
 
 			if (load_x509($3->v, &cur_rmconf->peerscertfile,
-				      &cur_rmconf->peerscert)) {
+					&cur_rmconf->peerscert)) {
 				yyerror("failed to load certificate \"%s\"\n",
 					$3->v);
-				return -1;
+				ABORT_AND_VFREE($3);
 			}
-
 			vfree($3);
 		}
 		EOS
@@ -1880,23 +1958,25 @@ remote_spec
 
 			if (cur_rmconf->peerscert != NULL) {
 				yyerror("peers_certfile already defined\n");
-				return -1;
+				ABORT_AND_VFREE($3);
 			}
 
 			cur_rmconf->peerscert = vmalloc(1);
 			if (cur_rmconf->peerscert == NULL) {
-				yyerror("failed to allocate peerscert");
-				return -1;
+				yyerror("failed to allocate peerscert\n");
+				ABORT_AND_VFREE($3);
 			}
+
 			cur_rmconf->peerscert->v[0] = ISAKMP_CERT_PLAINRSA;
 
 			getpathname(path, sizeof(path),
 				    LC_PATHTYPE_CERT, $3->v);
 			if (rsa_parse_file(cur_rmconf->rsa_public, path,
-					   RSA_TYPE_PUBLIC)) {
+					RSA_TYPE_PUBLIC)) {
 				yyerror("Couldn't parse keyfile.\n", path);
-				return -1;
+				ABORT_AND_VFREE2(cur_rmconf->peerscert, $3);
 			}
+
 			plog(LLV_DEBUG, LOCATION, NULL,
 			     "Public PlainRSA keyfile parsed: %s\n", path);
 
@@ -1907,13 +1987,15 @@ remote_spec
 		{
 			if (cur_rmconf->peerscert != NULL) {
 				yyerror("peers_certfile already defined\n");
-				return -1;
+				ABORT();
 			}
+
 			cur_rmconf->peerscert = vmalloc(1);
 			if (cur_rmconf->peerscert == NULL) {
-				yyerror("failed to allocate peerscert");
-				return -1;
+				yyerror("failed to allocate peerscert\n");
+				ABORT();
 			}
+
 			cur_rmconf->peerscert->v[0] = ISAKMP_CERT_DNS;
 		}
 		EOS
@@ -1921,14 +2003,14 @@ remote_spec
 		{
 			if (cur_rmconf->cacert != NULL) {
 				yyerror("ca_type already defined\n");
-				return -1;
+				ABORT_AND_VFREE($3);
 			}
 
 			if (load_x509($3->v, &cur_rmconf->cacertfile,
-				      &cur_rmconf->cacert)) {
+					&cur_rmconf->cacert)) {
 				yyerror("failed to load certificate \"%s\"\n",
 					$3->v);
-				return -1;
+				ABORT_AND_VFREE($3);
 			}
 
 			vfree($3);
@@ -1942,18 +2024,22 @@ remote_spec
 		{
 			if (set_identifier(&cur_rmconf->idv, $2, $3) != 0) {
 				yyerror("failed to set identifer.\n");
-				return -1;
+				ABORT_AND_VFREE($3);
 			}
+
 			cur_rmconf->idvtype = $2;
+			vfree($3);
 		}
 		EOS
 	|	MY_IDENTIFIER IDENTIFIERTYPE IDENTIFIERQUAL identifierstring
 		{
 			if (set_identifier_qual(&cur_rmconf->idv, $2, $4, $3) != 0) {
 				yyerror("failed to set identifer.\n");
-				return -1;
+				ABORT_AND_VFREE($4);
 			}
+
 			cur_rmconf->idvtype = $2;
+			vfree($4);
 		}
 		EOS
 	|	XAUTH_LOGIN identifierstring
@@ -1962,57 +2048,69 @@ remote_spec
 			/* formerly identifier type login */
 			if (xauth_rmconf_used(&cur_rmconf->xauth) == -1) {
 				yyerror("failed to allocate xauth state\n");
-				return -1;
+				ABORT_AND_VFREE($2);
 			}
+
 			if ((cur_rmconf->xauth->login = vdup($2)) == NULL) {
-				yyerror("failed to set identifer.\n");
-				return -1;
+				yyerror("failed to set identifer\n");
+				ABORT_AND_VFREE($2);
 			}
+
 #else
-			yyerror("racoon not configured with --enable-hybrid");
+			yywarn(error_message_hybrid_config_not_configured);
 #endif
+			vfree($2);
 		}
 		EOS
 	|	PEERS_IDENTIFIER IDENTIFIERTYPE identifierstring
 		{
-			struct idspec  *id;
-			id = newidspec();
-			if (id == NULL) {
-				yyerror("failed to allocate idspec");
-				return -1;
+			struct idspec  *idspec = NULL;
+			vchar_t* id = NULL; 
+			if (set_identifier(&id, $2, $3) != 0) {
+				yyerror("failed to set identifer\n");
+				ABORT_AND_VFREE2(id, $3);
 			}
-			if (set_identifier(&id->id, $2, $3) != 0) {
-				yyerror("failed to set identifer.\n");
-				racoon_free(id);
-				return -1;
+			
+			if ((idspec = newidspec()) == NULL) {
+				yyerror("failed to allocate idspec\n");
+				ABORT_AND_VFREE2(id, $3);
 			}
-			id->idtype = $2;
-			genlist_append (cur_rmconf->idvl_p, id);
+
+			idspec->id = id; /* hand over id to idspec. */
+			idspec->idtype = $2;
+			genlist_append (cur_rmconf->idvl_p, idspec);
+			vfree($3);
 		}
 		EOS
 	|	PEERS_IDENTIFIER IDENTIFIERTYPE IDENTIFIERQUAL identifierstring
 		{
-			struct idspec  *id;
-			id = newidspec();
-			if (id == NULL) {
-				yyerror("failed to allocate idspec");
-				return -1;
+			struct idspec *idspec = NULL;
+			{
+				vchar_t* id = NULL;
+				if (set_identifier_qual(&id, $2, $4, $3) != 0) {
+					yyerror("failed to set identifer\n");
+					ABORT_AND_VFREE2(id, $4);		
+				}
+				
+				if ((idspec = newidspec()) == NULL) {
+					yyerror("failed to allocate idspec\n");
+					ABORT_AND_VFREE2(id, $4);
+				}
+	
+				idspec->id = id; /* hand over id to idspec. */
 			}
-			if (set_identifier_qual(&id->id, $2, $4, $3) != 0) {
-				yyerror("failed to set identifer.\n");
-				racoon_free(id);
-				return -1;
-			}
-			id->idtype = $2;
-			genlist_append (cur_rmconf->idvl_p, id);
+			idspec->idtype = $2;
+			genlist_append (cur_rmconf->idvl_p, idspec);
+
+			vfree($4);
 		}
 		EOS
 	|	VERIFY_IDENTIFIER SWITCH { cur_rmconf->verify_identifier = $2; } EOS
 	|	NONCE_SIZE NUMBER { cur_rmconf->nonce_size = $2; } EOS
 	|	DH_GROUP
 		{
-			yyerror("dh_group cannot be defined here.");
-			return -1;
+			yyerror("dh_group cannot be defined here\n");
+			ABORT();
 		}
 		dh_group_num EOS
 	|	PASSIVE SWITCH { cur_rmconf->passive = $2; } EOS
@@ -2020,12 +2118,12 @@ remote_spec
 	|	IKE_FRAG REMOTE_FORCE_LEVEL { cur_rmconf->ike_frag = ISAKMP_FRAG_FORCE; } EOS
 	|	ESP_FRAG NUMBER { 
 #ifdef SADB_X_EXT_NAT_T_FRAG
-        		if (libipsec_opt & LIBIPSEC_OPT_FRAG)
+        	if (libipsec_opt & LIBIPSEC_OPT_FRAG)
 				cur_rmconf->esp_frag = $2; 
 			else
-                		yywarn("libipsec lacks IKE frag support");
+            	yywarn("libipsec lacks IKE frag support\n");
 #else
-			yywarn("Your kernel does not support esp_frag");
+			yywarn("Your kernel does not support esp_frag\n");
 #endif
 		} EOS
 	|	SCRIPT QUOTEDSTRING PHASE1_UP { 
@@ -2034,6 +2132,8 @@ remote_spec
 
 			cur_rmconf->script[SCRIPT_PHASE1_UP] = 
 			    script_path_add(vdup($2));
+
+			vfree($2);
 		} EOS
 	|	SCRIPT QUOTEDSTRING PHASE1_DOWN { 
 			if (cur_rmconf->script[SCRIPT_PHASE1_DOWN] != NULL)
@@ -2041,6 +2141,8 @@ remote_spec
 
 			cur_rmconf->script[SCRIPT_PHASE1_DOWN] = 
 			    script_path_add(vdup($2));
+
+			vfree($2);
 		} EOS
 	|	SCRIPT QUOTEDSTRING PHASE1_DEAD { 
 			if (cur_rmconf->script[SCRIPT_PHASE1_DEAD] != NULL)
@@ -2048,6 +2150,8 @@ remote_spec
 
 			cur_rmconf->script[SCRIPT_PHASE1_DEAD] = 
 			    script_path_add(vdup($2));
+
+			vfree($2);
 		} EOS
 	|	MODE_CFG SWITCH { cur_rmconf->mode_cfg = $2; } EOS
 	|	WEAK_PHASE1_CHECK SWITCH {
@@ -2060,12 +2164,12 @@ remote_spec
 	|	NAT_TRAVERSAL SWITCH
 		{
 #ifdef ENABLE_NATT
-        		if (libipsec_opt & LIBIPSEC_OPT_NATT)
+			if (libipsec_opt & LIBIPSEC_OPT_NATT)
 				cur_rmconf->nat_traversal = $2;
 			else
-                		yyerror("libipsec lacks NAT-T support");
+				yywarn("libipsec lacks NAT-T support\n");
 #else
-			yyerror("NAT-T support not compiled in.");
+			yywarn(error_message_natt_not_compiled_in);
 #endif
 		} EOS
 	|	NAT_TRAVERSAL REMOTE_FORCE_LEVEL
@@ -2074,9 +2178,9 @@ remote_spec
 			if (libipsec_opt & LIBIPSEC_OPT_NATT)
 				cur_rmconf->nat_traversal = NATT_FORCE;
 			else
-                		yyerror("libipsec lacks NAT-T support");
+				yyerror("libipsec lacks NAT-T support");
 #else
-			yyerror("NAT-T support not compiled in.");
+			yywarn(error_message_natt_not_compiled_in);
 #endif
 		} EOS
 	|	DPD SWITCH
@@ -2084,7 +2188,7 @@ remote_spec
 #ifdef ENABLE_DPD
 			cur_rmconf->dpd = $2;
 #else
-			yyerror("DPD support not compiled in.");
+			yywarn(error_message_dpd_not_compiled_in);
 #endif
 		} EOS
 	|	DPD_DELAY NUMBER
@@ -2092,7 +2196,7 @@ remote_spec
 #ifdef ENABLE_DPD
 			cur_rmconf->dpd_interval = $2;
 #else
-			yyerror("DPD support not compiled in.");
+			yywarn(error_message_dpd_not_compiled_in);
 #endif
 		}
 		EOS
@@ -2101,7 +2205,7 @@ remote_spec
 #ifdef ENABLE_DPD
 			cur_rmconf->dpd_retry = $2;
 #else
-			yyerror("DPD support not compiled in.");
+			yywarn(error_message_dpd_not_compiled_in);
 #endif
 		}
 		EOS
@@ -2110,7 +2214,7 @@ remote_spec
 #ifdef ENABLE_DPD
 			cur_rmconf->dpd_maxfails = $2;
 #else
-			yyerror("DPD support not compiled in.");
+			yywarn(error_message_dpd_not_compiled_in);
 #endif
 		}
 		EOS
@@ -2137,17 +2241,16 @@ remote_spec
 				"will be ignored at the moment.");
 			cur_rmconf->lifebyte = fix_lifebyte($3 * $4);
 			if (cur_rmconf->lifebyte == 0)
-				return -1;
+				ABORT();
 #endif
 		}
 		EOS
 	|	PROPOSAL
 		{
-			struct secprotospec *spspec;
-
-			spspec = newspspec();
+			struct secprotospec *spspec = newspspec();
 			if (spspec == NULL)
-				return -1;
+				ABORT();
+
 			insspspec(cur_rmconf, spspec);
 		}
 		BOC isakmpproposal_specs EOC
@@ -2156,14 +2259,13 @@ exchange_types
 	:	/* nothing */
 	|	exchange_types EXCHANGETYPE
 		{
-			struct etypes *new;
-			new = racoon_malloc(sizeof(struct etypes));
+			struct etypes *new = racoon_malloc(sizeof(struct etypes));
 			if (new == NULL) {
 				yyerror("failed to allocate etypes");
-				return -1;
+				ABORT();
 			}
-			new->type = $2;
-			new->next = NULL;
+
+			new->next = NULL; new->type = $2;
 			if (cur_rmconf->etypes == NULL)
 				cur_rmconf->etypes = new;
 			else {
@@ -2181,18 +2283,21 @@ cert_spec
 		{
 			if (cur_rmconf->mycert != NULL) {
 				yyerror("certificate_type already defined\n");
-				return -1;
+				ABORT_AND_VFREE2($2, $3);
 			}
 
 			if (load_x509($2->v, &cur_rmconf->mycertfile,
-				      &cur_rmconf->mycert)) {
+					&cur_rmconf->mycert)) {
 				yyerror("failed to load certificate \"%s\"\n",
 					$2->v);
-				return -1;
+				ABORT_AND_VFREE2($2, $3);
 			}
 
 			cur_rmconf->myprivfile = racoon_strdup($3->v);
-			STRDUP_FATAL(cur_rmconf->myprivfile);
+			if (!cur_rmconf->myprivfile) {
+				yyerror("failed to allocate myprivfile\n");
+				ABORT_AND_VFREE2($2, $3);
+			}
 
 			vfree($2);
 			vfree($3);
@@ -2205,14 +2310,15 @@ cert_spec
 
 			if (cur_rmconf->mycert != NULL) {
 				yyerror("certificate_type already defined\n");
-				return -1;
+				ABORT_AND_VFREE($2);
 			}
 
 			cur_rmconf->mycert = vmalloc(1);
 			if (cur_rmconf->mycert == NULL) {
-				yyerror("failed to allocate mycert");
-				return -1;
+				yyerror("failed to allocate mycert\n");
+				ABORT_AND_VFREE($2);
 			}
+
 			cur_rmconf->mycert->v[0] = ISAKMP_CERT_PLAINRSA;
 
 			getpathname(path, sizeof(path),
@@ -2221,10 +2327,11 @@ cert_spec
 			cur_rmconf->send_cert = FALSE;
 			cur_rmconf->verify_cert = FALSE;
 			if (rsa_parse_file(cur_rmconf->rsa_private, path,
-					   RSA_TYPE_PRIVATE)) {
-				yyerror("Couldn't parse keyfile.\n", path);
-				return -1;
+					RSA_TYPE_PRIVATE)) {
+				yyerror("Couldn't parse keyfile %s\n", path);
+				ABORT_AND_VFREE($2);
 			}
+
 			plog(LLV_DEBUG, LOCATION, NULL,
 			     "Private PlainRSA keyfile parsed: %s\n", path);
 			vfree($2);
@@ -2236,8 +2343,8 @@ dh_group_num
 		{
 			$$ = algtype2doi(algclass_isakmp_dh, $1);
 			if ($$ == -1) {
-				yyerror("must be DH group");
-				return -1;
+				yyerror("must be DH group\n");
+				ABORT();
 			}
 		}
 	|	NUMBER
@@ -2245,9 +2352,9 @@ dh_group_num
 			if (ARRAYLEN(num2dhgroup) > $1 && num2dhgroup[$1] != 0) {
 				$$ = num2dhgroup[$1];
 			} else {
-				yyerror("must be DH group");
 				$$ = 0;
-				return -1;
+				yyerror("must be DH group\n");
+				ABORT();
 			}
 		}
 	;
@@ -2269,12 +2376,12 @@ isakmpproposal_spec
 	|	LIFETIME LIFETYPE_BYTE NUMBER unittype_byte
 		{
 #if 1
-			yyerror("byte lifetime support is deprecated");
-			return -1;
+			yyerror("byte lifetime support is deprecated\n");
+			ABORT();
 #else
 			cur_rmconf->spspec->lifebyte = fix_lifebyte($3 * $4);
 			if (cur_rmconf->spspec->lifebyte == 0)
-				return -1;
+				ABORT();
 #endif
 		}
 		EOS
@@ -2286,14 +2393,18 @@ isakmpproposal_spec
 	|	GSS_ID QUOTEDSTRING
 		{
 			if (cur_rmconf->spspec->vendorid != VENDORID_GSSAPI) {
-				yyerror("wrong Vendor ID for gssapi_id");
-				return -1;
+				yyerror("wrong Vendor ID for gssapi_id\n");
+				ABORT_AND_VFREE($2);
 			}
+
 			if (cur_rmconf->spspec->gssid != NULL)
 				racoon_free(cur_rmconf->spspec->gssid);
 			cur_rmconf->spspec->gssid =
 			    racoon_strdup($2->v);
-			STRDUP_FATAL(cur_rmconf->spspec->gssid);
+			if (!cur_rmconf->spspec->gssid) {
+				yyerror("failed to allocate gssid\n");
+				ABORT_AND_VFREE($2);
+			}
 		}
 		EOS
 	|	ALGORITHM_CLASS ALGORITHMTYPE keylength
@@ -2303,8 +2414,8 @@ isakmpproposal_spec
 
 			doi = algtype2doi($1, $2);
 			if (doi == -1) {
-				yyerror("algorithm mismatched 1");
-				return -1;
+				yyerror("algorithm mismatched 1\n");
+				ABORT();
 			}
 
 			switch ($1) {
@@ -2312,16 +2423,16 @@ isakmpproposal_spec
 			/* reject suppressed algorithms */
 #ifndef HAVE_OPENSSL_RC5_H
 				if ($2 == algtype_rc5) {
-					yyerror("algorithm %s not supported",
-					    s_attr_isakmp_enc(doi));
-					return -1;
+					yyerror("algorithm %s not supported\n",
+						s_attr_isakmp_enc(doi));
+					ABORT();
 				}
 #endif
 #ifndef HAVE_OPENSSL_IDEA_H
 				if ($2 == algtype_idea) {
-					yyerror("algorithm %s not supported",
-					    s_attr_isakmp_enc(doi));
-					return -1;
+					yyerror("algorithm %s not supported\n",
+						s_attr_isakmp_enc(doi));
+					ABORT();
 				}
 #endif
 
@@ -2329,13 +2440,13 @@ isakmpproposal_spec
 				defklen = default_keylen($1, $2);
 				if (defklen == 0) {
 					if ($3) {
-						yyerror("keylen not allowed");
-						return -1;
+						yyerror("keylen not allowed\n");
+						ABORT();
 					}
 				} else {
 					if ($3 && check_keylen($1, $2, $3) < 0) {
-						yyerror("invalid keylen %d", $3);
-						return -1;
+						yyerror("invalid keylen %d\n", $3);
+						ABORT();
 					}
 				}
 				if ($3)
@@ -2355,10 +2466,9 @@ isakmpproposal_spec
 				switch ($2) {
 				case algtype_gssapikrb:
 					if (cur_rmconf->spspec->vendorid !=
-					    VENDORID_UNKNOWN) {
-						yyerror("Vendor ID mismatch "
-						    "for auth method");
-						return -1;
+						VENDORID_UNKNOWN) {
+						yyerror("Vendor ID mismatch for auth method\n");
+						ABORT();
 					}
 					/*
 					 * For interoperability with Win2k,
@@ -2370,14 +2480,15 @@ isakmpproposal_spec
 				case algtype_rsasig:
 					if (oakley_get_certtype(cur_rmconf->peerscert) == ISAKMP_CERT_PLAINRSA) {
 						if (rsa_list_count(cur_rmconf->rsa_private) == 0) {
-							yyerror ("Private PlainRSA key not set. "
-								 "Use directive 'certificate_type plainrsa ...'\n");
-							return -1;
+							yyerror ("Private PlainRSA key not set."
+								"Use directive 'certificate_type plainrsa ...'\n");
+							ABORT();
 						}
+
 						if (rsa_list_count(cur_rmconf->rsa_public) == 0) {
-							yyerror ("Public PlainRSA keys not set. "
-								 "Use directive 'peers_certfile plainrsa ...'\n");
-							return -1;
+							yyerror ("Public PlainRSA keys not set."
+								"Use directive 'peers_certfile plainrsa ...'\n");
+							ABORT();
 						}
 					}
 					break;
@@ -2386,8 +2497,8 @@ isakmpproposal_spec
 				}
 				break;
 			default:
-				yyerror("algorithm mismatched 2");
-				return -1;
+				yyerror("algorithm mismatched 2\n");
+				ABORT();
 			}
 		}
 		EOS
@@ -2801,7 +2912,7 @@ adminsock_conf(path, owner, group, mode_dec)
 	uid = atoi(owner->v);
 	isnum = !errno;
 	if (((pw = getpwnam(owner->v)) == NULL) && !isnum)
-		yyerror("User \"%s\" does not exist", owner->v);
+		yywarn("User \"%s\" does not exist\n", owner->v);
 
 	if (pw)
 		adminsock_owner = pw->pw_uid;
@@ -2815,7 +2926,7 @@ adminsock_conf(path, owner, group, mode_dec)
 	gid = atoi(group->v);
 	isnum = !errno;
 	if (((gr = getgrnam(group->v)) == NULL) && !isnum)
-		yyerror("Group \"%s\" does not exist", group->v);
+		yywarn("Group \"%s\" does not exist\n", group->v);
 
 	if (gr)
 		adminsock_group = gr->gr_gid;
@@ -2826,19 +2937,22 @@ adminsock_conf(path, owner, group, mode_dec)
 		return;
 
 	if (mode_dec > 777)
-		yyerror("Mode 0%03o is invalid", mode_dec);
+		yywarn("Mode 0%03o is invalid\n", mode_dec);
+
 	if (mode_dec >= 400) { mode += 0400; mode_dec -= 400; }
 	if (mode_dec >= 200) { mode += 0200; mode_dec -= 200; }
 	if (mode_dec >= 100) { mode += 0200; mode_dec -= 100; }
 
 	if (mode_dec > 77)
-		yyerror("Mode 0%03o is invalid", mode_dec);
+		yywarn("Mode 0%03o is invalid\n", mode_dec);
+
 	if (mode_dec >= 40) { mode += 040; mode_dec -= 40; }
 	if (mode_dec >= 20) { mode += 020; mode_dec -= 20; }
 	if (mode_dec >= 10) { mode += 020; mode_dec -= 10; }
 
 	if (mode_dec > 7)
-		yyerror("Mode 0%03o is invalid", mode_dec);
+		yywarn("Mode 0%03o is invalid\n", mode_dec);
+
 	if (mode_dec >= 4) { mode += 04; mode_dec -= 4; }
 	if (mode_dec >= 2) { mode += 02; mode_dec -= 2; }
 	if (mode_dec >= 1) { mode += 02; mode_dec -= 1; }
