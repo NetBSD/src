@@ -1,6 +1,6 @@
-/*	$NetBSD: fcnvfxt.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: fcnvfxt.c,v 1.4 2012/01/01 20:04:36 skrll Exp $	*/
 
-/*	$OpenBSD: fcnvfxt.c,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
+/*	$OpenBSD: fcnvfxt.c,v 1.8 2010/07/30 18:05:23 kettenis Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcnvfxt.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcnvfxt.c,v 1.4 2012/01/01 20:04:36 skrll Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -74,12 +74,15 @@ unsigned int *status;
 		/* check for MININT */
 		if ((src_exponent > SGL_FX_MAX_EXP + 1) ||
 		Sgl_isnotzero_mantissa(src) || Sgl_iszero_sign(src)) {
-			/*
-			 * Since source is a number which cannot be
-			 * represented in fixed-point format, return
-			 * largest (or smallest) fixed-point number.
-			 */
-			Sgl_return_overflow(src,dstptr);
+			if (Sgl_iszero_sign(src)) result = 0x7fffffff;
+			else result = 0x80000000;
+
+			if (Is_invalidtrap_enabled()) {
+				return(INVALIDEXCEPTION);
+			}
+			Set_invalidflag();
+			*dstptr = result;
+			return(NOEXCEPTION);
 		}
 	}
 	/*
@@ -135,12 +138,21 @@ unsigned int *status;
 		/* check for MININT */
 		if ((src_exponent > DBL_FX_MAX_EXP + 1) ||
 		Sgl_isnotzero_mantissa(src) || Sgl_iszero_sign(src)) {
-			/*
-			 * Since source is a number which cannot be
-			 * represented in fixed-point format, return
-			 * largest (or smallest) fixed-point number.
-			 */
-			Sgl_return_overflow_dbl(src,dstptr);
+			if (Sgl_iszero_sign(src)) {
+				resultp1 = 0x7fffffff;
+				resultp2 = 0xffffffff;
+			}
+			else {
+				resultp1 = 0x80000000;
+				resultp2 = 0;
+			}
+
+			if (Is_invalidtrap_enabled()) {
+				return(INVALIDEXCEPTION);
+			}
+			Set_invalidflag();
+			Dint_copytoptr(resultp1,resultp2,dstptr);
+			return(NOEXCEPTION);
 		}
 		Dint_set_minint(resultp1,resultp2);
 		Dint_copytoptr(resultp1,resultp2,dstptr);
@@ -200,7 +212,15 @@ unsigned int *status;
 	if (src_exponent > SGL_FX_MAX_EXP) {
 		/* check for MININT */
 		if (Dbl_isoverflow_to_int(src_exponent,srcp1,srcp2)) {
-			Dbl_return_overflow(srcp1,srcp2,dstptr);
+			if (Dbl_iszero_sign(srcp1)) result = 0x7fffffff;
+			else result = 0x80000000;
+
+			if (Is_invalidtrap_enabled()) {
+				return(INVALIDEXCEPTION);
+			}
+			Set_invalidflag();
+			*dstptr = result;
+			return(NOEXCEPTION);
 		}
 	}
 	/*
@@ -258,12 +278,21 @@ unsigned int *status;
 		/* check for MININT */
 		if ((src_exponent > DBL_FX_MAX_EXP + 1) ||
 		Dbl_isnotzero_mantissa(srcp1,srcp2) || Dbl_iszero_sign(srcp1)) {
-			/*
-			 * Since source is a number which cannot be
-			 * represented in fixed-point format, return
-			 * largest (or smallest) fixed-point number.
-			 */
-			Dbl_return_overflow_dbl(srcp1,srcp2,dstptr);
+			if (Dbl_iszero_sign(srcp1)) {
+				resultp1 = 0x7fffffff;
+				resultp2 = 0xffffffff;
+			}
+			else {
+				resultp1 = 0x80000000;
+				resultp2 = 0;
+			}
+
+			if (Is_invalidtrap_enabled()) {
+				return(INVALIDEXCEPTION);
+			}
+			Set_invalidflag();
+			Dint_copytoptr(resultp1,resultp2,dstptr);
+			return(NOEXCEPTION);
 		}
 	}
 	/*
