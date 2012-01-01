@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.170 2011/10/17 16:35:22 mbalmer Exp $	*/
+/*	$NetBSD: util.c,v 1.171 2012/01/01 23:26:22 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -872,7 +872,7 @@ extract_file(distinfo *dist, int update)
 
 #ifdef SUPPORT_8_3_SOURCE_FILESYSTEM
 	/*
-	 * Update path to use dist->name tuncated to the first eight
+	 * Update path to use dist->name truncated to the first eight
 	 * characters and check again
 	 */
 	(void)snprintf(path, sizeof path, "%s/%.8s%.4s", /* 4 as includes '.' */
