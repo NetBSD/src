@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.26 2011/03/14 15:50:36 vanhu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.27 2012/01/01 15:29:28 tteras Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -724,6 +724,9 @@ delrmconf(rmconf)
 {
 	int i;
 
+	if (rmconf == NULL)
+		return;
+
 #ifdef ENABLE_HYBRID
 	if (rmconf->xauth)
 		xauth_rmconf_delete(&rmconf->xauth);
@@ -1091,7 +1094,7 @@ newidspec()
 	if (new == NULL)
 		return NULL;
 	new->idtype = IDTYPE_ADDRESS;
-
+	new->id = NULL;
 	return new;
 }
 

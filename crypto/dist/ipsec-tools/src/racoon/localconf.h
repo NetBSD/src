@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.h,v 1.7 2008/12/23 14:04:42 tteras Exp $	*/
+/*	$NetBSD: localconf.h,v 1.8 2012/01/01 15:29:28 tteras Exp $	*/
 
 /* Id: localconf.h,v 1.13 2005/11/06 18:13:18 monas Exp */
 
@@ -116,6 +116,9 @@ struct localconf {
 };
 
 extern struct localconf *lcconf;
+
+extern void lcconf_setchroot __P((char* chroot));
+extern int lcconf_setpath __P((char*, unsigned int));
 
 extern void initlcconf __P((void));
 extern void flushlcconf __P((void));
