@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.15 2011/11/06 20:20:57 phx Exp $ */
+/* $NetBSD: main.c,v 1.16 2012/01/01 18:25:03 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ extern char bootprog_name[], bootprog_rev[];
 extern char newaltboot[], newaltboot_end[];
 
 struct pcidev lata[2];
-struct pcidev lnif[1];
+struct pcidev lnif[2];
 struct pcidev lusb[3];
 int nata, nnif, nusb;
 
@@ -137,7 +137,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 		nata = pcilookup(PCI_CLASS_MISCSTORAGE, lata, 2);
 	if (nata == 0)
 		nata = pcilookup(PCI_CLASS_SCSI, lata, 2);
-	nnif = pcilookup(PCI_CLASS_ETH, lnif, 1);
+	nnif = pcilookup(PCI_CLASS_ETH, lnif, 2);
 	nusb = pcilookup(PCI_CLASS_USB, lusb, 3);
 
 #ifdef DEBUG
@@ -153,10 +153,10 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	}
 	if (nnif == 0)
 		printf("no NET found\n");
-	else {
+	else for (n = 0; n < nnif; n++) {
 		int b, d, f, bdf, pvd;
-		bdf = lnif[0].bdf;
-		pvd = lnif[0].pvd;
+		bdf = lnif[n].bdf;
+		pvd = lnif[n].pvd;
 		pcidecomposetag(bdf, &b, &d, &f);
 		printf("%04x.%04x NET %02d:%02d:%02d\n",
 		    PCI_VENDOR(pvd), PCI_PRODUCT(pvd), b, d, f);
@@ -176,11 +176,18 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	pcisetup();
 	pcifixup();
 
-	if (dskdv_init(&lata[0]) == 0
-	    || (nata == 2 && dskdv_init(&lata[1]) == 0))
+	/* intialize a disk driver */
+	for (n = 0; n < nata; n++)
+		if (dskdv_init(&lata[n]) != 0)
+			break;
+	if (n >= nata)
 		printf("IDE/SATA device driver was not found\n");
 
-	if (netif_init(&lnif[0]) == 0)
+	/* initialize a network interface */
+	for (n = 0; n < nnif; n++)
+		if (netif_init(&lnif[n]) != 0)
+			break;
+	if (n >= nnif)
 		printf("no NET device driver was found\n");
 
 	/*
