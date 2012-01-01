@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.85 2011/12/30 19:30:59 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.86 2012/01/01 13:52:13 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2011/12/30 19:30:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2012/01/01 13:52:13 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -686,8 +686,8 @@ pv_update(struct pv_entry *pv)
 		mmap_ppl = THUNK_PROT_NONE;
 	}
 
-	/* unmanaged pages are special; they dont track r/m */
-	if (vflags & PV_UNMANAGED)
+	/* unmanaged or wired pages are special; they dont track r/m */
+	if (vflags & (PV_UNMANAGED | PV_WIRED))
 		mmap_ppl = THUNK_PROT_READ | THUNK_PROT_WRITE;
 
 	pv->pv_mmap_ppl = mmap_ppl;
