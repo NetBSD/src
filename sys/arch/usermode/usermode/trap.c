@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.48 2011/12/26 22:04:35 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.49 2012/01/02 22:02:51 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 2011/12/26 22:04:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2012/01/02 22:02:51 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,6 +150,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	va = (vaddr_t) info->si_addr;
 	va = trunc_page(va);
 
+#if 0	/* disabled for now, these checks need to move */
 #ifdef DIAGNOSTIC
 	/* sanity */
 	if ((va < VM_MIN_ADDRESS) || (va >= VM_MAX_KERNEL_ADDRESS))
@@ -158,6 +159,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	/* extra debug for now -> should issue signal */
 	if (va == 0)
 		panic("NULL deref\n");
+#endif
 #endif
 
 //printf("memaccess error : va = %p\n", (void *) va);
