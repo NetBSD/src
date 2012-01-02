@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.60 2011/02/28 21:22:35 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.61 2012/01/02 16:13:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1743,7 +1743,7 @@ EXIT(TLABEL(dtlb_u))
 	.level	1.1
 #endif /* HP8000_CPU */
 
-#if defined(HP7000_CPU) || defined(HP7100_CPU)
+#if defined(HP7000_CPU)
 /*
  * int desidhash_s(void)
  * int desidhash_x(void)
@@ -1767,7 +1767,7 @@ ALTENTRY(desidhash_x)
 	bv	0(%rp)
 	extru	%t1, 4, 5, %ret0	/* return chip revision */
 EXIT(desidhash_s)
-#endif /* defined(HP7000_CPU) || defined(HP7100_CPU) */
+#endif /* defined(HP7000_CPU) */
 
 #if defined(HP7100_CPU) || defined(HP7200_CPU)
 /*

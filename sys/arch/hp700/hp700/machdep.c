@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2011/12/12 19:03:09 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2012/01/02 16:13:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2011/12/12 19:03:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2012/01/02 16:13:12 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -330,8 +330,8 @@ const struct hppa_cpu_info cpu_types[] = {
 	{ "PA7000", NULL, "PCXS",
 	  hpcxs,  0,
 	  0, "1.1a",
-	  desidhash_s, itlb_x, dtlb_x, itlbna_x, dtlbna_x, tlbd_x,
-	  ibtlb_g, NULL, pbtlb_g }, /* XXXNH check */
+	  desidhash_s, itlb_s, dtlb_s, itlbna_s, dtlbna_s, tlbd_s,
+	  ibtlb_g, NULL, pbtlb_g },
 #endif
 #ifdef HP7100_CPU
 	{ "PA7100", "T-Bird", "PCXT",
