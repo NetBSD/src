@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.58 2011/07/12 02:22:13 dholland Exp $	*/
+/*	$NetBSD: inode.h,v 1.59 2012/01/02 22:10:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -242,7 +242,7 @@ struct inode {
 #define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
 #define	IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
 #define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
-
+#define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
 #if defined(_KERNEL)
 
 /*
