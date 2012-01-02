@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.56 2011/12/19 10:56:59 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.57 2012/01/02 16:13:12 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -135,8 +135,8 @@
 
 #define	DR_PAGE0	.word	0x14001200
 #define	DR_PAGE1	.word	0x14001240
-#define	MTCPU_T(x,t)	.word	0x14001400 | ((t) << 21) | ((x) << 16)
-#define	MFCPU_T(r,x)	.word	0x14001400 | ((r) << 21) | (x)
+#define	MTCPU_T(x,t)	.word	0x14001600 | ((t) << 21) | ((x) << 16)
+#define	MFCPU_T(r,x)	.word	0x14001a00 | ((r) << 21) | ((x) << 16)
 #define	MTCPU_C(x,t)	.word	0x14000240 | ((t) << 21) | ((x) << 16)
 #define	MFCPU_C(r,x)	.word	0x14000600 | ((r) << 21) | ((x) << 16)
 #define	MFCPU_U(r,x)	.word	0x140008a0 | ((r) << 21) | ((x))
