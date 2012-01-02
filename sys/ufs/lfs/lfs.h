@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.134 2011/07/11 08:27:40 hannken Exp $	*/
+/*	$NetBSD: lfs.h,v 1.135 2012/01/02 22:10:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -592,6 +592,7 @@ struct segsum_v1 {
 #define	SS_CONT		0x02		/* more partials to finish this write*/
 #define	SS_CLEAN	0x04		/* written by the cleaner */
 #define	SS_RFW		0x08		/* written by the roll-forward agent */
+#define	SS_RECLAIM	0x10		/* written by the roll-forward agent */
 	u_int16_t ss_flags;		/* 24: used for directory operations */
 	u_int16_t ss_pad;		/* 26: extra space */
 	/* FINFO's and inode daddr's... */
@@ -608,7 +609,8 @@ struct segsum {
 	u_int16_t ss_nfinfo;		/* 20: number of file info structures */
 	u_int16_t ss_ninos;		/* 22: number of inodes in summary */
 	u_int16_t ss_flags;		/* 24: used for directory operations */
-	u_int8_t  ss_pad[6];		/* 26: extra space */
+	u_int8_t  ss_pad[2];		/* 26: extra space */
+	u_int32_t ss_reclino;           /* 28: inode being reclaimed */
 	u_int64_t ss_serial;		/* 32: serial number */
 	u_int64_t ss_create;		/* 40: time stamp */
 	/* FINFO's and inode daddr's... */
@@ -840,6 +842,8 @@ struct lfs {
 	int lfs_nowrap;			/* Suspend log wrap */
 	int lfs_wrappass;		/* Allow first log wrap requester to pass */
 	int lfs_wrapstatus;		/* Wrap status */
+	int lfs_reclino;		/* Inode being reclaimed */
+	int lfs_startseg;               /* Segment we started writing at */
 	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
 };
 
@@ -945,13 +949,15 @@ struct segment {
 	u_int32_t seg_number;		/* number of this segment */
 	int32_t *start_lbp;		/* beginning lbn for this set */
 
-#define	SEGM_CKP	0x01		/* doing a checkpoint */
-#define	SEGM_CLEAN	0x02		/* cleaner call; don't sort */
-#define	SEGM_SYNC	0x04		/* wait for segment */
-#define	SEGM_PROT	0x08		/* don't inactivate at segunlock */
-#define SEGM_PAGEDAEMON	0x10		/* pagedaemon called us */
-#define SEGM_WRITERD	0x20		/* LFS writed called us */
-#define SEGM_FORCE_CKP	0x40		/* Force checkpoint right away */
+#define SEGM_CKP	0x0001		/* doing a checkpoint */
+#define SEGM_CLEAN	0x0002		/* cleaner call; don't sort */
+#define SEGM_SYNC	0x0004		/* wait for segment */
+#define SEGM_PROT	0x0008		/* don't inactivate at segunlock */
+#define SEGM_PAGEDAEMON	0x0010		/* pagedaemon called us */
+#define SEGM_WRITERD	0x0020		/* LFS writed called us */
+#define SEGM_FORCE_CKP	0x0040		/* Force checkpoint right away */
+#define SEGM_RECLAIM	0x0080		/* Writing to reclaim vnode */
+#define SEGM_SINGLE	0x0100		/* Opportunistic writevnodes */
 	u_int16_t seg_flags;		/* run-time flags for this segment */
 	u_int32_t seg_iocount;		/* number of ios pending */
 	int	  ndupino;		/* number of duplicate inodes */
@@ -992,6 +998,7 @@ struct lfs_inode_ext {
 #define LFSI_DELETED      0x02
 #define LFSI_WRAPBLOCK    0x04
 #define LFSI_WRAPWAIT     0x08
+#define LFSI_BMAP         0x10
 	u_int32_t lfs_iflags;           /* Inode flags */
 	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
 #ifdef _KERNEL
@@ -1017,10 +1024,16 @@ struct lfs_inode_ext {
  * Macros for determining free space on the disk, with the variable metadata
  * of segment summaries and inode blocks taken into account.
  */
-/* Estimate number of clean blocks not available for writing */
-#define LFS_EST_CMETA(F) (int32_t)((((F)->lfs_dmeta *			     \
-				     (int64_t)(F)->lfs_nclean) /	     \
-				      ((F)->lfs_nseg - (F)->lfs_nclean)))
+/*
+ * Estimate number of clean blocks not available for writing because
+ * they will contain metadata or overhead.  This is calculated as
+ * (dmeta / # dirty segments) * (# clean segments).
+ */
+#define CM_MAG_NUM 3
+#define CM_MAG_DEN 2
+#define LFS_EST_CMETA(F) (int32_t)((					\
+				    (CM_MAG_NUM * ((F)->lfs_dmeta * (int64_t)(F)->lfs_nclean)) / \
+				    (CM_MAG_DEN * ((F)->lfs_nseg - (F)->lfs_nclean))))
 
 /* Estimate total size of the disk not including metadata */
 #define LFS_EST_NONMETA(F) ((F)->lfs_dsize - (F)->lfs_dmeta - LFS_EST_CMETA(F))
