@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.88 2012/01/01 21:40:22 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.89 2012/01/02 09:49:12 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2012/01/01 21:40:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2012/01/02 09:49:12 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -509,6 +509,12 @@ pmap_destroy(pmap_t pmap)
 		}
 	}
 #endif
+	for (l1 = 0; l1 < pm_nl1; l1++) {
+		l2tbl = pmap->pm_l1[l1];
+		if (!l2tbl)
+			continue;
+		pool_put(&pmap_l2_pool, l2tbl);
+	}
 	pool_put(&pmap_l1_pool, pmap->pm_l1);
 	pool_put(&pmap_pool, pmap);
 }
