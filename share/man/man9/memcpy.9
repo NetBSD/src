@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)memcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: memcpy.9,v 1.7 2003/09/08 17:54:35 wiz Exp $
+.\"	$NetBSD: memcpy.9,v 1.8 2012/01/02 15:41:51 rkujawa Exp $
 .\"
 .Dd July 7, 2001
 .Dt MEMCPY 9
@@ -39,7 +39,7 @@
 .Nm memcpy
 .Nd copy byte string
 .Sh SYNOPSIS
-.In systm.h
+.In sys/systm.h
 .Ft void *
 .Fn memcpy "void * restrict dst" "const void * restrict src" "size_t len"
 .Sh DESCRIPTION
