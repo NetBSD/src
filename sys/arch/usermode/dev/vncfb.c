@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.10 2011/12/30 20:08:36 jmcneill Exp $ */
+/* $NetBSD: vncfb.c,v 1.11 2012/01/02 00:20:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.10 2011/12/30 20:08:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.11 2012/01/02 00:20:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,7 +507,7 @@ vncfb_mmap(void *v, void *vs, off_t offset, int prot)
 	paddr_t pa;
 	vaddr_t va;
 
-	if (offset < 0 || offset + PAGE_SIZE > sc->sc_framebufsize) {
+	if (offset < 0 || offset >= sc->sc_framebufsize) {
 		device_printf(sc->sc_dev, "mmap: offset 0x%x, fbsize 0x%x"
 		    " out of range!\n",
 		    (unsigned int)offset, (unsigned int)sc->sc_framebufsize);
