@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.57 2011/12/31 20:03:50 snj Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.58 2012/01/02 23:55:31 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2885,4 +2885,14 @@ lib/libtelnet/encrypt.c				1.15
 
 	Avoid buffer overflow, reported by Colin Percival at FreeBSD
 	[christos, ticket #1704]
+
+xsrc/xfree/xc/programs/Xserver/fb/fbpict.c	1.5
+xsrc/xfree/xc/programs/Xserver/mi/miarc.c	1.2
+xsrc/xfree/xc/programs/Xserver/mi/misprite.c	1.2
+
+	mod(a,b) used to be defined with a - in front of naked a, such that
+	uses of mod with certain arithmetic expressions as a led to
+	surprising results, namely the one in Xrender praised in
+	CVE-2010-1166.
+	[is, ticket #1707]
 
