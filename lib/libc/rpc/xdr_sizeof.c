@@ -39,7 +39,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/xdr/xdr_sizeof.c,v 1.5.38.1 2010/12/21 17:10:29 kensmith Exp $");
 #else
-__RCSID("$NetBSD: xdr_sizeof.c,v 1.2 2011/07/04 11:01:40 mrg Exp $");
+__RCSID("$NetBSD: xdr_sizeof.c,v 1.3 2012/01/02 21:29:55 dholland Exp $");
 #endif
 
 #include "namespace.h"
@@ -117,7 +117,7 @@ x_inline(xdrs, len)
 		/* Free the earlier space and allocate new area */
 		if (xdrs->x_private)
 			free(xdrs->x_private);
-		if ((xdrs->x_private = (caddr_t) malloc(len)) == NULL) {
+		if ((xdrs->x_private = malloc(len)) == NULL) {
 			xdrs->x_base = 0;
 			return (NULL);
 		}
