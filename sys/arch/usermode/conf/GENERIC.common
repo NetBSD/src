@@ -1,14 +1,14 @@
-# $NetBSD: GENERIC.common,v 1.9 2011/12/30 20:08:36 jmcneill Exp $
+# $NetBSD: GENERIC.common,v 1.10 2012/01/02 21:48:14 reinoud Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
 
-options 	SYMTAB_SPACE=310000
+options 	SYMTAB_SPACE=350000
 
 options 	RTC_OFFSET=0
 options 	KTRACE
@@ -38,6 +38,9 @@ file-system	KERNFS
 file-system	PROCFS
 file-system	PTYFS
 file-system	TMPFS
+file-system	NFS
+file-system	UDF
+file-system	NILFS
 options		WAPBL
 
 options 	INET
