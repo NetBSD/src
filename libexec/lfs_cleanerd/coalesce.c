@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.18 2009/08/06 00:51:55 pooka Exp $  */
+/*      $NetBSD: coalesce.c,v 1.19 2012/01/02 21:35:17 perseant Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -124,6 +124,8 @@ get_dinode(struct clfs *fs, ino_t ino)
 	     dip < (struct ufs1_dinode *)(bp->b_data + fs->lfs_ibsize); dip++)
 		if (dip->di_inumber == ino) {
 			r = (struct ufs1_dinode *)malloc(sizeof(*r));
+			if (r == NULL)
+				break;
 			memcpy(r, dip, sizeof(*r));
 			brelse(bp, 0);
 			return r;
