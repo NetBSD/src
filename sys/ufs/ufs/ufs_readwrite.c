@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.100 2011/11/18 21:18:52 christos Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.101 2012/01/02 22:10:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.100 2011/11/18 21:18:52 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.101 2012/01/02 22:10:45 perseant Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -294,6 +294,7 @@ WRITE(void *v)
 
 #ifdef LFS_READWRITE
 	async = true;
+	lfs_availwait(fs, btofsb(fs, uio->uio_resid));
 	lfs_check(vp, LFS_UNUSED_LBN, 0);
 #endif /* !LFS_READWRITE */
 	if (!usepc)

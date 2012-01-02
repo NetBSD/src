@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.120 2011/07/11 08:27:40 hannken Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.121 2012/01/02 22:10:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.120 2011/07/11 08:27:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.121 2012/01/02 22:10:44 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,7 @@ int	lfs_subsys_pages     = 0L;	/* Total number LFS-written pages */
 int	lfs_fs_pagetrip	     = 0;	/* # of pages to trip per-fs write */
 int	lfs_writing	     = 0;	/* Set if already kicked off a writer
 					   because of buffer space */
+int	locked_queue_waiters = 0;	/* Number of processes waiting on lq */
 
 /* Lock and condition variables for above. */
 kcondvar_t	locked_queue_cv;
@@ -160,8 +161,12 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp,
 
 		lfs_flush(fs, 0, 0);
 
+		DLOG((DLOG_AVAIL, "lfs_reservebuf: waiting: count=%d, bytes=%ld\n",
+		      locked_queue_count, locked_queue_bytes));
+		++locked_queue_waiters;
 		error = cv_timedwait_sig(&locked_queue_cv, &lfs_lock,
 		    hz * LFS_BUFWAIT);
+		--locked_queue_waiters;
 		if (error && error != EWOULDBLOCK) {
 			mutex_exit(&lfs_lock);
 			return error;
@@ -171,8 +176,11 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp,
 	locked_queue_rcount += n;
 	locked_queue_rbytes += bytes;
 
-	if (n < 0)
+	if (n < 0 && locked_queue_waiters > 0) {
+		DLOG((DLOG_AVAIL, "lfs_reservebuf: broadcast: count=%d, bytes=%ld\n",
+		      locked_queue_count, locked_queue_bytes));
 		cv_broadcast(&locked_queue_cv);
+	}
 
 	mutex_exit(&lfs_lock);
 
@@ -461,7 +469,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 */
 	if (fs->lfs_ronly || (fs->lfs_pflags & LFS_PF_CLEAN)) {
 		bp->b_oflags &= ~BO_DELWRI;
-		bp->b_flags |= B_READ;
+		bp->b_flags |= B_READ; /* XXX is this right? --ks */
 		bp->b_error = 0;
 		mutex_enter(&bufcache_lock);
 		LFS_UNLOCK_BUF(bp);
@@ -535,6 +543,7 @@ lfs_flush_fs(struct lfs *fs, int flags)
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
 
+	fs->lfs_pdflush = 0;
 	mutex_exit(&lfs_lock);
 	lfs_writer_enter(fs, "fldirop");
 	lfs_segwrite(fs->lfs_ivnode->v_mount, flags);
@@ -689,10 +698,10 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	/* If there are too many pending dirops, we have to flush them. */
 	if (fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
-		flags |= SEGM_CKP;
-	}
-
-	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
+		mutex_exit(&lfs_lock);
+		lfs_flush_dirops(fs);
+		mutex_enter(&lfs_lock);
+	} else if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 	    lfs_subsys_pages > LFS_MAX_PAGES ||
 	    fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
@@ -717,8 +726,10 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 			++lfs_stats.wait_exceeded;
 		DLOG((DLOG_AVAIL, "lfs_check: waiting: count=%d, bytes=%ld\n",
 		      locked_queue_count, locked_queue_bytes));
+		++locked_queue_waiters;
 		error = cv_timedwait_sig(&locked_queue_cv, &lfs_lock,
 		    hz * LFS_BUFWAIT);
+		--locked_queue_waiters;
 		if (error != EWOULDBLOCK)
 			break;
 
