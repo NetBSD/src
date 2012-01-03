@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.51 2012/01/03 12:05:00 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.52 2012/01/03 21:28:50 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.51 2012/01/03 12:05:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52 2012/01/03 21:28:50 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -278,7 +278,7 @@ pagefault(void)
 	lwp_errno = thunk_geterrno();
 
 	vm_map = &vm->vm_map;
-	from_kernel = (pc >= VM_MIN_KERNEL_ADDRESS);
+	from_kernel = (pc >= kmem_k_start);
 	if (from_kernel && (va >= VM_MIN_KERNEL_ADDRESS))
 		vm_map = kernel_map;
 

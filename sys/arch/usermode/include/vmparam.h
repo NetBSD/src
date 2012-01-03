@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.12 2011/12/25 21:10:00 reinoud Exp $ */
+/* $NetBSD: vmparam.h,v 1.13 2012/01/03 21:28:50 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,14 +35,14 @@
 #define __USE_TOPDOWN_VM
 
 extern paddr_t kmem_k_start, kmem_k_end;
-extern paddr_t kmem_ext_start, kmem_ext_end;
+extern paddr_t kmem_kvm_start, kmem_kvm_end;
 extern paddr_t kmem_user_start, kmem_user_end;
 
-#define VM_MIN_KERNEL_ADDRESS	kmem_k_start
-#define VM_MAX_KERNEL_ADDRESS 	kmem_ext_end
 #define VM_MIN_ADDRESS		kmem_user_start
-#define VM_MAXUSER_ADDRESS	kmem_user_end
 #define VM_MAX_ADDRESS		kmem_user_end
+#define VM_MAXUSER_ADDRESS	kmem_user_end
+#define VM_MIN_KERNEL_ADDRESS	kmem_kvm_start
+#define VM_MAX_KERNEL_ADDRESS 	kmem_kvm_end
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 #define VM_PHYSSEG_MAX		1
@@ -50,6 +50,9 @@ extern paddr_t kmem_user_start, kmem_user_end;
 #define	VM_FREELIST_DEFAULT	0
 
 #define	USRSTACK		VM_MAXUSER_ADDRESS
+
+/* override the default pager_map size, there is little KVA */
+#define PAGER_MAP_DEFAULT_SIZE	(4 * 1024 * 1024)
 
 #if defined(__i386__) 
 #define	PAGE_SHIFT		12
