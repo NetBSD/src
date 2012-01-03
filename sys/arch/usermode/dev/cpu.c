@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.58 2012/01/03 12:05:01 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.59 2012/01/03 12:10:04 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58 2012/01/03 12:05:01 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59 2012/01/03 12:10:04 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -333,9 +333,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	memcpy(pcb2, pcb1, sizeof(struct pcb));
 
 	stacksize = 2*PAGE_SIZE;
-	stack_ucp           = malloc(stacksize, M_TEMP, M_NOWAIT);
-	stack_syscall_ucp   = malloc(stacksize, M_TEMP, M_NOWAIT);
-	stack_pagefault_ucp = malloc(stacksize, M_TEMP, M_NOWAIT);
+	stack_ucp           = malloc(stacksize, M_TEMP, M_WAITOK);
+	stack_syscall_ucp   = malloc(stacksize, M_TEMP, M_WAITOK);
+	stack_pagefault_ucp = malloc(stacksize, M_TEMP, M_WAITOK);
 	pcb2->pcb_needfree = true;
 
 	KASSERT(stack_ucp);
@@ -414,8 +414,8 @@ cpu_startup(void)
 	memcpy(&lwp0pcb.pcb_trapret_ucp,   &lwp0pcb.pcb_ucp, sizeof(ucontext_t));
 
 	/* set up the ucontext for the pagefault */
-	stacksize = 16*PAGE_SIZE;
-	stack_pagefault_ucp = malloc(stacksize, M_TEMP, M_NOWAIT);
+	stacksize = 8*PAGE_SIZE;
+	stack_pagefault_ucp = malloc(stacksize, M_TEMP, M_WAITOK);
 
 	lwp0pcb.pcb_pagefault_ucp.uc_stack.ss_sp = stack_pagefault_ucp;
 	lwp0pcb.pcb_pagefault_ucp.uc_stack.ss_size = stacksize;
