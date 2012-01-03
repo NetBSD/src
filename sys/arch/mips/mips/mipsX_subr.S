@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.52 2011/12/23 23:40:00 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.53 2012/01/03 03:32:23 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1535,6 +1535,11 @@ NESTED_NOPROFILE(MIPSX(cache_exception), KERNFRAME_SIZ, ra)
 	eret
 	nop
 #endif
+#if (MIPS64R2_RMIXL) > 0
+	PTR_LA	k0, MIPSX(exception)		# switches to KSEG0
+	jr	k0				# let common exception handle it
+	 nop
+#else
 	PTR_LA	k0, panic			# return to panic
 	PTR_LA	a0, 9f				# panicstr
 	_MFC0	a1, MIPS_COP_0_ERROR_PC
@@ -1543,16 +1548,6 @@ NESTED_NOPROFILE(MIPSX(cache_exception), KERNFRAME_SIZ, ra)
 	mfcr	a2, k1
 	li	k1, 0x30b	/* L1D_CACHE_INTERRUPT */
 	mfcr	a3, k1
-#if defined(__mips_o32)
-#error O32 not supported.
-#endif
-	mfc0	a4, MIPS_COP_0_STATUS
-	mfc0	a5, MIPS_COP_0_CAUSE
-#elif (MIPS64R2_RMIXL) > 0
-	li	k1, 0x308	/* LSU_CERR_LOG0 */
-	mfcr	a3, k1
-	li	k1, 0x309	/* LSU_CERR_LOG1 */
-	mfcr	a2, k1
 #if defined(__mips_o32)
 #error O32 not supported.
 #endif
@@ -1574,10 +1569,11 @@ NESTED_NOPROFILE(MIPSX(cache_exception), KERNFRAME_SIZ, ra)
 
 	eret
 
-#if (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+#if (MIPS64_RMIXL) > 0
 	MSG("cache error @ EPC %#llx\nL1D_CACHE_ERROR_LOG %#llx\nL1D_CACHE_INTERRUPT %#lx\nstatus %#x, cause %#x");
 #else
 	MSG("cache error @ EPC 0x%x ErrCtl 0x%x CacheErr 0x%x");
+#endif
 #endif
 	.set	at
 END(MIPSX(cache_exception))
