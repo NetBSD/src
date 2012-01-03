@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.38.16.1.2.1 2010/04/21 00:27:39 matt Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.38.16.1.2.2 2012/01/03 18:27:21 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.38.16.1.2.1 2010/04/21 00:27:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.38.16.1.2.2 2012/01/03 18:27:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,8 +165,10 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Enable the device. */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
-		       csr | PCI_COMMAND_MASTER_ENABLE);
+	if ((csr & PCI_COMMAND_MASTER_ENABLE) == 0) {
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+			       csr | PCI_COMMAND_MASTER_ENABLE);
+	}
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
