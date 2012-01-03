@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.61 2012/01/02 16:13:12 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.62 2012/01/03 06:18:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -640,7 +640,8 @@ LDILDO(tlbd_l)
 #endif
 
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || \
-    defined(HP8500_CPU) || defined(HP8600_CPU)
+    defined(HP8500_CPU) || defined(HP8600_CPU) || \
+    defined(HP8700_CPU)
 LDILDO(itlb_u)
 LDILDO(itlbna_u)
 LDILDO(dtlb_u)
@@ -1227,7 +1228,6 @@ EXIT(hppa_fpu_swapout)
 #define	TLB_STATS_AFT(t)	/**/
 #endif
 
-#if defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU)
 #define	TLB_PULL(bits,lbl)						! \
 	/* space:pgaddr -- %r8:%r9 */					! \
 	mfctl	CR_VTOP, %r16						! \
@@ -1249,6 +1249,36 @@ EXIT(hppa_fpu_swapout)
 	dep	%r0, 31, 12, %r17	/* needed ? */			! \
 	addi	2, %r25, %r25						! \
 	extru	%r17, 24, 25, %r17
+
+/*
+ * possible optimizations:
+ *	change pte to reduce number of shifts
+ *	reorder to reduce stalls
+ */
+#define	TLB_PULL_L(bits,lbl)						! \
+	/* space:pgaddr -- %r8:%r9 */					! \
+	mfctl	CR_VTOP, %r16						! \
+	ldwx,s	%r8(%r16), %r17		/* space -> page directory */	! \
+	extru	%r9, 9, 10, %r25					! \
+	combt,=,n %r0, %r17, lbl					! \
+	ldwx,s	%r25(%r17), %r24	/* page -> page table */	! \
+	extru	%r9, 19, 10, %r16					! \
+	combt,=,n %r0, %r24, lbl					! \
+	ldwx,s	%r16(%r24), %r17	/* va -> pa:prot */		! \
+	sh2addl	%r16, %r24, %r25					! \
+	combt,=,n %r0, %r17, lbl					! \
+	copy	%r17, %r16						! \
+	depi	(bits), 21+bits, 1+bits, %r17				! \
+	sub,=	%r16, %r17, %r0		/* do not store if unchanged */	! \
+	stws	%r17, 0(%r25)		/* store back w/ the bits */	! \
+	shd	%r17, %r0, 13, %r25					! \
+	dep	%r8, 30, 15, %r25	/* mix0r the pid from the sid */! \
+	dep	%r0, 31, 12, %r17	/* needed ? */			! \
+	addi	2, %r25, %r25						! \
+	extru	%r17, 24, 25, %r17	/* tlbbtop(%r17) */		! \
+	sync
+
+#if defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU)
 
 	.align	32
 
@@ -1403,34 +1433,6 @@ EXIT(TLABEL(dtlbna_s))
 #define	IITLBPF(r)	.word	0x04000400 | ((r) << 16)
 #define	IDTLBAF(r)	.word	0x04001440 | ((r) << 16)
 #define	IDTLBPF(r)	.word	0x04001400 | ((r) << 16)
-
-/*
- * possible optimizations:
- *	change pte to reduce number of shifts
- *	reorder to reduce stalls
- */
-#define	TLB_PULL_L(bits,lbl)						! \
-	/* space:pgaddr -- %r8:%r9 */					! \
-	mfctl	CR_VTOP, %r16						! \
-	ldwx,s	%r8(%r16), %r17		/* space -> page directory */	! \
-	extru	%r9, 9, 10, %r25					! \
-	combt,=,n %r0, %r17, lbl					! \
-	ldwx,s	%r25(%r17), %r24	/* page -> page table */	! \
-	extru	%r9, 19, 10, %r16					! \
-	combt,=,n %r0, %r24, lbl					! \
-	ldwx,s	%r16(%r24), %r17	/* va -> pa:prot */		! \
-	sh2addl	%r16, %r24, %r25					! \
-	combt,=,n %r0, %r17, lbl					! \
-	copy	%r17, %r16						! \
-	depi	(bits), 21+bits, 1+bits, %r17				! \
-	sub,=	%r16, %r17, %r0		/* do not store if unchanged */	! \
-	stws	%r17, 0(%r25)		/* store back w/ the bits */	! \
-	shd	%r17, %r0, 13, %r25					! \
-	dep	%r8, 30, 15, %r25	/* mix0r the pid from the sid */! \
-	dep	%r0, 31, 12, %r17	/* needed ? */			! \
-	addi	2, %r25, %r25						! \
-	extru	%r17, 24, 25, %r17	/* tlbbtop(%r17) */		! \
-	sync
 
 	.align	32
 
@@ -1605,7 +1607,10 @@ L$dtlb_done_l:
 EXIT(TLABEL(dtlb_l))
 #endif /* defined(HP7100LC_CPU) || defined(HP7300LC_CPU) */
 
-#if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
+#if defined(HP8000_CPU) || defined(HP8200_CPU) || \
+    defined(HP8500_CPU) || defined(HP8600_CPU) || \
+    defined(HP8700_CPU)
+
 	.level	2.0w
 
 	/* xlate 32bit->64bit pte */
@@ -1876,7 +1881,10 @@ EXIT(desidhash_l)
 
 #endif /* defined(HP7100LC_CPU) || defined(HP7300LC_CPU) */
 
-#if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
+#if defined(HP8000_CPU) || defined(HP8200_CPU) || \
+    defined(HP8500_CPU) || defined(HP8600_CPU) || \
+    defined(HP8700_CPU)
+
 	.level	2.0w
 LEAF_ENTRY_NOPROFILE(desidhash_u)
 	MFCPU_U(2,28)
@@ -1898,7 +1906,7 @@ LEAF_ENTRY_NOPROFILE(pbtlb_u)
 	nop
 EXIT(pbtlb_u)
 	.level	1.1
-#endif /* HP8000_CPU */
+#endif /* HP8000_CPU || HP8200_CPU || HP8500_CPU || HP8600_CPU || HP8700_CPU */
 
 	.align	64
 	.export	TLABEL(all), entry
