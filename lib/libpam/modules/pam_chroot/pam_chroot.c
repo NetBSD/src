@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_chroot.c,v 1.4 2005/04/19 03:15:34 christos Exp $	*/
+/*	$NetBSD: pam_chroot.c,v 1.5 2012/01/03 19:02:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_chroot/pam_chroot.c,v 1.3 2003/04/30 00:40:24 des Exp $");
 #else
-__RCSID("$NetBSD: pam_chroot.c,v 1.4 2005/04/19 03:15:34 christos Exp $");
+__RCSID("$NetBSD: pam_chroot.c,v 1.5 2012/01/03 19:02:54 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: pam_chroot.c,v 1.4 2005/04/19 03:15:34 christos Exp $");
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include <unistd.h>
 
 #define PAM_SM_SESSION
@@ -96,11 +97,11 @@ pam_sm_open_session(pam_handle_t *pamh, int flags __unused,
 	openpam_log(PAM_LOG_DEBUG, "chrooting %s to %s", dir, user);
 
 	if (chroot(dir) == -1) {
-		openpam_log(PAM_LOG_ERROR, "chroot(): %m");
+		openpam_log(PAM_LOG_ERROR, "chroot(): %s", strerror(errno));
 		return (PAM_SESSION_ERR);
 	}
 	if (chdir(cwd) == -1) {
-		openpam_log(PAM_LOG_ERROR, "chdir(): %m");
+		openpam_log(PAM_LOG_ERROR, "chdir(): %s", strerror(errno));
 		return (PAM_SESSION_ERR);
 	}
 	pam_setenv(pamh, "HOME", cwd, 1);
