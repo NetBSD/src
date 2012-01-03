@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.963.4.1.4.6 2011/12/31 02:26:21 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.963.4.1.4.7 2012/01/03 18:28:15 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.1.4.6 2011/12/31 02:25:42 matt Exp
+ *	NetBSD: pcidevs,v 1.962.4.1.4.7 2012/01/03 18:27:47 matt Exp
  */
 
 /*
@@ -2924,7 +2924,7 @@
 #define	PCI_PRODUCT_NETLOGIC_XLP_NAE	0x1009		/* XLP Network Acceleration engine */
 #define	PCI_PRODUCT_NETLOGIC_XLP_POE	0x100A		/* XLP Packet Ordering engine */
 #define	PCI_PRODUCT_NETLOGIC_XLP_FMN	0x100B		/* XLP Fast Messaging Network */
-#define	PCI_PRODUCT_NETLOGIC_XLP_RAID	0x100C		/* XLP Data Transfer and RAID engine */
+#define	PCI_PRODUCT_NETLOGIC_XLP_DMA	0x100C		/* XLP Data Transfer and RAID engine */
 #define	PCI_PRODUCT_NETLOGIC_XLP_SAE	0x100D		/* XLP Security accelerator */
 #define	PCI_PRODUCT_NETLOGIC_XLP_PKE	0x100E		/* XLP RSA/ECC accelerator */
 #define	PCI_PRODUCT_NETLOGIC_XLP_CDE	0x100F		/* XLP Compress/Decompression engine */
