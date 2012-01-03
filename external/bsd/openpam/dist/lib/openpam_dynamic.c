@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_dynamic.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
+/*	$NetBSD: openpam_dynamic.c,v 1.3 2012/01/03 18:56:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -82,7 +82,7 @@ openpam_dynamic(const char *path)
 {
 	const pam_module_t *dlmodule;
 	pam_module_t *module;
-	const char *prefix;
+	const char *prefix, *epath = path;
 	char *vpath;
 	void *dlh;
 	int i, serrno;
@@ -98,6 +98,7 @@ openpam_dynamic(const char *path)
 	/* try versioned module first, then unversioned module */
 	if (asprintf(&vpath, "%s/%s.%d", prefix, path, LIB_MAJ) < 0)
 		goto err;
+	epath = vpath;
 	if ((dlh = try_dlopen(vpath)) == NULL && errno == ENOENT) {
 		*strrchr(vpath, '.') = '\0';
 		dlh = try_dlopen(vpath);
@@ -126,7 +127,7 @@ buf_err:
 		dlclose(dlh);
 	FREE(module);
 err:
-	openpam_log(PAM_LOG_ERROR, "%m");
+	openpam_log(PAM_LOG_ERROR, "%s: %s", epath, strerror(errno));
 	return (NULL);
 }
 
