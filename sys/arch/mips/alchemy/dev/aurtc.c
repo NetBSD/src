@@ -1,4 +1,4 @@
-/* $NetBSD: aurtc.c,v 1.13 2011/07/01 18:39:29 dyoung Exp $ */
+/* $NetBSD: aurtc.c,v 1.14 2012/01/03 07:36:02 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.13 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.14 2012/01/03 07:36:02 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,22 +89,22 @@ __KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.13 2011/07/01 18:39:29 dyoung Exp $");
 #define	PUTREG(x,v)	(REGVAL(x) = (v))
 
 struct aurtc_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct todr_chip_handle	sc_tch;
 	void			*sc_shutdownhook;
 };
 
-static int	aurtc_match(struct device *, struct cfdata *, void *);
-static void	aurtc_attach(struct device *, struct device *, void *);
+static int	aurtc_match(device_t, struct cfdata *, void *);
+static void	aurtc_attach(device_t, device_t, void *);
 static int	aurtc_gettime(todr_chip_handle_t, struct timeval *);
 static int	aurtc_settime(todr_chip_handle_t, struct timeval *);
 static void	aurtc_shutdown(void *);
 
-CFATTACH_DECL(aurtc, sizeof (struct aurtc_softc),
+CFATTACH_DECL_NEW(aurtc, sizeof (struct aurtc_softc),
     aurtc_match, aurtc_attach, NULL, NULL);
 
 int
-aurtc_match(struct device *parent, struct cfdata *match, void *aux)
+aurtc_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct aubus_attach_args *aa = aux;
 
@@ -115,12 +115,13 @@ aurtc_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-aurtc_attach(struct device *parent, struct device *self, void *aux)
+aurtc_attach(device_t parent, device_t self, void *aux)
 {
-	struct aurtc_softc *sc = (struct aurtc_softc *)self;
+	struct aurtc_softc *sc = device_private(self);
 
 	printf(": Au1X00 programmable clock\n");
 	
+	sc->sc_dev = self;
 	sc->sc_tch.cookie = sc;
 	sc->sc_tch.bus_cookie = NULL;
 	sc->sc_tch.todr_gettime = aurtc_gettime;

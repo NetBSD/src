@@ -1,4 +1,4 @@
-/* $NetBSD: auspi.c,v 1.6 2011/07/10 23:13:23 matt Exp $ */
+/* $NetBSD: auspi.c,v 1.7 2012/01/03 07:36:02 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.6 2011/07/10 23:13:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.7 2012/01/03 07:36:02 kiyohara Exp $");
 
 #include "locators.h"
 
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.6 2011/07/10 23:13:23 matt Exp $");
 #include <dev/spi/spivar.h>
 
 struct auspi_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct aupsc_controller	sc_psc;		/* parent controller ops */
 	struct spi_controller	sc_spi;		/* SPI implementation ops */
 	struct auspi_machdep	sc_md;		/* board-specific support */
@@ -86,11 +86,11 @@ struct auspi_softc {
 
 #define	STATIC
 
-STATIC int auspi_match(struct device *, struct cfdata *, void *);
-STATIC void auspi_attach(struct device *, struct device *, void *);
+STATIC int auspi_match(device_t, struct cfdata *, void *);
+STATIC void auspi_attach(device_t, device_t, void *);
 STATIC int auspi_intr(void *);
 
-CFATTACH_DECL(auspi, sizeof(struct auspi_softc),
+CFATTACH_DECL_NEW(auspi, sizeof(struct auspi_softc),
     auspi_match, auspi_attach, NULL, NULL);
 
 /* SPI service routines */
@@ -109,7 +109,7 @@ STATIC void auspi_sched(struct auspi_softc *);
 	bus_space_write_4(sc->sc_psc.psc_bust, sc->sc_psc.psc_bush, x, v)
 
 int
-auspi_match(struct device *parent, struct cfdata *cf, void *aux)
+auspi_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct aupsc_attach_args *aa = aux;
 
@@ -120,12 +120,14 @@ auspi_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-auspi_attach(struct device *parent, struct device *self, void *aux)
+auspi_attach(device_t parent, device_t self, void *aux)
 {
 	struct auspi_softc *sc = device_private(self);
 	struct aupsc_attach_args *aa = aux;
 	struct spibus_attach_args sba;
 	const struct auspi_machdep *md;
+
+	sc->sc_dev = self;
 
 	if ((md = auspi_machdep(aa->aupsc_addr)) != NULL) {
 		sc->sc_md = *md;

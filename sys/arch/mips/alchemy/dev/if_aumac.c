@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.32 2011/11/19 22:51:20 tls Exp $ */
+/* $NetBSD: if_aumac.c,v 1.33 2012/01/03 07:36:02 kiyohara Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.32 2011/11/19 22:51:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.33 2012/01/03 07:36:02 kiyohara Exp $");
 
 #include "rnd.h"
 
@@ -117,7 +117,7 @@ struct aumac_buf {
  * Software state per device.
  */
 struct aumac_softc {
-	struct device sc_dev;		/* generic device information */
+	device_t sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_mac_sh;	/* MAC space handle */
 	bus_space_handle_t sc_macen_sh;	/* MAC enable space handle */
@@ -191,21 +191,21 @@ static int	aumac_intr(void *);
 static int	aumac_txintr(struct aumac_softc *);
 static int	aumac_rxintr(struct aumac_softc *);
 
-static int	aumac_mii_readreg(struct device *, int, int);
-static void	aumac_mii_writereg(struct device *, int, int, int);
-static void	aumac_mii_statchg(struct device *);
+static int	aumac_mii_readreg(device_t, int, int);
+static void	aumac_mii_writereg(device_t, int, int, int);
+static void	aumac_mii_statchg(device_t);
 static int	aumac_mii_wait(struct aumac_softc *, const char *);
 
-static int	aumac_match(struct device *, struct cfdata *, void *);
-static void	aumac_attach(struct device *, struct device *, void *);
+static int	aumac_match(device_t, struct cfdata *, void *);
+static void	aumac_attach(device_t, device_t, void *);
 
 int	aumac_copy_small = 0;
 
-CFATTACH_DECL(aumac, sizeof(struct aumac_softc),
+CFATTACH_DECL_NEW(aumac, sizeof(struct aumac_softc),
     aumac_match, aumac_attach, NULL, NULL);
 
 static int
-aumac_match(struct device *parent, struct cfdata *cf, void *aux)
+aumac_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct aubus_attach_args *aa = aux;
 
@@ -216,11 +216,11 @@ aumac_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-aumac_attach(struct device *parent, struct device *self, void *aux)
+aumac_attach(device_t parent, device_t self, void *aux)
 {
 	const uint8_t *enaddr;
 	prop_data_t ea;
-	struct aumac_softc *sc = (void *) self;
+	struct aumac_softc *sc = device_private(self);
 	struct aubus_attach_args *aa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct pglist pglist;
@@ -230,41 +230,38 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 
 	callout_init(&sc->sc_tick_ch, 0);
 
-	printf(": Au1X00 10/100 Ethernet\n");
+	aprint_normal(": Au1X00 10/100 Ethernet\n");
+	aprint_naive("\n");
 
+	sc->sc_dev = self;
 	sc->sc_st = aa->aa_st;
 
 	/* Get the MAC address. */
-	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-address");
+	ea = prop_dictionary_get(device_properties(self), "mac-address");
 	if (ea == NULL) {
-		printf("%s: unable to get mac-addr property\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to get mac-addr property\n");
 		return;
 	}
 	KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
 	KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
 	enaddr = prop_data_data_nocopy(ea);
 
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(enaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(enaddr));
 
 	/* Map the device. */
 	if (bus_space_map(sc->sc_st, aa->aa_addrs[AA_MAC_BASE],
 	    MACx_SIZE, 0, &sc->sc_mac_sh) != 0) {
-		printf("%s: unable to map MAC registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to map MAC registers\n");
 		return;
 	}
 	if (bus_space_map(sc->sc_st, aa->aa_addrs[AA_MAC_ENABLE],
 	    MACENx_SIZE, 0, &sc->sc_macen_sh) != 0) {
-		printf("%s: unable to map MACEN registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to map MACEN registers\n");
 		return;
 	}
 	if (bus_space_map(sc->sc_st, aa->aa_addrs[AA_MAC_DMA_BASE],
 	    MACx_DMA_SIZE, 0, &sc->sc_dma_sh) != 0) {
-		printf("%s: unable to map MACDMA registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to map MACDMA registers\n");
 		return;
 	}
 
@@ -275,8 +272,8 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = au_intr_establish(aa->aa_irq[0], 1, IPL_NET, IST_LEVEL,
 	    aumac_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to register interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "unable to register interrupt handler\n");
 		return;
 	}
 
@@ -321,7 +318,7 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
 
-	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
@@ -330,7 +327,7 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	} else
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strcpy(ifp->if_xname, device_xname(self));
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = aumac_ioctl;
@@ -345,26 +342,25 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp, enaddr);
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-	    RND_TYPE_NET, 0);
+	rnd_attach_source(&sc->rnd_source, device_xname(self), RND_TYPE_NET, 0);
 #endif
 
 #ifdef AUMAC_EVENT_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_ev_txstall, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txstall");
+	    NULL, device_xname(self), "txstall");
 	evcnt_attach_dynamic(&sc->sc_ev_rxstall, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "rxstall");
+	    NULL, device_xname(self), "rxstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txintr, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txintr");
+	    NULL, device_xname(self), "txintr");
 	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "rxintr");
+	    NULL, device_xname(self), "rxintr");
 #endif
 
 	/* Make sure the interface is shutdown during reboot. */
 	sc->sc_sdhook = shutdownhook_establish(aumac_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "WARNING: unable to establish shutdown hook\n");
 	return;
 }
 
@@ -475,7 +471,7 @@ aumac_watchdog(struct ifnet *ifp)
 {
 	struct aumac_softc *sc = ifp->if_softc;
 
-	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: device timeout\n", device_xname(sc->sc_dev));
 	(void) aumac_init(ifp);
 
 	/* Try to get more packets going. */
@@ -631,7 +627,7 @@ aumac_rxintr(struct aumac_softc *sc)
 #define PRINTERR(str)							\
 	do {								\
 		error++;						\
-		printf("%s: %s\n", sc->sc_dev.dv_xname, str);		\
+		printf("%s: %s\n", device_xname(sc->sc_dev), str);	\
 	} while (0)
 
 		if (stat & RX_STAT_ERRS) {
@@ -702,14 +698,14 @@ aumac_rxintr(struct aumac_softc *sc)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
 			printf("%s: unable to allocate Rx mbuf\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			goto dropit;
 		}
 		if (len > MHLEN - 2) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				printf("%s: unable to allocate Rx cluster\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				m_freem(m);
 				goto dropit;
 			}
@@ -822,7 +818,7 @@ aumac_init(struct ifnet *ifp)
 
 out:
 	if (error)
-		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+		printf("%s: interface not running\n", device_xname(sc->sc_dev));
 	return (error);
 }
 
@@ -990,7 +986,7 @@ aumac_mii_wait(struct aumac_softc *sc, const char *msg)
 		delay(10);
 	}
 
-	printf("%s: MII failed to %s\n", sc->sc_dev.dv_xname, msg);
+	printf("%s: MII failed to %s\n", device_xname(sc->sc_dev), msg);
 	return (1);
 }
 
@@ -1000,9 +996,9 @@ aumac_mii_wait(struct aumac_softc *sc, const char *msg)
  *	Read a PHY register on the MII.
  */
 static int
-aumac_mii_readreg(struct device *self, int phy, int reg)
+aumac_mii_readreg(device_t self, int phy, int reg)
 {
-	struct aumac_softc *sc = (void *) self;
+	struct aumac_softc *sc = device_private(self);
 
 	if (aumac_mii_wait(sc, "become ready"))
 		return (0);
@@ -1023,9 +1019,9 @@ aumac_mii_readreg(struct device *self, int phy, int reg)
  *	Write a PHY register on the MII.
  */
 static void
-aumac_mii_writereg(struct device *self, int phy, int reg, int val)
+aumac_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct aumac_softc *sc = (void *) self;
+	struct aumac_softc *sc = device_private(self);
 
 	if (aumac_mii_wait(sc, "become ready"))
 		return;
@@ -1043,9 +1039,9 @@ aumac_mii_writereg(struct device *self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-aumac_mii_statchg(struct device *self)
+aumac_mii_statchg(device_t self)
 {
-	struct aumac_softc *sc = (void *) self;
+	struct aumac_softc *sc = device_private(self);
 
 	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
 		sc->sc_control |= CONTROL_F;

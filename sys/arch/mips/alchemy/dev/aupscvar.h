@@ -1,4 +1,4 @@
-/* $NetBSD: aupscvar.h,v 1.3 2006/10/02 07:32:16 gdamore Exp $ */
+/* $NetBSD: aupscvar.h,v 1.4 2012/01/03 07:36:02 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -52,7 +52,7 @@ struct aupsc_attach_args {
 };
 
 struct aupsc_protocol_device {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct aupsc_controller	sc_ctrl;
 };
 
