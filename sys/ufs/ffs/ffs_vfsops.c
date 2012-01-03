@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.271 2011/11/14 18:35:14 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.272 2012/01/03 15:44:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.271 2011/11/14 18:35:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.272 2012/01/03 15:44:00 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -524,7 +524,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 #ifdef WAPBL
 			if (fs->fs_flags & FS_DOWAPBL) {
 				printf("%s: replaying log to disk\n",
-				    fs->fs_fsmnt);
+				    mp->mnt_stat.f_mntonname);
 				KDASSERT(mp->mnt_wapbl_replay);
 				error = wapbl_replay_write(mp->mnt_wapbl_replay,
 							   devvp);
