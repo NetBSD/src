@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.962.4.1.4.6 2011/12/31 02:25:42 matt Exp $
+$NetBSD: pcidevs,v 1.962.4.1.4.7 2012/01/03 18:27:47 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2917,7 +2917,7 @@ product NETLOGIC XLP_OHCIUSB	0x1008	XLP OHCI USB controller
 product NETLOGIC XLP_NAE	0x1009	XLP Network Acceleration engine
 product NETLOGIC XLP_POE	0x100A	XLP Packet Ordering engine
 product NETLOGIC XLP_FMN	0x100B	XLP Fast Messaging Network
-product NETLOGIC XLP_RAID	0x100C	XLP Data Transfer and RAID engine
+product NETLOGIC XLP_DMA	0x100C	XLP Data Transfer and RAID engine
 product NETLOGIC XLP_SAE	0x100D	XLP Security accelerator
 product NETLOGIC XLP_PKE	0x100E	XLP RSA/ECC accelerator
 product NETLOGIC XLP_CDE	0x100F	XLP Compress/Decompression engine
