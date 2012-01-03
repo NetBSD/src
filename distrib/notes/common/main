@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.14 2010/11/06 03:42:21 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.14.2.1 2012/01/03 05:31:07 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd April 24, 2010
+.Dd January 3, 2012
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -455,1094 +455,120 @@ wouldn't exist.
 .Pp
 .
 .Nx
-5.1 is dedicated to the memory of Martti Kuparinen, who
-was the victim of a traffic accident in June 2010.
+5.1.1 is dedicated to the memory of Yoshihiro Masuda, who passed away
+in May 2011.
 .Pp
-Martti's technical contributions are too many to list here in full.
-He created and maintained numerous packages in pkgsrc, updated two
-packet filter solutions distributed with
-.Nx
-and improved several
-hardware drivers. Beyond that he was always helpful and friendly. His
-example encouraged users to contribute to the project and share their
-work with the community. Some of these users later became
-.Nx
-developers themselves thanks to Martti's efforts.
+He was a spiritual pillar of the BSD community in Japan.
+Through an impressive number of books and articles on BSD, he gave courage
+to BSD developers.
+We remember his passion and deep love for BSD.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between the NetBSD 5.0 and 5.1 Releases
+.Ss Changes Between the NetBSD 5.1 and 5.1.1 Releases
 .Pp
-The
 .Nx
 \*V
-release is the first feature update of the NetBSD 5.0 release branch.
+is the first critical/security update of the NetBSD 5.1 release branch.
 It represents a selected subset of fixes deemed critical for security or
-stability reasons, as well as new features and enhancements.
+stability reasons.
 .Pp
 Please note that all fixes in security/critical updates (i.e., NetBSD 5.0.1,
 5.0.2, etc.) are cumulative, so the latest update contains all such fixes
 since the corresponding minor release.
 These fixes also appear in minor releases (i.e., NetBSD 5.1, 5.2, etc.).
+.
 .Pp
 The complete list of changes can be found in the
-CHANGES-5.1:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.1/CHANGES-5.1
-file in the top level directory of the NetBSD 5.1 release tree.
+CHANGES-5.1.1:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.1.1/CHANGES-5.1.1
+file in the top level directory of the NetBSD 5.1.1 release tree.
 An abbreviated list is as follows:
 .Ss2 Security Advisory Fixes
 .(bullet
-NetBSD-SA2009-004 (NetBSD OpenPAM
-.Xr passwd 1
-changing weakness):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-004.txt.asc
+NetBSD-SA2010-012:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-012.txt.asc ,
+OpenSSL TLS extension parsing race condition.
 .It
-NetBSD-SA2009-005 (Plaintext Recovery Attack Against SSH):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-005.txt.asc
+NetBSD-SA2011-001:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-001.txt.asc ,
+BIND DoS due to improper handling of RRSIG records.
 .It
-NetBSD-SA2009-006 (Buffer overflows in ntp):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-006.txt.asc
+NetBSD-SA2011-002:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-002.txt.asc ,
+OpenSSL TLS extension parsing race condition.
 .It
-NetBSD-SA2009-007 (Buffer overflows in
-.Xr hack 6 ):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-007.txt.asc
+NetBSD-SA2011-003:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-003.txt.asc ,
+Exhausting kernel memory from user controlled value.
 .It
-NetBSD-SA2009-008 (OpenSSL ASN1 parsing denial of service and CMS signature
-verification weakness):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-008.txt.asc
+NetBSD-SA2011-004:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-004.txt.asc ,
+Kernel stack overflow via nested IPCOMP packet.
 .It
-NetBSD-SA2009-009 (OpenSSL DTLS Memory Exhaustion and DSA signature
-verification vulnerabilities):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-009.txt.asc
+NetBSD-SA2011-005:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-005.txt.asc ,
+ISC dhclient does not strip shell meta-characters in environment variables passed to scripts.
 .It
-NetBSD-SA2009-010 (ISC dhclient subnet-mask flag stack overflow):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-010.txt.asc
+NetBSD-SA2011-006:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-006.txt.asc ,
+BIND DoS via packet with rrtype zero.
 .It
-NetBSD-SA2009-011 (ISC DHCP server Denial of Service vulnerability):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-011.txt.asc
+NetBSD-SA2011-007:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-007.txt.asc ,
+LZW decoding loop on manipulated compressed files.
 .It
-NetBSD-SA2009-012 (SHA2 implementation potential buffer overflow):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-012.txt.asc
+NetBSD-SA2011-008:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-008.txt.asc ,
+OpenPAM privilege escalation.
 .It
-NetBSD-SA2009-013 (BIND named dynamic update Denial of Service vulnerability):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-013.txt.asc
-.It
-NetBSD-SA2010-002 (OpenSSL TLS renegotiation man in the middle vulnerability):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-002.txt.asc
-.It
-NetBSD-SA2010-003 (azalia(4)/hdaudio(4) negative mixer index panic):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-003.txt.asc
-.It
-NetBSD-SA2010-004 (amd64 per-page No-execute (NX) bit disabled):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-004.txt.asc
-.It
-NetBSD-SA2010-005 (NTP server Denial of Service vulnerability):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-005.txt.asc
-.It
-NetBSD-SA2010-006 (Buffer length checking errors in CODA):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-006.txt.asc
-.It
-NetBSD-SA2010-007 (Integer overflow in libbz2 decompression code):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-007.txt.asc
-.It
-NetBSD-SA2010-008 (sftp(1)/ftp(1)/glob(3) related resource exhaustion):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-008.txt.asc
-.It
-NetBSD-SA2010-010 (Buffer Length Handling Errors in netsmb):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-010.txt.asc
-.It
-NetBSD-SA2010-011 (OpenSSL Double Free Arbitrary Code Execution):
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-011.txt.asc
+NetBSD-SA2011-009:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-009.txt.asc ,
+BIND resolver DoS.
 .bullet)
 .
 .Pp
-Advisories prior to NetBSD-SA2009-004 do not affect
-NetBSD 5.0:
-.Lk http://www.NetBSD.org/support/security/patches-5.0.html .
+Advisories prior to NetBSD-SA2010-012 do not affect
+NetBSD 5.1.1:
+.Lk http://www.NetBSD.org/support/security/patches-5.1.1.html .
 .Ss2 Other Security Fixes
 .(bullet
-openssl: Fix CVE-2009-4355 and CVE-2010-0740.
+Fix a buffer overflow in libtelnet.
 .It
-Fix crash in openssl: handshake_dgst[] may be used without being allocated,
-causing NULL pointer dereference.
+OpenSSL: Fix CVE-2010-4180.
 .It
-Update BIND server and tools to 9.5.2-P2, fixing CVE-2009-0025, CVE-2009-4022,
-and CVE-2010-0097.
+Postfix: Update to 2.6.9, fixing CVE-2011-0411.
 .It
-.Xr ntpd 8 :
-Fix CVE-2009-3563.
+dhcpcd: Fix CVE-2011-0996.
 .It
-expat: Fix SA36425 and CVE-2009-3560.
+xrdb: Fix CVE-2011-0465.
 .It
-.Xr fts 3 :
-Avoid possible integer overflow on really deep dirs, and subsequent collateral
-damage.
-Received from OpenBSD via US-CERT as VU #590371.
-.It
-Fix a couple issues with POSIX message queues:
-.(bullet
-An invalid signal number passed to mq_notify() could crash the kernel on
-delivery -- add a boundary check.
-.It
-A user could set mq_maxmsg (the maximal number of messages in a queue) to a
-huge value on mq_open(O_CREAT) and later use up all kernel memory by
-mq_send() -- add a sysctl'able limit which defaults to 16*mq_def_maxmsg.
-.bullet)
-.
-.It
-.Xr arc4random 3 :
-Keep arc4_i and arc4_j synchronised after a rekeying.
-This prevents accidentally ending up in a short ARC4 cycle.
-.It
-freetype: Fix CVE-2009-0946.
-.It
-.Xr ftpd 8 :
-Fix a remote crash. PR 43023.
-.It
-openldap: Fix CVE-2009-3767.
-.It
-Fix an NX regression observed on amd64 kernels, where per-page execution right
-was disabled (therefore leading to the inability of the kernel to detect
-fraudulent use of memory mappings marked as not being executable).
+.Xr glob 3 :
+Prevent resource DoS from brace expansion.
 .bullet)
 .
 .Ss2 Kernel
 .(bullet
-Fix random "filesystem full" messages on large FFS file systems.
-.It
-Fix a regression in the 4.4BSD scheduler, improving interactive performance
-under load.
-.It
-Remove a race where physio_done() may use memory already freed.
-PR 39536.
-.It
-Fix a crash observed when trying to load a corrupted ELF kernel module.
-.It
-Fix PR 41566, where writes on the controlling tty were not being awoken from
-blocks.
-.It
-Various fixes for POSIX message queues.
-.It
-Fix a couple deadlocks in the VFS subsystem.
-PR 41374.
-.It
-Fix an issue on some architectures where a softint could fire on the wrong CPU.
-.It
-Fixes for POSIX advisory locks.
-.It
-A number of other stability fixes.
-.It
-Fix a case where
-.Xr setpriority 2
-returned EACCES instead of EPERM.
-PR 41489.
-.It
-.Xr lockf 3
-passes its arguments through to
-.Xr fcntl 2
-but is supposed to support -ve lengths (lock area before current offset).
-Nothing in libc or the kernel allowed for this, so some random part of the
-file would get locked.
-PR 41620.
-.It
-Fix ktrace of data from iovec based system calls. PR 41819.
-.It
-Fix stack size enforcement.
-.bullet)
-.
-.Ss2 File Systems
-.(bullet
-.Xr fsck_ext2fs 8 :
-Ignore the "-P" option as intended, to make this work with, e.g.,
-"fsck_flags=-pP" in
-.Pa /etc/rc.conf .
-PR 41490.
-.It
-UFS quotas: Add missing mutex_destroy() before pool_cache_put().
-Prevents a "Mutex error: lockdebug_alloc: already initialized" panic.
-.It
-.Xr tunefs 8 :
-Allow tunefs to clear any type of WAPBL log, not only in-filesystem ones.
-.It
-.Xr fsck_ffs 8 :
-Do some basic checks of the WAPBL journal, and fail if the kernel would
-refuse to mount the filesystem read/write.
-Add code to clear the bogus journal when not run in preen (-p) mode.
-.It
 .Xr wapbl 4 :
-If the WAPBL journal can't be read (ffs_wapbl_replay_start() fails), mount
-the filesystem anyway if MNT_FORCE is present.
-This allows to still boot single-user a system with a corrupted WAPBL on /,
-and so get a chance to run fsck to fix it.
+Fix errors that can lead to file system corruption and panics.
 .It
-smbfs:
-.(bullet
-Fix some panics while trying to umount a smbfs share.
-.It
-Fix detection of SMB capabilities according to the CIFS spec:
-.(bullet
-SMB_CAP_LARGE_FILES advertises support for 64-bit file offsets.
-.It
-SMB_CAP_LARGE_READX and SMB_CAP_LARGE_WRITEX advertise support for large
-reads and writes (larger than 64KB).
-PR 42175.
-.bullet)
-.
-.It
-Add support for file sizes greater than 4GB.
-.It
-Prevent malicious local program from causing a kernel crash.
-.bullet)
-.
-.It
-A number of fixes for ext2fs.
-PR 28712.
-.It
-procfs: Fix memory leak.
-PR 42053.
-.It
-Fix
-.Xr cp 1
-from NTFS. PR 38531.
-.It
-cd9660: Change cd9660_mount, in MNT_UPDATE case, to check dev_t's for
-equality instead of just vnode pointers.
-Fixes erroneous "Invalid argument" errors from
-.Xr mount 8
-with -u against cd9660 root in the presence of mfs or tmpfs
-.Pa /dev
-prepared after initial mountroot.
-.It
-A number of fixes to ffs snapshots.
-.It
-sysctlfs: Fix a crash while trying to read nodes on amd64.
-PR 41494.
-.It
-Various improvements to UDF.
-.It
-xattr: Fix system crash which could be triggered by a malicious command.
-.It
-coda: Fix incomplete ioctl parameter verification.
-.It
-ffs: Fix a race condition which could lead to data corruption.
-.It
-.Xr wapbl 4 :
-Fix replay problems which could corrupt the fs. PR 43336.
+Several stability fixes.
 .bullet)
 .
 .Ss2 Networking
 .(bullet
-.Xr ath 4 :
-Remove the binary HAL and update to the open source HAL.
+Clean up setting ECN bit in TOS. PR 44742.
 .It
-Add the
-.Xr age 4
-driver for Attansic L1.
+Prevent NFS server hang under load. PR 45093.
 .It
-Add the
-.Xr ale 4
-driver for Atheros AR8121/AR8113/AR8114.
-.It
-.Xr brgphy 4 :
-Add support for BCM5462, BCM54K2 and BCM5722.
-.It
-.Xr arp 4 :
-Don't require the gateway address to have room for both an interface name and
-address.
-Fixes a regression in 'arp -s ...' on interfaces such as xennet0 with unusually
-long names. PR 41878.
-.It
-Make tcp msl (max segment life) tunable via sysctl net.inet.tcp.msl.
-.It
-Fixed a number of
-.Xr bge 4
-bugs.
-.It
-.Xr ifpci 4 :
-Fix endianness issues when accessing the B-channel fifos.
-.It
-.Xr wm 4 :
-.(bullet
-Numerous fixes for various chips.
-.It
-Add SIOCSIFADDR support for setting the AF_LINK address, necessary for agr to
-be able to set the mac addresses of each port to the agr address (i.e., so it
-can receive all intended traffic at the hardware level).
-.It
-Enable hardware VLAN support.
-.bullet)
-.
-.It
-.Xr re 4 :
-.(bullet
-Detect RTL8169CP, RTL8168D/8111D, and RTL8103E variants.
-.It
-Add hardware checksum support for newer 8168/8111/8102 chips.
-.It
-Fix RX hardware checksum for DESCV2 chips.
-PR 40605.
-.bullet)
-.
-.It
-.Xr le 4 :
-Don't immediately switch UTP/AUI ports on lost carrier.
-.It
-.Xr agr 4 :
-Add vlan support and hardware offload capabilities.
-Add support for disabling the LACP protocol by setting LINK1 on the agr
-interface.
-.It
-.Xr bnx 4 :
-.(bullet
-Protect against spurious "bnx0: Double mbuf allocation failure!" panics.
-.It
-Add support for BCM5709 and BCM5716.
-.bullet)
-.
-.It
-Follow exactly the recommendation of draft-ietf-tcpm-tcpsecure-11.txt: Don't
-check against the last ack received, but the expected sequence number.
-This makes RST handling independent of delayed ACK.
-.It
-.Xr vr 4 :
-Add suspend/resume support.
-.It
-.Xr carp 4 :
-Improve logging. PR 38260.
-.It
-Give 100BASE-TX full duplex higher priority than 100BASE-T4.
-.It
-Fix wpa with
-.Xr ral 4 .
-.It
-.Xr vlan 4 :
-Inherit the parent's TCP segmentation offload capability.
-.It
-dhcpcd:
-.(bullet
-Update to 5.1.3.
-.It
-Add an rc.d script.
-.It
-Only start dhcpcd per interface if not running the full dhcpcd daemon.
-Only stop dhcpcd per interface if it's running for the interface.
-PR 40320.
-.bullet)
-.
-.It
-Fix a panic when trying to disable IPFilter before enabling it.
-PR 41364.
-.It
-.Xr ping 8 :
-Deal with source route and record route specially giving a meaningful error
-message when remote side doesn't support record route.
-PR 41111.
-.It
-.Xr ifconfig 8 :
-Don't require a "vlan" argument with "-vlanif". "ifconfig vlan0 -vlanif" now
-works as one would expect.
-.It
-.Xr tap 4 :
-Fix a potential leak on device close.
-.Xr bpf 4 :
-Prevent malicious bytecode from crashing the kernel with a divide-by-zero trap.
-.It
-UDPv6: Prevent local crash by malicious user program.
-.bullet)
-.
-.Ss2 Miscellaneous Drivers
-.(bullet
-.Xr ehci 4 :
-Add a workaround for ATI SB600 and SB700 revisions A12 and A13 to avoid a USB
-subsystem hang when the system has multiple USB devices connected to it or one
-device is re-connected often.
-.It
-.Xr uftdi 4 :
-Add support for multiple channel cards, specifically quad channel FT4232H.
-.It
-.Xr ums 4 :
-Add quirks to make MS Wireless Laser Mouse 6000 work.
-PR 41737.
-Add support for USB HID devices that report absolute coordinates instead of
-relative movement data, e.g. touchpanels. Add support for the Microsoft
-Natural Ergonomic Desktop 7000 mouse.
-.It
-.Xr apm 4 :
-Fix suspend/resume.
-.bullet)
-.
-.Ss2 Audio
-.(bullet
-Add
-.Xr hdaudio 4 ,
-a standards-compliant driver for Intel High Definition Audio.
-It will replace
-.Xr azalia 4
-eventually.
-.It
-Add
-.Xr gcscaudio 4 ,
-an AMD Geode CS5536 audio driver.
-.It
-Add support for playback- or capture-only devices.
-PR 42050.
-.It
-.Xr pad 4 :
-Catch up to
-.Xr audio 4
-device_t/softc split to prevent pad from corrupting its child device's softc.
-.It
-.Xr audio 4 :
-OSS audio allows mixer operations on the dsp device.
-NetBSD would previously return EINVAL in these circumstances.
-This can break audio in apps running under Linux emulation.
-Select whether to call mixer_ioctl() or audio_ioctl() based on whether the
-command smells like a mixer ioctl or not.
-.bullet)
-.
-.Ss2 Security
-.(bullet
-.Xr pam 3 :
-Restore the good old UNIX behavior of root password changing: only root may
-change the root password.
-.It
-.Xr racoon 8 :
-Fix a bug where racoon used a wrong IPsec-SA handle that was for another peer
-if it received an ISAKMP message for IPsec-SA that has the same message-id as
-the message-id that was received before.
-.It
-.Xr ipsec 4 :
-Add a missing splx() call.
-PR 41701.
-.It
-.Xr opencrypto 9 :
-.(bullet
-Extend the API to allow the destination buffer size to be specified when it is
-not the same size as the input buffer.
-.It
-Add user-space access to compression features.
-.It
-Add software gzip support (CRYPTO_GZIP_COMP).
-.It
-Add the fast version of crc32 from zlib to libkern.
-.It
-Fix PRs 41069 and 41070.
-.bullet)
-.
-.bullet)
-.
-.Ss2 Storage
-.(bullet
-Add support for RAIDframe parity maps.
-Drastically reduces the amount of time spent checking parity after an unclean
-shutdown by keeping better track of which regions might have had outstanding
-writes.
-Enabled by default; can be disabled on a per-set basis, or tuned, with the new
-.Xr raidctl 8
-commands.
-.It
-Add sdmmc framework.
-.It
-Add
-.Xr sdhc 4 ,
-a driver for SD controllers following the SD Host Controller Standard
-Simplified Specification.
-.It
-Add
-.Xr wb 4 ,
-a driver for Winbond W83L518D SD/MMC readers.
-.It
-.Xr siisata 4 :
-Sync with HEAD, fixing a number of bugs.
-PR 41579.
-.It
-.Xr mfi 4 :
-Fix command list corruption seen on heavy I/O load.
-Add support for MFI gen2 devices.
-.It
-.Xr twa 4 :
-Disable completely bogus DIAGNOSTIC check.
-.It
-.Xr wdc 4 :
-use 8bits access to legacy IDE registers through the SATA interface (except
-data registers).
-Stops errors such as the following when probing SATA drives through controllers 
-that offer the legacy pciide interface: viaide1 channel 0: reset failed for
-drive 0
-.It
-.Xr piixide 4 :
-Add Intel 3400 support.
-.bullet)
-.
-.Ss2 Platform specific
-.(bullet
-x86 (amd64 and i386)
-.(bullet
-Add a workaround for a bug with some Opteron revisions where locked operations
-sometimes do not serve as memory barriers, allowing memory references to bleed
-outside of critical sections.
-.It
-.Xr ichlpcib 4 :
-Fix watchdog code:
-.(bullet
-The timer bound constants are in tick, so convert period to tick before
-checking it against the bounds.
-.It
-For ICH5 or older, fix code that would have always written a 0 period to the
-register.
-.bullet)
-.
-.It
-Add CPU topology detection support for AMD processors.
-.It
-.Xr asus 4 :
-.(bullet
-Add experimental cpu fan/voltage switching support (sysctl hw.asus0.*).
-.It
-Add fan sensor.
-.bullet)
-.
-.It
-Add hw.wake.* sysctl subtree for toggling which devices are allowed to restore
-the system from sleep.
-By default, the following devices are enabled for wake: sleep/power buttons,
-lid switch, pc kbd controller.
-.It
-.Xr agp 4 :
-Add support for Intel G35, G45, and Q45.
-.It
-Cut down on the number of lines used in acpi autoconf messages.
-.It
-Extend CPU probe of Intel processors to handle extended-models: new Intel 45nm
-processors, Core i7, Atom, and the 45nm Xeon MP.
-Properly decode several new Intel cache descriptors, as listed in the most
-recent (March 2009) edition of Intel's Application Note 485.
-PRs 41289 and 41290.
-.It
-.Xr cpuctl 8 :
-Add newer VIA C7 core and VIA Nano.
-When printing an unknown VIA CPU, default to 'Unknown IDT/VIA' instead of 'C3'.
-.It
-Fix NetBSD under qemu with ACPI enabled. PR 38729.
-.It
-.Xr acpi 4 :
-If the firmware describes duplicate keyboard controller nodes, don't panic
-when the driver fails to map registers. PR 39671.
-.It
-Fix a bug where mapping the very end of iomem accidentally returns an address
-in the ISA hole.
-Fixes ohci on VirtualPC 7 for Mac, which places OHCI at base address
-0xfffff000 size 0x1000.
-.It
-int 15h/AH=86h (WAIT) doesn't work properly on all hardware and emulators, so
-for the countdown use the more coarsely grained sleep implementation based on
-int 1ah/AH=00h (GET SYSTEM TIME).
-.It
-Use the TSC and current multiplier to calculate bus clock on VIA C7 Esther.
-.It
-Add support for VIA C7 temperature sensors (options VIA_C7TEMP) and enable in
-i386 GENERIC kernel.
-.It
-Fix a regression in the boot loader where pressing a letter not bound to a
-menu item would select a numeric item.
-.It
-Enable
-.Xr cgd 4
-support on all amd64 and i386 XEN kernels.
-.bullet)
-.
-.It
-amd64
-.(bullet
-Handle protection faults properly, returning SIGSEGV instead of SIGBUS.
-.It
-Ensure FP state is reset, if FP is used in a signal handler.
-PR 39299.
-.It
-Build kernel modules with -mno-red-zone like the kernel is built.
-.It
-On amd64, add a third free list distinct from the default free list, holding
-RAM between 16Mb and 4Gb.
-This helps preventing
-.Xr bus_dma 9
-memory allocation failures for 32bit DMA on large-memory machines.
-.bullet)
-.
-.It
-i386
-.(bullet
-.It
-The FPU Tag word is a 16bit register, in FPU (387) mode it defines 2-bit
-tags for each FPU data register, in MMX mode it defines 1-bit tags for each
-data register.
-The single bit tags are stored in the lower 8 bits and thus in the first byte
-of the save frame.
-.It
-Fix a local user crash.
-.bullet)
-.It
-ARM: Work-around a possible process exit corner case which can leave stale
-data in the cache after a context-switch.
-PR 41058.
-.It
-sgimips
-.(bullet
-haltwo(4): Set delta value for the mixer's master channel.
-.It
-Add a driver for the Indy's front panel buttons. Power button presses are
-reported to sysmon, volume control buttons are reported to PMF.
-.It
-Fixes for newport video.
-.bullet)
-.
-.It
-alpha
-.(bullet
-A number of multiprocessor fixes.
-PRs 41106 and 42174.
-.It
-Add support for booting off a couple of common RAID adapters found on several
-models of alpha systems: mlx [Mylex DAC060] and iop [I2O].
-PR 25829.
-.It
-Change the kernel text to 0xfffffc0000430000 (which is where Tru64 has its
-kernel).
-.It
-The tsc(4) bus initialization was using a single statically allocated extent
-storage for each tsp(4), which caused a LOCKDEBUG kernel to fail because the
-extent storage contained a mutex which panics when the second mutex_init() is
-attempted.
-Put the extent storage into the tsp_config structure so each tsp(4) gets its
-own.
-PR 38358.
-.bullet)
-.
-.It
-amiga
-.(bullet
-Switch amiga to the common m68k pmap.
-.It
-Fix a problem with the timecounter running backwards everytime the hardware
-counter wraps and the clock-interrupt is not yet serviced by hardclock().
-.It
-Improve precision of small kernel delays.
-.It
-Fix keyboard handshaking problems on Amiga 1200.
-.bullet)
-.
-.It
-atari
-.(bullet
-Rewrite the
-.Xr binpatch 8
-utility to add support for ELF binaries, old src/usr.sbin/mdsetimage sources
-which support misc executable formats without LGPL'ed libbfd.
-.It
-Add a workaround for annoying "WARNING: negative runtime; monotonic clock has
-gone backwards" message.
-.It
-.Xr fd 4 :
-Correctly detect the default density.
-.bullet)
-.
-.It
-hp300: Make install.md probe
-.Xr cd 4
-devices properly.
-.It
-hpcmips: Fix pcic kthread creation timing.
-PRs 41791 and 41164.
-.It
-m68k: Ensure functions like
-.Xr mmap 2 ,
-.Xr mremap 2 ,
-.Xr shmat 2
-or
-.Xr sbrk 2
-return -1 in case of an error.
-A side benefit of this is to fix a segfault caused by jemalloc when
-.Xr mmap 2
-failed.
-.It
-macppc: pbms(4): Avoid an immediate crash during attach, and fix the aspect
-ratio of the trackpad on the geyser2 model.
-.It
-pmax: Make
-.Xr ksyms 4
-actually work.
-.It
-sh3: Fix logic error in copyinstr() when deciding whether to return EFAULT or
-ENAMETOOLONG.
-.It
-sparc64:
-.(bullet
-Fix long double support in 32bit libc. PR 41406.
-.It
-When preparing the initial trap frame for a new forked lwp, explicitly clear
-condition code.
-Otherwise we might catch a signal before we ever return to userland.
-PR 41302.
-.It
-Fix a disk I/O regression under heavy load.
-.It
-Build the sunleo X driver.
-.It
-Add
-.Xr lom 4 ,
-a driver for LOMlite lights out management hardware monitor and watchdog timer.
-.It
-sab(4): Allow the RSC to be the console on an E250, by checking for
-RSC-specific properties, and by not changing the port baud rate.
-.bullet)
-.
-.It
-vax
-.(bullet
-binutils: Allocate relocation section using bfd_zalloc() to ensure no garbage
-relocations when not all the entries are used.
-PR 39182.
-.It
-Keep track of the previous ICR value and hardclock_ticks to ensure the 32 bit
-counter doesn't go backwards.
-Also, the ICR runs from -10000 to -1, so adjust the value when reading it.
-Now mfpr works quite nicely on a 4000/90.
-.bullet)
-.
-.It
-sparc
-.(bullet
-Enable
-.Xr ddb 4
-in GENERIC-like kernels.
-.It
-Fix a number of issues with floppies.
-.It
-Add apc(4), a driver for the Aurora Personality Chip (APC) found on
-SPARCstation-4/5, and emulated by qemu to idle the simulator when the CPU is
-idle.
-Only the CPU idle part implemented at this time.
-.bullet)
-.
-.It
-xen
-.(bullet
-Now a XEN3_DOM0 kernel properly updates the CMOS time.
-.It
-Implement DIOCGDISKINFO for xbd disk driver.
-.It
-xbdback: implement and publish "feature-flush-cache". xbd: if
-feature-flush-cache is present, use it for DIOCCACHESYNC.
-Should improve WAPBL reliability of Xen guests on a NetBSD dom0.
-.It
-xennet: Write a "feature-rx-notify" to the xenstore, which is used by recent
-linux dom0 kernels.
-This reduces packet loss when using a NetBSD domU on such linux dom0.
-.It
-xennetback: Announce feature-rx-copy and feature-rx-flip.
-Add support for request-rx-copy.
-PR 40650.
-.It
-Add i368PAE support to Xen3 dom0.
-.It
-Add Xen3 PCI pass-through support.
-.It
-Fix stalled xbdback detach that would stall the whole xenbus thread,
-preventing new domUs from being created.
-.It
-Make it possible to use netbsd-5 domUs running on a Xen2 hypervisor.
-.bullet)
-.
+.Xr gem 4 :
+Fix corrupted packet problem on 100Mb/s half duplex links.
 .bullet)
 .
 .Ss2 Miscellaneous
 .(bullet
-.Xr sh 1 :
-Make the cd builtin accept and ignore -P.
-PR 42557.
+Update and add some TNF ssh keys to /etc/ssh/ssh_known_hosts.
 .It
-.Xr fdisk 8 :
-Fix issues with large disks.
-.It
-.Xr savecore 8 :
-Instead of exiting with an obscure error message if -N /kernelname isn't
-specified, blithely assume the kernel will consume around 20 megs.
-.It
-.Xr newfs 8 :
-Issue a better error message if attempting to create a file system on a block
-device.
-Inspired by PR 41127.
-.It
-.Xr newfs_msdos 8 :
-Make fs size detection get proper size rather than disk size.
-.It
-.Xr termcap 3 :
-Only add the ZZ capability for termcap entries that are larger than 1023 bytes.
-.It
-.Xr dkctl 8 :
-List the partition types addwedge understands.
-PR 37252.
-Make dkctl conform to its man page and print the device name on addwedge when
-the addition was successful (as well as indicating success).
-.It
-If the current locale doesn't define the 'thousands' grouping info then use sane defaults (',' every 3 digits).
-PR 40714.
-.It
-.Xr pthread 3 :
-.(bullet
-Make nanosleep cancelable again.
-.It
-Improve the algorithm used in pthread creation so that it does a better job of
-reusing dead threads.
-.It
-Make sure thread id is set correctly in case a threaded program forks from a
-thread other than the main thread.
-Fixes issues with, e.g., ruby.
-.bullet)
-.
-.It
-.Xr newsyslog 8 :
-Reset ziptype on each line. Failure to do this caused any log file to be
-compressed if it was listed after a line using Z or J flag.
-.It
-nvi(1):
-.(bullet
-Fix a problem where the pattern /\$/ didn't match a dollar sign.
-PR 41781.
-.It
-Make :ESC, #+ and #- work again.
-.It
-Rename "expandtabs" to "expandtab" to match documentation.
-.It
-Implement the "et" abbreviation for expandtab.
-.It
-Fix regexp on LP64 systems.
-PR 41924.
-.It
-Fix format string bug: filenames may contain % characters.
-.It
-Fix ~ on big-endian architecturs.
-.bullet)
-.
-.It
-.Xr pstat 8 :
-Distinguish between UFS1 and UFS2 inodes by reading the ufsmount structure,
-the previous heuristic of comparing the size fields of inode and dinode failed.
-.It
-.Xr btpin 1 :
-Add a -P flag to attempt immediate pairing.
-.It
-.Xr ksh 1 :
-Support 0xnn for hexadecimal constants, as well as 16#nn.
-PR 40512.
-.It
-Add support for fr_*.UTF-8 locale. Setting LANG to fr_*.UTF-8 won't get the
-message catalog right (they're encoded in iso-8859-1), but other locale
-functions should work properly.
-.It
-Add Solaris-like dlinfo() interface to the ELF dynamic linker.
-Implement RTLD_DI_LINKMAP which returns a pointer to the linkmap chain at the
-given object.
-.It
-.Xr kill 1 :
-Make sure that numerical signals and pids are in range for their types.
-PR 42143.
-.It
-.Xr pcap 3 :
-pcap_lookupnet(): reset ifr before SIOCGIFNETMASK.
-Without it we get back a bogus netmask.
-PR 41367.
-.It
-.Xr man 1 :
-Accept a pathname to a man file, e.g., "man ./man.1"
-.It
-.Xr setlocale 3 :
-Handle nonexistent locales properly.
-PR 42124.
-.It
-.Xr amldb 8 :
-Check validity of parent to avoid a potential segfault.
-.It
-.Xr sort 1 :
-Fix a ton of bugs including but not limited to PR 18614 PR 27257 PR 25551 PR 221
-82 PR 31095 PR 30504 PR 36816 PR 37860 PR 39308 PR 42094.
-.It
-.Xr user 8 :
-Fix -p flag: rm_eo is the first character *after* the match, so no need for a +1. Blowfish hashes are only 53 chars long, not 54.
-.It
-Update libevent to 1.4.11-stable.
-.It
-.Xr hunt 6 :
-Fix possible remote DoS of a running hunt game, and prevent a possible
-theoretical attack involving >= 1 billion ammo.
-.It
-.Xr systat 1 :
-Fix problems with SIGWINCH. PR 42161.
-.It
-.Xr gzip 1 :
-.(bullet
-Fix support for multi-section bzip2 files, as created by pbzip2.
-.It
-Add "pack" uncompression support.
-.It
-Avoid an overflow in suffix handling.
-.bullet)
-.
-.It
-audio{ctl,play,record}: Add extended WAVE header support, attempt to play a
-bunch more WAV files.
-.It
-Update Postfix to 2.6.5.
-.It
-.Xr df 1 :
-Block numbers are measured in f_frsize units.
-Make -P option use this instead of f_bsize.
-Also account for reserved blocks like normal non-P output.
-PR 41541.
-.It
-Update libfetch to 2.30.
-.It
-.Xr window 1 :
-Fix a SEGV with certain terminal types.
-PR 41581.
-.It
-Update pkg_install to 20100204:
-.(bullet
-audit-packages.conf(5) has been superseded by pkg_install.conf(5).
-The default configuration is the same.
-.It
-Support for pkg_view(1) has been retired.
-.It
-The functionality of audit-packages(1) and download-vulnerability-list(1) has
-moved into
-.Xr pkg_admin 1 .
-Wrapper scripts that handle the common use cases are provided.
-.bullet)
-.
-.It
-.Xr racoonctl 8 :
-Adjust ADMINPORTDIR to match that of racoon (
-.Pa /var/run
-). PR 41376.
-.It
-.Xr schedctl 8 :
-Skip LSIDL and LSZOMB threads when retrieving info.
-.It
-.Xr postinstall 8
-now knows about
-.Pa /etc/dhcpcd.conf .
-.It
-.Xr drvctl 8 :
-Allow querying for root devices in the tree by specifying an empty device name.
-Ensure that l_devname is NUL-terminated and fail otherwise. If drvctl -l is
-used without argument, print the root device nodes.
-.It
-.Xr paste 1 :
-Null-terminate the delimiter list string after processing escapes (which can
-shorten it) because the code that issues delimiters depends on it being
-null-terminated.
-This caused e.g. paste -d '\0' a b to print a '0' at the beginning of each
-line.
-PR 41159.
-.It
-Don't attempt to read or write ~/.lesshst if it's not a regular file or a
-symlink to a regular file.
-Previously, symlinking to
-.Pa /dev/null
-would cause less to trash
-.Pa /dev/null
-if run with sufficient privileges.
-PR 42237.
-.It
-Make rtsold_flags default to -a.
-PR 39657.
-.It
-libevent: Add -fno-strict-aliasing to work around problems with GCC 4 and
-strict-aliasing.
-.It
-Renamed a number of internal getline() functions to get_line() so as to
-compile under -current.
-.It
-Install the Xvidtune app-defaults file.
-PR 41577.
-.It
-Fixes to Linux compat:
-.(bullet
-In
-.Xr sendmsg 2 ,
-copy the msghdr structure before trying to use it.
-.It
-In linux_sys_sched_getaffinity(), do not leak memory on error.
-.bullet)
-.
-.It
-Various METALOG fixes, including sorting entries.
-PRs 24457 and 41155.
-.It
-Update DRM code.
-.It
-.Xr cdce 4 :
-Add support for the Openmoko Freerunner.
-PR 40049.
-.It
-.Xr pms 4 :
-Add elantech multi-touch support.
-.It
-Big X.Org update.
-.It
-.Xr ugen 4 :
-ugen_get_cdesc() can return NULL.
-When this happens, return EINVAL error instead of crashing.
-.It
-Fix a race between nfsd and local rm.
-PR 41147.
-.It
-.Xr puc 4 :
-Add support for Oxford Semiconductor OXmPCI952 2 port UARTs.
-Add support for the IBM 481033H SCC.
-.It
-.Xr sysinst 8 :
-Try ATA/SCSI identify commands and when successful, use the model information
-along with the disk size when creating the 'Available disks' menu.
-PR 41925.
-.It
-Fix PR kern/41659: add missing splx() in FAST_IPSEC code.
-.It
-Add hungarian keyboard layout.
-.It
-Add Swiss German keyboard layout.
-.It
-Introduce MKSUBPIXEL, which allows enabling subpixel rendering code in FreeType.
-.It
-Support drives over 1TB in size in sysinst.
-Error if drive is over 2TB in in size (and thus over the disklabel limit).
-.It
-Update and add some TNF ssh keys to
-.Pa /etc/ssh/ssh_known_hosts .
-.It
-Prevent
-.Xr makefs 8
-from creating invalid ISO format on rockridge support which causes fatal errors in ARC BIOS firmware on MIPS Magnum R4000.
-PR 42410.
-.It
-.Xr sysinst 8 :
-When creating /etc/fstab: for the first swap partition use type "sw,dp"
-instead of "sw", so dump device gets configured correctly if swap is not on
-the second partition.
-PR 42148.
-.It
-sys/atomic.h: Make atomics usable from C++.
-.It
-.Xr wc 1 :
-Add support for "-L" option (longest line) as present in the GNU and FreeBSD
-versions of "wc".
-.It
-libm: Add f{min,max,dim}{,l,f}.
-.It
-jemalloc: Fix race condition on reallocation of huge category.
-PR 42876.
-.It
-sys/null.h: Enclose (void *)0 in an extra set of parenthese to make the
-result usable in arbitrary expressions.
-PR 41890.
+Update tzdata to 2011n.
 .bullet)
 .
 .Ss2 "Known Problems"
@@ -1644,6 +670,8 @@ Changes between the 4.0 and 5.0 releases.
 Changes between the initial 5.0 branch and final release of 5.0.
 .It Li CHANGES-5.1
 Changes between the 5.0 and 5.1 releases.
+.It Li CHANGES-5.1.1
+Changes between the 5.1 adn 5.1.1 releases.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
@@ -1672,14 +700,12 @@ This set contains the
 .Dq gnu
 sources, including the source for the compiler, assembler, groff,
 and the other GNU utilities in the binary distribution sets.
-.showsize 79 450
 .It Sy sharesrc
 This set contains the
 .Dq share
 sources, which include the sources for the man pages not associated
 with any particular program; the sources for the typesettable document
 set; the dictionaries; and more.
-.showsize 7 32
 .It Sy src
 This set contains all of the base
 .Nx
@@ -1688,17 +714,14 @@ This set contains all of the base
 .Sy sharesrc ,
 or
 .Sy syssrc .
-.showsize 59 350
 .It Sy syssrc
 This set contains the sources to the
 .Nx
 \*V kernel for all architectures as well as the
 .Xr config 1
 utility.
-.showsize 34 197
 .It Sy xsrc
 This set contains the sources to the X Window System.
-.showsize 127 694
 .tag)
 .Pp
 All the above source sets are located in the
@@ -1806,6 +829,10 @@ may wish to bear the
 following problems and compatibility issues in mind when upgrading to
 .Nx
 \*V.
+.Pp
+Note: None of the items mentioned below are relevant if upgrading from
+5.1.
+They still apply if you are upgrading from a pre-5.1 release, though.
 .Pp
 If your port uses X.Org and you see messages from the X server indicating
 that no devices were found, you may need to run
@@ -2281,8 +1308,10 @@ If you're one of them, and would like to be mentioned, tell us!)
 .br_ne 1i
 .It Em "The NetBSD core group:"
 .It Ta Ta
+.It Ta Alan Barrett Ta Mt apb@NetBSD.org
 .It Ta Alistair Crooks Ta Mt agc@NetBSD.org
-.It Ta Quentin Garnier Ta Mt cube@NetBSD.org
+.It Ta Matthew Green Ta Mt mrg@NetBSD.org
+.It Ta Chuck Silvers Ta Mt chs@NetBSD.org
 .It Ta Matt Thomas Ta Mt matt@NetBSD.org
 .It Ta YAMAMOTO Takashi Ta Mt yamt@NetBSD.org
 .It Ta Christos Zoulas Ta Mt christos@NetBSD.org
@@ -2293,76 +1322,64 @@ If you're one of them, and would like to be mentioned, tell us!)
 .\"
 .\" XXX created by list-portmasters.pl
 .\"
+.It Ta Ta Ta
 .It Ta Erik Berls                 Ta Mt      cyber@NetBSD.org Ta Sy cobalt
 .It Ta Manuel Bouyer              Ta Mt     bouyer@NetBSD.org Ta Sy xen
 .It Ta Simon Burge                Ta Mt     simonb@NetBSD.org Ta Sy evbmips
 .It Ta Simon Burge                Ta Mt     simonb@NetBSD.org Ta Sy pmax
 .It Ta Simon Burge                Ta Mt     simonb@NetBSD.org Ta Sy sbmips
 .It Ta Julian Coleman             Ta Mt        jdc@NetBSD.org Ta Sy atari
-.It Ta Marcus Comstedt            Ta Mt     marcus@NetBSD.org Ta Sy dreamcast
 .It Ta Andrew Doran               Ta Mt         ad@NetBSD.org Ta Sy amd64
 .It Ta Andrew Doran               Ta Mt         ad@NetBSD.org Ta Sy i386
 .It Ta Matthias Drochner          Ta Mt   drochner@NetBSD.org Ta Sy cesfic
 .It Ta Gavan Fantom               Ta Mt      gavan@NetBSD.org Ta Sy iyonix
-.It Ta Jaime A Fournier           Ta Mt       ober@NetBSD.org Ta Sy zaurus
-.It Ta Matt Fredette              Ta Mt   fredette@NetBSD.org Ta Sy sun2
-.It Ta Ichiro FUKUHARA            Ta Mt     ichiro@NetBSD.org Ta Sy hpcarm
-.It Ta Chris Gilbert              Ta Mt      chris@NetBSD.org Ta Sy cats
-.It Ta Ben Harris                 Ta Mt      bjh21@NetBSD.org Ta Sy acorn26
-.It Ta Ross Harvey                Ta Mt       ross@NetBSD.org Ta Sy alpha
 .It Ta Nick Hudson                Ta Mt      skrll@NetBSD.org Ta Sy hp700
 .It Ta Martin Husemann            Ta Mt     martin@NetBSD.org Ta Sy sparc64
-.It Ta IWAMOTO Toshihiro          Ta Mt     toshii@NetBSD.org Ta Sy hpcarm
-.It Ta Darrin Jewell              Ta Mt        dbj@NetBSD.org Ta Sy next68k
 .It Ta S\(/oren J\(/orvang        Ta Mt      soren@NetBSD.org Ta Sy sgimips
-.It Ta Wayne Knowles              Ta Mt        wdk@NetBSD.org Ta Sy mipsco
 .It Ta Takayoshi Kochi            Ta Mt      kochi@NetBSD.org Ta Sy ia64
-.It Ta Paul Kranenburg            Ta Mt         pk@NetBSD.org Ta Sy sparc
 .It Ta Michael Lorenz             Ta Mt   macallan@NetBSD.org Ta Sy macppc
 .It Ta Anders Magnusson           Ta Mt      ragge@NetBSD.org Ta Sy vax
-.It Ta Cherry G. Mathew           Ta Mt     cherry@NetBSD.org Ta Sy ia64
-.It Ta NISHIMURA Takeshi          Ta Mt    nsmrtks@NetBSD.org Ta Sy x68k
 .It Ta Tohru Nishimura            Ta Mt   nisimura@NetBSD.org Ta Sy luna68k
 .It Ta Tohru Nishimura            Ta Mt   nisimura@NetBSD.org Ta Sy sandpoint
-.It Ta Andrey Petrov              Ta Mt     petrov@NetBSD.org Ta Sy sparc64
 .It Ta Scott Reynolds             Ta Mt     scottr@NetBSD.org Ta Sy mac68k
 .It Ta Tim Rightnour              Ta Mt    garbled@NetBSD.org Ta Sy ofppc
 .It Ta Tim Rightnour              Ta Mt    garbled@NetBSD.org Ta Sy prep
 .It Ta Tim Rightnour              Ta Mt    garbled@NetBSD.org Ta Sy rs6000
 .It Ta Noriyuki Soda              Ta Mt       soda@NetBSD.org Ta Sy arc
 .It Ta Ignatios Souvatzis         Ta Mt         is@NetBSD.org Ta Sy amiga
-.It Ta Jonathan Stone             Ta Mt   jonathan@NetBSD.org Ta Sy pmax
-.It Ta Shin Takemura              Ta Mt   takemura@NetBSD.org Ta Sy hpcmips
+.It Ta Ignatios Souvatzis         Ta Mt         is@NetBSD.org Ta Sy amigappc
+.It Ta NISHIMURA Takeshi          Ta Mt    nsmrtks@NetBSD.org Ta Sy x68k
 .It Ta Matt Thomas                Ta Mt       matt@NetBSD.org Ta Sy alpha
+.It Ta Matt Thomas                Ta Mt       matt@NetBSD.org Ta Sy ibmnws
 .It Ta Matt Thomas                Ta Mt       matt@NetBSD.org Ta Sy netwinder
-.It Ta Jason Thorpe               Ta Mt    thorpej@NetBSD.org Ta Sy algor
-.It Ta Jason Thorpe               Ta Mt    thorpej@NetBSD.org Ta Sy evbarm
-.It Ta Jason Thorpe               Ta Mt    thorpej@NetBSD.org Ta Sy shark
 .It Ta Izumi Tsutsui              Ta Mt    tsutsui@NetBSD.org Ta Sy ews4800mips
 .It Ta Izumi Tsutsui              Ta Mt    tsutsui@NetBSD.org Ta Sy hp300
 .It Ta Izumi Tsutsui              Ta Mt    tsutsui@NetBSD.org Ta Sy news68k
+.It Ta Valeriy E. Ushakov         Ta Mt        uwe@NetBSD.org Ta Sy hpcsh
 .It Ta Valeriy E. Ushakov         Ta Mt        uwe@NetBSD.org Ta Sy landisk
-.It Ta Nathan Williams            Ta Mt    nathanw@NetBSD.org Ta Sy sun3
 .It Ta Steve Woodford             Ta Mt        scw@NetBSD.org Ta Sy evbppc
 .It Ta Steve Woodford             Ta Mt        scw@NetBSD.org Ta Sy mvme68k
 .It Ta Steve Woodford             Ta Mt        scw@NetBSD.org Ta Sy mvmeppc
 .It Ta Reinoud Zandijk            Ta Mt    reinoud@NetBSD.org Ta Sy acorn32
-.It Ta Ta Ta
 .
 .br_ne 1i
 .It Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
+.It Ta Stephen Borrill Ta Mt sborrill@NetBSD.org
 .It Ta Manuel Bouyer Ta Mt bouyer@NetBSD.org
 .It Ta David Brownlee Ta Mt abs@NetBSD.org
 .It Ta James Chacon Ta Mt jmc@NetBSD.org
 .It Ta Julian Coleman Ta Mt jdc@NetBSD.org
 .It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
-.It Ta Liam J. Foy Ta Mt liamjfoy@NetBSD.org
+.It Ta Alistair Grooks Ta Mt agc@NetBSD.org
 .It Ta John Heasley Ta Mt heas@NetBSD.org
-.It Ta Geert Hendrickx Ta Mt ghen@NetBSD.org
+.It Ta Martin Husemann Ta Mt martin@NetBSD.org
 .It Ta Soren Jacobsen Ta Mt snj@NetBSD.org
+.It Ta Mark Kirby Ta Mt mkirby@NetBSD.org
 .It Ta Phil Nelson Ta Mt phil@NetBSD.org
+.It Ta Jeremy C. Reed Ta Mt reed@NetBSD.org
 .It Ta Jeff Rizzo Ta Mt riz@NetBSD.org
+.It Ta SAITOH Masanobu Ta Mt msaitoh@NetBSD.org
 .It Ta Ta
 .
 .br_ne 2i
