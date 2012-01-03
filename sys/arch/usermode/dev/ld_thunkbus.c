@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.24 2011/12/14 21:22:24 jmcneill Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.25 2012/01/03 12:05:01 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.24 2011/12/14 21:22:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.25 2012/01/03 12:05:01 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -182,9 +182,9 @@ ld_thunkbus_complete(void *arg)
 	}
 
 done:
-	dprintf_debug("\tfin\n");
+	thunk_printf_debug("\tfin\n");
 	if (bp->b_error)
-		dprintf_debug("error!\n");
+		thunk_printf_debug("error!\n");
 
 	sc->busy = false;
 	lddone(&sc->sc_ld, bp);

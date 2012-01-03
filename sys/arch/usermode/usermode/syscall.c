@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.19 2011/12/20 15:45:37 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.20 2012/01/03 12:05:00 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19 2011/12/20 15:45:37 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.20 2012/01/03 12:05:00 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,8 +117,8 @@ syscall(void)
 #if 0
 	aprint_debug("syscall no. %d, ", code);
 	aprint_debug("nargs %d, argsize %d =>  ", nargs, argsize);
-	dprintf_debug("syscall no. %d, ", code);
-	dprintf_debug("nargs %d, argsize %d =>  ", nargs, argsize);
+	thunk_printf_debug("syscall no. %d, ", code);
+	thunk_printf_debug("nargs %d, argsize %d =>  ", nargs, argsize);
 #endif
 
 	/*
@@ -160,7 +160,7 @@ syscall(void)
 		/* nothing to do */
 		break;
 	}
-	//dprintf_debug("end of syscall : return to userland\n");
+	//thunk_printf_debug("end of syscall : return to userland\n");
 //if (code != 4) printf("userret() code %d\n", code);
 	userret(l);
 }
@@ -219,7 +219,7 @@ return;
 	}
 #if 0
 	if ((code == 4)) {
-//		dprintf_debug("[us] %s", (char *) args[1]);
+//		thunk_printf_debug("[us] %s", (char *) args[1]);
 		printf("[us] %s", (char *) args[1]);
 	}
 #endif

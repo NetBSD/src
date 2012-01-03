@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.50 2012/01/03 10:53:46 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.51 2012/01/03 12:05:00 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.50 2012/01/03 10:53:46 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.51 2012/01/03 12:05:00 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -119,29 +119,29 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 //printf("sigsegv\n");
 #if 0
 	va = (vaddr_t) info->si_addr;
-	dprintf_debug("mem trap lwp = %p pid = %d lid = %d, va = %p\n",
+	thunk_printf_debug("mem trap lwp = %p pid = %d lid = %d, va = %p\n",
 	    curlwp,
 	    curlwp->l_proc->p_pid,
 	    curlwp->l_lid,
 	    (void *) va);
 #endif
 #if 0
-	dprintf_debug("SIGSEGV or SIGBUS!\n");
-	dprintf_debug("\tsi_signo = %d\n", info->si_signo);
-	dprintf_debug("\tsi_errno = %d\n", info->si_errno);
-	dprintf_debug("\tsi_code  = %d\n", info->si_code);
+	thunk_printf_debug("SIGSEGV or SIGBUS!\n");
+	thunk_printf_debug("\tsi_signo = %d\n", info->si_signo);
+	thunk_printf_debug("\tsi_errno = %d\n", info->si_errno);
+	thunk_printf_debug("\tsi_code  = %d\n", info->si_code);
 	if (info->si_code == SEGV_MAPERR)
-		dprintf_debug("\t\tSEGV_MAPERR\n");
+		thunk_printf_debug("\t\tSEGV_MAPERR\n");
 	if (info->si_code == SEGV_ACCERR)
-		dprintf_debug("\t\tSEGV_ACCERR\n");
+		thunk_printf_debug("\t\tSEGV_ACCERR\n");
 	if (info->si_code == BUS_ADRALN)
-		dprintf_debug("\t\tBUS_ADRALN\n");
+		thunk_printf_debug("\t\tBUS_ADRALN\n");
 	if (info->si_code == BUS_ADRERR)
-		dprintf_debug("\t\tBUS_ADRERR\n");
+		thunk_printf_debug("\t\tBUS_ADRERR\n");
 	if (info->si_code == BUS_OBJERR)
-		dprintf_debug("\t\tBUS_OBJERR\n");
-	dprintf_debug("\tsi_addr = %p\n", info->si_addr);
-	dprintf_debug("\tsi_trap = %d\n", info->si_trap);
+		thunk_printf_debug("\t\tBUS_OBJERR\n");
+	thunk_printf_debug("\tsi_addr = %p\n", info->si_addr);
+	thunk_printf_debug("\tsi_trap = %d\n", info->si_trap);
 #endif
 
 	l = curlwp;
@@ -282,13 +282,13 @@ pagefault(void)
 	if (from_kernel && (va >= VM_MIN_KERNEL_ADDRESS))
 		vm_map = kernel_map;
 
-	dprintf_debug("pagefault : pc %p, va %p\n", (void *) pc, (void *) va);
+	thunk_printf_debug("pagefault : pc %p, va %p\n", (void *) pc, (void *) va);
 
 	/* can pmap handle it? on its own? (r/m) */
 	onfault = pcb->pcb_onfault;
 	rv = 0;
 	if (!pmap_fault(vm_map->pmap, va, &atype)) {
-		dprintf_debug("pmap fault couldn't handle it! : "
+		thunk_printf_debug("pmap fault couldn't handle it! : "
 			"derived atype %d\n", atype);
 
 		/* extra debug for now */
@@ -301,7 +301,7 @@ pagefault(void)
 	}
 
 	if (rv) {
-		dprintf_debug("uvm_fault returned error %d\n", rv);
+		thunk_printf_debug("uvm_fault returned error %d\n", rv);
 
 		/* something got wrong */
 		if (from_kernel) {
