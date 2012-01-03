@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.57 2011/12/27 14:55:31 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.58 2012/01/03 12:05:01 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57 2011/12/27 14:55:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58 2012/01/03 12:05:01 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -164,7 +164,7 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	struct cpu_info *ci = curcpu();
 
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_switchto [%s,pid=%d,lid=%d] -> [%s,pid=%d,lid=%d]\n",
+	thunk_printf_debug("cpu_switchto [%s,pid=%d,lid=%d] -> [%s,pid=%d,lid=%d]\n",
 	    oldlwp ? oldlwp->l_name : "none",
 	    oldlwp ? oldlwp->l_proc->p_pid : -1,
 	    oldlwp ? oldlwp->l_lid : -1,
@@ -172,14 +172,14 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	    newlwp ? newlwp->l_proc->p_pid : -1,
 	    newlwp ? newlwp->l_lid : -1);
 	if (oldpcb) {
-		dprintf_debug("    oldpcb uc_link=%p, uc_stack.ss_sp=%p, "
+		thunk_printf_debug("    oldpcb uc_link=%p, uc_stack.ss_sp=%p, "
 		    "uc_stack.ss_size=%d\n",
 		    oldpcb->pcb_ucp.uc_link,
 		    oldpcb->pcb_ucp.uc_stack.ss_sp,
 		    (int)oldpcb->pcb_ucp.uc_stack.ss_size);
 	}
 	if (newpcb) {
-		dprintf_debug("    newpcb uc_link=%p, uc_stack.ss_sp=%p, "
+		thunk_printf_debug("    newpcb uc_link=%p, uc_stack.ss_sp=%p, "
 		    "uc_stack.ss_size=%d\n",
 		    newpcb->pcb_ucp.uc_link,
 		    newpcb->pcb_ucp.uc_stack.ss_sp,
@@ -203,7 +203,7 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	}
 
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_switchto: returning %p (was %p)\n", ci->ci_stash, oldlwp);
+	thunk_printf_debug("cpu_switchto: returning %p (was %p)\n", ci->ci_stash, oldlwp);
 #endif
 	return ci->ci_stash;
 }
@@ -212,7 +212,7 @@ void
 cpu_dumpconf(void)
 {
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_dumpconf\n");
+	thunk_printf_debug("cpu_dumpconf\n");
 #endif
 }
 
@@ -228,7 +228,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	ucontext_t *ucp = &pcb->pcb_userret_ucp;
 
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_getmcontext\n");
+	thunk_printf_debug("cpu_getmcontext\n");
 #endif
 	memcpy(mcp, &ucp->uc_mcontext, sizeof(mcontext_t));
 	return;
@@ -241,7 +241,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	ucontext_t *ucp = &pcb->pcb_userret_ucp;
 
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_setmcontext\n");
+	thunk_printf_debug("cpu_setmcontext\n");
 #endif
 	memcpy(&ucp->uc_mcontext, mcp, sizeof(mcontext_t));
 	return 0;
@@ -262,7 +262,7 @@ void
 cpu_lwp_free(struct lwp *l, int proc)
 {
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_lwp_free (dummy)\n");
+	thunk_printf_debug("cpu_lwp_free (dummy)\n");
 #endif
 }
 
@@ -272,7 +272,7 @@ cpu_lwp_free2(struct lwp *l)
 	struct pcb *pcb = lwp_getpcb(l);
 
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_lwp_free2\n");
+	thunk_printf_debug("cpu_lwp_free2\n");
 #endif
 
 	if (pcb == NULL)
@@ -301,7 +301,7 @@ static void
 cpu_lwp_trampoline(ucontext_t *ucp, void (*func)(void *), void *arg)
 {
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_lwp_trampoline called with func %p, arg %p\n", (void *) func, arg);
+	thunk_printf_debug("cpu_lwp_trampoline called with func %p, arg %p\n", (void *) func, arg);
 #endif
 	/* init lwp */
 	lwp_startup(curcpu()->ci_stash, curlwp);
@@ -320,7 +320,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	void *stack_ucp, *stack_syscall_ucp, *stack_pagefault_ucp;
 
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_lwp_fork [%s/%p] -> [%s/%p] stack=%p stacksize=%d\n",
+	thunk_printf_debug("cpu_lwp_fork [%s/%p] -> [%s/%p] stack=%p stacksize=%d\n",
 	    l1 ? l1->l_name : "none", l1,
 	    l2 ? l2->l_name : "none", l2,
 	    stack, (int)stacksize);
@@ -337,6 +337,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	stack_syscall_ucp   = malloc(stacksize, M_TEMP, M_NOWAIT);
 	stack_pagefault_ucp = malloc(stacksize, M_TEMP, M_NOWAIT);
 	pcb2->pcb_needfree = true;
+
+	KASSERT(stack_ucp);
+	KASSERT(stack_syscall_ucp);
+	KASSERT(stack_pagefault_ucp);
 
 	if (thunk_getcontext(&pcb2->pcb_ucp))
 		panic("getcontext failed");
