@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.71 2011/12/31 21:29:12 christos Exp $ */
+/* $NetBSD: thunk.c,v 1.72 2012/01/03 12:05:00 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.71 2011/12/31 21:29:12 christos Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.72 2012/01/03 12:05:00 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -82,15 +82,26 @@ __RCSID("$NetBSD: thunk.c,v 1.71 2011/12/31 21:29:12 christos Exp $");
 extern int boothowto;
 
 void
-dprintf_debug(const char *fmt, ...)
+thunk_printf_debug(const char *fmt, ...)
 {
-        if (boothowto & AB_DEBUG) {
-                va_list ap;
+	if (boothowto & AB_DEBUG) {
+		va_list ap;
 
-                va_start(ap, fmt);
-                vfprintf(stderr, fmt, ap);
-                va_end(ap);
-        }
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
+}
+
+void
+thunk_printf(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	fflush(stderr);
 }
 
 static void
