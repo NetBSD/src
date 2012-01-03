@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.49 2012/01/02 22:02:51 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.50 2012/01/03 10:53:46 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2012/01/02 22:02:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.50 2012/01/03 10:53:46 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,7 +108,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	ucontext_t *uct = ctx;
 	struct lwp *l;
 	struct pcb *pcb;
-	vaddr_t va;
+	vaddr_t va, pc;
 
 	assert((info->si_signo == SIGSEGV) || (info->si_signo == SIGBUS));
 
@@ -147,8 +147,12 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	l = curlwp;
 	pcb = lwp_getpcb(l);
 
+	/* get address of faulted memory access and make it page aligned */
 	va = (vaddr_t) info->si_addr;
 	va = trunc_page(va);
+
+	/* get PC address of faulted memory instruction */
+	pc = md_get_pc(ctx);
 
 #if 0	/* disabled for now, these checks need to move */
 #ifdef DIAGNOSTIC
@@ -169,6 +173,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	/* remember our parameters */
 //	assert((void *) pcb->pcb_fault_addr == NULL);
 	pcb->pcb_fault_addr = va;
+	pcb->pcb_fault_pc   = pc;
 
 	/* switch to the pagefault entry on return from signal */
 	memcpy(uct, &pcb->pcb_pagefault_ucp, sizeof(ucontext_t));
@@ -259,26 +264,25 @@ pagefault(void)
 	struct vmspace *vm;
 	struct vm_map *vm_map;
 	vm_prot_t atype;
-	vaddr_t va;
+	vaddr_t va, pc;
 	void *onfault;
-	int kmem, lwp_errno, rv;
+	int from_kernel, lwp_errno, rv;
 
 	l = curlwp;
 	pcb = lwp_getpcb(l);
 	p = l->l_proc;
 	vm = p->p_vmspace;
 	va = pcb->pcb_fault_addr;
+	pc = pcb->pcb_fault_pc;
 
 	lwp_errno = thunk_geterrno();
 
-	kmem = 1;
-	vm_map = kernel_map;
-	if ((va >= VM_MIN_ADDRESS) && (va < VM_MAXUSER_ADDRESS)) {
-		kmem = 0;
-		vm_map = &vm->vm_map;
-	}
+	vm_map = &vm->vm_map;
+	from_kernel = (pc >= VM_MIN_KERNEL_ADDRESS);
+	if (from_kernel && (va >= VM_MIN_KERNEL_ADDRESS))
+		vm_map = kernel_map;
 
-	dprintf_debug("pagefault : va = %p\n", (void *) va);
+	dprintf_debug("pagefault : pc %p, va %p\n", (void *) pc, (void *) va);
 
 	/* can pmap handle it? on its own? (r/m) */
 	onfault = pcb->pcb_onfault;
@@ -300,7 +304,7 @@ pagefault(void)
 		dprintf_debug("uvm_fault returned error %d\n", rv);
 
 		/* something got wrong */
-		if (kmem) {
+		if (from_kernel) {
 			/* copyin / copyout */
 			if (!onfault)
 				panic("kernel fault");

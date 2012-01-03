@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.47 2011/12/29 21:22:49 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.48 2012/01/03 10:53:46 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -37,7 +37,7 @@
 #include "opt_memsize.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2011/12/29 21:22:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2012/01/03 10:53:46 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -438,6 +438,14 @@ md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp,
 		reg[ 9] = rval[1];	/* EDX */
 
 	//dump_regs(reg);
+}
+
+register_t
+md_get_pc(ucontext_t *ucp)
+{
+	register_t *reg = (register_t *) &ucp->uc_mcontext;
+
+	return reg[14];			/* EIP */
 }
 
 int
