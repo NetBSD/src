@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.6 2011/12/31 02:26:21 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.7 2012/01/03 18:28:16 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.1.4.6 2011/12/31 02:25:42 matt Exp
+ *	NetBSD: pcidevs,v 1.962.4.1.4.7 2012/01/03 18:27:47 matt Exp
  */
 
 /*
@@ -10244,7 +10244,7 @@ static const struct pci_product pci_products[] = {
 	    "XLP Fast Messaging Network",
 	},
 	{
-	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_RAID,
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_DMA,
 	    "XLP Data Transfer and RAID engine",
 	},
 	{
