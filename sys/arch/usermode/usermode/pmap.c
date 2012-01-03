@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.90 2012/01/03 12:05:00 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.91 2012/01/03 12:16:16 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2012/01/03 12:05:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2012/01/03 12:16:16 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
+#include "opt_misc.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,7 +168,7 @@ pmap_bootstrap(void)
 	kmem_k_end   = (vaddr_t) PAGE_SIZE * (atop(&etext) + 1);
 
 	/* calculate total available memory space */
-	totmem_len  = (vaddr_t) mem_kvm + KVMSIZE;
+	totmem_len  = (vaddr_t) TEXTADDR;
 
 	/* calculate the number of available pages */
 	physmem     = totmem_len / PAGE_SIZE;
