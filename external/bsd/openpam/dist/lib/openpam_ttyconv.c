@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_ttyconv.c,v 1.2 2011/12/25 22:27:55 christos Exp $	*/
+/*	$NetBSD: openpam_ttyconv.c,v 1.3 2012/01/03 18:56:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -151,13 +151,13 @@ prompt_echo_off(const char *msg, FILE *infp, FILE *outfp, FILE *errfp)
 
 	fd = fileno(infp);
 	if (tcgetattr(fd, &tattr) != 0) {
-		openpam_log(PAM_LOG_ERROR, "tcgetattr(): %m");
+		openpam_log(PAM_LOG_ERROR, "tcgetattr(): %s", strerror(errno));
 		return (NULL);
 	}
 	lflag = tattr.c_lflag;
 	tattr.c_lflag &= ~ECHO;
 	if (tcsetattr(fd, TCSAFLUSH, &tattr) != 0) {
-		openpam_log(PAM_LOG_ERROR, "tcsetattr(): %m");
+		openpam_log(PAM_LOG_ERROR, "tcsetattr(): %s", strerror(errno));
 		return (NULL);
 	}
 	ret = prompt(msg, infp, outfp, errfp);

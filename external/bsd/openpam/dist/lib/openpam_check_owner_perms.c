@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_check_owner_perms.c,v 1.3 2011/12/25 23:18:56 christos Exp $	*/
+/*	$NetBSD: openpam_check_owner_perms.c,v 1.4 2012/01/03 18:56:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
@@ -65,7 +65,7 @@ openpam_check_desc_owner_perms(const char *name, int fd)
 	arbitrator = geteuid();
 	if (fstat(fd, &sb) != 0) {
 		serrno = errno;
-		openpam_log(PAM_LOG_ERROR, "%s: %m", name);
+		openpam_log(PAM_LOG_ERROR, "%s: %s", name, strerror(errno));
 		errno = serrno;
 		return (-1);
 	}
@@ -108,7 +108,8 @@ openpam_check_path_owner_perms(const char *path)
 	while (len > 0) {
 		if (stat(pathbuf, &sb) != 0) {
 			serrno = errno;
-			openpam_log(PAM_LOG_ERROR, "%s: %m", pathbuf);
+			openpam_log(PAM_LOG_ERROR, "%s: %s", pathbuf,
+			    strerror(errno));
 			errno = serrno;
 			return (-1);
 		}

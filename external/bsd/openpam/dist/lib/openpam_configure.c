@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_configure.c,v 1.3 2011/12/25 23:18:56 christos Exp $	*/
+/*	$NetBSD: openpam_configure.c,v 1.4 2012/01/03 18:56:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -370,7 +370,7 @@ openpam_parse_chain(pam_handle_t *pamh,
 
 	if ((f = fopen(filename, "r")) == NULL) {
 		openpam_log(errno == ENOENT ? PAM_LOG_DEBUG : PAM_LOG_NOTICE,
-		    "%s: %m", filename);
+		    "%s: %s", filename, strerror(errno));
 		return (PAM_SUCCESS);
 	}
 	if (openpam_check_desc_owner_perms(filename, fileno(f)) != 0) {
@@ -496,7 +496,7 @@ openpam_parse_chain(pam_handle_t *pamh,
 	fclose(f);
 	return (PAM_SUCCESS);
 syserr:
-	openpam_log(PAM_LOG_ERROR, "%s: %m", filename);
+	openpam_log(PAM_LOG_ERROR, "%s: %s", filename, strerror(errno));
 fail:
 	if (this && this->optc) {
 		while (this->optc--)
@@ -546,7 +546,8 @@ openpam_load_chain(pam_handle_t *pamh,
 		len = strlen(*path);
 		if ((*path)[len - 1] == '/') {
 			if (asprintf(&filename, "%s%s", *path, service) < 0) {
-				openpam_log(PAM_LOG_ERROR, "asprintf(): %m");
+				openpam_log(PAM_LOG_ERROR, "asprintf(): %s",
+				    strerror(errno));
 				return (PAM_BUF_ERR);
 			}
 			ret = openpam_parse_chain(pamh, service, facility,
