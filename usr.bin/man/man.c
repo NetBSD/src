@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.43 2011/06/14 20:08:45 wiz Exp $	*/
+/*	$NetBSD: man.c,v 1.44 2012/01/03 17:49:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.43 2011/06/14 20:08:45 wiz Exp $");
+__RCSID("$NetBSD: man.c,v 1.44 2012/01/03 17:49:57 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1021,7 +1021,13 @@ printmanpath(struct manstate *m)
 	
 	if (glob(defaultpath, GLOB_BRACE | GLOB_NOSORT, NULL, &pg) != 0)
 		err(EXIT_FAILURE, "glob failed");
-		
+
+	if (pg.gl_matchc == 0) {
+		warnx("Default path in %s doesn't exist", _PATH_MANCONF);
+		globfree(&pg);
+		return;
+	}
+
 	TAILQ_FOREACH(esubd, &subdirs->entrylist, q) {
 		/* Drop cat page directory, only sources are relevant. */
 		if (strncmp(esubd->s, "man", 3))
