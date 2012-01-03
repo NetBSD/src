@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.14 2011/12/12 15:04:51 reinoud Exp $ */
+/* $NetBSD: pcb.h,v 1.15 2012/01/03 10:53:46 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,6 +51,7 @@ struct pcb {
 
 	int		 pcb_errno;		/* save/restore place */
 	vaddr_t		 pcb_fault_addr;	/* save place for fault addr */
+	vaddr_t		 pcb_fault_pc;		/* save place for fault PC */
 };
 
 #endif /* !_ARCH_USERMODE_INCLUDE_PCB_H */
