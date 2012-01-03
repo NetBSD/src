@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.91 2012/01/03 12:16:16 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.92 2012/01/03 21:28:50 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2012/01/03 12:16:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2012/01/03 21:28:50 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -85,7 +85,6 @@ static pmap_t active_pmap = NULL;
 
 static char  mem_name[20] = "";
 static int   mem_fh;
-static void *mem_uvm;	/* keeps all memory managed by UVM */
 
 static int phys_npages = 0;
 static int pm_nentries = 0;
@@ -115,31 +114,29 @@ extern void	setup_signal_handlers(void);
 
 /* exposed (to signal handler f.e.) */
 vaddr_t kmem_k_start, kmem_k_end;
-vaddr_t kmem_ext_start, kmem_ext_end;
+vaddr_t kmem_kvm_start, kmem_kvm_end;
 vaddr_t kmem_user_start, kmem_user_end;
-vaddr_t kmem_ext_cur_start, kmem_ext_cur_end;
+vaddr_t kmem_kvm_cur_start, kmem_kvm_cur_end;
 
 /* amount of physical memory */
-int	physmem; 
+uint	physmem; 
 int	num_pv_entries = 0;
 int	num_pmaps = 0;
 
 #define SPARSE_MEMFILE
 
-static uint8_t mem_kvm[KVMSIZE + 2*PAGE_SIZE];
 
 void
 pmap_bootstrap(void)
 {
 	struct pmap *pmap;
-	paddr_t totmem_len;
+	paddr_t DRAM_cfg;
 	paddr_t fpos, file_len;
 	paddr_t pv_fpos, tlb_fpos, pm_l1_fpos, pm_fpos;
 	paddr_t wlen;
-	paddr_t user_len, barrier_len;
+	paddr_t barrier_len;
 	paddr_t pv_table_size;
 	vaddr_t free_start, free_end;
-	vaddr_t mpos;
 	paddr_t pa;
 	vaddr_t va;
 	uintptr_t pg, l1;
@@ -163,33 +160,23 @@ pmap_bootstrap(void)
 	thunk_printf_debug("1st end of data     at %p\n", &end);
 	thunk_printf_debug("CUR end data        at %p\n", thunk_sbrk(0));
 
+	barrier_len = 2 * 1024 * 1024;
+
 	/* calculate kernel section (R-X) */
 	kmem_k_start = (vaddr_t) PAGE_SIZE * (atop(_start)    );
 	kmem_k_end   = (vaddr_t) PAGE_SIZE * (atop(&etext) + 1);
 
-	/* calculate total available memory space */
-	totmem_len  = (vaddr_t) TEXTADDR;
+	/* calculate total available memory space & available pages */
+	DRAM_cfg = (vaddr_t) TEXTADDR;
+	physmem  = DRAM_cfg / PAGE_SIZE;
 
-	/* calculate the number of available pages */
-	physmem     = totmem_len / PAGE_SIZE;
-
-	/* calculate memory lengths */
-	barrier_len = 2 * 1024 * 1024;
-	user_len    = kmem_k_start - vm_min_addr - barrier_len;
-
-	/* devide memory */
-	mem_uvm = (void *) vm_min_addr;
-	mpos = vm_min_addr;
+	/* kvm at the top */
+	kmem_kvm_end    = kmem_k_start - barrier_len;
+	kmem_kvm_start  = kmem_kvm_end - KVMSIZE;
 
 	/* claim an area for userland (---/R--/RW-/RWX) */
-	kmem_user_start = mpos;
-	mpos += user_len;
-	kmem_user_end   = mpos;
-
-	/* calculate KVM section (RW-) */
-	kmem_ext_start = round_page((vaddr_t) mem_kvm);
-	mpos += KVMSIZE;
-	kmem_ext_end   = mpos;
+	kmem_user_start = vm_min_addr;
+	kmem_user_end   = kmem_kvm_start - barrier_len;
 
 	/* print summary */
 	aprint_verbose("\nMemory summary\n");
@@ -197,26 +184,31 @@ pmap_bootstrap(void)
 	aprint_verbose("\tkmem_user_end\t%p\n",   (void *) kmem_user_end);
 	aprint_verbose("\tkmem_k_start\t%p\n",    (void *) kmem_k_start);
 	aprint_verbose("\tkmem_k_end\t%p\n",      (void *) kmem_k_end);
-	aprint_verbose("\tkmem_ext_start\t%p\n",  (void *) kmem_ext_start);
-	aprint_verbose("\tkmem_ext_end\t%p\n",    (void *) kmem_ext_end);
+	aprint_verbose("\tkmem_kvm_start\t%p\n",  (void *) kmem_kvm_start);
+	aprint_verbose("\tkmem_kvm_end\t%p\n",    (void *) kmem_kvm_end);
 
-	aprint_verbose("\ttotmem_len\t%10d\n", (int) totmem_len);
+	aprint_verbose("\tDRAM_cfg\t%10d\n", (int) DRAM_cfg);
 	aprint_verbose("\tkvmsize\t\t%10d\n", (int) KVMSIZE);
-	aprint_verbose("\tuser_len\t%10d\n", (int) user_len);
+	aprint_verbose("\tuser_len\t%10d\n",
+		(int) (kmem_user_end - kmem_user_start));
 
 	aprint_verbose("\n\n");
 
 	/* protect user memory UVM area (---) */
-	err = thunk_munmap(mem_uvm, kmem_user_end - vm_min_addr);
+	err = thunk_munmap((void *) kmem_user_start,
+			kmem_k_start - kmem_user_start);
 	if (err)
 		panic("pmap_bootstrap: userland uvm space protection "
 			"failed (%d)\n", thunk_geterrno());
 
-	/* protect kvm UVM area (---) */
-	err = thunk_munmap((void *) kmem_ext_start, KVMSIZE);
+#if 0
+	/* protect kvm UVM area if separate (---) */
+	err = thunk_munmap((void *) kmem_kvm_start,
+			kmem_kvm_end - kmem_kvm_start);
 	if (err)
 		panic("pmap_bootstrap: kvm uvm space protection "
 			"failed (%d)\n", thunk_geterrno());
+#endif
 
 	thunk_printf_debug("Creating memory mapped backend\n");
 
@@ -230,7 +222,7 @@ pmap_bootstrap(void)
 		panic("pmap_bootstrap: can't unlink %s", mem_name);
 
 	/* file_len is the backing store length, nothing to do with placement */
-	file_len = totmem_len;
+	file_len = DRAM_cfg;
 
 #ifdef SPARSE_MEMFILE
 	{
@@ -270,7 +262,7 @@ pmap_bootstrap(void)
 	fpos = 0;
 	free_start = fpos;     /* in physical space ! */
 	free_end   = file_len; /* in physical space ! */
-	kmem_ext_cur_start = kmem_ext_start;
+	kmem_kvm_cur_start = kmem_kvm_start;
 
 	/* calculate pv table size */
 	phys_npages = (free_end - free_start) / PAGE_SIZE;
@@ -280,7 +272,7 @@ pmap_bootstrap(void)
 		(uint64_t) pv_table_size/1024, (uintptr_t) phys_npages);
 
 	/* calculate number of pmap entries needed for a complete map */
-	pm_nentries = (VM_MAX_KERNEL_ADDRESS - VM_MIN_ADDRESS) / PAGE_SIZE;
+	pm_nentries = (kmem_k_start - VM_MIN_ADDRESS) / PAGE_SIZE;
 	pm_entries_size = round_page(pm_nentries * sizeof(struct pv_entry *));
 	thunk_printf_debug("tlb va->pa lookup table is %"PRIu64" KB for "
 		"%d logical pages\n", pm_entries_size/1024, pm_nentries);
@@ -291,12 +283,12 @@ pmap_bootstrap(void)
 
 	/* claim pv table */
 	pv_fpos = fpos;
-	pv_table = (struct pv_entry *) kmem_ext_cur_start;
+	pv_table = (struct pv_entry *) kmem_kvm_cur_start;
 	addr = thunk_mmap(pv_table, pv_table_size,
 		THUNK_PROT_READ | THUNK_PROT_WRITE,
 		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
 		mem_fh, pv_fpos);
-	if (addr != (void *) kmem_ext_start)
+	if (addr != (void *) pv_table)
 		panic("pmap_bootstrap: can't map in pv table\n");
 
 	memset(pv_table, 0, pv_table_size);	/* test and clear */
@@ -304,11 +296,11 @@ pmap_bootstrap(void)
 	thunk_printf_debug("pv_table initialiased correctly, mmap works\n");
 
 	/* advance */
-	kmem_ext_cur_start += pv_table_size;
+	kmem_kvm_cur_start += pv_table_size;
 	fpos += pv_table_size;
 
 	/* set up tlb space */
-	tlb = (struct pv_entry **) kmem_ext_cur_start;
+	tlb = (struct pv_entry **) kmem_kvm_cur_start;
 	tlb_fpos = fpos;
 	addr = thunk_mmap(tlb, pm_entries_size,
 		THUNK_PROT_READ | THUNK_PROT_WRITE,
@@ -322,7 +314,7 @@ pmap_bootstrap(void)
 	thunk_printf_debug("kernel tlb entries initialized correctly\n");
 
 	/* advance */
-	kmem_ext_cur_start += pm_entries_size;
+	kmem_kvm_cur_start += pm_entries_size;
 	fpos += pm_entries_size;
 
 	/* set up kernel pmap and add a l1 map */
@@ -330,7 +322,7 @@ pmap_bootstrap(void)
         memset(pmap, 0, sizeof(*pmap)); 
 	pmap->pm_count = 1;		/* reference */
 	pmap->pm_flags = PM_ACTIVE;	/* kernel pmap is allways active */
-	pmap->pm_l1 = (struct pmap_l2 **) kmem_ext_cur_start;
+	pmap->pm_l1 = (struct pmap_l2 **) kmem_kvm_cur_start;
 
 	pm_l1_fpos = fpos;
 	addr = thunk_mmap(pmap->pm_l1, pm_l1_size,
@@ -345,12 +337,12 @@ pmap_bootstrap(void)
 	thunk_printf_debug("kernel pmap l1 table initialiased correctly\n");
 
 	/* advance for l1 tables */
-	kmem_ext_cur_start += round_page(pm_l1_size);
+	kmem_kvm_cur_start += round_page(pm_l1_size);
 	fpos += round_page(pm_l1_size);
 
 	/* followed by the pm entries */
 	pm_fpos = fpos;
-	kernel_pm_entries = (struct pv_entry **) kmem_ext_cur_start;
+	kernel_pm_entries = (struct pv_entry **) kmem_kvm_cur_start;
 	addr = thunk_mmap(kernel_pm_entries, pm_entries_size,
 		THUNK_PROT_READ | THUNK_PROT_WRITE,
 		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
@@ -361,7 +353,7 @@ pmap_bootstrap(void)
 	memset(kernel_pm_entries, 0, pm_entries_size);	/* test and clear */
 
 	/* advance for the statically allocated pm_entries */
-	kmem_ext_cur_start += pm_entries_size;
+	kmem_kvm_cur_start += pm_entries_size;
 	fpos += pm_entries_size;
 
 	/* put pointers in the l1 to point to the pv_entry space */
@@ -371,8 +363,8 @@ pmap_bootstrap(void)
 			((vaddr_t) kernel_pm_entries + l1 * PMAP_L2_SIZE);
 	}
 
-	/* kmem used [kmem_ext_start - kmem_ext_cur_start] */
-	kmem_ext_cur_end = kmem_ext_cur_start;
+	/* kmem used [kmem_kvm_start - kmem_kvm_cur_start] */
+	kmem_kvm_cur_end = kmem_kvm_cur_start;
 
 	/* manually enter the mappings into the kernel map */
 	for (pg = 0; pg < pv_table_size; pg += PAGE_SIZE) {
@@ -401,7 +393,6 @@ pmap_bootstrap(void)
 	thunk_printf_debug("kernel pmap entries mem added to the kernel pmap\n");
 
 	/* add file space to uvm's FREELIST */
-	/* XXX really from 0? or from fpos to have better stats */
 	uvm_page_physload(atop(0),
 	    atop(free_end),
 	    atop(free_start + fpos), /* mark used till fpos */
@@ -412,7 +403,7 @@ pmap_bootstrap(void)
 	aprint_verbose("\t%"PRIu64" MB of physical pages left\n",
 		(uint64_t) (free_end - (free_start + fpos))/1024/1024);
 	aprint_verbose("\t%"PRIu64" MB of kmem left\n",
-		(uint64_t) (kmem_ext_end - kmem_ext_cur_end)/1024/1024);
+		(uint64_t) (kmem_kvm_end - kmem_kvm_cur_end)/1024/1024);
 
 	setup_signal_handlers();
 }
@@ -426,8 +417,10 @@ pmap_init(void)
 void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
-	*vstartp = kmem_ext_cur_start;	/* min to map in */
-	*vendp   = kmem_ext_end;	/* max available */
+	if (vstartp)
+		*vstartp = kmem_kvm_cur_start;		/* min to map in */
+	if (vendp)
+		*vendp   = kmem_kvm_end - PAGE_SIZE;	/* max available */
 }
 
 static void
@@ -598,9 +591,10 @@ static void
 pmap_set_pv(pmap_t pmap, uint lpn, struct pv_entry *pv)
 {
 	struct pmap_l2 *l2tbl;
-	int l1   = lpn / PMAP_L2_NENTRY;
+	int l1 = lpn / PMAP_L2_NENTRY;
 	int l2 = lpn % PMAP_L2_NENTRY;
 
+if (lpn >= pm_nentries) panic("peeing outside box\n");
 	l2tbl = pmap->pm_l1[l1];
 	if (!l2tbl) {
 		l2tbl = pmap->pm_l1[l1] = pool_get(&pmap_l2_pool, PR_WAITOK);
@@ -613,9 +607,10 @@ static struct pv_entry *
 pmap_lookup_pv(pmap_t pmap, uint lpn)
 {
 	struct pmap_l2 *l2tbl;
-	int l1   = lpn / PMAP_L2_NENTRY;
+	int l1 = lpn / PMAP_L2_NENTRY;
 	int l2 = lpn % PMAP_L2_NENTRY;
 
+if (lpn >= pm_nentries) panic("peeing outside box\n");
 	l2tbl = pmap->pm_l1[l1];
 	if (l2tbl)
 		return l2tbl->pm_l2[l2];
@@ -1352,10 +1347,10 @@ pmap_growkernel(vaddr_t maxkvaddr)
 {
 	thunk_printf_debug("pmap_growkernel: till %p (adding %"PRIu64" KB)\n",
 		(void *) maxkvaddr,
-		(uint64_t) (maxkvaddr - kmem_ext_cur_end)/1024);
-	if (maxkvaddr > kmem_ext_end)
-		return kmem_ext_end;
-	kmem_ext_cur_end = maxkvaddr;
-	return kmem_ext_cur_end;
+		(uint64_t) (maxkvaddr - kmem_kvm_cur_end)/1024);
+	if (maxkvaddr > kmem_kvm_end)
+		return kmem_kvm_end;
+	kmem_kvm_cur_end = maxkvaddr;
+	return kmem_kvm_cur_end;
 }
 
