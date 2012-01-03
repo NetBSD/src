@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_exec.c,v 1.5 2011/02/03 02:05:59 christos Exp $	*/
+/*	$NetBSD: pam_exec.c,v 1.6 2012/01/03 19:02:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_exec/pam_exec.c,v 1.4 2005/02/01 10:37:07 des Exp $");
 #else
-__RCSID("$NetBSD: pam_exec.c,v 1.5 2011/02/03 02:05:59 christos Exp $");
+__RCSID("$NetBSD: pam_exec.c,v 1.6 2012/01/03 19:02:54 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -128,15 +128,15 @@ _pam_exec(pam_handle_t *pamh __unused, int flags __unused,
 	}
 	openpam_free_envlist(envlist);
 	if (pid == -1) {
-		openpam_log(PAM_LOG_ERROR, "vfork(): %m");
+		openpam_log(PAM_LOG_ERROR, "vfork(): %s", strerror(errno));
 		return (PAM_SYSTEM_ERR);
 	}
 	if (waitpid(pid, &status, 0) == -1) {
-		openpam_log(PAM_LOG_ERROR, "waitpid(): %m");
+		openpam_log(PAM_LOG_ERROR, "waitpid(): %s", strerror(errno));
 		return (PAM_SYSTEM_ERR);
 	}
 	if (childerr != 0) {
-		openpam_log(PAM_LOG_ERROR, "execve(): %m");
+		openpam_log(PAM_LOG_ERROR, "execve(): %s", strerror(errno));
 		return (PAM_SYSTEM_ERR);
 	}
 	if (WIFSIGNALED(status)) {

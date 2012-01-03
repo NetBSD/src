@@ -1,4 +1,4 @@
-/*	$NetBSD: login_access.c,v 1.5 2006/11/03 18:55:40 christos Exp $	*/
+/*	$NetBSD: login_access.c,v 1.6 2012/01/03 19:02:55 christos Exp $	*/
 
 /*
  * This module implements a simple but effective form of login access
@@ -19,7 +19,7 @@ static char sccsid[] = "%Z% %M% %I% %E% %U%";
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_login_access/login_access.c,v 1.12 2004/03/05 08:10:18 markm Exp $");
 #else
-__RCSID("$NetBSD: login_access.c,v 1.5 2006/11/03 18:55:40 christos Exp $");
+__RCSID("$NetBSD: login_access.c,v 1.6 2012/01/03 19:02:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -122,7 +122,7 @@ login_access(const char *user, const char *from)
 	}
 	(void) fclose(fp);
     } else if (errno != ENOENT) {
-	logit(LOG_ERR, "cannot open %s: %m", _PATH_LOGACCESS);
+	logit(LOG_ERR, "cannot open %s: %s", _PATH_LOGACCESS, strerror(errno));
     }
     return (match == 0 || (line[0] == '+'));
 }

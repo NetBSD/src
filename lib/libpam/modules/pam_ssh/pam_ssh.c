@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.20 2011/12/16 17:37:14 drochner Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.21 2012/01/03 19:02:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.20 2011/12/16 17:37:14 drochner Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.21 2012/01/03 19:02:55 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -306,19 +306,19 @@ pam_ssh_start_agent(pam_handle_t *pamh, struct passwd *pwd)
 #endif
 		/* child: drop privs, close fds and start agent */
 		if (setgid(pwd->pw_gid) == -1) {
-			openpam_log(PAM_LOG_DEBUG, "%s: Cannot setgid %d (%m)",
-			    __func__, (int)pwd->pw_gid);
+			openpam_log(PAM_LOG_DEBUG, "%s: Cannot setgid %d (%s)",
+			    __func__, (int)pwd->pw_gid, strerror(errno));
 			goto done;
 		}
 		if (initgroups(pwd->pw_name, pwd->pw_gid) == -1) {
 			openpam_log(PAM_LOG_DEBUG,
-			    "%s: Cannot initgroups for %s (%m)",
-			    __func__, pwd->pw_name);
+			    "%s: Cannot initgroups for %s (%s)",
+			    __func__, pwd->pw_name, strerror(errno));
 			goto done;
 		}
 		if (setuid(pwd->pw_uid) == -1) {
-			openpam_log(PAM_LOG_DEBUG, "%s: Cannot setuid %d (%m)",
-			    __func__, (int)pwd->pw_uid);
+			openpam_log(PAM_LOG_DEBUG, "%s: Cannot setuid %d (%s)",
+			    __func__, (int)pwd->pw_uid, strerror(errno));
 			goto done;
 		}
 		(void)close(STDIN_FILENO);
