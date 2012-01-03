@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.143.2.7 2010/04/24 06:48:22 snj Exp $
+.\"	$NetBSD: contents,v 1.143.2.7.2.1 2012/01/03 05:31:07 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -485,59 +485,6 @@ It contains the base
 .Nx
 utilities that are necessary for the
 system to run and be minimally functional.
-.\"
-.\" XXX set sizes can be calculated using list-setsizes.sh
-.\"
-.if \n[acorn26] .setsize 28 81
-.if \n[acorn32] .setsize 28 81
-.if \n[algor] .setsize 30 96
-.if \n[alpha] .setsize 33 103
-.if \n[amd64] .setsize 34 101
-.if \n[amiga] .setsize 26 76
-.if \n[arc] .setsize 30 96
-.if \n[atari] .setsize 26 76
-.if \n[cats] .setsize 28 81
-.if \n[cesfic] .setsize 26 75
-.if \n[cobalt] .setsize 30 96
-.if \n[dreamcast] .setsize 28 74
-.if \n[evbarm] .setsize 28 81
-.if \n[evbmips] .setsize 30 96
-.if \n[evbppc] .setsize 27 80
-.if \n[evbsh3] .setsize 28 74
-.if \n[hp300] .setsize 26 75
-.if \n[hp700] .setsize 31 86
-.if \n[hpcarm] .setsize 28 81
-.if \n[hpcmips] .setsize 30 96
-.if \n[hpcsh] .setsize 28 74
-.if \n[i386] .setsize 26 77
-.if \n[ibmnws] .setsize 29 84
-.if \n[iyonix] .setsize 28 81
-.if \n[landisk] .setsize 28 74
-.if \n[luna68k] .setsize 26 75
-.if \n[mac68k] .setsize 26 75
-.if \n[macppc] .setsize 29 84
-.if \n[mipsco] .setsize 30 96
-.if \n[mmeye] .setsize 28 74
-.if \n[mvme68k] .setsize 26 76
-.if \n[mvmeppc] .setsize 29 84
-.if \n[netwinder] .setsize 28 81
-.if \n[news68k] .setsize 26 75
-.if \n[newsmips] .setsize 30 96
-.if \n[next68k] .setsize 26 75
-.if \n[ofppc] .setsize 29 84
-.if \n[pmax] .setsize 30 96
-.if \n[prep] .setsize 29 84
-.if \n[sandpoint] .setsize 29 84
-.if \n[sbmips] .setsize 30 96
-.if \n[sgimips] .setsize 30 96
-.if \n[shark] .setsize 28 81
-.if \n[sparc] .setsize 27 81
-.if \n[sparc64] .setsize 33 104
-.if \n[sun2] .setsize 166 415
-.if \n[sun3] .setsize 26 75
-.if \n[vax] .setsize 25 71
-.if \n[x68k] .setsize 26 76
-.showsize
 .
 .It Sy comp
 Things needed for compiling programs.
@@ -550,56 +497,6 @@ set).
 This set also includes the manual pages for
 all of the utilities it contains, as well as the
 system call and library manual pages.
-.if \n[acorn26] .setsize 41 141
-.if \n[acorn32] .setsize 41 141
-.if \n[algor] .setsize 37 140
-.if \n[alpha] .setsize 50 207
-.if \n[amd64] .setsize 59 219
-.if \n[amiga] .setsize 36 130
-.if \n[arc] .setsize 37 140
-.if \n[atari] .setsize 36 130
-.if \n[cats] .setsize 41 141
-.if \n[cesfic] .setsize 36 130
-.if \n[cobalt] .setsize 37 140
-.if \n[dreamcast] .setsize 39 126
-.if \n[evbarm] .setsize 41 141
-.if \n[evbmips] .setsize 37 140
-.if \n[evbppc] .setsize 44 154
-.if \n[evbsh3] .setsize 39 126
-.if \n[hp300] .setsize 36 130
-.if \n[hp700] .setsize 44 149
-.if \n[hpcarm] .setsize 41 141
-.if \n[hpcmips] .setsize 37 140
-.if \n[hpcsh] .setsize 39 126
-.if \n[i386] .setsize 38 131
-.if \n[ibmnws] .setsize 44 154
-.if \n[iyonix] .setsize 41 141
-.if \n[landisk] .setsize 39 126
-.if \n[luna68k] .setsize 36 130
-.if \n[mac68k] .setsize 36 130
-.if \n[macppc] .setsize 44 154
-.if \n[mipsco] .setsize 37 140
-.if \n[mmeye] .setsize 39 126
-.if \n[mvme68k] .setsize 36 130
-.if \n[mvmeppc] .setsize 44 154
-.if \n[netwinder] .setsize 41 141
-.if \n[news68k] .setsize 36 130
-.if \n[newsmips] .setsize 37 140
-.if \n[next68k] .setsize 36 130
-.if \n[ofppc] .setsize 44 154
-.if \n[pmax] .setsize 37 140
-.if \n[prep] .setsize 44 154
-.if \n[sandpoint] .setsize 44 154
-.if \n[sbmips] .setsize 37 140
-.if \n[sgimips] .setsize 37 140
-.if \n[shark] .setsize 41 141
-.if \n[sparc] .setsize 39 141
-.if \n[sparc64] .setsize 59 226
-.if \n[sun2] .setsize 30 108
-.if \n[sun3] .setsize 36 130
-.if \n[vax] .setsize 29 107
-.if \n[x68k] .setsize 36 130
-.showsize
 .
 .It Sy etc
 This distribution set contains the system
@@ -611,63 +508,9 @@ This set
 be installed if you are installing the system from scratch, but should
 .Em not
 be used if you are upgrading.
-.\" Not MI, but close enough to the same size on all ports...
-.showsize 1 1
 .
 .It Sy games
 This set includes the games and their manual pages.
-.\" Shareable within MACHINE_ARCH (NIH)
-.setsize -unknown-machine-arch- -unknown-machine-arch-
-.if \n[acorn26] .setsize 4 8
-.if \n[acorn32] .setsize 4 8
-.if \n[algor] .setsize 4 9
-.if \n[alpha] .setsize 4 9
-.if \n[amd64] .setsize 4 8
-.if \n[amiga] .setsize 4 8
-.if \n[arc] .setsize 4 9
-.if \n[atari] .setsize 4 8
-.if \n[cats] .setsize 4 8
-.if \n[cesfic] .setsize 4 8
-.if \n[cobalt] .setsize 4 9
-.if \n[dreamcast] .setsize 4 8
-.if \n[evbarm] .setsize 4 8
-.if \n[evbmips] .setsize 4 9
-.if \n[evbppc] .setsize 4 8
-.if \n[evbsh3] .setsize 4 8
-.if \n[hp300] .setsize 4 8
-.if \n[hp700] .setsize 4 8
-.if \n[hpcarm] .setsize 4 8
-.if \n[hpcmips] .setsize 4 9
-.if \n[hpcsh] .setsize 4 8
-.if \n[i386] .setsize 4 8
-.if \n[ibmnws] .setsize 4 8
-.if \n[iyonix] .setsize 4 8
-.if \n[landisk] .setsize 4 8
-.if \n[luna68k] .setsize 4 8
-.if \n[mac68k] .setsize 4 8
-.if \n[macppc] .setsize 4 8
-.if \n[mipsco] .setsize 4 9
-.if \n[mmeye] .setsize 4 8
-.if \n[mvme68k] .setsize 4 8
-.if \n[mvmeppc] .setsize 4 8
-.if \n[netwinder] .setsize 4 8
-.if \n[news68k] .setsize 4 8
-.if \n[newsmips] .setsize 4 9
-.if \n[next68k] .setsize 4 8
-.if \n[ofppc] .setsize 4 8
-.if \n[pmax] .setsize 4 9
-.if \n[prep] .setsize 4 8
-.if \n[sandpoint] .setsize 4 8
-.if \n[sbmips] .setsize 4 9
-.if \n[sgimips] .setsize 4 9
-.if \n[shark] .setsize 4 8
-.if \n[sparc] .setsize 4 8
-.if \n[sparc64] .setsize 4 9
-.if \n[sun2] .setsize 9 21
-.if \n[sun3] .setsize 4 8
-.if \n[vax] .setsize 4 8
-.if \n[x68k] .setsize 4 8
-.showsize
 .
 .\" Kernel set(s)
 .
@@ -681,21 +524,16 @@ kernel, named
 You
 .Em must
 install the kernel that matches your hardware.
-.showsize 2 4
 .\}
 .el \{\
 .ie \n[evbarm] \{\
 .It Sy kern-INTEGRATOR
 (see below)
-.showsize 14 36
 .It Sy kern-IQ80310
 (see below)
-.showsize 26 74
 .It Sy kern-IQ80321
 (see below)
-.showsize 28 74
 .It Sy kern-TEAMASA_NPWR
-.showsize 17 44
 .Pp
 These sets contain a
 .Nx*M
@@ -723,7 +561,6 @@ kernel, named
 You
 .Em must
 install either this distribution set or kern-GENERICSBC.
-.showsize 2 4
 .It Sy kern-GENERICSBC
 This set contains a
 .Nx*M
@@ -734,7 +571,6 @@ kernel, named
 You
 .Em must
 install either this distribution set or kern-GENERIC.
-.showsize 2 4
 .\}
 .el \{\
 .ie \n[macppc] \{\
@@ -748,7 +584,6 @@ kernel named
 You
 .Em must
 install this distribution set.
-.showsize 4 8
 .It Sy kern-GENERIC.MP
 This set contains a
 .Nx*M
@@ -756,7 +591,6 @@ This set contains a
 .Li GENERIC.MP
 kernel, which will use multiple processors (if present), named
 .Pa /netbsd .
-.showsize 4 8
 .\}
 .el \{\
 .ie \n[sgimips] \{\
@@ -791,7 +625,6 @@ kernel (for O2), named
 You
 .Em must
 install one of these distribution sets for your machine.
-.showsize 4 8
 .\}
 .el \{\
 .ie \n[sparc] \{\
@@ -805,7 +638,6 @@ kernel named
 You
 .Em must
 install this distribution set.
-.showsize 2 4
 .It Sy kern-GENERIC.MP
 This set contains a
 .Nx*M
@@ -813,7 +645,6 @@ This set contains a
 .Li GENERIC.MP
 kernel, which will use multiple processors (if present), named
 .Pa /netbsd .
-.showsize 2 4
 .It Sy kern-GENERIC_SCSI3
 This set contains a
 .Nx*M
@@ -823,7 +654,6 @@ kernel, which will set SCSI ID 3 to
 .Li sd0 ,
 named
 .Pa /netbsd .
-.showsize 2 4
 .It Sy kern-GENERIC_SUN4U
 This set contains a
 .Nx*M
@@ -831,7 +661,6 @@ This set contains a
 .Li GENERIC_SUN4U
 kernel, which supports only UltraSPARC systems in 32 bit mode, named
 .Pa /netbsd .
-.showsize 4 9
 .It Sy kern-KRUPS
 This set contains a
 .Nx*M
@@ -839,7 +668,6 @@ This set contains a
 .Li GENERIC-KRUPS
 kernel, which supports the JavaStation-NC, named
 .Pa /netbsd .
-.showsize 2 3
 .It Sy kern-MRCOFFEE
 This set contains a
 .Nx*M
@@ -847,7 +675,6 @@ This set contains a
 .Li MRCOFFE
 kernel, which which supports the OpenBOOT PROM 2 JavaStation-1, named
 .Pa /netbsd .
-.showsize 2 3
 .It Sy kern-MRCOFFEE_OFW
 This set contains a
 .Nx*M
@@ -855,7 +682,6 @@ This set contains a
 .Li MRCOFFE_OFW
 kernel, which which supports the OpenFirmware JavaStation-1, named
 .Pa /netbsd .
-.showsize 2 3
 .\}
 .el \{\
 .ie \n[sparc64] \{\
@@ -869,7 +695,6 @@ kernel named
 You
 .Em must
 install this or the kern-GENERIC.MP distribution set.
-.showsize 4 10
 .It Sy kern-GENERIC.MP
 This set contains a
 .Nx*M
@@ -877,7 +702,6 @@ This set contains a
 .Li GENERIC.MP
 kernel, which will use multiple processors (if present), named
 .Pa /netbsd .
-.showsize 4 10
 .\}
 .el \{\
 .ie \n[evbppc] \{\
@@ -890,7 +714,6 @@ kernel in ELF format named
 and the same kernel in the format needed by the bootloader as
 .Pa /netbsd.img .
 These kernels are specific to the Plat'Home OpenBlockS266 microserver.
-.showsize 4 8
 .It Sy kern-WALNUT
 This set contains a
 .Nx*M
@@ -900,7 +723,6 @@ kernel in ELF format named
 and the same kernel in the format needed by the bootloader as
 .Pa /netbsd.img .
 These kernels are specific to the IBM 405GP based Walnut evaluation board.
-.showsize 5 10
 .\}
 .el \{\
 .ie \n[xen] \{\
@@ -921,48 +743,6 @@ This set also contains an a.out kernel named
 .Pa /netbsd.aout
 that your system may need to boot.
 .\}
-.if \n[acorn26] .setsize 2 4
-.if \n[acorn32] .setsize 2 4
-.if \n[alpha] .setsize 5 10
-.if \n[amd64] .setsize 5 13
-.if \n[amiga] .setsize 2 4
-.if \n[arc] .setsize 3 6
-.if \n[cats] .setsize 5 10
-.if \n[cobalt] .setsize 2 5
-.if \n[dreamcast] .setsize 2 3
-.if \n[hp300] .setsize 2 4
-.if \n[hp700] .setsize 4 8
-.if \n[hpcmips] .setsize 2 5
-.if \n[hpcsh] .setsize 2 3
-.if \n[i386] .setsize 5 11
-.if \n[ibmnws] .setsize 2 5
-.if \n[iyonix] .setsize 2 4
-.if \n[landisk] .setsize 3 4
-.if \n[luna68k] .setsize 1 2
-.if \n[mac68k] .setsize 2 4
-.if \n[macppc] .setsize 4 8
-.if \n[mipsco] .setsize 2 3
-.if \n[mmeye] .setsize 2 3
-.if \n[mvme68k] .setsize 2 3
-.if \n[mvmeppc] .setsize 2 3
-.if \n[netwinder] .setsize 2 4
-.if \n[news68k] .setsize 2 3
-.if \n[newsmips] .setsize 2 4
-.if \n[next68k] .setsize 2 3
-.if \n[ofppc] .setsize 3 5
-.if \n[pmax] .setsize 2 5
-.if \n[prep] .setsize 2 5
-.if \n[sandpoint] .setsize 2 4
-.if \n[sbmips] .setsize 2 4
-.if \n[sgimips] .setsize -unknown- -unknown-
-.if \n[shark] .setsize 4 7
-.if \n[sparc] .setsize 2 4
-.if \n[sparc64] .setsize 4 10
-.if \n[sun2] .setsize 1 2
-.if \n[sun3] .setsize 1 2
-.if \n[vax] .setsize 2 3
-.if \n[x68k] .setsize 2 3
-.showsize
 .\} \" !\n[xen]
 .\} \" !\n[evbppc]
 .\} \" !\n[sparc64]
@@ -980,15 +760,11 @@ binaries and other software contained in the
 set.
 Note that it does not include any of the manual pages
 that are included in the other sets.
-.\" MI
-.showsize 12 50
 .
 .It Sy misc
 This set includes the system dictionaries,
 the typesettable document set, and other files from
 .Pa /usr/share .
-.\" MI
-.showsize 4 13
 .
 .It Sy text
 This set includes
@@ -997,56 +773,6 @@ text processing tools, including
 .Xr groff 1 ,
 all related programs, and their manual pages.
 .\" Shareable within MACHINE_ARCH (NIH)
-.if \n[acorn26] .setsize 3 10
-.if \n[acorn32] .setsize 3 10
-.if \n[algor] .setsize 4 12
-.if \n[alpha] .setsize 4 12
-.if \n[amd64] .setsize 4 11
-.if \n[amiga] .setsize 3 10
-.if \n[arc] .setsize 4 12
-.if \n[atari] .setsize 3 10
-.if \n[cats] .setsize 3 10
-.if \n[cesfic] .setsize 3 10
-.if \n[cobalt] .setsize 4 12
-.if \n[dreamcast] .setsize 3 10
-.if \n[evbarm] .setsize 3 10
-.if \n[evbmips] .setsize 4 12
-.if \n[evbppc] .setsize 4 11
-.if \n[evbsh3] .setsize 3 10
-.if \n[hp300] .setsize 3 10
-.if \n[hp700] .setsize 4 11
-.if \n[hpcarm] .setsize 3 10
-.if \n[hpcmips] .setsize 4 12
-.if \n[hpcsh] .setsize 3 10
-.if \n[i386] .setsize 3 10
-.if \n[ibmnws] .setsize 4 11
-.if \n[iyonix] .setsize 3 10
-.if \n[landisk] .setsize 3 10
-.if \n[luna68k] .setsize 3 10
-.if \n[mac68k] .setsize 3 10
-.if \n[macppc] .setsize 4 11
-.if \n[mipsco] .setsize 4 12
-.if \n[mmeye] .setsize 3 10
-.if \n[mvme68k] .setsize 3 10
-.if \n[mvmeppc] .setsize 4 11
-.if \n[netwinder] .setsize 3 10
-.if \n[news68k] .setsize 3 10
-.if \n[newsmips] .setsize 4 12
-.if \n[next68k] .setsize 3 10
-.if \n[ofppc] .setsize 4 11
-.if \n[pmax] .setsize 4 12
-.if \n[prep] .setsize 4 11
-.if \n[sandpoint] .setsize 4 11
-.if \n[sbmips] .setsize 4 12
-.if \n[sgimips] .setsize 4 12
-.if \n[shark] .setsize 3 10
-.if \n[sparc] .setsize 3 10
-.if \n[sparc64] .setsize 3 11
-.if \n[sun2] .setsize 5 15
-.if \n[sun3] .setsize 3 10
-.if \n[vax] .setsize 3 10
-.if \n[x68k] .setsize 3 10
-.showsize
 .
 .tag) \" sets
 .
@@ -1077,169 +803,15 @@ The sets are:
 The basic files needed for a complete X
 client environment.
 This does not include the X servers.
-.\" Shareable within MACHINE_ARCH, except atari (NIH)
-.if \n[acorn26] .setsize 7 20
-.if \n[acorn32] .setsize 7 20
-.if \n[algor] .setsize 7 23
-.if \n[alpha] .setsize 8 25
-.if \n[amd64] .setsize 8 24
-.if \n[amiga] .setsize 6 19
-.if \n[arc] .setsize 7 23
-.if \n[atari] .setsize 6 19
-.if \n[cats] .setsize 7 20
-.if \n[cesfic] .setsize 6 19
-.if \n[cobalt] .setsize 7 23
-.if \n[dreamcast] .setsize 7 19
-.if \n[evbarm] .setsize 7 20
-.if \n[evbmips] .setsize 7 23
-.if \n[evbppc] .setsize 7 21
-.if \n[evbsh3] .setsize 7 19
-.if \n[hp300] .setsize 6 19
-.if \n[hp700] .setsize 8 22
-.if \n[hpcarm] .setsize 7 20
-.if \n[hpcmips] .setsize 7 23
-.if \n[hpcsh] .setsize 7 19
-.if \n[i386] .setsize 7 21
-.if \n[ibmnws] .setsize 7 21
-.if \n[iyonix] .setsize 7 20
-.if \n[landisk] .setsize 7 19
-.if \n[luna68k] .setsize 6 19
-.if \n[mac68k] .setsize 6 19
-.if \n[macppc] .setsize 8 23
-.if \n[mipsco] .setsize 7 23
-.if \n[mmeye] .setsize 7 19
-.if \n[mvme68k] .setsize 6 19
-.if \n[mvmeppc] .setsize 7 21
-.if \n[netwinder] .setsize 7 20
-.if \n[news68k] .setsize 6 19
-.if \n[newsmips] .setsize 7 23
-.if \n[next68k] .setsize 6 19
-.if \n[ofppc] .setsize 7 21
-.if \n[pmax] .setsize 7 23
-.if \n[prep] .setsize 7 21
-.if \n[sandpoint] .setsize 7 21
-.if \n[sbmips] .setsize 7 23
-.if \n[sgimips] .setsize 8 25
-.if \n[shark] .setsize 8 22
-.if \n[sparc] .setsize 7 20
-.if \n[sparc64] .setsize 8 25
-.if \n[sun2] .setsize -unknown- -unknown-
-.if \n[sun3] .setsize 6 19
-.if \n[vax] .setsize 6 18
-.if \n[x68k] .setsize 6 19
-.showsize
 .
 .It Sy xcomp
 The extra libraries and include files needed to compile X source code.
-.\" Shareable within MACHINE_ARCH (NIH)
-.if \n[acorn26] .setsize 14 49
-.if \n[acorn32] .setsize 14 49
-.if \n[algor] .setsize 11 42
-.if \n[alpha] .setsize 16 70
-.if \n[amd64] .setsize 16 63
-.if \n[amiga] .setsize 11 43
-.if \n[arc] .setsize 11 42
-.if \n[atari] .setsize 11 43
-.if \n[cats] .setsize 14 49
-.if \n[cesfic] .setsize 11 43
-.if \n[cobalt] .setsize 11 42
-.if \n[dreamcast] .setsize 13 43
-.if \n[evbarm] .setsize 14 49
-.if \n[evbmips] .setsize 11 42
-.if \n[evbppc] .setsize 14 48
-.if \n[evbsh3] .setsize 13 43
-.if \n[hp300] .setsize 11 43
-.if \n[hp700] .setsize 15 51
-.if \n[hpcarm] .setsize 14 49
-.if \n[hpcmips] .setsize 11 42
-.if \n[hpcsh] .setsize 13 43
-.if \n[i386] .setsize 14 48
-.if \n[ibmnws] .setsize 14 48
-.if \n[iyonix] .setsize 14 49
-.if \n[landisk] .setsize 13 43
-.if \n[luna68k] .setsize 11 43
-.if \n[mac68k] .setsize 11 43
-.if \n[macppc] .setsize 17 55
-.if \n[mipsco] .setsize 11 42
-.if \n[mmeye] .setsize 13 43
-.if \n[mvme68k] .setsize 11 43
-.if \n[mvmeppc] .setsize 14 48
-.if \n[netwinder] .setsize 14 49
-.if \n[news68k] .setsize 11 43
-.if \n[newsmips] .setsize 11 42
-.if \n[next68k] .setsize 11 43
-.if \n[ofppc] .setsize 14 48
-.if \n[pmax] .setsize 11 42
-.if \n[prep] .setsize 14 48
-.if \n[sandpoint] .setsize 14 48
-.if \n[sbmips] .setsize 11 42
-.if \n[sgimips] .setsize 13 48
-.if \n[shark] .setsize 17 56
-.if \n[sparc] .setsize 13 47
-.if \n[sparc64] .setsize 17 65
-.if \n[sun2] .setsize -unknown- -unknown-
-.if \n[sun3] .setsize 11 43
-.if \n[vax] .setsize 8 34
-.if \n[x68k] .setsize 11 43
-.showsize
 .
 .It Sy xfont
 Fonts needed by the X server and by X clients.
-.if \n[acorn26] .setsize 31 39
-.if \n[acorn32] .setsize 31 39
-.if \n[algor] .setsize 31 39
-.if \n[alpha] .setsize 31 39
-.if \n[amd64] .setsize 32 74
-.if \n[amiga] .setsize 31 39
-.if \n[arc] .setsize 31 39
-.if \n[atari] .setsize 31 39
-.if \n[cats] .setsize 31 39
-.if \n[cesfic] .setsize 31 39
-.if \n[cobalt] .setsize 31 39
-.if \n[dreamcast] .setsize 31 39
-.if \n[evbarm] .setsize 31 39
-.if \n[evbmips] .setsize 31 39
-.if \n[evbppc] .setsize 31 39
-.if \n[evbsh3] .setsize 31 39
-.if \n[hp300] .setsize 31 39
-.if \n[hp700] .setsize 31 39
-.if \n[hpcarm] .setsize 31 39
-.if \n[hpcmips] .setsize 31 39
-.if \n[hpcsh] .setsize 31 39
-.if \n[i386] .setsize 32 74
-.if \n[ibmnws] .setsize 31 39
-.if \n[iyonix] .setsize 31 39
-.if \n[landisk] .setsize 31 39
-.if \n[luna68k] .setsize 31 39
-.if \n[mac68k] .setsize 31 39
-.if \n[macppc] .setsize 32 74
-.if \n[mipsco] .setsize 31 39
-.if \n[mmeye] .setsize 31 39
-.if \n[mvme68k] .setsize 31 39
-.if \n[mvmeppc] .setsize 31 39
-.if \n[netwinder] .setsize 31 39
-.if \n[news68k] .setsize 31 39
-.if \n[newsmips] .setsize 31 39
-.if \n[next68k] .setsize 31 39
-.if \n[ofppc] .setsize 31 39
-.if \n[pmax] .setsize 31 39
-.if \n[prep] .setsize 31 39
-.if \n[sandpoint] .setsize 31 39
-.if \n[sbmips] .setsize 31 39
-.if \n[sgimips] .setsize 32 74
-.if \n[shark] .setsize 32 74
-.if \n[sparc] .setsize 31 39
-.if \n[sparc64] .setsize 32 74
-.if \n[sun2] .setsize -unknown- -unknown-
-.if \n[sun3] .setsize 31 39
-.if \n[vax] .setsize 31 39
-.if \n[x68k] .setsize 31 39
-.showsize
 .
 .It Sy xetc
 Configuration files for X which could be locally modified.
-.setsize 1 1
-.showsize
 .
 .It Sy xserver
 The X server. 
@@ -1281,56 +853,6 @@ This includes the X68k and Xprt
 servers with man pages and the runtime configuration file.
 .\}
 .
-.if \n[acorn26] .setsize 5 12
-.if \n[acorn32] .setsize 6 13
-.if \n[algor] .setsize 5 15
-.if \n[alpha] .setsize 8 19
-.if \n[amd64] .setsize 9 26
-.if \n[amiga] .setsize 5 11
-.if \n[arc] .setsize 5 15
-.if \n[atari] .setsize 4 10
-.if \n[cats] .setsize 11 28
-.if \n[cesfic] .setsize 4 10
-.if \n[cobalt] .setsize 5 15
-.if \n[dreamcast] .setsize 5 10
-.if \n[evbarm] .setsize 5 12
-.if \n[evbmips] .setsize 5 15
-.if \n[evbppc] .setsize 5 12
-.if \n[evbsh3] .setsize 5 9
-.if \n[hp300] .setsize 4 10
-.if \n[hp700] .setsize 5 13
-.if \n[hpcarm] .setsize 6 13
-.if \n[hpcmips] .setsize 6 17
-.if \n[hpcsh] .setsize 5 11
-.if \n[i386] .setsize 8 21
-.if \n[ibmnws] .setsize 5 12
-.if \n[iyonix] .setsize 5 12
-.if \n[landisk] .setsize 5 9
-.if \n[luna68k] .setsize 4 10
-.if \n[mac68k] .setsize 5 13
-.if \n[macppc] .setsize 7 19
-.if \n[mipsco] .setsize 5 15
-.if \n[mmeye] .setsize 5 9
-.if \n[mvme68k] .setsize 4 10
-.if \n[mvmeppc] .setsize 5 12
-.if \n[netwinder] .setsize 10 25
-.if \n[news68k] .setsize 4 10
-.if \n[newsmips] .setsize 6 16
-.if \n[next68k] .setsize 4 10
-.if \n[ofppc] .setsize 10 27
-.if \n[pmax] .setsize 6 16
-.if \n[prep] .setsize 5 12
-.if \n[sandpoint] .setsize 5 12
-.if \n[sbmips] .setsize 5 15
-.if \n[sgimips] .setsize 5 15
-.if \n[shark] .setsize 5 14
-.if \n[sparc] .setsize 13 35
-.if \n[sparc64] .setsize 7 19
-.if \n[sun2] .setsize -unknown- -unknown-
-.if \n[sun3] .setsize 6 16
-.if \n[vax] .setsize 4 9
-.if \n[x68k] .setsize 4 11
-.showsize
 .
 .tag) \" x sets
 .
