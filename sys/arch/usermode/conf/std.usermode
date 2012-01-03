@@ -1,15 +1,13 @@
-# $NetBSD: std.usermode,v 1.9 2011/12/20 21:01:39 jmcneill Exp $
+# $NetBSD: std.usermode,v 1.10 2012/01/03 21:28:50 reinoud Exp $
 
 include "conf/std"
 
-options 	HZ=100
+options 	HZ=20
 options		EXEC_ELF32
 options 	EXEC_ELF64
 options 	EXEC_SCRIPT
 
 # Defaults
-options		NKMEMPAGES=4096
-#options		NKMEMPAGES_MAX_DEFAULT=2048
 options		syscall_debug
 
 defflag opt_xen.h	DO_NOT_DEFINE

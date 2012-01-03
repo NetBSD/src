@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.i386,v 1.1 2011/12/20 21:01:39 jmcneill Exp $
+# $NetBSD: GENERIC.i386,v 1.2 2012/01/03 21:28:50 reinoud Exp $
 
 machine usermode
 include "arch/usermode/conf/GENERIC.common"
@@ -6,12 +6,12 @@ include "arch/i386/conf/majors.i386"
 
 no options EXEC_ELF64
 
-options		TEXTADDR=0x0f000000	# 1.5 Gb?
-options		KVMSIZE=0x008000000
-
+options		TEXTADDR=0x40000000	# 1 Gb `phys ram' / total space
+options		KVMSIZE= 0x10000000	# KVM space reserved in VM map, 256 Mb
+options		NKMEMPAGES_MAX=32768	# 128 Mb max
 makeoptions	COPTS+="-m32"
 makeoptions	LD="ld -melf_i386"
 
 #options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC32-$Revision: 1.1 $"
+#ident 		"GENERIC32-$Revision: 1.2 $"
 
