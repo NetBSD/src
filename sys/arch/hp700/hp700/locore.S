@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.57 2012/01/02 16:13:12 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.58 2012/01/03 06:11:21 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -118,30 +118,18 @@
 	_DEBUG_DUMPN(reg1, reg2, reg3, 27)	! \
 	_DEBUG_DUMPN(reg1, reg2, reg3, 31)
 
-#ifdef XXXNH
 /*
  * hv-specific instructions
  */
-#define	DR_PAGE0	diag (0x70 << 5)				/* XXXNH Different */
-#define	DR_PAGE1	diag (0x72 << 5)				/* XXXNH Different */
-#define	MTCPU_T(x,t)	diag ((t) << 21) | ((x) << 16) | (0xc0 << 5)	/* XXXNH Different */
-#define	MFCPU_T(r,x)	diag ((r) << 21) | (0xa0 << 5) | (x)
+#define	DR_PAGE0	diag (0x70 << 5)
+#define	DR_PAGE1	diag (0x72 << 5)
+
+#define	MTCPU_T(x,t)	diag ((t) << 21) | ((x) << 16) | (0xb0 << 5)
+#define	MFCPU_T(r,x)	diag ((r) << 21) | ((x) << 16) | (0xd0 << 5)
 #define	MTCPU_C(x,t)	diag ((t) << 21) | ((x) << 16) | (0x12 << 5)
 #define	MFCPU_C(r,x)	diag ((r) << 21) | ((x) << 16) | (0x30 << 5)
-#define	MFCPU_U(r,x)	.word	0x140008a0 | ((r) << 21) | ((x))
-#define	MTCPU_U(x,r)	.word	0x14001840 | ((r) << 21) | ((x) << 16)
-
-#else
-
-#define	DR_PAGE0	.word	0x14001200
-#define	DR_PAGE1	.word	0x14001240
-#define	MTCPU_T(x,t)	.word	0x14001600 | ((t) << 21) | ((x) << 16)
-#define	MFCPU_T(r,x)	.word	0x14001a00 | ((r) << 21) | ((x) << 16)
-#define	MTCPU_C(x,t)	.word	0x14000240 | ((t) << 21) | ((x) << 16)
-#define	MFCPU_C(r,x)	.word	0x14000600 | ((r) << 21) | ((x) << 16)
-#define	MFCPU_U(r,x)	.word	0x140008a0 | ((r) << 21) | ((x))
-#define	MTCPU_U(x,r)	.word	0x14001840 | ((r) << 21) | ((x) << 16)
-#endif
+#define	MFCPU_U(r,x)	diag ((r) << 21) | ((x))       | (0x45 << 5)
+#define	MTCPU_U(x,r)	diag ((r) << 21) | ((x) << 16) | (0xc2 << 5)
 
 	.import	$global$, data
 	.import pdc, data
