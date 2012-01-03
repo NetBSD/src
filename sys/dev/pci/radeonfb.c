@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.48 2011/12/29 20:14:39 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.49 2012/01/03 00:25:49 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,9 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.48 2011/12/29 20:14:39 macallan Exp $");
-
-#define RADEONFB_DEFAULT_DEPTH 8
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.49 2012/01/03 00:25:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +98,12 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.48 2011/12/29 20:14:39 macallan Exp $
 #include <dev/pci/radeonfbvar.h>
 #include "opt_radeonfb.h"
 #include "opt_vcons.h"
+
+#ifdef RADEONFB_DEPTH_32
+#define RADEONFB_DEFAULT_DEPTH 32
+#else
+#define RADEONFB_DEFAULT_DEPTH 8
+#endif
 
 static int radeonfb_match(device_t, cfdata_t, void *);
 static void radeonfb_attach(device_t, device_t, void *);
@@ -162,8 +166,8 @@ static void radeonfb_copyrows(void *, int, int, int);
 static void radeonfb_copycols(void *, int, int, int, int);
 static void radeonfb_cursor(void *, int, int, int);
 static void radeonfb_putchar(void *, int, int, unsigned, long);
+static void radeonfb_putchar_aa32(void *, int, int, unsigned, long);
 static void radeonfb_putchar_wrapper(void *, int, int, unsigned, long);
-static int radeonfb_allocattr(void *, int, int, int, long *);
 
 static int radeonfb_get_backlight(struct radeonfb_display *);
 static int radeonfb_set_backlight(struct radeonfb_display *, int);
@@ -222,7 +226,7 @@ static struct wsscreen_descr radeonfb_stdscreen = {
 	0, 0,		/* ncols, nrows */
 	NULL,		/* textops */
 	8, 16,		/* fontwidth, fontheight */
-	WSSCREEN_WSCOLORS | WSSCREEN_REVERSE, /* capabilities */
+	WSSCREEN_WSCOLORS, /* capabilities */
 	0,		/* modecookie */
 };
 
@@ -755,11 +759,8 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		dp->rd_softc = sc;
 		dp->rd_wsmode = WSDISPLAYIO_MODE_EMUL;
 		dp->rd_bg = WS_DEFAULT_BG;
-#if 0
-		dp->rd_bpp = sc->sc_maxbpp;	/* XXX: for now */
-#else
 		dp->rd_bpp = RADEONFB_DEFAULT_DEPTH;	/* XXX */
-#endif
+
 		/* for text mode, we pick a resolution that won't
 		 * require panning */
 		radeonfb_pickres(dp, &dp->rd_virtx, &dp->rd_virty, 0);
@@ -1146,7 +1147,7 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 		    0, prot, 0);	
 		return pa;
 	}	
-#endif /* macppc */
+#endif /* PCI_MAGIC_IO_RANGE */
 
 #endif /* RADEONFB_MMAP_BARS */
 
@@ -1947,7 +1948,6 @@ radeonfb_setcrtc(struct radeonfb_display *dp, int index)
 	pitch = (((sc->sc_maxx * sc->sc_maxbpp) + ((sc->sc_maxbpp * 8) - 1)) /
 	    (sc->sc_maxbpp * 8));
 #endif
-	//pitch = pitch | (pitch << 16);
 
 	switch (crtc) {
 	case 0:
@@ -2162,13 +2162,15 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_height = dp->rd_virty;
 	ri->ri_stride = dp->rd_stride;
 	ri->ri_flg = RI_CENTER;
+	if (ri->ri_depth == 32) {
+		ri->ri_flg |= RI_ENABLE_ALPHA;
+	}
 	ri->ri_bits = (void *)dp->rd_fbptr;
 
 #ifdef VCONS_DRAW_INTR
 	scr->scr_flags |= VCONS_DONT_READ;
 #endif
 
-	/* XXX: 32 bpp only */
 	/* this is rgb in "big-endian order..." */
 	ri->ri_rnum = 8;
 	ri->ri_gnum = 8;
@@ -2188,10 +2190,10 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	 * XXX: font selection should be based on properties, with some
 	 * normal/reasonable default.
 	 */
-	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 
 	/* initialize and look for an initial font */
 	rasops_init(ri, dp->rd_virty/8, dp->rd_virtx/8);
+	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, dp->rd_virty / ri->ri_font->fontheight,
 		    dp->rd_virtx / ri->ri_font->fontwidth);
@@ -2202,16 +2204,23 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_ops.copycols = radeonfb_copycols;
 	ri->ri_ops.eraserows = radeonfb_eraserows;
 	ri->ri_ops.erasecols = radeonfb_erasecols;
-	ri->ri_ops.allocattr = radeonfb_allocattr;
-	if (IS_R300(dp->rd_softc)) {
-		/*
-		 * radeonfb_putchar() doesn't work right on some R3xx
-		 * so we use software drawing here, the wrapper just makes
-		 * sure the engine is idle before scribbling into vram
-		 */
-		ri->ri_ops.putchar = radeonfb_putchar_wrapper;
+	/* pick a putchar method based on font and Radeon model */
+	if (ri->ri_font->stride < ri->ri_font->fontwidth) {
+		/* got a bitmap font */
+		if (IS_R300(dp->rd_softc)) {
+			/*
+			 * radeonfb_putchar() doesn't work right on some R3xx
+			 * so we use software drawing here, the wrapper just
+			 *  makes sure the engine is idle before scribbling
+			 * into vram
+			 */
+			ri->ri_ops.putchar = radeonfb_putchar_wrapper;
+		} else {
+			ri->ri_ops.putchar = radeonfb_putchar;
+		}
 	} else {
-		ri->ri_ops.putchar = radeonfb_putchar;
+		/* got an alpha font */
+		ri->ri_ops.putchar = radeonfb_putchar_aa32;
 	}
 	ri->ri_ops.cursor = radeonfb_cursor;
 }
@@ -2386,6 +2395,8 @@ radeonfb_r300cg_workaround(struct radeonfb_softc *sc)
 /*
  * Acceleration entry points.
  */
+
+/* this one draws characters using bitmap fonts */
 static void
 radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
@@ -2456,7 +2467,7 @@ radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			data8 = data;
 			for (i = 0; i < h; i++) {
 				reg = *data8;
-				bus_space_write_stream_4(sc->sc_regt,
+				bus_space_write_stream_4(sc->sc_regt, 
 				    sc->sc_regh, RADEON_HOST_DATA0, reg);
 				data8++;
 			}
@@ -2466,12 +2477,103 @@ radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			data16 = data;
 			for (i = 0; i < h; i++) {
 				reg = *data16;
-				bus_space_write_stream_4(sc->sc_regt,
+				bus_space_write_stream_4(sc->sc_regt, 
 				    sc->sc_regh, RADEON_HOST_DATA0, reg);
 				data16++;
 			}
 			break;
 		}
+	}
+}
+
+/* ... while this one is for anti-aliased ones */
+static void
+radeonfb_putchar_aa32(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info	*ri = cookie;
+	struct vcons_screen	*scr = ri->ri_hw;
+	struct radeonfb_display	*dp = scr->scr_cookie;
+	struct radeonfb_softc	*sc = dp->rd_softc;
+	struct wsdisplay_font	*font = PICK_FONT(ri, c);
+	uint32_t		bg, fg, gmc;
+	uint8_t			*data;
+	int			w, h, xd, yd;
+	int 			i, r, g, b, aval;
+	int 			rf, gf, bf, rb, gb, bb;
+	uint32_t 		pixel;
+
+	if (dp->rd_wsmode != WSDISPLAYIO_MODE_EMUL)
+		return;
+
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	w = font->fontwidth;
+	h = font->fontheight;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
+
+	xd = ri->ri_xorigin + col * w;
+	yd = ri->ri_yorigin + row * h;
+
+	if (c == 0x20) {
+		radeonfb_rectfill(dp, xd, yd, w, h, bg);
+		return;
+	}
+	data = (uint8_t *)font->data + (c - font->firstchar) * ri->ri_fontscale;
+
+	gmc = dp->rd_format << RADEON_GMC_DST_DATATYPE_SHIFT;
+
+	radeonfb_wait_fifo(sc, 5);
+	
+	PUT32(sc, RADEON_DP_GUI_MASTER_CNTL,
+	    RADEON_GMC_BRUSH_NONE |
+	    RADEON_GMC_SRC_DATATYPE_COLOR |
+	    RADEON_ROP3_S |
+	    RADEON_DP_SRC_SOURCE_HOST_DATA |
+	    RADEON_GMC_CLR_CMP_CNTL_DIS |
+	    RADEON_GMC_WR_MSK_DIS |
+	    gmc);
+
+	PUT32(sc, RADEON_DP_CNTL,
+	    RADEON_DST_X_LEFT_TO_RIGHT |
+	    RADEON_DST_Y_TOP_TO_BOTTOM);
+
+	PUT32(sc, RADEON_SRC_X_Y, 0);
+	PUT32(sc, RADEON_DST_X_Y, (xd << 16) | yd);
+	PUT32(sc, RADEON_DST_WIDTH_HEIGHT, (w << 16) | h);
+
+	rf = (fg >> 16) & 0xff;
+	rb = (bg >> 16) & 0xff;
+	gf = (fg >> 8) & 0xff;
+	gb = (bg >> 8) & 0xff;
+	bf =  fg & 0xff;
+	bb =  bg & 0xff;
+
+	/*
+	 * I doubt we can upload data faster than even the slowest Radeon
+	 * could process them, especially when doing the alpha blending stuff
+	 * along the way, so just make sure there's some room in the FIFO and
+	 * then hammer away
+	 */
+	radeonfb_wait_fifo(sc, 10);
+	for (i = 0; i < ri->ri_fontscale; i++) {
+		aval = *data;
+		data++;
+		if (aval == 0) {
+			pixel = bg;
+		} else if (aval == 255) {
+			pixel = fg;
+		} else {
+			r = aval * rf + (255 - aval) * rb;
+			g = aval * gf + (255 - aval) * gb;
+			b = aval * bf + (255 - aval) * bb;
+			pixel = (r & 0xff00) << 8 |
+			        (g & 0xff00) |
+			        (b & 0xff00) >> 8;
+		}
+		PUT32(sc, RADEON_HOST_DATA0, pixel);
 	}
 }
 
@@ -2606,17 +2708,6 @@ radeonfb_cursor(void *cookie, int on, int row, int col)
 	}
 }
 
-static int
-radeonfb_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
-{
-	if ((fg == 0) && (bg == 0)) {
-		fg = WS_DEFAULT_FG;
-		bg = WS_DEFAULT_BG;
-	}
-	*attrp = ((fg & 0xf) << 24) | ((bg & 0xf) << 16) | (flags & 0xff) << 8;
-	return 0;
-}
-
 /*
  * Underlying acceleration support.
  */
@@ -2675,7 +2766,6 @@ radeonfb_bitblt(struct radeonfb_display *dp, int srcx, int srcy,
 	radeonfb_wait_fifo(sc, 6);
 
 	PUT32(sc, RADEON_DP_GUI_MASTER_CNTL,
-	    //RADEON_GMC_SRC_CLIPPING |
 	    RADEON_GMC_BRUSH_SOLID_COLOR |
 	    RADEON_GMC_SRC_DATATYPE_COLOR |
 	    RADEON_GMC_CLR_CMP_CNTL_DIS |
@@ -2761,7 +2851,6 @@ radeonfb_engine_init(struct radeonfb_display *dp)
 
 	radeonfb_engine_reset(sc);
 	pitch = ((dp->rd_virtx * (dp->rd_bpp / 8) + 0x3f)) >> 6;
-	//pitch = ((sc->sc_maxx * (sc->sc_maxbpp / 8) + 0x3f)) >> 6;
 
 	radeonfb_wait_fifo(sc, 1);
 	if (!IS_R300(sc))
