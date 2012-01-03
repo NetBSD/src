@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ftpusers.c,v 1.5 2005/04/19 13:04:38 christos Exp $	*/
+/*	$NetBSD: pam_ftpusers.c,v 1.6 2012/01/03 19:02:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ftpusers/pam_ftpusers.c,v 1.1 2002/05/08 00:30:10 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ftpusers.c,v 1.5 2005/04/19 13:04:38 christos Exp $");
+__RCSID("$NetBSD: pam_ftpusers.c,v 1.6 2012/01/03 19:02:55 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: pam_ftpusers.c,v 1.5 2005/04/19 13:04:38 christos Exp $");
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -80,7 +81,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags __unused,
 	found = 0;
 	ulen = strlen(user);
 	if ((f = fopen(_PATH_FTPUSERS, "r")) == NULL) {
-		PAM_LOG("%s: %m", _PATH_FTPUSERS);
+		PAM_LOG("%s: %s", _PATH_FTPUSERS, strerror(errno));
 		goto done;
 	}
 	while (!found && (line = fgetln(f, &len)) != NULL) {
