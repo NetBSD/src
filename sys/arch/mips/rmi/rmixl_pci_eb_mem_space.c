@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pci_mem_space.c,v 1.1.2.2 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixl_pci_eb_mem_space.c,v 1.1.2.1 2012/01/04 16:17:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pci_mem_space.c,v 1.1.2.2 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pci_eb_mem_space.c,v 1.1.2.1 2012/01/04 16:17:54 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,10 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_pci_mem_space.c,v 1.1.2.2 2011/12/24 01:57:54 
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
 
-#define	CHIP			rmixl_pci
+#define	CHIP			rmixl_pci_eb
 #define	CHIP_MEM		/* defined */
-#define	CHIP_ACCESS_SIZE	1
-#define CHIP_LITTLE_ENDIAN
+#define	CHIP_ACCESS_SIZE	4
+#define CHIP_BIG_ENDIAN
 
 #define CHIP_V(v)		((struct rmixl_config *)(v))
 

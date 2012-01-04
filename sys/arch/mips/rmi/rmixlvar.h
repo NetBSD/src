@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.24 2011/12/30 06:45:00 matt Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.25 2012/01/04 16:17:54 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -66,19 +66,31 @@ cpu_rmixl(const struct pridtab *ct)
 static inline bool
 cpu_rmixlr(const struct pridtab *ct)
 {
+#ifdef MIPS64_XLR
 	return cpu_rmixl(ct) && cpu_rmixl_chip_type(ct) == CIDFL_RMI_TYPE_XLR;
+#else
+	return false;
+#endif
 }
 
 static inline bool
 cpu_rmixls(const struct pridtab *ct)
 {
+#ifdef MIPS64_XLS
 	return cpu_rmixl(ct) && cpu_rmixl_chip_type(ct) == CIDFL_RMI_TYPE_XLS;
+#else
+	return false;
+#endif
 }
 
 static inline bool
 cpu_rmixlp(const struct pridtab *ct)
 {
+#ifdef MIPS64_XLP
 	return cpu_rmixl(ct) && cpu_rmixl_chip_type(ct) == CIDFL_RMI_TYPE_XLP;
+#else
+	return false;
+#endif
 }
 
 typedef enum {
@@ -112,6 +124,11 @@ typedef enum {
 	RMIXLP_3XXQ,
 	RMIXLP_ANY,		/* must be last */
 } rmixlp_variant_t;
+
+#define	RMIXLP_8XX_P	(RMIXLP_8XX <= rmixl_configuration.rc_xlp_variant \
+			 && rmixl_configuration.rc_xlp_variant <= RMIXLP_4XX)
+#define	RMIXLP_3XX_P	(RMIXLP_3XX <= rmixl_configuration.rc_xlp_variant \
+			 && rmixl_configuration.rc_xlp_variant <= RMIXLP_3XXQ)
 
 struct rmixl_region {
 	bus_addr_t		r_pbase;
@@ -153,41 +170,54 @@ struct rmixl_config {
 	struct extent *		rc_pci_mem_ex;
 	struct extent *		rc_pci_io_ex;
 	struct extent *		rc_srio_mem_ex;
-	int			rc_mallocsafe;
 	uint64_t		rc_gpio_available;
 	rmixlfw_info_t 		rc_psb_info;
 	rmixlfw_psb_type_t	rc_psb_type;
 	volatile struct rmixlfw_cpu_wakeup_info *
 				rc_cpu_wakeup_info;
 	const void *		rc_cpu_wakeup_end;
+	const char *		rc_cpuname;
+	int			rc_mallocsafe;
+	rmixlp_variant_t	rc_xlp_variant;
+	uint8_t			rc_ncores;
 };
 
 extern struct rmixl_config rmixl_configuration;
-extern const char *rmixl_cpuname;
 
-extern void rmixl_flash_eb_bus_mem_init(bus_space_tag_t, void *);
-extern void rmixl_flash_el_bus_mem_init(bus_space_tag_t, void *);
-extern void rmixl_iobus_bus_mem_init(bus_space_tag_t, void *);
-extern void rmixl_obio_eb_bus_mem_init(bus_space_tag_t, void *);
-extern void rmixl_obio_el_bus_mem_init(bus_space_tag_t, void *);
-extern void rmixl_pci_cfg_el_bus_mem_init(bus_space_tag_t, void *);
-extern void rmixl_pci_cfg_eb_bus_mem_init(bus_space_tag_t, void *);
-extern void rmixl_pci_ecfg_el_bus_mem_init(bus_space_tag_t, void *);
-extern void rmixl_pci_ecfg_eb_bus_mem_init(bus_space_tag_t, void *);
-extern void rmixl_pci_bus_mem_init(bus_space_tag_t, void *);
-extern void rmixl_pci_bus_io_init(bus_space_tag_t, void *);
+void	rmixl_flash_eb_bus_mem_init(bus_space_tag_t, void *);
+void	rmixl_flash_el_bus_mem_init(bus_space_tag_t, void *);
+void	rmixl_iobus_bus_mem_init(bus_space_tag_t, void *);
+void	rmixl_obio_eb_bus_mem_init(bus_space_tag_t, void *);
+void	rmixl_obio_el_bus_mem_init(bus_space_tag_t, void *);
+void	rmixl_pci_cfg_el_bus_mem_init(bus_space_tag_t, void *);
+void	rmixl_pci_cfg_eb_bus_mem_init(bus_space_tag_t, void *);
+void	rmixl_pci_ecfg_el_bus_mem_init(bus_space_tag_t, void *);
+void	rmixl_pci_ecfg_eb_bus_mem_init(bus_space_tag_t, void *);
+void	rmixl_pci_eb_bus_mem_init(bus_space_tag_t, void *);
+void	rmixl_pci_el_bus_mem_init(bus_space_tag_t, void *);
+void	rmixl_pci_bus_io_init(bus_space_tag_t, void *);
 
 void	rmixlp_pcie_pc_init(void);
 
-extern void rmixl_addr_error_init(void);
-extern int  rmixl_addr_error_check(void);
-extern rmixlp_variant_t rmixl_xlp_variant;
+void	rmixl_addr_error_init(void);
+int	rmixl_addr_error_check(void);
 
-extern uint64_t rmixl_mfcr(u_int);
-extern void rmixl_mtcr(uint64_t, u_int);
+uint64_t rmixl_mfcr(u_int);
+void	rmixl_mtcr(uint64_t, u_int);
 
-extern void rmixl_eirr_ack(uint64_t, uint64_t, uint64_t);
+void	rmixl_eirr_ack(uint64_t, uint64_t, uint64_t);
 
+void	rmixl_fmn_init(void);
+
+void	rmixl_init_early_cons(struct rmixl_config *, bool);
+void	rmixl_mach_xlp_init(struct rmixl_config *);
+void	rmixl_mach_xlsxlr_init(struct rmixl_config *);
+void	rmixl_mach_freq_init(struct rmixl_config *, bool, bool);
+void	rmixl_mach_init_parse_args(int, char **);
+void	rmixl_mach_init_common(struct rmixl_config *, vaddr_t, uint64_t,
+	    bool, bool);
+uint64_t rmixl_physaddr_init(void);
+uint64_t rmixlfw_init(int64_t);
 
 /*
  * rmixl_cache_err_dis:

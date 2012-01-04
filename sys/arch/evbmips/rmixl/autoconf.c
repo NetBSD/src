@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.2.5 2011/12/24 01:44:43 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.6 2012/01/04 16:17:52 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.2.5 2011/12/24 01:44:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.2.6 2012/01/04 16:17:52 matt Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -56,6 +56,8 @@ void
 cpu_configure()
 {
 	rmixl_bus_dma_init();
+
+	rmixl_fmn_init();
 
 	intr_init();
 

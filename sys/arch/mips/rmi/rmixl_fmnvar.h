@@ -1,4 +1,4 @@
-/*	$Id: rmixl_fmnvar.h,v 1.1.2.5 2011/12/24 01:57:54 matt Exp $	*/
+/*	$Id: rmixl_fmnvar.h,v 1.1.2.6 2012/01/04 16:17:53 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,9 +45,9 @@ typedef struct rmixl_fmn_msg {
 } rmixl_fmn_msg_t;
 
 typedef struct rmixl_fmn_rxmsg {
-	u_int rxsid;
+	uint16_t rxsid;
 	u_int code;
-	u_int size;
+	uint8_t size;
 	rmixl_fmn_msg_t msg;
 } rmixl_fmn_rxmsg_t;
 
@@ -63,86 +63,88 @@ typedef struct rmixl_fmn_rxmsg {
  *   and use the 'pri' parameter
  * - i.e. for now there is only one priority
  */
-#define RMIXL_CPU_CORE(cpuid)	((uint32_t)((cpuid) & __BITS(9,0)) >> 2)
-#define RMIXL_CPU_THREAD(cpuid)	((uint32_t)((cpuid) & __BITS(1,0)))
-#define RMIXL_FMN_CORE_DESTID(core, bucket)	\
-		 (((core) << 3) | (bucket))
+#define RMIXL_CPU_CORE(cpuid)	((uint32_t)__SHIFTOUT((cpuid), __BITS(7,3)))
+#define RMIXL_CPU_THREAD(cpuid)	((uint32_t)__SHIFTOUT((cpuid), __BITS(1,0)))
 
+static inline uint64_t
+mips_dmfc2(const u_int regnum, const u_int sel)
+{
+	uint64_t __val;
 
-#define RMIXL_DMFC2(regnum, sel, rv)					\
+	__asm volatile(
+		".set push" 			"\n\t"
+		".set mips64"			"\n\t"
+		".set noat"			"\n\t"
+		"dmfc2 %0,$%1,%2"		"\n\t"
+		".set pop"			"\n\t"
+	    : "=r"(__val) : "n"(regnum), "n"(sel));
+
+	return __val;
+}
+
+static inline void
+mips_dmtc2(u_int regnum, u_int sel, uint64_t val)
+{
+	__asm volatile(
+		".set push" 			"\n\t"
+		".set mips64"			"\n\t"
+		".set noat"			"\n\t"
+		"dmtc2 %0,$%1,%2"		"\n\t"
+		".set pop"			"\n\t"
+	    :: "r"(val), "n"(regnum), "n"(sel));
+}
+
+static inline uint64_t
+mips_mfc2(const u_int regnum, const u_int sel)
+{
+	uint32_t __val;
+
+	__asm volatile(
+		".set push"			"\n\t"
+		".set mips32"			"\n\t"
+		"mfc2 %0,$%1,%2"		"\n\t"
+		".set pop"			"\n\t"
+	    : "=r"(__val) : "n"(regnum), "n"(sel));
+	return __val;
+}
+
+static inline void
+mips_mtc2(u_int regnum, u_int sel, uint32_t val)
+{
+	__asm volatile(
+		".set push" 			"\n\t"
+		".set mips32"			"\n\t"
+		".set noat"			"\n\t"
+		"mtc2 %0,$%1,%2"		"\n\t"
+		".set pop"			"\n\t"
+	    :: "r"(val), "n"(regnum), "n"(sel));
+}
+
+#define COP2_PRINT_8(regno, sel)					\
 do {									\
-	uint64_t __val;							\
-									\
-	__asm volatile(							\
-		".set push" 			"\n\t"			\
-		".set mips64"			"\n\t"			\
-		".set noat"			"\n\t"			\
-		"dmfc2 %0,$%1,%2"		"\n\t"			\
-		".set pop"			"\n\t"			\
-	    : "=r"(__val) : "n"(regnum), "n"(sel));			\
-	rv = __val;							\
+	printf("%s: COP2(%d,%d) = %#"PRIx64"\n",			\
+	    __func__, regno, sel, mips_dmfc2(regno, sel));		\
 } while (0)
 
-#define RMIXL_DMTC2(regnum, sel, val)					\
+#define COP2_PRINT_4(regno, sel)					\
 do {									\
-	uint64_t __val = val;						\
-									\
-	__asm volatile(							\
-		".set push" 			"\n\t"			\
-		".set mips64"			"\n\t"			\
-		".set noat"			"\n\t"			\
-		"dmtc2 %0,$%1,%2"		"\n\t"			\
-		".set pop"			"\n\t"			\
-	    :: "r"(__val), "n"(regnum), "n"(sel));			\
-} while (0)
-
-#define RMIXL_MFC2(regnum, sel, rv)					\
-do {									\
-	uint32_t __val;							\
-									\
-	__asm volatile(							\
-		".set push"			"\n\t"			\
-		".set mips64"			"\n\t"			\
-		"mfc2 %0,$%1,%2"		"\n\t"			\
-		".set pop"			"\n\t"			\
-	    : "=r"(__val) : "n"(regnum), "n"(sel));			\
-	rv = __val;							\
-} while (0)
-
-#define RMIXL_MTC2(regnum, sel, val)					\
-do {									\
-	uint32_t __val = val;						\
-									\
-	__asm volatile(							\
-		".set push"			"\n\t"			\
-		".set mips64"			"\n\t"			\
-		"mtc2 %0,$%1,%2"		"\n\t"			\
-		".set pop"			"\n\t"			\
-	    :: "r"(__val), "n"(regnum), "n"(sel));			\
-} while (0)
-
-#define CPU2_PRINT_8(regno, sel)					\
-do {									\
-	uint64_t r;							\
-	RMIXL_DMFC2(regno, sel, r);					\
-	printf("%s: CP2(%d,%d) = %#"PRIx64"\n",				\
-		__func__, regno, sel, r);				\
-} while (0)
-
-#define CPU2_PRINT_4(regno, sel)					\
-do {									\
-	uint32_t r;							\
-	RMIXL_MFC2(regno, sel, r);					\
-	printf("%s: CP2(%d,%d) = %#x\n",				\
-		__func__, regno, sel, r);				\
+	printf("%s: COP2(%d,%d) = %#"PRIx32"\n",			\
+	    __func__, regno, sel, mips_mfc2(regno, sel));		\
 } while (0)
 
 
 /*
  * encode 'dest' for msgsnd op 'rt'
  */
-#define RMIXL_MSGSND_DESC(size, code, dest_id)	\
-		((((size) - 1) << 16) | ((code) << 8) | (dest_id))
+#define RMIXL_MSGSND_DESC(size, code, dest_id)			\
+		(__SHIFTOUT((dest_id), __BITS(7,0))		\
+		|__SHIFTOUT((code), __BITS(15,8))		\
+		|__SHIFTOUT((size)-1, __BITS(17,16)))
+#define RMIXLP_MSGSND_DESC(size, code, dest_id, dest_vc)	\
+		(__SHIFTOUT((dest_id), __BITS(11,0))		\
+		|__SHIFTOUT((size)-1, __BITS(17,16))		\
+		|__SHIFTOUT((dest_vc), __BITS(20,19))		\
+		|__SHIFTOUT((code), __BITS(31,24)))
 
 static inline void
 rmixl_msgsnd(uint32_t desc)
@@ -154,7 +156,25 @@ rmixl_msgsnd(uint32_t desc)
 		"sync"			"\n\t"
 		"msgsnd %0"		"\n\t"
 		".set pop"		"\n\t"
-			:: "r"(desc));
+	    :: "r"(desc));
+}
+
+static inline uint32_t
+rmixlp_msgsnd(uint32_t desc)
+{
+	uint32_t rv;
+
+	__asm__ volatile (
+		".set push"		"\n\t"
+		".set noreorder"	"\n\t"
+		".set arch=xlp"		"\n\t"
+		"sync"			"\n\t"
+		"msgsnds %[desc],%[rv]"	"\n\t"
+		".set pop"		"\n\t"
+	    :	[rv] "=r" (rv)
+	    :	[desc] "r" (desc));
+
+	return rv;
 }
 
 static inline void
@@ -166,7 +186,24 @@ rmixl_msgld(uint32_t bucket)
 		".set arch=xlr"		"\n\t"
 		"msgld %0"		"\n\t"
 		".set pop"		"\n\t"
-			:: "r"(bucket));
+	    :: "r"(bucket));
+}
+
+static inline uint32_t
+rmixlp_msgld(uint32_t rxq)
+{
+	uint32_t rv;
+
+	__asm__ volatile (
+		".set push"		"\n\t"
+		".set noreorder"	"\n\t"
+		".set arch=xlp"		"\n\t"
+		"msglds %[rxq],%[rv]"	"\n\t"
+		".set pop"		"\n\t"
+	    :	[rv] "=r"(rv)
+	    :	[rxq] "r"(rxq));
+
+	return rv;
 }
 
 /*
@@ -174,140 +211,150 @@ rmixl_msgld(uint32_t bucket)
  * see XLS PRM (rev. 3.21) 5.3.9
  */
 static inline void
-rmixl_fmn_msgwait(u_int mask)
+rmixl_msgwait(u_int mask)
 {
 	__asm__ volatile (
 		".set push"		"\n\t"
 		".set noreorder"	"\n\t"
 		".set arch=xlr"		"\n\t"
-		"addu %0,%0,0"		"\n\t"
+		"daddu %0,%0,0"		"\n\t"
 		"msgwait %0"		"\n\t"
 		".set pop"		"\n\t"
-			:: "r"(mask));
+	    :: "r"(mask));
 }
 
 static inline uint32_t
 rmixl_cp2_enable(void)
 {
 	uint32_t rv;
-	uint32_t cu2;
+	uint32_t sr;
 
 	KASSERT(curcpu()->ci_cpl == IPL_HIGH);
 	__asm volatile(
-		".set push"		"\n\t"
-		".set noreorder"	"\n\t"
-		"li	%1,%3"		"\n\t"
-		"mfc0	%0,$%2"		"\n\t"
-		"or	%1,%1,%0"	"\n\t"
-		"mtc0	%1,$%2"		"\n\t"
-		".set pop"		"\n\t"
-			: "=r"(rv), "=r"(cu2)
-			: "n"(MIPS_COP_0_STATUS), "n"(1 << 30));
+		".set push"			"\n\t"
+		".set noreorder"		"\n\t"
+		".set noat"			"\n\t"
+		"mfc0	%[sr],$%[c0_status]"	"\n\t"
+		"and	%[rv],%[sr],%[mask]"	"\n\t"
+		"or	%[sr],%[mask]"		"\n\t"
+		"mtc0	%[sr],$%[c0_status]"	"\n\t"
+		".set pop"			"\n\t"
+	    :	[rv] "=r" (rv),
+		[sr] "=r" (sr)
+	    :	[c0_status] "n" (MIPS_COP_0_STATUS),
+		[mask] "r" (MIPS_SR_COP_2_BIT));
 
-	return (rv & (1 << 30));
+	return rv;
 }
 
 static inline void
 rmixl_cp2_restore(uint32_t ocu)
 {
 	uint32_t cu2;
-	uint32_t mask = ~(1 << 30);
 
 	KASSERT(curcpu()->ci_cpl == IPL_HIGH);
 	__asm volatile(
-		".set push"		"\n\t"
-		".set noreorder"	"\n\t"
-		"mfc0	%0,$%1"		"\n\t"
-		"and	%0,%2,%0"	"\n\t"
-		"or	%0,%3,%0"	"\n\t"
-		"mtc0	%0,$%1"		"\n\t"
-		".set pop"		"\n\t"
-			: "=r"(cu2)
-			: "n"(MIPS_COP_0_STATUS), "r"(mask), "r"(ocu));
+		".set push"			"\n\t"
+		".set noreorder"		"\n\t"
+		".set noat"			"\n\t"
+		"mfc0	%[sr],$%[c0_status]"	"\n\t"
+		"and	%[sr],%[mask]"		"\n\t"
+		"or	%[sr],%[ocu]"		"\n\t"
+		"mtc0	%[sr],$%[c0_status]"	"\n\t"
+		".set pop"			"\n\t"
+	    :	[sr] "=r"(cu2)
+	    :	[c0_status] "n" (MIPS_COP_0_STATUS),
+		[mask] "r" (~MIPS_SR_COP_2_BIT),
+		[ocu] "r" (ocu));
 }
 
+#ifdef MIPS64_XLP
 /*
  * logical station IDs for RMI XLP
  */
-#define	RMIXLP_FMN_STID_RESERVED	-1
-#define	RMIXLP_FMN_STID_CORE0		0
-#define	RMIXLP_FMN_STID_CORE1		1
-#define	RMIXLP_FMN_STID_CORE2		2
-#define	RMIXLP_FMN_STID_CORE3		3
-#define	RMIXLP_FMN_STID_CORE4		4
-#define	RMIXLP_FMN_STID_CORE5		5
-#define	RMIXLP_FMN_STID_CORE6		6
-#define	RMIXLP_FMN_STID_CORE7		7
-#define	RMIXLP_FMN_STID_POPQ		8
-#define	RMIXLP_FMN_STID_PCIE0		9
-#define	RMIXLP_FMN_STID_PCIE1		10
-#define	RMIXLP_FMN_STID_PCIE2		11
-#define	RMIXLP_FMN_STID_PCIE3		12
-#define	RMIXLP_FMN_STID_DMA		13
-#define	RMIXLP_FMN_STID_PKE		14
-#define	RMIXLP_FMN_STID_SAE		16
-#define	RMIXLP_FMN_STID_CDE		16
-#define	RMIXLP_FMN_STID_POE		17
-#define	RMIXLP_FMN_STID_NAE0		18
-#define	RMIXLP_FMN_STID_NAE1		19
-#define	RMIXLP_FMN_NSTID		20
+#define	RMIXLP_FMN_STID_RESERVED	0
+#define	RMIXLP_FMN_STID_CPU		1	
+#define	RMIXLP_FMN_STID_POPQ		2
+#define	RMIXLP_FMN_STID_PCIE0		3
+#define	RMIXLP_FMN_STID_PCIE1		4
+#define	RMIXLP_FMN_STID_PCIE2		5
+#define	RMIXLP_FMN_STID_PCIE3		6
+#define	RMIXLP_FMN_STID_DMA		7
+#define	RMIXLP_FMN_STID_PKE		8
+#define	RMIXLP_FMN_STID_SAE		9
+#define	RMIXLP_FMN_STID_CDE		10
+#define	RMIXLP_FMN_STID_POE		11
+#define	RMIXLP_FMN_STID_NAE		12	// NAE Egress
+#define	RMIXLP_FMN_STID_RXE		13
+#define	RMIXLP_FMN_STID_SRIO		14
+#define	RMIXLP_FMN_STID_FMN		15
+#define	RMIXLP_FMN_STID_NAE_FREEIN	16
+#define	RMIXLP_FMN_NSTID		17
+#else
+#define	RMIXLP_FMN_NSTID		0
+#endif
 
-
+#ifdef MIPS64_XLS
 /*
  * logical station IDs for RMI XLR
  * see Table 13.2 "Addressable Buckets" in the XLR PRM
  */
-#define RMIXLR_FMN_STID_CORE0			0
-#define RMIXLR_FMN_STID_CORE1			1
-#define RMIXLR_FMN_STID_CORE2			2
-#define RMIXLR_FMN_STID_CORE3			3
-#define RMIXLR_FMN_STID_CORE4			4
-#define RMIXLR_FMN_STID_CORE5			5
-#define RMIXLR_FMN_STID_CORE6			6
-#define RMIXLR_FMN_STID_CORE7			7
-#define RMIXLR_FMN_STID_TXRX_0			8
-#define RMIXLR_FMN_STID_TXRX_1			9
-#define RMIXLR_FMN_STID_RGMII			10
-#define RMIXLR_FMN_STID_DMA			11
-#define RMIXLR_FMN_STID_FREE_0			12
-#define RMIXLR_FMN_STID_FREE_1			13
-#define RMIXLR_FMN_STID_SAE			14
+#define RMIXLR_FMN_STID_RESERVED		0
+#define RMIXLR_FMN_STID_CORE0			1
+#define RMIXLR_FMN_STID_CORE1			2
+#define RMIXLR_FMN_STID_CORE2			3
+#define RMIXLR_FMN_STID_CORE3			4
+#define RMIXLR_FMN_STID_CORE4			5
+#define RMIXLR_FMN_STID_CORE5			6
+#define RMIXLR_FMN_STID_CORE6			7
+#define RMIXLR_FMN_STID_CORE7			8
+#define RMIXLR_FMN_STID_TXRX_0			9
+#define RMIXLR_FMN_STID_TXRX_1			10
+#define RMIXLR_FMN_STID_RGMII			11
+#define RMIXLR_FMN_STID_DMA			12
+#define RMIXLR_FMN_STID_FREE_0			13
+#define RMIXLR_FMN_STID_FREE_1			14
+#define RMIXLR_FMN_STID_SAE			15
 #define RMIXLR_FMN_NSTID			(RMIXLR_FMN_STID_SAE+1)
-#define RMIXLR_FMN_STID_RESERVED		-1
+#else
+#define	RMIXLR_FMN_NSTID		0
+#endif
 
+#ifdef MIPS64_XLR
 /*
  * logical station IDs for RMI XLS
  * see Table 12.1 "Stations and Addressable Buckets ..." in the XLS PRM
  */
-#define RMIXLS_FMN_STID_CORE0			0
-#define RMIXLS_FMN_STID_CORE1			1
-#define RMIXLS_FMN_STID_CORE2			2
-#define RMIXLS_FMN_STID_CORE3			3
-#define RMIXLS_FMN_STID_GMAC_Q0			4
-#define RMIXLS_FMN_STID_GMAC_Q1			5
-#define RMIXLS_FMN_STID_DMA			6
-#define RMIXLS_FMN_STID_CDE			7
-#define RMIXLS_FMN_STID_PCIE			8
-#define RMIXLS_FMN_STID_SAE			9
+#define RMIXLS_FMN_STID_RESERVED		0
+#define RMIXLS_FMN_STID_CORE0			1
+#define RMIXLS_FMN_STID_CORE1			2
+#define RMIXLS_FMN_STID_CORE2			3
+#define RMIXLS_FMN_STID_CORE3			4
+#define RMIXLS_FMN_STID_GMAC_Q0			5
+#define RMIXLS_FMN_STID_GMAC_Q1			6
+#define RMIXLS_FMN_STID_DMA			7
+#define RMIXLS_FMN_STID_CDE			8
+#define RMIXLS_FMN_STID_PCIE			9
+#define RMIXLS_FMN_STID_SAE			10
 #define RMIXLS_FMN_NSTID			(RMIXLS_FMN_STID_SAE+1)
-#define RMIXLS_FMN_STID_RESERVED		-1
-
+#else
+#define	RMIXLS_FMN_NSTID		0
+#endif
 
 #define RMIXL_FMN_NSTID		\
-		MAX(MAX(RMIXLR_FMN_NSTID, RMIXLS_FMN_NSTID), RMIXLP_FMN_NSTID)
+	MAX(MAX(RMIXLR_FMN_NSTID, RMIXLS_FMN_NSTID), RMIXLP_FMN_NSTID)
 
-
-#define RMIXL_FMN_INTR_IPL	IPL_HIGH
+typedef int (*rmixl_fmn_intr_handler_t)(void *, rmixl_fmn_rxmsg_t *);
 
 void	rmixl_fmn_init(void);
-void	rmixl_fmn_init_core(void);
-void	rmixl_fmn_init_cpu_intr(void);
-void   *rmixl_fmn_intr_establish(int, int (*)(void *, rmixl_fmn_rxmsg_t *), void *);
+void	rmixl_fmn_init_thread(void);
+void *	rmixl_fmn_intr_establish(size_t, rmixl_fmn_intr_handler_t, void *);
 void	rmixl_fmn_intr_disestablish(void *);
 void	rmixl_fmn_intr_poll(u_int, rmixl_fmn_rxmsg_t *);
-int	rmixl_fmn_msg_send(u_int, u_int, u_int, rmixl_fmn_msg_t *);
-int	rmixl_fmn_msg_recv(u_int, rmixl_fmn_rxmsg_t *);
-
-
+/*
+ * true == succes, false = failure
+ */
+bool	rmixl_fmn_msg_send(u_int, u_int, u_int, u_int, const rmixl_fmn_msg_t *);
+bool	rmixl_fmn_msg_recv(u_int, rmixl_fmn_rxmsg_t *);
 
 #endif	/* _ARCH_MIPS_RMIXL_RMIXL_FMNVAR_H_ */

@@ -29,13 +29,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.4 2011/12/31 08:20:43 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.5 2012/01/04 16:17:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/gpio.h>
+#include <sys/percpu.h>
 
 #include "locators.h"
 #include "gpio.h"
@@ -70,6 +71,8 @@ static int	xlgpio_pin_read(void *, int);
 static void	xlgpio_pin_write(void *, int, int);
 static void	xlgpio_pin_ctl(void *, int, int);
 
+static void	 xlgpio_percpu_evcnt_attach(void *, void *, struct cpu_info *);
+
 static const uint8_t xlgpio_pincnt_by_variant[] = {
         [RMIXLP_8XX] = RMIXLP_GPIO_8XX_MAXPINS,
         [RMIXLP_4XX] = RMIXLP_GPIO_4XX_MAXPINS,
@@ -88,12 +91,12 @@ static int (* const xlgpio_intrs[])(void *) = {
 };
 
 struct xlgpio_intrpin {
-	struct evcnt gip_ev;
 	int (*gip_func)(void *);
 	void *gip_arg;
 	uint8_t gip_ipl;
 	uint8_t gip_ist;
-	char gip_ev_name[sizeof("pin XX")];
+	bool gip_mpsafe;
+	char gip_pin_name[sizeof("pin XX")];
 };
 
 #define	PINMASK		31
@@ -106,6 +109,7 @@ struct xlgpio_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+	percpu_t *sc_percpu_evs;
 	struct xlgpio_intrpin sc_pins[2*PINGROUP];
 	struct xlgpio_group {
 		struct xlgpio_intrpin *gg_pins;
@@ -218,7 +222,6 @@ xlgpio_pci_attach(device_t parent, device_t self, void *aux)
 	struct rmixl_config * const rcp = &rmixl_configuration;
 	struct pci_attach_args * const pa = aux;
 	struct xlgpio_softc * const sc = &xlgpio_sc;
-	const char * const xname = device_xname(self);
 
 	KASSERT(sc->sc_dev == NULL);
 
@@ -243,8 +246,8 @@ xlgpio_pci_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Of course, each XLP variant has a different number of pins.
 	 */
-	KASSERT(rmixl_xlp_variant < __arraycount(xlgpio_pincnt_by_variant));
-	sc->sc_pincnt = xlgpio_pincnt_by_variant[rmixl_xlp_variant];
+	KASSERT(rcp->rc_xlp_variant < __arraycount(xlgpio_pincnt_by_variant));
+	sc->sc_pincnt = xlgpio_pincnt_by_variant[rcp->rc_xlp_variant];
 	rcp->rc_gpio_available &= __BITS(sc->sc_pincnt - 1, 0);
 
 	/*
@@ -252,13 +255,23 @@ xlgpio_pci_attach(device_t parent, device_t self, void *aux)
 	 */
 	for (size_t pin = 0; pin < sc->sc_pincnt; pin++) {
 		struct xlgpio_intrpin * const gip = &sc->sc_pins[pin];
-		snprintf(gip->gip_ev_name, sizeof(gip->gip_ev_name),
+		snprintf(gip->gip_pin_name, sizeof(gip->gip_pin_name),
 		    "pin %zu", pin);
 
-		evcnt_attach_dynamic(&gip->gip_ev, EVCNT_TYPE_INTR,
-		    NULL, xname, gip->gip_ev_name);
 		KASSERT(gip->gip_func == xlgpio_stray_intr);
 	}
+
+	/*
+	 * Allocate the evcnts for each pin (regardless if it's available or
+	 * not) on each cpu and then attach the evcnt for each pin.
+	 */
+	sc->sc_percpu_evs = percpu_alloc(sc->sc_pincnt * sizeof(struct evcnt));
+	KASSERT(sc->sc_percpu_evs != NULL);
+
+	/*
+	 * Now attach the per-cpu evcnts.
+	 */
+	percpu_foreach(sc->sc_percpu_evs, xlgpio_percpu_evcnt_attach, sc);
 
 	for (size_t group = 0; group < __arraycount(sc->sc_groups); group++) {
 		struct xlgpio_group * const gg = &sc->sc_groups[group];
@@ -268,7 +281,7 @@ xlgpio_pci_attach(device_t parent, device_t self, void *aux)
 		/*
 		 * These are at different offsets on the 3xx than the 8xx/4xx.
 		 */
-		if (rmixl_xlp_variant >= RMIXLP_3XX) {
+		if (rcp->rc_xlp_variant >= RMIXLP_3XX) {
 			gg->gg_r_intpol = RMIXLP_GPIO_3XX_INTPOL(group);
 			gg->gg_r_inttype = RMIXLP_GPIO_3XX_INTTYPE(group);
 			gg->gg_r_intstat = RMIXLP_GPIO_3XX_INTSTAT(group);
@@ -332,7 +345,7 @@ xlgpio_group_intr(struct xlgpio_softc *sc, int ipl, size_t group)
 	sts &= xlgpio_read_4(sc, gg->gg_r_intstat);
 	if (sts == 0)
 		return rv;
-	
+
 	/* First, ACK any edge type interrupts */
 	if (sts & gg->gg_inttype)
 		xlgpio_write_4(sc, gg->gg_r_intstat, sts & gg->gg_inttype);
@@ -340,17 +353,22 @@ xlgpio_group_intr(struct xlgpio_softc *sc, int ipl, size_t group)
  	/* narrow to level interrupts */
 	uint32_t intlevel = (sts & ~gg->gg_inttype);
 
+	struct evcnt * const evs =
+	    (struct evcnt *)percpu_getref(sc->sc_percpu_evs) + group * PINGROUP;
+	
 	while (sts != 0) {
-		const int bit = PINMASK - __builtin_clz(sts);
-		struct xlgpio_intrpin * const gip = &gg->gg_pins[bit];
+		const int pin = PINMASK - __builtin_clz(sts);
+		struct xlgpio_intrpin * const gip = &gg->gg_pins[pin];
 
 		KASSERT(gip->gip_ipl == ipl);
-		const int nrv = (*gip->gip_func)(gip->gip_arg);
+		const int nrv = rmixl_intr_deliver(gip->gip_func, gip->gip_arg,
+		     gip->gip_mpsafe, &evs[pin], ipl);
 		if (nrv)
 			rv = nrv;
-		gip->gip_ev.ev_count++;
-		sts &= ~(1 << bit);
+		sts &= PIN_MASK(pin);
 	}
+
+	percpu_putref(sc->sc_percpu_evs);
 
 	/* Now ACK any level type interrupts */
 	if (intlevel)
@@ -400,6 +418,21 @@ xlgpio_vm_intr(void *v)
 	return xlgpio_intr(sc, IPL_VM);
 }
 
+void
+xlgpio_percpu_evcnt_attach(void *v0, void *v1, struct cpu_info *ci)
+{
+	struct evcnt * const evs = v0;
+	struct xlgpio_softc * const sc = v1;
+	const char * const xname = device_xname(ci->ci_dev);
+
+	for (size_t pin = 0; pin < sc->sc_pincnt; pin++) {
+		struct xlgpio_intrpin * const gip = &sc->sc_pins[pin];
+
+		evcnt_attach_dynamic(&evs[pin], EVCNT_TYPE_INTR,
+		    NULL, xname, gip->gip_pin_name);
+	}
+}
+
 void *
 gpio_intr_establish(size_t pin, int ipl, int ist,
 	int (*func)(void *), void *arg, bool mpsafe)
@@ -434,6 +467,7 @@ gpio_intr_establish(size_t pin, int ipl, int ist,
 	gip->gip_ipl = ipl;
 	gip->gip_func = func;
 	gip->gip_arg = arg;
+	gip->gip_mpsafe = mpsafe;
 
 	if (ist == IST_EDGE) {
 		atomic_or_32(&gg->gg_inttype, mask);

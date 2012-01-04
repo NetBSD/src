@@ -269,38 +269,13 @@ cpu_rmixl_attach_primary(struct rmixl_cpu_softc * const sc)
 	cpu_rmixl_watchpoint_init();
 #endif
 
-	rmixl_fmn_init();
-
 	rmixl_intr_init_clk();
 #ifdef MULTIPROCESSOR
 	rmixl_intr_init_ipi();
 #endif
 
-#ifdef NOTYET
-	void *ih = rmixl_fmn_intr_establish(RMIXL_FMN_STID_CORE0,
-		cpu_fmn_intr, ci);
-	if (ih == NULL)
-		panic("%s: rmixl_fmn_intr_establish failed",
-			__func__);
-	sc->sc_ih_fmn = ih;
-#endif
+	rmixl_fmn_init_thread();
 }
-
-#ifdef NOTYET
-static int
-cpu_fmn_intr(void *arg, rmixl_fmn_rxmsg_t *rxmsg)
-{
-	if (CPU_IS_PRIMARY(curcpu())) {
-		printf("%s: cpu%ld: rxsid=%#x, code=%d, size=%d\n",
-			__func__, cpu_number(),
-			rxmsg->rxsid, rxmsg->code, rxmsg->size);
-		for (int i=0; i < rxmsg->size; i++)
-			printf("\t%#"PRIx64"\n", rxmsg->msg.data[i]);
-	}
-
-	return 1;
-}
-#endif
 
 #ifdef MULTIPROCESSOR
 /*
@@ -312,6 +287,7 @@ void
 cpu_rmixl_run(struct cpu_info *ci)
 {
 	struct rmixl_cpu_softc * const sc = (void *)ci->ci_softc;
+	rmixl_fmn_init_thead();
 	cpucore_rmixl_run(device_parent(sc->sc_dev));
 }
 

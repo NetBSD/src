@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.1.2.11 2011/12/31 08:20:43 matt Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.1.2.12 2012/01/04 16:17:54 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.11 2011/12/31 08:20:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.12 2012/01/04 16:17:54 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -439,7 +439,7 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * initialize the PCI MEM and IO bus space tags
 	 */
-	rmixl_pci_bus_mem_init(&rcp->rc_pci_memt, rcp);
+	rmixl_pci_el_bus_mem_init(&rcp->rc_pci_memt, rcp);
 	rmixl_pci_bus_io_init(&rcp->rc_pci_iot, rcp);
 
 	/*

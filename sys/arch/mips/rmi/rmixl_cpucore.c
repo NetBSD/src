@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.12 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.13 2012/01/04 16:17:53 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.12 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.13 2012/01/04 16:17:53 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -87,7 +87,7 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 	struct cpunode_attach_args *na = aux;
 	struct cpucore_attach_args ca;
 	u_int nthreads;
-	struct rmixl_config *rcp = &rmixl_configuration;
+	struct rmixl_config * const rcp = &rmixl_configuration;
 	const u_int cpu_cidflags = mips_options.mips_cpu->cpu_cidflags;
 
 	sc->sc_dev = self;
@@ -128,7 +128,7 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 	    curcpu()->ci_cycles_per_hz, curcpu()->ci_divisor_delay);
 
 	aprint_normal("%s: ", device_xname(self));
-	cpu_identify(self, rmixl_cpuname);
+	cpu_identify(self, rcp->rc_cpuname);
 
 	nthreads = MIPS_CIDFL_RMI_NTHREADS(cpu_cidflags);
 	aprint_normal_dev(self, "%d %s on core\n", nthreads,
@@ -234,7 +234,6 @@ cpucore_rmixl_hatch(device_t self)
 		/* PCRs for core#0 are set up in mach_init() */
 		if (sc->sc_core != 0)
 			rmixl_pcr_init_core();
-		rmixl_fmn_init_core();
 		sc->sc_hatched = true;
 	}
 }
