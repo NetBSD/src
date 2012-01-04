@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178.2.10 2012/01/04 16:29:29 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.11 2012/01/04 16:30:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.10 2012/01/04 16:29:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.11 2012/01/04 16:30:06 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1509,9 +1509,7 @@ uvm_pagefree(struct vm_page *pg)
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
 	KASSERT(!(pg->pqflags & PQ_FREE));
 	KASSERT(mutex_owned(&uvm_pageqlock) || !uvmpdpol_pageisqueued_p(pg));
-	KASSERT(pg->uobject == NULL || mutex_owned(pg->uobject->vmobjlock));
-	KASSERT(pg->uobject != NULL || pg->uanon == NULL ||
-		mutex_owned(pg->uanon->an_lock));
+	KASSERT(uvm_page_locked_p(pg));
 
 	/*
 	 * if the page is loaned, resolve the loan instead of freeing.
