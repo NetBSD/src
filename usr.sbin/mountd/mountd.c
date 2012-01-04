@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.123 2011/11/02 18:09:44 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.124 2012/01/04 16:09:44 drochner Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.123 2011/11/02 18:09:44 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.124 2012/01/04 16:09:44 drochner Exp $");
 #endif
 #endif				/* not lint */
 
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: mountd.c,v 1.123 2011/11/02 18:09:44 christos Exp $");
 #include "pathnames.h"
 
 #ifdef IPSEC
-#include <netinet6/ipsec.h>
+#include <netipsec/ipsec.h>
 #ifndef IPSEC_POLICY_IPSEC	/* no ipsec support on old ipsec */
 #undef IPSEC
 #endif

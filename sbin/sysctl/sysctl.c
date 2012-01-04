@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.138 2011/08/29 14:35:04 joerg Exp $ */
+/*	$NetBSD: sysctl.c,v 1.139 2012/01/04 16:09:42 drochner Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.138 2011/08/29 14:35:04 joerg Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.139 2012/01/04 16:09:42 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,6 @@ __RCSID("$NetBSD: sysctl.c,v 1.138 2011/08/29 14:35:04 joerg Exp $");
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <machine/cpu.h>
-#include <netkey/key_var.h>
 
 #include <assert.h>
 #include <ctype.h>

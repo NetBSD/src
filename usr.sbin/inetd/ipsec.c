@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.3 2009/01/08 21:37:20 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.4 2012/01/04 16:09:43 drochner Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -43,7 +43,7 @@
 #include <ctype.h>
 
 #ifdef IPSEC
-#include <netinet6/ipsec.h>
+#include <netipsec/ipsec.h>
 #ifndef IPSEC_POLICY_IPSEC	/* no ipsec support on old ipsec */
 #undef IPSEC
 #endif
