@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.60 2012/01/04 15:14:57 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.61 2012/01/04 15:18:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.60 2012/01/04 15:14:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.61 2012/01/04 15:18:57 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -414,7 +414,7 @@ cpu_startup(void)
 	memcpy(&lwp0pcb.pcb_trapret_ucp,   &lwp0pcb.pcb_ucp, sizeof(ucontext_t));
 
 	/* set up the ucontext for the pagefault */
-	stacksize = 8*PAGE_SIZE;
+	stacksize = 2*PAGE_SIZE;
 	stack_pagefault_ucp = malloc(stacksize, M_TEMP, M_WAITOK | M_ZERO);
 
 	lwp0pcb.pcb_pagefault_ucp.uc_stack.ss_sp = stack_pagefault_ucp;
