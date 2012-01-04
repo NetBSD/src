@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1361 2011/12/17 13:27:51 tsutsui Exp $
+# $NetBSD: mi,v 1.1362 2012/01/04 15:54:39 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -156,6 +156,7 @@
 ./usr/share/man/cat1/fg.0			man-util-catman		.cat
 ./usr/share/man/cat1/fgrep.0			man-util-catman		.cat
 ./usr/share/man/cat1/file.0			man-util-catman		.cat
+./usr/share/man/cat1/fincore.0			man-util-catman		.cat
 ./usr/share/man/cat1/find.0			man-util-catman		.cat
 ./usr/share/man/cat1/finger.0			man-util-catman		.cat
 ./usr/share/man/cat1/fmt.0			man-util-catman		.cat
@@ -3083,6 +3084,7 @@
 ./usr/share/man/html1/fg.html			man-util-htmlman	html
 ./usr/share/man/html1/fgrep.html		man-util-htmlman	html
 ./usr/share/man/html1/file.html			man-util-htmlman	html
+./usr/share/man/html1/fincore.html		man-util-htmlman	html
 ./usr/share/man/html1/find.html			man-util-htmlman	html
 ./usr/share/man/html1/finger.html		man-util-htmlman	html
 ./usr/share/man/html1/fmt.html			man-util-htmlman	html
@@ -5627,6 +5629,7 @@
 ./usr/share/man/man1/fg.1			man-util-man		.man
 ./usr/share/man/man1/fgrep.1			man-util-man		.man
 ./usr/share/man/man1/file.1			man-util-man		.man
+./usr/share/man/man1/fincore.1			man-util-man		.man
 ./usr/share/man/man1/find.1			man-util-man		.man
 ./usr/share/man/man1/finger.1			man-util-man		.man
 ./usr/share/man/man1/fmt.1			man-util-man		.man
