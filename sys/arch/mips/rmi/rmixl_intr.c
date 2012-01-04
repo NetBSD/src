@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.33 2011/12/31 08:20:43 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.34 2012/01/04 16:17:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.33 2011/12/31 08:20:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.34 2012/01/04 16:17:53 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -103,6 +103,12 @@ int iointr_debug = IOINTR_DEBUG;
 #else
 # define DPRINTF(x)
 #endif
+
+static int
+rmixl_stray_intr(void *v)
+{
+	return 0;
+}
 
 #define RMIXL_PICREG_READ(off) \
 	RMIXL_IOREG_READ(RMIXL_IO_DEV_PIC + (off))
@@ -622,8 +628,8 @@ static const char * const rmixl_irtnames_xlp3xx[RMIXLP_NIRTS] = {
 	[158] = "pic int 158 (dram3_1)",
 	[159] = "pic int 159 (tracebuf)",
 };
-
 #endif /* MIPS64_XLP */
+
 /*
  * rmixl_vecnames_common:
  * - use for unknown cpu implementation
@@ -713,8 +719,20 @@ rmixl_intrvecq_t rmixl_intrvec_lruq[_IPL_N] = {
 	[IPL_DDB] = TAILQ_HEAD_INITIALIZER(rmixl_intrvec_lruq[IPL_DDB]),
 	[IPL_HIGH] = TAILQ_HEAD_INITIALIZER(rmixl_intrvec_lruq[IPL_HIGH]),
 };
-rmixl_intrvec_t rmixl_intrvec[NINTRVECS];
-rmixl_intrhand_t rmixl_irt_intrhands[MAX(MAX(RMIXLR_NIRTS,RMIXLS_NIRTS), RMIXLP_NIRTS)];
+
+rmixl_intrvec_t rmixl_intrvec[NINTRVECS] = {
+	[0 ... NINTRVECS-1] = {
+		.iv_intrhand = {
+			.ih_func = rmixl_stray_intr,
+		},
+	},
+};
+#define	RMIXL_NIRTS	MAX(MAX(RMIXLR_NIRTS,RMIXLS_NIRTS), RMIXLP_NIRTS)
+rmixl_intrhand_t rmixl_irt_intrhands[RMIXL_NIRTS] = {
+	[0 ... RMIXL_NIRTS-1] = {
+		.ih_func = rmixl_stray_intr,
+	},
+};
 static u_int rmixl_nirts;
 const char * const *rmixl_irtnames;
 
@@ -727,7 +745,6 @@ static uint32_t rmixl_irt_thread_mask(__cpuset_t);
 static void rmixl_irt_init(size_t);
 static void rmixl_irt_disestablish(size_t);
 static void rmixl_irt_establish(size_t, size_t, int);
-static size_t rmixl_intr_get_vec(int);
 
 #ifdef MULTIPROCESSOR
 static int rmixl_send_ipi(struct cpu_info *, int);
@@ -766,7 +783,7 @@ evbmips_intr_init(void)
 	 */
 	if (is_xlp_p) {
 #ifdef MIPS64_XLP
-		if (rmixl_xlp_variant >= RMIXLP_3XX) {
+		if (RMIXLP_3XX_P) {
 			rmixl_irtnames = rmixl_irtnames_xlp3xx;
 			rmixl_nirts = __arraycount(rmixl_irtnames_xlp3xx);
 		} else {
@@ -980,8 +997,8 @@ rmixl_intr_get_vec(int ipl)
 	 * In reality higer ipls should have higher vec numbers,
 	 * but for now don't worry about it.
 	 */
-	struct rmixl_intrvecq * freeq = &rmixl_intrvec_lruq[IPL_NONE];
-	struct rmixl_intrvecq * iplq = &rmixl_intrvec_lruq[ipl];
+	struct rmixl_intrvecq * const freeq = &rmixl_intrvec_lruq[IPL_NONE];
+	struct rmixl_intrvecq * const iplq = &rmixl_intrvec_lruq[ipl];
 	rmixl_intrvec_t *iv; 
 
 	/*
@@ -1201,7 +1218,7 @@ rmixl_vec_establish(size_t vec, rmixl_intrhand_t *ih, int ipl,
 		    iv, iv_lruq_link);
 	}
 
-	if (ih->ih_func != NULL) {
+	if (ih->ih_func != rmixl_stray_intr) {
 #ifdef DIAGNOSTIC
 		printf("%s: intrhand[%zu] busy\n", __func__, vec);
 #endif
@@ -1255,7 +1272,7 @@ rmixl_intr_establish(size_t irt, int ipl, int ist,
 
 	rmixl_intrhand_t *ih = &rmixl_irt_intrhands[irt];
 
-	KASSERT(ih->ih_func == NULL);
+	KASSERT(ih->ih_func == rmixl_stray_intr);
 
 	const size_t vec = rmixl_intr_get_vec(ipl);
 
@@ -1286,12 +1303,12 @@ rmixl_vec_disestablish(void *cookie)
 
 	KASSERT(mutex_owned(rmixl_intr_lock));
 	KASSERT(vec < NINTRVECS);
-	KASSERT(ih->ih_func != NULL);
+	KASSERT(ih->ih_func != rmixl_stray_intr);
 	KASSERT(IPL_VM <= iv->iv_ipl && iv->iv_ipl <= IPL_HIGH);
 
 	LIST_REMOVE(ih, ih_link);
 
-	ih->ih_func = NULL;	/* do this first */
+	ih->ih_func = rmixl_stray_intr;	/* do this first */
 
 	const uint64_t eimr_bit = __BIT(ih->ih_vec);
 	for (int i = iv->iv_ipl; --i >= 0; ) {
@@ -1418,29 +1435,14 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 				sc->sc_irt_evcnts[irt].ev_count++;
 			}
 
-			if (ih->ih_func != NULL) {
-#ifdef MULTIPROCESSOR
-				if (ih->ih_mpsafe) {
-					(void)(*ih->ih_func)(ih->ih_arg);
-				} else {
-					KASSERTMSG(ipl == IPL_VM,
-					    ("%s: %s: ipl (%d) != IPL_VM for KERNEL_LOCK",
-					    __func__, sc->sc_vec_evcnts[vec].ev_name,
-					    ipl));
-					KERNEL_LOCK(1, NULL);
-					(void)(*ih->ih_func)(ih->ih_arg);
-					KERNEL_UNLOCK_ONE(NULL);
-				}
-#else
-				(void)(*ih->ih_func)(ih->ih_arg);
-#endif /* MULTIPROCESSOR */
-			}
+			rmixl_intr_deliver(ih->ih_func, ih->ih_arg,
+			    ih->ih_mpsafe, &sc->sc_vec_evcnts[vec], ipl);
+
 			KASSERT(ipl == iv->iv_ipl);
 			KASSERTMSG(curcpu()->ci_cpl >= ipl,
 			    ("%s: after %s: cpl (%d) < ipl %d",
 			    __func__, sc->sc_vec_evcnts[vec].ev_name,
 			    ipl, curcpu()->ci_cpl));
-			sc->sc_vec_evcnts[vec].ev_count++;
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpunode.c,v 1.1.2.5 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixl_cpunode.c,v 1.1.2.6 2012/01/04 16:17:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.1.2.5 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.1.2.6 2012/01/04 16:17:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.1.2.5 2011/12/24 01:57:54 matt E
 #include <machine/bus.h>
 #include "locators.h"
 
-const char *rmixl_cpuname;
-static char xlpxxx_cpuname[8];
-
 static int  cpunode_rmixl_match(device_t, cfdata_t, void *);
 static void cpunode_rmixl_attach(device_t, device_t, void *);
 static int  cpunode_rmixl_print(void *, const char *);
@@ -73,7 +70,6 @@ static int  cpunode_rmixl_print(void *, const char *);
 CFATTACH_DECL_NEW(cpunode_rmixl, sizeof(struct cpunode_softc),
 	cpunode_rmixl_match, cpunode_rmixl_attach, NULL, NULL);
 
-rmixlp_variant_t rmixl_xlp_variant;
 static u_int rmixl_nodes;
 
 static int
@@ -124,9 +120,12 @@ static void
 cpunode_rmixl_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpunode_softc * const sc = device_private(self);
+	struct rmixl_config * const rcp = &rmixl_configuration;
 	struct mainbus_attach_args * const ma = aux;
 	struct cpunode_attach_args na;
 	const u_int cpu_cidflags = mips_options.mips_cpu->cpu_cidflags;
+	const u_int rmi_type = cpu_cidflags & MIPS_CIDFL_RMI_TYPE;
+	const u_int ncores = rcp->rc_ncores;
 	u_int sz;
 
 	aprint_naive("\n");
@@ -135,9 +134,6 @@ cpunode_rmixl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_node = ma->ma_node;
 	rmixl_nodes |= __BIT(ma->ma_node);
-
-	u_int ncores = MIPS_CIDFL_RMI_NCORES(cpu_cidflags);
-	const u_int rmi_type = cpu_cidflags & MIPS_CIDFL_RMI_TYPE;
 
 	switch (rmi_type) {
 	case CIDFL_RMI_TYPE_XLR:
@@ -152,56 +148,6 @@ cpunode_rmixl_attach(device_t parent, device_t self, void *aux)
 			sz/1024, sz/(256 * 1024));
 		break;
 	case CIDFL_RMI_TYPE_XLP: {
-		uint32_t cfg_status0 = rmixlp_read_4(RMIXLP_SM_PCITAG,
-		    RMIXLP_SM_EFUSE_DEVICE_CFG_STATUS0);
-		const char *sfx = "";
-		char msd;
-		if (mips_options.mips_cpu->cpu_pid == MIPS_XLP8XX) {
-			/*
-			 * From XLP 8xx-4XX PRM 1.41 (2011-12-16)
-			 * 31.4 System Configuration
-			 */
-			uint32_t cfg_status1 = rmixlp_read_4(RMIXLP_SM_PCITAG,
-			    RMIXLP_SM_EFUSE_DEVICE_CFG_STATUS1);
-			uint8_t id0 = cfg_status0; /* bits 7:0 */
-			for (ncores = 8; id0 != 0; id0 >>= 1) {
-				ncores -= id0 & 1;
-			}
-			if ((cfg_status1 & 7) == 0) {
-				msd = '8';
-				rmixl_xlp_variant = RMIXLP_8XX;
-			} else {
-				msd = '4';
-				rmixl_xlp_variant = RMIXLP_4XX;
-			}
-		} else if (mips_options.mips_cpu->cpu_pid == MIPS_XLP3XX) {
-			/*
-			 * From XLP3xx_3xx-Lite PRM 1.41 (2011-12-16)
-			 * 30.4 System Configuration
-			 */
-			uint8_t idl = (cfg_status0 >> 8) & 0xf;
-			uint8_t idh = (cfg_status0 >> 16) & 0xff;
-			size_t variant = (cfg_status0 >> 4) & 0x3;
-			static const char sfxs[4][2] = { "", "L", "H", "Q" };
-			sfx = sfxs[variant];
-			if (idh == 0xff) {
-				ncores = 1;
-			} else if (idl != 0) {
-				ncores = 2;
-			} else {
-				ncores = 4;
-			}
-			msd = '3';
-			rmixl_xlp_variant = RMIXLP_3XX + variant;
-		} else {
-			panic("%s: unknown RMI XLP variant %#x!",
-			    __func__, mips_options.mips_cpu->cpu_pid);
-		}
-
-		snprintf(xlpxxx_cpuname, sizeof(xlpxxx_cpuname),
-		    "XLP%c%02u%s", msd, ncores * 4, sfx);
-		rmixl_cpuname = xlpxxx_cpuname;
-
 		/*
 		 * L3 is unified on XLP.  Why they don't use COP0 Config2 for
 		 * this bothers me (except 16-way doesn't have an encoding).
