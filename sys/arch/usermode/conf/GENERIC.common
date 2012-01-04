@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC.common,v 1.10 2012/01/02 21:48:14 reinoud Exp $
+# $NetBSD: GENERIC.common,v 1.11 2012/01/04 14:04:12 jmcneill Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.10 $"
+#ident 		"GENERIC-$Revision: 1.11 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -11,6 +11,7 @@ makeoptions	DEBUG="-O1 -g3"
 options 	SYMTAB_SPACE=350000
 
 options 	RTC_OFFSET=0
+options 	NTP
 options 	KTRACE
 #options 	USERCONF
 
@@ -72,6 +73,7 @@ options 	WSDISPLAY_COMPAT_USL
 pseudo-device	loop
 pseudo-device	pty
 pseudo-device	bpfilter
+pseudo-device	clockctl
 pseudo-device	drvctl
 pseudo-device	ksyms
 pseudo-device	wsmux
