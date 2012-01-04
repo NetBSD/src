@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.45 2012/01/04 17:07:20 drochner Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.46 2012/01/04 17:26:21 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.45 2012/01/04 17:07:20 drochner Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.46 2012/01/04 17:26:21 drochner Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -204,6 +204,7 @@ main(int argc, char **argv)
 	const char *elline;
 	int scratch, rv;
 	struct sigaction sa_timer;
+	const char *use_digital = NULL; /* historical default */
 
 	cdname = getenv("MUSIC_CD");
 	if (cdname == NULL)
@@ -219,10 +220,14 @@ main(int argc, char **argv)
 	if (!da.auname)
 		da.auname = "/dev/sound";
 
+	use_digital = getenv("CDPLAY_DIGITAL");
+
 	while ((c = getopt(argc, argv, "a:f:h")) != -1)
 		switch (c) {
 		case 'a':
 			da.auname = optarg;
+			if (!use_digital)
+				use_digital = "";
 			continue;
 		case 'f':
 			cdname = optarg;
@@ -246,6 +251,15 @@ main(int argc, char **argv)
 
 	opencd();
 	da.afd = -1;
+
+	sigemptyset(&sa_timer.sa_mask);
+	sa_timer.sa_handler = sig_timer;
+	sa_timer.sa_flags = SA_RESTART;
+	if ((rv = sigaction(SIGALRM, &sa_timer, NULL)) < 0)
+		err(EXIT_FAILURE, "sigaction()");
+
+	if (use_digital)
+		start_digital(use_digital);
 
 	if (argc > 0) {
 		interactive = 0;
@@ -276,12 +290,6 @@ main(int argc, char **argv)
 	el_set(elptr, EL_HIST, history, hist);
 	el_set(elptr, EL_SIGNAL, 1);
 	el_source(elptr, NULL);
-
-	sigemptyset(&sa_timer.sa_mask);
-	sa_timer.sa_handler = sig_timer;
-	sa_timer.sa_flags = SA_RESTART;
-	if ((rv = sigaction(SIGALRM, &sa_timer, NULL)) < 0)
-		err(EXIT_FAILURE, "sigaction()");
 
 	for (;;) {
 		line = NULL;
@@ -1131,7 +1139,7 @@ play_track(int tstart, int istart, int tend, int iend)
 
 	if ((rv = ioctl(fd, CDIOCPLAYTRACKS, &t)) < 0) {
 		int oerrno = errno;
-		if (errno == EINVAL && start_digital("5") == 0)
+		if (errno == EINVAL && start_digital("") == 0)
 			return play_track(tstart, istart, tend, iend);
 		errno = oerrno;
 		warn("ioctl(CDIOCPLAYTRACKS)");
@@ -1159,6 +1167,9 @@ play_digital(int start, int end)
 	da.lba_start = start;
 	da.lba_end = --end;
 	da.changed = da.playing = 1;
+	if (!interactive)
+		while (da.playing)
+			sleep(1);
 	return (0);
 }
 
