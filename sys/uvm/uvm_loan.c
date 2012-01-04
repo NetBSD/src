@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81.2.8 2011/12/28 13:24:19 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.9 2012/01/04 16:31:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.8 2011/12/28 13:24:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.9 2012/01/04 16:31:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1755,6 +1755,7 @@ uvm_loan_resolve_orphan(struct vm_page *pg, bool pageqlocked)
 		return;
 	}
 	KASSERT(pg->loan_count > 0);
+	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 	if (!pageqlocked) {
 		mutex_enter(&uvm_pageqlock);
 	}
@@ -1770,7 +1771,6 @@ uvm_loan_resolve_orphan(struct vm_page *pg, bool pageqlocked)
 	 * the pagestate should have been decremented when uobj dropped the
 	 * ownership.
 	 */
-	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 	ucpu = uvm_cpu_get();
 	ucpu->loan_resolve_orphan++;
 	ucpu->pagestate[1][UVM_PAGE_STATUS_DIRTY]++;
