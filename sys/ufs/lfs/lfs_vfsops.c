@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.292 2012/01/02 22:10:45 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.293 2012/01/04 02:48:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.292 2012/01/02 22:10:45 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.293 2012/01/04 02:48:58 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -524,14 +524,12 @@ lfs_writerd(void *arg)
  			vfs_unbusy(mp, false, &nmp);
  		}
 		if (lfsc + skipc == 0) {
-#ifdef notyet
 			mutex_enter(&lfs_lock);
 			lfs_writer_daemon = 0;
 			lfs_writer_lid = 0;
 			mutex_exit(&lfs_lock);
 			mutex_exit(&mountlist_lock);
 			break;
-#endif
 		}
  		mutex_exit(&mountlist_lock);
  
@@ -545,6 +543,9 @@ lfs_writerd(void *arg)
 	if (vfs != NULL)
 		vfs->vfs_refcount--;
 	mutex_exit(&vfs_list_lock);
+
+	/* Done! */
+	kthread_exit(0);
 }
 
 /*
