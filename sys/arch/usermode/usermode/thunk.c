@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.72 2012/01/03 12:05:00 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.73 2012/01/04 13:31:30 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.72 2012/01/03 12:05:00 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.73 2012/01/04 13:31:30 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1157,12 +1157,24 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 		socklen_t sinlen;
 		int flags;
 
+#ifdef RFB_DEBUG
+		fprintf(stdout, "rfb: poll connection\n");
+#endif
+
 		/* poll for connections */
 		fds[0].fd = rfb->sockfd;
 		fds[0].events = POLLIN;
 		fds[0].revents = 0;
-		if (poll(fds, __arraycount(fds), 0) != 1)
+		if (poll(fds, __arraycount(fds), 0) != 1) {
+#ifdef RFB_DEBUG
+			fprintf(stdout, "rfb: NO connection\n");
+#endif
 			return -1;
+		}
+
+#ifdef RFB_DEBUG
+		fprintf(stdout, "rfb: try accept\n");
+#endif
 
 		sinlen = sizeof(sin);
 		rfb->clientfd = accept(rfb->sockfd, (struct sockaddr *)&sin,
