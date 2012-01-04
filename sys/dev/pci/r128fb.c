@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.24 2012/01/04 07:56:35 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.25 2012/01/04 08:38:20 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.24 2012/01/04 07:56:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.25 2012/01/04 08:38:20 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	bool			is_console;
 	int			i, j;
 	uint32_t		reg, flags;
+	uint8_t			tmp;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -278,9 +279,23 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_depth == 8) {
 		/* generate an r3g3b2 colour map */
 		for (i = 0; i < 256; i++) {
-			sc->sc_cmap_red[i] = i & 0xe0;
-			sc->sc_cmap_green[i] = (i & 0x1c) << 3;
-			sc->sc_cmap_blue[i] = (i & 0x03) << 6;
+			tmp = i & 0xe0;
+			/*
+			 * replicate bits so 0xe0 maps to a red value of 0xff
+			 * in order to make white look actually white
+			 */
+			tmp |= (tmp >> 3) | (tmp >> 6);
+			sc->sc_cmap_red[i] = tmp;
+
+			tmp = (i & 0x1c) << 3;
+			tmp |= (tmp >> 3) | (tmp >> 6);
+			sc->sc_cmap_green[i] = tmp;
+
+			tmp = (i & 0x03) << 6;
+			tmp |= tmp >> 2;
+			tmp |= tmp >> 4;
+			sc->sc_cmap_blue[i] = tmp;
+
 			r128fb_putpalreg(sc, i, sc->sc_cmap_red[i],
 				       sc->sc_cmap_green[i],
 				       sc->sc_cmap_blue[i]);
