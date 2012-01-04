@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.41 2011/05/15 00:06:23 wiz Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.42 2012/01/04 16:09:44 drochner Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.41 2011/05/15 00:06:23 wiz Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.42 2012/01/04 16:09:44 drochner Exp $");
 #endif
 #endif
 
@@ -279,7 +279,7 @@ __RCSID("$NetBSD: traceroute6.c,v 1.41 2011/05/15 00:06:23 wiz Exp $");
 
 #ifdef IPSEC
 #include <net/route.h>
-#include <netinet6/ipsec.h>
+#include <netipsec/ipsec.h>
 #endif
 
 #include "as.h"
