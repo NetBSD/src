@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178.2.9 2011/12/26 16:03:11 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.10 2012/01/04 16:29:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.9 2011/12/26 16:03:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.10 2012/01/04 16:29:29 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1341,9 +1341,6 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 			}
 			error = uvm_pageinsert(obj, pg);
 			if (error != 0) {
-#if 1
-				printf("page insertion failed %p\n", pg);
-#endif
 				pg->uobject = NULL;
 				uvm_pagefree(pg);
 				return NULL;
