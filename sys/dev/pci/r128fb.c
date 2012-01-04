@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.25 2012/01/04 08:38:20 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.26 2012/01/04 15:56:18 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.25 2012/01/04 08:38:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.26 2012/01/04 15:56:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -825,8 +825,7 @@ r128fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct r128fb_softc *sc = scr->scr_cookie;
 	void *data;
 	uint32_t fg, bg;
-	int uc, i;
-	int x, y, wi, he, offset;
+	int i, x, y, wi, he, offset;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
 		return;
@@ -847,8 +846,7 @@ r128fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		return;
 	}
 
-	uc = c - font->firstchar;
-	data = (uint8_t *)font->data + uc * ri->ri_fontscale;
+	data = WSFONT_GLYPH(c, font);
 
 	r128fb_wait(sc, 8);
 
@@ -926,7 +924,7 @@ r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct r128fb_softc *sc = scr->scr_cookie;
 	uint32_t bg, latch = 0, bg8, fg8, pixel;
-	int uc, i, x, y, wi, he, r, g, b, aval;
+	int i, x, y, wi, he, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0, fgo, bgo;
 	uint8_t *data8;
 
@@ -947,8 +945,7 @@ r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		return;
 	}
 
-	uc = c - font->firstchar;
-	data8 = (uint8_t *)font->data + uc * ri->ri_fontscale;
+	data8 = WSFONT_GLYPH(c, font);
 
 	r128fb_wait(sc, 5);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
