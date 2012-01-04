@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.205 2012/01/04 15:54:37 yamt Exp $
+#	$NetBSD: Makefile,v 1.206 2012/01/04 16:25:13 yamt Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -26,7 +26,7 @@ SUBDIR= apply apropos asa at audio audiocfg \
 	rusers rwall rwho \
 	script sdiff sdpquery sed seq shar shlock shmif_dumpbus \
 	showmount shuffle sockstat soelim sort spell split stat su systat \
-	tabs tail talk tcopy tee telnet tftp tic time tip touch tput \
+	tabs tail talk tcopy tee telnet tftp tic time tip touch tpfmt tput \
 	tr true tset tsort tty ul uname unexpand unifdef \
 	uniq units unvis unzip usbhidaction usbhidctl users utoppya \
 	uudecode uuencode uuidgen vacation vgrind videoctl vis \

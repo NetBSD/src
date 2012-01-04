@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.975 2012/01/04 15:54:37 yamt Exp $
+# $NetBSD: mi,v 1.976 2012/01/04 16:25:14 yamt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -691,6 +691,7 @@
 ./usr/bin/tn3270				base-obsolete		obsolete
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
+./usr/bin/tpfmt					base-util-bin
 ./usr/bin/tput					base-util-bin
 ./usr/bin/tr					base-util-bin
 ./usr/bin/true					base-util-bin
@@ -1469,6 +1470,7 @@
 ./usr/sbin/tcpdump				base-netutil-bin
 ./usr/sbin/timed				base-timed-bin
 ./usr/sbin/timedc				base-timed-bin
+./usr/sbin/tprof				base-sysutil-bin
 ./usr/sbin/traceroute				base-netutil-bin
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
