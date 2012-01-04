@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.74 2011/12/31 22:18:56 riz Exp $
+.\"	$NetBSD: fdisk.8,v 1.75 2012/01/04 10:57:40 wiz Exp $
 .\"
 .Dd December 1, 2011
 .Dt FDISK 8
@@ -60,7 +60,7 @@ and (optionally, depending on the boot code) a menu
 for selecting a partition to be booted.
 There can be at most 4 partitions defined in sector 0,
 one of which can be an extended
-partition which can be split into any number of sub-partitions (then called 
+partition which can be split into any number of sub-partitions (then called
 logical partitions).
 .Pp
 The boot code in the MBR is usually invoked by the BIOS or firmware,
@@ -602,7 +602,7 @@ Default location of i386 bootcode
 .It Pa /usr/mdec/mbr_bootsel
 Default location of i386 bootselect code
 .It Pa /usr/mdec/mbr_ext
-Default location of i386 bootselect for extended partitions (i.e., NetBSD on 
+Default location of i386 bootselect for extended partitions (i.e., NetBSD on
 logical partitions)
 .El
 .Sh EXAMPLES
