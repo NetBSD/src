@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1721 2012/01/04 16:09:41 drochner Exp $
+#	$NetBSD: mi,v 1.1722 2012/01/04 16:25:14 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3841,6 +3841,7 @@
 ./usr/libdata/debug/usr/bin/tn3270.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/top.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/touch.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/tpfmt.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tput.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tr.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/troff.debug		comp-groff-debug	groff,debug
@@ -4289,6 +4290,7 @@
 ./usr/libdata/debug/usr/sbin/tcpdump.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/timed.debug	comp-timed-debug	debug
 ./usr/libdata/debug/usr/sbin/timedc.debug	comp-timed-debug	debug
+./usr/libdata/debug/usr/sbin/tprof.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/traceroute.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/traceroute6.debug	comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/trpt.debug		comp-netutil-debug	debug
