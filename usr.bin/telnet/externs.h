@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.34 2006/02/02 19:33:12 he Exp $	*/
+/*	$NetBSD: externs.h,v 1.35 2012/01/04 16:09:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -41,7 +41,7 @@
 #include <string.h>
 
 #if defined(IPSEC)
-#include <netinet6/ipsec.h>
+#include <netipsec/ipsec.h>
 #if defined(IPSEC_POLICY_IPSEC)
 extern char *ipsec_policy_in;
 extern char *ipsec_policy_out;
