@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.40 2011/08/03 04:11:15 manu Exp $ */
+/* $NetBSD: utils.c,v 1.41 2012/01/04 15:58:37 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.40 2011/08/03 04:11:15 manu Exp $");
+__RCSID("$NetBSD: utils.c,v 1.41 2012/01/04 15:58:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,22 @@ set_utimes(const char *file, struct stat *fs)
     return (0);
 }
 
+struct finfo {
+	const char *from;
+	const char *to;
+	size_t size;
+};
+
+static void
+progress(const struct finfo *fi, size_t written)
+{
+	int pcent = (int)((100.0 * written) / fi->size);
+
+	pinfo = 0;
+	(void)fprintf(stderr, "%s => %s %zu/%zu bytes %d%% written\n",
+	    fi->from, fi->to, written, fi->size, pcent);
+}
+
 int
 copy_file(FTSENT *entp, int dne)
 {
@@ -81,6 +97,7 @@ copy_file(FTSENT *entp, int dne)
 	struct stat to_stat, *fs;
 	int ch, checkch, from_fd, rcount, rval, to_fd, tolnk, wcount;
 	char *p;
+	size_t ptotal = 0;
 	
 	if ((from_fd = open(entp->fts_path, O_RDONLY, 0)) == -1) {
 		warn("%s", entp->fts_path);
@@ -164,6 +181,12 @@ copy_file(FTSENT *entp, int dne)
 	 * now if it's empty, so let's not bother.
 	 */
 	if (fs->st_size > 0) {
+		struct finfo fi;
+
+		fi.from = entp->fts_path;
+		fi.to = to.p_path;
+		fi.size = (size_t)fs->st_size;
+
 		/*
 		 * Mmap and write if less than 8M (the limit is so
 		 * we don't totally trash memory on big files).
@@ -203,6 +226,9 @@ copy_file(FTSENT *entp, int dne)
 						break;
 					}
 					remainder -= chunk;
+					ptotal += chunk;
+					if (pinfo)
+						progress(&fi, ptotal);
 				} while (remainder > 0);
 
 				if (munmap(p, fsize) < 0) {
@@ -220,6 +246,9 @@ copy_file(FTSENT *entp, int dne)
 					rval = 1;
 					break;
 				}
+				ptotal += wcount;
+				if (pinfo)
+					progress(&fi, ptotal);
 			}
 			if (rcount < 0) {
 				warn("%s", entp->fts_path);
