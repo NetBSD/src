@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.74 2011/12/30 19:18:35 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.75 2012/01/04 10:30:23 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.74 2011/12/30 19:18:35 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75 2012/01/04 10:30:23 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1276,7 +1276,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 
 	/* Initialise L2 entries 0 - 2: Point them to pmap_kernel() */
 	int i;
-	for (i = 0; i < 3; i++ ) {
+	for (i = 0 ; i < PDP_SIZE - 1; i++) {
 		ci->ci_pae_l3_pdir[i] =
 		    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[i]) | PG_V;
 	}
