@@ -1,12 +1,13 @@
-#	$NetBSD: files.rmixl,v 1.1.2.17 2011/12/30 06:43:39 matt Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.18 2012/01/04 16:17:53 matt Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
 
-file	arch/mips/rmi/rmixl_spl.S
-file	arch/mips/rmi/rmixl_intr.c
-file	arch/mips/rmi/rmixl_subr.S
 file	arch/mips/rmi/rmixl_fmn.c
+file	arch/mips/rmi/rmixl_intr.c
+file	arch/mips/rmi/rmixl_machdep.c
+file	arch/mips/rmi/rmixl_spl.S
+file	arch/mips/rmi/rmixl_subr.S
 
 
 # node is parent of one or more core
@@ -36,7 +37,8 @@ file    arch/mips/rmi/rmixl_pci_cfg_el_space.c	rmixl_pcix | rmixl_pcie
 file    arch/mips/rmi/rmixl_pci_ecfg_eb_space.c	rmixlp_pcie
 file    arch/mips/rmi/rmixl_pci_ecfg_el_space.c	rmixl_pcie | rmixlp_pcie
 file    arch/mips/rmi/rmixl_pci_io_space.c	rmixl_pcix | rmixl_pcie | rmixlp_pcie
-file    arch/mips/rmi/rmixl_pci_mem_space.c	rmixl_pcix | rmixl_pcie | rmixlp_pcie
+file    arch/mips/rmi/rmixl_pci_el_mem_space.c	rmixl_pcix | rmixl_pcie | rmixlp_pcie
+file    arch/mips/rmi/rmixl_pci_eb_mem_space.c	rmixlp_pcie
 
 # NS16550 compatible serial ports
 attach com at obio with com_rmixl
@@ -64,7 +66,7 @@ attach  xliobus at obio with xliobus_obio
 file    arch/mips/rmi/rmixl_iobus_space.c	xliobus_obio
 file    arch/mips/rmi/rmixl_iobus.c		xliobus_obio
 
-# NAND flash controller
+# XL NAND flash controller
 device	xlnand: nandbus 
 attach  xlnand at xliobus with xlnand_iobus 
 attach	xlnand at pci with xlnand_pci
@@ -103,14 +105,14 @@ file	arch/mips/rmi/rmixl_ohci.c		rmixl_ohci
 attach	ehci at xlusbi with rmixl_ehci
 file	arch/mips/rmi/rmixl_ehci.c		rmixl_ehci
 
-# PCI SDHC controller
+# XL PCI SDHC controller
 device	xlsdio { [slot=-1] }
 attach	xlsdio at pci
 attach	sdhc at xlsdio with sdhc_xlsdio
 file	arch/mips/rmi/rmixl_sdio.c		xlsdio
 file	arch/mips/rmi/rmixl_sdhc.c		sdhc_xlsdio
 
-# XL NAE controller
+# XL Network Acceleration Engine
 device	xlnae { [port=-1] }
 attach	xlnae at obio with xlnae_obio
 attach	xlnae at pci with xlnae_pci
@@ -120,6 +122,49 @@ file	arch/mips/rmi/rmixl_xlnae_obio.c	xlnae_obio
 file	arch/mips/rmi/rmixl_xlnae_pci.c		xlnae_pci
 file	arch/mips/rmi/rmixl_xlnae.c		xlnae
 file	arch/mips/rmi/rmixl_nae.c		nae
+
+# XL Fast Messaging Network
+device	xlfmn
+attach	xlfmn at obio with xlfmn_obio
+attach	xlfmn at pci with xlfmn_pci
+file	arch/mips/rmi/rmixl_xlfmn_obio.c	xlfmn_obio
+file	arch/mips/rmi/rmixl_xlfmn_pci.c		xlfmn_pci
+
+# XL Packet Ordering Engine
+device	xlpoe
+attach	xlpoe at pci with xlpoe_pci
+file	arch/mips/rmi/rmixl_xlpoe_pci.c		xlpoe_pci
+
+# XL Compression/Decompression Engine
+device	xlcde
+attach	xlcde at obio with xlcde_obio
+attach	xlcde at pci with xlcde_pci
+file	arch/mips/rmi/rmixl_xlcde_obio.c	xlcde_obio
+file	arch/mips/rmi/rmixl_xlcde_pci.c		xlcde_pci
+
+# XL Security Acceleration Engine (AES/etc.)
+device	xlsae
+attach	xlsae at obio with xlsae_obio
+attach	xlsae at pci with xlsae_pci
+file	arch/mips/rmi/rmixl_xlsae_obio.c	xlsae_obio
+file	arch/mips/rmi/rmixl_xlsae_pci.c		xlsae_pci
+
+# XL Public Key Engine (RSA/ECC)
+device	xlpke
+attach	xlpke at pci with xlpke_pci
+file	arch/mips/rmi/rmixl_xlpke_pci.c		xlpke_pci
+
+# XL Regular eXpression Engine
+device	xlrxe
+attach	xlrxe at pci with xlrxe_pci
+file	arch/mips/rmi/rmixl_xlrxe_pci.c		xlrxe_pci
+
+# XL Serial Rapid IO controller
+device	xlsrio
+attach	xlsrio at obio with xlsrio_obio
+attach	xlsrio at pci with xlsrio_pci
+file	arch/mips/rmi/rmixl_xlsrio_obio.c	xlsrio_obio
+file	arch/mips/rmi/rmixl_xlsrio_pci.c	xlsrio_pci
 
 # XL I2C controller
 device	xli2c: i2cbus

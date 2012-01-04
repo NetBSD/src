@@ -1,8 +1,8 @@
-#	$NetBSD: XLPEVB,v 1.1.2.4 2011/12/30 06:47:09 matt Exp $
+#	$NetBSD: XLPEVB,v 1.1.2.5 2012/01/04 16:17:52 matt Exp $
 
 include 	"arch/evbmips/conf/std.rmixlp"
 
-#ident 		"XLSATX-$Revision: 1.1.2.4 $"
+#ident 		"XLSATX-$Revision: 1.1.2.5 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -151,10 +151,8 @@ wm*		at pci? dev ? function ?	# Intel i82546EB Gig-E
 makphy*		at mii? phy ?			# Marvell 88E1000 PHYs
 ukphy*		at mii? phy ?			# unknown PHY
 com*		at pci? dev ? function ?
-ehci*		at pci? dev ? function 6	# won't match
-ohci*		at pci? dev ? function 7	# won't match
-#ehci*		at pci? dev ? function ?
-#ohci*		at pci? dev ? function ?
+ehci*		at pci? dev ? function ?
+ohci*		at pci? dev ? function ?
 xlsdio*		at pci? dev ? function ?
 sdhc*		at xlsdio? slot 0
 sdmmc*		at sdhc?
@@ -163,7 +161,8 @@ xlnae*		at pci? dev ? function ?
 nae5		at xlnae? port 16
 xli2c0		at pci0 dev 6 function 2
 xli2c1		at pci0 dev 6 function 3
-iic*		at xli2c?
+iic0		at xli2c0
+iic1	 	at xli2c1
 spdmem*		at iic? addr 0x51
 spdmem*		at iic? addr 0x52
 seeprom*	at iic1 addr 0x57 size 2048
@@ -176,7 +175,7 @@ nand*		at xlnand?
 flash*		at nand?
 xlspi*		at pci? dev ? function ?
 xlgpio*		at pci? dev ? function ?
-gpio*		at xlgpio?
+gpio0		at xlgpio?
 ahcisata*	at pci? dev ? function ?
 siisata* 	at pci? dev ? function ?
 atabus*		at ata?

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.6 2011/12/31 08:20:43 matt Exp $	*/
+/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.7 2012/01/04 16:17:54 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.6 2011/12/31 08:20:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.7 2012/01/04 16:17:54 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -89,6 +89,9 @@ int rmixlp_pcie_debug = PCI_DEBUG;
 # define STATIC
 #endif
 
+#define	RMIXLP_PCITAG_IDX(tag)		(((tag) >> 12) & 0x3f)
+#define	RMIXLP_PCITAG_BIT(tag)		__BIT(RMIXLP_PCITAG_IDX(tag))
+
 typedef struct {
 	rmixlp_variant_t lnk_variant;
 	uint8_t lnk_ports;
@@ -107,14 +110,29 @@ static struct rmixlp_pcie_softc {
 	bus_dma_tag_t			sc_dmat32;
 	bus_dma_tag_t			sc_dmat64;
 	rmixlp_pcie_lnkcfg_t		sc_lnkcfg;
+	pcitag_t			sc_mapprobe;
 	uint8_t				sc_lnkmode;
-	bool				sc_usb_bswapped;
+	uint64_t			sc_bswapped;
 	kmutex_t			sc_mutex;
+	pcireg_t			sc_bus0_bar0_sizes[64];
+	struct mips_bus_space		sc_pci_eb_memt;
 } rmixlp_pcie_softc = {
 	.sc_pc = &rmixl_configuration.rc_pci_chipset,
 	.sc_pci_cfg_memt = &rmixl_configuration.rc_pci_cfg_memt,
 	.sc_pci_ecfg_eb_memt = &rmixl_configuration.rc_pci_ecfg_eb_memt,
 	.sc_pci_ecfg_el_memt = &rmixl_configuration.rc_pci_ecfg_el_memt,
+	.sc_bus0_bar0_sizes = {
+		[0 ... 63] = 0xffffffff,
+		[RMIXLP_PCITAG_IDX(RMIXLP_EHCI0_PCITAG)] = 4-0x400,
+		[RMIXLP_PCITAG_IDX(RMIXLP_OHCI0_PCITAG)] = 4-0x400,
+		[RMIXLP_PCITAG_IDX(RMIXLP_OHCI1_PCITAG)] = 4-0x400,
+		[RMIXLP_PCITAG_IDX(RMIXLP_EHCI1_PCITAG)] = 4-0x400,
+		[RMIXLP_PCITAG_IDX(RMIXLP_OHCI2_PCITAG)] = 4-0x400,
+		[RMIXLP_PCITAG_IDX(RMIXLP_OHCI3_PCITAG)] = 4-0x400,
+		[RMIXLP_PCITAG_IDX(RMIXLP_NAE_PCITAG)] = 4-0x20000,
+		[RMIXLP_PCITAG_IDX(RMIXLP_POE_PCITAG)] = 4-0x2000,
+		[RMIXLP_PCITAG_IDX(RMIXLP_AHCI_PCITAG)] = 4-0x400,
+	},
 };
 
 static int	rmixlp_pcie_match(device_t, cfdata_t, void *);
@@ -124,7 +142,8 @@ static void	rmixlp_pcie_bar_alloc(struct rmixlp_pcie_softc *,
 static void	rmixlp_pcie_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 
-static void	rmixlp_pcie_lnkcfg_get(struct rmixlp_pcie_softc *);
+static void	rmixlp_pcie_lnkcfg_get(struct rmixlp_pcie_softc *,
+		    const struct rmixl_config *);
 static void	rmixlp_pcie_usb_init_hook(pci_chipset_tag_t, pcitag_t);
 
 static void	rmixlp_pcie_conf_interrupt(void *, int, int, int, int, int *);
@@ -219,10 +238,10 @@ rmixlp_pcie_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Get our link configuration.
 	 */
-	rmixlp_pcie_lnkcfg_get(sc);
+	rmixlp_pcie_lnkcfg_get(sc, rcp);
 
 	aprint_debug_dev(sc->sc_dev, "using link variant %d (system is %d)\n",
-	    sc->sc_lnkcfg.lnk_variant, rmixl_xlp_variant);
+	    sc->sc_lnkcfg.lnk_variant, rcp->rc_xlp_variant);
 	for (size_t port = 0; port < sc->sc_lnkcfg.lnk_ports; port++) {
 		if (sc->sc_lnkcfg.lnk_lanes[port] == 0)
 			continue;
@@ -253,17 +272,22 @@ rmixlp_pcie_attach(device_t parent, device_t self, void *aux)
 				rp->r_size = 0;
 			}
 		}
-		if (0)
-			rmixlp_pcie_bar_alloc(sc, &rcp->rc_pci_mem, 256, 1);
-		rcp->rc_pci_mem.r_pbase = rmixlp_read_4(RMIXLP_EHCI0_PCITAG,
-		    PCI_BAR0) & -8;
-		rcp->rc_pci_mem.r_size = 256 << 20;
-		extent_alloc_region(rcp->rc_phys_ex, 
-		    rcp->rc_pci_mem.r_pbase >> 20,
-		    rcp->rc_pci_mem.r_size >> 20,
-		    EX_NOWAIT);
+		if (false) {
+			rmixlp_pcie_bar_alloc(sc, &rcp->rc_pci_mem, 32, 1);
+		} else {
+#if 0
+			rcp->rc_pci_mem.r_pbase =
+			    rmixlp_read_4(RMIXLP_EHCI0_PCITAG, PCI_BAR0) & -8;
 #endif
-		rmixl_pci_bus_mem_init(&rcp->rc_pci_memt, rcp);
+			KASSERT(rcp->rc_pci_mem.r_size == 0x100000);
+			rcp->rc_pci_mem.r_size = 64 << 20;
+			extent_alloc_region(rcp->rc_phys_ex, 
+			    (rcp->rc_pci_mem.r_pbase >> 20) - 1,
+			    (rcp->rc_pci_mem.r_size >> 20) + 1,
+			    EX_NOWAIT);
+		}
+#endif /* PCI_NETBSD_CONFIGURE */
+		rmixl_pci_eb_bus_mem_init(&rcp->rc_pci_memt, rcp);
 	}
 
 	if (rcp->rc_pci_iot.bs_cookie == NULL) {
@@ -294,18 +318,28 @@ rmixlp_pcie_attach(device_t parent, device_t self, void *aux)
 	rmixlp_pcie_pc_init();
 #endif
 
+#if 0
+	/*
+	 * Disable byte swapping for USB and AHCI.
+	 */
+	sc->sc_bswapped |= RMIXLP_PCITAG_BIT(RMIXLP_EHCI0_PCITAG);
+	sc->sc_bswapped |= RMIXLP_PCITAG_BIT(RMIXLP_OHCI0_PCITAG);
+	sc->sc_bswapped |= RMIXLP_PCITAG_BIT(RMIXLP_OHCI1_PCITAG);
+	sc->sc_bswapped |= RMIXLP_PCITAG_BIT(RMIXLP_EHCI1_PCITAG);
+	sc->sc_bswapped |= RMIXLP_PCITAG_BIT(RMIXLP_OHCI2_PCITAG);
+	sc->sc_bswapped |= RMIXLP_PCITAG_BIT(RMIXLP_OHCI3_PCITAG);
+	pci_conf_write(sc->sc_pc, RMIXLP_EHCI0_PCITAG,
+	    RMIXLP_USB_BYTE_SWAP_DIS, 1);
+	if (RMIXLP_3XX_P) {
+		sc->sc_bswapped |= RMIXLP_PCITAG_BIT(RMIXLP_AHCI_PCITAG);
+		pci_conf_write(sc->sc_pc, RMIXLP_AHCI_PCITAG,
+		    RMIXLP_SATA_BYTE_SWAP_DIS, 1);
+	}
+#endif
+
 	/*
 	 * Make sure the USB devices aren't still in reset.
 	 */
-	/*
-	 * Disable byte swapping.
-	 */
-#ifdef BYTESWAP_USB
-	pci_conf_write(sc->sc_pc, RMIXLP_EHCI0_PCITAG,
-	    RMIXLP_USB_BYTE_SWAP_DIS, 1);
-#endif
-	sc->sc_usb_bswapped = (pci_conf_read(sc->sc_pc, RMIXLP_EHCI0_PCITAG,
-	    RMIXLP_USB_BYTE_SWAP_DIS) != 0);
 	rmixlp_pcie_usb_init_hook(sc->sc_pc, RMIXLP_EHCI0_PCITAG);
 	rmixlp_pcie_usb_init_hook(sc->sc_pc, RMIXLP_OHCI0_PCITAG);
 	rmixlp_pcie_usb_init_hook(sc->sc_pc, RMIXLP_OHCI1_PCITAG);
@@ -376,14 +410,15 @@ rmixlp_pcie_bar_alloc(struct rmixlp_pcie_softc *sc, struct rmixl_region *rp,
  *	IO_AD[22:19] for EP(0)/RC(1) determination
  */
 static void
-rmixlp_pcie_lnkcfg_get(struct rmixlp_pcie_softc *sc)
+rmixlp_pcie_lnkcfg_get(struct rmixlp_pcie_softc *sc,
+	const struct rmixl_config *rcp)
 {
 	const uint32_t por_cfg = rmixlp_read_4(RMIXLP_SM_PCITAG,
 	    RMIXLP_SM_POWER_ON_RESET_CFG);
 	const u_int plc = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_PLC);
 	const u_int pm = __SHIFTOUT(por_cfg, RMIXLP_SM_POWER_ON_RESET_CFG_PM);
 	for (const rmixlp_pcie_lnkcfg_t *lnk = rmixlp_pcie_lnkcfgs;; lnk++) {
-		if ((lnk->lnk_variant == rmixl_xlp_variant
+		if ((lnk->lnk_variant == rcp->rc_xlp_variant
 		    || lnk->lnk_variant == RMIXLP_ANY)
 		    && (plc & lnk->lnk_plc_mask) == lnk->lnk_plc_match) {
 			sc->sc_lnkcfg = *lnk;
@@ -392,7 +427,7 @@ rmixlp_pcie_lnkcfg_get(struct rmixlp_pcie_softc *sc)
 		}
 	}
 	panic("%s: missing lnkcfg for XLP variant %d",
-	    __func__, rmixl_xlp_variant);
+	    __func__, rcp->rc_xlp_variant);
 }
 
 #if 0
@@ -563,6 +598,16 @@ rmixlp_pcie_set_bus0_bar0(struct rmixlp_pcie_softc *sc, pcitag_t tag,
 	pcireg_t ml = rmixlp_pcie_conf_read(sc, tag, PCI_BAR0);
 	bus_size_t bar_size = 0;
 
+	pcireg_t cmdsts = rmixlp_pcie_conf_read(sc, tag,
+	    PCI_COMMAND_STATUS_REG);
+	cmdsts &= ~PCI_COMMAND_MEM_ENABLE;
+	rmixlp_pcie_conf_write(sc, tag, PCI_COMMAND_STATUS_REG, cmdsts);
+
+	/* align EHCI1 to a 4KB boundary (XLP8xx PRM 28.11.1) */
+	if (tag == RMIXLP_EHCI1_PCITAG) {
+		pbase = (pbase + 0x1000 - 1) & -0x1000;
+	}
+
 	switch (PCI_MAPREG_TYPE(ml)|PCI_MAPREG_MEM_TYPE(ml)) {
 	case PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT: {
 		rmixlp_pcie_conf_write(sc, tag, bar, 0xffffffff);
@@ -581,7 +626,7 @@ rmixlp_pcie_set_bus0_bar0(struct rmixlp_pcie_softc *sc, pcitag_t tag,
 		break;
 	}
 	case PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_64BIT: {
-		// pcireg_t mu = rmixlp_pcie_conf_read(sc, tag, bar + 4);
+		pcireg_t mu = rmixlp_pcie_conf_read(sc, tag, bar + 4);
 		rmixlp_pcie_conf_write(sc, tag, bar, 0xffffffff);
 		rmixlp_pcie_conf_write(sc, tag, bar + 4, 0xffffffff);
 		pcireg_t maskl = rmixlp_pcie_conf_read(sc, tag, bar);
@@ -590,10 +635,13 @@ rmixlp_pcie_set_bus0_bar0(struct rmixlp_pcie_softc *sc, pcitag_t tag,
 		if (bar_size == 0)
 			return pbase;
 		pbase = (pbase + bar_size - 1) & -bar_size;
+		if (mu != ((pbase >> 32) & 0xffffffff)) {
+			rmixlp_pcie_conf_write(sc, tag, bar + 4,
+			    (pbase >> 32) & 0xffffffff);
+		}
 		rmixlp_pcie_conf_write(sc, tag, bar,
-		    (pbase >> 0) & 0xffffffff);
-		rmixlp_pcie_conf_write(sc, tag, bar + 4,
-		    (pbase >> 32) & 0xffffffff);
+		    ((pbase >> 0) & 0xffffffff)
+		    | PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_64BIT);
 		aprint_normal_dev(sc->sc_dev,
 		    "tag %#lx bar[0]: mem64=%#"PRIxBUSADDR
 		    " size=%#"PRIxBUSSIZE"\n",
@@ -605,8 +653,7 @@ rmixlp_pcie_set_bus0_bar0(struct rmixlp_pcie_softc *sc, pcitag_t tag,
 	default:
 		return pbase;
 	}
-	pcireg_t cmdsts = rmixlp_pcie_conf_read(sc, tag,
-	    PCI_COMMAND_STATUS_REG);
+
 	cmdsts |= PCI_COMMAND_MEM_ENABLE;
 	rmixlp_pcie_conf_write(sc, tag, PCI_COMMAND_STATUS_REG, cmdsts);
 
@@ -789,21 +836,36 @@ rmixlp_pcie_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz,
 static void
 rmixlp_pcie_usb_init_hook(pci_chipset_tag_t pc, pcitag_t tag)
 {
-	const size_t func = _RMIXL_PCITAG_FUNC(tag);
 	const pcireg_t id = pci_conf_read(pc, tag, PCI_ID_REG);
 	if (id != PCI_ID_CODE(PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_EHCIUSB)
 	    && id != PCI_ID_CODE(PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_OHCIUSB))
 		return;
 
-	if (func == 0 || func == 3) {
+	if (PCI_PRODUCT(id) == PCI_PRODUCT_NETLOGIC_XLP_EHCIUSB) {
+		const uint32_t phy_reset_flags = RMIXLP_USB_PHY0_PHYPORTRST1
+		    |RMIXLP_USB_PHY0_PHYPORTRST0
+		    |RMIXLP_USB_PHY0_USBPHYRESET;
+		/*
+		 * Put the PHY into reset.
+		 */
+		pcireg_t phy0 = pci_conf_read(pc, tag, RMIXLP_USB_PHY0);
+		phy0 |= phy_reset_flags;
+		pci_conf_write(pc, tag, RMIXLP_USB_PHY0, phy0);
+
+		/*
+		 * Put the controller into reset.
+		 */
+		pcireg_t ctl0 = pci_conf_read(pc, tag, RMIXLP_USB_CTL0);
+		ctl0 |= RMIXLP_USB_CTL0_USBCTLRRST;
+		pci_conf_write(pc, tag, RMIXLP_USB_CTL0, ctl0);
+
 		/*
 		 * Bring the PHY out of reset.
 		 */
-		pcireg_t phy0 = pci_conf_read(pc, tag, RMIXLP_USB_PHY0);
-		phy0 &= ~(RMIXLP_USB_PHY0_PHYPORTRST1
-		    |RMIXLP_USB_PHY0_PHYPORTRST0
-		    |RMIXLP_USB_PHY0_USBPHYRESET);
+		phy0 &= ~phy_reset_flags;
 		pci_conf_write(pc, tag, RMIXLP_USB_PHY0, phy0);
+
+		delay(10000);	/* wait 10ms */
 	}
 
 	/*
@@ -814,6 +876,14 @@ rmixlp_pcie_usb_init_hook(pci_chipset_tag_t pc, pcitag_t tag)
 		ctl0 &= ~RMIXLP_USB_CTL0_USBCTLRRST;
 		pci_conf_write(pc, tag, RMIXLP_USB_CTL0, ctl0);
 	}
+
+	/*
+	 * Allow interrupts
+	 */
+	pcireg_t inten = pci_conf_read(pc, tag, RMIXLP_USB_INTERRUPTEN);
+	inten |= RMIXLP_USB_INTERRUPTEN_INTEN;
+	inten |= RMIXLP_USB_INTERRUPTEN_PHY_INTEN;
+	pci_conf_write(pc, tag, RMIXLP_USB_INTERRUPTEN, inten);
 }
 
 void
@@ -885,6 +955,60 @@ rmixlp_pcie_conf_read(void *v, pcitag_t tag, int offset)
 	KASSERT((offset & 3) == 0);
 
 	/*
+	 * For some reason, NetLogic put this register in the wrong place
+	 * so change the offset to the correct location.
+	 */
+	if ((tag == RMIXLP_EHCI0_PCITAG || tag == RMIXLP_EHCI1_PCITAG)
+	    && offset == 0x60)
+		offset = 0x100;
+
+	if (_RMIXL_PCITAG_BUS(tag) == 0 && (_RMIXL_PCITAG_DEV(tag) & 7) > 0) {
+		if (tag == sc->sc_mapprobe) {
+			if (offset == PCI_MAPREG_START + 4) {
+				aprint_debug_dev(sc->sc_dev,
+				    "tag %#lx reg %#x: %#x\n",
+				    tag, offset, 0xffffffff);
+				return 0xffffffff;
+			}
+#if 0
+			return sc->sc_bus0_bar0_sizes[RMIXLP_PCITAG_IDX(tag)];
+#else
+			switch (_RMIXL_PCITAG_DEV(tag)) {
+			case _RMIXL_PCITAG_DEV(RMIXLP_EHCI0_PCITAG):
+				rv = 4-0x400;
+				break;
+			case _RMIXL_PCITAG_DEV(RMIXLP_NAE_PCITAG):
+				switch (_RMIXL_PCITAG_FUNC(tag)) {
+				case _RMIXL_PCITAG_FUNC(RMIXLP_NAE_PCITAG):
+					rv = 4-0x20000;
+					break;
+				case _RMIXL_PCITAG_FUNC(RMIXLP_POE_PCITAG):
+					rv = 4-0x2000;
+					break;
+				case _RMIXL_PCITAG_FUNC(RMIXLP_AHCI_PCITAG):
+					rv = 4-0x400;
+					break;
+				default:
+					rv = 0xffffffff;
+					break;
+				}
+				break;
+			case _RMIXL_PCITAG_DEV(RMIXLP_FMN_PCITAG):
+				rv = 4-0x4000;
+				break;
+			default:
+				rv = 0xffffffff;
+				break;
+			}
+			aprint_debug_dev(sc->sc_dev,
+			    "conf_read: tag %#lx reg %#x: %#x\n",
+			    tag, offset, rv);
+			return rv;
+#endif
+		}
+	}
+
+	/*
 	 * If this register isn't addressable via PCI ECFG space, it might
 	 * be accesible via normal PCI CFG space.
 	 */
@@ -924,9 +1048,8 @@ rmixlp_pcie_conf_read(void *v, pcitag_t tag, int offset)
 	if (__predict_true(!cold))
 		mutex_exit(&sc->sc_mutex);
 
-	if (_RMIXL_PCITAG_BUS(tag) == _RMIXL_PCITAG_BUS(RMIXLP_EHCI0_PCITAG)
-	    && _RMIXL_PCITAG_DEV(tag) == _RMIXL_PCITAG_DEV(RMIXLP_EHCI0_PCITAG)
-	    && sc->sc_usb_bswapped) {
+	if (_RMIXL_PCITAG_BUS(tag) == 0
+	    && (sc->sc_bswapped & RMIXLP_PCITAG_BIT(tag))) {
 		rv = bswap32(rv);
 	}
 
@@ -944,9 +1067,44 @@ rmixlp_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	KASSERT(offset < 0x1000);
 	KASSERT((offset & 3) == 0);
 
-	if (_RMIXL_PCITAG_BUS(tag) == _RMIXL_PCITAG_BUS(RMIXLP_EHCI0_PCITAG)
-	    && _RMIXL_PCITAG_DEV(tag) == _RMIXL_PCITAG_DEV(RMIXLP_EHCI0_PCITAG)
-	    && sc->sc_usb_bswapped) {
+	/*
+	 * For some reason, NetLogic put this register in the wrong place
+	 * so change the offset to the correct location.
+	 */
+	if ((tag == RMIXLP_EHCI0_PCITAG || tag == RMIXLP_EHCI1_PCITAG)
+	    && offset == 0x60)
+		offset = 0x100;
+
+	if (_RMIXL_PCITAG_BUS(tag) == 0 && (_RMIXL_PCITAG_DEV(tag) & 7) != 0) {
+		if ((offset & -8) == PCI_MAPREG_START) {
+			if (val >= 0xfffffff0) {
+				sc->sc_mapprobe = tag;
+				aprint_debug_dev(sc->sc_dev,
+				    "conf_write: tag %#lx reg %#x: %#x%s\n",
+				    tag, offset, val, " (suppressed)");
+				return;
+			}
+			sc->sc_mapprobe = 0;
+			if (sc->sc_bswapped & RMIXLP_PCITAG_BIT(tag)) {
+				val = bswap32(val);
+			}
+			if (val == bus_space_read_4(bst, bsh, (bus_size_t)tag|offset)) {
+				aprint_debug_dev(sc->sc_dev,
+				    "conf_write: tag %#lx reg %#x: %#x%s\n",
+				    tag, offset, val, " (suppressed)");
+				return;
+			}
+			aprint_debug_dev(sc->sc_dev,
+			    "conf_write: tag %#lx reg %#x: %#x%s\n",
+			    tag, offset, val, "");
+			bus_space_write_4(bst, bsh, (bus_size_t)tag | offset,
+			    val);
+			return;
+		}
+	}
+
+	if (_RMIXL_PCITAG_BUS(tag) == 0
+	    && (sc->sc_bswapped & RMIXLP_PCITAG_BIT(tag))) {
 		val = bswap32(val);
 	}
 
@@ -1000,6 +1158,9 @@ rmixlp_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 			rmixlp_write_4(RMIXLP_SBC_PCITAG,
 			    RMIXLP_SBC_BUSNUM_BARn(func),
 			    nval);
+			aprint_debug_dev(sc->sc_dev,
+			    "tag %#lx reg %#x: %#x (%#x)\n",
+			    tag, offset, nval, val);
 		}
 	}
 

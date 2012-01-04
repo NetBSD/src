@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_fmn.c,v 1.1.2.8 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixl_fmn.c,v 1.1.2.9 2012/01/04 16:17:53 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,10 +35,17 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/percpu.h>
+#include <sys/atomic.h>
+
+#include <dev/pci/pcidevs.h>
+
 #include <mips/cpuregs.h>
+
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_intr.h>
+#include <mips/rmi/rmixl_cpuvar.h>
 #include <mips/rmi/rmixl_fmnvar.h>
 
 #ifdef FMN_DEBUG
@@ -53,101 +60,306 @@
 # define DIAG_PRF(x)
 #endif
 
+/*
+ * macros used because mtc2, mfc2, dmtc2, dmfc2 instructions
+ * must use literal values for rd and sel operands
+ * so let the compiler sort it out
+ */
+
+/*
+ * read first 4 SELs for given RD
+ */
+#define FMN_COP2_4SEL_READ(rd, sel, vp)					\
+	do {								\
+		uint32_t *rp = (vp);					\
+		rp[0] = mips_mfc2(rd, sel+0);				\
+		rp[1] = mips_mfc2(rd, sel+1);				\
+		rp[2] = mips_mfc2(rd, sel+2);				\
+		rp[3] = mips_mfc2(rd, sel+3);				\
+	} while (0)
+
+/*
+ * write v to first 4 SELs for given RD
+ */
+#define FMN_COP2_4SEL_WRITE(rd, sel, v)					\
+	do {								\
+		mips_mtc2(rd, sel,   v);				\
+		mips_mtc2(rd, sel+1, v);				\
+		mips_mtc2(rd, sel+2, v);				\
+		mips_mtc2(rd, sel+3, v);				\
+	} while (0)
+
+#define FMN_COP2_8SEL_WRITE(rd, v)					\
+	do {								\
+		mips_mtc2(rd, 0, v);					\
+		mips_mtc2(rd, 1, v);					\
+		mips_mtc2(rd, 2, v);					\
+		mips_mtc2(rd, 3, v);					\
+		mips_mtc2(rd, 4, v);					\
+		mips_mtc2(rd, 5, v);					\
+		mips_mtc2(rd, 6, v);					\
+		mips_mtc2(rd, 7, v);					\
+	} while (0)
+
+
+#define FMN_COP2_SEL_CASE_READ(rd, sel, v)				\
+	case sel:							\
+		v = mips_mfc2(rd, sel);					\
+		break
+#define FMN_COP2_SEL_CASE_WRITE(rd, sel, v)				\
+	case sel:							\
+		mips_mtc2(rd, sel, v);					\
+		break
+/*
+ * read/write a single arbitrary sel for the given rd
+ */
+#define FMN_COP2_SEL_SWITCH_RW(rw, rd, sel, val)			\
+	do {								\
+		switch (sel) {						\
+			FMN_COP2_SEL_CASE_ ## rw(rd, 0, val);		\
+			FMN_COP2_SEL_CASE_ ## rw(rd, 1, val);		\
+			FMN_COP2_SEL_CASE_ ## rw(rd, 2, val);		\
+			FMN_COP2_SEL_CASE_ ## rw(rd, 3, val);		\
+			FMN_COP2_SEL_CASE_ ## rw(rd, 4, val);		\
+			FMN_COP2_SEL_CASE_ ## rw(rd, 5, val);		\
+			FMN_COP2_SEL_CASE_ ## rw(rd, 6, val);		\
+			FMN_COP2_SEL_CASE_ ## rw(rd, 7, val);		\
+			default:					\
+				panic("%s:%d: bad sel %d\n",		\
+					__func__, __LINE__, sel);	\
+		}							\
+	} while (0)
+
+#define FMN_COP2_RD_CASE_RW(rw, rd, sel, val)				\
+	case rd:							\
+		FMN_COP2_SEL_SWITCH_RW(rw, rd, sel, val);		\
+		break
+/*
+ * read/write a single arbitrary Credit Counter at (rd, sel)
+ * eg:
+ *	FMN_COP2_RD_SWITCH_RW(READ,  16, 2, val)
+ *	FMN_COP2_RD_SWITCH_RW(WRITE, 18, 0, val)
+ */
+#define FMN_COP2_RD_SWITCH_RW(rw, rd, sel, val)				\
+	do {								\
+		switch(rd) {						\
+			FMN_COP2_RD_CASE_RW(rw, 0,  sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 1,  sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 2,  sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 3,  sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 4,  sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 5,  sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 6,  sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 7,  sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 8,  sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 9,  sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 10, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 11, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 12, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 13, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 14, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 15, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 16, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 17, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 18, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 19, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 20, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 21, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 22, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 23, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 24, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 25, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 26, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 27, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 28, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 29, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 30, sel, val);		\
+			FMN_COP2_RD_CASE_RW(rw, 31, sel, val);		\
+			default:					\
+				panic("%s:%d: bad regno %d\n",		\
+					__func__, __LINE__, rd);	\
+		}							\
+	} while (0)
+
+
+static int
+fmn_stray_intr(void *v, rmixl_fmn_rxmsg_t *msg)
+{
+	/* nothing */
+	return 0;
+}
+
+typedef uint8_t fmn_queue_id_t;
+
 typedef struct fmn_station_info {
-	const char     *si_name;
-	const u_int	si_buckets_max;
-	const u_int	si_stid_first;
-	const u_int	si_stid_last;
-	const u_int	si_bucket_size_dflt;
-	const u_int	si_credits_min;
-	const u_int	si_regbase;
+	const char *			si_name;
+	uint16_t			si_qid_first;
+	uint16_t			si_qid_last;
+	u_int				si_buckets_max;
+	u_int				si_bucket_size_dflt;
+	u_int				si_credits_min;
+	u_int				si_regbase;
 } fmn_station_info_t;
 
 typedef struct fmn_intrhand {
-	int		(*ih_func)(void *, rmixl_fmn_rxmsg_t *);
-	void		*ih_arg;
-	struct evcnt	ih_count;
+	rmixl_fmn_intr_handler_t	ih_func;
+	void *				ih_arg;
 } fmn_intrhand_t;
 
 /*
- * per-core FMN structure
+ * Global FMN stuff
  */
-typedef struct fmn {
-	kmutex_t *			fmn_lock; 
-	u_int				fmn_core;
-	u_int				fmn_thread;
-	u_int				fmn_nstid;
-	const int *			fmn_stidtab;
+typedef struct fmn_info {
+	const fmn_queue_id_t *		fmn_qidtab;
 	const fmn_station_info_t *	fmn_stinfo;
-	void *				fmn_ih;
-	fmn_intrhand_t			fmn_intrhand[RMIXL_FMN_NSTID];
-} fmn_t;
+	percpu_t *			fmn_ev_percpu;
+	size_t				fmn_intr_vec;
+	uint32_t			fmn_nstid;
+	volatile uint32_t		fmn_coremask;
+	volatile uint32_t		fmn_nthread;
 
-static fmn_t fmn_store[1 << 10];	/* index by cpuid) *//* XXX assumes 1 node */
-#define NFMN	(sizeof(fmn_store) / sizeof(fmn_store[0]))
+	/*
+	 * There are no per-CPU handlers.
+	 */
+	volatile fmn_intrhand_t		fmn_intrhand[RMIXL_FMN_NSTID];
+} fmn_info_t;
+
+
+static fmn_info_t fmn_info = {
+	.fmn_intrhand = {
+		[0 ... RMIXL_FMN_NSTID-1] = {
+			.ih_func = fmn_stray_intr,
+			.ih_arg = &fmn_info,
+		},
+	},
+};
 
 
 #ifdef MIPS64_XLP
+static const struct xlp_stid_map {
+	pcitag_t map_pcitag;
+	uint16_t map_product_id;
+	uint8_t map_stid;
+} xlp_stid_map[] = {
+#define	MAP_ENTRY3(a,b,c) { \
+	.map_pcitag = RMIXLP_##a##_PCITAG, \
+	.map_product_id = PCI_PRODUCT_NETLOGIC_XLP_##b, \
+	.map_stid = RMIXLP_FMN_STID_##c }
+#define	MAP_ENTRY1(a)	MAP_ENTRY3(a, a, a)
+	MAP_ENTRY3(PCIPORT0, PCIROOT, PCIE0),
+	MAP_ENTRY3(PCIPORT1, PCIROOT, PCIE1),
+	MAP_ENTRY3(PCIPORT2, PCIROOT, PCIE2),
+	MAP_ENTRY3(PCIPORT3, PCIROOT, PCIE3),
+	MAP_ENTRY1(NAE),
+	MAP_ENTRY1(NAE),
+	MAP_ENTRY1(NAE),
+	MAP_ENTRY1(NAE),
+	MAP_ENTRY1(POE),
+	MAP_ENTRY1(FMN),
+	MAP_ENTRY1(DMA),
+	MAP_ENTRY1(SAE),
+	MAP_ENTRY1(PKE),
+	MAP_ENTRY1(CDE),
+	MAP_ENTRY1(RXE),
+	MAP_ENTRY1(SRIO),
+#undef MAP_ENTRY1
+#undef MAP_ENTRY3
+};
+
 /* use this table for XLPxxx */
-static const int station_xlp_xxx[] = {
-	[   0 ...   15]	= RMIXLP_FMN_STID_CORE0,
-	[  16 ...   31]	= RMIXLP_FMN_STID_CORE1,
-	[  32 ...   47]	= RMIXLP_FMN_STID_CORE2,
-	[  48 ...   63]	= RMIXLP_FMN_STID_CORE3,
-	[  64 ...   79]	= RMIXLP_FMN_STID_CORE4,
-	[  80 ...   95]	= RMIXLP_FMN_STID_CORE5,
-	[  96 ...  111]	= RMIXLP_FMN_STID_CORE6,
-	[ 112 ...  127]	= RMIXLP_FMN_STID_CORE7,
+static fmn_queue_id_t xlp_xxx_qidtab[1024] = {
+	/* There are 4 VC queues per thread and are added dynamicly */
 	[ 128 ...  255]	= RMIXLP_FMN_STID_POPQ,
-	[ 256 ...  257]	= RMIXLP_FMN_STID_PCIE0,
-	[ 258 ...  259]	= RMIXLP_FMN_STID_PCIE1,
-	[ 260 ...  261]	= RMIXLP_FMN_STID_PCIE2,
-	[ 262 ...  263]	= RMIXLP_FMN_STID_PCIE3,
-	[ 264 ...  271]	= RMIXLP_FMN_STID_DMA,
-	[ 272 ...  280]	= RMIXLP_FMN_STID_PKE,
-	[ 281 ...  296]	= RMIXLP_FMN_STID_SAE,
-	[ 297 ...  304]	= RMIXLP_FMN_STID_CDE,
-	[ 305 ...  383]	= RMIXLP_FMN_STID_RESERVED,
-	[ 384 ...  391]	= RMIXLP_FMN_STID_POE,
-	[ 392 ...  475]	= RMIXLP_FMN_STID_RESERVED,
-	[ 478 ...  999]	= RMIXLP_FMN_STID_NAE0,	/* egress (0) */
-	[1000 ... 1019]	= RMIXLP_FMN_STID_NAE1,
-	[1020 ... 1023]	= RMIXLP_FMN_STID_RESERVED,
+	/* I/O Push Queues start here and are determinted dynamicly */
 };
 
 /* use this table for XLPxxx */
-static const fmn_station_info_t station_info_xlp_xxx[RMIXLP_FMN_NSTID] = {
-	[RMIXLP_FMN_STID_CORE0]   = { "core0",	8,    0,   15,  32, 4, 0 },
-	[RMIXLP_FMN_STID_CORE1]   = { "core1",	8,   16,   31,  32, 4, 0 },
-	[RMIXLP_FMN_STID_CORE2]   = { "core2",	8,   32,   47,  32, 4, 0 },
-	[RMIXLP_FMN_STID_CORE3]   = { "core3",	8,   48,   63,  32, 4, 0 },
-	[RMIXLP_FMN_STID_CORE4]   = { "core4",	8,   64,   79,  32, 4, 0 },
-	[RMIXLP_FMN_STID_CORE5]   = { "core5",	8,   80,   95,  32, 4, 0 },
-	[RMIXLP_FMN_STID_CORE6]   = { "core6",	8,   96,  111,  32, 4, 0 },
-	[RMIXLP_FMN_STID_CORE7]   = { "core7",	8,  112,  127,  32, 4, 0 },
-	[RMIXLP_FMN_STID_CORE7]   = { "popq",	8,  128,  255,  32, 4, 0 },
-	[RMIXLP_FMN_STID_PCIE0]   = { "pcie0",	8,  256,  257,  32, 0, 0 },
-	[RMIXLP_FMN_STID_PCIE1]   = { "pcie1",	8,  258,  259,  32, 0, 0 },
-	[RMIXLP_FMN_STID_PCIE2]   = { "pcie2",	8,  260,  261,  32, 0, 0 },
-	[RMIXLP_FMN_STID_PCIE3]   = { "pcie3",	8,  262,  263,  32, 0, 0 },
-	[RMIXLP_FMN_STID_DMA]     = { "dma",    3,  264,  271,  32, 0, 0 },
-	[RMIXLP_FMN_STID_PKE]     = { "pke",	3,  272,  280,  32, 0, 0 },
-	[RMIXLP_FMN_STID_SAE]     = { "sae",	4,  281,  296,  64, 0, 0 },
-	[RMIXLP_FMN_STID_CDE]     = { "cde",	4,  297,  304, 128, 0, 0 },
-	[RMIXLP_FMN_STID_POE]     = { "poe",	2,  384,  391, 128, 0, 0 },
-	[RMIXLP_FMN_STID_NAE0]    = { "nae0",	2,  476,  999, 128, 0, 0 },
-	[RMIXLP_FMN_STID_NAE1]    = { "nae0",	2, 1000, 1019, 128, 0, 0 },
+static fmn_station_info_t xlp_xxx_stinfo[RMIXLP_FMN_NSTID] = {
+	[RMIXLP_FMN_STID_CPU]    = { "cpu" },
+	[RMIXLP_FMN_STID_POPQ]    = { "popq",	128,  255 },
+	[RMIXLP_FMN_STID_PCIE0]   = { "pcie0" },
+	[RMIXLP_FMN_STID_PCIE1]   = { "pcie1" },
+	[RMIXLP_FMN_STID_PCIE2]   = { "pcie2" },
+	[RMIXLP_FMN_STID_PCIE3]   = { "pcie3" },
+	[RMIXLP_FMN_STID_DMA]     = { "dma" },
+	[RMIXLP_FMN_STID_PKE]     = { "pke" },
+	[RMIXLP_FMN_STID_SAE]     = { "sae" },
+	[RMIXLP_FMN_STID_CDE]     = { "cde" },
+	[RMIXLP_FMN_STID_POE]     = { "poe" },
+	[RMIXLP_FMN_STID_NAE]     = { "nae" },
+	[RMIXLP_FMN_STID_NAE_FREEIN] = { "freein" },
+	[RMIXLP_FMN_STID_FMN]     = { "fmn" },
+	[RMIXLP_FMN_STID_RXE]     = { "rxe" },
+	[RMIXLP_FMN_STID_SRIO]    = { "srio" },
 };
 
+static void
+fmn_init_xlp_claim_qids(const fmn_station_info_t * const si, size_t stid)
+{
+	for (size_t qid = si->si_qid_first; qid <= si->si_qid_last; qid++) {
+		xlp_xxx_qidtab[qid++] = stid;
+	}
+}
 /*
  * link to TX station ID table for RMI XLP type chip
  */
 static void
-rmixl_fmn_init_core_xlp(fmn_t *fmnp)
+fmn_init_xlp(fmn_info_t *fmn)
 {
-	fmnp->fmn_nstid = RMIXLP_FMN_NSTID;
-	fmnp->fmn_stidtab = station_xlp_xxx;
-	fmnp->fmn_stinfo = station_info_xlp_xxx;
+	fmn->fmn_nstid = RMIXLP_FMN_NSTID;
+	fmn->fmn_qidtab = xlp_xxx_qidtab;
+	fmn->fmn_stinfo = xlp_xxx_stinfo;
+
+	for (size_t i = 0; i < __arraycount(xlp_stid_map); i++) {
+		const struct xlp_stid_map * const map = &xlp_stid_map[i];
+		fmn_station_info_t * const si = &xlp_xxx_stinfo[map->map_stid];
+		pcireg_t id = rmixlp_read_4(map->map_pcitag, PCI_ID_REG);
+		if (PCI_PRODUCT(id) != map->map_product_id) {
+			continue;
+		}
+
+		pcireg_t statinfo = rmixlp_read_4(map->map_pcitag,
+		    PCI_RMIXLP_STATID);
+		size_t qid_count = PCI_RMIXLP_STATID_COUNT(statinfo);
+		size_t qid_base = PCI_RMIXLP_STATID_BASE(statinfo);
+		if (qid_base < 256 && qid_count > 0) {
+			aprint_error("%s: pci device %#lx has "
+			    "invalid station information (%#x); ignored\n",
+			    __func__, map->map_pcitag, statinfo);
+			qid_count = 0;
+		}
+		if (qid_count == 0) {
+			si->si_qid_first = 1024;
+			si->si_qid_last = 1023;
+			continue;
+		}
+
+		si->si_qid_first = qid_base;
+		si->si_qid_last = qid_base + qid_count - 1;
+
+		fmn_init_xlp_claim_qids(si, map->map_stid);
+	}
+
+	/*
+	 * Initialize the NAE Free-In FIFO qids (used for supply buffers
+	 * for received packets).  There is one qid per interface.
+	 */
+	fmn_station_info_t * const si =
+		    &xlp_xxx_stinfo[RMIXLP_FMN_STID_NAE_FREEIN];
+	if (RMIXLP_8XX_P) {	
+		si->si_qid_first = 1000;
+		si->si_qid_last = 1019;
+	} else {
+		KASSERT(RMIXLP_3XX_P);
+		si->si_qid_first = 496;
+		si->si_qid_last = 504;
+	}
+	fmn_init_xlp_claim_qids(si, RMIXLP_FMN_STID_NAE_FREEIN);
+}
+
+static void
+fmn_init_thread_xlp(fmn_info_t *fmn)
+{
 }
 #endif /* MIPS64_XLP */
 
@@ -157,7 +369,7 @@ rmixl_fmn_init_core_xlp(fmn_t *fmnp)
  * see Table 12.1 in the XLS PRM
  */
 /* use this table for XLS6xx, XLS4xx */
-static const int station_xls_4xx[] = {
+static const fmn_queue_id_t xls_4xx_qidtab[] = {
 	[0 ... 7]	= RMIXLS_FMN_STID_CORE0,
 	[8 ... 15]	= RMIXLS_FMN_STID_CORE1,
 	[16 ... 23]	= RMIXLS_FMN_STID_CORE2,
@@ -175,21 +387,21 @@ static const int station_xls_4xx[] = {
 };
 
 /* use this table for XLS6xx, XLS4xx */
-static const fmn_station_info_t station_info_xls_4xx[RMIXLS_FMN_NSTID] = {
-	[RMIXLS_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
-	[RMIXLS_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
-	[RMIXLS_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
-	[RMIXLS_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
-	[RMIXLS_FMN_STID_GMAC_Q0] = { "gmac_q0",	3,  80,  87,  32, 0, RMIXL_IO_DEV_GMAC_0 },
-	[RMIXLS_FMN_STID_GMAC_Q1] = { "gmac_q1",	3,  96, 103,  32, 0, RMIXL_IO_DEV_GMAC_4 },
-	[RMIXLS_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_DMA },
-	[RMIXLS_FMN_STID_CDE]     = { "cde",	4, 108, 109, 128, 0, RMIXL_IO_DEV_CDE },
-	[RMIXLS_FMN_STID_PCIE]    = { "pcie",	8,  64,  71,  32, 0, RMIXL_IO_DEV_PCIE_BE },
-	[RMIXLS_FMN_STID_SAE]     = { "sae",	2, 120, 121, 128, 0, RMIXL_IO_DEV_SAE },
+static const fmn_station_info_t xls_4xx_stinfo[RMIXLS_FMN_NSTID] = {
+	[RMIXLS_FMN_STID_CORE0]   = { "core0",	  0,   7, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE1]   = { "core1",	  8,  15, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE2]   = { "core2",	 16,  23, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE3]   = { "core3",	 24,  31, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_PCIE]    = { "pcie",	 64,  71, 8,  32, 0, RMIXL_IO_DEV_PCIE_BE },
+	[RMIXLS_FMN_STID_GMAC_Q0] = { "gmac_q0", 80,  87, 3,  32, 0, RMIXL_IO_DEV_GMAC_0 },
+	[RMIXLS_FMN_STID_GMAC_Q1] = { "gmac_q1", 96, 103, 3,  32, 0, RMIXL_IO_DEV_GMAC_4 },
+	[RMIXLS_FMN_STID_DMA]     = { "dma",	104, 107, 4,  64, 0, RMIXL_IO_DEV_DMA },
+	[RMIXLS_FMN_STID_CDE]     = { "cde",	108, 109, 4, 128, 0, RMIXL_IO_DEV_CDE },
+	[RMIXLS_FMN_STID_SAE]     = { "sae",	120, 121, 2, 128, 0, RMIXL_IO_DEV_SAE },
 };
 
 /* use this table for XLS408Lite, XLS404Lite */
-static const int station_xls_4xx_lite[] = {
+static const fmn_queue_id_t xls_4xx_lite_qidtab[] = {
 	[0 ... 7]	= RMIXLS_FMN_STID_CORE0,
 	[8 ... 15]	= RMIXLS_FMN_STID_CORE1,
 	[16 ... 23]	= RMIXLS_FMN_STID_CORE2,
@@ -206,21 +418,21 @@ static const int station_xls_4xx_lite[] = {
 };
 
 /* use this table for XLS4xxLite */
-static const fmn_station_info_t station_info_xls_4xx_lite[RMIXLS_FMN_NSTID] = {
-	[RMIXLS_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
-	[RMIXLS_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
-	[RMIXLS_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
-	[RMIXLS_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
-	[RMIXLS_FMN_STID_GMAC_Q0] = { "gmac_q0",	3,  80,  87,  32, 0, RMIXL_IO_DEV_GMAC_0 },
-	[RMIXLS_FMN_STID_GMAC_Q1] = { "gmac_q1",	3,  96, 103,  32, 0, RMIXL_IO_DEV_GMAC_4 },
-	[RMIXLS_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_DMA },
-	[RMIXLS_FMN_STID_CDE]     = { "cde",	4, 108, 109, 128, 0, RMIXL_IO_DEV_CDE },
-	[RMIXLS_FMN_STID_PCIE]    = { "pcie",	4, 116, 119,  64, 0, RMIXL_IO_DEV_PCIE_BE },
-	[RMIXLS_FMN_STID_SAE]     = { "sae",	2, 120, 121, 128, 0, RMIXL_IO_DEV_SAE },
+static const fmn_station_info_t xls_4xx_lite_stinfo[RMIXLS_FMN_NSTID] = {
+	[RMIXLS_FMN_STID_CORE0]   = { "core0",	  0,   7, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE1]   = { "core1",	  8,  15, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE2]   = { "core2",	 16,  23, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE3]   = { "core3",	 24,  31, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_GMAC_Q0] = { "gmac_q0", 80,  87, 3,  32, 0, RMIXL_IO_DEV_GMAC_0 },
+	[RMIXLS_FMN_STID_GMAC_Q1] = { "gmac_q1", 96, 103, 3,  32, 0, RMIXL_IO_DEV_GMAC_4 },
+	[RMIXLS_FMN_STID_DMA]     = { "dma",	104, 107, 4,  64, 0, RMIXL_IO_DEV_DMA },
+	[RMIXLS_FMN_STID_CDE]     = { "cde",	108, 109, 4, 128, 0, RMIXL_IO_DEV_CDE },
+	[RMIXLS_FMN_STID_PCIE]    = { "pcie",	116, 119, 4,  64, 0, RMIXL_IO_DEV_PCIE_BE },
+	[RMIXLS_FMN_STID_SAE]     = { "sae",	120, 121, 2, 128, 0, RMIXL_IO_DEV_SAE },
 };
 
 /* use this table for XLS2xx */
-static const int station_xls_2xx[] = {
+static const fmn_queue_id_t xls_2xx_qidtab[] = {
 	[0 ... 7]	= RMIXLS_FMN_STID_CORE0,
 	[8 ... 15]	= RMIXLS_FMN_STID_CORE1,
 	[16 ... 23]	= RMIXLS_FMN_STID_CORE2,
@@ -235,19 +447,19 @@ static const int station_xls_2xx[] = {
 };
 
 /* use this table for XLS2xx */
-static const fmn_station_info_t station_info_xls_2xx[RMIXLS_FMN_NSTID] = {
-	[RMIXLS_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
-	[RMIXLS_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
-	[RMIXLS_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
-	[RMIXLS_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
-	[RMIXLS_FMN_STID_GMAC_Q0] = { "gmac_q0",	3,  96, 103,  32, 0, RMIXL_IO_DEV_GMAC_0 },
-	[RMIXLS_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_DMA },
-	[RMIXLS_FMN_STID_PCIE]    = { "pcie",	8,  64,  71,  32, 0, RMIXL_IO_DEV_PCIE_BE },
-	[RMIXLS_FMN_STID_SAE]     = { "sae",	2, 120, 121, 128, 0, RMIXL_IO_DEV_SAE },
+static const fmn_station_info_t xls_2xx_stinfo[RMIXLS_FMN_NSTID] = {
+	[RMIXLS_FMN_STID_CORE0]   = { "core0",	  0,   7, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE1]   = { "core1",	  8,  15, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE2]   = { "core2",	 16,  23, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE3]   = { "core3",	 24,  31, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_PCIE]    = { "pcie",	 64,  71, 8,  32, 0, RMIXL_IO_DEV_PCIE_BE },
+	[RMIXLS_FMN_STID_GMAC_Q0] = { "gmac_q0", 96, 103, 3,  32, 0, RMIXL_IO_DEV_GMAC_0 },
+	[RMIXLS_FMN_STID_DMA]     = { "dma",	104, 107, 4,  64, 0, RMIXL_IO_DEV_DMA },
+	[RMIXLS_FMN_STID_SAE]     = { "sae",	120, 121, 2, 128, 0, RMIXL_IO_DEV_SAE },
 };
 
 /* use this table for XLS1xx */
-static const int station_xls_1xx[] = {
+static const fmn_queue_id_t xls_1xx_qidtab[] = {
 	[0 ... 7]	= RMIXLS_FMN_STID_CORE0,
 	[8 ... 15]	= RMIXLS_FMN_STID_CORE1,
 	[16 ... 23]	= RMIXLS_FMN_STID_CORE2,
@@ -263,64 +475,61 @@ static const int station_xls_1xx[] = {
 };
 
 /* use this table for XLS1xx */
-static const fmn_station_info_t station_info_xls_1xx[RMIXLS_FMN_NSTID] = {
-	[RMIXLS_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
-	[RMIXLS_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
-	[RMIXLS_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
-	[RMIXLS_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
-	[RMIXLS_FMN_STID_GMAC_Q0] = { "gmac_q0",	3,  96, 101,  32, 0, RMIXL_IO_DEV_GMAC_0 },
-	[RMIXLS_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_PCIE_BE },
-	[RMIXLS_FMN_STID_PCIE]    = { "pcie",	4,  64,  67,  32, 0, RMIXL_IO_DEV_PCIE_BE },
-	[RMIXLS_FMN_STID_SAE]     = { "sae",	2, 120, 121, 128, 0, RMIXL_IO_DEV_SAE },
+static const fmn_station_info_t xls_1xx_stinfo[RMIXLS_FMN_NSTID] = {
+	[RMIXLS_FMN_STID_CORE0]   = { "core0",	  0,   7, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE1]   = { "core1",	  8,  15, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE2]   = { "core2",	 16,  23, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE3]   = { "core3",	 24,  31, 8,  32, 4, 0 },
+	[RMIXLS_FMN_STID_PCIE]    = { "pcie",	 64,  67, 4,  32, 0, RMIXL_IO_DEV_PCIE_BE },
+	[RMIXLS_FMN_STID_GMAC_Q0] = { "gmac_q0", 96, 101, 3,  32, 0, RMIXL_IO_DEV_GMAC_0 },
+	[RMIXLS_FMN_STID_DMA]     = { "dma",	104, 107, 4,  64, 0, RMIXL_IO_DEV_PCIE_BE },
+	[RMIXLS_FMN_STID_SAE]     = { "sae",	120, 121, 2, 128, 0, RMIXL_IO_DEV_SAE },
 };
+
+static const struct xls_stid_map {
+	uint8_t				map_impl;
+	const fmn_queue_id_t *		map_qidtab;
+	const fmn_station_info_t *	map_stinfo;
+} xls_stid_map[] = {
+	{ MIPS_XLS104, xls_1xx_qidtab, xls_1xx_stinfo },
+	{ MIPS_XLS108, xls_1xx_qidtab, xls_1xx_stinfo },
+	{ MIPS_XLS204, xls_2xx_qidtab, xls_2xx_stinfo },
+	{ MIPS_XLS208, xls_2xx_qidtab, xls_2xx_stinfo },
+	{ MIPS_XLS404, xls_4xx_qidtab, xls_4xx_stinfo },
+	{ MIPS_XLS408, xls_4xx_qidtab, xls_4xx_stinfo },
+	{ MIPS_XLS416, xls_4xx_qidtab, xls_4xx_stinfo },
+	{ MIPS_XLS608, xls_4xx_qidtab, xls_4xx_stinfo },
+	{ MIPS_XLS616, xls_4xx_qidtab, xls_4xx_stinfo },
+	{ MIPS_XLS404LITE, xls_4xx_lite_qidtab, xls_4xx_lite_stinfo },
+	{ MIPS_XLS408LITE, xls_4xx_lite_qidtab, xls_4xx_lite_stinfo },
+};
+
 
 /*
  * link to TX station ID table for RMI XLS type chip
  */
 static void
-rmixl_fmn_init_core_xls(fmn_t *fmnp)
+fmn_init_xls(fmn_info_t *fmn)
 {
-	const fmn_station_info_t *info = NULL;
-	const int *tab = NULL;
+	const uint8_t impl = MIPS_PRID_IMPL(mips_options.mips_cpu_id);
 
-	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
-	case MIPS_XLS104:
-	case MIPS_XLS108:
-		tab = station_xls_1xx;
-		info = station_info_xls_1xx;
-		break;
-	case MIPS_XLS204:
-	case MIPS_XLS208:
-		tab = station_xls_2xx;
-		info = station_info_xls_2xx;
-		break;
-	case MIPS_XLS404:
-	case MIPS_XLS408:
-	case MIPS_XLS416:
-	case MIPS_XLS608:
-	case MIPS_XLS616:
-		tab = station_xls_4xx;
-		info = station_info_xls_4xx;
-		break;
-	case MIPS_XLS404LITE:
-	case MIPS_XLS408LITE:
-		tab = station_xls_4xx_lite;
-		info = station_info_xls_4xx_lite;
-		break;
-	default:
-		panic("%s: unknown PRID IMPL %#x\n", __func__,
-			MIPS_PRID_IMPL(mips_options.mips_cpu_id));
+	for (size_t i = 0; i < __arraycount(xls_stid_map); i++) {
+		const struct xls_stid_map * const map = &xls_stid_map[i];
+		if (map->map_impl == impl) {
+			fmn->fmn_nstid = RMIXLS_FMN_NSTID;
+			fmn->fmn_qidtab = map->map_qidtab;
+			fmn->fmn_stinfo = map->map_stinfo;
+			return;
+		}
 	}
 
-	fmnp->fmn_nstid = RMIXLS_FMN_NSTID;
-	fmnp->fmn_stidtab = tab;
-	fmnp->fmn_stinfo = info;
+	panic("%s: unknown PRID IMPL %#x\n", __func__, impl);
 }
 #endif /* MIPS64_XLS */
 
 #ifdef MIPS64_XLR
 /* use this table for XLRxxx */
-static const int station_xlr_xxx[] = {
+static const fmn_queue_id_t xlr_xxx_qidtab[] = {
 	[0 ... 7]	= RMIXLR_FMN_STID_CORE0,
 	[8 ... 15]	= RMIXLR_FMN_STID_CORE1,
 	[16 ... 23]	= RMIXLR_FMN_STID_CORE2,
@@ -346,267 +555,55 @@ static const int station_xlr_xxx[] = {
  * - the XGMII/SPI4 stations si_regbase are 'special'
  * - the RGMII station si_regbase is 'special'
  */ 
-static const fmn_station_info_t station_info_xlr_xxx[RMIXLR_FMN_NSTID] = {
-	[RMIXLR_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
-	[RMIXLR_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
-	[RMIXLR_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
-	[RMIXLR_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
-	[RMIXLR_FMN_STID_CORE4]   = { "core4",	8,  32,  39,  32, 4, 0 },
-	[RMIXLR_FMN_STID_CORE5]   = { "core5",	8,  40,  47,  32, 4, 0 },
-	[RMIXLR_FMN_STID_CORE6]   = { "core6",	8,  48,  55,  32, 4, 0 },
-	[RMIXLR_FMN_STID_CORE7]   = { "core7",	8,  56,  63,  32, 4, 0 },
-	[RMIXLR_FMN_STID_TXRX_0]  = { "txrx0",	1,  64,  79,  16, 0, RMIXL_IO_DEV_XGMAC_A },
-	[RMIXLR_FMN_STID_TXRX_1]  = { "txrx1",	1,  80,  95,  16, 0, RMIXL_IO_DEV_XGMAC_B },
-	[RMIXLR_FMN_STID_RGMII]   = { "rgmii",	8,  96, 103,  32, 0, RMIXL_IO_DEV_GMAC_A },
-	[RMIXLR_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_DMA },
-	[RMIXLR_FMN_STID_FREE_0]  = { "free0",	2, 112, 113, 128, 0, RMIXL_IO_DEV_XGMAC_A },
-	[RMIXLR_FMN_STID_FREE_1]  = { "free1",	2, 114, 115, 128, 0, RMIXL_IO_DEV_XGMAC_B },
-	[RMIXLR_FMN_STID_SAE]     = { "sae",	5, 120, 124,  32, 0, RMIXL_IO_DEV_SAE },
+static const fmn_station_info_t xlr_xxx_stinfo[RMIXLR_FMN_NSTID] = {
+	[RMIXLR_FMN_STID_CORE0]   = { "core0",	  0,   7, 8,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE1]   = { "core1",	  8,  15, 8,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE2]   = { "core2",	 16,  23, 8,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE3]   = { "core3",	 24,  31, 8,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE4]   = { "core4",	 32,  39, 8,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE5]   = { "core5",	 40,  47, 8,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE6]   = { "core6",	 48,  55, 8,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE7]   = { "core7",	 56,  63, 8,  32, 4, 0 },
+	[RMIXLR_FMN_STID_TXRX_0]  = { "txrx0",	 64,  79, 1,  16, 0, RMIXL_IO_DEV_XGMAC_A },
+	[RMIXLR_FMN_STID_TXRX_1]  = { "txrx1",	 80,  95, 1,  16, 0, RMIXL_IO_DEV_XGMAC_B },
+	[RMIXLR_FMN_STID_RGMII]   = { "rgmii",	 96, 103, 8,  32, 0, RMIXL_IO_DEV_GMAC_A },
+	[RMIXLR_FMN_STID_DMA]     = { "dma",	104, 107, 4,  64, 0, RMIXL_IO_DEV_DMA },
+	[RMIXLR_FMN_STID_FREE_0]  = { "free0",	112, 113, 2, 128, 0, RMIXL_IO_DEV_XGMAC_A },
+	[RMIXLR_FMN_STID_FREE_1]  = { "free1",	114, 115, 2, 128, 0, RMIXL_IO_DEV_XGMAC_B },
+	[RMIXLR_FMN_STID_SAE]     = { "sae",	120, 124, 5,  32, 0, RMIXL_IO_DEV_SAE },
 };
 
 /*
  * link to TX station ID table for RMI XLR type chip
  */
 static void
-rmixl_fmn_init_core_xlr(fmn_t *fmnp)
+fmn_init_xlr(fmn_info_t *fmn)
 {
-	fmnp->fmn_nstid = RMIXLR_FMN_NSTID;
-	fmnp->fmn_stidtab = station_xlr_xxx;
-	fmnp->fmn_stinfo = station_info_xlr_xxx;
+	fmn->fmn_nstid = RMIXLR_FMN_NSTID;
+	fmn->fmn_qidtab = xlr_xxx_qidtab;
+	fmn->fmn_stinfo = xlr_xxx_stinfo;
 }
 #endif /* MIPS64_XLR */
 
-static fmn_t *
-fmn_lookup(cpuid_t cpuid)
-{
-	KASSERT(cpuid < (cpuid_t)NFMN);
-	return &fmn_store[cpuid];
-}
-
-static void	rmixl_fmn_config_noncore(fmn_t *);
-static void	rmixl_fmn_config_core(fmn_t *);
-#ifdef NOTYET
-static int	rmixl_fmn_intr_dispatch(void *);
-#endif	/* NOTYET */
-static int	rmixl_fmn_msg_recv_subr(u_int, rmixl_fmn_rxmsg_t *);
-
-#ifdef FMN_DEBUG
-void	rmixl_fmn_cp2_dump(void);
-void	rmixl_fmn_cc_dump(void);
-#endif
-
+#if (MIPS64_XLR + MIPS64_XLS) > 0
 /*
- * macros used because mtc2, mfc2, dmtc2, dmfc2 instructions
- * must use literal values for rd and sel operands
- * so let the compiler sort it out
- */
-
-/*
- * write v to all 8 SELs for given RD
- */
-#define FMN_CP2_4SEL_READ(rd, sel, vp)					\
-	do {								\
-		uint32_t *rp = vp;					\
-		RMIXL_MFC2(rd, sel,   rp[0]);				\
-		RMIXL_MFC2(rd, sel+1, rp[1]);				\
-		RMIXL_MFC2(rd, sel+2, rp[2]);				\
-		RMIXL_MFC2(rd, sel+3, rp[3]);				\
-	} while (0)
-
-/*
- * write v to all 8 SELs for given RD
- */
-#define FMN_CP2_4SEL_WRITE(rd, sel, v)					\
-	do {								\
-		RMIXL_MTC2(rd, sel,   v);				\
-		RMIXL_MTC2(rd, sel+1, v);				\
-		RMIXL_MTC2(rd, sel+2, v);				\
-		RMIXL_MTC2(rd, sel+3, v);				\
-	} while (0)
-
-#define FMN_CP2_8SEL_WRITE(rd, v)					\
-	do {								\
-		RMIXL_MTC2(rd, 0, v);					\
-		RMIXL_MTC2(rd, 1, v);					\
-		RMIXL_MTC2(rd, 2, v);					\
-		RMIXL_MTC2(rd, 3, v);					\
-		RMIXL_MTC2(rd, 4, v);					\
-		RMIXL_MTC2(rd, 5, v);					\
-		RMIXL_MTC2(rd, 6, v);					\
-		RMIXL_MTC2(rd, 7, v);					\
-	} while (0)
-
-
-#define FMN_CP2_SEL_CASE_READ(rd, sel, v)				\
-	case sel:							\
-		RMIXL_MFC2(rd, sel, v);					\
-		break
-#define FMN_CP2_SEL_CASE_WRITE(rd, sel, v)				\
-	case sel:							\
-		RMIXL_MTC2(rd, sel, v);					\
-		break
-/*
- * read/write a single arbitrary sel for the given rd
- */
-#define FMN_CP2_SEL_SWITCH_RW(rw, rd, sel, val)				\
-	do {								\
-		switch (sel) {						\
-			FMN_CP2_SEL_CASE_ ## rw(rd, 0, val);		\
-			FMN_CP2_SEL_CASE_ ## rw(rd, 1, val);		\
-			FMN_CP2_SEL_CASE_ ## rw(rd, 2, val);		\
-			FMN_CP2_SEL_CASE_ ## rw(rd, 3, val);		\
-			FMN_CP2_SEL_CASE_ ## rw(rd, 4, val);		\
-			FMN_CP2_SEL_CASE_ ## rw(rd, 5, val);		\
-			FMN_CP2_SEL_CASE_ ## rw(rd, 6, val);		\
-			FMN_CP2_SEL_CASE_ ## rw(rd, 7, val);		\
-			default:					\
-				panic("%s:%d: bad sel %d\n",		\
-					__func__, __LINE__, sel);	\
-		}							\
-	} while (0)
-
-#define FMN_CP2_RD_CASE_RW(rw, rd, sel, val)				\
-	case rd:							\
-		FMN_CP2_SEL_SWITCH_RW(rw, rd, sel, val);		\
-		break
-/*
- * read/write a single arbitrary Credit Counter at (rd, sel)
- * eg:
- *	FMN_CP2_RD_SWITCH_RW(READ,  16, 2, val)
- *	FMN_CP2_RD_SWITCH_RW(WRITE, 18, 0, val)
- */
-#define FMN_CP2_RD_SWITCH_RW(rw, rd, sel, val)				\
-	do {								\
-		switch(rd) {						\
-			FMN_CP2_RD_CASE_RW(rw, 0,  sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 1,  sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 2,  sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 3,  sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 4,  sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 5,  sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 6,  sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 7,  sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 8,  sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 9,  sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 10, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 11, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 12, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 13, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 14, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 15, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 16, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 17, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 18, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 19, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 20, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 21, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 22, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 23, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 24, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 25, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 26, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 27, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 28, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 29, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 30, sel, val);		\
-			FMN_CP2_RD_CASE_RW(rw, 31, sel, val);		\
-			default:					\
-				panic("%s:%d: bad regno %d\n",		\
-					__func__, __LINE__, rd);	\
-		}							\
-	} while (0)
-
-
-void
-rmixl_fmn_init(void)
-{
-	int cpu;
-	fmn_t *fmnp;
-	static bool once=false;
-
-	KASSERTMSG((CPU_IS_PRIMARY(curcpu())), ("ci=%p, index=%d\n",
-		curcpu(), cpu_index(curcpu())));
-	fmnp = fmn_lookup(curcpu()->ci_cpuid);
-
-	if (once == true)
-		panic("%s: call only once!", __func__);
-	once = true;
-
-	for (cpu=0; cpu < NFMN; cpu++) {
-		fmnp[cpu].fmn_core = RMIXL_CPU_CORE(cpu);
-		fmnp[cpu].fmn_thread = RMIXL_CPU_THREAD(cpu);
-	}
-
-	rmixl_fmn_init_core();		/* for initial boot cpu (#0) */
-	rmixl_fmn_config_noncore(fmnp);	/* boot cpu initializes noncore */
-}
-
-void
-rmixl_fmn_init_core(void)
-{
-	fmn_t *fmnp;
-	kmutex_t *lk;
-
-	fmnp = fmn_lookup(curcpu()->ci_cpuid);
-	KASSERT(fmnp != NULL);
-	KASSERT(fmnp->fmn_core == RMIXL_CPU_CORE(curcpu()->ci_cpuid));
-	KASSERT(fmnp->fmn_thread == RMIXL_CPU_THREAD(curcpu()->ci_cpuid));
-
-	lk = mutex_obj_alloc(MUTEX_DEFAULT, RMIXL_FMN_INTR_IPL);
-	if (lk == NULL)
-		panic("%s: mutex_obj_alloc failed", __func__);
-	fmnp->fmn_lock = lk;
-
-	mutex_enter(fmnp->fmn_lock);
-
-	/*
-	 * do chip-dependent per-core FMN initialization
-	 */
-	switch(cpu_rmixl_chip_type(mips_options.mips_cpu)) {
-#ifdef MIPS64_XLR
-	case CIDFL_RMI_TYPE_XLR:
-		rmixl_fmn_init_core_xlr(fmnp);
-		break;
-#endif
-#ifdef MIPS64_XLS
-	case CIDFL_RMI_TYPE_XLS:
-		rmixl_fmn_init_core_xls(fmnp);
-		break;
-#endif
-#ifdef MIPS64_XLP
-	case CIDFL_RMI_TYPE_XLP:
-		rmixl_fmn_init_core_xlp(fmnp);
-		break;
-#endif
-	default:
-		panic("%s: RMI chip type %#x unknown", __func__,
-			cpu_rmixl_chip_type(mips_options.mips_cpu));
-	}
-
-	/*
-	 * thread #0 for each core owns 'global' CP2 regs
-	 */
-	if (fmnp->fmn_thread == 0)
-		rmixl_fmn_config_core(fmnp);
-
-	mutex_exit(fmnp->fmn_lock);
-}
-
-/*
- * rmixl_fmn_config_noncore
+ * fmn_init_noncore_xlrxls
  *
  *	initialize bucket sizes and (minimum) credits for non-core stations
  *	to ZERO.  configured through memory write operations instead of CP2
  */
 static void
-rmixl_fmn_config_noncore(fmn_t *fmnp)
+fmn_init_noncore_xlrxls(fmn_info_t *fmn)
 {
-	for (u_int sid=0; sid < fmnp->fmn_nstid; sid++) {
-		u_int regoff = fmnp->fmn_stinfo[sid].si_regbase;
+	for (const fmn_station_info_t *si = fmn->fmn_stinfo;
+	     si < &fmn->fmn_stinfo[fmn->fmn_nstid];
+	     si++) {
+		u_int regoff = si->si_regbase;
 		if (regoff != 0) {
-			u_int buckets_max = fmnp->fmn_stinfo[sid].si_buckets_max;
 			regoff += RMIXL_FMN_BS_FIRST;
-			for (u_int bucket=0; bucket < buckets_max; bucket++) {
+			for (size_t bucket=0;
+			     bucket < si->si_buckets_max;
+			     bucket++) {
 				RMIXL_IOREG_WRITE(regoff, 0);
 				regoff += sizeof(uint32_t);
 			}
@@ -615,172 +612,277 @@ rmixl_fmn_config_noncore(fmn_t *fmnp)
 }
 
 /*
- * rmixl_fmn_config_core
+ * fmn_init_thread_xlrxls
  *
- *	- assumes fmn_mutex is owned
  *	- configure FMN 
  *	- initialize bucket sizes and (minimum) credits for a core
  */
 static void
-rmixl_fmn_config_core(fmn_t *fmnp)
+fmn_init_thread_xlrxls(fmn_info_t *fmn)
 {
-	const fmn_station_info_t *info = fmnp->fmn_stinfo;
+	const fmn_station_info_t *si = fmn->fmn_stinfo;
 	uint32_t sts1;
 	uint32_t cfg;
-	uint32_t cp0_status;
 
-	KASSERT(mutex_owned(fmnp->fmn_lock) != 0);
-	KASSERT(fmnp->fmn_thread == 0);
-	cp0_status = rmixl_cp2_enable();
+	/*
+	 * Let's see if we've initialized this core before.
+	 */
+	const uint32_t new = __BIT(RMIXL_CPU_CORE(curcpu()->ci_cpuid));
+	for (;;) {
+		const uint32_t old = fmn->fmn_coremask;
+		if (old & new) {
+			fmn_init_noncore_xlrxls(fmn);
+			return;
+		}
+		if (old == atomic_cas_32(&fmn->fmn_coremask, old, old | new))
+			break;
+	}
+
+	const uint32_t cp0_status = rmixl_cp2_enable();
 
 	/* check/clear any pre-existing status1 error(s) */
-	RMIXL_MFC2(RMIXL_COP_2_MSG_STS, 1, sts1);
+	sts1 = mips_mfc2(RMIXL_COP_2_MSG_STS, 1);
 	if ((sts1 & RMIXL_MSG_STS1_ERRS) != 0)
-		RMIXL_MTC2(RMIXL_COP_2_MSG_STS, 1, sts1);
+		mips_mtc2(RMIXL_COP_2_MSG_STS, 1, sts1);
 
 	/* set up MsgConfig reg */
-	cfg = ((1 << RMIXL_MSG_CFG0_WMSHIFT)			/* watermark */
-	    |  (RMIXL_INTRVEC_FMN << RMIXL_MSG_CFG0_IV_SHIFT)	/* irq */
-	    |  (1 << RMIXL_MSG_CFG0_ITM_SHIFT)			/* thread mask */
-	    |   RMIXL_MSG_CFG0_WIE				/* watermark intr enb */
-	    |   RMIXL_MSG_CFG0_EIE);				/* rx not empty intr enb */
-	RMIXL_DMTC2(RMIXL_COP_2_MSG_CFG, 0, cfg);
+	cfg = __SHIFTIN(1, RMIXL_MSG_CFG0_WM)		/* watermark */
+	    |  __SHIFTIN(fmn->fmn_intr_vec, RMIXL_MSG_CFG0_IV)
+							/* irq */
+	    |  __SHIFTIN(1, RMIXL_MSG_CFG0_ITM)		/* thread mask */
+	    |   RMIXL_MSG_CFG0_WIE			/* watermark intr enb */
+	    |   RMIXL_MSG_CFG0_EIE;			/* rx not empty intr enb */
+	mips_dmtc2(RMIXL_COP_2_MSG_CFG, 0, cfg);
 
 	/* disable trace mode, credit overrun intr, messaging errors intr */
-	RMIXL_DMTC2(RMIXL_COP_2_MSG_CFG, 0, 0);
+	mips_dmtc2(RMIXL_COP_2_MSG_CFG, 0, 0);
 
 	/* XXX using 4 buckets per core */
-	KASSERT(4 <= info->si_buckets_max);
+	KASSERT(4 <= si->si_buckets_max);
 
 	/*
 	 * initialize default sizes for core buckets
 	 * zero sizes for unused buckets
 	 */
-	KASSERT(info->si_buckets_max == 8);
-	uint32_t sz = info->si_bucket_size_dflt;
+	KASSERT(si->si_buckets_max == 8);
+	uint32_t sz = si->si_bucket_size_dflt;
 	KASSERT((sz & ~RMIXL_MSG_BSZ_SIZE) == 0);
-	RMIXL_MTC2(RMIXL_COP_2_MSG_BSZ, 0, sz);
-	RMIXL_MTC2(RMIXL_COP_2_MSG_BSZ, 1, sz);
-	RMIXL_MTC2(RMIXL_COP_2_MSG_BSZ, 2, sz);
-	RMIXL_MTC2(RMIXL_COP_2_MSG_BSZ, 3, sz);
-	RMIXL_MTC2(RMIXL_COP_2_MSG_BSZ, 4, 0);
-	RMIXL_MTC2(RMIXL_COP_2_MSG_BSZ, 5, 0);
-	RMIXL_MTC2(RMIXL_COP_2_MSG_BSZ, 6, 0);
-	RMIXL_MTC2(RMIXL_COP_2_MSG_BSZ, 7, 0);
+	mips_mtc2(RMIXL_COP_2_MSG_BSZ, 0, sz);
+	mips_mtc2(RMIXL_COP_2_MSG_BSZ, 1, sz);
+	mips_mtc2(RMIXL_COP_2_MSG_BSZ, 2, sz);
+	mips_mtc2(RMIXL_COP_2_MSG_BSZ, 3, sz);
+	mips_mtc2(RMIXL_COP_2_MSG_BSZ, 4, 0);
+	mips_mtc2(RMIXL_COP_2_MSG_BSZ, 5, 0);
+	mips_mtc2(RMIXL_COP_2_MSG_BSZ, 6, 0);
+	mips_mtc2(RMIXL_COP_2_MSG_BSZ, 7, 0);
 
 	/*
 	 * configure minimum credits for each core, 4 buckets
 	 * zero all unused credit counters for this core
 	 */
-	uint32_t cr = info->si_credits_min;
+	uint32_t cr = si->si_credits_min;
 
-	FMN_CP2_4SEL_WRITE(RMIXL_COP_2_CREDITS,   0, cr);
-	FMN_CP2_4SEL_WRITE(RMIXL_COP_2_CREDITS,   4,  0);
-	FMN_CP2_4SEL_WRITE(RMIXL_COP_2_CREDITS+1, 0, cr);
-	FMN_CP2_4SEL_WRITE(RMIXL_COP_2_CREDITS+1, 4,  0);
-	FMN_CP2_4SEL_WRITE(RMIXL_COP_2_CREDITS+2, 0, cr);
-	FMN_CP2_4SEL_WRITE(RMIXL_COP_2_CREDITS+2, 4,  0);
-	FMN_CP2_4SEL_WRITE(RMIXL_COP_2_CREDITS+3, 0, cr);
-	FMN_CP2_4SEL_WRITE(RMIXL_COP_2_CREDITS+3, 4,  0);
+	FMN_COP2_4SEL_WRITE(RMIXL_COP_2_CREDITS,   0, cr);
+	FMN_COP2_4SEL_WRITE(RMIXL_COP_2_CREDITS,   4,  0);
+	FMN_COP2_4SEL_WRITE(RMIXL_COP_2_CREDITS+1, 0, cr);
+	FMN_COP2_4SEL_WRITE(RMIXL_COP_2_CREDITS+1, 4,  0);
+	FMN_COP2_4SEL_WRITE(RMIXL_COP_2_CREDITS+2, 0, cr);
+	FMN_COP2_4SEL_WRITE(RMIXL_COP_2_CREDITS+2, 4,  0);
+	FMN_COP2_4SEL_WRITE(RMIXL_COP_2_CREDITS+3, 0, cr);
+	FMN_COP2_4SEL_WRITE(RMIXL_COP_2_CREDITS+3, 4,  0);
 
-	FMN_CP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+4,     0);
-	FMN_CP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+5,     0);
-	FMN_CP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+6,     0);
-	FMN_CP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+7,     0);
-	FMN_CP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+8,     0);
-	FMN_CP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+9,     0);
-	FMN_CP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+10,    0);
-	FMN_CP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+11,    0);
-	FMN_CP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+12,    0);
-	FMN_CP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+13,    0);
-	FMN_CP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+14,    0);
-	FMN_CP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+15,    0); 
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+4,     0);
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+5,     0);
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+6,     0);
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+7,     0);
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+8,     0);
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+9,     0);
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+10,    0);
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+11,    0);
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+12,    0);
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+13,    0);
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+14,    0);
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+15,    0); 
 
-	RMIXL_MFC2(RMIXL_COP_2_MSG_STS, 1, sts1);
+	sts1 = mips_mfc2(RMIXL_COP_2_MSG_STS, 1);
 	KASSERT((sts1 & RMIXL_MSG_STS1_ERRS) == 0);
 
 	rmixl_cp2_restore(cp0_status);
 }
+#endif /* (MIPS64_XLR + MIPS64_XLS) > 0 */
 
-void
-rmixl_fmn_init_cpu_intr(void)
+static inline struct evcnt *
+fmn_ev_getref(void)
 {
-	fmn_t *fmnp;
+	struct evcnt * const ev = percpu_getref(fmn_info.fmn_ev_percpu);
+	KASSERT(ev != NULL);
 
-	fmnp = fmn_lookup(curcpu()->ci_cpuid);
-	mutex_enter(fmnp->fmn_lock);
+	return ev;
+}
 
-	for (int i=0; i < fmnp->fmn_nstid; i++)
-		evcnt_attach_dynamic(&fmnp->fmn_intrhand[i].ih_count,
-			EVCNT_TYPE_INTR, NULL, "rmixl_fmn", fmnp->fmn_stinfo[i].si_name);
+static inline void
+fmn_ev_putref(struct evcnt *ev)
+{
+	percpu_putref(fmn_info.fmn_ev_percpu);
+}
 
-#ifdef NOTYET
-	/*
-	 * establish dispatcher for FMN interrupt
-	 */
-	extern kmutex_t rmixl_intr_lock;
-	void *ih;
 
-	mutex_enter(&rmixl_intr_lock);
-	ih = rmixl_vec_establish(RMIXL_INTRVEC_FMN, -1, RMIXL_FMN_INTR_IPL,
-		rmixl_fmn_intr_dispatch, fmnp, "fmn");
-	if (ih == NULL)
-		panic("%s: rmixl_vec_establish failed", __func__);
-	mutex_exit(&rmixl_intr_lock);
-	fmnp->fmn_ih = ih;
+#if (MIPS64_XLP) > 0
+static void	fmn_init_thread_xlp(fmn_info_t *);
+#endif
+static int	fmn_intr_dispatch(void *);
+
+#ifdef FMN_DEBUG
+void	rmixl_fmn_cp2_dump(void);
+void	rmixl_fmn_cc_dump(void);
 #endif
 
-	mutex_exit(fmnp->fmn_lock);
+/*
+ * This is called from cpu_configure before autoconf starts.
+ */
+void
+rmixl_fmn_init(void)
+{
+	fmn_info_t * const fmn = &fmn_info; 
+
+	/*
+	 * do chip-dependent FMN initialization
+	 */
+	switch(cpu_rmixl_chip_type(mips_options.mips_cpu)) {
+#ifdef MIPS64_XLR
+	case CIDFL_RMI_TYPE_XLR:
+		fmn_init_xlr(fmn);
+		break;
+#endif
+#ifdef MIPS64_XLS
+	case CIDFL_RMI_TYPE_XLS:
+		fmn_init_xls(fmn);
+		break;
+#endif
+#ifdef MIPS64_XLP
+	case CIDFL_RMI_TYPE_XLP:
+		fmn_init_xlp(fmn);
+		break;
+#endif
+	default:
+		panic("%s: RMI chip type %#x unknown", __func__,
+			cpu_rmixl_chip_type(mips_options.mips_cpu));
+	}
+
+	fmn->fmn_ev_percpu = percpu_alloc(fmn->fmn_nstid*sizeof(struct evcnt));
+	KASSERT(fmn->fmn_ev_percpu != NULL);
+}
+
+/*
+ * This must be done in the context of the thread itself.
+ */
+void
+rmixl_fmn_init_thread(void)
+{
+	fmn_info_t * const fmn = &fmn_info;
+	struct cpu_info * const ci = curcpu();
+	struct rmixl_cpu_softc * const sc = (void *)ci->ci_softc;
+
+	KASSERT(sc->sc_dev != NULL);
+
+	const char * const xname = device_xname(sc->sc_dev);
+	KASSERT(xname != NULL);
+
+	struct evcnt * const ev = fmn_ev_getref();
+	KASSERT(ev != NULL);
+
+	KASSERT(fmn->fmn_stinfo[0].si_name == NULL);
+	for (size_t i = 1; i < fmn_info.fmn_nstid; i++) {
+		KASSERT(fmn->fmn_stinfo[i].si_name != NULL);
+#if 0
+		evcnt_attach_dynamic(&ev[i], EVCNT_TYPE_INTR, NULL,
+		    xname, fmn->fmn_stinfo[i].si_name);
+#endif
+	}
+
+	fmn_ev_putref(ev);
+
+	if (CPU_IS_PRIMARY(ci)) {
+		KASSERT(rmixl_intr_lock != NULL);
+		/*
+		 * establish dispatcher for FMN interrupt
+		 */
+		mutex_enter(rmixl_intr_lock);
+		fmn->fmn_intr_vec = rmixl_intr_get_vec(IPL_VM);
+		void * const ih = rmixl_vec_establish(fmn->fmn_intr_vec, NULL,
+		    IPL_VM, fmn_intr_dispatch, NULL, true);
+		if (ih == NULL)
+			panic("%s: rmixl_vec_establish failed", __func__);
+		mutex_exit(rmixl_intr_lock);
+	}
+	/*
+	 * do chip-dependent per-core FMN initialization
+	 */
+	switch(cpu_rmixl_chip_type(mips_options.mips_cpu)) {
+#ifdef MIPS64_XLR
+	case CIDFL_RMI_TYPE_XLR:
+		fmn_init_thread_xlrxls(fmn);
+		break;
+#endif
+#ifdef MIPS64_XLS
+	case CIDFL_RMI_TYPE_XLS:
+		fmn_init_thread_xlrxls(fmn);
+		break;
+#endif
+#ifdef MIPS64_XLP
+	case CIDFL_RMI_TYPE_XLP:
+		fmn_init_thread_xlp(fmn);
+		break;
+#endif
+	default:
+		panic("%s: RMI chip type %#x unknown", __func__,
+			cpu_rmixl_chip_type(mips_options.mips_cpu));
+	}
 }
 
 void *
-rmixl_fmn_intr_establish(int txstid, int (*func)(void *, rmixl_fmn_rxmsg_t *), void *arg)
+rmixl_fmn_intr_establish(size_t txstid, rmixl_fmn_intr_handler_t func,
+	void *arg)
 {
-	fmn_t *fmnp;
-	fmn_intrhand_t *ih;
+	fmn_info_t * const fmn = &fmn_info;
+	volatile fmn_intrhand_t *ih = &fmn->fmn_intrhand[txstid];
 
-	fmnp = fmn_lookup(curcpu()->ci_cpuid);
-
-	mutex_enter(fmnp->fmn_lock);
-
-	ih = &fmnp->fmn_intrhand[txstid];
-
-	if (ih->ih_func != NULL) {
+	if (atomic_cas_ptr(&ih->ih_arg, fmn, arg) == fmn) {
+		/*
+		 * Now that the argument is updated, we can change func
+		 */
+		membar_producer();
+		(void) atomic_swap_ptr(&ih->ih_func, func);
+	} else {
 #ifdef DEBUG
-		panic("%s: intrhand[%d] busy", __func__, txstid);
+		panic("%s: intrhand[%zu] busy", __func__, txstid);
 #endif
 		ih = NULL;
-	}  else {
-		ih->ih_func = func;
-		ih->ih_arg = arg;
 	}
 
-	mutex_exit(fmnp->fmn_lock);
-
-	return ih;
+	return __UNVOLATILE(ih);
 }
 
 void
 rmixl_fmn_intr_disestablish(void *cookie)
 {
-	fmn_t *fmnp;
-	fmn_intrhand_t *ih = cookie;
+	fmn_info_t * const fmn = &fmn_info;
+	volatile fmn_intrhand_t * const ih = cookie;
+	rmixl_fmn_intr_handler_t func = ih->ih_func;
 
-	fmnp = fmn_lookup(curcpu()->ci_cpuid);
-	mutex_enter(fmnp->fmn_lock);
-
-	if (ih->ih_func != NULL) {
-		ih->ih_func = NULL;
-		ih->ih_arg = NULL;
-	}
+	if (atomic_cas_ptr(&ih->ih_func, func, fmn_stray_intr) == func) {
+		/*
+		 * Now that the old interrupt handler is no longer being
+		 * called, we can swap out the argument.
+		 */
+		membar_producer();
+		(void) atomic_swap_ptr(&ih->ih_arg, fmn);
 #ifdef DEBUG
-	else {
-		panic("%s: intrhand[%ld] not in use",
-			__func__, ih - &fmnp->fmn_intrhand[0]);
-	}
+	} else {
+		panic("%s: intrhand[%zd] not in use",
+		    __func__, ih - fmn->fmn_intrhand);
 #endif
-
-	mutex_exit(fmnp->fmn_lock);
+	}
 }
 
 void
@@ -794,8 +896,8 @@ rmixl_fmn_intr_poll(u_int bucket, rmixl_fmn_rxmsg_t *rxmsg)
 	cp0_status = rmixl_cp2_enable();
 
 	for(;;) {
-		rmixl_fmn_msgwait(bit);
-		if (rmixl_fmn_msg_recv(bucket, rxmsg) == 0)
+		rmixl_msgwait(bit);
+		if (rmixl_fmn_msg_recv(bucket, rxmsg))
 			break;
 		DELAY(10);		/* XXX */
 	}
@@ -803,224 +905,248 @@ rmixl_fmn_intr_poll(u_int bucket, rmixl_fmn_rxmsg_t *rxmsg)
 	rmixl_cp2_restore(cp0_status);
 }
 
-#ifdef NOTYET
 static int
-rmixl_fmn_intr_dispatch(void *arg)
+fmn_intr_dispatch(void *arg)
 {
-	fmn_t *fmnp = arg;
-	uint32_t msg_status;
-	uint32_t cp0_status;
-	uint32_t rfbne;
-	int txstid;
+	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
+	fmn_info_t * const fmn = &fmn_info;
+	uint32_t mask;
 	int rv = 0;
 
-	mutex_enter(fmnp->fmn_lock);
-	cp0_status = rmixl_cp2_enable();
+	const uint32_t cp0_status = rmixl_cp2_enable();
 
-	RMIXL_MFC2(RMIXL_COP_2_MSG_STS, 0, msg_status);
-	rfbne = (~msg_status) >> RMIXL_MSG_STS0_RFBE_SHIFT;
-
-	if (rfbne != 0) {
-		DPRINTF(("%s: rfbne %#x\n", __func__, rfbne));
-		for (u_int bucket=0; bucket < 8; bucket++) {
-			rmixl_fmn_rxmsg_t rxmsg;
-			fmn_intrhand_t *ih;
-
-			if ((rfbne & (1 << bucket)) == 0)
-				continue;
-			if (rmixl_fmn_msg_recv_subr(bucket, &rxmsg) != 0)
-				continue;
-			rv = 1;
-			txstid = fmnp->fmn_stidtab[rxmsg.rxsid];
-			ih = &fmnp->fmn_intrhand[txstid];
-			if (ih->ih_func != NULL)
-				if ((ih->ih_func)(ih->ih_arg, &rxmsg) != 0)
-					ih->ih_count.ev_count++;
-		}
-
+	if (is_xlp_p) {
+		uint32_t msg_rx_sts = mips_mfc2(RMIXLP_COP_2_MSG_RX_STS, 0);
+		mask = __SHIFTOUT(~msg_rx_sts, RMIXLP_MSG_RX_STS_RXQVCE);
+	} else {
+		uint32_t msg_sts = mips_mfc2(RMIXL_COP_2_MSG_STS, 0);
+		mask = __SHIFTOUT(~msg_sts, RMIXL_MSG_STS0_RFBE);
 	}
+
+	if (mask != 0) {
+		DPRINTF(("%s: non-empty q-mask %#x\n", __func__, mask));
+	}
+
+	struct evcnt * const ev = fmn_ev_getref(); // acquire per-cpu counters
+
+	for (u_int rxq=0; mask != 0; rxq++, mask >>= 1) {
+		if ((mask & 1) == 0)
+			continue;
+
+		rmixl_fmn_rxmsg_t rxmsg;
+		if (!rmixl_fmn_msg_recv(rxq, &rxmsg))
+			continue;
+
+		const size_t txstid = fmn->fmn_qidtab[rxmsg.rxsid];
+		volatile fmn_intrhand_t * const ih = &fmn->fmn_intrhand[txstid];
+		membar_consumer(); // make sure arg is loaded before func
+		void * const ih_arg = ih->ih_arg;
+		membar_consumer(); // make sure arg is loaded before func
+		rmixl_fmn_intr_handler_t ih_func = ih->ih_func;
+		if ((*ih_func)(ih_arg, &rxmsg) != 0)
+			ev[txstid].ev_count++;
+		rv = 1;
+	}
+
+	fmn_ev_putref(ev);			// release per-cpu counters
+
 	rmixl_cp2_restore(cp0_status);
-	mutex_exit(fmnp->fmn_lock);
 
 	return rv;
 }
-#endif	/* NOTYET */
 
-int
-rmixl_fmn_msg_send(u_int size, u_int code, u_int dest_id, rmixl_fmn_msg_t *msg)
+static bool
+rmixl_fmn_clear_to_send_p(void)
 {
-	fmn_t *fmnp;
-        uint32_t cp0_status;
-        uint32_t msg_status;
-        uint32_t msg_status1;
-	uint32_t desc;
-	int rv = 0;
+	KASSERT(!cpu_rmixlp(mips_options.mips_cpu));
+	uint32_t msg_sts;
+	for (u_int try=16; try--; ) {
+		msg_sts = mips_mfc2(RMIXL_COP_2_MSG_STS, 0);
+		if ((msg_sts & (RMIXL_MSG_STS0_LPF|RMIXL_MSG_STS0_SPF|RMIXL_MSG_STS0_SMP)) == 0)
+			return true;
+		DELAY(10);		/* XXX ??? */
+	}
+	DIAG_PRF(("%s: cpu%u: sts=%#x: can't send\n",
+	    __func__, cpu_number(), msg_sts));
+	return false;
+}
+
+bool
+rmixl_fmn_msg_send(u_int size, u_int code, u_int dest_id, u_int dest_vc,
+	const rmixl_fmn_msg_t *msg)
+{
+	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
+	bool rv = false;	/* assume failure */
     
-	KASSERT((size >= 1) && size <= 4);
-	KASSERT(code <= 0xff);
-	KASSERT(dest_id <= 0xff);
+	KASSERT(1 <= size && size <= 4);
+	KASSERT(code < 0x100);
+	KASSERT(dest_id < (is_xlp_p ? 0x1000 : 0x80));
+	KASSERT(dest_vc == 0 || (is_xlp_p && (dest_id & 0x380) == 0x80));
 
-	fmnp = fmn_lookup(curcpu()->ci_cpuid);
-	mutex_enter(fmnp->fmn_lock);
-        cp0_status = rmixl_cp2_enable();
+	const uint32_t cp0_status = rmixl_cp2_enable();
 
-	switch(size) {
+	switch (size) {
 	case 1:
-		RMIXL_DMTC2(RMIXL_COP_2_TXBUF, 0, msg->data[0]);
+		mips_dmtc2(RMIXL_COP_2_TXBUF, 0, msg->data[0]);
 		break;
 	case 2:
-		RMIXL_DMTC2(RMIXL_COP_2_TXBUF, 0, msg->data[0]);
-		RMIXL_DMTC2(RMIXL_COP_2_TXBUF, 1, msg->data[1]);
+		mips_dmtc2(RMIXL_COP_2_TXBUF, 0, msg->data[0]);
+		mips_dmtc2(RMIXL_COP_2_TXBUF, 1, msg->data[1]);
 		break;
 	case 3:
-		RMIXL_DMTC2(RMIXL_COP_2_TXBUF, 0, msg->data[0]);
-		RMIXL_DMTC2(RMIXL_COP_2_TXBUF, 1, msg->data[1]);
-		RMIXL_DMTC2(RMIXL_COP_2_TXBUF, 2, msg->data[2]);
+		mips_dmtc2(RMIXL_COP_2_TXBUF, 0, msg->data[0]);
+		mips_dmtc2(RMIXL_COP_2_TXBUF, 1, msg->data[1]);
+		mips_dmtc2(RMIXL_COP_2_TXBUF, 2, msg->data[2]);
 		break;
 	case 4:
-		RMIXL_DMTC2(RMIXL_COP_2_TXBUF, 0, msg->data[0]);
-		RMIXL_DMTC2(RMIXL_COP_2_TXBUF, 1, msg->data[1]);
-		RMIXL_DMTC2(RMIXL_COP_2_TXBUF, 2, msg->data[2]);
-		RMIXL_DMTC2(RMIXL_COP_2_TXBUF, 3, msg->data[3]);
+		mips_dmtc2(RMIXL_COP_2_TXBUF, 0, msg->data[0]);
+		mips_dmtc2(RMIXL_COP_2_TXBUF, 1, msg->data[1]);
+		mips_dmtc2(RMIXL_COP_2_TXBUF, 2, msg->data[2]);
+		mips_dmtc2(RMIXL_COP_2_TXBUF, 3, msg->data[3]);
 		break;
 	default:
 		DIAG_PRF(("%s: bad size %d", __func__, size));
-		rv = -1;
 		goto out;
 	}
 
-	for (int try=16; try--; ) {
-		RMIXL_MFC2(RMIXL_COP_2_MSG_STS, 0, msg_status);
-		if ((msg_status & (RMIXL_MSG_STS0_LPF|RMIXL_MSG_STS0_SPF|RMIXL_MSG_STS0_SMP)) == 0)
-			goto send;
-		DELAY(10);		/* XXX ??? */
+	if (!is_xlp_p && !rmixl_fmn_clear_to_send_p()) {
+		goto out;
 	}
-	DIAG_PRF(("%s: cpu%u, msg %p, dst_id=%d, sts=%#x: can't send\n",
-		__func__, cpu_number(), msg, dest_id, msg_status));
-	rv = -1;
-	goto out;
- send:
-	desc = RMIXL_MSGSND_DESC(size, code, dest_id);
+	uint32_t desc;
+	if (is_xlp_p) {
+		desc = RMIXLP_MSGSND_DESC(size, code, dest_id, dest_vc);
+	} else {
+		desc = RMIXL_MSGSND_DESC(size, code, dest_id);
+	}
 	DPRINTF(("%s: cpu%u, desc %#x\n", __func__, cpu_number(), desc));
-	for (int try=16; try--; ) {
-		rmixl_msgsnd(desc);
-		RMIXL_MFC2(RMIXL_COP_2_MSG_STS, 0, msg_status);
-		RMIXL_MFC2(RMIXL_COP_2_MSG_STS, 1, msg_status1);
-		if (((msg_status  & RMIXL_MSG_STS0_SCF) == 0)
-		&&  ((msg_status1 & RMIXL_MSG_STS1_ERRS) == 0))
-			goto out;
-#if 0
-#ifdef DEBUG
-		if ((msg_status & RMIXL_MSG_STS0_SCF) != 0) {
-			uint32_t r;
-			u_int regno = RMIXL_COP_2_CREDITS+fmnp->fmn_core;
-			u_int sel = fmnp->fmn_thread;
-			printf("%s: CC[%d,%d]=", __func__, regno, sel);
-			FMN_CP2_RD_SWITCH_RW(READ, regno, sel, r);
-			printf("%s: CC[%d,%d]=%d\n", __func__, regno, sel, r);
+	rv = -1;	/* assume failure */
+	for (size_t try=16; try--; ) {
+		if (is_xlp_p) {
+			if ((rv == rmixlp_msgsnd(desc)) != false)
+				break;
+			uint32_t tx_sts = mips_mfc2(RMIXLP_COP_2_MSG_TX_STS, 0);
+			const uint32_t bad_tx_sts = RMIXLP_MSG_TX_STS_PS
+			    | RMIXLP_MSG_TX_STS_IQC | RMIXLP_MSG_TX_STS_OQC;
+			KASSERT((tx_sts & bad_tx_sts) != 0);
+			tx_sts &= ~bad_tx_sts;
+			mips_mtc2(RMIXLP_COP_2_MSG_TX_STS, 0, tx_sts);
+		} else {
+			rmixl_msgsnd(desc);
+
+			uint32_t msg_sts0 = mips_mfc2(RMIXL_COP_2_MSG_STS, 0);
+			uint32_t msg_sts1 = mips_mfc2(RMIXL_COP_2_MSG_STS, 1);
+
+			if ((msg_sts0 & RMIXL_MSG_STS0_SCF) == 0
+			    && (msg_sts1 & RMIXL_MSG_STS1_ERRS) == 0) {
+				rv = 0;
+				break;
+			}
+
+			/* clear status1 error(s) */
+			if ((msg_sts1 & RMIXL_MSG_STS1_ERRS) != 0) {
+				msg_sts1 = mips_mfc2(RMIXL_COP_2_MSG_STS, 1);
+				mips_mtc2(RMIXL_COP_2_MSG_STS, 1, msg_sts1);
+			}
+			DIAG_PRF(("%s: src=%ld, dst=%d, sts=%#x/%#x: send error, try %zu\n",
+				__func__, curcpu()->ci_cpuid, dest_id, msg_sts0, msg_sts1, try));
 		}
-#endif	/* DEBUG */
-#endif	/* 0 */
-		/* clear status1 error(s) */
-		if ((msg_status1 & RMIXL_MSG_STS1_ERRS) != 0) {
-			RMIXL_MFC2(RMIXL_COP_2_MSG_STS, 1, msg_status1);
-			RMIXL_MTC2(RMIXL_COP_2_MSG_STS, 1, msg_status1);
-		}
-		DIAG_PRF(("%s: src=%ld, dst=%d, sts=%#x, %#x: send error, try %d\n",
-			__func__, curcpu()->ci_cpuid, dest_id, msg_status, msg_status1, try));
 		DELAY(10);
 	}
-	rv = -1;
  out:
 	rmixl_cp2_restore(cp0_status);
-	mutex_exit(fmnp->fmn_lock);
 
 	return rv;
+}
+
+static int
+fmn_msgld_rmixlp(u_int rxq, rmixl_fmn_rxmsg_t *rxmsg)
+{
+	bool rv = false;
+	for (u_int try=16; !rv && try; try--) {
+		rv = rmixlp_msgld(rxq);
+	}
+	if (!rv)
+		return rv;
+
+	uint32_t msg_sts = mips_mfc2(RMIXLP_COP_2_MSG_RX_STS, 0);
+	rxmsg->rxsid = __SHIFTOUT(msg_sts, RMIXLP_MSG_RX_STS_SID);
+	rxmsg->code = __SHIFTOUT(msg_sts, RMIXLP_MSG_RX_STS_SC);
+	rxmsg->size = __SHIFTOUT(msg_sts, RMIXLP_MSG_RX_STS_SM1) + 1;
+	return true;
+}
+
+static bool
+fmn_msgld_rmixl(u_int rxq, rmixl_fmn_rxmsg_t *rxmsg)
+{
+	uint32_t msg_sts;
+
+	for (u_int try=16; try--; ) {
+		msg_sts = mips_mfc2(RMIXL_COP_2_MSG_STS, 0);
+		if ((msg_sts & RMIXL_MSG_STS0_LPF) == 0) {
+			break;
+		}
+	}
+	if (msg_sts & RMIXL_MSG_STS0_LPF) {
+		DIAG_PRF(("%s: cpu%u, rxq=%d, sts=%#x: Load Pending Fail\n",
+			__func__, cpu_number(), rxq, msg_sts));
+		return false;
+	}
+	rmixl_msgld(rxq);
+	msg_sts = mips_mfc2(RMIXL_COP_2_MSG_STS, 0);
+	DPRINTF(("%s: cpu%u, rxq=%d, sts=%#x\n",
+		__func__, cpu_number(), rxq, msg_sts));
+	if (msg_sts & (RMIXL_MSG_STS0_LEF|RMIXL_MSG_STS0_LPF))
+		return false;
+
+	rxmsg->rxsid = __SHIFTOUT(msg_sts, RMIXL_MSG_STS0_RMSID);
+	rxmsg->code = __SHIFTOUT(msg_sts, RMIXL_MSG_STS0_RMSC);
+	rxmsg->size = __SHIFTOUT(msg_sts, RMIXL_MSG_STS0_RMS) + 1;
+	return true;
 }
 
 /*
  * rmixl_fmn_msg_recv
  *
- *	- grab fmn_lock and call rmixl_fmn_msg_recv_subr to do the real work
- *	- assume cp2 access is already enabled
- */
-int
-rmixl_fmn_msg_recv(u_int bucket, rmixl_fmn_rxmsg_t *rxmsg)
-{
-	fmn_t *fmnp;
-	int rv;
-
-	fmnp = fmn_lookup(curcpu()->ci_cpuid);
-	mutex_enter(fmnp->fmn_lock);
-	rv = rmixl_fmn_msg_recv_subr(bucket, rxmsg);
-	mutex_exit(fmnp->fmn_lock);
-
-	return rv;
-}
-
-/*
- * rmixl_fmn_msg_recv_subr
- *
- *	- assume fmn_lock is owned
  *	- assume cp2 access is already enabled 
  */
-static int
-rmixl_fmn_msg_recv_subr(u_int bucket, rmixl_fmn_rxmsg_t *rxmsg)
+bool
+rmixl_fmn_msg_recv(u_int rxq, rmixl_fmn_rxmsg_t *rxmsg)
 {
-	fmn_t *fmnp;
-	uint32_t msg_status;
-	int rv;
+	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
+	bool rv = false;
 
-	fmnp = fmn_lookup(curcpu()->ci_cpuid);
-	KASSERT(mutex_owned(fmnp->fmn_lock) != 0);
+	KASSERT(!is_xlp_p || rxq < 4);
 
-	for (int try=16; try--; ) {
-		RMIXL_MFC2(RMIXL_COP_2_MSG_STS, 0, msg_status);
-		if ((msg_status & (RMIXL_MSG_STS0_LPF)) == 0)
-			goto recv;
+	if (is_xlp_p) {
+		rv = fmn_msgld_rmixlp(rxq, rxmsg);
+	} else {
+		rv = fmn_msgld_rmixl(rxq, rxmsg);
 	}
-	DIAG_PRF(("%s: cpu%u, bucket=%d, sts=%#x: Load Pending Fail\n",
-		__func__, cpu_number(), bucket, msg_status));
-	rv = -1;
-	goto out;
- recv:
-	rmixl_msgld(bucket);
-	RMIXL_MFC2(RMIXL_COP_2_MSG_STS, 0, msg_status);
-	DPRINTF(("%s: cpu%u, bucket=%d, sts=%#x\n",
-		__func__, cpu_number(), bucket, msg_status));
-	rv = msg_status & (RMIXL_MSG_STS0_LEF|RMIXL_MSG_STS0_LPF);
-	if (rv == 0) {
-		rxmsg->rxsid = (msg_status & RMIXL_MSG_STS0_RMSID)
-				>> RMIXL_MSG_STS0_RMSID_SHIFT;
-		rxmsg->code = (msg_status & RMIXL_MSG_STS0_RMSC)
-				>> RMIXL_MSG_STS0_RMSC_SHIFT;
-		rxmsg->size = ((msg_status & RMIXL_MSG_STS0_RMS)
-				>> RMIXL_MSG_STS0_RMS_SHIFT) + 1;
+	if (rv) {
 		switch(rxmsg->size) {
 		case 1:
-			RMIXL_DMFC2(RMIXL_COP_2_RXBUF, 0, rxmsg->msg.data[0]);
+			rxmsg->msg.data[0] = mips_dmfc2(RMIXL_COP_2_RXBUF, 0);
 			break;
 		case 2:
-			RMIXL_DMFC2(RMIXL_COP_2_RXBUF, 0, rxmsg->msg.data[0]);
-			RMIXL_DMFC2(RMIXL_COP_2_RXBUF, 1, rxmsg->msg.data[1]);
+			rxmsg->msg.data[0] = mips_dmfc2(RMIXL_COP_2_RXBUF, 0);
+			rxmsg->msg.data[1] = mips_dmfc2(RMIXL_COP_2_RXBUF, 1);
 			break;
 		case 3:
-			RMIXL_DMFC2(RMIXL_COP_2_RXBUF, 0, rxmsg->msg.data[0]);
-			RMIXL_DMFC2(RMIXL_COP_2_RXBUF, 1, rxmsg->msg.data[1]);
-			RMIXL_DMFC2(RMIXL_COP_2_RXBUF, 2, rxmsg->msg.data[2]);
+			rxmsg->msg.data[0] = mips_dmfc2(RMIXL_COP_2_RXBUF, 0);
+			rxmsg->msg.data[1] = mips_dmfc2(RMIXL_COP_2_RXBUF, 1);
+			rxmsg->msg.data[2] = mips_dmfc2(RMIXL_COP_2_RXBUF, 2);
 			break;
 		case 4:
-			RMIXL_DMFC2(RMIXL_COP_2_RXBUF, 0, rxmsg->msg.data[0]);
-			RMIXL_DMFC2(RMIXL_COP_2_RXBUF, 1, rxmsg->msg.data[1]);
-			RMIXL_DMFC2(RMIXL_COP_2_RXBUF, 2, rxmsg->msg.data[2]);
-			RMIXL_DMFC2(RMIXL_COP_2_RXBUF, 3, rxmsg->msg.data[3]);
+			rxmsg->msg.data[0] = mips_dmfc2(RMIXL_COP_2_RXBUF, 0);
+			rxmsg->msg.data[1] = mips_dmfc2(RMIXL_COP_2_RXBUF, 1);
+			rxmsg->msg.data[2] = mips_dmfc2(RMIXL_COP_2_RXBUF, 2);
+			rxmsg->msg.data[3] = mips_dmfc2(RMIXL_COP_2_RXBUF, 3);
 			break;
 		default:
 			/* "impossible" due to bitfield width */
 			panic("%s: bad size %d", __func__, rxmsg->size);
 		}
 	}
- out:
 
 	return rv;
 }
@@ -1029,178 +1155,192 @@ rmixl_fmn_msg_recv_subr(u_int bucket, rmixl_fmn_rxmsg_t *rxmsg)
 void
 rmixl_fmn_cp2_dump(void)
 {
-	uint32_t cp0_status;
+	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
 
-	cp0_status = rmixl_cp2_enable();
+	const uint32_t cp0_status = rmixl_cp2_enable();
 
-	CPU2_PRINT_8(RMIXL_COP_2_TXBUF, 0);
-	CPU2_PRINT_8(RMIXL_COP_2_TXBUF, 1);
-	CPU2_PRINT_8(RMIXL_COP_2_TXBUF, 2);
-	CPU2_PRINT_8(RMIXL_COP_2_TXBUF, 3);
+	COP2_PRINT_8(RMIXL_COP_2_TXBUF, 0);
+	COP2_PRINT_8(RMIXL_COP_2_TXBUF, 1);
+	COP2_PRINT_8(RMIXL_COP_2_TXBUF, 2);
+	COP2_PRINT_8(RMIXL_COP_2_TXBUF, 3);
 
-	CPU2_PRINT_8(RMIXL_COP_2_RXBUF, 0);
-	CPU2_PRINT_8(RMIXL_COP_2_RXBUF, 1);
-	CPU2_PRINT_8(RMIXL_COP_2_RXBUF, 2);
-	CPU2_PRINT_8(RMIXL_COP_2_RXBUF, 3);
+	COP2_PRINT_8(RMIXL_COP_2_RXBUF, 0);
+	COP2_PRINT_8(RMIXL_COP_2_RXBUF, 1);
+	COP2_PRINT_8(RMIXL_COP_2_RXBUF, 2);
+	COP2_PRINT_8(RMIXL_COP_2_RXBUF, 3);
 
-	CPU2_PRINT_4(RMIXL_COP_2_MSG_STS, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_MSG_STS, 1);
+	if (is_xlp_p) {
+		COP2_PRINT_4(RMIXLP_COP_2_MSG_TX_STS, 0);
+		COP2_PRINT_4(RMIXLP_COP_2_MSG_RX_STS, 0);
+		COP2_PRINT_4(RMIXLP_COP_2_MSG_STS1, 0);
+		COP2_PRINT_4(RMIXLP_COP_2_MSG_CFG, 0);
+		COP2_PRINT_4(RMIXLP_COP_2_MSG_ERR, 0);
+		COP2_PRINT_4(RMIXLP_COP_2_MSG_ERR, 1);
+		COP2_PRINT_4(RMIXLP_COP_2_MSG_ERR, 2);
+		COP2_PRINT_4(RMIXLP_COP_2_MSG_ERR, 3);
+		COP2_PRINT_8(RMIXLP_COP_2_CREDITS, 0);
+		COP2_PRINT_4(RMIXLP_COP_2_CREDITS, 1);
+	} else {
 
-	CPU2_PRINT_4(RMIXL_COP_2_MSG_CFG, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_MSG_CFG, 1);
+		COP2_PRINT_4(RMIXL_COP_2_MSG_STS, 0);
+		COP2_PRINT_4(RMIXL_COP_2_MSG_STS, 1);
 
-	CPU2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 7);
+		COP2_PRINT_4(RMIXL_COP_2_MSG_CFG, 0);
+		COP2_PRINT_4(RMIXL_COP_2_MSG_CFG, 1);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 7);
+		COP2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 0);
+		COP2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 1);
+		COP2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 2);
+		COP2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 3);
+		COP2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 4);
+		COP2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 5);
+		COP2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 6);
+		COP2_PRINT_4(RMIXL_COP_2_MSG_BSZ, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 0, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 1, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 2, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 3, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 4, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 5, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 6, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 7, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 8, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 9, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 10, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 11, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 12, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 13, 7);
 
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 0);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 1);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 2);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 3);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 4);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 5);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 6);
-	CPU2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 7);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 14, 7);
+
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 0);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 1);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 2);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 3);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 4);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 5);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 6);
+		COP2_PRINT_4(RMIXL_COP_2_CREDITS + 15, 7);
+	}
 
 	rmixl_cp2_restore(cp0_status);
 }
@@ -1209,23 +1349,27 @@ rmixl_fmn_cp2_dump(void)
 void
 rmixl_fmn_cc_dump(void)
 {
-	uint32_t cc[4][8];
+	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
 
-	FMN_CP2_4SEL_READ(RMIXL_COP_2_CREDITS,   0, &cc[0][0]);
-	FMN_CP2_4SEL_READ(RMIXL_COP_2_CREDITS,   4, &cc[0][4]);
-	FMN_CP2_4SEL_READ(RMIXL_COP_2_CREDITS+1, 0, &cc[1][0]);
-	FMN_CP2_4SEL_READ(RMIXL_COP_2_CREDITS+1, 4, &cc[1][4]);
-	FMN_CP2_4SEL_READ(RMIXL_COP_2_CREDITS+2, 0, &cc[2][0]);
-	FMN_CP2_4SEL_READ(RMIXL_COP_2_CREDITS+2, 4, &cc[2][4]);
-	FMN_CP2_4SEL_READ(RMIXL_COP_2_CREDITS+3, 0, &cc[3][0]);
-	FMN_CP2_4SEL_READ(RMIXL_COP_2_CREDITS+3, 4, &cc[3][4]);
+	if (is_xlp_p) {
+	} else {
+		uint32_t cc[4][8];
 
-	printf("%s: cpu%u\n", __func__, cpu_number());
-	for (int i=0; i < 4; i++) {
-		for (int j=0; j < 8; j++)
-			printf(" %#x,", cc[i][j]);
-		printf("\n");
+		FMN_COP2_4SEL_READ(RMIXL_COP_2_CREDITS,   0, &cc[0][0]);
+		FMN_COP2_4SEL_READ(RMIXL_COP_2_CREDITS,   4, &cc[0][4]);
+		FMN_COP2_4SEL_READ(RMIXL_COP_2_CREDITS+1, 0, &cc[1][0]);
+		FMN_COP2_4SEL_READ(RMIXL_COP_2_CREDITS+1, 4, &cc[1][4]);
+		FMN_COP2_4SEL_READ(RMIXL_COP_2_CREDITS+2, 0, &cc[2][0]);
+		FMN_COP2_4SEL_READ(RMIXL_COP_2_CREDITS+2, 4, &cc[2][4]);
+		FMN_COP2_4SEL_READ(RMIXL_COP_2_CREDITS+3, 0, &cc[3][0]);
+		FMN_COP2_4SEL_READ(RMIXL_COP_2_CREDITS+3, 4, &cc[3][4]);
+
+		printf("%s: cpu%u\n", __func__, cpu_number());
+		for (size_t i=0; i < 4; i++) {
+			for (size_t j=0; j < 8; j++)
+				printf(" %#x,", cc[i][j]);
+			printf("\n");
+		}
 	}
 }
-
 #endif	/* FMN_DEBUG */

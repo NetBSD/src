@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.h,v 1.1.2.11 2011/12/31 08:20:43 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.h,v 1.1.2.12 2012/01/04 16:17:53 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,8 @@
  * vectors (0 <= vec < 8)  are CAUSE[8..15] (including softintrs and count/compare)
  */
 #define RMIXL_INTRVEC_IPI	8
-#define RMIXL_INTRVEC_FMN	(RMIXL_INTRVEC_IPI + NIPIS)
+
+#define	RMIXLP_IRT_PCIE_MSIX	46
 
 /*
  * iv_list and ref count manage sharing of each vector
@@ -71,11 +72,34 @@ typedef struct rmixl_intrvec {
 
 typedef TAILQ_HEAD(rmixl_intrvecq, rmixl_intrvec) rmixl_intrvecq_t;
 
+static inline int
+rmixl_intr_deliver(int (*func)(void *), void *arg, bool mpsafe_p,
+	struct evcnt *ev, int ipl)
+{
+	int rv;
+#ifndef MULTIPROCESSOR
+	mpsafe_p = true;
+#endif
+	if (mpsafe_p) {
+		rv = (*func)(arg);
+	} else {
+		KASSERTMSG(ipl == IPL_VM,
+		    ("%s: %s: ipl (%d) != IPL_VM for KERNEL_LOCK",
+		    __func__, ev->ev_name, ipl));
+		KERNEL_LOCK(1, NULL);
+		rv = (*func)(arg);
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+	ev->ev_count++;
+	return rv;
+}
+
 /*
  * stuff exported from rmixl_spl.S
  */
 extern const struct splsw rmixl_splsw;
 extern uint64_t ipl_eimr_map[];
+extern kmutex_t *rmixl_intr_lock;
 
 void *	rmixl_intr_establish(size_t /* irt */, int /* ipl */, int /* ist */,
 	    int (*)(void *), void *, bool);
@@ -83,6 +107,7 @@ void	rmixl_intr_disestablish(void *);
 void *	rmixl_vec_establish(size_t /* vec */, rmixl_intrhand_t *, int /* ipl */,
 	    int (*)(void *), void *, bool);
 void	rmixl_vec_disestablish(void *);
+size_t	rmixl_intr_get_vec(int /* ipl */);
 const char *
 	rmixl_intr_string(size_t);
 const char *
