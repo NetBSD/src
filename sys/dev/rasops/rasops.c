@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.68 2011/12/28 08:36:46 macallan Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.69 2012/01/04 20:17:05 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.68 2011/12/28 08:36:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.69 2012/01/04 20:17:05 macallan Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -841,7 +841,10 @@ rasops_init_devcmap(struct rasops_info *ri)
 		/* Fill the word for generic routines, which want this */
 		if (ri->ri_depth == 24)
 			c = c | ((c & 0xff) << 24);
-		else if (ri->ri_depth <= 16)
+		else if (ri->ri_depth == 8) {
+			c = c | (c << 8);
+			c |= c << 16;
+		} else if (ri->ri_depth <= 16)
 			c = c | (c << 16);
 
 		/* 24bpp does bswap on the fly. {32,16,15}bpp do it here. */
