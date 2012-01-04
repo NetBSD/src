@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.92 2012/01/03 21:28:50 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.93 2012/01/04 11:53:09 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2012/01/03 21:28:50 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2012/01/04 11:53:09 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -50,7 +50,7 @@ struct pv_entry {
 	uintptr_t	pv_ppn;		/* physical page number */
 	uintptr_t	pv_lpn;		/* logical page number  */
 	vm_prot_t	pv_prot;	/* logical protection */
-	int		pv_mmap_ppl;	/* programmed protection */
+	uint8_t		pv_mmap_ppl;	/* programmed protection */
 	uint8_t		pv_vflags;	/* per mapping flags */
 #define PV_WIRED	0x01		/* wired mapping */
 #define PV_UNMANAGED	0x02		/* entered by pmap_kenter_ */
