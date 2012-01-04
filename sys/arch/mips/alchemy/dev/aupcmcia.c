@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.8 2012/01/03 07:36:02 kiyohara Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.9 2012/01/04 02:36:26 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 /* #include "pci.h" */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.8 2012/01/03 07:36:02 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.9 2012/01/04 02:36:26 kiyohara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -389,14 +389,14 @@ aupcm_event_thread(void *arg)
 			if (sc->sc_slot_status(sp->as_slot) != 0) {
 				if (!sp->as_status) {
 					DPRINTF(("%s: card %d insertion\n",
-						    sc->sc_dev.dv_xname, i));
+					    device_xname(sc->sc_dev), i));
 					attach |= (1 << i);
 					sp->as_status = 1;
 				}
 			} else {
 				if (sp->as_status) {
 					DPRINTF(("%s: card %d removal\n",
-						    sc->sc_dev.dv_xname, i));
+					    device_xname(sc->sc_dev), i));
 					detach |= (1 << i);
 					sp->as_status = 0;
 				}
@@ -409,8 +409,7 @@ aupcm_event_thread(void *arg)
 
 			if (detach & (1 << i)) {
 				aupcm_slot_disable(sp);
-				pcmcia_card_detach(sp->as_pcmcia,
-				    DETACH_FORCE);
+				pcmcia_card_detach(sp->as_pcmcia, DETACH_FORCE);
 			} else if (attach & (1 << i)) {
 				/*
 				 * until the function is enabled, don't

@@ -1,4 +1,4 @@
-/* $NetBSD: auspi.c,v 1.7 2012/01/03 07:36:02 kiyohara Exp $ */
+/* $NetBSD: auspi.c,v 1.8 2012/01/04 02:36:26 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.7 2012/01/03 07:36:02 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.8 2012/01/04 02:36:26 kiyohara Exp $");
 
 #include "locators.h"
 
@@ -162,7 +162,7 @@ auspi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = au_intr_establish(aa->aupsc_irq, 0, IPL_BIO, IST_LEVEL,
 	    auspi_intr, sc);
 
-	(void) config_found_ia(&sc->sc_dev, "spibus", &sba, spibus_print);
+	(void) config_found_ia(self, "spibus", &sba, spibus_print);
 }
 
 int
@@ -376,15 +376,15 @@ auspi_intr(void *arg)
 
 	if (ev & SPIMSK_MM) {
 		printf("%s: multiple masters detected!\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		err = EIO;
 	}
 	if (ev & SPIMSK_RO) {
-		printf("%s: receive overflow\n", sc->sc_dev.dv_xname);
+		printf("%s: receive overflow\n", device_xname(sc->sc_dev));
 		err = EIO;
 	}
 	if (ev & SPIMSK_TU) {
-		printf("%s: transmit underflow\n", sc->sc_dev.dv_xname);
+		printf("%s: transmit underflow\n", device_xname(sc->sc_dev));
 		err = EIO;
 	}
 	if (err) {
@@ -409,7 +409,7 @@ auspi_intr(void *arg)
 			if ((sc->sc_wchunk != NULL) ||
 			    (sc->sc_rchunk != NULL)) {
 				printf("%s: partial transfer?\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				err = EIO;
 			} 
 			auspi_done(sc, err);
