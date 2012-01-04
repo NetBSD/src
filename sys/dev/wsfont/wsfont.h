@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.22 2011/12/22 05:01:15 macallan Exp $	*/
+/* 	$NetBSD: wsfont.h,v 1.23 2012/01/04 15:53:49 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,8 @@
 
 #define WSFONT_FLAGS_MASK	0x7f000000
 #define WSFONT_FLAG_OPT		0x01000000	/* use alternate font */
-
+#define WSFONT_GLYPH(c, font)	((uint8_t *)font->data + \
+		((c) - font->firstchar) * font->stride * font->fontheight)
 /*
  * Example:
  *
