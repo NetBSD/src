@@ -246,4 +246,4 @@
 /* Define to `unsigned' if <sys/types.h> does not define. */
 /* #undef size_t */
 
-#define PATH_IPSEC_H <netinet6/ipsec.h>
+#define PATH_IPSEC_H <netipsec/ipsec.h>
