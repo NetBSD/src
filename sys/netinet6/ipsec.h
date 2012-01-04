@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.51 2009/05/06 21:41:59 elad Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.52 2012/01/04 15:55:36 drochner Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -447,10 +447,9 @@ extern int ipsec6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
-typedef void *ipsec_policy_t;
-extern ipsec_policy_t ipsec_set_policy(const char *, int);
-extern int ipsec_get_policylen(ipsec_policy_t);
-extern char *ipsec_dump_policy(ipsec_policy_t, const char *);
+extern char *ipsec_set_policy(const char *, int);
+extern int ipsec_get_policylen(char *);
+extern char *ipsec_dump_policy(char *, const char *);
 
 extern const char *ipsec_strerror(void);
 #endif /* !_KERNEL */
