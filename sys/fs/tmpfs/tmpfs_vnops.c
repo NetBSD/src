@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.92 2011/09/27 01:32:21 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.92.2.1 2012/01/04 16:43:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.92 2011/09/27 01:32:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.92.2.1 2012/01/04 16:43:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -561,6 +561,9 @@ tmpfs_read(void *v)
 	uobj = node->tn_spec.tn_reg.tn_aobj;
 	error = 0;
 
+	if (uio->uio_offset + uio->uio_resid <= node->tn_size) {
+		uvm_loanobj(&vp->v_uobj, uio);
+	}
 	while (error == 0 && uio->uio_resid > 0) {
 		vsize_t len;
 
