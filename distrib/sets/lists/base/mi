@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.974 2011/12/17 13:27:49 tsutsui Exp $
+# $NetBSD: mi,v 1.975 2012/01/04 15:54:37 yamt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -447,6 +447,7 @@
 ./usr/bin/false					base-util-bin
 ./usr/bin/fgrep					base-util-bin
 ./usr/bin/file					base-util-bin
+./usr/bin/fincore				base-util-bin
 ./usr/bin/find					base-util-bin
 ./usr/bin/finger				base-util-bin
 ./usr/bin/fmt					base-util-bin
