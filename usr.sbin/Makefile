@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.259 2011/12/17 13:27:52 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.260 2012/01/04 16:25:14 yamt Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -26,7 +26,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp \
 	rpc.pcnfsd rpc.statd rpcbind rwhod \
 	sa screenblank sdpd services_mkdb sesd schedctl sliplogin spray \
 	srtconfig sti sunlabel sup syslogd \
-	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl traceroute trpt \
+	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl tprof traceroute trpt \
 	unlink usbdevs user \
 	videomode vipw veriexecgen vnconfig \
 	wake wiconfig wlanctl wsconscfg wsfontload wsmoused wsmuxctl \
