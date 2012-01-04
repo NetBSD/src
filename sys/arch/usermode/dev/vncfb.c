@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.11 2012/01/02 00:20:30 jmcneill Exp $ */
+/* $NetBSD: vncfb.c,v 1.12 2012/01/04 14:53:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.11 2012/01/02 00:20:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.12 2012/01/04 14:53:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -651,11 +651,29 @@ vncfb_kbd_ioctl(void *priv, u_long cmd, void *data, int flag, lwp_t *l)
 static void
 vncfb_kbd_cngetc(void *priv, u_int *type, int *data)
 {
+	struct vncfb_softc *sc = priv;
+	thunk_rfb_event_t event;
+
+	for (;;) {
+		if (thunk_rfb_poll(&sc->sc_rfb, &event) > 0) {
+			if (event.message_type == THUNK_RFB_KEY_EVENT) {
+				*type = event.data.key_event.down_flag ?
+				    WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
+				*data = event.data.key_event.keysym & 0xfff;
+				return;
+			}
+		}
+	}
 }
 
 static void
 vncfb_kbd_cnpollc(void *priv, int on)
 {
+	struct vncfb_softc *sc = priv;
+
+	if (!on) {
+		vncfb_intr(sc);
+	}
 }
 
 static void
