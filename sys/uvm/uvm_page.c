@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178.2.11 2012/01/04 16:30:06 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.12 2012/01/04 16:31:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.11 2012/01/04 16:30:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.12 2012/01/04 16:31:17 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1524,15 +1524,13 @@ uvm_pagefree(struct vm_page *pg)
 		 * if the page is owned by an anon then we just want to
 		 * drop anon ownership.  the kernel will free the page when
 		 * it is done with it.  if the page is owned by an object,
-		 * remove it from the object and mark it dirty for the benefit
-		 * of possible anon owners.
+		 * remove it from the object.
 		 *
 		 * regardless of previous ownership, wakeup any waiters,
 		 * unbusy the page, and we're done.
 		 */
 
 		if (obj != NULL) {
-			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 			uvm_pageremove(obj, pg);
 			pg->pqflags &= ~(PQ_FILE|PQ_AOBJ);
 		} else if (pg->uanon != NULL) {
