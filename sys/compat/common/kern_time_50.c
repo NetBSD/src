@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.21 2012/01/04 13:45:55 apb Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.22 2012/01/04 14:31:17 apb Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.21 2012/01/04 13:45:55 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.22 2012/01/04 14:31:17 apb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.21 2012/01/04 13:45:55 apb Exp $"
 #endif
 
 #include <sys/param.h>
+#include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/filedesc.h>
@@ -625,6 +626,10 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
     struct lwp *l)
 {
 	int error = 0;
+	const struct cdevsw *cd = cdevsw_lookup(dev);
+
+	if (cd == NULL || cd->d_ioctl == NULL)
+		return ENXIO;
 
 	switch (cmd) {
 	case CLOCKCTL_OSETTIMEOFDAY: {
@@ -672,7 +677,7 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
 	}
 	case CLOCKCTL_ONTP_ADJTIME:
 		/* The ioctl number changed but the data did not change. */
-		error = clockctlioctl(dev, CLOCKCTL_NTP_ADJTIME,
+		error = (cd->d_ioctl)(dev, CLOCKCTL_NTP_ADJTIME,
 		    data, flags, l);
 		break;
 	default:
