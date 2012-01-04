@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.57 2011/08/18 08:11:58 manu Exp $ */
+/* $NetBSD: cp.c,v 1.58 2012/01/04 15:58:37 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.57 2011/08/18 08:11:58 manu Exp $");
+__RCSID("$NetBSD: cp.c,v 1.58 2012/01/04 15:58:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: cp.c,v 1.57 2011/08/18 08:11:58 manu Exp $");
 #include <errno.h>
 #include <fts.h>
 #include <locale.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -88,11 +89,18 @@ PATH_T to = { .p_end = to.p_path, .target_end = empty  };
 uid_t myuid;
 int Hflag, Lflag, Rflag, Pflag, fflag, iflag, lflag, pflag, rflag, vflag, Nflag;
 mode_t myumask;
+sig_atomic_t pinfo;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
 
-int 	main(int, char *[]);
-int 	copy(char *[], enum op, int);
+static int copy(char *[], enum op, int);
+
+static void
+progress(int sig __unused)
+{
+
+	pinfo++;
+}
 
 int
 main(int argc, char *argv[])
@@ -210,6 +218,8 @@ main(int argc, char *argv[])
 	/* Set end of argument list for fts(3). */
 	argv[argc] = NULL;     
 	
+	(void)signal(SIGINFO, progress);
+	
 	/*
 	 * Cp has two distinct cases:
 	 *
@@ -310,7 +320,7 @@ popdne(void)
 	return rv;
 }
 
-int
+static int
 copy(char *argv[], enum op type, int fts_options)
 {
 	struct stat to_stat;
