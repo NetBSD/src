@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.h,v 1.2 2009/01/11 02:45:50 christos Exp $ */
+/*      $NetBSD: clockctl.h,v 1.3 2012/01/04 13:45:55 apb Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,6 +58,13 @@ struct clockctl50_clock_settime {
 };
 
 #define CLOCKCTL_OCLOCK_SETTIME _IOW('C', 0x3, struct clockctl50_clock_settime)
+
+struct clockctl50_ntp_adjtime {
+	struct timex *tp;
+	register_t retval;
+};
+
+#define CLOCKCTL_ONTP_ADJTIME _IOWR('C', 0x4, struct clockctl50_ntp_adjtime)
 
 #ifdef _KERNEL
 struct lwp;
