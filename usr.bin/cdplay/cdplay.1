@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdplay.1,v 1.23 2011/11/26 23:20:41 christos Exp $
+.\"	$NetBSD: cdplay.1,v 1.24 2012/01/04 17:26:21 drochner Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" from FreeBSD: cdcontrol.1,v 1.16.2.2 1999/01/31 15:36:01 billf Exp
 .\"
-.Dd November 26, 2011
+.Dd January 3, 2012
 .Dt CDPLAY 1
 .Os
 .Sh NAME
@@ -57,6 +57,12 @@ and
 will be tried (in this order) to find the device; as a last resort,
 .Pa /dev/sound
 will be used.
+If the
+.Dq Fl a
+command line option is used, or the
+.Ev CDPLAY_DIGITAL
+environment variable is present,
+digital transfer mode is switched on automatically.
 .It Fl f Ar device
 Specify the control device to use.
 Both absolute paths and paths relative to
