@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.317 2011/12/02 16:37:43 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.318 2012/01/04 16:36:49 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -608,12 +608,91 @@ Notes:		- maintain object pages in radix tree rather than rb tree.
 		TODO:
 			- benchmark
 			- test
-			- make the write clustering fix less kludgy and work
-			  for backward clustering
+			- make the write clustering fix less kludgy
 
 		tested: i386, amd64, nfs, ffs
 
 		have good chances to be broken: lfs, sparc64, hp700
+
+		the following is kernel build test results.
+		most of NG seem unrelated to the changes in the branch.
+
+			acorn26  GENERIC    OK      
+			acorn32  GENERIC    OK      
+			algor    P6032      NG      
+			alpha    GENERIC    OK      
+			alpha    GENERIC.MP OK      
+			amd64    GENERIC    OK      
+			amd64    XEN3_DOM0  OK      
+			amd64    XEN3_DOMU  OK      
+			amiga    GENERIC    OK      
+			amigappc GENERIC    OK      
+			arc      GENERIC    OK      
+			atari    MILAN-PCIIDE OK      
+			bebox    GENERIC    OK      
+			cats     GENERIC    OK      
+			cesfic   GENERIC    OK      
+			cobalt   GENERIC    OK      
+			dreamcast GENERIC    NG      
+			emips    GENERIC    OK      
+			evbarm   NSLU2      NG      
+			evbarm   TS7200     NG      
+			evbmips  P6032      NG      
+			evbmips  MALTA      NG      
+			evbppc   WALNUT     NG      
+			evbppc   EXPLORA451 NG      
+			evbppc   PMPPC      NG      
+			evbsh3   COMPUTEXEVB OK      
+			ews4800mips GENERIC    OK      
+			hp300    GENERIC    OK      
+			hp700    GENERIC    OK      
+			hpcarm   JORNADA720 OK      
+			hpcarm   JORNADA728 OK      
+			hpcmips  GENERIC    OK      
+			hpcsh    GENERIC    OK      
+			hpcsh    HPW650PA   OK      
+			i386     MONOLITHIC OK      
+			i386     GENERIC    OK      
+			i386     XEN3_DOM0  OK      
+			i386     XEN3_DOMU  OK      
+			i386     ALL        NG      
+			ia64     GENERIC    OK      
+			ia64     GENERIC.SKI NG      
+			ibmnws   GENERIC    OK      
+			iyonix   GENERIC    NG      
+			landisk  GENERIC    OK      
+			luna68k  GENERIC    OK      
+			mac68k   GENERIC    OK      
+			macppc   GENERIC    OK      
+			macppc   GENERIC.MP OK      
+			mipsco   GENERIC    OK      
+			mmeye    GENERIC    OK      
+			mvme68k  GENERIC    OK      
+			mvmeppc  GENERIC    OK      
+			netwinder GENERIC    NG      
+			news68k  GENERIC    OK      
+			newsmips GENERIC    OK      
+			next68k  GENERIC    OK      
+			ofppc    GENERIC    OK      
+			ofppc    GENERIC.MP NG      
+			pmax     GENERIC    OK      
+			prep     GENERIC    OK      
+			rs6000   GENERIC    NG      
+			sandpoint GENERIC    OK      
+			sbmips   GENERIC    NG      
+			sbmips   GENERIC.MP NG      
+			sgimips  GENERIC32_IP3x OK      
+			shark    GENERIC    NG      
+			sparc    GENERIC    OK      
+			sparc    GENERIC.MP OK      
+			sparc64  GENERIC    OK      
+			sun2     GENERIC    OK      
+			sun3     GENERIC    OK      
+			usermode GENERIC    NG      
+			vax      GENERIC    OK      
+			vax      GENERIC.MP OK      
+			x68k     GENERIC    OK      
+			zaurus   GENERIC    NG      
 
 Branch:		reinoud-bufcleanup
 Description:	implement and evaluate struct buf usage cleanup strategies.
