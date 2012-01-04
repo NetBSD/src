@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.49 2012/01/03 00:25:49 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.50 2012/01/04 15:56:18 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.49 2012/01/03 00:25:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.50 2012/01/04 15:56:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2432,7 +2432,7 @@ radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		radeonfb_rectfill(dp, xd, yd, w, h, bg);
 		return;
 	}
-	data = (uint8_t *)font->data + (c - font->firstchar) * ri->ri_fontscale;
+	data = WSFONT_GLYPH(c, font);
 
 	gmc = dp->rd_format << RADEON_GMC_DST_DATATYPE_SHIFT;
 
@@ -2521,7 +2521,7 @@ radeonfb_putchar_aa32(void *cookie, int row, int col, u_int c, long attr)
 		radeonfb_rectfill(dp, xd, yd, w, h, bg);
 		return;
 	}
-	data = (uint8_t *)font->data + (c - font->firstchar) * ri->ri_fontscale;
+	data = WSFONT_GLYPH(c, font);
 
 	gmc = dp->rd_format << RADEON_GMC_DST_DATATYPE_SHIFT;
 
