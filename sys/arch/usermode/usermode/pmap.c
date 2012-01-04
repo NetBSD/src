@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.95 2012/01/04 15:10:45 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.96 2012/01/04 16:20:41 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2012/01/04 15:10:45 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2012/01/04 16:20:41 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -480,7 +480,7 @@ void
 pmap_destroy(pmap_t pmap)
 {
 	struct pmap_l2 *l2tbl;
-	int l1, l2;
+	int l1;
 
 	/* if multiple references exist just remove a reference */
 	thunk_printf_debug("pmap_destroy %p\n", pmap);
@@ -494,6 +494,8 @@ pmap_destroy(pmap_t pmap)
 	KASSERT(pmap->pm_stats.wired_count == 0);
 #ifdef DIAGNOSTIC
 	for (l1 = 0; l1 < pm_nl1; l1++) {
+		int l2;
+
 		l2tbl = pmap->pm_l1[l1];
 		if (!l2tbl)
 			continue;
@@ -761,8 +763,9 @@ pmap_page_deactivate(struct pv_entry *pv)
 	/* don't try to unmap pv entries that are already unmapped */
 	if (!tlb[pv->pv_lpn])
 		return;
+
 	if (tlb[pv->pv_lpn]->pv_mmap_ppl == THUNK_PROT_NONE)
-		return;
+		goto deactivate;
 
 	map_flags = THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED;
 	addr = thunk_mmap((void *) va, PAGE_SIZE, THUNK_PROT_NONE,
@@ -772,6 +775,7 @@ pmap_page_deactivate(struct pv_entry *pv)
 	if (addr != (void *) va)
 		panic("pmap_page_deactivate: mmap failed");
 
+deactivate:
 	tlb[pv->pv_lpn] = NULL;
 }
 
