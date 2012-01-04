@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.44 2011/11/26 23:20:41 christos Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.45 2012/01/04 17:07:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.44 2011/11/26 23:20:41 christos Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.45 2012/01/04 17:07:20 drochner Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -245,7 +245,6 @@ main(int argc, char **argv)
 	}
 
 	opencd();
-	srandom((u_long)time(NULL));
 	da.afd = -1;
 
 	if (argc > 0) {
