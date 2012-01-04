@@ -75,7 +75,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Have ipsec_policy_t */
-#define HAVE_IPSEC_POLICY_T
+/* #undef HAVE_IPSEC_POLICY_T */
 
 /* Hybrid authentication uses PAM */
 /* NetBSD build: -DHAVE_LIBPAM is already supplied on the command line */

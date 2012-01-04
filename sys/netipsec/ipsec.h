@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.29 2011/06/09 19:54:18 drochner Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.30 2012/01/04 15:55:36 drochner Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -44,10 +44,11 @@
 #endif
 
 #include <net/pfkeyv2.h>
-#include <netipsec/ipsec_osdep.h>
 #include <netipsec/keydb.h>
 
 #ifdef _KERNEL
+
+#include <netipsec/ipsec_osdep.h>
 
 /*
  * Security Policy Index
@@ -352,9 +353,9 @@ int ipsec_clear_socket_cache(struct mbuf *m)
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
-void *ipsec_set_policy (char *, int);
-int ipsec_get_policylen (void *);
-char *ipsec_dump_policy (void *, char *);
+char *ipsec_set_policy (const char *, int);
+int ipsec_get_policylen (char *);
+char *ipsec_dump_policy (char *, const char *);
 
 const char *ipsec_strerror (void);
 #endif /* !_KERNEL */
