@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_token.l,v 1.7 2007/07/18 12:07:50 vanhu Exp $	*/
+/*	$NetBSD: policy_token.l,v 1.8 2012/01/04 15:55:35 drochner Exp $	*/
 
 /* Id: policy_token.l,v 1.12 2005/05/05 12:32:18 manubsd Exp */
 
@@ -64,6 +64,7 @@ int yylex __P((void));
 
 %option noyywrap
 %option nounput
+%option noinput
 
 /* common section */
 nl		\n
