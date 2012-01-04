@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1362 2012/01/04 15:54:39 yamt Exp $
+# $NetBSD: mi,v 1.1363 2012/01/04 16:25:15 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -526,6 +526,7 @@
 ./usr/share/man/cat1/tn3270.0			man-obsolete		obsolete
 ./usr/share/man/cat1/top.0			man-util-catman		.cat
 ./usr/share/man/cat1/touch.0			man-util-catman		.cat
+./usr/share/man/cat1/tpfmt.0			man-util-catman		.cat
 ./usr/share/man/cat1/tput.0			man-util-catman		.cat
 ./usr/share/man/cat1/tr.0			man-util-catman		.cat
 ./usr/share/man/cat1/true.0			man-util-catman		.cat
@@ -1648,6 +1649,7 @@
 ./usr/share/man/cat4/tlphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tm121temp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/tp.0			man-sys-catman		.cat
+./usr/share/man/cat4/tprof.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tqphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tra.0			man-sys-catman		.cat
@@ -1846,6 +1848,8 @@
 ./usr/share/man/cat4/x86/mem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/odcm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/powernow.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/tprof_pmi.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/tprof_amdpmi.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/vmt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbdback.0			man-sys-catman		.cat
@@ -2868,6 +2872,7 @@
 ./usr/share/man/cat8/traceroute.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/traceroute6.0		man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/trivial-rewrite.0		man-postfix-catman	postfix,.cat
+./usr/share/man/cat8/tprof.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/trpt.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/trsp.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ttyflags.0			man-sysutil-catman	.cat
@@ -3434,6 +3439,7 @@
 ./usr/share/man/html1/tn3270.html		man-obsolete		obsolete
 ./usr/share/man/html1/top.html			man-util-htmlman	html
 ./usr/share/man/html1/touch.html		man-util-htmlman	html
+./usr/share/man/html1/tpfmt.html		man-util-htmlman	html
 ./usr/share/man/html1/tput.html			man-util-htmlman	html
 ./usr/share/man/html1/tr.html			man-util-htmlman	html
 ./usr/share/man/html1/true.html			man-util-htmlman	html
@@ -4423,6 +4429,7 @@
 ./usr/share/man/html4/tlphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/tm121temp.html		man-sys-htmlman		html
 ./usr/share/man/html4/tp.html			man-sys-htmlman		html
+./usr/share/man/html4/tprof.html		man-sys-htmlman		html
 ./usr/share/man/html4/tqphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/tr.html			man-sys-htmlman		html
 ./usr/share/man/html4/tra.html			man-sys-htmlman		html
@@ -4615,6 +4622,8 @@
 ./usr/share/man/html4/x86/mem.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/odcm.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/powernow.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/tprof_amdpmi.html	man-sys-htmlman		html
+./usr/share/man/html4/x86/tprof_pmi.html	man-sys-htmlman		html
 ./usr/share/man/html4/x86/vmt.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbd.html			man-sys-htmlman		html
 ./usr/share/man/html4/xbdback.html		man-sys-htmlman		html
@@ -5432,6 +5441,7 @@
 ./usr/share/man/html8/traceroute.html		man-netutil-htmlman	html
 ./usr/share/man/html8/traceroute6.html		man-netutil-htmlman	use_inet6,html
 ./usr/share/man/html8/trivial-rewrite.html	man-postfix-htmlman	postfix,html
+./usr/share/man/html8/tprof.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/trpt.html			man-netutil-htmlman	html
 ./usr/share/man/html8/ttyflags.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/tunefs.html		man-sysutil-htmlman	html
@@ -5999,6 +6009,7 @@
 ./usr/share/man/man1/tn3270.1			man-obsolete		obsolete
 ./usr/share/man/man1/top.1			man-util-man		.man
 ./usr/share/man/man1/touch.1			man-util-man		.man
+./usr/share/man/man1/tpfmt.1			man-util-man		.man
 ./usr/share/man/man1/tput.1			man-util-man		.man
 ./usr/share/man/man1/tr.1			man-util-man		.man
 ./usr/share/man/man1/true.1			man-util-man		.man
@@ -7121,6 +7132,7 @@
 ./usr/share/man/man4/tlphy.4			man-sys-man		.man
 ./usr/share/man/man4/tm121temp.4		man-sys-man		.man
 ./usr/share/man/man4/tp.4			man-sys-man		.man
+./usr/share/man/man4/tprof.4			man-sys-man		.man
 ./usr/share/man/man4/tqphy.4			man-sys-man		.man
 ./usr/share/man/man4/tr.4			man-sys-man		.man
 ./usr/share/man/man4/tra.4			man-sys-man		.man
@@ -7319,6 +7331,8 @@
 ./usr/share/man/man4/x86/mem.4			man-sys-man		.man
 ./usr/share/man/man4/x86/odcm.4			man-sys-man		.man
 ./usr/share/man/man4/x86/powernow.4		man-sys-man		.man
+./usr/share/man/man4/x86/tprof_amdpmi.4		man-sys-man		.man
+./usr/share/man/man4/x86/tprof_pmi.4		man-sys-man		.man
 ./usr/share/man/man4/x86/vmt.4			man-sys-man		.man
 ./usr/share/man/man4/xbd.4			man-sys-man		.man
 ./usr/share/man/man4/xbdback.4			man-sys-man		.man
@@ -8341,6 +8355,7 @@
 ./usr/share/man/man8/traceroute.8		man-netutil-man		.man
 ./usr/share/man/man8/traceroute6.8		man-netutil-man		use_inet6,.man
 ./usr/share/man/man8/trivial-rewrite.8		man-postfix-man		postfix,.man
+./usr/share/man/man8/tprof.8			man-sysutil-man		.man
 ./usr/share/man/man8/trpt.8			man-netutil-man		.man
 ./usr/share/man/man8/trsp.8			man-obsolete		obsolete
 ./usr/share/man/man8/ttyflags.8			man-sysutil-man		.man
