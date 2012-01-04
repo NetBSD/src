@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.38.16.1.2.2 2012/01/03 18:27:21 matt Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.38.16.1.2.3 2012/01/04 00:10:40 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.38.16.1.2.2 2012/01/03 18:27:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.38.16.1.2.3 2012/01/04 00:10:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,13 +230,17 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Find companion controllers.  According to the spec they always
 	 * have lower function numbers so they should be enumerated already.
 	 */
+	const u_int maxncomp = EHCI_HCS_N_CC(EREAD4(&sc->sc, EHCI_HCSPARAMS));
+	KASSERT(maxncomp <= EHCI_COMPANION_MAX);
 	ncomp = 0;
 	TAILQ_FOREACH(up, &ehci_pci_alldevs, next) {
-		if (up->bus == pa->pa_bus && up->device == pa->pa_device) {
+		if (up->bus == pa->pa_bus && up->device == pa->pa_device
+		    && !up->claimed) {
 			DPRINTF(("ehci_pci_attach: companion %s\n",
 				 device_xname(up->usb)));
 			sc->sc.sc_comps[ncomp++] = up->usb;
-			if (ncomp >= EHCI_COMPANION_MAX)
+			up->claimed = true;
+			if (ncomp == maxncomp)
 				break;
 		}
 	}
