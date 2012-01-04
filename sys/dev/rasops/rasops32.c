@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.23 2012/01/03 23:15:11 macallan Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.24 2012/01/04 17:01:52 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.23 2012/01/03 23:15:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.24 2012/01/04 17:01:52 macallan Exp $");
 
 #include "opt_rasops.h"
 
@@ -92,9 +92,8 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 #endif
 
 	/* check if character fits into font limits */
-	if (uc < font->firstchar ||
-	    (uc - font->firstchar) >= font->numchars)
-	    return;
+	if (!CHAR_IN_FONT(uc, font))
+		return;
 
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	if (ri->ri_hwbits)
@@ -123,8 +122,7 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fr = WSFONT_GLYPH(uc, font);
 		fs = font->stride;
 
 		while (height--) {
@@ -184,9 +182,8 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 #endif
 
 	/* check if character fits into font limits */
-	if (uc < font->firstchar ||
-	    (uc - font->firstchar) >= font->numchars)
-	    return;
+	if (!CHAR_IN_FONT(uc, font))
+		return;
 
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	if (ri->ri_hwbits)
@@ -215,8 +212,7 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		uc -= font->firstchar;
-		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fr = WSFONT_GLYPH(uc, font);
 		fs = font->stride;
 
 		r0 = (clr[0] >> 16) & 0xff;
