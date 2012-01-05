@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.171 2012/01/01 23:26:22 riz Exp $	*/
+/*	$NetBSD: util.c,v 1.172 2012/01/05 21:29:25 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -967,7 +967,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 	/* Ensure mountpoint for distribution files exists in current root. */
 	(void)mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
-	if (scripting)
+	if (script)
 		(void)fprintf(script, "mkdir -m 755 /mnt2\n");
 
 	/* reset failure/success counters */
@@ -1411,7 +1411,7 @@ scripting_vfprintf(FILE *f, const char *fmt, va_list ap)
 
 	if (f)
 		(void)vfprintf(f, fmt, ap);
-	if (scripting)
+	if (script)
 		(void)vfprintf(script, fmt, ap);
 }
 
