@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.159 2012/01/05 21:29:24 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.160 2012/01/05 22:18:36 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,8 @@
 /* System includes needed for this. */
 #include <sys/types.h>
 #include <sys/disklabel.h>
+
+const char *getfslabelname(uint8_t);
 
 static inline void *
 deconst(const void *p)

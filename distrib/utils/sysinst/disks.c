@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.121 2012/01/05 21:29:24 christos Exp $ */
+/*	$NetBSD: disks.c,v 1.122 2012/01/05 22:18:36 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,6 +46,7 @@
 #include <sys/swap.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+#define FSTYPENAMES
 #include <sys/disklabel.h>
 
 #include <dev/scsipi/scsipi_all.h>
@@ -86,6 +87,14 @@ static void fixsb(const char *, const char *, char);
 #endif
 
 static const char *disk_names[] = { DISK_NAMES, "vnd", NULL };
+
+const char *
+getfslabelname(uint8_t f)
+{
+	if (f >= __arraycount(fstypenames) || fstypenames[f] == NULL)
+		return "invalid";
+	return fstypenames[f];
+}
 
 /* from src/sbin/atactl/atactl.c
  * extract_string: copy a block of bytes out of ataparams and make
@@ -455,7 +464,7 @@ fmt_fspart(menudesc *m, int ptn, void *arg)
 		else
 			desc = "FFSv1";
 	else
-		desc = getfstypename(p->pi_fstype);
+		desc = getfslabelname(p->pi_fstype);
 
 #ifdef PART_BOOT
 	if (ptn == PART_BOOT)
