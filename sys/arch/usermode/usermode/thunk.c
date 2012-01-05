@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.73 2012/01/04 13:31:30 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.74 2012/01/05 12:12:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.73 2012/01/04 13:31:30 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.74 2012/01/05 12:12:58 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -69,6 +69,10 @@ __RCSID("$NetBSD: thunk.c,v 1.73 2012/01/04 13:31:30 reinoud Exp $");
 
 #include "../include/thunk.h"
 
+#ifdef __NetBSD__
+#define SYS_syscallemu	511
+#endif
+
 #ifndef __arraycount
 #define __arraycount(x)	(sizeof((x)) / sizeof((x)[0]))
 #endif
@@ -102,6 +106,19 @@ thunk_printf(const char *fmt, ...)
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	fflush(stderr);
+}
+
+int
+thunk_syscallemu_init(void *ustart, void *uend)
+{
+	int error;
+
+	fprintf(stdout, "%s: syscall(%d, %p, %p)\n", __func__,
+	    SYS_syscallemu, ustart, uend);
+	error = syscall(SYS_syscallemu, (uintptr_t)ustart, (uintptr_t)uend);
+	fprintf(stdout, "%s: returned %d\n", __func__, error);
+
+	return error;
 }
 
 static void
@@ -192,13 +209,6 @@ thunk_to_native_mapflags(int flags)
 		nflags |= MAP_SHARED;
 	if (flags & THUNK_MAP_PRIVATE)
 		nflags |= MAP_PRIVATE;
-#ifndef MAP_NOSYSCALLS
-#define MAP_NOSYSCALLS (1<<16)		/* XXX alias for now XXX */
-#endif
-#ifdef MAP_NOSYSCALLS
-	if (flags & THUNK_MAP_NOSYSCALLS)
-		nflags |= MAP_NOSYSCALLS;
-#endif
 
 	return nflags;
 }
