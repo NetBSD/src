@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.482 2011/11/01 02:04:43 tcort Exp $
+.\"	$NetBSD: main,v 1.483 2012/01/05 05:48:27 ast Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1340,6 +1340,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta T K Spindler Ta Mt dogcow@NetBSD.org
 .It Ta Matthew Sporleder Ta Mt mspo@NetBSD.org
 .It Ta Bill Squier Ta Mt groo@NetBSD.org
+.It Ta Adrian Steinmann Ta Mt ast@NetBSD.org
 .It Ta Bill Studenmund Ta Mt wrstuden@NetBSD.org
 .It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.org
 .It Ta Kimmo Suominen Ta Mt kim@NetBSD.org
