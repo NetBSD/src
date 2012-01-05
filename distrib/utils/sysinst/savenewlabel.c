@@ -1,4 +1,4 @@
-/*	$NetBSD: savenewlabel.c,v 1.7 2009/09/20 22:43:00 abs Exp $	*/
+/*	$NetBSD: savenewlabel.c,v 1.8 2012/01/05 19:43:59 christos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: savenewlabel.c,v 1.7 2009/09/20 22:43:00 abs Exp $");
+__RCSID("$NetBSD: savenewlabel.c,v 1.8 2012/01/05 19:43:59 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -86,14 +86,19 @@ savenewlabel(partinfo *lp, int nparts)
 	    (uint32_t)dlsize);
 	scripting_fprintf(f, "\t:se#%d:%s\\\n", sectorsize, doessf);
 	for (i = 0; i < nparts; i++) {
-		scripting_fprintf(f, "\t:p%c#%" PRIu32 ":o%c#%" PRIu32 ":t%c=%s:",
-		    'a'+i, (uint32_t)bsdlabel[i].pi_size,
-		    'a'+i, (uint32_t)bsdlabel[i].pi_offset,
-		    'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
+		char fstypename[128];
+
+		scripting_fprintf(f, "\t:p%c#%" PRIu32 ":o%c#%" PRIu32
+		    ":t%c=%s:", 'a'+i, (uint32_t)bsdlabel[i].pi_size,
+		    'a'+i, (uint32_t)bsdlabel[i].pi_offset, 'a'+i,
+		    getfstypename(fstypename, sizeof(fstypename),
+		    bsdlabel[i].pi_fstype));
 		if (PI_ISBSDFS(&bsdlabel[i]))
-			scripting_fprintf (f, "b%c#%" PRIu32 ":f%c#%" PRIu32 ":ta=4.2BSD:",
-			   'a'+i, (uint32_t)(bsdlabel[i].pi_fsize * bsdlabel[i].pi_frag),
-			   'a'+i, (uint32_t)bsdlabel[i].pi_fsize);
+			scripting_fprintf (f, "b%c#%" PRIu32 ":f%c#%" PRIu32
+			    ":ta=4.2BSD:", 'a'+i,
+			    (uint32_t)(bsdlabel[i].pi_fsize *
+			    bsdlabel[i].pi_frag),
+			    'a'+i, (uint32_t)bsdlabel[i].pi_fsize);
 	
 		if (i < nparts - 1)
 			scripting_fprintf(f, "\\\n");
