@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.12 2011/12/26 20:26:38 jym Exp $ */
+/* $NetBSD: balloon.c,v 1.13 2012/01/05 18:11:50 jym Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define BALLOONDEBUG 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.12 2011/12/26 20:26:38 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.13 2012/01/05 18:11:50 jym Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -692,7 +692,7 @@ sysctl_kern_xen_balloon_min(SYSCTLFN_ARGS)
 	return 0;
 }
 
-/* Returns the current memory reservation of the domain */
+/* Returns the maximum memory reservation of the domain */
 static int
 sysctl_kern_xen_balloon_max(SYSCTLFN_ARGS)
 {
