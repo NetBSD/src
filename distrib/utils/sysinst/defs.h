@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.157 2012/01/05 20:21:35 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.158 2012/01/05 21:22:49 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -384,8 +384,8 @@ int	config_network(void);
 void	mnt_net_config(void);
 
 /* From run.c */
-int	collect(int, char **, const char *, ...);
-int	run_program(int, const char *, ...);
+int	collect(int, char **, const char *, ...) __printflike(3, 4);
+int	run_program(int, const char *, ...) __printflike(2, 3);
 void	do_logging(void);
 int	do_system(const char *);
 
@@ -416,10 +416,10 @@ int	sanity_check(void);
 int	set_timezone(void);
 int	set_root_password(void);
 int	set_root_shell(void);
-void	scripting_fprintf(FILE *, const char *, ...);
-void	scripting_vfprintf(FILE *, const char *, va_list);
+void	scripting_fprintf(FILE *, const char *, ...) __printflike(2, 3);
+void	scripting_vfprintf(FILE *, const char *, va_list) __printflike(2, 0);
 void	add_rc_conf(const char *, ...);
-void	add_sysctl_conf(const char *, ...);
+void	add_sysctl_conf(const char *, ...) __printflike(1, 2);
 void	enable_rc_conf(void);
 void	set_sizemultname_cyl(void);
 void	set_sizemultname_meg(void);
@@ -437,7 +437,8 @@ const	char *target_expand(const char *);
 void	make_target_dir(const char *);
 void	append_to_target_file(const char *, const char *);
 void	echo_to_target_file(const char *, const char *);
-void	sprintf_to_target_file(const char *, const char *, ...);
+void	sprintf_to_target_file(const char *, const char *, ...)
+    __printflike(2, 3);
 void	trunc_target_file(const char *);
 const	char *target_prefix(void);
 int	target_chdir(const char *);

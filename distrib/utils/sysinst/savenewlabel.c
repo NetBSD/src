@@ -1,4 +1,4 @@
-/*	$NetBSD: savenewlabel.c,v 1.9 2012/01/05 20:21:35 christos Exp $	*/
+/*	$NetBSD: savenewlabel.c,v 1.10 2012/01/05 21:22:49 christos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: savenewlabel.c,v 1.9 2012/01/05 20:21:35 christos Exp $");
+__RCSID("$NetBSD: savenewlabel.c,v 1.10 2012/01/05 21:22:49 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -76,7 +76,7 @@ savenewlabel(partinfo *lp, int nparts)
 		(void)fprintf(stderr, "Could not open /etc/disktab");
 		if (logging)
 			(void)fprintf(logfp,
-			    "Failed to open /etc/diskabel for appending.\n");
+			    "Failed to open /etc/disktab for appending.\n");
 		exit (1);
 	}
 	scripting_fprintf(f, "%s|NetBSD installation generated:\\\n", bsddiskname);
@@ -85,6 +85,11 @@ savenewlabel(partinfo *lp, int nparts)
 	scripting_fprintf(f, "\t:sc#%d:su#%" PRIu32 ":\\\n", dlhead*dlsec,
 	    (uint32_t)dlsize);
 	scripting_fprintf(f, "\t:se#%d:%s\\\n", sectorsize, doessf);
+	if ((size_t)nparts > __arraycount(bsdlabel)) {
+		nparts = __arraycount(bsdlabel);
+		if (logging)
+			(void)fprintf(logfp, "nparts limited to %d.\n", nparts);
+	}
 	for (i = 0; i < nparts; i++) {
 		scripting_fprintf(f, "\t:p%c#%" PRIu32 ":o%c#%" PRIu32
 		    ":t%c=%s:", 'a'+i, (uint32_t)bsdlabel[i].pi_size,
