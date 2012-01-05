@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2012/01/05 17:18:02 reinoud Exp $	*/
+/*	$NetBSD: syscall.c,v 1.8 2012/01/05 17:26:57 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2012/01/05 17:18:02 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2012/01/05 17:26:57 reinoud Exp $");
 
 #include "opt_sa.h"
 
@@ -106,7 +106,6 @@ syscall(struct trapframe *frame)
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
-	struct vm_map *map;
 	int error;
 	register_t code, rval[2], rip_call;
 #ifdef __x86_64__
