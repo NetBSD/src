@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.119 2012/01/05 20:21:35 christos Exp $ */
+/*	$NetBSD: disks.c,v 1.120 2012/01/05 21:22:49 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -668,7 +668,7 @@ make_fstab(void)
 #endif
 	}
 
-	scripting_fprintf(f, "# NetBSD /etc/fstab\n# See /usr/share/examples/"
+	scripting_fprintf(f, "# NetBSD %s/etc/fstab\n# See /usr/share/examples/"
 		"fstab/ for more examples.\n", target_prefix());
 	for (i = 0; i < getmaxpartitions(); i++) {
 		const char *s = "";
