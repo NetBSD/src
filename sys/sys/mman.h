@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.43 2011/12/20 15:39:35 reinoud Exp $	*/
+/*	$NetBSD: mman.h,v 1.44 2012/01/05 15:19:52 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -96,14 +96,6 @@ typedef	__off_t		off_t;		/* file offset */
 #define	MAP_FILE	0x0000	/* map from file (default) */
 #define	MAP_ANON	0x1000	/* allocated from memory, swap space */
 #define	MAP_STACK	0x2000	/* allocated from memory, swap space (stack) */
-
-/*
- * Map attributes 0x00010000 till 0x00ff0000
- */
-#define MAP_ATTR(n)		((n) << MAP_ATTRIB_SHIFT)
-#define MAP_ATTRIB_SHIFT	16
-#define MAP_ATTRIB_MASK		MAP_ATTR(0xff)
-#define MAP_NOSYSCALLS		MAP_ATTR(0x01) /* no syscalls allowed */
 
 /*
  * Alignment (expressed in log2).  Must be >= log2(PAGE_SIZE) and
