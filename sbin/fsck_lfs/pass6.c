@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.23 2010/02/16 23:20:30 mlelstv Exp $	 */
+/* $NetBSD: pass6.c,v 1.24 2012/01/05 16:18:00 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 			ip->i_ffs1_blocks += frags;
 		else {
 			/* possible fragment truncation or extension */
-			ofrags = ip->i_lfs_fragsize[lbn];
+			ofrags = numfrags(fs, ip->i_lfs_fragsize[lbn]);
 			ip->i_ffs1_blocks += (frags - ofrags);
 		}
 		ip->i_ffs1_db[lbn] = ndaddr;
