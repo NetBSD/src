@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 2011/11/04 11:27:03 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.20 2012/01/05 21:32:36 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,14 +71,14 @@ md_get_info(void)
 
 	fd = open(dev_name, O_RDONLY, 0);
 	if (fd < 0) {
-		if (logging)
+		if (logfp)
 			(void)fprintf(logfp, "Can't open %s\n", dev_name);
 		endwin();
 		fprintf(stderr, "Can't open %s\n", dev_name);
 		exit(1);
 	}
 	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
-		if (logging)
+		if (logfp)
 			(void)fprintf(logfp, "Can't read disklabel on %s.\n",
 				dev_name);
 		endwin();
