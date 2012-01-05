@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.123 2012/01/02 23:53:07 snj Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.124 2012/01/05 09:48:49 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5851,3 +5851,8 @@ xsrc/xfree/xc/programs/Xserver/mi/misprite.c	1.2
 	CVE-2010-1166.
 	[is, ticket #1707]
 
+sys/net/if.c					1.246
+	PR/44030: ifreqn2o gets called with the parameters the wrong way
+	around. Reverts fix for PR 42585 (ticket #1416) as the root cause
+	of the crash is addressed by PR 44054 (pullup #1541).
+	[obache, ticket #1708]
