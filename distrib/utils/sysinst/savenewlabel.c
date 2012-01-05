@@ -1,4 +1,4 @@
-/*	$NetBSD: savenewlabel.c,v 1.10 2012/01/05 21:22:49 christos Exp $	*/
+/*	$NetBSD: savenewlabel.c,v 1.11 2012/01/05 21:29:25 christos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: savenewlabel.c,v 1.10 2012/01/05 21:22:49 christos Exp $");
+__RCSID("$NetBSD: savenewlabel.c,v 1.11 2012/01/05 21:29:25 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,13 +68,13 @@ savenewlabel(partinfo *lp, int nparts)
 
 	/* Create /etc/disktab */
 	f = fopen("/tmp/disktab", "w");
-	if (logging)
+	if (logfp)
 		(void)fprintf(logfp, "Creating disklabel %s\n", bsddiskname);
 	scripting_fprintf(NULL, "cat <<EOF >>/etc/disktab\n");
 	if (f == NULL) {
 		endwin();
 		(void)fprintf(stderr, "Could not open /etc/disktab");
-		if (logging)
+		if (logfp)
 			(void)fprintf(logfp,
 			    "Failed to open /etc/disktab for appending.\n");
 		exit (1);
@@ -87,7 +87,7 @@ savenewlabel(partinfo *lp, int nparts)
 	scripting_fprintf(f, "\t:se#%d:%s\\\n", sectorsize, doessf);
 	if ((size_t)nparts > __arraycount(bsdlabel)) {
 		nparts = __arraycount(bsdlabel);
-		if (logging)
+		if (logfp)
 			(void)fprintf(logfp, "nparts limited to %d.\n", nparts);
 	}
 	for (i = 0; i < nparts; i++) {
