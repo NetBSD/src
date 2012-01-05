@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.27 2011/12/31 21:24:07 christos Exp $
+# $NetBSD: Makefile.usermode,v 1.28 2012/01/05 12:12:58 jmcneill Exp $
 
 OPT_CPU_HOST=			%CPU_HOST%
 .if !empty(OPT_CPU_HOST)
@@ -35,6 +35,7 @@ CPPFLAGS+=-D__NetBSD__ -Wno-unused-but-set-variable
 
 DEFCOPTS=	-fno-omit-frame-pointer
 CPPFLAGS+=	-Dusermode
+CPPFLAGS+=	-Dsyscall=kernel_syscall
 CPPFLAGS.init_main.c+=	-Dmain=kernmain
 
 CPPFLAGS.thunk.c+=	${USERMODE_CPPFLAGS}

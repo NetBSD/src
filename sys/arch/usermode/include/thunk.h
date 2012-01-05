@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.55 2012/01/03 12:05:01 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.56 2012/01/05 12:12:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -61,7 +61,6 @@ struct thunk_termios {
 #define THUNK_MAP_FILE		0x0004
 #define THUNK_MAP_SHARED	0x0010
 #define THUNK_MAP_PRIVATE	0x0020
-#define THUNK_MAP_NOSYSCALLS	0x0040
 
 #define THUNK_PROT_NONE		0x00
 #define THUNK_PROT_READ		0x01
@@ -72,6 +71,8 @@ struct aiocb;
 
 void	thunk_printf_debug(const char *fmt, ...) __attribute__((__format__(__printf__, 1, 2)));
 void	thunk_printf(const char *fmt, ...) __attribute__((__format__(__printf__, 1, 2)));
+
+int	thunk_syscallemu_init(void *, void *);
 
 int	thunk_setitimer(int, const struct thunk_itimerval *, struct thunk_itimerval *);
 int	thunk_gettimeofday(struct thunk_timeval *, void *);
