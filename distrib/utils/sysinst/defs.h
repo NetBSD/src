@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.158 2012/01/05 21:22:49 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.159 2012/01/05 21:29:24 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -231,8 +231,6 @@ const char *multname;
 
 /* loging variables */
 
-int logging;
-int scripting;
 FILE *logfp;
 FILE *script;
 
