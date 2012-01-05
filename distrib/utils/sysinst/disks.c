@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.118 2012/01/05 19:43:59 christos Exp $ */
+/*	$NetBSD: disks.c,v 1.119 2012/01/05 20:21:35 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,6 @@
 #include <sys/swap.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
-#define FSTYPENAMES
 #include <sys/disklabel.h>
 
 #include <dev/scsipi/scsipi_all.h>
@@ -87,18 +86,6 @@ static void fixsb(const char *, const char *, char);
 #endif
 
 static const char *disk_names[] = { DISK_NAMES, "vnd", NULL };
-
-const char *
-getfstypename(char *buf, size_t len, uint8_t fstype)
-{
-	
-	if (fstype >= __arraycount(fstypenames) ||
-	    fstypenames[fstype] == NULL)
-		snprintf(buf, len, "*unknown*%" PRIu8 "*", fstype);
-	else
-		strlcpy(buf, fstypenames[fstype], len);
-	return buf;
-}
 
 /* from src/sbin/atactl/atactl.c
  * extract_string: copy a block of bytes out of ataparams and make
@@ -447,7 +434,6 @@ fmt_fspart(menudesc *m, int ptn, void *arg)
 {
 	unsigned int poffset, psize, pend;
 	const char *desc;
-	char buf[128];
 	static const char *Yes, *No;
 	partinfo *p = bsdlabel + ptn;
 
@@ -469,7 +455,7 @@ fmt_fspart(menudesc *m, int ptn, void *arg)
 		else
 			desc = "FFSv1";
 	else
-		desc = getfstypename(buf, sizeof(buf), p->pi_fstype);
+		desc = getfstypename(p->pi_fstype);
 
 #ifdef PART_BOOT
 	if (ptn == PART_BOOT)
