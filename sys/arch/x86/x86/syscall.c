@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6 2011/12/20 15:41:50 reinoud Exp $	*/
+/*	$NetBSD: syscall.c,v 1.7 2012/01/05 17:18:02 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2011/12/20 15:41:50 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2012/01/05 17:18:02 reinoud Exp $");
 
 #include "opt_sa.h"
 
@@ -128,32 +128,6 @@ syscall(struct trapframe *frame)
 	 * size in tf_err on entry.
 	 */
 	rip_call = X86_TF_RIP(frame) - frame->tf_err;
-
-	/* are we allowed to execute system calls in this memory space? */
-	if (p->p_flag & PK_CHKNOSYSCALL) {
-		map = &(p->p_vmspace->vm_map);
-		vm_map_lock(map);
-
-		if (uvm_map_checkattr(map, rip_call, rip_call + frame->tf_err,
-					MAP_NOSYSCALLS)) {
-			ksiginfo_t ksi;
-
-			vm_map_unlock(map);
-			X86_TF_RIP(frame) = rip_call;
-
-			/* treat as illegal instruction */
-			KSI_INIT_TRAP(&ksi);
-			ksi.ksi_signo = SIGILL;
-			ksi.ksi_code = ILL_ILLTRP;
-			ksi.ksi_addr = (void *) X86_TF_RIP(frame);
-			ksi.ksi_trap = 0; /* XXX ? */
-			trapsignal(l, &ksi);
-			userret(l);
-			return;
-		}
-
-		vm_map_unlock(map);
-	}
 
 	code = X86_TF_RAX(frame) & (SYS_NSYSENT - 1);
 	callp = p->p_emul->e_sysent + code;
