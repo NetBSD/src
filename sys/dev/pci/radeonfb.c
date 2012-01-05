@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.50 2012/01/04 15:56:18 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.51 2012/01/05 21:40:03 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.50 2012/01/04 15:56:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.51 2012/01/05 21:40:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2556,8 +2556,10 @@ radeonfb_putchar_aa32(void *cookie, int row, int col, u_int c, long attr)
 	 * could process them, especially when doing the alpha blending stuff
 	 * along the way, so just make sure there's some room in the FIFO and
 	 * then hammer away
+	 * As it turns out we can, so make periodic stops to let the FIFO
+	 * drain.
 	 */
-	radeonfb_wait_fifo(sc, 10);
+	radeonfb_wait_fifo(sc, 20);
 	for (i = 0; i < ri->ri_fontscale; i++) {
 		aval = *data;
 		data++;
@@ -2573,6 +2575,8 @@ radeonfb_putchar_aa32(void *cookie, int row, int col, u_int c, long attr)
 			        (g & 0xff00) |
 			        (b & 0xff00) >> 8;
 		}
+		if (i & 16)
+			radeonfb_wait_fifo(sc, 20);
 		PUT32(sc, RADEON_HOST_DATA0, pixel);
 	}
 }
