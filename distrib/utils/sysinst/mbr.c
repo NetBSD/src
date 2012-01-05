@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.88 2011/10/17 16:35:22 mbalmer Exp $ */
+/*	$NetBSD: mbr.c,v 1.89 2012/01/05 21:29:24 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1287,7 +1287,7 @@ edit_mbr(mbr_info_t *mbri)
 			msg_display(MSG_ovrwrite);
 			process_menu(MENU_noyes, NULL);
 			if (!yesno) {
-				if (logging)
+				if (logfp)
 					(void)fprintf(logfp, "User answered no to destroy other data, aborting.\n");
 				return 0;
 			}

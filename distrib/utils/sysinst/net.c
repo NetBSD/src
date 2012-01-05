@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.127 2011/04/04 08:30:13 mbalmer Exp $	*/
+/*	$NetBSD: net.c,v 1.128 2012/01/05 21:29:24 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -241,7 +241,7 @@ get_ifconfig_info(void)
 
 	textsize = collect(T_OUTPUT, &textbuf, "/sbin/ifconfig -a 2>/dev/null");
 	if (textsize < 0) {
-		if (logging)
+		if (logfp)
 			(void)fprintf(logfp,
 			    "Aborting: Could not run ifconfig.\n");
 		(void)fprintf(stderr, "Could not run ifconfig.");
@@ -820,7 +820,7 @@ done:
 		) {
 		f = fopen("/etc/resolv.conf", "w");
 		if (f == NULL) {
-			if (logging)
+			if (logfp)
 				(void)fprintf(logfp,
 				    "%s", msg_string(MSG_resolv));
 			(void)fprintf(stderr, "%s", msg_string(MSG_resolv));

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.61 2011/09/16 15:42:28 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.62 2012/01/05 21:29:24 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,8 +60,6 @@ static void cleanup(void);
 static void process_f_flag(char *);
 
 static int exit_cleanly = 0;	/* Did we finish nicely? */
-int logging;			/* are we logging everything? */
-int scripting;			/* are we building a script? */
 FILE *logfp;			/* log file */
 FILE *script;			/* script file */
 
@@ -126,13 +124,10 @@ main(int argc, char **argv)
 	WINDOW *win;
 	int ch;
 
-	logging = 0; /* shut them off unless turned on by the user */
 	init();
 #ifdef DEBUG
 	log_flip();
 #endif
-	scripting = 0;
-
 	/* Check for TERM ... */
 	if (!getenv("TERM")) {
 		(void)fprintf(stderr,
@@ -407,16 +402,18 @@ cleanup(void)
 
 	endwin();
 
-	if (logging) {
+	if (logfp) {
 		fprintf(logfp, "Log ended at: %s\n", asctime(localtime(&tloc)));
 		fflush(logfp);
 		fclose(logfp);
+		logfp = NULL;
 	}
-	if (scripting) {
+	if (script) {
 		fprintf(script, "# Script ended at: %s\n",
 		    asctime(localtime(&tloc)));
 		fflush(script);
 		fclose(script);
+		script = NULL;
 	}
 
 	if (!exit_cleanly)
