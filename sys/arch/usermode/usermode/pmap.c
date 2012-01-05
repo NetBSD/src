@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.96 2012/01/04 16:20:41 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.97 2012/01/05 12:12:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2012/01/04 16:20:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2012/01/05 12:12:58 jmcneill Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -399,6 +399,11 @@ pmap_bootstrap(void)
 	    atop(free_end), 
 	    VM_FREELIST_DEFAULT);
 
+	/* setup syscall emulation */
+	if (thunk_syscallemu_init((void *)VM_MIN_ADDRESS,
+	    (void *)VM_MAXUSER_ADDRESS) != 0)
+		panic("couldn't enable syscall emulation");
+
 	aprint_verbose("leaving pmap_bootstrap:\n");
 	aprint_verbose("\t%"PRIu64" MB of physical pages left\n",
 		(uint64_t) (free_end - (free_start + fpos))/1024/1024);
@@ -735,8 +740,6 @@ pmap_page_activate(struct pv_entry *pv)
 	void *addr;
 
 	map_flags = THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED;
-	if ((va >= VM_MIN_ADDRESS) && (va < VM_MAXUSER_ADDRESS)) 
-		map_flags |= THUNK_MAP_NOSYSCALLS;
 
 	addr = thunk_mmap((void *) va, PAGE_SIZE, pv->pv_mmap_ppl,
 		map_flags, mem_fh, pa);
