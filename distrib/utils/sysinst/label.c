@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.59 2012/01/05 20:21:35 christos Exp $	*/
+/*	$NetBSD: label.c,v 1.60 2012/01/05 20:22:33 christos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.59 2012/01/05 20:21:35 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.60 2012/01/05 20:22:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -387,7 +387,6 @@ edit_ptn(menudesc *menu, void *arg)
 
 	if (all_fstype_menu == -1) {
 		for (i = 0; i < nelem(all_fstypes); i++) {
-			char buf[128];
 			all_fstypes[i].opt_name = getfstypename(i);
 			all_fstypes[i].opt_menu = OPT_NOMENU;
 			all_fstypes[i].opt_flags = 0;
