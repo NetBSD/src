@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.52 2009/09/19 14:57:27 abs Exp $	*/
+/*	$NetBSD: target.c,v 1.53 2012/01/05 21:22:49 christos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.52 2009/09/19 14:57:27 abs Exp $");
+__RCSID("$NetBSD: target.c,v 1.53 2012/01/05 21:22:49 christos Exp $");
 #endif
 
 /*
@@ -465,7 +465,7 @@ target_collect_file(int kind, char **buffer, const char *name)
 #ifdef	DEBUG
 	printf("collect real name %s\n", realname);
 #endif
-	return collect(kind, buffer, realname);
+	return collect(kind, buffer, "%s", realname);
 }
 
 /*
