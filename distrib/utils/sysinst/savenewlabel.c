@@ -1,4 +1,4 @@
-/*	$NetBSD: savenewlabel.c,v 1.11 2012/01/05 21:29:25 christos Exp $	*/
+/*	$NetBSD: savenewlabel.c,v 1.12 2012/01/05 22:18:36 christos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: savenewlabel.c,v 1.11 2012/01/05 21:29:25 christos Exp $");
+__RCSID("$NetBSD: savenewlabel.c,v 1.12 2012/01/05 22:18:36 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -94,10 +94,10 @@ savenewlabel(partinfo *lp, int nparts)
 		scripting_fprintf(f, "\t:p%c#%" PRIu32 ":o%c#%" PRIu32
 		    ":t%c=%s:", 'a'+i, (uint32_t)bsdlabel[i].pi_size,
 		    'a'+i, (uint32_t)bsdlabel[i].pi_offset, 'a'+i,
-		    getfstypename(bsdlabel[i].pi_fstype));
+		    getfslabelname(bsdlabel[i].pi_fstype));
 		if (PI_ISBSDFS(&bsdlabel[i]))
 			scripting_fprintf (f, "b%c#%" PRIu32 ":f%c#%" PRIu32
-			    ":ta=4.2BSD:", 'a'+i,
+			    ":", 'a'+i,
 			    (uint32_t)(bsdlabel[i].pi_fsize *
 			    bsdlabel[i].pi_frag),
 			    'a'+i, (uint32_t)bsdlabel[i].pi_fsize);
