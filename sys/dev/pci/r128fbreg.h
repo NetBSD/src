@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fbreg.h,v 1.4 2011/12/28 09:27:18 macallan Exp $	*/
+/*	$NetBSD: r128fbreg.h,v 1.5 2012/01/06 13:59:50 macallan Exp $	*/
 
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
@@ -313,6 +313,12 @@
 #       define R128_CRTC_DBL_SCAN_EN      (1 <<  0)
 #       define R128_CRTC_INTERLACE_EN     (1 <<  1)
 #       define R128_CRTC_CSYNC_EN         (1 <<  4)
+#	define R128_CRTC_PIX_WIDTH	  (7 <<  8)
+#	define R128_CRTC_COLOR_8BIT	  (2 <<  8)
+#	define R128_CRTC_COLOR_15BIT	  (3 <<  8)
+#	define R128_CRTC_COLOR_16BIT	  (4 <<  8)
+#	define R128_CRTC_COLOR_24BIT	  (5 <<  8)
+#	define R128_CRTC_COLOR_32BIT	  (6 <<  8)
 #       define R128_CRTC_CUR_EN           (1 << 16)
 #       define R128_CRTC_CUR_MODE_MASK    (7 << 17)
 #       define R128_CRTC_ICON_EN          (1 << 20)
