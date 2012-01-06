@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.23 2007/02/18 17:00:08 dsl Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.24 2012/01/06 14:08:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.23 2007/02/18 17:00:08 dsl Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.24 2012/01/06 14:08:08 drochner Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -96,16 +96,6 @@ struct command	ip6_commands[] = {
 	{ "run",	ip6_run,	"show running total stats"},
 	{ "time",	ip6_time,	"show stats for each sample time"},
 	{ "zero",	ip6_zero,	"re-zero running totals"},
-	{ .c_name = NULL }
-};
-#endif
-
-#ifdef IPSEC
-struct command	ipsec_commands[] = {
-	{ "boot",	ipsec_boot,	"show total stats since boot"},
-	{ "run",	ipsec_run,	"show running total stats"},
-	{ "time",	ipsec_time,	"show stats for each sample time"},
-	{ "zero",	ipsec_zero,	"re-zero running totals"},
 	{ .c_name = NULL }
 };
 #endif
@@ -184,11 +174,6 @@ struct mode modes[] = {
 #ifdef INET6
 	{ "inet6.ip6",	showip6,	fetchip6,	labelip6,
 	  initip6,	openip6,	closeip6,	ip6_commands,
-	  CF_LOADAV },
-#endif
-#ifdef IPSEC
-	{ "ipsec",	showipsec,	fetchipsec,	labelipsec,
-	  initipsec,	openipsec,	closeipsec,	ipsec_commands,
 	  CF_LOADAV },
 #endif
 	{ "iostat",	showiostat,	fetchiostat,	labeliostat,
