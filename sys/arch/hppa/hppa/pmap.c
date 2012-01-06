@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.89 2012/01/06 07:59:07 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.90 2012/01/06 08:03:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2012/01/06 07:59:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2012/01/06 08:03:16 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -595,11 +595,13 @@ pmap_pv_remove(struct vm_page *pg, pmap_t pmap, vaddr_t va)
 	KASSERT(pmap == pmap_kernel() || uvm_page_locked_p(pg));
 
 	for (pv = *(pve = &md->pvh_list);
-	    pv; pv = *(pve = &(*pve)->pv_next))
+	    pv; pv = *(pve = &(*pve)->pv_next)) {
 		if (pv->pv_pmap == pmap && (pv->pv_va & PV_VAMASK) == va) {
 			*pve = pv->pv_next;
 			break;
 		}
+	}
+
 	return (pv);
 }
 
