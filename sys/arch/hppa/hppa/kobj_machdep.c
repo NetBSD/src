@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.6 2011/12/13 12:55:50 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.7 2012/01/06 09:09:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.6 2011/12/13 12:55:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7 2012/01/06 09:09:25 skrll Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -215,8 +215,10 @@ int
 kobj_machdep(kobj_t ko, void *base, size_t size, bool load)
 {
 
-	if (load)
+	if (load) {
 		fdcache(HPPA_SID_KERNEL, (vaddr_t)base, size);
+		ficache(HPPA_SID_KERNEL, (vaddr_t)base, size);
+	}
 
 	return 0;
 }
