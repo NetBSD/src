@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.21 2012/01/03 19:02:55 christos Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.22 2012/01/06 14:04:02 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.21 2012/01/03 19:02:55 christos Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.22 2012/01/06 14:04:02 drochner Exp $");
 #endif
 
 #include <sys/param.h>
@@ -184,11 +184,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	if (pwd->pw_dir == NULL)
 		return (PAM_AUTH_ERR);
 
-	/* switch to user credentials */
-	pam_err = openpam_borrow_cred(pamh, pwd);
-	if (pam_err != PAM_SUCCESS)
-		return (pam_err);
-
 	nkeys = 0;
 	pass = (pam_get_item(pamh, PAM_AUTHTOK, &item) == PAM_SUCCESS &&
 	    item != NULL);
@@ -196,10 +191,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	/* get passphrase */
 	pam_err = pam_get_authtok(pamh, PAM_AUTHTOK,
 	    &passphrase, pam_ssh_prompt);
-	if (pam_err != PAM_SUCCESS) {
-		openpam_restore_cred(pamh);
+	if (pam_err != PAM_SUCCESS)
 		return (pam_err);
-	}
+
+	/* switch to user credentials */
+	pam_err = openpam_borrow_cred(pamh, pwd);
+	if (pam_err != PAM_SUCCESS)
+		return (pam_err);
 
 	/* try to load keys from all keyfiles we know of */
 	for (kfn = pam_ssh_keyfiles; *kfn != NULL; ++kfn) {
@@ -209,6 +207,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 			++nkeys;
 		}
 	}
+
+	/* switch back to arbitrator credentials */
+	openpam_restore_cred(pamh);
 
 	/*
 	 * If we tried an old token and didn't get anything, and
@@ -221,9 +222,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 		pass = 0;
 		goto load_keys;
 	}
-
-	/* switch back to arbitrator credentials before returning */
-	openpam_restore_cred(pamh);
 
 	/* no keys? */
 	if (nkeys == 0)
