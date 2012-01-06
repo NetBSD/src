@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.74 2012/01/05 12:12:58 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.75 2012/01/06 14:11:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.74 2012/01/05 12:12:58 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.75 2012/01/06 14:11:55 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -461,7 +461,7 @@ thunk_open(const char *path, int flags, mode_t mode)
 }
 
 int
-thunk_fstat_getsize(int fd, ssize_t *size, ssize_t *blksize)
+thunk_fstat_getsize(int fd, off_t *size, ssize_t *blksize)
 {
 	struct stat st;
 	int error;
