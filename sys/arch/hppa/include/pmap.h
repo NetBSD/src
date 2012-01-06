@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.33 2011/12/23 16:35:00 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34 2012/01/06 09:11:45 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -104,9 +104,7 @@ static inline paddr_t hppa_unmap_poolpage(vaddr_t va)
 
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || \
     defined(HP8500_CPU) || defined(HP8600_CPU)
-	ficache(HPPA_SID_KERNEL, va, PAGE_SIZE);
 	pdtlb(HPPA_SID_KERNEL, va);
-	pitlb(HPPA_SID_KERNEL, va);
 #endif
 
 	return (paddr_t)va;
