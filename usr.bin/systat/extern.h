@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.41 2011/09/06 18:31:44 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.42 2012/01/06 14:08:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -220,17 +220,4 @@ void	 ip6_boot(char *);
 void	 ip6_run(char *);
 void	 ip6_time(char *);
 void	 ip6_zero(char *);
-#endif
-
-#ifdef IPSEC
-void	 closeipsec(WINDOW *);
-void	 fetchipsec(void);
-int	 initipsec(void);
-void	 labelipsec(void);
-WINDOW	*openipsec(void);
-void	 showipsec(void);
-void	 ipsec_boot(char *);
-void	 ipsec_run(char *);
-void	 ipsec_time(char *);
-void	 ipsec_zero(char *);
 #endif
