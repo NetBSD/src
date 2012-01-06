@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.25 2012/01/03 12:05:01 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.26 2012/01/06 14:11:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.25 2012/01/03 12:05:01 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.26 2012/01/06 14:11:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -90,7 +90,8 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	struct ld_softc *ld = &sc->sc_ld;
 	struct thunkbus_attach_args *taa = opaque;
 	const char *path = taa->u.diskimage.path;
-	ssize_t size, blksize;
+	ssize_t blksize;
+	off_t size;
 
 	ld->sc_dv = self;
 
