@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 2012/01/06 08:36:10 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.94 2012/01/06 08:38:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2012/01/06 08:36:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2012/01/06 08:38:11 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -945,9 +945,9 @@ pmap_bootstrap(vaddr_t vstart)
 
 	availphysmem = 0;
 
-	pmap_page_physload(resvmem, atop(ksrx));	
-	pmap_page_physload(atop(kero), atop(ksrw));	
-	pmap_page_physload(atop(kerw), physmem);	
+	pmap_page_physload(resvmem, atop(ksrx));
+	pmap_page_physload(atop(kero), atop(ksrw));
+	pmap_page_physload(atop(kerw), physmem);
 
 	mutex_init(&pmaps_lock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -1113,7 +1113,7 @@ pmap_destroy(pmap_t pmap)
 
 		KASSERT(pg != pmap->pm_pdir_pg);
 		pa = VM_PAGE_TO_PHYS(pg);
-		
+
 		DPRINTF(PDB_FOLLOW, ("%s(%p): stray ptp "
 		    "0x%lx w/ %d ents:", __func__, pmap, pa,
 		    pg->wire_count - 1));
@@ -1381,7 +1381,7 @@ pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				    VM_PAGE_TO_MD(pg);
 				md->pvh_attrs |= pmap_pvh_attrs(pte);
 			}
-			
+
 			pmap_pte_flush(pmap, sva, pte);
 			pte &= ~PTE_PROT(TLB_AR_MASK);
 			pte |= pteprot;
@@ -1809,7 +1809,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 
 		pmap_pte_flush(pmap, va, pte);
 		pmap_pte_set(pde, va, 0);
-		
+
 		pg = pmap_initialized ? PHYS_TO_VM_PAGE(PTE_PAGE(pte)) : NULL;
 		if (pg != NULL) {
 			pve = pmap_pv_remove(pg, pmap, va);
