@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsbase.h,v 1.9 1998/09/14 18:36:07 tv Exp $	*/
+/*	$NetBSD: rcsbase.h,v 1.10 2012/01/06 15:16:03 joerg Exp $	*/
 
 /* RCS common definitions and data structures */
 
@@ -33,6 +33,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsbase.h,v $
+ * Revision 1.10  2012/01/06 15:16:03  joerg
+ * Don't use dangling elses.
+ *
  * Revision 1.9  1998/09/14 18:36:07  tv
  * Increase "keylength" to 32, inspired by <prlw1@newn.cam.ac.uk> in PR
  * bin/5415.  This will not be a significant performance hit, but allows
@@ -283,14 +286,14 @@ Report problems and direct all questions to:
 #	if maps_memory
 #		define declarecache register Iptr_type ptr, lim
 #		define setupcache(f) (lim = (f)->lim)
-#		define Igeteof_(f,c,s) if ((f)->ptr==(f)->lim) s else (c)= *(f)->ptr++;
-#		define cachegeteof_(c,s) if (ptr==lim) s else (c)= *ptr++;
+#		define Igeteof_(f,c,s) do { if ((f)->ptr==(f)->lim) s else (c)= *(f)->ptr++; } while(0);
+#		define cachegeteof_(c,s) do { if (ptr==lim) s else (c)= *ptr++; } while(0);
 #	else
 		int Igetmore P((RILE*));
 #		define declarecache register Iptr_type ptr; register RILE *rRILE
 #		define setupcache(f) (rRILE = (f))
-#		define Igeteof_(f,c,s) if ((f)->ptr==(f)->readlim && !Igetmore(f)) s else (c)= *(f)->ptr++;
-#		define cachegeteof_(c,s) if (ptr==rRILE->readlim && !Igetmore(rRILE)) s else (c)= *ptr++;
+#		define Igeteof_(f,c,s) do { if ((f)->ptr==(f)->readlim && !Igetmore(f)) s else (c)= *(f)->ptr++; } while (0);
+#		define cachegeteof_(c,s) do { if (ptr==rRILE->readlim && !Igetmore(rRILE)) s else (c)= *ptr++; } } while (0);
 #	endif
 #	define uncache(f) ((f)->ptr = ptr)
 #	define cache(f) (ptr = (f)->ptr)

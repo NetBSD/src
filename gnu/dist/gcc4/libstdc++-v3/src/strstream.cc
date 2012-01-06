@@ -311,10 +311,12 @@ namespace std
   strstreambuf::_M_free(char* p)
   {
     if (p)
+    {
       if (_M_free_fun)
 	_M_free_fun(p);
       else
 	delete[] p;
+    }
   }
 
   void 
