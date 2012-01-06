@@ -1,4 +1,4 @@
-/* $NetBSD: syscallemu_i386.c,v 1.1 2012/01/05 13:26:51 jmcneill Exp $ */
+/* $NetBSD: syscallemu_x86.c,v 1.1 2012/01/06 13:16:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscallemu_i386.c,v 1.1 2012/01/05 13:26:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscallemu_x86.c,v 1.1 2012/01/06 13:16:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscallemu_i386.c,v 1.1 2012/01/05 13:26:51 jmcneill
  * to the original syscall handler.
  */
 static void
-i386_syscall_emu(struct trapframe *frame)
+x86_syscall_emu(struct trapframe *frame)
 {
 	void (*md_syscall)(struct trapframe *) = NULL;
 	struct syscallemu_data *sce;
@@ -101,7 +101,7 @@ md_syscallemu(struct proc *p)
 	void *osyscall;
 
 	osyscall = p->p_md.md_syscall;
-	p->p_md.md_syscall = i386_syscall_emu;
+	p->p_md.md_syscall = x86_syscall_emu;
 
 	return osyscall;
 }
