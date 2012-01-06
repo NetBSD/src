@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.95 2012/01/06 08:48:43 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.96 2012/01/06 08:54:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2012/01/06 08:48:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2012/01/06 08:54:05 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -1317,7 +1317,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 			if (pmap_initialized &&
 			    (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte)))) {
-				struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+				struct vm_page_md * const md =
+				    VM_PAGE_TO_MD(pg);
 
 				pve = pmap_pv_remove(pg, pmap, sva);
 				md->pvh_attrs |= pmap_pvh_attrs(pte);
