@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2010/02/06 23:45:26 he Exp $
+#	$NetBSD: Makefile,v 1.37 2012/01/06 14:08:08 drochner Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -21,9 +21,6 @@ BINGRP=	kmem
 BINMODE=2555
 LINKS=	${BINDIR}/systat ${BINDIR}/sysstat
 MLINKS+=systat.1 sysstat.1
-
-CPPFLAGS+=-DIPSEC
-SRCS+=	ipsec.c
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
