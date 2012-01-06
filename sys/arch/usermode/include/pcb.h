@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.15 2012/01/03 10:53:46 reinoud Exp $ */
+/* $NetBSD: pcb.h,v 1.16 2012/01/06 12:54:59 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,13 +40,16 @@
 //typedef ucontext_t trapframe;
 
 struct pcb {
+	void		*pcb_stack_userland;
+	void		*pcb_stack_syscall;
+	void		*pcb_stack_pagefault;
+
 	ucontext_t	 pcb_ucp;		/* lwp switchframe */
 	ucontext_t	 pcb_syscall_ucp;	/* syscall context */
 	ucontext_t	 pcb_userret_ucp;	/* return to userland context */
 	ucontext_t	 pcb_pagefault_ucp;	/* pagefault context */
 	ucontext_t	 pcb_trapret_ucp;
 
-	bool		 pcb_needfree;
 	void *		 pcb_onfault;		/* on fault handler */
 
 	int		 pcb_errno;		/* save/restore place */
