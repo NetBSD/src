@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.40 2011/12/12 19:03:09 mrg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.41 2012/01/06 22:14:04 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.40 2011/12/12 19:03:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41 2012/01/06 22:14:04 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -477,7 +477,7 @@ hppa_walkbus(struct confargs *ca)
 	if (ca->ca_hpabase == 0)
 		return;
 	
-	aprint_verbose(">> Walking bus at HPA 0x%lx\n", ca->ca_hpabase);
+	aprint_debug(">> Walking bus at HPA 0x%lx\n", ca->ca_hpabase);
 
 	for (i = 0; i < ca->ca_nmodules; i++) {
 		int error;
@@ -500,12 +500,12 @@ hppa_walkbus(struct confargs *ca)
 		if (error < 0)
 			continue;
 
-		aprint_verbose(">> HPA 0x%lx[0x%x]", nhm.hm_hpa,
+		aprint_debug(">> HPA 0x%lx[0x%x]", nhm.hm_hpa,
 		    nhm.hm_hpasz);
 
 		TAILQ_FOREACH(hm, &hppa_pdcmodule_list, hm_link) {
 			if (nhm.hm_hpa == hm->hm_hpa) {
-				aprint_verbose(" found by firmware\n");
+				aprint_debug(" found by firmware\n");
 				break;
 			}
 		}
@@ -516,7 +516,7 @@ hppa_walkbus(struct confargs *ca)
 
 		/* Expect PDC to report devices of the following types */
 		if (nhm.hm_type.iodc_type == HPPA_TYPE_FIO) {
-			aprint_verbose(" expected to be missing\n");
+			aprint_debug(" expected to be missing\n");
 			continue;
 		}
 
@@ -568,7 +568,7 @@ pdc_scanbus(device_t self, struct confargs *ca,
 			} else
 				nca.ca_naddrs = hm->hm_naddrs;
 
-			aprint_verbose(">> ADDRS[%d/%d]: ", nca.ca_naddrs,
+			aprint_debug(">> ADDRS[%d/%d]: ", nca.ca_naddrs,
 			    hm->hm_modindex);
 
 			KASSERT(hm->hm_modindex != -1);
@@ -583,31 +583,31 @@ pdc_scanbus(device_t self, struct confargs *ca,
 				nca.ca_addrs[ia].size =
 				    pdc_find_addr.size << PGSHIFT;
 
-				aprint_verbose(" 0x%lx[0x%x]",
+				aprint_debug(" 0x%lx[0x%x]",
 				    nca.ca_addrs[ia].addr,
 				    nca.ca_addrs[ia].size);
 			}
-			aprint_verbose("\n");
+			aprint_debug("\n");
 		}
 
-		aprint_verbose(">> HPA 0x%lx[0x%x]\n", nca.ca_hpa,
+		aprint_debug(">> HPA 0x%lx[0x%x]\n", nca.ca_hpa,
 		    nca.ca_hpasz);
 
 		snprintb(buf, sizeof(buf), PZF_BITS, nca.ca_dp.dp_flags);
-		aprint_verbose(">> probing: flags %s ", buf);
+		aprint_debug(">> probing: flags %s ", buf);
 		if (nca.ca_dp.dp_mod >=0) {
 			int n;
 
-			aprint_verbose(" path ");
+			aprint_debug(" path ");
 			for (n = 0; n < 6; n++) {
 				if (nca.ca_dp.dp_bc[n] >= 0)
-					aprint_verbose("%d/",
+					aprint_debug("%d/",
 					    nca.ca_dp.dp_bc[n]);
 			}
-			aprint_verbose("%d", nca.ca_dp.dp_mod);
+			aprint_debug("%d", nca.ca_dp.dp_mod);
 		}
 
-		aprint_verbose(" type %x sv %x\n",
+		aprint_debug(" type %x sv %x\n",
 		    nca.ca_type.iodc_type, nca.ca_type.iodc_sv_model);
 
 		nca.ca_irq = HP700CF_IRQ_UNDEF;
@@ -707,12 +707,12 @@ hppa_pdcmodule_create(struct hppa_pdcmodule *hm, const char *who)
 	if (hm->hm_dp.dp_mod >= 0) {
 		int n;
 
-		aprint_verbose(">> %s device at path ", who);
+		aprint_debug(">> %s device at path ", who);
 		for (n = 0; n < 6; n++) {
 			if (hm->hm_dp.dp_bc[n] >= 0)
-				aprint_verbose("%d/", hm->hm_dp.dp_bc[n]);
+				aprint_debug("%d/", hm->hm_dp.dp_bc[n]);
 		}
-		aprint_verbose("%d addrs %d\n", hm->hm_dp.dp_mod,
+		aprint_debug("%d addrs %d\n", hm->hm_dp.dp_mod,
 		    hm->hm_naddrs);
 	}
 
