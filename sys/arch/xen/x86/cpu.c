@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.75 2012/01/04 10:30:23 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.76 2012/01/06 15:15:28 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75 2012/01/04 10:30:23 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.76 2012/01/06 15:15:28 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1307,6 +1307,10 @@ pmap_cpu_init_late(struct cpu_info *ci)
 #endif /* __x86_64__ else PAE */
 
 	/* Xen wants R/O */
+	/* FIXME: This should use pmap_protect() .. */
+#ifdef DIAGNOSTIC
+	pmap_kremove((vaddr_t)ci->ci_kpm_pdir, PAGE_SIZE);
+#endif /* DIAGNOSTIC */
 	pmap_kenter_pa((vaddr_t)ci->ci_kpm_pdir, ci->ci_kpm_pdirpa,
 	    VM_PROT_READ, 0);
 
@@ -1319,6 +1323,10 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	ci->ci_pae_l3_pdir[3] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PG_k | PG_V;
 
 	/* Mark L3 R/O (Xen wants this) */
+#ifdef DIAGNOSTIC
+	/* FIXME: This should use pmap_protect() .. */
+	pmap_kremove((vaddr_t)ci->ci_pae_l3_pdir, PAGE_SIZE);
+#endif /* DIAGNOSTIC */
 	pmap_kenter_pa((vaddr_t)ci->ci_pae_l3_pdir, ci->ci_pae_l3_pdirpa,
 		VM_PROT_READ, 0);
 
