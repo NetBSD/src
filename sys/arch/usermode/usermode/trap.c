@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.52 2012/01/03 21:28:50 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.53 2012/01/06 20:39:42 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52 2012/01/03 21:28:50 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53 2012/01/06 20:39:42 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -204,33 +204,33 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 	    (void *) info->si_addr);
 #endif
 #if 0
-	printf("SIGILL!\n");
-	printf("\tsi_signo = %d\n", info->si_signo);
-	printf("\tsi_errno = %d\n", info->si_errno);
-	printf("\tsi_code  = %d\n", info->si_code);
+	thunk_printf("SIGILL!\n");
+	thunk_printf("\tsi_signo = %d\n", info->si_signo);
+	thunk_printf("\tsi_errno = %d\n", info->si_errno);
+	thunk_printf("\tsi_code  = %d\n", info->si_code);
 	if (info->si_code == ILL_ILLOPC)
-		printf("\t\tIllegal opcode");
+		thunk_printf("\t\tIllegal opcode");
 	if (info->si_code == ILL_ILLOPN)
-		printf("\t\tIllegal operand");
+		thunk_printf("\t\tIllegal operand");
 	if (info->si_code == ILL_ILLADR)
-		printf("\t\tIllegal addressing mode");
+		thunk_printf("\t\tIllegal addressing mode");
 	if (info->si_code == ILL_ILLTRP)
-		printf("\t\tIllegal trap");
+		thunk_printf("\t\tIllegal trap");
 	if (info->si_code == ILL_PRVOPC)
-		printf("\t\tPrivileged opcode");
+		thunk_printf("\t\tPrivileged opcode");
 	if (info->si_code == ILL_PRVREG)
-		printf("\t\tPrivileged register");
+		thunk_printf("\t\tPrivileged register");
 	if (info->si_code == ILL_COPROC)
-		printf("\t\tCoprocessor error");
+		thunk_printf("\t\tCoprocessor error");
 	if (info->si_code == ILL_BADSTK)
-		printf("\t\tInternal stack error");
-	printf("\tsi_addr = %p\n", info->si_addr);
-	printf("\tsi_trap = %d\n", info->si_trap);
+		thunk_printf("\t\tInternal stack error");
+	thunk_printf("\tsi_addr = %p\n", info->si_addr);
+	thunk_printf("\tsi_trap = %d\n", info->si_trap);
 
-	printf("%p : ", info->si_addr);
+	thunk_printf("%p : ", info->si_addr);
 	for (int i = 0; i < 10; i++)
-		printf("%02x ", *((uint8_t *) info->si_addr + i));
-	printf("\n");
+		thunk_printf("%02x ", *((uint8_t *) info->si_addr + i));
+	thunk_printf("\n");
 #endif
 
 	l = curlwp;
