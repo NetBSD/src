@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.96 2012/01/06 08:54:05 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97 2012/01/06 20:55:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2012/01/06 08:54:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2012/01/06 20:55:28 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -209,6 +209,7 @@ static inline struct pv_entry *pmap_pv_remove(struct vm_page *, pmap_t,
 
 static inline void pmap_flush_page(struct vm_page *, bool);
 static int pmap_check_alias(struct vm_page *, vaddr_t, pt_entry_t);
+static void pmap_syncicache_page(struct vm_page *, pmap_t, vaddr_t);
 
 static void pmap_page_physload(paddr_t, paddr_t);
 
@@ -228,7 +229,8 @@ void pmap_dump_table(pa_space_t, vaddr_t);
 void pmap_dump_pv(paddr_t);
 #endif
 
-#define	IS_IOPAGE_P(pa)	((pa) >= HPPA_IOBEGIN)
+#define	IS_IOPAGE_P(pa)		((pa) >= HPPA_IOBEGIN)
+#define	IS_PVFEXEC_P(f)		(((f) & PVF_EXEC) != 0)
 
 /* un-invert PVF_REF */
 #define pmap_pvh_attrs(a) \
@@ -598,6 +600,14 @@ pmap_pv_remove(struct vm_page *pg, pmap_t pmap, vaddr_t va)
 		if (pv->pv_pmap == pmap && (pv->pv_va & PV_VAMASK) == va) {
 			*pve = pv->pv_next;
 			break;
+		}
+	}
+
+	if (IS_PVFEXEC_P(md->pvh_attrs)) {
+		if (md->pvh_list == NULL) {
+			md->pvh_attrs &= ~PVF_EXEC;
+		} else {
+			pmap_syncicache_page(pg, pmap, va);
 		}
 	}
 
@@ -1167,6 +1177,31 @@ pmap_reference(pmap_t pmap)
 	mutex_exit(pmap->pm_lock);
 }
 
+
+void
+pmap_syncicache_page(struct vm_page *pg, pmap_t pm, vaddr_t va)
+{
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+	struct pv_entry *pve = md->pvh_list;
+
+	for (; pve; pve = pve->pv_next) {
+		pmap_t fpm = pve->pv_pmap;
+		vaddr_t fva = pve->pv_va & PV_VAMASK;
+		pt_entry_t pte = pmap_vp_find(fpm, fva);
+
+		if ((pte & PTE_PROT(TLB_DIRTY)) == 0)
+			continue;
+
+		/* Don't attempt to use the mapping we're adding */
+		if (pm == fpm && va == fva)
+			continue;
+
+		fdcache(fpm->pm_space, fva, PAGE_SIZE);
+		ficache(fpm->pm_space, fva, PAGE_SIZE);
+		break;
+	}
+}
+
 /*
  * pmap_enter(pmap, va, pa, prot, flags)
  *	Create a translation for the virtual address (va) to the physical
@@ -1179,7 +1214,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	volatile pt_entry_t *pde;
 	pt_entry_t pte;
-	struct vm_page *pg, *ptp = NULL;
+	struct vm_page *pg = NULL, *ptp = NULL;
 	struct pv_entry *pve = NULL;
 	bool wired = (flags & PMAP_WIRED) != 0;
 
@@ -1213,13 +1248,13 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		else if (!wired && (pte & PTE_PROT(TLB_WIRED)))
 			pmap->pm_stats.wired_count--;
 
+		pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
 		if (PTE_PAGE(pte) == pa) {
 			DPRINTF(PDB_FOLLOW|PDB_ENTER,
 			    ("%s: same page\n", __func__));
 			goto enter;
 		}
 
-		pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
 		if (pg != NULL) {
 			pve = pmap_pv_remove(pg, pmap, va);
 
@@ -1257,6 +1292,17 @@ enter:
 	/* preserve old ref & mod */
 	pte = pa | PTE_PROT(pmap_prot(pmap, prot)) |
 	    (pte & PTE_PROT(TLB_UNCACHEABLE|TLB_DIRTY|TLB_REFTRAP));
+
+	if (pg != NULL) {
+		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+		if ((pte & PTE_PROT(TLB_EXECUTE)) != 0 &&
+		    !IS_PVFEXEC_P(md->pvh_attrs)) {
+			pmap_syncicache_page(pg, pmap, va);
+			md->pvh_attrs |= PVF_EXEC;
+		}
+	}
+
 	if (IS_IOPAGE_P(pa))
 		pte |= PTE_PROT(TLB_UNCACHEABLE);
 	if (wired)
@@ -1380,9 +1426,11 @@ pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			if (pg != NULL) {
 				struct vm_page_md * const md =
 				    VM_PAGE_TO_MD(pg);
+
 				md->pvh_attrs |= pmap_pvh_attrs(pte);
 			}
 
+			/* Add TLB_EXECUTE if PVF_EXEC ??? */
 			pmap_pte_flush(pmap, sva, pte);
 			pte &= ~PTE_PROT(TLB_AR_MASK);
 			pte |= pteprot;
@@ -1401,8 +1449,10 @@ pmap_page_remove(struct vm_page *pg)
 
 	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s(%p)\n", __func__, pg));
 
-	if (md->pvh_list == NULL)
+	if (md->pvh_list == NULL) {
+		KASSERT((md->pvh_attrs & PVF_EXEC) == 0);
 		return;
+	}
 
 	pvp = &md->pvh_list;
 	for (pve = md->pvh_list; pve; pve = npve) {
@@ -1438,6 +1488,7 @@ pmap_page_remove(struct vm_page *pg)
 		}
 		PMAP_UNLOCK(pmap);
 	}
+	md->pvh_attrs &= ~PVF_EXEC;
 	*pvp = NULL;
 
 	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s: leaving\n", __func__));
@@ -1651,6 +1702,7 @@ pmap_zero_page(paddr_t pa)
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("%s(%lx)\n", __func__, pa));
 
 	KASSERT(VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(pa))->pvh_list == NULL);
+	KASSERT((VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(pa))->pvh_attrs & PVF_EXEC) == 0);
 
 	memset((void *)pa, 0, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
@@ -1676,6 +1728,7 @@ pmap_copy_page(paddr_t spa, paddr_t dpa)
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("%s(%lx, %lx)\n", __func__, spa, dpa));
 
 	KASSERT(VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(dpa))->pvh_list == NULL);
+	KASSERT((VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(dpa))->pvh_attrs & PVF_EXEC) == 0);
 
 	pmap_flush_page(srcpg, false);
 
