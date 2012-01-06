@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsrev.c,v 1.6 2006/03/26 22:20:04 christos Exp $	*/
+/*	$NetBSD: rcsrev.c,v 1.7 2012/01/06 15:16:03 joerg Exp $	*/
 
 /* Handle RCS revision numbers.  */
 
@@ -31,6 +31,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsrev.c,v $
+ * Revision 1.7  2012/01/06 15:16:03  joerg
+ * Don't use dangling elses.
+ *
  * Revision 1.6  2006/03/26 22:20:04  christos
  * Coverity CID 2361: Avoid possible NULL deref.
  *
@@ -761,7 +764,7 @@ fexpandsym(source, target, fp)
 			for (bp = tp;  *bp=='0' && isdigit(bp[1]);  bp++)
 				continue;
 
-			if (!*bp)
+			if (!*bp) {
 			    if (s || *sp!='.')
 				break;
 			    else {
@@ -777,6 +780,7 @@ fexpandsym(source, target, fp)
 				bp = tp = target->string;
 				tlim = tp + target->size;
 			    }
+			}
 		}
 
 		while ((*tp++ = *bp++))
