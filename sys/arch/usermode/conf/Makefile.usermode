@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.28 2012/01/05 12:12:58 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.29 2012/01/06 20:44:57 reinoud Exp $
 
 OPT_CPU_HOST=			%CPU_HOST%
 .if !empty(OPT_CPU_HOST)
@@ -53,6 +53,9 @@ MD_OBJS=	thunk.o
 MD_CFILES=	${USERMODE}/usermode/thunk.c
 MD_SFILES=
 
+MD_OBJS+=	machdep.${USERMODE_CPU}.o
+MD_CFILES+=	${USERMODE}/usermode/machdep.${USERMODE_CPU}.c
+
 ##
 ## (5) link settings
 ##
@@ -76,6 +79,8 @@ NVFLAGS=	-n
 .BEGIN:
 	@rm -f i386 && \
 		ln -s $S/arch/i386/include i386
+	@rm -f amd64 && \
+		ln -s $S/arch/amd64/include amd64
 .endif
 
 thunk.d: ${USERMODE}/usermode/thunk.c
