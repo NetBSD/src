@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.91 2012/01/06 08:32:08 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.92 2012/01/06 08:33:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2012/01/06 08:32:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2012/01/06 08:33:26 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -208,10 +208,11 @@ static inline struct pv_entry *pmap_pv_remove(struct vm_page *, pmap_t,
     vaddr_t);
 
 static inline void pmap_flush_page(struct vm_page *, bool);
-
-void pmap_copy_page(paddr_t, paddr_t);
+static int pmap_check_alias(struct vm_page *, vaddr_t, pt_entry_t);
 
 static void pmap_page_physload(paddr_t, paddr_t);
+
+void pmap_copy_page(paddr_t, paddr_t);
 
 #ifdef USE_HPT
 static inline struct hpt_entry *pmap_hash(pmap_t, vaddr_t);
@@ -226,8 +227,6 @@ void pmap_hptdump(void);
 void pmap_dump_table(pa_space_t, vaddr_t);
 void pmap_dump_pv(paddr_t);
 #endif
-
-static int pmap_check_alias(struct vm_page *, vaddr_t, pt_entry_t);
 
 #define	IS_IOPAGE_P(pa)	((pa) >= HPPA_IOBEGIN)
 
