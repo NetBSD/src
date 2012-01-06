@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.52 2012/01/04 15:55:36 drochner Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.53 2012/01/06 14:17:11 drochner Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -42,9 +42,10 @@
 #endif
 
 #include <net/pfkeyv2.h>
-#include <netkey/keydb.h>
 
 #ifdef _KERNEL
+
+#include <netkey/keydb.h>
 
 /*
  * Security Policy Index
