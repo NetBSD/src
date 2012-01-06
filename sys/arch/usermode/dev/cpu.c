@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.61 2012/01/04 15:18:57 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.62 2012/01/06 12:54:59 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.61 2012/01/04 15:18:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62 2012/01/06 12:54:59 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -278,22 +278,23 @@ cpu_lwp_free2(struct lwp *l)
 	if (pcb == NULL)
 		return;
 
-	if (pcb->pcb_needfree) {
-#if 0
-		free(pcb->pcb_ucp.uc_stack.ss_sp, M_TEMP);
+	if (pcb->pcb_stack_userland) {
+		free(pcb->pcb_stack_userland, M_TEMP);
+		pcb->pcb_stack_userland = NULL;
 		pcb->pcb_ucp.uc_stack.ss_sp = NULL;
 		pcb->pcb_ucp.uc_stack.ss_size = 0;
-#endif
+	}
 
-		free(pcb->pcb_syscall_ucp.uc_stack.ss_sp, M_TEMP);
+	if (pcb->pcb_stack_syscall) {
+		free(pcb->pcb_stack_syscall, M_TEMP);
 		pcb->pcb_syscall_ucp.uc_stack.ss_sp = NULL;
 		pcb->pcb_syscall_ucp.uc_stack.ss_size = 0;
+	}
 
-		free(pcb->pcb_pagefault_ucp.uc_stack.ss_sp, M_TEMP);
+	if (pcb->pcb_stack_pagefault) {
+		free(pcb->pcb_stack_pagefault, M_TEMP);
 		pcb->pcb_pagefault_ucp.uc_stack.ss_sp = NULL;
 		pcb->pcb_pagefault_ucp.uc_stack.ss_size = 0;
-
-		pcb->pcb_needfree = false;
 	}
 }
 
@@ -317,7 +318,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct pcb *pcb1 = lwp_getpcb(l1);
 	struct pcb *pcb2 = lwp_getpcb(l2);
-	void *stack_ucp, *stack_syscall_ucp, *stack_pagefault_ucp;
 
 #ifdef CPU_DEBUG
 	thunk_printf_debug("cpu_lwp_fork [%s/%p] -> [%s/%p] stack=%p stacksize=%d\n",
@@ -333,21 +333,20 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	memcpy(pcb2, pcb1, sizeof(struct pcb));
 
 	stacksize = 2*PAGE_SIZE;
-	stack_ucp           = malloc(stacksize, M_TEMP, M_WAITOK | M_ZERO);
-	stack_syscall_ucp   = malloc(stacksize, M_TEMP, M_WAITOK | M_ZERO);
-	stack_pagefault_ucp = malloc(stacksize, M_TEMP, M_WAITOK | M_ZERO);
-	pcb2->pcb_needfree = true;
+	pcb2->pcb_stack_userland  = malloc(stacksize, M_TEMP, M_WAITOK | M_ZERO);
+	pcb2->pcb_stack_syscall   = malloc(stacksize, M_TEMP, M_WAITOK | M_ZERO);
+	pcb2->pcb_stack_pagefault = malloc(stacksize, M_TEMP, M_WAITOK | M_ZERO);
 
-	KASSERT(stack_ucp);
-	KASSERT(stack_syscall_ucp);
-	KASSERT(stack_pagefault_ucp);
+	KASSERT(pcb2->pcb_stack_userland);
+	KASSERT(pcb2->pcb_stack_syscall);
+	KASSERT(pcb2->pcb_stack_pagefault);
 
 	if (thunk_getcontext(&pcb2->pcb_ucp))
 		panic("getcontext failed");
 
 	/* set up the ucontext for the userland switch */
 	/* XXX BUG TODO when is this stack space freed? */
-	pcb2->pcb_ucp.uc_stack.ss_sp = stack_ucp;
+	pcb2->pcb_ucp.uc_stack.ss_sp = pcb2->pcb_stack_userland;
 	pcb2->pcb_ucp.uc_stack.ss_size = stacksize;
 	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
 	pcb2->pcb_ucp.uc_link = &pcb2->pcb_userret_ucp;
@@ -356,7 +355,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	    3, &pcb2->pcb_ucp, func, arg);
 
 	/* set up the ucontext for the syscall */
-	pcb2->pcb_syscall_ucp.uc_stack.ss_sp = stack_syscall_ucp;
+	pcb2->pcb_syscall_ucp.uc_stack.ss_sp = pcb2->pcb_stack_syscall;
 	pcb2->pcb_syscall_ucp.uc_stack.ss_size = stacksize;
 	pcb2->pcb_syscall_ucp.uc_flags = _UC_STACK | _UC_CPU;
 	pcb2->pcb_syscall_ucp.uc_link = &pcb2->pcb_userret_ucp;
@@ -364,7 +363,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	    0, NULL, NULL, NULL);
 
 	/* set up the ucontext for the pagefault */
-	pcb2->pcb_pagefault_ucp.uc_stack.ss_sp = stack_pagefault_ucp;
+	pcb2->pcb_pagefault_ucp.uc_stack.ss_sp = pcb2->pcb_stack_pagefault;
 	pcb2->pcb_pagefault_ucp.uc_stack.ss_size = stacksize;
 	pcb2->pcb_pagefault_ucp.uc_flags = _UC_STACK | _UC_CPU;
 	pcb2->pcb_pagefault_ucp.uc_link = &pcb2->pcb_trapret_ucp;
@@ -385,7 +384,6 @@ cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	size_t stacksize, msgbufsize = 32 * 1024;
-	void *stack_pagefault_ucp;
 
 	/* get ourself a message buffer */
 	um_msgbuf = kmem_zalloc(msgbufsize, KM_SLEEP);
@@ -415,9 +413,9 @@ cpu_startup(void)
 
 	/* set up the ucontext for the pagefault */
 	stacksize = 2*PAGE_SIZE;
-	stack_pagefault_ucp = malloc(stacksize, M_TEMP, M_WAITOK | M_ZERO);
+	lwp0pcb.pcb_stack_pagefault = malloc(stacksize, M_TEMP, M_WAITOK | M_ZERO);
 
-	lwp0pcb.pcb_pagefault_ucp.uc_stack.ss_sp = stack_pagefault_ucp;
+	lwp0pcb.pcb_pagefault_ucp.uc_stack.ss_sp = lwp0pcb.pcb_stack_pagefault;
 	lwp0pcb.pcb_pagefault_ucp.uc_stack.ss_size = stacksize;
 	lwp0pcb.pcb_pagefault_ucp.uc_flags = _UC_STACK | _UC_CPU;
 	lwp0pcb.pcb_pagefault_ucp.uc_link = &lwp0pcb.pcb_userret_ucp;
