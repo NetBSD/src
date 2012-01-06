@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 2011/12/30 07:41:58 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89 2012/01/06 07:59:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2011/12/30 07:41:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2012/01/06 07:59:07 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -227,7 +227,7 @@ void pmap_dump_table(pa_space_t, vaddr_t);
 void pmap_dump_pv(paddr_t);
 #endif
 
-int pmap_check_alias(struct vm_page *, vaddr_t, pt_entry_t);
+static int pmap_check_alias(struct vm_page *, vaddr_t, pt_entry_t);
 
 #define	IS_IOPAGE_P(pa)	((pa) >= HPPA_IOBEGIN)
 
@@ -515,7 +515,7 @@ pmap_dump_pv(paddr_t pa)
 }
 #endif
 
-int
+static int
 pmap_check_alias(struct vm_page *pg, vaddr_t va, pt_entry_t pte)
 {
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
