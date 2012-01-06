@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1722 2012/01/04 16:25:14 yamt Exp $
+#	$NetBSD: mi,v 1.1723 2012/01/06 14:17:10 drochner Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1938,8 +1938,8 @@
 ./usr/include/netinet/tcpip.h			comp-c-include
 ./usr/include/netinet/udp.h			comp-c-include
 ./usr/include/netinet/udp_var.h			comp-c-include
-./usr/include/netinet6/ah.h			comp-c-include
-./usr/include/netinet6/esp.h			comp-c-include
+./usr/include/netinet6/ah.h			comp-obsolete		obsolete
+./usr/include/netinet6/esp.h			comp-obsolete		obsolete
 ./usr/include/netinet6/icmp6.h			comp-obsolete		obsolete
 ./usr/include/netinet6/in6.h			comp-c-include
 ./usr/include/netinet6/in6_gif.h		comp-c-include
@@ -1950,7 +1950,7 @@
 ./usr/include/netinet6/ip6_mroute.h		comp-c-include
 ./usr/include/netinet6/ip6_var.h		comp-c-include
 ./usr/include/netinet6/ip6protosw.h		comp-c-include
-./usr/include/netinet6/ipcomp.h			comp-c-include
+./usr/include/netinet6/ipcomp.h			comp-obsolete		obsolete
 ./usr/include/netinet6/ipsec.h			comp-c-include
 ./usr/include/netinet6/mld6_var.h		comp-c-include
 ./usr/include/netinet6/nd6.h			comp-c-include
@@ -1965,7 +1965,8 @@
 ./usr/include/netipsec/ipip_var.h		comp-c-include
 ./usr/include/netipsec/ipsec.h			comp-c-include
 ./usr/include/netipsec/ipsec_var.h		comp-c-include
-./usr/include/netipsec/keydb.h			comp-c-include
+./usr/include/netipsec/keydb.h			comp-obsolete		obsolete
+./usr/include/netipsec/keysock.h		comp-c-include
 ./usr/include/netisdn/i4b_cause.h		comp-c-include
 ./usr/include/netisdn/i4b_debug.h		comp-c-include
 ./usr/include/netisdn/i4b_ioctl.h		comp-c-include
@@ -2002,10 +2003,10 @@
 ./usr/include/netiso/tp_user.h			comp-c-include
 ./usr/include/netiso/tp_var.h			comp-c-include
 ./usr/include/netiso/tuba_table.h		comp-obsolete		obsolete
-./usr/include/netkey/key.h			comp-c-include
-./usr/include/netkey/key_debug.h		comp-c-include
-./usr/include/netkey/key_var.h			comp-c-include
-./usr/include/netkey/keydb.h			comp-c-include
+./usr/include/netkey/key.h			comp-obsolete		obsolete
+./usr/include/netkey/key_debug.h		comp-obsolete		obsolete
+./usr/include/netkey/key_var.h			comp-obsolete		obsolete
+./usr/include/netkey/keydb.h			comp-obsolete		obsolete
 ./usr/include/netkey/keysock.h			comp-c-include
 ./usr/include/netkey/keyv2.h			comp-obsolete		obsolete
 ./usr/include/netmpls/mpls.h			comp-c-include

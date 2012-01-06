@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.30 2012/01/04 15:55:36 drochner Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.31 2012/01/06 14:17:11 drochner Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -44,10 +44,10 @@
 #endif
 
 #include <net/pfkeyv2.h>
-#include <netipsec/keydb.h>
 
 #ifdef _KERNEL
 
+#include <netipsec/keydb.h>
 #include <netipsec/ipsec_osdep.h>
 
 /*
