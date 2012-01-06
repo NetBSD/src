@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.37 2011/11/04 11:27:04 martin Exp $ */
+/*	$NetBSD: md.c,v 1.38 2012/01/06 20:52:43 riz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -168,7 +168,6 @@ md_cleanup_install(void)
 {
 #ifndef DEBUG
 	int new_speed;
-	char sed_cmd[64];
 
 	enable_rc_conf();
 
@@ -187,9 +186,8 @@ md_cleanup_install(void)
 		new_speed = 0;
 
 	if (new_speed != 0) {
-		snprintf(sed_cmd, 64, "sed -an -e 's/115200/%d/;H;$!d;g;w"
+		run_program(RUN_CHROOT, "sed -an -e 's/115200/%d/;H;$!d;g;w"
 		    "/etc/ttys' /etc/ttys", new_speed);
-		run_program(RUN_CHROOT, sed_cmd);
 	}
 #endif
 }
