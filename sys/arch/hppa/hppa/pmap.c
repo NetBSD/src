@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 2012/01/06 08:33:26 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93 2012/01/06 08:36:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2012/01/06 08:33:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2012/01/06 08:36:10 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -904,7 +904,7 @@ pmap_bootstrap(vaddr_t vstart)
 			btlb_entry_size[btlb_j] = size;
 			btlb_entry_vm_prot[btlb_j] = 
 			    VM_PROT_READ | VM_PROT_WRITE;
-	
+
 			/* Move on. */
 			addr =
 			    btlb_entry_start[btlb_j] + btlb_entry_size[btlb_j];
@@ -1727,7 +1727,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (opte)
 		pmap_pte_flush(pmap_kernel(), va, opte);
 
-	
 	pg = pmap_initialized ? PHYS_TO_VM_PAGE(PTE_PAGE(pte)) : NULL;
 	if (pg != NULL) {
 		KASSERT(pa < HPPA_IOBEGIN);
@@ -1844,7 +1843,7 @@ pmap_hptdump(void)
 			char buf[128];
 
 			snprintb(buf, sizeof(buf), TLB_BITS, hpt->hpt_tlbprot);
-	
+
 			db_printf("hpt@%p: %x{%sv=%x:%x},%s,%x\n",
 			    hpt, *(int *)hpt, (hpt->hpt_valid?"ok,":""),
 			    hpt->hpt_space, hpt->hpt_vpn << 9,
