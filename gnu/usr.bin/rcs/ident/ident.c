@@ -1,4 +1,4 @@
-/*	$NetBSD: ident.c,v 1.5 2006/03/26 22:50:48 christos Exp $	*/
+/*	$NetBSD: ident.c,v 1.6 2012/01/06 15:16:03 joerg Exp $	*/
 /* Identify RCS keyword strings in files.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
@@ -30,6 +30,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: ident.c,v $
+ * Revision 1.6  2012/01/06 15:16:03  joerg
+ * Don't use dangling elses.
+ *
  * Revision 1.5  2006/03/26 22:50:48  christos
  * Coverity CID 1202: Always return on EOF, otherwise we would try to use
  * ctab[-1].
@@ -142,7 +145,7 @@ mainProg(identId, "ident", "Id: ident.c,v 5.9 1995/06/16 06:19:24 eggert Exp")
 		    break;
 	    }
 
-   if (0 <= quiet)
+   if (0 <= quiet) {
        if (!a)
 	    VOID scanfile(stdin, (char*)0, quiet);
        else
@@ -156,7 +159,7 @@ mainProg(identId, "ident", "Id: ident.c,v 5.9 1995/06/16 06:19:24 eggert Exp")
 		)
 		    break;
 	    } while ((a = *++argv));
-
+   }
    if (ferror(stdout) || fclose(stdout)!=0) {
       reportError("standard output");
       status = EXIT_FAILURE;
