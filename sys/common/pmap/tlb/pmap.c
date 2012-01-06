@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2011/09/27 01:02:37 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 2012/01/06 09:41:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2011/09/27 01:02:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2012/01/06 09:41:17 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -792,11 +792,11 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 			pmap_md_vca_clean(pg, sva, PMAP_WBINV);
 			if (VM_PAGEMD_EXECPAGE_P(mdpg)) {
 				KASSERT(mdpg->mdpg_first.pv_pmap != NULL);
-				UVMHIST_LOG(pmapexechist,
-				    "pg %p (pa %#"PRIxPADDR"): %s",
-				    pg, VM_PAGE_TO_PHYS(pg),
-				    "syncicached performed", 0);
 				if (pte_cached_p(pt_entry)) {
+					UVMHIST_LOG(pmapexechist,
+					    "pg %p (pa %#"PRIxPADDR"): %s",
+					    pg, VM_PAGE_TO_PHYS(pg),
+					    "syncicached performed", 0);
 					pmap_page_syncicache(pg);
 					PMAP_COUNT(exec_synced_protect);
 				}
