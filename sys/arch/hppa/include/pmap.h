@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34 2012/01/06 09:11:45 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.35 2012/01/06 09:12:25 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -200,7 +200,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 struct pv_entry;
 
 struct vm_page_md {
-	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
+	struct pv_entry	*pvh_list;	/* head of list */
 	u_int		pvh_attrs;	/* to preserve ref/mod */
 };
 
