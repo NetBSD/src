@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.26 2012/01/06 14:11:55 jmcneill Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.27 2012/01/06 20:40:51 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.26 2012/01/06 14:11:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.27 2012/01/06 20:40:51 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -161,7 +161,8 @@ ld_thunkbus_complete(void *arg)
 		goto done;
 	}
 
-	//printf("ld: %s %u @ %lld -> %p (flags 0x%08x)\n", bp->b_flags & B_READ ? "read" : "write",
+	//printf("%s: %s %u @ %lld -> %p (flags 0x%08x)\n", __func__, 
+	//    bp->b_flags & B_READ ? "read" : "write",
 	//    (unsigned int)bp->b_bcount, (long long)offset, bp->b_data, bp->b_flags);
 
 	/* read/write the request */
@@ -172,7 +173,7 @@ ld_thunkbus_complete(void *arg)
 	}
 
 	//if (ret == -1)
-	//	printf("ld: errno = %d\n", thunk_geterrno());
+	//	printf("%s: errno = %d\n", __func__, thunk_geterrno());
 
 	/* setup return params */
 	if ((ret >= 0) && (ret == bp->b_bcount)) {
