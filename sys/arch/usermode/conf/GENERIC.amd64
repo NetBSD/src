@@ -1,19 +1,19 @@
-# $NetBSD: GENERIC.i386,v 1.3 2012/01/06 20:44:57 reinoud Exp $
+# $NetBSD: GENERIC.amd64,v 1.1 2012/01/06 20:44:57 reinoud Exp $
 
 machine usermode
 include "arch/usermode/conf/GENERIC.common"
-include "arch/i386/conf/majors.i386"
+include "arch/amd64/conf/majors.amd64"
 
-no options EXEC_ELF64
+no options EXEC_ELF32
 
 options		TEXTADDR=0x40000000	# 1 Gb `phys ram' / total space
 options		KVMSIZE= 0x10000000	# KVM space reserved in VM map, 256 Mb
 options		NKMEMPAGES_MAX=32768	# 128 Mb max
 
-makeoptions	USERMODE_CPU="i386"
-makeoptions	COPTS+="-m32"
-makeoptions	LD="ld -melf_i386"
+makeoptions     USERMODE_CPU="amd64"
+makeoptions	COPTS+="-m64"
+makeoptions	LD="ld -melf_amd64"
 
 #options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC32-$Revision: 1.3 $"
+#ident 		"GENERIC32-$Revision: 1.1 $"
 
