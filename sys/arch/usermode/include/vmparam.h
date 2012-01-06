@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.13 2012/01/03 21:28:50 reinoud Exp $ */
+/* $NetBSD: vmparam.h,v 1.14 2012/01/06 12:53:07 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,7 @@ extern paddr_t kmem_user_start, kmem_user_end;
 #define	USRSTACK		VM_MAXUSER_ADDRESS
 
 /* override the default pager_map size, there is little KVA */
-#define PAGER_MAP_DEFAULT_SIZE	(4 * 1024 * 1024)
+#define PAGER_MAP_DEFAULT_SIZE	(8 * 1024 * 1024)
 
 #if defined(__i386__) 
 #define	PAGE_SHIFT		12
