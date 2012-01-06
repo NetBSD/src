@@ -1,4 +1,4 @@
-/*	$NetBSD: rlog.c,v 1.5 2011/05/15 14:33:12 christos Exp $	*/
+/*	$NetBSD: rlog.c,v 1.6 2012/01/06 15:16:03 joerg Exp $	*/
 
 /* Print log messages and other information about RCS files.  */
 
@@ -31,6 +31,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rlog.c,v $
+ * Revision 1.6  2012/01/06 15:16:03  joerg
+ * Don't use dangling elses.
+ *
  * Revision 1.5  2011/05/15 14:33:12  christos
  * register c -> int c
  *
@@ -591,13 +594,14 @@ putadelta(node,editscript,trunk)
 		node->author, node->state
 	);
 
-        if ( editscript )
+        if ( editscript ) {
            if(trunk)
 	      aprintf(out, insDelFormat,
                              editscript->deletelns, editscript->insertlns);
            else
 	      aprintf(out, insDelFormat,
                              editscript->insertlns, editscript->deletelns);
+        }
 
         newbranch = node->branches;
         if ( newbranch ) {
@@ -973,12 +977,13 @@ extractdelta(pdelta)
 	    while (strcmp(pstate->status, pdelta->state) != 0)
 		if (!(pstate = pstate->nextstate))
 		    return false;
-	if (lockflag) /* only locked revisions wanted */
+	if (lockflag) { /* only locked revisions wanted */
 	    for (plock = Locks;  ;  plock = plock->nextlock)
 		if (!plock)
 		    return false;
 		else if (plock->delta == pdelta)
 		    break;
+	}
 	if ((prevision = Revlst)) /* only certain revs or branches wanted */
 	    for (;;) {
                 length = prevision->numfld;
