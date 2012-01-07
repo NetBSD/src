@@ -1,14 +1,14 @@
-# $NetBSD: GENERIC.common,v 1.12 2012/01/07 18:10:18 jmcneill Exp $
+# $NetBSD: GENERIC.common,v 1.13 2012/01/07 19:43:06 reinoud Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.12 $"
+#ident 		"GENERIC-$Revision: 1.13 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
 
-options 	SYMTAB_SPACE=350000
+options 	SYMTAB_SPACE=450000
 
 options 	RTC_OFFSET=0
 options 	NTP
