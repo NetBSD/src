@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.29 2011/12/11 23:56:10 christos Exp $	*/
+/*	$NetBSD: tcp.h,v 1.30 2012/01/07 20:20:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,6 +37,7 @@
 #include <sys/featuretest.h>
 
 #if defined(_NETBSD_SOURCE)
+#include <sys/types.h>
 
 typedef uint32_t tcp_seq;
 /*
