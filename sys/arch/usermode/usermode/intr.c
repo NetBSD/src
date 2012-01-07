@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.12 2011/12/30 11:04:50 jmcneill Exp $ */
+/* $NetBSD: intr.c,v 1.13 2012/01/07 18:07:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2011/12/30 11:04:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2012/01/07 18:07:57 jmcneill Exp $");
 
 #include <sys/types.h>
 
@@ -39,7 +39,7 @@ struct intr_handler {
 	void *arg;
 };
 
-#define SIGIO_MAX_HANDLERS	4
+#define SIGIO_MAX_HANDLERS	8
 
 static struct intr_handler sigio_intr_handler[SIGIO_MAX_HANDLERS];
 
