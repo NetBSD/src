@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.8 2011/12/29 21:22:49 jmcneill Exp $ */
+/* $NetBSD: mainbus.c,v 1.9 2012/01/07 18:10:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2011/12/29 21:22:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2012/01/07 18:10:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -50,7 +50,8 @@ typedef struct mainbus_softc {
 CFATTACH_DECL_NEW(mainbus, sizeof(mainbus_softc_t),
     mainbus_match, mainbus_attach, NULL, NULL);
 
-extern char *usermode_root_image_path;
+extern char *usermode_disk_image_path[];
+extern int usermode_disk_image_path_count;
 extern char *usermode_tap_device;
 extern char *usermode_tap_eaddr;
 extern char *usermode_audio_device;
@@ -68,6 +69,7 @@ mainbus_attach(device_t parent, device_t self, void *opaque)
 {
 	mainbus_softc_t *sc = device_private(self);
 	struct thunkbus_attach_args taa;
+	int i;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -104,9 +106,9 @@ mainbus_attach(device_t parent, device_t self, void *opaque)
 		config_found_ia(self, "thunkbus", &taa, mainbus_print);
 	}
 
-	if (usermode_root_image_path) {
+	for (i = 0; i < usermode_disk_image_path_count; i++) {
 		taa.taa_type = THUNKBUS_TYPE_DISKIMAGE;
-		taa.u.diskimage.path = usermode_root_image_path;
+		taa.u.diskimage.path = usermode_disk_image_path[i];
 		config_found_ia(self, "thunkbus", &taa, mainbus_print);
 	}
 }
