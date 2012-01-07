@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.60 2011/11/13 21:57:14 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.61 2012/01/07 18:41:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -121,6 +121,7 @@ int		snprintb(char *, size_t, const char *, uint64_t);
 int		sockaddr_snprintf(char *, size_t, const char *,
     const struct sockaddr *);
 char 	       *strpct(char *, size_t, uintmax_t, uintmax_t, size_t);
+char 	       *strspct(char *, size_t, intmax_t, intmax_t, size_t);
 int		string_to_flags(char **, unsigned long *, unsigned long *);
 int		ttyaction(const char *, const char *, const char *);
 int		ttylock(const char *, int, pid_t *);
