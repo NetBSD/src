@@ -1,4 +1,4 @@
-.\" $NetBSD: strpct.3,v 1.3 2011/09/01 23:13:16 fair Exp $
+.\" $NetBSD: strpct.3,v 1.4 2012/01/07 18:40:55 christos Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,18 +26,21 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 1, 2011
+.Dd January 7, 2012
 .Dt STRPCT 3
 .Os
 .Sh NAME
-.Nm strpct
-.Nd decimal percent formatter
+.Nm strpct ,
+.Nm strspct
+.Nd decimal percent formatters
 .Sh LIBRARY
 .Lb libutil
 .Sh SYNOPSIS
 .In util.h
 .Ft char *
 .Fn strpct "char *buf" "size_t bufsiz" "uintmax_t numerator" "uintmax_t denominator" "size_t precision"
+.Ft char *
+.Fn strspct "char *buf" "size_t bufsiz" "intmax_t numerator" "intmax_t denominator" "size_t precision"
 .Sh DESCRIPTION
 The
 .Fn strpct
@@ -50,7 +53,13 @@ into a percentage representation with given number of digits of
 without using floating point arithmetic.
 .Sh RETURN VALUES
 .Fn strpct
-always returns a pointer to a NUL-terminated formatted string which
+and
+.Fn strspct
+always return a pointer to a NUL-terminated (unless
+.Fa buflen
+is
+.Dv 0 )
+formatted string which
 is placed in
 .Fa buf
 and is up to
@@ -82,6 +91,8 @@ and
 .Xr time 1
 started using it.
 .Fn strpct
+and
+.Fn strspct
 appeared separately in libutil for
 .Nx 6.0 .
 .Sh AUTHORS
