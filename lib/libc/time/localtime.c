@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.64 2011/11/08 18:37:31 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.65 2012/01/07 15:19:35 martin Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.64 2011/11/08 18:37:31 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.65 2012/01/07 15:19:35 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -2134,8 +2134,6 @@ timegm(struct tm *const tmp)
 	if (tmp != NULL)
 		tmp->tm_isdst = 0;
 	t = time1(gmtptr, tmp, gmtsub, 0L);
-	if (t == WRONG)
-		errno = EOVERFLOW;
 	return t;
 }
 
@@ -2147,8 +2145,6 @@ timeoff(struct tm *const tmp, const long offset)
 	if (tmp != NULL)
 		tmp->tm_isdst = 0;
 	t = time1(gmtptr, tmp, gmtsub, offset);
-	if (t == WRONG)
-		errno = EOVERFLOW;
 	return t;
 }
 
