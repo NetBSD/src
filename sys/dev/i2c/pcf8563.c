@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.2 2011/01/21 22:42:16 jakllsch Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.3 2012/01/07 21:02:15 phx Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.2 2011/01/21 22:42:16 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.3 2012/01/07 21:02:15 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,15 @@ pcf8563rtc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (ia->ia_addr == PCF8563_ADDR)
-		return 1;
-
+	if (ia->ia_name) {
+		/* direct config - check name */
+		if (strcmp(ia->ia_name, "pcf8563rtc") == 0)
+			return 1;
+	} else {
+		/* indirect config - check typical address */
+		if (ia->ia_addr == PCF8563_ADDR)
+			return 1;
+	}
 	return 0;
 }
 
