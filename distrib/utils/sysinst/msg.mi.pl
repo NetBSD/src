@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.74 2011/04/17 12:33:42 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.75 2012/01/07 18:54:31 christos Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -648,15 +648,15 @@ message badetcfstab
 }
 
 message X_oldexists
-{Nie moge zapisac /usr/X11R6/bin/X jako /usr/X11R6/bin/X.old, poniewaz
-na docelowym dysku jest juz /usr/X11R6/bin/X.old. Napraw to przed kontynuacja.
+{Nie moge zapisac /usr/X11R7/bin/X jako /usr/X11R7/bin/X.old, poniewaz
+na docelowym dysku jest juz /usr/X11R7/bin/X.old. Napraw to przed kontynuacja.
 
 Jedyny sposob to uruchomic powloke z menu Narzedziowego i sprawdzic
-docelowe /usr/X11R6/bin/X oraz /usr/X11R6/bin/X.old. Jesli
-/usr/X11R6/bin/X.old pochodzi z zakonczonej aktualizacji, mozesz usunac
-/usr/X11R6/bin/X.old i zrobic restart. Albo jesli /usr/X11R6/bin/X.old
+docelowe /usr/X11R7/bin/X oraz /usr/X11R7/bin/X.old. Jesli
+/usr/X11R7/bin/X.old pochodzi z zakonczonej aktualizacji, mozesz usunac
+/usr/X11R7/bin/X.old i zrobic restart. Albo jesli /usr/X11R7/bin/X.old
 pochodzi z aktualnej niekompletnej aktualizacji, mozesz usunac
-/usr/X11R6/bin/X i przeniesc /usr/X11R6/bin/X.old na /usr/X11R6/bin/X.
+/usr/X11R7/bin/X i przeniesc /usr/X11R7/bin/X.old na /usr/X11R7/bin/X.
 
 Przerywamy aktualizacje.}
 
