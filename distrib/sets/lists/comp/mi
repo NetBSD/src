@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1723 2012/01/06 14:17:10 drochner Exp $
+#	$NetBSD: mi,v 1.1724 2012/01/07 18:42:38 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8949,6 +8949,7 @@
 ./usr/share/man/cat3/strsignal.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strsnvis.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strsnvisx.0		comp-c-catman		.cat
+./usr/share/man/cat3/strspct.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strspn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strsuftoll.0		comp-c-catman		.cat
@@ -15136,6 +15137,7 @@
 ./usr/share/man/html3/strsignal.html		comp-c-htmlman		html
 ./usr/share/man/html3/strsnvis.html		comp-c-htmlman		html
 ./usr/share/man/html3/strsnvisx.html		comp-c-htmlman		html
+./usr/share/man/html3/strspct.html		comp-c-htmlman		html
 ./usr/share/man/html3/strspn.html		comp-c-htmlman		html
 ./usr/share/man/html3/strstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/strsuftoll.html		comp-c-htmlman		html
@@ -21359,6 +21361,7 @@
 ./usr/share/man/man3/strsignal.3		comp-c-man		.man
 ./usr/share/man/man3/strsnvis.3			comp-c-man		.man
 ./usr/share/man/man3/strsnvisx.3		comp-c-man		.man
+./usr/share/man/man3/strspct.3			comp-c-man		.man
 ./usr/share/man/man3/strspn.3			comp-c-man		.man
 ./usr/share/man/man3/strstr.3			comp-c-man		.man
 ./usr/share/man/man3/strsuftoll.3		comp-c-man		.man
