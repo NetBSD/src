@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.29 2012/01/06 20:44:57 reinoud Exp $
+# $NetBSD: Makefile.usermode,v 1.30 2012/01/07 20:07:00 reinoud Exp $
 
 OPT_CPU_HOST=			%CPU_HOST%
 .if !empty(OPT_CPU_HOST)
@@ -53,8 +53,8 @@ MD_OBJS=	thunk.o
 MD_CFILES=	${USERMODE}/usermode/thunk.c
 MD_SFILES=
 
-MD_OBJS+=	machdep.${USERMODE_CPU}.o
-MD_CFILES+=	${USERMODE}/usermode/machdep.${USERMODE_CPU}.c
+MD_OBJS+=	cpu_${USERMODE_CPU}.o
+MD_CFILES+=	${USERMODE}/target/${USERMODE_CPU}/cpu_${USERMODE_CPU}.c
 
 ##
 ## (5) link settings
