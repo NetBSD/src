@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.97 2012/01/05 12:12:58 jmcneill Exp $ */
+/* $NetBSD: pmap.c,v 1.98 2012/01/07 19:44:13 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2012/01/05 12:12:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2012/01/07 19:44:13 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -595,13 +595,18 @@ pv_get(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 }
 
 static void
-pmap_set_pv(pmap_t pmap, uint lpn, struct pv_entry *pv)
+pmap_set_pv(pmap_t pmap, uintptr_t lpn, struct pv_entry *pv)
 {
 	struct pmap_l2 *l2tbl;
 	int l1 = lpn / PMAP_L2_NENTRY;
 	int l2 = lpn % PMAP_L2_NENTRY;
 
-if (lpn >= pm_nentries) panic("peeing outside box\n");
+#ifdef DIAGNOSTIC
+	if (lpn >= pm_nentries)
+		panic("peeing outside box : addr in page around %"PRIx64"\n",
+			(uint64_t) lpn*PAGE_SIZE);
+#endif
+
 	l2tbl = pmap->pm_l1[l1];
 	if (!l2tbl) {
 		l2tbl = pmap->pm_l1[l1] = pool_get(&pmap_l2_pool, PR_WAITOK);
@@ -611,13 +616,18 @@ if (lpn >= pm_nentries) panic("peeing outside box\n");
 }
 
 static struct pv_entry *
-pmap_lookup_pv(pmap_t pmap, uint lpn)
+pmap_lookup_pv(pmap_t pmap, uintptr_t lpn)
 {
 	struct pmap_l2 *l2tbl;
 	int l1 = lpn / PMAP_L2_NENTRY;
 	int l2 = lpn % PMAP_L2_NENTRY;
 
-if (lpn >= pm_nentries) panic("peeing outside box\n");
+#ifdef DIAGNOSTIC
+	if (lpn >= pm_nentries)
+		panic("peeing outside box : addr in page around %"PRIx64"\n",
+			(uint64_t) lpn*PAGE_SIZE);
+#endif
+
 	l2tbl = pmap->pm_l1[l1];
 	if (l2tbl)
 		return l2tbl->pm_l2[l2];
