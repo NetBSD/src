@@ -1,4 +1,4 @@
-/* $NetBSD: t_mktime.c,v 1.3 2011/12/17 19:04:07 apb Exp $ */
+/* $NetBSD: t_mktime.c,v 1.4 2012/01/07 15:05:22 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -44,13 +44,14 @@ ATF_TC_HEAD(mktime_negyear, tc)
 ATF_TC_BODY(mktime_negyear, tc)
 {
 	struct tm tms;
+	time_t t;
 
 	(void)memset(&tms, 0, sizeof(tms));
 	tms.tm_year = ~0;
 
 	errno = 0;
-
-	ATF_REQUIRE_ERRNO(errno, mktime(&tms) != (time_t)-1);
+	t = mktime(&tms);
+	ATF_REQUIRE_ERRNO(0, t != (time_t)-1);
 }
 
 ATF_TC(timegm_epoch);
@@ -64,13 +65,15 @@ ATF_TC_HEAD(timegm_epoch, tc)
 ATF_TC_BODY(timegm_epoch, tc)
 {
 	struct tm tms;
+	time_t t;
 
 	/* midnight on 1 Jan 1970 */
 	(void)memset(&tms, 0, sizeof(tms));
 	errno = 0;
 	tms.tm_year = 1970 - 1900;
 	tms.tm_mday = 1;
-	ATF_REQUIRE_ERRNO(errno, timegm(&tms) == (time_t)0);
+	t = timegm(&tms);
+	ATF_REQUIRE_ERRNO(0, t == (time_t)0);
 
 	/* one second after midnight on 1 Jan 1970 */
 	(void)memset(&tms, 0, sizeof(tms));
@@ -78,7 +81,8 @@ ATF_TC_BODY(timegm_epoch, tc)
 	tms.tm_year = 1970 - 1900;
 	tms.tm_mday = 1;
 	tms.tm_sec = 1;
-	ATF_REQUIRE_ERRNO(errno, timegm(&tms) == (time_t)1);
+	t = timegm(&tms);
+	ATF_REQUIRE_ERRNO(0, t == (time_t)1);
 
 	/*
 	 * 1969-12-31 23:59:59 = one second before the epoch.
@@ -92,7 +96,8 @@ ATF_TC_BODY(timegm_epoch, tc)
 	tms.tm_hour = 23;
 	tms.tm_min = 59;
 	tms.tm_sec = 59;
-	ATF_REQUIRE_ERRNO(errno, timegm(&tms) == (time_t)-1);
+	t = timegm(&tms);
+	ATF_REQUIRE_ERRNO(0, t == (time_t)-1);
 
 	/*
 	 * Another way of getting one second before the epoch:
@@ -103,7 +108,8 @@ ATF_TC_BODY(timegm_epoch, tc)
 	tms.tm_year = 1970 - 1900;
 	tms.tm_mday = 1;
 	tms.tm_sec = -1;
-	ATF_REQUIRE_ERRNO(errno, timegm(&tms) == (time_t)-1);
+	t = timegm(&tms);
+	ATF_REQUIRE_ERRNO(0, t == (time_t)-1);
 
 	/*
 	 * Two seconds before the epoch.
@@ -113,7 +119,8 @@ ATF_TC_BODY(timegm_epoch, tc)
 	tms.tm_year = 1970 - 1900;
 	tms.tm_mday = 1;
 	tms.tm_sec = -2;
-	ATF_REQUIRE_ERRNO(errno, timegm(&tms) == (time_t)-2);
+	t = timegm(&tms);
+	ATF_REQUIRE_ERRNO(0, t == (time_t)-2);
 
 }
 
