@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.35 2011/04/17 12:33:42 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.36 2012/01/07 18:54:30 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -669,16 +669,16 @@ Interrumpiendo la actualización.
 }
 
 message X_oldexists
-{No se puede guardar /usr/X11R6/bin/X como /usr/X11R6/bin/X.old, porque el
-disco objetivo ya tiene un /usr/X11R6/bin/X.old.  Por favor, arregle esto
+{No se puede guardar /usr/X11R7/bin/X como /usr/X11R7/bin/X.old, porque el
+disco objetivo ya tiene un /usr/X11R7/bin/X.old.  Por favor, arregle esto
 antes de continuar.
 
 Una manera es iniciando una shell desde el menú Utilidades, y examinar
-el objetivo /usr/X11R6/bin/X y /usr/X11R6/bin/X.old.  Si
-/usr/X11R6/bin/X.old es de una actualización completada, puede rm -f
-/usr/X11R6/bin/X.old y reiniciar.  O si /usr/X11R6/bin/X.old es de
-una actualizacion reciente e incompleta, puede rm -f /usr/X11R6/bin/X
-y mv /usr/X11R6/bin/X.old a /usr/X11R6/bin/X.
+el objetivo /usr/X11R7/bin/X y /usr/X11R7/bin/X.old.  Si
+/usr/X11R7/bin/X.old es de una actualización completada, puede rm -f
+/usr/X11R7/bin/X.old y reiniciar.  O si /usr/X11R7/bin/X.old es de
+una actualizacion reciente e incompleta, puede rm -f /usr/X11R7/bin/X
+y mv /usr/X11R7/bin/X.old a /usr/X11R7/bin/X.
 
 Interrumpiendo la actualización.}
 

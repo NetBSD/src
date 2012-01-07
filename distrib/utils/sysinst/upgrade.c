@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.51 2011/04/04 08:30:14 mbalmer Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.52 2012/01/07 18:54:31 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -112,20 +112,20 @@ static int
 save_X(void)
 {
 	/* Only care for X if it's a symlink */
-	if (target_symlink_exists_p("/usr/X11R6/bin/X")) {
-		if (target_symlink_exists_p("/usr/X11R6/bin/X.old")) {
+	if (target_symlink_exists_p("/usr/X11R7/bin/X")) {
+		if (target_symlink_exists_p("/usr/X11R7/bin/X.old")) {
 			msg_display(MSG_X_oldexists);
 			process_menu(MENU_ok, NULL);
 			return EEXIST;
 		}
 
 #ifdef DEBUG
-		printf("saving /usr/X11R6/bin/X as .../X.old ...");
+		printf("saving /usr/X11R7/bin/X as .../X.old ...");
 #endif
 
 		/* Move target .../X to .../X.old.  Abort on error. */
-		mv_within_target_or_die("/usr/X11R6/bin/X",
-					"/usr/X11R6/bin/X.old");
+		mv_within_target_or_die("/usr/X11R7/bin/X",
+					"/usr/X11R7/bin/X.old");
 	}
 
 	return 0;
@@ -138,11 +138,11 @@ save_X(void)
 static int
 merge_X(void)
 {
-	if (target_symlink_exists_p("/usr/X11R6/bin/X.old")) {
+	if (target_symlink_exists_p("/usr/X11R7/bin/X.old")) {
 		/* Only move back X if it's a symlink - we don't want
 		 * to restore old binaries */
-		mv_within_target_or_die("/usr/X11R6/bin/X.old",
-					"/usr/X11R6/bin/X");
+		mv_within_target_or_die("/usr/X11R7/bin/X.old",
+					"/usr/X11R7/bin/X");
 	}
 
 	return 0;

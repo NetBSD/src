@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.17 2011/09/16 15:42:28 joerg Exp $
+/*	$NetBSD: aout2elf.c,v 1.18 2012/01/07 18:54:30 christos Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -287,11 +287,11 @@ domove:
 	n = handle_aout_libs(src, LIB_MOVE, concat_paths(prefix, "usr/lib"));
 
 	if (run_program(0, "mkdir -p %s ",
-	    concat_paths(prefix, "usr/X11R6/lib")))
+	    concat_paths(prefix, "usr/X11R7/lib")))
 		abort_libupdate();
 
-	strlcpy(src, target_expand("/usr/X11R6/lib"), sizeof(src));
-	handle_aout_x_libs(src, concat_paths(prefix, "usr/X11R6/lib"));
+	strlcpy(src, target_expand("/usr/X11R7/lib"), sizeof(src));
+	handle_aout_x_libs(src, concat_paths(prefix, "usr/X11R7/lib"));
 
 	if (backedup) {
 		msg_display(MSG_emulbackup);
