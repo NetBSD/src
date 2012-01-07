@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.13 2011/05/28 13:59:31 phx Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.14 2012/01/07 15:03:11 phx Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.13 2011/05/28 13:59:31 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.14 2012/01/07 15:03:11 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,15 +129,15 @@ dsrtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct dsrtc_softc *sc;
 
 	if ((sc = device_lookup_private(&dsrtc_cd, minor(dev))) == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	/* XXX: Locking */
 
 	if (sc->sc_open)
-		return (EBUSY);
+		return EBUSY;
 
 	sc->sc_open = 1;
-	return (0);
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -147,10 +147,10 @@ dsrtc_close(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct dsrtc_softc *sc;
 
 	if ((sc = device_lookup_private(&dsrtc_cd, minor(dev))) == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	sc->sc_open = 0;
-	return (0);
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -162,13 +162,13 @@ dsrtc_read(dev_t dev, struct uio *uio, int flags)
 	int a, error;
 
 	if ((sc = device_lookup_private(&dsrtc_cd, minor(dev))) == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	if (uio->uio_offset >= DS1307_NVRAM_SIZE)
-		return (EINVAL);
+		return EINVAL;
 
 	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0)
-		return (error);
+		return error;
 
 	while (uio->uio_resid && uio->uio_offset < DS1307_NVRAM_SIZE) {
 		a = (int)uio->uio_offset;
@@ -179,17 +179,17 @@ dsrtc_read(dev_t dev, struct uio *uio, int flags)
 			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "dsrtc_read: read failed at 0x%x\n", a);
-			return (error);
+			return error;
 		}
 		if ((error = uiomove(&ch, 1, uio)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
-			return (error);
+			return error;
 		}
 	}
 
 	iic_release_bus(sc->sc_tag, 0);
 
-	return (0);
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -201,13 +201,13 @@ dsrtc_write(dev_t dev, struct uio *uio, int flags)
 	int a, error;
 
 	if ((sc = device_lookup_private(&dsrtc_cd, minor(dev))) == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	if (uio->uio_offset >= DS1307_NVRAM_SIZE)
-		return (EINVAL);
+		return EINVAL;
 
 	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0)
-		return (error);
+		return error;
 
 	while (uio->uio_resid && uio->uio_offset < DS1307_NVRAM_SIZE) {
 		a = (int)uio->uio_offset;
@@ -226,7 +226,7 @@ dsrtc_write(dev_t dev, struct uio *uio, int flags)
 
 	iic_release_bus(sc->sc_tag, 0);
 
-	return (error);
+	return error;
 }
 
 static int
@@ -249,7 +249,7 @@ dsrtc_gettime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 		dsrtc_clock_read(sc, &check);
 	} while (memcmp(dt, &check, sizeof(check)) != 0 && --retries);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -258,9 +258,9 @@ dsrtc_settime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 	struct dsrtc_softc *sc = ch->cookie;
 
 	if (dsrtc_clock_write(sc, dt) == 0)
-		return (-1);
+		return -1;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -272,7 +272,7 @@ dsrtc_clock_read(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
 		aprint_error_dev(sc->sc_dev,
 		    "dsrtc_clock_read: failed to acquire I2C bus\n");
-		return (0);
+		return 0;
 	}
 
 	/* Read each RTC register in order. */
@@ -286,7 +286,7 @@ dsrtc_clock_read(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 			aprint_error_dev(sc->sc_dev,
 			    "dsrtc_clock_read: failed to read rtc "
 			    "at 0x%x\n", i);
-			return (0);
+			return 0;
 		}
 	}
 
@@ -299,15 +299,14 @@ dsrtc_clock_read(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	dt->dt_sec = FROMBCD(bcd[DS1307_SECONDS] & DS1307_SECONDS_MASK);
 	dt->dt_min = FROMBCD(bcd[DS1307_MINUTES] & DS1307_MINUTES_MASK);
 
-	if ((bcd[DS1307_HOURS] & DS1307_HOURS_24HRS) == 0) {
+	if ((bcd[DS1307_HOURS] & DS1307_HOURS_12HRS_MODE) != 0) {
 		dt->dt_hour = FROMBCD(bcd[DS1307_HOURS] &
-		    DS1307_HOURS_12MASK);
+		    DS1307_HOURS_12MASK) % 12; /* 12AM -> 0, 12PM -> 12 */
 		if (bcd[DS1307_HOURS] & DS1307_HOURS_12HRS_PM)
 			dt->dt_hour += 12;
-	} else {
+	} else
 		dt->dt_hour = FROMBCD(bcd[DS1307_HOURS] &
 		    DS1307_HOURS_24MASK);
-	}
 
 	dt->dt_day = FROMBCD(bcd[DS1307_DATE] & DS1307_DATE_MASK);
 	dt->dt_mon = FROMBCD(bcd[DS1307_MONTH] & DS1307_MONTH_MASK);
@@ -315,7 +314,7 @@ dsrtc_clock_read(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	/* XXX: Should be an MD way to specify EPOCH used by BIOS/Firmware */
 	dt->dt_year = FROMBCD(bcd[DS1307_YEAR]) + POSIX_BASE_YEAR;
 
-	return (1);
+	return 1;
 }
 
 static int
@@ -330,7 +329,7 @@ dsrtc_clock_write(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	 */
 	bcd[DS1307_SECONDS] = TOBCD(dt->dt_sec);
 	bcd[DS1307_MINUTES] = TOBCD(dt->dt_min);
-	bcd[DS1307_HOURS] = TOBCD(dt->dt_hour) | DS1307_HOURS_24HRS;
+	bcd[DS1307_HOURS] = TOBCD(dt->dt_hour); /* DS1307_HOURS_12HRS_MODE=0 */
 	bcd[DS1307_DATE] = TOBCD(dt->dt_day);
 	bcd[DS1307_DAY] = TOBCD(dt->dt_wday);
 	bcd[DS1307_MONTH] = TOBCD(dt->dt_mon);
@@ -339,7 +338,7 @@ dsrtc_clock_write(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
 		aprint_error_dev(sc->sc_dev,
 		    "dsrtc_clock_write: failed to acquire I2C bus\n");
-		return (0);
+		return 0;
 	}
 
 	/* Stop the clock */
@@ -351,7 +350,7 @@ dsrtc_clock_write(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
 		aprint_error_dev(sc->sc_dev,
 		    "dsrtc_clock_write: failed to Hold Clock\n");
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -369,11 +368,11 @@ dsrtc_clock_write(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 			    "dsrtc_clock_write: failed to write rtc "
 			    " at 0x%x\n", i);
 			/* XXX: Clock Hold is likely still asserted! */
-			return (0);
+			return 0;
 		}
 	}
 
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
-	return (1);
+	return 1;
 }

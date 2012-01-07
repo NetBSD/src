@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307reg.h,v 1.2 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: ds1307reg.h,v 1.3 2012/01/07 15:03:11 phx Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
 #define	DS1307_NVRAM_START	0x08
 #define	DS1307_NVRAM_END	0x3f
 
-#define	DS1307_NRTC_REGS	8
+#define	DS1307_NRTC_REGS	7
 #define	DS1307_NVRAM_SIZE	((DS1307_NVRAM_END - DS1307_NVRAM_START) + 1)
 
 /*
@@ -64,7 +64,7 @@
 #define	DS1307_SECONDS_CH	(1u << 7)	/* Clock Hold */
 #define	DS1307_SECONDS_MASK	0x7f
 #define	DS1307_MINUTES_MASK	0x7f
-#define	DS1307_HOURS_24HRS	(1u << 6)	/* Set for 24 hour mode */
+#define	DS1307_HOURS_12HRS_MODE	(1u << 6)	/* Set for 12 hour mode */
 #define	DS1307_HOURS_12HRS_PM	(1u << 5)	/* If 12 hr mode, set = PM */
 #define	DS1307_HOURS_12MASK	0x1f
 #define	DS1307_HOURS_24MASK	0x3f
