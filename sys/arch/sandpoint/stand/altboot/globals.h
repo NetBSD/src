@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.14 2011/11/06 20:20:57 phx Exp $ */
+/* $NetBSD: globals.h,v 1.15 2012/01/07 19:57:49 phx Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -48,7 +48,6 @@ void sat_write(char *, int);
 int sat_getch(void);
 int sat_tstch(void);
 #endif
-unsigned mpc107memsize(void);
 void read_mac_from_flash(uint8_t *);
 
 /* PPC processor ctl */
