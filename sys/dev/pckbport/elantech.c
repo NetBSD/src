@@ -1,4 +1,4 @@
-/* $NetBSD: elantech.c,v 1.4 2011/09/09 14:29:47 jakllsch Exp $ */
+/* $NetBSD: elantech.c,v 1.5 2012/01/07 10:27:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elantech.c,v 1.4 2011/09/09 14:29:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elantech.c,v 1.5 2012/01/07 10:27:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,11 +220,20 @@ pms_elantech_input(void *opaque, int data)
 	if (!psc->sc_enabled)
 		return;
 
-	if ((psc->inputstate == 0 && (data & 0x0c) != 0x0c) ||
-	    (psc->inputstate == 3 && (data & 0x0f) != 0x08)) {
-		aprint_debug_dev(psc->sc_dev, "waiting for sync..\n");
-		psc->inputstate = 0;
-		return;
+	if (sc->version >= 0x020800) {
+		if ((psc->inputstate == 0 && (data & 0x0c) != 0x04) ||
+		    (psc->inputstate == 3 && (data & 0x0f) != 0x02)) {
+			aprint_debug_dev(psc->sc_dev, "waiting for sync..\n");
+			psc->inputstate = 0;
+			return;
+		}
+	} else {
+		if ((psc->inputstate == 0 && (data & 0x0c) != 0x0c) ||
+		    (psc->inputstate == 3 && (data & 0x0e) != 0x08)) {
+			aprint_debug_dev(psc->sc_dev, "waiting for sync..\n");
+			psc->inputstate = 0;
+			return;
+		}
 	}
 
 	psc->packet[psc->inputstate++] = data & 0xff;
@@ -245,8 +254,8 @@ pms_elantech_input(void *opaque, int data)
 	case 0:
 		/* FALLTHROUGH */
 	case 1:
-		ep.ep_x = ((int16_t)psc->packet[1] << 8) | psc->packet[2];
-		ep.ep_y = ((int16_t)psc->packet[4] << 8) | psc->packet[5];
+		ep.ep_x = ((int16_t)(psc->packet[1] & 0xf) << 8) | psc->packet[2];
+		ep.ep_y = ((int16_t)(psc->packet[4] & 0xf) << 8) | psc->packet[5];
 
 		aprint_debug_dev(psc->sc_dev,
 		    "%d finger detected in elantech mode:\n", ep.ep_nfingers);
@@ -365,9 +374,9 @@ pms_elantech_probe_init(void *opaque)
 		    resp[0], resp[2], resp[0], resp[1], resp[2]);
 		goto doreset;
 	}
-	sc->version = fwversion;
-	aprint_normal_dev(psc->sc_dev, "Elantech touchpad version %d.%d\n",
-	    resp[0], resp[2]);
+	sc->version = (resp[0] << 16) | (resp[1] << 8) | resp[2];
+	aprint_normal_dev(psc->sc_dev, "Elantech touchpad version %d.%d (%06x)\n",
+	    resp[0], resp[2], sc->version);
 
 	res = pms_elantech_init(psc);
 	if (res) {
