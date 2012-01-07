@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.i386.c,v 1.1 2012/01/06 20:44:57 reinoud Exp $ */
+/* $NetBSD: cpu_i386.c,v 1.1 2012/01/07 20:07:01 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -33,9 +33,8 @@
  * non-generic mcontext_t's one day, but will this break non-NetBSD hosts?
  */
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.i386.c,v 1.1 2012/01/06 20:44:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_i386.c,v 1.1 2012/01/07 20:07:01 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -55,9 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.i386.c,v 1.1 2012/01/06 20:44:57 reinoud Exp
 #include <dev/mm.h>
 #include <machine/machdep.h>
 #include <machine/thunk.h>
-
-
-#ifdef __i386__
 
 #if 0
 static void dump_regs(register_t *reg);;
@@ -290,6 +286,7 @@ md_syscall_check_opcode(ucontext_t *ucp)
 	case 0xff0b:	/* UD2      */
 	case 0x80cd:	/* int $80  */
 	case 0x340f:	/* sysenter */
+	case 0x050f:	/* syscall */
 		return 1;
 	default:
 		return 0;
@@ -308,6 +305,7 @@ md_syscall_get_opcode(ucontext_t *ucp, uint32_t *opcode)
 	case 0xff0b:	/* UD2      */
 	case 0x80cd:	/* int $80  */
 	case 0x340f:	/* sysenter */
+	case 0x050f:	/* syscall */
 		*opcode = *p16;
 		break;
 	default:
@@ -326,6 +324,7 @@ md_syscall_inc_pc(ucontext_t *ucp, uint32_t opcode)
 	case 0xff0b:	/* UD2      */
 	case 0x80cd:	/* int $80  */
 	case 0x340f:	/* sysenter */
+	case 0x050f:	/* syscall */
 		reg[14] += 2;	/* EIP */
 		break;
 	default:
@@ -344,6 +343,7 @@ md_syscall_dec_pc(ucontext_t *ucp, uint32_t opcode)
 	case 0xff0b:	/* UD2      */
 	case 0x80cd:	/* int $80  */
 	case 0x340f:	/* sysenter */
+	case 0x050f:	/* syscall */
 		reg[14] -= 2;	/* EIP */
 		break;
 	default:
@@ -351,6 +351,4 @@ md_syscall_dec_pc(ucontext_t *ucp, uint32_t opcode)
 			__func__, (uint32_t) opcode);
 	}
 }
-
-#endif
 
