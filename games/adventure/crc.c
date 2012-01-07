@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.11 2009/08/25 06:04:17 dholland Exp $	*/
+/*	$NetBSD: crc.c,v 1.12 2012/01/07 18:08:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 5/31/93";
 static char ORIGINAL_sccsid[] = "@(#)crc.c	5.2 (Berkeley) 4/4/91";
 #else
-__RCSID("$NetBSD: crc.c,v 1.11 2009/08/25 06:04:17 dholland Exp $");
+__RCSID("$NetBSD: crc.c,v 1.12 2012/01/07 18:08:35 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,13 +124,8 @@ crc(const char *ptr, int nr)
 
 	while (nr > 0)
 		for (p = ptr; nr--; ++p) {
-			/*
-			 * The following is not portable to machines
-			 * where char is unsigned, because of sign
-			 * extension. But it can't be changed without
-			 * breaking save files. Sigh.
-			 */
-			if (!(i = crcval >> 24 ^ *p)) {
+			i = (crcval >> 24 ^ (unsigned char)*p) & 0xff;
+			if (i == 0) {
 				i = step++;
 				if (step >= sizeof(crctab) / sizeof(crctab[0]))
 					step = 0;
