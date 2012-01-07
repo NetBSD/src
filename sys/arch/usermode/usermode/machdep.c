@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.49 2012/01/06 20:44:57 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.50 2012/01/07 18:10:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -37,7 +37,7 @@
 #include "opt_memsize.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2012/01/06 20:44:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2012/01/07 18:10:18 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -58,6 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2012/01/06 20:44:57 reinoud Exp $")
 #include <machine/machdep.h>
 #include <machine/thunk.h>
 
+#ifndef MAX_DISK_IMAGES
+#define MAX_DISK_IMAGES	4
+#endif
+
 char machine[_SYS_NMLN] = "";
 char machine_arch[_SYS_NMLN] = "";
 char module_machine_usermode[_SYS_NMLN] = "";
@@ -65,7 +69,10 @@ char module_machine_usermode[_SYS_NMLN] = "";
 struct vm_map *phys_map = NULL;
 
 static char **saved_argv;
-char *usermode_root_image_path = NULL;
+
+char *usermode_disk_image_path[MAX_DISK_IMAGES];
+int usermode_disk_image_path_count = 0;
+
 static char usermode_tap_devicebuf[PATH_MAX] = "";
 char *usermode_tap_device = NULL;
 char *usermode_tap_eaddr = NULL;
@@ -82,16 +89,16 @@ static void
 usage(const char *pn)
 {
 	printf("usage: %s [-acdqsvxz]"
-	    " [tap=<dev>,<eaddr>]"
-	    " [audio=<dev>]"
-	    " [vnc=<width>x<height>,<port>]"
-	    " [<fsimg>]\n",
+	    " [net=<tapdev>,<eaddr>]"
+	    " [audio=<audiodev>]"
+	    " [disk=<diskimg> ...]"
+	    " [vnc=<width>x<height>,<port>]\n",
 	    pn);
 	printf("       (ex. \"%s"
-	    " tap=tap0,00:00:be:ef:ca:fe"
+	    " net=tap0,00:00:be:ef:ca:fe"
 	    " audio=audio0"
-	    " vnc=640x480,5900"
-	    " root.fs\")\n", pn);
+	    " disk=root.fs"
+	    " vnc=640x480,5900\")\n", pn);
 }
 
 void
@@ -115,11 +122,11 @@ main(int argc, char *argv[])
 
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
-			if (strncmp(argv[i], "tap=", strlen("tap=")) == 0) {
-				char *tap = argv[i] + strlen("tap=");
+			if (strncmp(argv[i], "net=", strlen("net=")) == 0) {
+				char *tap = argv[i] + strlen("net=");
 				char *mac = strchr(tap, ',');
 				if (mac == NULL) {
-					printf("bad tap= format\n");
+					printf("bad net= format\n");
 					return;
 				}
 				*mac++ = '\0';
@@ -166,8 +173,22 @@ main(int argc, char *argv[])
 				usermode_vnc_width = strtoul(w, NULL, 10);
 				usermode_vnc_height = strtoul(h, NULL, 10);
 				usermode_vnc_port = strtoul(p, NULL, 10);
+			} else if (strncmp(argv[i], "disk=",
+			    strlen("disk=")) == 0) {
+				if (usermode_disk_image_path_count ==
+				    MAX_DISK_IMAGES) {
+					printf("too many disk images "
+					    "(increase MAX_DISK_IMAGES)\n");
+					usage(argv[0]);
+					return;
+				}
+				usermode_disk_image_path[
+				    usermode_disk_image_path_count++] =
+				    argv[i] + strlen("disk=");
 			} else {
-				usermode_root_image_path = argv[i];
+				printf("%s: unknown parameter\n", argv[i]);
+				usage(argv[0]);
+				return;
 			}
 			continue;
 		}
