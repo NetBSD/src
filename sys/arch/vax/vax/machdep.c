@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.183 2011/12/12 19:03:12 mrg Exp $	 */
+/* $NetBSD: machdep.c,v 1.184 2012/01/07 16:47:42 chs Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183 2011/12/12 19:03:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184 2012/01/07 16:47:42 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -719,6 +719,18 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	tf->tf_sp = gr[_REG_SP];
 	tf->tf_pc = gr[_REG_PC];
 	tf->tf_psl = gr[_REG_PSL];
+
+	if (flags & _UC_TLSBASE) {
+		void *tlsbase;
+		int error;
+
+		error = copyin((void *)tf->tf_sp, &tlsbase, sizeof(tlsbase));
+		if (error) {
+			return error;
+		}
+		lwp_setprivate(l, tlsbase);
+		tf->tf_sp += sizeof(tlsbase);
+	}
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.6 2011/04/12 18:24:28 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.7 2012/01/07 16:47:42 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,6 +63,9 @@ typedef	__greg_t	__gregset_t[_NGREG];
 typedef struct {
 	__gregset_t	__gregs;	/* General Purpose Register set */
 } mcontext_t;
+
+/* Machine-dependent uc_flags */
+#define _UC_TLSBASE	0x00080000
 
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
