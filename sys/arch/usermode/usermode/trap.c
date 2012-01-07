@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.53 2012/01/06 20:39:42 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.54 2012/01/07 19:45:14 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53 2012/01/06 20:39:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54 2012/01/07 19:45:14 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -166,7 +166,9 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 #endif
 #endif
 
-//printf("memaccess error : va = %p\n", (void *) va);
+//	thunk_printf("memaccess error : pc = %p, va = %p\n",
+//		(void *) pc, (void *) va);
+
 	/* copy this state to return to */
 	memcpy(&pcb->pcb_trapret_ucp, uct, sizeof(ucontext_t));
 
@@ -282,7 +284,8 @@ pagefault(void)
 	if (from_kernel && (va >= VM_MIN_KERNEL_ADDRESS))
 		vm_map = kernel_map;
 
-	thunk_printf_debug("pagefault : pc %p, va %p\n", (void *) pc, (void *) va);
+//	thunk_printf_debug("pagefault : pc %p, va %p\n",
+//		(void *) pc, (void *) va);
 
 	/* can pmap handle it? on its own? (r/m) */
 	onfault = pcb->pcb_onfault;
