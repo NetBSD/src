@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_amd64.c,v 1.1 2012/01/07 20:07:00 reinoud Exp $ */
+/* $NetBSD: cpu_x86_64.c,v 1.1 2012/01/07 20:44:42 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_amd64.c,v 1.1 2012/01/07 20:07:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_x86_64.c,v 1.1 2012/01/07 20:44:42 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
