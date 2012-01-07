@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.1 2009/06/03 01:02:28 christos Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.2 2012/01/07 16:47:42 chs Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.1 2009/06/03 01:02:28 christos Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.2 2012/01/07 16:47:42 chs Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -76,4 +76,12 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	gr[_REG_SP] = (__greg_t)sp;
 	gr[_REG_FP] = (__greg_t)sp;
 	gr[_REG_PC] = (__greg_t)start + 2;
+
+	/*
+	 * Push the TLS pointer onto the new stack also.
+	 * The _UC_TLSBASE flag tells the kernel to pop it and use it.
+	 */
+	*--sp = (intptr_t)private;
+	gr[_REG_SP] = (__greg_t)sp;
+	u->uc_flags |= _UC_TLSBASE;
 }
