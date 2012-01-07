@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.2 2011/08/11 23:15:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2012/01/07 02:07:58 mrg Exp $
 
 XCBUTIL=	image
 
 SRCS=	\
 	xcb_image.c
 
-.include "../xcb-util.mk"
-
-LIBDPLIBS+=\
+XCBUTIL_EXTRA_DPLIBS+=\
 	xcb-shm	${.CURDIR}/../../libxcb/shm \
 	xcb-aux	${.CURDIR}/../aux
+
+.include "../xcb-util.mk"
 
 CPPFLAGS+=	-I${X11SRCDIR.xcb-util}/aux
 
