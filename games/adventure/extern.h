@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2012/01/08 18:16:00 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 2012/01/08 18:17:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -25,6 +25,7 @@
  */
 
 #include <string.h>
+#include <stdint.h>
 
 /* crc.c */
 struct crcstate {
