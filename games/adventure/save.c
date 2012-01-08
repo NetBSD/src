@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.12 2012/01/07 22:23:16 dholland Exp $	*/
+/*	$NetBSD: save.c,v 1.13 2012/01/08 18:16:00 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.12 2012/01/07 22:23:16 dholland Exp $");
+__RCSID("$NetBSD: save.c,v 1.13 2012/01/08 18:16:00 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -60,13 +60,14 @@ struct savefile {
 	bool warned;
 	unsigned bintextpos;
 	uint32_t key;
-	uint32_t sum;
+	struct crcstate crc;
 	unsigned char pad[8];
 	unsigned padpos;
 };
 
 #define BINTEXT_WIDTH 60
-#define FORMAT_VERSION 1
+#define FORMAT_VERSION 2
+#define FORMAT_VERSION_NOSUM 1
 static const char header[] = "Adventure save file\n";
 
 ////////////////////////////////////////////////////////////
@@ -133,7 +134,7 @@ savefile_open(const char *name, bool forwrite)
 	sf->warned = false;
 	sf->bintextpos = 0;
 	sf->key = 0;
-	sf->sum = 0;
+	crc_start(&sf->crc);
 	memset(sf->pad, 0, sizeof(sf->pad));
 	sf->padpos = 0;
 	return sf;
@@ -362,7 +363,7 @@ static void
 savefile_key(struct savefile *sf, uint32_t key)
 {
 	sf->key = 0;
-	sf->sum = 0;
+	crc_start(&sf->crc);
 	hash(&sf->key, sizeof(sf->key), sf->pad, sizeof(sf->pad));
 	sf->padpos = 0;
 }
@@ -412,6 +413,7 @@ savefile_cread(struct savefile *sf, void *data, size_t len)
 		}
 		pos += amt;
 	}
+	crc_add(&sf->crc, data, len);
 	return 0;
 }
 
@@ -443,6 +445,7 @@ savefile_cwrite(struct savefile *sf, const void *data, size_t len)
 		}
 		pos += amt;
 	}
+	crc_add(&sf->crc, data, len);
 	return 0;
 }
 
@@ -528,6 +531,7 @@ compat_restore(const char *infile)
 	char   *s;
 	long    sum, cksum = 0;
 	int     i;
+	struct crcstate crc;
 
 	if ((in = fopen(infile, "rb")) == NULL) {
 		fprintf(stderr,
@@ -544,9 +548,10 @@ compat_restore(const char *infile)
 	}
 	fclose(in);
 
-	crc_start();		/* See if she cheated */
+	crc_start(&crc);		/* See if she cheated */
 	for (p = compat_savearray; p->address != NULL; p++)
-		cksum = crc(p->address, p->width);
+		crc_add(&crc, p->address, p->width);
+	cksum = crc_get(&crc);
 	if (sum != cksum)	/* Tsk tsk */
 		return 2;	/* Altered the file */
 	/* We successfully restored, so this really was a save file */
@@ -661,7 +666,7 @@ save(const char *outfile)
 	uint32_t key, writeable_key;
 	uint32_t version;
 	unsigned i, j, n;
-	uint32_t val;
+	uint32_t val, sum;
 
 	sf = savefile_open(outfile, true);
 	if (sf == NULL) {
@@ -732,8 +737,8 @@ save(const char *outfile)
 	}
 #endif
 
-	sf->sum = htonl(sf->sum);
-	if (savefile_binwrite(sf, &sf->sum, sizeof(&sf->sum))) {
+	sum = htonl(crc_get(&sf->crc));
+	if (savefile_binwrite(sf, &sum, sizeof(&sum))) {
 		savefile_close(sf);
 		return 1;
 	}
@@ -753,6 +758,7 @@ restore(const char *infile)
 	uint32_t version, key, sum;
 	unsigned i, j, n;
 	uint32_t val;
+	bool skipsum = false;
 
 	sf = savefile_open(infile, false);
 	if (sf == NULL) {
@@ -777,7 +783,13 @@ restore(const char *infile)
 		return 1;
 	}
 	version = ntohl(version);
-	if (version != FORMAT_VERSION) {
+	switch (version) {
+	    case FORMAT_VERSION:
+		break;
+	    case FORMAT_VERSION_NOSUM:
+		skipsum = true;
+		break;
+	    default:
 		savefile_close(sf);
 		fprintf(stderr,
 		    "Oh dear, that file must be from the future. I don't know"
@@ -840,7 +852,7 @@ restore(const char *infile)
 	}
 	sum = ntohl(sum);
 	/* See if she cheated */
-	if (sum != sf->sum) {
+	if (!skipsum && sum != crc_get(&sf->crc)) {
 		/* Tsk tsk, altered the file */
 		savefile_close(sf);
 		return 2;
