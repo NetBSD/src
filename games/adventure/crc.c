@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.12 2012/01/07 18:08:35 dholland Exp $	*/
+/*	$NetBSD: crc.c,v 1.13 2012/01/08 18:16:00 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,13 +38,13 @@
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 5/31/93";
 static char ORIGINAL_sccsid[] = "@(#)crc.c	5.2 (Berkeley) 4/4/91";
 #else
-__RCSID("$NetBSD: crc.c,v 1.12 2012/01/07 18:08:35 dholland Exp $");
+__RCSID("$NetBSD: crc.c,v 1.13 2012/01/08 18:16:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
-static const unsigned long crctab[] = {
+static const uint32_t crctab[256] = {
 	0x7fffffff,
 	0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
 	0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e,
@@ -98,6 +98,7 @@ static const unsigned long crctab[] = {
 	0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02,
 	0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
+
 /*
  * crc --
  *      Compute a POSIX.2 checksum.  This routine modified by Jim Gillogly
@@ -106,31 +107,39 @@ static const unsigned long crctab[] = {
  *      it.
  */
 
-static unsigned long crcval;
-static unsigned int step;
-
 void
-crc_start(void)
+crc_start(struct crcstate *c)
 {
-	crcval = step = 0;
+	c->crcval = 0;
+	c->step = 0;
 }
 
-/* Process nr bytes at a time; ptr points to them */
-unsigned long
-crc(const char *ptr, int nr)
+/*
+ * Process NUM bytes pointed to by DATA
+ */
+void
+crc_add(struct crcstate *c, const void *data, size_t num)
 {
-	int     i;
-	const char   *p;
+	const unsigned char *udata;
+	size_t pos;
+	unsigned x;
 
-	while (nr > 0)
-		for (p = ptr; nr--; ++p) {
-			i = (crcval >> 24 ^ (unsigned char)*p) & 0xff;
-			if (i == 0) {
-				i = step++;
-				if (step >= sizeof(crctab) / sizeof(crctab[0]))
-					step = 0;
+	udata = data;
+	pos = 0;
+	while (pos < num) {
+		x = (c->crcval >> 24 ^ udata[pos++]) & 0xff;
+		if (x == 0) {
+			x = c->step++;
+			if (c->step >= __arraycount(crctab)) {
+				c->step = 0;
 			}
-			crcval = (crcval << 8) ^ crctab[i];
 		}
-	return crcval & 0xffffffff;	/* Mask to 32 bits. */
+		c->crcval = (c->crcval << 8) ^ crctab[x];
+	}
+}
+
+uint32_t
+crc_get(struct crcstate *c)
+{
+	return c->crcval;
 }
