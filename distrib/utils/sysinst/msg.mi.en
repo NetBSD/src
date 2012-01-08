@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.166 2012/01/07 18:54:30 christos Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.167 2012/01/08 02:32:00 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -649,16 +649,16 @@ message badetcfstab
 }
 
 message X_oldexists
-{I cannot save /usr/X11R7/bin/X as /usr/X11R7/bin/X.old, because the
-target disk already has an /usr/X11R7/bin/X.old. Please fix this before
+{I cannot save %s/bin/X as %s/bin/X.old, because the
+target disk already has an %s/bin/X.old. Please fix this before
 continuing.
 
 One way is to start a shell from the Utilities menu, examine the
-target /usr/X11R7/bin/X and /usr/X11R7/bin/X.old.  If
-/usr/X11R7/bin/X.old is from a completed upgrade, you can rm -f
-/usr/X11R7/bin/X.old and restart.  Or if /usr/X11R7/bin/X.old is from
-a recent, incomplete upgrade, you can rm -f /usr/X11R7/bin/X and mv
-/usr/X11R7/bin/X.old to /usr/X11R7/bin/X.
+target %s/bin/X and %s/bin/X.old.  If
+%s/bin/X.old is from a completed upgrade, you can rm -f
+%s/bin/X.old and restart.  Or if %s/bin/X.old is from
+a recent, incomplete upgrade, you can rm -f %s/bin/X and mv
+%s/bin/X.old to %s/bin/X
 
 Aborting upgrade.}
 
