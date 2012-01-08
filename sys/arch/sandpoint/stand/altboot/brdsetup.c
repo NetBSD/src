@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.24 2012/01/07 19:57:49 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.25 2012/01/08 14:53:54 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -76,17 +76,16 @@ static struct brdprop brdlist[] = {
 	"kurobox",
 	"KuroBox",
 	BRD_KUROBOX,
-	32768000,
+	0,
 	"eumb", 0x4600, 57600,
 	kurosetup, kurobrdfix, NULL, NULL },
     {
 	"synology",
 	"Synology DS",
 	BRD_SYNOLOGY,
-	33164691,	/* from Synology/Linux source            */
-			/* XXX should be 33165343 for the CS-406 */
+	0,
 	"eumb", 0x4500, 115200,
-	NULL, synobrdfix, NULL, synoreset },
+	synosetup, synobrdfix, NULL, synoreset },
     {
 	"qnap",
 	"QNAP TS",
@@ -113,7 +112,7 @@ static struct brdprop brdlist[] = {
 	"nhnas",
 	"Netronics NH230/231",
 	BRD_NH230NAS,
-	0,
+	33000000,
 	"eumb", 0x4500, 9600,
 	NULL, nhnasbrdfix, NULL, NULL },
     {
@@ -661,6 +660,16 @@ kurobrdfix(struct brdprop *brd)
 	init_uart(uart2base, 9600, LCR_8BITS | LCR_PEVEN);
 	/* Stop Watchdog */
 	send_sat("AAAAFFFFJJJJ>>>>VVVV>>>>ZZZZVVVVKKKK");
+}
+
+void
+synosetup(struct brdprop *brd)
+{
+
+	if (1) /* 200 and 266MHz models */
+		brd->extclk = 33164691; /* from Synology/Linux source */
+	else   /* 400MHz models XXX how to check? */
+		brd->extclk = 33165343;
 }
 
 void
