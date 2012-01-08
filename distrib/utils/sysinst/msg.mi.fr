@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.116 2012/01/07 18:54:31 christos Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.117 2012/01/08 02:32:00 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -703,16 +703,16 @@ Ceci est une erreur majeure : nous ne pouvons continuer.
 
 message X_oldexists
 {
-Impossible de sauvegarder /usr/X11R7/bin/X : le disque contient déjà
-un fichier /usr/X11R7/bin/X.old et nous devons renommer l'actuel fichier
+Impossible de sauvegarder %s/bin/X : le disque contient déjà
+un fichier %s/bin/X.old et nous devons renommer l'actuel fichier
 avec ce nom. Veuillez supprimer ou renommer le fichier X.old avant de
 recommencer.
 Vous pouvez démarrer un shell depuis le menu "Utilitaires" afin
 de faire cette modification.
 Ce fichier provient probablement d'une ancienne mise à jour et
 il est possible de le supprimer. S'il provient d'une mise à jour
-incomplète, vous pouvez effacer /usr/X11R7/bin/X et renommer
-/usr/X11R7/bin/X.old en /usr/X11R7/bin/X.
+incomplète, vous pouvez effacer %s/bin/X et renommer
+%s/bin/X.old en %s/bin/X.%0s%0s%0s%0s%0s%0s
 
 Arrêt de la mise à jour.
 }
