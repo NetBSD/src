@@ -45,15 +45,20 @@ EOF
 
 	# header specific quirks
 	if [ "$hdr" = "disklabel.h" ]; then
+		echo "#include <machine/types.h>" >> ${hdr}
+		echo "#ifndef __HAVE_OLD_DISKLABEL" >> ${hdr}
 		echo "#undef DISKUNIT" >> ${hdr}
 		echo "#undef DISKPART" >> ${hdr}
 		echo "#undef DISKMINOR" >> ${hdr}
+		echo "#endif" >> ${hdr}
 	elif [ "$hdr" = "ptrace.h" ]; then
 		echo "#undef __HAVE_PTRACE_MACHDEP" >> ${hdr}
 		echo "#undef __HAVE_PROCFS_MACHDEP" >> ${hdr}
 	elif [ "$hdr" = "param.h" ]; then
+		echo "#undef UPAGES" >> ${hdr}
+		echo "#define UPAGES 6" >> ${hdr}
 		echo "#undef USPACE" >> ${hdr}
-		echo "#define USPACE (PAGE_SIZE*4)" >> ${hdr}
+		echo "#define USPACE (PAGE_SIZE*UPAGES)" >> ${hdr}
 	fi
 
 	echo >>${hdr}
