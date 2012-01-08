@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.58 2012/01/07 18:54:30 christos Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.59 2012/01/08 02:32:00 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -677,18 +677,18 @@ Aktualisierung wird abgebrochen.
 }
 
 message X_oldexists
-{Der alte X Server /usr/X11R7/bin/X kann nicht als /usr/X11R7/bin/X.old
+{Der alte X Server %s/bin/X kann nicht als %s/bin/X.old
 gesichert werden, da eine Datei mit diesem Namen bereits existiert.
 Bitte korrigieren Sie dies, bevor Sie fortfahren.
 
 Eine Möglichkeit ist es, im Extras-Menü eine Shell zu starten,
-wodurch Sie /usr/X11R7/bin/X.old überprüfen können. Gehört diese Datei zu
+wodurch Sie %s/bin/X.old überprüfen können. Gehört diese Datei zu
 einer früheren Aktualisierung, so können Sie diese mit rm -f
-/usr/X11R7/bin/x.old löschen und danach die Aktualisierung neu starten.
-Gehört die Datei /usr/X11R7/bin/X.old aber zu einer aktuellen,
-abgebrochenen Aktualisierung, so können Sie die Datei /usr/X11R7/bin/X mit
-mv /usr/X11R7/bin/X.old /usr/X11R7/bin/X wieder herstellen und die
-unvollständige Aktualisierung fortsetzen.
+%s/bin/x.old löschen und danach die Aktualisierung neu starten.
+Gehört die Datei %s/bin/X.old aber zu einer aktuellen,
+abgebrochenen Aktualisierung, so können Sie die Datei %s/bin/X mit
+mv %s/bin/X.old %s/bin/X wieder herstellen und die
+unvollständige Aktualisierung fortsetzen. %0s%0s%0s
 
 Aktualisierung wird abgebrochen.}
 
