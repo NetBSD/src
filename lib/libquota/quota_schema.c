@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_schema.c,v 1.1 2012/01/09 15:22:39 dholland Exp $	*/
+/*	$NetBSD: quota_schema.c,v 1.2 2012/01/09 15:34:34 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,54 +29,75 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_schema.c,v 1.1 2012/01/09 15:22:39 dholland Exp $");
+__RCSID("$NetBSD: quota_schema.c,v 1.2 2012/01/09 15:34:34 dholland Exp $");
 
-#include <stddef.h>
+#include <sys/types.h>
+#include <sys/statvfs.h>
+#include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 
 #include <quota.h>
+#include <quota/quotaprop.h>
+#include "quotapvt.h"
 
-/* ARGSUSED */
+/*
+ * Functions for getting information about idtypes and such.
+ */
+
 const char *
 quota_getimplname(struct quotahandle *qh)
 {
-	errno = ENOSYS;
-	return NULL;
+	if (qh->qh_isnfs) {
+		/* XXX this should maybe report the rquotad protocol version */
+		return "nfs via rquotad";
+	} else {
+		return __quota_proplib_getimplname(qh);
+	}
 }
 
 /* ARGSUSED */
 unsigned
 quota_getnumidtypes(struct quotahandle *qh)
 {
-	return 0;
+	return QUOTA_NCLASS;
 }
 
 /* ARGSUSED */
 const char *
 quota_idtype_getname(struct quotahandle *qh, int idtype)
 {
-	errno = ENOSYS;
-	return NULL;
+	if (idtype < 0 || idtype >= QUOTA_NCLASS) {
+		return NULL;
+	}
+	return ufs_quota_class_names[idtype];
 }
 
 /* ARGSUSED */
 unsigned
 quota_getnumobjtypes(struct quotahandle *qh)
 {
-	return 0;
+	return QUOTA_NLIMITS;
 }
 
 /* ARGSUSED */
 const char *
 quota_objtype_getname(struct quotahandle *qh, int objtype)
 {
-	errno = ENOSYS;
-	return NULL;
+	if (objtype < 0 || objtype >= QUOTA_NLIMITS) {
+		return NULL;
+	}
+	return ufs_quota_limit_names[objtype];
 }
 
 /* ARGSUSED */
 int
 quota_objtype_isbytes(struct quotahandle *qh, int objtype)
 {
+	switch (objtype) {
+		case QUOTA_LIMIT_BLOCK: return 1;
+		case QUOTA_LIMIT_FILE: return 0;
+		default: break;
+	}
 	return 0;
 }
