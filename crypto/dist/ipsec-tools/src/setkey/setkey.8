@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.28 2011/05/24 08:54:40 wiz Exp $
+.\"	$NetBSD: setkey.8,v 1.29 2012/01/09 15:25:13 drochner Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -330,6 +330,9 @@ Specify hard/soft life time duration of the SA measured in seconds.
 .It Fl bh Ar bytes
 .It Fl bs Ar bytes
 Specify hard/soft life time duration of the SA measured in bytes transported.
+.\"
+.It Fl esp_frag Ar bytes
+Specify esp fragment size for NAT-T (only valid for NAT-T SAs).
 .\"
 .It Fl ctx Ar doi Ar algorithm Ar context-name
 Specify an access control label.
