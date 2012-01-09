@@ -1,7 +1,6 @@
-#	$NetBSD: files.ipsec,v 1.7 2011/12/19 11:59:57 drochner Exp $
+#	$NetBSD: files.ipsec,v 1.8 2012/01/09 15:16:31 drochner Exp $
 
 defflag opt_ipsec.h		KAME_IPSEC
-defflag opt_ipsec.h		IPSEC: KAME_IPSEC
 defflag opt_ipsec.h		IPSEC_ESP: des, blowfish, cast128
 defflag opt_ipsec.h		IPSEC_NAT_T
 
