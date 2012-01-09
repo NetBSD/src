@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.11 2011/09/01 14:55:58 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.12 2012/01/09 01:01:49 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.11 2011/09/01 14:55:58 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.12 2012/01/09 01:01:49 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1166,7 +1166,7 @@ do_pio:
 		}
 		if (ata_bio->flags & ATA_LBA48)
 			wdccommandext(chp, xfer->c_drive, atacmd_to48(cmd),
-			    (u_int64_t)ata_bio->blkno, nblks);
+			    (uint64_t)ata_bio->blkno, nblks, 0);
 		else
 			wdccommand(chp, xfer->c_drive, cmd, cyl,
 			    head, sect, nblks,
