@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_open.c,v 1.2 2012/01/09 15:27:04 dholland Exp $	*/
+/*	$NetBSD: quota_open.c,v 1.3 2012/01/09 15:29:56 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,8 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_open.c,v 1.2 2012/01/09 15:27:04 dholland Exp $");
+__RCSID("$NetBSD: quota_open.c,v 1.3 2012/01/09 15:29:56 dholland Exp $");
 
+#include <sys/types.h>
+#include <sys/statvfs.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -41,20 +43,64 @@ __RCSID("$NetBSD: quota_open.c,v 1.2 2012/01/09 15:27:04 dholland Exp $");
 struct quotahandle *
 quota_open(const char *path)
 {
+
+	struct statvfs stv;
 	struct quotahandle *qh;
+	int isnfs;
 	int serrno;
+
+	if (statvfs(path, &stv) < 0) {
+		return NULL;
+	}
+
+	/*
+	 * We need to know up front if the volume is NFS. If so, we
+	 * don't go to the kernel at all but instead do RPCs to the
+	 * NFS server's rpc.rquotad. Therefore, don't check the
+	 * mount flags for quota support or do anything else that
+	 * reaches the kernel.
+	 */
+	
+	if (!strcmp(stv.f_fstypename, "nfs")) {
+		isnfs = 1;
+	} else {
+		isnfs = 0;
+		if ((stv.f_flag & ST_QUOTA) == 0) {
+			/* XXX: correct errno? */
+			errno = EOPNOTSUPP;
+			return NULL;
+		}
+	}
 
 	qh = malloc(sizeof(*qh));
 	if (qh == NULL) {
 		return NULL;
 	}
-	qh->qh_mountpoint = strdup(path);
+
+	/*
+	 * Get the mount point from statvfs; this way the passed-in
+	 * path can be any path on the volume.
+	 */
+
+	qh->qh_mountpoint = strdup(stv.f_mntonname);
 	if (qh->qh_mountpoint == NULL) {
 		serrno = errno;
 		free(qh);
 		errno = serrno;
 		return NULL;
 	}
+
+	qh->qh_mountdevice = strdup(stv.f_mntfromname);
+	if (qh->qh_mountdevice == NULL) {
+		serrno = errno;
+		free(qh->qh_mountpoint);
+		free(qh);
+		errno = serrno;
+		return NULL;
+	}
+
+	qh->qh_isnfs = isnfs;
+
 	return qh;
 }
 
@@ -67,13 +113,13 @@ quota_getmountpoint(struct quotahandle *qh)
 const char *
 quota_getmountdevice(struct quotahandle *qh)
 {
-	errno = ENOSYS;
-	return NULL;
+	return qh->qh_mountdevice;
 }
 
 void
 quota_close(struct quotahandle *qh)
 {
+	free(qh->qh_mountdevice);
 	free(qh->qh_mountpoint);
 	free(qh);
 }

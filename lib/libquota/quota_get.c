@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_get.c,v 1.2 2012/01/09 15:27:04 dholland Exp $	*/
+/*	$NetBSD: quota_get.c,v 1.3 2012/01/09 15:29:55 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_get.c,v 1.2 2012/01/09 15:27:04 dholland Exp $");
+__RCSID("$NetBSD: quota_get.c,v 1.3 2012/01/09 15:29:55 dholland Exp $");
 
 #include <quota.h>
 #include "quotapvt.h"
@@ -47,5 +47,9 @@ quotaval_clear(struct quotaval *qv)
 int
 quota_get(struct quotahandle *qh, const struct quotakey *qk, struct quotaval *qv)
 {
-	return __quota_proplib_get(qh, qk, qv);
+	if (qh->qh_isnfs) {
+		return __quota_nfs_get(qh, qk, qv);
+	} else {
+		return __quota_proplib_get(qh, qk, qv);
+	}
 }
