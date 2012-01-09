@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.36 2012/01/09 15:40:47 dholland Exp $	*/
+/*	$NetBSD: repquota.c,v 1.37 2012/01/09 15:42:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.36 2012/01/09 15:40:47 dholland Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.37 2012/01/09 15:42:37 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,11 +65,10 @@ __RCSID("$NetBSD: repquota.c,v 1.36 2012/01/09 15:40:47 dholland Exp $");
 #include <unistd.h>
 
 #include <quota/quota.h>
-#include <ufs/ufs/quota1.h>
+#include <quota/quotaprop.h>
 #include <quota.h>
 
 #include "printquota.h"
-#include "quotautil.h"
 
 struct fileusage {
 	struct	fileusage *fu_next;
@@ -95,11 +94,10 @@ static struct fileusage *addid(uint32_t, int, const char *);
 static struct fileusage *lookup(uint32_t, int);
 static struct fileusage *qremove(uint32_t, int);
 static int	repquota(struct quotahandle *, int);
-static int	repquota2(struct quotahandle *, int);
-static int	repquota1(struct quotahandle *, int);
 static void	usage(void) __attribute__((__noreturn__));
 static void	printquotas(int, struct quotahandle *);
 static void	exportquotas(void);
+static int	oneof(const char *, char *[], int cnt);
 
 int
 main(int argc, char **argv)
@@ -207,14 +205,6 @@ usage(void)
 static int
 repquota(struct quotahandle *qh, int idtype)
 {
-	if (repquota2(qh, idtype) != 0)
-		return repquota1(qh, idtype);
-	return 0;
-}
-
-static int
-repquota2(struct quotahandle *qh, int idtype)
-{
 	struct quotacursor *qc;
 	struct quotakey qk;
 	struct quotaval qv;
@@ -260,72 +250,6 @@ repquota2(struct quotahandle *qh, int idtype)
 	if (xflag == 0 && valid[idtype])
 		printquotas(idtype, qh);
 
-	return 0;
-}
-
-static int
-repquota1(struct quotahandle *qh, int idtype)
-{
-	char qfpathname[MAXPATHLEN];
-	struct fstab *fs;
-	struct fileusage *fup;
-	FILE *qf;
-	uint32_t id;
-	struct dqblk dqbuf;
-	time_t bgrace = MAX_DQ_TIME, igrace = MAX_DQ_TIME;
-	int type = ufsclass2qtype(idtype);
-	const char *mountpoint;
-
-	mountpoint = quota_getmountpoint(qh);
-
-	setfsent();
-	while ((fs = getfsent()) != NULL) {
-		if (strcmp(fs->fs_vfstype, "ffs") == 0 &&
-		   strcmp(fs->fs_file, mountpoint) == 0)
-			break;
-	}
-	endfsent();
-	if (fs == NULL) {
-		warnx("%s not found in fstab", mountpoint);
-		return 1;
-	}
-	if (!hasquota(qfpathname, sizeof(qfpathname), fs, type))
-		return 0;
-		
-	if ((qf = fopen(qfpathname, "r")) == NULL) {
-		warn("Cannot open `%s'", qfpathname);
-		return 1;
-	}
-	for (id = 0; ; id++) {
-		fread(&dqbuf, sizeof(struct dqblk), 1, qf);
-		if (feof(qf))
-			break;
-		if (id == 0) {
-			if (dqbuf.dqb_btime > 0)
-				bgrace = dqbuf.dqb_btime;
-			if (dqbuf.dqb_itime > 0)
-				igrace = dqbuf.dqb_itime;
-		}
-		if (dqbuf.dqb_curinodes == 0 && dqbuf.dqb_curblocks == 0 &&
-		    dqbuf.dqb_bsoftlimit == 0 && dqbuf.dqb_bhardlimit == 0 &&
-		    dqbuf.dqb_isoftlimit == 0 && dqbuf.dqb_ihardlimit == 0)
-			continue;
-		if ((fup = lookup(id, idtype)) == 0)
-			fup = addid(id, idtype, (char *)0);
-		dqblk_to_quotaval(&dqbuf, fup->fu_qv);
-		fup->fu_qv[QUOTA_LIMIT_BLOCK].qv_grace = bgrace;
-		fup->fu_qv[QUOTA_LIMIT_FILE].qv_grace = igrace;
-	}
-	defaultqv[idtype][QUOTA_LIMIT_BLOCK].qv_grace = bgrace;
-	defaultqv[idtype][QUOTA_LIMIT_FILE].qv_grace = igrace;
-	defaultqv[idtype][QUOTA_LIMIT_BLOCK].qv_softlimit = 
-	    defaultqv[idtype][QUOTA_LIMIT_BLOCK].qv_hardlimit = 
-	    defaultqv[idtype][QUOTA_LIMIT_FILE].qv_softlimit = 
-	    defaultqv[idtype][QUOTA_LIMIT_FILE].qv_hardlimit = QUOTA_NOLIMIT;
-	fclose(qf);
-	valid[idtype] = 1;
-	if (xflag == 0)
-		printquotas(idtype, qh);
 	return 0;
 }
 
@@ -590,4 +514,18 @@ addid(uint32_t id, int idtype, const char *name)
 	fup->fu_qv[QUOTA_LIMIT_BLOCK] = defaultqv[idtype][QUOTA_LIMIT_BLOCK];
 	fup->fu_qv[QUOTA_LIMIT_FILE] = defaultqv[idtype][QUOTA_LIMIT_FILE];
 	return fup;
+}
+
+/*
+ * Check to see if target appears in list of size cnt.
+ */
+static int
+oneof(const char *target, char *list[], int cnt)
+{
+	int i;
+
+	for (i = 0; i < cnt; i++)
+		if (strcmp(target, list[i]) == 0)
+			return i;
+	return -1;
 }
