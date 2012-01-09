@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.22 2011/11/14 13:24:04 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.23 2012/01/09 15:25:13 drochner Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -2034,6 +2034,9 @@ pfkey_align(struct sadb_msg *msg, caddr_t *mhp)
 		case SADB_X_EXT_NAT_T_TYPE:
 		case SADB_X_EXT_NAT_T_SPORT:
 		case SADB_X_EXT_NAT_T_DPORT:
+#ifdef SADB_X_EXT_NAT_T_FRAG
+		case SADB_X_EXT_NAT_T_FRAG:
+#endif
 		case SADB_X_EXT_NAT_T_OA:
 #endif
 #ifdef SADB_X_EXT_TAG
