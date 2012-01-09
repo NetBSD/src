@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.122 2012/01/05 22:18:36 christos Exp $ */
+/*	$NetBSD: disks.c,v 1.123 2012/01/09 01:51:47 riz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -402,7 +402,7 @@ find_disks(const char *doingwhat)
 			NULL, NULL, NULL, NULL, NULL);
 		if (menu_no == -1)
 			return -1;
-		msg_display(MSG_ask_disk);
+		msg_display(MSG_ask_disk, doingwhat);
 		process_menu(menu_no, &selected_disk);
 		free_menu(menu_no);
 	}
