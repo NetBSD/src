@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.13 2012/01/07 18:07:57 jmcneill Exp $ */
+/* $NetBSD: intr.c,v 1.14 2012/01/09 22:20:53 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2012/01/07 18:07:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.14 2012/01/09 22:20:53 reinoud Exp $");
 
 #include <sys/types.h>
 
@@ -89,8 +89,10 @@ spl_intr(int x, void (*func)(void *), void *arg)
 	spli->arg = arg;
 
 	spl_intr_wr[x] = (spl_intr_wr[x] + 1) % MAX_QUEUED_EVENTS;
-	if (spl_intr_wr[x] == spl_intr_rd[x])
+	if (spl_intr_wr[x] == spl_intr_rd[x]) {
+		thunk_printf("%s: spl list %d full!\n", __func__, x);
 		panic("%s: spl list %d full!\n", __func__, x);
+	}
 }
 
 int
