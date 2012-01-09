@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_proplib.c,v 1.1 2012/01/09 15:27:04 dholland Exp $	*/
+/*	$NetBSD: quota_proplib.c,v 1.2 2012/01/09 15:32:38 dholland Exp $	*/
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_proplib.c,v 1.1 2012/01/09 15:27:04 dholland Exp $");
+__RCSID("$NetBSD: quota_proplib.c,v 1.2 2012/01/09 15:32:38 dholland Exp $");
 
 #include <string.h>
 #include <errno.h>
@@ -73,10 +73,18 @@ __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
 		errno = ENOMEM;
 		return -1;
 	}
-	if (!prop_dictionary_set_uint32(data, "id", qk->qk_id)) {
-		prop_object_release(data);
-		errno = ENOMEM;
-		return -1;
+	if (qk->qk_id == QUOTA_DEFAULTID) {
+		if (!prop_dictionary_set_cstring(data, "id", "default")) {
+			prop_object_release(data);
+			errno = ENOMEM;
+			return -1;
+		}
+	} else {
+		if (!prop_dictionary_set_uint32(data, "id", qk->qk_id)) {
+			prop_object_release(data);
+			errno = ENOMEM;
+			return -1;
+		}
 	}
 
 	datas = prop_array_create();
