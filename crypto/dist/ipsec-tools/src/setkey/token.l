@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.16 2011/05/26 21:50:02 drochner Exp $	*/
+/*	$NetBSD: token.l,v 1.17 2012/01/09 15:25:13 drochner Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -257,6 +257,7 @@ nocyclic-seq	{ return(NOCYCLICSEQ); }
 {hyphen}bh	{ return(F_LIFEBYTE_HARD); }
 {hyphen}bs	{ return(F_LIFEBYTE_SOFT); }
 {hyphen}ctx	{ return(SECURITY_CTX); }
+{hyphen}esp_frag { return(F_ESPFRAG); }
 
 	/* ... */
 any		{ return(ANY); }
