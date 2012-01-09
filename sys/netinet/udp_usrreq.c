@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.184 2011/12/19 11:59:57 drochner Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.185 2012/01/09 22:26:44 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.184 2011/12/19 11:59:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.185 2012/01/09 22:26:44 liamjfoy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1611,7 +1611,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	esp4_input(n, iphdrlen);
 #endif
 
-	/* We handled it, it shoudln't be handled by UDP */
+	/* We handled it, it shouldn't be handled by UDP */
 	return 1;
 }
 #endif
