@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.34 2011/10/07 16:30:17 christos Exp $	*/
+/*	$NetBSD: telnet.c,v 1.35 2012/01/09 16:08:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.34 2011/10/07 16:30:17 christos Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.35 2012/01/09 16:08:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -527,7 +527,7 @@ dooption(int option)
 #endif
 
 	    case TELOPT_XDISPLOC:	/* X Display location */
-		if (env_getvalue((unsigned char *)"DISPLAY"))
+		if (env_getvalue((const unsigned char *)"DISPLAY"))
 		    new_state_ok = 1;
 		break;
 
@@ -618,7 +618,7 @@ dontoption(int option)
  * duplicate, or verbose names (names with spaces).
  */
 
-static char *name_unknown = "UNKNOWN";
+static char name_unknown[] = "UNKNOWN";
 static char *unknown[] = { 0, 0 };
 
 char **
@@ -800,7 +800,7 @@ gettermname(void)
 		resettermname = 0;
 		if (tnamep && tnamep != unknown)
 			free(tnamep);
-		if ((tname = (char *)env_getvalue((unsigned char *)"TERM")) &&
+		if ((tname = (char *)env_getvalue((const unsigned char *)"TERM")) &&
 				(setupterm(tname, 1, &err) == 0)) {
 			tnamep = mklist(termbuf, tname);
 		} else {
@@ -872,14 +872,14 @@ suboption(void)
 	if (SB_EOF())
 	    return;
 	if (SB_GET() == TELQUAL_SEND) {
-	    long ospeed, ispeed;
+	    long osp, isp;
 	    unsigned char temp[50];
 	    int len;
 
-	    TerminalSpeeds(&ispeed, &ospeed);
+	    TerminalSpeeds(&isp, &osp);
 
 	    sprintf((char *)temp, "%c%c%c%c%ld,%ld%c%c", IAC, SB, TELOPT_TSPEED,
-		    TELQUAL_IS, (long)ospeed, (long)ispeed, IAC, SE);
+		    TELQUAL_IS, osp, isp, IAC, SE);
 	    len = strlen((char *)temp+4) + 4;	/* temp[3] is 0 ... */
 
 	    if (len < NETROOM()) {
@@ -975,7 +975,7 @@ suboption(void)
 	    unsigned char temp[50], *dp;
 	    int len;
 
-	    if ((dp = env_getvalue((unsigned char *)"DISPLAY")) == NULL) {
+	    if ((dp = env_getvalue((const unsigned char *)"DISPLAY")) == NULL) {
 		/*
 		 * Something happened, we no longer have a DISPLAY
 		 * variable.  So, turn off the option.
@@ -1106,7 +1106,7 @@ lm_will(unsigned char *cmd, int len)
     default:
 	str_lm[3] = DONT;
 	str_lm[4] = cmd[0];
-	if (NETROOM() > sizeof(str_lm)) {
+	if ((size_t)NETROOM() > sizeof(str_lm)) {
 	    ring_supply_data(&netoring, str_lm, sizeof(str_lm));
 	    printsub('>', &str_lm[2], sizeof(str_lm)-2);
 	}
@@ -1142,7 +1142,7 @@ lm_do(unsigned char *cmd, int len)
     default:
 	str_lm[3] = WONT;
 	str_lm[4] = cmd[0];
-	if (NETROOM() > sizeof(str_lm)) {
+	if ((size_t)NETROOM() > sizeof(str_lm)) {
 	    ring_supply_data(&netoring, str_lm, sizeof(str_lm));
 	    printsub('>', &str_lm[2], sizeof(str_lm)-2);
 	}
@@ -1183,7 +1183,7 @@ lm_mode(unsigned char *cmd, int len, int init)
 	str_lm_mode[4] = linemode;
 	if (!init)
 	    str_lm_mode[4] |= MODE_ACK;
-	if (NETROOM() > sizeof(str_lm_mode)) {
+	if ((size_t)NETROOM() > sizeof(str_lm_mode)) {
 	    ring_supply_data(&netoring, str_lm_mode, sizeof(str_lm_mode));
 	    printsub('>', &str_lm_mode[2], sizeof(str_lm_mode)-2);
 	}
@@ -1297,7 +1297,7 @@ unsigned char slc_import_def[] = {
 void
 slc_import(int def)
 {
-    if (NETROOM() > sizeof(slc_import_val)) {
+    if ((size_t)NETROOM() > sizeof(slc_import_val)) {
 	if (def) {
 	    ring_supply_data(&netoring, slc_import_def, sizeof(slc_import_def));
 	    printsub('>', &slc_import_def[2], sizeof(slc_import_def)-2);
@@ -1438,7 +1438,7 @@ slc_start_reply(void)
 void
 slc_add_reply(unsigned int func, unsigned int flags, cc_t value)
 {
-	if ((slc_replyp - slc_reply) + 6 > sizeof(slc_reply))
+	if ((size_t)(slc_replyp - slc_reply) + 6 > sizeof(slc_reply))
 		return;
 	if ((*slc_replyp++ = func) == IAC)
 		*slc_replyp++ = IAC;
@@ -1454,7 +1454,7 @@ slc_end_reply(void)
     int len;
 
     len = slc_replyp - slc_reply;
-    if (len <= 4 || (len + 2 > sizeof(slc_reply)))
+    if (len <= 4 || ((size_t)len + 2 > sizeof(slc_reply)))
 	return;
     *slc_replyp++ = IAC;
     *slc_replyp++ = SE;
@@ -1688,7 +1688,7 @@ env_opt_add(unsigned char *ep)
 }
 
 int
-opt_welldefined(char *ep)
+opt_welldefined(const char *ep)
 {
 	if ((strcmp(ep, "USER") == 0) ||
 	    (strcmp(ep, "DISPLAY") == 0) ||
@@ -2280,7 +2280,7 @@ telnet(const char *user)
 	send_will(TELOPT_LINEMODE, 1);
 	send_will(TELOPT_NEW_ENVIRON, 1);
 	send_do(TELOPT_STATUS, 1);
-	if (env_getvalue((unsigned char *)"DISPLAY"))
+	if (env_getvalue((const unsigned char *)"DISPLAY"))
 	    send_will(TELOPT_XDISPLOC, 1);
 	if (eight)
 	    tel_enter_binary(eight);
