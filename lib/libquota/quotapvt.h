@@ -1,4 +1,4 @@
-/*	$NetBSD: quotapvt.h,v 1.3 2012/01/09 15:31:11 dholland Exp $	*/
+/*	$NetBSD: quotapvt.h,v 1.4 2012/01/09 15:34:34 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,6 +36,7 @@ struct quotahandle {
 };
 
 /* proplib kernel interface */
+const char *__quota_proplib_getimplname(struct quotahandle *);
 int __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
 			struct quotaval *qv);
 
