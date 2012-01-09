@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2011/10/05 10:48:54 roy Exp $
+#	$NetBSD: Makefile,v 1.49 2012/01/09 16:08:55 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -34,7 +34,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 
-WARNS?=	1	# XXX -Wshadow etc.  fix asap
+WARNS?=	4	# XXX -Wshadow etc.  fix asap
 CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-format-security
 
 .include <bsd.own.mk>
@@ -64,17 +64,20 @@ CPPFLAGS+=-DINET6
 LIBTELNETDIR!=	cd ${.CURDIR}/../../lib/libtelnet; ${PRINTOBJDIR}
 
 .if (${USE_KERBEROS} != "no")
-CPPFLAGS+=-DKRB5 -DFORWARD -DAUTHENTICATION -DENCRYPTION
-LDADD+= -lkrb5 -lasn1 -lcrypto -lcrypt
-DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCRYPTO} ${LIBCRYPT}
+CPPFLAGS+=-DKRB5 -DFORWARD
+LDADD+= -lkrb5 -lasn1 -lcom_err -lroken
+DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN}
+.endif
+
+.if (${MKCRYPTO} != "no")
+CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION
+LDADD+= -ldes -lcrypto -lcrypt
+DPADD+=	${LIBDES} ${LIBCRYPTO} ${LIBCRYPT}
+.endif
 
 .if (${USE_PAM} != "no")
 LDADD+= -lpam ${PAM_STATIC_LDADD}
 DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
-.endif
-
-LDADD+= -ldes -lcom_err -lroken
-DPADD+=	${LIBDES} ${LIBCOM_ERR} ${LIBROKEN}
 .endif
 
 .if defined(HAVE_GCC) || defined(HAVE_PCC)
