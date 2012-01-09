@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.132 2011/12/27 16:52:52 christos Exp $
+# $NetBSD: md.sparc64,v 1.133 2012/01/09 15:24:37 dholland Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -963,7 +963,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libpthread.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpthread_dbg.so.2.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpuffs.so.2.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libquota.so.0.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libquota.so.0.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libradius.so.4.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librefuse.so.2.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libresolv.so.2.0.debug		comp-compat-shlib	compat,pic,debug
