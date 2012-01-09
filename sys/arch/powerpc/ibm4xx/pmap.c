@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 2011/06/30 00:52:58 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 2012/01/09 06:49:25 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2011/06/30 00:52:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2012/01/09 06:49:25 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -875,7 +875,9 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 	/* If this is a real fault, enter it in the tlb */
 	if (tte && ((flags & PMAP_WIRED) == 0)) {
+		int s2 = splhigh();
 		ppc4xx_tlb_enter(pm->pm_ctx, va, tte);
+		splx(s2);
 	}
 	splx(s);
 
@@ -1289,7 +1291,7 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	tlbpid_t pid;
 	u_short msr;
 	paddr_t pa;
-	int s, sz;
+	int sz;
 
 	tlbenter_ev.ev_count++;
 
@@ -1299,7 +1301,6 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	tl = (pte & ~TLB_RPN_MASK) | pa;
 	tl |= ppc4xx_tlbflags(va, pa);
 
-	s = splhigh();
 	idx = ppc4xx_tlb_find_victim();
 
 #ifdef DIAGNOSTIC
@@ -1330,7 +1331,6 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 		"sync; isync;"
 	: "=&r" (msr), "=&r" (pid)
 	: "r" (ctx), "r" (idx), "r" (tl), "r" (th));
-	splx(s);
 }
 
 void
