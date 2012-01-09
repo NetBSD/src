@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.c,v 1.15 2011/12/23 16:48:16 christos Exp $	*/
+/*	$NetBSD: encrypt.c,v 1.16 2012/01/09 15:25:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)encrypt.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: encrypt.c,v 1.15 2011/12/23 16:48:16 christos Exp $");
+__RCSID("$NetBSD: encrypt.c,v 1.16 2012/01/09 15:25:33 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -126,7 +126,7 @@ static Encryptions encryptions[] = {
 			ofb64_keyid,
 			ofb64_printsub },
 #endif	/* DES_ENCRYPTION */
-    { 0, },
+    { .name = 0 },
 };
 
 static unsigned char str_send[64] = { IAC, SB, TELOPT_ENCRYPT,
@@ -765,7 +765,7 @@ encrypt_keyid(kp, keyid, len)
 		if (ep->keyid)
 			(void)(*ep->keyid)(dir, kp->keyid, &kp->keylen);
 
-	} else if (len > sizeof(kp->keyid)) {
+	} else if ((size_t)len > sizeof(kp->keyid)) {
 		return;
 	} else if ((len != kp->keylen) ||
 		   (memcmp(keyid, kp->keyid, len) != 0)) {
@@ -788,11 +788,7 @@ encrypt_keyid(kp, keyid, len)
 }
 
 	void
-encrypt_send_keyid(dir, keyid, keylen, saveit)
-	int dir;
-	unsigned char *keyid;
-	int keylen;
-	int saveit;
+encrypt_send_keyid(int dir, const unsigned char *keyid, int keylen, int saveit)
 {
 	unsigned char *strp;
 
