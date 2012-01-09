@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_proplib.c,v 1.2 2012/01/09 15:32:38 dholland Exp $	*/
+/*	$NetBSD: quota_proplib.c,v 1.3 2012/01/09 15:34:34 dholland Exp $	*/
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,16 +26,142 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_proplib.c,v 1.2 2012/01/09 15:32:38 dholland Exp $");
+__RCSID("$NetBSD: quota_proplib.c,v 1.3 2012/01/09 15:34:34 dholland Exp $");
 
 #include <string.h>
 #include <errno.h>
+#include <err.h>
 
 #include <quota.h>
 #include "quotapvt.h"
 
 #include <quota/quotaprop.h>
 #include <quota/quota.h>
+
+static int
+__quota_proplib_getversion(struct quotahandle *qh, int8_t *version_ret)
+{
+	const char *idtype;
+	prop_dictionary_t dict, data, cmd;
+	prop_array_t cmds, blank, datas;
+	const char *cmdstr;
+	struct plistref pref;
+	int8_t error8;
+
+	/* XXX does this matter? */
+	idtype = ufs_quota_class_names[QUOTA_CLASS_USER];
+
+	/*
+	 * XXX this should not crash out on error. But this is what
+	 * the code this came from did... probably because it can just
+	 * leak memory instead of needing the proper cleanup code.
+	 */
+
+	dict = quota_prop_create();
+	if (dict == NULL) {
+		err(1, "quota_getimplname: quota_prop_create");
+	}
+
+	cmds = prop_array_create();
+	if (cmds == NULL) {
+		err(1, "quota_getimplname: prop_array_create");
+	}
+
+	blank = prop_array_create();
+	if (blank == NULL) {
+		err(1, "quota_getimplname: prop_array_create");
+	}
+
+	if (!quota_prop_add_command(cmds, "get version", idtype, blank)) {
+		err(1, "quota_getimplname: quota_prop_add_command");
+	}
+
+	if (!prop_dictionary_set(dict, "commands", cmds)) {
+		err(1, "quota_getimplname: prop_dictionary_set");
+	}
+
+	if (prop_dictionary_send_syscall(dict, &pref) != 0) {
+		err(1, "quota_getimplname: prop_dictionary_send_syscall");
+	}
+
+	/* XXX don't we need prop_object_release(cmds) here too? */
+	prop_object_release(dict);
+
+	if (quotactl(qh->qh_mountpoint, &pref) != 0)
+		err(1, "quota_getimplname: quotactl");
+	
+	if (prop_dictionary_recv_syscall(&pref, &dict) != 0) {
+		err(1, "quota_getimplname: prop_dictionary_recv_syscall");
+	}
+				    
+	if ((errno = quota_get_cmds(dict, &cmds)) != 0) {
+		err(1, "quota_getimplname: bad response (%s)",
+		    "quota_get_cmds");
+	}
+
+	cmd = prop_array_get(cmds, 0);
+	if (cmd == NULL) {
+		err(1, "quota_getimplname: bad response (%s)",
+		    "prop_array_get");
+	}
+
+	if (!prop_dictionary_get_cstring_nocopy(cmd, "command", &cmdstr)) {
+		err(1, "quota_getimplname: bad response (%s)",
+		    "prop_dictionary_get_cstring_nocopy");
+	}
+
+	if (strcmp("get version", cmdstr) != 0) {
+		errx(1, "quota_getimplname: bad response (%s)",
+		     "command name did not match");
+	}
+			
+	if (!prop_dictionary_get_int8(cmd, "return", &error8)) {
+		err(1, "quota_getimplname: bad response (%s)",
+		    "prop_dictionary_get_int8");
+	}
+
+	if (error8) {
+		/* this means the RPC action failed */
+		prop_object_release(dict);
+		errno = error8;
+		return -1;
+	}
+
+	datas = prop_dictionary_get(cmd, "data");
+	if (datas == NULL) {
+		err(1, "quota_getimplname: bad response (%s)",
+		    "prop_dictionary_get");
+	}
+
+	data = prop_array_get(datas, 0);
+	if (data == NULL) {
+		err(1, "quota_getimplname: bad response (%s)",
+		    "prop_array_get");
+	}
+
+	if (!prop_dictionary_get_int8(data, "version", version_ret)) {
+		err(1, "quota_getimplname: bad response (%s)",
+		    "prop_array_get_int8");
+	}
+
+	return 0;
+}
+
+const char *
+__quota_proplib_getimplname(struct quotahandle *qh)
+{
+	int8_t version;
+
+	if (__quota_proplib_getversion(qh, &version) < 0) {
+		return NULL;
+	}
+	switch (version) {
+		case 1: return "ffs quota1";
+		case 2: return "ffs quota2";
+		default: break;
+	}
+	return "unknown";
+}
 
 int
 __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
