@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_get.c,v 1.1 2012/01/09 15:22:38 dholland Exp $	*/
+/*	$NetBSD: quota_get.c,v 1.2 2012/01/09 15:27:04 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,22 +29,23 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_get.c,v 1.1 2012/01/09 15:22:38 dholland Exp $");
-
-#include <errno.h>
+__RCSID("$NetBSD: quota_get.c,v 1.2 2012/01/09 15:27:04 dholland Exp $");
 
 #include <quota.h>
+#include "quotapvt.h"
 
-/* ARGSUSED */
 void
 quotaval_clear(struct quotaval *qv)
 {
+	qv->qv_hardlimit = QUOTA_NOLIMIT;
+	qv->qv_softlimit = QUOTA_NOLIMIT;
+	qv->qv_usage = 0;
+	qv->qv_expiretime = QUOTA_NOTIME;
+	qv->qv_grace = QUOTA_NOTIME;
 }
 
-/* ARGSUSED */
 int
 quota_get(struct quotahandle *qh, const struct quotakey *qk, struct quotaval *qv)
 {
-	errno = ENOSYS;
-	return -1;
+	return __quota_proplib_get(qh, qk, qv);
 }
