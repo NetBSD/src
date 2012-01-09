@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_cursor.c,v 1.2 2012/01/09 15:40:10 dholland Exp $	*/
+/*	$NetBSD: quota_cursor.c,v 1.3 2012/01/09 15:41:58 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_cursor.c,v 1.2 2012/01/09 15:40:10 dholland Exp $");
+__RCSID("$NetBSD: quota_cursor.c,v 1.3 2012/01/09 15:41:58 dholland Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -41,11 +41,26 @@ struct quotacursor *
 quota_opencursor(struct quotahandle *qh)
 {
 	struct quotacursor *qc;
+	int8_t version;
 	int serrno;
 
 	if (qh->qh_isnfs) {
 		errno = EOPNOTSUPP;
 		return NULL;
+	}
+
+	if (__quota_proplib_getversion(qh, &version)) {
+		return NULL;
+	}
+
+	/*
+	 * For the time being at least the version 1 kernel code
+	 * cannot do cursors.
+	 */
+	if (version == 1 && !qh->qh_hasoldfiles) {
+		if (__quota_oldfiles_initialize(qh)) {
+			return NULL;
+		}
 	}
 
 	qc = malloc(sizeof(*qc));
@@ -54,13 +69,25 @@ quota_opencursor(struct quotahandle *qh)
 	}
 
 	qc->qc_qh = qh;
-	qc->u.qc_proplib = __quota_proplib_cursor_create();
 
-	if (qc->u.qc_proplib == NULL) {
-		serrno = errno;
-		free(qc);
-		errno = serrno;
-		return NULL;
+	if (version == 1) {
+		qc->qc_type = QC_OLDFILES;
+		qc->u.qc_oldfiles = __quota_oldfiles_cursor_create(qh);
+		if (qc->u.qc_oldfiles == NULL) {
+			serrno = errno;
+			free(qc);
+			errno = serrno;
+			return NULL;
+		}
+	} else {
+		qc->qc_type = QC_PROPLIB;
+		qc->u.qc_proplib = __quota_proplib_cursor_create();
+		if (qc->u.qc_proplib == NULL) {
+			serrno = errno;
+			free(qc);
+			errno = serrno;
+			return NULL;
+		}
 	}
 	return qc;
 }
@@ -68,22 +95,47 @@ quota_opencursor(struct quotahandle *qh)
 void
 quotacursor_close(struct quotacursor *qc)
 {
-	__quota_proplib_cursor_destroy(qc->u.qc_proplib);
+	switch (qc->qc_type) {
+	    case QC_PROPLIB:
+		__quota_proplib_cursor_destroy(qc->u.qc_proplib);
+		break;
+	    case QC_OLDFILES:
+		__quota_oldfiles_cursor_destroy(qc->u.qc_oldfiles);
+		break;
+	}
 	free(qc);
 }
 
 int
 quotacursor_skipidtype(struct quotacursor *qc, unsigned idtype)
 {
-	return __quota_proplib_cursor_skipidtype(qc->u.qc_proplib, idtype);
+	switch (qc->qc_type) {
+	    case QC_PROPLIB:
+		return __quota_proplib_cursor_skipidtype(qc->u.qc_proplib,
+							 idtype);
+	    case QC_OLDFILES:
+		return __quota_oldfiles_cursor_skipidtype(qc->u.qc_oldfiles,
+							  idtype);
+	}
+	errno = EINVAL;
+	return -1;
 }
 
 int
 quotacursor_get(struct quotacursor *qc,
 		struct quotakey *qk_ret, struct quotaval *qv_ret)
 {
-	return __quota_proplib_cursor_get(qc->qc_qh, qc->u.qc_proplib,
-					  qk_ret, qv_ret);
+	switch (qc->qc_type) {
+	    case QC_PROPLIB:
+		return __quota_proplib_cursor_get(qc->qc_qh, qc->u.qc_proplib,
+						  qk_ret, qv_ret);
+	    case QC_OLDFILES:
+		return __quota_oldfiles_cursor_get(qc->qc_qh,
+						   qc->u.qc_oldfiles,
+						   qk_ret, qv_ret);
+	}
+	errno = EINVAL;
+	return -1;
 }
 
 int
@@ -91,19 +143,42 @@ quotacursor_getn(struct quotacursor *qc,
 		 struct quotakey *keys, struct quotaval *vals, 
 		 unsigned maxnum)
 {
-	return __quota_proplib_cursor_getn(qc->qc_qh, qc->u.qc_proplib,
-					   keys, vals, maxnum);
+	switch (qc->qc_type) {
+	    case QC_PROPLIB:
+		return __quota_proplib_cursor_getn(qc->qc_qh, qc->u.qc_proplib,
+						   keys, vals, maxnum);
+	    case QC_OLDFILES:
+		return __quota_oldfiles_cursor_getn(qc->qc_qh,
+						    qc->u.qc_oldfiles,
+						    keys, vals, maxnum);
+	}
+	errno = EINVAL;
+	return -1;
 }
 
 int
 quotacursor_atend(struct quotacursor *qc)
 {
-	return __quota_proplib_cursor_atend(qc->qc_qh,
-					    qc->u.qc_proplib);
+	switch (qc->qc_type) {
+	    case QC_PROPLIB:
+		return __quota_proplib_cursor_atend(qc->qc_qh,
+						    qc->u.qc_proplib);
+	    case QC_OLDFILES:
+		return __quota_oldfiles_cursor_atend(qc->u.qc_oldfiles);
+	}
+	errno = EINVAL;
+	return -1;
 }
 
 int
 quotacursor_rewind(struct quotacursor *qc)
 {
-	return __quota_proplib_cursor_rewind(qc->u.qc_proplib);
+	switch (qc->qc_type) {
+	    case QC_PROPLIB:
+		return __quota_proplib_cursor_rewind(qc->u.qc_proplib);
+	    case QC_OLDFILES:
+		return __quota_oldfiles_cursor_rewind(qc->u.qc_oldfiles);
+	}
+	errno = EINVAL;
+	return -1;
 }

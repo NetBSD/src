@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_open.c,v 1.3 2012/01/09 15:29:56 dholland Exp $	*/
+/*	$NetBSD: quota_open.c,v 1.4 2012/01/09 15:41:58 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,12 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_open.c,v 1.3 2012/01/09 15:29:56 dholland Exp $");
+__RCSID("$NetBSD: quota_open.c,v 1.4 2012/01/09 15:41:58 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/statvfs.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <errno.h>
 
 #include <quota.h>
@@ -101,6 +102,10 @@ quota_open(const char *path)
 
 	qh->qh_isnfs = isnfs;
 
+	qh->qh_hasoldfiles = 0;
+	qh->qh_userfile = -1;
+	qh->qh_groupfile = -1;
+
 	return qh;
 }
 
@@ -119,6 +124,12 @@ quota_getmountdevice(struct quotahandle *qh)
 void
 quota_close(struct quotahandle *qh)
 {
+	if (qh->qh_userfile >= 0) {
+		close(qh->qh_userfile);
+	}
+	if (qh->qh_groupfile >= 0) {
+		close(qh->qh_groupfile);
+	}
 	free(qh->qh_mountdevice);
 	free(qh->qh_mountpoint);
 	free(qh);

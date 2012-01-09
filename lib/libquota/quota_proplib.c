@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_proplib.c,v 1.4 2012/01/09 15:40:10 dholland Exp $	*/
+/*	$NetBSD: quota_proplib.c,v 1.5 2012/01/09 15:41:58 dholland Exp $	*/
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_proplib.c,v 1.4 2012/01/09 15:40:10 dholland Exp $");
+__RCSID("$NetBSD: quota_proplib.c,v 1.5 2012/01/09 15:41:58 dholland Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -55,7 +55,7 @@ struct proplib_quotacursor {
 	unsigned didblocks;
 };
 
-static int
+int
 __quota_proplib_getversion(struct quotahandle *qh, int8_t *version_ret)
 {
 	const char *idtype;
