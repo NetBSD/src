@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/03/24 17:05:43 bouyer Exp $
+#	$NetBSD: Makefile,v 1.2 2012/01/09 15:22:38 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
@@ -13,5 +13,10 @@ LIBDPLIBS+=     rpcsvc  ${.CURDIR}/../librpcsvc
 
 SRCS+=	getfsquota.c getnfsquota.c getufsquota.c
 MAN=
+
+SRCS+=	quota_open.c
+SRCS+=	quota_schema.c
+SRCS+=	quota_get.c quota_put.c quota_delete.c
+SRCS+=	quota_cursor.c
 
 .include <bsd.lib.mk>
