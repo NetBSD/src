@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.409 2011/10/02 16:39:46 jmcneill Exp $
+.\"	$NetBSD: options.4,v 1.410 2012/01/09 15:16:31 drochner Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd October 2, 2011
+.Dd January 9, 2012
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1646,9 +1646,19 @@ for details.
 .It Cd options IPSEC
 Includes support for the
 .Tn IPsec
+protocol, using the FAST_IPSEC implementation.
+See
+.Xr fast_ipsec 4
+for details.
+(This option is an alias for the
+.Cd FAST_IPSEC
+option described below.)
+.It Cd options KAME_IPSEC
+Includes support for the
+.Tn IPsec
 protocol, using the KAME implementation.
 See
-.Xr ipsec 4
+.Xr kame_ipsec 4
 for details.
 .It Cd options IPSEC_DEBUG
 Enables debugging code in
@@ -1663,7 +1673,7 @@ Includes support for
 .Tn ESP
 protocol, using the KAME implementation.
 See
-.Xr ipsec 4
+.Xr kame_ipsec 4
 for details.
 .It Cd options FAST_IPSEC
 Includes support for the

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1363 2012/01/04 16:25:15 yamt Exp $
+# $NetBSD: mi,v 1.1364 2012/01/09 15:16:30 drochner Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1236,6 +1236,7 @@
 ./usr/share/man/cat4/jme.0			man-sys-catman		.cat
 ./usr/share/man/cat4/jmide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/joy.0			man-sys-catman		.cat
+./usr/share/man/cat4/kame_ipsec.0		man-sys-catman		.cat
 ./usr/share/man/cat4/kloader.0			man-sys-catman		.cat
 ./usr/share/man/cat4/kse.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ksyms.0			man-sys-catman		.cat
@@ -6719,6 +6720,7 @@
 ./usr/share/man/man4/jme.4			man-sys-man		.man
 ./usr/share/man/man4/jmide.4			man-sys-man		.man
 ./usr/share/man/man4/joy.4			man-sys-man		.man
+./usr/share/man/man4/kame_ipsec.4		man-sys-man		.man
 ./usr/share/man/man4/kloader.4			man-sys-man		.man
 ./usr/share/man/man4/kse.4			man-sys-man		.man
 ./usr/share/man/man4/ksyms.4			man-sys-man		.man
