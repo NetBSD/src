@@ -1,4 +1,4 @@
-/*	$NetBSD: genget.c,v 1.11 2004/10/28 21:14:52 dsl Exp $	*/
+/*	$NetBSD: genget.c,v 1.12 2012/01/09 15:25:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)genget.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: genget.c,v 1.11 2004/10/28 21:14:52 dsl Exp $");
+__RCSID("$NetBSD: genget.c,v 1.12 2012/01/09 15:25:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,11 +50,10 @@ __RCSID("$NetBSD: genget.c,v 1.11 2004/10/28 21:14:52 dsl Exp $");
  * the length of *s1 is returned.
  */
 	int
-isprefix(s1, s2)
-	register char *s1, *s2;
+isprefix(char *s1, const char *s2)
 {
 	char *os1;
-	register char c1, c2;
+	char c1, c2;
 
 	if (*s1 == '\0')
 		return(-1);

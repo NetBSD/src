@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.19 2006/03/20 04:03:22 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.20 2012/01/09 15:25:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.19 2006/03/20 04:03:22 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.20 2012/01/09 15:25:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,7 +162,7 @@ Authenticator authenticators[] = {
 	{ 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
-static Authenticator NoAuth = { 0 };
+static Authenticator NoAuth = { .type = 0 };
 
 static int	i_support = 0;
 static int	i_wont_support = 0;
@@ -395,10 +395,10 @@ auth_send(data, cnt)
 	 */
 	if (data < _auth_send_data ||
 	    data > _auth_send_data + sizeof(_auth_send_data)) {
-		auth_send_cnt = cnt > sizeof(_auth_send_data)
+		auth_send_cnt = (size_t)cnt > sizeof(_auth_send_data)
 					? sizeof(_auth_send_data)
-					: cnt;
-		memmove((void *)_auth_send_data, (void *)data, auth_send_cnt);
+					: (size_t)cnt;
+		memmove(_auth_send_data, data, auth_send_cnt);
 		auth_send_data = _auth_send_data;
 	} else {
 		/*
@@ -517,7 +517,7 @@ auth_name(data, cnt)
 			printf(">>>%s: Empty name in NAME\r\n", Name);
 		return;
 	}
-	if (cnt > sizeof(savename) - 1) {
+	if ((size_t)cnt > sizeof(savename) - 1) {
 		if (auth_debug_mode)
 			printf(">>>%s: Name in NAME (%d) exceeds %ld length\r\n",
 					Name, cnt, (long)sizeof(savename)-1);
