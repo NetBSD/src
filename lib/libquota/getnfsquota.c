@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsquota.c,v 1.4 2011/11/25 16:55:05 dholland Exp $	*/
+/*	$NetBSD: getnfsquota.c,v 1.5 2012/01/09 15:31:11 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,170 +42,84 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: getnfsquota.c,v 1.4 2011/11/25 16:55:05 dholland Exp $");
+__RCSID("$NetBSD: getnfsquota.c,v 1.5 2012/01/09 15:31:11 dholland Exp $");
 #endif
 #endif /* not lint */
 
-/*
- * Disk quota reporting program.
- */
-#include <sys/param.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-
-#include <ctype.h>
-#include <err.h>
-#include <errno.h>
-#include <netdb.h>
-#include <stdio.h>
+#include <sys/mount.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#include <unistd.h>
+#include <errno.h>
 
+#include <quota.h>
 #include <quota/quota.h>
-#include <quota/quotaprop.h>
 
-#include <rpc/rpc.h>
-#include <rpc/pmap_prot.h>
-#include <rpcsvc/rquota.h>
-
-/* convert a rquota limit to our semantic */
-static uint64_t
-rqlim2qlim(uint32_t lim)
-{
-	if (lim == 0)
-		return UQUAD_MAX;
-	else
-		return (lim - 1);
-}
- 
-static int
-callaurpc(const char *host, rpcprog_t prognum, rpcvers_t versnum,
-    rpcproc_t procnum, xdrproc_t inproc, void *in, xdrproc_t outproc, void *out)
-{
-	struct sockaddr_in server_addr;
-	enum clnt_stat clnt_stat;
-	struct hostent *hp;
-	struct timeval timeout, tottimeout;
- 
-	CLIENT *client = NULL;
-	int sock = RPC_ANYSOCK;
- 
-	if ((hp = gethostbyname(host)) == NULL)
-		return (int) RPC_UNKNOWNHOST;
-	timeout.tv_usec = 0;
-	timeout.tv_sec = 6;
-	memmove(&server_addr.sin_addr, hp->h_addr, hp->h_length);
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port =  0;
-
-	if ((client = clntudp_create(&server_addr, prognum,
-	    versnum, timeout, &sock)) == NULL)
-		return (int) rpc_createerr.cf_stat;
-
-	client->cl_auth = authunix_create_default();
-	tottimeout.tv_sec = 25;
-	tottimeout.tv_usec = 0;
-	clnt_stat = clnt_call(client, procnum, inproc, in,
-	    outproc, out, tottimeout);
- 
-	return (int) clnt_stat;
-}
+#include "quotapvt.h"
 
 int
 getnfsquota(const char *mp, struct quotaval *qv,
     uint32_t id, const char *class)
 {
-	struct getquota_args gq_args;
-	struct ext_getquota_args ext_gq_args;
-	struct getquota_rslt gq_rslt;
-	struct timeval tv;
-	char *host, *path;
-	int ret, rpcqtype;
+	struct statvfs *mounts;
+	size_t size;
+	int nummounts, i, ret;
+	int serrno;
 
-	if (strcmp(class, QUOTADICT_CLASS_USER) == 0)
-		rpcqtype = RQUOTA_USRQUOTA;
-	else if (strcmp(class, QUOTADICT_CLASS_GROUP) == 0)
-		rpcqtype = RQUOTA_GRPQUOTA;
-	else {
-		errno = EINVAL;
+	/*
+	 * For some reason getnfsquota was defined so that the mount
+	 * information passed in is the f_mntfromname (containing the
+	 * remote host and path) from statvfs. The only way to convert
+	 * this back to something generally useful is to search the
+	 * available mounts for something that matches. Sigh.
+	 *
+	 * Note that we can't use getmntinfo(3) as the caller probably
+	 * is and another use would potentially interfere.
+	 */
+
+	nummounts = getvfsstat(NULL, (size_t)0, MNT_NOWAIT);
+	if (nummounts < 0) {
+		return -1;
+	}
+	if (nummounts == 0) {
+		errno = ENOENT;
+		return -1;
+	}
+	size = nummounts * sizeof(mounts[0]);
+	mounts = malloc(size);
+	if (mounts == NULL) {
+		return -1;
+	}
+	nummounts = getvfsstat(mounts, size, MNT_NOWAIT);
+	if (nummounts < 0) {
+		serrno = errno;
+		free(mounts);
+		errno = serrno;
 		return -1;
 	}
 
 	/*
-	 * must be some form of "hostname:/path"
+	 * Note: if the size goes up, someone added a new mount; it
+	 * can't be the one we're looking for. Assume it will end up
+	 * at the end of the list so we don't need to refetch the
+	 * info, and reset nummounts to avoid chugging off the end
+	 * of the array.
 	 */
-	path = strdup(mp);
-	if (path == NULL) {
-		errno = ENOMEM;
-		return -1;
-	}
-	host = strsep(&path, ":");
-	if (path == NULL) {
-		free(host);
-		errno = EINVAL;
-		return -1;
+	if (nummounts * sizeof(mounts[0]) > size) {
+		nummounts = size / sizeof(mounts[0]);
 	}
 
-	ext_gq_args.gqa_pathp = path;
-	ext_gq_args.gqa_id = id;
-	ext_gq_args.gqa_type = rpcqtype;
-	ret = callaurpc(host, RQUOTAPROG, EXT_RQUOTAVERS,
-	    RQUOTAPROC_GETQUOTA, (xdrproc_t)xdr_ext_getquota_args,
-	    &ext_gq_args, (xdrproc_t)xdr_getquota_rslt, &gq_rslt);
-	if (ret == RPC_PROGVERSMISMATCH && rpcqtype == RQUOTA_USRQUOTA) {
-		/* try RQUOTAVERS */
-		gq_args.gqa_pathp = path;
-		gq_args.gqa_uid = id;
-		ret = callaurpc(host, RQUOTAPROG, RQUOTAVERS,
-		    RQUOTAPROC_GETQUOTA, (xdrproc_t)xdr_getquota_args,
-		    &gq_args, (xdrproc_t)xdr_getquota_rslt, &gq_rslt);
+	for (i=0; i<nummounts; i++) {
+		if (!strcmp(mounts[i].f_mntfromname, mp)) {
+			ret = __quota_getquota(mounts[i].f_mntonname,
+					       qv, id, class);
+			serrno = errno;
+			free(mounts);
+			errno = serrno;
+			return ret;
+		}
 	}
-	free(host);
-
-	if (ret != RPC_SUCCESS) {
-		return 0;
-	}
-
-	switch (gq_rslt.status) {
-	case Q_NOQUOTA:
-		break;
-	case Q_EPERM:
-		errno = EACCES;
-		return -1;
-	case Q_OK:
-		gettimeofday(&tv, NULL);
-
-		/* blocks*/
-		qv[QUOTA_LIMIT_BLOCK].qv_hardlimit = rqlim2qlim(
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bhardlimit *
-		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE));
-		qv[QUOTA_LIMIT_BLOCK].qv_softlimit = rqlim2qlim(
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsoftlimit *
-		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE));
-		qv[QUOTA_LIMIT_BLOCK].qv_usage =
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curblocks *
-		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
-		qv[QUOTA_LIMIT_BLOCK].qv_expiretime = (tv.tv_sec +
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_btimeleft);
-
-		/* inodes */
-		qv[QUOTA_LIMIT_FILE].qv_hardlimit = rqlim2qlim(
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit);
-		qv[QUOTA_LIMIT_FILE].qv_softlimit = rqlim2qlim(
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_fsoftlimit);
-		qv[QUOTA_LIMIT_FILE].qv_usage =
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curfiles;
-		qv[QUOTA_LIMIT_FILE].qv_expiretime = (int)(tv.tv_sec +
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft);
-
-		qv[QUOTA_LIMIT_BLOCK].qv_grace =
-		    qv[QUOTA_LIMIT_FILE].qv_grace = 0;
-		return 1;
-	default:
-		/* XXX sert errno and return -1 ? */
-		break;
-	}
-	return 0;
+	free(mounts);
+	errno = ENOENT;
+	return -1;
 }
