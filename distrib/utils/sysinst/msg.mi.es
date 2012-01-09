@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.37 2012/01/08 02:32:00 christos Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.38 2012/01/09 01:51:47 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -136,7 +136,7 @@ Por tanto se entiende que quiere %s NetBSD en él.
 }
 
 message ask_disk
-{¿En cuál disco quiere instalar NetBSD? }
+{¿En cuál disco quiere %s NetBSD? }
 
 message Available_disks
 {Discos disponibles}
