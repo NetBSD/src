@@ -81883,7 +81883,8 @@ SQLITE_PRIVATE Index *sqlite3CreateIndex(
   Token *pName = 0;    /* Unqualified name of the index to create */
   struct ExprList_item *pListItem; /* For looping over pList */
   int nCol;
-  int nExtra = 0;
+  int nExtra = 0, nPad = 0;
+  size_t nOff;
   char *zExtra;
 
   assert( pStart==0 || pEnd!=0 ); /* pEnd must be non-NULL if pStart is */
@@ -82053,6 +82054,8 @@ SQLITE_PRIVATE Index *sqlite3CreateIndex(
   */
   nName = sqlite3Strlen30(zName);
   nCol = pList->nExpr;
+  nOff = sizeof(*pIndex)+sizeof(tRowcnt)*(nCol+1);
+  nPad = ((nOff + (sizeof(char*)-1)) & ~ (sizeof(char*)-1)) - nOff;
   pIndex = sqlite3DbMallocZero(db, 
       sizeof(Index) +              /* Index structure  */
       sizeof(tRowcnt)*(nCol+1) +   /* Index.aiRowEst   */
@@ -82060,13 +82063,14 @@ SQLITE_PRIVATE Index *sqlite3CreateIndex(
       sizeof(char *)*nCol +        /* Index.azColl     */
       sizeof(u8)*nCol +            /* Index.aSortOrder */
       nName + 1 +                  /* Index.zName      */
-      nExtra                       /* Collation sequence names */
+      nExtra +                     /* Collation sequence names */
+      nPad
   );
   if( db->mallocFailed ){
     goto exit_create_index;
   }
   pIndex->aiRowEst = (tRowcnt*)(&pIndex[1]);
-  pIndex->azColl = (char**)(&pIndex->aiRowEst[nCol+1]);
+  pIndex->azColl = (char**)((char*)(&pIndex->aiRowEst[nCol+1])+nPad);
   pIndex->aiColumn = (int *)(&pIndex->azColl[nCol]);
   pIndex->aSortOrder = (u8 *)(&pIndex->aiColumn[nCol]);
   pIndex->zName = (char *)(&pIndex->aSortOrder[nCol]);
@@ -130641,7 +130645,7 @@ SQLITE_API int sqlite3_extension_init(
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: sqlite3.c,v 1.2 2011/11/02 23:19:48 christos Exp $
+** $Id: sqlite3.c,v 1.3 2012/01/09 11:20:20 martin Exp $
 **
 ** This file implements an integration between the ICU library 
 ** ("International Components for Unicode", an open-source library 
