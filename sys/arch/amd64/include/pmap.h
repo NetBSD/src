@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.28 2011/11/06 15:18:18 cherry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29 2012/01/09 13:04:13 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -263,6 +263,8 @@
     atomic_and_ulong((volatile unsigned long *)p, ~(b))
 #define pmap_pte_flush()		/* nothing */
 #else
+extern kmutex_t pte_lock;
+
 static __inline pt_entry_t
 pmap_pa2pte(paddr_t pa)
 {
@@ -277,54 +279,57 @@ pmap_pte2pa(pt_entry_t pte)
 static __inline void
 pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
 {
-	int s = splvm();
+	mutex_enter(&pte_lock);
 	xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
-	splx(s);
+	mutex_exit(&pte_lock);
 }
 
 static __inline pt_entry_t
 pmap_pte_cas(volatile pt_entry_t *ptep, pt_entry_t o, pt_entry_t n)
 {
-	int s = splvm();
+	pt_entry_t opte;
 
-	pt_entry_t opte = *ptep;
-
+	mutex_enter(&pte_lock);
+	opte = *ptep;
 	if (opte == o) {
 		xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(ptep)), n);
 		xpq_flush_queue();
 	}
-	splx(s);
+
+	mutex_exit(&pte_lock);
 	return opte;
 }
 
 static __inline pt_entry_t
 pmap_pte_testset(volatile pt_entry_t *pte, pt_entry_t npte)
 {
-	int s = splvm();
-	pt_entry_t opte = *pte;
+	pt_entry_t opte;
+
+	mutex_enter(&pte_lock);
+	opte = *pte;
 	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)), npte);
 	xpq_flush_queue();
-	splx(s);
+	mutex_exit(&pte_lock);
 	return opte;
 }
 
 static __inline void
 pmap_pte_setbits(volatile pt_entry_t *pte, pt_entry_t bits)
 {
-	int s = splvm();
+	mutex_enter(&pte_lock);
 	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)), (*pte) | bits);
 	xpq_flush_queue();
-	splx(s);
+	mutex_exit(&pte_lock);
 }
 
 static __inline void
 pmap_pte_clearbits(volatile pt_entry_t *pte, pt_entry_t bits)
 {	
-	int s = splvm();
+	mutex_enter(&pte_lock);
 	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)),
 	    (*pte) & ~bits);
 	xpq_flush_queue();
-	splx(s);
+	mutex_exit(&pte_lock);
 }
 
 static __inline void
