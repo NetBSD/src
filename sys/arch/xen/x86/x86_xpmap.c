@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.36 2011/11/06 15:18:19 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.37 2012/01/09 13:04:13 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.36 2011/11/06 15:18:19 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.37 2012/01/09 13:04:13 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -117,6 +117,7 @@ volatile shared_info_t *HYPERVISOR_shared_info;
 /* Xen requires the start_info struct to be page aligned */
 union start_info_union start_info_union __aligned(PAGE_SIZE);
 unsigned long *xpmap_phys_to_machine_mapping;
+kmutex_t pte_lock;
 
 void xen_failsafe_handler(void);
 
@@ -652,6 +653,8 @@ bootstrap_again:
 	/* Finally, flush TLB. */
 	xpq_queue_tlb_flush();
 
+	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
+	
 	return (init_tables + ((count + l2_4_count) * PAGE_SIZE));
 }
 
