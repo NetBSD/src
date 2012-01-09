@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.75 2011/12/19 11:47:16 drochner Exp $	*/
+/*	$NetBSD: key.c,v 1.76 2012/01/09 15:42:08 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.75 2011/12/19 11:47:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.76 2012/01/09 15:42:08 drochner Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -427,6 +427,7 @@ static struct mbuf *key_setdumpsa (struct secasvar *, u_int8_t,
 #ifdef IPSEC_NAT_T
 static struct mbuf *key_setsadbxport (u_int16_t, u_int16_t);
 static struct mbuf *key_setsadbxtype (u_int16_t);
+static struct mbuf *key_setsadbxfrag (u_int16_t);
 #endif
 static void key_porttosaddr (union sockaddr_union *, u_int16_t);
 static int key_checksalen (const union sockaddr_union *);
@@ -3629,9 +3630,15 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 				SADB_X_EXT_NAT_T_SPORT);
 			break;
 
+		case SADB_X_EXT_NAT_T_FRAG:
+			/* don't send frag info if not set */
+			if (sav->natt_type == 0 || sav->esp_frag == IP_MAXPACKET)
+				continue;
+			m = key_setsadbxfrag(sav->esp_frag);
+			break;
+
 		case SADB_X_EXT_NAT_T_OAI:
 		case SADB_X_EXT_NAT_T_OAR:
-		case SADB_X_EXT_NAT_T_FRAG:
 			continue;
 #endif
 
@@ -3745,6 +3752,35 @@ key_setsadbxport(u_int16_t port, u_int16_t type)
 	p->sadb_x_nat_t_port_len = PFKEY_UNIT64(len);
 	p->sadb_x_nat_t_port_exttype = type;
 	p->sadb_x_nat_t_port_port = port;
+
+	return m;
+}
+
+/*
+ * set fragmentation info in sadb_x_nat_t_frag
+ */
+static struct mbuf *
+key_setsadbxfrag(u_int16_t flen)
+{
+	struct mbuf *m;
+	size_t len;
+	struct sadb_x_nat_t_frag *p;
+
+	len = PFKEY_ALIGN8(sizeof(struct sadb_x_nat_t_frag));
+
+	m = key_alloc_mbuf(len);
+	if (!m || m->m_next) {  /*XXX*/
+		if (m)
+			m_freem(m);
+		return NULL;
+	}
+
+	p = mtod(m, struct sadb_x_nat_t_frag *);
+
+	memset(p, 0, len);
+	p->sadb_x_nat_t_frag_len = PFKEY_UNIT64(len);
+	p->sadb_x_nat_t_frag_exttype = SADB_X_EXT_NAT_T_FRAG;
+	p->sadb_x_nat_t_frag_fraglen = flen;
 
 	return m;
 }
