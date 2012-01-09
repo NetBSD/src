@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.39 2011/11/25 16:55:05 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.40 2012/01/09 15:44:05 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.39 2011/11/25 16:55:05 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.40 2012/01/09 15:44:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: edquota.c,v 1.39 2011/11/25 16:55:05 dholland Exp $");
 #include <sys/types.h>
 #include <sys/statvfs.h>
 
+#include <quota.h>
 #include <quota/quotaprop.h>
 #include <quota/quota.h>
 #include <ufs/ufs/quota1.h>
@@ -360,81 +361,39 @@ getprivs2(long id, int quotaclass, const char *filesys, int defaultq)
 static void
 putprivs2(uint32_t id, int quotaclass, struct quotause *qup)
 {
+	struct quotahandle *qh;
+	struct quotakey qk;
+	char idname[32];
 
-	prop_dictionary_t dict, data, cmd;
-	prop_array_t cmds, datas;
-	struct plistref pref;
-	int8_t error8;
-	uint64_t *valuesp[QUOTA_NLIMITS];
-
-	valuesp[QL_BLK] =
-	    &qup->qv[QL_BLK].qv_hardlimit;
-	valuesp[QL_FL] =
-	    &qup->qv[QL_FL].qv_hardlimit;
-
-	data = quota64toprop(id, (qup->flags & DEFAULT) ? 1 : 0,
-	    valuesp, ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
-	    ufs_quota_limit_names, QUOTA_NLIMITS);
-
-	if (data == NULL)
-		err(1, "quota64toprop(id)");
-
-	dict = quota_prop_create();
-	cmds = prop_array_create();
-	datas = prop_array_create();
-
-	if (dict == NULL || cmds == NULL || datas == NULL) {
-		errx(1, "can't allocate proplist");
+	if (qup->flags & DEFAULT) {
+		snprintf(idname, sizeof(idname), "%s default",
+			 quotaclass == QUOTA_IDTYPE_USER ? "user" : "group");
+		id = QUOTA_DEFAULTID;
+	} else {
+		snprintf(idname, sizeof(idname), "%s %u",
+			 quotaclass == QUOTA_IDTYPE_USER ? "uid" : "gid", id);
 	}
 
-	if (!prop_array_add_and_rel(datas, data))
-		err(1, "prop_array_add(data)");
-	
-	if (!quota_prop_add_command(cmds, "set",
-	    ufs_quota_class_names[quotaclass], datas))
-		err(1, "prop_add_command");
-	if (!prop_dictionary_set(dict, "commands", cmds))
-		err(1, "prop_dictionary_set(command)");
-	if (Dflag)
-		printf("message to kernel:\n%s\n",
-		    prop_dictionary_externalize(dict));
-
-	if (prop_dictionary_send_syscall(dict, &pref) != 0)
-		err(1, "prop_dictionary_send_syscall");
-	prop_object_release(dict);
-
-	if (quotactl(qup->fsname, &pref) != 0)
-		err(1, "quotactl");
-
-	if (prop_dictionary_recv_syscall(&pref, &dict) != 0) {
-		err(1, "prop_dictionary_recv_syscall");
+	qh = quota_open(qup->fsname);
+	if (qh == NULL) {
+		err(1, "%s: quota_open", qup->fsname);
 	}
 
-	if (Dflag)
-		printf("reply from kernel:\n%s\n",
-		    prop_dictionary_externalize(dict));
-
-	if ((errno = quota_get_cmds(dict, &cmds)) != 0) {
-		err(1, "quota_get_cmds");
+	qk.qk_idtype = quotaclass;
+	qk.qk_id = id;
+	qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
+	if (quota_put(qh, &qk, &qup->qv[QL_BLK])) {
+		err(1, "%s: quota_put (%s blocks)", qup->fsname, idname);
 	}
-	/* only one command, no need to iter */
-	cmd = prop_array_get(cmds, 0);
-	if (cmd == NULL)
-		err(1, "prop_array_get(cmd)");
 
-	if (!prop_dictionary_get_int8(cmd, "return", &error8))
-		err(1, "prop_get(return)");
-
-	if (error8) {
-		errno = error8;
-		if (qup->flags & DEFAULT)
-			warn("set default %s quota",
-			    ufs_quota_class_names[quotaclass]);
-		else
-			warn("set %s quota for %u",
-			    ufs_quota_class_names[quotaclass], id);
+	qk.qk_idtype = quotaclass;
+	qk.qk_id = id;
+	qk.qk_objtype = QUOTA_OBJTYPE_FILES;
+	if (quota_put(qh, &qk, &qup->qv[QL_FL])) {
+		err(1, "%s: quota_put (%s files)", qup->fsname, idname);
 	}
-	prop_object_release(dict);
+
+	quota_close(qh);
 }
 
 ////////////////////////////////////////////////////////////
@@ -519,42 +478,35 @@ putprivs(uint32_t id, int quotaclass, struct quotalist *qlist)
 static void
 clearpriv(int argc, char **argv, const char *filesys, int quotaclass)
 {
-	prop_array_t cmds, datas;
-	prop_dictionary_t protodict, dict, data, cmd;
-	struct plistref pref;
-	bool ret;
 	struct statvfs *fst;
 	int nfst, i;
-	int8_t error8;
 	int id;
+	id_t *ids;
+	unsigned nids, maxids, j;
+	struct quotahandle *qh;
+	struct quotakey qk;
+	char idname[32];
 
-	/* build a generic command */
-	protodict = quota_prop_create();
-	cmds = prop_array_create();
-	datas = prop_array_create();
-	if (protodict == NULL || cmds == NULL || datas == NULL) {
-		errx(1, "can't allocate proplist");
+	maxids = 4;
+	nids = 0;
+	ids = malloc(maxids * sizeof(ids[0]));
+	if (ids == NULL) {
+		err(1, "malloc");
 	}
 
 	for ( ; argc > 0; argc--, argv++) {
 		if ((id = getidbyname(*argv, quotaclass)) == -1)
 			continue;
-		data = prop_dictionary_create();
-		if (data == NULL)
-			errx(1, "can't allocate proplist");
 
-		ret = prop_dictionary_set_uint32(data, "id", id);
-		if (!ret)
-			err(1, "prop_dictionary_set(id)");
-		if (!prop_array_add_and_rel(datas, data))
-			err(1, "prop_array_add(data)");
+		if (nids + 1 > maxids) {
+			maxids *= 2;
+			ids = realloc(ids, maxids * sizeof(ids[0]));
+			if (ids == NULL) {
+				err(1, "realloc");
+			}
+		}
+		ids[nids++] = id;
 	}
-	if (!quota_prop_add_command(cmds, "clear",
-	    ufs_quota_class_names[quotaclass], datas))
-		err(1, "prop_add_command");
-
-	if (!prop_dictionary_set(protodict, "commands", cmds))
-		err(1, "prop_dictionary_set(command)");
 
 	/* now loop over quota-enabled filesystems */
 	nfst = getmntinfo(&fst, MNT_WAIT);
@@ -567,45 +519,47 @@ clearpriv(int argc, char **argv, const char *filesys, int quotaclass)
 		if (filesys && strcmp(fst[i].f_mntonname, filesys) != 0 &&
 		    strcmp(fst[i].f_mntfromname, filesys) != 0)
 			continue;
-		if (Dflag) {
-			fprintf(stderr, "message to kernel for %s:\n%s\n",
-			    fst[i].f_mntonname,
-			    prop_dictionary_externalize(protodict));
+
+		qh = quota_open(fst[i].f_mntonname);
+		if (qh == NULL) {
+			err(1, "%s: quota_open", fst[i].f_mntonname);
 		}
 
-		if (prop_dictionary_send_syscall(protodict, &pref) != 0)
-			err(1, "prop_dictionary_send_syscall");
-		if (quotactl(fst[i].f_mntonname, &pref) != 0)
-			err(1, "quotactl");
+		for (j = 0; j < nids; j++) {
+			snprintf(idname, sizeof(idname), "%s %u",
+				 quotaclass == QUOTA_IDTYPE_USER ? 
+				 "uid" : "gid", ids[j]);
 
-		if (prop_dictionary_recv_syscall(&pref, &dict) != 0) {
-			err(1, "prop_dictionary_recv_syscall");
+			qk.qk_idtype = quotaclass;
+			qk.qk_id = ids[j];
+			qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
+			if (quota_delete(qh, &qk)) {
+				err(1, "%s: quota_delete (%s blocks)",
+				    fst[i].f_mntonname, idname);
+			}
+
+			qk.qk_idtype = quotaclass;
+			qk.qk_id = ids[j];
+			qk.qk_objtype = QUOTA_OBJTYPE_FILES;
+			if (quota_delete(qh, &qk)) {
+				if (errno == ENOENT) {
+ 					/*
+					 * XXX ignore this case; due
+					 * to a weakness in the quota
+					 * proplib interface it can
+					 * appear spuriously.
+					 */
+				} else {
+					err(1, "%s: quota_delete (%s files)",
+					    fst[i].f_mntonname, idname);
+				}
+			}
 		}
 
-		if (Dflag) {
-			fprintf(stderr, "reply from kernel for %s:\n%s\n",
-			    fst[i].f_mntonname,
-			    prop_dictionary_externalize(dict));
-		}
-		if ((errno = quota_get_cmds(dict, &cmds)) != 0) {
-			err(1, "quota_get_cmds");
-		}
-		/* only one command, no need to iter */
-		cmd = prop_array_get(cmds, 0);
-		if (cmd == NULL)
-			err(1, "prop_array_get(cmd)");
-
-		if (!prop_dictionary_get_int8(cmd, "return", &error8))
-			err(1, "prop_get(return)");
-		if (error8) {
-			errno = error8;
-			warn("clear %s quota entries on %s",
-			    ufs_quota_class_names[quotaclass],
-			    fst[i].f_mntonname);
-		}
-		prop_object_release(dict);
+		quota_close(qh);
 	}
-	prop_object_release(protodict);
+
+	free(ids);
 }
 
 ////////////////////////////////////////////////////////////
