@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.35 2012/01/09 15:38:59 dholland Exp $	*/
+/*	$NetBSD: repquota.c,v 1.36 2012/01/09 15:40:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.35 2012/01/09 15:38:59 dholland Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.36 2012/01/09 15:40:47 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,133 +213,52 @@ repquota(struct quotahandle *qh, int idtype)
 }
 
 static int
-repquota2_getstuff(struct quotahandle *qh, int idtype, prop_array_t *ret)
-{
-	prop_dictionary_t dict, cmd;
-	prop_array_t cmds, datas;
-	struct plistref pref;
-	int8_t error8;
-
-	dict = quota_prop_create();
-	cmds = prop_array_create();
-	datas = prop_array_create();
-
-	if (dict == NULL || cmds == NULL || datas == NULL)
-		errx(1, "can't allocate proplist");
-	if (!quota_prop_add_command(cmds, "getall",
-	    ufs_quota_class_names[idtype], datas))
-		err(1, "prop_add_command");
-	if (!prop_dictionary_set(dict, "commands", cmds))
-		err(1, "prop_dictionary_set(command)");
-	if (Dflag)
-		printf("message to kernel:\n%s\n",
-		    prop_dictionary_externalize(dict));
-	if (prop_dictionary_send_syscall(dict, &pref) != 0)
-		err(1, "prop_dictionary_send_syscall");
-	prop_object_release(dict);
-
-	if (quotactl(quota_getmountpoint(qh), &pref) != 0)
-		err(1, "quotactl");
-
-	if (prop_dictionary_recv_syscall(&pref, &dict) != 0) {
-		err(1, "prop_dictionary_recv_syscall");
-	}
-	if (Dflag)
-		printf("reply from kernel:\n%s\n",
-		    prop_dictionary_externalize(dict));
-	if ((errno = quota_get_cmds(dict, &cmds)) != 0) {
-		err(1, "quota_get_cmds");
-	}
-
-	cmd = prop_array_get(cmds, 0);
-	if (cmd == NULL) {
-		err(1, "prop_array_get(cmds)");
-	}
-
-	const char *cmdstr;
-	if (!prop_dictionary_get_cstring_nocopy(cmd, "command",
-	    &cmdstr))
-		err(1, "prop_get(command)");
-
-	if (!prop_dictionary_get_int8(cmd, "return", &error8))
-		err(1, "prop_get(return)");
-
-	if (error8) {
-		prop_object_release(dict);
-		if (error8 != EOPNOTSUPP) {
-			errno = error8;
-			warn("get %s quotas",
-			    ufs_quota_class_names[idtype]);
-		}
-		return 1;
-	}
-	datas = prop_dictionary_get(cmd, "data");
-	if (datas == NULL)
-		err(1, "prop_dict_get(datas)");
-
-	prop_object_retain(datas);
-	prop_object_release(dict);
-
-	*ret = datas;
-	return 0;
-}
-
-static int
 repquota2(struct quotahandle *qh, int idtype)
 {
-	prop_dictionary_t data;
-	prop_array_t datas;
-	prop_object_iterator_t dataiter;
+	struct quotacursor *qc;
+	struct quotakey qk;
+	struct quotaval qv;
 	struct quotaval *qvp;
 	struct fileusage *fup;
-	const char *strid;
-	uint32_t id;
-	uint64_t *values[QUOTA_NLIMITS];
 
-	if (repquota2_getstuff(qh, idtype, &datas)) {
+	qc = quota_opencursor(qh);
+	if (qc == NULL) {
 		return 1;
 	}
 
-		dataiter = prop_array_iterator(datas);
-		if (dataiter == NULL)
-			err(1, "prop_array_iterator");
+	if (idtype == QUOTA_IDTYPE_USER) {
+		quotacursor_skipidtype(qc, QUOTA_IDTYPE_GROUP);
+	}
+	if (idtype == QUOTA_IDTYPE_GROUP) {
+		quotacursor_skipidtype(qc, QUOTA_IDTYPE_USER);
+	}
 
-		valid[idtype] = 0;
-		while ((data = prop_object_iterator_next(dataiter)) != NULL) {
-			valid[idtype] = 1;
-			strid = NULL;
-			if (!prop_dictionary_get_uint32(data, "id", &id)) {
-				if (!prop_dictionary_get_cstring_nocopy(data,
-				    "id", &strid))
-					errx(1, "can't find id in quota entry");
-				if (strcmp(strid, "default") != 0) {
-					errx(1,
-					    "wrong id string %s in quota entry",
-					    strid);
-				}
-				qvp = defaultqv[idtype];
-			} else {
-				if ((fup = lookup(id, idtype)) == 0)
-					fup = addid(id, idtype, (char *)0);
-				qvp = fup->fu_qv;
-			}
-			values[QUOTA_LIMIT_BLOCK] =
-			    &qvp[QUOTA_LIMIT_BLOCK].qv_hardlimit;
-			values[QUOTA_LIMIT_FILE] =
-			    &qvp[QUOTA_LIMIT_FILE].qv_hardlimit;
-				
-			errno = proptoquota64(data, values,
-			    ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
-			    ufs_quota_limit_names, QUOTA_NLIMITS);
-			if (errno)
-				err(1, "proptoquota64");
+	valid[idtype] = 0;
+	while (!quotacursor_atend(qc)) {
+		if (quotacursor_get(qc, &qk, &qv)) {
+			err(1, "%s: quotacursor_get", quota_getmountpoint(qh));
 		}
-		prop_object_iterator_release(dataiter);
+		if (qk.qk_idtype != idtype) {
+			continue;
+		}
+
+		valid[idtype] = 1;
+		if (qk.qk_id == QUOTA_DEFAULTID) {
+			qvp = defaultqv[idtype];
+		} else {
+			if ((fup = lookup(qk.qk_id, idtype)) == 0)
+				fup = addid(qk.qk_id, idtype, (char *)0);
+			qvp = fup->fu_qv;
+		}
+		if (qk.qk_objtype == QUOTA_OBJTYPE_BLOCKS) {
+			qvp[QUOTA_OBJTYPE_BLOCKS] = qv;
+		} else if (qk.qk_objtype == QUOTA_OBJTYPE_FILES) {
+			qvp[QUOTA_OBJTYPE_FILES] = qv;
+		}
+	}
 
 	if (xflag == 0 && valid[idtype])
 		printquotas(idtype, qh);
-
-	prop_object_release(datas);
 
 	return 0;
 }
@@ -665,6 +584,9 @@ addid(uint32_t id, int idtype, const char *name)
 	} else {
 		snprintf(fup->fu_name, len + 1, "%u", id);
 	}
+	/*
+	 * XXX nothing guarantees the default limits have been loaded yet
+	 */
 	fup->fu_qv[QUOTA_LIMIT_BLOCK] = defaultqv[idtype][QUOTA_LIMIT_BLOCK];
 	fup->fu_qv[QUOTA_LIMIT_FILE] = defaultqv[idtype][QUOTA_LIMIT_FILE];
 	return fup;
