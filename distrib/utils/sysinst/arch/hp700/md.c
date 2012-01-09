@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 2012/01/05 21:32:36 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.14 2012/01/09 11:51:41 skrll Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,6 +49,8 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+#define HP700_PDC_LIMIT	((unsigned)2*1024*1024*1024)
 
 void
 md_init(void)
@@ -108,7 +110,7 @@ md_get_info(void)
 	/*
 	 * hp700 PDC can only address up to 2GB.
 	 */
-	root_limit = ((unsigned)2*1024*1024*1024) / (unsigned)sectorsize;
+	root_limit = HP700_PDC_LIMIT / (unsigned)sectorsize;
 
 	return 1;
 }
@@ -128,6 +130,23 @@ md_make_bsd_partitions(void)
 int
 md_check_partitions(void)
 {
+	/* Check the root partition is sane. */
+	uint32_t limit = HP700_PDC_LIMIT / (unsigned)sectorsize;
+	int part;
+
+	for (part = PART_A; part < MAXPARTITIONS; part++) {
+		if (strcmp(bsdlabel[part].pi_mount, "/") == 0) {
+			uint32_t offset = bsdlabel[part].pi_offset;
+			uint32_t size = bsdlabel[part].pi_size;
+
+			if (offset > limit || offset + size > limit) {
+				msg_display(MSG_md_pdclimit);
+				process_menu(MENU_ok, NULL);
+				return 0;
+			}
+		}
+	}
+
 	return 1;
 }
 
