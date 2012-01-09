@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.27 2012/01/06 20:40:51 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.28 2012/01/09 14:56:35 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.27 2012/01/06 20:40:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.28 2012/01/09 14:56:35 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -149,7 +149,7 @@ ld_thunkbus_complete(void *arg)
 	struct ld_thunkbus_transfer *tt = &sc->sc_tt;
 	struct buf *bp = tt->tt_bp;
 	off_t offset = bp->b_rawblkno * ld->sc_secsize;
-	size_t ret;
+	int64_t ret;
 
 	if (!sc->busy)
 		panic("%s: but not busy?\n", __func__);
