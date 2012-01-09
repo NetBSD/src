@@ -1,4 +1,4 @@
-/*	$NetBSD: quotapvt.h,v 1.7 2012/01/09 15:43:19 dholland Exp $	*/
+/*	$NetBSD: quotapvt.h,v 1.8 2012/01/09 15:45:19 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -85,6 +85,9 @@ int __quota_oldfiles_initialize(struct quotahandle *qh);
 const char *__quota_oldfiles_getimplname(struct quotahandle *);
 int __quota_oldfiles_get(struct quotahandle *qh, const struct quotakey *qk,
 			struct quotaval *qv);
+int __quota_oldfiles_put(struct quotahandle *qh, const struct quotakey *qk,
+			const struct quotaval *qv);
+int __quota_oldfiles_delete(struct quotahandle *qh, const struct quotakey *qk);
 struct oldfiles_quotacursor *
 	__quota_oldfiles_cursor_create(struct quotahandle *);
 void __quota_oldfiles_cursor_destroy(struct oldfiles_quotacursor *);
