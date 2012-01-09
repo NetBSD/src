@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.59 2012/01/08 02:32:00 christos Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.60 2012/01/09 01:51:47 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -136,7 +136,7 @@ Sie NetBSD darauf %s möchten.
 }
 
 message ask_disk
-{Auf welcher Festplatte möchten Sie NetBSD installieren? }
+{Auf welcher Festplatte möchten Sie NetBSD %s? }
 
 message Available_disks
 {Verfügbare Festplatten}
