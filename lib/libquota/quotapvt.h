@@ -1,4 +1,4 @@
-/*	$NetBSD: quotapvt.h,v 1.4 2012/01/09 15:34:34 dholland Exp $	*/
+/*	$NetBSD: quotapvt.h,v 1.5 2012/01/09 15:40:10 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,14 +35,38 @@ struct quotahandle {
 	char spare[14*sizeof(char *) + 15 * sizeof(int)];
 };
 
+struct quotacursor {
+	struct quotahandle *qc_qh;
+	union {
+		struct proplib_quotacursor *qc_proplib;
+	} u;
+};
+
+
 /* proplib kernel interface */
 const char *__quota_proplib_getimplname(struct quotahandle *);
 int __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
 			struct quotaval *qv);
+struct proplib_quotacursor *__quota_proplib_cursor_create(void);
+void __quota_proplib_cursor_destroy(struct proplib_quotacursor *);
+int __quota_proplib_cursor_skipidtype(struct proplib_quotacursor *,
+				      unsigned idtype);
+int __quota_proplib_cursor_get(struct quotahandle *,
+			       struct proplib_quotacursor *,
+			       struct quotakey *, struct quotaval *);
+int __quota_proplib_cursor_getn(struct quotahandle *,
+				struct proplib_quotacursor *,
+				struct quotakey *, struct quotaval *,
+				unsigned);
+int __quota_proplib_cursor_atend(struct quotahandle *,
+				 struct proplib_quotacursor *);
+int __quota_proplib_cursor_rewind(struct proplib_quotacursor *);
+
 
 /* nfs rquotad interface */
 int __quota_nfs_get(struct quotahandle *qh, const struct quotakey *qk,
 		    struct quotaval *qv);
+
 
 /* compat for old library */
 int __quota_getquota(const char *path, struct quotaval *qv, uid_t id,
