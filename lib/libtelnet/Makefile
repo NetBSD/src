@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.33 2011/06/20 07:43:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.34 2012/01/09 15:25:33 christos Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -7,7 +7,7 @@ LIBISPRIVATE=	yes
 
 .include <bsd.own.mk>
 
-WARNS?=	1
+WARNS?=	4
 
 LIB=	telnet
 SRCS=	auth.c encrypt.c genget.c getent.c misc.c
@@ -15,11 +15,13 @@ SRCS=	auth.c encrypt.c genget.c getent.c misc.c
 CPPFLAGS+= -DHAS_CGETENT
 CPPFLAGS+= -I${.CURDIR}
 
-.if (${USE_KERBEROS} != "no")
+.if ${MKCRYPTO} != "no"
 SRCS+=	enc_des.c
 CPPFLAGS+= -DENCRYPTION -DAUTHENTICATION
 CPPFLAGS+= -DDES_ENCRYPTION
+.endif
 
+.if ${USE_KERBEROS} != "no"
 SRCS+=	kerberos5.c
 CPPFLAGS+= -DKRB5
 .endif
