@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_oldfiles.c,v 1.1 2012/01/09 15:41:58 dholland Exp $	*/
+/*	$NetBSD: quota_oldfiles.c,v 1.2 2012/01/09 15:45:19 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -64,7 +64,7 @@ struct oldfiles_quotacursor {
 };
 
 static uint64_t
-dqblk_limit(uint32_t val)
+dqblk_getlimit(uint32_t val)
 {
 	if (val == 0) {
 		return QUOTA_NOLIMIT;
@@ -73,11 +73,21 @@ dqblk_limit(uint32_t val)
 	}
 }
 
+static uint32_t
+dqblk_setlimit(uint64_t val)
+{
+	if (val == QUOTA_NOLIMIT && val >= 0xffffffffUL) {
+		return 0;
+	} else {
+		return (uint32_t)val + 1;
+	}
+}
+
 static void
 dqblk_getblocks(const struct dqblk *dq, struct quotaval *qv)
 {
-	qv->qv_hardlimit = dqblk_limit(dq->dqb_bhardlimit);
-	qv->qv_softlimit = dqblk_limit(dq->dqb_bsoftlimit);
+	qv->qv_hardlimit = dqblk_getlimit(dq->dqb_bhardlimit);
+	qv->qv_softlimit = dqblk_getlimit(dq->dqb_bsoftlimit);
 	qv->qv_usage = dq->dqb_curblocks;
 	qv->qv_expiretime = dq->dqb_btime;
 	qv->qv_grace = QUOTA_NOTIME;
@@ -86,11 +96,31 @@ dqblk_getblocks(const struct dqblk *dq, struct quotaval *qv)
 static void
 dqblk_getfiles(const struct dqblk *dq, struct quotaval *qv)
 {
-	qv->qv_hardlimit = dqblk_limit(dq->dqb_ihardlimit);
-	qv->qv_softlimit = dqblk_limit(dq->dqb_isoftlimit);
+	qv->qv_hardlimit = dqblk_getlimit(dq->dqb_ihardlimit);
+	qv->qv_softlimit = dqblk_getlimit(dq->dqb_isoftlimit);
 	qv->qv_usage = dq->dqb_curinodes;
 	qv->qv_expiretime = dq->dqb_itime;
 	qv->qv_grace = QUOTA_NOTIME;
+}
+
+static void
+dqblk_putblocks(const struct quotaval *qv, struct dqblk *dq)
+{
+	dq->dqb_bhardlimit = dqblk_setlimit(qv->qv_hardlimit);
+	dq->dqb_bsoftlimit = dqblk_setlimit(qv->qv_softlimit);
+	dq->dqb_curblocks = qv->qv_usage;
+	dq->dqb_btime = qv->qv_expiretime;
+	/* ignore qv->qv_grace */
+}
+
+static void
+dqblk_putfiles(const struct quotaval *qv, struct dqblk *dq)
+{
+	dq->dqb_ihardlimit = dqblk_setlimit(qv->qv_hardlimit);
+	dq->dqb_isoftlimit = dqblk_setlimit(qv->qv_softlimit);
+	dq->dqb_curinodes = qv->qv_usage;
+	dq->dqb_itime = qv->qv_expiretime;
+	/* ignore qv->qv_grace */
 }
 
 static int
@@ -249,8 +279,11 @@ __quota_oldfiles_doget(struct quotahandle *qh, const struct quotakey *qk,
 	result = pread(file, &dq, sizeof(dq), pos);
 	if (result < 0) {
 		return -1;
-	}
-	if ((size_t)result != sizeof(dq)) {
+	} else if (result == 0) {
+		/* Past EOF; no quota info on file for this ID */
+		errno = ENOENT;
+		return -1;
+	} else if ((size_t)result != sizeof(dq)) {
 		errno = EFTYPE;
 		return -1;
 	}
@@ -296,11 +329,133 @@ __quota_oldfiles_doget(struct quotahandle *qh, const struct quotakey *qk,
 	return 0;
 }
 
+static int
+__quota_oldfiles_doput(struct quotahandle *qh, const struct quotakey *qk,
+		       const struct quotaval *qv)
+{
+	int file;
+	off_t pos;
+	struct quotaval qv2;
+	struct dqblk dq;
+	ssize_t result;
+
+	switch (qk->qk_idtype) {
+	    case QUOTA_IDTYPE_USER:
+		file = qh->qh_userfile;
+		break;
+	    case QUOTA_IDTYPE_GROUP:
+		file = qh->qh_groupfile;
+		break;
+	    default:
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (qk->qk_id == QUOTA_DEFAULTID) {
+		pos = 0;
+	} else {
+		pos = qk->qk_id * sizeof(struct dqblk);
+	}
+
+	result = pread(file, &dq, sizeof(dq), pos);
+	if (result < 0) {
+		return -1;
+	} else if (result == 0) {
+		/* Past EOF; fill in a blank dq to start from */
+		dq.dqb_bhardlimit = 0;
+		dq.dqb_bsoftlimit = 0;
+		dq.dqb_curblocks = 0;
+		dq.dqb_ihardlimit = 0;
+		dq.dqb_isoftlimit = 0;
+		dq.dqb_curinodes = 0;
+		dq.dqb_btime = 0;
+		dq.dqb_itime = 0;
+	} else if ((size_t)result != sizeof(dq)) {
+		errno = EFTYPE;
+		return -1;
+	}
+
+	switch (qk->qk_objtype) {
+	    case QUOTA_OBJTYPE_BLOCKS:
+		dqblk_getblocks(&dq, &qv2);
+		break;
+	    case QUOTA_OBJTYPE_FILES:
+		dqblk_getfiles(&dq, &qv2);
+		break;
+	    default:
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (qk->qk_id == QUOTA_DEFAULTID) {
+		qv2.qv_hardlimit = qv->qv_hardlimit;
+		qv2.qv_softlimit = qv->qv_softlimit;
+		/* leave qv2.qv_usage unchanged */
+		qv2.qv_expiretime = qv->qv_grace;
+		/* skip qv2.qv_grace */
+
+		/* ignore qv->qv_usage */
+		/* ignore qv->qv_expiretime */
+	} else if (qk->qk_id == 0) {
+		/* leave qv2.qv_hardlimit unchanged */
+		/* leave qv2.qv_softlimit unchanged */
+		qv2.qv_usage = qv->qv_usage;
+		/* leave qv2.qv_expiretime unchanged */
+		/* skip qv2.qv_grace */
+
+		/* ignore qv->qv_hardlimit */
+		/* ignore qv->qv_softlimit */
+		/* ignore qv->qv_expiretime */
+		/* ignore qv->qv_grace */
+	} else {
+		qv2 = *qv;
+	}
+
+	switch (qk->qk_objtype) {
+	    case QUOTA_OBJTYPE_BLOCKS:
+		dqblk_putblocks(&qv2, &dq);
+		break;
+	    case QUOTA_OBJTYPE_FILES:
+		dqblk_putfiles(&qv2, &dq);
+		break;
+	    default:
+		errno = EINVAL;
+		return -1;
+	}
+
+	result = pwrite(file, &dq, sizeof(dq), pos);
+	if (result < 0) {
+		return -1;
+	} else if ((size_t)result != sizeof(dq)) {
+		/* ? */
+		errno = EFTYPE;
+		return -1;
+	}
+
+	return 0;
+}
+
 int
 __quota_oldfiles_get(struct quotahandle *qh, const struct quotakey *qk,
 		     struct quotaval *qv)
 {
 	return __quota_oldfiles_doget(qh, qk, qv, NULL);
+}
+
+int
+__quota_oldfiles_put(struct quotahandle *qh, const struct quotakey *qk,
+		     const struct quotaval *qv)
+{
+	return __quota_oldfiles_doput(qh, qk, qv);
+}
+
+int
+__quota_oldfiles_delete(struct quotahandle *qh, const struct quotakey *qk)
+{
+	struct quotaval qv;
+
+	quotaval_clear(&qv);
+	return __quota_oldfiles_doput(qh, qk, &qv);
 }
 
 struct oldfiles_quotacursor *
