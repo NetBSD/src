@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.5 2011/04/04 08:30:29 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.6 2012/01/09 11:51:41 skrll Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/12/03 01:54:49 minoura Exp */
 
@@ -53,3 +53,5 @@ message dobootblks
 message set_kernel_1
 {Kernel (GENERIC)}
 
+message md_pdclimit
+{Partycja jest d?u?szy ni? PDC 2GB}
