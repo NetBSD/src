@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.7 2012/01/04 16:17:54 matt Exp $	*/
+/*	$NetBSD: rmixlp_pcie.c,v 1.1.2.8 2012/01/09 22:03:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.7 2012/01/04 16:17:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixlp_pcie.c,v 1.1.2.8 2012/01/09 22:03:13 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -132,6 +132,8 @@ static struct rmixlp_pcie_softc {
 		[RMIXLP_PCITAG_IDX(RMIXLP_NAE_PCITAG)] = 4-0x20000,
 		[RMIXLP_PCITAG_IDX(RMIXLP_POE_PCITAG)] = 4-0x2000,
 		[RMIXLP_PCITAG_IDX(RMIXLP_AHCI_PCITAG)] = 4-0x400,
+		[RMIXLP_PCITAG_IDX(RMIXLP_FMN_PCITAG)] = 4-0x4000,
+		[RMIXLP_PCITAG_IDX(RMIXLP_SRIO_PCITAG)] = 4-0x20000,
 	},
 };
 
@@ -962,49 +964,22 @@ rmixlp_pcie_conf_read(void *v, pcitag_t tag, int offset)
 	    && offset == 0x60)
 		offset = 0x100;
 
+	/*
+	 * I2C incorrectly reports the wrong IRT for the 2nd I2C controller
+	 * so correct it here.
+	 */
+	if (tag == RMIXLP_I2C2_PCITAG && offset == PCI_RMIXLP_IRTINFO)
+		return 0x00010088;
+
 	if (_RMIXL_PCITAG_BUS(tag) == 0 && (_RMIXL_PCITAG_DEV(tag) & 7) > 0) {
-		if (tag == sc->sc_mapprobe) {
-			if (offset == PCI_MAPREG_START + 4) {
-				aprint_debug_dev(sc->sc_dev,
-				    "tag %#lx reg %#x: %#x\n",
-				    tag, offset, 0xffffffff);
-				return 0xffffffff;
-			}
-#if 0
-			return sc->sc_bus0_bar0_sizes[RMIXLP_PCITAG_IDX(tag)];
-#else
-			switch (_RMIXL_PCITAG_DEV(tag)) {
-			case _RMIXL_PCITAG_DEV(RMIXLP_EHCI0_PCITAG):
-				rv = 4-0x400;
-				break;
-			case _RMIXL_PCITAG_DEV(RMIXLP_NAE_PCITAG):
-				switch (_RMIXL_PCITAG_FUNC(tag)) {
-				case _RMIXL_PCITAG_FUNC(RMIXLP_NAE_PCITAG):
-					rv = 4-0x20000;
-					break;
-				case _RMIXL_PCITAG_FUNC(RMIXLP_POE_PCITAG):
-					rv = 4-0x2000;
-					break;
-				case _RMIXL_PCITAG_FUNC(RMIXLP_AHCI_PCITAG):
-					rv = 4-0x400;
-					break;
-				default:
-					rv = 0xffffffff;
-					break;
-				}
-				break;
-			case _RMIXL_PCITAG_DEV(RMIXLP_FMN_PCITAG):
-				rv = 4-0x4000;
-				break;
-			default:
-				rv = 0xffffffff;
-				break;
-			}
+		if (tag == sc->sc_mapprobe && (offset & -8) == PCI_BAR0) {
+			rv = (offset == PCI_BAR0)
+			    ? sc->sc_bus0_bar0_sizes[RMIXLP_PCITAG_IDX(tag)]
+			    : 0xffffffff;
 			aprint_debug_dev(sc->sc_dev,
 			    "conf_read: tag %#lx reg %#x: %#x\n",
 			    tag, offset, rv);
 			return rv;
-#endif
 		}
 	}
 
