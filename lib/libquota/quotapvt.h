@@ -1,4 +1,4 @@
-/*	$NetBSD: quotapvt.h,v 1.5 2012/01/09 15:40:10 dholland Exp $	*/
+/*	$NetBSD: quotapvt.h,v 1.6 2012/01/09 15:41:59 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,18 +32,27 @@ struct quotahandle {
 	char *qh_mountpoint;
 	char *qh_mountdevice;
 	int qh_isnfs;
-	char spare[14*sizeof(char *) + 15 * sizeof(int)];
+
+	/* these are used only by quota_oldfiles */
+	int qh_hasoldfiles;
+	int qh_userfile;
+	int qh_groupfile;
+
+	char spare[14*sizeof(char *) + 12 * sizeof(int)];
 };
 
 struct quotacursor {
 	struct quotahandle *qc_qh;
+	enum { QC_PROPLIB, QC_OLDFILES } qc_type;
 	union {
 		struct proplib_quotacursor *qc_proplib;
+		struct oldfiles_quotacursor *qc_oldfiles;
 	} u;
 };
 
 
 /* proplib kernel interface */
+int __quota_proplib_getversion(struct quotahandle *qh, int8_t *version_ret);
 const char *__quota_proplib_getimplname(struct quotahandle *);
 int __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
 			struct quotaval *qv);
@@ -66,6 +75,27 @@ int __quota_proplib_cursor_rewind(struct proplib_quotacursor *);
 /* nfs rquotad interface */
 int __quota_nfs_get(struct quotahandle *qh, const struct quotakey *qk,
 		    struct quotaval *qv);
+
+
+/* direct interface to old (quota1-type) files */
+int __quota_oldfiles_initialize(struct quotahandle *qh);
+const char *__quota_oldfiles_getimplname(struct quotahandle *);
+int __quota_oldfiles_get(struct quotahandle *qh, const struct quotakey *qk,
+			struct quotaval *qv);
+struct oldfiles_quotacursor *
+	__quota_oldfiles_cursor_create(struct quotahandle *);
+void __quota_oldfiles_cursor_destroy(struct oldfiles_quotacursor *);
+int __quota_oldfiles_cursor_skipidtype(struct oldfiles_quotacursor *,
+				      unsigned idtype);
+int __quota_oldfiles_cursor_get(struct quotahandle *,
+			       struct oldfiles_quotacursor *,
+			       struct quotakey *, struct quotaval *);
+int __quota_oldfiles_cursor_getn(struct quotahandle *,
+				struct oldfiles_quotacursor *,
+				struct quotakey *, struct quotaval *,
+				unsigned);
+int __quota_oldfiles_cursor_atend(struct oldfiles_quotacursor *);
+int __quota_oldfiles_cursor_rewind(struct oldfiles_quotacursor *);
 
 
 /* compat for old library */
