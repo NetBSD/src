@@ -1,4 +1,4 @@
-/*	$NetBSD: quotapvt.h,v 1.6 2012/01/09 15:41:59 dholland Exp $	*/
+/*	$NetBSD: quotapvt.h,v 1.7 2012/01/09 15:43:19 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,6 +56,9 @@ int __quota_proplib_getversion(struct quotahandle *qh, int8_t *version_ret);
 const char *__quota_proplib_getimplname(struct quotahandle *);
 int __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
 			struct quotaval *qv);
+int __quota_proplib_put(struct quotahandle *qh, const struct quotakey *qk,
+			const struct quotaval *qv);
+int __quota_proplib_delete(struct quotahandle *qh, const struct quotakey *qk);
 struct proplib_quotacursor *__quota_proplib_cursor_create(void);
 void __quota_proplib_cursor_destroy(struct proplib_quotacursor *);
 int __quota_proplib_cursor_skipidtype(struct proplib_quotacursor *,
