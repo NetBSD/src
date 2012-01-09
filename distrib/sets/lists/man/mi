@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1365 2012/01/09 16:04:45 skrll Exp $
+# $NetBSD: mi,v 1.1366 2012/01/09 16:59:36 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4058,6 +4058,7 @@
 ./usr/share/man/html4/jme.html			man-sys-htmlman		html
 ./usr/share/man/html4/jmide.html		man-sys-htmlman		html
 ./usr/share/man/html4/joy.html			man-sys-htmlman		html
+./usr/share/man/html4/kame_ipsec.html		man-sys-htmlman		html
 ./usr/share/man/html4/kloader.html		man-sys-htmlman		html
 ./usr/share/man/html4/kse.html			man-sys-htmlman		html
 ./usr/share/man/html4/ksyms.html		man-sys-htmlman		html
