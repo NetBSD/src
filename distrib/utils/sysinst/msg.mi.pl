@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.76 2012/01/08 02:32:00 christos Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.77 2012/01/09 01:51:47 riz Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -133,7 +133,7 @@ NetBSD wlasnie na nim.
 }
 
 message ask_disk
-{Na ktorym z nich chcesz zainstalowac NetBSD? }
+{Na ktorym z nich chcesz %s NetBSD? }
 
 message Available_disks
 {Dostepne dyski}
