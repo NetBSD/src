@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.80 2012/01/09 19:39:18 skrll Exp $
+.\"	$NetBSD: installboot.8,v 1.81 2012/01/09 19:40:09 skrll Exp $
 .\"
 .\" Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 3, 2011
+.Dd January 9, 2012
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -518,6 +518,27 @@ Installed copy of secondary bootstrap.
 Searched for by the primary bootstrap if
 .Pa /boot. Ns Sy MACHINE
 is not found.
+.
+.El
+.
+.Ss Nx Ns Tn /hp700 files
+.
+.Bl -tag -width /usr/mdec/bootxx_ustarfs
+.
+.It Pa /usr/mdec/xxboot
+.Nx Ns Tn /hp700
+primary bootstrap for
+.Sy FFSv1 ,
+.Sy FFSv2 ,
+.Sy LFSv1 ,
+and
+.Sy LFSv2 .
+.It Pa /usr/mdec/cdboot
+.Nx Ns Tn /hp700
+primary bootstrap for ISO 9660 file system.
+.It Pa /usr/mdec/sdboot
+Synonym for
+.Pa /usr/mdec/xxboot
 .
 .El
 .
