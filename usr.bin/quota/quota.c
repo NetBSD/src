@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.43 2011/11/30 16:12:32 dholland Exp $	*/
+/*	$NetBSD: quota.c,v 1.44 2012/01/09 15:35:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.43 2011/11/30 16:12:32 dholland Exp $");
+__RCSID("$NetBSD: quota.c,v 1.44 2012/01/09 15:35:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: quota.c,v 1.43 2011/11/30 16:12:32 dholland Exp $");
 #include <time.h>
 #include <unistd.h>
 
-#include <quota/quotaprop.h>
+#include <quota.h>
 #include <quota/quota.h>
 
 #include "printquota.h"
@@ -78,26 +78,25 @@ __RCSID("$NetBSD: quota.c,v 1.43 2011/11/30 16:12:32 dholland Exp $");
 
 struct quotause {
 	struct	quotause *next;
-	long	flags;
 	uid_t	id;
 	struct	quotaval *qvs;
 	unsigned numqvs;
 	char	fsname[MAXPATHLEN + 1];
+	struct	quotahandle *qh;
 };
-#define	FOUND	0x01
-#define	QUOTA2	0x02
 
 static int	anyusage(struct quotaval *, unsigned);
 static int	anyover(struct quotaval *, unsigned, time_t);
 static const char *getovermsg(struct quotaval *, const char *, time_t);
 static struct quotause	*getprivs(id_t, int);
-static void	heading(int, id_t, const char *, const char *);
+static void	heading(int, const char *, id_t, const char *, const char *);
 static int	isover(struct quotaval *qv, time_t now);
-static void	printqv(struct quotaval *, int, int, time_t);
+static void	printqv(struct quotaval *, int, time_t);
 static void	showgid(gid_t);
 static void	showgrpname(const char *);
-static void	showonequota(int, id_t, const char *, struct quotause *);
-static void	showquotas(int, id_t, const char *);
+static void	showonequota(int, const char *, id_t, const char *,
+			     struct quotause *);
+static void	showquotas(int, const char *, id_t, const char *);
 static void	showuid(uid_t);
 static void	showusrname(const char *);
 static int	unlimited(struct quotaval *qvs, unsigned numqvs);
@@ -157,9 +156,9 @@ main(int argc, char *argv[])
 			errx(1, "-d: permission denied");
 #endif
 		if (uflag)
-			showquotas(QUOTA_CLASS_USER, 0, "");
+			showquotas(QUOTA_IDTYPE_USER, "user", 0, "");
 		if (gflag)
-			showquotas(QUOTA_CLASS_GROUP, 0, "");
+			showquotas(QUOTA_IDTYPE_GROUP, "group", 0, "");
 		return 0;
 	}
 	if (argc == 0) {
@@ -233,7 +232,7 @@ showuid(uid_t uid)
 		warnx("%s (uid %d): permission denied", name, uid);
 		return;
 	}
-	showquotas(QUOTA_CLASS_USER, uid, name);
+	showquotas(QUOTA_IDTYPE_USER, "user", uid, name);
 }
 
 /*
@@ -252,7 +251,7 @@ showusrname(const char *name)
 		warnx("%s (uid %d): permission denied", name, pwd->pw_uid);
 		return;
 	}
-	showquotas(QUOTA_CLASS_USER, pwd->pw_uid, name);
+	showquotas(QUOTA_IDTYPE_USER, "user", pwd->pw_uid, name);
 }
 
 /*
@@ -286,7 +285,7 @@ showgid(gid_t gid)
 			return;
 		}
 	}
-	showquotas(QUOTA_CLASS_GROUP, gid, name);
+	showquotas(QUOTA_IDTYPE_GROUP, "group", gid, name);
 }
 
 /*
@@ -320,39 +319,35 @@ showgrpname(const char *name)
 			return;
 		}
 	}
-	showquotas(QUOTA_CLASS_GROUP, grp->gr_gid, name);
+	showquotas(QUOTA_IDTYPE_GROUP, "group", grp->gr_gid, name);
 }
 
 static void
-showquotas(int type, id_t id, const char *idname)
+showquotas(int idtype, const char *idtypename, id_t id, const char *idname)
 {
 	struct quotause *qup;
 	struct quotause *quplist;
 
 	needheading = 1;
 
-	quplist = getprivs(id, type);
+	quplist = getprivs(id, idtype);
 	for (qup = quplist; qup; qup = qup->next) {
-		showonequota(type, id, idname, qup);
+		showonequota(idtype, idtypename, id, idname, qup);
 	}
 	if (!qflag) {
 		/* In case nothing printed, issue a header saying "none" */
-		heading(type, id, idname, "none");
+		heading(idtype, idtypename, id, idname, "none");
 	}
 }
 
 static void
-showonequota(int type, id_t id, const char *idname, struct quotause *qup)
+showonequota(int idtype, const char *idtypename, id_t id, const char *idname,
+	     struct quotause *qup)
 {
-	static const int isbytes[QUOTA_NLIMITS] = {
-		[QUOTA_LIMIT_BLOCK] = 1, 
-		[QUOTA_LIMIT_FILE] = 0,
-	};
 	static time_t now;
 	struct quotaval *qvs;
 	unsigned numqvs, i;
 	const char *msg;
-	int isquota2;
 
 	qvs = qup->qvs;
 	numqvs = qup->numqvs;
@@ -367,10 +362,11 @@ showonequota(int type, id_t id, const char *idname, struct quotause *qup)
 
 	if (qflag) {
 		for (i=0; i<numqvs; i++) {
-			msg = getovermsg(&qvs[i], ufs_quota_limit_names[i],
+			msg = getovermsg(&qvs[i],
+					 quota_idtype_getname(qup->qh, i),
 					 now);
 			if (msg != NULL) {
-				heading(type, id, idname, "");
+				heading(idtype, idtypename, id, idname, "");
 				printf("\t%s %s\n", msg, qup->fsname);
 			}
 		}
@@ -378,10 +374,19 @@ showonequota(int type, id_t id, const char *idname, struct quotause *qup)
 	}
 
 	/*
+	 * XXX this behavior appears to be demanded by the ATF tests,
+	 * although it seems to be at variance with the preexisting
+	 * logic in quota.c.
+	 */
+	if (unlimited(qvs, numqvs) && !anyusage(qvs, numqvs)) {
+		return;
+	}
+
+	/*
 	 * XXX: anyover can in fact be true if anyusage is not true,
 	 * if there's a quota of zero set on some volume. This is
 	 * because the check we do checks if adding one more thing
-	 * will go over. That is reasonable, I suppose, but Arguably
+	 * will go over. That is reasonable, I suppose, but arguably
 	 * the resulting behavior with usage 0 is a bug. (Also, what
 	 * reason do we have to believe that the reported grace expire
 	 * time is valid if we aren't in fact over yet?)
@@ -389,7 +394,7 @@ showonequota(int type, id_t id, const char *idname, struct quotause *qup)
 
 	if (vflag || dflag || anyover(qvs, numqvs, now) || 
 	    anyusage(qvs, numqvs)) {
-		heading(type, id, idname, "");
+		heading(idtype, idtypename, id, idname, "");
 		if (strlen(qup->fsname) > 4) {
 			printf("%s\n", qup->fsname);
 			printf("%12s", "");
@@ -397,30 +402,27 @@ showonequota(int type, id_t id, const char *idname, struct quotause *qup)
 			printf("%12s", qup->fsname);
 		}
 
-		isquota2 = (qup->flags & QUOTA2) != 0;
-
 		for (i=0; i<numqvs; i++) {
-			printqv(&qvs[i], isquota2, 
-				i >= QUOTA_NLIMITS ? 0 : isbytes[i], now);
+			printqv(&qvs[i],
+				quota_objtype_isbytes(qup->qh, i), now);
 		}
 		printf("\n");
 	}
 }
 
 static void
-heading(int type, id_t id, const char *idname, const char *tag)
+heading(int idtype, const char *idtypename, id_t id, const char *idname,
+	const char *tag)
 {
 	if (needheading == 0)
 		return;
 	needheading = 0;
 
 	if (dflag)
-		printf("Default %s disk quotas: %s\n",
-		    ufs_quota_class_names[type], tag);
+		printf("Default %s disk quotas: %s\n", idtypename, tag);
 	else
 		printf("Disk quotas for %s %s (%cid %u): %s\n",
-		    ufs_quota_class_names[type], idname,
-		    *ufs_quota_class_names[type], id, tag);
+		       idtypename, idname, idtypename[0], id, tag);
 
 	if (!qflag && tag[0] == '\0') {
 		printf("%12s%9s %8s%9s%8s%8s %7s%8s%8s\n"
@@ -438,7 +440,7 @@ heading(int type, id_t id, const char *idname, const char *tag)
 }
 
 static void
-printqv(struct quotaval *qv, int isquota2, int isbytes, time_t now)
+printqv(struct quotaval *qv, int isbytes, time_t now)
 {
 	char buf[20];
 	const char *str;
@@ -468,7 +470,7 @@ printqv(struct quotaval *qv, int isquota2, int isbytes, time_t now)
 
 	if (over) {
 		str = timeprt(buf, 9, now, qv->qv_expiretime);
-	} else if (isquota2 && vflag) {
+	} else if (vflag && qv->qv_grace != QUOTA_NOTIME) {
 		str = timeprt(buf, 9, 0, qv->qv_grace);
 	} else {
 		str = "";
@@ -480,13 +482,14 @@ printqv(struct quotaval *qv, int isquota2, int isbytes, time_t now)
  * Collect the requested quota information.
  */
 static struct quotause *
-getprivs(id_t id, int quotatype)
+getprivs(id_t id, int idtype)
 {
 	struct quotause *qup, *quptail;
 	struct quotause *quphead;
 	struct statvfs *fst;
+	struct quotakey qk;
 	int nfst, i;
-	int8_t version;
+	unsigned j;
 
 	qup = quphead = quptail = NULL;
 
@@ -498,6 +501,14 @@ getprivs(id_t id, int quotatype)
 			if ((qup = malloc(sizeof *qup)) == NULL)
 				err(1, "Out of memory");
 		}
+		qup->qh = quota_open(fst[i].f_mntonname);
+		if (qup->qh == NULL) {
+			if (errno == EOPNOTSUPP || errno == ENXIO) {
+				continue;
+			}
+			err(1, "%s: quota_open", fst[i].f_mntonname);
+		}
+#if 0
 		if (strncmp(fst[i].f_fstypename, "nfs", 
 		    sizeof(fst[i].f_fstypename)) == 0) {
 			version = 0;
@@ -507,7 +518,7 @@ getprivs(id_t id, int quotatype)
 				err(1, "Out of memory");
 			}
 			if (getnfsquota(fst[i].f_mntfromname,
-			    qup->qvs, id, ufs_quota_class_names[quotatype]) != 1)
+			    qup->qvs, id, ufs_quota_class_names[idtype]) != 1)
 				continue;
 		} else if ((fst[i].f_flag & ST_QUOTA) != 0) {
 			qup->numqvs = QUOTA_NLIMITS;
@@ -516,14 +527,35 @@ getprivs(id_t id, int quotatype)
 				err(1, "Out of memory");
 			}
 			if (getvfsquota(fst[i].f_mntonname, qup->qvs, &version,
-			    id, quotatype, dflag, Dflag) != 1)
+			    id, idtype, dflag, Dflag) != 1)
 				continue;
 		} else
 			continue;
-		(void)strncpy(qup->fsname, fst[i].f_mntonname,
-		    sizeof(qup->fsname) - 1);
-		if (version == 2)
-			qup->flags |= QUOTA2;
+#else
+		qup->numqvs = quota_getnumidtypes(qup->qh);
+		qup->qvs = malloc(qup->numqvs * sizeof(qup->qvs[0]));
+		if (qup->qvs == NULL) {
+			err(1, "Out of memory");
+		}
+		qk.qk_idtype = idtype;
+		if (dflag) {
+			qk.qk_id = QUOTA_DEFAULTID;
+		} else {
+			qk.qk_id = id;
+		}
+		for (j=0; j<qup->numqvs; j++) {
+			qk.qk_objtype = j;
+			if (quota_get(qup->qh, &qk, &qup->qvs[j]) < 0) {
+				if (errno != ENOENT) {
+					warn("%s: quota_get (objtype %u)",
+					     fst[i].f_mntonname, j);
+				}
+				quotaval_clear(&qup->qvs[j]);
+			}
+		}
+#endif
+		(void)strlcpy(qup->fsname, fst[i].f_mntonname,
+		    sizeof(qup->fsname));
 		if (quphead == NULL)
 			quphead = qup;
 		else
@@ -542,8 +574,8 @@ unlimited(struct quotaval *qvs, unsigned numqvs)
 	unsigned i;
 
 	for (i=0; i<numqvs; i++) {
-		if (qvs[i].qv_softlimit != UQUAD_MAX ||
-		    qvs[i].qv_hardlimit != UQUAD_MAX) {
+		if (qvs[i].qv_softlimit != QUOTA_NOLIMIT ||
+		    qvs[i].qv_hardlimit != QUOTA_NOLIMIT) {
 			return 0;
 		}
 	}
