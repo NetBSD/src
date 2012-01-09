@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1364 2012/01/09 15:16:30 drochner Exp $
+# $NetBSD: mi,v 1.1365 2012/01/09 16:04:45 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2333,6 +2333,7 @@
 ./usr/share/man/cat8/hp300/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hp700/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hp700/boot.0		man-sys-catman		.cat
+./usr/share/man/cat8/hp700/mkboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hp700/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hpcarm/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hpcarm/boot.0		man-sys-catman		.cat
@@ -5021,6 +5022,7 @@
 ./usr/share/man/html8/hp300/crash.html		man-sys-htmlman		html
 ./usr/share/man/html8/hp300/format.html		man-sys-htmlman		html
 ./usr/share/man/html8/hp700/boot.html		man-sys-htmlman		html
+./usr/share/man/html8/hp700/mkboot.html		man-sys-htmlman		html
 ./usr/share/man/html8/hpcarm/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/hpcboot.html		man-sys-htmlman		html
 ./usr/share/man/html8/hpcmips/boot.html		man-sys-htmlman		html
@@ -7816,6 +7818,7 @@
 ./usr/share/man/man8/hp300/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/hp700/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/hp700/boot.8		man-sys-man		.man
+./usr/share/man/man8/hp700/mkboot.8		man-sys-man		.man
 ./usr/share/man/man8/hp700/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/hpcarm/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/hpcarm/boot.8		man-sys-man		.man
