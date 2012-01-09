@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.58 2011/12/07 15:47:43 cegger Exp $	*/
+/*	$NetBSD: clock.c,v 1.59 2012/01/09 13:33:38 cherry Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.58 2011/12/07 15:47:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.59 2012/01/09 13:33:38 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,7 +395,6 @@ sysctl_xen_timepush(SYSCTLFN_ARGS)
 #endif
 
 /* ARGSUSED */
-/* SMP note: Timecounter uses vcpu0's clock */
 u_int
 xen_get_timecount(struct timecounter *tc)
 {
