@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.52 2011/04/24 21:18:24 elric Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.53 2012/01/09 16:36:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.52 2011/04/24 21:18:24 elric Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.53 2012/01/09 16:36:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,13 +118,13 @@ int	hostinfo = 1;			/* do we print login banner? */
 
 static int debug = 0;
 int keepalive = 1;
-char *gettyname = "default";
+const char *gettyname = "default";
 char *progname;
 
 int main(int, char *[]);
 void usage(void);
 int getterminaltype(char *, size_t);
-int getent(char *, char *);
+int getent(char *, const char *);
 void doit(struct sockaddr *);
 void _gettermname(void);
 int terminaltypeok(char *);
@@ -360,7 +360,7 @@ main(int argc, char *argv[])
 	if (debug) {
 	    int s, ns, error;
 	    socklen_t foo;
-	    char *service = "telnet";
+	    const char *service = "telnet";
 	    struct addrinfo hints, *res;
 
 	    if (argc > 1) {
@@ -747,7 +747,8 @@ telnet(int f, int p)
 	char	defent[TABBUFSIZ];
 	char	defstrs[TABBUFSIZ];
 #undef	TABBUFSIZ
-	char *HE, *HN, *IM, *IF, *ptyibuf2ptr;
+	char *HE, *HN, *IF, *ptyibuf2ptr;
+	const char *IM;
 	struct pollfd set[2];
 
 	/*
