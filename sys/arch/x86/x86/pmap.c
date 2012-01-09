@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.150 2012/01/06 15:15:27 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.151 2012/01/09 04:39:14 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.150 2012/01/06 15:15:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2012/01/09 04:39:14 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2120,9 +2120,6 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
 		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
 		/* FIXME: This should use pmap_protect() .. */
-#ifdef DIAGNOSTIC
-		pmap_kremove(object, PAGE_SIZE);
-#endif /* DIAGNOSTIC */
 		pmap_kenter_pa(object, pdirpa, VM_PROT_READ, 0);
 		pmap_update(pmap_kernel());
 		/*
