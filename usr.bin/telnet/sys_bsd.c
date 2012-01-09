@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.32 2004/11/10 20:26:43 christos Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.33 2012/01/09 16:08:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.32 2004/11/10 20:26:43 christos Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.33 2012/01/09 16:08:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ int
 	tin,			/* Input file descriptor */
 	net;
 
-struct	termios old_tc = { 0 };
+struct	termios old_tc = { .c_iflag = 0 };
 extern struct termios new_tc;
 
 # ifndef	TCSANOW
