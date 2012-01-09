@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.128 2012/01/05 21:29:24 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.129 2012/01/09 02:52:50 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1109,20 +1109,19 @@ mnt_net_config(void)
 	if ((net_dhcpconf & DHCPCONF_HOST) == 0)
 		add_rc_conf("hostname=%s\n", recombine_host_domain());
 
-	/* If not running in target, copy resolv.conf there. */
-	if ((net_dhcpconf & DHCPCONF_NAMESVR) == 0) {
+	/* Copy resolv.conf to target.  If DHCP was used to create it,
+	 * it will be replaced on next boot anyway. */
 #ifndef INET6
-		if (net_namesvr[0] != '\0')
-			dup_file_into_target("/etc/resolv.conf");
+	if (net_namesvr[0] != '\0')
+		dup_file_into_target("/etc/resolv.conf");
 #else
-		/*
-		 * not sure if it is a good idea, to allow dhcp config to
-		 * override IPv6 configuration
-		 */
-		if (net_namesvr[0] != '\0' || net_namesvr6[0] != '\0')
-			dup_file_into_target("/etc/resolv.conf");
+	/*
+	 * not sure if it is a good idea, to allow dhcp config to
+	 * override IPv6 configuration
+	 */
+	if (net_namesvr[0] != '\0' || net_namesvr6[0] != '\0')
+		dup_file_into_target("/etc/resolv.conf");
 #endif
-	}
 
 	/*
 	 * bring the interface up, it will be necessary for IPv6, and
