@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.34 2012/01/09 15:38:20 dholland Exp $	*/
+/*	$NetBSD: repquota.c,v 1.35 2012/01/09 15:38:59 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.34 2012/01/09 15:38:20 dholland Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.35 2012/01/09 15:38:59 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,11 +94,11 @@ static int	xflag = 0;		/* export */
 static struct fileusage *addid(uint32_t, int, const char *);
 static struct fileusage *lookup(uint32_t, int);
 static struct fileusage *qremove(uint32_t, int);
-static int	repquota(const struct statvfs *, int);
-static int	repquota2(const struct statvfs *, int);
-static int	repquota1(const struct statvfs *, int);
+static int	repquota(struct quotahandle *, int);
+static int	repquota2(struct quotahandle *, int);
+static int	repquota1(struct quotahandle *, int);
 static void	usage(void) __attribute__((__noreturn__));
-static void	printquotas(int, const struct statvfs *, int);
+static void	printquotas(int, struct quotahandle *);
 static void	exportquotas(void);
 
 int
@@ -109,6 +109,7 @@ main(int argc, char **argv)
 	int ch;
 	struct statvfs *fst;
 	int nfst;
+	struct quotahandle *qh;
 
 	while ((ch = getopt(argc, argv, "Daguhvx")) != -1) {
 		switch(ch) {
@@ -155,21 +156,35 @@ main(int argc, char **argv)
 	for (i = 0; i < nfst; i++) {
 		if ((fst[i].f_flag & ST_QUOTA) == 0)
 			continue;
-		if (aflag) {
-			if (gflag)
-				errs += repquota(&fst[i], QUOTA_IDTYPE_GROUP);
-			if (uflag)
-				errs += repquota(&fst[i], QUOTA_IDTYPE_USER);
+		/* check if we want this volume */
+		if (!aflag) {
+			argnum = oneof(fst[i].f_mntonname, argv, argc);
+			if (argnum < 0) {
+				argnum = oneof(fst[i].f_mntfromname,
+					       argv, argc);
+			}
+			if (argnum < 0) {
+				continue;
+			}
+			done |= 1U << argnum;
+		}
+
+		qh = quota_open(fst[i].f_mntonname);
+		if (qh == NULL) {
+			/* XXX: check this errno */
+			if (errno == EOPNOTSUPP || errno == ENXIO) {
+				continue;
+			}
+			warn("%s: quota_open", fst[i].f_mntonname);
 			continue;
 		}
-		if ((argnum = oneof(fst[i].f_mntonname, argv, argc)) >= 0 ||
-		    (argnum = oneof(fst[i].f_mntfromname, argv, argc)) >= 0) {
-			done |= 1U << argnum;
-			if (gflag)
-				errs += repquota(&fst[i], QUOTA_IDTYPE_GROUP);
-			if (uflag)
-				errs += repquota(&fst[i], QUOTA_IDTYPE_USER);
-		}
+
+		if (gflag)
+			errs += repquota(qh, QUOTA_IDTYPE_GROUP);
+		if (uflag)
+			errs += repquota(qh, QUOTA_IDTYPE_USER);
+
+		quota_close(qh);
 	}
 	if (xflag)
 		exportquotas();
@@ -190,26 +205,20 @@ usage(void)
 }
 
 static int
-repquota(const struct statvfs *vfs, int idtype)
+repquota(struct quotahandle *qh, int idtype)
 {
-	if (repquota2(vfs, idtype) != 0)
-		return repquota1(vfs, idtype);
+	if (repquota2(qh, idtype) != 0)
+		return repquota1(qh, idtype);
 	return 0;
 }
 
 static int
-repquota2(const struct statvfs *vfs, int idtype)
+repquota2_getstuff(struct quotahandle *qh, int idtype, prop_array_t *ret)
 {
-	prop_dictionary_t dict, data, cmd;
+	prop_dictionary_t dict, cmd;
 	prop_array_t cmds, datas;
 	struct plistref pref;
-	int8_t error8, version = 0;
-	prop_object_iterator_t cmditer, dataiter;
-	struct quotaval *qvp;
-	struct fileusage *fup;
-	const char *strid;
-	uint32_t id;
-	uint64_t *values[QUOTA_NLIMITS];
+	int8_t error8;
 
 	dict = quota_prop_create();
 	cmds = prop_array_create();
@@ -220,9 +229,6 @@ repquota2(const struct statvfs *vfs, int idtype)
 	if (!quota_prop_add_command(cmds, "getall",
 	    ufs_quota_class_names[idtype], datas))
 		err(1, "prop_add_command");
-	if (!quota_prop_add_command(cmds, "get version",
-	    ufs_quota_class_names[idtype], prop_array_create()))
-		err(1, "prop_add_command");
 	if (!prop_dictionary_set(dict, "commands", cmds))
 		err(1, "prop_dictionary_set(command)");
 	if (Dflag)
@@ -232,7 +238,7 @@ repquota2(const struct statvfs *vfs, int idtype)
 		err(1, "prop_dictionary_send_syscall");
 	prop_object_release(dict);
 
-	if (quotactl(vfs->f_mntonname, &pref) != 0)
+	if (quotactl(quota_getmountpoint(qh), &pref) != 0)
 		err(1, "quotactl");
 
 	if (prop_dictionary_recv_syscall(&pref, &dict) != 0) {
@@ -244,41 +250,56 @@ repquota2(const struct statvfs *vfs, int idtype)
 	if ((errno = quota_get_cmds(dict, &cmds)) != 0) {
 		err(1, "quota_get_cmds");
 	}
-	cmditer = prop_array_iterator(cmds);
-	if (cmditer == NULL)
-		err(1, "prop_array_iterator(cmds)");
 
-	while ((cmd = prop_object_iterator_next(cmditer)) != NULL) {
-		const char *cmdstr;
-		if (!prop_dictionary_get_cstring_nocopy(cmd, "command",
-		    &cmdstr))
-			err(1, "prop_get(command)");
+	cmd = prop_array_get(cmds, 0);
+	if (cmd == NULL) {
+		err(1, "prop_array_get(cmds)");
+	}
 
-		if (!prop_dictionary_get_int8(cmd, "return", &error8))
-			err(1, "prop_get(return)");
+	const char *cmdstr;
+	if (!prop_dictionary_get_cstring_nocopy(cmd, "command",
+	    &cmdstr))
+		err(1, "prop_get(command)");
 
-		if (error8) {
-			prop_object_release(dict);
-			if (error8 != EOPNOTSUPP) {
-				errno = error8;
-				warn("get %s quotas",
-				    ufs_quota_class_names[idtype]);
-			}
-			return error8;
+	if (!prop_dictionary_get_int8(cmd, "return", &error8))
+		err(1, "prop_get(return)");
+
+	if (error8) {
+		prop_object_release(dict);
+		if (error8 != EOPNOTSUPP) {
+			errno = error8;
+			warn("get %s quotas",
+			    ufs_quota_class_names[idtype]);
 		}
-		datas = prop_dictionary_get(cmd, "data");
-		if (datas == NULL)
-			err(1, "prop_dict_get(datas)");
+		return 1;
+	}
+	datas = prop_dictionary_get(cmd, "data");
+	if (datas == NULL)
+		err(1, "prop_dict_get(datas)");
 
-		if (strcmp("get version", cmdstr) == 0) {
-			data = prop_array_get(datas, 0);
-			if (data == NULL)
-				err(1, "prop_array_get(version)");
-			if (!prop_dictionary_get_int8(data, "version",
-			    &version))
-				err(1, "prop_get_int8(version)");
-			continue;
-		}
+	prop_object_retain(datas);
+	prop_object_release(dict);
+
+	*ret = datas;
+	return 0;
+}
+
+static int
+repquota2(struct quotahandle *qh, int idtype)
+{
+	prop_dictionary_t data;
+	prop_array_t datas;
+	prop_object_iterator_t dataiter;
+	struct quotaval *qvp;
+	struct fileusage *fup;
+	const char *strid;
+	uint32_t id;
+	uint64_t *values[QUOTA_NLIMITS];
+
+	if (repquota2_getstuff(qh, idtype, &datas)) {
+		return 1;
+	}
+
 		dataiter = prop_array_iterator(datas);
 		if (dataiter == NULL)
 			err(1, "prop_array_iterator");
@@ -314,16 +335,17 @@ repquota2(const struct statvfs *vfs, int idtype)
 				err(1, "proptoquota64");
 		}
 		prop_object_iterator_release(dataiter);
-	}
-	prop_object_iterator_release(cmditer);
-	prop_object_release(dict);
+
 	if (xflag == 0 && valid[idtype])
-		printquotas(idtype, vfs, version);
+		printquotas(idtype, qh);
+
+	prop_object_release(datas);
+
 	return 0;
 }
 
 static int
-repquota1(const struct statvfs *vfs, int idtype)
+repquota1(struct quotahandle *qh, int idtype)
 {
 	char qfpathname[MAXPATHLEN];
 	struct fstab *fs;
@@ -333,16 +355,19 @@ repquota1(const struct statvfs *vfs, int idtype)
 	struct dqblk dqbuf;
 	time_t bgrace = MAX_DQ_TIME, igrace = MAX_DQ_TIME;
 	int type = ufsclass2qtype(idtype);
+	const char *mountpoint;
+
+	mountpoint = quota_getmountpoint(qh);
 
 	setfsent();
 	while ((fs = getfsent()) != NULL) {
 		if (strcmp(fs->fs_vfstype, "ffs") == 0 &&
-		   strcmp(fs->fs_file, vfs->f_mntonname) == 0)
+		   strcmp(fs->fs_file, mountpoint) == 0)
 			break;
 	}
 	endfsent();
 	if (fs == NULL) {
-		warnx("%s not found in fstab", vfs->f_mntonname);
+		warnx("%s not found in fstab", mountpoint);
 		return 1;
 	}
 	if (!hasquota(qfpathname, sizeof(qfpathname), fs, type))
@@ -381,12 +406,12 @@ repquota1(const struct statvfs *vfs, int idtype)
 	fclose(qf);
 	valid[idtype] = 1;
 	if (xflag == 0)
-		printquotas(idtype, vfs, 1);
+		printquotas(idtype, qh);
 	return 0;
 }
 
 static void
-printquotas(int idtype, const struct statvfs *vfs, int version)
+printquotas(int idtype, struct quotahandle *qh)
 {
 	static int multiple = 0;
 	uint32_t id;
@@ -426,9 +451,9 @@ printquotas(int idtype, const struct statvfs *vfs, int version)
 	if (multiple++)
 		printf("\n");
 	if (vflag)
-		printf("*** Report for %s quotas on %s (%s, version %d)\n",
-		    ufs_quota_class_names[idtype], vfs->f_mntonname,
-		    vfs->f_mntfromname, version);
+		printf("*** Report for %s quotas on %s (%s: %s)\n",
+		    ufs_quota_class_names[idtype], quota_getmountpoint(qh),
+		    quota_getmountdevice(qh), quota_getimplname(qh));
 	printf("                        Block limits               "
 	    "File limits\n");
 	printf(idtype == QUOTA_IDTYPE_USER ? "User " : "Group");
@@ -451,8 +476,12 @@ printquotas(int idtype, const struct statvfs *vfs, int version)
 				overchar[i] = '+';
 				break;
 			default:
-				timemsg[i] =  (vflag && version == 2) ?
-				    timeprt(b0[i], 8, 0, q[i].qv_grace) : "";
+				if (vflag && q[i].qv_grace != QUOTA_NOTIME) {
+					timemsg[i] = timeprt(b0[i], 8, 0,
+							     q[i].qv_grace);
+				} else {
+					timemsg[i] = "";
+				}
 				overchar[i] = '-';
 				break;
 			}
