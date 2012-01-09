@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1724 2012/01/07 18:42:38 christos Exp $
+#	$NetBSD: mi,v 1.1725 2012/01/09 15:19:44 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2213,6 +2213,7 @@
 ./usr/include/puffs.h				comp-puffs-include
 ./usr/include/puffsdump.h			comp-puffs-include
 ./usr/include/pwd.h				comp-c-include
+./usr/include/quota.h				comp-c-include
 ./usr/include/quota/quota.h			comp-c-include
 ./usr/include/quota/quotaprop.h			comp-c-include
 ./usr/include/radlib.h				comp-c-include
