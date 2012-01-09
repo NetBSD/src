@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.12 2011/12/30 16:55:21 cherry Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.13 2012/01/09 12:58:49 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.12 2011/12/30 16:55:21 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.13 2012/01/09 12:58:49 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -576,6 +576,8 @@ pmap_kpm_sync_xcall(void *arg1, void *arg2)
 
 	struct pmap *pmap = arg1;
 	int index = *(int *)arg2;
+	KASSERT(pmap == pmap_kernel() || index < PDIR_SLOT_PTE);
+	
 	struct cpu_info *ci = xpq_cpu();
 
 	if (pmap == pmap_kernel()) {
@@ -596,7 +598,7 @@ pmap_kpm_sync_xcall(void *arg1, void *arg2)
 	}
 	
 	pmap_pte_set(&ci->ci_kpm_pdir[index],
-	    pmap_kernel()->pm_pdir[index]);
+	    pmap->pm_pdir[index]);
 	pmap_pte_flush();
 #endif /* PAE || __x86_64__ */
 }
@@ -650,6 +652,7 @@ xen_kpm_sync(struct pmap *pmap, int index)
 #else /* MULTIPROCESSOR */
 #define CPU_IS_CURCPU(ci) __predict_true((ci) == curcpu())
 #endif /* MULTIPROCESSOR */
+#if 0 /* XXX: Race with remote pmap_load() */
 				if (ci->ci_want_pmapload &&
 				    !CPU_IS_CURCPU(ci)) {
 					/*
@@ -659,7 +662,7 @@ xen_kpm_sync(struct pmap *pmap, int index)
 					 */
 					continue;
 				    }
-
+#endif /* 0 */
 				where = xc_unicast(XC_HIGHPRI, pmap_kpm_sync_xcall,
 				    pmap, &index, ci);
 				xc_wait(where);
