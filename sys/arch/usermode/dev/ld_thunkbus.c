@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.28 2012/01/09 14:56:35 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.29 2012/01/09 21:01:31 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.28 2012/01/09 14:56:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.29 2012/01/09 21:01:31 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -50,12 +50,18 @@ static int	ld_thunkbus_ldstart(struct ld_softc *, struct buf *);
 static int	ld_thunkbus_lddump(struct ld_softc *, void *, int, int);
 static int	ld_thunkbus_ldflush(struct ld_softc *, int);
 
+//#define LD_USE_AIO
+
+#ifdef LD_USE_AIO
+static int	ld_aio_sig(void *);
+#endif
 static void	ld_thunkbus_complete(void *arg);
 
 struct ld_thunkbus_softc;
 
 struct ld_thunkbus_transfer {
 	struct ld_thunkbus_softc *tt_sc;
+	struct aiocb	tt_aio;
 	struct buf	*tt_bp;
 };
 
@@ -64,6 +70,7 @@ struct ld_thunkbus_softc {
 
 	int		sc_fd;
 	void		*sc_ih;
+	void		*sc_aio_ih;
 
 	struct ld_thunkbus_transfer sc_tt;
 	bool		busy;
@@ -120,10 +127,117 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_ih = softint_establish(SOFTINT_BIO,
 	    ld_thunkbus_complete, ld);
 
+#ifdef LD_USE_AIO
+	sc->sc_aio_ih = sigio_intr_establish(ld_aio_sig, sc);
+	if (sc->sc_aio_ih == NULL)
+		panic("couldn't establish aio sig interrupt");
+#endif
+
 	sc->busy = false;
 
 	ldattach(ld);
 }
+
+#ifdef LD_USE_AIO
+static int
+ld_aio_sig(void *arg)
+{
+	struct ld_softc *ld = arg;
+	struct ld_thunkbus_softc *sc = (struct ld_thunkbus_softc *)ld;
+
+	curcpu()->ci_idepth++;
+	spl_intr(IPL_BIO, softint_schedule, sc->sc_ih);
+	curcpu()->ci_idepth--;
+
+	return 0;
+}
+
+static int
+ld_thunkbus_ldstart(struct ld_softc *ld, struct buf *bp)
+{
+	struct ld_thunkbus_softc *sc = (struct ld_thunkbus_softc *)ld;
+	struct ld_thunkbus_transfer *tt = &sc->sc_tt;
+	off_t offset = bp->b_rawblkno * ld->sc_secsize;
+	off_t disksize = ld->sc_secsize * ld->sc_secperunit;
+	int error;
+
+	tt->tt_sc = sc;
+	tt->tt_bp = bp;
+
+	memset(&tt->tt_aio, 0, sizeof(tt->tt_aio));
+	tt->tt_aio.aio_fildes = sc->sc_fd;
+	tt->tt_aio.aio_buf = bp->b_data;
+	tt->tt_aio.aio_nbytes = bp->b_bcount;
+	tt->tt_aio.aio_offset = offset;
+
+	tt->tt_aio.aio_sigevent.sigev_notify = SIGEV_SIGNAL;
+	tt->tt_aio.aio_sigevent.sigev_signo = SIGIO;
+	tt->tt_aio.aio_sigevent.sigev_value.sival_ptr = tt;
+#if 0
+	device_printf(sc->sc_ld.sc_dv, "%s addr %p, off=%lld, count=%lld\n",
+	    (bp->b_flags & B_READ) ? "rd" : "wr",
+	    bp->b_data,
+	    (long long)bp->b_rawblkno,
+	    (long long)bp->b_bcount);
+#endif
+	if (sc->busy)
+		panic("%s: reentry", __func__);
+
+	if ((offset < 0) || (offset + bp->b_bcount > disksize)) {
+		error = EIO;
+		bp->b_error = error;
+		bp->b_resid = bp->b_bcount;
+	} else {
+		sc->busy = true;
+		if (bp->b_flags & B_READ)
+			error = thunk_aio_read(&tt->tt_aio);
+		else
+			error = thunk_aio_write(&tt->tt_aio);
+	}
+	return error;
+}
+
+static void
+ld_thunkbus_complete(void *arg)
+{
+	struct ld_softc *ld = arg;
+	struct ld_thunkbus_softc *sc = (struct ld_thunkbus_softc *)ld;
+	struct ld_thunkbus_transfer *tt = &sc->sc_tt;
+	struct buf *bp = tt->tt_bp;
+	int error;
+
+	/*
+	 * check if our aio has finished, we could be called for whatever
+	 * reason, for whatever SIGIO since signals can be missed.
+	 */
+	if (!sc->busy)
+		return;
+
+	/* check if it was OUR sigio */
+	error = thunk_aio_error(&tt->tt_aio);
+	if (error == EINPROGRESS)
+		return;
+
+	/* use the result */
+	if ((error == 0) &&
+	    thunk_aio_return(&tt->tt_aio) != -1) {
+		bp->b_resid = 0;
+	} else {
+		bp->b_error = error;
+		bp->b_resid = bp->b_bcount;
+	}
+
+	thunk_printf_debug("\tfin\n");
+	if (bp->b_error)
+		thunk_printf_debug("error!\n");
+
+	sc->busy = false;
+	lddone(&sc->sc_ld, bp);
+}
+
+
+#else /* LD_USE_AIO */
+
 
 static int
 ld_thunkbus_ldstart(struct ld_softc *ld, struct buf *bp)
@@ -154,13 +268,6 @@ ld_thunkbus_complete(void *arg)
 	if (!sc->busy)
 		panic("%s: but not busy?\n", __func__);
 
-	if (offset < 0 ||
-	    offset + bp->b_bcount > ld->sc_secsize * ld->sc_secperunit) {
-		bp->b_error = EIO;
-		bp->b_resid = bp->b_bcount;
-		goto done;
-	}
-
 	//printf("%s: %s %u @ %lld -> %p (flags 0x%08x)\n", __func__, 
 	//    bp->b_flags & B_READ ? "read" : "write",
 	//    (unsigned int)bp->b_bcount, (long long)offset, bp->b_data, bp->b_flags);
@@ -182,8 +289,6 @@ ld_thunkbus_complete(void *arg)
 		bp->b_error = thunk_geterrno();
 		bp->b_resid = bp->b_bcount;
 	}
-
-done:
 	thunk_printf_debug("\tfin\n");
 	if (bp->b_error)
 		thunk_printf_debug("error!\n");
@@ -191,6 +296,9 @@ done:
 	sc->busy = false;
 	lddone(&sc->sc_ld, bp);
 }
+
+#endif /* LD_USE_AIO */
+
 
 static int
 ld_thunkbus_lddump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
