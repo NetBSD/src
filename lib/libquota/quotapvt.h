@@ -1,4 +1,4 @@
-/*	$NetBSD: quotapvt.h,v 1.1 2012/01/09 15:27:04 dholland Exp $	*/
+/*	$NetBSD: quotapvt.h,v 1.2 2012/01/09 15:29:56 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,8 +30,16 @@
 
 struct quotahandle {
 	char *qh_mountpoint;
+	char *qh_mountdevice;
+	int qh_isnfs;
+	char spare[14*sizeof(char *) + 15 * sizeof(int)];
 };
 
 /* proplib kernel interface */
 int __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
 			struct quotaval *qv);
+
+/* nfs rquotad interface */
+int __quota_nfs_get(struct quotahandle *qh, const struct quotakey *qk,
+		    struct quotaval *qv);
+
