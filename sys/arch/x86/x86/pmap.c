@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.151 2012/01/09 04:39:14 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.152 2012/01/09 04:55:35 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2012/01/09 04:39:14 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.152 2012/01/09 04:55:35 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1880,16 +1880,22 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 #  if defined(__x86_64__)
 		/*
 		 * If ptp is a L3 currently mapped in kernel space,
-		 * clear it before freeing
+		 * on any cpu, clear it before freeing
 		 */
-		if (pmap_pdirpa(pmap, 0) == curcpu()->ci_xen_current_user_pgd
-		    && level == PTP_LEVELS - 1) {
-			pmap_pte_set(&pmap_kernel()->pm_pdir[index], 0);
-			/*
-			 * Update the per-cpu PD on all cpus the current
-			 * pmap is active on 
-			 */ 
-			xen_kpm_sync(pmap, index);
+		struct cpu_info *ci;
+		CPU_INFO_ITERATOR cii;
+
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			if (pmap_pdirpa(pmap, 0) == ci->ci_xen_current_user_pgd
+			    && level == PTP_LEVELS - 1) {
+				pmap_pte_set(&pmap_kernel()->pm_pdir[index], 0);
+				/*
+				 * Update the per-cpu PD on all cpus the current
+				 * pmap is active on 
+				 */ 
+				xen_kpm_sync(pmap, index);
+				break;
+			}
 		}
 #  endif /*__x86_64__ */
 		invaladdr = level == 1 ? (vaddr_t)ptes :
