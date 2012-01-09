@@ -32,7 +32,7 @@
 #ifdef notdef
 __FBSDID("$FreeBSD: src/contrib/telnet/libtelnet/sra.c,v 1.16 2002/05/06 09:48:02 markm Exp $");
 #else
-__RCSID("$NetBSD: sra.c,v 1.10 2011/07/01 15:09:28 christos Exp $");
+__RCSID("$NetBSD: sra.c,v 1.11 2012/01/09 15:25:34 christos Exp $");
 #endif
 
 #ifdef	SRA
@@ -82,7 +82,7 @@ static unsigned char str_data[1024] = { IAC, SB, TELOPT_AUTHENTICATION, 0,
 #define SRA_ACCEPT 4
 #define SRA_REJECT 5
 
-static int check_user(char *, char *);
+static int check_user(char *, const char *);
 
 /* support routine to send out authentication message */
 static int
@@ -466,7 +466,7 @@ rootterm(const char *ttyname)
 }
 
 static int
-check_user(char *name, char *cred)
+check_user(char *name, const char *cred)
 {
 	struct passwd pws, *pw;
 	char pwbuf[1024];
@@ -554,7 +554,7 @@ auth_conv(int num_msg, const struct pam_message **msg,
  * The PAM version as a side effect may put a new username in *name.
  */
 static int
-check_user(char *name, char *cred)
+check_user(char *name, const char *cred)
 {
 	pam_handle_t *pamh = NULL;
 	const void *item;

@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.h,v 1.8 2005/02/06 05:53:07 perry Exp $	*/
+/*	$NetBSD: encrypt.h,v 1.9 2012/01/09 15:25:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,7 +77,7 @@ typedef	struct {
 
 
 typedef struct {
-	char	*name;
+	const char	*name;
 	int	type;
 	void	(*output)(unsigned char *, int);
 	int	(*input)(int);
