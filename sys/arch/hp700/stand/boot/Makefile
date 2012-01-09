@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.7 2008/05/10 19:11:59 skrll Exp $
+#	$NetBSD: Makefile,v 1.8 2012/01/09 16:03:26 skrll Exp $
 
 #	$OpenBSD: Makefile,v 1.10 2000/05/31 19:56:51 mickey Exp $
 
 PROG=		boot
 PROGSOURCE=	srt0.S boot.c bootinfo.c ct.c conf.c lf.c lif.c tgets.c
 NEWVERSWHAT=	"LIF/FFS/LFS Boot"
+
+NOMAN=		# defined
 
 CLEANFILES+=	boot.gdb boot.map
 
