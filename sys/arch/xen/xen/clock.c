@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.59 2012/01/09 13:33:38 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.60 2012/01/09 13:35:42 cherry Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.59 2012/01/09 13:33:38 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.60 2012/01/09 13:35:42 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ xen_wall_time(struct timespec *wt)
 		 * Under Xen3, shadow->ts is the wall time less system time
 		 * get_vcpu_time() will update shadow
 		 */
-		nsec = get_vcpu_time(curcpu());
+		nsec = get_vcpu_time(ci);
 		*wt = shadow->ts;
 		nsec += wt->tv_nsec;
 	} while (!time_values_up_to_date(ci));
