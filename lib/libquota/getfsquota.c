@@ -1,4 +1,4 @@
-/*	$NetBSD: getfsquota.c,v 1.3 2011/11/25 16:55:05 dholland Exp $ */
+/*	$NetBSD: getfsquota.c,v 1.4 2012/01/09 15:31:11 dholland Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -27,39 +27,20 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getfsquota.c,v 1.3 2011/11/25 16:55:05 dholland Exp $");
+__RCSID("$NetBSD: getfsquota.c,v 1.4 2012/01/09 15:31:11 dholland Exp $");
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <err.h>
-#include <string.h>
-
-#include <sys/types.h>
-#include <sys/statvfs.h>
-
-#include <quota/quotaprop.h>
+#include <quota.h>
 #include <quota/quota.h>
 
-/* retrieve quotas with ufs semantics from vfs, for the given user id */
+#include "quotapvt.h"
+
+
+/*
+ * "retrieve quotas with ufs semantics from vfs, for the given user id"
+ */
 int
 getfsquota(const char *path, struct quotaval *qv, uid_t id,
     const char *class)
 {
-	struct statvfs v;
-
-	if (statvfs(path, &v) < 0) {
-		return -1;
-	}
-	if (strcmp(v.f_fstypename, "nfs") == 0)
-		return getnfsquota(v.f_mntfromname, qv, id, class);
-	else {
-		if ((v.f_flag & ST_QUOTA) == 0)
-			return 0;
-		/*
-		 * assume all quota-enabled local filesystems have UFS
-		 * semantic for now
-		 */
-		return getufsquota(v.f_mntonname, qv, id, class);
-	}
+	return __quota_getquota(path, qv, id, class);
 }
