@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_dtv.c,v 1.4 2011/10/02 19:15:40 jmcneill Exp $ */
+/* $NetBSD: auvitek_dtv.c,v 1.5 2012/01/09 10:57:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.4 2011/10/02 19:15:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.5 2012/01/09 10:57:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,8 +257,11 @@ auvitek_dtv_init_pipes(struct auvitek_softc *sc)
 {
 	usbd_status err;
 
+	KERNEL_LOCK(1, curlwp);
 	err = usbd_open_pipe(sc->sc_bulk_iface, sc->sc_ab.ab_endpt,
 	    USBD_EXCLUSIVE_USE, &sc->sc_ab.ab_pipe);
+	KERNEL_UNLOCK_ONE(curlwp);
+
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "couldn't open bulk-in pipe: %s\n",
 		    usbd_errstr(err));
@@ -272,8 +275,10 @@ static int
 auvitek_dtv_close_pipes(struct auvitek_softc *sc)
 {
 	if (sc->sc_ab.ab_pipe != NULL) {
+		KERNEL_LOCK(1, curlwp);
 		usbd_abort_pipe(sc->sc_ab.ab_pipe);
 		usbd_close_pipe(sc->sc_ab.ab_pipe);
+		KERNEL_UNLOCK_ONE(curlwp);
 		sc->sc_ab.ab_pipe = NULL;
 	}
 
@@ -348,7 +353,11 @@ auvitek_dtv_bulk_start1(struct auvitek_bulk_xfer *bx)
 	    //USBD_SHORT_XFER_OK|USBD_NO_COPY, USBD_NO_TIMEOUT,
 	    USBD_NO_COPY, 100,
 	    auvitek_dtv_bulk_cb);
+
+	KERNEL_LOCK(1, curlwp);
 	err = usbd_transfer(bx->bx_xfer);
+	KERNEL_UNLOCK_ONE(curlwp);
+
 	if (err != USBD_IN_PROGRESS) {
 		aprint_error_dev(sc->sc_dev, "USB error: %s\n",
 		    usbd_errstr(err));
