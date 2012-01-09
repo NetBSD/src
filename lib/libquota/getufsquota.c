@@ -1,4 +1,4 @@
-/*	$NetBSD: getufsquota.c,v 1.4 2011/11/25 16:55:05 dholland Exp $ */
+/*	$NetBSD: getufsquota.c,v 1.5 2012/01/09 15:28:31 dholland Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -27,24 +27,95 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getufsquota.c,v 1.4 2011/11/25 16:55:05 dholland Exp $");
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <err.h>
-#include <string.h>
+__RCSID("$NetBSD: getufsquota.c,v 1.5 2012/01/09 15:28:31 dholland Exp $");
 
 #include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <err.h>
 
 #include <quota/quotaprop.h>
 #include <quota/quota.h>
 
-/* retrieve quotas with ufs semantics from vfs, for the given user id */
+#include <quota.h>
+
+/*
+ * Return true if QV contains any actual information.
+ *
+ * XXX when qv_grace is not available it should be set to QUOTA_NOTIME,
+ * not zero, but this is currently not always the case.
+ */
+static int
+quotaval_nonempty(const struct quotaval *qv)
+{
+	if (qv->qv_hardlimit != QUOTA_NOLIMIT ||
+	    qv->qv_softlimit != QUOTA_NOLIMIT ||
+	    qv->qv_usage != 0 ||
+	    qv->qv_expiretime != QUOTA_NOTIME ||
+	    (qv->qv_grace != QUOTA_NOTIME && qv->qv_grace != 0)) {
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * "retrieve quotas with ufs semantics from vfs, for the given user id"
+ *
+ * What this actually does is: for mount point MP, and id ID, which
+ * can be either a uid or a gid depending on what string CLASS
+ * contains, fetch both block and file quotas and store them in QV,
+ * namely in qv[0] and qv[1] respectively.
+ */
 int
 getufsquota(const char *mp, struct quotaval *qv, uid_t id,
     const char *class)
 {
+#if 1
+	struct quotakey qk;
+	struct quotahandle *qh;
+
+	qh = quota_open(mp);
+	if (qh == NULL) {
+		return -1;
+	}
+
+	qk.qk_id = id;
+	if (!strcmp(class, QUOTADICT_CLASS_USER)) {
+		qk.qk_idtype = QUOTA_IDTYPE_USER;
+	} else if (!strcmp(class, QUOTADICT_CLASS_GROUP)) {
+		qk.qk_idtype = QUOTA_IDTYPE_GROUP;
+	} else {
+		errno = EINVAL;
+		return -1;
+	}
+
+	/*
+	 * Use explicit indexes on qv[] to make sure this continues
+	 * to work the way it used to (for compat) independent of
+	 * what might happen to the symbolic constants.
+	 */
+
+	qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
+	if (quota_get(qh, &qk, &qv[0]) < 0) {
+		return -1;
+	}
+
+	qk.qk_objtype = QUOTA_OBJTYPE_FILES;
+	if (quota_get(qh, &qk, &qv[1]) < 0) {
+		return -1;
+	}
+
+	quota_close(qh);
+
+	if (quotaval_nonempty(&qv[0]) || quotaval_nonempty(&qv[1])) {
+		return 1;
+	}
+
+	return 0;
+
+#else /* old code for reference */
 	prop_dictionary_t dict, data, cmd;
 	prop_array_t cmds, datas;
 	struct plistref pref;
@@ -175,4 +246,5 @@ end_cmds:
 end_dict:
 	prop_object_release(dict);
 	return -1;
+#endif
 }
