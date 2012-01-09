@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.20 2005/06/21 22:29:53 lha Exp $	*/
+/*	$NetBSD: ext.h,v 1.21 2012/01/09 16:36:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -90,7 +90,7 @@ extern void
 	doeof(void),
 	dooption(int),
 	dontoption(int),
-	edithost(char *, char *),
+	edithost(const char *, const char *),
 	fatal(int, const char *),
 	fatalperror(int, const char *),
 	get_slc_defaults(void),
@@ -103,7 +103,7 @@ extern void
 	netflush(void),
 #ifdef DIAGNOSTICS
 	printoption(const char *, int),
-	printdata(char *, char *, int),
+	printdata(const char *, char *, int),
 #ifndef ENCRYPTION
 	printsub(int, unsigned char *, int),
 #endif
@@ -130,7 +130,7 @@ extern void
 	tty_binaryout(int);
 
 extern char *
-	putf(char *, char *);
+	putf(const char *, char *);
 
 extern int
 	end_slc(unsigned char **),
