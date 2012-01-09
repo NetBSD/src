@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.40 2012/01/09 15:44:05 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.41 2012/01/09 15:44:42 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.40 2012/01/09 15:44:05 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.41 2012/01/09 15:44:42 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,26 +122,26 @@ static int Dflag = 0;
  * getinoquota as to the interpretation of quota classes.
  */
 static int
-getidbyname(const char *name, int quotaclass)
+getidbyname(const char *name, int idtype)
 {
 	struct passwd *pw;
 	struct group *gr;
 
 	if (alldigits(name))
 		return atoi(name);
-	switch(quotaclass) {
-	case QUOTA_CLASS_USER:
+	switch (idtype) {
+	case QUOTA_IDTYPE_USER:
 		if ((pw = getpwnam(name)) != NULL)
 			return pw->pw_uid;
 		warnx("%s: no such user", name);
 		break;
-	case QUOTA_CLASS_GROUP:
+	case QUOTA_IDTYPE_GROUP:
 		if ((gr = getgrnam(name)) != NULL)
 			return gr->gr_gid;
 		warnx("%s: no such group", name);
 		break;
 	default:
-		warnx("%d: unknown quota type", quotaclass);
+		warnx("%d: unknown quota type", idtype);
 		break;
 	}
 	sleep(1);
@@ -244,7 +244,7 @@ quotalist_append(struct quotalist *qlist, struct quotause *qup)
 // ffs quota v1
 
 static void
-putprivs1(uint32_t id, int quotaclass, struct quotause *qup)
+putprivs1(uint32_t id, int idtype, struct quotause *qup)
 {
 	struct dqblk dqblk;
 	int fd;
@@ -266,7 +266,7 @@ putprivs1(uint32_t id, int quotaclass, struct quotause *qup)
 }
 
 static struct quotause *
-getprivs1(long id, int quotaclass, const char *filesys)
+getprivs1(long id, int idtype, const char *filesys)
 {
 	struct fstab *fs;
 	char qfpathname[MAXPATHLEN];
@@ -286,7 +286,7 @@ getprivs1(long id, int quotaclass, const char *filesys)
 		return NULL;
 
 	if (!hasquota(qfpathname, sizeof(qfpathname), fs,
-	    ufsclass2qtype(quotaclass)))
+	    ufsclass2qtype(idtype)))
 		return NULL;
 
 	qup = quotause_create();
@@ -335,7 +335,7 @@ getprivs1(long id, int quotaclass, const char *filesys)
 // ffs quota v2
 
 static struct quotause *
-getprivs2(long id, int quotaclass, const char *filesys, int defaultq)
+getprivs2(long id, int idtype, const char *filesys, int defaultq)
 {
 	struct quotause *qup;
 	int8_t version;
@@ -345,10 +345,10 @@ getprivs2(long id, int quotaclass, const char *filesys, int defaultq)
 	if (defaultq)
 		qup->flags |= DEFAULT;
 	if (!getvfsquota(filesys, qup->qv, &version,
-	    id, quotaclass, defaultq, Dflag)) {
+	    id, idtype, defaultq, Dflag)) {
 		/* no entry, get default entry */
 		if (!getvfsquota(filesys, qup->qv, &version,
-		    id, quotaclass, 1, Dflag)) {
+		    id, idtype, 1, Dflag)) {
 			free(qup);
 			return NULL;
 		}
@@ -359,7 +359,7 @@ getprivs2(long id, int quotaclass, const char *filesys, int defaultq)
 }
 
 static void
-putprivs2(uint32_t id, int quotaclass, struct quotause *qup)
+putprivs2(uint32_t id, int idtype, struct quotause *qup)
 {
 	struct quotahandle *qh;
 	struct quotakey qk;
@@ -367,11 +367,11 @@ putprivs2(uint32_t id, int quotaclass, struct quotause *qup)
 
 	if (qup->flags & DEFAULT) {
 		snprintf(idname, sizeof(idname), "%s default",
-			 quotaclass == QUOTA_IDTYPE_USER ? "user" : "group");
+			 idtype == QUOTA_IDTYPE_USER ? "user" : "group");
 		id = QUOTA_DEFAULTID;
 	} else {
 		snprintf(idname, sizeof(idname), "%s %u",
-			 quotaclass == QUOTA_IDTYPE_USER ? "uid" : "gid", id);
+			 idtype == QUOTA_IDTYPE_USER ? "uid" : "gid", id);
 	}
 
 	qh = quota_open(qup->fsname);
@@ -379,14 +379,14 @@ putprivs2(uint32_t id, int quotaclass, struct quotause *qup)
 		err(1, "%s: quota_open", qup->fsname);
 	}
 
-	qk.qk_idtype = quotaclass;
+	qk.qk_idtype = idtype;
 	qk.qk_id = id;
 	qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
 	if (quota_put(qh, &qk, &qup->qv[QL_BLK])) {
 		err(1, "%s: quota_put (%s blocks)", qup->fsname, idname);
 	}
 
-	qk.qk_idtype = quotaclass;
+	qk.qk_idtype = idtype;
 	qk.qk_id = id;
 	qk.qk_objtype = QUOTA_OBJTYPE_FILES;
 	if (quota_put(qh, &qk, &qup->qv[QL_FL])) {
@@ -403,7 +403,7 @@ putprivs2(uint32_t id, int quotaclass, struct quotause *qup)
  * Collect the requested quota information.
  */
 static struct quotalist *
-getprivs(long id, int defaultq, int quotaclass, const char *filesys)
+getprivs(long id, int defaultq, int idtype, const char *filesys)
 {
 	struct statvfs *fst;
 	int nfst, i;
@@ -423,7 +423,7 @@ getprivs(long id, int defaultq, int quotaclass, const char *filesys)
 		    strcmp(fst[i].f_mntonname, filesys) != 0 &&
 		    strcmp(fst[i].f_mntfromname, filesys) != 0)
 			continue;
-		qup = getprivs2(id, quotaclass, fst[i].f_mntonname, defaultq);
+		qup = getprivs2(id, idtype, fst[i].f_mntonname, defaultq);
 		if (qup == NULL) {
 			/*
 			 * XXX: returning NULL is totally wrong. On
@@ -447,7 +447,7 @@ getprivs(long id, int defaultq, int quotaclass, const char *filesys)
 		if (defaultq)
 			errx(1, "no default quota for version 1");
 		/* if we get there, filesys is not mounted. try the old way */
-		qup = getprivs1(id, quotaclass, filesys);
+		qup = getprivs1(id, idtype, filesys);
 		if (qup == NULL) {
 			/* XXX. see above */
 			/*return NULL;*/
@@ -463,20 +463,20 @@ getprivs(long id, int defaultq, int quotaclass, const char *filesys)
  * Store the requested quota information.
  */
 static void
-putprivs(uint32_t id, int quotaclass, struct quotalist *qlist)
+putprivs(uint32_t id, int idtype, struct quotalist *qlist)
 {
 	struct quotause *qup;
 
         for (qup = qlist->head; qup; qup = qup->next) {
 		if (qup->qfname == NULL)
-			putprivs2(id, quotaclass, qup);
+			putprivs2(id, idtype, qup);
 		else
-			putprivs1(id, quotaclass, qup);
+			putprivs1(id, idtype, qup);
 	}
 }
 
 static void
-clearpriv(int argc, char **argv, const char *filesys, int quotaclass)
+clearpriv(int argc, char **argv, const char *filesys, int idtype)
 {
 	struct statvfs *fst;
 	int nfst, i;
@@ -495,7 +495,7 @@ clearpriv(int argc, char **argv, const char *filesys, int quotaclass)
 	}
 
 	for ( ; argc > 0; argc--, argv++) {
-		if ((id = getidbyname(*argv, quotaclass)) == -1)
+		if ((id = getidbyname(*argv, idtype)) == -1)
 			continue;
 
 		if (nids + 1 > maxids) {
@@ -527,10 +527,10 @@ clearpriv(int argc, char **argv, const char *filesys, int quotaclass)
 
 		for (j = 0; j < nids; j++) {
 			snprintf(idname, sizeof(idname), "%s %u",
-				 quotaclass == QUOTA_IDTYPE_USER ? 
+				 idtype == QUOTA_IDTYPE_USER ? 
 				 "uid" : "gid", ids[j]);
 
-			qk.qk_idtype = quotaclass;
+			qk.qk_idtype = idtype;
 			qk.qk_id = ids[j];
 			qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
 			if (quota_delete(qh, &qk)) {
@@ -538,7 +538,7 @@ clearpriv(int argc, char **argv, const char *filesys, int quotaclass)
 				    fst[i].f_mntonname, idname);
 			}
 
-			qk.qk_idtype = quotaclass;
+			qk.qk_idtype = idtype;
 			qk.qk_id = ids[j];
 			qk.qk_objtype = QUOTA_OBJTYPE_FILES;
 			if (quota_delete(qh, &qk)) {
@@ -625,7 +625,7 @@ top:
  */
 static int
 writeprivs(struct quotalist *qlist, int outfd, const char *name,
-    int quotaclass)
+    int idtype)
 {
 	struct quotause *qup;
 	FILE *fd;
@@ -637,10 +637,10 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 		errx(1, "fdopen");
 	if (name == NULL) {
 		fprintf(fd, "Default %s quotas:\n",
-		    ufs_quota_class_names[quotaclass]);
+		    ufs_quota_class_names[idtype]);
 	} else {
 		fprintf(fd, "Quotas for %s %s:\n",
-		    ufs_quota_class_names[quotaclass], name);
+		    ufs_quota_class_names[idtype], name);
 	}
 	for (qup = qlist->head; qup; qup = qup->next) {
 		struct quotaval *q = qup->qv;
@@ -934,7 +934,7 @@ out:
 // actions
 
 static void
-replicate(const char *fs, int quotaclass, const char *protoname,
+replicate(const char *fs, int idtype, const char *protoname,
 	  char **names, int numnames)
 {
 	long protoid, id;
@@ -942,25 +942,25 @@ replicate(const char *fs, int quotaclass, const char *protoname,
 	struct quotause *qup;
 	int i;
 
-	if ((protoid = getidbyname(protoname, quotaclass)) == -1)
+	if ((protoid = getidbyname(protoname, idtype)) == -1)
 		exit(1);
-	protoprivs = getprivs(protoid, 0, quotaclass, fs);
+	protoprivs = getprivs(protoid, 0, idtype, fs);
 	for (qup = protoprivs->head; qup; qup = qup->next) {
 		qup->qv[QL_BLK].qv_expiretime = 0;
 		qup->qv[QL_FL].qv_expiretime = 0;
 	}
 	for (i=0; i<numnames; i++) {
-		id = getidbyname(names[i], quotaclass);
-		if (id < 0)
+		id = getidbyname(names[i], idtype);
+		if (id == -1)
 			continue;
-		putprivs(id, quotaclass, protoprivs);
+		putprivs(id, idtype, protoprivs);
 	}
 	/* XXX */
 	/* quotalist_destroy(protoprivs); */
 }
 
 static void
-assign(const char *fs, int quotaclass,
+assign(const char *fs, int idtype,
        char *soft, char *hard, char *grace,
        char **names, int numnames)
 {
@@ -1008,13 +1008,13 @@ assign(const char *fs, int quotaclass,
 			id = 0;
 			dflag = 1;
 		} else {
-			id = getidbyname(names[i], quotaclass);
+			id = getidbyname(names[i], idtype);
 			if (id == -1)
 				continue;
 			dflag = 0;
 		}
 
-		curprivs = getprivs(id, dflag, quotaclass, fs);
+		curprivs = getprivs(id, dflag, idtype, fs);
 		for (lqup = curprivs->head; lqup; lqup = lqup->next) {
 			struct quotaval *q = lqup->qv;
 			if (soft) {
@@ -1042,19 +1042,19 @@ assign(const char *fs, int quotaclass,
 				q[QL_FL].qv_grace = gracei;
 			}
 		}
-		putprivs(id, quotaclass, curprivs);
+		putprivs(id, idtype, curprivs);
 		quotalist_destroy(curprivs);
 	}
 }
 
 static void
-clear(const char *fs, int quotaclass, char **names, int numnames)
+clear(const char *fs, int idtype, char **names, int numnames)
 {
-	clearpriv(numnames, names, fs, quotaclass);
+	clearpriv(numnames, names, fs, idtype);
 }
 
 static void
-editone(const char *fs, int quotaclass, const char *name,
+editone(const char *fs, int idtype, const char *name,
 	int tmpfd, const char *tmppath)
 {
 	struct quotalist *curprivs;
@@ -1065,14 +1065,14 @@ editone(const char *fs, int quotaclass, const char *name,
 		id = 0;
 		dflag = 1;
 	} else {
-		id = getidbyname(name, quotaclass);
+		id = getidbyname(name, idtype);
 		if (id == -1)
 			return;
 		dflag = 0;
 	}
-	curprivs = getprivs(id, dflag, quotaclass, fs);
+	curprivs = getprivs(id, dflag, idtype, fs);
 
-	if (writeprivs(curprivs, tmpfd, name, quotaclass) == 0)
+	if (writeprivs(curprivs, tmpfd, name, idtype) == 0)
 		goto fail;
 
 	if (editit(tmppath) == 0)
@@ -1081,13 +1081,13 @@ editone(const char *fs, int quotaclass, const char *name,
 	if (readprivs(curprivs, tmpfd, dflag) == 0)
 		goto fail;
 
-	putprivs(id, quotaclass, curprivs);
+	putprivs(id, idtype, curprivs);
 fail:
 	quotalist_destroy(curprivs);
 }
 
 static void
-edit(const char *fs, int quotaclass, char **names, int numnames)
+edit(const char *fs, int idtype, char **names, int numnames)
 {
 	char tmppath[] = _PATH_TMPFILE;
 	int tmpfd, i;
@@ -1096,7 +1096,7 @@ edit(const char *fs, int quotaclass, char **names, int numnames)
 	fchown(tmpfd, getuid(), getgid());
 
 	for (i=0; i<numnames; i++) {
-		editone(fs, quotaclass, names[i], tmpfd, tmppath);
+		editone(fs, idtype, names[i], tmpfd, tmppath);
 	}
 
 	close(tmpfd);
@@ -1128,7 +1128,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int quotaclass;
+	int idtype;
 	char *protoname;
 	char *soft = NULL, *hard = NULL, *grace = NULL;
 	char *fs = NULL;
@@ -1142,7 +1142,7 @@ main(int argc, char *argv[])
 	if (getuid())
 		errx(1, "permission denied");
 	protoname = NULL;
-	quotaclass = QUOTA_CLASS_USER;
+	idtype = QUOTA_IDTYPE_USER;
 	while ((ch = getopt(argc, argv, "DHcdugp:s:h:t:f:")) != -1) {
 		switch(ch) {
 		case 'D':
@@ -1162,10 +1162,10 @@ main(int argc, char *argv[])
 			pflag++;
 			break;
 		case 'g':
-			quotaclass = QUOTA_CLASS_GROUP;
+			idtype = QUOTA_IDTYPE_GROUP;
 			break;
 		case 'u':
-			quotaclass = QUOTA_CLASS_USER;
+			idtype = QUOTA_IDTYPE_USER;
 			break;
 		case 's':
 			soft = optarg;
@@ -1189,7 +1189,7 @@ main(int argc, char *argv[])
 	if (pflag) {
 		if (soft || hard || grace || dflag || cflag)
 			usage();
-		replicate(fs, quotaclass, protoname, argv, argc);
+		replicate(fs, idtype, protoname, argv, argc);
 	} else if (soft || hard || grace) {
 		if (cflag)
 			usage();
@@ -1197,17 +1197,17 @@ main(int argc, char *argv[])
 			/* use argv[argc], which is null, to mean 'default' */
 			argc++;
 		}
-		assign(fs, quotaclass, soft, hard, grace, argv, argc);
+		assign(fs, idtype, soft, hard, grace, argv, argc);
 	} else if (cflag) {
 		if (dflag)
 			usage();
-		clear(fs, quotaclass, argv, argc);
+		clear(fs, idtype, argv, argc);
 	} else {
 		if (dflag) {
 			/* use argv[argc], which is null, to mean 'default' */
 			argc++;
 		}
-		edit(fs, quotaclass, argv, argc);
+		edit(fs, idtype, argv, argc);
 	}
 	return 0;
 }
