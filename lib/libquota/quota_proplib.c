@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_proplib.c,v 1.5 2012/01/09 15:41:58 dholland Exp $	*/
+/*	$NetBSD: quota_proplib.c,v 1.6 2012/01/09 15:43:19 dholland Exp $	*/
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_proplib.c,v 1.5 2012/01/09 15:41:58 dholland Exp $");
+__RCSID("$NetBSD: quota_proplib.c,v 1.6 2012/01/09 15:43:19 dholland Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -465,6 +465,239 @@ __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
 
 	prop_object_release(dict);
 
+	return 0;
+}
+
+int
+__quota_proplib_put(struct quotahandle *qh, const struct quotakey *qk,
+		    const struct quotaval *qv)
+{
+	prop_dictionary_t dict, data, cmd;
+	prop_array_t cmds, datas;
+	struct plistref pref;
+	int8_t error8;
+	uint64_t *valuesp[QUOTA_NLIMITS];
+	const char *idtype;
+	unsigned limitcode, otherlimitcode;
+	unsigned otherobjtype;
+	struct quotakey qk2;
+	struct quotaval qv2;
+
+	switch (qk->qk_idtype) {
+	    case QUOTA_IDTYPE_USER:
+		idtype = ufs_quota_class_names[QUOTA_CLASS_USER];
+		break;
+	    case QUOTA_IDTYPE_GROUP:
+		idtype = ufs_quota_class_names[QUOTA_CLASS_GROUP];
+		break;
+	    default:
+		errno = EINVAL;
+		return -1;
+	}
+
+	switch (qk->qk_objtype) {
+	    case QUOTA_OBJTYPE_BLOCKS:
+		limitcode = QUOTA_LIMIT_BLOCK;
+		otherlimitcode = QUOTA_LIMIT_FILE;
+		otherobjtype = QUOTA_OBJTYPE_FILES;
+		break;
+	    case QUOTA_OBJTYPE_FILES:
+		limitcode = QUOTA_LIMIT_FILE;
+		otherlimitcode = QUOTA_LIMIT_BLOCK;
+		otherobjtype = QUOTA_OBJTYPE_BLOCKS;
+		break;
+	    default:
+		errno = EINVAL;
+		return -1;
+	}
+
+	/* XXX in addition to being invalid/unsafe this also discards const */
+	valuesp[limitcode] = __UNCONST(&qv->qv_hardlimit);
+
+	/*
+	 * You cannot set just the block info or just the file info.
+	 * You have to set both together, or EINVAL comes back. So we
+	 * have to fetch the current values for the other object type,
+	 * and stuff both into the RPC packet. Blah. XXX.
+	 */
+	qk2.qk_idtype = qk->qk_idtype;
+	qk2.qk_id = qk->qk_id;
+	qk2.qk_objtype = otherobjtype;
+	if (__quota_proplib_get(qh, &qk2, &qv2)) {
+		if (errno == ENOENT) {
+			/* Nothing there yet, use a blank value */
+			quotaval_clear(&qv2);
+		} else {
+			return -1;
+		}
+	}
+	valuesp[otherlimitcode] = &qv2.qv_hardlimit;
+
+	data = quota64toprop(qk->qk_id, qk->qk_id == QUOTA_DEFAULTID ? 1 : 0,
+	    valuesp, ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
+	    ufs_quota_limit_names, QUOTA_NLIMITS);
+
+	if (data == NULL)
+		err(1, "quota64toprop(id)");
+
+	dict = quota_prop_create();
+	cmds = prop_array_create();
+	datas = prop_array_create();
+
+	if (dict == NULL || cmds == NULL || datas == NULL) {
+		errx(1, "can't allocate proplist");
+	}
+
+	if (!prop_array_add_and_rel(datas, data))
+		err(1, "prop_array_add(data)");
+	
+	if (!quota_prop_add_command(cmds, "set", idtype, datas))
+		err(1, "prop_add_command");
+	if (!prop_dictionary_set(dict, "commands", cmds))
+		err(1, "prop_dictionary_set(command)");
+#if 0
+	if (Dflag)
+		printf("message to kernel:\n%s\n",
+		    prop_dictionary_externalize(dict));
+#endif
+
+	if (prop_dictionary_send_syscall(dict, &pref) != 0)
+		err(1, "prop_dictionary_send_syscall");
+	prop_object_release(dict);
+
+	if (quotactl(qh->qh_mountpoint, &pref) != 0)
+		err(1, "quotactl");
+
+	if (prop_dictionary_recv_syscall(&pref, &dict) != 0) {
+		err(1, "prop_dictionary_recv_syscall");
+	}
+
+#if 0
+	if (Dflag)
+		printf("reply from kernel:\n%s\n",
+		    prop_dictionary_externalize(dict));
+#endif
+
+	if ((errno = quota_get_cmds(dict, &cmds)) != 0) {
+		err(1, "quota_get_cmds");
+	}
+	/* only one command, no need to iter */
+	cmd = prop_array_get(cmds, 0);
+	if (cmd == NULL)
+		err(1, "prop_array_get(cmd)");
+
+	if (!prop_dictionary_get_int8(cmd, "return", &error8))
+		err(1, "prop_get(return)");
+
+	if (error8) {
+		prop_object_release(dict);
+		errno = error8;
+		return -1;
+	}
+	prop_object_release(dict);
+	return 0;
+}
+
+int
+__quota_proplib_delete(struct quotahandle *qh, const struct quotakey *qk)
+{
+	prop_array_t cmds, datas;
+	prop_dictionary_t protodict, dict, data, cmd;
+	struct plistref pref;
+	int8_t error8;
+	bool ret;
+	const char *idtype;
+
+	/*
+	 * XXX for now we always clear quotas for all objtypes no
+	 * matter what's passed in. This is ok (sort of) for now
+	 * because the only caller is edquota, which only calls delete
+	 * for both blocks and files in immediate succession. But it's
+	 * wrong in the long run. I'm not fixing it at the moment
+	 * because I expect all this code to be deleted in the near
+	 * future.
+	 */
+	(void)qk->qk_objtype;
+
+	switch (qk->qk_idtype) {
+	    case QUOTA_IDTYPE_USER:
+		idtype = ufs_quota_class_names[QUOTA_CLASS_USER];
+		break;
+	    case QUOTA_IDTYPE_GROUP:
+		idtype = ufs_quota_class_names[QUOTA_CLASS_GROUP];
+		break;
+	    default:
+		errno = EINVAL;
+		return -1;
+	}
+
+	/* build a generic command */
+	protodict = quota_prop_create();
+	cmds = prop_array_create();
+	datas = prop_array_create();
+	if (protodict == NULL || cmds == NULL || datas == NULL) {
+		errx(1, "can't allocate proplist");
+	}
+
+	data = prop_dictionary_create();
+	if (data == NULL)
+		errx(1, "can't allocate proplist");
+
+	ret = prop_dictionary_set_uint32(data, "id", qk->qk_id);
+	if (!ret)
+		err(1, "prop_dictionary_set(id)");
+	if (!prop_array_add_and_rel(datas, data))
+		err(1, "prop_array_add(data)");
+
+	if (!quota_prop_add_command(cmds, "clear", idtype, datas))
+		err(1, "prop_add_command");
+
+	if (!prop_dictionary_set(protodict, "commands", cmds))
+		err(1, "prop_dictionary_set(command)");
+
+#if 0
+	if (Dflag) {
+		fprintf(stderr, "message to kernel for %s:\n%s\n",
+			qh->qh_mountpoint,
+			prop_dictionary_externalize(protodict));
+	}
+#endif
+
+	if (prop_dictionary_send_syscall(protodict, &pref) != 0)
+		err(1, "prop_dictionary_send_syscall");
+	if (quotactl(qh->qh_mountpoint, &pref) != 0)
+		err(1, "quotactl");
+
+	if (prop_dictionary_recv_syscall(&pref, &dict) != 0) {
+		err(1, "prop_dictionary_recv_syscall");
+	}
+
+#if 0
+	if (Dflag) {
+		fprintf(stderr, "reply from kernel for %s:\n%s\n",
+			qh->qh_mountpoint,
+			prop_dictionary_externalize(dict));
+	}
+#endif
+
+	if ((errno = quota_get_cmds(dict, &cmds)) != 0) {
+		err(1, "quota_get_cmds");
+	}
+	/* only one command, no need to iter */
+	cmd = prop_array_get(cmds, 0);
+	if (cmd == NULL)
+		err(1, "prop_array_get(cmd)");
+
+	if (!prop_dictionary_get_int8(cmd, "return", &error8))
+		err(1, "prop_get(return)");
+	if (error8) {
+		prop_object_release(dict);
+		prop_object_release(protodict);
+		errno = error8;
+		return -1;
+	}
+	prop_object_release(dict);
+	prop_object_release(protodict);
 	return 0;
 }
 
