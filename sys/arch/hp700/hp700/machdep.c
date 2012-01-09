@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 2012/01/02 16:13:12 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104 2012/01/09 19:40:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2012/01/02 16:13:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2012/01/09 19:40:54 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -450,11 +450,13 @@ hppa_init(paddr_t start, void *bi)
 	if (bi != NULL)
 		memcpy(&bootinfo, bi, sizeof(struct bootinfo));
 
-	pdc_init();	/* init PDC iface, so we can call em easy */
+	/* init PDC iface, so we can call em easy */
+	pdc_init();
 
 	cpu_hzticks = (PAGE0->mem_10msec * 100) / hz;
 
-	delay_init();	/* calculate CPU clock ratio */
+	/* calculate CPU clock ratio */
+	delay_init();
 
 	/* fetch the monarch/"default" cpu hpa */
 	
