@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_cursor.c,v 1.1 2012/01/09 15:22:38 dholland Exp $	*/
+/*	$NetBSD: quota_cursor.c,v 1.2 2012/01/09 15:40:10 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,65 +29,81 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_cursor.c,v 1.1 2012/01/09 15:22:38 dholland Exp $");
+__RCSID("$NetBSD: quota_cursor.c,v 1.2 2012/01/09 15:40:10 dholland Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
 
 #include <quota.h>
+#include "quotapvt.h"
 
-/* ARGSUSED */
 struct quotacursor *
 quota_opencursor(struct quotahandle *qh)
 {
-	errno = ENOSYS;
-	return NULL;
+	struct quotacursor *qc;
+	int serrno;
+
+	if (qh->qh_isnfs) {
+		errno = EOPNOTSUPP;
+		return NULL;
+	}
+
+	qc = malloc(sizeof(*qc));
+	if (qc == NULL) {
+		return NULL;
+	}
+
+	qc->qc_qh = qh;
+	qc->u.qc_proplib = __quota_proplib_cursor_create();
+
+	if (qc->u.qc_proplib == NULL) {
+		serrno = errno;
+		free(qc);
+		errno = serrno;
+		return NULL;
+	}
+	return qc;
 }
 
-/* ARGSUSED */
 void
 quotacursor_close(struct quotacursor *qc)
 {
+	__quota_proplib_cursor_destroy(qc->u.qc_proplib);
+	free(qc);
 }
 
-/* ARGSUSED */
 int
 quotacursor_skipidtype(struct quotacursor *qc, unsigned idtype)
 {
-	errno = ENOSYS;
-	return -1;
+	return __quota_proplib_cursor_skipidtype(qc->u.qc_proplib, idtype);
 }
 
-/* ARGSUSED */
 int
 quotacursor_get(struct quotacursor *qc,
 		struct quotakey *qk_ret, struct quotaval *qv_ret)
 {
-	errno = ENOSYS;
-	return -1;
+	return __quota_proplib_cursor_get(qc->qc_qh, qc->u.qc_proplib,
+					  qk_ret, qv_ret);
 }
 
-/* ARGSUSED */
 int
 quotacursor_getn(struct quotacursor *qc,
 		 struct quotakey *keys, struct quotaval *vals, 
 		 unsigned maxnum)
 {
-	errno = ENOSYS;
-	return -1;
+	return __quota_proplib_cursor_getn(qc->qc_qh, qc->u.qc_proplib,
+					   keys, vals, maxnum);
 }
 
-/* ARGSUSED */
 int
 quotacursor_atend(struct quotacursor *qc)
 {
-	return 0;
+	return __quota_proplib_cursor_atend(qc->qc_qh,
+					    qc->u.qc_proplib);
 }
 
-/* ARGSUSED */
 int
 quotacursor_rewind(struct quotacursor *qc)
 {
-	errno = ENOSYS;
-	return -1;
+	return __quota_proplib_cursor_rewind(qc->u.qc_proplib);
 }
