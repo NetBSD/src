@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.26 2011/06/20 17:44:33 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.27 2012/01/09 06:25:55 kiyohara Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 2011/06/20 17:44:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2012/01/09 06:25:55 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,6 +98,12 @@ stat_intr(struct clockframe *frame)
 
 	/* Nobody can interrupt us, but see if we're allowed to run. */
 	int s = splclock();
+
+	/*
+	 * Reenable interrupts
+	 */
+	__asm volatile ("wrteei 1");
+
 	if (IPL_CLOCK > s)
   		statclock(frame);
 	splx(s);
@@ -128,6 +134,12 @@ decr_intr(struct clockframe *frame)
 	ci->ci_data.cpu_nintr++;
 	ci->ci_ev_clock.ev_count++;
 	pcpl = splclock();
+
+	/*
+	 * Reenable interrupts
+	 */
+	__asm volatile ("wrteei 1");
+
 	if (pcpl >= IPL_CLOCK) {
 		tickspending += nticks;
 		ticksmissed += nticks;
@@ -140,11 +152,6 @@ decr_intr(struct clockframe *frame)
 		 * start of this tick interval.
 		 */
 		lasttb = lasttb2;
-
-		/*
-		 * Reenable interrupts
-		 */
-		__asm volatile ("wrteei 1");
 
 		/*
 		 * Do standard timer interrupt stuff.
