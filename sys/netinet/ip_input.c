@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.297 2011/12/19 11:59:56 drochner Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.298 2012/01/09 14:31:22 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.297 2011/12/19 11:59:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.298 2012/01/09 14:31:22 liamjfoy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -456,7 +456,7 @@ ip_input(struct mbuf *m)
 		goto bad;
 	}
 	if (hlen > m->m_len) {
-		if ((m = m_pullup(m, hlen)) == 0) {
+		if ((m = m_pullup(m, hlen)) == NULL) {
 			IP_STATINC(IP_STAT_BADHLEN);
 			return;
 		}
