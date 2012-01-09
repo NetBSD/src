@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.266 2011/12/04 19:48:36 jakllsch Exp $ */
+/*	$NetBSD: wdc.c,v 1.267 2012/01/09 01:01:49 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.266 2011/12/04 19:48:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.267 2012/01/09 01:01:49 jakllsch Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1714,7 +1714,7 @@ wdccommand(struct ata_channel *chp, u_int8_t drive, u_int8_t command,
  */
 void
 wdccommandext(struct ata_channel *chp, u_int8_t drive, u_int8_t command,
-    u_int64_t blkno, u_int16_t count)
+    u_int64_t blkno, u_int16_t count, u_int16_t features)
 {
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
@@ -1732,8 +1732,8 @@ wdccommandext(struct ata_channel *chp, u_int8_t drive, u_int8_t command,
 	    (drive << 4) | WDSD_LBA);
 
 	if (wdc->cap & WDC_CAPABILITY_WIDEREGS) {
-		bus_space_write_2(wdr->cmd_iot, wdr->cmd_iohs[wd_features], 0,
-		    0);
+		bus_space_write_2(wdr->cmd_iot, wdr->cmd_iohs[wd_features],
+		    0, features);
 		bus_space_write_2(wdr->cmd_iot, wdr->cmd_iohs[wd_seccnt],
 		    0, count);
 		bus_space_write_2(wdr->cmd_iot, wdr->cmd_iohs[wd_lba_lo],
@@ -1744,8 +1744,8 @@ wdccommandext(struct ata_channel *chp, u_int8_t drive, u_int8_t command,
 		    0, (((blkno >> 32) & 0xff00) | ((blkno >> 16) & 0x00ff)));
 	} else {
 		/* previous */
-		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_features], 0,
-		    0);
+		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_features],
+		    0, features >> 8);
 		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_seccnt],
 		    0, count >> 8);
 		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_lba_lo],
@@ -1756,12 +1756,12 @@ wdccommandext(struct ata_channel *chp, u_int8_t drive, u_int8_t command,
 		    0, blkno >> 40);
 
 		/* current */
-		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_features], 0,
-		    0);
-		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_seccnt], 0,
-		    count);
-		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_lba_lo], 0,
-		    blkno);
+		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_features],
+		    0, features);
+		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_seccnt],
+		    0, count);
+		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_lba_lo],
+		    0, blkno);
 		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_lba_mi],
 		    0, blkno >> 8);
 		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_lba_hi],
