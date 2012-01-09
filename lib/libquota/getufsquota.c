@@ -1,4 +1,4 @@
-/*	$NetBSD: getufsquota.c,v 1.5 2012/01/09 15:28:31 dholland Exp $ */
+/*	$NetBSD: getufsquota.c,v 1.6 2012/01/09 15:31:11 dholland Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -27,19 +27,16 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getufsquota.c,v 1.5 2012/01/09 15:28:31 dholland Exp $");
+__RCSID("$NetBSD: getufsquota.c,v 1.6 2012/01/09 15:31:11 dholland Exp $");
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <err.h>
 
-#include <quota/quotaprop.h>
 #include <quota/quota.h>
-
+#include <quota/quotaprop.h>	/* for QUOTADICT_CLASS_* strings */
 #include <quota.h>
+
+#include "quotapvt.h"
 
 /*
  * Return true if QV contains any actual information.
@@ -68,15 +65,15 @@ quotaval_nonempty(const struct quotaval *qv)
  * contains, fetch both block and file quotas and store them in QV,
  * namely in qv[0] and qv[1] respectively.
  */
+
 int
-getufsquota(const char *mp, struct quotaval *qv, uid_t id,
+__quota_getquota(const char *path, struct quotaval *qv, uid_t id,
     const char *class)
 {
-#if 1
 	struct quotakey qk;
 	struct quotahandle *qh;
 
-	qh = quota_open(mp);
+	qh = quota_open(path);
 	if (qh == NULL) {
 		return -1;
 	}
@@ -114,6 +111,14 @@ getufsquota(const char *mp, struct quotaval *qv, uid_t id,
 	}
 
 	return 0;
+}
+
+int
+getufsquota(const char *mp, struct quotaval *qv, uid_t id,
+    const char *class)
+{
+#if 1
+	return __quota_getquota(mp, qv, id, class);
 
 #else /* old code for reference */
 	prop_dictionary_t dict, data, cmd;

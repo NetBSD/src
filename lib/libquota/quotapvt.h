@@ -1,4 +1,4 @@
-/*	$NetBSD: quotapvt.h,v 1.2 2012/01/09 15:29:56 dholland Exp $	*/
+/*	$NetBSD: quotapvt.h,v 1.3 2012/01/09 15:31:11 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,4 +42,8 @@ int __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
 /* nfs rquotad interface */
 int __quota_nfs_get(struct quotahandle *qh, const struct quotakey *qk,
 		    struct quotaval *qv);
+
+/* compat for old library */
+int __quota_getquota(const char *path, struct quotaval *qv, uid_t id,
+		     const char *class);
 
