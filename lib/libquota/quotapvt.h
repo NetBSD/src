@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_open.c,v 1.2 2012/01/09 15:27:04 dholland Exp $	*/
+/*	$NetBSD: quotapvt.h,v 1.1 2012/01/09 15:27:04 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,52 +28,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_open.c,v 1.2 2012/01/09 15:27:04 dholland Exp $");
+struct quotahandle {
+	char *qh_mountpoint;
+};
 
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-
-#include <quota.h>
-#include "quotapvt.h"
-
-struct quotahandle *
-quota_open(const char *path)
-{
-	struct quotahandle *qh;
-	int serrno;
-
-	qh = malloc(sizeof(*qh));
-	if (qh == NULL) {
-		return NULL;
-	}
-	qh->qh_mountpoint = strdup(path);
-	if (qh->qh_mountpoint == NULL) {
-		serrno = errno;
-		free(qh);
-		errno = serrno;
-		return NULL;
-	}
-	return qh;
-}
-
-const char *
-quota_getmountpoint(struct quotahandle *qh)
-{
-	return qh->qh_mountpoint;
-}
-
-const char *
-quota_getmountdevice(struct quotahandle *qh)
-{
-	errno = ENOSYS;
-	return NULL;
-}
-
-void
-quota_close(struct quotahandle *qh)
-{
-	free(qh->qh_mountpoint);
-	free(qh);
-}
+/* proplib kernel interface */
+int __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
+			struct quotaval *qv);
