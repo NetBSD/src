@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.6 2012/01/08 21:34:21 rmind Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.7 2012/01/09 01:47:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_ncgen.c,v 1.6 2012/01/08 21:34:21 rmind Exp $");
+__RCSID("$NetBSD: npf_ncgen.c,v 1.7 2012/01/09 01:47:09 rmind Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -108,7 +108,7 @@ npfctl_ncgen_putptr(nc_ctx_t *ctx, void *nc)
 
 	if ((ptrdiff_t)ctx->nc_expected != diff) {
 		errx(EXIT_FAILURE, "unexpected n-code fragment size "
-		    "(expected words %lu, diff %td)", ctx->nc_expected, diff);
+		    "(expected words %zu, diff %td)", ctx->nc_expected, diff);
 	}
 	ctx->nc_expected = 0;
 	ctx->nc_iptr = nc;
