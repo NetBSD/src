@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.8 2012/01/08 21:34:21 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.9 2012/01/10 23:39:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ typedef struct module_arg {
 	npfvar_t *	ma_opts;
 } module_arg_t;
 
-void		yyerror(const char *, ...) __printflike(1, 2);
+void		yyerror(const char *, ...) __printflike(1, 2) __dead;
 void *		zalloc(size_t);
 void *		xrealloc(void *, size_t);
 char *		xstrdup(const char *);

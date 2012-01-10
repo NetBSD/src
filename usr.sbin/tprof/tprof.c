@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.4 2009/01/26 05:53:10 yamt Exp $	*/
+/*	$NetBSD: tprof.c,v 1.5 2012/01/10 23:39:33 joerg Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.4 2009/01/26 05:53:10 yamt Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.5 2012/01/10 23:39:33 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: tprof.c,v 1.4 2009/01/26 05:53:10 yamt Exp $");
 int devfd;
 int outfd;
 
-static void
+__dead static void
 usage(void)
 {
 
