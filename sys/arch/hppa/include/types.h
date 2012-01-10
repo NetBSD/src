@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20 2011/03/17 22:14:43 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.21 2012/01/10 16:26:43 skrll Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -61,10 +61,6 @@ typedef	unsigned long		psize_t;
 #define	PRIxPADDR		"lx"
 #define	PRIxPSIZE		"lx"
 #define	PRIuPSIZE		"lu"
-/* XXX DIE DIE DIE */
-typedef	unsigned long vm_offset_t;
-typedef unsigned long vm_size_t;
-
 #endif
 
 /*
