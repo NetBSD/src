@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.37 2011/08/31 18:31:03 plunky Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.38 2012/01/10 20:01:57 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.37 2011/08/31 18:31:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.38 2012/01/10 20:01:57 drochner Exp $");
 
 /*
  * IPsec output processing.
@@ -632,6 +632,74 @@ bad:
 #endif
 
 #ifdef INET6
+static void
+compute_ipsec_pos(struct mbuf *m, int *i, int *off)
+{
+	int nxt;
+	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr*);
+	struct ip6_ext ip6e;
+	int dstopt = 0;
+
+	*i = sizeof(struct ip6_hdr);
+	*off = offsetof(struct ip6_hdr, ip6_nxt);
+	nxt = ip6->ip6_nxt;
+
+	/*
+	 * chase mbuf chain to find the appropriate place to
+	 * put AH/ESP/IPcomp header.
+	 *  IPv6 hbh dest1 rthdr ah* [esp* dest2 payload]
+	 */
+	do {
+		switch (nxt) {
+		case IPPROTO_AH:
+		case IPPROTO_ESP:
+		case IPPROTO_IPCOMP:
+		/*
+		 * we should not skip security header added
+		 * beforehand.
+		 */
+			return;
+
+		case IPPROTO_HOPOPTS:
+		case IPPROTO_DSTOPTS:
+		case IPPROTO_ROUTING:
+		/*
+		 * if we see 2nd destination option header,
+		 * we should stop there.
+		 */
+			if (nxt == IPPROTO_DSTOPTS && dstopt)
+				return;
+
+			if (nxt == IPPROTO_DSTOPTS) {
+				/*
+				 * seen 1st or 2nd destination option.
+				 * next time we see one, it must be 2nd.
+				 */
+				dstopt = 1;
+			} else if (nxt == IPPROTO_ROUTING) {
+				/*
+				 * if we see destionation option next
+				 * time, it must be dest2.
+				 */
+				dstopt = 2;
+			}
+
+			/* skip this header */
+			m_copydata(m, *i, sizeof(ip6e), &ip6e);
+			nxt = ip6e.ip6e_nxt;
+			*off = *i + offsetof(struct ip6_ext, ip6e_nxt);
+			/*
+			 * we will never see nxt == IPPROTO_AH
+			 * so it is safe to omit AH case.
+			 */
+			*i += (ip6e.ip6e_len + 1) << 3;
+			break;
+		default:
+			return;
+		}
+	} while (*i < m->m_pkthdr.len);
+}
+
 static int
 in6_sa_equal_addrwithscope(const struct sockaddr_in6 *sa, const struct in6_addr *ia)
 {
@@ -731,8 +799,7 @@ ipsec6_process_packet(
 		i = ip->ip_hl << 2;
 		off = offsetof(struct ip, ip_p);
 	} else {	
-		i = sizeof(struct ip6_hdr);
-		off = offsetof(struct ip6_hdr, ip6_nxt);
+		compute_ipsec_pos(m, &i, &off);
 	}
 	error = (*sav->tdb_xform->xf_output)(m, isr, NULL, i, off);
 	splx(s);

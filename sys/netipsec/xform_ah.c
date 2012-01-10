@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.33 2011/05/24 19:10:08 drochner Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.34 2012/01/10 20:01:57 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.33 2011/05/24 19:10:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.34 2012/01/10 20:01:57 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.33 2011/05/24 19:10:08 drochner Exp $
 
 #ifdef INET6
 #include <netinet6/ip6_var.h>
+#include <netinet6/scope6_var.h>
 #include <netipsec/ipsec6.h>
 #  ifdef __FreeBSD__
 #  include <netinet6/ip6_ecn.h>
@@ -279,7 +280,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 #ifdef INET6
 	struct ip6_ext *ip6e;
 	struct ip6_hdr ip6;
-	int alloc, len, ad;
+	int alloc, ad, nxt;
 #endif /* INET6 */
 
 	switch (proto) {
@@ -501,28 +502,28 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		} else
 			break;
 
-		off = ip6.ip6_nxt & 0xff; /* Next header type. */
+		nxt = ip6.ip6_nxt & 0xff; /* Next header type. */
 
-		for (len = 0; len < skip - sizeof(struct ip6_hdr);)
-			switch (off) {
+		for (off = 0; off < skip - sizeof(struct ip6_hdr);)
+			switch (nxt) {
 			case IPPROTO_HOPOPTS:
 			case IPPROTO_DSTOPTS:
-				ip6e = (struct ip6_ext *) (ptr + len);
+				ip6e = (struct ip6_ext *) (ptr + off);
 
 				/*
 				 * Process the mutable/immutable
 				 * options -- borrows heavily from the
 				 * KAME code.
 				 */
-				for (count = len + sizeof(struct ip6_ext);
-				     count < len + ((ip6e->ip6e_len + 1) << 3);) {
+				for (count = off + sizeof(struct ip6_ext);
+				     count < off + ((ip6e->ip6e_len + 1) << 3);) {
 					if (ptr[count] == IP6OPT_PAD1) {
 						count++;
 						continue; /* Skip padding. */
 					}
 
 					/* Sanity check. */
-					if (count > len +
+					if (count > off +
 					    ((ip6e->ip6e_len + 1) << 3)) {
 						m_freem(m);
 
@@ -554,8 +555,8 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				}
 
 				/* Advance. */
-				len += ((ip6e->ip6e_len + 1) << 3);
-				off = ip6e->ip6e_nxt;
+				off += ((ip6e->ip6e_len + 1) << 3);
+				nxt = ip6e->ip6e_nxt;
 				break;
 
 			case IPPROTO_ROUTING:
@@ -563,10 +564,47 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				 * Always include routing headers in
 				 * computation.
 				 */
-				ip6e = (struct ip6_ext *) (ptr + len);
-				len += ((ip6e->ip6e_len + 1) << 3);
-				off = ip6e->ip6e_nxt;
-				break;
+				{
+					struct ip6_rthdr *rh;
+
+					ip6e = (struct ip6_ext *) (ptr + off);
+					rh = (struct ip6_rthdr *)(ptr + off);
+					/*
+					 * must adjust content to make it look like
+					 * its final form (as seen at the final
+					 * destination).
+					 * we only know how to massage type 0 routing
+					 * header.
+					 */
+					if (out && rh->ip6r_type == IPV6_RTHDR_TYPE_0) {
+						struct ip6_rthdr0 *rh0;
+						struct in6_addr *addr, finaldst;
+						int i;
+
+						rh0 = (struct ip6_rthdr0 *)rh;
+						addr = (struct in6_addr *)(rh0 + 1);
+
+						for (i = 0; i < rh0->ip6r0_segleft; i++)
+							in6_clearscope(&addr[i]);
+
+						finaldst = addr[rh0->ip6r0_segleft - 1];
+						memmove(&addr[1], &addr[0],
+							sizeof(struct in6_addr) *
+							(rh0->ip6r0_segleft - 1));
+
+						m_copydata(m, 0, sizeof(ip6), &ip6);
+						addr[0] = ip6.ip6_dst;
+						ip6.ip6_dst = finaldst;
+						m_copyback(m, 0, sizeof(ip6), &ip6);
+
+						rh0->ip6r0_segleft = 0;
+					}
+
+					/* advance */
+					off += ((ip6e->ip6e_len + 1) << 3);
+					nxt = ip6e->ip6e_nxt;
+					break;
+				}
 
 			default:
 				DPRINTF(("ah_massage_headers: unexpected "
