@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.36 2012/01/09 16:08:55 christos Exp $	*/
+/*	$NetBSD: externs.h,v 1.37 2012/01/10 23:39:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -234,7 +234,7 @@ int sourceroute(struct addrinfo *, char *, char **, int *, int*);
 
 /* main.c */
 void tninit(void);
-void usage(void);
+void usage(void) __dead;
 
 /* network.c */
 void init_network(void);

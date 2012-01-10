@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.53 2012/01/09 16:36:48 christos Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.54 2012/01/10 23:39:11 joerg Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.53 2012/01/09 16:36:48 christos Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.54 2012/01/10 23:39:11 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,11 +121,10 @@ int keepalive = 1;
 const char *gettyname = "default";
 char *progname;
 
-int main(int, char *[]);
-void usage(void);
+void usage(void) __dead;
 int getterminaltype(char *, size_t);
 int getent(char *, const char *);
-void doit(struct sockaddr *);
+static void doit(struct sockaddr *) __dead;
 void _gettermname(void);
 int terminaltypeok(char *);
 char *getstr(const char *, char **);
@@ -670,12 +669,12 @@ char *hostname;
 char host_name[MAXHOSTNAMELEN + 1];
 char remote_host_name[MAXHOSTNAMELEN + 1];
 
-extern void telnet(int, int);
+static void telnet(int, int) __dead;
 
 /*
  * Get a pty, scan input lines.
  */
-void
+static void
 doit(struct sockaddr *who)
 {
 	char *host;
@@ -739,7 +738,7 @@ doit(struct sockaddr *who)
  * Main loop.  Select from pty and network, and
  * hand data to telnet receiver finite state machine.
  */
-void
+static void
 telnet(int f, int p)
 {
 	int on = 1;
