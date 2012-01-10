@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35.38.8 2012/01/10 18:01:09 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.35.38.9 2012/01/10 18:34:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.8 2012/01/10 18:01:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.9 2012/01/10 18:34:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -150,20 +150,25 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 #else
 			if (v < MIPS_KSEG0_START)
 				return (EFAULT);
-			if (v > MIPS_PHYS_TO_KSEG0(mips_avail_end +
-					mips_round_page(MSGBUFSIZE) - c)
-			    && (v < MIPS_KSEG2_START
-				|| (
+			if (MIPS_KSEG0_P(v + c - 1)) {
+				/*
+				 * If all of memory is in KSEG0, make sure
+				 * we don't beyond its limit.  (mips_avail_end
+				 * may be beyond the end of KSEG0).
+				 */
+				if (MIPS_KSEG0_TO_PHYS(v) >= mips_avail_end
+				    + mips_round_page(MSGBUFSIZE) - c)
+					return (EFAULT);
 #ifdef ENABLE_MIPS_KSEGX
-				    (v < VM_KSEGX_ADDRESS
-				     || v >= VM_KSEGX_ADDRESS + VM_KSEGX_SIZE)
-#else
-				    true
+			} else if (VM_KSEGX_ADDRESS <= v
+			    && v + c <= VM_KSEGX_ADDRESS + VM_KSEGX_SIZE) {
+				/* nothing */
 #endif
-				    && !uvm_kernacc((void *)v, c,
-					uio->uio_rw == UIO_READ
-					    ? B_READ
-					    : B_WRITE))))
+			} else if (v < MIPS_KSEG2_START
+				   || !uvm_kernacc((void *)v, c,
+					    uio->uio_rw == UIO_READ
+						? B_READ
+						: B_WRITE))
 				return (EFAULT);
 #endif
 			error = uiomove((void *)v, c, uio);
