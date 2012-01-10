@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.14 2012/01/06 12:53:07 reinoud Exp $ */
+/* $NetBSD: vmparam.h,v 1.15 2012/01/10 10:19:38 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,8 +51,12 @@ extern paddr_t kmem_user_start, kmem_user_end;
 
 #define	USRSTACK		VM_MAXUSER_ADDRESS
 
-/* override the default pager_map size, there is little KVA */
-#define PAGER_MAP_DEFAULT_SIZE	(8 * 1024 * 1024)
+/*
+ * When an architecture has little KVA then override the default pager_map
+ * size in its block by limiting it like this:
+ *
+ * #define PAGER_MAP_DEFAULT_SIZE	(8 * 1024 * 1024)
+ */
 
 #if defined(__i386__) 
 #define	PAGE_SHIFT		12
