@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.43 2011/10/30 00:30:56 jakllsch Exp $	*/
+/*	$NetBSD: menus.mi,v 1.44 2012/01/10 21:02:47 gson Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -246,8 +246,10 @@ menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 		action { src_prompt(MSG_Host, ftp.host, sizeof ftp.host); };
 	option {src_legend(menu, MSG_Base_dir, ftp.dir);},
 		action { src_prompt(MSG_Base_dir, ftp.dir, sizeof ftp.dir); };
-	option {src_legend(menu, MSG_Set_dir, set_dir);},
-		action { src_prompt(MSG_Set_dir, set_dir, sizeof set_dir); };
+	option {src_legend(menu, MSG_Set_dir_bin, set_dir_bin);},
+		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
+	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
+		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
 	option {src_legend(menu, MSG_User, ftp.user);},
 		action { src_prompt(MSG_User, ftp.user, sizeof ftp.user);
 			ftp.pass[0] = 0;
@@ -286,8 +288,10 @@ menu nfssource, y=-4, x=0, w=70, no box, no clear,
 		action { src_prompt(MSG_Host, nfs_host, sizeof nfs_host); };
 	option {src_legend(menu, MSG_Base_dir, nfs_dir);},
 		action { src_prompt(MSG_Base_dir, nfs_dir, sizeof nfs_dir); };
-	option {src_legend(menu, MSG_Set_dir, set_dir);},
-		action { src_prompt(MSG_Set_dir, set_dir, sizeof set_dir); };
+	option {src_legend(menu, MSG_Set_dir_bin, set_dir_bin);},
+		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
+	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
+		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
 
 menu fdremount, title MSG_What_do_you_want_to_do;
 	option MSG_Try_again, exit, action { *(int *)arg = SET_CONTINUE; };
@@ -322,8 +326,10 @@ menu cdromsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 	display action { msg_display_add(MSG_cdromsource); };
 	option {src_legend(menu, MSG_Device, cdrom_dev);},
 		action { src_prompt(MSG_dev, cdrom_dev, sizeof cdrom_dev); };
-	option {src_legend(menu, MSG_Set_dir, set_dir);},
-		action { src_prompt(MSG_Set_dir, set_dir, sizeof set_dir); };
+	option {src_legend(menu, MSG_Set_dir_bin, set_dir_bin);},
+		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
+	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
+		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
 
 menu localfssource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 	display action { msg_display(MSG_localfssource); };
@@ -333,15 +339,19 @@ menu localfssource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_filesys, localfs_fs, sizeof localfs_fs); };
 	option {src_legend(menu, MSG_Base_dir, localfs_dir);},
 		action { src_prompt(MSG_Base_dir, localfs_dir, sizeof localfs_dir);};
-	option {src_legend(menu, MSG_Set_dir, set_dir);},
-		action { src_prompt(MSG_Set_dir, set_dir, sizeof set_dir); };
+	option {src_legend(menu, MSG_Set_dir_bin, set_dir_bin);},
+		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
+	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
+		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
 
 menu localdirsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 	display action { msg_display(MSG_localdir); };
 	option {src_legend(menu, MSG_Base_dir, localfs_dir);},
 		action { src_prompt(MSG_Base_dir, localfs_dir, 60); };
-	option {src_legend(menu, MSG_Set_dir, set_dir);},
-		action { src_prompt(MSG_Set_dir, set_dir, 60); };
+	option {src_legend(menu, MSG_Set_dir_bin, set_dir_bin);},
+		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, 60); };
+	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
+		action { src_prompt(MSG_Set_dir_src, set_dir_src, 60); };
 
 menu namesrv6, title MSG_Select_IPv6_DNS_server;
 	option "google-public-dns-a.google.com", exit, action
