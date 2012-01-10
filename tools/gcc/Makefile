@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2011/12/12 18:59:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.49 2012/01/10 12:26:45 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -103,7 +103,7 @@ BUILD_MAKE=${TOOL_GMAKE}
 # mknative-gcc specific stuff
 #
 
-.if ${HAVE_GCC} >= 45
+.if ${HAVE_GCC} < 45
 GCCSRCDIR=${.CURDIR}/../../gnu/dist/gcc4
 .else
 GCCSRCDIR=${.CURDIR}/../../external/gpl3/gcc/dist
