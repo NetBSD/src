@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.150 2011/12/15 14:25:12 phx Exp $
+#	$NetBSD: files.amiga,v 1.151 2012/01/10 20:29:50 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -32,6 +32,10 @@ defflag				BB060STUPIDROM
 defflag				P5PPC68KBOARD
 defflag				LEV6_DEFER
 defflag				DEVRELOAD
+
+defflag opt_p5pb.h		P5PB_GENFB
+defflag opt_p5pb.h		P5PB_OLD_FIRMWARE
+defflag opt_p5pb.h		P5PB_DEBUG
 
 defparam			IOBZCLOCK
 
@@ -355,11 +359,6 @@ device	wesc: scsi, asiop
 attach	wesc at zbus
 file	arch/amiga/dev/wesc.c		wesc needs-flag
 
-# Phase5 Blizzard 603e+ SCSI
-device	bppcsc: scsi, asiop
-attach	bppcsc at zbus
-file	arch/amiga/dev/bppcsc.c		bppcsc needs-flag
-
 # C= A4091 & A4000T
 device	afsc: scsi, asiop
 attach	afsc at zbus
@@ -370,11 +369,6 @@ file	arch/amiga/dev/afsc.c		afsc | aftsc needs-flag
 # ncr 57c720/770 controllers
 define	siopng
 file	arch/amiga/dev/siop2.c		siopng
-
-# CyberStorm MKIII scsi
-device	cbiiisc: scsi, siopng
-attach	cbiiisc at zbus
-file	arch/amiga/dev/cbiiisc.c	cbiiisc needs-flag
 
 # Emulex ESP216 & FAS216 controllers
 
@@ -498,13 +492,32 @@ include "compat/ossaudio/files.ossaudio"
 # Bluetooth stack
 include "dev/bluetooth/files.bluetooth"
 
+# Phase5 BPPC/CSPPC internal bus
+device	p5bus {}
+attach	p5bus at zbus
+file	arch/amiga/dev/p5bus.c		p5bus
+
+device	p5membar {}
+attach	p5membar at zbus
+file	arch/amiga/pci/p5membar.c	p5membar
+
+# CyberStorm MKIII scsi
+device	cbiiisc: scsi, siopng
+attach	cbiiisc at p5bus 
+file	arch/amiga/dev/cbiiisc.c	cbiiisc needs-flag
+
+# Phase5 Blizzard 603e+ SCSI
+device	bppcsc: scsi, asiop
+attach	bppcsc at p5bus 
+file	arch/amiga/dev/bppcsc.c		bppcsc needs-flag
+
 # PCI bus
 file	arch/amiga/pci/p5pb.c		pci
 file	arch/amiga/pci/mppb.c		pci
 file	arch/amiga/pci/pci_machdep.c	pci
 
 device	p5pb: pcibus
-attach	p5pb at zbus
+attach	p5pb at p5bus 
 
 device	mppb: pcibus
 attach	mppb at zbus

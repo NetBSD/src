@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.90 2011/12/26 13:07:24 mlelstv Exp $
+# $NetBSD: GENERIC.in,v 1.91 2012/01/10 20:29:50 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90 $"
+#ident 		"GENERIC-$Revision: 1.91 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -329,6 +329,8 @@ m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 ')m4_dnl
 
 m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
+p5bus0		at zbus0		# Phase5 CSPPC/BPPC internal bus
+
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
 ')m4_dnl
@@ -483,7 +485,7 @@ mgnsc0		at zbus0		# Magnum scsi
 scsibus*	at mgnsc0
 wesc0		at zbus0		# Warp Engine scsi
 scsibus*	at wesc0
-bppcsc0		at zbus0		# BlizzardPPC 603e+ scsi
+bppcsc0		at p5bus0		# BlizzardPPC 603e+ scsi
 scsibus*	at bppcsc0
 afsc0		at zbus0		# A4091 scsi
 scsibus*	at afsc0
@@ -501,7 +503,7 @@ cbsc0		at zbus0		# CyberSCSI I
 scsibus*	at cbsc0
 cbiisc0 	at zbus0		# CyberSCSI II
 scsibus*	at cbiisc0
-cbiiisc0 	at zbus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
+cbiiisc0 	at p5bus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
 scsibus*	at cbiiisc0
 empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
@@ -555,14 +557,20 @@ m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 # PCI bus support
 options		PCIVERBOSE              # verbose PCI device autoconfig messages
 #options	PCI_CONFIG_DUMP
-options		PCI_NETBSD_CONFIGURE
+options		PCI_NETBSD_CONFIGURE	# used only by mppb(4)
 
-p5pb0		at zbus0                # Phase5 PCI bridge (CVPPC/BVPPC)
+p5pb0		at p5bus0		# Phase5 PCI bridge (CVPPC/BVPPC/G-REX)
+p5membar*	at zbus0		# Phase5 PCI bridge autoconfiguring BARs
+#options	P5PB_OLD_FIRMWARE	# enable support for p5pb with old fw
+#options	P5PB_GENFB		# enable genfb support for CVPPC/BVPPC
+#options	P5PB_DEBUG		# enable excessive debug for p5pb
 pci*		at p5pb0
-mppb*           at zbus0                # Matay Prometheus Zorro-PCI bridge
+
+mppb*           at zbus0		# Matay Prometheus Zorro-PCI bridge
 pci*            at mppb?
 
-ne*             at pci?                 # NE2000 Ethernet
+#genfb*		at pci?			# generic fb, CVPPC/BVPPC only
+ne*             at pci?			# NE2000 Ethernet
 
 # Bluetooth Controller and Device support
 # tested only with btuart on an A1200
