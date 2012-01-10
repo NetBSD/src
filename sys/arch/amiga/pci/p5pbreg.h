@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pbreg.h,v 1.3 2011/10/07 08:44:21 rkujawa Exp $ */
+/*	$NetBSD: p5pbreg.h,v 1.4 2012/01/10 20:29:50 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -58,10 +58,13 @@
 #define P5BUS_PCI_IO_BASE	0xFFFA0000
 #define P5BUS_PCI_IO_SIZE	0x0000FFFF
 
+#define P5BUS_PCI_BRIDGE_BASE	0xFFFE0000
+#define P5BUS_PCI_BRIDGE_SIZE	0x0000FFFF	/* 4kB on some fw revs */
+
 #define OFF_PCI_CONF_DATA	0x00000000 
 #define OFF_PCI_CONF_ADDR	0x00020000
 
-#define P5BUS_CONF_ENDIAN	0x0000          /* PCI_CONF_ADDR + offset */
+#define P5BUS_CONF_ENDIAN	0x0000          /* PCI_BRIDGE_BASE + offset */
 #define P5BUS_CONF_ENDIAN_BIG	0x02            /* to switch into BE mode */
 #define P5BUS_CONF_INTR		0x0010          /* ? XXX interrupt enable? */
 #define P5BUS_CONF_INTR_INT2	0x01            /* ? XXX INT2? */

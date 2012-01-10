@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pbvar.h,v 1.2 2012/01/10 20:29:50 rkujawa Exp $ */
+/*      $NetBSD: p5busvar.h,v 1.1 2012/01/10 20:29:50 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,33 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMIGA_P5PBVAR_H_
-
 #include <sys/types.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pciconf.h>
-#include <machine/pci_machdep.h>
 
-struct p5pb_autoconf_entry {
-	volatile char	*base;
-	uint32_t	size;
-	TAILQ_ENTRY(p5pb_autoconf_entry) entries;
+#define P5_CARDTYPE_CS		1	/* CyberStorm PPC/Mk-III */
+#define P5_CARDTYPE_BPPC	2	/* BlizzardPPC */
+
+struct p5bus_attach_args {
+	char	p5baa_name[32];
+	uint8_t	p5baa_cardtype; 
 };
 
-struct p5pb_softc {
-	device_t				sc_dev;
-
-	volatile char				*ba;
-	struct bus_space_tag			pci_conf_area;
-	struct bus_space_tag			pci_mem_area;
-	struct bus_space_tag			pci_io_area;
-	struct amiga_pci_chipset		apc;
-
-	/* list of preconfigured BARs */
-	TAILQ_HEAD(, p5pb_autoconf_entry)	auto_bars;
-
-	bool(*p5pb_bus_map)(struct p5pb_softc *);
-
-};
-
-#endif /* _AMIGA_P5PBVAR_H_ */
