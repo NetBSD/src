@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.172 2012/01/05 21:29:25 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.173 2012/01/10 21:02:47 gson Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,7 @@
 #define MD_SETS_SELECTED_NOX SET_KERNEL_1, SET_SYSTEM, SET_MD
 #endif
 #ifndef MD_SETS_VALID
-#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD
+#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD, SET_SOURCE
 #endif
 
 #define MAX_CD_DEVS	256	/* how many cd drives do we expect to attach */
@@ -149,6 +149,14 @@ distinfo dist_list[] = {
 #ifdef SET_MD_4_NAME
 	{SET_MD_4_NAME,		SET_MD_4,		MSG_set_md_4, NULL},
 #endif
+
+	{NULL,			SET_GROUP,		MSG_set_source, NULL},
+	{"syssrc",		SET_SYSSRC,		MSG_set_syssrc, NULL},
+	{"src",			SET_SRC,		MSG_set_src, NULL},
+	{"sharesrc",		SET_SHARESRC,		MSG_set_sharesrc, NULL},
+	{"gnusrc",		SET_GNUSRC,		MSG_set_gnusrc, NULL},
+	{"xsrc",		SET_XSRC,		MSG_set_xsrc, NULL},
+	{NULL,			SET_GROUP_END,		NULL, NULL},
 
 	{NULL,			SET_LAST,		NULL, NULL},
 };
@@ -357,7 +365,8 @@ get_via_floppy(void)
 	fetch_fn = floppy_fetch;
 
 	/* Set ext_dir for absolute path. */
-	snprintf(ext_dir, sizeof ext_dir, "%s/%s", target_prefix(), xfer_dir);
+	snprintf(ext_dir_bin, sizeof ext_dir_bin, "%s/%s", target_prefix(), xfer_dir);
+	snprintf(ext_dir_src, sizeof ext_dir_src, "%s/%s", target_prefix(), xfer_dir);
 
 	return SET_OK;
 }
@@ -473,8 +482,9 @@ cd_has_sets(void)
 
 	mnt2_mounted = 1;
 
-	snprintf(ext_dir, sizeof ext_dir, "%s/%s", "/mnt2", set_dir);
-	return dir_exists_p(ext_dir);
+	snprintf(ext_dir_bin, sizeof ext_dir_bin, "%s/%s", "/mnt2", set_dir_bin);
+	snprintf(ext_dir_src, sizeof ext_dir_src, "%s/%s", "/mnt2", set_dir_src);
+	return dir_exists_p(ext_dir_bin);
 }
 
 
@@ -520,10 +530,11 @@ get_via_cdrom(void)
 	bool silent = false;
 
 	/* If root is a CD-ROM and we have sets, skip this step. */
-	if (statvfs(set_dir, &sb) == 0 &&
+	if (statvfs(set_dir_bin, &sb) == 0 &&
 	    (strcmp(sb.f_fstypename, MOUNT_CD9660) == 0
 		    || strcmp(sb.f_fstypename, MOUNT_UDF) == 0)) {
-	    	strlcpy(ext_dir, set_dir, sizeof ext_dir);
+	    	strlcpy(ext_dir_bin, set_dir_bin, sizeof ext_dir_bin);
+	    	strlcpy(ext_dir_src, set_dir_src, sizeof ext_dir_src);
 		return SET_OK;
 	}
 
@@ -593,8 +604,10 @@ get_via_localfs(void)
 
 	mnt2_mounted = 1;
 
-	snprintf(ext_dir, sizeof ext_dir, "%s/%s/%s",
-		"/mnt2", localfs_dir, set_dir);
+	snprintf(ext_dir_bin, sizeof ext_dir_bin, "%s/%s/%s",
+		"/mnt2", localfs_dir, set_dir_bin);
+	snprintf(ext_dir_src, sizeof ext_dir_src, "%s/%s/%s",
+		"/mnt2", localfs_dir, set_dir_src);
 
 	return SET_OK;
 }
@@ -614,7 +627,8 @@ get_via_localdir(void)
 	 * We have to have an absolute path ('cos pax runs in a
 	 * different directory), make it so.
 	 */
-	snprintf(ext_dir, sizeof ext_dir, "/%s/%s", localfs_dir, set_dir);
+	snprintf(ext_dir_bin, sizeof ext_dir_bin, "/%s/%s", localfs_dir, set_dir_bin);
+	snprintf(ext_dir_src, sizeof ext_dir_src, "/%s/%s", localfs_dir, set_dir_src);
 
 	return SET_OK;
 }
@@ -856,7 +870,7 @@ extract_file(distinfo *dist, int update)
 		make_target_dir(xfer_dir);
 
 	(void)snprintf(path, sizeof path, "%s/%s%s",
-	    ext_dir, dist->name, dist_postfix);
+	    ext_dir_for_set(dist->name), dist->name, dist_postfix);
 
 	owd = getcwd(NULL, 0);
 
@@ -876,7 +890,7 @@ extract_file(distinfo *dist, int update)
 	 * characters and check again
 	 */
 	(void)snprintf(path, sizeof path, "%s/%.8s%.4s", /* 4 as includes '.' */
-	    ext_dir, dist->name, dist_postfix);
+	    ext_dir_for_set(dist->name), dist->name, dist_postfix);
 		if (!file_exists_p(path)) {
 #endif /* SUPPORT_8_3_SOURCE_FILESYSTEM */
 
@@ -1480,3 +1494,20 @@ check_lfs_progs(void)
 	return 0;
 #endif
 }
+
+int
+set_is_source(const char *set_name) {
+	int len = strlen(set_name);
+	return len >= 3 && memcmp(set_name + len - 3, "src", 3) == 0;
+}
+
+const char *
+set_dir_for_set(const char *set_name) {
+	return set_is_source(set_name) ? set_dir_src : set_dir_bin;
+}
+
+const char *
+ext_dir_for_set(const char *set_name) {
+	return set_is_source(set_name) ? ext_dir_src : ext_dir_bin;
+}
+
