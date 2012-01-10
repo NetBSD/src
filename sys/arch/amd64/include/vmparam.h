@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.28 2011/11/24 17:08:07 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.29 2012/01/10 16:03:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -122,7 +122,7 @@
 #else /* XEN */
 #define VM_MIN_KERNEL_ADDRESS	0xffffa00000000000
 #endif
-#define VM_MAX_KERNEL_ADDRESS	0xffffff8000000000
+#define VM_MAX_KERNEL_ADDRESS	0xfffffe8000000000
 
 #define VM_MAXUSER_ADDRESS32	0xfffff000
 
