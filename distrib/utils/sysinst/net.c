@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.129 2012/01/09 02:52:50 riz Exp $	*/
+/*	$NetBSD: net.c,v 1.130 2012/01/10 21:02:47 gson Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -945,7 +945,8 @@ ftp_fetch(const char *set_name)
 	const char *ftp_opt;
 	char ftp_user_encoded[STRSIZE];
 	char ftp_dir_encoded[STRSIZE];
-	char *cp, *set_dir2;
+	char *cp;
+	const char *set_dir2;
 	int rval;
 
 	/*
@@ -981,7 +982,7 @@ ftp_fetch(const char *set_name)
 	if (cp != ftp_dir_encoded && cp[-1] != '/')
 		*cp++ = '/';
 
-	set_dir2 = set_dir;
+	set_dir2 = set_dir_for_set(set_name);
 	while (*set_dir2 == '/')
 		++set_dir2;
 
@@ -1031,7 +1032,9 @@ get_via_ftp(const char *xfer_type)
 	/* We'll fetch each file just before installing it */
 	fetch_fn = ftp_fetch;
 	ftp.xfer_type = xfer_type;
-	snprintf(ext_dir, sizeof ext_dir, "%s/%s", target_prefix(),
+	snprintf(ext_dir_bin, sizeof ext_dir_bin, "%s/%s", target_prefix(),
+	    xfer_dir + (*xfer_dir == '/'));
+	snprintf(ext_dir_src, sizeof ext_dir_src, "%s/%s", target_prefix(),
 	    xfer_dir + (*xfer_dir == '/'));
 
 	return SET_OK;
@@ -1046,9 +1049,10 @@ get_via_nfs(void)
 		return SET_RETRY;
 
 	/* If root is on NFS and we have sets, skip this step. */
-	if (statvfs(set_dir, &sb) == 0 &&
+	if (statvfs(set_dir_bin, &sb) == 0 &&
 	    strcmp(sb.f_fstypename, "nfs") == 0) {
-	    	strlcpy(ext_dir, set_dir, sizeof ext_dir);
+	    	strlcpy(ext_dir_bin, set_dir_bin, sizeof ext_dir_bin);
+	    	strlcpy(ext_dir_src, set_dir_src, sizeof ext_dir_src);
 		return SET_OK;
 	}
 
@@ -1062,7 +1066,8 @@ get_via_nfs(void)
 
 	mnt2_mounted = 1;
 
-	snprintf(ext_dir, sizeof ext_dir, "/mnt2/%s", set_dir);
+	snprintf(ext_dir_bin, sizeof ext_dir_bin, "/mnt2/%s", set_dir_bin);
+	snprintf(ext_dir_src, sizeof ext_dir_src, "/mnt2/%s", set_dir_src);
 
 	/* return location, don't clean... */
 	return SET_OK;
