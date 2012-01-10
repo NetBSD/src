@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.168 2012/01/09 01:51:47 riz Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.169 2012/01/10 21:02:47 gson Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -769,6 +769,24 @@ message set_X11_servers
 message set_X11_prog
 {X11 programming}
 
+message set_source
+{Source sets}
+
+message set_syssrc
+{Kernel sources}
+
+message set_src
+{Base sources}
+
+message set_sharesrc
+{Share sources}
+
+message set_gnusrc
+{GNU sources}
+
+message set_xsrc
+{X11 sources}
+
 message cur_distsets_row
 {%-27s %3s}
 
@@ -906,7 +924,8 @@ message Custom_installation {Custom installation}
 message hidden {** hidden **}
 message Host {Host}
 message Base_dir {Base directory}
-message Set_dir {Set directory}
+message Set_dir_bin {Binary set directory}
+message Set_dir_src {Source set directory}
 message Xfer_dir {Transfer directory}
 message User {User}
 message Password {Password}
