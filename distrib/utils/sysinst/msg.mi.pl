@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.77 2012/01/09 01:51:47 riz Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.78 2012/01/10 21:02:47 gson Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -767,6 +767,24 @@ message set_X11_servers
 message set_X11_prog
 {Programowanie X11}
 
+message set_source
+{Source sets}
+
+message set_syssrc
+{Kernel sources}
+
+message set_src
+{Base sources}
+
+message set_sharesrc
+{Share sources}
+
+message set_gnusrc
+{GNU sources}
+
+message set_xsrc
+{X11 sources}
+
 message cur_distsets_row
 {%-30s %3s}
 
@@ -900,7 +918,8 @@ message Custom_installation {Inna instalacja}
 message hidden {** ukryte **}
 message Host {Host}
 message Base_dir {Katalog}
-message Set_dir {Katalog}
+message Set_dir_src {Katalog pakiet binary} /* fix XLAT */
+message Set_dir_bin {Katalog pakiet source} /* fix XLAT */
 message Xfer_dir {Transfer Katalog} /* fix XLAT */
 message User {Uzytkownik}
 message Password {Haslo}
