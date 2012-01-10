@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.75 2012/01/06 14:11:55 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.76 2012/01/10 12:04:56 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.75 2012/01/06 14:11:55 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.76 2012/01/10 12:04:56 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -209,6 +209,27 @@ thunk_to_native_mapflags(int flags)
 		nflags |= MAP_SHARED;
 	if (flags & THUNK_MAP_PRIVATE)
 		nflags |= MAP_PRIVATE;
+
+	return nflags;
+}
+
+static int
+thunk_to_native_madviseflags(int flags)
+{
+	int nflags = 0;
+
+	if (flags & THUNK_MADV_NORMAL)
+		nflags |= MADV_NORMAL;
+	if (flags & THUNK_MADV_RANDOM)
+		nflags |= MADV_RANDOM;
+	if (flags & THUNK_MADV_SEQUENTIAL)
+		nflags |= MADV_SEQUENTIAL;
+	if (flags & THUNK_MADV_WILLNEED)
+		nflags |= MADV_WILLNEED;
+	if (flags & THUNK_MADV_DONTNEED)
+		nflags |= MADV_DONTNEED;
+	if (flags & THUNK_MADV_FREE)
+		nflags |= MADV_FREE;
 
 	return nflags;
 }
@@ -670,6 +691,16 @@ thunk_mprotect(void *addr, size_t len, int prot)
 	nprot = thunk_to_native_prot(prot);
 
 	return mprotect(addr, len, nprot);
+}
+
+int
+thunk_madvise(void *addr, size_t len, int behav)
+{
+	int nbehav;
+
+	nbehav = thunk_to_native_madviseflags(behav);
+
+	return madvise(addr, len, nbehav);
 }
 
 int
