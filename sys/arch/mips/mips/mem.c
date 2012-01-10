@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35.38.7 2011/11/29 07:48:31 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.35.38.8 2012/01/10 18:01:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.7 2011/11/29 07:48:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.8 2012/01/10 18:01:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -107,12 +107,20 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			/*
 			 * XXX Broken; assumes contiguous physical memory.
 			 */
+#ifdef _LP64
 			if (v + c > ctob(physmem))
 				return (EFAULT);
-#ifdef _LP64
 			v = MIPS_PHYS_TO_XKPHYS_CACHED(v);
 #else
-			v = MIPS_PHYS_TO_KSEG0(v);
+			if (MIPS_KSEG0_P(v + c - 1)) {
+				v = MIPS_PHYS_TO_KSEG0(v);
+#ifdef ENABLE_MIPS_KSEGX
+			} else if (mips_ksegx_start <= v
+			    && v + c <= mips_ksegx_start + VM_KSEGX_SIZE) {
+				v += VM_KSEGX_ADDRESS - mips_ksegx_start;
+#endif
+			} else
+				return (EFAULT);
 #endif
 			error = uiomove((void *)v, c, uio);
 #if defined(MIPS3_PLUS)
