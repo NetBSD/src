@@ -678,6 +678,12 @@ die_array_create(dwarf_t *dw, Dwarf_Die arr, Dwarf_Off off, tdesc_t *tdp)
 		tdesc_t *dimtdp;
 		int flags;
 
+		/* Check for bogus gcc DW_AT_byte_size attribute */
+		if (uval == 0xffffffff) {
+		    printf("dwarf.c:%s() working around bogus DW_AT_byte_size = 0xffffffff\n", __func__);
+		    uval = 0;
+		}
+
 		tdp->t_size = uval;
 
 		/*
@@ -764,6 +770,11 @@ die_enum_create(dwarf_t *dw, Dwarf_Die die, Dwarf_Off off, tdesc_t *tdp)
 	tdp->t_type = ENUM;
 
 	(void) die_unsigned(dw, die, DW_AT_byte_size, &uval, DW_ATTR_REQ);
+	/* Check for bogus gcc DW_AT_byte_size attribute */
+	if (uval == 0xffffffff) {
+	    printf("dwarf.c:%s() working around bogus DW_AT_byte_size = 0xffffffff\n", __func__);
+	    uval = 0;
+	}
 	tdp->t_size = uval;
 
 	if ((mem = die_child(dw, die)) != NULL) {
@@ -877,7 +888,7 @@ static void
 die_sou_create(dwarf_t *dw, Dwarf_Die str, Dwarf_Off off, tdesc_t *tdp,
     int type, const char *typename)
 {
-	Dwarf_Unsigned sz, bitsz, bitoff;
+	Dwarf_Unsigned sz, bitsz, bitoff, maxsz=0;
 	Dwarf_Die mem;
 	mlist_t *ml, **mlastp;
 	iidesc_t *ii;
@@ -933,6 +944,8 @@ die_sou_create(dwarf_t *dw, Dwarf_Die str, Dwarf_Off off, tdesc_t *tdp,
 			ml->ml_name = NULL;
 
 		ml->ml_type = die_lookup_pass1(dw, mem, DW_AT_type);
+		debug(3, "die_sou_create(): ml_type = %p t_id = %d\n", ml->ml_type,
+			ml->ml_type->t_id);
 
 		if (die_mem_offset(dw, mem, DW_AT_data_member_location,
 		    &mloff, 0)) {
@@ -960,7 +973,20 @@ die_sou_create(dwarf_t *dw, Dwarf_Die str, Dwarf_Off off, tdesc_t *tdp,
 
 		*mlastp = ml;
 		mlastp = &ml->ml_next;
+
+		/* work out the size of the largest member to work around a gcc bug */
+		if (maxsz < ml->ml_size) {
+		    maxsz = ml->ml_size;
+		}
 	} while ((mem = die_sibling(dw, mem)) != NULL);
+
+	/* See if we got a bogus DW_AT_byte_size.  GCC will sometimes
+	 * emit this.
+	 */
+	if (sz == 0xffffffff) {
+	    printf("dwarf.c:%s() working around bogus DW_AT_byte_size = 0xffffffff\n", __func__);
+	    tdp->t_size = maxsz / 8;	/* maxsz is in bits, t_size is bytes */
+	}
 
 	/*
 	 * GCC will attempt to eliminate unused types, thus decreasing the
@@ -1030,7 +1056,7 @@ die_sou_resolve(tdesc_t *tdp, tdesc_t **tdpp __unused, void *private)
 	if (tdp->t_flags & TDESC_F_RESOLVED)
 		return (1);
 
-	debug(3, "resolving sou %s\n", tdesc_name(tdp));
+	debug(3, "resolving sou %s [%d]\n", tdesc_name(tdp), tdp->t_id);
 
 	for (ml = tdp->t_members; ml != NULL; ml = ml->ml_next) {
 		if (ml->ml_size == 0) {
@@ -1382,6 +1408,12 @@ die_base_create(dwarf_t *dw, Dwarf_Die base, Dwarf_Off off, tdesc_t *tdp)
 	 * the data model.
 	 */
 	(void) die_unsigned(dw, base, DW_AT_byte_size, &sz, DW_ATTR_REQ);
+
+	/* Check for bogus gcc DW_AT_byte_size attribute */
+	if (sz == 0xffffffff) {
+	    printf("dwarf.c:%s() working around bogus DW_AT_byte_size = 0xffffffff\n", __func__);
+	    sz = 0;
+	}
 
 	if (tdp->t_name == NULL)
 		terminate("die %llu: base type without name\n", off);
