@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.50 2010/08/11 11:31:45 pgoyette Exp $ */
+/*	$NetBSD: ipmi.c,v 1.51 2012/01/10 15:23:11 njoly Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.50 2010/08/11 11:31:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.51 2012/01/10 15:23:11 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2125,6 +2125,7 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ia = *(struct ipmi_attach_args *)aux;
 	sc->sc_dev = self;
+	aprint_naive("\n");
 	aprint_normal("\n");
 
 	/* lock around read_sensor so that no one messes with the bmc regs */
