@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.143 2012/01/10 20:01:56 drochner Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.144 2012/01/10 20:05:37 drochner Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.143 2012/01/10 20:01:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.144 2012/01/10 20:05:37 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2323,7 +2323,7 @@ do {								\
 	if (src->type) {					\
 		int hlen = (((struct ip6_ext *)src->type)->ip6e_len + 1) << 3;\
 		dst->type = malloc(hlen, M_IP6OPT, canwait);	\
-		if (dst->type == NULL && canwait == M_NOWAIT)	\
+		if (dst->type == NULL)				\
 			goto bad;				\
 		memcpy(dst->type, src->type, hlen);		\
 	}							\
@@ -2338,14 +2338,14 @@ copypktopts(struct ip6_pktopts *dst, struct ip6_pktopts *src, int canwait)
 	if (src->ip6po_pktinfo) {
 		dst->ip6po_pktinfo = malloc(sizeof(*dst->ip6po_pktinfo),
 		    M_IP6OPT, canwait);
-		if (dst->ip6po_pktinfo == NULL && canwait == M_NOWAIT)
+		if (dst->ip6po_pktinfo == NULL)
 			goto bad;
 		*dst->ip6po_pktinfo = *src->ip6po_pktinfo;
 	}
 	if (src->ip6po_nexthop) {
 		dst->ip6po_nexthop = malloc(src->ip6po_nexthop->sa_len,
 		    M_IP6OPT, canwait);
-		if (dst->ip6po_nexthop == NULL && canwait == M_NOWAIT)
+		if (dst->ip6po_nexthop == NULL)
 			goto bad;
 		memcpy(dst->ip6po_nexthop, src->ip6po_nexthop,
 		    src->ip6po_nexthop->sa_len);
@@ -2375,7 +2375,7 @@ ip6_copypktopts(struct ip6_pktopts *src, int canwait)
 	struct ip6_pktopts *dst;
 
 	dst = malloc(sizeof(*dst), M_IP6OPT, canwait);
-	if (dst == NULL && canwait == M_NOWAIT)
+	if (dst == NULL)
 		return (NULL);
 	ip6_initpktopts(dst);
 
