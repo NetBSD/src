@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.21 2012/01/09 16:36:48 christos Exp $	*/
+/*	$NetBSD: ext.h,v 1.22 2012/01/10 23:39:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -81,7 +81,7 @@ extern void
 	add_slc(char, char, cc_t),
 	check_slc(void),
 	change_slc(int, int, cc_t),
-	cleanup(int),
+	cleanup(int) __dead,
 	clientstat(int, int, int),
 	copy_termbuf(char *, int),
 	deferslc(void),
@@ -91,8 +91,8 @@ extern void
 	dooption(int),
 	dontoption(int),
 	edithost(const char *, const char *),
-	fatal(int, const char *),
-	fatalperror(int, const char *),
+	fatal(int, const char *) __dead,
+	fatalperror(int, const char *) __dead,
 	get_slc_defaults(void),
 	init_env(void),
 	init_termbuf(void),
@@ -120,7 +120,7 @@ extern void
 	sendbrk(void),
 	sendsusp(void),
 	set_termbuf(void),
-	start_login(char *, int, char *),
+	start_login(char *, int, char *) __dead,
 	start_slc(int),
 	startslave(char *, int, char *),
 	suboption(void),
