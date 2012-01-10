@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.35 2012/01/09 16:08:55 christos Exp $	*/
+/*	$NetBSD: telnet.c,v 1.36 2012/01/10 13:49:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.35 2012/01/09 16:08:55 christos Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.36 2012/01/10 13:49:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1633,7 +1633,7 @@ env_opt_add(unsigned char *ep)
 	vp = env_getvalue(ep);
 	elen = 2 * (vp ? strlen((char *)vp) : 0) +
 		2 * strlen((char *)ep) + 6;
-	if ((opt_replyend - opt_replyp) < elen)
+	if ((unsigned int)(opt_replyend - opt_replyp) < elen)
 	{
 		unsigned char *p;
 		len = opt_replyend - opt_reply + elen;
