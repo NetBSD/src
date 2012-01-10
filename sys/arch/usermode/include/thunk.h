@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.57 2012/01/06 14:11:55 jmcneill Exp $ */
+/* $NetBSD: thunk.h,v 1.58 2012/01/10 12:04:56 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -66,6 +66,14 @@ struct thunk_termios {
 #define THUNK_PROT_READ		0x01
 #define THUNK_PROT_WRITE	0x02
 #define THUNK_PROT_EXEC		0x04
+
+#define THUNK_MADV_NORMAL	0x01
+#define THUNK_MADV_RANDOM	0x02
+#define THUNK_MADV_SEQUENTIAL	0x04
+#define THUNK_MADV_WILLNEED	0x08
+#define THUNK_MADV_DONTNEED	0x10
+#define THUNK_MADV_FREE		0x20
+
 
 struct aiocb;
 
@@ -138,6 +146,7 @@ void *	thunk_sbrk(intptr_t len);
 void *	thunk_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset);
 int	thunk_munmap(void *addr, size_t len);
 int	thunk_mprotect(void *addr, size_t len, int prot);
+int	thunk_madvise(void *addr, size_t len, int behav);
 int	thunk_posix_memalign(void **, size_t, size_t);
 
 int	thunk_idle(void);
