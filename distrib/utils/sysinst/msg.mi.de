@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.60 2012/01/09 01:51:47 riz Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.61 2012/01/10 21:02:47 gson Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -829,6 +829,24 @@ message set_X11_servers
 message set_X11_prog
 {X11 Programmierung}
 
+message set_source
+{Quelltexte}
+
+message set_syssrc
+{Kernel Quelltexte}
+
+message set_src
+{Basissystem Quelltexte}
+
+message set_sharesrc
+{Share Quelltexte}
+
+message set_gnusrc
+{GNU Quelltexte}
+
+message set_xsrc
+{X11 Quelltexte}
+
 message cur_distsets_row
 {%-27s %3s}
 
@@ -966,7 +984,8 @@ message Custom_installation {Benutzerdefinierte Installation}
 message hidden {** versteckt **}
 message Host {Host}
 message Base_dir {Basispfad}
-message Set_dir {Verzeichnis}
+message Set_dir_bin {Binärpaket-Verzeichnis}
+message Set_dir_src {Quelltext-Verzeichnis}
 message Xfer_dir {Zwischenspeicher}
 message User {Benutzer}
 message Password {Passwort}

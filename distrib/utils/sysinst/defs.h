@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.160 2012/01/05 22:18:36 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.161 2012/01/10 21:02:47 gson Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -122,6 +122,13 @@ enum {
     SET_MD_2,		/* Machine dependent set */
     SET_MD_3,		/* Machine dependent set */
     SET_MD_4,		/* Machine dependent set */
+    
+    /* Source sets */
+    SET_SYSSRC,
+    SET_SRC,
+    SET_SHARESRC,
+    SET_GNUSRC,
+    SET_XSRC,
 
     SET_LAST,
     SET_GROUP,		/* Start of submenu */
@@ -143,6 +150,9 @@ enum {
 
 /* All machine dependent sets */
 #define SET_MD SET_MD_1, SET_MD_2, SET_MD_3, SET_MD_4
+
+/* All source sets */
+#define SET_SOURCE SET_SYSSRC, SET_SRC, SET_SHARESRC, SET_GNUSRC, SET_XSRC
 
 /* Set list flags */
 #define SFLAG_MINIMAL	1
@@ -278,11 +288,17 @@ int  clean_xfer_dir;
 #define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL
 #endif
 
-/* Abs. path we extract from */
-char ext_dir[STRSIZE];
+/* Abs. path we extract binary sets from */
+char ext_dir_bin[STRSIZE];
 
-/* Place we look in all fs types */
-char set_dir[STRSIZE];
+/* Abs. path we extract source sets from */
+char ext_dir_src[STRSIZE];
+
+/* Place we look for binary sets in all fs types */
+char set_dir_bin[STRSIZE];
+
+/* Place we look for source sets in all fs types */
+char set_dir_src[STRSIZE];
 
 struct {
     char host[STRSIZE];
@@ -427,6 +443,9 @@ int	check_lfs_progs(void);
 void	init_set_status(int);
 void	customise_sets(void);
 void	umount_mnt2(void);
+int 	set_is_source(const char *);
+const char *set_dir_for_set(const char *);
+const char *ext_dir_for_set(const char *);
 
 /* from target.c */
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)
