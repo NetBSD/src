@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.99 2012/01/09 14:58:15 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.100 2012/01/10 10:09:49 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2012/01/09 14:58:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2012/01/10 10:09:49 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -251,12 +251,9 @@ pmap_bootstrap(void)
 #endif
 
 	/* protect the current kernel section */
-#if 0
-	int err;
 	err = thunk_mprotect((void *) kmem_k_start, kmem_k_end - kmem_k_start,
 		THUNK_PROT_READ | THUNK_PROT_EXEC);
 	assert(err == 0);
-#endif
 
 	/* initialize counters */
 	fpos = 0;
