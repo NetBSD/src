@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2012/01/10 12:26:45 skrll Exp $
+#	$NetBSD: Makefile,v 1.50 2012/01/10 12:27:54 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -117,7 +117,7 @@ MKNATIVE?=	${.CURDIR}/mknative-gcc
 
 bootstrap-libgcc: .configure_done
 	@echo 'Creating files needed for libgcc by a native bootstrap build.'
-	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} lib${MODULE} \
+	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} lib${MKNATIVE_TARGET} \
 		${.OBJDIR}/build ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM} \
 		${DESTDIR}
 
