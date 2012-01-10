@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.100 2012/01/10 10:09:49 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.101 2012/01/10 12:07:17 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2012/01/10 10:09:49 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2012/01/10 12:07:17 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -253,6 +253,13 @@ pmap_bootstrap(void)
 	/* protect the current kernel section */
 	err = thunk_mprotect((void *) kmem_k_start, kmem_k_end - kmem_k_start,
 		THUNK_PROT_READ | THUNK_PROT_EXEC);
+	assert(err == 0);
+
+	/* madvise the host kernel about our intentions with the memory */
+	/* no measured effect, but might make a difference on high load */
+	err = thunk_madvise((void *) kmem_user_start,
+		kmem_k_start - kmem_user_start,
+		THUNK_MADV_WILLNEED | THUNK_MADV_RANDOM);
 	assert(err == 0);
 
 	/* initialize counters */
