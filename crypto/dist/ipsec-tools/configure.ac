@@ -112,7 +112,7 @@ esac
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(limits.h sys/time.h unistd.h stdarg.h varargs.h)
-AC_CHECK_HEADERS(shadow.h)
+AC_CHECK_HEADERS(shadow.h strings.h)
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
