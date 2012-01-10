@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1366 2012/01/09 16:59:36 skrll Exp $
+# $NetBSD: mi,v 1.1367 2012/01/10 20:47:01 rkujawa Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -751,6 +751,7 @@
 ./usr/share/man/cat4/amiga/mfcs.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/mgnsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/mppb.0		man-sys-catman		.cat
+./usr/share/man/cat4/amiga/p5membar.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/p5pb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/qn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/ser.0		man-sys-catman		.cat
@@ -3645,6 +3646,7 @@
 ./usr/share/man/html4/amiga/mfcs.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/mgnsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/mppb.html		man-sys-htmlman		html
+./usr/share/man/html4/amiga/p5membar.html	man-sys-htmlman		html
 ./usr/share/man/html4/amiga/p5pb.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/qn.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/ser.html		man-sys-htmlman		html
@@ -6238,6 +6240,7 @@
 ./usr/share/man/man4/amiga/mfcs.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/mgnsc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/mppb.4		man-sys-man		.man
+./usr/share/man/man4/amiga/p5membar.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/p5pb.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/qn.4			man-sys-man		.man
 ./usr/share/man/man4/amiga/ser.4		man-sys-man		.man
