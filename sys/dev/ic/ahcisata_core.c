@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.32 2011/08/20 16:03:48 jakllsch Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.33 2012/01/10 01:43:05 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.32 2011/08/20 16:03:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.33 2012/01/10 01:43:05 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -579,7 +579,7 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 	ahci_channel_stop(sc, chp, flags);
 	if (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
 	    achp->ahcic_sstatus) != SStatus_DET_DEV) {
-		printf("%s: port reset failed\n", AHCINAME(sc));
+		printf("%s: port %d reset failed\n", AHCINAME(sc), chp->ch_channel);
 		/* XXX and then ? */
 	}
 	if (chp->ch_queue->active_xfer) {
