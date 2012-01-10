@@ -1,7 +1,7 @@
-/*	$NetBSD: p5pbvar.h,v 1.2 2012/01/10 20:29:50 rkujawa Exp $ */
+/*	$NetBSD: p5membarvar.h,v 1.1 2012/01/10 20:29:50 rkujawa Exp $ */
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,33 +29,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMIGA_P5PBVAR_H_
-
 #include <sys/types.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pciconf.h>
-#include <machine/pci_machdep.h>
+#include <sys/device.h>
 
-struct p5pb_autoconf_entry {
-	volatile char	*base;
-	uint32_t	size;
-	TAILQ_ENTRY(p5pb_autoconf_entry) entries;
+struct p5membar_softc {
+	device_t	sc_dev;
+
+	uint8_t		sc_type;
+#define P5MEMBAR_TYPE_INTERNAL	1	/* internal stuff, don't touch */
+#define P5MEMBAR_TYPE_MEMORY	2	/* PCI memory BAR */	
+
+	volatile char	*sc_base;	/* base PA */
+	uint32_t	sc_size;
 };
 
-struct p5pb_softc {
-	device_t				sc_dev;
-
-	volatile char				*ba;
-	struct bus_space_tag			pci_conf_area;
-	struct bus_space_tag			pci_mem_area;
-	struct bus_space_tag			pci_io_area;
-	struct amiga_pci_chipset		apc;
-
-	/* list of preconfigured BARs */
-	TAILQ_HEAD(, p5pb_autoconf_entry)	auto_bars;
-
-	bool(*p5pb_bus_map)(struct p5pb_softc *);
-
-};
-
-#endif /* _AMIGA_P5PBVAR_H_ */
