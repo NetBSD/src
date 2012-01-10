@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.56 2011/11/04 00:22:33 zoltan Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.57 2012/01/10 20:01:56 drochner Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -327,8 +327,7 @@ struct m_tag *ip6_findaux(struct mbuf *);
 void	ip6_delaux(struct mbuf *);
 
 int	ip6_mforward(struct ip6_hdr *, struct ifnet *, struct mbuf *);
-int	ip6_process_hopopts(struct mbuf *, u_int8_t *, int, u_int32_t *,
-				 u_int32_t *);
+int	ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 void	ip6_savecontrol(struct in6pcb *, struct mbuf **, struct ip6_hdr *,
 		struct mbuf *);
 void	ip6_notify_pmtu(struct in6pcb *, const struct sockaddr_in6 *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.142 2011/12/31 20:41:59 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.143 2012/01/10 20:01:56 drochner Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.142 2011/12/31 20:41:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.143 2012/01/10 20:01:56 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -317,10 +317,6 @@ ip6_output(
 #ifdef FAST_IPSEC
 	/* Check the security policy (SP) for the packet */
     
-	/* XXX For moment, we doesn't support packet with extented action */
-	if (optlen !=0)
-		goto freehdrs;
-
 	sp = ipsec6_check_policy(m,so,flags,&needipsec,&error);
 	if (error != 0) {
 		/*
@@ -858,28 +854,18 @@ skip_ipsec2:;
 	 * it must be examined and processed even by the source node.
 	 * (RFC 2460, section 4.)
 	 */
-	if (exthdrs.ip6e_hbh) {
-		struct ip6_hbh *hbh = mtod(exthdrs.ip6e_hbh, struct ip6_hbh *);
+	if (ip6->ip6_nxt == IPV6_HOPOPTS) {
 		u_int32_t dummy1; /* XXX unused */
 		u_int32_t dummy2; /* XXX unused */
+		int hoff = sizeof(struct ip6_hdr);
 
-		/*
-		 *  XXX: if we have to send an ICMPv6 error to the sender,
-		 *       we need the M_LOOP flag since icmp6_error() expects
-		 *       the IPv6 and the hop-by-hop options header are
-		 *       continuous unless the flag is set.
-		 */
-		m->m_flags |= M_LOOP;
-		m->m_pkthdr.rcvif = ifp;
-		if (ip6_process_hopopts(m, (u_int8_t *)(hbh + 1),
-		    ((hbh->ip6h_len + 1) << 3) - sizeof(struct ip6_hbh),
-		    &dummy1, &dummy2) < 0) {
+		if (ip6_hopopts_input(&dummy1, &dummy2, &m, &hoff)) {
 			/* m was already freed at this point */
 			error = EINVAL;/* better error? */
 			goto done;
 		}
-		m->m_flags &= ~M_LOOP; /* XXX */
-		m->m_pkthdr.rcvif = NULL;
+
+		ip6 = mtod(m, struct ip6_hdr *);
 	}
 
 #ifdef PFIL_HOOKS

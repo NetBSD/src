@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.135 2011/12/31 20:41:59 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.136 2012/01/10 20:01:56 drochner Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.135 2011/12/31 20:41:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.136 2012/01/10 20:01:56 drochner Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -161,7 +161,8 @@ percpu_t *ip6stat_percpu;
 static void ip6_init2(void *);
 static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
 
-static int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
+static int ip6_process_hopopts(struct mbuf *, u_int8_t *, int, u_int32_t *,
+	u_int32_t *);
 static struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
 static void sysctl_net_inet6_ip6_setup(struct sysctllog **);
 
@@ -882,7 +883,7 @@ ip6_getdstifaddr(struct mbuf *m)
  *
  * rtalertp - XXX: should be stored more smart way
  */
-static int
+int
 ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, 
 	struct mbuf **mp, int *offp)
 {
@@ -927,7 +928,7 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp,
  * (RFC2460 p7), opthead is pointer into data content in m, and opthead to
  * opthead + hbhlen is located in continuous memory region.
  */
-int
+static int
 ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen, 
 	u_int32_t *rtalertp, u_int32_t *plenp)
 {
