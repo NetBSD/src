@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35.38.9 2012/01/10 18:34:03 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.35.38.10 2012/01/10 18:36:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.9 2012/01/10 18:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.10 2012/01/10 18:36:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -152,8 +152,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				return (EFAULT);
 			if (MIPS_KSEG0_P(v + c - 1)) {
 				/*
-				 * If all of memory is in KSEG0, make sure
-				 * we don't beyond its limit.  (mips_avail_end
+				 * If all of memory is in KSEG0, make sure we
+				 * don't go beyond its limit.  (mips_avail_end
 				 * may be beyond the end of KSEG0).
 				 */
 				if (MIPS_KSEG0_TO_PHYS(v) >= mips_avail_end
