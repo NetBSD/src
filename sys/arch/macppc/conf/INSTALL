@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.113 2011/12/18 05:49:29 dholland Exp $
+#	$NetBSD: INSTALL,v 1.114 2012/01/11 16:29:32 macallan Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -55,7 +55,8 @@ options 	INET6		# IPV6
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
-options 	FONT_SONY8x16
+options 	FONT_GALLANT12x22	# big, Sun-like font
+options 	FONT_QVSS8x15		# a smaller font for lower resolutions
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
