@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/11/18 15:56:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2012/01/11 23:24:49 joerg Exp $
 
 LIB=	clangLex
 
@@ -14,6 +14,7 @@ SRCS+=	HeaderMap.cpp \
 	MacroInfo.cpp \
 	ModuleMap.cpp \
 	PPCaching.cpp \
+	PPCallbacks.cpp \
 	PPDirectives.cpp \
 	PPExpressions.cpp \
 	PPLexerChange.cpp \
