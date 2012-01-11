@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.16 2012/01/11 16:18:30 macallan Exp $	*/
+/*	$NetBSD: newport.c,v 1.17 2012/01/11 21:23:38 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.16 2012/01/11 16:18:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.17 2012/01/11 21:23:38 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,7 +536,7 @@ newport_attach_common(struct newport_devconfig *dc, struct gio_attach_args *ga)
 	wsfont_init();
 
 	dc->dc_font = wsfont_find(NULL, 8, 16, 0, WSDISPLAY_FONTORDER_L2R,
-	    WSDISPLAY_FONTORDER_L2R);
+	    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	if (dc->dc_font < 0)
 		panic("newport_attach_common: no suitable fonts");
 
