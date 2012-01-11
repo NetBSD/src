@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.23 2012/01/04 15:53:49 macallan Exp $	*/
+/* 	$NetBSD: wsfont.h,v 1.24 2012/01/11 15:52:32 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #define WSFONT_FLAG_OPT		0x01000000	/* use alternate font */
 #define WSFONT_GLYPH(c, font)	((uint8_t *)font->data + \
 		((c) - font->firstchar) * font->stride * font->fontheight)
+#define FONT_IS_ALPHA(f) ((f)->fontwidth <= (f)->stride)
+
 /*
  * Example:
  *
@@ -58,9 +60,13 @@
 struct wsdisplay_font;
 
 void	wsfont_init(void);
-int	wsfont_matches(struct wsdisplay_font *, const char *, int, int, int);
-int	wsfont_find(const char *, int, int, int, int, int);
-int	wsfont_find_aa(const char *, int, int, int, int, int);
+int	wsfont_matches(struct wsdisplay_font *, const char *, int, int, int, int);
+int	wsfont_find(const char *, int, int, int, int, int, int);
+#define WSFONT_FIND_BITMAP	1
+#define WSFONT_FIND_ALPHA	2
+#define WSFONT_FIND_ALL		0xff
+void	wsfont_walk(void (*)(struct wsdisplay_font *, void *, int), void *);
+
 int	wsfont_add(struct wsdisplay_font *, int);
 int	wsfont_remove(int);
 void	wsfont_enum(void (*)(const char *, int, int, int));
@@ -74,5 +80,7 @@ enum {
 	WSFONT_ROTATE_CCW,
 	WSFONT_ROTATE_UD
 };
+
+int	wsfont_make_cookie(int, int, int);
 
 #endif	/* !_WSFONT_H_ */
