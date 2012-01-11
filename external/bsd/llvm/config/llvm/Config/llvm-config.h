@@ -36,7 +36,9 @@
 #define LLVM_HAS_ATOMICS 1
 
 /* Host triple we were built on */
+#if 0
 #define LLVM_DEFAULT_TARGET_TRIPLE "x86_64--netbsd"
+#endif
 
 /* Installation directory for include files */
 #define LLVM_INCLUDEDIR "/usr/include"

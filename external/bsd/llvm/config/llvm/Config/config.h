@@ -545,7 +545,9 @@
 #define LLVM_DATADIR "/usr/share/llvm"
 
 /* Target triple LLVM will generate code for by default */
+#if 0
 #define LLVM_DEFAULT_TARGET_TRIPLE "x86_64--netbsd"
+#endif
 
 /* Installation directory for documentation */
 #define LLVM_DOCSDIR "/usr/share/doc/llvm"
