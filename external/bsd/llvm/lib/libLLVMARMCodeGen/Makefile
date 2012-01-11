@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/11/18 15:56:53 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2012/01/11 23:24:47 joerg Exp $
 
 LIB=	LLVMARMCodeGen
 
@@ -23,6 +23,7 @@ SRCS+=	ARMAsmPrinter.cpp \
 	ARMJITInfo.cpp \
 	ARMLoadStoreOptimizer.cpp \
 	ARMMCInstLower.cpp \
+	ARMMachineFunctionInfo.cpp \
 	ARMRegisterInfo.cpp \
 	ARMSelectionDAGInfo.cpp \
 	ARMSubtarget.cpp \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/11/18 15:56:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2012/01/11 23:24:49 joerg Exp $
 
 LIB=	clangStaticAnalyzerCore
 
@@ -39,6 +39,7 @@ SRCS+=	AggExprVisitor.cpp \
 	Store.cpp \
 	SValBuilder.cpp \
 	SVals.cpp \
+	SubEngine.cpp \
 	SymbolManager.cpp \
 	TextPathDiagnostics.cpp
 
