@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.76 2012/01/10 12:04:56 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.77 2012/01/11 12:37:50 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.76 2012/01/10 12:04:56 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.77 2012/01/11 12:37:50 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -479,6 +479,12 @@ int
 thunk_open(const char *path, int flags, mode_t mode)
 {
 	return open(path, flags, mode);
+}
+
+int
+thunk_close(int fd)
+{
+	return close(fd);
 }
 
 int
