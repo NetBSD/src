@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.12 2011/12/31 01:16:09 rkujawa Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.13 2012/01/11 17:27:45 plunky Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.12 2011/12/31 01:16:09 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.13 2012/01/11 17:27:45 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -378,9 +378,7 @@ btkbd_ioctl(void *self, unsigned long cmd, void *data, int flag,
 		break;
 
 	case WSKBDIO_SETLEDS:
-		mutex_enter(bt_lock);
 		btkbd_set_leds(sc, *(int *)data);
-		mutex_exit(bt_lock);
 		break;
 
 	case WSKBDIO_GETLEDS:
