@@ -1,7 +1,8 @@
-/*	$NetBSD: newport.c,v 1.15 2009/05/12 23:51:25 macallan Exp $	*/
+/*	$NetBSD: newport.c,v 1.16 2012/01/11 16:18:30 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
+ *               2009 Michael Lorenz
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.15 2009/05/12 23:51:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.16 2012/01/11 16:18:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +172,8 @@ rex3_read(struct newport_devconfig *dc, bus_size_t rexreg)
 static void
 rex3_wait_gfifo(struct newport_devconfig *dc)
 {
-	while (rex3_read(dc, REX3_REG_STATUS) & REX3_STATUS_GFXBUSY)
+	while (rex3_read(dc, REX3_REG_STATUS) &
+	    (REX3_STATUS_GFXBUSY | REX3_STATUS_PIPELEVEL_MASK))
 		;
 }
 
@@ -589,6 +591,7 @@ newport_attach(device_t parent, device_t self, void *aux)
 		    &newport_console_screen.scr_ri.ri_ops;
 		memcpy(&newport_textops, &newport_console_screen.scr_ri.ri_ops,
 		    sizeof(struct wsdisplay_emulops));
+		vcons_replay_msgbuf(&newport_console_screen);
 	}
 	wa.scrdata = &newport_screenlist;
 	wa.accessops = &newport_accessops;
@@ -651,7 +654,7 @@ newport_init_screen(void *cookie, struct vcons_screen *scr,
 
 	/*&ri->ri_bits = (char *)sc->sc_fb.fb_pixels;*/
 
-	rasops_init(ri, dc->dc_yres / 8, dc->dc_xres / 8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, dc->dc_yres / ri->ri_font->fontheight,
@@ -777,6 +780,7 @@ newport_putchar(void *c, int row, int col, u_int ch, long attr)
 
 		bitmap += font->stride;
 	}
+	rex3_wait_gfifo(dc);
 }
 
 static void
@@ -905,6 +909,12 @@ newport_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				rex3_wait_gfifo(dc);
 				newport_setup_hw(dc);
 				vcons_redraw_screen(vd->active);
+			} else {
+				xmap9_write_mode(dc, 0,
+	    			    XMAP9_MODE_GAMMA_BYPASS |
+				    XMAP9_CONFIG_RGBMAP_2 |
+	    			    XMAP9_MODE_PIXSIZE_24BPP);
+				xmap9_write(dc, XMAP9_DCBCRS_MODE_SELECT, 0);
 			}
 		}
 		return 0;
@@ -924,5 +934,5 @@ newport_mmap(void *v, void *vs, off_t offset, int prot)
 	if ( offset >= 0xfffff)
 		return -1;
 
-	return mips_btop(dc->dc_addr + offset);
+	return bus_space_mmap(dc->dc_st, dc->dc_sh, offset, prot, 0);
 }
