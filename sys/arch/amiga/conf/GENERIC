@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.279 2012/01/10 20:29:49 rkujawa Exp $
+# $NetBSD: GENERIC,v 1.280 2012/01/11 17:04:29 rkujawa Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.90 2011/12/26 13:07:24 mlelstv Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.91 2012/01/10 20:29:50 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.279 $"
+#ident 		"GENERIC-$Revision: 1.280 $"
 
 
 maxusers	8
@@ -481,6 +481,8 @@ pci*		at p5pb0
 
 mppb*           at zbus0		# Matay Prometheus Zorro-PCI bridge
 pci*            at mppb?
+
+#cv3dpb*	at zbus0		# CyberVision 64/3D PCI bridge
 
 #genfb*		at pci?			# generic fb, CVPPC/BVPPC only
 ne*             at pci?			# NE2000 Ethernet

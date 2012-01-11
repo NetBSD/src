@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.151 2012/01/10 20:29:50 rkujawa Exp $
+#	$NetBSD: files.amiga,v 1.152 2012/01/11 17:04:29 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -514,6 +514,7 @@ file	arch/amiga/dev/bppcsc.c		bppcsc needs-flag
 # PCI bus
 file	arch/amiga/pci/p5pb.c		pci
 file	arch/amiga/pci/mppb.c		pci
+file	arch/amiga/pci/cv3dpb.c		pci
 file	arch/amiga/pci/pci_machdep.c	pci
 
 device	p5pb: pcibus
@@ -521,6 +522,9 @@ attach	p5pb at p5bus
 
 device	mppb: pcibus
 attach	mppb at zbus
+
+device	cv3dpb: pcibus
+attach	cv3dpb at zbus
 
 include	"dev/i2o/files.i2o"
 include	"dev/pci/files.pci"
