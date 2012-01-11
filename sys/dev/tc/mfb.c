@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.57 2010/11/13 13:52:12 uebayasi Exp $ */
+/* $NetBSD: mfb.c,v 1.58 2012/01/11 21:12:36 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.57 2010/11/13 13:52:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.58 2012/01/11 21:12:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,10 +296,10 @@ mfb_common_init(struct rasops_info *ri)
 	wsfont_init();
 	/* prefer 12 pixel wide font */
 	cookie = wsfont_find(NULL, 12, 0, 0, WSDISPLAY_FONTORDER_L2R,
-	    WSDISPLAY_FONTORDER_L2R);
+	    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	if (cookie <= 0)
 		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_L2R,
-		    WSDISPLAY_FONTORDER_L2R);
+		    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	if (cookie <= 0) {
 		printf("mfb: font table is empty\n");
 		return;

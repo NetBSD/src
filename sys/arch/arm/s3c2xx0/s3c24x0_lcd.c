@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.c,v 1.7 2011/07/01 20:31:39 dyoung Exp $ */
+/* $NetBSD: s3c24x0_lcd.c,v 1.8 2012/01/11 21:15:46 macallan Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.7 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.8 2012/01/11 21:15:46 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -560,7 +560,7 @@ s3c24x0_lcd_alloc_screen(void *v, const struct wsscreen_descr *_type,
 
 		cookie = wsfont_find(NULL, type->c.fontwidth, 
 		    type->c.fontheight, 0, WSDISPLAY_FONTORDER_L2R,
-		    WSDISPLAY_FONTORDER_L2R);
+		    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 
 		if (cookie > 0) {
 			if (wsfont_lock(cookie, &scr->rinfo.ri_font))

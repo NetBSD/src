@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.36 2010/11/13 13:52:12 uebayasi Exp $ */
+/* $NetBSD: sfbplus.c,v 1.37 2012/01/11 21:12:36 macallan Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.36 2010/11/13 13:52:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.37 2012/01/11 21:12:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,10 +392,10 @@ sfbp_common_init(struct rasops_info *ri)
 	wsfont_init();
 	/* prefer 12 pixel wide font */
 	cookie = wsfont_find(NULL, 12, 0, 0, WSDISPLAY_FONTORDER_R2L,
-	    WSDISPLAY_FONTORDER_L2R);
+	    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	if (cookie <= 0)
 		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_R2L,
-		    WSDISPLAY_FONTORDER_L2R);
+		    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	if (cookie <= 0) {
 		printf("sfbp: font table is empty\n");
 		return;
