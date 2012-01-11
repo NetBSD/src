@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2011/12/19 14:07:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2012/01/11 23:24:47 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -18,8 +18,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	DeadMachineInstructionElim.cpp \
 	DwarfEHPrepare.cpp \
 	EdgeBundles.cpp \
-	ELFCodeEmitter.cpp \
-	ELFWriter.cpp \
 	ExecutionDepsFix.cpp \
 	ExpandISelPseudos.cpp \
 	ExpandPostRAPseudos.cpp \
@@ -30,6 +28,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	InlineSpiller.cpp \
 	InterferenceCache.cpp \
 	IntrinsicLowering.cpp \
+	JITCodeEmitter.cpp \
 	LLVMTargetMachine.cpp \
 	LatencyPriorityQueue.cpp \
 	LexicalScopes.cpp \
@@ -46,6 +45,8 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineBranchProbabilityInfo.cpp \
 	MachineBlockFrequencyInfo.cpp \
 	MachineBlockPlacement.cpp \
+	MachineCodeEmitter.cpp \
+	MachineCopyPropagation.cpp \
 	MachineCSE.cpp \
 	MachineDominators.cpp \
 	MachineFunction.cpp \
@@ -64,7 +65,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineSSAUpdater.cpp \
 	MachineSink.cpp \
 	MachineVerifier.cpp \
-	ObjectCodeEmitter.cpp \
 	OcamlGC.cpp \
 	OptimizePHIs.cpp \
 	PHIElimination.cpp \
