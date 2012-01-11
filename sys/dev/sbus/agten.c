@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.27 2010/11/15 05:59:57 uebayasi Exp $ */
+/*	$NetBSD: agten.c,v 1.28 2012/01/11 16:08:57 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.27 2010/11/15 05:59:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.28 2012/01/11 16:08:57 macallan Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -469,7 +469,7 @@ agten_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_CLEAR;
 	}
 
-	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
