@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.28 2011/10/08 00:22:25 kiyohara Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.29 2012/01/11 16:02:30 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.28 2011/10/08 00:22:25 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.29 2012/01/11 16:02:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1048,7 +1048,7 @@ voodoofb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_CLEAR;
 	}
 	
-	rasops_init(ri, sc->height/8, sc->width/8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, sc->height / ri->ri_font->fontheight,

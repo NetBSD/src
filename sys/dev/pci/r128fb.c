@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.26 2012/01/04 15:56:18 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.27 2012/01/11 16:02:29 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.26 2012/01/04 15:56:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.27 2012/01/11 16:02:29 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -534,7 +534,7 @@ r128fb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (sc->sc_depth == 8)
 		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 
-	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 #ifdef VCONS_DRAW_INTR
 	scr->scr_flags |= VCONS_DONT_READ;

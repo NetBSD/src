@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.51 2012/01/05 21:40:03 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.52 2012/01/11 16:02:30 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.51 2012/01/05 21:40:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.52 2012/01/11 16:02:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2192,7 +2192,7 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	 */
 
 	/* initialize and look for an initial font */
-	rasops_init(ri, dp->rd_virty/8, dp->rd_virtx/8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, dp->rd_virty / ri->ri_font->fontheight,
