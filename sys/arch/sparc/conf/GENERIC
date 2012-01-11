@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.229 2011/12/18 05:49:32 dholland Exp $
+# $NetBSD: GENERIC,v 1.230 2012/01/11 17:18:51 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.229 $"
+#ident 		"GENERIC-$Revision: 1.230 $"
 
 maxusers	32
 
@@ -67,7 +67,7 @@ options 	WSDISPLAY_SCROLLSUPPORT
 
 # generic options vlid for both wscons and RASTERCONSOLE
 options 	FONT_GALLANT12x22	# the console font
-#options 	FONT_BOLD8x16		# a somewhat smaller font
+options 	FONT_BOLD8x16		# a somewhat smaller font
 
 #### System options that are the same for all ports
 
