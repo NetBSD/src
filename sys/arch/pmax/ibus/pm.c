@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.10 2011/07/09 17:32:30 matt Exp $	*/
+/*	$NetBSD: pm.c,v 1.11 2012/01/11 21:17:33 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.10 2011/07/09 17:32:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.11 2012/01/11 21:17:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -266,13 +266,13 @@ pm_common_init(void)
 	wsfont_init();
 	if (ri->ri_depth == 8)
 		cookie = wsfont_find(NULL, 12, 0, 0, bior,
-		    WSDISPLAY_FONTORDER_L2R);
+		    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	else
 		cookie = wsfont_find(NULL, 8, 0, 0, bior,
-		    WSDISPLAY_FONTORDER_L2R);
+		    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	if (cookie <= 0)
 		cookie = wsfont_find(NULL, 0, 0, 0, bior,
-		    WSDISPLAY_FONTORDER_L2R);
+		    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	if (cookie <= 0) {
 		printf("pm: font table is empty\n");
 		return;
