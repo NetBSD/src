@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.50 2011/07/26 08:59:37 mrg Exp $ */
+/*	$NetBSD: igsfb.c,v 1.51 2012/01/11 16:12:38 macallan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.50 2011/07/26 08:59:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.51 2012/01/11 16:12:38 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -455,7 +455,7 @@ igsfb_init_wsdisplay(void *cookie, struct vcons_screen *scr, int existing,
 
 
 	/* XXX: TODO: compute term size based on font dimensions? */
-	rasops_init(ri, 34, 80);
+	rasops_init(ri, 0, 0);
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 	    ri->ri_width / ri->ri_font->fontwidth);
 
