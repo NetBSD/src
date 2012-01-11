@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.69 2012/01/04 20:17:05 macallan Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.70 2012/01/11 15:52:32 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.69 2012/01/04 20:17:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.70 2012/01/11 15:52:32 macallan Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -52,6 +52,20 @@ __KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.69 2012/01/04 20:17:05 macallan Exp $")
 #ifndef _KERNEL
 #include <errno.h>
 #endif
+
+#ifdef RASOPS_DEBUG
+#define DPRINTF aprint_error
+#else
+#define DPRINTF while (0) printf
+#endif
+
+struct rasops_matchdata {
+	struct rasops_info *ri;
+	int wantcols, wantrows;
+	int bestscore;
+	struct wsdisplay_font *pick;
+	int ident;
+};	
 
 /* ANSI colormap (R,G,B). Upper 8 are high-intensity */
 const u_char rasops_cmap[256*3] = {
@@ -167,6 +181,57 @@ void	rasops_make_box_chars_alpha(struct rasops_info *);
 extern int cold;
 
 /*
+ * Rate a font based on how many character cells we would get out of it in the
+ * current video mode. Lower is better.
+ */
+static void
+rasops_matches(struct wsdisplay_font *font, void *cookie, int ident)
+{
+	struct rasops_matchdata *md = cookie;
+	struct rasops_info *ri = md->ri;
+	int cols, score = 1;
+
+	/* first weed out fonts the caller doesn't claim support for */
+	if (FONT_IS_ALPHA(font)) {
+		/*
+		 * If we end up with a bitmap font and an alpha font with
+		 * otherwise identical scores, prefer alpha
+		 */
+		score = 0;
+		if ((ri->ri_flg & RI_ENABLE_ALPHA) == 0)
+			return;
+	}
+	cols = ri->ri_width / font->fontwidth;
+	/*
+	 * if the font is too small to allow 80 columns give those closer to
+	 * 80 a better score but with a huge penalty compared to fonts that
+	 * give us 80 columns or more
+	 */ 
+	if (cols < md->wantcols) {
+		score += 100000 + 2 * (md->wantcols - cols);
+	} else 
+		score += 2 * cols;
+	DPRINTF("%s: %d\n", font->name, score);
+	if (score < md->bestscore) {
+		md->bestscore = score;
+		md->pick = font;
+		md->ident = ident;
+	}
+}
+
+static int
+rasops_find(struct rasops_info *ri, int wantrows, int wantcols)
+{
+	struct rasops_matchdata md =
+	    { ri, wantcols, wantrows, 1000000, NULL, 0};
+
+	wsfont_walk(rasops_matches, &md);
+	if (md.pick == NULL)
+		return -1;
+	return (wsfont_make_cookie(md.ident, WSDISPLAY_FONTORDER_L2R,
+			    WSDISPLAY_FONTORDER_L2R));
+}
+/*
  * Initialize a 'rasops_info' descriptor.
  */
 int
@@ -181,22 +246,21 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 
 		wsfont_init();
 
-		if (ri->ri_flg & RI_ENABLE_ALPHA) {
-			/* try finding an AA font first */
-			cookie = wsfont_find_aa(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_L2R,
-			    WSDISPLAY_FONTORDER_L2R);
-		}
-		if (cookie == -1) {
-			/* Want 8 pixel wide, don't care about aesthetics */
-			cookie = wsfont_find(NULL, 8, 0, 0, WSDISPLAY_FONTORDER_L2R,
-			    WSDISPLAY_FONTORDER_L2R);
-		}
-		if (cookie <= 0)
-			cookie = wsfont_find(NULL, 0, 0, 0,
-			    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R);
+		/*
+		 * first, try to find something that's as close as possible
+		 * to the caller's requested terminal size
+		 */ 
+		if (wantrows == 0)
+			wantrows = RASOPS_DEFAULT_HEIGHT;
+		if (wantcols == 0)
+			wantcols = RASOPS_DEFAULT_WIDTH;
+		cookie = rasops_find(ri, wantrows, wantcols);
 
+		/*
+		 * this means there is no supported font in the list
+		 */
 		if (cookie <= 0) {
-			printf("rasops_init: font table is empty\n");
+			aprint_error("rasops_init: font table is empty\n");
 			return (-1);
 		}
 
@@ -214,7 +278,7 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 #endif
 
 		if (wsfont_lock(cookie, &ri->ri_font)) {
-			printf("rasops_init: couldn't lock font\n");
+			aprint_error("rasops_init: couldn't lock font\n");
 			return (-1);
 		}
 
@@ -225,12 +289,12 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 	/* This should never happen in reality... */
 #ifdef DEBUG
 	if ((long)ri->ri_bits & 3) {
-		printf("rasops_init: bits not aligned on 32-bit boundary\n");
+		aprint_error("rasops_init: bits not aligned on 32-bit boundary\n");
 		return (-1);
 	}
 
 	if ((int)ri->ri_stride & 3) {
-		printf("rasops_init: stride not aligned on 32-bit boundary\n");
+		aprint_error("rasops_init: stride not aligned on 32-bit boundary\n");
 		return (-1);
 	}
 #endif
@@ -251,6 +315,11 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	int bpp, s, len;
 
 	s = splhigh();
+
+	if (wantrows == 0)
+		wantrows = RASOPS_DEFAULT_HEIGHT;
+	if (wantcols == 0)
+		wantcols = RASOPS_DEFAULT_WIDTH;
 
 	/* throw away old line drawing character bitmaps, if we have any */
 	if (ri->ri_optfont.data != NULL) {
