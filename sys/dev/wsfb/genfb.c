@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.45 2012/01/04 20:18:28 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.46 2012/01/11 16:13:11 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.45 2012/01/04 20:18:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.46 2012/01/11 16:13:11 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,7 +514,7 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
 
 
-	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
