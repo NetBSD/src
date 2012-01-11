@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.50 2010/11/23 22:14:27 mrg Exp $ */
+/*	$NetBSD: cgsix.c,v 1.51 2012/01/11 16:10:13 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.50 2010/11/23 22:14:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.51 2012/01/11 16:10:13 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1250,7 +1250,7 @@ cgsix_init_screen(void *cookie, struct vcons_screen *scr,
 	if (sc->sc_fhcrev < 2)
 		memset(sc->sc_fb.fb_pixels, (*defattr >> 16) & 0xff,
 		    sc->sc_stride * sc->sc_height);
-	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
