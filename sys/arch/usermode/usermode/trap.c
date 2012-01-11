@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.54 2012/01/07 19:45:14 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.55 2012/01/11 12:40:26 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54 2012/01/07 19:45:14 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55 2012/01/11 12:40:26 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,13 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54 2012/01/07 19:45:14 reinoud Exp $");
 #include <machine/thunk.h>
 
 
-//#include <machine/ctlreg.h>
-//#include <machine/trap.h>
-//#include <machine/instr.h>
-//#include <machine/userret.h>
-
 /* forwards and externals */
 void setup_signal_handlers(void);
+void stop_all_signal_handlers(void);
+
 static void mem_access_handler(int sig, siginfo_t *info, void *ctx);
 static void illegal_instruction_handler(int sig, siginfo_t *info, void *ctx);
 extern int errno;
@@ -61,10 +58,13 @@ bool pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype);
 
 static stack_t sigstk;
 
+
 void
 startlwp(void *arg)
 {
+	/* nothing here */
 }
+
 
 void
 setup_signal_handlers(void)
@@ -102,6 +102,17 @@ setup_signal_handlers(void)
 }
 
 
+void
+stop_all_signal_handlers(void)
+{
+	thunk_sigblock(SIGALRM);
+	thunk_sigblock(SIGIO);
+	thunk_sigblock(SIGILL);
+	thunk_sigblock(SIGSEGV);
+	thunk_sigblock(SIGBUS);
+}
+
+
 static void
 mem_access_handler(int sig, siginfo_t *info, void *ctx)
 {
@@ -116,15 +127,6 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 		panic("received signal %d with no info",
 		    info->si_signo);
 
-//printf("sigsegv\n");
-#if 0
-	va = (vaddr_t) info->si_addr;
-	thunk_printf_debug("mem trap lwp = %p pid = %d lid = %d, va = %p\n",
-	    curlwp,
-	    curlwp->l_proc->p_pid,
-	    curlwp->l_lid,
-	    (void *) va);
-#endif
 #if 0
 	thunk_printf_debug("SIGSEGV or SIGBUS!\n");
 	thunk_printf_debug("\tsi_signo = %d\n", info->si_signo);
@@ -154,26 +156,15 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	/* get PC address of faulted memory instruction */
 	pc = md_get_pc(ctx);
 
-#if 0	/* disabled for now, these checks need to move */
-#ifdef DIAGNOSTIC
-	/* sanity */
-	if ((va < VM_MIN_ADDRESS) || (va >= VM_MAX_KERNEL_ADDRESS))
-		panic("peeing outside the box! (va=%p)", (void *)va);
-
-	/* extra debug for now -> should issue signal */
-	if (va == 0)
-		panic("NULL deref\n");
+#if 0
+	thunk_printf("memaccess error : pc = %p, va = %p\n",
+		(void *) pc, (void *) va);
 #endif
-#endif
-
-//	thunk_printf("memaccess error : pc = %p, va = %p\n",
-//		(void *) pc, (void *) va);
 
 	/* copy this state to return to */
 	memcpy(&pcb->pcb_trapret_ucp, uct, sizeof(ucontext_t));
 
 	/* remember our parameters */
-//	assert((void *) pcb->pcb_fault_addr == NULL);
 	pcb->pcb_fault_addr = va;
 	pcb->pcb_fault_pc   = pc;
 
@@ -190,21 +181,6 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 	struct pcb *pcb;
 
 	assert(info->si_signo == SIGILL);
-#if 0
-	sigset_t ss;
-	thunk_sigemptyset(&ss);
-	thunk_sigaddset(&ss, SIGALRM);
-	thunk_sigaddset(&ss, SIGILL);
-	thunk_sigprocmask(SIG_UNBLOCK, &ss, NULL);
-#endif
-
-#if 0
-	printf("\nillegal instruction trap lwp = %p pid = %d lid = %d, va = %p\n",
-	    curlwp,
-	    curlwp->l_proc->p_pid,
-	    curlwp->l_lid,
-	    (void *) info->si_addr);
-#endif
 #if 0
 	thunk_printf("SIGILL!\n");
 	thunk_printf("\tsi_signo = %d\n", info->si_signo);
@@ -284,8 +260,10 @@ pagefault(void)
 	if (from_kernel && (va >= VM_MIN_KERNEL_ADDRESS))
 		vm_map = kernel_map;
 
-//	thunk_printf_debug("pagefault : pc %p, va %p\n",
-//		(void *) pc, (void *) va);
+#if 0
+	thunk_printf_debug("pagefault : pc %p, va %p\n",
+		(void *) pc, (void *) va);
+#endif
 
 	/* can pmap handle it? on its own? (r/m) */
 	onfault = pcb->pcb_onfault;
@@ -312,6 +290,7 @@ pagefault(void)
 			if (!onfault)
 				panic("kernel fault");
 			panic("%s: can't call onfault yet\n", __func__);
+			/* XXX implement me ? */
 			/* jump to given onfault */
 			// tf = &kernel_tf;
 			// memset(tf, 0, sizeof(struct trapframe));
