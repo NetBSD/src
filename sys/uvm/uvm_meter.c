@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.56.4.6 2011/12/26 16:03:11 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.56.4.7 2012/01/11 00:08:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.56.4.6 2011/12/26 16:03:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.56.4.7 2012/01/11 00:08:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,6 +321,12 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       CTLTYPE_BOOL, "idlezero",
 		       SYSCTL_DESCR("Whether try to zero pages in idle loop"),
 		       NULL, 0, &vm_page_zero_enable, 0,
+		       CTL_VM, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "loanread",
+		       SYSCTL_DESCR("Use page loaning for read"),
+		       NULL, 0, &vm_loan_read, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
 
 	uvmpdpol_sysctlsetup();
