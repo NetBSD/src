@@ -1,5 +1,5 @@
-/*	Id: cgram.y,v 1.341 2011/09/03 07:43:43 ragge Exp 	*/	
-/*	$NetBSD: cgram.y,v 1.1.1.5 2012/01/11 20:33:09 plunky Exp $	*/
+/*	Id: cgram.y,v 1.2 2012/01/04 19:04:08 ragge Exp 	*/	
+/*	$NetBSD: cgram.y,v 1.1.1.1 2012/01/11 20:33:17 plunky Exp $	*/
 
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -123,6 +123,17 @@
 %token	C_ATTRIBUTE	/* COMPAT_GCC */
 %token	PCC_OFFSETOF
 %token	GCC_DESIG
+%token	CXX_NAMESPACE
+%token	CXX_DUALCC
+%token	CXX_TEMPLATE
+%token	CXX_USING
+%token	CXX_TYPENAME
+%token	CXX_CASTS
+%token	CXX_THROW
+%token	CXX_MORENM
+%token	CXX_NEW
+%token	CXX_DELETE
+%token	CXX_CLASS
 
 /*
  * Precedence
@@ -161,8 +172,8 @@ static int attrwarn = 1;
 #define	NORETYP	SNOCREAT /* no return type, save in unused field in symtab */
 
        NODE *bdty(int op, ...);
-static void fend(void);
-static void fundef(NODE *tp, NODE *p);
+static void fend(struct symtab *);
+static struct symtab *fundef(NODE *tp, NODE *p);
 static void olddecl(NODE *p, NODE *a);
 static struct symtab *init_declarator(NODE *tn, NODE *p, int assign, NODE *a);
 static void resetbc(int mask);
@@ -225,7 +236,7 @@ struct savbc {
 }
 
 	/* define types */
-%start ext_def_list
+%start edf
 
 %type <intval> ifelprefix ifprefix whprefix forprefix doprefix switchpart
 		xbegin
@@ -236,12 +247,13 @@ struct savbc {
 		declaration_specifiers designation
 		specifier_qualifier_list merge_specifiers
 		identifier_list arg_param_list type_qualifier_list
-		designator_list designator xasm oplist oper cnstr funtype
+		designator_list designator xasm oplist oper cnstr 
 		typeof attribute attribute_specifier /* COMPAT_GCC */
 		attribute_list attr_spec_list attr_var /* COMPAT_GCC */
-%type <strp>	string C_STRING GCC_DESIG
+		new_ma new_type_sq new_ds nmrec
+%type <strp>	string C_STRING GCC_DESIG nsname CXX_MORENM
 %type <rp>	str_head
-%type <symp>	xnfdeclarator clbrace enum_head
+%type <symp>	xnfdeclarator clbrace enum_head funtype
 
 %type <intval>  C_STRUCT C_RELOP C_DIVOP C_SHIFTOP
 		C_ANDAND C_OROR C_STROP C_INCOP C_UNOP C_ASOP C_EQUOP
@@ -250,28 +262,100 @@ struct savbc {
 %type <strp>	C_NAME C_TYPENAME
 %%
 
-ext_def_list:	   ext_def_list external_def
+edf:		  ext_def_list
 		| { ftnend(); }
 		;
 
-external_def:	   funtype kr_args compoundstmt { fend(); }
+ext_def_list:	  ext_def_list external_def
+		| external_def
+		;
+
+external_def:	   funtype kr_args compoundstmt { fend($1); }
 		|  declaration  { blevel = 0; symclear(0); }
-		|  asmstatement ';'
+		| namespace
+		| extlink
+		| blockdcl
 		|  ';'
 		|  error { blevel = 0; }
 		;
 
 funtype:	  /* no type given */ declarator {
-		    fundef(mkty(INT, 0, 0), $1);
+		    $$ = fundef(mkty(INT, 0, 0), $1);
 		    cftnsp->sflags |= NORETYP;
 		}
-		| declaration_specifiers declarator { fundef($1,$2); }
+		| declaration_specifiers declarator { $$ = fundef($1,$2); }
 		;
 
 kr_args:	  /* empty */
 		| arg_dcl_list
 		;
 
+blockdcl:	  simple_decl
+		| asmstatement
+		| ns_alias
+		| using_x
+		;
+
+using_x:	  CXX_USING tnopt ccopt nested_name_sp ';' { werror("using"); }
+		| CXX_USING CXX_NAMESPACE ccopt nested_name_sp ';' { werror("using2"); }
+		;
+
+tnopt:		  CXX_TYPENAME { }
+		| { }
+		;
+
+ns_alias:	  CXX_NAMESPACE C_NAME '=' qual_ns_sp ';' { werror("ns_alias");}
+		;
+
+qual_ns_sp:	  ccopt nested_name_sp
+		;
+
+nested_name_sp:   nmtnm
+		| nmtnm CXX_DUALCC nested_name_sp
+		| nmtnm CXX_DUALCC CXX_TEMPLATE nested_name_sp
+		;
+
+nmtnm:		  C_NAME
+		| C_TYPENAME
+		;
+
+ccopt:		  CXX_DUALCC
+		| { }
+		;
+
+simple_decl:	  ')' NOMATCH { uerror("simple-declaration"); }
+		;
+
+namespace:	  CXX_NAMESPACE nsname attr_var nsbeg ns_body '}' { POPSYM(); }
+		;
+
+nsname:		  C_NAME
+		| { $$ = NULL; }
+		;
+ 
+ns_body:	  ext_def_list
+		| { }
+		;
+
+nsbeg:		  '{' { dclns($<nodep>0, $<strp>-1); }
+		;
+
+extlink:	  C_CLASS C_STRING eb '{' ext_def_list '}' { elnk = LINK_DEF; }
+		| C_CLASS C_STRING eb '{' '}' { elnk = LINK_DEF; }
+		| C_CLASS C_STRING eb declaration { elnk = LINK_DEF; }
+		;
+
+eb:		  {
+			NODE *p = $<nodep>-1;
+			char *s = $<strp>0;
+			if (p->n_type != EXTERN)
+				uerror("'extern' expected");
+			if (strcmp(s, "\"C\"") != 0 && strcmp(s, "\"c\""))
+				uerror("unknown linkage %s", s);
+			nfree(p);
+			elnk = LINK_C;
+		}
+		;
 /*
  * Returns a node pointer or NULL, if no types at all given.
  * Type trees are checked for correctness and merged into one
@@ -312,6 +396,29 @@ typeof:		   C_TYPEOF '(' e ')' { $$ = tyof(eve($3)); }
 		|  C_TYPEOF '(' cast_type ')' { TYMFIX($3); $$ = tyof($3); }
 		;
 
+new_ma:		   new_type_sq
+		|  new_type_sq new_ma { $$ = cmop($2, $1); }
+		|  cf_spec { $$ = $1; }
+		|  cf_spec new_ma { $$ = cmop($2, $1); }
+		;
+
+new_ds:		   new_ma { $$ = typenode($1); }
+		;
+
+new_type_sq:	   C_TYPE { $$ = $1; }
+		|  C_TYPENAME { 
+			struct symtab *sp = lookup($1, 0);
+			if (sp->stype == ENUMTY) {
+				sp->stype = strmemb(sp->sap)->stype;
+			}
+			$$ = mkty(sp->stype, sp->sdf, sp->sap);
+			$$->n_sp = sp;
+		}
+		|  struct_dcl { $$ = $1; }
+		|  enum_dcl { $$ = $1; }
+		|  C_QUALIFIER { $$ = $1; }
+		;
+
 attribute_specifier :
 		   C_ATTRIBUTE '(' '(' attribute_list ')' ')' { $$ = $4; }
  /*COMPAT_GCC*/	;
@@ -339,6 +446,7 @@ declarator:	   '*' declarator { $$ = bdty(UMUL, $2); }
 			$$ = $2;
 			$$->n_left = $3;
 		}
+		|  nmrec C_NAME { $$ = biop(NMLIST, $1, bdty(NAME, $2)); }
 		|  C_NAME { $$ = bdty(NAME, $1); }
 		|  '(' attr_spec_list declarator ')' {
 			$$ = $3;
@@ -402,6 +510,7 @@ parameter_type_list:
  * No CM nodes if only one parameter.
  */
 parameter_list:	   parameter_declaration { $$ = $1; }
+		|  parameter_declaration '&' { $$ = $1; }
 		|  parameter_list ',' parameter_declaration {
 			$$ = cmop($1, $3);
 		}
@@ -556,6 +665,10 @@ struct_dcl:	   str_head '{' struct_dcl_list '}' {
 			$$ = rstruct($3,$1);
 			uawarn($2, "struct_dcl");
 		}
+		|  C_STRUCT attr_var nmrec C_NAME { 
+			$$ = cxxrstruct($1,$2,$3,$4);
+			uawarn($2, "struct_dcl");
+		}
  /*COMPAT_GCC*/	|  str_head '{' '}' { $$ = dclstruct($1); }
 		;
 
@@ -587,9 +700,10 @@ struct_dcl_list:   struct_declaration
 		;
 
 struct_declaration:
-		   specifier_qualifier_list struct_declarator_list optsemi {
+		   declaration_specifiers struct_declarator_list optsemi {
 			tfree($1);
 		}
+		|  C_NAME ':' { /* cxxaccess($1); */ }
 		;
 
 optsemi:	   ';' { }
@@ -617,7 +731,7 @@ struct_declarator: declarator attr_var {
 			p = tymerge($<nodep>0, tymfix($1));
 			if ($2)
 				p->n_ap = attr_add(p->n_ap, gcc_attr_parse($2));
-			soumemb(p, (char *)$1->n_sp, 0);
+			soumemb(p, (char *)$1->n_sp, $<nodep>0->n_lval);
 			tfree(p);
 		}
 		|  ':' e {
@@ -783,7 +897,7 @@ begin:		  '{' {
 		}
 		;
 
-statement:	   e ';' { ecomp(eve($1)); symclear(blevel); }
+statement:	   e ';' { /* fwalk($1, eprint, 0); */ ecomp(eve($1)); symclear(blevel); }
 		|  compoundstmt
 		|  ifprefix statement { plabel($1); reached = 1; }
 		|  ifelprefix statement {
@@ -1039,12 +1153,12 @@ elist:		   { $$ = NIL; }
  * Precedence order of operators.
  */
 e:		   e ',' e { $$ = biop(COMOP, $1, $3); }
-		|  e '=' e {  $$ = biop(ASSIGN, $1, $3); }
-		|  e C_ASOP e {  $$ = biop($2, $1, $3); }
+		|  e '=' e { $$ = biop(ASSIGN, $1, $3); }
+		|  e C_ASOP e { $$ = biop($2, $1, $3); }
 		|  e '?' e ':' e {
 			$$=biop(QUEST, $1, biop(COLON, $3, $5));
 		}
-		|  e '?' ':' e {
+		|  e '?' ':' e { 
 			NODE *p = tempnode(0, $1->n_type, $1->n_df, $1->n_ap);
 			$$ = biop(COLON, ccopy(p), $4);
 			$$=biop(QUEST, biop(ASSIGN, p, $1), $$);
@@ -1087,6 +1201,12 @@ term:		   term C_INCOP {  $$ = biop($2, $1, bcon(1)); }
 		|  '&' term { $$ = biop(ADDROF, $2, NIL); }
 		|  '-' term { $$ = biop(UMINUS, $2, NIL ); }
 		|  '+' term { $$ = biop(PLUS, $2, bcon(0)); }
+		|  CXX_CASTS C_RELOP cast_type C_RELOP '(' e ')' {
+			tfree($6);
+			tfree($3);
+			$$ = bcon(0);
+			werror("CXX_CASTS unhandled");
+		}
 		|  C_UNOP term { $$ = biop($1, $2, NIL); }
 		|  C_INCOP term {
 			$$ = biop($1 == INCR ? PLUSEQ : MINUSEQ, $2, bcon(1));
@@ -1118,14 +1238,27 @@ term:		   term C_INCOP {  $$ = biop($2, $1, bcon(1)); }
 			$$ = bdty(NAME, $4);
 			$$->n_op = CLOP;
 		}
-		|  term '[' e ']' { $$ = biop(LB, $1, $3); }
+		|  term '[' e ']' {
+			if ($1->n_op == NEWKW) {
+				$1->n_left = biop(LB, $1->n_left, $3);
+			} else
+				$$ = biop(LB, $1, $3);
+		}
 		|  C_NAME  '(' elist ')' {
+#if 0
+			if ($3) tfree($3);
+			$$ = bcon(0);
+#else
 			$$ = biop($3 ? CALL : UCALL, bdty(NAME, $1), $3);
+#endif
 		}
 		|  term  '(' elist ')' { $$ = biop($3 ? CALL : UCALL, $1, $3); }
 		|  term C_STROP C_NAME { $$ = biop($2, $1, bdty(NAME, $3)); }
 		|  term C_STROP C_TYPENAME { $$ = biop($2, $1, bdty(NAME, $3));}
 		|  C_NAME %prec C_SIZEOF /* below ( */{ $$ = bdty(NAME, $1); }
+		|  nmrec C_NAME %prec C_SIZEOF {
+			$$ = biop(NMLIST, $1, bdty(NAME, $2));
+		}
 		|  PCC_OFFSETOF  '(' cast_type ',' term ')' {
 			TYMFIX($3);
 			$3->n_type = INCREF($3->n_type);
@@ -1163,6 +1296,18 @@ term:		   term C_INCOP {  $$ = biop($2, $1, bcon(1)); }
 			    biop(GOTO, bcon(($2)+1), NIL), voidcon());
 			flend();
 		}
+		|  CXX_NEW new_ds { $$ = biop(NEWKW, $2, bcon(0)); }
+		|  CXX_NEW '(' cast_type ')' { $$ = 0; uerror("new cast"); }
+		|  CXX_DELETE term %prec '-' {
+			$$ = biop(DELETE, $2, bcon(NM_DEL));
+		}
+		|  CXX_DELETE '[' ']' term %prec '-' {
+			$$ = biop(DELETE, $4, bcon(NM_DLA));
+		}
+		;
+
+nmrec:		  CXX_MORENM { $$ = bdty(NAME, $1); }
+		| CXX_MORENM nmrec { $$ = biop(NMLIST, $2, bdty(NAME, $1)); }
 		;
 
 xa:		  { $<intval>$ = inattr; inattr = 0; }
@@ -1450,13 +1595,16 @@ init_declarator(NODE *tn, NODE *p, int assign, NODE *a)
 	struct symtab *sp;
 
 	p = aryfix(p);
-	p = tymerge(tn, p);
+	if (p->n_op == NMLIST) {
+		tymerge(tn, p->n_right);
+	} else
+		p = tymerge(tn, p);
 	if (a) {
 		struct attr *ap = gcc_attr_parse(a);
 		p->n_ap = attr_add(p->n_ap, ap);
 	}
 
-	p->n_sp = sp = lookup((char *)p->n_sp, 0); /* XXX */
+	sp = cxxdeclvar(p);
 
 	if (fun_inline && ISFTN(p->n_type))
 		sp->sflags |= SINLINE;
@@ -1572,7 +1720,7 @@ funargs(NODE *p)
 	if (p->n_type == VOID && p->n_sp->sname == NULL)
 		return p; /* sanitycheck later */
 	else if (p->n_sp->sname == NULL)
-		uerror("argument missing");
+		; /* uerror("argument missing"); */
 	else
 		defid(p, PARAM);
 	return p;
@@ -1593,11 +1741,11 @@ listfw(NODE *p, NODE * (*f)(NODE *))
 /*
  * Declare a function.
  */
-static void
+static struct symtab *
 fundef(NODE *tp, NODE *p)
 {
 	extern int prolab;
-	struct symtab *s;
+	struct symtab *s, *nsthis;
 	NODE *q, *typ;
 	int class = tp->n_lval, oclass, ctval;
 	char *c;
@@ -1609,7 +1757,8 @@ fundef(NODE *tp, NODE *p)
 	 */
 	ctval = tvaloff;
 	for (q = p; coptype(q->n_op) != LTYPE &&
-	    q->n_left->n_op != NAME; q = q->n_left) {
+	    q->n_left->n_op != NAME &&
+	    q->n_left->n_op != NMLIST; q = q->n_left) {
 		if (q->n_op == CALL)
 			q->n_right = namekill(q->n_right, 1);
 	}
@@ -1625,13 +1774,23 @@ fundef(NODE *tp, NODE *p)
 		blevel = 0;
 	}
 
-	p = typ = tymerge(tp, p);
+	if (p->n_op == CALL && p->n_left->n_op == NMLIST) {
+		NODE *r = p->n_left;
+		p->n_left = r->n_right;
+		r->n_right = typ = tymerge(tp, p);
+		p = r;
+	} else
+		typ = tymerge(tp, p);
+
 #ifdef GCC_COMPAT
 	/* gcc seems to discard __builtin_ when declaring functions */
 	if (strncmp("__builtin_", (char *)typ->n_sp, 10) == 0)
 		typ->n_sp = (struct symtab *)((char *)typ->n_sp + 10);
 #endif
-	s = typ->n_sp = lookup((char *)typ->n_sp, 0); /* XXX */
+
+	s = cxxftnfind(p, SNORMAL);
+	nsthis = nscur;
+	nscur = s->sdown; /* XXX fun in fun? */
 
 	oclass = s->sclass;
 	if (class == STATIC && oclass == EXTERN)
@@ -1650,7 +1809,10 @@ fundef(NODE *tp, NODE *p)
 		class = SNULL; /* same result */
 
 	cftnsp = s;
+#if 0
 	defid(p, class);
+#endif
+
 #ifdef GCC_COMPAT
 	if (attr_find(p->n_ap, GCC_ATYP_ALW_INL)) {
 		/* Temporary turn on temps to make always_inline work */
@@ -1671,11 +1833,11 @@ fundef(NODE *tp, NODE *p)
 #endif
 	tfree(tp);
 	tfree(p);
-
+	return nsthis;
 }
 
 static void
-fend(void)
+fend(struct symtab *ns)
 {
 	if (blevel)
 		cerror("function level error");
@@ -1684,6 +1846,7 @@ fend(void)
 	if (alwinl & 2) xtemps = 0;
 	alwinl = 0;
 	cftnsp = NULL;
+	nscur = ns;
 }
 
 NODE *
@@ -2003,8 +2166,9 @@ eve(NODE *p)
 	p1 = p->n_left;
 	p2 = p->n_right;
 	switch (p->n_op) {
+	case NMLIST:
 	case NAME:
-		sp = lookup((char *)p->n_sp, 0);
+		sp = cxxlookup(p, SNORMAL|SNOCREAT);
 		if (sp->sflags & SINLINE)
 			inline_ref(sp);
 		r = nametree(sp);
@@ -2018,7 +2182,7 @@ eve(NODE *p)
 
 	case DOT:
 	case STREF:
-		r = structref(eve(p1), p->n_op, (char *)p2->n_sp);
+		r = cxxstructref(eve(p1), p->n_op, (char *)p2->n_sp);
 		nfree(p2);
 		break;
 
@@ -2075,9 +2239,11 @@ eve(NODE *p)
 		p2 = eve(p2);
 		/* FALLTHROUGH */
 	case UCALL:
-		if (p1->n_op == NAME) {
-			sp = lookup((char *)p1->n_sp, 0);
+		if (p1->n_op == NAME || p1->n_op == NMLIST) {
+			sp = cxxlookup(p1, SNORMAL);
 			if (sp->stype == UNDEF) {
+				if (!isbuiltin(sp->sname))
+					uerror("'%s' undefined", sp->sname);
 				p1->n_type = FTN|INT;
 				p1->n_sp = sp;
 				p1->n_ap = NULL;
@@ -2088,9 +2254,26 @@ eve(NODE *p)
 			if (attr_find(sp->sap, GCC_ATYP_DEPRECATED))
 				werror("`%s' is deprecated", sp->sname);
 #endif
-			r = doacall(sp, nametree(sp), p2);
+			r = doacall(sp, nametree(sp), p2, 0);
+		} else if (p1->n_op == DOT || p1->n_op == STREF) {
+			/*
+			 * function as member of a struct.
+			 * - check args for correct overloaded function
+			 * - add hidden arg0 as pointer to this struct
+			 */
+
+			p1->n_left = eve(p1->n_left); /* eval rest */
+			if (p->n_op == UCALL)
+				p2 = NULL;
+			r = cxxmatchftn(p1, p2);
+			if (p1->n_op == DOT)
+				p1->n_left = buildtree(ADDROF, p1->n_left, NIL);
+			nfree(p1->n_right);
+			p1 = nfree(p1);
+			p2 = cxxaddhidden(p2, p1);
+			r = doacall(NULL, r, p2, 1);
 		} else
-			r = doacall(NULL, eve(p1), p2);
+			r = doacall(NULL, eve(p1), p2, 0);
 		break;
 
 #ifndef NO_COMPLEX
@@ -2214,6 +2397,17 @@ eve2:		r = buildtree(p->n_op, p1, eve(p2));
 
 	case CLOP:
 		r = nametree(p->n_sp);
+		break;
+
+	case DELETE:
+		p1 = eve(p1);
+		r = cxx_delete(p1, p2->n_lval);
+		nfree(p2);
+		break;
+
+	case NEWKW:
+		r = cxx_new(p1);
+		nfree(p2);
 		break;
 
 	default:
