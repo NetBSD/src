@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.28 2010/09/14 19:36:13 macallan Exp $ */
+/*	$NetBSD: cgthree.c,v 1.29 2012/01/11 16:10:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.28 2010/09/14 19:36:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.29 2012/01/11 16:10:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,7 +557,7 @@ cgthree_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_bits = sc->sc_fb.fb_pixels;
 
-	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
