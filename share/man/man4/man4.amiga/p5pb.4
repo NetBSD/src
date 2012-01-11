@@ -1,4 +1,4 @@
-.\" $NetBSD: p5pb.4,v 1.5 2012/01/10 20:41:45 rkujawa Exp $
+.\" $NetBSD: p5pb.4,v 1.6 2012/01/11 10:15:36 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,20 +44,26 @@
 The
 .Nm
 driver provides support for the PCI bus present on various devices equipped with
-the Phase5 PCI bridge. 
+the Phase5 PCI bridge.
 .Pp
-Processor boards running firmware revision older than 44.69 need a kernel 
-configured with P5PB_OLD_FIRMWARE option. 
+Processor boards running firmware revision older than 44.69 need a kernel
+configured with the
+.Dv P5PB_OLD_FIRMWARE
+option.
 .Pp
 The
-.Nm 
-driver provides necessary support for CyberVisionPPC and BlizzardVisionPPC, 
-allowing attachment of 
+.Nm
+driver provides necessary support for CyberVisionPPC and BlizzardVisionPPC,
+allowing attachment of
 .Xr genfb 4
-driver. 
-Owners of these cards should enable the P5PB_GENFB option.
+driver.
+Owners of these cards should enable the
+.Dv P5PB_GENFB
+option.
 .Pp
-Additional, excessive debugging output is enabled by P5PB_DEBUG option.
+Additional, excessive debugging output is enabled by the
+.Dv P5PB_DEBUG
+option.
 .Sh HARDWARE
 The
 .Nm
@@ -87,17 +93,21 @@ driver was written by
 .An Radoslaw Kujawa Aq radoslaw.kujawa@gmail.com .
 .Sh CAVEATS
 The
-.Nx developers don't have access to G-REX hardware or documentation.
-Support for this device is based on best wishes. 
+.Nx
+developers don't have access to G-REX hardware or documentation.
+Support for this device is based on best wishes.
 .Pp
-Support for 
+Support for
 .Xr genfb 4
 framebuffer on CVPPC/BVPPC needs more testing.
 .Sh BUGS
-Current version of this driver depends on PCI bus setup and enumeration
-done by the firmware.
+The current version of this driver depends on PCI bus setup and
+enumeration done by the firmware.
 .Pp
-DMA to host memory is not supported. This is a driver limitation.
+DMA to host memory is not supported.
+This is a driver limitation.
 .Pp
-The P5PB_OLD_FIRMWARE option should only be enabled if PCI hardware is 
-present. Otherwise kernel panic might occur due to bus error.
+The
+.Dv P5PB_OLD_FIRMWARE
+option should only be enabled if PCI hardware is present.
+Otherwise a kernel panic might occur due to bus error.
