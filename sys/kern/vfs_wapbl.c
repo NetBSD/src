@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.48 2011/12/02 12:38:59 yamt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.49 2012/01/11 00:11:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.48 2011/12/02 12:38:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.49 2012/01/11 00:11:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1956,7 +1956,12 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	int error;
 	daddr_t pbn;
 
-	/* XXX Calc checksum here, instead we do this for now */
+	/*
+	 * flush disk cache to ensure that blocks we've written are actually
+	 * written to the stable storage before the commit header.
+	 *
+	 * XXX Calc checksum here, instead we do this for now
+	 */
 	wapbl_cache_sync(wl, "1");
 
 	wc->wc_head = head;
@@ -1972,6 +1977,8 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	    (intmax_t)head, (intmax_t)tail));
 
 	/*
+	 * write the commit header.
+	 *
 	 * XXX if generation will rollover, then first zero
 	 * over second commit header before trying to write both headers.
 	 */
@@ -1984,6 +1991,10 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	if (error)
 		return error;
 
+	/*
+	 * flush disk cache to ensure that the commit header is actually
+	 * written before meta data blocks.
+	 */
 	wapbl_cache_sync(wl, "2");
 
 	/*
