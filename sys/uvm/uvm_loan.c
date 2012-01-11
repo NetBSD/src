@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81.2.10 2012/01/11 00:08:41 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.11 2012/01/11 00:09:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.10 2012/01/11 00:08:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.11 2012/01/11 00:09:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1391,9 +1391,7 @@ uvm_loanobj_read(struct vm_map *map, vaddr_t va, size_t len,
 	UVMHIST_LOG(ubchist, "map %p va 0x%x npages %d", map, va, npages, 0);
 	UVMHIST_LOG(ubchist, "uobj %p off 0x%x", uobj, off, 0, 0);
 
-	if (npages > MAXPAGES) {
-		return EINVAL;
-	}
+	KASSERT(npages <= MAXPAGES);
 #if defined(PMAP_PREFER)
 	/*
 	 * avoid creating VAC aliases.
