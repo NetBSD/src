@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.893 2011/12/25 23:29:34 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.894 2012/01/11 01:20:10 riz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -15,13 +15,13 @@
 # A few notes on the format of this file (for the benefit of
 # 3rdparty2html):
 #
-# 1.) Any line whose first non-whitespace character is # is a comment
-# 2.) Entries are separated by blank lines
-# 3.) Every package needs at least the following entries: Package,
-#     Version, Current Vers, and Maintainer.
+# 1.) Any line whose first non-whitespace character is # is a comment;
+# 2.) Entries are separated by blank lines;
+# 3.) Every package needs at least the Package, Version, Current Vers,
+#     and Maintainer fields;
 # 4.) Where a field has multiple lines of information, the field tag
 #     should be repeated on each line, except:
-# 5.) The Notes: field tag should appear on a line by itself.  All
+# 5.) The Notes: field tag should appear on a line by itself; all
 #     remaining lines until the end of the record are notes.
 
 Package:	acpica
@@ -142,7 +142,7 @@ Responsible:	thorpej, mrg
 License:	GPLv3, LGPLv3, GPLv2, LGPLv2, BSD
 Notes:
 
-Package:	bozohttpd 
+Package:	bozohttpd
 Version:	20100617
 Current Vers:	20100617
 Maintainer:	mrg@eterna.com.au
@@ -328,7 +328,7 @@ Archive Site:	http://flex.sourceforge.net/
 Home Page:	http://flex.sourceforge.net/
 Mailing List:	http://lists.sourceforge.net/mailman/listinfo/flex-announce
 Responsible:
-License:	BSD-like	
+License:	BSD-like
 Notes:
 There is a flex2netbsd script to help newer imports.
 
@@ -448,14 +448,14 @@ License:	BSD (3-clause)
 Notes:
 
 Package:	ipf
-Version:	4.1.33
-Current Vers:	4.1.33
+Version:	4.1.34
+Current Vers:	5.1.0
 Maintainer:	Darren Reed
 Archive Site:	http://coombs.anu.edu.au/~avalon/
 Home Page:	http://coombs.anu.edu.au/~avalon/
 Mailing List:	ipfilter@postbox.anu.edu.au
 Responsible:	darrenr, mike
-License:	BSD-based, see src/dist/ipf/IPFILTER.LICENSE
+License:	BSD-based; see src/dist/ipf/IPFILTER.LICENCE
 Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
 See also dist/ipf/README.NetBSD
@@ -478,13 +478,13 @@ When configure.ac is updated, run the following:
   cd src/crypto/dist/ipsec-tools
   ./bootstrap
   ./configure --enable-adminport --enable-hybrid --enable-frag \
-  	      --enable-natt --enable-dpd 
+  	      --enable-natt --enable-dpd
 Then copy package_version.h to src/lib/libipsec and merge config.h with
 src/lib/libipsec/config.h (it needs some manual tweaking)
 
-NOTE: As NetBSD HEAD and ipsec-tools HEAD are just the same thing, 
+NOTE: As NetBSD HEAD and ipsec-tools HEAD are just the same thing,
 NetBSD-current always contains latest ipsec-tools code. On the other hand,
-ipsec-tools has stable branches (e.g.: ipsec-tools-0_7-branch), which 
+ipsec-tools has stable branches (e.g.: ipsec-tools-0_7-branch), which
 are manually pulled up to NetBSD stable branches (e.g.: netbsd-4 is regularly
 sync with ipsec-tools-0_7-branch)
 
@@ -559,7 +559,7 @@ Home Page:	http://sources.redhat.com/lvm2/
 Responsible:	haad
 License:	LGPLv2.1
 Notes:
-The lvm2tools and the libdevmapper are now distributed as one source 
+The lvm2tools and the libdevmapper are now distributed as one source
 repository. See the lvm2tools Notes for more information.
 
 Package:	libevent
@@ -580,10 +580,10 @@ Archive Site:	ftp://sources.redhat.com/pub/lvm2/
 Home Page:	http://sources.redhat.com/lvm2/
 Responsible:	haad
 License:	GPLv2
-Notes: 
-Use the src/external/gpl2/lvm2tools/dist/lvm2netbsd script to prepare source tree 
+Notes:
+Use the src/external/gpl2/lvm2tools/dist/lvm2netbsd script to prepare source tree
 for import. Keep eye on dist/include/configure.h it migh change over the releases.
-We maintain our own version of libdevmapper ioctl protocol code, therefore we 
+We maintain our own version of libdevmapper ioctl protocol code, therefore we
 should test it before import. Talk to haad before importing new version.
 
 Package:	libpcap
@@ -879,15 +879,16 @@ reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
 Version:	20110215
-Current Vers.:	20110215
+Current Vers:	20110805
 Maintainer:	The pkgsrc developers
-Home Page:	http://www.pkgsrc.org
+Home Page:	http://www.pkgsrc.org/
 Mailing List:	tech-pkg@NetBSD.org
 Responsible:	joerg
 License:	BSD
 Notes:
-The authoritative version used to live in src/usr.sbin/pkg_install and was
-moved to pkgsrc/pkgtool/pkg_install. Reachover Makefiles are kept in place.
+The authoritative version used to live in src/usr.sbin/pkg_install, and was
+moved to pkgsrc/pkgtools/pkg_install. Reachover Makefiles were kept in place.
+pkg_install currently resides in src/external/bsd/pkg_install.
 
 Package:	ping
 Version:	980911
@@ -947,9 +948,9 @@ Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
 Mailing List:	bug-gnu-utils@gnu.org
 Home Page:	http://www.gnu.org/software/rcs/
 Responsible:	agc
-License:	GPLv2
+License:	GPLv2 (5.7; 5.8 is GPLv3+)
 Notes:
-Beta versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
+Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
 
 Package:	root.cache
 Version:	2011060800 (Jun 8, 2011)
@@ -1058,7 +1059,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Home Page:	http://www.gnu.org/software/texinfo/
 Mailing List:	bug-texinfo@gnu.org
 Responsible:	
-License:	GPLv2 (4.9 is GPLv3)
+License:	GPLv2 (4.8; 4.9 and higher is GPLv3)
 Notes:
 Use src/gnu/dist/texinfo/texinfo2netbsd for preparing the source tree
 for the import.
@@ -1157,12 +1158,12 @@ Notes:
 Imported to src/common/dist/zlib and shared by the kernel and userland.
 
 Package:	services, protocols
-Version:	2010-10-04
-Current Vers:	2010-11-30
+Version:	2010-10-04 (services), 2010-05-27 (protocols)
+Current Vers:	2012-01-04 (services), 2011-11-01 (protocols)
 Maintainer:	IANA
-Archive Site:	http://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt
-Archive Site:	http://www.iana.org/assignments/port-numbers
-Home Page:	http://www.iana.org
+Archive Site:	http://www.iana.org/assignments/port-numbers (services)
+Archive Site:	http://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt (protocols)
+Home Page:	http://www.iana.org/
 Mailing List:
 Responsible:	christos
 License:	None
