@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.10 2011/11/24 05:57:17 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.11 2012/01/11 16:02:30 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.10 2011/11/24 05:57:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.11 2012/01/11 16:02:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,8 +304,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	ri = &sc->sc_console_screen.scr_ri;
 
 	j = 0;
-	for (i = 0; i < (1 << sc->sc_depth); i++) {
-
+	for (i = 0; i < 256; i++) {
 		sc->sc_cmap_red[i] = rasops_cmap[j];
 		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
 		sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
@@ -477,7 +476,7 @@ pm2fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER;
 
-	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,

@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.71 2011/08/04 00:57:33 jakllsch Exp $	*/
+/*	$NetBSD: machfb.c,v 1.72 2012/01/11 16:02:29 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.71 2011/08/04 00:57:33 jakllsch Exp $");
+	"$NetBSD: machfb.c,v 1.72 2012/01/11 16:02:29 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -825,8 +825,7 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 		}
 	}
 	
-	rasops_init(ri, sc->sc_my_mode->vdisplay / 8,
-	    sc->sc_my_mode->hdisplay / 8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 	rasops_reconfig(ri, sc->sc_my_mode->vdisplay / ri->ri_font->fontheight,
 		    sc->sc_my_mode->hdisplay / ri->ri_font->fontwidth);
