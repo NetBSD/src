@@ -1,4 +1,4 @@
-.\" $NetBSD: cv3dpb.4,v 1.1 2012/01/11 17:25:19 rkujawa Exp $
+.\" $NetBSD: cv3dpb.4,v 1.2 2012/01/11 19:44:56 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Dt CV3DPB 4 amiga
 .Os
 .Sh NAME
-.Nm cv3dpb 
+.Nm cv3dpb
 .Nd Phase5 CyberVision 64/3D PCI bridge driver
 .Sh SYNOPSIS
 .Cd "cv3dpb* at zbus0"
@@ -41,14 +41,14 @@ The
 .Nm
 driver provides support for the PCI bus present on CyberVision 64/3D graphics
 card.
-It allows using S3 ViRGE present on this card, as an usual PCI device.
+It allows using the S3 ViRGE present on this card as a usual PCI device.
 .Sh HARDWARE
 The
 .Nm
 driver supports the following hardware:
 .Bl -tag -offset indent
-.It Phase5 CyberVision 64/3D graphics card.
-.It DCE Computer CyberVision 64/3D Mk-II graphics card.
+.It Phase5 CyberVision 64/3D graphics card
+.It DCE Computer CyberVision 64/3D Mk-II graphics card
 .El
 .Sh SEE ALSO
 .Xr grfcv3d 4 ,
