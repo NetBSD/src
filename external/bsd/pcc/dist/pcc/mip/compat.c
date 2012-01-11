@@ -24,8 +24,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: compat.c,v 1.10 2011/06/09 19:24:46 plunky Exp 	
- * $NetBSD: compat.c,v 1.1.1.4 2011/09/01 12:47:12 plunky Exp $
+ * Id: compat.c,v 1.11 2011/09/27 08:22:55 plunky Exp 	
+ * $NetBSD: compat.c,v 1.1.1.5 2012/01/11 20:33:31 plunky Exp $
  */
 
 /*-
@@ -209,7 +209,7 @@ getopt(int argc, char * const argv[], const char *args)
 }
 #endif
 
-#ifdef WIN32
+#ifdef os_win32
 #define ISPATHSEPARATOR(x) ((x == '/') || (x == '\\'))
 #else
 #define ISPATHSEPARATOR(x) (x == '/')
@@ -260,7 +260,7 @@ basename(char *path)
 }
 #endif
 
-#if !defined(HAVE_MKSTEMP) && !defined(WIN32)
+#if !defined(HAVE_MKSTEMP) && !defined(os_win32)
 #include <fcntl.h>	/* open() */
 #include <unistd.h>	/* getpid() */
 
