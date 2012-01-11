@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.320 2011/12/31 20:41:59 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.321 2012/01/11 14:39:08 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.320 2011/12/31 20:41:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.321 2012/01/11 14:39:08 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3176,7 +3176,7 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 	/*
 	 * Look up an SADB entry which matches the address of the peer.
 	 */
-	sav = KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI));
+	sav = KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI), 0, 0);
 #else
 	if (ip)
 		sav = key_allocsa(AF_INET, (void *)&ip->ip_src,
