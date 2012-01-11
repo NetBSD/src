@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pbreg.h,v 1.4 2012/01/10 20:29:50 rkujawa Exp $ */
+/*	$NetBSD: p5pbreg.h,v 1.5 2012/01/11 17:04:29 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -49,20 +49,19 @@
 #ifndef _AMIGA_P5PBREG_H_
 
 #define P5BUS_PCI_CONF_BASE	0xFFFC0000
-#define P5BUS_PCI_CONF_SIZE	0x00021000
+#define P5BUS_PCI_CONF_SIZE	0x00020000	/* up to 128kB */
 
 /* XXX: This is OK for CVPPC/BVPPC only! */ 
 #define P5BUS_PCI_MEM_BASE	0xE0000000
 #define P5BUS_PCI_MEM_SIZE	0x01010000	/* actually 0x01020000 */
 
 #define P5BUS_PCI_IO_BASE	0xFFFA0000
-#define P5BUS_PCI_IO_SIZE	0x0000FFFF
+#define P5BUS_PCI_IO_SIZE	0x0000FFFF	/* 64kB */
 
 #define P5BUS_PCI_BRIDGE_BASE	0xFFFE0000
-#define P5BUS_PCI_BRIDGE_SIZE	0x0000FFFF	/* 4kB on some fw revs */
+#define P5BUS_PCI_BRIDGE_SIZE	0x0000FFFF	/* 64kB, 4kB on some fw revs */
 
 #define OFF_PCI_CONF_DATA	0x00000000 
-#define OFF_PCI_CONF_ADDR	0x00020000
 
 #define P5BUS_CONF_ENDIAN	0x0000          /* PCI_BRIDGE_BASE + offset */
 #define P5BUS_CONF_ENDIAN_BIG	0x02            /* to switch into BE mode */
