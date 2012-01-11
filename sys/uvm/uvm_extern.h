@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.176.2.6 2011/12/26 16:03:10 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.176.2.7 2012/01/11 00:08:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -504,6 +504,8 @@ struct uvmexp_sysctl {
 extern struct uvmexp uvmexp;
 /* MD code needs this without including <uvm/uvm.h> */
 extern bool vm_page_zero_enable;
+
+extern bool vm_loan_read;
 #endif
 
 /*
