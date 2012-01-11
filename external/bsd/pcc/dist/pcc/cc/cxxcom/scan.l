@@ -1,6 +1,6 @@
 %{
-/*	Id: scan.l,v 1.109 2011/09/03 08:04:18 ragge Exp 	*/	
-/*	$NetBSD: scan.l,v 1.1.1.5 2012/01/11 20:33:13 plunky Exp $	*/
+/*	Id: scan.l,v 1.1 2012/01/01 16:20:55 ragge Exp 	*/	
+/*	$NetBSD: scan.l,v 1.1.1.1 2012/01/11 20:33:21 plunky Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -56,6 +56,7 @@ static void control(int);
 static void pragma(void);
 int notype, parbal, inattr, parlvl, nodinit, inoso;
 static int resw(TWORD, int);
+static int namechk(void);
 
 #define	CPP_IDENT 	2
 #define	CPP_LINE 	3
@@ -97,12 +98,16 @@ extern void yyset_lineno (int);
 "break"			{ return(C_BREAK); }
 "case"			{ return(C_CASE); }
 "char"			{ 	return resw(CHAR, C_TYPE); }
+"class"			{ yylval.intval = CLNAME; notype=1; return(C_STRUCT); }
 "_Complex"		{ 	return resw(COMPLEX, C_TYPE); }
 "const"			{ 	return resw(CON, C_QUALIFIER); }
+"const_cast"		{ yylval.intval = CONST_CAST; return(CXX_CASTS); }
 "continue"		{ return(C_CONTINUE); }
 "default"		{ return(C_DEFAULT); }
+"delete"		{ return(CXX_DELETE); }
 "do"			{ return(C_DO); }
 "double"		{ 	return resw(DOUBLE, C_TYPE); }
+"dynamic_cast"		{ yylval.intval = DYN_CAST; return(CXX_CASTS); }
 "else"			{ return(C_ELSE); }
 "enum"			{ notype=1; return(C_ENUM); }
 "extern"		{ 	return resw(EXTERN, C_CLASS); }
@@ -114,50 +119,30 @@ extern void yyset_lineno (int);
 "inline"		{ return(C_FUNSPEC); }
 "int"			{ 	return resw(INT, C_TYPE); }
 "long"			{ 	return resw(LONG, C_TYPE); }
+"namespace"		{ 	return(CXX_NAMESPACE); }
+"new"			{ 	notype = 0; return(CXX_NEW); }
 "register"		{ 	return resw(REGISTER, C_CLASS); }
+"reinterpret_cast"	{ yylval.intval = REINT_CAST; return(CXX_CASTS); }
 "restrict"		{ ; /* just ignore */ }
 "return"		{ return(C_RETURN); }
 "short"			{ 	return resw(SHORT, C_TYPE); }
 "signed"		{ 	return resw(SIGNED, C_TYPE); }
 "sizeof"		{ return(C_SIZEOF); }
 "static"		{ 	return resw(STATIC, C_CLASS); }
+"static_cast"		{ yylval.intval = STATIC_CAST; return(CXX_CASTS); }
 "struct"		{ yylval.intval = STNAME; notype=1; return(C_STRUCT); }
 "switch"		{ return(C_SWITCH); }
+"template"		{ return(CXX_TEMPLATE); }
 "typedef"		{ 	return resw(TYPEDEF, C_CLASS); }
+"typename"		{ return(CXX_TYPENAME); }
 "union"			{ yylval.intval = UNAME; notype=1; return(C_STRUCT); }
 "unsigned"		{ 	return resw(UNSIGNED, C_TYPE); }
+"using"			{ return(CXX_USING); }
 "void"			{ 	return resw(VOID, C_TYPE); }
 "volatile"		{	return resw(VOL, C_QUALIFIER); }
 "while"			{ return(C_WHILE); }
 
-{UL}({UL}|{D})*	{ 	struct symtab *s;
-			int i = 0;
-
-			yylval.strp = addname(yytext);
-#ifdef GCC_COMPAT
-			if (doing_init && nodinit == 0) {
-				/* check for name: for old gcc compat */
-				while ((i = input()) == ' ' || i == '\t')
-					;
-				if (i == ':')
-					return(GCC_DESIG);
-				unput(i);
-			}
-			if ((i = gcc_keyword(yylval.strp, &yylval.nodep)) > 0) {
-				if (i == PCC_OFFSETOF)
-					inoso = 1;
-				return i;
-			}
-#endif
-			if (i == 0) {
-				if (notype)
-					return(C_NAME);
-				s = lookup(yylval.strp, SNOCREAT);
-				return s && s->sclass == TYPEDEF ?
-				    notype=1, C_TYPENAME : C_NAME;
-			}
-		}
-
+{UL}({UL}|{D})*		{ return namechk(); }
 0[xX]{H}+{IS}?		{ yylval.nodep = cvtdig(16); return(C_ICON); }
 0{D}+{IS}?		{ yylval.nodep = cvtdig(8); return(C_ICON); }
 {D}+{IS}?		{ yylval.nodep = cvtdig(10); return(C_ICON); }
@@ -195,6 +180,7 @@ L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 ">="			{ yylval.intval = GE; return(C_RELOP); }
 "=="			{ yylval.intval = EQ; return(C_EQUOP); }
 "!="			{ yylval.intval = NE; return(C_EQUOP); }
+"::"			{ return(CXX_DUALCC); }
 ";"			{ notype = 0; return(';'); }
 ("{"|"<%")		{ notype = 0; return('{'); }
 ("}"|"%>")		{ if (rpole) notype = 1; return('}'); }
@@ -237,6 +223,35 @@ L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 
 int lineno;
 char *ftitle = "<stdin>";
+
+static int
+namechk()
+{ 	
+	struct symtab *s;
+	int i;
+
+	yylval.strp = addname(yytext);
+
+	while ((i = input()) == ' ' || i == '\t')
+		;
+	if (i == ':') {
+		if ((i = input()) == ':')
+			return CXX_MORENM;
+		unput(i);
+		if (doing_init && nodinit == 0)
+			return(GCC_DESIG);
+		i = ':';
+	}
+	unput(i);
+
+	if ((i = gcc_keyword(yylval.strp, &yylval.nodep)) > 0)
+		return i;
+
+	if (notype)
+		return(C_NAME);
+	s = lookup(yylval.strp, SNOCREAT);
+	return s && s->sclass == TYPEDEF ?  notype=1, C_TYPENAME : C_NAME;
+}
 
 int
 yywrap(void)

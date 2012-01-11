@@ -1,5 +1,5 @@
-/*	Id: builtins.c,v 1.34 2011/10/24 08:53:18 plunky Exp 	*/	
-/*	$NetBSD: builtins.c,v 1.1.1.3 2012/01/11 20:33:08 plunky Exp $	*/
+/*	Id: builtins.c,v 1.1 2012/01/01 16:20:54 ragge Exp 	*/	
+/*	$NetBSD: builtins.c,v 1.1.1.1 2012/01/11 20:33:16 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -803,5 +803,19 @@ builtin_check(NODE *f, NODE *a)
 		return (*bt->fun)(f, a, bt->rt);
 	}
 	return NIL;
+}
+
+int
+isbuiltin(char *n)
+{
+	int i;
+
+	if (strncmp(n, "__builtin_", 10))
+		return 0;
+	for (i = 0; i < (int)(sizeof(bitable)/sizeof(bitable[0])); i++) {
+		if (strcmp(bitable[i].name, n) == 0)
+			return 1;
+	}
+	return 0;
 }
 #endif
