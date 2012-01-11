@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwelve.c,v 1.4 2010/08/18 21:11:50 macallan Exp $ */
+/*	$NetBSD: cgtwelve.c,v 1.5 2012/01/11 16:08:57 macallan Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the Sun CG12 / Matrox SG3 graphics board */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.4 2010/08/18 21:11:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.5 2012/01/11 16:08:57 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,7 +486,7 @@ cgtwelve_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_bits = sc->sc_shadow;
 	}
 
-	rasops_init(ri, ri->ri_height / 8, ri->ri_width / 8);
+	rasops_init(ri, 0, 0);
 #ifdef CG12_COLOR
 	ri->ri_caps = WSSCREEN_REVERSE | WSSCREEN_WSCOLORS;
 #else
