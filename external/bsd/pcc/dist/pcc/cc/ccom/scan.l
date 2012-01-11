@@ -1,6 +1,6 @@
 %{
-/*	Id: scan.l,v 1.108 2011/06/07 12:43:36 plunky Exp 	*/	
-/*	$NetBSD: scan.l,v 1.3 2011/09/01 12:55:29 plunky Exp $	*/
+/*	Id: scan.l,v 1.109 2011/09/03 08:04:18 ragge Exp 	*/	
+/*	$NetBSD: scan.l,v 1.4 2012/01/11 20:46:48 plunky Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -54,7 +54,7 @@ static NODE *charcon(void);
 static NODE *wcharcon(void);
 static void control(int);
 static void pragma(void);
-int notype, parbal, inattr, parlvl, nodinit;
+int notype, parbal, inattr, parlvl, nodinit, inoso;
 static int resw(TWORD, int);
 
 #define	CPP_IDENT 	2
@@ -143,8 +143,11 @@ extern void yyset_lineno (int);
 					return(GCC_DESIG);
 				unput(i);
 			}
-			if ((i = gcc_keyword(yylval.strp, &yylval.nodep)) > 0)
+			if ((i = gcc_keyword(yylval.strp, &yylval.nodep)) > 0) {
+				if (i == PCC_OFFSETOF)
+					inoso = 1;
 				return i;
+			}
 #endif
 			if (i == 0) {
 				if (notype)
@@ -195,11 +198,12 @@ L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 ";"			{ notype = 0; return(';'); }
 ("{"|"<%")		{ notype = 0; return('{'); }
 ("}"|"%>")		{ if (rpole) notype = 1; return('}'); }
-","			{ if (parbal) notype = 0; return(','); }
+","			{ if (parbal && !inoso) notype = 0; return(','); }
 ":"			{ if (doing_init) nodinit--; return(':'); }
 "="			{ return('='); }
 "("			{ parbal++; notype = 0; return('('); }
 ")"			{	parbal--;
+				inoso = 0;
 				if (parbal==0) { notype = 0; }
 				if (inattr && parlvl == parbal)
 					inattr = 0;

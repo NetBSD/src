@@ -1,5 +1,5 @@
-.\"	Id: cc.1,v 1.33 2011/08/28 11:57:45 plunky Exp 	
-.\"	$NetBSD: cc.1,v 1.4 2011/09/01 12:55:29 plunky Exp $
+.\"	Id: cc.1,v 1.36 2011/11/11 09:13:14 plunky Exp 	
+.\"	$NetBSD: cc.1,v 1.5 2012/01/11 20:46:47 plunky Exp $
 .\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd September 14, 2007
+.Dd November 11, 2011
 .Dt CC 1
 .Os
 .Sh NAME
@@ -27,8 +27,7 @@
 .Op Fl cEgkLMPStvX
 .Op Fl B Ns Ar prefix
 .Op Fl D Ar macro Ns Oo = Ns Ar value Oc
-.Op Fl fPIC
-.Op Fl fpic
+.Op Fl f Ns Ar feature
 .Op Fl I Ar path
 .Op Fl include Ar file
 .Op Fl isystem Ar path
@@ -44,7 +43,10 @@
 .Op Fl shared
 .Op Fl static
 .Op Fl U Ar macro
-.Op Fl Wl Ar flags
+.Op Fl Wa Ns , Ns Ar options
+.Op Fl Wc Ns , Ns Ar options
+.Op Fl Wl Ns , Ns Ar options
+.Op Fl Wp Ns , Ns Ar options
 .Op Fl x Ar language
 .Op Ar
 .Sh DESCRIPTION
@@ -141,6 +143,8 @@ Do not compile, assemble, or link.
 Output is sent to standard output unless the
 .Fl o
 option is used.
+.It Fl ffreestanding
+Assume a freestanding environment.
 .It Fl fPIC
 Generate PIC code.
 .\" TODO: document about avoiding machine-specific maximum size?
@@ -281,9 +285,14 @@ preprocessor to remove the initial macro definition.
 Outputs the version of
 .Nm
 and shows what commands will be run with their command line arguments.
-.It Fl Wl Ar flags
-Options for the linker.
-.\" what is ignored? llist?
+.It Fl Wa Ns , Ns Ar options
+Comma separated list of options for the assembler.
+.It Fl Wc Ns , Ns Ar options
+Comma separated list of options for the compiler.
+.It Fl Wl Ns , Ns Ar options
+Comma separated list of options for the linker.
+.It Fl Wp Ns , Ns Ar options
+Comma separated list of options for the preprocessor.
 .It Fl X
 Don't remove temporary files on exit.
 .It Fl x Ar language
