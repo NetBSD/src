@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.15 2011/12/28 18:23:01 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.16 2012/01/11 16:07:29 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.15 2011/12/28 18:23:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.16 2012/01/11 16:07:29 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,7 +537,7 @@ voyagerfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_flg |= RI_ENABLE_ALPHA;
 #endif
 
-	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
@@ -838,7 +838,7 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct voyagerfb_softc *sc = scr->scr_cookie;
 	uint32_t cmd;
-	int fg, bg, uc;
+	int fg, bg;
 	uint8_t *data;
 	int x, y, wi, he;
 
@@ -859,9 +859,8 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		voyagerfb_rectfill(sc, x, y, wi, he, bg);
 		return;
 	}
-	uc = c - font->firstchar;
-	data = (uint8_t *)font->data + uc * ri->ri_fontscale;
-	if (font->stride < font->fontwidth) {
+	data = WSFONT_GLYPH(c, font);
+	if (!FONT_IS_ALPHA(font)) {
 		/* this is a mono font */
 		cmd = ROP_COPY |
 		      SM502_CTRL_USE_ROP2 |
