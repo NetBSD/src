@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.29 2012/01/03 23:13:59 macallan Exp $ */
+/* 	$NetBSD: rasops.h,v 1.30 2012/01/11 15:52:32 macallan Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -143,7 +143,6 @@ struct rasops_info {
 			  (ri->ri_optfont.data != NULL)) ? \
 			 &ri->ri_optfont : ri->ri_font
 
-#define FONT_IS_ALPHA(f) ((f)->fontwidth <= (f)->stride)
 /*
  * rasops_init().
  *
