@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.58 2012/01/10 12:04:56 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.59 2012/01/11 12:37:50 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -115,6 +115,7 @@ void	thunk_putchar(int);
 int	thunk_execv(const char *, char * const []);
 
 int	thunk_open(const char *, int, mode_t);
+int	thunk_close(int);
 int	thunk_fstat_getsize(int, off_t *, ssize_t *);
 ssize_t	thunk_pread(int, void *, size_t, off_t);
 ssize_t	thunk_pwrite(int, const void *, size_t, off_t);
