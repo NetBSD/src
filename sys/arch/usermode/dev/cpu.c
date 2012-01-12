@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.62 2012/01/06 12:54:59 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.63 2012/01/12 13:28:54 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62 2012/01/06 12:54:59 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.63 2012/01/12 13:28:54 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -345,7 +345,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		panic("getcontext failed");
 
 	/* set up the ucontext for the userland switch */
-	/* XXX BUG TODO when is this stack space freed? */
 	pcb2->pcb_ucp.uc_stack.ss_sp = pcb2->pcb_stack_userland;
 	pcb2->pcb_ucp.uc_stack.ss_size = stacksize;
 	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
