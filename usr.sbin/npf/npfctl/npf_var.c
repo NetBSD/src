@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.c,v 1.1 2012/01/08 21:34:21 rmind Exp $	*/
+/*	$NetBSD: npf_var.c,v 1.2 2012/01/12 20:41:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_var.c,v 1.1 2012/01/08 21:34:21 rmind Exp $");
+__RCSID("$NetBSD: npf_var.c,v 1.2 2012/01/12 20:41:33 christos Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -54,6 +54,7 @@ struct npfvar {
 };
 
 static npfvar_t *	var_list = NULL;
+static size_t		var_num = 0;
 
 npfvar_t *
 npfvar_create(const char *name)
@@ -86,6 +87,7 @@ npfvar_add(npfvar_t *vp)
 {
 	vp->v_next = var_list;
 	var_list = vp;
+	var_num++;
 }
 
 npfvar_t *
@@ -185,10 +187,15 @@ npfvar_get_type(const npfvar_t *vp)
 	return vp ? vp->v_type : -1;
 }
 
-void *
-npfvar_get_data(const npfvar_t *vp, int type, size_t idx)
+static void *
+npfvar_get_data1(const npfvar_t *vp, int type, size_t idx, size_t level)
 {
 	npf_element_t *el;
+
+	if (level >= var_num) {
+		yyerror("variable loop for '%s'", vp->v_key);
+		return NULL;
+	}
 
 	if (vp == NULL)
 		return NULL;
@@ -209,5 +216,15 @@ npfvar_get_data(const npfvar_t *vp, int type, size_t idx)
 	while (idx--) {
 		el = el->e_next;
 	}
+
+	if (vp->v_type == NPFVAR_VAR_ID)
+		return npfvar_get_data1(npfvar_lookup(el->e_data), type, 0,
+			level + 1);
 	return el->e_data;
+}
+
+void *
+npfvar_get_data(const npfvar_t *vp, int type, size_t idx)
+{
+	return npfvar_get_data1(vp, type, idx, 0);
 }
