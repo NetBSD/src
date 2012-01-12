@@ -965,6 +965,11 @@ mips_config_cache_modern(uint32_t cpu_id)
 		mci->mci_picache_ways = MIPSNN_CFG1_IA(cfg1) + 1;
 
 		/*
+		 * Is this Icache virtually indexed and virtually tagged?
+		 */
+		mci->mci_picache_vivt = (cfg & MIPSNN_CFG_VI) != 0;
+
+		/*
 		 * Compute the total size and "way mask" for the
 		 * primary Dcache.
 		 */
