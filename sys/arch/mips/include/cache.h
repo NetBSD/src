@@ -170,6 +170,7 @@ struct mips_cache_info {
 	u_int mci_picache_ways;
 	u_int mci_picache_way_size;
 	u_int mci_picache_way_mask;
+	bool mci_picache_vivt;		/* virtually indexed and tagged */
 
 	u_int mci_pdcache_size;		/* and unified */
 	u_int mci_pdcache_line_size;

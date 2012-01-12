@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_syncicache.c,v 1.1.2.1 2011/12/23 22:31:30 matt Exp $	*/
+/*	$NetBSD: pmap_syncicache.c,v 1.1.2.2 2012/01/12 18:50:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_syncicache.c,v 1.1.2.1 2011/12/23 22:31:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_syncicache.c,v 1.1.2.2 2012/01/12 18:50:33 matt Exp $");
 
 /*
  *
@@ -100,6 +100,26 @@ pmap_syncicache_page(struct vm_page *pg, uint32_t colors)
 		mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg)),
 		    PAGE_SIZE);
 	} else if (PG_MD_CACHED_P(md)) {
+		/*
+		 * The page may not be mapped so we can't use one of its
+		 * virtual addresses.  But if the cache is not vivt (meaning
+		 * it's physically tagged), we can use its XKPHYS cached or
+		 * KSEG0 (if it lies within) address to invalid it.
+		 */
+		if (__predict_true(!mips_cache_info.mci_picache_vivt)) {
+			const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+#if _LP64
+			mips_icache_sync_range(MIPS_PHYS_TO_XKPHYS_CACHED(pa),
+			    PAGE_SIZE);
+			return;
+#else
+			if (MIPS_KSEG0_P(pa)) {
+				mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(pa),
+				    PAGE_SIZE);
+				return;
+			}
+#endif
+		}
 #if 0
 		struct cpu_info * const ci = curcpu();
 		colors >>= PG_MD_EXECPAGE_SHIFT;
