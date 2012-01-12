@@ -1,9 +1,9 @@
-/*	$NetBSD: uturn.c,v 1.17 2012/01/12 23:06:45 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.18 2012/01/12 23:10:27 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
 /*-
- * Copyright (c) 2012, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
