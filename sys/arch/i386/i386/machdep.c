@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.715 2011/12/30 17:57:49 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.716 2012/01/12 19:37:45 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.715 2011/12/30 17:57:49 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.716 2012/01/12 19:37:45 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1354,9 +1354,6 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_pae_l3_pdir = (pd_entry_t *)(rcr3() + KERNBASE);
 #endif /* PAE && !XEN */
 
-#if NISA > 0 || NPCI > 0
-	x86_bus_space_init();
-#endif
 #ifdef XEN
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 #endif
@@ -1412,6 +1409,11 @@ init386(paddr_t first_avail)
 	 */
 	initgdt(NULL);
 #endif /* XEN */
+
+#if NISA > 0 || NPCI > 0
+	x86_bus_space_init();
+#endif /* NISA > 0 || NPCI > 0 */
+	
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
 #ifdef DEBUG_MEMLOAD
