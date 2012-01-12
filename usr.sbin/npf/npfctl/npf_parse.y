@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.1 2012/01/08 21:34:21 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.2 2012/01/12 20:41:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -661,6 +661,7 @@ iface
 		const int type = npfvar_get_type(vp);
 
 		switch (type) {
+		case NPFVAR_VAR_ID:
 		case NPFVAR_STRING:
 			$$ = npfctl_parse_iface(npfvar_expand_string(vp));
 			break;
@@ -690,6 +691,7 @@ ifindex
 		const int type = npfvar_get_type(vp);
 
 		switch (type) {
+		case NPFVAR_VAR_ID:
 		case NPFVAR_STRING:
 			$$ = npfctl_find_ifindex(npfvar_expand_string(vp));
 			break;
