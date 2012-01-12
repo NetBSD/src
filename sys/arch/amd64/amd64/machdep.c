@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.173 2011/12/12 19:03:08 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.174 2012/01/12 19:49:37 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 2011/12/12 19:03:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.174 2012/01/12 19:49:37 cherry Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1640,6 +1640,7 @@ init_x86_64(paddr_t first_avail)
 	use_pae = 1; /* PAE always enabled in long mode */
 
 #ifdef XEN
+	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.716 2012/01/12 19:37:45 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.717 2012/01/12 19:49:37 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.716 2012/01/12 19:37:45 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.717 2012/01/12 19:49:37 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1408,6 +1408,8 @@ init386(paddr_t first_avail)
 	 * before the above variables are set.
 	 */
 	initgdt(NULL);
+
+	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 #endif /* XEN */
 
 #if NISA > 0 || NPCI > 0
