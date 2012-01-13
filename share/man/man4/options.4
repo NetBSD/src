@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.410 2012/01/09 15:16:31 drochner Exp $
+.\"	$NetBSD: options.4,v 1.411 2012/01/13 16:05:16 cegger Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 9, 2012
+.Dd January 13, 2012
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1093,6 +1093,9 @@ Synonym of
 .El
 .Ss Miscellaneous Options
 .Bl -ohang
+.It Cd options CPU_UCODE
+Support cpu microcode loading via
+.Xr cpuctl 8 .
 .It Cd options MEMORY_DISK_DYNAMIC
 This option makes the
 .Xr md 4
