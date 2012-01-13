@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.76 2012/01/13 16:05:14 cegger Exp $
+#	$NetBSD: files.x86,v 1.77 2012/01/13 21:46:00 martin Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -93,7 +93,6 @@ file	arch/x86/x86/x86_autoconf.c
 file	arch/x86/x86/x86_userconf.c		userconf
 file	arch/x86/x86/x86_machdep.c
 
-defflag CPU_UCODE
 file	arch/x86/x86/cpu_ucode.c	cpu_ucode needs-flag
 file	arch/x86/x86/cpu_ucode_amd.c	cpu_ucode needs-flag
 
