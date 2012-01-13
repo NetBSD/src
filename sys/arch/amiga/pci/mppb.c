@@ -1,4 +1,4 @@
-/*	$NetBSD: mppb.c,v 1.3 2012/01/13 13:36:36 rkujawa Exp $ */
+/*	$NetBSD: mppb.c,v 1.4 2012/01/13 13:41:25 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,9 @@ mppb_attach(device_t parent, device_t self, void *aux)
 	struct pcibus_attach_args pba;  
 	struct zbus_args *zap;
 	pci_chipset_tag_t pc;
+#ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
+#endif /* PCI_NETBSD_CONFIGURE */
 
 	zap = aux;
 	sc = device_private(self);
