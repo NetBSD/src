@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42 2012/01/13 07:01:04 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.43 2012/01/13 07:05:57 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.42 2012/01/13 07:01:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43 2012/01/13 07:05:57 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -352,7 +352,8 @@ device_register(device_t dev, void *aux)
 	 * controller's struct dev in boot_device. The SCSI device is located
 	 * later, see below.
 	 */
-	if (device_is_a(pdev, "gsc") || device_is_a(pdev, "phantomas")) {
+	if (device_is_a(pdev, "gsc") || device_is_a(pdev, "phantomas") ||
+	    device_is_a(pdev, "uturn")) {
 		struct confargs *ca = aux;
 
 		if ((hppa_hpa_t)PAGE0->mem_boot.pz_hpa == ca->ca_hpa) {
