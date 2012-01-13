@@ -1,6 +1,6 @@
-.\"	$NetBSD: cpuctl.8,v 1.6 2008/06/22 14:50:40 wiz Exp $
+.\"	$NetBSD: cpuctl.8,v 1.7 2012/01/13 16:05:16 cegger Exp $
 .\"
-.\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2007, 2008, 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 22, 2008
+.Dd January 13, 2012
 .Dt CPUCTL 8
 .Os
 .Sh NAME
@@ -66,11 +66,48 @@ away from individual CPUs.
 At least one CPU in the system must remain on line.
 .It online Ar cpuno
 Set the specified CPU on line, making it available to run unbound LWPs.
+.It ucode Op Ar file
+This applies the microcode patch on all cpus.
+The default filename is used if no filename is specified.
+The
+.Cm identify
+command prints the installed version on that cpu.
+On success the
+.Cm identify
+command show different ucode versions before and after this command.
 .El
+.Sh EXAMPLES
+Run
+.Dl cpuctl identify 0
+and you should see something like this:
+.Bd -literal -offset indent
+cpu0: UCode version: 0x1000080
+.Ed
+.Pp
+After applying the microcode patch with
+.Dl cpuctl ucode
+you can see with
+.Dl cpuctl identify 0
+that the patch got applied:
+.Bd -literal -offset indent
+cpu0: UCode version: 0x1000083
+.Ed
 .Sh FILES
 .Bl -tag -width /dev/cpuctl -compact
 .It Pa /dev/cpuctl
 control device
+.It Pa /libdata/firmware/x86/amd/
+The directory to install the microcode file for AMD CPUs into.
+The default filename is
+.Pa microcode_amd.bin
+for CPU families 0x10 to 0x14.
+The default filename is
+.Pa microcode_amd_famXXh.bin
+where
+.Dv XX
+is the CPU family starting with 15 (hex).
+Get it from
+.Pa http://www.amd64.org/support/microcode.html
 .El
 .Sh SEE ALSO
 .Xr psrset 8 ,

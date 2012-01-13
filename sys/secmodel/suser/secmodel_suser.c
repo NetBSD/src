@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.36 2011/12/04 19:25:01 jym Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.37 2012/01/13 16:05:15 cegger Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.36 2011/12/04 19:25:01 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.37 2012/01/13 16:05:15 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -248,6 +248,7 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_SYSTEM_CPU:
 		switch (req) {
 		case KAUTH_REQ_SYSTEM_CPU_SETSTATE:
+		case KAUTH_REQ_SYSTEM_CPU_UCODE_APPLY:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
 

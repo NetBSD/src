@@ -1,7 +1,7 @@
-/*	$NetBSD: cpuctl.c,v 1.19 2011/09/27 11:24:21 jruoho Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.20 2012/01/13 16:05:16 cegger Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.19 2011/09/27 11:24:21 jruoho Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.20 2012/01/13 16:05:16 cegger Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,19 +63,22 @@ static void	cpu_offline(char **);
 static void	cpu_online(char **);
 static void	cpu_intr(char **);
 static void	cpu_nointr(char **);
+static void	cpu_ucode(char **);
 
 static struct cmdtab {
 	const char	*label;
 	int	takesargs;
+	int	argsoptional;
 	void	(*func)(char **);
 } const cpu_cmdtab[] = {
-	{ "identify", 1, cpu_identify },
-	{ "list", 0, cpu_list },
-	{ "offline", 1, cpu_offline },
-	{ "online", 1, cpu_online },
-	{ "intr", 1, cpu_intr },
-	{ "nointr", 1, cpu_nointr },
-	{ NULL, 0, NULL },
+	{ "identify", 1, 0, cpu_identify },
+	{ "list", 0, 0, cpu_list },
+	{ "offline", 1, 0, cpu_offline },
+	{ "online", 1, 0, cpu_online },
+	{ "intr", 1, 0, cpu_intr },
+	{ "nointr", 1, 0, cpu_nointr },
+	{ "ucode", 1, 1, cpu_ucode },
+	{ NULL, 0, 0, NULL },
 };
 
 static int	fd;
@@ -93,8 +96,11 @@ main(int argc, char **argv)
 
 	for (ct = cpu_cmdtab; ct->label != NULL; ct++) {
 		if (strcmp(argv[1], ct->label) == 0) {
-			if ((ct->takesargs == 0) ^ (argv[2] == NULL))
-			    	usage();
+			if (!ct->argsoptional &&
+			    ((ct->takesargs == 0) ^ (argv[2] == NULL)))
+			{
+				usage();
+			}
 			(*ct->func)(argv + 2);
 			break;
 		}
@@ -119,6 +125,7 @@ usage(void)
 	fprintf(stderr, "       %s online cpuno\n", progname);
 	fprintf(stderr, "       %s intr cpuno\n", progname);
 	fprintf(stderr, "       %s nointr cpuno\n", progname);
+	fprintf(stderr, "       %s ucode [file]\n", progname);
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
@@ -181,11 +188,34 @@ cpu_nointr(char **argv)
 }
 
 static void
+cpu_ucode(char **argv)
+{
+	int error;
+	struct cpu_ucode uc;
+
+	if (argv[0] != NULL)
+		strlcpy(uc.fwname, argv[0], sizeof(uc.fwname));
+	else
+		memset(uc.fwname, '\0', sizeof(uc.fwname));
+
+	error = ioctl(fd, IOC_CPU_UCODE_APPLY, &uc);
+	if (error < 0) {
+		if (uc.fwname[0])
+			err(EXIT_FAILURE, "%s", uc.fwname);
+		else
+			err(EXIT_FAILURE, "IOC_CPU_UCODE_APPLY");
+	}
+}
+
+
+static void
 cpu_identify(char **argv)
 {
 	char name[32];
 	unsigned int id, np;
 	cpuset_t *cpuset;
+	struct cpu_ucode ucode;
+	char ucbuf[16];
 
 	np = sysconf(_SC_NPROCESSORS_CONF);
 	id = getcpuid(argv);
@@ -209,6 +239,16 @@ cpu_identify(char **argv)
 		cpuset_destroy(cpuset);
 	}
 	identifycpu(name);
+
+	if (ioctl(fd, IOC_CPU_UCODE_GET_VERSION, &ucode) < 0)
+		ucode.version = (uint64_t)-1;
+	if (ucode.version == (uint64_t)-1)
+		strcpy(ucbuf, "?");
+	else
+		snprintf(ucbuf, sizeof(ucbuf), "0x%"PRIx64,
+		    ucode.version);
+
+	printf("%s: UCode version: %s\n", name, ucbuf);
 }
 
 static u_int
@@ -263,11 +303,13 @@ cpu_list(char **argv)
 			strcpy(ibuf, "?");
 		else
 			snprintf(ibuf, sizeof(ibuf), "%d", cs.cs_intrcnt - 1);
+
 		lastmod = (time_t)cs.cs_lastmod |
 		    ((time_t)cs.cs_lastmodhi << 32);
 		ts = asctime(localtime(&lastmod));
 		ts[strlen(ts) - 1] = '\0';
-		printf("%-4d %-4x %-12s %-10s %s %s\n", i, cs.cs_hwid, state,
+		printf("%-4d %-4x %-12s %-10s %s %-5s\n",
+		   i, cs.cs_hwid, state,
 		   intr, ts, ibuf);
 	}
 }

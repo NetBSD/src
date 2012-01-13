@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.58 2011/12/18 05:49:28 dholland Exp $
+#	$NetBSD: XEN3_DOM0,v 1.59 2012/01/13 16:05:14 cegger Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -44,6 +44,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
+
+options		CPU_UCODE	# cpu ucode loading support
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
