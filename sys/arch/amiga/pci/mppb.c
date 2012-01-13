@@ -1,4 +1,4 @@
-/*	$NetBSD: mppb.c,v 1.2 2011/09/19 19:15:29 rkujawa Exp $ */
+/*	$NetBSD: mppb.c,v 1.3 2012/01/13 13:36:36 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -167,6 +167,7 @@ mppb_attach(device_t parent, device_t self, void *aux)
 	sc->apc.pc_conf_hook = amiga_pci_conf_hook;
 	sc->apc.pc_conf_interrupt = amiga_pci_conf_interrupt;
 
+#ifdef PCI_NETBSD_CONFIGURE
 	ioext = extent_create("mppbio",  MPPB_IO_BASE, 
 	    MPPB_IO_BASE + MPPB_IO_SIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);
 	memext = extent_create("mppbmem",  MPPB_MEM_BASE, 
@@ -176,6 +177,7 @@ mppb_attach(device_t parent, device_t self, void *aux)
 
 	extent_destroy(ioext);
 	extent_destroy(memext);
+#endif /* PCI_NETBSD_CONFIGURE */
 
 	pba.pba_iot = &(sc->pci_io_area);
 	pba.pba_memt = &(sc->pci_mem_area);
