@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsfont.9,v 1.16 2011/06/13 15:24:21 nonaka Exp $
+.\"     $NetBSD: wsfont.9,v 1.17 2012/01/13 16:06:20 macallan Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,10 +49,10 @@
 .Fn wsfont_init "void"
 .Ft int
 .Fn wsfont_matches "struct wsdisplay_font *font" "const char *name" \
-"int width" "int height" "int stride"
+"int width" "int height" "int stride" "int flags"
 .Ft int
 .Fn wsfont_find "const char *name" "int width" "int height" "int stride" \
-"int bitorder" "int byteorder"
+"int bitorder" "int byteorder" "int flags"
 .Ft int
 .Fn wsfont_add "struct wsdisplay_font *font" "int copy"
 .Ft int
@@ -126,11 +126,14 @@ Matches the font
 with the specifications
 .Fa name ,
 .Fa width ,
-.Fa height
+.Fa height ,
+.Fa stride 
 and
-.Fa stride .
+.Fa flags .
 Return zero if not matched and non-zero if matched.
-.It Fn wsfont_find "name" "width" "height" "stride" "bitorder" "byteorder"
+The "flags" parameter has the same meaning as in 
+.Fn wsfont_find .
+.It Fn wsfont_find "name" "width" "height" "stride" "bitorder" "byteorder" "flags"
 Find the font called
 .Fa name
 from the fonts loaded into the kernel.
@@ -161,6 +164,16 @@ The font is ordered left to right.
 The font is ordered right to left.
 .El
 .Pp
+The
+.Fa flags
+parameter determines what type of font can be returned.
+Any combination of the following values is allowed:
+.Bl -tag -width compact
+.It WSFONT_FIND_BITMAP
+To search bitmap fonts,
+.It WSFONT_FIND_ALPHA
+to search anti-aliased fonts.
+.El
 When more flexibility is required,
 .Fn wsfont_enum
 should be used.
