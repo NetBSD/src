@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasops.9,v 1.13 2012/01/13 16:06:20 macallan Exp $
+.\"     $NetBSD: rasops.9,v 1.14 2012/01/13 16:50:28 macallan Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -146,6 +146,18 @@ cursor is currently clipped
 .It  RI_CFGDONE
 .Fn rasops_reconfig
 completed successfully
+.It  RI_NO_AUTO
+do not generate box drawing characters for ISO fonts.
+Use this when it is not safe to allocate memory, for example when setting up
+an early console.
+.It  RI_ENABLE_ALPHA
+set this if the caller supports anti-aliased fonts in the given colour depth.
+Without this flag rasops_init() will only pick bitmap fonts.
+.It  RI_8BIT_IS_RGB
+set this if the caller uses an R3G3B2 colour map in 8 bit.
+.Fn rasops_init
+will generate an appropriate ri_devcmap[] but the caller still needs to set up
+the actual colour map.
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
