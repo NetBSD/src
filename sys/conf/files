@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1034 2011/12/19 16:10:07 drochner Exp $
+#	$NetBSD: files,v 1.1035 2012/01/13 21:46:00 martin Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -58,6 +58,7 @@ defparam opt_dump.h		DUMP_ON_PANIC
 defflag	opt_callout.h		CALLWHEEL_STATS
 
 defflag				CPU_IN_CKSUM
+defflag				CPU_UCODE
 
 defflag opt_dtrace.h		KDTRACE_HOOKS
 
