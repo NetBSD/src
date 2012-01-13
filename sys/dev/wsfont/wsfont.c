@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.53 2012/01/11 15:52:32 macallan Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.54 2012/01/13 16:08:02 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.53 2012/01/11 15:52:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.54 2012/01/13 16:08:02 macallan Exp $");
 
 #include "opt_wsfont.h"
 
@@ -506,9 +506,9 @@ wsfont_rotate(int cookie, int rotate)
 	default:
 		return (-1);
 	}
-
+	/* rotation works only with bitmap fonts so far */
 	ncookie = wsfont_find(font->name, font->fontwidth, font->fontheight, 
-	    font->stride, 0, 0);
+	    font->stride, 0, 0, WSFONT_FIND_BITMAP);
 
 	return (ncookie);
 }
