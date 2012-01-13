@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 2012/01/06 22:14:04 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.42 2012/01/13 07:01:04 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41 2012/01/06 22:14:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.42 2012/01/13 07:01:04 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -352,11 +352,14 @@ device_register(device_t dev, void *aux)
 	 * controller's struct dev in boot_device. The SCSI device is located
 	 * later, see below.
 	 */
-	if ((device_is_a(pdev, "gsc") || device_is_a(pdev, "phantomas"))
-	    && (hppa_hpa_t)PAGE0->mem_boot.pz_hpa ==
-	    ((struct gsc_attach_args *)aux)->ga_ca.ca_hpa)
-		/* This is (the controller of) the boot device. */
-		boot_device = dev;
+	if (device_is_a(pdev, "gsc") || device_is_a(pdev, "phantomas")) {
+		struct confargs *ca = aux;
+
+		if ((hppa_hpa_t)PAGE0->mem_boot.pz_hpa == ca->ca_hpa) {
+			/* This is (the controller of) the boot device. */
+			boot_device = dev;
+		}
+	}
 	/*
 	 * If the boot device is a PCI device the HPA is the address where the
 	 * firmware has mapped the PCI memory of the PCI device. This is quite
@@ -396,38 +399,52 @@ device_register(device_t dev, void *aux)
 		}
 		/* This is the PCI host bridge in front of the boot device. */
 		boot_device = dev;
+
 	}
-	/* XXX Guesswork. No hardware to test how firmware handles a ppb. */
-	if (device_is_a(dev, "ppb")
-	    && boot_device == device_parent(pdev)
-	    && ((struct pci_attach_args*)aux)->pa_device
-	    == PAGE0->mem_boot.pz_dp.dp_bc[3]
-	    && ((struct pci_attach_args*)aux)->pa_function
-	    == PAGE0->mem_boot.pz_dp.dp_bc[4])
-		/* This is the PCI - PCI bridge in front of the boot device. */
-		boot_device = dev;
-	if (device_is_a(pdev, "pci")
-	    && boot_device == device_parent(pdev)
-	    && ((struct pci_attach_args*)aux)->pa_device
-	    == PAGE0->mem_boot.pz_dp.dp_bc[5]
-	    && ((struct pci_attach_args*)aux)->pa_function
-	    == PAGE0->mem_boot.pz_dp.dp_mod)
-		/* This is (the controller of) the boot device. */
-		boot_device = dev;
+	if (device_is_a(dev, "ppb") && boot_device == device_parent(pdev)) {
+		/*
+		 * XXX Guesswork. No hardware to test how firmware handles
+		 * a ppb.
+		 */
+		struct pci_attach_args *paa = (struct pci_attach_args*)aux;
+		
+		if (paa->pa_device == PAGE0->mem_boot.pz_dp.dp_bc[3] &&
+		    paa->pa_function == PAGE0->mem_boot.pz_dp.dp_bc[4]) {
+			/*
+			 * This is the PCI - PCI bridge in front of the boot
+			 * device.
+			 */
+			boot_device = dev;
+		}
+	}
+	if (device_is_a(pdev, "pci") && boot_device == device_parent(pdev)) {
+		struct pci_attach_args *paa = (struct pci_attach_args*)aux;
+
+		if (paa->pa_device == PAGE0->mem_boot.pz_dp.dp_bc[5] &&
+		    paa->pa_function == PAGE0->mem_boot.pz_dp.dp_mod) {
+			/*
+			 * This is (the controller of) the boot device.
+			 */
+			boot_device = dev;
+		}
+	}
 	/*
 	 * When SCSI devices are attached, we look if the SCSI device hangs
 	 * below the controller remembered in boot_device. If so, we compare
 	 * the SCSI ID and LUN with the DP layer information. If they match
 	 * we found the boot device.
 	 */
-	if (device_is_a(pdev, "scsibus")
-	    && boot_device == device_parent(pdev)
-	    && ((struct scsipibus_attach_args *)aux)->sa_periph->periph_target
-	    == PAGE0->mem_boot.pz_dp.dp_layers[0]
-	    && ((struct scsipibus_attach_args *)aux)->sa_periph->periph_lun
-	    == PAGE0->mem_boot.pz_dp.dp_layers[1])
-		/* This is the boot device. */
-		boot_device = dev;
+	if (device_is_a(pdev, "scsibus") &&
+	    boot_device == device_parent(pdev)) {
+		struct scsipibus_attach_args *saa = aux;
+		struct scsipi_periph *p = saa->sa_periph;
+		
+		if (p->periph_target == PAGE0->mem_boot.pz_dp.dp_layers[0] &&
+		    p->periph_lun == PAGE0->mem_boot.pz_dp.dp_layers[1]) {
+			/* This is the boot device. */
+			boot_device = dev;
+		}
+	}
 
 	hp700_pagezero_unmap(pagezero_cookie);
 	return;
