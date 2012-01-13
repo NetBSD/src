@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpf.c,v 1.3 2011/12/18 22:51:00 joerg Exp $	*/
+/*	$NetBSD: t_bpf.c,v 1.4 2012/01/13 16:28:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -90,7 +90,6 @@ ATF_TC_BODY(bpfwriteleak, tc)
 
 	ATF_REQUIRE_ERRNO(ENETDOWN, rump_sys_write(bpfd, buf, sizeof(buf))==-1);
 
-	atf_tc_expect_fail("PR kern/44196");
 	ATF_REQUIRE_EQ(getmtdata(), 0);
 }
 
