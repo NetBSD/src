@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasops.9,v 1.14 2012/01/13 16:50:28 macallan Exp $
+.\"     $NetBSD: rasops.9,v 1.15 2012/01/13 23:09:51 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 7, 2001
+.Dd January 13, 2012
 .Dt RASOPS 9
 .Os
 .Sh NAME
@@ -180,10 +180,13 @@ The arguments
 .Fa wantrows
 and
 .Fa wantcols
-are the number of rows and columns we'd like. Passing zero for either one of
+are the number of rows and columns we'd like.
+Passing zero for either one of
 them uses the default - normally 80x25 but it can be changed with
+.Bd -literal -offset indent
 options RASOPS_DEFAULT_WIDTH=80
 options RASOPS_DEFAULT_HEIGHT=25
+.Ed
 If calling
 .Fn rasops_reconfig
 to change the font and ri_wsfcookie \*[Ge] 0, you must call
