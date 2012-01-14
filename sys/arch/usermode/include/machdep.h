@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.7 2012/01/03 10:53:46 reinoud Exp $ */
+/* $NetBSD: machdep.h,v 1.8 2012/01/14 17:31:09 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -36,10 +36,7 @@ void	md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp,
 void	md_syscall_inc_pc(ucontext_t *ucp, uint32_t opcode);
 void	md_syscall_dec_pc(ucontext_t *ucp, uint32_t opcode);
 register_t md_get_pc(ucontext_t *ucp);
+register_t md_get_sp(ucontext_t *ucp);
 
 /* handlers */
 void	syscall(void);
-void	pagefault(void);
-
-/* signal stack */
-stack_t *usermode_signal_stack(void);
