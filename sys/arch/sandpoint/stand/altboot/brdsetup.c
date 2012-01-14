@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.26 2012/01/14 20:03:11 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.27 2012/01/14 22:36:54 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ static struct brdprop brdlist[] = {
 	NULL, dlinkbrdfix, NULL, NULL },
     {
 	"nhnas",
-	"Netronics NH230/231",
+	"Netronix NH-230/231",
 	BRD_NH230NAS,
 	33000000,
 	"eumb", 0x4500, 9600,
