@@ -1,6 +1,6 @@
 /// notes about altboot ///
 
-$NetBSD: README.altboot,v 1.7 2012/01/01 14:16:41 phx Exp $
+$NetBSD: README.altboot,v 1.8 2012/01/14 20:16:53 phx Exp $
 
 Altboot is a functional bridge to fill the gap between a NAS product
 custom bootloader and the NetBSD kernel startup environment.  Altboot
@@ -43,6 +43,10 @@ Altboot is known working on at least these models:
 - Iomega StorCenter with vendor custom U-Boot
 
    U-Boot 1.0.0 (Sep  2 2005 - 14:49:11)
+
+- Netronics NH230/231 and compatible with restricted vendor custom PPCboot
+
+   PPCBoot 2.0.0-A9 (Feb 13 2006 - 14:56:11)
 
 The standard use of altboot is to invoke it with a short script from
 U-Boot/PPCboot, where the altboot.bin image is stored in an unoccupied 128KB
