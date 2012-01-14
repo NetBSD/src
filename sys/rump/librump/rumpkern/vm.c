@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.120.2.2 2011/11/10 14:33:18 yamt Exp $	*/
+/*	$NetBSD: vm.c,v 1.120.2.3 2012/01/14 04:36:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.120.2.2 2011/11/10 14:33:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.120.2.3 2012/01/14 04:36:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -625,6 +625,13 @@ uvm_loanbreak(struct vm_page *pg)
 {
 
 	panic("%s: unimplemented", __func__);
+}
+
+int
+uvm_loanobj(struct uvm_object *uobj, struct uio *uio)
+{
+
+	return ENOTSUP;
 }
 
 void
