@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.483 2012/01/05 05:48:27 ast Exp $
+.\"	$NetBSD: main,v 1.484 2012/01/14 22:56:30 jmcneill Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -171,18 +171,18 @@ bootloader
 and the installation kernel
 .Pa macppc/binary/kernel/netbsd-GENERIC_MD.gz .
 If you have a CD-R, you can fetch the CD image,
-.Pa macppccd-\*V.iso .
+.Pa NetBSD-\*V-macppc.iso .
 .\}
 .if \n[sparc] \{\
 Fetch a CD image,
-.Pa sparccd-\*V.iso
+.Pa NetBSD-\*V-sparc.iso
 or the floppy disk images,
 .Pa sparc/install/floppy/disk1.gz No and Pa sparc/install/floppy/disk2 .
 You need either the pair of floppies or the CD to boot your system.
 .\}
 .if \n[sparc64] \{\
 This is either a CD image,
-.Pa sparc64cd-\*V.iso
+.Pa NetBSD-\*V-sparc64.iso
 or the installation kernel and bootloader,
 .Pa sparc64/binary/kernel/netbsd-INSTALL.gz No and Pa sparc64/installation/misc/ofwboot
 which can be booted from a
