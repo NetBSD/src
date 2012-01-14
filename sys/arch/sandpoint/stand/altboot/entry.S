@@ -1,4 +1,4 @@
-/* $NetBSD: entry.S,v 1.5 2011/10/30 21:08:33 phx Exp $ */
+/* $NetBSD: entry.S,v 1.6 2012/01/14 20:03:12 phx Exp $ */
 
 #include <powerpc/psl.h>
 #include <powerpc/spr.h>
@@ -343,5 +343,5 @@ BAT123:
 	.long xBATU(0x80000000, BAT_BL_256M, BAT_Vs)
 	.long xBATL(0xfc000000, BAT_I|BAT_G, BAT_PP_RW)
 	.long xBATU(0xfc000000, BAT_BL_64M, BAT_Vs)
-	.long 0
-	.long 0
+	.long xBATL(0x70000000, BAT_I|BAT_G, BAT_PP_RW)
+	.long xBATU(0x70000000, BAT_BL_128K, BAT_Vs)

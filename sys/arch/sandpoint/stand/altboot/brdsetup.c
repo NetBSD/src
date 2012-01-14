@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.25 2012/01/08 14:53:54 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.26 2012/01/14 20:03:11 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,6 +57,60 @@ BRD_DECL(iomega);
 BRD_DECL(dlink);
 BRD_DECL(nhnas);
 
+static void brdfixup(void);
+static void setup(void);
+static void send_iomega(int, int, int, int, int, int);
+static inline uint32_t mfmsr(void);
+static inline void mtmsr(uint32_t);
+static inline uint32_t cputype(void);
+static inline u_quad_t mftb(void);
+static void init_uart(unsigned, unsigned, uint8_t);
+static void send_sat(char *);
+static unsigned mpc107memsize(void);
+
+/* UART registers */
+#define RBR		0
+#define THR		0
+#define DLB		0
+#define DMB		1
+#define IER		1
+#define FCR		2
+#define LCR		3
+#define  LCR_DLAB	0x80
+#define  LCR_PEVEN	0x18
+#define  LCR_PNONE	0x00
+#define  LCR_8BITS	0x03
+#define MCR		4
+#define  MCR_RTS	0x02
+#define  MCR_DTR	0x01
+#define LSR		5
+#define  LSR_THRE	0x20
+#define  LSR_DRDY	0x01
+#define DCR		0x11
+#define UART_READ(base, r)	in8(base + (r))
+#define UART_WRITE(base, r, v)	out8(base + (r), (v))
+
+/* MPC106 and MPC824x PCI bridge memory configuration */
+#define MPC106_MEMSTARTADDR1	0x80
+#define MPC106_EXTMEMSTARTADDR1	0x88
+#define MPC106_MEMENDADDR1	0x90
+#define MPC106_EXTMEMENDADDR1	0x98
+#define MPC106_MEMEN		0xa0
+
+/* Iomega StorCenter MC68HC908 microcontroller data packet */
+#define IOMEGA_POWER		0
+#define IOMEGA_LED		1
+#define IOMEGA_FLASH_RATE	2
+#define IOMEGA_FAN		3
+#define IOMEGA_HIGH_TEMP	4
+#define IOMEGA_LOW_TEMP		5
+#define IOMEGA_ID		6
+#define IOMEGA_CHECKSUM		7
+#define IOMEGA_PACKETSIZE	8
+
+/* NH230/231 GPIO */
+#define NHGPIO_WRITE(x)		*((uint8_t *)0x70000000) = x
+
 static struct brdprop brdlist[] = {
     {
 	"sandpoint",
@@ -78,7 +132,7 @@ static struct brdprop brdlist[] = {
 	BRD_KUROBOX,
 	0,
 	"eumb", 0x4600, 57600,
-	kurosetup, kurobrdfix, NULL, NULL },
+	kurosetup, kurobrdfix, NULL, kuroreset },
     {
 	"synology",
 	"Synology DS",
@@ -114,7 +168,7 @@ static struct brdprop brdlist[] = {
 	BRD_NH230NAS,
 	33000000,
 	"eumb", 0x4500, 9600,
-	NULL, nhnasbrdfix, NULL, NULL },
+	NULL, nhnasbrdfix, NULL, nhnasreset },
     {
 	"unknown",
 	"Unknown board",
@@ -124,63 +178,14 @@ static struct brdprop brdlist[] = {
 	NULL, NULL, NULL, NULL }, /* must be the last */
 };
 
-/* MPC106 and MPC824x PCI bridge memory configuration */
-#define MPC106_MEMSTARTADDR1	0x80
-#define MPC106_EXTMEMSTARTADDR1	0x88
-#define MPC106_MEMENDADDR1	0x90
-#define MPC106_EXTMEMENDADDR1	0x98
-#define MPC106_MEMEN		0xa0
-
-/* Iomega StorCenter MC68HC908 microcontroller data packet */
-#define IOMEGA_POWER		0
-#define IOMEGA_LED		1
-#define IOMEGA_FLASH_RATE	2
-#define IOMEGA_FAN		3
-#define IOMEGA_HIGH_TEMP	4
-#define IOMEGA_LOW_TEMP		5
-#define IOMEGA_ID		6
-#define IOMEGA_CHECKSUM		7
-#define IOMEGA_PACKETSIZE	8
-
 static struct brdprop *brdprop;
 static uint32_t ticks_per_sec, ns_per_tick;
-
-static void brdfixup(void);
-static void setup(void);
-static void send_iomega(int, int, int, int, int, int);
-static inline uint32_t mfmsr(void);
-static inline void mtmsr(uint32_t);
-static inline uint32_t cputype(void);
-static inline u_quad_t mftb(void);
-static void init_uart(unsigned, unsigned, uint8_t);
-static void send_sat(char *);
-static unsigned mpc107memsize(void);
 
 const unsigned dcache_line_size = 32;		/* 32B linesize */
 const unsigned dcache_range_size = 4 * 1024;	/* 16KB / 4-way */
 
 unsigned uart1base;	/* console */
 unsigned uart2base;	/* optional satellite processor */
-#define RBR		0
-#define THR		0
-#define DLB		0
-#define DMB		1
-#define IER		1
-#define FCR		2
-#define LCR		3
-#define  LCR_DLAB	0x80
-#define  LCR_PEVEN	0x18
-#define  LCR_PNONE	0x00
-#define  LCR_8BITS	0x03
-#define MCR		4
-#define  MCR_RTS	0x02
-#define  MCR_DTR	0x01
-#define LSR		5
-#define  LSR_THRE	0x20
-#define  LSR_DRDY	0x01
-#define DCR		0x11
-#define UART_READ(base, r)	in8(base + (r))
-#define UART_WRITE(base, r, v)	out8(base + (r), (v))
 
 void brdsetup(void);	/* called by entry.S */
 
@@ -663,6 +668,14 @@ kurobrdfix(struct brdprop *brd)
 }
 
 void
+kuroreset()
+{
+
+	send_sat("CCGG");
+	/*NOTREACHED*/
+}
+
+void
 synosetup(struct brdprop *brd)
 {
 
@@ -736,7 +749,18 @@ void
 nhnasbrdfix(struct brdprop *brd)
 {
 
-	/* illuminate LEDs */
+	/* status LED off, USB-LEDs on, low-speed fan */
+	NHGPIO_WRITE(0x04);
+}
+
+void
+nhnasreset()
+{
+
+	/* status LED on, assert system-reset to all devices */
+	NHGPIO_WRITE(0x02);
+	delay(100000);
+	/*NOTREACHED*/
 }
 
 void
