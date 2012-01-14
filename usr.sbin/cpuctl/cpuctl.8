@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpuctl.8,v 1.7 2012/01/13 16:05:16 cegger Exp $
+.\"	$NetBSD: cpuctl.8,v 1.8 2012/01/14 00:59:56 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,31 +67,15 @@ At least one CPU in the system must remain on line.
 .It online Ar cpuno
 Set the specified CPU on line, making it available to run unbound LWPs.
 .It ucode Op Ar file
-This applies the microcode patch on all cpus.
+This applies the microcode patch on all CPUs.
 The default filename is used if no filename is specified.
 The
 .Cm identify
-command prints the installed version on that cpu.
+command prints the installed version on that CPU.
 On success the
 .Cm identify
 command show different ucode versions before and after this command.
 .El
-.Sh EXAMPLES
-Run
-.Dl cpuctl identify 0
-and you should see something like this:
-.Bd -literal -offset indent
-cpu0: UCode version: 0x1000080
-.Ed
-.Pp
-After applying the microcode patch with
-.Dl cpuctl ucode
-you can see with
-.Dl cpuctl identify 0
-that the patch got applied:
-.Bd -literal -offset indent
-cpu0: UCode version: 0x1000083
-.Ed
 .Sh FILES
 .Bl -tag -width /dev/cpuctl -compact
 .It Pa /dev/cpuctl
@@ -109,6 +93,22 @@ is the CPU family starting with 15 (hex).
 Get it from
 .Pa http://www.amd64.org/support/microcode.html
 .El
+.Sh EXAMPLES
+Run
+.Dl cpuctl identify 0
+and you should see something like this:
+.Bd -literal -offset indent
+cpu0: UCode version: 0x1000080
+.Ed
+.Pp
+After applying the microcode patch with
+.Dl cpuctl ucode
+you can see with
+.Dl cpuctl identify 0
+that the patch got applied:
+.Bd -literal -offset indent
+cpu0: UCode version: 0x1000083
+.Ed
 .Sh SEE ALSO
 .Xr psrset 8 ,
 .Xr schedctl 8
