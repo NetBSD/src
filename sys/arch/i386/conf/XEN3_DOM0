@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.59 2012/01/13 16:05:14 cegger Exp $
+#	$NetBSD: XEN3_DOM0,v 1.60 2012/01/14 12:14:28 tron Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -45,7 +45,7 @@ options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
-options		CPU_UCODE	# cpu ucode loading support
+options 	CPU_UCODE	# cpu ucode loading support
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
