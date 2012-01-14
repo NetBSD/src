@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.6 2011/12/20 13:46:17 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.7 2012/01/14 04:44:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.6 2011/12/20 13:46:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.7 2012/01/14 04:44:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,12 +370,10 @@ startover:
 			struct vm_page *pg = pgs[ridx + i];
 
 			/*
-			 * we should not see PG_HOLE pages here as it's a
-			 * caller's responsibility to allocate blocks
+			 * it's caller's responsibility to allocate blocks
 			 * beforehand for the overwrite case.
 			 */
-			KASSERT((pg->flags & PG_HOLE) == 0);
-			pg->flags &= ~PG_RDONLY;
+			pg->flags &= ~(PG_RDONLY|PG_HOLE);
 			/*
 			 * mark the page dirty.
 			 * otherwise another thread can do putpages and pull
