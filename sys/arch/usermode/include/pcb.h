@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.16 2012/01/06 12:54:59 reinoud Exp $ */
+/* $NetBSD: pcb.h,v 1.17 2012/01/14 17:42:51 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,30 +31,20 @@
 
 #include <sys/cdefs.h>
 #include <sys/ucontext.h>
+#include <sys/queue.h>
 
-/*
- * Trap frame.  Pushed onto the kernel stack on a trap (synchronous exception).
- * XXX move to frame.h?
- */
 
-//typedef ucontext_t trapframe;
-
+#define TRAPSTACKSIZE (USPACE -2*sizeof(ucontext_t) - 3*sizeof(register_t))
 struct pcb {
-	void		*pcb_stack_userland;
-	void		*pcb_stack_syscall;
-	void		*pcb_stack_pagefault;
+	ucontext_t pcb_ucp;		/* switchframe */
+	ucontext_t pcb_userret_ucp;
 
-	ucontext_t	 pcb_ucp;		/* lwp switchframe */
-	ucontext_t	 pcb_syscall_ucp;	/* syscall context */
-	ucontext_t	 pcb_userret_ucp;	/* return to userland context */
-	ucontext_t	 pcb_pagefault_ucp;	/* pagefault context */
-	ucontext_t	 pcb_trapret_ucp;
+	uint8_t *sys_stack_top;		/* points at free point in sys_stack */
+	uint8_t	 sys_stack[TRAPSTACKSIZE];
 
-	void *		 pcb_onfault;		/* on fault handler */
+	void	*pcb_onfault;		/* on fault handler */
 
-	int		 pcb_errno;		/* save/restore place */
-	vaddr_t		 pcb_fault_addr;	/* save place for fault addr */
-	vaddr_t		 pcb_fault_pc;		/* save place for fault PC */
+	int	 pcb_errno;		/* save/restore place */
 };
 
 #endif /* !_ARCH_USERMODE_INCLUDE_PCB_H */

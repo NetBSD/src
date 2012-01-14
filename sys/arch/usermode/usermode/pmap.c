@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.101 2012/01/10 12:07:17 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.102 2012/01/14 17:42:52 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2012/01/10 12:07:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2012/01/14 17:42:52 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2012/01/10 12:07:17 reinoud Exp $");
 #include <sys/pool.h>
 #include <machine/thunk.h>
 #include <machine/machdep.h>
+#include <machine/pcb.h>
 
 #include <uvm/uvm.h>
 
@@ -193,6 +194,16 @@ pmap_bootstrap(void)
 		(int) (kmem_user_end - kmem_user_start));
 
 	aprint_verbose("\n\n");
+
+	/* make critical assertions before modifying anything */
+	if (sizeof(struct pcb) > USPACE) {
+		panic("sizeof(struct pcb) is %d bytes too big for USPACE. "
+		   "Please adjust TRAPSTACKSIZE calculation",
+		   (int) (USPACE - sizeof(struct pcb)));
+	}
+	if (TRAPSTACKSIZE < 4*PAGE_SIZE) {
+		panic("TRAPSTACKSIZE is too small, please increase UPAGES");
+	}
 
 	/* protect user memory UVM area (---) */
 	err = thunk_munmap((void *) kmem_user_start,
@@ -625,11 +636,8 @@ pmap_lookup_pv(pmap_t pmap, uintptr_t lpn)
 	int l1 = lpn / PMAP_L2_NENTRY;
 	int l2 = lpn % PMAP_L2_NENTRY;
 
-#ifdef DIAGNOSTIC
 	if (lpn >= pm_nentries)
-		panic("peeing outside box : addr in page around %"PRIx64"\n",
-			(uint64_t) lpn*PAGE_SIZE);
-#endif
+		return NULL;
 
 	l2tbl = pmap->pm_l1[l1];
 	if (l2tbl)
