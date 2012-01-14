@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.8 2009/11/17 21:09:54 agc Exp $
+$NetBSD: storage,v 1.9 2012/01/14 22:06:16 agc Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -12,38 +12,35 @@ please do not rely on them being there.
 Features that will be in 6.0:
 2. logical volume management
 3. a native port of Sun's ZFS
+4. ReFUSE, perfuse and pud
+6. Support for flash devices - NAND, and flash file system
 7. rump extensions
-10. RAIDframe parity map
-
-Features that are planned for 6.0:
-1. devfs
-4. ReFUSE-lowlevel
-5. web-based management tools for storage subsystems
-6. support for flash devices - NAND and MMC/SD
-8. virtualised disks in userland
 9. in-kernel iSCSI initiator
+10. RAIDframe parity map
+11. quota system re-work
 
-We currently expect to branch 6.0 in the March 2010 timeframe, with a view
-to a 6.0 release later in 2010.
+Features that are planned for future releases:
+1. devfs/udevfsd
+5. web-based management tools for storage subsystems
+8. virtualised disks in userland
+12. lfs renovation
 
 We'll continue to update this roadmap as features and dates get firmed up.
 
 Some explanations
 =================
 
-1. devfs
----------
+1. udevfsd
+----------
 
-Devfs will allow device special files (the files used to access
-devices) to be created dynamically as and when they are attached to
-the system.  This will greatly reduce the number of files in a /dev
-directory and removes the need to run the MAKEDEV script when support
-for new devices is added to the NetBSD kernel.  NetBSD's devfs
-implementation will also allow multiple instances of the file system
-to be mounted simultaneously, which is very useful for chroot jails.
-Please contact core@ if you are interested in devfs development.
+There has always been discussion over devfs, and experience with it
+seems mixed (to be kind). At the same time, carrying around a whole
+populated /dev seems quite possible and effective, but maybe a bit
+unwieldy. jmcneill's udevfsd addresses this in a different way, and
+is currently in othersrc/external/bsd/udevfsd. Not planned for 6.0
+right now.
 
-Responsible: mjf
+Responsible: jmcneill
 
 2. Logical Volume Management
 ----------------------------
@@ -68,35 +65,41 @@ The ZFS source code has been committed to the repository.
 
 Responsible: haad, ad, ver
 
-4. ReFUSE-lowlevel
-------------------
+4. ReFUSE, perfuse and pud
+--------------------------
 
 FUSE has two interfaces, the normal high-level one, and a lower-level
-interface which is closer to the way standard file systems operate. This
-adds the low-level functionality in the same way that ReFUSE adds the
-high-level functionality
+interface which is closer to the way standard file systems operate. 
+manu's perfuse adds the low-level functionality in the same way that
+ReFUSE adds the high-level functionality.  In addition, there is the
+"pass to userspace device" framework added by pooka as part of rump. 
+All 3 will be in 6.0.
 
-Responsible: pooka, agc
+Responsible: pooka, manu, agc
 
 5. Web-based Management tools for Storage Subsystems
 ----------------------------------------------------
 
-Standard tools for managing the storage subsystems that NetBSD provides,
-using a standard web-server as the basic user interface on the storage
-device, allowing remote management by a standard web browser.
+Standard tools for managing the storage subsystems that NetBSD
+provides, using a standard web-server as the basic user interface on
+the storage device, allowing remote management by a standard web
+browser.  CIM and related functinoality are interesting datapoints in
+this space, although credentials and authentication are always
+challenges in this space. Will not make it into 6.0
 
 Responsible: agc
 
-6. Support for flash devices - NAND and MMC/SD
-----------------------------------------------
+6. Support for flash devices - NAND, and flash file system
+----------------------------------------------------------
 
-The NetBSD Foundation is interested in having a file system which is
-optimised to work with today's flash devices, including SSDs both with
-wear-levelling functionality and without, as well as support for NAND,
-and MMC/SD devices. Please get in touch with core@ if you're interested
-in helping out with this area of development.
+ahoka has have contributed many things in this area, including
+flash(4), flash(9), flashctl(8) and nand(9).  In addition, the
+University of Szeged has contributed chfs,
+http://en.wikipedia.org/wiki/CHFS, which is described as "the first
+open source flash specific file system written for NetBSD".  All of
+these will be in 6.0.
 
-Responsible: TBD
+Responsible: ahoka
 
 7. RUMP Extensions
 ------------------
@@ -112,20 +115,21 @@ Responsible: pooka
 --------------------------------
 
 For better support of virtualization, a library which provides a consistent 
-view of virtualized disk images has been developed by jmcneill.
+view of virtualized disk images has been developed by jmcneill. This will
+not make it into 6.0, although some extra functionality for reading vmdk
+images is available in othersrc/external/bsd/vmdk.
 
-Responsible: jmcneill
+Responsible: jmcneill, agc
 
 
 9. In-kernel iSCSI Initiator
 ----------------------------
 
 NetBSD has had a userland implementation of an iSCSI initiator since
-NetBSD 4.99.35, based on ReFUSE.  There is a possibility that an
-in-kernel initiator may be available - please contact core if you are
-interested in this functionality.
+NetBSD 4.99.35, based on ReFUSE.  Wasabi Systems kindly contributed their
+kernel-based iSCSI initiator, and it will be in 6.0.
 
-Responsible: core
+Responsible: riz, agc
 
 
 10. RAIDframe parity map
@@ -143,5 +147,28 @@ patches is available for NetBSD-5.
 
 Responsible: jld
 
-Alistair Crooks
-Tue Nov 17 07:17:20 PST 2009
+
+11. quota system re-work
+------------------------
+
+The quota system has been re-worked by bouyer, and is in -current
+right now.  dholland is updating and modifying this rework so that it
+is a more generalised solution, with better features for security. 
+This is expected to be in 6.0, although there is a lot of work to
+complete.
+
+Responsible: bouyer, dholland
+
+
+12. LFS renovation
+------------------
+
+LFS had been de-emphasised in the time period leading up to the
+5.0 release, but is undergoing some rework by perseant, and dholland
+has some contributions in this area too.
+
+Responsible: perseant, dholland
+
+
+Alistair Crooks, David Holland
+Sat Jan 14 05:52:37 PST 2012
