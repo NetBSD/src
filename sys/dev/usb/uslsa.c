@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.17 2012/01/14 21:06:01 jakllsch Exp $ */
+/* $NetBSD: uslsa.c,v 1.18 2012/01/14 21:15:48 jakllsch Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.17 2012/01/14 21:06:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.18 2012/01/14 21:15:48 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,6 @@ static void uslsa_close(void *, int);
 static int uslsa_usbd_errno(usbd_status);
 static int uslsa_request_set(struct uslsa_softc *, uint8_t, uint16_t);
 static int uslsa_set_flow(struct uslsa_softc *, tcflag_t, tcflag_t);
-
-static void uslsa_props(struct uslsa_softc *);
 
 static const struct ucom_methods uslsa_methods = {
 	uslsa_get_status,
