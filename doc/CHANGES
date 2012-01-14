@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1645 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1646 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1199,5 +1199,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	adventure(6): New save file format. Please regenerate (restore
 		and re-save) any old save files. [dholland 20120107]
 	x86, xen: Add cpu ucode loading support via cpuctl(8). [cegger 20120113]
-	sandpoint: Netronics NH230/231 and compatible NAS are supported.
+	sandpoint: Netronix NH-230/231 and compatible NAS are supported.
 		[phx 20120114]
