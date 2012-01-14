@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_mpcsoc.c,v 1.2 2011/06/20 06:21:45 matt Exp $ */
+/*	$NetBSD: pic_mpcsoc.c,v 1.3 2012/01/14 19:35:59 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_mpcsoc.c,v 1.2 2011/06/20 06:21:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_mpcsoc.c,v 1.3 2012/01/14 19:35:59 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -161,9 +161,18 @@ mpcpic_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 
 	x = irq;
 	x |= OPENPIC_IMASK;
-	x |= (i8259iswired && irq == 0) ?
-	    OPENPIC_POLARITY_POSITIVE :	OPENPIC_POLARITY_NEGATIVE;
-	x |= (type == IST_EDGE) ? OPENPIC_SENSE_EDGE : OPENPIC_SENSE_LEVEL;
+
+	if ((i8259iswired && irq == 0) ||
+	    type == IST_EDGE_RISING || type == IST_LEVEL_HIGH)
+		x |= OPENPIC_POLARITY_POSITIVE;
+	else
+		x |= OPENPIC_POLARITY_NEGATIVE;
+
+	if (type == IST_EDGE_FALLING || type == IST_EDGE_RISING)
+		x |= OPENPIC_SENSE_EDGE;
+	else
+		x |= OPENPIC_SENSE_LEVEL;
+
 	x |= realpri << OPENPIC_PRIORITY_SHIFT;
 	openpic_write(MPCPIC_IVEC(irq), x);
 
