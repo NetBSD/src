@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.6 2011/08/13 10:31:24 jmcneill Exp $ */
+/* $NetBSD: cpu.h,v 1.7 2012/01/14 21:23:24 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,6 +36,16 @@
 
 extern void	cpu_signotify(struct lwp *);
 extern void	cpu_need_proftick(struct lwp *);
+extern void	userret(struct lwp *);
+
+#define	curcpu()	usermode_curcpu()
+#define cpu_number()	0
+
+#define cpu_proc_fork(p1, p2)
+
+extern int	astpending;
+#define aston(ci) (astpending++)
+
 
 struct cpu_info {
 	device_t	ci_dev;
@@ -65,11 +75,6 @@ usermode_delay(unsigned int ms)
 	extern int thunk_usleep(unsigned int);
 	thunk_usleep(ms);
 }
-
-#define	curcpu()	usermode_curcpu()
-#define cpu_number()	0
-
-#define cpu_proc_fork(p1, p2)
 
 #define delay(ms)	usermode_delay(ms)
 #define DELAY(ms)	usermode_delay(ms)
