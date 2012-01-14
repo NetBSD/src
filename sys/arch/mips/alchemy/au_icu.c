@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.28 2011/07/10 23:13:23 matt Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.29 2012/01/14 16:09:19 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.28 2011/07/10 23:13:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.29 2012/01/14 16:09:19 kiyohara Exp $");
 
 #include "opt_ddb.h"
 #define __INTR_PRIVATE
@@ -99,8 +99,13 @@ static const struct ipl_sr_map alchemy_ipl_sr_map = {
 	[IPL_SOFTBIO] =		MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
 	[IPL_SOFTSERIAL] =	MIPS_SOFT_INT_MASK,
-	[IPL_VM] =		MIPS_SOFT_INT_MASK|MIPS_INT_MASK_0,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK |
+				MIPS_INT_MASK_0	|
+				MIPS_INT_MASK_1	|
+				MIPS_INT_MASK_2 |
+				MIPS_INT_MASK_3,
 	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_DDB] =		MIPS_INT_MASK,
 	[IPL_HIGH] =		MIPS_INT_MASK,
     },
 };
