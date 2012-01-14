@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_x86_64.c,v 1.1 2012/01/07 20:44:42 reinoud Exp $ */
+/* $NetBSD: cpu_x86_64.c,v 1.2 2012/01/14 17:42:52 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_x86_64.c,v 1.1 2012/01/07 20:44:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_x86_64.c,v 1.2 2012/01/14 17:42:52 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -110,13 +110,15 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigframe_siginfo *fp, frame;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	ucontext_t *ucp = &pcb->pcb_userret_ucp;
-	register_t *reg = (register_t *) &ucp->uc_mcontext;
+	ucontext_t *ucp;
+	register_t *reg;
 	int onstack, error;
 	char *sp;
 
 	KASSERT(mutex_owned(p->p_lock));
 
+	ucp = &pcb->pcb_userret_ucp;
+	reg = (register_t *) &ucp->uc_mcontext;
 #if 0
 	thunk_printf("%s: ", __func__);
 	thunk_printf("flags %d, ", (int) ksi->ksi_flags);
@@ -187,10 +189,12 @@ void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct pcb *pcb = lwp_getpcb(l);
-	ucontext_t *ucp = &pcb->pcb_userret_ucp;
+	ucontext_t *ucp;
 	register_t *reg;
 	int i;
 
+	/* set up the user context */
+	ucp = &pcb->pcb_userret_ucp;
 	reg = (register_t *) &ucp->uc_mcontext;
 	for (i = 0; i < 15; i++)
 		reg[i] = 0;
@@ -199,6 +203,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	reg[21] = pack->ep_entry;		/* RIP */
 	reg[24] = (register_t) stack;		/* RSP */
 
+	/* use given stack */
 	ucp->uc_stack.ss_sp   = (void *) stack;
 	ucp->uc_stack.ss_size = pack->ep_ssize;
 
@@ -268,6 +273,14 @@ md_get_pc(ucontext_t *ucp)
 	register_t *reg = (register_t *) &ucp->uc_mcontext;
 
 	return reg[21];			/* RIP */
+}
+
+register_t
+md_get_sp(ucontext_t *ucp)
+{
+	register_t *reg = (register_t *) &ucp->uc_mcontext;
+
+	return reg[24];			/* RSP */
 }
 
 int
