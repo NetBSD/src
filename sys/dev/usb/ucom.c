@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.94 2012/01/14 20:25:45 jakllsch Exp $	*/
+/*	$NetBSD: ucom.c,v 1.95 2012/01/14 20:41:49 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.94 2012/01/14 20:25:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.95 2012/01/14 20:41:49 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1246,10 +1246,12 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, (void *)&cp, &cc, NULL);
 
-	if (cc == 0) {
-		aprint_normal_dev(sc->sc_dev,
-		    "ucomreadcb: zero length xfer!\n");
+#ifdef UCOM_DEBUG
+	/* This is triggered by uslsa(4) occasionally. */
+	if ((ucomdebug > 0) && (cc == 0)) {
+		device_printf(sc->sc_dev, "ucomreadcb: zero length xfer!\n");
 	}
+#endif
 
 	KDASSERT(cp == ub->ub_data);
 
