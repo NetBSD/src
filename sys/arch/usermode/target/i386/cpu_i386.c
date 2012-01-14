@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_i386.c,v 1.1 2012/01/07 20:07:01 reinoud Exp $ */
+/* $NetBSD: cpu_i386.c,v 1.2 2012/01/14 17:42:52 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_i386.c,v 1.1 2012/01/07 20:07:01 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_i386.c,v 1.2 2012/01/14 17:42:52 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_i386.c,v 1.1 2012/01/07 20:07:01 reinoud Exp $")
 #include <dev/mm.h>
 #include <machine/machdep.h>
 #include <machine/thunk.h>
+
+#include "opt_exec.h"
 
 #if 0
 static void dump_regs(register_t *reg);;
@@ -108,16 +110,18 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigframe_siginfo *fp, frame;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	ucontext_t *ucp = &pcb->pcb_userret_ucp;
-	register_t *reg = (register_t *) &ucp->uc_mcontext;
+	ucontext_t *ucp;
+	register_t *reg;
 	int onstack, error;
 
 	KASSERT(mutex_owned(p->p_lock));
 
+	ucp = &pcb->pcb_userret_ucp;
+	reg = (register_t *) &ucp->uc_mcontext;
 #if 0
-	printf("%s: ", __func__);
-	printf("flags %d, ", (int) ksi->ksi_flags);
-	printf("to lwp %d, signo %d, code %d, errno %d\n",
+	thunk_printf("%s: ", __func__);
+	thunk_printf("flags %d, ", (int) ksi->ksi_flags);
+	thunk_printf("to lwp %d, signo %d, code %d, errno %d\n",
 		(int) ksi->ksi_lid,
 		ksi->ksi_signo,
 		ksi->ksi_code,
@@ -179,7 +183,7 @@ void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct pcb *pcb = lwp_getpcb(l);
-	ucontext_t *ucp = &pcb->pcb_userret_ucp;
+	ucontext_t *ucp;
 	uint *reg, i;
 
 #ifdef DEBUG_EXEC
@@ -190,16 +194,15 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		pcb->pcb_ucp.uc_stack.ss_sp);
 	printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n",
 		(int) pcb->pcb_ucp.uc_stack.ss_size);
-	printf("\tpcb->pcb_userret_ucp.uc_stack.ss_sp   = %p\n",
-		pcb->pcb_userret_ucp.uc_stack.ss_sp);
-	printf("\tpcb->pcb_userret_ucp.uc_stack.ss_size = %d\n",
-		(int) pcb->pcb_userret_ucp.uc_stack.ss_size);
 #endif
 
+	/* set up the user context */
+	ucp = &pcb->pcb_userret_ucp;
 	reg = (int *) &ucp->uc_mcontext;
 	for (i = 4; i < 11; i++)
 		reg[i] = 0;
 
+	/* use given stack */
 	ucp->uc_stack.ss_sp = (void *) (stack-4);	/* to prevent clearing */
 	ucp->uc_stack.ss_size = 0; //pack->ep_ssize;
 	thunk_makecontext(ucp, (void *) pack->ep_entry, 0, NULL, NULL, NULL);
@@ -216,10 +219,6 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		pcb->pcb_ucp.uc_stack.ss_sp);
 	printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n",
 		(int) pcb->pcb_ucp.uc_stack.ss_size);
-	printf("\tpcb->pcb_userret_ucp.uc_stack.ss_sp   = %p\n",
-		pcb->pcb_userret_ucp.uc_stack.ss_sp);
-	printf("\tpcb->pcb_userret_ucp.uc_stack.ss_size = %d\n",
-		(int) pcb->pcb_userret_ucp.uc_stack.ss_size);
 	printf("\tpack->ep_entry                = %p\n",
 		(void *) pack->ep_entry);
 #endif
@@ -272,6 +271,14 @@ md_get_pc(ucontext_t *ucp)
 	register_t *reg = (register_t *) &ucp->uc_mcontext;
 
 	return reg[14];			/* EIP */
+}
+
+register_t
+md_get_sp(ucontext_t *ucp)
+{
+	register_t *reg = (register_t *) &ucp->uc_mcontext;
+
+	return reg[17];			/* ESP */
 }
 
 int
