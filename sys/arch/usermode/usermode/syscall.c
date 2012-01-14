@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.21 2012/01/14 17:42:52 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.22 2012/01/14 21:45:28 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21 2012/01/14 17:42:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.22 2012/01/14 21:45:28 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,16 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21 2012/01/14 17:42:52 reinoud Exp $")
 #include <machine/pcb.h>
 #include <machine/thunk.h>
 #include <machine/machdep.h>
-
-
-void userret(struct lwp *l);
-
-void
-userret(struct lwp *l)
-{
-	/* invoke MI userret code */
-	mi_userret(l);
-}
 
 void
 child_return(void *arg)
@@ -161,7 +151,6 @@ syscall(void)
 	}
 	//thunk_printf_debug("end of syscall : return to userland\n");
 //if (code != 4) thunk_printf("userret() code %d\n", code);
-	userret(l);
 }
 
 

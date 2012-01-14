@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.64 2012/01/14 17:42:51 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.65 2012/01/14 21:45:28 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64 2012/01/14 17:42:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.65 2012/01/14 21:45:28 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64 2012/01/14 17:42:51 reinoud Exp $");
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/kmem.h>
+#include <sys/kernel.h>
 
 #include <dev/cons.h>
 
@@ -155,6 +156,7 @@ void
 cpu_need_resched(struct cpu_info *ci, int flags)
 {
 	ci->ci_want_resched |= flags;
+	aston(ci);
 }
 
 void

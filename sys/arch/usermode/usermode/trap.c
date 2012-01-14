@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.56 2012/01/14 17:42:52 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.57 2012/01/14 21:45:28 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.56 2012/01/14 17:42:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2012/01/14 21:45:28 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.56 2012/01/14 17:42:52 reinoud Exp $");
 /* forwards and externals */
 void setup_signal_handlers(void);
 void stop_all_signal_handlers(void);
+void userret(struct lwp *l);
 
 static void mem_access_handler(int sig, siginfo_t *info, void *ctx);
 static void illegal_instruction_handler(int sig, siginfo_t *info, void *ctx);
@@ -62,6 +63,7 @@ bool pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype);
 
 static stack_t sigstk;
 
+int astpending;
 
 void
 startlwp(void *arg)
@@ -203,6 +205,49 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 }
 
 
+/* ast and userret */
+void
+userret(struct lwp *l)
+{
+	struct pcb *pcb;
+	ucontext_t ucp, *nucp;
+	vaddr_t pc;
+	
+	KASSERT(l);
+
+	/* are we going back to userland? */
+	pcb = lwp_getpcb(l);
+	KASSERT(pcb);
+
+	/* where are we going back to ? */
+	thunk_getcontext(&ucp);
+	nucp = (ucontext_t *) ucp.uc_link;
+	pc = md_get_pc(nucp);
+
+	if (pc >= kmem_k_start)
+		return;
+
+	/* ok, going to userland, proceed! */
+	if (astpending) {
+		astpending = 0;
+
+		curcpu()->ci_data.cpu_ntrap++;
+#if 0
+		/* profiling */
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
+			ADDUPROF(l);
+		}
+#endif
+		/* allow a forced task switch */
+		if (l->l_cpu->ci_want_resched)
+			preempt();
+	}
+
+	/* invoke MI userret code */
+	mi_userret(l);
+}
+
 /* signal handler switching to a illegal instruction context */
 static void
 illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
@@ -317,10 +362,11 @@ pagefault(vaddr_t pc, vaddr_t va)
 		(void *) pc, (void *) va);
 #endif
 
-	/* can pmap handle it? on its own? (r/m) */
+	/* can pmap handle it? on its own? (r/m) emulation */
 	if (pmap_fault(vm_map->pmap, va, &atype)) {
 //		thunk_printf("pagefault leave (pmap)\n");
-		goto out;
+		/* no use doing anything else here */
+		goto out_quick;
 	}
 
 	/* ask UVM */
@@ -386,10 +432,11 @@ pagefault(vaddr_t pc, vaddr_t va)
 #else
 	trapsignal(l, &ksi);
 #endif
-	mi_userret(l);
 
 //	thunk_printf("pagefault leave\n");
 out:
+	userret(l);
+out_quick:
 	thunk_seterrno(lwp_errno);
 	pcb->pcb_errno = lwp_errno;
 }
@@ -410,6 +457,7 @@ illegal_instruction(void)
 	if (md_syscall_check_opcode(ucp)) {
 		syscall();
 //		thunk_printf("illegal instruction leave\n");
+		userret(l);
 		return;
 	}
 
@@ -427,6 +475,6 @@ illegal_instruction(void)
 #else
 	trapsignal(l, &ksi);
 #endif
-	mi_userret(l);
+	userret(l);
 }
 
