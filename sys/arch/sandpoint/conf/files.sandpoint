@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.30 2011/12/17 20:20:37 phx Exp $
+#	$NetBSD: files.sandpoint,v 1.31 2012/01/14 19:39:25 phx Exp $
 #
 # Motorola's "SandPoint" evaluation board and multiplied descendents.
 #
@@ -31,12 +31,12 @@ include "dev/ata/files.ata"
 #
 # Memory Disk for install floppy
 #
-file dev/md_root.c	memory_disk_hooks
+file	dev/md_root.c	memory_disk_hooks
 
 #
 # System bus types
 #
-define mainbus { }
+define	mainbus { }
 device	mainbus: isabus, pcibus, mainbus
 attach	mainbus at root
 
@@ -48,15 +48,19 @@ device	cfi: norbus
 attach	cfi at mainbus with sandpointcfi
 file	arch/sandpoint/sandpoint/flash_cfi.c	sandpointcfi
 
-device eumb { [ unit = -1 ] }: mainbus
-attach eumb at mainbus
+device	nhpow: sysmon_power, sysmon_taskq, gpiobus
+attach	nhpow at mainbus
+file	arch/sandpoint/sandpoint/nhpow.c	nhpow
+
+device	eumb { [ unit = -1 ] }: mainbus
+attach	eumb at mainbus
 file	arch/sandpoint/sandpoint/eumb.c		eumb
 
-attach com at eumb with com_eumb
+attach	com at eumb with com_eumb
 file	arch/sandpoint/sandpoint/com_eumb.c	com_eumb needs-flag
 
 device	ociic: motoi2c, i2cbus
-attach ociic at eumb with iic_eumb
+attach	ociic at eumb with iic_eumb
 file	arch/sandpoint/sandpoint/iic_eumb.c	iic_eumb
 
 device	satmgr: sysmon_power, sysmon_taskq
