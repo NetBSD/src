@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.117 2011/12/31 00:08:48 christos Exp $
+#	$NetBSD: files.usb,v 1.118 2012/01/14 21:06:01 jakllsch Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -339,7 +339,7 @@ file	dev/usb/uark.c		uark
 
 # Silicon Labs CP210x serial driver
 device	uslsa: ucombus
-attach	uslsa at usbdevif
+attach	uslsa at usbifif
 file	dev/usb/uslsa.c			uslsa
 
 # WinChipHead CH341/340 serial driver
