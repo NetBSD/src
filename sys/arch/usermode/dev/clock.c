@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.23 2011/12/15 03:42:32 jmcneill Exp $ */
+/* $NetBSD: clock.c,v 1.24 2012/01/14 21:24:52 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 2011/12/15 03:42:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24 2012/01/14 21:24:52 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 2011/12/15 03:42:32 jmcneill Exp $");
 static int	clock_match(device_t, cfdata_t, void *);
 static void	clock_attach(device_t, device_t, void *);
 
-static void	clock(void);
 static void	clock_signal(int sig, siginfo_t *info, void *ctx);
 static unsigned int clock_getcounter(struct timecounter *);
 
@@ -124,33 +123,15 @@ clock_intr(void *priv)
 
 	while (nticks-- > 0) {
 		hardclock(&cf);
-	};
-}
-
-static void
-clock(void)
-{
-	curcpu()->ci_idepth++;
-	spl_intr(IPL_SOFTCLOCK, clock_intr, NULL);
-	curcpu()->ci_idepth--;
+	}
 }
 
 static void
 clock_signal(int sig, siginfo_t *info, void *ctx)
 {
-#if 0
-	ucontext_t *uct = ctx;
-	struct lwp *l;
-	struct pcb *pcb;
-
-	l = curlwp;
-	pcb = lwp_getpcb(l);
-
-	/* copy this state as where the lwp was XXX NEEDED? */
-	memcpy(&pcb->pcb_ucp, uct, sizeof(ucontext_t));
-#endif
-
-	clock();
+	curcpu()->ci_idepth++;
+	spl_intr(IPL_CLOCK, clock_intr, NULL);
+	curcpu()->ci_idepth--;
 }
 
 static unsigned int
