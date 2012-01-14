@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1035 2012/01/13 21:46:00 martin Exp $
+#	$NetBSD: files,v 1.1036 2012/01/14 04:18:49 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1428,7 +1428,7 @@ file	dev/dkwedge/dk.c
 file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
 file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
 file	dev/dkwedge/dkwedge_mbr.c	dkwedge_method_mbr
-file	dev/firmload.c			firmload
+file	dev/firmload.c			firmload | cpu_ucode	needs-flag
 file	dev/fss.c			fss
 file	dev/keylock.c			keylock
 file	dev/lockstat.c			lockstat		needs-flag
