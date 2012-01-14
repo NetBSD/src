@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.42 2011/12/23 00:51:45 jakllsch Exp $	*/
+/*	$NetBSD: ubt.c,v 1.43 2012/01/14 21:37:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.42 2011/12/23 00:51:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.43 2012/01/14 21:37:17 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -680,7 +680,6 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 		return ENOENT;
 	}
 
-#ifdef DIAGNOSTIC
 	if (rd_size > MLEN) {
 		aprint_error_dev(sc->sc_dev, "rd_size=%d exceeds MLEN\n",
 		    rd_size);
@@ -694,7 +693,6 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 
 		return EOVERFLOW;
 	}
-#endif
 
 	sc->sc_scord_size = rd_size;
 	sc->sc_scord_addr = rd_addr;
