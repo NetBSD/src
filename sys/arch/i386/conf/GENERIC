@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1062 2012/01/13 16:05:14 cegger Exp $
+# $NetBSD: GENERIC,v 1.1063 2012/01/14 12:14:28 tron Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1062 $"
+#ident 		"GENERIC-$Revision: 1.1063 $"
 
 maxusers	64		# estimated number of users
 
@@ -80,7 +80,7 @@ options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
-options		CPU_UCODE	# cpu ucode loading support
+options 	CPU_UCODE	# cpu ucode loading support
 
 # Note: SysV IPC parameters can be changed dynamically; see sysctl(8).
 options 	SYSVMSG		# System V-like message queues
