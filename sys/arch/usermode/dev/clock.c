@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.24 2012/01/14 21:24:52 reinoud Exp $ */
+/* $NetBSD: clock.c,v 1.25 2012/01/14 21:42:51 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24 2012/01/14 21:24:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 2012/01/14 21:42:51 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -130,7 +130,7 @@ static void
 clock_signal(int sig, siginfo_t *info, void *ctx)
 {
 	curcpu()->ci_idepth++;
-	spl_intr(IPL_CLOCK, clock_intr, NULL);
+	spl_intr(IPL_SOFTCLOCK, clock_intr, NULL);
 	curcpu()->ci_idepth--;
 }
 
