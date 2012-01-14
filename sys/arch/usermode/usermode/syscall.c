@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.20 2012/01/03 12:05:00 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.21 2012/01/14 17:42:52 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.20 2012/01/03 12:05:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21 2012/01/14 17:42:52 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,11 +61,12 @@ child_return(void *arg)
 	lwp_t *l = arg;
 	register_t rval[2];
 	struct pcb *pcb = lwp_getpcb(l);
+	ucontext_t *ucp = &pcb->pcb_userret_ucp;
 
 	/* return value zero */
 	rval[0] = 0;
 	rval[1] = 0;
-	md_syscall_set_returnargs(l, &pcb->pcb_userret_ucp, 0, rval);
+	md_syscall_set_returnargs(l, ucp, 0, rval);
 
 	aprint_debug("child return! lwp %p\n", l);
 	userret(l);
@@ -98,8 +99,6 @@ syscall(void)
 	/* system call accounting */
 	curcpu()->ci_data.cpu_nsyscall++;
 	LWP_CACHE_CREDS(l, l->l_proc);
-
-	/* TODO are we allowed to execute system calls in this memory space? */
 
 	/* XXX do we want do do emulation? */
 	md_syscall_get_opcode(ucp, &opcode);
@@ -161,7 +160,7 @@ syscall(void)
 		break;
 	}
 	//thunk_printf_debug("end of syscall : return to userland\n");
-//if (code != 4) printf("userret() code %d\n", code);
+//if (code != 4) thunk_printf("userret() code %d\n", code);
 	userret(l);
 }
 
@@ -173,54 +172,54 @@ syscall_args_print(lwp_t *l, int code, int nargs, int argsize, register_t *args)
 
 return;
 	if (code != 4) {
-		printf("lwp %p, code %3d, nargs %d, argsize %3d\t%s(", 
+		thunk_printf("lwp %p, code %3d, nargs %d, argsize %3d\t%s(", 
 			l, code, nargs, argsize, syscallnames[code]);
 		switch (code) {
 		case 5:
-			printf("\"%s\", %"PRIx32", %"PRIx32"", (char *) (args[0]), (uint) args[1], (uint) args[2]);
+			thunk_printf("\"%s\", %"PRIx32", %"PRIx32"", (char *) (args[0]), (uint) args[1], (uint) args[2]);
 			break;
 		case 33:
-			printf("\"%s\", %"PRIx32"", (char *) (args[0]), (uint) args[1]);
+			thunk_printf("\"%s\", %"PRIx32"", (char *) (args[0]), (uint) args[1]);
 			break;
 		case 50:
-			printf("\"%s\"", (char *) (args[0]));
+			thunk_printf("\"%s\"", (char *) (args[0]));
 			break;
 		case 58:
-			printf("\"%s\", %"PRIx32", %"PRIx32"", (char *) (args[0]), (uint) (args[1]), (uint) args[2]);
+			thunk_printf("\"%s\", %"PRIx32", %"PRIx32"", (char *) (args[0]), (uint) (args[1]), (uint) args[2]);
 			break;
 		case 59:
-			printf("\"%s\", [", (char *) (args[0]));
+			thunk_printf("\"%s\", [", (char *) (args[0]));
 			argv = (char **) (args[1]);
 			if (*argv) {
 				while (*argv) {
-					printf("\"%s\", ", *argv);
+					thunk_printf("\"%s\", ", *argv);
 					argv++;
 				}
-				printf("\b\b");
+				thunk_printf("\b\b");
 			}
-			printf("], [");
+			thunk_printf("], [");
 			envp = (char **) (args[2]);
 			if (*envp) {
 				while (*envp) {
-					printf("\"%s\", ", *envp);
+					thunk_printf("\"%s\", ", *envp);
 					envp++;
 				}
-				printf("\b\b");
+				thunk_printf("\b\b");
 			}
-			printf("]");
+			thunk_printf("]");
 			break;
 		default:
 			for (int i = 0; i < nargs; i++)
-				printf("%"PRIx32", ", (uint) args[i]);
+				thunk_printf("%"PRIx32", ", (uint) args[i]);
 			if (nargs)
-				printf("\b\b");
+				thunk_printf("\b\b");
 		}
-		printf(") ");
+		thunk_printf(") ");
 	}
 #if 0
 	if ((code == 4)) {
 //		thunk_printf_debug("[us] %s", (char *) args[1]);
-		printf("[us] %s", (char *) args[1]);
+		thunk_printf("[us] %s", (char *) args[1]);
 	}
 #endif
 }
@@ -243,7 +242,7 @@ return;
 		errstr = "OK";
 	}
 	if (code != 4)
-		printf("=> %s: %d, (%"PRIx32", %"PRIx32")\n",
+		thunk_printf("=> %s: %d, (%"PRIx32", %"PRIx32")\n",
 			errstr, error, (uint) (rval[0]), (uint) (rval[1]));
 }
 
