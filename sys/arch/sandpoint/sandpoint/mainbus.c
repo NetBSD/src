@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26 2011/12/18 14:28:59 phx Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.27 2012/01/14 19:39:25 phx Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2011/12/18 14:28:59 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27 2012/01/14 19:39:25 phx Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2011/12/18 14:28:59 phx Exp $");
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
+#include <machine/bootinfo.h>
 #include <machine/isa_machdep.h>
 
 #include <dev/pci/pcivar.h>
@@ -75,6 +76,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args mba;
 	struct pcibus_attach_args pba;
+	struct btinfo_prodfamily *pfam;
 #if defined(PCI_NETBSD_CONFIGURE)
 	struct extent *ioext, *memext;
 #endif
@@ -88,6 +90,14 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.ma_name = "eumb";
 	mba.ma_bst = &sandpoint_eumb_space_tag;
 	config_found_ia(self, "mainbus", &mba, mainbus_print);
+
+	pfam = lookup_bootinfo(BTINFO_PRODFAMILY);
+	if (pfam != NULL && strcmp(pfam->name, "nhnas") == 0) {
+		/* attach nhpow(4) for NH230/231 only */
+		mba.ma_name = "nhpow";
+		mba.ma_bst = &sandpoint_nhgpio_space_tag;
+		config_found_ia(self, "mainbus", &mba, mainbus_print);
+	}
 
 	mba.ma_name = "cfi";
 	mba.ma_bst = &sandpoint_flash_space_tag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2011/12/17 20:20:38 phx Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2012/01/14 19:39:25 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2011/12/17 20:20:38 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2012/01/14 19:39:25 phx Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -122,12 +122,12 @@ extern struct consdev kcomcons;
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
+	extern u_long ticks_per_sec, ns_per_tick;
 	struct btinfo_magic *bi_magic = btinfo;
 	struct btinfo_memory *meminfo;
 	struct btinfo_clock *clockinfo;
 	size_t memsize;
 	u_long ticks;
-	extern u_long ticks_per_sec, ns_per_tick;
 
 	if ((unsigned)btinfo != 0 && (unsigned)btinfo < startkernel
 	    && bi_magic->magic == BOOTINFO_MAGIC)
@@ -173,6 +173,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	oea_batinit(
 	    0x80000000, BAT_BL_256M,	/* SANDPOINT_BUS_SPACE_MEM */
 	    0xfc000000, BAT_BL_64M,	/* _EUMB|_IO */
+	    0x70000000, BAT_BL_128K,	/* only for NH230 board control */
 	    0);
 
 	/* Install vectors and interrupt handler */
@@ -452,8 +453,12 @@ struct powerpc_bus_space sandpoint_flash_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0x00000000, 0xff000000, 0x00000000,
 };
+struct powerpc_bus_space sandpoint_nhgpio_space_tag = {
+	_BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0x70000000, 0x00000000, 0x00001000,
+};
 
-static char ex_storage[6][EXTENT_FIXED_STORAGE_SIZE(8)]
+static char ex_storage[7][EXTENT_FIXED_STORAGE_SIZE(8)]
     __attribute__((aligned(8)));
 
 void
@@ -496,6 +501,12 @@ sandpoint_bus_space_init(void)
 	    ex_storage[5], sizeof(ex_storage[5]));
 	if (error)
 		panic("sandpoint_bus_space_init: can't init flash tag");
+
+	/* NH230/231 only: extended ROM space at 0x70000000 for GPIO */
+	error = bus_space_init(&sandpoint_nhgpio_space_tag, "nh23x-gpio",
+	    ex_storage[6], sizeof(ex_storage[6]));
+	if (error)
+		panic("sandpoint_bus_space_init: can't init nhgpio tag");
 }
 
 #define MPC107_EUMBBAR		0x78	/* Eumb base address */
