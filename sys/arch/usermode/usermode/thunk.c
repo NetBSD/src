@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.77 2012/01/11 12:37:50 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.78 2012/01/14 17:42:52 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.77 2012/01/11 12:37:50 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.78 2012/01/14 17:42:52 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -960,7 +960,7 @@ thunk_rfb_open(thunk_rfb_t *rfb, uint16_t port)
 }
 
 static ssize_t
-safe_send(int s, const void *msg, size_t len)
+safe_send(int s, const void *msg, int len)
 {
 	const uint8_t *p;
 	ssize_t sent_len;
@@ -982,7 +982,7 @@ safe_send(int s, const void *msg, size_t len)
 }
 
 static ssize_t
-safe_recv(int s, void *buf, size_t len)
+safe_recv(int s, void *buf, int len)
 {
 	uint8_t *p;
 	int recv_len;
