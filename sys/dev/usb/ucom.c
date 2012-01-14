@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.93 2011/12/23 00:51:45 jakllsch Exp $	*/
+/*	$NetBSD: ucom.c,v 1.94 2012/01/14 20:25:45 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.93 2011/12/23 00:51:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.94 2012/01/14 20:25:45 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -656,12 +656,15 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 int
 ucompoll(dev_t dev, int events, struct lwp *l)
 {
-	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct ucom_softc *sc;
+	struct tty *tp;
 	int revents;
 
-	if (sc->sc_dying)
+	sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
+	if (sc == NULL || sc->sc_dying)
 		return (POLLHUP);
+
+	tp = sc->sc_tty;
 
 	sc->sc_refcnt++;
 	revents = ((*tp->t_linesw->l_poll)(tp, events, l));
