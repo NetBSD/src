@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.65 2012/01/07 20:51:23 phx Exp $
+# $NetBSD: GENERIC,v 1.66 2012/01/14 19:39:25 phx Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.65 $"
+#ident 		"GENERIC-$Revision: 1.66 $"
 
 maxusers	32
 
@@ -179,6 +179,8 @@ cpu*		at mainbus0
 #nor*		at cfi?
 #flash*		at nor?
 
+nhpow0		at mainbus0			# NH230/231 power,LED,buttons
+
 pci*		at mainbus0 bus ?
 pchb*		at pci? dev ? function ?	# PCI host bridge
 
@@ -224,6 +226,9 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# GPIO devices
+gpio*	at gpiobus?
 
 # USB Controller and Devices
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
