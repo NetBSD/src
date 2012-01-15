@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.133 2012/01/15 03:58:28 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.134 2012/01/15 20:43:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.133 2012/01/15 03:58:28 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.134 2012/01/15 20:43:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -557,14 +557,14 @@ void
 reget(int argc, char *argv[])
 {
 
-	(void)getit(argc, argv, 1, restart_point ? "r+" : "w" );
+	(void)getit(argc, argv, 1, restart_point ? "r+" : "a");
 }
 
 void
 get(int argc, char *argv[])
 {
 
-	(void)getit(argc, argv, 0, restart_point ? "r+" : "w" );
+	(void)getit(argc, argv, 0, restart_point ? "r+" : "w");
 }
 
 /*
