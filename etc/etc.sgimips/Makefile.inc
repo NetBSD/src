@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2010/12/27 03:38:53 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2012/01/15 17:36:55 joerg Exp $
 #
 #	etc.sgimips/Makefile.inc -- sgimips-specific etc Makefile targets
 #
@@ -36,7 +36,7 @@ SGI.image= ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom/netbsd-sgimips.
 iso-image-md-post:
 	@SEEK=$$(${TOOL_AWK} '/SGI_BOOT_BLOCK_SIZE_VOLHDR/{print $$3}' \
 		${DESTDIR}/usr/include/sys/bootblock.h) ; \
-	EST=$$(ls -l ${CDROM.image} \
+	EST=$$(ls -l ${CDROM_IMAGE} \
 		| ${TOOL_AWK} '{ s += $$5 } \
 			END { print int(('$${SEEK}'*512+s)/1024/1024/32+1)*32 \
 			}') ; \
@@ -49,6 +49,6 @@ iso-image-md-post:
 		${SGI.image}; \
 	${TOOLDIR}/bin/nbsgivol -f -w ip3xboot ${DESTDIR}/usr/mdec/ip3xboot \
 		${SGI.image}; \
-	dd if=${CDROM.image} of=${SGI.image} bs=512 seek=$${SEEK}
-	mv ${SGI.image} ${CDROM.image}
+	dd if=${CDROM_IMAGE} of=${SGI.image} bs=512 seek=$${SEEK}
+	mv ${SGI.image} ${CDROM_IMAGE}
 	rm -f ${RELEASEDIR}/ip2x ${RELEASEDIR}/ip3x
