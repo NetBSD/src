@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.50 2012/01/07 18:10:18 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.51 2012/01/15 10:18:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -37,7 +37,7 @@
 #include "opt_memsize.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2012/01/07 18:10:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2012/01/15 10:18:58 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ char *usermode_tap_device = NULL;
 char *usermode_tap_eaddr = NULL;
 static char usermode_audio_devicebuf[PATH_MAX] = "";
 char *usermode_audio_device = NULL;
+char *usermode_root_device = NULL;
 int usermode_vnc_width = 0;
 int usermode_vnc_height = 0;
 int usermode_vnc_port = -1;
@@ -92,12 +93,14 @@ usage(const char *pn)
 	    " [net=<tapdev>,<eaddr>]"
 	    " [audio=<audiodev>]"
 	    " [disk=<diskimg> ...]"
+	    " [root=<device>]"
 	    " [vnc=<width>x<height>,<port>]\n",
 	    pn);
 	printf("       (ex. \"%s"
 	    " net=tap0,00:00:be:ef:ca:fe"
 	    " audio=audio0"
 	    " disk=root.fs"
+	    " root=ld0"
 	    " vnc=640x480,5900\")\n", pn);
 }
 
@@ -185,6 +188,10 @@ main(int argc, char *argv[])
 				usermode_disk_image_path[
 				    usermode_disk_image_path_count++] =
 				    argv[i] + strlen("disk=");
+			} else if (strncmp(argv[i], "root=",
+			    strlen("root=")) == 0) {
+				usermode_root_device = argv[i] +
+				    strlen("root=");
 			} else {
 				printf("%s: unknown parameter\n", argv[i]);
 				usage(argv[0]);
