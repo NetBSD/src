@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.4 2011/11/26 23:42:27 christos Exp $	*/
+/*	$NetBSD: npf.h,v 1.5 2012/01/15 00:49:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ typedef struct nl_rule		nl_nat_t;
 nl_config_t *	npf_config_create(void);
 int		npf_config_submit(nl_config_t *, int);
 void		npf_config_destroy(nl_config_t *);
+int		npf_config_flush(int);
 #ifdef _NPF_PRIVATE
 void		_npf_config_setsubmit(nl_config_t *, const char *);
 #endif

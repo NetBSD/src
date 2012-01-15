@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.11 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.12 2012/01/15 00:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.11 2011/11/29 20:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.12 2012/01/15 00:49:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	rlset = npf_core_ruleset();
 	rl = npf_ruleset_inspect(&npc, nbuf, rlset, ifp, di, NPF_LAYER_3);
 	if (rl == NULL) {
+		npf_core_exit();
 		if (default_pass) {
 			npf_stats_inc(NPF_STAT_PASS_DEFAULT);
 			goto pass;

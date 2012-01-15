@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.8 2012/01/08 21:34:21 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.9 2012/01/15 00:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.8 2012/01/08 21:34:21 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.9 2012/01/15 00:49:48 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -239,7 +239,7 @@ npfctl(int action, int argc, char **argv)
 		ret = npfctl_config_send(fd);
 		break;
 	case NPFCTL_FLUSH:
-		ret = npfctl_config_flush(fd);
+		ret = npf_config_flush(fd);
 		break;
 	case NPFCTL_TABLE:
 		if (argc < 5) {
