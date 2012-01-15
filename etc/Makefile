@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.394 2012/01/14 22:56:31 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.395 2012/01/15 17:36:55 joerg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -423,7 +423,7 @@ release snapshot: .PHONY .MAKE check_DESTDIR check_RELEASEDIR snap_md_post
 #	Note: At least mkisofs 2.0 should be used.
 #
 CDROM_NAME_ADD?=
-CDROM.image?=${RELEASEDIR}/iso/NetBSD-${DISTRIBVER}-${MACHINE}.iso
+CDROM_IMAGE?=${RELEASEDIR}/iso/NetBSD-${DISTRIBVER}-${MACHINE}.iso
 CDROM.dir=	${.OBJDIR}/cdrom.dir
 CDROM.pathlist=	${.OBJDIR}/cdrom.pathlist
 
@@ -432,7 +432,7 @@ iso-image:
 .if ${MKISOFS} != true
 do-iso-image: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-post
 	${MAKESUMS} -t ${RELEASEDIR}/iso/ '*.iso'
-	@echo "iso-image created as: ${CDROM.image}"
+	@echo "iso-image created as: ${CDROM_IMAGE}"
 .else
 do-iso-image:
 	@echo iso-image: mkisofs not found
@@ -458,7 +458,7 @@ iso-image-mi: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-pre
 		false; \
 	fi
 	${MKISOFS} ${MKISOFS_FLAGS} -graft-points -path-list ${CDROM.pathlist} \
-	    -o ${CDROM.image} ${CDROM.dir}
+	    -o ${CDROM_IMAGE} ${CDROM.dir}
 
 # iso-image-md-pre --
 #	Setup ${CDROM.dir} to produce a bootable CD image.
