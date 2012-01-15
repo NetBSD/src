@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.66 2012/01/15 10:18:58 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.67 2012/01/15 10:45:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66 2012/01/15 10:18:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2012/01/15 10:45:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66 2012/01/15 10:18:58 jmcneill Exp $");
 #include <sys/msgbuf.h>
 #include <sys/kmem.h>
 #include <sys/kernel.h>
+#include <sys/mount.h>
 
 #include <dev/cons.h>
 
@@ -127,10 +128,21 @@ cpu_reboot(int howto, char *bootstr)
 {
 	extern void usermode_reboot(void);
 
-	splhigh();
+	if (cold)
+		howto |= RB_HALT;
+
+	if ((howto & RB_NOSYNC) == 0)
+		vfs_shutdown();
+	else
+		suspendsched();
+
+	doshutdownhooks();
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN)
 		thunk_exit(0);
+
+	splhigh();
 
 	if (howto & RB_DUMP)
 		thunk_abort();
