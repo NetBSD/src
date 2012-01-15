@@ -1,4 +1,4 @@
-$NetBSD: networking,v 1.8 2009/09/26 05:36:22 tsarna Exp $
+$NetBSD: networking,v 1.9 2012/01/15 02:56:17 agc Exp $
 
 NetBSD Networking Roadmap
 =========================
@@ -7,7 +7,9 @@ This is a small roadmap document, and deals with the networking
 side of the operating system.
 
 The following projects are expected to be included in NetBSD 6.0
+8. SMP-aware Network Packet Filter
 
+The following features are expected to be in future releases:
 1. Mobile IPv6
 2. SCTP
 3. network driver polling
@@ -15,9 +17,6 @@ The following projects are expected to be included in NetBSD 6.0
 5. integrated multicast dns / zeroconf
 6. tcp support in libsa
 7. netboot from http
-
-We currently expect to branch 6.0 in the March 2010 timeframe, with a view
-to a 6.0 release later in 2010.
 
 We'll continue to update this roadmap as features and dates get firmed up.
 
@@ -30,15 +29,20 @@ Some explanations
 
 Add support for the SCTP for both IPv4 and IPv6.
 
+Responsible: TBD
+
+
 3. network driver polling
 -------------------------
 
 Responsible: matt
 
+
 4. ALTQ processing for input
 ----------------------------
 
 Responsible: matt
+
 
 5. multicast DNS / zeroconf
 ---------------------------
@@ -47,6 +51,7 @@ Add support for multicast DNS (name.local)
 
 Responsible: tsarna
 
+
 6. tcp support in libsa
 -----------------------
 
@@ -54,14 +59,26 @@ Add a tiny tcp implementation to libsa.
 
 Responsible: matt
 
+
 7. http netbooting
 ------------------
 
 Be able to use a HTTP server hosting a kernel and/or disk image as a
 read-only root device.
 
-Responsible: ???
+Responsible: TBD
+
+8. SMP-aware Packet Filter
+--------------------------
+
+A new packet filter which is SMP-aware has been written by rmind, as a
+project funded by the NetBSD Foundation.  zoltan has updated it for
+IPv6, and various bits contributed by christos, dholland and martin. 
+This will be in 6.0
+
+Responsible: rmind, zoltan, christos, dholland, martin
+
 
 Matt Thomas
 Alistair Crooks
-Sun 25 Jan 2009 21:06:42 PST
+Sat Jan 14 11:44:46 PST 2012
