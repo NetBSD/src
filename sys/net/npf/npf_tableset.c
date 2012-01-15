@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_tableset.c,v 1.8 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.9 2012/01/15 00:49:49 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.8 2011/11/29 20:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.9 2012/01/15 00:49:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -208,7 +208,7 @@ npf_table_create(u_int tid, int type, size_t hsize)
 
 	t = kmem_zalloc(sizeof(npf_table_t), KM_SLEEP);
 	switch (type) {
-	case NPF_TABLE_RBTREE:
+	case NPF_TABLE_TREE:
 		rb_tree_init(&t->t_rbtree, &table_rbtree_ops);
 		break;
 	case NPF_TABLE_HASH:
@@ -247,7 +247,7 @@ npf_table_destroy(npf_table_t *t)
 		}
 		hashdone(t->t_hashl, HASH_LIST, t->t_hashmask);
 		break;
-	case NPF_TABLE_RBTREE:
+	case NPF_TABLE_TREE:
 		while ((e = rb_tree_iterate(&t->t_rbtree, NULL,
 		    RB_DIR_LEFT)) != NULL) {
 			rb_tree_remove_node(&t->t_rbtree, e);
@@ -331,7 +331,7 @@ npf_table_check(npf_tableset_t *tset, u_int tid, int type)
 	if (tset[tid] != NULL) {
 		return EEXIST;
 	}
-	if (type != NPF_TABLE_RBTREE && type != NPF_TABLE_HASH) {
+	if (type != NPF_TABLE_TREE && type != NPF_TABLE_HASH) {
 		return EINVAL;
 	}
 	return 0;
@@ -384,7 +384,7 @@ npf_table_add_cidr(npf_tableset_t *tset, u_int tid,
 			error = EEXIST;
 		}
 		break;
-	case NPF_TABLE_RBTREE:
+	case NPF_TABLE_TREE:
 		/* Insert entry.  Returns false, if duplicate. */
 		if (rb_tree_insert_node(&t->t_rbtree, e) != e) {
 			error = EEXIST;
@@ -444,7 +444,7 @@ npf_table_rem_cidr(npf_tableset_t *tset, u_int tid,
 			error = ESRCH;
 		}
 		break;
-	case NPF_TABLE_RBTREE:
+	case NPF_TABLE_TREE:
 		/* Key: (address & mask). */
 		npf_calculate_masked_addr(&val, addr, mask);
 		e = rb_tree_find_node(&t->t_rbtree, &val);
@@ -491,7 +491,7 @@ npf_table_match_addr(npf_tableset_t *tset, u_int tid, const npf_addr_t *addr)
 				break;
 		}
 		break;
-	case NPF_TABLE_RBTREE:
+	case NPF_TABLE_TREE:
 		e = rb_tree_find_node(&t->t_rbtree, addr);
 		KASSERT(e && npf_compare_cidr(addr, e->te_mask, &e->te_addr,
 		    NPF_NO_NETMASK) == 0);

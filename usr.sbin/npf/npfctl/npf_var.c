@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.c,v 1.2 2012/01/12 20:41:33 christos Exp $	*/
+/*	$NetBSD: npf_var.c,v 1.3 2012/01/15 00:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_var.c,v 1.2 2012/01/12 20:41:33 christos Exp $");
+__RCSID("$NetBSD: npf_var.c,v 1.3 2012/01/15 00:49:48 rmind Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -217,9 +217,10 @@ npfvar_get_data1(const npfvar_t *vp, int type, size_t idx, size_t level)
 		el = el->e_next;
 	}
 
-	if (vp->v_type == NPFVAR_VAR_ID)
-		return npfvar_get_data1(npfvar_lookup(el->e_data), type, 0,
-			level + 1);
+	if (vp->v_type == NPFVAR_VAR_ID) {
+		npfvar_t *rvp = npfvar_lookup(el->e_data);
+		return npfvar_get_data1(rvp, type, 0, level + 1);
+	}
 	return el->e_data;
 }
 

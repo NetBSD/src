@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.2 2012/01/12 20:41:33 christos Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.3 2012/01/15 00:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -240,7 +240,7 @@ table
 
 table_type
 	: HASH		{ $$ = NPF_TABLE_HASH; }
-	| TREE		{ $$ = NPF_TABLE_RBTREE; }
+	| TREE		{ $$ = NPF_TABLE_TREE; }
 	;
 
 table_store
