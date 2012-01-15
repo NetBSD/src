@@ -1,4 +1,4 @@
-$NetBSD: system,v 1.8 2009/11/17 21:09:54 agc Exp $
+$NetBSD: system,v 1.9 2012/01/15 02:49:12 agc Exp $
 
 NetBSD System Roadmap
 =====================
@@ -6,26 +6,20 @@ NetBSD System Roadmap
 This is a small roadmap document, and deals with the main system
 aspects of the operating system.
 
-The following projects are already in NetBSD-current and will appear
-in NetBSD 6.0:
-
+The following projects will appear in NetBSD 6.0:
 1. 64-bit time values supported
 2. Better Kernel Modules support
 5. namei() tactical changes
+9. namei() strategic changes
 10. emap (ephemeral mapping) support for i386 and amd64
 11. support for mDNSResponder
 
-The following projects are expected to be included in NetBSD 6.0
-
+The following projects may make it into future releases:
 3. Full kernel preemption for real-time threads
 4. POSIX shared memory
 6. Better resource controls
 7. Improved observability: online crashdumps, remote debugging
 8. Processor and cache topology aware scheduler
-9. namei() strategic changes
-
-We currently expect to branch 6.0 in the March 2010 timeframe, with a view
-to a 6.0 release later in 2010.
 
 We'll continue to update this roadmap as features and dates get firmed up.
 
@@ -69,6 +63,7 @@ be extended to support the ARM, MIPS and SuperH ports.
 
 Responsible: rmind
 
+
 4. POSIX shared memory
 ----------------------
 
@@ -77,6 +72,7 @@ shared memory objects and add the memory locations to the address space of
 a process.
 
 Responsible: rmind
+
 
 5. Incremental namei improvements, Phase 1
 ------------------------------------------
@@ -88,17 +84,24 @@ be in 6.0.
 
 Responsible: dholland
 
+
 6. Better resource controls
 ---------------------------
 
 A resource provisioning and control framework that extends beyond the
 traditional Unix process limits.
 
+Responsible: TBD
+
+
 7. Improved observability: online crashdumps, remote debugging
 --------------------------------------------------------------
 
 XXX crashdumps while the system is running
 XXX firewire support in libkvm
+
+Responsible: TBD
+
 
 8. Processor and cache topology aware scheduler
 -----------------------------------------------
@@ -110,6 +113,7 @@ cache thrashing, and thus improve overall performance in modern SMP
 systems.
 
 Responsible: rmind
+
 
 9. Incremental namei improvements, Phase 2
 ------------------------------------------
@@ -140,4 +144,4 @@ will appear in NetBSD 6.0.
 
 
 Alistair Crooks
-Thu Nov  5 07:47:34 PST 2009
+Sat Jan 14 11:40:49 PST 2012
