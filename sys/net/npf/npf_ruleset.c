@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.8 2011/12/08 23:36:57 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.9 2012/01/15 00:49:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.8 2011/12/08 23:36:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.9 2012/01/15 00:49:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -458,8 +458,7 @@ npf_ruleset_replace(const char *name, npf_ruleset_t *rlset)
  * Loop through the rules in the set and run n-code processor of each rule
  * against the packet (nbuf chain).  If sub-ruleset is found, inspect it.
  *
- * => If not found, core ruleset lock is released.
- * => Caller should protect the nbuf chain.
+ * => Caller is responsible for nbuf chain protection.
  */
 npf_rule_t *
 npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_ruleset_t *mainrlset,
@@ -507,9 +506,6 @@ again:
 		rlset = &final_rl->r_subset;
 		final_rl = NULL;
 		goto again;
-	}
-	if (final_rl == NULL) {
-		npf_core_exit();
 	}
 	return final_rl;
 }
