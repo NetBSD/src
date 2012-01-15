@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.10 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.11 2012/01/15 00:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.10 2011/11/29 20:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.11 2012/01/15 00:49:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -376,6 +376,7 @@ npfctl_reload(u_long cmd, void *data)
 	npf_ruleset_t *rlset = NULL;
 	npf_ruleset_t *nset = NULL;
 	prop_dictionary_t dict;
+	bool flush;
 	int error;
 
 	/* Retrieve the dictionary. */
@@ -413,11 +414,17 @@ npfctl_reload(u_long cmd, void *data)
 		goto fail;
 	}
 
+	flush = false;
+	prop_dictionary_get_bool(dict, "flush", &flush);
+
 	/*
 	 * Finally - reload ruleset, tableset and NAT policies.
 	 * Operation will be performed as a single transaction.
 	 */
 	npf_reload(rlset, tblset, nset);
+
+	/* Turn on/off session tracking accordingly. */
+	npf_session_tracking(!flush);
 
 	/* Done.  Since data is consumed now, we shall not destroy it. */
 	tblset = NULL;

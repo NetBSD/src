@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.8 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.9 2012/01/15 00:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.8 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.9 2012/01/15 00:49:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -402,6 +402,7 @@ npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, ifnet_t *ifp, const int di)
 	rlset = npf_core_natset();
 	rl = npf_ruleset_inspect(npc, nbuf, rlset, ifp, di, NPF_LAYER_3);
 	if (rl == NULL) {
+		npf_core_exit();
 		return NULL;
 	}
 	np = npf_rule_getnat(rl);

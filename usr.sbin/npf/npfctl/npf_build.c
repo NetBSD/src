@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.1 2012/01/08 21:34:21 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.2 2012/01/15 00:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.1 2012/01/08 21:34:21 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.2 2012/01/15 00:49:48 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -77,21 +77,6 @@ npfctl_config_send(int fd)
 	error = npf_config_submit(npf_conf, fd);
 	npf_config_destroy(npf_conf);
 	return error;
-}
-
-int
-npfctl_config_flush(int fd)
-{
-	int ret;
-
-	/* Pass empty configuration to flush. */
-	npfctl_config_init(false);
-	defgroup_set = true;
-	ret = npfctl_config_send(fd);
-	if (ret) {
-		return ret;
-	}
-	return npf_sessions_send(fd, NULL);
 }
 
 bool

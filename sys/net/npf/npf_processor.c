@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.7 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.8 2012/01/15 00:49:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.7 2011/11/29 20:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.8 2012/01/15 00:49:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -283,13 +283,14 @@ cisc_like:
 		cmpval = npf_match_ether(nbuf, d, n, i, &regs[NPF_NREGS - 1]);
 		break;
 	case NPF_OPCODE_IP4MASK:
-		/* Source/destination, network address, subnet mask. */
+		/* Source/destination, network address, subnet. */
 		i_ptr = nc_fetch_word(i_ptr, &d);
 		i_ptr = nc_fetch_double(i_ptr, &addr.s6_addr32[0], &n);
 		cmpval = npf_match_ipmask(npc, nbuf, n_ptr, d, &addr,
 		    (npf_netmask_t)n);
 		break;
 	case NPF_OPCODE_IP6MASK:
+		/* Source/destination, network address, subnet. */
 		i_ptr = nc_fetch_word(i_ptr, &d);
 		i_ptr = nc_fetch_double(i_ptr,
 		    &addr.s6_addr32[0], &addr.s6_addr32[1]);
@@ -455,7 +456,7 @@ jmp_check:
 		if (error) {
 			return error;
 		}
-		if (/* XXX !val ||*/ (val > NPF_MAX_NETMASK && val != NPF_NO_NETMASK)) {
+		if (!val || (val > NPF_MAX_NETMASK && val != NPF_NO_NETMASK)) {
 			return NPF_ERR_INVAL;
 		}
 		break;
@@ -464,7 +465,7 @@ jmp_check:
 		if (error) {
 			return error;
 		}
-		if (/* XXX !val ||*/ (val > NPF_MAX_NETMASK && val != NPF_NO_NETMASK)) {
+		if (!val || (val > NPF_MAX_NETMASK && val != NPF_NO_NETMASK)) {
 			return NPF_ERR_INVAL;
 		}
 		break;
