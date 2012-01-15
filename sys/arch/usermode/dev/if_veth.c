@@ -1,4 +1,4 @@
-/* $NetBSD: if_veth.c,v 1.3 2012/01/09 20:39:39 reinoud Exp $ */
+/* $NetBSD: if_veth.c,v 1.4 2012/01/15 10:51:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.3 2012/01/09 20:39:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.4 2012/01/15 10:51:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.3 2012/01/09 20:39:39 reinoud Exp $");
 
 static int	veth_match(device_t, cfdata_t, void *);
 static void	veth_attach(device_t, device_t, void *);
+static bool	veth_shutdown(device_t, int);
 
 static int	veth_init(struct ifnet *);
 static void	veth_start(struct ifnet *);
@@ -103,6 +104,9 @@ veth_attach(device_t parent, device_t self, void *opaque)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 
 	sc->sc_dev = self;
+
+	pmf_device_register1(self, NULL, NULL, veth_shutdown);
+
 	sc->sc_tapfd = thunk_open_tap(taa->u.veth.device);
 	if (sc->sc_tapfd == -1) {
 		aprint_error(": couldn't open %s: %d\n",
@@ -154,6 +158,17 @@ veth_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_rx_ih = sigio_intr_establish(veth_rx, sc);
 	if (sc->sc_rx_ih == NULL)
 		panic("couldn't establish veth rx interrupt");
+}
+
+static bool
+veth_shutdown(device_t self, int flags)
+{
+	struct veth_softc *sc = device_private(self);
+
+	if (sc->sc_tapfd != -1)
+		thunk_close(sc->sc_tapfd);
+
+	return true;
 }
 
 static int

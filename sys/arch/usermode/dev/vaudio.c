@@ -1,4 +1,4 @@
-/* $NetBSD: vaudio.c,v 1.2 2011/12/26 23:50:43 jmcneill Exp $ */
+/* $NetBSD: vaudio.c,v 1.3 2012/01/15 10:51:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vaudio.c,v 1.2 2011/12/26 23:50:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vaudio.c,v 1.3 2012/01/15 10:51:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -76,6 +76,7 @@ struct vaudio_softc {
 
 static int	vaudio_match(device_t, cfdata_t, void *);
 static void	vaudio_attach(device_t, device_t, void *);
+static bool	vaudio_shutdown(device_t, int);
 
 static void	vaudio_intr(void *);
 static void	vaudio_softintr_play(void *);
@@ -148,6 +149,9 @@ vaudio_attach(device_t parent, device_t self, void *opaque)
 	aprint_normal(": Virtual Audio (device = %s)\n", taa->u.vaudio.device);
 
 	sc->sc_dev = self;
+
+	pmf_device_register1(self, NULL, NULL, vaudio_shutdown);
+
 	sc->sc_audiopath = taa->u.vaudio.device;
 	sc->sc_audiofd = thunk_audio_open(sc->sc_audiopath);
 	if (sc->sc_audiofd == -1) {
@@ -179,6 +183,17 @@ vaudio_attach(device_t parent, device_t self, void *opaque)
 	callout_setfunc(&sc->sc_record.st_callout, vaudio_intr, &sc->sc_record);
 
 	sc->sc_audiodev = audio_attach_mi(&vaudio_hw_if, sc, self);
+}
+
+static bool
+vaudio_shutdown(device_t self, int flags)
+{
+	struct vaudio_softc *sc = device_private(self);
+
+	if (sc->sc_audiofd != -1)
+		thunk_audio_close(sc->sc_audiofd);
+
+	return true;
 }
 
 static void
