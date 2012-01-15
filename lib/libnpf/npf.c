@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.c,v 1.5 2011/11/26 23:42:27 christos Exp $	*/
+/*	$NetBSD: npf.c,v 1.6 2012/01/15 00:49:47 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.5 2011/11/26 23:42:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.6 2012/01/15 00:49:47 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -56,6 +56,7 @@ struct nl_config {
 	pri_t			ncf_nat_pri;
 	/* Custom file to externalise property-list. */
 	const char *		ncf_plist;
+	bool			ncf_flush;
 };
 
 struct nl_rule {
@@ -92,6 +93,7 @@ npf_config_create(void)
 	ncf->ncf_nat_pri = 1;
 
 	ncf->ncf_plist = NULL;
+	ncf->ncf_flush = false;
 
 	return ncf;
 }
@@ -111,6 +113,7 @@ npf_config_submit(nl_config_t *ncf, int fd)
 	prop_dictionary_set(npf_dict, "rprocs", ncf->ncf_rproc_list);
 	prop_dictionary_set(npf_dict, "tables", ncf->ncf_table_list);
 	prop_dictionary_set(npf_dict, "translation", ncf->ncf_nat_list);
+	prop_dictionary_set_bool(npf_dict, "flush", ncf->ncf_flush);
 
 	if (plist) {
 		if (!prop_dictionary_externalize_to_file(npf_dict, plist)) {
@@ -120,6 +123,22 @@ npf_config_submit(nl_config_t *ncf, int fd)
 		error = prop_dictionary_send_ioctl(npf_dict, fd, IOC_NPF_RELOAD);
 	}
 	prop_object_release(npf_dict);
+	return error;
+}
+
+int
+npf_config_flush(int fd)
+{
+	nl_config_t *ncf;
+	int error;
+
+	ncf = npf_config_create();
+	if (ncf == NULL) {
+		return ENOMEM;
+	}
+	ncf->ncf_flush = true;
+	error = npf_config_submit(ncf, fd);
+	npf_config_destroy(ncf);
 	return error;
 }
 
@@ -510,7 +529,6 @@ npf_table_destroy(nl_table_t *tl)
  */
 
 int
-/*ARGSUSED*/
 npf_update_rule(int fd, const char *rname __unused, nl_rule_t *rl)
 {
 	prop_dictionary_t rldict = rl->nrl_dict;

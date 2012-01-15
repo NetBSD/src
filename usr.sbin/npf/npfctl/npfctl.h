@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.9 2012/01/10 23:39:32 joerg Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.10 2012/01/15 00:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -144,7 +144,6 @@ void		npfctl_gennc_tcpfl(nc_ctx_t *, uint8_t, uint8_t);
 
 void		npfctl_config_init(bool);
 int		npfctl_config_send(int);
-int		npfctl_config_flush(int);
 
 void		npfctl_build_rproc(const char *, npfvar_t *);
 void		npfctl_build_group(const char *, int, u_int);
