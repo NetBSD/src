@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.78 2012/01/14 17:42:52 reinoud Exp $ */
+/* $NetBSD: thunk.c,v 1.79 2012/01/15 10:35:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.78 2012/01/14 17:42:52 reinoud Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.79 2012/01/15 10:35:08 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -113,10 +113,12 @@ thunk_syscallemu_init(void *ustart, void *uend)
 {
 	int error;
 
-	fprintf(stdout, "%s: syscall(%d, %p, %p)\n", __func__,
-	    SYS_syscallemu, ustart, uend);
+	errno = 0;
 	error = syscall(SYS_syscallemu, (uintptr_t)ustart, (uintptr_t)uend);
-	fprintf(stdout, "%s: returned %d\n", __func__, error);
+	if (error == -1 && errno == EACCES) {
+		/* syscallemu already active for this pid */
+		error = 0;
+	}
 
 	return error;
 }
