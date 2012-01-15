@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.51 2012/01/15 10:18:58 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.52 2012/01/15 10:30:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -37,7 +37,7 @@
 #include "opt_memsize.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2012/01/15 10:18:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2012/01/15 10:30:21 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -128,21 +128,21 @@ main(int argc, char *argv[])
 			if (strncmp(argv[i], "net=", strlen("net=")) == 0) {
 				char *tap = argv[i] + strlen("net=");
 				char *mac = strchr(tap, ',');
+				char *p = usermode_tap_devicebuf;
 				if (mac == NULL) {
 					printf("bad net= format\n");
 					return;
 				}
-				*mac++ = '\0';
-				if (*tap != '/')
-					snprintf(usermode_tap_devicebuf,
-					    sizeof(usermode_tap_devicebuf),
-					    "/dev/%s", tap);
-				else
-					snprintf(usermode_tap_devicebuf,
-					    sizeof(usermode_tap_devicebuf),
-					    "%s", tap);
+				memset(usermode_tap_devicebuf, 0,
+				    sizeof(usermode_tap_devicebuf));
+				if (*tap != '/') {
+					memcpy(p, "/dev/", strlen("/dev/"));
+					p += strlen("/dev/");
+				}
+				for (; *tap != ','; p++, tap++)
+					*p = *tap;
 				usermode_tap_device = usermode_tap_devicebuf;
-				usermode_tap_eaddr = mac;
+				usermode_tap_eaddr = mac + 1;
 			} else if (strncmp(argv[i], "audio=",
 			    strlen("audio=")) == 0) {
 				char *audio = argv[i] + strlen("audio=");
