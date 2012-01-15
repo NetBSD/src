@@ -1,4 +1,4 @@
-$NetBSD: virtualization,v 1.4 2009/09/15 21:07:58 agc Exp $
+$NetBSD: virtualization,v 1.5 2012/01/15 02:45:42 agc Exp $
 
 NetBSD Virtualization Roadmap
 =============================
@@ -6,15 +6,15 @@ NetBSD Virtualization Roadmap
 This is a small roadmap document, and deals with the virtualization
 side of the operating system.
 
+Features that will be in 6.0:
 1. NetBSD/usermode
-2. virtualization jails via secmodel
-3. iSCSI booting
-4. iSCSI device cloning
 5. Xen domU migration, suspend and resume
 6. Xen balloon driver support
 
-We currently expect to branch 6.0 in the March 2010 timeframe, with a view
-to a 6.0 release later in 2010.
+Features which may make future releases:
+2. virtualization jails via secmodel
+3. iSCSI booting
+4. iSCSI device cloning
 
 We'll continue to update this roadmap as features and dates get firmed up.
 
@@ -28,9 +28,11 @@ Some explanations
 NetBSD/usermode is an port of NetBSD to a POSIX-compatible user-space,
 with the intention that it should be possible to run the usermode
 version of NetBSD on any POSIX-compatible operating system.  This code
-has been committed to the repository, but more work is needed.
+has been committed to the repository by jmcneill, and updated by reinoud
+and jmcneill. usermode can now boot up to X11, can use a vnc console,
+and is under active development now. This is most definitely in 6.0.
 
-Responsible: jmcneill
+Responsible: jmcneill, reinoud
 
 2. Virtualization Jails via secmodel
 ------------------------------------
@@ -38,7 +40,7 @@ Responsible: jmcneill
 One novel way of creating jails for virtualization is to use a new
 secmodel (part of the kauth framework), to isolate processes into
 jail-based virtual machines. This is the basis of a paper given by
-bad@ at AsiaBSDcon in March 2008.
+bad@ at AsiaBSDcon in March 2008. This will not make 6.0
 
 Responsible: bad
 
@@ -48,7 +50,7 @@ Responsible: bad
 In order to make Xen domains migration-friendly, the storage that the
 domain uses must be based on some form of network-centric storage, either
 NFS, or a SAN or IP-SAN. For IP-SANs, iSCSI booting will be used. This
-is dependent on the in-kernel iSCSI initiator project completing.
+is dependent on the in-kernel iSCSI initiator project completing. This will not make 6.0
 
 Responsible: agc
 
@@ -58,7 +60,7 @@ Responsible: agc
 To minimise the storage requirements for multiple domU booting, using
 a standard root filesystem or block device for the domU is required, along
 with some form of copy-on-write mechanism to preserve any modifications
-that are made.
+that are made. This will not make 6.0
 
 Responsible: agc
 
@@ -67,8 +69,8 @@ Responsible: agc
 
 Xen domU migration is where a domU domain is moved from one dom0 to
 another dom0 on the same vlan (to avoid networking problems, the
-virtual arp address migrates with the domU itself). jym is actively
-working on this, and preliminary results are good.
+virtual arp address migrates with the domU itself). jym has committed
+this code, and it will be in 6.0
 
 Responsible: jym, bouyer
 
@@ -77,11 +79,11 @@ Responsible: jym, bouyer
 
 The balloon driver allows more memory to be added to a running Xen domU
 instance; this allows extra memory to be used by the domU for resource
-peak needs. cherry has made a preliminary balloon driver - some testing
-is needed before it can be committed.
+peak needs. cherry has made a preliminary balloon driver and this has been
+further updated and tested by jym. This will be in 6.0.
 
-Responsible: cherry
+Responsible: jym, cherry
 
 
 Alistair Crooks
-Tue 15 Sep 2009 08:06:34 PDT
+Sat Jan 14 11:38:50 PST 2012
