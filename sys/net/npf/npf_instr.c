@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.8 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.9 2012/01/15 00:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.8 2011/11/29 20:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.9 2012/01/15 00:49:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,9 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.8 2011/11/29 20:05:30 rmind Exp $");
 #define	NPF_PORTRANGE_MATCH(r, p)	(p >= (r >> 16) && p <= (r & 0xffff))
 
 /*
- * npf_match_ether: find and check Ethernet and possible VLAN headers.
+ * npf_match_ether: find and check Ethernet with possible VLAN headers.
  *
- * => Stores value in to advance to layer 3 header (usually, IPv4).
+ * => Stores value in the register for advancing to layer 3 header.
  * => Returns zero on success or -1 on failure.
  */
 int
@@ -127,11 +127,6 @@ npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 		}
 		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
-#if 1	/* XXX */
-	if (mask == 0) {
-		return 0;
-	}
-#endif
 	addr = sd ? npc->npc_srcip : npc->npc_dstip;
 	if (mask != NPF_NO_NETMASK) {
 		npf_calculate_masked_addr(&cmpaddr, addr, mask);

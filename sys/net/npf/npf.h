@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.11 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.12 2012/01/15 00:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -248,7 +248,7 @@ void		npf_hook_unregister(npf_rule_t *, npf_hook_t *);
 
 /* Table types. */
 #define	NPF_TABLE_HASH			1
-#define	NPF_TABLE_RBTREE		2
+#define	NPF_TABLE_TREE			2
 
 /* Layers. */
 #define	NPF_LAYER_2			2
