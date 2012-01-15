@@ -1,4 +1,4 @@
-$NetBSD: system,v 1.10 2012/01/15 03:11:13 agc Exp $
+$NetBSD: system,v 1.11 2012/01/15 06:53:23 dholland Exp $
 
 NetBSD System Roadmap
 =====================
@@ -117,7 +117,7 @@ Improve the scheduler to make decisions about thread migration
 according to the topology, to get better thread affinity and less
 cache thrashing, and thus improve overall performance in modern SMP
 systems. Code has been written, but did not show any performance
-impreovment. We will continue to monitor this area.
+improvement. We will continue to monitor this area.
 
 Responsible: rmind
 
