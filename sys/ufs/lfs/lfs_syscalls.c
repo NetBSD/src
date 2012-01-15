@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.140 2012/01/02 22:10:45 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.141 2012/01/15 04:42:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.140 2012/01/02 22:10:45 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.141 2012/01/15 04:42:04 perseant Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -291,17 +291,6 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 			 */
 			if (v_daddr != LFS_UNUSED_DADDR) {
 				lfs_vunref(vp);
-				/*
-				 * If the vnode has LFSI_BMAP, it was
-				 * not found in the cache.  Dump it so
-				 * we can reuse the vnode.
-				 * XXX If we knew what segment we were
-				 * XXX supposed to be looking for, we
-				 * XXX would be able to be more selective
-				 * XXX here.
-				 */
-				if (ip->i_lfs_iflags & LFSI_BMAP)
-					vrecycle(vp, NULL, NULL);
 				numrefed--;
 			}
 
@@ -719,6 +708,8 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 */
 			if (v_daddr != LFS_UNUSED_DADDR) {
 				lfs_vunref(vp);
+				if (VTOI(vp)->i_lfs_iflags & LFSI_BMAP)
+					vrecycle(vp, NULL, NULL);
 				numrefed--;
 			}
 
@@ -1138,6 +1129,11 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 	ip = VTOI(vp);
 	ufs_ihashins(ip);
 	mutex_exit(&ufs_hashlock);
+
+#ifdef notyet
+	/* Not found in the cache => this vnode was loaded only for cleaning. */
+	ip->i_lfs_iflags |= LFSI_BMAP;
+#endif
 
 	/*
 	 * XXX
