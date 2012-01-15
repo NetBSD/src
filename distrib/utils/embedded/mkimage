@@ -1,0 +1,233 @@
+#! /bin/sh
+
+# $NetBSD: mkimage,v 1.1 2012/01/15 02:01:02 agc Exp $
+
+# Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+# find next available vnd, from kre
+next_avail ()
+{
+	local dev="$1"
+	local N=$(( ${#dev} + 1 ))
+	local unit units
+
+	units=$(
+		sysctl -n hw.disknames		|
+			tr ' ' '\012'		|
+			grep '^'"${dev}"'[0-9]'	|
+			sort -n -k 1.$N			)
+
+	test -z "${units}" && {
+		test -e "/dev/${dev}0a" || {
+			echo >&2 "No ${dev}s available!"
+			return 1
+		}
+		echo "${dev}0"
+		return
+	}
+
+	N=0
+	for unit in ${units}
+	do
+		if [ "${unit}" = "${dev}${N}" ]
+		then
+			N=$(( N + 1 ))
+		else
+			echo "${dev}${N}"
+			return
+		fi
+	done
+
+	test -e /dev/"${dev}${N}a" || {
+		echo >&2 "All ${dev}s in use"
+		return 1
+	}
+
+	echo "${dev}${N}"
+}
+
+# find the size of the gzipped files in a .tgz archive
+sizeone() {
+        case "$1" in 
+        *.tgz|*.tar.gz)
+                tar tvzf "$1" | awk '{ tot += $5 } END { print tot }'
+                ;;
+        *.tbz|*.tar.bz2)
+                tar tvjf "$1" | awk '{ tot += $5 } END { print tot }' 
+                ;;
+        *)
+                echo 0
+                ;; 
+        esac
+}
+
+setsdir=/usr/build/release/i386/binary/sets
+size=0	# in MB
+overhead=8 # in MB
+image=usermode.img
+h=usermode1.$(uname -n)
+sets="base etc modules"
+usermodedirs="/var.run /var.log /etc.cow /root.cow /pkgs"
+specialdirs="/kern /proc"
+bar="==="
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-S)	setsdir=$2; shift ;;
+	-h)	h=$2; shift ;;
+	-s)	size=$2; shift ;;
+	-x)	set -x ;;
+	*)	break ;;
+	esac
+	shift
+done
+
+if [ $# -gt 0 ]; then
+	# take the next argument as being the image name
+	image="$1"
+	shift
+fi
+
+total=0
+for s in ${sets}; do
+	total=$(expr ${total} + $(sizeone ${setsdir}/${s}.tgz))
+done
+total=$(expr \( ${total} / 1000000 \) + ${overhead})
+if [ $size -eq 0 ]; then
+        # auto-size the pkgs fs
+        size=${total}
+else
+        # check that we've been given enough space
+        if [ ${total} -gt ${size} ]; then
+                echo "File system size given as ${size} MB, but it needs ${total} MB" >&2
+                exit 1
+        fi
+fi
+
+echo "${bar} making a new ${size} MB image in ${image} ${bar}"
+dd if=/dev/zero of=${image} bs=1m count=${size}
+
+vnddev=$(next_avail vnd)
+echo "${bar} mounting image via vnd ${vnddev} ${bar}"
+sudo vnconfig ${vnddev} ${image}
+sudo newfs /dev/r${vnddev}a
+sudo mount /dev/${vnddev}a /mnt
+
+echo "${bar} installing sets ${bar}"
+(cd /mnt &&
+	for s in ${sets}; do
+		echo ${s}
+		sudo tar xpzf ${setsdir}/${s}.tgz
+	done
+)
+
+echo "${bar} performing customisations ${bar}"
+sudo rm -f /mnt/etc/motd
+
+tmp=/tmp/usermode.$$
+cat > ${tmp} << EOF
+# NetBSD/usermode /etc/fstab
+/dev/ld0a       /               ffs     ro              1 1
+/dev/ld1a	/pkgs		ffs	ro		1 2
+kernfs          /kern           kernfs  rw
+ptyfs           /dev/pts        ptyfs   rw
+procfs          /proc           procfs  rw
+# mount /root as tmpfs on top of existing dir
+tmpfs           /root.cow       tmpfs   rw,-s2M         0 0
+/root.cow       /root           union   rw,hidden       0 0
+# mount /etc as tmpfs on top of existing dir
+tmpfs           /etc.cow        tmpfs   rw,-s12M        0 0
+/etc.cow        /etc            union   rw,hidden       0 0
+# mount /var/run as tmpfs on top of existing dir
+tmpfs           /var.run        tmpfs   rw,-s1M         0 0
+/var.run        /var/run        union   rw,hidden       - -
+# mount /var/log as tmpfs on top of existing dir
+tmpfs           /var.log        tmpfs   rw,-s10M        0 0
+/var.log        /var/log        union   rw,hidden       - -
+tmpfs           /var/db         tmpfs   rw,-s8M         0 0
+tmpfs           /tmp            tmpfs   rw,-s32M        0 0
+/dev/cd0a       /cdrom          cd9660  ro,noauto
+EOF
+sudo mv ${tmp} /mnt/etc/fstab
+
+cat > ${tmp} << EOF
+#       $NetBSD: mkimage,v 1.1 2012/01/15 02:01:02 agc Exp $
+#
+# see rc.conf(5) for more information.
+#
+# Use program=YES to enable program, NO to disable it. program_flags are
+# passed to the program on the command line.
+#
+
+# Load the defaults in from /etc/defaults/rc.conf (if it's readable).
+# These can be overridden below.
+#
+if [ -r /etc/defaults/rc.conf ]; then
+        . /etc/defaults/rc.conf
+fi
+
+# If this is not set to YES, the system will drop into single-user mode.
+#
+rc_configured=YES
+
+# make sure we have the right rw filesystem at boot
+critical_filesystems_local="/var/db /var.run /var/run /var.log /var/log /etc.cow /etc /root.cow /root"
+
+# Add local overrides below
+#
+dhcpcd=YES
+sshd=YES
+
+hostname=${h}
+EOF
+sudo mv ${tmp} /mnt/etc/rc.conf
+
+echo "${bar} making extra directories ${bar}"
+for d in ${usermodedirs}; do
+	sudo mkdir -p /mnt/${d}
+done
+for d in ${specialdirs}; do
+	sudo mkdir -p /mnt/${d}
+done
+
+echo "${bar} customising /var/tmp ${bar}"
+sudo rm -rf /mnt/var/tmp
+(cd /mnt/var && sudo ln -s /tmp tmp)
+
+# package-related stuff
+(cat /mnt/etc/csh.cshrc;echo "setenv PKG_DBDIR /usr/pkg/.dbdir") > ${tmp}
+sudo mv ${tmp} /mnt/etc/csh.cshrc
+(cat /mnt/etc/profile;echo "export PKG_DBDIR=/usr/pkg/.dbdir") > ${tmp}
+sudo mv ${tmp} /mnt/etc/profile
+(echo "PKG_DBDIR=/usr/pkg/.dbdir") > ${tmp}
+sudo mv ${tmp} /mnt/etc/mk.conf
+(cd /mnt/usr && sudo ln -s /pkgs/usr/pkg pkg)
+
+df /mnt
+
+sudo umount /mnt
+sudo vnconfig -u ${vnddev}
+
+exit 0
