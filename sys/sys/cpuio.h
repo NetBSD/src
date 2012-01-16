@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuio.h,v 1.6 2012/01/13 16:05:16 cegger Exp $	*/
+/*	$NetBSD: cpuio.h,v 1.7 2012/01/16 10:36:16 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2009, 2012 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <sys/ioccom.h>
 
 #ifndef _KERNEL
+#include <limits.h>
 #include <stdbool.h>
 #endif
 
