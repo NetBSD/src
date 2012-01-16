@@ -20,6 +20,11 @@ Authors and contributors                        Automated Testing Framework
   initial version of the atf-check utility and started the addition of the
   ATF_REQUIRE family of macros in the C interface.
 
+* Paul Goyette <pgoyette@NetBSD.org>
+
+  Implemented timestamping of test programs and test cases so that
+  atf-report can provide timings for their execution.
+
 
 ===========================================================================
 vim: filetype=text:textwidth=75:expandtab:shiftwidth=2:softtabstop=2
