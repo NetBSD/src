@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
 
 static
 void
-create_ctl_file(const atf_tc_t *tc, const char *name)
+create_ctl_file(const char *name)
 {
     atf_fs_path_t p;
 
@@ -100,9 +100,9 @@ init_and_run_h_tc(const char *name, void (*head)(atf_tc_t *),
     } \
     ATF_TC_BODY(h_ ## id, tc) \
     { \
-        create_ctl_file(tc, "before"); \
+        create_ctl_file("before"); \
         macro; \
-        create_ctl_file(tc, "after"); \
+        create_ctl_file("after"); \
     }
 
 #define H_CHECK_HEAD_NAME(id) ATF_TC_HEAD_NAME(h_check_ ## id)
@@ -678,14 +678,14 @@ ATF_TC_BODY(require_streq, tc)
 
 static
 bool
-aux_bool(const char *fmt)
+aux_bool(const char *fmt ATF_DEFS_ATTRIBUTE_UNUSED)
 {
     return false;
 }
 
 static
 const char *
-aux_str(const char *fmt)
+aux_str(const char *fmt ATF_DEFS_ATTRIBUTE_UNUSED)
 {
     return "foo";
 }

@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #if !defined(ATF_C_MACROS_H)
 #define ATF_C_MACROS_H
 
+#include <atf-c/defs.h>
 #include <atf-c/tc.h>
 #include <atf-c/tp.h>
 #include <atf-c/utils.h>
@@ -84,7 +85,7 @@
 #define ATF_TC_BODY(tc, tcptr) \
     static \
     void \
-    atfu_ ## tc ## _body(const atf_tc_t *tcptr)
+    atfu_ ## tc ## _body(const atf_tc_t *tcptr ATF_DEFS_ATTRIBUTE_UNUSED)
 
 #define ATF_TC_BODY_NAME(tc) \
     (atfu_ ## tc ## _body)
@@ -92,7 +93,7 @@
 #define ATF_TC_CLEANUP(tc, tcptr) \
     static \
     void \
-    atfu_ ## tc ## _cleanup(const atf_tc_t *tcptr)
+    atfu_ ## tc ## _cleanup(const atf_tc_t *tcptr ATF_DEFS_ATTRIBUTE_UNUSED)
 
 #define ATF_TC_CLEANUP_NAME(tc) \
     (atfu_ ## tc ## _cleanup)
