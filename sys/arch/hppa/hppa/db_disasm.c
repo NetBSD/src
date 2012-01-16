@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.12 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.13 2012/01/16 09:01:35 skrll Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2009/11/03 05:07:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2012/01/16 09:01:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2253,16 +2253,18 @@ db_disasm(vaddr_t loc, bool flag)
 		else
 			i = m->subops[ext];
 
-		if (i->dasmfcn != coprDasm && i->dasmfcn != diagDasm &&
-		    i->dasmfcn != ariDasm && i->dasmfcn != scDasm &&
-		    i->dasmfcn != ldDasm)
-			db_printf(i->mnem);
-		if (i->dasmfcn)
-			(*i->dasmfcn)(i, ofs, instruct);
-		else if (i->mnem[0] == '?')
-			db_printf("???");
+		if (i) {
+			if (i->dasmfcn != coprDasm && i->dasmfcn != diagDasm &&
+			    i->dasmfcn != ariDasm && i->dasmfcn != scDasm &&
+			    i->dasmfcn != ldDasm)
+				db_printf("%s", i->mnem);
+			if (i->dasmfcn)
+				(*i->dasmfcn)(i, ofs, instruct);
+		} else {
+			db_printf("undefined subop");
+		}
 	} else
-		db_printf("???");
+		db_printf("undefined");
 
 	db_printf("\n");
 	return (loc + sizeof(instruct));
