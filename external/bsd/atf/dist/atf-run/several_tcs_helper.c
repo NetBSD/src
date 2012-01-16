@@ -52,10 +52,7 @@ ATF_TC_CLEANUP(second, tc)
 {
 }
 
-ATF_TC(third);
-ATF_TC_HEAD(third, tc)
-{
-}
+ATF_TC_WITHOUT_HEAD(third);
 ATF_TC_BODY(third, tc)
 {
 }
