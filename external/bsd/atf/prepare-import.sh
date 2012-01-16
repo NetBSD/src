@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.5 2011/06/14 15:27:11 jmmv Exp $
+# $NetBSD: prepare-import.sh,v 1.6 2012/01/16 22:42:40 jmmv Exp $
 #
 # Use this script to recreate the 'dist' subdirectory from a newly released
 # distfile.  The script takes care of unpacking the distfile, removing any
@@ -16,7 +16,7 @@ CLEAN_PATTERNS="${CLEAN_PATTERNS} *.m4"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} INSTALL TODO"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} Makefile* */Makefile* */*/Makefile*"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} admin"
-CLEAN_PATTERNS="${CLEAN_PATTERNS} atf-sh/atf-sh.m4"
+CLEAN_PATTERNS="${CLEAN_PATTERNS} atf-*/atf-*.m4"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} bconfig.h.in"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} bootstrap"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} configure*"
