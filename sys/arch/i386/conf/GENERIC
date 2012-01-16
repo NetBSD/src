@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1064 2012/01/15 15:05:06 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.1065 2012/01/16 14:43:09 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1064 $"
+#ident 		"GENERIC-$Revision: 1.1065 $"
 
 maxusers	64		# estimated number of users
 
@@ -1435,6 +1435,7 @@ auvitek* at uhub?			# Auvitek AU0828 USB TV
 coram*	at pci? dev ? function ?	# Conexant CX23885 PCI-E TV
 cxdtv*	at pci? dev ? function ?	# Conexant CX2388[0-3] PCI TV
 emdtv*	at uhub?			# Empia EM28xx USB TV
+cir*	at emdtv?
 pseye*	at uhub?			# Sony PLAYSTATION(R) Eye webcam
 uvideo* at uhub?			# USB Video Class capture devices
 
