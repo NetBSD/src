@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.42 2011/11/18 20:24:21 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.43 2012/01/16 14:57:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.42 2011/11/18 20:24:21 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.43 2012/01/16 14:57:45 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1006,9 +1006,9 @@ vi_histedit(EditLine *el, Int c __attribute__((__unused__)))
 	ssize_t st;
 	int status;
 	char tempfile[] = "/tmp/histedit.XXXXXXXXXX";
-	char *cp;
+	char *cp = NULL;
 	size_t len;
-	Char *line;
+	Char *line = NULL;
 
 	if (el->el_state.doingarg) {
 		if (vi_to_history_line(el, 0) == CC_ERROR)
@@ -1021,16 +1021,11 @@ vi_histedit(EditLine *el, Int c __attribute__((__unused__)))
 	len = (size_t)(el->el_line.lastchar - el->el_line.buffer);
 #define TMP_BUFSIZ (EL_BUFSIZ * MB_LEN_MAX)
 	cp = el_malloc(TMP_BUFSIZ * sizeof(*cp));
-	if (cp == NULL) {
-		unlink(tempfile);
-		close(fd);
-		return CC_ERROR;
-	}
+	if (cp == NULL)
+		goto error;
 	line = el_malloc(len * sizeof(*line) + 1);
-	if (line == NULL) {
-		el_free(cp);
-		return CC_ERROR;
-	}
+	if (line == NULL)
+		goto error;
 	Strncpy(line, el->el_line.buffer, len);
 	line[len] = '\0';
 	ct_wcstombs(cp, line, TMP_BUFSIZ - 1);
@@ -1041,11 +1036,7 @@ vi_histedit(EditLine *el, Int c __attribute__((__unused__)))
 	pid = fork();
 	switch (pid) {
 	case -1:
-		close(fd);
-		unlink(tempfile);
-		el_free(cp);
-                el_free(line);
-		return CC_ERROR;
+		goto error;
 	case 0:
 		close(fd);
 		execlp("vi", "vi", tempfile, (char *)NULL);
@@ -1076,6 +1067,12 @@ vi_histedit(EditLine *el, Int c __attribute__((__unused__)))
 	unlink(tempfile);
 	/* return CC_REFRESH; */
 	return ed_newline(el, 0);
+error:
+	el_free(line);
+	el_free(cp);
+	close(fd);
+	unlink(tempfile);
+	return CC_ERROR;
 }
 
 /* vi_history_word():
