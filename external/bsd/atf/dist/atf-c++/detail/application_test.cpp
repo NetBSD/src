@@ -71,6 +71,7 @@ public:
             }
         }
 
+        ATF_REQUIRE(zflag);
         ATF_REQUIRE_EQ(1, argc - optind);
         ATF_REQUIRE_EQ(std::string("foo"), argv[optind]);
 
