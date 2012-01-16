@@ -1,4 +1,4 @@
-.\"	$NetBSD: kame_ipsec.4,v 1.1 2012/01/09 15:16:31 drochner Exp $
+.\"	$NetBSD: kame_ipsec.4,v 1.2 2012/01/16 16:27:59 drochner Exp $
 .\"	$KAME: ipsec.4,v 1.17 2001/06/27 15:25:10 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd May 16, 2009
-.Dt IPSEC 4
+.Dt KAME_IPSEC 4
 .Os
 .Sh NAME
 .Nm ipsec
@@ -45,39 +45,10 @@
 .Cd options IPSEC_DEBUG
 .Sh DESCRIPTION
 .Nm
-is a security protocol in Internet Protocol (IP) layer.
-.Nm
-is defined for both IPv4 and IPv6
-.Po
-.Xr inet 4
-and
-.Xr inet6 4
-.Pc .
-.Nm
-consists of two sub-protocols:
-.Pp
-.Bl -hang
-.It Em Encapsulated Security Payload Pq ESP
-protects IP payload from wire-tapping (interception) by encrypting it with
-secret key cryptography algorithms.
-.It Em Authentication Header Pq AH
-guarantees integrity of IP packet
-and protects it from intermediate alteration or impersonation,
-by attaching cryptographic checksum computed by one-way hash functions.
-.El
-.Pp
-.Nm
-has two operation modes:
-.Pp
-.Bl -hang
-.It Em Transport mode
-is for protecting peer-to-peer communication between end nodes.
-.It Em Tunnel mode
-includes IP-in-IP encapsulation operation
-and is designed for security gateways, as in Virtual Private Network
-.Pq Tn VPN
-configurations.
-.El
+is the first implemtation of IPSEC in
+.Nx .
+It is being replaced by
+.Xr fast_ipsec 4 .
 .Pp
 The following kernel options are available:
 .Bl -ohang
@@ -133,203 +104,11 @@ and
 .Em IPSEC_ESP .
 .El
 .\"
-.Ss Kernel interface
-.Nm
-is controlled by key management engine and policy engine,
-in the operating system kernel.
-.Pp
-Key management engine can be accessed from the userland by using
-.Dv PF_KEY
-sockets.
-The
-.Dv PF_KEY
-socket API is defined in RFC2367.
-.Pp
-Policy engine can be controlled by extended part of
-.Dv PF_KEY
-API,
-.Xr setsockopt 2
-operations, and
-.Xr sysctl 3
-interface.
-The kernel implements
-extended version of
-.Dv PF_KEY
-interface, and allows you to define IPsec policy like per-packet filters.
-.Xr setsockopt 2
-interface is used to define per-socket behavior, and
-.Xr sysctl 3
-interface is used to define host-wide default behavior.
-.Pp
-The kernel code does not implement dynamic encryption key exchange protocol
-like IKE
-.Pq Internet Key Exchange .
-That should be implemented as userland programs
-.Pq usually as daemons ,
-by using the above described APIs.
-.\"
-.Ss Policy management
-The kernel implements experimental policy management code.
-You can manage the IPsec policy in two ways.
-One is to configure per-socket policy using
-.Xr setsockopt 2 .
-The other is to configure kernel packet filter-based policy using
-.Dv PF_KEY
-interface, via
-.Xr setkey 8 .
-In both cases, IPsec policy must be specified with syntax described in
-.Xr ipsec_set_policy 3 .
-.Pp
-With
-.Xr setsockopt 2 ,
-you can define IPsec policy in per-socket basis.
-You can enforce particular IPsec policy onto packets that go through
-particular socket.
-.Pp
-With
-.Xr setkey 8
-you can define IPsec policy against packets,
-using sort of packet filtering rule.
-Refer to
-.Xr setkey 8
-on how to use it.
-.Pp
-In the latter case,
-.Dq Li default
-policy is allowed for use with
-.Xr setkey 8 .
-By configuring policy to
-.Li default ,
-you can refer system-wide
-.Xr sysctl 8
-variable for default settings.
-The following variables are available.
-.Li 1
-means
-.Dq Li use ,
-and
-.Li 2
-means
-.Dq Li require
-in the syntax.
-.Bl -column net.inet6.ipsec6.esp_trans_deflev integerxxx
-.It Sy Name Ta Sy Type Ta Sy Changeable
-.It net.inet.ipsec.esp_trans_deflev Ta integer Ta yes
-.It net.inet.ipsec.esp_net_deflev Ta integer Ta yes
-.It net.inet.ipsec.ah_trans_deflev Ta integer Ta yes
-.It net.inet.ipsec.ah_net_deflev Ta integer Ta yes
-.It net.inet6.ipsec6.esp_trans_deflev Ta integer Ta yes
-.It net.inet6.ipsec6.esp_net_deflev Ta integer Ta yes
-.It net.inet6.ipsec6.ah_trans_deflev Ta integer Ta yes
-.It net.inet6.ipsec6.ah_net_deflev Ta integer Ta yes
-.El
-.Pp
-If kernel finds no matching policy system wide default value is applied.
-System wide default is specified by the following
-.Xr sysctl 8
-variables.
-.Li 0
-means
-.Dq Li discard
-which asks the kernel to drop the packet.
-.Li 1
-means
-.Dq Li none .
-.Bl -column net.inet6.ipsec6.esp_trans_deflev integerxxx
-.It Sy Name Ta Sy Type Ta Sy Changeable
-.It net.inet.ipsec.def_policy Ta integer Ta yes
-.It net.inet6.ipsec6.def_policy Ta integer Ta yes
-.El
-.\"
-.Ss Miscellaneous sysctl variables
-The following variables are accessible via
-.Xr sysctl 8 ,
-for tweaking kernel IPsec behavior:
-.Bl -column net.inet6.ipsec6.esp_trans_deflev integerxxx
-.It Sy Name Ta Sy Type Ta Sy Changeable
-.It net.inet.ipsec.ah_cleartos Ta integer Ta yes
-.It net.inet.ipsec.ah_offsetmask Ta integer Ta yes
-.It net.inet.ipsec.dfbit Ta integer Ta yes
-.It net.inet.ipsec.ecn Ta integer Ta yes
-.It net.inet.ipsec.debug Ta integer Ta yes
-.It net.inet6.ipsec6.ecn Ta integer Ta yes
-.It net.inet6.ipsec6.debug Ta integer Ta yes
-.El
-.Pp
-The variables are interpreted as follows:
-.Bl -tag -width "123456"
-.It Li ipsec.ah_cleartos
-If set to non-zero, the kernel clears type-of-service field in the IPv4 header
-during AH authentication data computation.
-The variable is for tweaking AH behavior to interoperate with devices that
-implement RFC1826 AH.
-It should be set to non-zero
-.Pq clear the type-of-service field
-for RFC2402 conformance.
-.It Li ipsec.ah_offsetmask
-During AH authentication data computation, the kernel will include
-16bit fragment offset field
-.Pq including flag bits
-in IPv4 header, after computing logical AND with the variable.
-The variable is for tweaking AH behavior to interoperate with devices that
-implement RFC1826 AH.
-It should be set to zero
-.Pq clear the fragment offset field during computation
-for RFC2402 conformance.
-.It Li ipsec.dfbit
-The variable configures the kernel behavior on IPv4 IPsec tunnel encapsulation.
-If set to 0, DF bit on the outer IPv4 header will be cleared.
-1 means that the outer DF bit is set regardless from the inner DF bit.
-2 means that the DF bit is copied from the inner header to the outer.
-The variable is supplied to conform to RFC2401 chapter 6.1.
-.It Li ipsec.ecn
-If set to non-zero, IPv4 IPsec tunnel encapsulation/decapsulation behavior will
-be friendly to ECN
-.Pq explicit congestion notification ,
-as documented in
-.Li draft-ietf-ipsec-ecn-02.txt .
-.Xr gif 4
-talks more about the behavior.
-.It Li ipsec.debug
-If set to non-zero, debug messages will be generated via
-.Xr syslog 3 .
-.El
-.Pp
-Variables under
-.Li net.inet6.ipsec6
-tree has similar meaning as the
-.Li net.inet.ipsec
-counterpart.
-.\"
-.Sh PROTOCOLS
-The
-.Nm
-protocol works like plug-in to
-.Xr inet 4
-and
-.Xr inet6 4
-protocols.
-Therefore,
-.Nm
-supports most of the protocols defined upon those IP-layer protocols.
-Some of the protocols, like
-.Xr icmp 4
-or
-.Xr icmp6 4 ,
-may behave differently with
-.Nm ipsec .
-This is because
-.Nm
-can prevent
-.Xr icmp 4
-or
-.Xr icmp6 4
-routines from looking into IP payload.
-.\"
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
 .Xr ipsec_set_policy 3 ,
+.Xr ipsec 4 ,
 .Xr fast_ipsec 4 ,
 .Xr icmp6 4 ,
 .Xr intro 4 ,
