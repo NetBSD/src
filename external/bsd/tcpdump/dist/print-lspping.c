@@ -19,7 +19,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-lspping.c,v 1.20 2008-01-28 14:20:43 hannes Exp";
 #else
-__RCSID("$NetBSD: print-lspping.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-lspping.c,v 1.3 2012/01/16 17:34:18 christos Exp $");
 #endif
 #endif
 
@@ -883,7 +883,7 @@ lspping_print(register const u_char *pptr, register u_int len) {
         }
         /* do we want to see an additionally tlv hexdump ? */
         if (vflag > 1 || tlv_hexdump==TRUE)
-            print_unknown_data(tptr+sizeof(sizeof(struct lspping_tlv_header)),"\n\t    ",
+            print_unknown_data(tptr+sizeof(struct lspping_tlv_header),"\n\t    ",
                                lspping_tlv_len);
 
 
