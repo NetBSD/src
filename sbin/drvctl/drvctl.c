@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.14 2011/10/19 22:13:46 dyoung Exp $ */
+/* $NetBSD: drvctl.c,v 1.15 2012/01/16 19:43:50 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -44,7 +44,8 @@
 					  : O_RDONLY)
 
 __dead static void usage(void);
-static void extract_property(prop_dictionary_t, const char *);
+static void extract_property(prop_dictionary_t, const char *, bool);
+static void display_object(prop_object_t, bool);
 static void list_children(int, char *, bool, bool, int);
 
 static void
@@ -208,7 +209,7 @@ main(int argc, char **argv)
 			free(xml);
 		} else {
 			for (i = 1; i < argc; i++)
-				extract_property(data_dict, argv[i]);
+				extract_property(data_dict, argv[i], nflag);
 		}
 
 		prop_object_release(results_dict);
@@ -221,9 +222,9 @@ main(int argc, char **argv)
 }
 
 static void
-extract_property(prop_dictionary_t dict, const char *prop)
+extract_property(prop_dictionary_t dict, const char *prop, bool nflag)
 {
-	char *s, *p, *cur, *ep = NULL, *xml;
+	char *s, *p, *cur, *ep = NULL;
 	prop_object_t obj;
 
 	s = strdup(prop);
@@ -236,35 +237,48 @@ extract_property(prop_dictionary_t dict, const char *prop)
 				exit(EXIT_FAILURE);
 		} else {
 			obj = prop_dictionary_get(dict, cur);
-			if (obj == NULL)
-				exit(EXIT_FAILURE);
-			switch (prop_object_type(obj)) {
-			case PROP_TYPE_BOOL:
-				printf("%s\n",
-				    prop_bool_true(obj) ? "true" : "false");
-				break;
-			case PROP_TYPE_NUMBER:
-				printf("%" PRId64 "\n",
-				    prop_number_integer_value(obj));
-				break;
-			case PROP_TYPE_STRING:
-				printf("%s\n",
-				    prop_string_cstring_nocopy(obj));
-				break;
-			case PROP_TYPE_DICTIONARY:
-				xml = prop_dictionary_externalize(obj);
-				printf("%s", xml);
-				free(xml);
-				break;
-			default:
-				fprintf(stderr, "unhandled type %d\n",
-				    prop_object_type(obj));
-				exit(EXIT_FAILURE);
-			}
+			display_object(obj, nflag);
 		}
 	}
 
 	free(s);
+}
+
+static void
+display_object(prop_object_t obj, bool nflag)
+{
+	char *xml;
+	prop_object_t next_obj;
+	prop_object_iterator_t iter;
+
+	if (obj == NULL)
+		exit(EXIT_FAILURE);
+	switch (prop_object_type(obj)) {
+	case PROP_TYPE_BOOL:
+		printf("%s\n", prop_bool_true(obj) ? "true" : "false");
+		break;
+	case PROP_TYPE_NUMBER:
+		printf("%" PRId64 "\n", prop_number_integer_value(obj));
+		break;
+	case PROP_TYPE_STRING:
+		printf("%s\n", prop_string_cstring_nocopy(obj));
+		break;
+	case PROP_TYPE_DICTIONARY:
+		xml = prop_dictionary_externalize(obj);
+		printf("%s", xml);
+		free(xml);
+		break;
+	case PROP_TYPE_ARRAY:
+		iter = prop_array_iterator(obj);
+		if (!nflag)
+			printf("Array:\n");
+		while ((next_obj = prop_object_iterator_next(iter)) != NULL)
+			display_object(next_obj, nflag);
+		break;
+	default:
+		fprintf(stderr, "unhandled type %d\n", prop_object_type(obj));
+		exit(EXIT_FAILURE);
+	}
 }
 
 static void
