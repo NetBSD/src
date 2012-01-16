@@ -90,13 +90,13 @@
 #define PACKAGE_BUGREPORT "atf-devel@NetBSD.org"
 
 /* Define to the copyright string applicable to this package. */
-#define PACKAGE_COPYRIGHT "Copyright (c) 2007-2011 The NetBSD Foundation, Inc."
+#define PACKAGE_COPYRIGHT "Copyright (c) 2007-2012 The NetBSD Foundation, Inc."
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "Automated Testing Framework"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Automated Testing Framework 0.14"
+#define PACKAGE_STRING "Automated Testing Framework 0.15"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "atf"
@@ -105,10 +105,10 @@
 #define PACKAGE_URL "http://www.NetBSD.org/~jmmv/atf/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.14"
+#define PACKAGE_VERSION "0.15"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.14"
+#define VERSION "0.15"
