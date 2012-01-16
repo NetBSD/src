@@ -30,8 +30,11 @@
 #if !defined(_ATF_RUN_ALARM_HPP_)
 #define _ATF_RUN_ALARM_HPP_
 
-#include <ctime>
-#include <csignal>
+extern "C" {
+#include <sys/types.h>
+}
+
+#include <memory>
 
 #include "atf-c++/utils.hpp"
 
@@ -45,17 +48,15 @@ class signal_programmer;
 // ------------------------------------------------------------------------
 
 class timer : utils::noncopyable {
-    ::timer_t m_timer;
-    ::itimerspec m_old_it;
-    struct sigaction m_old_sa;
-    bool m_fired;
+    struct impl;
+    std::auto_ptr< impl > m_pimpl;
 
 public:
     timer(const unsigned int);
     virtual ~timer(void);
 
     bool fired(void) const;
-    void setfired(void) { m_fired = true; }
+    void set_fired(void);
     virtual void timeout_callback(void) = 0;
 };
 
