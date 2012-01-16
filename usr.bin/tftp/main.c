@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2011/09/17 15:15:46 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2012/01/16 17:38:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.29 2011/09/17 15:15:46 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2012/01/16 17:38:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -662,7 +662,7 @@ command(void)
 
 	for (;;) {
 		(void)printf("%s> ", prompt);
-		if (fgets(line, LBUFLEN, stdin) == 0) {
+		if (fgets(line, LBUFLEN, stdin) == NULL) {
 			if (feof(stdin)) {
 				exit(0);
 			} else {
