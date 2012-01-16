@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_wbuf.c,v 1.3 2012/01/16 12:17:55 ahoka Exp $	*/
+/*	$NetBSD: chfs_wbuf.c,v 1.4 2012/01/16 12:28:47 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -45,54 +45,65 @@
 #define PAGE_DIV(x) ( rounddown((x), chmp->chm_wbuf_pagesize) )
 #define PAGE_MOD(x) ( (x) % (chmp->chm_wbuf_pagesize) )
 
-#define NOPAD	0
-#define SETPAD	1
+enum {
+	WBUF_NOPAD,
+	WBUF_SETPAD
+};
 
 /**
  * chfs_flush_wbuf - write wbuf to the flash
  * @chmp: super block info
- * @pad: padding (NOPAD / SETPAD)
+ * @pad: padding (WBUF_NOPAD / WBUF_SETPAD)
  * Returns zero in case of success.
  */
 static int
 chfs_flush_wbuf(struct chfs_mount *chmp, int pad)
 {
-	int ret=0;
-	size_t retlen = 0;
+	int ret;
+	size_t retlen;
+	struct chfs_node_ref *nref;
+	struct chfs_flash_padding_node* padnode;
 
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 	KASSERT(mutex_owned(&chmp->chm_lock_sizes));
 	KASSERT(rw_write_held(&chmp->chm_lock_wbuf));
+	KASSERT(pad == WBUF_SETPAD || pad == WBUF_NOPAD);
 
-	if (pad) {
+	if (pad == WBUF_SETPAD) {
 		chmp->chm_wbuf_len = PAD(chmp->chm_wbuf_len);
-		memset(chmp->chm_wbuf + chmp->chm_wbuf_len, 0, chmp->chm_wbuf_pagesize - chmp->chm_wbuf_len);
+		memset(chmp->chm_wbuf + chmp->chm_wbuf_len, 0,
+		    chmp->chm_wbuf_pagesize - chmp->chm_wbuf_len);
 
-		struct chfs_flash_padding_node* padnode = (void*)(chmp->chm_wbuf + chmp->chm_wbuf_len);
+		padnode = (void *)(chmp->chm_wbuf + chmp->chm_wbuf_len);
 		padnode->magic = htole16(CHFS_FS_MAGIC_BITMASK);
 		padnode->type = htole16(CHFS_NODETYPE_PADDING);
-		padnode->length = htole32(chmp->chm_wbuf_pagesize - chmp->chm_wbuf_len);
-		padnode->hdr_crc = htole32(crc32(0, (uint8_t *)padnode, sizeof(*padnode)-4));
+		padnode->length = htole32(chmp->chm_wbuf_pagesize
+		    - chmp->chm_wbuf_len);
+		padnode->hdr_crc = htole32(crc32(0, (uint8_t *)padnode,
+			sizeof(*padnode)-4));
 
-		struct chfs_node_ref *nref;
 		nref = chfs_alloc_node_ref(chmp->chm_nextblock);
 		nref->nref_offset = chmp->chm_wbuf_ofs + chmp->chm_wbuf_len;
 		nref->nref_offset = CHFS_GET_OFS(nref->nref_offset) |
 		    CHFS_OBSOLETE_NODE_MASK;
 		chmp->chm_wbuf_len = chmp->chm_wbuf_pagesize;
 
-		chfs_change_size_free(chmp, chmp->chm_nextblock, -padnode->length);
-		chfs_change_size_wasted(chmp, chmp->chm_nextblock, padnode->length);
+		chfs_change_size_free(chmp, chmp->chm_nextblock,
+		    -padnode->length);
+		chfs_change_size_wasted(chmp, chmp->chm_nextblock,
+		    padnode->length);
 	}
 
-	ret = chfs_write_leb(chmp, chmp->chm_nextblock->lnr, chmp->chm_wbuf, chmp->chm_wbuf_ofs, chmp->chm_wbuf_len, &retlen);
-	if(ret) {
+	ret = chfs_write_leb(chmp, chmp->chm_nextblock->lnr, chmp->chm_wbuf,
+	    chmp->chm_wbuf_ofs, chmp->chm_wbuf_len, &retlen);
+	if (ret) {
 		return ret;
 	}
 
-	memset(chmp->chm_wbuf,0xff,chmp->chm_wbuf_pagesize);
+	memset(chmp->chm_wbuf, 0xff, chmp->chm_wbuf_pagesize);
 	chmp->chm_wbuf_ofs += chmp->chm_wbuf_pagesize;
 	chmp->chm_wbuf_len = 0;
+
 	return 0;
 }
 
@@ -156,7 +167,7 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 
 	if (EB_ADDRESS(to) != EB_ADDRESS(chmp->chm_wbuf_ofs)) {
 		if (chmp->chm_wbuf_len) {
-			ret = chfs_flush_wbuf(chmp, SETPAD);
+			ret = chfs_flush_wbuf(chmp, WBUF_SETPAD);
 			if (ret)
 				goto outerr;
 		}
@@ -179,7 +190,7 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 		/* take care of alignement to next page*/
 		if (!chmp->chm_wbuf_len) {
 			chmp->chm_wbuf_len += chmp->chm_wbuf_pagesize;
-			ret = chfs_flush_wbuf(chmp, NOPAD);
+			ret = chfs_flush_wbuf(chmp, WBUF_NOPAD);
 			if (ret)
 				goto outerr;
 		}
@@ -193,7 +204,7 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 
 		wbuf_retlen = chfs_fill_wbuf(chmp, v, vlen);
 		if (chmp->chm_wbuf_len == chmp->chm_wbuf_pagesize) {
-			ret = chfs_flush_wbuf(chmp, NOPAD);
+			ret = chfs_flush_wbuf(chmp, WBUF_NOPAD);
 			if (ret) {
 				goto outerr;
 			}
@@ -213,14 +224,14 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 		}
 		wbuf_retlen = chfs_fill_wbuf(chmp, v, vlen);
 		if (chmp->chm_wbuf_len == chmp->chm_wbuf_pagesize) {
-			ret = chfs_flush_wbuf(chmp, NOPAD);
+			ret = chfs_flush_wbuf(chmp, WBUF_NOPAD);
 			if (ret)
 				goto outerr;
 		}
 
 		// if we write the last vector, we flush with padding
 		/*if (invec == count-1) {
-		  ret = chfs_flush_wbuf(chmp, SETPAD);
+		  ret = chfs_flush_wbuf(chmp, WBUF_SETPAD);
 		  if (ret)
 		  goto outerr;
 		  }*/
@@ -243,7 +254,7 @@ int chfs_flush_pending_wbuf(struct chfs_mount *chmp)
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 	mutex_enter(&chmp->chm_lock_sizes);
 	rw_enter(&chmp->chm_lock_wbuf, RW_WRITER);
-	err = chfs_flush_wbuf(chmp, SETPAD);
+	err = chfs_flush_wbuf(chmp, WBUF_SETPAD);
 	rw_exit(&chmp->chm_lock_wbuf);
 	mutex_exit(&chmp->chm_lock_sizes);
 	return err;
