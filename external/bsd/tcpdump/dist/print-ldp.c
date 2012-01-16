@@ -20,7 +20,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ldp.c,v 1.20 2006-06-23 02:03:09 hannes Exp";
 #else
-__RCSID("$NetBSD: print-ldp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-ldp.c,v 1.3 2012/01/16 17:34:18 christos Exp $");
 #endif
 #endif
 
@@ -614,7 +614,7 @@ ldp_msg_print(register const u_char *pptr) {
         }
         /* do we want to see an additionally hexdump ? */
         if (vflag > 1 || hexdump==TRUE)
-            print_unknown_data(tptr+sizeof(sizeof(struct ldp_msg_header)),"\n\t  ",
+            print_unknown_data(tptr+sizeof(struct ldp_msg_header),"\n\t  ",
                                msg_len);
 
         tptr += msg_len+4;
