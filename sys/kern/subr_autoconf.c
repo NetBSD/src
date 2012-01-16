@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.220 2011/08/31 18:31:02 plunky Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.221 2012/01/16 19:42:40 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.220 2011/08/31 18:31:02 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.221 2012/01/16 19:42:40 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -169,6 +169,7 @@ static void config_alldevs_unlock(int);
 static int config_alldevs_lock(void);
 static void config_alldevs_enter(struct alldevs_foray *);
 static void config_alldevs_exit(struct alldevs_foray *);
+static void config_add_attrib_dict(device_t);
 
 static void config_collect_garbage(struct devicelist *);
 static void config_dump_garbage(struct devicelist *);
@@ -1390,7 +1391,89 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	prop_dictionary_set_uint16(dev->dv_properties,
 	    "device-unit", dev->dv_unit);
 
+	if (dev->dv_cfdriver->cd_attrs != NULL)
+		config_add_attrib_dict(dev);
+
 	return dev;
+}
+
+/*
+ * Create an array of device attach attributes and add it
+ * to the device's dv_properties dictionary.
+ *
+ * <key>interface-attributes</key>
+ * <array>
+ *    <dict>
+ *       <key>attribute-name</key>
+ *       <string>foo</string>
+ *       <key>locators</key>
+ *       <array>
+ *          <dict>
+ *             <key>loc-name</key>
+ *             <string>foo-loc1</string>
+ *          </dict>
+ *          <dict>
+ *             <key>loc-name</key>
+ *             <string>foo-loc2</string>
+ *             <key>default</key>
+ *             <string>foo-loc2-default</string>
+ *          </dict>
+ *          ...
+ *       </array>
+ *    </dict>
+ *    ...
+ * </array>
+ */
+
+static void
+config_add_attrib_dict(device_t dev)
+{
+	int i, j;
+	const struct cfiattrdata *ci;
+	prop_dictionary_t attr_dict, loc_dict;
+	prop_array_t attr_array, loc_array;
+
+	if ((attr_array = prop_array_create()) == NULL)
+		return;
+
+	for (i = 0; ; i++) {
+		if ((ci = dev->dv_cfdriver->cd_attrs[i]) == NULL)
+			break;
+		if ((attr_dict = prop_dictionary_create()) == NULL)
+			break;
+		prop_dictionary_set_cstring_nocopy(attr_dict, "attribute-name",
+		    ci->ci_name);
+
+		/* Create an array of the locator names and defaults */
+
+		if (ci->ci_loclen != 0 &&
+		    (loc_array = prop_array_create()) != NULL) {
+			for (j = 0; j < ci->ci_loclen; j++) {
+				loc_dict = prop_dictionary_create();
+				if (loc_dict == NULL)
+					continue;
+				prop_dictionary_set_cstring_nocopy(loc_dict,
+				    "loc-name", ci->ci_locdesc[j].cld_name);
+				if (ci->ci_locdesc[j].cld_defaultstr != NULL)
+					prop_dictionary_set_cstring_nocopy(
+					    loc_dict, "default",
+					    ci->ci_locdesc[j].cld_defaultstr);
+				prop_array_set(loc_array, j, loc_dict);
+				prop_object_release(loc_dict);
+			}
+			prop_dictionary_set_and_rel(attr_dict, "locators",
+			    loc_array);
+		}
+		prop_array_add(attr_array, attr_dict);
+		prop_object_release(attr_dict);
+	}
+	if (i == 0)
+		prop_object_release(attr_array);
+	else
+		prop_dictionary_set_and_rel(dev->dv_properties,
+		    "interface-attributes", attr_array);
+
+	return;
 }
 
 /*
