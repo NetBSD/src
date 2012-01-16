@@ -1,4 +1,35 @@
-/*	$NetBSD: ext2fs.c,v 1.12 2012/01/16 18:44:13 christos Exp $	*/
+/*	$NetBSD: minixfs3.c,v 1.1 2012/01/16 18:44:13 christos Exp $	*/
+
+/*-
+ * Copyright (c) 2012
+ *	Vrije Universiteit, Amsterdam, The Netherlands. All rights reserved.
+ *
+ * Author: Evgeniy Ivanov (based on libsa/ext2fs.c).
+ *
+ * This code is derived from src/sys/lib/libsa/ext2fs.c contributed to 
+ * The NetBSD Foundation, see copyrights below.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS
+ * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -83,16 +114,11 @@
  */
 
 /*
- *	Stand-alone file reading package for Ext2 file system.
+ *	Stand-alone file reading package for MFS file system.
  */
-
-/* #define EXT2FS_DEBUG */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <ufs/ext2fs/ext2fs_dinode.h>
-#include <ufs/ext2fs/ext2fs_dir.h>
-#include <ufs/ext2fs/ext2fs.h>
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
 #else
@@ -100,7 +126,7 @@
 #endif
 
 #include "stand.h"
-#include "ext2fs.h"
+#include "minixfs3.h"
 
 #if defined(LIBSA_FS_SINGLECOMPONENT) && !defined(LIBSA_NO_FS_SYMLINK)
 #define LIBSA_NO_FS_SYMLINK
@@ -110,9 +136,6 @@
 #define twiddle()
 #endif
 
-#ifndef indp_t
-#define indp_t		int32_t
-#endif
 typedef uint32_t	ino32_t;
 #ifndef FSBTODB
 #define FSBTODB(fs, indp) fsbtodb(fs, indp)
@@ -135,11 +158,11 @@ typedef uint32_t	ino32_t;
  */
 struct file {
 	off_t		f_seekp;	/* seek pointer */
-	struct m_ext2fs	*f_fs;		/* pointer to super-block */
-	struct ext2fs_dinode	f_di;		/* copy of on-disk inode */
+	struct mfs_sblock  *f_fs;	/* pointer to super-block */
+	struct mfs_dinode  f_di;	/* copy of on-disk inode */
 	uint		f_nishift;	/* for blocks in indirect block */
-	indp_t		f_ind_cache_block;
-	indp_t		f_ind_cache[IND_CACHE_SZ];
+	block_t		f_ind_cache_block;
+	block_t		f_ind_cache[IND_CACHE_SZ];
 
 	char		*f_buf;		/* buffer for data block */
 	size_t		f_buf_size;	/* size of data block */
@@ -154,32 +177,17 @@ typedef struct entry_t entry_t;
 struct entry_t {
 	entry_t	*e_next;
 	ino32_t	e_ino;
-	uint8_t	e_type;
 	char	e_name[1];
-};
-
-static const char    *const typestr[] = {
-	"unknown",
-	"REG",
-	"DIR",
-	"CHR",
-	"BLK",
-	"FIFO",
-	"SOCK",
-	"LNK"
 };
 
 #endif /* LIBSA_ENABLE_LS_OP */
 
+
 static int read_inode(ino32_t, struct open_file *);
-static int block_map(struct open_file *, indp_t, indp_t *);
-static int buf_read_file(struct open_file *, char **, size_t *);
+static int block_map(struct open_file *, block_t, block_t *);
+static int buf_read_file(struct open_file *, void *, size_t *);
 static int search_directory(const char *, int, struct open_file *, ino32_t *);
-static int read_sblock(struct open_file *, struct m_ext2fs *);
-static int read_gdblock(struct open_file *, struct m_ext2fs *);
-#ifdef EXT2FS_DEBUG
-static void dump_sblock(struct m_ext2fs *);
-#endif
+static int read_sblock(struct open_file *, struct mfs_sblock *);
 
 /*
  * Read a new inode into a file structure.
@@ -188,12 +196,12 @@ static int
 read_inode(ino32_t inumber, struct open_file *f)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	struct m_ext2fs *fs = fp->f_fs;
+	struct mfs_sblock *fs = fp->f_fs;
 	char *buf;
 	size_t rsize;
 	int rc;
 	daddr_t inode_sector;
-	struct ext2fs_dinode *dip;
+	struct mfs_dinode *dip;
 
 	inode_sector = FSBTODB(fs, ino_to_fsba(fs, inumber));
 
@@ -203,15 +211,15 @@ read_inode(ino32_t inumber, struct open_file *f)
 	buf = fp->f_buf;
 	twiddle();
 	rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
-	    inode_sector, fs->e2fs_bsize, buf, &rsize);
+	    inode_sector, fs->mfs_block_size, buf, &rsize);
 	if (rc)
 		return rc;
-	if (rsize != fs->e2fs_bsize)
+	if (rsize != fs->mfs_block_size)
 		return EIO;
 
-	dip = (struct ext2fs_dinode *)(buf +
-	    EXT2_DINODE_SIZE(fs) * ino_to_fsbo(fs, inumber));
-	e2fs_iload(dip, &fp->f_di);
+	dip = (struct mfs_dinode *)(buf +
+	    INODE_SIZE * ino_to_fsbo(fs, inumber));
+	mfs_iload(dip, &fp->f_di);
 
 	/*
 	 * Clear out the old buffers
@@ -222,80 +230,84 @@ read_inode(ino32_t inumber, struct open_file *f)
 }
 
 /*
- * Given an offset in a file, find the disk block number that
- * contains that block.
+ * Given an offset in a file, find the disk block number (not zone!)
+ * that contains that block.
  */
 static int
-block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
+block_map(struct open_file *f, block_t file_block, block_t *disk_block_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	struct m_ext2fs *fs = fp->f_fs;
+	struct mfs_sblock *fs = fp->f_fs;
 	uint level;
-	indp_t ind_cache;
-	indp_t ind_block_num;
+	block_t ind_cache;
+	block_t ind_block_num;
+	zone_t zone;
 	size_t rsize;
 	int rc;
-	indp_t *buf = (void *)fp->f_buf;
+	int boff;
+	int scale = fs->mfs_log_zone_size; /* for block-zone conversion */
+	block_t *buf = (void *)fp->f_buf;
 
 	/*
 	 * Index structure of an inode:
 	 *
-	 * e2di_blocks[0..NDADDR-1]
-	 *			hold block numbers for blocks
-	 *			0..NDADDR-1
+	 * mdi_blocks[0..NR_DZONES-1]
+	 *			hold zone numbers for zones
+	 *			0..NR_DZONES-1
 	 *
-	 * e2di_blocks[NDADDR+0]
+	 * mdi_blocks[NR_DZONES+0]
 	 *			block NDADDR+0 is the single indirect block
-	 *			holds block numbers for blocks
-	 *			NDADDR .. NDADDR + NINDIR(fs)-1
+	 *			holds zone numbers for zones
+	 *			NR_DZONES .. NR_DZONES + NINDIR(fs)-1
 	 *
-	 * e2di_blocks[NDADDR+1]
+	 * mdi_blocks[NR_DZONES+1]
 	 *			block NDADDR+1 is the double indirect block
-	 *			holds block numbers for INDEX blocks for blocks
-	 *			NDADDR + NINDIR(fs) ..
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2 - 1
-	 *
-	 * e2di_blocks[NDADDR+2]
-	 *			block NDADDR+2 is the triple indirect block
-	 *			holds block numbers for	double-indirect
-	 *			blocks for blocks
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2 ..
-	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2
-	 *				+ NINDIR(fs)**3 - 1
+	 *			holds zone numbers for INDEX blocks for zones
+	 *			NR_DZONES + NINDIR(fs) ..
+	 *			NR_TZONES + NINDIR(fs) + NINDIR(fs)**2 - 1
 	 */
 
-	if (file_block < NDADDR) {
-		/* Direct block. */
-		*disk_block_p = fs2h32(fp->f_di.e2di_blocks[file_block]);
+	zone = file_block >> scale;
+	boff = (int) (file_block - (zone << scale) ); /* relative blk in zone */
+
+	if (zone < NR_DZONES) {
+		/* Direct zone */
+		zone_t z = fs2h32(fp->f_di.mdi_zone[zone]);
+		if (z == NO_ZONE) {
+			*disk_block_p = NO_BLOCK;
+			return 0;
+		}
+		*disk_block_p = (block_t) ((z << scale) + boff);
 		return 0;
 	}
 
-	file_block -= NDADDR;
+	zone -= NR_DZONES;
 
-	ind_cache = file_block >> LN2_IND_CACHE_SZ;
+	ind_cache = zone >> LN2_IND_CACHE_SZ;
 	if (ind_cache == fp->f_ind_cache_block) {
 		*disk_block_p =
-		    fs2h32(fp->f_ind_cache[file_block & IND_CACHE_MASK]);
+		    fs2h32(fp->f_ind_cache[zone & IND_CACHE_MASK]);
 		return 0;
 	}
 
 	for (level = 0;;) {
 		level += fp->f_nishift;
-		if (file_block < (indp_t)1 << level)
+
+		if (zone < (block_t)1 << level)
 			break;
 		if (level > NIADDR * fp->f_nishift)
-			/* Block number too high */
+			/* Zone number too high */
 			return EFBIG;
-		file_block -= (indp_t)1 << level;
+		zone -= (block_t)1 << level;
 	}
 
 	ind_block_num =
-	    fs2h32(fp->f_di.e2di_blocks[NDADDR + (level / fp->f_nishift - 1)]);
+	    fs2h32(fp->f_di.mdi_zone[NR_DZONES + (level / fp->f_nishift - 1)]);
 
 	for (;;) {
 		level -= fp->f_nishift;
 		if (ind_block_num == 0) {
-			*disk_block_p = 0;	/* missing */
+			*disk_block_p = NO_BLOCK;	/* missing */
 			return 0;
 		}
 
@@ -307,25 +319,26 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 		 * However we don't do this very often anyway...
 		 */
 		rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
-			FSBTODB(fp->f_fs, ind_block_num), fs->e2fs_bsize,
+			FSBTODB(fs, ind_block_num), fs->mfs_block_size,
 			buf, &rsize);
 		if (rc)
 			return rc;
-		if (rsize != fs->e2fs_bsize)
+		if (rsize != fs->mfs_block_size)
 			return EIO;
-		ind_block_num = fs2h32(buf[file_block >> level]);
+
+		ind_block_num = fs2h32(buf[zone >> level]);
 		if (level == 0)
 			break;
-		file_block &= (1 << level) - 1;
+		zone &= (1 << level) - 1;
 	}
 
 	/* Save the part of the block that contains this sector */
-	memcpy(fp->f_ind_cache, &buf[file_block & ~IND_CACHE_MASK],
+	memcpy(fp->f_ind_cache, &buf[zone & ~IND_CACHE_MASK],
 	    IND_CACHE_SZ * sizeof fp->f_ind_cache[0]);
 	fp->f_ind_cache_block = ind_cache;
 
-	*disk_block_p = ind_block_num;
-
+	zone = (zone_t)ind_block_num;
+	*disk_block_p = (block_t)((zone << scale) + boff);
 	return 0;
 }
 
@@ -334,19 +347,20 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
  * Return the location in the buffer and the amount in the buffer.
  */
 static int
-buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
+buf_read_file(struct open_file *f, void *v, size_t *size_p)
 {
+	char **buf_p = v;
 	struct file *fp = (struct file *)f->f_fsdata;
-	struct m_ext2fs *fs = fp->f_fs;
+	struct mfs_sblock *fs = fp->f_fs;
 	long off;
-	indp_t file_block;
-	indp_t disk_block;
+	block_t file_block;
+	block_t disk_block;
 	size_t block_size;
 	int rc;
 
 	off = blkoff(fs, fp->f_seekp);
 	file_block = lblkno(fs, fp->f_seekp);
-	block_size = fs->e2fs_bsize;	/* no fragment */
+	block_size = fs->mfs_block_size;
 
 	if (file_block != fp->f_buf_blkno) {
 		rc = block_map(f, file_block, &disk_block);
@@ -379,9 +393,8 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	/*
 	 * But truncate buffer at end of file.
 	 */
-	/* XXX should handle LARGEFILE */
-	if (*size_p > fp->f_di.e2di_size - fp->f_seekp)
-		*size_p = fp->f_di.e2di_size - fp->f_seekp;
+	if (*size_p > fp->f_di.mdi_size - fp->f_seekp)
+		*size_p = fp->f_di.mdi_size - fp->f_seekp;
 
 	return 0;
 }
@@ -395,33 +408,45 @@ search_directory(const char *name, int length, struct open_file *f,
 	ino32_t *inumber_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	struct ext2fs_direct *dp;
-	struct ext2fs_direct *edp;
-	char *buf;
+	struct mfs_sblock *fs = fp->f_fs;
+	struct mfs_direct *dp;
+	struct mfs_direct *dbuf;
 	size_t buf_size;
 	int namlen;
 	int rc;
 
 	fp->f_seekp = 0;
-	/* XXX should handle LARGEFILE */
-	while (fp->f_seekp < (off_t)fp->f_di.e2di_size) {
-		rc = buf_read_file(f, &buf, &buf_size);
+
+	while (fp->f_seekp < (off_t)fp->f_di.mdi_size) {
+		rc = buf_read_file(f, (void *)&dbuf, &buf_size);
 		if (rc)
 			return rc;
+		if (buf_size == 0)
+			return EIO;
 
-		dp = (struct ext2fs_direct *)buf;
-		edp = (struct ext2fs_direct *)(buf + buf_size);
-		for (; dp < edp;
-		    dp = (void *)((char *)dp + fs2h16(dp->e2d_reclen))) {
-			if (fs2h16(dp->e2d_reclen) <= 0)
-				break;
-			if (fs2h32(dp->e2d_ino) == (ino32_t)0)
+		/* XXX we assume, that buf_read_file reads an fs block and
+		 * doesn't truncate buffer. Currently i_size in MFS doesn't
+		 * the same as size of allocated blocks, it makes buf_read_file
+		 * to truncate buf_size.
+		 */
+		if (buf_size < fs->mfs_block_size)
+			buf_size = fs->mfs_block_size;
+
+		for (dp = dbuf; dp < &dbuf[NR_DIR_ENTRIES(fs)]; dp++) {
+			char *cp;
+			if (fs2h32(dp->mfsd_ino) == (ino32_t) 0)
 				continue;
-			namlen = dp->e2d_namlen;
+			/* Compute the length of the name */
+			cp = memchr(dp->mfsd_name, '\0', sizeof(dp->mfsd_name));
+			if (cp == NULL)
+				namlen = sizeof(dp->mfsd_name);
+			else
+				namlen = cp - (dp->mfsd_name);
+
 			if (namlen == length &&
-			    !memcmp(name, dp->e2d_name, length)) {
+			    !memcmp(name, dp->mfsd_name, length)) {
 				/* found entry */
-				*inumber_p = fs2h32(dp->e2d_ino);
+				*inumber_p = fs2h32(dp->mfsd_ino);
 				return 0;
 			}
 		}
@@ -431,87 +456,90 @@ search_directory(const char *name, int length, struct open_file *f,
 }
 
 int
-read_sblock(struct open_file *f, struct m_ext2fs *fs)
+read_sblock(struct open_file *f, struct mfs_sblock *fs)
 {
-	static uint8_t sbbuf[SBSIZE];
-	struct ext2fs ext2fs;
+	static uint8_t sbbuf[MINBSIZE];
 	size_t buf_size;
 	int rc;
 
+	/* We must read amount multiple of sector size, hence we can't
+	 * read SBSIZE and read MINBSIZE.
+	 */
+	if (SBSIZE > MINBSIZE)
+		return EINVAL;
+
 	rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
-	    SBOFF / DEV_BSIZE, SBSIZE, sbbuf, &buf_size);
+	    SUPER_BLOCK_OFF / DEV_BSIZE, MINBSIZE, sbbuf, &buf_size);
 	if (rc)
 		return rc;
 
-	if (buf_size != SBSIZE)
+	if (buf_size != MINBSIZE)
 		return EIO;
 
-	e2fs_sbload((void *)sbbuf, &ext2fs);
-	if (ext2fs.e2fs_magic != E2FS_MAGIC)
+	mfs_sbload((void *)sbbuf, fs);
+
+	if (fs->mfs_magic != SUPER_MAGIC)
 		return EINVAL;
-	if (ext2fs.e2fs_rev > E2FS_REV1 ||
-	    (ext2fs.e2fs_rev == E2FS_REV1 &&
-	     (ext2fs.e2fs_first_ino != EXT2_FIRSTINO ||
-	     (ext2fs.e2fs_inode_size != 128 && ext2fs.e2fs_inode_size != 256) ||
-	      ext2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP))) {
-		return ENODEV;
+	if (fs->mfs_block_size < MINBSIZE)
+		return EINVAL;
+	if ((fs->mfs_block_size % 512) != 0)
+		return EINVAL;
+	if (SBSIZE > fs->mfs_block_size)
+		return EINVAL;
+	if ((fs->mfs_block_size % INODE_SIZE) != 0)
+		return EINVAL;
+
+	/* For even larger disks, a similar problem occurs with s_firstdatazone.
+	 * If the on-disk field contains zero, we assume that the value was too
+	 * large to fit, and compute it on the fly.
+	 */
+	if (fs->mfs_firstdatazone_old == 0) {
+		block_t offset;
+		offset = START_BLOCK + fs->mfs_imap_blocks + fs->mfs_zmap_blocks;
+		offset += (fs->mfs_ninodes + fs->mfs_inodes_per_block - 1) /
+				fs->mfs_inodes_per_block;
+
+		fs->mfs_firstdatazone =
+			(offset + (1 << fs->mfs_log_zone_size) - 1) >>
+				fs->mfs_log_zone_size;
+	} else {
+		fs->mfs_firstdatazone = (zone_t) fs->mfs_firstdatazone_old;
 	}
 
-	e2fs_sbload((void *)sbbuf, &fs->e2fs);
-	/* compute in-memory m_ext2fs values */
-	fs->e2fs_ncg =
-	    howmany(fs->e2fs.e2fs_bcount - fs->e2fs.e2fs_first_dblock,
-	    fs->e2fs.e2fs_bpg);
-	/* XXX assume hw bsize = 512 */
-	fs->e2fs_fsbtodb = fs->e2fs.e2fs_log_bsize + 1;
-	fs->e2fs_bsize = MINBSIZE << fs->e2fs.e2fs_log_bsize;
-	fs->e2fs_bshift = LOG_MINBSIZE + fs->e2fs.e2fs_log_bsize;
-	fs->e2fs_qbmask = fs->e2fs_bsize - 1;
-	fs->e2fs_bmask = ~fs->e2fs_qbmask;
-	fs->e2fs_ngdb =
-	    howmany(fs->e2fs_ncg, fs->e2fs_bsize / sizeof(struct ext2_gd));
-	fs->e2fs_ipb = fs->e2fs_bsize / ext2fs.e2fs_inode_size;
-	fs->e2fs_itpg = fs->e2fs.e2fs_ipg / fs->e2fs_ipb;
+	if (fs->mfs_imap_blocks < 1 || fs->mfs_zmap_blocks < 1
+			|| fs->mfs_ninodes < 1 || fs->mfs_zones < 1
+			|| fs->mfs_firstdatazone <= 4
+			|| fs->mfs_firstdatazone >= fs->mfs_zones
+			|| (unsigned) fs->mfs_log_zone_size > 4)
+		return EINVAL;
+
+	/* compute in-memory mfs_sblock values */
+	fs->mfs_inodes_per_block = fs->mfs_block_size / INODE_SIZE;
+
+
+	{
+		int32_t mult = fs->mfs_block_size >> LOG_MINBSIZE;
+		int ln2 = LOG_MINBSIZE;
+
+		for (; mult != 1; ln2++)
+			mult >>= 1;
+
+		fs->mfs_bshift = ln2;
+		/* XXX assume hw bsize = 512 */
+		fs->mfs_fsbtodb = ln2 - LOG_MINBSIZE + 1;
+	}
+
+	fs->mfs_qbmask = fs->mfs_block_size - 1;
+	fs->mfs_bmask = ~fs->mfs_qbmask;
 
 	return 0;
 }
-
-int
-read_gdblock(struct open_file *f, struct m_ext2fs *fs)
-{
-	struct file *fp = (struct file *)f->f_fsdata;
-	size_t rsize;
-	uint gdpb;
-	int i, rc;
-
-	gdpb = fs->e2fs_bsize / sizeof(struct ext2_gd);
-
-	for (i = 0; i < fs->e2fs_ngdb; i++) {
-		rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
-		    FSBTODB(fs, fs->e2fs.e2fs_first_dblock +
-		    1 /* superblock */ + i),
-		    fs->e2fs_bsize, fp->f_buf, &rsize);
-		if (rc)
-			return rc;
-		if (rsize != fs->e2fs_bsize)
-			return EIO;
-
-		e2fs_cgload((struct ext2_gd *)fp->f_buf,
-		    &fs->e2fs_gd[i * gdpb],
-		    (i == (fs->e2fs_ngdb - 1)) ?
-		    (fs->e2fs_ncg - gdpb * i) * sizeof(struct ext2_gd):
-		    fs->e2fs_bsize);
-	}
-
-	return 0;
-}
-
 
 /*
  * Open a file.
  */
 __compactcall int
-ext2fs_open(const char *path, struct open_file *f)
+minixfs3_open(const char *path, struct open_file *f)
 {
 #ifndef LIBSA_FS_SINGLECOMPONENT
 	const char *cp, *ncp;
@@ -519,7 +547,7 @@ ext2fs_open(const char *path, struct open_file *f)
 #endif
 	ino32_t inumber;
 	struct file *fp;
-	struct m_ext2fs *fs;
+	struct mfs_sblock *fs;
 	int rc;
 #ifndef LIBSA_NO_FS_SYMLINK
 	ino32_t parent_inumber;
@@ -543,24 +571,14 @@ ext2fs_open(const char *path, struct open_file *f)
 	if (rc)
 		goto out;
 
-#ifdef EXT2FS_DEBUG
-	dump_sblock(fs);
-#endif
-
 	/* alloc a block sized buffer used for all fs transfers */
-	fp->f_buf = alloc(fs->e2fs_bsize);
-
-	/* read group descriptor blocks */
-	fs->e2fs_gd = alloc(sizeof(struct ext2_gd) * fs->e2fs_ncg);
-	rc = read_gdblock(f, fs);
-	if (rc)
-		goto out;
+	fp->f_buf = alloc(fs->mfs_block_size);
 
 	/*
 	 * Calculate indirect block levels.
 	 */
 	{
-		indp_t mult;
+		int32_t mult;
 		int ln2;
 
 		/*
@@ -583,7 +601,7 @@ ext2fs_open(const char *path, struct open_file *f)
 		fp->f_nishift = ln2;
 	}
 
-	inumber = EXT2_ROOTINO;
+	inumber = ROOT_INODE;
 	if ((rc = read_inode(inumber, f)) != 0)
 		goto out;
 
@@ -602,7 +620,7 @@ ext2fs_open(const char *path, struct open_file *f)
 		/*
 		 * Check that current node is a directory.
 		 */
-		if ((fp->f_di.e2di_mode & EXT2_IFMT) != EXT2_IFDIR) {
+		if ((fp->f_di.mdi_mode & I_TYPE) != I_DIRECTORY) {
 			rc = ENOTDIR;
 			goto out;
 		}
@@ -636,10 +654,11 @@ ext2fs_open(const char *path, struct open_file *f)
 		/*
 		 * Check for symbolic link.
 		 */
-		if ((fp->f_di.e2di_mode & EXT2_IFMT) == EXT2_IFLNK) {
-			/* XXX should handle LARGEFILE */
-			int link_len = fp->f_di.e2di_size;
+		if ((fp->f_di.mdi_mode & I_TYPE) == I_SYMBOLIC_LINK) {
+			int link_len = fp->f_di.mdi_size;
 			int len;
+			size_t buf_size;
+			block_t	disk_block;
 
 			len = strlen(cp);
 
@@ -651,29 +670,22 @@ ext2fs_open(const char *path, struct open_file *f)
 
 			memmove(&namebuf[link_len], cp, len + 1);
 
-			if (link_len < EXT2_MAXSYMLINKLEN) {
-				memcpy(namebuf, fp->f_di.e2di_blocks, link_len);
-			} else {
-				/*
-				 * Read file for symbolic link
-				 */
-				size_t buf_size;
-				indp_t	disk_block;
+			/*
+			 * Read file for symbolic link
+			 */
+			buf = fp->f_buf;
+			rc = block_map(f, (block_t)0, &disk_block);
+			if (rc)
+				goto out;
 
-				buf = fp->f_buf;
-				rc = block_map(f, (indp_t)0, &disk_block);
-				if (rc)
-					goto out;
-
-				twiddle();
-				rc = DEV_STRATEGY(f->f_dev)(f->f_devdata,
+			twiddle();
+			rc = DEV_STRATEGY(f->f_dev)(f->f_devdata,
 					F_READ, FSBTODB(fs, disk_block),
-					fs->e2fs_bsize, buf, &buf_size);
-				if (rc)
-					goto out;
+					fs->mfs_block_size, buf, &buf_size);
+			if (rc)
+				goto out;
 
-				memcpy(namebuf, buf, link_len);
-			}
+			memcpy(namebuf, buf, link_len);
 
 			/*
 			 * If relative pathname, restart at parent directory.
@@ -683,7 +695,7 @@ ext2fs_open(const char *path, struct open_file *f)
 			if (*cp != '/')
 				inumber = parent_inumber;
 			else
-				inumber = (ino32_t)EXT2_ROOTINO;
+				inumber = (ino32_t) ROOT_INODE;
 
 			if ((rc = read_inode(inumber, f)) != 0)
 				goto out;
@@ -712,16 +724,13 @@ ext2fs_open(const char *path, struct open_file *f)
 
 out:
 	if (rc)
-		ext2fs_close(f);
-	else {
-		fsmod = "ext2fs";
-		fsmod2 = "ffs";
-	}
+		minixfs3_close(f);
+
 	return rc;
 }
 
 __compactcall int
-ext2fs_close(struct open_file *f)
+minixfs3_close(struct open_file *f)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 
@@ -729,11 +738,8 @@ ext2fs_close(struct open_file *f)
 	if (fp == NULL)
 		return 0;
 
-	if (fp->f_fs->e2fs_gd)
-		dealloc(fp->f_fs->e2fs_gd,
-		    sizeof(struct ext2_gd) * fp->f_fs->e2fs_ncg);
 	if (fp->f_buf)
-		dealloc(fp->f_buf, fp->f_fs->e2fs_bsize);
+		dealloc(fp->f_buf, fp->f_fs->mfs_block_size);
 	dealloc(fp->f_fs, sizeof(*fp->f_fs));
 	dealloc(fp, sizeof(struct file));
 	return 0;
@@ -744,7 +750,7 @@ ext2fs_close(struct open_file *f)
  * Cross block boundaries when necessary.
  */
 __compactcall int
-ext2fs_read(struct open_file *f, void *start, size_t size, size_t *resid)
+minixfs3_read(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	size_t csize;
@@ -754,8 +760,7 @@ ext2fs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 	char *addr = start;
 
 	while (size != 0) {
-		/* XXX should handle LARGEFILE */
-		if (fp->f_seekp >= (off_t)fp->f_di.e2di_size)
+		if (fp->f_seekp >= (off_t)fp->f_di.mdi_size)
 			break;
 
 		rc = buf_read_file(f, &buf, &buf_size);
@@ -772,6 +777,7 @@ ext2fs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 		addr += csize;
 		size -= csize;
 	}
+
 	if (resid)
 		*resid = size;
 	return rc;
@@ -782,7 +788,7 @@ ext2fs_read(struct open_file *f, void *start, size_t size, size_t *resid)
  */
 #ifndef LIBSA_NO_FS_WRITE
 __compactcall int
-ext2fs_write(struct open_file *f, void *start, size_t size, size_t *resid)
+minixfs3_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 
 	return EROFS;
@@ -791,7 +797,7 @@ ext2fs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 
 #ifndef LIBSA_NO_FS_SEEK
 __compactcall off_t
-ext2fs_seek(struct open_file *f, off_t offset, int where)
+minixfs3_seek(struct open_file *f, off_t offset, int where)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 
@@ -803,8 +809,7 @@ ext2fs_seek(struct open_file *f, off_t offset, int where)
 		fp->f_seekp += offset;
 		break;
 	case SEEK_END:
-		/* XXX should handle LARGEFILE */
-		fp->f_seekp = fp->f_di.e2di_size - offset;
+		fp->f_seekp = fp->f_di.mdi_size - offset;
 		break;
 	default:
 		return -1;
@@ -814,78 +819,73 @@ ext2fs_seek(struct open_file *f, off_t offset, int where)
 #endif /* !LIBSA_NO_FS_SEEK */
 
 __compactcall int
-ext2fs_stat(struct open_file *f, struct stat *sb)
+minixfs3_stat(struct open_file *f, struct stat *sb)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 
 	/* only important stuff */
 	memset(sb, 0, sizeof *sb);
-	sb->st_mode = fp->f_di.e2di_mode;
-	sb->st_uid = fp->f_di.e2di_uid;
-	sb->st_gid = fp->f_di.e2di_gid;
-	/* XXX should handle LARGEFILE */
-	sb->st_size = fp->f_di.e2di_size;
+	sb->st_mode = fp->f_di.mdi_mode;
+	sb->st_uid = fp->f_di.mdi_uid;
+	sb->st_gid = fp->f_di.mdi_gid;
+	sb->st_size = fp->f_di.mdi_size;
 	return 0;
 }
 
 #if defined(LIBSA_ENABLE_LS_OP)
 __compactcall void
-ext2fs_ls(struct open_file *f, const char *pattern)
+minixfs3_ls(struct open_file *f, const char *pattern)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	size_t block_size = fp->f_fs->e2fs_bsize;
-	char *buf;
+	struct mfs_sblock *fs = fp->f_fs;
+	struct mfs_direct *dp;
+	struct mfs_direct *dbuf;
 	size_t buf_size;
 	entry_t	*names = 0, *n, **np;
 
 	fp->f_seekp = 0;
-	while (fp->f_seekp < (off_t)fp->f_di.e2di_size) {
-		struct ext2fs_direct  *dp, *edp;
-		int rc = buf_read_file(f, &buf, &buf_size);
+	while (fp->f_seekp < (off_t)fp->f_di.mdi_size) {
+		int rc = buf_read_file(f, &dbuf, &buf_size);
 		if (rc)
 			goto out;
-		if (buf_size != block_size || buf_size == 0)
-			goto out;
 
-		dp = (struct ext2fs_direct *)buf;
-		edp = (struct ext2fs_direct *)(buf + buf_size);
+		/* XXX we assume, that buf_read_file reads an fs block and
+		 * doesn't truncate buffer. Currently i_size in MFS doesn't
+		 * the same as size of allocated blocks, it makes buf_read_file
+		 * to truncate buf_size.
+		 */
+		if (buf_size < fs->mfs_block_size)
+			buf_size = fs->mfs_block_size;
 
-		for (; dp < edp;
-		     dp = (void *)((char *)dp + fs2h16(dp->e2d_reclen))) {
-			const char *t;
+		for (dp = dbuf; dp < &dbuf[NR_DIR_ENTRIES(fs)]; dp++) {
+			char *cp;
+			int namlen;
 
-			if (fs2h16(dp->e2d_reclen) <= 0)
-				goto out;
-
-			if (fs2h32(dp->e2d_ino) == 0)
+			if (fs2h32(dp->mfsd_ino) == 0)
 				continue;
 
-			if (dp->e2d_type >= NELEM(typestr) ||
-			    !(t = typestr[dp->e2d_type])) {
-				/*
-				 * This does not handle "old"
-				 * filesystems properly. On little
-				 * endian machines, we get a bogus
-				 * type name if the namlen matches a
-				 * valid type identifier. We could
-				 * check if we read namlen "0" and
-				 * handle this case specially, if
-				 * there were a pressing need...
-				 */
-				printf("bad dir entry\n");
-				goto out;
-			}
-			if (pattern && !fnmatch(dp->e2d_name, pattern))
+			if (pattern && !fnmatch(dp->mfsd_name, pattern))
 				continue;
-			n = alloc(sizeof *n + strlen(dp->e2d_name));
+
+			/* Compute the length of the name,
+			 * We don't use strlen and strcpy, because original MFS
+			 * code doesn't.
+			 */
+			cp = memchr(dp->mfsd_name, '\0', sizeof(dp->mfsd_name));
+			if (cp == NULL)
+				namlen = sizeof(dp->mfsd_name);
+			else
+				namlen = cp - (dp->mfsd_name);
+
+			n = alloc(sizeof *n + namlen);
 			if (!n) {
-				printf("%d: %s (%s)\n",
-					fs2h32(dp->e2d_ino), dp->e2d_name, t);
+				printf("%d: %s\n",
+					fs2h32(dp->mfsd_ino), dp->mfsd_name);
 				continue;
 			}
-			n->e_ino = fs2h32(dp->e2d_ino);
-			n->e_type = dp->e2d_type;
-			strcpy(n->e_name, dp->e2d_name);
+			n->e_ino = fs2h32(dp->mfsd_ino);
+			strncpy(n->e_name, dp->mfsd_name, namlen);
+			n->e_name[namlen] = '\0';
 			for (np = &names; *np; np = &(*np)->e_next) {
 				if (strcmp(n->e_name, (*np)->e_name) < 0)
 					break;
@@ -900,8 +900,8 @@ ext2fs_ls(struct open_file *f, const char *pattern)
 		entry_t *p_names = names;
 		do {
 			n = p_names;
-			printf("%d: %s (%s)\n",
-				n->e_ino, n->e_name, typestr[n->e_type]);
+			printf("%d: %s\n",
+				n->e_ino, n->e_name);
 			p_names = n->e_next;
 		} while (p_names);
 	} else {
@@ -921,124 +921,44 @@ out:
 
 /*
  * byte swap functions for big endian machines
- * (ext2fs is always little endian)
- *
- * XXX: We should use src/sys/ufs/ext2fs/ext2fs_bswap.c
+ * (mfs is always little endian)
  */
 
 /* These functions are only needed if native byte order is not big endian */
 #if BYTE_ORDER == BIG_ENDIAN
 void
-e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
+minixfs3_sb_bswap(struct mfs_sblock *old, struct mfs_sblock *new)
 {
-
-	/* preserve unused fields */
-	memcpy(new, old, sizeof(struct ext2fs));
-	new->e2fs_icount	=	bswap32(old->e2fs_icount);
-	new->e2fs_bcount	=	bswap32(old->e2fs_bcount);
-	new->e2fs_rbcount	=	bswap32(old->e2fs_rbcount);
-	new->e2fs_fbcount	=	bswap32(old->e2fs_fbcount);
-	new->e2fs_ficount	=	bswap32(old->e2fs_ficount);
-	new->e2fs_first_dblock	=	bswap32(old->e2fs_first_dblock);
-	new->e2fs_log_bsize	=	bswap32(old->e2fs_log_bsize);
-	new->e2fs_fsize		=	bswap32(old->e2fs_fsize);
-	new->e2fs_bpg		=	bswap32(old->e2fs_bpg);
-	new->e2fs_fpg		=	bswap32(old->e2fs_fpg);
-	new->e2fs_ipg		=	bswap32(old->e2fs_ipg);
-	new->e2fs_mtime		=	bswap32(old->e2fs_mtime);
-	new->e2fs_wtime		=	bswap32(old->e2fs_wtime);
-	new->e2fs_mnt_count	=	bswap16(old->e2fs_mnt_count);
-	new->e2fs_max_mnt_count	=	bswap16(old->e2fs_max_mnt_count);
-	new->e2fs_magic		=	bswap16(old->e2fs_magic);
-	new->e2fs_state		=	bswap16(old->e2fs_state);
-	new->e2fs_beh		=	bswap16(old->e2fs_beh);
-	new->e2fs_minrev	=	bswap16(old->e2fs_minrev);
-	new->e2fs_lastfsck	=	bswap32(old->e2fs_lastfsck);
-	new->e2fs_fsckintv	=	bswap32(old->e2fs_fsckintv);
-	new->e2fs_creator	=	bswap32(old->e2fs_creator);
-	new->e2fs_rev		=	bswap32(old->e2fs_rev);
-	new->e2fs_ruid		=	bswap16(old->e2fs_ruid);
-	new->e2fs_rgid		=	bswap16(old->e2fs_rgid);
-	new->e2fs_first_ino	=	bswap32(old->e2fs_first_ino);
-	new->e2fs_inode_size	=	bswap16(old->e2fs_inode_size);
-	new->e2fs_block_group_nr =	bswap16(old->e2fs_block_group_nr);
-	new->e2fs_features_compat =	bswap32(old->e2fs_features_compat);
-	new->e2fs_features_incompat =	bswap32(old->e2fs_features_incompat);
-	new->e2fs_features_rocompat =	bswap32(old->e2fs_features_rocompat);
-	new->e2fs_algo		=	bswap32(old->e2fs_algo);
-	new->e2fs_reserved_ngdb	=	bswap16(old->e2fs_reserved_ngdb);
+	new->mfs_ninodes	=	bswap32(old->mfs_ninodes);
+	new->mfs_nzones		=	bswap16(old->mfs_nzones);
+	new->mfs_imap_blocks	=	bswap16(old->mfs_imap_blocks);
+	new->mfs_zmap_blocks	=	bswap16(old->mfs_zmap_blocks);
+	new->mfs_firstdatazone_old =	bswap16(old->mfs_firstdatazone_old);
+	new->mfs_log_zone_size	=	bswap16(old->mfs_log_zone_size);
+	new->mfs_max_size	=	bswap32(old->mfs_max_size);
+	new->mfs_zones		=	bswap32(old->mfs_zones);
+	new->mfs_magic		=	bswap16(old->mfs_magic);
+	new->mfs_block_size	=	bswap16(old->mfs_block_size);
+	new->mfs_disk_version	=	old->mfs_disk_version;
 }
 
-void e2fs_cg_bswap(struct ext2_gd *old, struct ext2_gd *new, int size)
+void minixfs3_i_bswap(struct mfs_dinode *old, struct mfs_dinode *new)
 {
 	int i;
 
-	for (i = 0; i < (size / sizeof(struct ext2_gd)); i++) {
-		new[i].ext2bgd_b_bitmap	= bswap32(old[i].ext2bgd_b_bitmap);
-		new[i].ext2bgd_i_bitmap	= bswap32(old[i].ext2bgd_i_bitmap);
-		new[i].ext2bgd_i_tables	= bswap32(old[i].ext2bgd_i_tables);
-		new[i].ext2bgd_nbfree	= bswap16(old[i].ext2bgd_nbfree);
-		new[i].ext2bgd_nifree	= bswap16(old[i].ext2bgd_nifree);
-		new[i].ext2bgd_ndirs	= bswap16(old[i].ext2bgd_ndirs);
-	}
-}
+	new->mdi_mode		=	bswap16(old->mdi_mode);
+	new->mdi_nlinks		=	bswap16(old->mdi_nlinks);
+	new->mdi_uid		=	bswap16(old->mdi_uid);
+	new->mdi_gid		=	bswap16(old->mdi_gid);
+	new->mdi_size		=	bswap32(old->mdi_size);
+	new->mdi_atime		=	bswap32(old->mdi_atime);
+	new->mdi_mtime		=	bswap32(old->mdi_mtime);
+	new->mdi_ctime		=	bswap32(old->mdi_ctime);
 
-void e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new)
-{
-
-	new->e2di_mode		=	bswap16(old->e2di_mode);
-	new->e2di_uid		=	bswap16(old->e2di_uid);
-	new->e2di_gid		=	bswap16(old->e2di_gid);
-	new->e2di_nlink		=	bswap16(old->e2di_nlink);
-	new->e2di_size		=	bswap32(old->e2di_size);
-	new->e2di_atime		=	bswap32(old->e2di_atime);
-	new->e2di_ctime		=	bswap32(old->e2di_ctime);
-	new->e2di_mtime		=	bswap32(old->e2di_mtime);
-	new->e2di_dtime		=	bswap32(old->e2di_dtime);
-	new->e2di_nblock	=	bswap32(old->e2di_nblock);
-	new->e2di_flags		=	bswap32(old->e2di_flags);
-	new->e2di_gen		=	bswap32(old->e2di_gen);
-	new->e2di_facl		=	bswap32(old->e2di_facl);
-	new->e2di_dacl		=	bswap32(old->e2di_dacl);
-	new->e2di_faddr		=	bswap32(old->e2di_faddr);
-	memcpy(&new->e2di_blocks[0], &old->e2di_blocks[0],
-	    (NDADDR + NIADDR) * sizeof(uint32_t));
-}
-#endif
-
-#ifdef EXT2FS_DEBUG
-void
-dump_sblock(struct m_ext2fs *fs)
-{
-
-	printf("fs->e2fs.e2fs_bcount = %u\n", fs->e2fs.e2fs_bcount);
-	printf("fs->e2fs.e2fs_first_dblock = %u\n", fs->e2fs.e2fs_first_dblock);
-	printf("fs->e2fs.e2fs_log_bsize = %u\n", fs->e2fs.e2fs_log_bsize);
-	printf("fs->e2fs.e2fs_bpg = %u\n", fs->e2fs.e2fs_bpg);
-	printf("fs->e2fs.e2fs_ipg = %u\n", fs->e2fs.e2fs_ipg);
-	printf("fs->e2fs.e2fs_magic = 0x%x\n", fs->e2fs.e2fs_magic);
-	printf("fs->e2fs.e2fs_rev = %u\n", fs->e2fs.e2fs_rev);
-
-	if (fs->e2fs.e2fs_rev == E2FS_REV1) {
-		printf("fs->e2fs.e2fs_first_ino = %u\n",
-		    fs->e2fs.e2fs_first_ino);
-		printf("fs->e2fs.e2fs_inode_size = %u\n",
-		    fs->e2fs.e2fs_inode_size);
-		printf("fs->e2fs.e2fs_features_compat = %u\n",
-		    fs->e2fs.e2fs_features_compat);
-		printf("fs->e2fs.e2fs_features_incompat = %u\n",
-		    fs->e2fs.e2fs_features_incompat);
-		printf("fs->e2fs.e2fs_features_rocompat = %u\n",
-		    fs->e2fs.e2fs_features_rocompat);
-		printf("fs->e2fs.e2fs_reserved_ngdb = %u\n",
-		    fs->e2fs.e2fs_reserved_ngdb);
-	}
-
-	printf("fs->e2fs_bsize = %u\n", fs->e2fs_bsize);
-	printf("fs->e2fs_fsbtodb = %u\n", fs->e2fs_fsbtodb);
-	printf("fs->e2fs_ncg = %u\n", fs->e2fs_ncg);
-	printf("fs->e2fs_ngdb = %u\n", fs->e2fs_ngdb);
-	printf("fs->e2fs_ipb = %u\n", fs->e2fs_ipb);
-	printf("fs->e2fs_itpg = %u\n", fs->e2fs_itpg);
+	/* We don't swap here, because indirects must be swapped later
+	 * anyway, hence everything is done by block_map().
+	 */
+	for (i = 0; i < NR_TZONES; i++)
+		new->mdi_zone[i] = old->mdi_zone[i];
 }
 #endif
