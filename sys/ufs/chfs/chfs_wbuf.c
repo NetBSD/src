@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_wbuf.c,v 1.2 2011/11/24 20:50:33 agc Exp $	*/
+/*	$NetBSD: chfs_wbuf.c,v 1.3 2012/01/16 12:17:55 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -35,27 +35,18 @@
 #include <dev/flash/flash.h>
 #include <sys/uio.h>
 #include "chfs.h"
-//#include </root/xipffs/netbsd.chfs/chfs.h>
 
-#define DBG_WBUF 1
+#define DBG_WBUF 1		/* XXX unused, but should be */
 
 #define PAD(x) (((x)+3)&~3)
 
-#define EB_ADDRESS(x) ( ((unsigned long)(x) / chmp->chm_ebh->eb_size) * chmp->chm_ebh->eb_size )
+#define EB_ADDRESS(x) ( rounddown((x), chmp->chm_ebh->eb_size) )
 
-#define PAGE_DIV(x) ( ((unsigned long)(x) / (unsigned long)(chmp->chm_wbuf_pagesize)) * (unsigned long)(chmp->chm_wbuf_pagesize) )
-#define PAGE_MOD(x) ( (unsigned long)(x) % (unsigned long)(chmp->chm_wbuf_pagesize) )
-
-/*
-// test functions
-int wbuf_test(void);
-void wbuf_test_erase_flash(struct chfs_mount*);
-void wbuf_test_callback(struct erase_instruction*);
-*/
+#define PAGE_DIV(x) ( rounddown((x), chmp->chm_wbuf_pagesize) )
+#define PAGE_MOD(x) ( (x) % (chmp->chm_wbuf_pagesize) )
 
 #define NOPAD	0
 #define SETPAD	1
-
 
 /**
  * chfs_flush_wbuf - write wbuf to the flash
