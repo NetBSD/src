@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -197,7 +197,7 @@ atf_process_status_init(atf_process_status_t *s, int status)
 }
 
 void
-atf_process_status_fini(atf_process_status_t *s)
+atf_process_status_fini(atf_process_status_t *s ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 
@@ -412,24 +412,6 @@ out:
 }
 
 static
-atf_error_t
-silence_stdin(void)
-{
-    atf_error_t err;
-
-    close(STDIN_FILENO);
-    int fd = open("/dev/zero", O_RDONLY);
-    if (fd == -1)
-        err = atf_libc_error(errno, "Could not open /dev/zero");
-    else {
-        INV(fd == STDIN_FILENO);
-        err = atf_no_error();
-    }
-
-    return err;
-}
-
-static
 void
 do_child(void (*)(void *),
          void *,
@@ -444,10 +426,6 @@ do_child(void (*start)(void *),
          const stream_prepare_t *errsp)
 {
     atf_error_t err;
-
-    err = silence_stdin();
-    if (atf_is_error(err))
-        goto out;
 
     err = child_connect(outsp, STDOUT_FILENO);
     if (atf_is_error(err))

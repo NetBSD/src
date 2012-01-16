@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -214,7 +214,7 @@ oflag_inline_body()
     # XXX Ugly hack to workaround the lack of \e in FreeBSD.  Look for a
     # nicer solution...
     case $(uname) in
-    FreeBSD)
+    Darwin|FreeBSD)
         h_pass "printf '\a\b\f\n\r\t\v'" -o inline:"\a\b\f\n\r\t\v"
         ;;
     *)
@@ -334,7 +334,7 @@ eflag_inline_body()
     # XXX Ugly hack to workaround the lack of \e in FreeBSD.  Look for a
     # nicer solution...
     case $(uname) in
-    FreeBSD)
+    Darwin|FreeBSD)
         h_pass "printf '\a\b\f\n\r\t\v' 1>&2" -e inline:"\a\b\f\n\r\t\v"
         ;;
     *)
@@ -400,6 +400,17 @@ eflag_negated_body()
     h_fail "echo foo bar 1>&2" -e not-match:foo
 }
 
+atf_test_case stdin
+stdin_head()
+{
+    atf_set "descr" "Tests that stdin is preserved"
+}
+stdin_body()
+{
+    echo "hello" | ${Atf_Check} -o match:"hello" cat || \
+        atf_fail "atf-check does not seem to respect stdin"
+}
+
 atf_test_case invalid_umask
 invalid_umask_head()
 {
@@ -443,6 +454,8 @@ atf_init_test_cases()
     atf_add_test_case eflag_save
     atf_add_test_case eflag_multiple
     atf_add_test_case eflag_negated
+
+    atf_add_test_case stdin
 
     atf_add_test_case invalid_umask
 }

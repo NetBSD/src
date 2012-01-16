@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
+// Copyright (c) 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -98,11 +98,11 @@ print_indented(const std::string& str)
 // at the moment will be bogus if there are some.
 static
 void
-check_equal(const atf::tests::tc& tc, const std::string& str,
+check_match(const atf::tests::tc& tc, const std::string& str,
             const std::string& exp)
 {
-    if (str != exp) {
-        std::cout << "String equality check failed.\n"
+    if (!atf::text::match(str, exp)) {
+        std::cout << "String match check failed.\n"
                   << "Adding >> and << to delimit the string boundaries "
                      "below.\n";
         std::cout << "GOT:\n";
@@ -490,6 +490,29 @@ ATF_TEST_CASE_BODY(tp_59)
     do_parser_test< tp_reader >(input, exp_calls, exp_errors);
 }
 
+ATF_TEST_CASE_WITHOUT_HEAD(tp_60);
+ATF_TEST_CASE_BODY(tp_60)
+{
+    const char* input =
+        "Content-Type: application/X-atf-tp; version=\"1\"\n"
+        "\n"
+        "ident: test\n"
+        "require.memory: 12345D\n"
+    ;
+
+    const char* exp_calls[] = {
+        NULL
+    };
+
+    const char* exp_errors[] = {
+        "4: The require.memory property requires an integer value representing"
+        " an amount of bytes",
+        NULL
+    };
+
+    do_parser_test< tp_reader >(input, exp_calls, exp_errors);
+}
+
 // -------------------------------------------------------------------------
 // Tests for the "tps" writer.
 // -------------------------------------------------------------------------
@@ -503,19 +526,20 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
 {
     std::ostringstream expss;
     std::ostringstream ss;
+    const char *ts_regex = "[0-9]+\\.[0-9]{1,6}, ";
 
 #define RESET \
     expss.str(""); \
     ss.str("")
 
 #define CHECK \
-    check_equal(*this, ss.str(), expss.str())
+    check_match(*this, ss.str(), expss.str())
 
     {
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
+        expss << "Content-Type: application/X-atf-tps; version=\"3\"\n\n";
         CHECK;
     }
 
@@ -523,7 +547,7 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
+        expss << "Content-Type: application/X-atf-tps; version=\"3\"\n\n";
         CHECK;
 
         w.info("foo", "bar");
@@ -539,7 +563,7 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
+        expss << "Content-Type: application/X-atf-tps; version=\"3\"\n\n";
         CHECK;
 
         w.ntps(0);
@@ -551,7 +575,7 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
+        expss << "Content-Type: application/X-atf-tps; version=\"3\"\n\n";
         CHECK;
 
         w.ntps(123);
@@ -563,7 +587,7 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
+        expss << "Content-Type: application/X-atf-tps; version=\"3\"\n\n";
         CHECK;
 
         w.ntps(2);
@@ -571,19 +595,19 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         CHECK;
 
         w.start_tp("foo", 0);
-        expss << "tp-start: foo, 0\n";
+        expss << "tp-start: " << ts_regex << "foo, 0\n";
         CHECK;
 
         w.end_tp("");
-        expss << "tp-end: foo\n";
+        expss << "tp-end: " << ts_regex << "foo\n";
         CHECK;
 
         w.start_tp("bar", 0);
-        expss << "tp-start: bar, 0\n";
+        expss << "tp-start: " << ts_regex << "bar, 0\n";
         CHECK;
 
         w.end_tp("failed program");
-        expss << "tp-end: bar, failed program\n";
+        expss << "tp-end: " << ts_regex << "bar, failed program\n";
         CHECK;
     }
 
@@ -591,7 +615,7 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
+        expss << "Content-Type: application/X-atf-tps; version=\"3\"\n\n";
         CHECK;
 
         w.ntps(1);
@@ -599,15 +623,15 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         CHECK;
 
         w.start_tp("foo", 1);
-        expss << "tp-start: foo, 1\n";
+        expss << "tp-start: " << ts_regex << "foo, 1\n";
         CHECK;
 
         w.start_tc("brokentc");
-        expss << "tc-start: brokentc\n";
+        expss << "tc-start: " << ts_regex << "brokentc\n";
         CHECK;
 
         w.end_tp("aborted");
-        expss << "tp-end: foo, aborted\n";
+        expss << "tp-end: " << ts_regex << "foo, aborted\n";
         CHECK;
     }
 
@@ -615,7 +639,7 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
+        expss << "Content-Type: application/X-atf-tps; version=\"3\"\n\n";
         CHECK;
 
         w.ntps(1);
@@ -623,35 +647,35 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         CHECK;
 
         w.start_tp("thetp", 3);
-        expss << "tp-start: thetp, 3\n";
+        expss << "tp-start: " << ts_regex << "thetp, 3\n";
         CHECK;
 
         w.start_tc("passtc");
-        expss << "tc-start: passtc\n";
+        expss << "tc-start: " << ts_regex << "passtc\n";
         CHECK;
 
         w.end_tc("passed", "");
-        expss << "tc-end: passtc, passed\n";
+        expss << "tc-end: " << ts_regex << "passtc, passed\n";
         CHECK;
 
         w.start_tc("failtc");
-        expss << "tc-start: failtc\n";
+        expss << "tc-start: " << ts_regex << "failtc\n";
         CHECK;
 
         w.end_tc("failed", "The reason");
-        expss << "tc-end: failtc, failed, The reason\n";
+        expss << "tc-end: " << ts_regex << "failtc, failed, The reason\n";
         CHECK;
 
         w.start_tc("skiptc");
-        expss << "tc-start: skiptc\n";
+        expss << "tc-start: " << ts_regex << "skiptc\n";
         CHECK;
 
         w.end_tc("skipped", "The reason");
-        expss << "tc-end: skiptc, skipped, The reason\n";
+        expss << "tc-end: " << ts_regex << "skiptc, skipped, The reason\n";
         CHECK;
 
         w.end_tp("");
-        expss << "tp-end: thetp\n";
+        expss << "tp-end: " << ts_regex << "thetp\n";
         CHECK;
     }
 
@@ -659,7 +683,7 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
+        expss << "Content-Type: application/X-atf-tps; version=\"3\"\n\n";
         CHECK;
 
         w.ntps(1);
@@ -667,11 +691,11 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         CHECK;
 
         w.start_tp("thetp", 1);
-        expss << "tp-start: thetp, 1\n";
+        expss << "tp-start: " << ts_regex << "thetp, 1\n";
         CHECK;
 
         w.start_tc("thetc");
-        expss << "tc-start: thetc\n";
+        expss << "tc-start: " << ts_regex << "thetc\n";
         CHECK;
 
         w.stdout_tc("a line");
@@ -687,11 +711,11 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         CHECK;
 
         w.end_tc("passed", "");
-        expss << "tc-end: thetc, passed\n";
+        expss << "tc-end: " << ts_regex << "thetc, passed\n";
         CHECK;
 
         w.end_tp("");
-        expss << "tp-end: thetp\n";
+        expss << "tp-end: " << ts_regex << "thetp\n";
         CHECK;
     }
 
@@ -699,7 +723,7 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
+        expss << "Content-Type: application/X-atf-tps; version=\"3\"\n\n";
         CHECK;
 
         w.ntps(1);
@@ -707,11 +731,11 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         CHECK;
 
         w.start_tp("thetp", 0);
-        expss << "tp-start: thetp, 0\n";
+        expss << "tp-start: " << ts_regex << "thetp, 0\n";
         CHECK;
 
         w.end_tp("");
-        expss << "tp-end: thetp\n";
+        expss << "tp-end: " << ts_regex << "thetp\n";
         CHECK;
 
         w.info("foo", "bar");
@@ -966,6 +990,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, tp_57);
     ATF_ADD_TEST_CASE(tcs, tp_58);
     ATF_ADD_TEST_CASE(tcs, tp_59);
+    ATF_ADD_TEST_CASE(tcs, tp_60);
 
     ATF_ADD_TEST_CASE(tcs, atf_tps_writer);
 
