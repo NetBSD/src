@@ -1,4 +1,4 @@
-/*	$NetBSD: getfstypename.c,v 1.5 2011/11/14 16:21:44 christos Exp $	*/
+/*	$NetBSD: getfstypename.c,v 1.6 2012/01/16 18:47:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@
 # include <sys/cdefs.h>
 # ifndef _KERNEL
 #  if !defined(lint)
-__RCSID("$NetBSD: getfstypename.c,v 1.5 2011/11/14 16:21:44 christos Exp $");
+__RCSID("$NetBSD: getfstypename.c,v 1.6 2012/01/16 18:47:57 christos Exp $");
 #  endif
 # else
-__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.5 2011/11/14 16:21:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.6 2012/01/16 18:47:57 christos Exp $");
 # endif /* _KERNEL */
 
 # define FSTYPE_ENUMNAME fstype_enum
@@ -121,6 +121,8 @@ getfstypename(int fstype)
 		return DKW_PTYPE_CGD;
 	case FSMAXTYPES:
 		return DKW_PTYPE_UNKNOWN;
+	case FS_MINIXFS3:
+		return DKW_PTYPE_MINIXFS3;
 	}
 	/* Stupid gcc, should know it is impossible to get here */
 	return DKW_PTYPE_UNKNOWN;
