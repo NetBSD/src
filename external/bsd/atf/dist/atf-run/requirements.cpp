@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,17 +27,18 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-// TODO: We probably don't want to raise std::runtime_error for the errors
-// detected in this file.
 extern "C" {
 #include <sys/param.h>
 #include <sys/sysctl.h>
-};
+}
 
-#include <cstdlib>
-#include <cstring>
 #include <cerrno>
+#include <cstring>
 #include <stdexcept>
+
+extern "C" {
+#include "atf-c/defs.h"
+}
 
 #include "atf-c++/config.hpp"
 
@@ -147,6 +148,66 @@ check_machine(const std::string& machines)
         return "Requires one of the '" + machines + "' machine types";
 }
 
+#if defined(__APPLE__) || defined(__NetBSD__)
+static
+std::string
+check_memory_sysctl(const int64_t needed, const char* sysctl_variable)
+{
+    int64_t available;
+    std::size_t available_length = sizeof(available);
+    if (::sysctlbyname(sysctl_variable, &available, &available_length,
+                       NULL, 0) == -1) {
+        const char* e = std::strerror(errno);
+        return "Failed to get sysctl(hw.usermem64) value: " + std::string(e);
+    }
+
+    if (available < needed) {
+        return "Not enough memory; needed " + atf::text::to_string(needed) +
+            ", available " + atf::text::to_string(available);
+    } else
+        return "";
+}
+#   if defined(__APPLE__)
+static
+std::string
+check_memory_darwin(const int64_t needed)
+{
+    return check_memory_sysctl(needed, "hw.usermem");
+}
+#   elif defined(__NetBSD__)
+static
+std::string
+check_memory_netbsd(const int64_t needed)
+{
+    return check_memory_sysctl(needed, "hw.usermem64");
+}
+#   else
+#      error "Conditional error"
+#   endif
+#else
+static
+std::string
+check_memory_unknown(const int64_t needed ATF_DEFS_ATTRIBUTE_UNUSED)
+{
+    return "";
+}
+#endif
+
+static
+std::string
+check_memory(const std::string& raw_memory)
+{
+    const int64_t needed = atf::text::to_bytes(raw_memory);
+
+#if defined(__APPLE__)
+    return check_memory_darwin(needed);
+#elif defined(__NetBSD__)
+    return check_memory_netbsd(needed);
+#else
+    return check_memory_unknown(needed);
+#endif
+}
+
 static
 std::string
 check_progs(const std::string& progs)
@@ -193,36 +254,6 @@ check_user(const std::string& user, const atf::tests::vars_map& config)
                                  "require.user");
 }
 
-static
-std::string
-check_memory(const std::string& memory)
-{
-    // Make sure we have enough memory 
-    int64_t memneed = atf::text::to_number(memory);
-    int64_t memavail;
-    size_t len = sizeof(memavail);
-
-    if (::sysctlbyname("hw.usermem64", &memavail, &len, NULL, 0) == -1) {
-	const char *e = ::strerror(errno);
-	std::stringstream ss;
-	ss << "sysctl hw.usermem64 failed (" << e << ")";
-	return ss.str();
-    }
-
-    if (memavail < memneed) {
-	char avail[6], need[6];
-	::humanize_number(avail, sizeof(avail), memavail, "", HN_AUTOSCALE,
-	    HN_B | HN_NOSPACE);
-	::humanize_number(need, sizeof(need), memneed, "", HN_AUTOSCALE,
-	    HN_B | HN_NOSPACE);
-	std::stringstream ss;
-	ss << "available memory (" << avail <<
-	    ") is less than required (" << need << ")";
-	return ss.str();
-    }
-    return "";
-}
-
 } // anonymous namespace
 
 std::string
@@ -245,12 +276,12 @@ impl::check_requirements(const atf::tests::vars_map& metadata,
             failure_reason = check_files(value);
         else if (name == "require.machine")
             failure_reason = check_machine(value);
+        else if (name == "require.memory")
+            failure_reason = check_memory(value);
         else if (name == "require.progs")
             failure_reason = check_progs(value);
         else if (name == "require.user")
             failure_reason = check_user(value, config);
-	else if (name == "require.memory")
-            failure_reason = check_memory(value);
         else {
             // Unknown require.* properties are forbidden by the
             // application/X-atf-tp parser.
