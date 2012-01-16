@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.25 2011/05/24 12:03:04 joerg Exp $	*/
+/*	$NetBSD: parms.c,v 1.26 2012/01/16 17:38:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: parms.c,v 1.25 2011/05/24 12:03:04 joerg Exp $");
+__RCSID("$NetBSD: parms.c,v 1.26 2012/01/16 17:38:16 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -192,7 +192,7 @@ gwkludge(void)
 	}
 
 	for (lnum = 1; ; lnum++) {
-		if (0 == fgets(lbuf, sizeof(lbuf), fp))
+		if (fgets(lbuf, sizeof(lbuf), fp) == NULL)
 			break;
 		lptr = lbuf;
 		while (*lptr == ' ')
