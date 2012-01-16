@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.111 2011/11/13 22:19:09 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.112 2012/01/16 18:47:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -357,7 +357,8 @@ x(UDF,     24, "UDF",        NULL,   "udf")   /* UDF */ \
 x(SYSVBFS, 25, "SysVBFS",    NULL,  "sysvbfs")/* System V boot file system */ \
 x(EFS,     26, "EFS",        NULL,   "efs")   /* SGI's Extent Filesystem */ \
 x(NILFS,   27, "NiLFS",      NULL,   "nilfs") /* NTT's NiLFS(2) */ \
-x(CGD,     28, "cgd",	     NULL,   NULL)    /* Cryptographic disk */
+x(CGD,     28, "cgd",	     NULL,   NULL)    /* Cryptographic disk */ \
+x(MINIXFS3,29, "MINIX FSv3", NULL,   NULL)    /* MINIX file system v3 */
 
 
 #ifndef _LOCORE
