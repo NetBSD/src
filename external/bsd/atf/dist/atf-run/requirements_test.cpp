@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
+// Copyright (c) 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@
 //
 
 #include "atf-c++/config.hpp"
+#include "atf-c++/detail/text.hpp"
 #include "atf-c++/macros.hpp"
 
 #include "requirements.hpp"
@@ -48,7 +49,7 @@ do_check(const std::string& expected, const atf::tests::vars_map& metadata,
          const atf::tests::vars_map& config = no_config)
 {
     const std::string actual = impl::check_requirements(metadata, config);
-    if (actual != expected)
+    if (!atf::text::match(actual, expected))
         ATF_FAIL("Requirements failure reason \"" + actual + "\" does not "
                  "match \"" + expected + "\"");
 }
@@ -224,6 +225,37 @@ ATF_TEST_CASE_BODY(require_machine_many_fail) {
 }
 
 // -------------------------------------------------------------------------
+// Tests for the require.memory metadata property.
+// -------------------------------------------------------------------------
+
+ATF_TEST_CASE_WITHOUT_HEAD(require_memory_ok);
+ATF_TEST_CASE_BODY(require_memory_ok) {
+    atf::tests::vars_map metadata;
+    metadata["require.memory"] = "1m";
+    do_check("", metadata);
+}
+
+ATF_TEST_CASE_WITHOUT_HEAD(require_memory_not_enough);
+ATF_TEST_CASE_BODY(require_memory_not_enough) {
+    atf::tests::vars_map metadata;
+    metadata["require.memory"] = "128t";
+#if defined(__APPLE__) || defined(__NetBSD__)
+    do_check("Not enough memory; needed 140737488355328, available [0-9]*",
+             metadata);
+#else
+    skip("Don't know how to check for the amount of physical memory");
+#endif
+}
+
+ATF_TEST_CASE_WITHOUT_HEAD(require_memory_fail);
+ATF_TEST_CASE_BODY(require_memory_fail) {
+    atf::tests::vars_map metadata;
+    metadata["require.memory"] = "foo";
+    ATF_REQUIRE_THROW(std::runtime_error,
+                      impl::check_requirements(metadata, no_config));
+}
+
+// -------------------------------------------------------------------------
 // Tests for the require.progs metadata property.
 // -------------------------------------------------------------------------
 
@@ -345,6 +377,11 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, require_machine_one_fail);
     ATF_ADD_TEST_CASE(tcs, require_machine_many_ok);
     ATF_ADD_TEST_CASE(tcs, require_machine_many_fail);
+
+    // Add test cases for require.memory.
+    ATF_ADD_TEST_CASE(tcs, require_memory_ok);
+    ATF_ADD_TEST_CASE(tcs, require_memory_not_enough);
+    ATF_ADD_TEST_CASE(tcs, require_memory_fail);
 
     // Add test cases for require.progs.
     ATF_ADD_TEST_CASE(tcs, require_progs_one_ok);

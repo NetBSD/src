@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ struct atf_fs_path;
     } \
     ATF_TC_BODY(name, tc) \
     { \
-        header_check(tc, hdrname); \
+        header_check(hdrname); \
     }
 
 #define BUILD_TC(name, sfile, descr, failmsg) \
@@ -67,7 +67,7 @@ struct atf_fs_path;
     }
 
 void build_check_c_o(const atf_tc_t *, const char *, const char *);
-void header_check(const atf_tc_t *, const char *);
+void header_check(const char *);
 void get_process_helpers_path(const atf_tc_t *, const bool,
                               struct atf_fs_path *);
 bool grep_string(const struct atf_dynstr *, const char *);

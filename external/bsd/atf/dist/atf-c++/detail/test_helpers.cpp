@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ build_check_cxx_o(const atf::tests::tc& tc, const char* sfile,
 }
 
 void
-header_check(const atf::tests::tc& tc, const char *hdrname)
+header_check(const char *hdrname)
 {
     std::ofstream srcfile("test.c");
     ATF_REQUIRE(srcfile);

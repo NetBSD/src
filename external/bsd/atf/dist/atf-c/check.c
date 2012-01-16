@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -301,13 +301,10 @@ atf_check_result_init(atf_check_result_t *r, const char *const *argv,
                       const atf_fs_path_t *dir)
 {
     atf_error_t err;
-    const char *workdir;
 
     r->pimpl = malloc(sizeof(struct atf_check_result_impl));
     if (r->pimpl == NULL)
         return atf_no_memory_error();
-
-    workdir = atf_config_get("atf_workdir");
 
     err = array_to_list(argv, &r->pimpl->m_argv);
     if (atf_is_error(err))
