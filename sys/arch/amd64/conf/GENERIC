@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.344 2012/01/15 15:05:07 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.345 2012/01/16 14:44:07 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.344 $"
+#ident 		"GENERIC-$Revision: 1.345 $"
 
 maxusers	64		# estimated number of users
 
@@ -882,6 +882,10 @@ irframe* at stuirda?
 ustir*	at uhub? port ?
 irframe* at ustir?
 
+# Windows Media Center IR transceiver
+irmce*	at uhub? port ?
+cir*	at irmce?
+
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
@@ -1052,6 +1056,7 @@ auvitek* at uhub?			# Auvitek AU0828 USB TV
 coram*	at pci? dev ? function ?	# Conexant CX23885 PCI-E TV
 cxdtv*	at pci? dev ? function ?	# Conexant CX2388[0-3] PCI TV
 emdtv*	at uhub?			# Empia EM28xx USB TV
+cir*	at emdtv?
 pseye*	at uhub?			# Sony PLAYSTATION(R) Eye webcam
 uvideo* at uhub?			# USB Video Class capture devices
 
