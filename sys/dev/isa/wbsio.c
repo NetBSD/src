@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.3 2011/05/18 01:03:15 dyoung Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.4 2012/01/17 16:28:33 jakllsch Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.5 2009/03/29 21:53:52 sthen Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -215,6 +215,9 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 
 	/* Escape from configuration mode */
 	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	if (iobase == 0)
 		return;
