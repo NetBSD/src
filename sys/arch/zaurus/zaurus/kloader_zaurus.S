@@ -1,7 +1,7 @@
-/*	$NetBSD: kloader_zaurus.S,v 1.1 2009/03/11 09:02:05 nonaka Exp $	*/
+/*	$NetBSD: kloader_zaurus.S,v 1.2 2012/01/17 15:48:33 nonaka Exp $	*/
 
 /*-
- * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
+ * Copyright (c) 2009-2012 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,9 +56,9 @@
  */
 	.global	_C_LABEL(kloader_zaurus_boot)
 _C_LABEL(kloader_zaurus_boot):
-	mov	r0, r12			/* r12: kbi */
-	bic	r12, r12, #0xff000000
-	orr	r12, r12, #0xa0000000
+	mov	sp, r0			/* sp: kbi */
+	bic	sp, sp, #0xff000000	/* clear upper 8 bits */
+	orr	sp, sp, #0xa0000000	/* OR in physical base address */
 
 	/* We will go ahead and disable the MMU here. */
 	adr	r8, .Lmmuoff
@@ -105,24 +105,19 @@ _C_LABEL(kloader_zaurus_boot):
 	bl	.Lputcrlf
 #endif
 
-	/* set temporary stack pointer */
+	/* Set kernel entry */
+	ldr	r0, [sp]
+
+	/* Set temporary stack pointer */
 	ldr	sp, .Lstack_addr
 
 	/* Jump to kernel entry */
-#if 0	/* XXX */
-	ldr	r0, [r12]	/* kbi->entry */
-#else
-	ldr	r0, .Lstart_addr
-#endif
 	mov	pc, r0
 
 99:	b	99b
 
 .Lstack_addr:
 	.word	0xa0004000
-
-.Lstart_addr:
-	.word	0xa0200000
 
 #ifdef PROGRESS
 .Lprogress:
