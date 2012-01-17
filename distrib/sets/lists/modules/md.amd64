@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.31 2011/10/18 00:33:48 jmcneill Exp $
+# $NetBSD: md.amd64,v 1.32 2012/01/17 16:59:37 jakllsch Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -81,6 +81,14 @@
 ./@MODULEDIR@/itesio/itesio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/lg3303				base-kernel-modules	kmod
 ./@MODULEDIR@/lg3303/lg3303.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/lm				base-kernel-modules	kmod
+./@MODULEDIR@/lm/lm.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/lm_isa				base-kernel-modules	kmod
+./@MODULEDIR@/lm_isa/lm_isa.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/lm_isa_common			base-kernel-modules	kmod
+./@MODULEDIR@/lm_isa_common/lm_isa_common.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/lm_wbsio				base-kernel-modules	kmod
+./@MODULEDIR@/lm_wbsio/lm_wbsio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mt2131				base-kernel-modules	kmod
 ./@MODULEDIR@/mt2131/mt2131.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/nxt2k				base-kernel-modules	kmod
@@ -103,6 +111,8 @@
 ./@MODULEDIR@/tvpll/tvpll.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/vmt				base-kernel-modules	kmod
 ./@MODULEDIR@/vmt/vmt.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/wbsio				base-kernel-modules	kmod
+./@MODULEDIR@/wbsio/wbsio.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/wmidell				base-kernel-modules	kmod
 ./@MODULEDIR@/wmidell/wmidell.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/wmieeepc				base-kernel-modules	kmod
