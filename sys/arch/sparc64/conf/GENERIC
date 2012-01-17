@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.147 2011/12/25 10:37:14 martin Exp $
+# $NetBSD: GENERIC,v 1.148 2012/01/17 16:03:37 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.147 $"
+#ident 		"GENERIC-$Revision: 1.148 $"
 
 maxusers	64
 
@@ -507,6 +507,7 @@ fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 gem*	at sbus? slot ? offset ?
+gsip*	at pci? dev ? function ?	# National Semiconductor DP83820 GigE
 # XXX lacks bus_dmamap_sync()
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 # XXX uses vtophys()
