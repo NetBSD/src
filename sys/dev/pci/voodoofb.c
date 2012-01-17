@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.30 2012/01/17 07:48:48 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.31 2012/01/17 19:13:22 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.30 2012/01/17 07:48:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.31 2012/01/17 19:13:22 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.30 2012/01/17 07:48:48 macallan Exp $
 #include <sys/malloc.h>
 #include <sys/callout.h>
 #include <sys/kauth.h>
-
-#include <dev/videomode/videomode.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -56,6 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.30 2012/01/17 07:48:48 macallan Exp $
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
 #include <dev/pci/wsdisplay_pci.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_bitbang.h>
+#include <dev/i2c/ddcvar.h>
+#include <dev/videomode/videomode.h>
+#include <dev/videomode/edidvar.h>
+#include <dev/videomode/edidreg.h>
 
 #include "opt_wsemul.h"
 
@@ -86,6 +91,12 @@ struct voodoofb_softc {
 	int bits_per_pixel;
 	int width, height, linebytes;
 	const struct videomode *sc_videomode;
+
+	/* i2c stuff */
+	struct i2c_controller sc_i2c;
+	uint8_t sc_edid_data[128];
+	struct edid_info sc_edid_info;
+	uint32_t sc_i2creg;
 
 	int sc_mode;
 	uint32_t sc_bg;
@@ -196,6 +207,34 @@ struct wsdisplay_accessops voodoofb_accessops = {
 	NULL,	/* load_font */
 	NULL,	/* polls */
 	NULL,	/* scroll */
+};
+
+/* I2C glue */
+static int voodoofb_i2c_acquire_bus(void *, int);
+static void voodoofb_i2c_release_bus(void *, int);
+static int voodoofb_i2c_send_start(void *, int);
+static int voodoofb_i2c_send_stop(void *, int);
+static int voodoofb_i2c_initiate_xfer(void *, i2c_addr_t, int);
+static int voodoofb_i2c_read_byte(void *, uint8_t *, int);
+static int voodoofb_i2c_write_byte(void *, uint8_t, int);
+
+/* I2C bitbang glue */
+static void voodoofb_i2cbb_set_bits(void *, uint32_t);
+static void voodoofb_i2cbb_set_dir(void *, uint32_t);
+static uint32_t voodoofb_i2cbb_read(void *);
+
+static void voodoofb_setup_i2c(struct voodoofb_softc *);
+
+static const struct i2c_bitbang_ops voodoofb_i2cbb_ops = {
+	voodoofb_i2cbb_set_bits,
+	voodoofb_i2cbb_set_dir,
+	voodoofb_i2cbb_read,
+	{
+		VSP_SDA0_IN,
+		VSP_SCL0_IN,
+		0,
+		0
+	}
 };
 
 /*
@@ -369,9 +408,15 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	printf("%s: initial resolution %dx%d, %d bit\n", device_xname(self),
 	    sc->width, sc->height, sc->bits_per_pixel);
 
+	sc->sc_videomode = NULL;
+	voodoofb_setup_i2c(sc);
+
 	/* XXX this should at least be configurable via kernel config */
-	if ((sc->sc_videomode = pick_mode_by_ref(1024, 768, 60)) != NULL)
-		voodoofb_set_videomode(sc, sc->sc_videomode);
+	if (sc->sc_videomode == NULL) {
+		sc->sc_videomode = pick_mode_by_ref(width, height, 60);
+	}
+
+	voodoofb_set_videomode(sc, sc->sc_videomode);
 
 	vcons_init(&sc->vd, sc, &voodoofb_defaultscreen, &voodoofb_accessops);
 	sc->vd.init_screen = voodoofb_init_screen;
@@ -1411,4 +1456,141 @@ voodoofb_init(struct voodoofb_softc *sc)
 	voodoo3_write32(sc, SRCXY, 0);
 
 	voodoofb_wait_idle(sc);
+}
+
+static void
+voodoofb_setup_i2c(struct voodoofb_softc *sc)
+{
+	int i;
+
+	/* Fill in the i2c tag */
+	sc->sc_i2c.ic_cookie = sc;
+	sc->sc_i2c.ic_acquire_bus = voodoofb_i2c_acquire_bus;
+	sc->sc_i2c.ic_release_bus = voodoofb_i2c_release_bus;
+	sc->sc_i2c.ic_send_start = voodoofb_i2c_send_start;
+	sc->sc_i2c.ic_send_stop = voodoofb_i2c_send_stop;
+	sc->sc_i2c.ic_initiate_xfer = voodoofb_i2c_initiate_xfer;
+	sc->sc_i2c.ic_read_byte = voodoofb_i2c_read_byte;
+	sc->sc_i2c.ic_write_byte = voodoofb_i2c_write_byte;
+	sc->sc_i2c.ic_exec = NULL;
+
+	sc->sc_i2creg = voodoo3_read32(sc, VIDSERPARPORT);
+#ifdef VOODOOFB_DEBUG
+	printf("data: %08x\n", sc->sc_i2creg);
+#endif
+	sc->sc_i2creg |= VSP_ENABLE_IIC0;
+	sc->sc_i2creg &= ~(VSP_SDA0_OUT | VSP_SCL0_OUT);
+	voodoo3_write32(sc, VIDSERPARPORT, sc->sc_i2creg);
+
+	/* zero out the EDID buffer */
+	memset(sc->sc_edid_data, 0, 128);
+
+	/* Some monitors don't respond first time */
+	i = 0;
+	while (sc->sc_edid_data[1] == 0 && i++ < 3)
+		ddc_read_edid(&sc->sc_i2c, sc->sc_edid_data, 128);
+	if (i < 3) {
+		if (edid_parse(sc->sc_edid_data, &sc->sc_edid_info) != -1) {
+#ifdef VOODOOFB_DEBUG
+			edid_print(&sc->sc_edid_info);
+#endif
+			/*
+			 * Now pick a mode.
+			 * How do we know our max. pixel clock?
+			 * All Voodoo3 should support at least 250MHz.
+			 * All Voodoo3 I've seen so far have at least 8MB
+			 * which we're not going to exhaust either in 8bit.
+			 */
+			if ((sc->sc_edid_info.edid_preferred_mode != NULL)) {
+				sc->sc_videomode =
+				    sc->sc_edid_info.edid_preferred_mode;
+			} else {
+				int n;
+				struct videomode *m = sc->sc_edid_info.edid_modes;
+
+				sort_modes(sc->sc_edid_info.edid_modes,
+			   	    &sc->sc_edid_info.edid_preferred_mode,
+				    sc->sc_edid_info.edid_nmodes);
+				while ((sc->sc_videomode == NULL) &&
+				       (n < sc->sc_edid_info.edid_nmodes)) {
+					if (m[n].dot_clock <= 250000) {
+						sc->sc_videomode = &m[n];
+					}
+				}
+			}
+		}
+	}
+}
+
+/* I2C bitbanging */
+static void voodoofb_i2cbb_set_bits(void *cookie, uint32_t bits)
+{
+	struct voodoofb_softc *sc = cookie;
+	uint32_t out;
+
+	out = bits >> 2;	/* bitmasks match the IN bits */
+
+	voodoo3_write32(sc, VIDSERPARPORT, sc->sc_i2creg | out);
+}
+
+static void voodoofb_i2cbb_set_dir(void *cookie, uint32_t dir)
+{
+	/* Nothing to do */
+}
+
+static uint32_t voodoofb_i2cbb_read(void *cookie)
+{
+	struct voodoofb_softc *sc = cookie;
+	uint32_t bits;
+
+	bits = voodoo3_read32(sc, VIDSERPARPORT);
+
+	return bits;
+}
+
+/* higher level I2C stuff */
+static int
+voodoofb_i2c_acquire_bus(void *cookie, int flags)
+{
+	/* private bus */
+	return (0);
+}
+
+static void
+voodoofb_i2c_release_bus(void *cookie, int flags)
+{
+	/* private bus */
+}
+
+static int
+voodoofb_i2c_send_start(void *cookie, int flags)
+{
+	return (i2c_bitbang_send_start(cookie, flags, &voodoofb_i2cbb_ops));
+}
+
+static int
+voodoofb_i2c_send_stop(void *cookie, int flags)
+{
+
+	return (i2c_bitbang_send_stop(cookie, flags, &voodoofb_i2cbb_ops));
+}
+
+static int
+voodoofb_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
+{
+
+	return (i2c_bitbang_initiate_xfer(cookie, addr, flags, 
+	    &voodoofb_i2cbb_ops));
+}
+
+static int
+voodoofb_i2c_read_byte(void *cookie, uint8_t *valp, int flags)
+{
+	return (i2c_bitbang_read_byte(cookie, valp, flags, &voodoofb_i2cbb_ops));
+}
+
+static int
+voodoofb_i2c_write_byte(void *cookie, uint8_t val, int flags)
+{
+	return (i2c_bitbang_write_byte(cookie, val, flags, &voodoofb_i2cbb_ops));
 }
