@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.31 2012/01/17 19:13:22 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.32 2012/01/17 21:31:46 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.31 2012/01/17 19:13:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.32 2012/01/17 21:31:46 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,8 @@ struct voodoofb_softc {
 	bus_space_handle_t sc_memh;	
 
 	bus_space_tag_t sc_regt;
-	bus_space_tag_t sc_fbt;
 	bus_space_tag_t sc_ioregt;
 	bus_space_handle_t sc_regh;
-	bus_space_handle_t sc_fbh;	
 	bus_space_handle_t sc_ioregh;	
 	bus_addr_t sc_regs, sc_fb, sc_ioreg;
 	bus_size_t sc_regsize, sc_fbsize, sc_ioregsize;
@@ -342,7 +340,7 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	ulong defattr;
 	int console, width, height, i, j;
 	prop_dictionary_t dict;
-	int linebytes, depth;
+	int linebytes, depth, flags;
 	uint32_t bg, fg, ul;
 
 	sc->sc_dev = self;
@@ -359,10 +357,8 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pa = *pa;
 
 	/* the framebuffer */
-	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM,
-	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_PREFETCHABLE | 
-	    BUS_SPACE_MAP_LINEAR, 
-	    &sc->sc_fbt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
+	if (pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, 0x14, PCI_MAPREG_TYPE_MEM,
+	    &sc->sc_fb, &sc->sc_fbsize, &flags)) {
 		aprint_error_dev(self, "failed to map the frame buffer.\n");
 	}
 
@@ -508,7 +504,6 @@ voodoofb_drm_unmap(struct voodoofb_softc *sc)
 
 	bus_space_unmap(sc->sc_ioregt, sc->sc_ioregh, sc->sc_ioregsize);
 	bus_space_unmap(sc->sc_regt, sc->sc_regh, sc->sc_regsize);
-	bus_space_unmap(sc->sc_fbt, sc->sc_fbh, sc->sc_fbsize);
 
 	return 0;
 }
@@ -516,12 +511,6 @@ voodoofb_drm_unmap(struct voodoofb_softc *sc)
 static int
 voodoofb_drm_map(struct voodoofb_softc *sc)
 {
-	if (pci_mapreg_map(&sc->sc_pa, 0x14, PCI_MAPREG_TYPE_MEM,
-	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_PREFETCHABLE | 
-	    BUS_SPACE_MAP_LINEAR, 
-	    &sc->sc_fbt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		aprint_error_dev(sc->sc_dev, "failed to map the frame buffer.\n");
-	}
 
 	/* memory-mapped registers */
 	if (pci_mapreg_map(&sc->sc_pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
@@ -1005,7 +994,7 @@ voodoofb_mmap(void *v, void *vs, off_t offset, int prot)
 		
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->sc_fbsize) {
-		pa = bus_space_mmap(sc->sc_fbt, offset, 0, prot, 
+		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
 		    BUS_SPACE_MAP_LINEAR);	
 		return pa;
 	}
@@ -1064,16 +1053,7 @@ voodoofb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->width;
 	ri->ri_height = sc->height;
 	ri->ri_stride = sc->width;
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
-
-	ri->ri_bits = bus_space_vaddr(sc->sc_fbt, sc->sc_fbh);
-
-#ifdef VOODOOFB_DEBUG
-	printf("addr: %08lx\n", (ulong)ri->ri_bits);
-#endif
-	if (existing) {
-		ri->ri_flg |= RI_CLEAR;
-	}
+	ri->ri_flg = RI_CENTER;
 	
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
