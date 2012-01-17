@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa_common.c,v 1.1 2012/01/17 16:50:07 jakllsch Exp $ */
+/*	$NetBSD: lm_isa_common.c,v 1.2 2012/01/17 17:17:15 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa_common.c,v 1.1 2012/01/17 16:50:07 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa_common.c,v 1.2 2012/01/17 17:17:15 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ lm_isa_writereg(struct lm_softc *lmsc, int reg, int val)
 	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_DATA, val);
 }
 
-MODULE(MODULE_CLASS_DRIVER, lm_isa_common, "");
+MODULE(MODULE_CLASS_DRIVER, lm_isa_common, NULL);
 
 static int
 lm_isa_common_modcmd(modcmd_t cmd, void *priv)
