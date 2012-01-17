@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2011/08/16 08:07:12 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2012/01/17 18:44:24 skrll Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -6,7 +6,7 @@ RUMPKERNEL=	yes	# XXX: Avoid -mcmodel=kernel
 
 CWARNFLAGS.clang+=	-Wno-format
 
-LDADD+=	-lutil -lkvm -ledit -lterminfo -T${.CURDIR}/ldscript.crash
+LDADD+=	-lutil -lkvm -ledit -lterminfo
 DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 
 # some ddb kernel components need limited modifications.  for now,
