@@ -15,7 +15,7 @@ arch/sgimips/hpc/haltwo.c	done
 arch/sgimips/mace/mavb.c	done
 arch/sparc/dev/audioamd.c	done
 arch/x68k/dev/vs.c		done		port-x68k
-arch/zaurus/dev/zaudio.c	done		does not work, not confirmed to be working before.  no sound, no crash.
+arch/zaurus/dev/zaudio.c	done		port-zaurus
 dev/bluetooth/btsco.c		done		port-i386
 dev/ebus/cs4231_ebus.c		done		port-sparc64
 dev/ic/interwave.c		done
