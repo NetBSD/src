@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.19 2012/01/17 03:06:33 jakllsch Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.20 2012/01/17 03:39:33 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.19 2012/01/17 03:06:33 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.20 2012/01/17 03:39:33 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 # include "rnd.h"
@@ -85,8 +85,9 @@ via_c3_rnd(void *arg)
 {
 	struct via_padlock_softc *sc = arg;
 
-	unsigned int rv, creg0, len = VIAC3_RNG_BUFSIZ;
-	static uint32_t buffer[VIAC3_RNG_BUFSIZ + 2];	/* XXX 2? */
+	uint32_t creg0, len = VIAC3_RNG_BUFSIZ;
+	uint32_t buffer[VIAC3_RNG_BUFSIZ/4 + 1]; /* CPU goes 3 bytes beyond */
+	uint32_t eax, ecx, edi; /* XXX write-only, but necessary it seems */
 
 	/*
 	 * Sadly, we have to monkey with the coprocessor enable and fault
@@ -109,14 +110,14 @@ via_c3_rnd(void *arg)
 	 * if we will feed the data to SHA1?) (%edx[0,1] = "11").
 	 */
 	__asm __volatile("rep xstorerng"
-			 : "=a" (rv) : "d" (3), "D" (buffer),
-			 "c" (len * sizeof(int)) : "memory", "cc");
+			 : "=a" (eax), "=c" (ecx), "=D" (edi)
+			 : "d" (3), "D" (buffer), "c" (len)
+			 : "memory", "cc");
 	/* Put CR0 back how it was */
 	lcr0(creg0);
 	x86_enable_intr();
 	kpreempt_enable();
-	rnd_add_data(&sc->sc_rnd_source, buffer, len * sizeof(int),
-		     len * sizeof(int));
+	rnd_add_data(&sc->sc_rnd_source, buffer, len, len * NBBY);
 	callout_reset(&sc->sc_rnd_co, sc->sc_rnd_hz, via_c3_rnd, sc);
 }
 
