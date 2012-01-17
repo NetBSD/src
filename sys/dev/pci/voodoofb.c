@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.29 2012/01/11 16:02:30 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.30 2012/01/17 07:48:48 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.29 2012/01/11 16:02:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.30 2012/01/17 07:48:48 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,15 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.29 2012/01/11 16:02:30 macallan Exp $
 #include <sys/malloc.h>
 #include <sys/callout.h>
 #include <sys/kauth.h>
-
-#if defined(macppc) || defined (sparc64) || defined(ofppc)
-#define HAVE_OPENFIRMWARE
-#endif
-
-#ifdef HAVE_OPENFIRMWARE
-#include <dev/ofw/openfirm.h>
-#include <dev/ofw/ofw_pci.h>
-#endif
 
 #include <dev/videomode/videomode.h>
 
@@ -311,10 +302,8 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 #endif
 	ulong defattr;
 	int console, width, height, i, j;
-#ifdef HAVE_OPENFIRMWARE
 	prop_dictionary_t dict;
 	int linebytes, depth;
-#endif
 	uint32_t bg, fg, ul;
 
 	sc->sc_dev = self;
@@ -355,7 +344,6 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	/* we should read these from the chip instead of depending on OF */
 	width = height = -1;
 	
-#ifdef HAVE_OPENFIRMWARE
 	dict = device_properties(self);
 	if (!prop_dictionary_get_uint32(dict, "width", &width)) {
 		aprint_error_dev(self, "no width property\n");
@@ -380,7 +368,6 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	sc->linebytes = linebytes;
 	printf("%s: initial resolution %dx%d, %d bit\n", device_xname(self),
 	    sc->width, sc->height, sc->bits_per_pixel);
-#endif
 
 	/* XXX this should at least be configurable via kernel config */
 	if ((sc->sc_videomode = pick_mode_by_ref(1024, 768, 60)) != NULL)
@@ -596,17 +583,12 @@ voodoofb_getcmap(struct voodoofb_softc *sc, struct wsdisplay_cmap *cm)
 static bool
 voodoofb_is_console(struct voodoofb_softc *sc)
 {
-#ifdef HAVE_OPENFIRMWARE
 	prop_dictionary_t dict;
 	bool console;
 
 	dict = device_properties(sc->sc_dev);
 	prop_dictionary_get_bool(dict, "is_console", &console);
 	return console;
-#else
-	/* XXX how do we know we're console on i386? */
-	return true;
-#endif
 }
 
 static void
