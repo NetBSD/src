@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.57 2012/01/14 21:45:28 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.58 2012/01/17 19:46:55 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2012/01/14 21:45:28 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2012/01/17 19:46:55 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,14 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2012/01/14 21:45:28 reinoud Exp $");
 /* forwards and externals */
 void setup_signal_handlers(void);
 void stop_all_signal_handlers(void);
-void userret(struct lwp *l);
 
 static void mem_access_handler(int sig, siginfo_t *info, void *ctx);
 static void illegal_instruction_handler(int sig, siginfo_t *info, void *ctx);
 extern int errno;
 
-static void pagefault(vaddr_t pc, vaddr_t va);
-static void illegal_instruction(void);
+static void pagefault(vaddr_t from_userland, vaddr_t pc, vaddr_t va);
+static void illegal_instruction(vaddr_t from_userland);
 
 bool pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype);
 
@@ -120,6 +119,33 @@ stop_all_signal_handlers(void)
 }
 
 
+/* ast and userret */
+void
+userret(struct lwp *l)
+{
+	/* invoke MI userret code */
+	mi_userret(l);
+
+	while (astpending) {
+		astpending = 0;
+
+		curcpu()->ci_data.cpu_ntrap++;
+#if 0
+		/* profiling */
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
+			ADDUPROF(l);
+		}
+#endif
+		/* allow a forced task switch */
+		if (l->l_cpu->ci_want_resched)
+			preempt();
+
+		mi_userret(l);
+	}
+}
+
+
 /* signal handler switching to a pagefault context */
 static void
 mem_access_handler(int sig, siginfo_t *info, void *ctx)
@@ -128,6 +154,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	struct lwp *l;
 	struct pcb *pcb;
 	vaddr_t va, sp, pc, fp;
+	int from_userland;
 
 	assert((info->si_signo == SIGSEGV) || (info->si_signo == SIGBUS));
 
@@ -176,9 +203,12 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 #endif
 
 	/* if we're running on a stack of our own, use the system stack */
+	from_userland = 0;
 	if ((sp < (vaddr_t) pcb->sys_stack) || (sp > (vaddr_t) pcb->sys_stack_top)) {
 		sp = (vaddr_t) pcb->sys_stack_top - sizeof(register_t);
 		fp = (vaddr_t) &pcb->pcb_userret_ucp;
+		if (pc < kmem_user_end)
+			from_userland = 1;
 	} else {
 		/* stack grows down */
 		fp = sp - sizeof(ucontext_t) - sizeof(register_t); /* slack */
@@ -198,55 +228,12 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 
 	pcb->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
 	thunk_makecontext(&pcb->pcb_ucp, (void (*)(void)) pagefault,
-		2, (void *) pc, (void *) va, NULL);
+		3, (void *) from_userland, (void *) pc, (void *) va);
 
 	/* switch to the new pagefault entry on return from signal */
 	memcpy(ctx, &pcb->pcb_ucp, sizeof(ucontext_t));
 }
 
-
-/* ast and userret */
-void
-userret(struct lwp *l)
-{
-	struct pcb *pcb;
-	ucontext_t ucp, *nucp;
-	vaddr_t pc;
-	
-	KASSERT(l);
-
-	/* are we going back to userland? */
-	pcb = lwp_getpcb(l);
-	KASSERT(pcb);
-
-	/* where are we going back to ? */
-	thunk_getcontext(&ucp);
-	nucp = (ucontext_t *) ucp.uc_link;
-	pc = md_get_pc(nucp);
-
-	if (pc >= kmem_k_start)
-		return;
-
-	/* ok, going to userland, proceed! */
-	if (astpending) {
-		astpending = 0;
-
-		curcpu()->ci_data.cpu_ntrap++;
-#if 0
-		/* profiling */
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
-#endif
-		/* allow a forced task switch */
-		if (l->l_cpu->ci_want_resched)
-			preempt();
-	}
-
-	/* invoke MI userret code */
-	mi_userret(l);
-}
 
 /* signal handler switching to a illegal instruction context */
 static void
@@ -255,7 +242,8 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 	ucontext_t *ucp = ctx;
 	struct lwp *l;
 	struct pcb *pcb;
-	vaddr_t sp, fp;
+	vaddr_t sp, pc, fp;
+	int from_userland;
 
 	assert(info->si_signo == SIGILL);
 #if 0
@@ -291,14 +279,21 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 	l = curlwp;
 	pcb = lwp_getpcb(l);
 
+	/* get PC address of faulted instruction */
+	pc = md_get_pc(ctx);
+
 	/* setup for illegal_instruction context */
 	sp = md_get_sp(ctx);
 
 	/* if we're running on a stack of our own, use the system stack */
+	from_userland = 0;
 	if ((sp < (vaddr_t) pcb->sys_stack) ||
 			(sp > (vaddr_t) pcb->sys_stack_top)) {
 		sp = (vaddr_t) pcb->sys_stack_top - sizeof(register_t);
 		fp = (vaddr_t) &pcb->pcb_userret_ucp;
+
+		KASSERT(pc < kmem_user_end);
+		from_userland = 1;
 	} else {
 		panic("illegal instruction inside kernel?");
 #if 0
@@ -321,7 +316,7 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 
 	pcb->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
 	thunk_makecontext(&pcb->pcb_ucp, (void (*)(void)) illegal_instruction,
-		0, NULL, NULL, NULL);
+		1, (void *) from_userland, NULL, NULL);
 
 	/* switch to the new illegal instruction entry on return from signal */
 	memcpy(ctx, &pcb->pcb_ucp, sizeof(ucontext_t));
@@ -333,7 +328,7 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
  * pmap reference fault or let uvm handle it.
  */
 static void
-pagefault(vaddr_t pc, vaddr_t va)
+pagefault(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 {
 	struct proc *p;
 	struct lwp *l;
@@ -435,7 +430,8 @@ pagefault(vaddr_t pc, vaddr_t va)
 
 //	thunk_printf("pagefault leave\n");
 out:
-	userret(l);
+	if (from_userland)
+		userret(l);
 out_quick:
 	thunk_seterrno(lwp_errno);
 	pcb->pcb_errno = lwp_errno;
@@ -445,7 +441,7 @@ out_quick:
  * Context for handing illegal instruction from the sigill handler
  */
 static void
-illegal_instruction(void)
+illegal_instruction(vaddr_t from_userland)
 {
 	struct lwp *l = curlwp;
 	struct pcb *pcb = lwp_getpcb(l);
@@ -457,6 +453,7 @@ illegal_instruction(void)
 	if (md_syscall_check_opcode(ucp)) {
 		syscall();
 //		thunk_printf("illegal instruction leave\n");
+		KASSERT(from_userland);
 		userret(l);
 		return;
 	}
@@ -475,6 +472,7 @@ illegal_instruction(void)
 #else
 	trapsignal(l, &ksi);
 #endif
+	KASSERT(from_userland);
 	userret(l);
 }
 
