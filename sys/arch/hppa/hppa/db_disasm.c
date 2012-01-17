@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.14 2012/01/17 12:08:43 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.15 2012/01/17 12:32:52 skrll Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14 2012/01/17 12:08:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.15 2012/01/17 12:32:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2233,7 +2233,7 @@ db_disasm(vaddr_t loc, bool flag)
 	const struct majoropcode *m;
 	u_int ext;
 	union insn instruct;
-	OFS ofs = 0;
+	OFS ofs = loc;
 
 	iExInit();
 
