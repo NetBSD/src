@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.6 2012/01/17 16:34:52 jakllsch Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.7 2012/01/17 17:17:15 jakllsch Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.5 2009/03/29 21:53:52 sthen Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -263,7 +263,7 @@ wbsio_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-MODULE(MODULE_CLASS_DRIVER, wbsio, "");
+MODULE(MODULE_CLASS_DRIVER, wbsio, NULL);
 
 #ifdef _MODULE
 #include "ioconf.c"
