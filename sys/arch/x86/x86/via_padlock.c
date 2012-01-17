@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.18 2012/01/17 03:01:39 jakllsch Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.19 2012/01/17 03:06:33 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.18 2012/01/17 03:01:39 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.19 2012/01/17 03:06:33 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 # include "rnd.h"
@@ -93,7 +93,7 @@ via_c3_rnd(void *arg)
 	 * registers, which are really for the FPU, in order to read
 	 * from the RNG.
 	 *
- 	 * Don't remove CR0_TS from the call below -- comments in the Linux
+	 * Don't remove CR0_TS from the call below -- comments in the Linux
 	 * driver indicate that the xstorerng instruction can generate
 	 * spurious DNA faults though no FPU or SIMD state is changed
 	 * even if such a fault is generated.
