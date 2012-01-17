@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.976 2012/01/04 16:25:14 yamt Exp $
+# $NetBSD: mi,v 1.977 2012/01/17 18:53:22 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -499,7 +499,7 @@
 ./usr/bin/kgetcred				base-krb5-bin		kerberos
 ./usr/bin/kinit					base-krb5-bin		kerberos
 ./usr/bin/klist					base-krb5-bin		kerberos
-./usr/bin/kpasswd				base-krb5-bin		use_kerberos
+./usr/bin/kpasswd				base-krb5-bin		kerberos
 ./usr/bin/krb5-config				base-krb5-bin		kerberos
 ./usr/bin/ktrace				base-debug-bin
 ./usr/bin/ktruss				base-debug-bin
