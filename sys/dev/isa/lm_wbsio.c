@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.24 2012/01/17 16:50:07 jakllsch Exp $ */
+/*	$NetBSD: lm_wbsio.c,v 1.1 2012/01/17 16:50:07 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.24 2012/01/17 16:50:07 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_wbsio.c,v 1.1 2012/01/17 16:50:07 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,31 +46,31 @@ __KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.24 2012/01/17 16:50:07 jakllsch Exp $")
 
 #include <dev/isa/lm_isa_common_var.h>
 
-CFATTACH_DECL_NEW(lm_isa, sizeof(struct lm_isa_softc),
+CFATTACH_DECL_NEW(lm_wbsio, sizeof(struct lm_isa_softc),
     lm_isa_match, lm_isa_attach, lm_isa_detach, NULL);
 
-MODULE(MODULE_CLASS_DRIVER, lm_isa, "lm_isa_common");
+MODULE(MODULE_CLASS_DRIVER, lm_wbsio, "lm_isa_common");
 
 #ifdef _MODULE
 #include "ioconf.c"
 #endif
 
 static int
-lm_isa_modcmd(modcmd_t cmd, void *priv)
+lm_wbsio_modcmd(modcmd_t cmd, void *priv)
 {
 	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_lm_isa,
-		    cfattach_ioconf_lm_isa, cfdata_ioconf_lm_isa);
+		error = config_init_component(cfdriver_ioconf_lm_wbsio,
+		    cfattach_ioconf_lm_wbsio, cfdata_ioconf_lm_wbsio);
 #endif
 		return error;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		error = config_fini_component(cfdriver_ioconf_lm_isa,
-		    cfattach_ioconf_lm_isa, cfdata_ioconf_lm_isa);
+		error = config_fini_component(cfdriver_ioconf_lm_wbsio,
+		    cfattach_ioconf_lm_wbsio, cfdata_ioconf_lm_wbsio);
 #endif
 		return error;
 	default:

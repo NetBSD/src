@@ -1,0 +1,10 @@
+# $NetBSD: lm_isa.ioconf,v 1.1 2012/01/17 16:50:07 jakllsch Exp $
+
+ioconf lm_isa
+
+include "conf/files"
+include "dev/isa/files.isa"
+
+pseudo-root isa*
+
+lm* at isa? port 0x290
