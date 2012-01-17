@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.17 2011/11/28 15:22:41 tls Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.18 2012/01/17 03:01:39 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.17 2011/11/28 15:22:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.18 2012/01/17 03:01:39 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 # include "rnd.h"
@@ -101,7 +101,7 @@ via_c3_rnd(void *arg)
 	 */
 	kpreempt_disable();
 	x86_disable_intr();
-	creg0 = rcr0();	
+	creg0 = rcr0();
 	lcr0(creg0 & ~(CR0_EM|CR0_TS));	/* Permit access to SIMD/FPU path */
 	/*
 	 * Collect the random data from the C3 RNG into our buffer.
@@ -118,7 +118,7 @@ via_c3_rnd(void *arg)
 	rnd_add_data(&sc->sc_rnd_source, buffer, len * sizeof(int),
 		     len * sizeof(int));
 	callout_reset(&sc->sc_rnd_co, sc->sc_rnd_hz, via_c3_rnd, sc);
-}	
+}
 
 static void
 via_c3_rnd_init(struct via_padlock_softc *sc)
