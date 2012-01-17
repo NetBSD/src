@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2012/01/11 23:24:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2012/01/17 15:51:55 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -63,6 +63,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachinePassRegistry.cpp \
 	MachineRegisterInfo.cpp \
 	MachineSSAUpdater.cpp \
+	MachineScheduler.cpp \
 	MachineSink.cpp \
 	MachineVerifier.cpp \
 	OcamlGC.cpp \
@@ -76,6 +77,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	ProcessImplicitDefs.cpp \
 	PrologEpilogInserter.cpp \
 	PseudoSourceValue.cpp \
+	RegAllocBase.cpp \
 	RegAllocBasic.cpp \
 	RegAllocFast.cpp \
 	RegAllocGreedy.cpp \
