@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.13 2012/01/16 09:01:35 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.14 2012/01/17 12:08:43 skrll Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2012/01/16 09:01:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14 2012/01/17 12:08:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1296,7 +1296,7 @@ iExInit(void)
 int
 addDasm(const struct inst *i, OFS ofs, union insn w)
 {
-	db_printf("%s\t%%r%d,%%r%d,%%r%d",addDCond(Cond4(w)),
+	db_printf("%s\t%%r%d, %%r%d, %%r%d",addDCond(Cond4(w)),
 		Rsa(w),Rsb(w),Rtc(w));
 	return (1);
 }
@@ -1307,9 +1307,9 @@ unitDasm(const struct inst *i, OFS ofs, union insn w)
 {
 	db_printf(unitDCond(Cond4(w)));
 	if (Match("dcor") || Match("idcor"))
-		db_printf("\t%%r%d,%%r%d",Rsb(w),Rtc(w));
+		db_printf("\t%%r%d, %%r%d",Rsb(w),Rtc(w));
 	else
-		db_printf("\t%%r%d,%%r%d,%%r%d",Rsa(w),Rsb(w),Rtc(w));
+		db_printf("\t%%r%d, %%r%d, %%r%d",Rsa(w),Rsb(w),Rtc(w));
 	return (1);
 }
 
@@ -1318,10 +1318,10 @@ int
 iaDasm(const struct inst *i, OFS ofs, union insn w)
 {
 	if (Match("addi"))
-		db_printf("%s\t%d,%%r%d,%%r%d",
+		db_printf("%s\t%d, %%r%d, %%r%d",
 		    addDCond(Cond4(w)),Im11(w),Rsb(w),Rta(w));
 	else
-		db_printf("%s\t%d,%%r%d,%%r%d",
+		db_printf("%s\t%d, %%r%d, %%r%d",
 		    subDCond(Cond4(w)),Im11(w),Rsb(w),Rta(w));
 	return (1);
 }
@@ -1331,10 +1331,10 @@ int
 shdDasm(const struct inst *i, OFS ofs, union insn w)
 {
 	if (Match("vshd"))
-		db_printf("%s\t%%r%d,%%r%d,%%r%d",
+		db_printf("%s\t%%r%d, %%r%d, %%r%d",
 		    edDCond(Cond(w)), Rsa(w),Rsb(w),Rtc(w));
 	else
-		db_printf("%s\t%%r%d,%%r%d,%d,%%r%d",
+		db_printf("%s\t%%r%d, %%r%d, %d, %%r%d",
 		    edDCond(Cond(w)),Rsa(w),Rsb(w),31-Imd5(w),Rtc(w));
 	return (1);
 }
@@ -1343,7 +1343,7 @@ shdDasm(const struct inst *i, OFS ofs, union insn w)
 int
 extrDasm(const struct inst *i, OFS ofs, union insn w)
 {
-	db_printf("%s\t%%r%d,%d,%d,%%r%d",
+	db_printf("%s\t%%r%d, %d, %d, %%r%d",
 	    edDCond(Cond(w)),Rsb(w),Imd5(w),32 - Rsc(w),Rta(w));
 	return (1);
 }
@@ -1353,7 +1353,7 @@ extrDasm(const struct inst *i, OFS ofs, union insn w)
 int
 vextrDasm(const struct inst *i, OFS ofs, union insn w)
 {
-	db_printf("%s\t%%r%d,%d,%%r%d",
+	db_printf("%s\t%%r%d, %d, %%r%d",
 	    edDCond(Cond(w)),Rsb(w),32 - Rsc(w),Rta(w));
 	return (1);
 }
@@ -1363,7 +1363,7 @@ vextrDasm(const struct inst *i, OFS ofs, union insn w)
 int
 depDasm(const struct inst *i, OFS ofs, union insn w)
 {
-	db_printf("%s\t%%r%d,%d,%d,%%r%d",
+	db_printf("%s\t%%r%d, %d, %d, %%r%d",
 	    edDCond(Cond(w)),Rsa(w),31 - Imd5(w),32 - Rsc(w),Rtb(w));
 	return (1);
 }
@@ -1373,7 +1373,7 @@ depDasm(const struct inst *i, OFS ofs, union insn w)
 int
 vdepDasm(const struct inst *i, OFS ofs, union insn w)
 {
-	db_printf("%s\t%%r%d,%d,%%r%d",
+	db_printf("%s\t%%r%d, %d, %%r%d",
 	    edDCond(Cond(w)),Rsa(w),32 - Rsc(w),Rtb(w));
 	return (1);
 }
@@ -1383,7 +1383,7 @@ vdepDasm(const struct inst *i, OFS ofs, union insn w)
 int
 depiDasm(const struct inst *i, OFS ofs, union insn w)
 {
-	db_printf("%s\t%d,%d,%d,%%r%d",
+	db_printf("%s\t%d, %d, %d, %%r%d",
 	    edDCond(Cond(w)),Ima5(w),31 - Imd5(w),32 - Imc5A(w),Rtb(w));
 	return (1);
 }
@@ -1392,7 +1392,7 @@ depiDasm(const struct inst *i, OFS ofs, union insn w)
 int
 vdepiDasm(const struct inst *i, OFS ofs, union insn w)
 {
-	db_printf("%s\t%d,%d,%%r%d",edDCond(Cond(w)),Ima5(w),32-Imc5A(w),Rtb(w));
+	db_printf("%s\t%d, %d, %%r%d",edDCond(Cond(w)),Ima5(w),32-Imc5A(w),Rtb(w));
 	return (1);
 }
 
@@ -1517,14 +1517,14 @@ ldDasm(const struct inst *i, OFS ofs, union insn w)
 		s[0] = '\0';
 
 	if (Rsb(w) == 0 && Match("ldo")) {
-		db_printf("ldi\t%s%X,%%r%d",s,d,Rta(w));
+		db_printf("ldi\t%s%X, %%r%d",s,d,Rta(w));
 		return (1);
 	}
 	db_printf("%s\t%s%s%X",i->mnem,(d < 2048? "R'":""), s, d);
 	if (Dss(w))
-		db_printf("(%%sr%d,%%r%d),%%r%d",Dss(w),Rsb(w),Rta(w));
+		db_printf("(%%sr%d, %%r%d), %%r%d",Dss(w),Rsb(w),Rta(w));
 	else
-		db_printf("(%%r%d),%%r%d",Rsb(w),Rta(w));
+		db_printf("(%%r%d), %%r%d",Rsb(w),Rta(w));
 	return (1);
 }
 
@@ -1535,7 +1535,7 @@ stDasm(const struct inst *i, OFS ofs, union insn w)
 	int d = Disp(w);
 	char s[2];
 
-	db_printf("\t%%r%d,",Rta(w));
+	db_printf("\t%%r%d, ",Rta(w));
 
 	s[1] = '\0';
 	if (d < 0) {
@@ -1547,7 +1547,7 @@ stDasm(const struct inst *i, OFS ofs, union insn w)
 	db_printf("%s%s%X", (d < 2048? "R'":""), s, d);
 
 	if (Dss(w))
-		db_printf("(%%sr%d,%%r%d)",Dss(w),Rsb(w));
+		db_printf("(%%sr%d, %%r%d)",Dss(w),Rsb(w));
 	else
 		db_printf("(%%r%d)",Rsb(w));
 	return (1);
@@ -1581,9 +1581,9 @@ ldxDasm(const struct inst *i, OFS ofs, union insn w)
 		db_printf("%s\t%%r%d", p, Rsa(w));
 
 	if (Dss(w))
-		db_printf("(%%sr%d,%%r%d),%%r%d",Dss(w),Rsb(w),Rtc(w));
+		db_printf("(%%sr%d, %%r%d), %%r%d",Dss(w),Rsb(w),Rtc(w));
 	else
-		db_printf("(%%r%d),%%r%d",Rsb(w),Rtc(w));
+		db_printf("(%%r%d), %%r%d",Rsb(w),Rtc(w));
 	return (1);
 }
 
@@ -1603,9 +1603,9 @@ stsDasm(const struct inst *i, OFS ofs, union insn w)
 	case SEQPASS:	p = ",q"; break;
 	case PREFETCH:	p = ",p"; break;
 	}
-	db_printf("%s\t%%r%d,", p, Rta(w));
+	db_printf("%s\t%%r%d, ", p, Rta(w));
 	if (Dss(w))
-		db_printf("%d(%%sr%d,%%r%d)",Imc5(w),Dss(w),Rsb(w));
+		db_printf("%d(%%sr%d, %%r%d)",Imc5(w),Dss(w),Rsb(w));
 	else
 		db_printf("%d(%%r%d)",Imc5(w),Rsb(w));
 	return (1);
@@ -1627,9 +1627,9 @@ stbysDasm(const struct inst *i, OFS ofs, union insn w)
 	case SEQPASS:	p = ",r"; break;
 	case PREFETCH:	p = ",z"; break;
 	}
-	db_printf("%s\t%%r%d,", p, Rta(w));
+	db_printf("%s\t%%r%d, ", p, Rta(w));
 	if (Dss(w))
-		db_printf("%d(%%sr%d,%%r%d)",Imc5(w),Dss(w),Rsb(w));
+		db_printf("%d(%%sr%d, %%r%d)",Imc5(w),Dss(w),Rsb(w));
 	else
 		db_printf("%d(%%r%d)",Imc5(w),Rsb(w));
 	return (1);
@@ -1639,7 +1639,7 @@ stbysDasm(const struct inst *i, OFS ofs, union insn w)
 int
 limmDasm(const struct inst *i, OFS ofs, union insn w)
 {
-	db_printf("\tL'%X,%%r%d", Im21(w), Rtb(w));
+	db_printf("\tL'%X, %%r%d", Im21(w), Rtb(w));
 	return (1);
 }
 
@@ -1660,7 +1660,7 @@ blDasm(const struct inst *i, OFS ofs, union insn w)
 	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
 
 	if (link || Match("gate"))
-		db_printf(",%%r%d",link);
+		db_printf(", %%r%d",link);
 
 	return (1);
 }
@@ -1669,7 +1669,7 @@ blDasm(const struct inst *i, OFS ofs, union insn w)
 int
 brDasm(const struct inst *i, OFS ofs, union insn w)
 {
-	db_printf("%s\t%%r%d,%%r%d", Nu(w)?",n":"", Rsa(w), Rtb(w));
+	db_printf("%s\t%%r%d, %%r%d", Nu(w)?",n":"", Rsa(w), Rtb(w));
 	return (1);
 }
 
@@ -1697,7 +1697,7 @@ beDasm(const struct inst *i, OFS ofs, union insn w)
 		s[0] = '\0';
 
 	p =  Nu(w)? ",n":"";
-	db_printf("%s\tR'%s%X(%%sr%d,%%r%d)", p,
+	db_printf("%s\tR'%s%X(%%sr%d, %%r%d)", p,
 	    s, d, Sr(w), Rsb(w));
 	return (1);
 }
@@ -1715,7 +1715,7 @@ cbDasm(const struct inst *i, OFS ofs, union insn w)
 		db_printf(addDCond(Cond(w) << 1));
 	else
 		db_printf(subDCond(Cond(w) << 1));
-	db_printf("%s\t%%r%d,%%r%d,", Nu(w)?",n":"", Rsa(w), Rsb(w));
+	db_printf("%s\t%%r%d, %%r%d,", Nu(w)?",n":"", Rsa(w), Rsb(w));
 	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
 }
@@ -1732,7 +1732,7 @@ cbiDasm(const struct inst *i, OFS ofs, union insn w)
 		db_printf(addDCond(Cond(w) << 1));
 	else
 		db_printf(subDCond(Cond(w) << 1));
-	db_printf("%s\t%d,%%r%d,", Nu(w)? ",n":"", Ima5(w), Rsb(w));
+	db_printf("%s\t%d, %%r%d, ", Nu(w)? ",n":"", Ima5(w), Rsb(w));
 	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
 }
@@ -1747,9 +1747,9 @@ bbDasm(const struct inst *i, OFS ofs, union insn w)
 	db_printf(edDCond(Cond(w)));
 	p = Nu(w)? ",n":"";
 	if (Match("bvb"))
-		db_printf("%s\t%%r%d,", p, Rta(w));
+		db_printf("%s\t%%r%d, ", p, Rta(w));
 	else
-		db_printf("%s\t%%r%d,%d,", p, Rsa(w), Imb5(w));
+		db_printf("%s\t%%r%d, %d, ", p, Rsa(w), Imb5(w));
 	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
 }
@@ -1762,9 +1762,9 @@ ariDasm(const struct inst *i, OFS ofs, union insn w)
 		if (Rsa(w) == 0 && Rtc(w) == 0)
 			db_printf("nop");
 		else
-			db_printf("copy\t%%r%d,%%r%d",Rsa(w),Rtc(w));
+			db_printf("copy\t%%r%d, %%r%d",Rsa(w),Rtc(w));
 	} else
-		db_printf("%s%s\t%%r%d,%%r%d,%%r%d", i->mnem,
+		db_printf("%s%s\t%%r%d, %%r%d, %%r%d", i->mnem,
 			  subDCond(Cond4(w)), Rsa(w),Rsb(w),Rtc(w));
 	return(1);
 }
@@ -1777,22 +1777,22 @@ scDasm(const struct inst *i, OFS ofs, union insn w)
 		if (Rtb(w) == 11)
 			db_printf("mtsar\t%%r%d",Rsa(w));
 		else
-			db_printf("mtctl\t%%r%d,%%cr%d",Rsa(w),Rtb(w));
+			db_printf("mtctl\t%%r%d, %%cr%d",Rsa(w),Rtb(w));
 		return (1);
 	}
 	db_printf(i->mnem);
 	if (Match("ssm") || Match("rsm"))
-		db_printf("\t%d,%%r%d",Ima5A(w),Rtc(w));
+		db_printf("\t%d, %%r%d",Ima5A(w),Rtc(w));
 	else if (Match("mtsm")) db_printf("\t%%r%d",Rsa(w));
 	else if (Match("ldprid")) db_printf("\t%%r%d",Rtc(w));
-	else if (Match("mtsp")) db_printf("\t%%r%d,%%sr%d",Rsa(w),Sr(w));
-	else if (Match("mfsp")) db_printf("\t%%sr%d,%%r%d",Sr(w),Rtc(w));
-	else if (Match("mfctl")) db_printf("\t%%cr%d,%%r%d",Rsb(w),Rtc(w));
+	else if (Match("mtsp")) db_printf("\t%%r%d, %%sr%d",Rsa(w),Sr(w));
+	else if (Match("mfsp")) db_printf("\t%%sr%d, %%r%d",Sr(w),Rtc(w));
+	else if (Match("mfctl")) db_printf("\t%%cr%d, %%r%d",Rsb(w),Rtc(w));
 	else if (Match("ldsid")) {
 		if (Dss(w))
-			db_printf("\t(%%sr%d,%%r%d),%%r%d",Dss(w),Rsb(w),Rtc(w));
+			db_printf("\t(%%sr%d, %%r%d), %%r%d",Dss(w),Rsb(w),Rtc(w));
 		else
-			db_printf("\t(%%r%d),%%r%d",Rsb(w),Rtc(w));
+			db_printf("\t(%%r%d), %%r%d",Rsb(w),Rtc(w));
 	} else {
 		db_printf("?????");
 		return (0);
@@ -1807,17 +1807,17 @@ mmgtDasm(const struct inst *i, OFS ofs, union insn w)
 	if (Match("probe")) {
 		if (ProbeI(w)) {
 			if (Dss(w))
-				db_printf("i\t(%%sr%d,%%r%d),%d,%%r%d",
+				db_printf("i\t(%%sr%d, %%r%d), %d, %%r%d",
 				    Dss(w),Rsb(w),Rsa(w),Rtc(w));
 			else
-				db_printf("i\t(%%r%d),%d,%%r%d",
+				db_printf("i\t(%%r%d), %d, %%r%d",
 				    Rsb(w),Rsa(w),Rtc(w));
 		} else {
 			if (Dss(w))
-				db_printf("\t(%%sr%d,%%r%d),%%r%d,%%r%d",
+				db_printf("\t(%%sr%d, %%r%d), %%r%d, %%r%d",
 				    Dss(w),Rsb(w),Rsa(w),Rtc(w));
 			else
-				db_printf("\t(%%r%d),%%r%d,%%r%d",
+				db_printf("\t(%%r%d), %%r%d, %%r%d",
 				    Rsb(w),Rsa(w),Rtc(w));
 		}
 	}
@@ -1825,31 +1825,31 @@ mmgtDasm(const struct inst *i, OFS ofs, union insn w)
 		if (Modify(w))
 			db_printf(",m");
 		if (Dss(w))
-			db_printf("\t%%r%d(%%sr%d,%%r%d),%%r%d",
+			db_printf("\t%%r%d(%%sr%d, %%r%d), %%r%d",
 			    Rsa(w),Dss(w),Rsb(w),Rtc(w));
 		else
-			db_printf("\t%%r%d(%%r%d),%%r%d",Rsa(w),Rsb(w),Rtc(w));
+			db_printf("\t%%r%d(%%r%d), %%r%d",Rsa(w),Rsb(w),Rtc(w));
 	}
 	else if (Match("pdtlb") || Match("pdc") || Match("fdc")) {
 		if (Modify(w)) db_printf(",m");
 		if (Dss(w))
-			db_printf("\t%%r%d(%%sr%d,%%r%d)",Rsa(w),Dss(w),Rsb(w));
+			db_printf("\t%%r%d(%%sr%d, %%r%d)",Rsa(w),Dss(w),Rsb(w));
 		else
 			db_printf("\t%%r%d(%%r%d)",Rsa(w),Rsb(w));
 	}
 	else if (Match("pitlb") || Match("fic")) {
 		if (Modify(w))
 			db_printf(",m");
-		db_printf("\t%%r%d(%%sr%d,%%r%d)",Rsa(w),Sr(w),Rsb(w));
+		db_printf("\t%%r%d(%%sr%d, %%r%d)",Rsa(w),Sr(w),Rsb(w));
 	}
 	else if (Match("idtlb")) {
 		if (Dss(w))
-			db_printf("\t%%r%d,(%%sr%d,%%r%d)",Rsa(w),Dss(w),Rsb(w));
+			db_printf("\t%%r%d, (%%sr%d, %%r%d)",Rsa(w),Dss(w),Rsb(w));
 		else
-			db_printf("\t%%r%d,(%%r%d)",Rsa(w),Rsb(w));
+			db_printf("\t%%r%d, (%%r%d)",Rsa(w),Rsb(w));
 	}
 	else if (Match("iitlb"))
-		db_printf("\t%%r%d,(%%sr%d,%%r%d)",Rsa(w),Sr(w),Rsb(w));
+		db_printf("\t%%r%d, (%%sr%d, %%r%d)",Rsa(w),Sr(w),Rsb(w));
 	else {
 		db_printf("?????");
 		return (0);
@@ -1861,7 +1861,7 @@ mmgtDasm(const struct inst *i, OFS ofs, union insn w)
 int
 brkDasm(const struct inst *i, OFS ofs, union insn w)
 {
-	db_printf("\t%d,%d",Bi1(w),Bi2(w));
+	db_printf("\t%d, %d",Bi1(w),Bi2(w));
 	return (1);
 }
 
@@ -1904,7 +1904,7 @@ floatDasm(const struct inst *i, OFS ofs, union insn w)
 				return(0);
 			}
 			db_printf("%s,%s",p,fmtStrTbl[fmt]);
-			db_printf(",%s\t%%f%s,%%f%s",
+			db_printf(",%s\t%%f%s, %%f%s",
 			    condStrTbl[op2], ST(r1), ST(r2));
 			return (1);
 		}
@@ -1924,7 +1924,7 @@ floatDasm(const struct inst *i, OFS ofs, union insn w)
 		default: db_printf(fcoprUndef); return (0);
 		}
 		db_printf("%s,%s", p, fmtStrTbl[fmt]);
-		db_printf("\t%%f%s,%%f%s,%%f%s",ST(r1),ST(r2),ST(t));
+		db_printf("\t%%f%s, %%f%s, %%f%s",ST(r1),ST(r2),ST(t));
 	} else if (op1 & 1) {			/* class 1 */
 		dfmt = (op1 >> 4) & 3;
 #define DT(r) ((dfmt & 1)? fdreg[(r)]:fsreg[(r)])
@@ -1947,7 +1947,7 @@ floatDasm(const struct inst *i, OFS ofs, union insn w)
 		}
 #endif
 		db_printf("%s,%s", p, fmtStrTbl[fmt]);
-		db_printf(",%s\t%%f%s,%%f%s",fmtStrTbl[dfmt],ST(r1),DT(t));
+		db_printf(",%s\t%%f%s, %%f%s",fmtStrTbl[dfmt],ST(r1),DT(t));
 	} else {				/* class 0 */
 		/*
 		 * get target register
@@ -1965,7 +1965,7 @@ floatDasm(const struct inst *i, OFS ofs, union insn w)
 		default: db_printf(fcoprUndef); return (0);
 		}
 		db_printf("%s,%s",p,fmtStrTbl[fmt]);
-		db_printf("\t%%f%s,%%f%s",ST(r1),ST(t));
+		db_printf("\t%%f%s, %%f%s",ST(r1),ST(t));
 	}
 	return (1);
 }
@@ -2002,7 +2002,7 @@ fcoprDasm(union insn w, u_int op1, u_int op2)
 		case 5: p = "rnd"; break;
 		default: db_printf(fcoprUndef); return(0);
 		}
-		db_printf("f%s,%s\t%%fr%d,%%fr%d", p, fmtStrTbl[fmt], r1, t);
+		db_printf("f%s,%s\t%%fr%d, %%fr%d", p, fmtStrTbl[fmt], r1, t);
 		break;
 	    case 1:
 		/* Opclass 1: 1 source, 1 destination conversions */
@@ -2017,7 +2017,7 @@ fcoprDasm(union insn w, u_int op1, u_int op2)
 		case 3: p = "fxt"; break;
 		}
 #endif
-		db_printf("fcnv%s,%s,%s\t%%fr%d,%%fr%d",
+		db_printf("fcnv%s,%s,%s\t%%fr%d, %%fr%d",
 		    p, fmtStrTbl[fmt], fmtStrTbl[dfmt], r1, t);
 		break;
 	    case 2:
@@ -2028,7 +2028,7 @@ fcoprDasm(union insn w, u_int op1, u_int op2)
 		case 0: p = "fcmp"; break;
 		default: db_printf(fcoprUndef); return (0);
 		}
-		db_printf("%s,%s,%s\t%%fr%d,%%fr%d",
+		db_printf("%s,%s,%s\t%%fr%d, %%fr%d",
 		    p,fmtStrTbl[fmt],condStrTbl[op2],r1,r2);
 		break;
 	    case 3:
@@ -2043,7 +2043,7 @@ fcoprDasm(union insn w, u_int op1, u_int op2)
 		case 4: p = "rem"; break;
 		default: db_printf(fcoprUndef); return (0);
 		}
-		db_printf("f%s,%s\t%%fr%d,%%fr%d,%%fr%d",
+		db_printf("f%s,%s\t%%fr%d, %%fr%d, %%fr%d",
 		    p, fmtStrTbl[fmt], r1, r2, t);
 		break;
 	    default:
@@ -2117,9 +2117,9 @@ coprDasm(const struct inst *i, OFS ofs, union insn w)
 		else
 			db_printf("\t%%r%d",Rsa(w));
 		if (Dss(w))
-			db_printf("(%%sr%d,%%r%d),%%f%s", Dss(w),Rsb(w), p);
+			db_printf("(%%sr%d, %%r%d), %%f%s", Dss(w),Rsb(w), p);
 		else
-			db_printf("(%%r%d),%%f%s",Rsb(w), p);
+			db_printf("(%%r%d), %%f%s",Rsb(w), p);
 	} else {
 		const char *p;
 
@@ -2129,11 +2129,11 @@ coprDasm(const struct inst *i, OFS ofs, union insn w)
 			p = fsreg[(Rsc(w)<<1)+(uid&1)];
 
 		if (ShortDisp(w))
-			db_printf("\t%%f%s,%d", p, Ima5(w));
+			db_printf("\t%%f%s, %d", p, Ima5(w));
 		else
-			db_printf("\t%%f%s,%%r%d", p, Rta(w));
+			db_printf("\t%%f%s, %%r%d", p, Rta(w));
 		if (Dss(w))
-			db_printf("(%%sr%d,%%r%d)",Dss(w),Rsb(w));
+			db_printf("(%%sr%d, %%r%d)",Dss(w),Rsb(w));
 		else
 			db_printf("(%%r%d)",Rsb(w));
 	}
@@ -2163,11 +2163,11 @@ lpkDasm(const struct inst *i, OFS ofs, union insn w)
 	case PREFETCH:	db_printf(",p"); break;
 	}
 	if (ShortDisp(w))
-		db_printf("\t%%fr%d,%d",Rsc(w),Ima5(w));
+		db_printf("\t%%fr%d, %d",Rsc(w),Ima5(w));
 	else
-		db_printf("\t%%fr%d,%%r%d",Rsc(w),Rta(w));
+		db_printf("\t%%fr%d, %%r%d",Rsc(w),Rta(w));
 	if (Dss(w))
-		db_printf("(%%sr%d,%%r%d)",Dss(w),Rsb(w));
+		db_printf("(%%sr%d, %%r%d)",Dss(w),Rsb(w));
 	else
 		db_printf("(%%r%d)",Rsb(w));
 	return (1);
@@ -2177,9 +2177,9 @@ int
 diagDasm(const struct inst *i, OFS ofs, union insn w)
 {
 	if (0x0b0 == BitfR(w,19,8,_b198))	/* mtcpu */
-		db_printf("mtcpu\t%%r%d,%%dr%d", Rsa(w), Rtb(w));
+		db_printf("mtcpu\t%%r%d, %%dr%d", Rsa(w), Rtb(w));
 	else if (0x0d0 == BitfR(w,19,8,_b198))	/* mfcpu */
-		db_printf("mfcpu\t%%dr%d,%%r%d", Rsb(w), Rta(w));
+		db_printf("mfcpu\t%%dr%d, %%r%d", Rsb(w), Rta(w));
 	else {
 		db_printf(i->mnem);
 		if (Match("diag"))
@@ -2196,11 +2196,11 @@ int
 fmpysubDasm(const struct inst *i, OFS ofs, union insn w)
 {
 	if (SinglePrec(w))
-		db_printf("SUB,SGL\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
+		db_printf("sub,sgl\t%%f%s, %%f%s, %%f%s, %%f%s, %%f%s",
 		    fsreg[Ms1(w)], fsreg[Ms2(w)], fsreg[Mt(w)],
 		    fsreg[As(w)], fsreg[Ad(w)]);
 	else
-		db_printf("SUB,DBL\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
+		db_printf("sub,dbl\t%%f%s, %%f%s, %%f%s, %%f%s, %%f%s",
 		    fdreg[Ms1(w)], fdreg[Ms2(w)], fdreg[Mt(w)],
 		    fdreg[As(w)], fdreg[Ad(w)]);
 	return (1);
@@ -2217,10 +2217,10 @@ fmpyaddDasm(const struct inst *i, OFS ofs, union insn w)
 		*ad  = SinglePrec(w) ? fsreg[Ad(w)]  : fdreg[Ad(w)];
 
 	if (Rsd(w) == 0)
-		db_printf("\t%%fcfxt,%s,%%f%s,%%f%s,%%f%s",
+		db_printf("\t%%fcfxt, %s, %%f%s, %%f%s, %%f%s",
 		    ((SinglePrec(w)) ? "sgl" : "dbl"), ms1, ms2, mt);
 	else
-		db_printf("add%s\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
+		db_printf("add%s\t%%f%s, %%f%s, %%f%s, %%f%s, %%f%s",
 		    ((SinglePrec(w)) ? "sgl" : "dbl"), ms1, ms2, mt, as, ad);
 
 	return (1);
