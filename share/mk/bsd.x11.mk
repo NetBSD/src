@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.104 2011/09/29 10:59:26 dholland Exp $
+#	$NetBSD: bsd.x11.mk,v 1.105 2012/01/17 19:40:08 njoly Exp $
 
 .include <bsd.init.mk>
 
@@ -285,7 +285,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@Z_LIBS@,-lz,; \
 		s,@LIBZ@,-lz,; \
 		s,@LIBBZ2@,-lbz2,; \
-		s,@xkb_base@,\\$$\{libdir\}/X11/xkb,; \
+		s,@xkb_base@,\\$$\{prefix\}/lib/X11/xkb,; \
 		s,@xcbincludedir@,\\$$\{prefix\}/share/xcb,; \
 		s,@fontrootdir@,\\$$\{libdir\}/X11/fonts,; \
 		s,@LIBXML2_LIBS@,,; \
