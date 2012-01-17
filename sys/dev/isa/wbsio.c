@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.7 2012/01/17 17:17:15 jakllsch Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.8 2012/01/17 18:04:46 jakllsch Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.5 2009/03/29 21:53:52 sthen Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -153,7 +153,7 @@ wbsio_probe(device_t parent, cfdata_t match, void *aux)
 void
 wbsio_attach(device_t parent, device_t self, void *aux)
 {
-	struct wbsio_softc *sc = (void *)self;
+	struct wbsio_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	struct isa_attach_args nia;
 	const char *desc = NULL;
@@ -233,6 +233,7 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 int
 wbsio_detach(device_t self, int flags)
 {
+	struct wbsio_softc *sc = device_private(self);
 	int rc;
 
 	if ((rc = config_detach_children(self, flags)) != 0)
