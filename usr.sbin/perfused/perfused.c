@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.17 2011/12/28 17:33:53 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.18 2012/01/17 17:58:36 joerg Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -55,8 +55,8 @@
  * we ever mount multiple filesystems in a single perfused, 
  * but it is not sure we will ever want to do that.
  */
-struct puffs_usermount *perfuse_mount = NULL;
-FILE *perfuse_trace = NULL;
+static struct puffs_usermount *my_perfuse_mount = NULL;
+static FILE *perfuse_trace = NULL;
 
 static int access_mount(const char *, uid_t, int);
 static void new_mount(int, int);
@@ -278,7 +278,7 @@ new_mount(int fd, int pmnt_flags)
 	/*
 	 * Setup trace file facility
 	 */
-	perfuse_mount = pu;
+	my_perfuse_mount = pu;
 
 	if ((perfuse_trace = fopen(_PATH_VAR_RUN_PERFUSE_TRACE, "w")) == NULL)
 		DERR(EX_OSFILE, 
@@ -359,7 +359,7 @@ siginfo_handler(int sig)
 static void
 sigusr1_handler(int sig)
 {
-	return perfuse_trace_dump(perfuse_mount, perfuse_trace);
+	return perfuse_trace_dump(my_perfuse_mount, perfuse_trace);
 }
 
 static int
