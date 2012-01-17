@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.81 2011/10/06 16:03:48 christos Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.82 2012/01/17 20:34:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -266,22 +266,8 @@ pthread__self(void)
 #endif
 	return (pthread_t)tcb->tcb_pthread;
 }
-#elif 0 && defined(__HAVE___LWP_GETPRIVATE_FAST)
-static inline pthread_t __constfunc
-pthread__self(void)
-{
-	return (pthread_t)__lwp_getprivate_fast();
-}
 #else
-/* Stack location of pointer to a particular thread */
-extern vaddr_t	pthread__mainbase;
-extern vaddr_t	pthread__mainstruct;
-static inline pthread_t
-pthread__id(vaddr_t sp) {
-	vaddr_t va = sp & pthread__threadmask;
-	return (pthread_t)(va == pthread__mainbase ? pthread__mainstruct : va);
-}
-#define pthread__self() 	(pthread__id(pthread__sp()))
+#error Either __HAVE_TLS_VARIANT_I or __HAVE_TLS_VARIANT_II must be defined
 #endif
 
 #define pthread__abort()						\

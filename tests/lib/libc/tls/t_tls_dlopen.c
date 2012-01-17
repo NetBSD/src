@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_dlopen.c,v 1.2 2011/11/17 16:20:11 joerg Exp $	*/
+/*	$NetBSD: t_tls_dlopen.c,v 1.3 2012/01/17 20:34:57 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_tls_dlopen.c,v 1.2 2011/11/17 16:20:11 joerg Exp $");
+__RCSID("$NetBSD: t_tls_dlopen.c,v 1.3 2012/01/17 20:34:57 joerg Exp $");
 
 #include <atf-c.h>
 #include <dlfcn.h>
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: t_tls_dlopen.c,v 1.2 2011/11/17 16:20:11 joerg Exp $");
 
 #include <sys/tls.h>
 
-#if !defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE_TLS_VARIANT_II)
+#ifdef __HAVE_NO___THREAD
 #define	__thread
 #endif
 
@@ -84,7 +84,7 @@ ATF_TC_BODY(t_tls_dlopen, tc)
 	void *handle;
 	pthread_t t;
 
-#if !defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE_TLS_VARIANT_II)
+#ifdef __HAVE_NO___THREAD
 	atf_tc_skip("no TLS support on this platform");
 #endif
 
