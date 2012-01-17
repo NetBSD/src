@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmouse.4,v 1.18 2009/03/09 19:24:28 joerg Exp $
+.\" $NetBSD: wsmouse.4,v 1.19 2012/01/17 03:49:19 christos Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -38,6 +38,8 @@
 (PS/2 mouse, including ``IntelliMouse''-compatible wheel mice)
 .Cd "wsmouse*   at ums? mux 0"
 (USB mouse)
+.Cd "wsmouse*   at uts? mux 0"
+(USB touchscreen)
 .Cd "wsmouse*   at lms? mux 0"
 (Logitech bus mouse, i386 only)
 .Cd "wsmouse*   at mms? mux 0"
@@ -124,6 +126,7 @@ above for more details.
 .Xr pms 4 ,
 .Xr uep 4 ,
 .Xr ums 4 ,
+.Xr uts 4 ,
 .Xr wscons 4 ,
 .Xr wsmux 4 ,
 .Xr moused 8 ,
