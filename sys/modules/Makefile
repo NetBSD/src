@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.100 2011/12/04 23:13:54 jym Exp $
+#	$NetBSD: Makefile,v 1.101 2012/01/17 16:59:38 jakllsch Exp $
 
 .include <bsd.own.mk>
 
@@ -190,6 +190,11 @@ SUBDIR+=	viadrm
 SUBDIR+=	aps
 SUBDIR+=	finsio
 SUBDIR+=	itesio
+SUBDIR+=	lm
+SUBDIR+=	lm_isa
+SUBDIR+=	lm_isa_common
+SUBDIR+=	lm_wbsio
+SUBDIR+=	wbsio
 .endif
 
 .if ${MACHINE_CPU} == "m68k"
