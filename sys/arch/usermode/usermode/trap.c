@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.58 2012/01/17 19:46:55 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.59 2012/01/17 20:50:38 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2012/01/17 19:46:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.59 2012/01/17 20:50:38 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,7 +62,7 @@ bool pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype);
 
 static stack_t sigstk;
 
-int astpending;
+int astpending = 0;
 
 void
 startlwp(void *arg)
