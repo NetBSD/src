@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1370 2012/01/17 08:13:41 mbalmer Exp $
+# $NetBSD: mi,v 1.1371 2012/01/17 18:53:23 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -228,7 +228,7 @@
 ./usr/share/man/cat1/kimpersonate.0		man-obsolete		obsolete
 ./usr/share/man/cat1/kinit.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/klist.0			man-krb5-catman		kerberos,.cat
-./usr/share/man/cat1/kpasswd.0			man-krb5-catman		use_kerberos,.cat
+./usr/share/man/cat1/kpasswd.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/krb5-config.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/ksh.0			man-util-catman		.cat
 ./usr/share/man/cat1/ktrace.0			man-debug-catman	.cat
@@ -3154,7 +3154,7 @@
 ./usr/share/man/html1/kimpersonate.html		man-obsolete		obsolete
 ./usr/share/man/html1/kinit.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html1/klist.html		man-krb5-htmlman	kerberos,html
-./usr/share/man/html1/kpasswd.html		man-krb5-htmlman	use_kerberos,html
+./usr/share/man/html1/kpasswd.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html1/krb5-config.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html1/ksh.html			man-util-htmlman	html
 ./usr/share/man/html1/ktrace.html		man-debug-htmlman	html
@@ -5723,7 +5723,7 @@
 ./usr/share/man/man1/kimpersonate.1		man-obsolete		obsolete
 ./usr/share/man/man1/kinit.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/klist.1			man-krb5-man		kerberos,.man
-./usr/share/man/man1/kpasswd.1			man-krb5-man		use_kerberos,.man
+./usr/share/man/man1/kpasswd.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/krb5-config.1		man-krb5-man		kerberos,.man
 ./usr/share/man/man1/ksh.1			man-util-man		.man
 ./usr/share/man/man1/ktrace.1			man-debug-man		.man
