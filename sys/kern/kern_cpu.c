@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.53 2012/01/13 16:05:15 cegger Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.54 2012/01/17 10:47:27 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.53 2012/01/13 16:05:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.54 2012/01/17 10:47:27 cegger Exp $");
 
 #include "opt_cpu_ucode.h"
 
@@ -256,11 +256,6 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		error = kauth_authorize_machdep(l->l_cred,
 		    KAUTH_MACHDEP_CPU_UCODE_APPLY,
 		    NULL, NULL, NULL, NULL);
-		if (error != 0)
-			break;
-		error = kauth_authorize_system(l->l_cred,
-		    KAUTH_SYSTEM_CPU, KAUTH_REQ_SYSTEM_CPU_UCODE_APPLY,
-		    data, NULL, NULL);
 		if (error != 0)
 			break;
 		error = cpu_ucode_apply(data);
