@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.24 2012/01/17 16:50:07 jakllsch Exp $ */
+/*	$NetBSD: lm_isa_common_var.h,v 1.1 2012/01/17 16:50:07 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,51 +29,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.24 2012/01/17 16:50:07 jakllsch Exp $");
+#ifndef _LM_ISA_COMMON_VAR_H_
+#define  _LM_ISA_COMMON_VAR_H_
+#include <dev/ic/nslm7xvar.h>
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
-#include <sys/module.h>
-#include <sys/conf.h>
+int 	lm_isa_match(device_t, cfdata_t, void *);
+void 	lm_isa_attach(device_t, device_t, void *);
+int 	lm_isa_detach(device_t, int);
 
-#include <sys/bus.h>
+struct lm_isa_softc {
+	struct lm_softc lmsc;
+	bus_space_tag_t lm_iot;
+	bus_space_handle_t lm_ioh;
+};
 
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-
-#include <dev/isa/lm_isa_common_var.h>
-
-CFATTACH_DECL_NEW(lm_isa, sizeof(struct lm_isa_softc),
-    lm_isa_match, lm_isa_attach, lm_isa_detach, NULL);
-
-MODULE(MODULE_CLASS_DRIVER, lm_isa, "lm_isa_common");
-
-#ifdef _MODULE
-#include "ioconf.c"
-#endif
-
-static int
-lm_isa_modcmd(modcmd_t cmd, void *priv)
-{
-	int error = 0;
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-#ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_lm_isa,
-		    cfattach_ioconf_lm_isa, cfdata_ioconf_lm_isa);
-#endif
-		return error;
-	case MODULE_CMD_FINI:
-#ifdef _MODULE
-		error = config_fini_component(cfdriver_ioconf_lm_isa,
-		    cfattach_ioconf_lm_isa, cfdata_ioconf_lm_isa);
-#endif
-		return error;
-	default:
-		return ENOTTY;
-	}
-}
+#endif /* _LM_ISA_COMMON_VAR_H_ */
