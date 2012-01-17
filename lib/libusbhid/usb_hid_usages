@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.4 2009/07/10 22:11:58 jakllsch Exp $
+# $NetBSD: usb_hid_usages,v 1.5 2012/01/17 03:49:20 christos Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -858,6 +858,10 @@
 	0x44	Barrel Switch
 	0x45	Eraser
 	0x46	Tablet Pick
+	0x51	Contact ID
+	0x53	Device Index
+	0x54	Contact Count
+	0x55	Contact Count Maximum
 
 15	Physical Interface Device
 
