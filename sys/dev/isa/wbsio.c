@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.5 2012/01/17 16:32:03 jakllsch Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.6 2012/01/17 16:34:52 jakllsch Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.5 2009/03/29 21:53:52 sthen Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/module.h>
 #include <sys/systm.h>
 
 #include <sys/bus.h>
@@ -260,4 +261,33 @@ wbsio_print(void *aux, const char *pnp)
 		aprint_normal("-0x%x", ia->ia_io[0].ir_addr +
 		    ia->ia_io[0].ir_size - 1);
 	return (UNCONF);
+}
+
+MODULE(MODULE_CLASS_DRIVER, wbsio, "");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+wbsio_modcmd(modcmd_t cmd, void *opaque)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		return config_init_component(cfdriver_ioconf_wbsio,
+		    cfattach_ioconf_wbsio, cfdata_ioconf_wbsio);
+#else
+		return 0;
+#endif
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		return config_fini_component(cfdriver_ioconf_wbsio,
+		    cfattach_ioconf_wbsio, cfdata_ioconf_wbsio);
+#else
+		return 0;
+#endif
+	default:
+		return ENOTTY;
+	}
 }
