@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.162 2011/11/18 21:18:50 christos Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.163 2012/01/17 09:30:16 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.162 2011/11/18 21:18:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.163 2012/01/17 09:30:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1356,11 +1356,16 @@ puffs_vnop_fsync(void *v)
 		off_t a_offhi;
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, fsync);
-	struct vnode *vp = ap->a_vp;
-	struct puffs_node *pn = VPTOPP(vp);
-	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	struct vnode *vp;
+	struct puffs_node *pn;
+	struct puffs_mount *pmp;
 	int error, dofaf;
 
+	vp = ap->a_vp;
+	KASSERT(vp != NULL);
+	pn = VPTOPP(vp);
+	KASSERT(pn != NULL);
+	pmp = MPTOPUFFSMP(vp->v_mount);
 	if (ap->a_flags & FSYNC_WAIT) {
 		mutex_enter(&pn->pn_sizemtx);
 	} else {
