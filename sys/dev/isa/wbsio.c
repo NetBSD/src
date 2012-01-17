@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.4 2012/01/17 16:28:33 jakllsch Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.5 2012/01/17 16:32:03 jakllsch Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.5 2009/03/29 21:53:52 sthen Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -69,10 +69,12 @@ struct wbsio_softc {
 
 int	wbsio_probe(device_t, cfdata_t, void *);
 void	wbsio_attach(device_t, device_t, void *);
+int	wbsio_detach(device_t, int);
+void	wbsio_childdet(device_t, device_t);
 int	wbsio_print(void *, const char *);
 
-CFATTACH_DECL_NEW(wbsio, sizeof(struct wbsio_softc),
-    wbsio_probe, wbsio_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(wbsio, sizeof(struct wbsio_softc),
+    wbsio_probe, wbsio_attach, wbsio_detach, NULL, NULL, wbsio_childdet);
 
 static __inline void
 wbsio_conf_enable(bus_space_tag_t iot, bus_space_handle_t ioh)
@@ -225,6 +227,24 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 	nia = *ia;
 	nia.ia_io[0].ir_addr = iobase;
 	config_found(self, &nia, wbsio_print);
+}
+
+int
+wbsio_detach(device_t self, int flags)
+{
+	int rc;
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, WBSIO_IOSIZE);
+	pmf_device_deregister(self);
+	return 0;
+}
+
+void
+wbsio_childdet(device_t self, device_t child)
+{
+	return;
 }
 
 int
