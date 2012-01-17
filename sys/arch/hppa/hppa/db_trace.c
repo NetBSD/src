@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10 2011/02/28 21:24:25 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.11 2012/01/17 10:56:56 skrll Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10 2011/02/28 21:24:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11 2012/01/17 10:56:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,14 +128,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		pr("%s() at ", name);
 		db_printsym(pc, DB_STGY_PROC, pr);
 		pr("\n");
-
-		/* XXX NH - unwind info here */
-		/* aue = ue_find(pc); */
-
-		/*
-		 * get rp?
-		 * fp -= ue_total_frame_size(aue)
-		 */
 
 		/*
 		 * if a terminal frame then report the trapframe and continue
