@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.59 2012/01/17 20:50:38 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.60 2012/01/18 12:39:45 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.59 2012/01/17 20:50:38 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2012/01/18 12:39:45 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,22 +146,15 @@ userret(struct lwp *l)
 }
 
 
-/* signal handler switching to a pagefault context */
+#ifdef DEBUG
+/*
+ * Uncomment the following if you want to receive information about what
+ * triggered the fault. Mainly for debugging and porting purposes
+ */
 static void
-mem_access_handler(int sig, siginfo_t *info, void *ctx)
+print_mem_access_siginfo(int sig, siginfo_t *info, void *ctx,
+	vaddr_t pc, vaddr_t va, vaddr_t sp)
 {
-	ucontext_t *ucp = ctx;
-	struct lwp *l;
-	struct pcb *pcb;
-	vaddr_t va, sp, pc, fp;
-	int from_userland;
-
-	assert((info->si_signo == SIGSEGV) || (info->si_signo == SIGBUS));
-
-	if (info->si_code == SI_NOINFO)
-		panic("received signal %d with no info",
-		    info->si_signo);
-
 #if 0
 	thunk_printf_debug("SIGSEGV or SIGBUS!\n");
 	thunk_printf_debug("\tsi_signo = %d\n", info->si_signo);
@@ -181,6 +174,75 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	thunk_printf_debug("\tsi_trap = %d\n", info->si_trap);
 #endif
 
+#if 0
+	printf("memaccess error, pc %p, va %p, "
+		"sys_stack %p, sp %p, stack top %p\n",
+		(void *) pc, (void *) va,
+		(void *) pcb->sys_stack, (void *) sp,
+		(void *) pcb->sys_stack_top);
+#endif
+}
+
+/*
+ * Uncomment the following if you want to receive information about what
+ * triggered the fault. Mainly for debugging and porting purposes
+ */
+static void
+print_illegal_instruction_siginfo(int sig, siginfo_t *info, void *ctx,
+	vaddr_t pc, vaddr_t va, vaddr_t sp)
+{
+#if 0
+	thunk_printf("SIGILL!\n");
+	thunk_printf("\tsi_signo = %d\n", info->si_signo);
+	thunk_printf("\tsi_errno = %d\n", info->si_errno);
+	thunk_printf("\tsi_code  = %d\n", info->si_code);
+	if (info->si_code == ILL_ILLOPC)
+		thunk_printf("\t\tIllegal opcode");
+	if (info->si_code == ILL_ILLOPN)
+		thunk_printf("\t\tIllegal operand");
+	if (info->si_code == ILL_ILLADR)
+		thunk_printf("\t\tIllegal addressing mode");
+	if (info->si_code == ILL_ILLTRP)
+		thunk_printf("\t\tIllegal trap");
+	if (info->si_code == ILL_PRVOPC)
+		thunk_printf("\t\tPrivileged opcode");
+	if (info->si_code == ILL_PRVREG)
+		thunk_printf("\t\tPrivileged register");
+	if (info->si_code == ILL_COPROC)
+		thunk_printf("\t\tCoprocessor error");
+	if (info->si_code == ILL_BADSTK)
+		thunk_printf("\t\tInternal stack error");
+	thunk_printf("\tsi_addr = %p\n", info->si_addr);
+	thunk_printf("\tsi_trap = %d\n", info->si_trap);
+
+	thunk_printf("%p : ", info->si_addr);
+	for (int i = 0; i < 10; i++)
+		thunk_printf("%02x ", *((uint8_t *) info->si_addr + i));
+	thunk_printf("\n");
+#endif
+}
+#else /* DEBUG */
+#define print_mem_access_siginfo(s, i, c, p, v, sp)
+#define print_illegal_instruction_siginfo(s, i, c, p, v, sp)
+#endif /* DEBUG */
+
+
+/* signal handler switching to a pagefault context */
+static void
+mem_access_handler(int sig, siginfo_t *info, void *ctx)
+{
+	ucontext_t *ucp = ctx;
+	struct lwp *l;
+	struct pcb *pcb;
+	vaddr_t va, sp, pc, fp;
+	int from_userland;
+
+	assert((info->si_signo == SIGSEGV) || (info->si_signo == SIGBUS));
+
+	if (info->si_code == SI_NOINFO)
+		panic("received signal %d with no info",
+		    info->si_signo);
+
 	l = curlwp;
 	pcb = lwp_getpcb(l);
 
@@ -194,13 +256,7 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	/* setup for pagefault context */
 	sp = md_get_sp(ctx);
 
-#if 0
-	printf("memaccess error, pc %p, va %p, "
-		"sys_stack %p, sp %p, stack top %p\n",
-		(void *) pc, (void *) va,
-		(void *) pcb->sys_stack, (void *) sp,
-		(void *) pcb->sys_stack_top);
-#endif
+	print_mem_access_siginfo(sig, info, ctx, pc, va, sp);
 
 	/* if we're running on a stack of our own, use the system stack */
 	from_userland = 0;
@@ -246,35 +302,6 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 	int from_userland;
 
 	assert(info->si_signo == SIGILL);
-#if 0
-	thunk_printf("SIGILL!\n");
-	thunk_printf("\tsi_signo = %d\n", info->si_signo);
-	thunk_printf("\tsi_errno = %d\n", info->si_errno);
-	thunk_printf("\tsi_code  = %d\n", info->si_code);
-	if (info->si_code == ILL_ILLOPC)
-		thunk_printf("\t\tIllegal opcode");
-	if (info->si_code == ILL_ILLOPN)
-		thunk_printf("\t\tIllegal operand");
-	if (info->si_code == ILL_ILLADR)
-		thunk_printf("\t\tIllegal addressing mode");
-	if (info->si_code == ILL_ILLTRP)
-		thunk_printf("\t\tIllegal trap");
-	if (info->si_code == ILL_PRVOPC)
-		thunk_printf("\t\tPrivileged opcode");
-	if (info->si_code == ILL_PRVREG)
-		thunk_printf("\t\tPrivileged register");
-	if (info->si_code == ILL_COPROC)
-		thunk_printf("\t\tCoprocessor error");
-	if (info->si_code == ILL_BADSTK)
-		thunk_printf("\t\tInternal stack error");
-	thunk_printf("\tsi_addr = %p\n", info->si_addr);
-	thunk_printf("\tsi_trap = %d\n", info->si_trap);
-
-	thunk_printf("%p : ", info->si_addr);
-	for (int i = 0; i < 10; i++)
-		thunk_printf("%02x ", *((uint8_t *) info->si_addr + i));
-	thunk_printf("\n");
-#endif
 
 	l = curlwp;
 	pcb = lwp_getpcb(l);
@@ -284,6 +311,8 @@ illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
 
 	/* setup for illegal_instruction context */
 	sp = md_get_sp(ctx);
+
+	print_illegal_instruction_siginfo(sig, info, ctx, pc, 0, sp);
 
 	/* if we're running on a stack of our own, use the system stack */
 	from_userland = 0;
@@ -436,6 +465,7 @@ out_quick:
 	thunk_seterrno(lwp_errno);
 	pcb->pcb_errno = lwp_errno;
 }
+
 
 /*
  * Context for handing illegal instruction from the sigill handler
