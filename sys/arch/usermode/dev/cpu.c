@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.67 2012/01/15 10:45:03 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.68 2012/01/18 19:17:02 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2012/01/15 10:45:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68 2012/01/18 19:17:02 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -78,6 +78,9 @@ char cpu_model[48] = "virtual processor";
 typedef struct cpu_softc {
 	device_t	sc_dev;
 	struct cpu_info	*sc_ci;
+
+	ucontext_t	sc_ucp;
+	uint8_t		sc_ucp_stack[PAGE_SIZE];
 } cpu_softc_t;
 
 
@@ -108,8 +111,16 @@ cpu_attach(device_t parent, device_t self, void *opaque)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	cpu_info_primary.ci_dev = self;
 	sc->sc_dev = self;
 	sc->sc_ci = &cpu_info_primary;
+
+	thunk_getcontext(&sc->sc_ucp);
+	sc->sc_ucp.uc_stack.ss_sp = sc->sc_ucp_stack;
+	sc->sc_ucp.uc_stack.ss_size = PAGE_SIZE - sizeof(register_t);
+	sc->sc_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
+	thunk_sigaddset(&sc->sc_ucp.uc_sigmask, SIGALRM);
+	thunk_sigaddset(&sc->sc_ucp.uc_sigmask, SIGIO);
 }
 
 void
@@ -176,12 +187,34 @@ cpu_need_proftick(struct lwp *l)
 {
 }
 
+static
+void
+cpu_switchto_atomic(lwp_t *oldlwp, lwp_t *newlwp)
+{
+	struct pcb *oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
+	struct pcb *newpcb = lwp_getpcb(newlwp);
+	struct cpu_info *ci = curcpu();
+
+	ci->ci_stash = oldlwp;
+
+	if (oldpcb)
+		oldpcb->pcb_errno = thunk_geterrno();
+
+	thunk_seterrno(newpcb->pcb_errno);
+
+	curlwp = newlwp;
+	if (thunk_setcontext(&newpcb->pcb_ucp))
+		panic("setcontext failed");
+	/* not reached */
+}
+
 lwp_t *
 cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 {
 	struct pcb *oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
 	struct pcb *newpcb = lwp_getpcb(newlwp);
 	struct cpu_info *ci = curcpu();
+	cpu_softc_t *sc = device_private(ci->ci_dev);
 
 #ifdef CPU_DEBUG
 	thunk_printf_debug("cpu_switchto [%s,pid=%d,lid=%d] -> [%s,pid=%d,lid=%d]\n",
@@ -207,19 +240,16 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	}
 #endif /* !CPU_DEBUG */
 
-	ci->ci_stash = oldlwp;
+	/* create atomic switcher */
+	thunk_makecontext(&sc->sc_ucp, (void (*)(void)) cpu_switchto_atomic,
+			2, oldlwp, newlwp, NULL);
 
-	if (oldpcb) {
-		oldpcb->pcb_errno = thunk_geterrno();
-		thunk_seterrno(newpcb->pcb_errno);
-		curlwp = newlwp;
-		if (thunk_swapcontext(&oldpcb->pcb_ucp, &newpcb->pcb_ucp))
-			panic("swapcontext failed");
+	if (!oldpcb) {
+		thunk_setcontext(&sc->sc_ucp);
+		/* never returns */
 	} else {
-		thunk_seterrno(newpcb->pcb_errno);
-		curlwp = newlwp;
-		if (thunk_setcontext(&newpcb->pcb_ucp))
-			panic("setcontext failed");
+		thunk_swapcontext(&oldpcb->pcb_ucp, &sc->sc_ucp);
+		/* returns here */
 	}
 
 #ifdef CPU_DEBUG
@@ -344,7 +374,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* get l2 its own stack */
 	pcb2->pcb_ucp.uc_stack.ss_sp = pcb2->sys_stack;
 	pcb2->pcb_ucp.uc_stack.ss_size = pcb2->sys_stack_top - pcb2->sys_stack;
-	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
+	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
 	pcb2->pcb_ucp.uc_link = &pcb2->pcb_userret_ucp;
 	thunk_makecontext(&pcb2->pcb_ucp,
 	    (void (*)(void)) cpu_lwp_trampoline,
@@ -382,6 +412,7 @@ cpu_startup(void)
 	/* init lwp0 */
 	memset(&lwp0pcb, 0, sizeof(lwp0pcb));
 	thunk_getcontext(&lwp0pcb.pcb_ucp);
+	lwp0pcb.pcb_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
 	uvm_lwp_setuarea(&lwp0, (vaddr_t) &lwp0pcb);
 	memcpy(&lwp0pcb.pcb_userret_ucp, &lwp0pcb.pcb_ucp, sizeof(ucontext_t));
 
