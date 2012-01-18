@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.7 2012/01/14 04:44:45 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.8 2012/01/18 02:09:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.7 2012/01/14 04:44:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.8 2012/01/18 02:09:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,10 +375,11 @@ startover:
 			 */
 			pg->flags &= ~(PG_RDONLY|PG_HOLE);
 			/*
-			 * mark the page dirty.
+			 * mark the page DIRTY.
 			 * otherwise another thread can do putpages and pull
 			 * our vnode from syncer's queue before our caller does
-			 * ubc_release.
+			 * ubc_release.  note that putpages won't see CLEAN
+			 * pages even if they are BUSY.
 			 */
 			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 		}
@@ -852,7 +853,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 {
 	struct uvm_object * const uobj = &vp->v_uobj;
 	kmutex_t * const slock = uobj->vmobjlock;
-	off_t off;
+	off_t nextoff;
 	/* Even for strange MAXPHYS, the shift rounds down to a page */
 #define maxpages (MAXPHYS >> PAGE_SHIFT)
 	int i, error;
@@ -865,7 +866,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
 	struct lwp * const l = curlwp ? curlwp : &lwp0;
 	int flags;
-	bool modified;		/* if we write out any pages */
+	bool written;		/* if we write out any pages */
 	bool need_wapbl;
 	bool has_trans;
 	bool tryclean;		/* try to pull off from the syncer's list */
@@ -886,7 +887,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	    (origflags & PGO_JOURNALLOCKED) == 0);
 
 retry:
-	modified = false;
+	written = false;
 	flags = origflags;
 	KASSERT((vp->v_iflag & VI_ONWORKLST) != 0 ||
 	    (vp->v_iflag & VI_WRMAPDIRTY) == 0);
@@ -938,7 +939,7 @@ retry:
 
 	error = 0;
 	wasclean = (vp->v_numoutput == 0);
-	off = startoff;
+	nextoff = startoff;
 	if (endoff == 0 || flags & PGO_ALLPAGES) {
 		endoff = trunc_page(LLONG_MAX);
 	}
@@ -967,7 +968,7 @@ retry:
 	for (;;) {
 		bool protected;
 
-		pg = uvm_page_array_fill_and_peek(&a, uobj, off, 0,
+		pg = uvm_page_array_fill_and_peek(&a, uobj, nextoff, 0,
 		    dirtyonly ? UVM_PAGE_ARRAY_FILL_DIRTYONLY : 0);
 		if (pg == NULL) {
 			break;
@@ -981,7 +982,7 @@ retry:
 		KASSERT((pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
 		    (pg->flags & (PG_BUSY)) != 0);
 		KASSERT(pg->offset >= startoff);
-		KASSERT(pg->offset >= off);
+		KASSERT(pg->offset >= nextoff);
 		KASSERT(!dirtyonly ||
 		    uvm_pagegetdirty(pg) != UVM_PAGE_STATUS_CLEAN);
 		if (pg->offset >= endoff) {
@@ -990,7 +991,7 @@ retry:
 		if (pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
 			KASSERT((pg->flags & PG_BUSY) != 0);
 			wasclean = false;
-			off = pg->offset + PAGE_SIZE;
+			nextoff = pg->offset + PAGE_SIZE;
 			uvm_page_array_advance(&a);
 			continue;
 		}
@@ -1018,7 +1019,7 @@ retry:
 				 */
 				break;
 			}
-			off = pg->offset; /* visit this page again */
+			nextoff = pg->offset; /* visit this page again */
 			if ((pg->flags & PG_BUSY) != 0) {
 				pg->flags |= PG_WANTED;
 				UVM_UNLOCK_AND_WAIT(pg, slock, 0, "genput", 0);
@@ -1036,7 +1037,7 @@ retry:
 			continue;
 		}
 
-		off = pg->offset + PAGE_SIZE;
+		nextoff = pg->offset + PAGE_SIZE;
 		uvm_page_array_advance(&a);
 
 		/*
@@ -1097,13 +1098,14 @@ retry:
 			pg->flags |= PG_BUSY;
 			UVM_PAGE_OWN(pg, "genfs_putpages");
 
+			fpflags = UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY;
+
 			/*
 			 * XXX PG_PAGER1 incompatibility check.
 			 * this is a kludge for nfs.
 			 * probably it's better to make PG_NEEDCOMMIT a first
 			 * level citizen for uvm/genfs.
 			 */
-			fpflags = UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY;
 			if ((pg->flags & PG_PAGER1) != 0) {
 				fpflags |= UFP_ONLYPAGER1;
 			} else {
@@ -1112,20 +1114,31 @@ retry:
 
 			/*
 			 * first look backward.
+			 *
+			 * because we always scan pages in the ascending order,
+			 * backward scan can be useful only for the first page
+			 * in the range.
 			 */
-			npages = MIN(maxpages >> 1, off >> PAGE_SHIFT);
-			nback = npages;
-			uvn_findpages(uobj, off - PAGE_SIZE, &nback, &pgs[0],
-			    NULL, fpflags | UFP_BACKWARD);
-			if (nback) {
-				memmove(&pgs[0], &pgs[npages - nback],
-				    nback * sizeof(pgs[0]));
-				if (npages - nback < nback)
-					memset(&pgs[nback], 0,
-					    (npages - nback) * sizeof(pgs[0]));
-				else
-					memset(&pgs[npages - nback], 0,
+			if (startoff == pg->offset) {
+				npages = MIN(maxpages >> 1,
+				    pg->offset >> PAGE_SHIFT);
+				nback = npages;
+				uvn_findpages(uobj, pg->offset - PAGE_SIZE,
+				    &nback, &pgs[0], NULL,
+				    fpflags | UFP_BACKWARD);
+				if (nback) {
+					memmove(&pgs[0], &pgs[npages - nback],
 					    nback * sizeof(pgs[0]));
+					if (npages - nback < nback)
+						memset(&pgs[nback], 0,
+						    (npages - nback) *
+						    sizeof(pgs[0]));
+					else
+						memset(&pgs[npages - nback], 0,
+						    nback * sizeof(pgs[0]));
+				}
+			} else {
+				nback = 0;
 			}
 
 			/*
@@ -1186,7 +1199,8 @@ retry:
 					KASSERT(npages == 1);
 					KASSERT(!needs_clean);
 					KASSERT(pg == tpg);
-					KASSERT(off == tpg->offset + PAGE_SIZE);
+					KASSERT(nextoff ==
+					    tpg->offset + PAGE_SIZE);
 					uvm_pagefree(tpg);
 					if (pagedaemon)
 						uvmexp.pdfreed++;
@@ -1197,21 +1211,22 @@ retry:
 			mutex_exit(&uvm_pageqlock);
 		}
 		if (needs_clean) {
-			KASSERT(off == pg->offset + PAGE_SIZE);
-			off = pg->offset + ((npages - nback) << PAGE_SHIFT);
-			KASSERT(pgs[nback] == pg);
-			KASSERT(off == pgs[npages - 1]->offset + PAGE_SIZE);
 			mutex_exit(slock);
+			KASSERT(nextoff == pg->offset + PAGE_SIZE);
+			nextoff = pg->offset + ((npages - nback) << PAGE_SHIFT);
+			KASSERT(pgs[nback] == pg);
+			KASSERT(nextoff == pgs[npages - 1]->offset + PAGE_SIZE);
 
 			/*
 			 * start the i/o.
-			 *
+			 */
+			error = GOP_WRITE(vp, pgs, npages, flags);
+			written = true;
+			/*
 			 * as we dropped the object lock, our cached pages can
 			 * be stale.
 			 */
-			modified = true;
 			uvm_page_array_clear(&a);
-			error = GOP_WRITE(vp, pgs, npages, flags);
 			mutex_enter(slock);
 			if (error) {
 				break;
@@ -1230,7 +1245,7 @@ retry:
 	 * might not involve any page faults.
 	 */
 
-	if (modified && (vp->v_iflag & VI_WRMAPDIRTY) != 0 &&
+	if (written && (vp->v_iflag & VI_WRMAPDIRTY) != 0 &&
 	    (vp->v_type != VBLK ||
 	    (vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)) {
 		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
