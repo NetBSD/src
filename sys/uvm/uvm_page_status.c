@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_status.c,v 1.1.2.5 2011/11/20 10:52:35 yamt Exp $	*/
+/*	$NetBSD: uvm_page_status.c,v 1.1.2.6 2012/01/18 02:09:06 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.5 2011/11/20 10:52:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.6 2012/01/18 02:09:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,6 +173,7 @@ uvm_pagecheckdirty(struct vm_page *pg, bool protected)
 				pmap_clear_modify(pg);
 			}
 		} else {
+			KASSERT(oldstatus == UVM_PAGE_STATUS_UNKNOWN);
 			modified = pmap_clear_modify(pg);
 		}
 		uvm_pagemarkdirty(pg, newstatus);
