@@ -1,4 +1,4 @@
-# $NetBSD: t_quotalimit.sh,v 1.3 2011/03/09 19:04:58 bouyer Exp $ 
+# $NetBSD: t_quotalimit.sh,v 1.4 2012/01/18 20:51:23 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -54,7 +54,7 @@ done
 
 limit_quota()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 	local id=1
@@ -96,12 +96,12 @@ limit_quota()
 		    -o match:'daemon    \+-        3        2        3    2:0         2       4       6' \
 		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -$q /mnt
 	done
-	rump_shutdown
+	rump_quota_shutdown
 }
 
 limit_softquota()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 	local id=1
@@ -143,12 +143,12 @@ limit_softquota()
 		    -o match:'daemon    \+-        2        2        3   none         2       4       6' \
 		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -$q /mnt
 	done
-	rump_shutdown
+	rump_quota_shutdown
 }
 
 limit_iquota()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 	local id=1
@@ -190,12 +190,12 @@ limit_iquota()
 		    -o match:'daemon    -\+        3     2048     3072                6       4       6    2:0' \
 		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -$q /mnt
 	done
-	rump_shutdown
+	rump_quota_shutdown
 }
 
 limit_softiquota()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 	local id=1
@@ -237,12 +237,12 @@ limit_softiquota()
 		    -o match:'daemon    -\+        2     2048     3072                5       4       6   none' \
 		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -$q /mnt
 	done
-	rump_shutdown
+	rump_quota_shutdown
 }
 
 inherit_defaultquota()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 	local id=1
@@ -289,12 +289,12 @@ inherit_defaultquota()
 		    -o match:'daemon    \+-        3        2        3    2:0         2       4       6' \
 		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -$q /mnt
 	done
-	rump_shutdown
+	rump_quota_shutdown
 }
 
 inherit_defaultiquota()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 	local id=1
@@ -341,5 +341,5 @@ inherit_defaultiquota()
 		    -o match:'daemon    -\+        3     2048     3072                6       4       6    2:0' \
 		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -$q /mnt
 	done
-	rump_shutdown
+	rump_quota_shutdown
 }
