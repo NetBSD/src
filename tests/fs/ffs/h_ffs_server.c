@@ -1,4 +1,4 @@
-/*	$NetBSD: h_quota2_server.c,v 1.2 2011/03/06 17:08:40 bouyer Exp $	*/
+/*	$NetBSD: h_ffs_server.c,v 1.1 2012/01/18 20:51:23 bouyer Exp $	*/
 
 /*
  * rump server for advanced quota tests

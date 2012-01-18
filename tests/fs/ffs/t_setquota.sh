@@ -1,4 +1,4 @@
-# $NetBSD: t_setquota.sh,v 1.3 2011/03/09 19:04:58 bouyer Exp $ 
+# $NetBSD: t_setquota.sh,v 1.4 2012/01/18 20:51:23 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -48,7 +48,7 @@ done
 
 set_quota()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 	local fail
@@ -99,12 +99,12 @@ set_quota()
 -o "not-match:--        0        -        -" \
 		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -${q} /mnt
 	done
-	rump_shutdown
+	rump_quota_shutdown
 }
 
 set_quota_new()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 	local fail
@@ -149,12 +149,12 @@ set_quota_new()
 		    -o "match:Disk quotas for .*: none$" \
 		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v ${id}
 	done
-	rump_shutdown
+	rump_quota_shutdown
 }
 
 set_quota_default()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 	local fail
@@ -199,5 +199,5 @@ set_quota_default()
 		    -o "match:Default (user|group) disk quotas: none$" \
 		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v ${id}
 	done
-	rump_shutdown
+	rump_quota_shutdown
 }
