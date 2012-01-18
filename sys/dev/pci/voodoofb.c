@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.32 2012/01/17 21:31:46 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.33 2012/01/18 08:04:18 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.32 2012/01/17 21:31:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.33 2012/01/18 08:04:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -976,8 +976,9 @@ voodoofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					   sc->sc_cmap_blue[i]);
 				}
 				vcons_redraw_screen(ms);
-			} else
+			} else {
 				voodoofb_drm_unmap(sc);
+			}
 		}
 		}
 		return 0;
@@ -1185,11 +1186,21 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 	vertical_blanking_start	= vertical_display_enable_end;
 	vertical_blanking_end	= vertical_total;
 	
+#if 0
 	misc = 0x0f |
 	    (vm->hdisplay < 400 ? 0xa0 :
 		vm->hdisplay < 480 ? 0x60 :
 		vm->hdisplay < 768 ? 0xe0 : 0x20);
-     
+#else
+	misc = 0x2f;
+	if (vm->flags & VID_NHSYNC)
+		misc |= HSYNC_NEG;
+	if (vm->flags & VID_NVSYNC)
+		misc |= VSYNC_NEG;
+#ifdef VOODOOFB_DEBUG
+	printf("misc: %02x\n", misc);
+#endif
+#endif	
 	mode->vr_seq[0] = 3;
 	mode->vr_seq[1] = 1;
 	mode->vr_seq[2] = 8;
@@ -1247,7 +1258,7 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 	    
 	mode->vr_crtc[CRTC_VDISP_EXT] =
 	    (vertical_total & 0x400) >> 10 |
-	    (vertical_display_enable_end & 0x400) >> 8 |
+	    (vertical_display_enable_end & 0x400) >> 8 | /* the manual is contradictory here */
 	    (vertical_blanking_start & 0x400) >> 6 |
 	    (vertical_blanking_end & 0x400) >> 4;
     
@@ -1438,6 +1449,16 @@ voodoofb_init(struct voodoofb_softc *sc)
 	voodoofb_wait_idle(sc);
 }
 
+#define MAX_CLOCK 250000	/* all Voodoo3 should support that */
+#define MAX_HRES  1700		/*
+				 * XXX in theory we can go higher but I
+				 * couldn't get anything above 1680 x 1200
+				 * to work, so until I find out why it's
+				 * disabled so people won't end up with a
+				 * blank screen
+				 */
+#define MODE_IS_VALID(m) (((m)->dot_clock <= MAX_CLOCK) && \
+					    ((m)->hdisplay < MAX_HRES))
 static void
 voodoofb_setup_i2c(struct voodoofb_softc *sc)
 {
@@ -1482,20 +1503,33 @@ voodoofb_setup_i2c(struct voodoofb_softc *sc)
 			 * which we're not going to exhaust either in 8bit.
 			 */
 			if ((sc->sc_edid_info.edid_preferred_mode != NULL)) {
-				sc->sc_videomode =
+				struct videomode *m =
 				    sc->sc_edid_info.edid_preferred_mode;
-			} else {
+				if (MODE_IS_VALID(m)) {
+					sc->sc_videomode = m;
+				} else {
+					aprint_error_dev(sc->sc_dev,
+					    "unable to use preferred mode\n");
+				}
+			}
+			/*
+			 * if we can't use the preferred mode go look for the
+			 * best one we can support
+			 */
+			if (sc->sc_videomode == NULL) {
 				int n;
-				struct videomode *m = sc->sc_edid_info.edid_modes;
+				struct videomode *m =
+				     sc->sc_edid_info.edid_modes;
 
 				sort_modes(sc->sc_edid_info.edid_modes,
 			   	    &sc->sc_edid_info.edid_preferred_mode,
 				    sc->sc_edid_info.edid_nmodes);
 				while ((sc->sc_videomode == NULL) &&
 				       (n < sc->sc_edid_info.edid_nmodes)) {
-					if (m[n].dot_clock <= 250000) {
+					if (MODE_IS_VALID(&m[n])) {
 						sc->sc_videomode = &m[n];
 					}
+					n++;
 				}
 			}
 		}
