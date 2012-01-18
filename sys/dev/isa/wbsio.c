@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.8 2012/01/17 18:04:46 jakllsch Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.9 2012/01/18 00:23:30 jakllsch Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.5 2009/03/29 21:53:52 sthen Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -62,20 +62,28 @@
 #define WBSIO_HM_ADDR_LSB	0x61	/* Address [7:0] */
 
 struct wbsio_softc {
-	struct device		sc_dev;
+	device_t	sc_dev;
+	device_t	sc_lm_dev;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	struct isa_attach_args	sc_ia;
+	struct isa_io		sc_io;
 };
 
 int	wbsio_probe(device_t, cfdata_t, void *);
 void	wbsio_attach(device_t, device_t, void *);
 int	wbsio_detach(device_t, int);
+int	wbsio_rescan(device_t, const char *, const int *);
 void	wbsio_childdet(device_t, device_t);
 int	wbsio_print(void *, const char *);
 
+static int wbsio_search(device_t, cfdata_t, const int *, void *);
+
 CFATTACH_DECL2_NEW(wbsio, sizeof(struct wbsio_softc),
-    wbsio_probe, wbsio_attach, wbsio_detach, NULL, NULL, wbsio_childdet);
+    wbsio_probe, wbsio_attach, wbsio_detach, NULL,
+    wbsio_rescan, wbsio_childdet);
 
 static __inline void
 wbsio_conf_enable(bus_space_tag_t iot, bus_space_handle_t ioh)
@@ -90,16 +98,16 @@ wbsio_conf_disable(bus_space_tag_t iot, bus_space_handle_t ioh)
 	bus_space_write_1(iot, ioh, WBSIO_INDEX, WBSIO_CONF_DS_MAGIC);
 }
 
-static __inline u_int8_t
-wbsio_conf_read(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t index)
+static __inline uint8_t
+wbsio_conf_read(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t index)
 {
 	bus_space_write_1(iot, ioh, WBSIO_INDEX, index);
 	return (bus_space_read_1(iot, ioh, WBSIO_DATA));
 }
 
 static __inline void
-wbsio_conf_write(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t index,
-    u_int8_t data)
+wbsio_conf_write(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t index,
+    uint8_t data)
 {
 	bus_space_write_1(iot, ioh, WBSIO_INDEX, index);
 	bus_space_write_1(iot, ioh, WBSIO_DATA, data);
@@ -111,7 +119,7 @@ wbsio_probe(device_t parent, cfdata_t match, void *aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	u_int8_t reg;
+	uint8_t reg;
 
 	/* Must supply an address */
 	if (ia->ia_nio < 1)
@@ -155,10 +163,12 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 {
 	struct wbsio_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
-	struct isa_attach_args nia;
 	const char *desc = NULL;
-	u_int8_t reg, reg0, reg1;
-	u_int16_t iobase;
+	uint8_t reg;
+
+	sc->sc_dev = self;
+
+	sc->sc_ia = *ia;
 
 	/* Map ISA I/O space */
 	sc->sc_iot = ia->ia_iot;
@@ -203,31 +213,13 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Winbond LPC Super I/O %s rev 0x%02x\n", desc, reg);
 
-	/* Select HM logical device */
-	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_HM);
-
-	/*
-	 * The address should be 8-byte aligned, but it seems some
-	 * BIOSes ignore this.  They get away with it, because
-	 * Apparently the hardware simply ignores the lower three
-	 * bits.  We do the same here.
-	 */
-	reg0 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_HM_ADDR_LSB);
-	reg1 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_HM_ADDR_MSB);
-	iobase = (reg1 << 8) | (reg0 & ~0x7);
-
 	/* Escape from configuration mode */
 	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	if (iobase == 0)
-		return;
-
-	nia = *ia;
-	nia.ia_io[0].ir_addr = iobase;
-	config_found(self, &nia, wbsio_print);
+	wbsio_rescan(self, "wbsio", NULL);
 }
 
 int
@@ -243,10 +235,64 @@ wbsio_detach(device_t self, int flags)
 	return 0;
 }
 
+int
+wbsio_rescan(device_t self, const char *ifattr, const int *locators)
+{
+
+	config_search_loc(wbsio_search, self, ifattr, locators, NULL);
+
+	return 0;
+}
+
 void
 wbsio_childdet(device_t self, device_t child)
 {
-	return;
+	struct wbsio_softc *sc = device_private(self);
+
+	if (sc->sc_lm_dev == child)
+		sc->sc_lm_dev = NULL;
+}
+
+static int
+wbsio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
+{
+	struct wbsio_softc *sc = device_private(parent);
+	uint16_t iobase;
+	uint8_t reg0, reg1;
+
+	/* Enter configuration mode */
+	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+
+	/* Select HM logical device */
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_HM);
+
+	/*
+	 * The address should be 8-byte aligned, but it seems some
+	 * BIOSes ignore this.  They get away with it, because
+	 * Apparently the hardware simply ignores the lower three
+	 * bits.  We do the same here.
+	 */
+	reg0 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_HM_ADDR_LSB);
+	reg1 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_HM_ADDR_MSB);
+
+	/* Escape from configuration mode */
+	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+
+	iobase = (reg1 << 8) | (reg0 & ~0x7);
+
+	if (iobase == 0)
+		return -1;
+
+	sc->sc_ia.ia_nio = 1;
+	sc->sc_ia.ia_io = &sc->sc_io;
+	sc->sc_ia.ia_io[0].ir_addr = iobase;
+	sc->sc_ia.ia_io[0].ir_size = 8;
+	sc->sc_ia.ia_niomem = 0;
+	sc->sc_ia.ia_nirq = 0;
+	sc->sc_ia.ia_ndrq = 0;
+	sc->sc_lm_dev = config_attach(parent, cf, &sc->sc_ia, wbsio_print);
+
+	return 0;
 }
 
 int
