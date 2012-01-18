@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.149 2012/01/11 23:24:46 joerg Exp $
+# $NetBSD: md.amd64,v 1.150 2012/01/18 17:32:41 riz Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -969,6 +969,7 @@
 ./usr/lib/i386/libtermlib_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libtre.a				comp-c-lib		compat
 ./usr/lib/i386/libtre.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libtre_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libtre_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libtre_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libukfs.a			comp-c-lib		compat
