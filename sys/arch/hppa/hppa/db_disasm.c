@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.15 2012/01/17 12:32:52 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.16 2012/01/18 09:35:48 skrll Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -38,17 +38,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.15 2012/01/17 12:32:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16 2012/01/18 09:35:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <machine/db_machdep.h>
+
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
 
+#ifndef _KERNEL
+#include <string.h>
+#endif
 
 /* IMPORTANT NOTE:
  *  All modules using this header may assume that the datatype "int" is a
@@ -1138,7 +1142,7 @@ static const struct inst instrs[] = {
 	{ FMPYADD,0, "fmpy",    fmpyaddDasm },
 	{ FSTQX,  0, "fstqx",   lpkDasm  },
 	{ FSTQS,  0, "fstqs",   lpkDasm  },
-	{0}
+	{ 0, 0, 0, 0, 0, "", NULL}
 };
 
 
@@ -1160,70 +1164,70 @@ static const struct inst *so_deps [0x08];
 #define ILLEG NULL
 #define NENTS(a) (sizeof(a)/sizeof(a[0])-1)
 static struct majoropcode majopcs[NMAJOPCS] = {
-	{ so_sysop, NENTS(so_sysop) }, /* 00 */
-	{ so_mmuop, NENTS(so_mmuop) }, /* 01 */
-	{ so_arith, NENTS(so_arith) }, /* 02 */
-	{ so_loads, NENTS(so_loads) }, /* 03 */
-	{ ILLEG, 1 }, /* 04 */
-	{ ILLEG, 1 }, /* 05 */
-	{ ILLEG, 1 }, /* 06 */
-	{ ILLEG, 1 }, /* 07 */
-	{ ILLEG, 1 }, /* 08 */
-	{ so_cldw , NENTS(so_cldw ) }, /* 09 */
-	{ ILLEG, 1 }, /* 0A */
-	{ so_cldd , NENTS(so_cldd ) }, /* 0B */
-	{ ILLEG, 1 }, /* 0C */
-	{ ILLEG, 1 }, /* 0D */
-	{ so_float, NENTS(so_float) }, /* 0E */
-	{ so_fstq , NENTS(so_fstq ) }, /* 0F */
-	{ ILLEG, 1 }, /* 10 */
-	{ ILLEG, 1 }, /* 11 */
-	{ ILLEG, 1 }, /* 12 */
-	{ ILLEG, 1 }, /* 13 */
-	{ ILLEG, 1 }, /* 14 */
-	{ ILLEG, 1 }, /* 15 */
-	{ ILLEG, 1 }, /* 16 */
-	{ ILLEG, 1 }, /* 17 */
-	{ ILLEG, 1 }, /* 18 */
-	{ ILLEG, 1 }, /* 19 */
-	{ ILLEG, 1 }, /* 1A */
-	{ ILLEG, 1 }, /* 1B */
-	{ ILLEG, 1 }, /* 1C */
-	{ ILLEG, 1 }, /* 1D */
-	{ ILLEG, 1 }, /* 1E */
-	{ ILLEG, 1 }, /* 1F */
-	{ ILLEG, 1 }, /* 20 */
-	{ ILLEG, 1 }, /* 21 */
-	{ ILLEG, 1 }, /* 22 */
-	{ ILLEG, 1 }, /* 23 */
-	{ ILLEG, 1 }, /* 24 */
-	{ so_subi , NENTS(so_subi ) }, /* 25 */
-	{ ILLEG, 1 }, /* 26 */
-	{ ILLEG, 1 }, /* 27 */
-	{ ILLEG, 1 }, /* 28 */
-	{ ILLEG, 1 }, /* 29 */
-	{ ILLEG, 1 }, /* 2A */
-	{ ILLEG, 1 }, /* 2B */
-	{ so_addit, NENTS(so_addit) }, /* 2C */
-	{ so_addi , NENTS(so_addi ) }, /* 2D */
-	{ ILLEG, 1 }, /* 2E */
-	{ ILLEG, 1 }, /* 2F */
-	{ ILLEG, 1 }, /* 30 */
-	{ ILLEG, 1 }, /* 31 */
-	{ ILLEG, 1 }, /* 32 */
-	{ ILLEG, 1 }, /* 33 */
-	{ so_shext, NENTS(so_shext) }, /* 34 */
-	{ so_deps , NENTS(so_deps ) }, /* 35 */
-	{ ILLEG, 1 }, /* 36 */
-	{ ILLEG, 1 }, /* 37 */
-	{ ILLEG, 1 }, /* 38 */
-	{ ILLEG, 1 }, /* 39 */
-	{ so_ebran, NENTS(so_ebran) }, /* 3A */
-	{ ILLEG, 1 }, /* 3B */
-	{ ILLEG, 1 }, /* 3C */
-	{ ILLEG, 1 }, /* 3D */
-	{ ILLEG, 1 }, /* 3E */
-	{ ILLEG, 1 }, /* 3F */
+	{ so_sysop, NENTS(so_sysop), 0, 0 }, /* 00 */
+	{ so_mmuop, NENTS(so_mmuop), 0, 0 }, /* 01 */
+	{ so_arith, NENTS(so_arith), 0, 0 }, /* 02 */
+	{ so_loads, NENTS(so_loads), 0, 0 }, /* 03 */
+	{ ILLEG, 1, 0, 0 }, /* 04 */
+	{ ILLEG, 1, 0, 0 }, /* 05 */
+	{ ILLEG, 1, 0, 0 }, /* 06 */
+	{ ILLEG, 1, 0, 0 }, /* 07 */
+	{ ILLEG, 1, 0, 0 }, /* 08 */
+	{ so_cldw , NENTS(so_cldw ), 0, 0 }, /* 09 */
+	{ ILLEG, 1, 0, 0 }, /* 0A */
+	{ so_cldd , NENTS(so_cldd ), 0, 0 }, /* 0B */
+	{ ILLEG, 1, 0, 0 }, /* 0C */
+	{ ILLEG, 1, 0, 0 }, /* 0D */
+	{ so_float, NENTS(so_float), 0, 0 }, /* 0E */
+	{ so_fstq , NENTS(so_fstq ), 0, 0 }, /* 0F */
+	{ ILLEG, 1, 0, 0 }, /* 10 */
+	{ ILLEG, 1, 0, 0 }, /* 11 */
+	{ ILLEG, 1, 0, 0 }, /* 12 */
+	{ ILLEG, 1, 0, 0 }, /* 13 */
+	{ ILLEG, 1, 0, 0 }, /* 14 */
+	{ ILLEG, 1, 0, 0 }, /* 15 */
+	{ ILLEG, 1, 0, 0 }, /* 16 */
+	{ ILLEG, 1, 0, 0 }, /* 17 */
+	{ ILLEG, 1, 0, 0 }, /* 18 */
+	{ ILLEG, 1, 0, 0 }, /* 19 */
+	{ ILLEG, 1, 0, 0 }, /* 1A */
+	{ ILLEG, 1, 0, 0 }, /* 1B */
+	{ ILLEG, 1, 0, 0 }, /* 1C */
+	{ ILLEG, 1, 0, 0 }, /* 1D */
+	{ ILLEG, 1, 0, 0 }, /* 1E */
+	{ ILLEG, 1, 0, 0 }, /* 1F */
+	{ ILLEG, 1, 0, 0 }, /* 20 */
+	{ ILLEG, 1, 0, 0 }, /* 21 */
+	{ ILLEG, 1, 0, 0 }, /* 22 */
+	{ ILLEG, 1, 0, 0 }, /* 23 */
+	{ ILLEG, 1, 0, 0 }, /* 24 */
+	{ so_subi , NENTS(so_subi ), 0, 0 }, /* 25 */
+	{ ILLEG, 1, 0, 0 }, /* 26 */
+	{ ILLEG, 1, 0, 0 }, /* 27 */
+	{ ILLEG, 1, 0, 0 }, /* 28 */
+	{ ILLEG, 1, 0, 0 }, /* 29 */
+	{ ILLEG, 1, 0, 0 }, /* 2A */
+	{ ILLEG, 1, 0, 0 }, /* 2B */
+	{ so_addit, NENTS(so_addit), 0, 0 }, /* 2C */
+	{ so_addi , NENTS(so_addi ), 0, 0 }, /* 2D */
+	{ ILLEG, 1, 0, 0 }, /* 2E */
+	{ ILLEG, 1, 0, 0 }, /* 2F */
+	{ ILLEG, 1, 0, 0 }, /* 30 */
+	{ ILLEG, 1, 0, 0 }, /* 31 */
+	{ ILLEG, 1, 0, 0 }, /* 32 */
+	{ ILLEG, 1, 0, 0 }, /* 33 */
+	{ so_shext, NENTS(so_shext), 0, 0 }, /* 34 */
+	{ so_deps , NENTS(so_deps ), 0, 0 }, /* 35 */
+	{ ILLEG, 1, 0, 0 }, /* 36 */
+	{ ILLEG, 1, 0, 0 }, /* 37 */
+	{ ILLEG, 1, 0, 0 }, /* 38 */
+	{ ILLEG, 1, 0, 0 }, /* 39 */
+	{ so_ebran, NENTS(so_ebran), 0, 0 }, /* 3A */
+	{ ILLEG, 1, 0, 0 }, /* 3B */
+	{ ILLEG, 1, 0, 0 }, /* 3C */
+	{ ILLEG, 1, 0, 0 }, /* 3D */
+	{ ILLEG, 1, 0, 0 }, /* 3E */
+	{ ILLEG, 1, 0, 0 }, /* 3F */
 };
 #undef NENTS
 #undef ILLEG
@@ -1253,9 +1257,11 @@ iExInit(void)
 	 */
 	for (i = &instrs[0]; *i->mnem; i++) {
 		m = &majopcs[i->majopc];
-		if (m->maxsubop < i->opcext)
-			panic("iExInit not enough space for opcode %d",
+		if (m->maxsubop < i->opcext) {
+			db_printf("iExInit not enough space for opcode %d",
 			    i->majopc);
+			return 0;
+		}
 		shft = 32 - i->extbs - i->extbl;
 		mask = (1 << i->extbl) - 1;
 		if (m->extshft || m->extmask) {
@@ -1305,7 +1311,7 @@ addDasm(const struct inst *i, OFS ofs, union insn w)
 int
 unitDasm(const struct inst *i, OFS ofs, union insn w)
 {
-	db_printf(unitDCond(Cond4(w)));
+	db_printf("%s", unitDCond(Cond4(w)));
 	if (Match("dcor") || Match("idcor"))
 		db_printf("\t%%r%d, %%r%d",Rsb(w),Rtc(w));
 	else
@@ -1422,7 +1428,7 @@ subDCond(u_int cond)
 	case TR:	return(",tr");
 	case NEV:	return("");
 	default:
-		panic("subDCond: unknown condition");
+		return("subDCond: unknown condition");
 	}
 }
 
@@ -1453,7 +1459,7 @@ addDCond(u_int cond)
 	case TR:	return(",tr");
 	case NEV:	return("");
 	default:
-		panic("addDCond: unknown condition");
+		return ("addDCond: unknown condition");
 	}
 }
 
@@ -1474,7 +1480,7 @@ unitDCond(u_int cond)
 	case TR:	return(",tr");
 	case NEV:	return("");
 	default:
-		panic("unitDCond: unknown condition");
+		return("unitDCond: unknown condition");
 	}
 }
 
@@ -1491,7 +1497,7 @@ edDCond(u_int cond)
 	case XEV:	return(",ev");
 	case NEV:	return("");
 	default:
-		panic("edDCond: unknown condition");
+		return("edDCond: unknown condition");
 	}
 }
 
@@ -1617,7 +1623,7 @@ stbysDasm(const struct inst *i, OFS ofs, union insn w)
 {
 	const char *p;
 
-	db_printf(ModBefore(w)? ",e":",b");
+	db_printf("%s", ModBefore(w)? ",e":",b");
 	if (Modify(w))
 		db_printf(",m");
 	switch (CacheCtrl(w)) {
@@ -1710,12 +1716,12 @@ cbDasm(const struct inst *i, OFS ofs, union insn w)
 	OFS tgtofs = ofs + 8 + Cbdisp(w);
 
 	if (Match("movb"))
-		db_printf(edDCond(Cond(w)));
+		db_printf("%s", edDCond(Cond(w)));
 	else if (Match("addb"))
-		db_printf(addDCond(Cond(w) << 1));
+		db_printf("%s", addDCond(Cond(w) << 1));
 	else
-		db_printf(subDCond(Cond(w) << 1));
-	db_printf("%s\t%%r%d, %%r%d,", Nu(w)?",n":"", Rsa(w), Rsb(w));
+		db_printf("%s", subDCond(Cond(w) << 1));
+	db_printf("%s\t%%r%d, %%r%d, ", Nu(w)?",n":"", Rsa(w), Rsb(w));
 	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
 }
@@ -1727,11 +1733,11 @@ cbiDasm(const struct inst *i, OFS ofs, union insn w)
 	OFS tgtofs = ofs + 8 + Cbdisp(w);
 
 	if (Match("movib"))
-		db_printf(edDCond(Cond(w)));
+		db_printf("%s", edDCond(Cond(w)));
 	else if (Match("addib"))
-		db_printf(addDCond(Cond(w) << 1));
+		db_printf("%s", addDCond(Cond(w) << 1));
 	else
-		db_printf(subDCond(Cond(w) << 1));
+		db_printf("%s", subDCond(Cond(w) << 1));
 	db_printf("%s\t%d, %%r%d, ", Nu(w)? ",n":"", Ima5(w), Rsb(w));
 	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
@@ -1744,7 +1750,7 @@ bbDasm(const struct inst *i, OFS ofs, union insn w)
 	OFS tgtofs = ofs + 8 + Cbdisp(w);
 	const char *p;
 
-	db_printf(edDCond(Cond(w)));
+	db_printf("%s", edDCond(Cond(w)));
 	p = Nu(w)? ",n":"";
 	if (Match("bvb"))
 		db_printf("%s\t%%r%d, ", p, Rta(w));
@@ -1780,7 +1786,7 @@ scDasm(const struct inst *i, OFS ofs, union insn w)
 			db_printf("mtctl\t%%r%d, %%cr%d",Rsa(w),Rtb(w));
 		return (1);
 	}
-	db_printf(i->mnem);
+	db_printf("%s", i->mnem);
 	if (Match("ssm") || Match("rsm"))
 		db_printf("\t%d, %%r%d",Ima5A(w),Rtc(w));
 	else if (Match("mtsm")) db_printf("\t%%r%d",Rsa(w));
@@ -1900,7 +1906,7 @@ floatDasm(const struct inst *i, OFS ofs, union insn w)
 				p = "cmp";
 				break;
 			default:
-				db_printf(fcoprUndef);
+				db_printf("%s", fcoprUndef);
 				return(0);
 			}
 			db_printf("%s,%s",p,fmtStrTbl[fmt]);
@@ -1921,7 +1927,7 @@ floatDasm(const struct inst *i, OFS ofs, union insn w)
 		case 2: p = (Fpi(w)) ? "mpyi" : "mpy"; break;
 		case 3: p = "div"; break;
 		case 4: p = "rem"; break;
-		default: db_printf(fcoprUndef); return (0);
+		default: db_printf("%s", fcoprUndef); return (0);
 		}
 		db_printf("%s,%s", p, fmtStrTbl[fmt]);
 		db_printf("\t%%f%s, %%f%s, %%f%s",ST(r1),ST(r2),ST(t));
@@ -1962,7 +1968,7 @@ floatDasm(const struct inst *i, OFS ofs, union insn w)
 		case 3: p = "abs"; break;
 		case 4: p = "sqrt"; break;
 		case 5: p = "rnd"; break;
-		default: db_printf(fcoprUndef); return (0);
+		default: db_printf("%s", fcoprUndef); return (0);
 		}
 		db_printf("%s,%s",p,fmtStrTbl[fmt]);
 		db_printf("\t%%f%s, %%f%s",ST(r1),ST(t));
@@ -2000,7 +2006,7 @@ fcoprDasm(union insn w, u_int op1, u_int op2)
 		case 3: p = "abs"; break;
 		case 4: p = "sqrt"; break;
 		case 5: p = "rnd"; break;
-		default: db_printf(fcoprUndef); return(0);
+		default: db_printf("%s", fcoprUndef); return(0);
 		}
 		db_printf("f%s,%s\t%%fr%d, %%fr%d", p, fmtStrTbl[fmt], r1, t);
 		break;
@@ -2026,7 +2032,7 @@ fcoprDasm(union insn w, u_int op1, u_int op2)
 		fmt = (op1 >> 2) & 3;
 		switch((op1 >> 4) & 7) {
 		case 0: p = "fcmp"; break;
-		default: db_printf(fcoprUndef); return (0);
+		default: db_printf("%s", fcoprUndef); return (0);
 		}
 		db_printf("%s,%s,%s\t%%fr%d, %%fr%d",
 		    p,fmtStrTbl[fmt],condStrTbl[op2],r1,r2);
@@ -2041,13 +2047,13 @@ fcoprDasm(union insn w, u_int op1, u_int op2)
 		case 2: p = "mpy"; break;
 		case 3: p = "div"; break;
 		case 4: p = "rem"; break;
-		default: db_printf(fcoprUndef); return (0);
+		default: db_printf("%s", fcoprUndef); return (0);
 		}
 		db_printf("f%s,%s\t%%fr%d, %%fr%d, %%fr%d",
 		    p, fmtStrTbl[fmt], r1, r2, t);
 		break;
 	    default:
-		    db_printf(fcoprUndef);
+		    db_printf("%s", fcoprUndef);
 		    return(0);
 	}
 	return (1);
@@ -2181,7 +2187,7 @@ diagDasm(const struct inst *i, OFS ofs, union insn w)
 	else if (0x0d0 == BitfR(w,19,8,_b198))	/* mfcpu */
 		db_printf("mfcpu\t%%dr%d, %%r%d", Rsb(w), Rta(w));
 	else {
-		db_printf(i->mnem);
+		db_printf("%s", i->mnem);
 		if (Match("diag"))
 			db_printf("\t0x%X",w.w & 0x03ffffff);
 		else {
@@ -2237,11 +2243,13 @@ db_disasm(vaddr_t loc, bool flag)
 
 	iExInit();
 
+#ifdef _KERNEL
 	if (USERMODE(loc)) {
 		if (copyin((void *)(loc &~ HPPA_PC_PRIV_MASK),
 		    &instruct, sizeof(instruct)))
 			instruct.w = 0;
 	} else
+#endif
 		instruct.w = *(int *)loc;
 
 	m = &majopcs[Opcode(instruct)];

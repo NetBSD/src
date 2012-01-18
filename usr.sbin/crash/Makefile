@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2012/01/17 18:44:24 skrll Exp $
+#	$NetBSD: Makefile,v 1.15 2012/01/18 09:35:48 skrll Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -12,6 +12,7 @@ DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 # some ddb kernel components need limited modifications.  for now,
 # punt if not noted as implemented here.
 .if    ${MACHINE} == "amd64" \
+    || ${MACHINE} == "hp700" \
     || ${MACHINE} == "i386" \
     || ${MACHINE} == "sparc64"
 REALCRASH=yes
@@ -35,6 +36,7 @@ SRCS+=	db_expr.c db_lex.c db_output.c db_print.c
 SRCS+=	db_sym.c db_variables.c db_write_cmd.c
 
 .PATH:	${S}/arch/${MACHINE}/${MACHINE}
+.PATH:	${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 SRCS+=	db_disasm.c
 
 . if    ${MACHINE} == "amd64" \
@@ -45,6 +47,10 @@ SRCS+=	db_trace.c
 SRCS+=	db_machdep.c
 . else
 MACHINE_FAMILY = ${MACHINE}
+. endif
+
+. if ${MACHINE} == "hp700"
+SRCS+=	db_trace.c db_machdep.c
 . endif
 
 . if ${MACHINE} == "sparc64"

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.21 2012/01/10 16:26:43 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.22 2012/01/18 09:35:48 skrll Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -40,6 +40,7 @@
 #include <sys/featuretest.h>
 
 #if defined(_NETBSD_SOURCE)
+#if defined(_KERNEL)
 typedef struct label_t {
 	int	lbl_rp;
 	int	lbl_sp;
@@ -47,6 +48,7 @@ typedef struct label_t {
 	int	lbl_ss[1];
 	double	lbl_sf[10];	/* hp800:fr12-fr15, hp700:fr12-fr21 */
 } label_t;
+#endif
 
 typedef	unsigned long		hppa_hpa_t;
 typedef	unsigned long		hppa_spa_t;

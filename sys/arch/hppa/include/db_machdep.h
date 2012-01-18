@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.11 2011/05/26 15:34:12 joerg Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.12 2012/01/18 09:35:48 skrll Exp $	*/
 
 /*	$OpenBSD: db_machdep.h,v 1.5 2001/02/16 19:20:13 mickey Exp $	*/
 
@@ -31,8 +31,12 @@
 #ifndef	_HPPA_DB_MACHDEP_H_
 #define	_HPPA_DB_MACHDEP_H_
 
+#include <sys/param.h>
+
 #include <uvm/uvm_extern.h>
+
 #include <machine/pcb.h>
+#include <machine/frame.h>
 
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32
