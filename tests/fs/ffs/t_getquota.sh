@@ -1,4 +1,4 @@
-# $NetBSD: t_getquota.sh,v 1.3 2011/03/09 19:04:58 bouyer Exp $ 
+# $NetBSD: t_getquota.sh,v 1.4 2012/01/18 20:51:23 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -38,7 +38,7 @@ done
 
 get_quota()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 	local fail
@@ -83,12 +83,12 @@ get_quota()
 -o "not-match:--        0        -        -                1       -       -" \
 		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -${q} /mnt
 	done
-	rump_shutdown
+	rump_quota_shutdown
 }
 
 quota_walk_list()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 
