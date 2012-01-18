@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2012/01/06 09:41:17 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 2012/01/18 07:17:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2012/01/06 09:41:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2012/01/18 07:17:09 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -717,7 +717,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		(void)VM_PAGEMD_PVLIST_LOCK(mdpg, false);
 		pv = &mdpg->mdpg_first;
 		/*
-		 * Loop over all current mappings setting/clearing as apropos.
+		 * Loop over all current mappings setting/clearing as appropriate.
 		 */
 		if (pv->pv_pmap != NULL) {
 			while (pv != NULL) {
