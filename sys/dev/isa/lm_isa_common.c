@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa_common.c,v 1.2 2012/01/17 17:17:15 jakllsch Exp $ */
+/*	$NetBSD: lm_isa_common.c,v 1.3 2012/01/18 00:11:43 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa_common.c,v 1.2 2012/01/17 17:17:15 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa_common.c,v 1.3 2012/01/18 00:11:43 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,14 +58,6 @@ struct lm_isa_softc {
 	bus_space_tag_t lm_iot;
 	bus_space_handle_t lm_ioh;
 };
-
-#if 0
-CFATTACH_DECL_NEW(lm_isa, sizeof(struct lm_isa_softc),
-    lm_isa_match, lm_isa_attach, lm_isa_detach, NULL);
-
-CFATTACH_DECL_NEW(lm_wbsio, sizeof(struct lm_isa_softc),
-    lm_isa_match, lm_isa_attach, lm_isa_detach, NULL);
-#endif
 
 int
 lm_isa_match(device_t parent, cfdata_t match, void *aux)
@@ -161,7 +153,7 @@ lm_isa_writereg(struct lm_softc *lmsc, int reg, int val)
 	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_DATA, val);
 }
 
-MODULE(MODULE_CLASS_DRIVER, lm_isa_common, NULL);
+MODULE(MODULE_CLASS_DRIVER, lm_isa_common, "lm");
 
 static int
 lm_isa_common_modcmd(modcmd_t cmd, void *priv)
