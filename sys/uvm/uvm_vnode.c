@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.97.2.3 2011/12/20 13:46:17 yamt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.97.2.4 2012/01/18 02:09:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.3 2011/12/20 13:46:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.4 2012/01/18 02:09:06 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -210,7 +210,7 @@ uvn_findpages(struct uvm_object *uobj, voff_t offset, unsigned int *npagesp,
 	if (flags & UFP_BACKWARD) {
 		for (i = npages - 1; i >= 0; i--, offset -= PAGE_SIZE) {
 			rv = uvn_findpage(uobj, offset, &pgs[i], flags, a,
-			    npages - i);
+			    i + 1);
 			if (rv == 0) {
 				if (flags & UFP_DIRTYONLY)
 					break;
@@ -242,9 +242,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
     unsigned int flags, struct uvm_page_array *a, unsigned int nleft)
 {
 	struct vm_page *pg;
-	bool dirty;
 	const unsigned int fillflags =
-	    ((flags & UFP_BACKWARD) ? UVM_PAGE_ARRAY_FILL_BACKWARD : 0) ||
+	    ((flags & UFP_BACKWARD) ? UVM_PAGE_ARRAY_FILL_BACKWARD : 0) |
 	    ((flags & UFP_DIRTYONLY) ?
 	    (UVM_PAGE_ARRAY_FILL_DIRTYONLY|UVM_PAGE_ARRAY_FILL_DENSE) : 0);
 	UVMHIST_FUNC("uvn_findpage"); UVMHIST_CALLED(ubchist);
@@ -254,14 +253,22 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 
 	if (*pgp != NULL) {
 		UVMHIST_LOG(ubchist, "dontcare", 0,0,0,0);
-		goto skip;
+		goto skip_offset;
 	}
 	for (;;) {
-		/* look for an existing page */
+		/*
+		 * look for an existing page.
+		 *
+		 * XXX fragile API
+		 * note that the array can be the one supplied by the caller of
+		 * uvm_findpages.  in that case, fillflags used by the caller
+		 * might not match strictly with ours.
+		 * in particular, the caller might have filled the array
+		 * without DIRTYONLY or DENSE but passed us UFP_DIRTYONLY.
+		 */
 		pg = uvm_page_array_fill_and_peek(a, uobj, offset, nleft,
 		    fillflags);
 		if (pg != NULL && pg->offset != offset) {
-			KASSERT((fillflags & UVM_PAGE_ARRAY_FILL_DENSE) == 0);
 			KASSERT(
 			    ((fillflags & UVM_PAGE_ARRAY_FILL_BACKWARD) != 0)
 			    == (pg->offset < offset));
@@ -334,7 +341,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 
 		/* stop on clean pages if requested */
 		if (flags & UFP_DIRTYONLY) {
-			dirty = uvm_pagecheckdirty(pg, false);
+			const bool dirty = uvm_pagecheckdirty(pg, false);
+
 			if (!dirty) {
 				UVMHIST_LOG(ubchist, "dirtonly", 0,0,0,0);
 				return 0;
@@ -352,7 +360,10 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 	*pgp = pg;
 	return 1;
 
-skip:
+skip_offset:
+	/*
+	 * skip this offset
+	 */
 	pg = uvm_page_array_peek(a);
 	if (pg != NULL) {
 		if (pg->offset == offset) {
@@ -361,6 +372,14 @@ skip:
 			KASSERT((fillflags & UVM_PAGE_ARRAY_FILL_DENSE) == 0);
 		}
 	}
+	return 0;
+
+skip:
+	/*
+	 * skip this page
+	 */
+	KASSERT(pg != NULL);
+	uvm_page_array_advance(a);
 	return 0;
 }
 

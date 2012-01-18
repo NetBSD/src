@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81.2.11 2012/01/11 00:09:51 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.12 2012/01/18 02:09:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.11 2012/01/11 00:09:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.12 2012/01/18 02:09:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1386,7 +1386,7 @@ uvm_loanobj_read(struct vm_map *map, vaddr_t va, size_t len,
 	unsigned int i, refs, aoff, pgoff;
 	unsigned int loaned; /* # of newly created O->A loan */
 	int error;
-	UVMHIST_FUNC("uvm_vnp_loanread"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC("uvm_loanobj_read"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "map %p va 0x%x npages %d", map, va, npages, 0);
 	UVMHIST_LOG(ubchist, "uobj %p off 0x%x", uobj, off, 0, 0);
