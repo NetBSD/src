@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.c,v 1.2 2012/01/18 23:12:21 nonaka Exp $	*/
+/*	$NetBSD: pathfs.h,v 1.1 2012/01/18 23:12:21 nonaka Exp $	*/
 
-/*
- * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
+/*-
+ * Copyright (C) 2012 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,28 +25,4 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "boot.h"
-#include "unixdev.h"
-
-#include <lib/libsa/ufs.h>
-#include <lib/libsa/ext2fs.h>
-#include "pathfs.h"
-
-char devname_hd[] = "hd";
-char devname_mmcd[] = "mmcd";
-char devname_path[] = "path";
-
-struct devsw devsw[] = {
-    { devname_hd, unixstrategy, unixopen, unixclose, unixioctl },
-    { devname_mmcd, unixstrategy, unixopen, unixclose, unixioctl },
-    { devname_path, unixstrategy, unixpathopen, unixclose, unixioctl },
-};
-int ndevs = __arraycount(devsw);
-
-struct fs_ops file_system[] = {
-    FS_OPS(ffsv1),
-    FS_OPS(ffsv2),
-    FS_OPS(ext2fs),
-    FS_OPS(pathfs),
-};
-int nfsys = __arraycount(file_system);
+FS_DEF(pathfs);
