@@ -1,4 +1,4 @@
-# $NetBSD: t_miscquota.sh,v 1.3 2011/03/09 19:04:58 bouyer Exp $ 
+# $NetBSD: t_miscquota.sh,v 1.4 2012/01/18 20:51:23 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -55,7 +55,7 @@ test_case log_unlink_remount quota_log \
 
 quota_walk_list()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 
@@ -84,13 +84,13 @@ quota_walk_list()
 	# do a repquota
 	atf_check -s exit:0 -o 'match:<integer>0x64000' \
 	    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -x -${expect} /mnt
-	rump_shutdown
+	rump_quota_shutdown
 }
 
 quota_snap()
 {
 	local flag=$1; shift
-	create_with_quotas $*
+	create_ffs $*
 	local q=$3
 	local expect
 
@@ -124,13 +124,13 @@ quota_snap()
 	    -o 'match:-        -  7days         5       -       -  7days' \
 	    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -av
 	#shutdown and check filesystem
-	rump_shutdown
+	rump_quota_shutdown
 }
 
 quota_log()
 {
 	local srv2args=$1; shift
-	create_with_quotas $*
+	create_ffs $*
 	local q=$3
 	local expect
 
@@ -160,5 +160,5 @@ quota_log()
 	atf_check -o ignore -e ignore $(atf_get_srcdir)/h_quota2_tests \
 	    ${srv2args} -b 5 ${IMG} ${RUMP_SERVER}
 	#shutdown and check filesystem
-	rump_shutdown
+	rump_quota_shutdown
 }

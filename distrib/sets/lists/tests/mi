@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.433 2011/12/27 17:13:10 pgoyette Exp $
+# $NetBSD: mi,v 1.434 2012/01/18 20:51:23 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -227,7 +227,8 @@
 ./usr/libdata/debug/usr/tests/dev/sysmon					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/sysmon/t_swwdog.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
-./usr/libdata/debug/usr/tests/fs/ffs/h_quota2_server.debug		tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/h_ffs_server.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/h_quota2_server.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/fs/ffs/h_quota2_tests.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_fifos.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_mount.debug			tests-fs-debug		debug,atf
@@ -1410,7 +1411,8 @@
 ./usr/tests/fs/h_funcs.subr			tests-fs-tests		atf
 ./usr/tests/fs/ffs				tests-fs-tests
 ./usr/tests/fs/ffs/Atffile			tests-fs-tests		atf
-./usr/tests/fs/ffs/h_quota2_server		tests-fs-tests		atf
+./usr/tests/fs/ffs/h_ffs_server			tests-fs-tests		atf
+./usr/tests/fs/ffs/h_quota2_server		tests-obsolete		obsolete
 ./usr/tests/fs/ffs/h_quota2_tests		tests-fs-tests		atf
 ./usr/tests/fs/ffs/rump_edquota			tests-obsolete		obsolete
 ./usr/tests/fs/ffs/rump_quota			tests-obsolete		obsolete
