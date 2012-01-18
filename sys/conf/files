@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1036 2012/01/14 04:18:49 pgoyette Exp $
+#	$NetBSD: files,v 1.1037 2012/01/18 20:37:20 drochner Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -58,7 +58,6 @@ defparam opt_dump.h		DUMP_ON_PANIC
 defflag	opt_callout.h		CALLWHEEL_STATS
 
 defflag				CPU_IN_CKSUM
-defflag				CPU_UCODE
 
 defflag opt_dtrace.h		KDTRACE_HOOKS
 
@@ -1355,6 +1354,7 @@ file	kern/kern_drvctl.c		drvctl		needs-flag
 
 # cpu control
 defpseudo cpuctl
+defflag				CPU_UCODE: firmload
 
 # pass-to-userspace transporter
 defpseudo putter
@@ -1428,7 +1428,7 @@ file	dev/dkwedge/dk.c
 file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
 file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
 file	dev/dkwedge/dkwedge_mbr.c	dkwedge_method_mbr
-file	dev/firmload.c			firmload | cpu_ucode	needs-flag
+file	dev/firmload.c			firmload		needs-flag
 file	dev/fss.c			fss
 file	dev/keylock.c			keylock
 file	dev/lockstat.c			lockstat		needs-flag
