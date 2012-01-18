@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_wbsio.c,v 1.1 2012/01/17 16:50:07 jakllsch Exp $ */
+/*	$NetBSD: lm_wbsio.c,v 1.2 2012/01/18 00:14:32 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_wbsio.c,v 1.1 2012/01/17 16:50:07 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_wbsio.c,v 1.2 2012/01/18 00:14:32 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: lm_wbsio.c,v 1.1 2012/01/17 16:50:07 jakllsch Exp $"
 CFATTACH_DECL_NEW(lm_wbsio, sizeof(struct lm_isa_softc),
     lm_isa_match, lm_isa_attach, lm_isa_detach, NULL);
 
-MODULE(MODULE_CLASS_DRIVER, lm_wbsio, "lm_isa_common");
+MODULE(MODULE_CLASS_DRIVER, lm_wbsio, "lm_isa_common,wbsio");
 
 #ifdef _MODULE
 #include "ioconf.c"
