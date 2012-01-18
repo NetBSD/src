@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofbreg.h,v 1.1 2006/04/11 16:11:07 macallan Exp $	*/
+/*	$NetBSD: voodoofbreg.h,v 1.2 2012/01/18 08:04:18 macallan Exp $	*/
 
 /*
  * Copyright 2005, 2006 by Michael Lorenz.
@@ -256,6 +256,8 @@
 #define SEQ_INDEX	0x3c4
 #define SEQ_DATA	0x3c5
 #define MISC_W		0x3c2
+	#define		VSYNC_NEG	0x80
+	#define		HSYNC_NEG	0x40
 #define GRA_INDEX	0x3ce
 #define GRA_DATA	0x3cf
 #define ATT_IW		0x3c0
