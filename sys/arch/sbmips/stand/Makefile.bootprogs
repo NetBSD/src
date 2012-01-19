@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.9 2011/02/20 07:47:39 matt Exp $
+# $NetBSD: Makefile.bootprogs,v 1.10 2012/01/19 19:58:16 matt Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -64,6 +64,8 @@ CLEANFILES+= vers.c
 
 REGION1_START=		0x20000000		# "Region 1 start"
 REGION1_SIZE!=		expr 256 \* 1024	# 256k
+
+LDSCRIPT=		${.CURDIR}/../common/boot.ldscript
 
 # our memory lauout:
 
