@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_nae.c,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_nae.c,v 1.1.2.2 2012/01/19 18:26:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,7 +39,11 @@ __KERNEL_RCSID(1, "$NetBSD: rmixl_nae.c,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $
 static int nae_match(device_t, cfdata_t, void *);
 static void nae_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(nae, 0,
+struct nae_gmac_softc {
+	device_t sc_dev;
+};
+
+CFATTACH_DECL_NEW(nae_gmac, sizeof(struct nae_gmac_softc),
     nae_match, nae_attach, 0, 0);
 
 static int
