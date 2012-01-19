@@ -132,7 +132,7 @@ END(rmixlfw_wakeup_cpu)
  * rmixl_cpu_trampoline - entry point for subordinate (non-#0) CPU wakeup
  */
 NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
-#ifdef _LP64
+#ifndef __mips_o32
 	/*
 	 * reconstruct trampoline args addr:
 	 * sign-extend 32 bit KSEG0 address in a0
