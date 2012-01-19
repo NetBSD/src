@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.11 2011/11/12 16:56:12 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.12 2012/01/19 07:38:05 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -498,7 +498,7 @@ dsk_open(struct open_file *f, ...)
 
 	/* build btinfo to identify disk device */
 	snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), "wd");
-	bi_rdev.cookie = d->unittag; /* disk unit number */
+	bi_rdev.cookie = (d->unittag << 8) | d->part;
 	return 0;
 }
 
