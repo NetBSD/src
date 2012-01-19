@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 2011/06/18 08:08:30 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 2012/01/19 07:38:06 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2011/06/18 08:08:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2012/01/19 07:38:06 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,8 +138,8 @@ device_register(device_t dev, void *aux)
 	}
 	if (bi_rdev != NULL && device_class(dev) == DV_DISK
 	    && device_is_a(dev, bi_rdev->devname)
-	    && device_unit(dev) == bi_rdev->cookie) {
+	    && device_unit(dev) == (bi_rdev->cookie >> 8)) {
 		booted_device = dev;
-		booted_partition = 0;
+		booted_partition = bi_rdev->cookie & 0xff;
 	}
 }
