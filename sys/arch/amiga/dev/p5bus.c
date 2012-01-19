@@ -1,4 +1,4 @@
-/*      $NetBSD: p5bus.c,v 1.1 2012/01/10 20:29:50 rkujawa Exp $ */
+/*      $NetBSD: p5bus.c,v 1.2 2012/01/19 00:14:08 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -64,10 +64,6 @@ struct p5bus_softc {
 	uint8_t		sc_has_ppc;
 #define P5BUS_PPC_NONE		0	/* CS Mk-III only */
 #define P5BUS_PPC_OK		1	/* has working PPC CPU */
-	uint8_t		sc_has_pci;
-#define P5BUS_PCI_NONE		0
-#define P5BUS_PCI_CVPPC	1	/* CyberVisionPPC / BlizzardVisionPPC */
-#define P5BUS_PCI_GREX		2	/* G-REX (not yet) */
 };
 
 CFATTACH_DECL_NEW(p5bus, sizeof(struct p5bus_softc),
@@ -126,7 +122,7 @@ p5bus_attach(device_t parent, device_t self, void *aux)
 	
 	} else if (zap->prodid == ZORRO_PRODID_BPPC) {
 
-		if (sn[0] == 'I') {	/* only "+" model has SCSI */
+		if (sn[0] != 'I') {	/* only "+" model has SCSI */
 			aprint_normal_dev(sc->sc_dev, 
 			    "BlizzardPPC 603e (sn %s)\n", sn);
 			sc->sc_has_scsi = P5BUS_SCSI_NONE;
@@ -140,8 +136,6 @@ p5bus_attach(device_t parent, device_t self, void *aux)
 		sc->sc_has_ppc = P5BUS_PPC_OK;
 
 	}
-
-	sc->sc_has_pci = P5BUS_PCI_CVPPC; /* XXX: insert probe here? */
 
 	p5baa.p5baa_cardtype = sc->sc_cardtype;
 
@@ -177,10 +171,9 @@ p5bus_callback(device_t self) {
 	sc = device_private(self);
 	p5baa.p5baa_cardtype = sc->sc_cardtype;
 
-	if (sc->sc_has_pci) {
-		strcpy(p5baa.p5baa_name, "p5pb");
-		config_found_ia(sc->sc_dev, "p5bus", &p5baa, p5bus_print);
-	}
+	/* p5pb is always found, probe is inside of p5pb driver */
+	strcpy(p5baa.p5baa_name, "p5pb");
+	config_found_ia(sc->sc_dev, "p5bus", &p5baa, p5bus_print);
 }
 
 /* Get serial number of the card. */
