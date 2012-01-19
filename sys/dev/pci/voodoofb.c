@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.33 2012/01/18 08:04:18 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.34 2012/01/19 18:35:27 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.33 2012/01/18 08:04:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.34 2012/01/19 18:35:27 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,6 @@ struct voodoo_regs {
 	
 static struct vcons_screen voodoofb_console_screen;
 
-extern const u_char rasops_cmap[768];
-
 static int	voodoofb_match(device_t, cfdata_t, void *);
 static void	voodoofb_attach(device_t, device_t, void *);
 
@@ -133,6 +131,7 @@ static void 	voodoofb_init(struct voodoofb_softc *);
 
 static void	voodoofb_cursor(void *, int, int, int);
 static void	voodoofb_putchar(void *, int, int, u_int, long);
+static void	voodoofb_putchar_aa(void *, int, int, u_int, long);
 static void	voodoofb_copycols(void *, int, int, int, int);
 static void	voodoofb_erasecols(void *, int, int, int, long);
 static void	voodoofb_copyrows(void *, int, int, int);
@@ -235,6 +234,8 @@ static const struct i2c_bitbang_ops voodoofb_i2cbb_ops = {
 	}
 };
 
+extern const u_char rasops_cmap[768];
+
 /*
  * Inline functions for getting access to register aperture.
  */
@@ -244,6 +245,11 @@ voodoo3_write32(struct voodoofb_softc *sc, uint32_t reg, uint32_t val)
 	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, val);
 }
 
+static inline void
+voodoo3_write32s(struct voodoofb_softc *sc, uint32_t reg, uint32_t val)
+{
+	bus_space_write_stream_4(sc->sc_regt, sc->sc_regh, reg, val);
+}
 static inline uint32_t
 voodoo3_read32(struct voodoofb_softc *sc, uint32_t reg) 
 {
@@ -447,10 +453,39 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 #endif
 	
 	j = 0;
-	for (i = 0; i < 256; i++) {
-		voodoofb_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1], 
-		    rasops_cmap[j + 2]);
-		j += 3;
+	if (sc->bits_per_pixel == 8) {
+		uint8_t tmp;
+		for (i = 0; i < 256; i++) {
+			tmp = i & 0xe0;
+			/*
+			 * replicate bits so 0xe0 maps to a red value of 0xff
+			 * in order to make white look actually white
+			 */
+			tmp |= (tmp >> 3) | (tmp >> 6);
+			sc->sc_cmap_red[i] = tmp;
+
+			tmp = (i & 0x1c) << 3;
+			tmp |= (tmp >> 3) | (tmp >> 6);
+			sc->sc_cmap_green[i] = tmp;
+
+			tmp = (i & 0x03) << 6;
+			tmp |= tmp >> 2;
+			tmp |= tmp >> 4;
+			sc->sc_cmap_blue[i] = tmp;
+
+			voodoofb_putpalreg(sc, i, sc->sc_cmap_red[i],
+			    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
+		}
+	} else {
+		/* linear ramp */
+		for (i = 0; i < 256; i++) {
+			sc->sc_cmap_red[i] = i;
+			sc->sc_cmap_green[i] = i;
+			sc->sc_cmap_blue[i] = i;
+
+			voodoofb_putpalreg(sc, i, sc->sc_cmap_red[i],
+			    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
+		}
 	}
 
 #ifdef VOODOOFB_ENABLE_INTR
@@ -711,6 +746,106 @@ voodoofb_putchar(void *cookie, int row, int col, u_int c, long attr)
 				data += font->stride;
 			}
 		}
+	}
+}
+
+static void
+voodoofb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct voodoofb_softc *sc = scr->scr_cookie;
+	uint8_t *data;
+	uint32_t bg, latch = 0, bg8, fg8, pixel;
+	int i, x, y, wi, he, r, g, b, aval;
+	int r1, g1, b1, r0, g0, b0, fgo, bgo, j;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
+		return;
+
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+	if (c == 0x20) {
+		voodoofb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+	data = WSFONT_GLYPH(c, font);
+
+	voodoo3_make_room(sc, 6);
+	voodoo3_write32(sc, SRCFORMAT,	FMT_8BIT | FMT_PAD_BYTE);
+	voodoo3_write32(sc, DSTFORMAT,	sc->linebytes | FMT_8BIT);
+	voodoo3_write32(sc, DSTSIZE,	wi | (he << 16));
+	voodoo3_write32(sc, DSTXY,	x | (y << 16));
+	voodoo3_write32(sc, SRCXY,	0);
+	voodoo3_write32(sc, COMMAND_2D, COMMAND_2D_H2S_BITBLT | 
+	    (ROP_COPY << 24) | SST_2D_GO);
+
+	/*
+	 * we need the RGB colours here, so get offsets into rasops_cmap
+	 */
+	fgo = ((attr >> 24) & 0xf) * 3;
+	bgo = ((attr >> 16) & 0xf) * 3;
+
+	r0 = rasops_cmap[bgo];
+	r1 = rasops_cmap[fgo];
+	g0 = rasops_cmap[bgo + 1];
+	g1 = rasops_cmap[fgo + 1];
+	b0 = rasops_cmap[bgo + 2];
+	b1 = rasops_cmap[fgo + 2];
+#define R3G3B2(r, g, b) ((r & 0xe0) | ((g >> 3) & 0x1c) | (b >> 6))
+	bg8 = R3G3B2(r0, g0, b0);
+	fg8 = R3G3B2(r1, g1, b1);
+	voodoo3_make_room(sc, 15);
+	j = 15;
+	for (i = 0; i < ri->ri_fontscale; i++) {
+		aval = *data;
+		if (aval == 0) {
+			pixel = bg8;
+		} else if (aval == 255) {
+			pixel = fg8;
+		} else {
+			r = aval * r1 + (255 - aval) * r0;
+			g = aval * g1 + (255 - aval) * g0;
+			b = aval * b1 + (255 - aval) * b0;
+			pixel = ((r & 0xe000) >> 8) |
+				((g & 0xe000) >> 11) |
+				((b & 0xc000) >> 14);
+		}
+		latch = (latch << 8) | pixel;
+		/* write in 32bit chunks */
+		if ((i & 3) == 3) {
+			voodoo3_write32s(sc, LAUNCH_2D, latch);
+			/*
+			 * not strictly necessary, old data should be shifted 
+			 * out 
+			 */
+			latch = 0;
+			/*
+			 * check for pipeline space every now and then
+			 * I don't think we can feed a Voodoo3 faster than it
+			 * can process simple pixel data but I have been wrong
+			 * about that before
+			 */
+			j--;
+			if (j == 0) {
+				voodoo3_make_room(sc, 15);
+				j = 15;
+			}
+		}
+		data++;
+	}
+	/* if we have pixels left in latch write them out */
+	if ((i & 3) != 0) {
+		latch = latch << ((4 - (i & 3)) << 3);	
+		voodoo3_write32s(sc, LAUNCH_2D, latch);
 	}
 }
 
@@ -1054,7 +1189,7 @@ voodoofb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->width;
 	ri->ri_height = sc->height;
 	ri->ri_stride = sc->width;
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 	
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
@@ -1068,7 +1203,11 @@ voodoofb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = voodoofb_eraserows;
 	ri->ri_ops.erasecols = voodoofb_erasecols;
 	ri->ri_ops.cursor = voodoofb_cursor;
-	ri->ri_ops.putchar = voodoofb_putchar;
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = voodoofb_putchar_aa;
+	} else {
+		ri->ri_ops.putchar = voodoofb_putchar;
+	}
 }
 
 #if 0
