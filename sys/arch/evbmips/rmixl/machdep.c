@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp");
 
 //#define MACHDEP_DEBUG 1
 #ifdef MACHDEP_DEBUG
-int machdep_debug=MACHDEP_DEBUG;
+extern int machdep_debug;
 # define DPRINTF(x,...)	do { if (machdep_debug) printf(x, ## __VA_ARGS__); } while(0)
 #else
 # define DPRINTF(x,...)
