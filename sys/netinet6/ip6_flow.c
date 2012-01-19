@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.18 2009/03/23 18:43:20 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.19 2012/01/19 13:19:34 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.18 2009/03/23 18:43:20 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.19 2012/01/19 13:19:34 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,7 +496,6 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	ip6f->ip6f_src = ip6->ip6_src;
 	ip6f->ip6f_flow = ip6->ip6_flow;
 	PRT_SLOW_ARM(ip6f->ip6f_timer, IP6FLOW_TIMER);
-	ip6f->ip6f_start = time_uptime;
 
 	/*
 	 * Insert into the approriate bucket of the flow table.
