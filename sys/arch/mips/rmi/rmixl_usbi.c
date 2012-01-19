@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_usbi.c,v 1.1.2.10 2011/12/31 08:20:43 matt Exp $	*/
+/*	rmixl_usbi.c,v 1.1.2.10 2011/12/31 08:20:43 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.10 2011/12/31 08:20:43 matt Exp $");
+__KERNEL_RCSID(0, "rmixl_usbi.c,v 1.1.2.10 2011/12/31 08:20:43 matt Exp");
 
 #include "locators.h"
 
@@ -163,7 +163,7 @@ rmixl_usbi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	/* attach any children */
-	config_search_ia(rmixl_usbi_search, self, "rmixl_usbi", NULL);
+	config_search_ia(rmixl_usbi_search, self, "xlusbi", NULL);
 }
 
 static int
