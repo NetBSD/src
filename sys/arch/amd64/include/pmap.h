@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30 2012/01/15 16:48:31 cherry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.31 2012/01/19 22:00:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -278,9 +278,9 @@ pmap_pte2pa(pt_entry_t pte)
 static __inline void
 pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
 {
-	mutex_enter(&pte_lock);
+	int s = splvm();
 	xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
-	mutex_exit(&pte_lock);
+	splx(s);
 }
 
 static __inline pt_entry_t
