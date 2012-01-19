@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.57 2012/01/10 20:01:56 drochner Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.58 2012/01/19 13:19:34 liamjfoy Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -241,7 +241,6 @@ struct ip6flow {
 	u_quad_t ip6f_dropped;            /* ENOBUFS returned by if_output */
 	u_quad_t ip6f_forwarded;          /* packets forwarded */
 	u_int ip6f_timer;               /* lifetime timer */
-	time_t ip6f_start;              /* creation time */
 };
 
 #ifdef _KERNEL
