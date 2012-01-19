@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofbreg.h,v 1.2 2012/01/18 08:04:18 macallan Exp $	*/
+/*	$NetBSD: voodoofbreg.h,v 1.3 2012/01/19 18:35:27 macallan Exp $	*/
 
 /*
  * Copyright 2005, 2006 by Michael Lorenz.
@@ -149,6 +149,18 @@
 #define CLIP0MAX	(0x00100000 + 0x0c)
 #define DSTBASE		(0x00100000 + 0x10)
 #define DSTFORMAT	(0x00100000 + 0x14)
+	#define		FMT_STRIDE_MASK		0x00003fff
+	#define		FMT_MONO		0x00000000
+	#define		FMT_8BIT		0x00010000
+	#define		FMT_16BIT		0x00030000
+	#define		FMT_24BIT		0x00040000
+	#define		FMT_32BIT		0x00050000
+	#define		FMT_422YUYV		0x00080000
+	#define		FMT_422UYVY		0x00090000
+	#define		FMT_PAD_STRIDE		0x00000000
+	#define		FMT_PAD_BYTE		0x00400000
+	#define		FMT_PAD_WORD		0x00800000
+	#define		FMT_PAD_LONG		0x00c00000
 #define SRCBASE		(0x00100000 + 0x34)
 #define COMMANDEXTRA_2D	(0x00100000 + 0x38)
 #define CLIP1MIN	(0x00100000 + 0x4c)
