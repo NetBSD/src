@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.3 2011/09/19 19:15:29 rkujawa Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.4 2012/01/19 00:14:08 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <machine/intr.h>
 
 #include <m68k/bus_dma.h>
+
+/* #define __HAVE_PCI_CONF_HOOK */
 
 /*
  * Forward declarations.

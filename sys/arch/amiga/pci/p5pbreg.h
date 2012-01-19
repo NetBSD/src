@@ -1,7 +1,7 @@
-/*	$NetBSD: p5pbreg.h,v 1.5 2012/01/11 17:04:29 rkujawa Exp $ */
+/*	$NetBSD: p5pbreg.h,v 1.6 2012/01/19 00:14:08 rkujawa Exp $ */
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,39 +34,44 @@
  * 
  * 0xFFFA0000 - PCI register space, 64KB
  * 0xFFFC0000 - PCI configuration mechanism #1 data, 128KB
- * 0xFFFE0000 - (unknown, maybe PCI configuration mechanism #1 address, 4KB)
+ * 0xFFFE0000 - (unknown, probably PCI bridge configuration registers, 4KB)
  * 
  * 0xE0000000 - Permedia RAM on CVPPC/BVPPC (1st aperture), 8MB
  * 0xE0800000 - Permedia RAM on CVPPC/BVPPC (2nd aperture), 8MB
- * 0xE1000000 - Permedia registers, 128KB
+ * 0xE1000000 - Permedia registers on CVPPC/BVPPC, 128KB
+ *
+ * 0x80000000 - PCI cards memory space on G-REX, variable size
  *
  * Note: this map may not look the same for every firmware revision. 
  * 
- * The bridge is probably capable of DMA and interrupts, but this would 
- * need further reverse engineering, and is not really needed to drive
- * the Permedia 2 chip on CVPPC/BVPPC cards.
+ * The bridge is certainly capable of DMA, but this needs further reverse 
+ * engineering.
  */
 #ifndef _AMIGA_P5PBREG_H_
 
 #define P5BUS_PCI_CONF_BASE	0xFFFC0000
 #define P5BUS_PCI_CONF_SIZE	0x00020000	/* up to 128kB */
 
-/* XXX: This is OK for CVPPC/BVPPC only! */ 
-#define P5BUS_PCI_MEM_BASE	0xE0000000
-#define P5BUS_PCI_MEM_SIZE	0x01010000	/* actually 0x01020000 */
+#define OFF_PCI_CONF_DATA	0x00001000	/* also 0 on CVPPC */
+#define OFF_PCI_DEVICE		0x00002000
+#define OFF_PCI_FUNCTION	0x00000100
 
 #define P5BUS_PCI_IO_BASE	0xFFFA0000
-#define P5BUS_PCI_IO_SIZE	0x0000FFFF	/* 64kB */
+#define P5BUS_PCI_IO_SIZE	0x00010000	/* 64kB */
 
-#define P5BUS_PCI_BRIDGE_BASE	0xFFFE0000
-#define P5BUS_PCI_BRIDGE_SIZE	0x0000FFFF	/* 64kB, 4kB on some fw revs */
+/* Bridge configuration */
+#define P5BUS_BRIDGE_BASE	0xFFFE0000
+#define P5BUS_BRIDGE_SIZE	0x00001000	/* 64kB, 4kB on some fw revs */
 
-#define OFF_PCI_CONF_DATA	0x00000000 
+#define OFF_BRIDGE_ENDIAN	0x0000          /* PCI_BRIDGE_BASE + offset */
+#define P5BUS_BRIDGE_ENDIAN_BIG	0x02            /* to switch into BE mode */
+#define OFF_BRIDGE_INTR		0x0010          /* ? XXX interrupt enable? */
+#define P5BUS_BRIDGE_INTR_INT2	0x01            /* ? XXX INT2? */
 
-#define P5BUS_CONF_ENDIAN	0x0000          /* PCI_BRIDGE_BASE + offset */
-#define P5BUS_CONF_ENDIAN_BIG	0x02            /* to switch into BE mode */
-#define P5BUS_CONF_INTR		0x0010          /* ? XXX interrupt enable? */
-#define P5BUS_CONF_INTR_INT2	0x01            /* ? XXX INT2? */
+/* CVPPC/BVPPC defaults. */ 
+#define P5BUS_PCI_MEM_BASE	0xE0000000
+/* #define P5BUS_PCI_MEM_BASE	0x80000000 */	/* default on G-REX */
+#define P5BUS_PCI_MEM_SIZE	0x01020000
 
 /* typical configuration of Permedia 2 on CVPPC/BVPPC */
 #define OFF_P2_APERTURE_1	0x0 
@@ -74,12 +79,9 @@
 #define OFF_P2_REGS		0x01000000 
 /* #define OFF_P2_REGS		0x0F000000 */   /* ? alt. Permedia regs */
 
-/* PCI configuration register on CV64/3D, base is an offset from card base */
-#define CV643D_PCI_CONF_BASE	0xC0E0000
-#define CV643D_PCI_CONF_SIZE	0xFFF
-#define CV643D_PCI_MEM_BASE	0x4000000
-#define CV643D_PCI_MEM_SIZ	0x4000FFF
-#define CV643D_PCI_IO_BASE	0xC000000	
-#define CV643D_PCI_IO_SIZE	0xFFFF
+/* Permedia 2 vendor and product IDs, for CVPPC/BVPPC probe. */
+#define P5PB_PM2_VENDOR_ID	0x104C
+#define P5PB_PM2_PRODUCT_ID	0x3D07
 
 #endif /* _AMIGA_P5PBREG_H_ */
+

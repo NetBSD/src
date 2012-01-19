@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.152 2012/01/11 17:04:29 rkujawa Exp $
+#	$NetBSD: files.amiga,v 1.153 2012/01/19 00:14:08 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -33,8 +33,6 @@ defflag				P5PPC68KBOARD
 defflag				LEV6_DEFER
 defflag				DEVRELOAD
 
-defflag opt_p5pb.h		P5PB_GENFB
-defflag opt_p5pb.h		P5PB_OLD_FIRMWARE
 defflag opt_p5pb.h		P5PB_DEBUG
 
 defparam			IOBZCLOCK

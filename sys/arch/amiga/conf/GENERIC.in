@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.92 2012/01/11 17:04:29 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.93 2012/01/19 00:14:08 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.92 $"
+#ident 		"GENERIC-$Revision: 1.93 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -557,12 +557,10 @@ m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 # PCI bus support
 options		PCIVERBOSE              # verbose PCI device autoconfig messages
 #options	PCI_CONFIG_DUMP
-options		PCI_NETBSD_CONFIGURE	# used only by mppb(4)
+options		PCI_NETBSD_CONFIGURE	# supported by mppb(4) and p5pb(4)
 
 p5pb0		at p5bus0		# Phase5 PCI bridge (CVPPC/BVPPC/G-REX)
 p5membar*	at zbus0		# Phase5 PCI bridge autoconfiguring BARs
-#options	P5PB_OLD_FIRMWARE	# enable support for p5pb with old fw
-#options	P5PB_GENFB		# enable genfb support for CVPPC/BVPPC
 #options	P5PB_DEBUG		# enable excessive debug for p5pb
 pci*		at p5pb0
 
