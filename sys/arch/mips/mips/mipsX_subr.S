@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.53 2012/01/03 03:32:23 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.54 2012/01/19 08:28:49 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -136,7 +136,7 @@
 
 #include "assym.h"
 
-#ifdef _LP64
+#ifndef __mips_o32
 #define	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(reg) \
 	li reg, MIPS_SR_KX; mtc0 reg, MIPS_COP_0_STATUS
 #define	SET_EXCEPTION_LEVEL(reg) \

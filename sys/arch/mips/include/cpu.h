@@ -138,10 +138,6 @@ struct cpu_info {
 	void *ci_fpsave_si;		/* FP sync softint handler */
 	struct evcnt ci_evcnt_all_ipis;	/* aggregated IPI counter */
 	struct evcnt ci_evcnt_per_ipi[NIPIS];	/* individual IPI counters*/
-	struct evcnt ci_evcnt_synci_activate_rqst;
-	struct evcnt ci_evcnt_synci_onproc_rqst;
-	struct evcnt ci_evcnt_synci_deferred_rqst;
-	struct evcnt ci_evcnt_synci_ipi_rqst;
 
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
 #define	CPUF_PRESENT	0x02		/* CPU is present */
@@ -242,7 +238,7 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 #else
 #define	cpu_number()		(0)
-#define	CPU_IS_PRIMARY(ci)	(true)
+#define	CPU_IS_PRIMARY(ci)	((void) (ci), true)
 #endif
 
 /* XXX simonb
@@ -268,9 +264,7 @@ struct mips_options {
 	u_int mips3_pg_shift;
 	u_int mips3_pg_cached;
 #ifdef MIPS3_PLUS
-#ifdef _LP64
 	uint64_t mips3_xkphys_cached;
-#endif
 	uint64_t mips3_tlb_vpn_mask;
 	uint64_t mips3_tlb_pfn_mask;
 	uint32_t mips3_tlb_pg_mask;

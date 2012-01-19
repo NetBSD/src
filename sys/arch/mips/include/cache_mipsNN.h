@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.h,v 1.4.126.1 2011/12/27 01:56:33 matt Exp $	*/
+/*	$NetBSD: cache_mipsNN.h,v 1.4.126.2 2012/01/19 08:28:48 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 void	mipsNN_cache_init(uint32_t, uint32_t);
 
 void	mipsNN_picache_sync_all(void);
-void	mipsNN_picache_sync_range(vaddr_t, vsize_t);
+void	mipsNN_picache_sync_range(register_t, vsize_t);
 void	mipsNN_picache_sync_range_index(vaddr_t, vsize_t);
 
 void	mipsNN_pdcache_wbinv_all(void);

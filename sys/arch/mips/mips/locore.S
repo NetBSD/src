@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.23 2011/04/29 08:26:26 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.24 2012/01/19 08:28:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,6 +109,8 @@ _C_LABEL(kernel_text):
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 #ifdef _LP64
 	li	t0, MIPS_SR_KX | MIPS_SR_UX	# turn on XKSEG and XKPHYS
+#elif __mips_n32
+	li	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
 #else
 	li	t0, 0				# Disable interrupts and
 #endif
@@ -124,7 +126,7 @@ _C_LABEL(kernel_text):
 #endif /* HPCMIPS_L1CACHE_DISABLE */
 #else
 	mfc0	t0, MIPS_COP_0_STATUS
-#ifdef _LP64
+#ifndef __mips_o32
 	or	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
 #endif
 	or	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
