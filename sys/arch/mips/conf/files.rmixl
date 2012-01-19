@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.18 2012/01/04 16:17:53 matt Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.19 2012/01/19 17:37:15 matt Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -113,58 +113,58 @@ file	arch/mips/rmi/rmixl_sdio.c		xlsdio
 file	arch/mips/rmi/rmixl_sdhc.c		sdhc_xlsdio
 
 # XL Network Acceleration Engine
-device	xlnae { [port=-1] }
+device	xlnae { [complex=-1], [lane=-1], [kind=-1], [phy=-1] }
 attach	xlnae at obio with xlnae_obio
 attach	xlnae at pci with xlnae_pci
 device	nae: ether, ifnet, arp, mii
-attach	nae at xlnae
+attach	nae at xlnae with nae_gmac
 file	arch/mips/rmi/rmixl_xlnae_obio.c	xlnae_obio
 file	arch/mips/rmi/rmixl_xlnae_pci.c		xlnae_pci
 file	arch/mips/rmi/rmixl_xlnae.c		xlnae
-file	arch/mips/rmi/rmixl_nae.c		nae
+file	arch/mips/rmi/rmixl_nae.c		nae_gmac
 
 # XL Fast Messaging Network
 device	xlfmn
 attach	xlfmn at obio with xlfmn_obio
 attach	xlfmn at pci with xlfmn_pci
-file	arch/mips/rmi/rmixl_xlfmn_obio.c	xlfmn_obio
-file	arch/mips/rmi/rmixl_xlfmn_pci.c		xlfmn_pci
+file	arch/mips/rmi/rmixl_fmn_obio.c		xlfmn_obio
+file	arch/mips/rmi/rmixl_fmn_pci.c		xlfmn_pci
 
 # XL Packet Ordering Engine
 device	xlpoe
 attach	xlpoe at pci with xlpoe_pci
-file	arch/mips/rmi/rmixl_xlpoe_pci.c		xlpoe_pci
+file	arch/mips/rmi/rmixl_poe_pci.c		xlpoe_pci
 
 # XL Compression/Decompression Engine
 device	xlcde
 attach	xlcde at obio with xlcde_obio
 attach	xlcde at pci with xlcde_pci
-file	arch/mips/rmi/rmixl_xlcde_obio.c	xlcde_obio
-file	arch/mips/rmi/rmixl_xlcde_pci.c		xlcde_pci
+file	arch/mips/rmi/rmixl_cde_obio.c		xlcde_obio
+file	arch/mips/rmi/rmixl_cde_pci.c		xlcde_pci
 
 # XL Security Acceleration Engine (AES/etc.)
 device	xlsae
 attach	xlsae at obio with xlsae_obio
 attach	xlsae at pci with xlsae_pci
-file	arch/mips/rmi/rmixl_xlsae_obio.c	xlsae_obio
-file	arch/mips/rmi/rmixl_xlsae_pci.c		xlsae_pci
+file	arch/mips/rmi/rmixl_sae_obio.c		xlsae_obio
+file	arch/mips/rmi/rmixl_sae_pci.c		xlsae_pci
 
 # XL Public Key Engine (RSA/ECC)
 device	xlpke
 attach	xlpke at pci with xlpke_pci
-file	arch/mips/rmi/rmixl_xlpke_pci.c		xlpke_pci
+file	arch/mips/rmi/rmixl_pke_pci.c		xlpke_pci
 
 # XL Regular eXpression Engine
 device	xlrxe
 attach	xlrxe at pci with xlrxe_pci
-file	arch/mips/rmi/rmixl_xlrxe_pci.c		xlrxe_pci
+file	arch/mips/rmi/rmixl_rxe_pci.c		xlrxe_pci
 
 # XL Serial Rapid IO controller
 device	xlsrio
 attach	xlsrio at obio with xlsrio_obio
 attach	xlsrio at pci with xlsrio_pci
-file	arch/mips/rmi/rmixl_xlsrio_obio.c	xlsrio_obio
-file	arch/mips/rmi/rmixl_xlsrio_pci.c	xlsrio_pci
+file	arch/mips/rmi/rmixl_srio_obio.c		xlsrio_obio
+file	arch/mips/rmi/rmixl_srio_pci.c		xlsrio_pci
 
 # XL I2C controller
 device	xli2c: i2cbus
