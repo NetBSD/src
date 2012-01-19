@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.118 2011/11/25 14:34:50 joerg Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.119 2012/01/19 21:25:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -52,42 +52,42 @@
 #include <machine/elf_machdep.h>
 #endif
 
-typedef	uint8_t  	Elf_Byte;
+typedef uint8_t		Elf_Byte;
 
-typedef	uint32_t	Elf32_Addr;
+typedef uint32_t	Elf32_Addr;
 #define	ELF32_FSZ_ADDR	4
-typedef	uint32_t	Elf32_Off;
-typedef	int32_t		Elf32_SOff;
+typedef uint32_t	Elf32_Off;
+typedef int32_t		Elf32_SOff;
 #define	ELF32_FSZ_OFF	4
-typedef	int32_t		Elf32_Sword;
-#define	ELF32_FSZ_SWORD	4
-typedef	uint32_t	Elf32_Word;
+typedef int32_t		Elf32_Sword;
+#define	ELF32_FSZ_SWORD 4
+typedef uint32_t	Elf32_Word;
 #define	ELF32_FSZ_WORD	4
-typedef	uint16_t	Elf32_Half;
+typedef uint16_t	Elf32_Half;
 #define	ELF32_FSZ_HALF	2
-typedef	uint64_t	Elf32_Lword;
-#define	ELF32_FSZ_LWORD	8
+typedef uint64_t	Elf32_Lword;
+#define	ELF32_FSZ_LWORD 8
 
-typedef	uint64_t	Elf64_Addr;
+typedef uint64_t	Elf64_Addr;
 #define	ELF64_FSZ_ADDR	8
-typedef	uint64_t	Elf64_Off;
-typedef	int64_t		Elf64_SOff;
+typedef uint64_t	Elf64_Off;
+typedef int64_t		Elf64_SOff;
 #define	ELF64_FSZ_OFF	8
-typedef	int32_t		Elf64_Shalf;
-#define	ELF64_FSZ_SHALF	4
+typedef int32_t		Elf64_Shalf;
+#define	ELF64_FSZ_SHALF 4
 
-typedef	int32_t		Elf64_Sword;
-#define	ELF64_FSZ_SWORD	4
-typedef	uint32_t	Elf64_Word;
+typedef int32_t		Elf64_Sword;
+#define	ELF64_FSZ_SWORD 4
+typedef uint32_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	4
 
-typedef	int64_t		Elf64_Sxword;
+typedef int64_t		Elf64_Sxword;
 #define	ELF64_FSZ_SXWORD 8
-typedef	uint64_t	Elf64_Xword;
-#define	ELF64_FSZ_XWORD	8
-typedef	uint64_t	Elf64_Lword;
-#define	ELF64_FSZ_LWORD	8
-typedef	uint16_t	Elf64_Half;
+typedef uint64_t	Elf64_Xword;
+#define	ELF64_FSZ_XWORD 8
+typedef uint64_t	Elf64_Lword;
+#define	ELF64_FSZ_LWORD 8
+typedef uint16_t	Elf64_Half;
 #define	ELF64_FSZ_HALF 2
 
 /*
@@ -104,12 +104,12 @@ typedef struct {
 	Elf32_Off	e_phoff;		/* Program hdr offset */
 	Elf32_Off	e_shoff;		/* Section hdr offset */
 	Elf32_Word	e_flags;		/* Processor flags */
-	Elf32_Half      e_ehsize;		/* sizeof ehdr */
-	Elf32_Half      e_phentsize;		/* Program header entry size */
-	Elf32_Half      e_phnum;		/* Number of program headers */
-	Elf32_Half      e_shentsize;		/* Section header entry size */
-	Elf32_Half      e_shnum;		/* Number of section headers */
-	Elf32_Half      e_shstrndx;		/* String table index */
+	Elf32_Half	e_ehsize;		/* sizeof ehdr */
+	Elf32_Half	e_phentsize;		/* Program header entry size */
+	Elf32_Half	e_phnum;		/* Number of program headers */
+	Elf32_Half	e_shentsize;		/* Section header entry size */
+	Elf32_Half	e_shnum;		/* Number of section headers */
+	Elf32_Half	e_shstrndx;		/* String table index */
 } Elf32_Ehdr;
 
 typedef struct {
@@ -131,9 +131,9 @@ typedef struct {
 
 /* e_ident offsets */
 #define	EI_MAG0		0	/* '\177' */
-#define	EI_MAG1		1	/* 'E'    */
-#define	EI_MAG2		2	/* 'L'    */
-#define	EI_MAG3		3	/* 'F'    */
+#define	EI_MAG1		1	/* 'E'	  */
+#define	EI_MAG2		2	/* 'L'	  */
+#define	EI_MAG3		3	/* 'F'	  */
 #define	EI_CLASS	4	/* File class */
 #define	EI_DATA		5	/* Data encoding */
 #define	EI_VERSION	6	/* File version */
@@ -343,23 +343,23 @@ typedef struct {
 #define	PT_TLS		7		/* TLS initialisation image */
 #define	PT_NUM		8
 
-#define	PT_LOOS         0x60000000	/* OS-specific range */
+#define	PT_LOOS		0x60000000	/* OS-specific range */
 
 /* GNU-specific */
-#define	PT_GNU_EH_FRAME	0x6474e550	/* EH frame segment */
+#define	PT_GNU_EH_FRAME 0x6474e550	/* EH frame segment */
 #define	PT_GNU_STACK	0x6474e551	/* Indicate executable stack */
-#define	PT_GNU_RELRO	0x6474e552      /* Make read-only after relocation */
+#define	PT_GNU_RELRO	0x6474e552	/* Make read-only after relocation */
 
-#define	PT_HIOS         0x6fffffff
+#define	PT_HIOS		0x6fffffff
 #define	PT_LOPROC	0x70000000	/* Processor-specific range */
 #define	PT_HIPROC	0x7fffffff
 
-#define	PT_MIPS_REGINFO	0x70000000
+#define	PT_MIPS_REGINFO 0x70000000
 
 /* p_flags */
-#define	PF_R		0x4	/* Segment is readable */
-#define	PF_W		0x2	/* Segment is writable */
-#define	PF_X		0x1	/* Segment is executable */
+#define	PF_R		0x4		/* Segment is readable */
+#define	PF_W		0x2		/* Segment is writable */
+#define	PF_X		0x1		/* Segment is executable */
 
 #define	PF_MASKOS	0x0ff00000	/* Operating system specific values */
 #define	PF_MASKPROC	0xf0000000	/* Processor-specific values */
@@ -420,11 +420,11 @@ typedef struct {
 #define	SHT_GNU_HASH	0x6ffffff6	/* GNU style symbol hash table */
 #define	SHT_SUNW_move	0x6ffffffa
 #define	SHT_SUNW_syminfo 0x6ffffffc
-#define	SHT_SUNW_verdef	0x6ffffffd	/* Versions defined by file */
+#define	SHT_SUNW_verdef 0x6ffffffd	/* Versions defined by file */
 #define	SHT_GNU_verdef	SHT_SUNW_verdef
 #define	SHT_SUNW_verneed 0x6ffffffe	/* Versions needed by file */
-#define	SHT_GNU_verneed	SHT_SUNW_verneed
-#define	SHT_SUNW_versym	0x6fffffff	/* Symbol versions */
+#define	SHT_GNU_verneed SHT_SUNW_verneed
+#define	SHT_SUNW_versym 0x6fffffff	/* Symbol versions */
 #define	SHT_GNU_versym	SHT_SUNW_versym
 #define	SHT_HIOS	0x6fffffff
 #define	SHT_LOPROC	0x70000000	/* Processor-specific range */
@@ -547,7 +547,7 @@ typedef struct {
 /* r_info utility macros */
 #define	ELF32_R_SYM(info)	((info) >> 8)
 #define	ELF32_R_TYPE(info)	((info) & 0xff)
-#define	ELF32_R_INFO(sym, type)	(((sym) << 8) + (unsigned char)(type))
+#define	ELF32_R_INFO(sym, type) (((sym) << 8) + (unsigned char)(type))
 
 typedef struct {
 	Elf64_Addr	r_offset;	/* where to do it */
@@ -578,7 +578,7 @@ typedef struct {
 
 #define	ELF32_M_SYM(info)	((info) >> 8)
 #define	ELF32_M_SIZE(info)	((info) & 0xff)
-#define	ELF32_M_INFO(sym, size)	(((sym) << 8) + (unsigned char)(size))
+#define	ELF32_M_INFO(sym, size) (((sym) << 8) + (unsigned char)(size))
 
 typedef struct {
 	Elf64_Lword	m_value;	/* symbol value */
@@ -590,24 +590,24 @@ typedef struct {
 
 #define	ELF64_M_SYM(info)	((info) >> 8)
 #define	ELF64_M_SIZE(info)	((info) & 0xff)
-#define	ELF64_M_INFO(sym, size)	(((sym) << 8) + (unsigned char)(size))
+#define	ELF64_M_INFO(sym, size) (((sym) << 8) + (unsigned char)(size))
 
 /*
  * Hardware/software capabilities entry
  */
 typedef struct {
-	Elf32_Word	c_tag;		/* entry tag value */
+	Elf32_Word		c_tag;	/* entry tag value */
 	union {
-	    Elf32_Addr	c_ptr;
-	    Elf32_Word	c_val;
+		Elf32_Addr	c_ptr;
+		Elf32_Word	c_val;
 	} c_un;
 } Elf32_Cap;
 
 typedef struct {
-	Elf64_Xword	c_tag;		/* entry tag value */
+	Elf64_Xword		c_tag;	/* entry tag value */
 	union {
-	    Elf64_Addr	c_ptr;
-	    Elf64_Xword	c_val;
+		Elf64_Addr	c_ptr;
+		Elf64_Xword	c_val;
 	} c_un;
 } Elf64_Cap;
 
@@ -615,18 +615,18 @@ typedef struct {
  * Dynamic Section structure array
  */
 typedef struct {
-	Elf32_Word	d_tag;		/* entry tag value */
+	Elf32_Word		d_tag;	/* entry tag value */
 	union {
-	    Elf32_Addr	d_ptr;
-	    Elf32_Word	d_val;
+		Elf32_Addr	d_ptr;
+		Elf32_Word	d_val;
 	} d_un;
 } Elf32_Dyn;
 
 typedef struct {
-	Elf64_Xword	d_tag;		/* entry tag value */
+	Elf64_Xword		d_tag;	/* entry tag value */
 	union {
-	    Elf64_Addr	d_ptr;
-	    Elf64_Xword	d_val;
+		Elf64_Addr	d_ptr;
+		Elf64_Xword	d_val;
 	} d_un;
 } Elf64_Dyn;
 
@@ -651,15 +651,15 @@ typedef struct {
 #define	DT_REL		17	/* Address of Rel relocation table */
 #define	DT_RELSZ	18	/* Size, in bytes, of DT_REL table */
 #define	DT_RELENT	19	/* Size, in bytes, of one DT_REL entry */
-#define	DT_PLTREL	20 	/* Type of PLT relocation entries */
+#define	DT_PLTREL	20	/* Type of PLT relocation entries */
 #define	DT_DEBUG	21	/* Used for debugging; unspecified */
 #define	DT_TEXTREL	22	/* Relocations might modify non-writable seg */
 #define	DT_JMPREL	23	/* Address of relocations associated with PLT */
 #define	DT_BIND_NOW	24	/* Process all relocations at load-time */
 #define	DT_INIT_ARRAY	25	/* Address of initialization function array */
 #define	DT_FINI_ARRAY	26	/* Size, in bytes, of DT_INIT_ARRAY array */
-#define	DT_INIT_ARRAYSZ	27	/* Address of termination function array */
-#define	DT_FINI_ARRAYSZ	28	/* Size, in bytes, of DT_FINI_ARRAY array*/
+#define	DT_INIT_ARRAYSZ 27	/* Address of termination function array */
+#define	DT_FINI_ARRAYSZ 28	/* Size, in bytes, of DT_FINI_ARRAY array*/
 #define	DT_NUM		29
 
 #define	DT_LOOS		0x60000000	/* Operating system specific range */
@@ -688,8 +688,8 @@ typedef struct {
 } Aux32Info;
 
 typedef struct {
-	Elf64_Word	a_type;				/* 32-bit id */
-	Elf64_Xword	a_v;				/* 64-bit id */
+	Elf64_Word	a_type;		/* 32-bit id */
+	Elf64_Xword	a_v;		/* 64-bit id */
 } Aux64Info;
 
 /* a_type */
@@ -722,15 +722,15 @@ typedef struct {
 #define	AT_SUN_LPGSIZE	2007	/* large pagesize */
 
 	/* Other information */
-#define	AT_SUN_PLATFORM	2008	/* sysinfo(SI_PLATFORM) */
+#define	AT_SUN_PLATFORM 2008	/* sysinfo(SI_PLATFORM) */
 #define	AT_SUN_HWCAP	2009	/* process hardware capabilities */
 #define	AT_SUN_IFLUSH	2010	/* do we need to flush the instruction cache? */
 #define	AT_SUN_CPU	2011	/* CPU name */
 	/* ibcs2 emulation band aid */
 #define	AT_SUN_EMUL_ENTRY 2012	/* coff entry point */
-#define	AT_SUN_EMUL_EXECFD 2013	/* coff file descriptor */
+#define	AT_SUN_EMUL_EXECFD 2013 /* coff file descriptor */
 	/* Executable's fully resolved name */
-#define	AT_SUN_EXECNAME	2014
+#define	AT_SUN_EXECNAME 2014
 
 /*
  * Note Headers
@@ -800,7 +800,7 @@ typedef struct {
  * name: SuSE\0\0\0\0
  * namesz: 8
  * desc: 
- *      word[0] = VVTTMMmm
+ *	word[0] = VVTTMMmm
  *
  *	V = version of following data
  *	T = product type: [box, sles, nld, whatever]
@@ -819,7 +819,7 @@ typedef struct {
  * name: NetBSD\0\0
  * namesz: 8
  * desc: 
- *      word[0]: MMmmrrpp00
+ *	word[0]: MMmmrrpp00
  *
  *	M = major version
  *	m = minor version
@@ -839,7 +839,7 @@ typedef struct {
  * name: ???
  * namesz: ???
  * desc:
- * 	a tuple of <phnum>(16),<chk-type>(16),<chk-value>.
+ *	a tuple of <phnum>(16),<chk-type>(16),<chk-value>.
  * descsz: ???
  */
 #define	ELF_NOTE_TYPE_CHECKSUM_TAG	2
@@ -872,7 +872,7 @@ typedef struct {
  * NetBSD-specific core file information.
  *
  * NetBSD ELF core files use notes to provide information about
- * the process's state.  The note name is "NetBSD-CORE" for
+ * the process's state.	 The note name is "NetBSD-CORE" for
  * information that is global to the process, and "NetBSD-CORE@nn",
  * where "nn" is the lwpid of the LWP that the information belongs
  * to (such as register state).
@@ -895,36 +895,36 @@ typedef struct {
 
 #define	ELF_NOTE_NETBSD_CORE_PROCINFO	1
 
-#define	NETBSD_ELFCORE_PROCINFO_VERSION	1
+#define	NETBSD_ELFCORE_PROCINFO_VERSION 1
 
 struct netbsd_elfcore_procinfo {
 	/* Version 1 fields start here. */
-	uint32_t	cpi_version;	/* netbsd_elfcore_procinfo version */
-	uint32_t	cpi_cpisize;	/* sizeof(netbsd_elfcore_procinfo) */
-	uint32_t	cpi_signo;	/* killing signal */
-	uint32_t	cpi_sigcode;	/* signal code */
-	uint32_t	cpi_sigpend[4];	/* pending signals */
-	uint32_t	cpi_sigmask[4];	/* blocked signals */
-	uint32_t	cpi_sigignore[4];/* blocked signals */
-	uint32_t	cpi_sigcatch[4];/* blocked signals */
-	int32_t		cpi_pid;	/* process ID */
-	int32_t		cpi_ppid;	/* parent process ID */
-	int32_t		cpi_pgrp;	/* process group ID */
-	int32_t		cpi_sid;	/* session ID */
-	uint32_t	cpi_ruid;	/* real user ID */
-	uint32_t	cpi_euid;	/* effective user ID */
-	uint32_t	cpi_svuid;	/* saved user ID */
-	uint32_t	cpi_rgid;	/* real group ID */
-	uint32_t	cpi_egid;	/* effective group ID */
-	uint32_t	cpi_svgid;	/* saved group ID */
-	uint32_t	cpi_nlwps;	/* number of LWPs */
-	int8_t		cpi_name[32];	/* copy of p->p_comm */
+	uint32_t	cpi_version;		/* our version */
+	uint32_t	cpi_cpisize;		/* sizeof(this struct) */
+	uint32_t	cpi_signo;		/* killing signal */
+	uint32_t	cpi_sigcode;		/* signal code */
+	uint32_t	cpi_sigpend[4];		/* pending signals */
+	uint32_t	cpi_sigmask[4];		/* blocked signals */
+	uint32_t	cpi_sigignore[4];	/* ignored signals */
+	uint32_t	cpi_sigcatch[4];	/* caught signals */
+	int32_t		cpi_pid;		/* process ID */
+	int32_t		cpi_ppid;		/* parent process ID */
+	int32_t		cpi_pgrp;		/* process group ID */
+	int32_t		cpi_sid;		/* session ID */
+	uint32_t	cpi_ruid;		/* real user ID */
+	uint32_t	cpi_euid;		/* effective user ID */
+	uint32_t	cpi_svuid;		/* saved user ID */
+	uint32_t	cpi_rgid;		/* real group ID */
+	uint32_t	cpi_egid;		/* effective group ID */
+	uint32_t	cpi_svgid;		/* saved group ID */
+	uint32_t	cpi_nlwps;		/* number of LWPs */
+	int8_t		cpi_name[32];		/* copy of p->p_comm */
 	/* Add version 2 fields below here. */
 	int32_t		cpi_siglwp;	/* LWP target of killing signal */
 };
 
 #if !defined(ELFSIZE) && defined(ARCH_ELFSIZE)
-#define	ELFSIZE	ARCH_ELFSIZE
+#define	ELFSIZE ARCH_ELFSIZE
 #endif
 
 #if defined(ELFSIZE)
@@ -989,7 +989,7 @@ struct netbsd_elfcore_procinfo {
 #define	AuxInfo		Aux64Info
 #endif
 
-#ifndef	Elf_Symindx
+#ifndef Elf_Symindx
 #define	Elf_Symindx	uint32_t
 #endif
 
@@ -1021,10 +1021,10 @@ typedef struct {
 					   lazily-loaded */
 #define	SYMINFO_FLG_DIRECTBIND	0x0010	/* ref should be bound directly to
 					   object containing definition */
-#define	SYMINFO_FLG_NOEXTDIRECT	0x0020	/* don't let an external reference
+#define	SYMINFO_FLG_NOEXTDIRECT 0x0020	/* don't let an external reference
 					   directly bind to this symbol */
 #define	SYMINFO_FLG_FILTER	0x0002	/* symbol ref is associated to a */
-#define	SYMINFO_FLG_AUXILIARY	0x0040	/*      standard or auxiliary filter */
+#define	SYMINFO_FLG_AUXILIARY	0x0040	/*	standard or auxiliary filter */
 
 #define	SYMINFO_BT_SELF		0xffff	/* symbol bound to self */
 #define	SYMINFO_BT_PARENT	0xfffe	/* symbol bound to parent */
@@ -1048,7 +1048,7 @@ typedef struct {
 #define	VER_DEF_IDX(x)		VER_NDX(x)
 
 /*
- * These constants are used for Elf32_Verdef struct's vd_flags.  
+ * These constants are used for Elf32_Verdef struct's vd_flags.	 
  */
 #define	VER_FLG_BASE		0x1
 #define	VER_FLG_WEAK		0x2
@@ -1061,7 +1061,7 @@ typedef struct {
 #define	VER_NDX_GIVEN		2
 
 /*
- * These constants are used for Elf32_Verneed struct's version number.  
+ * These constants are used for Elf32_Verneed struct's version number.	
  */
 #define	VER_NEED_NONE		0
 #define	VER_NEED_CURRENT	1
@@ -1097,13 +1097,13 @@ typedef struct {
 	Elf32_Word	vd_aux;		/* offset to verdaux entries */
 	Elf32_Word	vd_next;	/* offset to next verdef */
 } Elf32_Verdef;
-typedef	Elf32_Verdef	Elf64_Verdef;
+typedef Elf32_Verdef	Elf64_Verdef;
 
 typedef struct {
 	Elf32_Word	vda_name;	/* string table offset of name */
 	Elf32_Word	vda_next;	/* offset to verdaux */
 } Elf32_Verdaux;
-typedef	Elf32_Verdaux	Elf64_Verdaux;
+typedef Elf32_Verdaux	Elf64_Verdaux;
 
 typedef struct {
 	Elf32_Half	vn_version;	/* version number of structure */
@@ -1112,7 +1112,7 @@ typedef struct {
 	Elf32_Word	vn_aux;		/* offset to vernaux entries */
 	Elf32_Word	vn_next;	/* offset to next verneed */
 } Elf32_Verneed;
-typedef	Elf32_Verneed	Elf64_Verneed;
+typedef Elf32_Verneed	Elf64_Verneed;
 
 typedef struct {
 	Elf32_Word	vna_hash;	/* Hash of dependency name */
@@ -1121,20 +1121,20 @@ typedef struct {
 	Elf32_Word	vna_name;	/* string table offset to version name*/
 	Elf32_Word	vna_next;	/* offset to next vernaux */
 } Elf32_Vernaux;
-typedef	Elf32_Vernaux	Elf64_Vernaux;
+typedef Elf32_Vernaux	Elf64_Vernaux;
 
 typedef struct {
 	Elf32_Half	vs_vers;
 } Elf32_Versym;
-typedef	Elf32_Versym	Elf64_Versym;
+typedef Elf32_Versym	Elf64_Versym;
 
 #ifdef _KERNEL
 
-#define	ELF_AUX_ENTRIES	14	/* Max size of aux array passed to loader */
+#define	ELF_AUX_ENTRIES 14	/* Max size of aux array passed to loader */
 #define	ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
-#define	ELF32_LINK_ADDR	((Elf32_Addr)-2) /* advises to use link address */
+#define	ELF32_LINK_ADDR ((Elf32_Addr)-2) /* advises to use link address */
 #define	ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
-#define	ELF64_LINK_ADDR	((Elf64_Addr)-2) /* advises to use link address */
+#define	ELF64_LINK_ADDR ((Elf64_Addr)-2) /* advises to use link address */
 
 #if defined(ELFSIZE) && (ELFSIZE == 64)
 #define	ELF_NO_ADDR	ELF64_NO_ADDR
@@ -1145,11 +1145,11 @@ typedef	Elf32_Versym	Elf64_Versym;
 #endif
 
 #ifndef ELF32_EHDR_FLAGS_OK
-#define	ELF32_EHDR_FLAGS_OK(eh)	1
+#define	ELF32_EHDR_FLAGS_OK(eh) 1
 #endif
 
 #ifndef ELF64_EHDR_FLAGS_OK
-#define	ELF64_EHDR_FLAGS_OK(eh)	1
+#define	ELF64_EHDR_FLAGS_OK(eh) 1
 #endif
 
 #if defined(ELFSIZE) && (ELFSIZE == 64)
@@ -1160,11 +1160,11 @@ typedef	Elf32_Versym	Elf64_Versym;
 
 #if defined(ELFSIZE)
 struct elf_args {
-        Elf_Addr  arg_entry;      /* program entry point */
-        Elf_Addr  arg_interp;     /* Interpreter load address */
-        Elf_Addr  arg_phaddr;     /* program header address */
-        Elf_Addr  arg_phentsize;  /* Size of program header */
-        Elf_Addr  arg_phnum;      /* Number of program headers */
+	Elf_Addr	arg_entry;	/* program entry point */
+	Elf_Addr	arg_interp;	/* Interpreter load address */
+	Elf_Addr	arg_phaddr;	/* program header address */
+	Elf_Addr	arg_phentsize;	/* Size of program header */
+	Elf_Addr	arg_phnum;	/* Number of program headers */
 };
 #endif
 
@@ -1177,11 +1177,11 @@ struct ps_strings;
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds(struct lwp *, struct exec_package *);
 int	elf32_copyargs(struct lwp *, struct exec_package *,
-    	    struct ps_strings *, char **, void *);
+    struct ps_strings *, char **, void *);
 
 int	coredump_elf32(struct lwp *, void *);
 int	coredump_writenote_elf32(struct proc *, void *, Elf32_Nhdr *,
-	    const char *, void *);
+    const char *, void *);
 
 int	elf32_check_header(Elf32_Ehdr *, int);
 #endif
@@ -1189,11 +1189,11 @@ int	elf32_check_header(Elf32_Ehdr *, int);
 #ifdef EXEC_ELF64
 int	exec_elf64_makecmds(struct lwp *, struct exec_package *);
 int	elf64_copyargs(struct lwp *, struct exec_package *,
-	    struct ps_strings *, char **, void *);
+    struct ps_strings *, char **, void *);
 
 int	coredump_elf64(struct lwp *, void *);
 int	coredump_writenote_elf64(struct proc *, void *, Elf64_Nhdr *,
-	    const char *, void *);
+    const char *, void *);
 
 int	elf64_check_header(Elf64_Ehdr *, int);
 #endif
