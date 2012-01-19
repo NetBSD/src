@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.8 2012/01/19 12:10:00 reinoud Exp $ */
+/* $NetBSD: cpu.h,v 1.9 2012/01/19 12:14:49 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -43,9 +43,10 @@ extern void	userret(struct lwp *);
 
 #define cpu_proc_fork(p1, p2)
 
+struct cpu_info;
 extern int	astpending;
 #define aston(ci) (astpending++)
-#define cpu_need_resched(ci, flags) { ci->ci_want_resched = 1; aston(); }
+extern void cpu_need_resched(struct cpu_info *ci, int flags);
 
 
 struct cpu_info {
