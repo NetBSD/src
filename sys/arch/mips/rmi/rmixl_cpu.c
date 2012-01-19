@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "rmixl_cpu.c,v 1.1.2.21 2011/04/29 08:26:31 matt Exp");
 
 static int	cpu_rmixl_match(device_t, cfdata_t, void *);
 static void	cpu_rmixl_attach(device_t, device_t, void *);
-static void	cpu_rmixl_attach_primary(struct rmixl_cpu_softc * const);
+static void	cpu_rmixl_attach_primary(struct cpu_softc * const);
 #ifdef NOTYET
 static int	cpu_fmn_intr(void *, rmixl_fmn_rxmsg_t *);
 #endif
@@ -92,7 +92,7 @@ struct cpu_info *
 		rmixl_cpuinfo_print(u_int);
 #endif	/* DEBUG */
 
-CFATTACH_DECL_NEW(cpu_rmixl, sizeof(struct rmixl_cpu_softc),
+CFATTACH_DECL_NEW(cpu_rmixl, sizeof(struct cpu_softc),
 	cpu_rmixl_match, cpu_rmixl_attach, NULL, NULL); 
 
 #ifdef MULTIPROCESSOR
@@ -177,7 +177,7 @@ cpu_rmixl_match(device_t parent, cfdata_t cf, void *aux)
 static void
 cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 {
-	struct rmixl_cpu_softc * const sc = device_private(self);
+	struct cpu_softc * const sc = device_private(self);
 	struct cpu_info *ci = NULL;
 	static bool once = false;
 	extern void rmixl_spl_init_cpu(void);
@@ -252,7 +252,7 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
  * attach the primary processor
  */
 static void
-cpu_rmixl_attach_primary(struct rmixl_cpu_softc * const sc)
+cpu_rmixl_attach_primary(struct cpu_softc * const sc)
 {
 	struct cpu_info *ci = sc->sc_ci;
 	uint32_t ebase;
@@ -286,8 +286,8 @@ cpu_rmixl_attach_primary(struct rmixl_cpu_softc * const sc)
 void
 cpu_rmixl_run(struct cpu_info *ci)
 {
-	struct rmixl_cpu_softc * const sc = (void *)ci->ci_softc;
-	rmixl_fmn_init_thead();
+	struct cpu_softc * const sc = ci->ci_softc;
+	rmixl_fmn_init_thread();
 	cpucore_rmixl_run(device_parent(sc->sc_dev));
 }
 
@@ -299,7 +299,7 @@ cpu_rmixl_run(struct cpu_info *ci)
 void
 cpu_rmixl_hatch(struct cpu_info *ci)
 {
-	struct rmixl_cpu_softc * const sc = (void *)ci->ci_softc;
+	struct cpu_softc * const sc = ci->ci_softc;
 	extern void rmixl_spl_init_cpu(void);
 
 	rmixl_spl_init_cpu();	/* spl initialization for this CPU */
@@ -394,7 +394,6 @@ cpu_setup_trampoline_callback(struct cpu_info *ci)
 		(uint64_t)1 << ci->ci_cpuid, wakeup_cpu);
 }
 #endif	/* MULTIPROCESSOR */
-
 
 #ifdef DEBUG
 void
