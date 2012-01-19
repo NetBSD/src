@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_iobus.c,v 1.3.8.2 2011/12/27 19:58:19 matt Exp $	*/
+/*	$NetBSD: rmixl_iobus.c,v 1.3.8.3 2012/01/19 10:24:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.3.8.2 2011/12/27 19:58:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.3.8.3 2012/01/19 10:24:52 matt Exp $");
 
 #include "locators.h"
 
@@ -161,7 +161,7 @@ rmixl_iobus_obio_attach(device_t parent, device_t self, void *aux)
 	rmixl_iobus_csconfig_init(sc);
 
 	/* attach any children */
-	config_search_ia(rmixl_iobus_search, self, "rmixl_iobus", NULL);
+	config_search_ia(rmixl_iobus_search, self, "xliobus", NULL);
 }
 
 static void
