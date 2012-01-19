@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_fmn.c,v 1.1.2.10 2012/01/19 08:05:24 matt Exp $	*/
+/*	rmixl_fmn.c,v 1.1.2.10 2012/01/19 08:05:24 matt Exp	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -638,7 +638,7 @@ fmn_init_noncore_xlrxls(fmn_info_t *fmn)
 static void
 fmn_init_thread_xlrxls(fmn_info_t *fmn)
 {
-	const fmn_station_info_t *si = fmn->fmn_stinfo;
+	const fmn_station_info_t *si = fmn->fmn_stinfo + 1;
 	uint32_t sts1;
 	uint32_t cfg;
 
@@ -780,7 +780,9 @@ rmixl_fmn_cpu_attach(struct cpu_info *ci)
 	struct cpu_softc * const sc = ci->ci_softc;
 
 	KASSERT(sc->sc_fmn_si == NULL);
-	sc->sc_fmn_si = softint_establish(SOFTINT_NET, fmn_softint, sc);
+	sc->sc_fmn_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
+	    fmn_softint, sc);
+	KASSERT(sc->sc_fmn_si != NULL);
 
 	KASSERT(sc->sc_dev != NULL);
 
@@ -937,6 +939,7 @@ fmn_intr(void *arg)
 	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
 	struct cpu_softc * const sc = curcpu()->ci_softc;
 
+	KASSERT(sc->sc_fmn_si != NULL);
 	softint_schedule(sc->sc_fmn_si);
 	if (!is_xlp_p) {
 		/*

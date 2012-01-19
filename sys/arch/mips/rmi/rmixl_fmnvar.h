@@ -1,4 +1,4 @@
-/*	$Id: rmixl_fmnvar.h,v 1.1.2.7 2012/01/19 09:59:08 matt Exp $	*/
+/*	rmixl_fmnvar.h,v 1.1.2.7 2012/01/19 09:59:08 matt Exp	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -230,7 +230,6 @@ rmixl_cp2_enable(void)
 	uint32_t rv;
 	uint32_t sr;
 
-	KASSERT(curcpu()->ci_cpl == IPL_HIGH);
 	__asm volatile(
 		".set push"			"\n\t"
 		".set noreorder"		"\n\t"
@@ -253,7 +252,6 @@ rmixl_cp2_restore(uint32_t ocu)
 {
 	uint32_t cu2;
 
-	KASSERT(curcpu()->ci_cpl == IPL_HIGH);
 	__asm volatile(
 		".set push"			"\n\t"
 		".set noreorder"		"\n\t"
