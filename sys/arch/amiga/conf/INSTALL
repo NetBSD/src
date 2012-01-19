@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.104 2012/01/19 22:11:49 rkujawa Exp $
+# $NetBSD: INSTALL,v 1.105 2012/01/19 22:43:11 rkujawa Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.93 2012/01/19 00:14:08 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.94 2012/01/19 22:11:49 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.104 $"
+#ident 		"GENERIC-$Revision: 1.105 $"
 
 makeoptions	COPTS="-Os"
 
@@ -378,7 +378,7 @@ wdc*		at zbus0		# Buddha / Catweasel
 #efa0		at mainbus0		# ELBOX FastATA 1200 Mk-III/Mk-IV 
 
 atabus* 	at wdc? channel ?	# ATA bus
-atabus*		at efa? channel ?	# ATA bus 
+#atabus*	at efa? channel ?	# ATA bus 
 wd*		at atabus? drive ?	#  + drives
 atapibus*	at atabus?		# ATAPI bus
 cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
