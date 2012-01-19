@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.25 2012/01/04 16:17:54 matt Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.26 2012/01/19 08:03:22 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -67,7 +67,11 @@ static inline bool
 cpu_rmixlr(const struct pridtab *ct)
 {
 #ifdef MIPS64_XLR
+#if (MIPS64_XLS + MIPS64_XLP) == 0
+	return true;
+#else
 	return cpu_rmixl(ct) && cpu_rmixl_chip_type(ct) == CIDFL_RMI_TYPE_XLR;
+#endif
 #else
 	return false;
 #endif
@@ -77,7 +81,11 @@ static inline bool
 cpu_rmixls(const struct pridtab *ct)
 {
 #ifdef MIPS64_XLS
+#if (MIPS64_XLR + MIPS64_XLP) == 0
+	return true;
+#else
 	return cpu_rmixl(ct) && cpu_rmixl_chip_type(ct) == CIDFL_RMI_TYPE_XLS;
+#endif
 #else
 	return false;
 #endif
@@ -87,7 +95,11 @@ static inline bool
 cpu_rmixlp(const struct pridtab *ct)
 {
 #ifdef MIPS64_XLP
+#if (MIPS64_XLR + MIPS64_XLS) == 0
+	return true;
+#else
 	return cpu_rmixl(ct) && cpu_rmixl_chip_type(ct) == CIDFL_RMI_TYPE_XLP;
+#endif
 #else
 	return false;
 #endif
