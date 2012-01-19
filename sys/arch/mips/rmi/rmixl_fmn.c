@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_fmn.c,v 1.1.2.9 2012/01/04 16:17:53 matt Exp $	*/
+/*	$NetBSD: rmixl_fmn.c,v 1.1.2.10 2012/01/19 08:05:24 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,8 +35,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
-#include <sys/percpu.h>
 #include <sys/atomic.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcidevs.h>
 
@@ -212,9 +212,10 @@ typedef struct fmn_intrhand {
 typedef struct fmn_info {
 	const fmn_queue_id_t *		fmn_qidtab;
 	const fmn_station_info_t *	fmn_stinfo;
-	percpu_t *			fmn_ev_percpu;
+	const char			(*fmn_bucket_names)[12];
 	size_t				fmn_intr_vec;
-	uint32_t			fmn_nstid;
+	uint8_t				fmn_nstid;
+	uint8_t				fmn_nbucket;	// or vc (XLP)
 	volatile uint32_t		fmn_coremask;
 	volatile uint32_t		fmn_nthread;
 
@@ -223,7 +224,6 @@ typedef struct fmn_info {
 	 */
 	volatile fmn_intrhand_t		fmn_intrhand[RMIXL_FMN_NSTID];
 } fmn_info_t;
-
 
 static fmn_info_t fmn_info = {
 	.fmn_intrhand = {
@@ -234,6 +234,14 @@ static fmn_info_t fmn_info = {
 	},
 };
 
+static char fmn_stid_ev_names[RMIXL_FMN_NSTID][32];
+
+#if (MIPS64_XLR + MIPS64_XLS) > 0
+static const char xlrxls_bucket_names[8][12] = {
+	"bucket 0", "bucket 1", "bucket 2", "bucket 3",
+	"bucket 4", "bucket 5", "bucket 6", "bucket 7",
+};
+#endif /* (MIPS64_XLR + MIPS64_XLS) > 0 */
 
 #ifdef MIPS64_XLP
 static const struct xlp_stid_map {
@@ -293,6 +301,10 @@ static fmn_station_info_t xlp_xxx_stinfo[RMIXLP_FMN_NSTID] = {
 	[RMIXLP_FMN_STID_SRIO]    = { "srio" },
 };
 
+static const char xlp_bucket_names[4][12] = {
+	"vc 0", "vc 1", "vc 2", "vc 3",
+};
+
 static void
 fmn_init_xlp_claim_qids(const fmn_station_info_t * const si, size_t stid)
 {
@@ -306,6 +318,8 @@ fmn_init_xlp_claim_qids(const fmn_station_info_t * const si, size_t stid)
 static void
 fmn_init_xlp(fmn_info_t *fmn)
 {
+	fmn->fmn_nbucket = 4;	// 4 VCs per thread
+	fmn->fmn_bucket_names = xlp_bucket_names;
 	fmn->fmn_nstid = RMIXLP_FMN_NSTID;
 	fmn->fmn_qidtab = xlp_xxx_qidtab;
 	fmn->fmn_stinfo = xlp_xxx_stinfo;
@@ -516,6 +530,8 @@ fmn_init_xls(fmn_info_t *fmn)
 	for (size_t i = 0; i < __arraycount(xls_stid_map); i++) {
 		const struct xls_stid_map * const map = &xls_stid_map[i];
 		if (map->map_impl == impl) {
+			fmn->fmn_nbucket = 8;	// 4 buckets per core
+			fmn->fmn_bucket_names = xlrxls_bucket_names;
 			fmn->fmn_nstid = RMIXLS_FMN_NSTID;
 			fmn->fmn_qidtab = map->map_qidtab;
 			fmn->fmn_stinfo = map->map_stinfo;
@@ -554,7 +570,7 @@ static const fmn_queue_id_t xlr_xxx_qidtab[] = {
  * caution:
  * - the XGMII/SPI4 stations si_regbase are 'special'
  * - the RGMII station si_regbase is 'special'
- */ 
+ */
 static const fmn_station_info_t xlr_xxx_stinfo[RMIXLR_FMN_NSTID] = {
 	[RMIXLR_FMN_STID_CORE0]   = { "core0",	  0,   7, 8,  32, 4, 0 },
 	[RMIXLR_FMN_STID_CORE1]   = { "core1",	  8,  15, 8,  32, 4, 0 },
@@ -579,6 +595,8 @@ static const fmn_station_info_t xlr_xxx_stinfo[RMIXLR_FMN_NSTID] = {
 static void
 fmn_init_xlr(fmn_info_t *fmn)
 {
+	fmn->fmn_nbucket = 8;	// 4 buckets per core
+	fmn->fmn_bucket_names = xlrxls_bucket_names;
 	fmn->fmn_nstid = RMIXLR_FMN_NSTID;
 	fmn->fmn_qidtab = xlr_xxx_qidtab;
 	fmn->fmn_stinfo = xlr_xxx_stinfo;
@@ -614,7 +632,7 @@ fmn_init_noncore_xlrxls(fmn_info_t *fmn)
 /*
  * fmn_init_thread_xlrxls
  *
- *	- configure FMN 
+ *	- configure FMN
  *	- initialize bucket sizes and (minimum) credits for a core
  */
 static void
@@ -702,7 +720,7 @@ fmn_init_thread_xlrxls(fmn_info_t *fmn)
 	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+12,    0);
 	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+13,    0);
 	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+14,    0);
-	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+15,    0); 
+	FMN_COP2_8SEL_WRITE(RMIXL_COP_2_CREDITS+15,    0);
 
 	sts1 = mips_mfc2(RMIXL_COP_2_MSG_STS, 1);
 	KASSERT((sts1 & RMIXL_MSG_STS1_ERRS) == 0);
@@ -711,26 +729,11 @@ fmn_init_thread_xlrxls(fmn_info_t *fmn)
 }
 #endif /* (MIPS64_XLR + MIPS64_XLS) > 0 */
 
-static inline struct evcnt *
-fmn_ev_getref(void)
-{
-	struct evcnt * const ev = percpu_getref(fmn_info.fmn_ev_percpu);
-	KASSERT(ev != NULL);
-
-	return ev;
-}
-
-static inline void
-fmn_ev_putref(struct evcnt *ev)
-{
-	percpu_putref(fmn_info.fmn_ev_percpu);
-}
-
-
 #if (MIPS64_XLP) > 0
 static void	fmn_init_thread_xlp(fmn_info_t *);
 #endif
-static int	fmn_intr_dispatch(void *);
+static int	fmn_intr(void *);
+static void	fmn_softint(void *);
 
 #ifdef FMN_DEBUG
 void	rmixl_fmn_cp2_dump(void);
@@ -743,7 +746,7 @@ void	rmixl_fmn_cc_dump(void);
 void
 rmixl_fmn_init(void)
 {
-	fmn_info_t * const fmn = &fmn_info; 
+	fmn_info_t * const fmn = &fmn_info;
 
 	/*
 	 * do chip-dependent FMN initialization
@@ -768,9 +771,31 @@ rmixl_fmn_init(void)
 		panic("%s: RMI chip type %#x unknown", __func__,
 			cpu_rmixl_chip_type(mips_options.mips_cpu));
 	}
+}
 
-	fmn->fmn_ev_percpu = percpu_alloc(fmn->fmn_nstid*sizeof(struct evcnt));
-	KASSERT(fmn->fmn_ev_percpu != NULL);
+void
+rmixl_fmn_cpu_attach(struct cpu_info *ci)
+{
+	fmn_info_t * const fmn = &fmn_info;
+	struct cpu_softc * const sc = ci->ci_softc;
+
+	KASSERT(sc->sc_fmn_si == NULL);
+	sc->sc_fmn_si = softint_establish(SOFTINT_NET, fmn_softint, sc);
+
+	KASSERT(sc->sc_dev != NULL);
+
+	const char * const xname = device_xname(sc->sc_dev);
+	KASSERT(xname != NULL);
+
+	for (size_t i = 1; i < fmn_info.fmn_nstid; i++) {
+		evcnt_attach_dynamic(&sc->sc_fmn_stid_evcnts[i],
+		    EVCNT_TYPE_MISC, NULL, xname, fmn_stid_ev_names[i]);
+	}
+
+	for (size_t i = 0; i < fmn_info.fmn_nbucket; i++) {
+		evcnt_attach_dynamic(&sc->sc_fmn_cpu_evcnts[i],
+		    EVCNT_TYPE_MISC, NULL, xname, fmn->fmn_bucket_names[i]);
+	}
 }
 
 /*
@@ -781,26 +806,13 @@ rmixl_fmn_init_thread(void)
 {
 	fmn_info_t * const fmn = &fmn_info;
 	struct cpu_info * const ci = curcpu();
-	struct rmixl_cpu_softc * const sc = (void *)ci->ci_softc;
-
-	KASSERT(sc->sc_dev != NULL);
-
-	const char * const xname = device_xname(sc->sc_dev);
-	KASSERT(xname != NULL);
-
-	struct evcnt * const ev = fmn_ev_getref();
-	KASSERT(ev != NULL);
 
 	KASSERT(fmn->fmn_stinfo[0].si_name == NULL);
 	for (size_t i = 1; i < fmn_info.fmn_nstid; i++) {
 		KASSERT(fmn->fmn_stinfo[i].si_name != NULL);
-#if 0
-		evcnt_attach_dynamic(&ev[i], EVCNT_TYPE_INTR, NULL,
-		    xname, fmn->fmn_stinfo[i].si_name);
-#endif
+		snprintf(fmn_stid_ev_names[i], sizeof(fmn_stid_ev_names[i]),
+		    "fmn %s rx msgs", fmn->fmn_stinfo[i].si_name);
 	}
-
-	fmn_ev_putref(ev);
 
 	if (CPU_IS_PRIMARY(ci)) {
 		KASSERT(rmixl_intr_lock != NULL);
@@ -810,7 +822,7 @@ rmixl_fmn_init_thread(void)
 		mutex_enter(rmixl_intr_lock);
 		fmn->fmn_intr_vec = rmixl_intr_get_vec(IPL_VM);
 		void * const ih = rmixl_vec_establish(fmn->fmn_intr_vec, NULL,
-		    IPL_VM, fmn_intr_dispatch, NULL, true);
+		    IPL_VM, fmn_intr, NULL, true);
 		if (ih == NULL)
 			panic("%s: rmixl_vec_establish failed", __func__);
 		mutex_exit(rmixl_intr_lock);
@@ -905,33 +917,74 @@ rmixl_fmn_intr_poll(u_int bucket, rmixl_fmn_rxmsg_t *rxmsg)
 	rmixl_cp2_restore(cp0_status);
 }
 
+size_t
+rmixl_fmn_qid_to_stid(size_t qid)
+{
+	return fmn_info.fmn_qidtab[qid];
+}
+
+const char *
+rmixl_fmn_stid_name(size_t stid)
+{
+	KASSERT(stid != 0);
+	KASSERT(stid < fmn_info.fmn_nstid);
+	return fmn_info.fmn_stinfo[stid].si_name;
+}
+
 static int
-fmn_intr_dispatch(void *arg)
+fmn_intr(void *arg)
+{
+	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
+	struct cpu_softc * const sc = curcpu()->ci_softc;
+
+	softint_schedule(sc->sc_fmn_si);
+	if (!is_xlp_p) {
+		/*
+		 * On the XLR and XLS, we can only stop interrupts on a per
+		 * core basis but then there are no per-thread resources so
+		 * it doesn't really hurt.
+		 */
+		const uint32_t cp0_status = rmixl_cp2_enable();
+		uint32_t msg_cfg = mips_mfc2(RMIXL_COP_2_MSG_CFG, 0);
+		msg_cfg &= ~(RMIXL_MSG_CFG0_EIE|RMIXL_MSG_CFG0_WIE);
+		mips_mtc2(RMIXL_COP_2_MSG_CFG, 0, msg_cfg);
+		rmixl_cp2_restore(cp0_status);
+	}
+	return 1;
+}
+
+static void
+fmn_softint(void *arg)
 {
 	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
 	fmn_info_t * const fmn = &fmn_info;
-	uint32_t mask;
-	int rv = 0;
+	struct cpu_softc * const sc = curcpu()->ci_softc;
+	uint32_t mask = 0;
+	uint32_t processed = 0;
 
 	const uint32_t cp0_status = rmixl_cp2_enable();
 
-	if (is_xlp_p) {
-		uint32_t msg_rx_sts = mips_mfc2(RMIXLP_COP_2_MSG_RX_STS, 0);
-		mask = __SHIFTOUT(~msg_rx_sts, RMIXLP_MSG_RX_STS_RXQVCE);
-	} else {
-		uint32_t msg_sts = mips_mfc2(RMIXL_COP_2_MSG_STS, 0);
-		mask = __SHIFTOUT(~msg_sts, RMIXL_MSG_STS0_RFBE);
-	}
+	for (;;) {
+		if (mask == 0) {
+			if (is_xlp_p) {
+				mask = __SHIFTOUT(
+				    ~mips_mfc2(RMIXLP_COP_2_MSG_RX_STS,0),
+				    RMIXLP_MSG_RX_STS_RXQVCE);
+			} else {
+				mask = __SHIFTOUT(
+				    ~mips_mfc2(RMIXL_COP_2_MSG_STS,0),
+				    RMIXL_MSG_STS0_RFBE);
+			}
+			if (mask == 0)
+				break;
+		}
 
-	if (mask != 0) {
 		DPRINTF(("%s: non-empty q-mask %#x\n", __func__, mask));
-	}
 
-	struct evcnt * const ev = fmn_ev_getref(); // acquire per-cpu counters
+		const u_int rxq = ffs(mask) - 1;
+		processed = (1 << rxq);
 
-	for (u_int rxq=0; mask != 0; rxq++, mask >>= 1) {
-		if ((mask & 1) == 0)
-			continue;
+		sc->sc_fmn_cpu_evcnts[rxq].ev_count++;
 
 		rmixl_fmn_rxmsg_t rxmsg;
 		if (!rmixl_fmn_msg_recv(rxq, &rxmsg))
@@ -939,20 +992,29 @@ fmn_intr_dispatch(void *arg)
 
 		const size_t txstid = fmn->fmn_qidtab[rxmsg.rxsid];
 		volatile fmn_intrhand_t * const ih = &fmn->fmn_intrhand[txstid];
+
 		membar_consumer(); // make sure arg is loaded before func
 		void * const ih_arg = ih->ih_arg;
+
 		membar_consumer(); // make sure arg is loaded before func
 		rmixl_fmn_intr_handler_t ih_func = ih->ih_func;
+
 		if ((*ih_func)(ih_arg, &rxmsg) != 0)
-			ev[txstid].ev_count++;
-		rv = 1;
+			sc->sc_fmn_stid_evcnts[txstid].ev_count++;
 	}
 
-	fmn_ev_putref(ev);			// release per-cpu counters
+	if (is_xlp_p) {
+		/*
+		 * We need to set VC_PEND again so interrupts can get posted
+		 * for the VCs we processed.  This register is global for all
+		 * threads on a core so only ACK the VCs we processed.
+		 */
+		uint32_t msg_sts1 = mips_mfc2(RMIXLP_COP_2_MSG_STS1, 0);
+		msg_sts1 |= __SHIFTOUT(processed, RMIXLP_MSG_STS1_VC_PEND);
+		mips_mtc2(RMIXLP_COP_2_MSG_STS1, 0, msg_sts1);
+	}
 
 	rmixl_cp2_restore(cp0_status);
-
-	return rv;
 }
 
 static bool
@@ -977,7 +1039,7 @@ rmixl_fmn_msg_send(u_int size, u_int code, u_int dest_id, u_int dest_vc,
 {
 	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
 	bool rv = false;	/* assume failure */
-    
+
 	KASSERT(1 <= size && size <= 4);
 	KASSERT(code < 0x100);
 	KASSERT(dest_id < (is_xlp_p ? 0x1000 : 0x80));
@@ -1107,7 +1169,7 @@ fmn_msgld_rmixl(u_int rxq, rmixl_fmn_rxmsg_t *rxmsg)
 /*
  * rmixl_fmn_msg_recv
  *
- *	- assume cp2 access is already enabled 
+ *	- assume cp2 access is already enabled
  */
 bool
 rmixl_fmn_msg_recv(u_int rxq, rmixl_fmn_rxmsg_t *rxmsg)
