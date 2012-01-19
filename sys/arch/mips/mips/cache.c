@@ -247,14 +247,14 @@ mips_config_cache_prehistoric(void)
 		mco->mco_icache_sync_range =
 		    r3k_icache_sync_range;
 		mco->mco_icache_sync_range_index =
-		    mco->mco_icache_sync_range;
+		    (void (*)(vaddr_t, vsize_t)) mco->mco_icache_sync_range;
 
 		mco->mco_pdcache_wbinv_all =
 		    r3k_pdcache_wbinv_all;
 		mco->mco_pdcache_wbinv_range =
 		    r3k_pdcache_inv_range;
 		mco->mco_pdcache_wbinv_range_index =
-		    mco->mco_pdcache_wbinv_range;
+		    (void (*)(vaddr_t, vsize_t)) mco->mco_pdcache_wbinv_range;
 		mco->mco_pdcache_inv_range =
 		    r3k_pdcache_inv_range;
 		mco->mco_pdcache_wb_range =
@@ -1032,9 +1032,9 @@ mips_config_cache_modern(uint32_t cpu_id)
 	case 0:
 		mco->mco_icache_sync_all = cache_noop;
 		mco->mco_icache_sync_range =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 		mco->mco_icache_sync_range_index =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 		break;
 #endif
 	default:
@@ -1075,13 +1075,13 @@ mips_config_cache_modern(uint32_t cpu_id)
 	case 0:
 		mco->mco_pdcache_wbinv_all = cache_noop;
 		mco->mco_pdcache_wbinv_range =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 		mco->mco_pdcache_wbinv_range_index =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 		mco->mco_pdcache_inv_range =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 		mco->mco_pdcache_wb_range =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 		break;
 #endif
 	default:
@@ -1237,23 +1237,23 @@ mips_config_cache_modern(uint32_t cpu_id)
 #endif
 		mco->mco_pdcache_wbinv_all = cache_noop;
 		mco->mco_pdcache_wbinv_range =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 		mco->mco_pdcache_wbinv_range_index =
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 		mco->mco_pdcache_inv_range =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 		mco->mco_pdcache_wb_range =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 
 		mco->mco_sdcache_wbinv_all = cache_noop;
 		mco->mco_sdcache_wbinv_range =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 		mco->mco_sdcache_wbinv_range_index =
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 		mco->mco_sdcache_inv_range =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 		mco->mco_sdcache_wb_range =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 	}
 	if (opts->mips_cpu_flags & CPU_MIPS_I_D_CACHE_COHERENT) {
 #ifdef CACHE_DEBUG
@@ -1264,7 +1264,7 @@ mips_config_cache_modern(uint32_t cpu_id)
 		mco->mco_intern_pdcache_sync_range_index =
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 		mco->mco_intern_pdcache_sync_range =
-		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		    (void (*)(register_t, vsize_t))cache_noop;
 	}
 }
 #endif /* MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL > 0 */

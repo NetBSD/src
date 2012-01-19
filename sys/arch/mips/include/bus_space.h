@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.4.18.2 2009/11/17 07:35:24 matt Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.4.18.3 2012/01/19 08:28:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -116,8 +116,8 @@ typedef psize_t bus_size_t;
  * Access methods for bus space.
  */
 typedef struct mips_bus_space *bus_space_tag_t;
-typedef intptr_t bus_space_handle_t;
-#define	PRIxBSH		PRIxPTR
+typedef register_t bus_space_handle_t;
+#define	PRIxBSH		PRIxREGISTER
 
 struct mips_bus_space {
 	/* cookie */

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.17 2011/12/31 08:18:42 matt Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.18 2012/01/19 08:28:48 matt Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,11 +67,10 @@
 #define	IPI_AST		1		/* force ast */
 #define	IPI_SHOOTDOWN	2		/* do a tlb shootdown */
 #define	IPI_FPSAVE	3		/* save current fp registers */
-#define	IPI_SYNCICACHE	4		/* sync icache for pages */
-#define	IPI_KPREEMPT	5		/* schedule a kernel preemption */
-#define	IPI_SUSPEND	6		/* DDB suspend signaling */
-#define	IPI_HALT	7		/* halt cpu */
-#define	NIPIS		8
+#define	IPI_KPREEMPT	4		/* schedule a kernel preemption */
+#define	IPI_SUSPEND	5		/* DDB suspend signaling */
+#define	IPI_HALT	6		/* halt cpu */
+#define	NIPIS		7
 
 #ifdef __INTR_PRIVATE
 struct splsw {

@@ -27,9 +27,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __mips_n32
+/*
+ * Treat N32 as N64
+ */
+#undef _MIPS_SZPTR
+#define _MIPS_SZPTR 64
+#endif
+
 #include <mips/asm.h>
 
-RCSID("$NetBSD: cache_r4k_subr.S,v 1.1.2.1 2011/12/27 03:39:58 matt Exp $")
+RCSID("$NetBSD: cache_r4k_subr.S,v 1.1.2.2 2012/01/19 08:28:49 matt Exp $")
 
 #include <mips/cache_r4k.h>
 

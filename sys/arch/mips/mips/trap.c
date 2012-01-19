@@ -668,20 +668,6 @@ ast(void)
 	do {
 		l->l_md.md_astpending = 0;
 
-#ifdef MULTIPROCESSOR
-		/*
-		 * Before returning to userland, if some icache page indicies
-		 * have been marked bad then flush them from the icache.
-		 */
-		if (MIPS_HAS_R4K_MMU) {
-			kpreempt_disable();
-			struct cpu_info * const ci = l->l_cpu;
-			if (ci->ci_tlb_info->ti_synci_page_bitmap != 0)
-				pmap_tlb_syncicache_ast(ci);
-			kpreempt_enable();
-		}
-#endif
-
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
@@ -699,7 +685,7 @@ ast(void)
 }
 
 
-/* XXX need to rewrite acient comment XXX
+/* XXX need to rewrite ancient comment XXX
  * This routine is called by procxmt() to single step one instruction.
  * We do this by storing a break instruction after the current instruction,
  * resuming execution, and then restoring the old instruction.

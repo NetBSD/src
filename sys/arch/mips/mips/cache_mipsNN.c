@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.11.78.7 2011/12/27 03:39:41 matt Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.11.78.8 2012/01/19 08:28:49 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.11.78.7 2011/12/27 03:39:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.11.78.8 2012/01/19 08:28:49 matt Exp $");
 
 #include <sys/param.h>
 
@@ -109,7 +109,7 @@ mipsNN_sdcache_wbinv_all(void)
 }
 
 void
-mipsNN_picache_sync_range(vaddr_t va, vsize_t size)
+mipsNN_picache_sync_range(register_t va, vsize_t size)
 {
 
 	mips_intern_dcache_sync_range(va, size);

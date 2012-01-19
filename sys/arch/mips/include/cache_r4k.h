@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.11.96.2 2011/12/27 01:56:33 matt Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.11.96.3 2012/01/19 08:28:48 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,7 +63,7 @@
  *	Perform the specified cache operation on a single line.
  */
 static inline void
-cache_op_r4k_line(vaddr_t va, u_int op)
+cache_op_r4k_line(register_t va, u_int op)
 {
 	__asm volatile(
 		".set push"		"\n\t"
@@ -81,7 +81,7 @@ cache_op_r4k_line(vaddr_t va, u_int op)
  *	Perform the specified cache operation on 8 n-byte cache lines.
  */
 static inline void
-cache_r4k_op_8lines_NN(size_t n, vaddr_t va, u_int op)
+cache_r4k_op_8lines_NN(size_t n, register_t va, u_int op)
 {
 	__asm volatile(
 		".set push"			"\n\t"
@@ -117,7 +117,7 @@ cache_r4k_op_8lines_NN(size_t n, vaddr_t va, u_int op)
  *	Perform the specified cache operation on 32 n-byte cache lines.
  */
 static inline void
-cache_r4k_op_32lines_NN(size_t n, vaddr_t va, u_int op)
+cache_r4k_op_32lines_NN(size_t n, register_t va, u_int op)
 {
 	__asm volatile(
 		".set push"			"\n\t"
@@ -177,7 +177,7 @@ cache_r4k_op_32lines_NN(size_t n, vaddr_t va, u_int op)
  *	Perform the specified cache operation on 16 n-byte cache lines, 2-ways.
  */
 static inline void
-cache_r4k_op_16lines_NN_2way(size_t n, vaddr_t va1, vaddr_t va2, u_int op)
+cache_r4k_op_16lines_NN_2way(size_t n, register_t va1, register_t va2, u_int op)
 {
 	__asm volatile(
 		".set push"			"\n\t"
@@ -227,17 +227,17 @@ cache_r4k_op_16lines_NN_2way(size_t n, vaddr_t va1, vaddr_t va2, u_int op)
  *	Perform the specified cache operation on 16 32-byte cache lines, 2-ways.
  */
 #define	cache_r4k_op_16lines_16_2way(va1, va2, op)			\
-		cache_r4k_op_16lines_NN_2way(16, (va1), (va2), (op)
+		cache_r4k_op_16lines_NN_2way(16, (va1), (va2), (op))
 #define	cache_r4k_op_16lines_32_2way(va1, va2, op)			\
-		cache_r4k_op_16lines_NN_2way(32, (va1), (va2), (op)
+		cache_r4k_op_16lines_NN_2way(32, (va1), (va2), (op))
 
 /*
  * cache_r4k_op_8lines_NN_4way:
  *	Perform the specified cache operation on 8 n-byte cache lines, 4-ways.
  */
 static inline void
-cache_r4k_op_8lines_NN_4way(size_t n, vaddr_t va1, vaddr_t va2, vaddr_t va3,
-	vaddr_t va4, u_int op)
+cache_r4k_op_8lines_NN_4way(size_t n, register_t va1, register_t va2, register_t va3,
+	register_t va4, u_int op)
 {
 	__asm volatile(
 		".set push"			"\n\t"
@@ -293,64 +293,64 @@ cache_r4k_op_8lines_NN_4way(size_t n, vaddr_t va1, vaddr_t va2, vaddr_t va3,
 	    cache_r4k_op_8lines_NN_4way(32, (va1), (va2), (va3), (va4), (op))
 
 void	r4k_icache_sync_all_16(void);
-void	r4k_icache_sync_range_16(vaddr_t, vsize_t);
+void	r4k_icache_sync_range_16(register_t, vsize_t);
 void	r4k_icache_sync_range_index_16(vaddr_t, vsize_t);
 
 void	r4k_icache_sync_all_32(void);
-void	r4k_icache_sync_range_32(vaddr_t, vsize_t);
+void	r4k_icache_sync_range_32(register_t, vsize_t);
 void	r4k_icache_sync_range_index_32(vaddr_t, vsize_t);
 
 void	r4k_pdcache_wbinv_all_16(void);
-void	r4k_pdcache_wbinv_range_16(vaddr_t, vsize_t);
+void	r4k_pdcache_wbinv_range_16(register_t, vsize_t);
 void	r4k_pdcache_wbinv_range_index_16(vaddr_t, vsize_t);
 
-void	r4k_pdcache_inv_range_16(vaddr_t, vsize_t);
-void	r4k_pdcache_wb_range_16(vaddr_t, vsize_t);
+void	r4k_pdcache_inv_range_16(register_t, vsize_t);
+void	r4k_pdcache_wb_range_16(register_t, vsize_t);
 
 void	r4k_pdcache_wbinv_all_32(void);
-void	r4k_pdcache_wbinv_range_32(vaddr_t, vsize_t);
+void	r4k_pdcache_wbinv_range_32(register_t, vsize_t);
 void	r4k_pdcache_wbinv_range_index_32(vaddr_t, vsize_t);
 
-void	r4k_pdcache_inv_range_32(vaddr_t, vsize_t);
-void	r4k_pdcache_wb_range_32(vaddr_t, vsize_t);
+void	r4k_pdcache_inv_range_32(register_t, vsize_t);
+void	r4k_pdcache_wb_range_32(register_t, vsize_t);
 
 void	r4k_sdcache_wbinv_all_32(void);
-void	r4k_sdcache_wbinv_range_32(vaddr_t, vsize_t);
+void	r4k_sdcache_wbinv_range_32(register_t, vsize_t);
 void	r4k_sdcache_wbinv_range_index_32(vaddr_t, vsize_t);
 
-void	r4k_sdcache_inv_range_32(vaddr_t, vsize_t);
-void	r4k_sdcache_wb_range_32(vaddr_t, vsize_t);
+void	r4k_sdcache_inv_range_32(register_t, vsize_t);
+void	r4k_sdcache_wb_range_32(register_t, vsize_t);
 
 void	r4k_sdcache_wbinv_all_128(void);
-void	r4k_sdcache_wbinv_range_128(vaddr_t, vsize_t);
+void	r4k_sdcache_wbinv_range_128(register_t, vsize_t);
 void	r4k_sdcache_wbinv_range_index_128(vaddr_t, vsize_t);
 
-void	r4k_sdcache_inv_range_128(vaddr_t, vsize_t);
-void	r4k_sdcache_wb_range_128(vaddr_t, vsize_t);
+void	r4k_sdcache_inv_range_128(register_t, vsize_t);
+void	r4k_sdcache_wb_range_128(register_t, vsize_t);
 
 void	r4k_sdcache_wbinv_all_generic(void);
-void	r4k_sdcache_wbinv_range_generic(vaddr_t, vsize_t);
+void	r4k_sdcache_wbinv_range_generic(register_t, vsize_t);
 void	r4k_sdcache_wbinv_range_index_generic(vaddr_t, vsize_t);
 
-void	r4k_sdcache_inv_range_generic(vaddr_t, vsize_t);
-void	r4k_sdcache_wb_range_generic(vaddr_t, vsize_t);
+void	r4k_sdcache_inv_range_generic(register_t, vsize_t);
+void	r4k_sdcache_wb_range_generic(register_t, vsize_t);
 
 /* cache_r4k_pcache16.S */
 
 void	cache_r4k_icache_index_inv_16(vaddr_t, vsize_t);
-void	cache_r4k_icache_hit_inv_16(vaddr_t, vsize_t);
+void	cache_r4k_icache_hit_inv_16(register_t, vsize_t);
 void	cache_r4k_pdcache_index_wb_inv_16(vaddr_t, vsize_t);
-void	cache_r4k_pdcache_hit_inv_16(vaddr_t, vsize_t);
-void	cache_r4k_pdcache_hit_wb_inv_16(vaddr_t, vsize_t);
-void	cache_r4k_pdcache_hit_wb_16(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_hit_inv_16(register_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_inv_16(register_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_16(register_t, vsize_t);
 
 /* cache_r4k_pcache32.S */
 
 void	cache_r4k_icache_index_inv_32(vaddr_t, vsize_t);
-void	cache_r4k_icache_hit_inv_32(vaddr_t, vsize_t);
+void	cache_r4k_icache_hit_inv_32(register_t, vsize_t);
 void	cache_r4k_pdcache_index_wb_inv_32(vaddr_t, vsize_t);
-void	cache_r4k_pdcache_hit_inv_32(vaddr_t, vsize_t);
-void	cache_r4k_pdcache_hit_wb_inv_32(vaddr_t, vsize_t);
-void	cache_r4k_pdcache_hit_wb_32(vaddr_t, vsize_t);
+void	cache_r4k_pdcache_hit_inv_32(register_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_inv_32(register_t, vsize_t);
+void	cache_r4k_pdcache_hit_wb_32(register_t, vsize_t);
 
 #endif /* !_LOCORE */

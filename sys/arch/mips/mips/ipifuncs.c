@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.6 2011/04/29 08:26:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.7 2012/01/19 08:28:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -52,7 +52,6 @@ static const char * const ipi_names[] = {
 	[IPI_AST]	= "ipi ast",
 	[IPI_SHOOTDOWN]	= "ipi shootdown",
 	[IPI_FPSAVE]	= "ipi fpsave",
-	[IPI_SYNCICACHE]	= "ipi isync",
 	[IPI_KPREEMPT]	= "ipi kpreempt",
 	[IPI_SUSPEND]	= "ipi suspend",
 	[IPI_HALT]	= "ipi halt",
@@ -83,12 +82,6 @@ static void
 ipi_fpsave(struct cpu_info *ci)
 {
 	softint_schedule(ci->ci_fpsave_si);
-}
-
-static inline void
-ipi_syncicache(struct cpu_info *ci)
-{
-	pmap_tlb_syncicache_wanted(ci);
 }
 
 #ifdef __HAVE_PREEEMPTION
@@ -135,10 +128,6 @@ ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
 	if (ipi_mask & __BIT(IPI_FPSAVE)) {
 		ci->ci_evcnt_per_ipi[IPI_FPSAVE].ev_count++;
 		ipi_fpsave(ci);
-	}
-	if (ipi_mask & __BIT(IPI_SYNCICACHE)) {
-		ci->ci_evcnt_per_ipi[IPI_SYNCICACHE].ev_count++;
-		ipi_syncicache(ci);
 	}
 	if (ipi_mask & __BIT(IPI_SUSPEND)) {
 		ci->ci_evcnt_per_ipi[IPI_SUSPEND].ev_count++;

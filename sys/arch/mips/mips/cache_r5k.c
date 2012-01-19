@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.12.96.2 2011/04/29 08:26:23 matt Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.12.96.3 2012/01/19 08:28:49 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.12.96.2 2011/04/29 08:26:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.12.96.3 2012/01/19 08:28:49 matt Exp $");
 
 #include <sys/param.h>
 
@@ -107,9 +107,9 @@ r5k_icache_sync_all_32(void)
 }
 
 void
-r5k_icache_sync_range_32(vaddr_t va, vsize_t size)
+r5k_icache_sync_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -206,9 +206,9 @@ r5k_pdcache_wbinv_all_32(void)
 }
 
 void
-r4600v1_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
+r4600v1_pdcache_wbinv_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 	uint32_t ostatus;
 
 	/*
@@ -242,9 +242,9 @@ r4600v1_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 }
 
 void
-r4600v2_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
+r4600v2_pdcache_wbinv_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 	uint32_t ostatus;
 
 	va = trunc_line(va);
@@ -270,9 +270,9 @@ r4600v2_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 }
 
 void
-vr4131v1_pdcache_wbinv_range_16(vaddr_t va, vsize_t size)
+vr4131v1_pdcache_wbinv_range_16(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line16(va + size);
+	register_t eva = round_line16(va + size);
 
 	va = trunc_line16(va);
 
@@ -292,9 +292,9 @@ vr4131v1_pdcache_wbinv_range_16(vaddr_t va, vsize_t size)
 }
 
 void
-r5k_pdcache_wbinv_range_16(vaddr_t va, vsize_t size)
+r5k_pdcache_wbinv_range_16(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line16(va + size);
+	register_t eva = round_line16(va + size);
 
 	va = trunc_line16(va);
 
@@ -311,9 +311,9 @@ r5k_pdcache_wbinv_range_16(vaddr_t va, vsize_t size)
 }
 
 void
-r5k_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
+r5k_pdcache_wbinv_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -394,9 +394,9 @@ r5k_pdcache_wbinv_range_index_32(vaddr_t va, vsize_t size)
 }
 
 void
-r4600v1_pdcache_inv_range_32(vaddr_t va, vsize_t size)
+r4600v1_pdcache_inv_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 	uint32_t ostatus;
 
 	/*
@@ -421,9 +421,9 @@ r4600v1_pdcache_inv_range_32(vaddr_t va, vsize_t size)
 }
 
 void
-r4600v2_pdcache_inv_range_32(vaddr_t va, vsize_t size)
+r4600v2_pdcache_inv_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 	uint32_t ostatus;
 
 	va = trunc_line(va);
@@ -452,9 +452,9 @@ r4600v2_pdcache_inv_range_32(vaddr_t va, vsize_t size)
 }
 
 void
-r5k_pdcache_inv_range_16(vaddr_t va, vsize_t size)
+r5k_pdcache_inv_range_16(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line16(va + size);
+	register_t eva = round_line16(va + size);
 
 	va = trunc_line16(va);
 
@@ -470,9 +470,9 @@ r5k_pdcache_inv_range_16(vaddr_t va, vsize_t size)
 }
 
 void
-r5k_pdcache_inv_range_32(vaddr_t va, vsize_t size)
+r5k_pdcache_inv_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -488,9 +488,9 @@ r5k_pdcache_inv_range_32(vaddr_t va, vsize_t size)
 }
 
 void
-r4600v1_pdcache_wb_range_32(vaddr_t va, vsize_t size)
+r4600v1_pdcache_wb_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 	uint32_t ostatus;
 
 	/*
@@ -515,9 +515,9 @@ r4600v1_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 }
 
 void
-r4600v2_pdcache_wb_range_32(vaddr_t va, vsize_t size)
+r4600v2_pdcache_wb_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 	uint32_t ostatus;
 
 	va = trunc_line(va);
@@ -546,9 +546,9 @@ r4600v2_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 }
 
 void
-r5k_pdcache_wb_range_16(vaddr_t va, vsize_t size)
+r5k_pdcache_wb_range_16(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line16(va + size);
+	register_t eva = round_line16(va + size);
 
 	va = trunc_line16(va);
 
@@ -564,9 +564,9 @@ r5k_pdcache_wb_range_16(vaddr_t va, vsize_t size)
 }
 
 void
-r5k_pdcache_wb_range_32(vaddr_t va, vsize_t size)
+r5k_pdcache_wb_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -625,10 +625,10 @@ r5k_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 #define	mips_r5k_trunc_page(x)	((x) & ~(128 * 32 - 1))
 
 void
-r5k_sdcache_wbinv_range(vaddr_t va, vsize_t size)
+r5k_sdcache_wbinv_range(register_t va, vsize_t size)
 {
 	uint32_t ostatus, taglo;
-	vaddr_t eva = mips_r5k_round_page(va + size);
+	register_t eva = mips_r5k_round_page(va + size);
 
 	va = mips_r5k_trunc_page(va);
 
@@ -654,7 +654,7 @@ r5k_sdcache_wbinv_range(vaddr_t va, vsize_t size)
 }
 
 void
-r5k_sdcache_wb_range(vaddr_t va, vsize_t size)
+r5k_sdcache_wb_range(register_t va, vsize_t size)
 {
 	/* Write-through cache, no need to WB */
 }

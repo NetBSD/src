@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_syncicache.c,v 1.1.2.2 2012/01/12 18:50:33 matt Exp $	*/
+/*	$NetBSD: pmap_syncicache.c,v 1.1.2.3 2012/01/19 08:28:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_syncicache.c,v 1.1.2.2 2012/01/12 18:50:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_syncicache.c,v 1.1.2.3 2012/01/19 08:28:50 matt Exp $");
 
 /*
  *
@@ -62,249 +62,48 @@ u_int pmap_syncicache_page_mask;
 u_int pmap_syncicache_map_mask;
 
 void
-pmap_syncicache_init(void)
-{
-	const u_int icache_way_pages =
-	    mips_cache_info.mci_picache_way_size >> PGSHIFT;
-	KASSERT(icache_way_pages <= 8*sizeof(pmap_syncicache_page_mask));
-	pmap_syncicache_page_mask = icache_way_pages - 1;
-	KASSERT(pmap_syncicache_page_mask == atop(MIPS_ICACHE_ALIAS_MASK));
-	pmap_syncicache_map_mask = ~(~0 << icache_way_pages);
-	KASSERT((pmap_syncicache_map_mask & ~(PG_MD_EXECPAGE_ANY >> PG_MD_EXECPAGE_SHIFT)) == 0);
-	printf("tlb0: synci page mask %#x and map mask %#x used for %u pages\n",
-	    pmap_syncicache_page_mask, pmap_syncicache_map_mask,
-	    icache_way_pages);
-}
-
-void
 pmap_syncicache_page(struct vm_page *pg, uint32_t colors)
 {
-	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-#ifdef MULTIPROCESSOR
-	pv_entry_t pv = &md->pvh_first;
-	uint32_t onproc = 0;
-	(void)PG_MD_PVLIST_LOCK(md, false);
-	if (pv->pv_pmap != NULL) {
-		for (; pv != NULL; pv = pv->pv_next) {
-			onproc |= pv->pv_pmap->pm_onproc;
-			if (onproc == cpus_running)
-				break;
-		}
-	}
-	PG_MD_PVLIST_UNLOCK(md);
-	kpreempt_disable();
-	pmap_tlb_syncicache(colors & md->pvh_attrs, onproc);
-	kpreempt_enable();
-#else
 	if (!MIPS_HAS_R4K_MMU) {
 		mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg)),
 		    PAGE_SIZE);
-	} else if (PG_MD_CACHED_P(md)) {
-		/*
-		 * The page may not be mapped so we can't use one of its
-		 * virtual addresses.  But if the cache is not vivt (meaning
-		 * it's physically tagged), we can use its XKPHYS cached or
-		 * KSEG0 (if it lies within) address to invalid it.
-		 */
-		if (__predict_true(!mips_cache_info.mci_picache_vivt)) {
-			const paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#if _LP64
-			mips_icache_sync_range(MIPS_PHYS_TO_XKPHYS_CACHED(pa),
-			    PAGE_SIZE);
-			return;
-#else
-			if (MIPS_KSEG0_P(pa)) {
-				mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(pa),
-				    PAGE_SIZE);
-				return;
-			}
-#endif
-		}
-#if 0
-		struct cpu_info * const ci = curcpu();
-		colors >>= PG_MD_EXECPAGE_SHIFT;
-		KASSERT(colors != 0);
-
-		/*
-		 * Record the colors to flushes the next time we return
-		 * to userspace.
-		 */
-		u_int old = ci->ci_icache_badcolors;
-		atomic_or_uint(&ci->ci_icache_badcolors, colors);
-		if ((old & colors) == colors) {
-			ci->ci_evcnt_syncicache_duplicate.ev_count++;
-		} else {
-			ci->ci_evcnt_syncicache_desired.ev_count++;
-		}
-#else
-		colors >>= PG_MD_EXECPAGE_SHIFT;
-		/*
-		 * If not all the colors are in use, just flush the
-		 * ones that are.
-		 */
-		for (vaddr_t va = MIPS_KSEG0_START;
-		     colors != 0;
-		     colors >>= 1, va += PAGE_SIZE) {
-			if (colors & 1) {
-				mips_icache_sync_range_index(va, PAGE_SIZE);
-			}
-		}
-#endif
-	}
-#endif
-}
-
-void
-pmap_syncicache_ast(struct cpu_info *ci)
-{
-	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
-
-	kpreempt_disable();
-	uint32_t page_bitmap = atomic_swap_32(&ti->ti_syncicache_bitmap, 0);
-#if 0
-	printf("%s: need to sync %#x\n", __func__, page_bitmap);
-#endif
-	ti->ti_evcnt_syncicache_asts.ev_count++;
-	/*
-	 * If every bit is set in the bitmap, sync the entire icache.
-	 */
-	if (page_bitmap == pmap_syncicache_map_mask) {
-		mips_icache_sync_all();
-		ti->ti_evcnt_syncicache_all.ev_count++;
-		ti->ti_evcnt_syncicache_pages.ev_count += pmap_syncicache_page_mask+1;
-		kpreempt_enable();
 		return;
 	}
 
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+	if (!PG_MD_CACHED_P(md))
+		return;
+
 	/*
-	 * Loop through the bitmap clearing each set of indices for each page.
+	 * The page may not be mapped so we can't use one of its
+	 * virtual addresses.  But if the cache is not vivt (meaning
+	 * it's physically tagged), we can use its XKPHYS cached or
+	 * KSEG0 (if it lies within) address to invalid it.
 	 */
-	for (vaddr_t va = 0;
-	     page_bitmap != 0;
-	     page_bitmap >>= 1, va += PAGE_SIZE) {
-		if (page_bitmap & 1) {
-			/*
-			 * Each bit set represents a page to be synced.
-			 */
-			mips_icache_sync_range_index(va, PAGE_SIZE);
-			ti->ti_evcnt_syncicache_pages.ev_count++;
+	if (__predict_true(!mips_cache_info.mci_picache_vivt)) {
+		const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+#ifndef __mips_o32
+		mips_icache_sync_range(MIPS_PHYS_TO_XKPHYS_CACHED(pa),
+		    PAGE_SIZE);
+		return;
+#else
+		if (MIPS_KSEG0_P(pa)) {
+			mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(pa),
+			    PAGE_SIZE);
+			return;
 		}
-	}
-
-	kpreempt_enable();
-}
-
-#ifdef MULTIPROCESSOR
-void
-pmap_syncicache(uint32_t colors, uint32_t page_onproc)
-{
-	KASSERT(kpreempt_disabled());
-	/*
-	 * We don't sync the icache here but let ast do it for us just before
-	 * returning to userspace.  We do this because we don't really know
-	 * on which CPU we will return to userspace and if we synch the icache
-	 * now it might not be on the CPU we need it on.  In addition, others
-	 * threads might sync the icache before we get to return to userland
-	 * so there's no reason for us to do it.
-	 *
-	 * Each TLB/cache keeps a synci sequence number which gets advanced
-	 * each that TLB/cache performs a mips_sync_icache_all.  When we
-	 * return to userland, we check the pmap's corresponding synci
-	 * sequence number for that TLB/cache.  If they match, it means that
-	 * no one has yet synched the icache so we much do it ourselves.  If
-	 * they don't match someone has already synced the icache for us.
-	 *
-	 * There is a small chance that the generation numbers will wrap and
-	 * then become equal but that's a one in 4 billion cache and will
-	 * just cause an extra sync of the icache.
-	 */
-	const uint32_t cpu_mask = 1L << cpu_index(curcpu());
-	const uint32_t page_mask = colors;
-	KASSERT((page_mask & ~pmap_syncicache_map_mask) == 0);
-	uint32_t onproc = 0;
-	for (size_t i = 0; i < pmap_ntlbs; i++) {
-		struct pmap_tlb_info * const ti = pmap_tlbs[0];
-		TLBINFO_LOCK(ti);
-		for (;;) {
-			uint32_t old_page_bitmap = ti->ti_syncicache_bitmap;
-
-			uint32_t orig_page_bitmap = atomic_cas_32(
-			    &ti->ti_syncicache_bitmap, old_page_bitmap,
-			    old_page_bitmap | page_mask);
-
-			if ((orig_page_bitmap & page_mask) == page_mask) {
-				ti->ti_evcnt_syncicache_duplicate.ev_count++;
-				break;
-			}
-
-			if (orig_page_bitmap == old_page_bitmap) {
-				if (old_page_bitmap == 0) {
-					onproc |= ti->ti_cpu_mask;
-				} else {
-					ti->ti_evcnt_syncicache_deferred.ev_count++;
-				}
-				ti->ti_evcnt_syncicache_desired.ev_count++;
-				break;
-			}
-		}
-#if 0
-		printf("%s: %s: %x to %x on cpus %#x\n", __func__,
-		    ti->ti_name, page_mask, ti->ti_syncicache_bitmap,
-		     onproc & page_onproc & ti->ti_cpu_mask);
 #endif
-		TLBINFO_UNLOCK(ti);
 	}
-	onproc &= page_onproc;
-	if (__predict_false(onproc != 0)) {
-		/*
-		 * If the cpu need to sync this page, tell the current lwp
-		 * to sync the icache before it returns to userspace.
-		 */
-		if (onproc & cpu_mask) {
-			if (curcpu()->ci_flags & CPUF_USERPMAP) {
-				curlwp->l_md.md_astpending = 1;	/* force call to ast() */
-				curcpu()->ci_evcnt_syncicache_onproc_rqst.ev_count++;
-			} else {
-				curcpu()->ci_evcnt_syncicache_deferred_rqst.ev_count++;
-			}
-			onproc ^= cpu_mask;
-		}
-
-		/*
-		 * For each cpu that is affect, send an IPI telling
-		 * that CPU that the current thread needs to sync its icache.
-		 * We might cause some spurious icache syncs but that's not
-		 * going to break anything.
-		 */
-		for (u_int n = ffs(onproc);
-		     onproc != 0;
-		     onproc >>= n, onproc <<= n, n = ffs(onproc)) {
-			cpu_send_ipi(cpu_lookup(n-1), IPI_SYNCICACHE);
-		}
-	}
-}
-
-void
-pmap_syncicache_wanted(struct cpu_info *ci)
-{
-	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
-
-	KASSERT(cpu_intr_p());
-
-	TLBINFO_LOCK(ti);
-
+	colors >>= PG_MD_EXECPAGE_SHIFT;
 	/*
-	 * We might have been notified because another CPU changed an exec
-	 * page and now needs us to sync the icache so tell the current lwp
-	 * to do the next time it returns to userland (which should be very
-	 * soon).
+	 * If not all the colors are in use, just flush the
+	 * ones that are.
 	 */
-	if (ti->ti_syncicache_bitmap && (ci->ci_flags & CPUF_USERPMAP)) {
-		curlwp->l_md.md_astpending = 1;	/* force call to ast() */
-		ci->ci_evcnt_syncicache_ipi_rqst.ev_count++;
+	for (vaddr_t va = MIPS_KSEG0_START;
+	     colors != 0;
+	     colors >>= 1, va += PAGE_SIZE) {
+		if (colors & 1) {
+			mips_icache_sync_range_index(va, PAGE_SIZE);
+		}
 	}
-
-	TLBINFO_UNLOCK(ti);
-
 }
-#endif /* MULTIPROCESSOR */

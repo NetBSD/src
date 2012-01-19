@@ -272,18 +272,6 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 		cpu_info_last->ci_next = ci;
 		cpu_info_last = ci;
 	}
-	evcnt_attach_dynamic(&ci->ci_evcnt_synci_activate_rqst,
-	    EVCNT_TYPE_MISC, NULL, xname,
-	    "syncicache activate request");
-	evcnt_attach_dynamic(&ci->ci_evcnt_synci_deferred_rqst,
-	    EVCNT_TYPE_MISC, NULL, xname,
-	    "syncicache deferred request");
-	evcnt_attach_dynamic(&ci->ci_evcnt_synci_ipi_rqst,
-	    EVCNT_TYPE_MISC, NULL, xname,
-	    "syncicache ipi request");
-	evcnt_attach_dynamic(&ci->ci_evcnt_synci_onproc_rqst,
-	    EVCNT_TYPE_MISC, NULL, xname,
-	    "syncicache onproc request");
 
 	/*
 	 * Initialize IPI framework for this cpu instance

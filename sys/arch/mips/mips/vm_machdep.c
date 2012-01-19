@@ -102,6 +102,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* If parent LWP was using FPU, then save the FPU h/w state. */
 	fpu_save_lwp(l1);
 #endif
+#ifndef __mips_o32
+	KASSERT(pcb1->pcb_context.val[_L_SR] & MIPS_SR_KX);
+#endif
 
 	/* Copy the PCB from parent. */
 	*pcb2 = *pcb1;
@@ -165,7 +168,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->pcb_context.val[_L_SP] = (intptr_t)tf;			/* SP */
 	pcb->pcb_context.val[_L_RA] =
 	   mips_locore_jumpvec.ljv_lwp_trampoline;			/* RA */
-#ifdef _LP64
+#ifndef __mips_n32
 	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_KX);
 #endif
 	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_INT_IE);

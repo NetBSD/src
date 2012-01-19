@@ -272,6 +272,9 @@ struct splsw mips_splsw;
 struct mips_options mips_options = {
 	.mips_cpu_id = 0xffffffff,
 	.mips_fpu_id = 0xffffffff,
+#ifdef MIPS3_PLUS
+	.mips3_xkphys_cached = MIPS_PHYS_TO_XKPHYS(3,0),
+#endif
 };
 
 struct	user *proc0paddr;
@@ -1264,12 +1267,12 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 		cca = (opts->mips_cpu_flags & CPU_MIPS_CACHED_CCA_MASK) >>
 		    CPU_MIPS_CACHED_CCA_SHIFT;
 		opts->mips3_pg_cached = MIPS3_CCA_TO_PG(cca);
-#ifdef _LP64
+#ifndef __mips_o32
 		opts->mips3_xkphys_cached = MIPS_PHYS_TO_XKPHYS(cca, 0);
 #endif
 	} else {
 		opts->mips3_pg_cached = MIPS3_DEFAULT_PG_CACHED;
-#ifdef _LP64
+#ifndef __mips_o32
 		opts->mips3_xkphys_cached = MIPS3_DEFAULT_XKPHYS_CACHED;
 #endif
 	}
@@ -2116,6 +2119,9 @@ mips_init_lwp0_uarea(void)
 #ifdef _LP64
 	pcb->pcb_context.val[_L_SR] |= MIPS_SR_KX | MIPS_SR_UX;
 	l->l_md.md_utf->tf_regs[_R_SR] = MIPS_SR_KX | MIPS_SR_UX;
+#elif defined(__mips_n32)
+	pcb->pcb_context.val[_L_SR] |= MIPS_SR_KX;
+	l->l_md.md_utf->tf_regs[_R_SR] = MIPS_SR_KX;
 #endif
 }
 
