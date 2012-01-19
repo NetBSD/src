@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.29 2011/03/05 14:26:01 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.30 2012/01/19 20:55:38 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -79,7 +79,9 @@
  *
  */
 #define	ALIGNBYTES	7
+#define	ALIGNBYTES32	ALIGNBYTES
 #define	ALIGN(p)	(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define	ALIGN32(p)	(((uintptr_t)(p) + ALIGNBYTES32) & ~ALIGNBYTES32)
 #define ALIGNED_POINTER(p,t)	((((uintptr_t)(p)) & (sizeof(t)-1)) == 0)
 
 #ifdef ENABLE_MIPS_16KB_PAGE
