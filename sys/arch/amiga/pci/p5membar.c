@@ -1,4 +1,4 @@
-/*	$NetBSD: p5membar.c,v 1.1 2012/01/10 20:29:50 rkujawa Exp $ */
+/*	$NetBSD: p5membar.c,v 1.2 2012/01/19 00:14:08 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ p5membar_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": PCI I/O area, %d kB\n",
 		    zap->size / 1024);
 		sc->sc_type = P5MEMBAR_TYPE_INTERNAL;
-	} else if ((bus_addr_t) zap->pa == P5BUS_PCI_BRIDGE_BASE) {
+	} else if ((bus_addr_t) zap->pa == P5BUS_BRIDGE_BASE) {
 		aprint_normal(": PCI bridge, %d kB\n",
 		    zap->size / 1024);
 		sc->sc_type = P5MEMBAR_TYPE_INTERNAL;
