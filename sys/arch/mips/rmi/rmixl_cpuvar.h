@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpuvar.h,v 1.1.2.4 2011/12/24 01:57:54 matt Exp $	*/
+/*	$NetBSD: rmixl_cpuvar.h,v 1.1.2.5 2012/01/19 08:05:24 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,17 +31,24 @@
 #ifndef _ARCH_MIPS_RMI_RMIXL_CPUVAR_H_
 #define _ARCH_MIPS_RMI_RMIXL_CPUVAR_H_
 
+#include <mips/rmi/rmixl_fmnvar.h>
+
 struct rmixl_cpu_trampoline_args {
 	uint64_t	ta_sp;
 	uint64_t	ta_lwp;
 	uint64_t	ta_cpuinfo;
 };
 
-struct rmixl_cpu_softc {
+struct cpu_softc {
 	device_t sc_dev;
 	struct cpu_info *sc_ci;
+
+	void *sc_fmn_si;		/* fast messaging network softint */
+
 	struct evcnt sc_vec_evcnts[64];
 	struct evcnt sc_irt_evcnts[160];
+	struct evcnt sc_fmn_stid_evcnts[RMIXL_FMN_NSTID];
+	struct evcnt sc_fmn_cpu_evcnts[8];
 };
 
 #endif	/* _ARCH_MIPS_RMI_RMIXL_CPUVAR_H_ */

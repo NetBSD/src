@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.34 2012/01/04 16:17:53 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.35 2012/01/19 08:05:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.34 2012/01/04 16:17:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.35 2012/01/19 08:05:24 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -724,6 +724,7 @@ rmixl_intrvec_t rmixl_intrvec[NINTRVECS] = {
 	[0 ... NINTRVECS-1] = {
 		.iv_intrhand = {
 			.ih_func = rmixl_stray_intr,
+			.ih_arg = rmixl_stray_intr,
 		},
 	},
 };
@@ -731,6 +732,7 @@ rmixl_intrvec_t rmixl_intrvec[NINTRVECS] = {
 rmixl_intrhand_t rmixl_irt_intrhands[RMIXL_NIRTS] = {
 	[0 ... RMIXL_NIRTS-1] = {
 		.ih_func = rmixl_stray_intr,
+		.ih_arg = rmixl_stray_intr,
 	},
 };
 static u_int rmixl_nirts;
@@ -944,7 +946,7 @@ rmixl_intr_init_ipi(void)
 void
 rmixl_intr_init_cpu(struct cpu_info *ci)
 {
-	struct rmixl_cpu_softc * const sc = (void *)ci->ci_softc;
+	struct cpu_softc * const sc = ci->ci_softc;
 	const char * xname = device_xname(sc->sc_dev);
 
 	KASSERT(sc != NULL);
@@ -1304,6 +1306,7 @@ rmixl_vec_disestablish(void *cookie)
 	KASSERT(mutex_owned(rmixl_intr_lock));
 	KASSERT(vec < NINTRVECS);
 	KASSERT(ih->ih_func != rmixl_stray_intr);
+	KASSERT(ih->ih_arg != rmixl_stray_intr);
 	KASSERT(IPL_VM <= iv->iv_ipl && iv->iv_ipl <= IPL_HIGH);
 
 	LIST_REMOVE(ih, ih_link);
@@ -1318,7 +1321,7 @@ rmixl_vec_disestablish(void *cookie)
 
 	ih->ih_vec = 0;
 	ih->ih_mpsafe = false;
-	ih->ih_arg = NULL;
+	ih->ih_arg = rmixl_stray_intr;
 
 	/*
 	 * If this vector isn't servicing any interrupts, then check to
@@ -1370,7 +1373,7 @@ rmixl_intr_disestablish(void *cookie)
 void
 evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 {
-	struct rmixl_cpu_softc * const sc = (void *)curcpu()->ci_softc;
+	struct cpu_softc * const sc = curcpu()->ci_softc;
 	const bool is_xlp_p = cpu_rmixlp(mips_options.mips_cpu);
 
 	DPRINTF(("%s: cpu%u: ipl %d, pc %#"PRIxVADDR", pending %#x\n",
@@ -1462,13 +1465,13 @@ rmixl_send_ipi(struct cpu_info *ci, int tag)
 	KASSERT(tag >= 0 && tag < NIPIS);
 
 	if (is_xlp_p) {
-		r = RMXLP_PIC_IPI_CTRL_MAKE(0, __BIT(cpuid & 15),
-		   RMIXL_INTERVEC_IPI + tag);
+		r = RMIXLP_PIC_IPI_CTRL_MAKE(0, __BIT(cpuid & 15),
+		   RMIXL_INTRVEC_IPI + tag);
 	} else {
 		const uint32_t core = (uint32_t)(cpuid >> 2);
 		const uint32_t thread = (uint32_t)(cpuid & __BITS(1,0));
-		r = RMXLP_PIC_IPI_CTRL_MAKE(0, core, thread,
-		   RMIXL_INTERVEC_IPI + tag);
+		r = RMIXL_PIC_IPIBASE_MAKE(0, core, thread,
+		   RMIXL_INTRVEC_IPI + tag);
 	}
 
 	mutex_enter(rmixl_ipi_lock);
