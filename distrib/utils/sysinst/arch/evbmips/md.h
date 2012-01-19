@@ -1,4 +1,4 @@
-/* $NetBSD: md.h,v 1.2.22.2 2011/05/13 17:10:36 matt Exp $ */
+/* md.h,v 1.2.22.2 2011/05/13 17:10:36 matt Exp */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,6 +61,7 @@
 #if defined(ARCH_mipsel)
 #define SET_KERNEL_6_NAME	"kern-MTX-1"
 #define SET_KERNEL_7_NAME	"kern-OMSAL400"
+#define SET_KERNEL_8_NAME	"kern-CPMBR1400"
 #endif
 
 #if defined(ARCH_mips64eb) || defined(ARCH_mips64el)
