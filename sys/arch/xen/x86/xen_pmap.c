@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.13 2012/01/09 12:58:49 cherry Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.14 2012/01/19 22:04:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.13 2012/01/09 12:58:49 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.14 2012/01/19 22:04:05 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -619,6 +619,7 @@ xen_kpm_sync(struct pmap *pmap, int index)
 	if (__predict_false(xpq_cpu != &x86_curcpu)) { /* Too early to xcall */
 		CPU_INFO_ITERATOR cii;
 		struct cpu_info *ci;
+		int s = splvm();
 		for (CPU_INFO_FOREACH(cii, ci)) {
 			if (ci == NULL) {
 				continue;
@@ -629,6 +630,7 @@ xen_kpm_sync(struct pmap *pmap, int index)
 			}
 		}
 		pmap_pte_flush();
+		splx(s);
 		return;
 	}
 
