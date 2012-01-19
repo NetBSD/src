@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.21 2011/12/23 22:31:30 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.22 2012/01/19 08:28:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.21 2011/12/23 22:31:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.22 2012/01/19 08:28:50 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -221,26 +221,6 @@ pmap_pai_reset(struct pmap_tlb_info *ti, struct pmap_asid_info *pai,
 void
 pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *ti)
 {
-	evcnt_attach_dynamic(&ti->ti_evcnt_syncicache_desired,
-	    EVCNT_TYPE_MISC, NULL,
-	    ti->ti_name, "icache syncs desired");
-	evcnt_attach_dynamic(&ti->ti_evcnt_syncicache_asts,
-	    EVCNT_TYPE_MISC, &ti->ti_evcnt_syncicache_desired,
-	    ti->ti_name, "icache sync asts");
-	evcnt_attach_dynamic(&ti->ti_evcnt_syncicache_all,
-	    EVCNT_TYPE_MISC, &ti->ti_evcnt_syncicache_asts,
-	    ti->ti_name, "icache full syncs");
-	evcnt_attach_dynamic(&ti->ti_evcnt_syncicache_pages,
-	    EVCNT_TYPE_MISC, &ti->ti_evcnt_syncicache_asts,
-	    ti->ti_name, "icache pages synced");
-	evcnt_attach_dynamic(&ti->ti_evcnt_syncicache_duplicate,
-	    EVCNT_TYPE_MISC, &ti->ti_evcnt_syncicache_desired,
-	    ti->ti_name, "icache dup pages skipped");
-#ifdef MULTIPROCESSOR
-	evcnt_attach_dynamic(&ti->ti_evcnt_syncicache_deferred,
-	    EVCNT_TYPE_MISC, &ti->ti_evcnt_syncicache_desired,
-	    ti->ti_name, "icache pages deferred");
-#endif /* MULTIPROCESSOR */
 	evcnt_attach_dynamic(&ti->ti_evcnt_asid_reinits,
 	    EVCNT_TYPE_MISC, NULL,
 	    ti->ti_name, "asid pool reinit");
@@ -276,7 +256,6 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 				ti->ti_asid_mask |= ti->ti_asid_mask >> 1;
 			}
 		}
-		pmap_syncicache_init();
 		return;
 #ifdef MULTIPROCESSOR
 	}
@@ -789,15 +768,6 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 		 * be changed while this TLBs lock is held.
 		 */
 		atomic_or_32(&pm->pm_onproc, 1 << cpu_index(ci));
-		/*
-		 * If this CPU has had exec pages changes that haven't been
-		 * icache synched, make sure to do that before returning to
-		 * userland.
-		 */
-		if (ti->ti_syncipage_page_bitmap) {
-			l->l_md.md_astpending = 1; /* force call to ast() */
-			ci->ci_evcnt_syncipage_activate_rqst.ev_count++;
-		}
 		atomic_or_ulong(&ci->ci_flags, CPUF_USERPMAP);
 #endif /* MULTIPROCESSOR */
 		ci->ci_pmap_asid_cur = pai->pai_asid;

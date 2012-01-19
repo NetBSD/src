@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_tx39.c,v 1.6.28.1 2010/01/20 09:04:35 matt Exp $	*/
+/*	$NetBSD: cache_tx39.c,v 1.6.28.2 2012/01/19 08:28:49 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.6.28.1 2010/01/20 09:04:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.6.28.2 2012/01/19 08:28:49 matt Exp $");
 
 #include <sys/param.h>
 
@@ -67,9 +67,9 @@ tx3900_icache_sync_all_16(void)
 }
 
 void
-tx3900_icache_sync_range_16(vaddr_t va, vsize_t size)
+tx3900_icache_sync_range_16(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -117,9 +117,9 @@ tx3900_pdcache_wbinv_all_4(void)
 }
 
 void
-tx3900_pdcache_inv_range_4(vaddr_t va, vsize_t size)
+tx3900_pdcache_inv_range_4(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -136,7 +136,7 @@ tx3900_pdcache_inv_range_4(vaddr_t va, vsize_t size)
 }
 
 void
-tx3900_pdcache_wb_range_4(vaddr_t va, vsize_t size)
+tx3900_pdcache_wb_range_4(register_t va, vsize_t size)
 {
 
 	/* Cache is write-through. */
@@ -161,9 +161,9 @@ tx3920_icache_sync_all_16wb(void)
 }
 
 void
-tx3920_icache_sync_range_16wt(vaddr_t va, vsize_t size)
+tx3920_icache_sync_range_16wt(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -171,9 +171,9 @@ tx3920_icache_sync_range_16wt(vaddr_t va, vsize_t size)
 }
 
 void
-tx3920_icache_sync_range_16wb(vaddr_t va, vsize_t size)
+tx3920_icache_sync_range_16wb(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -221,9 +221,9 @@ tx3920_pdcache_wbinv_all_16wb(void)
 }
 
 void
-tx3920_pdcache_wbinv_range_16wb(vaddr_t va, vsize_t size)
+tx3920_pdcache_wbinv_range_16wb(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -240,9 +240,9 @@ tx3920_pdcache_wbinv_range_16wb(vaddr_t va, vsize_t size)
 }
 
 void
-tx3920_pdcache_inv_range_16(vaddr_t va, vsize_t size)
+tx3920_pdcache_inv_range_16(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -259,16 +259,16 @@ tx3920_pdcache_inv_range_16(vaddr_t va, vsize_t size)
 }
 
 void
-tx3920_pdcache_wb_range_16wt(vaddr_t va, vsize_t size)
+tx3920_pdcache_wb_range_16wt(register_t va, vsize_t size)
 {
 
 	/* Cache is write-through. */
 }
 
 void
-tx3920_pdcache_wb_range_16wb(vaddr_t va, vsize_t size)
+tx3920_pdcache_wb_range_16wb(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 

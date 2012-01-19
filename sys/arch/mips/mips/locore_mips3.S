@@ -849,6 +849,8 @@ NESTED_NOPROFILE(cpu_trampoline, 0, ra)
 
 #ifdef _LP64
 	li	v0, MIPS_SR_KX | MIPS_SR_UX	# allow 64bit addressing
+#elif defined(__mips_n32)
+	li	v0, MIPS_SR_KX			# allow 64bit kernel addressing
 #else
 	li	v0, 0
 #endif

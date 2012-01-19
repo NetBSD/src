@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r10k.c,v 1.4.96.1 2010/01/20 09:04:34 matt Exp $	*/
+/*	$NetBSD: cache_r10k.c,v 1.4.96.2 2012/01/19 08:28:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Takao Shinohara.
@@ -97,9 +97,9 @@ r10k_icache_sync_all(void)
 }
 
 void
-r10k_icache_sync_range(vaddr_t va, vsize_t size)
+r10k_icache_sync_range(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -167,9 +167,9 @@ r10k_pdcache_wbinv_all(void)
 }
 
 void
-r10k_pdcache_wbinv_range(vaddr_t va, vsize_t size)
+r10k_pdcache_wbinv_range(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -204,9 +204,9 @@ r10k_pdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 }
 
 void
-r10k_pdcache_inv_range(vaddr_t va, vsize_t size)
+r10k_pdcache_inv_range(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -217,9 +217,9 @@ r10k_pdcache_inv_range(vaddr_t va, vsize_t size)
 }
 
 void
-r10k_pdcache_wb_range(vaddr_t va, vsize_t size)
+r10k_pdcache_wb_range(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
@@ -252,10 +252,10 @@ r10k_sdcache_wbinv_all(void)
 }
 
 void
-r10k_sdcache_wbinv_range(vaddr_t va, vsize_t size)
+r10k_sdcache_wbinv_range(register_t va, vsize_t size)
 {
 	const struct mips_cache_info * const mci = &mips_cache_info;
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 	vsize_t line_size = mci->mci_sdcache_line_size;
 
 	va = trunc_line(va);
@@ -292,10 +292,10 @@ r10k_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 }
 
 void
-r10k_sdcache_inv_range(vaddr_t va, vsize_t size)
+r10k_sdcache_inv_range(register_t va, vsize_t size)
 {
 	const struct mips_cache_info * const mci = &mips_cache_info;
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 	vsize_t line_size = mci->mci_sdcache_line_size;
 
 	va = trunc_line(va);
@@ -307,10 +307,10 @@ r10k_sdcache_inv_range(vaddr_t va, vsize_t size)
 }
 
 void
-r10k_sdcache_wb_range(vaddr_t va, vsize_t size)
+r10k_sdcache_wb_range(register_t va, vsize_t size)
 {
 	const struct mips_cache_info * const mci = &mips_cache_info;
-	vaddr_t eva = round_line(va + size);
+	register_t eva = round_line(va + size);
 	vsize_t line_size = mci->mci_sdcache_line_size;
 
 	va = trunc_line(va);

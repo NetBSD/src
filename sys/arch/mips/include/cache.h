@@ -128,34 +128,34 @@
 
 struct mips_cache_ops {
 	void	(*mco_icache_sync_all)(void);
-	void	(*mco_icache_sync_range)(vaddr_t, vsize_t);
+	void	(*mco_icache_sync_range)(register_t, vsize_t);
 	void	(*mco_icache_sync_range_index)(vaddr_t, vsize_t);
 
 	void	(*mco_pdcache_wbinv_all)(void);
-	void	(*mco_pdcache_wbinv_range)(vaddr_t, vsize_t);
+	void	(*mco_pdcache_wbinv_range)(register_t, vsize_t);
 	void	(*mco_pdcache_wbinv_range_index)(vaddr_t, vsize_t);
-	void	(*mco_pdcache_inv_range)(vaddr_t, vsize_t);
-	void	(*mco_pdcache_wb_range)(vaddr_t, vsize_t);
+	void	(*mco_pdcache_inv_range)(register_t, vsize_t);
+	void	(*mco_pdcache_wb_range)(register_t, vsize_t);
 
 	/* These are called only by the (mipsNN) icache functions. */
 	void	(*mco_intern_icache_sync_range_index)(vaddr_t, vsize_t);
-	void	(*mco_intern_icache_sync_range)(vaddr_t, vsize_t);
+	void	(*mco_intern_icache_sync_range)(register_t, vsize_t);
 	void	(*mco_intern_pdcache_sync_all)(void);
 	void	(*mco_intern_pdcache_sync_range_index)(vaddr_t, vsize_t);
-	void	(*mco_intern_pdcache_sync_range)(vaddr_t, vsize_t);
+	void	(*mco_intern_pdcache_sync_range)(register_t, vsize_t);
 	/* This is used internally by the (mipsNN) pdcache functions. */
 	void	(*mco_intern_pdcache_wbinv_range_index)(vaddr_t, vsize_t);
 
 	void	(*mco_sdcache_wbinv_all)(void);
-	void	(*mco_sdcache_wbinv_range)(vaddr_t, vsize_t);
+	void	(*mco_sdcache_wbinv_range)(register_t, vsize_t);
 	void	(*mco_sdcache_wbinv_range_index)(vaddr_t, vsize_t);
-	void	(*mco_sdcache_inv_range)(vaddr_t, vsize_t);
-	void	(*mco_sdcache_wb_range)(vaddr_t, vsize_t);
+	void	(*mco_sdcache_inv_range)(register_t, vsize_t);
+	void	(*mco_sdcache_wb_range)(register_t, vsize_t);
 
 	/* These are called only by the (mipsNN) icache functions. */
 	void	(*mco_intern_sdcache_sync_all)(void);
 	void	(*mco_intern_sdcache_sync_range_index)(vaddr_t, vsize_t);
-	void	(*mco_intern_sdcache_sync_range)(vaddr_t, vsize_t);
+	void	(*mco_intern_sdcache_sync_range)(register_t, vsize_t);
 
 	/* This is used internally by the (mipsNN) sdcache functions. */
 	void	(*mco_intern_sdcache_wbinv_range_index)(vaddr_t, vsize_t);
