@@ -1,8 +1,8 @@
-#	$NetBSD: XLPEVB,v 1.1.2.5 2012/01/04 16:17:52 matt Exp $
+#	$NetBSD: XLPEVB,v 1.1.2.6 2012/01/19 17:42:26 matt Exp $
 
 include 	"arch/evbmips/conf/std.rmixlp"
 
-#ident 		"XLSATX-$Revision: 1.1.2.5 $"
+#ident 		"XLSATX-$Revision: 1.1.2.6 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -158,7 +158,11 @@ sdhc*		at xlsdio? slot 0
 sdmmc*		at sdhc?
 ld*		at sdmmc?
 xlnae*		at pci? dev ? function ?
-nae5		at xlnae? port 16
+nae0		at xlnae? complex 0 lane 0 kind 1 phy 4
+nae1		at xlnae? complex 0 lane 1 kind 1 phy 7
+nae2		at xlnae? complex 0 lane 2 kind 1 phy 6
+nae3		at xlnae? complex 0 lane 3 kind 1 phy 5
+nae5		at xlnae? complex 4 lane 2 kind 1 phy 16
 xli2c0		at pci0 dev 6 function 2
 xli2c1		at pci0 dev 6 function 3
 iic0		at xli2c0
@@ -173,6 +177,13 @@ flash*		at nor?
 xlnand*		at pci? dev ? function ?
 nand*		at xlnand?
 flash*		at nand?
+xlcde*		at pci? dev ? function ?
+xlfmn*		at pci? dev ? function ?
+xlpke*		at pci? dev ? function ?
+xlpoe*		at pci? dev ? function ?
+xlrxe*		at pci? dev ? function ?
+xlsae*		at pci? dev ? function ?
+xlsrio*		at pci? dev ? function ?
 xlspi*		at pci? dev ? function ?
 xlgpio*		at pci? dev ? function ?
 gpio0		at xlgpio?
