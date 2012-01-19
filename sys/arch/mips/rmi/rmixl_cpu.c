@@ -245,7 +245,9 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-        cpu_attach_common(self, ci);
+	rmixl_fmn_cpu_attach(ci);
+
+	cpu_attach_common(self, ci);
 }
 
 /*
