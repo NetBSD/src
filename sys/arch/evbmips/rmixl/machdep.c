@@ -1,4 +1,4 @@
-/*	machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp	*/
+/*	$NetBSD: machdep.c,v 1.1.2.46 2012/01/19 08:31:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
