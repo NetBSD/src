@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.13 2012/01/04 16:17:53 matt Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.14 2012/01/19 07:58:58 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.13 2012/01/04 16:17:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.14 2012/01/19 07:58:58 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -233,7 +233,7 @@ cpucore_rmixl_hatch(device_t self)
 	if (sc->sc_hatched == false) {
 		/* PCRs for core#0 are set up in mach_init() */
 		if (sc->sc_core != 0)
-			rmixl_pcr_init_core();
+			rmixl_pcr_init_core(cpu_rmixlp(mips_options.mips_cpu));
 		sc->sc_hatched = true;
 	}
 }
