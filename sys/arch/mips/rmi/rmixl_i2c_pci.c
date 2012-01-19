@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_i2c_pci.c,v 1.1.2.2 2011/12/27 19:57:18 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_i2c_pci.c,v 1.1.2.3 2012/01/19 17:29:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,17 +54,16 @@ int xli2c_debug = 0;
 #define	DPRINTF(x)
 #endif
 
-static int xli2c_pci_match(device_t, cfdata_t, void *);
-static void xli2c_pci_attach(device_t, device_t, void *);
+static int	xli2c_pci_match(device_t, cfdata_t, void *);
+static void	xli2c_pci_attach(device_t, device_t, void *);
 
-static int  xli2c_acquire_bus(void *, int);
-static void xli2c_release_bus(void *, int);
-static int  xli2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
-		void *, size_t, int);
-#if 0
-static int  xli2c_intr(void *);
-#endif
-static int  xli2c_wait_for_command(struct xli2c_softc *, uint8_t);
+static int	xli2c_acquire_bus(void *, int);
+static void	xli2c_release_bus(void *, int);
+static int	xli2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
+		    void *, size_t, int);
+
+static int	xli2c_intr(void *);
+static int	xli2c_wait_for_command(struct xli2c_softc *, uint8_t);
 
 static inline uint8_t
 xli2c_read_status(struct xli2c_softc *sc)
@@ -159,7 +158,6 @@ xli2c_pci_attach(device_t parent, device_t self, void *aux)
 	/* MMM MAGIC */
 	xli2c_write_prescale(sc, rmixl_i2c_calc_prescale(133333333, 100000));
 
-#if 0
 	pci_intr_handle_t pcih;
 
 	pci_intr_map(pa, &pcih);
@@ -170,7 +168,6 @@ xli2c_pci_attach(device_t parent, device_t self, void *aux)
 		const char * const intrstr = pci_intr_string(pa->pa_pc, pcih);
 		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	}
-#endif
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
@@ -201,7 +198,6 @@ xli2c_release_bus(void *v, int flags)
 	mutex_exit(&sc->sc_buslock);
 }
 
-#if 0
 static int
 xli2c_intr(void *v)
 {
@@ -211,7 +207,6 @@ xli2c_intr(void *v)
 
 	return 0;
 }
-#endif
 
 /* send a command and busy wait for the byte data transfer to complete */
 static int
