@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.5 2012/01/04 16:17:53 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.6 2012/01/19 17:28:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.5 2012/01/04 16:17:53 matt 
 #include <sys/device.h>
 #include <sys/gpio.h>
 #include <sys/percpu.h>
+#include <sys/kmem.h>
 
 #include "locators.h"
 #include "gpio.h"
@@ -262,10 +263,14 @@ xlgpio_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Allocate the evcnts for each pin (regardless if it's available or
-	 * not) on each cpu and then attach the evcnt for each pin.
+	 * Allocate a pointer to each cpu's evcnts and then, for each cpu,
+	 * allocate its evcnts and then attach an evcnt for each pin.
+	 * We can't allocate the evcnt structures directly since
+	 * percpu will move the contents of percpu memory around and 
+	 * corrupt the pointers in the evcnts themselves.  Remember, any
+	 * problem can be solved with sufficient indirection.
 	 */
-	sc->sc_percpu_evs = percpu_alloc(sc->sc_pincnt * sizeof(struct evcnt));
+	sc->sc_percpu_evs = percpu_alloc(sizeof(struct evcnt *));
 	KASSERT(sc->sc_percpu_evs != NULL);
 
 	/*
@@ -354,7 +359,7 @@ xlgpio_group_intr(struct xlgpio_softc *sc, int ipl, size_t group)
 	uint32_t intlevel = (sts & ~gg->gg_inttype);
 
 	struct evcnt * const evs =
-	    (struct evcnt *)percpu_getref(sc->sc_percpu_evs) + group * PINGROUP;
+	    *(struct evcnt **)percpu_getref(sc->sc_percpu_evs) + group * PINGROUP;
 	
 	while (sts != 0) {
 		const int pin = PINMASK - __builtin_clz(sts);
@@ -421,9 +426,14 @@ xlgpio_vm_intr(void *v)
 void
 xlgpio_percpu_evcnt_attach(void *v0, void *v1, struct cpu_info *ci)
 {
-	struct evcnt * const evs = v0;
+	struct evcnt ** const evs_p = v0;
 	struct xlgpio_softc * const sc = v1;
 	const char * const xname = device_xname(ci->ci_dev);
+	struct evcnt *evs;
+
+	evs = kmem_zalloc(sc->sc_pincnt * sizeof(*evs), KM_SLEEP);
+	KASSERT(evs != NULL);
+	*evs_p = evs;
 
 	for (size_t pin = 0; pin < sc->sc_pincnt; pin++) {
 		struct xlgpio_intrpin * const gip = &sc->sc_pins[pin];
