@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pbvar.h,v 1.2 2012/01/10 20:29:50 rkujawa Exp $ */
+/*	$NetBSD: p5pbvar.h,v 1.3 2012/01/19 00:14:08 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -45,17 +45,23 @@ struct p5pb_autoconf_entry {
 struct p5pb_softc {
 	device_t				sc_dev;
 
-	volatile char				*ba;
+	struct p5bus_attach_args		*p5baa;
+
 	struct bus_space_tag			pci_conf_area;
 	struct bus_space_tag			pci_mem_area;
 	struct bus_space_tag			pci_io_area;
 	struct amiga_pci_chipset		apc;
 
+	uint8_t					bridge_type;
+#define P5PB_BRIDGE_CVPPC			1
+#define P5PB_BRIDGE_GREX1200			2
+#define P5PB_BRIDGE_GREX4000			3
+
+	uint32_t				pci_mem_lowest;
+	uint32_t				pci_mem_highest;
+
 	/* list of preconfigured BARs */
 	TAILQ_HEAD(, p5pb_autoconf_entry)	auto_bars;
-
-	bool(*p5pb_bus_map)(struct p5pb_softc *);
-
 };
 
 #endif /* _AMIGA_P5PBVAR_H_ */
