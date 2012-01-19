@@ -1,4 +1,4 @@
-/*	$Id: rmixl_fmnvar.h,v 1.1.2.6 2012/01/04 16:17:53 matt Exp $	*/
+/*	$Id: rmixl_fmnvar.h,v 1.1.2.7 2012/01/19 09:59:08 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,6 +31,7 @@
 #ifndef _ARCH_MIPS_RMIXL_RMIXL_FMNVAR_H_
 #define _ARCH_MIPS_RMIXL_RMIXL_FMNVAR_H_
 
+#include <sys/cpu.h>
 #include <mips/cpuregs.h>
 
 #define RMIXL_FMN_CODE_PSB_WAKEUP	200	/* firmware MSGRNG_CODE_BOOT_WAKEUP */
@@ -346,11 +347,17 @@ rmixl_cp2_restore(uint32_t ocu)
 
 typedef int (*rmixl_fmn_intr_handler_t)(void *, rmixl_fmn_rxmsg_t *);
 
+void	rmixl_fmn_cpu_attach(struct cpu_info *ci);
 void	rmixl_fmn_init(void);
 void	rmixl_fmn_init_thread(void);
 void *	rmixl_fmn_intr_establish(size_t, rmixl_fmn_intr_handler_t, void *);
 void	rmixl_fmn_intr_disestablish(void *);
 void	rmixl_fmn_intr_poll(u_int, rmixl_fmn_rxmsg_t *);
+
+size_t	rmixl_fmn_qid_to_stid(size_t);
+const char *
+	rmixl_fmn_stid_name(size_t);
+
 /*
  * true == succes, false = failure
  */
