@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.101 2011/12/20 23:56:29 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.102 2012/01/20 00:25:29 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -531,8 +531,11 @@ struct cmsghdr {
  * without (2), we can't guarantee binary compatibility in case of future
  * changes in ALIGNBYTES.
  */
-#define __CMSG_ALIGN(n)	(((n) + __cmsg_alignbytes()) & ~__cmsg_alignbytes())
 #ifdef _KERNEL
+#define __CMSG_ALIGN(n)	(((n) + ALIGNBYTES) & ~ALIGNBYTES)
+#define CMSG_ALIGN(n)	__CMSG_ALIGN(n)
+#else
+#define __CMSG_ALIGN(n)	(((n) + __cmsg_alignbytes()) & ~__cmsg_alignbytes())
 #define CMSG_ALIGN(n)	__CMSG_ALIGN(n)
 #endif
 
@@ -574,9 +577,11 @@ struct cmsghdr {
 
 #include <sys/cdefs.h>
 
+#ifndef	_KERNEL
 __BEGIN_DECLS
-int	__cmsg_alignbytes(void);
+int	__cmsg_alignbytes(void) __constfunc;
 __END_DECLS
+#endif
 
 #ifdef	_KERNEL
 static inline socklen_t
