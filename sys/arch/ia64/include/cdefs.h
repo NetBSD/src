@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.2 2012/01/20 14:08:06 joerg Exp $	*/
 
 #ifndef	_MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
@@ -7,5 +7,7 @@
 #ifndef __ELF__
 #define __ELF__
 #endif
+
+#define	__ALIGNBYTES		15
 
 #endif /* !_MACHINE_CDEFS_H_ */

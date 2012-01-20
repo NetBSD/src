@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_send_fd.c,v 1.5 2011/05/30 16:24:13 joerg Exp $	*/
+/*	$NetBSD: unix_send_fd.c,v 1.6 2012/01/20 14:08:05 joerg Exp $	*/
 
 /*++
 /* NAME
@@ -72,11 +72,7 @@ int     unix_send_fd(int fd, int sendfd)
 #if defined(CMSG_SPACE) && !defined(NO_MSGHDR_MSG_CONTROL)
     union {
 	struct cmsghdr just_for_alignment;
-#  ifdef __clang__
-	char    control[128];
-#  else
 	char    control[CMSG_SPACE(sizeof(sendfd))];
-#  endif
     }       control_un;
     struct cmsghdr *cmptr;
 
