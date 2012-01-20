@@ -1,7 +1,7 @@
-/*	$NetBSD: kloader_machdep.c,v 1.4 2011/11/20 04:07:50 nonaka Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.5 2012/01/20 15:00:27 nonaka Exp $	*/
 
 /*-
- * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
+ * Copyright (c) 2009-2012 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.4 2011/11/20 04:07:50 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.5 2012/01/20 15:00:27 nonaka Exp $");
 
 #include "debug_kloader.h"
 
@@ -44,9 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.4 2011/11/20 04:07:50 nonaka E
 
 #include <zaurus/zaurus/zaurus_var.h>
 
-#ifndef KERNEL_BASE
-#define	KERNEL_BASE	0xc0000000
-#endif
+#define	KERNEL_TEXT_BASE	((vaddr_t)&KERNEL_BASE_virt)
 
 kloader_jumpfunc_t kloader_zaurus_jump __attribute__((__noreturn__));
 kloader_bootfunc_t kloader_zaurus_boot __attribute__((__noreturn__));
@@ -78,8 +76,9 @@ kloader_zaurus_jump(kloader_bootfunc_t func, vaddr_t sp,
     struct kloader_bootinfo *kbi, struct kloader_page_tag *tag)
 {
 	extern int kloader_howto;
-	void (*bootinfop)(void *, void *) = (void *)(0xc0200000 - PAGE_SIZE);
-	uint32_t *bootmagicp = (uint32_t *)(0xc0200000 - BOOTARGS_BUFSIZ);
+	extern char KERNEL_BASE_virt[];
+	void (*bootinfop)(void *, void *);
+	uint32_t *bootmagicp;
 	vaddr_t top, ptr;
 	struct bootinfo *bootinfo;
 	struct btinfo_howto *bi_howto;
@@ -88,11 +87,13 @@ kloader_zaurus_jump(kloader_bootfunc_t func, vaddr_t sp,
 	disable_interrupts(I32_bit|F32_bit);	
 
 	/* copy 2nd boot-loader to va=pa page */
+	bootinfop = (void *)(KERNEL_TEXT_BASE - PAGE_SIZE);
 	memmove(bootinfop, func, PAGE_SIZE);
 
 	/*
 	 * make bootinfo
 	 */
+	bootmagicp = (uint32_t *)(KERNEL_TEXT_BASE - BOOTARGS_BUFSIZ);
 	memset(bootmagicp, 0, BOOTARGS_BUFSIZ);
 	bootinfo = (struct bootinfo *)(bootmagicp + 1);
 	bootinfo->nentries = 0;
@@ -119,8 +120,7 @@ kloader_zaurus_jump(kloader_bootfunc_t func, vaddr_t sp,
 		ptr += bi_rootdv->common.len;
 	}
 
-	if (bootinfo->nentries > 0)
-		*bootmagicp = BOOTARGS_MAGIC;
+	*bootmagicp = BOOTARGS_MAGIC;
 	cpu_idcache_wbinv_all();
 
 	/* jump to 2nd boot-loader */
@@ -140,7 +140,7 @@ kloader_phystov(paddr_t pa)
 	vaddr_t va;
 	int error;
 
-	va = KERNEL_BASE + pa - 0xa0000000UL;
+	va = KERNEL_BASE + pa - PXA2X0_SDRAM0_START;
 	error = pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
 	if (error) {
 		printf("%s: map failed: pa=0x%lx, va=0x%lx, error=%d\n",
