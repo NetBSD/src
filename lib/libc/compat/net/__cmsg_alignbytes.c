@@ -1,4 +1,4 @@
-/*	$NetBSD: __cmsg_alignbytes.c,v 1.3 2009/03/16 05:59:21 cegger Exp $	*/
+/*	$NetBSD: __cmsg_alignbytes.c,v 1.1 2012/01/20 14:08:05 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,22 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __cmsg_alignbytes.c,v 1.3 2009/03/16 05:59:21 cegger Exp $");
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: __cmsg_alignbytes.c,v 1.1 2012/01/20 14:08:05 joerg Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
-#else
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/socket.h>
-#endif
+
+int __cmsg_alignbytes(void);
 
 int
 __cmsg_alignbytes(void)

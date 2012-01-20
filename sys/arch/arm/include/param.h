@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 2010/05/06 19:10:26 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.14 2012/01/20 14:08:05 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -90,7 +90,7 @@
  * (within reasonable limits). 
  *
  */
-#define ALIGNBYTES		(sizeof(int) - 1)
+#define	ALIGNBYTES	__ALIGNBYTES
 #define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 /* ARM-specific macro to align a stack pointer (downwards). */

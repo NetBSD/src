@@ -1,4 +1,4 @@
-/* $Id: imsg-buffer.c,v 1.4 2011/08/31 20:13:31 plunky Exp $ */
+/* $Id: imsg-buffer.c,v 1.5 2012/01/20 14:08:04 joerg Exp $ */
 /*	$OpenBSD: imsg-buffer.c,v 1.3 2010/05/26 13:56:07 nicm Exp $	*/
 
 /*
@@ -228,11 +228,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 	struct cmsghdr	*cmsg;
 	union {
 		struct cmsghdr	hdr;
-#if defined(__clang__) || defined(__PCC__)
-		char		buf[128];
-#else
 		char		buf[CMSG_SPACE(sizeof(int))];
-#endif
 	} cmsgbuf;
 
 	bzero(&iov, sizeof(iov));

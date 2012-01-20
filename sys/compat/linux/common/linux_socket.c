@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.111 2011/12/20 23:56:28 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.112 2012/01/20 14:08:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.111 2011/12/20 23:56:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.112 2012/01/20 14:08:07 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -595,11 +595,11 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 
 			/* Zero area between header and data */
 			memset(cmsg + 1, 0, 
-				CMSG_ALIGN(sizeof(cmsg)) - sizeof(cmsg));
+				CMSG_ALIGN(sizeof(*cmsg)) - sizeof(*cmsg));
 
 			/* Copyin the data */
 			error = copyin(LINUX_CMSG_DATA(l_cc),
-				CMSG_DATA(control),
+				CMSG_DATA(cmsg),
 				l_cmsg.cmsg_len - sizeof(l_cmsg));
 			if (error)
 				goto done;
