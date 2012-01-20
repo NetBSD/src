@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.67 2012/01/20 06:50:00 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68 2012/01/20 06:51:19 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -274,7 +274,7 @@ struct cpu_info {
 	u_long		ci_itmr;
 
 #if defined(MULTIPROCESSOR)
-	struct	lwp	*ci_curlwp;	/* CPU owner */
+	struct lwp	*ci_curlwp;	/* CPU owner */
 	paddr_t		ci_stack;	/* stack for spin up */
 	volatile int	ci_flags;	/* CPU status flags */
 #define	CPUF_PRIMARY	0x0001		/* ... is monarch/primary */
