@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.c,v 1.7 2009/01/16 13:30:07 hira Exp $	*/
+/*	$NetBSD: locale.c,v 1.8 2012/01/20 16:31:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Alexey Zelkin <phantom@FreeBSD.org>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: locale.c,v 1.7 2009/01/16 13:30:07 hira Exp $");
+__RCSID("$NetBSD: locale.c,v 1.8 2012/01/20 16:31:30 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -56,11 +56,9 @@ __RCSID("$NetBSD: locale.c,v 1.7 2009/01/16 13:30:07 hira Exp $");
 #include <stringlist.h>
 #include <unistd.h>
 
-#ifdef CITRUS
 #include "citrus_namespace.h"
 #include "citrus_region.h"
 #include "citrus_lookup.h"
-#endif
 #include "setlocale_local.h"
 
 /* Local prototypes */
@@ -443,12 +441,8 @@ void
 init_locales_list_alias(void)
 {
 	char aliaspath[PATH_MAX];
-#ifdef CITRUS
 	struct _lookup *hlookup;
 	struct _region key, dat;
-#else
-	FILE *fp;
-#endif
 	size_t n;
 	char *s, *t;
 
@@ -458,23 +452,12 @@ init_locales_list_alias(void)
 	(void)snprintf(aliaspath, sizeof(aliaspath),
 		"%s/" _LOCALE_ALIAS_NAME, _PathLocale);
 
-#ifdef CITRUS
 	if (_lookup_seq_open(&hlookup, aliaspath,
 	    _LOOKUP_CASE_SENSITIVE) == 0) {
 		while (_lookup_seq_next(hlookup, &key, &dat) == 0) {
 			n = _region_size((const struct _region *)&key);
 			s = _region_head((const struct _region *)&key);
 			for (t = s; n > 0 && *s!= '/'; --n, ++s);
-#else
-	fp = fopen(aliaspath, "r");
-	if (fp != NULL) {
-		while ((s = fgetln(fp, &n)) != NULL) {
-			_DIAGASSERT(n > 0);
-			if (*s == '#' || *s == '\n')
-				continue;
-			for (t = s; n > 0 && strchr("/ \t\n", *s) == NULL;
-			    --n, ++s);
-#endif
 			n = (size_t)(s - t);
 			s = malloc(n + 1);
 			if (s == NULL)
@@ -486,11 +469,7 @@ init_locales_list_alias(void)
 			else
 				free(s);
 		}
-#ifdef CITRUS
 		_lookup_seq_close(hlookup);
-#else
-		fclose(fp);
-#endif
 	}
 }
 

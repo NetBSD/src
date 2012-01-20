@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.28 2009/03/10 13:15:40 joerg Exp $	*/
+/*	$NetBSD: catopen.c,v 1.29 2012/01/20 16:31:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: catopen.c,v 1.28 2009/03/10 13:15:40 joerg Exp $");
+__RCSID("$NetBSD: catopen.c,v 1.29 2012/01/20 16:31:30 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -50,15 +50,11 @@ __RCSID("$NetBSD: catopen.c,v 1.28 2009/03/10 13:15:40 joerg Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#ifdef HAVE_CITRUS
 #include "citrus_namespace.h"
 #include "citrus_bcs.h"
 #include "citrus_region.h"
 #include "citrus_lookup.h"
 #include "citrus_aliasname_local.h"
-#else
-#include "aliasname_local.h"
-#endif
 
 #define NLS_ALIAS_DB "/usr/share/nls/nls.alias"
 
