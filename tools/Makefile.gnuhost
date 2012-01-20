@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.35 2011/11/21 13:46:37 tsutsui Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.36 2012/01/20 23:01:05 christos Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -18,10 +18,11 @@
 .include <bsd.own.mk>
 
 # Disable use of pre-compiled headers on Darwin.
-BUILD_OSTYPE!=  uname -s
+BUILD_OSTYPE!= uname -s
 .if ${BUILD_OSTYPE} == "Darwin"
 HOST_CFLAGS+=-O2 -no-cpp-precomp
 .endif
+MAKE_PROGRAM?=	${MAKE}
 
 GNUHOSTDIST?=	${.CURDIR}/../../gnu/dist/${MODULE}
 
@@ -56,7 +57,7 @@ CONFIGURE_ENV+= \
 		LDFLAGS=${HOST_LDFLAGS:Q} \
 		LEX=${LEX:Q} \
 		M4=${TOOL_M4:Q} \
-		MAKE=${MAKE:Q} \
+		MAKE=${MAKE_PROGRAM:Q} \
 		PATH="${TOOLDIR}/bin:$$PATH" \
 		RANLIB=${HOST_RANLIB:Q} \
 		YACC=${YACC:Q}
@@ -68,11 +69,11 @@ CONFIGURE_ARGS+=--prefix=${TOOLDIR}
 CONFIGURE_ARGS+=--disable-shared
 .endif
 
+.if ${MAKE_PROGRAM} == ${MAKE}
 .ifndef _NOWRAPPER
 # Some systems have a small ARG_MAX.  On such systems, prevent Make
 # variables set on the command line from being exported in the
 # environment (they will still be set in MAKEOVERRIDES).
-BUILD_OSTYPE!=	uname -s
 .if ${BUILD_OSTYPE} == "Darwin" || ${BUILD_OSTYPE} == "FreeBSD"
 __noenvexport=	-X
 .endif
@@ -80,28 +81,58 @@ MAKE_ARGS:=	${__noenvexport} -f ${.PARSEDIR}/Makefile.gnuwrap ${MAKE_ARGS}
 .else
 MAKE_ARGS+=	_NOWRAPPER=1
 .endif
+BUILD_COMMAND=	${BUILD_ENV} ${MAKE} ${MAKE_ARGS}
+.else
+
+# gmake version of this puts MAKE_ARGS in the environment to be sure that
+# sub-gmake's get them, otherwise tools/gcc tries to build libgcc and
+# fails.  it also uses "env -i" to entirely clear out MAKEFLAGS.
+GMAKE_J_ARGS?=	${MAKEFLAGS:[*]:M*-j*:C/.*(-j ?[0-9]*).*/\1/W}
+BUILD_COMMAND=	/usr/bin/env -i ${BUILD_ENV} ${MAKE_ARGS} ${TOOL_GMAKE} ${GMAKE_J_ARGS} -e ${MAKE_ARGS}
+
+.endif
 
 MAKE_ARGS+=	BISON=true DESTDIR= INSTALL=${HOST_INSTALL_FILE:Q}
 
 ALL_TARGET?=	all
 INSTALL_TARGET?=install
 
-.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
+BUILD_PLATFORM!= uname -srm | tr ' ' '-'
+CONFIGURE_PLATFORM!= if [ -s .configure_done ]; then cat .configure_done; else echo none; fi
+.if "${BUILD_PLATFORM}" != "${CONFIGURE_PLATFORM}"
+configure_cleanup:
+	@mkdir build 2>/dev/null || true
+	@(echo "Cleaning stale cache files ${BUILD_PLATFORM} != ${CONFIGURE_PLATFORM}")
+	@(cd build && find . -name config.cache -print0 | xargs -0 rm -f)
+configure_cleanup=configure_cleanup
+.endif
+
+BUILD_PLATFORM!= uname -srm | tr ' ' '-'
+CONFIGURE_PLATFORM!= if [ -s .configure_done ]; then cat .configure_done; else echo none; fi
+.if "${BUILD_PLATFORM}" != "${CONFIGURE_PLATFORM}"
+configure_cleanup:
+	@mkdir build 2>/dev/null || true
+	@(echo "Cleaning stale cache files ${BUILD_PLATFORM} != ${CONFIGURE_PLATFORM}")
+	@(cd build && find . -name config.cache -print0 | xargs -0 rm -f)
+configure_cleanup=configure_cleanup
+.endif
+
+.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile ${configure_cleanup}
 	@mkdir build 2>/dev/null || true
 	@(cd build && ${CONFIGURE_ENV} ${HOST_SH} ${GNUHOSTDIST}/configure ${CONFIGURE_ARGS})
-	@touch $@
+	@echo ${BUILD_PLATFORM} > $@
 
 # The .build_done timestamp is only updated if a file actually changes
 # in the build tree during "make all".  This way, if nothing has changed,
 # a "make install MKUPDATE=yes" will do nothing.
 
 .build_done: .configure_done
-	@(cd build && ${BUILD_ENV} ${MAKE} ${MAKE_ARGS} ${ALL_TARGET})
+	@(cd build && ${BUILD_COMMAND} ${ALL_TARGET})
 	@if [ ! -f $@ ] || [ -n "$$(find build -type f -newer .build_done -print)" ]; \
 		then touch $@; fi
 
 .install_done! ${BUILD:D.build_done}
-	@(cd ${.OBJDIR}/build && ${MAKE} ${MAKE_ARGS} ${INSTALL_TARGET})
+	@(cd ${.OBJDIR}/build && ${BUILD_COMMAND} ${INSTALL_TARGET})
 	@touch $@
 
 # Mapping to standard targets.
