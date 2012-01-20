@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_recv_fd.c,v 1.6 2011/05/30 18:47:27 pgoyette Exp $	*/
+/*	$NetBSD: unix_recv_fd.c,v 1.7 2012/01/20 14:08:04 joerg Exp $	*/
 
 /*++
 /* NAME
@@ -70,11 +70,7 @@ int     unix_recv_fd(int fd)
 #if defined(CMSG_SPACE) && !defined(NO_MSGHDR_MSG_CONTROL)
     union {
 	struct cmsghdr just_for_alignment;
-#  ifdef __clang__
-	char    control[128];
-#  else
 	char    control[CMSG_SPACE(sizeof(newfd))];
-#  endif
     }       control_un;
     struct cmsghdr *cmptr;
 

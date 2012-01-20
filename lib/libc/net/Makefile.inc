@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.80 2011/12/25 12:32:36 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.81 2012/01/20 14:08:05 joerg Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
 .PATH: ${ARCHDIR}/net ${.CURDIR}/net
 
-SRCS+=	__cmsg_alignbytes.c base64.c ethers.c gethnamaddr.c getifaddrs.c \
+SRCS+=	base64.c ethers.c gethnamaddr.c getifaddrs.c \
 	getnetnamadr.c getnetent.c getpeereid.c \
 	getprotobyname.c getprotobynumber.c getprotoent.c \
 	getprotobyname_r.c getprotobynumber_r.c getprotoent_r.c \

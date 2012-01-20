@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 2011/07/26 12:55:35 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.15 2012/01/20 14:08:05 joerg Exp $	*/
 
 #ifdef __x86_64__
 
@@ -23,7 +23,7 @@
  * (within reasonable limits). 
  *
  */
-#define ALIGNBYTES		(sizeof(long) - 1)
+#define ALIGNBYTES		__ALIGNBYTES
 #define ALIGN(p)		(((u_long)(p) + ALIGNBYTES) &~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	1
 
