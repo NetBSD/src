@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2011/11/12 04:39:19 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2012/01/20 15:00:27 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2011/11/12 04:39:19 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2012/01/20 15:00:27 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -179,8 +179,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2011/11/12 04:39:19 nonaka Exp $");
 #endif
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
-#define	KERNEL_TEXT_OFFSET	0x00200000
-#define	KERNEL_TEXT_BASE	(KERNEL_BASE + KERNEL_TEXT_OFFSET)
+#define	KERNEL_TEXT_BASE	((vaddr_t)&KERNEL_BASE_virt)
 #ifndef	KERNEL_VM_BASE
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 #endif
@@ -265,7 +264,7 @@ struct bootinfo _bootinfo;
 struct bootinfo *bootinfo;
 struct btinfo_howto *bi_howto;
 
-#define	KERNEL_BASE_PHYS	(PXA2X0_SDRAM0_START + KERNEL_TEXT_OFFSET)
+#define	KERNEL_BASE_PHYS	((paddr_t)&KERNEL_BASE_phys)
 #define	BOOTINFO_PAGE		(KERNEL_BASE_PHYS - PAGE_SIZE)
 
 /* Prototypes */
@@ -640,6 +639,7 @@ initarm(void *arg)
 	extern vsize_t xscale_minidata_clean_size; /* used in KASSERT */
 #endif
 	extern vaddr_t xscale_cache_clean_addr;
+	extern char KERNEL_BASE_phys[], KERNEL_BASE_virt[];
 	int loop;
 	int loop1;
 	u_int l1pagetable;
@@ -931,8 +931,9 @@ initarm(void *arg)
 
 		textsize = (textsize + PGOFSET) & ~PGOFSET;
 		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
-		
-		logical = KERNEL_TEXT_OFFSET;	/* offset of kernel in RAM */
+
+		/* offset of kernel in RAM */
+		logical = KERNEL_TEXT_BASE - KERNEL_BASE;
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
