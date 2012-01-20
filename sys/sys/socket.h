@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.102 2012/01/20 00:25:29 joerg Exp $	*/
+/*	$NetBSD: socket.h,v 1.103 2012/01/20 01:17:01 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -536,7 +536,6 @@ struct cmsghdr {
 #define CMSG_ALIGN(n)	__CMSG_ALIGN(n)
 #else
 #define __CMSG_ALIGN(n)	(((n) + __cmsg_alignbytes()) & ~__cmsg_alignbytes())
-#define CMSG_ALIGN(n)	__CMSG_ALIGN(n)
 #endif
 
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
