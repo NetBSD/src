@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.38 2012/01/13 21:02:03 joerg Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.39 2012/01/20 14:08:07 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.38 2012/01/13 21:02:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.39 2012/01/20 14:08:07 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +49,113 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.38 2012/01/13 21:02:03 joerg E
 #include <compat/netbsd32/netbsd32_conv.h>
 
 /*
- * XXX Assumes that sockaddr is compatible.
- * XXX Assumes that copyout_msg_control uses identical alignment.
+ * XXX Assumes that struct sockaddr is compatible.
  */
+
+#define	CMSG32_ALIGN(n)	(((n) + ALIGNBYTES32) & ~ALIGNBYTES32)
+#define	CMSG32_DATA(cmsg) \
+	((u_char *)(void *)(cmsg) + CMSG32_ALIGN(sizeof(struct cmsghdr)))
+
+#define	CMSG32_NXTHDR(mhdr, cmsg)	\
+	(((char *)(cmsg) + CMSG32_ALIGN((cmsg)->cmsg_len) + \
+			    CMSG32_ALIGN(sizeof(struct cmsghdr)) > \
+	    (((char *)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
+	    (struct cmsghdr *)0 : \
+	    (struct cmsghdr *)((char *)(cmsg) + \
+	        CMSG32_ALIGN((cmsg)->cmsg_len)))
+#define	CMSG32_FIRSTHDR(mhdr) \
+	((mhdr)->msg_controllen >= sizeof(struct cmsghdr) ? \
+	 (struct cmsghdr *)(mhdr)->msg_control : \
+	 (struct cmsghdr *)0)
+
+#define CMSG32_SPACE(l)	(CMSG32_ALIGN(sizeof(struct cmsghdr)) + CMSG32_ALIGN(l))
+#define CMSG32_LEN(l)	(CMSG32_ALIGN(sizeof(struct cmsghdr)) + (l))
+
+static int
+copyout32_msg_control_mbuf(struct lwp *l, struct msghdr *mp, int *len, struct mbuf *m, char **q, bool *truncated)
+{
+	struct cmsghdr *cmsg, cmsg32;
+	int i, j, error;
+
+	*truncated = false;
+	cmsg = mtod(m, struct cmsghdr *);
+	do {
+		if ((char *)cmsg == mtod(m, char *) + m->m_len)
+			break;
+		if ((char *)cmsg > mtod(m, char *) + m->m_len - sizeof(*cmsg))
+			return EINVAL;
+		cmsg32 = *cmsg;
+		j = cmsg->cmsg_len - CMSG_LEN(0);
+		i = cmsg32.cmsg_len = CMSG32_LEN(j);
+		if (i > *len) {
+			mp->msg_flags |= MSG_CTRUNC;
+			if (cmsg->cmsg_level == SOL_SOCKET
+			    && cmsg->cmsg_type == SCM_RIGHTS) {
+				*truncated = true;
+				return 0;
+			}
+			j -= i - *len;
+			i = *len;
+		}
+
+		ktrkuser("msgcontrol", cmsg, cmsg->cmsg_len);
+		error = copyout(&cmsg32, *q, MAX(i, sizeof(cmsg32)));
+		if (error)
+			return (error);
+		if (i > CMSG32_LEN(0)) {
+			error = copyout(CMSG_DATA(cmsg), *q + CMSG32_LEN(0), i - CMSG32_LEN(0));
+			if (error)
+				return (error);
+		}
+		j = CMSG32_SPACE(cmsg->cmsg_len - CMSG_LEN(0));
+		if (*len >= j) {
+			*len -= j;
+			*q += j;
+		} else {
+			*q += i;
+			*len = 0;
+		}
+		cmsg = (void *)((char *)cmsg + CMSG_ALIGN(cmsg->cmsg_len));
+	} while (*len > 0);
+
+	return 0;
+}
+
+static int
+copyout32_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
+{
+	int len, error = 0;
+	struct mbuf *m;
+	char *q;
+	bool truncated;
+
+	len = mp->msg_controllen;
+	if (len <= 0 || control == 0) {
+		mp->msg_controllen = 0;
+		free_control_mbuf(l, control, control);
+		return 0;
+	}
+
+	q = (char *)mp->msg_control;
+
+	for (m = control; m != NULL; m = m->m_next) {
+		error = copyout32_msg_control_mbuf(l, mp, &len, m, &q, &truncated);
+		if (truncated) {
+			m = control;
+			break;
+		}
+		if (error)
+			break;
+		if (len <= 0)
+			break;
+	}
+
+	free_control_mbuf(l, control, m);
+
+	mp->msg_controllen = q - (char *)mp->msg_control;
+	return error;
+}
+
 int
 netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap, register_t *retval)
 {
@@ -97,7 +201,7 @@ netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap, registe
 		goto done;
 
 	if (msg.msg_control != NULL)
-		error = copyout_msg_control(l, &msg, control);
+		error = copyout32_msg_control(l, &msg, control);
 
 	if (error == 0)
 		error = copyout_sockname(msg.msg_name, &msg.msg_namelen, 0,
@@ -116,6 +220,107 @@ netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap, registe
 	if (iov != aiov)
 		kmem_free(iov, iovsz);
 	return (error);
+}
+
+static int
+copyin32_msg_control(struct lwp *l, struct msghdr *mp)
+{
+	/*
+	 * Handle cmsg if there is any.
+	 */
+	struct cmsghdr *cmsg, cmsg32, *cc;
+	struct mbuf *ctl_mbuf;
+	ssize_t resid = mp->msg_controllen;
+	size_t clen, cidx = 0, cspace;
+	u_int8_t *control;
+	int error;
+
+	ctl_mbuf = m_get(M_WAIT, MT_CONTROL);
+	clen = MLEN;
+	control = mtod(ctl_mbuf, void *);
+	memset(control, 0, clen);
+
+	cc = CMSG32_FIRSTHDR(mp);
+	do {
+		error = copyin(cc, &cmsg32, sizeof(cmsg32));
+		if (error)
+			goto failure;
+
+		/*
+		 * Sanity check the control message length.
+		 */
+		if (cmsg32.cmsg_len > resid ||
+		    cmsg32.cmsg_len < sizeof(cmsg32)) {
+			error = EINVAL;
+			goto failure;
+		}
+
+		cspace = CMSG_SPACE(cmsg32.cmsg_len - CMSG32_LEN(0));
+
+		/* Check the buffer is big enough */
+		if (__predict_false(cidx + cspace > clen)) {
+			u_int8_t *nc;
+			size_t nclen;
+
+			nclen = cidx + cspace;
+			if (nclen >= PAGE_SIZE) {
+				error = EINVAL;
+				goto failure;
+			}
+			nc = realloc(clen <= MLEN ? NULL : control,
+				     nclen, M_TEMP, M_WAITOK);
+			if (!nc) {
+				error = ENOMEM;
+				goto failure;
+			}
+			if (cidx <= MLEN) {
+				/* Old buffer was in mbuf... */
+				memcpy(nc, control, cidx);
+				memset(nc + cidx, 0, nclen - cidx);
+			} else {
+				memset(nc + nclen, 0, nclen - clen);
+			}
+			control = nc;
+			clen = nclen;
+		}
+
+		/* Copy header */
+		cmsg = (void *)&control[cidx];
+		cmsg->cmsg_len = CMSG_LEN(cmsg32.cmsg_len - CMSG32_LEN(0));
+		cmsg->cmsg_level = cmsg32.cmsg_level;
+		cmsg->cmsg_type = cmsg32.cmsg_type;
+
+		/* Copyin the data */
+		error = copyin(CMSG32_DATA(cc), CMSG_DATA(cmsg),
+		    cmsg32.cmsg_len - CMSG32_LEN(0));
+		if (error)
+			goto failure;
+
+		resid -= CMSG32_ALIGN(cmsg32.cmsg_len);
+		cidx += cmsg->cmsg_len;
+	} while ((cc = CMSG32_NXTHDR(mp, cc)) && resid > 0);
+
+	/* If we allocated a buffer, attach to mbuf */
+	if (cidx > MLEN) {
+		MEXTADD(ctl_mbuf, control, clen, M_MBUF, NULL, NULL);
+		ctl_mbuf->m_flags |= M_EXT_RW;
+	}
+	control = NULL;
+	mp->msg_controllen = ctl_mbuf->m_len = CMSG_ALIGN(cidx);
+
+	mp->msg_control = ctl_mbuf;
+	mp->msg_flags |= MSG_CONTROLMBUF;
+
+	ktrkuser("msgcontrol", mtod(ctl_mbuf, void *),
+	    mp->msg_controllen);
+
+	return 0;
+
+failure:
+	if (control != mtod(ctl_mbuf, void *))
+		free(control, M_MBUF);
+	m_free(ctl_mbuf);
+	return error;
 }
 
 int
@@ -137,6 +342,16 @@ netbsd32_sendmsg(struct lwp *l, const struct netbsd32_sendmsg_args *uap, registe
 	if (error)
 		return (error);
 	netbsd32_to_msghdr(&msg32, &msg);
+	msg.msg_flags = 0;
+
+	if (CMSG32_FIRSTHDR(&msg)) {
+		error = copyin32_msg_control(l, &msg);
+		if (error)
+			return (error);
+	} else {
+		msg.msg_control = NULL;
+		msg.msg_controllen = 0;
+	}
 
 	iovsz = msg.msg_iovlen * sizeof(struct iovec);
 	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
@@ -151,10 +366,7 @@ netbsd32_sendmsg(struct lwp *l, const struct netbsd32_sendmsg_args *uap, registe
 	if (error)
 		goto done;
 	msg.msg_iov = iov;
-	msg.msg_flags = 0;
 
-	/* Luckily we can use this directly */
-	/* XXX: dsl (June'07) The cmsg alignment rules differ ! */
 	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
 	if (iov != aiov)
