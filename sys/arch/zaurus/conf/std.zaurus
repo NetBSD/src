@@ -1,4 +1,4 @@
-#	$NetBSD: std.zaurus,v 1.3 2008/01/27 12:37:12 chris Exp $
+#	$NetBSD: std.zaurus,v 1.4 2012/01/20 15:00:27 nonaka Exp $
 #
 # standard NetBSD/zaurus options
 
@@ -13,7 +13,8 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 
-#options 	ARM32_NEW_VM_LAYOUT     # Not yet ready for prime-time
+makeoptions	KERNEL_BASE_PHYS="0xa0200000"
+makeoptions	LOADADDRESS="0xc0200000"
 
 options 	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
 
