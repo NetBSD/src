@@ -1,6 +1,4 @@
 /* Script for -N: mix text and data on same page; don't align data */
-OUTPUT_FORMAT("elf32-tradbigmips", "elf32-tradbigmips",
-	      "elf32-tradlittlemips")
 OUTPUT_ARCH(mips)
 ENTRY(__start)
 SEARCH_DIR("=/usr/lib");
