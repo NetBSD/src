@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.30 2012/01/19 20:55:38 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.31 2012/01/20 14:08:06 joerg Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -78,7 +78,7 @@
  * (within reasonable limits).
  *
  */
-#define	ALIGNBYTES	7
+#define	ALIGNBYTES	__ALIGNBYTES
 #define	ALIGNBYTES32	ALIGNBYTES
 #define	ALIGN(p)	(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define	ALIGN32(p)	(((uintptr_t)(p) + ALIGNBYTES32) & ~ALIGNBYTES32)
