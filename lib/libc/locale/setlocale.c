@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale.c,v 1.58 2010/06/07 13:52:30 tnozaki Exp $ */
+/* $NetBSD: setlocale.c,v 1.59 2012/01/20 16:31:30 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setlocale.c,v 1.58 2010/06/07 13:52:30 tnozaki Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.59 2012/01/20 16:31:30 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,35 +47,19 @@ __link_set_decl(all_categories, _locale_category_t);
 
 extern const _locale_category_t _generic_LC_ALL_desc;
 extern const _locale_category_t _dummy_LC_COLLATE_desc;
-#ifdef WITH_RUNE
 extern const _locale_category_t _citrus_LC_CTYPE_desc;
 extern const _locale_category_t _citrus_LC_MONETARY_desc;
 extern const _locale_category_t _citrus_LC_NUMERIC_desc;
 extern const _locale_category_t _citrus_LC_TIME_desc;
 extern const _locale_category_t _citrus_LC_MESSAGES_desc;
-#else
-extern const _locale_category_t _localeio_LC_CTYPE_desc;
-extern const _locale_category_t _localeio_LC_MONETARY_desc;
-extern const _locale_category_t _localeio_LC_NUMERIC_desc;
-extern const _locale_category_t _localeio_LC_TIME_desc;
-extern const _locale_category_t _localeio_LC_MESSAGES_desc;
-#endif
 
 __link_set_add_data(all_categories, _generic_LC_ALL_desc);
 __link_set_add_data(all_categories, _dummy_LC_COLLATE_desc);
-#ifdef WITH_RUNE
 __link_set_add_data(all_categories, _citrus_LC_CTYPE_desc);
 __link_set_add_data(all_categories, _citrus_LC_MONETARY_desc);
 __link_set_add_data(all_categories, _citrus_LC_NUMERIC_desc);
 __link_set_add_data(all_categories, _citrus_LC_TIME_desc);
 __link_set_add_data(all_categories, _citrus_LC_MESSAGES_desc);
-#else
-__link_set_add_data(all_categories, _localeio_LC_CTYPE_desc);
-__link_set_add_data(all_categories, _localeio_LC_MONETARY_desc);
-__link_set_add_data(all_categories, _localeio_LC_NUMERIC_desc);
-__link_set_add_data(all_categories, _localeio_LC_TIME_desc);
-__link_set_add_data(all_categories, _localeio_LC_MESSAGES_desc);
-#endif
 
 _locale_category_t *
 _find_category(int category)
