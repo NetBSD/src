@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.11 2010/06/19 13:26:52 tnozaki Exp $ */
+/* $NetBSD: global_locale.c,v 1.12 2012/01/20 16:31:29 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.11 2010/06/19 13:26:52 tnozaki Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.12 2012/01/20 16:31:29 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -39,12 +39,8 @@ __RCSID("$NetBSD: global_locale.c,v 1.11 2010/06/19 13:26:52 tnozaki Exp $");
 #define __SETLOCALE_SOURCE__
 #include <locale.h>
 #include <stdlib.h>
-#ifdef WITH_RUNE
-#include "runetype_local.h"
-#else
-#include "bsdctype_local.h"
-#endif
 
+#include "runetype_local.h"
 #include "setlocale_local.h"
 
 static struct lconv _global_ldata = {
@@ -159,11 +155,7 @@ struct _locale_impl_t _global_locale = {
 	[(size_t)LC_ALL     ] = (_locale_part_t)NULL,
 	[(size_t)LC_COLLATE ] = (_locale_part_t)NULL,
 	[(size_t)LC_CTYPE   ] = (_locale_part_t)
-#ifdef WITH_RUNE
 	    __UNCONST(&_DefaultRuneLocale),
-#else
-	    __UNCONST(&_DefaultBSDCTypeLocale),
-#endif
 	[(size_t)LC_MONETARY] = (_locale_part_t)
 	    __UNCONST(&_DefaultMonetaryLocale),
 	[(size_t)LC_NUMERIC ] = (_locale_part_t)
