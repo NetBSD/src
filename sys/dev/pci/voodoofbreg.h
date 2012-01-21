@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofbreg.h,v 1.3 2012/01/19 18:35:27 macallan Exp $	*/
+/*	$NetBSD: voodoofbreg.h,v 1.4 2012/01/21 16:12:57 jakllsch Exp $	*/
 
 /*
  * Copyright 2005, 2006 by Michael Lorenz.
@@ -197,9 +197,9 @@
 #define BIT(x) (1UL << (x))
 
 /* COMMAND_2D reg. values */
-#define ROP_COPY	0xcc     // src
-#define ROP_INVERT      0x55     // NOT dst
-#define ROP_XOR         0x66     // src XOR dst
+#define ROP_COPY	0xccU    // src
+#define ROP_INVERT	0x55U    // NOT dst
+#define ROP_XOR		0x66U    // src XOR dst
 
 #define AUTOINC_DSTX                    BIT(10)
 #define AUTOINC_DSTY                    BIT(11)
