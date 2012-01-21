@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.7 2012/01/21 19:49:56 christos Exp $ */
+/*	$NetBSD: cut.c,v 1.8 2012/01/21 19:56:46 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -257,7 +257,6 @@ cut_line(SCR *sp, db_recno_t lno, size_t fcno, size_t clen, CB *cbp)
 	 * copy the portion we want, and reset the TEXT length.
 	 */
 	if (len != 0) {
-/*###260 [cc] error: comparison between signed and unsigned integer expressions%%%*/
 		if (clen == ENTIRE_LINE)
 			clen = len - fcno;
 		MEMCPYW(tp->lb, p + fcno, clen);
