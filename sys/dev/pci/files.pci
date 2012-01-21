@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.352 2012/01/21 23:46:49 rkujawa Exp $
+#	$NetBSD: files.pci,v 1.353 2012/01/21 23:54:57 rkujawa Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1032,7 +1032,7 @@ file	dev/pci/mvsata_pci.c		mvsata_pci
 
 include "dev/pci/voyager/files.voyager"
 # Silicon Motion SM502 / Voyager GX
-device	voyager: i2cbus, i2c_bitbang, voyagerbus, i2cbus
+device	voyager: i2c_bitbang, voyagerbus, i2cbus
 attach	voyager at pci
 file	dev/pci/voyager.c		voyager
 defflag	opt_voyager.h	VOYAGER_DEBUG
