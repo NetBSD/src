@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.17 2011/12/27 20:59:45 jmcneill Exp $ */
+/* $NetBSD: ttycons.c,v 1.18 2012/01/21 22:09:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.17 2011/12/27 20:59:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.18 2012/01/21 22:09:57 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -103,9 +103,9 @@ static int	ttycons_param(struct tty *, struct termios *);
 static int	ttycons_intr(void *);
 static void	ttycons_softintr(void *);
 
-static void	ttycons_ctrlc(int);
+static sigfunc_t  ttycons_ctrlc;
 static void	ttycons_softctrlc(void *);
-static void	ttycons_ctrlz(int);
+static sigfunc_t  ttycons_ctrlz;
 static void	ttycons_softctrlz(void *);
 
 static int
@@ -154,8 +154,9 @@ ttycons_attach(device_t parent, device_t self, void *opaque)
 		panic("couldn't establish ttycons ctrlz handler\n");
 
 	sigio_intr_establish(ttycons_intr, sc);
-	thunk_signal(SIGINT, ttycons_ctrlc);
-	thunk_signal(SIGTSTP, ttycons_ctrlz);
+	signal_intr_establish(SIGINT,  ttycons_ctrlc);
+	signal_intr_establish(SIGTSTP, ttycons_ctrlz);
+
 	if (thunk_set_stdin_sigio(true) != 0)
 		panic("couldn't enable stdin async mode");
 }
@@ -361,9 +362,7 @@ ttycons_intr(void *priv)
 {
 	struct ttycons_softc *sc = priv;
 
-	curcpu()->ci_idepth++;
-	spl_intr(IPL_SERIAL, softint_schedule, sc->sc_rd_sih);
-	curcpu()->ci_idepth--;
+	softint_schedule(sc->sc_rd_sih);
 
 	return 0;
 }
@@ -383,17 +382,20 @@ ttycons_softintr(void *priv)
 	}
 }
 
+
+/*
+ * handle SIGINT signal from trap.c
+ *
+ * argument 'pc' and 'va' are not used.
+ */
 static void
-ttycons_ctrlc(int sig)
+ttycons_ctrlc(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 {
 	struct ttycons_softc *sc;
 
-	curcpu()->ci_idepth++;
 	sc = device_lookup_private(&ttycons_cd, minor(cn_tab->cn_dev));
-	if (sc) {
-		spl_intr(IPL_SERIAL, softint_schedule, sc->sc_ctrlc_sih);
-	}
-	curcpu()->ci_idepth--;
+	if (sc)
+		softint_schedule(sc->sc_ctrlc_sih);
 
 }
 
@@ -408,18 +410,19 @@ ttycons_softctrlc(void *priv)
 	t->t_linesw->l_rint(ch, t);
 }
 
+/*
+ * handle SIGTSTP signal from trap.c
+ *
+ * argument 'pc' and 'va' are not used.
+ */
 static void
-ttycons_ctrlz(int sig)
+ttycons_ctrlz(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 {
 	struct ttycons_softc *sc;
 
-	curcpu()->ci_idepth++;
 	sc = device_lookup_private(&ttycons_cd, minor(cn_tab->cn_dev));
-	if (sc) {
-		spl_intr(IPL_SERIAL, softint_schedule, sc->sc_ctrlz_sih);
-	}
-	curcpu()->ci_idepth--;
-
+	if (sc)
+		softint_schedule(sc->sc_ctrlz_sih);
 }
 
 static void
