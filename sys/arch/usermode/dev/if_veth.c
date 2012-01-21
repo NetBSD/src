@@ -1,4 +1,4 @@
-/* $NetBSD: if_veth.c,v 1.4 2012/01/15 10:51:12 jmcneill Exp $ */
+/* $NetBSD: if_veth.c,v 1.5 2012/01/21 22:09:56 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.4 2012/01/15 10:51:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.5 2012/01/21 22:09:56 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -189,10 +189,7 @@ veth_rx(void *priv)
 {
 	struct veth_softc *sc = priv;
 
-	curcpu()->ci_idepth++;
-	spl_intr(IPL_NET, softint_schedule, sc->sc_rx_intr);
-	curcpu()->ci_idepth--;
-
+	softint_schedule(sc->sc_rx_intr);
 	return 0;
 }
 

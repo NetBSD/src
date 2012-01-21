@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.68 2012/01/18 19:17:02 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.69 2012/01/21 22:09:56 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68 2012/01/18 19:17:02 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69 2012/01/21 22:09:56 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -244,12 +244,13 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	thunk_makecontext(&sc->sc_ucp, (void (*)(void)) cpu_switchto_atomic,
 			2, oldlwp, newlwp, NULL);
 
-	if (!oldpcb) {
-		thunk_setcontext(&sc->sc_ucp);
-		/* never returns */
-	} else {
+	KASSERT(sc);
+	if (oldpcb) {
 		thunk_swapcontext(&oldpcb->pcb_ucp, &sc->sc_ucp);
 		/* returns here */
+	} else {
+		thunk_setcontext(&sc->sc_ucp);
+		/* never returns */
 	}
 
 #ifdef CPU_DEBUG
@@ -374,8 +375,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* get l2 its own stack */
 	pcb2->pcb_ucp.uc_stack.ss_sp = pcb2->sys_stack;
 	pcb2->pcb_ucp.uc_stack.ss_size = pcb2->sys_stack_top - pcb2->sys_stack;
-	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
 	pcb2->pcb_ucp.uc_link = &pcb2->pcb_userret_ucp;
+
+	thunk_sigemptyset(&pcb2->pcb_ucp.uc_sigmask);
+	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
 	thunk_makecontext(&pcb2->pcb_ucp,
 	    (void (*)(void)) cpu_lwp_trampoline,
 	    3, &pcb2->pcb_ucp, func, arg);
@@ -412,7 +415,9 @@ cpu_startup(void)
 	/* init lwp0 */
 	memset(&lwp0pcb, 0, sizeof(lwp0pcb));
 	thunk_getcontext(&lwp0pcb.pcb_ucp);
+	thunk_sigemptyset(&lwp0pcb.pcb_ucp.uc_sigmask);
 	lwp0pcb.pcb_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
+
 	uvm_lwp_setuarea(&lwp0, (vaddr_t) &lwp0pcb);
 	memcpy(&lwp0pcb.pcb_userret_ucp, &lwp0pcb.pcb_ucp, sizeof(ucontext_t));
 
