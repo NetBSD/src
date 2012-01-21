@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.29 2012/01/09 21:01:31 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.30 2012/01/21 22:09:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.29 2012/01/09 21:01:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.30 2012/01/21 22:09:57 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -145,9 +145,7 @@ ld_aio_sig(void *arg)
 	struct ld_softc *ld = arg;
 	struct ld_thunkbus_softc *sc = (struct ld_thunkbus_softc *)ld;
 
-	curcpu()->ci_idepth++;
-	spl_intr(IPL_BIO, softint_schedule, sc->sc_ih);
-	curcpu()->ci_idepth--;
+	softint_schedule(sc->sc_ih);
 
 	return 0;
 }
@@ -250,7 +248,7 @@ ld_thunkbus_ldstart(struct ld_softc *ld, struct buf *bp)
 
 	/* let the softint do the work */
 	sc->busy = true;
-	spl_intr(IPL_BIO, softint_schedule, sc->sc_ih);
+	softint_schedule(sc->sc_ih);
 
 	return 0;
 }
