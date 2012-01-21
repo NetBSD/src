@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.25 2007/09/25 08:19:09 junyoung Exp $	*/
+/*	$NetBSD: gettext.c,v 1.26 2012/01/21 13:35:49 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.25 2007/09/25 08:19:09 junyoung Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.26 2012/01/21 13:35:49 tnozaki Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -624,7 +624,8 @@ mapit(const char *path, struct domainbinding *db)
 		if (v)
 			*v = '\0';
 	}
-	if (_gettext_parse_plural(&mohandle->mo.mo_plural,
+	if (!mohandle->mo.mo_header ||
+	    _gettext_parse_plural(&mohandle->mo.mo_plural,
 				  &mohandle->mo.mo_nplurals,
 				  mohandle->mo.mo_header, headerlen))
 		mohandle->mo.mo_plural = NULL;
