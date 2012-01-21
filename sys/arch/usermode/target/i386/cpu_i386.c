@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_i386.c,v 1.2 2012/01/14 17:42:52 reinoud Exp $ */
+/* $NetBSD: cpu_i386.c,v 1.3 2012/01/21 22:05:06 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_i386.c,v 1.2 2012/01/14 17:42:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_i386.c,v 1.3 2012/01/21 22:05:06 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -268,6 +268,7 @@ md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp,
 register_t
 md_get_pc(ucontext_t *ucp)
 {
+	KASSERT(ucp);
 	register_t *reg = (register_t *) &ucp->uc_mcontext;
 
 	return reg[14];			/* EIP */
@@ -276,6 +277,7 @@ md_get_pc(ucontext_t *ucp)
 register_t
 md_get_sp(ucontext_t *ucp)
 {
+	KASSERT(ucp);
 	register_t *reg = (register_t *) &ucp->uc_mcontext;
 
 	return reg[17];			/* ESP */
@@ -303,6 +305,7 @@ md_syscall_check_opcode(ucontext_t *ucp)
 void
 md_syscall_get_opcode(ucontext_t *ucp, uint32_t *opcode)
 {
+	KASSERT(ucp);
 	register_t *reg = (register_t *) &ucp->uc_mcontext;
 //	uint8_t  *p8  = (uint8_t *) (reg[14]);
 	uint16_t *p16 = (uint16_t*) (reg[14]);	/* EIP */
@@ -323,6 +326,7 @@ md_syscall_get_opcode(ucontext_t *ucp, uint32_t *opcode)
 void
 md_syscall_inc_pc(ucontext_t *ucp, uint32_t opcode)
 {
+	KASSERT(ucp);
 	uint *reg = (int *) &ucp->uc_mcontext;
 
 	/* advance program counter */
@@ -343,6 +347,7 @@ md_syscall_inc_pc(ucontext_t *ucp, uint32_t opcode)
 void
 md_syscall_dec_pc(ucontext_t *ucp, uint32_t opcode)
 {
+	KASSERT(ucp);
 	uint *reg = (int *) &ucp->uc_mcontext;
 
 	switch (opcode) {
