@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.25 2012/01/14 21:42:51 reinoud Exp $ */
+/* $NetBSD: clock.c,v 1.26 2012/01/21 22:09:56 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 2012/01/14 21:42:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 2012/01/21 22:09:56 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -50,10 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 2012/01/14 21:42:51 reinoud Exp $");
 static int	clock_match(device_t, cfdata_t, void *);
 static void	clock_attach(device_t, device_t, void *);
 
-static void	clock_signal(int sig, siginfo_t *info, void *ctx);
 static unsigned int clock_getcounter(struct timecounter *);
 
 static int	clock_todr_gettime(struct todr_chip_handle *, struct timeval *);
+
+extern void setup_clock_intr(void);
+void clock_intr(void *priv);
+
 
 struct clock_softc {
 	device_t		sc_dev;
@@ -72,6 +75,7 @@ static struct timecounter clock_timecounter = {
 };
 
 timer_t clock_timerid;
+int clock_running = 0;
 
 CFATTACH_DECL_NEW(clock, sizeof(struct clock_softc),
     clock_match, clock_attach, NULL, NULL);
@@ -90,7 +94,6 @@ clock_match(device_t parent, cfdata_t match, void *opaque)
 static void
 clock_attach(device_t parent, device_t self, void *opaque)
 {
-	static struct sigaction sa;
 	struct clock_softc *sc = device_private(self);
 
 	aprint_naive("\n");
@@ -101,21 +104,15 @@ clock_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_todr.todr_gettime = clock_todr_gettime;
 	todr_attach(&sc->sc_todr);
 
-	memset(&sa, 0, sizeof(sa));
-	thunk_sigemptyset(&sa.sa_mask);
-	sa.sa_sigaction = clock_signal;
-	sa.sa_flags = SA_RESTART | SA_ONSTACK;
-	if (thunk_sigaction(SIGALRM, &sa, NULL) == -1)
-		panic("couldn't register SIGALRM handler : %d",
-		    thunk_geterrno());
-
 	clock_timerid = thunk_timer_attach();
-
 	clock_timecounter.tc_quality = 1000;
 	tc_init(&clock_timecounter);
+
+	setup_clock_intr();
+	clock_running = 1;
 }
 
-static void
+void
 clock_intr(void *priv)
 {
 	struct clockframe cf;
@@ -126,13 +123,6 @@ clock_intr(void *priv)
 	}
 }
 
-static void
-clock_signal(int sig, siginfo_t *info, void *ctx)
-{
-	curcpu()->ci_idepth++;
-	spl_intr(IPL_SOFTCLOCK, clock_intr, NULL);
-	curcpu()->ci_idepth--;
-}
 
 static unsigned int
 clock_getcounter(struct timecounter *tc)
