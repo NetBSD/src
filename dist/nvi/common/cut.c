@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.6 2012/01/21 19:32:37 christos Exp $ */
+/*	$NetBSD: cut.c,v 1.7 2012/01/21 19:49:56 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -134,7 +134,7 @@ copyloop:
 	}
 
 
-#define	ENTIRE_LINE	-1
+#define	ENTIRE_LINE	(size_t)-1
 	/* In line mode, it's pretty easy, just cut the lines. */
 	if (LF_ISSET(CUT_LINEMODE)) {
 		cbp->flags |= CB_LMODE;
@@ -257,6 +257,7 @@ cut_line(SCR *sp, db_recno_t lno, size_t fcno, size_t clen, CB *cbp)
 	 * copy the portion we want, and reset the TEXT length.
 	 */
 	if (len != 0) {
+/*###260 [cc] error: comparison between signed and unsigned integer expressions%%%*/
 		if (clen == ENTIRE_LINE)
 			clen = len - fcno;
 		MEMCPYW(tp->lb, p + fcno, clen);
