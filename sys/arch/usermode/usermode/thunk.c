@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.79 2012/01/15 10:35:08 jmcneill Exp $ */
+/* $NetBSD: thunk.c,v 1.80 2012/01/21 19:17:33 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.79 2012/01/15 10:35:08 jmcneill Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.80 2012/01/21 19:17:33 reinoud Exp $");
 #endif
 
 #include <sys/types.h>
@@ -602,6 +602,13 @@ int
 thunk_sigemptyset(sigset_t *sa_mask)
 {
 	return sigemptyset(sa_mask);
+}
+
+
+int
+thunk_sigfillset(sigset_t *sa_mask)
+{
+	return sigfillset(sa_mask);
 }
 
 
