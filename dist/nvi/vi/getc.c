@@ -1,4 +1,4 @@
-/*	$NetBSD: getc.c,v 1.4 2012/01/21 17:12:56 christos Exp $ */
+/*	$NetBSD: getc.c,v 1.5 2012/01/21 19:29:41 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -143,12 +143,10 @@ cs_fspace(SCR *sp, VCS *csp)
 int
 cs_fblank(SCR *sp, VCS *csp)
 {
-	if (csp->cs_flags == CS_EMP)
-		return (0);
 	for (;;) {
 		if (cs_next(sp, csp))
 			return (1);
-		if (csp->cs_flags == CS_EOL ||
+		if (csp->cs_flags == CS_EOL || csp->cs_flags == CS_EMP ||
 		    (csp->cs_flags == 0 && ISBLANK2(csp->cs_ch)))
 			continue;
 		break;
@@ -214,12 +212,10 @@ cs_prev(SCR *sp, VCS *csp)
 int
 cs_bblank(SCR *sp, VCS *csp)
 {
-	if (csp->cs_flags == CS_EMP)
-		return (0);
 	for (;;) {
 		if (cs_prev(sp, csp))
 			return (1);
-		if (csp->cs_flags == CS_EOL ||
+		if (csp->cs_flags == CS_EOL || csp->cs_flags == CS_EMP ||
 		    (csp->cs_flags == 0 && ISBLANK2(csp->cs_ch)))
 			continue;
 		break;
