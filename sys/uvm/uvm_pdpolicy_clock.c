@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.1 2012/01/21 23:20:58 matt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.1 2012/01/21 23:20:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -246,7 +246,7 @@ void
 uvmpdpol_balancequeue(int swap_shortage)
 {
 	int inactive_shortage;
-	struct vm_page *p, *nextpg;
+	struct vm_page *pg, *nextpg;
 
 	/*
 	 * we have done the scan to get free pages.   now we work on meeting
@@ -254,17 +254,17 @@ uvmpdpol_balancequeue(int swap_shortage)
 	 */
 
 	inactive_shortage = pdpol_state.s_inactarg - pdpol_state.s_inactive;
-	for (p = TAILQ_FIRST(&pdpol_state.s_activeq);
-	     p != NULL && (inactive_shortage > 0 || swap_shortage > 0);
-	     p = nextpg) {
-		nextpg = TAILQ_NEXT(p, pageq.queue);
+	for (pg = TAILQ_FIRST(&pdpol_state.s_activeq);
+	     pg != NULL && (inactive_shortage > 0 || swap_shortage > 0);
+	     pg = nextpg) {
+		nextpg = TAILQ_NEXT(pg, pageq.queue);
 
 		/*
 		 * if there's a shortage of swap slots, try to free it.
 		 */
 
-		if (swap_shortage > 0 && (p->pqflags & PQ_SWAPBACKED) != 0) {
-			if (uvmpd_trydropswap(p)) {
+		if (swap_shortage > 0 && (pg->pqflags & PQ_SWAPBACKED) != 0) {
+			if (uvmpd_trydropswap(pg)) {
 				swap_shortage--;
 			}
 		}
@@ -275,7 +275,7 @@ uvmpdpol_balancequeue(int swap_shortage)
 
 		if (inactive_shortage > 0) {
 			/* no need to check wire_count as pg is "active" */
-			uvmpdpol_pagedeactivate(p);
+			uvmpdpol_pagedeactivate(pg);
 			uvmexp.pddeact++;
 			inactive_shortage--;
 		}
