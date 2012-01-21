@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.59 2012/01/11 12:37:50 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.60 2012/01/21 19:17:33 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -132,6 +132,7 @@ void	thunk_signal(int, void (*)(int));
 int	thunk_sigblock(int);
 int	thunk_sigunblock(int);
 int	thunk_sigemptyset(sigset_t *sa_mask);
+int	thunk_sigfillset(sigset_t *sa_mask);
 void	thunk_sigaddset(sigset_t *sa_mask, int sig);
 int	thunk_sigprocmask(int how, const sigset_t * set, sigset_t *oset);
 int	thunk_atexit(void (*function)(void));
