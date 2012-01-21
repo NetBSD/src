@@ -1,7 +1,7 @@
-/*	$NetBSD: shpcic.c,v 1.15 2011/07/01 19:17:38 dyoung Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.16 2012/01/21 19:44:30 nonaka Exp $	*/
 
-/*
- * Copyright (c) 2005 NONAKA Kimihiro
+/*-
+ * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.15 2011/07/01 19:17:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.16 2012/01/21 19:44:30 nonaka Exp $");
 
 #include "opt_pci.h"
 
