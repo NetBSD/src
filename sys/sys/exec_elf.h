@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.120 2012/01/19 21:35:11 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.121 2012/01/21 21:44:03 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -446,8 +446,6 @@ typedef struct {
 #define SHF_TLS		     0x00000400 /* Holds thread-local data */
 #define SHF_MASKOS	     0x0ff00000 /* Operating system specific values */
 #define SHF_MASKPROC	     0xf0000000 /* Processor-specific values */
-#define SHF_MASKOS	     0x0ff00000 /* OS-specific.	 */
-#define SHF_MASKPROC	     0xf0000000 /* Processor-specific */
 #define SHF_ORDERED	     0x40000000 /* Ordering requirement (Solaris) */
 #define SHF_EXCLUDE	     0x80000000 /* Excluded unless unles ref/alloc
 					   (Solaris).*/
