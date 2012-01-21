@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.36 2011/11/12 11:10:49 sekiya Exp $	*/
+/*	$NetBSD: makphy.c,v 1.37 2012/01/21 16:48:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.36 2011/11/12 11:10:49 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.37 2012/01/21 16:48:08 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,11 @@ static const struct mii_phydesc makphys[] = {
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1011,
 	  MII_STR_xxMARVELL_E1011 },
 
+#if 0
+/* doesn't work on eg. HP XW9400 */
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1149,
 	  MII_STR_xxMARVELL_E1149 },
+#endif
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1111,
 	  MII_STR_xxMARVELL_E1111 },
