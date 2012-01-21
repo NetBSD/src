@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.5 2011/11/23 19:25:28 tnozaki Exp $ */
+/*	$NetBSD: cut.c,v 1.6 2012/01/21 19:32:37 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -134,16 +134,16 @@ copyloop:
 	}
 
 
-#define	ENTIRE_LINE	0
+#define	ENTIRE_LINE	-1
 	/* In line mode, it's pretty easy, just cut the lines. */
 	if (LF_ISSET(CUT_LINEMODE)) {
 		cbp->flags |= CB_LMODE;
 		for (lno = fm->lno; lno <= tm->lno; ++lno)
-			if (cut_line(sp, lno, 0, 0, cbp))
+			if (cut_line(sp, lno, 0, ENTIRE_LINE, cbp))
 				goto cut_line_err;
 	} else {
 		/*
-		 * Get the first line.  A length of 0 causes cut_line
+		 * Get the first line.  A length of ENTIRE_LINE causes cut_line
 		 * to cut from the MARK to the end of the line.
 		 */
 		if (cut_line(sp, fm->lno, fm->cno, fm->lno != tm->lno ?
@@ -257,7 +257,7 @@ cut_line(SCR *sp, db_recno_t lno, size_t fcno, size_t clen, CB *cbp)
 	 * copy the portion we want, and reset the TEXT length.
 	 */
 	if (len != 0) {
-		if (clen == 0)
+		if (clen == ENTIRE_LINE)
 			clen = len - fcno;
 		MEMCPYW(tp->lb, p + fcno, clen);
 		tp->len = clen;
