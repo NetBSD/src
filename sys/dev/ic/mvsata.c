@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.12 2012/01/09 01:01:49 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.13 2012/01/21 18:33:17 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.12 2012/01/09 01:01:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.13 2012/01/21 18:33:17 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1601,8 +1601,8 @@ again:
 	/*
 	 * after a ATAPI_SOFT_RESET, the device will have released the bus.
 	 * Reselect again, it doesn't hurt for others commands, and the time
-	 * penalty for the extra regiter write is acceptable,
-	 * wdc_exec_command() isn't called often (mosly for autoconfig)
+	 * penalty for the extra register write is acceptable,
+	 * wdc_exec_command() isn't called often (mostly for autoconfig)
 	 */
 	MVSATA_WDC_WRITE_1(mvport, SRB_H, WDSD_IBM);
 	if ((ata_c->flags & AT_XFDONE) != 0) {
