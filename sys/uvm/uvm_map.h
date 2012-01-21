@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.68 2011/12/20 15:41:01 reinoud Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.69 2012/01/21 16:51:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -82,7 +82,10 @@
  */
 
 #define UVM_MAP_CLIP_START(MAP,ENTRY,VA,UMR) { \
-	if ((VA) > (ENTRY)->start) uvm_map_clip_start(MAP,ENTRY,VA,UMR); }
+	if ((VA) > (ENTRY)->start && (VA) < (ENTRY)->end) { \
+		uvm_map_clip_start(MAP,ENTRY,VA,UMR); \
+	} \
+}
 
 /*
  * UVM_MAP_CLIP_END: ensure that the entry ends at or before
@@ -92,7 +95,10 @@
  */
 
 #define UVM_MAP_CLIP_END(MAP,ENTRY,VA,UMR) { \
-	if ((VA) < (ENTRY)->end) uvm_map_clip_end(MAP,ENTRY,VA,UMR); }
+	if ((VA) > (ENTRY)->start && (VA) < (ENTRY)->end) { \
+		uvm_map_clip_end(MAP,ENTRY,VA,UMR); \
+	} \
+} 
 
 /*
  * extract flags
