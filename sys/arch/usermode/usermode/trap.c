@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.60 2012/01/18 12:39:45 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.61 2012/01/21 22:09:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2012/01/18 12:39:45 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61 2012/01/21 22:09:57 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,24 +46,49 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2012/01/18 12:39:45 reinoud Exp $");
 #include <machine/intr.h>
 #include <machine/thunk.h>
 
+/* define maximum signal number */
+#ifndef NSIG
+#define NSIG 64
+#endif
 
 /* forwards and externals */
 void setup_signal_handlers(void);
 void stop_all_signal_handlers(void);
 
-static void mem_access_handler(int sig, siginfo_t *info, void *ctx);
-static void illegal_instruction_handler(int sig, siginfo_t *info, void *ctx);
-extern int errno;
+static sigfunc_t pagefault;
+static sigfunc_t illegal_instruction;
+static sigfunc_t alarm;
+static sigfunc_t sigio;
 
-static void pagefault(vaddr_t from_userland, vaddr_t pc, vaddr_t va);
-static void illegal_instruction(vaddr_t from_userland);
-
-bool pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype);
-
+/* raw signal handlers */
 static stack_t sigstk;
+ucontext_t jump_ucp;
 
+sigfunc_t *sig_funcs[NSIG];
+
+/* segv, bus */
+extern bool pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype);
+
+/* alarm */
+void setup_clock_intr(void);
+extern void clock_intr(void *priv);
+
+extern int clock_running;
+void *alrm_ih;
+
+/* sigio handlers */
+struct intr_handler {
+	int (*func)(void *);
+	void *arg;
+};
+#define SIGIO_MAX_HANDLERS	8
+static struct intr_handler sigio_intr_handler[SIGIO_MAX_HANDLERS];
+
+/* misc */
 int astpending = 0;
 
+
+/* XXX why is it here ? */
 void
 startlwp(void *arg)
 {
@@ -74,8 +99,14 @@ startlwp(void *arg)
 void
 setup_signal_handlers(void)
 {
-	static struct sigaction sa;
+	int i;
 
+	/*
+	 * Set up the alternative signal stack. This prevents signals to be
+	 * pushed on the NetBSD/usermode userland's stack with all desastrous
+	 * effects. Especially ld.so and friends have such tiny stacks that
+	 * its not feasable.
+	 */
 	if ((sigstk.ss_sp = thunk_malloc(SIGSTKSZ)) == NULL)
 		panic("can't allocate signal stack space\n");
 	sigstk.ss_size  = SIGSTKSZ;
@@ -84,65 +115,103 @@ setup_signal_handlers(void)
 		panic("can't set alternate stacksize: %d",
 		    thunk_geterrno());
 
-	/* SIGBUS and SIGSEGV need to be reentrant hence the SA_NODEFER */
-	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK | SA_NODEFER;
-	sa.sa_sigaction = mem_access_handler;
-	thunk_sigemptyset(&sa.sa_mask);
-	if (thunk_sigaction(SIGSEGV, &sa, NULL) == -1)
-		panic("couldn't register SIGSEGV handler: %d",
-		    thunk_geterrno());
-	if (thunk_sigaction(SIGBUS, &sa, NULL) == -1)
-		panic("couldn't register SIGBUS handler: %d", thunk_geterrno());
+	for (i = 0; i < NSIG; i++)
+		sig_funcs[i] = NULL;
 
-	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
-	sa.sa_sigaction = illegal_instruction_handler;
-	thunk_sigemptyset(&sa.sa_mask);
-	if (thunk_sigaction(SIGILL, &sa, NULL) == -1)
-		panic("couldn't register SIGILL handler: %d", thunk_geterrno());
+	/* HUP */
+	/* INT */	/* ttycons ^C */
+	/* QUIT */
+	signal_intr_establish(SIGILL, illegal_instruction);
+	/* TRAP */
+	/* ABRT */
+	/* SIGEMT */
+	/* SIGFPE XXX! */
+	/* KILL */
+	signal_intr_establish(SIGBUS,  pagefault);
+	signal_intr_establish(SIGSEGV, pagefault);
+	/* SYS */
+	/* PIPE */
+	signal_intr_establish(SIGALRM, alarm);
+	/* TERM */
+	/* URG */
+	/* STOP */
+	/* TSTP */	/* ttycons ^Z */
+	/* CONT */
+	/* CHLD */
+	/* GTTIN */
+	/* TTOU */
+	signal_intr_establish(SIGIO,   sigio);
+	/* XCPU */
+	/* XFSZ */
+	/* VTALRM */
+	/* PROF */
+	/* WINCH */
+	/* INFO */
+	/* USR1 */
+	/* USR2 */
+	/* PWR */
+}
 
-	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
-	sa.sa_sigaction = sigio_signal_handler;
-	thunk_sigemptyset(&sa.sa_mask);
-	if (thunk_sigaction(SIGIO, &sa, NULL) == -1)
-		panic("couldn't register SIGIO handler: %d", thunk_geterrno());
+
+/* XXX yes this is blunt */
+void
+stop_all_signal_handlers(void)
+{
+	int i;
+	for (i = 0; i < NSIG; i++)
+		if (sig_funcs[i])
+			thunk_sigblock(i);
 }
 
 
 void
-stop_all_signal_handlers(void)
+setup_clock_intr(void)
 {
-	thunk_sigblock(SIGALRM);
-	thunk_sigblock(SIGIO);
-	thunk_sigblock(SIGILL);
-	thunk_sigblock(SIGSEGV);
-	thunk_sigblock(SIGBUS);
+	/* setup soft interrupt handler */
+	alrm_ih = softint_establish(SOFTINT_CLOCK,
+		clock_intr, NULL);
 }
 
 
 /* ast and userret */
+static void
+ast(struct lwp *l)
+{
+	struct pcb *pcb;
+
+	if (!astpending)
+		return;
+
+	astpending = 0;
+	curcpu()->ci_data.cpu_ntrap++;
+
+#if 0
+	/* profiling */
+	if (l->l_pflag & LP_OWEUPC) {
+		l->l_pflag &= ~LP_OWEUPC;
+		ADDUPROF(l);
+	}
+#endif
+
+	/* allow a forced task switch */
+	if (curcpu()->ci_want_resched) {
+		curcpu()->ci_want_resched = 0;
+		preempt();
+		/* returns here! */
+	}
+	KASSERT(l == curlwp); KASSERT(l);
+	pcb = lwp_getpcb(l); KASSERT(pcb);
+	mi_userret(l);
+}
+
+
 void
 userret(struct lwp *l)
 {
 	/* invoke MI userret code */
 	mi_userret(l);
 
-	while (astpending) {
-		astpending = 0;
-
-		curcpu()->ci_data.cpu_ntrap++;
-#if 0
-		/* profiling */
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
-#endif
-		/* allow a forced task switch */
-		if (l->l_cpu->ci_want_resched)
-			preempt();
-
-		mi_userret(l);
-	}
+	ast(l);
 }
 
 
@@ -175,11 +244,8 @@ print_mem_access_siginfo(int sig, siginfo_t *info, void *ctx,
 #endif
 
 #if 0
-	printf("memaccess error, pc %p, va %p, "
-		"sys_stack %p, sp %p, stack top %p\n",
-		(void *) pc, (void *) va,
-		(void *) pcb->sys_stack, (void *) sp,
-		(void *) pcb->sys_stack_top);
+	thunk_printf("memaccess error, pc %p, va %p, sp %p\n",
+		(void *) pc, (void *) va, (void *) sp);
 #endif
 }
 
@@ -220,6 +286,10 @@ print_illegal_instruction_siginfo(int sig, siginfo_t *info, void *ctx,
 		thunk_printf("%02x ", *((uint8_t *) info->si_addr + i));
 	thunk_printf("\n");
 #endif
+
+#if 0
+	thunk_printf("sigill\n");
+#endif
 }
 #else /* DEBUG */
 #define print_mem_access_siginfo(s, i, c, p, v, sp)
@@ -227,40 +297,47 @@ print_illegal_instruction_siginfo(int sig, siginfo_t *info, void *ctx,
 #endif /* DEBUG */
 
 
-/* signal handler switching to a pagefault context */
 static void
-mem_access_handler(int sig, siginfo_t *info, void *ctx)
+handle_signal(int sig, siginfo_t *info, void *ctx)
 {
+	sigfunc_t *f;
 	ucontext_t *ucp = ctx;
 	struct lwp *l;
 	struct pcb *pcb;
 	vaddr_t va, sp, pc, fp;
 	int from_userland;
 
-	assert((info->si_signo == SIGSEGV) || (info->si_signo == SIGBUS));
+	if (sig == SIGBUS || sig == SIGSEGV || sig == SIGILL) {
+		if (info->si_code == SI_NOINFO)
+			panic("received signal %d with no info",
+			    info->si_signo);
+	}
 
-	if (info->si_code == SI_NOINFO)
-		panic("received signal %d with no info",
-		    info->si_signo);
+	f = sig_funcs[sig];
+	KASSERT(f);
 
-	l = curlwp;
-	pcb = lwp_getpcb(l);
+	l = curlwp; KASSERT(l);
+	pcb = lwp_getpcb(l); KASSERT(pcb);
 
-	/* get address of faulted memory access and make it page aligned */
+	/* get address of possible faulted memory access and page aligne it */
 	va = (vaddr_t) info->si_addr;
 	va = trunc_page(va);
 
-	/* get PC address of faulted memory instruction */
+	/* get PC address of possibly faulted instruction */
 	pc = md_get_pc(ctx);
 
-	/* setup for pagefault context */
+	/* nest it on the stack */
 	sp = md_get_sp(ctx);
 
-	print_mem_access_siginfo(sig, info, ctx, pc, va, sp);
+	if (sig == SIGBUS || sig == SIGSEGV)
+		print_mem_access_siginfo(sig, info, ctx, pc, va, sp);
+	if (sig == SIGILL)
+		print_illegal_instruction_siginfo(sig, info, ctx, pc, va, sp);
 
 	/* if we're running on a stack of our own, use the system stack */
 	from_userland = 0;
-	if ((sp < (vaddr_t) pcb->sys_stack) || (sp > (vaddr_t) pcb->sys_stack_top)) {
+	if ((sp < (vaddr_t) pcb->sys_stack) ||
+	    (sp > (vaddr_t) pcb->sys_stack_top)) {
 		sp = (vaddr_t) pcb->sys_stack_top - sizeof(register_t);
 		fp = (vaddr_t) &pcb->pcb_userret_ucp;
 		if (pc < kmem_user_end)
@@ -276,79 +353,38 @@ mem_access_handler(int sig, siginfo_t *info, void *ctx)
 	}
 
 	memcpy((void *) fp, ucp, sizeof(ucontext_t));
+	memcpy(&jump_ucp, ucp, sizeof(ucontext_t));
 
-	/* create context for pagefault */
-	pcb->pcb_ucp.uc_stack.ss_sp = (void *) pcb->sys_stack;
-	pcb->pcb_ucp.uc_stack.ss_size = sp - (vaddr_t) pcb->sys_stack;
-	pcb->pcb_ucp.uc_link = (void *) fp;	/* link to old frame on stack */
+	/* create context */
+	jump_ucp.uc_stack.ss_sp = (void *) pcb->sys_stack;
+	jump_ucp.uc_stack.ss_size = sp - (vaddr_t) pcb->sys_stack;
+	jump_ucp.uc_link = (void *) fp;	/* link to old frame on stack */
 
-	pcb->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
-	thunk_makecontext(&pcb->pcb_ucp, (void (*)(void)) pagefault,
+	thunk_sigemptyset(&jump_ucp.uc_sigmask);
+	jump_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
+	thunk_makecontext(&jump_ucp,
+			(void (*)(void)) f,
 		3, (void *) from_userland, (void *) pc, (void *) va);
 
-	/* switch to the new pagefault entry on return from signal */
-	memcpy(ctx, &pcb->pcb_ucp, sizeof(ucontext_t));
+	/* switch to the new context on return from signal */
+	thunk_setcontext(&jump_ucp);
+//	memcpy(ctx, &pcb->pcb_ucp, sizeof(ucontext_t));
 }
 
 
-/* signal handler switching to a illegal instruction context */
-static void
-illegal_instruction_handler(int sig, siginfo_t *info, void *ctx)
+void
+signal_intr_establish(int sig, sigfunc_t f)
 {
-	ucontext_t *ucp = ctx;
-	struct lwp *l;
-	struct pcb *pcb;
-	vaddr_t sp, pc, fp;
-	int from_userland;
+	static struct sigaction sa;
 
-	assert(info->si_signo == SIGILL);
+	sig_funcs[sig] = f;
 
-	l = curlwp;
-	pcb = lwp_getpcb(l);
-
-	/* get PC address of faulted instruction */
-	pc = md_get_pc(ctx);
-
-	/* setup for illegal_instruction context */
-	sp = md_get_sp(ctx);
-
-	print_illegal_instruction_siginfo(sig, info, ctx, pc, 0, sp);
-
-	/* if we're running on a stack of our own, use the system stack */
-	from_userland = 0;
-	if ((sp < (vaddr_t) pcb->sys_stack) ||
-			(sp > (vaddr_t) pcb->sys_stack_top)) {
-		sp = (vaddr_t) pcb->sys_stack_top - sizeof(register_t);
-		fp = (vaddr_t) &pcb->pcb_userret_ucp;
-
-		KASSERT(pc < kmem_user_end);
-		from_userland = 1;
-	} else {
-		panic("illegal instruction inside kernel?");
-#if 0
-		/* stack grows down */
-		fp = sp - sizeof(ucontext_t) - sizeof(register_t); /* slack */
-		sp = fp - sizeof(register_t);	/* slack */
-
-		/* sanity check before copying */
-		if (fp - 2*PAGE_SIZE < (vaddr_t) pcb->sys_stack)
-			panic("%s: out of system stack", __func__);
-#endif
-	}
-
-	memcpy((void *) fp, ucp, sizeof(ucontext_t));
-
-	/* create context for illegal instruction */
-	pcb->pcb_ucp.uc_stack.ss_sp = (void *) pcb->sys_stack;
-	pcb->pcb_ucp.uc_stack.ss_size = sp - (vaddr_t) pcb->sys_stack;
-	pcb->pcb_ucp.uc_link = (void *) fp;	/* link to old frame on stack */
-
-	pcb->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
-	thunk_makecontext(&pcb->pcb_ucp, (void (*)(void)) illegal_instruction,
-		1, (void *) from_userland, NULL, NULL);
-
-	/* switch to the new illegal instruction entry on return from signal */
-	memcpy(ctx, &pcb->pcb_ucp, sizeof(ucontext_t));
+	sa.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
+	sa.sa_sigaction = (void *) handle_signal;
+	thunk_sigfillset(&sa.sa_mask);
+	if (thunk_sigaction(sig, &sa, NULL) == -1)
+		panic("couldn't register SIG%d handler: %d", sig,
+		    thunk_geterrno());
 }
 
 
@@ -377,18 +413,17 @@ pagefault(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 	lwp_errno = thunk_geterrno();
 
 	vm_map = &vm->vm_map;
-	from_kernel = (pc >= kmem_k_start);
+	from_kernel = (pc >= kmem_k_start) && (!from_userland);
 	if (from_kernel && (va >= VM_MIN_KERNEL_ADDRESS))
 		vm_map = kernel_map;
 
 #if 0
-	thunk_printf("pagefault : pc %p, va %p\n",
-		(void *) pc, (void *) va);
+	thunk_printf("%s: l %p, pcb %p\n", __func__, l, pcb);
+	thunk_printf("\tpc %p, va %p\n", (void *) pc, (void *) va);
 #endif
 
 	/* can pmap handle it? on its own? (r/m) emulation */
 	if (pmap_fault(vm_map->pmap, va, &atype)) {
-//		thunk_printf("pagefault leave (pmap)\n");
 		/* no use doing anything else here */
 		goto out_quick;
 	}
@@ -416,8 +451,8 @@ pagefault(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 	}
 
 	/* something got wrong */
-	thunk_printf("%s: uvm fault %d, pc %p, from_kernel %d\n",
-		__func__, error, (void *) pc, from_kernel);
+	thunk_printf("%s: uvm fault %d, pc %p, va %p, from_kernel %d\n",
+		__func__, error, (void *) pc, (void *) va, from_kernel);
 
 	/* check if its from copyin/copyout */
 	if (onfault) {
@@ -437,6 +472,7 @@ pagefault(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 	/* send signal */
 	thunk_printf("giving signal to userland\n");
 
+	KASSERT(from_userland);
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGSEGV;
 	ksi.ksi_trap = 0;	/* XXX */
@@ -468,28 +504,32 @@ out_quick:
 
 
 /*
- * Context for handing illegal instruction from the sigill handler
+ * handle an illegal instruction.
+ *
+ * arguments 'pc' and 'va' are ignored here
  */
 static void
-illegal_instruction(vaddr_t from_userland)
+illegal_instruction(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 {
 	struct lwp *l = curlwp;
 	struct pcb *pcb = lwp_getpcb(l);
 	ucontext_t *ucp = &pcb->pcb_userret_ucp;
 	ksiginfo_t ksi;
 
-//	thunk_printf("illegal instruction\n");
+//	thunk_printf("%s: l %p, pcb %p\n", __func__, l, pcb);
+
+	KASSERT(from_userland);
+
 	/* if its a syscall ... */
 	if (md_syscall_check_opcode(ucp)) {
 		syscall();
-//		thunk_printf("illegal instruction leave\n");
-		KASSERT(from_userland);
 		userret(l);
 		return;
 	}
 
 	thunk_printf("%s: giving SIGILL (TRAP)\n", __func__);
 
+	KASSERT(from_userland);
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGILL;
 	ksi.ksi_trap  = 0;	/* XXX */
@@ -502,7 +542,75 @@ illegal_instruction(vaddr_t from_userland)
 #else
 	trapsignal(l, &ksi);
 #endif
-	KASSERT(from_userland);
 	userret(l);
+}
+
+
+/*
+ * handle alarm, a clock ticker.
+ *
+ * arguments 'pc' and 'va' are ignored here
+ */
+static void
+alarm(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
+{
+	struct lwp *l = curlwp;
+	struct pcb *pcb = lwp_getpcb(l); KASSERT(pcb);
+
+	if (!clock_running)
+		return;
+//	thunk_printf("%s: l %p, pcb %p\n", __func__, l, pcb);
+
+	softint_schedule(alrm_ih);
+
+	KASSERT(l == curlwp);
+	if (from_userland)
+		userret(l);
+}
+
+
+/*
+ * handle sigio, a mux for all io operations.
+ *
+ * arguments 'pc' and 'va' are ignored here
+ */
+static void
+sigio(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
+{
+	struct lwp *l = curlwp;
+	struct pcb *pcb = lwp_getpcb(l); KASSERT(pcb);
+	struct intr_handler *sih;
+	unsigned int n;
+
+//	thunk_printf("%s: l %p, pcb %p\n", __func__, l, pcb);
+	for (n = 0; n < SIGIO_MAX_HANDLERS; n++) {
+		sih = &sigio_intr_handler[n];
+		if (sih->func)
+			sih->func(sih->arg);
+	}
+
+	KASSERT(l == curlwp);
+	if (from_userland)
+		userret(l);		/* or ast? */
+}
+
+
+/* sigio register function */
+void *
+sigio_intr_establish(int (*func)(void *), void *arg)
+{
+	struct intr_handler *sih;
+	unsigned int n;
+
+	for (n = 0; n < SIGIO_MAX_HANDLERS; n++) {
+		sih = &sigio_intr_handler[n];
+		if (sih->func == NULL) {
+			sih->func = func;
+			sih->arg = arg;
+			return sih;
+		}
+	}
+
+	panic("increase SIGIO_MAX_HANDLERS");
 }
 

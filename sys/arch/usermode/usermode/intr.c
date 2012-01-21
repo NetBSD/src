@@ -1,4 +1,4 @@
-/* $NetBSD: intr.c,v 1.14 2012/01/09 22:20:53 reinoud Exp $ */
+/* $NetBSD: intr.c,v 1.15 2012/01/21 22:09:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,72 +27,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.14 2012/01/09 22:20:53 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.15 2012/01/21 22:09:57 reinoud Exp $");
 
 #include <sys/types.h>
 
 #include <machine/intr.h>
 #include <machine/thunk.h>
 
-struct intr_handler {
-	int (*func)(void *);
-	void *arg;
-};
-
-#define SIGIO_MAX_HANDLERS	8
-
-static struct intr_handler sigio_intr_handler[SIGIO_MAX_HANDLERS];
-
-//#define INTR_USE_SIGPROCMASK
-
-#define MAX_QUEUED_EVENTS 128
-
-static int usermode_x = IPL_NONE;
-
-#ifdef INTR_USE_SIGPROCMASK
-static bool block_sigalrm = false;
-#endif
-
-
-struct spl_intr_event {
-	void (*func)(void *);
-	void *arg;
-};
-
-struct spl_intr_event spl_intrs[IPL_HIGH+1][MAX_QUEUED_EVENTS];
-int spl_intr_wr[IPL_HIGH+1];
-int spl_intr_rd[IPL_HIGH+1];
+int usermode_x = IPL_NONE;
 
 void
 splinit(void)
 {
-	int i;
-	for (i = 0; i <= IPL_HIGH; i++) {
-		spl_intr_rd[i] = 1;
-		spl_intr_wr[i] = 1;
-	}
-}
-
-void
-spl_intr(int x, void (*func)(void *), void *arg)
-{
-	struct spl_intr_event *spli;
-
-	if (x >= usermode_x) {
-		func(arg);
-		return;
-	}
-
-//	dprintf_debug("spl_intr: queue %d when %d\n", x, usermode_x);
-	spli = &spl_intrs[x][spl_intr_wr[x]];
-	spli->func = func;
-	spli->arg = arg;
-
-	spl_intr_wr[x] = (spl_intr_wr[x] + 1) % MAX_QUEUED_EVENTS;
-	if (spl_intr_wr[x] == spl_intr_rd[x]) {
-		thunk_printf("%s: spl list %d full!\n", __func__, x);
-		panic("%s: spl list %d full!\n", __func__, x);
-	}
+	/* nothing */
 }
 
 int
@@ -100,16 +47,8 @@ splraise(int x)
 {
 	int oldx = usermode_x;
 
-	if (x > usermode_x) {
+	if (x > usermode_x)
 		usermode_x = x;
-	}
-
-#ifdef INTR_USE_SIGPROCMASK
-	if (x >= IPL_SCHED && !block_sigalrm) {
-		thunk_sigblock(SIGALRM);
-		block_sigalrm = true;
-	}
-#endif
 
 	return oldx;
 }
@@ -117,62 +56,7 @@ splraise(int x)
 void
 spllower(int x)
 {
-	struct spl_intr_event *spli;
-	int y;
-
-	/* `eat' interrupts that came by until we got back to x */
-	if (usermode_x > x) {
-//restart:
-		for (y = usermode_x; y >= x; y--) {
-			while (spl_intr_rd[y] != spl_intr_wr[y]) {
-//				dprintf_debug("spl y %d firing\n", y);
-				spli = &spl_intrs[y][spl_intr_rd[y]];
-				if (!spli->func)
-					panic("%s: spli->func is NULL for ipl %d, rd %d, wr %d\n",
-						__func__, y, spl_intr_rd[y], spl_intr_wr[y]);
-				spli->func(spli->arg);
-				spl_intr_rd[y] = (spl_intr_rd[y] + 1) % MAX_QUEUED_EVENTS;
-//				goto restart;
-			}
-		}
+	if (usermode_x > x)
 		usermode_x = x;
-	}
-
-#ifdef INTR_USE_SIGPROCMASK
-	if (x < IPL_SCHED && block_sigalrm) {
-		thunk_sigunblock(SIGALRM);
-		block_sigalrm = false;
-	}
-#endif
 }
 
-void
-sigio_signal_handler(int sig, siginfo_t *info, void *ctx)
-{
-	struct intr_handler *sih;
-	unsigned int n;
-
-	for (n = 0; n < SIGIO_MAX_HANDLERS; n++) {
-		sih = &sigio_intr_handler[n];
-		if (sih->func)
-			sih->func(sih->arg);
-	}
-}
-
-void *
-sigio_intr_establish(int (*func)(void *), void *arg)
-{
-	struct intr_handler *sih;
-	unsigned int n;
-
-	for (n = 0; n < SIGIO_MAX_HANDLERS; n++) {
-		sih = &sigio_intr_handler[n];
-		if (sih->func == NULL) {
-			sih->func = func;
-			sih->arg = arg;
-			return sih;
-		}
-	}
-
-	panic("increase SIGIO_MAX_HANDLERS");
-}
