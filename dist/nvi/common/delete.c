@@ -1,4 +1,4 @@
-/*	$NetBSD: delete.c,v 1.1.1.2 2008/05/18 14:29:41 aymeric Exp $ */
+/*	$NetBSD: delete.c,v 1.2 2012/01/21 17:12:56 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -89,6 +89,11 @@ del(SCR *sp, MARK *fm, MARK *tm, int lmode)
 
 	/* Case 3 -- delete within a single line. */
 	if (tm->lno == fm->lno) {
+		if (tm->cno == fm->cno) {
+			if (db_delete(sp, fm->lno))
+				return (1);
+			goto done;
+		}
 		if (db_get(sp, fm->lno, DBG_FATAL, &p, &len))
 			return (1);
 		GET_SPACE_RETW(sp, bp, blen, len);
