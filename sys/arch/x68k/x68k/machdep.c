@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.179 2011/12/12 19:03:12 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.180 2012/01/21 20:19:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2011/12/12 19:03:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2012/01/21 20:19:55 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -180,7 +180,7 @@ x68k_init(void)
 	 */
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end),
-	    VM_FREELIST_DEFAULT);
+	    VM_FREELIST_MAINMEM);
 #ifdef EXTENDED_MEMORY
 	setmemrange();
 #endif
@@ -1144,7 +1144,7 @@ setmemrange(void)
 		if ((u_long)mlist[i].base < h) {
 			uvm_page_physload(atop(mlist[i].base), atop(h),
 			    atop(mlist[i].base), atop(h),
-			    VM_FREELIST_DEFAULT);
+			    VM_FREELIST_HIGHMEM);
 			mem_size += h - (u_long) mlist[i].base;
 		}
 	}
