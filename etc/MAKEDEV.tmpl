@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.148 2011/11/19 16:41:55 agc Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.149 2012/01/21 02:52:50 isaki Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -262,7 +262,6 @@
 #	pad*	Pseudo-audio device driver
 #	pci*	PCI bus access devices
 #	pf	PF packet filter
-#	pow*	power management device (x68k)
 #	putter	Pass-to-Userspace Transporter
 #	px*	PixelStamp Xserver access
 #	radio*	radio devices
@@ -2020,21 +2019,6 @@ bmd[0-9]*)
 
 sram)
 	mkdev sram c %sram_chr% 0 644
-	;;
-
-pow[0-9]*)
-	unit=${i#pow}
-	case $unit in
-	0|1)
-		mkdev pow${unit} c %pow_chr% ${unit} 644
-		if [ $unit = 0 ]; then
-			lndev pow${unit} pow
-		fi
-		;;
-	*)
-		warn "bad unit for pow in: $i"
-		;;
-	esac
 	;;
 
 ttyS[0-9]*)
