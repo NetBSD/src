@@ -127,6 +127,7 @@ extern initialize_file_ftype _initialize_tui_regs;
 extern initialize_file_ftype _initialize_tui_stack;
 extern initialize_file_ftype _initialize_tui_win;
 extern initialize_file_ftype _initialize_python;
+extern initialize_file_ftype _initialize_nbsd_thread;
 void
 initialize_all_files (void)
 {
@@ -251,4 +252,5 @@ initialize_all_files (void)
   _initialize_tui_stack ();
   _initialize_tui_win ();
   _initialize_python ();
+  _initialize_nbsd_thread();
 }
