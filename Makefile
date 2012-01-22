@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.289 2011/09/09 14:23:37 apb Exp $
+#	$NetBSD: Makefile,v 1.290 2012/01/22 03:53:32 tsutsui Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -71,6 +71,16 @@
 #	Create CD-ROM image with source in RELEASEDIR/iso.
 #	RELEASEDIR must already have been populated by
 #	`make release sourcesets' or equivalent.
+#   live-image:
+#	Create bootable live image for emulators or USB stick etc.
+#	in RELEASEDIR/liveimage.
+#	RELEASEDIR must already have been populated by `make release'
+#	or equivalent.
+#   install-image:
+#	Create bootable installation image for USB stick etc.
+#	in RELEASEDIR/installimage.
+#	RELEASEDIR must already have been populated by `make release'
+#	or equivalent.
 #
 # Targets invoked by `make build,' in order:
 #   cleandir:        cleans the tree.
@@ -398,6 +408,24 @@ iso-image: .PHONY
 iso-image-source: .PHONY
 	${MAKEDIRTARGET} distrib iso_image CDSOURCE=true
 	${MAKEDIRTARGET} etc iso-image
+	@echo   "make ${.TARGET} started at:  ${START_TIME}"
+	@printf "make ${.TARGET} finished at: " && date
+
+#
+# Create bootable live images.
+#
+
+live-image: .PHONY
+	${MAKEDIRTARGET} etc live-image
+	@echo   "make ${.TARGET} started at:  ${START_TIME}"
+	@printf "make ${.TARGET} finished at: " && date
+
+#
+# Create bootable installation images.
+#
+
+install-image: .PHONY
+	${MAKEDIRTARGET} etc install-image
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
 

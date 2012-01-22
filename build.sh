@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.252 2011/12/05 23:04:39 jym Exp $
+#	$NetBSD: build.sh,v 1.253 2012/01/22 03:53:32 tsutsui Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -864,6 +864,10 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
                         RELEASEDIR/RELEASEMACHINEDIR/binary/syspkgs.
     iso-image           Create CD-ROM image in RELEASEDIR/iso.
     iso-image-source    Create CD-ROM image with source in RELEASEDIR/iso.
+    live-image          Create bootable live image in
+                        RELEASEDIR/RELEASEMACHINEDIR/installation/liveimage.
+    install-image       Create bootable installation image in
+                        RELEASEDIR/RELEASEMACHINEDIR/installation/installimage.
     params              Display various make(1) parameters.
 
  Options:
@@ -1133,6 +1137,14 @@ parseoptions()
 
 		iso-image-source)
 			op=iso_image_source   # used as part of a variable name
+			;;
+
+		live-image)
+			op=live_image	# used as part of a variable name
+			;;
+
+		install-image)
+			op=install_image # used as part of a variable name
 			;;
 
 		kernel=*|releasekernel=*)
@@ -1632,7 +1644,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.252 2011/12/05 23:04:39 jym Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.253 2012/01/22 03:53:32 tsutsui Exp $
 # with these arguments: ${_args}
 #
 
@@ -1960,6 +1972,17 @@ main()
 			statusmsg "Successful make ${op}"
 			;;
 
+		live-image)
+			${runcmd} "${makewrapper}" ${parallel} ${op} ||
+			    bomb "Failed to make ${op}"
+			statusmsg "Successful make ${op}"
+			;;
+
+		install-image)
+			${runcmd} "${makewrapper}" ${parallel} ${op} ||
+			    bomb "Failed to make ${op}"
+			statusmsg "Successful make ${op}"
+			;;
 		kernel=*)
 			arg=${op#*=}
 			buildkernel "${arg}"

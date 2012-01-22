@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.18 2012/01/14 22:56:30 jmcneill Exp $
+#	$NetBSD: Makefile.bootcd,v 1.19 2012/01/22 03:53:32 tsutsui Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -47,6 +47,12 @@ CDROMS_RELEASEDIR?=	iso
 .endif
 .if defined(CDRELEASE_NOISOS)
 CDRELEASE_EXCLUDE=	-s ',./installation/cdrom.*,,gp'
+.endif
+.if !defined(CDRELEASE_LIVEIMAGE)
+CDRELEASE_EXCLUDE+=	-s ',./installation/liveimage.*,,gp'
+.endif
+.if !defined(CDRELEASE_INSTALLIMAGE)
+CDRELEASE_EXCLUDE+=	-s ',./installation/installimage.*,,gp'
 .endif
 
 .include <bsd.sys.mk>		# for HOST_SH

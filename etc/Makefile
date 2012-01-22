@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.395 2012/01/15 17:36:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.396 2012/01/22 03:53:33 tsutsui Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -474,6 +474,33 @@ iso-image-md-pre: .PHONY check_DESTDIR check_RELEASEDIR iso-image-setup
 iso-image-md-post: .PHONY check_DESTDIR check_RELEASEDIR iso-image-mi
 #	(empty -- look in the machine-dependent Makefile.inc)
 
+
+# live-image --
+#	Standalone target to create live images after the release was composed.
+#	Should be run after "make release" in src and xsrc.
+#	LIVEIMG_RELEASEDIR specifies where to install live images and
+#	it can be set in MD etc.${MACHINE}/Makefile.inc.
+#
+LIVEIMG_RELEASEDIR?= ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/liveimage
+
+live-image: .PHONY check_DESTDIR check_RELEASEDIR
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib live_image \
+	    LIVEIMG_RELEASEDIR=${LIVEIMG_RELEASEDIR}
+	${MAKESUMS} -t ${LIVEIMG_RELEASEDIR} '*.img.gz'
+
+# install-image --
+#	Standalone target to create installation images
+#	after the release was composed.
+#	Should be run after "make release" in src and xsrc.
+#	INSTIMG_RELEASEDIR specifies where to install live images and
+#	it can be set in MD etc.${MACHINE}/Makefile.inc.
+#
+INSTIMG_RELEASEDIR?= ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/installimage
+
+install-image: .PHONY check_DESTDIR check_RELEASEDIR
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib install_image \
+	    INSTIMG_RELEASEDIR=${INSTIMG_RELEASEDIR}
+	${MAKESUMS} -t ${INSTIMG_RELEASEDIR} '*.img.gz'
 
 # snap_pre --
 #	Create ${RELEASEDIR} and necessary subdirectories.
