@@ -451,7 +451,7 @@ store_fp_register (const struct regcache *regcache, int regno)
   int ret;
 
   ret = ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -473,7 +473,7 @@ store_fp_register (const struct regcache *regcache, int regno)
     }
 
   ret = ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to write register %d to inferior"), regno);
@@ -495,7 +495,7 @@ store_fp_regs (const struct regcache *regcache)
 			(char *) &inferior_fp_registers.fpr_fpsr);
 
   ret = ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to store floating-point registers"));
