@@ -1,4 +1,4 @@
-/* $NetBSD: fmemopen.c,v 1.5 2010/09/27 17:08:29 tnozaki Exp $ */
+/* $NetBSD: fmemopen.c,v 1.6 2012/01/22 18:36:17 christos Exp $ */
 
 /*-
  * Copyright (c)2007, 2010 Takehiko NOZAKI,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmemopen.c,v 1.5 2010/09/27 17:08:29 tnozaki Exp $");
+__RCSID("$NetBSD: fmemopen.c,v 1.6 2012/01/22 18:36:17 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -97,8 +97,8 @@ ok:
 	return (int)(p->cur - s);
 }
 
-static fpos_t
-fmemopen_seek(void *cookie, fpos_t offset, int whence)
+static off_t
+fmemopen_seek(void *cookie, off_t offset, int whence)
 {
 	struct fmemopen_cookie *p;
  
@@ -118,12 +118,12 @@ fmemopen_seek(void *cookie, fpos_t offset, int whence)
 		errno = EINVAL;
 		goto error;
 	}
-	if (offset >= (fpos_t)0 && offset <= p->tail - p->head) {
+	if (offset >= (off_t)0 && offset <= p->tail - p->head) {
 		p->cur = p->head + (ptrdiff_t)offset;
-		return (fpos_t)(p->cur - p->head);
+		return (off_t)(p->cur - p->head);
 	}
 error:
-	return (fpos_t)-1;
+	return (off_t)-1;
 }
 
 static int
