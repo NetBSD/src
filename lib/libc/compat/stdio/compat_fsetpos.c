@@ -1,4 +1,4 @@
-/*	$NetBSD: funopen.c,v 1.11 2012/01/22 18:36:17 christos Exp $	*/
+/* $NetBSD: compat_fsetpos.c,v 1.1 2012/01/22 18:36:19 christos Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -30,53 +30,39 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * Original version ID:
+ * NetBSD: fsetpos.c,v 1.10 2003/08/07 16:43:25 agc Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)funopen.c	8.1 (Berkeley) 6/4/93";
-#else
-__RCSID("$NetBSD: funopen.c,v 1.11 2012/01/22 18:36:17 christos Exp $");
-#endif
+__RCSID("$NetBSD: compat_fsetpos.c,v 1.1 2012/01/22 18:36:19 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#define __LIBC12_SOURCE__
+
+#include "namespace.h"
+#include <sys/types.h>
+ 
+#include <assert.h>
 #include <stdio.h>
-#include <errno.h>
-#include "reentrant.h"
-#include "local.h"
+#include <compat/include/stdio.h>
+  
+#ifdef __warn_references
+__warn_references(fsetpos,
+    "warning: reference to compatibility fsetpos(); include <stdio.h> for correc t reference")
+#endif
 
-FILE *
-funopen(cookie, readfn, writefn, seekfn, closefn)
-	const void *cookie;
-	int (*readfn) __P((void *, char *, int));
-	int (*writefn) __P((void *, const char *, int));
-	off_t (*seekfn) __P((void *, off_t, int));
-	int (*closefn) __P((void *));
+
+/*
+ * fsetpos: like fseek.
+ */
+int
+fsetpos(FILE * __restrict iop, const off_t * __restrict pos)
 {
-	FILE *fp;
-	int flags;
+	_DIAGASSERT(iop != NULL);
+	_DIAGASSERT(pos != NULL);
 
-	if (readfn == NULL) {
-		if (writefn == NULL) {		/* illegal */
-			errno = EINVAL;
-			return (NULL);
-		} else
-			flags = __SWR;		/* write only */
-	} else {
-		if (writefn == NULL)
-			flags = __SRD;		/* read only */
-		else
-			flags = __SRW;		/* read-write */
-	}
-	if ((fp = __sfp()) == NULL)
-		return (NULL);
-	fp->_flags = flags;
-	fp->_file = -1;
-	fp->_cookie = __UNCONST(cookie);
-	fp->_read = readfn;
-	fp->_write = writefn;
-	fp->_seek = seekfn;
-	fp->_close = closefn;
-	return (fp);
+	return fseeko(iop, *pos, SEEK_SET) == (off_t)-1;
 }

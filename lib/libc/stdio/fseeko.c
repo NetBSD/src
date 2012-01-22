@@ -1,4 +1,4 @@
-/*	$NetBSD: fseeko.c,v 1.8 2009/01/31 00:08:05 lukem Exp $	*/
+/*	$NetBSD: fseeko.c,v 1.9 2012/01/22 18:36:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fseeko.c,v 1.8 2009/01/31 00:08:05 lukem Exp $");
+__RCSID("$NetBSD: fseeko.c,v 1.9 2012/01/22 18:36:17 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: fseeko.c,v 1.8 2009/01/31 00:08:05 lukem Exp $");
 __weak_alias(fseeko, _fseeko)
 #endif
 
-#define	POS_ERR	(-(fpos_t)1)
+#define	POS_ERR	((off_t)-1)
 
 /*
  * Seek the given file to the given offset.
@@ -62,8 +62,8 @@ __weak_alias(fseeko, _fseeko)
 int
 fseeko(FILE *fp, off_t offset, int whence)
 {
-	fpos_t (*seekfn)(void *, fpos_t, int);
-	fpos_t target, curoff;
+	off_t (*seekfn)(void *, off_t, int);
+	off_t target, curoff;
 	size_t n;
 	struct stat st;
 	int havepos;
@@ -101,7 +101,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 		if (fp->_flags & __SOFF)
 			curoff = fp->_offset;
 		else {
-			curoff = (*seekfn)(fp->_cookie, (fpos_t)0, SEEK_CUR);
+			curoff = (*seekfn)(fp->_cookie, (off_t)0, SEEK_CUR);
 			if (curoff == POS_ERR) {
 				FUNLOCKFILE(fp);
 				return (-1);
@@ -170,7 +170,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 		if (fp->_flags & __SOFF)
 			curoff = fp->_offset;
 		else {
-			curoff = (*seekfn)(fp->_cookie, (fpos_t)0, SEEK_CUR);
+			curoff = (*seekfn)(fp->_cookie, (off_t)0, SEEK_CUR);
 			if (curoff == POS_ERR)
 				goto dumb;
 		}
@@ -203,7 +203,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 	 * skip this; see fgetln.c.)
 	 */
 	if ((fp->_flags & __SMOD) == 0 &&
-	    target >= curoff && target < (fpos_t)(curoff + n)) {
+	    target >= curoff && target < curoff + (off_t)n) {
 		int o = (int)(target - curoff);
 
 		fp->_p = fp->_bf._base + o;
@@ -247,7 +247,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 	 */
 dumb:
 	if (__sflush(fp) ||
-	    (*seekfn)(fp->_cookie, (fpos_t)offset, whence) == POS_ERR) {
+	    (*seekfn)(fp->_cookie, offset, whence) == POS_ERR) {
 		FUNLOCKFILE(fp);
 		return (-1);
 	}

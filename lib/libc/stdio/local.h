@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.30 2011/07/17 20:54:34 joerg Exp $	*/
+/*	$NetBSD: local.h,v 1.31 2012/01/22 18:36:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -52,7 +52,7 @@ extern void	__sfpinit __P((FILE *));
 extern int	__srefill __P((FILE *));
 extern int	__sread __P((void *, char *, int));
 extern int	__swrite __P((void *, char const *, int));
-extern fpos_t	__sseek __P((void *, fpos_t, int));
+extern off_t	__sseek __P((void *, off_t, int));
 extern int	__sclose __P((void *));
 extern void	__sinit __P((void));
 extern void	_cleanup __P((void));
@@ -123,7 +123,7 @@ extern void __funlockfile_internal __P((FILE *, int));
  */
 
 static __inline bool
-__fpos_overflow(fpos_t pos)
+__long_overflow(off_t pos)
 {
-  return (pos < LONG_MIN) || (pos > LONG_MAX);
+	return (pos < LONG_MIN) || (pos > LONG_MAX);
 }

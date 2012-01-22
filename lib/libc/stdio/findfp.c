@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.25 2010/09/06 14:52:55 christos Exp $	*/
+/*	$NetBSD: findfp.c,v 1.26 2012/01/22 18:36:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.25 2010/09/06 14:52:55 christos Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.26 2012/01/22 18:36:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,7 +62,7 @@ int	__sdidinit;
 /*	  read      seek     write     ext                              up */ \
 	  __sread,  __sseek, __swrite, { (void *)(__sFext + file), 0 }, NULL, \
 /*	  ur ubuf,                 nbuf      lb     blksize  offset */ \
-	  0, { '\0', '\0', '\0' }, { '\0' }, { NULL, 0 }, 0, (fpos_t)0 }
+	  0, { '\0', '\0', '\0' }, { '\0' }, { NULL, 0 }, 0, (off_t)0 }
 
 				/* the usual - (stdin + stdout + stderr) */
 static FILE usual[FOPEN_MAX - 3];

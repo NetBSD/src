@@ -1,4 +1,4 @@
-/*	$NetBSD: ftello.c,v 1.4 2003/08/07 16:43:26 agc Exp $	*/
+/*	$NetBSD: ftello.c,v 1.5 2012/01/22 18:36:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ftello.c,v 1.4 2003/08/07 16:43:26 agc Exp $");
+__RCSID("$NetBSD: ftello.c,v 1.5 2012/01/22 18:36:17 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,7 +55,7 @@ off_t
 ftello(fp)
 	FILE *fp;
 {
-	fpos_t pos;
+	off_t pos;
 
 
 	FLOCKFILE(fp);
@@ -74,8 +74,8 @@ ftello(fp)
 	if (fp->_flags & __SOFF)
 		pos = fp->_offset;
 	else {
-		pos = (*fp->_seek)(fp->_cookie, (fpos_t)0, SEEK_CUR);
-		if (pos == (fpos_t)-1) {
+		pos = (*fp->_seek)(fp->_cookie, (off_t)0, SEEK_CUR);
+		if (pos == (off_t)-1) {
 			FUNLOCKFILE(fp);
 			return (pos);
 		}

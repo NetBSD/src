@@ -1,4 +1,4 @@
-/*	$NetBSD: fopen.c,v 1.13 2008/03/13 15:40:00 christos Exp $	*/
+/*	$NetBSD: fopen.c,v 1.14 2012/01/22 18:36:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fopen.c,v 1.13 2008/03/13 15:40:00 christos Exp $");
+__RCSID("$NetBSD: fopen.c,v 1.14 2012/01/22 18:36:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -111,7 +111,7 @@ fopen(file, mode)
 	 * fseek and ftell.)
 	 */
 	if (oflags & O_APPEND)
-		(void) __sseek((void *)fp, (fpos_t)0, SEEK_END);
+		(void) __sseek((void *)fp, (off_t)0, SEEK_END);
 	return (fp);
 release:
 	fp->_flags = 0;			/* release */
