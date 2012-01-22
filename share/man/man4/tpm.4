@@ -1,4 +1,4 @@
-.\"	$OpenBSD:$
+.\"	$NetBSD: tpm.4,v 1.2 2012/01/22 11:26:48 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Hans-Jörg Höxer, <Hans-Joerg.Hoexer@genua.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate:$
+.Dd January 22, 2012
 .Dt TPM 4
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@
 The
 .Nm
 driver provides support for various trusted platfrom modules (TPM) that can
-store cryptographic keys. 
+store cryptographic keys.
 .Pp
 Supported modules:
 .Pp
@@ -52,13 +52,12 @@ The driver can be configured to use an IRQ by providing a free ISA
 interrupt vector using the keyword
 .Em irq
 in the kernel configuration file or using
-.Xr config 8 .
+.Xr config 1 .
 If not IRQ is specified, the driver uses polling.
 This is the default configuration.
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr files.conf 5,
-.Xr config 8
+.Xr config 1 ,
+.Xr intro 4
 .Sh AUTHORS
 .An -nosplit
 The
