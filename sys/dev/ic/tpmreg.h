@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmreg.h,v 1.1 2012/01/22 06:44:28 christos Exp $	*/
+/*	$NetBSD: tpmreg.h,v 1.2 2012/01/22 20:41:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
@@ -24,7 +24,7 @@
 
 #define TPM_PARAM_SIZE	0x0001
 
-#define	TPM_ACCESS			0x0000	/* acess register */
+#define	TPM_ACCESS			0x0000	/* access register */
 #define	TPM_ACCESS_ESTABLISHMENT	0x01	/* establishment */
 #define	TPM_ACCESS_REQUEST_USE		0x02	/* request using locality */
 #define	TPM_ACCESS_REQUEST_PENDING	0x04	/* pending request */
@@ -64,7 +64,7 @@
 #define	TPM_CAPSREQ \
   (TPM_INTF_DATA_AVAIL_INT|TPM_INTF_LOCALITY_CHANGE_INT|TPM_INTF_INT_LEVEL_LOW)
 #define	TPM_CAPBITS \
-  "\020\01IDRDY\02ISTSV\03ILOCH\04IHIGH\05ILOW\06IEDGE\07IFALL\010IRDY\011BCST"
+  "\020\01IDRDY\02ISTSV\03ILOCH\04IHIGH\05ILOW\06IRISE\07IFALL\010IRDY\011BCST"
 
 #define	TPM_STS			0x0018		/* status register */
 #define TPM_STS_MASK		0x000000ff	/* status bits */
