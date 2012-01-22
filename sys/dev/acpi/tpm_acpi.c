@@ -1,4 +1,4 @@
-/* $NetBSD: tpm_acpi.c,v 1.1 2012/01/22 06:44:28 christos Exp $ */
+/* $NetBSD: tpm_acpi.c,v 1.2 2012/01/22 20:24:27 christos Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.1 2012/01/22 06:44:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.2 2012/01/22 20:24:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,12 +102,10 @@ tpm_acpi_match(device_t parent, cfdata_t match, void *aux)
 	/* There can be only one. */
 	if (tpm_cd.cd_devs && tpm_cd.cd_devs[0])
 		return 0;
-
 #ifdef notyet
-	// XXX: My sony can't find the IRQ
-	return acpi_match_hid(aa->aa_node->ad_devinfo, tpm_acpi_ids);
-#else
 	return 0;
+#else
+	return acpi_match_hid(aa->aa_node->ad_devinfo, tpm_acpi_ids);
 #endif
 }
 
@@ -117,9 +115,12 @@ tpm_acpi_attach(device_t parent, device_t self, void *aux)
 	struct tpm_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
+	struct acpi_io *io;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
-	int rv;
+	bus_addr_t base;
+	bus_addr_t size;
+	int rv, inum;
 
 	sc->sc_dev = self;
 
@@ -132,43 +133,64 @@ tpm_acpi_attach(device_t parent, device_t self, void *aux)
                 return;
 	}
 
-	mem = acpi_res_mem(&res, 0);
-	if (mem == NULL) {
-		aprint_error_dev(sc->sc_dev, "cannot find mem\n");
-		goto out;
+	io = acpi_res_io(&res, 0);
+	if (io && tpm_legacy_probe(aa->aa_iot, io->ar_base)) {
+		sc->sc_bt = aa->aa_iot;
+		base = io->ar_base;
+		size = io->ar_length;
+		sc->sc_batm = aa->aa_iot;
+		sc->sc_init = tpm_legacy_init;
+		sc->sc_start = tpm_legacy_start;
+		sc->sc_read = tpm_legacy_read;
+		sc->sc_write = tpm_legacy_write;
+		sc->sc_end = tpm_legacy_end;
+		mem = NULL;
+	} else {
+		mem = acpi_res_mem(&res, 0);
+		if (mem == NULL) {
+			aprint_error_dev(sc->sc_dev, "cannot find mem\n");
+			goto out;
+		}
+
+		if (mem->ar_length != TPM_SIZE) {
+			aprint_error_dev(sc->sc_dev,
+			    "wrong size mem %u != %u\n",
+			    mem->ar_length, TPM_SIZE);
+			goto out;
+		}
+
+		base = mem->ar_base;
+		size = mem->ar_length;
+		sc->sc_bt = aa->aa_memt;
+		sc->sc_init = tpm_tis12_init;
+		sc->sc_start = tpm_tis12_start;
+		sc->sc_read = tpm_tis12_read;
+		sc->sc_write = tpm_tis12_write;
+		sc->sc_end = tpm_tis12_end;
 	}
 
-	if (mem->ar_length != TPM_SIZE) {
-		aprint_error_dev(sc->sc_dev, "wrong size mem %u != %u\n",
-		    mem->ar_length, TPM_SIZE);
-		goto out;
-	}
-
-	sc->sc_bt = aa->aa_memt;
-	sc->sc_init = tpm_tis12_init;
-	sc->sc_start = tpm_tis12_start;
-	sc->sc_read = tpm_tis12_read;
-	sc->sc_write = tpm_tis12_write;
-	sc->sc_end = tpm_tis12_end;
-
-	if (bus_space_map(sc->sc_bt, mem->ar_base, mem->ar_length, 0,
-	    &sc->sc_bh)) {
+	if (bus_space_map(sc->sc_bt, base, size, 0, &sc->sc_bh)) {
 		aprint_error_dev(sc->sc_dev, "cannot map registers\n");
 		goto out;
 	}
 
-	irq = acpi_res_irq(&res, 0);
-	if (irq == NULL) {
-		aprint_error_dev(sc->sc_dev, "cannot find irq\n");
+	if (mem && !tpm_tis12_probe(sc->sc_bt, sc->sc_bh)) {
+		aprint_error_dev(sc->sc_dev, "1.2 probe failed\n");
 		goto out1;
 	}
 
-	if ((rv = (*sc->sc_init)(sc, irq->ar_irq,
-	    device_xname(sc->sc_dev))) != 0)
+	irq = acpi_res_irq(&res, 0);
+	if (irq == NULL)
+		inum = -1;
+	else
+		inum = irq->ar_irq;
+
+	if ((rv = (*sc->sc_init)(sc, inum, device_xname(sc->sc_dev))) != 0)
 		aprint_error_dev(sc->sc_dev, "cannot init device %d\n", rv);
 		goto out1;
 
-	if ((sc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq,
+	if (inum != -1 &&
+	    (sc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq,
 	    IST_EDGE, IPL_TTY, tpm_intr, sc)) == NULL) {
 		aprint_error_dev(sc->sc_dev, "cannot establish interrupt\n");
 		goto out1;
@@ -178,7 +200,7 @@ tpm_acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "Cannot set power mgmt handler\n");
 	return;
 out1:
-	bus_space_unmap(sc->sc_bt, sc->sc_bh, TPM_SIZE);
+	bus_space_unmap(sc->sc_bt, sc->sc_bh, size);
 out:
 	acpi_resource_cleanup(&res);
 }
