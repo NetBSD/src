@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.12 2012/01/19 07:38:05 nisimura Exp $ */
+/* $NetBSD: dsk.c,v 1.13 2012/01/22 13:08:16 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -179,34 +179,46 @@ int
 perform_atareset(struct dkdev_ata *l, int n)
 {
 	struct dvata_chan *chan = &l->chan[n];
+//	int retries;
 
-	CSR_WRITE_1(chan->ctl, ATA_DREQ);
-	delay(10);
-	CSR_WRITE_1(chan->ctl, ATA_SRST|ATA_DREQ);
-	delay(10);
-	CSR_WRITE_1(chan->ctl, ATA_DREQ);
+//	for (retries = 0; retries < 10; retries++) {
+		CSR_WRITE_1(chan->ctl, ATA_DREQ);
+		delay(10);
+		CSR_WRITE_1(chan->ctl, ATA_SRST|ATA_DREQ);
+		delay(10);
+		CSR_WRITE_1(chan->ctl, ATA_DREQ);
+//		if (spinwait_unbusy(l, n, 1000/*250*/, NULL) != 0)
+//			return 1;
+//		delay(1000 * 1000);
+//	}
+	return spinwait_unbusy(l, n, 1000/*250*/, NULL);
+}
 
-	return spinwait_unbusy(l, n, 250, NULL);
+/* clear idle and standby timers to spin up the drive */
+void
+wakeup_drive(struct dkdev_ata *l, int n)
+{
+	struct dvata_chan *chan = &l->chan[n];
+
+	CSR_WRITE_1(chan->cmd + _NSECT, 0);
+	CSR_WRITE_1(chan->cmd + _CMD, ATA_CMD_IDLE);
+	(void)CSR_READ_1(chan->alt);
+	delay(10 * 1000);
+	CSR_WRITE_1(chan->cmd + _NSECT, 0);
+	CSR_WRITE_1(chan->cmd + _CMD, ATA_CMD_STANDBY);
+	(void)CSR_READ_1(chan->alt);
+	delay(10 * 1000);
 }
 
 int
-satapresense(struct dkdev_ata *l, int n)
+atachkpwr(struct dkdev_ata *l, int n)
 {
-#define VND_CH(n) (((n&02)<<8)+((n&01)<<7))
-#define VND_SC(n) (0x100+VND_CH(n))
-#define VND_SS(n) (0x104+VND_CH(n))
+	struct dvata_chan *chan = &l->chan[n];
 
-	uint32_t sc = l->bar[5] + VND_SC(n);
-	uint32_t ss = l->bar[5] + VND_SS(n);
-	unsigned val;
-
-	val = (00 << 4) | (03 << 8);	/* any speed, no pwrmgt */
-	CSR_WRITE_4(sc, val | 01);	/* perform init */
-	delay(50 * 1000);
-	CSR_WRITE_4(sc, val);
-	delay(50 * 1000);	
-	val = CSR_READ_4(ss);		/* has completed */
-	return ((val & 03) == 03);	/* active drive found */
+	CSR_WRITE_1(chan->cmd + _CMD, ATA_CMD_CHKPWR);
+	(void)CSR_READ_1(chan->alt);
+	delay(10 * 1000);
+	return CSR_READ_1(chan->cmd + _NSECT);
 }
 
 static int
