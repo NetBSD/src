@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.1 2012/01/22 03:53:30 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.2 2012/01/22 16:50:00 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -121,11 +121,6 @@
 .if empty(IMGBASE)
 .BEGIN:
 	@echo "Error: IMGBASE is not set"
-	@false
-.endif
-.if empty(RELEASEDIR)
-.BEGIN:
-	@echo "Error: RELEASEDIR is not set"
 	@false
 .endif
 
