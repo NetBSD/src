@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.183 2011/07/09 15:03:35 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.184 2012/01/22 10:32:35 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183 2011/07/09 15:03:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.184 2012/01/22 10:32:35 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1040,9 +1040,30 @@ noether:
 			prop_dictionary_t props = device_properties(busdev);
 			prop_object_t cfg = prop_dictionary_get(props,
 				"i2c-child-devices");
-			if (!cfg)
+			if (!cfg) {
+				int node;
+				const char *name;
+
+				/*
+				 * pmu's i2c devices are under the "i2c" node,
+				 * so find it out.
+				 */
+				name = prom_getpropstring(busnode, "name");
+				if (strcmp(name, "pmu") == 0) {
+					for (node = OF_child(busnode);
+					     node != 0; node = OF_peer(node)) {
+						name = prom_getpropstring(node,
+						    "name");
+						if (strcmp(name, "i2c") == 0) {
+							busnode = node;
+							break;
+						}
+					}
+				}
+
 				of_enter_i2c_devs(props, busnode,
 				    sizeof(cell_t));
+			}
 		}
 	}
 
