@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.34 2012/01/19 18:35:27 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.35 2012/01/22 19:00:45 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.34 2012/01/19 18:35:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.35 2012/01/22 19:00:45 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1110,6 +1110,7 @@ voodoofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					   sc->sc_cmap_green[i],
 					   sc->sc_cmap_blue[i]);
 				}
+				voodoofb_clearscreen(sc);
 				vcons_redraw_screen(ms);
 			} else {
 				voodoofb_drm_unmap(sc);
