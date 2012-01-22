@@ -119,6 +119,7 @@ extern initialize_file_ftype _initialize_mi_cmds;
 extern initialize_file_ftype _initialize_mi_cmd_env;
 extern initialize_file_ftype _initialize_mi_interp;
 extern initialize_file_ftype _initialize_python;
+extern initialize_file_ftype _initialize_nbsd_thread;
 void
 initialize_all_files (void)
 {
@@ -235,4 +236,5 @@ initialize_all_files (void)
   _initialize_mi_cmd_env ();
   _initialize_mi_interp ();
   _initialize_python ();
+  _initialize_nbsd_thread();
 }
