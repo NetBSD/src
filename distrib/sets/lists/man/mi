@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1371 2012/01/17 18:53:23 joerg Exp $
+# $NetBSD: mi,v 1.1372 2012/01/22 06:44:30 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1653,6 +1653,7 @@
 ./usr/share/man/cat4/tlphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tm121temp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/tp.0			man-sys-catman		.cat
+./usr/share/man/cat4/tpm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tprof.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tqphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tr.0			man-sys-catman		.cat
@@ -4438,7 +4439,7 @@
 ./usr/share/man/html4/tlp.html			man-sys-htmlman		html
 ./usr/share/man/html4/tlphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/tm121temp.html		man-sys-htmlman		html
-./usr/share/man/html4/tp.html			man-sys-htmlman		html
+./usr/share/man/html4/tpm.html			man-sys-htmlman		html
 ./usr/share/man/html4/tprof.html		man-sys-htmlman		html
 ./usr/share/man/html4/tqphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/tr.html			man-sys-htmlman		html
@@ -7148,6 +7149,7 @@
 ./usr/share/man/man4/tlphy.4			man-sys-man		.man
 ./usr/share/man/man4/tm121temp.4		man-sys-man		.man
 ./usr/share/man/man4/tp.4			man-sys-man		.man
+./usr/share/man/man4/tpm.4			man-sys-man		.man
 ./usr/share/man/man4/tprof.4			man-sys-man		.man
 ./usr/share/man/man4/tqphy.4			man-sys-man		.man
 ./usr/share/man/man4/tr.4			man-sys-man		.man

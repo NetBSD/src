@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.149 2012/01/21 02:52:50 isaki Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.150 2012/01/22 06:44:29 christos Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -291,6 +291,9 @@
 #
 # iSCSI communication devices
 #	iscsi*	iSCSI driver and /sbin/iscsid communication
+#
+# Trusted Computing devices
+#	tpm	Trusted Platform Module
 
 
 #
@@ -2056,6 +2059,10 @@ tap|tap[0-9]*)
 		mkdev tap c %tap_chr% 0xfffff 600
 		;;
 	esac
+	;;
+
+tpm)
+	mkdev tpm c %tpm_chr% 0 600
 	;;
 
 fw[0-9]*)
