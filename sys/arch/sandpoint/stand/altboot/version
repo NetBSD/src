@@ -11,3 +11,6 @@
 	mode, default boot path is now wd0:netbsd in multiuser mode
 1.8:	Iomega support, IT821x & VT6410 IDE support, fixed interrupt
 	issue, exception handler and sat-controller test mode (DEBUG)
+1.9:	Support PATA drive configuration option. Wait until drives are
+        ready after cold-start. Wake up drives from standby mode.
+        A default command line can be saved to flash as initrd image.
