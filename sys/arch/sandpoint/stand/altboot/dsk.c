@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.13 2012/01/22 13:08:16 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.14 2012/01/22 13:16:54 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -179,19 +179,14 @@ int
 perform_atareset(struct dkdev_ata *l, int n)
 {
 	struct dvata_chan *chan = &l->chan[n];
-//	int retries;
 
-//	for (retries = 0; retries < 10; retries++) {
-		CSR_WRITE_1(chan->ctl, ATA_DREQ);
-		delay(10);
-		CSR_WRITE_1(chan->ctl, ATA_SRST|ATA_DREQ);
-		delay(10);
-		CSR_WRITE_1(chan->ctl, ATA_DREQ);
-//		if (spinwait_unbusy(l, n, 1000/*250*/, NULL) != 0)
-//			return 1;
-//		delay(1000 * 1000);
-//	}
-	return spinwait_unbusy(l, n, 1000/*250*/, NULL);
+	CSR_WRITE_1(chan->ctl, ATA_DREQ);
+	delay(10);
+	CSR_WRITE_1(chan->ctl, ATA_SRST|ATA_DREQ);
+	delay(10);
+	CSR_WRITE_1(chan->ctl, ATA_DREQ);
+
+	return spinwait_unbusy(l, n, 1000, NULL);
 }
 
 /* clear idle and standby timers to spin up the drive */
