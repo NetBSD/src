@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.15 2012/01/07 19:57:49 phx Exp $ */
+/* $NetBSD: globals.h,v 1.16 2012/01/22 13:08:16 phx Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -42,6 +42,7 @@ extern uint32_t cpuclock, busclock;
 
 /* board specific support code */
 struct brdprop *brd_lookup(int);
+int get_drive_config(int);
 int tstchar(void);
 #ifdef DEBUG
 void sat_write(char *, int);
@@ -177,16 +178,23 @@ DSK_DECL(siisata);
 #define ATA_STS_DRDY		0x40
 #define ATA_STS_ERR 		0x01
 /* command */
+#define ATA_CMD_CHKPWR		0xe5
 #define ATA_CMD_IDENT		0xec
+#define ATA_CMD_IDLE		0xe3
 #define ATA_CMD_READ		0x20
 #define ATA_CMD_READ_EXT	0x24
 #define ATA_CMD_SETF		0xef
+#define ATA_CMD_STANDBY		0xe2
 /* device */
 #define ATA_DEV_LBA		0xe0
 #define ATA_DEV_OBS		0x90
 /* control */
 #define ATA_DREQ		0x08
 #define ATA_SRST		0x04
+/* power state */
+#define ATA_PWR_ACTIVE		0xff
+#define ATA_PWR_IDLE		0x80
+#define ATA_PWR_STANDBY		0x00
 
 #define ATA_XFER		0x03
 #define XFER_PIO4		0x0c
@@ -229,4 +237,5 @@ struct disk {
 
 int spinwait_unbusy(struct dkdev_ata *, int, int, const char **);
 int perform_atareset(struct dkdev_ata *, int);
-int satapresense(struct dkdev_ata *, int);
+void wakeup_drive(struct dkdev_ata *, int);
+int atachkpwr(struct dkdev_ata *, int);
