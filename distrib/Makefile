@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2012/01/04 03:43:34 riz Exp $
+#	$NetBSD: Makefile,v 1.18 2012/01/22 03:53:32 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -18,5 +18,7 @@ SUBDIR+= ${RELEASEMACHINE}
 
 TARGETS+=release
 TARGETS+=iso_image
+TARGETS+=live_image
+TARGETS+=install_image
 
 .include <bsd.subdir.mk>
