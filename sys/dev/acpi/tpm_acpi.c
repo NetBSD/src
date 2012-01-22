@@ -1,4 +1,4 @@
-/* $NetBSD: tpm_acpi.c,v 1.2 2012/01/22 20:24:27 christos Exp $ */
+/* $NetBSD: tpm_acpi.c,v 1.3 2012/01/22 20:25:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.2 2012/01/22 20:24:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.3 2012/01/22 20:25:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,9 +103,9 @@ tpm_acpi_match(device_t parent, cfdata_t match, void *aux)
 	if (tpm_cd.cd_devs && tpm_cd.cd_devs[0])
 		return 0;
 #ifdef notyet
-	return 0;
-#else
 	return acpi_match_hid(aa->aa_node->ad_devinfo, tpm_acpi_ids);
+#else
+	return 0;
 #endif
 }
 
