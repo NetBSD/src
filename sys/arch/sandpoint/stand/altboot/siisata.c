@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.4 2011/05/30 19:48:12 phx Exp $ */
+/* $NetBSD: siisata.c,v 1.5 2012/01/22 13:08:17 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,6 +35,14 @@
 
 #include "globals.h"
 
+/*
+ * - no vtophys() translation, vaddr_t == paddr_t.
+ */
+#define CSR_READ_4(r)		in32rb(r)
+#define CSR_WRITE_4(r,v)	out32rb(r,v)
+
+static int satapresense(struct dkdev_ata *, int);
+
 static uint32_t pciiobase = PCI_XIOBASE;
 
 int
@@ -56,7 +64,7 @@ void *
 siisata_init(unsigned tag, void *data)
 {
 	unsigned idreg;
-	int n, nchan, retries;
+	int n, nchan, retries/*waitforspinup*/;
 	struct dkdev_ata *l;
 
 	l = alloc(sizeof(struct dkdev_ata));
@@ -99,22 +107,57 @@ siisata_init(unsigned tag, void *data)
 	pcicfgwrite(tag, 0x80, 0x00);
 	pcicfgwrite(tag, 0x84, 0x00);
 
-	for (n = 0, retries = 0; n < nchan; n++) {
-		l->presense[n] = 0;
-
-		if (satapresense(l, n)) {
-			/* drive present, now check whether soft reset works */
-			while (retries++ < 10) {
-				if (perform_atareset(l, n)) {
-					DPRINTF(("port %d device present\n", n));
-					l->presense[n] = 1;
+	for (n = 0; n < nchan; n++) {
+		l->presense[n] = satapresense(l, n);
+		if (l->presense[n] == 0) {
+			DPRINTF(("port %d not present\n", n));
+			l->presense[n] = 0;
+			continue;
+		}
+		if (atachkpwr(l, n) != ATA_PWR_ACTIVE) {
+			/* drive is probably sleeping, wake it up */
+			for (retries = 0; retries < 10; retries++) {
+				wakeup_drive(l, n);
+				DPRINTF(("port %d spinning up...\n", n));
+				delay(1000 * 1000);
+				l->presense[n] = perform_atareset(l, n);
+				if (atachkpwr(l, n) == ATA_PWR_ACTIVE)
 					break;
-				}
-				/* give the drive another second to spin up */
-				if (retries < 10)
-					delay(1000 * 1000);
+			}
+		} else {
+			/* check to see whether soft reset works */
+			DPRINTF(("port %d active\n", n));
+			for (retries = 0; retries < 10; retries++) {
+				l->presense[n] = perform_atareset(l, n);
+				if (l->presense[n] != 0)
+					break;
+				DPRINTF(("port %d cold-starting...\n", n));
+				delay(1000 * 1000);
 			}
 		}
+
+		if (l->presense[n])
+			printf("port %d present\n", n);
 	}
 	return l;
+}
+
+static int
+satapresense(struct dkdev_ata *l, int n)
+{
+#define VND_CH(n) (((n&02)<<8)+((n&01)<<7))
+#define VND_SC(n) (0x100+VND_CH(n))
+#define VND_SS(n) (0x104+VND_CH(n))
+
+	uint32_t sc = l->bar[5] + VND_SC(n);
+	uint32_t ss = l->bar[5] + VND_SS(n);
+	unsigned val;
+
+	val = (00 << 4) | (03 << 8);	/* any speed, no pwrmgt */
+	CSR_WRITE_4(sc, val | 01);	/* perform init */
+	delay(50 * 1000);
+	CSR_WRITE_4(sc, val);
+	delay(50 * 1000);	
+	val = CSR_READ_4(ss);		/* has completed */
+	return ((val & 03) == 03);	/* active drive found */
 }
