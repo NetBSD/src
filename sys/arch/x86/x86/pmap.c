@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.153 2012/01/09 12:58:49 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.154 2012/01/22 18:16:35 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2012/01/09 12:58:49 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2012/01/22 18:16:35 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1883,7 +1883,6 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		 * on any cpu, clear it before freeing
 		 */
 		if (level == PTP_LEVELS - 1) {
-			pmap_pte_set(&pmap_kernel()->pm_pdir[index], 0);
 			/*
 			 * Update the per-cpu PD on all cpus the current
 			 * pmap is active on 
@@ -1987,9 +1986,6 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 		 * if pmap is curmap and modifying top level (PGD)
 		 */
 		if(i == PTP_LEVELS && pmap != pmap_kernel()) {
-		        pmap_pte_set(&pmap_kernel()->pm_pdir[index],
-		                (pd_entry_t) (pmap_pa2pte(pa)
-		                        | PG_u | PG_RW | PG_V));
 			/*
 			 * Update the per-cpu PD on all cpus the current
 			 * pmap is active on 

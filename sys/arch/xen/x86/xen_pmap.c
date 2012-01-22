@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.14 2012/01/19 22:04:05 bouyer Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.15 2012/01/22 18:16:34 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.14 2012/01/19 22:04:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.15 2012/01/22 18:16:34 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -555,16 +555,19 @@ pmap_unmap_recursive_entries(void)
 
 extern struct cpu_info	* (*xpq_cpu)(void);
 static __inline void
-pmap_kpm_setpte(struct cpu_info *ci, int index)
+pmap_kpm_setpte(struct cpu_info *ci, struct pmap *pmap, int index)
 {
+	if (pmap == pmap_kernel()) {
+		KASSERT(index >= PDIR_SLOT_KERN);
+	}
 #ifdef PAE
-		xpq_queue_pte_update(
-			xpmap_ptetomach(&ci->ci_kpm_pdir[l2tol2(index)]),
-			pmap_kernel()->pm_pdir[index]);
+	xpq_queue_pte_update(
+		xpmap_ptetomach(&ci->ci_kpm_pdir[l2tol2(index)]),
+		pmap->pm_pdir[index]);
 #elif defined(__x86_64__)
-		xpq_queue_pte_update(
-			xpmap_ptetomach(&ci->ci_kpm_pdir[index]),
-			pmap_kernel()->pm_pdir[index]);
+	xpq_queue_pte_update(
+		xpmap_ptetomach(&ci->ci_kpm_pdir[index]),
+		pmap->pm_pdir[index]);
 #endif /* PAE */
 }
 
@@ -580,27 +583,20 @@ pmap_kpm_sync_xcall(void *arg1, void *arg2)
 	
 	struct cpu_info *ci = xpq_cpu();
 
-	if (pmap == pmap_kernel()) {
-		KASSERT(index >= PDIR_SLOT_KERN);
-		pmap_kpm_setpte(ci, index);
-		pmap_pte_flush();
+#ifdef PAE
+	KASSERTMSG(pmap == pmap_kernel(), "%s not allowed for PAE user pmaps", __func__);
+#endif /* PAE */
+
+	if (__predict_true(pmap != pmap_kernel()) &&
+	    pmap != ci->ci_pmap) {
+		/* User pmap changed. Nothing to do. */
 		return;
 	}
 
-#ifdef PAE
-	KASSERTMSG(false, "%s not allowed for PAE user pmaps", __func__);
-	return;
-#else /* __x86_64__ */
-	
-	if (ci->ci_pmap != pmap) {
-		/* pmap changed. Nothing to do. */
-		return;
-	}
-	
-	pmap_pte_set(&ci->ci_kpm_pdir[index],
-	    pmap->pm_pdir[index]);
+	/* Update per-cpu kpm */
+	pmap_kpm_setpte(ci, pmap, index);
 	pmap_pte_flush();
-#endif /* PAE || __x86_64__ */
+	return;
 }
 
 /*
@@ -626,7 +622,7 @@ xen_kpm_sync(struct pmap *pmap, int index)
 			}
 			if (pmap == pmap_kernel() ||
 			    ci->ci_cpumask & pmap->pm_cpus) {
-				pmap_kpm_setpte(ci, index);
+				pmap_kpm_setpte(ci, pmap, index);
 			}
 		}
 		pmap_pte_flush();
