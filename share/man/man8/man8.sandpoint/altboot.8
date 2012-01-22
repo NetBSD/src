@@ -1,4 +1,4 @@
-.\" $NetBSD: altboot.8,v 1.6 2012/01/22 15:37:23 phx Exp $
+.\" $NetBSD: altboot.8,v 1.7 2012/01/22 16:41:42 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,25 +95,30 @@ The invocation syntax is:
 where
 .Ar N
 is a string of digits, which defines the number of connected drives on each
-PATA channel. This option is useful to avoid the delays, when
+PATA channel.
+This option is useful to avoid the delays, when
 .Nm
-is trying to detect a non-existing drive. Examples:
+is trying to detect a non-existing drive.
+Examples:
 .Bl -tag -width xx
 .It ide: Ns Ar 10
-A single master drive on the first channel. Nothing on the second channel.
+A single master drive on the first channel.
+Nothing on the second channel.
 .It ide: Ns Ar 22
 A master and slave drive on both channels of the first controller.
 .It ide: Ns Ar 1111
-A master drive on each channel. The first two digits belong to the first
+A master drive on each channel.
+The first two digits belong to the first
 controller, the last two to the second controller.
 .El
 .Pp
 Unspecified digits will be read as
-.Ar 0 Ns .
+.Ar 0 .
 The
 .Ar ide
-option has only a meaning for PATA disks. Omitting it makes it default to
-.Ar ide:10 Ns .
+option has only a meaning for PATA disks.
+Omitting it makes it default to
+.Ar ide:10 .
 .Pp
 .It Va optN
 multi, auto, ask, single, ddb, userconf, norm, quiet, verb,
@@ -134,8 +139,8 @@ One of the following:
 .Dl nfs:
 .Dl tftp: Ns Ar filename
 .Dl tftp:
-.Dl wd Ns Ar Np Ns : Ns Ar filename
-.Dl wd Ns Ar Np Ns :
+.Dl wd Ns Ar Np : Ns Ar filename
+.Dl wd Ns Ar Np :
 .Dl mem: Ns Ar address
 .Dl net:
 .Pp
@@ -233,28 +238,31 @@ When
 is lacking important commands like
 .Tn cp
 or
-.Tn go Ns ,
+.Tn go ,
 or is unable to save the enviroment, then there is still the option to
 replace the
 .Tn Linux
 kernel module by
 .Pa altboot.img
-and save it to the same address in flash ROM. In this case you have only
-two options left to pass arguments:
+and save it to the same address in flash ROM.
+In this case you have only two options left to pass arguments:
 .Pp
 .Bl -bullet -compact
 .It
 Enter the interactive command line mode, after
 .Nm
-has started. This requires a serial console.
+has started.
+This requires a serial console.
 .It
 Write a fixed command line into flash, replacing the
 .Tn Linux
-initrd image. The command line is a normal
+initrd image.
+The command line is a normal
 .Tn ASCII
 file, started by the identifier
 .Em altboot:
-and terminated by any control character between 0 and 31. Example:
+and terminated by any control character between 0 and 31.
+Example:
 .Dl altboot:silent ide:1111 wd0:netbsd
 .El
 .Sh SEE ALSO
