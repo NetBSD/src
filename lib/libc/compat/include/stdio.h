@@ -1,4 +1,4 @@
-/*	$NetBSD: funopen.c,v 1.11 2012/01/22 18:36:17 christos Exp $	*/
+/* $NetBSD: stdio.h,v 1.1 2012/01/22 18:36:14 christos Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -30,53 +30,17 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)stdio.h	8.5 (Berkeley) 4/29/95
+ *
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)funopen.c	8.1 (Berkeley) 6/4/93";
-#else
-__RCSID("$NetBSD: funopen.c,v 1.11 2012/01/22 18:36:17 christos Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+#ifndef _COMPAT_STDIO_H_
+#define _COMPAT_STDIO_H_
 
-#include <stdio.h>
-#include <errno.h>
-#include "reentrant.h"
-#include "local.h"
+__BEGIN_DECLS
+int	fgetpos(FILE * __restrict, off_t * __restrict);
+int	fsetpos(FILE *, const off_t *);
+__END_DECLS
 
-FILE *
-funopen(cookie, readfn, writefn, seekfn, closefn)
-	const void *cookie;
-	int (*readfn) __P((void *, char *, int));
-	int (*writefn) __P((void *, const char *, int));
-	off_t (*seekfn) __P((void *, off_t, int));
-	int (*closefn) __P((void *));
-{
-	FILE *fp;
-	int flags;
-
-	if (readfn == NULL) {
-		if (writefn == NULL) {		/* illegal */
-			errno = EINVAL;
-			return (NULL);
-		} else
-			flags = __SWR;		/* write only */
-	} else {
-		if (writefn == NULL)
-			flags = __SRD;		/* read only */
-		else
-			flags = __SRW;		/* read-write */
-	}
-	if ((fp = __sfp()) == NULL)
-		return (NULL);
-	fp->_flags = flags;
-	fp->_file = -1;
-	fp->_cookie = __UNCONST(cookie);
-	fp->_read = readfn;
-	fp->_write = writefn;
-	fp->_seek = seekfn;
-	fp->_close = closefn;
-	return (fp);
-}
+#endif /* _COMPAT_STDIO_H_ */
