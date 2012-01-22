@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.161 2012/01/17 18:05:15 jakllsch Exp $
+#	$NetBSD: files.isa,v 1.162 2012/01/22 06:44:28 christos Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -522,6 +522,10 @@ file	dev/isa/toasterlcd.c		toasterlcd
 device toaster
 attach toaster at tsdio
 file	dev/isa/toaster.c		toaster
+
+# Trusted Platform Module
+attach tpm at isa with tpm_isa
+file   dev/isa/tpm_isa.c		tpm_isa	needs-flag
 
 #
 # ISA Plug 'n Play autoconfiguration glue.
