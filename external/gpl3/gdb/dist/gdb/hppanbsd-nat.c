@@ -168,7 +168,7 @@ hppanbsd_fetch_registers (struct target_ops *ops,
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       hppanbsd_supply_gregset (regcache, &regs);
@@ -179,7 +179,7 @@ hppanbsd_fetch_registers (struct target_ops *ops,
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       hppanbsd_supply_fpregset (regcache, &fpregs);
@@ -198,13 +198,13 @@ hppanbsd_store_registers (struct target_ops *ops,
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-                  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+                  (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       hppanbsd_collect_gregset (regcache, &regs, regnum);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	          (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+	          (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't write registers"));
     }
 
@@ -213,13 +213,13 @@ hppanbsd_store_registers (struct target_ops *ops,
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       hppanbsd_collect_fpregset (regcache, &fpregs, regnum);
 
       if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
