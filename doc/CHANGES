@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1649 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1650 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1049,7 +1049,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	mpfr: Import mpfr 3.0.1.  [mrg 20110619]
 	GMP: Import GNU MP 5.0.2.  [mrg 20110619]
 	sandpoint: Add support for booting from RAID 1 [jdc 20110620]
-	GCC: Import version 4.5.3.  [mrg 20110620]
+	gcc(1): Import version 4.5.3.  [mrg 20110620]
 	ld.elf_so(1): Support ELF symbol versioning. [nonaka 20110625]
 	kernel: Add new system calls pipe2(2), dup3(2), paccept(2), kqueue1(2)
 		and flags SOCK_CLOEXEC/SOCK_NONBLOCK to socket(2), and
@@ -1062,9 +1062,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	acpi(4): Updated ACPICA to 20110623. [jruoho 20110628]
 	vnd(4): Allow vnd(4) to be backed by a sparse file. [hannken 20110629]
 	less(1): Import version 444. [tron 20110703]
-	mips: Rework Atheros MIPS-based SoC support.  Add initial support
-		for AR71xx (24K) and AR9344 (74K) SoCs.
 	bind: Update to 9.8.0-P4: Security fixes. [spz 20110705]
+	mips: Rework Atheros MIPS-based SoC support.  Add initial support
+		for AR71xx (24K) and AR9344 (74K) SoCs. [matt 20110707]
 	dtv(4): Add digital TV framework. [jmcneill 20110709]
 	auvitek(4): Add digital capture support. [jmcneill 20110709]
 	cxdtv(4): Add driver for Conexant CX23880-based DTV cards.
@@ -1124,22 +1124,22 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	yacc(1): Import byacc-20110908 [christos 20110910]
 	traceroute(8): Updated to 1.4a12 [christos 20110910]
 	bind: Update to 9.9.0a1 [christos 20110911]
-	file: Update to 5.09 [christos 20110916]
+	file(1): Update to 5.09 [christos 20110916]
 	mppb(4): Add driver for Prometheus Zorro III to PCI bridge.
 		[rkujawa 20110917]
 	xen: Provide experimental support for suspend/resume in
 		NetBSD domUs. [jym 20110920]
-	tty: Provide a sysctl and ioctl to dynamically change the tty buffer
+	tty(4): Provide a sysctl and ioctl to dynamically change the tty buffer
 		sizes [christos 20110923]
 	udp(4): Commit Vlad Balan's Google SoC project. This implements
 		RFC6056 port selection algorithms. The selection can
 		be done at the global level via sysctl(7), or at the socket
 		level via setsockopt(2) [christos 20110923]
 	binutils: updated to FSF binutils 2.21.1a.  [christos 20110924]
-	GDB: Updated to 7.3.1.  [christos 20110924]
+	gdb(1): Updated to 7.3.1.  [christos 20110924]
 	audiocfg(1): New tool to control default audio defaults, by Jared
 		D. McNeill.  [mrg 20111006]
-	GCC: Obsolete libgcc_pic.  [mrg 20111006]
+	gcc(1): Obsolete libgcc_pic.  [mrg 20111006]
 	amd64: Switch to GDB 7.3.1.  [christos 20111008]
 	i386: Switch to GDB 7.3.1.  [christos 20111008]
 	zoneinfo: Import tzdata2011l. [apb 20111010]
@@ -1179,7 +1179,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		support. [tsutsui 20111120]
 	arm: Add TLS (thread local storage) support.  [joerg 20111118]
 	m68k: Add TLS (thread local storage) support.  [joerg 20111122]
-	audio: Audio drivers are now MP-safe. [jmcneill 20111123]
+	audio(9): Audio drivers are now MP-safe. [jmcneill 20111123]
 	xbdback(4): driver is now MP-SAFE. [jym 20111123]
 	resolvconf(8): import openresolv-3.4.5 [roy 20111124]
 	mount_chfs(8): Add mount_chfs(8), a tool for mounting CHFS volumes.
