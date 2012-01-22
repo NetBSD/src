@@ -1,4 +1,4 @@
-.\"     $NetBSD: pcq.9,v 1.5 2010/12/02 12:54:13 wiz Exp $
+.\"     $NetBSD: pcq.9,v 1.6 2012/01/22 02:55:47 rmind Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 8, 2010
+.Dd January 22, 2012
 .Dt PCQ 9
 .Os
 .Sh NAME
@@ -95,11 +95,11 @@ immediately, if resources are unavailable.
 Free the resources held by
 .Fa pcq .
 .It Fn pcq_get "pcq"
-Remove the next item to be consumed from the queue and return
-it.
+Remove the next item to be consumed from the queue and return it.
 If the queue is empty,
 return
 .Dv NULL .
+The caller must prevent concurrent gets from occuring.
 .It Fn pcq_maxitems "pcq"
 Return the maximum number of items that the queue can store at
 any one time.
@@ -132,8 +132,6 @@ The
 .Nm
 interface first appeared in
 .Nx 6.0 .
-.Sh AUTHORS
-.An Matt Thomas Aq matt@NetBSD.org
 .\" .Sh CAVEATS
 .\" .Sh BUGS
 .\" .Sh SECURITY CONSIDERATIONS
