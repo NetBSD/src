@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.93 2011/11/18 21:18:51 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.94 2012/01/22 03:13:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.93 2011/11/18 21:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.94 2012/01/22 03:13:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -382,11 +382,24 @@ tmpfs_close(void *v)
 	return 0;
 }
 
-static int
-tmpfs_check_possible(vnode_t *vp, tmpfs_node_t *node, mode_t mode)
+int
+tmpfs_access(void *v)
 {
+	struct vop_access_args /* {
+		struct vnode	*a_vp;
+		int		a_mode;
+		kauth_cred_t	a_cred;
+	} */ *ap = v;
+	vnode_t *vp = ap->a_vp;
+	mode_t mode = ap->a_mode;
+	kauth_cred_t cred = ap->a_cred;
+	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 	const bool writing = (mode & VWRITE) != 0;
+	int error;
 
+	KASSERT(VOP_ISLOCKED(vp));
+
+	/* Possible? */
 	switch (vp->v_type) {
 	case VDIR:
 	case VLNK:
@@ -403,41 +416,16 @@ tmpfs_check_possible(vnode_t *vp, tmpfs_node_t *node, mode_t mode)
 	default:
 		return EINVAL;
 	}
-	return (writing && (node->tn_flags & IMMUTABLE) != 0) ? EPERM : 0;
-}
-
-static int
-tmpfs_check_permitted(vnode_t *vp, tmpfs_node_t *node, mode_t mode,
-    kauth_cred_t cred)
-{
-
-	return genfs_can_access(vp->v_type, node->tn_mode, node->tn_uid,
-	    node->tn_gid, mode, cred);
-}
-
-int
-tmpfs_access(void *v)
-{
-	struct vop_access_args /* {
-		struct vnode	*a_vp;
-		int		a_mode;
-		kauth_cred_t	a_cred;
-	} */ *ap = v;
-	vnode_t *vp = ap->a_vp;
-	mode_t mode = ap->a_mode;
-	kauth_cred_t cred = ap->a_cred;
-	tmpfs_node_t *node;
-	int error;
-
-	KASSERT(VOP_ISLOCKED(vp));
-
-	node = VP_TO_TMPFS_NODE(vp);
-	error = tmpfs_check_possible(vp, node, mode);
-	if (error) {
-		return error;
+	if (writing && (node->tn_flags & IMMUTABLE) != 0) {
+		return EPERM;
 	}
+
+	/* Permitted? */
+	error = genfs_can_access(vp->v_type, node->tn_mode, node->tn_uid,
+	    node->tn_gid, mode, cred);
+
 	return kauth_authorize_vnode(cred, kauth_mode_to_action(mode), vp,
-	    NULL, tmpfs_check_permitted(vp, node, mode, cred));
+	    NULL, error);
 }
 
 int
