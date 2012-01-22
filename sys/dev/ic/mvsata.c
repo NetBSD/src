@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.13 2012/01/21 18:33:17 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.14 2012/01/22 16:09:08 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.13 2012/01/21 18:33:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.14 2012/01/22 16:09:08 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -2277,7 +2277,7 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 
 static void
 mvsata_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
-{    
+{
 	struct atac_softc *atac = chp->ch_atac;
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	int drive = xfer->c_drive;
