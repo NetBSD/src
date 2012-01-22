@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.61 2012/01/21 22:09:57 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.62 2012/01/22 17:51:39 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61 2012/01/21 22:09:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2012/01/22 17:51:39 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -305,7 +305,7 @@ handle_signal(int sig, siginfo_t *info, void *ctx)
 	struct lwp *l;
 	struct pcb *pcb;
 	vaddr_t va, sp, pc, fp;
-	int from_userland;
+	long from_userland;
 
 	if (sig == SIGBUS || sig == SIGSEGV || sig == SIGILL) {
 		if (info->si_code == SI_NOINFO)
