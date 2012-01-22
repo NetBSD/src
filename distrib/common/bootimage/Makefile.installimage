@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.installimage,v 1.1 2012/01/22 03:53:30 tsutsui Exp $
+#	$NetBSD: Makefile.installimage,v 1.2 2012/01/22 16:50:00 tsutsui Exp $
 #
 # Common Makefile to create a bootable installation image for USB flash etc.
 #
@@ -11,15 +11,14 @@
 # See Makefile.bootimage for other variables.
 #
 
-.if empty(INSTIMGBASE)
-.BEGIN:
+.if !target(check_INSTIMGBASE)
+check_INSTIMGBASE: .PHONY .NOTMAIN
+.if !defined(INSTIMGBASE)
 	@echo "Error: INSTIMGBASE is not set"
 	@false
+.else
+	@true
 .endif
-.if empty(RELEASEDIR)
-.BEGIN:
-	@echo "Error: RELEASEDIR is not set"
-	@false
 .endif
 
 SWAPMB=		0			# no swap
@@ -54,7 +53,7 @@ INSTIMG_RELEASEDIR?=	${RELEASEMACHINEDIR}/installation/installimage
 # should be defined elsewhere? 
 MKDIR?=		mkdir -p
 
-install_image: ${IMGBASE}.img.gz
+install_image: check_INSTIMGBASE check_RELEASEDIR ${IMGBASE}.img.gz
 	${MKDIR} ${INSTIMG_RELEASEDIR}
 	${RELEASE_INSTALL} ${IMGBASE}.img.gz ${INSTIMG_RELEASEDIR}
 	# note ${MAKESUM} will be calculated in src/etc/Makefile
