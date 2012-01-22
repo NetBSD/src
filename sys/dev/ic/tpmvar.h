@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmvar.h,v 1.1 2012/01/22 06:44:28 christos Exp $	*/
+/*	$NetBSD: tpmvar.h,v 1.2 2012/01/22 20:41:25 christos Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
  * Copyright (c) 2009, 2010 Hans-Jörg Höxer
@@ -23,8 +23,8 @@ struct tpm_softc {
 
 	int	(*sc_init)(struct tpm_softc *, int, const char *);
 	int	(*sc_start)(struct tpm_softc *, int);
-	int	(*sc_read)(struct tpm_softc *, void *, int, size_t *, int);
-	int	(*sc_write)(struct tpm_softc *, void *, int);
+	int	(*sc_read)(struct tpm_softc *, void *, size_t, size_t *, int);
+	int	(*sc_write)(struct tpm_softc *, const void *, size_t);
 	int	(*sc_end)(struct tpm_softc *, int, int);
 
 	bus_space_tag_t sc_bt, sc_batm;
@@ -49,13 +49,13 @@ bool tpm_resume(device_t, const pmf_qual_t *);
 int tpm_tis12_probe(bus_space_tag_t, bus_space_handle_t);
 int tpm_tis12_init(struct tpm_softc *, int, const char *);
 int tpm_tis12_start(struct tpm_softc *, int);
-int tpm_tis12_read(struct tpm_softc *, void *, int, size_t *, int);
-int tpm_tis12_write(struct tpm_softc *, void *, int);
+int tpm_tis12_read(struct tpm_softc *, void *, size_t, size_t *, int);
+int tpm_tis12_write(struct tpm_softc *, const void *, size_t);
 int tpm_tis12_end(struct tpm_softc *, int, int);
 
 int tpm_legacy_probe(bus_space_tag_t, bus_addr_t);
 int tpm_legacy_init(struct tpm_softc *, int, const char *);
 int tpm_legacy_start(struct tpm_softc *, int);
-int tpm_legacy_read(struct tpm_softc *, void *, int, size_t *, int);
-int tpm_legacy_write(struct tpm_softc *, void *, int);
+int tpm_legacy_read(struct tpm_softc *, void *, size_t, size_t *, int);
+int tpm_legacy_write(struct tpm_softc *, const void *, size_t);
 int tpm_legacy_end(struct tpm_softc *, int, int);
