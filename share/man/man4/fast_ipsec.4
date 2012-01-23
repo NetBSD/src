@@ -1,4 +1,4 @@
-.\"	$NetBSD: fast_ipsec.4,v 1.11 2012/01/09 16:17:37 drochner Exp $
+.\"	$NetBSD: fast_ipsec.4,v 1.12 2012/01/23 00:03:08 wiz Exp $
 .\"	$FreeBSD: fast_ipsec.4,v 1.2 2003/03/03 11:51:30 ru Exp $
 .\"
 .\" Copyright (c) 2004
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 9, 2012
+.Dd January 23, 2012
 .Dt FAST_IPSEC 4
 .Os
 .Sh NAME
@@ -61,7 +61,6 @@ Fast IPsec
 implementation is intended to be compatible with the
 .Tn KAME IPsec
 implementation.
-This documentation concentrates on differences from that software.
 The user should refer to
 .Xr ipsec 4
 for basic information on setting up and using these protocols.
@@ -113,11 +112,6 @@ Support for IPSEC_NAT_T
 described in RFCs 3947 and 3948) has been added in
 .Nx 5.0 .
 .Sh BUGS
-There still are some issues in the IPv6 support.
-In particular
-.Tn FAST_IPSEC
-does not protect packets with IPv6 extension headers.
-.Pp
 Certain legacy authentication algorithms are not supported because of
 issues with the
 .Xr opencrypto 9
