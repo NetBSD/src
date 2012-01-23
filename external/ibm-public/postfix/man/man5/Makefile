@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/23 15:02:52 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2012/01/23 01:28:56 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,6 @@ MLINKS=	header_checks.5 body_checks.5
 
 # XXX notyet:
 # The base install does include support for these:
-# ldap_table.5 mysql_table.5 pgsql_table.5
+# mysql_table.5 pgsql_table.5
 
 .include <bsd.man.mk>
