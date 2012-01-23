@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmreg.h,v 1.2 2012/01/22 20:41:25 christos Exp $	*/
+/*	$NetBSD: tpmreg.h,v 1.3 2012/01/23 04:12:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
@@ -46,7 +46,9 @@
 #define	TPM_STS_VALID_INT	0x00000002	/* int on TPM_STS_VALID is set */
 #define	TPM_DATA_AVAIL_INT	0x00000001	/* int on TPM_STS_DATA_AVAIL is set */
 #define	TPM_INTERRUPT_ENABLE_BITS \
-    "\020\040ENA\010RDY\03LOCH\02STSV\01DRDY"
+    "\177\020b\0DRDY\0b\1STSVALID\0b\2LOCCHG\0" \
+    "F\3\2:\0HIGH\0:\1LOW\0:\2RISE\0:\3FALL\0" \
+    "b\7IRDY\0b\x1fGIENABLE\0"
 
 #define	TPM_INT_VECTOR		0x000c	/* 8 bit reg for 4 bit irq vector */
 #define	TPM_INT_STATUS		0x0010	/* bits are & 0x87 from TPM_INTERRUPT_ENABLE */
@@ -84,7 +86,7 @@
 
 #define	TPM_ACCESS_TMO	2000		/* 2sec */
 #define	TPM_READY_TMO	2000		/* 2sec */
-#define	TPM_READ_TMO	120000		/* 2 minutes */
+#define	TPM_READ_TMO	2000		/* 2sec */
 #define TPM_BURST_TMO	2000		/* 2sec */
 
 #define	TPM_LEGACY_BUSY	0x01

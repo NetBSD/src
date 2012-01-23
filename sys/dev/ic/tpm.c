@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.3 2012/01/22 20:41:25 christos Exp $	*/
+/*	$NetBSD: tpm.c,v 1.4 2012/01/23 04:12:26 christos Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
  * Copyright (c) 2009, 2010 Hans-Jörg Höxer
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.3 2012/01/22 20:41:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.4 2012/01/23 04:12:26 christos Exp $");
 
 #if 0
 #define	TPM_DEBUG 
@@ -132,24 +132,40 @@ tpm_tis12_irqinit(struct tpm_softc *sc, int irq, int idx)
 	}
 
 	/* Ack and disable all interrupts. */
+	r = bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE);
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE,
-	    bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE) &
-	    ~TPM_GLOBAL_INT_ENABLE);
+	    r & ~TPM_GLOBAL_INT_ENABLE);
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INT_STATUS,
 	    bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INT_STATUS));
+#ifdef TPM_DEBUG
+	char buf[128];
+	snprintb(buf, sizeof(buf), TPM_INTERRUPT_ENABLE_BITS, r);
+	aprint_debug_dev(sc->sc_dev, "%s: before ien %s\n", __func__, buf);
+#endif
 
 	/* Program interrupt vector. */
 	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_INT_VECTOR, irq);
 	sc->sc_vector = irq;
 
 	/* Program interrupt type. */
+	r &= ~(TPM_INT_EDGE_RISING|TPM_INT_EDGE_FALLING|TPM_INT_LEVEL_HIGH|
+	    TPM_INT_LEVEL_LOW);
+	r |= TPM_GLOBAL_INT_ENABLE|TPM_CMD_READY_INT|TPM_LOCALITY_CHANGE_INT|
+	    TPM_STS_VALID_INT|TPM_DATA_AVAIL_INT;
 	if (sc->sc_capabilities & TPM_INTF_INT_EDGE_RISING)
-		r = TPM_INT_EDGE_RISING;
+		r |= TPM_INT_EDGE_RISING;
+	else if (sc->sc_capabilities & TPM_INTF_INT_EDGE_FALLING)
+		r |= TPM_INT_EDGE_FALLING;
 	else if (sc->sc_capabilities & TPM_INTF_INT_LEVEL_HIGH)
-		r = TPM_INT_LEVEL_HIGH;
+		r |= TPM_INT_LEVEL_HIGH;
 	else
-		r = TPM_INT_LEVEL_LOW;
+		r |= TPM_INT_LEVEL_LOW;
+
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE, r);
+#ifdef TPM_DEBUG
+	snprintb(buf, sizeof(buf), TPM_INTERRUPT_ENABLE_BITS, r);
+	aprint_debug_dev(sc->sc_dev, "%s: after ien %s\n", __func__, buf);
+#endif
 
 	return 0;
 }
