@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.66 2012/01/14 19:39:25 phx Exp $
+# $NetBSD: GENERIC,v 1.67 2012/01/23 01:58:54 phx Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,33 +22,46 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.66 $"
+#ident 		"GENERIC-$Revision: 1.67 $"
 
 maxusers	32
 
 #options 	ALTIVEC		# Include AltiVec support
 
-#options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
-#options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
-# HMAC key to be used for debugging sessions
-#options 	IPKDBKEY="\"HMAC pass phrase text\""
-#options 	IPKDBSECURE	# Allow debugging even when securelevel > 0
-#makeoptions	DEBUG="-g"
+# Standard system options
+#options 	INSECURE	# disable kernel security levels
 
-#options 	MODULAR			# module(7) support
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	KTRACE
 
-#options 	DEBUG
-#options 	DIAGNOSTIC
-options 	TRAP_PANICWAIT
+#options 	SYSVMSG		# System V message queues
+#options 	SYSVSEM		# System V semaphores
+#options 	SYSVSHM		# System V shared memory
+#options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
+
+#options 	MODULAR		# module(7) support
+#options 	USERCONF	# userconf(4) support
+
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Enable experimental buffer queue strategy for better responsiveness under
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
+
+# Diagnostic/debugging support options
+#options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-options 	KTRACE
+#options 	TRAP_PANICWAIT
 #options 	PMAPCHECK
 #options 	PMAPDEBUG
 #options 	SYMTAB_SPACE=300000
-#options 	USERCONF	# userconf(4) support
-#options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
-options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+options 	MSGBUFSIZE=65536
+
+#makeoptions	DEBUG="-g"
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -66,13 +79,18 @@ options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
+#options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-
-options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
-options 	MSGBUFSIZE=65536
+# Wedge support
+#options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+#options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+# The following two options can break /etc/fstab, so handle with care
+#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 
+# File systems
 file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
@@ -101,6 +119,9 @@ options 	WAPBL		# File system journaling support
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+
+#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
@@ -138,41 +159,21 @@ options 	INET6		# IPV6
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
-options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+#options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
 
+# Kernel root file system and dump configuration
 config		netbsd	root on ? type ?
 
-# network pseudo-devices
-pseudo-device	bpfilter		# packet filter
-pseudo-device	vlan			# IEEE 802.1q encapsulation
-#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-#pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
-#pseudo-device	ipfilter
-pseudo-device	loop
-
-# miscellaneous pseudo-devices
-pseudo-device	vnd		
-#options 	VND_COMPRESSION		# compressed vnd(4)
-#pseudo-device	cgd		4	# cryptographic disk devices
-pseudo-device	pty
-pseudo-device	clockctl		# user control of clock subsystem
-pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
-pseudo-device	fss			# file system snapshot device
-
 #
-# device
+# Device configuration
 #
-options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-
-#options 	PCIVERBOSE	# verbose PCI device messages
-#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
-#options 	PCI_NETBSD_CONFIGURE	# Have NetBSD configure PCI I/O & Mem
-
 mainbus0	at root
-
 cpu*		at mainbus0
 
 #cfi0		at mainbus0
@@ -181,6 +182,7 @@ cpu*		at mainbus0
 
 nhpow0		at mainbus0			# NH230/231 power,LED,buttons
 
+#options 	PCI_NETBSD_CONFIGURE
 pci*		at mainbus0 bus ?
 pchb*		at pci? dev ? function ?	# PCI host bridge
 
@@ -261,6 +263,61 @@ wd*	at umass?
 scsibus* at umass?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
+
+#
+# accept filters
+#pseudo-device	accf_data		# "dataready" accept filter
+#pseudo-device	accf_http		# "httpready" accept filter
+
+# network pseudo-devices
+pseudo-device	loop
+pseudo-device	bpfilter		# packet filter
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	ipfilter
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	tap			# virtual Ethernet
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
+#pseudo-device	carp			# Common Address Redundancy Protocol
+
+# miscellaneous pseudo-devices
+pseudo-device	vnd		
+#options 	VND_COMPRESSION		# compressed vnd(4)
+#pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	pty
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	nsmb			# SMB requester
+pseudo-device	fss			# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
+
 # Veriexec
 #
 # a pseudo device needed for veriexec
@@ -276,3 +333,5 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
+
+#options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
