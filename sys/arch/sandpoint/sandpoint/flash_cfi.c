@@ -1,4 +1,4 @@
-/* $NetBSD: flash_cfi.c,v 1.1 2011/12/17 20:20:38 phx Exp $ */
+/* $NetBSD: flash_cfi.c,v 1.2 2012/01/23 15:16:37 phx Exp $ */
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -32,7 +32,7 @@
  * NOR CFI driver support for sandpoint
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_cfi.c,v 1.1 2011/12/17 20:20:38 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_cfi.c,v 1.2 2012/01/23 15:16:37 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: flash_cfi.c,v 1.1 2011/12/17 20:20:38 phx Exp $");
 
 static int  sandpointcfi_probe(device_t, cfdata_t, void *);
 static void sandpointcfi_attach(device_t, device_t, void *);
-static int  sandpointcfi_detach(device_t, int);
 
 struct sandpointcfi_softc {
 	device_t		sc_dev;
@@ -56,7 +55,7 @@ struct sandpointcfi_softc {
 };
 
 CFATTACH_DECL_NEW(sandpointcfi, sizeof(struct sandpointcfi_softc),
-    sandpointcfi_probe, sandpointcfi_attach, sandpointcfi_detach, NULL);
+    sandpointcfi_probe, sandpointcfi_attach, NULL, NULL);
 
 static int
 sandpointcfi_probe(device_t parent, cfdata_t cf, void *aux)
@@ -152,21 +151,4 @@ sandpointcfi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->sc_nordev = nor_attach_mi(&sc->sc_nor_if, self);
-}
-
-static int
-sandpointcfi_detach(device_t self, int flags)
-{
-	struct sandpointcfi_softc *sc;
-	int rv;
-
-	pmf_device_deregister(self);
-	sc = device_private(self);
-	rv = 0;
-
-	if (sc->sc_nordev != NULL)
-		rv = config_detach(sc->sc_nordev, flags);
-
-	bus_space_unmap(sc->sc_cfi.cfi_bst, sc->sc_cfi.cfi_bsh, sc->sc_size);
-	return rv;
 }
