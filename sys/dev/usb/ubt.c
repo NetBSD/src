@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.43 2012/01/14 21:37:17 plunky Exp $	*/
+/*	$NetBSD: ubt.c,v 1.44 2012/01/23 08:30:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.43 2012/01/14 21:37:17 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.44 2012/01/23 08:30:24 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -727,8 +727,11 @@ ubt_sysctl_config(SYSCTLFN_ARGS)
 	if (sc->sc_enabled)
 		return EBUSY;
 
+	KERNEL_LOCK(1, curlwp);
 	sc->sc_config = t;
-	return ubt_set_isoc_config(sc);
+	error = ubt_set_isoc_config(sc);
+	KERNEL_UNLOCK_ONE(curlwp);
+	return error;
 }
 
 static void
