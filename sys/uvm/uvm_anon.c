@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.62.2.2 2011/12/26 16:03:10 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.62.2.3 2012/01/23 03:21:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.62.2.2 2011/12/26 16:03:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.62.2.3 2012/01/23 03:21:18 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -348,10 +348,7 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 		wakeup(pg);
 	}
 
-	mutex_exit(anon->an_lock);
-	if (uobj) {
-		mutex_exit(uobj->vmobjlock);
-	}
+	amap_unlock(amap);
 	return false;
 }
 
