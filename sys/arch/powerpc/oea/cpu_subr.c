@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.70 2011/06/29 06:00:17 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.71 2012/01/23 16:22:57 phx Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.70 2011/06/29 06:00:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.71 2012/01/23 16:22:57 phx Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -404,6 +404,7 @@ cpu_attach_common(device_t self, int id)
 	 * and just bail out.
 	 */
 	if (id != 0) {
+		aprint_naive("\n");
 		aprint_normal(": ID %d\n", id);
 		aprint_normal_dev(self,
 		    "processor off-line; "
@@ -440,6 +441,7 @@ cpu_attach_common(device_t self, int id)
 		cpu_setup(self, ci);
 		break;
 	default:
+		aprint_naive("\n");
 		if (id >= CPU_MAXNUM) {
 			aprint_normal(": more than %d cpus?\n", CPU_MAXNUM);
 			panic("cpuattach");
@@ -468,6 +470,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	vers = (pvr >> 16) & 0xffff;
 
 	cpu_identify(model, sizeof(model));
+	aprint_naive("\n");
 	aprint_normal(": %s, ID %d%s\n", model,  cpu_number(),
 	    cpu_number() == 0 ? " (primary)" : "");
 

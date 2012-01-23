@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.14 2011/12/29 10:27:36 phx Exp $ */
+/* $NetBSD: satmgr.c,v 1.15 2012/01/23 16:22:58 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -205,6 +205,7 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	}
 	if (ops == NULL)
 		goto notavail;
+	aprint_naive(": button manager\n");
 	aprint_normal(": button manager (%s)\n", ops->family);
 	sc->sc_ops = ops;
 
