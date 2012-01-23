@@ -181,6 +181,18 @@ fill_fpregset (const struct regcache *regcache, fpregset_t *fpregsetp, int regno
     regcache_raw_collect (regcache, ARM_FPS_REGNUM, (char *) &fpregsetp->fpr_fpsr);
 }
 
+void
+supply_gregset (struct regcache *regcache, const gdb_gregset_t *gregsetp)
+{
+  arm_supply_gregset (regcache, (struct reg *)gregsetp);
+}
+
+void
+supply_fpregset (struct regcache *regcache, const gdb_fpregset_t *fpregsetp)
+{
+  arm_supply_fparegset (regcache, (struct fpreg *)fpregsetp);
+}
+
 static void
 fetch_register (struct regcache *regcache, int regno)
 {
