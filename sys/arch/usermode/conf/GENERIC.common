@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC.common,v 1.16 2012/01/15 00:15:23 jmcneill Exp $
+# $NetBSD: GENERIC.common,v 1.17 2012/01/23 12:08:31 reinoud Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -63,7 +63,7 @@ veth0		at mainbus?
 vaudio0		at mainbus?
 audio0		at vaudio0
 
-vncfb0		at thunkbus?
+vncfb0		at mainbus?
 wsdisplay0	at vncfb?
 wskbd0		at vncfb?
 wsmouse0	at vncfb? mux 0
