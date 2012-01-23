@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.67 2012/01/23 01:58:54 phx Exp $
+# $NetBSD: GENERIC,v 1.68 2012/01/23 14:13:51 phx Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.67 $"
+#ident 		"GENERIC-$Revision: 1.68 $"
 
 maxusers	32
 
@@ -205,7 +205,7 @@ acardide*	at pci? dev ? function ?	# Acard IDE controllers
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
-viaide*		at pci? dev ? function ?	# VIA IDE controllers
+viaide* 	at pci? dev ? function ?	# VIA IDE controllers
 
 # ATA (IDE) bus support
 atabus* at ata?
@@ -263,19 +263,38 @@ wd*	at umass?
 scsibus* at umass?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
-
 #
-# accept filters
-#pseudo-device	accf_data		# "dataready" accept filter
-#pseudo-device	accf_http		# "httpready" accept filter
+# Pseudo-Devices
+#
+#pseudo-device 	crypto			# /dev/crypto device
+#pseudo-device	swcrypto		# software crypto implementation
+
+# disk/mass storage pseudo-devices
+#pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	fss			# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
+
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+
+pseudo-device	vnd		
+#options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	loop
 pseudo-device	bpfilter		# packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-#pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	ipfilter
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
@@ -287,33 +306,27 @@ pseudo-device	bpfilter		# packet filter
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	agr			# IEEE 802.3ad link aggregation
-#pseudo-device	carp			# Common Address Redundancy Protocol
+
+#
+# accept filters
+#pseudo-device	accf_data		# "dataready" accept filter
+#pseudo-device	accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
-pseudo-device	vnd		
-#options 	VND_COMPRESSION		# compressed vnd(4)
-#pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
-options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-# Options to enable various other RAIDframe RAID types.
-#options 	RF_INCLUDE_EVENODD=1
-#options 	RF_INCLUDE_RAID5_RS=1
-#options 	RF_INCLUDE_PARITYLOGGING=1
-#options 	RF_INCLUDE_CHAINDECLUSTER=1
-#options 	RF_INCLUDE_INTERDECLUSTER=1
-#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
-#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	pty
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	nsmb			# SMB requester
-pseudo-device	fss			# file system snapshot device
-#pseudo-device	putter			# for puffs and pud
+#pseudo-device	lockstat		# lock profiling
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+#pseudo-device	nsmb			# experimental - SMB requester
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
@@ -327,11 +340,12 @@ pseudo-device	drvctl
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
+#options 	VERIFIED_EXEC_FP_RMD160
+#options 	VERIFIED_EXEC_FP_SHA256
+#options 	VERIFIED_EXEC_FP_SHA384
+#options 	VERIFIED_EXEC_FP_SHA512
+#options 	VERIFIED_EXEC_FP_SHA1
+#options 	VERIFIED_EXEC_FP_MD5
 
-#options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+#options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+#options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
