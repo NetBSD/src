@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.6 2012/01/19 00:14:08 rkujawa Exp $ */
+/*	$NetBSD: p5pb.c,v 1.7 2012/01/24 00:20:45 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -117,7 +117,6 @@ p5pb_match(device_t parent, cfdata_t cf, void *aux)
 	return 0;
 }
 
-
 static void
 p5pb_attach(device_t parent, device_t self, void *aux)
 {
@@ -184,7 +183,10 @@ p5pb_attach(device_t parent, device_t self, void *aux)
 	sc->apc.pc_intr_disestablish = amiga_pci_intr_disestablish;
 
 #ifdef PCI_NETBSD_CONFIGURE
-	p5pb_bus_reconfigure(sc);
+	/* Never reconfigure the bus on CVPPC/BVPPC, avoid the fb breakage. */
+	if (sc->bridge_type != P5PB_BRIDGE_CVPPC) {
+		p5pb_bus_reconfigure(sc);
+	}
 #endif /* PCI_NETBSD_CONFIGURE */
 
 	/* Initialize the bus attachment structure. */
@@ -198,10 +200,7 @@ p5pb_attach(device_t parent, device_t self, void *aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
-	/* If we are a CVPPC/BVPPC, set the properties needed for genfb. */
-	if (sc->bridge_type == P5PB_BRIDGE_CVPPC) {
-		p5pb_set_props(sc);
-	}
+	p5pb_set_props(sc);
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
@@ -300,7 +299,7 @@ p5pb_find_resources(struct p5pb_softc *sc)
 
 /*
  * Set properties needed to support fb driver. These are read later during
- * autoconfg in device_register(). Needed for CVPPC/BVPPC.
+ * autoconfg in device_register(). Needed for CVPPC/BVPPC and Voodoo in G-REX.
  */
 void
 p5pb_set_props(struct p5pb_softc *sc) 
@@ -310,18 +309,27 @@ p5pb_set_props(struct p5pb_softc *sc)
 	
 	dev = sc->sc_dev;
 	dict = device_properties(dev);
-	
+
 	prop_dictionary_set_uint32(dict, "width", P5GFX_WIDTH);
 	prop_dictionary_set_uint32(dict, "height", P5GFX_HEIGHT);
 	prop_dictionary_set_uint8(dict, "depth", P5GFX_DEPTH);
-	prop_dictionary_set_uint16(dict, "linebytes", P5GFX_LINEBYTES);
-	prop_dictionary_set_uint64(dict, "address", 
-	    kvtop((void*) sc->pci_mem_area.base)); 
+
+	/* genfb needs additional properties, like virtual, physical address */
 #if (NGENFB > 0)
-	/* genfb needs virtual address too */
+	/* XXX: currently genfb is supported only on CVPPC/BVPPC */
+	prop_dictionary_set_uint16(dict, "linebytes", P5GFX_LINEBYTES);
 	prop_dictionary_set_uint64(dict, "virtual_address",
 	    sc->pci_mem_area.base);
+	prop_dictionary_set_uint64(dict, "address", 
+	    kvtop((void*) sc->pci_mem_area.base)); 
 #endif
+
+#ifdef P5PB_CONSOLE
+	prop_dictionary_set_bool(dict, "is_console", true);
+#else
+	prop_dictionary_set_bool(dict, "is_console", false);
+#endif
+
 }
 
 pcireg_t
@@ -369,7 +377,7 @@ p5pb_pci_bus_maxdevs_cvppc(pci_chipset_tag_t pc, int busno)
 int
 p5pb_pci_bus_maxdevs_grex4000(pci_chipset_tag_t pc, int busno) 
 {
-	/* G-REX 4000 has 4 slots. */
+	/* G-REX 4000 has 4, G-REX 4000T has 3 slots? */
 	return 1; /* XXX: 4 not yet! */
 }
 
