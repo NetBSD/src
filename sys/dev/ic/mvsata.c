@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.14 2012/01/22 16:09:08 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.15 2012/01/24 20:04:08 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.14 2012/01/22 16:09:08 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.15 2012/01/24 20:04:08 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1543,8 +1543,18 @@ mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	if (ata_c->flags & AT_POLL)
 		/* polled command, disable interrupts */
 		MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT | WDCTL_IDS);
-	wdccommand(chp, drive, ata_c->r_command, ata_c->r_cyl, ata_c->r_head,
-	    ata_c->r_sector, ata_c->r_count, ata_c->r_features);
+	if ((ata_c->flags & AT_LBA48) != 0) {
+		wdccommandext(chp, drive, ata_c->r_command,
+		    ata_c->r_lba, ata_c->r_count, ata_c->r_features);
+	} else {
+		wdccommand(chp, drive, ata_c->r_command,
+		    (ata_c->r_lba >> 8) & 0xffff,
+		    (((ata_c->flags & AT_LBA) != 0) ? WDSD_LBA : 0) |
+		    ((ata_c->r_lba >> 24) & 0x0f),
+		    ata_c->r_lba & 0xff,
+		    ata_c->r_count & 0xff,
+		    ata_c->r_features & 0xff);
+	}
 
 	if ((ata_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
@@ -1604,7 +1614,9 @@ again:
 	 * penalty for the extra register write is acceptable,
 	 * wdc_exec_command() isn't called often (mostly for autoconfig)
 	 */
-	MVSATA_WDC_WRITE_1(mvport, SRB_H, WDSD_IBM);
+	if ((xfer->c_flags & C_ATAPI) != 0) {
+		MVSATA_WDC_WRITE_1(mvport, SRB_H, WDSD_IBM);
+	}
 	if ((ata_c->flags & AT_XFDONE) != 0) {
 		/*
 		 * We have completed a data xfer. The drive should now be
@@ -1703,13 +1715,43 @@ mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	if ((ata_c->flags & AT_READREG) != 0 &&
 	    device_is_active(atac->atac_dev) &&
 	    (ata_c->flags & (AT_ERROR | AT_DF)) == 0) {
-		ata_c->r_head = MVSATA_WDC_READ_1(mvport, SRB_H);
-		ata_c->r_count = MVSATA_WDC_READ_1(mvport, SRB_SC);
-		ata_c->r_sector = MVSATA_WDC_READ_1(mvport, SRB_LBAL);
-		ata_c->r_cyl = MVSATA_WDC_READ_1(mvport, SRB_LBAM) << 8;
-		ata_c->r_cyl |= MVSATA_WDC_READ_1(mvport, SRB_LBAH);
+		ata_c->r_status = MVSATA_WDC_READ_1(mvport, SRB_CS);
 		ata_c->r_error = MVSATA_WDC_READ_1(mvport, SRB_FE);
-		ata_c->r_features = ata_c->r_error;
+		ata_c->r_count = MVSATA_WDC_READ_1(mvport, SRB_SC);
+		ata_c->r_lba =
+		    (uint64_t)MVSATA_WDC_READ_1(mvport, SRB_LBAL) << 0;
+		ata_c->r_lba |=
+		    (uint64_t)MVSATA_WDC_READ_1(mvport, SRB_LBAM) << 8;
+		ata_c->r_lba |=
+		    (uint64_t)MVSATA_WDC_READ_1(mvport, SRB_LBAH) << 16;
+		ata_c->r_device = MVSATA_WDC_READ_1(mvport, SRB_H);
+		if ((ata_c->flags & AT_LBA48) != 0) {
+			if ((ata_c->flags & AT_POLL) != 0) {
+				MVSATA_WDC_WRITE_1(mvport, SRB_CAS,
+				    WDCTL_HOB|WDCTL_4BIT|WDCTL_IDS);
+			} else {
+				MVSATA_WDC_WRITE_1(mvport, SRB_CAS,
+				    WDCTL_HOB|WDCTL_4BIT);
+			}
+			ata_c->r_count |=
+			    MVSATA_WDC_READ_1(mvport, SRB_SC) << 8;
+			ata_c->r_lba =
+			    (uint64_t)MVSATA_WDC_READ_1(mvport, SRB_LBAL) << 24;
+			ata_c->r_lba |=
+			    (uint64_t)MVSATA_WDC_READ_1(mvport, SRB_LBAM) << 32;
+			ata_c->r_lba |=
+			    (uint64_t)MVSATA_WDC_READ_1(mvport, SRB_LBAH) << 40;
+			if ((ata_c->flags & AT_POLL) != 0) {
+				MVSATA_WDC_WRITE_1(mvport, SRB_CAS,
+				    WDCTL_4BIT|WDCTL_IDS);
+			} else {
+				MVSATA_WDC_WRITE_1(mvport, SRB_CAS,
+				    WDCTL_4BIT);
+			}
+		} else {
+			ata_c->r_lba |=
+			    (uint64_t)(ata_c->r_device & 0x0f) << 24;
+		}
 	}
 	callout_stop(&chp->ch_callout);
 	chp->ch_queue->active_xfer = NULL;
