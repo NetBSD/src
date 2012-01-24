@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.95 2012/01/19 22:43:11 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.96 2012/01/24 00:19:39 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.95 $"
+#ident 		"GENERIC-$Revision: 1.96 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -562,6 +562,7 @@ options		PCI_NETBSD_CONFIGURE	# supported by mppb(4) and p5pb(4)
 p5pb0		at p5bus0		# Phase5 PCI bridge (CVPPC/BVPPC/G-REX)
 p5membar*	at zbus0		# Phase5 PCI bridge autoconfiguring BARs
 #options	P5PB_DEBUG		# enable excessive debug for p5pb
+#options	P5PB_CONSOLE		# console on CVPPC/BVPPC/Voodoo3
 pci*		at p5pb0
 
 mppb*           at zbus0		# Matay Prometheus Zorro-PCI bridge
@@ -570,6 +571,9 @@ pci*            at mppb?
 #cv3dpb*	at zbus0		# CyberVision 64/3D PCI bridge
 
 #genfb*		at pci?			# generic fb, CVPPC/BVPPC only
+#voodoofb*	at pci?			# 3Dfx Voodoo 3 in G-REX
+#radeonfb*	at pci?			# untested
+
 ne*             at pci?			# NE2000 Ethernet
 
 # Bluetooth Controller and Device support

@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.63 2011/12/15 14:25:12 phx Exp $
+# $NetBSD: WSCONS,v 1.64 2012/01/24 00:19:39 rkujawa Exp $
 
 # GENERIC with wscons(4)
 #
@@ -48,5 +48,17 @@ no ite5		at grf5
 no ite6		at grf6
 no ite7		at grf7
 
+# PCI framebuffers
+#genfb*		at pci?			# CyberVisionPPC/BlizzardVisionPPC only
+voodoofb*	at pci?			# 3Dfx Voodoo 3 in G-REX 
+#radeonfb*	at pci?			# untested
+
+# Console support for CyberVisionPPC, BlizzardVisionPPC and 3Dfx Voodoo 3 in 
+# G-REX.
+options		P5PB_CONSOLE
+
+wsdisplay*	at wsemuldisplaydev? console ?
+
 pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 pseudo-device	wsmux			# mouse & keyboard multiplexor
+
