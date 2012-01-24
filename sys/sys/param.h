@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.399 2012/01/13 16:25:16 macallan Exp $	*/
+/*	$NetBSD: param.h,v 1.400 2012/01/24 20:03:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -204,6 +204,11 @@
  * allocated memory.
  */
 #if defined(_KERNEL) || defined(__EXPOSE_STACK)
+
+#ifndef STACK_ALIGNBYTES
+#define STACK_ALIGNBYTES	__ALIGNBYTES
+#endif
+
 #ifdef __MACHINE_STACK_GROWS_UP
 #define	STACK_GROW(sp, _size)		(((char *)(void *)(sp)) + (_size))
 #define	STACK_SHRINK(sp, _size)		(((char *)(void *)(sp)) - (_size))
@@ -219,7 +224,27 @@
 #define	STACK_ALLOC(sp, _size)		(((char *)(void *)(sp)) - (_size))
 #define	STACK_MAX(p, _size)		((char *)(void *)(p))
 #endif
+
 #endif /* defined(_KERNEL) || defined(__EXPOSE_STACK) */
+
+/*
+ * Round p (pointer or byte index) up to a correctly-aligned value for all
+ * data types (int, long, ...).   The result is u_int and must be cast to
+ * any desired pointer type.
+ *
+ * ALIGNED_POINTER is a boolean macro that checks whether an address
+ * is valid to fetch data elements of type t from on this architecture.
+ * This does not reflect the optimal alignment, just the possibility
+ * (within reasonable limits).
+ *
+ */
+#define ALIGNBYTES	__ALIGNBYTES
+#ifndef ALIGN
+#define	ALIGN(p)		(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#endif
+#ifndef ALIGNED_POINTER
+#define	ALIGNED_POINTER(p,t)	((((uintptr_t)(p)) & (sizeof(t) - 1)) == 0)
+#endif
 
 /*
  * Historic priority levels.  These are meaningless and remain only
