@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.153 2012/01/19 22:43:11 rkujawa Exp $
+# $NetBSD: DRACO,v 1.154 2012/01/24 00:19:39 rkujawa Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.94 2012/01/19 22:11:49 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.95 2012/01/19 22:43:11 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153 $"
+#ident 		"GENERIC-$Revision: 1.154 $"
 
 
 maxusers	8
