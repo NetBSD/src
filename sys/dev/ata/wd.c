@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.390 2011/11/25 13:55:40 joerg Exp $ */
+/*	$NetBSD: wd.c,v 1.391 2012/01/24 20:04:07 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.390 2011/11/25 13:55:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.391 2012/01/24 20:04:07 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -2068,13 +2068,16 @@ wdioctlstrategy(struct buf *bp)
 	if (wi->wi_atareq.flags & ATACMD_READREG)
 		ata_c.flags |= AT_READREG;
 
+	if ((wi->wi_atareq.flags & ATACMD_LBA) != 0)
+		ata_c.flags |= AT_LBA;
+
 	ata_c.flags |= AT_WAIT;
 
 	ata_c.timeout = wi->wi_atareq.timeout;
 	ata_c.r_command = wi->wi_atareq.command;
-	ata_c.r_head = wi->wi_atareq.head & 0x0f;
-	ata_c.r_cyl = wi->wi_atareq.cylinder;
-	ata_c.r_sector = wi->wi_atareq.sec_num;
+	ata_c.r_lba = ((wi->wi_atareq.head & 0x0f) << 24) |
+	    (wi->wi_atareq.cylinder << 8) |
+	    wi->wi_atareq.sec_num;
 	ata_c.r_count = wi->wi_atareq.sec_count;
 	ata_c.r_features = wi->wi_atareq.features;
 	ata_c.r_st_bmask = WDCS_DRDY;
@@ -2099,11 +2102,13 @@ wdioctlstrategy(struct buf *bp)
 	} else {
 		wi->wi_atareq.retsts = ATACMD_OK;
 		if (wi->wi_atareq.flags & ATACMD_READREG) {
-			wi->wi_atareq.head = ata_c.r_head ;
-			wi->wi_atareq.cylinder = ata_c.r_cyl;
-			wi->wi_atareq.sec_num = ata_c.r_sector;
+			wi->wi_atareq.command = ata_c.r_status;
+			wi->wi_atareq.features = ata_c.r_error;
 			wi->wi_atareq.sec_count = ata_c.r_count;
-			wi->wi_atareq.features = ata_c.r_features;
+			wi->wi_atareq.sec_num = ata_c.r_lba & 0xff;
+			wi->wi_atareq.head = (ata_c.r_device & 0xf0) |
+			    ((ata_c.r_lba >> 24) & 0x0f);
+			wi->wi_atareq.cylinder = (ata_c.r_lba >> 8) & 0xffff;
 			wi->wi_atareq.error = ata_c.r_error;
 		}
 	}
