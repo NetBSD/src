@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.438 2011/12/04 19:24:58 jym Exp $	*/
+/*	$NetBSD: init_main.c,v 1.439 2012/01/24 20:03:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.438 2011/12/04 19:24:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.439 2012/01/24 20:03:36 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -997,7 +997,7 @@ start_init(void *arg)
 		/*
 		 * Move out the arg pointers.
 		 */
-		ucp = (void *)STACK_ALIGN(ucp, ALIGNBYTES);
+		ucp = (void *)STACK_ALIGN(ucp, STACK_ALIGNBYTES);
 		uap = (char **)STACK_ALLOC(ucp, sizeof(char *) * 3);
 		SCARG(&args, path) = arg0;
 		SCARG(&args, argp) = uap;
