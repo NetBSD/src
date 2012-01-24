@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25 2012/01/20 14:08:06 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.26 2012/01/24 20:03:37 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,10 +52,6 @@
 #endif
 #define	MACHINE_ARCH	"powerpc"
 #define	MID_MACHINE	MID_POWERPC
-
-#define	ALIGNBYTES	__ALIGNBYTES
-#define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
-#define	ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #ifdef PPC_IBM4XX
 #define	PGSHIFT		14	/* Use 16KB to reduce TLB thrashing */

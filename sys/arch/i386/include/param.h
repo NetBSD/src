@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.73 2012/01/20 14:08:06 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.74 2012/01/24 20:03:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,20 +51,6 @@
 #define	MACHINE_ARCH	"i386"
 #define	MID_MACHINE	MID_I386
 
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_int and
- * must be cast to any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
- *
- */
-#define ALIGNBYTES		__ALIGNBYTES
-#define ALIGN(p)		(((u_int)(u_long)(p) + ALIGNBYTES) &~ \
-    ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	1
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */

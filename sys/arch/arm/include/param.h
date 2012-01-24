@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 2012/01/20 14:08:05 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.15 2012/01/24 20:03:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -79,23 +79,8 @@
 
 #define	MID_MACHINE	MID_ARM6
 
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_int and
- * must be cast to any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
- *
- */
-#define	ALIGNBYTES	__ALIGNBYTES
-#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 /* ARM-specific macro to align a stack pointer (downwards). */
-#define STACKALIGNBYTES		(8 - 1)
-#define STACKALIGN(p)		((u_int)(p) &~ STACKALIGNBYTES)
+#define STACK_ALIGNBYTES	(8 - 1)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)

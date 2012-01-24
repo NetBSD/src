@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.31 2012/01/20 14:08:06 joerg Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.32 2012/01/24 20:03:37 christos Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -66,23 +66,6 @@
 #ifndef COHERENCY_UNIT
 #define COHERENCY_UNIT	32	/* MIPS cachelines are usually 32 bytes */
 #endif
-
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value for all
- * data types (int, long, ...).   The result is u_int and must be cast to
- * any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits).
- *
- */
-#define	ALIGNBYTES	__ALIGNBYTES
-#define	ALIGNBYTES32	ALIGNBYTES
-#define	ALIGN(p)	(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
-#define	ALIGN32(p)	(((uintptr_t)(p) + ALIGNBYTES32) & ~ALIGNBYTES32)
-#define ALIGNED_POINTER(p,t)	((((uintptr_t)(p)) & (sizeof(t)-1)) == 0)
 
 #ifdef ENABLE_MIPS_16KB_PAGE
 #define	NBPG		16384		/* bytes/page */
