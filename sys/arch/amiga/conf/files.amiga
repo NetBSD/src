@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.153 2012/01/19 00:14:08 rkujawa Exp $
+#	$NetBSD: files.amiga,v 1.154 2012/01/24 00:19:39 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -33,7 +33,7 @@ defflag				P5PPC68KBOARD
 defflag				LEV6_DEFER
 defflag				DEVRELOAD
 
-defflag opt_p5pb.h		P5PB_DEBUG
+defflag opt_p5pb.h		P5PB_DEBUG P5PB_CONSOLE
 
 defparam			IOBZCLOCK
 
@@ -526,7 +526,6 @@ attach	cv3dpb at zbus
 
 include	"dev/i2o/files.i2o"
 include	"dev/pci/files.pci"
-#include "dev/wsfb/files.wsfb"
 
 include	"arch/amiga/conf/majors.amiga"
 
