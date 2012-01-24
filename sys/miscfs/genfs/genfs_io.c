@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.8 2012/01/18 02:09:05 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.9 2012/01/24 02:09:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.8 2012/01/18 02:09:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.9 2012/01/24 02:09:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,6 +224,10 @@ startover:
 			error = EBUSY;
 			goto out_err;
 		}
+		/*
+		 * lock and unlock g_glock to ensure that no one is truncating
+		 * the file behind us.
+		 */
 		if (!genfs_node_rdtrylock(vp)) {
 			genfs_rel_pages(ap->a_m, npages);
 
@@ -590,19 +594,13 @@ startover:
 			    iobytes);
 			skipbytes += iobytes;
 
-			mutex_enter(uobj->vmobjlock);
-			for (i = 0; i < holepages; i++) {
-#if 0
-				if (memwrite) {
-					uvm_pagemarkdirty(pgs[pidx + i],
-					    UVM_PAGE_STATUS_DIRTY);
-				}
-#endif
-				if (!blockalloc) {
+			if (!blockalloc) {
+				mutex_enter(uobj->vmobjlock);
+				for (i = 0; i < holepages; i++) {
 					pgs[pidx + i]->flags |= PG_HOLE;
 				}
+				mutex_exit(uobj->vmobjlock);
 			}
-			mutex_exit(uobj->vmobjlock);
 			continue;
 		}
 
@@ -887,7 +885,6 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	    (origflags & PGO_JOURNALLOCKED) == 0);
 
 retry:
-	written = false;
 	flags = origflags;
 	KASSERT((vp->v_iflag & VI_ONWORKLST) != 0 ||
 	    (vp->v_iflag & VI_WRMAPDIRTY) == 0);
@@ -939,10 +936,6 @@ retry:
 
 	error = 0;
 	wasclean = (vp->v_numoutput == 0);
-	nextoff = startoff;
-	if (endoff == 0 || flags & PGO_ALLPAGES) {
-		endoff = trunc_page(LLONG_MAX);
-	}
 
 	/*
 	 * if this vnode is known not to have dirty pages,
@@ -959,9 +952,14 @@ retry:
 	}
 
 	/*
-	 * start the loop.
+	 * start the loop to scan pages.
 	 */
 
+	written = false;
+	nextoff = startoff;
+	if (endoff == 0 || flags & PGO_ALLPAGES) {
+		endoff = trunc_page(LLONG_MAX);
+	}
 	freeflag = pagedaemon ? PG_PAGEOUT : PG_RELEASED;
 	tryclean = true;
 	uvm_page_array_init(&a);
@@ -1102,7 +1100,14 @@ retry:
 
 			/*
 			 * XXX PG_PAGER1 incompatibility check.
-			 * this is a kludge for nfs.
+			 *
+			 * this is a kludge for nfs.  nfs has two kind of dirty
+			 * pages:
+			 *	- not written to the server yet
+			 *	- written to the server but not committed yet
+			 * the latter is marked as PG_NEEDCOMMIT. (== PG_PAGER1)
+			 * nfs doesn't want them being clustered together.
+			 *
 			 * probably it's better to make PG_NEEDCOMMIT a first
 			 * level citizen for uvm/genfs.
 			 */
