@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.290 2012/01/22 03:53:32 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.291 2012/01/24 17:37:34 abs Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -48,7 +48,7 @@
 #   installworld:
 #	Install the distribution from DESTDIR to INSTALLWORLDDIR (which
 #	defaults to the root directory).  Ensures that INSTALLWORLDDIR
-#	is the not root directory if cross compiling.
+#	is not the root directory if cross compiling.
 #   release:
 #	Does a `make distribution', and then tars up the DESTDIR files
 #	into ${RELEASEDIR}/${RELEASEMACHINEDIR}, in release(7) format.
