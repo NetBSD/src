@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.108 2011/08/04 17:48:50 rkujawa Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.109 2012/01/24 00:20:45 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.108 2011/08/04 17:48:50 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.109 2012/01/24 00:20:45 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -590,16 +590,22 @@ device_register(device_t dev, void *aux)
 	prop_dictionary_t dict, parent_dict;
 	struct pci_attach_args *pa = aux;
 
+	/* TODO: move this stuff into p5pb driver and call only if present. */
 	if (device_parent(dev) && device_is_a(device_parent(dev), "pci")) {
 
 		dict = device_properties(dev);
 
 		if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY) {
 
-			/* Handle CVPPC/BVPPC card. */
-			if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TI)
+			/* Handle the CVPPC/BVPPC card... */
+			if ( ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TI)
 			    && (PCI_PRODUCT(pa->pa_id) == 
-			    PCI_PRODUCT_TI_TVP4020) ) {
+			    PCI_PRODUCT_TI_TVP4020) ) || 
+			    /* ...and 3Dfx Voodoo 3 in G-REX. */ 
+			    ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3DFX)
+			    && (PCI_PRODUCT(pa->pa_id) == 
+			    PCI_PRODUCT_3DFX_VOODOO3) )
+			   ) {
 		
 				/*
 				 * PCI bridge knows the properties, 
@@ -618,18 +624,20 @@ device_register(device_t dev, void *aux)
 				prop_dictionary_set(dict, "depth",
 				    prop_dictionary_get(parent_dict, "depth"));
 
+#if (NGENFB > 0)
 				prop_dictionary_set(dict, "linebytes",
 				    prop_dictionary_get(parent_dict, 
 				    "linebytes"));
-
 				prop_dictionary_set(dict, "address",
 				    prop_dictionary_get(parent_dict, 
 				    "address"));
-#if (NGENFB > 0)
 				prop_dictionary_set(dict, "virtual_address",
 				    prop_dictionary_get(parent_dict, 
 				    "virtual_address"));
 #endif
+				prop_dictionary_set(dict, "is_console",
+				    prop_dictionary_get(parent_dict, 
+				    "is_console"));
 			}
 		}
 	}
