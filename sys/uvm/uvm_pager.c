@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.107.2.1 2011/11/02 21:54:01 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.107.2.2 2012/01/24 02:10:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.107.2.1 2011/11/02 21:54:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.107.2.2 2012/01/24 02:10:47 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -421,7 +421,6 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 			pg->pqflags |= PQ_READAHEAD;
 			uvm_ra_total.ev_count++;
 #endif /* defined(READAHEAD_STATS) */
-			KASSERT((pg->flags & PG_CLEAN) != 0);
 			KASSERT(uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN);
 			uvm_pageenqueue(pg);
 		}
