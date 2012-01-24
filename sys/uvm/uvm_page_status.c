@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_status.c,v 1.1.2.6 2012/01/18 02:09:06 yamt Exp $	*/
+/*	$NetBSD: uvm_page_status.c,v 1.1.2.7 2012/01/24 02:11:33 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.6 2012/01/18 02:09:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.7 2012/01/24 02:11:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __CTASSERT(UVM_PAGE_STATUS_CLEAN == PG_CLEAN);
 /*
  * uvm_pagegetdirty: return the dirtiness status (one of UVM_PAGE_STATUS_
  * values) of the page.
+ *
+ * called with the owner locked.
  */
 
 unsigned int
@@ -82,6 +84,13 @@ stat_update(bool isanon, unsigned int oldstatus, unsigned int newstatus)
 /*
  * uvm_pagemarkdirty: set the dirtiness status (one of UVM_PAGE_STATUS_ values)
  * of the page.
+ *
+ * called with the owner locked.
+ *
+ * update the radix tree tag for object-owned page.
+ *
+ * if new status is UVM_PAGE_STATUS_UNKNOWN, clear pmap-level dirty bit
+ * so that later uvm_pagecheckdirty() can notice modifications on the page.
  */
 
 void
@@ -133,6 +142,11 @@ uvm_pagemarkdirty(struct vm_page *pg, unsigned int newstatus)
  * uvm_pagecheckdirty: check if page is dirty, and remove its dirty-marks.
  *
  * called with the owner locked.
+ *
+ * returns if the page was dirty.
+ *
+ * if protected is true, mark the page CLEAN.  otherwise, mark the page UNKNOWN.
+ * ("mark" in the sense of uvm_pagemarkdirty().)
  */
 
 bool
@@ -181,6 +195,12 @@ uvm_pagecheckdirty(struct vm_page *pg, bool protected)
 	return modified;
 }
 
+/*
+ * uvm_cpu_get: get a pointer to the uvm per-cpu area.
+ *
+ * XXX this should not be here.
+ */
+
 struct uvm_cpu *
 uvm_cpu_get(void)
 {
@@ -188,6 +208,12 @@ uvm_cpu_get(void)
 	kpreempt_disable();
 	return curcpu()->ci_data.cpu_uvm;
 }
+
+/*
+ * uvm_cpu_put: put a pointer to the uvm per-cpu area.
+ *
+ * XXX this should not be here.
+ */
 
 void
 uvm_cpu_put(struct uvm_cpu *ucpu)
