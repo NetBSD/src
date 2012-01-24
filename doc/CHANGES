@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1652 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1653 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1209,3 +1209,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	build.sh: Add live-image and install-image targets.  [tsutsui 20120122]
 	tpm(4):	 Add a Trusted Computing Module driver from bsssd
 		[christos 20120122]
+	valkyriefb and videopll: drivers to support the onboard video
+		circuitry found in for example the Performa 6360.
+		[macallan 20120123]
