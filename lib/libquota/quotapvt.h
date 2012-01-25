@@ -1,4 +1,4 @@
-/*	$NetBSD: quotapvt.h,v 1.9 2012/01/25 01:22:57 dholland Exp $	*/
+/*	$NetBSD: quotapvt.h,v 1.10 2012/01/25 17:43:37 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,13 +28,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define QUOTA_MODE_NFS		1
+#define QUOTA_MODE_PROPLIB	2
+#define QUOTA_MODE_OLDFILES	3
+
 struct quotahandle {
 	char *qh_mountpoint;
 	char *qh_mountdevice;
-	int qh_isnfs;
+	int qh_mode;
 
 	/* these are used only by quota_oldfiles */
-	int qh_hasoldfiles;
+	int qh_oldfilesopen;
 	int qh_userfile;
 	int qh_groupfile;
 
@@ -86,6 +90,8 @@ int __quota_nfs_get(struct quotahandle *qh, const struct quotakey *qk,
 
 
 /* direct interface to old (quota1-type) files */
+void __quota_oldfiles_load_fstab(void);
+int __quota_oldfiles_infstab(const char *);
 int __quota_oldfiles_initialize(struct quotahandle *qh);
 const char *__quota_oldfiles_getimplname(struct quotahandle *);
 int __quota_oldfiles_get(struct quotahandle *qh, const struct quotakey *qk,
