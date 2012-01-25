@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.899 2012/01/25 09:36:13 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.900 2012/01/25 14:36:30 roy Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -270,8 +270,8 @@ No changes for NetBSD integration - just import the new distribution on
 top of the current tree.
 
 Package:	dhcpcd
-Version:	5.2.12
-Current Vers:	5.2.12
+Version:	5.5.0
+Current Vers:	5.5.0
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
