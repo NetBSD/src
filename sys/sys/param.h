@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.400 2012/01/24 20:03:36 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.401 2012/01/25 18:26:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -224,6 +224,7 @@
 #define	STACK_ALLOC(sp, _size)		(((char *)(void *)(sp)) - (_size))
 #define	STACK_MAX(p, _size)		((char *)(void *)(p))
 #endif
+#define	STACK_LEN_ALIGN(len, bytes)	((len) + bytes) & ~bytes)
 
 #endif /* defined(_KERNEL) || defined(__EXPOSE_STACK) */
 
