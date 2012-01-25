@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.188.2.2 2012/01/04 16:43:37 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.188.2.3 2012/01/25 00:41:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.188.2.2 2012/01/04 16:43:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.188.2.3 2012/01/25 00:41:36 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -90,7 +90,6 @@ nfs_bioread(struct vnode *vp, struct uio *uio, int ioflag,
 	int enough = 0;
 	struct dirent *dp, *pdp, *edp, *ep;
 	off_t curoff = 0;
-	int advice;
 	struct lwp *l = curlwp;
 
 #ifdef DIAGNOSTIC
@@ -135,6 +134,8 @@ nfs_bioread(struct vnode *vp, struct uio *uio, int ioflag,
 	}
 
 	do {
+	    int advice;
+
 	    /*
 	     * Don't cache symlinks.
 	     */
@@ -148,7 +149,7 @@ nfs_bioread(struct vnode *vp, struct uio *uio, int ioflag,
 
 		advice = IO_ADV_DECODE(ioflag);
 		if (uio->uio_offset + uio->uio_resid <= np->n_size) {
-			uvm_loanobj(&vp->v_uobj, uio);
+			uvm_loanobj(&vp->v_uobj, uio, advice);
 		}
 		while (uio->uio_resid > 0) {
 			vsize_t bytelen;
