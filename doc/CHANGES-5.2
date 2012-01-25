@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.129 2012/01/25 18:24:06 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.130 2012/01/25 18:46:35 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5905,4 +5905,12 @@ lib/libpuffs/puffs.c				1.108
 
 	Signal pathconf in the vector of supported ops.
 	[manu, ticket #1706]
+
+distrib/amd64/ramdisks/ramdisk/list		1.14 via patch
+distrib/i386/ramdisks/ramdisk-big/list		1.6 via patch
+
+	Add /sbin/dkctl to the install ramdisk. This allows you to drop
+	to a command prompt and enable writecaches before installing,
+	if necessary.
+	[sborrill, ticket #1709]
 
