@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.35 2012/01/22 19:00:45 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.36 2012/01/25 02:04:35 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.35 2012/01/22 19:00:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.36 2012/01/25 02:04:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,11 +83,11 @@ struct voodoofb_softc {
 
 	void *sc_ih;
 	
-	size_t memsize;
-	int memtype;
+	size_t sc_memsize;
+	int sc_memtype;
 
-	int bits_per_pixel;
-	int width, height, linebytes;
+	int sc_bits_per_pixel;
+	int sc_width, sc_height, sc_linebytes;
 	const struct videomode *sc_videomode;
 
 	/* i2c stuff */
@@ -367,6 +367,7 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_fb, &sc->sc_fbsize, &flags)) {
 		aprint_error_dev(self, "failed to map the frame buffer.\n");
 	}
+	sc->sc_memsize = sc->sc_fbsize >> 1;	/* VRAM aperture is 2x VRAM */
 
 	/* memory-mapped registers */
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
@@ -403,12 +404,12 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	if (width == -1 || height == -1)
 		return;
 
-	sc->width = width;
-	sc->height = height;
-	sc->bits_per_pixel = depth;
-	sc->linebytes = linebytes;
+	sc->sc_width = width;
+	sc->sc_height = height;
+	sc->sc_bits_per_pixel = depth;
+	sc->sc_linebytes = linebytes;
 	printf("%s: initial resolution %dx%d, %d bit\n", device_xname(self),
-	    sc->width, sc->height, sc->bits_per_pixel);
+	    sc->sc_width, sc->sc_height, sc->sc_bits_per_pixel);
 
 	sc->sc_videomode = NULL;
 	voodoofb_setup_i2c(sc);
@@ -453,7 +454,7 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 #endif
 	
 	j = 0;
-	if (sc->bits_per_pixel == 8) {
+	if (sc->sc_bits_per_pixel == 8) {
 		uint8_t tmp;
 		for (i = 0; i < 256; i++) {
 			tmp = i & 0xe0;
@@ -663,7 +664,7 @@ voodoofb_is_console(struct voodoofb_softc *sc)
 static void
 voodoofb_clearscreen(struct voodoofb_softc *sc)
 {
-	voodoofb_rectfill(sc, 0, 0, sc->width, sc->height, sc->sc_bg);
+	voodoofb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height, sc->sc_bg);
 }
 
 /*
@@ -781,7 +782,7 @@ voodoofb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 
 	voodoo3_make_room(sc, 6);
 	voodoo3_write32(sc, SRCFORMAT,	FMT_8BIT | FMT_PAD_BYTE);
-	voodoo3_write32(sc, DSTFORMAT,	sc->linebytes | FMT_8BIT);
+	voodoo3_write32(sc, DSTFORMAT,	sc->sc_linebytes | FMT_8BIT);
 	voodoo3_write32(sc, DSTSIZE,	wi | (he << 16));
 	voodoo3_write32(sc, DSTXY,	x | (y << 16));
 	voodoo3_write32(sc, SRCXY,	0);
@@ -935,8 +936,8 @@ voodoofb_bitblt(struct voodoofb_softc *sc, int xs, int ys, int xd, int yd, int w
 {
 	uint32_t fmt, blitcmd;
 	
-	fmt = sc->linebytes | ((sc->bits_per_pixel + 
-	    ((sc->bits_per_pixel == 8) ? 0 : 8)) << 13);
+	fmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel + 
+	    ((sc->sc_bits_per_pixel == 8) ? 0 : 8)) << 13);
 	blitcmd = COMMAND_2D_S2S_BITBLT | (ROP_COPY << 24);
 
 	if (xs <= xd) {
@@ -966,8 +967,8 @@ voodoofb_rectfill(struct voodoofb_softc *sc, int x, int y, int width,
 	uint32_t fmt, col;
 	
 	col = (colour << 24) | (colour << 16) | (colour << 8) | colour;
-	fmt = sc->linebytes | ((sc->bits_per_pixel + 
-	    ((sc->bits_per_pixel == 8) ? 0 : 8)) << 13);
+	fmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel + 
+	    ((sc->sc_bits_per_pixel == 8) ? 0 : 8)) << 13);
 
 	voodoo3_make_room(sc, 6);
 	voodoo3_write32(sc, DSTFORMAT, fmt);
@@ -984,8 +985,8 @@ voodoofb_rectinvert(struct voodoofb_softc *sc, int x, int y, int width,
 {
 	uint32_t fmt;
 	
-	fmt = sc->linebytes | ((sc->bits_per_pixel + 
-	    ((sc->bits_per_pixel == 8) ? 0 : 8)) << 13);
+	fmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel + 
+	    ((sc->sc_bits_per_pixel == 8) ? 0 : 8)) << 13);
 
 	voodoo3_make_room(sc, 6);
 	voodoo3_write32(sc, DSTFORMAT,	fmt);
@@ -1000,10 +1001,10 @@ static void
 voodoofb_setup_mono(struct voodoofb_softc *sc, int xd, int yd, int width, int height, uint32_t fg,
 					uint32_t bg) 
 {
-	uint32_t dfmt, sfmt = sc->linebytes;
+	uint32_t dfmt, sfmt = sc->sc_linebytes;
 	
-	dfmt = sc->linebytes | ((sc->bits_per_pixel + 
-	    ((sc->bits_per_pixel == 8) ? 0 : 8)) << 13);
+	dfmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel + 
+	    ((sc->sc_bits_per_pixel == 8) ? 0 : 8)) << 13);
 
 	voodoo3_make_room(sc, 9);
 	voodoo3_write32(sc, SRCFORMAT,	sfmt);
@@ -1186,17 +1187,17 @@ voodoofb_init_screen(void *cookie, struct vcons_screen *scr,
 	struct voodoofb_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 	
-	ri->ri_depth = sc->bits_per_pixel;
-	ri->ri_width = sc->width;
-	ri->ri_height = sc->height;
-	ri->ri_stride = sc->width;
+	ri->ri_depth = sc->sc_bits_per_pixel;
+	ri->ri_width = sc->sc_width;
+	ri->ri_height = sc->sc_height;
+	ri->ri_stride = sc->sc_linebytes;
 	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 	
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
-	rasops_reconfig(ri, sc->height / ri->ri_font->fontheight,
-		    sc->width / ri->ri_font->fontwidth);
+	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
+		    sc->sc_width / ri->ri_font->fontwidth);
 
 	ri->ri_hw = scr;
 	ri->ri_ops.copyrows = voodoofb_copyrows;
@@ -1458,10 +1459,10 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 	uint32_t bpp = 1;	/* for now */
 	uint32_t bytes_per_row = vm->hdisplay * bpp;
 
-	sc->bits_per_pixel = bpp << 3;
-	sc->width = vm->hdisplay;
-	sc->height = vm->vdisplay;
-	sc->linebytes = bytes_per_row;
+	sc->sc_bits_per_pixel = bpp << 3;
+	sc->sc_width = vm->hdisplay;
+	sc->sc_height = vm->vdisplay;
+	sc->sc_linebytes = bytes_per_row;
 	
 	voodoofb_setup_monitor(sc, vm);
 	vp = voodoo3_read32(sc, VIDPROCCFG);
@@ -1516,7 +1517,8 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 	voodoo3_write32(sc, PLLCTRL0, vidpll);
 	
 	voodoo3_make_room(sc, 5);
-	voodoo3_write32(sc, VIDSCREENSIZE, sc->width | (sc->height << 12));
+	voodoo3_write32(sc, VIDSCREENSIZE, sc->sc_width |
+	    (sc->sc_height << 12));
 	voodoo3_write32(sc, VIDDESKSTART,  0);
 
 	vidproc &= ~VIDCFG_HWCURSOR_ENABLE;
@@ -1538,7 +1540,7 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 	voodoo3_write32(sc, SRCXY, 0);
 	voodoofb_wait_idle(sc);
 	printf("%s: switched to %dx%d, %d bit\n", device_xname(sc->sc_dev),
-	    sc->width, sc->height, sc->bits_per_pixel);
+	    sc->sc_width, sc->sc_height, sc->sc_bits_per_pixel);
 }
 
 static void
@@ -1593,7 +1595,7 @@ voodoofb_init(struct voodoofb_softc *sc)
 #define MAX_HRES  1700		/*
 				 * XXX in theory we can go higher but I
 				 * couldn't get anything above 1680 x 1200
-				 * to work, so until I find out why it's
+				 * to work, so until I find out why, it's
 				 * disabled so people won't end up with a
 				 * blank screen
 				 */
