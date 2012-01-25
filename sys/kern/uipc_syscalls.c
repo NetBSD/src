@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.153 2012/01/25 15:51:24 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.154 2012/01/25 16:56:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.153 2012/01/25 15:51:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.154 2012/01/25 16:56:13 christos Exp $");
 
 #include "opt_pipe.h"
 
@@ -1015,9 +1015,9 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t 
 	sockopt_init(&sopt, SCARG(uap, level), SCARG(uap, name), 0);
 
 	if (fp->f_flag & FNOSIGPIPE)
-		atomic_or_uint(&so->so_options, SO_NOSIGPIPE);
+		so->so_options |= SO_NOSIGPIPE;
 	else
-		atomic_and_uint(&so->so_options, ~SO_NOSIGPIPE);
+		so->so_options &= ~SO_NOSIGPIPE;
 	error = sogetopt(so, &sopt);
 	if (error)
 		goto out;
