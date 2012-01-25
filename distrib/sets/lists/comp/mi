@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1726 2012/01/18 17:32:41 riz Exp $
+#	$NetBSD: mi,v 1.1727 2012/01/25 17:54:32 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7728,6 +7728,7 @@
 ./usr/share/man/cat3/libmj.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libnetpgp.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libperfuse.0		comp-perfuse-catman	.cat
+./usr/share/man/cat3/libquota.0			comp-c-catman		.cat
 ./usr/share/man/cat3/libradius.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libsaslc.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libusb.0			comp-obsolete		obsolete
@@ -8514,6 +8515,27 @@
 ./usr/share/man/cat3/qiflush.0			comp-c-catman		.cat
 ./usr/share/man/cat3/qsort.0			comp-c-catman		.cat
 ./usr/share/man/cat3/queue.0			comp-c-catman		.cat
+./usr/share/man/cat3/quota_close.0		comp-c-catman		.cat
+./usr/share/man/cat3/quota_delete.0		comp-c-catman		.cat
+./usr/share/man/cat3/quota_get.0		comp-c-catman		.cat
+./usr/share/man/cat3/quota_getimplname.0	comp-c-catman		.cat
+./usr/share/man/cat3/quota_getmountdevice.0	comp-c-catman		.cat
+./usr/share/man/cat3/quota_getmountpoint.0	comp-c-catman		.cat
+./usr/share/man/cat3/quota_getnumidtypes.0	comp-c-catman		.cat
+./usr/share/man/cat3/quota_getnumobjtypes.0	comp-c-catman		.cat
+./usr/share/man/cat3/quota_idtype_getname.0	comp-c-catman		.cat
+./usr/share/man/cat3/quota_objtype_getname.0	comp-c-catman		.cat
+./usr/share/man/cat3/quota_objtype_isbytes.0	comp-c-catman		.cat
+./usr/share/man/cat3/quota_open.0		comp-c-catman		.cat
+./usr/share/man/cat3/quota_opencursor.0		comp-c-catman		.cat
+./usr/share/man/cat3/quota_put.0		comp-c-catman		.cat
+./usr/share/man/cat3/quotacursor_atend.0	comp-c-catman		.cat
+./usr/share/man/cat3/quotacursor_close.0	comp-c-catman		.cat
+./usr/share/man/cat3/quotacursor_get.0		comp-c-catman		.cat
+./usr/share/man/cat3/quotacursor_getn.0		comp-c-catman		.cat
+./usr/share/man/cat3/quotacursor_rewind.0	comp-c-catman		.cat
+./usr/share/man/cat3/quotacursor_skipidtype.0	comp-c-catman		.cat
+./usr/share/man/cat3/quotaval_clear.0		comp-c-catman		.cat
 ./usr/share/man/cat3/radixsort.0		comp-c-catman		.cat
 ./usr/share/man/cat3/raise.0			comp-c-catman		.cat
 ./usr/share/man/cat3/raise_default_signal.0	comp-c-catman		.cat
@@ -13956,6 +13978,7 @@
 ./usr/share/man/html3/libmj.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libnetpgp.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libperfuse.html		comp-perfuse-htmlman	html
+./usr/share/man/html3/libquota.html		comp-c-htmlman		html
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
 ./usr/share/man/html3/libsaslc.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libusbhid.html		comp-c-htmlman		html
@@ -14723,6 +14746,27 @@
 ./usr/share/man/html3/qiflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/qsort.html		comp-c-htmlman		html
 ./usr/share/man/html3/queue.html		comp-c-htmlman		html
+./usr/share/man/html3/quota_close.html		comp-c-htmlman		html
+./usr/share/man/html3/quota_delete.html		comp-c-htmlman		html
+./usr/share/man/html3/quota_get.html		comp-c-htmlman		html
+./usr/share/man/html3/quota_getimplname.html	comp-c-htmlman		html
+./usr/share/man/html3/quota_getmountdevice.html	comp-c-htmlman		html
+./usr/share/man/html3/quota_getmountpoint.html	comp-c-htmlman		html
+./usr/share/man/html3/quota_getnumidtypes.html	comp-c-htmlman		html
+./usr/share/man/html3/quota_getnumobjtypes.html	comp-c-htmlman		html
+./usr/share/man/html3/quota_idtype_getname.html	comp-c-htmlman		html
+./usr/share/man/html3/quota_objtype_getname.html	comp-c-htmlman		html
+./usr/share/man/html3/quota_objtype_isbytes.html	comp-c-htmlman		html
+./usr/share/man/html3/quota_open.html		comp-c-htmlman		html
+./usr/share/man/html3/quota_opencursor.html	comp-c-htmlman		html
+./usr/share/man/html3/quota_put.html		comp-c-htmlman		html
+./usr/share/man/html3/quotacursor_atend.html	comp-c-htmlman		html
+./usr/share/man/html3/quotacursor_close.html	comp-c-htmlman		html
+./usr/share/man/html3/quotacursor_get.html	comp-c-htmlman		html
+./usr/share/man/html3/quotacursor_getn.html	comp-c-htmlman		html
+./usr/share/man/html3/quotacursor_rewind.html	comp-c-htmlman		html
+./usr/share/man/html3/quotacursor_skipidtype.html	comp-c-htmlman		html
+./usr/share/man/html3/quotaval_clear.html	comp-c-htmlman		html
 ./usr/share/man/html3/radixsort.html		comp-c-htmlman		html
 ./usr/share/man/html3/raise.html		comp-c-htmlman		html
 ./usr/share/man/html3/raise_default_signal.html	comp-c-htmlman		html
@@ -20144,6 +20188,7 @@
 ./usr/share/man/man3/libmj.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/libnetpgp.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/libperfuse.3		comp-perfuse-man	.man
+./usr/share/man/man3/libquota.3			comp-c-man		.man
 ./usr/share/man/man3/libradius.3		comp-c-man		.man
 ./usr/share/man/man3/libsaslc.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/libusb.3			comp-obsolete		obsolete
@@ -20930,6 +20975,27 @@
 ./usr/share/man/man3/qiflush.3			comp-c-man		.man
 ./usr/share/man/man3/qsort.3			comp-c-man		.man
 ./usr/share/man/man3/queue.3			comp-c-man		.man
+./usr/share/man/man3/quota_close.3		comp-c-man		.man
+./usr/share/man/man3/quota_delete.3		comp-c-man		.man
+./usr/share/man/man3/quota_get.3		comp-c-man		.man
+./usr/share/man/man3/quota_getimplname.3	comp-c-man		.man
+./usr/share/man/man3/quota_getmountdevice.3	comp-c-man		.man
+./usr/share/man/man3/quota_getmountpoint.3	comp-c-man		.man
+./usr/share/man/man3/quota_getnumidtypes.3	comp-c-man		.man
+./usr/share/man/man3/quota_getnumobjtypes.3	comp-c-man		.man
+./usr/share/man/man3/quota_idtype_getname.3	comp-c-man		.man
+./usr/share/man/man3/quota_objtype_getname.3	comp-c-man		.man
+./usr/share/man/man3/quota_objtype_isbytes.3	comp-c-man		.man
+./usr/share/man/man3/quota_open.3		comp-c-man		.man
+./usr/share/man/man3/quota_opencursor.3		comp-c-man		.man
+./usr/share/man/man3/quota_put.3		comp-c-man		.man
+./usr/share/man/man3/quotacursor_atend.3	comp-c-man		.man
+./usr/share/man/man3/quotacursor_close.3	comp-c-man		.man
+./usr/share/man/man3/quotacursor_get.3		comp-c-man		.man
+./usr/share/man/man3/quotacursor_getn.3		comp-c-man		.man
+./usr/share/man/man3/quotacursor_rewind.3	comp-c-man		.man
+./usr/share/man/man3/quotacursor_skipidtype.3	comp-c-man		.man
+./usr/share/man/man3/quotaval_clear.3		comp-c-man		.man
 ./usr/share/man/man3/radixsort.3		comp-c-man		.man
 ./usr/share/man/man3/raise.3			comp-c-man		.man
 ./usr/share/man/man3/raise_default_signal.3	comp-c-man		.man
