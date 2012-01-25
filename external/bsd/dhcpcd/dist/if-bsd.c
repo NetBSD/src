@@ -362,13 +362,22 @@ manage_link(int fd)
 			case RTM_IFINFO:
 				ifm = (struct if_msghdr *)(void *)p;
 				memset(ifname, 0, sizeof(ifname));
-				if (if_indextoname(ifm->ifm_index, ifname))
-					handle_interface(0, ifname);
+				if (!(if_indextoname(ifm->ifm_index, ifname)))
+					break;
+				switch (ifm->ifm_data.ifi_link_state) {
+				case LINK_STATE_DOWN:
+					len = -1;
+					break;
+				default:
+					len = ~ifm->ifm_flags &
+					    (IFF_UP | IFF_RUNNING) ? -1 : 1;
+					break;
+				}
+				handle_carrier(len, ifm->ifm_flags, ifname);
 				break;
 			case RTM_DELETE:
-				if (!(rtm->rtm_addrs & RTA_DST) ||
-				    !(rtm->rtm_addrs & RTA_GATEWAY) ||
-				    !(rtm->rtm_addrs & RTA_NETMASK))
+				if (~rtm->rtm_addrs &
+				    (RTA_DST | RTA_GATEWAY | RTA_NETMASK))
 					break;
 				if (rtm->rtm_pid == getpid())
 					break;
