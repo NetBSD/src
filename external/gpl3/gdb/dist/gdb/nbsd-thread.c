@@ -1123,6 +1123,7 @@ init_nbsd_proc_callbacks (void)
 {
   nbsd_thread_callbacks.proc_read = nbsd_thread_proc_read;
   nbsd_thread_callbacks.proc_write = nbsd_thread_proc_write;
+/*###1126 [cc] error: assignment from incompatible pointer type%%%*/
   nbsd_thread_callbacks.proc_lookup = nbsd_thread_proc_lookup;
   nbsd_thread_callbacks.proc_regsize = nbsd_thread_proc_regsize;
   nbsd_thread_callbacks.proc_getregs = nbsd_thread_proc_getregs;
