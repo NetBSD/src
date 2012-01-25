@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.128 2012/01/25 18:08:17 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.129 2012/01/25 18:24:06 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5888,4 +5888,21 @@ sys/dev/fssvar.h				1.26
 	Fix FSSIOCSET50: needs to use the 5.0 struct fss_set, not the current
 	one.
 	[bouyer, ticket #1700]
+
+sys/dev/mii/mii_physubr.c			1.73 via patch
+
+	Make 1000baseT connections work properly when specified with
+	ifconfig(8).  PR#20700.
+	[buhrow, ticket #1701]
+
+sys/ufs/ffs/ffs_inode.c				1.108
+sys/ufs/lfs/lfs_inode.c				1.126
+
+	Fix ufs/lfs file truncation.
+	[bouyer, ticket #1702]
+
+lib/libpuffs/puffs.c				1.108
+
+	Signal pathconf in the vector of supported ops.
+	[manu, ticket #1706]
 
