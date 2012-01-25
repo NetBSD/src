@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.334 2012/01/24 20:03:36 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.335 2012/01/25 18:26:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.334 2012/01/24 20:03:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.335 2012/01/25 18:26:26 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -793,7 +793,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif /* PAX_ASLR */
 
 	/* make the stack "safely" aligned */
-	len = (size_t)STACK_ALIGN(len, STACK_ALIGNBYTES);
+	len = STACK_LEN_ALIGN(len, STACK_ALIGNBYTES);
 
 	if (len > pack.ep_ssize) { /* in effect, compare to initial limit */
 		DPRINTF(("%s: stack limit exceeded %zu\n", __func__, len));
