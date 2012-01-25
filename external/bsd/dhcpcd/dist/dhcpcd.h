@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 
 #include <sys/socket.h>
 #include <net/if.h>
+#include <netinet/in.h>
 
 #include <limits.h>
 
@@ -81,6 +82,27 @@ struct if_state {
 	size_t arping_index;
 };
 
+struct ra_opt {
+	uint8_t type;
+	struct timeval expire;
+	char *option;
+	struct ra_opt *next;
+};
+
+struct ra {
+	struct in6_addr from;
+	char sfrom[INET6_ADDRSTRLEN];
+	struct timeval received;
+	uint32_t lifetime;
+	struct in6_addr prefix;
+	int prefix_len;
+	uint32_t prefix_vltime;
+	uint32_t prefix_pltime;
+	char sprefix[INET6_ADDRSTRLEN];
+	struct ra_opt *options;
+	struct ra *next;
+};
+
 struct interface {
 	char name[IF_NAMESIZE];
 	struct if_state *state;
@@ -109,6 +131,11 @@ struct interface {
 
 	unsigned char *clientid;
 
+	unsigned char *rs;
+	size_t rslen;
+	int rsprobes;
+	struct ra *ras;
+
 	struct interface *next;
 };
 
@@ -122,6 +149,7 @@ extern struct interface *ifaces;
 
 struct interface *find_interface(const char *);
 int handle_args(struct fd_list *, int, char **);
+void handle_carrier(int, int, const char *);
 void handle_interface(int, const char *);
 void handle_hwaddr(const char *, unsigned char *, size_t);
 void handle_ifa(int, const char *,
@@ -137,7 +165,8 @@ void start_expire(void *);
 void send_decline(struct interface *);
 void open_sockets(struct interface *);
 void close_sockets(struct interface *);
-void drop_config(struct interface *, const char *);
+void drop_dhcp(struct interface *, const char *);
+void drop_interface(struct interface *, const char *);
 int select_profile(struct interface *, const char *);
 
 #endif

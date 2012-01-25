@@ -84,6 +84,7 @@ struct rt {
 	struct in_addr net;
 	struct in_addr gate;
 	const struct interface *iface;
+	int metric;
 	struct in_addr src;
 	struct rt *next;
 };

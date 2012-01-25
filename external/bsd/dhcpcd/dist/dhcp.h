@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -109,6 +109,7 @@ enum DHO {
 	DHO_FQDN                   = 81,
 	DHO_DNSSEARCH              = 119, /* RFC 3397 */
 	DHO_CSR                    = 121, /* RFC 3442 */
+	DHO_SIXRD                  = 212, /* RFC 5969 */
 	DHO_MSCSR                  = 249, /* MS code for RFC 3442 */
 	DHO_END                    = 255
 };
@@ -186,6 +187,7 @@ int get_option_uint8(uint8_t *, const struct dhcp_message *, uint8_t);
 	    !IN_LINKLOCAL(htonl((m)->yiaddr)) &&			\
 	    get_option_uint8(NULL, m, DHO_MESSAGETYPE) == -1)
 struct rt *get_option_routes(const struct dhcp_message *, const char *, int *);
+ssize_t decode_rfc3397(char *, ssize_t, int, const uint8_t *);
 ssize_t configure_env(char **, const char *, const struct dhcp_message *,
     const struct if_options *);
 

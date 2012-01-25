@@ -1,7 +1,8 @@
-/*
+/* 
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
- *
+ * All rights reserved
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -24,29 +25,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef IPV6RS_H
+#define IPV6RS_H
 
-#define PACKAGE			"dhcpcd"
-#define VERSION			"5.5.0"
-
-#ifndef CONFIG
-# define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
-#endif
-#ifndef SCRIPT
-# define SCRIPT			LIBEXECDIR "/" PACKAGE "-run-hooks"
-#endif
-#ifndef DUID
-# define DUID			SYSCONFDIR "/" PACKAGE ".duid"
-#endif
-#ifndef LEASEFILE
-# define LEASEFILE		DBDIR "/" PACKAGE "-%s.lease"
-#endif
-#ifndef PIDFILE
-# define PIDFILE		RUNDIR "/" PACKAGE "%s%s.pid"
-#endif
-#ifndef CONTROLSOCKET
-# define CONTROLSOCKET		RUNDIR "/" PACKAGE ".sock"
-#endif
-
+int ipv6rs_open(void);
+void ipv6rs_handledata(void *);
+int ipv6rs_start(struct interface *);
+ssize_t ipv6rs_env(char **, const char *, const struct interface *);
+void ipv6rs_free(struct interface *ifp);
+void ipv6rs_expire(void *arg);
 #endif

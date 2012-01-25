@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -28,8 +28,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <sys/time.h>
 #include <stdio.h>
-#include <time.h>
 
 #include "config.h"
 #include "defs.h"
@@ -72,6 +72,8 @@ int set_nonblock(int);
 char *get_line(FILE * __restrict);
 extern int clock_monotonic;
 int get_monotonic(struct timeval *);
+ssize_t setvar(char ***, const char *, const char *, const char *);
+ssize_t setvard(char ***, const char *, const char *, int);
 time_t uptime(void);
 int writepid(int, pid_t);
 void *xrealloc(void *, size_t);

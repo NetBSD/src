@@ -46,6 +46,7 @@
 #include "dhcp.h"
 #include "if-options.h"
 #include "if-pref.h"
+#include "ipv6rs.h"
 #include "net.h"
 #include "signals.h"
 
@@ -62,7 +63,6 @@
 #endif
 
 static struct rt *routes;
-
 
 static int
 exec_script(char *const *argv, char *const *env)
@@ -169,6 +169,14 @@ make_env(const struct interface *iface, char ***argv)
 	ssize_t e, elen, l;
 	const struct if_options *ifo = iface->state->options;
 	const struct interface *ifp;
+	int dhcp, ra;
+
+	dhcp = 0;
+	ra = 0;
+	if (strcmp(iface->state->reason, "ROUTERADVERT") == 0)
+		ra = 1;
+	else
+		dhcp = 1;
 
 	/* When dumping the lease, we only want to report interface and
 	   reason - the other interface variables are meaningless */
@@ -236,7 +244,7 @@ make_env(const struct interface *iface, char ***argv)
 			snprintf(env[elen++], e, "old_ssid=%s", iface->ssid);
 		}
 	}
-	if (iface->state->old) {
+	if (dhcp && iface->state->old) {
 		e = configure_env(NULL, NULL, iface->state->old, ifo);
 		if (e > 0) {
 			env = xrealloc(env, sizeof(char *) * (elen + e + 1));
@@ -248,7 +256,7 @@ make_env(const struct interface *iface, char ***argv)
 	}
 
 dumplease:
-	if (iface->state->new) {
+	if (dhcp && iface->state->new) {
 		e = configure_env(NULL, NULL, iface->state->new, ifo);
 		if (e > 0) {
 			env = xrealloc(env, sizeof(char *) * (elen + e + 1));
@@ -257,6 +265,13 @@ dumplease:
 		}
 		append_config(&env, &elen, "new",
 		    (const char *const *)ifo->config);
+	}
+	if (ra) {
+		e = ipv6rs_env(NULL, NULL, iface);
+		if (e > 0) {
+			env = xrealloc(env, sizeof(char *) * (elen + e + 1));
+			elen += ipv6rs_env(env + elen, "new", iface);
+		}
 	}
 
 	/* Add our base environment */
@@ -471,10 +486,8 @@ c_route(struct rt *ort, struct rt *nrt, const struct interface *iface)
 	/* We delete and add the route so that we can change metric.
 	 * This also has the nice side effect of flushing ARP entries so
 	 * we don't have to do that manually. */
-	del_route(ort->iface, &ort->dest, &ort->net, &ort->gate,
-	    ort->iface->metric);
-	if (!add_route(iface, &nrt->dest, &nrt->net, &nrt->gate,
-		iface->metric))
+	del_route(ort->iface, &ort->dest, &ort->net, &ort->gate, ort->metric);
+	if (!add_route(iface, &nrt->dest, &nrt->net, &nrt->gate, nrt->metric))
 		return 0;
 	syslog(LOG_ERR, "%s: add_route: %m", iface->name);
 	return -1;
@@ -661,6 +674,7 @@ build_routes(void)
 		dnr = add_destination_route(dnr, ifp);
 		for (rt = dnr; rt && (rtn = rt->next, 1); lrt = rt, rt = rtn) {
 			rt->iface = ifp;
+			rt->metric = ifp->metric;
 			/* Is this route already in our table? */
 			if ((find_route(nrs, rt, NULL, NULL)) != NULL)
 				continue;
@@ -669,7 +683,8 @@ build_routes(void)
 			if ((or = find_route(routes, rt, &rtl, NULL))) {
 				if (or->iface != ifp ||
 				    or->src.s_addr != ifp->addr.s_addr ||
-				    rt->gate.s_addr != or->gate.s_addr)
+				    rt->gate.s_addr != or->gate.s_addr ||
+				    rt->metric != or->metric)
 				{
 					if (c_route(or, rt, ifp) != 0)
 						continue;
