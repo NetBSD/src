@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109.2.19 2011/11/18 22:35:43 sborrill Exp $
+# $NetBSD: mi,v 1.1109.2.20 2012/01/25 21:18:15 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1645,6 +1645,9 @@
 ./usr/share/man/cat4/viapm.0			man-sys-catman		obsolete
 ./usr/share/man/cat4/video.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vinum.0			man-obsolete		obsolete
+./usr/share/man/cat4/vioif.0			man-sys-catman		.cat
+./usr/share/man/cat4/viomb.0			man-sys-catman		.cat
+./usr/share/man/cat4/virtio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vlan.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmnet.0			man-sys-catman		.cat
@@ -4120,6 +4123,9 @@
 ./usr/share/man/html4/viaenv.html		man-sys-htmlman		html
 ./usr/share/man/html4/viaide.html		man-sys-htmlman		html
 ./usr/share/man/html4/video.html		man-sys-htmlman		html
+./usr/share/man/html4/vioif.html		man-sys-htmlman		html
+./usr/share/man/html4/viomb.html		man-sys-htmlman		html
+./usr/share/man/html4/virtio.html		man-sys-htmlman		html
 ./usr/share/man/html4/vlan.html			man-sys-htmlman		html
 ./usr/share/man/html4/vmmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/vmnet.html		man-sys-htmlman		html
@@ -6533,6 +6539,9 @@
 ./usr/share/man/man4/viapm.4			man-sys-man		obsolete
 ./usr/share/man/man4/video.4			man-sys-man		.man
 ./usr/share/man/man4/vinum.4			man-obsolete		obsolete
+./usr/share/man/man4/vioif.4			man-sys-man		.man
+./usr/share/man/man4/viomb.4			man-sys-man		.man
+./usr/share/man/man4/virtio.4			man-sys-man		.man
 ./usr/share/man/man4/vlan.4			man-sys-man		.man
 ./usr/share/man/man4/vmmon.4			man-sys-man		.man
 ./usr/share/man/man4/vmnet.4			man-sys-man		.man
