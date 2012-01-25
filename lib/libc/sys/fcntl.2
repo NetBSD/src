@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.39 2011/06/27 08:21:08 wiz Exp $
+.\"	$NetBSD: fcntl.2,v 1.40 2012/01/25 00:28:35 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd June 25, 2011
+.Dd January 23, 2012
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -146,35 +146,32 @@ Close all file descriptors greater than or equal to
 .Ar fd .
 .It Dv F_MAXFD
 Return the maximum file descriptor number currently open by the process.
+.It Dv F_GETNOSIGPIPE
+Return if the
+.Dv O_NOSIGPIPE
+flag is set in the file descriptor.
+.It Dv F_SETNOSIGPIPE
+Set or clear the
+.Dv O_NOSIGPIPE
+in the file descriptor.
 .El
 .Pp
-The flags for the
+The set of valid flags for the
 .Dv F_GETFL
 and
 .Dv F_SETFL
 flags are as follows:
-.Bl -tag -width O_NONBLOCKX
-.It Dv O_NONBLOCK
-Non-blocking I/O; if no data is available to a
-.Xr read 2
-call, or if a
-.Xr write 2
-operation would block,
-the read or write call returns \-1 with the error
-.Er EAGAIN .
-.It Dv O_APPEND
-Force each write to append at the end of file;
-corresponds to the
-.Dv O_APPEND
-flag of
+.Dv O_APPEND ,
+.Dv O_ASYNC ,
+.Dv O_FSYNC ,
+.Dv O_NONBLOCK ,
+.Dv O_DSYNC ,
+.Dv O_RSYNC ,
+.Dv O_ALT_IO ,
+.Dv O_DIRECT ,
+.Dv O_NOSIGPIPE .
+These flags are described in
 .Xr open 2 .
-.It Dv O_ASYNC
-Enable the
-.Dv SIGIO
-signal to be sent to the process group
-when I/O is possible, e.g.,
-upon availability of data to be read.
-.El
 .Pp
 Several commands are available for doing advisory file locking;
 they all operate on the following structure:
