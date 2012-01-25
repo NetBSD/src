@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.99.8.3 2010/03/09 03:54:44 snj Exp $	*/
+/*	$NetBSD: ugen.c,v 1.99.8.4 2012/01/25 17:33:17 riz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.99.8.3 2010/03/09 03:54:44 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.99.8.4 2012/01/25 17:33:17 riz Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -605,7 +605,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			}
 			sce->state |= UGEN_ASLP;
 			DPRINTFN(5, ("ugenread: sleep on %p\n", sce));
-			error = tsleep(sce, PZERO | PCATCH, "ugenri", 0);
+			error = tsleep(sce, PZERO | PCATCH, "ugenri", mstohz(sce->timeout));
 			DPRINTFN(5, ("ugenread: woke, error=%d\n", error));
 			if (sc->sc_dying)
 				error = EIO;
@@ -651,7 +651,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 						 ("ugenread: sleep on %p\n",
 						  sce));
 					error = tsleep(sce, PZERO | PCATCH,
-						       "ugenrb", 0);
+						       "ugenrb", mstohz(sce->timeout));
 					DPRINTFN(5,
 						 ("ugenread: woke, error=%d\n",
 						  error));
@@ -743,7 +743,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			}
 			sce->state |= UGEN_ASLP;
 			DPRINTFN(5, ("ugenread: sleep on %p\n", sce));
-			error = tsleep(sce, PZERO | PCATCH, "ugenri", 0);
+			error = tsleep(sce, PZERO | PCATCH, "ugenri", mstohz(sce->timeout));
 			DPRINTFN(5, ("ugenread: woke, error=%d\n", error));
 			if (sc->sc_dying)
 				error = EIO;
@@ -851,7 +851,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 						 ("ugenwrite: sleep on %p\n",
 						  sce));
 					error = tsleep(sce, PZERO | PCATCH,
-						       "ugenwb", 0);
+						       "ugenwb", mstohz(sce->timeout));
 					DPRINTFN(5,
 						 ("ugenwrite: woke, error=%d\n",
 						  error));
