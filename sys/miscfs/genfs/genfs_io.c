@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.9 2012/01/24 02:09:34 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.10 2012/01/25 00:40:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.9 2012/01/24 02:09:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.10 2012/01/25 00:40:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1274,8 +1274,8 @@ skip_scan:
 #endif /* !defined(DEBUG) */
 
 	/*
-	 * if we started any i/o and we're doing sync i/o, wait for all writes
-	 * to finish.
+	 * if we found or started any i/o and we're doing sync i/o,
+	 * wait for all writes to finish.
 	 */
 
 	if (!wasclean && !async) {
