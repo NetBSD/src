@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.217 2011/09/25 13:40:37 chs Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.218 2012/01/25 00:28:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.217 2011/09/25 13:40:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.218 2012/01/25 00:28:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,20 +500,25 @@ fd_getvnode(unsigned fd, file_t **fpp)
  * to a socket.
  */
 int
-fd_getsock(unsigned fd, struct socket **sop)
+fd_getsock1(unsigned fd, struct socket **sop, file_t **fp)
 {
-	file_t *fp;
-
-	fp = fd_getfile(fd);
-	if (__predict_false(fp == NULL)) {
+	*fp = fd_getfile(fd);
+	if (__predict_false(*fp == NULL)) {
 		return EBADF;
 	}
-	if (__predict_false(fp->f_type != DTYPE_SOCKET)) {
+	if (__predict_false((*fp)->f_type != DTYPE_SOCKET)) {
 		fd_putfile(fd);
 		return ENOTSOCK;
 	}
-	*sop = fp->f_data;
+	*sop = (*fp)->f_data;
 	return 0;
+}
+
+int
+fd_getsock(unsigned fd, struct socket **sop)
+{
+	file_t *fp;
+	return fd_getsock1(fd, sop, &fp);
 }
 
 /*

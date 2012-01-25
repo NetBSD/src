@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.104 2012/01/20 14:08:07 joerg Exp $	*/
+/*	$NetBSD: socket.h,v 1.105 2012/01/25 00:28:35 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -110,6 +110,7 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 
 #define	SOCK_CLOEXEC	0x10000000	/* set close on exec on socket */
 #define	SOCK_NONBLOCK	0x20000000	/* set non blocking i/o socket */
+#define	SOCK_NOSIGPIPE	0x40000000	/* don't send sigpipe */
 #define	SOCK_FLAGS_MASK	0xf0000000	/* flags mask */
 
 /*
@@ -126,6 +127,7 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SO_OOBINLINE	0x0100		/* leave received OOB data in line */
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
 /* 	SO_OTIMESTAMP	0x0400		*/
+#define	SO_NOSIGPIPE	0x0800		/* no SIGPIPE from EPIPE */
 #define	SO_ACCEPTFILTER	0x1000		/* there is an accept filter */
 #define	SO_TIMESTAMP	0x2000		/* timestamp received dgram traffic */
 

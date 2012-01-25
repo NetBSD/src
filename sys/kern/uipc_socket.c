@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.206 2011/12/20 23:56:28 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.207 2012/01/25 00:28:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.206 2011/12/20 23:56:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.207 2012/01/25 00:28:36 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -589,7 +589,8 @@ fsocreate(int domain, struct socket **sop, int type, int protocol,
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
 	fd_set_exclose(l, fd, (flags & SOCK_CLOEXEC) != 0);
-	fp->f_flag = FREAD|FWRITE|((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0);
+	fp->f_flag = FREAD|FWRITE|((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0)|
+	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_ops = &socketops;
 	error = socreate(domain, &so, type, protocol, l, NULL);
@@ -1719,6 +1720,7 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 	case SO_REUSEPORT:
 	case SO_OOBINLINE:
 	case SO_TIMESTAMP:
+	case SO_NOSIGPIPE:
 #ifdef SO_OTIMESTAMP
 	case SO_OTIMESTAMP:
 #endif
@@ -1919,6 +1921,7 @@ sogetopt1(struct socket *so, struct sockopt *sopt)
 	case SO_BROADCAST:
 	case SO_OOBINLINE:
 	case SO_TIMESTAMP:
+	case SO_NOSIGPIPE:
 #ifdef SO_OTIMESTAMP
 	case SO_OTIMESTAMP:
 #endif
