@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.898 2012/01/24 09:57:40 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.899 2012/01/25 09:36:13 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -358,7 +358,7 @@ for GCC 4.5:
 
 Package:	gdb
 Version:	6.5/7.3.1
-Current Vers:	7.3.1
+Current Vers:	7.4
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
