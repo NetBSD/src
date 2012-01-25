@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.h,v 1.17.4.1 2011/12/26 16:03:11 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.h,v 1.17.4.2 2012/01/25 00:41:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@ int uvm_loanuobjpages(struct uvm_object *, voff_t, int,
     struct vm_page **);
 struct vm_page *uvm_loanbreak(struct vm_page *);
 int uvm_loanbreak_anon(struct vm_anon *);
-int uvm_loanobj(struct uvm_object *, struct uio *);
+int uvm_loanobj(struct uvm_object *, struct uio *, int);
 void uvm_loan_resolve_orphan(struct vm_page *, bool);
 
 #endif /* _KERNEL */

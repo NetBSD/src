@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.99.2.1 2012/01/04 16:43:37 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.99.2.2 2012/01/25 00:41:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.99.2.1 2012/01/04 16:43:37 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.99.2.2 2012/01/25 00:41:36 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -124,7 +124,7 @@ READ(void *v)
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 		if (uio->uio_offset + uio->uio_resid <= vp->v_size) {
-			uvm_loanobj(&vp->v_uobj, uio);
+			uvm_loanobj(&vp->v_uobj, uio, advice);
 		}
 		while (uio->uio_resid > 0) {
 			if (ioflag & IO_DIRECT) {

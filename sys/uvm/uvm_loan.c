@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81.2.12 2012/01/18 02:09:06 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.13 2012/01/25 00:41:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.12 2012/01/18 02:09:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.13 2012/01/25 00:41:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ static void	uvm_unloananon(struct vm_anon **, int);
 static void	uvm_unloanpage(struct vm_page **, int);
 static int	uvm_loanpage(struct vm_page **, int);
 static int	uvm_loanobj_read(struct vm_map *, vaddr_t, size_t,
-			struct uvm_object *, off_t);
+			struct uvm_object *, off_t, int);
 
 
 /*
@@ -1296,7 +1296,7 @@ uvm_loanbreak_anon(struct vm_anon *anon)
 }
 
 int
-uvm_loanobj(struct uvm_object *uobj, struct uio *uio)
+uvm_loanobj(struct uvm_object *uobj, struct uio *uio, int advice)
 {
 	struct iovec *iov;
 	struct vm_map *map;
@@ -1347,7 +1347,7 @@ uvm_loanobj(struct uvm_object *uobj, struct uio *uio)
 			va = (vaddr_t)iov->iov_base;
 			len = MIN(iov->iov_len, MAXPHYS);
 			error = uvm_loanobj_read(map, va, len, uobj,
-						 uio->uio_offset);
+						 uio->uio_offset, advice);
 			if (error) {
 				goto out;
 			}
@@ -1374,7 +1374,7 @@ out:
 
 static int
 uvm_loanobj_read(struct vm_map *map, vaddr_t va, size_t len,
-    struct uvm_object *uobj, off_t off)
+    struct uvm_object *uobj, off_t off, int advice)
 {
 	unsigned int npages = len >> PAGE_SHIFT;
 	struct vm_page *pgs[MAXPAGES];
@@ -1492,7 +1492,7 @@ retry:
 	memset(pgs, 0, sizeof(pgs));
 	mutex_enter(uobj->vmobjlock);
 	error = (*uobj->pgops->pgo_get)(uobj, off, pgs, &npages, 0,
-	    VM_PROT_READ, 0, PGO_SYNCIO);
+	    VM_PROT_READ, advice, PGO_SYNCIO);
 	if (error) {
 		UVMHIST_LOG(ubchist, "getpages -> %d", error,0,0,0);
 		return error;
