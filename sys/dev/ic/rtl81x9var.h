@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.41.12.5 2009/06/19 21:51:43 snj Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.41.12.6 2012/01/25 18:02:44 riz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -194,6 +194,7 @@ struct rtk_softc {
 #define RTKQ_NOEECMD		0x00000080	/* unusable EEPROM command */
 #define RTKQ_MACSTAT		0x00000100	/* set MACSTAT_DIS on init */
 #define RTKQ_CMDSTOP		0x00000200	/* set STOPREQ on stop */
+#define RTKQ_PHYWAKE_PM		0x00000400	/* wake PHY from power down */
 
 	bus_dma_tag_t 		sc_dmat;
 
