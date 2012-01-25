@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.49 2012/01/25 16:51:17 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.50 2012/01/25 17:18:47 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -27,8 +27,8 @@ maxusers	32			# estimated number of users
 # CPU options
 
 # For XScale systems
-#options 	CPU_XSCALE_PXA250        # Support the XScale PXA25x core
-options 	CPU_XSCALE_PXA270        # Support the XScale PXA27x core
+#options 	CPU_XSCALE_PXA250	# Support the XScale PXA25x core
+options 	CPU_XSCALE_PXA270	# Support the XScale PXA27x core
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
 # Architecture options
@@ -123,14 +123,14 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 # Device options
 
 # Miscellaneous kernel options
-#options 	KTRACE          # system call tracing via ktrace(1)
-#options 	KMEMSTATS       # kernel memory statistics
-#options 	SCSIVERBOSE     # Verbose SCSI errors
-#options 	MIIVERBOSE      # Verbose MII autoconfuration messages
-#options 	USBVERBOSE      # verbose USB device autoconfig messages
-#options 	USERCONF        # userconf(4) support
+#options 	KTRACE		# system call tracing via ktrace(1)
+#options 	KMEMSTATS	# kernel memory statistics
+#options 	SCSIVERBOSE	# Verbose SCSI errors
+#options 	MIIVERBOSE	# Verbose MII autoconfuration messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR # smaller, but slower pipe(2)
-#options 	SYSCTL_INCLUDE_DESCR    # Include sysctl descriptions in kernel
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 #
 # wscons options
@@ -158,13 +158,13 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC      # internal consistency checks
+options 	DIAGNOSTIC		# internal consistency checks
 #options 	DEBUG
-#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
-options 	DDB             # in-kernel debugger
-options 	DDB_HISTORY_SIZE=100    # Enable history editing in DDB
+#options 	VERBOSE_INIT_ARM	# verbose bootstraping messages
+options 	DDB			# in-kernel debugger
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
-#makeoptions 	DEBUG="-g"  # compile full symbol table
+#makeoptions 	DEBUG="-g"		# compile full symbol table
 options 	SYMTAB_SPACE=512000
 
 
@@ -187,8 +187,8 @@ pxartc0 at pxaip? addr 0x40900000 size 0x10	# RTC
 
 # DMAC support
 pxadmac0 at pxaip? addr 0x40000000 intr 25
-options		PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
-#options	PXA2X0_DMAC_FIXED_PRIORITY	# Don't want multiple priority
+options 	PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
+#options 	PXA2X0_DMAC_FIXED_PRIORITY	# Don't want multiple priority
 
 # I2C support
 ziic0 at pxaip?
@@ -221,7 +221,7 @@ zrc0 at pxaip?
 wskbd* at zrc? mux 1
 
 # LCD
-lcd0 at pxaip?
+lcd0 at pxaip?				# PXA2x0 integrated LCD Controller
 options 	PXA2X0_LCD_WRITETHROUGH
 wsdisplay* at lcd? console ?
 lcdctl0 at zssp0
@@ -314,44 +314,44 @@ cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
 #uaudio* at uhub? port ? configuration ?
 
 # USB Ethernet adapters
-aue*    at uhub? port ?         # ADMtek AN986 Pegasus based adapters
-axe*    at uhub? port ?         # ASIX AX88172 based adapters
-cdce*   at uhub? port ?         # CDC, Ethernet Networking Control Model
-cue*    at uhub? port ?         # CATC USB-EL1201A based adapters
-kue*    at uhub? port ?         # Kawasaki LSI KL5KUSB101B based adapters
-udav*   at uhub? port ?         # Davicom DM9601 based adapters
-url*    at uhub? port ?         # Realtek RTL8150L based adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+axe*	at uhub? port ?		# ASIX AX88172 based adapters
+cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+udav*	at uhub? port ?		# Davicom DM9601 based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Kyocera AIR-EDGE PHONE
 #ukyopon* at uhub? port ?
 #ucom* at ukyopon? portno ?
 
 # USB Generic driver
-ugen*   at uhub? port ?
+ugen*	at uhub? port ?
 
 # MII/PHY support
-acphy*  at mii? phy ?                   # DAltima AC101 and AMD Am79c874 PHYs
-amhphy* at mii? phy ?                   # AMD 79c901 Ethernet PHYs
-bmtphy* at mii? phy ?                   # Broadcom BCM5201 and BCM5202 PHYs
-brgphy* at mii? phy ?                   # Broadcom BCM5400-family PHYs
-dmphy*  at mii? phy ?                   # Davicom DM9101 PHYs
-exphy*  at mii? phy ?                   # 3Com internal PHYs
-glxtphy* at mii? phy ?                  # Level One LXT-1000 PHYs
-gphyter* at mii? phy ?                  # NS83861 Gig-E PHY
-icsphy* at mii? phy ?                   # Integrated Circuit Systems ICS189x
-inphy*  at mii? phy ?                   # Intel 82555 PHYs
-iophy*  at mii? phy ?                   # Intel 82553 PHYs
-lxtphy* at mii? phy ?                   # Level One LXT-970 PHYs
-makphy* at mii? phy ?                   # Marvell Semiconductor 88E1000 PHYs
-nsphy*  at mii? phy ?                   # NS83840 PHYs
-nsphyter* at mii? phy ?                 # NS83843 PHYs
-pnaphy* at mii? phy ?                   # generic HomePNA PHYs
-qsphy*  at mii? phy ?                   # Quality Semiconductor QS6612 PHYs
-sqphy*  at mii? phy ?                   # Seeq 80220/80221/80223 PHYs
-tlphy*  at mii? phy ?                   # ThunderLAN PHYs
-tqphy*  at mii? phy ?                   # TDK Semiconductor PHYs
-ukphy*  at mii? phy ?                   # generic unknown PHYs
-urlphy* at mii? phy ?                   # Realtek RTL8150L internal PHYs
+acphy*  at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
+amhphy* at mii? phy ?			# AMD 79c901 Ethernet PHYs
+bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
+brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
+dmphy*  at mii? phy ?			# Davicom DM9101 PHYs
+exphy*  at mii? phy ?			# 3Com internal PHYs
+glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
+icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
+inphy*  at mii? phy ?			# Intel 82555 PHYs
+iophy*  at mii? phy ?			# Intel 82553 PHYs
+lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+nsphy*  at mii? phy ?			# NS83840 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
+pnaphy* at mii? phy ?			# generic HomePNA PHYs
+qsphy*  at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*  at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*  at mii? phy ?			# ThunderLAN PHYs
+tqphy*  at mii? phy ?			# TDK Semiconductor PHYs
+ukphy*  at mii? phy ?			# generic unknown PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 
 # integrated MMC/SD contoller
@@ -375,7 +375,7 @@ pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
-pseudo-device   bpfilter                # Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 
 # accept filters
