@@ -27,6 +27,17 @@
 #include "sparc64-tdep.h"
 #include "sparc-nat.h"
 
+#include <machine/reg.h>
+
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+#include "gregset.h"
+ 
 /* NetBSD is different from the other OSes that support both SPARC and
    UltraSPARC in that the result of ptrace(2) depends on whether the
    traced process is 32-bit or 64-bit.  */
@@ -126,28 +137,26 @@ sparc64nbsd_fpregset_supplies_p (struct gdbarch *gdbarch, int regnum)
   return 0;
 }
 
-
 void
-supply_gregset (struct regcache *regcache, const void *gregs)
+supply_gregset (struct regcache *regcache, const gregset_t *gregs)
 {
   sparc64nbsd_supply_gregset (sparc_gregset, regcache, -1, gregs);
 }
 
 void
-supply_fpregset (struct regcache *regcache, const void *fpregs)
+supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
 {
   sparc64nbsd_supply_fpregset (regcache, -1, fpregs);
 }
 
 void
-fill_gregset (const struct regcache *regcache, void *gregs, int regnum)
+fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
 {
   sparc64nbsd_collect_gregset (sparc_gregset, regcache, regnum, gregs);
 }
 
 void
-fill_fpregset (const struct regcache *regcache,
-	       void *fpregs, int regnum)
+fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
 {
   sparc64nbsd_collect_fpregset (regcache, regnum, fpregs);
 }
