@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_schema.c,v 1.3 2012/01/25 01:22:57 dholland Exp $	*/
+/*	$NetBSD: quota_schema.c,v 1.4 2012/01/25 17:43:37 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_schema.c,v 1.3 2012/01/25 01:22:57 dholland Exp $");
+__RCSID("$NetBSD: quota_schema.c,v 1.4 2012/01/25 17:43:37 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/statvfs.h>
@@ -47,45 +47,132 @@ __RCSID("$NetBSD: quota_schema.c,v 1.3 2012/01/25 01:22:57 dholland Exp $");
 const char *
 quota_getimplname(struct quotahandle *qh)
 {
-	if (qh->qh_isnfs) {
+	switch (qh->qh_mode) {
+	    case QUOTA_MODE_NFS:
 		/* XXX this should maybe report the rquotad protocol version */
 		return "nfs via rquotad";
-	} else {
+
+	    case QUOTA_MODE_PROPLIB:
 		return __quota_proplib_getimplname(qh);
+
+	    case QUOTA_MODE_OLDFILES:
+		return __quota_proplib_getimplname(qh);
+
+	    default:
+		break;
 	}
+	errno = EINVAL;
+	return NULL;
 }
 
 /* ARGSUSED */
 unsigned
 quota_getnumidtypes(struct quotahandle *qh)
 {
-	return __quota_proplib_getnumidtypes();
+	switch (qh->qh_mode) {
+	    case QUOTA_MODE_NFS:
+		/* XXX for old rquotad versions this should be 1... */
+		return 2;
+
+	    case QUOTA_MODE_PROPLIB:
+		return __quota_proplib_getnumidtypes();
+
+	    case QUOTA_MODE_OLDFILES:
+	    default:
+		break;
+	}
+	return 2;
 }
 
 /* ARGSUSED */
 const char *
 quota_idtype_getname(struct quotahandle *qh, int idtype)
 {
-	return __quota_proplib_idtype_getname(idtype);
+	switch (qh->qh_mode) {
+	    case QUOTA_MODE_PROPLIB:
+		return __quota_proplib_idtype_getname(idtype);
+
+	    case QUOTA_MODE_NFS:
+	    case QUOTA_MODE_OLDFILES:
+		break;
+	}
+
+	switch (idtype) {
+	    case QUOTA_IDTYPE_USER:
+		return "user";
+
+	    case QUOTA_IDTYPE_GROUP:
+		return "group";
+
+	    default:
+		break;
+	}
+	errno = EINVAL;
+	return "???";
 }
 
 /* ARGSUSED */
 unsigned
 quota_getnumobjtypes(struct quotahandle *qh)
 {
-	return __quota_proplib_getnumobjtypes();
+	switch (qh->qh_mode) {
+	    case QUOTA_MODE_PROPLIB:
+		return __quota_proplib_getnumobjtypes();
+
+	    case QUOTA_MODE_NFS:
+	    case QUOTA_MODE_OLDFILES:
+	    default:
+		break;
+	}
+	return 2;
 }
 
 /* ARGSUSED */
 const char *
 quota_objtype_getname(struct quotahandle *qh, int objtype)
 {
-	return __quota_proplib_objtype_getname(objtype);
+	switch (qh->qh_mode) {
+	    case QUOTA_MODE_PROPLIB:
+		return __quota_proplib_objtype_getname(objtype);
+	    case QUOTA_MODE_NFS:
+	    case QUOTA_MODE_OLDFILES:
+	    default:
+		break;
+	}
+
+	switch (objtype) {
+	    case QUOTA_OBJTYPE_BLOCKS:
+		return "block";
+	    case QUOTA_OBJTYPE_FILES:
+		return "file";
+	    default:
+		break;
+	}
+	errno = EINVAL;
+	return "???"; /* ? */
 }
 
 /* ARGSUSED */
 int
 quota_objtype_isbytes(struct quotahandle *qh, int objtype)
 {
-	return __quota_proplib_objtype_isbytes(objtype);
+	switch (qh->qh_mode) {
+	    case QUOTA_MODE_PROPLIB:
+		return __quota_proplib_objtype_isbytes(objtype);
+	    case QUOTA_MODE_NFS:
+	    case QUOTA_MODE_OLDFILES:
+	    default:
+		break;
+	}
+
+	switch (objtype) {
+	    case QUOTA_OBJTYPE_BLOCKS:
+		return 1;
+	    case QUOTA_OBJTYPE_FILES:
+		return 0;
+	    default:
+		break;
+	}
+	errno = EINVAL;
+	return 0; /* ? */
 }
