@@ -1,4 +1,4 @@
-/*	$NetBSD: zssp.c,v 1.11 2011/07/19 15:11:49 dyoung Exp $	*/
+/*	$NetBSD: zssp.c,v 1.12 2012/01/25 16:51:17 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.11 2011/07/19 15:11:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.12 2012/01/25 16:51:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,8 @@ struct zssp_softc {
 
 static int	zssp_match(device_t, cfdata_t, void *);
 static void	zssp_attach(device_t, device_t, void *);
+static int	zssp_search(device_t, cfdata_t, const int *, void *);
+static int	zssp_print(void *, const char *);
 
 CFATTACH_DECL_NEW(zssp, sizeof(struct zssp_softc),
 	zssp_match, zssp_attach, NULL, NULL);
@@ -89,6 +91,29 @@ zssp_attach(device_t parent, device_t self, void *aux)
 		    "couldn't establish power handler\n");
 
 	zssp_init();
+
+	/* Attach all devices */
+	config_search_ia(zssp_search, self, "zssp", sc);
+}
+
+static int
+zssp_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
+{
+	struct zssp_attach_args aa;
+
+	aa.zaa_name = cf->cf_name;
+
+	if (config_match(parent, cf, &aa))
+		config_attach(parent, cf, &aa, zssp_print);
+
+	return 0;
+}
+
+static int
+zssp_print(void *aux, const char *name)
+{
+
+	return UNCONF;
 }
 
 /*
@@ -100,7 +125,10 @@ zssp_init(void)
 {
 	struct zssp_softc *sc;
 
-	KASSERT(zssp_sc != NULL);
+	if (__predict_false(zssp_sc == NULL)) {
+		aprint_error("%s: not configured.\n", __func__);
+		return;
+	}
 	sc = zssp_sc;
 
 	pxa2x0_clkman_config(CKEN_SSP, 1);
@@ -135,7 +163,10 @@ zssp_ic_start(int ic, uint32_t data)
 {
 	struct zssp_softc *sc;
 
-	KASSERT(zssp_sc != NULL);
+	if (__predict_false(zssp_sc == NULL)) {
+		aprint_error("%s: not configured.\n", __func__);
+		return;
+	}
 	sc = zssp_sc;
 
 	/* disable other ICs */
@@ -176,7 +207,10 @@ zssp_ic_stop(int ic)
 	struct zssp_softc *sc;
 	uint32_t rv;
 
-	KASSERT(zssp_sc != NULL);
+	if (__predict_false(zssp_sc == NULL)) {
+		aprint_error("%s: not configured.\n", __func__);
+		return 0;
+	}
 	sc = zssp_sc;
 
 	switch (ic) {
@@ -233,7 +267,10 @@ zssp_read_max1111(uint32_t cmd)
 	int i;
 	int s;
 
-	KASSERT(zssp_sc != NULL);
+	if (__predict_false(zssp_sc == NULL)) {
+		aprint_error("%s: not configured.\n", __func__);
+		return 0;
+	}
 	sc = zssp_sc;
 
 	s = splhigh();
@@ -286,8 +323,8 @@ zssp_read_ads7846(uint32_t cmd)
 	uint32_t val;
 	int s;
 
-	if (zssp_sc == NULL) {
-		printf("zssp_read_ads7846: not configured\n");
+	if (__predict_false(zssp_sc == NULL)) {
+		aprint_error("%s: not configured\n", __func__);
 		return 0;
 	}
 	sc = zssp_sc;
