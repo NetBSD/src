@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.36 2012/01/25 02:04:35 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.37 2012/01/25 03:49:12 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.36 2012/01/25 02:04:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.37 2012/01/25 03:49:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,15 @@ struct voodoofb_softc {
 	int sc_bits_per_pixel;
 	int sc_width, sc_height, sc_linebytes;
 	const struct videomode *sc_videomode;
+
+	/* glyph cache */
+	long sc_defattr, sc_kernattr;
+	uint32_t sc_glyphs_defattr[256];
+	uint32_t sc_glyphs_kernattr[256];
+	int sc_numglyphs, sc_usedglyphs;
+	uint32_t sc_cache;	/* offset where cache starts */
+	uint32_t sc_fmt;	/* *fmt register */
+	void *sc_font;
 
 	/* i2c stuff */
 	struct i2c_controller sc_i2c;
@@ -160,6 +169,8 @@ static void	voodoofb_setup_mono(struct voodoofb_softc *, int, int, int,
 static void	voodoofb_feed_line(struct voodoofb_softc *, int, uint8_t *);
 
 static void	voodoofb_wait_idle(struct voodoofb_softc *);
+static void	voodoofb_init_glyphcache(struct voodoofb_softc *,
+			    struct rasops_info *);
 
 #ifdef VOODOOFB_ENABLE_INTR
 static int	voodoofb_intr(void *);
@@ -420,6 +431,8 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	voodoofb_set_videomode(sc, sc->sc_videomode);
+
+	sc->sc_font = NULL;
 
 	vcons_init(&sc->vd, sc, &voodoofb_defaultscreen, &voodoofb_accessops);
 	sc->vd.init_screen = voodoofb_init_screen;
@@ -758,7 +771,7 @@ voodoofb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct voodoofb_softc *sc = scr->scr_cookie;
 	uint8_t *data;
-	uint32_t bg, latch = 0, bg8, fg8, pixel;
+	uint32_t bg, latch = 0, bg8, fg8, pixel, save_offset = 0;
 	int i, x, y, wi, he, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0, fgo, bgo, j;
 
@@ -778,9 +791,33 @@ voodoofb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		voodoofb_rectfill(sc, x, y, wi, he, bg);
 		return;
 	}
+
+	/* first, see if it's in the cache */
+	if ((attr == sc->sc_defattr) && (c < 256)) {
+		uint32_t offset = sc->sc_glyphs_defattr[c];
+		if (offset != 0) {
+			voodoo3_make_room(sc, 8);
+			voodoo3_write32(sc, SRCBASE, offset);
+			voodoo3_write32(sc, DSTBASE, 0);
+			voodoo3_write32(sc, SRCFORMAT,	sc->sc_fmt);
+			voodoo3_write32(sc, DSTFORMAT,	sc->sc_linebytes | FMT_8BIT);
+			voodoo3_write32(sc, DSTSIZE,	wi | (he << 16));
+			voodoo3_write32(sc, DSTXY,	x | (y << 16));
+			voodoo3_write32(sc, SRCXY,	0);
+			voodoo3_write32(sc, COMMAND_2D, COMMAND_2D_S2S_BITBLT | 
+			    (ROP_COPY << 24) | SST_2D_GO);
+			return;
+		} else {
+			int slot = sc->sc_usedglyphs;
+			sc->sc_usedglyphs++;
+			save_offset = sc->sc_cache + (slot * ri->ri_fontscale);
+			sc->sc_glyphs_defattr[c] = save_offset;
+		}
+	}
 	data = WSFONT_GLYPH(c, font);
 
-	voodoo3_make_room(sc, 6);
+	voodoo3_make_room(sc, 7);
+	voodoo3_write32(sc, DSTBASE, 0);
 	voodoo3_write32(sc, SRCFORMAT,	FMT_8BIT | FMT_PAD_BYTE);
 	voodoo3_write32(sc, DSTFORMAT,	sc->sc_linebytes | FMT_8BIT);
 	voodoo3_write32(sc, DSTSIZE,	wi | (he << 16));
@@ -847,6 +884,19 @@ voodoofb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	if ((i & 3) != 0) {
 		latch = latch << ((4 - (i & 3)) << 3);	
 		voodoo3_write32s(sc, LAUNCH_2D, latch);
+	}
+	if (save_offset != 0) {
+		/* save the glyph we just drew */
+		voodoo3_make_room(sc, 8);
+		voodoo3_write32(sc, SRCBASE, 0);
+		voodoo3_write32(sc, DSTBASE, save_offset);
+		voodoo3_write32(sc, SRCFORMAT,	sc->sc_linebytes | FMT_8BIT);
+		voodoo3_write32(sc, DSTFORMAT,	sc->sc_fmt);
+		voodoo3_write32(sc, DSTSIZE,	wi | (he << 16));
+		voodoo3_write32(sc, DSTXY,	0);
+		voodoo3_write32(sc, SRCXY,	x | (y << 16));
+		voodoo3_write32(sc, COMMAND_2D, COMMAND_2D_S2S_BITBLT | 
+			    (ROP_COPY << 24) | SST_2D_GO);
 	}
 }
 
@@ -950,8 +1000,10 @@ voodoofb_bitblt(struct voodoofb_softc *sc, int xs, int ys, int xd, int yd, int w
 		ys += (height - 1);
 		yd += (height - 1);
 	}
-	voodoo3_make_room(sc, 6);
+	voodoo3_make_room(sc, 8);
 	
+	voodoo3_write32(sc, SRCBASE, 0);
+	voodoo3_write32(sc, DSTBASE, 0);
 	voodoo3_write32(sc, SRCFORMAT, fmt);
 	voodoo3_write32(sc, DSTFORMAT, fmt);
 	voodoo3_write32(sc, DSTSIZE,   width | (height << 16));
@@ -970,8 +1022,9 @@ voodoofb_rectfill(struct voodoofb_softc *sc, int x, int y, int width,
 	fmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel + 
 	    ((sc->sc_bits_per_pixel == 8) ? 0 : 8)) << 13);
 
-	voodoo3_make_room(sc, 6);
+	voodoo3_make_room(sc, 7);
 	voodoo3_write32(sc, DSTFORMAT, fmt);
+	voodoo3_write32(sc, DSTBASE, 0);
 	voodoo3_write32(sc, COLORFORE, colour);
 	voodoo3_write32(sc, COLORBACK, colour);
 	voodoo3_write32(sc, COMMAND_2D, COMMAND_2D_FILLRECT | (ROP_COPY << 24));
@@ -988,7 +1041,9 @@ voodoofb_rectinvert(struct voodoofb_softc *sc, int x, int y, int width,
 	fmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel + 
 	    ((sc->sc_bits_per_pixel == 8) ? 0 : 8)) << 13);
 
-	voodoo3_make_room(sc, 6);
+	voodoo3_make_room(sc, 8);
+	voodoo3_write32(sc, SRCBASE, 0);
+	voodoo3_write32(sc, DSTBASE, 0);
 	voodoo3_write32(sc, DSTFORMAT,	fmt);
 	voodoo3_write32(sc, COMMAND_2D,	COMMAND_2D_FILLRECT | 
 	    (ROP_INVERT << 24));
@@ -1006,9 +1061,10 @@ voodoofb_setup_mono(struct voodoofb_softc *sc, int xd, int yd, int width, int he
 	dfmt = sc->sc_linebytes | ((sc->sc_bits_per_pixel + 
 	    ((sc->sc_bits_per_pixel == 8) ? 0 : 8)) << 13);
 
-	voodoo3_make_room(sc, 9);
+	voodoo3_make_room(sc, 10);
 	voodoo3_write32(sc, SRCFORMAT,	sfmt);
 	voodoo3_write32(sc, DSTFORMAT,	dfmt);
+	voodoo3_write32(sc, DSTBASE, 0);
 	voodoo3_write32(sc, COLORFORE,	fg);
 	voodoo3_write32(sc, COLORBACK,	bg);
 	voodoo3_write32(sc, DSTSIZE,	width | (height << 16));
@@ -1207,6 +1263,10 @@ voodoofb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.cursor = voodoofb_cursor;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = voodoofb_putchar_aa;
+		ri->ri_ops.allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG,
+		     0, &sc->sc_defattr);
+		sc->sc_kernattr = (WS_KERNEL_FG << 24) | (WS_KERNEL_BG << 16);
+		voodoofb_init_glyphcache(sc, ri);
 	} else {
 		ri->ri_ops.putchar = voodoofb_putchar;
 	}
@@ -1541,6 +1601,7 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 	voodoofb_wait_idle(sc);
 	printf("%s: switched to %dx%d, %d bit\n", device_xname(sc->sc_dev),
 	    sc->sc_width, sc->sc_height, sc->sc_bits_per_pixel);
+	sc->sc_numglyphs = 0;	/* invalidate the glyph cache */
 }
 
 static void
@@ -1749,4 +1810,28 @@ static int
 voodoofb_i2c_write_byte(void *cookie, uint8_t val, int flags)
 {
 	return (i2c_bitbang_write_byte(cookie, val, flags, &voodoofb_i2cbb_ops));
+}
+
+/* glyph cache */
+static void
+voodoofb_init_glyphcache(struct voodoofb_softc *sc, struct rasops_info *ri)
+{
+	int bufsize, i;
+
+	if (sc->sc_numglyphs != 0) {
+		/* re-initialize */
+		if (ri->ri_font == sc->sc_font) {
+			/* nothing to do, keep using the same cache */
+			return;
+		}
+	}
+	sc->sc_cache = (ri->ri_width * ri->ri_stride + 3) & 0xfffffffc;
+	bufsize = sc->sc_memsize - sc->sc_cache;
+	sc->sc_numglyphs = bufsize / ri->ri_fontscale;
+	sc->sc_usedglyphs = 0;
+	for (i = 0; i < 256; i++) {
+		sc->sc_glyphs_kernattr[i] = 0;
+		sc->sc_glyphs_defattr[i] = 0;
+	}
+	sc->sc_fmt = ri->ri_font->fontwidth | FMT_8BIT;
 }
