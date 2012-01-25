@@ -30,8 +30,42 @@
 
 #include <sys/types.h>
 #include <machine/pcb.h>
+#include <machine/reg.h>
 
 #include "bsd-kvm.h"
+
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+#include "gregset.h"
+ 
+void
+supply_gregset (struct regcache *regcache, const gregset_t *gregs)
+{
+  sparc_supply_gregset (sparc_gregset, regcache, -1, gregs);
+}
+
+void
+supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
+{
+  sparc_supply_fpregset (regcache, -1, fpregs);
+}
+
+void
+fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
+{
+  sparc_collect_gregset (sparc_gregset, regcache, regnum, gregs);
+}
+
+void
+fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
+{
+  sparc_collect_fpregset (regcache, regnum, fpregs);
+}
 
 static int
 sparc32nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
