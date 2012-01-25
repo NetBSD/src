@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_open.c,v 1.4 2012/01/09 15:41:58 dholland Exp $	*/
+/*	$NetBSD: quota_open.c,v 1.5 2012/01/25 17:43:37 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_open.c,v 1.4 2012/01/09 15:41:58 dholland Exp $");
+__RCSID("$NetBSD: quota_open.c,v 1.5 2012/01/25 17:43:37 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/statvfs.h>
@@ -47,30 +47,40 @@ quota_open(const char *path)
 
 	struct statvfs stv;
 	struct quotahandle *qh;
-	int isnfs;
+	int mode;
 	int serrno;
+
+	/*
+	 * Probe order:
+	 *
+	 *    1. Check for NFS. NFS quota ops don't go to the kernel
+	 *    at all but instead do RPCs to the NFS server's
+	 *    rpc.rquotad, so it doesn't matter what the kernel
+	 *    thinks.
+	 *
+	 *    2. Check if quotas are enabled in the mount flags. If
+	 *    so, we can do quotactl calls.
+	 *
+	 *    3. Check if the volume is listed in fstab as one of
+	 *    the filesystem types supported by quota_oldfiles.c,
+	 *    and with the proper mount options to enable quotas.
+	 */
 
 	if (statvfs(path, &stv) < 0) {
 		return NULL;
 	}
 
-	/*
-	 * We need to know up front if the volume is NFS. If so, we
-	 * don't go to the kernel at all but instead do RPCs to the
-	 * NFS server's rpc.rquotad. Therefore, don't check the
-	 * mount flags for quota support or do anything else that
-	 * reaches the kernel.
-	 */
-	
+	__quota_oldfiles_load_fstab();
+
 	if (!strcmp(stv.f_fstypename, "nfs")) {
-		isnfs = 1;
+		mode = QUOTA_MODE_NFS;
+	} else if ((stv.f_flag & ST_QUOTA) != 0) {
+		mode = QUOTA_MODE_PROPLIB;
+	} else if (__quota_oldfiles_infstab(stv.f_mntonname)) {
+		mode = QUOTA_MODE_OLDFILES;
 	} else {
-		isnfs = 0;
-		if ((stv.f_flag & ST_QUOTA) == 0) {
-			/* XXX: correct errno? */
-			errno = EOPNOTSUPP;
-			return NULL;
-		}
+		errno = EOPNOTSUPP;
+		return NULL;
 	}
 
 	qh = malloc(sizeof(*qh));
@@ -100,9 +110,9 @@ quota_open(const char *path)
 		return NULL;
 	}
 
-	qh->qh_isnfs = isnfs;
+	qh->qh_mode = mode;
 
-	qh->qh_hasoldfiles = 0;
+	qh->qh_oldfilesopen = 0;
 	qh->qh_userfile = -1;
 	qh->qh_groupfile = -1;
 
