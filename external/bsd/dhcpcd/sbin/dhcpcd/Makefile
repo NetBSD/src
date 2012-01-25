@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.10 2011/01/03 11:33:44 roy Exp $
+# $NetBSD: Makefile,v 1.11 2012/01/25 14:39:05 roy Exp $
 #
 
 PROG=		dhcpcd
 SRCS=		arp.c bind.c common.c control.c configure.c dhcp.c dhcpcd.c \
-		duid.c eloop.c if-options.c if-pref.c ipv4ll.c net.c \
+		duid.c eloop.c if-options.c if-pref.c ipv4ll.c ipv6rs.c net.c \
 		signals.c
 SRCS+=		bpf.c if-bsd.c platform-bsd.c
 
