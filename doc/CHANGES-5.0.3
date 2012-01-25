@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.58 2012/01/02 23:55:31 snj Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.59 2012/01/25 20:49:02 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2895,4 +2895,26 @@ xsrc/xfree/xc/programs/Xserver/mi/misprite.c	1.2
 	surprising results, namely the one in Xrender praised in
 	CVE-2010-1166.
 	[is, ticket #1707]
+
+crypto/dist/openssl/ssl/d1_pkt.c	patch
+
+	Address CVE-2012-0050.
+	[drochner, ticket #1710]
+
+crypto/dist/openssl/crypto/x509v3/pcy_map.c	patch
+crypto/dist/openssl/crypto/x509v3/pcy_tree.c	patch
+
+	Address CVE-2011-4109.
+	[drochner, ticket #1711]
+
+crypto/dist/openssl/engines/ccgost/gost2001_keyx.c	patch
+crypto/dist/openssl/engines/ccgost/gost94_keyx.c	patch
+
+	Address CVE-2011-4109.
+	[drochner, ticket #1712]
+
+crypto/dist/openssl/ssl/s3_enc.c        patch
+
+	Address CVE-2011-4576.
+	[drochner, ticket #1713]
 
