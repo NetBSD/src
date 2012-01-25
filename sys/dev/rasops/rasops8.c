@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.31 2012/01/25 16:38:27 macallan Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.32 2012/01/25 20:18:04 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.31 2012/01/25 16:38:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.32 2012/01/25 20:18:04 macallan Exp $");
 
 #include "opt_rasops.h"
 
@@ -144,18 +144,12 @@ rasops8_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		u_char c = clr[0];
 
 		while (height--) {
-			dp = rp;
-			rp += ri->ri_stride;
+			memset(rp, c, width);
 			if (ri->ri_hwbits) {
-				hp = hrp;
+				memset(hrp, c, width);
 				hrp += ri->ri_stride;
 			}
-
-			for (cnt = width; cnt; cnt--) {
-				*dp++ = c;
-				if (ri->ri_hwbits)
-					*hp++ = c;
-			}
+			rp += ri->ri_stride;
 		}
 	} else {
 		fr = WSFONT_GLYPH(uc, font);
@@ -199,7 +193,7 @@ rasops8_putchar(void *cookie, int row, int col, u_int uc, long attr)
 static void
 rasops8_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 {
-	int width, height, cnt, fs;
+	int width, height, fs;
 	u_char *dp, *rp, *hp, *hrp, *fr, bg, fg, pixel;
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
@@ -233,18 +227,12 @@ rasops8_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	if (uc == ' ') {
 
 		while (height--) {
-			dp = rp;
-			rp += ri->ri_stride;
+			memset(rp, bg, width);
 			if (ri->ri_hwbits) {
-				hp = hrp;
+				memset(hrp, bg, width);
 				hrp += ri->ri_stride;
 			}
-
-			for (cnt = width; cnt; cnt--) {
-				*dp++ = bg;
-				if (ri->ri_hwbits)
-					*hp++ = bg;
-			}
+			rp += ri->ri_stride;
 		}
 	} else {
 		fr = WSFONT_GLYPH(uc, font);
