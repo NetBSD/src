@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_oldfiles.c,v 1.2 2012/01/09 15:45:19 dholland Exp $	*/
+/*	$NetBSD: quota_oldfiles.c,v 1.3 2012/01/25 17:43:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -49,6 +49,14 @@
 #include <quota.h>
 #include "quotapvt.h"
 
+struct oldfiles_fstabentry {
+	char *ofe_mountpoint;
+	int ofe_hasuserquota;
+	int ofe_hasgroupquota;
+	char *ofe_userquotafile;
+	char *ofe_groupquotafile;
+};
+
 struct oldfiles_quotacursor {
 	unsigned oqc_doingusers;
 	unsigned oqc_doinggroups;
@@ -62,6 +70,172 @@ struct oldfiles_quotacursor {
 	unsigned oqc_pos;
 	unsigned oqc_didblocks;
 };
+
+static struct oldfiles_fstabentry *__quota_oldfiles_fstab;
+static unsigned __quota_oldfiles_numfstab;
+static unsigned __quota_oldfiles_maxfstab;
+static int __quota_oldfiles_fstab_loaded;
+
+static const struct oldfiles_fstabentry *
+__quota_oldfiles_find_fstabentry(const char *mountpoint)
+{
+	unsigned i;
+
+	for (i = 0; i < __quota_oldfiles_numfstab; i++) {
+		if (!strcmp(mountpoint,
+			    __quota_oldfiles_fstab[i].ofe_mountpoint)) {
+			return &__quota_oldfiles_fstab[i];
+		}
+	}
+	return NULL;
+}
+
+static int
+__quota_oldfiles_add_fstabentry(struct oldfiles_fstabentry *ofe)
+{
+	unsigned newmax;
+	struct oldfiles_fstabentry *newptr;
+
+	if (__quota_oldfiles_numfstab + 1 >= __quota_oldfiles_maxfstab) {
+		if (__quota_oldfiles_maxfstab == 0) {
+			newmax = 4;
+		} else {
+			newmax = __quota_oldfiles_maxfstab * 2;
+		}
+		newptr = realloc(__quota_oldfiles_fstab,
+				 newmax * sizeof(__quota_oldfiles_fstab[0]));
+		if (newptr == NULL) {
+			return -1;
+		}
+		__quota_oldfiles_maxfstab = newmax;
+		__quota_oldfiles_fstab = newptr;
+	}
+
+	__quota_oldfiles_fstab[__quota_oldfiles_numfstab++] = *ofe;
+	return 0;
+}
+
+static int
+__quota_oldfiles_fill_fstabentry(const struct fstab *fs,
+				 struct oldfiles_fstabentry *ofe)
+{
+	char buf[sizeof(fs->fs_mntops)];
+	char *opt, *state, *s;
+	int serrno;
+	int ret = 0;
+
+	/*
+	 * Inspect the mount options to find the quota files.
+	 * XXX this info should be gotten from the kernel.
+	 *
+	 * The options are:
+	 *    userquota[=path]          enable user quotas
+	 *    groupquota[=path]         enable group quotas
+	 */
+
+	ofe->ofe_mountpoint = NULL;
+	ofe->ofe_hasuserquota = ofe->ofe_hasgroupquota = 0;
+	ofe->ofe_userquotafile = ofe->ofe_groupquotafile = NULL;
+
+	strlcpy(buf, fs->fs_mntops, sizeof(buf));
+	for (opt = strtok_r(buf, ",", &state);
+	     opt != NULL;
+	     opt = strtok_r(NULL, ",", &state)) {
+		s = strchr(opt, '=');
+		if (s != NULL) {
+			*(s++) = '\0';
+		}
+		if (!strcmp(opt, "userquota")) {
+			ret = 1;
+			ofe->ofe_hasuserquota = 1;
+			if (s != NULL) {
+				ofe->ofe_userquotafile = strdup(s);
+				if (ofe->ofe_userquotafile == NULL) {
+					goto fail;
+				}
+			}
+		} else if (!strcmp(opt, "groupquota")) {
+			ret = 1;
+			ofe->ofe_hasgroupquota = 1;
+			if (s != NULL) {
+				ofe->ofe_groupquotafile = strdup(s);
+				if (ofe->ofe_groupquotafile == NULL) {
+					goto fail;
+				}
+			}
+		}
+	}
+
+	if (ret == 1) {
+		ofe->ofe_mountpoint = strdup(fs->fs_file);
+		if (ofe->ofe_mountpoint == NULL) {
+			goto fail;
+		}
+	}
+
+	return ret;
+
+fail:
+	serrno = errno;
+	if (ofe->ofe_mountpoint != NULL) {
+		free(ofe->ofe_mountpoint);
+	}
+	if (ofe->ofe_groupquotafile != NULL) {
+		free(ofe->ofe_groupquotafile);
+	}
+	if (ofe->ofe_userquotafile != NULL) {
+		free(ofe->ofe_userquotafile);
+	}
+	errno = serrno;
+	return -1;
+}
+
+void
+__quota_oldfiles_load_fstab(void)
+{
+	struct oldfiles_fstabentry ofe;
+	struct fstab *fs;
+	int result;
+
+	if (__quota_oldfiles_fstab_loaded) {
+		return;
+	}
+
+	/*
+	 * XXX: should be able to handle ext2fs quota1 files too
+	 *
+	 * XXX: should use getfsent_r(), but there isn't one.
+	 */
+	setfsent();
+	while ((fs = getfsent()) != NULL) {
+		if (!strcmp(fs->fs_vfstype, "ffs") ||
+		    !strcmp(fs->fs_vfstype, "lfs")) {
+			result = __quota_oldfiles_fill_fstabentry(fs, &ofe);
+			if (result == -1) {
+				goto failed;
+			}
+			if (result == 0) {
+				continue;
+			}
+			if (__quota_oldfiles_add_fstabentry(&ofe)) {
+				goto failed;
+			}
+		}
+	}
+	endfsent();
+	__quota_oldfiles_fstab_loaded = 1;
+
+	return;
+failed:
+	warn("Failed reading fstab");
+	return;
+}
+
+int
+__quota_oldfiles_infstab(const char *mountpoint)
+{
+	return __quota_oldfiles_find_fstabentry(mountpoint) != NULL;
+}
 
 static uint64_t
 dqblk_getlimit(uint32_t val)
@@ -144,79 +318,35 @@ __quota_oldfiles_initialize(struct quotahandle *qh)
 {
 	static const char *const names[] = INITQFNAMES;
 
-	struct fstab *fs;
-	char buf[sizeof(fs->fs_mntops)];
-	char *opt, *state, *s;
+	const struct oldfiles_fstabentry *ofe;
 	char path[PATH_MAX];
 	const char *userquotafile, *groupquotafile;
-	int hasuserquota, hasgroupquota;
 
-	if (qh->qh_hasoldfiles) {
+	if (qh->qh_oldfilesopen) {
 		/* already initialized */
 		return 0;
 	}
 
 	/*
 	 * Find the fstab entry.
-	 *
-	 * XXX: should be able to handle not just ffs quota1 files but
-	 * also lfs and even ext2fs.
 	 */
-	setfsent();
-	while ((fs = getfsent()) != NULL) {
-		if (!strcmp(fs->fs_vfstype, "ffs") &&
-		    !strcmp(fs->fs_file, qh->qh_mountpoint)) {
-			break;
-		}
-	}
-	endfsent();
-
-	if (fs == NULL) {
+	ofe = __quota_oldfiles_find_fstabentry(qh->qh_mountpoint);
+	if (ofe == NULL) {
 		warnx("%s not found in fstab", qh->qh_mountpoint);
 		errno = ENXIO;
 		return -1;
 	}
 
-	/*
-	 * Inspect the mount options to find the quota files.
-	 * XXX this info should be gotten from the kernel.
-	 *
-	 * The options are:
-	 *    userquota[=path]          enable user quotas
-	 *    groupquota[=path]         enable group quotas
-	 */
-	hasuserquota = hasgroupquota = 0;
-	userquotafile = groupquotafile = NULL;
-	strlcpy(buf, fs->fs_mntops, sizeof(buf));
-	for (opt = strtok_r(buf, ",", &state);
-	     opt != NULL;
-	     opt = strtok_r(NULL, ",", &state)) {
-		s = strchr(opt, '=');
-		if (s != NULL) {
-			*(s++) = '\0';
-		}
-		if (!strcmp(opt, "userquota")) {
-			hasuserquota = 1;
-			if (s != NULL) {
-				userquotafile = s;
-			}
-		} else if (!strcmp(opt, "groupquota")) {
-			hasgroupquota = 1;
-			if (s != NULL) {
-				groupquotafile = s;
-			}
-		}
-	}
-
-	if (!hasuserquota && !hasgroupquota) {
+	if (!ofe->ofe_hasuserquota && !ofe->ofe_hasgroupquota) {
 		errno = ENXIO;
 		return -1;
 	}
 
-	if (hasuserquota) {
+	if (ofe->ofe_hasuserquota) {
+		userquotafile = ofe->ofe_userquotafile;
 		if (userquotafile == NULL) {
 			(void)snprintf(path, sizeof(path), "%s/%s.%s",
-				       fs->fs_file,
+				       qh->qh_mountpoint,
 				       QUOTAFILENAME, names[USRQUOTA]);
 			userquotafile = path;
 		}
@@ -225,10 +355,11 @@ __quota_oldfiles_initialize(struct quotahandle *qh)
 			return -1;
 		}
 	}
-	if (hasgroupquota) {
+	if (ofe->ofe_hasgroupquota) {
+		groupquotafile = ofe->ofe_groupquotafile;
 		if (groupquotafile == NULL) {
 			(void)snprintf(path, sizeof(path), "%s/%s.%s",
-				       fs->fs_file,
+				       qh->qh_mountpoint,
 				       QUOTAFILENAME, names[GRPQUOTA]);
 			groupquotafile = path;
 		}
@@ -238,7 +369,7 @@ __quota_oldfiles_initialize(struct quotahandle *qh)
 		}
 	}
 
-	qh->qh_hasoldfiles = 1;
+	qh->qh_oldfilesopen = 1;
 
 	return 0;
 }
@@ -246,7 +377,7 @@ __quota_oldfiles_initialize(struct quotahandle *qh)
 const char *
 __quota_oldfiles_getimplname(struct quotahandle *qh)
 {
-	return "ffs quota1 direct file access";
+	return "ufs/ffs quota v1 file access";
 }
 
 static int
@@ -257,6 +388,12 @@ __quota_oldfiles_doget(struct quotahandle *qh, const struct quotakey *qk,
 	off_t pos;
 	struct dqblk dq;
 	ssize_t result;
+
+	if (!qh->qh_oldfilesopen) {
+		if (__quota_oldfiles_initialize(qh)) {
+			return -1;
+		}
+	}
 
 	switch (qk->qk_idtype) {
 	    case QUOTA_IDTYPE_USER:
@@ -338,6 +475,12 @@ __quota_oldfiles_doput(struct quotahandle *qh, const struct quotakey *qk,
 	struct quotaval qv2;
 	struct dqblk dq;
 	ssize_t result;
+
+	if (!qh->qh_oldfilesopen) {
+		if (__quota_oldfiles_initialize(qh)) {
+			return -1;
+		}
+	}
 
 	switch (qk->qk_idtype) {
 	    case QUOTA_IDTYPE_USER:
@@ -464,6 +607,8 @@ __quota_oldfiles_cursor_create(struct quotahandle *qh)
 	struct oldfiles_quotacursor *oqc;
 	struct stat st;
 	int serrno;
+
+	/* quota_opencursor calls initialize for us, no need to do it here */
 
 	oqc = malloc(sizeof(*oqc));
 	if (oqc == NULL) {
