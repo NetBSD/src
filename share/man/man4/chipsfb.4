@@ -1,4 +1,4 @@
-.\"	$NetBSD: chipsfb.4,v 1.3 2011/10/12 16:59:20 njoly Exp $
+.\"	$NetBSD: chipsfb.4,v 1.4 2012/01/25 04:18:31 macallan Exp $
 .\"
 .\" Copyright (c) 2007 Michael Lorenz
 .\" All rights reserved.
@@ -11,8 +11,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. The name of the author may not be used to endorse or promote products
-.\"    derived from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -26,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 12, 2007
+.Dd January 24 2012
 .Dt CHIPSFB 4
 .Os
 .Sh NAME
@@ -34,6 +32,7 @@
 .Nd Chips \*[Am] Technologies 6555x based graphics chips
 .Sh SYNOPSIS
 .Cd "chipsfb* at pci?"
+.Cd "chipsfb* at ofbus?"
 .Cd "wsdisplay* at chipsfb?"
 .Sh DESCRIPTION
 The
@@ -45,4 +44,4 @@ framebuffer, but all graphics operations used by wsdisplay use the blitter.
 .Xr wscons 4 ,
 .Xr wsdisplay 4
 .Sh BUGS
-The driver has been tested on macppc only.
+The driver has been tested on macppc and shark only.
