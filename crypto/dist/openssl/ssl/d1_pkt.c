@@ -375,6 +375,8 @@ dtls1_process_record(SSL *s)
 	SSL3_RECORD *rr;
 	unsigned int mac_size;
 	unsigned char md[EVP_MAX_MD_SIZE];
+	int decryption_failed_or_bad_record_mac = 0;
+	unsigned char *mac = NULL;
 
 
 	rr= &(s->s3->rrec);
@@ -409,12 +411,10 @@ dtls1_process_record(SSL *s)
 	enc_err = s->method->ssl3_enc->enc(s,0);
 	if (enc_err <= 0)
 		{
-		if (enc_err == 0)
-			/* SSLerr() and ssl3_send_alert() have been called */
-			goto err;
-
-		/* otherwise enc_err == -1 */
-		goto decryption_failed_or_bad_record_mac;
+		/* To minimize information leaked via timing, we will always
+		 * perform all computations before discarding the message.
+		 */
+		decryption_failed_or_bad_record_mac = 1;
 		}
 
 #ifdef TLS_DEBUG
@@ -440,26 +440,30 @@ printf("\n");
 			SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_PRE_MAC_LENGTH_TOO_LONG);
 			goto f_err;
 #else
-			goto decryption_failed_or_bad_record_mac;
+			decryption_failed_or_bad_record_mac = 1;
 #endif			
 			}
 		/* check the MAC for rr->input (it's in mac_size bytes at the tail) */
-		if (rr->length < mac_size)
+		if (rr->length >= mac_size)
 			{
-#if 0 /* OK only for stream ciphers */
-			al=SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_LENGTH_TOO_SHORT);
-			goto f_err;
-#else
-			goto decryption_failed_or_bad_record_mac;
-#endif
+			rr->length -= mac_size;
+			mac = &rr->data[rr->length];
 			}
-		rr->length-=mac_size;
+		else
+			rr->length = 0;
 		i=s->method->ssl3_enc->mac(s,md,0);
-		if (memcmp(md,&(rr->data[rr->length]),mac_size) != 0)
+		if (i < 0 || mac == NULL || memcmp(md, mac, mac_size) != 0)
 			{
-			goto decryption_failed_or_bad_record_mac;
+			decryption_failed_or_bad_record_mac = 1;
 			}
+		}
+
+	if (decryption_failed_or_bad_record_mac)
+		{
+		/* decryption failed, silently discard message */
+		rr->length = 0;
+		s->packet_length = 0;
+		goto err;
 		}
 
 	/* r->length is now just compressed */
@@ -500,14 +504,6 @@ printf("\n");
 	dtls1_record_bitmap_update(s, &(s->d1->bitmap));/* Mark receipt of record. */
 	return(1);
 
-decryption_failed_or_bad_record_mac:
-	/* Separate 'decryption_failed' alert was introduced with TLS 1.0,
-	 * SSL 3.0 only has 'bad_record_mac'.  But unless a decryption
-	 * failure is directly visible from the ciphertext anyway,
-	 * we should not reveal which kind of error occured -- this
-	 * might become visible to an attacker (e.g. via logfile) */
-	al=SSL_AD_BAD_RECORD_MAC;
-	SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
 err:
