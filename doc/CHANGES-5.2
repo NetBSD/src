@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.127 2012/01/25 17:36:37 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.128 2012/01/25 18:08:17 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5876,4 +5876,16 @@ sys/dev/ic/rtl81x9var.h				1.52
 
 	Add support to recognize the 8168E model of this chip.
 	[garbled, ticket #1698]
+
+sys/dev/pci/if_wm.c				1.225
+
+	Disable hardware vlan tagging on 82576 chips.
+	[bouyer, ticket #1699]
+
+sys/dev/fss.c					1.79
+sys/dev/fssvar.h				1.26
+
+	Fix FSSIOCSET50: needs to use the 5.0 struct fss_set, not the current
+	one.
+	[bouyer, ticket #1700]
 
