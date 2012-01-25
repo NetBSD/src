@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.127 2011/07/27 14:35:34 uebayasi Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.128 2012/01/25 00:28:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.127 2011/07/27 14:35:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.128 2012/01/25 00:28:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +357,7 @@ dofilewrite(int fd, struct file *fp, const void *buf,
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE) {
+		if (error == EPIPE && !(fp->f_flag & FNOSIGPIPE)) {
 			mutex_enter(proc_lock);
 			psignal(curproc, SIGPIPE);
 			mutex_exit(proc_lock);
@@ -484,7 +484,7 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE) {
+		if (error == EPIPE && !(fp->f_flag & FNOSIGPIPE)) {
 			mutex_enter(proc_lock);
 			psignal(curproc, SIGPIPE);
 			mutex_exit(proc_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.23 2011/10/31 21:31:29 christos Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.24 2012/01/25 00:28:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.23 2011/10/31 21:31:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.24 2012/01/25 00:28:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,6 +401,18 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	case F_SETFD:
 		fd_set_exclose(l, fd,
 		    ((long)SCARG(uap, arg) & FD_CLOEXEC) != 0);
+		break;
+
+	case F_GETNOSIGPIPE:
+		*retval = (fp->f_flag & FNOSIGPIPE) != 0;
+		break;
+
+	case F_SETNOSIGPIPE:
+		if (SCARG(uap, arg))
+			fp->f_flag |= FNOSIGPIPE;
+		else
+			fp->f_flag &= ~FNOSIGPIPE;
+		*retval = 0;
 		break;
 
 	case F_GETFL:
