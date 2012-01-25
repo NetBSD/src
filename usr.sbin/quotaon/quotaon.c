@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.27 2011/09/30 22:08:20 jym Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.28 2012/01/25 01:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.27 2011/09/30 22:08:20 jym Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.28 2012/01/25 01:28:40 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ static int	gflag;		/* operate on group quotas */
 static int	uflag;		/* operate on user quotas */
 static int	vflag;		/* verbose */
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static int quotaonoff(struct fstab *, int, int, const char *);
 static int readonly(struct fstab *);
 
