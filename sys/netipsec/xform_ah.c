@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.35 2012/01/24 21:57:03 drochner Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.36 2012/01/25 20:31:23 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.35 2012/01/24 21:57:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.36 2012/01/25 20:31:23 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -641,7 +641,7 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
 	struct newah *ah;
-	int hl, rplen, authsize;
+	int hl, rplen, authsize, error;
 
 	struct cryptodesc *crda;
 	struct cryptop *crp;
@@ -746,10 +746,18 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		return ENOBUFS;
 	}
 
+	error = m_makewritable(&m, 0, skip + rplen + authsize, M_NOWAIT);
+	if (error) {
+		m_freem(m);
+		DPRINTF(("ah_input: failed to copyback_cow\n"));
+		AH_STATINC(AH_STAT_HDROPS);
+		free(tc, M_XDATA);
+		crypto_freereq(crp);
+		return error;
+	}
+
 	/* Only save information if crypto processing is needed. */
 	if (mtag == NULL) {
-		int error;
-
 		/*
 		 * Save the authenticator, the skipped portion of the packet,
 		 * and the AH header.
