@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.61 2011/06/26 16:43:12 christos Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.62 2012/01/25 00:28:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -200,6 +200,7 @@ file_t	*fd_getfile2(proc_t *, unsigned);
 void	fd_putfile(unsigned);
 int	fd_getvnode(unsigned, file_t **);
 int	fd_getsock(unsigned, struct socket **);
+int	fd_getsock1(unsigned, struct socket **, file_t **);
 void	fd_putvnode(unsigned);
 void	fd_putsock(unsigned);
 int	fd_close(unsigned);
