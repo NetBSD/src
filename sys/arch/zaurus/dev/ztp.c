@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.10 2010/02/24 22:37:56 dyoung Exp $	*/
+/*	$NetBSD: ztp.c,v 1.11 2012/01/25 15:58:10 tsutsui Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.10 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.11 2012/01/25 15:58:10 tsutsui Exp $");
 
 #include "lcd.h"
 
@@ -114,6 +114,7 @@ static void	ztp_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ztp, sizeof(struct ztp_softc),
 	ztp_match, ztp_attach, NULL, NULL);
 
+static int	ztp_finalize(device_t);
 static int	ztp_enable(void *);
 static void	ztp_disable(void *);
 static bool	ztp_suspend(device_t dv, const pmf_qual_t *);
@@ -149,19 +150,8 @@ ztp_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tp_poll, 0);
 	callout_setfunc(&sc->sc_tp_poll, ztp_poll, sc);
 
-	/* Initialize ADS7846 Difference Reference mode */
-	(void)zssp_ic_send(ZSSP_IC_ADS7846,
-	    (1<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH));
-	delay(5000);
-	(void)zssp_ic_send(ZSSP_IC_ADS7846,
-	    (3<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH));
-	delay(5000);
-	(void)zssp_ic_send(ZSSP_IC_ADS7846,
-	    (4<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH));
-	delay(5000);
-	(void)zssp_ic_send(ZSSP_IC_ADS7846,
-	    (5<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH));
-	delay(5000);
+	/* defer initialization until all other devices are attached */
+	config_finalize_register(self, ztp_finalize);
 
 	a.accessops = &ztp_accessops;
 	a.accesscookie = sc;
@@ -180,6 +170,27 @@ ztp_attach(device_t parent, device_t self, void *aux)
 	tpcalib_init(&sc->sc_tpcalib);
 	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
 	    __UNCONST(&ztp_default_calib), 0, 0);
+}
+
+static int
+ztp_finalize(device_t dv)
+{
+
+	/* Initialize ADS7846 Difference Reference mode */
+	(void)zssp_ic_send(ZSSP_IC_ADS7846,
+	    (1<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH));
+	delay(5000);
+	(void)zssp_ic_send(ZSSP_IC_ADS7846,
+	    (3<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH));
+	delay(5000);
+	(void)zssp_ic_send(ZSSP_IC_ADS7846,
+	    (4<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH));
+	delay(5000);
+	(void)zssp_ic_send(ZSSP_IC_ADS7846,
+	    (5<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH));
+	delay(5000);
+
+	return 0;
 }
 
 static int

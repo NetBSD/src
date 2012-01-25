@@ -1,4 +1,4 @@
-/*	$NetBSD: zrc.c,v 1.7 2011/06/19 16:20:09 nonaka Exp $	*/
+/*	$NetBSD: zrc.c,v 1.8 2012/01/25 15:58:10 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_remote.c,v 1.1 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.7 2011/06/19 16:20:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.8 2012/01/25 15:58:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,6 +101,7 @@ static void	zrc_attach(struct device *, struct device *, void *);
 CFATTACH_DECL_NEW(zrc, sizeof(struct zrc_softc), 
     zrc_match, zrc_attach, NULL, NULL);
 
+static int	zrc_finalize(device_t);
 static int	zrc_intr(void *);
 static void	zrc_timeout(void *);
 static int	zrc_scan(void);
@@ -190,11 +191,8 @@ zrc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Enable the pullup while waiting for an interrupt. */
-	if (ZAURUS_ISC1000)
-		ioexp_akin_pullup(1);
-	else
-		scoop_akin_pullup(1);
+	/* defer enabling pullup until ioexp or scoop is attached */
+	config_finalize_register(self, zrc_finalize);
 
 	sc->sc_keydown = KEY_RELEASE;
 
@@ -204,6 +202,19 @@ zrc_attach(device_t parent, device_t self, void *aux)
 	a.accesscookie = sc;
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+}
+
+static int
+zrc_finalize(device_t dv)
+{
+
+	/* Enable the pullup while waiting for an interrupt. */
+	if (ZAURUS_ISC1000)
+		ioexp_akin_pullup(1);
+	else
+		scoop_akin_pullup(1);
+
+	return 0;
 }
 
 static int

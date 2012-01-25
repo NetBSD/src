@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.17 2012/01/21 18:56:51 nonaka Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.18 2012/01/25 15:58:10 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.17 2012/01/21 18:56:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.18 2012/01/25 15:58:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,7 @@ static void	zaudio_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(zaudio, sizeof(struct zaudio_softc), 
     zaudio_match, zaudio_attach, NULL, NULL);
 
+static int	zaudio_finalize(device_t);
 static bool	zaudio_suspend(device_t, const pmf_qual_t *);
 static bool	zaudio_resume(device_t, const pmf_qual_t *);
 static void	zaudio_volume_up(device_t);
@@ -381,7 +382,8 @@ zaudio_attach(device_t parent, device_t self, void *aux)
 	(void) pxa2x0_gpio_intr_establish(GPIO_HP_IN_C3000, IST_EDGE_BOTH,
 	    IPL_BIO, zaudio_jack_intr, sc);
 
-	zaudio_init(sc);
+	/* zaudio_init() implicitly depends on ioexp or scoop */
+	config_finalize_register(self, zaudio_finalize);
 
 	audio_attach_mi(&wm8750_hw_if, sc, self);
 
@@ -403,6 +405,15 @@ fail_i2c:
 	pxa2x0_i2s_detach_sub(&sc->sc_i2s);
 fail_i2s:
 	pmf_device_deregister(self);
+}
+
+static int
+zaudio_finalize(device_t dv)
+{
+	struct zaudio_softc *sc = device_private(dv);
+
+	zaudio_init(sc);
+	return 0;
 }
 
 static bool
