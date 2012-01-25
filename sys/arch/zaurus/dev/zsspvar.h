@@ -1,4 +1,4 @@
-/*	$NetBSD: zsspvar.h,v 1.1 2006/12/16 05:24:13 ober Exp $	*/
+/*	$NetBSD: zsspvar.h,v 1.2 2012/01/25 16:51:17 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_sspvar.h,v 1.3 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
@@ -19,6 +19,10 @@
 
 #ifndef	_ZAURUS_DEV_ZSSPVAR_H_
 #define	_ZAURUS_DEV_ZSSPVAR_H_
+
+struct zssp_attach_args {
+	const char *zaa_name;
+};
 
 #define ZSSP_IC_MAX1111		1	/* temperature/voltage ADC */
 #define ZSSP_IC_LZ9JG18		2	/* LCD backlight controller */

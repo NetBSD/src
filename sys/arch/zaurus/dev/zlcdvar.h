@@ -1,7 +1,7 @@
-/*	$NetBSD: zlcdvar.h,v 1.3 2011/06/21 18:13:19 nonaka Exp $	*/
+/*	$NetBSD: zlcdvar.h,v 1.4 2012/01/25 16:51:17 tsutsui Exp $	*/
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,13 +32,6 @@
 #ifndef	_ZAURUS_DEV_ZLCDVAR_H_
 #define	_ZAURUS_DEV_ZLCDVAR_H_
 
-#include "lcd.h"
-
 void lcd_cnattach(void);
-#if NLCD > 0
-void lcd_blank(int);
-#else
-#define	lcd_blank(blank)	do { } while (/*CONSTCOND*/0)
-#endif
 
 #endif	/* _ZAURUS_DEV_ZLCDVAR_H_ */
