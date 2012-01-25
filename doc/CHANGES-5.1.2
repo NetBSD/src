@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.2,v 1.1.2.1 2012/01/07 03:55:08 snj Exp $
+# $NetBSD: CHANGES-5.1.2,v 1.1.2.2 2012/01/25 20:48:28 riz Exp $
 
 A complete list of changes from the NetBSD 5.1.1 release to the NetBSD 5.1.2
 release:
@@ -8,4 +8,26 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 5.1.1_PATCH.
 	[snj]
+
+crypto/dist/openssl/ssl/d1_pkt.c	patch
+
+	Address CVE-2012-0050.
+	[drochner, ticket #1710]
+
+crypto/dist/openssl/crypto/x509v3/pcy_map.c	patch
+crypto/dist/openssl/crypto/x509v3/pcy_tree.c	patch
+
+	Address CVE-2011-4109.
+	[drochner, ticket #1711]
+
+crypto/dist/openssl/engines/ccgost/gost2001_keyx.c	patch
+crypto/dist/openssl/engines/ccgost/gost94_keyx.c	patch
+
+	Address CVE-2011-4109.
+	[drochner, ticket #1712]
+
+crypto/dist/openssl/ssl/s3_enc.c        patch
+
+	Address CVE-2011-4576.
+	[drochner, ticket #1713]
 
