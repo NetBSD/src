@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.99.4.1 2010/02/22 04:43:46 snj Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.99.4.2 2012/01/25 18:18:46 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.99.4.1 2010/02/22 04:43:46 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.99.4.2 2012/01/25 18:18:46 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -273,8 +273,11 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			uvm_vnp_setwritesize(ovp, eob);
 			error = ufs_balloc_range(ovp, osize, eob - osize,
 			    cred, aflag);
-			if (error)
+			if (error) {
+				(void) ffs_truncate(ovp, osize,
+				    ioflag & IO_SYNC, cred);
 				return error;
+			}
 			if (ioflag & IO_SYNC) {
 				mutex_enter(&ovp->v_interlock);
 				VOP_PUTPAGES(ovp,
