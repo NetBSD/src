@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.6 2008/03/21 13:25:27 xtraeme Exp $ */
+/* $NetBSD: hpet.c,v 1.6.14.1 2012/01/25 21:18:15 riz Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.6 2008/03/21 13:25:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.6.14.1 2012/01/25 21:18:15 riz Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -67,6 +67,10 @@ hpet_attach_subr(device_t dv)
 
 	/* Get frequency */
 	val = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_PERIOD);
+	if (val == 0) {
+		aprint_error_dev(dv, "invalid timer period\n");
+		return;
+	}
 	tc->tc_frequency = 1000000000000000ULL / val;
 
 	/* Enable timer */

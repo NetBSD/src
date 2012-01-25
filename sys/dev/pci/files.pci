@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.308.2.6 2009/10/28 09:03:42 bouyer Exp $
+#	$NetBSD: files.pci,v 1.308.2.7 2012/01/25 21:18:15 riz Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -972,3 +972,19 @@ include "dev/pci/n8/files.n8"
 
 # High Definition Audio
 include "dev/pci/hdaudio/files.hdaudio"
+
+# VirtIO
+device	virtio {}
+attach	virtio at pci
+file	dev/pci/virtio.c	virtio
+
+attach	ld at virtio with ld_virtio
+file	dev/pci/ld_virtio.c	ld_virtio
+
+device	viomb
+attach	viomb at virtio
+file	dev/pci/viomb.c		viomb
+
+device	vioif
+attach	vioif at virtio
+file	dev/pci/if_vioif.c	vioif

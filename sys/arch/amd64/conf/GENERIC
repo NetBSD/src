@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.231.4.8 2010/11/21 03:05:09 riz Exp $
+# $NetBSD: GENERIC,v 1.231.4.9 2012/01/25 21:18:13 riz Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.231.4.8 $"
+#ident 		"GENERIC-$Revision: 1.231.4.9 $"
 
 maxusers	64		# estimated number of users
 
@@ -1026,6 +1026,12 @@ btsco* at bthub?
 # Middle Digital, Inc. PCI-Weasel serial console board control
 # devices (watchdog timer, etc.)
 weasel* at pci?
+
+# Virtio devices
+virtio*	at pci? dev ? function ?	# Virtio PCI device
+viomb*	at virtio?			# Virtio memory balloon device
+ld*	at virtio?			# Virtio disk device
+vioif*	at virtio?			# Virtio network device
 
 # Pull in optional local configuration
 cinclude "arch/amd64/conf/GENERIC.local"
