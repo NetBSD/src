@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_cursor.c,v 1.3 2012/01/09 15:41:58 dholland Exp $	*/
+/*	$NetBSD: quota_cursor.c,v 1.4 2012/01/25 17:43:37 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_cursor.c,v 1.3 2012/01/09 15:41:58 dholland Exp $");
+__RCSID("$NetBSD: quota_cursor.c,v 1.4 2012/01/25 17:43:37 dholland Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -44,20 +44,31 @@ quota_opencursor(struct quotahandle *qh)
 	int8_t version;
 	int serrno;
 
-	if (qh->qh_isnfs) {
+	switch (qh->qh_mode) {
+	    case QUOTA_MODE_NFS:
 		errno = EOPNOTSUPP;
 		return NULL;
-	}
 
-	if (__quota_proplib_getversion(qh, &version)) {
-		return NULL;
+	    case QUOTA_MODE_PROPLIB:
+		if (__quota_proplib_getversion(qh, &version)) {
+			return NULL;
+		}
+		break;
+
+	    case QUOTA_MODE_OLDFILES:
+		version = 1;
+		break;
+
+	    default:
+		errno = EINVAL;
+		break;
 	}
 
 	/*
 	 * For the time being at least the version 1 kernel code
 	 * cannot do cursors.
 	 */
-	if (version == 1 && !qh->qh_hasoldfiles) {
+	if (version == 1 && !qh->qh_oldfilesopen) {
 		if (__quota_oldfiles_initialize(qh)) {
 			return NULL;
 		}
