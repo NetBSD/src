@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.32.4.4 2009/06/19 21:51:43 snj Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.32.4.5 2012/01/25 18:02:45 riz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -130,6 +130,7 @@
 #define RTK_CSIAR		0x0068          
 #define RTK_TBI_LPAR		0x006A
 #define RTK_GMEDIASTAT		0x006C	/* 8 bits */
+#define RTK_PMCH		0x006F	/* 8 bits */
 #define RTK_EPHYAR		0x0080
 #define RTK_LDPS		0x0082	/* Link Down Power Saving */
 #define RTK_DBG_REG		0x00D1
@@ -161,6 +162,7 @@
 #define RTK_HWREV_8103E		0x24C00000
 #define RTK_HWREV_8168D		0x28000000
 #define RTK_HWREV_8168DP	0x28800000
+#define RTK_HWREV_8168E		0x2C000000
 #define RTK_HWREV_8168_SPIN1	0x30000000
 #define RTK_HWREV_8100E		0x30800000
 #define RTK_HWREV_8101E		0x34000000
