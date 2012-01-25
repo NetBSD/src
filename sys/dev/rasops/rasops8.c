@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.30 2012/01/04 20:16:20 macallan Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.31 2012/01/25 16:38:27 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.30 2012/01/04 20:16:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.31 2012/01/25 16:38:27 macallan Exp $");
 
 #include "opt_rasops.h"
 
@@ -205,6 +205,7 @@ rasops8_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int x, y, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0, fgo, bgo;
+	uint8_t scanline[32] __attribute__ ((aligned(8)));
 
 	hp = hrp = NULL;
 
@@ -278,11 +279,11 @@ rasops8_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 						((g & 0xe000) >> 11) |
 						((b & 0xc000) >> 14);
 				}
-				*dp = pixel;
-				dp++;
+				scanline[x] = pixel;
 			}
+			memcpy(rp, scanline, width);
 			if (ri->ri_hwbits) {
-				memcpy(rp, hrp, width);
+				memcpy(hrp, scanline, width);
 				hrp += ri->ri_stride;
 			}
 			rp += ri->ri_stride;
