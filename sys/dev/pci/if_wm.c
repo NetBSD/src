@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.162.4.15 2011/03/07 04:14:19 riz Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.162.4.16 2012/01/25 18:02:17 riz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.15 2011/03/07 04:14:19 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.16 2012/01/25 18:02:17 riz Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1818,7 +1818,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * If we're a i82543 or greater, we can support VLANs.
 	 */
-	if (sc->sc_type >= WM_T_82543)
+	if (sc->sc_type == WM_T_82575 || sc->sc_type == WM_T_82576)
+		sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
+	else if (sc->sc_type >= WM_T_82543)
 		sc->sc_ethercom.ec_capabilities |=
 		    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
 
