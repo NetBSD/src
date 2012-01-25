@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.31 2011/06/26 16:42:41 christos Exp $
+.\"	$NetBSD: kqueue.2,v 1.32 2012/01/25 00:28:35 christos Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd June 24, 2011
+.Dd January 23, 2012
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -92,6 +92,11 @@ on the returned file descriptor:
 Set the close on exec property.
 .It Dv O_NONBLOCK
 Sets non-blocking I/O.
+.It Dv O_NOSIGPIPE
+Return
+.Er EPIPE
+instead of raising
+.Dv SIGPIPE .
 .El
 The queue is not inherited by a child created with
 .Xr fork 2 .
