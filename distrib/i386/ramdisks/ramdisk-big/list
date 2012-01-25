@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2006/11/18 16:09:57 dsl Exp $
+#	$NetBSD: list,v 1.2.26.1 2012/01/25 18:45:39 riz Exp $
 #
 
 PROG	bin/chio
@@ -10,6 +10,7 @@ PROG	bin/rcmd
 PROG	bin/sync
 
 PROG	sbin/dhclient
+PROG	sbin/dkctl
 PROG	sbin/fdisk
 PROG	sbin/mount_ext2fs
 PROG	sbin/mount_ntfs
