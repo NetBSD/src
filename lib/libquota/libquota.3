@@ -1,4 +1,4 @@
-.\"	$NetBSD: libquota.3,v 1.1 2012/01/25 21:11:45 dholland Exp $
+.\"	$NetBSD: libquota.3,v 1.2 2012/01/25 21:58:43 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -162,7 +162,7 @@ The hard limit.
 .It uint64_t qv_usage
 The current usage.
 .It int64_t qv_expiretime
-The time 
+The time
 .Pq in time_t terms
 at which the current grace period, if any, expires.
 .It int64_t qv_grace
@@ -226,7 +226,9 @@ The
 .Fa path
 may be any file or file system object on the desired volume.
 On success, returns a quota handle for further use.
-On failure, returns NULL and sets
+On failure, returns
+.Dv NULL
+and sets
 .Dv errno .
 .It Fn quota_close
 Close a quota handle previously created with
@@ -234,12 +236,12 @@ Close a quota handle previously created with
 .It Fn quota_getmountdevice
 Return the path of the device the target volume is mounted from.
 This is retrieved with
-.Xr statvfs 3 .
+.Xr statvfs 2 .
 .It Fn quota_getmountpoint
 Return the path in the directory tree where the target volume is
 mounted.
 This is retrieved with
-.Xr statvfs 3 .
+.Xr statvfs 2 .
 .It Fn quota_getimplname
 Return a human-readable string describing the underlying quota
 implementation.
@@ -269,7 +271,7 @@ Return, in
 .Fa val ,
 the quota information associated with the quota key
 .Fa key .
-On failure, returns -1 and sets
+On failure, returns \-1 and sets
 .Dv errno .
 .It Fn quota_put
 Update the quota information associated with the quota key
@@ -286,7 +288,7 @@ or
 .Xr fsck 8
 must be used.
 Also note that sufficient privilege is required.
-On failure, returns -1 and sets
+On failure, returns \-1 and sets
 .Dv errno .
 .It Fn quota_delete
 Remove the quota information associated with the quota key
@@ -294,14 +296,16 @@ Remove the quota information associated with the quota key
 Depending on the backend implementation this might just blank it out
 or might physically remove the quota record from disk.
 Note that sufficient privilege is required.
-On failure, returns -1 and sets
+On failure, returns \-1 and sets
 .Dv errno .
 .It Fn quota_opencursor
 Prepare to iterate the store by creating a cursor.
 The cursor starts at the beginning of the store.
 On success, returns a pointer to a cursor object that can be used with
 the quotacursor calls.
-On failure, returns NULL and sets
+On failure, returns
+.Dv NULL
+and sets
 .Dv errno .
 .It Fn quotacursor_close
 Destroy a cursor previously created with
@@ -309,11 +313,11 @@ Destroy a cursor previously created with
 This releases internal storage.
 .It Fn quotacursor_skipidtype
 Hint to the implementation that the caller is not interested in
-retriving records with ID type
+retrieving records with ID type
 .Fa idtype .
 As this is a hint, the implementation may ignore it; the caller should
 still be prepared to receive and ignore such records.
-On failure, returns -1 and sets
+On failure, returns \-1 and sets
 .Dv errno .
 .It Fn quotacursor_get
 Retrieve the next record
@@ -321,7 +325,7 @@ Retrieve the next record
 from a cursor.
 Note that records are not guaranteed to be returned in any particular
 order.
-On failure, returns -1 and sets
+On failure, returns \-1 and sets
 .Dv errno .
 .It Fn quotacursor_getn
 Retrieve the next several keys and values from a cursor.
@@ -333,7 +337,7 @@ and
 .Fa vals
 arguments.
 Returns the number of records retrieved.
-On failure, returns -1 and sets
+On failure, returns \-1 and sets
 .Dv errno .
 .It Fn quotacursor_atend
 Returns true if the cursor has reached the end of the quota store.
@@ -351,28 +355,9 @@ to the default empty state.
 .\" can be generated inside file systems.
 Error conditions include:
 .Bl -tag -width Er
-.It Bq Er EOPNOTSUPP
-The
-.Fa path
-passed to
-.Fn quota_open
-was on a volume that has no quota support.
-.It Bq Er ENXIO
-The
-.Fa path
-passed to
-.Fn quota_open
-was on a volume whose quota support is not enabled.
-.It Bq Er EOPNOTSUPP
-The iterator functions,
-.Fn quota_put ,
-or other unsupported operations were attempted on an NFS volume,
-or on some other volume type that does not support the full
-semantic range of quota information.
-.It Bq Er ENOENT
-The quota information requested from
-.Fn quota_get
-does not exist.
+.\" .It Bq Er EBUSY
+.\" .Fn quota_quotaon
+.\" was attempted on a volume that is not a quota v1 volume.
 .It Bq Er EDEADLK
 An inconsistency was detected during
 .Fn quotacursor_get
@@ -381,9 +366,27 @@ or
 The application should discard information collected so far and use
 .Fn quotacursor_rewind
 to start the iteration over.
-.\" .It Bq Er EBUSY
-.\" .Fn quota_quotaon
-.\" was attempted on a volume that is not a quota v1 volume.
+.It Bq Er ENOENT
+The quota information requested from
+.Fn quota_get
+does not exist.
+.It Bq Er ENXIO
+The
+.Fa path
+passed to
+.Fn quota_open
+was on a volume whose quota support is not enabled.
+.It Bq Er EOPNOTSUPP
+The
+.Fa path
+passed to
+.Fn quota_open
+was on a volume that has no quota support.
+Or, the iterator functions,
+.Fn quota_put ,
+or other unsupported operations were attempted on an NFS volume,
+or on some other volume type that does not support the full
+semantic range of quota information.
 .El
 .Sh SEE ALSO
 .Xr quota 1 ,
@@ -402,4 +405,5 @@ library first appeared in
 .Sh AUTHORS
 The
 .Nm
-library was written by David A. Holland.
+library was written by
+.An David A. Holland .
