@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.319 2012/01/13 08:54:00 cherry Exp $
+#	$NetBSD: BRANCHES,v 1.320 2012/01/25 00:43:03 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -597,6 +597,7 @@ Base Tag:	yamt-pagecache-base3
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src
 Notes:		- maintain object pages in radix tree rather than rb tree.
+		- shrink the size of vm_page.
 		- reduce unnecessary page scan in putpages.  esp. when an
 		  object has a ton of pages cached but only a few of them
 		  are dirty.
@@ -609,6 +610,8 @@ Notes:		- maintain object pages in radix tree rather than rb tree.
 			- benchmark
 			- test
 			- make the write clustering fix less kludgy
+			- revert PG_HOLE stuff?
+			- fix or disable the ad-hoc per-cpu statistic
 
 		tested: i386, amd64, nfs, ffs
 
