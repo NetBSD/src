@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.37 2012/01/09 15:42:37 dholland Exp $	*/
+/*	$NetBSD: repquota.c,v 1.38 2012/01/25 01:24:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.37 2012/01/09 15:42:37 dholland Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.38 2012/01/25 01:24:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,18 +70,30 @@ __RCSID("$NetBSD: repquota.c,v 1.37 2012/01/09 15:42:37 dholland Exp $");
 
 #include "printquota.h"
 
+/*
+ * XXX. Ideally we shouldn't compile either of these in, but it's a
+ * nontrivial rework to avoid it and it'll work ok for now.
+ */
+#define REPQUOTA_NUMIDTYPES	2
+#define REPQUOTA_NUMOBJTYPES	2
+
 struct fileusage {
 	struct	fileusage *fu_next;
-	struct	quotaval fu_qv[QUOTA_NLIMITS];
+	struct	quotaval fu_qv[REPQUOTA_NUMOBJTYPES];
 	uint32_t	fu_id;
 	char	fu_name[1];
 	/* actually bigger */
 };
+
 #define FUHASH 1024	/* must be power of two */
-static struct fileusage *fuhead[QUOTA_NCLASS][FUHASH];
-static uint32_t highid[QUOTA_NCLASS];	/* highest addid()'ed identifier per class */
-int valid[QUOTA_NCLASS];
-static struct quotaval defaultqv[QUOTA_NCLASS][QUOTA_NLIMITS];
+static struct fileusage *fuhead[REPQUOTA_NUMIDTYPES][FUHASH];
+
+/* highest addid()'ed identifier per idtype */
+static uint32_t highid[REPQUOTA_NUMIDTYPES];
+
+int valid[REPQUOTA_NUMIDTYPES];
+
+static struct quotaval defaultqv[REPQUOTA_NUMIDTYPES][REPQUOTA_NUMOBJTYPES];
 
 static int	vflag = 0;		/* verbose */
 static int	aflag = 0;		/* all file systems */
@@ -89,6 +101,15 @@ static int	Dflag = 0;		/* debug */
 static int	hflag = 0;		/* humanize */
 static int	xflag = 0;		/* export */
 
+/*
+ * XXX this should go away and be replaced with a call to
+ * quota_idtype_getname(), but that needs a quotahandle and requires
+ * the same nontrivial rework as getting rid of REPQUOTA_NUMIDTYPES.
+ */
+static const char *const repquota_idtype_names[REPQUOTA_NUMIDTYPES] = {
+	"user",
+	"group",
+};
 
 static struct fileusage *addid(uint32_t, int, const char *);
 static struct fileusage *lookup(uint32_t, int);
@@ -261,10 +282,12 @@ printquotas(int idtype, struct quotahandle *qh)
 	int i;
 	struct fileusage *fup;
 	struct quotaval *q;
-	const char *timemsg[QUOTA_NLIMITS];
-	char overchar[QUOTA_NLIMITS];
+	const char *timemsg[REPQUOTA_NUMOBJTYPES];
+	char overchar[REPQUOTA_NUMOBJTYPES];
 	time_t now;
 	char b0[2][20], b1[20], b2[20], b3[20];
+	int ok, objtype;
+	int isbytes, width;
 
 	switch (idtype) {
 	case QUOTA_IDTYPE_GROUP:
@@ -295,7 +318,7 @@ printquotas(int idtype, struct quotahandle *qh)
 		printf("\n");
 	if (vflag)
 		printf("*** Report for %s quotas on %s (%s: %s)\n",
-		    ufs_quota_class_names[idtype], quota_getmountpoint(qh),
+		    repquota_idtype_names[idtype], quota_getmountpoint(qh),
 		    quota_getmountdevice(qh), quota_getimplname(qh));
 	printf("                        Block limits               "
 	    "File limits\n");
@@ -307,7 +330,7 @@ printquotas(int idtype, struct quotahandle *qh)
 		q = fup->fu_qv;
 		if (fup == 0)
 			continue;
-		for (i = 0; i < QUOTA_NLIMITS; i++) {
+		for (i = 0; i < REPQUOTA_NUMOBJTYPES; i++) {
 			switch (QL_STATUS(quota_check_limit(q[i].qv_usage, 1,
 			    q[i].qv_softlimit, q[i].qv_hardlimit,
 			    q[i].qv_expiretime, now))) {
@@ -330,31 +353,43 @@ printquotas(int idtype, struct quotahandle *qh)
 			}
 		}
 
-		if (q[QUOTA_LIMIT_BLOCK].qv_usage == 0 &&
-		    q[QUOTA_LIMIT_FILE].qv_usage == 0 && vflag == 0 &&
-		    overchar[QUOTA_LIMIT_BLOCK] == '-' &&
-		    overchar[QUOTA_LIMIT_FILE] == '-')
+		ok = 1;
+		for (objtype = 0; objtype < REPQUOTA_NUMOBJTYPES; objtype++) {
+			if (q[objtype].qv_usage != 0 ||
+			    overchar[objtype] != '-') {
+				ok = 0;
+			}
+		}
+		if (ok && vflag == 0)
 			continue;
 		if (strlen(fup->fu_name) > 9)
 			printf("%s ", fup->fu_name);
 		else
 			printf("%-10s", fup->fu_name);
-		printf("%c%c%9s%9s%9s%7s",
-			overchar[QUOTA_LIMIT_BLOCK], overchar[QUOTA_LIMIT_FILE],
-			intprt(b1, 10, q[QUOTA_LIMIT_BLOCK].qv_usage,
-			  HN_B, hflag),
-			intprt(b2, 10, q[QUOTA_LIMIT_BLOCK].qv_softlimit,
-			  HN_B, hflag),
-			intprt(b3, 10, q[QUOTA_LIMIT_BLOCK].qv_hardlimit,
-			  HN_B, hflag),
-			timemsg[QUOTA_LIMIT_BLOCK]);
-		printf("  %8s%8s%8s%7s\n",
-			intprt(b1, 9, q[QUOTA_LIMIT_FILE].qv_usage, 0, hflag),
-			intprt(b2, 9, q[QUOTA_LIMIT_FILE].qv_softlimit,
-			  0, hflag),
-			intprt(b3, 9, q[QUOTA_LIMIT_FILE].qv_hardlimit,
-			  0, hflag),
-			timemsg[QUOTA_LIMIT_FILE]);
+		for (objtype = 0; objtype < REPQUOTA_NUMOBJTYPES; objtype++) {
+			printf("%c", overchar[objtype]);
+		}
+		for (objtype = 0; objtype < REPQUOTA_NUMOBJTYPES; objtype++) {
+			isbytes = quota_objtype_isbytes(qh, objtype);
+			width = isbytes ? 9 : 8;
+			printf("%*s%*s%*s%7s",
+			       width,
+			       intprt(b1, width+1, q[objtype].qv_usage,
+				      isbytes ? HN_B : 0, hflag),
+			       width,
+			       intprt(b2, width+1, q[objtype].qv_softlimit,
+				      isbytes ? HN_B : 0, hflag),
+			       width,
+			       intprt(b3, width+1, q[objtype].qv_hardlimit,
+				      isbytes ? HN_B : 0, hflag),
+			       timemsg[objtype]);
+
+			if (objtype + 1 < REPQUOTA_NUMOBJTYPES) {
+				printf("  ");
+			} else {
+				printf("\n");
+			}
+		}
 		free(fup);
 	}
 }
@@ -377,7 +412,7 @@ exportquotas(void)
 	}
 
 
-	for (idtype = 0; idtype < QUOTA_NCLASS; idtype++) {
+	for (idtype = 0; idtype < REPQUOTA_NUMIDTYPES; idtype++) {
 		if (valid[idtype] == 0)
 			continue;
 		datas = prop_array_create();
@@ -511,8 +546,8 @@ addid(uint32_t id, int idtype, const char *name)
 	/*
 	 * XXX nothing guarantees the default limits have been loaded yet
 	 */
-	fup->fu_qv[QUOTA_LIMIT_BLOCK] = defaultqv[idtype][QUOTA_LIMIT_BLOCK];
-	fup->fu_qv[QUOTA_LIMIT_FILE] = defaultqv[idtype][QUOTA_LIMIT_FILE];
+	fup->fu_qv[QUOTA_OBJTYPE_BLOCKS] = defaultqv[idtype][QUOTA_OBJTYPE_BLOCKS];
+	fup->fu_qv[QUOTA_OBJTYPE_FILES] = defaultqv[idtype][QUOTA_OBJTYPE_FILES];
 	return fup;
 }
 
