@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.130 2012/01/25 18:46:35 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.131 2012/01/25 20:47:43 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5913,4 +5913,26 @@ distrib/i386/ramdisks/ramdisk-big/list		1.6 via patch
 	to a command prompt and enable writecaches before installing,
 	if necessary.
 	[sborrill, ticket #1709]
+
+crypto/dist/openssl/ssl/d1_pkt.c	patch
+
+	Address CVE-2012-0050.
+	[drochner, ticket #1710]
+
+crypto/dist/openssl/crypto/x509v3/pcy_map.c	patch
+crypto/dist/openssl/crypto/x509v3/pcy_tree.c	patch
+
+	Address CVE-2011-4109.
+	[drochner, ticket #1711]
+
+crypto/dist/openssl/engines/ccgost/gost2001_keyx.c	patch
+crypto/dist/openssl/engines/ccgost/gost94_keyx.c	patch
+
+	Address CVE-2011-4109.
+	[drochner, ticket #1712]
+
+crypto/dist/openssl/ssl/s3_enc.c        patch
+
+	Address CVE-2011-4576.
+	[drochner, ticket #1713]
 
