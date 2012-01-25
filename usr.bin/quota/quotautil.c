@@ -1,4 +1,4 @@
-/*	$NetBSD: quotautil.c,v 1.3 2011/03/24 17:05:46 bouyer Exp $ */
+/*	$NetBSD: quotautil.c,v 1.4 2012/01/25 01:24:07 dholland Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotautil.c,v 1.3 2011/03/24 17:05:46 bouyer Exp $");
+__RCSID("$NetBSD: quotautil.c,v 1.4 2012/01/25 01:24:07 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,6 @@ __RCSID("$NetBSD: quotautil.c,v 1.3 2011/03/24 17:05:46 bouyer Exp $");
 #include <limits.h>
 #include <inttypes.h>
 
-#include <quota/quotaprop.h>
 #include <ufs/ufs/quota1.h>
 
 #include "quotautil.h"
