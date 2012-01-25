@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_schema.c,v 1.2 2012/01/09 15:34:34 dholland Exp $	*/
+/*	$NetBSD: quota_schema.c,v 1.3 2012/01/25 01:22:57 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_schema.c,v 1.2 2012/01/09 15:34:34 dholland Exp $");
+__RCSID("$NetBSD: quota_schema.c,v 1.3 2012/01/25 01:22:57 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/statvfs.h>
@@ -38,7 +38,6 @@ __RCSID("$NetBSD: quota_schema.c,v 1.2 2012/01/09 15:34:34 dholland Exp $");
 #include <errno.h>
 
 #include <quota.h>
-#include <quota/quotaprop.h>
 #include "quotapvt.h"
 
 /*
@@ -60,44 +59,33 @@ quota_getimplname(struct quotahandle *qh)
 unsigned
 quota_getnumidtypes(struct quotahandle *qh)
 {
-	return QUOTA_NCLASS;
+	return __quota_proplib_getnumidtypes();
 }
 
 /* ARGSUSED */
 const char *
 quota_idtype_getname(struct quotahandle *qh, int idtype)
 {
-	if (idtype < 0 || idtype >= QUOTA_NCLASS) {
-		return NULL;
-	}
-	return ufs_quota_class_names[idtype];
+	return __quota_proplib_idtype_getname(idtype);
 }
 
 /* ARGSUSED */
 unsigned
 quota_getnumobjtypes(struct quotahandle *qh)
 {
-	return QUOTA_NLIMITS;
+	return __quota_proplib_getnumobjtypes();
 }
 
 /* ARGSUSED */
 const char *
 quota_objtype_getname(struct quotahandle *qh, int objtype)
 {
-	if (objtype < 0 || objtype >= QUOTA_NLIMITS) {
-		return NULL;
-	}
-	return ufs_quota_limit_names[objtype];
+	return __quota_proplib_objtype_getname(objtype);
 }
 
 /* ARGSUSED */
 int
 quota_objtype_isbytes(struct quotahandle *qh, int objtype)
 {
-	switch (objtype) {
-		case QUOTA_LIMIT_BLOCK: return 1;
-		case QUOTA_LIMIT_FILE: return 0;
-		default: break;
-	}
-	return 0;
+	return __quota_proplib_objtype_isbytes(objtype);
 }

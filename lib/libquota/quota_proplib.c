@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_proplib.c,v 1.6 2012/01/09 15:43:19 dholland Exp $	*/
+/*	$NetBSD: quota_proplib.c,v 1.7 2012/01/25 01:22:56 dholland Exp $	*/
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_proplib.c,v 1.6 2012/01/09 15:43:19 dholland Exp $");
+__RCSID("$NetBSD: quota_proplib.c,v 1.7 2012/01/25 01:22:56 dholland Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -178,6 +178,47 @@ __quota_proplib_getimplname(struct quotahandle *qh)
 		default: break;
 	}
 	return "unknown";
+}
+
+unsigned
+__quota_proplib_getnumidtypes(void)
+{
+	return QUOTA_NCLASS;
+}
+
+const char *
+__quota_proplib_idtype_getname(int idtype)
+{
+	if (idtype < 0 || idtype >= QUOTA_NCLASS) {
+		return NULL;
+	}
+	return ufs_quota_class_names[idtype];
+}
+
+unsigned
+__quota_proplib_getnumobjtypes(void)
+{
+	return QUOTA_NLIMITS;
+}
+
+const char *
+__quota_proplib_objtype_getname(int objtype)
+{
+	if (objtype < 0 || objtype >= QUOTA_NLIMITS) {
+		return NULL;
+	}
+	return ufs_quota_limit_names[objtype];
+}
+
+int
+__quota_proplib_objtype_isbytes(int objtype)
+{
+	switch (objtype) {
+		case QUOTA_LIMIT_BLOCK: return 1;
+		case QUOTA_LIMIT_FILE: return 0;
+		default: break;
+	}
+	return 0;
 }
 
 static int
