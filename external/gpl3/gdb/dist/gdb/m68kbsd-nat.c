@@ -32,6 +32,16 @@
 #include "m68k-tdep.h"
 #include "inf-ptrace.h"
 
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+
+#include "gregset.h" 
+
 static int
 m68kbsd_gregset_supplies_p (int regnum)
 {
@@ -91,7 +101,7 @@ m68kbsd_collect_gregset (const struct regcache *regcache,
    in FPREGS.  */
 
 static void
-m68kbsd_collect_fpregset (struct regcache *regcache,
+m68kbsd_collect_fpregset (const struct regcache *regcache,
 			  void *fpregs, int regnum)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
@@ -104,6 +114,36 @@ m68kbsd_collect_fpregset (struct regcache *regcache,
 	regcache_raw_collect (regcache, i,
 			      regs + m68kbsd_fpreg_offset (gdbarch, i));
     }
+}
+
+void
+supply_gregset (struct regcache *regcache, const gregset_t *gregsetp)
+{
+  m68kbsd_supply_gregset (regcache, gregsetp);
+}
+
+/* Fill register REGNUM (if it is a general-purpose register) in
+   *GREGSETP with the value in GDB's register cache.  If REGNUM is -1,
+   do this for all registers.  */
+
+void
+fill_gregset (const struct regcache *regcache,
+              gregset_t *gregsetp, int regnum)
+{
+  m68kbsd_collect_gregset (regcache, gregsetp, regnum);
+}
+
+void
+supply_fpregset (struct regcache *regcache, const fpregset_t *fpregsetp)
+{  
+  m68kbsd_supply_fpregset (regcache, fpregsetp);
+}
+   
+void
+fill_fpregset (const struct regcache *regcache,
+               fpregset_t *fpregsetp, int regnum)
+{
+  m68kbsd_collect_fpregset (regcache, fpregsetp, regnum);
 }
 
 
