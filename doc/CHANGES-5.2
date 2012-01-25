@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.131 2012/01/25 20:47:43 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.132 2012/01/25 21:21:21 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5935,4 +5935,39 @@ crypto/dist/openssl/ssl/s3_enc.c        patch
 
 	Address CVE-2011-4576.
 	[drochner, ticket #1713]
+
+sys/fs/puffs/puffs_node.c			1.23 via patch
+
+	Fix a race condition where the filesystem lookups a vnode that is
+	being recycled, producing ENOENT while the file does exist.
+	[manu, ticket #1714]
+
+sys/arch/amd64/conf/GENERIC		1.338 via patch
+sys/arch/i386/conf/GENERIC		1.1055 via patch
+sys/arch/i386/conf/ALL			1.325 via patch
+sys/arch/x86/include/i82489reg.h	1.11
+sys/dev/ic/hpetreg.h			1.4
+sys/dev/ic/hpet.c			1.8
+sys/dev/pci/files.pci			1.350 via patch
+sys/dev/pci/if_vioif.c			0-1.2 via patch
+sys/dev/pci/ld_virtio.c			0-1.4 via patch
+sys/dev/pci/viomb.c			0-1.1 via patch
+sys/dev/pci/virtio.c			0-1.3 via patch
+sys/dev/pci/virtioreg.h			0-1.1 via patch
+sys/dev/pci/virtiovar.h			0-1.1 via patch
+distrib/sets/lists/man/mi		1.1352, 1.1358 via patch
+share/man/man4/Makefile			1.573, 1.575 via patch
+share/man/man4/ld.4			1.19 via patch
+share/man/man4/virtio.4			0-1.4 via patch
+share/man/man4/vioif.4			0-1.2 via patch
+share/man/man4/viomb.4			0-1.2 via patch
+
+	Allow NetBSD 5.2 to run unmodified under Linux kvm.
+	[hannken, ticket #1715]
+
+sys/coda/coda.h					1.15
+
+	Fix "pwd" within code, which was failing due to incorrect sign
+	extension.
+	[gdt, ticket #1716]
 
