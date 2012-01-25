@@ -42,6 +42,11 @@
 #include "observer.h"
 
 #include <machine/reg.h>
+#ifndef __sh3__
+#define HAVE_FPREGS
+#else
+struct fpreg { };
+#endif
 
 #ifndef HAVE_GREGSET_T
 typedef struct reg gregset_t;
@@ -366,7 +371,9 @@ nbsd_thread_fetch_registers (struct target_ops *ops, struct regcache *cache,
   struct target_ops *beneath = find_target_beneath (ops);
   td_thread_t *thread;
   gregset_t gregs;
+#ifdef HAVE_FPREGS
   fpregset_t fpregs;
+#endif
   int val;
   struct cleanup *old_chain;
 
@@ -381,8 +388,10 @@ nbsd_thread_fetch_registers (struct target_ops *ops, struct regcache *cache,
 	error ("nbsd_thread_fetch_registers: td_thr_getregs: %s\n",
 	       td_err_string (val));
       supply_gregset (cache, &gregs);
+#ifdef HAVE_FPREGS
       if ((val = td_thr_getregs (thread, 1, &fpregs)) == 0)
 	      supply_fpregset (cache, &fpregs);
+#endif
     }
   else
     {
@@ -404,7 +413,9 @@ nbsd_thread_store_registers (struct target_ops *ops, struct regcache *cache,
   struct target_ops *beneath = find_target_beneath (ops);
   td_thread_t *thread;
   gregset_t gregs;
+#ifdef HAVE_FPREGS
   fpregset_t fpregs;
+#endif
   int val;
 
   if (nbsd_thread_active && IS_THREAD (inferior_ptid))
@@ -415,16 +426,20 @@ nbsd_thread_store_registers (struct target_ops *ops, struct regcache *cache,
 	      td_err_string (val));
 
       fill_gregset (cache, &gregs, -1);
+#ifdef HAVE_FPREGS
       fill_fpregset (cache, &fpregs, -1);
+#endif
 
       val = td_thr_setregs (thread, 0, &gregs);
       if (val != 0)
 	error ("nbsd_thread_store_registers: td_thr_setregs: %s\n",
 	      td_err_string (val));
+#ifdef HAVE_FPREGS
       val = td_thr_setregs (thread, 1, &fpregs);
       if (val != 0)
 	error ("nbsd_thread_store_registers: td_thr_setregs: %s\n",
 	      td_err_string (val));
+#endif
     }
   else
     {
@@ -842,7 +857,7 @@ nbsd_thread_examine_cmd (char *exp, int from_tty)
   else
     return;
 
-  if ((ret = td_map_pth2thr (main_ta, (pthread_t) addr, &th)) != 0)
+  if ((ret = td_map_pth2thr (main_ta, (pthread_t)(uintptr_t)addr, &th)) != 0)
     error ("nbsd_thread_examine_command: td_map_pth2thr: %s",
 	   td_err_string (ret));
   
@@ -949,7 +964,7 @@ tsd_cb (pthread_key_t key, void (*destructor)(void *), void *ignore)
   printf_filtered ("Key %3d   ", key);
 
   /* XXX What does GDB use to print a function? */
-  ms = lookup_minimal_symbol_by_pc ((CORE_ADDR)destructor);
+  ms = lookup_minimal_symbol_by_pc ((CORE_ADDR)(uintptr_t)destructor);
 
   if (!ms)
     name = "???";
@@ -975,7 +990,7 @@ nbsd_thread_proc_read (void *arg, caddr_t addr, void *buf, size_t size)
 {
   int val;
 
-  val = target_read_memory ((CORE_ADDR)addr, buf, size);
+  val = target_read_memory ((CORE_ADDR)(uintptr_t)addr, buf, size);
 
   if (val == 0)
     return 0;
@@ -989,7 +1004,7 @@ nbsd_thread_proc_write (void *arg, caddr_t addr, void *buf, size_t size)
 {
   int val;
 
-  val = target_write_memory ((CORE_ADDR)addr, buf, size);
+  val = target_write_memory ((CORE_ADDR)(uintptr_t)addr, buf, size);
 
   if (val == 0)
     return 0;
@@ -1007,7 +1022,7 @@ nbsd_thread_proc_lookup (void *arg, const char *sym, caddr_t *addr)
   if (!ms)
     return TD_ERR_NOSYM;
 
-  *addr = (caddr_t) SYMBOL_VALUE_ADDRESS (ms);
+  *addr = (caddr_t)(uintptr_t)SYMBOL_VALUE_ADDRESS (ms);
 
   return 0;
 
@@ -1022,7 +1037,11 @@ nbsd_thread_proc_regsize (void *arg, int regset, size_t *size)
       *size = sizeof (gregset_t);
       break;
     case 1:
+#ifdef HAVE_FPREGS
       *size = sizeof (fpregset_t);
+#else
+      *size = 0;
+#endif
       break;
     default:
       return TD_ERR_INVAL;
@@ -1066,7 +1085,9 @@ nbsd_thread_proc_getregs (void *arg, int regset, int lwp, void *buf)
       fill_gregset (cache, (gregset_t *)buf, -1);
       break;
     case 1:
+#ifdef HAVE_FPREGS
       fill_fpregset (cache, (fpregset_t *)buf, -1);
+#endif
       break;
     default: /* XXX need to handle other reg sets: SSE, AltiVec, etc. */
       ret = TD_ERR_INVAL;
@@ -1096,7 +1117,9 @@ nbsd_thread_proc_setregs (void *arg, int regset, int lwp, void *buf)
       supply_gregset(cache, (gregset_t *)buf);
       break;
     case 1:
+#ifdef HAVE_FPREGS
       supply_fpregset(cache, (fpregset_t *)buf);
+#endif
       break;
     default: /* XXX need to handle other reg sets: SSE, AltiVec, etc. */
       ret = TD_ERR_INVAL;
