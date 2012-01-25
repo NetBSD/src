@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2012/01/20 15:00:27 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2012/01/25 16:51:17 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2012/01/20 15:00:27 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2012/01/25 16:51:17 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1241,6 +1241,7 @@ parseopts(const char *opts, int *howto)
 #include <dev/ic/comvar.h>
 #endif
 
+#include "lcd.h"
 #include "wsdisplay.h"
 
 #ifndef CONSPEED

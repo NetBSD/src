@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.11 2012/01/25 15:58:10 tsutsui Exp $	*/
+/*	$NetBSD: ztp.c,v 1.12 2012/01/25 16:51:17 tsutsui Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.11 2012/01/25 15:58:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.12 2012/01/25 16:51:17 tsutsui Exp $");
 
 #include "lcd.h"
 
@@ -41,11 +41,13 @@ __KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.11 2012/01/25 15:58:10 tsutsui Exp $");
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/xscalereg.h>
-#include <arm/xscale/pxa2x0_lcd.h>
 #include <arm/xscale/pxa2x0_gpio.h>
+#if NLCD > 0
+#include <arm/xscale/pxa2x0_lcd.h>
+#endif
 
+#include <zaurus/zaurus/zaurus_var.h>
 #include <zaurus/dev/zsspvar.h>
-
 #ifdef ZTP_DEBUG
 #define	DPRINTF(s)	printf s
 #else
@@ -70,9 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.11 2012/01/25 15:58:10 tsutsui Exp $");
 
 #define CCNT_HS_400_VGA_C3K 6250	/* 15.024us */
 
-/* XXX need to ask zaurus_lcd.c for the screen dimension */
-#define CURRENT_DISPLAY (&sharp_zaurus_C3000)
-extern const struct lcd_panel_geometry sharp_zaurus_C3000;
+/* XXX need to ask lcd drivers for the screen dimension */
+#if NLCD > 0
+extern const struct lcd_panel_geometry lcd_panel_geometry_c3000;
+#endif
 
 /* Settable via sysctl. */
 int ztp_rawmode;
@@ -132,7 +135,10 @@ static const struct wsmouse_accessops ztp_accessops = {
 static int
 ztp_match(device_t parent, cfdata_t cf, void *aux)
 {
+	struct zssp_attach_args *aa = aux;
 
+	if (strcmp("ztp", aa->zaa_name))
+		return 0;
 	return 1;
 }
 
@@ -157,8 +163,8 @@ ztp_attach(device_t parent, device_t self, void *aux)
 	a.accesscookie = sc;
 
 #if NLCD > 0
-	sc->sc_resx = CURRENT_DISPLAY->panel_height;
-	sc->sc_resy = CURRENT_DISPLAY->panel_width;
+	sc->sc_resx = lcd_panel_geometry_c3000.panel_height;
+	sc->sc_resy = lcd_panel_geometry_c3000.panel_width;
 #else
 	sc->sc_resx = 480;	/* XXX */
 	sc->sc_resy = 640;	/* XXX */
