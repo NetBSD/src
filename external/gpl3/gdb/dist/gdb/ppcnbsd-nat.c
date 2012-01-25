@@ -39,6 +39,16 @@
 #include "bsd-kvm.h"
 #include "inf-ptrace.h"
 
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+#include "gregset.h"
+ 
+
 /* Returns true if PT_GETREGS fetches this register.  */
 
 static int
@@ -147,6 +157,38 @@ ppcnbsd_store_inferior_registers (struct target_ops *ops,
 		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't set FP registers"));
     }
+}
+
+void
+supply_gregset (struct regcache *regcache, const gregset_t *gregs)
+{
+  if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
+	      (PTRACE_TYPE_ARG3) gregs, TIDGET (inferior_ptid)) == -1)
+    perror_with_name (_("Couldn't write registers"));
+}
+
+void
+supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
+{
+  if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
+	      (PTRACE_TYPE_ARG3) fpregs, TIDGET (inferior_ptid)) == -1)
+    perror_with_name (_("Couldn't set FP registers"));
+}
+
+void
+fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
+{
+      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) gregs, TIDGET (inferior_ptid)) == -1)
+        perror_with_name (_("Couldn't get registers"));
+}
+
+void
+fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
+{
+      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) fpregs, TIDGET (inferior_ptid)) == -1)
+	perror_with_name (_("Couldn't get FP registers"));
 }
 
 static int
