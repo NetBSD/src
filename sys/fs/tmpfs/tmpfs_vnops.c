@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.92.2.1 2012/01/04 16:43:37 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.92.2.2 2012/01/25 00:41:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.92.2.1 2012/01/04 16:43:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.92.2.2 2012/01/25 00:41:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -545,6 +545,7 @@ tmpfs_read(void *v)
 	const int ioflag = ap->a_ioflag;
 	tmpfs_node_t *node;
 	struct uvm_object *uobj;
+	const int advice = IO_ADV_DECODE(ioflag);
 	int error;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -562,7 +563,7 @@ tmpfs_read(void *v)
 	error = 0;
 
 	if (uio->uio_offset + uio->uio_resid <= node->tn_size) {
-		uvm_loanobj(&vp->v_uobj, uio);
+		uvm_loanobj(&vp->v_uobj, uio, advice);
 	}
 	while (error == 0 && uio->uio_resid > 0) {
 		vsize_t len;
@@ -574,7 +575,7 @@ tmpfs_read(void *v)
 		if (len == 0) {
 			break;
 		}
-		error = ubc_uiomove(uobj, uio, len, IO_ADV_DECODE(ioflag),
+		error = ubc_uiomove(uobj, uio, len, advice,
 		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 	}
 	return error;
