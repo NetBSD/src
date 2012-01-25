@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.48 2011/12/18 05:49:33 dholland Exp $
+#	$NetBSD: GENERIC,v 1.49 2012/01/25 16:51:17 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -209,7 +209,7 @@ ioexp0 at iic? addr 0x18
 zssp0 at pxaip?
 
 # touchpad
-ztp0 at pxaip?
+ztp0 at zssp?
 wsmouse* at ztp? mux 0
 
 # keyboard
@@ -224,6 +224,7 @@ wskbd* at zrc? mux 1
 lcd0 at pxaip?
 options 	PXA2X0_LCD_WRITETHROUGH
 wsdisplay* at lcd? console ?
+lcdctl0 at zssp0
 
 # WM8750 Audio
 zaudio0 at iic? addr 0x1b

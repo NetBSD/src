@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.14 2011/06/21 18:13:19 nonaka Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.15 2012/01/25 16:51:17 tsutsui Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,12 +18,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.14 2011/06/21 18:13:19 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.15 2012/01/25 16:51:17 tsutsui Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #if 0	/* XXX */
 #include "apm.h"
 #endif
+#include "lcdctl.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.14 2011/06/21 18:13:19 nonaka Exp $");
 
 #include <zaurus/zaurus/zaurus_var.h>
 #include <zaurus/dev/zkbdmap.h>
-#include <zaurus/dev/zlcdvar.h>
+#if NLCDCTL > 0
+#include <zaurus/dev/lcdctlvar.h>
+#endif
 
 static const int gpio_sense_pins_c3000[] = {
 	12,
@@ -513,9 +516,13 @@ zkbd_hinge(void *v)
 		if (lid_suspend)
 			apm_suspends++;
 #endif
-		lcd_blank(1);
+#if NLCDCTL > 0
+		lcdctl_blank(true);
+#endif
 	} else {
-		lcd_blank(0);
+#if NLCDCTL > 0
+		lcdctl_blank(false);
+#endif
 	}
 
 	return 1;
