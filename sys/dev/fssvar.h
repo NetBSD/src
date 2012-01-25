@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.23.4.1 2011/06/18 17:00:25 bouyer Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.23.4.2 2012/01/25 18:06:27 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -37,6 +37,12 @@
 #define FSS_UNCONFIG_ON_CLOSE	0x01	/* Unconfigure on last close */
 #define FSS_UNLINK_ON_CREATE	0x02	/* Unlink backing store on create */
 
+struct fss_set50 {
+	char		*fss_mount;	/* Mount point of file system */
+	char		*fss_bstore;	/* Path of backing store */
+	blksize_t	fss_csize;	/* Preferred cluster size */
+};
+
 struct fss_set {
 	char		*fss_mount;	/* Mount point of file system */
 	char		*fss_bstore;	/* Path of backing store */
@@ -57,7 +63,7 @@ struct fss_get {
 #define FSSIOCCLR	_IO('F', 2)			/* Unconfigure */
 #define FSSIOFSET	_IOW('F', 3, int)		/* Set flags */
 #define FSSIOFGET	_IOR('F', 4, int)		/* Get flags */
-#define FSSIOCSET50	_IOW('F', 0, struct fss_set)	/* Old configure */
+#define FSSIOCSET50	_IOW('F', 0, struct fss_set50)	/* Old configure */
 
 #ifdef _KERNEL
 

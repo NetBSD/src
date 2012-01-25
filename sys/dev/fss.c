@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.60.4.4 2011/06/18 17:00:25 bouyer Exp $	*/
+/*	$NetBSD: fss.c,v 1.60.4.5 2012/01/25 18:06:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.60.4.4 2011/06/18 17:00:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.60.4.5 2012/01/25 18:06:26 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,11 +298,17 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
 	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(dev));
+	struct fss_set _fss;
 	struct fss_set *fss = (struct fss_set *)data;
+	struct fss_set50 *fss50 = (struct fss_set50 *)data;
 	struct fss_get *fsg = (struct fss_get *)data;
 
 	switch (cmd) {
 	case FSSIOCSET50:
+		fss = &_fss;
+		fss->fss_mount = fss50->fss_mount;
+		fss->fss_bstore = fss50->fss_bstore;
+		fss->fss_csize = fss50->fss_csize;
 		fss->fss_flags = 0;
 		/* Fall through */
 	case FSSIOCSET:
