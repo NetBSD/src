@@ -611,6 +611,10 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
 		return 1;
 
 		/* Some internal error */
+		case -1:
+		return -1;
+
+		/* Some internal error */
 		case 0:
 		return 0;
 
