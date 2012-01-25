@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.38 2012/01/06 20:52:43 riz Exp $ */
+/*	$NetBSD: md.c,v 1.39 2012/01/25 19:03:35 phx Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -153,7 +153,7 @@ md_post_disklabel(void)
 int
 md_post_newfs(void)
 {
-	/* no boot blocks, we are using netboot */
+	/* no boot blocks, we are using altboot */
 	return 0;
 }
 
