@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.30 2012/01/09 15:41:21 wiz Exp $
+.\"	$NetBSD: setkey.8,v 1.31 2012/01/26 21:11:27 drochner Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -726,11 +726,19 @@ rijndael-cbc	128/192/256	rfc3602
 twofish-cbc	0 to 256	draft-ietf-ipsec-ciph-aes-cbc-01
 aes-ctr		160/224/288	rfc3686
 camellia-cbc	128/192/256	rfc4312
+aes-gcm-16	160/224/288	rfc4106
+aes-gmac	160/224/288	rfc4543
 .Ed
 .Pp
 Note that the first 128/192/256 bits of a key for
-.Li aes-ctr
+.Li aes-ctr ,
+.Li aes-gcm-16
+or
+.Li aes-gmac
 will be used as AES key, and the remaining 32 bits will be used as nonce.
+Also note that
+.Li aes-gmac
+does not encrypt the payload, it only provides authentication.
 .Pp
 These compression algorithms can be used as
 .Ar calgo
