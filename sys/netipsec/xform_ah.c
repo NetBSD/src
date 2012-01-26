@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.36 2012/01/25 20:31:23 drochner Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.37 2012/01/26 21:10:24 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.36 2012/01/25 20:31:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.37 2012/01/26 21:10:24 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -328,12 +328,6 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 #else  /*!__FreeBSD__ */
 			ip->ip_len = htons(inlen);
 #endif /*!__FreeBSD__ */
-			DPRINTF(("ip len: skip %d, "
-				 "in %d host %d: new: raw %d host %d\n",
-				 skip,
-				 inlen, TOHOST(inlen),
-				 ip->ip_len, ntohs(ip->ip_len)));
-
 
 			if (alg == CRYPTO_MD5_KPDK || alg == CRYPTO_SHA1_KPDK)
 				ip->ip_off  &= IP_OFF_CONVERT(IP_DF);
@@ -690,11 +684,6 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		return EACCES;
 	}
 	AH_STATADD(AH_STAT_IBYTES, m->m_pkthdr.len - skip - hl);
-	DPRINTF(("ah_input skip %d poff %d\n"
-		 "len: hl %d authsize %d rpl %d expect %ld\n",
-		 skip, protoff,
-		 hl, authsize, rplen,
-		 (long)(authsize + rplen - sizeof(struct ah))));
 
 	/* Get crypto descriptors. */
 	crp = crypto_getreq(1);
@@ -763,16 +752,6 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		 * and the AH header.
 		 */
 		m_copydata(m, 0, skip + rplen + authsize, (tc + 1));
-
-		{
-			u_int8_t *pppp = ((char *)(tc+1))+skip+rplen;
-			DPRINTF(("ah_input: zeroing %d bytes of authent " \
-		    "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n",
-				 authsize,
-				 pppp[0], pppp[1], pppp[2], pppp[3],
-				 pppp[4], pppp[5], pppp[6], pppp[7],
-				 pppp[8], pppp[9], pppp[10], pppp[11]));
-		}
 
 		/* Zeroize the authenticator on the packet. */
 		m_copyback(m, skip + rplen, authsize, ipseczeroes);
