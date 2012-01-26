@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.96 2011/10/21 21:35:28 dyoung Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.97 2012/01/26 21:17:28 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -283,6 +283,7 @@ int	pci_probe_device(struct pci_softc *, pcitag_t tag,
 	    int (*)(const struct pci_attach_args *),
 	    struct pci_attach_args *);
 void	pci_devinfo(pcireg_t, pcireg_t, int, char *, size_t);
+void	pci_aprint_devinfo(const struct pci_attach_args *);
 void	pci_conf_print(pci_chipset_tag_t, pcitag_t,
 	    void (*)(pci_chipset_tag_t, pcitag_t, const pcireg_t *));
 const struct pci_quirkdata *
