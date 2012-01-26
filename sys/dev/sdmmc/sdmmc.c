@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.10 2012/01/21 19:44:31 nonaka Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.11 2012/01/26 02:20:12 matt Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.10 2012/01/21 19:44:31 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.11 2012/01/26 02:20:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -346,7 +346,7 @@ sdmmc_card_attach(struct sdmmc_softc *sc)
 	error = sdmmc_enable(sc);
 	if (error) {
 		if (!ISSET(sc->sc_caps, SMC_CAPS_POLL_CARD_DET)) {
-			aprint_error_dev(sc->sc_dev, "couldn't enable card\n");
+			aprint_error_dev(sc->sc_dev, "couldn't enable card: %d\n", error);
 		}
 		goto err;
 	}
