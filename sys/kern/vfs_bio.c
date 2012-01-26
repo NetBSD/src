@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.232 2011/10/05 01:53:03 jakllsch Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.233 2012/01/26 19:18:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.232 2011/10/05 01:53:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.233 2012/01/26 19:18:25 rmind Exp $");
 
 #include "opt_bufcache.h"
 
@@ -1705,6 +1705,7 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 						break;
 					}
 					mutex_exit(&bufcache_lock);
+					sysctl_relock();
 					goto retry;
 				}
 				dp += elem_size;
