@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.191 2011/11/28 14:06:59 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.192 2012/01/27 19:48:41 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.191 2011/11/28 14:06:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.192 2012/01/27 19:48:41 para Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -583,25 +583,8 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 	if (*spare != NULL) {
 		anon = *spare;
 		*spare = NULL;
-	} else if (ufi->map != kernel_map) {
-		anon = uvm_analloc();
 	} else {
-		UVMHIST_LOG(maphist, "kernel_map, unlock and retry", 0,0,0,0);
-
-		/*
-		 * we can't allocate anons with kernel_map locked.
-		 */
-
-		uvm_page_unbusy(&uobjpage, 1);
-		uvmfault_unlockall(ufi, amap, uobj);
-
-		*spare = uvm_analloc();
-		if (*spare == NULL) {
-			goto nomem;
-		}
-		KASSERT((*spare)->an_lock == NULL);
-		error = ERESTART;
-		goto done;
+		anon = uvm_analloc();
 	}
 	if (anon) {
 
@@ -636,7 +619,6 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 		/* unlock and fail ... */
 		uvm_page_unbusy(&uobjpage, 1);
 		uvmfault_unlockall(ufi, amap, uobj);
-nomem:
 		if (!uvm_reclaimable()) {
 			UVMHIST_LOG(maphist, "out of VM", 0,0,0,0);
 			uvmexp.fltnoanon++;
