@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.94 2011/07/17 23:18:23 mrg Exp $ */
+/*	$NetBSD: iommu.c,v 1.95 2012/01/27 18:53:02 para Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.94 2011/07/17 23:18:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.95 2012/01/27 18:53:02 para Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -276,7 +276,7 @@ iommu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dvmamap = extent_create("iommudvma",
 					IOMMU_DVMA_BASE, IOMMU_DVMA_END,
-					M_DEVBUF, 0, 0, EX_NOWAIT);
+					0, 0, EX_NOWAIT);
 	if (sc->sc_dvmamap == NULL)
 		panic("iommu: unable to allocate DVMA map");
 

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.184 2012/01/07 16:47:42 chs Exp $	 */
+/* $NetBSD: machdep.c,v 1.185 2012/01/27 18:53:05 para Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184 2012/01/07 16:47:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185 2012/01/27 18:53:05 para Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -309,7 +309,7 @@ consinit(void)
 	 */
 	KASSERT(iospace != 0);
 	iomap_ex = extent_create("iomap", iospace + VAX_NBPG,
-	    iospace + ((IOSPSZ * VAX_NBPG) - 1), M_DEVBUF,
+	    iospace + ((IOSPSZ * VAX_NBPG) - 1),
 	    (void *) iomap_ex_storage, sizeof(iomap_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 #ifdef DEBUG

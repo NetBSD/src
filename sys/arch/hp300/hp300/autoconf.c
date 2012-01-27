@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.98 2011/05/10 14:38:08 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.99 2012/01/27 18:52:55 para Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98 2011/05/10 14:38:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.99 2012/01/27 18:52:55 para Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -900,7 +900,7 @@ iomap_init(void)
 
 	/* extiobase is initialized by pmap_bootstrap(). */
 	extio_ex = extent_create("extio", (u_long) extiobase,
-	    (u_long) extiobase + (ptoa(EIOMAPSIZE) - 1), M_DEVBUF,
+	    (u_long) extiobase + (ptoa(EIOMAPSIZE) - 1),
 	    (void *) extio_ex_storage, sizeof(extio_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 }
