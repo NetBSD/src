@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.11 2011/07/17 01:36:50 dyoung Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.12 2012/01/27 18:52:49 para Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11 2011/07/17 01:36:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12 2012/01/27 18:52:49 para Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,7 @@ arc_bus_space_init_extent(bus_space_tag_t bst, void *storage,
 {
 
 	bst->bs_extent = extent_create(bst->bs_name,
-	    bst->bs_start, bst->bs_start + bst->bs_size, M_DEVBUF,
+	    bst->bs_start, bst->bs_start + bst->bs_size,
 	    storage, storagesize, EX_NOWAIT);
 	if (bst->bs_extent == NULL)
 		panic("arc_bus_space_init_extent: cannot create extent map %s",
