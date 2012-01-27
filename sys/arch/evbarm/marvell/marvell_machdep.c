@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.5 2011/06/30 20:09:25 wiz Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.6 2012/01/27 15:28:32 jakllsch Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.5 2011/06/30 20:09:25 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.6 2012/01/27 15:28:32 jakllsch Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -332,8 +332,6 @@ initarm(void *arg)
 		nremap = ORION_MLMB_NREMAP;
 
 		orion_getclks(MARVELL_INTERREGS_VBASE);
-		if (mvTclk == 166666667)	/* 166MHz */
-			mvTclk = 166664740;	/* ???? */
 		break;
 #endif	/* ORION */
 
