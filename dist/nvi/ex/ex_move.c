@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_move.c,v 1.1.1.2 2008/05/18 14:31:16 aymeric Exp $ */
+/*	$NetBSD: ex_move.c,v 1.2 2012/01/27 16:41:22 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -54,7 +54,7 @@ ex_copy(SCR *sp, EXCMD *cmdp)
 	memset(&cb, 0, sizeof(cb));
 	CIRCLEQ_INIT(&cb.textq);
 	for (cnt = fm1.lno; cnt <= fm2.lno; ++cnt)
-		if (cut_line(sp, cnt, 0, 0, &cb)) {
+		if (cut_line(sp, cnt, 0, ENTIRE_LINE, &cb)) {
 			rval = 1;
 			goto err;
 		}
