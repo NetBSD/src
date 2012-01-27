@@ -1,4 +1,4 @@
-/*	$NetBSD: lcdctl.c,v 1.1 2012/01/25 16:51:17 tsutsui Exp $	*/
+/*	$NetBSD: lcdctl.c,v 1.2 2012/01/27 14:48:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2012 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcdctl.c,v 1.1 2012/01/25 16:51:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcdctl.c,v 1.2 2012/01/27 14:48:22 tsutsui Exp $");
 
 #include "ioexp.h"
 
@@ -79,7 +79,6 @@ static void	lcdctl_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(lcdctl, sizeof(struct lcdctl_softc),
 	lcdctl_match, lcdctl_attach, NULL, NULL);
 
-static int lcdctl_finalize(device_t);
 static void lcdctl_brightness_up(device_t);
 static void lcdctl_brightness_down(device_t);
 static void lcdctl_display_on(device_t);
@@ -119,8 +118,10 @@ lcdctl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_nbacklighttbl = __arraycount(lcdctl_backlight_c3000);
 	sc->sc_backlighttbl = lcdctl_backlight_c3000;
 
-	/* schedule adjustment of LCD brightness after all devices are ready */
-	config_finalize_register(self, lcdctl_finalize);
+	/* Start with approximately 40% of full brightness. */
+	lcdctl_set_brightness(sc, 3);
+
+	lcdctl_sc = sc;
 
 	if (!pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_UP,
 	    lcdctl_brightness_up, true))
@@ -134,19 +135,6 @@ lcdctl_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_event_register(self, PMFE_DISPLAY_OFF,
 	    lcdctl_display_off, true))
 		aprint_error_dev(self, "couldn't register event handler\n");
-}
-
-static int
-lcdctl_finalize(device_t dv)
-{
-	struct lcdctl_softc *sc = device_private(dv);
-
-	/* Start with approximately 40% of full brightness. */
-	lcdctl_set_brightness(sc, 3);
-
-	lcdctl_sc = sc;
-
-	return 0;
 }
 
 static void
