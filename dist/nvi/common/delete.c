@@ -1,4 +1,4 @@
-/*	$NetBSD: delete.c,v 1.5 2012/01/21 19:49:56 christos Exp $ */
+/*	$NetBSD: delete.c,v 1.6 2012/01/27 16:41:22 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -65,7 +65,7 @@ del(SCR *sp, MARK *fm, MARK *tm, int lmode)
 		if (tm->lno == lno) {
 			if (db_get(sp, lno, DBG_FATAL, &p, &len))
 				return (1);
-			eof = tm->cno != (size_t)-1 && tm->cno >= len ? 1 : 0;
+			eof = tm->cno != ENTIRE_LINE && tm->cno >= len ? 1 : 0;
 		} else
 			eof = 1;
 		if (eof) {

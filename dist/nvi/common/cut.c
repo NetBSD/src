@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.8 2012/01/21 19:56:46 christos Exp $ */
+/*	$NetBSD: cut.c,v 1.9 2012/01/27 16:41:22 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -134,7 +134,6 @@ copyloop:
 	}
 
 
-#define	ENTIRE_LINE	(size_t)-1
 	/* In line mode, it's pretty easy, just cut the lines. */
 	if (LF_ISSET(CUT_LINEMODE)) {
 		cbp->flags |= CB_LMODE;
