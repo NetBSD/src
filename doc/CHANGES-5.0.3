@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.59 2012/01/25 20:49:02 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.60 2012/01/27 19:32:31 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2917,4 +2917,9 @@ crypto/dist/openssl/ssl/s3_enc.c        patch
 
 	Address CVE-2011-4576.
 	[drochner, ticket #1713]
+
+crypto/dist/ssh/auth-options.c		patch
+
+	Prevent minor information disclosure in ssh.
+	[drochner, ticket #1717]
 
