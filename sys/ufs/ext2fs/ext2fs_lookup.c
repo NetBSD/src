@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.66 2011/07/12 16:59:48 dholland Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.67 2012/01/27 19:22:48 para Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.66 2011/07/12 16:59:48 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.67 2012/01/27 19:22:48 para Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.66 2011/07/12 16:59:48 dholland 
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
@@ -167,15 +168,14 @@ ext2fs_readdir(void *v)
 	aiov.iov_len = e2fs_count;
 	auio.uio_resid = e2fs_count;
 	UIO_SETUP_SYSSPACE(&auio);
-	dirbuf = malloc(e2fs_count, M_TEMP, M_WAITOK);
-	dstd = malloc(sizeof(struct dirent), M_TEMP, M_WAITOK | M_ZERO);
+	dirbuf = kmem_alloc(e2fs_count, KM_SLEEP);
+	dstd = kmem_zalloc(sizeof(struct dirent), KM_SLEEP);
 	if (ap->a_ncookies) {
 		nc = e2fs_count / _DIRENT_MINSIZE((struct dirent *)0);
 		ncookies = nc;
 		cookies = malloc(sizeof (off_t) * ncookies, M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
-	memset(dirbuf, 0, e2fs_count);
 	aiov.iov_base = dirbuf;
 
 	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
@@ -209,8 +209,8 @@ ext2fs_readdir(void *v)
 		/* we need to correct uio_offset */
 		uio->uio_offset = off;
 	}
-	free(dirbuf, M_TEMP);
-	free(dstd, M_TEMP);
+	kmem_free(dirbuf, e2fs_count);
+	kmem_free(dstd, sizeof(*dstd));
 	*ap->a_eofflag = ext2fs_size(VTOI(ap->a_vp)) <= uio->uio_offset;
 	if (ap->a_ncookies) {
 		if (error) {

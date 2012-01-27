@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.42 2011/03/24 17:05:46 bouyer Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.43 2012/01/27 19:22:50 para Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.42 2011/03/24 17:05:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.43 2012/01/27 19:22:50 para Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.42 2011/03/24 17:05:46 bouyer Exp $
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
