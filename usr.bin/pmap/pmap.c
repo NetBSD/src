@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 2011/10/11 12:25:56 tsutsui Exp $ */
+/*	$NetBSD: pmap.c,v 1.48 2012/01/27 19:48:42 para Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.47 2011/10/11 12:25:56 tsutsui Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.48 2012/01/27 19:48:42 para Exp $");
 #endif
 
 #include <string.h>
@@ -302,12 +302,11 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 		printf("%*s    aref = { ar_pageoff = %x, ar_amap = %p },",
 		       indent(2), "", vme->aref.ar_pageoff, vme->aref.ar_amap);
 		printf(" advice = %d,\n", vme->advice);
-		printf("%*s    flags = %x <%s%s%s%s%s > }\n", indent(2), "",
+		printf("%*s    flags = %x <%s%s%s%s > }\n", indent(2), "",
 		       vme->flags,
 		       vme->flags & UVM_MAP_KERNEL ? " KERNEL" : "",
 		       vme->flags & UVM_MAP_KMAPENT ? " KMAPENT" : "",
-		       vme->flags & UVM_MAP_FIRST ? " FIRST" : "",
-		       vme->flags & UVM_MAP_QUANTUM ? " QUANTUM" : "",
+		       vme->flags & UVM_MAP_STATIC ? " STATIC" : "",
 		       vme->flags & UVM_MAP_NOMERGE ? " NOMERGE" : "");
 	}
 

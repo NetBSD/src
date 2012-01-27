@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.207 2012/01/25 00:28:36 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.208 2012/01/27 19:48:40 para Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.207 2012/01/25 00:28:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.208 2012/01/27 19:48:40 para Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -135,8 +135,6 @@ EVCNT_ATTACH_STATIC(sosend_kvalimit);
 #define	SOSEND_COUNTER_INCR(ev)		/* nothing */
 
 #endif /* SOSEND_COUNTERS */
-
-static struct callback_entry sokva_reclaimerentry;
 
 #if defined(SOSEND_NO_LOAN) || defined(MULTIPROCESSOR)
 int sock_loan_thresh = -1;
@@ -384,19 +382,6 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	return (space);
 }
 
-static int
-sokva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
-{
-
-	KASSERT(ce == &sokva_reclaimerentry);
-	KASSERT(obj == NULL);
-
-	if (!vm_map_starved_p(kernel_map)) {
-		return CALLBACK_CHAIN_ABORT;
-	}
-	return CALLBACK_CHAIN_CONTINUE;
-}
-
 struct mbuf *
 getsombuf(struct socket *so, int type)
 {
@@ -478,9 +463,6 @@ soinit(void)
 	/* Set the initial adjusted socket buffer size. */
 	if (sb_max_set(sb_max))
 		panic("bad initial sb_max value: %lu", sb_max);
-
-	callback_register(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
-	    &sokva_reclaimerentry, NULL, sokva_reclaim_callback);
 
 	socket_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
 	    socket_listener_cb, NULL);
