@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.73 2012/01/27 18:53:09 para Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.74 2012/01/27 19:48:40 para Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.73 2012/01/27 18:53:09 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.74 2012/01/27 19:48:40 para Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -125,13 +125,6 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 {
 	struct extent_region *rp;
 	int exflags, error;
-
-	/*
-	 * If the kernel memory allocator is not yet running, we can't
-	 * use it (obviously).
-	 */
-	if (KMEM_IS_RUNNING == 0)
-		flags &= ~EX_MALLOCOK;
 
 	/*
 	 * XXX Make a static, create-time flags word, so we don't

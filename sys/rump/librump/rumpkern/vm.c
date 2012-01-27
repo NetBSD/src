@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.120 2011/10/31 13:23:55 yamt Exp $	*/
+/*	$NetBSD: vm.c,v 1.121 2012/01/27 19:48:41 para Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,13 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.120 2011/10/31 13:23:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.121 2012/01/27 19:48:41 para Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/vmem.h>
 #include <sys/mman.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
@@ -78,11 +79,12 @@ int *uvmexp_pageshift = &uvmexp.pageshift;
 #endif
 
 struct vm_map rump_vmmap;
-static struct vm_map_kernel kmem_map_store;
-struct vm_map *kmem_map = &kmem_map_store.vmk_map;
 
-static struct vm_map_kernel kernel_map_store;
-struct vm_map *kernel_map = &kernel_map_store.vmk_map;
+static struct vm_map kernel_map_store;
+struct vm_map *kernel_map = &kernel_map_store;
+
+vmem_t *kmem_arena;
+vmem_t *kmem_va_arena;
 
 static unsigned int pdaemon_waiters;
 static kmutex_t pdaemonmtx;
@@ -327,9 +329,17 @@ uvm_init(void)
 	cv_init(&oomwait, "oomwait");
 
 	kernel_map->pmap = pmap_kernel();
-	callback_head_init(&kernel_map_store.vmk_reclaim_callback, IPL_VM);
-	kmem_map->pmap = pmap_kernel();
-	callback_head_init(&kmem_map_store.vmk_reclaim_callback, IPL_VM);
+
+	vmem_bootstrap();
+	kmem_arena = vmem_create("kmem", 0, 1024*1024, PAGE_SIZE,
+	    NULL, NULL, NULL,
+	    0, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
+
+	vmem_init(kmem_arena);
+
+	kmem_va_arena = vmem_create("kva", 0, 0, PAGE_SIZE,
+	    vmem_alloc, vmem_free, kmem_arena,
+	    32 * PAGE_SIZE, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
 
 	pool_cache_bootstrap(&pagecache, sizeof(struct vm_page), 0, 0, 0,
 	    "page$", NULL, IPL_NONE, pgctor, pgdtor, NULL);
@@ -356,21 +366,6 @@ uvm_pageunwire(struct vm_page *pg)
 
 	/* nada */
 }
-
-/*
- * The uvm reclaim hook is not currently necessary because it is
- * used only by ZFS and implements exactly the same functionality
- * as the kva reclaim hook which we already run in the pagedaemon
- * (rump vm does not have a concept of uvm_map(), so we cannot
- * reclaim kva it when a mapping operation fails due to insufficient
- * available kva).
- */
-void
-uvm_reclaim_hook_add(struct uvm_reclaim_hook *hook_entry)
-{
-
-}
-__strong_alias(uvm_reclaim_hook_del,uvm_reclaim_hook_add);
 
 /* where's your schmonz now? */
 #define PUNLIMIT(a)	\
@@ -595,13 +590,6 @@ uvm_estimatepageable(int *active, int *inactive)
 	*inactive = 1024;
 }
 
-struct vm_map_kernel *
-vm_map_to_kernel(struct vm_map *map)
-{
-
-	return (struct vm_map_kernel *)map;
-}
-
 bool
 vm_map_starved_p(struct vm_map *map)
 {
@@ -735,46 +723,33 @@ uvm_km_free(struct vm_map *map, vaddr_t vaddr, vsize_t size, uvm_flag_t flags)
 
 struct vm_map *
 uvm_km_suballoc(struct vm_map *map, vaddr_t *minaddr, vaddr_t *maxaddr,
-	vsize_t size, int pageable, bool fixed, struct vm_map_kernel *submap)
+	vsize_t size, int pageable, bool fixed, struct vm_map *submap)
 {
 
 	return (struct vm_map *)417416;
 }
 
-vaddr_t
-uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
+int
+uvm_km_kmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags,
+    vmem_addr_t *addr)
 {
+	vaddr_t va;
+	va = (vaddr_t)rump_hypermalloc(size, PAGE_SIZE,
+	    (flags & VM_SLEEP), "kmalloc");
 
-	return (vaddr_t)rump_hypermalloc(PAGE_SIZE, PAGE_SIZE,
-	    waitok, "kmalloc");
+	if (va) {
+		*addr = va;
+		return 0;
+	} else {
+		return ENOMEM;
+	}
 }
 
 void
-uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
+uvm_km_kmem_free(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 {
 
-	rump_hyperfree((void *)addr, PAGE_SIZE);
-}
-
-vaddr_t
-uvm_km_alloc_poolpage_cache(struct vm_map *map, bool waitok)
-{
-
-	return uvm_km_alloc_poolpage(map, waitok);
-}
-
-void
-uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t vaddr)
-{
-
-	uvm_km_free_poolpage(map, vaddr);
-}
-
-void
-uvm_km_va_drain(struct vm_map *map, uvm_flag_t flags)
-{
-
-	/* we eventually maybe want some model for available memory */
+	rump_hyperfree((void *)addr, size);
 }
 
 /*
@@ -1013,7 +988,6 @@ uvm_pageout(void *arg)
 	for (;;) {
 		if (!NEED_PAGEDAEMON()) {
 			kernel_map->flags &= ~VM_MAP_WANTVA;
-			kmem_map->flags &= ~VM_MAP_WANTVA;
 		}
 
 		if (pdaemon_waiters) {
@@ -1027,7 +1001,6 @@ uvm_pageout(void *arg)
 
 		/* tell the world that we are hungry */
 		kernel_map->flags |= VM_MAP_WANTVA;
-		kmem_map->flags |= VM_MAP_WANTVA;
 		mutex_exit(&pdaemonmtx);
 
 		/*
@@ -1106,15 +1079,6 @@ uvm_pageout(void *arg)
 			mutex_enter(&pdaemonmtx);
 			continue;
 		}
-
-		/*
-		 * Still not there?  sleeves come off right about now.
-		 * First: do reclaim on kernel/kmem map.
-		 */
-		callback_run_roundrobin(&kernel_map_store.vmk_reclaim_callback,
-		    NULL);
-		callback_run_roundrobin(&kmem_map_store.vmk_reclaim_callback,
-		    NULL);
 
 		/*
 		 * And then drain the pools.  Wipe them out ... all of them.

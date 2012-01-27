@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.224 2011/07/01 20:57:45 dyoung Exp $	*/
+/*	$NetBSD: pmap.c,v 1.225 2012/01/27 19:48:38 para Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -197,12 +197,12 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/cdefs.h>
 #include <sys/cpu.h>
 #include <sys/sysctl.h>
- 
+
 #include <uvm/uvm.h>
 
 #include <sys/bus.h>
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224 2011/07/01 20:57:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.225 2012/01/27 19:48:38 para Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -5497,7 +5497,7 @@ pmap_postinit(void)
 	needed = (maxproc / PMAP_DOMAINS) + ((maxproc % PMAP_DOMAINS) ? 1 : 0);
 	needed -= 1;
 
-	l1 = malloc(sizeof(*l1) * needed, M_VMPMAP, M_WAITOK);
+	l1 = kmem_alloc(sizeof(*l1) * needed, KM_SLEEP);
 
 	for (loop = 0; loop < needed; loop++, l1++) {
 		/* Allocate a L1 page table */
@@ -5506,7 +5506,7 @@ pmap_postinit(void)
 			panic("Cannot allocate L1 KVM");
 
 		error = uvm_pglistalloc(L1_TABLE_SIZE, physical_start,
-		    physical_end, L1_TABLE_SIZE, 0, &plist, 1, M_WAITOK);
+		    physical_end, L1_TABLE_SIZE, 0, &plist, 1, 1);
 		if (error)
 			panic("Cannot allocate L1 physical pages");
 

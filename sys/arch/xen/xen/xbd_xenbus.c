@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.50 2011/12/07 15:47:43 cegger Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.51 2012/01/27 19:48:39 para Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.50 2011/12/07 15:47:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.51 2012/01/27 19:48:39 para Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -1064,11 +1064,13 @@ static int
 xbd_map_align(struct xbd_req *req)
 {
 	int s = splvm();
+	int rc;
 
-	req->req_data = (void *)uvm_km_alloc(kmem_map, req->req_bp->b_bcount,
-	    PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_NOWAIT);
+	rc = uvm_km_kmem_alloc(kmem_va_arena,
+	    req->req_bp->b_bcount, (VM_NOSLEEP | VM_INSTANTFIT),
+	    req->req_data);
 	splx(s);
-	if (__predict_false(req->req_data == NULL))
+	if (__predict_false(rc != 0))
 		return ENOMEM;
 	if ((req->req_bp->b_flags & B_READ) == 0)
 		memcpy(req->req_data, req->req_bp->b_data,
@@ -1084,7 +1086,6 @@ xbd_unmap_align(struct xbd_req *req)
 		memcpy(req->req_bp->b_data, req->req_data,
 		    req->req_bp->b_bcount);
 	s = splvm();
-	uvm_km_free(kmem_map, (vaddr_t)req->req_data, req->req_bp->b_bcount,
-	    UVM_KMF_WIRED);
+	uvm_km_kmem_free(kmem_va_arena, (vaddr_t)req->req_data, req->req_bp->b_bcount);
 	splx(s);
 }

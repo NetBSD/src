@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.62 2011/06/12 03:36:02 rmind Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.63 2012/01/27 19:48:41 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.62 2011/06/12 03:36:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.63 2012/01/27 19:48:41 para Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.62 2011/06/12 03:36:02 rmind Exp $"
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
@@ -216,7 +216,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 		mutex_exit(&udv_lock);
 
 		/* Note: both calls may allocate memory and sleep. */
-		udv = malloc(sizeof(*udv), M_TEMP, M_WAITOK);
+		udv = kmem_alloc(sizeof(*udv), KM_SLEEP);
 		uvm_obj_init(&udv->u_obj, &uvm_deviceops, true, 1);
 
 		mutex_enter(&udv_lock);
@@ -239,7 +239,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 		if (lcv) {
 			mutex_exit(&udv_lock);
 			uvm_obj_destroy(&udv->u_obj, true);
-			free(udv, M_TEMP);
+			kmem_free(udv, sizeof(*udv));
 			continue;
 		}
 
@@ -329,7 +329,7 @@ again:
 	mutex_exit(uobj->vmobjlock);
 
 	uvm_obj_destroy(uobj, true);
-	free(udv, M_TEMP);
+	kmem_free(udv, sizeof(*udv));
 	UVMHIST_LOG(maphist," <- done, freed uobj=0x%x", uobj,0,0,0);
 }
 

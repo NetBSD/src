@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.41 2011/04/24 03:56:50 rmind Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.42 2012/01/27 19:48:41 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.41 2011/04/24 03:56:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.42 2012/01/27 19:48:41 para Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,6 @@ uvm_init(void)
 
 	memset(&uvm, 0, sizeof(uvm));
 	averunnable.fscale = FSCALE;
-	uvm_amap_init();
 
 	/*
 	 * step 2: init the page sub-system.  this includes allocating the
@@ -104,9 +103,7 @@ uvm_init(void)
 	uvm_page_init(&kvm_start, &kvm_end);
 
 	/*
-	 * step 3: init the map sub-system.  allocates the static pool of
-	 * vm_map_entry structures that are used for "special" kernel maps
-	 * (e.g. kernel_map, kmem_map, etc...).
+	 * step 3: init the map sub-system. 
 	 */
 
 	uvm_map_init();
@@ -114,9 +111,18 @@ uvm_init(void)
 	/*
 	 * step 4: setup the kernel's virtual memory data structures.  this
 	 * includes setting up the kernel_map/kernel_object.
+	 * Bootstrap all kernel memory allocators.
 	 */
 
-	uvm_km_init(kvm_start, kvm_end);
+	uao_init();
+	uvm_km_bootstrap(kvm_start, kvm_end);
+
+	/* 
+	 * step 5: setup uvm_map pool_caches and init the amap.
+	 */
+
+	uvm_map_init_caches();
+	uvm_amap_init();
 
 	/*
 	 * step 5: init the pmap module.   the pmap module is free to allocate
@@ -125,36 +131,22 @@ uvm_init(void)
 
 	pmap_init();
 
-	/*
-	 * step 6: init the kernel memory allocator.   after this call the
-	 * kernel memory allocator (malloc) can be used. this includes
-	 * setting up the kmem_map.
+	/* step 6: init the kernel maps virtual address caches.
+	 * make kernel memory allocator ready for use.
+         * After this call the pool/kmem memory allocators can be used.
 	 */
 
-	kmeminit();
+	uvm_km_init();
 
 #ifdef DEBUG
 	debug_init();
 #endif
 
 	/*
-	 * step 7: init all pagers and the pager_map.
+	 * step 6: init all pagers and the pager_map.
 	 */
 
 	uvm_pager_init();
-
-	/*
-	 * Initialize pools.  This must be done before anyone manipulates
-	 * any vm_maps because we use a pool for some map entry structures.
-	 */
-
-	pool_subsystem_init();
-
-	/*
-	 * init slab memory allocator kmem(9).
-	 */
-
-	kmem_init();
 
 	/*
 	 * Initialize the uvm_loan() facility.

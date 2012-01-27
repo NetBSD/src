@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.143 2012/01/05 15:19:53 reinoud Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.144 2012/01/27 19:48:41 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.143 2012/01/05 15:19:53 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.144 2012/01/27 19:48:41 para Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -701,7 +701,7 @@ sys_munmap(struct lwp *l, const struct sys_munmap_args *uap, register_t *retval)
 		return (EINVAL);
 	}
 #endif
-	uvm_unmap_remove(map, addr, addr + size, &dead_entries, NULL, 0);
+	uvm_unmap_remove(map, addr, addr + size, &dead_entries, 0);
 	vm_map_unlock(map);
 	if (dead_entries != NULL)
 		uvm_unmap_detach(dead_entries, 0);

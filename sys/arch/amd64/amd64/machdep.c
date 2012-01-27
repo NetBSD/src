@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.174 2012/01/12 19:49:37 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.175 2012/01/27 19:48:38 para Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.174 2012/01/12 19:49:37 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175 2012/01/27 19:48:38 para Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -278,7 +278,7 @@ vaddr_t lo32_vaddr;
 paddr_t lo32_paddr;
 
 vaddr_t module_start, module_end;
-static struct vm_map_kernel module_map_store;
+static struct vm_map module_map_store;
 extern struct vm_map *module_map;
 vaddr_t kern_end;
 
@@ -386,9 +386,9 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	uvm_map_setup_kernel(&module_map_store, module_start, module_end, 0);
-	module_map_store.vmk_map.pmap = pmap_kernel();
-	module_map = &module_map_store.vmk_map;
+	uvm_map_setup(&module_map_store, module_start, module_end, 0);
+	module_map_store.pmap = pmap_kernel();
+	module_map = &module_map_store;
 
 	/* Say hello. */
 	banner();

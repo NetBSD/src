@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.58 2011/12/30 19:01:07 christos Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.59 2012/01/27 19:48:41 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.58 2011/12/30 19:01:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.59 2012/01/27 19:48:41 para Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,12 +247,6 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 				    "statistics"),
 		       sysctl_vm_uvmexp, 0, &uvmexp, sizeof(uvmexp),
 		       CTL_VM, VM_UVMEXP, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "nkmempages",
-		       SYSCTL_DESCR("Default number of pages in kmem_map"),
-		       NULL, 0, &nkmempages, 0,
-		       CTL_VM, VM_NKMEMPAGES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "uvmexp2",

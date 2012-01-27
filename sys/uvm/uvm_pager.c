@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.107 2011/10/11 23:57:07 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.108 2012/01/27 19:48:42 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.107 2011/10/11 23:57:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.108 2012/01/27 19:48:42 para Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -272,7 +272,7 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	}
 
 	vm_map_lock(pager_map);
-	uvm_unmap_remove(pager_map, kva, kva + size, &entries, NULL, 0);
+	uvm_unmap_remove(pager_map, kva, kva + size, &entries, 0);
 	mutex_enter(&pager_map_wanted_lock);
 	if (pager_map_wanted) {
 		pager_map_wanted = false;
