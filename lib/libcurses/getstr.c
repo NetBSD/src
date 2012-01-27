@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.21 2012/01/06 22:20:54 christos Exp $	*/
+/*	$NetBSD: getstr.c,v 1.22 2012/01/27 15:37:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.21 2012/01/06 22:20:54 christos Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.22 2012/01/27 15:37:09 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -241,17 +241,14 @@ __wgetnstr(WINDOW *win, char *str, int n)
 			wmove(win, win->cury, xpos);
 		} else {
 			if (remain) {
-				if (iscntrl((unsigned char)c)) {
+				if (iscntrl((unsigned char)c))
 					mvwaddch(win, win->cury, xpos, ' ');
-					wmove(win, win->cury, xpos + 1);
-				}
 				str++;
 				xpos++;
 				remain--;
-			} else {
+			} else
 				mvwaddch(win, win->cury, xpos, ' ');
-				wmove(win, win->cury, xpos - 1);
-			}
+			wmove(win, win->cury, xpos);
 		}
 	}
 
