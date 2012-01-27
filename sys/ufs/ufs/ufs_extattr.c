@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.35 2011/07/07 14:56:45 manu Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.36 2012/01/27 19:22:49 para Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.35 2011/07/07 14:56:45 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.36 2012/01/27 19:22:49 para Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.35 2011/07/07 14:56:45 manu Exp $"
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/fcntl.h>
 #include <sys/lwp.h>
 #include <sys/vnode.h>
@@ -76,8 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.35 2011/07/07 14:56:45 manu Exp $"
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ufs/ufs_extern.h>
-
-static MALLOC_JUSTDEFINE(M_UFS_EXTATTR, "ufs_extattr","ufs extended attribute");
 
 int ufs_extattr_sync = 1;
 int ufs_extattr_autocreate = 1024;
@@ -506,7 +504,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 	if (dvp->v_type != VDIR)
 		return (ENOTDIR);
 
-	dirbuf = malloc(DIRBLKSIZ, M_TEMP, M_WAITOK);
+	dirbuf = kmem_alloc(DIRBLKSIZ, KM_SLEEP);
 
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -578,7 +576,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 				break;
 		}
 	}
-	free(dirbuf, M_TEMP);
+	kmem_free(dirbuf, DIRBLKSIZ);
 	
 	return (0);
 }
@@ -736,8 +734,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 	if (backing_vnode->v_type != VREG)
 		return (EINVAL);
 
-	attribute = malloc(sizeof(*attribute), M_UFS_EXTATTR,
-	    M_WAITOK | M_ZERO);
+	attribute = kmem_zalloc(sizeof(*attribute), KM_SLEEP);
 
 	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED)) {
 		error = EOPNOTSUPP;
@@ -818,7 +815,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 	VOP_UNLOCK(backing_vnode);
 
  free_exit:
-	free(attribute, M_UFS_EXTATTR);
+	kmem_free(attribute, sizeof(*attribute));
 	return (error);
 }
 
@@ -844,7 +841,7 @@ ufs_extattr_disable(struct ufsmount *ump, int attrnamespace,
 	error = vn_close(uele->uele_backing_vnode, FREAD|FWRITE,
 	    l->l_cred);
 
-	free(uele, M_UFS_EXTATTR);
+	kmem_free(uele, sizeof(*uele));
 
 	return (error);
 }
@@ -1540,12 +1537,10 @@ void
 ufs_extattr_init(void)
 {
 
-	malloc_type_attach(M_UFS_EXTATTR);
 }
 
 void
 ufs_extattr_done(void)
 {
 
-	malloc_type_detach(M_UFS_EXTATTR);
 }
