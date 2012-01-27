@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.39 2011/12/12 19:11:21 njoly Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.40 2012/01/27 21:46:42 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.39 2011/12/12 19:11:21 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.40 2012/01/27 21:46:42 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -331,6 +331,8 @@ sysvbfs_setattr(void *arg)
 	struct bfs_inode *inode = bnode->inode;
 	struct bfs_fileattr *attr = &inode->attr;
 	struct bfs *bfs = bnode->bmp->bfs;
+	kauth_cred_t cred = ap->a_cred;
+	int error;
 
 	DPRINTF("%s:\n", __func__);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -342,12 +344,30 @@ sysvbfs_setattr(void *arg)
 	    ((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL))
 		return EINVAL;
 
-	if (vap->va_uid != (uid_t)VNOVAL)
-		attr->uid = vap->va_uid;
-	if (vap->va_gid != (uid_t)VNOVAL)
-		attr->gid = vap->va_gid;
-	if (vap->va_mode != (mode_t)VNOVAL)
-		attr->mode = vap->va_mode;
+	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (uid_t)VNOVAL) {
+		uid_t uid =
+		    (vap->va_uid != (uid_t)VNOVAL) ? vap->va_uid : attr->uid;
+		gid_t gid =
+		    (vap->va_gid != (gid_t)VNOVAL) ? vap->va_gid : attr->gid;
+		error = kauth_authorize_vnode(cred,
+		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
+		    genfs_can_chown(vp, cred, attr->uid, attr->gid, uid, gid));
+		if (error)
+			return error;
+		attr->uid = uid;
+		attr->gid = gid;
+	}
+
+	if (vap->va_mode != (mode_t)VNOVAL) {
+		mode_t mode = vap->va_mode;
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
+		    vp, NULL, genfs_can_chmod(vp, cred, attr->uid, attr->gid,
+		    mode));
+		if (error)
+			return error;
+		attr->mode = mode;
+	}
+
 	if (vap->va_atime.tv_sec != VNOVAL)
 		attr->atime = vap->va_atime.tv_sec;
 	if (vap->va_mtime.tv_sec != VNOVAL)
