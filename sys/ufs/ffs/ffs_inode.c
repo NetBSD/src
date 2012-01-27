@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.108 2011/11/23 19:42:10 bouyer Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.109 2012/01/27 19:22:49 para Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.108 2011/11/23 19:42:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.109 2012/01/27 19:22:49 para Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.108 2011/11/23 19:42:10 bouyer Exp $
 #include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
@@ -621,7 +621,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	else
 		bap2 = (int64_t *)bp->b_data;
 	if (lastbn >= 0) {
-		copy = malloc(fs->fs_bsize, M_TEMP, M_WAITOK);
+		copy = kmem_alloc(fs->fs_bsize, KM_SLEEP);
 		memcpy((void *)copy, bp->b_data, (u_int)fs->fs_bsize);
 		for (i = last + 1; i < NINDIR(fs); i++)
 			BAP_ASSIGN(ip, i, 0);
@@ -676,7 +676,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	}
 
 	if (copy != NULL) {
-		free(copy, M_TEMP);
+		kmem_free(copy, fs->fs_bsize);
 	} else {
 		brelse(bp, BC_INVAL);
 	}
