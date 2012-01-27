@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.7 2011/02/13 07:25:56 nonaka Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.8 2012/01/27 03:07:21 matt Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -337,7 +337,7 @@ __bitfield(uint32_t *src, int start, int len)
 		bc = 8 - bs;
 		if (bc > len)
 			bc = len;
-		dst |= (*sp++ >> bs) << shift;
+		dst |= (*sp >> bs) << shift;
 		shift += bc;
 		start += bc;
 		len -= bc;
