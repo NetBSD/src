@@ -252,8 +252,10 @@ int	physmem;		/* Total physical memory */
 int	netboot;		/* Are we netbooting? */
 
 
+phys_ram_seg_t avail_clusters[VM_PHYSSEG_MAX];
+u_int avail_cluster_cnt;
+u_quad_t avail_cluster_maxaddr;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-u_quad_t mem_cluster_maxaddr;
 u_int mem_cluster_cnt;
 
 static uint64_t mem_clusters_init(rmixlfw_mmap_t *, rmixlfw_mmap_t *);
@@ -654,28 +656,28 @@ rmixl_mach_init_common(struct rmixl_config *rcp, vaddr_t kernend,
 	 */
 
 	/* reserve 0..start..kernend pages */
-	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
+	avail_cluster_cnt = ram_seg_resv(avail_clusters, avail_cluster_cnt,
 		0, round_page(MIPS_KSEG0_TO_PHYS(kernend)));
 
 	/* reserve reset exception vector page */
 	/* should never be in our clusters anyway... */
-	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
+	avail_cluster_cnt = ram_seg_resv(avail_clusters, avail_cluster_cnt,
 		0x1FC00000, 0x1FC00000+NBPG);
 
 	/* Stop this abomination */
-	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
+	avail_cluster_cnt = ram_seg_resv(avail_clusters, avail_cluster_cnt,
 		0x18000000, 0x20000000);
 
 #ifdef MULTIPROCESSOR
 	/* reserve the cpu_wakeup_info area */
-	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
+	avail_cluster_cnt = ram_seg_resv(avail_clusters, avail_cluster_cnt,
 		(u_quad_t)trunc_page((vaddr_t)rcp->rc_cpu_wakeup_info),
 		(u_quad_t)round_page((vaddr_t)rcp->rc_cpu_wakeup_end));
 #endif
 
 #ifdef MEMLIMIT
 	/* reserve everything >= MEMLIMIT */
-	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
+	avail_cluster_cnt = ram_seg_resv(avail_clusters, avail_cluster_cnt,
 		(u_quad_t)MEMLIMIT, (u_quad_t)~0);
 #endif
 
@@ -684,10 +686,10 @@ rmixl_mach_init_common(struct rmixl_config *rcp, vaddr_t kernend,
 	 * Now we need to reserve an aligned block of memory for pre-init
 	 * allocations so we don't deplete KSEG0.
 	 */
-	for (u_int i=0; i < mem_cluster_cnt; i++) {
+	for (u_int i=0; i < avail_cluster_cnt; i++) {
 		u_quad_t finish = round_page(
-			mem_clusters[i].start + mem_clusters[i].size);
-		u_quad_t start = roundup2(mem_clusters[i].start, VM_KSEGX_SIZE);
+			avail_clusters[i].start + avail_clusters[i].size);
+		u_quad_t start = roundup2(avail_clusters[i].start, VM_KSEGX_SIZE);
 		if (start > MIPS_PHYS_MASK && start + VM_KSEGX_SIZE <= finish) {
 			mips_ksegx_start = start;
 			mips_ksegx_pte.pt_entry = mips_paddr_to_tlbpfn(start)
@@ -705,20 +707,20 @@ rmixl_mach_init_common(struct rmixl_config *rcp, vaddr_t kernend,
 #endif
 
 	/* get maximum RAM address from the VM clusters */
-	mem_cluster_maxaddr = 0;
-	for (u_int i=0; i < mem_cluster_cnt; i++) {
+	avail_cluster_maxaddr = 0;
+	for (u_int i=0; i < avail_cluster_cnt; i++) {
 		u_quad_t tmp = round_page(
-			mem_clusters[i].start + mem_clusters[i].size);
-		if (tmp > mem_cluster_maxaddr)
-			mem_cluster_maxaddr = tmp;
+			avail_clusters[i].start + avail_clusters[i].size);
+		if (tmp > avail_cluster_maxaddr)
+			avail_cluster_maxaddr = tmp;
 	}
-	DPRINTF("mem_cluster_maxaddr %#"PRIx64"\n", mem_cluster_maxaddr);
+	DPRINTF("avail_cluster_maxaddr %#"PRIx64"\n", avail_cluster_maxaddr);
 
 	/*
-	 * Load mem_clusters[] into the VM system.
+	 * Load avail_clusters[] into the VM system.
 	 */
 	mips_page_physload(MIPS_KSEG0_START, (vaddr_t) kernend,
-	    mem_clusters, mem_cluster_cnt, fl, fl_count);
+	    avail_clusters, avail_cluster_cnt, fl, fl_count);
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -1156,6 +1158,8 @@ rmixl_physaddr_dram_init(struct extent *ext)
 	}
 
 	mem_cluster_cnt = mp - mem_clusters;
+	avail_cluster_cnt = mem_cluster_cnt;
+	memcpy(avail_clusters, mem_clusters, sizeof(avail_clusters));
 
 	return memsize;
 }
@@ -1278,12 +1282,16 @@ rmixlfw_init(int64_t infop)
 	mem_clusters[0].start = 0;
 	mem_clusters[0].size = MEMSIZE;
 	mem_cluster_cnt = 1;
+	memcpy(avail_clusters, mem_clusters, sizeof(avail_clusters[0]));
+	avail_cluster_cnt = cnt;
 	return MEMSIZE;
 #else
 	uint64_t memsize = 0;
 	for (size_t i = 0; i < mem_cluster_cnt; i++) {
 		memsize += mem_clusters[i].size;
+		avail_clusters[i] = mem_clusters[i];
 	}
+	avail_cluster_cnt = mem_cluster_cnt;
 	if (memsize)
 		return memsize;
 
@@ -1426,6 +1434,8 @@ mem_clusters_init(
 		cnt++;
 	}
 	mem_cluster_cnt = cnt;
+	memcpy(avail_clusters, mem_clusters, sizeof(avail_clusters));
+	avail_cluster_cnt = cnt;
 	return sum;
 }
 
