@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.16 2012/01/25 16:51:17 tsutsui Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.17 2012/01/27 15:07:41 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -38,12 +38,13 @@
  * integrated LCD controller.  Codes for it is arm/xscale/pxa2x0_lcd.c.
  *
  * Codes in this file provide platform specific things including:
- *   LCD on/off switch and backlight brightness
  *   LCD panel geometry
+ *
+ * LCD on/off switch and backlight brightness are done in lcdctl.c.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.16 2012/01/25 16:51:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.17 2012/01/27 15:07:41 tsutsui Exp $");
 
 #include "lcdctl.h"
 
