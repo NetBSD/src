@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.18 2012/01/21 19:44:31 nonaka Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.19 2012/01/27 03:06:24 matt Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.18 2012/01/21 19:44:31 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.19 2012/01/27 03:06:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -926,15 +926,20 @@ sdmmc_mem_decode_scr(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	/*
 	 * Change the raw-scr received from the DMA stream to resp.
 	 */
-	resp[0] = be32toh(sf->raw_scr[1]);
-	resp[1] = be32toh(sf->raw_scr[0]) >> 8;
+	resp[0] = be32toh(sf->raw_scr[1]) >> 8;		// LSW
+	resp[1] = be32toh(sf->raw_scr[0]);		// MSW
+	resp[0] |= (resp[1] & 0xff) << 24;
+	resp[1] >>= 8;
+	resp[0] = htole32(resp[0]);
+	resp[1] = htole32(resp[1]);
 
 	ver = SCR_STRUCTURE(resp);
 	sf->scr.sd_spec = SCR_SD_SPEC(resp);
 	sf->scr.bus_width = SCR_SD_BUS_WIDTHS(resp);
 
-	DPRINTF(("%s: sdmmc_mem_decode_scr: spec=%d, bus width=%d\n",
-	    SDMMCDEVNAME(sc), sf->scr.sd_spec, sf->scr.bus_width));
+	DPRINTF(("%s: sdmmc_mem_decode_scr: %08x%08x spec=%d, bus width=%d\n",
+	    SDMMCDEVNAME(sc), resp[1], resp[0],
+	    sf->scr.sd_spec, sf->scr.bus_width));
 
 	if (ver != 0) {
 		DPRINTF(("%s: unknown structure version: %d\n",
