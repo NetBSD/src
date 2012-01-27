@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.h,v 1.6 2011/11/21 04:36:05 christos Exp $	*/
+/*	$NetBSD: kmem.h,v 1.7 2012/01/27 19:48:41 para Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -36,6 +36,7 @@ typedef unsigned int km_flag_t;
 void *kmem_alloc(size_t, km_flag_t);
 void *kmem_zalloc(size_t, km_flag_t);
 void kmem_free(void *, size_t);
+
 void kmem_init(void);
 size_t kmem_roundup_size(size_t);
 

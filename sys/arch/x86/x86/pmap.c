@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.154 2012/01/22 18:16:35 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.155 2012/01/27 19:48:39 para Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2012/01/22 18:16:35 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155 2012/01/27 19:48:39 para Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1512,24 +1512,6 @@ pmap_bootstrap(vaddr_t kva_start)
 	LIST_INIT(&pmaps);
 
 	/*
-	 * initialize caches.
-	 */
-
-	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
-	    "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
-#ifdef PAE
-	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE * PDP_SIZE, 0, 0, 0,
-	    "pdppl", &pmap_pdp_allocator, IPL_NONE,
-	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
-#else /* PAE */
-	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0,
-	    "pdppl", NULL, IPL_NONE, pmap_pdp_ctor, pmap_pdp_dtor, NULL);
-#endif /* PAE */
-	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0,
-	    PR_LARGECACHE, "pvpl", &pool_allocator_meta, IPL_NONE, NULL,
-	    NULL, NULL);
-
-	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
 	 */
 
@@ -1632,6 +1614,24 @@ pmap_init(void)
 	for (i = 0; i < PV_HASH_LOCK_CNT; i++) {
 		mutex_init(&pv_hash_locks[i].lock, MUTEX_NODEBUG, IPL_VM);
 	}
+
+	/*
+	 * initialize caches.
+	 */
+
+	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
+	    "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
+#ifdef PAE
+	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE * PDP_SIZE, 0, 0, 0,
+	    "pdppl", &pmap_pdp_allocator, IPL_NONE,
+	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
+#else /* PAE */
+	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0,
+	    "pdppl", NULL, IPL_NONE, pmap_pdp_ctor, pmap_pdp_dtor, NULL);
+#endif /* PAE */
+	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0,
+	    PR_LARGECACHE, "pvpl", &pool_allocator_kmem, IPL_NONE, NULL,
+	    NULL, NULL);
 
 	pmap_tlb_init();
 

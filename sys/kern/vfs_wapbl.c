@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.49 2012/01/11 00:11:32 yamt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.50 2012/01/27 19:48:40 para Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.49 2012/01/11 00:11:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.50 2012/01/27 19:48:40 para Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -64,9 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.49 2012/01/11 00:11:32 yamt Exp $");
 #include <miscfs/specfs/specdev.h>
 
 #if 0 /* notyet */
-#define	wapbl_malloc(s) kmem_alloc((s), KM_SLEEP)
-#define	wapbl_free(a, s) kmem_free((a), (s))
-#define	wapbl_calloc(n, s) kmem_zalloc((n)*(s), KM_SLEEP)
+#define	wapbl_malloc(s) kmem_intr_alloc((s), KM_SLEEP)
+#define	wapbl_free(a, s) kmem_intr_free((a), (s))
+#define	wapbl_calloc(n, s) kmem_intr_zalloc((n)*(s), KM_SLEEP)
 #else
 MALLOC_JUSTDEFINE(M_WAPBL, "wapbl", "write-ahead physical block logging");
 #define	wapbl_malloc(s) malloc((s), M_WAPBL, M_WAITOK)
@@ -310,7 +310,7 @@ wapbl_sysctl_init(void)
 static void
 wapbl_init(void)
 {
-	malloc_type_attach(M_WAPBL);
+	//malloc_type_attach(M_WAPBL);
 	wapbl_sysctl_init();
 }
 

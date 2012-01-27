@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 2012/01/09 06:49:25 kiyohara Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 2012/01/27 19:48:39 para Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,12 +67,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2012/01/09 06:49:25 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2012/01/27 19:48:39 para Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
@@ -612,7 +612,7 @@ pmap_create(void)
 {
 	struct pmap *pm;
 
-	pm = malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
+	pm = kmem_alloc(sizeof(*pm), KM_SLEEP);
 	memset(pm, 0, sizeof *pm);
 	pm->pm_refs = 1;
 	return pm;
@@ -650,7 +650,7 @@ pmap_destroy(struct pmap *pm)
 		}
 	if (pm->pm_ctx)
 		ctx_free(pm);
-	free(pm, M_VMPMAP);
+	kmem_free(pm, sizeof(*pm));
 }
 
 /*
