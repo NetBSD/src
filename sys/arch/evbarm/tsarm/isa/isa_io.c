@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.8 2011/07/01 19:11:34 dyoung Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.9 2012/01/27 18:52:54 para Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.8 2011/07/01 19:11:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.9 2012/01/27 18:52:54 para Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,10 +242,10 @@ isa_io_init(vm_offset_t isa_io_addr, vm_offset_t isa_mem_addr)
 	isa_io_bs_tag.bs_cookie = (void *)isa_io_addr;
 	isa_mem_bs_tag.bs_cookie = (void *)isa_mem_addr;
 
-	isaio_ex = extent_create("isaio", 0x0, 0xffff, M_DEVBUF, 
+	isaio_ex = extent_create("isaio", 0x0, 0xffff, 
 		(void *)isaio_ex_storage, sizeof(isaio_ex_storage),
 		EX_NOWAIT|EX_NOCOALESCE);
-	isamem_ex = extent_create("isamem", 0x0, 0xfffff, M_DEVBUF, 
+	isamem_ex = extent_create("isamem", 0x0, 0xfffff, 
 		(void *)isamem_ex_storage, sizeof(isamem_ex_storage),
 		EX_NOWAIT|EX_NOCOALESCE);
 	if (isaio_ex == NULL || isamem_ex == NULL)

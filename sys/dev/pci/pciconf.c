@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.33 2011/08/24 20:27:35 dyoung Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.34 2012/01/27 18:53:08 para Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.33 2011/08/24 20:27:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.34 2012/01/27 18:53:08 para Exp $");
 
 #include "opt_pci.h"
 
@@ -708,7 +708,7 @@ setup_iowins(pciconf_bus_t *pb)
 		}
 		if (pd->ppb && pi->reg == 0) {
 			pd->ppb->ioext = extent_create("pciconf", pi->address,
-			    pi->address + pi->size, M_DEVBUF, NULL, 0,
+			    pi->address + pi->size, NULL, 0,
 			    EX_NOWAIT);
 			if (pd->ppb->ioext == NULL) {
 				print_tag(pd->pc, pd->tag);
@@ -759,8 +759,7 @@ setup_memwins(pciconf_bus_t *pb)
 		}
 		if (pd->ppb && pm->reg == 0) {
 			ex = extent_create("pciconf", pm->address,
-			    pm->address + pm->size, M_DEVBUF, NULL, 0,
-			    EX_NOWAIT);
+			    pm->address + pm->size, NULL, 0, EX_NOWAIT);
 			if (ex == NULL) {
 				print_tag(pd->pc, pd->tag);
 				printf("Failed to alloc MEM ext. for bus %d\n",

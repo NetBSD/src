@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 2012/01/09 19:40:54 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105 2012/01/27 18:52:56 para Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2012/01/09 19:40:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 2012/01/27 18:52:56 para Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -515,7 +515,7 @@ hppa_init(paddr_t start, void *bi)
 
 	/* we hope this won't fail */
 	hp700_io_extent = extent_create("io",
-	    HPPA_IOSPACE, 0xffffffff, M_DEVBUF,
+	    HPPA_IOSPACE, 0xffffffff,
 	    (void *)hp700_io_extent_store, sizeof(hp700_io_extent_store),
 	    EX_NOCOALESCE|EX_NOWAIT);
 

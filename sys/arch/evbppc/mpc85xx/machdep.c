@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2011/08/02 00:25:38 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2012/01/27 18:52:54 para Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1369,12 +1369,12 @@ cpu_startup(void)
 #if NPCI > 0 && defined(PCI_MEMBASE)
 	pcimem_ex = extent_create("pcimem",
 	    PCI_MEMBASE, PCI_MEMBASE + 4*PCI_MEMSIZE,
-	    M_DEVBUF, NULL, 0, EX_WAITOK);
+	    NULL, 0, EX_WAITOK);
 #endif
 #if NPCI > 0 && defined(PCI_IOBASE)
 	pciio_ex = extent_create("pciio",
 	    PCI_IOBASE, PCI_IOBASE + 4*PCI_IOSIZE,
-	    M_DEVBUF, NULL, 0, EX_WAITOK);
+	    NULL, 0, EX_WAITOK);
 #endif
 	mpc85xx_extirq_setup();
 	/*

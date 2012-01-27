@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.314 2011/12/12 19:03:11 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.315 2012/01/27 18:53:02 para Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314 2011/12/12 19:03:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.315 2012/01/27 18:53:02 para Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -323,7 +323,7 @@ cpu_startup(void)
 		 */
 		dvmamap24 = extent_create("dvmamap24",
 					  D24_DVMA_BASE, D24_DVMA_END,
-					  M_DEVBUF, 0, 0, EX_NOWAIT);
+					  0, 0, EX_NOWAIT);
 		if (dvmamap24 == NULL)
 			panic("unable to allocate DVMA map");
 	}

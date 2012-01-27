@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.12 2012/01/03 07:36:02 kiyohara Exp $ */
+/* $NetBSD: aupci.c,v 1.13 2012/01/27 18:52:58 para Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.12 2012/01/03 07:36:02 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.13 2012/01/27 18:52:58 para Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -259,10 +259,10 @@ aupciattach(device_t parent, device_t self, void *aux)
 
 #ifdef PCI_NETBSD_CONFIGURE
 	mem_ex = extent_create("pcimem", mstart, 0xffffffff,
-	    M_DEVBUF, NULL, 0, EX_WAITOK);
+	    NULL, 0, EX_WAITOK);
 
 	io_ex = extent_create("pciio", AUPCI_IO_START, AUPCI_IO_END,
-	    M_DEVBUF, NULL, 0, EX_WAITOK);
+	    NULL, 0, EX_WAITOK);
 
 	pci_configure_bus(&sc->sc_pc,
 	    io_ex, mem_ex, NULL, 0, mips_cache_info.mci_dcache_align);

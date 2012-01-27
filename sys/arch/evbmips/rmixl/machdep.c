@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2011/04/12 00:21:10 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2012/01/27 18:52:54 para Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2011/04/12 00:21:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2012/01/27 18:52:54 para Exp $");
 
 #define __INTR_PRIVATE
 
@@ -611,7 +611,7 @@ rmixl_physaddr_init(void)
 	u_long size;
 	uint32_t r;
 
-	ext = extent_create("physaddr", start, end, M_DEVBUF,
+	ext = extent_create("physaddr", start, end,
 		(void *)rmixl_physaddr_storage, sizeof(rmixl_physaddr_storage),
 		EX_NOWAIT | EX_NOCOALESCE);
 

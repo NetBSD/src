@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci.c,v 1.10 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: i80321_pci.c,v 1.11 2012/01/27 18:52:51 para Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.10 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.11 2012/01/27 18:52:51 para Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,16 +110,16 @@ i80321_pci_init(pci_chipset_tag_t pc, void *cookie)
 	ioext  = extent_create("pciio",
 	    sc->sc_ioout_xlate + sc->sc_ioout_xlate_offset,
 	    sc->sc_ioout_xlate + VERDE_OUT_XLATE_IO_WIN_SIZE - 1,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 
 #ifdef I80321_USE_DIRECT_WIN
 	memext = extent_create("pcimem", VERDE_OUT_DIRECT_WIN_BASE + VERDE_OUT_DIRECT_WIN_SKIP,
 	    VERDE_OUT_DIRECT_WIN_BASE + VERDE_OUT_DIRECT_WIN_SIZE- 1,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 #else
 	memext = extent_create("pcimem", sc->sc_owin[0].owin_xlate_lo,
 	    sc->sc_owin[0].owin_xlate_lo + VERDE_OUT_XLATE_MEM_WIN_SIZE - 1,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 #endif
 
 	aprint_normal("%s: configuring PCI bus\n", sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.28 2011/05/17 17:34:54 dyoung Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.29 2012/01/27 18:53:08 para Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.28 2011/05/17 17:34:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.29 2012/01/27 18:53:08 para Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -454,10 +454,8 @@ gtpci_pci_config(struct gtpci_softc *sc, bus_space_tag_t iot,
 	p2pc = GTPCI_READ(sc, GTPCI_P2PC);
 
 #ifdef PCI_NETBSD_CONFIGURE
-	ioext = extent_create("pciio", iostart, ioend, M_DEVBUF, NULL, 0,
-	    EX_NOWAIT);
-	memext = extent_create("pcimem", memstart, memend, M_DEVBUF, NULL, 0,
-	    EX_NOWAIT);
+	ioext = extent_create("pciio", iostart, ioend, NULL, 0, EX_NOWAIT);
+	memext = extent_create("pcimem", memstart, memend, NULL, 0, EX_NOWAIT);
 	if (ioext != NULL && memext != NULL)
 		pci_configure_bus(pc, ioext, memext, NULL,
 		    GTPCI_P2PC_BUSNUMBER(p2pc), cacheline_size);

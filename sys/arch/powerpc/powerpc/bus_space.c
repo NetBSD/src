@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.29 2011/12/17 19:34:07 phx Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.30 2012/01/27 18:53:00 para Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.29 2011/12/17 19:34:07 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.30 2012/01/27 18:53:00 para Exp $");
 
 #define _POWERPC_BUS_SPACE_PRIVATE
 
@@ -401,7 +401,7 @@ bus_space_init(struct powerpc_bus_space *t, const char *extent_name,
 {
 	if (t->pbs_extent == NULL && extent_name != NULL) {
 		t->pbs_extent = extent_create(extent_name, t->pbs_base,
-		    t->pbs_limit-1, M_DEVBUF, storage, storage_size,
+		    t->pbs_limit-1, storage, storage_size,
 		    EX_NOCOALESCE|EX_NOWAIT);
 		if (t->pbs_extent == NULL)
 			return ENOMEM;

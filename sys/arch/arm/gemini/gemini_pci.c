@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.10 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.11 2012/01/27 18:52:50 para Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.10 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.11 2012/01/27 18:52:50 para Exp $");
 
 #include <sys/cdefs.h>
 
@@ -211,7 +211,7 @@ gemini_pci_init(pci_chipset_tag_t pc, void *cookie)
 	ioext  = extent_create("pciio",
 		GEMINI_PCIIO_BASE,
 		GEMINI_PCIIO_BASE + GEMINI_PCIIO_SIZE - 1,
-		M_DEVBUF, NULL, 0, EX_NOWAIT);
+		NULL, 0, EX_NOWAIT);
 
 	/*
 	 * XXX PCI mem addr should be inherited ?
@@ -219,7 +219,7 @@ gemini_pci_init(pci_chipset_tag_t pc, void *cookie)
 	memext = extent_create("pcimem",
 		GEMINI_PCIMEM_BASE,
 		GEMINI_PCIMEM_BASE + GEMINI_PCIMEM_SIZE - 1,
-		M_DEVBUF, NULL, 0, EX_NOWAIT);
+		NULL, 0, EX_NOWAIT);
 
 	pci_configure_bus(pc, ioext, memext, NULL, 0, arm_dcache_align);
 

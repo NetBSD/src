@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.263 2011/12/12 19:03:11 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.264 2012/01/27 18:53:03 para Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.263 2011/12/12 19:03:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.264 2012/01/27 18:53:03 para Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2304,7 +2304,7 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 		 */
 		io_space = extent_create("IOSPACE",
 					 (u_long)IODEV_BASE, (u_long)IODEV_END,
-					 M_DEVBUF, 0, 0, EX_NOWAIT);
+					 0, 0, EX_NOWAIT);
 
 
 	size = round_page(size);

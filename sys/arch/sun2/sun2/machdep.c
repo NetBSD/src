@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2011/12/12 19:03:11 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2012/01/27 18:53:03 para Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2011/12/12 19:03:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2012/01/27 18:53:03 para Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -358,7 +358,7 @@ cpu_startup(void)
 	 */
 	dvmamap = extent_create("dvmamap",
 	    DVMA_MAP_BASE, DVMA_MAP_BASE + DVMA_MAP_AVAIL,
-	    M_DEVBUF, 0, 0, EX_NOWAIT);
+	    0, 0, EX_NOWAIT);
 	if (dvmamap == NULL)
 		panic("unable to allocate DVMA map");
 

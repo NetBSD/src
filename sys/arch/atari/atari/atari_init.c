@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.96 2011/11/26 14:05:52 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.97 2012/01/27 18:52:52 para Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.96 2011/11/26 14:05:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.97 2012/01/27 18:52:52 para Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -588,7 +588,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	 * on the machine.  When the amount of RAM is found, all
 	 * extents of RAM are allocated from the map.
 	 */
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff,
 	    (void *)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.342 2011/12/12 19:03:10 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.343 2012/01/27 18:52:57 para Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.342 2011/12/12 19:03:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.343 2012/01/27 18:52:57 para Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -278,7 +278,7 @@ mac68k_init(void)
 	 * on the machine.  When the amount of RAM is found, all
 	 * extents of RAM are allocated from the map.
 	 */
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff,
 	    (void *)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 

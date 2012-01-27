@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map_machdep.c,v 1.6 2009/12/16 23:19:06 matt Exp $	*/
+/*	$NetBSD: wired_map_machdep.c,v 1.7 2012/01/27 18:52:50 para Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.6 2009/12/16 23:19:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.7 2012/01/27 18:52:50 para Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ arc_init_wired_map(void)
 
 	mips3_nwired_page = 0;
 	arc_wired_map_ex = extent_create("wired_map",
-	    VM_MIN_WIRED_MAP_ADDRESS, VM_MAX_WIRED_MAP_ADDRESS, M_DEVBUF,
+	    VM_MIN_WIRED_MAP_ADDRESS, VM_MAX_WIRED_MAP_ADDRESS,
 	    (void *)wired_map_ex_storage, sizeof(wired_map_ex_storage),
 	    EX_NOWAIT);
 	if (arc_wired_map_ex == NULL)
