@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2011/06/12 03:21:21 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2012/01/27 18:52:53 para Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2011/06/12 03:21:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2012/01/27 18:52:53 para Exp $");
 
 #include "opt_ddb.h"
 
@@ -338,7 +338,7 @@ consinit(void)
 	 */
 	KASSERT(iospace != 0);
 	iomap_ex = extent_create("iomap", iospace,
-	    iospace + iospace_size - 1, M_DEVBUF,
+	    iospace + iospace_size - 1,
 	    (void *) iomap_ex_storage, sizeof(iomap_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 

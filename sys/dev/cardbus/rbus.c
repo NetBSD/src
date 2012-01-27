@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.28 2009/12/15 22:17:12 snj Exp $	*/
+/*	$NetBSD: rbus.c,v 1.29 2012/01/27 18:53:07 para Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.28 2009/12/15 22:17:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.29 2012/01/27 18:53:07 para Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ rbus_new(rbus_tag_t parent, bus_addr_t start, bus_size_t size, bus_addr_t offset
 	if (flags == RBUS_SPACE_SHARE) {
 		ex = parent->rb_ext;
 	} else if (flags == RBUS_SPACE_DEDICATE) {
-		if (NULL == (ex = extent_create("rbus", start, end, M_DEVBUF,
+		if (NULL == (ex = extent_create("rbus", start, end,
 		    NULL, 0, EX_NOCOALESCE|EX_NOWAIT))) {
 			return NULL;
 		}
@@ -295,7 +295,7 @@ rbus_new_root_delegate(bus_space_tag_t bt, bus_addr_t start, bus_size_t size, bu
 	struct extent *ex;
 
 	if (NULL == (ex = extent_create("rbus root", start, start + size,
-	    M_DEVBUF, NULL, 0, EX_NOCOALESCE|EX_NOWAIT))) {
+	    NULL, 0, EX_NOCOALESCE|EX_NOWAIT))) {
 		return NULL;
 	}
 
