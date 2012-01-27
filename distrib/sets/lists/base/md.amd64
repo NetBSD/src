@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.151 2012/01/27 08:41:35 jnemeth Exp $
+# $NetBSD: md.amd64,v 1.152 2012/01/27 08:47:52 jnemeth Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -351,7 +351,7 @@
 ./usr/mdec/netboot_pcnet_isapnp.rom		base-obsolete		obsolete
 ./usr/mdec/netboot_pcnet_pci.rom		base-obsolete		obsolete
 ./usr/mdec/netboot_wd80x3.rom			base-obsolete		obsolete
-./usr/mdec/pxeboot_ia32.bin			base-obsolete		obsolete
+./usr/mdec/pxeboot_ia32.bin			base-sysutil-bin
 ./usr/mdec/pxeboot_ia32_com0.bin		base-obsolete		obsolete
 ./usr/sbin/acpidump				base-sysutil-bin
 ./usr/sbin/amldb				base-sysutil-bin
