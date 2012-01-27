@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.150 2012/01/22 18:36:15 christos Exp $
+# $NetBSD: md.amd64,v 1.151 2012/01/27 08:41:35 jnemeth Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -343,15 +343,15 @@
 ./usr/mdec/mbr_ext				base-sysutil-bin
 ./usr/mdec/mbr_gpt				base-obsolete		obsolete
 ./usr/mdec/mbr_gpt_com0				base-obsolete		obsolete
-./usr/mdec/netboot_3c509.rom			base-sysutil-bin
-./usr/mdec/netboot_3c590.rom			base-sysutil-bin
-./usr/mdec/netboot_3c90xb.rom			base-sysutil-bin
-./usr/mdec/netboot_i82557.rom			base-sysutil-bin
-./usr/mdec/netboot_ne2000_isa.rom		base-sysutil-bin
-./usr/mdec/netboot_pcnet_isapnp.rom		base-sysutil-bin
-./usr/mdec/netboot_pcnet_pci.rom		base-sysutil-bin
-./usr/mdec/netboot_wd80x3.rom			base-sysutil-bin
-./usr/mdec/pxeboot_ia32.bin			base-sysutil-bin
+./usr/mdec/netboot_3c509.rom			base-obsolete		obsolete
+./usr/mdec/netboot_3c590.rom			base-obsolete		obsolete
+./usr/mdec/netboot_3c90xb.rom			base-obsolete		obsolete
+./usr/mdec/netboot_i82557.rom			base-obsolete		obsolete
+./usr/mdec/netboot_ne2000_isa.rom		base-obsolete		obsolete
+./usr/mdec/netboot_pcnet_isapnp.rom		base-obsolete		obsolete
+./usr/mdec/netboot_pcnet_pci.rom		base-obsolete		obsolete
+./usr/mdec/netboot_wd80x3.rom			base-obsolete		obsolete
+./usr/mdec/pxeboot_ia32.bin			base-obsolete		obsolete
 ./usr/mdec/pxeboot_ia32_com0.bin		base-obsolete		obsolete
 ./usr/sbin/acpidump				base-sysutil-bin
 ./usr/sbin/amldb				base-sysutil-bin
