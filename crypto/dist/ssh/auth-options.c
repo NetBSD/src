@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.c,v 1.9 2008/04/06 23:38:19 christos Exp $	*/
+/*	$NetBSD: auth-options.c,v 1.9.16.1 2012/01/27 19:32:45 riz Exp $	*/
 /* $OpenBSD: auth-options.c,v 1.41 2008/03/26 21:28:14 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.9 2008/04/06 23:38:19 christos Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.9.16.1 2012/01/27 19:32:45 riz Exp $");
 #include <sys/types.h>
 
 #include <netdb.h>
@@ -156,7 +156,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				goto bad_option;
 			}
 			forced_command[i] = '\0';
-			auth_debug_add("Forced command: %.900s", forced_command);
+			auth_debug_add("Forced command.");
 			opts++;
 			goto next_option;
 		}
