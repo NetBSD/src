@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2011/07/01 20:47:43 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 2012/01/27 18:52:57 para Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -124,9 +124,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	ibmnws_pci_get_chipset_tag_indirect (genppc_pct);
 
 #ifdef PCI_NETBSD_CONFIGURE
-	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,
+	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff,
 	    NULL, 0, EX_NOWAIT);
-	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
+	memext = extent_create("pcimem", 0x00000000, 0x0fffffff,
 	    NULL, 0, EX_NOWAIT);
 
 	pci_configure_bus(genppc_pct, ioext, memext, NULL, 0, CACHELINESIZE);
