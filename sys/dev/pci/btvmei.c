@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.26 2009/11/26 15:17:08 njoly Exp $ */
+/* $NetBSD: btvmei.c,v 1.27 2012/01/27 18:53:08 para Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.26 2009/11/26 15:17:08 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.27 2012/01/27 18:53:08 para Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,16 +303,16 @@ b3_617_init(struct b3_617_softc *sc)
 	 * set up scatter page allocation control
 	 */
 	sc->vmeext = extent_create("pcivme", MR_PCI_VME,
-				   MR_PCI_VME + MR_PCI_VME_SIZE - 1, M_DEVBUF,
+				   MR_PCI_VME + MR_PCI_VME_SIZE - 1,
 				   sc->vmemap, sizeof(sc->vmemap),
 				   EX_NOCOALESCE);
 #if 0
 	sc->pciext = extent_create("vmepci", MR_VME_PCI,
-				   MR_VME_PCI + MR_VME_PCI_SIZE - 1, M_DEVBUF,
+				   MR_VME_PCI + MR_VME_PCI_SIZE - 1,
 				   sc->pcimap, sizeof(sc->pcimap),
 				   EX_NOCOALESCE);
 	sc->dmaext = extent_create("dmapci", MR_DMA_PCI,
-				   MR_DMA_PCI + MR_DMA_PCI_SIZE - 1, M_DEVBUF,
+				   MR_DMA_PCI + MR_DMA_PCI_SIZE - 1,
 				   sc->dmamap, sizeof(sc->dmamap),
 				   EX_NOCOALESCE);
 #endif

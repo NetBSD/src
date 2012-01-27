@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.36 2009/12/11 13:52:57 tsutsui Exp $	*/
+/*	$NetBSD: dvma.c,v 1.37 2012/01/27 18:53:03 para Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.36 2009/12/11 13:52:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.37 2012/01/27 18:53:03 para Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ dvma_init(void)
 	 * into DVMA space for the purpose of data transfer.
 	 */
 	dvma_extent = extent_create("dvma", segmap_addr,
-	    segmap_addr + (dvma_segmap_size - 1), M_DEVBUF,
+	    segmap_addr + (dvma_segmap_size - 1),
 	    NULL, 0, EX_NOCOALESCE|EX_NOWAIT);
 }
 
