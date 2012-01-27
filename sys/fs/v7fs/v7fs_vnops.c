@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.6 2011/07/30 03:53:18 uch Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.7 2012/01/27 12:22:02 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.6 2011/07/30 03:53:18 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.7 2012/01/27 12:22:02 njoly Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -159,6 +159,13 @@ v7fs_lookup(void *v)
 		}
 		DPRINTF("lastcn=%d\n", flags & ISLASTCN);
 		return error;
+	}
+
+	if ((nameiop == DELETE) && islastcn) {
+		if ((error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred))) {
+			DPRINTF("access denied. (%s)\n", name);
+			return error;
+		}
 	}
 
 	/* Entry found. Allocate v-node */
