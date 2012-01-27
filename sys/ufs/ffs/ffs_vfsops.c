@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.272 2012/01/03 15:44:00 pgoyette Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.273 2012/01/27 19:22:49 para Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.272 2012/01/03 15:44:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.273 2012/01/27 19:22:49 para Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.272 2012/01/03 15:44:00 pgoyette Ex
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/pool.h>
 #include <sys/lock.h>
 #include <sys/sysctl.h>
@@ -648,7 +648,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		brelse(bp, 0);
 		return (error);
 	}
-	newfs = malloc(fs->fs_sbsize, M_UFSMNT, M_WAITOK);
+	newfs = kmem_alloc(fs->fs_sbsize, KM_SLEEP);
 	memcpy(newfs, bp->b_data, fs->fs_sbsize);
 #ifdef FFS_EI
 	if (ump->um_flags & UFS_NEEDSWAP) {
@@ -662,7 +662,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	     newfs->fs_bsize > MAXBSIZE ||
 	     newfs->fs_bsize < sizeof(struct fs)) {
 		brelse(bp, 0);
-		free(newfs, M_UFSMNT);
+		kmem_free(newfs, fs->fs_sbsize);
 		return (EIO);		/* XXX needs translation */
 	}
 	/* Store off old fs_sblockloc for fs_oldfscompat_read. */
@@ -679,7 +679,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	newfs->fs_active = fs->fs_active;
 	memcpy(fs, newfs, (u_int)fs->fs_sbsize);
 	brelse(bp, 0);
-	free(newfs, M_UFSMNT);
+	kmem_free(newfs, fs->fs_sbsize);
 
 	/* Recheck for apple UFS filesystem */
 	ump->um_flags &= ~UFS_ISAPPLEUFS;
@@ -865,6 +865,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	int32_t *lp;
 	kauth_cred_t cred;
 	u_int32_t sbsize = 8192;	/* keep gcc happy*/
+	u_int32_t allocsbsize;
 	int32_t fsbsize;
 
 	dev = devvp->v_rdev;
@@ -889,7 +890,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (error)
 		return error;
 
-	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
+	ump = kmem_alloc(sizeof(*ump), KM_SLEEP);
 	memset(ump, 0, sizeof *ump);
 	mutex_init(&ump->um_lock, MUTEX_DEFAULT, IPL_NONE);
 	error = ffs_snapshot_init(ump);
@@ -986,7 +987,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		break;
 	}
 
-	fs = malloc((u_long)sbsize, M_UFSMNT, M_WAITOK);
+	fs = kmem_alloc((u_long)sbsize, KM_SLEEP);
 	memcpy(fs, bp->b_data, sbsize);
 	ump->um_fs = fs;
 
@@ -1023,7 +1024,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			/* Force a re-read of the superblock */
 			brelse(bp, BC_INVAL);
 			bp = NULL;
-			free(fs, M_UFSMNT);
+			kmem_free(fs, sbsize);
 			fs = NULL;
 			goto sbagain;
 		}
@@ -1150,7 +1151,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (fs->fs_contigsumsize > 0)
 		bsize += fs->fs_ncg * sizeof(int32_t);
 	bsize += fs->fs_ncg * sizeof(*fs->fs_contigdirs);
-	space = malloc((u_long)bsize, M_UFSMNT, M_WAITOK);
+	allocsbsize = bsize;
+	space = kmem_alloc((u_long)allocsbsize, KM_SLEEP);
 	fs->fs_csp = space;
 	for (i = 0; i < blks; i += fs->fs_frag) {
 		bsize = fs->fs_bsize;
@@ -1159,7 +1161,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), bsize,
 			      cred, 0, &bp);
 		if (error) {
-			free(fs->fs_csp, M_UFSMNT);
+			kmem_free(fs->fs_csp, allocsbsize);
 			goto out;
 		}
 #ifdef FFS_EI
@@ -1243,7 +1245,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 		error = ffs_wapbl_start(mp);
 		if (error) {
-			free(fs->fs_csp, M_UFSMNT);
+			kmem_free(fs->fs_csp, allocsbsize);
 			goto out;
 		}
 	}
@@ -1252,7 +1254,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #ifdef QUOTA2
 		error = ffs_quota2_mount(mp);
 		if (error) {
-			free(fs->fs_csp, M_UFSMNT);
+			kmem_free(fs->fs_csp, allocsbsize);
 			goto out;
 		}
 #else
@@ -1263,7 +1265,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			    (mp->mnt_flag & MNT_FORCE) ? "" : ", not mounting");
 			if ((mp->mnt_flag & MNT_FORCE) == 0) {
 				error = EINVAL;
-				free(fs->fs_csp, M_UFSMNT);
+				kmem_free(fs->fs_csp, allocsbsize);
 				goto out;
 			}
 		}
@@ -1290,15 +1292,15 @@ out:
 
 	fstrans_unmount(mp);
 	if (fs)
-		free(fs, M_UFSMNT);
+		kmem_free(fs, fs->fs_sbsize);
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp, bset);
 	if (ump) {
 		if (ump->um_oldfscompat)
-			free(ump->um_oldfscompat, M_UFSMNT);
+			kmem_free(ump->um_oldfscompat, 512 + 3*sizeof(int32_t));
 		mutex_destroy(&ump->um_lock);
-		free(ump, M_UFSMNT);
+		kmem_free(ump, sizeof(*ump));
 		mp->mnt_data = NULL;
 	}
 	return (error);
@@ -1322,8 +1324,8 @@ ffs_oldfscompat_read(struct fs *fs, struct ufsmount *ump, daddr_t sblockloc)
 		return;
 
 	if (!ump->um_oldfscompat)
-		ump->um_oldfscompat = malloc(512 + 3*sizeof(int32_t),
-		    M_UFSMNT, M_WAITOK);
+		ump->um_oldfscompat = kmem_alloc(512 + 3*sizeof(int32_t),
+		    KM_SLEEP);
 
 	memcpy(ump->um_oldfscompat, &fs->fs_old_postbl_start, 512);
 	extrasave = ump->um_oldfscompat;
@@ -1429,6 +1431,7 @@ ffs_unmount(struct mount *mp, int mntflags)
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs = ump->um_fs;
 	int error, flags;
+	u_int32_t bsize;
 #ifdef WAPBL
 	extern int doforce;
 #endif
@@ -1475,13 +1478,19 @@ ffs_unmount(struct mount *mp, int mntflags)
 	(void)VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD | FWRITE,
 		NOCRED);
 	vput(ump->um_devvp);
-	free(fs->fs_csp, M_UFSMNT);
-	free(fs, M_UFSMNT);
+
+	bsize = fs->fs_cssize;
+	if (fs->fs_contigsumsize > 0)
+		bsize += fs->fs_ncg * sizeof(int32_t);
+	bsize += fs->fs_ncg * sizeof(*fs->fs_contigdirs);
+	kmem_free(fs->fs_csp, bsize);
+
+	kmem_free(fs, fs->fs_sbsize);
 	if (ump->um_oldfscompat != NULL)
-		free(ump->um_oldfscompat, M_UFSMNT);
+		kmem_free(ump->um_oldfscompat, 512 + 3*sizeof(int32_t));
 	mutex_destroy(&ump->um_lock);
 	ffs_snapshot_fini(ump);
-	free(ump, M_UFSMNT);
+	kmem_free(ump, sizeof(*ump));
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	fstrans_unmount(mp);
