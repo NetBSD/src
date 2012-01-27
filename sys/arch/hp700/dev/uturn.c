@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.18 2012/01/12 23:10:27 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.19 2012/01/27 21:05:38 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -357,7 +357,7 @@ uturnattach(device_t parent, device_t self, void *aux)
 	snprintf(sc->sc_mapname, sizeof(sc->sc_mapname), "%s_map",
 	    device_xname(sc->sc_dv));
 	sc->sc_map = extent_create(sc->sc_mapname, 0, (1 << iova_bits),
-	    M_DEVBUF, 0, 0, EX_NOWAIT);
+	    0, 0, EX_NOWAIT);
 
 	sc->sc_dmatag = uturn_dmat;
 	sc->sc_dmatag._cookie = sc;
