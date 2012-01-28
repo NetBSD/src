@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.977 2012/01/17 18:53:22 joerg Exp $
+# $NetBSD: mi,v 1.978 2012/01/28 15:10:24 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -898,6 +898,8 @@
 ./usr/include/ss				base-obsolete		obsolete
 ./usr/include/ssp				base-c-usr
 ./usr/include/sys				base-c-usr
+./usr/include/trousers				base-c-usr
+./usr/include/tss				base-c-usr
 ./usr/include/ufs				base-c-usr
 ./usr/include/ufs/ext2fs			base-c-usr
 ./usr/include/ufs/ffs				base-c-usr
@@ -5005,6 +5007,7 @@
 ./var/spool/uucppublic				base-obsolete		obsolete
 ./var/tmp					base-sys-root
 ./var/tmp/vi.recover				base-util-root
+./var/tpm					base-sys-root
 ./var/www					base-netutil-root
 ./var/yp					base-nis-root
 ./var/yp/binding				base-nis-root
