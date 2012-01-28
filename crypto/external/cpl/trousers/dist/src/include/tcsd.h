@@ -51,8 +51,13 @@ struct tcsd_config
 #define TCSD_DEFAULT_CONFIG_FILE	ETC_PREFIX "/tcsd.conf"
 extern char *tcsd_config_file;
 
+#ifdef __NetBSD__
+#define TSS_USER_NAME		"_tss"
+#define TSS_GROUP_NAME		"_tss"
+#else
 #define TSS_USER_NAME		"tss"
 #define TSS_GROUP_NAME		"tss"
+#endif
 
 #define TCSD_DEFAULT_MAX_THREADS	10
 #define TCSD_DEFAULT_SYSTEM_PS_FILE	VAR_PREFIX "/lib/tpm/system.data"
