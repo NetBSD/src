@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.234 2012/01/27 19:48:40 para Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.235 2012/01/28 00:00:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.234 2012/01/27 19:48:40 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.235 2012/01/28 00:00:06 rmind Exp $");
 
 #include "opt_bufcache.h"
 
@@ -231,17 +231,14 @@ static struct vm_map *buf_map;
 static void *
 bufpool_page_alloc(struct pool *pp, int flags)
 {
-	int rc;
+	const vm_flag_t vflags = (flags & PR_WAITOK) ? VM_SLEEP: VM_NOSLEEP;
 	vmem_addr_t va;
+	int ret;
 
-	rc = uvm_km_kmem_alloc(kmem_va_arena, MAXBSIZE,
-	    ((flags & PR_WAITOK) ? VM_SLEEP : VM_NOSLEEP) | VM_INSTANTFIT,
-	    &va);
+	ret = uvm_km_kmem_alloc(kmem_va_arena, MAXBSIZE,
+	    vflags | VM_INSTANTFIT, &va);
 
-	if (rc != 0)
-		return NULL;
-	else
-		return (void *)va;
+	return ret ? NULL : (void *)va;
 }
 
 static void
