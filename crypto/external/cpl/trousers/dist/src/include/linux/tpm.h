@@ -18,7 +18,7 @@
 
 #if (defined (__linux) || defined (linux))
 #include <linux/ioctl.h>
-#elif (defined (__OpenBSD__) || defined (__FreeBSD__))
+#elif (defined (__OpenBSD__) || defined (__FreeBSD__) || defined(__NetBSD__))
 #include <sys/ioctl.h>
 #endif
 
