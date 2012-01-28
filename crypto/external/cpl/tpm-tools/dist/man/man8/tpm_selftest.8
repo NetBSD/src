@@ -1,0 +1,60 @@
+.\" Copyright (C) 2005 International Business Machines Corporation
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "tpm_selftest" 8 "2005-04-25"  "TPM Management"
+.ce 1
+TPM Management - tpm_selftest 
+.SH NAME
+tpm_selftest \- request TPM perform selftest and report
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.B tpm_selftest
+.RB [ OPTION ]
+
+.SH "DESCRIPTION"
+.PP
+\fBtpm_selftest\fR requests that the system's TPM perform a self test 
+(via the TPM_SelfTestFull API) and report the results. The \fB\-\-results\fR 
+option reports the outcome of the last self test operation without requesting
+that another test be executed. If the TPM fails the self test, it enters 
+failure mode where no commands are accepted. The results are reported in a 
+manufacturer specific format. The TPM's self test is always executed 
+automatically at every boot.
+
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display command usage info.
+.TP
+\fB-v\fR, \fB\-\-version\fR
+Display command version info.
+.TP
+\fB-l\fR, \fB\-\-log\fR [none|error|info|debug]
+Set logging level.
+.TP
+\fB-r\fR, \fB\-\-results\fR
+Report results only.
+
+.SH "SEE ALSO"
+.PP
+\fBtpm_version\fR(1), \fBtpm_takeownership\fR(8), \fBtpm_setownable\fR(8), \fBtcsd\fR(8)
+
+.SH "REPORTING BUGS"
+Report bugs to <trousers-users@lists.sourceforge.net>
