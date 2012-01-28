@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam.h,v 1.3 2011/12/25 23:18:56 christos Exp $	*/
+/*	$NetBSD: openpam.h,v 1.4 2012/01/28 21:52:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -346,7 +346,7 @@ struct pam_module {
 			[PAM_SM_CHAUTHTOK] = _PAM_SM_CHAUTHTOK		\
 		},							\
 	};								\
-	DATA_SET(_openpam_static_modules, _pam_module)
+	DATA_SET(openpam_static_modules, _pam_module)
 #else
 /* normal case */
 # define PAM_EXTERN
