@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.17 2011/06/23 02:35:56 enami Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.18 2012/01/28 02:35:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -245,8 +245,6 @@ typedef struct _iso9660_disk {
 
 	cd9660node *rootNode;
 
-	const char *rootFilesystemPath;
-
 	/* Important sector numbers here */
 	/* primaryDescriptor.type_l_path_table*/
 	int64_t primaryBigEndianTableSector;
@@ -346,7 +344,7 @@ int	cd9660_setup_boot_volume_descriptor(volume_descriptor *);
 int	cd9660_write_image(const char *image);
 int	cd9660_copy_file(FILE *, off_t, const char *);
 
-void	cd9660_compute_full_filename(cd9660node *, char *, int);
+void	cd9660_compute_full_filename(cd9660node *, char *);
 int	cd9660_compute_record_size(cd9660node *);
 
 /* Debugging functions */
