@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.66 2012/01/27 19:48:40 para Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.67 2012/01/28 23:05:48 rmind Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.66 2012/01/27 19:48:40 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.67 2012/01/28 23:05:48 rmind Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -85,6 +85,7 @@ VMEM_EVCNT_DEFINE(bt_inuse)
     kcondvar_t name;
 
 #else /* defined(_KERNEL) */
+#include <stdio.h>
 #include <errno.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -220,7 +221,6 @@ static kmutex_t vmem_list_lock;
 static LIST_HEAD(, vmem) vmem_list = LIST_HEAD_INITIALIZER(vmem_list);
 #endif /* defined(_KERNEL) */
 
-
 /* ---- misc */
 
 #define	VMEM_ALIGNUP(addr, align) \
@@ -234,34 +234,14 @@ static LIST_HEAD(, vmem) vmem_list = LIST_HEAD_INITIALIZER(vmem_list);
 
 #if !defined(_KERNEL)
 #define	xmalloc(sz, flags)	malloc(sz)
-#define	xfree(p)		free(p)
+#define	xfree(p, sz)		free(p)
 #define	bt_alloc(vm, flags)	malloc(sizeof(bt_t))
 #define	bt_free(vm, bt)		free(bt)
-#else	/* !defined(_KERNEL) */
-
-static inline void *
-xmalloc(size_t sz, vm_flag_t flags)
-{
-
-#if defined(_KERNEL)
-	return kmem_alloc(sz, (flags & VM_SLEEP) ? KM_SLEEP : KM_NOSLEEP);
 #else /* defined(_KERNEL) */
-	return malloc(sz);
-#endif /* defined(_KERNEL) */
-}
 
-static inline void
-xfree(void *p, size_t sz)
-{
-
-#if defined(_KERNEL)
-	kmem_free(p, sz);
-#else /* defined(_KERNEL) */
-	free(p);
-#endif /* defined(_KERNEL) */
-}
-
-#if defined(_KERNEL)
+#define	xmalloc(sz, flags) \
+    kmem_alloc(sz, ((flags) & VM_SLEEP) ? KM_SLEEP : KM_NOSLEEP);
+#define	xfree(p, sz)		kmem_free(p, sz);
 
 #define BT_MINRESERVE 6
 #define BT_MAXFREE 64
@@ -288,8 +268,7 @@ static size_t vmem_btag_count = STATIC_BT_COUNT;
 
 /* ---- boundary tag */
 
-#define BT_PER_PAGE \
-	(PAGE_SIZE / sizeof(bt_t))
+#define	BT_PER_PAGE	(PAGE_SIZE / sizeof(bt_t))
 
 static int bt_refill(vmem_t *vm, vm_flag_t flags);
 
@@ -361,14 +340,11 @@ bt_refill(vmem_t *vm, vm_flag_t flags)
 
 	return 0;
 }
-#endif /* defined(_KERNEL) */
 
 static inline bt_t *
 bt_alloc(vmem_t *vm, vm_flag_t flags)
 {
 	bt_t *bt;
-
-#if defined(_KERNEL)
 again:
 	VMEM_LOCK(vm);
 	if (vm->vm_nfreetags < BT_MINRESERVE &&
@@ -384,9 +360,6 @@ again:
 	vm->vm_nfreetags--;
 	VMEM_UNLOCK(vm);
 	VMEM_EVCNT_INCR(bt_inuse);
-#else /* defined(_KERNEL) */
-	bt = malloc(sizeof *bt);
-#endif /* defined(_KERNEL) */
 
 	return bt;
 }
@@ -395,7 +368,6 @@ static inline void
 bt_free(vmem_t *vm, bt_t *bt)
 {
 
-#if defined(_KERNEL)
 	VMEM_LOCK(vm);
 	LIST_INSERT_HEAD(&vm->vm_freetags, bt, bt_freelist);
 	vm->vm_nfreetags++;
@@ -410,15 +382,12 @@ bt_free(vmem_t *vm, bt_t *bt)
 	}
 	VMEM_UNLOCK(vm);
 	VMEM_EVCNT_DECR(bt_inuse);
-#else /* defined(_KERNEL) */
-	free(bt);
-#endif /* defined(_KERNEL) */
 }
 
-#endif	/* !defined(_KERNEL) */
+#endif	/* defined(_KERNEL) */
 
 /*
- * freelist[0] ... [1, 1] 
+ * freelist[0] ... [1, 1]
  * freelist[1] ... [2, 3]
  * freelist[2] ... [4, 7]
  * freelist[3] ... [8, 15]
@@ -1056,8 +1025,7 @@ vmem_create_internal(const char *name, vmem_addr_t base, vmem_size_t size,
 vmem_t *
 vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
     vmem_size_t quantum, vmem_import_t *importfn, vmem_release_t *releasefn,
-    vmem_t *source, vmem_size_t qcache_max, vm_flag_t flags,
-    int ipl)
+    vmem_t *source, vmem_size_t qcache_max, vm_flag_t flags, int ipl)
 {
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
@@ -1077,8 +1045,7 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
 vmem_t *
 vmem_xcreate(const char *name, vmem_addr_t base, vmem_size_t size,
     vmem_size_t quantum, vmem_ximport_t *importfn, vmem_release_t *releasefn,
-    vmem_t *source, vmem_size_t qcache_max, vm_flag_t flags,
-    int ipl)
+    vmem_t *source, vmem_size_t qcache_max, vm_flag_t flags, int ipl)
 {
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
@@ -1865,4 +1832,3 @@ main(void)
 	exit(EXIT_SUCCESS);
 }
 #endif /* defined(UNITTEST) */
-
