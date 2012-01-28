@@ -1,0 +1,85 @@
+.\" Copyright (C) 2004 International Business Machines Corporation
+.\" Written by Megan Schneider based on the Trusted Computing Group Software Stack Specification Version 1.1 Golden
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_TPM_ClearOwner" 3 "2004-05-25" "TSS 1.1"
+.ce 1
+TCG Software Stack Developer's Reference
+.SH NAME
+Tspi_TPM_ClearOwner \- clear TPM ownership
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/platform.h>
+.B #include <tss/tcpa_defines.h>
+.B #include <tss/tcpa_typedef.h>
+.B #include <tss/tcpa_struct.h>
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_TPM_ClearOwner(TSS_HTPM " hTPM ", TSS_BOOL " fForcedClear ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\fBTspi_TPM_ClearOwner\fR
+wipes the TPM of everything but its endorsement key. It will wipe the SRK, so
+anything locked to the SRK will also disappear when this command is executed.
+This is the only way to be certain that keys are gone, as it is the only way
+to guarantee that nothing can keep a copy of the key. You must assert either
+physical presence or owner authorization in order to use this command.
+
+.SH "PARAMETERS"
+.PP
+.SS hTPM
+The \fIhTPM\fR parameter is used to specify the handle of the TPM object.
+.SS fForcedClear
+The \fIfForcedClear\fR parameter is used to tell whether this command is being
+executed with owner authorization or with physical presence. If FALSE, then
+TPM owner authorization is used. If TRUE, then physical presence is required
+to clear the TPM.
+
+.SH "RETURN CODES"
+.PP
+\fBTspi_TPM_ClearOwner\fR returns TSS_SUCCESS on success, otherwise one of the
+following values is returned:
+.TP
+.SM TSS_E_INVALID_HANDLE
+\fIhTPM\fR is not a valid handle.
+
+.TP
+.SM TSS_E_INTERNAL_ERROR
+An internal SW error has been detected.
+
+.SH "CONFORMING TO"
+
+.PP
+\fBTspi_TPM_ClearOwner\fR conforms to the Trusted Computing Group
+Software Specification version 1.1 Golden
+
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_TPM_TakeOwnership\fR(3)

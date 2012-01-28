@@ -1,0 +1,23 @@
+
+All authors of this TSS have been funded by IBM.
+
+The TSS code was originally written for WIN32 by Ryan Catherman and ported to
+Linux initially by Seiji Munetoh and Taiga Nakamura as well as Ryan.
+
+The code has since been modified by Seiji Munetoh and Kent Yoder.
+
+The code is currently maintained by Kent Yoder <shpedoikal@gmail.com>.
+
+The manpages were originally written by Megan Schneider and Kathy Robertson
+and have been modified by Kent Yoder.
+
+Other contributors to the TSS 1.2 functionality:
+Tom Lendacky
+Loulwa Salem
+Ramon Brandao
+Klaus Kiwi
+
+Specifically the NVRAM implementation:
+James Xu
+Rossey Liu
+Jacfee Liu
