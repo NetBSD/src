@@ -25,7 +25,11 @@
 #if defined (HAVE_BYTEORDER_H)
 #include <sys/byteorder.h>
 #elif defined(HTOLE_DEFINED)
+#ifdef __NetBSD__
+#include <sys/endian.h>
+#else
 #include <endian.h>
+#endif
 #define LE_16 htole16
 #define LE_32 htole32
 #define LE_64 htole64
@@ -45,7 +49,7 @@
 
 static int user_ps_fd = -1;
 static MUTEX_DECLARE_INIT(user_ps_lock);
-#if (defined (__FreeBSD__) || defined (__OpenBSD__))
+#if (defined (__FreeBSD__) || defined (__OpenBSD__) || defined(__NetBSD__))
 static MUTEX_DECLARE_INIT(user_ps_path);
 #endif
 static struct flock fl;
@@ -72,7 +76,7 @@ get_user_ps_path(char **file)
 		*file = strdup(file_name);
 		return (*file) ? TSS_SUCCESS : TSPERR(TSS_E_OUTOFMEMORY);
 	}
-#if (defined (__FreeBSD__) || defined (__OpenBSD__))
+#if (defined (__FreeBSD__) || defined (__OpenBSD__) || defined(__NetBSD__))
 	MUTEX_LOCK(user_ps_path);
 #endif
 
@@ -99,7 +103,7 @@ get_user_ps_path(char **file)
 			return TSPERR(TSS_E_INTERNAL_ERROR);
 		}
 
-#elif (defined (__FreeBSD__) || defined (__OpenBSD__))
+#elif (defined (__FreeBSD__) || defined (__OpenBSD__) || defined(__NetBSD__))
 		if ((pwp = getpwent()) == NULL) {
 			LogDebugFn("USER PS: Error getting path to home directory: getpwent: %s",
                                    strerror(rc));
