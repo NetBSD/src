@@ -1,0 +1,91 @@
+.\" Copyright (C) 2004 International Business Machines Corporation
+.\" Written by Megan Schneider based on the Trusted Computing Group Software Stack Specification Version 1.1 Golden
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_TPM_PcrRead" 3 "2004-05-25" "TSS 1.1"
+.ce 1
+TCG Software Stack Developer's Reference
+.SH NAME
+Tspi_TPM_PcrRead \- read the value in a PCR register
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/platform.h>
+.B #include <tss/tcpa_defines.h>
+.B #include <tss/tcpa_typedef.h>
+.B #include <tss/tcpa_struct.h>
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_TPM_PcrRead(TSS_HTPM " hTPM ",              UINT32 " ulPcrIndex ","
+.BI "                            UINT32*  " pulPcrValueLength ", BYTE** " prgbPcrValue ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\fBTspi_TPM_PcrRead\fR reads a PCR register to find
+the current values.
+
+.SH "PARAMETERS"
+.PP
+.SS hTPM
+The \fIhTPM\fR parameter is used to specify the handle of the TPM
+object. The command to get the TPM to test itself will be sent here.
+.SS ulPcrIndex
+The \fIulPcrIndex\fR parameter is the index of the PCR to read.
+.SS pulPcrValueLength
+The \fIpulPcrValueLength\fR parameter receives the length in bytes
+of the \fIprgbPcrValue\fR parameter.
+.SS prgbPcrValue
+The \fIprgbPcrValue\fR parameter receives a pointer to the memory
+block containing the PCR data.
+
+.SH "RETURN CODES"
+.PP
+\fBTspi_TPM_PcrRead\fR returns TSS_SUCCESS on success, otherwise one
+of the following values is returned:
+.TP
+.SM TSS_E_INVALID_HANDLE
+\fIhTPM\fR is not a valid handle.
+
+.TP
+.SM TSS_E_INTERNAL_ERROR
+An internal SW error has been detected.
+
+.TP
+.SM TSS_E_BAD_PARAMETER
+One or more parameters is bad.
+
+.SH "CONFORMING TO"
+
+.PP
+\fBTspi_TPM_PcrRead\fR conforms to the Trusted Computing Group Software
+Specification version 1.1 Golden
+
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_TPM_PcrExtend\fR(3).
+
