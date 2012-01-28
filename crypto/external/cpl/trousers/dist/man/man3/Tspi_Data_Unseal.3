@@ -1,0 +1,81 @@
+.\" Copyright (C) 2004 International Business Machines Corporation
+.\" Written by Kathy Robertson based on the Trusted Computing Group Software Stack Specification Version 1.1 Golden
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_Data_Unseal" 3 "2004-05-26" "TSS 1.1" "TCG Software Stack Developer's Reference"
+.SH NAME
+Tspi_Data_Unseal \- dencrypt data encrypted by Tspi_Data_Seal() only if it was encrypted on the same platform and under the current configuration.
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/platform.h>
+.B #include <tss/tcpa_defines.h>
+.B #include <tss/tcpa_typedef.h>
+.B #include <tss/tcpa_struct.h>
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_Data_Unseal(TSS_HENCDATA " hEncData ",              TSS_HKEY " hKey ","
+.BI "                            UINT32       " pulUnsealedDataLength ", BYTE**   " prgbUnsealedData ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\fBTspi_Data_Unseal\fR reveals data encrypted by the Tspi_Data_Seal only if it was encrypted on the same platform and the current configuration. This is internally proofed and guaranteed by the TPM.
+.SH "PARAMETERS"
+.PP
+.SS hEncData
+Handle of the data object which contains the sealed data.
+.PP
+.SS hKey
+Handle to the key object addressing the nonmigratable key which is used to decrypt the data.
+.PP
+.SS pulUnsealedDataLength
+The length (in bytes) of the prgbUnsealedData parameter.
+.PP
+.SS prgbUnsealedData
+On successful completion of the command, this parameter points to a buffer containing the plaintext data.
+.PP
+.SS hPcrComposite
+Handle of the PCR Composite object specifying the PCRs which are part of the sealed data blob. Set to NULL, if the encrypted data should only be bound to the system and PCRs are not of interest.
+.SH "RETURN CODES"
+.PP
+\fBTspi_Data_Unseal\fR returns TSS_SUCCESS on success, otherwise one of the following values are returned:
+.TP
+.SM TSS_E_INVALID_HANDLE - Either \fBhEncData\fR or \fBhKey\fR is not a valid handle.
+.TP
+.SM TSS_E_INTERNAL_ERROR - An error occurred internal to the TSS.
+
+.SH "CONFORMING TO"
+
+.PP
+\fBTspi_Data_Unseal\fR conforms to the Trusted Computing Group Software Specification version 1.1 Golden
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_Data_Seal\fR(3).
+
+
+

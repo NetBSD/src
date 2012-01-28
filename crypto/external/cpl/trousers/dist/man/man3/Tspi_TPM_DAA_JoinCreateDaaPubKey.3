@@ -1,0 +1,112 @@
+.\" Copyright (C) 2006 International Business Machines Corporation
+.\" Written by Anthony Bussani based on the Trusted Computing Group Software Stack Specification Version 1.2
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_TPM_DAA_JoinCreateDaaPubKey" 3 "2006-09-04" "TSS 1.2"
+.ce 1
+TCG Software Stack Developer's Reference
+.SH NAME
+Tspi_TPM_DAA_JoinCreateDaaPubKey \- computes the credential request for the DAA Issuer
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_TPM_DAA_JoinCreateDaaPubKey("
+.BI "    TSS_HDAA                    " hDAA ","
+.BI "    TSS_HTPM                    " hTPM ","
+.BI "    UINT32                      " authenticationChallengeLength ","
+.BI "    BYTE*                       " authenticationChallenge ","
+.BI "    UINT32                      " nonceIssuerLength ","
+.BI "    BYTE*                       " nonceIssuer ","
+.BI "    UINT32                      " attributesPlatformLength ","
+.BI "    BYTE**                      " attributesPlatform ","
+.BI "    TSS_DAA_JOIN_SESSION*       " joinSession ","
+.BI "    TSS_DAA_CREDENTIAL_REQUEST* " credentialRequest
+.BI ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\Tspi_TPM_DAA_JoinCreateDaaPubKey\fR
+is the second (between \fBTspi_TPM_DAA_JoinInit()\fR and \fBTspi_TPM_DAA_JoinStoreCredential()\fR)
+ out of 3 functions to execute in order to receive a DAA Credential.
+It computes the credential request for the DAA Issuer, which also includes the Platforms's
+DAA public key and the attributes that were chosen by the Platform, and which are not visible
+to the DAA Issuer. The Platform can commit to the attribute values it has chosen.
+.SH "PARAMETERS"
+.PP
+.SS hDAA
+The \fIhDAA\fR parameter is used to specify the handle of the DAA object.
+.SS hTPM
+The \fIhTPM\fR parameter is the handle to the TPM object.
+.SS authenticationChallengeLength
+The \fIauthenticationChallengeLength\fR parameter is length of authenticationChallenge (256 bytes - DAA_SIZE_NE1).
+.SS authenticationChallenge
+The \fIauthenticationChallenge\fR parameter is the second nonce of the DAA Issuer that is encrypted by the endorsement public key.
+It is used as a challenge to authenticate the underlying TPM.
+.SS nonceIssuerLength
+The \fInonceIssuerLength\fR parameter is the length of nonceIssuer (20 bytes).
+.SS nonceIssuer
+The \fInonceIssuer\fR parameter is the nonce of the DAA Issuer.
+.SS attributesPlatformLength
+The \fIattributesPlatformLength\fR parameter is length of attributesPlatform array, which is determined
+by the DAA Issuer public key (). The length of a single attribute is ln/8. ln is defined as the size of
+the RSA modulus (2048).
+.SS attributesPlatform
+The \fIattributesPlatform\fR parameter is an array of attributes to be encoded into the DAA Credential
+not visible to the DAA Issuer.
+.SS joinSession
+The \fIjoinSession\fR parameter is a structure containing the DAA Join session information.
+.SS credentialRequest
+The \fIcredentialRequest\fR parameter is the credential request of the Platform, it contains the blinded
+DAA public key of the platform on which the DAA Issuer will issue the credential the blinded attributes
+chosen by the Platform.
+
+.SH "RETURN CODES"
+.PP
+\fBTspi_TPM_DAA_JoinCreateDaaPubKey\fR returns TSS_SUCCESS on success, otherwise one of the
+following values is returned:
+.TP
+.SM TSS_E_INVALID_HANDLE
+Either the DAA is not valid.
+.TP
+.SM TSS_E_BAD_PARAMETER
+.TP
+.SM TSS_E_INTERNAL_ERROR
+An internal SW error has been detected.
+
+.SH "CONFORMING TO"
+.PP
+\fBTspi_TPM_DAA_JoinCreateDaaPubKey\fR conforms to the Trusted Computing Group
+Software Specification version 1.2
+
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_TPM_DAA_JoinInit\fR(3)
+\fBTspi_TPM_DAA_JoinStoreCredential\fR(3)
+

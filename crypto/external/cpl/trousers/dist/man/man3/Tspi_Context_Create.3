@@ -1,0 +1,66 @@
+.\" Copyright (C) 2005 International Business Machines Corporation
+.\" Written by Kent Yoder based on the Trusted Computing Group Software Stack Specification Version 1.1 Golden
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_Context_Create" 3 "2004-05-26" "TSS 1.1" "TCG Software Stack Developer's Reference"
+.SH NAME
+Tspi_Context_Create \- create a TSP context handle.
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/platform.h>
+.B #include <tss/tcpa_defines.h>
+.B #include <tss/tcpa_typedef.h>
+.B #include <tss/tcpa_struct.h>
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_Context_Create(TSS_HCONTEXT* " phContext ");"
+.fi
+.sp
+.ad
+.hy
+.SH "DESCRIPTION"
+.PP
+\fBTspi_Context_Create\fR creates a handle to a new context object. The context is then used by other API functions to track resources related to it.
+.SH "PARAMETERS"
+.PP
+.SS phContext
+Receives the handle to the created context object.
+
+.SH "RETURN CODES"
+.PP
+\fBTspi_Context_Create\fR returns TSS_SUCCESS on success, otherwise one of the following values are returned:
+.TP
+.SM TSS_E_INTERNAL_ERROR - An internal error occurred in the TSS.
+
+.SH "CONFORMING TO"
+
+.PP
+\fBTspi_Context_Create\fR conforms to the Trusted Computing Group Software Specification version 1.1 Golden
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_Context_Close\fR(3), \fBTspi_Context_Connect\fR(3).
+
+
+
