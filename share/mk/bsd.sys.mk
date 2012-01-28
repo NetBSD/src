@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.210 2011/10/31 14:20:12 chs Exp $
+#	$NetBSD: bsd.sys.mk,v 1.211 2012/01/28 21:32:14 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -267,5 +267,8 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 .y.h: ${.TARGET:.h=.c}
 .endif
 .endif
+
+# Objcopy
+OBJCOPYLIBFLAGS?=${"${.TARGET:M*.po}" != "":?-X:-x}
 
 .endif	# !defined(_BSD_SYS_MK_)
