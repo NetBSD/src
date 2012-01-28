@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.155 2012/01/27 19:48:39 para Exp $	*/
+/*	$NetBSD: pmap.c,v 1.156 2012/01/28 07:19:17 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155 2012/01/27 19:48:39 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.156 2012/01/28 07:19:17 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -712,8 +712,6 @@ pmap_reference(struct pmap *pmap)
 	atomic_inc_uint(&pmap->pm_obj[0].uo_refs);
 }
 
-#ifndef XEN
-
 /*
  * pmap_map_ptes: map a pmap's PTEs into KVM and lock them in
  *
@@ -797,7 +795,13 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	pmap->pm_ncsw = l->l_ncsw;
 	*pmap2 = curpmap;
 	*ptepp = PTE_BASE;
+#ifdef XEN
+	KASSERT(ci->ci_normal_pdes[PTP_LEVELS - 2] == L4_BASE);
+	ci->ci_normal_pdes[PTP_LEVELS - 2] = pmap->pm_pdir;
+	*pdeppp = ci->ci_normal_pdes;
+#else /* XEN */
 	*pdeppp = normal_pdes;
+#endif /* XEN */
 }
 
 /*
@@ -817,6 +821,12 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		return;
 	}
 
+	ci = curcpu();
+#if defined(XEN) && defined(__x86_64__)
+	/* Reset per-cpu normal_pdes */
+	KASSERT(ci->ci_normal_pdes[PTP_LEVELS - 2] != L4_BASE);
+	ci->ci_normal_pdes[PTP_LEVELS - 2] = L4_BASE;
+#endif /* XEN && __x86_64__ */
 	/*
 	 * We cannot tolerate context switches while mapped in.
 	 * If it is our own pmap all we have to do is unlock.
@@ -832,7 +842,6 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	 * Mark whatever's on the CPU now as lazy and unlock.
 	 * If the pmap was already installed, we are done.
 	 */
-	ci = curcpu();
 	ci->ci_tlbstate = TLBSTATE_LAZY;
 	ci->ci_want_pmapload = (mypmap != pmap_kernel());
 	mutex_exit(pmap->pm_lock);
@@ -848,7 +857,6 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	pmap_destroy(pmap2);
 }
 
-#endif
 
 inline static void
 pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
@@ -2329,19 +2337,6 @@ pmap_destroy(struct pmap *pmap)
 	/*
 	 * reference count is zero, free pmap resources and then free pmap.
 	 */
-#ifdef XEN
-	/*
-	 * Xen lazy APDP handling:
-	 * clear APDP_PDE if pmap is the currently mapped
-	 */
-	if (xpmap_ptom_masked(pmap_pdirpa(pmap, 0)) == (*APDP_PDE & PG_FRAME)) {
-		kpreempt_disable();
-		pmap_unmap_apdp();
-		pmap_pte_flush();
-	        pmap_apte_flush(pmap_kernel());
-	        kpreempt_enable();
-	}
-#endif
 
 	/*
 	 * remove it from global list of pmaps
@@ -2760,17 +2755,6 @@ pmap_load(void)
 #endif
 
 #ifdef i386
-#ifdef XEN
-	/*
-	 * clear APDP slot, in case it points to a page table that has 
-	 * been freed
-	 */
-	if (*APDP_PDE) {
-		pmap_unmap_apdp();
-	}
-	/* lldt() does pmap_pte_flush() */
-#endif /* XEN */
-
 #ifndef XEN
 	ci->ci_tss.tss_ldt = pmap->pm_ldt_sel;
 	ci->ci_tss.tss_cr3 = pcb->pcb_cr3;
@@ -3933,8 +3917,8 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	KASSERT(pmap_initialized);
 	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
 	KASSERT(va < VM_MAX_KERNEL_ADDRESS);
-	KASSERTMSG(va != (vaddr_t)PDP_BASE && va != (vaddr_t)APDP_BASE,
-	    "pmap_enter: trying to map over PDP/APDP!");
+	KASSERTMSG(va != (vaddr_t)PDP_BASE,
+	    "pmap_enter: trying to map over PDP!");
 	KASSERTMSG(va < VM_MIN_KERNEL_ADDRESS ||
 	    pmap_valid_entry(pmap->pm_pdir[pl_i(va, PTP_LEVELS)]),
 	    "pmap_enter: missing kernel PTP for VA %lx!", va);
