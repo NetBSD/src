@@ -1,0 +1,54 @@
+
+ tpm-tools
+
+ Copyright (C) 2005, 2006 International Business Machines Corporation
+ All Rights Reserved.
+
+
+ DESCRIPTION
+ -----------
+ tpm-tools is an open-source package designed to enable user and application
+ enablement of Trusted Computing using a Trusted Platform Module (TPM),
+ similar to a smart card environment.  Trusted Computing is a set of
+ specifications set forth by the Trusted Computing Group (TCG).  For more
+ information on the TCG and Trusted Computing please visit the Trusted
+ Computing Group website at:
+   http://www.trustedcomputinggroup.org.
+
+ The tpm-tools package contains commands to allow the platform administrator
+ the ability to manage and diagnose the platform's TPM.  Additionally, the
+ package contains commands to utilize some of the capabilities available
+ in the TPM PKCS#11 interface implemented in the openCryptoki project.
+
+ The tpm-tools package is released under the Common Public License.
+
+
+ BUILD REQUIREMENTS
+ ----- ------------
+ Packages needed to build:
+
+  automake
+  autoconf
+  libtool
+  gettext
+  gettext-devel
+  trousers
+  trousers-devel
+
+  optional (for PKCS#11 support - tpmtoken commands)
+    openssl-0.9.7 or newer
+    openssl-devel-0.9.7 or newer
+    opencryptoki-2.2.0 or newer
+
+
+ BUILDING tpm-tools
+ -------- ---------
+ $ sh ./bootstrap.sh
+ $ ./configure
+ $ make
+ # make install
+
+ By default the build will place everything in /usr/local. Issue
+   ./configure --help
+ to see how to install to a different location.
+

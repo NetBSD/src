@@ -1,0 +1,73 @@
+.\" Copyright (C) 2005 - 2007 International Business Machines Corporation
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "tpm_changeownerauth" 8 "2005-05-06" "TPM Management"
+.ce 1
+TPM Management - tpm_changeownerauth
+.SH NAME
+tpm_changeownerauth \- change the authorization data associated with the owner or SRK
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.B tpm_changeownerauth
+.RB [ OPTION ]
+
+.SH "DESCRIPTION"
+.PP
+\fBtpm_changeownerauth\fR allows for changing the authorization data for the TPM owner or the TPM's Storage Root Key  
+(via the TPM_ChangeAuthOwner API).  This operation prompts for current password, followed by the new password and a confirmation of the new password. The \fB\-\-owner\fR option changes the TPM owner password and \fB\-\-srk\fR option changes the TPM's SRK password. The \fB\-\-well-known\fR option is used when SRK or owner passwords need to be changed and current owner password is a secret of zeros, \fB\-\-set-well-known\fR option changes current password to a secret of zeros, both options do not work by themselves, they must be used with \fB\-\-owner\fR and \fB\-\-srk\fR options to indicate which of these passwords will be changed.
+
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display command usage info.
+.TP
+\fB-v\fR, \fB\-\-version\fR
+Display command version info.
+.TP
+\fB-l\fR, \fB\-\-log\fR [none|error|info|debug]
+Set logging level.
+.TP
+\fB-u\fR, \fB\-\-unicode\fR
+Use TSS UNICODE encoding for passwords to comply with applications using TSS popup boxes
+.TP
+\fB-o\fR, \fB\-\-owner\fR
+Change the authorization data for the TPM owner.
+.TP
+\fB-s\fR, \fB\-\-srk\fR
+Change the authorization data for the TPM's Storage Root Key. 
+.TP
+\fB-g\fR, \fB\-\-original_password_unicode\fR
+Use TSS UNICODE encoding for original password to comply with applications using TSS popup boxes
+.TP
+\fB-n\fR, \fB\-\-new_password_unicode\fR
+Use TSS UNICODE encoding for new password to comply with applications using TSS popup boxes
+.TP
+\fB-z\fR, \fB\-\-well-known\fR
+Change password to a new one when current owner password is a secret of all zeros (20 bytes of zeros). It must be specified which password (owner, SRK or both) to change
+.TP
+\fB-r\fR, \fB\-\-set-well-known\fR
+Change password to a secret of all zeros (20 bytes of zeros). It must be specified which password (owner, SRK or both) to change
+.TP
+.SH "SEE ALSO"
+.PP
+\fBtpm_version\fR(1), \fBtpm_takeownership\fR(8), \fBtcsd\fR(8)
+
+.SH "REPORTING BUGS"
+Report bugs to <trousers-users@lists.sourceforge.net>
