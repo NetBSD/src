@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.78 2012/01/28 07:19:17 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.79 2012/01/28 12:15:19 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78 2012/01/28 07:19:17 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.79 2012/01/28 12:15:19 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1244,16 +1244,9 @@ cpu_load_pmap(struct pmap *pmap)
   * considered to be a canonical "SHADOW" PDIR with the following
   * properties: 
   * - Its recursive mapping points to itself
-  * - per-cpu recurseive mappings point to themselves
+  * - per-cpu recurseive mappings point to themselves on __x86_64__
   * - per-cpu L4 pages' kernel entries are expected to be in sync with
   *   the shadow
-  * - APDP_PDE_SHADOW accesses the shadow pdir
-  * - APDP_PDE accesses the per-cpu pdir
-  * - alternate mappings are considered per-cpu - however, x86 pmap
-  *   currently partially consults the shadow - this works because the
-  *   shadow PDE is updated together with the per-cpu entry (see:
-  *   xen_pmap.c: pmap_map_ptes(), and the pmap is locked while the
-  * alternate ptes are mapped in.
   */
 
 void
