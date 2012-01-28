@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.296 2011/11/06 14:11:00 dholland Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.297 2012/01/28 12:22:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.296 2011/11/06 14:11:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.297 2012/01/28 12:22:33 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -176,28 +176,19 @@ synch_init(void)
  * signal needs to be delivered, ERESTART is returned if the current system
  * call should be restarted if possible, and EINTR is returned if the system
  * call should be interrupted by the signal (return EINTR).
- *
- * The interlock is held until we are on a sleep queue. The interlock will
- * be locked before returning back to the caller unless the PNORELOCK flag
- * is specified, in which case the interlock will always be unlocked upon
- * return.
  */
 int
-ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
-	volatile struct simplelock *interlock)
+tsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo)
 {
 	struct lwp *l = curlwp;
 	sleepq_t *sq;
 	kmutex_t *mp;
-	int error;
 
 	KASSERT((l->l_pflag & LP_INTR) == 0);
 	KASSERT(ident != &lbolt);
 
 	if (sleepq_dontsleep(l)) {
 		(void)sleepq_abort(NULL, 0);
-		if ((priority & PNORELOCK) != 0)
-			simple_unlock(interlock);
 		return 0;
 	}
 
@@ -205,18 +196,7 @@ ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
 	sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj);
-
-	if (interlock != NULL) {
-		KASSERT(simple_lock_held(interlock));
-		simple_unlock(interlock);
-	}
-
-	error = sleepq_block(timo, priority & PCATCH);
-
-	if (interlock != NULL && (priority & PNORELOCK) == 0)
-		simple_lock(interlock);
- 
-	return error;
+	return sleepq_block(timo, priority & PCATCH);
 }
 
 int
@@ -245,7 +225,7 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 
 	if ((priority & PNORELOCK) == 0)
 		mutex_enter(mtx);
- 
+
 	return error;
 }
 
@@ -316,26 +296,6 @@ wakeup(wchan_t ident)
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
 	sleepq_wake(sq, ident, (u_int)-1, mp);
 }
-
-/*
- * OBSOLETE INTERFACE
- *
- * Make the highest priority LWP first in line on the specified
- * identifier runnable.
- */
-void 
-wakeup_one(wchan_t ident)
-{
-	sleepq_t *sq;
-	kmutex_t *mp;
-
-	if (__predict_false(cold))
-		return;
-
-	sq = sleeptab_lookup(&sleeptab, ident, &mp);
-	sleepq_wake(sq, ident, 1, mp);
-}
-
 
 /*
  * General yield call.  Puts the current LWP back on its run queue and
