@@ -18,8 +18,8 @@
 
 TSS_RESULT	   get_file(int *);
 int		   put_file(int);
-inline TSS_RESULT  read_data(int, void *, UINT32);
-inline TSS_RESULT  write_data(int, void *, UINT32);
+TSS_RESULT	   read_data(int, void *, UINT32);
+TSS_RESULT 	   write_data(int, void *, UINT32);
 UINT32		   psfile_get_num_keys(int);
 TSS_RESULT	   psfile_get_parent_uuid_by_uuid(int, TSS_UUID *, TSS_UUID *);
 TSS_RESULT	   psfile_remove_key_by_uuid(int, TSS_UUID *);
