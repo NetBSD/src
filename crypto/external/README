@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.2 2009/01/22 00:01:52 lukem Exp $
+$NetBSD: README,v 1.3 2012/01/28 01:30:42 christos Exp $
 
 Organization of Sources:
 
@@ -45,6 +45,8 @@ The licenses currently used are:
 
 	bsd		BSD (or equivalent) licensed software, possibly with
 			the "advertising clause".
+	cpl		Common Public License
+			http://www.opensource.org/licenses/cpl1.0
 
 If a package has components covered by different licenses
 (for example, GPL2 and the LGPL), use the <license> subdirectory
