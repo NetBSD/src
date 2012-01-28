@@ -2434,3 +2434,26 @@ mips_watchpoint_init(void)
 	curcpu()->ci_cpuwatch_count = cpuwatch_discover();
 }
 #endif
+
+bool
+mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
+{
+#ifdef _LP64
+	if (MIPS_XKSEG_P(pa)) {
+		*vap = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
+		return true;
+	}
+#endif
+#ifdef ENABLE_MIPS_KSEGX
+	if (mips_ksegx_start <= pa && pa < mips_ksegx_start + VM_KSEGX_SIZE) {
+		*vap = VM_KSEGX_ADDRESS + pa - mips_ksegx_start;
+		return true;
+	}
+#endif
+	if (MIPS_KSEG0_P(pa)) {
+		*vap = MIPS_PHYS_TO_KSEG0(pa);
+		return true;
+	}
+	return false;
+}
+
