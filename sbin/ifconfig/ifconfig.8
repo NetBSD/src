@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.103 2011/05/31 16:17:30 riastradh Exp $
+.\"	$NetBSD: ifconfig.8,v 1.104 2012/01/28 15:01:44 mbalmer Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd November 15, 2010
+.Dd January 28, 2012
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -805,6 +805,12 @@ flag may be used instead of an interface name.
 This flag instructs
 .Nm
 to display information about all interfaces in the system.
+This is also the default behaviour when no arguments are given to
+.Nm
+on the command line.
+When
+.Fl a
+is used, the output can be modified by adding more flags:
 .Fl d
 limits this to interfaces that are down,
 .Fl u
