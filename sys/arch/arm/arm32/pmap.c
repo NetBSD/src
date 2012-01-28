@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.226 2012/01/28 00:11:46 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.227 2012/01/28 16:16:41 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.226 2012/01/28 00:11:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.227 2012/01/28 16:16:41 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2843,7 +2843,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			/*
 			 * We're changing the attrs of an existing mapping.
 			 */
+#ifdef MULTIPROCESSOR
 			KASSERT(uvm_page_locked_p(pg));
+#endif
 			oflags = pmap_modify_pv(md, pa, pm, va,
 			    PVF_WRITE | PVF_EXEC | PVF_WIRED |
 			    PVF_MOD | PVF_REF, nflags);
@@ -2873,7 +2875,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				 * It is part of our managed memory so we
 				 * must remove it from the PV list
 				 */
+#ifdef MULTIPROCESSOR
 				KASSERT(uvm_page_locked_p(opg));
+#endif
 				pv = pmap_remove_pv(omd, opa, pm, va);
 				pmap_vac_me_harder(omd, opa, pm, 0);
 				oflags = pv->pv_flags;
@@ -2911,7 +2915,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				return (ENOMEM);
 			}
 
+#ifdef MULTIPROCESSOR
 			KASSERT(uvm_page_locked_p(pg));
+#endif
 			pmap_enter_pv(md, pa, pv, pm, va, nflags);
 		}
 	} else {
@@ -2941,7 +2947,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			struct vm_page_md *omd = VM_PAGE_TO_MD(opg);
 			paddr_t opa = VM_PAGE_TO_PHYS(opg);
 
+#ifdef MULTIPROCESSOR
 			KASSERT(uvm_page_locked_p(opg));
+#endif
 			pv = pmap_remove_pv(omd, opa, pm, va);
 			pmap_vac_me_harder(omd, opa, pm, 0);
 			oflags = pv->pv_flags;
@@ -3024,7 +3032,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (pg != NULL) {
 			struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 
+#ifdef MULTIPROCESSOR
 			KASSERT(uvm_page_locked_p(pg));
+#endif
 			pmap_vac_me_harder(md, pa, pm, va);
 		}
 	}
@@ -3032,7 +3042,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (pg) {
 		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 
+#ifdef MULTIPROCESSOR
 		KASSERT(uvm_page_locked_p(pg));
+#endif
 		KASSERT((md->pvh_attrs & PVF_DMOD) == 0 || (md->pvh_attrs & (PVF_DIRTY|PVF_NC)));
 		KASSERT(((md->pvh_attrs & PVF_WRITE) == 0) == (md->urw_mappings + md->krw_mappings == 0));
 	}
@@ -3136,7 +3148,9 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 				struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 				struct pv_entry *pv;
 
+#ifdef MULTIPROCESSOR
 				KASSERT(uvm_page_locked_p(pg));
+#endif
 				pv = pmap_remove_pv(md, pa, pm, sva);
 				pmap_vac_me_harder(md, pa, pm, 0);
 				if (pv != NULL) {
@@ -3261,7 +3275,6 @@ pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct pv_entry *pv;
 
-	KASSERT(uvm_page_locked_p(pg));
 	KASSERT(arm_cache_prefer_mask == 0 || md->pvh_attrs & (PVF_COLORED|PVF_NC));
 	KASSERT((md->pvh_attrs & PVF_KMPAGE) == 0);
 
@@ -3334,7 +3347,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			KASSERT(opg != pg);
 			KASSERT((omd->pvh_attrs & PVF_KMPAGE) == 0);
 			KASSERT((flags & PMAP_KMPAGE) == 0);
-			KASSERT(uvm_page_locked_p(opg));
 			pv = pmap_kremove_pg(opg, va);
 		}
 #endif
@@ -3352,7 +3364,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	PTE_SYNC(ptep);
 
 	if (pg) {
+#ifdef MULTIPROCESSOR
 		KASSERT(uvm_page_locked_p(pg));
+#endif
 		if (flags & PMAP_KMPAGE) {
 			KASSERT(md->urw_mappings == 0);
 			KASSERT(md->uro_mappings == 0);
@@ -3439,7 +3453,6 @@ pmap_kremove(vaddr_t va, vsize_t len)
 			opte = *ptep;
 			opg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
 			if (opg) {
-				KASSERT(uvm_page_locked_p(opg));
 				struct vm_page_md *omd = VM_PAGE_TO_MD(opg);
 
 				if (omd->pvh_attrs & PVF_KMPAGE) {
@@ -3610,7 +3623,9 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 					struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 					paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
+#ifdef MULTIPROCESSOR
 					KASSERT(uvm_page_locked_p(pg));
+#endif
 					f = pmap_modify_pv(md, pa, pm, sva,
 					    clr_mask, 0);
 					pmap_vac_me_harder(md, pa, pm, sva);
@@ -3693,7 +3708,9 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	    printf("pmap_page_protect: md %p (0x%08lx), prot 0x%x\n",
 	    md, pa, prot));
 
+#ifdef MULTIPROCESSOR
 	KASSERT(uvm_page_locked_p(pg));
+#endif
 
 	switch(prot) {
 	case VM_PROT_READ|VM_PROT_WRITE:
@@ -3731,7 +3748,9 @@ pmap_clear_modify(struct vm_page *pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	bool rv;
 
+#ifdef MULTIPROCESSOR
 	KASSERT(uvm_page_locked_p(pg));
+#endif
 
 	if (md->pvh_attrs & PVF_MOD) {
 		rv = true;
@@ -3763,7 +3782,9 @@ pmap_clear_reference(struct vm_page *pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	bool rv;
 
+#ifdef MULTIPROCESSOR
 	KASSERT(uvm_page_locked_p(pg));
+#endif
 
 	if (md->pvh_attrs & PVF_REF) {
 		rv = true;
@@ -3852,7 +3873,9 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 
 		/* Get the current flags for this page. */
+#ifdef MULTIPROCESSOR
 		KASSERT(uvm_page_locked_p(pg));
+#endif
 
 		pv = pmap_find_pv(md, pm, va);
 		if (pv == NULL) {
@@ -3910,7 +3933,9 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 
 		/* Get the current flags for this page. */
+#ifdef MULTIPROCESSOR
 		KASSERT(uvm_page_locked_p(pg));
+#endif
 
 		pv = pmap_find_pv(md, pm, va);
 		if (pv == NULL) {
@@ -4069,7 +4094,9 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 		/* Update the wired bit in the pv entry for this page. */
 		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 
+#ifdef MULTIPROCESSOR
 		KASSERT(uvm_page_locked_p(pg));
+#endif
 		(void) pmap_modify_pv(md, pa, pm, va, PVF_WIRED, 0);
 	}
 
@@ -4603,7 +4630,9 @@ pmap_copy_page_generic(paddr_t src, paddr_t dst)
 	 * the duration of the copy so that no other mappings can
 	 * be created while we have a potentially aliased mapping.
 	 */
+#ifdef MULTIPROCESSOR
 	KASSERT(uvm_page_locked_p(src_pg));
+#endif
 #ifdef PMAP_CACHE_VIVT
 	(void) pmap_clean_page(SLIST_FIRST(&src_md->pvh_list), true);
 #endif
@@ -4684,7 +4713,9 @@ pmap_copy_page_xscale(paddr_t src, paddr_t dst)
 	 * the duration of the copy so that no other mappings can
 	 * be created while we have a potentially aliased mapping.
 	 */
+#ifdef MULTIPROCESSOR
 	KASSERT(uvm_page_locked_p(src_pg));
+#endif
 #ifdef PMAP_CACHE_VIVT
 	(void) pmap_clean_page(SLIST_FIRST(&src_md->pvh_list), true);
 #endif
