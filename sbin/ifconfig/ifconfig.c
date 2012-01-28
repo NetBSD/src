@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.226 2011/08/29 14:35:00 joerg Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.227 2012/01/28 15:01:44 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.226 2011/08/29 14:35:00 joerg Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.227 2012/01/28 15:01:44 mbalmer Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -77,7 +77,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.226 2011/08/29 14:35:00 joerg Exp $");
 #include <net/if_ether.h>
 #include <netinet/in.h>		/* XXX */
 #include <netinet/in_var.h>	/* XXX */
- 
+
 #include <netdb.h>
 
 #include <sys/protosw.h>
@@ -418,7 +418,7 @@ register_family(struct afswtch *af)
 	SIMPLEQ_INSERT_TAIL(&aflist, af, af_next);
 	return 0;
 }
- 
+
 int
 register_flag(int flag)
 {
@@ -434,7 +434,7 @@ register_flag(int flag)
 
 	return 0;
 }
- 
+
 static int
 flag_index(int flag)
 {
@@ -467,7 +467,7 @@ get_flag(int flag)
 
 	if ((idx = flag_index(flag)) == -1)
 		return false;
-		
+
 	return gflagset[idx];
 }
 
@@ -482,7 +482,7 @@ init_parser(void)
 		err(EXIT_FAILURE, "parser_init(iface_only)");
 	if (parser_init(&iface_start.pif_parser) == -1)
 		err(EXIT_FAILURE, "parser_init(iface_start)");
- 
+
 	SIMPLEQ_FOREACH(b, &cmdloop_branches, b_next)
 		pbranch_addbranch(&command_root, b->b_parser);
 
@@ -557,7 +557,11 @@ main(int argc, char **argv)
 	start = init_parser();
 
 	/* Parse command-line options */
-	aflag = Nflag = vflag = zflag = false;
+	Nflag = vflag = zflag = false;
+	aflag = argc == 1 ? true : false;
+	if (aflag)
+		start = &opt_family_only.pb_parser;
+
 	while ((ch = getopt(argc, argv, gflags)) != -1) {
 		switch (ch) {
 		case 'A':
@@ -571,7 +575,7 @@ main(int argc, char **argv)
 		case 'b':
 			bflag = true;
 			break;
-			
+
 		case 'C':
 			Cflag = true;
 			break;
@@ -988,7 +992,7 @@ setifflags(prop_dictionary_t env, prop_dictionary_t oenv)
 	if (direct_ioctl(env, SIOCSIFFLAGS, &ifr) == -1)
 		return -1;
 
-	return 0; 
+	return 0;
 }
 
 static int
@@ -1078,7 +1082,7 @@ do_setifpreference(prop_dictionary_t env)
 
 	if (!prop_dictionary_get_int16(env, "preference",
 	    &ifap.ifap_preference))
-		return; 
+		return;
 
 	d = (prop_data_t)prop_dictionary_get(env, "address");
 	assert(d != NULL);
