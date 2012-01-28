@@ -9,7 +9,7 @@
  */
 
 
-#if (defined (__FreeBSD__) || defined (__OpenBSD__))
+#if (defined (__FreeBSD__) || defined (__OpenBSD__) || defined(__NetBSD__))
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <err.h>
@@ -81,7 +81,7 @@ platform_get_runlevel()
 
 	return runlevel;
 }
-#elif (defined (__FreeBSD__) || defined (__OpenBSD__))
+#elif (defined (__FreeBSD__) || defined (__OpenBSD__) || defined(__NetBSD__))
 
 char
 platform_get_runlevel()
