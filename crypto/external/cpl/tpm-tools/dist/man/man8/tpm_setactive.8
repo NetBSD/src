@@ -1,0 +1,71 @@
+.\" Copyright (C) 2005 International Business Machines Corporation
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "tpm_setactive" 8 "2005-05-06"  "TPM Management"
+.ce 1
+TPM Management - tpm_setactive
+.SH NAME
+tpm_setactive \- change TPM active states 
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.B tpm_setactive
+.RB [ OPTION ]
+
+.SH "DESCRIPTION"
+.PP
+\fBtpm_setactive\fR reports the status of the TPM's flags regarding the active state of the TPM.  This is the default behavior and also accessible via the \fB\-\-status\fR option. Requesting a report of this status prompts for the owner password.  The \fB\-\-active\fR option changes the TPM to the active state  
+(via the TPM_PhysicalSetDeactivated API).  This operation requires evidence of physical presence, is persistent and requires a reboot to take effect. The \fB\-\-inactive\fR 
+option (via the TPM_PhysicalSetDeactivated API) changes the TPM to the inactive state.  This operation requires evidence of physical presence, is persistent and requires a reboot to take effect.  An inactive TPM is essentially off but still allows for a tpm_takeownership to occur.  The \fB\-\-temp\fR option causes deactivation (via the TPM_SetTempDeactivated API) to happen immediately but only endure for the current boot cycle.  The \fB\-\-status\fR, \fB\-\-active\fR, \fB\-\-inactive\fR, and \fB\-\-temp\fR options are mutually exclusive and the last one on the command line will be carried out.
+
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display command usage info.
+.TP
+\fB-v\fR, \fB\-\-version\fR
+Display command version info.
+.TP
+\fB-l\fR, \fB\-\-log\fR [none|error|info|debug]
+Set logging level.
+.TP
+\fB-u\fR, \fB\-\-unicode\fR
+Use TSS UNICODE encoding for passwords to comply with applications using TSS popup boxes
+.TP
+\fB-s\fR, \fB\-\-status\fR
+Report the status of flags regarding the TPM active states. 
+.TP
+\fB-a\fR, \fB\-\-active\fR
+Make the TPM active.  Operation is persistent, requires phyiscal presence to authorize, and a reboot to take effect. 
+.TP
+\fB-i\fR, \fB\-\-inactive\fR
+Make the TPM inactive.   Operation is persistent, requires phyiscal presence to authorize, and a reboot to take effect.
+.TP
+\fB-t\fR, \fB\-\-temp\fR
+Makes the TPM inactive for the current boot cycle only. 
+.TP
+\fB-z\fR, \fB\-\-well-known\fR
+Authenticate using 20 bytes of zeros as owner password (the default TSS Well Known Secret), instead of prompting for an owner password.
+
+.SH "SEE ALSO"
+.PP
+\fBtpm_version\fR(1), \fBtpm_setpresence\fR(8), \fBtpm_takeownership\fR(8), \fBtpm_setenable\fR(8), \fBtcsd\fR(8)
+
+.SH "REPORTING BUGS"
+Report bugs to <trousers-users@lists.sourceforge.net>
