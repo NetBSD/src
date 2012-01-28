@@ -2439,21 +2439,20 @@ bool
 mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
 {
 #ifdef _LP64
-	if (MIPS_XKSEG_P(pa)) {
-		*vap = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
-		return true;
-	}
-#endif
+	*vap = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
+	return true;
+#else
 #ifdef ENABLE_MIPS_KSEGX
 	if (mips_ksegx_start <= pa && pa < mips_ksegx_start + VM_KSEGX_SIZE) {
 		*vap = VM_KSEGX_ADDRESS + pa - mips_ksegx_start;
 		return true;
 	}
 #endif
-	if (MIPS_KSEG0_P(pa)) {
+	if (pa <= MIPS_PHYS_MASK) {
 		*vap = MIPS_PHYS_TO_KSEG0(pa);
 		return true;
 	}
 	return false;
+#endif
 }
 
