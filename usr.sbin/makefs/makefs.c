@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.30 2011/08/15 14:45:01 wiz Exp $	*/
+/*	$NetBSD: makefs.c,v 1.31 2012/01/28 02:35:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.30 2011/08/15 14:45:01 wiz Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.31 2012/01/28 02:35:46 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 	fstype_t	*fstype;
 	fsinfo_t	 fsoptions;
 	fsnode		*root;
-	int	 	 ch, len;
+	int	 	 ch, i, len;
 	char		*specfile;
 
 	setprogname(argv[0]);
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 2)
+	if (argc < 2)
 		usage();
 
 	/* -x must be accompanied by -F */
@@ -254,8 +254,20 @@ main(int argc, char *argv[])
 
 				/* walk the tree */
 	TIMER_START(start);
-	root = walk_dir(argv[1], NULL);
+	root = walk_dir(argv[1], ".", NULL, NULL);
 	TIMER_RESULTS(start, "walk_dir");
+
+	/* append extra directory */
+	for (i = 2; i < argc; i++) {
+		struct stat sb;
+		if (stat(argv[i], &sb) == -1)
+			err(1, "Can't stat `%s'", argv[i]);
+		if (!S_ISDIR(sb.st_mode))
+			errx(1, "%s: not a directory", argv[i]);
+		TIMER_START(start);
+		root = walk_dir(argv[i], ".", NULL, root);
+		TIMER_RESULTS(start, "walk_dir2");
+	}
 
 	if (specfile) {		/* apply a specfile */
 		TIMER_START(start);
@@ -265,7 +277,7 @@ main(int argc, char *argv[])
 
 	if (debug & DEBUG_DUMP_FSNODES) {
 		printf("\nparent: %s\n", argv[1]);
-		dump_fsnodes(".", root);
+		dump_fsnodes(root);
 		putchar('\n');
 	}
 
@@ -319,7 +331,7 @@ usage(void)
 "usage: %s [-x] [-B endian] [-b free-blocks] [-d debug-mask]\n"
 "\t[-F mtree-specfile] [-f free-files] [-M minimum-size]\n"
 "\t[-m maximum-size] [-N userdb-dir] [-o fs-options] [-S sector-size]\n"
-"\t[-s image-size] [-t fs-type] image-file directory\n",
+"\t[-s image-size] [-t fs-type] image-file directory [extra-directory ...]\n",
 	    prog);
 	exit(1);
 }
