@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.311 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.312 2012/01/28 00:00:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.311 2012/01/27 19:48:41 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.312 2012/01/28 00:00:06 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -919,7 +919,7 @@ uvm_map_init(void)
  */
 void
 uvm_map_init_caches(void)
-{ 
+{
 	/*
 	 * initialize caches.
 	 */
@@ -1266,7 +1266,6 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 	const int amapwaitflag = (flags & UVM_FLAG_NOWAIT) ?
 	    AMAP_EXTEND_NOWAIT : 0;
 	const int advice = UVM_ADVICE(flags);
-	const int meflagval = 0;
 
 	vaddr_t start = args->uma_start;
 	vsize_t size = args->uma_size;
@@ -1310,7 +1309,7 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 
 	if (prev_entry->end == start &&
 	    prev_entry != &map->header &&
-	    UVM_ET_ISCOMPATIBLE(prev_entry, newetype, uobj, meflagval,
+	    UVM_ET_ISCOMPATIBLE(prev_entry, newetype, uobj, 0,
 	    prot, maxprot, inherit, advice, 0)) {
 
 		if (uobj && prev_entry->offset +
@@ -1367,7 +1366,7 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 forwardmerge:
 	if (prev_entry->next->start == (start + size) &&
 	    prev_entry->next != &map->header &&
-	    UVM_ET_ISCOMPATIBLE(prev_entry->next, newetype, uobj, meflagval,
+	    UVM_ET_ISCOMPATIBLE(prev_entry->next, newetype, uobj, 0,
 	    prot, maxprot, inherit, advice, 0)) {
 
 		if (uobj && prev_entry->next->offset != uoffset + size)
