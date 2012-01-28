@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.156 2012/01/28 07:19:17 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.157 2012/01/28 08:57:09 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.156 2012/01/28 07:19:17 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157 2012/01/28 08:57:09 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -795,13 +795,13 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	pmap->pm_ncsw = l->l_ncsw;
 	*pmap2 = curpmap;
 	*ptepp = PTE_BASE;
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 	KASSERT(ci->ci_normal_pdes[PTP_LEVELS - 2] == L4_BASE);
 	ci->ci_normal_pdes[PTP_LEVELS - 2] = pmap->pm_pdir;
 	*pdeppp = ci->ci_normal_pdes;
-#else /* XEN */
+#else /* XEN && __x86_64__ */
 	*pdeppp = normal_pdes;
-#endif /* XEN */
+#endif /* XEN && __x86_64__ */
 }
 
 /*
