@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_write.c,v 1.14 2011/01/04 09:48:21 wiz Exp $	*/
+/*	$NetBSD: cd9660_write.c,v 1.15 2012/01/28 02:35:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_write.c,v 1.14 2011/01/04 09:48:21 wiz Exp $");
+__RCSID("$NetBSD: cd9660_write.c,v 1.15 2012/01/28 02:35:46 christos Exp $");
 #endif  /* !__lint */
 
 static int cd9660_write_volume_descriptors(FILE *);
@@ -297,7 +297,7 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 			    __func__, (int)inode->st.st_ino, inode->ino));
 			inode->flags |= FI_WRITTEN;
 			cd9660_compute_full_filename(writenode,
-			    temp_file_name, 0);
+			    temp_file_name);
 			ret = cd9660_copy_file(fd, writenode->fileDataSector,
 			    temp_file_name);
 			if (ret == 0)
