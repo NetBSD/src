@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.179 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.180 2012/01/28 15:43:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.179 2012/01/27 19:48:41 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.180 2012/01/28 15:43:34 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1623,11 +1623,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			continue;
 		}
 
-		KASSERT(pg->uobject == NULL ||
-		    mutex_owned(pg->uobject->vmobjlock));
-		KASSERT(pg->uobject != NULL ||
-		    (pg->uanon != NULL && mutex_owned(pg->uanon->an_lock)));
-
+		KASSERT(uvm_page_locked_p(pg));
 		KASSERT(pg->flags & PG_BUSY);
 		KASSERT((pg->flags & PG_PAGEOUT) == 0);
 		if (pg->flags & PG_WANTED) {
@@ -1668,12 +1664,7 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 
 	uobj = pg->uobject;
 	anon = pg->uanon;
-	if (uobj != NULL) {
-		KASSERT(mutex_owned(uobj->vmobjlock));
-	} else if (anon != NULL) {
-		KASSERT(mutex_owned(anon->an_lock));
-	}
-
+	KASSERT(uvm_page_locked_p(pg));
 	KASSERT((pg->flags & PG_WANTED) == 0);
 
 	/* gain ownership? */
