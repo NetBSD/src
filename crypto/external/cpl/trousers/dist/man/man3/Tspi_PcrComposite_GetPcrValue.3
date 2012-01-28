@@ -1,0 +1,77 @@
+.\" Copyright (C) 2004 International Business Machines Corporation
+.\" Written by Kathy Robertson based on the Trusted Computing Group Software Stack Specification Version 1.1 Golden
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_PcrComposite_GetPcrValue" 3 "2004-05-26" "TSS 1.1" "TCG Software Stack Developer's Reference"
+.SH NAME
+Tspi_PcrComposite_GetPcrValue \- get the digest value of a given PCR index inside a PCR composite object.
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/platform.h>
+.B #include <tss/tcpa_defines.h>
+.B #include <tss/tcpa_typedef.h>
+.B #include <tss/tcpa_struct.h>
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_PcrComposite_GetPcrValue(TSS_HPCRS " hPcrComposite ",    UINT32 " ulPcrIndex ","
+.BI "                                         UINT32*   " ulPcrValueLength ", BYTE** " rgbPcrValue ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\fBTspi_PcrComposite_GetPcrValue\fR returns the digest value of a given PCR index inside a PCR composite object. 
+.SH "PARAMETERS"
+.PP
+.SS hPcrComposite
+Handle of the PCR composite object instance where a PCR value should be returned.
+.PP
+.SS ulPcrIndex
+This parameter indicates the index of the PCR to read.
+.PP
+.SS ulPcrValueLength
+The length (in bytes) of the rgbPcrValue parameter.
+.PP
+.SS rgbPcrValue
+After successful completion this parameter recieves a pointer to the memory block containing the PCR value of the PCR indicated by ulPcrIndex.
+.SH "RETURN CODES"
+.PP
+\fBTspi_PcrComposite_GetPcrValue\fR returns TSS_SUCCESS on success, otherwise one of the following values are returned:
+.TP
+.SM TSS_E_INVALID_HANDLE - Either \fIhPcrComposite\fR or \fIulPcrIndex\fR is an invalid parameter.
+.TP
+.SM TSS_E_INTERNAL_ERROR - An error occurred internal to the TSS.
+
+.SH "CONFORMING TO"
+
+.PP
+\fBTspi_PcrComposite_GetPcrValue\fR conforms to the Trusted Computing Group Software Specification version 1.1 Golden
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_PcrComposite_SelectPcrIndex\fR(3), \fBTspi_PcrComposite_SetPcrValue\fR(3).
+
+
