@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.191 2012/01/27 19:48:40 para Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.192 2012/01/28 00:00:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.191 2012/01/27 19:48:40 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.192 2012/01/28 00:00:06 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -531,8 +531,8 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 void
 pool_subsystem_init(void)
 {
-	int idx;
 	size_t size;
+	int idx;
 
 	mutex_init(&pool_head_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&pool_allocator_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -2718,7 +2718,9 @@ void	pool_page_free(struct pool *, void *);
 
 #ifdef POOL_SUBPAGE
 struct pool_allocator pool_allocator_kmem_fullpage = {
-	pool_page_alloc, pool_page_free, 0
+	.pa_alloc = pool_page_alloc,
+	.pa_free = pool_page_free,
+	.pa_pagesz = 0
 };
 #else
 struct pool_allocator pool_allocator_kmem = {
@@ -2733,7 +2735,9 @@ void	pool_page_free_nointr(struct pool *, void *);
 
 #ifdef POOL_SUBPAGE
 struct pool_allocator pool_allocator_nointr_fullpage = {
-	pool_page_alloc_nointr, pool_page_free_nointr, 0,
+	.pa_alloc = pool_page_alloc_nointr,
+	.pa_free = pool_page_free_nointr,
+	.pa_pagesz = 0
 };
 #else
 struct pool_allocator pool_allocator_nointr = {
@@ -2755,7 +2759,9 @@ void	*pool_subpage_alloc_nointr(struct pool *, int);
 void	pool_subpage_free_nointr(struct pool *, void *);
 
 struct pool_allocator pool_allocator_nointr = {
-	pool_subpage_alloc, pool_subpage_free, POOL_SUBPAGE,
+	.pa_alloc = pool_subpage_alloc,
+	.pa_free = pool_subpage_free,
+	.pa_pagesz = POOL_SUBPAGE
 };
 #endif /* POOL_SUBPAGE */
 
@@ -2791,18 +2797,14 @@ pool_allocator_free(struct pool *pp, void *v)
 void *
 pool_page_alloc(struct pool *pp, int flags)
 {
-	bool waitok = (flags & PR_WAITOK) ? true : false;
-	int rc;
+	const vm_flag_t vflags = (flags & PR_WAITOK) ? VM_SLEEP: VM_NOSLEEP;
 	vmem_addr_t va;
+	int ret;
 
-	rc = uvm_km_kmem_alloc(kmem_va_arena,
-	    pp->pr_alloc->pa_pagesz,
-	    ((waitok ? VM_SLEEP : VM_NOSLEEP) | VM_INSTANTFIT), &va);
+	ret = uvm_km_kmem_alloc(kmem_va_arena, pp->pr_alloc->pa_pagesz,
+	    vflags | VM_INSTANTFIT, &va);
 
-	if (rc != 0)
-		return NULL;
-	else
-		return (void *)va;
+	return ret ? NULL : (void *)va;
 }
 
 void
@@ -2815,25 +2817,21 @@ pool_page_free(struct pool *pp, void *v)
 static void *
 pool_page_alloc_meta(struct pool *pp, int flags)
 {
-	bool waitok = (flags & PR_WAITOK) ? true : false;
-	int rc;
-	vmem_addr_t addr;
+	const vm_flag_t vflags = (flags & PR_WAITOK) ? VM_SLEEP: VM_NOSLEEP;
+	vmem_addr_t va;
+	int ret;
 
-	rc = vmem_alloc(kmem_meta_arena, pp->pr_alloc->pa_pagesz,
-	    (waitok ? VM_SLEEP : VM_NOSLEEP) | VM_INSTANTFIT, &addr);
+	ret = vmem_alloc(kmem_meta_arena, pp->pr_alloc->pa_pagesz,
+	    vflags | VM_INSTANTFIT, &va);
 
-	if (rc != 0)
-		return 0;
-	else
-		return (void *)addr;
+	return ret ? NULL : (void *)va;
 }
 
 static void
 pool_page_free_meta(struct pool *pp, void *v)
 {
 
-	vmem_free(kmem_meta_arena, (vmem_addr_t)v,
-	    pp->pr_alloc->pa_pagesz);
+	vmem_free(kmem_meta_arena, (vmem_addr_t)v, pp->pr_alloc->pa_pagesz);
 }
 
 #ifdef POOL_SUBPAGE

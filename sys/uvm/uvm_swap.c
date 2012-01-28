@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.159 2012/01/27 19:48:42 para Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.160 2012/01/28 00:00:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.159 2012/01/27 19:48:42 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.160 2012/01/28 00:00:06 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -638,9 +638,8 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 		 */
 
 		priority = SCARG(uap, misc);
-		sdp = kmem_alloc(sizeof(*sdp), KM_SLEEP);
+		sdp = kmem_zalloc(sizeof(*sdp), KM_SLEEP);
 		spp = kmem_alloc(sizeof(*spp), KM_SLEEP);
-		memset(sdp, 0, sizeof(*sdp));
 		sdp->swd_flags = SWF_FAKE;
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
@@ -713,10 +712,9 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	 * done!  release the ref gained by namei() and unlock.
 	 */
 	vput(vp);
-
 out:
-	kmem_free(userpath, SWAP_PATH_MAX);
 	rw_exit(&swap_syscall_lock);
+	kmem_free(userpath, SWAP_PATH_MAX);
 
 	UVMHIST_LOG(pdhist, "<- done!  error=%d", error, 0, 0, 0);
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.273 2012/01/27 19:22:49 para Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.274 2012/01/28 00:00:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.273 2012/01/27 19:22:49 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.274 2012/01/28 00:00:06 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -890,8 +890,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (error)
 		return error;
 
-	ump = kmem_alloc(sizeof(*ump), KM_SLEEP);
-	memset(ump, 0, sizeof *ump);
+	ump = kmem_zalloc(sizeof(*ump), KM_SLEEP);
 	mutex_init(&ump->um_lock, MUTEX_DEFAULT, IPL_NONE);
 	error = ffs_snapshot_init(ump);
 	if (error)
