@@ -193,7 +193,7 @@ get_file_path(char *ptr, char **dest)
 	char tmp_buf[1024];
 	int i = 0;
 
-	while (isalpha(*ptr) || isdigit(*ptr) ||
+	while (isalpha((unsigned char)*ptr) || isdigit((unsigned char)*ptr) ||
 		*ptr == '/' || *ptr == '.' || *ptr == '#' || *ptr == '_' || *ptr == '-')
 	{
 		tmp_buf[i] = *ptr;
@@ -310,7 +310,7 @@ read_conf_line(char *buf, int line_num, struct tcsd_config *conf)
 			comma = rindex(arg, ',');
 
 			if (comma == NULL) {
-				if (!isdigit(*arg))
+				if (!isdigit((unsigned char)*arg))
 					break;
 
 				comma = arg;
@@ -339,7 +339,7 @@ read_conf_line(char *buf, int line_num, struct tcsd_config *conf)
 			comma = rindex(arg, ',');
 
 			if (comma == NULL) {
-				if (!isdigit(*arg))
+				if (!isdigit((unsigned char)*arg))
 					break;
 
 				comma = arg;
