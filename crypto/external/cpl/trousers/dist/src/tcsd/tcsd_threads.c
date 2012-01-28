@@ -185,13 +185,13 @@ thread_signal_init()
 
 	if ((rc = sigfillset(&thread_sigmask))) {
 		LogError("sigfillset failed: error=%d: %s", rc, strerror(rc));
-		LogError("worker thread %ld is exiting prematurely", THREAD_ID);
+		LogError("worker thread %ld is exiting prematurely", (long)THREAD_ID);
 		THREAD_EXIT(NULL);
 	}
 
 	if ((rc = THREAD_SET_SIGNAL_MASK(SIG_BLOCK, &thread_sigmask, NULL))) {
 		LogError("Setting thread sigmask failed: error=%d: %s", rc, strerror(rc));
-		LogError("worker thread %ld is exiting prematurely", THREAD_ID);
+		LogError("worker thread %ld is exiting prematurely", (long)THREAD_ID);
 		THREAD_EXIT(NULL);
 	}
 }
