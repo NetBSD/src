@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.39 2012/01/27 19:48:40 para Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.40 2012/01/28 23:09:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.39 2012/01/27 19:48:40 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.40 2012/01/28 23:09:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -77,12 +77,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.39 2012/01/27 19:48:40 para Exp $");
 
 #include <lib/libkern/libkern.h>
 
-struct kmem_cache_info {
-	int kc_size;
-	const char *kc_name;
-};
-
-static const struct kmem_cache_info kmem_cache_sizes[] = {
+static const struct kmem_cache_info {
+	size_t		kc_size;
+	const char *	kc_name;
+} kmem_cache_sizes[] = {
 	{  8, "kmem-8" },
 	{ 16, "kmem-16" },
 	{ 24, "kmem-24" },
@@ -111,17 +109,17 @@ static const struct kmem_cache_info kmem_cache_sizes[] = {
 };
 
 /*
- * KMEM_ALIGN is the smalles guaranteed alignment and
- * also the smallest allocateable quanta.
- * Every cache size which is a multiply of CACHE_LINE_SIZE
- * gets CACHE_LINE_SIZE alignment.
+ * KMEM_ALIGN is the smallest guaranteed alignment and also the
+ * smallest allocateable quantum.  Every cache size is a multiply
+ * of CACHE_LINE_SIZE and gets CACHE_LINE_SIZE alignment.
  */
-#define KMEM_ALIGN	8
-#define KMEM_SHIFT	3
-#define KMEM_MAXSIZE	4096
+#define	KMEM_ALIGN		8
+#define	KMEM_SHIFT		3
+#define	KMEM_MAXSIZE		4096
+#define	KMEM_CACHE_COUNT	(KMEM_MAXSIZE >> KMEM_SHIFT)
 
-static pool_cache_t kmem_cache[KMEM_MAXSIZE >> KMEM_SHIFT];
-static size_t kmem_cache_max;
+static pool_cache_t kmem_cache[KMEM_CACHE_COUNT] __cacheline_aligned;
+static size_t kmem_cache_maxidx __read_mostly;
 
 #if defined(DEBUG)
 int kmem_guard_depth = 0;
@@ -139,8 +137,8 @@ static int kmem_poison_ctor(void *, void *, int);
 static void kmem_poison_fill(void *, size_t);
 static void kmem_poison_check(void *, size_t);
 #else /* defined(KMEM_POISON) */
-#define kmem_poison_fill(p, sz)		/* nothing */
-#define kmem_poison_check(p, sz)		/* nothing */
+#define	kmem_poison_fill(p, sz)		/* nothing */
+#define	kmem_poison_check(p, sz)	/* nothing */
 #endif /* defined(KMEM_POISON) */
 
 #if defined(KMEM_REDZONE)
@@ -150,7 +148,7 @@ static void kmem_poison_check(void *, size_t);
 #endif /* defined(KMEM_REDZONE) */
 
 #if defined(KMEM_SIZE)
-#define	SIZE_SIZE	(max(KMEM_ALIGN, sizeof(size_t)))
+#define	SIZE_SIZE	(MAX(KMEM_ALIGN, sizeof(size_t)))
 static void kmem_size_set(void *, size_t);
 static void kmem_size_check(void *, size_t);
 #else
@@ -162,15 +160,10 @@ static void kmem_size_check(void *, size_t);
 CTASSERT(KM_SLEEP == PR_WAITOK);
 CTASSERT(KM_NOSLEEP == PR_NOWAIT);
 
-void * kmem_intr_alloc(size_t size, km_flag_t kmflags);
-void * kmem_intr_zalloc(size_t size, km_flag_t kmflags);
-void kmem_intr_free(void *, size_t size);
-
 void *
 kmem_intr_alloc(size_t size, km_flag_t kmflags)
 {
-	size_t index;
-	size_t allocsz;
+	size_t allocsz, index;
 	pool_cache_t pc;
 	uint8_t *p;
 
@@ -182,20 +175,18 @@ kmem_intr_alloc(size_t size, km_flag_t kmflags)
 		    (kmflags & KM_SLEEP) != 0);
 	}
 #endif
-
 	allocsz = kmem_roundup_size(size) + REDZONE_SIZE + SIZE_SIZE;
-	if ((index = ((allocsz - 1) >> KMEM_SHIFT))
-	    < kmem_cache_max >> KMEM_SHIFT) {
-		pc = kmem_cache[index];
-	} else {
-		int rc;
-		rc = uvm_km_kmem_alloc(kmem_va_arena,
+	index = (allocsz - 1) >> KMEM_SHIFT;
+
+	if (index >= kmem_cache_maxidx) {
+		int ret = uvm_km_kmem_alloc(kmem_va_arena,
 		    (vsize_t)round_page(allocsz),
 		    ((kmflags & KM_SLEEP) ? VM_SLEEP : VM_NOSLEEP)
 		     | VM_INSTANTFIT, (vmem_addr_t *)&p);
-		return (rc != 0) ? NULL : p;
+		return ret ? NULL : p;
 	}
 
+	pc = kmem_cache[index];
 	p = pool_cache_get(pc, kmflags);
 
 	if (__predict_true(p != NULL)) {
@@ -221,8 +212,7 @@ kmem_intr_zalloc(size_t size, km_flag_t kmflags)
 void
 kmem_intr_free(void *p, size_t size)
 {
-	size_t index;
-	size_t allocsz;
+	size_t allocsz, index;
 	pool_cache_t pc;
 
 	KASSERT(p != NULL);
@@ -234,12 +224,10 @@ kmem_intr_free(void *p, size_t size)
 		return;
 	}
 #endif
-
 	allocsz = kmem_roundup_size(size) + REDZONE_SIZE + SIZE_SIZE;
-	if ((index = ((allocsz - 1) >> KMEM_SHIFT))
-	    < kmem_cache_max >> KMEM_SHIFT) {
-		pc = kmem_cache[index];
-	} else {
+	index = (allocsz - 1) >> KMEM_SHIFT;
+
+	if (index >= kmem_cache_maxidx) {
 		uvm_km_kmem_free(kmem_va_arena, (vaddr_t)p,
 		    round_page(allocsz));
 		return;
@@ -251,9 +239,9 @@ kmem_intr_free(void *p, size_t size)
 	kmem_poison_check((uint8_t *)p + size, allocsz - size - SIZE_SIZE);
 	kmem_poison_fill(p, allocsz);
 
+	pc = kmem_cache[index];
 	pool_cache_put(pc, p);
 }
-
 
 /* ---- kmem API */
 
@@ -266,8 +254,8 @@ void *
 kmem_alloc(size_t size, km_flag_t kmflags)
 {
 
-	KASSERT(!cpu_intr_p());
-	KASSERT(!cpu_softintr_p());
+	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()),
+	    "kmem(9) should not be used from the interrupt context");
 	return kmem_intr_alloc(size, kmflags);
 }
 
@@ -280,8 +268,8 @@ void *
 kmem_zalloc(size_t size, km_flag_t kmflags)
 {
 
-	KASSERT(!cpu_intr_p());
-	KASSERT(!cpu_softintr_p());
+	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()),
+	    "kmem(9) should not be used from the interrupt context");
 	return kmem_intr_zalloc(size, kmflags);
 }
 
@@ -308,7 +296,10 @@ kmem_create_caches(const struct kmem_cache_info *array,
 	int i;
 
 	for (i = 0; array[i].kc_size != 0 ; i++) {
+		const char *name = array[i].kc_name;
 		size_t cache_size = array[i].kc_size;
+		int flags = PR_NOALIGN;
+		pool_cache_t pc;
 		size_t align;
 
 		if ((cache_size & (CACHE_LINE_SIZE - 1)) == 0)
@@ -318,17 +309,16 @@ kmem_create_caches(const struct kmem_cache_info *array,
 		else
 			align = KMEM_ALIGN;
 
-		const char *name = array[i].kc_name;
-		pool_cache_t pc;
-		int flags = PR_NOALIGN;
 		if (cache_size < CACHE_LINE_SIZE)
 			flags |= PR_NOTOUCH;
 
 		/* check if we reached the requested size */
-		if (cache_size > maxsize)
+		if (cache_size > maxsize) {
 			break;
-
-		kmem_cache_max = cache_size;
+		}
+		if ((cache_size >> KMEM_SHIFT) > kmem_cache_maxidx) {
+			kmem_cache_maxidx = cache_size >> KMEM_SHIFT;
+		}
 
 #if defined(KMEM_POISON)
 		pc = pool_cache_init(cache_size, align, 0, flags,
@@ -354,7 +344,6 @@ kmem_init(void)
 	uvm_kmguard_init(&kmem_guard, &kmem_guard_depth, &kmem_guard_size,
 		kernel_map);
 #endif
-
 	kmem_create_caches(kmem_cache_sizes, kmem_cache, KMEM_MAXSIZE);
 }
 

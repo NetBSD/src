@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.134 2012/01/27 19:48:40 para Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.135 2012/01/28 23:09:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.134 2012/01/27 19:48:40 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.135 2012/01/28 23:09:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -89,10 +89,6 @@ struct kmemusage *kmemusage;
 struct malloc_type *kmemstatistics;
 
 kmutex_t malloc_lock;
-
-extern void *kmem_intr_alloc(size_t, km_flag_t);
-extern void *kmem_intr_zalloc(size_t, km_flag_t);
-extern void kmem_intr_free(void *, size_t);
 
 struct malloc_header {
 	size_t mh_size;
