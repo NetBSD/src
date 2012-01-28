@@ -23,13 +23,8 @@ int		   get_file();
 int		   put_file(int);
 void		   close_file(int);
 void		   ps_destroy();
-#ifdef SOLARIS
-TSS_RESULT  read_data(int, void *, UINT32);
-TSS_RESULT  write_data(int, void *, UINT32);
-#else
-inline TSS_RESULT  read_data(int, void *, UINT32);
-inline TSS_RESULT  write_data(int, void *, UINT32);
-#endif
+TSS_RESULT         read_data(int, void *, UINT32);
+TSS_RESULT         write_data(int, void *, UINT32);
 int		   write_key_init(int, UINT32, UINT32, UINT32);
 TSS_RESULT	   cache_key(UINT32, UINT16, TSS_UUID *, TSS_UUID *, UINT16, UINT32, UINT32);
 TSS_RESULT	   UnloadBlob_KEY_PS(UINT16 *, BYTE *, TSS_KEY *);
