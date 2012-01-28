@@ -1,0 +1,71 @@
+.\" Copyright (C) 2005 International Business Machines Corporation
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "tpm_setenable" 8 "2005-05-06" "TPM Management"
+.ce 1
+TPM Management - tpm_setenable 
+.SH NAME
+tpm_setenable \- change TPM enable states 
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.B tpm_setenable
+.RB [ OPTION ]
+
+.SH "DESCRIPTION"
+.PP
+\fBtpm_setenable\fR reports the status of the TPM's flags regarding the enable state of the TPM.  This is the default behavior and also accessible via the \fB\-\-status\fR option. Requesting a report of this status prompts for the owner password.  The \fB\-\-enable\fR option changes the system's TPM to the enabled state  
+(via the TPM_OwnerSetDisable API).  This operation prompts for the owner password and is persistent. The \fB\-\-disable\fR 
+option (via the TPM_OwnerSetDisable API) changes the system's TPM to the disabled state.  This operation prompts for the owner password and is persistent.  A disabled TPM is essentially off and does not allow a tpm_takeownership to occur.  The \fB\-\-force\fR option overrides the owner password prompt and relies on physical presence for the operation authorization (via the TPM_PhysicalEnable and TPM_PhysicalDisable APIs).  The \fB\-\-enable\fR, \fB\-\-disable\fR, and \fB\-\-status\fR options are mutually exclusive and the last one on the command line will be carried out.
+
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display command usage info.
+.TP
+\fB-v\fR, \fB\-\-version\fR
+Display command version info.
+.TP
+\fB-l\fR, \fB\-\-log\fR [none|error|info|debug]
+Set logging level.
+.TP
+\fB-u\fR, \fB\-\-unicode\fR
+Use TSS UNICODE encoding for passwords to comply with applications using TSS popup boxes
+.TP
+\fB-s\fR, \fB\-\-status\fR
+Report the status of flags regarding the TPM enable states.
+.TP
+\fB-e\fR, \fB\-\-enable\fR
+Make the TPM enabled.  Operation is persistent and  prompts for owner authorization. 
+.TP
+\fB-d\fR, \fB\-\-disable\fR
+Make the TPM disabled.   Operation is persistent and prompts for owner authorization.
+.TP
+\fB-f\fR, \fB\-\-force\fR
+Overrides the prompt for owner authorization and uses physical presence to authorize the action.
+.TP
+\fB-z\fR, \fB\-\-well-known\fR
+Authenticate using 20 bytes of zeros as owner password (the default TSS Well Known Secret), instead of prompting for an owner password.
+
+.SH "SEE ALSO"
+.PP
+\fBtpm_version\fR(1), \fBtpm_setpresence\fR(8), \fBtpm_takeownership\fR(8), \fBtpm_setactive\fR(8), \fBtcsd\fR(8)
+
+.SH "REPORTING BUGS"
+Report bugs to <trousers-users@lists.sourceforge.net>
