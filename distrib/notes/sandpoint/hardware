@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.11 2011/02/03 21:04:52 phx Exp $
+.\"$NetBSD: hardware,v 1.12 2012/01/28 21:48:32 phx Exp $
 .
 .Nx*M
 is a port based on Motorola's
@@ -20,7 +20,16 @@ evaluation boards are still supported.
 The listed models of the following vendors are supported (installed NIC
 and disk device in brackets):
 .(tag 8n
-.It Em "KuroBox, Buffalo"
+.It Em "Allnet"
+.Pp
+.(bullet -compact
+.Pq Em "re/iteide"
+6250
+.It
+.Pq Em "re/satalink"
+6260
+.bullet)
+.It Em "Buffalo, KuroBox"
 .Pp
 .(bullet -compact
 .Pq Em "tlp/cmdide"
@@ -32,14 +41,77 @@ KuroBox HG
 .Pq Em "re/iteide"
 Gigabit LinkStation HD-HGLAN
 .It
-.Pq Em "sk/iteide"
-LinkStation LANxxxG
-.It
 .Pq Em "re/iteide"
 Classic TeraStation HD-HTGL
 .It
 .Pq Em "re/satalink"
 TeraStation Pro TS-TGL v1
+.bullet)
+.It Em "Conceptronic"
+.Pp
+.(bullet -compact
+.Pq Em "stge/acardide"
+CH3WNAS
+.bullet)
+.It Em "D-Link"
+.Pp
+.(bullet -compact
+.Pq Em "stge/acardide"
+DSM-G600 Rev.B
+.bullet)
+.It Em "Encore"
+.Pp
+.(bullet -compact
+.Pq Em "re/iteide"
+ENNHD-1000
+.bullet)
+.It Em "Fujitsu-Siemens"
+.Pp
+.(bullet -compact
+.Pq Em "re/satalink"
+AMS150, SBLAN2
+.bullet)
+.It Em "Iomega"
+.Pp
+.(bullet -compact
+.Pq Em "re/viaide"
+StorCenter G2
+.bullet)
+.It Em "LevelOne"
+.Pp
+.(bullet -compact
+.Pq Em "re/satalink"
+FNS-5000B
+.bullet)
+.It Em "Longshine"
+.Pp
+.(bullet -compact
+.Pq Em "re/satalink"
+LCS-8311
+.bullet)
+.It Em "Netronix"
+.Pp
+.(bullet -compact
+.Pq Em "re/iteide"
+NH-230
+.It
+.Pq Em "re/satalink"
+NH-231
+.bullet)
+.It Em "Planex"
+.Pp
+.(bullet -compact
+.Pq Em "re/iteide"
+NAS-01G
+.bullet)
+.It Em "Qnap"
+.Pp
+.(bullet -compact
+.Pq Em "wm/satalink"
+TS-100, TS-101(V1.02)
+.It
+.Pq Em "re/satalink"
+TS-101(V200), TS-201
 .bullet)
 .It Em "Synology"
 .Pp
@@ -53,21 +125,6 @@ DS-109j, DS-209j
 .It
 .Pq Em "sk/satalink"
 CS-406, RS-406, CS-406e, CS-407e
-.bullet)
-.It Em "QNAP"
-.Pp
-.(bullet -compact
-.Pq Em "wm/satalink"
-TS-100
-.It
-.Pq Em "wm/satalink"
-TS-101, TS-201
-.bullet)
-.It Em "iomega"
-.Pp
-.(bullet -compact
-.Pq Em "re/viaide"
-StorCenter XXX
 .bullet)
 .tag)
 .
