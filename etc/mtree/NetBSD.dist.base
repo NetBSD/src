@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.95 2012/01/28 02:17:29 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.96 2012/01/28 05:32:49 pgoyette Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1170,7 +1170,7 @@
 ./var/spool/sockets		mode=0777
 ./var/tmp			mode=01777
 ./var/tmp/vi.recover		mode=01777
-./var/tpm			uname=_tts gname=_tss mode=0750
+./var/tpm			uname=_tss gname=_tss mode=0750
 ./var/www
 ./var/yp
 ./var/yp/binding
