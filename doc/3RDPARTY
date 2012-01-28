@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.900 2012/01/25 14:36:30 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.901 2012/01/28 02:21:22 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1246,5 +1246,17 @@ Home Page:	http://laurikari.net/tre
 Mailing List:	http://laurikari.net/mailman/listinfo/tre-general
 Responsible:	agc, christos
 License:	BSD
+Notes:
+		Need to feed back local changes
+
+Package:	TrouSerS
+Version:	0.3.8
+Current Vers:	0.3.8
+Maintainer:	http://trousers.sourceforge.net
+Archive Site:	http://trousers.sourceforge.net
+Home Page:	http://trousers.sourceforge.net
+Mailing List:	http://trousers.sourceforge.net
+Responsible:	christos
+License:	CPL
 Notes:
 		Need to feed back local changes
