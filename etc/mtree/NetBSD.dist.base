@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.94 2011/11/12 01:19:40 jmmv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.95 2012/01/28 02:17:29 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -180,6 +180,8 @@
 ./usr/include/security
 ./usr/include/sys
 ./usr/include/ssp
+./usr/include/trousers
+./usr/include/tss
 ./usr/include/ufs
 ./usr/include/ufs/ext2fs
 ./usr/include/ufs/ffs
@@ -1168,6 +1170,7 @@
 ./var/spool/sockets		mode=0777
 ./var/tmp			mode=01777
 ./var/tmp/vi.recover		mode=01777
+./var/tpm			uname=_tts gname=_tss mode=0750
 ./var/www
 ./var/yp
 ./var/yp/binding
