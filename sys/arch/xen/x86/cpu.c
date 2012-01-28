@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.77 2012/01/09 04:39:14 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.78 2012/01/28 07:19:17 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.77 2012/01/09 04:39:14 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78 2012/01/28 07:19:17 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -460,7 +460,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		cpu_intr_init(ci);
 		cpu_get_tsc_freq(ci);
 		cpu_init(ci);
-		pmap_cpu_init_late(ci); /* XXX: cosmetic */
+		pmap_cpu_init_late(ci);
 
 		/* Every processor needs to init it's own ipi h/w (similar to lapic) */
 		xen_ipi_init();
@@ -1265,6 +1265,15 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	 * MD startup.
 	 */
 
+#if defined(__x86_64__)
+	/* Setup per-cpu normal_pdes */
+	int i;
+	extern pd_entry_t * const normal_pdes[];
+	for (i = 0;i < PTP_LEVELS - 1;i++) {
+		ci->ci_normal_pdes[i] = normal_pdes[i];
+	}
+#endif /* __x86_64__ */
+
 	if (ci == &cpu_info_primary)
 		return;
 
@@ -1326,7 +1335,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 
 #elif defined(__x86_64__)	
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(ci->ci_kpm_pdirpa));
-#endif /* PAE */
+#endif /* PAE , __x86_64__ */
 #endif /* defined(PAE) || defined(__x86_64__) */
 }
 
