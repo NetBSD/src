@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.15 2012/01/22 18:16:34 cherry Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.16 2012/01/28 07:19:17 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.15 2012/01/22 18:16:34 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.16 2012/01/28 07:19:17 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -143,206 +143,10 @@ __KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.15 2012/01/22 18:16:34 cherry Exp $")
 
 #define COUNT(x)	/* nothing */
 
-static pd_entry_t * const alternate_pdes[] = APDES_INITIALIZER;
 extern pd_entry_t * const normal_pdes[];
 
 extern paddr_t pmap_pa_start; /* PA of first physical page for this domain */
 extern paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
-
-void
-pmap_apte_flush(struct pmap *pmap)
-{
-
-	KASSERT(kpreempt_disabled());
-
-	/*
-	 * Flush the APTE mapping from all other CPUs that
-	 * are using the pmap we are using (who's APTE space
-	 * is the one we've just modified).
-	 *
-	 * XXXthorpej -- find a way to defer the IPI.
-	 */
-	pmap_tlb_shootdown(pmap, (vaddr_t)-1LL, 0, TLBSHOOT_APTE);
-	pmap_tlb_shootnow();
-}
-
-/*
- * Unmap the content of APDP PDEs
- */
-void
-pmap_unmap_apdp(void)
-{
-	int i;
-
-	for (i = 0; i < PDP_SIZE; i++) {
-		pmap_pte_set(APDP_PDE+i, 0);
-#if defined (PAE)
-		/*
-		 * For PAE, there are two places where alternative recursive
-		 * mappings could be found with Xen:
-		 * - in the L2 shadow pages
-		 * - the "real" L2 kernel page (pmap_kl2pd), which is unique
-		 * and static.
-		 * We first clear the APDP for the current pmap. As L2 kernel
-		 * page is unique, we only need to do it once for all pmaps.
-		 */
-		pmap_pte_set(APDP_PDE_SHADOW+i, 0);
-#endif
-	}
-}
-
-/*
- * pmap_map_ptes: map a pmap's PTEs into KVM and lock them in
- *
- * => we lock enough pmaps to keep things locked in
- * => must be undone with pmap_unmap_ptes before returning
- */
-
-void
-pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
-	      pd_entry_t **ptepp, pd_entry_t * const **pdeppp)
-{
-	pd_entry_t opde, npde;
-	struct pmap *ourpmap;
-	struct cpu_info *ci;
-	struct lwp *l;
-	bool iscurrent;
-	uint64_t ncsw;
-	int s;
-
-	/* the kernel's pmap is always accessible */
-	if (pmap == pmap_kernel()) {
-		*pmap2 = NULL;
-		*ptepp = PTE_BASE;
-		*pdeppp = normal_pdes;
-		return;
-	}
-	KASSERT(kpreempt_disabled());
-
- retry:
-	l = curlwp;
-	ncsw = l->l_ncsw;
- 	ourpmap = NULL;
-	ci = curcpu();
-#if defined(__x86_64__)
-	/*
-	 * curmap can only be pmap_kernel so at this point
-	 * pmap_is_curpmap is always false
-	 */
-	iscurrent = 0;
-	ourpmap = pmap_kernel();
-#else /* __x86_64__*/
-	if (ci->ci_want_pmapload &&
-	    vm_map_pmap(&l->l_proc->p_vmspace->vm_map) == pmap) {
-		pmap_load();
-		if (l->l_ncsw != ncsw)
-			goto retry;
-	}
-	iscurrent = pmap_is_curpmap(pmap);
-	/* if curpmap then we are always mapped */
-	if (iscurrent) {
-		mutex_enter(pmap->pm_lock);
-		*pmap2 = NULL;
-		*ptepp = PTE_BASE;
-		*pdeppp = normal_pdes;
-		goto out;
-	}
-	ourpmap = ci->ci_pmap;
-#endif /* __x86_64__ */
-
-	/* need to lock both curpmap and pmap: use ordered locking */
-	pmap_reference(ourpmap);
-	if ((uintptr_t) pmap < (uintptr_t) ourpmap) {
-		mutex_enter(pmap->pm_lock);
-		mutex_enter(ourpmap->pm_lock);
-	} else {
-		mutex_enter(ourpmap->pm_lock);
-		mutex_enter(pmap->pm_lock);
-	}
-
-	if (l->l_ncsw != ncsw)
-		goto unlock_and_retry;
-
-	/* need to load a new alternate pt space into curpmap? */
-	COUNT(apdp_pde_map);
-	opde = *APDP_PDE;
-	if (!pmap_valid_entry(opde) ||
-	    pmap_pte2pa(opde) != pmap_pdirpa(pmap, 0)) {
-		int i;
-		s = splvm();
-		/* Make recursive entry usable in user PGD */
-		for (i = 0; i < PDP_SIZE; i++) {
-			npde = pmap_pa2pte(
-			    pmap_pdirpa(pmap, i * NPDPG)) | PG_k | PG_V;
-			xpq_queue_pte_update(
-			    xpmap_ptom(pmap_pdirpa(pmap, PDIR_SLOT_PTE + i)),
-			    npde);
-			xpq_queue_pte_update(xpmap_ptetomach(&APDP_PDE[i]),
-			    npde);
-#ifdef PAE
-			/* update shadow entry too */
-			xpq_queue_pte_update(
-			    xpmap_ptetomach(&APDP_PDE_SHADOW[i]), npde);
-#endif /* PAE */
-			xpq_queue_invlpg(
-			    (vaddr_t)&pmap->pm_pdir[PDIR_SLOT_PTE + i]);
-		}
-		if (pmap_valid_entry(opde))
-			pmap_apte_flush(ourpmap);
-		splx(s);
-	}
-	*pmap2 = ourpmap;
-	*ptepp = APTE_BASE;
-	*pdeppp = alternate_pdes;
-	KASSERT(l->l_ncsw == ncsw);
-#if !defined(__x86_64__)
- out:
-#endif
- 	/*
- 	 * might have blocked, need to retry?
- 	 */
-	if (l->l_ncsw != ncsw) {
- unlock_and_retry:
-	    	if (ourpmap != NULL) {
-			mutex_exit(ourpmap->pm_lock);
-			pmap_destroy(ourpmap);
-		}
-		mutex_exit(pmap->pm_lock);
-		goto retry;
-	}
-}
-
-/*
- * pmap_unmap_ptes: unlock the PTE mapping of "pmap"
- */
-
-void
-pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
-{
-
-	if (pmap == pmap_kernel()) {
-		return;
-	}
-	KASSERT(kpreempt_disabled());
-	if (pmap2 == NULL) {
-		mutex_exit(pmap->pm_lock);
-	} else {
-#if defined(__x86_64__)
-		KASSERT(pmap2 == pmap_kernel());
-#else
-		KASSERT(curcpu()->ci_pmap == pmap2);
-#endif
-#if defined(MULTIPROCESSOR)
-		pmap_unmap_apdp();
-		pmap_pte_flush();
-		pmap_apte_flush(pmap2);
-#endif /* MULTIPROCESSOR */
-		COUNT(apdp_pde_unmap);
-		mutex_exit(pmap->pm_lock);
-		mutex_exit(pmap2->pm_lock);
-		pmap_destroy(pmap2);
-	}
-}
 
 int
 pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
@@ -439,33 +243,10 @@ pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 void
 pmap_xen_suspend(void)
 {
-	int i;
 	int s;
-	struct pmap *pm;
 
 	s = splvm();
-
-	pmap_unmap_apdp();
-
-	mutex_enter(&pmaps_lock);
-	/*
-	 * Set APDP entries to 0 in all pmaps.
-	 * Note that for PAE kernels, this only clears the APDP entries
-	 * found in the L2 shadow pages, as pmap_pdirpa() is used to obtain
-	 * the PA of the pmap->pm_pdir[] pages (forming the 4 contiguous
-	 * pages of PAE PD: 3 for user space, 1 for the L2 kernel shadow page)
-	 */
-	LIST_FOREACH(pm, &pmaps, pm_list) {
-		for (i = 0; i < PDP_SIZE; i++) {
-			xpq_queue_pte_update(
-			    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_APTE + i)),
-			    0);
-		}
-	}
-	mutex_exit(&pmaps_lock);
-
 	xpq_flush_queue();
-
 	splx(s);
 
 #ifdef PAE
