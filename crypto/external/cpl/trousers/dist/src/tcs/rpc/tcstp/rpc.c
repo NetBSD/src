@@ -13,7 +13,7 @@
 #include <syslog.h>
 #include <string.h>
 #include <netdb.h>
-#if (defined (__OpenBSD__) || defined (__FreeBSD__))
+#if (defined (__OpenBSD__) || defined (__FreeBSD__) || defined(__NetBSD__))
 #include <sys/types.h>
 #include <sys/socket.h>
 #endif
