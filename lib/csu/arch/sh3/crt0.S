@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $ */
+/* $NetBSD: crt0.S,v 1.2 2012/01/28 12:21:13 uwe Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -37,11 +37,17 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $")
+RCSID("$NetBSD: crt0.S,v 1.2 2012/01/28 12:21:13 uwe Exp $")
 
 STRONG_ALIAS(_start,__start)
 
+/*
+ * Kernel setregs() passes all arguments in registers to avoid
+ * copyout.  This trampoline pushes 5th and 6th arguments into stack,
+ * where C ABI expects them to be, and calls the real startup code
+ * written in C.
+ */
 _ENTRY(__start)
-	mov.l	r9,@-r15
-	bra ___start
-	mov.l	r8,@-r15
+	mov.l	r9, @-sp
+	bra	___start
+	 mov.l	r8, @-sp
