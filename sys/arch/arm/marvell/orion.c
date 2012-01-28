@@ -1,4 +1,4 @@
-/*	$NetBSD: orion.c,v 1.2 2012/01/28 03:09:28 jakllsch Exp $	*/
+/*	$NetBSD: orion.c,v 1.3 2012/01/28 03:10:26 jakllsch Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: orion.c,v 1.2 2012/01/28 03:09:28 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: orion.c,v 1.3 2012/01/28 03:10:26 jakllsch Exp $");
 
 #define _INTR_PRIVATE
 
@@ -237,7 +237,7 @@ orion_getclks(bus_addr_t iobase)
 	tclk = (reg >> tclk_shift) & ORION_PMISMPL_TCLK_MASK;
 	switch (tclk) {
 	case ORION_PMISMPL_TCLK_133:
-		mvTclk = 133333334;	/* 133MHz */
+		mvTclk = 133333333;	/* 133MHz */
 		break;
 
 	case ORION_PMISMPL_TCLK_150:
