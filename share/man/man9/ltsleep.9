@@ -1,4 +1,4 @@
-.\"	$NetBSD: ltsleep.9,v 1.13 2012/01/28 13:12:52 rmind Exp $
+.\"	$NetBSD: ltsleep.9,v 1.14 2012/01/28 13:26:12 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,9 +58,7 @@
 .Pp
 These functions implement voluntary context switching.
 .Fn tsleep
-and
-.Fn tsleep
-are used throughout the kernel whenever processing in the current context
+is used throughout the kernel whenever processing in the current context
 can not continue for any of the following reasons:
 .Bl -bullet -offset indent
 .It
