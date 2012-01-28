@@ -1,0 +1,63 @@
+.\" Copyright (C) 2005 International Business Machines Corporation
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "tpm_clear" 8 "2005-05-05"  "TPM Management"
+.ce 1
+TPM Management - tpm_clear 
+.SH NAME
+tpm_clear \- return the TPM to the default state (unowned, disabled, inactive)
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.B tpm_clear
+.RB [ OPTION ]
+
+.SH "DESCRIPTION"
+.PP
+\fBtpm_clear\fR requests that the system's TPM perform a clear  
+(via the TPM_OwnerClear API) wiping out all ownership information, in effect invalidaing all keys and data tied to the TPM, as well as disabling and deactivating the TPM.  This operation will prompt for the owner password.  The \fB\-\-force\fR 
+option relies on Phyiscal Presence to authorize the command (via the TPM_ForceClear API) skipping the owner password prompt.
+The TPM OwnerClear API can be disabled until the current owner is cleared, requiring use of the \fB\-\-force\fR with tpm_setclearable command.   The TPM_ForceClear API can be disabled for the current boot cycle with the tpm_setclearable command.  This command requires a reboot to complete the operation. 
+
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display command usage info.
+.TP
+\fB-v\fR, \fB\-\-version\fR
+Display command version info.
+.TP
+\fB-l\fR, \fB\-\-log\fR [none|error|info|debug]
+Set logging level.
+.TP
+\fB-u\fR, \fB\-\-unicode\fR
+Use TSS UNICODE encoding for passwords to comply with applications using TSS popup boxes
+.TP
+\fB-f\fR, \fB\-\-force\fR
+Rely on Physical Presence for authorization; therefore, do not prompt for owner password.
+.TP
+\fB-z\fR, \fB\-\-well-known\fR
+Authenticate using 20 bytes of zeros as owner password (the default TSS Well Known Secret), instead of prompting for an owner password.
+
+.SH "SEE ALSO"
+.PP
+\fBtpm_version\fR(1), \fBtpm_takeownership\fR(8), \fBtpm_setclearable\fR(8), \fBtpm_setactive\fR(8), \fBtpm_setenable\fR(8), \fBtcsd\fR(8)
+
+.SH "REPORTING BUGS"
+Report bugs to <trousers-users@lists.sourceforge.net>

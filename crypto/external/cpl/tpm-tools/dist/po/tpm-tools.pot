@@ -1,0 +1,1108 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR International Business Machines Corporation
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: trousers-tech@lists.sf.net\n"
+"POT-Creation-Date: 2012-01-18 10:18-0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: include/tpm_utils.h:59
+msgid "none"
+msgstr ""
+
+#: include/tpm_utils.h:61
+msgid "error"
+msgstr ""
+
+#: include/tpm_utils.h:63
+msgid "info"
+msgstr ""
+
+#: include/tpm_utils.h:65
+msgid "debug"
+msgstr ""
+
+#: lib/tpm_tspi.c:189
+msgid "  Version:   "
+msgstr ""
+
+#: lib/tpm_tspi.c:197
+#, c-format
+msgid "  Usage:     0x%04x (%s)\n"
+msgstr ""
+
+#: lib/tpm_tspi.c:204
+#, c-format
+msgid "  Flags:     0x%08x (%s)\n"
+msgstr ""
+
+#: lib/tpm_tspi.c:211
+#, c-format
+msgid "  AuthUsage: 0x%02x (%s)\n"
+msgstr ""
+
+#: lib/tpm_tspi.c:218
+#, c-format
+msgid "  Algorithm:         0x%08x (%s)\n"
+msgstr ""
+
+#: lib/tpm_tspi.c:225
+#, c-format
+msgid "  Encryption Scheme: 0x%08x (%s)\n"
+msgstr ""
+
+#: lib/tpm_tspi.c:232
+#, c-format
+msgid "  Signature Scheme:  0x%08x (%s)\n"
+msgstr ""
+
+#: lib/tpm_tspi.c:241
+#, c-format
+msgid "  Key Size:          %d bits\n"
+msgstr ""
+
+#: lib/tpm_tspi.c:250
+msgid "  Public Key:"
+msgstr ""
+
+#: lib/tpm_tspi.c:278 lib/tpm_pkcs11.c:46
+#, c-format
+msgid "%s success\n"
+msgstr ""
+
+#: lib/tpm_tspi.c:284
+#, c-format
+msgid "%s failed: 0x%08x - layer=%s, code=%04x (%d), %s\n"
+msgstr ""
+
+#: lib/tpm_log.c:126 src/data_mgmt/data_common.h:51
+#, c-format
+msgid "%s succeeded\n"
+msgstr ""
+
+#: lib/tpm_log.c:143
+msgid "Display command usage info."
+msgstr ""
+
+#: lib/tpm_log.c:144
+msgid "Display command version info."
+msgstr ""
+
+#: lib/tpm_log.c:145
+msgid "Set logging level."
+msgstr ""
+
+#: lib/tpm_log.c:151
+msgid ""
+"Use TSS UNICODE encoding for passwords to comply with applications using TSS "
+"popup boxes"
+msgstr ""
+
+#: lib/tpm_log.c:156
+msgid "Owner password"
+msgstr ""
+
+#: lib/tpm_log.c:161
+msgid "Index of the NVRAM area"
+msgstr ""
+
+#: lib/tpm_log.c:166
+#, c-format
+msgid "Usage: %s [options]\n"
+msgstr ""
+
+#: lib/tpm_log.c:174
+#, c-format
+msgid "Usage: %s [options]"
+msgstr ""
+
+#: lib/tpm_log.c:185 lib/tpm_pkcs11.c:730 lib/tpm_pkcs11.c:732
+#: lib/tpm_pkcs11.c:734 lib/tpm_pkcs11.c:738 lib/tpm_pkcs11.c:863
+#: lib/tpm_pkcs11.c:865 lib/tpm_pkcs11.c:867 lib/tpm_pkcs11.c:952
+#: lib/tpm_pkcs11.c:954 lib/tpm_pkcs11.c:956
+msgid "true"
+msgstr ""
+
+#: lib/tpm_log.c:185 lib/tpm_pkcs11.c:730 lib/tpm_pkcs11.c:732
+#: lib/tpm_pkcs11.c:734 lib/tpm_pkcs11.c:738 lib/tpm_pkcs11.c:863
+#: lib/tpm_pkcs11.c:865 lib/tpm_pkcs11.c:867 lib/tpm_pkcs11.c:952
+#: lib/tpm_pkcs11.c:954 lib/tpm_pkcs11.c:956
+msgid "false"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:53
+#, c-format
+msgid "%s failed: 0x%08x (%ld)\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:95
+#, c-format
+msgid "Slot description: %s\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:96
+#, c-format
+msgid "Slot manufacturer: %s\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:98
+msgid "Token is present\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:100
+msgid "Token is not present\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:125
+#, c-format
+msgid "Token Label: %s\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:126
+#, c-format
+msgid "Token manufacturer: %s\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:127
+#, c-format
+msgid "Token model: %s\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:130
+msgid "Token is initialized\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:132
+msgid "Token is not initialized\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:159
+#, c-format
+msgid "The PKCS#11 library cannot be loaded: %s\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:165
+#, c-format
+msgid "Unable to find the C_GetFunctionList function: %s\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:178
+#, c-format
+msgid "The token label cannot be greater than %ld characters\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:202
+msgid "No PKCS#11 slots present\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:208
+#, c-format
+msgid "Slots present: %ld\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:211
+msgid "Unable to obtain memory for PKCS#11 slot IDs\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:225
+#, c-format
+msgid "Retrieving slot information for SlotID %ld\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:234
+#, c-format
+msgid "Retrieving token information for SlotID %ld\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:252
+msgid "PKCS#11 TPM Token is not present\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:556
+msgid "Unable to obtain memory for object handle list\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:716
+msgid "Certificate Object\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:719
+msgid "\tX509 Certificate\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:723
+msgid "\tX509 Attribute Certificate\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:727
+#, c-format
+msgid "\tUnknown Certificate Type (%08x)\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:730 lib/tpm_pkcs11.c:863 lib/tpm_pkcs11.c:952
+#, c-format
+msgid "\tToken Object: %s\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:732 lib/tpm_pkcs11.c:865 lib/tpm_pkcs11.c:954
+#, c-format
+msgid "\tPrivate Object: %s\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:734 lib/tpm_pkcs11.c:867 lib/tpm_pkcs11.c:956
+#, c-format
+msgid "\tModifiable Object: %s\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:736 lib/tpm_pkcs11.c:869 lib/tpm_pkcs11.c:958
+#, c-format
+msgid "\tLabel: '%s'\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:738
+#, c-format
+msgid "\tTrusted: %s\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:744 lib/tpm_pkcs11.c:873
+msgid "Subject: "
+msgstr ""
+
+#: lib/tpm_pkcs11.c:746 lib/tpm_pkcs11.c:875
+#, c-format
+msgid "\tId: '%s' ("
+msgstr ""
+
+#: lib/tpm_pkcs11.c:751 lib/tpm_pkcs11.c:762
+msgid "Issuer: "
+msgstr ""
+
+#: lib/tpm_pkcs11.c:753 lib/tpm_pkcs11.c:764
+msgid "Serial Number: "
+msgstr ""
+
+#: lib/tpm_pkcs11.c:755 lib/tpm_pkcs11.c:768
+msgid "Value: "
+msgstr ""
+
+#: lib/tpm_pkcs11.c:760
+msgid "Owner: "
+msgstr ""
+
+#: lib/tpm_pkcs11.c:766
+msgid "Attribute Types: "
+msgstr ""
+
+#: lib/tpm_pkcs11.c:774
+msgid "Certificate: "
+msgstr ""
+
+#: lib/tpm_pkcs11.c:777
+msgid "Type: X509 Public Key"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:781
+msgid "Type: X509 Attribute"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:785
+#, c-format
+msgid "Unknown Type (%08x)"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:789 lib/tpm_pkcs11.c:894 lib/tpm_pkcs11.c:972
+#, c-format
+msgid ", Label: '%s'"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:852 lib/tpm_pkcs11.c:945
+msgid "Key Object\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:855
+msgid "\tPublic Key\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:859
+msgid "\tPrivate Key\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:871 lib/tpm_pkcs11.c:960
+#, c-format
+msgid "\tType: %ld\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:883
+msgid "Public Key: "
+msgstr ""
+
+#: lib/tpm_pkcs11.c:887
+msgid "Private Key: "
+msgstr ""
+
+#: lib/tpm_pkcs11.c:892 lib/tpm_pkcs11.c:970
+#, c-format
+msgid "Type: %ld"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:948
+msgid "\tSecret Key\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:965
+msgid "Secret Key: "
+msgstr ""
+
+#: lib/tpm_pkcs11.c:1004
+msgid "Data object\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:1023
+#, c-format
+msgid "Object class=%ld\n"
+msgstr ""
+
+#: lib/tpm_pkcs11.c:1121 lib/tpm_pkcs11.c:1213
+msgid "Unable to obtain memory for the encrypted data buffer\n"
+msgstr ""
+
+#: lib/tpm_utils.c:89
+#, c-format
+msgid "%s version: %s\n"
+msgstr ""
+
+#: lib/tpm_utils.c:107
+#, c-format
+msgid "Valid log levels are: %s, %s, %s, %s\n"
+msgstr ""
+
+#: lib/tpm_utils.c:188
+msgid "Passwords didn't match\n"
+msgstr ""
+
+#: lib/tpm_utils.c:201
+msgid "Confirm password: "
+msgstr ""
+
+#: src/data_mgmt/data_common.h:29
+msgid "Enter the TPM security officer password: "
+msgstr ""
+
+#: src/data_mgmt/data_common.h:30
+#, c-format
+msgid ""
+"A new TPM security officer password is needed. The password must be between "
+"%d and %d characters in length.\n"
+"Enter new password: "
+msgstr ""
+
+#: src/data_mgmt/data_common.h:36
+msgid "Enter your TPM user password: "
+msgstr ""
+
+#: src/data_mgmt/data_common.h:37
+#, c-format
+msgid ""
+"A new TPM user password is needed. The password must be between %d and %d "
+"characters in length.\n"
+"Enter new password: "
+msgstr ""
+
+#: src/data_mgmt/data_common.h:42
+msgid "The password entered is not valid, please try again.\n"
+msgstr ""
+
+#: src/data_mgmt/data_common.h:46
+msgid "Error, the TPM token has not been initialized\n"
+msgstr ""
+
+#: src/data_mgmt/data_common.h:47
+msgid "Error, unable to allocate needed memory\n"
+msgstr ""
+
+#: src/data_mgmt/data_common.h:48
+#, c-format
+msgid "Error, OpenSSL error: %s\n"
+msgstr ""
+
+#: src/data_mgmt/data_common.h:49
+#, c-format
+msgid "Error, unable to open file %s: %s\n"
+msgstr ""
+
+#: src/data_mgmt/data_common.h:52
+#, c-format
+msgid "%s failed\n"
+msgstr ""
+
+#: src/data_mgmt/data_import.c:132
+msgid ""
+"Import the PEM formatted RSA key and/or X.509 certificate object contained "
+"in FILE"
+msgstr ""
+
+#: src/data_mgmt/data_import.c:138
+msgid ""
+"Use FILE as the PEM formatted X.509 certificate input used to obtain the "
+"subject and id attributes"
+msgstr ""
+
+#: src/data_mgmt/data_import.c:140 src/data_mgmt/data_init.c:71
+#: src/data_mgmt/data_object.c:79 src/data_mgmt/data_passwd.c:77
+#: src/data_mgmt/data_protect.c:110
+msgid "Use STRING to identify the label of the PKCS#11 token to be used"
+msgstr ""
+
+#: src/data_mgmt/data_import.c:142
+msgid "Use STRING as the label for the imported object(s)"
+msgstr ""
+
+#: src/data_mgmt/data_import.c:144
+msgid "Import the object(s) as a public object"
+msgstr ""
+
+#: src/data_mgmt/data_import.c:146
+msgid "Import only the specified object type"
+msgstr ""
+
+#: src/data_mgmt/data_import.c:148
+msgid "Assume yes as the answer to any confirmation prompt"
+msgstr ""
+
+#: src/data_mgmt/data_import.h:25
+msgid "X509 Public Key Certificate"
+msgstr ""
+
+#: src/data_mgmt/data_import.h:26
+msgid "RSA Public Key"
+msgstr ""
+
+#: src/data_mgmt/data_import.h:27
+msgid "RSA Public/Private Key"
+msgstr ""
+
+#: src/data_mgmt/data_import.h:29
+msgid ""
+"The subject name and key identifier can not be obtained.\n"
+"Certificate to key association may not be possible after the import is "
+"complete.  If the key does not correspond to a certficate or the key can be "
+"associated with the certificate in another way this may not be an issue.\n"
+"Import the object? [y/N]: "
+msgstr ""
+
+#: src/data_mgmt/data_import.h:35
+#, c-format
+msgid ""
+"One or more %s objects matching the subject name and key identifier already "
+"exist.  Importing this object will replace all of these matching objects.\n"
+"Import the object? [y/N]: "
+msgstr ""
+
+#. TRANSLATORS: this should be the affirmative letter that was  prompted for in the message corresponding to: "Are you sure you want to continue?[y/N]"
+#: src/data_mgmt/data_import.h:39 src/data_mgmt/data_init.h:29
+#: src/tpm_mgmt/tpm_present.c:231
+msgid "y"
+msgstr ""
+
+#: src/data_mgmt/data_import.h:40 src/data_mgmt/data_init.h:30
+msgid "n"
+msgstr ""
+
+#: src/data_mgmt/data_import.h:42
+msgid "Error, an import file must be specified\n"
+msgstr ""
+
+#: src/data_mgmt/data_import.h:43
+msgid "Error, the X509 certificate does not contain an RSA key\n"
+msgstr ""
+
+#: src/data_mgmt/data_import.h:44
+msgid "Error, no objects were found that could be imported\n"
+msgstr ""
+
+#: src/data_mgmt/data_import.h:45
+msgid "Error, unable to obtain the required subject and id attributes\n"
+msgstr ""
+
+#: src/data_mgmt/data_init.c:73
+msgid "Reply 'yes' to the clear TPM token prompt"
+msgstr ""
+
+#: src/data_mgmt/data_init.h:25
+msgid ""
+"Warning: The TPM token has already been initialized. Reinitializing the TPM "
+"token will cause all TPM token data to be lost.\n"
+"Clear the TPM token data? [y/N]: "
+msgstr ""
+
+#: src/data_mgmt/data_object.c:81
+msgid "Display only public objects"
+msgstr ""
+
+#: src/data_mgmt/data_object.c:83
+msgid "Display additional information about the objects"
+msgstr ""
+
+#: src/data_mgmt/data_object.h:25
+msgid "No objects found\n"
+msgstr ""
+
+#: src/data_mgmt/data_passwd.c:79
+msgid "Change the security officer password"
+msgstr ""
+
+#: src/data_mgmt/data_protect.c:104
+msgid "Decrypt the input data"
+msgstr ""
+
+#: src/data_mgmt/data_protect.c:106
+msgid "Encrypt the input data (default)"
+msgstr ""
+
+#: src/data_mgmt/data_protect.c:108
+msgid "Use FILE as the input to the specified operation"
+msgstr ""
+
+#: src/data_mgmt/data_protect.c:112
+msgid "Use FILE as the output of the specified operation"
+msgstr ""
+
+#: src/data_mgmt/data_protect.h:28
+msgid "Error, an input file must be specified\n"
+msgstr ""
+
+#: src/data_mgmt/data_protect.h:29
+msgid "Error, an output file must be specified\n"
+msgstr ""
+
+#: src/data_mgmt/data_protect.h:30
+msgid "Error, protection key is not available\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:40
+msgid "Report current state"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:41
+msgid "Activate TPM, requires reboot"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:42
+msgid "Deactivate TPM, requires reboot"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:44
+msgid ""
+"Change state immediately but only for this boot.\n"
+"\t\tOnly valid in conjunction with the inactive parameter."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:46 src/tpm_mgmt/tpm_clear.c:46
+#: src/tpm_mgmt/tpm_clearable.c:36 src/tpm_mgmt/tpm_enable.c:50
+#: src/tpm_mgmt/tpm_getpubek.c:46 src/tpm_mgmt/tpm_ownable.c:75
+#: src/tpm_mgmt/tpm_restrictpubek.c:62
+msgid ""
+"Use 20 bytes of zeros (TSS_WELL_KNOWN_SECRET) as the TPM secret "
+"authorization data"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:54 src/tpm_mgmt/tpm_enable.c:59
+#: src/tpm_mgmt/tpm_ownable.c:43 src/tpm_mgmt/tpm_present.c:97
+#: src/tpm_mgmt/tpm_restrictpubek.c:36
+msgid "Changing mode to check status.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:58
+msgid "Changing mode to activate the TPM.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:62
+msgid "Changing mode to deactivate the TPM.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:66
+msgid "Changing mode to temporarily deactivate the TPM\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:70 src/tpm_mgmt/tpm_clear.c:58
+#: src/tpm_mgmt/tpm_clearable.c:78 src/tpm_mgmt/tpm_enable.c:75
+#: src/tpm_mgmt/tpm_getpubek.c:33 src/tpm_mgmt/tpm_ownable.c:57
+#: src/tpm_mgmt/tpm_present.c:153 src/tpm_mgmt/tpm_restrictpubek.c:44
+msgid "Using TSS_WELL_KNOWN_SECRET to authorize the TPM command\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:120
+msgid "Checking status:\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:125 src/tpm_mgmt/tpm_changeauth.c:155
+#: src/tpm_mgmt/tpm_clear.c:103 src/tpm_mgmt/tpm_clearable.c:133
+#: src/tpm_mgmt/tpm_clearable.c:168 src/tpm_mgmt/tpm_enable.c:124
+#: src/tpm_mgmt/tpm_enable.c:148 src/tpm_mgmt/tpm_getpubek.c:89
+#: src/tpm_mgmt/tpm_ownable.c:115 src/tpm_mgmt/tpm_present.c:188
+#: src/tpm_mgmt/tpm_present.c:305 src/tpm_mgmt/tpm_restrictpubek.c:101
+#: src/tpm_mgmt/tpm_takeownership.c:92
+msgid "Enter owner password: "
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:127 src/tpm_mgmt/tpm_clear.c:105
+#: src/tpm_mgmt/tpm_clearable.c:135 src/tpm_mgmt/tpm_clearable.c:171
+#: src/tpm_mgmt/tpm_enable.c:126 src/tpm_mgmt/tpm_enable.c:151
+#: src/tpm_mgmt/tpm_getpubek.c:91 src/tpm_mgmt/tpm_ownable.c:117
+#: src/tpm_mgmt/tpm_present.c:190 src/tpm_mgmt/tpm_present.c:307
+#: src/tpm_mgmt/tpm_restrictpubek.c:103
+msgid "Failed to get password\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:143
+#, c-format
+msgid "Persistent Deactivated Status: %s\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:149
+#, c-format
+msgid "Volatile Deactivated Status: %s\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_activate.c:155 src/tpm_mgmt/tpm_activate.c:160
+msgid "Action requires a reboot to take effect\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:46
+msgid "SRK"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:46
+msgid "Enter new SRK password: "
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:47 src/tpm_mgmt/tpm_restrictpubek.c:120
+msgid "owner"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:47
+msgid "Enter new owner password: "
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:55
+msgid "Change the owner password."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:56
+msgid "Change the SRK password."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:57
+msgid ""
+"Use TSS UNICODE encoding for original password to comply with applications "
+"using TSS popup boxes"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:58
+msgid ""
+"Use TSS UNICODE encoding for new password to comply with applications using "
+"TSS popup boxes"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:59
+msgid ""
+"Change password to a new one when current owner password is a secret of all "
+"zeros (20 bytes of zeros). It must be specified which password (owner, SRK "
+"or both) to change"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:60
+msgid ""
+"Change password to a secret of all zeros (20 bytes of zeros). It must be "
+"specified which password (owner, SRK or both) to change"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:158
+msgid "Failed to get owner password\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:176
+#, c-format
+msgid "Changing password for: %s.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:184
+msgid "Failed to get new password.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_changeauth.c:210
+#, c-format
+msgid "Change of %s password successful.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_clear.c:44 src/tpm_mgmt/tpm_enable.c:48
+msgid "Use physical presence authorization."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_clear.c:54 src/tpm_mgmt/tpm_enable.c:71
+msgid "Changing mode to use force authorization\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_clear.c:125
+msgid ""
+"TPM Successfuly Cleared.  You need to reboot to complete this operation.  "
+"After reboot the TPM will be in the default state: unowned, disabled and "
+"inactive.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_clearable.c:30
+msgid "Report current status."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_clearable.c:32
+msgid "Remove ability of the owner to clear TPM."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_clearable.c:34
+msgid ""
+"Remove ability to clear TPM with physical presence.\n"
+"\t\tThis action is not persistent"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_clearable.c:51
+msgid "Owner Clear"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_clearable.c:53
+msgid "Force Clear"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_clearable.c:128 src/tpm_mgmt/tpm_present.c:299
+msgid "Checking current status: \n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_clearable.c:161
+#, c-format
+msgid "Requested to disable: %s ability.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_clearable.c:188
+#, c-format
+msgid "Disabling %s successful.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_enable.c:44
+msgid "Display current state"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_enable.c:45
+msgid "Enable TPM"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_enable.c:46
+msgid "Disable TPM"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_enable.c:63
+msgid "Changing mode to enable the TPM\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_enable.c:67
+msgid "Changing mode to disable the TPM\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_enable.c:119
+msgid "Checking current status:\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_enable.c:141
+#, c-format
+msgid "Disabled status: %s\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_getpubek.c:83
+msgid "Public PubEk access blocked, owner password required\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_getpubek.c:109
+msgid "Public Endorsement Key:\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_ownable.c:47
+msgid "Changing to prevent ownership mode\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_ownable.c:52
+msgid "Changing to allow ownership mode\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_ownable.c:71 src/tpm_mgmt/tpm_restrictpubek.c:58
+msgid "Display current status"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_ownable.c:72
+msgid "Allow TPM takeownership command"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_ownable.c:73
+msgid "Prevent TPM takeownership command"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_ownable.c:133
+#, c-format
+msgid "Ownable status: %s\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:51
+msgid "Command Enable"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:52
+msgid "Hardware Enable"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:53
+msgid "Lifetime Lock"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:54
+msgid "Physical Presence"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:55
+msgid "Lock"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:72
+msgid "Report current physical presence states."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:73
+msgid "Assert that admin is present."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:74
+msgid "Clear assertion of admin presence."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:76
+msgid "Lock TPM presence assertion into specified state."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:78
+msgid "Allow TPM to accept Physical Presence Command."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:80
+msgid "Disallow TPM to accept Physical Presence Command."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:82
+msgid "Allow TPM to accept Hardware Physical Presence."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:84
+msgid "Disallow TPM to accept Hardware Physical Presence."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:86
+msgid ""
+"Prevent further modification of TPM Physical Presence\n"
+"\t\tCommand and Hardware Enablement states.\n"
+"\t\tTHIS ACTION IS PERMANENT AND CAN NEVER BE UNDONE."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:88
+msgid ""
+"Automatically respond yes to all prompts.  Only use\n"
+"\t\tthis if you are sure of the current state and don't want\n"
+"\t\tany textra checking done before setting the lifetime lock"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:90
+msgid ""
+"Use 20 bytes of zeros (TSS_WELL_KNOWN_SECRET) as the TPM secret "
+"authorization data."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:101
+msgid "Changing mode to assert presence.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:107
+msgid "Changing mode to clear presence.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:113
+msgid "Changing mode to lock presence.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:119
+msgid "Changing mode to enable command presence.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:125
+msgid "Changing mode to disable command presence.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:131
+msgid "Changing mode to enable hardware presence.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:137
+msgid "Changing mode to disable hardware presence.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:143
+msgid "Changing mode to set lifetime presence lock.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:149
+msgid "Changing mode to automatically answer yes.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:180
+msgid "Unable to determine current state without authorization\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:182
+msgid "TPM is owned\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:209
+msgid "Unable to determine current state with the entered password.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:216
+msgid ""
+"Unable to programatically determine the current setting of TPM Physcial "
+"Presence Command Enable and Hardware Enable states.  Make sure you are aware "
+"of and comfortable with the current states.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:220
+msgid "Current State:\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:224
+msgid "These will be the permanent values if you choose to proceed.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:227
+msgid ""
+"This command cannot be undone.  Are you sure you want to continue?[y/N]\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:233
+msgid ""
+"Setting the lifetime lock was confirmed.\n"
+"Continuing.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:238
+msgid ""
+"Continuing to set the lifetime lock was declined.\n"
+"Action canceled.\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:319
+msgid "Physical Presence Status:\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:334
+#, c-format
+msgid "Requested to Change %s to %s\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:343
+#, c-format
+msgid "Change to %s Failed\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_present.c:347
+#, c-format
+msgid "Change to %s Successful\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_restrictpubek.c:40
+msgid "Changing mode to restrist PubEK access\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_restrictpubek.c:60
+msgid "Restrict PubEK read to owner only"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_restrictpubek.c:119
+#, c-format
+msgid "Public Endorsement Key readable by: %s\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_restrictpubek.c:120
+msgid "everyone"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_selftest.c:70
+msgid "  TPM Test Results: "
+msgstr ""
+
+#: src/tpm_mgmt/tpm_selftest.c:86
+msgid "Report results of last test without retesting."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_selftest.c:94
+msgid "Results only\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_takeownership.c:29
+msgid "Set the owner secret to all zeros (20 bytes of zeros)."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_takeownership.c:30
+msgid "Set the SRK secret to all zeros (20 bytes of zeros)."
+msgstr ""
+
+#: src/tpm_mgmt/tpm_takeownership.c:99
+msgid "Enter SRK password: "
+msgstr ""
+
+#: src/tpm_mgmt/tpm_version.c:72
+msgid "  TPM 1.2 Version Info:\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_version.c:73
+#, c-format
+msgid "  Chip Version:        %hhu.%hhu.%hhu.%hhu\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_version.c:76
+#, c-format
+msgid "  Spec Level:          %hu\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_version.c:77
+#, c-format
+msgid "  Errata Revision:     %hhu\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_version.c:78
+#, c-format
+msgid "  TPM Vendor ID:       %c%c%c%c\n"
+msgstr ""
+
+#: src/tpm_mgmt/tpm_version.c:83
+msgid "  Vendor Specific data: "
+msgstr ""
+
+#: src/tpm_mgmt/tpm_version.c:95
+msgid "  TPM Version:         "
+msgstr ""
+
+#: src/tpm_mgmt/tpm_version.c:103
+msgid "  Manufacturer Info:   "
+msgstr ""
