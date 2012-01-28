@@ -116,7 +116,7 @@ int parseStringWithValues(const char *aArg,
 	while (offset < totlen) {
 		int found = 0;
 
-		while (isspace(*(aArg + offset)))
+		while (isspace((unsigned char)*(aArg + offset)))
 			offset++;
 
 		for (i = 0; svals[i].name; i++) {
@@ -155,7 +155,7 @@ int parseStringWithValues(const char *aArg,
 		}
 
 		while (!found) {
-			if (!isdigit(*(aArg+offset)))
+			if (!isdigit((unsigned char)*(aArg+offset)))
 				break;
 
 			if (sscanf(aArg + offset, "%u%n", &num, &numbytes) != 1) {
@@ -247,7 +247,7 @@ int parseHexOrDecimal(const char *aArg, unsigned int *x,
                       unsigned int minimum, unsigned int maximum,
 		      const char *name)
 {
-	while (isspace(*aArg))
+	while (isspace((unsigned char)*aArg))
 		aArg++;
 
 	if (strncmp(aArg, "0x", 2) == 0) {
@@ -255,7 +255,7 @@ int parseHexOrDecimal(const char *aArg, unsigned int *x,
 			return -1;
 		}
 	} else {
-		if (!isdigit(*aArg)) {
+		if (!isdigit((unsigned char)*aArg)) {
 		        fprintf(stderr,
 		                "%s must be a positive integer.\n", name);
 			return -1;
