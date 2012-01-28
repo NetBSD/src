@@ -21,7 +21,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <pwd.h>
-#if (defined (__OpenBSD__) || defined (__FreeBSD__))
+#if (defined (__OpenBSD__) || defined (__FreeBSD__) || defined(__NetBSD__))
 #include <netinet/in.h>
 #endif
 #include <arpa/inet.h>
