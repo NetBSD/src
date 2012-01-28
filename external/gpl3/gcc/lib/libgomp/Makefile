@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/09/23 09:36:37 tron Exp $
+#	$NetBSD: Makefile,v 1.6 2012/01/28 14:24:53 joerg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -49,6 +49,8 @@ CPPFLAGS+= \
 	-I${DIST}/libgcc \
 	-I${ARCHDIR}
 CFLAGS+=-pthread
+
+CWARNFLAGS.clang+=	-Wno-conversion
 
 # libgomp.so.1.0 is in GCC 4.5.
 SHLIB_MAJOR=	1
