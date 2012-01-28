@@ -44,7 +44,7 @@ libtpm_utils_la_SOURCES	=	tpm_utils.c \
 #
 # TSPI interface library
 libtpm_tspi_la_SOURCES	=	tpm_tspi.c
-libtpm_tspi_la_LIBADD	=	libtpm_utils.la -ldl
+libtpm_tspi_la_LIBADD	=	libtpm_utils.la
 
 #
 # PKCS#11 interface library

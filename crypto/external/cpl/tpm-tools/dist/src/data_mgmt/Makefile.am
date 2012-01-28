@@ -38,7 +38,7 @@ noinst_HEADERS =	data_common.h \
 # Common build flags
 AM_CPPFLAGS	=	-I$(top_srcdir)/include -D_LINUX
 
-LDADD		=	$(top_builddir)/lib/libtpm_pkcs11.la -ltspi -ldl
+LDADD		=	$(top_builddir)/lib/libtpm_pkcs11.la -ltspi
 
 
 #
