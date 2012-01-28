@@ -109,5 +109,5 @@ along with GCC; see the file COPYING3.  If not see
     fputs (integer_asm_op (SIZE, FALSE), FILE);		\
     fprintf (FILE, "%%pcrel%d(", SIZE * 8);		\
     assemble_name (FILE, LABEL);			\
-    fputc (')', FILE);					\
+    fprintf (FILE, "%+d)", SIZE);			\
   } while (0)
