@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.74 2012/01/28 19:12:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -64,83 +64,76 @@
 #ifndef _UVM_UVM_PAGE_H_
 #define _UVM_UVM_PAGE_H_
 
-/*
- * uvm_page.h
- */
-
-/*
- *	Resident memory system definitions.
- */
-
-/*
- *	Management of resident (logical) pages.
- *
- *	A small structure is kept for each resident
- *	page, indexed by page number.  Each structure
- *	is an element of several lists:
- *
- *		A red-black tree rooted with the containing
- *		object is used to quickly perform object+
- *		offset lookups
- *
- *		A list of all pages for a given object,
- *		so they can be quickly deactivated at
- *		time of deallocation.
- *
- *		An ordered list of pages due for pageout.
- *
- *	In addition, the structure contains the object
- *	and offset to which this page belongs (for pageout),
- *	and sundry status bits.
- *
- *	Fields in this structure are locked either by the lock on the
- *	object that the page belongs to (O) or by the lock on the page
- *	queues (P) [or both].
- */
-
-/*
- * locking note: the mach version of this data structure had bit
- * fields for the flags, and the bit fields were divided into two
- * items (depending on who locked what).  some time, in BSD, the bit
- * fields were dumped and all the flags were lumped into one short.
- * that is fine for a single threaded uniprocessor OS, but bad if you
- * want to actual make use of locking.  so, we've separated things
- * back out again.
- *
- * note the page structure has no lock of its own.
- */
-
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pglist.h>
 
 #include <sys/rbtree.h>
 
+/*
+ * Management of resident (logical) pages.
+ *
+ * Each resident page has a vm_page structure, indexed by page number.
+ * There are several lists in the structure:
+ *
+ * - A red-black tree rooted with the containing object is used to
+ *   quickly perform object+offset lookups.
+ * - A list of all pages for a given object, for a quick deactivation
+ *   at a time of deallocation.
+ * - An ordered list of pages due for pageout.
+ *
+ * In addition, the structure contains the object and offset to which
+ * this page belongs (for pageout) and sundry status bits.
+ *
+ * Note that the page structure has no lock of its own.  The page is
+ * generally protected by its owner's lock (UVM object or amap/anon).
+ * It should be noted that UVM has to serialize pmap(9) operations on
+ * the managed pages, e.g. for pmap_enter() calls.  Hence, the lock
+ * order is as follows:
+ *
+ *	[vmpage-owner-lock] ->
+ *		any pmap locks (e.g. PV hash lock)
+ *
+ * Since the kernel is always self-consistent, no serialization is
+ * required for unmanaged mappings, e.g. for pmap_kenter_pa() calls.
+ *
+ * Field markings and the corresponding locks:
+ *
+ * o:	page owner's lock (UVM object or amap/anon)
+ * p:	lock on the page queues
+ * o|p:	either lock can be acquired
+ * o&p:	both locks are required
+ * ?:	locked by pmap or assumed page owner's lock
+ *
+ * UVM and pmap(9) may use uvm_page_locked_p() to assert whether the
+ * page owner's lock is acquired.
+ */
+
 struct vm_page {
-	struct rb_node		rb_node;	/* tree of pages in obj (O) */
+	struct rb_node		rb_node;	/* o: tree of pages in obj */
 
 	union {
 		TAILQ_ENTRY(vm_page) queue;
 		LIST_ENTRY(vm_page) list;
-	} pageq;				/* queue info for FIFO
-						 * queue or free list (P) */
+	} pageq;				/* p: queue info for FIFO
+						 * queue or free list */
 	union {
 		TAILQ_ENTRY(vm_page) queue;
 		LIST_ENTRY(vm_page) list;
-	} listq;				/* pages in same object (O)*/
+	} listq;				/* o: pages in same object */
 
-	struct vm_anon		*uanon;		/* anon (O,P) */
-	struct uvm_object	*uobject;	/* object (O,P) */
-	voff_t			offset;		/* offset into object (O,P) */
-	uint16_t		flags;		/* object flags [O] */
+	struct vm_anon		*uanon;		/* o,p: anon */
+	struct uvm_object	*uobject;	/* o,p: object */
+	voff_t			offset;		/* o,p: offset into object */
+	uint16_t		flags;		/* o: object flags */
 	uint16_t		loan_count;	/* number of active loans
-						 * to read: [O or P]
-						 * to modify: [O _and_ P] */
-	uint16_t		wire_count;	/* wired down map refs [P] */
-	uint16_t		pqflags;	/* page queue flags [P] */
+						 * o|p: for reading
+						 * o&p: for modification */
+	uint16_t		wire_count;	/* p: wired down map refs */
+	uint16_t		pqflags;	/* p: page queue flags */
 	paddr_t			phys_addr;	/* physical address of page */
 
 #ifdef __HAVE_VM_PAGE_MD
-	struct vm_page_md	mdpage;		/* pmap-specific data */
+	struct vm_page_md	mdpage;		/* ?: pmap-specific data */
 #endif
 
 #if defined(UVM_PAGE_TRKOWN)
