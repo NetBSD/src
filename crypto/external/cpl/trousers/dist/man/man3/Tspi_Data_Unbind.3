@@ -1,0 +1,109 @@
+.\" Copyright (C) 2004 International Business Machines Corporation
+.\" Written by Megan Schneider based on the Trusted Computing Group Software Stack Specification Version 1.1 Golden
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_Data_Unbind" 3 "2004-05-25" "TSS 1.1"
+.ce 1
+TCG Software Stack Developer's Reference
+.SH NAME
+Tspi_Data_Unbind \- Decrypts data that has been bound to a key
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/platform.h>
+.B #include <tss/tcpa_defines.h>
+.B #include <tss/tcpa_typedef.h>
+.B #include <tss/tcpa_struct.h>
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_Data_Unbind(TSS_HENCDATA " hEncData ",             TSS_HKEY " hEncKey ","
+.BI "                            UINT32*      " pulUnboundDataLength ", BYTE**   " prgbUnboundData ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\fBTspi_Data_Unbind\fR decrypts the encrypted data
+blob exportedfrom the data object used in \fBTspi_Data_Bind\fR. The
+encrypted data blob must be imported to the object addressed by
+\fBTspi_SetAttribData\fR before calling this method.
+
+.SH "PARAMETERS"
+.PP
+.SS hEncData
+The handle of the data object which contains the encrypted data.
+.SS hEncKey
+Handle to the key object addressing the private key which is used
+to decrypt the data.
+.SS pulDataLength
+Receives the length of the data at the parameter \fIprgbUnboundData\fR.
+.SS prgbUnboundData
+Receives a pointer to a buffer containing the plaintext data.
+
+.SH "RETURN CODES"
+.PP
+\fBTspi_Data_Unbind\fR returns TSS_SUCCESS on success, otherwise one
+of the following values is returned:
+.TP
+.SM TSS_E_INVALID_HANDLE
+\fIhEncData\fR or \fIhEncKey\fR is not a valid handle.
+
+.TP
+.SM TSS_E_INTERNAL_ERROR
+An internal SW error has been detected.
+
+.TP
+.SM TSS_E_BAD_PARAMETER
+One or more parameters is bad.
+
+.TP
+.SM TSS_E_INVALID_ENCSCHEME
+Invalid encryption scheme.
+
+.TP
+.SM TSS_E_ENC_INVALID_LENGTH
+Invalid length of data to be encypted.
+
+.TP
+.SM TSS_E_ENC_NO_DATA
+No data to encrypt.
+
+.TP
+.SM TSS_E_ENC_INVALID_TYPE
+Invalid encryption type.
+
+
+.SH "CONFORMING TO"
+
+.PP
+\fBTspi_Data_Unbind\fR conforms to the Trusted Computing Group Software
+Specification version 1.1 Golden
+
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_Data_Bind\fR(3), \fBTspi_Data_Unseal\fR(3),
+\fBTspi_Data_Seal\fR(3).
+
