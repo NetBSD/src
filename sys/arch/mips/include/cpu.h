@@ -636,6 +636,7 @@ void	fpusave_cpu(struct cpu_info *);
 void	dumpsys(void);
 int	savectx(struct pcb *);
 void	cpu_identify(device_t, const char *);
+bool	mm_md_direct_mapped_phys(paddr_t, vaddr_t *);
 
 /* locore*.S */
 int	badaddr(void *, size_t);
