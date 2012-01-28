@@ -1,4 +1,4 @@
-#	$NetBSD: mod.mk,v 1.9 2010/05/03 22:12:32 christos Exp $
+#	$NetBSD: mod.mk,v 1.10 2012/01/28 21:34:22 christos Exp $
 
 NOLINT=		# don't build a lint library
 NOPROFILE=	# don't build a profile library
@@ -22,6 +22,9 @@ libinstall:: ${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}
 .else
 libinstall::
 .endif
+
+# Don't use -x because strips link_set symbols (which are local)
+OBJCOPYLIBFLAGS=-X
 
 .include <bsd.lib.mk>
 
