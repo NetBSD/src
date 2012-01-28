@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 2011/12/30 17:57:49 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46 2012/01/28 07:19:17 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -184,12 +184,13 @@ struct cpu_info {
 #if defined(XEN) && (defined(PAE) || defined(__x86_64__))
 	/* Currently active user PGD (can't use rcr3() with Xen) */
 	pd_entry_t *	ci_kpm_pdir;	/* per-cpu PMD (va) */
-	paddr_t		ci_kpm_pdirpa; /* per-cpu PMD (pa) */
+	paddr_t		ci_kpm_pdirpa;  /* per-cpu PMD (pa) */
 #if defined(__x86_64__)
+	/* per-cpu version of normal_pdes */
+	pd_entry_t *	ci_normal_pdes[3]; /* Ok to hardcode. only for x86_64 && XEN */
 	paddr_t		ci_xen_current_user_pgd;
 #endif /* __x86_64__ */
 #endif /* XEN et.al */
-
 
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
