@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.92 2011/07/02 01:26:29 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.93 2012/01/28 16:30:23 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92 2011/07/02 01:26:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.93 2012/01/28 16:30:23 skrll Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -331,7 +331,7 @@ cpu_uarea_free(void *vva)
 		return false;
 
 	/*
-	 * Since the pages are physically contiguous, the vm_page structurs
+	 * Since the pages are physically contiguous, the vm_page structure
 	 * will be as well.
 	 */
 	struct vm_page *pg = PHYS_TO_VM_PAGE(PMAP_UNMAP_POOLPAGE(va));

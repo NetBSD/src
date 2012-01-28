@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.109 2012/01/21 21:50:24 matt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.110 2012/01/28 16:30:23 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.109 2012/01/21 21:50:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.110 2012/01/28 16:30:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ cpu_uarea_free(void *vva)
 		return false;
 
 	/*
-	 * Since the pages are physically contiguous, the vm_page structurs
+	 * Since the pages are physically contiguous, the vm_page structure
 	 * will be as well.
 	 */
 	struct vm_page *pg = PHYS_TO_VM_PAGE(PMAP_UNMAP_POOLPAGE(va));
