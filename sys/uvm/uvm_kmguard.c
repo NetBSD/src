@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_kmguard.c,v 1.6 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: uvm_kmguard.c,v 1.7 2012/01/28 00:00:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  * - Use-after-free
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.6 2012/01/27 19:48:41 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.7 2012/01/28 00:00:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,15 +121,14 @@ uvm_kmguard_alloc(struct uvm_kmguard *kg, size_t len, bool waitok)
 	va = vm_map_min(kg->kg_map);
 	if (__predict_false(uvm_map(kg->kg_map, &va, PAGE_SIZE*2, NULL,
 	    UVM_UNKNOWN_OFFSET, PAGE_SIZE, UVM_MAPFLAG(UVM_PROT_ALL,
-	    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, flag))
-	    != 0)) {
+	    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, flag)) != 0)) {
 		return NULL;
 	}
 
 	/*
 	 * allocate a single page and map in at the start of the two page
 	 * block.
-	 */	
+	 */
 
 	for (;;) {
 		pg = uvm_pagealloc(NULL, va - vm_map_min(kg->kg_map), NULL, 0);
