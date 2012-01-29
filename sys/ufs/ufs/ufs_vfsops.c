@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.43 2012/01/27 19:22:50 para Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.44 2012/01/29 06:32:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.43 2012/01/27 19:22:50 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.44 2012/01/29 06:32:44 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -100,47 +100,31 @@ ufs_root(struct mount *mp, struct vnode **vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(struct mount *mp, prop_dictionary_t dict)
+ufs_quotactl(struct mount *mp, prop_dictionary_t cmddict, int dummy)
 {
 	struct lwp *l = curlwp;
 
 #if !defined(QUOTA) && !defined(QUOTA2)
 	(void) mp;
-	(void) dict;
+	(void) cmddict;
+	(void) dummy;
 	(void) l;
 	return (EOPNOTSUPP);
 #else
 	int  error;
-	prop_dictionary_t cmddict;
-	prop_array_t commands;
-	prop_object_iterator_t iter;
+
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
 
 	/* Mark the mount busy, as we're passing it to kauth(9). */
 	error = vfs_busy(mp, NULL);
-	if (error)
+	if (error) {
 		return (error);
-
-	error = quota_get_cmds(dict, &commands);
-	if (error)
-		goto out_vfs;
-	iter = prop_array_iterator(commands);
-	if (iter == NULL) {
-		error = ENOMEM;
-		goto out_vfs;
 	}
-		
-		
 	mutex_enter(&mp->mnt_updating);
-	while ((cmddict = prop_object_iterator_next(iter)) != NULL) {
-		if (prop_object_type(cmddict) != PROP_TYPE_DICTIONARY)
-			continue;
-		error = quota_handle_cmd(mp, l, cmddict);
-		if (error)
-			break;
-	}
-	prop_object_iterator_release(iter);
+
+	error = quota_handle_cmd(mp, l, cmddict);
+
 	mutex_exit(&mp->mnt_updating);
-out_vfs:
 	vfs_unbusy(mp, false, NULL);
 	return (error);
 #endif
