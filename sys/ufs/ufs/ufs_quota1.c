@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.14 2012/01/29 06:48:51 dholland Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.15 2012/01/29 06:49:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.14 2012/01/29 06:48:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.15 2012/01/29 06:49:44 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -553,7 +553,7 @@ quota1_encode_limit(uint64_t lim)
 }
 
 int
-quota1_handle_cmd_set(struct ufsmount *ump, const struct quotakey *key,
+quota1_handle_cmd_put(struct ufsmount *ump, const struct quotakey *key,
     const struct quotaval *val)
 {
 	struct dquot *dq;
