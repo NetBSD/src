@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.54 2012/01/17 10:47:27 cegger Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.55 2012/01/29 22:55:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.54 2012/01/17 10:47:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.55 2012/01/29 22:55:40 rmind Exp $");
 
 #include "opt_cpu_ucode.h"
 
@@ -110,12 +110,30 @@ int		ncpu			__read_mostly;
 int		ncpuonline		__read_mostly;
 bool		mp_online		__read_mostly;
 
-kcpuset_t *	kcpuset_attached	__read_mostly;
+/* Note: set on mi_cpu_attach() and idle_loop(). */
+kcpuset_t *	kcpuset_attached	__read_mostly	= NULL;
+kcpuset_t *	kcpuset_running		__read_mostly	= NULL;
 
 struct cpuqueue	cpu_queue		__cacheline_aligned
     = CIRCLEQ_HEAD_INITIALIZER(cpu_queue);
 
 static struct cpu_info **cpu_infos	__read_mostly;
+
+/*
+ * mi_cpu_init: early initialisation of MI CPU related structures.
+ *
+ * Note: may not block and memory allocator is not yet available.
+ */
+void
+mi_cpu_init(void)
+{
+
+	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	kcpuset_create(&kcpuset_attached, true);
+	kcpuset_create(&kcpuset_running, true);
+	kcpuset_set(kcpuset_running, 0);
+}
 
 int
 mi_cpu_attach(struct cpu_info *ci)
@@ -125,6 +143,8 @@ mi_cpu_attach(struct cpu_info *ci)
 	KASSERT(maxcpus > 0);
 
 	ci->ci_index = ncpu;
+	kcpuset_set(kcpuset_attached, cpu_index(ci));
+
 	CIRCLEQ_INSERT_TAIL(&cpu_queue, ci, ci_data.cpu_qchain);
 	TAILQ_INIT(&ci->ci_data.cpu_ld_locks);
 	__cpu_simple_lock_init(&ci->ci_data.cpu_ld_lock);
@@ -136,10 +156,8 @@ mi_cpu_attach(struct cpu_info *ci)
 	if (__predict_false(cpu_infos == NULL)) {
 		cpu_infos =
 		    kmem_zalloc(sizeof(cpu_infos[0]) * maxcpus, KM_SLEEP);
-		kcpuset_create(&kcpuset_attached, true);
 	}
 	cpu_infos[cpu_index(ci)] = ci;
-	kcpuset_set(kcpuset_attached, ci->ci_index);
 
 	sched_cpuattach(ci);
 

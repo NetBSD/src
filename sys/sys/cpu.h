@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 2012/01/13 16:05:16 cegger Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 2012/01/29 22:55:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -94,7 +94,8 @@ extern kmutex_t cpu_lock;
 extern u_int maxcpus;
 extern struct cpuqueue cpu_queue;
 extern kcpuset_t *kcpuset_attached;
-  
+extern kcpuset_t *kcpuset_running;
+
 static inline u_int
 cpu_index(struct cpu_info *ci)
 {
