@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.13 2012/01/29 06:53:36 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.14 2012/01/29 06:54:34 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.13 2012/01/29 06:53:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.14 2012/01/29 06:54:34 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -708,7 +708,7 @@ dq2clear_callback(struct ufsmount *ump, uint64_t *offp, struct quota2_entry *q2e
 	return 0;
 }
 int
-quota2_handle_cmd_clear(struct ufsmount *ump, int idtype, int id,
+quota2_handle_cmd_delete(struct ufsmount *ump, int idtype, int id,
     int defaultq, int objtype)
 {
 	int error, i, canfree;
