@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.h,v 1.5 2011/06/07 14:56:13 bouyer Exp $ */
+/* $NetBSD: quota2.h,v 1.6 2012/01/29 07:16:53 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -81,7 +81,10 @@ struct quota2_val {
 #define N_QL 2
 #define QL_BLOCK 0
 #define QL_FILE 1
-#define INITQLNAMES {QUOTADICT_LTYPE_BLOCK, QUOTADICT_LTYPE_FILE}
+#define INITQLNAMES { \
+	[QL_BLOCK] = "block",	\
+	[QL_FILE] =  "file",	\
+}
 
 struct quota2_entry {
 	/* block & inode limits and status */
