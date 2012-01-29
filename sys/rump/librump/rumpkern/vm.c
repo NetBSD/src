@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.121 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: vm.c,v 1.122 2012/01/29 14:57:31 njoly Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.121 2012/01/27 19:48:41 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.122 2012/01/29 14:57:31 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -330,6 +330,7 @@ uvm_init(void)
 
 	kernel_map->pmap = pmap_kernel();
 
+	pool_subsystem_init();
 	vmem_bootstrap();
 	kmem_arena = vmem_create("kmem", 0, 1024*1024, PAGE_SIZE,
 	    NULL, NULL, NULL,
