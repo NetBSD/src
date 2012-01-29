@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.22 2012/01/29 07:05:12 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.23 2012/01/29 07:06:01 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -107,8 +107,6 @@ struct vfs_quotactl_args {
 			struct quotakcursor *qc_cursor;
 			int qc_idtype;
 			struct quota_getall_result {
-				struct quotaval qr_defblocks;
-				struct quotaval qr_deffiles;
 				struct quotakey *qr_keys;
 				struct quotaval *qr_vals;
 				unsigned qr_num;
