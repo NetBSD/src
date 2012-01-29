@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.97 2012/01/29 07:08:58 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.98 2012/01/29 07:09:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.97 2012/01/29 07:08:58 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.98 2012/01/29 07:09:52 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -77,7 +77,7 @@ static int quota_handle_cmd_get(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
 static int quota_handle_cmd_put(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
-static int quota_handle_cmd_getall(struct mount *, struct lwp *,
+static int quota_handle_cmd_cursorget(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
 static int quota_handle_cmd_delete(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
@@ -88,6 +88,12 @@ static int quota_handle_cmd_quotaoff(struct mount *, struct lwp *,
 static int quota_handle_cmd_cursoropen(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
 static int quota_handle_cmd_cursorclose(struct mount *, struct lwp *,
+    struct vfs_quotactl_args *args);
+static int quota_handle_cmd_cursorskipidtype(struct mount *, struct lwp *,
+    struct vfs_quotactl_args *args);
+static int quota_handle_cmd_cursoratend(struct mount *, struct lwp *,
+    struct vfs_quotactl_args *args);
+static int quota_handle_cmd_cursorrewind(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
 
 /*
@@ -179,8 +185,8 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, int op,
 	    case QUOTACTL_PUT:
 		error = quota_handle_cmd_put(mp, l, args);
 		break;
-	    case QUOTACTL_GETALL:
-		error = quota_handle_cmd_getall(mp, l, args);
+	    case QUOTACTL_CURSORGET:
+		error = quota_handle_cmd_cursorget(mp, l, args);
 		break;
 	    case QUOTACTL_DELETE:
 		error = quota_handle_cmd_delete(mp, l, args);
@@ -190,6 +196,15 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, int op,
 		break;
 	    case QUOTACTL_CURSORCLOSE:
 		error = quota_handle_cmd_cursorclose(mp, l, args);
+		break;
+	    case QUOTACTL_CURSORSKIPIDTYPE:
+		error = quota_handle_cmd_cursorskipidtype(mp, l, args);
+		break;
+	    case QUOTACTL_CURSORATEND:
+		error = quota_handle_cmd_cursoratend(mp, l, args);
+		break;
+	    case QUOTACTL_CURSORREWIND:
+		error = quota_handle_cmd_cursorrewind(mp, l, args);
 		break;
 	    default:
 		panic("Invalid quotactl operation %d\n", op);
@@ -365,7 +380,7 @@ quota_handle_cmd_delete(struct mount *mp, struct lwp *l,
 }
 
 static int 
-quota_handle_cmd_getall(struct mount *mp, struct lwp *l, 
+quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l, 
     struct vfs_quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -376,12 +391,12 @@ quota_handle_cmd_getall(struct mount *mp, struct lwp *l,
 	unsigned *ret;
 	int error;
 
-	KASSERT(args->qc_type == QCT_GETALL);
-	cursor = args->u.getall.qc_cursor;
-	keys = args->u.getall.qc_keys;
-	vals = args->u.getall.qc_vals;
-	maxnum = args->u.getall.qc_maxnum;
-	ret = args->u.getall.qc_ret;
+	KASSERT(args->qc_type == QCT_CURSORGET);
+	cursor = args->u.cursorget.qc_cursor;
+	keys = args->u.cursorget.qc_keys;
+	vals = args->u.cursorget.qc_vals;
+	maxnum = args->u.cursorget.qc_maxnum;
+	ret = args->u.cursorget.qc_ret;
 
 	if ((ump->um_flags & UFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
@@ -393,11 +408,11 @@ quota_handle_cmd_getall(struct mount *mp, struct lwp *l,
 		
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
-		error = quota2_handle_cmd_getall(ump, cursor,
-						 keys, vals, maxnum, ret);
+		error = quota2_handle_cmd_cursorget(ump, cursor, keys, vals,
+						    maxnum, ret);
 	} else
 #endif
-		panic("quota_handle_cmd_getall: no support ?");
+		panic("quota_handle_cmd_cursorget: no support ?");
 
 	return error;
 }
@@ -447,6 +462,73 @@ quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l,
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
 		error = quota2_handle_cmd_cursorclose(ump, cursor);
+	} else
+#endif
+		error = EOPNOTSUPP;
+
+	return error;
+}
+
+static int 
+quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l, 
+    struct vfs_quotactl_args *args)
+{
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct quotakcursor *cursor;
+	int idtype;
+	int error;
+
+	KASSERT(args->qc_type == QCT_CURSORSKIPIDTYPE);
+	cursor = args->u.cursorskipidtype.qc_cursor;
+	idtype = args->u.cursorskipidtype.qc_idtype;
+
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		error = quota2_handle_cmd_cursorskipidtype(ump, cursor, idtype);
+	} else
+#endif
+		error = EOPNOTSUPP;
+
+	return error;
+}
+
+static int 
+quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l, 
+    struct vfs_quotactl_args *args)
+{
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct quotakcursor *cursor;
+	int *ret;
+	int error;
+
+	KASSERT(args->qc_type == QCT_CURSORATEND);
+	cursor = args->u.cursoratend.qc_cursor;
+	ret = args->u.cursoratend.qc_ret;
+
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		error = quota2_handle_cmd_cursoratend(ump, cursor, ret);
+	} else
+#endif
+		error = EOPNOTSUPP;
+
+	return error;
+}
+
+static int 
+quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l, 
+    struct vfs_quotactl_args *args)
+{
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct quotakcursor *cursor;
+	int error;
+
+	KASSERT(args->qc_type == QCT_CURSORREWIND);
+	cursor = args->u.cursorrewind.qc_cursor;
+
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		error = quota2_handle_cmd_cursorrewind(ump, cursor);
 	} else
 #endif
 		error = EOPNOTSUPP;
