@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.5 2012/01/29 06:37:30 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.6 2012/01/29 06:39:36 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,8 @@ struct vfs_quotactl_args {
 			int qc_q2type;
 			id_t qc_id;
 			int qc_defaultq;
-			prop_array_t qc_replies;
+			struct quotaval *qc_blocks_ret;
+			struct quotaval *qc_files_ret;
 		} get;
 	} u;
 };
