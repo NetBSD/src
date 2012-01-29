@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.88 2012/01/29 06:51:43 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.89 2012/01/29 06:52:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.88 2012/01/29 06:51:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.89 2012/01/29 06:52:39 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -319,16 +319,12 @@ quota_handle_cmd_clear(struct mount *mp, struct lwp *l,
 	int idtype;
 	id_t id;
 	int defaultq;
-	prop_dictionary_t data;
 	int error;
 
 	KASSERT(args->qc_type == QCT_CLEAR);
 	idtype = args->u.clear.qc_idtype;
 	id = args->u.clear.qc_id;
 	defaultq = args->u.clear.qc_defaultq;
-	data = args->u.clear.qc_data;
-
-	KASSERT(prop_object_type(data) == PROP_TYPE_DICTIONARY);
 
 	if ((ump->um_flags & UFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
@@ -341,8 +337,8 @@ quota_handle_cmd_clear(struct mount *mp, struct lwp *l,
 			goto err;
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_clear(ump, idtype, id, defaultq,
-			    data);
+			error = quota2_handle_cmd_clear(ump, idtype, id,
+			    defaultq);
 		} else
 #endif
 			panic("quota_handle_cmd_get: no support ?");
