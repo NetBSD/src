@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.227 2012/01/28 16:16:41 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.228 2012/01/29 20:16:16 he Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.227 2012/01/28 16:16:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.228 2012/01/29 20:16:16 he Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3342,7 +3342,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		PMAPCOUNT(kenter_remappings);
 #ifdef PMAP_CACHE_VIPT
 		opg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
+#ifdef DIAGNOSTIC
 		struct vm_page_md *omd = VM_PAGE_TO_MD(opg);
+#endif
 		if (opg) {
 			KASSERT(opg != pg);
 			KASSERT((omd->pvh_attrs & PVF_KMPAGE) == 0);
