@@ -1,4 +1,4 @@
-/*	$NetBSD: zapm.c,v 1.11 2011/06/19 16:20:09 nonaka Exp $	*/
+/*	$NetBSD: zapm.c,v 1.12 2012/01/29 10:12:41 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_apm.c,v 1.13 2006/12/12 23:14:28 dim Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.11 2011/06/19 16:20:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.12 2012/01/29 10:12:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -649,9 +649,11 @@ static void
 zapm_set_charging(struct zapm_softc *sc, int enable)
 {
 
-	scoop_discharge_battery(0);
-	scoop_charge_battery(enable, 0);
-	scoop_led_set(SCOOP_LED_ORANGE, enable);
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000) {
+		scoop_discharge_battery(0);
+		scoop_charge_battery(enable, 0);
+		scoop_led_set(SCOOP_LED_ORANGE, enable);
+	}
 }
 
 /*
@@ -867,7 +869,8 @@ zapm_poll1(void *v, int do_suspend)
 			if (charging)
 				zapm_set_charging(sc, 0);
 			sc->discharging = 1;
-			scoop_discharge_battery(1);
+			if (ZAURUS_ISC1000 || ZAURUS_ISC3000)
+				scoop_discharge_battery(1);
 			callout_schedule(&sc->sc_discharge_poll,
 			    DISCHARGE_TIMEOUT);
 		} else if (!ac_state) {

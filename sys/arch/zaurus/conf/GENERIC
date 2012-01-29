@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.50 2012/01/25 17:18:47 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.51 2012/01/29 10:12:41 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -27,7 +27,7 @@ maxusers	32			# estimated number of users
 # CPU options
 
 # For XScale systems
-#options 	CPU_XSCALE_PXA250	# Support the XScale PXA25x core
+options 	CPU_XSCALE_PXA250	# Support the XScale PXA25x core
 options 	CPU_XSCALE_PXA270	# Support the XScale PXA27x core
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
@@ -224,6 +224,8 @@ wskbd* at zrc? mux 1
 lcd0 at pxaip?				# PXA2x0 integrated LCD Controller
 options 	PXA2X0_LCD_WRITETHROUGH
 wsdisplay* at lcd? console ?
+w100lcd0 at pxaip?			# ATI Imageon100 LCDcontroller
+wsdisplay* at w100lcd? console ?
 lcdctl0 at zssp0
 
 # WM8750 Audio

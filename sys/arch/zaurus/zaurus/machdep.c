@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2012/01/25 16:51:17 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2012/01/29 10:12:42 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2012/01/25 16:51:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2012/01/29 10:12:42 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -168,6 +168,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2012/01/25 16:51:17 tsutsui Exp $")
 
 #include <zaurus/dev/scoopreg.h>
 #include <zaurus/dev/zlcdvar.h>
+#include <zaurus/dev/w100lcdvar.h>
 
 #include <dev/ic/comreg.h>
 
@@ -455,13 +456,19 @@ zaurus_restart(void)
 {
 	uint32_t rv;
 
-	rv = pxa2x0_memctl_read(MEMCTL_MSC0);
-	if ((rv & 0xffff0000) == 0x7ff00000) {
-		pxa2x0_memctl_write(MEMCTL_MSC0, (rv & 0xffff) | 0x7ee00000);
-	}
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000) {
+		rv = pxa2x0_memctl_read(MEMCTL_MSC0);
+		if ((rv & 0xffff0000) == 0x7ff00000) {
+			pxa2x0_memctl_write(MEMCTL_MSC0,
+			    (rv & 0xffff) | 0x7ee00000);
+		}
 
-	/* External reset circuit presumably asserts nRESET_GPIO. */
-	pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
+		/* External reset circuit presumably asserts nRESET_GPIO. */
+		pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
+	} else if (ZAURUS_ISC860) {
+		/* XXX not yet */
+		printf("zaurus_restart() for C7x0 is not implemented yet.\n");
+	}
 	delay(1 * 1000* 1000);	/* wait 1s */
 }
 
@@ -1242,6 +1249,7 @@ parseopts(const char *opts, int *howto)
 #endif
 
 #include "lcd.h"
+#include "w100lcd.h"
 #include "wsdisplay.h"
 
 #ifndef CONSPEED
@@ -1300,9 +1308,16 @@ consinit(void)
 	} else
 #endif
 	if (strcmp(console, "glass") == 0) {
-#if (NLCD > 0) && (NWSDISPLAY > 0)
+#if ((NLCD > 0) || (NW100LCD > 0)) && (NWSDISPLAY > 0)
 		glass_console = 1;
-		lcd_cnattach();
+#if NLCD > 0
+		if (ZAURUS_ISC1000 || ZAURUS_ISC3000)
+			lcd_cnattach();
+#endif
+#if NW100LCD > 0
+		if (ZAURUS_ISC860)
+			w100lcd_cnattach();
+#endif
 #endif
 	}
 

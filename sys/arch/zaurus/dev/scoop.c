@@ -1,4 +1,4 @@
-/*	$NetBSD: scoop.c,v 1.10 2012/01/27 14:48:22 tsutsui Exp $	*/
+/*	$NetBSD: scoop.c,v 1.11 2012/01/29 10:12:41 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_scoop.c,v 1.12 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.10 2012/01/27 14:48:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.11 2012/01/29 10:12:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,6 +293,9 @@ scoop_charge_battery(int enable, int voltage_high)
 {
 	struct scoop_softc *sc;
 
+	if (ZAURUS_ISC860)
+		return;
+
 	sc = device_lookup_private(&scoop_cd, 0);
 
 	if (sc != NULL) {
@@ -305,6 +308,9 @@ void
 scoop_discharge_battery(int enable)
 {
 	struct scoop_softc *sc;
+
+	if (ZAURUS_ISC860)
+		return;
 
 	sc = device_lookup_private(&scoop_cd, 0);
 
@@ -334,6 +340,9 @@ scoop0_set_card_power(enum scoop_card card, int new_cpr)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	uint16_t cpr;
+
+	if (ZAURUS_ISC860)
+		return;
 
 	sc = device_lookup_private(&scoop_cd, 0);
 	if (sc == NULL)
@@ -400,6 +409,9 @@ scoop_suspend(void)
 {
 	struct scoop_softc *sc, *sc0, *sc1;
 	uint32_t rv;
+
+	if (ZAURUS_ISC860)
+		return;
 
 	sc0 = device_lookup_private(&scoop_cd, 0);
 	sc1 = device_lookup_private(&scoop_cd, 1);
