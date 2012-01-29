@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.12 2012/01/29 06:29:04 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.13 2012/01/29 07:16:00 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.12 2012/01/29 06:29:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.13 2012/01/29 07:16:00 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,6 +338,7 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 	struct dqblk dqblk;
 	struct quotaval qv[QUOTA_NLIMITS];
 	uint64_t *values[QUOTA_NLIMITS];
+	int idtype;
 
 	values[QUOTA_LIMIT_BLOCK] = &qv[QUOTA_LIMIT_BLOCK].qv_hardlimit;
 	values[QUOTA_LIMIT_FILE] = &qv[QUOTA_LIMIT_FILE].qv_hardlimit;
@@ -376,16 +377,18 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 		error = ENOMEM;
 		if (!prop_array_add_and_rel(datas, data))
 			goto out_datas;
+		idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
 		if (!quota_prop_add_command(cmds, "quotaon",
-		    ufs_quota_class_names[qtype2ufsclass(q1cmd & SUBCMDMASK)],
+		    ufs_quota_class_names[idtype],
 		    datas))
 			goto out_cmds;
 		goto do_quotaonoff;
 
 	case Q_QUOTAOFF:
 		error = ENOMEM;
+		idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
 		if (!quota_prop_add_command(cmds, "quotaoff",
-		    ufs_quota_class_names[qtype2ufsclass(q1cmd & SUBCMDMASK)],
+		    ufs_quota_class_names[idtype],
 		    datas))
 			goto out_cmds;
 do_quotaonoff:
@@ -417,8 +420,9 @@ do_quotaonoff:
 			goto out_data;
 		if (!prop_array_add_and_rel(datas, data))
 			goto out_datas;
+		idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
 		if (!quota_prop_add_command(cmds, "get",
-		    ufs_quota_class_names[qtype2ufsclass(q1cmd & SUBCMDMASK)],
+		    ufs_quota_class_names[idtype],
 		    datas))
 			goto out_cmds;
 		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
@@ -473,8 +477,9 @@ do_quotaonoff:
 			goto out_data;
 		if (!prop_array_add_and_rel(datas, data))
 			goto out_datas;
+		idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
 		if (!quota_prop_add_command(cmds, "set",
-		    ufs_quota_class_names[qtype2ufsclass(q1cmd & SUBCMDMASK)],
+		    ufs_quota_class_names[idtype],
 		    datas))
 			goto out_cmds;
 		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
@@ -502,8 +507,9 @@ do_quotaonoff:
 		 * emulate with a "get version"
 		 */
 		error = ENOMEM;
+		idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
 		if (!quota_prop_add_command(cmds, "get version",
-		    ufs_quota_class_names[qtype2ufsclass(q1cmd & SUBCMDMASK)],
+		    ufs_quota_class_names[idtype],
 		    datas))
 			goto out_cmds;
 		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
