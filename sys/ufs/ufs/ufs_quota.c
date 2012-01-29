@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.101 2012/01/29 07:12:41 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.102 2012/01/29 07:13:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.101 2012/01/29 07:12:41 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.102 2012/01/29 07:13:43 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -220,7 +220,7 @@ quota_handle_cmd_stat(struct mount *mp, struct lwp *l,
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct quotastat *ret;
 
-	KASSERT(args->qc_type == QCT_STAT);
+	KASSERT(args->qc_op == QUOTACTL_STAT);
 	ret = args->u.stat.qc_ret;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
@@ -270,7 +270,7 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 	const struct quotakey *qk;
 	struct quotaval *ret;
 
-	KASSERT(args->qc_type == QCT_GET);
+	KASSERT(args->qc_op == QUOTACTL_GET);
 	qk = args->u.get.qc_key;
 	ret = args->u.get.qc_ret;
 
@@ -308,7 +308,7 @@ quota_handle_cmd_put(struct mount *mp, struct lwp *l,
 	id_t kauth_id;
 	int error;
 
-	KASSERT(args->qc_type == QCT_PUT);
+	KASSERT(args->qc_op == QUOTACTL_PUT);
 	qk = args->u.put.qc_key;
 	qv = args->u.put.qc_val;
 
@@ -355,7 +355,7 @@ quota_handle_cmd_delete(struct mount *mp, struct lwp *l,
 	id_t kauth_id;
 	int error;
 
-	KASSERT(args->qc_type == QCT_DELETE);
+	KASSERT(args->qc_op == QUOTACTL_DELETE);
 	qk = args->u.delete.qc_key;
 
 	kauth_id = qk->qk_id;
@@ -401,7 +401,7 @@ quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l,
 	unsigned *ret;
 	int error;
 
-	KASSERT(args->qc_type == QCT_CURSORGET);
+	KASSERT(args->qc_op == QUOTACTL_CURSORGET);
 	cursor = args->u.cursorget.qc_cursor;
 	keys = args->u.cursorget.qc_keys;
 	vals = args->u.cursorget.qc_vals;
@@ -435,7 +435,7 @@ quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l,
 	struct quotakcursor *cursor;
 	int error;
 
-	KASSERT(args->qc_type == QCT_CURSOROPEN);
+	KASSERT(args->qc_op == QUOTACTL_CURSOROPEN);
 	cursor = args->u.cursoropen.qc_cursor;
 
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
@@ -461,7 +461,7 @@ quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l,
 	struct quotakcursor *cursor;
 	int error;
 
-	KASSERT(args->qc_type == QCT_CURSORCLOSE);
+	KASSERT(args->qc_op == QUOTACTL_CURSORCLOSE);
 	cursor = args->u.cursorclose.qc_cursor;
 
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
@@ -488,7 +488,7 @@ quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l,
 	int idtype;
 	int error;
 
-	KASSERT(args->qc_type == QCT_CURSORSKIPIDTYPE);
+	KASSERT(args->qc_op == QUOTACTL_CURSORSKIPIDTYPE);
 	cursor = args->u.cursorskipidtype.qc_cursor;
 	idtype = args->u.cursorskipidtype.qc_idtype;
 
@@ -511,7 +511,7 @@ quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l,
 	int *ret;
 	int error;
 
-	KASSERT(args->qc_type == QCT_CURSORATEND);
+	KASSERT(args->qc_op == QUOTACTL_CURSORATEND);
 	cursor = args->u.cursoratend.qc_cursor;
 	ret = args->u.cursoratend.qc_ret;
 
@@ -533,7 +533,7 @@ quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l,
 	struct quotakcursor *cursor;
 	int error;
 
-	KASSERT(args->qc_type == QCT_CURSORREWIND);
+	KASSERT(args->qc_op == QUOTACTL_CURSORREWIND);
 	cursor = args->u.cursorrewind.qc_cursor;
 
 #ifdef QUOTA2
@@ -555,7 +555,7 @@ quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
 	const char *qfile;
 	int error;
 
-	KASSERT(args->qc_type == QCT_QUOTAON);
+	KASSERT(args->qc_op == QUOTACTL_QUOTAON);
 	idtype = args->u.quotaon.qc_idtype;
 	qfile = args->u.quotaon.qc_quotafile;
 
@@ -584,7 +584,7 @@ quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l,
 	int idtype;
 	int error;
 
-	KASSERT(args->qc_type == QCT_QUOTAOFF);
+	KASSERT(args->qc_op == QUOTACTL_QUOTAOFF);
 	idtype = args->u.quotaoff.qc_idtype;
 
 	if ((ump->um_flags & UFS_QUOTA2) != 0)
