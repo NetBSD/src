@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.28 2012/01/29 07:11:55 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.29 2012/01/29 07:12:41 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,6 +37,26 @@
  * use the <quota.h> API instead.
  */
 
+/* Size of random quota strings */
+#define QUOTA_NAMELEN   32
+
+/*
+ * Restrictions for qs_restrictions.
+ */
+#define QUOTA_RESTRICT_NEEDSQUOTACHECK	0x1	/* quotacheck(8) required */
+#define QUOTA_RESTRICT_UNIFORMGRACE	0x2	/* grace time is global */
+#define QUOTA_RESTRICT_32BIT		0x4	/* values limited to 2^32 */
+        
+/*              
+ * Structure for QUOTACTL_STAT.
+ */             
+struct quotastat {
+	char qs_implname[QUOTA_NAMELEN];
+	unsigned qs_numidtypes;
+	unsigned qs_numobjtypes;
+	unsigned qs_restrictions;
+};
+                        
 /*
  * Semi-opaque structure for cursors. This holds the cursor state in
  * userland; the size is exposed only to libquota, not to client code,
@@ -52,7 +72,7 @@ struct quotakcursor {
 };
 
 /* Command codes. */
-#define QUOTACTL_GETVERSION	0
+#define QUOTACTL_STAT		0
 #define QUOTACTL_QUOTAON	1
 #define QUOTACTL_QUOTAOFF	2
 #define QUOTACTL_GET		3
@@ -68,7 +88,7 @@ struct quotakcursor {
 /* Argument encoding. */
 enum vfs_quotactl_argtypes {
 	QCT_PROPLIB,	/* unused */
-	QCT_GETVERSION,	/* getversion */
+	QCT_STAT,	/* stat */
 	QCT_GET,	/* get */
 	QCT_PUT,	/* put */
 	QCT_DELETE,	/* delete */
@@ -90,8 +110,8 @@ struct vfs_quotactl_args {
 			prop_array_t qc_datas;
 		} proplib;
 		struct {
-			int *qc_version_ret;
-		} getversion;
+			struct quotastat *qc_ret;
+		} stat;
 		struct {
 			const struct quotakey *qc_key;
 			struct quotaval *qc_ret;
