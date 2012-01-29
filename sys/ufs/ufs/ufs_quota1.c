@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.13 2012/01/29 06:47:38 dholland Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.14 2012/01/29 06:48:51 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.13 2012/01/29 06:47:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.14 2012/01/29 06:48:51 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -553,14 +553,22 @@ quota1_encode_limit(uint64_t lim)
 }
 
 int
-quota1_handle_cmd_set(struct ufsmount *ump, int idtype, int id,
-    int defaultq, int objtype, const struct quotaval *val)
+quota1_handle_cmd_set(struct ufsmount *ump, const struct quotakey *key,
+    const struct quotaval *val)
 {
 	struct dquot *dq;
 	struct dqblk dqb;
 	int error;
 
-	switch (objtype) {
+	switch (key->qk_idtype) {
+	    case QUOTA_IDTYPE_USER:
+	    case QUOTA_IDTYPE_GROUP:
+		break;
+	    default:
+		return EINVAL;
+	}
+
+	switch (key->qk_objtype) {
 	    case QUOTA_OBJTYPE_BLOCKS:
 	    case QUOTA_OBJTYPE_FILES:
 		break;
@@ -568,28 +576,31 @@ quota1_handle_cmd_set(struct ufsmount *ump, int idtype, int id,
 		return EINVAL;
 	}
 
-	if (ump->um_quotas[idtype] == NULLVP)
+	if (ump->um_quotas[key->qk_idtype] == NULLVP)
 		return ENODEV;
 
-	if (defaultq) {
+	if (key->qk_id == QUOTA_DEFAULTID) {
 		/* just update grace times */
-		KASSERT(id == 0);
-		if ((error = dqget(NULLVP, id, ump, idtype, &dq)) != 0)
+		id_t id = 0;
+
+		if ((error = dqget(NULLVP, id, ump, key->qk_idtype, &dq)) != 0)
 			return error;
 		mutex_enter(&dq->dq_interlock);
-		if (objtype == QUOTA_OBJTYPE_BLOCKS && val->qv_grace > 0)
-			ump->umq1_btime[idtype] = dq->dq_btime =
-			    val->qv_grace;
-		if (objtype == QUOTA_OBJTYPE_FILES && val->qv_grace > 0)
-			ump->umq1_itime[idtype] = dq->dq_itime =
-			    val->qv_grace;
-		mutex_exit(&dq->dq_interlock);
+		if (val->qv_grace != QUOTA_NOTIME) {
+			if (key->qk_objtype == QUOTA_OBJTYPE_BLOCKS)
+				ump->umq1_btime[key->qk_idtype] = dq->dq_btime =
+					val->qv_grace;
+			if (key->qk_objtype == QUOTA_OBJTYPE_FILES)
+				ump->umq1_itime[key->qk_idtype] = dq->dq_itime =
+					val->qv_grace;
+		}
 		dq->dq_flags |= DQ_MOD;
+		mutex_exit(&dq->dq_interlock);
 		dqrele(NULLVP, dq);
 		return 0;
 	}
 
-	if ((error = dqget(NULLVP, id, ump, idtype, &dq)) != 0)
+	if ((error = dqget(NULLVP, key->qk_id, ump, key->qk_idtype, &dq)) != 0)
 		return (error);
 	mutex_enter(&dq->dq_interlock);
 	/*
@@ -601,7 +612,7 @@ quota1_handle_cmd_set(struct ufsmount *ump, int idtype, int id,
 	dqb.dqb_curinodes = dq->dq_curinodes;
 	dqb.dqb_btime = dq->dq_btime;
 	dqb.dqb_itime = dq->dq_itime;
-	switch (objtype) {
+	switch (key->qk_objtype) {
 	    case QUOTA_OBJTYPE_BLOCKS:
 		dqb.dqb_bsoftlimit = quota1_encode_limit(val->qv_softlimit);
 		dqb.dqb_bhardlimit = quota1_encode_limit(val->qv_hardlimit);
@@ -617,22 +628,23 @@ quota1_handle_cmd_set(struct ufsmount *ump, int idtype, int id,
 	}
 	if (dq->dq_id == 0 && val->qv_grace != QUOTA_NOTIME) {
 		/* also update grace time if available */
-		if (objtype == QUOTA_OBJTYPE_BLOCKS) {
-			ump->umq1_btime[idtype] = dqb.dqb_btime = val->qv_grace;
-				
+		if (key->qk_objtype == QUOTA_OBJTYPE_BLOCKS) {
+			ump->umq1_btime[key->qk_idtype] = dqb.dqb_btime =
+				val->qv_grace;
 		}
-		if (objtype == QUOTA_OBJTYPE_FILES) {
-			ump->umq1_itime[idtype] = dqb.dqb_itime = val->qv_grace;
+		if (key->qk_objtype == QUOTA_OBJTYPE_FILES) {
+			ump->umq1_itime[key->qk_idtype] = dqb.dqb_itime =
+				val->qv_grace;
 		}
 	}
 	if (dqb.dqb_bsoftlimit &&
 	    dq->dq_curblocks >= dqb.dqb_bsoftlimit &&
 	    (dq->dq_bsoftlimit == 0 || dq->dq_curblocks < dq->dq_bsoftlimit))
-		dqb.dqb_btime = time_second + ump->umq1_btime[idtype];
+		dqb.dqb_btime = time_second + ump->umq1_btime[key->qk_idtype];
 	if (dqb.dqb_isoftlimit &&
 	    dq->dq_curinodes >= dqb.dqb_isoftlimit &&
 	    (dq->dq_isoftlimit == 0 || dq->dq_curinodes < dq->dq_isoftlimit))
-		dqb.dqb_itime = time_second + ump->umq1_itime[idtype];
+		dqb.dqb_itime = time_second + ump->umq1_itime[key->qk_idtype];
 	dq->dq_un.dq1_dqb = dqb;
 	if (dq->dq_curblocks < dq->dq_bsoftlimit)
 		dq->dq_flags &= ~DQ_WARN(QL_BLOCK);

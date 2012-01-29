@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.83 2012/01/29 06:47:38 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.84 2012/01/29 06:48:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.83 2012/01/29 06:47:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.84 2012/01/29 06:48:50 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -268,39 +268,38 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
     struct vfs_quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	int idtype;
-	id_t id;
-	int defaultq;
-	int objtype;
+	const struct quotakey *qk;
 	const struct quotaval *qv;
+	id_t kauth_id;
 	int error;
 
 	KASSERT(args->qc_type == QCT_SET);
-	idtype = args->u.set.qc_idtype;
-	id = args->u.set.qc_id;
-	defaultq = args->u.set.qc_defaultq;
-	objtype = args->u.set.qc_objtype;
+	qk = args->u.set.qc_key;
 	qv = args->u.set.qc_val;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 
+	kauth_id = qk->qk_id;
+	if (kauth_id == QUOTA_DEFAULTID) {
+		kauth_id = 0;
+	}
+
 	/* avoid whitespace changes */
 	{
 		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
-		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(id), NULL);
+		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(kauth_id),
+		    NULL);
 		if (error != 0)
 			goto err;
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA)
-			error = quota1_handle_cmd_set(ump, idtype, id, defaultq,
-			    objtype, qv);
+			error = quota1_handle_cmd_set(ump, qk, qv);
 		else
 #endif
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_set(ump, idtype, id, defaultq,
-			    objtype, qv);
+			error = quota2_handle_cmd_set(ump, qk, qv);
 		} else
 #endif
 			panic("quota_handle_cmd_get: no support ?");
