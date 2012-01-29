@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.201 2011/10/12 23:04:22 dholland Exp $	*/
+/*	$NetBSD: mount.h,v 1.202 2012/01/29 06:29:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -407,6 +407,7 @@ struct mount *vfs_mountalloc(struct vfsops *, struct vnode *);
 int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 	    int, const char *);
 void	vfs_insmntque(struct vnode *, struct mount *);
+int	vfs_quotactl(struct mount *, prop_dictionary_t);
 
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
