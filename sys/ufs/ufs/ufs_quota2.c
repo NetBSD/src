@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.12 2012/01/29 06:52:39 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.13 2012/01/29 06:53:36 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.12 2012/01/29 06:52:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.13 2012/01/29 06:53:36 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -709,9 +709,9 @@ dq2clear_callback(struct ufsmount *ump, uint64_t *offp, struct quota2_entry *q2e
 }
 int
 quota2_handle_cmd_clear(struct ufsmount *ump, int idtype, int id,
-    int defaultq)
+    int defaultq, int objtype)
 {
-	int error, i;
+	int error, i, canfree;
 	struct dquot *dq;
 	struct quota2_header *q2h;
 	struct quota2_entry q2e, *q2ep;
@@ -755,18 +755,36 @@ quota2_handle_cmd_clear(struct ufsmount *ump, int idtype, int id,
 	if (error)
 		goto out_wapbl;
 
-	if (q2ep->q2e_val[QL_BLOCK].q2v_cur != 0 ||
-	    q2ep->q2e_val[QL_FILE].q2v_cur != 0) {
-		/* can't free this entry; revert to default */
-		for (i = 0; i < N_QL; i++) {
-			q2ep->q2e_val[i].q2v_softlimit =
-			    q2e.q2e_val[i].q2v_softlimit;
-			q2ep->q2e_val[i].q2v_hardlimit =
-			    q2e.q2e_val[i].q2v_hardlimit;
-			q2ep->q2e_val[i].q2v_grace =
-			    q2e.q2e_val[i].q2v_grace;
-			q2ep->q2e_val[i].q2v_time = 0;
+	/* make sure we can index by the objtype passed in */
+	CTASSERT(QUOTA_OBJTYPE_BLOCKS == QL_BLOCK);
+	CTASSERT(QUOTA_OBJTYPE_FILES == QL_FILE);
+
+	/* clear the requested objtype by copying from the default entry */
+	q2ep->q2e_val[objtype].q2v_softlimit =
+		q2e.q2e_val[objtype].q2v_softlimit;
+	q2ep->q2e_val[objtype].q2v_hardlimit =
+		q2e.q2e_val[objtype].q2v_hardlimit;
+	q2ep->q2e_val[objtype].q2v_grace =
+		q2e.q2e_val[objtype].q2v_grace;
+	q2ep->q2e_val[objtype].q2v_time = 0;
+
+	/* if this entry now contains no information, we can free it */
+	canfree = 1;
+	for (i = 0; i < N_QL; i++) {
+		if (q2ep->q2e_val[i].q2v_cur != 0 ||
+		    (q2ep->q2e_val[i].q2v_softlimit != 
+		     q2e.q2e_val[i].q2v_softlimit) ||
+		    (q2ep->q2e_val[i].q2v_hardlimit != 
+		     q2e.q2e_val[i].q2v_hardlimit) ||
+		    (q2ep->q2e_val[i].q2v_grace != 
+		     q2e.q2e_val[i].q2v_grace)) {
+			canfree = 0;
+			break;
 		}
+		/* note: do not need to check q2v_time */
+	}
+
+	if (canfree == 0) {
 		quota2_bwrite(ump->um_mountp, bp);
 		goto out_wapbl;
 	}
