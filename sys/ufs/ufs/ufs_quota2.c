@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.28 2012/01/29 07:18:17 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.29 2012/01/29 07:20:27 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.28 2012/01/29 07:18:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.29 2012/01/29 07:20:27 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.28 2012/01/29 07:18:17 dholland Exp
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_quota.h>
 #include <ufs/ufs/ufs_wapbl.h>
+
+#include <quota/quota.h>	/* XXX for quota_check_limit */
 
 /*
  * LOCKING:
@@ -431,6 +433,13 @@ getinoquota2(struct inode *ip, bool alloc, bool modify, struct buf **bpp,
 		}
 	}
 	return 0;
+}
+
+__inline static int __unused
+quota2_check_limit(struct quota2_val *q2v, uint64_t change, time_t now)
+{
+	return quota_check_limit(q2v->q2v_cur, change, q2v->q2v_softlimit,
+	    q2v->q2v_hardlimit, q2v->q2v_time, now);
 }
 
 static int
