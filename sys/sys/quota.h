@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.8 2012/01/29 06:38:23 dholland Exp $ */
+/* $NetBSD: quota.h,v 1.9 2012/01/29 06:40:57 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -30,8 +30,29 @@
 
 #include <sys/types.h>
 
+/* quota id types (entities being billed) */
+#define QUOTA_IDTYPE_USER	0
+#define QUOTA_IDTYPE_GROUP	1
+
+/* quota object types (things being limited) */
+#define QUOTA_OBJTYPE_BLOCKS	0
+#define QUOTA_OBJTYPE_FILES	1
+
 /* id value for "default" */
 #define QUOTA_DEFAULTID		((id_t)-1)
+
+/* limit value for "no limit" */
+#define QUOTA_NOLIMIT		((uint64_t)0xffffffffffffffffULL)
+
+/* time value for "no time" */
+#define QUOTA_NOTIME		((time_t)-1)
+
+
+struct quotakey {
+	int qk_idtype;
+	id_t qk_id;
+	int qk_objtype;
+};
 
 /*
  * Structure used to describe the value part of a quota record.

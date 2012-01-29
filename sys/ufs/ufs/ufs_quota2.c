@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.5 2012/01/29 06:38:24 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.6 2012/01/29 06:40:58 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.5 2012/01/29 06:38:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.6 2012/01/29 06:40:58 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -77,8 +77,6 @@ static int quota2_walk_list(struct ufsmount *, struct buf *, int,
 static int quota2_dict_update_q2e_limits(prop_dictionary_t,
     struct quota2_entry *);
 static prop_dictionary_t q2etoprop(struct quota2_entry *, int);
-static void q2e_to_quotavals(struct quota2_entry *, int, id_t *,
-    struct quotaval *, struct quotaval *);
 
 static const char *limnames[] = INITQLNAMES;
 
@@ -159,8 +157,8 @@ q2val_to_quotaval(struct quota2_val *q2v, struct quotaval *qv)
  * representation.
  */
 static void
-q2e_to_quotavals(struct quota2_entry *q2e, int def,
-	       id_t *id, struct quotaval *blocks, struct quotaval *files)
+q2e_to_quotaval(struct quota2_entry *q2e, int def,
+	       id_t *id, int objtype, struct quotaval *ret)
 {
 	if (def) {
 		*id = QUOTA_DEFAULTID;
@@ -168,9 +166,8 @@ q2e_to_quotavals(struct quota2_entry *q2e, int def,
 		*id = q2e->q2e_uid;
 	}
 
-	CTASSERT(N_QL == 2);
-	q2val_to_quotaval(&q2e->q2e_val[QL_BLOCK], blocks);
-	q2val_to_quotaval(&q2e->q2e_val[QL_FILE], files);
+	KASSERT(objtype >= 0 && objtype < N_QL);
+	q2val_to_quotaval(&q2e->q2e_val[objtype], ret);
 }
 
 
@@ -857,7 +854,7 @@ quota2_array_add_q2e(struct ufsmount *ump, int type,
 
 static int
 quota2_fetch_q2e(struct ufsmount *ump, int type,
-    int id, struct quotaval *blocks, struct quotaval *files)
+    int id, int objtype, struct quotaval *ret)
 {
 	struct dquot *dq;
 	int error;
@@ -888,14 +885,14 @@ quota2_fetch_q2e(struct ufsmount *ump, int type,
 	mutex_exit(&dq->dq_interlock);
 	dqrele(NULLVP, dq);
 
-	q2e_to_quotavals(&q2e, 0, &id2, blocks, files);
+	q2e_to_quotaval(&q2e, 0, &id2, objtype, ret);
 	KASSERT(id2 == id);
 	return 0;
 }
 
 int
 quota2_handle_cmd_get(struct ufsmount *ump, int type, int id,
-    int defaultq, struct quotaval *blocks, struct quotaval *files)
+    int defaultq, int objtype, struct quotaval *ret)
 {
 	int error;
 	struct quota2_header *q2h;
@@ -903,6 +900,19 @@ quota2_handle_cmd_get(struct ufsmount *ump, int type, int id,
 	struct buf *bp;
 	const int needswap = UFS_MPNEEDSWAP(ump);
 	id_t id2;
+
+	/*
+	 * Make sure the FS-independent codes match the internal ones,
+	 * so we can use the passed-in objtype without having to
+	 * convert it explicitly to QL_BLOCK/QL_FILE.
+	 */
+	CTASSERT(QL_BLOCK == QUOTA_OBJTYPE_BLOCKS);
+	CTASSERT(QL_FILE == QUOTA_OBJTYPE_FILES);
+	CTASSERT(N_QL == 2);
+
+	if (objtype < 0 || objtype >= N_QL) {
+		return EINVAL;
+	}
 
 	if (ump->um_quotas[type] == NULLVP)
 		return ENODEV;
@@ -916,10 +926,10 @@ quota2_handle_cmd_get(struct ufsmount *ump, int type, int id,
 		quota2_ufs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
 		mutex_exit(&dqlock);
 		brelse(bp, 0);
-		q2e_to_quotavals(&q2e, defaultq, &id2, blocks, files);
+		q2e_to_quotaval(&q2e, defaultq, &id2, objtype, ret);
 		(void)id2;
 	} else
-		error = quota2_fetch_q2e(ump, type, id, blocks, files);
+		error = quota2_fetch_q2e(ump, type, id, objtype, ret);
 	
 	return error;
 }
