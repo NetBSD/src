@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.9 2012/01/29 06:40:57 dholland Exp $ */
+/* $NetBSD: quota.h,v 1.10 2012/01/29 06:43:34 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -48,10 +48,13 @@
 #define QUOTA_NOTIME		((time_t)-1)
 
 
+/*
+ * Structure used to describe the key part of a quota record.
+ */
 struct quotakey {
-	int qk_idtype;
-	id_t qk_id;
-	int qk_objtype;
+	int qk_idtype;		/* type of id (user, group, etc.) */
+	id_t qk_id;		/* actual id number */
+	int qk_objtype;		/* type of fs object (blocks, files, etc.) */
 };
 
 /*
