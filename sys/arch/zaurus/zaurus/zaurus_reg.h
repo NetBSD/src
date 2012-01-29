@@ -1,4 +1,4 @@
-/*	$NetBSD: zaurus_reg.h,v 1.3 2008/03/31 23:35:39 chris Exp $	*/
+/*	$NetBSD: zaurus_reg.h,v 1.4 2012/01/29 10:12:42 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_reg.h,v 1.7 2005/12/14 14:39:38 uwe Exp $	*/
 /*	NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp */
 
@@ -73,7 +73,11 @@
 #define C3000_CF1_IRQ			106
 
 /* processor GPIO pins */
+#define C860_GPIO_SD_DETECT_PIN		9
+#define C860_RC_IRQ_PIN			4	/* remote control */
+#define C860_GPIO_SD_WP_PIN		7
 #define C860_CF0_IRQ_PIN		14
+#define C860_GPIO_SD_POWER_PIN		33
 #define	C3000_GPIO_SD_DETECT_PIN	9
 #define C3000_RC_IRQ_PIN		13	/* remote control */
 #define	C3000_GPIO_SD_WP_PIN		81

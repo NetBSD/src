@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.17 2012/01/27 15:07:41 tsutsui Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.18 2012/01/29 10:12:42 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.17 2012/01/27 15:07:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.18 2012/01/29 10:12:42 tsutsui Exp $");
 
 #include "lcdctl.h"
 
@@ -168,7 +168,8 @@ void
 lcd_cnattach(void)
 {
 
-	pxa2x0_lcd_cnattach(&lcd_std_screen, &lcd_panel_geometry_c3000);
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000)
+		pxa2x0_lcd_cnattach(&lcd_std_screen, &lcd_panel_geometry_c3000);
 }
 
 /*
