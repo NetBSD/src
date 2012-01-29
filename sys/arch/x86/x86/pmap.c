@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.159 2012/01/29 11:37:44 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.160 2012/01/29 11:45:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2012/01/29 11:37:44 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.160 2012/01/29 11:45:37 drochner Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4275,7 +4275,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	mutex_exit(kpm->pm_lock);
 	splx(s);
 
-	if (invalidate) {
+	if (invalidate && pmap_initialized) {
 		/* Invalidate the PDP cache. */
 		pool_cache_invalidate(&pmap_pdp_cache);
 	}
