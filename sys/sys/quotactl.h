@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.4 2012/01/29 06:36:50 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.5 2012/01/29 06:37:30 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,6 +50,7 @@
 enum vfs_quotactl_argtypes {
 	QCT_PROPLIB,	/* quotaon/off, get, set, getall, clear */
 	QCT_GETVERSION,	/* getversion */
+	QCT_GET,	/* get */
 };
 struct vfs_quotactl_args {
 	enum vfs_quotactl_argtypes qc_type;
@@ -62,6 +63,12 @@ struct vfs_quotactl_args {
 		struct {
 			int *qc_version_ret;
 		} getversion;
+		struct {
+			int qc_q2type;
+			id_t qc_id;
+			int qc_defaultq;
+			prop_array_t qc_replies;
+		} get;
 	} u;
 };
 

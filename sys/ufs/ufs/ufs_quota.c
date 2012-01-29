@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.73 2012/01/29 06:36:51 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.74 2012/01/29 06:37:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.73 2012/01/29 06:36:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.74 2012/01/29 06:37:30 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -230,56 +230,26 @@ static int
 quota_handle_cmd_get(struct mount *mp, struct lwp *l, 
     struct vfs_quotactl_args *args)
 {
-	prop_array_t replies;
-	prop_object_iterator_t iter;
-	prop_dictionary_t data;
-	uint32_t id;
 	struct ufsmount *ump = VFSTOUFS(mp);
-	int error, defaultq = 0;
-	const char *idstr;
-	prop_dictionary_t cmddict;
+	int error;
+	id_t id;
 	int q2type;
-	prop_array_t datas;
+	int defaultq;
+	prop_array_t replies;
 
-	KASSERT(args->qc_type == QCT_PROPLIB);
-	cmddict = args->u.proplib.qc_cmddict;
-	q2type = args->u.proplib.qc_q2type;
-	datas = args->u.proplib.qc_datas;
-
-	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
-	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+	KASSERT(args->qc_type == QCT_GET);
+	id = args->u.get.qc_id;
+	q2type = args->u.get.qc_q2type;
+	defaultq = args->u.get.qc_defaultq;
+	replies = args->u.get.qc_replies;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 	
-	replies = prop_array_create();
-	if (replies == NULL)
-		return ENOMEM;
-
-	iter = prop_array_iterator(datas);
-	if (iter == NULL) {
-		prop_object_release(replies);
-		return ENOMEM;
-	}
-	while ((data = prop_object_iterator_next(iter)) != NULL) {
-		if (!prop_dictionary_get_uint32(data, "id", &id)) {
-			if (!prop_dictionary_get_cstring_nocopy(data, "id",
-			    &idstr))
-				continue;
-			if (strcmp(idstr, "default")) {
-				error = EINVAL;
-				goto err;
-			}
-			id = 0;
-			defaultq = 1;
-		} else {
-			defaultq = 0;
-		}
+	/* avoid whitespace diffs */ {
 		error = quota_get_auth(mp, l, id);
-		if (error == EPERM)
-			continue;
 		if (error != 0) 
-			goto err;
+			return error;
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA)
 			error = quota1_handle_cmd_get(ump, q2type, id, defaultq,
@@ -294,21 +264,10 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 #endif
 			panic("quota_handle_cmd_get: no support ?");
 		
-		if (error == ENOENT)
-			continue;
 		if (error != 0)
-			goto err;
+			return error;
 	}
-	prop_object_iterator_release(iter);
-	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
-		error = ENOMEM;
-	} else {
-		error = 0;
-	}
-	return error;
-err:
-	prop_object_iterator_release(iter);
-	prop_object_release(replies);
+
 	return error;
 }
 
