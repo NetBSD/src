@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.27 2012/01/29 07:16:54 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.28 2012/01/29 07:18:17 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.27 2012/01/29 07:16:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.28 2012/01/29 07:18:17 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -74,10 +74,6 @@ static int quota2_walk_list(struct ufsmount *, struct buf *, int,
     int (*func)(struct ufsmount *, uint64_t *, struct quota2_entry *,
       uint64_t, void *));
 
-#if 0
-static prop_dictionary_t q2etoprop(struct quota2_entry *, int);
-#endif
-
 static const char *limnames[] = INITQLNAMES;
 
 static void
@@ -92,44 +88,6 @@ quota2_dict_update_q2e_limits(int objtype, const struct quotaval *val,
 	q2e->q2e_val[objtype].q2v_softlimit = val->qv_softlimit;
 	q2e->q2e_val[objtype].q2v_grace = val->qv_grace;
 }
-
-#if 0
-static prop_dictionary_t
-q2etoprop(struct quota2_entry *q2e, int def)
-{
-	const char *val_names[] = INITQVNAMES_ALL;
-	prop_dictionary_t dict1 = prop_dictionary_create();
-	prop_dictionary_t dict2;
-	int i;
-
-	if (dict1 == NULL)
-		return NULL;
-
-	if (def) {
-		if (!prop_dictionary_set_cstring_nocopy(dict1, "id",
-		    "default")) {
-			goto err;
-		}
-	} else {
-		if (!prop_dictionary_set_uint32(dict1, "id", q2e->q2e_uid)) {
-			goto err;
-		}
-	}
-	for (i = 0; i < N_QL; i++) {
-		dict2 = limits64toprop(&q2e->q2e_val[i].q2v_hardlimit,
-		    val_names, N_QV);
-		if (dict2 == NULL)
-			goto err;
-		if (!prop_dictionary_set_and_rel(dict1, limnames[i], dict2))
-			goto err;
-	}
-	return dict1;
-
-err:
-	prop_object_release(dict1);
-	return NULL;
-}
-#endif
 
 /*
  * Convert internal representation to FS-independent representation.
