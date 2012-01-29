@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.29 2012/01/29 07:09:52 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.30 2012/01/29 07:10:24 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.29 2012/01/29 07:09:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.30 2012/01/29 07:10:24 dholland Exp $");
 
 #include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
@@ -529,8 +529,10 @@ vfs_quotactl_getall(struct mount *mp,
 	struct quotaval *vals;
 	unsigned loopmax = 8;
 	unsigned loopnum;
+	int skipidtype;
 	struct vfs_quotactl_args args;
 	prop_array_t replies;
+	int atend, atzero;
 	struct quotakey *key;
 	struct quotaval *val;
 	id_t lastid;
@@ -550,6 +552,15 @@ vfs_quotactl_getall(struct mount *mp,
 	keys = malloc(loopmax * sizeof(keys[0]), M_TEMP, M_WAITOK);
 	vals = malloc(loopmax * sizeof(vals[0]), M_TEMP, M_WAITOK);
 
+	skipidtype = (q2type == QUOTA_IDTYPE_USER ?
+		      QUOTA_IDTYPE_GROUP : QUOTA_IDTYPE_USER);
+	args.qc_type = QCT_CURSORSKIPIDTYPE;
+	args.u.cursorskipidtype.qc_cursor = &cursor;
+	args.u.cursorskipidtype.qc_idtype = skipidtype;
+	error = VFS_QUOTACTL(mp, QUOTACTL_CURSORSKIPIDTYPE, &args);
+	/* ignore if it fails */
+	(void)error;
+
 	replies = prop_array_create();
 	if (replies == NULL) {
 		error = ENOMEM;
@@ -558,8 +569,20 @@ vfs_quotactl_getall(struct mount *mp,
 
 	thisreply = NULL;
 	lastid = 0; /* value not actually referenced */
+	atzero = 0;
 
 	while (1) {
+		args.qc_type = QCT_CURSORATEND;
+		args.u.cursoratend.qc_cursor = &cursor;
+		args.u.cursoratend.qc_ret = &atend;
+		error = VFS_QUOTACTL(mp, QUOTACTL_CURSORATEND, &args);
+		if (error) {
+			goto err;
+		}
+		if (atend) {
+			break;
+		}
+
 		args.qc_type = QCT_CURSORGET;
 		args.u.cursorget.qc_cursor = &cursor;
 		args.u.cursorget.qc_keys = keys;
@@ -568,13 +591,58 @@ vfs_quotactl_getall(struct mount *mp,
 		args.u.cursorget.qc_ret = &loopnum;
 
 		error = VFS_QUOTACTL(mp, QUOTACTL_CURSORGET, &args);
+		if (error == EDEADLK) {
+			/*
+			 * transaction abort, start over
+			 */
+
+			args.qc_type = QCT_CURSORREWIND;
+			args.u.cursorrewind.qc_cursor = &cursor;
+			error = VFS_QUOTACTL(mp, QUOTACTL_CURSORREWIND, &args);
+			if (error) {
+				goto err;
+			}
+
+			args.qc_type = QCT_CURSORSKIPIDTYPE;
+			args.u.cursorskipidtype.qc_cursor = &cursor;
+			args.u.cursorskipidtype.qc_idtype = skipidtype;
+			error = VFS_QUOTACTL(mp, QUOTACTL_CURSORSKIPIDTYPE,
+					     &args);
+			/* ignore if it fails */
+			(void)error;
+
+			prop_object_release(replies);
+			replies = prop_array_create();
+			if (replies == NULL) {
+				error = ENOMEM;
+				goto err;
+			}
+
+			thisreply = NULL;
+			lastid = 0;
+			atzero = 0;
+
+			continue;
+		}
 		if (error) {
 			goto err;
 		}
 
 		if (loopnum == 0) {
-			/* end of iteration */
-			break;
+			/*
+			 * This is not supposed to happen. However,
+			 * allow a return of zero items once as long
+			 * as something happens (including an atend
+			 * indication) on the next pass. If it happens
+			 * twice, warn and assume end of iteration.
+			 */
+			if (atzero) {
+				printf("vfs_quotactl: zero items returned\n");
+				break;
+			}
+			atzero = 1;
+		} else {
+			atzero = 0;
 		}
 
 		for (i = 0; i < loopnum; i++) {
@@ -616,14 +684,20 @@ vfs_quotactl_getall(struct mount *mp,
 	}
 
 	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
+		replies = NULL;
 		error = ENOMEM;
 		goto err;
 	}
-
+	replies = NULL;
 	error = 0;
+
  err:
 	free(keys, M_TEMP);
 	free(vals, M_TEMP);
+
+	if (replies != NULL) {
+		prop_object_release(replies);
+	}
 
 	args.qc_type = QCT_CURSORCLOSE;
 	args.u.cursorclose.qc_cursor = &cursor;
