@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.7 2012/01/29 06:37:30 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.8 2012/01/29 06:39:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,9 +80,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.7 2012/01/29 06:37:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.8 2012/01/29 06:39:36 dholland Exp $");
 
 #include <sys/mount.h>
+#include <sys/quota.h>
 #include <sys/quotactl.h>
 #include <quota/quotaprop.h>
 
@@ -166,17 +167,45 @@ vfs_quotactl_quotaoff(struct mount *mp,
 }
 
 static int
+vfs_quotactl_get_addreply(id_t id,
+			  int defaultq,
+			  const struct quotaval *blocks,
+			  const struct quotaval *files,
+			  prop_array_t replies)
+{
+	prop_dictionary_t dict;
+
+	/* XXX illegal casts */
+	uint64_t *valuesp[QUOTA_NLIMITS];
+	valuesp[QUOTA_LIMIT_BLOCK] = (void *)(intptr_t)&blocks->qv_hardlimit;
+	valuesp[QUOTA_LIMIT_FILE] =  (void *)(intptr_t)&files->qv_hardlimit;
+
+	dict = quota64toprop(id, defaultq, valuesp,
+	    ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
+	    ufs_quota_limit_names, QUOTA_NLIMITS);
+	if (dict == NULL)
+		return ENOMEM;
+	if (!prop_array_add_and_rel(replies, dict)) {
+		prop_object_release(dict);
+		return ENOMEM;
+	}
+
+	return 0;
+}
+
+static int
 vfs_quotactl_get(struct mount *mp,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
 {
 	prop_object_iterator_t iter;
 	prop_dictionary_t data;
+	prop_array_t replies;
 	uint32_t id;
 	int defaultq;
 	const char *idstr;
-	prop_array_t replies;
 	struct vfs_quotactl_args args;
+	struct quotaval blocks, files;
 	int error;
 
 	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
@@ -212,7 +241,8 @@ vfs_quotactl_get(struct mount *mp,
 		args.u.get.qc_q2type = q2type;
 		args.u.get.qc_id = id;
 		args.u.get.qc_defaultq = defaultq;
-		args.u.get.qc_replies = replies;
+		args.u.get.qc_blocks_ret = &blocks;
+		args.u.get.qc_files_ret = &files;
 		error = VFS_QUOTACTL(mp, QUOTACTL_GET, &args);
 		if (error == EPERM) {
 			/* XXX does this make sense? */
@@ -223,6 +253,10 @@ vfs_quotactl_get(struct mount *mp,
 		} else if (error) {
 			goto fail;
 		}
+
+		error = vfs_quotactl_get_addreply(id, defaultq,
+						  &blocks, &files,
+						  replies);
 	}
 
 	prop_object_iterator_release(iter);
