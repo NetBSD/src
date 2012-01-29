@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.24 2011/01/17 07:13:31 uebayasi Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.25 2012/01/29 22:55:40 rmind Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.24 2011/01/17 07:13:31 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.25 2012/01/29 22:55:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -49,6 +49,7 @@ idle_loop(void *dummy)
 	struct schedstate_percpu *spc;
 	struct lwp *l = curlwp;
 
+	kcpuset_atomic_set(kcpuset_running, cpu_index(ci));
 	ci->ci_data.cpu_onproc = l;
 
 	/* Update start time for this thread. */

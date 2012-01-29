@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.439 2012/01/24 20:03:36 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.440 2012/01/29 22:55:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.439 2012/01/24 20:03:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.440 2012/01/29 22:55:40 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -304,7 +304,7 @@ main(void)
 	kernel_lock_init();
 	once_init();
 
-	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
+	mi_cpu_init();
 	kernconfig_lock_init();
 	kthread_sysinit();
 
