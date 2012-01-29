@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.67 2012/01/28 23:05:48 rmind Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.68 2012/01/29 13:38:15 para Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.67 2012/01/28 23:05:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.68 2012/01/29 13:38:15 para Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -1247,6 +1247,13 @@ retry:
 	}
 	/* XXX */
 
+	if ((flags & VM_SLEEP) != 0) {
+		uvm_kick_pdaemon();
+		VMEM_LOCK(vm);
+		VMEM_CONDVAR_WAIT(vm);
+		VMEM_UNLOCK(vm);
+		goto retry;
+	}
 fail:
 	bt_free(vm, btnew);
 	bt_free(vm, btnew2);
@@ -1385,10 +1392,16 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 		bt_remseg(vm, t);
 		LIST_INSERT_HEAD(&tofree, t, bt_freelist);
 		vm->vm_size -= spansize;
+#if defined(_KERNEL)
+		VMEM_CONDVAR_BROADCAST(vm);
+#endif /* defined(_KERNEL) */
 		VMEM_UNLOCK(vm);
 		(*vm->vm_releasefn)(vm->vm_arg, spanaddr, spansize);
 	} else {
 		bt_insfree(vm, bt);
+#if defined(_KERNEL)
+		VMEM_CONDVAR_BROADCAST(vm);
+#endif /* defined(_KERNEL) */
 		VMEM_UNLOCK(vm);
 	}
 
@@ -1397,9 +1410,6 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 		LIST_REMOVE(t, bt_freelist);
 		bt_free(vm, t);
 	}
-#if defined(_KERNEL)
-	VMEM_CONDVAR_BROADCAST(vm);
-#endif /* defined(_KERNEL) */
 }
 
 /*
@@ -1471,7 +1481,6 @@ vmem_rehash_all(struct work *wk, void *dummy)
 		if (desired > current * 2 || desired * 2 < current) {
 			vmem_rehash(vm, desired, VM_NOSLEEP);
 		}
-		VMEM_CONDVAR_BROADCAST(vm);
 	}
 	mutex_exit(&vmem_list_lock);
 
