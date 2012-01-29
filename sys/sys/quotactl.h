@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.25 2012/01/29 07:08:58 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.26 2012/01/29 07:09:52 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,10 +57,13 @@ struct quotakcursor {
 #define QUOTACTL_QUOTAOFF	2
 #define QUOTACTL_GET		3
 #define QUOTACTL_PUT		4
-#define QUOTACTL_GETALL		5
+#define QUOTACTL_CURSORGET	5
 #define QUOTACTL_DELETE		6
 #define QUOTACTL_CURSOROPEN	7
 #define QUOTACTL_CURSORCLOSE	8
+#define QUOTACTL_CURSORSKIPIDTYPE 9
+#define QUOTACTL_CURSORATEND	10
+#define QUOTACTL_CURSORREWIND	11
 
 /* Argument encoding. */
 enum vfs_quotactl_argtypes {
@@ -71,7 +74,10 @@ enum vfs_quotactl_argtypes {
 	QCT_DELETE,	/* delete */
 	QCT_CURSOROPEN,	/* open cursor */
 	QCT_CURSORCLOSE,/* close cursor */
-	QCT_GETALL,	/* get all */
+	QCT_CURSORGET,	/* get from cursor */
+	QCT_CURSORSKIPIDTYPE, /* iteration hint */
+	QCT_CURSORATEND,/* test cursor */
+	QCT_CURSORREWIND,/* reset cursor */
 };
 struct vfs_quotactl_args {
 	enum vfs_quotactl_argtypes qc_type;
@@ -103,11 +109,22 @@ struct vfs_quotactl_args {
 		} cursorclose;
 		struct {
 			struct quotakcursor *qc_cursor;
+			unsigned qc_idtype;
+		} cursorskipidtype;
+		struct {
+			struct quotakcursor *qc_cursor;
 			struct quotakey *qc_keys;
 			struct quotaval *qc_vals;
 			unsigned qc_maxnum;
 			unsigned *qc_ret;
-		} getall;
+		} cursorget;
+		struct {
+			struct quotakcursor *qc_cursor;
+			int *qc_ret; /* really boolean */
+		} cursoratend;
+		struct {
+			struct quotakcursor *qc_cursor;
+		} cursorrewind;
 	} u;
 };
 
