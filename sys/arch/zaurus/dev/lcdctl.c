@@ -1,4 +1,4 @@
-/*	$NetBSD: lcdctl.c,v 1.2 2012/01/27 14:48:22 tsutsui Exp $	*/
+/*	$NetBSD: lcdctl.c,v 1.3 2012/01/29 10:12:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2012 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcdctl.c,v 1.2 2012/01/27 14:48:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcdctl.c,v 1.3 2012/01/29 10:12:41 tsutsui Exp $");
 
 #include "ioexp.h"
 
@@ -115,8 +115,14 @@ lcdctl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_islit = true;
 	sc->sc_isblank = false;
 
-	sc->sc_nbacklighttbl = __arraycount(lcdctl_backlight_c3000);
-	sc->sc_backlighttbl = lcdctl_backlight_c3000;
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000) {
+		sc->sc_nbacklighttbl = __arraycount(lcdctl_backlight_c3000);
+		sc->sc_backlighttbl = lcdctl_backlight_c3000;
+	} else {
+		/* XXX: Is this okay for C7x0/860? */
+		sc->sc_nbacklighttbl = __arraycount(lcdctl_backlight_c3000);
+		sc->sc_backlighttbl = lcdctl_backlight_c3000;
+	}
 
 	/* Start with approximately 40% of full brightness. */
 	lcdctl_set_brightness(sc, 3);
