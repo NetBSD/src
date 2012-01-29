@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.11 2012/01/29 06:44:33 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.12 2012/01/29 06:45:25 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.11 2012/01/29 06:44:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.12 2012/01/29 06:45:25 dholland Exp $");
 
 #include <sys/mount.h>
 #include <sys/quota.h>
@@ -299,6 +299,58 @@ vfs_quotactl_get(struct mount *mp,
 }
 
 static int
+vfs_quotactl_set_extractinfo(prop_dictionary_t data,
+			struct quotaval *blocks, struct quotaval *files)
+{
+	/*
+	 * So, the way proptoquota64 works is that you pass it an
+	 * array of pointers to uint64. Each of these pointers is
+	 * supposed to point to 5 (UFS_QUOTA_NENTRIES) uint64s. This
+	 * array of pointers is the second argument. The third and
+	 * forth argument are the names of the five values to extract,
+	 * and UFS_QUOTA_NENTRIES. The last two arguments are the
+	 * names assocated with the pointers (QUOTATYPE_LDICT_BLOCK,
+	 * QUOTADICT_LTYPE_FILE) and the number of pointers. Most of
+	 * the existing code was unsafely casting struct quotaval
+	 * (formerly struct ufs_quota_entry) to (uint64_t *) and using
+	 * that as the block of 5 uint64s. Or worse, pointing to
+	 * subregions of that and reducing the number of uint64s to
+	 * pull "adjacent" values. Demons fly out of your nose!
+	 */
+
+	uint64_t bvals[UFS_QUOTA_NENTRIES];
+	uint64_t fvals[UFS_QUOTA_NENTRIES];
+	uint64_t *valptrs[QUOTA_NLIMITS];
+	int error;
+
+	valptrs[QUOTA_LIMIT_BLOCK] = bvals;
+	valptrs[QUOTA_LIMIT_FILE] = fvals;
+	error = proptoquota64(data, valptrs,
+			      ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
+			      ufs_quota_limit_names, QUOTA_NLIMITS);
+	if (error) {
+		return error;
+	}
+
+	/*
+	 * There are no symbolic constants for these indexes!
+	 */
+
+	blocks->qv_hardlimit = bvals[0];
+	blocks->qv_softlimit = bvals[1];
+	blocks->qv_usage = bvals[2];
+	blocks->qv_expiretime = bvals[3];
+	blocks->qv_grace = bvals[4];
+	files->qv_hardlimit = fvals[0];
+	files->qv_softlimit = fvals[1];
+	files->qv_usage = fvals[2];
+	files->qv_expiretime = fvals[3];
+	files->qv_grace = fvals[4];
+
+	return 0;
+}
+
+static int
 vfs_quotactl_set(struct mount *mp,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
@@ -309,6 +361,7 @@ vfs_quotactl_set(struct mount *mp,
 	int defaultq;
 	uint32_t id;
 	const char *idstr;
+	struct quotaval blocks, files;
 	struct vfs_quotactl_args args;
 	int error;
 
@@ -338,10 +391,17 @@ vfs_quotactl_set(struct mount *mp,
 			defaultq = 0;
 		}
 
+		error = vfs_quotactl_set_extractinfo(data, &blocks, &files);
+		if (error) {
+			goto err;
+		}
+
 		args.qc_type = QCT_SET;
 		args.u.set.qc_id = id;
 		args.u.set.qc_defaultq = defaultq;
 		args.u.set.qc_q2type = q2type;
+		args.u.set.qc_blocks = &blocks;
+		args.u.set.qc_files = &files;
 		args.u.set.qc_data = data;
 		error = VFS_QUOTACTL(mp, QUOTACTL_SET, &args);
 		if (error) {
