@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.24 2012/01/29 07:05:12 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.25 2012/01/29 07:06:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.24 2012/01/29 07:05:12 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.25 2012/01/29 07:06:01 dholland Exp $");
 
 #include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
@@ -512,6 +512,8 @@ vfs_quotactl_getall(struct mount *mp,
 	prop_array_t replies;
 	prop_dictionary_t dict;
 	unsigned i;
+	id_t id;
+	int defaultq;
 	int error, error2;
 	int skip = 0;
 
@@ -559,15 +561,15 @@ vfs_quotactl_getall(struct mount *mp,
 		goto skip;
 	}
 
-	dict = vfs_quotactl_getall_makereply(0, 1, &result.qr_defblocks,
-					     &result.qr_deffiles);
-	if (!prop_array_add_and_rel(replies, dict)) {
-		error = ENOMEM;
-		goto err;
-	}
-
 	for (i = 0; i < result.qr_num; i += 2) {
-		dict = vfs_quotactl_getall_makereply(result.qr_keys[i].qk_id,0,
+		id = result.qr_keys[i].qk_id;
+		if (id == QUOTA_DEFAULTID) {
+			id = 0;
+			defaultq = 1;
+		} else {
+			defaultq = 0;
+		}
+		dict = vfs_quotactl_getall_makereply(id, defaultq,
 						     &result.qr_vals[i],
 						     &result.qr_vals[i+1]);
 		if (dict == NULL) {
