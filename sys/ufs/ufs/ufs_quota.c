@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.71 2012/01/29 06:34:58 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.72 2012/01/29 06:36:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.71 2012/01/29 06:34:58 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.72 2012/01/29 06:36:07 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -72,19 +72,20 @@ static pool_cache_t dquot_cache;
 
 
 static int quota_handle_cmd_get_version(struct mount *, struct lwp *,
-    prop_dictionary_t, prop_array_t);
+    struct vfs_quotactl_args *args);
 static int quota_handle_cmd_get(struct mount *, struct lwp *,
-    prop_dictionary_t, int, prop_array_t);
+    struct vfs_quotactl_args *args);
 static int quota_handle_cmd_set(struct mount *, struct lwp *,
-    prop_dictionary_t, int, prop_array_t);
+    struct vfs_quotactl_args *args);
 static int quota_handle_cmd_getall(struct mount *, struct lwp *,
-    prop_dictionary_t, int, prop_array_t);
+    struct vfs_quotactl_args *args);
 static int quota_handle_cmd_clear(struct mount *, struct lwp *,
-    prop_dictionary_t, int, prop_array_t);
+    struct vfs_quotactl_args *args);
 static int quota_handle_cmd_quotaon(struct mount *, struct lwp *, 
-    prop_dictionary_t, int, prop_array_t);
+    struct vfs_quotactl_args *args);
 static int quota_handle_cmd_quotaoff(struct mount *, struct lwp *, 
-    prop_dictionary_t, int, prop_array_t);
+    struct vfs_quotactl_args *args);
+
 /*
  * Initialize the quota fields of an inode.
  */
@@ -154,35 +155,31 @@ chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 
 int
 quota_handle_cmd(struct mount *mp, struct lwp *l, int op,
-		 prop_dictionary_t cmddict, int q2type, prop_array_t datas)
+		 struct vfs_quotactl_args *args)
 {
 	int error = 0;
 
-	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
-
 	switch (op) {
 	    case QUOTACTL_GETVERSION:
-		error = quota_handle_cmd_get_version(mp, l, cmddict, datas);
+		error = quota_handle_cmd_get_version(mp, l, args);
 		break;
 	    case QUOTACTL_QUOTAON:
-		error = quota_handle_cmd_quotaon(mp, l, cmddict,
-		    q2type, datas);
+		error = quota_handle_cmd_quotaon(mp, l, args);
 		break;
 	    case QUOTACTL_QUOTAOFF:
-		error = quota_handle_cmd_quotaoff(mp, l, cmddict,
-		    q2type, datas);
+		error = quota_handle_cmd_quotaoff(mp, l, args);
 		break;
 	    case QUOTACTL_GET:
-		error = quota_handle_cmd_get(mp, l, cmddict, q2type, datas);
+		error = quota_handle_cmd_get(mp, l, args);
 		break;
 	    case QUOTACTL_SET:
-		error = quota_handle_cmd_set(mp, l, cmddict, q2type, datas);
+		error = quota_handle_cmd_set(mp, l, args);
 		break;
 	    case QUOTACTL_GETALL:
-		error = quota_handle_cmd_getall(mp, l, cmddict, q2type, datas);
+		error = quota_handle_cmd_getall(mp, l, args);
 		break;
 	    case QUOTACTL_CLEAR:
-		error = quota_handle_cmd_clear(mp, l, cmddict, q2type, datas);
+		error = quota_handle_cmd_clear(mp, l, args);
 		break;
 	    default:
 		panic("Invalid quotactl operation %d\n", op);
@@ -193,12 +190,22 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, int op,
 
 static int 
 quota_handle_cmd_get_version(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, prop_array_t datas)
+    struct vfs_quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	prop_array_t replies;
 	prop_dictionary_t data;
 	int error = 0;
+	prop_dictionary_t cmddict;
+	prop_array_t datas;
+
+	KASSERT(args->qc_type == QCT_PROPLIB);
+	cmddict = args->u.proplib.qc_cmddict;
+	/* qc_q2type not used */
+	datas = args->u.proplib.qc_datas;
+
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
@@ -249,7 +256,7 @@ quota_get_auth(struct mount *mp, struct lwp *l, uid_t id) {
 
 static int 
 quota_handle_cmd_get(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, int type, prop_array_t datas)
+    struct vfs_quotactl_args *args)
 {
 	prop_array_t replies;
 	prop_object_iterator_t iter;
@@ -258,6 +265,17 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error, defaultq = 0;
 	const char *idstr;
+	prop_dictionary_t cmddict;
+	int q2type;
+	prop_array_t datas;
+
+	KASSERT(args->qc_type == QCT_PROPLIB);
+	cmddict = args->u.proplib.qc_cmddict;
+	q2type = args->u.proplib.qc_q2type;
+	datas = args->u.proplib.qc_datas;
+
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
@@ -292,13 +310,13 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 			goto err;
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA)
-			error = quota1_handle_cmd_get(ump, type, id, defaultq,
+			error = quota1_handle_cmd_get(ump, q2type, id, defaultq,
 			    replies);
 		else
 #endif
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_get(ump, type, id, defaultq,
+			error = quota2_handle_cmd_get(ump, q2type, id, defaultq,
 			    replies);
 		} else
 #endif
@@ -324,7 +342,7 @@ err:
 
 static int 
 quota_handle_cmd_set(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, int type, prop_array_t datas)
+    struct vfs_quotactl_args *args)
 {
 	prop_array_t replies;
 	prop_object_iterator_t iter;
@@ -333,6 +351,17 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error, defaultq = 0;
 	const char *idstr;
+	prop_dictionary_t cmddict;
+	int q2type;
+	prop_array_t datas;
+
+	KASSERT(args->qc_type == QCT_PROPLIB);
+	cmddict = args->u.proplib.qc_cmddict;
+	q2type = args->u.proplib.qc_q2type;
+	datas = args->u.proplib.qc_datas;
+
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
@@ -364,13 +393,13 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 			goto err;
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA)
-			error = quota1_handle_cmd_set(ump, type, id, defaultq,
+			error = quota1_handle_cmd_set(ump, q2type, id, defaultq,
 			    data);
 		else
 #endif
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_set(ump, type, id, defaultq,
+			error = quota2_handle_cmd_set(ump, q2type, id, defaultq,
 			    data);
 		} else
 #endif
@@ -394,7 +423,7 @@ err:
 
 static int 
 quota_handle_cmd_clear(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, int type, prop_array_t datas)
+    struct vfs_quotactl_args *args)
 {
 	prop_array_t replies;
 	prop_object_iterator_t iter;
@@ -403,6 +432,17 @@ quota_handle_cmd_clear(struct mount *mp, struct lwp *l,
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error, defaultq = 0;
 	const char *idstr;
+	prop_dictionary_t cmddict;
+	int q2type;
+	prop_array_t datas;
+
+	KASSERT(args->qc_type == QCT_PROPLIB);
+	cmddict = args->u.proplib.qc_cmddict;
+	q2type = args->u.proplib.qc_q2type;
+	datas = args->u.proplib.qc_datas;
+
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
 	if ((ump->um_flags & UFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
@@ -434,7 +474,7 @@ quota_handle_cmd_clear(struct mount *mp, struct lwp *l,
 			goto err;
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_clear(ump, type, id, defaultq,
+			error = quota2_handle_cmd_clear(ump, q2type, id, defaultq,
 			    data);
 		} else
 #endif
@@ -458,11 +498,22 @@ err:
 
 static int 
 quota_handle_cmd_getall(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, int type, prop_array_t datas)
+    struct vfs_quotactl_args *args)
 {
 	prop_array_t replies;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
+	prop_dictionary_t cmddict;
+	int q2type;
+	prop_array_t datas;
+
+	KASSERT(args->qc_type == QCT_PROPLIB);
+	cmddict = args->u.proplib.qc_cmddict;
+	q2type = args->u.proplib.qc_q2type;
+	datas = args->u.proplib.qc_datas;
+
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
 	if ((ump->um_flags & UFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
@@ -478,7 +529,7 @@ quota_handle_cmd_getall(struct mount *mp, struct lwp *l,
 
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
-		error = quota2_handle_cmd_getall(ump, type, replies);
+		error = quota2_handle_cmd_getall(ump, q2type, replies);
 	} else
 #endif
 		panic("quota_handle_cmd_getall: no support ?");
@@ -492,12 +543,23 @@ quota_handle_cmd_getall(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, int type, prop_array_t datas)
+    struct vfs_quotactl_args *args)
 {
 	prop_dictionary_t data;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
 	const char *qfile;
+	prop_dictionary_t cmddict;
+	int q2type;
+	prop_array_t datas;
+
+	KASSERT(args->qc_type == QCT_PROPLIB);
+	cmddict = args->u.proplib.qc_cmddict;
+	q2type = args->u.proplib.qc_q2type;
+	datas = args->u.proplib.qc_datas;
+
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
 	if ((ump->um_flags & UFS_QUOTA2) != 0)
 		return EBUSY;
@@ -518,7 +580,7 @@ quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
 		return error;
 	}
 #ifdef QUOTA
-	error = quota1_handle_cmd_quotaon(l, ump, type, qfile);
+	error = quota1_handle_cmd_quotaon(l, ump, q2type, qfile);
 #else
 	error = EOPNOTSUPP;
 #endif
@@ -528,10 +590,21 @@ quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, int type, prop_array_t datas)
+    struct vfs_quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
+	prop_dictionary_t cmddict;
+	int q2type;
+	prop_array_t datas;
+
+	KASSERT(args->qc_type == QCT_PROPLIB);
+	cmddict = args->u.proplib.qc_cmddict;
+	q2type = args->u.proplib.qc_q2type;
+	datas = args->u.proplib.qc_datas;
+
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
 	if ((ump->um_flags & UFS_QUOTA2) != 0)
 		return EOPNOTSUPP;
@@ -545,7 +618,7 @@ quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l,
 		return error;
 	}
 #ifdef QUOTA
-	error = quota1_handle_cmd_quotaoff(l, ump, type);
+	error = quota1_handle_cmd_quotaoff(l, ump, q2type);
 #else
 	error = EOPNOTSUPP;
 #endif
