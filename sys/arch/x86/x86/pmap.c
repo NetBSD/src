@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.157 2012/01/28 08:57:09 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.158 2012/01/29 11:37:08 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157 2012/01/28 08:57:09 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158 2012/01/29 11:37:08 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1869,12 +1869,6 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 	int level;
 	vaddr_t invaladdr;
 	pd_entry_t opde;
-#ifdef XEN
-	struct pmap *curpmap = vm_map_pmap(&curlwp->l_proc->p_vmspace->vm_map);
-#ifdef MULTIPROCESSOR
-	vaddr_t invaladdr2;
-#endif
-#endif
 
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(pmap->pm_lock));
@@ -1901,16 +1895,8 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 #  endif /*__x86_64__ */
 		invaladdr = level == 1 ? (vaddr_t)ptes :
 		    (vaddr_t)pdes[level - 2];
-		pmap_tlb_shootdown(curpmap, invaladdr + index * PAGE_SIZE,
+		pmap_tlb_shootdown(pmap, invaladdr + index * PAGE_SIZE,
 		    opde, TLBSHOOT_FREE_PTP1);
-#  if defined(MULTIPROCESSOR)
-		invaladdr2 = level == 1 ? (vaddr_t)PTE_BASE :
-		    (vaddr_t)normal_pdes[level - 2];
-		if (pmap != curpmap || invaladdr != invaladdr2) {
-			pmap_tlb_shootdown(pmap, invaladdr2 + index * PAGE_SIZE,
-			    opde, TLBSHOOT_FREE_PTP2);
-		}
-#  endif /* MULTIPROCESSOR */
 #else	/* XEN */
 		invaladdr = level == 1 ? (vaddr_t)ptes :
 		    (vaddr_t)pdes[level - 2];
