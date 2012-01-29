@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.9 2012/01/29 06:40:57 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.10 2012/01/29 06:41:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.9 2012/01/29 06:40:57 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.10 2012/01/29 06:41:41 dholland Exp $");
 
 #include <sys/mount.h>
 #include <sys/quota.h>
@@ -167,18 +167,27 @@ vfs_quotactl_quotaoff(struct mount *mp,
 }
 
 static int
-vfs_quotactl_get_addreply(id_t id,
-			  int defaultq,
+vfs_quotactl_get_addreply(const struct quotakey *qk,
 			  const struct quotaval *blocks,
 			  const struct quotaval *files,
 			  prop_array_t replies)
 {
 	prop_dictionary_t dict;
+	id_t id;
+	int defaultq;
+	uint64_t *valuesp[QUOTA_NLIMITS];
 
 	/* XXX illegal casts */
-	uint64_t *valuesp[QUOTA_NLIMITS];
 	valuesp[QUOTA_LIMIT_BLOCK] = (void *)(intptr_t)&blocks->qv_hardlimit;
 	valuesp[QUOTA_LIMIT_FILE] =  (void *)(intptr_t)&files->qv_hardlimit;
+
+	if (qk->qk_id == QUOTA_DEFAULTID) {
+		id = 0;
+		defaultq = 1;
+	} else {
+		id = qk->qk_id;
+		defaultq = 0;
+	}
 
 	dict = quota64toprop(id, defaultq, valuesp,
 	    ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
@@ -195,16 +204,16 @@ vfs_quotactl_get_addreply(id_t id,
 
 static int
 vfs_quotactl_get(struct mount *mp,
-			prop_dictionary_t cmddict, int q2type,
+			prop_dictionary_t cmddict, int idtype,
 			prop_array_t datas)
 {
 	prop_object_iterator_t iter;
 	prop_dictionary_t data;
 	prop_array_t replies;
 	uint32_t id;
-	int defaultq;
 	const char *idstr;
 	struct vfs_quotactl_args args;
+	struct quotakey qk;
 	struct quotaval blocks, files;
 	int error;
 
@@ -223,6 +232,8 @@ vfs_quotactl_get(struct mount *mp,
 	}
 
 	while ((data = prop_object_iterator_next(iter)) != NULL) {
+		qk.qk_idtype = idtype;
+
 		if (!prop_dictionary_get_uint32(data, "id", &id)) {
 			if (!prop_dictionary_get_cstring_nocopy(data, "id",
 			    &idstr))
@@ -231,17 +242,15 @@ vfs_quotactl_get(struct mount *mp,
 				error = EINVAL;
 				goto fail;
 			}
-			id = 0;
-			defaultq = 1;
+			qk.qk_id = QUOTA_DEFAULTID;
 		} else {
-			defaultq = 0;
+			qk.qk_id = id;
 		}
 
+		qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
+
 		args.qc_type = QCT_GET;
-		args.u.get.qc_q2type = q2type;
-		args.u.get.qc_id = id;
-		args.u.get.qc_defaultq = defaultq;
-		args.u.get.qc_objtype = QUOTA_OBJTYPE_BLOCKS;
+		args.u.get.qc_key = &qk;
 		args.u.get.qc_ret = &blocks;
 		error = VFS_QUOTACTL(mp, QUOTACTL_GET, &args);
 		if (error == EPERM) {
@@ -254,11 +263,10 @@ vfs_quotactl_get(struct mount *mp,
 			goto fail;
 		}
 
+		qk.qk_objtype = QUOTA_OBJTYPE_FILES;
+
 		args.qc_type = QCT_GET;
-		args.u.get.qc_q2type = q2type;
-		args.u.get.qc_id = id;
-		args.u.get.qc_defaultq = defaultq;
-		args.u.get.qc_objtype = QUOTA_OBJTYPE_FILES;
+		args.u.get.qc_key = &qk;
 		args.u.get.qc_ret = &files;
 		error = VFS_QUOTACTL(mp, QUOTACTL_GET, &args);
 		if (error == EPERM) {
@@ -271,8 +279,7 @@ vfs_quotactl_get(struct mount *mp,
 			goto fail;
 		}
 
-		error = vfs_quotactl_get_addreply(id, defaultq,
-						  &blocks, &files,
+		error = vfs_quotactl_get_addreply(&qk, &blocks, &files,
 						  replies);
 	}
 
