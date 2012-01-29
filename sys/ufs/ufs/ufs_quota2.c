@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.20 2012/01/29 07:04:21 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.21 2012/01/29 07:05:12 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.20 2012/01/29 07:04:21 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.21 2012/01/29 07:05:12 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -829,7 +829,8 @@ out_dq:
 
 static int
 quota2_result_add_q2e(struct ufsmount *ump, int idtype,
-    int id, struct quota_getall_result *result, unsigned pos)
+    int id, struct quota_getall_result *result, unsigned pos,
+    int skipfirst, int skiplast)
 {
 	struct dquot *dq;
 	int error;
@@ -859,15 +860,21 @@ quota2_result_add_q2e(struct ufsmount *ump, int idtype,
 	mutex_exit(&dq->dq_interlock);
 	dqrele(NULLVP, dq);
 
-	result->qr_keys[pos].qk_idtype = idtype;
-	result->qr_keys[pos].qk_objtype = QUOTA_OBJTYPE_BLOCKS;
-	q2e_to_quotaval(&q2e, 0, &result->qr_keys[pos].qk_id,
-			QL_BLOCK, &result->qr_vals[pos]);
+	if (skipfirst == 0) {
+		result->qr_keys[pos].qk_idtype = idtype;
+		result->qr_keys[pos].qk_objtype = QUOTA_OBJTYPE_BLOCKS;
+		q2e_to_quotaval(&q2e, 0, &result->qr_keys[pos].qk_id,
+				QL_BLOCK, &result->qr_vals[pos]);
+		pos++;
+	}
 
-	result->qr_keys[pos+1].qk_idtype = idtype;
-	result->qr_keys[pos+1].qk_objtype = QUOTA_OBJTYPE_FILES;
-	q2e_to_quotaval(&q2e, 0, &result->qr_keys[pos+1].qk_id,
-			QL_FILE, &result->qr_vals[pos+1]);
+	if (skiplast == 0) {
+		result->qr_keys[pos].qk_idtype = idtype;
+		result->qr_keys[pos].qk_objtype = QUOTA_OBJTYPE_FILES;
+		q2e_to_quotaval(&q2e, 0, &result->qr_keys[pos].qk_id,
+				QL_FILE, &result->qr_vals[pos]);
+		pos++;
+	}
 
 	return 0;
 }
@@ -997,6 +1004,7 @@ struct getuids {
 	uid_t *uids; /* array of uids, dynamically allocated */
 	long skip;
 	long seen;
+	long limit;
 };
 
 static int
@@ -1026,6 +1034,9 @@ quota2_getuids_callback(struct ufsmount *ump, uint64_t *offp,
 	gu->uids[gu->nuids] = ufs_rw32(q2ep->q2e_uid, needswap);
 	gu->nuids++;
 	gu->seen++;
+	if (gu->nuids == gu->limit) {
+		return Q2WL_ABORT;
+	}
 	return 0;
 }
 
@@ -1046,6 +1057,7 @@ quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
 	id_t junkid;
 	struct quotaval qv;
 	unsigned num, maxnum;
+	int skipfirst, skiplast;
 
 	cursor = Q2CURSOR(qkc);
 	error = q2cursor_check(cursor);
@@ -1098,11 +1110,20 @@ quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
 
 	gu.skip = cursor->q2c_uidpos;
 	gu.seen = 0;
+	gu.limit = result->qr_max / 2;
+	if (gu.limit == 0 && result->qr_max > 0) {
+		gu.limit = 1;
+	}
 	for (i = cursor->q2c_hashpos; i < quota2_hash_size ; i++) {
 		offset = q2h->q2h_entries[i];
 		gu.seen = 0;
 		error = quota2_walk_list(ump, hbp, idtype, &offset, 0, &gu,
 		    quota2_getuids_callback);
+		if (error == Q2WL_ABORT) {
+			/* got enough uids for now */
+			error = 0;
+			break;
+		}
 		if (error) {
 			if (gu.uids != NULL)
 				free(gu.uids, M_TEMP);
@@ -1124,10 +1145,22 @@ fail:
 	result->qr_vals = malloc(maxnum * sizeof(result->qr_vals[0]),
 				 M_TEMP, M_WAITOK);
 
+	/*
+	 * If we've already sent back the blocks value for the first id,
+	 * don't send it again (skipfirst).
+	 *
+	 * If we have an odd number of available result slots and we
+	 * aren't going to skip the first result entry, we need to
+	 * leave off the last result entry (skiplast).
+	 */
+	skipfirst = (cursor->q2c_blocks_done != 0);
+	skiplast = skipfirst == 0 && (result->qr_max < maxnum);
 	num = 0;
 	for (j = 0; j < gu.nuids; j++) {
 		error = quota2_result_add_q2e(ump, idtype,
-		    gu.uids[j], result, j*2);
+		    gu.uids[j], result, j*2,
+		    j == 0 && skipfirst,
+		    j + 1 == gu.nuids && skiplast);
 		if (error == ENOENT)
 			continue;
 		if (error)
@@ -1135,6 +1168,8 @@ fail:
 		num += 2;
 	}
 	result->qr_num = num;
+
+	cursor->q2c_blocks_done = skiplast;
 
 	free(gu.uids, M_TEMP);
 	return error;
