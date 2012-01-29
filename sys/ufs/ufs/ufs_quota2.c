@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.16 2012/01/29 06:57:15 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.17 2012/01/29 07:00:40 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.16 2012/01/29 06:57:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.17 2012/01/29 07:00:40 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -947,6 +947,15 @@ quota2_handle_cmd_get(struct ufsmount *ump, const struct quotakey *qk,
 	return error;
 }
 
+struct ufsq2_cursor {
+	uint32_t q2c_magic;
+};
+
+#define Q2C_MAGIC (0xbeebe111)
+
+#define Q2CURSOR(qkc) ((struct ufsq2_cursor *)&qkc->u.qkc_space[0])
+
+
 struct getuids {
 	long nuids; /* number of uids in array */
 	long size;  /* size of array */
@@ -979,9 +988,11 @@ quota2_getuids_callback(struct ufsmount *ump, uint64_t *offp,
 }
 
 int
-quota2_handle_cmd_getall(struct ufsmount *ump, int type, prop_array_t replies)
+quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
+    int type, prop_array_t replies)
 {
 	int error;
+	struct ufsq2_cursor *cursor;
 	struct quota2_header *q2h;
 	struct quota2_entry  q2e;
 	struct buf *hbp;
@@ -991,6 +1002,11 @@ quota2_handle_cmd_getall(struct ufsmount *ump, int type, prop_array_t replies)
 	int quota2_hash_size;
 	const int needswap = UFS_MPNEEDSWAP(ump);
 	struct getuids gu;
+
+	cursor = Q2CURSOR(qkc);
+	if (cursor->q2c_magic != Q2C_MAGIC) {
+		return EINVAL;
+	}
 
 	if (ump->um_quotas[type] == NULLVP)
 		return ENODEV;
@@ -1038,14 +1054,6 @@ error_bp:
 	free(gu.uids, M_TEMP);
 	return error;
 }
-
-struct ufsq2_cursor {
-	uint32_t q2c_magic;
-};
-
-#define Q2C_MAGIC (0xbeebe111)
-
-#define Q2CURSOR(qkc) ((struct ufsq2_cursor *)&qkc->u.qkc_space[0])
 
 int
 quota2_handle_cmd_cursoropen(struct ufsmount *ump, struct quotakcursor *qkc)
