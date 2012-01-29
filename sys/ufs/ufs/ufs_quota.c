@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.84 2012/01/29 06:48:50 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.85 2012/01/29 06:49:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.84 2012/01/29 06:48:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.85 2012/01/29 06:49:43 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -75,7 +75,7 @@ static int quota_handle_cmd_get_version(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
 static int quota_handle_cmd_get(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
-static int quota_handle_cmd_set(struct mount *, struct lwp *,
+static int quota_handle_cmd_put(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
 static int quota_handle_cmd_getall(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
@@ -172,8 +172,8 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, int op,
 	    case QUOTACTL_GET:
 		error = quota_handle_cmd_get(mp, l, args);
 		break;
-	    case QUOTACTL_SET:
-		error = quota_handle_cmd_set(mp, l, args);
+	    case QUOTACTL_PUT:
+		error = quota_handle_cmd_put(mp, l, args);
 		break;
 	    case QUOTACTL_GETALL:
 		error = quota_handle_cmd_getall(mp, l, args);
@@ -264,7 +264,7 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 }
 
 static int 
-quota_handle_cmd_set(struct mount *mp, struct lwp *l, 
+quota_handle_cmd_put(struct mount *mp, struct lwp *l, 
     struct vfs_quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -273,9 +273,9 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 	id_t kauth_id;
 	int error;
 
-	KASSERT(args->qc_type == QCT_SET);
-	qk = args->u.set.qc_key;
-	qv = args->u.set.qc_val;
+	KASSERT(args->qc_type == QCT_PUT);
+	qk = args->u.put.qc_key;
+	qv = args->u.put.qc_val;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
@@ -294,12 +294,12 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 			goto err;
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA)
-			error = quota1_handle_cmd_set(ump, qk, qv);
+			error = quota1_handle_cmd_put(ump, qk, qv);
 		else
 #endif
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_set(ump, qk, qv);
+			error = quota2_handle_cmd_put(ump, qk, qv);
 		} else
 #endif
 			panic("quota_handle_cmd_get: no support ?");

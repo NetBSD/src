@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.14 2012/01/29 06:48:50 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.15 2012/01/29 06:49:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.14 2012/01/29 06:48:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.15 2012/01/29 06:49:43 dholland Exp $");
 
 #include <sys/mount.h>
 #include <sys/quota.h>
@@ -299,7 +299,7 @@ vfs_quotactl_get(struct mount *mp,
 }
 
 static int
-vfs_quotactl_set_extractinfo(prop_dictionary_t data,
+vfs_quotactl_put_extractinfo(prop_dictionary_t data,
 			struct quotaval *blocks, struct quotaval *files)
 {
 	/*
@@ -351,7 +351,7 @@ vfs_quotactl_set_extractinfo(prop_dictionary_t data,
 }
 
 static int
-vfs_quotactl_set(struct mount *mp,
+vfs_quotactl_put(struct mount *mp,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
 {
@@ -395,7 +395,7 @@ vfs_quotactl_set(struct mount *mp,
 			defaultq = 0;
 		}
 
-		error = vfs_quotactl_set_extractinfo(data, &blocks, &files);
+		error = vfs_quotactl_put_extractinfo(data, &blocks, &files);
 		if (error) {
 			goto err;
 		}
@@ -404,10 +404,10 @@ vfs_quotactl_set(struct mount *mp,
 		qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
 		qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
 
-		args.qc_type = QCT_SET;
-		args.u.set.qc_key = &qk;
-		args.u.set.qc_val = &blocks;
-		error = VFS_QUOTACTL(mp, QUOTACTL_SET, &args);
+		args.qc_type = QCT_PUT;
+		args.u.put.qc_key = &qk;
+		args.u.put.qc_val = &blocks;
+		error = VFS_QUOTACTL(mp, QUOTACTL_PUT, &args);
 		if (error) {
 			goto err;
 		}
@@ -416,10 +416,10 @@ vfs_quotactl_set(struct mount *mp,
 		qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
 		qk.qk_objtype = QUOTA_OBJTYPE_FILES;
 
-		args.qc_type = QCT_SET;
-		args.u.set.qc_key = &qk;
-		args.u.set.qc_val = &files;
-		error = VFS_QUOTACTL(mp, QUOTACTL_SET, &args);
+		args.qc_type = QCT_PUT;
+		args.u.put.qc_key = &qk;
+		args.u.put.qc_val = &files;
+		error = VFS_QUOTACTL(mp, QUOTACTL_PUT, &args);
 		if (error) {
 			goto err;
 		}
@@ -503,7 +503,7 @@ vfs_quotactl_cmd(struct mount *mp, prop_dictionary_t cmddict)
 	} else if (strcmp(cmd, "get") == 0) {
 		error = vfs_quotactl_get(mp, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "set") == 0) {
-		error = vfs_quotactl_set(mp, cmddict, q2type, datas);
+		error = vfs_quotactl_put(mp, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "getall") == 0) {
 		error = vfs_quotactl_getall(mp, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "clear") == 0) {
