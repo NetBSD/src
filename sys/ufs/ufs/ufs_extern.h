@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.67 2012/01/29 06:32:44 dholland Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.68 2012/01/29 06:34:58 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -148,7 +148,9 @@ void	ufsquota_init(struct inode *);
 void	ufsquota_free(struct inode *);
 int	chkdq(struct inode *, int64_t, kauth_cred_t, int);
 int	chkiq(struct inode *, int32_t, kauth_cred_t, int);
-int	quota_handle_cmd(struct mount *, struct lwp *, prop_dictionary_t);
+int	quota_handle_cmd(struct mount *, struct lwp *, int,
+			 prop_dictionary_t, int, prop_array_t);
+
 int	qsync(struct mount *);
 
 /* ufs_quota1.c */
@@ -163,7 +165,7 @@ void	ufs_reinit(void);
 void	ufs_done(void);
 int	ufs_start(struct mount *, int);
 int	ufs_root(struct mount *, struct vnode **);
-int	ufs_quotactl(struct mount *, prop_dictionary_t, int);
+int	ufs_quotactl(struct mount *, int, prop_dictionary_t, int, prop_array_t);
 int	ufs_fhtovp(struct mount *, struct ufid *, struct vnode **);
 
 /* ufs_vnops.c */
