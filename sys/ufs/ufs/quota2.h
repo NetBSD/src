@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.h,v 1.6 2012/01/29 07:16:53 dholland Exp $ */
+/* $NetBSD: quota2.h,v 1.7 2012/01/29 07:17:41 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -55,23 +55,6 @@ struct quota2_val {
 	int64_t q2v_grace; /* allowed time for softlimit overflow */
 };
 
-/* NAMES for the above in the plist */
-#define INITQVNAMES_ALL { \
-    QUOTADICT_LIMIT_HARD, \
-    QUOTADICT_LIMIT_SOFT, \
-    QUOTADICT_LIMIT_USAGE, \
-    QUOTADICT_LIMIT_ETIME, \
-    QUOTADICT_LIMIT_GTIME \
-    }
-#define INITQVNAMES_LIMITSONLY { \
-    QUOTADICT_LIMIT_HARD, \
-    QUOTADICT_LIMIT_SOFT, \
-    NULL, \
-    NULL, \
-    QUOTADICT_LIMIT_GTIME \
-    }
-
-#define N_QV 5
 /*
  * On-disk description of a user or group quota
  * These entries are keept as linked list, either in one of the hash HEAD,
