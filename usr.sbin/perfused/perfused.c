@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.18 2012/01/17 17:58:36 joerg Exp $ */
+/*  $NetBSD: perfused.c,v 1.19 2012/01/29 06:22:02 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -55,8 +55,8 @@
  * we ever mount multiple filesystems in a single perfused, 
  * but it is not sure we will ever want to do that.
  */
-static struct puffs_usermount *my_perfuse_mount = NULL;
-static FILE *perfuse_trace = NULL;
+struct puffs_usermount *perfuse_mount = NULL;
+FILE *perfuse_trace = NULL;
 
 static int access_mount(const char *, uid_t, int);
 static void new_mount(int, int);
@@ -210,6 +210,10 @@ new_mount(int fd, int pmnt_flags)
 	pid_t pid;
 	int flags;
 	int sock_type;
+	char trace_file[MAXPATHLEN + 1];
+	char trace_name[MAXPATHLEN + 1];
+	ssize_t trace_namelen;
+	int i;
 
 	pid = (perfuse_diagflags & PDF_FOREGROUND) ? 0 : fork();
 	switch(pid) {
@@ -278,9 +282,17 @@ new_mount(int fd, int pmnt_flags)
 	/*
 	 * Setup trace file facility
 	 */
-	my_perfuse_mount = pu;
+	perfuse_mount = pu;
 
-	if ((perfuse_trace = fopen(_PATH_VAR_RUN_PERFUSE_TRACE, "w")) == NULL)
+	trace_namelen = strlcpy(trace_name, pmi.pmi_target, MAXPATHLEN);
+	for (i = 0; i < trace_namelen; i++)
+		if (trace_name[i] == '/')
+			trace_name[i] = '-';
+
+	(void)snprintf(trace_file, MAXPATHLEN, _PATH_VAR_RUN_PERFUSE_TRACE,
+		       trace_name);
+
+	if ((perfuse_trace = fopen(trace_file, "w")) == NULL)
 		DERR(EX_OSFILE, 
 		     "could not open \"%s\"",
 		     _PATH_VAR_RUN_PERFUSE_TRACE);
@@ -359,7 +371,16 @@ siginfo_handler(int sig)
 static void
 sigusr1_handler(int sig)
 {
-	return perfuse_trace_dump(my_perfuse_mount, perfuse_trace);
+	if (perfuse_diagflags & PDF_TRACE) {
+		perfuse_trace_dump(perfuse_mount, perfuse_trace);
+		perfuse_diagflags &= ~PDF_TRACE;
+		DPRINTF("trace dumped, trace disabled");
+	} else {
+		perfuse_diagflags |= PDF_TRACE;
+		DPRINTF("trace enabled");
+	}
+
+	return;
 }
 
 static int
@@ -370,9 +391,6 @@ parse_options(int argc, char **argv)
 	int retval = -1;
 
 	perfuse_diagflags = PDF_FOREGROUND | PDF_SYSLOG;
-#ifdef PERFUSE_DEBUG
-	perfuse_diagflags |= PDF_TRACE;
-#endif
 
 	while ((ch = getopt(argc, argv, "d:fsi:")) != -1) {
 		switch (ch) {
