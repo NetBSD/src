@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.30 2012/01/29 07:13:43 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.31 2012/01/29 19:36:14 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,13 +40,6 @@
 /* Size of random quota strings */
 #define QUOTA_NAMELEN   32
 
-/*
- * Restrictions for qs_restrictions.
- */
-#define QUOTA_RESTRICT_NEEDSQUOTACHECK	0x1	/* quotacheck(8) required */
-#define QUOTA_RESTRICT_UNIFORMGRACE	0x2	/* grace time is global */
-#define QUOTA_RESTRICT_32BIT		0x4	/* values limited to 2^32 */
-        
 /*              
  * Structure for QUOTACTL_STAT.
  */             
@@ -54,7 +47,7 @@ struct quotastat {
 	char qs_implname[QUOTA_NAMELEN];
 	unsigned qs_numidtypes;
 	unsigned qs_numobjtypes;
-	unsigned qs_restrictions;
+	unsigned qs_restrictions;	/* semantic restriction codes */
 };
                         
 /*
