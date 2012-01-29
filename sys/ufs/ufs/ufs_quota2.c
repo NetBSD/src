@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.6 2012/01/29 06:40:58 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.7 2012/01/29 06:41:42 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.6 2012/01/29 06:40:58 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.7 2012/01/29 06:41:42 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -853,8 +853,8 @@ quota2_array_add_q2e(struct ufsmount *ump, int type,
 }
 
 static int
-quota2_fetch_q2e(struct ufsmount *ump, int type,
-    int id, int objtype, struct quotaval *ret)
+quota2_fetch_q2e(struct ufsmount *ump, const struct quotakey *qk,
+    struct quotaval *ret)
 {
 	struct dquot *dq;
 	int error;
@@ -863,7 +863,7 @@ quota2_fetch_q2e(struct ufsmount *ump, int type,
 	const int needswap = UFS_MPNEEDSWAP(ump);
 	id_t id2;
 
-	error = dqget(NULLVP, id, ump, type, &dq);
+	error = dqget(NULLVP, qk->qk_id, ump, qk->qk_idtype, &dq);
 	if (error)
 		return error;
 
@@ -873,7 +873,7 @@ quota2_fetch_q2e(struct ufsmount *ump, int type,
 		dqrele(NULLVP, dq);
 		return ENOENT;
 	}
-	error = getq2e(ump, type, dq->dq2_lblkno, dq->dq2_blkoff,
+	error = getq2e(ump, qk->qk_idtype, dq->dq2_lblkno, dq->dq2_blkoff,
 	    &bp, &q2ep, 0);
 	if (error) {
 		mutex_exit(&dq->dq_interlock);
@@ -885,14 +885,14 @@ quota2_fetch_q2e(struct ufsmount *ump, int type,
 	mutex_exit(&dq->dq_interlock);
 	dqrele(NULLVP, dq);
 
-	q2e_to_quotaval(&q2e, 0, &id2, objtype, ret);
-	KASSERT(id2 == id);
+	q2e_to_quotaval(&q2e, 0, &id2, qk->qk_objtype, ret);
+	KASSERT(id2 == qk->qk_id);
 	return 0;
 }
 
 int
-quota2_handle_cmd_get(struct ufsmount *ump, int type, int id,
-    int defaultq, int objtype, struct quotaval *ret)
+quota2_handle_cmd_get(struct ufsmount *ump, const struct quotakey *qk,
+    struct quotaval *ret)
 {
 	int error;
 	struct quota2_header *q2h;
@@ -910,15 +910,15 @@ quota2_handle_cmd_get(struct ufsmount *ump, int type, int id,
 	CTASSERT(QL_FILE == QUOTA_OBJTYPE_FILES);
 	CTASSERT(N_QL == 2);
 
-	if (objtype < 0 || objtype >= N_QL) {
+	if (qk->qk_objtype < 0 || qk->qk_objtype >= N_QL) {
 		return EINVAL;
 	}
 
-	if (ump->um_quotas[type] == NULLVP)
+	if (ump->um_quotas[qk->qk_idtype] == NULLVP)
 		return ENODEV;
-	if (defaultq) {
+	if (qk->qk_id == QUOTA_DEFAULTID) {
 		mutex_enter(&dqlock);
-		error = getq2h(ump, type, &bp, &q2h, 0);
+		error = getq2h(ump, qk->qk_idtype, &bp, &q2h, 0);
 		if (error) {
 			mutex_exit(&dqlock);
 			return error;
@@ -926,10 +926,11 @@ quota2_handle_cmd_get(struct ufsmount *ump, int type, int id,
 		quota2_ufs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
 		mutex_exit(&dqlock);
 		brelse(bp, 0);
-		q2e_to_quotaval(&q2e, defaultq, &id2, objtype, ret);
+		q2e_to_quotaval(&q2e, qk->qk_id == QUOTA_DEFAULTID, &id2,
+				qk->qk_objtype, ret);
 		(void)id2;
 	} else
-		error = quota2_fetch_q2e(ump, type, id, objtype, ret);
+		error = quota2_fetch_q2e(ump, qk, ret);
 	
 	return error;
 }

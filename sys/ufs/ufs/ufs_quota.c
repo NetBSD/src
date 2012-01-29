@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.77 2012/01/29 06:40:57 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.78 2012/01/29 06:41:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.77 2012/01/29 06:40:57 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.78 2012/01/29 06:41:41 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -232,36 +232,28 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
-	id_t id;
-	int q2type;
-	int defaultq;
-	int objtype;
+	const struct quotakey *qk;
 	struct quotaval *ret;
 
 	KASSERT(args->qc_type == QCT_GET);
-	id = args->u.get.qc_id;
-	q2type = args->u.get.qc_q2type;
-	defaultq = args->u.get.qc_defaultq;
-	objtype = args->u.get.qc_objtype;
+	qk = args->u.get.qc_key;
 	ret = args->u.get.qc_ret;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 	
 	/* avoid whitespace diffs */ {
-		error = quota_get_auth(mp, l, id);
+		error = quota_get_auth(mp, l, qk->qk_id);
 		if (error != 0) 
 			return error;
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA) {
-			error = quota1_handle_cmd_get(ump, q2type, id, defaultq,
-			    objtype, ret);
+			error = quota1_handle_cmd_get(ump, qk, ret);
 		} else
 #endif
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_get(ump, q2type, id, defaultq,
-			    objtype, ret);
+			error = quota2_handle_cmd_get(ump, qk, ret);
 		} else
 #endif
 			panic("quota_handle_cmd_get: no support ?");
