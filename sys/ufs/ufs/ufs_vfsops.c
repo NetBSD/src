@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.46 2012/01/29 06:36:07 dholland Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.47 2012/01/29 07:14:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.46 2012/01/29 06:36:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.47 2012/01/29 07:14:39 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -101,7 +101,7 @@ ufs_root(struct mount *mp, struct vnode **vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(struct mount *mp, int op, struct vfs_quotactl_args *args)
+ufs_quotactl(struct mount *mp, struct vfs_quotactl_args *args)
 {
 	struct lwp *l = curlwp;
 
@@ -121,7 +121,7 @@ ufs_quotactl(struct mount *mp, int op, struct vfs_quotactl_args *args)
 	}
 	mutex_enter(&mp->mnt_updating);
 
-	error = quota_handle_cmd(mp, l, op, args);
+	error = quota_handle_cmd(mp, l, args);
 
 	mutex_exit(&mp->mnt_updating);
 	vfs_unbusy(mp, false, NULL);
