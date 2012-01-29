@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.103 2012/01/29 07:14:38 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.104 2012/01/29 07:16:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.103 2012/01/29 07:14:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.104 2012/01/29 07:16:53 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.103 2012/01/29 07:14:38 dholland Exp
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_quota.h>
-#include <quota/quotaprop.h>
 
 kmutex_t dqlock;
 kcondvar_t dqcv;
