@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.17 2012/01/29 07:00:40 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.18 2012/01/29 07:02:06 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.17 2012/01/29 07:00:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.18 2012/01/29 07:02:06 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -75,7 +75,9 @@ static int quota2_walk_list(struct ufsmount *, struct buf *, int,
     int (*func)(struct ufsmount *, uint64_t *, struct quota2_entry *,
       uint64_t, void *));
 
+#if 0
 static prop_dictionary_t q2etoprop(struct quota2_entry *, int);
+#endif
 
 static const char *limnames[] = INITQLNAMES;
 
@@ -92,6 +94,7 @@ quota2_dict_update_q2e_limits(int objtype, const struct quotaval *val,
 	q2e->q2e_val[objtype].q2v_grace = val->qv_grace;
 }
 
+#if 0
 static prop_dictionary_t
 q2etoprop(struct quota2_entry *q2e, int def)
 {
@@ -127,6 +130,7 @@ err:
 	prop_object_release(dict1);
 	return NULL;
 }
+#endif
 
 /*
  * Convert internal representation to FS-independent representation.
@@ -824,17 +828,16 @@ out_dq:
 }
 
 static int
-quota2_array_add_q2e(struct ufsmount *ump, int type,
-    int id, prop_array_t replies)
+quota2_result_add_q2e(struct ufsmount *ump, int idtype,
+    int id, struct quota_getall_result *result, unsigned pos)
 {
 	struct dquot *dq;
 	int error;
 	struct quota2_entry *q2ep, q2e;
 	struct buf  *bp;
 	const int needswap = UFS_MPNEEDSWAP(ump);
-	prop_dictionary_t dict;
 
-	error = dqget(NULLVP, id, ump, type, &dq);
+	error = dqget(NULLVP, id, ump, idtype, &dq);
 	if (error)
 		return error;
 
@@ -844,7 +847,7 @@ quota2_array_add_q2e(struct ufsmount *ump, int type,
 		dqrele(NULLVP, dq);
 		return ENOENT;
 	}
-	error = getq2e(ump, type, dq->dq2_lblkno, dq->dq2_blkoff,
+	error = getq2e(ump, idtype, dq->dq2_lblkno, dq->dq2_blkoff,
 	    &bp, &q2ep, 0);
 	if (error) {
 		mutex_exit(&dq->dq_interlock);
@@ -856,11 +859,16 @@ quota2_array_add_q2e(struct ufsmount *ump, int type,
 	mutex_exit(&dq->dq_interlock);
 	dqrele(NULLVP, dq);
 
-	dict = q2etoprop(&q2e, 0);
-	if (dict == NULL)
-		return ENOMEM;
-	if (!prop_array_add_and_rel(replies, dict))
-		return ENOMEM;
+	result->qr_keys[pos].qk_idtype = idtype;
+	result->qr_keys[pos].qk_objtype = QUOTA_OBJTYPE_BLOCKS;
+	q2e_to_quotaval(&q2e, 0, &result->qr_keys[pos].qk_id,
+			QL_BLOCK, &result->qr_vals[pos]);
+
+	result->qr_keys[pos+1].qk_idtype = idtype;
+	result->qr_keys[pos+1].qk_objtype = QUOTA_OBJTYPE_FILES;
+	q2e_to_quotaval(&q2e, 0, &result->qr_keys[pos+1].qk_id,
+			QL_FILE, &result->qr_vals[pos+1]);
+
 	return 0;
 }
 
@@ -989,39 +997,39 @@ quota2_getuids_callback(struct ufsmount *ump, uint64_t *offp,
 
 int
 quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
-    int type, prop_array_t replies)
+    int idtype, struct quota_getall_result *result)
 {
 	int error;
 	struct ufsq2_cursor *cursor;
 	struct quota2_header *q2h;
 	struct quota2_entry  q2e;
 	struct buf *hbp;
-	prop_dictionary_t dict;
 	uint64_t offset;
 	int i, j;
 	int quota2_hash_size;
 	const int needswap = UFS_MPNEEDSWAP(ump);
 	struct getuids gu;
+	id_t junkid;
+	unsigned num, maxnum;
 
 	cursor = Q2CURSOR(qkc);
 	if (cursor->q2c_magic != Q2C_MAGIC) {
 		return EINVAL;
 	}
 
-	if (ump->um_quotas[type] == NULLVP)
+	if (ump->um_quotas[idtype] == NULLVP)
 		return ENODEV;
+
 	mutex_enter(&dqlock);
-	error = getq2h(ump, type, &hbp, &q2h, 0);
+	error = getq2h(ump, idtype, &hbp, &q2h, 0);
 	if (error) {
 		mutex_exit(&dqlock);
 		return error;
 	}
 	quota2_ufs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
-	dict = q2etoprop(&q2e, 1);
-	if (!prop_array_add_and_rel(replies, dict)) {
-		error = ENOMEM;
-		goto error_bp;
-	}
+	q2e_to_quotaval(&q2e, 1, &junkid, QL_BLOCK, &result->qr_defblocks);
+	q2e_to_quotaval(&q2e, 1, &junkid, QL_FILE, &result->qr_deffiles);
+
 	/*
 	 * we can't directly get entries as we can't walk the list
 	 * with qdlock and grab dq_interlock to read the entries
@@ -1032,7 +1040,7 @@ quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
 	quota2_hash_size = ufs_rw16(q2h->q2h_hash_size, needswap);
 	for (i = 0; i < quota2_hash_size ; i++) {
 		offset = q2h->q2h_entries[i];
-		error = quota2_walk_list(ump, hbp, type, &offset, 0, &gu,
+		error = quota2_walk_list(ump, hbp, idtype, &offset, 0, &gu,
 		    quota2_getuids_callback);
 		if (error) {
 			if (gu.uids != NULL)
@@ -1040,17 +1048,30 @@ quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
 			break;
 		}
 	}
-error_bp:
+
 	mutex_exit(&dqlock);
 	brelse(hbp, 0);
 	if (error)
 		return error;
+
+	maxnum = gu.nuids*2;
+	result->qr_keys = malloc(maxnum * sizeof(result->qr_keys[0]),
+				 M_TEMP, M_WAITOK);
+	result->qr_vals = malloc(maxnum * sizeof(result->qr_vals[0]),
+				 M_TEMP, M_WAITOK);
+
+	num = 0;
 	for (j = 0; j < gu.nuids; j++) {
-		error = quota2_array_add_q2e(ump, type,
-		    gu.uids[j], replies);
-		if (error && error != ENOENT)
+		error = quota2_result_add_q2e(ump, idtype,
+		    gu.uids[j], result, j*2);
+		if (error == ENOENT)
+			continue;
+		if (error)
 			break;
+		num += 2;
 	}
+	result->qr_num = num;
+
 	free(gu.uids, M_TEMP);
 	return error;
 }

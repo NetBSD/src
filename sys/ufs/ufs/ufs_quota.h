@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.h,v 1.16 2012/01/29 07:00:40 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.h,v 1.17 2012/01/29 07:02:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -37,6 +37,7 @@
 #include <ufs/ufs/quota2.h>
 
 struct quotakcursor; /* from <sys/quotactl.h> */
+struct quota_getall_result; /* ditto, but: XXX temporary */
 
 
 /* link to this quota in the quota inode (for QUOTA2) */
@@ -132,7 +133,7 @@ int quota2_handle_cmd_put(struct ufsmount *, const struct quotakey *,
     const struct quotaval *);
 int quota2_handle_cmd_delete(struct ufsmount *, const struct quotakey *);
 int quota2_handle_cmd_getall(struct ufsmount *, struct quotakcursor *, int,
-    prop_array_t);
+    struct quota_getall_result *);
 int quota2_handle_cmd_cursoropen(struct ufsmount *, struct quotakcursor *);
 int quota2_handle_cmd_cursorclose(struct ufsmount *, struct quotakcursor *);
 int q2sync(struct mount *);
