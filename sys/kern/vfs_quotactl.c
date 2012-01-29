@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.6 2012/01/29 06:36:50 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.7 2012/01/29 06:37:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.6 2012/01/29 06:36:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.7 2012/01/29 06:37:30 dholland Exp $");
 
 #include <sys/mount.h>
 #include <sys/quotactl.h>
@@ -170,13 +170,74 @@ vfs_quotactl_get(struct mount *mp,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
 {
+	prop_object_iterator_t iter;
+	prop_dictionary_t data;
+	uint32_t id;
+	int defaultq;
+	const char *idstr;
+	prop_array_t replies;
 	struct vfs_quotactl_args args;
+	int error;
 
-	args.qc_type = QCT_PROPLIB;
-	args.u.proplib.qc_cmddict = cmddict;
-	args.u.proplib.qc_q2type = q2type;
-	args.u.proplib.qc_datas = datas;
-	return VFS_QUOTACTL(mp, QUOTACTL_GET, &args);
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+
+	replies = prop_array_create();
+	if (replies == NULL) {
+		return ENOMEM;
+	}
+
+	iter = prop_array_iterator(datas);
+	if (iter == NULL) {
+		prop_object_release(replies);
+		return ENOMEM;
+	}
+
+	while ((data = prop_object_iterator_next(iter)) != NULL) {
+		if (!prop_dictionary_get_uint32(data, "id", &id)) {
+			if (!prop_dictionary_get_cstring_nocopy(data, "id",
+			    &idstr))
+				continue;
+			if (strcmp(idstr, "default")) {
+				error = EINVAL;
+				goto fail;
+			}
+			id = 0;
+			defaultq = 1;
+		} else {
+			defaultq = 0;
+		}
+
+		args.qc_type = QCT_GET;
+		args.u.get.qc_q2type = q2type;
+		args.u.get.qc_id = id;
+		args.u.get.qc_defaultq = defaultq;
+		args.u.get.qc_replies = replies;
+		error = VFS_QUOTACTL(mp, QUOTACTL_GET, &args);
+		if (error == EPERM) {
+			/* XXX does this make sense? */
+			continue;
+		} else if (error == ENOENT) {
+			/* XXX does *this* make sense? */
+			continue;
+		} else if (error) {
+			goto fail;
+		}
+	}
+
+	prop_object_iterator_release(iter);
+	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
+		error = ENOMEM;
+	} else {
+		error = 0;
+	}
+
+	return error;
+
+ fail:
+	prop_object_iterator_release(iter);
+	prop_object_release(replies);
+	return error;
 }
 
 static int
