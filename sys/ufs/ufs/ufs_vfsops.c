@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.45 2012/01/29 06:34:58 dholland Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.46 2012/01/29 06:36:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.45 2012/01/29 06:34:58 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.46 2012/01/29 06:36:07 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.45 2012/01/29 06:34:58 dholland Exp
 
 #include <miscfs/specfs/specdev.h>
 
+#include <sys/quotactl.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -100,8 +101,7 @@ ufs_root(struct mount *mp, struct vnode **vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(struct mount *mp, int op, prop_dictionary_t cmddict, int q2type,
-	     prop_array_t datas)
+ufs_quotactl(struct mount *mp, int op, struct vfs_quotactl_args *args)
 {
 	struct lwp *l = curlwp;
 
@@ -112,9 +112,7 @@ ufs_quotactl(struct mount *mp, int op, prop_dictionary_t cmddict, int q2type,
 	(void) l;
 	return (EOPNOTSUPP);
 #else
-	int  error;
-
-	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	int error;
 
 	/* Mark the mount busy, as we're passing it to kauth(9). */
 	error = vfs_busy(mp, NULL);
@@ -123,7 +121,7 @@ ufs_quotactl(struct mount *mp, int op, prop_dictionary_t cmddict, int q2type,
 	}
 	mutex_enter(&mp->mnt_updating);
 
-	error = quota_handle_cmd(mp, l, op, cmddict, q2type, datas);
+	error = quota_handle_cmd(mp, l, op, args);
 
 	mutex_exit(&mp->mnt_updating);
 	vfs_unbusy(mp, false, NULL);
