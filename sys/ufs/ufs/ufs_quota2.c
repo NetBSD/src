@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.29 2012/01/29 07:20:27 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.30 2012/01/29 07:21:00 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,13 +26,12 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.29 2012/01/29 07:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.30 2012/01/29 07:21:00 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/file.h>
 #include <sys/proc.h>
@@ -794,17 +793,16 @@ out_dq:
 }
 
 static int
-quota2_result_add_q2e(struct ufsmount *ump, int idtype,
-    int id, struct quotakey *keys, struct quotaval *vals, unsigned pos,
-    int skipfirst, int skiplast)
+quota2_fetch_q2e(struct ufsmount *ump, const struct quotakey *qk,
+    struct quota2_entry *ret)
 {
 	struct dquot *dq;
 	int error;
-	struct quota2_entry *q2ep, q2e;
-	struct buf  *bp;
+	struct quota2_entry *q2ep;
+	struct buf *bp;
 	const int needswap = UFS_MPNEEDSWAP(ump);
 
-	error = dqget(NULLVP, id, ump, idtype, &dq);
+	error = dqget(NULLVP, qk->qk_id, ump, qk->qk_idtype, &dq);
 	if (error)
 		return error;
 
@@ -814,39 +812,23 @@ quota2_result_add_q2e(struct ufsmount *ump, int idtype,
 		dqrele(NULLVP, dq);
 		return ENOENT;
 	}
-	error = getq2e(ump, idtype, dq->dq2_lblkno, dq->dq2_blkoff,
+	error = getq2e(ump, qk->qk_idtype, dq->dq2_lblkno, dq->dq2_blkoff,
 	    &bp, &q2ep, 0);
 	if (error) {
 		mutex_exit(&dq->dq_interlock);
 		dqrele(NULLVP, dq);
 		return error;
 	}
-	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
+	quota2_ufs_rwq2e(q2ep, ret, needswap);
 	brelse(bp, 0);
 	mutex_exit(&dq->dq_interlock);
 	dqrele(NULLVP, dq);
-
-	if (skipfirst == 0) {
-		keys[pos].qk_idtype = idtype;
-		keys[pos].qk_objtype = QUOTA_OBJTYPE_BLOCKS;
-		q2e_to_quotaval(&q2e, 0, &keys[pos].qk_id,
-				QL_BLOCK, &vals[pos]);
-		pos++;
-	}
-
-	if (skiplast == 0) {
-		keys[pos].qk_idtype = idtype;
-		keys[pos].qk_objtype = QUOTA_OBJTYPE_FILES;
-		q2e_to_quotaval(&q2e, 0, &keys[pos].qk_id,
-				QL_FILE, &vals[pos]);
-		pos++;
-	}
 
 	return 0;
 }
 
 static int
-quota2_fetch_q2e(struct ufsmount *ump, const struct quotakey *qk,
+quota2_fetch_quotaval(struct ufsmount *ump, const struct quotakey *qk,
     struct quotaval *ret)
 {
 	struct dquot *dq;
@@ -923,11 +905,17 @@ quota2_handle_cmd_get(struct ufsmount *ump, const struct quotakey *qk,
 				qk->qk_objtype, ret);
 		(void)id2;
 	} else
-		error = quota2_fetch_q2e(ump, qk, ret);
+		error = quota2_fetch_quotaval(ump, qk, ret);
 	
 	return error;
 }
 
+/*
+ * Cursor structure we used.
+ *
+ * This will get stored in userland between calls so we must not assume
+ * it isn't arbitrarily corrupted.
+ */
 struct ufsq2_cursor {
 	uint32_t q2c_magic;	/* magic number */
 	int q2c_hashsize;	/* size of hash table at last go */
@@ -940,10 +928,54 @@ struct ufsq2_cursor {
 	int q2c_blocks_done;	/* true if we've returned the blocks value */
 };
 
+/*
+ * State of a single cursorget call, or at least the part of it that
+ * needs to be passed around.
+ */
+struct q2cursor_state {
+	/* data return pointers */
+	struct quotakey *keys;
+	struct quotaval *vals;
+
+	/* key/value counters */
+	unsigned maxkeyvals;
+	unsigned numkeys;	/* number of keys assigned */
+
+	/* ID to key/value conversion state */
+	int skipfirst;		/* if true skip first key/value */
+	int skiplast;		/* if true skip last key/value */
+
+	/* ID counters */
+	unsigned maxids;	/* maximum number of IDs to handle */
+	unsigned numids;	/* number of IDs handled */
+};
+
+/*
+ * Additional structure for getids callback.
+ */
+struct q2cursor_getids {
+	struct q2cursor_state *state;
+	int idtype;
+	unsigned skip;		/* number of ids to skip over */
+	unsigned new_skip;	/* number of ids to skip over next time */
+	unsigned skipped;	/* number skipped so far */
+};
+
+/*
+ * Cursor-related functions
+ */
+
+/* magic number */
 #define Q2C_MAGIC (0xbeebe111)
 
+/* extract cursor from caller form */
 #define Q2CURSOR(qkc) ((struct ufsq2_cursor *)&qkc->u.qkc_space[0])
 
+/*
+ * Check that a cursor we're handed is something like valid. If
+ * someone munges it and it still passes these checks, they'll get
+ * partial or odd results back but won't break anything.
+ */
 static int
 q2cursor_check(struct ufsq2_cursor *cursor)
 {
@@ -972,49 +1004,259 @@ q2cursor_check(struct ufsq2_cursor *cursor)
 	return 0;
 }
 
-struct getuids {
-	long nuids; /* number of uids in array */
-	long maxuids;  /* number of uids allocated */
-	uid_t *uids; /* array of uids, dynamically allocated */
-	long skip;
-	long seen;
-	long limit;
-};
+/*
+ * Set up the q2cursor state.
+ */
+static void
+q2cursor_initstate(struct q2cursor_state *state, struct quotakey *keys,
+    struct quotaval *vals, unsigned maxkeyvals, int blocks_done)
+{
+	state->keys = keys;
+	state->vals = vals;
 
+	state->maxkeyvals = maxkeyvals;
+	state->numkeys = 0;
+
+	/*
+	 * For each ID there are two quotavals to return. If the
+	 * maximum number of entries to return is odd, we might want
+	 * to skip the first quotaval of the first ID, or the last
+	 * quotaval of the last ID, but not both. So the number of IDs
+	 * we want is (up to) half the number of return slots we have,
+	 * rounded up.
+	 */
+
+	state->maxids = (state->maxkeyvals + 1) / 2;
+	state->numids = 0;
+	if (state->maxkeyvals % 2) {
+		if (blocks_done) {
+			state->skipfirst = 1;
+			state->skiplast = 0;
+		} else {
+			state->skipfirst = 0;
+			state->skiplast = 1;
+		}
+	} else {
+		state->skipfirst = 0;
+		state->skiplast = 0;
+	}
+}
+
+/*
+ * Choose which idtype we're going to work on. If doing a full
+ * iteration, we do users first, then groups, but either might be
+ * disabled or marked to skip via cursorsetidtype(), so don't make
+ * silly assumptions.
+ */
 static int
-quota2_getuids_callback(struct ufsmount *ump, uint64_t *offp,
+q2cursor_pickidtype(struct ufsq2_cursor *cursor, int *idtype_ret)
+{
+	if (cursor->q2c_users_done == 0) {
+		*idtype_ret = QUOTA_IDTYPE_USER;
+	} else if (cursor->q2c_groups_done == 0) {
+		*idtype_ret = QUOTA_IDTYPE_GROUP;
+	} else {
+		return EAGAIN;
+	}
+	return 0;
+}
+
+/*
+ * Add an ID to the current state. Sets up either one or two keys to
+ * refer to it, depending on whether it's first/last and the setting
+ * of skipfirst. (skiplast does not need to be explicitly tested)
+ */
+static void
+q2cursor_addid(struct q2cursor_state *state, int idtype, id_t id)
+{
+	KASSERT(state->numids < state->maxids);
+	KASSERT(state->numkeys < state->maxkeyvals);
+
+	if (!state->skipfirst || state->numkeys > 0) {
+		state->keys[state->numkeys].qk_idtype = idtype;
+		state->keys[state->numkeys].qk_id = id;
+		state->keys[state->numkeys].qk_objtype = QUOTA_OBJTYPE_BLOCKS;
+		state->numkeys++;
+	}
+	if (state->numkeys < state->maxkeyvals) {
+		state->keys[state->numkeys].qk_idtype = idtype;
+		state->keys[state->numkeys].qk_id = id;
+		state->keys[state->numkeys].qk_objtype = QUOTA_OBJTYPE_FILES;
+		state->numkeys++;
+	} else {
+		KASSERT(state->skiplast);
+	}
+	state->numids++;
+}
+
+/*
+ * Callback function for getting IDs. Update counting and call addid.
+ */
+static int
+q2cursor_getids_callback(struct ufsmount *ump, uint64_t *offp,
     struct quota2_entry *q2ep, uint64_t off, void *v)
 {
-	struct getuids *gu = v;
-	uid_t *newuids;
-	long newmax;
+	struct q2cursor_getids *gi = v;
+	id_t id;
 #ifdef FFS_EI
 	const int needswap = UFS_MPNEEDSWAP(ump);
 #endif
 
-	if (gu->skip > 0) {
-		gu->skip--;
+	if (gi->skipped < gi->skip) {
+		gi->skipped++;
 		return 0;
 	}
-	if (gu->nuids == gu->maxuids) {
-		newmax = gu->maxuids + PAGE_SIZE / sizeof(uid_t);
-		newuids = realloc(gu->uids, newmax * sizeof(gu->uids[0]),
-		    M_TEMP, M_WAITOK);
-		if (newuids == NULL) {
-			return ENOMEM;
-		}
-		gu->uids = newuids;
-		gu->maxuids = newmax;
-	}
-	gu->uids[gu->nuids] = ufs_rw32(q2ep->q2e_uid, needswap);
-	gu->nuids++;
-	gu->seen++;
-	if (gu->nuids == gu->limit) {
+	id = ufs_rw32(q2ep->q2e_uid, needswap);
+	q2cursor_addid(gi->state, gi->idtype, id);
+	gi->new_skip++;
+	if (gi->state->numids >= gi->state->maxids) {
+		/* got enough ids, stop now */
 		return Q2WL_ABORT;
 	}
 	return 0;
 }
 
+/*
+ * Fill in a batch of quotakeys by scanning one or more hash chains.
+ */
+static int
+q2cursor_getkeys(struct ufsmount *ump, int idtype, struct ufsq2_cursor *cursor,
+    struct q2cursor_state *state,
+    int *hashsize_ret, struct quota2_entry *default_q2e_ret)
+{
+	const int needswap = UFS_MPNEEDSWAP(ump);
+	struct buf *hbp;
+	struct quota2_header *q2h;
+	int quota2_hash_size;
+	struct q2cursor_getids gi;
+	uint64_t offset;
+	int error;
+
+	/*
+	 * Read the header block.
+	 */
+
+	mutex_enter(&dqlock);
+	error = getq2h(ump, idtype, &hbp, &q2h, 0);
+	if (error) {
+		mutex_exit(&dqlock);
+		return error;
+	}
+
+	/* if the table size has changed, make the caller start over */
+	quota2_hash_size = ufs_rw16(q2h->q2h_hash_size, needswap);
+	if (cursor->q2c_hashsize == 0) {
+		cursor->q2c_hashsize = quota2_hash_size;
+	} else if (cursor->q2c_hashsize != quota2_hash_size) {
+		error = EDEADLK;
+		goto scanfail;
+	}
+
+	/* grab the entry with the default values out of the header */
+	quota2_ufs_rwq2e(&q2h->q2h_defentry, default_q2e_ret, needswap);
+
+	/* If we haven't done the defaults yet, that goes first. */
+	if (cursor->q2c_defaults_done == 0) {
+		q2cursor_addid(state, idtype, QUOTA_DEFAULTID);
+		cursor->q2c_defaults_done = 1;
+	}
+
+	gi.state = state;
+	gi.idtype = idtype;
+
+	while (state->numids < state->maxids) {
+		if (cursor->q2c_hashpos >= quota2_hash_size) {
+			/* nothing more left */
+			break;
+		}
+
+		/* scan this hash chain */
+		gi.skip = cursor->q2c_uidpos;
+		gi.new_skip = gi.skip;
+		gi.skipped = 0;
+		offset = q2h->q2h_entries[cursor->q2c_hashpos];
+
+		error = quota2_walk_list(ump, hbp, idtype, &offset, 0, &gi,
+		    q2cursor_getids_callback);
+		if (error == Q2WL_ABORT) {
+			/* callback stopped before reading whole chain */
+			cursor->q2c_uidpos = gi.new_skip;
+			/* not an error */
+			error = 0;
+		} else if (error) {
+			break;
+		} else {
+			/* read whole chain, advance to next */
+			cursor->q2c_uidpos = 0;
+			cursor->q2c_hashpos++;
+		}
+	}
+
+scanfail:
+	mutex_exit(&dqlock);
+	brelse(hbp, 0);
+	if (error)
+		return error;
+
+	*hashsize_ret = quota2_hash_size;
+	return 0;
+}
+
+/*
+ * Fetch the quotavals for the quotakeys.
+ */
+static int
+q2cursor_getvals(struct ufsmount *ump, struct q2cursor_state *state,
+    const struct quota2_entry *default_q2e)
+{
+	int hasid;
+	id_t loadedid, id;
+	unsigned pos;
+	struct quota2_entry q2e;
+	int objtype;
+	int error;
+
+	hasid = 0;
+	loadedid = 0;
+	for (pos = 0; pos < state->numkeys; pos++) {
+		id = state->keys[pos].qk_id;
+		if (!hasid || id != loadedid) {
+			hasid = 1;
+			loadedid = id;
+			if (id == QUOTA_DEFAULTID) {
+				q2e = *default_q2e;
+			} else {
+				error = quota2_fetch_q2e(ump,
+							 &state->keys[pos],
+							 &q2e);
+				if (error == ENOENT) {
+					/* something changed - start over */
+					error = EDEADLK;
+				}
+				if (error) {
+					return error;
+				}
+ 			}
+		}
+
+
+		objtype = state->keys[pos].qk_objtype;
+		KASSERT(objtype >= 0 && objtype < N_QL);
+		q2val_to_quotaval(&q2e.q2e_val[objtype], &state->vals[pos]);
+	}
+
+	return 0;
+}
+
+/*
+ * Handle cursorget.
+ *
+ * We can't just read keys and values directly, because we can't walk
+ * the list with qdlock and grab dq_interlock to read the entries at
+ * the same time. So we're going to do two passes: one to figure out
+ * which IDs we want and fill in the keys, and then a second to use
+ * the keys to fetch the values.
+ */
 int
 quota2_handle_cmd_cursorget(struct ufsmount *ump, struct quotakcursor *qkc,
     struct quotakey *keys, struct quotaval *vals, unsigned maxreturn,
@@ -1022,32 +1264,36 @@ quota2_handle_cmd_cursorget(struct ufsmount *ump, struct quotakcursor *qkc,
 {
 	int error;
 	struct ufsq2_cursor *cursor;
-	struct quota2_header *q2h;
-	struct quota2_entry  q2e;
-	struct buf *hbp;
-	uint64_t offset;
+	struct ufsq2_cursor newcursor;
+	struct q2cursor_state state;
+	struct quota2_entry default_q2e;
 	int idtype;
-	int can_switch_idtype;
-	int i, j;
 	int quota2_hash_size;
-	const int needswap = UFS_MPNEEDSWAP(ump);
-	struct getuids gu;
-	long excess;
-	id_t junkid;
-	struct quotaval qv;
-	unsigned num, maxnum;
-	int skipfirst, skiplast;
-	int numreturn;
 
+	/*
+	 * Convert and validate the cursor.
+	 */
 	cursor = Q2CURSOR(qkc);
 	error = q2cursor_check(cursor);
 	if (error) {
 		return error;
 	}
 
-	CTASSERT(USRQUOTA == QUOTA_IDTYPE_USER);
-	CTASSERT(GRPQUOTA == QUOTA_IDTYPE_GROUP);
+	/*
+	 * Make sure our on-disk codes match the values of the
+	 * FS-independent ones. This avoids the need for explicit
+	 * conversion (which would be a NOP anyway and thus easily
+	 * left out or called in the wrong places...)
+	 */
+	CTASSERT(QUOTA_IDTYPE_USER == USRQUOTA);
+	CTASSERT(QUOTA_IDTYPE_GROUP == GRPQUOTA);
+	CTASSERT(QUOTA_OBJTYPE_BLOCKS == QL_BLOCK);
+	CTASSERT(QUOTA_OBJTYPE_FILES == QL_FILE);
 
+	/*
+	 * If some of the idtypes aren't configured/enabled, arrange
+	 * to skip over them.
+	 */
 	if (cursor->q2c_users_done == 0 &&
 	    ump->um_quotas[USRQUOTA] == NULLVP) {
 		cursor->q2c_users_done = 1;
@@ -1057,155 +1303,74 @@ quota2_handle_cmd_cursorget(struct ufsmount *ump, struct quotakcursor *qkc,
 		cursor->q2c_groups_done = 1;
 	}
 
-restart:
+	/* Loop over, potentially, both idtypes */
+	while (1) {
 
-	if (cursor->q2c_users_done == 0) {
-		idtype = QUOTA_IDTYPE_USER;
-		can_switch_idtype = 1;
-	} else if (cursor->q2c_groups_done == 0) {
-		idtype = QUOTA_IDTYPE_GROUP;
-		can_switch_idtype = 0;
-	} else {
-		/* nothing more to do, return 0 */
-		*ret = 0;
-		return 0;
-	}
-
-	KASSERT(ump->um_quotas[idtype] != NULLVP);
-
-	numreturn = 0;
-
-	mutex_enter(&dqlock);
-	error = getq2h(ump, idtype, &hbp, &q2h, 0);
-	if (error) {
-		mutex_exit(&dqlock);
-		return error;
-	}
-
-	if (cursor->q2c_defaults_done == 0) {
-		quota2_ufs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
-		if (cursor->q2c_blocks_done == 0) {
-			q2e_to_quotaval(&q2e, 1, &junkid, QL_BLOCK, &qv);
-			keys[numreturn].qk_idtype = idtype;
-			keys[numreturn].qk_id = QUOTA_DEFAULTID;
-			keys[numreturn].qk_objtype = QUOTA_OBJTYPE_BLOCKS;
-			vals[numreturn++] = qv;
-			cursor->q2c_blocks_done = 1;
+		/* Choose id type */
+		error = q2cursor_pickidtype(cursor, &idtype);
+		if (error == EAGAIN) {
+			/* nothing more to do, return 0 */
+			*ret = 0;
+			return 0;
 		}
-		if (cursor->q2c_blocks_done == 1) {
-			q2e_to_quotaval(&q2e, 1, &junkid, QL_FILE, &qv);
-			keys[numreturn].qk_idtype = idtype;
-			keys[numreturn].qk_id = QUOTA_DEFAULTID;
-			keys[numreturn].qk_objtype = QUOTA_OBJTYPE_FILES;
-			vals[numreturn++] = qv;
+		KASSERT(ump->um_quotas[idtype] != NULLVP);
+
+		/*
+		 * Initialize the per-call iteration state. Copy the
+		 * cursor state so we can update it in place but back
+		 * out on error.
+		 */
+		q2cursor_initstate(&state, keys, vals, maxreturn,
+				   cursor->q2c_blocks_done);
+		newcursor = *cursor;
+
+		/* Assign keys */
+		error = q2cursor_getkeys(ump, idtype, &newcursor, &state,
+					 &quota2_hash_size, &default_q2e);
+		if (error) {
+			return error;
+		}
+
+		/* Now fill in the values. */
+		error = q2cursor_getvals(ump, &state, &default_q2e);
+		if (error) {
+			return error;
+		}
+
+		/*
+		 * Now that we aren't going to fail and lose what we
+		 * did so far, we can update the cursor state.
+		 */
+
+		if (newcursor.q2c_hashpos >= quota2_hash_size) {
+			if (idtype == QUOTA_IDTYPE_USER)
+				cursor->q2c_users_done = 1;
+			else
+				cursor->q2c_groups_done = 1;
+
+			/* start over on another id type */
+			cursor->q2c_hashsize = 0;
+			cursor->q2c_defaults_done = 0;
+			cursor->q2c_hashpos = 0;
+			cursor->q2c_uidpos = 0;
 			cursor->q2c_blocks_done = 0;
-			cursor->q2c_defaults_done = 1;
-		}
-	}
-
-	/*
-	 * we can't directly get entries as we can't walk the list
-	 * with qdlock and grab dq_interlock to read the entries
-	 * at the same time. So just walk the lists to build a list of uid,
-	 * and then read entries for these uids
-	 */
-	memset(&gu, 0, sizeof(gu));
-	quota2_hash_size = ufs_rw16(q2h->q2h_hash_size, needswap);
-
-	/* if the table size has changed, make the caller start over */
-	if (cursor->q2c_hashsize == 0) {
-		cursor->q2c_hashsize = quota2_hash_size;
-	} else if (cursor->q2c_hashsize != quota2_hash_size) {
-		error = EDEADLK;
-		goto fail;
-	}
-
-	gu.skip = cursor->q2c_uidpos;
-	gu.seen = 0;
-	gu.limit = (maxreturn - numreturn) / 2;
-	if (gu.limit == 0 && (maxreturn - numreturn) > 0) {
-		gu.limit = 1;
-	}
-	for (i = cursor->q2c_hashpos; i < quota2_hash_size ; i++) {
-		offset = q2h->q2h_entries[i];
-		gu.seen = 0;
-		error = quota2_walk_list(ump, hbp, idtype, &offset, 0, &gu,
-		    quota2_getuids_callback);
-		if (error && error != Q2WL_ABORT) {
-			if (gu.uids != NULL)
-				free(gu.uids, M_TEMP);
-			break;
-		}
-		if (error == Q2WL_ABORT) {
-			/* got enough uids for now */
-			error = 0;
-		}
-		if (gu.nuids > gu.limit) {
-			excess = gu.nuids - gu.limit;
-			KASSERT(excess < gu.seen);
-			gu.seen -= excess;
-			gu.nuids -= excess;
-		}
-		if (gu.nuids == gu.limit) {
-			break;
-		}
-	}
-	KASSERT(gu.nuids <= gu.limit);
-	cursor->q2c_hashpos = i;
-	cursor->q2c_uidpos = gu.seen;
-
-fail:
-	mutex_exit(&dqlock);
-	brelse(hbp, 0);
-	if (error)
-		return error;
-
-	if (gu.nuids == 0) {
-		if (idtype == QUOTA_IDTYPE_USER)
-			cursor->q2c_users_done = 1;
-		else
-			cursor->q2c_groups_done = 1;
-		if (can_switch_idtype) {
-			goto restart;
-		}
-	}
-
-	maxnum = gu.nuids*2;
-
-	/*
-	 * If we've already sent back the blocks value for the first id,
-	 * don't send it again (skipfirst).
-	 *
-	 * If we have an odd number of available result slots and we
-	 * aren't going to skip the first result entry, we need to
-	 * leave off the last result entry (skiplast).
-	 */
-	skipfirst = (cursor->q2c_blocks_done != 0);
-	skiplast = skipfirst == 0 && (maxreturn < maxnum);
-	num = 0;
-	for (j = 0; j < gu.nuids; j++) {
-		error = quota2_result_add_q2e(ump, idtype,
-		    gu.uids[j], keys, vals, numreturn + j*2,
-		    j == 0 && skipfirst,
-		    j + 1 == gu.nuids && skiplast);
-		if (error == ENOENT)
-			continue;
-		if (error)
-			break;
-		if ((j == 0 && skipfirst) || (j + 1 == gu.nuids && skiplast)) {
-			num += 1;
 		} else {
-			num += 2;
+			*cursor = newcursor;
+			cursor->q2c_blocks_done = state.skiplast;
+		}
+
+		/*
+		 * If we have something to return, return it.
+		 * Otherwise, continue to the other idtype, if any,
+		 * and only return zero at end of iteration.
+		 */
+		if (state.numkeys > 0) {
+			break;
 		}
 	}
-	numreturn += num;
-	*ret = numreturn;
 
-	cursor->q2c_blocks_done = skiplast;
-
-	if (gu.uids != NULL)
-		free(gu.uids, M_TEMP);
-	return error;
+	*ret = state.numkeys;
+	return 0;
 }
 
 int
