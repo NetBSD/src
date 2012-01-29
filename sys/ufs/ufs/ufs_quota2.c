@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.23 2012/01/29 07:07:22 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.24 2012/01/29 07:08:00 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.23 2012/01/29 07:07:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.24 2012/01/29 07:08:00 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -1000,7 +1000,7 @@ q2cursor_check(struct ufsq2_cursor *cursor)
 
 struct getuids {
 	long nuids; /* number of uids in array */
-	long size;  /* size of array */
+	long maxuids;  /* number of uids allocated */
 	uid_t *uids; /* array of uids, dynamically allocated */
 	long skip;
 	long seen;
@@ -1013,6 +1013,7 @@ quota2_getuids_callback(struct ufsmount *ump, uint64_t *offp,
 {
 	struct getuids *gu = v;
 	uid_t *newuids;
+	long newmax;
 #ifdef FFS_EI
 	const int needswap = UFS_MPNEEDSWAP(ump);
 #endif
@@ -1021,15 +1022,15 @@ quota2_getuids_callback(struct ufsmount *ump, uint64_t *offp,
 		gu->skip--;
 		return 0;
 	}
-	if (gu->nuids == gu->size) {
-		newuids = realloc(gu->uids, gu->size + PAGE_SIZE, M_TEMP,
-		    M_WAITOK);
+	if (gu->nuids == gu->maxuids) {
+		newmax = gu->maxuids + PAGE_SIZE / sizeof(uid_t);
+		newuids = realloc(gu->uids, newmax * sizeof(gu->uids[0]),
+		    M_TEMP, M_WAITOK);
 		if (newuids == NULL) {
-			free(gu->uids, M_TEMP);
 			return ENOMEM;
 		}
 		gu->uids = newuids;
-		gu->size += (PAGE_SIZE / sizeof(uid_t));
+		gu->maxuids = newmax;
 	}
 	gu->uids[gu->nuids] = ufs_rw32(q2ep->q2e_uid, needswap);
 	gu->nuids++;
