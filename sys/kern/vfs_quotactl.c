@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.3 2012/01/29 06:32:43 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.4 2012/01/29 06:34:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,10 +80,71 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.3 2012/01/29 06:32:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.4 2012/01/29 06:34:57 dholland Exp $");
 
 #include <sys/mount.h>
+#include <sys/quotactl.h>
 #include <quota/quotaprop.h>
+
+static int
+vfs_quotactl_cmd(struct mount *mp, prop_dictionary_t cmddict)
+{
+	int error;
+	const char *cmd, *type;
+	int op;
+	prop_array_t datas;
+	int q2type;
+
+	if (!prop_dictionary_get_cstring_nocopy(cmddict, "command", &cmd))
+		return EINVAL;
+	if (!prop_dictionary_get_cstring_nocopy(cmddict, "type", &type))
+		return EINVAL;
+
+	if (!strcmp(type, QUOTADICT_CLASS_USER)) {
+		q2type = QUOTA_CLASS_USER;
+	} else if (!strcmp(type, QUOTADICT_CLASS_GROUP)) {
+		q2type = QUOTA_CLASS_GROUP;
+	} else {
+		/* XXX this is a bad errno for this case */
+		return EOPNOTSUPP;
+	}
+
+	datas = prop_dictionary_get(cmddict, "data");
+	if (datas == NULL || prop_object_type(datas) != PROP_TYPE_ARRAY)
+		return EINVAL;
+
+	prop_object_retain(datas);
+	prop_dictionary_remove(cmddict, "data"); /* prepare for return */
+
+	if (strcmp(cmd, "get version") == 0) {
+		op = QUOTACTL_GETVERSION;
+	} else if (strcmp(cmd, "quotaon") == 0) {
+		op = QUOTACTL_QUOTAON;
+	} else if (strcmp(cmd, "quotaoff") == 0) {
+		op = QUOTACTL_QUOTAOFF;
+	} else if (strcmp(cmd, "get") == 0) {
+		op = QUOTACTL_GET;
+	} else if (strcmp(cmd, "set") == 0) {
+		op = QUOTACTL_SET;
+	} else if (strcmp(cmd, "getall") == 0) {
+		op = QUOTACTL_GETALL;
+	} else if (strcmp(cmd, "clear") == 0) {
+		op = QUOTACTL_CLEAR;
+	} else {
+		/* XXX this a bad errno for this case */
+		error = EOPNOTSUPP;
+		goto fail;
+	}
+
+	error = VFS_QUOTACTL(mp, op, cmddict, q2type, datas);
+
+ fail:
+	error = (prop_dictionary_set_int8(cmddict, "return",
+	    error) ? 0 : ENOMEM);
+	prop_object_release(datas);
+
+	return error;
+}
 
 int
 vfs_quotactl(struct mount *mp, prop_dictionary_t dict)
@@ -108,7 +169,7 @@ vfs_quotactl(struct mount *mp, prop_dictionary_t dict)
 			/* XXX shouldn't this be an error? */
 			continue;
 		}
-		error = VFS_QUOTACTL(mp, cmddict, 0/*dummy*/);
+		error = vfs_quotactl_cmd(mp, cmddict);
 		if (error) {
 			break;
 		}
