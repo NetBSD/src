@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.86 2012/01/29 06:50:15 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.87 2012/01/29 06:50:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.86 2012/01/29 06:50:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.87 2012/01/29 06:50:53 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -288,8 +288,10 @@ quota_handle_cmd_put(struct mount *mp, struct lwp *l,
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(kauth_id),
 	    NULL);
-	if (error != 0)
-		goto err;
+	if (error != 0) {
+		return error;
+	}
+
 #ifdef QUOTA
 	if (ump->um_flags & UFS_QUOTA)
 		error = quota1_handle_cmd_put(ump, qk, qv);
@@ -302,11 +304,10 @@ quota_handle_cmd_put(struct mount *mp, struct lwp *l,
 #endif
 		panic("quota_handle_cmd_get: no support ?");
 		
-	if (error && error != ENOENT)
-		goto err;
+	if (error == ENOENT) {
+		error = 0;
+	}
 
-	return 0;
- err:
 	return error;
 }
 
