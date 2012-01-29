@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.10 2012/01/29 06:41:42 dholland Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.11 2012/01/29 06:45:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.10 2012/01/29 06:41:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.11 2012/01/29 06:45:26 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -568,6 +568,7 @@ quota1_handle_cmd_set(struct ufsmount *ump, int type, int id,
 
 	if (defaultq) {
 		/* just update grace times */
+		KASSERT(id == 0);
 		error = proptoquota64(data, valuesp, val_limitsonly_grace, 1,
 		    ufs_quota_limit_names, QUOTA_NLIMITS);
 		if (error)
