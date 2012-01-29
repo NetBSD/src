@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.7 2012/01/01 15:41:16 dholland Exp $ */
+/* $NetBSD: quota.h,v 1.8 2012/01/29 06:38:23 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -29,6 +29,9 @@
 #define _SYS_QUOTA_H_
 
 #include <sys/types.h>
+
+/* id value for "default" */
+#define QUOTA_DEFAULTID		((id_t)-1)
 
 /*
  * Structure used to describe the value part of a quota record.
