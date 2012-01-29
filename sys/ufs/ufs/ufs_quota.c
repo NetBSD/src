@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.70 2011/03/24 17:05:46 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.71 2012/01/29 06:34:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.70 2011/03/24 17:05:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.71 2012/01/29 06:34:58 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.70 2011/03/24 17:05:46 bouyer Exp $"
 #include <sys/mount.h>
 #include <sys/kauth.h>
 
+#include <sys/quotactl.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -152,65 +153,41 @@ chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 }
 
 int
-quota_handle_cmd(struct mount *mp, struct lwp *l, prop_dictionary_t cmddict)
+quota_handle_cmd(struct mount *mp, struct lwp *l, int op,
+		 prop_dictionary_t cmddict, int q2type, prop_array_t datas)
 {
 	int error = 0;
-	const char *cmd, *type;
-	prop_array_t datas;
-	int q2type;
 
-	if (!prop_dictionary_get_cstring_nocopy(cmddict, "command", &cmd))
-		return EINVAL;
-	if (!prop_dictionary_get_cstring_nocopy(cmddict, "type", &type))
-		return EINVAL;
-	if (!strcmp(type, QUOTADICT_CLASS_USER)) {
-		q2type = USRQUOTA;
-	} else if (!strcmp(type, QUOTADICT_CLASS_GROUP)) {
-		q2type = GRPQUOTA;
-	} else
-		return EOPNOTSUPP;
-	datas = prop_dictionary_get(cmddict, "data");
-	if (datas == NULL || prop_object_type(datas) != PROP_TYPE_ARRAY)
-		return EINVAL;
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
-	prop_object_retain(datas);
-	prop_dictionary_remove(cmddict, "data"); /* prepare for return */
-
-	if (strcmp(cmd, "get version") == 0) {
+	switch (op) {
+	    case QUOTACTL_GETVERSION:
 		error = quota_handle_cmd_get_version(mp, l, cmddict, datas);
-		goto end;
-	}
-	if (strcmp(cmd, "quotaon") == 0) {
+		break;
+	    case QUOTACTL_QUOTAON:
 		error = quota_handle_cmd_quotaon(mp, l, cmddict,
 		    q2type, datas);
-		goto end;
-	}
-	if (strcmp(cmd, "quotaoff") == 0) {
+		break;
+	    case QUOTACTL_QUOTAOFF:
 		error = quota_handle_cmd_quotaoff(mp, l, cmddict,
 		    q2type, datas);
-		goto end;
-	}
-	if (strcmp(cmd, "get") == 0) {
+		break;
+	    case QUOTACTL_GET:
 		error = quota_handle_cmd_get(mp, l, cmddict, q2type, datas);
-		goto end;
-	}
-	if (strcmp(cmd, "set") == 0) {
+		break;
+	    case QUOTACTL_SET:
 		error = quota_handle_cmd_set(mp, l, cmddict, q2type, datas);
-		goto end;
-	}
-	if (strcmp(cmd, "getall") == 0) {
+		break;
+	    case QUOTACTL_GETALL:
 		error = quota_handle_cmd_getall(mp, l, cmddict, q2type, datas);
-		goto end;
-	}
-	if (strcmp(cmd, "clear") == 0) {
+		break;
+	    case QUOTACTL_CLEAR:
 		error = quota_handle_cmd_clear(mp, l, cmddict, q2type, datas);
-		goto end;
+		break;
+	    default:
+		panic("Invalid quotactl operation %d\n", op);
 	}
-	error = EOPNOTSUPP;
-end:
-	error = (prop_dictionary_set_int8(cmddict, "return",
-	    error) ? 0 : ENOMEM);
-	prop_object_release(datas);
+
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.1 2012/01/29 06:33:51 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.2 2012/01/29 06:34:57 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,5 +37,13 @@
  * use the <quota.h> API instead.
  */
 
+/* Command codes. */
+#define QUOTACTL_GETVERSION	0
+#define QUOTACTL_QUOTAON	1
+#define QUOTACTL_QUOTAOFF	2
+#define QUOTACTL_GET		3
+#define QUOTACTL_SET		4
+#define QUOTACTL_GETALL		5
+#define QUOTACTL_CLEAR		6
 
 #endif /* _SYS_QUOTACTL_H_ */
