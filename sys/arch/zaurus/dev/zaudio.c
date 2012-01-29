@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.18 2012/01/25 15:58:10 tsutsui Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.19 2012/01/29 10:12:41 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.18 2012/01/25 15:58:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.19 2012/01/29 10:12:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,6 +319,9 @@ static int
 zaudio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+
+	if (ZAURUS_ISC860)
+		return 0;	/* XXX for now */
 
 	if (ia->ia_name) {
 		/* direct config - check name */
