@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.32 2012/01/29 07:11:55 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.33 2012/01/29 07:12:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.32 2012/01/29 07:11:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.33 2012/01/29 07:12:40 dholland Exp $");
 
 #include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
@@ -95,6 +95,7 @@ vfs_quotactl_getversion(struct mount *mp,
 {
 	prop_array_t replies;
 	prop_dictionary_t data;
+	struct quotastat stat;
 	int q2version;
 	struct vfs_quotactl_args args;
 	int error;
@@ -102,11 +103,22 @@ vfs_quotactl_getversion(struct mount *mp,
 	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
 	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
-	args.qc_type = QCT_GETVERSION;
-	args.u.getversion.qc_version_ret = &q2version;
-	error = VFS_QUOTACTL(mp, QUOTACTL_GETVERSION, &args);
+	args.qc_type = QCT_STAT;
+	args.u.stat.qc_ret = &stat;
+	error = VFS_QUOTACTL(mp, QUOTACTL_STAT, &args);
 	if (error) {
 		return error;
+	}
+
+	/*
+	 * Set q2version based on the stat results. Currently there
+	 * are two valid values for q2version, 1 and 2, which we pick
+	 * based on whether quotacheck is required.
+	 */
+	if (stat.qs_restrictions & QUOTA_RESTRICT_NEEDSQUOTACHECK) {
+		q2version = 1;
+	} else {
+		q2version = 2;
 	}
 
 	data = prop_dictionary_create();
