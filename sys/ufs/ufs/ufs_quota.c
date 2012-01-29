@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.99 2012/01/29 07:11:12 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.100 2012/01/29 07:11:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.99 2012/01/29 07:11:12 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.100 2012/01/29 07:11:55 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -571,32 +571,22 @@ quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l,
     struct vfs_quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
+	int idtype;
 	int error;
-	prop_dictionary_t cmddict;
-	int q2type;
-	prop_array_t datas;
 
-	KASSERT(args->qc_type == QCT_PROPLIB);
-	cmddict = args->u.proplib.qc_cmddict;
-	q2type = args->u.proplib.qc_q2type;
-	datas = args->u.proplib.qc_datas;
-
-	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
-	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+	KASSERT(args->qc_type == QCT_QUOTAOFF);
+	idtype = args->u.quotaoff.qc_idtype;
 
 	if ((ump->um_flags & UFS_QUOTA2) != 0)
 		return EOPNOTSUPP;
 	
-	if (prop_array_count(datas) != 0)
-		return EINVAL;
-
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF, mp, NULL, NULL);
 	if (error != 0) {
 		return error;
 	}
 #ifdef QUOTA
-	error = quota1_handle_cmd_quotaoff(l, ump, q2type);
+	error = quota1_handle_cmd_quotaoff(l, ump, idtype);
 #else
 	error = EOPNOTSUPP;
 #endif
