@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.27 2012/01/29 07:07:22 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.28 2012/01/29 07:08:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.27 2012/01/29 07:07:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.28 2012/01/29 07:08:58 dholland Exp $");
 
 #include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
@@ -566,21 +566,8 @@ vfs_quotactl_getall(struct mount *mp,
 		args.u.getall.qc_vals = vals;
 		args.u.getall.qc_maxnum = loopmax;
 		args.u.getall.qc_ret = &loopnum;
-		args.u.getall.qc_idtype = q2type;	/* XXX */
 
 		error = VFS_QUOTACTL(mp, QUOTACTL_GETALL, &args);
-		/*
-		 * XXX this is bogus but up until now *all* errors
-		 * from inside quotactl_getall were suppressed by the
-		 * dispatching code in ufs_quota.c. Fixing that causes
-		 * repquota to break in an undesirable way; this is a
-		 * workaround.
-		 */
-		if (error == ENODEV || error == ENXIO) {
-			error = 0;
-			break;
-		}
-
 		if (error) {
 			goto err;
 		}
@@ -593,6 +580,11 @@ vfs_quotactl_getall(struct mount *mp,
 		for (i = 0; i < loopnum; i++) {
 			key = &keys[i];
 			val = &vals[i];
+
+			if (key->qk_idtype != q2type) {
+				/* don't want this result */
+				continue;
+			}
 
 			if (thisreply == NULL || key->qk_id != lastid) {
 				lastid = key->qk_id;

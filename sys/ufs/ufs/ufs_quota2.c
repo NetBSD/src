@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.24 2012/01/29 07:08:00 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.25 2012/01/29 07:08:58 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.24 2012/01/29 07:08:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.25 2012/01/29 07:08:58 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -966,6 +966,8 @@ struct ufsq2_cursor {
 	uint32_t q2c_magic;	/* magic number */
 	int q2c_hashsize;	/* size of hash table at last go */
 
+	int q2c_users_done;	/* true if we've returned all user data */
+	int q2c_groups_done;	/* true if we've returned all group data */
 	int q2c_defaults_done;	/* true if we've returned the default values */
 	int q2c_hashpos;	/* slot to start at in hash table */
 	int q2c_uidpos;		/* number of ids we've handled */
@@ -986,6 +988,12 @@ q2cursor_check(struct ufsq2_cursor *cursor)
 		return EINVAL;
 	}
 
+	if (cursor->q2c_users_done != 0 && cursor->q2c_users_done != 1) {
+		return EINVAL;
+	}
+	if (cursor->q2c_groups_done != 0 && cursor->q2c_groups_done != 1) {
+		return EINVAL;
+	}
 	if (cursor->q2c_defaults_done != 0 && cursor->q2c_defaults_done != 1) {
 		return EINVAL;
 	}
@@ -1043,8 +1051,8 @@ quota2_getuids_callback(struct ufsmount *ump, uint64_t *offp,
 
 int
 quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
-    int idtype, struct quotakey *keys, struct quotaval *vals,
-    unsigned maxreturn, unsigned *ret)
+    struct quotakey *keys, struct quotaval *vals, unsigned maxreturn,
+    unsigned *ret)
 {
 	int error;
 	struct ufsq2_cursor *cursor;
@@ -1052,6 +1060,8 @@ quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
 	struct quota2_entry  q2e;
 	struct buf *hbp;
 	uint64_t offset;
+	int idtype;
+	int can_switch_idtype;
 	int i, j;
 	int quota2_hash_size;
 	const int needswap = UFS_MPNEEDSWAP(ump);
@@ -1069,9 +1079,33 @@ quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
 		return error;
 	}
 
-	if (ump->um_quotas[idtype] == NULLVP) {
-		return ENODEV;
+	CTASSERT(USRQUOTA == QUOTA_IDTYPE_USER);
+	CTASSERT(GRPQUOTA == QUOTA_IDTYPE_GROUP);
+
+	if (cursor->q2c_users_done == 0 &&
+	    ump->um_quotas[USRQUOTA] == NULLVP) {
+		cursor->q2c_users_done = 1;
 	}
+	if (cursor->q2c_groups_done == 0 &&
+	    ump->um_quotas[GRPQUOTA] == NULLVP) {
+		cursor->q2c_groups_done = 1;
+	}
+
+restart:
+
+	if (cursor->q2c_users_done == 0) {
+		idtype = QUOTA_IDTYPE_USER;
+		can_switch_idtype = 1;
+	} else if (cursor->q2c_groups_done == 0) {
+		idtype = QUOTA_IDTYPE_GROUP;
+		can_switch_idtype = 0;
+	} else {
+		/* nothing more to do, return 0 */
+		*ret = 0;
+		return 0;
+	}
+
+	KASSERT(ump->um_quotas[idtype] != NULLVP);
 
 	numreturn = 0;
 
@@ -1160,6 +1194,16 @@ fail:
 	if (error)
 		return error;
 
+	if (gu.nuids == 0) {
+		if (idtype == QUOTA_IDTYPE_USER)
+			cursor->q2c_users_done = 1;
+		else
+			cursor->q2c_groups_done = 1;
+		if (can_switch_idtype) {
+			goto restart;
+		}
+	}
+
 	maxnum = gu.nuids*2;
 
 	/*
@@ -1209,6 +1253,8 @@ quota2_handle_cmd_cursoropen(struct ufsmount *ump, struct quotakcursor *qkc)
 	cursor->q2c_magic = Q2C_MAGIC;
 	cursor->q2c_hashsize = 0;
 
+	cursor->q2c_users_done = 0;
+	cursor->q2c_groups_done = 0;
 	cursor->q2c_defaults_done = 0;
 	cursor->q2c_hashpos = 0;
 	cursor->q2c_uidpos = 0;
