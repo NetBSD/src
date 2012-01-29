@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.90 2012/01/29 06:53:35 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.91 2012/01/29 06:54:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.90 2012/01/29 06:53:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.91 2012/01/29 06:54:34 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -79,7 +79,7 @@ static int quota_handle_cmd_put(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
 static int quota_handle_cmd_getall(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
-static int quota_handle_cmd_clear(struct mount *, struct lwp *,
+static int quota_handle_cmd_delete(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
 static int quota_handle_cmd_quotaon(struct mount *, struct lwp *, 
     struct vfs_quotactl_args *args);
@@ -178,8 +178,8 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, int op,
 	    case QUOTACTL_GETALL:
 		error = quota_handle_cmd_getall(mp, l, args);
 		break;
-	    case QUOTACTL_CLEAR:
-		error = quota_handle_cmd_clear(mp, l, args);
+	    case QUOTACTL_DELETE:
+		error = quota_handle_cmd_delete(mp, l, args);
 		break;
 	    default:
 		panic("Invalid quotactl operation %d\n", op);
@@ -312,7 +312,7 @@ quota_handle_cmd_put(struct mount *mp, struct lwp *l,
 }
 
 static int 
-quota_handle_cmd_clear(struct mount *mp, struct lwp *l, 
+quota_handle_cmd_delete(struct mount *mp, struct lwp *l, 
     struct vfs_quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -322,11 +322,11 @@ quota_handle_cmd_clear(struct mount *mp, struct lwp *l,
 	int objtype;
 	int error;
 
-	KASSERT(args->qc_type == QCT_CLEAR);
-	idtype = args->u.clear.qc_idtype;
-	id = args->u.clear.qc_id;
-	defaultq = args->u.clear.qc_defaultq;
-	objtype = args->u.clear.qc_objtype;
+	KASSERT(args->qc_type == QCT_DELETE);
+	idtype = args->u.delete.qc_idtype;
+	id = args->u.delete.qc_id;
+	defaultq = args->u.delete.qc_defaultq;
+	objtype = args->u.delete.qc_objtype;
 
 	if ((ump->um_flags & UFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
@@ -339,7 +339,7 @@ quota_handle_cmd_clear(struct mount *mp, struct lwp *l,
 			goto err;
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_clear(ump, idtype, id,
+			error = quota2_handle_cmd_delete(ump, idtype, id,
 			    defaultq, objtype);
 		} else
 #endif
