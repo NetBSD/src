@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.14 2012/01/29 06:54:34 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.15 2012/01/29 06:55:44 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.14 2012/01/29 06:54:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.15 2012/01/29 06:55:44 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -708,9 +708,11 @@ dq2clear_callback(struct ufsmount *ump, uint64_t *offp, struct quota2_entry *q2e
 	return 0;
 }
 int
-quota2_handle_cmd_delete(struct ufsmount *ump, int idtype, int id,
-    int defaultq, int objtype)
+quota2_handle_cmd_delete(struct ufsmount *ump, const struct quotakey *qk)
 {
+	int idtype;
+	id_t id;
+	int objtype;
 	int error, i, canfree;
 	struct dquot *dq;
 	struct quota2_header *q2h;
@@ -719,9 +721,13 @@ quota2_handle_cmd_delete(struct ufsmount *ump, int idtype, int id,
 	u_long hash_mask;
 	struct dq2clear_callback c;
 
+	idtype = qk->qk_idtype;
+	id = qk->qk_id;
+	objtype = qk->qk_objtype;
+
 	if (ump->um_quotas[idtype] == NULLVP)
 		return ENODEV;
-	if (defaultq)
+	if (id == QUOTA_DEFAULTID)
 		return EOPNOTSUPP;
 
 	/* get the default entry before locking the entry's buffer */
