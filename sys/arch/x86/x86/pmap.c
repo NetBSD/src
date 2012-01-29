@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.158 2012/01/29 11:37:08 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.159 2012/01/29 11:37:44 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158 2012/01/29 11:37:08 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2012/01/29 11:37:44 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2348,10 +2348,6 @@ pmap_destroy(struct pmap *pmap)
 		KASSERT(TAILQ_EMPTY(&pmap->pm_obj[i].memq));
 	}
 
-	/*
-	 * MULTIPROCESSOR -- no need to flush out of other processors'
-	 * APTE space because we do that in pmap_unmap_ptes().
-	 */
 	pool_cache_put(&pmap_pdp_cache, pmap->pm_pdir);
 
 #ifdef USER_LDT
