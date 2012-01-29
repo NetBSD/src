@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.2 2012/01/28 12:21:13 uwe Exp $ */
+/* $NetBSD: crt0.S,v 1.3 2012/01/29 23:27:24 uwe Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -37,7 +37,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.2 2012/01/28 12:21:13 uwe Exp $")
+RCSID("$NetBSD: crt0.S,v 1.3 2012/01/29 23:27:24 uwe Exp $")
 
 STRONG_ALIAS(_start,__start)
 
@@ -48,6 +48,10 @@ STRONG_ALIAS(_start,__start)
  * written in C.
  */
 _ENTRY(__start)
+	mov.l	.L___start, r0
 	mov.l	r9, @-sp
-	bra	___start
+	braf	r0
 	 mov.l	r8, @-sp
+
+	.p2align 2
+.L___start:	.long	_C_LABEL(___start)
