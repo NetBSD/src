@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.34 2012/01/29 07:13:42 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.35 2012/01/29 07:14:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.34 2012/01/29 07:13:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.35 2012/01/29 07:14:38 dholland Exp $");
 
 #include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
@@ -105,7 +105,7 @@ vfs_quotactl_getversion(struct mount *mp,
 
 	args.qc_op = QUOTACTL_STAT;
 	args.u.stat.qc_ret = &stat;
-	error = VFS_QUOTACTL(mp, QUOTACTL_STAT, &args);
+	error = VFS_QUOTACTL(mp, &args);
 	if (error) {
 		return error;
 	}
@@ -176,7 +176,7 @@ vfs_quotactl_quotaon(struct mount *mp,
 	args.qc_op = QUOTACTL_QUOTAON;
 	args.u.quotaon.qc_idtype = q2type;
 	args.u.quotaon.qc_quotafile = qfile;
-	return VFS_QUOTACTL(mp, QUOTACTL_QUOTAON, &args);
+	return VFS_QUOTACTL(mp, &args);
 }
 
 static int
@@ -194,7 +194,7 @@ vfs_quotactl_quotaoff(struct mount *mp,
 
 	args.qc_op = QUOTACTL_QUOTAOFF;
 	args.u.quotaoff.qc_idtype = q2type;
-	return VFS_QUOTACTL(mp, QUOTACTL_QUOTAOFF, &args);
+	return VFS_QUOTACTL(mp, &args);
 }
 
 static int
@@ -283,7 +283,7 @@ vfs_quotactl_get(struct mount *mp,
 		args.qc_op = QUOTACTL_GET;
 		args.u.get.qc_key = &qk;
 		args.u.get.qc_ret = &blocks;
-		error = VFS_QUOTACTL(mp, QUOTACTL_GET, &args);
+		error = VFS_QUOTACTL(mp, &args);
 		if (error == EPERM) {
 			/* XXX does this make sense? */
 			continue;
@@ -299,7 +299,7 @@ vfs_quotactl_get(struct mount *mp,
 		args.qc_op = QUOTACTL_GET;
 		args.u.get.qc_key = &qk;
 		args.u.get.qc_ret = &files;
-		error = VFS_QUOTACTL(mp, QUOTACTL_GET, &args);
+		error = VFS_QUOTACTL(mp, &args);
 		if (error == EPERM) {
 			/* XXX does this make sense? */
 			continue;
@@ -438,7 +438,7 @@ vfs_quotactl_put(struct mount *mp,
 		args.qc_op = QUOTACTL_PUT;
 		args.u.put.qc_key = &qk;
 		args.u.put.qc_val = &blocks;
-		error = VFS_QUOTACTL(mp, QUOTACTL_PUT, &args);
+		error = VFS_QUOTACTL(mp, &args);
 		if (error) {
 			goto err;
 		}
@@ -450,7 +450,7 @@ vfs_quotactl_put(struct mount *mp,
 		args.qc_op = QUOTACTL_PUT;
 		args.u.put.qc_key = &qk;
 		args.u.put.qc_val = &files;
-		error = VFS_QUOTACTL(mp, QUOTACTL_PUT, &args);
+		error = VFS_QUOTACTL(mp, &args);
 		if (error) {
 			goto err;
 		}
@@ -574,7 +574,7 @@ vfs_quotactl_getall(struct mount *mp,
 
 	args.qc_op = QUOTACTL_CURSOROPEN;
 	args.u.cursoropen.qc_cursor = &cursor;
-	error = VFS_QUOTACTL(mp, QUOTACTL_CURSOROPEN, &args);
+	error = VFS_QUOTACTL(mp, &args);
 	if (error) {
 		return error;
 	}
@@ -587,7 +587,7 @@ vfs_quotactl_getall(struct mount *mp,
 	args.qc_op = QUOTACTL_CURSORSKIPIDTYPE;
 	args.u.cursorskipidtype.qc_cursor = &cursor;
 	args.u.cursorskipidtype.qc_idtype = skipidtype;
-	error = VFS_QUOTACTL(mp, QUOTACTL_CURSORSKIPIDTYPE, &args);
+	error = VFS_QUOTACTL(mp, &args);
 	/* ignore if it fails */
 	(void)error;
 
@@ -605,7 +605,7 @@ vfs_quotactl_getall(struct mount *mp,
 		args.qc_op = QUOTACTL_CURSORATEND;
 		args.u.cursoratend.qc_cursor = &cursor;
 		args.u.cursoratend.qc_ret = &atend;
-		error = VFS_QUOTACTL(mp, QUOTACTL_CURSORATEND, &args);
+		error = VFS_QUOTACTL(mp, &args);
 		if (error) {
 			goto err;
 		}
@@ -620,7 +620,7 @@ vfs_quotactl_getall(struct mount *mp,
 		args.u.cursorget.qc_maxnum = loopmax;
 		args.u.cursorget.qc_ret = &loopnum;
 
-		error = VFS_QUOTACTL(mp, QUOTACTL_CURSORGET, &args);
+		error = VFS_QUOTACTL(mp, &args);
 		if (error == EDEADLK) {
 			/*
 			 * transaction abort, start over
@@ -628,7 +628,7 @@ vfs_quotactl_getall(struct mount *mp,
 
 			args.qc_op = QUOTACTL_CURSORREWIND;
 			args.u.cursorrewind.qc_cursor = &cursor;
-			error = VFS_QUOTACTL(mp, QUOTACTL_CURSORREWIND, &args);
+			error = VFS_QUOTACTL(mp, &args);
 			if (error) {
 				goto err;
 			}
@@ -636,8 +636,7 @@ vfs_quotactl_getall(struct mount *mp,
 			args.qc_op = QUOTACTL_CURSORSKIPIDTYPE;
 			args.u.cursorskipidtype.qc_cursor = &cursor;
 			args.u.cursorskipidtype.qc_idtype = skipidtype;
-			error = VFS_QUOTACTL(mp, QUOTACTL_CURSORSKIPIDTYPE,
-					     &args);
+			error = VFS_QUOTACTL(mp, &args);
 			/* ignore if it fails */
 			(void)error;
 
@@ -731,7 +730,7 @@ vfs_quotactl_getall(struct mount *mp,
 
 	args.qc_op = QUOTACTL_CURSORCLOSE;
 	args.u.cursorclose.qc_cursor = &cursor;
-	error2 = VFS_QUOTACTL(mp, QUOTACTL_CURSORCLOSE, &args);
+	error2 = VFS_QUOTACTL(mp, &args);
 
 	if (error) {
 		return error;
@@ -787,7 +786,7 @@ vfs_quotactl_clear(struct mount *mp,
 
 		args.qc_op = QUOTACTL_DELETE;
 		args.u.delete.qc_key = &qk;
-		error = VFS_QUOTACTL(mp, QUOTACTL_DELETE, &args);
+		error = VFS_QUOTACTL(mp, &args);
 		if (error) {
 			goto err;
 		}
@@ -798,7 +797,7 @@ vfs_quotactl_clear(struct mount *mp,
 
 		args.qc_op = QUOTACTL_DELETE;
 		args.u.delete.qc_key = &qk;
-		error = VFS_QUOTACTL(mp, QUOTACTL_DELETE, &args);
+		error = VFS_QUOTACTL(mp, &args);
 		if (error) {
 			goto err;
 		}

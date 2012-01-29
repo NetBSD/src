@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.102 2012/01/29 07:13:43 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.103 2012/01/29 07:14:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.102 2012/01/29 07:13:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.103 2012/01/29 07:14:38 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -164,12 +164,12 @@ chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 }
 
 int
-quota_handle_cmd(struct mount *mp, struct lwp *l, int op,
+quota_handle_cmd(struct mount *mp, struct lwp *l,
 		 struct vfs_quotactl_args *args)
 {
 	int error = 0;
 
-	switch (op) {
+	switch (args->qc_op) {
 	    case QUOTACTL_STAT:
 		error = quota_handle_cmd_stat(mp, l, args);
 		break;
@@ -207,7 +207,7 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, int op,
 		error = quota_handle_cmd_cursorrewind(mp, l, args);
 		break;
 	    default:
-		panic("Invalid quotactl operation %d\n", op);
+		panic("Invalid quotactl operation %d\n", args->qc_op);
 	}
 
 	return error;
