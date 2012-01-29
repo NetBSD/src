@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.4 2012/01/29 06:34:57 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.5 2012/01/29 06:36:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,18 +80,115 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.4 2012/01/29 06:34:57 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.5 2012/01/29 06:36:06 dholland Exp $");
 
 #include <sys/mount.h>
 #include <sys/quotactl.h>
 #include <quota/quotaprop.h>
 
 static int
+vfs_quotactl_getversion(struct mount *mp,
+			prop_dictionary_t cmddict, int q2type,
+			prop_array_t datas)
+{
+	struct vfs_quotactl_args args;
+
+	args.qc_type = QCT_PROPLIB;
+	args.u.proplib.qc_cmddict = cmddict;
+	args.u.proplib.qc_q2type = q2type;
+	args.u.proplib.qc_datas = datas;
+	return VFS_QUOTACTL(mp, QUOTACTL_GETVERSION, &args);
+}
+
+static int
+vfs_quotactl_quotaon(struct mount *mp,
+		     prop_dictionary_t cmddict, int q2type,
+		     prop_array_t datas)
+{
+	struct vfs_quotactl_args args;
+
+	args.qc_type = QCT_PROPLIB;
+	args.u.proplib.qc_cmddict = cmddict;
+	args.u.proplib.qc_q2type = q2type;
+	args.u.proplib.qc_datas = datas;
+	return VFS_QUOTACTL(mp, QUOTACTL_QUOTAON, &args);
+}
+
+static int
+vfs_quotactl_quotaoff(struct mount *mp,
+			prop_dictionary_t cmddict, int q2type,
+			prop_array_t datas)
+{
+	struct vfs_quotactl_args args;
+
+	args.qc_type = QCT_PROPLIB;
+	args.u.proplib.qc_cmddict = cmddict;
+	args.u.proplib.qc_q2type = q2type;
+	args.u.proplib.qc_datas = datas;
+	return VFS_QUOTACTL(mp, QUOTACTL_QUOTAOFF, &args);
+}
+
+static int
+vfs_quotactl_get(struct mount *mp,
+			prop_dictionary_t cmddict, int q2type,
+			prop_array_t datas)
+{
+	struct vfs_quotactl_args args;
+
+	args.qc_type = QCT_PROPLIB;
+	args.u.proplib.qc_cmddict = cmddict;
+	args.u.proplib.qc_q2type = q2type;
+	args.u.proplib.qc_datas = datas;
+	return VFS_QUOTACTL(mp, QUOTACTL_GET, &args);
+}
+
+static int
+vfs_quotactl_set(struct mount *mp,
+			prop_dictionary_t cmddict, int q2type,
+			prop_array_t datas)
+{
+	struct vfs_quotactl_args args;
+
+	args.qc_type = QCT_PROPLIB;
+	args.u.proplib.qc_cmddict = cmddict;
+	args.u.proplib.qc_q2type = q2type;
+	args.u.proplib.qc_datas = datas;
+	return VFS_QUOTACTL(mp, QUOTACTL_SET, &args);
+}
+
+static int
+vfs_quotactl_getall(struct mount *mp,
+			prop_dictionary_t cmddict, int q2type,
+			prop_array_t datas)
+{
+	struct vfs_quotactl_args args;
+
+	args.qc_type = QCT_PROPLIB;
+	args.u.proplib.qc_cmddict = cmddict;
+	args.u.proplib.qc_q2type = q2type;
+	args.u.proplib.qc_datas = datas;
+	return VFS_QUOTACTL(mp, QUOTACTL_GETALL, &args);
+}
+
+static int
+vfs_quotactl_clear(struct mount *mp,
+			prop_dictionary_t cmddict, int q2type,
+			prop_array_t datas)
+{
+	struct vfs_quotactl_args args;
+
+	args.qc_type = QCT_PROPLIB;
+	args.u.proplib.qc_cmddict = cmddict;
+	args.u.proplib.qc_q2type = q2type;
+	args.u.proplib.qc_datas = datas;
+	return VFS_QUOTACTL(mp, QUOTACTL_CLEAR, &args);
+}
+
+static int
 vfs_quotactl_cmd(struct mount *mp, prop_dictionary_t cmddict)
 {
 	int error;
 	const char *cmd, *type;
-	int op;
 	prop_array_t datas;
 	int q2type;
 
@@ -117,28 +214,24 @@ vfs_quotactl_cmd(struct mount *mp, prop_dictionary_t cmddict)
 	prop_dictionary_remove(cmddict, "data"); /* prepare for return */
 
 	if (strcmp(cmd, "get version") == 0) {
-		op = QUOTACTL_GETVERSION;
+		error = vfs_quotactl_getversion(mp, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "quotaon") == 0) {
-		op = QUOTACTL_QUOTAON;
+		error = vfs_quotactl_quotaon(mp, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "quotaoff") == 0) {
-		op = QUOTACTL_QUOTAOFF;
+		error = vfs_quotactl_quotaoff(mp, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "get") == 0) {
-		op = QUOTACTL_GET;
+		error = vfs_quotactl_get(mp, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "set") == 0) {
-		op = QUOTACTL_SET;
+		error = vfs_quotactl_set(mp, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "getall") == 0) {
-		op = QUOTACTL_GETALL;
+		error = vfs_quotactl_getall(mp, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "clear") == 0) {
-		op = QUOTACTL_CLEAR;
+		error = vfs_quotactl_clear(mp, cmddict, q2type, datas);
 	} else {
 		/* XXX this a bad errno for this case */
 		error = EOPNOTSUPP;
-		goto fail;
 	}
 
-	error = VFS_QUOTACTL(mp, op, cmddict, q2type, datas);
-
- fail:
 	error = (prop_dictionary_set_int8(cmddict, "return",
 	    error) ? 0 : ENOMEM);
 	prop_object_release(datas);
