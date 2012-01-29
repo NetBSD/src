@@ -1,4 +1,4 @@
-/*	$NetBSD: zmci.c,v 1.4 2012/01/21 18:56:51 nonaka Exp $	*/
+/*	$NetBSD: zmci.c,v 1.5 2012/01/29 10:12:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2006-2008 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zmci.c,v 1.4 2012/01/21 18:56:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zmci.c,v 1.5 2012/01/29 10:12:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,6 +62,7 @@ struct zmci_softc {
 	void *sc_detect_ih;
 	int sc_detect_pin;
 	int sc_wp_pin;
+	int sc_power_pin;
 };
 
 static int pxamci_match(device_t, cfdata_t, void *);
@@ -81,9 +82,7 @@ static int
 pxamci_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (ZAURUS_ISC1000 || ZAURUS_ISC3000)
-		return 1;
-	return 0;
+	return 1;
 }
 
 static void
@@ -100,8 +99,13 @@ pxamci_attach(device_t parent, device_t self, void *aux)
 		pxa2x0_gpio_set_function(sc->sc_detect_pin, GPIO_IN);
 		pxa2x0_gpio_set_function(sc->sc_wp_pin, GPIO_IN);
 	} else {
-		/* XXX: C7x0/C8x0 */
-		return;
+		/* C7x0/C860 */
+		sc->sc_detect_pin = C860_GPIO_SD_DETECT_PIN;
+		sc->sc_wp_pin = C860_GPIO_SD_WP_PIN;
+		sc->sc_power_pin = C860_GPIO_SD_POWER_PIN;
+		pxa2x0_gpio_set_function(sc->sc_detect_pin, GPIO_IN);
+		pxa2x0_gpio_set_function(sc->sc_wp_pin, GPIO_IN);
+		pxa2x0_gpio_set_function(sc->sc_power_pin, GPIO_OUT|GPIO_SET);
 	}
 
 	/* Establish SD detect interrupt */
@@ -161,7 +165,10 @@ zmci_set_power(void *arg, uint32_t ocr)
 	struct zmci_softc *sc = (struct zmci_softc *)arg;
 
 	if (ISSET(ocr, MMC_OCR_3_2V_3_3V|MMC_OCR_3_3V_3_4V)) {
-		scoop_set_sdmmc_power(1);
+		if (ZAURUS_ISC3000 || ZAURUS_ISC1000)
+			scoop_set_sdmmc_power(1);
+		else if (ZAURUS_ISC860)
+			pxa2x0_gpio_set_bit(sc->sc_power_pin);
 		return 0;
 	}
 
@@ -172,7 +179,10 @@ zmci_set_power(void *arg, uint32_t ocr)
 	}
 
 	/* power off */
-	scoop_set_sdmmc_power(0);
+	if (ZAURUS_ISC3000 || ZAURUS_ISC1000)
+		scoop_set_sdmmc_power(0);
+	else if(ZAURUS_ISC860)
+		pxa2x0_gpio_clear_bit(sc->sc_power_pin);
 	return 0;
 }
 
