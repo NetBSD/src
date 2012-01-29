@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.26 2012/01/29 07:09:52 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.27 2012/01/29 07:11:12 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@ struct quotakcursor {
 
 /* Argument encoding. */
 enum vfs_quotactl_argtypes {
-	QCT_PROPLIB,	/* quotaon/off */
+	QCT_PROPLIB,	/* quotaoff */
 	QCT_GETVERSION,	/* getversion */
 	QCT_GET,	/* get */
 	QCT_PUT,	/* put */
@@ -78,6 +78,7 @@ enum vfs_quotactl_argtypes {
 	QCT_CURSORSKIPIDTYPE, /* iteration hint */
 	QCT_CURSORATEND,/* test cursor */
 	QCT_CURSORREWIND,/* reset cursor */
+	QCT_QUOTAON,	/* quotaon */
 };
 struct vfs_quotactl_args {
 	enum vfs_quotactl_argtypes qc_type;
@@ -125,6 +126,10 @@ struct vfs_quotactl_args {
 		struct {
 			struct quotakcursor *qc_cursor;
 		} cursorrewind;
+		struct {
+			int qc_idtype;
+			const char *qc_quotafile;
+		} quotaon;
 	} u;
 };
 
