@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.23 2012/01/29 07:02:06 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.24 2012/01/29 07:05:12 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.23 2012/01/29 07:02:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.24 2012/01/29 07:05:12 dholland Exp $");
 
 #include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
@@ -526,6 +526,8 @@ vfs_quotactl_getall(struct mount *mp,
 
 	result.qr_keys = NULL;
 	result.qr_vals = NULL;
+	result.qr_num = 0;
+	result.qr_max = 0x7fffffff; /* XXX bogus; but temporary */
 
 	args.qc_type = QCT_GETALL;
 	args.u.getall.qc_cursor = &cursor;
