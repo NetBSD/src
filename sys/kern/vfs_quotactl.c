@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.19 2012/01/29 06:54:34 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.20 2012/01/29 06:55:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.19 2012/01/29 06:54:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.20 2012/01/29 06:55:44 dholland Exp $");
 
 #include <sys/mount.h>
 #include <sys/quota.h>
@@ -462,6 +462,7 @@ vfs_quotactl_clear(struct mount *mp,
 	uint32_t id;
 	int defaultq;
 	const char *idstr;
+	struct quotakey qk;
 	struct vfs_quotactl_args args;
 	int error;
 
@@ -491,21 +492,23 @@ vfs_quotactl_clear(struct mount *mp,
 			defaultq = 0;
 		}
 
+		qk.qk_idtype = q2type;
+		qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
+		qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
+
 		args.qc_type = QCT_DELETE;
-		args.u.delete.qc_idtype = q2type;
-		args.u.delete.qc_id = id;
-		args.u.delete.qc_defaultq = defaultq;
-		args.u.delete.qc_objtype = QUOTA_OBJTYPE_BLOCKS;
+		args.u.delete.qc_key = &qk;
 		error = VFS_QUOTACTL(mp, QUOTACTL_DELETE, &args);
 		if (error) {
 			goto err;
 		}
 
+		qk.qk_idtype = q2type;
+		qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
+		qk.qk_objtype = QUOTA_OBJTYPE_FILES;
+
 		args.qc_type = QCT_DELETE;
-		args.u.delete.qc_idtype = q2type;
-		args.u.delete.qc_id = id;
-		args.u.delete.qc_defaultq = defaultq;
-		args.u.delete.qc_objtype = QUOTA_OBJTYPE_FILES;
+		args.u.delete.qc_key = &qk;
 		error = VFS_QUOTACTL(mp, QUOTACTL_DELETE, &args);
 		if (error) {
 			goto err;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.91 2012/01/29 06:54:34 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.92 2012/01/29 06:55:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.91 2012/01/29 06:54:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.92 2012/01/29 06:55:44 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -316,17 +316,17 @@ quota_handle_cmd_delete(struct mount *mp, struct lwp *l,
     struct vfs_quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	int idtype;
-	id_t id;
-	int defaultq;
-	int objtype;
+	const struct quotakey *qk;
+	id_t kauth_id;
 	int error;
 
 	KASSERT(args->qc_type == QCT_DELETE);
-	idtype = args->u.delete.qc_idtype;
-	id = args->u.delete.qc_id;
-	defaultq = args->u.delete.qc_defaultq;
-	objtype = args->u.delete.qc_objtype;
+	qk = args->u.delete.qc_key;
+
+	kauth_id = qk->qk_id;
+	if (kauth_id == QUOTA_DEFAULTID) {
+		kauth_id = 0;
+	}
 
 	if ((ump->um_flags & UFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
@@ -334,13 +334,13 @@ quota_handle_cmd_delete(struct mount *mp, struct lwp *l,
 	/* avoid whitespace changes */
 	{
 		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
-		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(id), NULL);
+		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(kauth_id),
+		    NULL);
 		if (error != 0)
 			goto err;
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_delete(ump, idtype, id,
-			    defaultq, objtype);
+			error = quota2_handle_cmd_delete(ump, qk);
 		} else
 #endif
 			panic("quota_handle_cmd_get: no support ?");
