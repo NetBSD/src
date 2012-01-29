@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.82 2012/01/29 06:46:49 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.83 2012/01/29 06:47:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.82 2012/01/29 06:46:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.83 2012/01/29 06:47:38 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -268,23 +268,19 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
     struct vfs_quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
+	int idtype;
 	id_t id;
 	int defaultq;
-	int q2type;
-	const struct quotaval *blocks;
-	const struct quotaval *files;
-	prop_dictionary_t data;
+	int objtype;
+	const struct quotaval *qv;
 	int error;
 
 	KASSERT(args->qc_type == QCT_SET);
+	idtype = args->u.set.qc_idtype;
 	id = args->u.set.qc_id;
 	defaultq = args->u.set.qc_defaultq;
-	q2type = args->u.set.qc_q2type;
-	blocks = args->u.set.qc_blocks;
-	files = args->u.set.qc_files;
-	data = args->u.set.qc_data;
-
-	KASSERT(prop_object_type(data) == PROP_TYPE_DICTIONARY);
+	objtype = args->u.set.qc_objtype;
+	qv = args->u.set.qc_val;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
@@ -297,14 +293,14 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 			goto err;
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA)
-			error = quota1_handle_cmd_set(ump, q2type, id, defaultq,
-			    blocks, files);
+			error = quota1_handle_cmd_set(ump, idtype, id, defaultq,
+			    objtype, qv);
 		else
 #endif
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
-			error = quota2_handle_cmd_set(ump, q2type, id, defaultq,
-			    blocks, files);
+			error = quota2_handle_cmd_set(ump, idtype, id, defaultq,
+			    objtype, qv);
 		} else
 #endif
 			panic("quota_handle_cmd_get: no support ?");

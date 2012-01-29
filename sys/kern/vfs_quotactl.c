@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.12 2012/01/29 06:45:25 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.13 2012/01/29 06:47:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.12 2012/01/29 06:45:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.13 2012/01/29 06:47:38 dholland Exp $");
 
 #include <sys/mount.h>
 #include <sys/quota.h>
@@ -379,6 +379,9 @@ vfs_quotactl_set(struct mount *mp,
 	}
 
 	while ((data = prop_object_iterator_next(iter)) != NULL) {
+
+		KASSERT(prop_object_type(data) == PROP_TYPE_DICTIONARY);
+
 		if (!prop_dictionary_get_uint32(data, "id", &id)) {
 			if (!prop_dictionary_get_cstring_nocopy(data, "id",
 			    &idstr))
@@ -397,12 +400,22 @@ vfs_quotactl_set(struct mount *mp,
 		}
 
 		args.qc_type = QCT_SET;
+		args.u.set.qc_idtype = q2type;
 		args.u.set.qc_id = id;
 		args.u.set.qc_defaultq = defaultq;
-		args.u.set.qc_q2type = q2type;
-		args.u.set.qc_blocks = &blocks;
-		args.u.set.qc_files = &files;
-		args.u.set.qc_data = data;
+		args.u.set.qc_objtype = QUOTA_OBJTYPE_BLOCKS;
+		args.u.set.qc_val = &blocks;
+		error = VFS_QUOTACTL(mp, QUOTACTL_SET, &args);
+		if (error) {
+			goto err;
+		}
+
+		args.qc_type = QCT_SET;
+		args.u.set.qc_idtype = q2type;
+		args.u.set.qc_id = id;
+		args.u.set.qc_defaultq = defaultq;
+		args.u.set.qc_objtype = QUOTA_OBJTYPE_FILES;
+		args.u.set.qc_val = &files;
 		error = VFS_QUOTACTL(mp, QUOTACTL_SET, &args);
 		if (error) {
 			goto err;

@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.8 2012/01/29 06:46:50 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.9 2012/01/29 06:47:38 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.8 2012/01/29 06:46:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.9 2012/01/29 06:47:38 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -79,17 +79,16 @@ static prop_dictionary_t q2etoprop(struct quota2_entry *, int);
 static const char *limnames[] = INITQLNAMES;
 
 static void
-quota2_dict_update_q2e_limits(const struct quotaval *blocks,
-    const struct quotaval *files,
+quota2_dict_update_q2e_limits(int objtype, const struct quotaval *val,
     struct quota2_entry *q2e)
 {
-	q2e->q2e_val[QL_BLOCK].q2v_hardlimit = blocks->qv_hardlimit;
-	q2e->q2e_val[QL_BLOCK].q2v_softlimit = blocks->qv_softlimit;
-	q2e->q2e_val[QL_BLOCK].q2v_grace = blocks->qv_grace;
+	/* make sure we can index q2e_val[] by the fs-independent objtype */
+	CTASSERT(QUOTA_OBJTYPE_BLOCKS == QL_BLOCK);
+	CTASSERT(QUOTA_OBJTYPE_FILES == QL_FILE);
 
-	q2e->q2e_val[QL_FILE].q2v_hardlimit = blocks->qv_hardlimit;
-	q2e->q2e_val[QL_FILE].q2v_softlimit = blocks->qv_softlimit;
-	q2e->q2e_val[QL_FILE].q2v_grace = blocks->qv_grace;
+	q2e->q2e_val[objtype].q2v_hardlimit = val->qv_hardlimit;
+	q2e->q2e_val[objtype].q2v_softlimit = val->qv_softlimit;
+	q2e->q2e_val[objtype].q2v_grace = val->qv_grace;
 }
 
 static prop_dictionary_t
@@ -613,7 +612,7 @@ chkiq2(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 
 int
 quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
-    int defaultq, const struct quotaval *blocks, const struct quotaval *files)
+    int defaultq, int objtype, const struct quotaval *val)
 {
 	int error;
 	struct dquot *dq;
@@ -636,7 +635,7 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 			goto out_wapbl;
 		}
 		quota2_ufs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
-		quota2_dict_update_q2e_limits(blocks, files, &q2e);
+		quota2_dict_update_q2e_limits(objtype, val, &q2e);
 		quota2_ufs_rwq2e(&q2e, &q2h->q2h_defentry, needswap);
 		mutex_exit(&dqlock);
 		quota2_bwrite(ump->um_mountp, bp);
@@ -661,7 +660,7 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 		goto out_il;
 	
 	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
-	quota2_dict_update_q2e_limits(blocks, files, &q2e);
+	quota2_dict_update_q2e_limits(objtype, val, &q2e);
 	quota2_ufs_rwq2e(&q2e, q2ep, needswap);
 	quota2_bwrite(ump->um_mountp, bp);
 
