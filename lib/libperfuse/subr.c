@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.14 2011/10/30 05:11:37 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.15 2012/01/29 06:22:02 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -116,6 +116,9 @@ perfuse_destroy_pn(pn)
 
 		if (!TAILQ_EMPTY(&pnd->pnd_pcq))
 			DERRX(EX_SOFTWARE, "%s: non empty pnd_pcq", __func__);
+
+		if (pnd == NULL)
+			DERRX(EX_SOFTWARE, "%s: pnd == NULL ???", __func__);
 #endif /* PERFUSE_DEBUG */
 
 		free(pnd);
