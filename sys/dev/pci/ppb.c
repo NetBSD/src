@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.48 2012/01/26 21:17:28 drochner Exp $	*/
+/*	$NetBSD: ppb.c,v 1.49 2012/01/29 11:31:38 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.48 2012/01/26 21:17:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.49 2012/01/29 11:31:38 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 	struct pcibus_attach_args pba;
 	pcireg_t busdata;
 
-	pci_aprint_devinfo(pa);
+	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_pc = pc;
 	sc->sc_tag = pa->pa_tag;
