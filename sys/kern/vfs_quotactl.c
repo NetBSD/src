@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.25 2012/01/29 07:06:01 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.26 2012/01/29 07:06:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.25 2012/01/29 07:06:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.26 2012/01/29 07:06:37 dholland Exp $");
 
 #include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
@@ -439,9 +439,45 @@ err:
 }
 
 static prop_dictionary_t
-vfs_quotactl_getall_makereply(id_t id, int def,
-			      const struct quotaval *blocks,
-			      const struct quotaval *files)
+vfs_quotactl_getall_makereply(const struct quotakey *key)
+{
+	prop_dictionary_t dict;
+	id_t id;
+	int defaultq;
+
+	dict = prop_dictionary_create();
+	if (dict == NULL)
+		return NULL;
+
+	id = key->qk_id;
+	if (id == QUOTA_DEFAULTID) {
+		id = 0;
+		defaultq = 1;
+	} else {
+		defaultq = 0;
+	}
+
+	if (defaultq) {
+		if (!prop_dictionary_set_cstring_nocopy(dict, "id",
+		    "default")) {
+			goto err;
+		}
+	} else {
+		if (!prop_dictionary_set_uint32(dict, "id", id)) {
+			goto err;
+		}
+	}
+
+	return dict;
+
+err:
+	prop_object_release(dict);
+	return NULL;
+}
+
+static int
+vfs_quotactl_getall_addreply(prop_dictionary_t thisreply,
+    const struct quotakey *key, const struct quotaval *val)
 {
 #define INITQVNAMES_ALL { \
     QUOTADICT_LIMIT_HARD, \
@@ -454,51 +490,33 @@ vfs_quotactl_getall_makereply(id_t id, int def,
 
 	const char *val_names[] = INITQVNAMES_ALL;
 	uint64_t vals[N_QV];
-	prop_dictionary_t dict1 = prop_dictionary_create();
 	prop_dictionary_t dict2;
+	const char *objtypename;
 
-	if (dict1 == NULL)
-		return NULL;
-
-	if (def) {
-		if (!prop_dictionary_set_cstring_nocopy(dict1, "id",
-		    "default")) {
-			goto err;
-		}
-	} else {
-		if (!prop_dictionary_set_uint32(dict1, "id", id)) {
-			goto err;
-		}
+	switch (key->qk_objtype) {
+	    case QUOTA_OBJTYPE_BLOCKS:
+		objtypename = QUOTADICT_LTYPE_BLOCK;
+		break;
+	    case QUOTA_OBJTYPE_FILES:
+		objtypename = QUOTADICT_LTYPE_FILE;
+		break;
+	    default:
+		return EINVAL;
 	}
 
-	vals[0] = blocks->qv_hardlimit;
-	vals[1] = blocks->qv_softlimit;
-	vals[2] = blocks->qv_usage;
-	vals[3] = blocks->qv_expiretime;
-	vals[4] = blocks->qv_grace;
+	vals[0] = val->qv_hardlimit;
+	vals[1] = val->qv_softlimit;
+	vals[2] = val->qv_usage;
+	vals[3] = val->qv_expiretime;
+	vals[4] = val->qv_grace;
 	dict2 = limits64toprop(vals, val_names, N_QV);
 	if (dict2 == NULL)
-		goto err;
-	if (!prop_dictionary_set_and_rel(dict1, QUOTADICT_LTYPE_BLOCK, dict2))
-		goto err;
+		return ENOMEM;
 
+	if (!prop_dictionary_set_and_rel(thisreply, objtypename, dict2))
+		return ENOMEM;
 
-	vals[0] = files->qv_hardlimit;
-	vals[1] = files->qv_softlimit;
-	vals[2] = files->qv_usage;
-	vals[3] = files->qv_expiretime;
-	vals[4] = files->qv_grace;
-	dict2 = limits64toprop(vals, val_names, N_QV);
-	if (dict2 == NULL)
-		goto err;
-	if (!prop_dictionary_set_and_rel(dict1, QUOTADICT_LTYPE_FILE, dict2))
-		goto err;
-
-	return dict1;
-
-err:
-	prop_object_release(dict1);
-	return NULL;
+	return 0;
 }
 
 static int
@@ -510,10 +528,11 @@ vfs_quotactl_getall(struct mount *mp,
 	struct quota_getall_result result;
 	struct vfs_quotactl_args args;
 	prop_array_t replies;
-	prop_dictionary_t dict;
+	prop_dictionary_t thisreply;
+	struct quotakey *key;
+	struct quotaval *val;
+	id_t lastid;
 	unsigned i;
-	id_t id;
-	int defaultq;
 	int error, error2;
 	int skip = 0;
 
@@ -561,23 +580,34 @@ vfs_quotactl_getall(struct mount *mp,
 		goto skip;
 	}
 
-	for (i = 0; i < result.qr_num; i += 2) {
-		id = result.qr_keys[i].qk_id;
-		if (id == QUOTA_DEFAULTID) {
-			id = 0;
-			defaultq = 1;
-		} else {
-			defaultq = 0;
+	thisreply = NULL;
+	lastid = 0; /* value not actually referenced */
+	for (i = 0; i < result.qr_num; i++) {
+		key = &result.qr_keys[i];
+		val = &result.qr_vals[i];
+
+		if (thisreply == NULL || key->qk_id != lastid) {
+			lastid = key->qk_id;
+			thisreply = vfs_quotactl_getall_makereply(key);
+			if (thisreply == NULL) {
+				error = ENOMEM;
+				goto err;
+			}
+			/*
+			 * Note: while we release our reference to
+			 * thisreply here, we can (and do) continue to
+			 * use the pointer in the loop because the
+			 * copy attached to the replies array is not
+			 * going away.
+			 */
+			if (!prop_array_add_and_rel(replies, thisreply)) {
+				error = ENOMEM;
+				goto err;
+			}
 		}
-		dict = vfs_quotactl_getall_makereply(id, defaultq,
-						     &result.qr_vals[i],
-						     &result.qr_vals[i+1]);
-		if (dict == NULL) {
-			error = ENOMEM;
-			goto err;
-		}
-		if (!prop_array_add_and_rel(replies, dict)) {
-			error = ENOMEM;
+
+		error = vfs_quotactl_getall_addreply(thisreply, key, val);
+		if (error) {
 			goto err;
 		}
 	}
