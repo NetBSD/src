@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.18 2012/01/29 06:55:44 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.19 2012/01/29 06:57:15 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,6 +37,20 @@
  * use the <quota.h> API instead.
  */
 
+/*
+ * Semi-opaque structure for cursors. This holds the cursor state in
+ * userland; the size is exposed only to libquota, not to client code,
+ * and is meant to be large enough to accomodate all likely future
+ * expansion without being unduly bloated, as it will need to be
+ * copied in and out for every call using it.
+ */
+struct quotakcursor {
+	union {
+		char qkc_space[64];
+		uintmax_t __qkc_forcealign;
+	} u;
+};
+
 /* Command codes. */
 #define QUOTACTL_GETVERSION	0
 #define QUOTACTL_QUOTAON	1
@@ -45,6 +59,8 @@
 #define QUOTACTL_PUT		4
 #define QUOTACTL_GETALL		5
 #define QUOTACTL_DELETE		6
+#define QUOTACTL_CURSOROPEN	7
+#define QUOTACTL_CURSORCLOSE	8
 
 /* Argument encoding. */
 enum vfs_quotactl_argtypes {
@@ -53,6 +69,8 @@ enum vfs_quotactl_argtypes {
 	QCT_GET,	/* get */
 	QCT_PUT,	/* put */
 	QCT_DELETE,	/* delete */
+	QCT_CURSOROPEN,	/* open cursor */
+	QCT_CURSORCLOSE,/* close cursor */
 };
 struct vfs_quotactl_args {
 	enum vfs_quotactl_argtypes qc_type;
@@ -76,6 +94,12 @@ struct vfs_quotactl_args {
 		struct {
 			const struct quotakey *qc_key;
 		} delete;
+		struct {
+			struct quotakcursor *qc_cursor;
+		} cursoropen;
+		struct {
+			struct quotakcursor *qc_cursor;
+		} cursorclose;
 	} u;
 };
 
