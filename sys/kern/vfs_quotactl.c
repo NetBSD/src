@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.26 2012/01/29 07:06:37 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.27 2012/01/29 07:07:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.26 2012/01/29 07:06:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.27 2012/01/29 07:07:22 dholland Exp $");
 
 #include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
@@ -525,16 +525,18 @@ vfs_quotactl_getall(struct mount *mp,
 			prop_array_t datas)
 {
 	struct quotakcursor cursor;
-	struct quota_getall_result result;
+	struct quotakey *keys;
+	struct quotaval *vals;
+	unsigned loopmax = 8;
+	unsigned loopnum;
 	struct vfs_quotactl_args args;
 	prop_array_t replies;
-	prop_dictionary_t thisreply;
 	struct quotakey *key;
 	struct quotaval *val;
 	id_t lastid;
+	prop_dictionary_t thisreply;
 	unsigned i;
 	int error, error2;
-	int skip = 0;
 
 	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
 
@@ -545,30 +547,8 @@ vfs_quotactl_getall(struct mount *mp,
 		return error;
 	}
 
-	result.qr_keys = NULL;
-	result.qr_vals = NULL;
-	result.qr_num = 0;
-	result.qr_max = 0x7fffffff; /* XXX bogus; but temporary */
-
-	args.qc_type = QCT_GETALL;
-	args.u.getall.qc_cursor = &cursor;
-	args.u.getall.qc_idtype = q2type;
-	args.u.getall.qc_result = &result;
-	error = VFS_QUOTACTL(mp, QUOTACTL_GETALL, &args);
-	/*
-	 * XXX this is bogus but up until now *all* errors
-	 * from inside quotactl_getall were suppressed by the
-	 * dispatching code in ufs_quota.c. Fixing that causes
-	 * repquota to break in an undesirable way; this is a
-	 * workaround.
-	 */
-	if (error == ENODEV || error == ENXIO) {
-		skip = 1;
-		error = 0;
-	}
-	if (error) {
-		goto err;
-	}
+	keys = malloc(loopmax * sizeof(keys[0]), M_TEMP, M_WAITOK);
+	vals = malloc(loopmax * sizeof(vals[0]), M_TEMP, M_WAITOK);
 
 	replies = prop_array_create();
 	if (replies == NULL) {
@@ -576,43 +556,72 @@ vfs_quotactl_getall(struct mount *mp,
 		goto err;
 	}
 
-	if (skip) {
-		goto skip;
-	}
-
 	thisreply = NULL;
 	lastid = 0; /* value not actually referenced */
-	for (i = 0; i < result.qr_num; i++) {
-		key = &result.qr_keys[i];
-		val = &result.qr_vals[i];
 
-		if (thisreply == NULL || key->qk_id != lastid) {
-			lastid = key->qk_id;
-			thisreply = vfs_quotactl_getall_makereply(key);
-			if (thisreply == NULL) {
-				error = ENOMEM;
-				goto err;
-			}
-			/*
-			 * Note: while we release our reference to
-			 * thisreply here, we can (and do) continue to
-			 * use the pointer in the loop because the
-			 * copy attached to the replies array is not
-			 * going away.
-			 */
-			if (!prop_array_add_and_rel(replies, thisreply)) {
-				error = ENOMEM;
-				goto err;
-			}
+	while (1) {
+		args.qc_type = QCT_GETALL;
+		args.u.getall.qc_cursor = &cursor;
+		args.u.getall.qc_keys = keys;
+		args.u.getall.qc_vals = vals;
+		args.u.getall.qc_maxnum = loopmax;
+		args.u.getall.qc_ret = &loopnum;
+		args.u.getall.qc_idtype = q2type;	/* XXX */
+
+		error = VFS_QUOTACTL(mp, QUOTACTL_GETALL, &args);
+		/*
+		 * XXX this is bogus but up until now *all* errors
+		 * from inside quotactl_getall were suppressed by the
+		 * dispatching code in ufs_quota.c. Fixing that causes
+		 * repquota to break in an undesirable way; this is a
+		 * workaround.
+		 */
+		if (error == ENODEV || error == ENXIO) {
+			error = 0;
+			break;
 		}
 
-		error = vfs_quotactl_getall_addreply(thisreply, key, val);
 		if (error) {
 			goto err;
 		}
-	}
 
-skip:
+		if (loopnum == 0) {
+			/* end of iteration */
+			break;
+		}
+
+		for (i = 0; i < loopnum; i++) {
+			key = &keys[i];
+			val = &vals[i];
+
+			if (thisreply == NULL || key->qk_id != lastid) {
+				lastid = key->qk_id;
+				thisreply = vfs_quotactl_getall_makereply(key);
+				if (thisreply == NULL) {
+					error = ENOMEM;
+					goto err;
+				}
+				/*
+				 * Note: while we release our reference to
+				 * thisreply here, we can (and do) continue to
+				 * use the pointer in the loop because the
+				 * copy attached to the replies array is not
+				 * going away.
+				 */
+				if (!prop_array_add_and_rel(replies,
+							    thisreply)) {
+					error = ENOMEM;
+					goto err;
+				}
+			}
+
+			error = vfs_quotactl_getall_addreply(thisreply,
+							     key, val);
+			if (error) {
+				goto err;
+			}
+		}
+	}
 
 	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
 		error = ENOMEM;
@@ -621,12 +630,8 @@ skip:
 
 	error = 0;
  err:
-	if (result.qr_keys) {
-		free(result.qr_keys, M_TEMP);
-	}
-	if (result.qr_vals) {
-		free(result.qr_vals, M_TEMP);
-	}
+	free(keys, M_TEMP);
+	free(vals, M_TEMP);
 
 	args.qc_type = QCT_CURSORCLOSE;
 	args.u.cursorclose.qc_cursor = &cursor;

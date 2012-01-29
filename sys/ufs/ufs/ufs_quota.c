@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.95 2012/01/29 07:02:06 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.96 2012/01/29 07:07:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.95 2012/01/29 07:02:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.96 2012/01/29 07:07:22 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -370,14 +370,20 @@ quota_handle_cmd_getall(struct mount *mp, struct lwp *l,
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct quotakcursor *cursor;
+	struct quotakey *keys;
+	struct quotaval *vals;
+	unsigned maxnum;
+	unsigned *ret;
 	int idtype;
-	struct quota_getall_result *result;
 	int error;
 
 	KASSERT(args->qc_type == QCT_GETALL);
 	cursor = args->u.getall.qc_cursor;
+	keys = args->u.getall.qc_keys;
+	vals = args->u.getall.qc_vals;
+	maxnum = args->u.getall.qc_maxnum;
+	ret = args->u.getall.qc_ret;
 	idtype = args->u.getall.qc_idtype;
-	result = args->u.getall.qc_result;
 
 	if ((ump->um_flags & UFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
@@ -389,7 +395,8 @@ quota_handle_cmd_getall(struct mount *mp, struct lwp *l,
 		
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
-		error = quota2_handle_cmd_getall(ump, cursor, idtype, result);
+		error = quota2_handle_cmd_getall(ump, cursor, idtype,
+						 keys, vals, maxnum, ret);
 	} else
 #endif
 		panic("quota_handle_cmd_getall: no support ?");
