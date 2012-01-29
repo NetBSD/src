@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.104 2012/01/29 07:16:53 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.105 2012/01/29 11:59:14 para Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.104 2012/01/29 07:16:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.105 2012/01/29 11:59:14 para Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -430,7 +430,9 @@ static int
 quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l, 
     struct vfs_quotactl_args *args)
 {
+#ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
+#endif
 	struct quotakcursor *cursor;
 	int error;
 
@@ -456,7 +458,9 @@ static int
 quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l, 
     struct vfs_quotactl_args *args)
 {
+#ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
+#endif
 	struct quotakcursor *cursor;
 	int error;
 
@@ -482,7 +486,9 @@ static int
 quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l, 
     struct vfs_quotactl_args *args)
 {
+#ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
+#endif
 	struct quotakcursor *cursor;
 	int idtype;
 	int error;
@@ -505,7 +511,9 @@ static int
 quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l, 
     struct vfs_quotactl_args *args)
 {
+#ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
+#endif
 	struct quotakcursor *cursor;
 	int *ret;
 	int error;
@@ -528,7 +536,9 @@ static int
 quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l, 
     struct vfs_quotactl_args *args)
 {
+#ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
+#endif
 	struct quotakcursor *cursor;
 	int error;
 
