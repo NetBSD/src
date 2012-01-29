@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.20 2012/01/29 06:55:44 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.21 2012/01/29 06:57:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.20 2012/01/29 06:55:44 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.21 2012/01/29 06:57:15 dholland Exp $");
 
 #include <sys/mount.h>
 #include <sys/quota.h>
@@ -442,13 +442,32 @@ vfs_quotactl_getall(struct mount *mp,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
 {
+	struct quotakcursor cursor;
 	struct vfs_quotactl_args args;
+	int error, error2;
+
+	args.qc_type = QCT_CURSOROPEN;
+	args.u.cursoropen.qc_cursor = &cursor;
+	error = VFS_QUOTACTL(mp, QUOTACTL_CURSOROPEN, &args);
+	if (error) {
+		return error;
+	}
 
 	args.qc_type = QCT_PROPLIB;
 	args.u.proplib.qc_cmddict = cmddict;
 	args.u.proplib.qc_q2type = q2type;
 	args.u.proplib.qc_datas = datas;
-	return VFS_QUOTACTL(mp, QUOTACTL_GETALL, &args);
+	error = VFS_QUOTACTL(mp, QUOTACTL_GETALL, &args);
+
+	args.qc_type = QCT_CURSORCLOSE;
+	args.u.cursorclose.qc_cursor = &cursor;
+	error2 = VFS_QUOTACTL(mp, QUOTACTL_CURSORCLOSE, &args);
+
+	if (error) {
+		return error;
+	}
+	error = error2;
+	return error;
 }
 
 static int

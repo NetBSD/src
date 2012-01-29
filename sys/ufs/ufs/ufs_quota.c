@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.92 2012/01/29 06:55:44 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.93 2012/01/29 06:57:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.92 2012/01/29 06:55:44 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.93 2012/01/29 06:57:15 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -84,6 +84,10 @@ static int quota_handle_cmd_delete(struct mount *, struct lwp *,
 static int quota_handle_cmd_quotaon(struct mount *, struct lwp *, 
     struct vfs_quotactl_args *args);
 static int quota_handle_cmd_quotaoff(struct mount *, struct lwp *, 
+    struct vfs_quotactl_args *args);
+static int quota_handle_cmd_cursoropen(struct mount *, struct lwp *,
+    struct vfs_quotactl_args *args);
+static int quota_handle_cmd_cursorclose(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
 
 /*
@@ -180,6 +184,12 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, int op,
 		break;
 	    case QUOTACTL_DELETE:
 		error = quota_handle_cmd_delete(mp, l, args);
+		break;
+	    case QUOTACTL_CURSOROPEN:
+		error = quota_handle_cmd_cursoropen(mp, l, args);
+		break;
+	    case QUOTACTL_CURSORCLOSE:
+		error = quota_handle_cmd_cursorclose(mp, l, args);
 		break;
 	    default:
 		panic("Invalid quotactl operation %d\n", op);
@@ -396,6 +406,58 @@ quota_handle_cmd_getall(struct mount *mp, struct lwp *l,
 	} else {
 		error = 0;
 	}
+	return error;
+}
+
+static int 
+quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l, 
+    struct vfs_quotactl_args *args)
+{
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct quotakcursor *cursor;
+	int error;
+
+	KASSERT(args->qc_type == QCT_CURSOROPEN);
+	cursor = args->u.cursoropen.qc_cursor;
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, NULL, NULL);
+	if (error)
+		return error;
+
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		error = quota2_handle_cmd_cursoropen(ump, cursor);
+	} else
+#endif
+		error = EOPNOTSUPP;
+
+	return error;
+}
+
+static int 
+quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l, 
+    struct vfs_quotactl_args *args)
+{
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct quotakcursor *cursor;
+	int error;
+
+	KASSERT(args->qc_type == QCT_CURSORCLOSE);
+	cursor = args->u.cursorclose.qc_cursor;
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, NULL, NULL);
+	if (error)
+		return error;
+
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		error = quota2_handle_cmd_cursorclose(ump, cursor);
+	} else
+#endif
+		error = EOPNOTSUPP;
+
 	return error;
 }
 
