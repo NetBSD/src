@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.21 2012/01/29 06:57:15 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.22 2012/01/29 07:00:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.21 2012/01/29 06:57:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.22 2012/01/29 07:00:39 dholland Exp $");
 
 #include <sys/mount.h>
 #include <sys/quota.h>
@@ -453,10 +453,10 @@ vfs_quotactl_getall(struct mount *mp,
 		return error;
 	}
 
-	args.qc_type = QCT_PROPLIB;
-	args.u.proplib.qc_cmddict = cmddict;
-	args.u.proplib.qc_q2type = q2type;
-	args.u.proplib.qc_datas = datas;
+	args.qc_type = QCT_GETALL;
+	args.u.getall.qc_cursor = &cursor;
+	args.u.getall.qc_idtype = q2type;
+	args.u.getall.qc_cmddict = cmddict;
 	error = VFS_QUOTACTL(mp, QUOTACTL_GETALL, &args);
 
 	args.qc_type = QCT_CURSORCLOSE;
