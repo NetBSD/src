@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.42 2012/01/29 06:23:20 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.43 2012/01/29 07:16:00 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.42 2012/01/29 06:23:20 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.43 2012/01/29 07:16:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -288,7 +288,7 @@ getprivs1(long id, int idtype, const char *filesys)
 		return NULL;
 
 	if (!hasquota(qfpathname, sizeof(qfpathname), fs,
-	    ufsclass2qtype(idtype)))
+	    quota_idtype_to_ufs(idtype)))
 		return NULL;
 
 	qup = quotause_create();
