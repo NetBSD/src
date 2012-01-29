@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1658 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1659 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1221,3 +1221,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	kernel: Remove ltsleep(9) and wakeup_one(9). [rmind 20120128]
 	TrouSerS: Import trousers-0.3.8 [christos 20120127]
 	tpm-tools: Import tpm-tools-1.3.7.1 [christos 20120128]
+	zaurus: Add PXA25x based Zaurus SL-C700/750/760/860 suuport
+		ported by TOYOKURA Atsushi. [tsutsui 20120129]
