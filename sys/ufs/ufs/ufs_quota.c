@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.75 2012/01/29 06:38:24 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.76 2012/01/29 06:39:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.75 2012/01/29 06:38:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.76 2012/01/29 06:39:37 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -226,33 +226,6 @@ quota_get_auth(struct mount *mp, struct lwp *l, uid_t id) {
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, KAUTH_ARG(id), NULL);
 }
 
-static int
-quota_fill_cmd_get_reply(id_t id,
-			 int defaultq,
-			 const struct quotaval *blocks,
-			 const struct quotaval *files,
-			 prop_array_t replies)
-{
-	prop_dictionary_t dict;
-
-	/* XXX illegal casts */
-	uint64_t *valuesp[QUOTA_NLIMITS];
-	valuesp[QUOTA_LIMIT_BLOCK] = (void *)(intptr_t)&blocks->qv_hardlimit;
-	valuesp[QUOTA_LIMIT_FILE] =  (void *)(intptr_t)&files->qv_hardlimit;
-
-	dict = quota64toprop(id, defaultq, valuesp,
-	    ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
-	    ufs_quota_limit_names, QUOTA_NLIMITS);
-	if (dict == NULL)
-		return ENOMEM;
-	if (!prop_array_add_and_rel(replies, dict)) {
-		prop_object_release(dict);
-		return ENOMEM;
-	}
-
-	return 0;
-}
-
 static int 
 quota_handle_cmd_get(struct mount *mp, struct lwp *l, 
     struct vfs_quotactl_args *args)
@@ -262,14 +235,14 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 	id_t id;
 	int q2type;
 	int defaultq;
-	prop_array_t replies;
-	struct quotaval blocks, files;
+	struct quotaval *blocks, *files;
 
 	KASSERT(args->qc_type == QCT_GET);
 	id = args->u.get.qc_id;
 	q2type = args->u.get.qc_q2type;
 	defaultq = args->u.get.qc_defaultq;
-	replies = args->u.get.qc_replies;
+	blocks = args->u.get.qc_blocks_ret;
+	files = args->u.get.qc_files_ret;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
@@ -281,23 +254,19 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA) {
 			error = quota1_handle_cmd_get(ump, q2type, id, defaultq,
-			    &blocks, &files);
+			    blocks, files);
 		} else
 #endif
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
 			error = quota2_handle_cmd_get(ump, q2type, id, defaultq,
-			    &blocks, &files);
+			    blocks, files);
 		} else
 #endif
 			panic("quota_handle_cmd_get: no support ?");
 		
 		if (error != 0)
 			return error;
-
-		error = quota_fill_cmd_get_reply(id, defaultq,
-						 &blocks, &files,
-						 replies);
 	}
 
 	return error;
