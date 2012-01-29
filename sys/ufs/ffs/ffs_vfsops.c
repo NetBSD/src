@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.274 2012/01/28 00:00:06 rmind Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.275 2012/01/29 00:58:14 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.274 2012/01/28 00:00:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.275 2012/01/29 00:58:14 nonaka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -927,7 +927,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			fsbsize = fs->fs_bsize;
 #ifdef FFS_EI
 			needswap = 0;
-		} else if (fs->fs_magic == bswap32(FS_UFS1_MAGIC)) {
+		} else if (fs->fs_magic == FS_UFS1_MAGIC_SWAPPED) {
 			sbsize = bswap32(fs->fs_sbsize);
 			fstype = UFS1;
 			fsbsize = bswap32(fs->fs_bsize);
@@ -939,7 +939,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			fsbsize = fs->fs_bsize;
 #ifdef FFS_EI
 			needswap = 0;
-		} else if (fs->fs_magic == bswap32(FS_UFS2_MAGIC)) {
+		} else if (fs->fs_magic == FS_UFS2_MAGIC_SWAPPED) {
 			sbsize = bswap32(fs->fs_sbsize);
 			fstype = UFS2;
 			fsbsize = bswap32(fs->fs_bsize);
