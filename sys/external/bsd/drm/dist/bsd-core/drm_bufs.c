@@ -36,10 +36,6 @@
 #include "dev/pci/pcireg.h"
 #endif
 
-#if defined(__NetBSD__)
-#include <sys/kmem.h>
-#endif
-
 #include "drmP.h"
 
 /* Allocation of PCI memory resources (framebuffer, registers, etc.) for
@@ -188,11 +184,7 @@ int drm_addmap(struct drm_device * dev, unsigned long offset,
 			map->mtrr = 1;
 		break;
 	case _DRM_SHM:
-#if defined(__NetBSD__)
-		map->handle = kmem_alloc(map->size, KM_NOSLEEP);
-#else
 		map->handle = malloc(map->size, DRM_MEM_MAPS, M_NOWAIT);
-#endif
 		DRM_DEBUG("%lu %d %p\n",
 		    map->size, drm_order(map->size), map->handle);
 		if (!map->handle) {
@@ -206,11 +198,7 @@ int drm_addmap(struct drm_device * dev, unsigned long offset,
 			DRM_LOCK();
 			if (dev->lock.hw_lock != NULL) {
 				DRM_UNLOCK();
-#if defined(__NetBSD__)
-				kmem_free(map->handle, map->size);
-#else
 				free(map->handle, DRM_MEM_MAPS);
-#endif
 				free(map, DRM_MEM_MAPS);
 				return EBUSY;
 			}
@@ -350,11 +338,7 @@ void drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 		}
 		break;
 	case _DRM_SHM:
-#if defined(__NetBSD__)
-		kmem_free(map->handle, map->size);
-#else
 		free(map->handle, DRM_MEM_MAPS);
-#endif
 		break;
 	case _DRM_AGP:
 	case _DRM_SCATTER_GATHER:
