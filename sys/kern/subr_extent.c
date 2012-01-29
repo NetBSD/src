@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.74 2012/01/27 19:48:40 para Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.75 2012/01/29 11:14:49 para Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.74 2012/01/27 19:48:40 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.75 2012/01/29 11:14:49 para Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.74 2012/01/27 19:48:40 para Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#define	KMEM_IS_RUNNING		(kmem_map != NULL)
 #elif defined(_EXTENT_TESTING)
 /*
  * user-land definitions, so it can fit into a testing harness.
