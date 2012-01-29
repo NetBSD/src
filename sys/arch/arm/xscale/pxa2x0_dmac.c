@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.c,v 1.9 2011/11/23 23:07:29 jmcneill Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.c,v 1.10 2012/01/29 09:08:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -766,24 +766,39 @@ static inline int
 dmac_validate_desc(struct dmac_xfer_desc *xd, size_t *psize,
     bool *misaligned_flag)
 {
+	bus_dma_segment_t *dma_segs = xd->xd_dma_segs;
+	bus_addr_t periph_end;
+	bus_size_t align;
 	size_t size;
-	int i;
+	int i, nsegs = xd->xd_nsegs;
 
 	/*
 	 * Make sure the transfer parameters are acceptable.
 	 */
 
 	if (xd->xd_addr_hold &&
-	    (xd->xd_nsegs != 1 || xd->xd_dma_segs[0].ds_len == 0))
+	    (nsegs != 1 || dma_segs[0].ds_len == 0))
 		return (EINVAL);
 
-	for (i = 0, size = 0; i < xd->xd_nsegs; i++) {
-		if (xd->xd_dma_segs[i].ds_addr & 0x7) {
+	periph_end = CPU_IS_PXA270 ? PXA270_PERIPH_END : PXA250_PERIPH_END;
+	for (i = 0, size = 0; i < nsegs; i++) {
+		if (dma_segs[i].ds_addr >= PXA2X0_PERIPH_START &&
+		    dma_segs[i].ds_addr + dma_segs[i].ds_len < periph_end)
+			/* Internal Peripherals. */
+			align = 0x03;
+		else /* Companion-Chip/External Peripherals/External Memory. */
+			align = 0x07;
+		/*
+		 * XXXX:
+		 * Also PXA27x has more constraints by pairs Source/Target.
+		 */
+
+		if (dma_segs[i].ds_addr & align) {
 			if (!CPU_IS_PXA270)
 				return (EFAULT);
 			*misaligned_flag = true;
 		}
-		size += xd->xd_dma_segs[i].ds_len;
+		size += dma_segs[i].ds_len;
 	}
 
 	*psize = size;
