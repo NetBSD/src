@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.105 2012/01/25 00:28:35 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.106 2012/01/29 18:33:07 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -544,7 +544,7 @@ struct cmsghdr {
 			    __CMSG_ALIGN(sizeof(struct cmsghdr)) > \
 	    (((char *)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
 	    (struct cmsghdr *)0 : \
-	    (struct cmsghdr *)((char *)(cmsg) + \
+	    (struct cmsghdr *)(void *)((char *)(cmsg) + \
 	        __CMSG_ALIGN((cmsg)->cmsg_len)))
 
 /*
