@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.100 2012/01/29 07:11:55 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.101 2012/01/29 07:12:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.100 2012/01/29 07:11:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.101 2012/01/29 07:12:41 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -71,7 +71,7 @@ static u_long dqhash;
 static pool_cache_t dquot_cache;
 
 
-static int quota_handle_cmd_get_version(struct mount *, struct lwp *,
+static int quota_handle_cmd_stat(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
 static int quota_handle_cmd_get(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
@@ -170,8 +170,8 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, int op,
 	int error = 0;
 
 	switch (op) {
-	    case QUOTACTL_GETVERSION:
-		error = quota_handle_cmd_get_version(mp, l, args);
+	    case QUOTACTL_STAT:
+		error = quota_handle_cmd_stat(mp, l, args);
 		break;
 	    case QUOTACTL_QUOTAON:
 		error = quota_handle_cmd_quotaon(mp, l, args);
@@ -214,26 +214,36 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, int op,
 }
 
 static int 
-quota_handle_cmd_get_version(struct mount *mp, struct lwp *l, 
+quota_handle_cmd_stat(struct mount *mp, struct lwp *l, 
     struct vfs_quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	int *version_ret;
+	struct quotastat *ret;
 
-	KASSERT(args->qc_type == QCT_GETVERSION);
-	version_ret = args->u.getversion.qc_version_ret;
+	KASSERT(args->qc_type == QCT_STAT);
+	ret = args->u.stat.qc_ret;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 
 #ifdef QUOTA
 	if (ump->um_flags & UFS_QUOTA) {
-		*version_ret = 1;
+		strcpy(ret->qs_implname, "ufs/ffs quota v1");
+		ret->qs_numidtypes = MAXQUOTAS;
+		/* XXX no define for this */
+		ret->qs_numobjtypes = 2;
+		ret->qs_restrictions = 0;
+		ret->qs_restrictions |= QUOTA_RESTRICT_NEEDSQUOTACHECK;
+		ret->qs_restrictions |= QUOTA_RESTRICT_UNIFORMGRACE;
+		ret->qs_restrictions |= QUOTA_RESTRICT_32BIT;
 	} else
 #endif
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
-		*version_ret = 2;
+		strcpy(ret->qs_implname, "ufs/ffs quota v2");
+		ret->qs_numidtypes = MAXQUOTAS;
+		ret->qs_numobjtypes = N_QL;
+		ret->qs_restrictions = 0;
 	} else
 #endif
 		return EOPNOTSUPP;
