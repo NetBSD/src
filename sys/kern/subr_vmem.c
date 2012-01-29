@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.68 2012/01/29 13:38:15 para Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.69 2012/01/29 17:27:37 rmind Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.68 2012/01/29 13:38:15 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.69 2012/01/29 17:27:37 rmind Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -99,6 +99,7 @@ VMEM_EVCNT_DEFINE(bt_inuse)
 #define	LOCK_DECL(name)		/* nothing */
 #define	CONDVAR_DECL(name)	/* nothing */
 #define	VMEM_CONDVAR_INIT(vm, wchan)	/* nothing */
+#define	VMEM_CONDVAR_BROADCAST(vm)	/* nothing */
 #define	mutex_init(a, b, c)	/* nothing */
 #define	mutex_destroy(a)	/* nothing */
 #define	mutex_enter(a)		/* nothing */
@@ -809,14 +810,11 @@ vmem_import(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 	if (vm->vm_flags & VM_XIMPORT) {
 		rc = ((vmem_ximport_t *)vm->vm_importfn)(vm->vm_arg, size,
 		    &size, flags, &addr);
-		if (rc != 0) {
-			return ENOMEM;
-		}
 	} else {
 		rc = (vm->vm_importfn)(vm->vm_arg, size, flags, &addr);
-		if (rc != 0) {
-			return ENOMEM;
-		}
+	}
+	if (rc) {
+		return ENOMEM;
 	}
 
 	if (vmem_add1(vm, addr, size, flags, BT_TYPE_SPAN) != 0) {
@@ -1231,8 +1229,7 @@ retry:
 		goto retry_strat;
 	}
 #endif
-	if (align != vm->vm_quantum_mask + 1 || phase != 0 ||
-	    nocross != 0) {
+	if (align != vm->vm_quantum_mask + 1 || phase != 0 || nocross != 0) {
 
 		/*
 		 * XXX should try to import a region large enough to
@@ -1248,7 +1245,6 @@ retry:
 	/* XXX */
 
 	if ((flags & VM_SLEEP) != 0) {
-		uvm_kick_pdaemon();
 		VMEM_LOCK(vm);
 		VMEM_CONDVAR_WAIT(vm);
 		VMEM_UNLOCK(vm);
@@ -1392,16 +1388,12 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 		bt_remseg(vm, t);
 		LIST_INSERT_HEAD(&tofree, t, bt_freelist);
 		vm->vm_size -= spansize;
-#if defined(_KERNEL)
 		VMEM_CONDVAR_BROADCAST(vm);
-#endif /* defined(_KERNEL) */
 		VMEM_UNLOCK(vm);
 		(*vm->vm_releasefn)(vm->vm_arg, spanaddr, spansize);
 	} else {
 		bt_insfree(vm, bt);
-#if defined(_KERNEL)
 		VMEM_CONDVAR_BROADCAST(vm);
-#endif /* defined(_KERNEL) */
 		VMEM_UNLOCK(vm);
 	}
 
