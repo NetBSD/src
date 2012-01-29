@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.77 2012/01/22 18:36:15 christos Exp $
+# $NetBSD: ad.mips64el,v 1.78 2012/01/29 23:29:00 joerg Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -238,7 +238,7 @@
 ./usr/lib/64/libsl.so.5				base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libsl.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libsqlite3.so.1			base-compat-shlib	compat,pic
-./usr/lib/64/libsqlite3.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/64/libsqlite3.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libss.so.6				base-compat-shlib	obsolete
 ./usr/lib/64/libss.so.6.0			base-compat-shlib	obsolete
 ./usr/lib/64/libssh.so.18			base-compat-shlib	compat,pic,crypto
@@ -534,7 +534,7 @@
 ./usr/lib/o32/libsl.so.5			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libsl.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libsqlite3.so.1			base-compat-shlib	compat,pic
-./usr/lib/o32/libsqlite3.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libsqlite3.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libss.so.6			base-compat-shlib	obsolete
 ./usr/lib/o32/libss.so.6.0			base-compat-shlib	obsolete
 ./usr/lib/o32/libssh.so.18			base-compat-shlib	compat,pic,crypto
