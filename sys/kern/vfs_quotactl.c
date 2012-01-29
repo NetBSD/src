@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.33 2012/01/29 07:12:40 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.34 2012/01/29 07:13:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.33 2012/01/29 07:12:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.34 2012/01/29 07:13:42 dholland Exp $");
 
 #include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
@@ -103,7 +103,7 @@ vfs_quotactl_getversion(struct mount *mp,
 	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
 	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
-	args.qc_type = QCT_STAT;
+	args.qc_op = QUOTACTL_STAT;
 	args.u.stat.qc_ret = &stat;
 	error = VFS_QUOTACTL(mp, QUOTACTL_STAT, &args);
 	if (error) {
@@ -173,7 +173,7 @@ vfs_quotactl_quotaon(struct mount *mp,
 	    &qfile))
 		return EINVAL;
 
-	args.qc_type = QCT_QUOTAON;
+	args.qc_op = QUOTACTL_QUOTAON;
 	args.u.quotaon.qc_idtype = q2type;
 	args.u.quotaon.qc_quotafile = qfile;
 	return VFS_QUOTACTL(mp, QUOTACTL_QUOTAON, &args);
@@ -192,7 +192,7 @@ vfs_quotactl_quotaoff(struct mount *mp,
 	if (prop_array_count(datas) != 0)
 		return EINVAL;
 
-	args.qc_type = QCT_QUOTAOFF;
+	args.qc_op = QUOTACTL_QUOTAOFF;
 	args.u.quotaoff.qc_idtype = q2type;
 	return VFS_QUOTACTL(mp, QUOTACTL_QUOTAOFF, &args);
 }
@@ -280,7 +280,7 @@ vfs_quotactl_get(struct mount *mp,
 
 		qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
 
-		args.qc_type = QCT_GET;
+		args.qc_op = QUOTACTL_GET;
 		args.u.get.qc_key = &qk;
 		args.u.get.qc_ret = &blocks;
 		error = VFS_QUOTACTL(mp, QUOTACTL_GET, &args);
@@ -296,7 +296,7 @@ vfs_quotactl_get(struct mount *mp,
 
 		qk.qk_objtype = QUOTA_OBJTYPE_FILES;
 
-		args.qc_type = QCT_GET;
+		args.qc_op = QUOTACTL_GET;
 		args.u.get.qc_key = &qk;
 		args.u.get.qc_ret = &files;
 		error = VFS_QUOTACTL(mp, QUOTACTL_GET, &args);
@@ -435,7 +435,7 @@ vfs_quotactl_put(struct mount *mp,
 		qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
 		qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
 
-		args.qc_type = QCT_PUT;
+		args.qc_op = QUOTACTL_PUT;
 		args.u.put.qc_key = &qk;
 		args.u.put.qc_val = &blocks;
 		error = VFS_QUOTACTL(mp, QUOTACTL_PUT, &args);
@@ -447,7 +447,7 @@ vfs_quotactl_put(struct mount *mp,
 		qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
 		qk.qk_objtype = QUOTA_OBJTYPE_FILES;
 
-		args.qc_type = QCT_PUT;
+		args.qc_op = QUOTACTL_PUT;
 		args.u.put.qc_key = &qk;
 		args.u.put.qc_val = &files;
 		error = VFS_QUOTACTL(mp, QUOTACTL_PUT, &args);
@@ -572,7 +572,7 @@ vfs_quotactl_getall(struct mount *mp,
 
 	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
 
-	args.qc_type = QCT_CURSOROPEN;
+	args.qc_op = QUOTACTL_CURSOROPEN;
 	args.u.cursoropen.qc_cursor = &cursor;
 	error = VFS_QUOTACTL(mp, QUOTACTL_CURSOROPEN, &args);
 	if (error) {
@@ -584,7 +584,7 @@ vfs_quotactl_getall(struct mount *mp,
 
 	skipidtype = (q2type == QUOTA_IDTYPE_USER ?
 		      QUOTA_IDTYPE_GROUP : QUOTA_IDTYPE_USER);
-	args.qc_type = QCT_CURSORSKIPIDTYPE;
+	args.qc_op = QUOTACTL_CURSORSKIPIDTYPE;
 	args.u.cursorskipidtype.qc_cursor = &cursor;
 	args.u.cursorskipidtype.qc_idtype = skipidtype;
 	error = VFS_QUOTACTL(mp, QUOTACTL_CURSORSKIPIDTYPE, &args);
@@ -602,7 +602,7 @@ vfs_quotactl_getall(struct mount *mp,
 	atzero = 0;
 
 	while (1) {
-		args.qc_type = QCT_CURSORATEND;
+		args.qc_op = QUOTACTL_CURSORATEND;
 		args.u.cursoratend.qc_cursor = &cursor;
 		args.u.cursoratend.qc_ret = &atend;
 		error = VFS_QUOTACTL(mp, QUOTACTL_CURSORATEND, &args);
@@ -613,7 +613,7 @@ vfs_quotactl_getall(struct mount *mp,
 			break;
 		}
 
-		args.qc_type = QCT_CURSORGET;
+		args.qc_op = QUOTACTL_CURSORGET;
 		args.u.cursorget.qc_cursor = &cursor;
 		args.u.cursorget.qc_keys = keys;
 		args.u.cursorget.qc_vals = vals;
@@ -626,14 +626,14 @@ vfs_quotactl_getall(struct mount *mp,
 			 * transaction abort, start over
 			 */
 
-			args.qc_type = QCT_CURSORREWIND;
+			args.qc_op = QUOTACTL_CURSORREWIND;
 			args.u.cursorrewind.qc_cursor = &cursor;
 			error = VFS_QUOTACTL(mp, QUOTACTL_CURSORREWIND, &args);
 			if (error) {
 				goto err;
 			}
 
-			args.qc_type = QCT_CURSORSKIPIDTYPE;
+			args.qc_op = QUOTACTL_CURSORSKIPIDTYPE;
 			args.u.cursorskipidtype.qc_cursor = &cursor;
 			args.u.cursorskipidtype.qc_idtype = skipidtype;
 			error = VFS_QUOTACTL(mp, QUOTACTL_CURSORSKIPIDTYPE,
@@ -729,7 +729,7 @@ vfs_quotactl_getall(struct mount *mp,
 		prop_object_release(replies);
 	}
 
-	args.qc_type = QCT_CURSORCLOSE;
+	args.qc_op = QUOTACTL_CURSORCLOSE;
 	args.u.cursorclose.qc_cursor = &cursor;
 	error2 = VFS_QUOTACTL(mp, QUOTACTL_CURSORCLOSE, &args);
 
@@ -785,7 +785,7 @@ vfs_quotactl_clear(struct mount *mp,
 		qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
 		qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
 
-		args.qc_type = QCT_DELETE;
+		args.qc_op = QUOTACTL_DELETE;
 		args.u.delete.qc_key = &qk;
 		error = VFS_QUOTACTL(mp, QUOTACTL_DELETE, &args);
 		if (error) {
@@ -796,7 +796,7 @@ vfs_quotactl_clear(struct mount *mp,
 		qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
 		qk.qk_objtype = QUOTA_OBJTYPE_FILES;
 
-		args.qc_type = QCT_DELETE;
+		args.qc_op = QUOTACTL_DELETE;
 		args.u.delete.qc_key = &qk;
 		error = VFS_QUOTACTL(mp, QUOTACTL_DELETE, &args);
 		if (error) {

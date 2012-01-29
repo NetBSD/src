@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.429 2012/01/29 06:36:06 dholland Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.430 2012/01/29 07:13:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.429 2012/01/29 06:36:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.430 2012/01/29 07:13:42 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.429 2012/01/29 06:36:06 dholland Exp 
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
+#include <sys/quotactl.h> /* XXX temporary */
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
@@ -1009,6 +1010,8 @@ int
 VFS_QUOTACTL(struct mount *mp, int op, struct vfs_quotactl_args *args)
 {
 	int error;
+
+	KASSERT(op == args->qc_op);
 
 	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
 		KERNEL_LOCK(1, NULL);
