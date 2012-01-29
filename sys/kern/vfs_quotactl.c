@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.31 2012/01/29 07:11:12 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.32 2012/01/29 07:11:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.31 2012/01/29 07:11:12 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.32 2012/01/29 07:11:55 dholland Exp $");
 
 #include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
@@ -174,10 +174,14 @@ vfs_quotactl_quotaoff(struct mount *mp,
 {
 	struct vfs_quotactl_args args;
 
-	args.qc_type = QCT_PROPLIB;
-	args.u.proplib.qc_cmddict = cmddict;
-	args.u.proplib.qc_q2type = q2type;
-	args.u.proplib.qc_datas = datas;
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+
+	if (prop_array_count(datas) != 0)
+		return EINVAL;
+
+	args.qc_type = QCT_QUOTAOFF;
+	args.u.quotaoff.qc_idtype = q2type;
 	return VFS_QUOTACTL(mp, QUOTACTL_QUOTAOFF, &args);
 }
 
