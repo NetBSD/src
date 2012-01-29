@@ -1,4 +1,4 @@
-.\" $NetBSD: perfused.8,v 1.10 2012/01/29 06:22:02 manu Exp $
+.\" $NetBSD: perfused.8,v 1.11 2012/01/29 11:32:23 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 12, 2010
+.Dd January 29, 2012
 .Dt PERFUSED 8
 .Os
 .Sh NAME
@@ -126,8 +126,9 @@ If the
 flag was used, toggle debug output.
 Do nothing otherwise.
 .It Dv SIGUSR1
-Toggle FUSE operation dump on and off. When toggling off, the trace
-is is stored in 
+Toggle FUSE operation dump on and off.
+When toggling off, the trace
+is is stored in
 .Pa /var/run/perfuse-xxx.trace
 (xxx is the filesystem mount point).
 .El
