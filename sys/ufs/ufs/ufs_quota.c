@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.80 2012/01/29 06:44:33 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.81 2012/01/29 06:46:16 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.80 2012/01/29 06:44:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.81 2012/01/29 06:46:16 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -271,6 +271,8 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 	id_t id;
 	int defaultq;
 	int q2type;
+	const struct quotaval *blocks;
+	const struct quotaval *files;
 	prop_dictionary_t data;
 	int error;
 
@@ -278,6 +280,8 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 	id = args->u.set.qc_id;
 	defaultq = args->u.set.qc_defaultq;
 	q2type = args->u.set.qc_q2type;
+	blocks = args->u.set.qc_blocks;
+	files = args->u.set.qc_files;
 	data = args->u.set.qc_data;
 
 	KASSERT(prop_object_type(data) == PROP_TYPE_DICTIONARY);
@@ -294,7 +298,7 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA)
 			error = quota1_handle_cmd_set(ump, q2type, id, defaultq,
-			    data);
+			    blocks, files);
 		else
 #endif
 #ifdef QUOTA2
