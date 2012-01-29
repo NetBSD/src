@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.7 2012/01/29 06:23:20 dholland Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.8 2012/01/29 06:38:24 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.7 2012/01/29 06:23:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.8 2012/01/29 06:38:24 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -493,51 +493,39 @@ again:
 }
 
 int             
-quota1_handle_cmd_get(struct ufsmount *ump, int type, int id,
-    int defaultq, prop_array_t replies)
+quota1_handle_cmd_get(struct ufsmount *ump, int idtype, int id,
+    int defaultq, struct quotaval *blocks, struct quotaval *files)
 {
 	struct dquot *dq;
-	struct quotaval qv[QUOTA_NLIMITS];
-	prop_dictionary_t dict;
 	int error;
 	uint64_t *valuesp[QUOTA_NLIMITS];
-	valuesp[QUOTA_LIMIT_BLOCK] = &qv[QUOTA_LIMIT_BLOCK].qv_hardlimit;
-	valuesp[QUOTA_LIMIT_FILE] = &qv[QUOTA_LIMIT_FILE].qv_hardlimit;
 
+	valuesp[QUOTA_LIMIT_BLOCK] = &blocks->qv_hardlimit;
+	valuesp[QUOTA_LIMIT_FILE] = &files->qv_hardlimit;
 
-	if (ump->um_quotas[type] == NULLVP)
+	if (ump->um_quotas[idtype] == NULLVP)
 		return ENODEV;
 
 	if (defaultq) { /* we want the grace period of id 0 */
-		if ((error = dqget(NULLVP, 0, ump, type, &dq)) != 0)
+		if ((error = dqget(NULLVP, 0, ump, idtype, &dq)) != 0)
 			return error;
 
 	} else {
-		if ((error = dqget(NULLVP, id, ump, type, &dq)) != 0)
+		if ((error = dqget(NULLVP, id, ump, idtype, &dq)) != 0)
 			return error;
 	}
-	dqblk_to_quotavals(&dq->dq_un.dq1_dqb,
-			   &qv[QUOTA_LIMIT_BLOCK], &qv[QUOTA_LIMIT_FILE]);
+	dqblk_to_quotavals(&dq->dq_un.dq1_dqb, blocks, files);
 	dqrele(NULLVP, dq);
 	if (defaultq) {
-		if (qv[QUOTA_LIMIT_BLOCK].qv_expiretime > 0)
-			qv[QUOTA_LIMIT_BLOCK].qv_grace =
-			    qv[QUOTA_LIMIT_BLOCK].qv_expiretime;
+		if (blocks->qv_expiretime > 0)
+			blocks->qv_grace = blocks->qv_expiretime;
 		else
-			qv[QUOTA_LIMIT_BLOCK].qv_grace = MAX_DQ_TIME;
-		if (qv[QUOTA_LIMIT_FILE].qv_expiretime > 0)
-			qv[QUOTA_LIMIT_FILE].qv_grace =
-			    qv[QUOTA_LIMIT_FILE].qv_expiretime;
+			blocks->qv_grace = MAX_DQ_TIME;
+		if (files->qv_expiretime > 0)
+			files->qv_grace = files->qv_expiretime;
 		else
-			qv[QUOTA_LIMIT_FILE].qv_grace = MAX_DQ_TIME;
+			files->qv_grace = MAX_DQ_TIME;
 	}
-	dict = quota64toprop(id, defaultq, valuesp,
-	    ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
-	    ufs_quota_limit_names, QUOTA_NLIMITS);
-	if (dict == NULL)
-		return ENOMEM;
-	if (!prop_array_add_and_rel(replies, dict))
-		return ENOMEM;
 	return 0;
 }
 

@@ -44,9 +44,6 @@ struct quotacursor; /* Opaque. */
 #define QUOTA_OBJTYPE_BLOCKS	0
 #define QUOTA_OBJTYPE_FILES	1
 
-/* id value for "default" */
-#define QUOTA_DEFAULTID		((id_t)-1)
-
 /* limit value for "no limit" */
 #define QUOTA_NOLIMIT		((uint64_t)0xffffffffffffffffULL)
 
