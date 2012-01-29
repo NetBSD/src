@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.98 2012/01/29 07:09:52 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.99 2012/01/29 07:11:12 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.98 2012/01/29 07:09:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.99 2012/01/29 07:11:12 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -540,42 +540,25 @@ static int
 quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l, 
     struct vfs_quotactl_args *args)
 {
-	prop_dictionary_t data;
 	struct ufsmount *ump = VFSTOUFS(mp);
-	int error;
+	int idtype;
 	const char *qfile;
-	prop_dictionary_t cmddict;
-	int q2type;
-	prop_array_t datas;
+	int error;
 
-	KASSERT(args->qc_type == QCT_PROPLIB);
-	cmddict = args->u.proplib.qc_cmddict;
-	q2type = args->u.proplib.qc_q2type;
-	datas = args->u.proplib.qc_datas;
-
-	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
-	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+	KASSERT(args->qc_type == QCT_QUOTAON);
+	idtype = args->u.quotaon.qc_idtype;
+	qfile = args->u.quotaon.qc_quotafile;
 
 	if ((ump->um_flags & UFS_QUOTA2) != 0)
 		return EBUSY;
 	
-	if (prop_array_count(datas) != 1)
-		return EINVAL;
-
-	data = prop_array_get(datas, 0);
-	if (data == NULL)
-		return ENOMEM;
-	if (!prop_dictionary_get_cstring_nocopy(data, "quotafile",
-	    &qfile))
-		return EINVAL;
-
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF, mp, NULL, NULL);
 	if (error != 0) {
 		return error;
 	}
 #ifdef QUOTA
-	error = quota1_handle_cmd_quotaon(l, ump, q2type, qfile);
+	error = quota1_handle_cmd_quotaon(l, ump, idtype, qfile);
 #else
 	error = EOPNOTSUPP;
 #endif

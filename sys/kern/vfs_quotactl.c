@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.30 2012/01/29 07:10:24 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.31 2012/01/29 07:11:12 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.30 2012/01/29 07:10:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.31 2012/01/29 07:11:12 dholland Exp $");
 
 #include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
@@ -144,12 +144,26 @@ vfs_quotactl_quotaon(struct mount *mp,
 		     prop_dictionary_t cmddict, int q2type,
 		     prop_array_t datas)
 {
+	prop_dictionary_t data;
+	const char *qfile;
 	struct vfs_quotactl_args args;
 
-	args.qc_type = QCT_PROPLIB;
-	args.u.proplib.qc_cmddict = cmddict;
-	args.u.proplib.qc_q2type = q2type;
-	args.u.proplib.qc_datas = datas;
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+
+	if (prop_array_count(datas) != 1)
+		return EINVAL;
+
+	data = prop_array_get(datas, 0);
+	if (data == NULL)
+		return ENOMEM;
+	if (!prop_dictionary_get_cstring_nocopy(data, "quotafile",
+	    &qfile))
+		return EINVAL;
+
+	args.qc_type = QCT_QUOTAON;
+	args.u.quotaon.qc_idtype = q2type;
+	args.u.quotaon.qc_quotafile = qfile;
 	return VFS_QUOTACTL(mp, QUOTACTL_QUOTAON, &args);
 }
 
