@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.6 2011/11/25 16:55:05 dholland Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.7 2012/01/29 06:23:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.6 2011/11/25 16:55:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.7 2012/01/29 06:23:20 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -516,7 +516,8 @@ quota1_handle_cmd_get(struct ufsmount *ump, int type, int id,
 		if ((error = dqget(NULLVP, id, ump, type, &dq)) != 0)
 			return error;
 	}
-	dqblk_to_quotaval(&dq->dq_un.dq1_dqb, qv);
+	dqblk_to_quotavals(&dq->dq_un.dq1_dqb,
+			   &qv[QUOTA_LIMIT_BLOCK], &qv[QUOTA_LIMIT_FILE]);
 	dqrele(NULLVP, dq);
 	if (defaultq) {
 		if (qv[QUOTA_LIMIT_BLOCK].qv_expiretime > 0)
