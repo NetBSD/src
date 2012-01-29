@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.13 2012/01/29 07:16:00 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.14 2012/01/29 07:19:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.13 2012/01/29 07:16:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.14 2012/01/29 07:19:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.13 2012/01/29 07:16:00 dhollan
 #include <ufs/lfs/lfs_extern.h>
 
 #include <sys/quota.h>
-#include <quota/quotaprop.h>
+#include <sys/quotactl.h>
 #include <ufs/ufs/quota1.h>
 
 #include <compat/common/compat_util.h>
@@ -329,222 +329,115 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 	} */
 	struct mount *mp;
 	int error;
-	uint8_t error8;
 	struct vnode *vp;
 	int q1cmd = SCARG(uap, cmd);
-	prop_dictionary_t dict, data, cmd;
-	prop_array_t cmds, datas;
 	char *bufpath;
 	struct dqblk dqblk;
-	struct quotaval qv[QUOTA_NLIMITS];
-	uint64_t *values[QUOTA_NLIMITS];
+	struct quotakey key;
+	struct quotaval blocks, files;
+	struct quotastat qstat;
+	struct vfs_quotactl_args args;
 	int idtype;
-
-	values[QUOTA_LIMIT_BLOCK] = &qv[QUOTA_LIMIT_BLOCK].qv_hardlimit;
-	values[QUOTA_LIMIT_FILE] = &qv[QUOTA_LIMIT_FILE].qv_hardlimit;
 
 	error = namei_simple_user(SCARG(uap, path),
 				NSM_FOLLOW_TRYEMULROOT, &vp);
 	if (error != 0)
 		return (error);       
-	error = ENOMEM;
-	mp = vp->v_mount;
-	if ((dict = quota_prop_create()) == NULL)
-		goto out;
-	if ((cmds = prop_array_create()) == NULL)
-		goto out_dict;
-	if ((datas = prop_array_create()) == NULL)
-		goto out_cmds;
 
-	switch((q1cmd & ~SUBCMDMASK) >> SUBCMDSHIFT) {
+	mp = vp->v_mount;
+	idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
+
+	switch ((q1cmd & ~SUBCMDMASK) >> SUBCMDSHIFT) {
 	case Q_QUOTAON:
-		data = prop_dictionary_create();
-		if (data == NULL)
-			goto out_datas;
 		bufpath = malloc(PATH_MAX * sizeof(char), M_TEMP, M_WAITOK);
-		if (bufpath == NULL)
-			goto out_data;
 		error = copyinstr(SCARG(uap, arg), bufpath, PATH_MAX, NULL);
 		if (error != 0) {
 			free(bufpath, M_TEMP);
-			goto out_data;
+			break;
 		}
-		if (!prop_dictionary_set_cstring(data, "quotafile", bufpath))
-			error = ENOMEM;
+
+		args.qc_op = QUOTACTL_QUOTAON;
+		args.u.quotaon.qc_quotafile = bufpath;
+		args.u.quotaon.qc_idtype = idtype;
+		error = VFS_QUOTACTL(mp, &args);
+
 		free(bufpath, M_TEMP);
-		if (error)
-			goto out_data;
-		error = ENOMEM;
-		if (!prop_array_add_and_rel(datas, data))
-			goto out_datas;
-		idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
-		if (!quota_prop_add_command(cmds, "quotaon",
-		    ufs_quota_class_names[idtype],
-		    datas))
-			goto out_cmds;
-		goto do_quotaonoff;
+		break;
 
 	case Q_QUOTAOFF:
-		error = ENOMEM;
-		idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
-		if (!quota_prop_add_command(cmds, "quotaoff",
-		    ufs_quota_class_names[idtype],
-		    datas))
-			goto out_cmds;
-do_quotaonoff:
-		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
-			goto out_dict;
-		error = vfs_quotactl(mp, dict);
-		if (error)
-			goto out_dict;
-		if ((error = quota_get_cmds(dict, &cmds)) != 0)
-			goto out_dict;
-		cmd = prop_array_get(cmds, 0);
-		if (cmd == NULL) {
-			error = EINVAL;
-			goto out_dict;
-		}
-		if (!prop_dictionary_get_int8(cmd, "return", &error8)) {
-			error = EINVAL;
-			goto out_dict;
-		}
-		error = error8;
-		goto out_dict;
+		args.qc_op = QUOTACTL_QUOTAOFF;
+		args.u.quotaoff.qc_idtype = idtype;
+		error = VFS_QUOTACTL(mp, &args);
+		break;
 
 	case Q_GETQUOTA:
-		error = ENOMEM;
-		data = prop_dictionary_create();
-		if (data == NULL)
-			goto out_datas;
-		if (!prop_dictionary_set_uint32(data, "id", SCARG(uap, uid)))
-			goto out_data;
-		if (!prop_array_add_and_rel(datas, data))
-			goto out_datas;
-		idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
-		if (!quota_prop_add_command(cmds, "get",
-		    ufs_quota_class_names[idtype],
-		    datas))
-			goto out_cmds;
-		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
-			goto out_dict;
-		error = vfs_quotactl(mp, dict);
-		if (error)
-			goto out_dict;
-		if ((error = quota_get_cmds(dict, &cmds)) != 0)
-			goto out_dict;
-		cmd = prop_array_get(cmds, 0);
-		if (cmd == NULL) {
-			error = EINVAL;
-			goto out_dict;
+		key.qk_idtype = idtype;
+		key.qk_id = SCARG(uap, uid);
+		args.qc_op = QUOTACTL_GET;
+		args.u.get.qc_key = &key;
+
+		key.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
+		args.u.get.qc_ret = &blocks;
+		error = VFS_QUOTACTL(mp, &args);
+		if (error) {
+			break;
 		}
-		if (!prop_dictionary_get_int8(cmd, "return", &error8)) {
-			error = EINVAL;
-			goto out_dict;
+
+		key.qk_objtype = QUOTA_OBJTYPE_FILES;
+		args.u.get.qc_ret = &files;
+		error = VFS_QUOTACTL(mp, &args);
+		if (error) {
+			break;
 		}
-		error = error8;
-		if (error)
-			goto out_dict;
-		datas = prop_dictionary_get(cmd, "data");
-		error = EINVAL;
-		if (datas == NULL)
-			goto out_dict;
-		data = prop_array_get(datas, 0);
-		if (data == NULL)
-			goto out_dict;
-		error = proptoquota64(data, values,
-		    ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
-		    ufs_quota_limit_names, QUOTA_NLIMITS);
-		if (error)
-			goto out_dict;
-		quotavals_to_dqblk(&qv[QUOTA_LIMIT_BLOCK],
-				   &qv[QUOTA_LIMIT_FILE],
-				   &dqblk);
+
+		quotavals_to_dqblk(&blocks, &files, &dqblk);
 		error = copyout(&dqblk, SCARG(uap, arg), sizeof(dqblk));
-		goto out_dict;
+		break;
 		
 	case Q_SETQUOTA:
 		error = copyin(SCARG(uap, arg), &dqblk, sizeof(dqblk));
-		if (error)
-			goto out_datas;
-		dqblk_to_quotavals(&dqblk, &qv[QUOTA_LIMIT_BLOCK],
-				   &qv[QUOTA_LIMIT_FILE]);
+		if (error) {
+			break;
+		}
+		dqblk_to_quotavals(&dqblk, &blocks, &files);
 
-		error = ENOMEM;
-		data = quota64toprop(SCARG(uap, uid), 0, values,
-		    ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
-		    ufs_quota_limit_names, QUOTA_NLIMITS);
-		if (data == NULL)
-			goto out_data;
-		if (!prop_array_add_and_rel(datas, data))
-			goto out_datas;
-		idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
-		if (!quota_prop_add_command(cmds, "set",
-		    ufs_quota_class_names[idtype],
-		    datas))
-			goto out_cmds;
-		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
-			goto out_dict;
-		error = vfs_quotactl(mp, dict);
-		if (error)
-			goto out_dict;
-		if ((error = quota_get_cmds(dict, &cmds)) != 0)
-			goto out_dict;
-		cmd = prop_array_get(cmds, 0);
-		if (cmd == NULL) {
-			error = EINVAL;
-			goto out_dict;
+		key.qk_idtype = idtype;
+		key.qk_id = SCARG(uap, uid);
+		args.qc_op = QUOTACTL_PUT;
+		args.u.put.qc_key = &key;
+
+		key.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
+		args.u.put.qc_val = &blocks;
+		error = VFS_QUOTACTL(mp, &args);
+		if (error) {
+			break;
 		}
-		if (!prop_dictionary_get_int8(cmd, "return", &error8)) {
-			error = EINVAL;
-			goto out_dict;
-		}
-		error = error8;
-		goto out_dict;
+
+		key.qk_objtype = QUOTA_OBJTYPE_FILES;
+		args.u.put.qc_val = &files;
+		error = VFS_QUOTACTL(mp, &args);
+		break;
 		
 	case Q_SYNC:
 		/*
 		 * not supported but used only to see if quota is supported,
-		 * emulate with a "get version"
+		 * emulate with stat
+		 *
+		 * XXX should probably be supported
 		 */
-		error = ENOMEM;
-		idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
-		if (!quota_prop_add_command(cmds, "get version",
-		    ufs_quota_class_names[idtype],
-		    datas))
-			goto out_cmds;
-		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
-			goto out_dict;
-		error = vfs_quotactl(mp, dict);
-		if (error)
-			goto out_dict;
-		if ((error = quota_get_cmds(dict, &cmds)) != 0)
-			goto out_dict;
-		cmd = prop_array_get(cmds, 0);
-		if (cmd == NULL) {
-			error = EINVAL;
-			goto out_dict;
-		}
-		if (!prop_dictionary_get_int8(cmd, "return", &error8)) {
-			error = EINVAL;
-			goto out_dict;
-		}
-		error = error8;
-		goto out_dict;
+		(void)idtype; /* not used */
+
+		args.qc_op = QUOTACTL_STAT;
+		args.u.stat.qc_ret = &qstat;
+		error = VFS_QUOTACTL(mp, &args);
+		break;
 
 	case Q_SETUSE:
 	default:
 		error = EOPNOTSUPP;
-		goto out_datas;
+		break;
 	}
-out_data:
-	prop_object_release(data);
-out_datas:
-	prop_object_release(datas);
-out_cmds:
-	prop_object_release(cmds);
-out_dict:
-	prop_object_release(dict);
-out:
+
 	vrele(vp);
 	return error;
 }
