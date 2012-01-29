@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.7 2012/01/29 06:41:42 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.8 2012/01/29 06:46:50 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.7 2012/01/29 06:41:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.8 2012/01/29 06:46:50 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -74,32 +74,24 @@ static int quota2_walk_list(struct ufsmount *, struct buf *, int,
     int (*func)(struct ufsmount *, uint64_t *, struct quota2_entry *,
       uint64_t, void *));
 
-static int quota2_dict_update_q2e_limits(prop_dictionary_t,
-    struct quota2_entry *);
 static prop_dictionary_t q2etoprop(struct quota2_entry *, int);
 
 static const char *limnames[] = INITQLNAMES;
 
-static int
-quota2_dict_update_q2e_limits(prop_dictionary_t data,
+static void
+quota2_dict_update_q2e_limits(const struct quotaval *blocks,
+    const struct quotaval *files,
     struct quota2_entry *q2e)
 {
-	const char *val_limitsonly_names[] = INITQVNAMES_LIMITSONLY;
+	q2e->q2e_val[QL_BLOCK].q2v_hardlimit = blocks->qv_hardlimit;
+	q2e->q2e_val[QL_BLOCK].q2v_softlimit = blocks->qv_softlimit;
+	q2e->q2e_val[QL_BLOCK].q2v_grace = blocks->qv_grace;
 
-	int i, error;
-	prop_dictionary_t val;
-
-	for (i = 0; i < N_QL; i++) {
-		if (!prop_dictionary_get_dict(data, limnames[i], &val))
-			return EINVAL;
-		error = quotaprop_dict_get_uint64(val,
-		    &q2e->q2e_val[i].q2v_hardlimit,
-		    val_limitsonly_names, N_QV, true);
-		if (error)
-			return error;
-	}
-	return 0;
+	q2e->q2e_val[QL_FILE].q2v_hardlimit = blocks->qv_hardlimit;
+	q2e->q2e_val[QL_FILE].q2v_softlimit = blocks->qv_softlimit;
+	q2e->q2e_val[QL_FILE].q2v_grace = blocks->qv_grace;
 }
+
 static prop_dictionary_t
 q2etoprop(struct quota2_entry *q2e, int def)
 {
@@ -621,7 +613,7 @@ chkiq2(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 
 int
 quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
-    int defaultq, prop_dictionary_t data)
+    int defaultq, const struct quotaval *blocks, const struct quotaval *files)
 {
 	int error;
 	struct dquot *dq;
@@ -644,12 +636,7 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 			goto out_wapbl;
 		}
 		quota2_ufs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
-		error = quota2_dict_update_q2e_limits(data, &q2e);
-		if (error) {
-			mutex_exit(&dqlock);
-			brelse(bp, 0);
-			goto out_wapbl;
-		}
+		quota2_dict_update_q2e_limits(blocks, files, &q2e);
 		quota2_ufs_rwq2e(&q2e, &q2h->q2h_defentry, needswap);
 		mutex_exit(&dqlock);
 		quota2_bwrite(ump->um_mountp, bp);
@@ -674,11 +661,7 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 		goto out_il;
 	
 	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
-	error = quota2_dict_update_q2e_limits(data, &q2e);
-	if (error) {
-		brelse(bp, 0);
-		goto out_il;
-	}
+	quota2_dict_update_q2e_limits(blocks, files, &q2e);
 	quota2_ufs_rwq2e(&q2e, q2ep, needswap);
 	quota2_bwrite(ump->um_mountp, bp);
 
