@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.10 2012/01/29 06:48:51 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.11 2012/01/29 06:49:44 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.10 2012/01/29 06:48:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.11 2012/01/29 06:49:44 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -611,7 +611,7 @@ chkiq2(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 }
 
 int
-quota2_handle_cmd_set(struct ufsmount *ump, const struct quotakey *key,
+quota2_handle_cmd_put(struct ufsmount *ump, const struct quotakey *key,
     const struct quotaval *val)
 {
 	int error;
