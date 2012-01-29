@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.10 2012/01/29 06:43:34 dholland Exp $ */
+/* $NetBSD: quota.h,v 1.11 2012/01/29 19:36:14 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -46,6 +46,15 @@
 
 /* time value for "no time" */
 #define QUOTA_NOTIME		((time_t)-1)
+
+/*
+ * Semantic restrictions. These are hints applications can use
+ * to help produce comprehensible error diagnostics when something
+ * unsupported is attempted.
+ */
+#define QUOTA_RESTRICT_NEEDSQUOTACHECK	0x1	/* quotacheck(8) required */
+#define QUOTA_RESTRICT_UNIFORMGRACE	0x2	/* grace time is global */
+#define QUOTA_RESTRICT_32BIT		0x4	/* values limited to 2^32 */
 
 
 /*
