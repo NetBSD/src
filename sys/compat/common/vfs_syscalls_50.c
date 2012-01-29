@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.10 2011/11/25 16:55:05 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.11 2012/01/29 06:23:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.10 2011/11/25 16:55:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.11 2012/01/29 06:23:20 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,7 +452,9 @@ do_quotaonoff:
 		    ufs_quota_limit_names, QUOTA_NLIMITS);
 		if (error)
 			goto out_dict;
-		quotaval_to_dqblk(qv, &dqblk);
+		quotavals_to_dqblk(&qv[QUOTA_LIMIT_BLOCK],
+				   &qv[QUOTA_LIMIT_FILE],
+				   &dqblk);
 		error = copyout(&dqblk, SCARG(uap, arg), sizeof(dqblk));
 		goto out_dict;
 		
@@ -460,7 +462,8 @@ do_quotaonoff:
 		error = copyin(SCARG(uap, arg), &dqblk, sizeof(dqblk));
 		if (error)
 			goto out_datas;
-		dqblk_to_quotaval(&dqblk, qv);
+		dqblk_to_quotavals(&dqblk, &qv[QUOTA_LIMIT_BLOCK],
+				   &qv[QUOTA_LIMIT_FILE]);
 
 		error = ENOMEM;
 		data = quota64toprop(SCARG(uap, uid), 0, values,

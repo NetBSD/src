@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.41 2012/01/09 15:44:42 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.42 2012/01/29 06:23:20 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.41 2012/01/09 15:44:42 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.42 2012/01/29 06:23:20 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -249,7 +249,9 @@ putprivs1(uint32_t id, int idtype, struct quotause *qup)
 	struct dqblk dqblk;
 	int fd;
 
-	quotaval_to_dqblk(qup->qv, &dqblk);
+	quotavals_to_dqblk(&qup->qv[QUOTA_LIMIT_BLOCK],
+			   &qup->qv[QUOTA_LIMIT_FILE],
+			   &dqblk);
 	assert((qup->flags & DEFAULT) == 0);
 
 	if ((fd = open(qup->qfname, O_WRONLY)) < 0) {
@@ -327,7 +329,9 @@ getprivs1(long id, int idtype, const char *filesys)
 	close(fd);
 	qup->qfname = qfpathname;
 	endfsent();
-	dqblk_to_quotaval(&dqblk, qup->qv);
+	dqblk_to_quotavals(&dqblk,
+			   &qup->qv[QUOTA_LIMIT_BLOCK],
+			   &qup->qv[QUOTA_LIMIT_FILE]);
 	return qup;
 }
 
