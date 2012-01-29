@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.1 2012/01/29 06:26:55 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.2 2012/01/29 06:29:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -36,5 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.1 2012/01/29 06:26:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.2 2012/01/29 06:29:05 dholland Exp $");
 
+#include <sys/mount.h>
+
+int
+vfs_quotactl(struct mount *mp, prop_dictionary_t dict)
+{
+	return VFS_QUOTACTL(mp, dict);
+}
