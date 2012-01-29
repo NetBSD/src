@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.35 2012/01/29 07:14:38 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.36 2012/01/29 07:21:59 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,9 +80,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.35 2012/01/29 07:14:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.36 2012/01/29 07:21:59 dholland Exp $");
 
-#include <sys/malloc.h> /* XXX: temporary */
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/quota.h>
 #include <sys/quotactl.h>
@@ -579,8 +579,8 @@ vfs_quotactl_getall(struct mount *mp,
 		return error;
 	}
 
-	keys = malloc(loopmax * sizeof(keys[0]), M_TEMP, M_WAITOK);
-	vals = malloc(loopmax * sizeof(vals[0]), M_TEMP, M_WAITOK);
+	keys = kmem_alloc(loopmax * sizeof(keys[0]), KM_SLEEP);
+	vals = kmem_alloc(loopmax * sizeof(vals[0]), KM_SLEEP);
 
 	skipidtype = (q2type == QUOTA_IDTYPE_USER ?
 		      QUOTA_IDTYPE_GROUP : QUOTA_IDTYPE_USER);
@@ -721,8 +721,8 @@ vfs_quotactl_getall(struct mount *mp,
 	error = 0;
 
  err:
-	free(keys, M_TEMP);
-	free(vals, M_TEMP);
+	kmem_free(keys, loopmax * sizeof(keys[0]));
+	kmem_free(vals, loopmax * sizeof(vals[0]));
 
 	if (replies != NULL) {
 		prop_object_release(replies);
