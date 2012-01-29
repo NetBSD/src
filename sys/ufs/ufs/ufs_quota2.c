@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.15 2012/01/29 06:55:44 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.16 2012/01/29 06:57:15 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.15 2012/01/29 06:55:44 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.16 2012/01/29 06:57:15 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.15 2012/01/29 06:55:44 dholland Exp
 #include <sys/kauth.h>
 #include <sys/wapbl.h>
 #include <sys/quota.h>
+#include <sys/quotactl.h>
 
 #include <ufs/ufs/quota2.h>
 #include <ufs/ufs/inode.h>
@@ -1036,6 +1037,39 @@ error_bp:
 	}
 	free(gu.uids, M_TEMP);
 	return error;
+}
+
+struct ufsq2_cursor {
+	uint32_t q2c_magic;
+};
+
+#define Q2C_MAGIC (0xbeebe111)
+
+#define Q2CURSOR(qkc) ((struct ufsq2_cursor *)&qkc->u.qkc_space[0])
+
+int
+quota2_handle_cmd_cursoropen(struct ufsmount *ump, struct quotakcursor *qkc)
+{
+	struct ufsq2_cursor *cursor;
+
+	CTASSERT(sizeof(*cursor) <= sizeof(qkc->u.qkc_space));
+	cursor = Q2CURSOR(qkc);
+
+	cursor->q2c_magic = Q2C_MAGIC;
+	return 0;
+}
+
+int
+quota2_handle_cmd_cursorclose(struct ufsmount *ump, struct quotakcursor *qkc)
+{
+	struct ufsq2_cursor *cursor;
+
+	cursor = Q2CURSOR(qkc);
+	if (cursor->q2c_magic != Q2C_MAGIC) {
+		return EINVAL;
+	}
+
+	return 0;
 }
 
 int
