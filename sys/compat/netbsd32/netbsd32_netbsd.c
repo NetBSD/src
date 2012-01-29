@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.175 2011/11/15 14:13:17 njoly Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.176 2012/01/29 06:29:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.175 2011/11/15 14:13:17 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.176 2012/01/29 06:29:04 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1210,7 +1210,7 @@ netbsd32___quotactl50(struct lwp *l, const struct netbsd32___quotactl50_args *ua
 	error = prop_dictionary_copyin(&pref, &dict);
 	if (error)
 		return error;
-	error = VFS_QUOTACTL(mp, dict);
+	error = vfs_quotactl(mp, dict);
 	vrele(vp);
 	if (!error)
 		error = prop_dictionary_copyout(&pref, dict);

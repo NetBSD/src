@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.11 2012/01/29 06:23:20 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.12 2012/01/29 06:29:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.11 2012/01/29 06:23:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.12 2012/01/29 06:29:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,7 +391,7 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 do_quotaonoff:
 		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
 			goto out_dict;
-		error = VFS_QUOTACTL(mp, dict);
+		error = vfs_quotactl(mp, dict);
 		if (error)
 			goto out_dict;
 		if ((error = quota_get_cmds(dict, &cmds)) != 0)
@@ -423,7 +423,7 @@ do_quotaonoff:
 			goto out_cmds;
 		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
 			goto out_dict;
-		error = VFS_QUOTACTL(mp, dict);
+		error = vfs_quotactl(mp, dict);
 		if (error)
 			goto out_dict;
 		if ((error = quota_get_cmds(dict, &cmds)) != 0)
@@ -479,7 +479,7 @@ do_quotaonoff:
 			goto out_cmds;
 		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
 			goto out_dict;
-		error = VFS_QUOTACTL(mp, dict);
+		error = vfs_quotactl(mp, dict);
 		if (error)
 			goto out_dict;
 		if ((error = quota_get_cmds(dict, &cmds)) != 0)
@@ -508,7 +508,7 @@ do_quotaonoff:
 			goto out_cmds;
 		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
 			goto out_dict;
-		error = VFS_QUOTACTL(mp, dict);
+		error = vfs_quotactl(mp, dict);
 		if (error)
 			goto out_dict;
 		if ((error = quota_get_cmds(dict, &cmds)) != 0)

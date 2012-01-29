@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.442 2011/12/02 12:30:14 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.443 2012/01/29 06:29:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.442 2011/12/02 12:30:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.443 2012/01/29 06:29:05 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -626,7 +626,7 @@ sys___quotactl50(struct lwp *l, const struct sys___quotactl50_args *uap,
 	error = prop_dictionary_copyin(&pref, &dict);
 	if (error)
 		return error;
-	error = VFS_QUOTACTL(mp, dict);
+	error = vfs_quotactl(mp, dict);
 	vrele(vp);
 	if (!error)
 		error = prop_dictionary_copyout(&pref, dict);
