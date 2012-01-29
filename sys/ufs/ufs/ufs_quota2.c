@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.19 2012/01/29 07:03:47 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.20 2012/01/29 07:04:21 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.19 2012/01/29 07:03:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.20 2012/01/29 07:04:21 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -961,6 +961,7 @@ struct ufsq2_cursor {
 
 	int q2c_defaults_done;	/* true if we've returned the default values */
 	int q2c_hashpos;	/* slot to start at in hash table */
+	int q2c_uidpos;		/* number of ids we've handled */
 	int q2c_blocks_done;	/* true if we've returned the blocks value */
 };
 
@@ -968,11 +969,34 @@ struct ufsq2_cursor {
 
 #define Q2CURSOR(qkc) ((struct ufsq2_cursor *)&qkc->u.qkc_space[0])
 
+static int
+q2cursor_check(struct ufsq2_cursor *cursor)
+{
+	if (cursor->q2c_magic != Q2C_MAGIC) {
+		return EINVAL;
+	}
+	if (cursor->q2c_hashsize < 0) {
+		return EINVAL;
+	}
+
+	if (cursor->q2c_defaults_done != 0 && cursor->q2c_defaults_done != 1) {
+		return EINVAL;
+	}
+	if (cursor->q2c_hashpos < 0 || cursor->q2c_uidpos < 0) {
+		return EINVAL;
+	}
+	if (cursor->q2c_blocks_done != 0 && cursor->q2c_blocks_done != 1) {
+		return EINVAL;
+	}
+	return 0;
+}
 
 struct getuids {
 	long nuids; /* number of uids in array */
 	long size;  /* size of array */
 	uid_t *uids; /* array of uids, dynamically allocated */
+	long skip;
+	long seen;
 };
 
 static int
@@ -985,6 +1009,10 @@ quota2_getuids_callback(struct ufsmount *ump, uint64_t *offp,
 	const int needswap = UFS_MPNEEDSWAP(ump);
 #endif
 
+	if (gu->skip > 0) {
+		gu->skip--;
+		return 0;
+	}
 	if (gu->nuids == gu->size) {
 		newuids = realloc(gu->uids, gu->size + PAGE_SIZE, M_TEMP,
 		    M_WAITOK);
@@ -997,6 +1025,7 @@ quota2_getuids_callback(struct ufsmount *ump, uint64_t *offp,
 	}
 	gu->uids[gu->nuids] = ufs_rw32(q2ep->q2e_uid, needswap);
 	gu->nuids++;
+	gu->seen++;
 	return 0;
 }
 
@@ -1019,12 +1048,14 @@ quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
 	unsigned num, maxnum;
 
 	cursor = Q2CURSOR(qkc);
-	if (cursor->q2c_magic != Q2C_MAGIC) {
-		return EINVAL;
+	error = q2cursor_check(cursor);
+	if (error) {
+		return error;
 	}
 
-	if (ump->um_quotas[idtype] == NULLVP)
+	if (ump->um_quotas[idtype] == NULLVP) {
 		return ENODEV;
+	}
 
 	mutex_enter(&dqlock);
 	error = getq2h(ump, idtype, &hbp, &q2h, 0);
@@ -1065,14 +1096,11 @@ quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
 		goto fail;
 	}
 
-	/* why are these variables signed? */
-	if (cursor->q2c_hashpos < 0) {
-		error = EINVAL;
-		goto fail;
-	}
-
+	gu.skip = cursor->q2c_uidpos;
+	gu.seen = 0;
 	for (i = cursor->q2c_hashpos; i < quota2_hash_size ; i++) {
 		offset = q2h->q2h_entries[i];
+		gu.seen = 0;
 		error = quota2_walk_list(ump, hbp, idtype, &offset, 0, &gu,
 		    quota2_getuids_callback);
 		if (error) {
@@ -1082,6 +1110,7 @@ quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
 		}
 	}
 	cursor->q2c_hashpos = i;
+	cursor->q2c_uidpos = gu.seen;
 
 fail:
 	mutex_exit(&dqlock);
@@ -1121,8 +1150,10 @@ quota2_handle_cmd_cursoropen(struct ufsmount *ump, struct quotakcursor *qkc)
 
 	cursor->q2c_magic = Q2C_MAGIC;
 	cursor->q2c_hashsize = 0;
-	cursor->q2c_hashpos = 0;
+
 	cursor->q2c_defaults_done = 0;
+	cursor->q2c_hashpos = 0;
+	cursor->q2c_uidpos = 0;
 	cursor->q2c_blocks_done = 0;
 	return 0;
 }
@@ -1131,10 +1162,12 @@ int
 quota2_handle_cmd_cursorclose(struct ufsmount *ump, struct quotakcursor *qkc)
 {
 	struct ufsq2_cursor *cursor;
+	int error;
 
 	cursor = Q2CURSOR(qkc);
-	if (cursor->q2c_magic != Q2C_MAGIC) {
-		return EINVAL;
+	error = q2cursor_check(cursor);
+	if (error) {
+		return error;
 	}
 
 	/* nothing to do */
