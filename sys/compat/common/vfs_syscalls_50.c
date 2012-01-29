@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.14 2012/01/29 07:19:04 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.15 2012/01/29 07:19:48 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.14 2012/01/29 07:19:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.15 2012/01/29 07:19:48 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.14 2012/01/29 07:19:04 dhollan
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/dirent.h>
-#include <sys/malloc.h>
 #include <sys/kauth.h>
 #include <sys/time.h>
 #include <sys/vfs_syscalls.h>
@@ -327,17 +326,17 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 		syscallarg(int) uid;
 		syscallarg(void *) arg; 
 	} */
-	struct mount *mp;
-	int error;
 	struct vnode *vp;
-	int q1cmd = SCARG(uap, cmd);
-	char *bufpath;
+	struct mount *mp;
+	int q1cmd;
+	int idtype;
+	char *qfile;
 	struct dqblk dqblk;
 	struct quotakey key;
 	struct quotaval blocks, files;
 	struct quotastat qstat;
 	struct vfs_quotactl_args args;
-	int idtype;
+	int error;
 
 	error = namei_simple_user(SCARG(uap, path),
 				NSM_FOLLOW_TRYEMULROOT, &vp);
@@ -345,23 +344,24 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 		return (error);       
 
 	mp = vp->v_mount;
+	q1cmd = SCARG(uap, cmd);
 	idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
 
 	switch ((q1cmd & ~SUBCMDMASK) >> SUBCMDSHIFT) {
 	case Q_QUOTAON:
-		bufpath = malloc(PATH_MAX * sizeof(char), M_TEMP, M_WAITOK);
-		error = copyinstr(SCARG(uap, arg), bufpath, PATH_MAX, NULL);
+		qfile = PNBUF_GET();
+		error = copyinstr(SCARG(uap, arg), qfile, PATH_MAX, NULL);
 		if (error != 0) {
-			free(bufpath, M_TEMP);
+			PNBUF_PUT(qfile);
 			break;
 		}
 
 		args.qc_op = QUOTACTL_QUOTAON;
-		args.u.quotaon.qc_quotafile = bufpath;
+		args.u.quotaon.qc_quotafile = qfile;
 		args.u.quotaon.qc_idtype = idtype;
 		error = VFS_QUOTACTL(mp, &args);
 
-		free(bufpath, M_TEMP);
+		PNBUF_PUT(qfile);
 		break;
 
 	case Q_QUOTAOFF:
