@@ -1,4 +1,4 @@
-/*  $NetBSD: debug.c,v 1.8 2011/12/29 04:25:49 riz Exp $ */
+/*  $NetBSD: debug.c,v 1.9 2012/01/29 06:22:01 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -27,6 +27,9 @@
 
 #include <puffs.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <err.h>
+#include <errno.h>
 #include <sys/types.h>
 
 #include "perfuse_if.h"
@@ -127,6 +130,64 @@ perfuse_opdump_in(ps, pm)
 	return buf;
 }
 
+struct perfuse_trace *
+perfuse_trace_begin(ps, opc, pm)
+	struct perfuse_state *ps;
+	puffs_cookie_t opc;
+	perfuse_msg_t *pm;
+{
+	struct perfuse_trace *pt;
+
+	if ((pt = malloc(sizeof(*pt))) == NULL)
+		DERR(EX_OSERR, "malloc failed");
+
+	pt->pt_opcode = ps->ps_get_inhdr(pm)->opcode;
+	pt->pt_status = inxchg;
+
+	if (clock_gettime(CLOCK_REALTIME, &pt->pt_start) != 0)
+		DERR(EX_OSERR, "clock_gettime failed");
+
+	if (opc == 0)
+		(void)strcpy(pt->pt_path, "");
+	else
+		(void)strlcpy(pt->pt_path, 
+			      perfuse_node_path(opc),
+			      sizeof(pt->pt_path));
+
+	(void)strlcpy(pt->pt_extra,
+		      perfuse_opdump_in(ps, pm),
+		      sizeof(pt->pt_extra));
+
+	TAILQ_INSERT_TAIL(&ps->ps_trace, pt, pt_list);
+	ps->ps_tracecount++;
+
+	return pt;
+}
+
+void
+perfuse_trace_end(ps, pt, error)
+	struct perfuse_state *ps;
+	struct perfuse_trace *pt;
+	int error;
+{
+	if (clock_gettime(CLOCK_REALTIME, &pt->pt_end) != 0)
+		DERR(EX_OSERR, "clock_gettime failed");
+
+	pt->pt_status = done;
+	pt->pt_error = error;
+
+	while (ps->ps_tracecount > PERFUSE_TRACECOUNT_MAX) {
+		struct perfuse_trace *fpt = TAILQ_FIRST(&ps->ps_trace);
+
+		if (fpt == NULL || fpt->pt_status != done)
+			break;
+
+		TAILQ_REMOVE(&ps->ps_trace, fpt, pt_list);
+		free(fpt);
+		ps->ps_tracecount--;
+	}
+}
+
 void
 perfuse_trace_dump(pu, fp)
 	struct puffs_usermount *pu;
@@ -159,7 +220,7 @@ perfuse_trace_dump(pu, fp)
 	TAILQ_FOREACH(pt, &ps->ps_trace, pt_list) {
 		const char *quote = pt->pt_path[0] != '\0' ? "\"" : "";
 
-		fprintf(fp, "%" PRIu64 ".%09ld %s %s%s%s %s ",  
+		fprintf(fp, "%ld.%09ld %s %s%s%s %s ",  
 			pt->pt_start.tv_sec, pt->pt_start.tv_nsec,
 			perfuse_opname(pt->pt_opcode),
 			quote, pt->pt_path, quote,
@@ -172,7 +233,7 @@ perfuse_trace_dump(pu, fp)
 			ts.tv_nsec = 0;	/* delint */
 			timespecsub(&pt->pt_end, &pt->pt_start, &ts);
 
-			fprintf(fp, "error = %d elapsed = %" PRIu64 ".%09lu ",
+			fprintf(fp, "error = %d elapsed = %ld.%09lu ",
 				pt->pt_error, ts.tv_sec, ts.tv_nsec);
 
 			count[pt->pt_opcode]++;
@@ -206,8 +267,7 @@ perfuse_trace_dump(pu, fp)
 			min = 0;
 		}
 			
-		fprintf(fp, "%s\t%d\t%" PRId64 ".%09ld\t%" PRId64 
-		    ".%09ld\t%" PRId64 ".%09ld\t\n",
+		fprintf(fp, "%s\t%d\t%ld.%09ld\t%ld.%09ld\t%ld.%09ld\t\n",
 			perfuse_opname(i), count[i],
 			min, ts_min[i].tv_nsec,
 			(time_t)(avg / 1000000000L), (long)(avg % 1000000000L),

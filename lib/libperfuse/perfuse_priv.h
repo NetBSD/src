@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.24 2011/12/28 17:33:53 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.25 2012/01/29 06:22:02 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -252,6 +252,9 @@ int perfuse_node_listextattr(struct puffs_usermount *, puffs_cookie_t,
 int perfuse_node_deleteextattr(struct puffs_usermount *, puffs_cookie_t,
     int, const char *, const struct puffs_cred *);
 
+struct perfuse_trace *perfuse_trace_begin(struct perfuse_state *, 
+    puffs_cookie_t, perfuse_msg_t *);
+void perfuse_trace_end(struct perfuse_state *, struct perfuse_trace *, int);
 char *perfuse_opdump_in(struct perfuse_state *, perfuse_msg_t *);
 
 __END_DECLS

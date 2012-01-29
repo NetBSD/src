@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.h,v 1.6 2011/12/28 17:33:53 manu Exp $ */
+/*  $NetBSD: perfused.h,v 1.7 2012/01/29 06:22:02 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -34,7 +34,7 @@
 
 #define PERFUSE_MSG_T struct puffs_framebuf
 
-#define _PATH_VAR_RUN_PERFUSE_TRACE "/var/run/perfuse.trace"
+#define _PATH_VAR_RUN_PERFUSE_TRACE "/var/run/perfuse%s.trace"
 
 __BEGIN_DECLS
 

@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.49 2011/12/28 17:33:53 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.50 2012/01/29 06:22:02 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -207,7 +207,6 @@ xchg_msg(pu, opc, pm, len, wait)
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
 	struct perfuse_trace *pt = NULL;
-	int opcode;
 	int error;
 
 	ps = puffs_getspecific(pu);
@@ -228,31 +227,8 @@ xchg_msg(pu, opc, pm, len, wait)
 	/*
 	 * Record FUSE call start if requested
 	 */
-	opcode = ps->ps_get_inhdr(pm)->opcode;
-	if (perfuse_diagflags & PDF_TRACE) {
-		if ((pt = malloc(sizeof(*pt))) == NULL)
-			DERR(EX_OSERR, "malloc failed");
-
-		pt->pt_opcode = opcode;
-		pt->pt_status = inxchg;
-
-		if (opc == 0)
-			(void)strcpy(pt->pt_path, "");
-		else
-			(void)strlcpy(pt->pt_path, 
-				      perfuse_node_path(opc),
-				      sizeof(pt->pt_path));
-
-		(void)strlcpy(pt->pt_extra,
-			      perfuse_opdump_in(ps, pm),
-			      sizeof(pt->pt_extra));
-
-		if (clock_gettime(CLOCK_REALTIME, &pt->pt_start) != 0)
-			DERR(EX_OSERR, "clock_gettime failed");
-
-		TAILQ_INSERT_TAIL(&ps->ps_trace, pt, pt_list);
-		ps->ps_tracecount++;
-	}
+	if (perfuse_diagflags & PDF_TRACE)
+		pt = perfuse_trace_begin(ps, opc, pm);
 
 	/*
 	 * Do actual FUSE exchange
@@ -263,23 +239,8 @@ xchg_msg(pu, opc, pm, len, wait)
 	/*
 	 * Record FUSE call end if requested
 	 */
-	if (perfuse_diagflags & PDF_TRACE) {
-		if (clock_gettime(CLOCK_REALTIME, &pt->pt_end) != 0)
-			DERR(EX_OSERR, "clock_gettime failed");
-
-		pt->pt_status = done;
-		pt->pt_error = error;
-		while (ps->ps_tracecount > PERFUSE_TRACECOUNT_MAX) {
-			struct perfuse_trace *fpt = TAILQ_FIRST(&ps->ps_trace);
-
-			if (fpt->pt_status != done)
-				break;
-
-			TAILQ_REMOVE(&ps->ps_trace, fpt, pt_list);
-			ps->ps_tracecount--;
-			free(fpt);
-		}
-	}
+	if (pt != NULL)
+		perfuse_trace_end(ps, pt, error);
 
 	if (pnd) {
 		pnd->pnd_flags &= ~PND_INXCHG;
@@ -434,22 +395,29 @@ static int
 attr_expired(opc)
 	puffs_cookie_t opc;
 {
-	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
+	struct perfuse_node_data *pnd;
+	struct timespec expire;
 	struct timespec now;
+
+	pnd = PERFUSE_NODE_DATA(opc);
+	expire = pnd->pnd_attr_expire;
 
 	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
 		DERR(EX_OSERR, "clock_gettime failed");
 
-	return timespeccmp(&pnd->pnd_attr_expire, &now, <);
+	return timespeccmp(&expire, &now, <);
 }
 
 static int
 entry_expired(opc)
 	puffs_cookie_t opc;
 {
-	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
-	struct timespec expire = pnd->pnd_entry_expire;
+	struct perfuse_node_data *pnd;
+	struct timespec expire;
 	struct timespec now;
+
+	pnd = PERFUSE_NODE_DATA(opc);
+	expire = pnd->pnd_entry_expire;
 
 	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
 		DERR(EX_OSERR, "clock_gettime failed");
