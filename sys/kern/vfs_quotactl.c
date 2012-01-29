@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.28 2012/01/29 07:08:58 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.29 2012/01/29 07:09:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.28 2012/01/29 07:08:58 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.29 2012/01/29 07:09:52 dholland Exp $");
 
 #include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
@@ -560,14 +560,14 @@ vfs_quotactl_getall(struct mount *mp,
 	lastid = 0; /* value not actually referenced */
 
 	while (1) {
-		args.qc_type = QCT_GETALL;
-		args.u.getall.qc_cursor = &cursor;
-		args.u.getall.qc_keys = keys;
-		args.u.getall.qc_vals = vals;
-		args.u.getall.qc_maxnum = loopmax;
-		args.u.getall.qc_ret = &loopnum;
+		args.qc_type = QCT_CURSORGET;
+		args.u.cursorget.qc_cursor = &cursor;
+		args.u.cursorget.qc_keys = keys;
+		args.u.cursorget.qc_vals = vals;
+		args.u.cursorget.qc_maxnum = loopmax;
+		args.u.cursorget.qc_ret = &loopnum;
 
-		error = VFS_QUOTACTL(mp, QUOTACTL_GETALL, &args);
+		error = VFS_QUOTACTL(mp, QUOTACTL_CURSORGET, &args);
 		if (error) {
 			goto err;
 		}

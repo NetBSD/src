@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.25 2012/01/29 07:08:58 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.26 2012/01/29 07:09:52 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.25 2012/01/29 07:08:58 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.26 2012/01/29 07:09:52 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -1050,7 +1050,7 @@ quota2_getuids_callback(struct ufsmount *ump, uint64_t *offp,
 }
 
 int
-quota2_handle_cmd_getall(struct ufsmount *ump, struct quotakcursor *qkc,
+quota2_handle_cmd_cursorget(struct ufsmount *ump, struct quotakcursor *qkc,
     struct quotakey *keys, struct quotaval *vals, unsigned maxreturn,
     unsigned *ret)
 {
@@ -1275,6 +1275,74 @@ quota2_handle_cmd_cursorclose(struct ufsmount *ump, struct quotakcursor *qkc)
 	}
 
 	/* nothing to do */
+
+	return 0;
+}
+
+int
+quota2_handle_cmd_cursorskipidtype(struct ufsmount *ump,
+    struct quotakcursor *qkc, int idtype)
+{
+	struct ufsq2_cursor *cursor;
+	int error;
+
+	cursor = Q2CURSOR(qkc);
+	error = q2cursor_check(cursor);
+	if (error) {
+		return error;
+	}
+
+	switch (idtype) {
+	    case QUOTA_IDTYPE_USER:
+		cursor->q2c_users_done = 1;
+		break;
+	    case QUOTA_IDTYPE_GROUP:
+		cursor->q2c_groups_done = 1;
+		break;
+	    default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+int
+quota2_handle_cmd_cursoratend(struct ufsmount *ump, struct quotakcursor *qkc,
+    int *ret)
+{
+	struct ufsq2_cursor *cursor;
+	int error;
+
+	cursor = Q2CURSOR(qkc);
+	error = q2cursor_check(cursor);
+	if (error) {
+		return error;
+	}
+
+	*ret = (cursor->q2c_users_done && cursor->q2c_groups_done);
+	return 0;
+}
+
+int
+quota2_handle_cmd_cursorrewind(struct ufsmount *ump, struct quotakcursor *qkc)
+{
+	struct ufsq2_cursor *cursor;
+	int error;
+
+	cursor = Q2CURSOR(qkc);
+	error = q2cursor_check(cursor);
+	if (error) {
+		return error;
+	}
+
+	cursor->q2c_hashsize = 0;
+
+	cursor->q2c_users_done = 0;
+	cursor->q2c_groups_done = 0;
+	cursor->q2c_defaults_done = 0;
+	cursor->q2c_hashpos = 0;
+	cursor->q2c_uidpos = 0;
+	cursor->q2c_blocks_done = 0;
 
 	return 0;
 }
