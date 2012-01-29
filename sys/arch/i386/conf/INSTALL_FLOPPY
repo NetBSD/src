@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.14 2011/11/22 21:25:20 tls Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.15 2012/01/29 18:29:11 hannken Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -740,6 +740,11 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
 
+# Virtio devices
+virtio*	at pci? dev ? function ?	# Virtio PCI device
+viomb*	at virtio?			# Virtio memory balloon device
+ld*	at virtio?			# Virtio disk device
+vioif*	at virtio?			# Virtio network device
 
 # Pull in optional local configuration
 cinclude "arch/i386/conf/INSTALL.local"
