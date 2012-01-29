@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.72 2012/01/29 06:36:07 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.73 2012/01/29 06:36:51 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.72 2012/01/29 06:36:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.73 2012/01/29 06:36:51 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -193,55 +193,27 @@ quota_handle_cmd_get_version(struct mount *mp, struct lwp *l,
     struct vfs_quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	prop_array_t replies;
-	prop_dictionary_t data;
-	int error = 0;
-	prop_dictionary_t cmddict;
-	prop_array_t datas;
+	int *version_ret;
 
-	KASSERT(args->qc_type == QCT_PROPLIB);
-	cmddict = args->u.proplib.qc_cmddict;
-	/* qc_q2type not used */
-	datas = args->u.proplib.qc_datas;
-
-	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
-	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+	KASSERT(args->qc_type == QCT_GETVERSION);
+	version_ret = args->u.getversion.qc_version_ret;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 
-	replies = prop_array_create();
-	if (replies == NULL)
-		return ENOMEM;
-
-	data = prop_dictionary_create();
-	if (data == NULL) {
-		prop_object_release(replies);
-		return ENOMEM;
-	}
-
 #ifdef QUOTA
 	if (ump->um_flags & UFS_QUOTA) {
-		if (!prop_dictionary_set_int8(data, "version", 1))
-			error = ENOMEM;
+		*version_ret = 1;
 	} else
 #endif
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
-		if (!prop_dictionary_set_int8(data, "version", 2))
-			error = ENOMEM;
+		*version_ret = 2;
 	} else
 #endif
-		error = 0;
-	if (error)
-		prop_object_release(data);
-	else if (!prop_array_add_and_rel(replies, data))
-		error = ENOMEM;
-	if (error)
-		prop_object_release(replies);
-	else if (!prop_dictionary_set_and_rel(cmddict, "data", replies))
-		error = ENOMEM;
-	return error;
+		return EOPNOTSUPP;
+
+	return 0;
 }
 
 /* XXX shouldn't all this be in kauth ? */
