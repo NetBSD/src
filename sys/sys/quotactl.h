@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.29 2012/01/29 07:12:41 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.30 2012/01/29 07:13:43 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,42 +73,22 @@ struct quotakcursor {
 
 /* Command codes. */
 #define QUOTACTL_STAT		0
-#define QUOTACTL_QUOTAON	1
-#define QUOTACTL_QUOTAOFF	2
-#define QUOTACTL_GET		3
-#define QUOTACTL_PUT		4
-#define QUOTACTL_CURSORGET	5
-#define QUOTACTL_DELETE		6
-#define QUOTACTL_CURSOROPEN	7
-#define QUOTACTL_CURSORCLOSE	8
-#define QUOTACTL_CURSORSKIPIDTYPE 9
-#define QUOTACTL_CURSORATEND	10
-#define QUOTACTL_CURSORREWIND	11
+#define QUOTACTL_GET		1
+#define QUOTACTL_PUT		2
+#define QUOTACTL_DELETE		3
+#define QUOTACTL_CURSOROPEN	4
+#define QUOTACTL_CURSORCLOSE	5
+#define QUOTACTL_CURSORSKIPIDTYPE 6
+#define QUOTACTL_CURSORGET	7
+#define QUOTACTL_CURSORATEND	8
+#define QUOTACTL_CURSORREWIND	9
+#define QUOTACTL_QUOTAON	10
+#define QUOTACTL_QUOTAOFF	11
 
 /* Argument encoding. */
-enum vfs_quotactl_argtypes {
-	QCT_PROPLIB,	/* unused */
-	QCT_STAT,	/* stat */
-	QCT_GET,	/* get */
-	QCT_PUT,	/* put */
-	QCT_DELETE,	/* delete */
-	QCT_CURSOROPEN,	/* open cursor */
-	QCT_CURSORCLOSE,/* close cursor */
-	QCT_CURSORGET,	/* get from cursor */
-	QCT_CURSORSKIPIDTYPE, /* iteration hint */
-	QCT_CURSORATEND,/* test cursor */
-	QCT_CURSORREWIND,/* reset cursor */
-	QCT_QUOTAON,	/* quotaon */
-	QCT_QUOTAOFF,	/* quotaoff */
-};
 struct vfs_quotactl_args {
-	enum vfs_quotactl_argtypes qc_type;
+	unsigned qc_op;
 	union {
-		struct {
-			prop_dictionary_t qc_cmddict;
-			int qc_q2type;
-			prop_array_t qc_datas;
-		} proplib;
 		struct {
 			struct quotastat *qc_ret;
 		} stat;
