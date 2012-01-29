@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.37 2012/01/27 18:53:03 para Exp $	*/
+/*	$NetBSD: dvma.c,v 1.38 2012/01/29 16:24:01 para Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.37 2012/01/27 18:53:03 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.38 2012/01/29 16:24:01 para Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,10 +82,12 @@ dvma_init(void)
 	 * dvma_extent manages things handled in interrupt
 	 * context.
 	 */
-	phys_map = uvm_map_create(pmap_kernel(),
-	    DVMA_MAP_BASE, DVMA_MAP_END, 0);
+	phys_map = kmem_alloc(sizeof(struct vm_map), KM_SLEEP);
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
+
+	uvm_map_setup(phys_map, DVMA_MAP_BASE, DVMA_MAP_END, 0);
+	phys_map->pmap = pmap_kernel();
 
 	/*
 	 * Reserve the DVMA space used for segment remapping.
