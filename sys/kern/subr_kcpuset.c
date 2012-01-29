@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.3 2011/08/07 21:38:32 rmind Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.4 2012/01/29 19:08:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.3 2011/08/07 21:38:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.4 2012/01/29 19:08:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -87,7 +87,7 @@ static int			kc_last_idx = 0;
 static bool			kc_initialised = false;
 
 #define	KC_BITSIZE_EARLY	sizeof(kc_bits_early[0])
-#define	KC_NFIELDS_EARLY	(KC_BITSIZE_EARLY >> KC_SHIFT)
+#define	KC_NFIELDS_EARLY	1
 
 /*
  * The size of whole bitset fields and amount of fields.
@@ -113,6 +113,7 @@ kcpuset_sysinit(void)
 	/* Set a kcpuset_t sizes. */
 	kc_nfields = (KC_MAXCPUS >> KC_SHIFT);
 	kc_bitsize = sizeof(uint32_t) * kc_nfields;
+	KASSERT(kc_nfields != 0 && kc_bitsize != 0);
 
 	kc_cache = pool_cache_init(sizeof(kcpuset_impl_t) + kc_bitsize,
 	    coherency_unit, 0, 0, "kcpuset", NULL, IPL_NONE, NULL, NULL, NULL);
@@ -232,17 +233,9 @@ kcpuset_destroy(kcpuset_t *kcp)
 }
 
 /*
- * Routines to copy or reference/unreference the CPU set.
+ * Routines to reference/unreference the CPU set.
  * Note: early boot case is not supported by these routines.
  */
-
-void
-kcpuset_copy(kcpuset_t *dkcp, kcpuset_t *skcp)
-{
-
-	KASSERT(!kc_initialised || KC_GETSTRUCT(dkcp)->kc_refcnt == 1);
-	memcpy(dkcp, skcp, kc_bitsize);
-}
 
 void
 kcpuset_use(kcpuset_t *kcp)
@@ -311,9 +304,9 @@ kcpuset_copyout(kcpuset_t *kcp, cpuset_t *ucp, size_t len)
 }
 
 /*
- * Routines to change bit field - zero, fill, set, unset, etc.
+ * Routines to change bit field - zero, fill, copy, set, unset, etc.
  */
- 
+
 void
 kcpuset_zero(kcpuset_t *kcp)
 {
@@ -330,6 +323,15 @@ kcpuset_fill(kcpuset_t *kcp)
 	KASSERT(!kc_initialised || KC_GETSTRUCT(kcp)->kc_refcnt > 0);
 	KASSERT(!kc_initialised || KC_GETSTRUCT(kcp)->kc_next == NULL);
 	memset(kcp, ~0, kc_bitsize);
+}
+
+void
+kcpuset_copy(kcpuset_t *dkcp, kcpuset_t *skcp)
+{
+
+	KASSERT(!kc_initialised || KC_GETSTRUCT(dkcp)->kc_refcnt > 0);
+	KASSERT(!kc_initialised || KC_GETSTRUCT(dkcp)->kc_next == NULL);
+	memcpy(dkcp, skcp, kc_bitsize);
 }
 
 void
@@ -354,7 +356,7 @@ kcpuset_clear(kcpuset_t *kcp, cpuid_t i)
 	kcp->bits[j] &= ~(1 << (i & KC_MASK));
 }
 
-int
+bool
 kcpuset_isset(kcpuset_t *kcp, cpuid_t i)
 {
 	const size_t j = i >> KC_SHIFT;
@@ -365,6 +367,21 @@ kcpuset_isset(kcpuset_t *kcp, cpuid_t i)
 	KASSERT(j < kc_nfields);
 
 	return ((1 << (i & KC_MASK)) & kcp->bits[j]) != 0;
+}
+
+bool
+kcpuset_isotherset(kcpuset_t *kcp, cpuid_t i)
+{
+	const size_t j2 = i >> KC_SHIFT;
+	const uint32_t mask = ~(1 << (i & KC_MASK));
+
+	for (size_t j = 0; j < kc_nfields; j++) {
+		const uint32_t bits = kcp->bits[j];
+		if (bits && (j != j2 || (bits & mask) != 0)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 bool
@@ -393,6 +410,17 @@ kcpuset_merge(kcpuset_t *kcp1, kcpuset_t *kcp2)
 	for (size_t j = 0; j < kc_nfields; j++) {
 		kcp1->bits[j] |= kcp2->bits[j];
 	}
+}
+
+int
+kcpuset_countset(kcpuset_t *kcp)
+{
+	int count = 0;
+
+	for (size_t j = 0; j < kc_nfields; j++) {
+		count += popcount32(kcp->bits[j]);
+	}
+	return count;
 }
 
 /*
