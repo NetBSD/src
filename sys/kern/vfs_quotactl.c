@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.5 2012/01/29 06:36:06 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.6 2012/01/29 06:36:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.5 2012/01/29 06:36:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.6 2012/01/29 06:36:50 dholland Exp $");
 
 #include <sys/mount.h>
 #include <sys/quotactl.h>
@@ -91,13 +91,50 @@ vfs_quotactl_getversion(struct mount *mp,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
 {
+	prop_array_t replies;
+	prop_dictionary_t data;
+	int q2version;
 	struct vfs_quotactl_args args;
+	int error;
 
-	args.qc_type = QCT_PROPLIB;
-	args.u.proplib.qc_cmddict = cmddict;
-	args.u.proplib.qc_q2type = q2type;
-	args.u.proplib.qc_datas = datas;
-	return VFS_QUOTACTL(mp, QUOTACTL_GETVERSION, &args);
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+
+	args.qc_type = QCT_GETVERSION;
+	args.u.getversion.qc_version_ret = &q2version;
+	error = VFS_QUOTACTL(mp, QUOTACTL_GETVERSION, &args);
+	if (error) {
+		return error;
+	}
+
+	data = prop_dictionary_create();
+	if (data == NULL) {
+		return ENOMEM;
+	}
+
+	if (!prop_dictionary_set_int8(data, "version", q2version)) {
+		prop_object_release(data);
+		return ENOMEM;
+	}
+
+	replies = prop_array_create();
+	if (replies == NULL) {
+		prop_object_release(data);
+		return ENOMEM;
+	}
+
+	if (!prop_array_add_and_rel(replies, data)) {
+		prop_object_release(data);
+		prop_object_release(replies);
+		return ENOMEM;
+	}
+
+	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
+		prop_object_release(replies);
+		return ENOMEM;
+	}
+
+	return error;
 }
 
 static int
