@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.81 2012/01/29 06:46:16 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.82 2012/01/29 06:46:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.81 2012/01/29 06:46:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.82 2012/01/29 06:46:49 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -304,7 +304,7 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
 			error = quota2_handle_cmd_set(ump, q2type, id, defaultq,
-			    data);
+			    blocks, files);
 		} else
 #endif
 			panic("quota_handle_cmd_get: no support ?");
