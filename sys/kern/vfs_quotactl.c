@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.8 2012/01/29 06:39:36 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.9 2012/01/29 06:40:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.8 2012/01/29 06:39:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.9 2012/01/29 06:40:57 dholland Exp $");
 
 #include <sys/mount.h>
 #include <sys/quota.h>
@@ -241,8 +241,25 @@ vfs_quotactl_get(struct mount *mp,
 		args.u.get.qc_q2type = q2type;
 		args.u.get.qc_id = id;
 		args.u.get.qc_defaultq = defaultq;
-		args.u.get.qc_blocks_ret = &blocks;
-		args.u.get.qc_files_ret = &files;
+		args.u.get.qc_objtype = QUOTA_OBJTYPE_BLOCKS;
+		args.u.get.qc_ret = &blocks;
+		error = VFS_QUOTACTL(mp, QUOTACTL_GET, &args);
+		if (error == EPERM) {
+			/* XXX does this make sense? */
+			continue;
+		} else if (error == ENOENT) {
+			/* XXX does *this* make sense? */
+			continue;
+		} else if (error) {
+			goto fail;
+		}
+
+		args.qc_type = QCT_GET;
+		args.u.get.qc_q2type = q2type;
+		args.u.get.qc_id = id;
+		args.u.get.qc_defaultq = defaultq;
+		args.u.get.qc_objtype = QUOTA_OBJTYPE_FILES;
+		args.u.get.qc_ret = &files;
 		error = VFS_QUOTACTL(mp, QUOTACTL_GET, &args);
 		if (error == EPERM) {
 			/* XXX does this make sense? */

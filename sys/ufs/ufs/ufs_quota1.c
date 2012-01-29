@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.8 2012/01/29 06:38:24 dholland Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.9 2012/01/29 06:40:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.8 2012/01/29 06:38:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.9 2012/01/29 06:40:57 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -494,14 +494,11 @@ again:
 
 int             
 quota1_handle_cmd_get(struct ufsmount *ump, int idtype, int id,
-    int defaultq, struct quotaval *blocks, struct quotaval *files)
+    int defaultq, int objtype, struct quotaval *ret)
 {
 	struct dquot *dq;
 	int error;
-	uint64_t *valuesp[QUOTA_NLIMITS];
-
-	valuesp[QUOTA_LIMIT_BLOCK] = &blocks->qv_hardlimit;
-	valuesp[QUOTA_LIMIT_FILE] = &files->qv_hardlimit;
+	struct quotaval blocks, files;
 
 	if (ump->um_quotas[idtype] == NULLVP)
 		return ENODEV;
@@ -514,18 +511,30 @@ quota1_handle_cmd_get(struct ufsmount *ump, int idtype, int id,
 		if ((error = dqget(NULLVP, id, ump, idtype, &dq)) != 0)
 			return error;
 	}
-	dqblk_to_quotavals(&dq->dq_un.dq1_dqb, blocks, files);
+	dqblk_to_quotavals(&dq->dq_un.dq1_dqb, &blocks, &files);
 	dqrele(NULLVP, dq);
 	if (defaultq) {
-		if (blocks->qv_expiretime > 0)
-			blocks->qv_grace = blocks->qv_expiretime;
+		if (blocks.qv_expiretime > 0)
+			blocks.qv_grace = blocks.qv_expiretime;
 		else
-			blocks->qv_grace = MAX_DQ_TIME;
-		if (files->qv_expiretime > 0)
-			files->qv_grace = files->qv_expiretime;
+			blocks.qv_grace = MAX_DQ_TIME;
+		if (files.qv_expiretime > 0)
+			files.qv_grace = files.qv_expiretime;
 		else
-			files->qv_grace = MAX_DQ_TIME;
+			files.qv_grace = MAX_DQ_TIME;
 	}
+
+	switch (objtype) {
+	    case QUOTA_OBJTYPE_BLOCKS:
+		*ret = blocks;
+		break;
+	    case QUOTA_OBJTYPE_FILES:
+		*ret = files;
+		break;
+	    default:
+		return EINVAL;
+	}
+
 	return 0;
 }
 
