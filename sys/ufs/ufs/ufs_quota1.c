@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.11 2012/01/29 06:45:26 dholland Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.12 2012/01/29 06:46:16 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.11 2012/01/29 06:45:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.12 2012/01/29 06:46:16 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -543,25 +543,22 @@ quota1_handle_cmd_get(struct ufsmount *ump, const struct quotakey *qk,
 	return 0;
 }
 
+static uint32_t
+quota1_encode_limit(uint64_t lim)
+{
+	if (lim == QUOTA_NOLIMIT || lim >= 0xffffffff) {
+		return 0;
+	}
+	return lim;
+}
+
 int
 quota1_handle_cmd_set(struct ufsmount *ump, int type, int id,
-    int defaultq, prop_dictionary_t data)
+    int defaultq, const struct quotaval *blocks, const struct quotaval *files)
 {
 	struct dquot *dq;
 	struct dqblk dqb;
 	int error;
-	uint64_t bval[2];
-	uint64_t ival[2];
-	const char *val_limitsonly_grace[] = {QUOTADICT_LIMIT_GTIME};
-#define Q1_GTIME 0
-	const char *val_limitsonly_softhard[] =
-	    {QUOTADICT_LIMIT_SOFT, QUOTADICT_LIMIT_HARD};
-#define Q1_SOFT 0
-#define Q1_HARD 1
-
-	uint64_t *valuesp[QUOTA_NLIMITS];
-	valuesp[QUOTA_LIMIT_BLOCK] = bval;
-	valuesp[QUOTA_LIMIT_FILE] = ival;
 
 	if (ump->um_quotas[type] == NULLVP)
 		return ENODEV;
@@ -569,28 +566,20 @@ quota1_handle_cmd_set(struct ufsmount *ump, int type, int id,
 	if (defaultq) {
 		/* just update grace times */
 		KASSERT(id == 0);
-		error = proptoquota64(data, valuesp, val_limitsonly_grace, 1,
-		    ufs_quota_limit_names, QUOTA_NLIMITS);
-		if (error)
-			return error;
 		if ((error = dqget(NULLVP, id, ump, type, &dq)) != 0)
 			return error;
 		mutex_enter(&dq->dq_interlock);
-		if (bval[Q1_GTIME] > 0)
+		if (blocks->qv_grace > 0)
 			ump->umq1_btime[type] = dq->dq_btime =
-			    bval[Q1_GTIME];
-		if (ival[Q1_GTIME] > 0)
+			    blocks->qv_grace;
+		if (files->qv_grace > 0)
 			ump->umq1_itime[type] = dq->dq_itime =
-			    ival[Q1_GTIME];
+			    files->qv_grace;
 		mutex_exit(&dq->dq_interlock);
 		dq->dq_flags |= DQ_MOD;
 		dqrele(NULLVP, dq);
 		return 0;
 	}
-	error = proptoquota64(data, valuesp, val_limitsonly_softhard, 2,
-	    ufs_quota_limit_names, QUOTA_NLIMITS);
-	if (error)
-		return error;
 
 	if ((error = dqget(NULLVP, id, ump, type, &dq)) != 0)
 		return (error);
@@ -604,20 +593,19 @@ quota1_handle_cmd_set(struct ufsmount *ump, int type, int id,
 	dqb.dqb_curinodes = dq->dq_curinodes;
 	dqb.dqb_btime = dq->dq_btime;
 	dqb.dqb_itime = dq->dq_itime;
-	dqb.dqb_bsoftlimit = (bval[Q1_SOFT] == UQUAD_MAX) ? 0 : bval[Q1_SOFT];
-	dqb.dqb_bhardlimit = (bval[Q1_HARD] == UQUAD_MAX) ? 0 : bval[Q1_HARD];
-	dqb.dqb_isoftlimit = (ival[Q1_SOFT] == UQUAD_MAX) ? 0 : ival[Q1_SOFT];
-	dqb.dqb_ihardlimit = (ival[Q1_HARD] == UQUAD_MAX) ? 0 : ival[Q1_HARD];
+	dqb.dqb_bsoftlimit = quota1_encode_limit(blocks->qv_softlimit);
+	dqb.dqb_bhardlimit = quota1_encode_limit(blocks->qv_hardlimit);
+	dqb.dqb_isoftlimit = quota1_encode_limit(files->qv_softlimit);
+	dqb.dqb_ihardlimit = quota1_encode_limit(files->qv_hardlimit);
 	if (dq->dq_id == 0) {
 		/* also update grace time if available */
-		if (proptoquota64(data, valuesp, val_limitsonly_grace, 1,
-		    ufs_quota_limit_names, QUOTA_NLIMITS) == 0) {
-			if (bval[Q1_GTIME] > 0)
-				ump->umq1_btime[type] = dqb.dqb_btime =
-				    bval[Q1_GTIME];
-			if (ival[Q1_GTIME] > 0)
-				ump->umq1_itime[type] = dqb.dqb_itime =
-				    ival[Q1_GTIME];
+		if (blocks->qv_grace != QUOTA_NOTIME) {
+			ump->umq1_btime[type] = dqb.dqb_btime =
+				blocks->qv_grace;
+		}
+		if (files->qv_grace != QUOTA_NOTIME) {
+			ump->umq1_itime[type] = dqb.dqb_itime =
+				files->qv_grace;
 		}
 	}
 	if (dqb.dqb_bsoftlimit &&
