@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.180 2012/01/21 20:19:55 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.181 2012/01/29 12:43:00 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2012/01/21 20:19:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2012/01/29 12:43:00 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -992,8 +992,8 @@ mem_exists(void *mem, u_long basemax)
 	void *begin_check, *end_check;
 	label_t	faultbuf;
 
-	DPRINTF(("Enter mem_exists(%p, %x)\n", mem, basemax));
-	DPRINTF((" pmap_enter(%p, %p) for target... ", mem_v, mem));
+	DPRINTF(("Enter mem_exists(%p, %lx)\n", mem, basemax));
+	DPRINTF((" pmap_enter(%" PRIxVADDR ", %p) for target... ", mem_v, mem));
 	pmap_enter(pmap_kernel(), mem_v, (paddr_t)mem,
 	    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
 	pmap_update(pmap_kernel());
@@ -1001,7 +1001,7 @@ mem_exists(void *mem, u_long basemax)
 
 	/* only 24bits are significant on normal X680x0 systems */
 	base = (void *)((u_long)mem & 0x00FFFFFF);
-	DPRINTF((" pmap_enter(%p, %p) for shadow... ", base_v, base));
+	DPRINTF((" pmap_enter(%" PRIxVADDR ", %p) for shadow... ", base_v, base));
 	pmap_enter(pmap_kernel(), base_v, (paddr_t)base,
 	    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
 	pmap_update(pmap_kernel());
