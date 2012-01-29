@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.4 2011/06/07 14:56:13 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.5 2012/01/29 06:38:24 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.4 2011/06/07 14:56:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.5 2012/01/29 06:38:24 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.4 2011/06/07 14:56:13 bouyer Exp $"
 #include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/wapbl.h>
+#include <sys/quota.h>
 
 #include <ufs/ufs/quota2.h>
 #include <ufs/ufs/inode.h>
@@ -76,6 +77,8 @@ static int quota2_walk_list(struct ufsmount *, struct buf *, int,
 static int quota2_dict_update_q2e_limits(prop_dictionary_t,
     struct quota2_entry *);
 static prop_dictionary_t q2etoprop(struct quota2_entry *, int);
+static void q2e_to_quotavals(struct quota2_entry *, int, id_t *,
+    struct quotaval *, struct quotaval *);
 
 static const char *limnames[] = INITQLNAMES;
 
@@ -133,6 +136,41 @@ q2etoprop(struct quota2_entry *q2e, int def)
 err:
 	prop_object_release(dict1);
 	return NULL;
+}
+
+/*
+ * Convert internal representation to FS-independent representation.
+ * (Note that while the two types are currently identical, the
+ * internal representation is an on-disk struct and the FS-independent
+ * representation is not, and they might diverge in the future.)
+ */
+static void
+q2val_to_quotaval(struct quota2_val *q2v, struct quotaval *qv)
+{
+	qv->qv_softlimit = q2v->q2v_softlimit;
+	qv->qv_hardlimit = q2v->q2v_hardlimit;
+	qv->qv_usage = q2v->q2v_cur;
+	qv->qv_expiretime = q2v->q2v_time;
+	qv->qv_grace = q2v->q2v_grace;
+}
+
+/*
+ * Convert a quota2entry and default-flag to the FS-independent
+ * representation.
+ */
+static void
+q2e_to_quotavals(struct quota2_entry *q2e, int def,
+	       id_t *id, struct quotaval *blocks, struct quotaval *files)
+{
+	if (def) {
+		*id = QUOTA_DEFAULTID;
+	} else {
+		*id = q2e->q2e_uid;
+	}
+
+	CTASSERT(N_QL == 2);
+	q2val_to_quotaval(&q2e->q2e_val[QL_BLOCK], blocks);
+	q2val_to_quotaval(&q2e->q2e_val[QL_FILE], files);
 }
 
 
@@ -808,6 +846,7 @@ quota2_array_add_q2e(struct ufsmount *ump, int type,
 	brelse(bp, 0);
 	mutex_exit(&dq->dq_interlock);
 	dqrele(NULLVP, dq);
+
 	dict = q2etoprop(&q2e, 0);
 	if (dict == NULL)
 		return ENOMEM;
@@ -816,16 +855,54 @@ quota2_array_add_q2e(struct ufsmount *ump, int type,
 	return 0;
 }
 
+static int
+quota2_fetch_q2e(struct ufsmount *ump, int type,
+    int id, struct quotaval *blocks, struct quotaval *files)
+{
+	struct dquot *dq;
+	int error;
+	struct quota2_entry *q2ep, q2e;
+	struct buf  *bp;
+	const int needswap = UFS_MPNEEDSWAP(ump);
+	id_t id2;
+
+	error = dqget(NULLVP, id, ump, type, &dq);
+	if (error)
+		return error;
+
+	mutex_enter(&dq->dq_interlock);
+	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
+		mutex_exit(&dq->dq_interlock);
+		dqrele(NULLVP, dq);
+		return ENOENT;
+	}
+	error = getq2e(ump, type, dq->dq2_lblkno, dq->dq2_blkoff,
+	    &bp, &q2ep, 0);
+	if (error) {
+		mutex_exit(&dq->dq_interlock);
+		dqrele(NULLVP, dq);
+		return error;
+	}
+	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
+	brelse(bp, 0);
+	mutex_exit(&dq->dq_interlock);
+	dqrele(NULLVP, dq);
+
+	q2e_to_quotavals(&q2e, 0, &id2, blocks, files);
+	KASSERT(id2 == id);
+	return 0;
+}
+
 int
 quota2_handle_cmd_get(struct ufsmount *ump, int type, int id,
-    int defaultq, prop_array_t replies)
+    int defaultq, struct quotaval *blocks, struct quotaval *files)
 {
 	int error;
 	struct quota2_header *q2h;
 	struct quota2_entry q2e;
 	struct buf *bp;
-	prop_dictionary_t dict;
 	const int needswap = UFS_MPNEEDSWAP(ump);
+	id_t id2;
 
 	if (ump->um_quotas[type] == NULLVP)
 		return ENODEV;
@@ -839,13 +916,10 @@ quota2_handle_cmd_get(struct ufsmount *ump, int type, int id,
 		quota2_ufs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
 		mutex_exit(&dqlock);
 		brelse(bp, 0);
-		dict = q2etoprop(&q2e, defaultq);
-		if (dict == NULL)
-			return ENOMEM;
-		if (!prop_array_add_and_rel(replies, dict))
-			return ENOMEM;
+		q2e_to_quotavals(&q2e, defaultq, &id2, blocks, files);
+		(void)id2;
 	} else
-		error = quota2_array_add_q2e(ump, type, id, replies);
+		error = quota2_fetch_q2e(ump, type, id, blocks, files);
 	
 	return error;
 }
