@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.20 2012/01/29 07:00:39 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.21 2012/01/29 07:02:06 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,6 +36,8 @@
  * really, anything that isn't libquota or inside the kernel) should
  * use the <quota.h> API instead.
  */
+
+#include <sys/quota.h>
 
 /*
  * Semi-opaque structure for cursors. This holds the cursor state in
@@ -104,7 +106,13 @@ struct vfs_quotactl_args {
 		struct {
 			struct quotakcursor *qc_cursor;
 			int qc_idtype;
-			prop_dictionary_t qc_cmddict;
+			struct quota_getall_result {
+				struct quotaval qr_defblocks;
+				struct quotaval qr_deffiles;
+				struct quotakey *qr_keys;
+				struct quotaval *qr_vals;
+				unsigned qr_num;
+			} *qc_result;
 		} getall;
 	} u;
 };

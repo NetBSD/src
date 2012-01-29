@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.22 2012/01/29 07:00:39 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.23 2012/01/29 07:02:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,8 +80,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.22 2012/01/29 07:00:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.23 2012/01/29 07:02:06 dholland Exp $");
 
+#include <sys/malloc.h> /* XXX: temporary */
 #include <sys/mount.h>
 #include <sys/quota.h>
 #include <sys/quotactl.h>
@@ -437,14 +438,84 @@ err:
 	return error;
 }
 
+static prop_dictionary_t
+vfs_quotactl_getall_makereply(id_t id, int def,
+			      const struct quotaval *blocks,
+			      const struct quotaval *files)
+{
+#define INITQVNAMES_ALL { \
+    QUOTADICT_LIMIT_HARD, \
+    QUOTADICT_LIMIT_SOFT, \
+    QUOTADICT_LIMIT_USAGE, \
+    QUOTADICT_LIMIT_ETIME, \
+    QUOTADICT_LIMIT_GTIME \
+    }
+#define N_QV 5
+
+	const char *val_names[] = INITQVNAMES_ALL;
+	uint64_t vals[N_QV];
+	prop_dictionary_t dict1 = prop_dictionary_create();
+	prop_dictionary_t dict2;
+
+	if (dict1 == NULL)
+		return NULL;
+
+	if (def) {
+		if (!prop_dictionary_set_cstring_nocopy(dict1, "id",
+		    "default")) {
+			goto err;
+		}
+	} else {
+		if (!prop_dictionary_set_uint32(dict1, "id", id)) {
+			goto err;
+		}
+	}
+
+	vals[0] = blocks->qv_hardlimit;
+	vals[1] = blocks->qv_softlimit;
+	vals[2] = blocks->qv_usage;
+	vals[3] = blocks->qv_expiretime;
+	vals[4] = blocks->qv_grace;
+	dict2 = limits64toprop(vals, val_names, N_QV);
+	if (dict2 == NULL)
+		goto err;
+	if (!prop_dictionary_set_and_rel(dict1, QUOTADICT_LTYPE_BLOCK, dict2))
+		goto err;
+
+
+	vals[0] = files->qv_hardlimit;
+	vals[1] = files->qv_softlimit;
+	vals[2] = files->qv_usage;
+	vals[3] = files->qv_expiretime;
+	vals[4] = files->qv_grace;
+	dict2 = limits64toprop(vals, val_names, N_QV);
+	if (dict2 == NULL)
+		goto err;
+	if (!prop_dictionary_set_and_rel(dict1, QUOTADICT_LTYPE_FILE, dict2))
+		goto err;
+
+	return dict1;
+
+err:
+	prop_object_release(dict1);
+	return NULL;
+}
+
 static int
 vfs_quotactl_getall(struct mount *mp,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
 {
 	struct quotakcursor cursor;
+	struct quota_getall_result result;
 	struct vfs_quotactl_args args;
+	prop_array_t replies;
+	prop_dictionary_t dict;
+	unsigned i;
 	int error, error2;
+	int skip = 0;
+
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
 
 	args.qc_type = QCT_CURSOROPEN;
 	args.u.cursoropen.qc_cursor = &cursor;
@@ -453,11 +524,75 @@ vfs_quotactl_getall(struct mount *mp,
 		return error;
 	}
 
+	result.qr_keys = NULL;
+	result.qr_vals = NULL;
+
 	args.qc_type = QCT_GETALL;
 	args.u.getall.qc_cursor = &cursor;
 	args.u.getall.qc_idtype = q2type;
-	args.u.getall.qc_cmddict = cmddict;
+	args.u.getall.qc_result = &result;
 	error = VFS_QUOTACTL(mp, QUOTACTL_GETALL, &args);
+	/*
+	 * XXX this is bogus but up until now *all* errors
+	 * from inside quotactl_getall were suppressed by the
+	 * dispatching code in ufs_quota.c. Fixing that causes
+	 * repquota to break in an undesirable way; this is a
+	 * workaround.
+	 */
+	if (error == ENODEV || error == ENXIO) {
+		skip = 1;
+		error = 0;
+	}
+	if (error) {
+		goto err;
+	}
+
+	replies = prop_array_create();
+	if (replies == NULL) {
+		error = ENOMEM;
+		goto err;
+	}
+
+	if (skip) {
+		goto skip;
+	}
+
+	dict = vfs_quotactl_getall_makereply(0, 1, &result.qr_defblocks,
+					     &result.qr_deffiles);
+	if (!prop_array_add_and_rel(replies, dict)) {
+		error = ENOMEM;
+		goto err;
+	}
+
+	for (i = 0; i < result.qr_num; i += 2) {
+		dict = vfs_quotactl_getall_makereply(result.qr_keys[i].qk_id,0,
+						     &result.qr_vals[i],
+						     &result.qr_vals[i+1]);
+		if (dict == NULL) {
+			error = ENOMEM;
+			goto err;
+		}
+		if (!prop_array_add_and_rel(replies, dict)) {
+			error = ENOMEM;
+			goto err;
+		}
+	}
+
+skip:
+
+	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
+		error = ENOMEM;
+		goto err;
+	}
+
+	error = 0;
+ err:
+	if (result.qr_keys) {
+		free(result.qr_keys, M_TEMP);
+	}
+	if (result.qr_vals) {
+		free(result.qr_vals, M_TEMP);
+	}
 
 	args.qc_type = QCT_CURSORCLOSE;
 	args.u.cursorclose.qc_cursor = &cursor;
