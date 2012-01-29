@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.330 2012/01/14 12:30:12 tron Exp $
+# $NetBSD: ALL,v 1.331 2012/01/29 18:55:12 jakllsch Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.330 $"
+#ident 		"ALL-$Revision: 1.331 $"
 
 maxusers	64		# estimated number of users
 
@@ -2136,7 +2136,6 @@ options LOAD_DEBUG_INFO
 options LOCKF_DEBUG
 options LPT_DEBUG
 options MAGMA_DEBUG
-options MALLOC_DEBUG
 options MAPLE_DEBUG
 options MB8795_DEBUG
 options MCDDEBUG
