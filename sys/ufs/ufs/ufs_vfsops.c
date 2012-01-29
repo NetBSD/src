@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.47 2012/01/29 07:14:39 dholland Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.48 2012/01/29 07:16:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.47 2012/01/29 07:14:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.48 2012/01/29 07:16:54 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.47 2012/01/29 07:14:39 dholland Exp
 #ifdef UFS_DIRHASH
 #include <ufs/ufs/dirhash.h>
 #endif
-#include <quota/quotaprop.h>
 
 /* how many times ufs_init() was called */
 static int ufs_initcount = 0;
