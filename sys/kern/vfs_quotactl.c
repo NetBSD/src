@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.10 2012/01/29 06:41:41 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.11 2012/01/29 06:44:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.10 2012/01/29 06:41:41 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.11 2012/01/29 06:44:33 dholland Exp $");
 
 #include <sys/mount.h>
 #include <sys/quota.h>
@@ -303,13 +303,62 @@ vfs_quotactl_set(struct mount *mp,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
 {
+	prop_array_t replies;
+	prop_object_iterator_t iter;
+	prop_dictionary_t data;
+	int defaultq;
+	uint32_t id;
+	const char *idstr;
 	struct vfs_quotactl_args args;
+	int error;
 
-	args.qc_type = QCT_PROPLIB;
-	args.u.proplib.qc_cmddict = cmddict;
-	args.u.proplib.qc_q2type = q2type;
-	args.u.proplib.qc_datas = datas;
-	return VFS_QUOTACTL(mp, QUOTACTL_SET, &args);
+	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+
+	replies = prop_array_create();
+	if (replies == NULL)
+		return ENOMEM;
+
+	iter = prop_array_iterator(datas);
+	if (iter == NULL) {
+		prop_object_release(replies);
+		return ENOMEM;
+	}
+
+	while ((data = prop_object_iterator_next(iter)) != NULL) {
+		if (!prop_dictionary_get_uint32(data, "id", &id)) {
+			if (!prop_dictionary_get_cstring_nocopy(data, "id",
+			    &idstr))
+				continue;
+			if (strcmp(idstr, "default"))
+				continue;
+			id = 0;
+			defaultq = 1;
+		} else {
+			defaultq = 0;
+		}
+
+		args.qc_type = QCT_SET;
+		args.u.set.qc_id = id;
+		args.u.set.qc_defaultq = defaultq;
+		args.u.set.qc_q2type = q2type;
+		args.u.set.qc_data = data;
+		error = VFS_QUOTACTL(mp, QUOTACTL_SET, &args);
+		if (error) {
+			goto err;
+		}
+	}
+	prop_object_iterator_release(iter);
+	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
+		error = ENOMEM;
+	} else {
+		error = 0;
+	}
+	return error;
+err:
+	prop_object_iterator_release(iter);
+	prop_object_release(replies);
+	return error;
 }
 
 static int
