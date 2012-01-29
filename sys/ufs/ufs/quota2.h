@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.h,v 1.7 2012/01/29 07:17:41 dholland Exp $ */
+/* $NetBSD: quota2.h,v 1.8 2012/01/29 07:20:27 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,6 @@
 #ifndef _UFS_UFS_QUOTA2_H_
 #define _UFS_UFS_QUOTA2_H_
 #include <ufs/ufs/quota.h>
-#include <quota/quota.h>
 
 
 /* New disk quota implementation. In this implementation, the quota datas
@@ -108,10 +107,4 @@ void quota2_create_blk0(uint64_t, void *bp, int, int, int);
 void quota2_ufs_rwq2v(const struct quota2_val *, struct quota2_val *, int);
 void quota2_ufs_rwq2e(const struct quota2_entry *, struct quota2_entry *, int);
 
-__inline static int __unused
-quota2_check_limit(struct quota2_val *q2v, uint64_t change, time_t now)
-{
-	return quota_check_limit(q2v->q2v_cur, change, q2v->q2v_softlimit,
-	    q2v->q2v_hardlimit, q2v->q2v_time, now);
-}
 #endif /*  _UFS_UFS_QUOTA2_H_ */
