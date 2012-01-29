@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.38 2012/01/25 01:24:53 dholland Exp $	*/
+/*	$NetBSD: repquota.c,v 1.39 2012/01/29 07:23:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.38 2012/01/25 01:24:53 dholland Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.39 2012/01/29 07:23:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -324,7 +324,7 @@ printquotas(int idtype, struct quotahandle *qh)
 	    "File limits\n");
 	printf(idtype == QUOTA_IDTYPE_USER ? "User " : "Group");
 	printf("            used     soft     hard  grace      used"
-	    "soft    hard  grace\n");
+	    "    soft    hard  grace\n");
 	for (id = 0; id <= highid[idtype]; id++) {
 		fup = qremove(id, idtype);
 		q = fup->fu_qv;
