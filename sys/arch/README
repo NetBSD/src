@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.57 2012/01/09 13:51:54 phx Exp $
+$NetBSD: README,v 1.58 2012/01/29 10:29:53 tsutsui Exp $
 
 acorn26	arm	20000509	Acorn ARM2- and ARM3-based machines
 acorn32	arm	20011118	Acorn computers Ltd. ARM 6/7/SA based machines
@@ -56,7 +56,7 @@ sun3	m68k	19930625	Sun m680[23]0 based machines
 vax	vax	19940802	Digital Equipment Corp. VAX machines
 x68k	m68k	19960505	Sharp X68000, X68030
 xen	xen	20040311	Xen virtual machine monitor
-zaurus	arm	20061217	Sharp Zaurus C3x00 PDAs
+zaurus	arm	20061217	Sharp Zaurus C7x0/860/1000/3x00 PDAs
 
 Generic cpu features shared among multiple ports
 arm:		ARM CPU based platform files
