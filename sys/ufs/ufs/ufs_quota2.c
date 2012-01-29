@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.11 2012/01/29 06:49:44 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.12 2012/01/29 06:52:39 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.11 2012/01/29 06:49:44 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.12 2012/01/29 06:52:39 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -708,8 +708,8 @@ dq2clear_callback(struct ufsmount *ump, uint64_t *offp, struct quota2_entry *q2e
 	return 0;
 }
 int
-quota2_handle_cmd_clear(struct ufsmount *ump, int type, int id,
-    int defaultq, prop_dictionary_t data)
+quota2_handle_cmd_clear(struct ufsmount *ump, int idtype, int id,
+    int defaultq)
 {
 	int error, i;
 	struct dquot *dq;
@@ -719,14 +719,14 @@ quota2_handle_cmd_clear(struct ufsmount *ump, int type, int id,
 	u_long hash_mask;
 	struct dq2clear_callback c;
 
-	if (ump->um_quotas[type] == NULLVP)
+	if (ump->um_quotas[idtype] == NULLVP)
 		return ENODEV;
 	if (defaultq)
 		return EOPNOTSUPP;
 
 	/* get the default entry before locking the entry's buffer */
 	mutex_enter(&dqlock);
-	error = getq2h(ump, type, &hbp, &q2h, 0);
+	error = getq2h(ump, idtype, &hbp, &q2h, 0);
 	if (error) {
 		mutex_exit(&dqlock);
 		return error;
@@ -736,7 +736,7 @@ quota2_handle_cmd_clear(struct ufsmount *ump, int type, int id,
 	mutex_exit(&dqlock);
 	brelse(hbp, 0);
 
-	error = dqget(NULLVP, id, ump, type, &dq);
+	error = dqget(NULLVP, id, ump, idtype, &dq);
 	if (error)
 		return error;
 
@@ -750,7 +750,7 @@ quota2_handle_cmd_clear(struct ufsmount *ump, int type, int id,
 	if (error)
 		goto out_dq;
 	
-	error = getq2e(ump, type, dq->dq2_lblkno, dq->dq2_blkoff,
+	error = getq2e(ump, idtype, dq->dq2_lblkno, dq->dq2_blkoff,
 	    &bp, &q2ep, B_MODIFY);
 	if (error)
 		goto out_wapbl;
@@ -773,7 +773,7 @@ quota2_handle_cmd_clear(struct ufsmount *ump, int type, int id,
 	/* we can free it. release bp so we can walk the list */
 	brelse(bp, 0);
 	mutex_enter(&dqlock);
-	error = getq2h(ump, type, &hbp, &q2h, 0);
+	error = getq2h(ump, idtype, &hbp, &q2h, 0);
 	if (error)
 		goto out_dqlock;
 
@@ -781,7 +781,7 @@ quota2_handle_cmd_clear(struct ufsmount *ump, int type, int id,
 	c.dq = dq;
 	c.id = id;
 	c.q2h = q2h;
-	error = quota2_walk_list(ump, hbp, type,
+	error = quota2_walk_list(ump, hbp, idtype,
 	    &q2h->q2h_entries[id & hash_mask], B_MODIFY, &c,
 	    dq2clear_callback);
 
