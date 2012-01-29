@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.9 2012/01/29 06:47:38 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.10 2012/01/29 06:48:51 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.9 2012/01/29 06:47:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.10 2012/01/29 06:48:51 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -611,8 +611,8 @@ chkiq2(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 }
 
 int
-quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
-    int defaultq, int objtype, const struct quotaval *val)
+quota2_handle_cmd_set(struct ufsmount *ump, const struct quotakey *key,
+    const struct quotaval *val)
 {
 	int error;
 	struct dquot *dq;
@@ -621,28 +621,32 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 	struct buf *bp;
 	const int needswap = UFS_MPNEEDSWAP(ump);
 
-	if (ump->um_quotas[type] == NULLVP)
+	/* make sure we can index by the fs-independent idtype */
+	CTASSERT(QUOTA_IDTYPE_USER == USRQUOTA);
+	CTASSERT(QUOTA_IDTYPE_GROUP == GRPQUOTA);
+
+	if (ump->um_quotas[key->qk_idtype] == NULLVP)
 		return ENODEV;
 	error = UFS_WAPBL_BEGIN(ump->um_mountp);
 	if (error)
 		return error;
 	
-	if (defaultq) {
+	if (key->qk_id == QUOTA_DEFAULTID) {
 		mutex_enter(&dqlock);
-		error = getq2h(ump, type, &bp, &q2h, B_MODIFY);
+		error = getq2h(ump, key->qk_idtype, &bp, &q2h, B_MODIFY);
 		if (error) {
 			mutex_exit(&dqlock);
 			goto out_wapbl;
 		}
 		quota2_ufs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
-		quota2_dict_update_q2e_limits(objtype, val, &q2e);
+		quota2_dict_update_q2e_limits(key->qk_objtype, val, &q2e);
 		quota2_ufs_rwq2e(&q2e, &q2h->q2h_defentry, needswap);
 		mutex_exit(&dqlock);
 		quota2_bwrite(ump->um_mountp, bp);
 		goto out_wapbl;
 	}
 
-	error = dqget(NULLVP, id, ump, type, &dq);
+	error = dqget(NULLVP, key->qk_id, ump, key->qk_idtype, &dq);
 	if (error)
 		goto out_wapbl;
 
@@ -650,17 +654,18 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
 		/* need to alloc a new on-disk quot */
 		mutex_enter(&dqlock);
-		error = quota2_q2ealloc(ump, type, id, dq, &bp, &q2ep);
+		error = quota2_q2ealloc(ump, key->qk_idtype, key->qk_id, dq,
+		    &bp, &q2ep);
 		mutex_exit(&dqlock);
 	} else {
-		error = getq2e(ump, type, dq->dq2_lblkno, dq->dq2_blkoff,
-		    &bp, &q2ep, B_MODIFY);
+		error = getq2e(ump, key->qk_idtype, dq->dq2_lblkno,
+		    dq->dq2_blkoff, &bp, &q2ep, B_MODIFY);
 	}
 	if (error)
 		goto out_il;
 	
 	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
-	quota2_dict_update_q2e_limits(objtype, val, &q2e);
+	quota2_dict_update_q2e_limits(key->qk_objtype, val, &q2e);
 	quota2_ufs_rwq2e(&q2e, q2ep, needswap);
 	quota2_bwrite(ump->um_mountp, bp);
 
