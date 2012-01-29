@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 2011/11/04 11:27:04 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.11 2012/01/29 16:01:36 phx Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,6 +36,7 @@
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/disklabel_rdb.h>
 #include <stdio.h>
 #include <util.h>
 #include <machine/cpu.h>
@@ -46,12 +47,16 @@
 #include "menu_defs.h"
 #include "endian.h"
 
+static int check_rdb(void);
+static uint32_t rdbchksum(void *);
+
 /* We use MBR_PTYPE_PREP like port-prep does. */
 static int nonewfsmsdos = 0, nobootfix = 0, noprepfix=0;
 static int bootpart_fat12 = PART_BOOT_FAT12;
 static int bootpart_binfo = PART_BOOT_BINFO;
 static int bootpart_prep = PART_BOOT_PREP;
 static int bootinfo_mbr = 1;
+static int rdb_found = 0;
 
 /* bootstart/bootsize are for the fat */
 int binfostart, binfosize, bprepstart, bprepsize;
@@ -64,12 +69,17 @@ md_init(void)
 void
 md_init_set_status(int flags)
 {
+
 	(void)flags;
 }
 
 int
 md_get_info(void)
 {
+
+	if (check_rdb())
+		return 1;
+
 	return set_bios_geom_with_mbr_guess();
 }
 
@@ -87,6 +97,41 @@ md_make_bsd_partitions(void)
 	int ptend;
 	int no_swap = 0;
 	partinfo *p;
+
+	if (rdb_found) {
+		/*
+		 * We found RDB partitions on the disk, which cannot be
+		 * modified by rewriting the disklabel.
+		 * So just use what we have got.
+		 */
+		for (part = 0; part < maxpart; part++) {
+			if (PI_ISBSDFS(&bsdlabel[part])) {
+				bsdlabel[part].pi_flags |=
+				    PIF_NEWFS | PIF_MOUNT;
+
+				if (part == PART_A)
+					strcpy(bsdlabel[part].pi_mount, "/");
+			}
+		}
+
+		part_bsd = part_raw = getrawpartition();
+		if (part_raw == -1)
+			part_raw = PART_C;	/* for sanity... */
+		bsdlabel[part_raw].pi_offset = 0;
+		bsdlabel[part_raw].pi_size = dlsize;
+
+		set_sizemultname_meg();
+rdb_edit_check:
+		if (edit_and_check_label(bsdlabel, maxpart, part_raw,
+		    part_bsd) == 0) {
+			msg_display(MSG_abort);
+			return 0;
+		}
+		if (md_check_partitions() == 0)
+			goto rdb_edit_check;
+
+		return 1;
+	}
 
 	/*
 	 * Initialize global variables that track space used on this disk.
@@ -223,6 +268,9 @@ md_check_partitions(void)
 {
 	int part, fprep=0, ffat=0;
 
+	if (rdb_found)
+		return 1;
+
 	/* we need to find a boot partition, otherwise we can't create
 	 * our msdos fs boot partition.  We make the assumption that
 	 * the user hasn't done something stupid, like move it away
@@ -259,6 +307,10 @@ md_check_partitions(void)
 int
 md_pre_disklabel(void)
 {
+
+	if (rdb_found)
+		return 0;
+
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
@@ -278,7 +330,7 @@ md_post_disklabel(void)
 {
 	char bootdev[100];
 
-	if (bootstart == 0 || bootsize == 0)
+	if (bootstart == 0 || bootsize == 0 || rdb_found)
 		return 0;
 
 	snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", diskdev,
@@ -307,7 +359,7 @@ md_post_extract(void)
 	char bootdev[100], bootbdev[100], version[64];
 
 	/* if we can't make it bootable, just punt */
-	if (nobootfix && noprepfix)
+	if ((nobootfix && noprepfix) || rdb_found)
 		return 0;
 
 	snprintf(version, sizeof version, "NetBSD/%s %s", MACH, REL);
@@ -353,6 +405,7 @@ md_post_extract(void)
 void
 md_cleanup_install(void)
 {
+
 #ifndef DEBUG
 	enable_rc_conf();
 #endif
@@ -364,6 +417,9 @@ md_pre_update(void)
 	struct mbr_partition *part;
 	mbr_info_t *ext;
 	int i;
+
+	if (check_rdb())
+		return 1;
 
 	read_mbr(diskdev, &mbr);
 	/* do a sanity check of the partition table */
@@ -400,6 +456,7 @@ md_pre_update(void)
 int
 md_update(void)
 {
+
 	nonewfsmsdos = 1;
 	md_post_newfs();
 	return 1;
@@ -543,8 +600,56 @@ md_mbr_use_wholedisk(mbr_info_t *mbri)
 	return 1;
 }
 
+const char *md_disklabel_cmd(void)
+{
+
+	/* we cannot rewrite an RDB disklabel */
+	if (rdb_found)
+		return "echo No disklabel";
+
+	return "disklabel -w -r";
+}
+
+static int
+check_rdb(void)
+{
+	char buf[512], diskpath[MAXPATHLEN];
+	struct rdblock *rdb;
+	off_t blk;
+	int fd;
+
+	/* Find out if this disk has a valid RDB, before continuing. */
+	rdb = (struct rdblock *)buf;
+	fd = opendisk(diskdev, O_RDONLY, diskpath, sizeof(diskpath), 0);
+	if (fd < 0)
+		return 0;
+	for (blk = 0; blk < RDB_MAXBLOCKS; blk++) {
+		if (pread(fd, rdb, 512, blk * 512) != 512)
+			return 0;
+		if (rdb->id == RDBLOCK_ID && rdbchksum(rdb) == 0) {
+			rdb_found = 1;	/* do not repartition! */
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static uint32_t
+rdbchksum(void *bdata)
+{
+	uint32_t *blp, cnt, val;
+
+	blp = bdata;
+	cnt = blp[1];
+	val = 0;
+	while (cnt--)
+		val += *blp++;
+	return val;
+}
+
 int
 md_pre_mount()
 {
+
 	return 0;
 }
