@@ -1,12 +1,12 @@
-/*	$NetBSD: iplang_y.y,v 1.1.1.9 2010/04/17 20:45:27 darrenr Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.1.1.10 2012/01/30 16:03:36 darrenr Exp $	*/
 
 %{
 /*
- * Copyright (C) 1997-1998 by Darren Reed.
+ * Copyright (C) 2008 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: iplang_y.y,v 2.9.2.6 2009/12/27 06:53:15 darrenr Exp
+ * Id: iplang_y.y,v 2.16.2.1 2012/01/26 05:29:15 darrenr Exp
  */
 
 #include <stdio.h>
@@ -25,17 +25,13 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <sys/socket.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #ifndef	linux
 # include <netinet/ip_var.h>
-#endif
-#ifdef __osf__
-# include "radix_ipf_local.h"
-#endif
-#include <net/if.h>
-#ifndef	linux
+# include <net/route.h>
 # include <netinet/if_ether.h>
 #endif
 #include <netdb.h>

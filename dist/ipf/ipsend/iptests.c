@@ -1,14 +1,14 @@
-/*	$NetBSD: iptests.c,v 1.1.1.10 2010/04/17 20:45:12 darrenr Exp $	*/
+/*	$NetBSD: iptests.c,v 1.1.1.11 2012/01/30 16:03:42 darrenr Exp $	*/
 
 /*
- * Copyright (C) 1993-1998 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptests.c,v 2.8.2.12 2009/12/27 06:53:15 darrenr Exp";
+static const char rcsid[] = "@(#)Id: iptests.c,v 2.21.2.1 2012/01/26 05:29:15 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -24,7 +24,6 @@ typedef	int	boolean_t;
 #if !defined(__osf__)
 # ifdef __NetBSD__
 #  include <machine/lock.h>
-#  include <machine/mutex.h>
 # endif
 # define _KERNEL
 # define KERNEL
@@ -68,9 +67,6 @@ typedef	int	boolean_t;
 #include <sys/socket.h>
 #ifdef __hpux
 # define _NET_ROUTE_INCLUDED
-#endif
-#ifdef __osf__
-# include "radix_ipf_local.h"
 #endif
 #include <net/if.h>
 #if defined(linux) && (LINUX >= 0200)
@@ -126,11 +122,11 @@ typedef	int	boolean_t;
 
 
 void	ip_test1(dev, mtu, ip, gwip, ptest)
-char	*dev;
-int	mtu;
-ip_t	*ip;
-struct	in_addr	gwip;
-int	ptest;
+	char	*dev;
+	int	mtu;
+	ip_t	*ip;
+	struct	in_addr	gwip;
+	int	ptest;
 {
 #ifdef USE_NANOSLEEP
 	struct	timespec ts;
@@ -477,11 +473,11 @@ int	ptest;
 
 
 void	ip_test2(dev, mtu, ip, gwip, ptest)
-char	*dev;
-int	mtu;
-ip_t	*ip;
-struct	in_addr	gwip;
-int	ptest;
+	char	*dev;
+	int	mtu;
+	ip_t	*ip;
+	struct	in_addr	gwip;
+	int	ptest;
 {
 #ifdef USE_NANOSLEEP
 	struct	timespec ts;
@@ -573,11 +569,11 @@ int	ptest;
  * test 3 (ICMP)
  */
 void	ip_test3(dev, mtu, ip, gwip, ptest)
-char	*dev;
-int	mtu;
-ip_t	*ip;
-struct	in_addr	gwip;
-int	ptest;
+	char	*dev;
+	int	mtu;
+	ip_t	*ip;
+	struct	in_addr	gwip;
+	int	ptest;
 {
 	static	int	ict1[10] = { 8, 9, 10, 13, 14, 15, 16, 17, 18, 0 };
 	static	int	ict2[8] = { 3, 9, 10, 13, 14, 17, 18, 0 };
@@ -774,11 +770,11 @@ int	ptest;
 /* Perform test 4 (UDP) */
 
 void	ip_test4(dev, mtu, ip, gwip, ptest)
-char	*dev;
-int	mtu;
-ip_t	*ip;
-struct	in_addr	gwip;
-int	ptest;
+	char	*dev;
+	int	mtu;
+	ip_t	*ip;
+	struct	in_addr	gwip;
+	int	ptest;
 {
 #ifdef USE_NANOSLEEP
 	struct	timespec ts;
@@ -939,11 +935,11 @@ int	ptest;
 /* Perform test 5 (TCP) */
 
 void	ip_test5(dev, mtu, ip, gwip, ptest)
-char	*dev;
-int	mtu;
-ip_t	*ip;
-struct	in_addr	gwip;
-int	ptest;
+	char	*dev;
+	int	mtu;
+	ip_t	*ip;
+	struct	in_addr	gwip;
+	int	ptest;
 {
 #ifdef USE_NANOSLEEP
 	struct	timespec ts;
@@ -1289,11 +1285,11 @@ skip_five_and_six:
 /* Perform test 6 (exhaust mbuf test) */
 
 void	ip_test6(dev, mtu, ip, gwip, ptest)
-char	*dev;
-int	mtu;
-ip_t	*ip;
-struct	in_addr	gwip;
-int	ptest;
+	char	*dev;
+	int	mtu;
+	ip_t	*ip;
+	struct	in_addr	gwip;
+	int	ptest;
 {
 #ifdef USE_NANOSLEEP
 	struct	timespec ts;
@@ -1371,11 +1367,11 @@ int	ptest;
 static	u_long	tbuf[64];
 
 void	ip_test7(dev, mtu, ip, gwip, ptest)
-char	*dev;
-int	mtu;
-ip_t	*ip;
-struct	in_addr	gwip;
-int	ptest;
+	char	*dev;
+	int	mtu;
+	ip_t	*ip;
+	struct	in_addr	gwip;
+	int	ptest;
 {
 	ip_t	*pip;
 #ifdef USE_NANOSLEEP

@@ -1,19 +1,19 @@
-/*	$NetBSD: buildopts.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: buildopts.c,v 1.1.1.3 2012/01/30 16:03:23 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2000-2002 by Darren Reed.
+ * Copyright (C) 2011 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: buildopts.c,v 1.6.4.1 2006/06/16 17:20:56 darrenr Exp
+ * Id: buildopts.c,v 1.9.2.2 2012/01/26 05:29:15 darrenr Exp
  */
 
 #include "ipf.h"
 
 
 u_32_t buildopts(cp, op, len)
-char *cp, *op;
-int len;
+	char *cp, *op;
+	int len;
 {
 	struct ipopt_names *io;
 	u_32_t msk = 0;
@@ -23,6 +23,8 @@ int len;
 	for (s = strtok(cp, ","); s; s = strtok(NULL, ",")) {
 		if ((t = strchr(s, '=')))
 			*t++ = '\0';
+		else
+			t = "";
 		for (io = ionames; io->on_name; io++) {
 			if (strcasecmp(s, io->on_name) || (msk & io->on_bit))
 				continue;
@@ -37,6 +39,10 @@ int len;
 			fprintf(stderr, "unknown IP option name %s\n", s);
 			return 0;
 		}
+	}
+	while ((len & 3) != 3) {
+		*op++ = IPOPT_NOP;
+		len++;
 	}
 	*op++ = IPOPT_EOL;
 	len++;

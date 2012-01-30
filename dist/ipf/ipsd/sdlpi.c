@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlpi.c,v 1.1.1.3 2005/02/08 06:53:13 martti Exp $	*/
+/*	$NetBSD: sdlpi.c,v 1.1.1.4 2012/01/30 16:03:38 darrenr Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
@@ -60,7 +60,7 @@ void	nullbell()
 
 
 int	ack_recv(ep)
-char	*ep;
+	char	*ep;
 {
 	struct	tcpiphdr	tip;
 	tcphdr_t	*tcp;
@@ -80,8 +80,8 @@ char	*ep;
 
 
 int	readloop(fd, port, dst)
-int 	fd, port;
-struct	in_addr dst;
+	int 	fd, port;
+	struct	in_addr dst;
 {
 	static	u_char	buf[BUFSPACE];
 	register u_char	*bp, *cp, *bufend;
@@ -145,8 +145,8 @@ struct	in_addr dst;
 }
 
 int	initdevice(device, tout)
-char	*device;
-int	tout;
+	char	*device;
+	int	tout;
 {
 	struct	strioctl si;
 	struct	timeval to;
