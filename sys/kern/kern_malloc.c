@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.135 2012/01/28 23:09:06 rmind Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.136 2012/01/30 01:56:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.135 2012/01/28 23:09:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.136 2012/01/30 01:56:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -91,7 +91,8 @@ struct malloc_type *kmemstatistics;
 kmutex_t malloc_lock;
 
 struct malloc_header {
-	size_t mh_size;
+	/* Total size, include the header. */
+	size_t		mh_size;
 };
 
 /*
@@ -106,10 +107,9 @@ void *
 kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #endif /* MALLOCLOG */
 {
+	const int kmflags = (flags & M_NOWAIT) ? KM_NOSLEEP : KM_SLEEP;
+	const size_t allocsize = sizeof(struct malloc_header) + size;
 	struct malloc_header *mh;
-	int kmflags = ((flags & M_NOWAIT) != 0
-	    ? KM_NOSLEEP : KM_SLEEP);
-	size_t allocsize = sizeof(struct malloc_header) + size;
 	void *p;
 
 	p = kmem_intr_alloc(allocsize, kmflags);
@@ -178,7 +178,7 @@ kern_realloc(void *curaddr, unsigned long newsize, struct malloc_type *ksp,
 	mh = curaddr;
 	mh--;
 
-	cursize = mh->mh_size;
+	cursize = mh->mh_size - sizeof(struct malloc_header);
 
 	/*
 	 * If we already actually have as much as they want, we're done.
