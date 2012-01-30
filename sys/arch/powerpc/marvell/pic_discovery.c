@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_discovery.c,v 1.5 2011/06/20 06:22:23 matt Exp $	*/
+/*	$NetBSD: pic_discovery.c,v 1.6 2012/01/30 23:31:28 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_discovery.c,v 1.5 2011/06/20 06:22:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_discovery.c,v 1.6 2012/01/30 23:31:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -85,7 +85,7 @@ static void discovery_gpp_ack_irq(struct pic_ops *, int);
 
 
 struct pic_ops *
-setup_discovery_pic()
+setup_discovery_pic(void)
 {
 	struct discovery_pic_ops *discovery;
 	struct pic_ops *pic;
