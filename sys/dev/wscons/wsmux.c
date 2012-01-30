@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.53 2009/02/13 22:41:04 apb Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.54 2012/01/30 01:54:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.53 2009/02/13 22:41:04 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.54 2012/01/30 01:54:08 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
@@ -141,36 +141,29 @@ wsmuxattach(int n)
 }
 
 /* Keep track of all muxes that have been allocated */
+static struct wsmux_softc **wsmuxdevs = NULL;
 static int nwsmux = 0;
-static struct wsmux_softc **wsmuxdevs;
 
 /* Return mux n, create if necessary */
 struct wsmux_softc *
 wsmux_getmux(int n)
 {
 	struct wsmux_softc *sc;
-	int i;
-	void *new;
 
 	n = WSMUXDEV(n);	/* limit range */
 
 	/* Make sure there is room for mux n in the table */
 	if (n >= nwsmux) {
-		i = nwsmux;
-		nwsmux = n + 1;
-		if (i != 0)
-			new = realloc(wsmuxdevs, nwsmux * sizeof (*wsmuxdevs),
-				      M_DEVBUF, M_NOWAIT);
-		else
-			new = malloc(nwsmux * sizeof (*wsmuxdevs),
-				     M_DEVBUF, M_NOWAIT);
+		void *new;
+
+		new = realloc(wsmuxdevs, (n + 1) * sizeof(*wsmuxdevs),
+		    M_DEVBUF, M_ZERO | M_NOWAIT);
 		if (new == NULL) {
 			printf("wsmux_getmux: no memory for mux %d\n", n);
-			return (NULL);
+			return NULL;
 		}
 		wsmuxdevs = new;
-		for (; i < nwsmux; i++)
-			wsmuxdevs[i] = NULL;
+		nwsmux = n + 1;
 	}
 
 	sc = wsmuxdevs[n];
