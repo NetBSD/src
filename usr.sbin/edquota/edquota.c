@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.43 2012/01/29 07:16:00 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.44 2012/01/30 19:16:36 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.43 2012/01/29 07:16:00 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.44 2012/01/30 19:16:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,6 @@ __RCSID("$NetBSD: edquota.c,v 1.43 2012/01/29 07:16:00 dholland Exp $");
 #include <quota/quotaprop.h>
 #include <quota/quota.h>
 #include <ufs/ufs/quota1.h>
-#include <sys/quota.h>
 
 #include <assert.h>
 #include <err.h>
@@ -77,7 +76,6 @@ __RCSID("$NetBSD: edquota.c,v 1.43 2012/01/29 07:16:00 dholland Exp $");
 #include <unistd.h>
 
 #include "printquota.h"
-#include "getvfsquota.h"
 #include "quotautil.h"
 
 #include "pathnames.h"
@@ -88,7 +86,7 @@ static const char *quotagroup = QUOTAGROUP;
 
 /* flags for quotause */
 #define	FOUND	0x01
-#define	QUOTA2	0x02
+#define	XGRACE	0x02	/* extended grace periods (per-id) */
 #define	DEFAULT	0x04
 
 struct quotause {
@@ -96,6 +94,7 @@ struct quotause {
 	long	flags;
 	struct	quotaval qv[QUOTA_NLIMITS];
 	char	fsname[MAXPATHLEN + 1];
+	char	implementation[32];
 	char	*qfname;
 };
 
@@ -107,7 +106,6 @@ struct quotalist {
 static void	usage(void) __dead;
 
 static int Hflag = 0;
-static int Dflag = 0;
 
 /* more compact form of constants */
 #define QL_BLK QUOTA_LIMIT_BLOCK
@@ -338,27 +336,69 @@ getprivs1(long id, int idtype, const char *filesys)
 ////////////////////////////////////////////////////////////
 // ffs quota v2
 
+static int
+dogetprivs2(struct quotahandle *qh, int idtype, id_t id, int defaultq,
+	    int objtype, struct quotause *qup)
+{
+	struct quotakey qk;
+
+	qk.qk_idtype = idtype;
+	qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
+	qk.qk_objtype = objtype;
+	if (quota_get(qh, &qk, &qup->qv[objtype])) {
+		/* no entry, get default entry */
+		qk.qk_id = QUOTA_DEFAULTID;
+		if (quota_get(qh, &qk, &qup->qv[objtype])) {
+			return -1;
+		}
+	}
+	return 0;
+}
+
 static struct quotause *
 getprivs2(long id, int idtype, const char *filesys, int defaultq)
 {
 	struct quotause *qup;
-	int8_t version;
+	struct quotahandle *qh;
+	const char *impl;
+	unsigned restrictions;
 
 	qup = quotause_create();
 	strcpy(qup->fsname, filesys);
 	if (defaultq)
 		qup->flags |= DEFAULT;
-	if (!getvfsquota(filesys, qup->qv, &version,
-	    id, idtype, defaultq, Dflag)) {
-		/* no entry, get default entry */
-		if (!getvfsquota(filesys, qup->qv, &version,
-		    id, idtype, 1, Dflag)) {
-			free(qup);
-			return NULL;
-		}
+
+	qh = quota_open(filesys);
+	if (qh == NULL) {
+		quotause_destroy(qup);
+		return NULL;
 	}
-	if (version == 2)
-		qup->flags |= QUOTA2;
+
+	impl = quota_getimplname(qh);
+	if (impl == NULL) {
+		impl = "???";
+	}
+	strlcpy(qup->implementation, impl, sizeof(qup->implementation));
+
+	restrictions = quota_getrestrictions(qh);
+	if ((restrictions & QUOTA_RESTRICT_UNIFORMGRACE) == 0) {
+		qup->flags |= XGRACE;		
+	}
+
+	if (dogetprivs2(qh, idtype, id, defaultq, QUOTA_OBJTYPE_BLOCKS, qup)) {
+		quota_close(qh);
+		quotause_destroy(qup);
+		return NULL;
+	}
+
+	if (dogetprivs2(qh, idtype, id, defaultq, QUOTA_OBJTYPE_FILES, qup)) {
+		quota_close(qh);
+		quotause_destroy(qup);
+		return NULL;
+	}
+
+	quota_close(qh);
+
 	return qup;
 }
 
@@ -648,9 +688,9 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 	}
 	for (qup = qlist->head; qup; qup = qup->next) {
 		struct quotaval *q = qup->qv;
-		fprintf(fd, "%s (version %d):\n",
-		     qup->fsname, (qup->flags & QUOTA2) ? 2 : 1);
-		if ((qup->flags & DEFAULT) == 0 || (qup->flags & QUOTA2) != 0) {
+		fprintf(fd, "%s (%s):\n",
+		     qup->fsname, qup->implementation);
+		if ((qup->flags & DEFAULT) == 0 || (qup->flags & XGRACE) != 0) {
 			fprintf(fd, "\tblocks in use: %s, "
 			    "limits (soft = %s, hard = %s",
 			    intprt(b1, 21, q[QL_BLK].qv_usage,
@@ -659,17 +699,17 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 			    HN_NOSPACE | HN_B, Hflag),
 			    intprt(b3, 21, q[QL_BLK].qv_hardlimit,
 				HN_NOSPACE | HN_B, Hflag));
-			if (qup->flags & QUOTA2)
+			if (qup->flags & XGRACE)
 				fprintf(fd, ", ");
 		} else
 			fprintf(fd, "\tblocks: (");
 			
-		if (qup->flags & (QUOTA2|DEFAULT)) {
+		if (qup->flags & (XGRACE|DEFAULT)) {
 		    fprintf(fd, "grace = %s",
 			timepprt(b0, 21, q[QL_BLK].qv_grace, Hflag));
 		}
 		fprintf(fd, ")\n");
-		if ((qup->flags & DEFAULT) == 0 || (qup->flags & QUOTA2) != 0) {
+		if ((qup->flags & DEFAULT) == 0 || (qup->flags & XGRACE) != 0) {
 			fprintf(fd, "\tinodes in use: %s, "
 			    "limits (soft = %s, hard = %s",
 			    intprt(b1, 21, q[QL_FL].qv_usage,
@@ -678,12 +718,12 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 			    HN_NOSPACE, Hflag),
 			    intprt(b3, 21, q[QL_FL].qv_hardlimit,
 			     HN_NOSPACE, Hflag));
-			if (qup->flags & QUOTA2)
+			if (qup->flags & XGRACE)
 				fprintf(fd, ", ");
 		} else
 			fprintf(fd, "\tinodes: (");
 
-		if (qup->flags & (QUOTA2|DEFAULT)) {
+		if (qup->flags & (XGRACE|DEFAULT)) {
 		    fprintf(fd, "grace = %s",
 			timepprt(b0, 21, q[QL_FL].qv_grace, Hflag));
 		}
@@ -1147,11 +1187,8 @@ main(int argc, char *argv[])
 		errx(1, "permission denied");
 	protoname = NULL;
 	idtype = QUOTA_IDTYPE_USER;
-	while ((ch = getopt(argc, argv, "DHcdugp:s:h:t:f:")) != -1) {
+	while ((ch = getopt(argc, argv, "Hcdugp:s:h:t:f:")) != -1) {
 		switch(ch) {
-		case 'D':
-			Dflag++;
-			break;
 		case 'H':
 			Hflag++;
 			break;
