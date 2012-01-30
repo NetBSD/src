@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.33 2008/10/25 22:27:39 apb Exp $
+#	$NetBSD: Makefile,v 1.34 2012/01/30 16:13:21 darrenr Exp $
 
 .include <bsd.own.mk>
 
 PROG=		ipftest
-SRCS=		ipftest.c fil.c ip_frag.c ip_state.c ip_nat.c \
+SRCS=		ipftest.c fil.c ip_frag.c ip_state.c ip_nat.c ip_nat6.c \
 		ip_proxy.c ip_auth.c ip_htable.c ip_lookup.c \
-		ip_pool.c ip_scan.c ip_sync.c \
+		ip_dstlist.c ip_pool.c ip_sync.c \
 		ip_fil.c ip_log.c ippool_y.c ippool_l.c ipf_y.c \
-		ipf_l.c ipnat_y.c ipnat_l.c md5.c radix.c bpf_filter.c
+		ipf_l.c ipnat_y.c ipnat_l.c md5.c radix_ipf.c bpf_filter.c
 MAN=		ipftest.1
 
 CPPFLAGS+=	-DIPFILTER_LOG -DIPFILTER_LOOKUP \
-		-DIPFILTER_SCAN -DIPFILTER_SYNC -DIPFILTER_CKSUM \
+		-DIPFILTER_SYNC -DIPFILTER_CKSUM \
 		-I.
 
 COPTS.radix.c=	-Wno-error
