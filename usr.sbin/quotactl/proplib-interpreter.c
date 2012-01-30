@@ -1,4 +1,4 @@
-/*	$NetBSD: proplib-interpreter.c,v 1.1 2012/01/30 19:23:49 dholland Exp $	*/
+/*	$NetBSD: proplib-interpreter.c,v 1.2 2012/01/30 19:28:11 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -84,42 +84,40 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: proplib-interpreter.c,v 1.1 2012/01/30 19:23:49 dholland Exp $");
+__RCSID("$NetBSD: proplib-interpreter.c,v 1.2 2012/01/30 19:28:11 dholland Exp $");
 
-#include <sys/kmem.h>
-#include <sys/mount.h>
-#include <sys/quota.h>
-#include <sys/quotactl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <err.h>
+#include <assert.h>
+
+#include <quota.h>
 #include <quota/quotaprop.h>
 
+#include "proplib-interpreter.h"
+
 static int
-vfs_quotactl_getversion(struct mount *mp,
+vfs_quotactl_getversion(struct quotahandle *qh,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
 {
 	prop_array_t replies;
 	prop_dictionary_t data;
-	struct quotastat stat;
+	unsigned restrictions;
 	int q2version;
-	struct vfs_quotactl_args args;
-	int error;
 
-	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
-	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+	assert(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	assert(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
-	args.qc_op = QUOTACTL_STAT;
-	args.u.stat.qc_ret = &stat;
-	error = VFS_QUOTACTL(mp, &args);
-	if (error) {
-		return error;
-	}
+	restrictions = quota_getrestrictions(qh);
 
 	/*
 	 * Set q2version based on the stat results. Currently there
 	 * are two valid values for q2version, 1 and 2, which we pick
 	 * based on whether quotacheck is required.
 	 */
-	if (stat.qs_restrictions & QUOTA_RESTRICT_NEEDSQUOTACHECK) {
+	if (restrictions & QUOTA_RESTRICT_NEEDSQUOTACHECK) {
 		q2version = 1;
 	} else {
 		q2version = 2;
@@ -152,20 +150,19 @@ vfs_quotactl_getversion(struct mount *mp,
 		return ENOMEM;
 	}
 
-	return error;
+	return 0;
 }
 
 static int
-vfs_quotactl_quotaon(struct mount *mp,
+vfs_quotactl_quotaon(struct quotahandle *qh,
 		     prop_dictionary_t cmddict, int q2type,
 		     prop_array_t datas)
 {
 	prop_dictionary_t data;
 	const char *qfile;
-	struct vfs_quotactl_args args;
 
-	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
-	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+	assert(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	assert(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
 	if (prop_array_count(datas) != 1)
 		return EINVAL;
@@ -177,28 +174,30 @@ vfs_quotactl_quotaon(struct mount *mp,
 	    &qfile))
 		return EINVAL;
 
-	args.qc_op = QUOTACTL_QUOTAON;
-	args.u.quotaon.qc_idtype = q2type;
-	args.u.quotaon.qc_quotafile = qfile;
-	return VFS_QUOTACTL(mp, &args);
+	/* libquota knows the filename; cannot set it from here */
+	(void)qfile;
+
+	if (quota_quotaon(qh, q2type)) {
+		return errno;
+	}
+	return 0;
 }
 
 static int
-vfs_quotactl_quotaoff(struct mount *mp,
+vfs_quotactl_quotaoff(struct quotahandle *qh,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
 {
-	struct vfs_quotactl_args args;
-
-	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
-	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+	assert(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	assert(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
 	if (prop_array_count(datas) != 0)
 		return EINVAL;
 
-	args.qc_op = QUOTACTL_QUOTAOFF;
-	args.u.quotaoff.qc_idtype = q2type;
-	return VFS_QUOTACTL(mp, &args);
+	if (quota_quotaoff(qh, q2type)) {
+		return errno;
+	}
+	return 0;
 }
 
 static int
@@ -238,7 +237,7 @@ vfs_quotactl_get_addreply(const struct quotakey *qk,
 }
 
 static int
-vfs_quotactl_get(struct mount *mp,
+vfs_quotactl_get(struct quotahandle *qh,
 			prop_dictionary_t cmddict, int idtype,
 			prop_array_t datas)
 {
@@ -247,13 +246,12 @@ vfs_quotactl_get(struct mount *mp,
 	prop_array_t replies;
 	uint32_t id;
 	const char *idstr;
-	struct vfs_quotactl_args args;
 	struct quotakey qk;
 	struct quotaval blocks, files;
 	int error;
 
-	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
-	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+	assert(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	assert(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
 	replies = prop_array_create();
 	if (replies == NULL) {
@@ -284,34 +282,32 @@ vfs_quotactl_get(struct mount *mp,
 
 		qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
 
-		args.qc_op = QUOTACTL_GET;
-		args.u.get.qc_key = &qk;
-		args.u.get.qc_ret = &blocks;
-		error = VFS_QUOTACTL(mp, &args);
-		if (error == EPERM) {
-			/* XXX does this make sense? */
-			continue;
-		} else if (error == ENOENT) {
-			/* XXX does *this* make sense? */
-			continue;
-		} else if (error) {
-			goto fail;
+		if (quota_get(qh, &qk, &blocks)) {
+			if (errno == EPERM) {
+				/* XXX does this make sense? */
+				continue;
+			} else if (errno == ENOENT) {
+				/* XXX does *this* make sense? */
+				continue;
+			} else {
+				error = errno;
+				goto fail;
+			}
 		}
 
 		qk.qk_objtype = QUOTA_OBJTYPE_FILES;
 
-		args.qc_op = QUOTACTL_GET;
-		args.u.get.qc_key = &qk;
-		args.u.get.qc_ret = &files;
-		error = VFS_QUOTACTL(mp, &args);
-		if (error == EPERM) {
-			/* XXX does this make sense? */
-			continue;
-		} else if (error == ENOENT) {
-			/* XXX does *this* make sense? */
-			continue;
-		} else if (error) {
-			goto fail;
+		if (quota_get(qh, &qk, &files)) {
+			if (errno == EPERM) {
+				/* XXX does this make sense? */
+				continue;
+			} else if (errno == ENOENT) {
+				/* XXX does *this* make sense? */
+				continue;
+			} else {
+				error = errno;
+				goto fail;
+			}
 		}
 
 		error = vfs_quotactl_get_addreply(&qk, &blocks, &files,
@@ -386,7 +382,7 @@ vfs_quotactl_put_extractinfo(prop_dictionary_t data,
 }
 
 static int
-vfs_quotactl_put(struct mount *mp,
+vfs_quotactl_put(struct quotahandle *qh,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
 {
@@ -398,11 +394,10 @@ vfs_quotactl_put(struct mount *mp,
 	const char *idstr;
 	struct quotakey qk;
 	struct quotaval blocks, files;
-	struct vfs_quotactl_args args;
 	int error;
 
-	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
-	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+	assert(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	assert(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
 	replies = prop_array_create();
 	if (replies == NULL)
@@ -416,7 +411,7 @@ vfs_quotactl_put(struct mount *mp,
 
 	while ((data = prop_object_iterator_next(iter)) != NULL) {
 
-		KASSERT(prop_object_type(data) == PROP_TYPE_DICTIONARY);
+		assert(prop_object_type(data) == PROP_TYPE_DICTIONARY);
 
 		if (!prop_dictionary_get_uint32(data, "id", &id)) {
 			if (!prop_dictionary_get_cstring_nocopy(data, "id",
@@ -439,11 +434,8 @@ vfs_quotactl_put(struct mount *mp,
 		qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
 		qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
 
-		args.qc_op = QUOTACTL_PUT;
-		args.u.put.qc_key = &qk;
-		args.u.put.qc_val = &blocks;
-		error = VFS_QUOTACTL(mp, &args);
-		if (error) {
+		if (quota_put(qh, &qk, &blocks)) {
+			error = errno;
 			goto err;
 		}
 
@@ -451,11 +443,8 @@ vfs_quotactl_put(struct mount *mp,
 		qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
 		qk.qk_objtype = QUOTA_OBJTYPE_FILES;
 
-		args.qc_op = QUOTACTL_PUT;
-		args.u.put.qc_key = &qk;
-		args.u.put.qc_val = &files;
-		error = VFS_QUOTACTL(mp, &args);
-		if (error) {
+		if (quota_put(qh, &qk, &files)) {
+			error = errno;
 			goto err;
 		}
 	}
@@ -554,17 +543,17 @@ vfs_quotactl_getall_addreply(prop_dictionary_t thisreply,
 }
 
 static int
-vfs_quotactl_getall(struct mount *mp,
+vfs_quotactl_getall(struct quotahandle *qh,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
 {
-	struct quotakcursor cursor;
+	struct quotacursor *cursor;
 	struct quotakey *keys;
 	struct quotaval *vals;
 	unsigned loopmax = 8;
 	unsigned loopnum;
+	int num;
 	int skipidtype;
-	struct vfs_quotactl_args args;
 	prop_array_t replies;
 	int atend, atzero;
 	struct quotakey *key;
@@ -572,28 +561,31 @@ vfs_quotactl_getall(struct mount *mp,
 	id_t lastid;
 	prop_dictionary_t thisreply;
 	unsigned i;
-	int error, error2;
+	int error;
 
-	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	assert(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
 
-	args.qc_op = QUOTACTL_CURSOROPEN;
-	args.u.cursoropen.qc_cursor = &cursor;
-	error = VFS_QUOTACTL(mp, &args);
-	if (error) {
-		return error;
+	cursor = quota_opencursor(qh);
+	if (cursor == NULL) {
+		return errno;
 	}
 
-	keys = kmem_alloc(loopmax * sizeof(keys[0]), KM_SLEEP);
-	vals = kmem_alloc(loopmax * sizeof(vals[0]), KM_SLEEP);
+	keys = malloc(loopmax * sizeof(keys[0]));
+	if (keys == NULL) {
+		quotacursor_close(cursor);
+		return ENOMEM;
+	}
+	vals = malloc(loopmax * sizeof(vals[0]));
+	if (vals == NULL) {
+		free(keys);
+		quotacursor_close(cursor);
+		return ENOMEM;
+	}
 
 	skipidtype = (q2type == QUOTA_IDTYPE_USER ?
 		      QUOTA_IDTYPE_GROUP : QUOTA_IDTYPE_USER);
-	args.qc_op = QUOTACTL_CURSORSKIPIDTYPE;
-	args.u.cursorskipidtype.qc_cursor = &cursor;
-	args.u.cursorskipidtype.qc_idtype = skipidtype;
-	error = VFS_QUOTACTL(mp, &args);
+	quotacursor_skipidtype(cursor, skipidtype);
 	/* ignore if it fails */
-	(void)error;
 
 	replies = prop_array_create();
 	if (replies == NULL) {
@@ -606,43 +598,31 @@ vfs_quotactl_getall(struct mount *mp,
 	atzero = 0;
 
 	while (1) {
-		args.qc_op = QUOTACTL_CURSORATEND;
-		args.u.cursoratend.qc_cursor = &cursor;
-		args.u.cursoratend.qc_ret = &atend;
-		error = VFS_QUOTACTL(mp, &args);
-		if (error) {
-			goto err;
-		}
+		atend = quotacursor_atend(cursor);
 		if (atend) {
 			break;
 		}
 
-		args.qc_op = QUOTACTL_CURSORGET;
-		args.u.cursorget.qc_cursor = &cursor;
-		args.u.cursorget.qc_keys = keys;
-		args.u.cursorget.qc_vals = vals;
-		args.u.cursorget.qc_maxnum = loopmax;
-		args.u.cursorget.qc_ret = &loopnum;
+		num = quotacursor_getn(cursor, keys, vals, loopmax);
+		if (num < 0) {
+			error = errno;
+		} else {
+			error = 0;
+			loopnum = num;
+		}
 
-		error = VFS_QUOTACTL(mp, &args);
 		if (error == EDEADLK) {
 			/*
 			 * transaction abort, start over
 			 */
 
-			args.qc_op = QUOTACTL_CURSORREWIND;
-			args.u.cursorrewind.qc_cursor = &cursor;
-			error = VFS_QUOTACTL(mp, &args);
-			if (error) {
+			if (quotacursor_rewind(cursor)) {
+				error = errno;
 				goto err;
 			}
 
-			args.qc_op = QUOTACTL_CURSORSKIPIDTYPE;
-			args.u.cursorskipidtype.qc_cursor = &cursor;
-			args.u.cursorskipidtype.qc_idtype = skipidtype;
-			error = VFS_QUOTACTL(mp, &args);
+			quotacursor_skipidtype(cursor, skipidtype);
 			/* ignore if it fails */
-			(void)error;
 
 			prop_object_release(replies);
 			replies = prop_array_create();
@@ -670,7 +650,7 @@ vfs_quotactl_getall(struct mount *mp,
 			 * twice, warn and assume end of iteration.
 			 */
 			if (atzero) {
-				printf("vfs_quotactl: zero items returned\n");
+				warnx("zero items returned");
 				break;
 			}
 			atzero = 1;
@@ -725,26 +705,23 @@ vfs_quotactl_getall(struct mount *mp,
 	error = 0;
 
  err:
-	kmem_free(keys, loopmax * sizeof(keys[0]));
-	kmem_free(vals, loopmax * sizeof(vals[0]));
+	free(keys);
+	free(vals);
 
 	if (replies != NULL) {
 		prop_object_release(replies);
 	}
 
-	args.qc_op = QUOTACTL_CURSORCLOSE;
-	args.u.cursorclose.qc_cursor = &cursor;
-	error2 = VFS_QUOTACTL(mp, &args);
+	quotacursor_close(cursor);
 
 	if (error) {
 		return error;
 	}
-	error = error2;
-	return error;
+	return 0;
 }
 
 static int
-vfs_quotactl_clear(struct mount *mp,
+vfs_quotactl_clear(struct quotahandle *qh,
 			prop_dictionary_t cmddict, int q2type,
 			prop_array_t datas)
 {
@@ -755,11 +732,10 @@ vfs_quotactl_clear(struct mount *mp,
 	int defaultq;
 	const char *idstr;
 	struct quotakey qk;
-	struct vfs_quotactl_args args;
 	int error;
 
-	KASSERT(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
-	KASSERT(prop_object_type(datas) == PROP_TYPE_ARRAY);
+	assert(prop_object_type(cmddict) == PROP_TYPE_DICTIONARY);
+	assert(prop_object_type(datas) == PROP_TYPE_ARRAY);
 
 	replies = prop_array_create();
 	if (replies == NULL)
@@ -788,10 +764,8 @@ vfs_quotactl_clear(struct mount *mp,
 		qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
 		qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
 
-		args.qc_op = QUOTACTL_DELETE;
-		args.u.delete.qc_key = &qk;
-		error = VFS_QUOTACTL(mp, &args);
-		if (error) {
+		if (quota_delete(qh, &qk)) {
+			error = errno;
 			goto err;
 		}
 
@@ -799,10 +773,8 @@ vfs_quotactl_clear(struct mount *mp,
 		qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
 		qk.qk_objtype = QUOTA_OBJTYPE_FILES;
 
-		args.qc_op = QUOTACTL_DELETE;
-		args.u.delete.qc_key = &qk;
-		error = VFS_QUOTACTL(mp, &args);
-		if (error) {
+		if (quota_delete(qh, &qk)) {
+			error = errno;
 			goto err;
 		}
 	}
@@ -821,7 +793,7 @@ err:
 }
 
 static int
-vfs_quotactl_cmd(struct mount *mp, prop_dictionary_t cmddict)
+vfs_quotactl_cmd(struct quotahandle *qh, prop_dictionary_t cmddict)
 {
 	int error;
 	const char *cmd, *type;
@@ -850,19 +822,19 @@ vfs_quotactl_cmd(struct mount *mp, prop_dictionary_t cmddict)
 	prop_dictionary_remove(cmddict, "data"); /* prepare for return */
 
 	if (strcmp(cmd, "get version") == 0) {
-		error = vfs_quotactl_getversion(mp, cmddict, q2type, datas);
+		error = vfs_quotactl_getversion(qh, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "quotaon") == 0) {
-		error = vfs_quotactl_quotaon(mp, cmddict, q2type, datas);
+		error = vfs_quotactl_quotaon(qh, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "quotaoff") == 0) {
-		error = vfs_quotactl_quotaoff(mp, cmddict, q2type, datas);
+		error = vfs_quotactl_quotaoff(qh, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "get") == 0) {
-		error = vfs_quotactl_get(mp, cmddict, q2type, datas);
+		error = vfs_quotactl_get(qh, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "set") == 0) {
-		error = vfs_quotactl_put(mp, cmddict, q2type, datas);
+		error = vfs_quotactl_put(qh, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "getall") == 0) {
-		error = vfs_quotactl_getall(mp, cmddict, q2type, datas);
+		error = vfs_quotactl_getall(qh, cmddict, q2type, datas);
 	} else if (strcmp(cmd, "clear") == 0) {
-		error = vfs_quotactl_clear(mp, cmddict, q2type, datas);
+		error = vfs_quotactl_clear(qh, cmddict, q2type, datas);
 	} else {
 		/* XXX this a bad errno for this case */
 		error = EOPNOTSUPP;
@@ -876,7 +848,7 @@ vfs_quotactl_cmd(struct mount *mp, prop_dictionary_t cmddict)
 }
 
 int
-vfs_quotactl(struct mount *mp, prop_dictionary_t dict)
+proplib_quotactl(struct quotahandle *qh, prop_dictionary_t dict)
 {
 	prop_dictionary_t cmddict;
 	prop_array_t commands;
@@ -898,7 +870,7 @@ vfs_quotactl(struct mount *mp, prop_dictionary_t dict)
 			/* XXX shouldn't this be an error? */
 			continue;
 		}
-		error = vfs_quotactl_cmd(mp, cmddict);
+		error = vfs_quotactl_cmd(qh, cmddict);
 		if (error) {
 			break;
 		}
