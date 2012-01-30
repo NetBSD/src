@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.53 2011/07/30 13:19:21 jmcneill Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.54 2012/01/30 19:41:19 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.53 2011/07/30 13:19:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.54 2012/01/30 19:41:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,6 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 	const char *vendor;
-	char devinfo[256];
 	usbd_status r;
 	int ncomp;
 	struct usb_pci *up;
@@ -129,11 +128,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.hci_private = sc;
 
-	aprint_naive(": USB controller\n");
-
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, "USB controller");
 
 	/* Check for quirks */
 	quirk = ehci_pci_lookup_quirkdata(PCI_VENDOR(pa->pa_id),

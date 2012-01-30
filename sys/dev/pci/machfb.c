@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.72 2012/01/11 16:02:29 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.73 2012/01/30 19:41:22 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.72 2012/01/11 16:02:29 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.73 2012/01/30 19:41:22 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -505,7 +505,6 @@ mach64_attach(device_t parent, device_t self, void *aux)
 #if defined(__sparc__) || defined(__powerpc__)
 	const struct videomode *mode = NULL;
 #endif
-	char devinfo[256];
 	int bar, id, expected_id;
 	int is_gx;
 	const char **memtype_names;
@@ -529,10 +528,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	sc->sc_accessops.ioctl = mach64_ioctl;
 	sc->sc_accessops.mmap = mach64_mmap;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, 
-	    PCI_REVISION(pa->pa_class));
-	aprint_naive(": Graphics processor\n");
+	pci_aprint_devinfo(pa, "Graphics processor");
 #ifdef MACHFB_DEBUG
 	printf(prop_dictionary_externalize(device_properties(self)));
 #endif

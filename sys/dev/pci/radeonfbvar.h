@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.12 2011/12/30 14:32:31 macallan Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.13 2012/01/30 19:41:23 drochner Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -213,8 +213,6 @@ struct radeonfb_softc {
 	uint16_t		sc_family;
 	uint16_t		sc_flags;
 	pcireg_t		sc_id;
-
-	char			sc_devinfo[256];
 
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;

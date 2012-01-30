@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.3 2011/04/28 17:32:48 bouyer Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.4 2012/01/30 19:41:21 drochner Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.3 2011/04/28 17:32:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.4 2012/01/30 19:41:21 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,12 +175,10 @@ vte_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	int error;
-	char devinfo[256];
 	const struct sysctlnode *node;
 	int vte_nodenum;
 
 	sc->vte_dev = self;
-	aprint_normal("\n");
 
 	callout_init(&sc->vte_tick_ch, 0);
 
@@ -210,8 +208,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal_dev(self, "%s\n", devinfo);
+	pci_aprint_devinfo(pa, NULL);
 
 	/* Reset the ethernet controller. */
 	vte_reset(sc);

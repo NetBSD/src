@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.25 2011/05/15 01:00:52 msaitoh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.26 2012/01/30 19:41:19 drochner Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.25 2011/05/15 01:00:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.26 2012/01/30 19:41:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,14 +124,10 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	char devinfo[256];
 
 	sc->sc_dev = self;
 
-	aprint_naive("\n");
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_SMB_HOSTC);

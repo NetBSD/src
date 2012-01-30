@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.26 2011/08/06 14:56:33 jakllsch Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.27 2012/01/30 19:41:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.26 2011/08/06 14:56:33 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.27 2012/01/30 19:41:18 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -171,7 +171,6 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct ahci_pci_softc *psc = device_private(self);
 	struct ahci_softc *sc = &psc->ah_sc;
-	char devinfo[256];
 	const char *intrstr;
 	bool ahci_cap_64bit;
 	bool ahci_bad_64bit;
@@ -188,9 +187,7 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_naive(": AHCI disk controller\n");
-	aprint_normal(": %s\n", devinfo);
+	pci_aprint_devinfo(pa, "AHCI disk controller");
 	
 	if (pci_intr_map(pa, &intrhandle) != 0) {
 		aprint_error_dev(self, "couldn't map interrupt\n");

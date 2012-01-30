@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.108 2011/11/19 22:51:23 tls Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.109 2012/01/30 19:41:21 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.108 2011/11/19 22:51:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.109 2012/01/30 19:41:21 drochner Exp $");
 
 #include "rnd.h"
 
@@ -1440,7 +1440,6 @@ vr_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	uint8_t eaddr[ETHER_ADDR_LEN], mac;
 	int i, rseg, error;
-	char devinfo[256];
 
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(sc->vr_pc, sc->vr_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(sc->vr_pc, sc->vr_tag, (r))
@@ -1451,10 +1450,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	sc->vr_id = pa->pa_id;
 	callout_init(&sc->vr_tick_ch, 0);
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_naive("\n");
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	/*
 	 * Handle power management nonsense.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.77 2011/09/05 04:36:50 msaitoh Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.78 2012/01/30 19:41:20 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.77 2011/09/05 04:36:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.78 2012/01/30 19:41:20 drochner Exp $");
 
 #include "rnd.h"
 
@@ -314,8 +314,6 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	aprint_naive(": Ethernet controller\n");
-
 	/*
 	 * Map control/status registers.
 	 */
@@ -411,8 +409,6 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		if (sc->sc_rev >= FXP_REV_82559_A0)
 			sc->sc_flags |= FXPF_HAS_RESUME_BUG;
 
-		aprint_normal(": %s, rev %d\n", chipname != NULL ? chipname :
-		    fpp->fpp_name, sc->sc_rev);
 		break;
 
 	case PCI_PRODUCT_INTEL_82559ER:
@@ -433,8 +429,6 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		if (sc->sc_rev >= FXP_REV_82551_E)
 			chipname = "Intel i82551ER Ethernet";
 
-		aprint_normal(": %s, rev %d\n", chipname != NULL ? chipname :
-		    fpp->fpp_name, sc->sc_rev);
 		break;
 
 	case PCI_PRODUCT_INTEL_82801BA_LAN:
@@ -453,7 +447,6 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		/* FALLTHROUGH */
 
 	default:
-		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
 		if (sc->sc_rev >= FXP_REV_82558_A4)
 			sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
 		if (sc->sc_rev >= FXP_REV_82559_A0)
@@ -461,6 +454,9 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 
 		break;
 	}
+
+	pci_aprint_devinfo_fancy(pa, "Ethernet controller",
+		(chipname ? chipname : fpp->fpp_name), 1);
 
 	/* Make sure bus-mastering is enabled. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,

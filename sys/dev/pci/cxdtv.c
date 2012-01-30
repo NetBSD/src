@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.10 2012/01/16 15:33:50 jmcneill Exp $ */
+/* $NetBSD: cxdtv.c,v 1.11 2012/01/30 19:41:19 drochner Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.10 2012/01/16 15:33:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.11 2012/01/30 19:41:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -186,15 +186,12 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t reg;
 	const char *intrstr;
-	char devinfo[76];
 	struct i2cbus_attach_args iba;
 
 	sc = device_private(self);
 
 	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;
-
-	aprint_naive("\n");
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
@@ -204,9 +201,7 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 	sc->sc_board = cxdtv_board_lookup(sc->sc_vendor, sc->sc_product);
 	KASSERT(sc->sc_board != NULL);
 
-
-	pci_devinfo(reg, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	if (pci_mapreg_map(pa, CXDTV_MMBASE, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc_memt, &sc->sc_memh, NULL, &sc->sc_mems)) {

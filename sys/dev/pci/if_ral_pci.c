@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.18 2011/07/26 20:51:24 dyoung Exp $	*/
+/*	$NetBSD: if_ral_pci.c,v 1.19 2012/01/30 19:41:20 drochner Exp $	*/
 /*	$OpenBSD: if_ral_pci.c,v 1.6 2006/01/09 20:03:43 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * PCI front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.18 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.19 2012/01/30 19:41:20 drochner Exp $");
 
 
 #include <sys/param.h>
@@ -124,15 +124,12 @@ ral_pci_attach(device_t parent, device_t self, void *aux)
 	struct rt2560_softc *sc = &psc->sc_sc;
 	const struct pci_attach_args *pa = aux;
 	const char *intrstr;
-	char devinfo[256];
 	bus_addr_t base;
 	pci_intr_handle_t ih;
 	pcireg_t reg;
-	int error, revision;
+	int error;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
+	pci_aprint_devinfo(pa, NULL);
 
 	psc->sc_opns = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RALINK_RT2560) ?
 	    &ral_rt2560_opns : &ral_rt2661_opns;

@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.37 2011/12/02 11:58:44 jmcneill Exp $ */
+/* $NetBSD: auixp.c,v 1.38 2012/01/30 19:41:18 drochner Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.37 2011/12/02 11:58:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.38 2012/01/30 19:41:18 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1100,8 +1100,7 @@ auixp_attach(device_t parent, device_t self, void *aux)
 	const struct auixp_card_type *card;
 	const char *intrstr;
 	uint32_t data;
-	char devinfo[256];
-	int revision, error;
+	int error;
 
 	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
@@ -1112,11 +1111,7 @@ auixp_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* print information confirming attachment */
-	aprint_naive(": Audio controller\n");
-
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
+	pci_aprint_devinfo(pa, "Audio controller");
 
 	/* set up details from our set of known `cards'/chips */
 	for (card = auixp_card_types; card->pci_vendor_id; card++)

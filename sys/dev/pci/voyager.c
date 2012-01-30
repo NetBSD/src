@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.8 2011/12/13 14:41:55 macallan Exp $	*/
+/*	$NetBSD: voyager.c,v 1.9 2012/01/30 19:41:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.8 2011/12/13 14:41:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.9 2012/01/30 19:41:23 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,6 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	struct voyager_softc	*sc = device_private(self);
 	struct pci_attach_args	*pa = aux;
 	pci_intr_handle_t ih;
-	char devinfo[256];
 	struct voyager_attach_args vaa;
 	struct i2cbus_attach_args iba;
 	uint32_t reg;
@@ -162,8 +161,7 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_dev = self;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s\n", devinfo);
+	pci_aprint_devinfo(pa, NULL);
 
 	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_memt, &sc->sc_regh, &sc->sc_reg, &sc->sc_regsize)) {

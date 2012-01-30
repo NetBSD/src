@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.52 2012/01/11 16:02:30 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.53 2012/01/30 19:41:23 drochner Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.52 2012/01/11 16:02:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.53 2012/01/30 19:41:23 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,11 +450,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 			break;
 	}
 
-	pci_devinfo(sc->sc_id, pa->pa_class, 0, sc->sc_devinfo,
-	    sizeof(sc->sc_devinfo));
-
-	aprint_naive("\n");
-	aprint_normal(": %s\n", sc->sc_devinfo);
+	pci_aprint_devinfo(pa, NULL);
 
 	DPRINTF((prop_dictionary_externalize(device_properties(dev))));
 

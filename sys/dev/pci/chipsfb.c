@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.30 2011/07/22 14:34:38 njoly Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.31 2012/01/30 19:41:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.30 2011/07/22 14:34:38 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.31 2012/01/30 19:41:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,6 @@ chipsfb_pci_attach(device_t parent, device_t self, void *aux)
 	struct chipsfb_pci_softc *scp = device_private(self);
 	struct chipsfb_softc *sc = &scp->sc_chips;
 	const struct pci_attach_args *pa = aux;
-	char devinfo[256];
 	pcireg_t screg;
 
 	scp->sc_pc = pa->pa_pc;
@@ -102,9 +101,7 @@ chipsfb_pci_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(scp->sc_pc, scp->sc_pcitag, PCI_COMMAND_STATUS_REG, 
 	    screg);
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;
