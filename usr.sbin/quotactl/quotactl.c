@@ -1,4 +1,4 @@
-/* $NetBSD: quotactl.c,v 1.6 2012/01/30 19:28:11 dholland Exp $ */
+/* $NetBSD: quotactl.c,v 1.7 2012/01/30 19:31:31 dholland Exp $ */
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quotactl.c,v 1.6 2012/01/30 19:28:11 dholland Exp $");
+__RCSID("$NetBSD: quotactl.c,v 1.7 2012/01/30 19:31:31 dholland Exp $");
 #endif /* not lint */
 
 /*
@@ -46,8 +46,7 @@ __RCSID("$NetBSD: quotactl.c,v 1.6 2012/01/30 19:28:11 dholland Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include <quota/quotaprop.h>
-
+#include "quotaprop.h"
 #include "proplib-interpreter.h"
 
 __dead static void usage(void);
