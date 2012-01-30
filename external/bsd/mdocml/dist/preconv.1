@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: preconv.1,v 1.5 2011/08/18 08:58:44 kristaps Exp $
+.\"	$Vendor-Id: preconv.1,v 1.6 2011/12/25 19:35:44 kristaps Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd August 18, 2011
+.Dd December 25, 2011
 .Dt PRECONV 1
 .Os
 .Sh NAME
@@ -38,6 +38,11 @@ or other troff system supporting the
 escape sequence
 .Pc
 input.
+.Pp
+By default, it parses from standard output, determining encoding as
+described in
+.Sx Algorithm .
+.Pp
 Its arguments are as follows:
 .Bl -tag -width Ds
 .It Fl D Ar enc
@@ -47,15 +52,6 @@ The document's encoding.
 .It Ar file
 The input file.
 .El
-.Pp
-If
-.Ar file
-is not provided,
-.Nm
-accepts standard input.
-See
-.Sx Algorithm
-for encoding choice.
 .Pp
 The recoded input is written to standard output: Unicode characters in
 the ASCII range are printed as regular ASCII characters, while those
