@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.46 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.47 2012/01/30 19:41:19 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.46 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.47 2012/01/30 19:41:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,17 +189,13 @@ cs4281_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc;
 	char const *intrstr;
 	pcireg_t reg;
-	char devinfo[256];
 	int error;
 
 	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
-	aprint_naive(": Audio controller\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, "Audio controller");
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pt = pa->pa_tag;
