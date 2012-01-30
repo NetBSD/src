@@ -1,7 +1,7 @@
-/*	$NetBSD: lex_var.h,v 1.1.1.2 2007/04/14 20:17:34 martin Exp $	*/
+/*	$NetBSD: lex_var.h,v 1.1.1.3 2012/01/30 16:03:48 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002 by Darren Reed.
+ * Copyright (C) 2008 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */

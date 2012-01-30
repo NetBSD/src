@@ -1,10 +1,10 @@
-/*	$NetBSD: kmem.h,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: kmem.h,v 1.1.1.3 2012/01/30 16:03:24 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
- * Id: kmem.h,v 1.2.4.1 2006/06/16 17:21:04 darrenr Exp
+ * Id: kmem.h,v 1.5.2.1 2012/01/26 05:29:16 darrenr Exp
  */
 
 #ifndef	__KMEM_H__

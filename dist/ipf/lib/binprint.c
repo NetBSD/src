@@ -1,19 +1,19 @@
-/*	$NetBSD: binprint.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: binprint.c,v 1.1.1.3 2012/01/30 16:03:25 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2000-2002 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: binprint.c,v 1.8.4.1 2006/06/16 17:20:56 darrenr Exp
+ * Id: binprint.c,v 1.11.2.1 2012/01/26 05:29:15 darrenr Exp
  */
 
 #include "ipf.h"
 
 
 void binprint(ptr, size)
-void *ptr;
-size_t size;
+	void *ptr;
+	size_t size;
 {
 	u_char *s;
 	int i, j;

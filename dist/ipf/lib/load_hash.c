@@ -1,11 +1,11 @@
-/*	$NetBSD: load_hash.c,v 1.1.1.5 2009/08/19 08:29:30 darrenr Exp $	*/
+/*	$NetBSD: load_hash.c,v 1.1.1.6 2012/01/30 16:03:23 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002-2005 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_hash.c,v 1.11.2.6 2009/01/01 03:48:21 darrenr Exp
+ * Id: load_hash.c,v 1.21.2.3 2012/01/26 05:29:16 darrenr Exp
  */
 
 #include <fcntl.h>
@@ -14,13 +14,12 @@
 #include "netinet/ip_lookup.h"
 #include "netinet/ip_htable.h"
 
-static int hashfd = -1;
 
-
-int load_hash(iphp, list, iocfunc)
-iphtable_t *iphp;
-iphtent_t *list;
-ioctlfunc_t iocfunc;
+int
+load_hash(iphp, list, iocfunc)
+	iphtable_t *iphp;
+	iphtent_t *list;
+	ioctlfunc_t iocfunc;
 {
 	iplookupop_t op;
 	iphtable_t iph;
@@ -28,9 +27,7 @@ ioctlfunc_t iocfunc;
 	size_t size;
 	int n;
 
-	if ((hashfd == -1) && ((opts & OPT_DONOTHING) == 0))
-		hashfd = open(IPLOOKUP_NAME, O_RDWR);
-	if ((hashfd == -1) && ((opts & OPT_DONOTHING) == 0))
+	if (pool_open() == -1)
 		return -1;
 
 	for (n = 0, a = list; a != NULL; a = a->ipe_next)
@@ -67,7 +64,7 @@ ioctlfunc_t iocfunc;
 	iph.iph_ref = 0;
 
 	if ((opts & OPT_REMOVE) == 0) {
-		if ((*iocfunc)(hashfd, SIOCLOOKUPADDTABLE, &op))
+		if (pool_ioctl(iocfunc, SIOCLOOKUPADDTABLE, &op))
 			if ((opts & OPT_DONOTHING) == 0) {
 				perror("load_hash:SIOCLOOKUPADDTABLE");
 				return -1;
@@ -88,9 +85,8 @@ ioctlfunc_t iocfunc;
 			return -1;
 		}
 		iph.iph_list = list;
-		printhash(&iph, bcopywrap, iph.iph_name, opts);
+		printhash(&iph, bcopywrap, iph.iph_name, opts, NULL);
 		free(iph.iph_table);
-		iph.iph_list = NULL;
 
 		for (a = list; a != NULL; a = a->ipe_next) {
 			a->ipe_addr.in4_addr = htonl(a->ipe_addr.in4_addr);
@@ -102,10 +98,10 @@ ioctlfunc_t iocfunc;
 		printf("Hash %s:\n", iph.iph_name);
 
 	for (a = list; a != NULL; a = a->ipe_next)
-		load_hashnode(iphp->iph_unit, iph.iph_name, a, iocfunc);
+		load_hashnode(iphp->iph_unit, iph.iph_name, a, 0, iocfunc);
 
 	if ((opts & OPT_REMOVE) != 0) {
-		if ((*iocfunc)(hashfd, SIOCLOOKUPDELTABLE, &op))
+		if (pool_ioctl(iocfunc, SIOCLOOKUPDELTABLE, &op))
 			if ((opts & OPT_DONOTHING) == 0) {
 				perror("load_hash:SIOCLOOKUPDELTABLE");
 				return -1;

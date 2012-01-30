@@ -1,11 +1,11 @@
-/*	$NetBSD: remove_pool.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: remove_pool.c,v 1.1.1.3 2012/01/30 16:03:23 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2003 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: remove_pool.c,v 1.1.4.1 2006/06/16 17:21:16 darrenr Exp
+ * Id: remove_pool.c,v 1.5.2.1 2012/01/26 05:29:17 darrenr Exp
  */
 
 #include <fcntl.h>
@@ -14,19 +14,16 @@
 #include "netinet/ip_lookup.h"
 #include "netinet/ip_htable.h"
 
-static int poolfd = -1;
 
-
-int remove_pool(poolp, iocfunc)
-ip_pool_t *poolp;
-ioctlfunc_t iocfunc;
+int
+remove_pool(poolp, iocfunc)
+	ip_pool_t *poolp;
+	ioctlfunc_t iocfunc;
 {
 	iplookupop_t op;
 	ip_pool_t pool;
 
-	if ((poolfd == -1) && ((opts & OPT_DONOTHING) == 0))
-		poolfd = open(IPLOOKUP_NAME, O_RDWR);
-	if ((poolfd == -1) && ((opts & OPT_DONOTHING) == 0))
+	if (pool_open() == -1)
 		return -1;
 
 	op.iplo_type = IPLT_POOL;
@@ -40,7 +37,7 @@ ioctlfunc_t iocfunc;
 	strncpy(pool.ipo_name, poolp->ipo_name, sizeof(pool.ipo_name));
 	pool.ipo_flags = poolp->ipo_flags;
 
-	if ((*iocfunc)(poolfd, SIOCLOOKUPDELTABLE, &op))
+	if (pool_ioctl(iocfunc, SIOCLOOKUPDELTABLE, &op))
 		if ((opts & OPT_DONOTHING) == 0) {
 			perror("remove_pool:SIOCLOOKUPDELTABLE");
 			return -1;

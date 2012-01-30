@@ -1,29 +1,30 @@
-/*	$NetBSD: printtunable.c,v 1.1.1.3 2010/04/17 20:45:59 darrenr Exp $	*/
+/*	$NetBSD: printtunable.c,v 1.1.1.4 2012/01/30 16:03:25 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2003 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printtunable.c,v 1.1.4.2 2009/12/27 06:58:07 darrenr Exp
+ * Id: printtunable.c,v 1.7.2.1 2012/01/26 05:29:17 darrenr Exp
  */
 
 #include "ipf.h"
 
-void printtunable(tup)
-ipftune_t *tup;
+void
+printtunable(tup)
+	ipftune_t *tup;
 {
-	printf("%s\tmin %#lx\tmax %#lx\tcurrent ",
+	PRINTF("%s\tmin %lu\tmax %lu\tcurrent ",
 		tup->ipft_name, tup->ipft_min, tup->ipft_max);
 	if (tup->ipft_sz == sizeof(u_long))
-		printf("%lu\n", tup->ipft_vlong);
+		PRINTF("%lu\n", tup->ipft_vlong);
 	else if (tup->ipft_sz == sizeof(u_int))
-		printf("%u\n", tup->ipft_vint);
+		PRINTF("%u\n", tup->ipft_vint);
 	else if (tup->ipft_sz == sizeof(u_short))
-		printf("%hu\n", tup->ipft_vshort);
+		PRINTF("%hu\n", tup->ipft_vshort);
 	else if (tup->ipft_sz == sizeof(u_char))
-		printf("%u\n", (u_int)tup->ipft_vchar);
+		PRINTF("%u\n", (u_int)tup->ipft_vchar);
 	else {
-		printf("sz = %d\n", tup->ipft_sz);
+		PRINTF("sz = %d\n", tup->ipft_sz);
 	}
 }

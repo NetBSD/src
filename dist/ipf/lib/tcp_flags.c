@@ -1,11 +1,11 @@
-/*	$NetBSD: tcp_flags.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: tcp_flags.c,v 1.1.1.3 2012/01/30 16:03:23 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2000-2004 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: tcp_flags.c,v 1.8.2.1 2006/06/16 17:21:17 darrenr Exp
+ * Id: tcp_flags.c,v 1.11.2.1 2012/01/26 05:29:17 darrenr Exp
  */
 
 #include "ipf.h"
@@ -15,9 +15,9 @@ extern	u_char	flags[];
 
 
 u_char tcp_flags(flgs, mask, linenum)
-char *flgs;
-u_char *mask;
-int    linenum;
+	char *flgs;
+	u_char *mask;
+	int    linenum;
 {
 	u_char tcpf = 0, tcpfm = 0;
 	char *s;

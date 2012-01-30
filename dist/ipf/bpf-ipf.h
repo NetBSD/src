@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf-ipf.h,v 1.1.1.2 2008/05/20 06:43:46 darrenr Exp $	*/
+/*	$NetBSD: bpf-ipf.h,v 1.1.1.3 2012/01/30 16:03:21 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -39,7 +39,7 @@
  *
  *      @(#)bpf.h       7.1 (Berkeley) 5/7/91
  *
- * @(#) Header: /devel/CVS/IP-Filter/bpf-ipf.h,v 2.1.4.1 2007/10/26 12:15:08 darrenr Exp (LBL)
+ * @(#) Header: /devel/CVS/IP-Filter/bpf-ipf.h,v 2.2 2007/10/25 17:03:18 darrenr Exp (LBL)
  */
 
 #ifndef BPF_MAJOR_VERSION

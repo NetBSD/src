@@ -1,33 +1,63 @@
-/*	$NetBSD: printpoolnode.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: printpoolnode.c,v 1.1.1.3 2012/01/30 16:03:24 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002-2005 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 
 #include "ipf.h"
 
-#define	PRINTF	(void)printf
-#define	FPRINTF	(void)fprintf
 
-ip_pool_node_t *printpoolnode(np, opts)
-ip_pool_node_t *np;
-int opts;
+ip_pool_node_t *
+printpoolnode(np, opts, fields)
+	ip_pool_node_t *np;
+	int opts;
+	wordtab_t *fields;
 {
+	int i;
 
-	if ((opts & OPT_DEBUG) == 0) {
+	if (fields != NULL) {
+		for (i = 0; fields[i].w_value != 0; i++) {
+			printpoolfield(np, IPLT_POOL, i);
+			if (fields[i + 1].w_value != 0)
+				printf("\t");
+		}
+		printf("\n");
+	} else if ((opts & OPT_DEBUG) == 0) {
 		putchar(' ');
 		if (np->ipn_info == 1)
 			PRINTF("! ");
-		printip((u_32_t *)&np->ipn_addr.adf_addr.in4);
-		printmask((u_32_t *)&np->ipn_mask.adf_addr);
+		if (np->ipn_addr.adf_family == AF_INET) {
+			printip(np->ipn_addr.adf_family,
+				(u_32_t *)&np->ipn_addr.adf_addr.in4);
+		} else {
+#ifdef USE_INET6
+			char buf[INET6_ADDRSTRLEN+1];
+			const char *str;
+
+			str = inet_ntop(AF_INET6, &np->ipn_addr.adf_addr,
+					buf, sizeof(buf) - 1);
+			if (str != NULL)
+				PRINTF("%s", str);
+#endif
+		}
+		printmask(np->ipn_addr.adf_family,
+			  (u_32_t *)&np->ipn_mask.adf_addr);
 	} else {
 		PRINTF("\tAddress: %s%s", np->ipn_info ? "! " : "",
 			inet_ntoa(np->ipn_addr.adf_addr.in4));
-		printmask((u_32_t *)&np->ipn_mask.adf_addr);
-		PRINTF("\t\tHits %lu\tName %s\tRef %d\n",
-			np->ipn_hits, np->ipn_name, np->ipn_ref);
+		printmask(np->ipn_addr.adf_family,
+			  (u_32_t *)&np->ipn_mask.adf_addr);
+#ifdef USE_QUAD_T
+		PRINTF("\n\t\tHits %"PRIu64"\tBytes %"PRIu64"\tName %s\tRef %d\n",
+			np->ipn_hits, np->ipn_bytes,
+			np->ipn_name, np->ipn_ref);
+#else
+		PRINTF("\n\t\tHits %lu\tBytes %lu\tName %s\tRef %d\n",
+			np->ipn_hits, np->ipn_bytes,
+			np->ipn_name, np->ipn_ref);
+#endif
 	}
 	return np->ipn_next;
 }

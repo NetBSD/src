@@ -1,13 +1,13 @@
-/*	$NetBSD: ipsyncm.c,v 1.1.1.6 2010/04/17 20:45:02 darrenr Exp $	*/
+/*	$NetBSD: ipsyncm.c,v 1.1.1.7 2012/01/30 16:03:47 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2001-2006 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipsyncm.c,v 1.4.2.7 2009/12/27 06:58:06 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipsyncm.c,v 1.13.2.1 2012/01/26 05:29:19 darrenr Exp";
 #endif
 #include <sys/types.h>
 #include <sys/time.h>
@@ -54,8 +54,8 @@ static void handleterm(int sig)
 #define BUFFERLEN 1400
 
 int main(argc, argv)
-int argc;
-char *argv[];
+	int argc;
+	char *argv[];
 {
 	struct sockaddr_in sin;
 	char buff[BUFFERLEN];
