@@ -1,4 +1,4 @@
-/*	$NetBSD: snit.c,v 1.4 2010/04/17 21:00:09 darrenr Exp $	*/
+/*	$NetBSD: snit.c,v 1.5 2012/01/30 16:12:03 darrenr Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
@@ -41,7 +41,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)snit.c	1.5 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: snit.c,v 2.3.4.1 2009/12/27 06:53:15 darrenr Exp";
+static const char rcsid[] = "@(#)Id: snit.c,v 2.5 2007/12/20 09:35:10 darrenr Exp";
 #endif
 
 #define	CHUNKSIZE	8192
@@ -58,8 +58,8 @@ static	int	timeout;
 
 
 int	initdevice(device, tout)
-char	*device;
-int	tout;
+	char	*device;
+	int	tout;
 {
 	struct	strioctl si;
 	struct	timeval to;
@@ -115,8 +115,8 @@ int	tout;
  * output an IP packet onto a fd opened for /dev/nit
  */
 int	sendip(fd, pkt, len)
-int	fd, len;
-char	*pkt;
+	int	fd, len;
+	char	*pkt;
 {
 	struct	sockaddr sk, *sa = &sk;
 	struct	strbuf	cbuf, *cp = &cbuf, dbuf, *dp = &dbuf;

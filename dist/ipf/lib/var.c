@@ -1,11 +1,11 @@
-/*	$NetBSD: var.c,v 1.6 2010/04/17 21:00:09 darrenr Exp $	*/
+/*	$NetBSD: var.c,v 1.7 2012/01/30 16:12:04 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002-2004 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: var.c,v 1.4.2.4 2009/12/27 06:58:07 darrenr Exp
+ * Id: var.c,v 1.10.2.1 2012/01/26 05:29:17 darrenr Exp
  */
 
 #include <ctype.h>
@@ -25,7 +25,7 @@ static char *expand_string __P((char *, int));
 
 
 static variable_t *find_var(name)
-char *name;
+	char *name;
 {
 	variable_t *v;
 
@@ -37,8 +37,8 @@ char *name;
 
 
 char *get_variable(string, after, line)
-char *string, **after;
-int line;
+	char *string, **after;
+	int line;
 {
 	char c, *s, *t, *value;
 	variable_t *v;
@@ -84,8 +84,8 @@ int line;
 
 
 static char *expand_string(oldstring, line)
-char *oldstring;
-int line;
+	char *oldstring;
+	int line;
 {
 	char c, *s, *p1, *p2, *p3, *newstring, *value;
 	int len;
@@ -144,8 +144,8 @@ int line;
 
 
 void set_variable(name, value)
-char *name;
-char *value;
+	char *name;
+	char *value;
 {
 	variable_t *v;
 	int len;

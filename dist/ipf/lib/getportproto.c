@@ -1,19 +1,19 @@
-/*	$NetBSD: getportproto.c,v 1.7 2010/04/17 21:00:09 darrenr Exp $	*/
+/*	$NetBSD: getportproto.c,v 1.8 2012/01/30 16:12:04 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002-2005 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: getportproto.c,v 1.2.4.5 2009/12/27 06:58:06 darrenr Exp
+ * Id: getportproto.c,v 1.9.2.1 2012/01/26 05:29:15 darrenr Exp
  */
 
 #include <ctype.h>
 #include "ipf.h"
 
 int getportproto(name, proto)
-char *name;
-int proto;
+	char *name;
+	int proto;
 {
 	struct servent *s;
 	struct protoent *p;

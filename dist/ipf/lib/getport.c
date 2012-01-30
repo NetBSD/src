@@ -1,28 +1,37 @@
-/*	$NetBSD: getport.c,v 1.7 2010/04/17 21:00:09 darrenr Exp $	*/
+/*	$NetBSD: getport.c,v 1.8 2012/01/30 16:12:04 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002-2005 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: getport.c,v 1.1.4.7 2009/12/27 06:58:06 darrenr Exp
+ * Id: getport.c,v 1.12.2.1 2012/01/26 05:29:15 darrenr Exp
  */
 
 #include "ipf.h"
+#include <ctype.h>
 
-int getport(fr, name, port)
-frentry_t *fr;
-char *name;
-u_short *port;
+int getport(fr, name, port, proto)
+	frentry_t *fr;
+	char *name, *proto;
+	u_short *port;
 {
 	struct protoent *p;
 	struct servent *s;
 	u_short p1;
 
 	if (fr == NULL || fr->fr_type != FR_T_IPF) {
-		s = getservbyname(name, NULL);
+		s = getservbyname(name, proto);
 		if (s != NULL) {
 			*port = s->s_port;
+			return 0;
+		}
+
+		if (ISDIGIT(*name)) {
+			int portval = atoi(name);
+			if (portval < 0 || portval > 65535)
+				return -1;
+			*port = htons((u_short)portval);
 			return 0;
 		}
 		return -1;
