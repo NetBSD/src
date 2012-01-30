@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.44 2012/01/30 19:16:36 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.45 2012/01/30 19:18:36 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.44 2012/01/30 19:16:36 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.45 2012/01/30 19:18:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,9 @@ __RCSID("$NetBSD: edquota.c,v 1.44 2012/01/30 19:16:36 dholland Exp $");
 
 #include "pathnames.h"
 
+#if 0
 static const char *quotagroup = QUOTAGROUP;
+#endif
 
 #define MAX_TMPSTR	(100+MAXPATHLEN)
 
@@ -218,11 +220,13 @@ quotalist_destroy(struct quotalist *qlist)
 	free(qlist);
 }
 
+#if 0
 static bool
 quotalist_empty(struct quotalist *qlist)
 {
 	return qlist->head == NULL;
 }
+#endif
 
 static void
 quotalist_append(struct quotalist *qlist, struct quotause *qup)
@@ -241,6 +245,7 @@ quotalist_append(struct quotalist *qlist, struct quotause *qup)
 ////////////////////////////////////////////////////////////
 // ffs quota v1
 
+#if 0
 static void
 putprivs1(uint32_t id, int idtype, struct quotause *qup)
 {
@@ -332,6 +337,7 @@ getprivs1(long id, int idtype, const char *filesys)
 			   &qup->qv[QUOTA_LIMIT_FILE]);
 	return qup;
 }
+#endif
 
 ////////////////////////////////////////////////////////////
 // ffs quota v2
@@ -487,6 +493,7 @@ getprivs(long id, int defaultq, int idtype, const char *filesys)
 		quotalist_append(qlist, qup);
 	}
 
+#if 0
 	if (filesys && quotalist_empty(qlist)) {
 		if (defaultq)
 			errx(1, "no default quota for version 1");
@@ -500,6 +507,7 @@ getprivs(long id, int defaultq, int idtype, const char *filesys)
 		}
 		quotalist_append(qlist, qup);
 	}
+#endif
 	return qlist;
 }
 
@@ -514,8 +522,10 @@ putprivs(uint32_t id, int idtype, struct quotalist *qlist)
         for (qup = qlist->head; qup; qup = qup->next) {
 		if (qup->qfname == NULL)
 			putprivs2(id, idtype, qup);
+#if 0
 		else
 			putprivs1(id, idtype, qup);
+#endif
 	}
 }
 
