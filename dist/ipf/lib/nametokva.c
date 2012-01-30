@@ -1,11 +1,11 @@
-/*	$NetBSD: nametokva.c,v 1.1.1.3 2010/04/17 20:45:56 darrenr Exp $	*/
+/*	$NetBSD: nametokva.c,v 1.1.1.4 2012/01/30 16:03:24 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: nametokva.c,v 1.1.4.2 2009/12/27 06:58:06 darrenr Exp
+ * Id: nametokva.c,v 1.6.2.1 2012/01/26 05:29:16 darrenr Exp
  */
 
 #include "ipf.h"
@@ -14,8 +14,8 @@
 #include <fcntl.h>
 
 ipfunc_t nametokva(name, iocfunc)
-char *name;
-ioctlfunc_t iocfunc;
+	char *name;
+	ioctlfunc_t iocfunc;
 {
 	ipfunc_resolve_t res;
 	int fd;
@@ -24,7 +24,7 @@ ioctlfunc_t iocfunc;
 	res.ipfu_addr = NULL;
 	fd = -1;
 
-	if ((opts & OPT_DONOTHING) == 0) {
+	if ((opts & OPT_DONTOPEN) == 0) {
 		fd = open(IPL_NAME, O_RDONLY);
 		if (fd == -1)
 			return NULL;

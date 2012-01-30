@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.c,v 1.1.1.1 2004/03/28 08:55:47 martti Exp $	*/
+/*	$NetBSD: md5.c,v 1.1.1.2 2012/01/30 16:03:05 darrenr Exp $	*/
 
 
 
@@ -35,10 +35,15 @@
  ***********************************************************************
  */
 
-#if defined(_KERNEL) && !defined(__sgi)
-# include <sys/systm.h>
+#if defined(linux) && defined(_KERNEL)
+extern void *memcpy(void *, const void *, unsigned long);
+# define	bcopy(a,b,c)	memcpy(b,a,c)
 #else
-# include <string.h>
+# if defined(_KERNEL) && !defined(__sgi)
+#  include <sys/systm.h>
+# else
+#  include <string.h>
+# endif
 #endif
 
 #include "md5.h"
