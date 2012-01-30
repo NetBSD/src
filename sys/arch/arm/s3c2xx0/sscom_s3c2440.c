@@ -1,4 +1,33 @@
-/*	$NetBSD: sscom_s3c2410.c,v 1.5 2012/01/30 03:28:33 nisimura Exp $ */
+/*-
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Fleischer <paul@xpg.dk>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* Derived from sscom_s3c2410.c */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -33,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2410.c,v 1.5 2012/01/30 03:28:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2440.c,v 1.1 2012/01/30 03:28:33 nisimura Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -59,8 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: sscom_s3c2410.c,v 1.5 2012/01/30 03:28:33 nisimura E
 #include <machine/intr.h>
 #include <sys/bus.h>
 
-#include <arm/s3c2xx0/s3c2410reg.h>
-#include <arm/s3c2xx0/s3c2410var.h>
+#include <arm/s3c2xx0/s3c2440reg.h>
+#include <arm/s3c2xx0/s3c2440var.h>
 #include <arm/s3c2xx0/sscom_var.h>
 #include <sys/termios.h>
 
@@ -70,30 +99,30 @@ static void sscom_attach(struct device *, struct device *, void *);
 CFATTACH_DECL_NEW(sscom, sizeof(struct sscom_softc), sscom_match,
     sscom_attach, NULL, NULL);
 
-const struct sscom_uart_info s3c2410_uart_config[] = {
+const struct sscom_uart_info s3c2440_uart_config[] = {
 	/* UART 0 */
 	{
 		0,
-		S3C2410_INT_TXD0,
-		S3C2410_INT_RXD0,
-		S3C2410_INT_ERR0,
-		S3C2410_UART_BASE(0),
+		S3C2440_INT_TXD0,
+		S3C2440_INT_RXD0,
+		S3C2440_INT_ERR0,
+		S3C2440_UART_BASE(0),
 	},
 	/* UART 1 */
 	{
 		1,
-		S3C2410_INT_TXD1,
-		S3C2410_INT_RXD1,
-		S3C2410_INT_ERR1,
-		S3C2410_UART_BASE(1),
+		S3C2440_INT_TXD1,
+		S3C2440_INT_RXD1,
+		S3C2440_INT_ERR1,
+		S3C2440_UART_BASE(1),
 	},
 	/* UART 2 */
 	{
 		2,
-		S3C2410_INT_TXD2,
-		S3C2410_INT_RXD2,
-		S3C2410_INT_ERR2,
-		S3C2410_UART_BASE(2),
+		S3C2440_INT_TXD2,
+		S3C2440_INT_RXD2,
+		S3C2440_INT_ERR2,
+		S3C2440_UART_BASE(2),
 	},
 };
 
@@ -112,7 +141,7 @@ sscom_attach(struct device *parent, struct device *self, void *aux)
 	struct sscom_softc *sc = device_private(self);
 	struct s3c2xx0_attach_args *sa = aux;
 	int unit = sa->sa_index;
-	bus_addr_t iobase = s3c2410_uart_config[unit].iobase;
+	bus_addr_t iobase = s3c2440_uart_config[unit].iobase;
 
 	printf( ": UART%d addr=%lx", sa->sa_index, iobase );
 
@@ -121,8 +150,8 @@ sscom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_unit = unit;
 	sc->sc_frequency = s3c2xx0_softc->sc_pclk;
 
-	sc->sc_rx_irqno = s3c2410_uart_config[sa->sa_index].rx_int;
-	sc->sc_tx_irqno = s3c2410_uart_config[sa->sa_index].tx_int;
+	sc->sc_rx_irqno = s3c2440_uart_config[sa->sa_index].rx_int;
+	sc->sc_tx_irqno = s3c2440_uart_config[sa->sa_index].tx_int;
 
 	if (bus_space_map(sc->sc_iot, iobase, SSCOM_SIZE, 0, &sc->sc_ioh)) {
 		printf( ": failed to map registers\n" );
@@ -131,11 +160,11 @@ sscom_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	s3c24x0_intr_establish(s3c2410_uart_config[unit].tx_int,
+	s3c24x0_intr_establish(s3c2440_uart_config[unit].tx_int,
 	    IPL_SERIAL, IST_LEVEL, sscomtxintr, sc);
-	s3c24x0_intr_establish(s3c2410_uart_config[unit].rx_int,
+	s3c24x0_intr_establish(s3c2440_uart_config[unit].rx_int,
 	    IPL_SERIAL, IST_LEVEL, sscomrxintr, sc);
-	s3c24x0_intr_establish(s3c2410_uart_config[unit].err_int,
+	s3c24x0_intr_establish(s3c2440_uart_config[unit].err_int,
 	    IPL_SERIAL, IST_LEVEL, sscomrxintr, sc);
 	sscom_disable_txrxint(sc);
 
@@ -145,19 +174,23 @@ sscom_attach(struct device *parent, struct device *self, void *aux)
 
 
 int
-s3c2410_sscom_cnattach(bus_space_tag_t iot, int unit, int rate,
+s3c2440_sscom_cnattach(bus_space_tag_t iot, int unit, int rate,
     int frequency, tcflag_t cflag)
 {
-	return sscom_cnattach(iot, s3c2410_uart_config + unit,
+#if defined(SSCOM0CONSOLE) || defined(SSCOM1CONSOLE)
+	return sscom_cnattach(iot, s3c2440_uart_config + unit,
 	    rate, frequency, cflag);
+#else
+	return 0;
+#endif
 }
 
 #ifdef KGDB
 int
-s3c2410_sscom_kgdb_attach(bus_space_tag_t iot, int unit, int rate,
+s3c2440_sscom_kgdb_attach(bus_space_tag_t iot, int unit, int rate,
     int frequency, tcflag_t cflag)
 {
-	return sscom_kgdb_attach(iot, s3c2410_uart_config + unit,
+	return sscom_kgdb_attach(iot, s3c2440_uart_config + unit,
 	    rate, frequency, cflag);
 }
 #endif /* KGDB */

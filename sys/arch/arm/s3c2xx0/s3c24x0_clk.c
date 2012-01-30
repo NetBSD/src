@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_clk.c,v 1.11 2011/07/01 20:31:39 dyoung Exp $ */
+/*	$NetBSD: s3c24x0_clk.c,v 1.12 2012/01/30 03:28:33 nisimura Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.11 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.12 2012/01/30 03:28:33 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,8 @@ static u_int	s3c24x0_get_timecount(struct timecounter *);
 static struct timecounter s3c24x0_timecounter = {
 	s3c24x0_get_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	0,		/* frequency */
+	0xfff,			/* counter_mask */
+	0,			/* frequency */
 	"s3c234x0",		/* name */
 	100,			/* quality */
 	NULL,			/* prev */
@@ -122,9 +122,11 @@ s3c24x0_get_timecount(struct timecounter *tc)
 
 	restore_interrupts(save);
 
-	if (int_pend1)
+	if (int_pend1) {
 		count -= timer4_reload_value;
+	}
 
+	//printf("delta: %u\n", (s3c24x0_base - count));
 	return s3c24x0_base - count;
 }
 
@@ -205,6 +207,14 @@ hardintr(void *arg)
 	return 1;
 }
 
+static int
+statintr(void *arg)
+{
+	statclock((struct clockframe *)arg);
+
+	return 1;
+}
+
 void
 cpu_initclocks(void)
 {
@@ -244,20 +254,18 @@ cpu_initclocks(void)
 	timer4_mseccount = TIMER_FREQUENCY(pclk)/timer4_prescaler/1000 ;
 
 	bus_space_write_4(iot, ioh, TIMER_TCNTB(4),
-	    ((prescaler - 1) << 16) | (timer4_reload_value - 1));
+	    /*((prescaler - 1) << 16) |*/ (timer4_reload_value ));
 
 	printf("clock: hz=%d stathz = %d PCLK=%d prescaler=%d tc=%ld\n",
 	    hz, stathz, pclk, prescaler, tc);
 
 	bus_space_write_4(iot, ioh, TIMER_TCNTB(3),
-	    ((prescaler - 1) << 16) | (time_constant(stathz) - 1));
+	    /*((prescaler - 1) << 16) |*/ (time_constant(stathz)));
 
-	s3c24x0_intr_establish(S3C24X0_INT_TIMER4, IPL_CLOCK, 
+	s3c24x0_intr_establish(S3C24X0_INT_TIMER4, IPL_CLOCK,
 			       IST_NONE, hardintr, 0);
-#ifdef IPL_STATCLOCK
-	s3c24x0_intr_establish(S3C24X0_INT_TIMER3, IPL_STATCLOCK,
+	s3c24x0_intr_establish(S3C24X0_INT_TIMER3, IPL_HIGH,
 			       IST_NONE, statintr, 0);
-#endif
 
 	/* set prescaler1 */
 	reg = bus_space_read_4(iot, ioh, TIMER_TCFG0);
@@ -275,6 +283,8 @@ cpu_initclocks(void)
 	/* start timers */
 	reg = bus_space_read_4(iot, ioh, TIMER_TCON);
 	reg &= ~(TCON_MASK(3)|TCON_MASK(4));
+
+	s3c24x0_base = timer4_reload_value;
 
 	/* load the time constant */
 	bus_space_write_4(iot, ioh, TIMER_TCON, reg |

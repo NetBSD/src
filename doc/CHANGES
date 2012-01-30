@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1660 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1661 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1224,5 +1224,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	ifconfig(8): When invoked without arguments, ifconfig(8) shows a list
 		of all network interfaces in the system instead of the
 		usage [mbalmer 20120128]
-	zaurus: Add PXA25x based Zaurus SL-C700/750/760/860 suuport
+	zaurus: Add PXA25x based Zaurus SL-C700/750/760/860 support
 		ported by TOYOKURA Atsushi. [tsutsui 20120129]
+	evbarm: Add FrindlyARM Mini2440 support. Code was written by Paul
+		Fleisher. [nisimura 20120130]
