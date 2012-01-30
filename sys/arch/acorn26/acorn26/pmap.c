@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.33 2010/11/15 06:06:51 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.34 2012/01/30 17:03:58 he Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,10 +102,10 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2010/11/15 06:06:51 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2012/01/30 17:03:58 he Exp $");
 
 #include <sys/kernel.h> /* for cold */
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/pool.h>
 #include <sys/systm.h>
 #include <sys/lwp.h>
@@ -347,7 +347,7 @@ pmap_init2()
 	UVMHIST_CALLED(pmaphist);
 	/* We can now call malloc().  Rationalise our memory usage. */
 	pv_table_size = physmem * sizeof(struct pv_entry);
-	new_pv_table = malloc(pv_table_size, M_VMPMAP, M_WAITOK);
+	new_pv_table = kmem_alloc(pv_table_size, KM_SLEEP);
 	memcpy(new_pv_table, pv_table, pv_table_size);
 	old_pv_table = pv_table;
 	pv_table = new_pv_table;
@@ -380,9 +380,9 @@ pmap_create(void)
 		pmap_init2();
 	pmap = pool_get(&pmap_pool, PR_WAITOK);
 	memset(pmap, 0, sizeof(*pmap));
-	pmap->pm_entries = (struct pv_entry **)malloc(
-		sizeof(struct pv_entry *) * PM_NENTRIES, M_VMPMAP,
-		M_WAITOK | M_ZERO);
+	pmap->pm_entries = (struct pv_entry **)kmem_zalloc(
+		sizeof(struct pv_entry *) * PM_NENTRIES,
+		KM_SLEEP);
 	pmap->pm_count = 1;
 	return pmap;
 }
@@ -406,7 +406,8 @@ pmap_destroy(pmap_t pmap)
 		if (pmap->pm_entries[i] != NULL)
 			panic("pmap_destroy: pmap isn't empty");
 #endif
-	free((void *)pmap->pm_entries, M_VMPMAP);
+	kmem_free((void *)pmap->pm_entries,
+		sizeof(struct pv_entry *) * PM_NENTRIES);
 	pool_put(&pmap_pool, pmap);
 }
 
@@ -531,14 +532,14 @@ pv_update(struct pv_entry *pv)
 static struct pv_entry *
 pv_alloc(void)
 {
-	return malloc(sizeof(struct pv_entry), M_VMPMAP, M_NOWAIT | M_ZERO);
+	return kmem_intr_zalloc(sizeof(struct pv_entry), KM_NOSLEEP);
 }
 
 static void
 pv_free(struct pv_entry *pv)
 {
 
-	free(pv, M_VMPMAP);
+	kmem_intr_free(pv, sizeof(struct pv_entry));
 }
 
 static struct pv_entry *
