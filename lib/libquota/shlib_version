@@ -1,5 +1,5 @@
-#	$NetBSD: shlib_version,v 1.2 2012/01/09 15:24:38 dholland Exp $
+#	$NetBSD: shlib_version,v 1.3 2012/01/30 16:52:15 dholland Exp $
 #	Remember to update distrib/sets/lists/{base,comp} when changing
 #
 major=0
-minor=1
+minor=2
