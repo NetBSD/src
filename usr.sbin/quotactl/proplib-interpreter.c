@@ -1,4 +1,4 @@
-/*	$NetBSD: proplib-interpreter.c,v 1.2 2012/01/30 19:28:11 dholland Exp $	*/
+/*	$NetBSD: proplib-interpreter.c,v 1.3 2012/01/30 19:31:31 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: proplib-interpreter.c,v 1.2 2012/01/30 19:28:11 dholland Exp $");
+__RCSID("$NetBSD: proplib-interpreter.c,v 1.3 2012/01/30 19:31:31 dholland Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -93,8 +93,8 @@ __RCSID("$NetBSD: proplib-interpreter.c,v 1.2 2012/01/30 19:28:11 dholland Exp $
 #include <assert.h>
 
 #include <quota.h>
-#include <quota/quotaprop.h>
 
+#include "quotaprop.h"
 #include "proplib-interpreter.h"
 
 static int
