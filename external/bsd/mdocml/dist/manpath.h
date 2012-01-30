@@ -1,6 +1,7 @@
-/*	$Vendor-Id: msec.c,v 1.10 2011/12/02 01:37:14 schwarze Exp $ */
+/*	$Vendor-Id: manpath.h,v 1.5 2011/12/13 20:56:46 kristaps Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,24 +15,24 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef MANPATH_H
+#define MANPATH_H
 
-#include <stdlib.h>
-#include <string.h>
+/*
+ * Unsorted list of unique, absolute paths to be searched for manual
+ * databases.
+ */
+struct	manpaths {
+	int	  sz;
+	char	**paths;
+};
 
-#include "mandoc.h"
-#include "libmandoc.h"
+__BEGIN_DECLS
 
-#define LINE(x, y) \
-	if (0 == strcmp(p, x)) return(y);
+void	 manpath_manconf(struct manpaths *, const char *);
+void	 manpath_parse(struct manpaths *, const char *, char *, char *);
+void	 manpath_free(struct manpaths *);
 
-const char *
-mandoc_a2msec(const char *p)
-{
+__END_DECLS
 
-#include "msec.in"
-
-	return(NULL);
-}
+#endif /*!MANPATH_H*/
