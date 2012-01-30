@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: mdoc.7,v 1.212 2011/09/27 21:49:23 schwarze Exp $
+.\"	$Vendor-Id: mdoc.7,v 1.214 2012/01/03 10:18:05 kristaps Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 27, 2011
+.Dd January 3, 2012
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1282,7 +1282,8 @@ Its syntax is as follows:
 .Ar title
 .Oo
 .Ar section
-.Op Ar volume | arch
+.Op Ar volume
+.Op Ar arch
 .Oc
 .Oc
 .Ed
@@ -1363,42 +1364,19 @@ or
 .Ar CON
 .Pq contributed manuals .
 .It Ar arch
-This specifies a specific relevant architecture.
-If
-.Ar volume
-is not provided, it may be used in its place, else it may be used
-subsequent that.
-It, too, is optional.
-It must be one of
-.Ar alpha ,
-.Ar amd64 ,
-.Ar amiga ,
-.Ar arc ,
-.Ar arm ,
-.Ar armish ,
-.Ar aviion ,
-.Ar hp300 ,
-.Ar hppa ,
-.Ar hppa64 ,
-.Ar i386 ,
-.Ar landisk ,
-.Ar loongson ,
-.Ar luna88k ,
-.Ar mac68k ,
-.Ar macppc ,
-.Ar mips64 ,
-.Ar mvme68k ,
-.Ar mvme88k ,
-.Ar mvmeppc ,
-.Ar pmax ,
-.Ar sgi ,
-.Ar socppc ,
-.Ar sparc ,
-.Ar sparc64 ,
-.Ar sun3 ,
-.Ar vax ,
+This specifies the machine architecture a manual page applies to,
+where relevant, for example
+.Cm alpha ,
+.Cm amd64 ,
+.Cm i386 ,
 or
-.Ar zaurus .
+.Cm sparc64 .
+The list of supported architectures varies by operating system.
+For the full list of all architectures recognized by
+.Xr mandoc 1 ,
+see the file
+.Pa arch.in
+in the source distribution.
 .El
 .Pp
 Examples:
@@ -2395,6 +2373,8 @@ The following standards are recognised:
 .St -isoC-tcor2
 .It \-isoC-99
 .St -isoC-99
+.It \-isoC-2011
+.St -isoC-2011
 .It \-iso9945-1-90
 .St -iso9945-1-90
 .It \-iso9945-1-96
