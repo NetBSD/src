@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpf.c,v 1.9 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: sbpf.c,v 1.10 2012/01/30 20:10:27 darrenr Exp $	*/
 
 /*
  * (C)opyright 1995-1998 Darren Reed. (from tcplog)
@@ -28,6 +28,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 
