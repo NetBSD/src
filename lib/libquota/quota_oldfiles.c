@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_oldfiles.c,v 1.3 2012/01/25 17:43:37 dholland Exp $	*/
+/*	$NetBSD: quota_oldfiles.c,v 1.4 2012/01/30 06:15:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -119,7 +119,7 @@ static int
 __quota_oldfiles_fill_fstabentry(const struct fstab *fs,
 				 struct oldfiles_fstabentry *ofe)
 {
-	char buf[sizeof(fs->fs_mntops)];
+	char buf[256];
 	char *opt, *state, *s;
 	int serrno;
 	int ret = 0;
