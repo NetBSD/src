@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.92 2011/09/04 12:17:14 nakayama Exp $ */
+/*	$NetBSD: sbus.c,v 1.93 2012/01/30 04:25:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.92 2011/09/04 12:17:14 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.93 2012/01/30 04:25:15 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -315,7 +315,7 @@ sbus_setup_attach_args(struct sbus_softc *sc, bus_space_tag_t bustag,
 	error = prom_getprop(node, "name", 1, &n, &sa->sa_name);
 	if (error != 0)
 		return (error);
-	sa->sa_name[n] = '\0';
+	KASSERT(sa->sa_name[n-1] == '\0');
 
 	sa->sa_bustag = bustag;
 	sa->sa_dmatag = dmatag;
