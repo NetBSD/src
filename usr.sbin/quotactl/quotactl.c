@@ -1,4 +1,4 @@
-/* $NetBSD: quotactl.c,v 1.5 2011/08/31 13:32:40 joerg Exp $ */
+/* $NetBSD: quotactl.c,v 1.6 2012/01/30 19:28:11 dholland Exp $ */
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quotactl.c,v 1.5 2011/08/31 13:32:40 joerg Exp $");
+__RCSID("$NetBSD: quotactl.c,v 1.6 2012/01/30 19:28:11 dholland Exp $");
 #endif /* not lint */
 
 /*
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: quotactl.c,v 1.5 2011/08/31 13:32:40 joerg Exp $");
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <prop/proplib.h>
-#include <sys/quota.h>
+#include <quota.h>
 
 #include <errno.h>
 #include <err.h>
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: quotactl.c,v 1.5 2011/08/31 13:32:40 joerg Exp $");
 #include <unistd.h>
 
 #include <quota/quotaprop.h>
+
+#include "proplib-interpreter.h"
 
 __dead static void usage(void);
 
@@ -62,11 +64,14 @@ main(int argc, char * const argv[])
 	char *plist, *p;
 	size_t plistsize;
 	int status = 0, error;
+#if 0
 	struct plistref pref;
+#endif
 	prop_dictionary_t qdict, cmd;
 	prop_array_t cmds;
 	prop_object_iterator_t cmditer;
 	const char *mp, *xmlfile = NULL;
+	struct quotahandle *qh;
 
 	while ((ch = getopt(argc, argv, "Dx")) != -1) {
 		switch (ch) {
@@ -95,6 +100,10 @@ main(int argc, char * const argv[])
 			err(1, "%s", xmlfile);
 	}
 	mp = argv[0];
+	qh = quota_open(mp);
+	if (qh == NULL) {
+		err(1, "%s: quota_open", mp);
+	}
 
 	plist = malloc(READ_SIZE);
 	if (plist == NULL)
@@ -114,25 +123,32 @@ main(int argc, char * const argv[])
 	qdict = prop_dictionary_internalize(plist);
 	if (qdict == NULL)
 		err(1, "can't parse %s", xmlfile);
-	free(plist);
-	if (!prop_dictionary_send_syscall(qdict, &pref))
-		err(1, "can't externalize to syscall");
 	if (Dflag) {
 		plist = prop_dictionary_externalize(qdict);
-		fprintf(stderr, "message to kernel:\n%s\n", plist);
+		fprintf(stderr, "message to interpreter:\n%s\n", plist);
 		free(plist);
 	}
+	free(plist);
+#if 0
+	if (!prop_dictionary_send_syscall(qdict, &pref))
+		err(1, "can't externalize to syscall");
 	prop_object_release(qdict);
 	if (quotactl(mp,  &pref) != 0)
 		err(1, "quotactl failed");
 
 	if ((error = prop_dictionary_recv_syscall(&pref, &qdict)) != 0) {
-		errx(1, "error parsing reply from kernel: %s\n",
+		errx(1, "error parsing reply from kernel: %s",
 		    strerror(error));
 	}
+#else
+	error = proplib_quotactl(qh, qdict);
+	if (error) {
+		errx(1, "quotactl failed: %s", strerror(error));
+	}
+#endif
 	if (Dflag) {
 		plist = prop_dictionary_externalize(qdict);
-		fprintf(stderr, "reply from kernel:\n%s\n", plist);
+		fprintf(stderr, "reply from interpreter:\n%s\n", plist);
 		free(plist);
 	}
 	if (xflag) {
@@ -145,7 +161,7 @@ main(int argc, char * const argv[])
 	}
 	/* parse the reply, looking for errors */
 	if ((error = quota_get_cmds(qdict, &cmds)) != 0) {
-		errx(1, "error parsing reply from kernel: %s\n",
+		errx(1, "error parsing reply from interpreter: %s\n",
 		    strerror(error));
 	}
 	cmditer = prop_array_iterator(cmds);
@@ -167,6 +183,7 @@ main(int argc, char * const argv[])
 			status = 2;
 		}
 	}
+	quota_close(qh);
 	exit(status);
 }
 
