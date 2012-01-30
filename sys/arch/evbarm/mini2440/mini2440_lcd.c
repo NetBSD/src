@@ -1,5 +1,33 @@
-/*	$NetBSD: smdk2410_lcd.c,v 1.7 2012/01/30 03:28:34 nisimura Exp $ */
+/*-
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Fleischer <paul@xpg.dk>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
+/* This file is derived from arch/evbarm/smdk2xx0/smdk2410_lcd.c */
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -31,12 +59,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.7 2012/01/30 03:28:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_lcd.c,v 1.1 2012/01/30 03:28:34 nisimura Exp $");
 
 /*
- * LCD driver for Samsung SMDK2410.
+ * LCD driver for FriendlyARM MINI2440.
  *
- * Controlling LCD is almost completely done through S3C2410's
+ * Controlling LCD is almost completely done through S3C2440's
  * integrated LCD controller.  Codes for it is arm/s3c2xx0/s3c24x0_lcd.c.
  *
  * Codes in this file provide the platform's LCD panel information.
@@ -49,9 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.7 2012/01/30 03:28:34 nisimura Ex
 #include <sys/uio.h>
 #include <sys/malloc.h>
 
-#include <dev/cons.h> 
+#include <dev/cons.h>
 #include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wsdisplayvar.h> 
+#include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 
 #include <sys/bus.h>
@@ -60,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.7 2012/01/30 03:28:34 nisimura Ex
 #include <arm/s3c2xx0/s3c2410reg.h>
 #include <arm/s3c2xx0/s3c24x0_lcd.h>
 
-#include "locators.h"
 #include "wsdisplay.h"
 
 int	lcd_match(struct device *, struct cfdata *, void *);
@@ -127,10 +154,10 @@ static const struct wsscreen_descr *lcd_scr_descr[] = {
 	/* bpp4 needs a patch to rasops4 */
 	&lcd_bpp4_30x32.c,
 #endif
+	&lcd_bpp16_30x20.c,
 	&lcd_bpp8_30x32.c,
 	&lcd_bpp8_40x25.c,
 	&lcd_bpp16_30x32.c,
-	&lcd_bpp16_30x20.c,
 };
 
 #define	N_SCR_DESCR	(sizeof lcd_scr_descr / sizeof lcd_scr_descr[0])
@@ -174,37 +201,38 @@ lcd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct s3c2xx0_attach_args *sa = aux;
 
-	if (sa->sa_addr == SSIOCF_ADDR_DEFAULT)
-		sa->sa_addr = S3C2410_LCDC_BASE;
+	/*if (sa->sa_addr == SSIOCF_ADDR_DEFAULT)*/
+        sa->sa_addr = S3C2410_LCDC_BASE;
 
 	return 1;
 }
 
-static const struct s3c24x0_lcd_panel_info samsung_LTS350Q1 =
+static const struct s3c24x0_lcd_panel_info nec_NL2432HC22 =
 {
     240,			/* Width */
     320,			/* Height */
-    10*1000*1000,		/* pixel clock = 10MHz */
+    7*1000*1000,		/* pixel clock = 7MHz Really is target VCLK? */
 
 #define	_(field, val)	(((val)-1) << (field##_SHIFT))
 
     LCDCON1_PNRMODE_TFT,
 
     /* LCDCON2: vertical timings */
-    _(LCDCON2_VBPD, 2) |
-    _(LCDCON2_VFPD, 3) |
+    _(LCDCON2_VBPD, 38) | /*4*/
+    _(LCDCON2_VFPD, 4) | /*4*/
     _(LCDCON2_LINEVAL, 320) |
-    _(LCDCON2_VPSW, 2),
+    _(LCDCON2_VPSW, 6), /* 2 */
 
     /* LCDCON3: horizontal timings */
-    _(LCDCON3_HBPD, 7) | 
-    _(LCDCON3_HFPD, 3),
+    _(LCDCON3_HBPD, 30) | /*38*/
+    _(LCDCON3_HFPD, 2) | /*21*/
+    _(LCDCON3_HOZVAL, 240),
 
     /* LCDCON4: horizontaol pulse width */
-    _(LCDCON4_HPSW, 4),
+    _(LCDCON4_HPSW, 6), /* 6 */
 
     /* LCDCON5: signal polarities */
-    LCDCON5_FRM565 | LCDCON5_INVVLINE | LCDCON5_INVVFRAME,
+    LCDCON5_FRM565 | LCDCON5_INVVLINE | LCDCON5_INVVFRAME /*| LCDCON5_INVVDEN*/,
 
     /* LPCSEL register */
     LPCSEL_LPC_EN | LPCSEL_RES_SEL | LPCSEL_MODE_SEL,
@@ -222,7 +250,7 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 #else
 	struct s3c24x0_lcd_screen *screen;
 #endif
-
+	uint32_t data;
 
 	sc->sc_dev = self;
 	aprint_normal( "\n" );
@@ -235,7 +263,16 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(iot, gpio_ioh, GPIO_PDUP, ~0);
 	bus_space_write_4(iot, gpio_ioh, GPIO_PDCON, 0xaaaaaaaa);
 
-	s3c24x0_lcd_attach_sub(sc, aux, &samsung_LTS350Q1);
+	/* Setup GPIO G4 to b11 LCD_PWRDN  */
+	data = bus_space_read_4(iot, gpio_ioh, GPIO_PGCON);
+	data = GPIO_SET_FUNC(data, 4, 0x3);
+	bus_space_write_4(iot, gpio_ioh, GPIO_PGCON, data);
+
+	/* Disable Pull-up for GPIO G4 */
+	data = bus_space_read_4(iot, gpio_ioh, GPIO_PGUP);
+	bus_space_write_4(iot, gpio_ioh, GPIO_PGUP, data | (1<<4));
+
+	s3c24x0_lcd_attach_sub(sc, aux, &nec_NL2432HC22);
 
 #if NWSDISPLAY > 0
 
@@ -262,13 +299,13 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 #if NWSDISPLAY == 0
 
 int
-lcdopen( dev_t dev, int oflags, int devtype, struct proc *p )
+lcdopen( dev_t dev, int oflags, int devtype, struct lwp *p )
 {
 	return 0;
 }
 
 int
-lcdclose( dev_t dev, int fflag, int devtype, struct proc *p )
+lcdclose( dev_t dev, int fflag, int devtype, struct lwp *p )
 {
 	return 0;
 }
@@ -373,4 +410,3 @@ draw_test_pattern(struct s3c24x0_lcd_softc *sc, struct s3c24x0_lcd_screen *scr)
 	
 
 #endif /* LCD_DEBUG */
-
