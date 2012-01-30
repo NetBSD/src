@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: demandoc.1,v 1.5 2011/09/02 13:04:05 kristaps Exp $
+.\"	$Vendor-Id: demandoc.1,v 1.6 2011/12/25 19:35:44 kristaps Exp $
 .\"
 .\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 2, 2011
+.Dd December 25, 2011
 .Dt DEMANDOC 1
 .Os
 .Sh NAME
@@ -33,6 +33,13 @@ and
 .Xr man 7
 .Ux
 manual files.
+.Pp
+By default,
+.Nm
+parses standard input and outputs only text nodes, preserving line
+and column position.
+Escape sequences are omitted from the output.
+.Pp
 Its arguments are as follows:
 .Bl -tag -width Ds
 .It Fl w
@@ -49,18 +56,7 @@ stripped.
 The input files.
 .El
 .Pp
-If
-.Ar file
-is not provided,
-.Nm
-accepts standard input.
 If a document is not well-formed, it is skipped.
-.Pp
-By default,
-.Nm
-parses its input and outputs only text nodes, preserving line column
-position.
-Escape sequences are omitted from the output.
 .Pp
 The
 .Fl i ,
