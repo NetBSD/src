@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.44 2011/07/19 19:55:23 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.45 2012/01/30 23:34:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.44 2011/07/19 19:55:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.45 2012/01/30 23:34:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -701,16 +701,17 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
  * Called by DMA-safe memory allocation methods.
  */
 int
-_bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
-    flags, low, high)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
-	paddr_t low;
-	paddr_t high;
+_bus_dmamem_alloc_range(
+	bus_dma_tag_t t,
+	bus_size_t size,
+	bus_size_t alignment,
+	bus_size_t boundary,
+	bus_dma_segment_t *segs,
+	int nsegs,
+	int *rsegs,
+	int flags,
+	paddr_t low,
+	paddr_t high)
 {
 	paddr_t curaddr, lastaddr;
 	struct vm_page *m;
