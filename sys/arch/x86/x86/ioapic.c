@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.46 2012/01/30 16:44:23 jakllsch Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.47 2012/01/30 17:45:37 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.46 2012/01/30 16:44:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.47 2012/01/30 17:45:37 jakllsch Exp $");
 
 #include "opt_ddb.h"
 
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.46 2012/01/30 16:44:23 jakllsch Exp $")
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
+#include <machine/i8259.h>
 #include <machine/mpbiosvar.h>
 #include <machine/pio.h>
 #include <machine/pmap.h>
