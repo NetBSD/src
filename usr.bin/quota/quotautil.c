@@ -1,4 +1,4 @@
-/*	$NetBSD: quotautil.c,v 1.5 2012/01/30 06:02:12 dholland Exp $ */
+/*	$NetBSD: quotautil.c,v 1.6 2012/01/30 06:14:43 dholland Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotautil.c,v 1.5 2012/01/30 06:02:12 dholland Exp $");
+__RCSID("$NetBSD: quotautil.c,v 1.6 2012/01/30 06:14:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: quotautil.c,v 1.5 2012/01/30 06:02:12 dholland Exp $");
 #include "quotautil.h"
 
 const char *qfextension[] = INITQFNAMES;
-const char *qfnamep = QUOTAFILENAME;
+const char *qfname = QUOTAFILENAME;
  
 /*
  * Check to see if a particular quota is to be enabled.
