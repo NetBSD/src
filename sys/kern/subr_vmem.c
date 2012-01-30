@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.69 2012/01/29 17:27:37 rmind Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.70 2012/01/30 17:35:18 para Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.69 2012/01/29 17:27:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.70 2012/01/30 17:35:18 para Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -1260,6 +1260,7 @@ gotit:
 	KASSERT(bt->bt_size >= size);
 	bt_remfree(vm, bt);
 	vmem_check(vm);
+	vm->vm_inuse += size;
 	if (bt->bt_start != start) {
 		btnew2->bt_type = BT_TYPE_FREE;
 		btnew2->bt_start = bt->bt_start;
