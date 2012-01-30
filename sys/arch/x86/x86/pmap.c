@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.160 2012/01/29 11:45:37 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.161 2012/01/30 10:33:05 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.160 2012/01/29 11:45:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.161 2012/01/30 10:33:05 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1614,7 +1614,7 @@ pmap_prealloc_lowmem_ptps(void)
 void
 pmap_init(void)
 {
-	int i;
+	int i, flags;
 
 	for (i = 0; i < PV_HASH_SIZE; i++) {
 		SLIST_INIT(&pv_hash_heads[i].hh_list);
@@ -1629,12 +1629,22 @@ pmap_init(void)
 
 	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
 	    "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
+
+#ifdef XEN
+	/* 
+	 * pool_cache(9) should not touch cached objects, since they
+	 * are pinned on xen and R/O for the domU
+	 */
+	flags = PR_NOTOUCH;
+#else /* XEN */
+	flags = 0;
+#endif /* XEN */
 #ifdef PAE
-	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE * PDP_SIZE, 0, 0, 0,
+	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE * PDP_SIZE, 0, 0, flags,
 	    "pdppl", &pmap_pdp_allocator, IPL_NONE,
 	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
 #else /* PAE */
-	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0,
+	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, flags,
 	    "pdppl", NULL, IPL_NONE, pmap_pdp_ctor, pmap_pdp_dtor, NULL);
 #endif /* PAE */
 	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0,
@@ -1897,6 +1907,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		    (vaddr_t)pdes[level - 2];
 		pmap_tlb_shootdown(pmap, invaladdr + index * PAGE_SIZE,
 		    opde, TLBSHOOT_FREE_PTP1);
+		pmap_tlb_shootnow();
 #else	/* XEN */
 		invaladdr = level == 1 ? (vaddr_t)ptes :
 		    (vaddr_t)pdes[level - 2];
