@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.h,v 1.7 2012/01/29 06:22:02 manu Exp $ */
+/*  $NetBSD: perfused.h,v 1.8 2012/01/30 22:49:03 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -34,36 +34,36 @@
 
 #define PERFUSE_MSG_T struct puffs_framebuf
 
-#define _PATH_VAR_RUN_PERFUSE_TRACE "/var/run/perfuse%s.trace"
+#define _PATH_VAR_RUN_PERFUSE_TRACE "/var/run/perfused%s.trace"
 
 __BEGIN_DECLS
 
 #ifdef PERFUSE_DEBUG
-void perfuse_hexdump(const char *, size_t);
-const char *perfuse_opname(int);
-extern int perfuse_diagflags;
+void perfused_hexdump(const char *, size_t);
+const char *perfused_opname(int);
+extern int perfused_diagflags;
 #endif /* PERFUSE_DEBUG */
 
-int perfuse_open_sock(void);
-void *perfuse_recv_early(int, struct sockcred *, size_t); 
-int perfuse_readframe(struct puffs_usermount *, 
+int perfused_open_sock(void);
+void *perfused_recv_early(int, struct sockcred *, size_t); 
+int perfused_readframe(struct puffs_usermount *, 
      struct puffs_framebuf *, int, int *);
-int perfuse_writeframe(struct puffs_usermount *, 
+int perfused_writeframe(struct puffs_usermount *, 
      struct puffs_framebuf *, int, int *);
-int perfuse_cmpframe(struct puffs_usermount *, 
+int perfused_cmpframe(struct puffs_usermount *, 
      struct puffs_framebuf *, struct puffs_framebuf *, int *);
-void perfuse_gotframe(struct puffs_usermount *, struct puffs_framebuf *);
-void perfuse_fdnotify(struct puffs_usermount *, int, int) __dead;
+void perfused_gotframe(struct puffs_usermount *, struct puffs_framebuf *);
+void perfused_fdnotify(struct puffs_usermount *, int, int) __dead;
 
-struct fuse_out_header *perfuse_get_outhdr(perfuse_msg_t *);
-struct fuse_in_header *perfuse_get_inhdr(perfuse_msg_t *);
-char *perfuse_get_inpayload(perfuse_msg_t *);
-char *perfuse_get_outpayload(perfuse_msg_t *);
-void perfuse_umount(struct puffs_usermount *);
+struct fuse_out_header *perfused_get_outhdr(perfuse_msg_t *);
+struct fuse_in_header *perfused_get_inhdr(perfuse_msg_t *);
+char *perfused_get_inpayload(perfuse_msg_t *);
+char *perfused_get_outpayload(perfuse_msg_t *);
+void perfused_umount(struct puffs_usermount *);
 
-perfuse_msg_t *perfuse_new_pb(struct puffs_usermount *, 
+perfuse_msg_t *perfused_new_pb(struct puffs_usermount *, 
     puffs_cookie_t, int, size_t, const struct puffs_cred *);
-int perfuse_xchg_pb(struct puffs_usermount *, perfuse_msg_t *, size_t, 
+int perfused_xchg_pb(struct puffs_usermount *, perfuse_msg_t *, size_t, 
     enum perfuse_xchg_pb_reply);
 
 __END_DECLS
