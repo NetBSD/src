@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.21 2010/05/08 07:41:44 pgoyette Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.22 2012/01/30 19:41:22 drochner Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.21 2010/05/08 07:41:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.22 2012/01/30 19:41:22 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -141,12 +141,8 @@ nfsmbc_attach(device_t parent, device_t self, void *aux)
 	struct nfsmbc_attach_args nfsmbca;
 	pcireg_t reg;
 	int baseregs[2];
-	char devinfo[256];
 
-	aprint_naive("\n");
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;

@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.55 2011/11/24 03:35:59 mrg Exp $      */
+/*      $NetBSD: esm.c,v 1.56 2012/01/30 19:41:19 drochner Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.55 2011/11/24 03:35:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.56 2012/01/30 19:41:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1588,7 +1588,6 @@ esm_match(device_t dev, cfdata_t match, void *aux)
 static void
 esm_attach(device_t parent, device_t self, void *aux)
 {
-	char devinfo[256];
 	struct esm_softc *ess;
 	struct pci_attach_args *pa;
 	const char *intrstr;
@@ -1596,7 +1595,6 @@ esm_attach(device_t parent, device_t self, void *aux)
 	pcitag_t tag;
 	pci_intr_handle_t ih;
 	pcireg_t csr, data;
-	int revision;
 	uint16_t codec_data;
 	uint16_t pcmbar;
 	int error;
@@ -1606,11 +1604,8 @@ esm_attach(device_t parent, device_t self, void *aux)
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	tag = pa->pa_tag;
-	aprint_naive(": Audio controller\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
+	pci_aprint_devinfo(pa, "Audio controller");
 
 	mutex_init(&ess->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ess->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);

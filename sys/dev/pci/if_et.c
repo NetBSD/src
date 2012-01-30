@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.2 2011/05/18 01:02:43 dyoung Exp $	*/
+/*	$NetBSD: if_et.c,v 1.3 2012/01/30 19:41:20 drochner Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.2 2011/05/18 01:02:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.3 2012/01/30 19:41:20 drochner Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -205,13 +205,10 @@ et_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pcireg_t memtype;
 	int error;
-	char devinfo[256];
 
-	aprint_naive(": Ethernet controller\n");
+	pci_aprint_devinfo(pa, "Ethernet controller");
 
 	sc->sc_dev = self;
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	/*
 	 * Initialize tunables

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.4 2011/02/02 04:18:14 jakllsch Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.5 2012/01/30 19:41:23 drochner Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.4 2011/02/02 04:18:14 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.5 2012/01/30 19:41:23 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -176,7 +176,6 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 	pcireg_t slotinfo;
-	char devinfo[256];
 	char const *intrstr;
 	int nslots;
 	int reg;
@@ -190,10 +189,7 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_dmat = pa->pa_dmat;
 	sc->sc.sc_host = NULL;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
-	aprint_naive("\n");
+	pci_aprint_devinfo(pa, NULL);
 
 	/* Some controllers needs special treatment. */
 	flags = sdhc_pci_lookup_quirk_flags(pa);
