@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_proplib.c,v 1.7 2012/01/25 01:22:56 dholland Exp $	*/
+/*	$NetBSD: quota_proplib.c,v 1.8 2012/01/30 06:00:49 dholland Exp $	*/
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_proplib.c,v 1.7 2012/01/25 01:22:56 dholland Exp $");
+__RCSID("$NetBSD: quota_proplib.c,v 1.8 2012/01/30 06:00:49 dholland Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -367,6 +367,11 @@ __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
 	/* as far as I can tell this is required here - dholland */
 	prop_object_release(cmds);
 
+#if 0
+	printf("message to kernel:\n%s\n",
+	       prop_dictionary_externalize(dict));
+#endif
+
 	/*
 	 * Convert it to an XML turd for transfer.
 	 */
@@ -419,6 +424,11 @@ __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
 		return -1;
 	}
 
+#if 0
+	printf("reply from kernel:\n%s\n",
+	       prop_dictionary_externalize(dict));
+#endif
+
 	/*
 	 * Now unpack the response.
 	 */
@@ -458,15 +468,6 @@ __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
 		return -1;
 	}
 
-	if (error8 == ENODEV) {
-		/* XXX this currently means quotas are not enabled */
-		/* XXX but there's currently no way to fail in quota_open */
-		/* XXX in that case */
-		quotaval_clear(qv);
-		prop_object_release(dict);
-		return 0;
-	}
-		
 	if (error8) {
 		/* this means the RPC action failed */
 		prop_object_release(dict);

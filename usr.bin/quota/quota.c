@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.44 2012/01/09 15:35:44 dholland Exp $	*/
+/*	$NetBSD: quota.c,v 1.45 2012/01/30 06:00:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.44 2012/01/09 15:35:44 dholland Exp $");
+__RCSID("$NetBSD: quota.c,v 1.45 2012/01/30 06:00:49 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -546,7 +546,7 @@ getprivs(id_t id, int idtype)
 		for (j=0; j<qup->numqvs; j++) {
 			qk.qk_objtype = j;
 			if (quota_get(qup->qh, &qk, &qup->qvs[j]) < 0) {
-				if (errno != ENOENT) {
+				if (errno != ENOENT && errno != ENODEV) {
 					warn("%s: quota_get (objtype %u)",
 					     fst[i].f_mntonname, j);
 				}
