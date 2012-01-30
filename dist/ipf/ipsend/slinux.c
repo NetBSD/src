@@ -1,4 +1,4 @@
-/*	$NetBSD: slinux.c,v 1.3 2004/03/28 09:00:56 martti Exp $	*/
+/*	$NetBSD: slinux.c,v 1.4 2012/01/30 16:12:03 darrenr Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
@@ -30,7 +30,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)slinux.c	1.2 8/25/95";
-static const char rcsid[] = "@(#)Id: slinux.c,v 2.3 2001/06/09 17:09:26 darrenr Exp";
+static const char rcsid[] = "@(#)Id: slinux.c,v 2.4 2007/12/20 09:35:09 darrenr Exp";
 #endif
 
 #define	CHUNKSIZE	8192
@@ -46,8 +46,8 @@ static	char	*eth_dev = NULL;
 
 
 int	initdevice(dev, spare)
-char	*dev;
-int	spare;
+	char	*dev;
+	int	spare;
 {
 	int fd;
 
@@ -66,8 +66,8 @@ int	spare;
  * output an IP packet onto a fd opened for /dev/nit
  */
 int	sendip(fd, pkt, len)
-int	fd, len;
-char	*pkt;
+	int	fd, len;
+	char	*pkt;
 {
 	struct	sockaddr	s;
 	struct	ifreq	ifr;
