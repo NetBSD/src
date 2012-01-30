@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_schema.c,v 1.4 2012/01/25 17:43:37 dholland Exp $	*/
+/*	$NetBSD: quota_schema.c,v 1.5 2012/01/30 16:44:09 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_schema.c,v 1.4 2012/01/25 17:43:37 dholland Exp $");
+__RCSID("$NetBSD: quota_schema.c,v 1.5 2012/01/30 16:44:09 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/statvfs.h>
@@ -65,7 +65,28 @@ quota_getimplname(struct quotahandle *qh)
 	return NULL;
 }
 
-/* ARGSUSED */
+unsigned
+quota_getrestrictions(struct quotahandle *qh)
+{
+	switch (qh->qh_mode) {
+	    case QUOTA_MODE_NFS:
+		/* XXX this should maybe report the rquotad protocol version */
+		return QUOTA_RESTRICT_32BIT | QUOTA_RESTRICT_READONLY;
+
+	    case QUOTA_MODE_PROPLIB:
+		return __quota_proplib_getrestrictions(qh);
+
+	    case QUOTA_MODE_OLDFILES:
+		return QUOTA_RESTRICT_NEEDSQUOTACHECK |
+			QUOTA_RESTRICT_UNIFORMGRACE |
+			QUOTA_RESTRICT_32BIT;
+	    default:
+		break;
+	}
+	errno = EINVAL;
+	return 0;
+}
+
 unsigned
 quota_getnumidtypes(struct quotahandle *qh)
 {
@@ -84,7 +105,6 @@ quota_getnumidtypes(struct quotahandle *qh)
 	return 2;
 }
 
-/* ARGSUSED */
 const char *
 quota_idtype_getname(struct quotahandle *qh, int idtype)
 {
@@ -111,7 +131,6 @@ quota_idtype_getname(struct quotahandle *qh, int idtype)
 	return "???";
 }
 
-/* ARGSUSED */
 unsigned
 quota_getnumobjtypes(struct quotahandle *qh)
 {
@@ -127,7 +146,6 @@ quota_getnumobjtypes(struct quotahandle *qh)
 	return 2;
 }
 
-/* ARGSUSED */
 const char *
 quota_objtype_getname(struct quotahandle *qh, int objtype)
 {
@@ -152,7 +170,6 @@ quota_objtype_getname(struct quotahandle *qh, int objtype)
 	return "???"; /* ? */
 }
 
-/* ARGSUSED */
 int
 quota_objtype_isbytes(struct quotahandle *qh, int objtype)
 {

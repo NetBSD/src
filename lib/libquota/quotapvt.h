@@ -1,4 +1,4 @@
-/*	$NetBSD: quotapvt.h,v 1.10 2012/01/25 17:43:37 dholland Exp $	*/
+/*	$NetBSD: quotapvt.h,v 1.11 2012/01/30 16:44:09 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -58,6 +58,7 @@ struct quotacursor {
 /* proplib kernel interface */
 int __quota_proplib_getversion(struct quotahandle *qh, int8_t *version_ret);
 const char *__quota_proplib_getimplname(struct quotahandle *);
+unsigned __quota_proplib_getrestrictions(struct quotahandle *);
 unsigned __quota_proplib_getnumidtypes(void);
 const char *__quota_proplib_idtype_getname(int idtype);
 unsigned __quota_proplib_getnumobjtypes(void);
