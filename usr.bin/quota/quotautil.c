@@ -1,4 +1,4 @@
-/*	$NetBSD: quotautil.c,v 1.4 2012/01/25 01:24:07 dholland Exp $ */
+/*	$NetBSD: quotautil.c,v 1.5 2012/01/30 06:02:12 dholland Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotautil.c,v 1.4 2012/01/25 01:24:07 dholland Exp $");
+__RCSID("$NetBSD: quotautil.c,v 1.5 2012/01/30 06:02:12 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ hasquota(char *buf, size_t len, struct fstab *fs, int type)
 	char *opt;
 	char *cp = NULL;
 	static char initname, usrname[100], grpname[100];
+	char optbuf[256];
 
 	if (!initname) {
 		(void)snprintf(usrname, sizeof(usrname), "%s%s",
@@ -84,8 +85,8 @@ hasquota(char *buf, size_t len, struct fstab *fs, int type)
 		    qfextension[GRPQUOTA], qfname);
 		initname = 1;
 	}
-	strlcpy(buf, fs->fs_mntops, len);
-	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
+	strlcpy(optbuf, fs->fs_mntops, sizeof(optbuf));
+	for (opt = strtok(optbuf, ","); opt; opt = strtok(NULL, ",")) {
 		if ((cp = strchr(opt, '=')) != NULL)
 			*cp++ = '\0';
 		if (type == USRQUOTA && strcmp(opt, usrname) == 0)
