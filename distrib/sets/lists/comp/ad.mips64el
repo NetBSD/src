@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.66 2012/01/29 23:29:01 joerg Exp $
+# $NetBSD: ad.mips64el,v 1.67 2012/01/30 16:54:46 dholland Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -1347,7 +1347,7 @@
 ./usr/libdata/debug/usr/lib/64/libpthread.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libpthread_dbg.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libpuffs.so.2.0.debug	comp-puffs-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libquota.so.0.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libquota.so.0.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libradius.so.4.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/librefuse.so.2.0.debug	comp-refuse-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libresolv.so.2.0.debug	comp-net-debug	debug,compat
@@ -1499,7 +1499,7 @@
 ./usr/libdata/debug/usr/lib/o32/libpthread.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libpthread_dbg.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libpuffs.so.2.0.debug	comp-puffs-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libquota.so.0.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libquota.so.0.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libradius.so.4.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/librefuse.so.2.0.debug	comp-refuse-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libresolv.so.2.0.debug	comp-net-debug	debug,compat
