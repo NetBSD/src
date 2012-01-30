@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.59 2011/07/20 12:06:00 macallan Exp $	*/
+/*	$NetBSD: ebus.c,v 1.60 2012/01/30 04:25:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.59 2011/07/20 12:06:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.60 2012/01/30 04:25:15 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -226,7 +226,7 @@ ebus_setup_attach_args(struct ebus_softc *sc, int node,
 	rv = prom_getprop(node, "name", 1, &n, &ea->ea_name);
 	if (rv != 0)
 		return (rv);
-	ea->ea_name[n] = '\0';
+	KASSERT(ea->ea_name[n-1] == '\0');
 
 	ea->ea_node = node;
 	ea->ea_bustag = sc->sc_childbustag;
