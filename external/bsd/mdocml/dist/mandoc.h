@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.h,v 1.96 2011/10/06 22:29:12 kristaps Exp $ */
+/*	$Vendor-Id: mandoc.h,v 1.98 2011/11/08 00:15:23 kristaps Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -150,7 +150,6 @@ enum	mandocerr {
 	MANDOCERR_NOTMANUAL, /* manual isn't really a manual */
 	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
 	MANDOCERR_BADDISP, /* NOT IMPLEMENTED: .Bd -file */
-	MANDOCERR_SYNTLINESCOPE, /* line scope broken, syntax violated */
 	MANDOCERR_SYNTARGVCOUNT, /* argument count wrong, violates syntax */
 	MANDOCERR_SYNTCHILD, /* child violates parent syntax */
 	MANDOCERR_SYNTARGCOUNT, /* argument count wrong, violates syntax */
@@ -410,9 +409,9 @@ struct mchars	 *mchars_alloc(void);
 void		  mchars_free(struct mchars *);
 char	 	  mchars_num2char(const char *, size_t);
 int		  mchars_num2uc(const char *, size_t);
-int		  mchars_spec2cp(struct mchars *, 
+int		  mchars_spec2cp(const struct mchars *, 
 			const char *, size_t);
-const char	 *mchars_spec2str(struct mchars *, 
+const char	 *mchars_spec2str(const struct mchars *, 
 			const char *, size_t, size_t *);
 struct mparse	 *mparse_alloc(enum mparset, 
 			enum mandoclevel, mandocmsg, void *);
