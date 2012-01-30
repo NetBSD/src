@@ -1,4 +1,4 @@
-/*	$Vendor-Id: lib.in,v 1.10 2011/09/20 23:36:24 schwarze Exp $ */
+/*	$Vendor-Id: lib.in,v 1.13 2012/01/28 23:46:28 joerg Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -81,10 +81,11 @@ LINE("librefuse",	"File System in Userspace Convenience Library (librefuse, \\-l
 LINE("libresolv",	"DNS Resolver Library (libresolv, \\-lresolv)")
 LINE("librpcsec_gss",	"RPC GSS-API Authentication Library (librpcsec_gss, \\-lrpcsec_gss)")
 LINE("librpcsvc",	"RPC Service Library (librpcsvc, \\-lrpcsvc)")
-LINE("librt",		"POSIX Real\\-time Library (librt, -lrt)")
+LINE("librt",		"POSIX Real\\-time Library (librt, \\-lrt)")
 LINE("libsaslc",	"Simple Authentication and Security Layer client library (libsaslc, \\-lsaslc)")
 LINE("libsdp",		"Bluetooth Service Discovery Protocol User Library (libsdp, \\-lsdp)")
 LINE("libssp",		"Buffer Overflow Protection Library (libssp, \\-lssp)")
+LINE("libSystem",	"System Library (libSystem, \\-lSystem)")
 LINE("libtermcap",	"Termcap Access Library (libtermcap, \\-ltermcap)")
 LINE("libterminfo",	"Terminal Information Library (libterminfo, \\-lterminfo)")
 LINE("libthr",		"1:1 Threading Library (libthr, \\-lthr)")
