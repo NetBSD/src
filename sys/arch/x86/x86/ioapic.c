@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.45 2011/04/05 13:43:33 pgoyette Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.46 2012/01/30 16:44:23 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.45 2011/04/05 13:43:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.46 2012/01/30 16:44:23 jakllsch Exp $");
 
 #include "opt_ddb.h"
 
@@ -456,6 +456,8 @@ ioapic_enable(void)
 {
 	if (ioapics == NULL)
 		return;
+
+	i8259_setmask(0xffff);
 
 	if (ioapics->sc_flags & IOAPIC_PICMODE) {
 		aprint_debug_dev(ioapics->sc_dev,
