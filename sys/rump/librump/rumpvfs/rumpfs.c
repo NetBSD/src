@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.104 2011/12/12 19:11:22 njoly Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.105 2012/01/30 16:17:14 njoly Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.104 2011/12/12 19:11:22 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.105 2012/01/30 16:17:14 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -668,6 +668,10 @@ rump_vop_lookup(void *v)
 
 	*vpp = NULL;
 
+	rv = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
+	if (rv)
+		return rv;
+
 	if ((cnp->cn_flags & ISLASTCN)
 	    && (dvp->v_mount->mnt_flag & MNT_RDONLY)
 	    && (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
@@ -766,7 +770,16 @@ rump_vop_lookup(void *v)
 	if (!rd && (cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == CREATE) {
 		if (dvp->v_mount->mnt_flag & MNT_RDONLY)
 			return EROFS;
+		rv = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+		if (rv)
+			return rv;
 		return EJUSTRETURN;
+	}
+
+	if ((cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == DELETE) {
+		rv = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+		if (rv)
+			return rv;
 	}
 
 	if (RDENT_ISWHITEOUT(rd)) {
@@ -801,6 +814,37 @@ rump_vop_lookup(void *v)
 	return rv;
 }
 
+static int
+rump_check_possible(struct vnode *vp, struct rumpfs_node *rnode,
+    mode_t mode)
+{
+
+	if ((mode & VWRITE) == 0)
+		return 0;
+
+	switch (vp->v_type) {
+	case VDIR:
+	case VLNK:
+	case VREG:
+		break;
+	default:
+		/* special file is always writable. */
+		return 0;
+	}
+
+	return vp->v_mount->mnt_flag & MNT_RDONLY ? EROFS : 0;
+}
+
+static int
+rump_check_permitted(struct vnode *vp, struct rumpfs_node *rnode,
+    mode_t mode, kauth_cred_t cred)
+{
+	struct vattr *attr = &rnode->rn_va;
+
+	return genfs_can_access(vp->v_type, attr->va_mode, attr->va_uid,
+	    attr->va_gid, mode, cred);
+}
+
 int
 rump_vop_access(void *v)
 {
@@ -811,22 +855,16 @@ rump_vop_access(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	int mode = ap->a_mode;
+	struct rumpfs_node *rn = vp->v_data;
+	int error;
 
-	if (mode & VWRITE) {
-		switch (vp->v_type) {
-		case VDIR:
-		case VLNK:
-		case VREG:
-			if ((vp->v_mount->mnt_flag & MNT_RDONLY))
-				return EROFS;
-			break;
-		default:
-			break;
-		}
-	}
+	error = rump_check_possible(vp, rn, ap->a_mode);
+	if (error)
+		return error;
 
-	return 0;
+	error = rump_check_permitted(vp, rn, ap->a_mode, ap->a_cred);
+
+	return error;
 }
 
 static int
