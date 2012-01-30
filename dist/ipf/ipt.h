@@ -1,11 +1,11 @@
-/*	$NetBSD: ipt.h,v 1.6 2006/04/04 16:17:18 martti Exp $	*/
+/*	$NetBSD: ipt.h,v 1.7 2012/01/30 16:12:02 darrenr Exp $	*/
 
 /*
- * Copyright (C) 1993-2001 by Darren Reed.
+ * Copyright (C) 2007 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ipt.h,v 2.6.4.2 2006/03/26 23:42:04 darrenr Exp
+ * Id: ipt.h,v 2.9.2.1 2012/01/26 05:29:13 darrenr Exp
  */
 
 #ifndef	__IPT_H__
@@ -26,14 +26,11 @@
 struct	ipread	{
 	int	(*r_open) __P((char *));
 	int	(*r_close) __P((void));
-	int	(*r_readip) __P((char *, int, char **, int *));
+	int	(*r_readip) __P((mb_t *, char **, int *));
 	int	r_flags;
 };
 
 #define	R_DO_CKSUM	0x01
-
-extern	void	debug __P((char *, ...));
-extern	void	verbose __P((char *, ...));
 
 #ifdef P_DEF
 # undef	__P
