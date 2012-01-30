@@ -1,20 +1,22 @@
-/*	$NetBSD: printifname.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: printifname.c,v 1.1.1.3 2012/01/30 16:03:25 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printifname.c,v 1.2.4.1 2006/06/16 17:21:12 darrenr Exp
+ * Id: printifname.c,v 1.6.2.1 2012/01/26 05:29:16 darrenr Exp
  */
 
 #include "ipf.h"
 
-void printifname(format, name, ifp)
-char *format, *name;
-void *ifp;
+
+void
+printifname(format, name, ifp)
+	char *format, *name;
+	void *ifp;
 {
-	printf("%s%s", format, name);
+	PRINTF("%s%s", format, name);
 	if ((ifp == NULL) && strcmp(name, "-") && strcmp(name, "*"))
-		printf("(!)");
+		PRINTF("(!)");
 }
