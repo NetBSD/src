@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.26 2012/01/24 20:03:37 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.27 2012/01/30 06:04:32 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,6 +52,9 @@
 #endif
 #define	MACHINE_ARCH	"powerpc"
 #define	MID_MACHINE	MID_POWERPC
+
+/* PowerPC-specific macro to align a stack pointer (downwards). */
+#define	STACK_ALIGNBYTES	(16 - 1)	/* AltiVec */
 
 #ifdef PPC_IBM4XX
 #define	PGSHIFT		14	/* Use 16KB to reduce TLB thrashing */
