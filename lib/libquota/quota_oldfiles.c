@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_oldfiles.c,v 1.4 2012/01/30 06:15:22 dholland Exp $	*/
+/*	$NetBSD: quota_oldfiles.c,v 1.5 2012/01/30 16:45:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -237,6 +237,57 @@ __quota_oldfiles_infstab(const char *mountpoint)
 	return __quota_oldfiles_find_fstabentry(mountpoint) != NULL;
 }
 
+static void
+__quota_oldfiles_defquotafile(struct quotahandle *qh, int idtype,
+			      char *buf, size_t maxlen)
+{
+	static const char *const names[] = INITQFNAMES;
+
+	(void)snprintf(buf, maxlen, "%s/%s.%s",
+		       qh->qh_mountpoint,
+		       QUOTAFILENAME, names[USRQUOTA]);
+}
+
+const char *
+__quota_oldfiles_getquotafile(struct quotahandle *qh, int idtype,
+			      char *buf, size_t maxlen)
+{
+	const struct oldfiles_fstabentry *ofe;
+	const char *file;
+
+	ofe = __quota_oldfiles_find_fstabentry(qh->qh_mountpoint);
+	if (ofe == NULL) {
+		errno = ENXIO;
+		return NULL;
+	}
+
+	switch (idtype) {
+	    case USRQUOTA:
+		if (!ofe->ofe_hasuserquota) {
+			errno = ENXIO;
+			return NULL;
+		}
+		file = ofe->ofe_userquotafile;
+		break;
+	    case GRPQUOTA:
+		if (!ofe->ofe_hasgroupquota) {
+			errno = ENXIO;
+			return NULL;
+		}
+		file = ofe->ofe_groupquotafile;
+		break;
+	    default:
+		errno = EINVAL;
+		return NULL;
+	}
+
+	if (file == NULL) {
+		__quota_oldfiles_defquotafile(qh, idtype, buf, maxlen);
+		file = buf;
+	}
+	return file;
+}
+
 static uint64_t
 dqblk_getlimit(uint32_t val)
 {
@@ -316,8 +367,6 @@ __quota_oldfiles_open(struct quotahandle *qh, const char *path, int *fd_ret)
 int
 __quota_oldfiles_initialize(struct quotahandle *qh)
 {
-	static const char *const names[] = INITQFNAMES;
-
 	const struct oldfiles_fstabentry *ofe;
 	char path[PATH_MAX];
 	const char *userquotafile, *groupquotafile;
@@ -345,9 +394,8 @@ __quota_oldfiles_initialize(struct quotahandle *qh)
 	if (ofe->ofe_hasuserquota) {
 		userquotafile = ofe->ofe_userquotafile;
 		if (userquotafile == NULL) {
-			(void)snprintf(path, sizeof(path), "%s/%s.%s",
-				       qh->qh_mountpoint,
-				       QUOTAFILENAME, names[USRQUOTA]);
+			__quota_oldfiles_defquotafile(qh, USRQUOTA,
+						      path, sizeof(path));
 			userquotafile = path;
 		}
 		if (__quota_oldfiles_open(qh, userquotafile,
@@ -358,9 +406,8 @@ __quota_oldfiles_initialize(struct quotahandle *qh)
 	if (ofe->ofe_hasgroupquota) {
 		groupquotafile = ofe->ofe_groupquotafile;
 		if (groupquotafile == NULL) {
-			(void)snprintf(path, sizeof(path), "%s/%s.%s",
-				       qh->qh_mountpoint,
-				       QUOTAFILENAME, names[GRPQUOTA]);
+			__quota_oldfiles_defquotafile(qh, GRPQUOTA,
+						      path, sizeof(path));
 			groupquotafile = path;
 		}
 		if (__quota_oldfiles_open(qh, groupquotafile,
@@ -378,6 +425,45 @@ const char *
 __quota_oldfiles_getimplname(struct quotahandle *qh)
 {
 	return "ufs/ffs quota v1 file access";
+}
+
+int
+__quota_oldfiles_quotaon(struct quotahandle *qh, int idtype)
+{
+	int result;
+
+	/*
+	 * If we have the quota files open, close them.
+	 */
+
+	if (qh->qh_oldfilesopen) {
+		if (qh->qh_userfile >= 0) {
+			close(qh->qh_userfile);
+			qh->qh_userfile = -1;
+		}
+		if (qh->qh_groupfile >= 0) {
+			close(qh->qh_groupfile);
+			qh->qh_groupfile = -1;
+		}
+		qh->qh_oldfilesopen = 0;
+	}
+
+	/*
+	 * Go over to the syscall interface.
+	 */
+
+	result = __quota_proplib_quotaon(qh, idtype);
+	if (result < 0) {
+		return -1;
+	}
+
+	/*
+	 * We succeeded, so all further access should be via the
+	 * kernel.
+	 */
+
+	qh->qh_mode = QUOTA_MODE_PROPLIB;
+	return 0;
 }
 
 static int

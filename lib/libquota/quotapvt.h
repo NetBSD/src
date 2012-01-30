@@ -1,4 +1,4 @@
-/*	$NetBSD: quotapvt.h,v 1.11 2012/01/30 16:44:09 dholland Exp $	*/
+/*	$NetBSD: quotapvt.h,v 1.12 2012/01/30 16:45:13 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -64,6 +64,8 @@ const char *__quota_proplib_idtype_getname(int idtype);
 unsigned __quota_proplib_getnumobjtypes(void);
 const char *__quota_proplib_objtype_getname(int objtype);
 int __quota_proplib_objtype_isbytes(int objtype);
+int __quota_proplib_quotaon(struct quotahandle *, int idtype);
+int __quota_proplib_quotaoff(struct quotahandle *, int idtype);
 int __quota_proplib_get(struct quotahandle *qh, const struct quotakey *qk,
 			struct quotaval *qv);
 int __quota_proplib_put(struct quotahandle *qh, const struct quotakey *qk,
@@ -95,6 +97,9 @@ void __quota_oldfiles_load_fstab(void);
 int __quota_oldfiles_infstab(const char *);
 int __quota_oldfiles_initialize(struct quotahandle *qh);
 const char *__quota_oldfiles_getimplname(struct quotahandle *);
+const char *__quota_oldfiles_getquotafile(struct quotahandle *, int idtype,
+					  char *buf, size_t maxlen);
+int __quota_oldfiles_quotaon(struct quotahandle *, int idtype);
 int __quota_oldfiles_get(struct quotahandle *qh, const struct quotakey *qk,
 			struct quotaval *qv);
 int __quota_oldfiles_put(struct quotahandle *qh, const struct quotakey *qk,

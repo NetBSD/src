@@ -55,6 +55,9 @@ unsigned quota_getnumobjtypes(struct quotahandle *);
 const char *quota_objtype_getname(struct quotahandle *, int /*objtype*/);
 int quota_objtype_isbytes(struct quotahandle *, int /*objtype*/);
 
+int quota_quotaon(struct quotahandle *, int /*idtype*/);
+int quota_quotaoff(struct quotahandle *, int /*idtype*/);
+
 int quota_get(struct quotahandle *, const struct quotakey *,
 	      struct quotaval *);
 

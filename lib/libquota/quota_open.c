@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_open.c,v 1.5 2012/01/25 17:43:37 dholland Exp $	*/
+/*	$NetBSD: quota_open.c,v 1.6 2012/01/30 16:45:13 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_open.c,v 1.5 2012/01/25 17:43:37 dholland Exp $");
+__RCSID("$NetBSD: quota_open.c,v 1.6 2012/01/30 16:45:13 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/statvfs.h>
@@ -64,6 +64,15 @@ quota_open(const char *path)
 	 *    3. Check if the volume is listed in fstab as one of
 	 *    the filesystem types supported by quota_oldfiles.c,
 	 *    and with the proper mount options to enable quotas.
+	 *
+	 * Note that (as of this writing) the mount options for
+	 * enabling quotas are accepted by mount for *all* filesystem
+	 * types and then ignored -- the kernel mount flag (ST_QUOTA /
+	 * MNT_QUOTA) gets set either by the filesystem based on its
+	 * own criteria, or for old-style quotas, during quotaon. The
+	 * quota filenames specified in fstab are not passed to or
+	 * known by the kernel except via quota_oldfiles.c! This is
+	 * generally gross but not easily fixed.
 	 */
 
 	if (statvfs(path, &stv) < 0) {
@@ -143,4 +152,42 @@ quota_close(struct quotahandle *qh)
 	free(qh->qh_mountdevice);
 	free(qh->qh_mountpoint);
 	free(qh);
+}
+
+int
+quota_quotaon(struct quotahandle *qh, int idtype)
+{
+	switch (qh->qh_mode) {
+	    case QUOTA_MODE_NFS:
+		errno = EOPNOTSUPP;
+		break;
+	    case QUOTA_MODE_PROPLIB:
+		return __quota_proplib_quotaon(qh, idtype);
+	    case QUOTA_MODE_OLDFILES:
+		return __quota_oldfiles_quotaon(qh, idtype);
+	    default:
+		errno = EINVAL;
+		break;
+	}
+	return -1;
+}
+
+int
+quota_quotaoff(struct quotahandle *qh, int idtype)
+{
+	switch (qh->qh_mode) {
+	    case QUOTA_MODE_NFS:
+		errno = EOPNOTSUPP;
+		break;
+	    case QUOTA_MODE_PROPLIB:
+		return __quota_proplib_quotaoff(qh, idtype);
+	    case QUOTA_MODE_OLDFILES:
+		/* can't quotaoff if we haven't quotaon'd */
+		errno = ENOTCONN;
+		break;
+	    default:
+		errno = EINVAL;
+		break;
+	}
+	return -1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_proplib.c,v 1.9 2012/01/30 16:44:08 dholland Exp $	*/
+/*	$NetBSD: quota_proplib.c,v 1.10 2012/01/30 16:45:13 dholland Exp $	*/
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_proplib.c,v 1.9 2012/01/30 16:44:08 dholland Exp $");
+__RCSID("$NetBSD: quota_proplib.c,v 1.10 2012/01/30 16:45:13 dholland Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: quota_proplib.c,v 1.9 2012/01/30 16:44:08 dholland Exp $");
 #include <err.h>
 
 #include <quota.h>
+#include <ufs/ufs/quota1.h>
 #include "quotapvt.h"
 
 #include <quota/quotaprop.h>
@@ -54,6 +55,8 @@ struct proplib_quotacursor {
 	unsigned pos;
 	unsigned didblocks;
 };
+
+static const char *const __quota1_qfnames[] = INITQFNAMES;
 
 int
 __quota_proplib_getversion(struct quotahandle *qh, int8_t *version_ret)
@@ -237,6 +240,112 @@ __quota_proplib_objtype_isbytes(int objtype)
 		default: break;
 	}
 	return 0;
+}
+
+static int
+__quota_proplib_quotaonoff(struct quotahandle *qh, int idtype, int offmode)
+{
+	prop_dictionary_t dict, data, cmd;
+	prop_array_t cmds, datas;
+	struct plistref pref;
+	int8_t error8;
+	const char *file;
+	char path[PATH_MAX];
+
+	/*
+	 * Note that while it is an error to call quotaon on something
+	 * that isn't a volume with old-style quotas that expects
+	 * quotaon to be called, it's not our responsibility to check
+	 * for that; the filesystem will. Also note that it is not an
+	 * error to call quotaon repeatedly -- apparently this is to
+	 * permit changing the quota file in use on the fly or
+	 * something. So all we need to do here is ask the oldfiles
+	 * code if the mount option was set in fstab and fetch back
+	 * the filename.
+	 */
+
+	 if (offmode) {
+		 file = NULL;
+	 } else {
+		 file = __quota_oldfiles_getquotafile(qh, idtype,
+						      path, sizeof(path));
+		 if (file == NULL) {
+			 /*
+			  * This idtype (or maybe any idtype) was
+			  * not enabled in fstab.
+			  */
+			 errno = ENXIO;
+			 return -1;
+		 }
+	 }
+
+	dict = quota_prop_create();
+	cmds = prop_array_create();
+	datas = prop_array_create();
+
+	if (dict == NULL || cmds == NULL || datas == NULL)
+		errx(1, "can't allocate proplist");
+
+	if (offmode) {
+		if (!quota_prop_add_command(cmds, "quotaoff",
+		    __quota1_qfnames[idtype], datas))
+			err(1, "prop_add_command");
+	} else {
+		data = prop_dictionary_create();
+		if (data == NULL)
+			errx(1, "can't allocate proplist");
+		if (!prop_dictionary_set_cstring(data, "quotafile", file))
+			err(1, "prop_dictionary_set(quotafile)");
+		if (!prop_array_add_and_rel(datas, data))
+			err(1, "prop_array_add(data)");
+		if (!quota_prop_add_command(cmds, "quotaon",
+		    __quota1_qfnames[idtype], datas))
+			err(1, "prop_add_command");
+	}
+	if (!prop_dictionary_set(dict, "commands", cmds))
+		err(1, "prop_dictionary_set(command)");
+
+	if (prop_dictionary_send_syscall(dict, &pref) != 0)
+		err(1, "prop_dictionary_send_syscall");
+	prop_object_release(dict);
+
+	if (quotactl(qh->qh_mountpoint, &pref) != 0) {
+		warn("quotactl(%s)", qh->qh_mountpoint);
+		return -1;
+	}
+
+	if (prop_dictionary_recv_syscall(&pref, &dict) != 0)
+		err(1, "prop_dictionary_recv_syscall");
+
+	if ((errno = quota_get_cmds(dict, &cmds)) != 0)
+		err(1, "quota_get_cmds");
+
+	/* only one command, no need to iter */
+	cmd = prop_array_get(cmds, 0);
+	if (cmd == NULL)
+		err(1, "prop_array_get(cmd)");
+
+	if (!prop_dictionary_get_int8(cmd, "return", &error8))
+		err(1, "prop_get(return)");
+
+	if (error8) {
+		errno = error8;
+		return -1;
+	}
+
+	return 0;
+}
+
+int
+__quota_proplib_quotaon(struct quotahandle *qh, int idtype)
+{
+	return __quota_proplib_quotaonoff(qh, idtype, 0);
+}
+
+int
+__quota_proplib_quotaoff(struct quotahandle *qh, int idtype)
+{
+	return __quota_proplib_quotaonoff(qh, idtype, 1);
 }
 
 static int
