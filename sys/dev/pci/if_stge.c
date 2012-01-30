@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.53 2011/03/12 16:52:05 phx Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.54 2012/01/30 19:41:21 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.53 2011/03/12 16:52:05 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.54 2012/01/30 19:41:21 drochner Exp $");
 
 
 #include <sys/param.h>
@@ -397,7 +397,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
-	aprint_normal(": %s, rev. %d\n", sp->stge_name, sc->sc_rev);
+	pci_aprint_devinfo_fancy(pa, NULL, sp->stge_name, 1);
 
 	/*
 	 * Map the device.

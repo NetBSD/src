@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.37 2012/01/25 03:49:12 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.38 2012/01/30 19:41:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.37 2012/01/25 03:49:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.38 2012/01/30 19:41:23 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,7 +347,6 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 {
 	struct voodoofb_softc *sc = device_private(self);	
 	struct pci_attach_args *pa = aux;
-	char devinfo[256];
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri;
 #ifdef VOODOOFB_ENABLE_INTR
@@ -366,8 +365,7 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dacw = -1;
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;

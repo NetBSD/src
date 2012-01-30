@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.225 2011/11/28 18:21:46 bouyer Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.226 2012/01/30 19:41:21 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.225 2011/11/28 18:21:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.226 2012/01/30 19:41:21 drochner Exp $");
 
 #include "rnd.h"
 
@@ -1143,8 +1143,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dmat = pa->pa_dmat;
 
 	sc->sc_rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
-	aprint_naive(": Ethernet controller\n");
-	aprint_normal(": %s, rev. %d\n", wmp->wmp_name, sc->sc_rev);
+	pci_aprint_devinfo_fancy(pa, "Ethernet controller", wmp->wmp_name, 1);
 
 	sc->sc_type = wmp->wmp_type;
 	if (sc->sc_type < WM_T_82543) {

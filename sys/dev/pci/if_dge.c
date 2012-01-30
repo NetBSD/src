@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.32 2011/11/19 22:51:23 tls Exp $ */
+/*	$NetBSD: if_dge.c,v 1.33 2012/01/30 19:41:19 drochner Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.32 2011/11/19 22:51:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.33 2012/01/30 19:41:19 drochner Exp $");
 
 #include "rnd.h"
 
@@ -679,9 +679,8 @@ dge_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pt = pa->pa_tag;
 
-	preg = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
-	aprint_naive(": Ethernet controller\n");
-	aprint_normal(": Intel i82597EX 10GbE-LR Ethernet, rev. %d\n", preg);
+	pci_aprint_devinfo_fancy(pa, "Ethernet controller",
+		"Intel i82597EX 10GbE-LR Ethernet", 1);
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, DGE_PCI_BAR);
         if (pci_mapreg_map(pa, DGE_PCI_BAR, memtype, 0,
