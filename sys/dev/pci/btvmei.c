@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.27 2012/01/27 18:53:08 para Exp $ */
+/* $NetBSD: btvmei.c,v 1.28 2012/01/30 19:41:18 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.27 2012/01/27 18:53:08 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.28 2012/01/30 19:41:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,19 +90,14 @@ b3_617_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 
-	int rev;
-
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	struct vmebus_attach_args vaa;
 
-	aprint_naive(": VME bus adapter\n");
-
 	sc->sc_pc = pc;
 	sc->sc_dmat = pa->pa_dmat;
 
-	rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
-	aprint_normal(": BIT3 PCI-VME 617 rev %d\n", rev);
+	pci_aprint_devinfo_fancy(pa, "VME bus adapter", "BIT3 PCI-VME 617", 1);
 
 	/*
 	 * Map CSR and mapping table spaces.

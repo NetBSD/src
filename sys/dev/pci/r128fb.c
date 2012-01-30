@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.27 2012/01/11 16:02:29 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.28 2012/01/30 19:41:22 drochner Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.27 2012/01/11 16:02:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.28 2012/01/30 19:41:22 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,6 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	struct rasops_info	*ri;
 	bus_space_tag_t		tag;
-	char devinfo[256];
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
@@ -213,8 +212,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_dev = self;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s\n", devinfo);
+	pci_aprint_devinfo(pa, NULL);
 
 	/* fill in parameters from properties */
 	dict = device_properties(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.203 2011/08/01 11:20:26 drochner Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.204 2012/01/30 19:41:22 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.203 2011/08/01 11:20:26 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.204 2012/01/30 19:41:22 drochner Exp $");
 
 /*
 #define CBB_DEBUG
@@ -382,7 +382,6 @@ pccbbattach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t busreg, reg, sock_base;
 	bus_addr_t sockbase;
-	char devinfo[256];
 	int flags;
 
 #ifdef __HAVE_PCCBB_ATTACH_HOOK
@@ -399,13 +398,8 @@ pccbbattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_chipset = cb_chipset(pa->pa_id, &flags);
 
-	aprint_naive("\n");
-
-	pci_devinfo(pa->pa_id, 0, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)", devinfo,
-	    PCI_REVISION(pa->pa_class));
-	DPRINTF((" (chipflags %x)", flags));
-	aprint_normal("\n");
+	pci_aprint_devinfo(pa, NULL);
+	DPRINTF(("(chipflags %x)", flags));
 
 	TAILQ_INIT(&sc->sc_memwindow);
 	TAILQ_INIT(&sc->sc_iowindow);

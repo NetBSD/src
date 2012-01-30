@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.32 2011/08/20 20:01:08 jakllsch Exp $ */
+/*	$NetBSD: pchb.c,v 1.33 2012/01/30 19:41:18 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.32 2011/08/20 20:01:08 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.33 2012/01/30 19:41:18 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -155,15 +155,12 @@ pchbattach(device_t parent, device_t self, void *aux)
 {
 	struct pchb_softc *sc = device_private(self);
 	const struct pci_attach_args *pa = aux;
-	char devinfo[256];
 	struct pcibus_attach_args pba;
 	struct agpbus_attach_args apa;
 	pcireg_t bcreg;
 	u_char bdnum, pbnum = 0; /* XXX: gcc */
 	pcitag_t tag;
 	int doattach, attachflags, has_agp;
-
-	aprint_naive("\n");
 
 	doattach = 0;
 	has_agp = 0;
@@ -177,9 +174,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 	 * have auxiliary PCI buses.
 	 */
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	/*
