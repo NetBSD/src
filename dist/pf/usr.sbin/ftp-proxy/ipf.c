@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.3 2011/02/02 02:20:26 rmind Exp $	*/
+/*	$NetBSD: ipf.c,v 1.4 2012/01/30 16:14:27 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ ftp_proxy_entry_find(u_int32_t id)
 }
 
 static int
-ftp_proxy_entry_add_nat(struct ftp_proxy_entry *fpe, ipnat_t ipn)
+ftp_proxy_entry_add_nat(struct ftp_proxy_entry *fpe, ipnat_t *ipn)
 {
 	struct ftp_proxy_nat *fpn;
 
@@ -159,22 +159,22 @@ ftp_proxy_entry_add_nat(struct ftp_proxy_entry *fpe, ipnat_t ipn)
 	if (fpn == NULL)
 		return (-1);
 
-	memcpy(&fpn->ipn, &ipn, sizeof(fpn->ipn));
+	memcpy(&fpn->ipn, ipn, sizeof(fpn->ipn));
 	LIST_INSERT_HEAD(&fpe->nat_entries, fpn, link);
 
 	return (0);
 }
 
 static int
-ipfilter_add_nat(ipnat_t ipn)
+ipfilter_add_nat(ipnat_t *ipn)
 {
 	ipfobj_t obj;
 
 	memset(&obj, 0, sizeof(obj));
 	obj.ipfo_rev = IPFILTER_VERSION;
-	obj.ipfo_size = sizeof(ipn);
+	obj.ipfo_size = ipn->in_size;
 	obj.ipfo_type = IPFOBJ_IPNAT;
-	obj.ipfo_ptr = &ipn;
+	obj.ipfo_ptr = ipn;
 
 	return ioctl(natfd, SIOCADNAT, &obj);
 }
@@ -224,7 +224,7 @@ ipf_add_rdr(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
     u_int16_t d_port, struct sockaddr *rdr, u_int16_t rdr_port)
 {
 	struct ftp_proxy_entry *fpe = ftp_proxy_entry_find(id);
-	ipnat_t ipn;
+	ipnat_t *ipn;
 
 	if (fpe == NULL) {
 		errno = ENOENT;
@@ -237,98 +237,48 @@ ipf_add_rdr(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
 		return (-1);
 	}
 
-	memset(&ipn, 0, sizeof(ipn));
-	ipn.in_redir = NAT_REDIRECT;
-	ipn.in_v = 4;
-	ipn.in_outip = satosin(dst)->sin_addr.s_addr;
-	ipn.in_outmsk = 0xffffffff;
-	strlcpy(ipn.in_ifnames[0], netif, sizeof(ipn.in_ifnames[0]));
-	strlcpy(ipn.in_ifnames[1], netif, sizeof(ipn.in_ifnames[1]));
-	ipn.in_pmin = htons(d_port);
-	ipn.in_pmax = htons(d_port);
-	ipn.in_inip = satosin(rdr)->sin_addr.s_addr;
-	ipn.in_inmsk  = 0xffffffff;
-	ipn.in_pnext = htons(rdr_port);
-	ipn.in_flags = IPN_FIXEDDPORT | IPN_TCP;
-	strlcpy(ipn.in_tag.ipt_tag, fpe->proxy_tag, sizeof(ipn.in_tag.ipt_tag));
-
-	if (ipfilter_add_nat(ipn) == -1)
+	ipn = calloc(1, sizeof(*ipn) + 2 * IF_NAMESIZE + 2);
+	if (ipn == NULL) {
+		errno = ENOMEM;
 		return (-1);
+	}
+	ipn->in_redir = NAT_REDIRECT;
+	ipn->in_v[0] = 4;
+	ipn->in_v[1] = 4;
+	ipn->in_odstaddr = satosin(dst)->sin_addr.s_addr;
+	ipn->in_odstmsk = 0xffffffff;
+	ipn->in_odport = htons(d_port);
+	ipn->in_dtop = htons(d_port);
+	ipn->in_ndstaddr = satosin(rdr)->sin_addr.s_addr;
+	ipn->in_ndstmsk  = 0xffffffff;
+	ipn->in_dpnext = htons(rdr_port);
+	ipn->in_flags = IPN_FIXEDDPORT | IPN_TCP;
+	strlcpy(ipn->in_tag.ipt_tag, fpe->proxy_tag,
+	    sizeof(ipn->in_tag.ipt_tag));
 
-	if (ftp_proxy_entry_add_nat(fpe, ipn) == -1)
-		return (-1);
+	ipn->in_ifnames[0] = 0;
+	(void) strlcpy(ipn->in_names, netif, IF_NAMESIZE);
+	ipn->in_namelen = strlen(ipn->in_names) + 1;
+	ipn->in_ifnames[1] = ipn->in_namelen;
+	(void) strlcpy(ipn->in_names + ipn->in_namelen, netif, IF_NAMESIZE);
+	ipn->in_namelen += strlen(ipn->in_names + ipn->in_ifnames[1]) + 1;
+	ipn->in_size = sizeof(*ipn) + ipn->in_namelen;
 
-	fpe->status = 1;
-
-	return (0);
-}
-
-#if 0
-int
-ipf_add_rdr(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
-    u_int16_t d_port, struct sockaddr *rdr, u_int16_t rdr_port)
-{
-	u_32_t sum1, sum2, sumd;
-	int onoff, error;
-	nat_save_t ns;
-	ipfobj_t obj;
-	nat_t *nat;
-
-	if (!src || !dst || !d_port || !rdr || !rdr_port ||
-	    (src->sa_family != rdr->sa_family)) {
-		errno = EINVAL;
+	if (ipfilter_add_nat(ipn) == -1) {
+		free(ipn);
 		return (-1);
 	}
 
-	memset(&ns, 0, sizeof(ns));
-
-	nat = &ns.ipn_nat;
-	nat->nat_p = IPPROTO_TCP;
-	nat->nat_dir = NAT_OUTBOUND;
-	nat->nat_redir = NAT_REDIRECT;
-	strlcpy(nat->nat_ifnames[0], netif, sizeof(nat->nat_ifnames[0]));
-	strlcpy(nat->nat_ifnames[1], netif, sizeof(nat->nat_ifnames[1]));
-
-	nat->nat_inip = satosin(rdr)->sin_addr;
-	nat->nat_outip = satosin(dst)->sin_addr;
-	nat->nat_oip = satosin(src)->sin_addr;
-
-	sum1 = LONG_SUM(ntohl(nat->nat_inip.s_addr)) + rdr_port;
-	sum2 = LONG_SUM(ntohl(nat->nat_outip.s_addr)) + d_port;
-	CALC_SUMD(sum1, sum2, sumd);
-	nat->nat_sumd[0] = (sumd & 0xffff) + (sumd >> 16);
-	nat->nat_sumd[1] = nat->nat_sumd[0];
-
-	sum1 = LONG_SUM(ntohl(nat->nat_inip.s_addr));
-	sum2 = LONG_SUM(ntohl(nat->nat_outip.s_addr));
-	CALC_SUMD(sum1, sum2, sumd);
-	nat->nat_ipsumd = (sumd & 0xffff) + (sumd >> 16);
-
-	nat->nat_inport = htons(rdr_port);
-	nat->nat_outport = htons(d_port);
-	nat->nat_oport = satosin(src)->sin_port;
-
-	nat->nat_flags = IPN_TCPUDP;
-
-	memset(&obj, 0, sizeof(obj));
-	obj.ipfo_rev = IPFILTER_VERSION;
-	obj.ipfo_size = sizeof(ns);
-	obj.ipfo_ptr = &ns;
-	obj.ipfo_type = IPFOBJ_NATSAVE;
-
-	error = 0;
-	onoff = 1;
-	if (ioctl(natfd, SIOCSTLCK, &onoff) == -1)
+	if (ftp_proxy_entry_add_nat(fpe, ipn) == -1) {
+		free(ipn);
 		return (-1);
-	if (ioctl(natfd, SIOCSTPUT, &obj) == -1)
-		error = -1;
-	onoff = 0;
-	if (ioctl(natfd, SIOCSTLCK, &onoff) == -1)
-		error = -1;
+	}
 
-	return (error);
+	fpe->status = 1;
+	free(ipn);
+
+	return (0);
 }
-#endif
 
 int
 ipf_do_commit(void)
