@@ -196,7 +196,7 @@ ipf_p_dns_new(arg, fin, aps, nat)
 	aps->aps_psiz = sizeof(dnsinfo_t);
 	KMALLOCS(di, dnsinfo_t *, sizeof(dnsinfo_t));
 	if (di == NULL) {
-		printf("ipf_dns_new:KMALLOCS(%d) failed\n", sizeof(*di));
+		printf("ipf_dns_new:KMALLOCS(%zu) failed\n", sizeof(*di));
 		return -1;
         }
 
