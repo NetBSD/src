@@ -46,6 +46,7 @@ const char *quota_getmountpoint(struct quotahandle *);
 const char *quota_getmountdevice(struct quotahandle *);
 
 const char *quota_getimplname(struct quotahandle *);
+unsigned quota_getrestrictions(struct quotahandle *);
 
 unsigned quota_getnumidtypes(struct quotahandle *);
 const char *quota_idtype_getname(struct quotahandle *, int /*idtype*/);

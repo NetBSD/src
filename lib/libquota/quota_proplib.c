@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_proplib.c,v 1.8 2012/01/30 06:00:49 dholland Exp $	*/
+/*	$NetBSD: quota_proplib.c,v 1.9 2012/01/30 16:44:08 dholland Exp $	*/
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_proplib.c,v 1.8 2012/01/30 06:00:49 dholland Exp $");
+__RCSID("$NetBSD: quota_proplib.c,v 1.9 2012/01/30 16:44:08 dholland Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -178,6 +178,24 @@ __quota_proplib_getimplname(struct quotahandle *qh)
 		default: break;
 	}
 	return "unknown";
+}
+
+unsigned
+__quota_proplib_getrestrictions(struct quotahandle *qh)
+{
+	int8_t version;
+
+	if (__quota_proplib_getversion(qh, &version) < 0) {
+		/* XXX no decent way to report an error here */
+		return 0;
+	}
+	switch (version) {
+		case 1: return QUOTA_RESTRICT_NEEDSQUOTACHECK |
+				QUOTA_RESTRICT_UNIFORMGRACE |
+				QUOTA_RESTRICT_32BIT;
+		default: break;
+	}
+	return 0;
 }
 
 unsigned
