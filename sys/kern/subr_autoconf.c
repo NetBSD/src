@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.221 2012/01/16 19:42:40 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.222 2012/01/30 23:31:27 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.221 2012/01/16 19:42:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.222 2012/01/30 23:31:27 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -441,7 +441,7 @@ config_interrupts_thread(void *cookie)
 }
 
 void
-config_create_interruptthreads()
+config_create_interruptthreads(void)
 {
 	int i;
 
@@ -465,7 +465,7 @@ config_mountroot_thread(void *cookie)
 }
 
 void
-config_create_mountrootthreads()
+config_create_mountrootthreads(void)
 {
 	int i;
 
@@ -2108,7 +2108,7 @@ config_finalize(void)
 }
 
 void
-config_twiddle_init()
+config_twiddle_init(void)
 {
 
 	if ((boothowto & (AB_SILENT|AB_VERBOSE)) == AB_SILENT) {
