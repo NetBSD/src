@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_stub.c,v 1.5 2010/04/05 07:22:22 joerg Exp $	*/
+/*	$NetBSD: bpf_stub.c,v 1.6 2012/01/30 23:31:27 matt Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_stub.c,v 1.5 2010/04/05 07:22:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_stub.c,v 1.6 2012/01/30 23:31:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -160,7 +160,7 @@ bpf_stub_warn(void)
 }
 
 void
-bpf_setops()
+bpf_setops(void)
 {
 
 	mutex_init(&handovermtx, MUTEX_DEFAULT, IPL_NONE);
@@ -197,7 +197,7 @@ bpf_ops_handover_enter(struct bpf_ops *newops)
 
 /* hangover done */
 void
-bpf_ops_handover_exit()
+bpf_ops_handover_exit(void)
 {
 
 	mutex_enter(&handovermtx);
