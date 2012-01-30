@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_nfs.c,v 1.1 2012/01/09 15:29:56 dholland Exp $	*/
+/*	$NetBSD: quota_nfs.c,v 1.2 2012/01/30 06:39:26 dholland Exp $	*/
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_nfs.c,v 1.1 2012/01/09 15:29:56 dholland Exp $");
+__RCSID("$NetBSD: quota_nfs.c,v 1.2 2012/01/30 06:39:26 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h> /* XXX for DEV_BSIZE */
@@ -199,7 +199,6 @@ __quota_nfs_get(struct quotahandle *qh, const struct quotakey *qk,
 	case Q_NOQUOTA:
 		quotaval_clear(qv);
 		return 0;
-		break;
 	case Q_EPERM:
 		errno = EACCES;
 		return -1;
