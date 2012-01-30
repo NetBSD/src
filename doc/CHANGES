@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1661 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1662 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1226,5 +1226,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		usage [mbalmer 20120128]
 	zaurus: Add PXA25x based Zaurus SL-C700/750/760/860 support
 		ported by TOYOKURA Atsushi. [tsutsui 20120129]
-	evbarm: Add FrindlyARM Mini2440 support. Code was written by Paul
-		Fleisher. [nisimura 20120130]
+	evbarm: Add FriendlyARM Mini2440 support. Code was written by Paul
+		Fleischer. [nisimura 20120130]
