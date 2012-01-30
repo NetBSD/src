@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.139 2011/12/31 20:41:58 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.140 2012/01/30 20:02:55 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.139 2011/12/31 20:41:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.140 2012/01/30 20:02:55 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -683,6 +683,10 @@ COMPATNAME(rt_msg1)(int type, struct rt_addrinfo *rtinfo, void *data, int datale
 		dlen = RT_XROUNDUP(sa->sa_len);
 		m_copyback(m, len, sa->sa_len, sa);
 		if (dlen != sa->sa_len) {
+			/*
+			 * Up to 6 + 1 nul's since roundup is to
+			 * sizeof(uint64_t) (8 bytes)
+			 */
 			m_copyback(m, len + sa->sa_len,
 			    dlen - sa->sa_len, "\0\0\0\0\0\0");
 		}
@@ -735,8 +739,13 @@ again:
 		rtinfo->rti_addrs |= (1 << i);
 		dlen = RT_XROUNDUP(sa->sa_len);
 		if (cp) {
-			(void)memcpy(cp, sa, (size_t)dlen);
-			cp += dlen;
+			int diff = dlen - sa->sa_len;
+			(void)memcpy(cp, sa, (size_t)sa->sa_len);
+			cp += sa->sa_len;
+			if (diff > 0) {
+				(void)memset(cp, 0, (size_t)diff);
+				cp += diff;
+			}
 		}
 		len += dlen;
 	}
