@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.184 2012/01/22 10:32:35 nakayama Exp $ */
+/*	$NetBSD: autoconf.c,v 1.185 2012/01/30 12:19:45 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.184 2012/01/22 10:32:35 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.185 2012/01/30 12:19:45 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.184 2012/01/22 10:32:35 nakayama Exp 
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 #include <machine/bootinfo.h>
+#include <sparc64/sparc64/cache.h>
 #include <sparc64/sparc64/timerreg.h>
 
 #include <dev/ata/atavar.h>
@@ -196,7 +197,7 @@ static void
 get_ncpus(void)
 {
 #ifdef MULTIPROCESSOR
-	int node;
+	int node, l;
 	char sbuf[32];
 
 	node = findroot();
@@ -208,9 +209,16 @@ get_ncpus(void)
 		if (strcmp(sbuf, "cpu") != 0)
 			continue;
 		sparc_ncpus++;
+		l = prom_getpropint(node, "dcache-line-size", 0);
+		if (l > dcache_line_size)
+			dcache_line_size = l;
+		l = prom_getpropint(node, "icache-line-size", 0);
+		if (l > icache_line_size)
+			icache_line_size = l;
 	}
 #else
 	/* #define sparc_ncpus 1 */
+	icache_line_size = dcache_line_size = 8; /* will be fixed later */
 #endif
 }
 
