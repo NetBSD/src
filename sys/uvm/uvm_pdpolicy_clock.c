@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.16 2012/01/28 00:00:06 rmind Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.17 2012/01/30 17:21:52 para Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.16 2012/01/28 00:00:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.17 2012/01/30 17:21:52 para Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -419,22 +419,8 @@ uvmpdpol_reinit(void)
 bool
 uvmpdpol_needsscan_p(void)
 {
-	vmem_size_t kva_size, kva_free;
 
-	kva_size = vmem_size(kmem_arena, VMEM_FREE | VMEM_ALLOC);
-	kva_free = vmem_size(kmem_arena, VMEM_FREE);
-
-	if (kva_free < (kva_size / 10)) {
-		return true;
-	}
-
-	if (pdpol_state.s_inactive < pdpol_state.s_inactarg) {
-		return true;
-	}
-	if (pdpol_state.s_inactive < pdpol_state.s_inactarg) {
-		return true;
-	}
-	return false;
+	return pdpol_state.s_inactive < pdpol_state.s_inactarg;
 }
 
 void
