@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2011/09/24 17:54:19 christos Exp $
+#	$NetBSD: Makefile,v 1.22 2012/01/30 21:10:30 darrenr Exp $
 
 INCSDIR= /usr/include/netinet
 
@@ -20,7 +20,7 @@ INCS+=	ip_compat.h	# always needed by kdump(1)
 .if (${MKIPFILTER} != "no")
 INCS+=	ip_auth.h ip_fil.h ip_frag.h ip_htable.h ip_nat.h \
 	ip_lookup.h ip_pool.h ip_proxy.h ip_scan.h ip_state.h ip_sync.h \
-	ipl.h
+	ipf_rb.h ipl.h
 .endif
 
 .include <bsd.kinc.mk>
