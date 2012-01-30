@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: roff.7,v 1.33 2011/09/26 23:07:31 schwarze Exp $
+.\"	$Vendor-Id: roff.7,v 1.37 2011/12/11 00:38:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 26, 2011
+.Dd December 11, 2011
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -143,6 +143,8 @@ escape followed by an indicator: B (bold), I (italic), R (regular), or P
 (revert to previous mode).
 A numerical representation 3, 2, or 1 (bold, italic, and regular,
 respectively) may be used instead.
+The indicator or numerical representative may be preceded by C
+(constant-width), which is ignored.
 .Pp
 Examples:
 .Bl -tag -width Ds -offset indent -compact
@@ -842,6 +844,22 @@ only accepts relative paths not containing the strings
 .Qq ../
 and
 .Qq /.. .
+.Pp
+This request requires
+.Xr man 1
+to change to the right directory before calling
+.Xr mandoc 1 ,
+per convention to the root of the manual tree.
+Typical usage looks like:
+.Pp
+.Dl \&.so man3/Xcursor.3
+.Pp
+As the whole concept is rather fragile, the use of
+.Sx \&so
+is discouraged.
+Use
+.Xr ln 1
+instead.
 .Ss \&ta
 Set tab stops.
 This line-scoped request can take an arbitrary number of arguments.
@@ -943,14 +961,22 @@ using the next-line syntax.
 .%U http://heirloom.sourceforge.net/doctools/troff.pdf
 .Re
 .Sh HISTORY
-The RUNOFF typesetting system was written in PL/1 for the CTSS
-operating system by Jerome ("Jerry") E. Saltzer in 1961.
-It was first used as the main documentation tool by Multics since 1963.
-Robert ("Bob") H. Morris ported it to the GE-635 and called it
+The RUNOFF typesetting system, whose input forms the basis for
 .Nm ,
-Doug McIlroy rewrote it in BCPL in 1969,
-Joseph F. Ossanna rewrote it in PDP-11 assembly in 1973,
-and Brian W. Kernighan rewrote it in C in 1975.
+was written in MAD and FAP for the CTSS operating system by Jerome E.
+Saltzer in 1964.
+Doug McIlroy rewrote it in BCPL in 1969, renaming it
+.Nm .
+Dennis M. Ritchie rewrote McIlroy's
+.Nm
+in PDP-11 assembly for
+.At v1 ,
+Joseph F. Ossanna improved roff and renamed it nroff
+for
+.At v2 ,
+then ported nroff to C as troff, which Brian W. Kernighan released with
+.At v7 .
+In 1989, James Clarke re-implemented troff in C++, naming it groff.
 .Sh AUTHORS
 .An -nosplit
 This
