@@ -1,11 +1,11 @@
-/*	$NetBSD: load_pool.c,v 1.1.1.4 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: load_pool.c,v 1.1.1.5 2012/01/30 16:03:24 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002-2005 by Darren Reed.
+ * Copyright (C) 2010 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_pool.c,v 1.14.2.4 2006/06/16 17:21:06 darrenr Exp
+ * Id: load_pool.c,v 1.22.2.2 2012/01/26 05:29:16 darrenr Exp
  */
 
 #include <fcntl.h>
@@ -14,20 +14,17 @@
 #include "netinet/ip_lookup.h"
 #include "netinet/ip_pool.h"
 
-static int poolfd = -1;
 
-
-int load_pool(plp, iocfunc)
-ip_pool_t *plp;
-ioctlfunc_t iocfunc;
+int
+load_pool(plp, iocfunc)
+	ip_pool_t *plp;
+	ioctlfunc_t iocfunc;
 {
 	iplookupop_t op;
 	ip_pool_node_t *a;
 	ip_pool_t pool;
 
-	if ((poolfd == -1) && ((opts & OPT_DONOTHING) == 0))
-		poolfd = open(IPLOOKUP_NAME, O_RDWR);
-	if ((poolfd == -1) && ((opts & OPT_DONOTHING) == 0))
+	if (pool_open() == -1)
 		return -1;
 
 	op.iplo_unit = plp->ipo_unit;
@@ -42,7 +39,7 @@ ioctlfunc_t iocfunc;
 		op.iplo_arg |= IPOOL_ANON;
 
 	if ((opts & OPT_REMOVE) == 0) {
-		if ((*iocfunc)(poolfd, SIOCLOOKUPADDTABLE, &op))
+		if (pool_ioctl(iocfunc, SIOCLOOKUPADDTABLE, &op))
 			if ((opts & OPT_DONOTHING) == 0) {
 				perror("load_pool:SIOCLOOKUPADDTABLE");
 				return -1;
@@ -54,15 +51,16 @@ ioctlfunc_t iocfunc;
 
 	if ((opts & OPT_VERBOSE) != 0) {
 		pool.ipo_list = plp->ipo_list;
-		printpool(&pool, bcopywrap, pool.ipo_name, opts);
+		(void) printpool(&pool, bcopywrap, pool.ipo_name, opts, NULL);
 		pool.ipo_list = NULL;
 	}
 
 	for (a = plp->ipo_list; a != NULL; a = a->ipn_next)
-		load_poolnode(plp->ipo_unit, pool.ipo_name, a, iocfunc);
+		load_poolnode(plp->ipo_unit, pool.ipo_name,
+				     a, 0, iocfunc);
 
 	if ((opts & OPT_REMOVE) != 0) {
-		if ((*iocfunc)(poolfd, SIOCLOOKUPDELTABLE, &op))
+		if (pool_ioctl(iocfunc, SIOCLOOKUPDELTABLE, &op))
 			if ((opts & OPT_DONOTHING) == 0) {
 				perror("load_pool:SIOCLOOKUPDELTABLE");
 				return -1;
