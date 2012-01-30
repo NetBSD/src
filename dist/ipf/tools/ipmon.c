@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.19 2012/01/30 16:12:05 darrenr Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.20 2012/01/30 20:08:31 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2010 by Darren Reed.
@@ -1596,8 +1596,6 @@ int main(argc, argv)
 	int	doread, c, make_daemon = 0;
 	char	*prog;
 	config_t	config;
-
-	n = 0;	/* XXX gcc */
 
 	prog = strrchr(argv[0], '/');
 	if (prog == NULL)
