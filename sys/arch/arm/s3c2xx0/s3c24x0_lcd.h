@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.h,v 1.5 2011/07/01 20:31:39 dyoung Exp $ */
+/* $NetBSD: s3c24x0_lcd.h,v 1.6 2012/01/30 03:28:33 nisimura Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -56,7 +56,7 @@ struct s3c24x0_lcd_screen {
 };
 
 struct s3c24x0_lcd_softc {
-	struct device  dev;
+	device_t		sc_dev;
 
 	/* control registers */
 	bus_space_tag_t  	iot;
