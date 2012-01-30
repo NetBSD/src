@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.9 2012/01/11 16:02:30 macallan Exp $ */
+/*	$NetBSD: wcfb.c,v 1.10 2012/01/30 19:41:23 drochner Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.9 2012/01/11 16:02:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.10 2012/01/30 19:41:23 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,14 +156,11 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	uint32_t		reg;
 	unsigned long		defattr;
 	bool			is_console = 0;
-	char 			devinfo[256];
 	void *wtf;
 
 	sc->sc_dev = self;
 	sc->putchar = NULL;
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_naive("\n");
-	aprint_normal(": %s\n", devinfo);
+	pci_aprint_devinfo(pa, NULL);
 
 	dict = device_properties(self);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);

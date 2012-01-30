@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.11 2012/01/11 16:02:30 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.12 2012/01/30 19:41:22 drochner Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.11 2012/01/11 16:02:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.12 2012/01/30 19:41:22 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,6 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	struct pm2fb_softc	*sc = device_private(self);
 	struct pci_attach_args	*pa = aux;
 	struct rasops_info	*ri;
-	char devinfo[256];
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
@@ -238,8 +237,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_dev = self;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s\n", devinfo);
+	pci_aprint_devinfo(pa, NULL);
 
 	/* fill in parameters from properties */
 	dict = device_properties(self);

@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.9 2011/08/29 14:47:08 jmcneill Exp $ */
+/* $NetBSD: coram.c,v 1.10 2012/01/30 19:41:18 drochner Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.9 2011/08/29 14:47:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.10 2012/01/30 19:41:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,6 @@ coram_attach(device_t parent, device_t self, void *v)
 	const struct pci_attach_args *pa = v;
 	pci_intr_handle_t ih;
 	pcireg_t reg;
-	char devinfo[256];
 	const char *intrstr;
 	struct coram_iic_softc *cic;
 	uint32_t value;
@@ -174,9 +173,7 @@ coram_attach(device_t parent, device_t self, void *v)
 
 	sc->sc_dev = self;
 
-	aprint_naive("\n");
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	sc->sc_board = coram_board_lookup(PCI_VENDOR(reg), PCI_PRODUCT(reg));

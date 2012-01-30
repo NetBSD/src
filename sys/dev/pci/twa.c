@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.39 2012/01/27 19:48:39 para Exp $ */
+/*	$NetBSD: twa.c,v 1.40 2012/01/30 19:41:23 drochner Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.39 2012/01/27 19:48:39 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.40 2012/01/30 19:41:23 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1505,8 +1505,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 	sc->pc = pa->pa_pc;
 	sc->tag = pa->pa_tag;
 
-	aprint_naive(": RAID controller\n");
-	aprint_normal(": 3ware Apache\n");
+	pci_aprint_devinfo_fancy(pa, "RAID controller", "3ware Apache", 0);
 
 	sc->sc_quirks = 0;
 		
