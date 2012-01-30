@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.161 2012/01/30 10:33:05 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.162 2012/01/30 17:56:27 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.161 2012/01/30 10:33:05 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.162 2012/01/30 17:56:27 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1986,10 +1986,6 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 		pmap_pte_set(&pva[index], (pd_entry_t)
 		        (pmap_pa2pte(pa) | PG_u | PG_RW | PG_V));
 #if defined(XEN) && defined(__x86_64__)
-		/*
-		 * In Xen we must enter the mapping in kernel map too
-		 * if pmap is curmap and modifying top level (PGD)
-		 */
 		if(i == PTP_LEVELS && pmap != pmap_kernel()) {
 			/*
 			 * Update the per-cpu PD on all cpus the current
