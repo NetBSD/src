@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.152 2012/01/29 23:29:01 joerg Exp $
+# $NetBSD: md.amd64,v 1.153 2012/01/30 16:54:46 dholland Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1124,7 +1124,7 @@
 ./usr/libdata/debug/usr/lib/i386/libpthread.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libpthread_dbg.so.2.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libpuffs.so.2.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libquota.so.0.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libquota.so.0.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libradius.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librefuse.so.2.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libresolv.so.2.0.debug	comp-compat-shlib	compat,pic,debug
