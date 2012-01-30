@@ -1,18 +1,18 @@
-/*	$NetBSD: hostname.c,v 1.4 2010/04/17 21:00:09 darrenr Exp $	*/
+/*	$NetBSD: hostname.c,v 1.5 2012/01/30 16:12:04 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002-2003 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: hostname.c,v 1.6.2.3 2009/12/27 06:58:06 darrenr Exp
+ * Id: hostname.c,v 1.12.2.1 2012/01/26 05:29:15 darrenr Exp
  */
 
 #include "ipf.h"
 
-char *hostname(v, ip)
-int v;
-void *ip;
+char *hostname(family, ip)
+	int family;
+	void *ip;
 {
 	static char hostbuf[MAXHOSTNAMELEN+1];
 	struct hostent *hp;
@@ -21,14 +21,14 @@ void *ip;
 
 	memset(&ipa, 0, sizeof(ipa));	/* XXX gcc */
 
-	if (v == 4) {
+	if (family == AF_INET) {
 		ipa.s_addr = *(u_32_t *)ip;
 		if (ipa.s_addr == htonl(0xfedcba98))
 			return "test.host.dots";
 	}
 
 	if ((opts & OPT_NORESOLVE) == 0) {
-		if (v == 4) {
+		if (family == AF_INET) {
 			hp = gethostbyaddr(ip, 4, AF_INET);
 			if (hp != NULL && hp->h_name != NULL &&
 			    *hp->h_name != '\0') {
@@ -47,7 +47,7 @@ void *ip;
 		}
 	}
 
-	if (v == 4) {
+	if (family == AF_INET) {
 		return inet_ntoa(ipa);
 	}
 #ifdef  USE_INET6

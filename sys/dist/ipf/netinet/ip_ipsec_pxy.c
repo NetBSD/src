@@ -1,121 +1,174 @@
-/*	$NetBSD: ip_ipsec_pxy.c,v 1.8 2009/08/19 08:36:11 darrenr Exp $	*/
+/*	$NetBSD: ip_ipsec_pxy.c,v 1.9 2012/01/30 16:12:49 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2001-2003 by Darren Reed
+ * Copyright (C) 2011 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * Simple ISAKMP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ipsec_pxy.c,v 2.20.2.11 2008/11/06 21:18:34 darrenr Exp
+ * Id: ip_ipsec_pxy.c,v 2.43.2.2 2012/01/26 05:29:11 darrenr Exp
  *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.8 2009/08/19 08:36:11 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.9 2012/01/30 16:12:49 darrenr Exp $");
 
 #define	IPF_IPSEC_PROXY
 
 
-int ippr_ipsec_init __P((void));
-void ippr_ipsec_fini __P((void));
-int ippr_ipsec_new __P((fr_info_t *, ap_session_t *, nat_t *));
-void ippr_ipsec_del __P((ap_session_t *));
-int ippr_ipsec_inout __P((fr_info_t *, ap_session_t *, nat_t *));
-int ippr_ipsec_match __P((fr_info_t *, ap_session_t *, nat_t *));
+void *ipf_p_ipsec_soft_create __P((ipf_main_softc_t *));
+void ipf_p_ipsec_soft_destroy __P((ipf_main_softc_t *, void *));
+int ipf_p_ipsec_soft_init __P((ipf_main_softc_t *, void *));
+void ipf_p_ipsec_soft_fini __P((ipf_main_softc_t *, void *));
+int ipf_p_ipsec_init __P((void));
+void ipf_p_ipsec_fini __P((void));
+int ipf_p_ipsec_new __P((void *, fr_info_t *, ap_session_t *, nat_t *));
+void ipf_p_ipsec_del __P((ipf_main_softc_t *, ap_session_t *));
+int ipf_p_ipsec_inout __P((void *, fr_info_t *, ap_session_t *, nat_t *));
+int ipf_p_ipsec_match __P((fr_info_t *, ap_session_t *, nat_t *));
 
-static	frentry_t	ipsecfr;
-static	ipftq_t		*ipsecnattqe;
-static	ipftq_t		*ipsecstatetqe;
-static	char	ipsec_buffer[1500];
+typedef struct ipf_ipsec_softc_s {
+	frentry_t	ipsec_fr;
+	int		ipsec_proxy_init;
+	int		ipsec_proxy_ttl;
+	ipftq_t		*ipsec_nat_tqe;
+	ipftq_t		*ipsec_state_tqe;
+	char		ipsec_buffer[1500];
+} ipf_ipsec_softc_t;
 
-int	ipsec_proxy_init = 0;
-int	ipsec_proxy_ttl = 60;
 
 /*
  * IPSec application proxy initialization.
  */
-int ippr_ipsec_init()
+void *
+ipf_p_ipsec_soft_create(softc)
+	ipf_main_softc_t *softc;
 {
-	bzero((char *)&ipsecfr, sizeof(ipsecfr));
-	ipsecfr.fr_ref = 1;
-	ipsecfr.fr_flags = FR_OUTQUE|FR_PASS|FR_QUICK|FR_KEEPSTATE;
-	MUTEX_INIT(&ipsecfr.fr_lock, "IPsec proxy rule lock");
-	ipsec_proxy_init = 1;
+	ipf_ipsec_softc_t *softi;
 
-	ipsecnattqe = fr_addtimeoutqueue(&nat_utqe, ipsec_proxy_ttl);
-	if (ipsecnattqe == NULL)
+	KMALLOC(softi, ipf_ipsec_softc_t *);
+	if (softi == NULL)
+		return NULL;
+
+	bzero((char *)softi, sizeof(*softi));
+	softi->ipsec_fr.fr_ref = 1;
+	softi->ipsec_fr.fr_flags = FR_OUTQUE|FR_PASS|FR_QUICK|FR_KEEPSTATE;
+	MUTEX_INIT(&softi->ipsec_fr.fr_lock, "IPsec proxy rule lock");
+	softi->ipsec_proxy_init = 1;
+	softi->ipsec_proxy_ttl = 60;
+
+	return softi;
+}
+
+
+int
+ipf_p_ipsec_soft_init(softc, arg)
+	ipf_main_softc_t *softc;
+	void *arg;
+{
+	ipf_ipsec_softc_t *softi = arg;
+
+	softi->ipsec_nat_tqe = ipf_state_add_tq(softc, softi->ipsec_proxy_ttl);
+	if (softi->ipsec_nat_tqe == NULL)
 		return -1;
-	ipsecstatetqe = fr_addtimeoutqueue(&ips_utqe, ipsec_proxy_ttl);
-	if (ipsecstatetqe == NULL) {
-		if (fr_deletetimeoutqueue(ipsecnattqe) == 0)
-			fr_freetimeoutqueue(ipsecnattqe);
-		ipsecnattqe = NULL;
+	softi->ipsec_state_tqe = ipf_nat_add_tq(softc, softi->ipsec_proxy_ttl);
+	if (softi->ipsec_state_tqe == NULL) {
+		if (ipf_deletetimeoutqueue(softi->ipsec_nat_tqe) == 0)
+			ipf_freetimeoutqueue(softc, softi->ipsec_nat_tqe);
+		softi->ipsec_nat_tqe = NULL;
 		return -1;
 	}
 
-	ipsecnattqe->ifq_flags |= IFQF_PROXY;
-	ipsecstatetqe->ifq_flags |= IFQF_PROXY;
-
-	ipsecfr.fr_age[0] = ipsec_proxy_ttl;
-	ipsecfr.fr_age[1] = ipsec_proxy_ttl;
+	softi->ipsec_nat_tqe->ifq_flags |= IFQF_PROXY;
+	softi->ipsec_state_tqe->ifq_flags |= IFQF_PROXY;
+	softi->ipsec_fr.fr_age[0] = softi->ipsec_proxy_ttl;
+	softi->ipsec_fr.fr_age[1] = softi->ipsec_proxy_ttl;
 	return 0;
 }
 
 
-void ippr_ipsec_fini()
+void
+ipf_p_ipsec_soft_fini(softc, arg)
+	ipf_main_softc_t *softc;
+	void *arg;
 {
-	if (ipsecnattqe != NULL) {
-		if (fr_deletetimeoutqueue(ipsecnattqe) == 0)
-			fr_freetimeoutqueue(ipsecnattqe);
-	}
-	ipsecnattqe = NULL;
-	if (ipsecstatetqe != NULL) {
-		if (fr_deletetimeoutqueue(ipsecstatetqe) == 0)
-			fr_freetimeoutqueue(ipsecstatetqe);
-	}
-	ipsecstatetqe = NULL;
+	ipf_ipsec_softc_t *softi = arg;
 
-	if (ipsec_proxy_init == 1) {
-		MUTEX_DESTROY(&ipsecfr.fr_lock);
-		ipsec_proxy_init = 0;
+	if (arg == NULL)
+		return;
+
+	if (softi->ipsec_nat_tqe != NULL) {
+		if (ipf_deletetimeoutqueue(softi->ipsec_nat_tqe) == 0)
+			ipf_freetimeoutqueue(softc, softi->ipsec_nat_tqe);
 	}
+	softi->ipsec_nat_tqe = NULL;
+	if (softi->ipsec_state_tqe != NULL) {
+		if (ipf_deletetimeoutqueue(softi->ipsec_state_tqe) == 0)
+			ipf_freetimeoutqueue(softc, softi->ipsec_state_tqe);
+	}
+	softi->ipsec_state_tqe = NULL;
+}
+
+
+void
+ipf_p_ipsec_soft_destroy(softc, arg)
+	ipf_main_softc_t *softc;
+	void *arg;
+{
+	ipf_ipsec_softc_t *softi = arg;
+
+	if (softi->ipsec_proxy_init == 1) {
+		MUTEX_DESTROY(&softi->ipsec_fr.fr_lock);
+		softi->ipsec_proxy_init = 0;
+	}
+
+	KFREE(softi);
 }
 
 
 /*
  * Setup for a new IPSEC proxy.
  */
-int ippr_ipsec_new(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ipf_p_ipsec_new(arg, fin, aps, nat)
+	void *arg;
+	fr_info_t *fin;
+	ap_session_t *aps;
+	nat_t *nat;
 {
+	ipf_ipsec_softc_t *softi = arg;
+	ipf_main_softc_t *softc = fin->fin_main_soft;
+#ifdef USE_MUTEXES
+	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
+#endif
 	ipsec_pxy_t *ipsec;
+	ipnat_t *ipn, *np;
 	fr_info_t fi;
-	ipnat_t *ipn;
 	char *ptr;
 	int p, off, dlen, ttl;
 	mb_t *m;
 	ip_t *ip;
 
 	off = fin->fin_plen - fin->fin_dlen + fin->fin_ipoff;
-	bzero(ipsec_buffer, sizeof(ipsec_buffer));
+	bzero(softi->ipsec_buffer, sizeof(softi->ipsec_buffer));
 	ip = fin->fin_ip;
 	m = fin->fin_m;
 
 	dlen = M_LEN(m) - off;
 	if (dlen < 16)
 		return -1;
-	COPYDATA(m, off, MIN(sizeof(ipsec_buffer), dlen), ipsec_buffer);
+	COPYDATA(m, off, MIN(sizeof(softi->ipsec_buffer), dlen),
+		 softi->ipsec_buffer);
 
-	if (nat_outlookup(fin, 0, IPPROTO_ESP, nat->nat_inip,
+	if (ipf_nat_outlookup(fin, 0, IPPROTO_ESP, nat->nat_nsrcip,
 			  ip->ip_dst) != NULL)
 		return -1;
 
-	aps->aps_psiz = sizeof(*ipsec);
-	KMALLOCS(aps->aps_data, ipsec_pxy_t *, sizeof(*ipsec));
+	np = nat->nat_ptr;
+	aps->aps_psiz = sizeof(*ipsec) + np->in_namelen;
+	KMALLOCS(aps->aps_data, ipsec_pxy_t *, aps->aps_psiz);
 	if (aps->aps_data == NULL)
 		return -1;
 
@@ -128,29 +181,36 @@ nat_t *nat;
 	 * describe ESP but UDP instead.
 	 */
 	ipn = &ipsec->ipsc_rule;
-	ttl = IPF_TTLVAL(ipsecnattqe->ifq_ttl);
-	ipn->in_tqehead[0] = fr_addtimeoutqueue(&nat_utqe, ttl);
-	ipn->in_tqehead[1] = fr_addtimeoutqueue(&nat_utqe, ttl);
+	ttl = IPF_TTLVAL(softi->ipsec_nat_tqe->ifq_ttl);
+	ipn->in_tqehead[0] = ipf_nat_add_tq(softc, ttl);
+	ipn->in_tqehead[1] = ipf_nat_add_tq(softc, ttl);
 	ipn->in_ifps[0] = fin->fin_ifp;
 	ipn->in_apr = NULL;
 	ipn->in_use = 1;
 	ipn->in_hits = 1;
-	ipn->in_nip = ntohl(nat->nat_outip.s_addr);
+	ipn->in_snip = ntohl(nat->nat_nsrcaddr);
 	ipn->in_ippip = 1;
-	ipn->in_inip = nat->nat_inip.s_addr;
-	ipn->in_inmsk = 0xffffffff;
-	ipn->in_outip = fin->fin_saddr;
-	ipn->in_outmsk = nat->nat_outip.s_addr;
-	ipn->in_srcip = fin->fin_saddr;
-	ipn->in_srcmsk = 0xffffffff;
+	ipn->in_osrcip = nat->nat_osrcip;
+	ipn->in_osrcmsk = 0xffffffff;
+	ipn->in_nsrcip = nat->nat_nsrcip;
+	ipn->in_nsrcmsk = 0xffffffff;
+	ipn->in_odstip = nat->nat_odstip;
+	ipn->in_odstmsk = 0xffffffff;
+	ipn->in_ndstip = nat->nat_ndstip;
+	ipn->in_ndstmsk = 0xffffffff;
 	ipn->in_redir = NAT_MAP;
-	bcopy(nat->nat_ptr->in_ifnames[0], ipn->in_ifnames[0],
-	      sizeof(ipn->in_ifnames[0]));
-	ipn->in_p = IPPROTO_ESP;
+	ipn->in_pr[0] = IPPROTO_ESP;
+	ipn->in_pr[1] = IPPROTO_ESP;
+	MUTEX_INIT(&ipn->in_lock, "IPSec proxy NAT rule");
+
+	ipn->in_namelen = np->in_namelen;
+	bcopy(np->in_names, ipn->in_ifnames, ipn->in_namelen);
+	ipn->in_ifnames[0] = np->in_ifnames[0];
+	ipn->in_ifnames[1] = np->in_ifnames[1];
 
 	bcopy((char *)fin, (char *)&fi, sizeof(fi));
 	fi.fin_fi.fi_p = IPPROTO_ESP;
-	fi.fin_fr = &ipsecfr;
+	fi.fin_fr = &softi->ipsec_fr;
 	fi.fin_data[0] = 0;
 	fi.fin_data[1] = 0;
 	p = ip->ip_p;
@@ -158,7 +218,7 @@ nat_t *nat;
 	fi.fin_flx &= ~(FI_TCPUDP|FI_STATE|FI_FRAG);
 	fi.fin_flx |= FI_IGNORE;
 
-	ptr = ipsec_buffer;
+	ptr = softi->ipsec_buffer;
 	bcopy(ptr, (char *)ipsec->ipsc_icookie, sizeof(ipsec_cookie_t));
 	ptr += sizeof(ipsec_cookie_t);
 	bcopy(ptr, (char *)ipsec->ipsc_rcookie, sizeof(ipsec_cookie_t));
@@ -170,20 +230,19 @@ nat_t *nat;
 	if ((ipsec->ipsc_rcookie[0]|ipsec->ipsc_rcookie[1]) != 0)
 		ipsec->ipsc_rckset = 1;
 
-	MUTEX_ENTER(&ipf_nat_new);
-	ipsec->ipsc_nat = nat_new(&fi, ipn, &ipsec->ipsc_nat,
-				  NAT_SLAVE|SI_WILDP, NAT_OUTBOUND);
-	MUTEX_EXIT(&ipf_nat_new);
+	MUTEX_ENTER(&softn->ipf_nat_new);
+	ipsec->ipsc_nat = ipf_nat_add(&fi, ipn, &ipsec->ipsc_nat,
+				      NAT_SLAVE|SI_WILDP, NAT_OUTBOUND);
+	MUTEX_EXIT(&softn->ipf_nat_new);
 	if (ipsec->ipsc_nat != NULL) {
-		(void) nat_proto(&fi, ipsec->ipsc_nat, 0);
+		(void) ipf_nat_proto(&fi, ipsec->ipsc_nat, 0);
 		MUTEX_ENTER(&ipsec->ipsc_nat->nat_lock);
-		nat_update(&fi, ipsec->ipsc_nat);
+		ipf_nat_update(&fi, ipsec->ipsc_nat);
 		MUTEX_EXIT(&ipsec->ipsc_nat->nat_lock);
 
 		fi.fin_data[0] = 0;
 		fi.fin_data[1] = 0;
-		ipsec->ipsc_state = fr_addstate(&fi, &ipsec->ipsc_state,
-						SI_WILDP);
+		(void) ipf_state_add(softc, &fi, &ipsec->ipsc_state, SI_WILDP);
 	}
 	ip->ip_p = p & 0xff;
 	return 0;
@@ -194,11 +253,15 @@ nat_t *nat;
  * For outgoing IKE packets.  refresh timeouts for NAT & state entries, if
  * we can.  If they have disappeared, recreate them.
  */
-int ippr_ipsec_inout(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ipf_p_ipsec_inout(arg, fin, aps, nat)
+	void *arg;
+	fr_info_t *fin;
+	ap_session_t *aps;
+	nat_t *nat;
 {
+	ipf_ipsec_softc_t *softi = arg;
+	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipsec_pxy_t *ipsec;
 	fr_info_t fi;
 	ip_t *ip;
@@ -219,7 +282,7 @@ nat_t *nat;
 		if ((ipsec->ipsc_nat == NULL) || (ipsec->ipsc_state == NULL)) {
 			bcopy((char *)fin, (char *)&fi, sizeof(fi));
 			fi.fin_fi.fi_p = IPPROTO_ESP;
-			fi.fin_fr = &ipsecfr;
+			fi.fin_fr = &softi->ipsec_fr;
 			fi.fin_data[0] = 0;
 			fi.fin_data[1] = 0;
 			ip->ip_p = IPPROTO_ESP;
@@ -231,18 +294,23 @@ nat_t *nat;
 		 * Update NAT timeout/create NAT if missing.
 		 */
 		if (ipsec->ipsc_nat != NULL)
-			fr_queueback(&ipsec->ipsc_nat->nat_tqe);
+			ipf_queueback(softc->ipf_ticks,
+				      &ipsec->ipsc_nat->nat_tqe);
 		else {
-			MUTEX_ENTER(&ipf_nat_new);
-			ipsec->ipsc_nat = nat_new(&fi, &ipsec->ipsc_rule,
-						  &ipsec->ipsc_nat,
-						  NAT_SLAVE|SI_WILDP,
-						  nat->nat_dir);
-			MUTEX_EXIT(&ipf_nat_new);
+#ifdef USE_MUTEXES
+			ipf_nat_softc_t *softn = softc->ipf_nat_soft;
+#endif
+
+			MUTEX_ENTER(&softn->ipf_nat_new);
+			ipsec->ipsc_nat = ipf_nat_add(&fi, &ipsec->ipsc_rule,
+						      &ipsec->ipsc_nat,
+						      NAT_SLAVE|SI_WILDP,
+						      nat->nat_dir);
+			MUTEX_EXIT(&softn->ipf_nat_new);
 			if (ipsec->ipsc_nat != NULL) {
-				(void) nat_proto(&fi, ipsec->ipsc_nat, 0);
+				(void) ipf_nat_proto(&fi, ipsec->ipsc_nat, 0);
 				MUTEX_ENTER(&ipsec->ipsc_nat->nat_lock);
-				nat_update(&fi, ipsec->ipsc_nat);
+				ipf_nat_update(&fi, ipsec->ipsc_nat);
 				MUTEX_EXIT(&ipsec->ipsc_nat->nat_lock);
 			}
 		}
@@ -250,18 +318,18 @@ nat_t *nat;
 		/*
 		 * Update state timeout/create state if missing.
 		 */
-		READ_ENTER(&ipf_state);
+		READ_ENTER(&softc->ipf_state);
 		if (ipsec->ipsc_state != NULL) {
-			fr_queueback(&ipsec->ipsc_state->is_sti);
+			ipf_queueback(softc->ipf_ticks,
+				      &ipsec->ipsc_state->is_sti);
 			ipsec->ipsc_state->is_die = nat->nat_age;
-			RWLOCK_EXIT(&ipf_state);
+			RWLOCK_EXIT(&softc->ipf_state);
 		} else {
-			RWLOCK_EXIT(&ipf_state);
+			RWLOCK_EXIT(&softc->ipf_state);
 			fi.fin_data[0] = 0;
 			fi.fin_data[1] = 0;
-			ipsec->ipsc_state = fr_addstate(&fi,
-							&ipsec->ipsc_state,
-							SI_WILDP);
+			(void) ipf_state_add(softc, &fi, &ipsec->ipsc_state,
+					     SI_WILDP);
 		}
 		ip->ip_p = p;
 	}
@@ -275,10 +343,11 @@ nat_t *nat;
  * in the same order (not reversed depending on packet flow direction as with
  * UDP/TCP port numbers).
  */
-int ippr_ipsec_match(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ipf_p_ipsec_match(fin, aps, nat)
+	fr_info_t *fin;
+	ap_session_t *aps;
+	nat_t *nat;
 {
 	ipsec_pxy_t *ipsec;
 	u_32_t cookies[4];
@@ -319,8 +388,10 @@ nat_t *nat;
 /*
  * clean up after ourselves.
  */
-void ippr_ipsec_del(aps)
-ap_session_t *aps;
+void
+ipf_p_ipsec_del(softc, aps)
+	ipf_main_softc_t *softc;
+	ap_session_t *aps;
 {
 	ipsec_pxy_t *ipsec;
 
@@ -332,13 +403,13 @@ ap_session_t *aps;
 		 * *_del() is on a callback from aps_free(), from nat_delete()
 		 */
 
-		READ_ENTER(&ipf_state);
+		READ_ENTER(&softc->ipf_state);
 		if (ipsec->ipsc_state != NULL) {
-			ipsec->ipsc_state->is_die = fr_ticks + 1;
+			ipsec->ipsc_state->is_die = softc->ipf_ticks + 1;
 			ipsec->ipsc_state->is_me = NULL;
-			fr_queuefront(&ipsec->ipsc_state->is_sti);
+			ipf_queuefront(&ipsec->ipsc_state->is_sti);
 		}
-		RWLOCK_EXIT(&ipf_state);
+		RWLOCK_EXIT(&softc->ipf_state);
 
 		ipsec->ipsc_state = NULL;
 		ipsec->ipsc_nat = NULL;

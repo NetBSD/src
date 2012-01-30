@@ -1,11 +1,11 @@
-/*	$NetBSD: printsbuf.c,v 1.4 2010/04/17 21:00:09 darrenr Exp $	*/
+/*	$NetBSD: printsbuf.c,v 1.5 2012/01/30 16:12:04 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002-2004 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printsbuf.c,v 1.2.4.3 2009/12/27 06:58:07 darrenr Exp
+ * Id: printsbuf.c,v 1.12.2.1 2012/01/26 05:29:17 darrenr Exp
  */
 
 #ifdef	IPFILTER_SCAN
@@ -15,8 +15,9 @@
 #include "ipf.h"
 #include "netinet/ip_scan.h"
 
-void printsbuf(buf)
-char *buf;
+void
+printsbuf(buf)
+	char *buf;
 {
 	u_char *s;
 	int i;
@@ -25,8 +26,14 @@ char *buf;
 		if (ISPRINT(*s))
 			putchar(*s);
 		else
-			printf("\\%o", *s);
+			PRINTF("\\%o", *s);
 	}
 }
+#else
+void printsbuf(char *buf);
 
+void printsbuf(buf)
+	char *buf;
+{
+}
 #endif

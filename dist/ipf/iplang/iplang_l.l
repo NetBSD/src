@@ -1,12 +1,12 @@
-/*	$NetBSD: iplang_l.l,v 1.5 2004/03/28 09:00:55 martti Exp $	*/
+/*	$NetBSD: iplang_l.l,v 1.6 2012/01/30 16:12:03 darrenr Exp $	*/
 
 %{
 /*
- * Copyright (C) 1997-1998 by Darren Reed.
+ * Copyright (C) 2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: iplang_l.l,v 2.8 2003/07/28 01:15:31 darrenr Exp
+ * Id: iplang_l.l,v 2.8.4.1 2012/01/26 05:29:15 darrenr Exp
  */
 #include <stdio.h>
 #include <string.h>
