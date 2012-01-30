@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.153 2012/01/29 23:29:00 joerg Exp $
+# $NetBSD: md.amd64,v 1.154 2012/01/30 16:54:46 dholland Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -207,7 +207,7 @@
 ./usr/lib/i386/libpuffs.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libpuffs.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libquota.so.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libquota.so.0.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libquota.so.0.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libradius.so.4			base-compat-shlib	compat,pic
 ./usr/lib/i386/libradius.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librefuse.so.2			base-compat-shlib	compat,pic
