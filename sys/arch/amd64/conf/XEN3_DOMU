@@ -1,8 +1,8 @@
-# $NetBSD: XEN3_DOMU,v 1.35 2011/12/19 19:09:16 cherry Exp $
+# $NetBSD: XEN3_DOMU,v 1.36 2012/01/30 10:55:25 cherry Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
-#options		MULTIPROCESSOR	# Experimental
+options		MULTIPROCESSOR
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
