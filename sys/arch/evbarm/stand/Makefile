@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2003/04/29 05:35:08 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2012/01/30 03:28:34 nisimura Exp $
 
 SUBDIR+= gzboot
+SUBDIR+= boot2440
 
 .include <bsd.subdir.mk>
