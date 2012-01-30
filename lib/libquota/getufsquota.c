@@ -1,4 +1,4 @@
-/*	$NetBSD: getufsquota.c,v 1.6 2012/01/09 15:31:11 dholland Exp $ */
+/*	$NetBSD: getufsquota.c,v 1.7 2012/01/30 19:19:55 dholland Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -27,16 +27,19 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getufsquota.c,v 1.6 2012/01/09 15:31:11 dholland Exp $");
+__RCSID("$NetBSD: getufsquota.c,v 1.7 2012/01/30 19:19:55 dholland Exp $");
 
 #include <string.h>
 #include <errno.h>
 
 #include <quota/quota.h>
-#include <quota/quotaprop.h>	/* for QUOTADICT_CLASS_* strings */
 #include <quota.h>
 
 #include "quotapvt.h"
+
+/* Some strings passed to getufsquota() and friends */
+#define QUOTADICT_CLASS_USER "user"
+#define QUOTADICT_CLASS_GROUP "group"
 
 /*
  * Return true if QV contains any actual information.
