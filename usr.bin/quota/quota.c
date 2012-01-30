@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.45 2012/01/30 06:00:49 dholland Exp $	*/
+/*	$NetBSD: quota.c,v 1.46 2012/01/30 16:46:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.45 2012/01/30 06:00:49 dholland Exp $");
+__RCSID("$NetBSD: quota.c,v 1.46 2012/01/30 16:46:30 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,6 @@ __RCSID("$NetBSD: quota.c,v 1.45 2012/01/30 06:00:49 dholland Exp $");
 #include <quota/quota.h>
 
 #include "printquota.h"
-#include "getvfsquota.h"
 
 struct quotause {
 	struct	quotause *next;
