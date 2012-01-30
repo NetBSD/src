@@ -1,4 +1,4 @@
-/*	$NetBSD: t_kern.c,v 1.2 2011/01/06 13:42:45 pooka Exp $	*/
+/*	$NetBSD: t_kern.c,v 1.3 2012/01/30 13:05:52 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ LOCKFUN(DOUBLEFREE, "free lock twice", 0,
 LOCKFUN(DOUBLEINIT, "init lock twice", 1,
     "mutex error: lockdebug_alloc: already initialized");
 LOCKFUN(MEMFREE, "free memory active lock is in", 1,
-    "mutex error: kmem_free: allocation contains active lock");
+    "mutex error: kmem_intr_free: allocation contains active lock");
 LOCKFUN(MTX, "locking-against-self mutex", 0,
     "mutex error: lockdebug_wantlock: locking against myself");
 LOCKFUN(RWDOUBLEX, "locking-against-self exclusive rwlock", 0,
