@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.9 2012/01/30 19:16:36 dholland Exp $
+#	$NetBSD: Makefile,v 1.10 2012/01/30 19:19:20 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -13,8 +13,6 @@ DPADD=	${LIBQUOTA} ${LIBPROP} ${LIBRPCSVC}
 LDADD=	-lquota -lprop -lrpcsvc
 
 .PATH:	${NETBSDSRCDIR}/usr.bin/quota
-SRCS+=	printquota.c quotautil.c
-.PATH:	${NETBSDSRCDIR}/sys/ufs/ufs 
-SRCS+=	quota1_subr.c
+SRCS+=	printquota.c
 
 .include <bsd.prog.mk>
