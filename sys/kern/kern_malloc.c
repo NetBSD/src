@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.136 2012/01/30 01:56:47 rmind Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.137 2012/01/30 05:42:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.136 2012/01/30 01:56:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.137 2012/01/30 05:42:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -93,7 +93,7 @@ kmutex_t malloc_lock;
 struct malloc_header {
 	/* Total size, include the header. */
 	size_t		mh_size;
-};
+} __aligned(ALIGNBYTES+1);
 
 /*
  * Allocate a block of memory
