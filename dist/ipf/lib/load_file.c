@@ -1,14 +1,15 @@
-/*	$NetBSD: load_file.c,v 1.1.1.2 2010/04/17 20:45:58 darrenr Exp $	*/
+/*	$NetBSD: load_file.c,v 1.1.1.3 2012/01/30 16:03:25 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2006 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_file.c,v 1.1.2.2 2009/12/27 06:58:06 darrenr Exp
+ * Id: load_file.c,v 1.6.2.1 2012/01/26 05:29:16 darrenr Exp
  */
 
 #include "ipf.h"
+#include <ctype.h>
 
 alist_t *
 load_file(char *filename)
@@ -37,17 +38,23 @@ load_file(char *filename)
 		 */
 		s = strchr(line, '\n');
 		if (s == NULL) {
-			fprintf(stderr, "%d:%s: line too long\n", linenum, filename);
+			fprintf(stderr, "%d:%s: line too long\n",
+				linenum, filename);
 			fclose(fp);
 			alist_free(rtop);
 			return NULL;
 		}
 
-		*s = '\0';
+		/*
+		 * Remove trailing spaces
+		 */
+		for (; ISSPACE(*s); s--)
+			*s = '\0';
+
 		s = strchr(line, '\r');
 		if (s != NULL)
 			*s = '\0';
-		for (t = line; isspace(*t); t++)
+		for (t = line; ISSPACE(*t); t++)
 			;
 		if (*t == '!') {
 			not = 1;
@@ -58,21 +65,22 @@ load_file(char *filename)
 		/*
 		 * Remove comment markers
 		 */
-		for (s = t; *s; s++) {
-			if (*s == '#')
-				*s = '\0';
+		s = strchr(t, '#');
+		if (s != NULL) {
+			*s = '\0';
+			if (s == t)
+				continue;
 		}
-		if (!*t)
-			continue;
+
 		/*
 		 * Trim off tailing white spaces
 		 */
 		s = strlen(t) + t - 1;
-		while (isspace(*s))
+		while (ISSPACE(*s))
 			*s-- = '\0';
 
-		if (isdigit(*t)) {
-			a = alist_new(4, t);
+		a = alist_new(AF_UNSPEC, t);
+		if (a != NULL) {
 			a->al_not = not;
 			if (rbot != NULL)
 				rbot->al_next = a;
@@ -80,8 +88,8 @@ load_file(char *filename)
 				rtop = a;
 			rbot = a;
 		} else {
-			fprintf(stderr, "%s: unrecognised content line %d\n",
-				filename, linenum);
+			fprintf(stderr, "%s:%d unrecognised content :%s\n",
+				filename, linenum, t);
 		}
 	}
 	fclose(fp);

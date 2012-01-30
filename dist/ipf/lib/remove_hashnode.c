@@ -1,11 +1,11 @@
-/*	$NetBSD: remove_hashnode.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: remove_hashnode.c,v 1.1.1.3 2012/01/30 16:03:24 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2003 by Darren Reed.
+ * Copyright (C) 2009 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: remove_hashnode.c,v 1.1.4.1 2006/06/16 17:21:16 darrenr Exp
+ * Id: remove_hashnode.c,v 1.5.2.1 2012/01/26 05:29:17 darrenr Exp
  */
 
 #include <fcntl.h>
@@ -14,21 +14,18 @@
 #include "netinet/ip_lookup.h"
 #include "netinet/ip_htable.h"
 
-static int hashfd = -1;
 
-
-int remove_hashnode(unit, name, node, iocfunc)
-int unit;
-char *name;
-iphtent_t *node;
-ioctlfunc_t iocfunc;
+int
+remove_hashnode(unit, name, node, iocfunc)
+	int unit;
+	char *name;
+	iphtent_t *node;
+	ioctlfunc_t iocfunc;
 {
 	iplookupop_t op;
 	iphtent_t ipe;
 
-	if ((hashfd == -1) && ((opts & OPT_DONOTHING) == 0))
-		hashfd = open(IPLOOKUP_NAME, O_RDWR);
-	if ((hashfd == -1) && ((opts & OPT_DONOTHING) == 0))
+	if (pool_open() == -1)
 		return -1;
 
 	op.iplo_type = IPLT_HASH;
@@ -49,7 +46,7 @@ ioctlfunc_t iocfunc;
 		printf("%s\n", inet_ntoa(ipe.ipe_mask.in4));
 	}
 
-	if ((*iocfunc)(hashfd, SIOCLOOKUPDELNODE, &op))
+	if (pool_ioctl(iocfunc, SIOCLOOKUPDELNODE, &op))
 		if (!(opts & OPT_DONOTHING)) {
 			perror("remove_hash:SIOCLOOKUPDELNODE");
 			return -1;

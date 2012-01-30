@@ -1,21 +1,21 @@
-/*	$NetBSD: printpool.c,v 1.1.1.3 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: printpool.c,v 1.1.1.4 2012/01/30 16:03:24 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002-2005 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 
 #include "ipf.h"
 
-#define	PRINTF	(void)printf
-#define	FPRINTF	(void)fprintf
 
-ip_pool_t *printpool(pp, copyfunc, name, opts)
-ip_pool_t *pp;
-copyfunc_t copyfunc;
-char *name;
-int opts;
+ip_pool_t *
+printpool(pp, copyfunc, name, opts, fields)
+	ip_pool_t *pp;
+	copyfunc_t copyfunc;
+	char *name;
+	int opts;
+	wordtab_t *fields;
 {
 	ip_pool_node_t *ipnp, *ipnpn, ipn;
 	ip_pool_t ipp;
@@ -46,8 +46,9 @@ int opts;
 	if (ipp.ipo_list == NULL) {
 		putchar(';');
 	} else {
-		for (ipnp = ipp.ipo_list; ipnp != NULL; ) {
-			ipnp = printpoolnode(ipnp, opts);
+		for (ipnp = ipp.ipo_list; ipnp != NULL; ipnp = ipnpn) {
+			ipnpn = printpoolnode(ipnp, opts, fields);
+			free(ipnp);
 
 			if ((opts & OPT_DEBUG) == 0) {
 				putchar(';');
