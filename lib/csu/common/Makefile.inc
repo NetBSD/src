@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2012/01/31 20:03:50 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2012/01/31 20:08:28 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -45,22 +45,22 @@ PICFLAGS=	-fPIC
 PICFLAGS=
 .endif
 
-crt0.o: crt0-common.c crt0.S
+crt0.o: crt0.S crt0-common.c
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${PICFLAGS} ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
 	${COMPILE.S} ${ARCHDIR}/crt0.S -o ${.TARGET}.S.o
-	${LD} -x -r -o ${.TARGET} ${.TARGET}.c.o ${.TARGET}.S.o
-	rm -f ${.TARGET}.c.o ${.TARGET}.S.o
+	${COMPILE.c} ${PICFLAGS} ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
+	${LD} -x -r -o ${.TARGET} ${.TARGET}.S.o ${.TARGET}.c.o
+	rm -f ${.TARGET}.S.o ${.TARGET}.c.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
 
-gcrt0.o: crt0-common.c crt0.S
+gcrt0.o: crt0.S crt0-common.c
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${PICFLAGS} -DMCRT0 ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
 	${COMPILE.S} ${ARCHDIR}/crt0.S -o ${.TARGET}.S.o
-	${LD} -x -r -o ${.TARGET} ${.TARGET}.c.o ${.TARGET}.S.o
-	rm -f ${.TARGET}.c.o ${.TARGET}.S.o
+	${COMPILE.c} ${PICFLAGS} -DMCRT0 ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
+	${LD} -x -r -o ${.TARGET} ${.TARGET}.S.o ${.TARGET}.c.o
+	rm -f ${.TARGET}.S.o ${.TARGET}.c.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
