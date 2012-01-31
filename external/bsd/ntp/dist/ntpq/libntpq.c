@@ -1,4 +1,4 @@
-/*	$NetBSD: libntpq.c,v 1.1.1.1 2009/12/13 16:56:28 kardel Exp $	*/
+/*	$NetBSD: libntpq.c,v 1.1.1.2 2012/01/31 21:26:52 kardel Exp $	*/
 
 /*****************************************************************************
  *
@@ -11,7 +11,7 @@
  *  communcation is based on mode 6 packets.
  *
  ****************************************************************************/
-#define _LIBNTPQC
+#define LIBNTPQ_C
 #define NO_MAIN_ALLOWED 1
 /* #define BUILD_AS_LIB		Already provided by the Makefile */
 
@@ -19,40 +19,21 @@
 #include "libntpq.h"
 
 /* Function Prototypes */
-int ntpq_openhost(char *);
-int ntpq_closehost(void);
-int ntpq_queryhost(unsigned short VARSET, unsigned short association, char *resultbuf, int maxlen);
-int ntpq_stripquotes ( char *resultbuf, char *srcbuf, int datalen, int maxlen );
-int ntpq_queryhost_peervars(unsigned short association, char *resultbuf, int maxlen);
-int ntpq_getvar( char *resultbuf, int datalen, const char *varname, char *varvalue, int maxlen);
-int ntpq_get_peervar( const char *varname, char *varvalue, int maxlen);
-int ntpq_read_associations ( unsigned short resultbuf[], int max_entries );
-int ntpq_read_sysvars( char *resultbuf, int maxsize );
-int ntpq_get_assoc_allvars( int associd  );
-int ntpq_get_sysvars( void );
-int ntpq_get_assocs ( void );
-int ntpq_read_assoc_peervars( int associd, char *resultbuf, int maxsize );
-int ntpq_read_assoc_clockvars( int associd, char *resultbuf, int maxsize );
-int ntpq_get_assoc_number ( int associd );
-int ntpq_get_assoc_peervars( int associd );
-int ntpq_get_assoc_clockvars( int associd );
-int ntpq_get_assoc_clocktype ( int assoc_number );
  
 
 const char *Version = "libntpq 0.3beta";
 
 /* global variables used for holding snapshots of data */
- char peervars[NTPQ_BUFLEN];
- int peervarlen = 0;
- int peervar_assoc = 0;
- char clockvars[NTPQ_BUFLEN];
- int clockvarlen = 0;
- int clockvar_assoc = 0;
- char sysvars[NTPQ_BUFLEN];
- int sysvarlen = 0;
- char *ntpq_resultbuffer[NTPQ_BUFLEN];
- unsigned short ntpq_associations[MAXASSOC];
-
+char peervars[NTPQ_BUFLEN];
+int peervarlen = 0;
+associd_t peervar_assoc = 0;
+char clockvars[NTPQ_BUFLEN];
+int clockvarlen = 0;
+int clockvar_assoc = 0;
+char sysvars[NTPQ_BUFLEN];
+int sysvarlen = 0;
+char *ntpq_resultbuffer[NTPQ_BUFLEN];
+unsigned short ntpq_associations[MAXASSOC];
 struct ntpq_varlist ntpq_varlist[MAXLIST];
 
 /*****************************************************************************
@@ -131,32 +112,42 @@ int ntpq_stripquotes ( char *resultbuf, char *srcbuf, int datalen, int maxlen )
  * Parameters:
  *	resultbuf	char*	The resulting string without quoted
  *				characters
- *	datalen		int	The number of bytes stored in 
+ *	datalen		size_t	The number of bytes stored in 
  *							resultbuf
  *	varname		char*	Name of the required variable 
  *	varvalue	char*	Where the value of the variable should
  *							be stored
- *	maxlen		int	Max. number of bytes for varvalue
+ *	maxlen		size_t	Max. number of bytes for varvalue
  *
  * Returns:
- *	int		number of chars that have been copied to 
+ *	size_t		number of chars that have been copied to 
  *			varvalue
  ****************************************************************************/
 
-int ntpq_getvar( char *resultbuf, int datalen, const char *varname, char *varvalue, int maxlen)
+size_t
+ntpq_getvar(
+	const char *	resultbuf,
+	size_t		datalen,
+	const char *	varname,
+	char *		varvalue,
+	size_t		maxlen)
 {
-    char *name;
-    char *value = NULL;
+	char *	name;
+	char *	value;
+	int	idatalen;
 
-            while (nextvar(&datalen, &resultbuf, &name, &value)) {
+	value = NULL;
+	idatalen = (int)datalen;
 
-                if ( strcmp(varname, name) == 0 ) {
-			ntpq_stripquotes(varvalue,value,strlen(value),maxlen);
+	while (nextvar(&idatalen, &resultbuf, &name, &value)) {
+		if (strcmp(varname, name) == 0) {
+			ntpq_stripquotes(varvalue, value, strlen(value), maxlen);
+
 			return strlen(varvalue);
-                }
-            }
+		}
+	}
 
-            return 0;
+	return 0;
 }
 
 
@@ -190,7 +181,7 @@ int ntpq_getvar( char *resultbuf, int datalen, const char *varname, char *varval
 
 int ntpq_queryhost(unsigned short VARSET, unsigned short association, char *resultbuf, int maxlen)
 {
-	char *datap;
+	const char *datap;
 	int res;
 	int dsize;
 	u_short rstatus;
@@ -374,16 +365,16 @@ int ntpq_closehost(void)
  * 			ID has been found
  ****************************************************************************/
  
-int ntpq_get_assoc_number ( int associd )
+int ntpq_get_assoc_number ( associd_t associd )
 {
-   int i = 0;
+	int i;
 
-   for (i=0;i<numassoc;i++) {
-     if (assoc_cache[i].assid == associd)
-       return i;
-    }
+	for (i=0;i<numassoc;i++) {
+		if (assoc_cache[i].assid == associd)
+			return i;
+	}
 
-   return (-1);
+	return -1;
 
 }
 
@@ -414,53 +405,36 @@ int ntpq_get_assoc_number ( int associd )
  *			0 (zero) if an error occured
  ****************************************************************************/
 
-  int ntpq_read_assoc_peervars( int associd, char *resultbuf, int maxsize )
+int
+ntpq_read_assoc_peervars(
+	associd_t	associd,
+	char *		resultbuf,
+	int		maxsize
+	)
 {
+	const char *	datap;
+	int		res;
+	int		dsize;
+	u_short		rstatus;
 
-    char *datap;
-    int res;
-    int dsize;
-    u_short rstatus;
-   	l_fp rec;
-	  l_fp ts;
-    char value[NTPQ_BUFLEN];
+	res = doquery(CTL_OP_READVAR, associd, 0, 0, NULL, &rstatus,
+		      &dsize, &datap);
+	if (res != 0)
+		return 0;
+	if (dsize <= 0) {
+		if (numhosts > 1)
+			fprintf(stderr, "server=%s ", currenthost);
+		fprintf(stderr,
+			"***No information returned for association %d\n",
+			associd);
 
+		return 0;
+	}
+	if (dsize > maxsize) 
+		dsize = maxsize;
+	memcpy(resultbuf, datap, dsize);
 
-    res = doquery(CTL_OP_READVAR, associd, 0, 0, (char *)0, &rstatus,
-              &dsize, &datap);
-    
-    if (res != 0)
-        return 0;
-
-   	get_systime(&ts);
-
-    if (dsize == 0) {
-        if (numhosts > 1)
-            (void) fprintf(stderr, "server=%s ", currenthost);
-        (void) fprintf(stderr,
-                   "***No information returned for association %d\n",
-                   associd);
-        return 0;
-    } else {
-        if ( dsize > maxsize ) 
-            dsize = maxsize;
-
-        memcpy(resultbuf,datap,dsize);        
-        resultbuf[dsize]=0x0;
-        
-        ntpq_getvar(resultbuf, dsize, "rec", value, sizeof (value) );
-
-        if (!decodets(value, &rec))
-				  L_CLR(&rec);
-
-        memcpy(resultbuf,value,maxsize);        
-        resultbuf[dsize]=0x0;
-        dsize=strlen(resultbuf);
-        
-
-    }
-    return dsize;
-
+	return dsize;
 }
 
 
@@ -489,35 +463,37 @@ int ntpq_get_assoc_number ( int associd )
  *			- OR - 
  *			0 (zero) if an error occured
  ****************************************************************************/
-int ntpq_read_sysvars( char *resultbuf, int maxsize )
+size_t
+ntpq_read_sysvars(
+	char *	resultbuf,
+	size_t	maxsize
+	)
 {
+	const char *	datap;
+	int		res;
+	int		i_dsize;
+	size_t		dsize;
+	u_short		rstatus;
 
-    char *datap;
-    int res;
-    int dsize;
-    u_short rstatus;
+	res = doquery(CTL_OP_READVAR, 0, 0, 0, NULL, &rstatus,
+		      &i_dsize, &datap);
 
-    res = doquery(CTL_OP_READVAR, 0, 0, 0, (char *)0, &rstatus,
-              &dsize, &datap);
-    
-    if (res != 0)
-        return 0;
+	if (res != 0)
+		return 0;
 
-    if (dsize == 0) {
-        if (numhosts > 1)
-            (void) fprintf(stderr, "server=%s ", currenthost);
-        (void) fprintf(stderr,
-                   "***No sysvar information returned \n");
-        return 0;
-    } else {
-        if ( dsize > maxsize ) 
-            dsize = maxsize;
+	if (i_dsize == 0) {
+		if (numhosts > 1)
+			fprintf(stderr, "server=%s ", currenthost);
+		fprintf(stderr, "***No sysvar information returned\n");
 
-        memcpy(resultbuf,datap,dsize);
-    }
+		return 0;
+	} else {
+		dsize = max(0, i_dsize);
+		dsize = min(dsize, maxsize);
+		memcpy(resultbuf, datap, dsize);
+	}
 
-    return dsize;
-
+	return dsize;
 }
 
 
@@ -545,9 +521,10 @@ int ntpq_read_sysvars( char *resultbuf, int maxsize )
  *			0 (zero) if an error occured and both variable sets
  *			could not be read
  ****************************************************************************/
- int  ntpq_get_assoc_allvars( int associd  )
+ int  ntpq_get_assoc_allvars( associd_t associd  )
 {
-    return ( ntpq_get_assoc_peervars ( associd ) & ntpq_get_assoc_clockvars( associd ) );
+	return ntpq_get_assoc_peervars ( associd ) &
+	       ntpq_get_assoc_clockvars( associd );
 }
 
 
@@ -570,14 +547,14 @@ int ntpq_read_sysvars( char *resultbuf, int maxsize )
  *			0 (zero) if an error occured and the sysvars
  *			could not be read
  ****************************************************************************/
- int  ntpq_get_sysvars( void )
+int
+ntpq_get_sysvars(void)
 {
-        sysvarlen = ( ntpq_read_sysvars( sysvars, sizeof(sysvars )) );
-        if ( sysvarlen <= 0 ) {
-            return 0;
-        } else {
-            return 1;
-        }
+	sysvarlen = ntpq_read_sysvars(sysvars, sizeof(sysvars));
+	if (sysvarlen <= 0)
+		return 0;
+	else
+		return 1;
 }
 
 
@@ -628,16 +605,21 @@ int ntpq_get_peervar( const char *varname, char *varvalue, int maxlen)
  *			0 (zero) if an error occured and the variable set
  *			could not be read
  ****************************************************************************/
- int  ntpq_get_assoc_peervars( int associd )
+int
+ntpq_get_assoc_peervars(
+	associd_t associd
+	)
 {
-        peervarlen = ( ntpq_read_assoc_peervars( associd, peervars, sizeof(peervars )) );
-        if ( peervarlen <= 0 ) {
-            peervar_assoc = 0;
-            return 0;
-        } else {
-            peervar_assoc = associd;
-            return 1;
-        }
+	peervarlen = ntpq_read_assoc_peervars(associd, peervars, 
+					      sizeof(peervars));
+	if (peervarlen <= 0) {
+		peervar_assoc = 0;
+
+		return 0;
+	}
+	peervar_assoc = associd;
+
+	return 1;
 }
 
 
@@ -667,30 +649,33 @@ int ntpq_get_peervar( const char *varname, char *varvalue, int maxlen)
  *			0 (zero) if an error occured
  ****************************************************************************/
 
-int ntpq_read_assoc_clockvars( int associd, char *resultbuf, int maxsize )
+int
+ntpq_read_assoc_clockvars(
+	associd_t	associd,
+	char *		resultbuf,
+	int		maxsize
+	)
 {
+	const char *datap;
+	int res;
+	int dsize;
+	u_short rstatus;
 
-    char *datap;
-    int res;
-    int dsize;
-    u_short rstatus;
-    
-    res = ntpq_doquerylist(ntpq_varlist, CTL_OP_READCLOCK, associd, 0, &rstatus, &dsize, &datap);
-    
-    if (res != 0)
-        return 0;
+	res = ntpq_doquerylist(ntpq_varlist, CTL_OP_READCLOCK, associd,
+			       0, &rstatus, &dsize, &datap);
+	if (res != 0)
+		return 0;
 
-    if (dsize == 0) {
-        if (numhosts > 1) /* no information returned from server */
-	return 0;
-    } else {
-        if ( dsize > maxsize ) 
-            dsize = maxsize;
+	if (dsize == 0) {
+		if (numhosts > 1) /* no information returned from server */
+			return 0;
+	} else {
+		if (dsize > maxsize) 
+			dsize = maxsize;
+		memcpy(resultbuf, datap, dsize);
+	}
 
-        memcpy(resultbuf,datap,dsize);
-    }
-
-    return dsize;
+	return dsize;
 }
 
 
@@ -709,46 +694,37 @@ int ntpq_read_assoc_clockvars( int associd, char *resultbuf, int maxsize )
  *  NTP_CLOCKTYPE_MULTICAST Multicast server
  * 
  ****************************************************************************/
- int ntpq_get_assoc_clocktype ( int assoc_number )
+int
+ntpq_get_assoc_clocktype(
+	int assoc_index
+	)
 {
-    int type = 0;
-    int i, rc = 0;
-    sockaddr_u dum_store;
-    char value[LENHOSTNAME];
-    char resultbuf[1024];
+	associd_t	associd;
+	int		i;
+	int		rc;
+	sockaddr_u	dum_store;
+	char		dstadr[LENHOSTNAME];
+	char		resultbuf[NTPQ_BUFLEN];
 
+	if (assoc_index < 0 || assoc_index >= numassoc)
+		return -1;
 
-    if ( assoc_number < 0 || assoc_number > numassoc ) {
-        return -1;
-    } else {
-        if ( peervar_assoc != assoc_cache[assoc_number].assid ) {
+	associd = assoc_cache[assoc_index].assid;
+	if (associd == peervar_assoc) {
+		rc = ntpq_get_peervar("dstadr", dstadr, sizeof(dstadr));
+	} else {
+		i = ntpq_read_assoc_peervars(associd, resultbuf,
+					     sizeof(resultbuf));
+		if (i <= 0)
+			return -1;
+		rc = ntpq_getvar(resultbuf, i, "dstadr", dstadr,
+				 sizeof(dstadr));
+	}
 
-            i=ntpq_read_assoc_peervars(assoc_cache[assoc_number].assid, resultbuf, sizeof(resultbuf));
-            if ( i <= 0 ) {
-                return -1;
-            }
+	if (0 != rc && decodenetnum(dstadr, &dum_store))
+		return ntpq_decodeaddrtype(&dum_store);
 
-            rc = ntpq_getvar(resultbuf, i, "dstadr", value, LENHOSTNAME );
-
-
-        } else {
-            
-            rc = ntpq_get_peervar("dstadr",value,LENHOSTNAME);
-
-        }
-
-        if ( rc ) {
-            if (decodenetnum(value, &dum_store)) {
-		type = ntpq_decodeaddrtype(&dum_store);
-                return type;
-            }
-        }
-
-        return -1;
-    }
-
-    return -1;
-
+	return -1;
 }
 
 
@@ -773,20 +749,20 @@ int ntpq_read_assoc_clockvars( int associd, char *resultbuf, int maxsize )
  *			0 (zero) if an error occured and the variable set
  *			could not be read
  ****************************************************************************/
- int  ntpq_get_assoc_clockvars( int associd )
+int  ntpq_get_assoc_clockvars( associd_t associd )
 {
-        
-        if ( ntpq_get_assoc_clocktype(ntpq_get_assoc_number(associd)) != NTP_CLOCKTYPE_LOCAL )
-            return 0;
-  
-        clockvarlen = ( ntpq_read_assoc_clockvars( associd, clockvars, sizeof(clockvars )) );
-        if ( clockvarlen <= 0 ) {
-            clockvar_assoc = 0;
-            return 0;
-        } else {
-            clockvar_assoc = associd;
-            return 1;
-        }
+	if (NTP_CLOCKTYPE_LOCAL != ntpq_get_assoc_clocktype(
+	    ntpq_get_assoc_number(associd)))
+		return 0;
+	clockvarlen = ntpq_read_assoc_clockvars( associd, clockvars,
+						 sizeof(clockvars) );
+	if ( clockvarlen <= 0 ) {
+		clockvar_assoc = 0;
+		return 0;
+	} else {
+		clockvar_assoc = associd;
+		return 1;
+	}
 }
 
 

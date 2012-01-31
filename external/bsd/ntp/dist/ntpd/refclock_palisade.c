@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_palisade.c,v 1.1.1.1 2009/12/13 16:55:56 kardel Exp $	*/
+/*	$NetBSD: refclock_palisade.c,v 1.1.1.2 2012/01/31 21:26:16 kardel Exp $	*/
 
 /*
  * This software was developed by the Software and Component Technologies
@@ -73,7 +73,7 @@
 # include "config.h"
 #endif
 
-#if defined(REFCLOCK) && (defined(PALISADE) || defined(CLOCK_PALISADE))
+#if defined(REFCLOCK) && defined(CLOCK_PALISADE)
 
 #ifdef SYS_WINNT
 extern int async_write(int, const void *, unsigned int);
@@ -275,7 +275,7 @@ palisade_start (
 	char gpsdev[20];
 	struct termios tio;
 
-	(void) sprintf(gpsdev, DEVICE, unit);
+	snprintf(gpsdev, sizeof(gpsdev), DEVICE, unit);
 
 	/*
 	 * Open serial port. 
@@ -352,7 +352,8 @@ palisade_start (
 #ifdef DEBUG
 		printf("Palisade(%d) io_addclock\n",unit);
 #endif
-		(void) close(fd);
+		close(fd);
+		pp->io.fd = -1;
 		free(up);
 		return (0);
 	}
@@ -396,8 +397,10 @@ palisade_shutdown (
 	struct refclockproc *pp;
 	pp = peer->procptr;
 	up = (struct palisade_unit *)pp->unitptr;
-	io_closeclock(&pp->io);
-	free(up);
+	if (-1 != pp->io.fd)
+		io_closeclock(&pp->io);
+	if (NULL != up)
+		free(up);
 }
 
 
@@ -922,8 +925,10 @@ palisade_receive (
 	 * report and process 
 	 */
 
-	(void) sprintf(pp->a_lastcode,"%4d %03d %02d:%02d:%02d.%06ld",
-		       pp->year,pp->day,pp->hour,pp->minute, pp->second,pp->nsec); 
+	snprintf(pp->a_lastcode, sizeof(pp->a_lastcode),
+		 "%4d %03d %02d:%02d:%02d.%06ld",
+		 pp->year, pp->day,
+		 pp->hour,pp->minute, pp->second, pp->nsec); 
 	pp->lencode = 24;
 
 	if (!refclock_process(pp)) {
@@ -1263,10 +1268,11 @@ getlong(
 	)
 {
 	return (long) (bp[0] << 24) | 
-	    (bp[1] << 16) |
-	    (bp[2] << 8) |
-	    bp[3];
+		      (bp[1] << 16) |
+		      (bp[2] << 8) |
+		       bp[3];
 }
 
-int refclock_palisade_bs;
-#endif /* REFCLOCK */
+#else	/* REFCLOCK && CLOCK_PALISADE*/
+int refclock_palisade_c_notempty;
+#endif

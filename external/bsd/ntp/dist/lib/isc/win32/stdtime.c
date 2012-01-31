@@ -1,4 +1,4 @@
-/*	$NetBSD: stdtime.c,v 1.1.1.1 2009/12/13 16:54:40 kardel Exp $	*/
+/*	$NetBSD: stdtime.c,v 1.1.1.2 2012/01/31 21:21:51 kardel Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -35,5 +35,5 @@ isc_stdtime_get(isc_stdtime_t *t) {
 
 	REQUIRE(t != NULL);
 
-	(void)time(t);
+	(void)time((time_t *)t);
 }

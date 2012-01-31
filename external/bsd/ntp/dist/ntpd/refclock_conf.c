@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_conf.c,v 1.1.1.1 2009/12/13 16:55:47 kardel Exp $	*/
+/*	$NetBSD: refclock_conf.c,v 1.1.1.2 2012/01/31 21:26:35 kardel Exp $	*/
 
 /*
  * refclock_conf.c - reference clock configuration
@@ -170,8 +170,8 @@ extern	struct refclock refclock_shm;
 #define refclock_shm refclock_none
 #endif
 
-#ifdef CLOCK_PALISADE
-extern  struct refclock refclock_palisade;
+#ifdef CLOCK_PALISADE 
+extern	struct refclock refclock_palisade;
 #else
 #define refclock_palisade refclock_none
 #endif
@@ -266,7 +266,7 @@ extern	struct refclock	refclock_neoclock4x;
  *
  * Types are defined in ntp.h.  The index must match this.
  */
-struct refclock *refclock_conf[] = {
+struct refclock * const refclock_conf[] = {
 	&refclock_none,		/* 0 REFCLK_NONE */
 	&refclock_local,	/* 1 REFCLK_LOCAL */
 	&refclock_none,		/* 2 deprecated: REFCLK_GPS_TRAK */

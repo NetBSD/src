@@ -21,7 +21,7 @@
 		<script type="text/javascript" language="javascript" src="scripts/manual.txt"></script>
 		<hr>
 		<h4>Synopsis</h4>
-		<tt>ntpq [-inp] [-c <i>command</i>] [<i>host</i>] [...]</tt>
+		<tt>ntpq [-46dinp] [-c <i>command</i>] [<i>host</i>] [...]</tt>
 		<h4>Description</h4>
 		<p>The <tt>ntpq</tt> utility program is used to monitor NTP daemon <tt>ntpd</tt> operations
 			and determine performance. It uses the standard NTP mode 6 control
@@ -81,7 +81,7 @@
 			<dd>Exit <tt>ntpq</tt>.</dd>
 			<dt><tt>raw</tt></dt>
 			<dd>Display server messages as received and without reformatting.</dd>
-			<dt><tt>timeout <i>millseconds</i></tt></dt>
+			<dt><tt>timeout <i>milliseconds</i></tt></dt>
 			<dd>Specify a timeout period for responses to server queries. The default is about 5000 milliseconds. Note that since <tt>ntpq</tt> retries each query once after a timeout, the total waiting time for a timeout will be twice the timeout value set.</dd>
 		</dl>
 		<h4>Control Message Commands</h4>
@@ -122,15 +122,15 @@
 					</tr>
 					<tr>
 						<td><tt>condition</tt></td>
-						<td>source (see <a href="decode.html#peer">peer status word</a>)</td>
+						<td>selection status (see the <tt>select</tt> field of the <a href="decode.html#peer">peer status word</a>)</td>
 					</tr>
 					<tr>
 						<td><tt>last_event</tt></td>
-						<td>event report (see <a href="decode.html#peer">peer status word</a>)</td>
+						<td>event report (see the <tt>event</tt> field of the <a href="decode.html#peer">peer status word</a>)</td>
 					</tr>
 					<tr>
 						<td><tt>cnt</tt></td>
-						<td>event count (see <a href="decode.html#peer">peer status word</a>)</td>
+						<td>event count (see the <tt>count</tt> field of the <a href="decode.html#peer">peer status word</a>)</td>
 					</tr>
 				</table>
 			</dd>
@@ -153,8 +153,8 @@
 			<dt><tt>passwd</tt></dt>
 			<dd>Specify the password to use for write requests.</dd>
 			<dt id="pe"><tt>peers</tt></dt>
-			<dd>Display a list of associations in the form</dd>
-			<dd><tt>ind assid status conf reach auth condition last_event cnt</tt></dd>
+			<dd>Display a list of peers in the form</dd>
+			<dd><tt>[tally]remote refid st t when pool reach delay offset jitter</tt></dd>
 			<dd>
 				<table width="100%" border="1" cellspacing="2" cellpadding="2">
 					<tr>
@@ -162,8 +162,12 @@
 						<td>Description</td>
 					</tr>
 					<tr>
+						<td><tt>[tally]</tt></td>
+						<td>single-character code indicating current value of the <tt>select</tt> field of the <a href="decode.html#peer">peer status word</a></td>
+					</tr>
+					<tr>
 						<td><tt>remote</tt></td>
-						<td>index on this list</td>
+						<td>host name (or IP number) of peer</td>
 					</tr>
 					<tr>
 						<td><tt>refid</tt></td>
@@ -171,7 +175,7 @@
 					</tr>
 					<tr>
 						<td><tt>st</tt></td>
-						<td><a href="decode.html#peer">peer status word</a></td>
+						<td>stratum</td>
 					</tr>
 					<tr>
 						<td><tt>t</tt></td>
