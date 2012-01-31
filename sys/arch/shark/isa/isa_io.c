@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.11 2011/07/19 15:07:43 dyoung Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.12 2012/01/31 04:28:50 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.11 2011/07/19 15:07:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.12 2012/01/31 04:28:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,14 +379,9 @@ isa_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t 
 }
 
 int
-isa_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+isa_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
+	bus_size_t alignment, bus_size_t boundary, int cacheable,
+	bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	panic("isa_alloc(): Help!");
 }
