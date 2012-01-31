@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2012/01/18 09:35:48 skrll Exp $
+#	$NetBSD: Makefile,v 1.16 2012/01/31 21:17:57 mlelstv Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -14,7 +14,8 @@ DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 .if    ${MACHINE} == "amd64" \
     || ${MACHINE} == "hp700" \
     || ${MACHINE} == "i386" \
-    || ${MACHINE} == "sparc64"
+    || ${MACHINE} == "sparc64" \
+    || ${MACHINE_ARCH} == "m68k"
 REALCRASH=yes
 .else
 REALCRASH=no
@@ -54,6 +55,13 @@ SRCS+=	db_trace.c db_machdep.c
 . endif
 
 . if ${MACHINE} == "sparc64"
+SRCS+=	db_trace.c db_interface.c
+. endif
+
+. if	${MACHINE_ARCH} == "m68k"
+MACHINE_FAMILY = m68k
+.PATH:	${S}/arch/m68k/m68k
+CPPFLAGS+=	-I${S}/arch
 SRCS+=	db_trace.c db_interface.c
 . endif
 
