@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.15 2011/07/17 20:54:53 joerg Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.16 2012/01/31 09:53:44 hauke Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.15 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.16 2012/01/31 09:53:44 hauke Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,20 +126,40 @@ ddp_route(struct mbuf *m, struct route *ro)
 	struct elaphdr *elh;
 	struct at_ifaddr *aa = NULL;
 	struct ifnet   *ifp = NULL;
-	u_short         net;
+	uint16_t        net;
+	uint8_t         node;
+	uint8_t         loopback = 0;
 
 	if ((rt = rtcache_validate(ro)) != NULL && (ifp = rt->rt_ifp) != NULL) {
+		const struct sockaddr_at *dst = satocsat(rtcache_getdst(ro));
+		uint16_t dnet = dst->sat_addr.s_net;
+		uint8_t dnode = dst->sat_addr.s_node;
 		net = satosat(rt->rt_gateway)->sat_addr.s_net;
+		node = satosat(rt->rt_gateway)->sat_addr.s_node;
+
 		TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
-			if (aa->aa_ifp == ifp &&
-			    ntohs(net) >= ntohs(aa->aa_firstnet) &&
+			if (ntohs(net) >= ntohs(aa->aa_firstnet) &&
 			    ntohs(net) <= ntohs(aa->aa_lastnet)) {
+				/* Are we talking to ourselves? */
+				if (dnet == aa->aa_addr.sat_addr.s_net &&
+				    dnode == aa->aa_addr.sat_addr.s_node) {
+					/* If to us, redirect to lo0. */
+					ifp = lo0ifp;
+				}
+				/* Or is it a broadcast? */
+				else if (dnet == aa->aa_addr.sat_addr.s_net &&
+					dnode == 255) {
+					/* If broadcast, loop back a copy. */
+					loopback = 1;
+				}
 				break;
 			}
 		}
 	}
 	if (aa == NULL) {
+#ifdef NETATALKDEBUG
 		printf("%s: no address found\n", __func__);
+#endif
 		m_freem(m);
 		return EINVAL;
 	}
@@ -161,7 +181,8 @@ ddp_route(struct mbuf *m, struct route *ro)
 		    ntohs(aa->aa_firstnet) &&
 		    ntohs(satocsat(rtcache_getdst(ro))->sat_addr.s_net) <=
 		    ntohs(aa->aa_lastnet)) {
-			elh->el_dnode = satocsat(rtcache_getdst(ro))->sat_addr.s_node;
+			elh->el_dnode =
+			    satocsat(rtcache_getdst(ro))->sat_addr.s_node;
 		} else {
 			elh->el_dnode =
 			    satosat(rt->rt_gateway)->sat_addr.s_node;
@@ -182,5 +203,13 @@ ddp_route(struct mbuf *m, struct route *ro)
 #endif
 
 	/* XXX */
+	if (loopback && rtcache_getdst(ro)->sa_family == AF_APPLETALK) {
+		struct mbuf *copym = m_copypacket(m, M_DONTWAIT);
+		
+#ifdef NETATALKDEBUG
+		printf("Looping back (not AARP).\n");
+#endif
+		looutput(lo0ifp, copym, rtcache_getdst(ro), NULL);
+	}
 	return (*ifp->if_output)(ifp, m, (struct sockaddr *)&gate, NULL);
 }
