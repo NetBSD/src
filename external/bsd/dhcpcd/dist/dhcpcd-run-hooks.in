@@ -16,7 +16,12 @@ BOUND|INFORM|REBIND|REBOOT|RENEW|TIMEOUT|STATIC)	if_up=true;;
 PREINIT|EXPIRE|FAIL|IPV4LL|NAK|NOCARRIER|RELEASE|STOP)	if_down=true;;
 esac
 
-[ "$reason" = ROUTERADVERT -a "$ra_count" != 0 ] && if_up=true
+if [ "$reason" = ROUTERADVERT ]; then
+	if_suffix=":ra"
+	[ "$new_ra_count" != 0 ] && if_up=true
+else
+	if_suffix=
+fi
 
 # Ensure that all arguments are unique
 uniqify()
