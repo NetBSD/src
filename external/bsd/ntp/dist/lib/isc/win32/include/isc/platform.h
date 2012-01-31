@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1.1.1 2009/12/13 16:54:47 kardel Exp $	*/
+/*	$NetBSD: platform.h,v 1.1.1.2 2012/01/31 21:22:02 kardel Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -32,11 +32,11 @@
  *** Network.
  ***/
 
-#define ISC_PLATFORM_HAVEIPV6
 #if _MSC_VER > 1200
+#define ISC_PLATFORM_HAVEIPV6
 #define ISC_PLATFORM_HAVEIN6PKTINFO
-#endif
 #define ISC_PLATFORM_HAVESCOPEID
+#endif
 #define ISC_PLATFORM_NEEDPORTT
 #undef MSG_TRUNC
 #define ISC_PLATFORM_NEEDNTOP

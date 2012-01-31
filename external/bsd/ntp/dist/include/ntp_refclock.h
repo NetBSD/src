@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.h,v 1.1.1.1 2009/12/13 16:54:52 kardel Exp $	*/
+/*	$NetBSD: ntp_refclock.h,v 1.1.1.2 2012/01/31 21:23:19 kardel Exp $	*/
 
 /*
  * ntp_refclock.h - definitions for reference clock support
@@ -112,7 +112,7 @@ struct refclockstat {
 	double	fudgetime1;	/* configure fudge time1 */
 	double	fudgetime2;	/* configure fudge time2 */
 	int32	fudgeval1;	/* configure fudge value1 */
-	int32	fudgeval2;	/* configure fudge value2 */
+	u_int32	fudgeval2;	/* configure fudge value2 */
 	u_char	currentstatus;	/* clock status */
 	u_char	lastevent;	/* last exception event */
 	u_char	leap;		/* leap bits */
@@ -179,7 +179,7 @@ struct refclockbug {
 
 struct refclockproc {
 	struct	refclockio io;	/* I/O handler structure */
-	caddr_t	unitptr;	/* pointer to unit structure */
+	void *	unitptr;	/* pointer to unit structure */
 	u_char	leap;		/* leap/synchronization code */
 	u_char	currentstatus;	/* clock status */
 	u_char	lastevent;	/* last exception event */

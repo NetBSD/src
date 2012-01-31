@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_hopfpci.c,v 1.1.1.1 2009/12/13 16:55:48 kardel Exp $	*/
+/*	$NetBSD: refclock_hopfpci.c,v 1.1.1.2 2012/01/31 21:24:56 kardel Exp $	*/
 
 /*
  * refclock_hopfpci.c
@@ -126,24 +126,17 @@ hopfpci_start(
 	/*
 	 * Allocate and initialize unit structure
 	 */
-	up = (struct hopfclock_unit *) emalloc(sizeof(struct hopfclock_unit));
-
-	if (!(up)) {
-                msyslog(LOG_ERR, "hopfPCIClock(%d) emalloc: %m",unit);
-#ifdef DEBUG
-                printf("hopfPCIClock(%d) emalloc\n",unit);
-#endif
-		return (0);
-	}
-	memset((char *)up, 0, sizeof(struct hopfclock_unit));
+	up = emalloc(sizeof(*up));
+	memset(up, 0, sizeof(*up));
 
 #ifndef SYS_WINNT
 
  	fd = open(DEVICE,O_RDWR); /* try to open hopf clock device */
 
 #else
-	if (!OpenHopfDevice()){
-		msyslog(LOG_ERR,"Start: %s unit: %d failed!",DEVICE,unit);
+	if (!OpenHopfDevice()) {
+		msyslog(LOG_ERR, "Start: %s unit: %d failed!", DEVICE, unit);
+		free(up);
 		return (0);
 	}
 #endif
@@ -160,17 +153,12 @@ hopfpci_start(
 	/*
 	 * Initialize miscellaneous peer variables
 	 */
-	if (pp->unitptr!=0) {
-		memcpy((char *)&pp->refid, REFID, 4);
-		peer->precision = PRECISION;
-		pp->clockdesc = DESCRIPTION;
-		up->leap_status = 0;
-		up->unit = (short) unit;
-		return (1);
-	}
-	else {
-		return 0;
-	}
+	memcpy((char *)&pp->refid, REFID, 4);
+	peer->precision = PRECISION;
+	pp->clockdesc = DESCRIPTION;
+	up->leap_status = 0;
+	up->unit = (short) unit;
+	return (1);
 }
 
 
@@ -189,6 +177,8 @@ hopfpci_shutdown(
 #else
 	CloseHopfDevice();
 #endif
+	if (NULL != peer->procptr->unitptr)
+		free(peer->procptr->unitptr);
 }
 
 
@@ -223,9 +213,11 @@ hopfpci_poll(
 	else
 		pp->leap = LEAP_NOWARNING;
 
-	sprintf(pp->a_lastcode,"ST: %02X T: %02d:%02d:%02d.%03ld D: %02d.%02d.%04d",
-		m_time.wStatus, pp->hour, pp->minute, pp->second,
-		pp->nsec / 1000000, m_time.wDay, m_time.wMonth, m_time.wYear);
+	snprintf(pp->a_lastcode, sizeof(pp->a_lastcode),
+		 "ST: %02X T: %02d:%02d:%02d.%03ld D: %02d.%02d.%04d",
+		 m_time.wStatus, pp->hour, pp->minute, pp->second,
+		 pp->nsec / 1000000, m_time.wDay, m_time.wMonth,
+		 m_time.wYear);
 	pp->lencode = (u_short)strlen(pp->a_lastcode);
 
 	get_systime(&pp->lastrec);
