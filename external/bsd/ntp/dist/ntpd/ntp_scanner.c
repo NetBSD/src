@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_scanner.c,v 1.1.1.1 2009/12/13 16:56:14 kardel Exp $	*/
+/*	$NetBSD: ntp_scanner.c,v 1.1.1.2 2012/01/31 21:25:52 kardel Exp $	*/
 
 
 /* ntp_scanner.c
@@ -64,7 +64,10 @@ static int is_keyword(char *lexeme, follby *pfollowedby);
 
 
 /*
- * keyword() - Return the keyword associated with token T_ identifier
+ * keyword() - Return the keyword associated with token T_ identifier.
+ *	       See also token_name() for the string-ized T_ identifier.
+ *	       Example: keyword(T_Server) returns "server"
+ *			token_name(T_Server) returns "T_Server"
  */
 const char *
 keyword(
@@ -291,8 +294,8 @@ is_double(
 	char *lexeme
 	)
 {
-	int num_digits = 0;  /* Number of digits read */
-	int i;
+	u_int num_digits = 0;  /* Number of digits read */
+	u_int i;
 
 	i = 0;
 
@@ -638,8 +641,8 @@ normal_return:
 lex_too_long:
 	yytext[min(sizeof(yytext) - 1, 50)] = 0;
 	msyslog(LOG_ERR, 
-		"configuration item on line %d longer than limit of %d, began with '%s'",
-		ip_file->line_no, sizeof(yytext) - 1, yytext);
+		"configuration item on line %d longer than limit of %lu, began with '%s'",
+		ip_file->line_no, (u_long)(sizeof(yytext) - 1), yytext);
 
 	/*
 	 * If we hit the length limit reading the startup configuration

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_util.c,v 1.1.1.1 2009/12/13 16:55:42 kardel Exp $	*/
+/*	$NetBSD: ntp_util.c,v 1.1.1.2 2012/01/31 21:26:45 kardel Exp $	*/
 
 /*
  * ntp_util.c - stuff I didn't have any other place for
@@ -358,6 +358,11 @@ stats_config(
 	int	len;
 	char	tbuf[80];
 	char	str1[20], str2[20];
+#ifndef VMS
+	const char temp_ext[] = ".TEMP";
+#else
+	const char temp_ext[] = "-TEMP";
+#endif
 
 	/*
 	 * Expand environment strings under Windows NT, since the
@@ -412,14 +417,10 @@ stats_config(
 		stats_temp_file = erealloc(stats_temp_file, 
 					   len + sizeof(".TEMP"));
 
-		memmove(stats_drift_file, value, (unsigned)(len+1));
-		memmove(stats_temp_file, value, (unsigned)len);
-		memmove(stats_temp_file + len,
-#if !defined(VMS)
-			".TEMP", sizeof(".TEMP"));
-#else
-			"-TEMP", sizeof("-TEMP"));
-#endif /* VMS */
+		memcpy(stats_drift_file, value, (unsigned)(len+1));
+		memcpy(stats_temp_file, value, (unsigned)len);
+		memcpy(stats_temp_file + len, temp_ext,
+		       sizeof(temp_ext));
 
 		/*
 		 * Open drift file and read frequency. If the file is
@@ -722,7 +723,7 @@ record_raw_stats(
 	day = now.l_ui / 86400 + MJD_1900;
 	now.l_ui %= 86400;
 	if (rawstats.fp != NULL) {
-                fprintf(rawstats.fp, "%lu %s %s %s %s %s %s %s\n", day,
+		fprintf(rawstats.fp, "%lu %s %s %s %s %s %s %s\n", day,
 		    ulfptoa(&now, 3), stoa(srcadr), dstadr ? 
 		    stoa(dstadr) : "-",	ulfptoa(t1, 9), ulfptoa(t2, 9),
 		    ulfptoa(t3, 9), ulfptoa(t4, 9));
@@ -763,7 +764,7 @@ record_sys_stats(void)
 	day = now.l_ui / 86400 + MJD_1900;
 	now.l_ui %= 86400;
 	if (sysstats.fp != NULL) {
-                fprintf(sysstats.fp,
+		fprintf(sysstats.fp,
 		    "%lu %s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu\n",
 		    day, ulfptoa(&now, 3), current_time - sys_stattime,
 		    sys_received, sys_processed, sys_newversion,

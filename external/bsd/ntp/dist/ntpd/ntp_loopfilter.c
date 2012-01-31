@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.1.1.1 2009/12/13 16:55:34 kardel Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.1.1.2 2012/01/31 21:26:47 kardel Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -325,7 +325,7 @@ local_clock(
 		switch (state) {
 
 		/*
-		 * In SYNC state we ignore the first outlyer amd switch
+		 * In SYNC state we ignore the first outlyer and switch
 		 * to SPIK state.
 		 */
 		case EVNT_SYNC:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.1.1.1 2009/12/13 16:57:30 kardel Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.1.1.2 2012/01/31 21:28:02 kardel Exp $	*/
 
 /*
  * Program to generate cryptographic keys for ntp clients and servers
@@ -95,6 +95,7 @@
 #include "ntp_stdlib.h"
 #include "ntp_assert.h"
 
+#include "ntp_libopts.h"
 #include "ntp-keygen-opts.h"
 
 #ifdef OPENSSL
@@ -260,7 +261,6 @@ main(
 
 #ifdef OPENSSL
 	ssl_check_version();
-	fprintf(stderr, "Using OpenSSL version %lx\n", SSLeay());
 #endif /* OPENSSL */
 
 	/*
@@ -273,10 +273,21 @@ main(
 	epoch = tv.tv_sec;
 
 	{
-		int optct = optionProcess(&ntp_keygenOptions, argc, argv);
+		int optct = ntpOptionProcess(&ntp_keygenOptions,
+					     argc, argv);
 		argc -= optct;
 		argv += optct;
 	}
+
+#ifdef OPENSSL
+	if (SSLeay() == SSLEAY_VERSION_NUMBER)
+		fprintf(stderr, "Using OpenSSL version %s\n",
+			SSLeay_version(SSLEAY_VERSION));
+	else
+		fprintf(stderr, "Built against OpenSSL %s, using version %s\n",
+			OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION));
+#endif /* OPENSSL */
+
 	debug = DESC(DEBUG_LEVEL).optOccCt;
 	if (HAVE_OPT( MD5KEY ))
 		md5key++;
@@ -1648,7 +1659,6 @@ gen_mvkey(
 	s = BN_new();
 
 	BN_copy(s, dsa->q);
-	BN_div(s, u, s, s1[10], ctx);
 	BN_div(s, u, s, s1[n], ctx);
 
 	/*
@@ -1928,7 +1938,7 @@ x509	(
 	 * Sign and verify.
 	 */
 	X509_sign(cert, pkey, md);
-	if (!X509_verify(cert, pkey)) {
+	if (X509_verify(cert, pkey) <= 0) {
 		fprintf(stderr, "Verify %s certificate fails\n%s\n", id,
 		    ERR_error_string(ERR_get_error(), NULL));
 		X509_free(cert);

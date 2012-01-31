@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.h,v 1.1.1.1 2009/12/13 16:54:53 kardel Exp $	*/
+/*	$NetBSD: ntp_request.h,v 1.1.1.2 2012/01/31 21:23:20 kardel Exp $	*/
 
 /*
  * ntp_request.h - definitions for the ntpd remote query facility
@@ -825,7 +825,7 @@ struct info_clock {
 	l_fp fudgetime1;
 	l_fp fudgetime2;
 	int32 fudgeval1;
-	int32 fudgeval2;
+	u_int32 fudgeval2;
 };
 
 
@@ -836,7 +836,7 @@ struct conf_fudge {
 	u_int32 clockadr;
 	u_int32 which;
 	l_fp fudgetime;
-	int32 fudgeval_flags;
+	u_int32 fudgeval_flags;
 };
 
 #define	FUDGE_TIME1	1

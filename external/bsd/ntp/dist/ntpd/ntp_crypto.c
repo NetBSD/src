@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.1.1.1 2009/12/13 16:55:33 kardel Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.1.1.2 2012/01/31 21:25:29 kardel Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -857,7 +857,7 @@ crypto_recv(
 			 * protocol. A protocol restart will occur at
 			 * the next ASSOC message.
 			 */
-			if (peer->cast_flags & MDF_BCLNT &&
+			if ((peer->cast_flags & MDF_BCLNT) &&
 			    peer->assoc != associd)
 				break;
 

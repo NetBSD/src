@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1.1.1 2009/12/13 16:54:38 kardel Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.2 2012/01/31 21:22:43 kardel Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -319,7 +319,6 @@ initialize_ipv6only(void) {
 	RUNTIME_CHECK(isc_once_do(&once_ipv6only,
 				  try_ipv6only) == ISC_R_SUCCESS);
 }
-#endif /* WANT_IPV6 */
 
 #ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 static void
@@ -375,6 +374,7 @@ initialize_ipv6pktinfo(void) {
 				  try_ipv6pktinfo) == ISC_R_SUCCESS);
 }
 #endif /* ISC_PLATFORM_HAVEIN6PKTINFO */
+#endif /* WANT_IPV6 */
 #endif /* ISC_PLATFORM_HAVEIPV6 */
 
 isc_result_t

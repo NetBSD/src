@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_pcf.c,v 1.1.1.1 2009/12/13 16:56:00 kardel Exp $	*/
+/*	$NetBSD: refclock_pcf.c,v 1.1.1.2 2012/01/31 21:25:49 kardel Exp $	*/
 
 /*
  * refclock_pcf - clock driver for the Conrad parallel port radio clock
@@ -74,10 +74,10 @@ pcf_start(
 	/*
 	 * Open device file for reading.
 	 */
-	(void)sprintf(device, DEVICE, unit);
+	snprintf(device, sizeof(device), DEVICE, unit);
 	fd = open(device, O_RDONLY);
 	if (fd == -1) {
-		(void)sprintf(device, OLDDEVICE, unit);
+		snprintf(device, sizeof(device), OLDDEVICE, unit);
 		fd = open(device, O_RDONLY);
 	}
 #ifdef DEBUG

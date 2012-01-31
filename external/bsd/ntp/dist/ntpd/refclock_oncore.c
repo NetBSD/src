@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.1.1.1 2009/12/13 16:55:54 kardel Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.1.1.2 2012/01/31 21:26:41 kardel Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -633,6 +633,7 @@ oncore_start(
 
 	oncore_log(instance, LOG_NOTICE, "ONCORE DRIVER -- CONFIGURING");
 	instance->o_state = ONCORE_NO_IDEA;
+	oncore_log(instance, LOG_NOTICE, "state = ONCORE_NO_IDEA");
 
 	/* Now open files.
 	 * This is a bit complicated, a we dont want to open the same file twice
@@ -847,12 +848,14 @@ oncore_ppsapi(
 	char *cp, Msg[160];
 
 	if (time_pps_getcap(instance->pps_h, &cap) < 0) {
-		oncore_log(instance, LOG_ERR, "time_pps_getcap failed: %m");
+		msnprintf(Msg, sizeof(Msg), "time_pps_getcap failed: %m");
+		oncore_log(instance, LOG_ERR, Msg);
 		return (0);
 	}
 
 	if (time_pps_getparams(instance->pps_h, &instance->pps_p) < 0) {
-		oncore_log(instance, LOG_ERR, "time_pps_getparams failed: %m");
+		msnprintf(Msg, sizeof(Msg), "time_pps_getparams failed: %m");
+		oncore_log(instance, LOG_ERR, Msg);
 		return (0);
 	}
 
@@ -911,10 +914,12 @@ oncore_ppsapi(
 
 		if (time_pps_kcbind(instance->pps_h, PPS_KC_HARDPPS, i,
 		    PPS_TSFMT_TSPEC) < 0) {
-			oncore_log(instance, LOG_ERR, "time_pps_kcbind failed: %m");
+			msnprintf(Msg, sizeof(Msg), "time_pps_kcbind failed: %m");
+			oncore_log(instance, LOG_ERR, Msg);
 			oncore_log(instance, LOG_ERR, "HARDPPS failed, abort...");
 			return (0);
 		}
+
 		pps_enable = 1;
 	}
 	return(1);
@@ -1580,8 +1585,11 @@ oncore_get_timestamp(
 	int	current_mode;
 	pps_params_t current_params;
 	struct timespec timeout;
+	struct peer *peer;
 	pps_info_t pps_i;
 	char	Msg[140];
+
+	peer = instance->peer;
 
 #if 1
 	/* If we are in SiteSurvey mode, then we are in 3D mode, and we fall thru.
@@ -1590,18 +1598,22 @@ oncore_get_timestamp(
 	 * This gives good time, which gets better when the SS is done.
 	 */
 
-	if ((instance->site_survey == ONCORE_SS_DONE) && (instance->mode != MODE_0D))
+	if ((instance->site_survey == ONCORE_SS_DONE) && (instance->mode != MODE_0D)) {
 #else
 	/* old check, only fall thru for SS_DONE and 0D mode, 2h45m wait for ticks */
 
-	if ((instance->site_survey != ONCORE_SS_DONE) || (instance->mode != MODE_0D))
+	if ((instance->site_survey != ONCORE_SS_DONE) || (instance->mode != MODE_0D)) {
 #endif
+		peer->flags &= ~FLAG_PPS;
 		return;
+	}
 
 	/* Don't do anything without an almanac to define the GPS->UTC delta */
 
-	if (instance->rsm.bad_almanac)
+	if (instance->rsm.bad_almanac) {
+		peer->flags &= ~FLAG_PPS;
 		return;
+	}
 
 	/* Once the Almanac is valid, the M12+T does not produce valid UTC
 	 * immediately.
@@ -1611,6 +1623,7 @@ oncore_get_timestamp(
 
 	if (instance->count5) {
 		instance->count5--;
+		peer->flags &= ~FLAG_PPS;
 		return;
 	}
 
@@ -1620,6 +1633,7 @@ oncore_get_timestamp(
 	if (time_pps_fetch(instance->pps_h, PPS_TSFMT_TSPEC, &pps_i,
 	    &timeout) < 0) {
 		oncore_log(instance, LOG_ERR, "time_pps_fetch failed");
+		peer->flags &= ~FLAG_PPS;
 		return;
 	}
 
@@ -1646,6 +1660,7 @@ oncore_get_timestamp(
 
 		if (pps_i.assert_sequence == j) {
 			oncore_log(instance, LOG_NOTICE, "ONCORE: oncore_get_timestamp, error serial pps");
+			peer->flags &= ~FLAG_PPS;
 			return;
 		}
 
@@ -1673,6 +1688,7 @@ oncore_get_timestamp(
 
 		if (pps_i.clear_sequence == j) {
 			oncore_log(instance, LOG_ERR, "oncore_get_timestamp, error serial pps");
+			peer->flags &= ~FLAG_PPS;
 			return;
 		}
 		instance->ev_serial = pps_i.clear_sequence;
@@ -1731,12 +1747,16 @@ oncore_get_timestamp(
 	 */
 
 	if (time_pps_getcap(instance->pps_h, &current_mode) < 0) {
-		oncore_log(instance, LOG_ERR, "time_pps_getcap failed: %m");
+		msnprintf(Msg, sizeof(Msg), "time_pps_getcap failed: %m");
+		oncore_log(instance, LOG_ERR, Msg);
+		peer->flags &= ~FLAG_PPS;
 		return;
 	}
 
 	if (time_pps_getparams(instance->pps_h, &current_params) < 0) {
-		oncore_log(instance, LOG_ERR, "time_pps_getparams failed: %m");
+		msnprintf(Msg, sizeof(Msg), "time_pps_getparams failed: %m");
+		oncore_log(instance, LOG_ERR, Msg);
+		peer->flags &= ~FLAG_PPS;
 		return;
 	}
 
@@ -1846,6 +1866,7 @@ oncore_get_timestamp(
 
 	if (!refclock_process(instance->pp)) {
 		refclock_report(instance->peer, CEVNT_BADTIME);
+		peer->flags &= ~FLAG_PPS;
 		return;
 	}
 
@@ -1858,6 +1879,7 @@ oncore_get_timestamp(
 		instance->pp->lastref = instance->pp->lastrec;
 		refclock_receive(instance->peer);
 	}
+	peer->flags |= FLAG_PPS;
 }
 
 
@@ -2493,6 +2515,7 @@ oncore_msg_Bl(
 	} warn;
 
 	day_now = day_lsf = 0;
+	cp = NULL;      /* keep gcc happy */
 
 	chan = buf[4] & 0377;
 	id   = buf[5] & 0377;

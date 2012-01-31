@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.h,v 1.1.1.1 2009/12/13 16:56:19 kardel Exp $	*/
+/*	$NetBSD: ntpdate.h,v 1.1.1.2 2012/01/31 21:26:58 kardel Exp $	*/
 
 /*
  * ntpdate.h - declarations for the ntpdate and ntptimeset programs
@@ -93,7 +93,8 @@ struct server {
 /*
  * Some defaults
  */
-#define	DEFTIMEOUT	5		/* 5 timer increments */
+#define	MINTIMEOUT	(2 * TIMER_HZ)	/* 2s min. between packets */
+#define	DEFTIMEOUT	MINTIMEOUT	/*   (to the same server) */
 #define	DEFSAMPLES	4		/* get 4 samples per server */
 #define	DEFPRECISION	(-5)		/* the precision we claim */
 #define	DEFMAXPERIOD	60		/* maximum time to wait */

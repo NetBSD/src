@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.h,v 1.1.1.1 2009/12/13 16:54:50 kardel Exp $	*/
+/*	$NetBSD: ntp_config.h,v 1.1.1.2 2012/01/31 21:23:27 kardel Exp $	*/
 
 #ifndef NTP_CONFIG_H
 #define NTP_CONFIG_H
@@ -55,16 +55,6 @@
 #define FREE_CFG_T
 #endif
 
-/*
- * Some systems do not support fork() and don't have an alternate
- * threads implementation of ntp_intres.  Such systems are limited
- * to using numeric IP addresses.
- */
-#if defined(VMS) || defined (SYS_VXWORKS) || \
-    (!defined(HAVE_FORK) && !defined(SYS_WINNT))
-#define NO_INTRES
-#endif
-
 /* Limits */
 #define MAXLINE 1024
 
@@ -77,11 +67,12 @@
 /* Structure for storing an attribute-value pair  */
 struct attr_val {
     int attr;
-    union val{
-        double d;
-        int i;
-        char *s;
-        void *p;
+    union val {
+ 	double	d;
+ 	int	i;
+	u_int	u;
+ 	char *	s;
+	void *	p;
     } value;
     int type;
 };
@@ -222,6 +213,7 @@ void destroy_address_node(struct address_node *my_node);
 queue *enqueue_in_new_queue(void *my_node);
 struct attr_val *create_attr_dval(int attr, double value);
 struct attr_val *create_attr_ival(int attr, int value);
+struct attr_val *create_attr_shorts(int, ntp_u_int16_t, ntp_u_int16_t);
 struct attr_val *create_attr_sval(int attr, char *s);
 struct attr_val *create_attr_pval(int attr, void *s);
 struct filegen_node *create_filegen_node(int filegen_token, queue *options);

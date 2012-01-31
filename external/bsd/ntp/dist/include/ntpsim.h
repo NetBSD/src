@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpsim.h,v 1.1.1.1 2009/12/13 16:54:54 kardel Exp $	*/
+/*	$NetBSD: ntpsim.h,v 1.1.1.2 2012/01/31 21:23:23 kardel Exp $	*/
 
 /* ntpsim.h
  *
@@ -41,7 +41,6 @@
 #define NET_DLY .001            /* network delay */
 #define PROC_DLY .001		/* processing delay */
 #define BEEP_DLY 3600           /* beep interval (s) */
-#define	SLEW	500e-6		/* correction rate (PPM) */
 
 
 /* Discrete Event Queue

@@ -1,4 +1,4 @@
-/*	$NetBSD: humandate.c,v 1.1.1.1 2009/12/13 16:55:03 kardel Exp $	*/
+/*	$NetBSD: humandate.c,v 1.1.1.2 2012/01/31 21:23:55 kardel Exp $	*/
 
 /*
  * humandate - convert an NTP (or the current) time to something readable
@@ -17,19 +17,20 @@ extern const char *months[];	/* prettydate.c */
 char *
 humanlogtime(void)
 {
-	char *bp;
-	time_t cursec = time((time_t *) 0);
-	struct tm *tm;
+	char *		bp;
+	time_t		cursec;
+	struct tm *	tm;
 	
+	cursec = time(NULL);
 	tm = localtime(&cursec);
 	if (!tm)
 		return "-- --- --:--:--";
 
 	LIB_GETBUF(bp);
 	
-	(void) sprintf(bp, "%2d %s %02d:%02d:%02d",
-		       tm->tm_mday, months[tm->tm_mon],
-		       tm->tm_hour, tm->tm_min, tm->tm_sec);
+	snprintf(bp, LIB_BUFLENGTH, "%2d %s %02d:%02d:%02d",
+		 tm->tm_mday, months[tm->tm_mon],
+		 tm->tm_hour, tm->tm_min, tm->tm_sec);
 		
 	return bp;
 }

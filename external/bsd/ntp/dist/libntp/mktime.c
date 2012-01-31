@@ -1,4 +1,4 @@
-/*	$NetBSD: mktime.c,v 1.1.1.1 2009/12/13 16:55:03 kardel Exp $	*/
+/*	$NetBSD: mktime.c,v 1.1.1.2 2012/01/31 21:24:08 kardel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989 Regents of the University of California.
@@ -64,6 +64,10 @@
 #include "ntp_machine.h"
 
 #if !defined(HAVE_MKTIME) || !defined(HAVE_TIMEGM)
+
+#if SIZEOF_TIME_T >= 8
+#error libntp supplied mktime()/timegm() do not support 64-bit time_t
+#endif
 
 #ifndef DSTMINUTES
 #define DSTMINUTES 60
@@ -228,9 +232,9 @@ time2(
 	t = (t < 0) ? 0 : ((time_t) 1 << bits);
 	for ( ; ; ) {
 		if (usezn)
-	        	mytm = *localtime(&t);
+			mytm = *localtime(&t);
 		else
-	        	mytm = *gmtime(&t);
+			mytm = *gmtime(&t);
 		dir = tmcomp(&mytm, &yourtm);
 		if (dir != 0) {
 			if (bits-- < 0)

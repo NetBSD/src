@@ -1,4 +1,4 @@
-/*	$NetBSD: uglydate.c,v 1.1.1.1 2009/12/13 16:55:06 kardel Exp $	*/
+/*	$NetBSD: uglydate.c,v 1.1.1.2 2012/01/31 21:24:09 kardel Exp $	*/
 
 /*
  * uglydate - convert a time stamp to something barely readable
@@ -43,8 +43,10 @@ uglydate(
 		while (year >= 100)
 		    year -= 100;
 	}
-	(void) sprintf(bp, "%17s %02d:%03d:%02d:%02d:%02d.%03ld",
-		       timep, year, tm->tm_yday, tm->tm_hour, tm->tm_min,
-		       tm->tm_sec, msec);
+	snprintf(bp, LIB_BUFLENGTH,
+		 "%17s %02d:%03d:%02d:%02d:%02d.%03ld", timep, year,
+		 tm->tm_yday, tm->tm_hour, tm->tm_min, tm->tm_sec,
+		 msec);
+
 	return bp;
 }
