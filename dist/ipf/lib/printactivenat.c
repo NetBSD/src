@@ -1,4 +1,4 @@
-/*	$NetBSD: printactivenat.c,v 1.1.1.4 2012/01/30 16:03:22 darrenr Exp $	*/
+/*	$NetBSD: printactivenat.c,v 1.2 2012/01/31 08:43:44 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ printactivenat(nat, opts, ticks)
 		PRINTF("\tifp %s", getifname(nat->nat_ifps[0]));
 		PRINTF(",%s ", getifname(nat->nat_ifps[1]));
 #ifdef	USE_QUAD_T
-		PRINTF("bytes %"PRIu64"/%"PRIu64" pkts %"PRIu64"/%"PRIu64"",
+		PRINTF("bytes %llu/%llu pkts %llu/%llu",
 			(unsigned long long)nat->nat_bytes[0],
 			(unsigned long long)nat->nat_bytes[1],
 			(unsigned long long)nat->nat_pkts[0],
