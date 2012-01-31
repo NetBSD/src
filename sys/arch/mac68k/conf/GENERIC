@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.204 2011/12/18 05:49:29 dholland Exp $
+# $NetBSD: GENERIC,v 1.205 2012/01/31 22:13:20 hauke Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.204 $"
+#ident 		"GENERIC-$Revision: 1.205 $"
 
 maxusers	16		# estimated number of users
 
@@ -234,7 +234,8 @@ wsmouse* at ams?
 # Centronics printer port
 
 # CSI Hurdler Centronics Parallel Interface
-cpi*	at nubus?
+# CPI_CTC12_IS_TIMECOUNTER	0x01	Run counters 1+2 as timecounter	
+cpi*	at nubus? flags 0x1
 
 
 # Serial Devices
