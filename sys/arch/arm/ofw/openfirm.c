@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.9 2011/07/17 20:54:37 joerg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.10 2012/01/31 04:32:07 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.9 2011/07/17 20:54:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.10 2012/01/31 04:32:07 matt Exp $");
 
 #include <sys/param.h>
 
@@ -698,16 +698,17 @@ OF_exit(void)
 	while (1);			/* just in case */
 }
 
-void
-(*OF_set_callback(newfunc))(void *)
-	void (*newfunc)(void *);
+typedef void (*of_callback_t)(void *);
+
+of_callback_t
+OF_set_callback(of_callback_t newfunc)
 {
 	static struct {
 		const char *name;
 		int nargs;
 		int nreturns;
-		void (*newfunc)(void *);
-		void (*oldfunc)(void *);
+		of_callback_t newfunc;
+		of_callback_t oldfunc;
 	} args = {
 		"set-callback",
 		1,
