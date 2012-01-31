@@ -1,4 +1,4 @@
-/*	$NetBSD: ipftest.c,v 1.1.1.7 2012/01/30 16:03:47 darrenr Exp $	*/
+/*	$NetBSD: ipftest.c,v 1.2 2012/01/31 09:06:12 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -736,7 +736,7 @@ void dumprules(rulehead)
 
 	for (fr = rulehead; fr != NULL; fr = fr->fr_next) {
 #ifdef	USE_QUAD_T
-		printf("%"PRIu64" ",(unsigned long long)fr->fr_hits);
+		printf("%llu ",(unsigned long long)fr->fr_hits);
 #else
 		printf("%ld ", fr->fr_hits);
 #endif
