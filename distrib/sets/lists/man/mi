@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1373 2012/01/22 08:58:13 jnemeth Exp $
+# $NetBSD: mi,v 1.1374 2012/01/31 12:23:32 nisimura Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2279,6 +2279,7 @@
 ./usr/share/man/cat8/eshconfig.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/etcupdate.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/evbarm/MAKEDEV.0		man-obsolete		obsolete
+./usr/share/man/cat8/evbarm/bootmini2440.0	man-sysutil-catman	.cat
 ./usr/share/man/cat8/evbarm/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbmips/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbmips/makedev.0		man-obsolete		obsolete
@@ -4986,6 +4987,7 @@
 ./usr/share/man/html8/edquota.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/eeprom.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/emips/boot.html		man-sys-htmlman		html
+./usr/share/man/html8/evbarm/bootmini2440.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/envstat.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/error.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/eshconfig.html		man-sysutil-htmlman	html
@@ -7770,6 +7772,7 @@
 ./usr/share/man/man8/emips/boot.8		man-sys-man		.man
 ./usr/share/man/man8/emips/installboot.8		man-obsolete		obsolete
 ./usr/share/man/man8/emips/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/evbarm/bootmini2440.8	man-sysutils-man	.man
 ./usr/share/man/man8/envstat.8			man-sysutil-man		.man
 ./usr/share/man/man8/error.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/eshconfig.8		man-sysutil-man		.man
