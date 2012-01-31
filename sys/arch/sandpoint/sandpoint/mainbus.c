@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.28 2012/01/27 18:53:00 para Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.29 2012/01/31 21:12:03 phx Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28 2012/01/27 18:53:00 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.29 2012/01/31 21:12:03 phx Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28 2012/01/27 18:53:00 para Exp $");
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 #include <machine/isa_machdep.h>
+
+#include <powerpc/oea/spr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
@@ -150,6 +152,7 @@ cpu_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (strcmp(mba->ma_name, cpu_cd.cd_name) != 0)
 		return 0;
+
 	if (cpu_info[0].ci_dev != NULL)
 		return 0;
 
@@ -159,8 +162,29 @@ cpu_match(device_t parent, cfdata_t cf, void *aux)
 void
 cpu_attach(device_t parent, device_t self, void *aux)
 {
+	static uint8_t mem_to_cpuclk[] = {
+		25, 30, 45, 20, 20, 00, 10, 30,
+		30, 20, 45, 30, 25, 35, 30, 35,
+		20, 25, 20, 30, 35, 40, 40, 20,
+		30, 25, 40, 30, 30, 25, 35, 00
+	};
+	extern u_long ticks_per_sec;
+	struct cpu_info *ci;
+	u_int hid1, vers;
 
-	(void)cpu_attach_common(self, 0);
+	ci = cpu_attach_common(self, 0);
+	if (ci == NULL)
+		return;
+
+	vers = (mfpvr() >> 16) & 0xffff;
+	if (ci->ci_khz == 0 && vers == MPC8245) {
+		/* calculate speed from bus clock and PLL ratio */
+		asm volatile ("mfspr %0,1009" : "=r"(hid1));
+		ci->ci_khz = ((uint64_t)ticks_per_sec * 4 *
+		    mem_to_cpuclk[hid1 >> 27] + 10) / 10000;
+		aprint_normal_dev(self, "%u.%02u MHz\n",
+		    ci->ci_khz / 1000, (ci->ci_khz / 10) % 100);
+	}
 }
 
 int
