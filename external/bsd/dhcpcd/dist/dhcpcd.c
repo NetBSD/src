@@ -912,13 +912,13 @@ handle_carrier(int action, int flags, const char *ifname)
 			syslog(LOG_INFO, "%s: carrier lost", iface->name);
 			close_sockets(iface);
 			delete_timeouts(iface, start_expire, NULL);
-			drop_dhcp(iface, "NOCARRIER");
 			if (iface->ras) {
 				ipv6rs_free(iface);
 				iface->ras = NULL;
 				iface->state->reason = "ROUTERADVERT";
 				run_script(iface);
 			}
+			drop_dhcp(iface, "NOCARRIER");
 		}
 	} else if (carrier == 1 && !(~iface->flags & (IFF_UP | IFF_RUNNING))) {
 		if (iface->carrier != LINK_UP) {
@@ -1162,7 +1162,7 @@ start_interface(void *arg)
 	free(iface->state->offer);
 	iface->state->offer = NULL;
 
-	if (ifo->options & DHCPCD_IPV6RS)
+	if (options & DHCPCD_IPV6RS && ifo->options & DHCPCD_IPV6RS)
 		ipv6rs_start(iface);
 
 	if (iface->state->arping_index < ifo->arping_len) {
@@ -1934,29 +1934,25 @@ main(int argc, char **argv)
 		}
 
 		/* Ensure we have the needed directories */
-		if (mkdir(RUNDIR, 0755) == -1 && errno != EEXIST) {
+		if (mkdir(RUNDIR, 0755) == -1 && errno != EEXIST)
 			syslog(LOG_ERR, "mkdir `%s': %m", RUNDIR);
-			exit(EXIT_FAILURE);
-		}
-		if (mkdir(DBDIR, 0755) == -1 && errno != EEXIST) {
+		if (mkdir(DBDIR, 0755) == -1 && errno != EEXIST)
 			syslog(LOG_ERR, "mkdir `%s': %m", DBDIR);
-			exit(EXIT_FAILURE);
-		}
 
 		pidfd = open(pidfile, O_WRONLY | O_CREAT | O_NONBLOCK, 0664);
-		if (pidfd == -1) {
+		if (pidfd == -1)
 			syslog(LOG_ERR, "open `%s': %m", pidfile);
-			exit(EXIT_FAILURE);
+		else {
+			/* Lock the file so that only one instance of dhcpcd
+			 * runs on an interface */
+			if (flock(pidfd, LOCK_EX | LOCK_NB) == -1) {
+				syslog(LOG_ERR, "flock `%s': %m", pidfile);
+				exit(EXIT_FAILURE);
+			}
+			if (set_cloexec(pidfd) == -1)
+				exit(EXIT_FAILURE);
+			writepid(pidfd, getpid());
 		}
-		/* Lock the file so that only one instance of dhcpcd runs
-		 * on an interface */
-		if (flock(pidfd, LOCK_EX | LOCK_NB) == -1) {
-			syslog(LOG_ERR, "flock `%s': %m", pidfile);
-			exit(EXIT_FAILURE);
-		}
-		if (set_cloexec(pidfd) == -1)
-			exit(EXIT_FAILURE);
-		writepid(pidfd, getpid());
 	}
 
 	syslog(LOG_INFO, "version " VERSION " starting");
@@ -1968,10 +1964,8 @@ main(int argc, char **argv)
 	add_event(signal_fd, handle_signal, NULL);
 
 	if (options & DHCPCD_MASTER) {
-		if (start_control() == -1) {
+		if (start_control() == -1)
 			syslog(LOG_ERR, "start_control: %m");
-			exit(EXIT_FAILURE);
-		}
 	}
 
 	if (init_sockets() == -1) {
@@ -2045,7 +2039,7 @@ main(int argc, char **argv)
 
 	if (!(options & DHCPCD_BACKGROUND)) {
 		/* If we don't have a carrier, we may have to wait for a second
-		 * before one becomes available if we brought an interface up. */
+		 * before one becomes available if we brought an interface up */
 		if (opt == 0 &&
 		    options & DHCPCD_LINK &&
 		    options & DHCPCD_WAITUP &&
