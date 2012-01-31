@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.19 2012/01/30 16:12:05 darrenr Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.20 2012/01/31 08:57:36 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -834,13 +834,13 @@ static void printlivelist(fiop, out, set, fp, group, comment)
 
 		if (opts & (OPT_HITS|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%"PRIu64" ", (unsigned long long) fp->fr_hits);
+			PRINTF("%llu ", (unsigned long long) fp->fr_hits);
 #else
 			PRINTF("%lu ", fp->fr_hits);
 #endif
 		if (opts & (OPT_ACCNT|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%"PRIu64" ", (unsigned long long) fp->fr_bytes);
+			PRINTF("%llu ", (unsigned long long) fp->fr_bytes);
 #else
 			PRINTF("%lu ", fp->fr_bytes);
 #endif
@@ -951,13 +951,13 @@ static void printdeadlist(fiop, out, set, fp, group, comment)
 
 		if (opts & (OPT_HITS|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%"PRIu64" ", (unsigned long long) fb.fr_hits);
+			PRINTF("%llu ", (unsigned long long) fb.fr_hits);
 #else
 			PRINTF("%lu ", fb.fr_hits);
 #endif
 		if (opts & (OPT_ACCNT|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%"PRIu64" ", (unsigned long long) fb.fr_bytes);
+			PRINTF("%llu ", (unsigned long long) fb.fr_bytes);
 #else
 			PRINTF("%lu ", fb.fr_bytes);
 #endif
@@ -1772,7 +1772,7 @@ static void showauthstates(asp)
 	auth.igi_data = &fra;
 
 #ifdef	USE_QUAD_T
-	printf("Authorisation hits: %"PRIu64"\tmisses %"PRIu64"\n",
+	printf("Authorisation hits: %llu\tmisses %llu\n",
 		(unsigned long long) asp->fas_hits,
 		(unsigned long long) asp->fas_miss);
 #else
