@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.26 2011/07/26 08:56:26 mrg Exp $	*/
+/*	$NetBSD: scr.c,v 1.27 2012/01/31 04:28:50 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.26 2011/07/26 08:56:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.27 2012/01/31 04:28:50 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -3690,11 +3690,12 @@ static void myHatWedge(int nFIQs)
 **--
 */
 
-static void scrTimeout(ftn, sc, arg, count)
-    void (*ftn)(struct scr_softc*,int);
-    struct scr_softc* sc;
-    int arg;
-    register int count;
+static void
+scrTimeout(
+    void (*ftn)(struct scr_softc*,int),
+    struct scr_softc* sc,
+    int arg,
+    int count)
 {
 
     register Callout *new, *p, *t;
@@ -3778,10 +3779,11 @@ static void scrTimeout(ftn, sc, arg, count)
 **      nill
 **--
 */
-static void scrUntimeout(ftn, sc, arg)
-void (*ftn)(struct scr_softc*,int);
-struct scr_softc* sc;
-int arg;
+static void
+scrUntimeout(
+    void (*ftn)(struct scr_softc*, int),
+    struct scr_softc* sc,
+    int arg)
 {
     register Callout *p, *t;
     ASSERT(scrClkEnable);
