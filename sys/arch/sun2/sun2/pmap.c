@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 2011/06/03 17:03:52 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 2012/01/31 22:47:08 para Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2011/06/03 17:03:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2012/01/31 22:47:08 para Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2011/06/03 17:03:52 tsutsui Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/kcore.h>
@@ -1820,7 +1820,7 @@ void
 pmap_user_init(pmap_t pmap)
 {
 	int i;
-	pmap->pm_segmap = malloc(sizeof(char)*NUSEG, M_VMPMAP, M_WAITOK);
+	pmap->pm_segmap = kmem_alloc(sizeof(char)*NUSEG, KM_SLEEP);
 	for (i = 0; i < NUSEG; i++) {
 		pmap->pm_segmap[i] = SEGINV;
 	}
@@ -1871,7 +1871,7 @@ pmap_release(struct pmap *pmap)
 #endif
 		context_free(pmap);
 	}
-	free(pmap->pm_segmap, M_VMPMAP);
+	kmem_free(pmap->pm_segmap, sizeof(char)*NUSEG);
 	pmap->pm_segmap = NULL;
 
 	splx(s);
