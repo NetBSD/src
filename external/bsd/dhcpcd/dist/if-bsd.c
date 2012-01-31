@@ -195,7 +195,7 @@ if_route(const struct interface *iface, const struct in_addr *dest,
 		struct rt_msghdr hdr;
 		char buffer[sizeof(su) * 4];
 	} rtm;
-	char *bp = rtm.buffer, *p;
+	char *bp = rtm.buffer;
 	size_t l;
 	int retval = 0;
 
@@ -250,20 +250,8 @@ if_route(const struct interface *iface, const struct in_addr *dest,
 	} else
 		ADDADDR(gate);
 
-	if (rtm.hdr.rtm_addrs & RTA_NETMASK) {
-		/* Ensure that netmask is set correctly */
-		memset(&su, 0, sizeof(su));
-		su.sin.sin_family = AF_INET;
-		su.sin.sin_len = sizeof(su.sin);
-		memcpy(&su.sin.sin_addr, &net->s_addr, sizeof(su.sin.sin_addr));
-		p = su.sa.sa_len + (char *)&su;
-		for (su.sa.sa_len = 0; p > (char *)&su;)
-			if (*--p != 0) {
-				su.sa.sa_len = 1 + p - (char *)&su;
-				break;
-			}
-		ADDSU(su);
-	}
+	if (rtm.hdr.rtm_addrs & RTA_NETMASK)
+		ADDADDR(net);
 
 	if (rtm.hdr.rtm_addrs & RTA_IFA)
 		ADDADDR(&iface->addr);

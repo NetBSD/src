@@ -1125,10 +1125,8 @@ write_lease(const struct interface *iface, const struct dhcp_message *dhcp)
 	    iface->name, iface->leasefile);
 
 	fd = open(iface->leasefile, O_WRONLY | O_CREAT | O_TRUNC, 0444);
-	if (fd == -1) {
-		syslog(LOG_ERR, "%s: open: %m", iface->name);
+	if (fd == -1)
 		return -1;
-	}
 
 	/* Only write as much as we need */
 	while (p < e) {
