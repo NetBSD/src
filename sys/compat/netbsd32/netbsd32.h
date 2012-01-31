@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.88 2011/10/12 23:04:22 dholland Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.89 2012/01/31 22:51:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -583,6 +583,7 @@ typedef netbsd32_pointer_t netbsd32_stackp_t;
 /* from <sys/socket.h> */
 typedef netbsd32_pointer_t netbsd32_sockaddrp_t;
 typedef netbsd32_pointer_t netbsd32_osockaddrp_t;
+typedef netbsd32_pointer_t netbsd32_socklenp_t;
 
 typedef netbsd32_pointer_t netbsd32_msghdrp_t;
 struct netbsd32_msghdr {
