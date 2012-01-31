@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.105 2012/01/30 16:17:14 njoly Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.106 2012/01/31 19:00:03 njoly Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.105 2012/01/30 16:17:14 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.106 2012/01/31 19:00:03 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -895,11 +895,11 @@ rump_vop_setattr(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
 	struct rumpfs_node *rn = vp->v_data;
+	struct vattr *attr = &rn->rn_va;
+	kauth_cred_t cred = ap->a_cred;
+	int error;
 
 #define SETIFVAL(a,t) if (vap->a != (t)VNOVAL) rn->rn_va.a = vap->a
-	SETIFVAL(va_mode, mode_t);
-	SETIFVAL(va_uid, uid_t);
-	SETIFVAL(va_gid, gid_t);
 	SETIFVAL(va_atime.tv_sec, time_t);
 	SETIFVAL(va_ctime.tv_sec, time_t);
 	SETIFVAL(va_mtime.tv_sec, time_t);
@@ -910,6 +910,31 @@ rump_vop_setattr(void *v)
 	SETIFVAL(va_birthtime.tv_nsec, long);
 	SETIFVAL(va_flags, u_long);
 #undef  SETIFVAL
+
+	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (uid_t)VNOVAL) {
+		uid_t uid =
+		    (vap->va_uid != (uid_t)VNOVAL) ? vap->va_uid : attr->va_uid;
+		gid_t gid =
+		    (vap->va_gid != (gid_t)VNOVAL) ? vap->va_gid : attr->va_gid;
+		error = kauth_authorize_vnode(cred,
+		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
+		    genfs_can_chown(vp, cred, attr->va_uid, attr->va_gid, uid,
+		    gid));
+		if (error)
+			return error;
+		attr->va_uid = uid;
+		attr->va_gid = gid;
+	}
+
+	if (vap->va_mode != (mode_t)VNOVAL) {
+		mode_t mode = vap->va_mode;
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
+		    vp, NULL, genfs_can_chmod(vp, cred, attr->va_uid,
+		    attr->va_gid, mode));
+		if (error)
+			return error;
+		attr->va_mode = mode;
+	}
 
 	if (vp->v_type == VREG &&
 	    vap->va_size != VSIZENOTSET &&
