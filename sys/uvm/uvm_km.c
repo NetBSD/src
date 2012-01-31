@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.113 2012/01/29 12:37:01 para Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.114 2012/01/31 00:30:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.113 2012/01/29 12:37:01 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.114 2012/01/31 00:30:52 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -222,6 +222,8 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 		if (error)
 			panic(
 			    "uvm_km_bootstrap: could not reserve kernel kmem");
+	} else {
+		kmembase = base;
 	}
 
 	/*
@@ -528,7 +530,8 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	if (flags & UVM_KMF_EXEC)
 		prot |= VM_PROT_EXECUTE;
 	while (loopsize) {
-		KASSERT(!pmap_extract(pmap_kernel(), loopva, NULL));
+		KASSERTMSG(!pmap_extract(pmap_kernel(), loopva, NULL),
+		    "loopva=%#"PRIxVADDR, loopva);
 
 		pg = uvm_pagealloc_strat(NULL, offset, NULL, pgaflags,
 #ifdef UVM_KM_VMFREELIST
@@ -662,10 +665,13 @@ again:
 	loopsize = size;
 
 	while (loopsize) {
-		KASSERT(!pmap_extract(pmap_kernel(), loopva, NULL));
+		KASSERTMSG(!pmap_extract(pmap_kernel(), loopva, NULL),
+		    "loopva=%#"PRIxVADDR" loopsize=%#"PRIxVSIZE" vmem=%p",
+		    loopva, loopsize, vm);
 
-		pg = uvm_pagealloc(NULL, 0, NULL,
-		    (flags & VM_SLEEP) ? 0 : UVM_PGA_USERESERVE);
+		pg = uvm_pagealloc(NULL, loopva, NULL,
+		    UVM_KMF_COLORMATCH
+		    | ((flags & VM_SLEEP) ? 0 : UVM_PGA_USERESERVE));
 		if (__predict_false(pg == NULL)) {
 			if (flags & VM_SLEEP) {
 				uvm_wait("plpg");
