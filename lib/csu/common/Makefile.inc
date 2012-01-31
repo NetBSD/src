@@ -1,5 +1,4 @@
-Warning: Permanently added the RSA host key for IP address '149.20.53.70' to the list of known hosts.
-#	$NetBSD: Makefile.inc,v 1.4 2012/01/31 19:58:22 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2012/01/31 20:03:50 uwe Exp $
 
 .include <bsd.own.mk>
 
