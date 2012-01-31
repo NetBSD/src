@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1041 2012/01/29 06:26:54 dholland Exp $
+#	$NetBSD: files,v 1.1042 2012/01/31 05:08:14 macallan Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1128,7 +1128,7 @@ file	dev/ic/vga_common.c	vga | vga_rasterconsole
 
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
-device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8, vcons, videomode
+device	igsfb: wsemuldisplaydev, rasops8, vcons, videomode
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
 
