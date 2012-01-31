@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.h,v 1.1.1.1 2009/12/13 16:54:51 kardel Exp $	*/
+/*	$NetBSD: ntp_control.h,v 1.1.1.2 2012/01/31 21:23:27 kardel Exp $	*/
 
 /*
  * ntp_control.h - definitions related to NTP mode 6 control messages
@@ -20,7 +20,7 @@ struct ntp_control {
 /*
  * Length of the control header, in octets
  */
-#define	CTL_HEADER_LEN		12
+#define	CTL_HEADER_LEN		(offsetof(struct ntp_control, data))
 #define	CTL_MAX_DATA_LEN	468
 
 

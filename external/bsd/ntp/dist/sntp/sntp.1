@@ -1,19 +1,21 @@
-.TH SNTP 1 2009-12-10 "( 4.2.6)" "Programmer's Manual"
+.TH SNTP 1 2011-12-24 "( 4.2.6p5)" "Programmer's Manual"
 .\"  EDIT THIS FILE WITH CAUTION  (sntp.1)
 .\"  
-.\"  It has been AutoGen-ed  December 10, 2009 at 05:07:54 AM by AutoGen 5.10
+.\"  It has been AutoGen-ed  December 24, 2011 at 06:33:59 PM by AutoGen 5.12
 .\"  From the definitions    sntp-opts.def
 .\"  and the template file   agman1.tpl
 .\"
 .SH NAME
-sntp \- standard SNTP program
+sntp \- standard Simple Network Time Protocol program
 .SH SYNOPSIS
 .B sntp
 .\" Mixture of short (flag) options and long options
 .RB [ \-\fIflag\fP " [\fIvalue\fP]]... [" \--\fIopt-name\fP " [[=| ]\fIvalue\fP]]..."
 .br
 .in +8
-hostname-or-IP ...
+[ hostname-or-IP ...]
+.PP
+
 .SH "DESCRIPTION"
 This manual page briefly documents the \fBsntp\fP command.
 .I sntp
@@ -24,20 +26,22 @@ run as an interactive command or in a
 job.
 
 NTP (the Network Time Protocol) and SNTP (the Simple Network Time Protocol)
-are defined and described by
-draft-ietf-ntp-ntpv4-proto-13,
-which should become a full RFC any month now.
+are defined and described by RFC 5905.
 
 .PP
 The default is to write the estimated correct local date and time (i.e. not
 UTC) to the standard output in a format like
-.BR "'1996 Oct 15 20:17:25.123 +4.567 +/- 0.089 secs'" ,
+.BR "'1996-10-15 20:17:25.123 (+0800) +4.567 +/- 0.089 secs'" ,
 where the
+.B "'(+0800)'"
+means that to get to UTC from the reported local time one must
+add 8 hours and 0 minutes,
+and the
 .B "'+4.567 +/- 0.089 secs'"
 indicates the local clock is 4.567 seconds behind the correct time
 (so 4.567 seconds must be added to the local clock to get it to be correct),
 and the time of
-'1996 Oct 15 20:17:25.123'
+'1996-10-15 20:17:25.123'
 is believed to be correct to within
 +/- 0.089
 seconds.
@@ -48,7 +52,7 @@ Force IPv4 DNS name resolution.
 This option must not appear in combination with any of the following options:
 ipv6.
 .sp
-Force DNS resolution of following host names on the command line
+Force DNS resolution of the following host names on the command line
 to the IPv4 namespace.
 .TP
 .BR \-6 ", " \--ipv6
@@ -56,7 +60,7 @@ Force IPv6 DNS name resolution.
 This option must not appear in combination with any of the following options:
 ipv4.
 .sp
-Force DNS resolution of following host names on the command line
+Force DNS resolution of the following host names on the command line
 to the IPv6 namespace.
 .TP
 .BR \-d ", " \--normalverbose
@@ -70,24 +74,24 @@ suspected problem with the server, network or the source.
 .BR \-K " \fIfile-name\fP, " \--kod "=" \fIfile-name\fP
 KoD history filename.
 .sp
-Modifies the filename to be used to persist the history of KoD
+Specifies the filename to be used to persist the history of KoD
 responses received from servers.  The default is
 /var/db/ntp-kod.
 .TP
 .BR \-p ", " \--syslog
 Logging with syslog.
 This option must not appear in combination with any of the following options:
-filelog.
+logfile.
 .sp
 When this option is set all logging will be done using syslog.
 .TP
-.BR \-l " \fIfile-name\fP, " \--filelog "=" \fIfile-name\fP
+.BR \-l " \fIfile-name\fP, " \--logfile "=" \fIfile-name\fP
 Log to specified logfile.
 This option must not appear in combination with any of the following options:
 syslog.
 .sp
 This option causes the client to write log messages to the specified
-logfile. 
+logfile.
 .TP
 .BR \-s ", " \--settod
 Set (step) the time with settimeofday().
@@ -117,7 +121,7 @@ The default \fIseconds\fP for this option is:
 .ti +4
  68
 .sp
-When waiting for a broadcast packet SNTP will wait the number 
+When waiting for a broadcast packet SNTP will wait the number
 of seconds specified before giving up.  Default 68 seconds.
 .TP
 .BR \-a " \fIauth-keynumber\fP, " \--authentication "=" \fIauth-keynumber\fP
@@ -131,12 +135,12 @@ key's identifier. See the keyfile option (-k) for more details.
 .BR \-k " \fIfile-name\fP, " \--keyfile "=" \fIfile-name\fP
 Specify a keyfile. SNTP will look in this file for the key specified with \-a.
 .sp
-This option specifies the keyfile. SNTP will search for the key specified with \-a keyno in this 
+This option specifies the keyfile. SNTP will search for the key specified with \-a keyno in this
 file. Key files follow the following format:
 
 keyid keytype key
 
-Where 	keyid is a number identifying this key
+Where	keyid is a number identifying this key
 keytype is one of the follow:
 S  Key in 64 Bit hexadecimal number as specified in in the DES specification.
 N  Key in 64 Bit hexadecimal number as specified in the NTP standard.
@@ -207,6 +211,7 @@ Please send bug reports to:  http://bugs.ntp.org, bugs@ntp.org
 .nf
 .na
 see html/copyright.html
+
 .fi
 .ad
 .PP

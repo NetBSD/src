@@ -1,28 +1,30 @@
 NULL=
 AUTOMAKE_OPTIONS=	
 
+if NTP_BINSUBDIR_IS_BIN
 bin_PROGRAMS=	ntpq
+else
+sbin_PROGRAMS=	ntpq
+endif
 
 AM_CPPFLAGS= -I$(top_srcdir)/include -I$(top_srcdir)/lib/isc/include \
 	-I$(top_srcdir)/lib/isc/nothreads/include \
 	-I$(top_srcdir)/lib/isc/unix/include $(LIBOPTS_CFLAGS)
 
 # LDADD might need RESLIB and ADJLIB
-ntpq_LDADD=	version.o @LCRYPTO@ @EDITLINE_LIBS@ $(LIBOPTS_LDADD) \
-		../libntp/libntp.a
+ntpq_LDADD=	version.o $(LIBOPTS_LDADD) ../libntp/libntp.a \
+		@EDITLINE_LIBS@ @LCRYPTO@
 noinst_HEADERS=	ntpq.h
 noinst_LIBRARIES=	libntpq.a
-# HMS: I don't think we need libntpq_a_LIBADD...
-#libntpq_a_LIBADD=	version.o @EDITLINE_LIBS@ $(LIBOPTS_LDADD) ../libntp/libntp.a
 libntpq_a_CFLAGS=	-DNO_MAIN_ALLOWED -DBUILD_AS_LIB
 CLEANFILES=
 DISTCLEANFILES=	.version version.c
 ETAGS_ARGS=	Makefile.am
 EXTRA_DIST=	ntpq-opts.def ntpq.1 ntpq-opts.texi ntpq-opts.menu
-BUILT_SOURCES=	ntpq-opts.c ntpq-opts.h ntpq.1 ntpq-opts.texi ntpq-opts.menu
-man_MANS=	ntpq.1
-run_ag=		cd $(srcdir) &&					\
-		env PATH="$(abs_builddir):$(PATH)"		\
+BUILT_SOURCES=	ntpq-opts.c ntpq-opts.h
+man_MANS=	$(srcdir)/ntpq.1
+noinst_DATA=	$(srcdir)/ntpq-opts.texi $(srcdir)/ntpq-opts.menu
+run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)"	\
 		autogen -L ../include --writable
 std_def_list=	$(top_srcdir)/include/debug-opt.def		\
 		$(top_srcdir)/include/autogen-version.def 	\
@@ -42,9 +44,12 @@ $(srcdir)/ntpq-opts.c: $(srcdir)/ntpq-opts.def $(std_def_list)
 $(srcdir)/ntpq.1: $(srcdir)/ntpq-opts.def $(std_def_list)
 	$(run_ag) -Tagman1.tpl -bntpq ntpq-opts.def
 
-$(srcdir)/ntpq-opts.texi $(srcdir)/ntpq-opts.menu: $(srcdir)/ntpq-opts.def $(std_def_list)
-	$(MAKE) ntpq	# aginfo.tpl runs the binary to extract --help usage text
+$(srcdir)/ntpq-opts.menu: $(srcdir)/ntpq-opts.texi
+	@: do-nothing action to avoid default SCCS get, .menu built with .texi
+	
+$(srcdir)/ntpq-opts.texi: $(srcdir)/ntpq-opts.def $(std_def_list)
 	$(run_ag) -Taginfo.tpl -DLEVEL=section ntpq-opts.def
+	$(top_srcdir)/scripts/check--help $@
 
 $(PROGRAMS): $(LDADD)
 

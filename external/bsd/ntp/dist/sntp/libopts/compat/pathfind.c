@@ -1,4 +1,4 @@
-/*	$NetBSD: pathfind.c,v 1.1.1.1 2009/12/13 16:57:25 kardel Exp $	*/
+/*	$NetBSD: pathfind.c,v 1.1.1.2 2012/01/31 21:27:55 kardel Exp $	*/
 
 /*  -*- Mode: C -*-  */
 
@@ -6,10 +6,7 @@
 
 /*
  * Author:           Gary V Vaughan <gvaughan@oranda.demon.co.uk>
- * Time-stamp:       "2006-09-23 19:46:16 bkorb"
- *            by: bkorb
- *
- * Id: 8ce7ddfe2378f0b75c91c0ab348a6ad81634fb01
+ * Time-stamp:       "2010-07-17 09:50:32 bkorb"
  */
 
 /* Code: */

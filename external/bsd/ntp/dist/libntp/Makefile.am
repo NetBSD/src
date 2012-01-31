@@ -48,6 +48,7 @@ libntp_a_SRCS =						\
 	msutotsf.c					\
 	msyslog.c					\
 	netof.c						\
+	ntp_libopts.c					\
 	ntp_rfc2553.c					\
 	numtoa.c					\
 	numtohost.c					\
@@ -102,10 +103,10 @@ libntp_a_SRCS =						\
 libntp_a_SOURCES = systime.c $(libntp_a_SRCS)
 libntpsim_a_SOURCES = systime_s.c $(libntp_a_SRCS)
 EXTRA_libntp_a_SOURCES = adjtimex.c
-INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/lib/isc/include \
-	-I$(top_srcdir)/lib/isc/nothreads/include \
-	-I$(top_srcdir)/lib/isc/unix/include
 ETAGS_ARGS = Makefile.am
+INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/lib/isc/include \
+ -I$(top_srcdir)/lib/isc/nothreads/include \
+ -I$(top_srcdir)/lib/isc/unix/include $(LIBOPTS_CFLAGS)
 
 EXTRA_DIST = README
 
