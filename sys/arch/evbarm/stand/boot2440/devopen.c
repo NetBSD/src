@@ -34,6 +34,7 @@
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/nfs.h>
+#include <lib/libsa/tftp.h>
 #include <lib/libsa/ext2fs.h>
 #include <lib/libsa/dosfs.h>
 #include <lib/libsa/ufs.h>
@@ -58,6 +59,7 @@ struct devsw devsw[] = {
 };
 
 struct fs_ops ops_nfs = FS_OPS(nfs);
+struct fs_ops ops_tftp = FS_OPS(tftp);
 struct fs_ops ops_ext2fs = FS_OPS(ext2fs);
 struct fs_ops ops_dosfs = FS_OPS(dosfs);
 struct fs_ops ops_bsdfs = FS_OPS(ufs);
@@ -78,9 +80,19 @@ devopen(struct open_file *of, const char *name, char **file)
 	if (strncmp("net:", name, 4) == 0 ||
 	    strncmp("nfs:", name, 4) == 0 ) {
 		of->f_dev = &devsw[0];
-		if ((error = net_open(of, name+4)) != 0)
+		if ((error = net_open(of, name+4, "nfs")) != 0)
 			return error;
 		file_system[0] = ops_nfs;
+		*file = bootfile;
+		strncpy(bi_path.bootpath, bootfile, sizeof(bi_path.bootpath));
+
+		return 0;
+	} else if (strncmp("tftp:", name, 5) == 0) {
+		of->f_dev = &devsw[0];
+		if ((error = net_open(of, name+5, "tftp")) != 0) {
+			return error;
+		}
+		file_system[0] = ops_tftp;
 		*file = bootfile;
 		strncpy(bi_path.bootpath, bootfile, sizeof(bi_path.bootpath));
 
@@ -88,6 +100,9 @@ devopen(struct open_file *of, const char *name, char **file)
 	} else if (name[0] == 'l' && name[1] == 'd') {
 		int unit, part;
 		parseunit(&name[2], &unit, &part, file);
+		if (*file == NULL || strlen(*file) == 0) {
+			strcpy(*file, "netbsd");
+		}
 		of->f_dev = &devsw[1];
 		if ((error = sdmmc_open(of, unit, part)) != 0)
 			return error;
