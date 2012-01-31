@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_sysctl.c,v 1.1.1.1 2009/12/13 16:54:33 kardel Exp $	*/
+/*	$NetBSD: ifiter_sysctl.c,v 1.1.1.2 2012/01/31 21:22:54 kardel Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -168,6 +168,7 @@ internal_current(isc_interfaceiter_t *iter) {
 
 		memset(&iter->current, 0, sizeof(iter->current));
 
+		iter->current.ifindex = sdl->sdl_index;
 		namelen = sdl->sdl_nlen;
 		if (namelen > sizeof(iter->current.name) - 1)
 			namelen = sizeof(iter->current.name) - 1;

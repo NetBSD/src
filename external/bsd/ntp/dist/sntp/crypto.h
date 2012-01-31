@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.h,v 1.1.1.1 2009/12/13 16:57:10 kardel Exp $	*/
+/*	$NetBSD: crypto.h,v 1.1.1.2 2012/01/31 21:27:42 kardel Exp $	*/
 
 #ifndef CRYPTO_H
 #define CRYPTO_H
@@ -9,9 +9,12 @@
 
 #include <ntp_fp.h>
 #include <ntp.h>
-#include <ntp_md5.h>
 #include <ntp_stdlib.h>
-
+#ifdef OPENSSL
+# include "openssl/evp.h"
+#else
+# include <ntp_md5.h>		/* provides clone of OpenSSL MD5 API */
+#endif
 #include "utilities.h"
 #include "sntp-opts.h"
 
@@ -20,16 +23,16 @@
 /* #include "sntp-opts.h" */
 
 struct key {
+	struct key *next;
 	int key_id;
 	int key_len;
-	char type;
-	char key_seq[16];
-	struct key *next;
+	char type[10];
+	char key_seq[64];
 };
 
-int auth_md5(char *pkt_data, int mac_size, struct key *cmp_key);
 int auth_init(const char *keyfile, struct key **keys);
 void get_key(int key_id, struct key **d_key);
-
+int make_mac(char *pkt_data, int pkt_size, int mac_size, struct key *cmp_key, char *digest);
+int auth_md5(char *pkt_data, int pkt_size, int mac_size, struct key *cmp_key);
 
 #endif

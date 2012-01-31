@@ -1,9 +1,11 @@
 NULL=
 AUTOMAKE_OPTIONS= 
 
-bindir=	${exec_prefix}/${BINSUBDIR}
-
+if NTP_BINSUBDIR_IS_BIN
 bin_PROGRAMS=	ntpd @MAKE_NTPDSIM@
+else
+sbin_PROGRAMS=	ntpd @MAKE_NTPDSIM@
+endif
 
 noinst_LIBRARIES=	libntpd.a
 
@@ -23,12 +25,6 @@ CHECK_SAVECONFIG= check-saveconfig
 endif
 else !SAVECONFIG_ENABLED
 CHECK_SAVECONFIG=
-endif
-
-if NTP_CROSSCOMPILE
-NTP_KEYWORD_OUT=ntp_keyword.dummy
-else
-NTP_KEYWORD_OUT=ntp_keyword.out
 endif
 
 #
@@ -67,11 +63,21 @@ vphack_after:
 		ln -s $(srcdir)/ntp_parser.h . \
 		)
 
-BUILT_SOURCES=	$(VPHACK) ntp_parser.c ntp_parser.h $(VPHACK_AFTER) \
-	ntp_keyword.h ntpd-opts.c ntpd-opts.h ntpd.1 ntpd-opts.texi \
-	ntpd-opts.menu
+# BUILT_SOURCES which should also be in EXTRA_DIST
+B_S_DIST=		\
+	ntpd-opts.c 	\
+	ntpd-opts.h 	\
+	$(NULL)
 
-man_MANS=	ntpd.1
+BUILT_SOURCES=		\
+	$(VPHACK) 	\
+	ntp_parser.c 	\
+	ntp_parser.h 	\
+	$(VPHACK_AFTER)	\
+	$(B_S_DIST)	\
+	$(NULL)
+
+man_MANS=	$(srcdir)/ntpd.1
 
 # ntpdsim.1 is a remnant along with all the ntpdsim-opts.* files, the
 # simulator currently uses ntpd-opts.[ch].  This also means there is no
@@ -82,29 +88,43 @@ man_MANS=	ntpd.1
 # sqrt                                ntp_control.o
 # floor                               refclock_wwv.o
 # which are (usually) provided by -lm.
-keyword_gen_LDADD = ../libntp/libntp.a
-ntpd_LDADD = $(LDADD) -lm @LCRYPTO@ @LSCF@ $(LIBOPTS_LDADD) ../libntp/libntp.a
-ntpdsim_LDADD = $(LDADD) -lm @LCRYPTO@ @LSCF@ $(LIBOPTS_LDADD) ../libntp/libntpsim.a
+ntpd_LDADD = $(LDADD) $(LIBOPTS_LDADD) ../libntp/libntp.a -lm @LCRYPTO@ @LSCF@
+ntpdsim_LDADD = $(LDADD) $(LIBOPTS_LDADD) ../libntp/libntpsim.a -lm @LCRYPTO@ @LSCF@
 ntpdsim_CFLAGS = $(CFLAGS) -DSIM
 check_y2k_LDADD = $(LDADD) ../libntp/libntp.a
-DISTCLEANFILES = keyword-gen .version version.c
-CLEANFILES = check-saveconfig compsave.conf ntp_keyword.out \
-	ntp_keyword.dummy
-EXTRA_DIST = \
+keyword_gen_LDADD = ../libntp/libntp.a	# we don't want $(LDADD) here
+
+DISTCLEANFILES =		\
+	keyword-gen		\
+	.version		\
+	version.c		\
+	$(NULL)
+
+CLEANFILES =			\
+	check-saveconfig	\
+	compsave.conf		\
+	k-g-u-submake		\
+	$(NULL)
+
+EXTRA_DIST =			\
 	complete.conf		\
+	keyword-gen-utd		\
+	ntpd.1			\
 	ntpd-opts.def		\
+	ntpd-opts.menu		\
+	ntpd-opts.texi		\
 	ntpdbase-opts.def	\
-	ntp_keyword.h		\
 	refclock_msfees.c	\
 	refclock_trak.c		\
-	$(BUILT_SOURCES)	\
+	$(B_S_DIST)		\
 	$(NULL)
+
 ETAGS_ARGS = Makefile.am
 ###							Y2Kfixes
 check_PROGRAMS = @MAKE_CHECK_Y2K@
 EXTRA_PROGRAMS = check_y2k ntpdsim keyword-gen
-run_ag=		cd $(srcdir) &&					\
-		env PATH="$(abs_builddir):$(PATH)"		\
+noinst_DATA =	$(srcdir)/ntpd-opts.texi $(srcdir)/ntpd-opts.menu
+run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)"	\
 		autogen -L ../include --writable
 std_def_list=	$(top_srcdir)/include/autogen-version.def 	\
 		$(top_srcdir)/include/copyright.def 		\
@@ -117,6 +137,7 @@ ntpd_SOURCES =			\
 	cmd_args.c		\
 	ntp_config.c		\
 	ntp_data_structures.c	\
+	ntp_keyword.h		\
 	ntp_io.c		\
 	ntp_parser.y		\
 	ntp_scanner.c		\
@@ -192,19 +213,26 @@ libntpd_a_SOURCES =		\
 	refclock_zyfer.c	\
 	$(NULL)
 
-ntp_keyword.out: keyword-gen
-	./keyword-gen $(srcdir)/ntp_parser.h > $@
-	grep -v diff_ignore_line < $(srcdir)/ntp_keyword.h > cmp1
-	grep -v diff_ignore_line < $@ > cmp2
-	cmp cmp1 cmp2 > /dev/null || cp $@ $(srcdir)/ntp_keyword.h
-	rm cmp1 cmp2
-	
-ntp_keyword.dummy:
-	echo stamp > $@
+k-g-u-submake: keyword-gen
+	./keyword-gen $(srcdir)/ntp_parser.h > k-g.out
+	@grep -v diff_ignore_line < k-g.out > cmp1
+	@grep -v diff_ignore_line < $(srcdir)/ntp_keyword.h > cmp2
+	@cmp cmp1 cmp2 > /dev/null || \
+		{ mv -f k-g.out $(srcdir)/ntp_keyword.h && \
+		  echo 'Generated changed ntp_keyword.h.' ;}
+	@[ ! -f k-g.out ] || \
+		{ rm k-g.out && echo 'ntp_keyword.h is up to date.' ;}
+	@rm cmp1 cmp2
+	@echo 'keyword-gen and ntp_keyword.h are up to date.' > $@
 
-$(srcdir)/ntp_keyword.h: $(NTP_KEYWORD_OUT)
+$(srcdir)/keyword-gen-utd: $(srcdir)/keyword-gen.c $(srcdir)/ntp_parser.h
+	$(MAKE) k-g-u-submake	# avoid explicit dependency
+	grep diff_ignore_line $(srcdir)/ntp_keyword.h > k-g-u
+	mv -f k-g-u $@
+	
+$(srcdir)/ntp_keyword.h: $(srcdir)/keyword-gen-utd
 	@: do-nothing action to avoid default SCCS get
-	@: .h updated if needed by ntp_keyword.out rule
+	@: .h updated if needed by k-g-u-submake rule
 
 $(srcdir)/ntpd-opts.h: $(srcdir)/ntpd-opts.c
 	@: do-nothing action to avoid default SCCS get, .h built with .c
@@ -215,9 +243,12 @@ $(srcdir)/ntpd-opts.c: $(srcdir)/ntpd-opts.def $(srcdir)/ntpdbase-opts.def $(std
 $(srcdir)/ntpd.1: $(srcdir)/ntpd-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list)
 	$(run_ag) -Tagman1.tpl -bntpd ntpd-opts.def
 
-$(srcdir)/ntpd-opts.texi $(srcdir)/ntpd-opts.menu: $(srcdir)/ntpd-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list)
-	$(MAKE) ntpd	# aginfo.tpl runs the binary to extract --help usage text
+$(srcdir)/ntpd-opts.menu: $(srcdir)/ntpd-opts.texi
+	@: do-nothing action to avoid default SCCS get, .menu built with .texi
+	
+$(srcdir)/ntpd-opts.texi: $(srcdir)/ntpd-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list)
 	$(run_ag) -Taginfo.tpl -DLEVEL=section ntpd-opts.def
+	$(top_srcdir)/scripts/check--help $@
 
 $(PROGRAMS): $(LDADD)
 
@@ -227,13 +258,16 @@ compsave.conf: ntpd $(srcdir)/complete.conf
 check-saveconfig: $(srcdir)/complete.conf compsave.conf
 	cmp $(srcdir)/complete.conf compsave.conf && echo stamp > $@
 
+../libopts/libopts.la:
+	cd ../libopts && $(MAKE) libopts.la
+
 ../libntp/libntp.a:
 	cd ../libntp && $(MAKE) libntp.a
 
 ../libparse/libparse.a:
-	cd ../libparse && $(MAKE)
+	cd ../libparse && $(MAKE) libparse.a
 
-$(top_srcdir)/version :
+$(top_srcdir)/version:
 	cd $(top_srcdir) && $(MAKE) version
 
 version.o: $(ntpd_OBJECTS) ../libntp/libntp.a @LIBPARSE@ Makefile $(top_srcdir)/version

@@ -1,4 +1,4 @@
-/*	$NetBSD: recvbuff.h,v 1.1.1.1 2009/12/13 16:54:54 kardel Exp $	*/
+/*	$NetBSD: recvbuff.h,v 1.1.1.2 2012/01/31 21:23:23 kardel Exp $	*/
 
 #ifndef RECVBUFF_H
 #define RECVBUFF_H
@@ -67,7 +67,7 @@ struct recvbuf {
 #else
 	int recv_srcadr_len;		/* filled in on completion */
 #endif
-	struct interface *dstadr;	/* interface datagram arrived thru */
+	endpt *	dstadr;			/* address pkt arrived on */
 	SOCKET	fd;			/* fd on which it was received */
 	int msg_flags;			/* Flags received about the packet */
 	l_fp recv_time;			/* time of arrival */
