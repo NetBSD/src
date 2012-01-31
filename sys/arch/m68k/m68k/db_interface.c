@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.34 2007/02/22 17:09:44 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.35 2012/01/31 21:17:57 mlelstv Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,9 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.34 2007/02/22 17:09:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.35 2012/01/31 21:17:57 mlelstv Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,12 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.34 2007/02/22 17:09:44 thorpej Ex
 
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
+#ifdef _KERNEL
 #include <ddb/db_extern.h>
-
+#endif
 
 int	db_active = 0;
 db_regs_t	ddb_regs;
 
+#ifdef _KERNEL
 static void kdbprinttrap(int, int);
 
 /*
@@ -155,3 +159,4 @@ cpu_Debugger(void)
 
 	__asm ("trap #15");
 }
+#endif
