@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.3 2011/01/31 17:54:20 drochner Exp $
+Warning: Permanently added the RSA host key for IP address '149.20.53.70' to the list of known hosts.
+#	$NetBSD: Makefile.inc,v 1.4 2012/01/31 19:58:22 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +24,7 @@ crtbegin.o: crtbegin.S
 
 crtbeginS.o: crtbegin.S
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} -DSHARED ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
+	${COMPILE.S} -DPIC -DSHARED ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
