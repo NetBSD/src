@@ -42,12 +42,16 @@
 extern int netif_open(void*);
 extern int netif_init(unsigned int tag);
 
+extern struct in_addr servip;
+
+static int netdev_sock = -1;
+
 int
 net_open(struct open_file *f, ...)
 {
 	va_list ap;
-	char *path;
-	int sock, error = 0;
+	char *path, *proto;
+	int error = 0;
 
 	if( netif_init(0) == 0 ) {
 		error = ENODEV;
@@ -55,15 +59,16 @@ net_open(struct open_file *f, ...)
 	}
 
 	va_start(ap, f);
-
 	path = va_arg(ap, char *);
-	if ((sock = netif_open(path)) < 0) {
+	proto = va_arg(ap, char *);
+	va_end(ap);
+	if ((netdev_sock = netif_open(path)) < 0) {
 		error = errno;
 		goto out;
 	}
 
 	/* send DHCP request */
-	bootp(sock);
+	bootp(netdev_sock);
 
 	/* IP address was not found */
 	if (myip.s_addr == 0) {
@@ -96,6 +101,9 @@ net_open(struct open_file *f, ...)
 			printf("Root path: %s\n", rootpath);
 			strcpy(bootfile, ++filename);
 			printf("Bootfile: %s\n", bootfile);
+		} else {
+			/* No ':' found, assume it's just a filename */
+			strcpy(bootfile, path);
 		}
 	}
 
@@ -103,12 +111,14 @@ net_open(struct open_file *f, ...)
 	if (bootfile[0] == '\0')
 		strcpy(bootfile, "netbsd");
 
-	if (nfs_mount(sock, rootip, rootpath) != 0) {
+	if (strcmp(proto, "nfs") == 0
+	    && (nfs_mount(netdev_sock, rootip, rootpath) != 0)) {
 		error = errno;
 		goto out;
 	}
+
+	f->f_devdata = &netdev_sock;
 out:
-	va_end(ap);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2012/01/30 03:28:34 nisimura Exp $
+#	$NetBSD: Makefile,v 1.2 2012/01/31 11:04:17 nisimura Exp $
 
 S=		${.CURDIR}/../../../..
 PROG=		bootmini2440
@@ -11,7 +11,7 @@ CLEANFILES+=	vers.c ${PROG}.elf
 CFLAGS+=	-Wall -Wno-main -ffreestanding -march=armv4
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP 
 CPPFLAGS+=	-DDM9000MAC="0x08,0x08,0x11,0x18,0x12,0x27" 
-CPPFLAGS+=	-DDEFAULT_BOOTFILE="ld0e:netbsd;net:"
+CPPFLAGS+=	-DDEFAULT_BOOTFILE="ld0a:netbsd;net:"
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S} -I${S}/arch
 DBG=		
 
