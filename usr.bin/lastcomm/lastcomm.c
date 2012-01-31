@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.22 2012/01/31 16:30:40 christos Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.23 2012/01/31 21:53:42 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: lastcomm.c,v 1.22 2012/01/31 16:30:40 christos Exp $");
+__RCSID("$NetBSD: lastcomm.c,v 1.23 2012/01/31 21:53:42 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -226,7 +226,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [ -f file ] [-w] [command ...] [user ...] [tty ...]\n",
+	    "Usage: %s [-w] [-f file] [command ...] [user ...] [terminal ...]\n",
 	    getprogname());
 	exit(1);
 }
