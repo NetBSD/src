@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2011 Roy Marples
+# Copyright (c) 2007-2012 Roy Marples
 # All rights reserved
 
 # dnsmasq subscriber for resolvconf
@@ -58,8 +58,6 @@ if [ -s "$dbus_pid" -a -s "$dnsmasq_pid" ]; then
 			kill -0 $(cat "$dnsmasq_pid") 2>/dev/null
 		then
 			dbus=true
-			newconf="$newconf$NL# Domain specific servers will"
-			newconf="$newconf be sent over dbus${NL}enable-dbus$NL"
 		fi
 	fi
 fi
@@ -69,29 +67,61 @@ for n in $NAMESERVERS; do
 done
 
 dbusdest=
+conf=
 for d in $DOMAINS; do
 	dn="${d%%:*}"
 	ns="${d#*:}"
 	while [ -n "$ns" ]; do
-		if $dbus; then
+		case "$ns" in
+		*.*.*.*)
 			SIFS=${IFS-y} OIFS=$IFS
 			IFS=.
 			set -- ${ns%%,*}
 			num="0x$(printf %02x $1 $2 $3 $4)"
-			if [ "$SIFS" = yi ]; then
+			if [ "$SIFS" = y ]; then
 				unset IFS
 			else
 				IFS=$OIFS
 			fi
 			dbusdest="$dbusdest uint32:$(printf %u $num)"
 			dbusdest="$dbusdest string:$dn"
-		else
-			newconf="${newconf}server=/$dn/${ns%%,*}$NL"
-		fi
+			;;
+		*:*:*:*:*:*:*:*)
+			SIFS=${IFS-y} OIFS=$IFS bytes=
+			IFS=:
+			set -- ${ns%%,*}
+			while [ -n "$1" ]; do
+				addr="$1"
+				shift
+				while [ ${#addr} -lt 4 ]; do
+					addr="0${addr}"
+				done
+				byte1="$(printf %d 0x${addr%??})"
+				byte2="$(printf %d 0x${addr#??})"
+				dbusdest="$dbusdest byte:$byte1 byte:$byte2"
+			done
+			if [ "$SIFS" = y ]; then
+				unset IFS
+			else
+				IFS=$OIFS
+			fi
+			dbusdest="$dbusdest string:$dn"
+			;;
+		*)
+			dbus=false
+			;;
+		esac
+		conf="${conf}server=/$dn/${ns%%,*}$NL"
 		[ "$ns" = "${ns#*,}" ] && break
 		ns="${ns#*,}"
 	done
 done
+if $dbus; then
+	newconf="$newconf$NL# Domain specific servers will"
+	newconf="$newconf be sent over dbus${NL}enable-dbus$NL"
+else
+	newconf="$newconf$conf"
+fi
 
 # Try to ensure that config dirs exist
 if type config_mkdirs >/dev/null 2>&1; then
