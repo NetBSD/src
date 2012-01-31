@@ -1,4 +1,4 @@
-/*	$NetBSD: mbg_gps166.h,v 1.1.1.1 2009/12/13 16:54:49 kardel Exp $	*/
+/*	$NetBSD: mbg_gps166.h,v 1.1.1.2 2012/01/31 21:23:16 kardel Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/include/mbg_gps166.h,v 4.7 2006/06/22 18:41:43 kardel RELEASE_20060622_A
@@ -393,7 +393,7 @@ typedef struct {
   l_fp A0;         /*  ± Clock Correction Coefficient 0             [sec] */
   l_fp A1;         /*  ± Clock Correction Coefficient 1         [sec/sec] */
 
-  ushort WNlsf;    /*  week number of nearest leap second                 */
+  u_short WNlsf;   /*  week number of nearest leap second                 */
   short DNt;       /*  the day number at the end of which LS is inserted  */
   char delta_tls;  /*                                                     */
   char delta_tlsf; /*                                                     */

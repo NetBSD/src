@@ -1,6 +1,6 @@
-/*	$NetBSD: xat-attribute.c,v 1.1.1.1 2009/12/13 16:57:23 kardel Exp $	*/
+/*	$NetBSD: xat-attribute.c,v 1.1.1.2 2012/01/31 21:27:52 kardel Exp $	*/
 
-/* ANSI-C code produced by gperf version 3.0.2 */
+/* ANSI-C code produced by gperf version 3.0.4 */
 
 
 #if 0 /* gperf build options: */
@@ -84,6 +84,9 @@ static const xat_attribute_map_t xat_attribute_table[] =
   };
 
 #ifdef __GNUC__
+#if defined __GNUC_STDC_INLINE__ || defined __GNUC_GNU_INLINE__
+__attribute__ ((__gnu_inline__))
+#endif
 #endif
 static inline const xat_attribute_map_t *
 find_xat_attribute_name (register const char *str, register unsigned int len)
