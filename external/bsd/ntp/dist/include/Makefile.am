@@ -34,7 +34,9 @@ noinst_HEADERS =	\
 	ntp_filegen.h	\
 	ntp_fp.h	\
 	ntp_if.h	\
+	ntp_intres.h	\
 	ntp_io.h	\
+	ntp_libopts.h	\
 	ntp_lineedit.h	\
 	ntp_lists.h	\
 	ntp_machine.h	\

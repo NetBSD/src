@@ -1,32 +1,30 @@
-/*	$NetBSD: ntpd-opts.c,v 1.1.1.1 2009/12/13 16:56:16 kardel Exp $	*/
+/*	$NetBSD: ntpd-opts.c,v 1.1.1.2 2012/01/31 21:25:57 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpd-opts.c)
  *  
- *  It has been AutoGen-ed  December 10, 2009 at 04:56:48 AM by AutoGen 5.10
+ *  It has been AutoGen-ed  December 24, 2011 at 06:34:01 PM by AutoGen 5.12
  *  From the definitions    ntpd-opts.def
  *  and the template file   options
  *
- * Generated from AutoOpts 33:0:8 templates.
- */
-
-/*
- *  This file was produced by an AutoOpts template.  AutoOpts is a
- *  copyrighted work.  This source file is not encumbered by AutoOpts
- *  licensing, but is provided under the licensing terms chosen by the
- *  ntpd author or copyright holder.  AutoOpts is licensed under
- *  the terms of the LGPL.  The redistributable library (``libopts'') is
- *  licensed under the terms of either the LGPL or, at the users discretion,
- *  the BSD license.  See the AutoOpts and/or libopts sources for details.
+ * Generated from AutoOpts 35:0:10 templates.
+ *
+ *  AutoOpts is a copyrighted work.  This source file is not encumbered
+ *  by AutoOpts licensing, but is provided under the licensing terms chosen
+ *  by the ntpd author or copyright holder.  AutoOpts is
+ *  licensed under the terms of the LGPL.  The redistributable library
+ *  (``libopts'') is licensed under the terms of either the LGPL or, at the
+ *  users discretion, the BSD license.  See the AutoOpts and/or libopts sources
+ *  for details.
  *
  * This source file is copyrighted and licensed under the following terms:
  *
- * ntpd copyright (c) 1970-2009 David L. Mills and/or others - all rights reserved
- *
- * see html/copyright.html
+ *  see html/copyright.html
+ *  
  */
 
 #include <sys/types.h>
+
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,15 +35,15 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
+extern FILE * option_usage_fp;
 
 /* TRANSLATORS: choose the translation for option names wisely because you
                 cannot ever change your mind. */
-tSCC zCopyright[] =
-       "ntpd copyright (c) 1970-2009 David L. Mills and/or others, all rights reserved"
-/* extracted from ../include/copyright.def near line 8 */
-;
-tSCC zCopyrightNotice[24] =
-"see html/copyright.html";
+static char const zCopyright[38] =
+"ntpd 4.2.6p5\n\
+see html/copyright.html\n";
+static char const zLicenseDescrip[25] =
+"see html/copyright.html\n";
 
 extern tUsageProc optionUsage;
 
@@ -61,21 +59,15 @@ extern tUsageProc optionUsage;
 #ifndef NULL
 #  define NULL 0
 #endif
-#ifndef EXIT_SUCCESS
-#  define  EXIT_SUCCESS 0
-#endif
-#ifndef EXIT_FAILURE
-#  define  EXIT_FAILURE 1
-#endif
 
 /*
  *  Ipv4 option description with
  *  "Must also have options" and "Incompatible options":
  */
-tSCC    zIpv4Text[] =
+static char const zIpv4Text[] =
         "Force IPv4 DNS name resolution";
-tSCC    zIpv4_NAME[]               = "IPV4";
-tSCC    zIpv4_Name[]               = "ipv4";
+static char const zIpv4_NAME[]               = "IPV4";
+static char const zIpv4_Name[]               = "ipv4";
 static const int
     aIpv4CantList[] = {
     INDEX_OPT_IPV6, NO_EQUIVALENT };
@@ -85,10 +77,10 @@ static const int
  *  Ipv6 option description with
  *  "Must also have options" and "Incompatible options":
  */
-tSCC    zIpv6Text[] =
+static char const zIpv6Text[] =
         "Force IPv6 DNS name resolution";
-tSCC    zIpv6_NAME[]               = "IPV6";
-tSCC    zIpv6_Name[]               = "ipv6";
+static char const zIpv6_NAME[]               = "IPV6";
+static char const zIpv6_Name[]               = "ipv6";
 static const int
     aIpv6CantList[] = {
     INDEX_OPT_IPV4, NO_EQUIVALENT };
@@ -98,10 +90,10 @@ static const int
  *  Authreq option description with
  *  "Must also have options" and "Incompatible options":
  */
-tSCC    zAuthreqText[] =
+static char const zAuthreqText[] =
         "Require crypto authentication";
-tSCC    zAuthreq_NAME[]            = "AUTHREQ";
-tSCC    zAuthreq_Name[]            = "authreq";
+static char const zAuthreq_NAME[]            = "AUTHREQ";
+static char const zAuthreq_Name[]            = "authreq";
 static const int
     aAuthreqCantList[] = {
     INDEX_OPT_AUTHNOREQ, NO_EQUIVALENT };
@@ -111,10 +103,10 @@ static const int
  *  Authnoreq option description with
  *  "Must also have options" and "Incompatible options":
  */
-tSCC    zAuthnoreqText[] =
+static char const zAuthnoreqText[] =
         "Do not require crypto authentication";
-tSCC    zAuthnoreq_NAME[]          = "AUTHNOREQ";
-tSCC    zAuthnoreq_Name[]          = "authnoreq";
+static char const zAuthnoreq_NAME[]          = "AUTHNOREQ";
+static char const zAuthnoreq_Name[]          = "authnoreq";
 static const int
     aAuthnoreqCantList[] = {
     INDEX_OPT_AUTHREQ, NO_EQUIVALENT };
@@ -123,19 +115,19 @@ static const int
 /*
  *  Bcastsync option description:
  */
-tSCC    zBcastsyncText[] =
+static char const zBcastsyncText[] =
         "Allow us to sync to broadcast servers";
-tSCC    zBcastsync_NAME[]          = "BCASTSYNC";
-tSCC    zBcastsync_Name[]          = "bcastsync";
+static char const zBcastsync_NAME[]          = "BCASTSYNC";
+static char const zBcastsync_Name[]          = "bcastsync";
 #define BCASTSYNC_FLAGS       (OPTST_DISABLED)
 
 /*
  *  Configfile option description:
  */
-tSCC    zConfigfileText[] =
+static char const zConfigfileText[] =
         "configuration file name";
-tSCC    zConfigfile_NAME[]         = "CONFIGFILE";
-tSCC    zConfigfile_Name[]         = "configfile";
+static char const zConfigfile_NAME[]         = "CONFIGFILE";
+static char const zConfigfile_Name[]         = "configfile";
 #define CONFIGFILE_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
@@ -143,121 +135,121 @@ tSCC    zConfigfile_Name[]         = "configfile";
  *  Debug_Level option description:
  */
 #ifdef DEBUG
-tSCC    zDebug_LevelText[] =
+static char const zDebug_LevelText[] =
         "Increase output debug message level";
-tSCC    zDebug_Level_NAME[]        = "DEBUG_LEVEL";
-tSCC    zDebug_Level_Name[]        = "debug-level";
+static char const zDebug_Level_NAME[]        = "DEBUG_LEVEL";
+static char const zDebug_Level_Name[]        = "debug-level";
 #define DEBUG_LEVEL_FLAGS       (OPTST_DISABLED)
 
 #else   /* disable Debug_Level */
 #define DEBUG_LEVEL_FLAGS       (OPTST_OMITTED | OPTST_NO_INIT)
 #define zDebug_Level_NAME      NULL
-tSCC zDebug_Level_Name[] = "debug-level";
-tSCC zDebug_LevelText[]  = "this package was built using 'configure --disable--debug'";
+static char const zDebug_Level_Name[] = "debug-level";
+static char const zDebug_LevelText[]  = "this package was built using 'configure --disable--debug'";
 #endif  /* DEBUG */
 
 /*
  *  Set_Debug_Level option description:
  */
 #ifdef DEBUG
-tSCC    zSet_Debug_LevelText[] =
+static char const zSet_Debug_LevelText[] =
         "Set the output debug message level";
-tSCC    zSet_Debug_Level_NAME[]    = "SET_DEBUG_LEVEL";
-tSCC    zSet_Debug_Level_Name[]    = "set-debug-level";
+static char const zSet_Debug_Level_NAME[]    = "SET_DEBUG_LEVEL";
+static char const zSet_Debug_Level_Name[]    = "set-debug-level";
 #define SET_DEBUG_LEVEL_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
 #else   /* disable Set_Debug_Level */
 #define SET_DEBUG_LEVEL_FLAGS       (OPTST_OMITTED | OPTST_NO_INIT)
 #define zSet_Debug_Level_NAME      NULL
-tSCC zSet_Debug_Level_Name[] = "set-debug-level";
-tSCC zSet_Debug_LevelText[]  = "this package was built using 'configure --disable--debug'";
+static char const zSet_Debug_Level_Name[] = "set-debug-level";
+static char const zSet_Debug_LevelText[]  = "this package was built using 'configure --disable--debug'";
 #endif  /* DEBUG */
 
 /*
  *  Driftfile option description:
  */
-tSCC    zDriftfileText[] =
+static char const zDriftfileText[] =
         "frequency drift file name";
-tSCC    zDriftfile_NAME[]          = "DRIFTFILE";
-tSCC    zDriftfile_Name[]          = "driftfile";
+static char const zDriftfile_NAME[]          = "DRIFTFILE";
+static char const zDriftfile_Name[]          = "driftfile";
 #define DRIFTFILE_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
 /*
  *  Panicgate option description:
  */
-tSCC    zPanicgateText[] =
+static char const zPanicgateText[] =
         "Allow the first adjustment to be Big";
-tSCC    zPanicgate_NAME[]          = "PANICGATE";
-tSCC    zPanicgate_Name[]          = "panicgate";
+static char const zPanicgate_NAME[]          = "PANICGATE";
+static char const zPanicgate_Name[]          = "panicgate";
 #define PANICGATE_FLAGS       (OPTST_DISABLED)
 
 /*
  *  Jaildir option description:
  */
 #ifdef HAVE_DROPROOT
-tSCC    zJaildirText[] =
+static char const zJaildirText[] =
         "Jail directory";
-tSCC    zJaildir_NAME[]            = "JAILDIR";
-tSCC    zJaildir_Name[]            = "jaildir";
+static char const zJaildir_NAME[]            = "JAILDIR";
+static char const zJaildir_Name[]            = "jaildir";
 #define JAILDIR_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
 #else   /* disable Jaildir */
 #define JAILDIR_FLAGS       (OPTST_OMITTED | OPTST_NO_INIT)
 #define zJaildir_NAME      NULL
-tSCC zJaildir_Name[] = "jaildir";
-tSCC zJaildirText[]  = "built without --enable-clockctl or --enable-linuxcaps";
+static char const zJaildir_Name[] = "jaildir";
+static char const zJaildirText[]  = "built without --enable-clockctl or --enable-linuxcaps";
 #endif  /* HAVE_DROPROOT */
 
 /*
  *  Interface option description:
  */
-tSCC    zInterfaceText[] =
+static char const zInterfaceText[] =
         "Listen on an interface name or address";
-tSCC    zInterface_NAME[]          = "INTERFACE";
-tSCC    zInterface_Name[]          = "interface";
+static char const zInterface_NAME[]          = "INTERFACE";
+static char const zInterface_Name[]          = "interface";
 #define INTERFACE_FLAGS       (OPTST_DISABLED | OPTST_STACKED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
 /*
  *  Keyfile option description:
  */
-tSCC    zKeyfileText[] =
+static char const zKeyfileText[] =
         "path to symmetric keys";
-tSCC    zKeyfile_NAME[]            = "KEYFILE";
-tSCC    zKeyfile_Name[]            = "keyfile";
+static char const zKeyfile_NAME[]            = "KEYFILE";
+static char const zKeyfile_Name[]            = "keyfile";
 #define KEYFILE_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
 /*
  *  Logfile option description:
  */
-tSCC    zLogfileText[] =
+static char const zLogfileText[] =
         "path to the log file";
-tSCC    zLogfile_NAME[]            = "LOGFILE";
-tSCC    zLogfile_Name[]            = "logfile";
+static char const zLogfile_NAME[]            = "LOGFILE";
+static char const zLogfile_Name[]            = "logfile";
 #define LOGFILE_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
 /*
  *  Novirtualips option description:
  */
-tSCC    zNovirtualipsText[] =
+static char const zNovirtualipsText[] =
         "Do not listen to virtual interfaces";
-tSCC    zNovirtualips_NAME[]       = "NOVIRTUALIPS";
-tSCC    zNovirtualips_Name[]       = "novirtualips";
+static char const zNovirtualips_NAME[]       = "NOVIRTUALIPS";
+static char const zNovirtualips_Name[]       = "novirtualips";
 #define NOVIRTUALIPS_FLAGS       (OPTST_DISABLED)
 
 /*
  *  Modifymmtimer option description:
  */
 #ifdef SYS_WINNT
-tSCC    zModifymmtimerText[] =
+static char const zModifymmtimerText[] =
         "Modify Multimedia Timer (Windows only)";
-tSCC    zModifymmtimer_NAME[]      = "MODIFYMMTIMER";
-tSCC    zModifymmtimer_Name[]      = "modifymmtimer";
+static char const zModifymmtimer_NAME[]      = "MODIFYMMTIMER";
+static char const zModifymmtimer_Name[]      = "modifymmtimer";
 #define MODIFYMMTIMER_FLAGS       (OPTST_DISABLED)
 
 #else   /* disable Modifymmtimer */
@@ -270,57 +262,57 @@ tSCC    zModifymmtimer_Name[]      = "modifymmtimer";
 /*
  *  Nofork option description:
  */
-tSCC    zNoforkText[] =
+static char const zNoforkText[] =
         "Do not fork";
-tSCC    zNofork_NAME[]             = "NOFORK";
-tSCC    zNofork_Name[]             = "nofork";
+static char const zNofork_NAME[]             = "NOFORK";
+static char const zNofork_Name[]             = "nofork";
 #define NOFORK_FLAGS       (OPTST_DISABLED)
 
 /*
  *  Nice option description:
  */
-tSCC    zNiceText[] =
+static char const zNiceText[] =
         "Run at high priority";
-tSCC    zNice_NAME[]               = "NICE";
-tSCC    zNice_Name[]               = "nice";
+static char const zNice_NAME[]               = "NICE";
+static char const zNice_Name[]               = "nice";
 #define NICE_FLAGS       (OPTST_DISABLED)
 
 /*
  *  Pidfile option description:
  */
-tSCC    zPidfileText[] =
+static char const zPidfileText[] =
         "path to the PID file";
-tSCC    zPidfile_NAME[]            = "PIDFILE";
-tSCC    zPidfile_Name[]            = "pidfile";
+static char const zPidfile_NAME[]            = "PIDFILE";
+static char const zPidfile_Name[]            = "pidfile";
 #define PIDFILE_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
 /*
  *  Priority option description:
  */
-tSCC    zPriorityText[] =
+static char const zPriorityText[] =
         "Process priority";
-tSCC    zPriority_NAME[]           = "PRIORITY";
-tSCC    zPriority_Name[]           = "priority";
+static char const zPriority_NAME[]           = "PRIORITY";
+static char const zPriority_Name[]           = "priority";
 #define PRIORITY_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_NUMERIC))
 
 /*
  *  Quit option description:
  */
-tSCC    zQuitText[] =
+static char const zQuitText[] =
         "Set the time and quit";
-tSCC    zQuit_NAME[]               = "QUIT";
-tSCC    zQuit_Name[]               = "quit";
+static char const zQuit_NAME[]               = "QUIT";
+static char const zQuit_Name[]               = "quit";
 #define QUIT_FLAGS       (OPTST_DISABLED)
 
 /*
  *  Propagationdelay option description:
  */
-tSCC    zPropagationdelayText[] =
+static char const zPropagationdelayText[] =
         "Broadcast/propagation delay";
-tSCC    zPropagationdelay_NAME[]   = "PROPAGATIONDELAY";
-tSCC    zPropagationdelay_Name[]   = "propagationdelay";
+static char const zPropagationdelay_NAME[]   = "PROPAGATIONDELAY";
+static char const zPropagationdelay_Name[]   = "propagationdelay";
 #define PROPAGATIONDELAY_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
@@ -328,10 +320,10 @@ tSCC    zPropagationdelay_Name[]   = "propagationdelay";
  *  Saveconfigquit option description:
  */
 #ifdef SAVECONFIG
-tSCC    zSaveconfigquitText[] =
+static char const zSaveconfigquitText[] =
         "Save parsed configuration and quit";
-tSCC    zSaveconfigquit_NAME[]     = "SAVECONFIGQUIT";
-tSCC    zSaveconfigquit_Name[]     = "saveconfigquit";
+static char const zSaveconfigquit_NAME[]     = "SAVECONFIGQUIT";
+static char const zSaveconfigquit_Name[]     = "saveconfigquit";
 #define SAVECONFIGQUIT_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
@@ -345,20 +337,20 @@ tSCC    zSaveconfigquit_Name[]     = "saveconfigquit";
 /*
  *  Statsdir option description:
  */
-tSCC    zStatsdirText[] =
+static char const zStatsdirText[] =
         "Statistics file location";
-tSCC    zStatsdir_NAME[]           = "STATSDIR";
-tSCC    zStatsdir_Name[]           = "statsdir";
+static char const zStatsdir_NAME[]           = "STATSDIR";
+static char const zStatsdir_Name[]           = "statsdir";
 #define STATSDIR_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
 /*
  *  Trustedkey option description:
  */
-tSCC    zTrustedkeyText[] =
+static char const zTrustedkeyText[] =
         "Trusted key number";
-tSCC    zTrustedkey_NAME[]         = "TRUSTEDKEY";
-tSCC    zTrustedkey_Name[]         = "trustedkey";
+static char const zTrustedkey_NAME[]         = "TRUSTEDKEY";
+static char const zTrustedkey_Name[]         = "trustedkey";
 #define TRUSTEDKEY_FLAGS       (OPTST_DISABLED | OPTST_STACKED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
@@ -366,67 +358,67 @@ tSCC    zTrustedkey_Name[]         = "trustedkey";
  *  User option description:
  */
 #ifdef HAVE_DROPROOT
-tSCC    zUserText[] =
+static char const zUserText[] =
         "Run as userid (or userid:groupid)";
-tSCC    zUser_NAME[]               = "USER";
-tSCC    zUser_Name[]               = "user";
+static char const zUser_NAME[]               = "USER";
+static char const zUser_Name[]               = "user";
 #define USER_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
 #else   /* disable User */
 #define USER_FLAGS       (OPTST_OMITTED | OPTST_NO_INIT)
 #define zUser_NAME      NULL
-tSCC zUser_Name[] = "user";
-tSCC zUserText[]  = "built without --enable-clockctl or --enable-linuxcaps";
+static char const zUser_Name[] = "user";
+static char const zUserText[]  = "built without --enable-clockctl or --enable-linuxcaps";
 #endif  /* HAVE_DROPROOT */
 
 /*
  *  Updateinterval option description:
  */
-tSCC    zUpdateintervalText[] =
+static char const zUpdateintervalText[] =
         "interval in seconds between scans for new or dropped interfaces";
-tSCC    zUpdateinterval_NAME[]     = "UPDATEINTERVAL";
-tSCC    zUpdateinterval_Name[]     = "updateinterval";
+static char const zUpdateinterval_NAME[]     = "UPDATEINTERVAL";
+static char const zUpdateinterval_Name[]     = "updateinterval";
 #define UPDATEINTERVAL_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_NUMERIC))
 
 /*
  *  Var option description:
  */
-tSCC    zVarText[] =
+static char const zVarText[] =
         "make ARG an ntp variable (RW)";
-tSCC    zVar_NAME[]                = "VAR";
-tSCC    zVar_Name[]                = "var";
+static char const zVar_NAME[]                = "VAR";
+static char const zVar_Name[]                = "var";
 #define VAR_FLAGS       (OPTST_DISABLED | OPTST_STACKED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
 /*
  *  Dvar option description:
  */
-tSCC    zDvarText[] =
+static char const zDvarText[] =
         "make ARG an ntp variable (RW|DEF)";
-tSCC    zDvar_NAME[]               = "DVAR";
-tSCC    zDvar_Name[]               = "dvar";
+static char const zDvar_NAME[]               = "DVAR";
+static char const zDvar_Name[]               = "dvar";
 #define DVAR_FLAGS       (OPTST_DISABLED | OPTST_STACKED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
 /*
  *  Slew option description:
  */
-tSCC    zSlewText[] =
+static char const zSlewText[] =
         "Slew up to 600 seconds";
-tSCC    zSlew_NAME[]               = "SLEW";
-tSCC    zSlew_Name[]               = "slew";
+static char const zSlew_NAME[]               = "SLEW";
+static char const zSlew_Name[]               = "slew";
 #define SLEW_FLAGS       (OPTST_DISABLED)
 
 /*
  *  Usepcc option description:
  */
 #ifdef SYS_WINNT
-tSCC    zUsepccText[] =
+static char const zUsepccText[] =
         "Use CPU cycle counter (Windows only)";
-tSCC    zUsepcc_NAME[]             = "USEPCC";
-tSCC    zUsepcc_Name[]             = "usepcc";
+static char const zUsepcc_NAME[]             = "USEPCC";
+static char const zUsepcc_Name[]             = "usepcc";
 #define USEPCC_FLAGS       (OPTST_DISABLED)
 
 #else   /* disable Usepcc */
@@ -440,10 +432,10 @@ tSCC    zUsepcc_Name[]             = "usepcc";
  *  Pccfreq option description:
  */
 #ifdef SYS_WINNT
-tSCC    zPccfreqText[] =
+static char const zPccfreqText[] =
         "Force CPU cycle counter use (Windows only)";
-tSCC    zPccfreq_NAME[]            = "PCCFREQ";
-tSCC    zPccfreq_Name[]            = "pccfreq";
+static char const zPccfreq_NAME[]            = "PCCFREQ";
+static char const zPccfreq_Name[]            = "pccfreq";
 #define PCCFREQ_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
@@ -457,12 +449,12 @@ tSCC    zPccfreq_Name[]            = "pccfreq";
 /*
  *  Help/More_Help/Version option descriptions:
  */
-tSCC zHelpText[]          = "Display extended usage information and exit";
-tSCC zHelp_Name[]         = "help";
+static char const zHelpText[]          = "Display extended usage information and exit";
+static char const zHelp_Name[]         = "help";
 #ifdef HAVE_WORKING_FORK
 #define OPTST_MORE_HELP_FLAGS   (OPTST_IMM | OPTST_NO_INIT)
-tSCC zMore_Help_Name[]    = "more-help";
-tSCC zMore_HelpText[]     = "Extended usage information passed thru pager";
+static char const zMore_Help_Name[]    = "more-help";
+static char const zMore_HelpText[]     = "Extended usage information passed thru pager";
 #else
 #define OPTST_MORE_HELP_FLAGS   (OPTST_OMITTED | OPTST_NO_INIT)
 #define zMore_Help_Name   NULL
@@ -475,8 +467,8 @@ tSCC zMore_HelpText[]     = "Extended usage information passed thru pager";
                                 OPTST_ARG_OPTIONAL | OPTST_IMM | OPTST_NO_INIT
 #endif
 
-tSCC zVersionText[]       = "Output version information and exit";
-tSCC zVersion_Name[]      = "version";
+static char const zVersionText[]       = "Output version information and exit";
+static char const zVersion_Name[]      = "version";
 /*
  *  Declare option callback procedures
  */
@@ -490,9 +482,6 @@ tSCC zVersion_Name[]      = "version";
  *  Under test, omit argument processing, or call optionStackArg,
  *  if multiple copies are allowed.
  */
-extern tOptProc
-    optionNumericVal,    optionPagedUsage,    optionStackArg,
-    optionVersionStderr;
 static tOptProc
     doUsageOpt;
 
@@ -507,7 +496,10 @@ static tOptProc
  *  When not under test, there are different procs to use
  */
 extern tOptProc
-    optionNumericVal, optionPagedUsage, optionPrintVersion, optionStackArg;
+    optionBooleanVal,    optionNestedVal,     optionNumericVal,
+    optionPagedUsage,    optionPrintVersion,  optionResetOpt,
+    optionStackArg,      optionTimeDate,      optionTimeVal,
+    optionUnstackArg,    optionVersionStderr;
 static tOptProc
     doUsageOpt;
 
@@ -528,7 +520,7 @@ static tOptProc
  *
  *  Define the Ntpd Option Descriptions.
  */
-static tOptDesc optDesc[ OPTION_CT ] = {
+static tOptDesc optDesc[OPTION_CT] = {
   {  /* entry idx, value */ 0, VALUE_OPT_IPV4,
      /* equiv idx, value */ 0, VALUE_OPT_IPV4,
      /* equivalenced to  */ NO_EQUIVALENT,
@@ -956,18 +948,18 @@ static tOptDesc optDesc[ OPTION_CT ] = {
  *
  *  Define the Ntpd Option Environment
  */
-tSCC   zPROGNAME[]   = "NTPD";
-tSCC   zUsageTitle[] =
-"ntpd - NTP daemon program - Ver. 4.2.6\n\
+static char const zPROGNAME[5] = "NTPD";
+static char const zUsageTitle[99] =
+"ntpd - NTP daemon program - Ver. 4.2.6p5\n\
 USAGE:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]...\n";
 #define zRcName     NULL
 #define apzHomeList NULL
 
-tSCC   zBugsAddr[]    = "http://bugs.ntp.org, bugs@ntp.org";
+static char const zBugsAddr[34]    = "http://bugs.ntp.org, bugs@ntp.org";
 #define zExplain NULL
-tSCC    zDetail[]     = "\n\n";
-tSCC    zFullVersion[] = NTPD_FULL_VERSION;
-/* extracted from /usr/local/gnu/share/autogen/optcode.tpl near line 495 */
+static char const zDetail[7] = "\n\n";
+static char const zFullVersion[] = NTPD_FULL_VERSION;
+/* extracted from optcode.tlib near line 515 */
 
 #if defined(ENABLE_NLS)
 # define OPTPROC_BASE OPTPROC_TRANSLATE
@@ -980,6 +972,26 @@ tSCC    zFullVersion[] = NTPD_FULL_VERSION;
 
 #define ntpd_full_usage NULL
 #define ntpd_short_usage NULL
+#ifndef  PKGDATADIR
+# define PKGDATADIR ""
+#endif
+
+#ifndef  WITH_PACKAGER
+# define ntpd_packager_info NULL
+#else
+static char const ntpd_packager_info[] =
+    "Packaged by " WITH_PACKAGER
+
+# ifdef WITH_PACKAGER_VERSION
+        " ("WITH_PACKAGER_VERSION")"
+# endif
+
+# ifdef WITH_PACKAGER_BUG_REPORTS
+    "\nReport ntpd bugs to " WITH_PACKAGER_BUG_REPORTS
+# endif
+    "\n";
+#endif
+
 tOptions ntpdOptions = {
     OPTIONS_STRUCT_VERSION,
     0, NULL,                    /* original argc + argv    */
@@ -989,15 +1001,16 @@ tOptions ntpdOptions = {
     + OPTPROC_LONGOPT
     + OPTPROC_NO_REQ_OPT
     + OPTPROC_ENVIRON
-    + OPTPROC_NO_ARGS ),
+    + OPTPROC_NO_ARGS
+    + OPTPROC_MISUSE ),
     0, NULL,                    /* current option index, current option */
     NULL,         NULL,         zPROGNAME,
-    zRcName,      zCopyright,   zCopyrightNotice,
+    zRcName,      zCopyright,   zLicenseDescrip,
     zFullVersion, apzHomeList,  zUsageTitle,
     zExplain,     zDetail,      optDesc,
     zBugsAddr,                  /* address to send bugs to */
     NULL, NULL,                 /* extensions/saved state  */
-    optionUsage,       /* usage procedure */
+    optionUsage, /* usage procedure */
     translate_option_strings,   /* translation procedure */
     /*
      *  Indexes to special options
@@ -1009,19 +1022,18 @@ tOptions ntpdOptions = {
     },
     35 /* full option count */, 32 /* user option count */,
     ntpd_full_usage, ntpd_short_usage,
-    NULL, NULL
+    NULL, NULL,
+    PKGDATADIR, ntpd_packager_info
 };
 
 /*
  *  Create the static procedure(s) declared above.
  */
 static void
-doUsageOpt(
-    tOptions*   pOptions,
-    tOptDesc*   pOptDesc )
+doUsageOpt(tOptions * pOptions, tOptDesc * pOptDesc)
 {
     (void)pOptions;
-    USAGE( EXIT_SUCCESS );
+    USAGE(NTPD_EXIT_SUCCESS);
 }
 
 #if ! defined(TEST_NTPD_OPTS)
@@ -1039,22 +1051,25 @@ DESC(DEBUG_LEVEL).optOccCt = atoi( pOptDesc->pzLastArg );
 }
 #endif /* defined DEBUG */
 #endif /* defined(TEST_NTPD_OPTS) */
-/* extracted from /usr/local/gnu/share/autogen/optmain.tpl near line 109 */
+/* extracted from optmain.tlib near line 128 */
 
 #if defined(TEST_NTPD_OPTS) /* TEST MAIN PROCEDURE: */
 
-extern void optionPutShell( tOptions* );
+extern void optionPutShell(tOptions*);
 
 int
-main(int argc, char** argv)
+main(int argc, char ** argv)
 {
-    int res = EXIT_SUCCESS;
-    (void)optionProcess( &ntpdOptions, argc, argv );
-    optionPutShell( &ntpdOptions );
+    int res = NTPD_EXIT_SUCCESS;
+    (void)optionProcess(&ntpdOptions, argc, argv);
+    optionPutShell(&ntpdOptions);
+    res = ferror(stdout);
+    if (res != 0)
+        fputs("output error writing to stdout\n", stderr);
     return res;
 }
 #endif  /* defined TEST_NTPD_OPTS */
-/* extracted from /usr/local/gnu/share/autogen/optcode.tpl near line 627 */
+/* extracted from optcode.tlib near line 666 */
 
 #if ENABLE_NLS
 #include <stdio.h>
@@ -1063,11 +1078,11 @@ main(int argc, char** argv)
 #include <unistd.h>
 #include <autoopts/usage-txt.h>
 
-static char* AO_gettext( char const* pz );
+static char* AO_gettext(char const* pz);
 static void  coerce_it(void** s);
 
 static char*
-AO_gettext( char const* pz )
+AO_gettext(char const* pz)
 {
     char* pzRes;
     if (pz == NULL)
@@ -1075,60 +1090,61 @@ AO_gettext( char const* pz )
     pzRes = _(pz);
     if (pzRes == pz)
         return pzRes;
-    pzRes = strdup( pzRes );
+    pzRes = strdup(pzRes);
     if (pzRes == NULL) {
-        fputs( _("No memory for duping translated strings\n"), stderr );
-        exit( EXIT_FAILURE );
+        fputs(_("No memory for duping translated strings\n"), stderr);
+        exit(NTPD_EXIT_FAILURE);
     }
     return pzRes;
 }
 
-static void coerce_it(void** s) { *s = AO_gettext(*s); }
-#define COERSION(_f) \
-  coerce_it((void*)&(ntpdOptions._f))
+static void coerce_it(void** s) { *s = AO_gettext(*s);
+}
 
 /*
  *  This invokes the translation code (e.g. gettext(3)).
  */
 static void
-translate_option_strings( void )
+translate_option_strings(void)
 {
+    tOptions * const pOpt = &ntpdOptions;
+
     /*
      *  Guard against re-translation.  It won't work.  The strings will have
      *  been changed by the first pass through this code.  One shot only.
      */
     if (option_usage_text.field_ct != 0) {
-
         /*
          *  Do the translations.  The first pointer follows the field count
          *  field.  The field count field is the size of a pointer.
          */
-        tOptDesc* pOD = ntpdOptions.pOptDesc;
-        char**    ppz = (char**)(void*)&(option_usage_text);
-        int       ix  = option_usage_text.field_ct;
+        tOptDesc * pOD = pOpt->pOptDesc;
+        char **    ppz = (char**)(void*)&(option_usage_text);
+        int        ix  = option_usage_text.field_ct;
 
         do {
             ppz++;
             *ppz = AO_gettext(*ppz);
         } while (--ix > 0);
 
-        COERSION(pzCopyright);
-        COERSION(pzCopyNotice);
-        COERSION(pzFullVersion);
-        COERSION(pzUsageTitle);
-        COERSION(pzExplain);
-        COERSION(pzDetail);
+        coerce_it((void*)&(pOpt->pzCopyright));
+        coerce_it((void*)&(pOpt->pzCopyNotice));
+        coerce_it((void*)&(pOpt->pzFullVersion));
+        coerce_it((void*)&(pOpt->pzUsageTitle));
+        coerce_it((void*)&(pOpt->pzExplain));
+        coerce_it((void*)&(pOpt->pzDetail));
+        coerce_it((void*)&(pOpt->pzPackager));
         option_usage_text.field_ct = 0;
 
-        for (ix = ntpdOptions.optCt; ix > 0; ix--, pOD++)
+        for (ix = pOpt->optCt; ix > 0; ix--, pOD++)
             coerce_it((void*)&(pOD->pzText));
     }
 
-    if ((ntpdOptions.fOptSet & OPTPROC_NXLAT_OPT_CFG) == 0) {
-        tOptDesc* pOD = ntpdOptions.pOptDesc;
-        int       ix;
+    if ((pOpt->fOptSet & OPTPROC_NXLAT_OPT_CFG) == 0) {
+        tOptDesc * pOD = pOpt->pOptDesc;
+        int        ix;
 
-        for (ix = ntpdOptions.optCt; ix > 0; ix--, pOD++) {
+        for (ix = pOpt->optCt; ix > 0; ix--, pOD++) {
             coerce_it((void*)&(pOD->pz_Name));
             coerce_it((void*)&(pOD->pz_DisableName));
             coerce_it((void*)&(pOD->pz_DisablePfx));

@@ -23,7 +23,7 @@ case "$srcdir::$build_os::${force_ntp_vpath_hack+set}" in
 	ntp_vpath_hack="yes"
     esac
 esac
-AC_MSG_RESULT($ntp_vpath_hack)
+AC_MSG_RESULT([$ntp_vpath_hack])
 AM_CONDITIONAL([VPATH_HACK], [test x$ntp_vpath_hack = xyes])
 ])
 dnl ======================================================================

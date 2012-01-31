@@ -1,4 +1,4 @@
-/*	$NetBSD: once.h,v 1.1.1.1 2009/12/13 16:54:47 kardel Exp $	*/
+/*	$NetBSD: once.h,v 1.1.1.2 2012/01/31 21:22:05 kardel Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -29,7 +29,7 @@ ISC_LANG_BEGINDECLS
 
 typedef struct {
 	int status;
-	int counter;
+	LONG counter;
 } isc_once_t;
 
 #define ISC_ONCE_INIT_NEEDED 0

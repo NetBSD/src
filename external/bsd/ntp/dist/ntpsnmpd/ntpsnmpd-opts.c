@@ -1,32 +1,30 @@
-/*	$NetBSD: ntpsnmpd-opts.c,v 1.1.1.1 2009/12/13 16:56:34 kardel Exp $	*/
+/*	$NetBSD: ntpsnmpd-opts.c,v 1.1.1.2 2012/01/31 21:27:05 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpsnmpd-opts.c)
  *  
- *  It has been AutoGen-ed  December 10, 2009 at 05:03:45 AM by AutoGen 5.10
+ *  It has been AutoGen-ed  December 24, 2011 at 06:34:36 PM by AutoGen 5.12
  *  From the definitions    ntpsnmpd-opts.def
  *  and the template file   options
  *
- * Generated from AutoOpts 33:0:8 templates.
- */
-
-/*
- *  This file was produced by an AutoOpts template.  AutoOpts is a
- *  copyrighted work.  This source file is not encumbered by AutoOpts
- *  licensing, but is provided under the licensing terms chosen by the
- *  ntpsnmpd author or copyright holder.  AutoOpts is licensed under
- *  the terms of the LGPL.  The redistributable library (``libopts'') is
- *  licensed under the terms of either the LGPL or, at the users discretion,
- *  the BSD license.  See the AutoOpts and/or libopts sources for details.
+ * Generated from AutoOpts 35:0:10 templates.
+ *
+ *  AutoOpts is a copyrighted work.  This source file is not encumbered
+ *  by AutoOpts licensing, but is provided under the licensing terms chosen
+ *  by the ntpsnmpd author or copyright holder.  AutoOpts is
+ *  licensed under the terms of the LGPL.  The redistributable library
+ *  (``libopts'') is licensed under the terms of either the LGPL or, at the
+ *  users discretion, the BSD license.  See the AutoOpts and/or libopts sources
+ *  for details.
  *
  * This source file is copyrighted and licensed under the following terms:
  *
- * ntpsnmpd copyright (c) 1970-2009 David L. Mills and/or others - all rights reserved
- *
- * see html/copyright.html
+ *  see html/copyright.html
+ *  
  */
 
 #include <sys/types.h>
+
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,55 +35,60 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
+extern FILE * option_usage_fp;
 
 /* TRANSLATORS: choose the translation for option names wisely because you
                 cannot ever change your mind. */
-tSCC zCopyright[] =
-       "ntpsnmpd copyright (c) 1970-2009 David L. Mills and/or others, all rights reserved"
-/* extracted from ../include/copyright.def near line 8 */
-;
-tSCC zCopyrightNotice[24] =
-"see html/copyright.html";
+static char const zCopyright[42] =
+"ntpsnmpd 4.2.6p5\n\
+see html/copyright.html\n";
+static char const zLicenseDescrip[25] =
+"see html/copyright.html\n";
 
 extern tUsageProc optionUsage;
 
 #ifndef NULL
 #  define NULL 0
 #endif
-#ifndef EXIT_SUCCESS
-#  define  EXIT_SUCCESS 0
-#endif
-#ifndef EXIT_FAILURE
-#  define  EXIT_FAILURE 1
-#endif
 
 /*
  *  Nofork option description:
  */
-tSCC    zNoforkText[] =
+static char const zNoforkText[] =
         "Do not fork";
-tSCC    zNofork_NAME[]             = "NOFORK";
-tSCC    zNofork_Name[]             = "nofork";
+static char const zNofork_NAME[]             = "NOFORK";
+static char const zNofork_Name[]             = "nofork";
 #define NOFORK_FLAGS       (OPTST_DISABLED)
 
 /*
  *  Syslog option description:
  */
-tSCC    zSyslogText[] =
+static char const zSyslogText[] =
         "Log to syslog()";
-tSCC    zSyslog_NAME[]             = "SYSLOG";
-tSCC    zSyslog_Name[]             = "syslog";
+static char const zSyslog_NAME[]             = "SYSLOG";
+static char const zSyslog_Name[]             = "syslog";
 #define SYSLOG_FLAGS       (OPTST_DISABLED)
+
+/*
+ *  Agentxsocket option description:
+ */
+static char const zAgentxsocketText[] =
+        "The socket address ntpsnmpd uses to connect to net-snmpd";
+static char const zAgentxsocket_NAME[]       = "AGENTXSOCKET";
+static char const zAgentxsocket_Name[]       = "agentxsocket";
+static char const zAgentxsocketDefaultArg[]    = "unix:/var/agentx/master";
+#define AGENTXSOCKET_FLAGS       (OPTST_DISABLED \
+        | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
 /*
  *  Help/More_Help/Version option descriptions:
  */
-tSCC zHelpText[]          = "Display extended usage information and exit";
-tSCC zHelp_Name[]         = "help";
+static char const zHelpText[]          = "Display extended usage information and exit";
+static char const zHelp_Name[]         = "help";
 #ifdef HAVE_WORKING_FORK
 #define OPTST_MORE_HELP_FLAGS   (OPTST_IMM | OPTST_NO_INIT)
-tSCC zMore_Help_Name[]    = "more-help";
-tSCC zMore_HelpText[]     = "Extended usage information passed thru pager";
+static char const zMore_Help_Name[]    = "more-help";
+static char const zMore_HelpText[]     = "Extended usage information passed thru pager";
 #else
 #define OPTST_MORE_HELP_FLAGS   (OPTST_OMITTED | OPTST_NO_INIT)
 #define zMore_Help_Name   NULL
@@ -98,14 +101,14 @@ tSCC zMore_HelpText[]     = "Extended usage information passed thru pager";
                                 OPTST_ARG_OPTIONAL | OPTST_IMM | OPTST_NO_INIT
 #endif
 
-tSCC zVersionText[]       = "Output version information and exit";
-tSCC zVersion_Name[]      = "version";
-tSCC zSave_OptsText[]     = "Save the option state to a config file";
-tSCC zSave_Opts_Name[]    = "save-opts";
-tSCC zLoad_OptsText[]     = "Load options from a config file";
-tSCC zLoad_Opts_NAME[]    = "LOAD_OPTS";
-tSCC zNotLoad_Opts_Name[] = "no-load-opts";
-tSCC zNotLoad_Opts_Pfx[]  = "no";
+static char const zVersionText[]       = "Output version information and exit";
+static char const zVersion_Name[]      = "version";
+static char const zSave_OptsText[]     = "Save the option state to a config file";
+static char const zSave_Opts_Name[]    = "save-opts";
+static char const zLoad_OptsText[]     = "Load options from a config file";
+static char const zLoad_Opts_NAME[]    = "LOAD_OPTS";
+static char const zNotLoad_Opts_Name[] = "no-load-opts";
+static char const zNotLoad_Opts_Pfx[]  = "no";
 #define zLoad_Opts_Name   (zNotLoad_Opts_Name + 3)
 /*
  *  Declare option callback procedures
@@ -115,8 +118,6 @@ tSCC zNotLoad_Opts_Pfx[]  = "no";
  *  Under test, omit argument processing, or call optionStackArg,
  *  if multiple copies are allowed.
  */
-extern tOptProc
-    optionPagedUsage, optionVersionStderr;
 static tOptProc
     doUsageOpt;
 
@@ -125,7 +126,10 @@ static tOptProc
  *  When not under test, there are different procs to use
  */
 extern tOptProc
-    optionPagedUsage, optionPrintVersion;
+    optionBooleanVal,    optionNestedVal,     optionNumericVal,
+    optionPagedUsage,    optionPrintVersion,  optionResetOpt,
+    optionStackArg,      optionTimeDate,      optionTimeVal,
+    optionUnstackArg,    optionVersionStderr;
 static tOptProc
     doUsageOpt;
 #endif /* defined(TEST_NTPSNMPD_OPTS) */
@@ -139,7 +143,7 @@ static tOptProc
  *
  *  Define the Ntpsnmpd Option Descriptions.
  */
-static tOptDesc optDesc[ OPTION_CT ] = {
+static tOptDesc optDesc[OPTION_CT] = {
   {  /* entry idx, value */ 0, VALUE_OPT_NOFORK,
      /* equiv idx, value */ 0, VALUE_OPT_NOFORK,
      /* equivalenced to  */ NO_EQUIVALENT,
@@ -162,6 +166,18 @@ static tOptDesc optDesc[ OPTION_CT ] = {
      /* must/cannot opts */ NULL, NULL,
      /* option proc      */ NULL,
      /* desc, NAME, name */ zSyslogText, zSyslog_NAME, zSyslog_Name,
+     /* disablement strs */ NULL, NULL },
+
+  {  /* entry idx, value */ 2, VALUE_OPT_AGENTXSOCKET,
+     /* equiv idx, value */ 2, VALUE_OPT_AGENTXSOCKET,
+     /* equivalenced to  */ NO_EQUIVALENT,
+     /* min, max, act ct */ 0, 1, 0,
+     /* opt state flags  */ AGENTXSOCKET_FLAGS, 0,
+     /* last opt argumnt */ { zAgentxsocketDefaultArg },
+     /* arg list/cookie  */ NULL,
+     /* must/cannot opts */ NULL, NULL,
+     /* option proc      */ NULL,
+     /* desc, NAME, name */ zAgentxsocketText, zAgentxsocket_NAME, zAgentxsocket_Name,
      /* disablement strs */ NULL, NULL },
 
   {  /* entry idx, value */ INDEX_OPT_VERSION, VALUE_OPT_VERSION,
@@ -233,21 +249,21 @@ static tOptDesc optDesc[ OPTION_CT ] = {
  *
  *  Define the Ntpsnmpd Option Environment
  */
-tSCC   zPROGNAME[]   = "NTPSNMPD";
-tSCC   zUsageTitle[] =
-"ntpsnmpd - NTP SNMP MIB agent - Ver. 4.2.6\n\
-USAGE:  %s [ -<flag> | --<name> ]...\n";
-tSCC   zRcName[]     = ".ntprc";
-tSCC*  apzHomeList[] = {
-       "$HOME",
-       ".",
-       NULL };
+static char const zPROGNAME[9] = "NTPSNMPD";
+static char const zUsageTitle[103] =
+"ntpsnmpd - NTP SNMP MIB agent - Ver. 4.2.6p5\n\
+USAGE:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]...\n";
+static char const zRcName[7] = ".ntprc";
+static char const * const apzHomeList[3] = {
+    "$HOME",
+    ".",
+    NULL };
 
-tSCC   zBugsAddr[]    = "http://bugs.ntp.org, bugs@ntp.org";
+static char const zBugsAddr[34]    = "http://bugs.ntp.org, bugs@ntp.org";
 #define zExplain NULL
 #define zDetail         NULL
-tSCC    zFullVersion[] = NTPSNMPD_FULL_VERSION;
-/* extracted from /usr/local/gnu/share/autogen/optcode.tpl near line 495 */
+static char const zFullVersion[] = NTPSNMPD_FULL_VERSION;
+/* extracted from optcode.tlib near line 515 */
 
 #if defined(ENABLE_NLS)
 # define OPTPROC_BASE OPTPROC_TRANSLATE
@@ -260,6 +276,26 @@ tSCC    zFullVersion[] = NTPSNMPD_FULL_VERSION;
 
 #define ntpsnmpd_full_usage NULL
 #define ntpsnmpd_short_usage NULL
+#ifndef  PKGDATADIR
+# define PKGDATADIR ""
+#endif
+
+#ifndef  WITH_PACKAGER
+# define ntpsnmpd_packager_info NULL
+#else
+static char const ntpsnmpd_packager_info[] =
+    "Packaged by " WITH_PACKAGER
+
+# ifdef WITH_PACKAGER_VERSION
+        " ("WITH_PACKAGER_VERSION")"
+# endif
+
+# ifdef WITH_PACKAGER_BUG_REPORTS
+    "\nReport ntpsnmpd bugs to " WITH_PACKAGER_BUG_REPORTS
+# endif
+    "\n";
+#endif
+
 tOptions ntpsnmpdOptions = {
     OPTIONS_STRUCT_VERSION,
     0, NULL,                    /* original argc + argv    */
@@ -269,15 +305,16 @@ tOptions ntpsnmpdOptions = {
     + OPTPROC_LONGOPT
     + OPTPROC_NO_REQ_OPT
     + OPTPROC_ENVIRON
-    + OPTPROC_NO_ARGS ),
+    + OPTPROC_NO_ARGS
+    + OPTPROC_MISUSE ),
     0, NULL,                    /* current option index, current option */
     NULL,         NULL,         zPROGNAME,
-    zRcName,      zCopyright,   zCopyrightNotice,
+    zRcName,      zCopyright,   zLicenseDescrip,
     zFullVersion, apzHomeList,  zUsageTitle,
     zExplain,     zDetail,      optDesc,
     zBugsAddr,                  /* address to send bugs to */
     NULL, NULL,                 /* extensions/saved state  */
-    optionUsage,       /* usage procedure */
+    optionUsage, /* usage procedure */
     translate_option_strings,   /* translation procedure */
     /*
      *  Indexes to special options
@@ -287,38 +324,40 @@ tOptions ntpsnmpdOptions = {
       NO_EQUIVALENT, /* '-#' option index */
       NO_EQUIVALENT /* index of default opt */
     },
-    7 /* full option count */, 2 /* user option count */,
+    8 /* full option count */, 3 /* user option count */,
     ntpsnmpd_full_usage, ntpsnmpd_short_usage,
-    NULL, NULL
+    NULL, NULL,
+    PKGDATADIR, ntpsnmpd_packager_info
 };
 
 /*
  *  Create the static procedure(s) declared above.
  */
 static void
-doUsageOpt(
-    tOptions*   pOptions,
-    tOptDesc*   pOptDesc )
+doUsageOpt(tOptions * pOptions, tOptDesc * pOptDesc)
 {
     (void)pOptions;
-    USAGE( EXIT_SUCCESS );
+    USAGE(NTPSNMPD_EXIT_SUCCESS);
 }
-/* extracted from /usr/local/gnu/share/autogen/optmain.tpl near line 109 */
+/* extracted from optmain.tlib near line 128 */
 
 #if defined(TEST_NTPSNMPD_OPTS) /* TEST MAIN PROCEDURE: */
 
-extern void optionPutShell( tOptions* );
+extern void optionPutShell(tOptions*);
 
 int
-main(int argc, char** argv)
+main(int argc, char ** argv)
 {
-    int res = EXIT_SUCCESS;
-    (void)optionProcess( &ntpsnmpdOptions, argc, argv );
-    optionPutShell( &ntpsnmpdOptions );
+    int res = NTPSNMPD_EXIT_SUCCESS;
+    (void)optionProcess(&ntpsnmpdOptions, argc, argv);
+    optionPutShell(&ntpsnmpdOptions);
+    res = ferror(stdout);
+    if (res != 0)
+        fputs("output error writing to stdout\n", stderr);
     return res;
 }
 #endif  /* defined TEST_NTPSNMPD_OPTS */
-/* extracted from /usr/local/gnu/share/autogen/optcode.tpl near line 627 */
+/* extracted from optcode.tlib near line 666 */
 
 #if ENABLE_NLS
 #include <stdio.h>
@@ -327,11 +366,11 @@ main(int argc, char** argv)
 #include <unistd.h>
 #include <autoopts/usage-txt.h>
 
-static char* AO_gettext( char const* pz );
+static char* AO_gettext(char const* pz);
 static void  coerce_it(void** s);
 
 static char*
-AO_gettext( char const* pz )
+AO_gettext(char const* pz)
 {
     char* pzRes;
     if (pz == NULL)
@@ -339,60 +378,61 @@ AO_gettext( char const* pz )
     pzRes = _(pz);
     if (pzRes == pz)
         return pzRes;
-    pzRes = strdup( pzRes );
+    pzRes = strdup(pzRes);
     if (pzRes == NULL) {
-        fputs( _("No memory for duping translated strings\n"), stderr );
-        exit( EXIT_FAILURE );
+        fputs(_("No memory for duping translated strings\n"), stderr);
+        exit(NTPSNMPD_EXIT_FAILURE);
     }
     return pzRes;
 }
 
-static void coerce_it(void** s) { *s = AO_gettext(*s); }
-#define COERSION(_f) \
-  coerce_it((void*)&(ntpsnmpdOptions._f))
+static void coerce_it(void** s) { *s = AO_gettext(*s);
+}
 
 /*
  *  This invokes the translation code (e.g. gettext(3)).
  */
 static void
-translate_option_strings( void )
+translate_option_strings(void)
 {
+    tOptions * const pOpt = &ntpsnmpdOptions;
+
     /*
      *  Guard against re-translation.  It won't work.  The strings will have
      *  been changed by the first pass through this code.  One shot only.
      */
     if (option_usage_text.field_ct != 0) {
-
         /*
          *  Do the translations.  The first pointer follows the field count
          *  field.  The field count field is the size of a pointer.
          */
-        tOptDesc* pOD = ntpsnmpdOptions.pOptDesc;
-        char**    ppz = (char**)(void*)&(option_usage_text);
-        int       ix  = option_usage_text.field_ct;
+        tOptDesc * pOD = pOpt->pOptDesc;
+        char **    ppz = (char**)(void*)&(option_usage_text);
+        int        ix  = option_usage_text.field_ct;
 
         do {
             ppz++;
             *ppz = AO_gettext(*ppz);
         } while (--ix > 0);
 
-        COERSION(pzCopyright);
-        COERSION(pzCopyNotice);
-        COERSION(pzFullVersion);
-        COERSION(pzUsageTitle);
-        COERSION(pzExplain);
-        COERSION(pzDetail);
+        coerce_it((void*)&(pOpt->pzCopyright));
+        coerce_it((void*)&(pOpt->pzCopyNotice));
+        coerce_it((void*)&(pOpt->pzFullVersion));
+        coerce_it((void*)&(pOpt->pzUsageTitle));
+        coerce_it((void*)&(pOpt->pzExplain));
+        coerce_it((void*)&(pOpt->pzDetail));
+        coerce_it((void*)&(pOpt->pzPackager));
         option_usage_text.field_ct = 0;
 
-        for (ix = ntpsnmpdOptions.optCt; ix > 0; ix--, pOD++)
+        for (ix = pOpt->optCt; ix > 0; ix--, pOD++)
             coerce_it((void*)&(pOD->pzText));
     }
 
-    if ((ntpsnmpdOptions.fOptSet & OPTPROC_NXLAT_OPT_CFG) == 0) {
-        tOptDesc* pOD = ntpsnmpdOptions.pOptDesc;
-        int       ix;
+    if ((pOpt->fOptSet & OPTPROC_NXLAT_OPT_CFG) == 0) {
+        tOptDesc * pOD = pOpt->pOptDesc;
+        int        ix;
 
-        for (ix = ntpsnmpdOptions.optCt; ix > 0; ix--, pOD++) {
+        for (ix = pOpt->optCt; ix > 0; ix--, pOD++) {
             coerce_it((void*)&(pOD->pz_Name));
             coerce_it((void*)&(pOD->pz_DisableName));
             coerce_it((void*)&(pOD->pz_DisablePfx));

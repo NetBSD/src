@@ -1,9 +1,10 @@
-/*	$NetBSD: restore.c,v 1.1.1.1 2009/12/13 16:57:21 kardel Exp $	*/
+/*	$NetBSD: restore.c,v 1.1.1.2 2012/01/31 21:27:49 kardel Exp $	*/
 
 
 /*
- *  restore.c  Id: 6f5237ba2586755d8ca354f325fc00e7fa1395ec
- * Time-stamp:      "2007-07-04 11:34:40 bkorb"
+ * \file restore.c
+ *
+ * Time-stamp:      "2010-08-22 11:04:00 bkorb"
  *
  *  This module's routines will save the current option state to memory
  *  and restore it.  If saved prior to the initial optionProcess call,
@@ -11,7 +12,7 @@
  *
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is copyright (c) 1992-2009 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (c) 1992-2011 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -98,8 +99,8 @@ optionSaveState(tOptions* pOpts)
     tOptions* p = (tOptions*)pOpts->pSavedState;
 
     if (p == NULL) {
-        size_t sz = sizeof( *pOpts ) + (pOpts->optCt * sizeof( tOptDesc ));
-        p = AGALOC( sz, "saved option state" );
+        size_t sz = sizeof(*pOpts) + (pOpts->optCt * sizeof(tOptDesc));
+        p = AGALOC(sz, "saved option state");
         if (p == NULL) {
             tCC* pzName = pOpts->pzProgName;
             if (pzName == NULL) {
@@ -107,15 +108,15 @@ optionSaveState(tOptions* pOpts)
                 if (pzName == NULL)
                     pzName = zNil;
             }
-            fprintf( stderr, zCantSave, pzName, sz );
-            exit( EXIT_FAILURE );
+            fprintf(stderr, zCantSave, pzName, sz);
+            exit(EXIT_FAILURE);
         }
 
         pOpts->pSavedState = p;
     }
 
-    memcpy( p, pOpts, sizeof( *p ));
-    memcpy( p + 1, pOpts->pOptDesc, p->optCt * sizeof( tOptDesc ));
+    memcpy(p, pOpts, sizeof(*p));
+    memcpy(p + 1, pOpts->pOptDesc, p->optCt * sizeof(tOptDesc));
 
     fixupSavedOptionArgs(pOpts);
 }
@@ -137,7 +138,7 @@ optionSaveState(tOptions* pOpts)
  *       printed to @code{stderr} and exit is called.
 =*/
 void
-optionRestore( tOptions* pOpts )
+optionRestore(tOptions* pOpts)
 {
     tOptions* p = (tOptions*)pOpts->pSavedState;
 
@@ -148,15 +149,15 @@ optionRestore( tOptions* pOpts )
             if (pzName == NULL)
                 pzName = zNil;
         }
-        fprintf( stderr, zNoState, pzName );
-        exit( EXIT_FAILURE );
+        fprintf(stderr, zNoState, pzName);
+        exit(EXIT_FAILURE);
     }
 
     pOpts->pSavedState = NULL;
     optionFree(pOpts);
 
-    memcpy( pOpts, p, sizeof( *p ));
-    memcpy( pOpts->pOptDesc, p+1, p->optCt * sizeof( tOptDesc ));
+    memcpy(pOpts, p, sizeof(*p));
+    memcpy(pOpts->pOptDesc, p+1, p->optCt * sizeof(tOptDesc));
     pOpts->pSavedState = p;
 
     fixupSavedOptionArgs(pOpts);
@@ -176,7 +177,7 @@ optionRestore( tOptions* pOpts )
  *        this routine is always successful.
 =*/
 void
-optionFree( tOptions* pOpts )
+optionFree(tOptions* pOpts)
 {
  free_saved_state:
     {
@@ -204,7 +205,7 @@ optionFree( tOptions* pOpts )
 
             case OPARG_TYPE_HIERARCHY:
                 if (p->optCookie != NULL)
-                    unloadNestedArglist(p->optCookie);
+                    unload_arg_list(p->optCookie);
                 break;
             }
 
@@ -213,9 +214,9 @@ optionFree( tOptions* pOpts )
     }
     if (pOpts->pSavedState != NULL) {
         tOptions * p = (tOptions*)pOpts->pSavedState;
-        memcpy( pOpts, p, sizeof( *p ));
-        memcpy( pOpts->pOptDesc, p+1, p->optCt * sizeof( tOptDesc ));
-        AGFREE( pOpts->pSavedState );
+        memcpy(pOpts, p, sizeof(*p));
+        memcpy(pOpts->pOptDesc, p+1, p->optCt * sizeof(tOptDesc));
+        AGFREE(pOpts->pSavedState);
         pOpts->pSavedState = NULL;
         goto free_saved_state;
     }

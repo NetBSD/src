@@ -1,29 +1,26 @@
-/*	$NetBSD: ntpdc-opts.h,v 1.1.1.1 2009/12/13 16:56:26 kardel Exp $	*/
+/*	$NetBSD: ntpdc-opts.h,v 1.1.1.2 2012/01/31 21:27:04 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpdc-opts.h)
  *  
- *  It has been AutoGen-ed  December 10, 2009 at 05:02:36 AM by AutoGen 5.10
+ *  It has been AutoGen-ed  December 24, 2011 at 06:34:16 PM by AutoGen 5.12
  *  From the definitions    ntpdc-opts.def
  *  and the template file   options
  *
- * Generated from AutoOpts 33:0:8 templates.
- */
-
-/*
- *  This file was produced by an AutoOpts template.  AutoOpts is a
- *  copyrighted work.  This header file is not encumbered by AutoOpts
- *  licensing, but is provided under the licensing terms chosen by the
- *  ntpdc author or copyright holder.  AutoOpts is licensed under
- *  the terms of the LGPL.  The redistributable library (``libopts'') is
- *  licensed under the terms of either the LGPL or, at the users discretion,
- *  the BSD license.  See the AutoOpts and/or libopts sources for details.
+ * Generated from AutoOpts 35:0:10 templates.
+ *
+ *  AutoOpts is a copyrighted work.  This header file is not encumbered
+ *  by AutoOpts licensing, but is provided under the licensing terms chosen
+ *  by the ntpdc author or copyright holder.  AutoOpts is
+ *  licensed under the terms of the LGPL.  The redistributable library
+ *  (``libopts'') is licensed under the terms of either the LGPL or, at the
+ *  users discretion, the BSD license.  See the AutoOpts and/or libopts sources
+ *  for details.
  *
  * This source file is copyrighted and licensed under the following terms:
  *
- * ntpdc copyright (c) 1970-2009 David L. Mills and/or others - all rights reserved
- *
- * see html/copyright.html
+ *  see html/copyright.html
+ *  
  */
 /*
  *  This file contains the programmatic interface to the Automated
@@ -43,7 +40,7 @@
  *  tolerable version is at least as old as what was current when the header
  *  template was released.
  */
-#define AO_TEMPLATE_VERSION 135168
+#define AO_TEMPLATE_VERSION 143360
 #if (AO_TEMPLATE_VERSION < OPTIONS_MINIMUM_VERSION) \
  || (AO_TEMPLATE_VERSION > OPTIONS_STRUCT_VERSION)
 # error option template version mismatches autoopts/options.h header
@@ -72,13 +69,13 @@ typedef enum {
 } teOptIndex;
 
 #define OPTION_CT    15
-#define NTPDC_VERSION       "4.2.6"
-#define NTPDC_FULL_VERSION  "ntpdc - vendor-specific NTP query program - Ver. 4.2.6"
+#define NTPDC_VERSION       "4.2.6p5"
+#define NTPDC_FULL_VERSION  "ntpdc 4.2.6p5"
 
 /*
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED
  *  option name (as in the teOptIndex enumeration above).
- *  e.g. HAVE_OPT( IPV4 )
+ *  e.g. HAVE_OPT(IPV4)
  */
 #define         DESC(n) (ntpdcOptions.pOptDesc[INDEX_OPT_## n])
 #define     HAVE_OPT(n) (! UNUSED_OPT(& DESC(n)))
@@ -92,10 +89,18 @@ typedef enum {
 #define STACKLST_OPT(n) (((tArgList*)(DESC(n).optCookie))->apzArgs)
 #define    CLEAR_OPT(n) STMTS( \
                 DESC(n).fOptState &= OPTST_PERSISTENT_MASK;   \
-                if ( (DESC(n).fOptState & OPTST_INITENABLED) == 0) \
+                if ((DESC(n).fOptState & OPTST_INITENABLED) == 0) \
                     DESC(n).fOptState |= OPTST_DISABLED; \
                 DESC(n).optCookie = NULL )
 
+/* * * * * *
+ *
+ *  Enumeration of ntpdc exit codes
+ */
+typedef enum {
+    NTPDC_EXIT_SUCCESS = 0,
+    NTPDC_EXIT_FAILURE = 1
+} ntpdc_exit_code_t;
 /*
  *  Make sure there are no #define name conflicts with the option names
  */
@@ -179,32 +184,32 @@ typedef enum {
 /*
  *  Interface defines not associated with particular options
  */
-#define ERRSKIP_OPTERR  STMTS( ntpdcOptions.fOptSet &= ~OPTPROC_ERRSTOP )
-#define ERRSTOP_OPTERR  STMTS( ntpdcOptions.fOptSet |= OPTPROC_ERRSTOP )
+#define ERRSKIP_OPTERR  STMTS(ntpdcOptions.fOptSet &= ~OPTPROC_ERRSTOP)
+#define ERRSTOP_OPTERR  STMTS(ntpdcOptions.fOptSet |= OPTPROC_ERRSTOP)
 #define RESTART_OPT(n)  STMTS( \
                 ntpdcOptions.curOptIdx = (n); \
-                ntpdcOptions.pzCurOpt  = NULL )
+                ntpdcOptions.pzCurOpt  = NULL)
 #define START_OPT       RESTART_OPT(1)
-#define USAGE(c)        (*ntpdcOptions.pUsageProc)( &ntpdcOptions, c )
-/* extracted from /usr/local/gnu/share/autogen/opthead.tpl near line 409 */
+#define USAGE(c)        (*ntpdcOptions.pUsageProc)(&ntpdcOptions, c)
+/* extracted from opthead.tlib near line 451 */
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 /* * * * * *
  *
  *  Declare the ntpdc option descriptor.
  */
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-extern tOptions   ntpdcOptions;
+extern tOptions ntpdcOptions;
 
 #if defined(ENABLE_NLS)
 # ifndef _
 #   include <stdio.h>
-    static inline char* aoGetsText( char const* pz ) {
-        if (pz == NULL) return NULL;
-        return (char*)gettext( pz );
-    }
+static inline char* aoGetsText(char const* pz) {
+    if (pz == NULL) return NULL;
+    return (char*)gettext(pz);
+}
 #   define _(s)  aoGetsText(s)
 # endif /* _() */
 

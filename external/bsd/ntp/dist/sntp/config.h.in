@@ -12,9 +12,6 @@
 /* What is getsockname()'s socklen type? */
 #undef GETSOCKNAME_SOCKLEN_TYPE
 
-/* Define to 1 if you have the `atexit' function. */
-#undef HAVE_ATEXIT
-
 /* Define to 1 if you have the `canonicalize_file_name' function. */
 #undef HAVE_CANONICALIZE_FILE_NAME
 
@@ -70,9 +67,6 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Define to 1 if you have the `memset' function. */
-#undef HAVE_MEMSET
-
 /* Define to 1 if you have the `mmap' function. */
 #undef HAVE_MMAP
 
@@ -84,6 +78,9 @@
 
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <net/netmp.h> header file. */
+#undef HAVE_NET_NETMP_H
 
 /* sntp does not care about 'nice' */
 #undef HAVE_NO_NICE
@@ -243,6 +240,12 @@
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
 
+/* Define to 1 if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
+/* Define to 1 if you have the `vsprintf' function. */
+#undef HAVE_VSPRINTF
+
 /* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H
 
@@ -298,7 +301,10 @@
 /* have IPv6? */
 #undef ISC_PLATFORM_HAVEIPV6
 
-/* have sin6_scope_id? */
+/* struct sockaddr has sa_len? */
+#undef ISC_PLATFORM_HAVESALEN
+
+/* sin6_scope_id? */
 #undef ISC_PLATFORM_HAVESCOPEID
 
 /* missing in6addr_any? */
@@ -316,14 +322,27 @@
 /* ISC: provide inet_pton() */
 #undef ISC_PLATFORM_NEEDPTON
 
-/* Do we need netinet6/in6.h? */
-#undef LWRES_PLATFORM_NEEDNETINET6IN6H
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
+/* Does the target support multicast IP? */
+#undef MCAST
 
 /* Do we need an s_char typedef? */
 #undef NEED_S_CHAR_TYPEDEF
 
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+#undef NO_MINUS_C_MINUS_O
+
 /* Define this if optional arguments are disallowed */
 #undef NO_OPTIONAL_OPT_ARGS
+
+/* Should we avoid #warning on option name collisions? */
+#undef NO_OPTION_NAME_WARNINGS
+
+/* Use OpenSSL? */
+#undef OPENSSL
 
 /* Name of package */
 #undef PACKAGE
@@ -346,6 +365,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* define to a working POSIX compliant shell */
+#undef POSIX_SHELL
+
 /* name of regex header file */
 #undef REGEX_HEADER
 
@@ -364,6 +386,9 @@
 /* The size of `signed char', as computed by sizeof. */
 #undef SIZEOF_SIGNED_CHAR
 
+/* The size of `time_t', as computed by sizeof. */
+#undef SIZEOF_TIME_T
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
@@ -373,14 +398,20 @@
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
 
+/* What type to use for setsockopt */
+#undef TYPEOF_IP_MULTICAST_LOOP
+
 /* Version number of package */
 #undef VERSION
 
-/* ISC: Want IPv6? */
+/* configure --enable-ipv6 */
 #undef WANT_IPV6
 
 /* Define this if a working libregex can be found */
 #undef WITH_LIBREGEX
+
+/* Are we _special_? */
+#undef __APPLE_USE_RFC_3542
 
 /* Define to 1 if type `char' is unsigned and you are not using gcc.  */
 #ifndef __CHAR_UNSIGNED__
@@ -410,3 +441,13 @@
 
 /* Define as `fork' if `vfork' does not work. */
 #undef vfork
+
+
+#ifndef MPINFOU_PREDECLARED
+# define MPINFOU_PREDECLARED
+typedef union mpinfou {		/* For lint */
+	struct pdk_mpinfo *pdkptr;
+	struct mpinfo *pikptr;
+} mpinfou_t;
+#endif
+

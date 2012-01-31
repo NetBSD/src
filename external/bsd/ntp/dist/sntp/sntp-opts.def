@@ -6,19 +6,14 @@ autogen definitions options;
 #include copyright.def
 
 prog-name      = "sntp";
-prog-title     = "standard SNTP program";
-homerc         =  $HOME, ".";
-argument       = 'hostname-or-IP ...';
+prog-title	= "standard Simple Network Time Protocol program";
+argument	= '[ hostname-or-IP ...]';
+
+#include homerc.def
 
 long-opts;
 
 config-header  = "config.h";
-
-#ifndef __windows__
-rcfile         = ".ntprc";
-#else
-rcfile         = "ntp.ini";
-#endif
 
 environrc;
 
@@ -32,7 +27,7 @@ flag = {
     flags-cant = ipv6;
     descrip   = "Force IPv4 DNS name resolution";
     doc = <<-  _EndOfDoc_
-	Force DNS resolution of following host names on the command line
+	Force DNS resolution of the following host names on the command line
 	to the IPv4 namespace.
 	_EndOfDoc_;
 };
@@ -43,7 +38,7 @@ flag = {
     flags-cant = ipv4;
     descrip   = "Force IPv6 DNS name resolution";
     doc = <<-  _EndOfDoc_
-	Force DNS resolution of following host names on the command line
+	Force DNS resolution of the following host names on the command line
 	to the IPv6 namespace.
 	_EndOfDoc_;
 };
@@ -68,7 +63,7 @@ flag = {
     arg-name  = "file-name";
     descrip   = "KoD history filename";
     doc = <<-  _EndOfDoc_
-	Modifies the filename to be used to persist the history of KoD
+	Specifies the filename to be used to persist the history of KoD
 	responses received from servers.  The default is
 	/var/db/ntp-kod.
 	_EndOfDoc_;
@@ -76,17 +71,17 @@ flag = {
 
 
 flag = {
-	name 	= syslog;
+	name	= syslog;
 	value	= p;
-	flags-cant = filelog;
+	flags-cant = logfile;
 	descrip = "Logging with syslog";
 	doc = <<-  _EndOfDoc_
 	When this option is set all logging will be done using syslog.
 	_EndOfDoc_;
-}; 
+};
 
 flag = {
-	name	   = filelog;
+	name	   = logfile;
 	value	   = l;
 	arg-type   = string;
 	arg-name   = "file-name";
@@ -94,7 +89,7 @@ flag = {
 	descrip = "Log to specified logfile";
 	doc = <<-  _EndOfDoc_
 	This option causes the client to write log messages to the specified
-	logfile. 
+	logfile.
 	_EndOfDoc_;
 };
 
@@ -117,12 +112,12 @@ flag = {
 };
 
 flag = {
-	name 	= broadcast;
-	value 	= b;
+	name	= broadcast;
+	value	= b;
 	descrip	= "Use broadcasts to the address specified for synchronisation";
 	arg-type = string;
 	arg-name = "broadcast-address";
-	doc 	= <<-  _EndOfDoc_
+	doc	= <<-  _EndOfDoc_
 	If specified SNTP will listen to the specified broadcast address
 	for NTP broadcasts.  The default maximum wait time,
 	68 seconds, can be modified with -t.
@@ -130,20 +125,20 @@ flag = {
 };
 
 flag = {
-	name 	= timeout;
-	value 	= t;
+	name	= timeout;
+	value	= t;
 	descrip	= "Specify the number of seconds to wait for broadcasts";
 	arg-type = number;
 	arg-name = "seconds";
 	arg-default = 68;
 	doc	= <<-  _EndOfDoc_
-	When waiting for a broadcast packet SNTP will wait the number 
+	When waiting for a broadcast packet SNTP will wait the number
 	of seconds specified before giving up.  Default 68 seconds.
 	_EndOfDoc_;
 };
 
 flag = {
-	name 	= authentication;
+	name	= authentication;
 	value	= a;
 	descrip	= "Enable authentication with the key auth-keynumber";
 	arg-type = number;
@@ -156,18 +151,18 @@ flag = {
 };
 
 flag = {
-	name 	= keyfile;
+	name	= keyfile;
 	value	= k;
 	descrip	= "Specify a keyfile. SNTP will look in this file for the key specified with -a";
 	arg-type = string;
 	arg-name = "file-name";
 	doc	= <<-  _EndOfDoc_
-	This option specifies the keyfile. SNTP will search for the key specified with -a keyno in this 
+	This option specifies the keyfile. SNTP will search for the key specified with -a keyno in this
 	file. Key files follow the following format:
 
 	keyid keytype key
 
-	Where 	keyid is a number identifying this key
+	Where	keyid is a number identifying this key
 		keytype is one of the follow:
 			S  Key in 64 Bit hexadecimal number as specified in in the DES specification.
 			N  Key in 64 Bit hexadecimal number as specified in the NTP standard.
@@ -178,24 +173,20 @@ flag = {
 	_EndOfDoc_;
 };
 
-		
 
+/* explain: Additional information whenever the usage routine is invoked */
+explain = <<- _END_EXPLAIN
+	_END_EXPLAIN;
 
 detail = <<-  _END_DETAIL
-.I sntp
-implements the Simple Network Time Protocol, and is used
-to query an NTP or SNTP server and either
-display the time
-or
-set the local system's time (given suitable privilege).
+sntp implements the Simple Network Time Protocol, and is used to query
+an NTP or SNTP server and either display the time or set the local
+system's time (given suitable privilege).
 
-It can be
-run interactively from the command line or as a
-.I cron
-job.
+It can be run interactively from the command line or as a cron job.
 
-NTP and SNTP are defined by draft-ietf-ntp-ntpv4-proto-13, which
-obsoletes RFC 4330 and RFC 1305.
+NTP and SNTP are defined by RFC 5905, which obsoletes RFC 4330 and RFC
+1305.
 	_END_DETAIL;
 
 prog-man-descrip = <<-  _END_PROG_MAN_DESCRIP
@@ -207,24 +198,57 @@ run as an interactive command or in a
 job.
 
 NTP (the Network Time Protocol) and SNTP (the Simple Network Time Protocol)
-are defined and described by
-draft-ietf-ntp-ntpv4-proto-13,
-which should become a full RFC any month now.
+are defined and described by RFC 5905.
 
 .PP
 The default is to write the estimated correct local date and time (i.e. not
 UTC) to the standard output in a format like
-.BR "'1996 Oct 15 20:17:25.123 +4.567 +/- 0.089 secs'" ,
+.BR "'1996-10-15 20:17:25.123 (+0800) +4.567 +/- 0.089 secs'" ,
 where the
+.B "'(+0800)'"
+means that to get to UTC from the reported local time one must
+add 8 hours and 0 minutes,
+and the
 .B "'+4.567 +/- 0.089 secs'"
 indicates the local clock is 4.567 seconds behind the correct time
 (so 4.567 seconds must be added to the local clock to get it to be correct),
 and the time of
-'1996 Oct 15 20:17:25.123'
+'1996-10-15 20:17:25.123'
 is believed to be correct to within
 +/- 0.089
 seconds.
 	_END_PROG_MAN_DESCRIP;
+
+prog-info-descrip = <<-  _END_PROG_INFO_DESCRIP
+@code{sntp}
+can be used as a SNTP client to query a NTP or SNTP server and either display
+the time or set the local system's time (given suitable privilege).  It can be
+run as an interactive command or in a
+@code{cron}
+job.
+
+NTP (the Network Time Protocol) and SNTP (the Simple Network Time Protocol)
+are defined and described by RFC 5905.
+
+@indent
+The default is to write the estimated correct local date and time (i.e. not
+UTC) to the standard output in a format like
+@example
+1996-10-15 20:17:25.123 (+0800) +4.567 +/- 0.089 secs
+@end example
+where the
+@example
++4.567 +/- 0.089 secs
+@end example
+indicates the local clock is 4.567 seconds behind the correct time
+(so 4.567 seconds must be added to the local clock to get it to be correct),
+and the (local) time of
+@code{1996-10-15 20:17:25.123}
+can be converted to UTC time by adding 8 hours and 0 minutes, and
+is believed to be correct to within
+@code{+/- 0.089}
+seconds.
+	_END_PROG_INFO_DESCRIP;
 
 man-doc = <<-  _END_MAN_DOC
 .SH USAGE

@@ -1,7 +1,7 @@
-/*	$NetBSD: value-type.h,v 1.1.1.1 2009/12/13 16:57:23 kardel Exp $	*/
+/*	$NetBSD: value-type.h,v 1.1.1.2 2012/01/31 21:27:51 kardel Exp $	*/
 
 /*
- *  Generated header for gperf generated source Sun Nov  8 08:41:19 PST 2009
+ *  Generated header for gperf generated source Fri Apr 29 15:43:59 PDT 2011
  *  This file enumerates the list of names and declares the
  *  procedure for mapping string names to the enum value.
  */

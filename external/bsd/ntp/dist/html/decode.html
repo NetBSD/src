@@ -3,7 +3,7 @@
 	<head>
 <meta http-equiv="content-type" content="text/html;charset=iso-8859-1">
 <meta name="generator" content="HTML Tidy, see www.w3.org">
-<title>ntpd System Log Messages</title>
+<title>ntpd Event Messages and Status Words</title>
 <link href="scripts/style.css" type="text/css" rel="stylesheet">
 </head>
 <body>
@@ -13,7 +13,7 @@
 <p>Caterpillar knows all the error codes, which is more than most of us do.</p>
 
 <p>Last update:
-<!-- #BeginDate format:En2m -->24-Sep-2009  1:31<!-- #EndDate -->
+<!-- #BeginDate format:En2m -->30-Apr-2010  23:13<!-- #EndDate -->
 UTC</p>
 <br clear="left">
 
@@ -173,7 +173,9 @@ UTC</p>
 
 </table>
 
-<p>The Count Field displays the number of events since the last time the code changed. Upon reaching 15, subsequent events with the same code are ignored. The Event Field displays the most recent event message coded as follows:</p>
+<p>The Count Field displays the number of events since the last time the code changed. Upon reaching 15, subsequent events with the same code are ignored.</p>
+
+<p>The Event Field displays the most recent event message coded as follows:</p>
 
 <table width="100%" border="1" cellspacing="2" cellpadding="2">
 
@@ -288,7 +290,7 @@ UTC</p>
 
 <h4 id="peer">Peer Status Word</h4>
 
-<p>The peer status word consists of four fields: Status (0-4, Select (5-7), Count (8-11) and Code (12-15). It is reported in the first line of the <tt>rv <i>associd</i></tt> display produced by the <tt>ntpq</tt> program.</p>
+<p>The peer status word consists of four fields: Status (0-4), Select (5-7), Count (8-11) and Code (12-15). It is reported in the first line of the <tt>rv <i>associd</i></tt> display produced by the <tt>ntpq</tt> program.</p>
 
 <table width="50%" border="1" cellspacing="2" cellpadding="2">
 
@@ -301,7 +303,7 @@ UTC</p>
 
 </table>
 
-<p>The Status Field displays the peer status code bits in hexadecimal as follows:</p>
+<p>The Status Field displays the peer status code bits in hexadecimal; each bit is an independent flag.  (Note this field is 5 bits wide, and combines with the the 3-bit-wide Select Field to create the first full byte of the peer status word.)  The meaning of each bit in the Status Field is listed in the following table:</p>
 
 <table width="100%" border="1" cellspacing="2" cellpadding="2">
 
@@ -343,7 +345,7 @@ UTC</p>
 
 </table>
 
-<p>The Select Field displays the current selection. status The T Field displays the tally codes beginning the <tt>ntpq peers</tt> display. The values are coded as follows:</p>
+<p>The Select Field displays the current selection status. (The T Field in the following table gives the corresponding tally codes used in the <tt>ntpq peers</tt> display.) The values are coded as follows:</p>
 
 <table width="100%" border="1" cellspacing="2" cellpadding="2">
 
@@ -357,7 +359,7 @@ UTC</p>
 <tr>
 <td><tt>0</tt></td>
 <td><tt>sel_reject</tt></td>
-<td></td>
+<td>&nbsp;</td>
 <td>discarded as not valid (TEST10-TEST13)</td>
 </tr>
 
@@ -393,7 +395,7 @@ UTC</p>
 <td><tt>5</tt></td>
 <td><tt>sel_backup</tt></td>
 <td><tt>#</tt></td>
-<td>backup (more than <tt>tinker maxclock</tt> sources)</td>
+<td>backup (more than <tt>tos maxclock</tt> sources)</td>
 </tr>
 
 <tr>
@@ -412,7 +414,9 @@ UTC</p>
 
 </table>
 
-<p>The Count Field displays the number of events since the last time the code changed. Upon reaching 15, subsequent events with the same code are ignored. The Event Field displays the most recent event message coded as follows:</p>
+<p>The Count Field displays the number of events since the last time the code changed. Upon reaching 15, subsequent events with the same code are ignored. </p>
+
+<p>The Event Field displays the most recent event message coded as follows:</p>
 
 <table width="100%" border="1" cellspacing="2" cellpadding="2">
 

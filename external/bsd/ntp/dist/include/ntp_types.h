@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_types.h,v 1.1.1.1 2009/12/13 16:54:54 kardel Exp $	*/
+/*	$NetBSD: ntp_types.h,v 1.1.1.2 2012/01/31 21:23:24 kardel Exp $	*/
 
 /*
  *  ntp_types.h - defines how int32 and u_int32 are treated.
@@ -11,6 +11,13 @@
 
 #include <sys/types.h>
 #include "ntp_machine.h"
+
+#ifndef TRUE
+# define	TRUE	1
+#endif
+#ifndef FALSE
+# define	FALSE	0
+#endif
 
 /*
  * This is another naming conflict.
@@ -52,17 +59,35 @@ typedef unsigned int u_int;
 #if (SIZEOF_INT == 4)
 # ifndef int32
 #  define int32 int
+#  ifndef INT32_MIN
+#   define INT32_MIN INT_MIN
+#  endif
+#  ifndef INT32_MAX
+#   define INT32_MAX INT_MAX
+#  endif
 # endif
 # ifndef u_int32
 #  define u_int32 unsigned int
+#  ifndef U_INT32_MAX
+#   define U_INT32_MAX UINT_MAX
+#  endif
 # endif
 #else /* not sizeof(int) == 4 */
 # if (SIZEOF_LONG == 4)
 #  ifndef int32
 #   define int32 long
+#   ifndef INT32_MIN
+#    define INT32_MIN LONG_MIN
+#   endif
+#   ifndef INT32_MAX
+#    define INT32_MAX LONG_MAX
+#   endif
 #  endif
 #  ifndef u_int32
 #   define u_int32 unsigned long
+#   ifndef U_INT32_MAX
+#    define U_INT32_MAX ULONG_MAX
+#   endif
 #  endif
 # else /* not sizeof(long) == 4 */
 #  include "Bletch: what's 32 bits on this machine?"

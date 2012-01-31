@@ -35,18 +35,18 @@ well.  It can be run as an interactive command or from a cron job.
 
 This document applies to version @value{VERSION} of @code{sntp}.
 
-The program implements the SNTP protocol as defined by the draft NTPv4
+The program implements the SNTP protocol as defined by RFC 5905, the NTPv4
 IETF specification.
 
 @shortcontents
 
 @menu
 * sntp Description::            Description
-@include sntp-opts.menu
+* sntp Invocation::		Invoking sntp
 * Usage::                       Usage
 @end menu
 
-@node sntp Description, Usage, Top, Top
+@node sntp Description
 @comment  node-name,  next,  previous,  up
 @section Description
 
@@ -60,9 +60,9 @@ standard output in the format:
 where the +4.567 +/- 0.089 secs indicates the time offset and
 error bound of the system clock relative to the server clock.
 
-@c @include sntp-opts.texi
+@include sntp-opts.texi
 
-@node Usage,  , sntp Description, Top
+@node Usage
 @comment  node-name,  next,  previous,  up
 @section Usage
 

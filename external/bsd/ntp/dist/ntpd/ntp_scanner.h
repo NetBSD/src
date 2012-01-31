@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_scanner.h,v 1.1.1.1 2009/12/13 16:56:14 kardel Exp $	*/
+/*	$NetBSD: ntp_scanner.h,v 1.1.1.2 2012/01/31 21:26:44 kardel Exp $	*/
 
 /* ntp_scanner.h
  *
@@ -113,7 +113,6 @@ extern struct FILE_INFO *ip_file; /* Pointer to the configuration file stream */
 /* VARIOUS EXTERNAL DECLARATIONS
  * -----------------------------
  */
-extern short default_ai_family;
 extern int old_config_style;
 extern int input_from_file;
 extern struct FILE_INFO *fp[];

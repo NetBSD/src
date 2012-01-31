@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.1.1.1 2009/12/13 16:55:03 kardel Exp $	*/
+/*	$NetBSD: machines.c,v 1.1.1.2 2012/01/31 21:24:10 kardel Exp $	*/
 
 /* machines.c - provide special support for peculiar architectures
  *
@@ -10,6 +10,7 @@
 #include "config.h"
 #endif
 
+#include "ntp.h"
 #include "ntp_machine.h"
 #include "ntp_syslog.h"
 #include "ntp_stdlib.h"

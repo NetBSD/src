@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp.h,v 1.1.1.1 2009/12/13 16:54:50 kardel Exp $	*/
+/*	$NetBSD: ntp.h,v 1.1.1.2 2012/01/31 21:23:14 kardel Exp $	*/
 
 /*
  * ntp.h - NTP definitions for the masses
@@ -6,6 +6,7 @@
 #ifndef NTP_H
 #define NTP_H
 
+#include <stddef.h>
 #include <math.h>
 
 #include <ntp_fp.h>
@@ -174,31 +175,37 @@ typedef char s_char;
 
 /*
  * The interface structure is used to hold the addresses and socket
- * numbers of each of the interfaces we are using.
+ * numbers of each of the local network addresses we are using.
+ * Because "interface" is a reserved word in C++ and has so many
+ * varied meanings, a change to "endpt" (via typedef) is under way.
+ * Eventually the struct tag will change from interface to endpt_tag.
+ * endpt is unrelated to the select algorithm's struct endpoint.
  */
+typedef struct interface endpt;
 struct interface {
-	struct interface *link;	/* interface list link */
-	SOCKET fd;		/* socket this is opened on */
-	SOCKET bfd;		/* socket for receiving broadcasts */
-	sockaddr_u sin;		/* interface address */
-	sockaddr_u bcast;	/* broadcast address */
-	sockaddr_u mask;	/* interface mask */
-	char name[32];		/* name of interface */
-	u_short family;		/* Address family */
-	u_short phase;		/* phase in update cycle */
-	int flags;		/* interface flags */
-	int last_ttl;		/* last TTL specified */
-	u_int32 addr_refid;	/* IPv4 addr or IPv6 hash */
-	int num_mcast;		/* No. of IP addresses in multicast socket */
-	u_long starttime;	/* current_time as of creation of interface structure */
-	volatile long received;	/* number of incoming packets */
-	long sent;		/* number of outgoing packets */
-	long notsent;		/* number of send failures */
-	u_int scopeid;		/* Scope used for Multicasting */
-	u_int ifnum;		/* sequential interface instance count */
-	isc_boolean_t ignore_packets; /* listen-read-drop this? */
-	struct peer *peers;	/* list of peers for the interface */
-	u_int peercnt;		/* peers referencing this interface */
+	endpt *		elink;		/* endpt list link */
+	endpt *		mclink;		/* per-AF_* multicast list */
+	SOCKET		fd;		/* socket descriptor */
+	SOCKET		bfd;		/* for receiving broadcasts */
+	u_int32		ifnum;		/* endpt instance count */
+	sockaddr_u	sin;		/* unicast address */
+	sockaddr_u	mask;		/* subnet mask */
+	sockaddr_u	bcast;		/* broadcast address */
+	char		name[32];	/* name of interface */
+	u_short		family;		/* AF_INET/AF_INET6 */
+	u_short		phase;		/* phase in update cycle */
+	u_int32		flags;		/* interface flags */
+	int		last_ttl;	/* last TTL specified */
+	u_int32		addr_refid;	/* IPv4 addr or IPv6 hash */
+	int		num_mcast;	/* mcast addrs enabled */
+	u_long		starttime;	/* current_time at creation */
+	volatile long	received;	/* number of incoming packets */
+	long		sent;		/* number of outgoing packets */
+	long		notsent;	/* number of send failures */
+	u_int		ifindex;	/* for IPV6_MULTICAST_IF */
+	isc_boolean_t	ignore_packets; /* listen-read-drop this? */
+	struct peer *	peers;		/* list of peers using endpt */
+	u_int		peercnt;	/* count of same */
 };
 
 /*
@@ -211,8 +218,9 @@ struct interface {
 #define INT_MULTICAST	0x010	/* can multicast out this interface */
 #define	INT_BCASTOPEN	0x020	/* broadcast socket is open */
 #define INT_MCASTOPEN	0x040	/* multicasting enabled */
-#define INT_WILDCARD	0x080   /* wildcard interface - usually skipped */
+#define INT_WILDCARD	0x080	/* wildcard interface - usually skipped */
 #define INT_MCASTIF	0x100	/* bound directly to MCAST address */
+#define INT_PRIVACY	0x200	/* RFC 4941 IPv6 privacy address */
 
 /*
  * Define flasher bits (tests 1 through 11 in packet procedure)
@@ -252,7 +260,7 @@ struct peer {
 	struct peer *ass_next;	/* link pointer in associd hash */
 	struct peer *ilink;	/* list of peers for interface */
 	sockaddr_u srcadr;	/* address of remote host */
-	struct interface *dstadr; /* local address (interface) */
+	endpt *	dstadr;		/* local address */
 	associd_t associd;	/* association ID */
 	u_char	version;	/* version number */
 	u_char	hmode;		/* local association mode */
@@ -328,6 +336,7 @@ struct peer {
 	 * Ephemeral state variables
 	 */
 	u_char	status;		/* peer status */
+	u_char	new_status;	/* under-construction status */
 	u_char	reach;		/* reachability register */
 	int	flash;		/* protocol error test tally bits */
 	u_long	epoch;		/* reference epoch */
@@ -435,17 +444,17 @@ struct peer {
  * Values for peer.flags
  */
 #define	FLAG_CONFIG	0x0001	/* association was configured */
-#define FLAG_PREEMPT	0x0002	/* preemptable association */
+#define	FLAG_PREEMPT	0x0002	/* preemptable association */
 #define	FLAG_AUTHENTIC	0x0004	/* last message was authentic */
 #define	FLAG_REFCLOCK	0x0008	/* this is actually a reference clock */
-#define	FLAG_SYSPEER	0x0010	/* system peer */
-#define FLAG_PREFER	0x0020	/* prefer peer */
-#define FLAG_BURST	0x0040	/* burst mode */
-#define FLAG_PPS	0x0080	/* steered by PPS */
-#define FLAG_IBURST	0x0100	/* initial burst mode */
-#define FLAG_NOSELECT	0x0200	/* never select */
-#define FLAG_TRUE	0x0400	/* force truechimer */
-#define FLAG_SKEY	0x0800  /* autokey authentication */
+#define	FLAG_BC_VOL	0x0010	/* broadcast client volleying */
+#define	FLAG_PREFER	0x0020	/* prefer peer */
+#define	FLAG_BURST	0x0040	/* burst mode */
+#define	FLAG_PPS	0x0080	/* steered by PPS */
+#define	FLAG_IBURST	0x0100	/* initial burst mode */
+#define	FLAG_NOSELECT	0x0200	/* never select */
+#define	FLAG_TRUE	0x0400	/* force truechimer */
+#define	FLAG_SKEY	0x0800  /* autokey authentication */
 #define	FLAG_XLEAVE	0x1000	/* interleaved protocol */
 #define	FLAG_XB		0x2000	/* interleaved broadcast */
 #define	FLAG_XBOGUS	0x4000	/* interleaved bogus packet */
@@ -774,23 +783,31 @@ struct mon_data {
 /*
  * Structure used for restrictlist entries
  */
-struct restrictlist {
-	struct restrictlist *next;	/* link to next entry */
-	u_int32 addr;			/* Ipv4 host address (host byte order) */
-	u_int32 mask;			/* Ipv4 mask for address (host byte order) */
-	u_long count;			/* number of packets matched */
-	u_short flags;			/* accesslist flags */
-	u_short mflags;			/* match flags */
-};
+typedef struct res_addr4_tag {
+	u_int32		addr;		/* IPv4 addr (host order) */
+	u_int32		mask;		/* IPv4 mask (host order) */
+} res_addr4;
 
-struct restrictlist6 {
-	struct restrictlist6 *next;	/* link to next entry */
-	struct in6_addr addr6;		/* Ipv6 host address */
-	struct in6_addr mask6;		/* Ipv6 mask address */
-	u_long count;			/* number of packets matched */
-	u_short flags;			/* accesslist flags */
-	u_short mflags;			/* match flags */
+typedef struct res_addr6_tag {
+	struct in6_addr addr;		/* IPv6 addr (net order) */
+	struct in6_addr mask;		/* IPv6 mask (net order) */
+} res_addr6;
+
+typedef struct restrict_u_tag	restrict_u;
+struct restrict_u_tag {
+	restrict_u *		link;	/* link to next entry */
+	u_int32			count;	/* number of packets matched */
+	u_short			flags;	/* accesslist flags */
+	u_short			mflags;	/* match flags */
+	union {				/* variant starting here */
+		res_addr4 v4;
+		res_addr6 v6;
+	} u;
 };
+#define	V4_SIZEOF_RESTRICT_U	(offsetof(restrict_u, u)	\
+				 + sizeof(res_addr4))
+#define	V6_SIZEOF_RESTRICT_U	(offsetof(restrict_u, u)	\
+				 + sizeof(res_addr6))
 
 
 /*
