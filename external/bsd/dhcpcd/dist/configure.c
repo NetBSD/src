@@ -329,6 +329,11 @@ run_script(const struct interface *iface)
 	const struct fd_list *fd;
 	struct iovec iov[2];
 
+	if (iface->state->options->script == NULL ||
+	    iface->state->options->script[0] == '\0' ||
+	    strcmp(iface->state->options->script, "/dev/null") == 0)
+		return 0;
+
 	syslog(LOG_DEBUG, "%s: executing `%s', reason %s",
 	    iface->name, argv[0], iface->state->reason);
 
