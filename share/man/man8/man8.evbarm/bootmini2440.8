@@ -1,4 +1,4 @@
-.\" $NetBSD: bootmini2440.8,v 1.1 2012/01/31 12:23:33 nisimura Exp $
+.\" $NetBSD: bootmini2440.8,v 1.2 2012/01/31 13:25:05 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,10 +27,9 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-
 .Dd January 31, 2012
 .Dt BOOTMINI2440 8 evbarm
-.Os NetBSD
+.Os
 .Sh NAME
 .Nm bootmini2440
 .Nd bootloader for FriendlyARM MINI2440 evaluation board
@@ -42,18 +41,19 @@ is a program to load
 kernel, which works on top of
 .Tn U-Boot .
 It loads and executes a kernel from an SD memory card, or over
-network using
+the network using the
 .Tn NFS/TFTP
 protocol.
 .Pp
-The 
+The
 .Nm
 bootloader can be loaded anywhere by
 .Tn U-Boot ,
 although care should be taken that the bootloader can load the
 .Nx
-kernel without overwriting itself. The kernel is, by default, made
-to be loaded at 0x30200000. The recommended location for
+kernel without overwriting itself.
+The kernel is, by default, made to be loaded at 0x30200000.
+The recommended location for
 .Nm
 is 0x30A00000.
 .Pp
@@ -63,13 +63,15 @@ takes a number of arguments, which all are optional:
 .Bl -tag -width xx
 .It Va mac=
 is used to set the MAC-address of the on-board DM9000 Ethernet
-chip. As Mini2440 has no EEPROM to store DM9000 MAC-address, this
-is necessary in order to have a working Ethernet controller. If
-this argument is left unspecified, a default value of 08:08:11:18:12:27
+chip.
+As Mini2440 has no EEPROM to store DM9000 MAC-address, this
+is necessary in order to have a working Ethernet controller.
+If this argument is left unspecified, a default value of 08:08:11:18:12:27
 is used.
 .It Va opt1 ... Va optN
-is one of single, kdb, ask, quiet, or verbose. Their meaning is described in 
-.Xr boothowto 7 .
+is one of single, kdb, ask, quiet, or verbose.
+Their meaning is described in
+.Xr boothowto 9 .
 .It Va bootname
 is one of the following:
 .Pp
@@ -79,7 +81,7 @@ is one of the following:
 .Dl tftp: Ns Ar filename
 .Dl tftp:
 .Dl ld0 Ns Ar p : Ns Ar filename
-.Dl ld0 Ns Ar p : 
+.Dl ld0 Ns Ar p :
 .Pp
 .Bl -tag -width xx
 .It net: Ns Va ip Ns : Ns Va filename
@@ -94,7 +96,8 @@ using
 .It net: Ns Ar filename
 use
 .Tn DHCP
-to determine own IP-address and server IP-address. Load kernel specified by
+to determine own IP-address and server IP-address.
+Load kernel specified by
 .Ar filename
 from the server using
 .Tn NFS .
@@ -107,7 +110,8 @@ Load the kernel using
 .It tftp: Ns Ar filename
 use
 .Tn DHCP
-to determine own IP-address and server IP-address. Load kernel specified by
+to determine own IP-address and server IP-address.
+Load kernel specified by
 .Ar filename
 from the server using
 .Tn TFTP .
@@ -118,16 +122,18 @@ to determine own IP-address, server IP-address, and kernel to load.
 Load kernel using
 .Tn TFTP .
 .It ld0 Ns Va p : Ns Va filename
-load kernel from an SD card. The kernel specified by
+load kernel from an SD card.
+The kernel specified by
 .Ar filename
 is attempted loaded on the partition given by
 .Ar p .
-.It ld0 Ns Va p : 
-load kernel from an SD card. The kernel will be loaded from the
-file "netbsd" on the partition specified by
+.It ld0 Ns Va p :
+load kernel from an SD card.
+The kernel will be loaded from the file
+.Dq Pa netbsd
+on the partition specified by
 .Ar p .
 .El
-.Pp
 .Sh EXAMPLES
 .Ss Loading Nm
 Use
@@ -154,18 +160,19 @@ MAC-address, and booting into single user-mode:
 .Xr nfsd 8 ,
 .xr tftpd 8 ,
 .Xr boothowto 9
-.Sh BUGS
-.Nm
-cannot currently function properly without
-.Tn U-Boot
-(or equivalent). Although it performs clock and
-.Tn UART
-configuration, it cannot bootstrap itself from
-.Tn NAND
-flash.
 .Sh HISTORY
 The
 .Nx Ns Tn /evbarm
 .Nm
 first appeared in
 .Nx 6.0 .
+.Sh BUGS
+.Nm
+cannot currently function properly without
+.Tn U-Boot
+(or equivalent).
+Although it performs clock and
+.Tn UART
+configuration, it cannot bootstrap itself from
+.Tn NAND
+flash.
