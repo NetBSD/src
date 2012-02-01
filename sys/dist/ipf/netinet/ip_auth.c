@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.17 2012/01/30 16:12:49 darrenr Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.18 2012/02/01 02:21:19 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -129,7 +129,7 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.17 2012/01/30 16:12:49 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.18 2012/02/01 02:21:19 christos Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.117.2.7 2012/01/29 05:30:35 darrenr Exp";
 #endif
@@ -163,13 +163,13 @@ typedef	struct ipf_auth_softc_s {
 } ipf_auth_softc_t;
 
 
-static void ipf_auth_deref __P((frauthent_t **));
-static void ipf_auth_deref_unlocked __P((ipf_auth_softc_t *, frauthent_t **));
-static int ipf_auth_geniter __P((ipf_main_softc_t *, ipftoken_t *,
-				 ipfgeniter_t *, ipfobj_t *));
-static int ipf_auth_reply __P((ipf_main_softc_t *, ipf_auth_softc_t *, char *));
-static int ipf_auth_wait __P((ipf_main_softc_t *, ipf_auth_softc_t *, char *));
-static int ipf_auth_flush __P((void *));
+static void ipf_auth_deref(frauthent_t **);
+static void ipf_auth_deref_unlocked(ipf_auth_softc_t *, frauthent_t **);
+static int ipf_auth_geniter(ipf_main_softc_t *, ipftoken_t *,
+				 ipfgeniter_t *, ipfobj_t *);
+static int ipf_auth_reply(ipf_main_softc_t *, ipf_auth_softc_t *, char *);
+static int ipf_auth_wait(ipf_main_softc_t *, ipf_auth_softc_t *, char *);
+static int ipf_auth_flush(void *);
 
 
 /* ------------------------------------------------------------------------ */
@@ -181,7 +181,7 @@ static int ipf_auth_flush __P((void *));
 /* other functions is obvious.                                              */
 /* ------------------------------------------------------------------------ */
 int
-ipf_auth_main_load()
+ipf_auth_main_load(void)
 {
 	return 0;
 }
@@ -196,7 +196,7 @@ ipf_auth_main_load()
 /* other functions is obvious.                                              */
 /* ------------------------------------------------------------------------ */
 int
-ipf_auth_main_unload()
+ipf_auth_main_unload(void)
 {
 	return 0;
 }
@@ -211,8 +211,7 @@ ipf_auth_main_unload()
 /* and initialise some fields to their defaults.                            */
 /* ------------------------------------------------------------------------ */
 void *
-ipf_auth_soft_create(softc)
-	ipf_main_softc_t *softc;
+ipf_auth_soft_create(ipf_main_softc_t *softc)
 {
 	ipf_auth_softc_t *softa;
 
@@ -244,9 +243,7 @@ ipf_auth_soft_create(softc)
 /* rules.                                                                   */
 /* ------------------------------------------------------------------------ */
 int
-ipf_auth_soft_init(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_auth_soft_init(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_auth_softc_t *softa = arg;
 
@@ -283,9 +280,7 @@ ipf_auth_soft_init(softc, arg)
 /* is free'd by _destroy().                                                 */
 /* ------------------------------------------------------------------------ */
 int
-ipf_auth_soft_fini(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_auth_soft_fini(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_auth_softc_t *softa = arg;
 	frauthent_t *fae, **faep;
@@ -343,9 +338,7 @@ ipf_auth_soft_fini(softc, arg)
 /* Undo what was done in _create() - i.e. free the soft context data.       */
 /* ------------------------------------------------------------------------ */
 void
-ipf_auth_soft_destroy(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_auth_soft_destroy(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_auth_softc_t *softa = arg;
 
@@ -367,9 +360,7 @@ ipf_auth_soft_destroy(softc, arg)
 /*                                                                          */
 /* ------------------------------------------------------------------------ */
 void
-ipf_auth_setlock(arg, tmp)
-	void *arg;
-	int tmp;
+ipf_auth_setlock(void *arg, int tmp)
 {
 	ipf_auth_softc_t *softa = arg;
 
@@ -388,9 +379,7 @@ ipf_auth_setlock(arg, tmp)
 /* will end up returning FR_AUTH) then return FR_BLOCK instead.             */
 /* ------------------------------------------------------------------------ */
 frentry_t *
-ipf_auth_check(fin, passp)
-	fr_info_t *fin;
-	u_32_t *passp;
+ipf_auth_check(fr_info_t *fin, u_32_t *passp)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_auth_softc_t *softa = softc->ipf_auth_soft;
@@ -511,9 +500,7 @@ ipf_auth_check(fin, passp)
 /* waiting to hear about these events.                                      */
 /* ------------------------------------------------------------------------ */
 int
-ipf_auth_new(m, fin)
-	mb_t *m;
-	fr_info_t *fin;
+ipf_auth_new(mb_t *m, fr_info_t *fin)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_auth_softc_t *softa = softc->ipf_auth_soft;
@@ -603,12 +590,8 @@ ipf_auth_new(m, fin)
 /* in IPFilter - ie ioctls called on an open fd for /dev/ipf_auth           */
 /* ------------------------------------------------------------------------ */
 int
-ipf_auth_ioctl(softc, data, cmd, mode, uid, ctx)
-	ipf_main_softc_t *softc;
-	void *data;
-	ioctlcmd_t cmd;
-	int mode, uid;
-	void *ctx;
+ipf_auth_ioctl(ipf_main_softc_t *softc, void *data, ioctlcmd_t cmd, int mode,
+    int uid, void *ctx)
 {
 	ipf_auth_softc_t *softa = softc->ipf_auth_soft;
 	int error = 0, i;
@@ -709,8 +692,7 @@ ipf_auth_ioctl(softc, data, cmd, mode, uid, ctx)
 /* this being called twice per second.                                      */
 /* ------------------------------------------------------------------------ */
 void
-ipf_auth_expire(softc)
-	ipf_main_softc_t *softc;
+ipf_auth_expire(ipf_main_softc_t *softc)
 {
 	ipf_auth_softc_t *softa = softc->ipf_auth_soft;
 	frauthent_t *fae, **faep;
@@ -779,10 +761,8 @@ ipf_auth_expire(softc)
 /*                                                                          */
 /* ------------------------------------------------------------------------ */
 int
-ipf_auth_precmd(softc, cmd, fr, frptr)
-	ipf_main_softc_t *softc;
-	ioctlcmd_t cmd;
-	frentry_t *fr, **frptr;
+ipf_auth_precmd(ipf_main_softc_t *softc, ioctlcmd_t cmd, frentry_t *fr,
+    frentry_t **frptr)
 {
 	ipf_auth_softc_t *softa = softc->ipf_auth_soft;
 	frauthent_t *fae, **faep;
@@ -864,8 +844,7 @@ ipf_auth_precmd(softc, cmd, fr, frptr)
 /* into these data structures.                                              */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_auth_flush(arg)
-	void *arg;
+ipf_auth_flush(void *arg)
 {
 	ipf_auth_softc_t *softa = arg;
 	int i, num_flushed;
@@ -910,8 +889,7 @@ ipf_auth_flush(arg)
 /* queue.                                                                   */
 /* ------------------------------------------------------------------------ */
 int
-ipf_auth_waiting(softc)
-	ipf_main_softc_t *softc;
+ipf_auth_waiting(ipf_main_softc_t *softc)
 {
 	ipf_auth_softc_t *softa = softc->ipf_auth_soft;
 
@@ -931,11 +909,8 @@ ipf_auth_waiting(softc)
 /* Stomping over various fields with new information will not harm anything */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_auth_geniter(softc, token, itp, objp)
-	ipf_main_softc_t *softc;
-	ipftoken_t *token;
-	ipfgeniter_t *itp;
-	ipfobj_t *objp;
+ipf_auth_geniter(ipf_main_softc_t *softc, ipftoken_t *token, ipfgeniter_t *itp,
+    ipfobj_t *objp)
 {
 	ipf_auth_softc_t *softa = softc->ipf_auth_soft;
 	frauthent_t *fae, *next, zero;
@@ -998,9 +973,7 @@ ipf_auth_geniter(softc, token, itp, objp)
 /* held.                                                                    */
 /* ------------------------------------------------------------------------ */
 static void
-ipf_auth_deref_unlocked(softa, faep)
-	ipf_auth_softc_t *softa;
-	frauthent_t **faep;
+ipf_auth_deref_unlocked(ipf_auth_softc_t *softa, frauthent_t **faep)
 {
 	WRITE_ENTER(&softa->ipf_authlk);
 	ipf_auth_deref(faep);
@@ -1019,8 +992,7 @@ ipf_auth_deref_unlocked(softa, faep)
 /* the reference count on the structure by 1.  If it reaches 0, free it up. */
 /* ------------------------------------------------------------------------ */
 static void
-ipf_auth_deref(faep)
-	frauthent_t **faep;
+ipf_auth_deref(frauthent_t **faep)
 {
 	frauthent_t *fae;
 
@@ -1046,10 +1018,7 @@ ipf_auth_deref(faep)
 /* to sleep.                                                                */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_auth_wait(softc, softa, data)
-	ipf_main_softc_t *softc;
-	ipf_auth_softc_t *softa;
-	char *data;
+ipf_auth_wait(ipf_main_softc_t *softc, ipf_auth_softc_t *softa, char *data)
 {
 	frauth_t auth, *au = &auth;
 	int error, len, i;
@@ -1177,10 +1146,7 @@ ipf_auth_ioctlloop:
 /* form of flags, the same as those used in each rule.                      */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_auth_reply(softc, softa, data)
-	ipf_main_softc_t *softc;
-	ipf_auth_softc_t *softa;
-	char *data;
+ipf_auth_reply(ipf_main_softc_t *softc, ipf_auth_softc_t *softa, char *data)
 {
 	frauth_t auth, *au = &auth, *fra;
 	fr_info_t fin;
@@ -1291,10 +1257,7 @@ ipf_auth_reply(softc, softa, data)
 
 
 u_32_t
-ipf_auth_pre_scanlist(softc, fin, pass)
-	ipf_main_softc_t *softc;
-	fr_info_t *fin;
-	u_32_t pass;
+ipf_auth_pre_scanlist(ipf_main_softc_t *softc, fr_info_t *fin, u_32_t pass)
 {
 	ipf_auth_softc_t *softa = softc->ipf_auth_soft;
 
@@ -1306,8 +1269,7 @@ ipf_auth_pre_scanlist(softc, fin, pass)
 
 
 frentry_t **
-ipf_auth_rulehead(softc)
-	ipf_main_softc_t *softc;
+ipf_auth_rulehead(ipf_main_softc_t *softc)
 {
 	ipf_auth_softc_t *softa = softc->ipf_auth_soft;
 

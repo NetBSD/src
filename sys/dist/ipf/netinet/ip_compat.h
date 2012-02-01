@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.31 2012/01/30 16:12:49 darrenr Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.32 2012/02/01 02:21:19 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -12,13 +12,6 @@
 #ifndef _NETINET_IP_COMPAT_H_
 #define _NETINET_IP_COMPAT_H_
 
-#ifndef	__P
-# ifdef	__STDC__
-#  define	__P(x)  x
-# else
-#  define	__P(x)  ()
-# endif
-#endif
 #ifndef	__STDC__
 # undef		const
 # define	const
@@ -303,7 +296,7 @@ typedef unsigned int	u_32_t;
 #  define	KMALLOC(a,b)	(a) = (b)kmem_alloc(sizeof(*(a)), KM_NOSLEEP)
 #  define	KMALLOCS(a,b,c)	(a) = (b)kmem_alloc((c), KM_NOSLEEP)
 #  define	GET_MINOR(x)	getminor(x)
-extern	void	*get_unit __P((void *, char *, int));
+extern	void	*get_unit(void *, char *, int);
 #  define	GETIFP(n, v)	get_unit(softc, n, v)
 #  if defined(INSTANCES)
 #   include	<sys/hook.h>
@@ -513,7 +506,7 @@ typedef	struct	iplog_select_s {
 #  define	SPL_IMP(x)	;
 #  undef	SPL_X
 #  define	SPL_X(x)	;
-extern	void	*get_unit __P((char *, int));
+extern	void	*get_unit(char *, int);
 #  define	GETIFP(n, v)	get_unit(n, v)
 #  define	GETIFMTU_4(x)	((ill_t *)x)->ill_mtu
 #  define	GETIFMTU_6(x)	((ill_t *)x)->ill_mtu
@@ -681,8 +674,8 @@ typedef struct {
 #  define	SPL_NET(x)	(x) = splnet()
 #  define	SPL_SCHED(x)	(x) = splsched()
 #  define	SPL_X(x)	(void) splx(x)
-extern	void	m_copydata __P((struct mbuf *, int, int, void *));
-extern	void	m_copyback __P((struct mbuf *, int, int, void *));
+extern	void	m_copydata(struct mbuf *, int, int, void *);
+extern	void	m_copyback(struct mbuf *, int, int, void *);
 #  define	MSGDSIZE(x)	mbufchainlen(x)
 #  define	M_ADJ(m,x)	m_adj(m, x)
 #  define	M_LEN(x)	(x)->m_len
@@ -1089,7 +1082,7 @@ typedef	u_int32_t	u_32_t;
 #   define	SPL_NET(x)	;
 #   define	SPL_IMP(x)	;
 #   define	SPL_SCHED(x)	;
-extern	int	in_cksum __P((struct mbuf *, int));
+extern	int	in_cksum(struct mbuf *, int);
 #  else
 #   define	SPL_SCHED(x)	x = splhigh()
 #  endif /* __FreeBSD_version >= 500043 */
@@ -1231,8 +1224,8 @@ typedef	u_int32_t	u_32_t;
 #  define	UIOMOVE(a,b,c,d)	uiomove((void *)a,b,c,d)
 #  define	IPF_PANIC(x,y)	if (x) { printf y; panic("ipf_panic"); }
 
-extern	void	m_copydata __P((struct mbuf *, int, int, void *));
-extern	void	m_copyback __P((struct mbuf *, int, int, void *));
+extern	void	m_copydata(struct mbuf *, int, int, void *);
+extern	void	m_copyback(struct mbuf *, int, int, void *);
 
 typedef struct mbuf mb_t;
 # endif
@@ -1326,10 +1319,10 @@ struct ip6_ext {
 #  define	SPL_X(x)		do { } while (0)
 #  define	IFNAME(x)		((struct net_device*)x)->name
 typedef	struct	sk_buff	mb_t;
-extern	void	m_copydata __P((mb_t *, int, int, void *));
-extern	void	m_copyback __P((mb_t *, int, int, void *));
-extern	void	m_adj __P((mb_t *, int));
-extern	mb_t	*m_pullup __P((mb_t *, int));
+extern	void	m_copydata(mb_t *, int, int, void *);
+extern	void	m_copyback(mb_t *, int, int, void *);
+extern	void	m_adj(mb_t *, int);
+extern	mb_t	*m_pullup(mb_t *, int);
 #  define	mbuf	sk_buff
 
 #  define	mtod(m, t)	((t)(m)->data)
@@ -1401,7 +1394,7 @@ struct rtentry {
 struct ifnet {
 	char	if_xname[IFNAMSIZ];
 	int	if_unit;
-	int	(* if_output) __P((struct ifnet *, struct mbuf *, struct sockaddr *, struct rtentry *));
+	int	(* if_output)(struct ifnet *, struct mbuf *, struct sockaddr *, struct rtentry *);
 	struct	ifaddr	*if_addrlist;
 };
 # define	IFNAME(x)	((struct ifnet *)x)->if_xname
@@ -1430,7 +1423,7 @@ typedef	struct uio {
 	int	uio_rw;
 } uio_t;
 
-extern	int	uiomove __P((void *, size_t, int, struct uio *));
+extern	int	uiomove(void *, size_t, int, struct uio *);
 
 # define	UIO_READ	1
 # define	UIO_WRITE	2
@@ -1505,7 +1498,7 @@ typedef u_int32_t 	u_32_t;
 #  undef	SPL_X
 #  define	SPL_X(x)		splx(x)
 #  define	UIOMOVE(a,b,c,d)	uiomove((void *)a,b,c,d)
-extern void* getifp __P((char *, int));
+extern void* getifp(char *, int);
 #  define	GETIFP(n, v)		getifp(n, v)
 #  define	GETIFMTU_4(x)		((struct ifnet *)x)->if_mtu
 #  define	GETIFMTU_6(x)		((struct ifnet *)x)->if_mtu
@@ -1654,11 +1647,11 @@ typedef union {
 #endif
 
 #if defined(linux) && defined(_KERNEL)
-extern	void	ipf_read_enter __P((ipfrwlock_t *));
-extern	void	ipf_write_enter __P((ipfrwlock_t *));
-extern	void	ipf_rw_exit __P((ipfrwlock_t *));
-extern	void	ipf_rw_init __P((ipfrwlock_t *, char *));
-extern	void	ipf_rw_downgrade __P((ipfrwlock_t *));
+extern	void	ipf_read_enter(ipfrwlock_t *);
+extern	void	ipf_write_enter(ipfrwlock_t *);
+extern	void	ipf_rw_exit(ipfrwlock_t *);
+extern	void	ipf_rw_init(ipfrwlock_t *, char *);
+extern	void	ipf_rw_downgrade(ipfrwlock_t *);
 #endif
 
 /*
@@ -1727,12 +1720,12 @@ typedef	struct	mb_s	{
 					      MTOD((mb_t *)m, char *) + (o), \
 					      (l))
 # define	UIOMOVE(a,b,c,d)	ipfuiomove(a,b,c,d)
-extern	void	m_copydata __P((mb_t *, int, int, void *));
-extern	int	ipfuiomove __P((void *, int, int, struct uio *));
-extern	int	bcopywrap __P((void *, void *, size_t));
-extern	mb_t	*allocmbt __P((size_t));
-extern	mb_t	*dupmbt __P((mb_t *));
-extern	void	freembt __P((mb_t *));
+extern	void	m_copydata(mb_t *, int, int, void *);
+extern	int	ipfuiomove(void *, int, int, struct uio *);
+extern	int	bcopywrap(void *, void *, size_t);
+extern	mb_t	*allocmbt(size_t);
+extern	mb_t	*dupmbt(mb_t *);
+extern	void	freembt(mb_t *);
 
 # define	MUTEX_DESTROY(x)	eMmutex_destroy(&(x)->ipf_emu, \
 							__FILE__, __LINE__)
@@ -1757,16 +1750,16 @@ extern	void	freembt __P((mb_t *));
 
 # define	USE_MUTEXES		1
 
-extern void eMmutex_destroy __P((eMmutex_t *, char *, int));
-extern void eMmutex_enter __P((eMmutex_t *, char *, int));
-extern void eMmutex_exit __P((eMmutex_t *, char *, int));
-extern void eMmutex_init __P((eMmutex_t *, char *, char *, int));
-extern void eMrwlock_destroy __P((eMrwlock_t *));
-extern void eMrwlock_exit __P((eMrwlock_t *));
-extern void eMrwlock_init __P((eMrwlock_t *, char *));
-extern void eMrwlock_read_enter __P((eMrwlock_t *, char *, int));
-extern void eMrwlock_write_enter __P((eMrwlock_t *, char *, int));
-extern void eMrwlock_downgrade __P((eMrwlock_t *, char *, int));
+extern void eMmutex_destroy(eMmutex_t *, char *, int);
+extern void eMmutex_enter(eMmutex_t *, char *, int);
+extern void eMmutex_exit(eMmutex_t *, char *, int);
+extern void eMmutex_init(eMmutex_t *, char *, char *, int);
+extern void eMrwlock_destroy(eMrwlock_t *);
+extern void eMrwlock_exit(eMrwlock_t *);
+extern void eMrwlock_init(eMrwlock_t *, char *);
+extern void eMrwlock_read_enter(eMrwlock_t *, char *, int);
+extern void eMrwlock_write_enter(eMrwlock_t *, char *, int);
+extern void eMrwlock_downgrade(eMrwlock_t *, char *, int);
 
 #endif
 
@@ -1960,7 +1953,7 @@ MALLOC_DECLARE(M_IPFILTER);
 #endif
 #ifndef	COPYIFNAME
 # define	NEED_FRGETIFNAME
-extern	char	*ipf_getifname __P((struct ifnet *, char *));
+extern	char	*ipf_getifname(struct ifnet *, char *);
 # define	COPYIFNAME(v, x, b) \
 				ipf_getifname((struct ifnet *)x, b)
 #endif
