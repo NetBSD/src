@@ -1,4 +1,4 @@
-/*	$NetBSD: quotapvt.h,v 1.13 2012/02/01 05:34:41 dholland Exp $	*/
+/*	$NetBSD: quotapvt.h,v 1.14 2012/02/01 05:46:46 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,9 +56,9 @@ struct quotacursor {
 /* new non-proplib kernel interface */
 const char *__quota_kernel_getimplname(struct quotahandle *);
 unsigned __quota_kernel_getrestrictions(struct quotahandle *);
-unsigned __quota_kernel_getnumidtypes(struct quotahandle *);
+int __quota_kernel_getnumidtypes(struct quotahandle *);
 const char *__quota_kernel_idtype_getname(struct quotahandle *, int idtype);
-unsigned __quota_kernel_getnumobjtypes(struct quotahandle *);
+int __quota_kernel_getnumobjtypes(struct quotahandle *);
 const char *__quota_kernel_objtype_getname(struct quotahandle *, int objtype);
 int __quota_kernel_objtype_isbytes(struct quotahandle *, int objtype);
 int __quota_kernel_quotaon(struct quotahandle *, int idtype);
@@ -73,14 +73,14 @@ void __quota_kernel_cursor_destroy(struct quotahandle *,
 				   struct kernel_quotacursor *);
 int __quota_kernel_cursor_skipidtype(struct quotahandle *,
 				     struct kernel_quotacursor *,
-				     unsigned idtype);
+				     int idtype);
 int __quota_kernel_cursor_get(struct quotahandle *,
 			      struct kernel_quotacursor *,
 			      struct quotakey *, struct quotaval *);
 int __quota_kernel_cursor_getn(struct quotahandle *,
 				struct kernel_quotacursor *,
 				struct quotakey *, struct quotaval *,
-				unsigned);
+				unsigned maxnum);
 int __quota_kernel_cursor_atend(struct quotahandle *,
 				struct kernel_quotacursor *);
 int __quota_kernel_cursor_rewind(struct quotahandle *,
@@ -108,7 +108,7 @@ struct oldfiles_quotacursor *
 	__quota_oldfiles_cursor_create(struct quotahandle *);
 void __quota_oldfiles_cursor_destroy(struct oldfiles_quotacursor *);
 int __quota_oldfiles_cursor_skipidtype(struct oldfiles_quotacursor *,
-				      unsigned idtype);
+				      int idtype);
 int __quota_oldfiles_cursor_get(struct quotahandle *,
 			       struct oldfiles_quotacursor *,
 			       struct quotakey *, struct quotaval *);

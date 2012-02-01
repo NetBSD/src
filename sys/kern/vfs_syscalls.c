@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.446 2012/02/01 05:43:54 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.447 2012/02/01 05:46:45 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.446 2012/02/01 05:43:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.447 2012/02/01 05:46:45 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -771,7 +771,7 @@ do_sys_quotactl_cursorskipidtype(struct mount *mp,
 static int
 do_sys_quotactl_cursorget(struct mount *mp, struct quotakcursor *cursor_u,
     struct quotakey *keys_u, struct quotaval *vals_u, unsigned maxnum,
-    int *ret_u)
+    unsigned *ret_u)
 {
 #define CGET_STACK_MAX 8
 	struct quotakcursor cursor_k;
@@ -779,7 +779,7 @@ do_sys_quotactl_cursorget(struct mount *mp, struct quotakcursor *cursor_u,
 	struct quotaval stackvals[CGET_STACK_MAX];
 	struct quotakey *keys_k;
 	struct quotaval *vals_k;
-	int ret_k;
+	unsigned ret_k;
 	int error;
 
 	if (maxnum > 128) {

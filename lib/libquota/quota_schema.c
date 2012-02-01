@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_schema.c,v 1.6 2012/02/01 05:34:40 dholland Exp $	*/
+/*	$NetBSD: quota_schema.c,v 1.7 2012/02/01 05:46:46 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_schema.c,v 1.6 2012/02/01 05:34:40 dholland Exp $");
+__RCSID("$NetBSD: quota_schema.c,v 1.7 2012/02/01 05:46:46 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/statvfs.h>
@@ -88,7 +88,7 @@ quota_getrestrictions(struct quotahandle *qh)
 	return 0;
 }
 
-unsigned
+int
 quota_getnumidtypes(struct quotahandle *qh)
 {
 	switch (qh->qh_mode) {
@@ -132,7 +132,7 @@ quota_idtype_getname(struct quotahandle *qh, int idtype)
 	return "???";
 }
 
-unsigned
+int
 quota_getnumobjtypes(struct quotahandle *qh)
 {
 	switch (qh->qh_mode) {

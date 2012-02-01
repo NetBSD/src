@@ -48,10 +48,10 @@ const char *quota_getmountdevice(struct quotahandle *);
 const char *quota_getimplname(struct quotahandle *);
 unsigned quota_getrestrictions(struct quotahandle *);
 
-unsigned quota_getnumidtypes(struct quotahandle *);
+int quota_getnumidtypes(struct quotahandle *);
 const char *quota_idtype_getname(struct quotahandle *, int /*idtype*/);
 
-unsigned quota_getnumobjtypes(struct quotahandle *);
+int quota_getnumobjtypes(struct quotahandle *);
 const char *quota_objtype_getname(struct quotahandle *, int /*objtype*/);
 int quota_objtype_isbytes(struct quotahandle *, int /*objtype*/);
 
@@ -69,7 +69,7 @@ int quota_delete(struct quotahandle *, const struct quotakey *);
 struct quotacursor *quota_opencursor(struct quotahandle *);
 void quotacursor_close(struct quotacursor *);
 
-int quotacursor_skipidtype(struct quotacursor *, unsigned /*idtype*/);
+int quotacursor_skipidtype(struct quotacursor *, int /*idtype*/);
 
 int quotacursor_get(struct quotacursor *, struct quotakey *,
 		    struct quotaval *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_oldfiles.c,v 1.6 2012/02/01 05:34:40 dholland Exp $	*/
+/*	$NetBSD: quota_oldfiles.c,v 1.7 2012/02/01 05:46:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -748,7 +748,7 @@ __quota_oldfiles_cursor_destroy(struct oldfiles_quotacursor *oqc)
 
 int
 __quota_oldfiles_cursor_skipidtype(struct oldfiles_quotacursor *oqc,
-				   unsigned idtype)
+				   int idtype)
 {
 	switch (idtype) {
 	    case QUOTA_IDTYPE_USER:

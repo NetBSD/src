@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.34 2012/02/01 05:43:54 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.35 2012/02/01 05:46:45 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,8 +47,8 @@
  */             
 struct quotastat {
 	char qs_implname[QUOTA_NAMELEN];
-	unsigned qs_numidtypes;
-	unsigned qs_numobjtypes;
+	int qs_numidtypes;
+	int qs_numobjtypes;
 	unsigned qs_restrictions;	/* semantic restriction codes */
 };
 
@@ -127,7 +127,7 @@ struct quotactl_args {
 		} cursorclose;
 		struct {
 			struct quotakcursor *qc_cursor;
-			unsigned qc_idtype;
+			int qc_idtype;
 		} cursorskipidtype;
 		struct {
 			struct quotakcursor *qc_cursor;

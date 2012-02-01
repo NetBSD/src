@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_kernel.c,v 1.2 2012/02/01 05:43:53 dholland Exp $	*/
+/*	$NetBSD: quota_kernel.c,v 1.3 2012/02/01 05:46:46 dholland Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_kernel.c,v 1.2 2012/02/01 05:43:53 dholland Exp $");
+__RCSID("$NetBSD: quota_kernel.c,v 1.3 2012/02/01 05:46:46 dholland Exp $");
 
 #include <stdlib.h>
 #include <err.h>
@@ -79,7 +79,7 @@ __quota_kernel_getrestrictions(struct quotahandle *qh)
 	return stat.qs_restrictions;
 }
 
-unsigned
+int
 __quota_kernel_getnumidtypes(struct quotahandle *qh)
 {
 	struct quotastat stat;
@@ -105,7 +105,7 @@ __quota_kernel_idtype_getname(struct quotahandle *qh, int idtype)
 	return stat.qis_name;
 }
 
-unsigned
+int
 __quota_kernel_getnumobjtypes(struct quotahandle *qh)
 {
 	struct quotastat stat;
@@ -266,7 +266,7 @@ __quota_kernel_cursor_destroy(struct quotahandle *qh,
 int
 __quota_kernel_cursor_skipidtype(struct quotahandle *qh,
 				 struct kernel_quotacursor *cursor,
-				 unsigned idtype)
+				 int idtype)
 {
 	struct quotactl_args args;
 
