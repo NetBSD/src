@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.91 2012/02/01 05:43:54 dholland Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.92 2012/02/01 05:46:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -303,7 +303,7 @@ struct netbsd32_quotactlargs {
 		} cursorclose;
 		struct {
 			netbsd32_pointer_t qc_cursor;
-			unsigned qc_idtype;
+			int qc_idtype;
 		} cursorskipidtype;
 		struct {
 			netbsd32_pointer_t qc_cursor;
