@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.162 2011/11/21 09:07:59 hannken Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.163 2012/02/01 02:27:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.162 2011/11/21 09:07:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.163 2012/02/01 02:27:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,7 +699,8 @@ nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp
 			KASSERT(npages <= M_EXT_MAXPAGES); /* XXX */
 
 			/* allocate kva for mbuf data */
-			lva = sokvaalloc(npages << PAGE_SHIFT, slp->ns_so);
+			lva = sokvaalloc(pgoff, npages << PAGE_SHIFT,
+			    slp->ns_so);
 			if (lva == 0) {
 				/* fall back to VOP_READ */
 				goto loan_fail;
