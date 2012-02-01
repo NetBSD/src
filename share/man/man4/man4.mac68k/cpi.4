@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpi.4,v 1.4 2009/03/23 16:14:01 joerg Exp $
+.\"	$NetBSD: cpi.4,v 1.5 2012/02/01 08:45:03 hauke Exp $
 .\"
 .\" Copyright (c) 2008 Hauke Fath.  All rights reserved.
 .\"
@@ -30,12 +30,26 @@
 .Nd parallel printer driver for Creative Systems Inc. Hurdler CPI Nubus card
 .\"
 .Sh SYNOPSIS
-.Cd "cpi* at nubus?"
+.Cd "cpi* at nubus? flags 0x1"
 .\"
 .Sh DESCRIPTION
-The
 .Nm
 interface provides access to parallel printer ports.
+.\"
+.Sh CONFIGURATION
+The
+.Nm
+driver supports the following
+.Sy flags
+for use in
+.Xr config 1
+files:
+.Pp
+.Bl -tag -compact -width "bits 16-23:"
+.It bit 0 :
+use the CIO counters 1 and 2 as a 32 bit 
+.Xr timecounter 9 .
+.El
 .\"
 .Sh HARDWARE
 The
@@ -72,7 +86,8 @@ The Z8536 INT line (pin 24) is wired to PB7 (pin 15).
 .Xr autoconf 4 ,
 .Xr lpt 4 ,
 .Xr nubus 4 ,
-.Xr printcap 5
+.Xr printcap 5 ,
+.Xr timecounter 9
 .Pp
 .Tn IEEE Standard 1284-1994
 .\" .Sh STANDARDS
