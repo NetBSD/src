@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.104 2012/01/27 19:48:42 para Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.105 2012/02/01 23:43:49 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.104 2012/01/27 19:48:42 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.105 2012/02/01 23:43:49 para Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -173,7 +173,8 @@ uvm_kick_pdaemon(void)
 
 	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
 	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
-	     uvmpdpol_needsscan_p())) {
+	     uvmpdpol_needsscan_p()) ||
+	     uvm_km_va_starved_p()) {
 		wakeup(&uvm.pagedaemon);
 	}
 }
@@ -248,10 +249,13 @@ uvm_pageout(void *arg)
 	 */
 
 	for (;;) {
-		bool needsscan, needsfree;
+		bool needsscan, needsfree, kmem_va_starved;
+
+		kmem_va_starved = uvm_km_va_starved_p();
 
 		mutex_spin_enter(&uvm_fpageqlock);
-		if (uvm_pagedaemon_waiters == 0 || uvmexp.paging > 0) {
+		if ((uvm_pagedaemon_waiters == 0 || uvmexp.paging > 0) &&
+		    !kmem_va_starved) {
 			UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
 			UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
 			    &uvm_fpageqlock, false, "pgdaemon", 0);
@@ -320,7 +324,7 @@ uvm_pageout(void *arg)
 		 * if we don't need free memory, we're done.
 		 */
 
-		if (!needsfree && !uvm_km_va_starved_p())
+		if (!needsfree && !kmem_va_starved)
 			continue;
 
 		/*

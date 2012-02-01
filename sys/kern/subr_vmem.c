@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.70 2012/01/30 17:35:18 para Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.71 2012/02/01 23:43:49 para Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.70 2012/01/30 17:35:18 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.71 2012/02/01 23:43:49 para Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -1245,6 +1245,11 @@ retry:
 	/* XXX */
 
 	if ((flags & VM_SLEEP) != 0) {
+#if defined(_KERNEL) && !defined(_RUMPKERNEL)
+		mutex_spin_enter(&uvm_fpageqlock);
+		uvm_kick_pdaemon();
+		mutex_spin_exit(&uvm_fpageqlock);
+#endif
 		VMEM_LOCK(vm);
 		VMEM_CONDVAR_WAIT(vm);
 		VMEM_UNLOCK(vm);

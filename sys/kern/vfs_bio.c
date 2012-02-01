@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.235 2012/01/28 00:00:06 rmind Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.236 2012/02/01 23:43:49 para Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.235 2012/01/28 00:00:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.236 2012/02/01 23:43:49 para Exp $");
 
 #include "opt_bufcache.h"
 
@@ -231,21 +231,18 @@ static struct vm_map *buf_map;
 static void *
 bufpool_page_alloc(struct pool *pp, int flags)
 {
-	const vm_flag_t vflags = (flags & PR_WAITOK) ? VM_SLEEP: VM_NOSLEEP;
-	vmem_addr_t va;
-	int ret;
 
-	ret = uvm_km_kmem_alloc(kmem_va_arena, MAXBSIZE,
-	    vflags | VM_INSTANTFIT, &va);
-
-	return ret ? NULL : (void *)va;
+	return (void *)uvm_km_alloc(buf_map,
+	    MAXBSIZE, MAXBSIZE,
+	    ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT|UVM_KMF_TRYLOCK)
+	    | UVM_KMF_WIRED);
 }
 
 static void
 bufpool_page_free(struct pool *pp, void *v)
 {
 
-	uvm_km_kmem_free(kmem_va_arena, (vaddr_t)v, MAXBSIZE);
+	uvm_km_free(buf_map, (vaddr_t)v, MAXBSIZE, UVM_KMF_WIRED);
 }
 
 static struct pool_allocator bufmempool_allocator = {
@@ -491,7 +488,7 @@ bufinit(void)
 		pa = (size <= PAGE_SIZE && use_std)
 			? &pool_allocator_nointr
 			: &bufmempool_allocator;
-		pool_init(pp, size, 0, 0, PR_NOALIGN, name, pa, IPL_NONE);
+		pool_init(pp, size, 0, 0, 0, name, pa, IPL_NONE);
 		pool_setlowat(pp, 1);
 		pool_sethiwat(pp, 1);
 	}
