@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.12 2012/01/30 16:12:49 darrenr Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.13 2012/02/01 02:21:19 christos Exp $	*/
 
 /*
  * Copyright (C) 2008 by Darren Reed.
@@ -9,20 +9,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_irc_pxy.c,v 1.12 2012/01/30 16:12:49 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_irc_pxy.c,v 1.13 2012/02/01 02:21:19 christos Exp $");
 
 #define	IPF_IRC_PROXY
 
 #define	IPF_IRCBUFSZ	96	/* This *MUST* be >= 64! */
 
 
-void ipf_p_irc_main_load __P((void));
-void ipf_p_irc_main_unload __P((void));
-int ipf_p_irc_new __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_irc_out __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_irc_send __P((fr_info_t *, nat_t *));
-int ipf_p_irc_complete __P((ircinfo_t *, char *, size_t));
-u_short ipf_irc_atoi __P((char **));
+void ipf_p_irc_main_load(void);
+void ipf_p_irc_main_unload(void);
+int ipf_p_irc_new(void *, fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_irc_out(void *, fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_irc_send(fr_info_t *, nat_t *);
+int ipf_p_irc_complete(ircinfo_t *, char *, size_t);
+u_short ipf_irc_atoi(char **);
 
 static	frentry_t	ircnatfr;
 

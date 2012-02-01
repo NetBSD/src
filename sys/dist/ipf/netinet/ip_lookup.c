@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.17 2012/01/30 16:12:49 darrenr Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.18 2012/02/01 02:21:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2010 by Darren Reed.
@@ -68,7 +68,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.17 2012/01/30 16:12:49 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.18 2012/02/01 02:21:20 christos Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.67.2.5 2012/01/29 05:30:36 darrenr Exp";
 #endif
@@ -113,8 +113,7 @@ typedef struct ipf_lookup_softc_s {
 /* Initialise all of the subcomponents of the lookup infrstructure.         */
 /* ------------------------------------------------------------------------ */
 void *
-ipf_lookup_soft_create(softc)
-	ipf_main_softc_t *softc;
+ipf_lookup_soft_create(ipf_main_softc_t *softc)
 {
 	ipf_lookup_softc_t *softl;
 	ipf_lookup_t **l;
@@ -147,9 +146,7 @@ ipf_lookup_soft_create(softc)
 /* Initialise all of the subcomponents of the lookup infrstructure.         */
 /* ------------------------------------------------------------------------ */
 int
-ipf_lookup_soft_init(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_lookup_soft_init(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_lookup_softc_t *softl = (ipf_lookup_softc_t *)arg;
 	int err = 0;
@@ -174,9 +171,7 @@ ipf_lookup_soft_init(softc, arg)
 /* Call the fini function in each backend to cleanup all allocated data.    */
 /* ------------------------------------------------------------------------ */
 int
-ipf_lookup_soft_fini(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_lookup_soft_fini(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_lookup_softc_t *softl = (ipf_lookup_softc_t *)arg;
 	int i;
@@ -200,8 +195,7 @@ ipf_lookup_soft_fini(softc, arg)
 /* allowing them to delete any lifetime limited data.                       */
 /* ------------------------------------------------------------------------ */
 void
-ipf_lookup_expire(softc)
-	ipf_main_softc_t *softc;
+ipf_lookup_expire(ipf_main_softc_t *softc)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	int i;
@@ -224,9 +218,7 @@ ipf_lookup_expire(softc)
 /* ipf_lookup_init() can be called again, safely.                           */
 /* ------------------------------------------------------------------------ */
 void
-ipf_lookup_soft_destroy(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_lookup_soft_destroy(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_lookup_softc_t *softl = (ipf_lookup_softc_t *)arg;
 	int i;
@@ -258,12 +250,8 @@ ipf_lookup_soft_destroy(softc, arg)
 /* command.                                                                 */
 /* ------------------------------------------------------------------------ */
 int
-ipf_lookup_ioctl(softc, data, cmd, mode, uid, ctx)
-	ipf_main_softc_t *softc;
-	void *data;
-	ioctlcmd_t cmd;
-	int mode, uid;
-	void *ctx;
+ipf_lookup_ioctl(ipf_main_softc_t *softc, void *data, ioctlcmd_t cmd,
+    int mode, int uid, void *ctx)
 {
 	int err;
 	SPL_INT(s);
@@ -342,10 +330,7 @@ ipf_lookup_ioctl(softc, data, cmd, mode, uid, ctx)
 /* add a node to it.                                                        */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_lookup_addnode(softc, data, uid)
-	ipf_main_softc_t *softc;
-	void *data;
-	int uid;
+ipf_lookup_addnode(ipf_main_softc_t *softc, void *data, int uid)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	iplookupop_t op;
@@ -395,10 +380,7 @@ ipf_lookup_addnode(softc, data, uid)
 /* in and then deleting the entry that gets found.                          */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_lookup_delnode(softc, data, uid)
-	ipf_main_softc_t *softc;
-	void *data;
-	int uid;
+ipf_lookup_delnode(ipf_main_softc_t *softc, void *data, int uid)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	iplookupop_t op;
@@ -446,9 +428,7 @@ ipf_lookup_delnode(softc, data, uid)
 /* for this one.                                                            */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_lookup_addtable(softc, data)
-	ipf_main_softc_t *softc;
-	void *data;
+ipf_lookup_addtable(ipf_main_softc_t *softc, void *data)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	iplookupop_t op;
@@ -509,9 +489,7 @@ ipf_lookup_addtable(softc, data)
 /* calls the relevant function to do the cleanup.                           */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_lookup_deltable(softc, data)
-	ipf_main_softc_t *softc;
-	void *data;
+ipf_lookup_deltable(ipf_main_softc_t *softc, void *data)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	iplookupop_t op;
@@ -558,9 +536,7 @@ ipf_lookup_deltable(softc, data)
 /* Copy statistical information from inside the kernel back to user space.  */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_lookup_stats(softc, data)
-	ipf_main_softc_t *softc;
-	void *data;
+ipf_lookup_stats(ipf_main_softc_t *softc, void *data)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	iplookupop_t op;
@@ -608,9 +584,7 @@ ipf_lookup_stats(softc, data)
 /* entry in the hash table/pool or want to remove all groups from those.    */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_lookup_flush(softc, data)
-	ipf_main_softc_t *softc;
-	void *data;
+ipf_lookup_flush(ipf_main_softc_t *softc, void *data)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	int err, unit, num, type, i;
@@ -668,10 +642,7 @@ ipf_lookup_flush(softc, data)
 /* type of object being passed into it.                                     */
 /* ------------------------------------------------------------------------ */
 void
-ipf_lookup_deref(softc, type, ptr)
-	ipf_main_softc_t *softc;
-	int type;
-	void *ptr;
+ipf_lookup_deref(ipf_main_softc_t *softc, int type, void *ptr)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	int i;
@@ -703,11 +674,7 @@ ipf_lookup_deref(softc, type, ptr)
 /* Decodes ioctl request to step through either hash tables or pools.       */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_lookup_iterate(softc, data, uid, ctx)
-	ipf_main_softc_t *softc;
-	void *data;
-	int uid;
-	void *ctx;
+ipf_lookup_iterate(ipf_main_softc_t *softc, void *data, int uid, void *ctx)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	ipflookupiter_t iter;
@@ -774,10 +741,7 @@ ipf_lookup_iterate(softc, data, uid, ctx)
 /* go on from pool types to hash types as part of the "get next".)          */
 /* ------------------------------------------------------------------------ */
 void
-ipf_lookup_iterderef(softc, type, data)
-	ipf_main_softc_t *softc;
-	u_32_t type;
-	void *data;
+ipf_lookup_iterderef(ipf_main_softc_t *softc, u_32_t type, void *data)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	struct iplookupiterkey *lkey;
@@ -819,11 +783,7 @@ ipf_lookup_iterderef(softc, type, data)
 /* which the token was being used.                                          */
 /* ------------------------------------------------------------------------ */
 int
-ipf_lookup_deltok(softc, data, uid, ctx)
-	ipf_main_softc_t *softc;
-	void *data;
-	int uid;
-	void *ctx;
+ipf_lookup_deltok(ipf_main_softc_t *softc, void *data, int uid, void *ctx)
 {
 	int error, key;
 	SPL_INT(s);
@@ -853,12 +813,8 @@ ipf_lookup_deltok(softc, data, uid, ctx)
 /* or not the "table" number exists.                                        */
 /* ------------------------------------------------------------------------ */
 void *
-ipf_lookup_res_num(softc, unit, type, number, funcptr)
-	ipf_main_softc_t *softc;
-	int unit;
-	u_int type;
-	u_int number;
-	lookupfunc_t *funcptr;
+ipf_lookup_res_num(ipf_main_softc_t *softc, int unit, u_int type, u_int number,
+    lookupfunc_t *funcptr)
 {
 	char name[FR_GROUPLEN];
 
@@ -888,12 +844,8 @@ ipf_lookup_res_num(softc, unit, type, number, funcptr)
 /* or not the "table" number exists.                                        */
 /* ------------------------------------------------------------------------ */
 void *
-ipf_lookup_res_name(softc, unit, type, name, funcptr)
-	ipf_main_softc_t *softc;
-	int unit;
-	u_int type;
-	char *name;
-	lookupfunc_t *funcptr;
+ipf_lookup_res_name(ipf_main_softc_t *softc, int unit, u_int type, char *name,
+    lookupfunc_t *funcptr)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	ipf_lookup_t **l;
@@ -937,10 +889,7 @@ ipf_lookup_res_name(softc, unit, type, name, funcptr)
 /* only the hash table backend.                                             */
 /* ------------------------------------------------------------------------ */
 void *
-ipf_lookup_find_htable(softc, unit, name)
-	ipf_main_softc_t *softc;
-	int unit;
-	char *name;
+ipf_lookup_find_htable(ipf_main_softc_t *softc, int unit, char *name)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	ipf_lookup_t **l;
@@ -972,9 +921,7 @@ ipf_lookup_find_htable(softc, unit, name)
 /* ------------------------------------------------------------------------ */
 /*ARGSUSED*/
 void
-ipf_lookup_sync(softc, ifp)
-	ipf_main_softc_t *softc;
-	void *ifp;
+ipf_lookup_sync(ipf_main_softc_t *softc, void *ifp)
 {
 	ipf_lookup_softc_t *softl = softc->ipf_lookup_soft;
 	ipf_lookup_t **l;
