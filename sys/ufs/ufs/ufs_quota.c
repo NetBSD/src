@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.105 2012/01/29 11:59:14 para Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.106 2012/02/01 05:16:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.105 2012/01/29 11:59:14 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.106 2012/02/01 05:16:56 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -71,6 +71,10 @@ static pool_cache_t dquot_cache;
 
 
 static int quota_handle_cmd_stat(struct mount *, struct lwp *,
+    struct vfs_quotactl_args *args);
+static int quota_handle_cmd_idtypestat(struct mount *, struct lwp *,
+    struct vfs_quotactl_args *args);
+static int quota_handle_cmd_objtypestat(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
 static int quota_handle_cmd_get(struct mount *, struct lwp *,
     struct vfs_quotactl_args *args);
@@ -172,6 +176,12 @@ quota_handle_cmd(struct mount *mp, struct lwp *l,
 	    case QUOTACTL_STAT:
 		error = quota_handle_cmd_stat(mp, l, args);
 		break;
+	    case QUOTACTL_IDTYPESTAT:
+		error = quota_handle_cmd_idtypestat(mp, l, args);
+		break;
+	    case QUOTACTL_OBJTYPESTAT:
+		error = quota_handle_cmd_objtypestat(mp, l, args);
+		break;
 	    case QUOTACTL_QUOTAON:
 		error = quota_handle_cmd_quotaon(mp, l, args);
 		break;
@@ -247,6 +257,76 @@ quota_handle_cmd_stat(struct mount *mp, struct lwp *l,
 #endif
 		return EOPNOTSUPP;
 
+	return 0;
+}
+
+static int 
+quota_handle_cmd_idtypestat(struct mount *mp, struct lwp *l, 
+    struct vfs_quotactl_args *args)
+{
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int idtype;
+	struct quotaidtypestat *info;
+	const char *name;
+
+	KASSERT(args->qc_op == QUOTACTL_IDTYPESTAT);
+	idtype = args->u.idtypestat.qc_idtype;
+	info = args->u.idtypestat.qc_info;
+
+	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
+		return EOPNOTSUPP;
+
+	/*
+	 * These are the same for both QUOTA and QUOTA2.
+	 */
+	switch (idtype) {
+	    case QUOTA_IDTYPE_USER:
+		name = "user";
+		break;
+	    case QUOTA_IDTYPE_GROUP:
+		name = "group";
+		break;
+	    default:
+		return EINVAL;
+	}
+	strlcpy(info->qis_name, name, sizeof(info->qis_name));
+	return 0;
+}
+
+static int 
+quota_handle_cmd_objtypestat(struct mount *mp, struct lwp *l, 
+    struct vfs_quotactl_args *args)
+{
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int objtype;
+	struct quotaobjtypestat *info;
+	const char *name;
+	int isbytes;
+
+	KASSERT(args->qc_op == QUOTACTL_OBJTYPESTAT);
+	objtype = args->u.objtypestat.qc_objtype;
+	info = args->u.objtypestat.qc_info;
+
+	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
+		return EOPNOTSUPP;
+
+	/*
+	 * These are the same for both QUOTA and QUOTA2.
+	 */
+	switch (objtype) {
+	    case QUOTA_OBJTYPE_BLOCKS:
+		name = "block";
+		isbytes = 1;
+		break;
+	    case QUOTA_OBJTYPE_FILES:
+		name = "file";
+		isbytes = 0;
+		break;
+	    default:
+		return EINVAL;
+	}
+	strlcpy(info->qos_name, name, sizeof(info->qos_name));
+	info->qos_isbytes = isbytes;
 	return 0;
 }
 
