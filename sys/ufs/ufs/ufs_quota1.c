@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.16 2012/01/29 07:16:53 dholland Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.17 2012/02/01 05:43:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.16 2012/01/29 07:16:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.17 2012/02/01 05:43:54 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -493,7 +493,7 @@ again:
 
 int             
 quota1_handle_cmd_get(struct ufsmount *ump, const struct quotakey *qk,
-    struct quotaval *ret)
+    struct quotaval *qv)
 {
 	struct dquot *dq;
 	int error;
@@ -530,10 +530,10 @@ quota1_handle_cmd_get(struct ufsmount *ump, const struct quotakey *qk,
 
 	switch (qk->qk_objtype) {
 	    case QUOTA_OBJTYPE_BLOCKS:
-		*ret = blocks;
+		*qv = blocks;
 		break;
 	    case QUOTA_OBJTYPE_FILES:
-		*ret = files;
+		*qv = files;
 		break;
 	    default:
 		return EINVAL;
