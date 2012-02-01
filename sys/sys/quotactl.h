@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.31 2012/01/29 19:36:14 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.32 2012/02/01 05:16:56 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,6 +49,17 @@ struct quotastat {
 	unsigned qs_numobjtypes;
 	unsigned qs_restrictions;	/* semantic restriction codes */
 };
+
+/*
+ * Structures for QUOTACTL_IDTYPESTAT and QUOTACTL_OBJTYPESTAT.
+ */
+struct quotaidtypestat {
+	char qis_name[QUOTA_NAMELEN];
+};
+struct quotaobjtypestat {
+	char qos_name[QUOTA_NAMELEN];
+	int qos_isbytes;
+};
                         
 /*
  * Semi-opaque structure for cursors. This holds the cursor state in
@@ -66,17 +77,19 @@ struct quotakcursor {
 
 /* Command codes. */
 #define QUOTACTL_STAT		0
-#define QUOTACTL_GET		1
-#define QUOTACTL_PUT		2
-#define QUOTACTL_DELETE		3
-#define QUOTACTL_CURSOROPEN	4
-#define QUOTACTL_CURSORCLOSE	5
-#define QUOTACTL_CURSORSKIPIDTYPE 6
-#define QUOTACTL_CURSORGET	7
-#define QUOTACTL_CURSORATEND	8
-#define QUOTACTL_CURSORREWIND	9
-#define QUOTACTL_QUOTAON	10
-#define QUOTACTL_QUOTAOFF	11
+#define QUOTACTL_IDTYPESTAT	1
+#define QUOTACTL_OBJTYPESTAT	2
+#define QUOTACTL_GET		3
+#define QUOTACTL_PUT		4
+#define QUOTACTL_DELETE		5
+#define QUOTACTL_CURSOROPEN	6
+#define QUOTACTL_CURSORCLOSE	7
+#define QUOTACTL_CURSORSKIPIDTYPE 8
+#define QUOTACTL_CURSORGET	9
+#define QUOTACTL_CURSORATEND	10
+#define QUOTACTL_CURSORREWIND	11
+#define QUOTACTL_QUOTAON	12
+#define QUOTACTL_QUOTAOFF	13
 
 /* Argument encoding. */
 struct vfs_quotactl_args {
@@ -85,6 +98,14 @@ struct vfs_quotactl_args {
 		struct {
 			struct quotastat *qc_ret;
 		} stat;
+		struct {
+			int qc_idtype;
+			struct quotaidtypestat *qc_info;
+		} idtypestat;
+		struct {
+			int qc_objtype;
+			struct quotaobjtypestat *qc_info;
+		} objtypestat;
 		struct {
 			const struct quotakey *qc_key;
 			struct quotaval *qc_ret;
