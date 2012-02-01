@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.29 2011/06/27 08:21:08 wiz Exp $
+.\"	$NetBSD: recv.2,v 1.30 2012/02/01 13:29:15 manu Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -95,6 +95,8 @@ in which case the value
 .Va errno
 set to
 .Er EAGAIN .
+If no data is available and the remote peer was shut down, 
+0 is returned.
 The receive calls normally return any data available,
 up to the requested amount,
 rather than waiting for receipt of the full amount requested;
@@ -230,7 +232,9 @@ for ancillary data.
 is returned to indicate that expedited or out-of-band data were received.
 .Sh RETURN VALUES
 These calls return the number of bytes received, or \-1
-if an error occurred.
+if an error occurred. 
+For connected sockets whose remote peer was shut down,
+0 is returned when no more data is available.
 .Sh ERRORS
 The calls fail if:
 .Bl -tag -width Er
