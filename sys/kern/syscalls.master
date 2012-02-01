@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.252 2011/08/17 07:22:34 manu Exp $
+	$NetBSD: syscalls.master,v 1.253 2012/02/01 05:34:41 dholland Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -885,8 +885,8 @@
 			    dev_t dev); }
 451	STD  RUMP 	{ int|sys|50|fhstat(const void *fhp, \
 			    size_t fh_size, struct stat *sb); }
-452	STD  RUMP	{ int|sys|50|quotactl(const char *path, \
-			    struct plistref *pref); }
+; 452 only ever appeared in 5.99.x and can be reused after netbsd-7
+452	OBSOL		5.99 quotactl
 453	STD  RUMP	{ int|sys||pipe2(int *fildes, int flags); }
 454	STD  RUMP	{ int|sys||dup3(int from, int to, int flags); }
 455	STD  RUMP	{ int|sys||kqueue1(int flags); }
@@ -925,3 +925,5 @@
 			    int flag); }
 472	STD  RUMP	{ int|sys||futimens(int fd, \
 			    const struct timespec *tptr); }
+473	STD  RUMP	{ int|sys||__quotactl(const char *path, \
+			    struct quotactl_args *args); }

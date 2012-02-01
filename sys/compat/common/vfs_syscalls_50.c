@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.15 2012/01/29 07:19:48 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.16 2012/02/01 05:34:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.15 2012/01/29 07:19:48 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.16 2012/02/01 05:34:41 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,7 +335,6 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 	struct quotakey key;
 	struct quotaval blocks, files;
 	struct quotastat qstat;
-	struct vfs_quotactl_args args;
 	int error;
 
 	error = namei_simple_user(SCARG(uap, path),
@@ -356,36 +355,27 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 			break;
 		}
 
-		args.qc_op = QUOTACTL_QUOTAON;
-		args.u.quotaon.qc_quotafile = qfile;
-		args.u.quotaon.qc_idtype = idtype;
-		error = VFS_QUOTACTL(mp, &args);
+		error = vfs_quotactl_quotaon(mp, idtype, qfile);
 
 		PNBUF_PUT(qfile);
 		break;
 
 	case Q_QUOTAOFF:
-		args.qc_op = QUOTACTL_QUOTAOFF;
-		args.u.quotaoff.qc_idtype = idtype;
-		error = VFS_QUOTACTL(mp, &args);
+		error = vfs_quotactl_quotaoff(mp, idtype);
 		break;
 
 	case Q_GETQUOTA:
 		key.qk_idtype = idtype;
 		key.qk_id = SCARG(uap, uid);
-		args.qc_op = QUOTACTL_GET;
-		args.u.get.qc_key = &key;
 
 		key.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
-		args.u.get.qc_ret = &blocks;
-		error = VFS_QUOTACTL(mp, &args);
+		error = vfs_quotactl_get(mp, &key, &blocks);
 		if (error) {
 			break;
 		}
 
 		key.qk_objtype = QUOTA_OBJTYPE_FILES;
-		args.u.get.qc_ret = &files;
-		error = VFS_QUOTACTL(mp, &args);
+		error = vfs_quotactl_get(mp, &key, &files);
 		if (error) {
 			break;
 		}
@@ -403,19 +393,15 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 
 		key.qk_idtype = idtype;
 		key.qk_id = SCARG(uap, uid);
-		args.qc_op = QUOTACTL_PUT;
-		args.u.put.qc_key = &key;
 
 		key.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
-		args.u.put.qc_val = &blocks;
-		error = VFS_QUOTACTL(mp, &args);
+		error = vfs_quotactl_put(mp, &key, &blocks);
 		if (error) {
 			break;
 		}
 
 		key.qk_objtype = QUOTA_OBJTYPE_FILES;
-		args.u.put.qc_val = &files;
-		error = VFS_QUOTACTL(mp, &args);
+		error = vfs_quotactl_put(mp, &key, &files);
 		break;
 		
 	case Q_SYNC:
@@ -427,9 +413,7 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 		 */
 		(void)idtype; /* not used */
 
-		args.qc_op = QUOTACTL_STAT;
-		args.u.stat.qc_ret = &qstat;
-		error = VFS_QUOTACTL(mp, &args);
+		error = vfs_quotactl_stat(mp, &qstat);
 		break;
 
 	case Q_SETUSE:
