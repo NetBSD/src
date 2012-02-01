@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2012/02/01 07:46:30 kardel Exp $
+#	$NetBSD: Makefile,v 1.5 2012/02/01 08:15:21 kardel Exp $
 
 LIBISPRIVATE=yes
 
@@ -25,6 +25,6 @@ SRCS=systime.c a_md5encrypt.c adjtime.c atoint.c atolfp.c atouint.c audio.c \
      uglydate.c uinttoa.c ymd2yd.c ntp_libopts.c
 
 COPTS.msyslog.c+= -Wno-format-nonliteral
-COPTS.ntp_libopts.c+= -I${IDIST}/sntp/libopts
+CPPFLAGS+= -I${IDIST}/sntp/libopts
 
 .include <bsd.lib.mk>
