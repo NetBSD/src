@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.245 2011/08/17 07:26:16 manu Exp $ */
+/* $NetBSD: syscall.h,v 1.246 2012/02/01 05:34:42 dholland Exp $ */
 
 /*
  * System call numbers.
@@ -1279,9 +1279,7 @@
 /* syscall: "__fhstat50" ret: "int" args: "const void *" "size_t" "struct stat *" */
 #define	SYS___fhstat50	451
 
-/* syscall: "__quotactl50" ret: "int" args: "const char *" "struct plistref *" */
-#define	SYS___quotactl50	452
-
+				/* 452 is obsolete 5.99 quotactl */
 /* syscall: "pipe2" ret: "int" args: "int *" "int" */
 #define	SYS_pipe2	453
 
@@ -1342,6 +1340,9 @@
 /* syscall: "futimens" ret: "int" args: "int" "const struct timespec *" */
 #define	SYS_futimens	472
 
-#define	SYS_MAXSYSCALL	473
+/* syscall: "__quotactl" ret: "int" args: "const char *" "struct quotactl_args *" */
+#define	SYS___quotactl	473
+
+#define	SYS_MAXSYSCALL	474
 #define	SYS_NSYSENT	512
 #endif /* _SYS_SYSCALL_H_ */

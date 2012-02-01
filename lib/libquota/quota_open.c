@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_open.c,v 1.6 2012/01/30 16:45:13 dholland Exp $	*/
+/*	$NetBSD: quota_open.c,v 1.7 2012/02/01 05:34:40 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_open.c,v 1.6 2012/01/30 16:45:13 dholland Exp $");
+__RCSID("$NetBSD: quota_open.c,v 1.7 2012/02/01 05:34:40 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/statvfs.h>
@@ -84,7 +84,7 @@ quota_open(const char *path)
 	if (!strcmp(stv.f_fstypename, "nfs")) {
 		mode = QUOTA_MODE_NFS;
 	} else if ((stv.f_flag & ST_QUOTA) != 0) {
-		mode = QUOTA_MODE_PROPLIB;
+		mode = QUOTA_MODE_KERNEL;
 	} else if (__quota_oldfiles_infstab(stv.f_mntonname)) {
 		mode = QUOTA_MODE_OLDFILES;
 	} else {
@@ -161,10 +161,10 @@ quota_quotaon(struct quotahandle *qh, int idtype)
 	    case QUOTA_MODE_NFS:
 		errno = EOPNOTSUPP;
 		break;
-	    case QUOTA_MODE_PROPLIB:
-		return __quota_proplib_quotaon(qh, idtype);
 	    case QUOTA_MODE_OLDFILES:
 		return __quota_oldfiles_quotaon(qh, idtype);
+	    case QUOTA_MODE_KERNEL:
+		return __quota_kernel_quotaon(qh, idtype);
 	    default:
 		errno = EINVAL;
 		break;
@@ -179,12 +179,12 @@ quota_quotaoff(struct quotahandle *qh, int idtype)
 	    case QUOTA_MODE_NFS:
 		errno = EOPNOTSUPP;
 		break;
-	    case QUOTA_MODE_PROPLIB:
-		return __quota_proplib_quotaoff(qh, idtype);
 	    case QUOTA_MODE_OLDFILES:
 		/* can't quotaoff if we haven't quotaon'd */
 		errno = ENOTCONN;
 		break;
+	    case QUOTA_MODE_KERNEL:
+		return __quota_kernel_quotaoff(qh, idtype);
 	    default:
 		errno = EINVAL;
 		break;
