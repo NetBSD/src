@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.90 2012/02/01 05:40:00 dholland Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.91 2012/02/01 05:43:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -274,7 +274,7 @@ struct netbsd32_quotactlargs {
 	unsigned qc_op;
 	union {
 		struct {
-			netbsd32_pointer_t qc_ret;
+			netbsd32_pointer_t qc_info;
 		} stat;
 		struct {
 			int qc_idtype;
@@ -286,7 +286,7 @@ struct netbsd32_quotactlargs {
 		} objtypestat;
 		struct {
 			netbsd32_pointer_t qc_key;
-			netbsd32_pointer_t qc_ret;
+			netbsd32_pointer_t qc_val;
 		} get;
 		struct {
 			netbsd32_pointer_t qc_key;

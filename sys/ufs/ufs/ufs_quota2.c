@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.31 2012/02/01 05:10:44 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.32 2012/02/01 05:43:54 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.31 2012/02/01 05:10:44 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.32 2012/02/01 05:43:54 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -867,7 +867,7 @@ quota2_fetch_quotaval(struct ufsmount *ump, const struct quotakey *qk,
 
 int
 quota2_handle_cmd_get(struct ufsmount *ump, const struct quotakey *qk,
-    struct quotaval *ret)
+    struct quotaval *qv)
 {
 	int error;
 	struct quota2_header *q2h;
@@ -902,10 +902,10 @@ quota2_handle_cmd_get(struct ufsmount *ump, const struct quotakey *qk,
 		mutex_exit(&dqlock);
 		brelse(bp, 0);
 		q2e_to_quotaval(&q2e, qk->qk_id == QUOTA_DEFAULTID, &id2,
-				qk->qk_objtype, ret);
+				qk->qk_objtype, qv);
 		(void)id2;
 	} else
-		error = quota2_fetch_quotaval(ump, qk, ret);
+		error = quota2_fetch_quotaval(ump, qk, qv);
 	
 	return error;
 }

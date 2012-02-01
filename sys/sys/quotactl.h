@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.33 2012/02/01 05:34:42 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.34 2012/02/01 05:43:54 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -98,7 +98,7 @@ struct quotactl_args {
 	unsigned qc_op;
 	union {
 		struct {
-			struct quotastat *qc_ret;
+			struct quotastat *qc_info;
 		} stat;
 		struct {
 			int qc_idtype;
@@ -110,7 +110,7 @@ struct quotactl_args {
 		} objtypestat;
 		struct {
 			const struct quotakey *qc_key;
-			struct quotaval *qc_ret;
+			struct quotaval *qc_val;
 		} get;
 		struct {
 			const struct quotakey *qc_key;

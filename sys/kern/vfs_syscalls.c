@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.445 2012/02/01 05:39:28 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.446 2012/02/01 05:43:54 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.445 2012/02/01 05:39:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.446 2012/02/01 05:43:54 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -921,7 +921,7 @@ do_sys_quotactl(const char *path_u, const struct quotactl_args *args)
 
 	switch (args->qc_op) {
 	    case QUOTACTL_STAT:
-		error = do_sys_quotactl_stat(mp, args->u.stat.qc_ret);
+		error = do_sys_quotactl_stat(mp, args->u.stat.qc_info);
 		break;
 	    case QUOTACTL_IDTYPESTAT:
 		error = do_sys_quotactl_idtypestat(mp,
@@ -936,7 +936,7 @@ do_sys_quotactl(const char *path_u, const struct quotactl_args *args)
 	    case QUOTACTL_GET:
 		error = do_sys_quotactl_get(mp,
 				args->u.get.qc_key,
-				args->u.get.qc_ret);
+				args->u.get.qc_val);
 		break;
 	    case QUOTACTL_PUT:
 		error = do_sys_quotactl_put(mp,
