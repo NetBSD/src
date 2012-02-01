@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_cursor.c,v 1.5 2012/02/01 05:34:40 dholland Exp $	*/
+/*	$NetBSD: quota_cursor.c,v 1.6 2012/02/01 05:46:46 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_cursor.c,v 1.5 2012/02/01 05:34:40 dholland Exp $");
+__RCSID("$NetBSD: quota_cursor.c,v 1.6 2012/02/01 05:46:46 dholland Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -117,7 +117,7 @@ quotacursor_close(struct quotacursor *qc)
 }
 
 int
-quotacursor_skipidtype(struct quotacursor *qc, unsigned idtype)
+quotacursor_skipidtype(struct quotacursor *qc, int idtype)
 {
 	switch (qc->qc_type) {
 	    case QC_OLDFILES:
