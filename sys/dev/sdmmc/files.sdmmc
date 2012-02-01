@@ -1,8 +1,10 @@
-#      $NetBSD: files.sdmmc,v 1.2 2009/06/28 11:17:39 hubertf Exp $
+#      $NetBSD: files.sdmmc,v 1.3 2012/02/01 22:34:42 matt Exp $
 #      $OpenBSD: files.sdmmc,v 1.2 2006/06/01 21:53:41 uwe Exp $
 #
 # Config file and device description for machine-independent SD/MMC code.
 # Included by ports that need it.
+
+defflag	opt_sdmmc.h			SDMMC_DEBUG SDHC_DEBUG SDMMCCISDEBUG
 
 device sdmmc {}
 attach sdmmc at sdmmcbus

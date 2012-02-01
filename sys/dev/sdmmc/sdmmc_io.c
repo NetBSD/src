@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.6 2011/02/13 06:43:52 nonaka Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.7 2012/02/01 22:34:43 matt Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,11 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.6 2011/02/13 06:43:52 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.7 2012/02/01 22:34:43 matt Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_sdmmc.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
