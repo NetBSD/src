@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_kernel.c,v 1.3 2012/02/01 05:46:46 dholland Exp $	*/
+/*	$NetBSD: quota_kernel.c,v 1.4 2012/02/01 06:19:05 dholland Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_kernel.c,v 1.3 2012/02/01 05:46:46 dholland Exp $");
+__RCSID("$NetBSD: quota_kernel.c,v 1.4 2012/02/01 06:19:05 dholland Exp $");
 
 #include <stdlib.h>
 #include <err.h>
@@ -299,13 +299,22 @@ __quota_kernel_cursor_getn(struct quotahandle *qh,
 	struct quotactl_args args;
 	unsigned ret;
 
+	if (maxnum > INT_MAX) {
+		/* joker, eh? */
+		errno = EINVAL;
+		return -1;
+	}
+
 	args.qc_op = QUOTACTL_CURSORGET;
 	args.u.cursorget.qc_cursor = &cursor->kcursor;
 	args.u.cursorget.qc_keys = keys;
 	args.u.cursorget.qc_vals = vals;
 	args.u.cursorget.qc_maxnum = maxnum;
 	args.u.cursorget.qc_ret = &ret;
-	return __quotactl(qh->qh_mountpoint, &args);
+	if (__quotactl(qh->qh_mountpoint, &args) < 0) {
+		return -1;
+	}
+	return ret;
 }
 
 int
