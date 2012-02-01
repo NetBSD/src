@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_oldfiles.c,v 1.7 2012/02/01 05:46:46 dholland Exp $	*/
+/*	$NetBSD: quota_oldfiles.c,v 1.8 2012/02/01 06:12:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -31,6 +31,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: quota_oldfiles.c,v 1.8 2012/02/01 06:12:37 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
