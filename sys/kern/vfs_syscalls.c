@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.444 2012/02/01 05:34:41 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.445 2012/02/01 05:39:28 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.444 2012/02/01 05:34:41 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.445 2012/02/01 05:39:28 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -907,6 +907,93 @@ do_sys_quotactl_quotaoff(struct mount *mp, int idtype)
 	return vfs_quotactl_quotaoff(mp, idtype);
 }
 
+int
+do_sys_quotactl(const char *path_u, const struct quotactl_args *args)
+{
+	struct mount *mp;
+	struct vnode *vp;
+	int error;
+
+	error = namei_simple_user(path_u, NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
+		return (error);
+	mp = vp->v_mount;
+
+	switch (args->qc_op) {
+	    case QUOTACTL_STAT:
+		error = do_sys_quotactl_stat(mp, args->u.stat.qc_ret);
+		break;
+	    case QUOTACTL_IDTYPESTAT:
+		error = do_sys_quotactl_idtypestat(mp,
+				args->u.idtypestat.qc_idtype,
+				args->u.idtypestat.qc_info);
+		break;
+	    case QUOTACTL_OBJTYPESTAT:
+		error = do_sys_quotactl_objtypestat(mp,
+				args->u.objtypestat.qc_objtype,
+				args->u.objtypestat.qc_info);
+		break;
+	    case QUOTACTL_GET:
+		error = do_sys_quotactl_get(mp,
+				args->u.get.qc_key,
+				args->u.get.qc_ret);
+		break;
+	    case QUOTACTL_PUT:
+		error = do_sys_quotactl_put(mp,
+				args->u.put.qc_key,
+				args->u.put.qc_val);
+		break;
+	    case QUOTACTL_DELETE:
+		error = do_sys_quotactl_delete(mp, args->u.delete.qc_key);
+		break;
+	    case QUOTACTL_CURSOROPEN:
+		error = do_sys_quotactl_cursoropen(mp,
+				args->u.cursoropen.qc_cursor);
+		break;
+	    case QUOTACTL_CURSORCLOSE:
+		error = do_sys_quotactl_cursorclose(mp,
+				args->u.cursorclose.qc_cursor);
+		break;
+	    case QUOTACTL_CURSORSKIPIDTYPE:
+		error = do_sys_quotactl_cursorskipidtype(mp,
+				args->u.cursorskipidtype.qc_cursor,
+				args->u.cursorskipidtype.qc_idtype);
+		break;
+	    case QUOTACTL_CURSORGET:
+		error = do_sys_quotactl_cursorget(mp,
+				args->u.cursorget.qc_cursor,
+				args->u.cursorget.qc_keys,
+				args->u.cursorget.qc_vals,
+				args->u.cursorget.qc_maxnum,
+				args->u.cursorget.qc_ret);
+		break;
+	    case QUOTACTL_CURSORATEND:
+		error = do_sys_quotactl_cursoratend(mp,
+				args->u.cursoratend.qc_cursor,
+				args->u.cursoratend.qc_ret);
+		break;
+	    case QUOTACTL_CURSORREWIND:
+		error = do_sys_quotactl_cursorrewind(mp,
+				args->u.cursorrewind.qc_cursor);
+		break;
+	    case QUOTACTL_QUOTAON:
+		error = do_sys_quotactl_quotaon(mp,
+				args->u.quotaon.qc_idtype,
+				args->u.quotaon.qc_quotafile);
+		break;
+	    case QUOTACTL_QUOTAOFF:
+		error = do_sys_quotactl_quotaoff(mp,
+				args->u.quotaoff.qc_idtype);
+		break;
+	    default:
+		error = EINVAL;
+		break;
+	}
+
+	vrele(vp);
+	return error;
+}
+
 /* ARGSUSED */
 int
 sys___quotactl(struct lwp *l, const struct sys___quotactl_args *uap,
@@ -916,96 +1003,15 @@ sys___quotactl(struct lwp *l, const struct sys___quotactl_args *uap,
 		syscallarg(const char *) path;
 		syscallarg(struct quotactl_args *) args;
 	} */
-	struct mount *mp;
-	struct vnode *vp;
 	struct quotactl_args args;
 	int error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_TRYEMULROOT, &vp);
-	if (error != 0)
-		return (error);
-	mp = vp->v_mount;
-
 	error = copyin(SCARG(uap, args), &args, sizeof(args));
 	if (error) {
-		goto fail;
+		return error;
 	}
 
-	switch (args.qc_op) {
-	    case QUOTACTL_STAT:
-		error = do_sys_quotactl_stat(mp, args.u.stat.qc_ret);
-		break;
-	    case QUOTACTL_IDTYPESTAT:
-		error = do_sys_quotactl_idtypestat(mp,
-				args.u.idtypestat.qc_idtype,
-				args.u.idtypestat.qc_info);
-		break;
-	    case QUOTACTL_OBJTYPESTAT:
-		error = do_sys_quotactl_objtypestat(mp,
-				args.u.objtypestat.qc_objtype,
-				args.u.objtypestat.qc_info);
-		break;
-	    case QUOTACTL_GET:
-		error = do_sys_quotactl_get(mp,
-				args.u.get.qc_key,
-				args.u.get.qc_ret);
-		break;
-	    case QUOTACTL_PUT:
-		error = do_sys_quotactl_put(mp,
-				args.u.put.qc_key,
-				args.u.put.qc_val);
-		break;
-	    case QUOTACTL_DELETE:
-		error = do_sys_quotactl_delete(mp, args.u.delete.qc_key);
-		break;
-	    case QUOTACTL_CURSOROPEN:
-		error = do_sys_quotactl_cursoropen(mp,
-				args.u.cursoropen.qc_cursor);
-		break;
-	    case QUOTACTL_CURSORCLOSE:
-		error = do_sys_quotactl_cursorclose(mp,
-				args.u.cursorclose.qc_cursor);
-		break;
-	    case QUOTACTL_CURSORSKIPIDTYPE:
-		error = do_sys_quotactl_cursorskipidtype(mp,
-				args.u.cursorskipidtype.qc_cursor,
-				args.u.cursorskipidtype.qc_idtype);
-		break;
-	    case QUOTACTL_CURSORGET:
-		error = do_sys_quotactl_cursorget(mp,
-				args.u.cursorget.qc_cursor,
-				args.u.cursorget.qc_keys,
-				args.u.cursorget.qc_vals,
-				args.u.cursorget.qc_maxnum,
-				args.u.cursorget.qc_ret);
-		break;
-	    case QUOTACTL_CURSORATEND:
-		error = do_sys_quotactl_cursoratend(mp,
-				args.u.cursoratend.qc_cursor,
-				args.u.cursoratend.qc_ret);
-		break;
-	    case QUOTACTL_CURSORREWIND:
-		error = do_sys_quotactl_cursorrewind(mp,
-				args.u.cursorrewind.qc_cursor);
-		break;
-	    case QUOTACTL_QUOTAON:
-		error = do_sys_quotactl_quotaon(mp,
-				args.u.quotaon.qc_idtype,
-				args.u.quotaon.qc_quotafile);
-		break;
-	    case QUOTACTL_QUOTAOFF:
-		error = do_sys_quotactl_quotaoff(mp,
-				args.u.quotaoff.qc_idtype);
-		break;
-	    default:
-		error = EINVAL;
-		break;
-	}
-
-fail:
-	vrele(vp);
-	return error;
+	return do_sys_quotactl(SCARG(uap, path), &args);
 }
 
 int
