@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.14 2012/02/01 02:21:20 christos Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.15 2012/02/01 16:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2011 by Darren Reed.
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.14 2012/02/01 02:21:20 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.15 2012/02/01 16:46:28 christos Exp $");
 
 #define	IPF_RCMD_PROXY
 
@@ -37,7 +37,7 @@ static	int		rcmd_proxy_init = 0;
  * RCMD application proxy initialization.
  */
 void
-ipf_p_rcmd_main_load()
+ipf_p_rcmd_main_load(void)
 {
 	bzero((char *)&rcmdfr, sizeof(rcmdfr));
 	rcmdfr.fr_ref = 1;
@@ -48,7 +48,7 @@ ipf_p_rcmd_main_load()
 
 
 void
-ipf_p_rcmd_main_unload()
+ipf_p_rcmd_main_unload(void)
 {
 	if (rcmd_proxy_init == 1) {
 		MUTEX_DESTROY(&rcmdfr.fr_lock);
@@ -61,11 +61,7 @@ ipf_p_rcmd_main_unload()
  * Setup for a new RCMD proxy.
  */
 int
-ipf_p_rcmd_new(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_rcmd_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	tcphdr_t *tcp = (tcphdr_t *)fin->fin_dp;
 	rcmdinfo_t *rc;
@@ -130,9 +126,7 @@ ipf_p_rcmd_new(arg, fin, aps, nat)
 
 
 void
-ipf_p_rcmd_del(softc, aps)
-	ipf_main_softc_t *softc;
-	ap_session_t *aps;
+ipf_p_rcmd_del(ipf_main_softc_t *softc, ap_session_t *aps)
 {
 	rcmdinfo_t *rci;
 
@@ -147,11 +141,10 @@ ipf_p_rcmd_del(softc, aps)
  * ipf_rcmd_atoi - implement a simple version of atoi
  */
 u_short
-ipf_rcmd_atoi(ptr)
-	char *ptr;
+ipf_rcmd_atoi(char *ptr)
 {
-	register char *s = ptr, c;
-	register u_short i = 0;
+	char *s = ptr, c;
+	u_short i = 0;
 
 	while (((c = *s++) != '\0') && ISDIGIT(c)) {
 		i *= 10;
@@ -162,10 +155,7 @@ ipf_rcmd_atoi(ptr)
 
 
 int
-ipf_p_rcmd_portmsg(fin, aps, nat)
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_rcmd_portmsg(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
 	int off, dlen, nflags, direction;
@@ -307,11 +297,7 @@ ipf_p_rcmd_portmsg(fin, aps, nat)
 
 
 int
-ipf_p_rcmd_out(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_rcmd_out(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	if (nat->nat_dir == NAT_OUTBOUND)
 		return ipf_p_rcmd_portmsg(fin, aps, nat);
@@ -320,11 +306,7 @@ ipf_p_rcmd_out(arg, fin, aps, nat)
 
 
 int
-ipf_p_rcmd_in(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_rcmd_in(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	if (nat->nat_dir == NAT_INBOUND)
 		return ipf_p_rcmd_portmsg(fin, aps, nat);

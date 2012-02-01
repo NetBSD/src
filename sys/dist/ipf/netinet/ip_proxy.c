@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.20 2012/01/30 16:12:50 darrenr Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.21 2012/02/01 16:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -105,7 +105,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.20 2012/01/30 16:12:50 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.21 2012/02/01 16:46:28 christos Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.102.2.7 2012/01/29 05:30:36 darrenr Exp";
 #endif
@@ -275,7 +275,7 @@ static	aproxy_t	ips_proxies[] = {
 /* Call the initialise routine for all the compiled in kernel proxies.      */
 /* ------------------------------------------------------------------------ */
 int
-ipf_proxy_main_load()
+ipf_proxy_main_load(void)
 {
 	aproxy_t *ap;
 
@@ -296,7 +296,7 @@ ipf_proxy_main_load()
 /* Call the finialise routine for all the compiled in kernel proxies.       */
 /* ------------------------------------------------------------------------ */
 int
-ipf_proxy_main_unload()
+ipf_proxy_main_unload(void)
 {
 	aproxy_t *ap;
 
@@ -312,8 +312,7 @@ ipf_proxy_main_unload()
 
 
 void *
-ipf_proxy_soft_create(softc)
-	ipf_main_softc_t *softc;
+ipf_proxy_soft_create(ipf_main_softc_t *softc)
 {
 	ipf_proxy_softc_t *softp;
 	aproxy_t *last;
@@ -375,9 +374,7 @@ failed:
 
 
 static aproxy_t *
-ipf_proxy_create_clone(softc, orig)
-	ipf_main_softc_t *softc;
-	aproxy_t *orig;
+ipf_proxy_create_clone(ipf_main_softc_t *softc, aproxy_t *orig)
 {
 	aproxy_t *apn;
 
@@ -405,9 +402,7 @@ ipf_proxy_create_clone(softc, orig)
 
 
 int
-ipf_proxy_soft_init(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_proxy_soft_init(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_proxy_softc_t *softp;
 	aproxy_t *ap;
@@ -438,9 +433,7 @@ ipf_proxy_soft_init(softc, arg)
 
 
 int
-ipf_proxy_soft_fini(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_proxy_soft_fini(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_proxy_softc_t *softp = arg;
 	aproxy_t *ap;
@@ -463,9 +456,7 @@ ipf_proxy_soft_fini(softc, arg)
 
 
 void
-ipf_proxy_soft_destroy(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_proxy_soft_destroy(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_proxy_softc_t *softp = arg;
 	aproxy_t *ap;
@@ -496,9 +487,7 @@ ipf_proxy_soft_destroy(softc, arg)
 /*                                                                          */
 /* ------------------------------------------------------------------------ */
 void
-ipf_proxy_flush(arg, how)
-	void *arg;
-	int how;
+ipf_proxy_flush(void *arg, int how)
 {
 	ipf_proxy_softc_t *softp = arg;
 	aproxy_t *ap;
@@ -530,9 +519,7 @@ ipf_proxy_flush(arg, how)
 /* collection compiled in and dynamically added.                            */
 /* ------------------------------------------------------------------------ */
 int
-ipf_proxy_add(arg, ap)
-	void *arg;
-	aproxy_t *ap;
+ipf_proxy_add(void *arg, aproxy_t *ap)
 {
 	ipf_proxy_softc_t *softp = arg;
 
@@ -575,10 +562,7 @@ ipf_proxy_add(arg, ap)
 /* control function.                                                        */
 /* ------------------------------------------------------------------------ */
 int
-ipf_proxy_ctl(softc, arg, ctl)
-	ipf_main_softc_t *softc;
-	void *arg;
-	ap_ctl_t *ctl;
+ipf_proxy_ctl(ipf_main_softc_t *softc, void *arg, ap_ctl_t *ctl)
 {
 	ipf_proxy_softc_t *softp = arg;
 	aproxy_t *a;
@@ -617,8 +601,7 @@ ipf_proxy_ctl(softc, arg, ctl)
 /* if it cannot be matched.                                                 */
 /* ------------------------------------------------------------------------ */
 int
-ipf_proxy_del(ap)
-	aproxy_t *ap;
+ipf_proxy_del(aproxy_t *ap)
 {
 	aproxy_t *a, **app;
 
@@ -645,10 +628,7 @@ ipf_proxy_del(ap)
 /*                                                                          */
 /* ------------------------------------------------------------------------ */
 int
-ipf_proxy_ok(fin, tcp, nat)
-	fr_info_t *fin;
-	tcphdr_t *tcp;
-	ipnat_t *nat;
+ipf_proxy_ok(fr_info_t *fin, tcphdr_t *tcp, ipnat_t *nat)
 {
 	aproxy_t *apr = nat->in_apr;
 	u_short dport = nat->in_odport;
@@ -670,12 +650,8 @@ ipf_proxy_ok(fin, tcp, nat)
 /*                                                                          */
 /* ------------------------------------------------------------------------ */
 int
-ipf_proxy_ioctl(softc, data, cmd, mode, ctx)
-	ipf_main_softc_t *softc;
-	void *data;
-	ioctlcmd_t cmd;
-	int mode;
-	void *ctx;
+ipf_proxy_ioctl(ipf_main_softc_t *softc, void *data, ioctlcmd_t cmd, int mode,
+    void *ctx)
 {
 	ap_ctl_t ctl;
 	void *ptr;
@@ -734,9 +710,7 @@ ipf_proxy_ioctl(softc, data, cmd, mode, ctx)
 /* matching.                                                                */
 /* ------------------------------------------------------------------------ */
 int
-ipf_proxy_match(fin, nat)
-	fr_info_t *fin;
-	nat_t *nat;
+ipf_proxy_match(fr_info_t *fin, nat_t *nat)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_proxy_softc_t *softp = softc->ipf_proxy_soft;
@@ -788,9 +762,7 @@ ipf_proxy_match(fin, nat)
 /* returning.                                                               */
 /* ------------------------------------------------------------------------ */
 int
-ipf_proxy_new(fin, nat)
-	fr_info_t *fin;
-	nat_t *nat;
+ipf_proxy_new(fr_info_t *fin, nat_t *nat)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_proxy_softc_t *softp = softc->ipf_proxy_soft;
@@ -861,9 +833,7 @@ ipf_proxy_new(fin, nat)
 /* check causes FI_BAD to be set.                                           */
 /* ------------------------------------------------------------------------ */
 int
-ipf_proxy_check(fin, nat)
-	fr_info_t *fin;
-	nat_t *nat;
+ipf_proxy_check(fr_info_t *fin, nat_t *nat)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_proxy_softc_t *softp = softc->ipf_proxy_soft;
@@ -1023,10 +993,7 @@ ipf_proxy_check(fin, nat)
 /* Search for an proxy by the protocol it is being used with and its name.  */
 /* ------------------------------------------------------------------------ */
 aproxy_t *
-ipf_proxy_lookup(arg, pr, name)
-	void *arg;
-	u_int pr;
-	char *name;
+ipf_proxy_lookup(void *arg, u_int pr, char *name)
 {
 	ipf_proxy_softc_t *softp = arg;
 	aproxy_t *ap;
@@ -1054,8 +1021,7 @@ ipf_proxy_lookup(arg, pr, name)
 /*                                                                          */
 /* ------------------------------------------------------------------------ */
 void
-ipf_proxy_free(ap)
-	aproxy_t *ap;
+ipf_proxy_free(aproxy_t *ap)
 {
 	ap->apr_ref--;
 }
@@ -1070,10 +1036,7 @@ ipf_proxy_free(ap)
 /* Locks Held:  ipf_nat_new, ipf_nat(W)                                     */
 /* ------------------------------------------------------------------------ */
 void
-aps_free(softc, arg, aps)
-	ipf_main_softc_t *softc;
-	void *arg;
-	ap_session_t *aps;
+aps_free(ipf_main_softc_t *softc, void *arg, ap_session_t *aps)
 {
 	ipf_proxy_softc_t *softp = arg;
 	ap_session_t *a, **ap;
@@ -1106,11 +1069,7 @@ aps_free(softc, arg, aps)
 /*                                                                          */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_proxy_fixseqack(fin, ip, aps, inc)
-	fr_info_t *fin;
-	ip_t *ip;
-	ap_session_t *aps;
-	int inc;
+ipf_proxy_fixseqack(fr_info_t *fin, ip_t *ip, ap_session_t *aps, int inc)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_proxy_softc_t *softp = softc->ipf_proxy_soft;
