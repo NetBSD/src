@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.6 2012/02/01 07:46:22 kardel Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.7 2012/02/01 22:48:15 kardel Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -584,13 +584,13 @@ process_private(
 		 */
 		if (!INFO_IS_AUTH(inpkt->auth_seq) || !info_auth_keyid
 		    || ntohl(tailinpkt->keyid) != info_auth_keyid) {
-			DPRINTF(5, ("failed auth %d info_auth_keyid %u pkt keyid %u maclen %zu\n",
+			DPRINTF(5, ("failed auth %d info_auth_keyid %u pkt keyid %u maclen %lu\n",
 				    INFO_IS_AUTH(inpkt->auth_seq),
 				    info_auth_keyid,
 				    ntohl(tailinpkt->keyid), (u_long)mac_len));
 #ifdef DEBUG
 			msyslog(LOG_DEBUG,
-				"process_private: failed auth %d info_auth_keyid %u pkt keyid %u maclen %zu\n",
+				"process_private: failed auth %d info_auth_keyid %u pkt keyid %u maclen %lu\n",
 				INFO_IS_AUTH(inpkt->auth_seq),
 				info_auth_keyid,
 				ntohl(tailinpkt->keyid), (u_long)mac_len);
