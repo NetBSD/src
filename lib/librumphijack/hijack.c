@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.90 2011/04/21 13:38:14 joerg Exp $	*/
+/*      $NetBSD: hijack.c,v 1.91 2012/02/01 05:34:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.90 2011/04/21 13:38:14 joerg Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.91 2012/02/01 05:34:41 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: hijack.c,v 1.90 2011/04/21 13:38:14 joerg Exp $");
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/statvfs.h>
+#include <sys/quotactl.h>
 
 #include <rump/rumpclient.h>
 #include <rump/rump_syscalls.h>
@@ -144,7 +145,7 @@ enum dualcall {
 #define REALGETFH __getfh30
 #define REALFHOPEN __fhopen40
 #define REALFHSTATVFS1 __fhstatvfs140
-#define REALQUOTACTL __quotactl50
+#define OLDREALQUOTACTL __quotactl50	/* 5.99.48-62 only */
 
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
@@ -168,7 +169,7 @@ int REALGETFH(const char *, void *, size_t *);
 int REALFHOPEN(const void *, size_t, int);
 int REALFHSTAT(const void *, size_t, struct stat *);
 int REALFHSTATVFS1(const void *, size_t, struct statvfs *, int);
-int REALQUOTACTL(const char *, struct plistref *);
+int OLDREALQUOTACTL(const char *, struct plistref *);
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -248,8 +249,10 @@ struct sysnames {
 	{ DUALCALL_FHOPEN,	S(REALFHOPEN),RSYS_NAME(FHOPEN)		},
 	{ DUALCALL_FHSTAT,	S(REALFHSTAT),RSYS_NAME(FHSTAT)		},
 	{ DUALCALL_FHSTATVFS1,	S(REALFHSTATVFS1),RSYS_NAME(FHSTATVFS1)	},
-#if __NetBSD_Prereq__(5,99,48)
-	{ DUALCALL_QUOTACTL,	S(REALQUOTACTL),RSYS_NAME(QUOTACTL)	},
+#if __NetBSD_Prereq__(5,99,63)
+	{ DUALCALL_QUOTACTL,	"__quotactl",	RSYS_NAME(__QUOTACTL)	},
+#elif __NetBSD_Prereq__(5,99,48)
+	{ DUALCALL_QUOTACTL,	S(OLDREALQUOTACTL),RSYS_NAME(QUOTACTL)	},
 #endif
 };
 #undef S
@@ -2178,8 +2181,13 @@ PATHCALL(int, unmount, DUALCALL_UNMOUNT,				\
 	(const char *, int),						\
 	(path, flags))
 
-#if __NetBSD_Prereq__(5,99,48)
-PATHCALL(int, REALQUOTACTL, DUALCALL_QUOTACTL,				\
+#if __NetBSD_Prereq__(5,99,63)
+PATHCALL(int, __quotactl, DUALCALL_QUOTACTL,				\
+	(const char *path, struct quotactl_args *args),			\
+	(const char *, struct quotactl_args *),				\
+	(path, args))
+#elif __NetBSD_Prereq__(5,99,48)
+PATHCALL(int, OLDREALQUOTACTL, DUALCALL_QUOTACTL,			\
 	(const char *path, struct plistref *p),				\
 	(const char *, struct plistref *),				\
 	(path, p))

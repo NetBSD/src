@@ -1,4 +1,4 @@
-/*	$NetBSD: quotactl.h,v 1.32 2012/02/01 05:16:56 dholland Exp $	*/
+/*	$NetBSD: quotactl.h,v 1.33 2012/02/01 05:34:42 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,6 +30,8 @@
 
 #ifndef _SYS_QUOTACTL_H_
 #define _SYS_QUOTACTL_H_
+
+#include <sys/stdint.h>
 
 /*
  * Note - this is an internal interface. Application code (and,
@@ -92,7 +94,7 @@ struct quotakcursor {
 #define QUOTACTL_QUOTAOFF	13
 
 /* Argument encoding. */
-struct vfs_quotactl_args {
+struct quotactl_args {
 	unsigned qc_op;
 	union {
 		struct {
@@ -150,5 +152,11 @@ struct vfs_quotactl_args {
 		} quotaoff;
 	} u;
 };
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+__BEGIN_DECLS
+int __quotactl(const char *, struct quotactl_args *);
+__END_DECLS
+#endif
 
 #endif /* _SYS_QUOTACTL_H_ */

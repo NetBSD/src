@@ -1,4 +1,4 @@
-/* $NetBSD: quotaprop.h,v 1.3 2011/11/20 21:43:34 dholland Exp $ */
+/* $NetBSD: quotaprop.h,v 1.4 2012/02/01 05:34:38 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -83,11 +83,5 @@ bool quota_prop_add_command(prop_array_t, const char *, const char *,
 prop_dictionary_t limits64toprop(uint64_t[], const char *[], int);
 prop_dictionary_t quota64toprop(uid_t, int, uint64_t *[], const char *[], int,
     const char *[], int);
-
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-__BEGIN_DECLS
-int quotactl(const char *, struct plistref *) __RENAME(__quotactl50);
-__END_DECLS
-#endif
 
 #endif /* _QUOTA_QUOTAPROP_H_ */

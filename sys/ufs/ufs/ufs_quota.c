@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.106 2012/02/01 05:16:56 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.107 2012/02/01 05:34:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.106 2012/02/01 05:16:56 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.107 2012/02/01 05:34:43 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -71,33 +71,33 @@ static pool_cache_t dquot_cache;
 
 
 static int quota_handle_cmd_stat(struct mount *, struct lwp *,
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_idtypestat(struct mount *, struct lwp *,
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_objtypestat(struct mount *, struct lwp *,
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_get(struct mount *, struct lwp *,
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_put(struct mount *, struct lwp *,
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_cursorget(struct mount *, struct lwp *,
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_delete(struct mount *, struct lwp *,
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_quotaon(struct mount *, struct lwp *, 
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_quotaoff(struct mount *, struct lwp *, 
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_cursoropen(struct mount *, struct lwp *,
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_cursorclose(struct mount *, struct lwp *,
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_cursorskipidtype(struct mount *, struct lwp *,
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_cursoratend(struct mount *, struct lwp *,
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 static int quota_handle_cmd_cursorrewind(struct mount *, struct lwp *,
-    struct vfs_quotactl_args *args);
+    struct quotactl_args *args);
 
 /*
  * Initialize the quota fields of an inode.
@@ -168,7 +168,7 @@ chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 
 int
 quota_handle_cmd(struct mount *mp, struct lwp *l,
-		 struct vfs_quotactl_args *args)
+		 struct quotactl_args *args)
 {
 	int error = 0;
 
@@ -224,7 +224,7 @@ quota_handle_cmd(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_stat(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct quotastat *ret;
@@ -262,7 +262,7 @@ quota_handle_cmd_stat(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_idtypestat(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int idtype;
@@ -295,7 +295,7 @@ quota_handle_cmd_idtypestat(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_objtypestat(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int objtype;
@@ -342,7 +342,7 @@ quota_get_auth(struct mount *mp, struct lwp *l, uid_t id) {
 
 static int 
 quota_handle_cmd_get(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
@@ -379,7 +379,7 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_put(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	const struct quotakey *qk;
@@ -427,7 +427,7 @@ quota_handle_cmd_put(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_delete(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	const struct quotakey *qk;
@@ -470,7 +470,7 @@ quota_handle_cmd_delete(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct quotakcursor *cursor;
@@ -508,7 +508,7 @@ quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 #ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -536,7 +536,7 @@ quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 #ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -564,7 +564,7 @@ quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 #ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -589,7 +589,7 @@ quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 #ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -614,7 +614,7 @@ quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 #ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -637,7 +637,7 @@ quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int idtype;
@@ -667,7 +667,7 @@ quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
 
 static int 
 quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l, 
-    struct vfs_quotactl_args *args)
+    struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int idtype;

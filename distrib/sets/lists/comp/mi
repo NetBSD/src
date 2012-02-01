@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1728 2012/01/30 22:51:51 tls Exp $
+#	$NetBSD: mi,v 1.1729 2012/02/01 05:34:38 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2473,6 +2473,7 @@
 ./usr/include/sys/ptree.h			comp-c-include
 ./usr/include/sys/queue.h			comp-c-include
 ./usr/include/sys/quota.h			comp-c-include
+./usr/include/sys/quotactl.h			comp-c-include
 ./usr/include/sys/radioio.h			comp-c-include
 ./usr/include/sys/ras.h				comp-c-include
 ./usr/include/sys/rb.h				comp-obsolete		obsolete

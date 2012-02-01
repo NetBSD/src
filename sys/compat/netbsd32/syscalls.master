@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.89 2012/01/31 22:52:19 matt Exp $
+	$NetBSD: syscalls.master,v 1.90 2012/02/01 05:34:40 dholland Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -969,8 +969,7 @@
 			    mode_t mode, netbsd32_dev_t dev); }
 451	STD	 	{ int|netbsd32|50|fhstat(const netbsd32_voidp fhp, \
 			    netbsd32_size_t fh_size, netbsd32_statp_t sb); }
-452	STD		{ int|netbsd32|50|quotactl(const netbsd32_charp path, \
-			    netbsd32_voidp pref); }
+452	OBSOL		5.99 quotactl
 453	STD		{ int|netbsd32||pipe2(netbsd32_intp fildes, int flags); }
 454	STD		{ int|netbsd32||dup3(int from, int to, int flags); }
 455	STD		{ int|netbsd32||kqueue1(int flags); }
@@ -1038,3 +1037,6 @@
 			    int flag); }
 472	STD  		{ int|netbsd32||futimens(int fd, \
 			    const netbsd32_timespecp_t tptr); }
+; XXX notyet
+;473	STD		{ int|sys||__quotactl(const netbsd32_charp path, \
+;			    netbsd32_quotactlargsp_t args); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_oldfiles.c,v 1.5 2012/01/30 16:45:13 dholland Exp $	*/
+/*	$NetBSD: quota_oldfiles.c,v 1.6 2012/02/01 05:34:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -452,7 +452,7 @@ __quota_oldfiles_quotaon(struct quotahandle *qh, int idtype)
 	 * Go over to the syscall interface.
 	 */
 
-	result = __quota_proplib_quotaon(qh, idtype);
+	result = __quota_kernel_quotaon(qh, idtype);
 	if (result < 0) {
 		return -1;
 	}
@@ -462,7 +462,7 @@ __quota_oldfiles_quotaon(struct quotahandle *qh, int idtype)
 	 * kernel.
 	 */
 
-	qh->qh_mode = QUOTA_MODE_PROPLIB;
+	qh->qh_mode = QUOTA_MODE_KERNEL;
 	return 0;
 }
 

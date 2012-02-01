@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_delete.c,v 1.3 2012/01/25 17:43:37 dholland Exp $	*/
+/*	$NetBSD: quota_delete.c,v 1.4 2012/02/01 05:34:40 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_delete.c,v 1.3 2012/01/25 17:43:37 dholland Exp $");
+__RCSID("$NetBSD: quota_delete.c,v 1.4 2012/02/01 05:34:40 dholland Exp $");
 
 #include <errno.h>
 
@@ -44,11 +44,11 @@ quota_delete(struct quotahandle *qh, const struct quotakey *qk)
 		errno = EOPNOTSUPP;
 		return -1;
 
-	    case QUOTA_MODE_PROPLIB:
-		return __quota_proplib_delete(qh, qk);
-
 	    case QUOTA_MODE_OLDFILES:
 		return __quota_oldfiles_delete(qh, qk);
+
+	    case QUOTA_MODE_KERNEL:
+		return __quota_kernel_delete(qh, qk);
 
 	    default:
 		break;

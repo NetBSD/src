@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.228 2011/08/17 07:26:16 manu Exp $ */
+/* $NetBSD: syscallargs.h,v 1.229 2012/02/01 05:34:43 dholland Exp $ */
 
 /*
  * System call argument lists.
@@ -2532,12 +2532,6 @@ struct sys___fhstat50_args {
 };
 check_syscall_args(sys___fhstat50)
 
-struct sys___quotactl50_args {
-	syscallarg(const char *) path;
-	syscallarg(struct plistref *) pref;
-};
-check_syscall_args(sys___quotactl50)
-
 struct sys_pipe2_args {
 	syscallarg(int *) fildes;
 	syscallarg(int) flags;
@@ -2687,6 +2681,12 @@ struct sys_futimens_args {
 	syscallarg(const struct timespec *) tptr;
 };
 check_syscall_args(sys_futimens)
+
+struct sys___quotactl_args {
+	syscallarg(const char *) path;
+	syscallarg(struct quotactl_args *) args;
+};
+check_syscall_args(sys___quotactl)
 
 /*
  * System call prototypes.
@@ -3528,8 +3528,6 @@ int	sys___mknod50(struct lwp *, const struct sys___mknod50_args *, register_t *)
 
 int	sys___fhstat50(struct lwp *, const struct sys___fhstat50_args *, register_t *);
 
-int	sys___quotactl50(struct lwp *, const struct sys___quotactl50_args *, register_t *);
-
 int	sys_pipe2(struct lwp *, const struct sys_pipe2_args *, register_t *);
 
 int	sys_dup3(struct lwp *, const struct sys_dup3_args *, register_t *);
@@ -3569,5 +3567,7 @@ int	sys_symlinkat(struct lwp *, const struct sys_symlinkat_args *, register_t *)
 int	sys_unlinkat(struct lwp *, const struct sys_unlinkat_args *, register_t *);
 
 int	sys_futimens(struct lwp *, const struct sys_futimens_args *, register_t *);
+
+int	sys___quotactl(struct lwp *, const struct sys___quotactl_args *, register_t *);
 
 #endif /* _SYS_SYSCALLARGS_H_ */

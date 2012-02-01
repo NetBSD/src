@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.49 2012/01/29 08:49:01 tsutsui Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.50 2012/02/01 05:34:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.49 2012/01/29 08:49:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.50 2012/02/01 05:34:43 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -100,7 +100,7 @@ ufs_root(struct mount *mp, struct vnode **vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(struct mount *mp, struct vfs_quotactl_args *args)
+ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 {
 
 #if !defined(QUOTA) && !defined(QUOTA2)
