@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.114 2012/01/31 00:30:52 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.115 2012/02/01 02:22:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.114 2012/01/31 00:30:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.115 2012/02/01 02:22:27 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -670,7 +670,7 @@ again:
 		    loopva, loopsize, vm);
 
 		pg = uvm_pagealloc(NULL, loopva, NULL,
-		    UVM_KMF_COLORMATCH
+		    UVM_FLAG_COLORMATCH
 		    | ((flags & VM_SLEEP) ? 0 : UVM_PGA_USERESERVE));
 		if (__predict_false(pg == NULL)) {
 			if (flags & VM_SLEEP) {
