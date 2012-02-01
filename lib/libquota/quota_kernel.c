@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_kernel.c,v 1.1 2012/02/01 05:34:40 dholland Exp $	*/
+/*	$NetBSD: quota_kernel.c,v 1.2 2012/02/01 05:43:53 dholland Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_kernel.c,v 1.1 2012/02/01 05:34:40 dholland Exp $");
+__RCSID("$NetBSD: quota_kernel.c,v 1.2 2012/02/01 05:43:53 dholland Exp $");
 
 #include <stdlib.h>
 #include <err.h>
@@ -52,7 +52,7 @@ __quota_kernel_stat(struct quotahandle *qh, struct quotastat *stat)
 	struct quotactl_args args;
 
 	args.qc_op = QUOTACTL_STAT;
-	args.u.stat.qc_ret = stat;
+	args.u.stat.qc_info = stat;
 	return __quotactl(qh->qh_mountpoint, &args);
 }
 
@@ -199,7 +199,7 @@ __quota_kernel_get(struct quotahandle *qh, const struct quotakey *qk,
 
 	args.qc_op = QUOTACTL_GET;
 	args.u.get.qc_key = qk;
-	args.u.get.qc_ret = qv;
+	args.u.get.qc_val = qv;
 	return __quotactl(qh->qh_mountpoint, &args);
 }
 
