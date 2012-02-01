@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.48 2012/01/31 09:41:37 darrenr Exp $	*/
+/*	$NetBSD: fil.c,v 1.49 2012/02/01 10:03:24 he Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.48 2012/01/31 09:41:37 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.49 2012/02/01 10:03:24 he Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.443.2.36 2012/01/29 05:30:35 darrenr Exp";
@@ -159,7 +159,9 @@ static	INLINE int	ipf_check_ipf(fr_info_t *, frentry_t *, int);
 static	u_32_t		ipf_checkcipso(fr_info_t *, u_char *, int);
 static	u_32_t		ipf_checkripso(u_char *);
 static	u_32_t		ipf_decaps(fr_info_t *, u_32_t, int);
+#ifdef	IPFILTER_LOG
 static	frentry_t	*ipf_dolog(fr_info_t *, u_32_t *);
+#endif
 static	int		ipf_flushlist(ipf_main_softc_t *, int, minor_t,
 				      int *, frentry_t **);
 static	int		ipf_flush_groups(ipf_main_softc_t *, int, int, int);
