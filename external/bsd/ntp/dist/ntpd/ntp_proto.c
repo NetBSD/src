@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_proto.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: ntp_proto.c,v 1.3 2012/02/01 07:46:22 kardel Exp $	*/
 
 /*
  * ntp_proto.c - NTP version 4 protocol machinery
@@ -79,7 +79,7 @@ double	sys_offset;	/* current local clock offset */
 double	sys_mindisp = MINDISPERSE; /* minimum distance (s) */
 double	sys_maxdist = MAXDISTANCE; /* selection threshold */
 double	sys_jitter;		/* system jitter */
-u_long 	sys_epoch;		/* last clock update time */
+u_long	sys_epoch;		/* last clock update time */
 static	double sys_clockhop;	/* clockhop threshold */
 int	leap_tai;		/* TAI at next next leap */
 u_long	leap_sec;		/* next scheduled leap from file */
@@ -127,6 +127,7 @@ static	void	fast_xmit	(struct recvbuf *, int, keyid_t,
 				    int);
 static	void	clock_update	(struct peer *);
 static	int	default_get_precision (void);
+static	int	local_refid	(struct peer *);
 static	int	peer_unfit	(struct peer *);
 
 
@@ -311,6 +312,7 @@ receive(
 	u_int32	opcode = 0;		/* extension field opcode */
 	sockaddr_u *dstadr_sin; 	/* active runway */
 	struct peer *peer2;		/* aux peer structure pointer */
+	endpt *	match_ep;		/* newpeer() local address */
 	l_fp	p_org;			/* origin timestamp */
 	l_fp	p_rec;			/* receive timestamp */
 	l_fp	p_xmt;			/* transmit timestamp */
@@ -470,8 +472,8 @@ receive(
 	restrict_mask = ntp_monitor(rbufp, restrict_mask);
 	if (restrict_mask & RES_LIMITED) {
 		sys_limitrejected++;
-		if (!(restrict_mask & RES_KOD) || hismode ==
-		    MODE_BROADCAST)
+		if (!(restrict_mask & RES_KOD) || MODE_BROADCAST ==
+		    hismode || MODE_SERVER == hismode)
 			return;			/* rate exceeded */
 
 		if (hismode == MODE_CLIENT)
@@ -503,8 +505,7 @@ receive(
 	 * multicaster, the broadcast address is null, so we use the
 	 * unicast address anyway. Don't ask.
 	 */
-	peer = findpeer(&rbufp->recv_srcadr, rbufp->dstadr,  hismode,
-	    &retcode);
+	peer = findpeer(rbufp,  hismode, &retcode);
 	dstadr_sin = &rbufp->dstadr->sin;
 	NTOHL_FP(&pkt->org, &p_org);
 	NTOHL_FP(&pkt->rec, &p_rec);
@@ -852,6 +853,20 @@ receive(
 #endif /* OPENSSL */
 
 		/*
+		 * Broadcasts received via a multicast address may
+		 * arrive after a unicast volley has begun
+		 * with the same remote address.  newpeer() will not
+		 * find duplicate associations on other local endpoints
+		 * if a non-NULL endpoint is supplied.  multicastclient
+		 * ephemeral associations are unique across all local
+		 * endpoints.
+		 */
+		if (!(INT_MCASTOPEN & rbufp->dstadr->flags))
+			match_ep = rbufp->dstadr;
+		else
+			match_ep = NULL;
+
+		/*
 		 * Determine whether to execute the initial volley.
 		 */
 		if (sys_bdelay != 0) {
@@ -870,10 +885,11 @@ receive(
 			 * Do not execute the volley. Start out in
 			 * broadcast client mode.
 			 */
-			if ((peer = newpeer(&rbufp->recv_srcadr,
-			    rbufp->dstadr, MODE_BCLIENT, hisversion,
-			    pkt->ppoll, pkt->ppoll, 0, 0, 0,
-			    skeyid)) == NULL) {
+			peer = newpeer(&rbufp->recv_srcadr, match_ep,
+			    MODE_BCLIENT, hisversion, pkt->ppoll,
+			    pkt->ppoll, FLAG_PREEMPT, MDF_BCLNT, 0,
+			    skeyid);
+			if (NULL == peer) {
 				sys_restricted++;
 				return;		/* ignore duplicate */
 
@@ -892,10 +908,11 @@ receive(
 		 * packet, normally 6 (64 s) and that the poll interval
 		 * is fixed at this value.
 		 */
-		if ((peer = newpeer(&rbufp->recv_srcadr, rbufp->dstadr,
+		peer = newpeer(&rbufp->recv_srcadr, match_ep,
 		    MODE_CLIENT, hisversion, pkt->ppoll, pkt->ppoll,
-		    FLAG_IBURST | FLAG_PREEMPT, MDF_BCLNT, 0,
-		    skeyid)) == NULL) {
+		    FLAG_BC_VOL | FLAG_IBURST | FLAG_PREEMPT, MDF_BCLNT,
+		    0, skeyid);
+		if (NULL == peer) {
 			sys_restricted++;
 			return;			/* ignore duplicate */
 		}
@@ -1498,8 +1515,8 @@ process_packet(
 		 * timestamp. This works for both basic and interleaved
 		 * modes.
 		 */
-		if (peer->cast_flags & MDF_BCLNT) {
-			peer->cast_flags &= ~MDF_BCLNT;
+		if (FLAG_BC_VOL & peer->flags) {
+			peer->flags &= ~FLAG_BC_VOL;
 			peer->delay = (peer->offset - p_offset) * 2;
 		}
 		p_del = peer->delay;
@@ -1605,8 +1622,8 @@ process_packet(
 	 * client mode when the client is fit and the autokey dance is
 	 * complete.
 	 */
-	if ((peer->cast_flags & MDF_BCLNT) && !(peer_unfit(peer) &
-	    TEST11)) {
+	if ((FLAG_BC_VOL & peer->flags) && MODE_CLIENT == peer->hmode &&
+	    !(TEST11 & peer_unfit(peer))) {	/* distance exceeded */
 #ifdef OPENSSL
 		if (peer->flags & FLAG_SKEY) {
 			if (!(~peer->crypto & CRYPTO_FLAG_ALL))
@@ -1652,7 +1669,8 @@ clock_update(
 		sys_refid = peer->refid;
 	else
 		sys_refid = addr2refid(&peer->srcadr);
-	dtemp = sys_jitter + fabs(sys_offset) + peer->disp + clock_phi *
+	dtemp = sys_jitter + fabs(sys_offset) + peer->disp +
+	    (peer->delay + peer->rootdelay) / 2 + clock_phi *
 	    (current_time - peer->update);
 	sys_rootdisp = dtemp + peer->rootdisp;
 	sys_rootdelay = peer->delay + peer->rootdelay;
@@ -2019,7 +2037,7 @@ clock_filter(
 	/*
 	 * A sample consists of the offset, delay, dispersion and epoch
 	 * of arrival. The offset and delay are determined by the on-
-	 * wire protcol. The dispersion grows from the last outbound
+	 * wire protocol. The dispersion grows from the last outbound
 	 * packet to the arrival of this one increased by the sum of the
 	 * peer precision and the system precision as required by the
 	 * error budget. First, shift the new arrival into the shift
@@ -2123,8 +2141,10 @@ clock_filter(
 	 * save the offset, delay and jitter. Note the jitter must not
 	 * be less than the precision.
 	 */
-	if (m == 0)
+	if (m == 0) {
+		clock_select();
 		return;
+	}
 
 	etemp = fabs(peer->offset - peer->filter_offset[k]);
 	peer->offset = peer->filter_offset[k];
@@ -2205,7 +2225,7 @@ clock_select(void)
 	double	high, low;
 	double	seljitter;
 	double	synch[NTP_MAXASSOC], error[NTP_MAXASSOC];
-	double	orphdist = 1e10;
+	double	orphmet = 2.0 * U_INT32_MAX; /* 2x is greater than */
 	struct peer *osys_peer = NULL;
 	struct peer *sys_prefer = NULL;	/* prefer peer */
 	struct peer *typesystem = NULL;
@@ -2270,8 +2290,7 @@ clock_select(void)
 	for (n = 0; n < NTP_HASH_SIZE; n++) {
 		for (peer = peer_hash[n]; peer != NULL; peer =
 		    peer->next) {
-			peer->flags &= ~FLAG_SYSPEER;
-			peer->status = CTL_PST_SEL_REJECT;
+			peer->new_status = CTL_PST_SEL_REJECT;
 
 			/*
 			 * Leave the island immediately if the peer is
@@ -2281,37 +2300,63 @@ clock_select(void)
 				continue;
 
 			/*
-			 * If this is an orphan, choose the one with
-			 * the lowest metric defined as the IPv4 address
-			 * or the first 64 bits of the hashed IPv6 address.
+			 * If this peer is an orphan parent, elect the
+			 * one with the lowest metric defined as the
+			 * IPv4 address or the first 64 bits of the
+			 * hashed IPv6 address.  To ensure convergence
+			 * on the same selected orphan, consider as
+			 * well that this system may have the lowest
+			 * metric and be the orphan parent.  If this
+			 * system wins, sys_peer will be NULL to trigger
+			 * orphan mode in timer().
 			 */
 			if (peer->stratum == sys_orphan) {
-				double	ftemp;
+				u_int32	localmet;
+				u_int32	peermet;
 
-				ftemp = addr2refid(&peer->srcadr);
-				if (ftemp < orphdist) {
+				if (peer->dstadr != NULL)
+					localmet = ntohl(peer->dstadr->addr_refid);
+				else
+					localmet = U_INT32_MAX;
+				peermet = ntohl(addr2refid(&peer->srcadr));
+				if (peermet < localmet &&
+				    peermet < orphmet) {
 					typeorphan = peer;
-					orphdist = ftemp;
+					orphmet = peermet;
 				}
 				continue;
 			}
+
+			/*
+			 * If this peer could have the orphan parent
+			 * as a synchronization ancestor, exclude it
+			 * from selection to avoid forming a 
+			 * synchronization loop within the orphan mesh,
+			 * triggering stratum climb to infinity 
+			 * instability.  Peers at stratum higher than
+			 * the orphan stratum could have the orphan
+			 * parent in ancestry so are excluded.
+			 * See http://bugs.ntp.org/2050
+			 */
+			if (peer->stratum > sys_orphan)
+				continue;
 #ifdef REFCLOCK
 			/*
 			 * The following are special cases. We deal
 			 * with them later.
 			 */
-			switch (peer->refclktype) { 
-			case REFCLK_LOCALCLOCK:
-				if (typelocal == NULL &&
-				    !(peer->flags & FLAG_PREFER))
-					typelocal = peer;
-				continue;
+			if (!(peer->flags & FLAG_PREFER)) {
+				switch (peer->refclktype) {
+				case REFCLK_LOCALCLOCK:
+					if (typelocal == NULL)
+						typelocal = peer;
+					continue;
 
-			case REFCLK_ACTS:
-				if (typeacts == NULL &&
-				    !(peer->flags & FLAG_PREFER))
-					typeacts = peer;
-				continue;
+				case REFCLK_ACTS:
+					if (typeacts == NULL)
+						typeacts = peer;
+					continue;
+				}
 			}
 #endif /* REFCLOCK */
 
@@ -2320,7 +2365,7 @@ clock_select(void)
 			 * island, but does not yet have the immunity
 			 * idol.
 			 */
-			peer->status = CTL_PST_SEL_SANE;
+			peer->new_status = CTL_PST_SEL_SANE;
 			peer_list[nlist++] = peer;
 
 			/*
@@ -2389,7 +2434,7 @@ clock_select(void)
 	 *
 	 * Here, nlist is the number of candidates and allow is the
 	 * number of falsetickers. Upon exit, the truechimers are the
-	 * susvivors with offsets not less than low and not greater than
+	 * survivors with offsets not less than low and not greater than
 	 * high. There may be none of them.
 	 */
 	low = 1e9;
@@ -2457,7 +2502,7 @@ clock_select(void)
 
 #ifdef REFCLOCK
 		/*
-		 * Elegible PPS peers must survive the intersection
+		 * Eligible PPS peers must survive the intersection
 		 * algorithm. Use the first one found, but don't
 		 * include any of them in the cluster population.
 		 */
@@ -2511,7 +2556,7 @@ clock_select(void)
 		} else if (typelocal != NULL) {
 			peer_list[0] = typelocal;
 			nlist = 1;
-		}
+		} else
 #endif /* REFCLOCK */
 		if (typeorphan != NULL) {
 			peer_list[0] = typeorphan;
@@ -2523,7 +2568,7 @@ clock_select(void)
 	 * Mark the candidates at this point as truechimers.
 	 */
 	for (i = 0; i < nlist; i++) {
-		peer_list[i]->status = CTL_PST_SEL_SELCAND;
+		peer_list[i]->new_status = CTL_PST_SEL_SELCAND;
 #ifdef DEBUG
 		if (debug > 1)
 			printf("select: survivor %s %f\n",
@@ -2577,7 +2622,7 @@ clock_select(void)
 			    ntoa(&peer_list[k]->srcadr), g, d);
 #endif
 		if (nlist > sys_maxclock)
-			peer_list[k]->status = CTL_PST_SEL_EXCESS;
+			peer_list[k]->new_status = CTL_PST_SEL_EXCESS;
 		for (j = k + 1; j < nlist; j++) {
 			peer_list[j - 1] = peer_list[j];
 			synch[j - 1] = synch[j];
@@ -2601,7 +2646,7 @@ clock_select(void)
 	for (i = 0; i < nlist; i++) {
 		peer = peer_list[i];
 		peer->unreach = 0;
-		peer->status = CTL_PST_SEL_SYNCCAND;
+		peer->new_status = CTL_PST_SEL_SYNCCAND;
 		sys_survivors++;
 		if (peer->leap == LEAP_ADDSECOND) {
 			if (peer->flags & FLAG_REFCLOCK)
@@ -2654,14 +2699,14 @@ clock_select(void)
 	 */
 	if (typesystem != NULL) {
 		if (sys_prefer == NULL) {
-			typesystem->status = CTL_PST_SEL_SYSPEER;
+			typesystem->new_status = CTL_PST_SEL_SYSPEER;
 			clock_combine(peer_list, sys_survivors);
-			sys_jitter = SQRT(SQUARE(typesystem->jitter) +
-			    SQUARE(sys_jitter) + SQUARE(seljitter));
+			sys_jitter = SQRT(SQUARE(sys_jitter) +
+			    SQUARE(seljitter));
 		} else {
 			typesystem = sys_prefer;
 			sys_clockhop = 0;
-			typesystem->status = CTL_PST_SEL_SYSPEER;
+			typesystem->new_status = CTL_PST_SEL_SYSPEER;
 			sys_offset = typesystem->offset;
 			sys_jitter = typesystem->jitter;
 		}
@@ -2679,13 +2724,13 @@ clock_select(void)
 	 * if there is a prefer peer or there are no survivors and none
 	 * are required.
 	 */
-	if (typepps != NULL && fabs(sys_offset < 0.4) &&
+	if (typepps != NULL && fabs(sys_offset) < 0.4 &&
 	    (typepps->refclktype != REFCLK_ATOM_PPS ||
 	    (typepps->refclktype == REFCLK_ATOM_PPS && (sys_prefer !=
 	    NULL || (typesystem == NULL && sys_minsane == 0))))) {
 		typesystem = typepps;
 		sys_clockhop = 0;
-		typesystem->status = CTL_PST_SEL_PPS;
+		typesystem->new_status = CTL_PST_SEL_PPS;
  		sys_offset = typesystem->offset;
 		sys_jitter = typesystem->jitter;
 #ifdef DEBUG
@@ -2705,6 +2750,10 @@ clock_select(void)
 		if (osys_peer != NULL)
 			report_event(EVNT_NOPEER, NULL, NULL);
 		sys_peer = NULL;			
+		for (n = 0; n < NTP_HASH_SIZE; n++)
+			for (peer = peer_hash[n]; peer != NULL; peer =
+			    peer->next)
+				peer->status = peer->new_status;
 		return;
 	}
 
@@ -2718,9 +2767,12 @@ clock_select(void)
 	/*
 	 * We have found the alpha male. Wind the clock.
 	 */
- 	if (osys_peer != typesystem)
+	if (osys_peer != typesystem)
 		report_event(PEVNT_NEWPEER, typesystem, NULL);
-	typesystem->flags |= FLAG_SYSPEER;
+	for (n = 0; n < NTP_HASH_SIZE; n++)
+		for (peer = peer_hash[n]; peer != NULL; peer =
+		    peer->next)
+			peer->status = peer->new_status;
 	clock_update(typesystem);
 }
 
@@ -3385,6 +3437,29 @@ key_expire(
 
 
 /*
+ * local_refid(peer) - check peer refid to avoid selecting peers
+ *		       currently synced to this ntpd.
+ */
+static int
+local_refid(
+	struct peer *	p
+	)
+{
+	endpt *	unicast_ep;
+
+	if (p->dstadr != NULL && !(INT_MCASTIF & p->dstadr->flags))
+		unicast_ep = p->dstadr;
+	else
+		unicast_ep = findinterface(&p->srcadr);
+
+	if (unicast_ep != NULL && p->refid == unicast_ep->addr_refid)
+		return TRUE;
+	else
+		return FALSE;
+}
+
+
+/*
  * Determine if the peer is unfit for synchronization
  *
  * A peer is unfit for synchronization if
@@ -3424,9 +3499,7 @@ peer_unfit(
 	 * server as the local peer but only if the remote peer is
 	 * neither a reference clock nor an orphan.
 	 */
-	if (peer->stratum > 1 && peer->refid != htonl(LOOPBACKADR) &&
-	    (peer->refid == (peer->dstadr ? peer->dstadr->addr_refid :
-	    0) || peer->refid == sys_refid))
+	if (peer->stratum > 1 && local_refid(peer))
 		rval |= TEST12;		/* synchronization loop */
 
 	/*
