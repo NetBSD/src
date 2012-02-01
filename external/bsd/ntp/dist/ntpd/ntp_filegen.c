@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_filegen.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: ntp_filegen.c,v 1.3 2012/02/01 07:46:22 kardel Exp $	*/
 
 /*
  * ntp_filegen.c,v 3.12 1994/01/25 19:06:11 kardel Exp
@@ -109,7 +109,7 @@ filegen_open(
 	basename = emalloc(len);
 	snprintf(basename, len, "%s%s", gen->prefix, gen->basename);
   
-	switch(gen->type) {
+	switch (gen->type) {
 
 	default:
 		msyslog(LOG_ERR, 
@@ -417,7 +417,6 @@ filegen_config(
 	)
 {
 	int file_existed = 0;
-	size_t octets;
 
 	/*
 	 * if nothing would be changed...
@@ -449,12 +448,11 @@ filegen_config(
 		    gen->flag, flag));
 
 	if (strcmp(gen->basename, basename) != 0) {
-		octets = strlen(basename) + 1;
-		gen->basename = erealloc(gen->basename, octets);
-		memcpy(gen->basename, basename, octets);
+		free(gen->basename);
+		gen->basename = estrdup(basename);
 	}
-	gen->type = (u_char) type;
-	gen->flag = (u_char) flag;
+	gen->type = (u_char)type;
+	gen->flag = (u_char)flag;
 
 	/*
 	 * make filegen use the new settings

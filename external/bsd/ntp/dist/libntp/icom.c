@@ -1,4 +1,4 @@
-/*	$NetBSD: icom.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
+/*	$NetBSD: icom.c,v 1.3 2012/02/01 07:46:22 kardel Exp $	*/
 
 /*
  * Program to control ICOM radios
@@ -7,6 +7,7 @@
  * distribution. The only function provided is to load the radio
  * frequency. All other parameters must be manually set before use.
  */
+#include <config.h>
 #include "icom.h"
 #include <unistd.h>
 #include <stdio.h>
@@ -15,6 +16,12 @@
 
 #include "ntp_tty.h"
 #include "l_stdlib.h"
+
+#ifdef SYS_WINNT
+#undef write	/* ports/winnt/include/config.h: #define write _write */
+extern int async_write(int, const void *, unsigned int);
+#define write(fd, data, octets)	async_write(fd, data, octets)
+#endif
 
 /*
  * Packet routines
@@ -66,13 +73,15 @@ icom_freq(			/* returns 0 (ok), EIO (error) */
 	u_char cmd[] = {PAD, PR, PR, 0, TX, V_SFREQ, 0, 0, 0, 0, FI,
 	    FI};
 	int temp;
-	cmd[3] = ident;
+
+	cmd[3] = (char)ident;
 	if (ident == IC735)
 		temp = 4;
 	else
 		temp = 5;
 	doublefreq(freq * 1e6, &cmd[6], temp);
 	temp = write(fd, cmd, temp + 7);
+
 	return (0);
 }
 
@@ -88,10 +97,10 @@ doublefreq(			/* returns void */
 	)
 {
 	int i;
-	char s1[11];
+	char s1[16];
 	char *y;
 
-	sprintf(s1, " %10.0f", freq);
+	snprintf(s1, sizeof(s1), " %10.0f", freq);
 	y = s1 + 10;
 	i = 0;
 	while (*y != ' ') {
@@ -99,13 +108,13 @@ doublefreq(			/* returns void */
 		x[i] = x[i] | ((*y-- & 0x0f) << 4);
 		i++;
 	}
-	for (; i < len; i++)
+	for ( ; i < len; i++)
 		x[i] = 0;
 	x[i] = FI;
 }
 
 /*
- * icom_open() - open and initialize serial interface
+ * icom_init() - open and initialize serial interface
  *
  * This routine opens the serial interface for raw transmission; that
  * is, character-at-a-time, no stripping, checking or monkeying with the
@@ -119,14 +128,23 @@ icom_init(
 	int trace		/* trace flags */	)
 {
 	TTY ttyb;
-	int fd, flags;
+	int fd;
+	int flags;
+	int rc;
+	int saved_errno;
 
 	flags = trace;
-	fd = open(device, O_RDWR, 0777);
+	fd = tty_open(device, O_RDWR, 0777);
 	if (fd < 0)
-		return (fd);
+		return -1;
 
-	tcgetattr(fd, &ttyb);
+	rc = tcgetattr(fd, &ttyb);
+	if (rc < 0) {
+		saved_errno = errno;
+		close(fd);
+		errno = saved_errno;
+		return -1;
+	}
 	ttyb.c_iflag = 0;	/* input modes */
 	ttyb.c_oflag = 0;	/* output modes */
 	ttyb.c_cflag = IBAUD|CS8|CLOCAL; /* control modes  (no read) */
@@ -135,7 +153,13 @@ icom_init(
 	ttyb.c_cc[VTIME] = 5;	/* receive timeout */
 	cfsetispeed(&ttyb, (u_int)speed);
 	cfsetospeed(&ttyb, (u_int)speed);
-	tcsetattr(fd, TCSANOW, &ttyb);
+	rc = tcsetattr(fd, TCSANOW, &ttyb);
+	if (rc < 0) {
+		saved_errno = errno;
+		close(fd);
+		errno = saved_errno;
+		return -1;
+	}
 	return (fd);
 }
 

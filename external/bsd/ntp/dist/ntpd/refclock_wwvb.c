@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_wwvb.c,v 1.1.1.2 2012/01/31 21:25:06 kardel Exp $	*/
+/*	$NetBSD: refclock_wwvb.c,v 1.2 2012/02/01 07:46:22 kardel Exp $	*/
 
 /*
  * refclock_wwvb - clock driver for Spectracom WWVB and GPS receivers
@@ -152,7 +152,7 @@ static	void	wwvb_receive	(struct recvbuf *);
 static	void	wwvb_poll	(int, struct peer *);
 static	void	wwvb_timer	(int, struct peer *);
 #ifdef HAVE_PPSAPI
-static	void	wwvb_control	(int, const struct refclockstat *,
+static	void	wwvb_control	(int, struct refclockstat *,
 				 struct refclockstat *, struct peer *);
 #define		WWVB_CONTROL	wwvb_control
 #else
@@ -557,7 +557,7 @@ wwvb_poll(
 static void
 wwvb_control(
 	int unit,
-	const struct refclockstat *in_st,
+	struct refclockstat *in_st,
 	struct refclockstat *out_st,
 	struct peer *peer
 	)

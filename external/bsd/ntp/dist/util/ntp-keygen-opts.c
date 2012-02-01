@@ -1,52 +1,49 @@
-/*	$NetBSD: ntp-keygen-opts.c,v 1.2 2010/12/04 23:08:48 christos Exp $	*/
+/*	$NetBSD: ntp-keygen-opts.c,v 1.3 2012/02/01 07:46:30 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntp-keygen-opts.c)
  *  
- *  It has been AutoGen-ed  December 10, 2009 at 05:08:21 AM by AutoGen 5.10
+ *  It has been AutoGen-ed  December 24, 2011 at 06:34:40 PM by AutoGen 5.12
  *  From the definitions    ntp-keygen-opts.def
  *  and the template file   options
  *
- * Generated from AutoOpts 33:0:8 templates.
- */
-
-/*
- *  This file was produced by an AutoOpts template.  AutoOpts is a
- *  copyrighted work.  This source file is not encumbered by AutoOpts
- *  licensing, but is provided under the licensing terms chosen by the
- *  ntp-keygen author or copyright holder.  AutoOpts is licensed under
- *  the terms of the LGPL.  The redistributable library (``libopts'') is
- *  licensed under the terms of either the LGPL or, at the users discretion,
- *  the BSD license.  See the AutoOpts and/or libopts sources for details.
+ * Generated from AutoOpts 35:0:10 templates.
+ *
+ *  AutoOpts is a copyrighted work.  This source file is not encumbered
+ *  by AutoOpts licensing, but is provided under the licensing terms chosen
+ *  by the ntp-keygen author or copyright holder.  AutoOpts is
+ *  licensed under the terms of the LGPL.  The redistributable library
+ *  (``libopts'') is licensed under the terms of either the LGPL or, at the
+ *  users discretion, the BSD license.  See the AutoOpts and/or libopts sources
+ *  for details.
  *
  * This source file is copyrighted and licensed under the following terms:
  *
- * ntp-keygen copyright (c) 1970-2009 David L. Mills and/or others - all rights reserved
- *
- * see html/copyright.html
+ *  see html/copyright.html
+ *  
  */
 
 #include <sys/types.h>
+
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-extern FILE * option_usage_fp;
 #define OPTION_CODE_COMPILE 1
 #include "ntp-keygen-opts.h"
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
+extern FILE * option_usage_fp;
 
 /* TRANSLATORS: choose the translation for option names wisely because you
                 cannot ever change your mind. */
-tSCC zCopyright[] =
-       "ntp-keygen copyright (c) 1970-2009 David L. Mills and/or others, all rights reserved"
-/* extracted from ../include/copyright.def near line 8 */
-;
-tSCC zCopyrightNotice[24] =
-"see html/copyright.html";
+static char const zCopyright[50] =
+"ntp-keygen (ntp) 4.2.6p5\n\
+see html/copyright.html\n";
+static char const zLicenseDescrip[25] =
+"see html/copyright.html\n";
 
 extern tUsageProc optionUsage;
 
@@ -63,21 +60,15 @@ extern tUsageProc optionUsage;
 #ifndef NULL
 #  define NULL 0
 #endif
-#ifndef EXIT_SUCCESS
-#  define  EXIT_SUCCESS 0
-#endif
-#ifndef EXIT_FAILURE
-#  define  EXIT_FAILURE 1
-#endif
 
 /*
  *  Certificate option description:
  */
 #ifdef OPENSSL
-tSCC    zCertificateText[] =
+static char const zCertificateText[] =
         "certificate scheme";
-tSCC    zCertificate_NAME[]        = "CERTIFICATE";
-tSCC    zCertificate_Name[]        = "certificate";
+static char const zCertificate_NAME[]        = "CERTIFICATE";
+static char const zCertificate_Name[]        = "certificate";
 #define CERTIFICATE_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
@@ -91,19 +82,19 @@ tSCC    zCertificate_Name[]        = "certificate";
 /*
  *  Debug_Level option description:
  */
-tSCC    zDebug_LevelText[] =
+static char const zDebug_LevelText[] =
         "Increase output debug message level";
-tSCC    zDebug_Level_NAME[]        = "DEBUG_LEVEL";
-tSCC    zDebug_Level_Name[]        = "debug-level";
+static char const zDebug_Level_NAME[]        = "DEBUG_LEVEL";
+static char const zDebug_Level_Name[]        = "debug-level";
 #define DEBUG_LEVEL_FLAGS       (OPTST_DISABLED)
 
 /*
  *  Set_Debug_Level option description:
  */
-tSCC    zSet_Debug_LevelText[] =
+static char const zSet_Debug_LevelText[] =
         "Set the output debug message level";
-tSCC    zSet_Debug_Level_NAME[]    = "SET_DEBUG_LEVEL";
-tSCC    zSet_Debug_Level_Name[]    = "set-debug-level";
+static char const zSet_Debug_Level_NAME[]    = "SET_DEBUG_LEVEL";
+static char const zSet_Debug_Level_Name[]    = "set-debug-level";
 #define SET_DEBUG_LEVEL_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
@@ -111,10 +102,10 @@ tSCC    zSet_Debug_Level_Name[]    = "set-debug-level";
  *  Id_Key option description:
  */
 #ifdef OPENSSL
-tSCC    zId_KeyText[] =
+static char const zId_KeyText[] =
         "Write IFF or GQ identity keys";
-tSCC    zId_Key_NAME[]             = "ID_KEY";
-tSCC    zId_Key_Name[]             = "id-key";
+static char const zId_Key_NAME[]             = "ID_KEY";
+static char const zId_Key_Name[]             = "id-key";
 #define ID_KEY_FLAGS       (OPTST_DISABLED)
 
 #else   /* disable Id_Key */
@@ -128,10 +119,10 @@ tSCC    zId_Key_Name[]             = "id-key";
  *  Gq_Params option description:
  */
 #ifdef OPENSSL
-tSCC    zGq_ParamsText[] =
+static char const zGq_ParamsText[] =
         "Generate GQ parameters and keys";
-tSCC    zGq_Params_NAME[]          = "GQ_PARAMS";
-tSCC    zGq_Params_Name[]          = "gq-params";
+static char const zGq_Params_NAME[]          = "GQ_PARAMS";
+static char const zGq_Params_Name[]          = "gq-params";
 #define GQ_PARAMS_FLAGS       (OPTST_DISABLED)
 
 #else   /* disable Gq_Params */
@@ -145,10 +136,10 @@ tSCC    zGq_Params_Name[]          = "gq-params";
  *  Host_Key option description:
  */
 #ifdef OPENSSL
-tSCC    zHost_KeyText[] =
+static char const zHost_KeyText[] =
         "generate RSA host key";
-tSCC    zHost_Key_NAME[]           = "HOST_KEY";
-tSCC    zHost_Key_Name[]           = "host-key";
+static char const zHost_Key_NAME[]           = "HOST_KEY";
+static char const zHost_Key_Name[]           = "host-key";
 #define HOST_KEY_FLAGS       (OPTST_DISABLED)
 
 #else   /* disable Host_Key */
@@ -162,10 +153,10 @@ tSCC    zHost_Key_Name[]           = "host-key";
  *  Iffkey option description:
  */
 #ifdef OPENSSL
-tSCC    zIffkeyText[] =
+static char const zIffkeyText[] =
         "generate IFF parameters";
-tSCC    zIffkey_NAME[]             = "IFFKEY";
-tSCC    zIffkey_Name[]             = "iffkey";
+static char const zIffkey_NAME[]             = "IFFKEY";
+static char const zIffkey_Name[]             = "iffkey";
 #define IFFKEY_FLAGS       (OPTST_DISABLED)
 
 #else   /* disable Iffkey */
@@ -179,10 +170,10 @@ tSCC    zIffkey_Name[]             = "iffkey";
  *  Issuer_Name option description:
  */
 #ifdef OPENSSL
-tSCC    zIssuer_NameText[] =
+static char const zIssuer_NameText[] =
         "set issuer name";
-tSCC    zIssuer_Name_NAME[]        = "ISSUER_NAME";
-tSCC    zIssuer_Name_Name[]        = "issuer-name";
+static char const zIssuer_Name_NAME[]        = "ISSUER_NAME";
+static char const zIssuer_Name_Name[]        = "issuer-name";
 #define ISSUER_NAME_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
@@ -196,20 +187,20 @@ tSCC    zIssuer_Name_Name[]        = "issuer-name";
 /*
  *  Md5key option description:
  */
-tSCC    zMd5keyText[] =
+static char const zMd5keyText[] =
         "generate MD5 keys";
-tSCC    zMd5key_NAME[]             = "MD5KEY";
-tSCC    zMd5key_Name[]             = "md5key";
+static char const zMd5key_NAME[]             = "MD5KEY";
+static char const zMd5key_Name[]             = "md5key";
 #define MD5KEY_FLAGS       (OPTST_DISABLED)
 
 /*
  *  Modulus option description:
  */
 #ifdef OPENSSL
-tSCC    zModulusText[] =
+static char const zModulusText[] =
         "modulus";
-tSCC    zModulus_NAME[]            = "MODULUS";
-tSCC    zModulus_Name[]            = "modulus";
+static char const zModulus_NAME[]            = "MODULUS";
+static char const zModulus_Name[]            = "modulus";
 #define MODULUS_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_NUMERIC))
 
@@ -224,10 +215,10 @@ tSCC    zModulus_Name[]            = "modulus";
  *  Pvt_Cert option description:
  */
 #ifdef OPENSSL
-tSCC    zPvt_CertText[] =
+static char const zPvt_CertText[] =
         "generate PC private certificate";
-tSCC    zPvt_Cert_NAME[]           = "PVT_CERT";
-tSCC    zPvt_Cert_Name[]           = "pvt-cert";
+static char const zPvt_Cert_NAME[]           = "PVT_CERT";
+static char const zPvt_Cert_Name[]           = "pvt-cert";
 #define PVT_CERT_FLAGS       (OPTST_DISABLED)
 
 #else   /* disable Pvt_Cert */
@@ -241,10 +232,10 @@ tSCC    zPvt_Cert_Name[]           = "pvt-cert";
  *  Pvt_Passwd option description:
  */
 #ifdef OPENSSL
-tSCC    zPvt_PasswdText[] =
+static char const zPvt_PasswdText[] =
         "output private password";
-tSCC    zPvt_Passwd_NAME[]         = "PVT_PASSWD";
-tSCC    zPvt_Passwd_Name[]         = "pvt-passwd";
+static char const zPvt_Passwd_NAME[]         = "PVT_PASSWD";
+static char const zPvt_Passwd_Name[]         = "pvt-passwd";
 #define PVT_PASSWD_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
@@ -259,10 +250,10 @@ tSCC    zPvt_Passwd_Name[]         = "pvt-passwd";
  *  Get_Pvt_Passwd option description:
  */
 #ifdef OPENSSL
-tSCC    zGet_Pvt_PasswdText[] =
+static char const zGet_Pvt_PasswdText[] =
         "input private password";
-tSCC    zGet_Pvt_Passwd_NAME[]     = "GET_PVT_PASSWD";
-tSCC    zGet_Pvt_Passwd_Name[]     = "get-pvt-passwd";
+static char const zGet_Pvt_Passwd_NAME[]     = "GET_PVT_PASSWD";
+static char const zGet_Pvt_Passwd_Name[]     = "get-pvt-passwd";
 #define GET_PVT_PASSWD_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
@@ -277,10 +268,10 @@ tSCC    zGet_Pvt_Passwd_Name[]     = "get-pvt-passwd";
  *  Sign_Key option description:
  */
 #ifdef OPENSSL
-tSCC    zSign_KeyText[] =
+static char const zSign_KeyText[] =
         "generate sign key (RSA or DSA)";
-tSCC    zSign_Key_NAME[]           = "SIGN_KEY";
-tSCC    zSign_Key_Name[]           = "sign-key";
+static char const zSign_Key_NAME[]           = "SIGN_KEY";
+static char const zSign_Key_Name[]           = "sign-key";
 #define SIGN_KEY_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
@@ -295,10 +286,10 @@ tSCC    zSign_Key_Name[]           = "sign-key";
  *  Subject_Name option description:
  */
 #ifdef OPENSSL
-tSCC    zSubject_NameText[] =
+static char const zSubject_NameText[] =
         "set subject name";
-tSCC    zSubject_Name_NAME[]       = "SUBJECT_NAME";
-tSCC    zSubject_Name_Name[]       = "subject-name";
+static char const zSubject_Name_NAME[]       = "SUBJECT_NAME";
+static char const zSubject_Name_Name[]       = "subject-name";
 #define SUBJECT_NAME_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_STRING))
 
@@ -313,10 +304,10 @@ tSCC    zSubject_Name_Name[]       = "subject-name";
  *  Trusted_Cert option description:
  */
 #ifdef OPENSSL
-tSCC    zTrusted_CertText[] =
+static char const zTrusted_CertText[] =
         "trusted certificate (TC scheme)";
-tSCC    zTrusted_Cert_NAME[]       = "TRUSTED_CERT";
-tSCC    zTrusted_Cert_Name[]       = "trusted-cert";
+static char const zTrusted_Cert_NAME[]       = "TRUSTED_CERT";
+static char const zTrusted_Cert_Name[]       = "trusted-cert";
 #define TRUSTED_CERT_FLAGS       (OPTST_DISABLED)
 
 #else   /* disable Trusted_Cert */
@@ -330,10 +321,10 @@ tSCC    zTrusted_Cert_Name[]       = "trusted-cert";
  *  Mv_Params option description:
  */
 #ifdef OPENSSL
-tSCC    zMv_ParamsText[] =
+static char const zMv_ParamsText[] =
         "generate <num> MV parameters";
-tSCC    zMv_Params_NAME[]          = "MV_PARAMS";
-tSCC    zMv_Params_Name[]          = "mv-params";
+static char const zMv_Params_NAME[]          = "MV_PARAMS";
+static char const zMv_Params_Name[]          = "mv-params";
 #define MV_PARAMS_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_NUMERIC))
 
@@ -348,10 +339,10 @@ tSCC    zMv_Params_Name[]          = "mv-params";
  *  Mv_Keys option description:
  */
 #ifdef OPENSSL
-tSCC    zMv_KeysText[] =
+static char const zMv_KeysText[] =
         "update <num> MV keys";
-tSCC    zMv_Keys_NAME[]            = "MV_KEYS";
-tSCC    zMv_Keys_Name[]            = "mv-keys";
+static char const zMv_Keys_NAME[]            = "MV_KEYS";
+static char const zMv_Keys_Name[]            = "mv-keys";
 #define MV_KEYS_FLAGS       (OPTST_DISABLED \
         | OPTST_SET_ARGTYPE(OPARG_TYPE_NUMERIC))
 
@@ -365,12 +356,12 @@ tSCC    zMv_Keys_Name[]            = "mv-keys";
 /*
  *  Help/More_Help/Version option descriptions:
  */
-tSCC zHelpText[]          = "Display extended usage information and exit";
-tSCC zHelp_Name[]         = "help";
+static char const zHelpText[]          = "Display extended usage information and exit";
+static char const zHelp_Name[]         = "help";
 #ifdef HAVE_WORKING_FORK
 #define OPTST_MORE_HELP_FLAGS   (OPTST_IMM | OPTST_NO_INIT)
-tSCC zMore_Help_Name[]    = "more-help";
-tSCC zMore_HelpText[]     = "Extended usage information passed thru pager";
+static char const zMore_Help_Name[]    = "more-help";
+static char const zMore_HelpText[]     = "Extended usage information passed thru pager";
 #else
 #define OPTST_MORE_HELP_FLAGS   (OPTST_OMITTED | OPTST_NO_INIT)
 #define zMore_Help_Name   NULL
@@ -383,14 +374,14 @@ tSCC zMore_HelpText[]     = "Extended usage information passed thru pager";
                                 OPTST_ARG_OPTIONAL | OPTST_IMM | OPTST_NO_INIT
 #endif
 
-tSCC zVersionText[]       = "Output version information and exit";
-tSCC zVersion_Name[]      = "version";
-tSCC zSave_OptsText[]     = "Save the option state to a config file";
-tSCC zSave_Opts_Name[]    = "save-opts";
-tSCC zLoad_OptsText[]     = "Load options from a config file";
-tSCC zLoad_Opts_NAME[]    = "LOAD_OPTS";
-tSCC zNotLoad_Opts_Name[] = "no-load-opts";
-tSCC zNotLoad_Opts_Pfx[]  = "no";
+static char const zVersionText[]       = "Output version information and exit";
+static char const zVersion_Name[]      = "version";
+static char const zSave_OptsText[]     = "Save the option state to a config file";
+static char const zSave_Opts_Name[]    = "save-opts";
+static char const zLoad_OptsText[]     = "Load options from a config file";
+static char const zLoad_Opts_NAME[]    = "LOAD_OPTS";
+static char const zNotLoad_Opts_Name[] = "no-load-opts";
+static char const zNotLoad_Opts_Pfx[]  = "no";
 #define zLoad_Opts_Name   (zNotLoad_Opts_Name + 3)
 /*
  *  Declare option callback procedures
@@ -400,25 +391,13 @@ tSCC zNotLoad_Opts_Pfx[]  = "no";
 #else /* not OPENSSL */
 # define doOptModulus NULL
 #endif /* def/not OPENSSL */
-#ifdef OPENSSL
-  extern tOptProc optionNumericVal;
-#else /* not OPENSSL */
-# define optionNumericVal NULL
-#endif /* def/not OPENSSL */
-#ifdef OPENSSL
-  extern tOptProc optionNumericVal;
-#else /* not OPENSSL */
-# define optionNumericVal NULL
-#endif /* def/not OPENSSL */
 #if defined(TEST_NTP_KEYGEN_OPTS)
 /*
  *  Under test, omit argument processing, or call optionStackArg,
  *  if multiple copies are allowed.
  */
-extern tOptProc
-    optionNumericVal, optionPagedUsage, optionVersionStderr;
 static tOptProc
-    doOptModulus, doUsageOpt;
+    doUsageOpt;
 
 /*
  *  #define map the "normal" callout procs to the test ones...
@@ -431,7 +410,10 @@ static tOptProc
  *  When not under test, there are different procs to use
  */
 extern tOptProc
-    optionPagedUsage, optionPrintVersion;
+    optionBooleanVal,    optionNestedVal,     optionNumericVal,
+    optionPagedUsage,    optionPrintVersion,  optionResetOpt,
+    optionStackArg,      optionTimeDate,      optionTimeVal,
+    optionUnstackArg,    optionVersionStderr;
 static tOptProc
     doOptSet_Debug_Level, doUsageOpt;
 
@@ -452,7 +434,7 @@ static tOptProc
  *
  *  Define the Ntp_Keygen Option Descriptions.
  */
-static tOptDesc optDesc[ OPTION_CT ] = {
+static tOptDesc optDesc[OPTION_CT] = {
   {  /* entry idx, value */ 0, VALUE_OPT_CERTIFICATE,
      /* equiv idx, value */ 0, VALUE_OPT_CERTIFICATE,
      /* equivalenced to  */ NO_EQUIVALENT,
@@ -738,23 +720,23 @@ static tOptDesc optDesc[ OPTION_CT ] = {
  *
  *  Define the Ntp_Keygen Option Environment
  */
-tSCC   zPROGNAME[]   = "NTP_KEYGEN";
-tSCC   zUsageTitle[] =
-"ntp-keygen (ntp) - Create a NTP host key - Ver. 4.2.6\n\
+static char const zPROGNAME[11] = "NTP_KEYGEN";
+static char const zUsageTitle[114] =
+"ntp-keygen (ntp) - Create a NTP host key - Ver. 4.2.6p5\n\
 USAGE:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]...\n";
-tSCC   zRcName[]     = ".ntprc";
-tSCC*  apzHomeList[] = {
-       "$HOME",
-       ".",
-       NULL };
+static char const zRcName[7] = ".ntprc";
+static char const * const apzHomeList[3] = {
+    "$HOME",
+    ".",
+    NULL };
 
-tSCC   zBugsAddr[]    = "http://bugs.ntp.org, bugs@ntp.org";
+static char const zBugsAddr[34]    = "http://bugs.ntp.org, bugs@ntp.org";
 #define zExplain NULL
-tSCC    zDetail[]     = "\n\
-If there is no new host key, look for an existing one.\n\
-If one is not found, create it.\n";
-tSCC    zFullVersion[] = NTP_KEYGEN_FULL_VERSION;
-/* extracted from /usr/local/gnu/share/autogen/optcode.tpl near line 495 */
+static char const zDetail[99] = "\n\
+If there is no new host key, look for an existing one.  If one is not\n\
+found, create it.\n";
+static char const zFullVersion[] = NTP_KEYGEN_FULL_VERSION;
+/* extracted from optcode.tlib near line 515 */
 
 #if defined(ENABLE_NLS)
 # define OPTPROC_BASE OPTPROC_TRANSLATE
@@ -767,6 +749,26 @@ tSCC    zFullVersion[] = NTP_KEYGEN_FULL_VERSION;
 
 #define ntp_keygen_full_usage NULL
 #define ntp_keygen_short_usage NULL
+#ifndef  PKGDATADIR
+# define PKGDATADIR ""
+#endif
+
+#ifndef  WITH_PACKAGER
+# define ntp_keygen_packager_info NULL
+#else
+static char const ntp_keygen_packager_info[] =
+    "Packaged by " WITH_PACKAGER
+
+# ifdef WITH_PACKAGER_VERSION
+        " ("WITH_PACKAGER_VERSION")"
+# endif
+
+# ifdef WITH_PACKAGER_BUG_REPORTS
+    "\nReport ntp_keygen bugs to " WITH_PACKAGER_BUG_REPORTS
+# endif
+    "\n";
+#endif
+
 tOptions ntp_keygenOptions = {
     OPTIONS_STRUCT_VERSION,
     0, NULL,                    /* original argc + argv    */
@@ -776,15 +778,16 @@ tOptions ntp_keygenOptions = {
     + OPTPROC_LONGOPT
     + OPTPROC_NO_REQ_OPT
     + OPTPROC_ENVIRON
-    + OPTPROC_NO_ARGS ),
+    + OPTPROC_NO_ARGS
+    + OPTPROC_MISUSE ),
     0, NULL,                    /* current option index, current option */
     NULL,         NULL,         zPROGNAME,
-    zRcName,      zCopyright,   zCopyrightNotice,
+    zRcName,      zCopyright,   zLicenseDescrip,
     zFullVersion, apzHomeList,  zUsageTitle,
     zExplain,     zDetail,      optDesc,
     zBugsAddr,                  /* address to send bugs to */
     NULL, NULL,                 /* extensions/saved state  */
-    optionUsage,       /* usage procedure */
+    optionUsage, /* usage procedure */
     translate_option_strings,   /* translation procedure */
     /*
      *  Indexes to special options
@@ -796,19 +799,18 @@ tOptions ntp_keygenOptions = {
     },
     23 /* full option count */, 18 /* user option count */,
     ntp_keygen_full_usage, ntp_keygen_short_usage,
-    NULL, NULL
+    NULL, NULL,
+    PKGDATADIR, ntp_keygen_packager_info
 };
 
 /*
  *  Create the static procedure(s) declared above.
  */
 static void
-doUsageOpt(
-    tOptions*   pOptions,
-    tOptDesc*   pOptDesc )
+doUsageOpt(tOptions * pOptions, tOptDesc * pOptDesc)
 {
     (void)pOptions;
-    USAGE( EXIT_SUCCESS );
+    USAGE(NTP_KEYGEN_EXIT_SUCCESS);
 }
 
 #if ! defined(TEST_NTP_KEYGEN_OPTS)
@@ -820,7 +822,7 @@ doUsageOpt(
 static void
 doOptSet_Debug_Level(tOptions* pOptions, tOptDesc* pOptDesc)
 {
-    /* extracted from ../include/debug-opt.def, line 27 */
+    /* extracted from debug-opt.def, line 27 */
 DESC(DEBUG_LEVEL).optOccCt = atoi( pOptDesc->pzLastArg );
 }
 #endif /* defined(TEST_NTP_KEYGEN_OPTS) */
@@ -835,63 +837,49 @@ doOptModulus(tOptions* pOptions, tOptDesc* pOptDesc)
 {
     static const struct {long const rmin, rmax;} rng[1] = {
         { 256, 2048 } };
-    long val;
     int  ix;
-    char * pzEnd;
 
     if (pOptions <= OPTPROC_EMIT_LIMIT)
         goto emit_ranges;
+    optionNumericVal(pOptions, pOptDesc);
 
-    errno = 0;
-    val = strtol(pOptDesc->optArg.argString, &pzEnd, 0);
-    if ((pOptDesc->optArg.argString == pzEnd) || (errno != 0))
-        goto bad_value;
-
-    if (*pzEnd != '\0')
-        goto bad_value;
     for (ix = 0; ix < 1; ix++) {
-        if (val < rng[ix].rmin)
+        if (pOptDesc->optArg.argInt < rng[ix].rmin)
             continue;  /* ranges need not be ordered. */
-        if (val == rng[ix].rmin)
-            goto valid_return;
+        if (pOptDesc->optArg.argInt == rng[ix].rmin)
+            return;
         if (rng[ix].rmax == LONG_MIN)
             continue;
-        if (val <= rng[ix].rmax)
-            goto valid_return;
+        if (pOptDesc->optArg.argInt <= rng[ix].rmax)
+            return;
     }
-
-  bad_value:
 
     option_usage_fp = stderr;
 
-  emit_ranges:
-    optionShowRange(pOptions, pOptDesc, (void *)(intptr_t)rng, 1);
-    return;
+emit_ranges:
 
-  valid_return:
-    if ((pOptDesc->fOptState & OPTST_ALLOC_ARG) != 0) {
-        free((void *)(intptr_t)pOptDesc->optArg.argString);
-        pOptDesc->fOptState &= ~OPTST_ALLOC_ARG;
-    }
-    pOptDesc->optArg.argInt = val;
+    optionShowRange(pOptions, pOptDesc, (void *)rng, 1);
 }
 #endif /* defined OPENSSL */
-/* extracted from /usr/local/gnu/share/autogen/optmain.tpl near line 109 */
+/* extracted from optmain.tlib near line 128 */
 
 #if defined(TEST_NTP_KEYGEN_OPTS) /* TEST MAIN PROCEDURE: */
 
-extern void optionPutShell( tOptions* );
+extern void optionPutShell(tOptions*);
 
 int
-main(int argc, char** argv)
+main(int argc, char ** argv)
 {
-    int res = EXIT_SUCCESS;
-    (void)optionProcess( &ntp_keygenOptions, argc, argv );
-    optionPutShell( &ntp_keygenOptions );
+    int res = NTP_KEYGEN_EXIT_SUCCESS;
+    (void)optionProcess(&ntp_keygenOptions, argc, argv);
+    optionPutShell(&ntp_keygenOptions);
+    res = ferror(stdout);
+    if (res != 0)
+        fputs("output error writing to stdout\n", stderr);
     return res;
 }
 #endif  /* defined TEST_NTP_KEYGEN_OPTS */
-/* extracted from /usr/local/gnu/share/autogen/optcode.tpl near line 627 */
+/* extracted from optcode.tlib near line 666 */
 
 #if ENABLE_NLS
 #include <stdio.h>
@@ -900,11 +888,11 @@ main(int argc, char** argv)
 #include <unistd.h>
 #include <autoopts/usage-txt.h>
 
-static char* AO_gettext( char const* pz );
+static char* AO_gettext(char const* pz);
 static void  coerce_it(void** s);
 
 static char*
-AO_gettext( char const* pz )
+AO_gettext(char const* pz)
 {
     char* pzRes;
     if (pz == NULL)
@@ -912,60 +900,61 @@ AO_gettext( char const* pz )
     pzRes = _(pz);
     if (pzRes == pz)
         return pzRes;
-    pzRes = strdup( pzRes );
+    pzRes = strdup(pzRes);
     if (pzRes == NULL) {
-        fputs( _("No memory for duping translated strings\n"), stderr );
-        exit( EXIT_FAILURE );
+        fputs(_("No memory for duping translated strings\n"), stderr);
+        exit(NTP_KEYGEN_EXIT_FAILURE);
     }
     return pzRes;
 }
 
-static void coerce_it(void** s) { *s = AO_gettext(*s); }
-#define COERSION(_f) \
-  coerce_it((void*)&(ntp_keygenOptions._f))
+static void coerce_it(void** s) { *s = AO_gettext(*s);
+}
 
 /*
  *  This invokes the translation code (e.g. gettext(3)).
  */
 static void
-translate_option_strings( void )
+translate_option_strings(void)
 {
+    tOptions * const pOpt = &ntp_keygenOptions;
+
     /*
      *  Guard against re-translation.  It won't work.  The strings will have
      *  been changed by the first pass through this code.  One shot only.
      */
     if (option_usage_text.field_ct != 0) {
-
         /*
          *  Do the translations.  The first pointer follows the field count
          *  field.  The field count field is the size of a pointer.
          */
-        tOptDesc* pOD = ntp_keygenOptions.pOptDesc;
-        char**    ppz = (char**)(void*)&(option_usage_text);
-        int       ix  = option_usage_text.field_ct;
+        tOptDesc * pOD = pOpt->pOptDesc;
+        char **    ppz = (char**)(void*)&(option_usage_text);
+        int        ix  = option_usage_text.field_ct;
 
         do {
             ppz++;
             *ppz = AO_gettext(*ppz);
         } while (--ix > 0);
 
-        COERSION(pzCopyright);
-        COERSION(pzCopyNotice);
-        COERSION(pzFullVersion);
-        COERSION(pzUsageTitle);
-        COERSION(pzExplain);
-        COERSION(pzDetail);
+        coerce_it((void*)&(pOpt->pzCopyright));
+        coerce_it((void*)&(pOpt->pzCopyNotice));
+        coerce_it((void*)&(pOpt->pzFullVersion));
+        coerce_it((void*)&(pOpt->pzUsageTitle));
+        coerce_it((void*)&(pOpt->pzExplain));
+        coerce_it((void*)&(pOpt->pzDetail));
+        coerce_it((void*)&(pOpt->pzPackager));
         option_usage_text.field_ct = 0;
 
-        for (ix = ntp_keygenOptions.optCt; ix > 0; ix--, pOD++)
+        for (ix = pOpt->optCt; ix > 0; ix--, pOD++)
             coerce_it((void*)&(pOD->pzText));
     }
 
-    if ((ntp_keygenOptions.fOptSet & OPTPROC_NXLAT_OPT_CFG) == 0) {
-        tOptDesc* pOD = ntp_keygenOptions.pOptDesc;
-        int       ix;
+    if ((pOpt->fOptSet & OPTPROC_NXLAT_OPT_CFG) == 0) {
+        tOptDesc * pOD = pOpt->pOptDesc;
+        int        ix;
 
-        for (ix = ntp_keygenOptions.optCt; ix > 0; ix--, pOD++) {
+        for (ix = pOpt->optCt; ix > 0; ix--, pOD++) {
             coerce_it((void*)&(pOD->pz_Name));
             coerce_it((void*)&(pOD->pz_DisableName));
             coerce_it((void*)&(pOD->pz_DisablePfx));

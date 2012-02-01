@@ -1,4 +1,4 @@
-/*	$NetBSD: parse-duration.c,v 1.1.1.2 2012/01/31 21:27:49 kardel Exp $	*/
+/*	$NetBSD: parse-duration.c,v 1.2 2012/02/01 07:46:23 kardel Exp $	*/
 
 /* Parse a time duration and return a seconds count
    Copyright (C) 2008-2011 Free Software Foundation, Inc.
@@ -56,7 +56,7 @@ typedef enum {
 #define TIME_MAX        0x7FFFFFFF
 
 /* Wrapper around strtoul that does not require a cast.  */
-static unsigned long inline
+inline static unsigned long 
 str_const_to_ul (cch_t * str, cch_t ** ppz, int base)
 {
   return strtoul (str, (char **)ppz, base);
