@@ -1,13 +1,12 @@
-/*	$NetBSD: ntpd.h,v 1.2 2010/12/04 23:08:33 christos Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.3 2012/02/01 07:46:21 kardel Exp $	*/
 
 /*
  * ntpd.h - Prototypes for ntpd.
  */
 
-#include "ntp_syslog.h"
-#include "ntp_fp.h"
 #include "ntp.h"
 #include "ntp_debug.h"
+#include "ntp_syslog.h"
 #include "ntp_select.h"
 #include "ntp_malloc.h"
 #include "ntp_refclock.h"
@@ -70,8 +69,8 @@ extern	unsigned WINAPI	ntp_intres_thread	(void *);
 
 /* ntp_io.c */
 typedef struct interface_info {
-	struct interface *	interface;
-	u_char			action;
+	endpt *	ep;
+	u_char	action;
 } interface_info_t;
 
 typedef void	(*interface_receiver_t)	(void *, interface_info_t *);
@@ -79,10 +78,10 @@ typedef void	(*interface_receiver_t)	(void *, interface_info_t *);
 extern  int	disable_dynamic_updates;
 
 extern	void	interface_enumerate	(interface_receiver_t, void *);
-extern	struct interface *findinterface	(sockaddr_u *);
-extern	struct interface *findbcastinter(sockaddr_u *);
-extern	void	enable_broadcast	(struct interface *, sockaddr_u *);
-extern	void	enable_multicast_if	(struct interface *, sockaddr_u *);
+extern	endpt *	findinterface		(sockaddr_u *);
+extern	endpt *	findbcastinter		(sockaddr_u *);
+extern	void	enable_broadcast	(endpt *, sockaddr_u *);
+extern	void	enable_multicast_if	(endpt *, sockaddr_u *);
 extern	void	interface_update	(interface_receiver_t, void *);
 
 extern	void	init_io 	(void);
@@ -110,6 +109,8 @@ extern	void	block_io_and_alarm	(void);
 #define UNBLOCK_IO_AND_ALARM()
 #define BLOCK_IO_AND_ALARM()
 #endif
+#define		latoa(pif)	localaddrtoa(pif)
+extern const char * localaddrtoa(endpt *);
 
 /* ntp_loopfilter.c */
 extern	void	init_loopfilter(void);
@@ -124,13 +125,13 @@ extern	u_int	sys_tai;
 extern	void	init_mon	(void);
 extern	void	mon_start	(int);
 extern	void	mon_stop	(int);
-extern	int	ntp_monitor     (struct recvbuf *, int);
+extern	int	ntp_monitor	(struct recvbuf *, int);
 extern  void    ntp_monclearinterface (struct interface *interface);
 
 /* ntp_peer.c */
 extern	void	init_peer	(void);
-extern	struct peer *findexistingpeer (sockaddr_u *, struct peer *, int);
-extern	struct peer *findpeer	(sockaddr_u *, struct interface *, int, int *);
+extern	struct peer *findexistingpeer (sockaddr_u *, struct peer *, int, u_char);
+extern	struct peer *findpeer	(struct recvbuf *, int, int *);
 extern	struct peer *findpeerbyassoc (u_int);
 extern  void	set_peerdstadr	(struct peer *peer, struct interface *interface);
 extern	struct peer *newpeer	(sockaddr_u *, struct interface *, int, int, int, int, u_int, u_char, int, keyid_t);
@@ -215,8 +216,8 @@ extern	void	process_private (struct recvbuf *, int);
 
 /* ntp_restrict.c */
 extern	void	init_restrict	(void);
-extern	int 	restrictions	(sockaddr_u *);
-extern	void	hack_restrict	(int, sockaddr_u *, sockaddr_u *, int, int);
+extern	u_short	restrictions	(sockaddr_u *);
+extern	void	hack_restrict	(int, sockaddr_u *, sockaddr_u *, u_short, u_short);
 
 /* ntp_timer.c */
 extern	void	init_timer	(void);
@@ -329,9 +330,9 @@ extern u_long	io_timereset;		/* time counters were reset */
 /*
  * Interface stuff
  */
-extern struct interface *any_interface;	/* default ipv4 interface */
-extern struct interface *any6_interface;/* default ipv6 interface */
-extern struct interface *loopback_interface; /* loopback interface */
+extern endpt *	any_interface;		/* IPv4 wildcard */
+extern endpt *	any6_interface;		/* IPv6 wildcard */
+extern endpt *	loopback_interface;	/* IPv4 loopback for refclocks */
 
 /*
  * File descriptor masks etc. for call to select
@@ -457,8 +458,8 @@ extern int	fdpps;			/* pps file descriptor */
 extern keyid_t	info_auth_keyid;	/* keyid used to authenticate requests */
 
 /* ntp_restrict.c */
-extern struct restrictlist *restrictlist; /* the ipv4 restriction list */
-extern struct restrictlist6 *restrictlist6; /* the ipv6 restriction list */
+extern restrict_u *	restrictlist4;	/* IPv4 restriction list */
+extern restrict_u *	restrictlist6;	/* IPv6 restriction list */
 extern int	ntp_minpkt;
 extern int	ntp_minpoll;
 extern int	mon_age;		/* monitor preempt age */
@@ -489,7 +490,8 @@ extern const char *chrootdir;		/* directory to chroot to */
 
 /* refclock_conf.c */
 #ifdef REFCLOCK
-extern struct refclock *refclock_conf[]; /* refclock configuration table */
+/* refclock configuration table */
+extern struct refclock * const refclock_conf[];
 extern u_char	num_refclock_conf;
 #endif
 

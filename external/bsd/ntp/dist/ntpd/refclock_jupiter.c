@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jupiter.c,v 1.3 2011/08/16 05:15:21 christos Exp $	*/
+/*	$NetBSD: refclock_jupiter.c,v 1.4 2012/02/01 07:46:22 kardel Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003
@@ -190,7 +190,7 @@ jupiter_start(
 	/*
 	 * Open serial port
 	 */
-	(void)sprintf(gpsdev, DEVICE, unit);
+	snprintf(gpsdev, sizeof(gpsdev), DEVICE, unit);
 	fd = refclock_open(gpsdev, SPEED232, LDISC_RAW);
 	if (fd == 0) {
 		jupiter_debug(peer, __func__, "open %s: %s",
@@ -199,12 +199,8 @@ jupiter_start(
 	}
 
 	/* Allocate unit structure */
-	if ((instance = (struct instance *)
-	    emalloc(sizeof(struct instance))) == NULL) {
-		(void) close(fd);
-		return (0);
-	}
-	memset((char *)instance, 0, sizeof(struct instance));
+	instance = emalloc(sizeof(*instance));
+	memset(instance, 0, sizeof(*instance));
 	instance->peer = peer;
 	pp = peer->procptr;
 	pp->io.clock_recv = jupiter_receive;
@@ -212,7 +208,7 @@ jupiter_start(
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
-		(void) close(fd);
+		close(fd);
 		free(instance);
 		return (0);
 	}
@@ -933,7 +929,7 @@ jupiter_send(struct instance *instance, struct jheader *hp)
 	}
 
 	if ((cc = write(instance->peer->procptr->io.fd, (char *)hp, size)) < 0) {
-		(void)sprintf(errstr, "write: %s", strerror(errno));
+		snprintf(errstr, sizeof(errstr), "write: %s", strerror(errno));
 		return (errstr);
 	} else if (cc != (ssize_t)size) {
 		(void)sprintf(errstr, "short write (%zd != %u)", cc, size);
