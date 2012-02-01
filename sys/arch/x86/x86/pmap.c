@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.162 2012/01/30 17:56:27 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.163 2012/02/01 18:55:32 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.162 2012/01/30 17:56:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.163 2012/02/01 18:55:32 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -675,17 +675,8 @@ pv_pte_next(struct pmap_page *pp, struct pv_pte *pvpte)
 bool
 pmap_is_curpmap(struct pmap *pmap)
 {
-#if defined(XEN) && defined(__x86_64__)
-	/*
-	 * Only kernel pmap is physically loaded.
-	 * User PGD may be active, but TLB will be flushed
-	 * with HYPERVISOR_iret anyway, so let's say no
-	 */
-	return(pmap == pmap_kernel());
-#else /* XEN && __x86_64__*/
 	return((pmap == pmap_kernel()) ||
 	       (pmap == curcpu()->ci_pmap));
-#endif
 }
 
 /*
