@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.3 2012/02/01 07:46:30 kardel Exp $	*/
+/*	$NetBSD: options.h,v 1.4 2012/02/01 20:48:01 kardel Exp $	*/
 
 /*   -*- buffer-read-only: t -*- vi: set ro:
  *  
@@ -1040,7 +1040,7 @@ extern void optionResetOpt(tOptions*, tOptDesc*);
 
 extern void optionSetMembers(tOptions*, tOptDesc*, char const * const *, unsigned int);
 
-extern void optionShowRange(tOptions*, tOptDesc*, void *, int);
+extern void optionShowRange(tOptions*, tOptDesc*, const void *, int);
 
 extern void optionStackArg(tOptions*, tOptDesc*);
 

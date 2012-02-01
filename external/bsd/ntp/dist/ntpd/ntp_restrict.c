@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_restrict.c,v 1.1.1.2 2012/01/31 21:26:46 kardel Exp $	*/
+/*	$NetBSD: ntp_restrict.c,v 1.2 2012/02/01 20:48:01 kardel Exp $	*/
 
 /*
  * ntp_restrict.c - determine host restrictions
@@ -48,7 +48,7 @@
 #define MASK_IPV6_ADDR(dst, src, msk)					\
 	do {								\
 		int idx;						\
-		for (idx = 0; idx < COUNTOF((dst)->s6_addr); idx++) {	\
+		for (idx = 0; idx < (int)COUNTOF((dst)->s6_addr); idx++) { \
 			(dst)->s6_addr[idx] = (src)->s6_addr[idx]	\
 					      & (msk)->s6_addr[idx];	\
 		}							\
@@ -294,7 +294,7 @@ match_restrict6_addr(
 		MASK_IPV6_ADDR(&masked, addr, &res->u.v6.mask);
 		if (ADDR6_EQ(&masked, &res->u.v6.addr)
 		    && (!(RESM_NTPONLY & res->mflags)
-			|| NTP_PORT == port))
+			|| NTP_PORT == (int)port))
 			break;
 	}
 	return res;
