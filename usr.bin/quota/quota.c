@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.46 2012/01/30 16:46:30 dholland Exp $	*/
+/*	$NetBSD: quota.c,v 1.47 2012/02/01 17:48:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.46 2012/01/30 16:46:30 dholland Exp $");
+__RCSID("$NetBSD: quota.c,v 1.47 2012/02/01 17:48:10 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -610,46 +610,31 @@ anyover(struct quotaval *qvs, unsigned numqvs, time_t now)
 static int
 isover(struct quotaval *qv, time_t now)
 {
-	int ql_stat;
-
-	ql_stat = quota_check_limit(qv->qv_usage, 1,
-				    qv->qv_softlimit,
-				    qv->qv_hardlimit,
-				    qv->qv_expiretime, now);
-	switch(QL_STATUS(ql_stat)) {
-	    case QL_S_DENY_HARD:
-	    case QL_S_DENY_GRACE:
-	    case QL_S_ALLOW_SOFT:
-		return 1;
-	    default:
-		break;
-	}
-	return 0;
+	return (qv->qv_usage >= qv->qv_hardlimit ||
+		qv->qv_usage >= qv->qv_softlimit);
 }
 
 static const char *
 getovermsg(struct quotaval *qv, const char *what, time_t now)
 {
 	static char buf[64];
-	int ql_stat;
 
-	ql_stat = quota_check_limit(qv->qv_usage, 1,
-				    qv->qv_softlimit,
-				    qv->qv_hardlimit,
-				    qv->qv_expiretime, now);
-	switch(QL_STATUS(ql_stat)) {
-	    case QL_S_DENY_HARD:
+	if (qv->qv_usage >= qv->qv_hardlimit) {
 		snprintf(buf, sizeof(buf), "%c%s limit reached on",
 			 toupper((unsigned char)what[0]), what+1);
-		break;
-	    case QL_S_DENY_GRACE:
-		snprintf(buf, sizeof(buf), "Over %s quota on", what);
-		break;
-	    case QL_S_ALLOW_SOFT:
-		snprintf(buf, sizeof(buf), "In %s grace period on", what);
-		break;
-	    default:
+		return buf;
+	}
+
+	if (qv->qv_usage < qv->qv_softlimit) {
+		/* Ok */
 		return NULL;
 	}
+
+	if (now > qv->qv_expiretime) {
+		snprintf(buf, sizeof(buf), "Over %s quota on", what);
+		return buf;
+	}
+
+	snprintf(buf, sizeof(buf), "In %s grace period on", what);
 	return buf;
 }

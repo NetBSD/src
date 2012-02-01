@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.40 2012/02/01 05:12:45 dholland Exp $	*/
+/*	$NetBSD: repquota.c,v 1.41 2012/02/01 17:48:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.40 2012/02/01 05:12:45 dholland Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.41 2012/02/01 17:48:10 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,6 +118,7 @@ static void	usage(void) __attribute__((__noreturn__));
 static void	printquotas(int, struct quotahandle *);
 static void	exportquotas(void);
 static int	oneof(const char *, char *[], int cnt);
+static int isover(struct quotaval *qv, time_t now);
 
 int
 main(int argc, char **argv)
@@ -330,17 +331,11 @@ printquotas(int idtype, struct quotahandle *qh)
 		if (fup == 0)
 			continue;
 		for (i = 0; i < REPQUOTA_NUMOBJTYPES; i++) {
-			switch (QL_STATUS(quota_check_limit(q[i].qv_usage, 1,
-			    q[i].qv_softlimit, q[i].qv_hardlimit,
-			    q[i].qv_expiretime, now))) {
-			case QL_S_DENY_HARD:
-			case QL_S_DENY_GRACE:
-			case QL_S_ALLOW_SOFT:
+			if (isover(&q[i], now)) {
 				timemsg[i] = timeprt(b0[i], 8, now,
 				    q[i].qv_expiretime);
 				overchar[i] = '+';
-				break;
-			default:
+			} else {
 				if (vflag && q[i].qv_grace != QUOTA_NOTIME) {
 					timemsg[i] = timeprt(b0[i], 8, 0,
 							     q[i].qv_grace);
@@ -348,7 +343,6 @@ printquotas(int idtype, struct quotahandle *qh)
 					timemsg[i] = "";
 				}
 				overchar[i] = '-';
-				break;
 			}
 		}
 
@@ -571,3 +565,10 @@ oneof(const char *target, char *list[], int cnt)
 			return i;
 	return -1;
 }
+
+static int
+isover(struct quotaval *qv, time_t now)
+{ 
+	return (qv->qv_usage >= qv->qv_hardlimit ||
+		qv->qv_usage >= qv->qv_softlimit);
+} 
