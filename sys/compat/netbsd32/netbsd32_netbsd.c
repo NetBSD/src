@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.177 2012/01/31 22:53:56 matt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.178 2012/02/01 05:40:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.177 2012/01/31 22:53:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.178 2012/02/01 05:40:00 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.177 2012/01/31 22:53:56 matt E
 #include <sys/filedesc.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
+#include <sys/quotactl.h>
 #include <sys/kauth.h>
 #include <sys/vfs_syscalls.h>
 
@@ -1185,39 +1186,97 @@ netbsd32_rmdir(struct lwp *l, const struct netbsd32_rmdir_args *uap, register_t 
 }
 
 int
-netbsd32___quotactl50(struct lwp *l, const struct netbsd32___quotactl50_args *uap, register_t *retval)
+netbsd32___quotactl(struct lwp *l, const struct netbsd32___quotactl_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_charp) path;
-		syscallarg(netbsd32_voidp) v;
+		syscallarg(netbsd32_voidp) args;
 	} */
-	struct plistref pref;
+	struct netbsd32_quotactlargs args32;
+	struct quotactl_args args;
 	int error;
-	struct vnode *vp;
-	struct mount *mp;
-	prop_dictionary_t dict;
 
-	error = namei_simple_user(SCARG_P32(uap, path),
-	    NSM_FOLLOW_TRYEMULROOT, &vp);
-
-	if (error != 0)
-		return (error);
-	mp = vp->v_mount;
-
-	error = netbsd32_copyin_plistref(SCARG(uap, pref), &pref);
-	if (error)
+	error = copyin(SCARG_P32(uap, args), &args32, sizeof(args32));
+	if (error) {
 		return error;
-	error = prop_dictionary_copyin(&pref, &dict);
-	if (error)
-		return error;
-	error = vfs_quotactl(mp, dict);
-	vrele(vp);
-	if (!error)
-		error = prop_dictionary_copyout(&pref, dict);
-	if (!error)
-		error = netbsd32_copyout_plistref(SCARG(uap, pref), &pref);
-	prop_object_release(dict);
-	return (error);
+	}
+
+	args.qc_op = args32.qc_op;
+	switch (args.qc_op) {
+	    case QUOTACTL_STAT:
+		args.u.stat.qc_ret = NETBSD32PTR64(args32.u.stat.qc_ret);
+		break;
+	    case QUOTACTL_IDTYPESTAT:
+		args.u.idtypestat.qc_idtype = args32.u.idtypestat.qc_idtype;
+		args.u.idtypestat.qc_info =
+			NETBSD32PTR64(args32.u.idtypestat.qc_info);
+		break;
+	    case QUOTACTL_OBJTYPESTAT:
+		args.u.objtypestat.qc_objtype =
+			args32.u.objtypestat.qc_objtype;
+		args.u.objtypestat.qc_info =
+			NETBSD32PTR64(args32.u.objtypestat.qc_info);
+		break;
+	    case QUOTACTL_GET:
+		args.u.get.qc_key = NETBSD32PTR64(args32.u.get.qc_key);
+		args.u.get.qc_ret = NETBSD32PTR64(args32.u.get.qc_ret);
+		break;
+	    case QUOTACTL_PUT:
+		args.u.put.qc_key = NETBSD32PTR64(args32.u.put.qc_key);
+		args.u.put.qc_val = NETBSD32PTR64(args32.u.put.qc_val);
+		break;
+	    case QUOTACTL_DELETE:
+		args.u.delete.qc_key = NETBSD32PTR64(args32.u.delete.qc_key);
+		break;
+	    case QUOTACTL_CURSOROPEN:
+		args.u.cursoropen.qc_cursor =
+			NETBSD32PTR64(args32.u.cursoropen.qc_cursor);
+		break;
+	    case QUOTACTL_CURSORCLOSE:
+		args.u.cursorclose.qc_cursor =
+			NETBSD32PTR64(args32.u.cursorclose.qc_cursor);
+		break;
+	    case QUOTACTL_CURSORSKIPIDTYPE:
+		args.u.cursorskipidtype.qc_cursor =
+			NETBSD32PTR64(args32.u.cursorskipidtype.qc_cursor);
+		args.u.cursorskipidtype.qc_idtype =
+			args32.u.cursorskipidtype.qc_idtype;
+		break;
+	    case QUOTACTL_CURSORGET:
+		args.u.cursorget.qc_cursor =
+			NETBSD32PTR64(args32.u.cursorget.qc_cursor);
+		args.u.cursorget.qc_keys =
+			NETBSD32PTR64(args32.u.cursorget.qc_keys);
+		args.u.cursorget.qc_vals =
+			NETBSD32PTR64(args32.u.cursorget.qc_vals);
+		args.u.cursorget.qc_maxnum =
+			args32.u.cursorget.qc_maxnum;
+		args.u.cursorget.qc_ret =
+			NETBSD32PTR64(args32.u.cursorget.qc_ret);
+		break;
+	    case QUOTACTL_CURSORATEND:
+		args.u.cursoratend.qc_cursor =
+			NETBSD32PTR64(args32.u.cursoratend.qc_cursor);
+		args.u.cursoratend.qc_ret =
+			NETBSD32PTR64(args32.u.cursoratend.qc_ret);
+		break;
+	    case QUOTACTL_CURSORREWIND:
+		args.u.cursorrewind.qc_cursor =
+			NETBSD32PTR64(args32.u.cursorrewind.qc_cursor);
+		break;
+	    case QUOTACTL_QUOTAON:
+		args.u.quotaon.qc_idtype = args32.u.quotaon.qc_idtype;
+		args.u.quotaon.qc_quotafile =
+			NETBSD32PTR64(args32.u.quotaon.qc_quotafile);
+		break;
+	    case QUOTACTL_QUOTAOFF:
+		args.u.quotaoff.qc_idtype = args32.u.quotaoff.qc_idtype;
+		break;
+	    default:
+		return EINVAL;
+	}
+
+	return do_sys_quotactl(SCARG_P32(uap, path), &args);
 }
 
 int
