@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/01/25 17:45:13 dholland Exp $
+#	$NetBSD: Makefile,v 1.7 2012/02/01 05:34:40 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
@@ -17,9 +17,9 @@ SRCS+=	quota_open.c
 SRCS+=	quota_schema.c
 SRCS+=	quota_get.c quota_put.c quota_delete.c
 SRCS+=	quota_cursor.c
-SRCS+=	quota_proplib.c
 SRCS+=	quota_nfs.c
 SRCS+=	quota_oldfiles.c
+SRCS+=	quota_kernel.c
 
 MAN=	libquota.3
 MLINKS=	libquota.3 quota_close.3 \

@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.258 2011/08/17 07:26:17 manu Exp $ */
+/* $NetBSD: init_sysent.c,v 1.259 2012/02/01 05:34:41 dholland Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.258 2011/08/17 07:26:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.259 2012/02/01 05:34:41 dholland Exp $");
 
 #include "opt_modular.h"
 #include "opt_ntp.h"
@@ -1096,8 +1096,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys___mknod50 },	/* 450 = __mknod50 */
 	{ ns(struct sys___fhstat50_args), 0,
 	    (sy_call_t *)sys___fhstat50 },	/* 451 = __fhstat50 */
-	{ ns(struct sys___quotactl50_args), 0,
-	    (sy_call_t *)sys___quotactl50 },	/* 452 = __quotactl50 */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 452 = obsolete 5.99 quotactl */
 	{ ns(struct sys_pipe2_args), 0,
 	    (sy_call_t *)sys_pipe2 },		/* 453 = pipe2 */
 	{ ns(struct sys_dup3_args), 0,
@@ -1138,8 +1138,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_unlinkat },	/* 471 = unlinkat */
 	{ ns(struct sys_futimens_args), 0,
 	    (sy_call_t *)sys_futimens },	/* 472 = futimens */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 473 = filler */
+	{ ns(struct sys___quotactl_args), 0,
+	    (sy_call_t *)sys___quotactl },	/* 473 = __quotactl */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 474 = filler */
 	{ 0, 0, 0,

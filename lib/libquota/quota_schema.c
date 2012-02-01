@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_schema.c,v 1.5 2012/01/30 16:44:09 dholland Exp $	*/
+/*	$NetBSD: quota_schema.c,v 1.6 2012/02/01 05:34:40 dholland Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_schema.c,v 1.5 2012/01/30 16:44:09 dholland Exp $");
+__RCSID("$NetBSD: quota_schema.c,v 1.6 2012/02/01 05:34:40 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/statvfs.h>
@@ -52,11 +52,11 @@ quota_getimplname(struct quotahandle *qh)
 		/* XXX this should maybe report the rquotad protocol version */
 		return "nfs via rquotad";
 
-	    case QUOTA_MODE_PROPLIB:
-		return __quota_proplib_getimplname(qh);
-
 	    case QUOTA_MODE_OLDFILES:
-		return __quota_proplib_getimplname(qh);
+		return __quota_oldfiles_getimplname(qh);
+
+	    case QUOTA_MODE_KERNEL:
+		return __quota_kernel_getimplname(qh);
 
 	    default:
 		break;
@@ -73,13 +73,14 @@ quota_getrestrictions(struct quotahandle *qh)
 		/* XXX this should maybe report the rquotad protocol version */
 		return QUOTA_RESTRICT_32BIT | QUOTA_RESTRICT_READONLY;
 
-	    case QUOTA_MODE_PROPLIB:
-		return __quota_proplib_getrestrictions(qh);
-
 	    case QUOTA_MODE_OLDFILES:
 		return QUOTA_RESTRICT_NEEDSQUOTACHECK |
 			QUOTA_RESTRICT_UNIFORMGRACE |
 			QUOTA_RESTRICT_32BIT;
+
+	    case QUOTA_MODE_KERNEL:
+		return __quota_kernel_getrestrictions(qh);
+
 	    default:
 		break;
 	}
@@ -95,8 +96,8 @@ quota_getnumidtypes(struct quotahandle *qh)
 		/* XXX for old rquotad versions this should be 1... */
 		return 2;
 
-	    case QUOTA_MODE_PROPLIB:
-		return __quota_proplib_getnumidtypes();
+	    case QUOTA_MODE_KERNEL:
+		return __quota_kernel_getnumidtypes(qh);
 
 	    case QUOTA_MODE_OLDFILES:
 	    default:
@@ -109,8 +110,8 @@ const char *
 quota_idtype_getname(struct quotahandle *qh, int idtype)
 {
 	switch (qh->qh_mode) {
-	    case QUOTA_MODE_PROPLIB:
-		return __quota_proplib_idtype_getname(idtype);
+	    case QUOTA_MODE_KERNEL:
+		return __quota_kernel_idtype_getname(qh, idtype);
 
 	    case QUOTA_MODE_NFS:
 	    case QUOTA_MODE_OLDFILES:
@@ -135,8 +136,8 @@ unsigned
 quota_getnumobjtypes(struct quotahandle *qh)
 {
 	switch (qh->qh_mode) {
-	    case QUOTA_MODE_PROPLIB:
-		return __quota_proplib_getnumobjtypes();
+	    case QUOTA_MODE_KERNEL:
+		return __quota_kernel_getnumobjtypes(qh);
 
 	    case QUOTA_MODE_NFS:
 	    case QUOTA_MODE_OLDFILES:
@@ -150,8 +151,8 @@ const char *
 quota_objtype_getname(struct quotahandle *qh, int objtype)
 {
 	switch (qh->qh_mode) {
-	    case QUOTA_MODE_PROPLIB:
-		return __quota_proplib_objtype_getname(objtype);
+	    case QUOTA_MODE_KERNEL:
+		return __quota_kernel_objtype_getname(qh, objtype);
 	    case QUOTA_MODE_NFS:
 	    case QUOTA_MODE_OLDFILES:
 	    default:
@@ -174,8 +175,8 @@ int
 quota_objtype_isbytes(struct quotahandle *qh, int objtype)
 {
 	switch (qh->qh_mode) {
-	    case QUOTA_MODE_PROPLIB:
-		return __quota_proplib_objtype_isbytes(objtype);
+	    case QUOTA_MODE_KERNEL:
+		return __quota_kernel_objtype_isbytes(qh, objtype);
 	    case QUOTA_MODE_NFS:
 	    case QUOTA_MODE_OLDFILES:
 	    default:
