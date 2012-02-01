@@ -1,4 +1,4 @@
-/* $NetBSD: ipi_openpic.c,v 1.6 2011/06/20 06:21:45 matt Exp $ */
+/* $NetBSD: ipi_openpic.c,v 1.7 2012/02/01 09:54:03 matt Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,11 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.6 2011/06/20 06:21:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.7 2012/02/01 09:54:03 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>

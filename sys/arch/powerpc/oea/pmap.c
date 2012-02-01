@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 2012/02/01 05:25:57 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.84 2012/02/01 09:54:03 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2012/02/01 05:25:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2012/02/01 09:54:03 matt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2012/02/01 05:25:57 matt Exp $");
 #include "opt_pmap.h"
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
@@ -1148,6 +1147,7 @@ pmap_create(void)
 	pmap_t pm;
 
 	pm = pool_get(&pmap_pool, PR_WAITOK);
+	KASSERT((vaddr_t)pm < VM_MIN_KERNEL_ADDRESS);
 	memset((void *)pm, 0, sizeof *pm);
 	pmap_pinit(pm);
 	
@@ -1613,6 +1613,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		pmap_pvo_free(pvo);
 	}
 	pvo = pool_get(pl, poolflags);
+	KASSERT((vaddr_t)pvo < VM_MIN_KERNEL_ADDRESS);
 
 #ifdef DEBUG
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_mpcsoc.c,v 1.4 2012/02/01 02:03:52 matt Exp $ */
+/*	$NetBSD: pic_mpcsoc.c,v 1.5 2012/02/01 09:54:03 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,10 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_mpcsoc.c,v 1.4 2012/02/01 02:03:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_mpcsoc.c,v 1.5 2012/02/01 09:54:03 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
@@ -89,7 +89,7 @@ setup_mpcpic(void *addr)
 	u_int x;
 
 	openpic_base = addr;
-	ops = malloc(sizeof(struct openpic_ops), M_DEVBUF, M_NOWAIT);
+	ops = kmem_alloc(sizeof(*ops), KM_SLEEP);
 	KASSERT(ops != NULL);
 	self = &ops->pic;
 

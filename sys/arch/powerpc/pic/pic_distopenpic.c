@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_distopenpic.c,v 1.8 2012/01/14 19:35:59 phx Exp $ */
+/*	$NetBSD: pic_distopenpic.c,v 1.9 2012/02/01 09:54:03 matt Exp $ */
 
 /*-
  * Copyright (c) 2008 Tim Rightnour
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_distopenpic.c,v 1.8 2012/01/14 19:35:59 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_distopenpic.c,v 1.9 2012/02/01 09:54:03 matt Exp $");
 
 #include "opt_openpic.h"
 #include "opt_interrupt.h"
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -64,7 +64,7 @@ setup_distributed_openpic(void *addr, int nrofisus, void **isu, int *maps)
 	u_int x;
 
 	openpic_base = (void *)addr;
-	opicops = malloc(sizeof(struct openpic_ops), M_DEVBUF, M_NOWAIT);
+	opicops = kmem_alloc(sizeof(*opicops), KM_SLEEP);
 	KASSERT(opicops != NULL);
 	pic = &opicops->pic;
 
@@ -73,11 +73,10 @@ setup_distributed_openpic(void *addr, int nrofisus, void **isu, int *maps)
 		panic("Can't handle a distributed openpic with internal ISU");
 	
 	opicops->nrofisus = nrofisus;
-	opicops->isu = malloc(sizeof(volatile unsigned char *) * nrofisus,
-	    M_DEVBUF, M_NOWAIT);
+	opicops->isu = kmem_alloc(sizeof(volatile u_char *) * nrofisus,
+	    KM_SLEEP);
 	KASSERT(opicops->isu != NULL);
-	opicops->irq_per = malloc(sizeof(uint8_t) * nrofisus,
-	    M_DEVBUF, M_NOWAIT);
+	opicops->irq_per = kmem_alloc(sizeof(uint8_t) * nrofisus, KM_SLEEP);
 	KASSERT(opicops->irq_per != NULL);
 	
 	for (irq=0, i=0; i < nrofisus ; i++) {

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.17 2011/06/22 18:06:34 matt Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.18 2012/02/01 09:54:03 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.17 2011/06/22 18:06:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.18 2012/02/01 09:54:03 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.17 2011/06/22 18:06:34 matt Ex
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
 
@@ -518,8 +518,7 @@ genofw_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 	 */
 	if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_PCI) {
-		pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
-		    M_DEVBUF, M_NOWAIT);
+		pbi = kmem_alloc(sizeof(*pbi), KM_SLEEP);
 		KASSERT(pbi != NULL);
 		pbi->pbi_properties = prop_dictionary_create();
 		KASSERT(pbi->pbi_properties != NULL);
@@ -529,7 +528,7 @@ genofw_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 			aprint_error("Cannot find node for device "
 			    "bus %d dev %d func %d\n", bus, dev, func);
 			prop_object_release(pbi->pbi_properties);
-			free(pbi, M_DEVBUF);
+			kmem_free(pbi, sizeof(*pbi));
 			return (PCI_CONF_DEFAULT);
 		}
 		genofw_setup_pciintr_map((void *)pct, pbi, node);
