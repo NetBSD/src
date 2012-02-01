@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_dstlist.h,v 1.1.1.1 2012/01/30 16:05:22 darrenr Exp $	*/
+/*	$NetBSD: ip_dstlist.h,v 1.2 2012/02/01 02:21:19 christos Exp $	*/
 
 /*
  * Copyright (C) 2010 by Darren Reed.
@@ -65,7 +65,6 @@ typedef	struct dstlist_stat_s {
 
 extern ipf_lookup_t ipf_dstlist_backend;
 
-extern int ipf_dstlist_select_node __P((fr_info_t *, void *, u_32_t *,
-					frdest_t *));
+extern int ipf_dstlist_select_node(fr_info_t *, void *, u_32_t *, frdest_t *);
 
 #endif /* __IP_DSTLIST_H__ */
