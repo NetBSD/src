@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1662 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1663 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1228,3 +1228,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		ported by TOYOKURA Atsushi. [tsutsui 20120129]
 	evbarm: Add FriendlyARM Mini2440 support. Code was written by Paul
 		Fleischer. [nisimura 20120130]
+	kernel: Add a new library, libquota, for control of and access to
+		disk quotas, extending the file-system-independent interface
+		added with the bouyer-quota2 branch. [dholland 20120201]
