@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_mpcsoc.c,v 1.3 2012/01/14 19:35:59 phx Exp $ */
+/*	$NetBSD: pic_mpcsoc.c,v 1.4 2012/02/01 02:03:52 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_mpcsoc.c,v 1.3 2012/01/14 19:35:59 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_mpcsoc.c,v 1.4 2012/02/01 02:03:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -143,7 +143,7 @@ setup_mpcpic(void *addr)
 }
 
 void
-mpcpic_reserv16()
+mpcpic_reserv16(void)
 {
 	extern int max_base; /* intr.c */
 
