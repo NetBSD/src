@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.h,v 1.3 2012/02/01 07:46:23 kardel Exp $	*/
+/*	$NetBSD: networking.h,v 1.4 2012/02/01 20:48:01 kardel Exp $	*/
 
 #ifndef NETWORKING_H
 #define NETWORKING_H
@@ -60,7 +60,7 @@ int recv_bcst_data (SOCKET rsock, char *rdata, int rdata_len, sockaddr_u *sas, s
 
 int recv_bcst_pkt (SOCKET rsock, struct pkt *rpkt, unsigned int rsize, sockaddr_u *sas);
 
-int process_pkt (struct pkt *rpkt, sockaddr_u *sas,	int pkt_len, int mode, struct pkt *spkt, char * func_name);
+int process_pkt (struct pkt *rpkt, sockaddr_u *sas,	int pkt_len, int mode, struct pkt *spkt, const char * func_name);
 
 /* Shortened peer structure. Not absolutely necessary yet */
 struct speer {
