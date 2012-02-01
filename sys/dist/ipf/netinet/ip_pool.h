@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.h,v 1.6 2012/01/30 16:12:50 darrenr Exp $	*/
+/*	$NetBSD: ip_pool.h,v 1.7 2012/02/01 02:21:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2011 by Darren Reed.
@@ -62,7 +62,7 @@ typedef	struct	ipf_pool_stat	{
 extern	ipf_lookup_t	ipf_pool_backend;
 
 #ifndef _KERNEL
-extern	void	ipf_pool_dump __P((ipf_main_softc_t *, void *));
+extern	void	ipf_pool_dump(ipf_main_softc_t *, void *);
 #endif
 
 #endif /* __IP_POOL_H__ */
