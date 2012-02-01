@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.96 2012/01/31 22:53:28 matt Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.97 2012/02/01 05:40:01 dholland Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.96 2012/01/31 22:53:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.97 2012/02/01 05:40:01 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1130,8 +1130,8 @@ struct sysent netbsd32_sysent[] = {
 	    (sy_call_t *)netbsd32___mknod50 },	/* 450 = netbsd32___mknod50 */
 	{ ns(struct netbsd32___fhstat50_args), 0,
 	    (sy_call_t *)netbsd32___fhstat50 },	/* 451 = netbsd32___fhstat50 */
-	{ ns(struct netbsd32___quotactl50_args), 0,
-	    (sy_call_t *)netbsd32___quotactl50 },/* 452 = netbsd32___quotactl50 */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 452 = obsolete 5.99 quotactl */
 	{ ns(struct netbsd32_pipe2_args), 0,
 	    (sy_call_t *)netbsd32_pipe2 },	/* 453 = netbsd32_pipe2 */
 	{ ns(struct netbsd32_dup3_args), 0,

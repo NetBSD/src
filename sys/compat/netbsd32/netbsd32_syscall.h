@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.97 2012/01/31 22:53:28 matt Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.98 2012/02/01 05:40:00 dholland Exp $ */
 
 /*
  * System call numbers.
@@ -1196,9 +1196,7 @@
 /* syscall: "netbsd32___fhstat50" ret: "int" args: "const netbsd32_voidp" "netbsd32_size_t" "netbsd32_statp_t" */
 #define	NETBSD32_SYS_netbsd32___fhstat50	451
 
-/* syscall: "netbsd32___quotactl50" ret: "int" args: "const netbsd32_charp" "netbsd32_voidp" */
-#define	NETBSD32_SYS_netbsd32___quotactl50	452
-
+				/* 452 is obsolete 5.99 quotactl */
 /* syscall: "netbsd32_pipe2" ret: "int" args: "netbsd32_intp" "int" */
 #define	NETBSD32_SYS_netbsd32_pipe2	453
 
