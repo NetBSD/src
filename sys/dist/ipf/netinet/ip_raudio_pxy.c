@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.7 2012/01/30 16:12:50 darrenr Exp $	*/
+/*	$NetBSD: ip_raudio_pxy.c,v 1.8 2012/02/01 02:21:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2008 by Darren Reed.
@@ -9,16 +9,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.7 2012/01/30 16:12:50 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.8 2012/02/01 02:21:20 christos Exp $");
 
 #define	IPF_RAUDIO_PROXY
 
 
-void ipf_p_raudio_main_load __P((void));
-void ipf_p_raudio_main_unload __P((void));
-int ipf_p_raudio_new __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_raudio_in __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_raudio_out __P((void *, fr_info_t *, ap_session_t *, nat_t *));
+void ipf_p_raudio_main_load(void);
+void ipf_p_raudio_main_unload(void);
+int ipf_p_raudio_new(void *, fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_raudio_in(void *, fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_raudio_out(void *, fr_info_t *, ap_session_t *, nat_t *);
 
 static	frentry_t	raudiofr;
 

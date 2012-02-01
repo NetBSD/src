@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.58 2012/01/30 16:12:49 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.59 2012/02/01 02:21:19 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.58 2012/01/30 16:12:49 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.59 2012/02/01 02:21:19 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.144.2.10 2012/01/29 05:30:36 darrenr Exp";
@@ -87,7 +87,7 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.144.2.10 2012/01/29 05:
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #ifdef INET
-extern	int	ip_optcopy __P((struct ip *, struct ip *));
+extern	int	ip_optcopy (struct ip *, struct ip *);
 #endif
 
 #ifdef IPFILTER_M_IPFILTER
@@ -107,9 +107,9 @@ static kauth_listener_t ipf_listener;
 #endif
 
 #if (__NetBSD_Version__ < 399001400)
-extern int ip6_getpmtu __P((struct route_in6 *, struct route_in6 *,
+extern int ip6_getpmtu (struct route_in6 *, struct route_in6 *,
 			    struct ifnet *, struct in6_addr *, u_long *,
-			    int *));
+			    int *);
 #endif
 #if (NetBSD >= 199511)
 static  int     ipfopen(dev_t dev, int flags, int devtype, PROC_T *p);
@@ -126,7 +126,7 @@ static  int     ipfclose(dev_t dev, int flags);
 static  int     ipfread(dev_t, struct uio *, int ioflag);
 static  int     ipfwrite(dev_t, struct uio *, int ioflag);
 static  int     ipfpoll(dev_t, int events, PROC_T *);
-static	void	ipf_timer_func __P((void *ptr));
+static	void	ipf_timer_func(void *ptr);
 
 const struct cdevsw ipl_cdevsw = {
 	ipfopen, ipfclose, ipfread, ipfwrite, ipfioctl,
@@ -142,11 +142,11 @@ const struct cdevsw ipl_cdevsw = {
 ipf_main_softc_t ipfmain;
 
 static	u_short	ipid = 0;
-static	int	(*ipf_savep) __P((void *, ip_t *, int, void *, int, struct mbuf **));
-static	int	ipf_send_ip __P((fr_info_t *, mb_t *));
+static	int	(*ipf_savep)(void *, ip_t *, int, void *, int, struct mbuf **);
+static	int	ipf_send_ip(fr_info_t *, mb_t *);
 #ifdef USE_INET6
-static int ipf_fastroute6 __P((struct mbuf *, struct mbuf **,
-			      fr_info_t *, frdest_t *));
+static int ipf_fastroute6(struct mbuf *, struct mbuf **,
+			      fr_info_t *, frdest_t *);
 #endif
 
 #if defined(NETBSD_PF)
@@ -154,7 +154,7 @@ static int ipf_fastroute6 __P((struct mbuf *, struct mbuf **,
 /*
  * We provide the ipf_checkp name just to minimize changes later.
  */
-int (*ipf_checkp) __P((void *, ip_t *ip, int hlen, void *ifp, int out, mb_t **mp));
+int (*ipf_checkp)(void *, ip_t *ip, int hlen, void *ifp, int out, mb_t **mp);
 #endif /* NETBSD_PF */
 
 #if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105110000)
@@ -163,11 +163,7 @@ int (*ipf_checkp) __P((void *, ip_t *ip, int hlen, void *ifp, int out, mb_t **mp
 static int ipf_check_wrapper(void *, struct mbuf **, struct ifnet *, int );
 
 static int
-ipf_check_wrapper(arg, mp, ifp, dir)
-	void *arg;
-	struct mbuf **mp;
-	struct ifnet *ifp;
-	int dir;
+ipf_check_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 	struct ip *ip;
 	int rv, hlen;
@@ -221,11 +217,7 @@ ipf_check_wrapper(arg, mp, ifp, dir)
 static int ipf_check_wrapper6(void *, struct mbuf **, struct ifnet *, int );
 
 static int
-ipf_check_wrapper6(arg, mp, ifp, dir)
-	void *arg;
-	struct mbuf **mp;
-	struct ifnet *ifp;
-	int dir;
+ipf_check_wrapper6(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 #if defined(INET6)
 #  if defined(M_CSUM_TCPv6) && (__NetBSD_Version__ > 200000000)
@@ -256,11 +248,7 @@ ipf_check_wrapper6(arg, mp, ifp, dir)
 static int ipf_pfilsync(void *, struct mbuf **, struct ifnet *, int);
 
 static int
-ipf_pfilsync(hdr, mp, ifp, dir)
-	void *hdr;
-	struct mbuf **mp;
-	struct ifnet *ifp;
-	int dir;
+ipf_pfilsync(void *hdr, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 	/*
 	 * The interface pointer is useless for create (we have nothing to
@@ -315,8 +303,7 @@ ipf_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
  * Try to detect the case when compiling for NetBSD with pseudo-device
  */
 void
-ipfilterattach(count)
-	int count;
+ipfilterattach(int count)
 {
 
 #if (__NetBSD_Version__ >= 599002000)
@@ -330,8 +317,7 @@ ipfilterattach(count)
 
 
 int
-ipfattach(softc)
-	ipf_main_softc_t *softc;
+ipfattach(ipf_main_softc_t *softc)
 {
 	SPL_INT(s);
 #if (__NetBSD_Version__ >= 499005500)
@@ -478,8 +464,7 @@ pfil_error:
 }
 
 static void
-ipf_timer_func(ptr)
-	void *ptr;
+ipf_timer_func(void *ptr)
 {
 	ipf_main_softc_t *softc = ptr;
 	SPL_INT(s);
@@ -509,8 +494,7 @@ ipf_timer_func(ptr)
  * stream.
  */
 int
-ipfdetach(softc)
-	ipf_main_softc_t *softc;
+ipfdetach(ipf_main_softc_t *softc)
 {
 	SPL_INT(s);
 #if (__NetBSD_Version__ >= 499005500)
@@ -607,31 +591,27 @@ ipfdetach(softc)
  * Filter ioctl interface.
  */
 int
-ipfioctl(dev, cmd, data, mode
+ipfioctl(dev_t dev, u_long cmd,
+#if  (__NetBSD_Version__ >= 499001000)
+	void *data,
+#else
+	caddr_t data,
+#endif
+	int mode
 #if (NetBSD >= 199511)
-, p)
 # if  (__NetBSD_Version__ >= 399001400)
-	struct lwp *p;
+	, struct lwp *p
 #   if (__NetBSD_Version__ >= 399002000)
 #     define	UID(l)	kauth_cred_getuid((l)->l_cred)
 #  else
 #     define	UID(l)	((l)->l_proc->p_cred->p_ruid)
 #  endif
 # else
-	struct proc *p;
+	, struct proc *p
 #  define	UID(p)	((p)->p_cred->p_ruid)
 # endif
-#else
+#endif
 )
-#endif
-	dev_t dev;
-	u_long cmd;
-#if  (__NetBSD_Version__ >= 499001000)
-	void *data;
-#else
-	caddr_t data;
-#endif
-	int mode;
 {
 	int error = 0, unit = 0;
 	SPL_INT(s);
@@ -689,8 +669,7 @@ ipfioctl(dev, cmd, data, mode
  * requires a large amount of setting up and isn't any more efficient.
  */
 int
-ipf_send_reset(fin)
-	fr_info_t *fin;
+ipf_send_reset(fr_info_t *fin)
 {
 	struct tcphdr *tcp, *tcp2;
 	int tlen = 0, hlen;
@@ -795,9 +774,7 @@ ipf_send_reset(fin)
  * Expects ip_len to be in host byte order when called.
  */
 static int
-ipf_send_ip(fin, m)
-	fr_info_t *fin;
-	mb_t *m;
+ipf_send_ip(fr_info_t *fin, mb_t *m)
 {
 	fr_info_t fnew;
 #ifdef INET
@@ -865,10 +842,7 @@ ipf_send_ip(fin, m)
 
 
 int
-ipf_send_icmp_err(type, fin, dst)
-	int type;
-	fr_info_t *fin;
-	int dst;
+ipf_send_icmp_err(int type, fr_info_t *fin, int dst)
 {
 	int err, hlen, xtra, iclen, ohlen, avail, code;
 	struct in_addr dst4;
@@ -1056,10 +1030,7 @@ ipf_send_icmp_err(type, fin, dst)
  * mpp - pointer to the mbuf pointer that is the start of the mbuf chain
  */
 int
-ipf_fastroute(m0, mpp, fin, fdp)
-	mb_t *m0, **mpp;
-	fr_info_t *fin;
-	frdest_t *fdp;
+ipf_fastroute(mb_t *m0, mb_t **mpp, fr_info_t *fin, frdest_t *fdp)
 {
 	register struct ip *ip, *mhip;
 	register struct mbuf *m = *mpp;
@@ -1359,10 +1330,8 @@ bad:
  * expected to be done by the called (ipf_fastroute).
  */
 static int
-ipf_fastroute6(m0, mpp, fin, fdp)
-	struct mbuf *m0, **mpp;
-	fr_info_t *fin;
-	frdest_t *fdp;
+ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
+    frdest_t *fdp)
 {
 # if __NetBSD_Version__ >= 499001100
 	struct route ip6route;
@@ -1482,8 +1451,7 @@ bad:
 
 
 int
-ipf_verifysrc(fin)
-	fr_info_t *fin;
+ipf_verifysrc(fr_info_t *fin)
 {
 #if __NetBSD_Version__ >= 499001100
 	union {
@@ -1525,11 +1493,8 @@ ipf_verifysrc(fin)
  * return the first IP Address associated with an interface
  */
 int
-ipf_ifpaddr(softc, v, atype, ifptr, inp, inpmask)
-	ipf_main_softc_t *softc;
-	int v, atype;
-	void *ifptr;
-	i6addr_t *inp, *inpmask;
+ipf_ifpaddr(ipf_main_softc_t *softc, int v, int atype, void *ifptr,
+    i6addr_t *inp, i6addr_t *inpmask)
 {
 #ifdef USE_INET6
 	struct in6_addr *inp6 = NULL;
@@ -1592,8 +1557,7 @@ ipf_ifpaddr(softc, v, atype, ifptr, inp, inpmask)
 
 
 u_32_t
-ipf_newisn(fin)
-	fr_info_t *fin;
+ipf_newisn(fr_info_t *fin)
 {
 #if __NetBSD_Version__ >= 105190000	/* 1.5T */
 	size_t asz;
@@ -1656,8 +1620,7 @@ ipf_newisn(fin)
 /* Returns the next IPv4 ID to use for this packet.                         */
 /* ------------------------------------------------------------------------ */
 u_short
-ipf_nextipid(fin)
-	fr_info_t *fin;
+ipf_nextipid(fr_info_t *fin)
 {
 #ifdef USE_MUTEXES
 	ipf_main_softc_t *softc = fin->fin_main_soft;
@@ -1673,8 +1636,7 @@ ipf_nextipid(fin)
 
 
 EXTERN_INLINE int
-ipf_checkv4sum(fin)
-	fr_info_t *fin;
+ipf_checkv4sum(fr_info_t *fin)
 {
 #ifdef M_CSUM_TCP_UDP_BAD
 	int manual, pflag, cflags, active;
@@ -1750,8 +1712,7 @@ skipauto:
 
 #ifdef USE_INET6
 EXTERN_INLINE int
-ipf_checkv6sum(fin)
-	fr_info_t *fin;
+ipf_checkv6sum(fr_info_t *fin)
 {
 # ifdef M_CSUM_TCP_UDP_BAD
 	int manual, pflag, cflags, active;
@@ -1818,8 +1779,7 @@ ipf_checkv6sum(fin)
 
 
 size_t
-mbufchainlen(m0)
-	struct mbuf *m0;
+mbufchainlen(struct mbuf *m0)
 {
 	size_t len;
 
@@ -1853,10 +1813,7 @@ mbufchainlen(m0)
 /* of buffers that starts at *fin->fin_mp.                                  */
 /* ------------------------------------------------------------------------ */
 void *
-ipf_pullup(xmin, fin, len)
-	mb_t *xmin;
-	fr_info_t *fin;
-	int len;
+ipf_pullup(mb_t *xmin, fr_info_t *fin, int len)
 {
 	int dpoff, ipoff;
 	mb_t *m = xmin;
@@ -1950,9 +1907,7 @@ ipf_pullup(xmin, fin, len)
 
 
 int
-ipf_inject(fin, m)
-	fr_info_t *fin;
-	mb_t *m;
+ipf_inject(fr_info_t *fin, mb_t *m)
 {
 	int error;
 
@@ -1978,7 +1933,7 @@ ipf_inject(fin, m)
 
 
 u_32_t
-ipf_random()
+ipf_random(void)
 {
 	int number;
 
@@ -1994,16 +1949,11 @@ ipf_random()
 /*
  * routines below for saving IP headers to buffer
  */
-static int ipfopen(dev, flags
+static int ipfopen(dev_t dev, int flags
 #if (NetBSD >= 199511)
-, devtype, p)
-	int devtype;
-	PROC_T *p;
-#else
-)
+    , int devtype, PROC_T *p
 #endif
-	dev_t dev;
-	int flags;
+)
 {
 	u_int unit = GET_MINOR(dev);
 	int error;
@@ -2033,16 +1983,11 @@ static int ipfopen(dev, flags
 }
 
 
-static int ipfclose(dev, flags
+static int ipfclose(dev_t dev, int flags
 #if (NetBSD >= 199511)
-, devtype, p)
-	int devtype;
-	PROC_T *p;
-#else
-)
+	, int devtype, PROC_T *p
 #endif
-	dev_t dev;
-	int flags;
+)
 {
 	u_int	unit = GET_MINOR(dev);
 
@@ -2059,10 +2004,7 @@ static int ipfclose(dev, flags
  * called during packet processing and cause an inconsistancy to appear in
  * the filter lists.
  */
-static int ipfread(dev, uio, ioflag)
-	int ioflag;
-	dev_t dev;
-	register struct uio *uio;
+static int ipfread(dev_t dev, struct uio *uio, int ioflag)
 {
 
 	if (ipfmain.ipf_running < 1) {
@@ -2088,10 +2030,7 @@ static int ipfread(dev, uio, ioflag)
  * called during packet processing and cause an inconsistancy to appear in
  * the filter lists.
  */
-static int ipfwrite(dev, uio, ioflag)
-	int ioflag;
-	dev_t dev;
-	register struct uio *uio;
+static int ipfwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 
 	if (ipfmain.ipf_running < 1) {
@@ -2106,10 +2045,7 @@ static int ipfwrite(dev, uio, ioflag)
 }
 
 
-static int ipfpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	PROC_T *p;
+static int ipfpoll(dev_t dev, int events, PROC_T *p)
 {
 	u_int unit = GET_MINOR(dev);
 	int revents = 0;
@@ -2155,10 +2091,7 @@ static int ipfpoll(dev, events, p)
 }
 
 u_int
-ipf_pcksum(fin, hlen, sum)
-	fr_info_t *fin;
-	int hlen;
-	u_int sum;
+ipf_pcksum(fr_info_t *fin, int hlen, u_int sum)
 {
 	struct mbuf *m;
 	u_int sum2;

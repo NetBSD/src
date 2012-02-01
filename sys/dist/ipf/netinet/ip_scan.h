@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.h,v 1.8 2012/01/30 16:12:50 darrenr Exp $	*/
+/*	$NetBSD: ip_scan.h,v 1.9 2012/02/01 02:21:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2008 by Darren Reed.
@@ -96,13 +96,13 @@ typedef	struct	ipscanstat	{
 } ipscanstat_t;
 
 
-extern	int ipf_scan_ioctl __P((ipf_main_softc_t *, void *, ioctlcmd_t, int, int, void *));
-extern	int ipf_scan_init __P((void));
-extern	int ipf_scan_attachis __P((struct ipstate *));
-extern	int ipf_scan_attachfr __P((struct frentry *));
-extern	int ipf_scan_detachis __P((struct ipstate *));
-extern	int ipf_scan_detachfr __P((struct frentry *));
-extern	int ipf_scan_packet __P((struct fr_info *, struct ipstate *));
-extern	void ipf_scan_unload __P((ipf_main_softc_t *));
+extern	int ipf_scan_ioctl(ipf_main_softc_t *, void *, ioctlcmd_t, int, int, void *);
+extern	int ipf_scan_init(void);
+extern	int ipf_scan_attachis(struct ipstate *);
+extern	int ipf_scan_attachfr(struct frentry *);
+extern	int ipf_scan_detachis(struct ipstate *);
+extern	int ipf_scan_detachfr(struct frentry *);
+extern	int ipf_scan_packet(struct fr_info *, struct ipstate *);
+extern	void ipf_scan_unload(ipf_main_softc_t *);
 
 #endif /* __IP_SCAN_H__ */

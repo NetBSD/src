@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.h,v 1.9 2012/01/30 16:12:50 darrenr Exp $	*/
+/*	$NetBSD: ip_sync.h,v 1.10 2012/02/01 02:21:21 christos Exp $	*/
 
 /*
  * Copyright (C) 2008 by Darren Reed.
@@ -102,22 +102,22 @@ typedef	struct	syncupdent	{		/* 28 or 32 bytes */
 	struct	synctcp_update	sup_tcp;
 } syncupdent_t;
 
-extern	void *ipf_sync_create __P((ipf_main_softc_t *));
-extern	int ipf_sync_soft_init __P((ipf_main_softc_t *, void *));
-extern	int ipf_sync_soft_fini __P((ipf_main_softc_t *, void *));
-extern	int ipf_sync_canread __P((void *));
-extern	int ipf_sync_canwrite __P((void *));
-extern	void ipf_sync_del_nat __P((void *, synclist_t *));
-extern	void ipf_sync_del_state __P((void *, synclist_t *));
-extern	int ipf_sync_init __P((void));
-extern	int ipf_sync_ioctl __P((ipf_main_softc_t *, void *, ioctlcmd_t, int, int, void *));
-extern	synclist_t *ipf_sync_new __P((ipf_main_softc_t *, int, fr_info_t *, void *));
-extern	int ipf_sync_read __P((ipf_main_softc_t *, struct uio *uio));
-extern	int ipf_sync_write __P((ipf_main_softc_t *, struct uio *uio));
-extern	int ipf_sync_main_unload __P((void));
-extern	void ipf_sync_update __P((ipf_main_softc_t *, int, fr_info_t *, synclist_t *));
-extern	void ipf_sync_expire __P((ipf_main_softc_t *));
-extern	void	ipf_sync_soft_destroy __P((ipf_main_softc_t *, void *));
-extern	void	*ipf_sync_soft_create __P((ipf_main_softc_t *));
+extern	void *ipf_sync_create(ipf_main_softc_t *);
+extern	int ipf_sync_soft_init(ipf_main_softc_t *, void *);
+extern	int ipf_sync_soft_fini(ipf_main_softc_t *, void *);
+extern	int ipf_sync_canread(void *);
+extern	int ipf_sync_canwrite(void *);
+extern	void ipf_sync_del_nat(void *, synclist_t *);
+extern	void ipf_sync_del_state(void *, synclist_t *);
+extern	int ipf_sync_init(void);
+extern	int ipf_sync_ioctl(ipf_main_softc_t *, void *, ioctlcmd_t, int, int, void *);
+extern	synclist_t *ipf_sync_new(ipf_main_softc_t *, int, fr_info_t *, void *);
+extern	int ipf_sync_read(ipf_main_softc_t *, struct uio *uio);
+extern	int ipf_sync_write(ipf_main_softc_t *, struct uio *uio);
+extern	int ipf_sync_main_unload(void);
+extern	void ipf_sync_update(ipf_main_softc_t *, int, fr_info_t *, synclist_t *);
+extern	void ipf_sync_expire(ipf_main_softc_t *);
+extern	void	ipf_sync_soft_destroy(ipf_main_softc_t *, void *);
+extern	void	*ipf_sync_soft_create(ipf_main_softc_t *);
 
 #endif /* IP_SYNC */

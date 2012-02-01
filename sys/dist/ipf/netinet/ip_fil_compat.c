@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_compat.c,v 1.3 2012/01/30 16:12:49 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_compat.c,v 1.4 2012/02/01 02:21:19 christos Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -85,14 +85,12 @@ typedef struct tcpinfo4 {
 	tcpdata_t	ts_data[2];
 } tcpinfo4_t;
 
-static void ipf_v5tcpinfoto4 __P((tcpinfo_t *, tcpinfo4_t *));
+static void ipf_v5tcpinfoto4(tcpinfo_t *, tcpinfo4_t *);
 
 static void ipf_v5tcpinfoto4(tcpinfo_t *, tcpinfo4_t *);
 
 static void
-ipf_v5tcpinfoto4(v5, v4)
-	tcpinfo_t *v5;
-	tcpinfo4_t *v4;
+ipf_v5tcpinfoto4(tcpinfo_t *v5, tcpinfo4_t *v4)
 {
 	v4->ts_sport = v5->ts_sport;
 	v4->ts_dport = v5->ts_dport;
@@ -1225,66 +1223,66 @@ typedef	struct	ipfrstat_4_1_1 {
 } ipfrstat_4_1_1_t;
 
 /* ------------------------------------------------------------------------ */
-static int ipf_addfrstr __P((char *, int, char *, int));
-static void ipf_v4iptov5 __P((frip4_t *, fr_ip_t *));
-static void ipf_v5iptov4 __P((fr_ip_t *, frip4_t *));
-static void ipfv4tuctov5 __P((frtuc4_t *, frtuc_t *));
-static void ipfv5tuctov4 __P((frtuc_t *, frtuc4_t *));
-static int ipf_v4fripftov5 __P((fripf4_t *, char *));
-static void ipf_v5fripftov4 __P((fripf_t *, fripf4_t *));
-static int fr_frflags4to5 __P((u_32_t));
-static int fr_frflags5to4 __P((u_32_t));
+static int ipf_addfrstr(char *, int, char *, int);
+static void ipf_v4iptov5(frip4_t *, fr_ip_t *);
+static void ipf_v5iptov4(fr_ip_t *, frip4_t *);
+static void ipfv4tuctov5(frtuc4_t *, frtuc_t *);
+static void ipfv5tuctov4(frtuc_t *, frtuc4_t *);
+static int ipf_v4fripftov5(fripf4_t *, char *);
+static void ipf_v5fripftov4(fripf_t *, fripf4_t *);
+static int fr_frflags4to5(u_32_t);
+static int fr_frflags5to4(u_32_t);
 
-static void friostat_current_to_4_1_0 __P((void *, friostat_4_1_0_t *, int));
-static void friostat_current_to_4_1_33 __P((void *, friostat_4_1_33_t *, int));
-static void ipstate_current_to_4_1_0 __P((void *, ipstate_4_1_0_t *));
-static void ipstate_current_to_4_1_16 __P((void *, ipstate_4_1_16_t *));
-static void ipnat_current_to_4_1_0 __P((void *, ipnat_4_1_0_t *));
-static void ipnat_current_to_4_1_14 __P((void *, ipnat_4_1_14_t *));
-static void frauth_current_to_4_1_11 __P((void *, frauth_4_1_11_t *));
-static void frauth_current_to_4_1_23 __P((void *, frauth_4_1_23_t *));
-static void frauth_current_to_4_1_24 __P((void *, frauth_4_1_24_t *));
-static void frauth_current_to_4_1_29 __P((void *, frauth_4_1_29_t *));
-static void frentry_current_to_4_1_0 __P((void *, frentry_4_1_0_t *));
-static void frentry_current_to_4_1_16 __P((void *, frentry_4_1_16_t *));
-static void frentry_current_to_4_1_34 __P((void *, frentry_4_1_34_t *));
-static void fr_info_current_to_4_1_11 __P((void *, fr_info_4_1_11_t *));
-static void fr_info_current_to_4_1_23 __P((void *, fr_info_4_1_23_t *));
-static void fr_info_current_to_4_1_24 __P((void *, fr_info_4_1_24_t *));
-static void nat_save_current_to_4_1_3 __P((void *, nat_save_4_1_3_t *));
-static void nat_save_current_to_4_1_14 __P((void *, nat_save_4_1_14_t *));
-static void nat_save_current_to_4_1_16 __P((void *, nat_save_4_1_16_t *));
-static void ipstate_save_current_to_4_1_0 __P((void *, ipstate_save_4_1_0_t *));
-static void ipstate_save_current_to_4_1_16 __P((void *, ipstate_save_4_1_16_t *));
-static void ips_stat_current_to_4_1_0 __P((void *, ips_stat_4_1_0_t *));
-static void ips_stat_current_to_4_1_21 __P((void *, ips_stat_4_1_21_t *));
-static void natstat_current_to_4_1_0 __P((void *, natstat_4_1_0_t *));
-static void natstat_current_to_4_1_16 __P((void *, natstat_4_1_16_t *));
-static void natstat_current_to_4_1_27 __P((void *, natstat_4_1_27_t *));
-static void natstat_current_to_4_1_32 __P((void *, natstat_4_1_32_t *));
-static void nat_current_to_4_1_3 __P((void *, nat_4_1_3_t *));
-static void nat_current_to_4_1_14 __P((void *, nat_4_1_14_t *));
-static void nat_current_to_4_1_25 __P((void *, nat_4_1_25_t *));
+static void friostat_current_to_4_1_0(void *, friostat_4_1_0_t *, int);
+static void friostat_current_to_4_1_33(void *, friostat_4_1_33_t *, int);
+static void ipstate_current_to_4_1_0(void *, ipstate_4_1_0_t *);
+static void ipstate_current_to_4_1_16(void *, ipstate_4_1_16_t *);
+static void ipnat_current_to_4_1_0(void *, ipnat_4_1_0_t *);
+static void ipnat_current_to_4_1_14(void *, ipnat_4_1_14_t *);
+static void frauth_current_to_4_1_11(void *, frauth_4_1_11_t *);
+static void frauth_current_to_4_1_23(void *, frauth_4_1_23_t *);
+static void frauth_current_to_4_1_24(void *, frauth_4_1_24_t *);
+static void frauth_current_to_4_1_29(void *, frauth_4_1_29_t *);
+static void frentry_current_to_4_1_0(void *, frentry_4_1_0_t *);
+static void frentry_current_to_4_1_16(void *, frentry_4_1_16_t *);
+static void frentry_current_to_4_1_34(void *, frentry_4_1_34_t *);
+static void fr_info_current_to_4_1_11(void *, fr_info_4_1_11_t *);
+static void fr_info_current_to_4_1_23(void *, fr_info_4_1_23_t *);
+static void fr_info_current_to_4_1_24(void *, fr_info_4_1_24_t *);
+static void nat_save_current_to_4_1_3(void *, nat_save_4_1_3_t *);
+static void nat_save_current_to_4_1_14(void *, nat_save_4_1_14_t *);
+static void nat_save_current_to_4_1_16(void *, nat_save_4_1_16_t *);
+static void ipstate_save_current_to_4_1_0(void *, ipstate_save_4_1_0_t *);
+static void ipstate_save_current_to_4_1_16(void *, ipstate_save_4_1_16_t *);
+static void ips_stat_current_to_4_1_0(void *, ips_stat_4_1_0_t *);
+static void ips_stat_current_to_4_1_21(void *, ips_stat_4_1_21_t *);
+static void natstat_current_to_4_1_0(void *, natstat_4_1_0_t *);
+static void natstat_current_to_4_1_16(void *, natstat_4_1_16_t *);
+static void natstat_current_to_4_1_27(void *, natstat_4_1_27_t *);
+static void natstat_current_to_4_1_32(void *, natstat_4_1_32_t *);
+static void nat_current_to_4_1_3(void *, nat_4_1_3_t *);
+static void nat_current_to_4_1_14(void *, nat_4_1_14_t *);
+static void nat_current_to_4_1_25(void *, nat_4_1_25_t *);
 
-static void friostat_4_1_0_to_current __P((friostat_4_1_0_t *, void *));
-static void friostat_4_1_33_to_current __P((friostat_4_1_33_t *, void *));
-static void ipnat_4_1_0_to_current __P((ipnat_4_1_0_t *, void *, int));
-static void ipnat_4_1_14_to_current __P((ipnat_4_1_14_t *, void *, int));
-static void frauth_4_1_11_to_current __P((frauth_4_1_11_t *, void *));
-static void frauth_4_1_23_to_current __P((frauth_4_1_23_t *, void *));
-static void frauth_4_1_24_to_current __P((frauth_4_1_24_t *, void *));
-static void frauth_4_1_29_to_current __P((frauth_4_1_29_t *, void *));
-static void frauth_4_1_32_to_current __P((frauth_4_1_32_t *, void *));
-static void frentry_4_1_0_to_current __P((ipf_main_softc_t *, frentry_4_1_0_t *, void *, int));
-static void frentry_4_1_16_to_current __P((ipf_main_softc_t *, frentry_4_1_16_t *, void *, int));
-static void frentry_4_1_34_to_current __P((ipf_main_softc_t *, frentry_4_1_34_t *, void *, int));
-static void fr_info_4_1_11_to_current __P((fr_info_4_1_11_t *, void *));
-static void fr_info_4_1_23_to_current __P((fr_info_4_1_23_t *, void *));
-static void fr_info_4_1_24_to_current __P((fr_info_4_1_24_t *, void *));
-static void fr_info_4_1_32_to_current __P((fr_info_4_1_32_t *, void *));
-static void nat_save_4_1_3_to_current __P((ipf_main_softc_t *, nat_save_4_1_3_t *, void *));
-static void nat_save_4_1_14_to_current __P((ipf_main_softc_t *, nat_save_4_1_14_t *, void *));
-static void nat_save_4_1_16_to_current __P((ipf_main_softc_t *, nat_save_4_1_16_t *, void *));
+static void friostat_4_1_0_to_current(friostat_4_1_0_t *, void *);
+static void friostat_4_1_33_to_current(friostat_4_1_33_t *, void *);
+static void ipnat_4_1_0_to_current(ipnat_4_1_0_t *, void *, int);
+static void ipnat_4_1_14_to_current(ipnat_4_1_14_t *, void *, int);
+static void frauth_4_1_11_to_current(frauth_4_1_11_t *, void *);
+static void frauth_4_1_23_to_current(frauth_4_1_23_t *, void *);
+static void frauth_4_1_24_to_current(frauth_4_1_24_t *, void *);
+static void frauth_4_1_29_to_current(frauth_4_1_29_t *, void *);
+static void frauth_4_1_32_to_current(frauth_4_1_32_t *, void *);
+static void frentry_4_1_0_to_current(ipf_main_softc_t *, frentry_4_1_0_t *, void *, int);
+static void frentry_4_1_16_to_current(ipf_main_softc_t *, frentry_4_1_16_t *, void *, int);
+static void frentry_4_1_34_to_current(ipf_main_softc_t *, frentry_4_1_34_t *, void *, int);
+static void fr_info_4_1_11_to_current(fr_info_4_1_11_t *, void *);
+static void fr_info_4_1_23_to_current(fr_info_4_1_23_t *, void *);
+static void fr_info_4_1_24_to_current(fr_info_4_1_24_t *, void *);
+static void fr_info_4_1_32_to_current(fr_info_4_1_32_t *, void *);
+static void nat_save_4_1_3_to_current(ipf_main_softc_t *, nat_save_4_1_3_t *, void *);
+static void nat_save_4_1_14_to_current(ipf_main_softc_t *, nat_save_4_1_14_t *, void *);
+static void nat_save_4_1_16_to_current(ipf_main_softc_t *, nat_save_4_1_16_t *, void *);
 
 /* ------------------------------------------------------------------------ */
 /* In this section is a series of short routines that deal with translating */
@@ -1308,9 +1306,7 @@ ipf_addfrstr(char *names, int namelen, char *str, int maxlen)
 
 
 static void
-ipf_v4iptov5(v4, v5)
-	frip4_t *v4;
-	fr_ip_t *v5;
+ipf_v4iptov5(frip4_t *v4, fr_ip_t *v5)
 {
 	v5->fi_v = v4->fi_v;
 	v5->fi_p = v4->fi_p;
@@ -1328,9 +1324,7 @@ ipf_v4iptov5(v4, v5)
 }
 
 static void
-ipf_v5iptov4(v5, v4)
-	fr_ip_t *v5;
-	frip4_t *v4;
+ipf_v5iptov4(fr_ip_t *v5, frip4_t *v4)
 {
 	v4->fi_v = v5->fi_v;
 	v4->fi_p = v5->fi_p;
@@ -1349,9 +1343,7 @@ ipf_v5iptov4(v5, v4)
 
 
 static void
-ipfv4tuctov5(v4, v5)
-	frtuc4_t *v4;
-	frtuc_t *v5;
+ipfv4tuctov5(frtuc4_t *v4, frtuc_t *v5)
 {
 	v5->ftu_src.frp_cmp = v4->ftu_src.frp_cmp;
 	v5->ftu_src.frp_port = v4->ftu_src.frp_port;
@@ -1363,9 +1355,7 @@ ipfv4tuctov5(v4, v5)
 
 
 static void
-ipfv5tuctov4(v5, v4)
-	frtuc_t *v5;
-	frtuc4_t *v4;
+ipfv5tuctov4(frtuc_t *v5, frtuc4_t *v4)
 {
 	v4->ftu_src.frp_cmp = v5->ftu_src.frp_cmp;
 	v4->ftu_src.frp_port = v5->ftu_src.frp_port;
@@ -1377,9 +1367,7 @@ ipfv5tuctov4(v5, v4)
 
 
 static int
-ipf_v4fripftov5(frp4, dst)
-	fripf4_t *frp4;
-	char *dst;
+ipf_v4fripftov5(fripf4_t *frp4, char *dst)
 {
 	fripf_t *frp;
 
@@ -1401,9 +1389,7 @@ ipf_v4fripftov5(frp4, dst)
 
 
 static void
-ipf_v5fripftov4(frp, frp4)
-	fripf_t *frp;
-	fripf4_t *frp4;
+ipf_v5fripftov4(fripf_t *frp, fripf4_t *frp4)
 {
 
 	ipf_v5iptov4(&frp->fri_ip, &frp4->fri_ip);
@@ -1426,11 +1412,7 @@ ipf_v5fripftov4(frp, frp4)
 /* kernel module.                                                           */
 /* ------------------------------------------------------------------------ */
 int
-ipf_in_compat(softc, obj, ptr, size)
-	ipf_main_softc_t *softc;
-	ipfobj_t *obj;
-	void *ptr;
-	int size;
+ipf_in_compat(ipf_main_softc_t *softc, ipfobj_t *obj, void *ptr, int size)
 {
 	int error;
 	int sz;
@@ -1833,8 +1815,7 @@ ipf_in_compat(softc, obj, ptr, size)
  * flags is v4 flags, returns v5 flags.
  */
 static int
-fr_frflags4to5(flags)
-	u_32_t flags;
+fr_frflags4to5(u_32_t flags)
 {
 	u_32_t nflags = 0;
 
@@ -1917,11 +1898,8 @@ fr_frflags4to5(flags)
 }
 
 static void
-frentry_4_1_34_to_current(softc, old, current, size)
-	ipf_main_softc_t *softc;
-	frentry_4_1_34_t *old;
-	void *current;
-	int size;
+frentry_4_1_34_to_current(ipf_main_softc_t *softc, frentry_4_1_34_t *old,
+    void *current, int size)
 {
 	frentry_t *fr = (frentry_t *)current;
 
@@ -2049,11 +2027,8 @@ frentry_4_1_34_to_current(softc, old, current, size)
 }
 
 static void
-frentry_4_1_16_to_current(softc, old, current, size)
-	ipf_main_softc_t *softc;
-	frentry_4_1_16_t *old;
-	void *current;
-	int size;
+frentry_4_1_16_to_current(ipf_main_softc_t *softc, frentry_4_1_16_t *old,
+    void *current, int size)
 {
 	frentry_t *fr = (frentry_t *)current;
 
@@ -2181,11 +2156,8 @@ frentry_4_1_16_to_current(softc, old, current, size)
 
 
 static void
-frentry_4_1_0_to_current(softc, old, current, size)
-	ipf_main_softc_t *softc;
-	frentry_4_1_0_t *old;
-	void *current;
-	int size;
+frentry_4_1_0_to_current(ipf_main_softc_t *softc, frentry_4_1_0_t *old,
+    void *current, int size)
 {
 	frentry_t *fr = (frentry_t *)current;
 
@@ -2315,9 +2287,7 @@ frentry_4_1_0_to_current(softc, old, current, size)
 
 
 static void
-friostat_4_1_33_to_current(old, current)
-	friostat_4_1_33_t *old;
-	void *current;
+friostat_4_1_33_to_current(friostat_4_1_33_t *old, void *current)
 {
 	friostat_t *fiop = (friostat_t *)current;
 
@@ -2347,9 +2317,7 @@ friostat_4_1_33_to_current(old, current)
 
 
 static void
-friostat_4_1_0_to_current(old, current)
-	friostat_4_1_0_t *old;
-	void *current;
+friostat_4_1_0_to_current(friostat_4_1_0_t *old, void *current)
 {
 	friostat_t *fiop = (friostat_t *)current;
 
@@ -2379,10 +2347,7 @@ friostat_4_1_0_to_current(old, current)
 
 
 static void
-ipnat_4_1_14_to_current(old, current, size)
-	ipnat_4_1_14_t *old;
-	void *current;
-	int size;
+ipnat_4_1_14_to_current(ipnat_4_1_14_t *old, void *current, int size)
 {
 	ipnat_t *np = (ipnat_t *)current;
 
@@ -2473,10 +2438,7 @@ ipnat_4_1_14_to_current(old, current, size)
 
 
 static void
-ipnat_4_1_0_to_current(old, current, size)
-	ipnat_4_1_0_t *old;
-	void *current;
-	int size;
+ipnat_4_1_0_to_current(ipnat_4_1_0_t *old, void *current, int size)
 {
 	ipnat_t *np = (ipnat_t *)current;
 
@@ -2555,9 +2517,7 @@ ipnat_4_1_0_to_current(old, current, size)
 
 
 static void
-frauth_4_1_32_to_current(old, current)
-	frauth_4_1_32_t *old;
-	void *current;
+frauth_4_1_32_to_current(frauth_4_1_32_t *old, void *current)
 {
 	frauth_t *fra = (frauth_t *)current;
 
@@ -2576,9 +2536,7 @@ frauth_4_1_32_to_current(old, current)
 
 
 static void
-frauth_4_1_29_to_current(old, current)
-	frauth_4_1_29_t *old;
-	void *current;
+frauth_4_1_29_to_current(frauth_4_1_29_t *old, void *current)
 {
 	frauth_t *fra = (frauth_t *)current;
 
@@ -2597,9 +2555,7 @@ frauth_4_1_29_to_current(old, current)
 
 
 static void
-frauth_4_1_24_to_current(old, current)
-	frauth_4_1_24_t *old;
-	void *current;
+frauth_4_1_24_to_current(frauth_4_1_24_t *old, void *current)
 {
 	frauth_t *fra = (frauth_t *)current;
 
@@ -2617,9 +2573,7 @@ frauth_4_1_24_to_current(old, current)
 
 
 static void
-frauth_4_1_23_to_current(old, current)
-	frauth_4_1_23_t *old;
-	void *current;
+frauth_4_1_23_to_current(frauth_4_1_23_t *old, void *current)
 {
 	frauth_t *fra = (frauth_t *)current;
 
@@ -2637,9 +2591,7 @@ frauth_4_1_23_to_current(old, current)
 
 
 static void
-frauth_4_1_11_to_current(old, current)
-	frauth_4_1_11_t *old;
-	void *current;
+frauth_4_1_11_to_current(frauth_4_1_11_t *old, void *current)
 {
 	frauth_t *fra = (frauth_t *)current;
 
@@ -2657,9 +2609,7 @@ frauth_4_1_11_to_current(old, current)
 
 
 static void
-fr_info_4_1_32_to_current(old, current)
-	fr_info_4_1_32_t *old;
-	void *current;
+fr_info_4_1_32_to_current(fr_info_4_1_32_t *old, void *current)
 {
 	fr_info_t *fin = (fr_info_t *)current;
 
@@ -2698,9 +2648,7 @@ fr_info_4_1_32_to_current(old, current)
 
 
 static void
-fr_info_4_1_24_to_current(old, current)
-	fr_info_4_1_24_t *old;
-	void *current;
+fr_info_4_1_24_to_current(fr_info_4_1_24_t *old, void *current)
 {
 	fr_info_t *fin = (fr_info_t *)current;
 
@@ -2739,9 +2687,7 @@ fr_info_4_1_24_to_current(old, current)
 
 
 static void
-fr_info_4_1_23_to_current(old, current)
-	fr_info_4_1_23_t *old;
-	void *current;
+fr_info_4_1_23_to_current(fr_info_4_1_23_t *old, void *current)
 {
 	fr_info_t *fin = (fr_info_t *)current;
 
@@ -2779,9 +2725,7 @@ fr_info_4_1_23_to_current(old, current)
 
 
 static void
-fr_info_4_1_11_to_current(old, current)
-	fr_info_4_1_11_t *old;
-	void *current;
+fr_info_4_1_11_to_current(fr_info_4_1_11_t *old, void *current)
 {
 	fr_info_t *fin = (fr_info_t *)current;
 
@@ -2835,10 +2779,8 @@ nat_4_1_14_to_current(nat_4_1_14_t *old, nat_t *current)
 
 
 static void
-nat_save_4_1_16_to_current(softc, old, current)
-	ipf_main_softc_t *softc;
-	nat_save_4_1_16_t *old;
-	void *current;
+nat_save_4_1_16_to_current(ipf_main_softc_t *softc, nat_save_4_1_16_t *old,
+    void *current)
 {
 	nat_save_t *nats = (nat_save_t *)current;
 
@@ -2852,10 +2794,8 @@ nat_save_4_1_16_to_current(softc, old, current)
 
 
 static void
-nat_save_4_1_14_to_current(softc, old, current)
-	ipf_main_softc_t *softc;
-	nat_save_4_1_14_t *old;
-	void *current;
+nat_save_4_1_14_to_current(ipf_main_softc_t *softc, nat_save_4_1_14_t *old,
+    void *current)
 {
 	nat_save_t *nats = (nat_save_t *)current;
 
@@ -2869,10 +2809,8 @@ nat_save_4_1_14_to_current(softc, old, current)
 
 
 static void
-nat_save_4_1_3_to_current(softc, old, current)
-	ipf_main_softc_t *softc;
-	nat_save_4_1_3_t *old;
-	void *current;
+nat_save_4_1_3_to_current(ipf_main_softc_t *softc, nat_save_4_1_3_t *old,
+    void *current)
 {
 	nat_save_t *nats = (nat_save_t *)current;
 
@@ -2886,9 +2824,7 @@ nat_save_4_1_3_to_current(softc, old, current)
 
 
 static void
-natstat_current_to_4_1_32(current, old)
-	void *current;
-	natstat_4_1_32_t *old;
+natstat_current_to_4_1_32(void *current, natstat_4_1_32_t *old)
 {
 	natstat_t *ns = (natstat_t *)current;
 
@@ -2929,9 +2865,7 @@ natstat_current_to_4_1_32(current, old)
 
 
 static void
-natstat_current_to_4_1_27(current, old)
-	void *current;
-	natstat_4_1_27_t *old;
+natstat_current_to_4_1_27(void *current, natstat_4_1_27_t *old)
 {
 	natstat_t *ns = (natstat_t *)current;
 
@@ -2968,9 +2902,7 @@ natstat_current_to_4_1_27(current, old)
 
 
 static void
-natstat_current_to_4_1_16(current, old)
-	void *current;
-	natstat_4_1_16_t *old;
+natstat_current_to_4_1_16(void *current, natstat_4_1_16_t *old)
 {
 	natstat_t *ns = (natstat_t *)current;
 
@@ -3006,9 +2938,7 @@ natstat_current_to_4_1_16(current, old)
 
 
 static void
-natstat_current_to_4_1_0(current, old)
-	void *current;
-	natstat_4_1_0_t *old;
+natstat_current_to_4_1_0(void *current, natstat_4_1_0_t *old)
 {
 	natstat_t *ns = (natstat_t *)current;
 
@@ -3043,9 +2973,7 @@ natstat_current_to_4_1_0(current, old)
 
 
 static void
-ipstate_save_current_to_4_1_16(current, old)
-	void *current;
-	ipstate_save_4_1_16_t *old;
+ipstate_save_current_to_4_1_16(void *current, ipstate_save_4_1_16_t *old)
 {
 	ipstate_save_t *ips = (ipstate_save_t *)current;
 
@@ -3056,9 +2984,7 @@ ipstate_save_current_to_4_1_16(current, old)
 
 
 static void
-ipstate_save_current_to_4_1_0(current, old)
-	void *current;
-	ipstate_save_4_1_0_t *old;
+ipstate_save_current_to_4_1_0(void *current, ipstate_save_4_1_0_t *old)
 {
 	ipstate_save_t *ips = (ipstate_save_t *)current;
 
@@ -3069,10 +2995,7 @@ ipstate_save_current_to_4_1_0(current, old)
 
 
 int
-ipf_out_compat(softc, obj, ptr)
-	ipf_main_softc_t *softc;
-	ipfobj_t *obj;
-	void *ptr;
+ipf_out_compat(ipf_main_softc_t *softc, ipfobj_t *obj, void *ptr)
 {
 	frentry_t *fr;
 	int error;
@@ -3568,10 +3491,7 @@ ipf_out_compat(softc, obj, ptr)
 
 
 static void
-friostat_current_to_4_1_33(current, old, rev)
-	void *current;
-	friostat_4_1_33_t *old;
-	int rev;
+friostat_current_to_4_1_33(void *current, friostat_4_1_33_t *old, int rev)
 {
 	friostat_t *fiop = (friostat_t *)current;
 
@@ -3614,10 +3534,7 @@ friostat_current_to_4_1_33(current, old, rev)
 
 
 static void
-friostat_current_to_4_1_0(current, old, rev)
-	void *current;
-	friostat_4_1_0_t *old;
-	int rev;
+friostat_current_to_4_1_0(void *current, friostat_4_1_0_t *old, int rev)
 {
 	friostat_t *fiop = (friostat_t *)current;
 
@@ -3683,8 +3600,7 @@ friostat_current_to_4_1_0(current, old, rev)
  * nflags is v5 flags, returns v4 flags.
  */
 static int
-fr_frflags5to4(nflags)
-	u_32_t nflags;
+fr_frflags5to4(u_32_t nflags)
 {
 	u_32_t oflags = 0;
 
@@ -3768,9 +3684,7 @@ fr_frflags5to4(nflags)
 
 
 static void
-frentry_current_to_4_1_34(current, old)
-	void *current;
-	frentry_4_1_34_t *old;
+frentry_current_to_4_1_34(void *current, frentry_4_1_34_t *old)
 {
 	frentry_t *fr = (frentry_t *)current;
 
@@ -3863,9 +3777,7 @@ frentry_current_to_4_1_34(current, old)
 
 
 static void
-frentry_current_to_4_1_16(current, old)
-	void *current;
-	frentry_4_1_16_t *old;
+frentry_current_to_4_1_16(void *current, frentry_4_1_16_t *old)
 {
 	frentry_t *fr = (frentry_t *)current;
 
@@ -3958,9 +3870,7 @@ frentry_current_to_4_1_16(current, old)
 
 
 static void
-frentry_current_to_4_1_0(current, old)
-	void *current;
-	frentry_4_1_0_t *old;
+frentry_current_to_4_1_0(void *current, frentry_4_1_0_t *old)
 {
 	frentry_t *fr = (frentry_t *)current;
 
@@ -4053,9 +3963,7 @@ frentry_current_to_4_1_0(current, old)
 
 
 static void
-fr_info_current_to_4_1_24(current, old)
-	void *current;
-	fr_info_4_1_24_t *old;
+fr_info_current_to_4_1_24(void *current, fr_info_4_1_24_t *old)
 {
 	fr_info_t *fin = (fr_info_t *)current;
 
@@ -4098,9 +4006,7 @@ fr_info_current_to_4_1_24(current, old)
 
 
 static void
-fr_info_current_to_4_1_23(current, old)
-	void *current;
-	fr_info_4_1_23_t *old;
+fr_info_current_to_4_1_23(void *current, fr_info_4_1_23_t *old)
 {
 	fr_info_t *fin = (fr_info_t *)current;
 
@@ -4141,9 +4047,7 @@ fr_info_current_to_4_1_23(current, old)
 
 
 static void
-fr_info_current_to_4_1_11(current, old)
-	void *current;
-	fr_info_4_1_11_t *old;
+fr_info_current_to_4_1_11(void *current, fr_info_4_1_11_t *old)
 {
 	fr_info_t *fin = (fr_info_t *)current;
 
@@ -4184,9 +4088,7 @@ fr_info_current_to_4_1_11(current, old)
 
 
 static void
-frauth_current_to_4_1_29(current, old)
-	void *current;
-	frauth_4_1_29_t *old;
+frauth_current_to_4_1_29(void *current, frauth_4_1_29_t *old)
 {
 	frauth_t *fra = (frauth_t *)current;
 
@@ -4205,9 +4107,7 @@ frauth_current_to_4_1_29(current, old)
 
 
 static void
-frauth_current_to_4_1_24(current, old)
-	void *current;
-	frauth_4_1_24_t *old;
+frauth_current_to_4_1_24(void *current, frauth_4_1_24_t *old)
 {
 	frauth_t *fra = (frauth_t *)current;
 
@@ -4225,9 +4125,7 @@ frauth_current_to_4_1_24(current, old)
 
 
 static void
-frauth_current_to_4_1_23(current, old)
-	void *current;
-	frauth_4_1_23_t *old;
+frauth_current_to_4_1_23(void *current, frauth_4_1_23_t *old)
 {
 	frauth_t *fra = (frauth_t *)current;
 
@@ -4245,9 +4143,7 @@ frauth_current_to_4_1_23(current, old)
 
 
 static void
-frauth_current_to_4_1_11(current, old)
-	void *current;
-	frauth_4_1_11_t *old;
+frauth_current_to_4_1_11(void *current, frauth_4_1_11_t *old)
 {
 	frauth_t *fra = (frauth_t *)current;
 
@@ -4265,9 +4161,7 @@ frauth_current_to_4_1_11(current, old)
 
 
 static void
-ipnat_current_to_4_1_14(current, old)
-	void *current;
-	ipnat_4_1_14_t *old;
+ipnat_current_to_4_1_14(void *current, ipnat_4_1_14_t *old)
 {
 	ipnat_t *np = (ipnat_t *)current;
 
@@ -4346,9 +4240,7 @@ ipnat_current_to_4_1_14(current, old)
 
 
 static void
-ipnat_current_to_4_1_0(current, old)
-	void *current;
-	ipnat_4_1_0_t *old;
+ipnat_current_to_4_1_0(void *current, ipnat_4_1_0_t *old)
 {
 	ipnat_t *np = (ipnat_t *)current;
 
@@ -4427,9 +4319,7 @@ ipnat_current_to_4_1_0(current, old)
 
 
 static void
-ipstate_current_to_4_1_16(current, old)
-	void *current;
-	ipstate_4_1_16_t *old;
+ipstate_current_to_4_1_16(void *current, ipstate_4_1_16_t *old)
 {
 	ipstate_t *is = (ipstate_t *)current;
 
@@ -4499,9 +4389,7 @@ ipstate_current_to_4_1_16(current, old)
 
 
 static void
-ipstate_current_to_4_1_0(current, old)
-	void *current;
-	ipstate_4_1_0_t *old;
+ipstate_current_to_4_1_0(void *current, ipstate_4_1_0_t *old)
 {
 	ipstate_t *is = (ipstate_t *)current;
 
@@ -4572,9 +4460,7 @@ ipstate_current_to_4_1_0(current, old)
 
 
 static void
-ips_stat_current_to_4_1_21(current, old)
-	void *current;
-	ips_stat_4_1_21_t *old;
+ips_stat_current_to_4_1_21(void *current, ips_stat_4_1_21_t *old)
 {
 	ips_stat_t *st = (ips_stat_t *)current;
 
@@ -4605,9 +4491,7 @@ ips_stat_current_to_4_1_21(current, old)
 
 
 static void
-ips_stat_current_to_4_1_0(current, old)
-	void *current;
-	ips_stat_4_1_0_t *old;
+ips_stat_current_to_4_1_0(void *current, ips_stat_4_1_0_t *old)
 {
 	ips_stat_t *st = (ips_stat_t *)current;
 
@@ -4637,9 +4521,7 @@ ips_stat_current_to_4_1_0(current, old)
 
 
 static void
-nat_save_current_to_4_1_16(current, old)
-	void *current;
-	nat_save_4_1_16_t *old;
+nat_save_current_to_4_1_16(void *current, nat_save_4_1_16_t *old)
 {
 	nat_save_t *nats = (nat_save_t *)current;
 
@@ -4653,9 +4535,7 @@ nat_save_current_to_4_1_16(current, old)
 
 
 static void
-nat_save_current_to_4_1_14(current, old)
-	void *current;
-	nat_save_4_1_14_t *old;
+nat_save_current_to_4_1_14(void *current, nat_save_4_1_14_t *old)
 {
 	nat_save_t *nats = (nat_save_t *)current;
 
@@ -4669,9 +4549,7 @@ nat_save_current_to_4_1_14(current, old)
 
 
 static void
-nat_save_current_to_4_1_3(current, old)
-	void *current;
-	nat_save_4_1_3_t *old;
+nat_save_current_to_4_1_3(void *current, nat_save_4_1_3_t *old)
 {
 	nat_save_t *nats = (nat_save_t *)current;
 
@@ -4685,9 +4563,7 @@ nat_save_current_to_4_1_3(current, old)
 
 
 static void
-nat_current_to_4_1_25(current, old)
-	void *current;
-	nat_4_1_25_t *old;
+nat_current_to_4_1_25(void *current, nat_4_1_25_t *old)
 {
 	nat_t *nat = (nat_t *)current;
 
@@ -4746,9 +4622,7 @@ nat_current_to_4_1_25(current, old)
 
 
 static void
-nat_current_to_4_1_14(current, old)
-	void *current;
-	nat_4_1_14_t *old;
+nat_current_to_4_1_14(void *current, nat_4_1_14_t *old)
 {
 	nat_t *nat = (nat_t *)current;
 
@@ -4806,9 +4680,7 @@ nat_current_to_4_1_14(current, old)
 
 
 static void
-nat_current_to_4_1_3(current, old)
-	void *current;
-	nat_4_1_3_t *old;
+nat_current_to_4_1_3(void *current, nat_4_1_3_t *old)
 {
 	nat_t *nat = (nat_t *)current;
 

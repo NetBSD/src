@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pptp_pxy.c,v 1.10 2012/01/30 16:12:50 darrenr Exp $	*/
+/*	$NetBSD: ip_pptp_pxy.c,v 1.11 2012/02/01 02:21:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2011 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_pptp_pxy.c,v 1.10 2012/01/30 16:12:50 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_pptp_pxy.c,v 1.11 2012/02/01 02:21:20 christos Exp $");
 
 #define	IPF_PPTP_PROXY
 
@@ -39,15 +39,15 @@ typedef	struct pptp_hdr {
 #define	PPTP_MTCTL_LINKINFO	15
 
 
-void ipf_p_pptp_main_load __P((void));
-void ipf_p_pptp_main_unload __P((void));
-int ipf_p_pptp_new __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-void ipf_p_pptp_del __P((ipf_main_softc_t *, ap_session_t *));
-int ipf_p_pptp_inout __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-void ipf_p_pptp_donatstate __P((fr_info_t *, nat_t *, pptp_pxy_t *));
-int ipf_p_pptp_message __P((fr_info_t *, nat_t *, pptp_pxy_t *, pptp_side_t *));
-int ipf_p_pptp_nextmessage __P((fr_info_t *, nat_t *, pptp_pxy_t *, int));
-int ipf_p_pptp_mctl __P((fr_info_t *, nat_t *, pptp_pxy_t *, pptp_side_t *));
+void ipf_p_pptp_main_load(void);
+void ipf_p_pptp_main_unload(void);
+int ipf_p_pptp_new(void *, fr_info_t *, ap_session_t *, nat_t *);
+void ipf_p_pptp_del(ipf_main_softc_t *, ap_session_t *);
+int ipf_p_pptp_inout(void *, fr_info_t *, ap_session_t *, nat_t *);
+void ipf_p_pptp_donatstate(fr_info_t *, nat_t *, pptp_pxy_t *);
+int ipf_p_pptp_message(fr_info_t *, nat_t *, pptp_pxy_t *, pptp_side_t *);
+int ipf_p_pptp_nextmessage(fr_info_t *, nat_t *, pptp_pxy_t *, int);
+int ipf_p_pptp_mctl(fr_info_t *, nat_t *, pptp_pxy_t *, pptp_side_t *);
 
 static	frentry_t	pptpfr;
 
@@ -60,7 +60,7 @@ static	int	ipf_p_pptp_gretimeout = IPF_TTLVAL(120);	/* 2 minutes */
  * PPTP application proxy initialization.
  */
 void
-ipf_p_pptp_main_load()
+ipf_p_pptp_main_load(void)
 {
 	bzero((char *)&pptpfr, sizeof(pptpfr));
 	pptpfr.fr_ref = 1;
@@ -73,7 +73,7 @@ ipf_p_pptp_main_load()
 
 
 void
-ipf_p_pptp_main_unload()
+ipf_p_pptp_main_unload(void)
 {
 	if (pptp_proxy_init == 1) {
 		MUTEX_DESTROY(&pptpfr.fr_lock);
