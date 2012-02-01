@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2011/06/07 17:30:18 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2012/02/01 21:56:40 matt Exp $
 #
 #	etc.evbppc/Makefile.inc -- evbppc-specific etc Makefile targets
 #
@@ -12,3 +12,4 @@ KERNEL_SETS+=		MPC8536DS MPC8548CDS P2020DS P2020RDB RB800
 KERNEL_SUFFIXES=	img
 
 BUILD_KERNELS=		INSTALL_WALNUT INSTALL_OPENBLOCKS266 INSTALL_PMPPC
+BUILD_KERNELS+=		INSTALL_P202DS INSTALL_P202RDB
