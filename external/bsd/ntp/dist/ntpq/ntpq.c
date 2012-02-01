@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.5 2012/02/01 20:48:01 kardel Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.6 2012/02/01 22:48:15 kardel Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -1031,9 +1031,9 @@ getresponse(
 
 		if (n < shouldbesize) {
 			printf("Response packet claims %u octets "
-				"payload, above %ld received\n",
+				"payload, above %u received\n",
 				count,
-				n - CTL_HEADER_LEN
+				(u_int)(n - CTL_HEADER_LEN)
 				);
 			return ERR_INCOMPLETE;
 		}
@@ -1083,8 +1083,8 @@ getresponse(
 		if ((int)count > (n - CTL_HEADER_LEN)) {
 			if (debug)
 				printf("Received count of %d octets, "
-					"data in packet is %lu\n",
-					count, n-CTL_HEADER_LEN);
+					"data in packet is %u\n",
+					count, (u_int)(n-CTL_HEADER_LEN));
 			continue;
 		}
 		if (count == 0 && CTL_ISMORE(rpkt.r_m_e_op)) {
@@ -2448,7 +2448,7 @@ keytype(
 	int		key_type;
 
 	if (!pcmd->nargs) {
-		fprintf(fp, "keytype is %s with %zu octet digests\n",
+		fprintf(fp, "keytype is %s with %lu octet digests\n",
 			keytype_name(info_auth_keytype),
 			(u_long)info_auth_hashlen);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.4 2012/02/01 07:46:23 kardel Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.5 2012/02/01 22:48:15 kardel Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -1782,7 +1782,7 @@ keytype(
 	int		key_type;
 
 	if (!pcmd->nargs) {
-		fprintf(fp, "keytype is %s with %zu octet digests\n",
+		fprintf(fp, "keytype is %s with %lu octet digests\n",
 			keytype_name(info_auth_keytype),
 			(u_long)info_auth_hashlen);
 		return;
