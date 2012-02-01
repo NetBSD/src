@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_uic.c,v 1.2 2011/12/13 10:55:45 kiyohara Exp $	*/
+/*	$NetBSD: pic_uic.c,v 1.3 2012/02/01 09:54:02 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.2 2011/12/13 10:55:45 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.3 2012/02/01 09:54:02 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/evcnt.h>
 #include <sys/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.45 2012/01/30 23:34:15 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.46 2012/02/01 09:54:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,13 +32,13 @@
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.45 2012/01/30 23:34:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.46 2012/02/01 09:54:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/bus.h>
@@ -104,10 +104,9 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments, bus_size_t m
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	mapsize = sizeof(struct powerpc_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	if ((mapstore = malloc(mapsize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+	mapsize = sizeof(*map) + sizeof(bus_dma_segment_t [nsegments - 1]);
+	if ((mapstore = kmem_intr_alloc(mapsize,
+	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
 		return (ENOMEM);
 
 	memset(mapstore, 0, mapsize);
@@ -134,7 +133,9 @@ void
 _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
-	free(map, M_DMAMAP);
+	size_t mapsize = sizeof(*map)
+	    + sizeof(bus_dma_segment_t [map->_dm_segcnt - 1]);
+	kmem_intr_free(map, mapsize);
 }
 
 /*
