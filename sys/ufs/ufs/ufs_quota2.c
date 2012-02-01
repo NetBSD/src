@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.30 2012/01/29 07:21:00 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.31 2012/02/01 05:10:44 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.30 2012/01/29 07:21:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.31 2012/02/01 05:10:44 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -1158,7 +1158,10 @@ q2cursor_getkeys(struct ufsmount *ump, int idtype, struct ufsq2_cursor *cursor,
 	/* If we haven't done the defaults yet, that goes first. */
 	if (cursor->q2c_defaults_done == 0) {
 		q2cursor_addid(state, idtype, QUOTA_DEFAULTID);
-		cursor->q2c_defaults_done = 1;
+		/* if we read both halves, mark it done */
+		if (state->numids < state->maxids || !state->skiplast) {
+			cursor->q2c_defaults_done = 1;
+		}
 	}
 
 	gi.state = state;
@@ -1181,14 +1184,22 @@ q2cursor_getkeys(struct ufsmount *ump, int idtype, struct ufsq2_cursor *cursor,
 		if (error == Q2WL_ABORT) {
 			/* callback stopped before reading whole chain */
 			cursor->q2c_uidpos = gi.new_skip;
+			/* if we didn't get both halves, back up */
+			if (state->numids == state->maxids && state->skiplast){
+				KASSERT(cursor->q2c_uidpos > 0);
+				cursor->q2c_uidpos--;
+			}
 			/* not an error */
 			error = 0;
 		} else if (error) {
 			break;
 		} else {
-			/* read whole chain, advance to next */
-			cursor->q2c_uidpos = 0;
-			cursor->q2c_hashpos++;
+			/* read whole chain */
+			/* if we got both halves of the last id, advance */
+			if (state->numids < state->maxids || !state->skiplast){
+				cursor->q2c_uidpos = 0;
+				cursor->q2c_hashpos++;
+			}
 		}
 	}
 
