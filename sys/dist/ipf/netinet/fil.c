@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.49 2012/02/01 10:03:24 he Exp $	*/
+/*	$NetBSD: fil.c,v 1.50 2012/02/01 10:18:04 he Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.49 2012/02/01 10:03:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.50 2012/02/01 10:18:04 he Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.443.2.36 2012/01/29 05:30:35 darrenr Exp";
@@ -9318,11 +9318,13 @@ ipf_create_all(arg)
 	if (softc == NULL)
 		return NULL;
 
+#ifdef IPFILTER_LOG
 	softc->ipf_log_soft = ipf_log_soft_create(softc);
 	if (softc->ipf_log_soft == NULL) {
 		ipf_destroy_all(softc);
 		return NULL;
 	}
+#endif
 
 	softc->ipf_lookup_soft = ipf_lookup_soft_create(softc);
 	if (softc->ipf_lookup_soft == NULL) {
@@ -9421,10 +9423,12 @@ ipf_destroy_all(softc)
 		softc->ipf_lookup_soft = NULL;
 	}
 
+#ifdef IPFILTER_LOG
 	if (softc->ipf_log_soft != NULL) {
 		ipf_log_soft_destroy(softc, softc->ipf_log_soft);
 		softc->ipf_log_soft = NULL;
 	}
+#endif
 
 	ipf_main_soft_destroy(softc, NULL);
 }
@@ -9446,8 +9450,10 @@ ipf_init_all(softc)
 	if (ipf_main_soft_init(softc) == -1)
 		return -1;
 
+#ifdef IPFILTER_LOG
 	if (ipf_log_soft_init(softc, softc->ipf_log_soft) == -1)
 		return -1;
+#endif
 
 	if (ipf_lookup_soft_init(softc, softc->ipf_lookup_soft) == -1)
 		return -1;
@@ -9508,8 +9514,10 @@ ipf_fini_all(softc)
 	if (ipf_lookup_soft_fini(softc, softc->ipf_lookup_soft) == -1)
 		return -1;
 
+#ifdef IPFILTER_LOG
 	if (ipf_log_soft_fini(softc, softc->ipf_log_soft) == -1)
 		return -1;
+#endif
 
 	if (ipf_main_soft_fini(softc) == -1)
 		return -1;
