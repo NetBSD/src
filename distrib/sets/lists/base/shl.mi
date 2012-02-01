@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.614 2012/01/30 16:54:46 dholland Exp $
+# $NetBSD: shl.mi,v 1.615 2012/02/01 17:53:54 dholland Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -383,8 +383,8 @@
 ./usr/lib/libpuffs.so.2				base-puffs-shlib
 ./usr/lib/libpuffs.so.2.0			base-puffs-shlib
 ./usr/lib/libquota.so				base-sys-shlib
-./usr/lib/libquota.so.0				base-sys-shlib
-./usr/lib/libquota.so.0.2			base-sys-shlib
+./usr/lib/libquota.so.1				base-sys-shlib
+./usr/lib/libquota.so.1.0			base-sys-shlib
 ./usr/lib/libradius.so				base-net-shlib
 ./usr/lib/libradius.so.4			base-net-shlib
 ./usr/lib/libradius.so.4.0			base-net-shlib
