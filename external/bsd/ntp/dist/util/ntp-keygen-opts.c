@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen-opts.c,v 1.3 2012/02/01 07:46:30 kardel Exp $	*/
+/*	$NetBSD: ntp-keygen-opts.c,v 1.4 2012/02/01 20:48:02 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntp-keygen-opts.c)
@@ -858,7 +858,7 @@ doOptModulus(tOptions* pOptions, tOptDesc* pOptDesc)
 
 emit_ranges:
 
-    optionShowRange(pOptions, pOptDesc, (void *)rng, 1);
+    optionShowRange(pOptions, pOptDesc, (const void *)rng, 1);
 }
 #endif /* defined OPENSSL */
 /* extracted from optmain.tlib near line 128 */

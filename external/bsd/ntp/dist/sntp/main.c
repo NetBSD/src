@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2012/02/01 07:46:23 kardel Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2012/02/01 20:48:01 kardel Exp $	*/
 
 #include <config.h>
 
@@ -254,7 +254,7 @@ handle_pkt (
 #if SIZEOF_TIME_T == 4
 			sscanf(p_SNTP_PRETEND_TIME, "%ld", &pretend_time);
 #elif SIZEOF_TIME_T == 8
-			sscanf(p_SNTP_PRETEND_TIME, "%lld", &pretend_time);
+			sscanf(p_SNTP_PRETEND_TIME, "%zd", &pretend_time);
 #else
 # include "GRONK: unexpected value for SIZEOF_TIME_T"
 #endif

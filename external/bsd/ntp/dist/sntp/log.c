@@ -1,10 +1,10 @@
-/*	$NetBSD: log.c,v 1.4 2012/02/01 07:46:23 kardel Exp $	*/
+/*	$NetBSD: log.c,v 1.5 2012/02/01 20:48:01 kardel Exp $	*/
 
 #include <config.h>
 
 #include "log.h"
 
-char *progname = "sntp";	/* for msyslog use too */
+const char *progname = "sntp";	/* for msyslog use too */
 
 static void cleanup_log(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.4 2012/02/01 07:46:23 kardel Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.5 2012/02/01 20:48:01 kardel Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -384,7 +384,7 @@ struct sock_timeval tvsout = { DEFSTIMEOUT, 0 };/* secondary time out */
 l_fp delay_time;				/* delay time */
 char currenthost[LENHOSTNAME];			/* current host name */
 int currenthostisnum;				/* is prior text from IP? */
-struct sockaddr_in hostaddr = { 0 };		/* host address */
+struct sockaddr_in hostaddr;			/* host address */
 int showhostnames = 1;				/* show host names by default */
 
 int ai_fam_templ;				/* address family */
@@ -896,7 +896,7 @@ getresponse(
 					"ERR_INCOMPLETE: Received fragments:\n");
 				for (f = 0; f < numfrags; f++)
 					fprintf(stderr,
-						"%2u: %5d %5d\t%3d octets\n",
+						"%2zu: %5d %5d\t%3d octets\n",
 						f, offsets[f],
 						offsets[f] +
 						counts[f],
@@ -935,7 +935,7 @@ getresponse(
 		/*
 		 * Check for format errors.  Bug proofing.
 		 */
-		if (n < CTL_HEADER_LEN) {
+		if (n < (int)CTL_HEADER_LEN) {
 			if (debug)
 				printf("Short (%d byte) packet received\n", n);
 			continue;
@@ -1031,7 +1031,7 @@ getresponse(
 
 		if (n < shouldbesize) {
 			printf("Response packet claims %u octets "
-				"payload, above %d received\n",
+				"payload, above %ld received\n",
 				count,
 				n - CTL_HEADER_LEN
 				);
@@ -1083,7 +1083,7 @@ getresponse(
 		if ((int)count > (n - CTL_HEADER_LEN)) {
 			if (debug)
 				printf("Received count of %d octets, "
-					"data in packet is %d\n",
+					"data in packet is %lu\n",
 					count, n-CTL_HEADER_LEN);
 			continue;
 		}
@@ -1187,7 +1187,7 @@ getresponse(
 				*rsize = offsets[f-1] + counts[f-1];
 				if (debug)
 					fprintf(stderr,
-						"%u packets reassembled into response\n",
+						"%zu packets reassembled into response\n",
 						numfrags);
 				return 0;
 			}
@@ -2230,7 +2230,7 @@ help(
 
 		for (row = 0; row < rows; row++) {
 			for (word = row; word < words; word += rows)
-				fprintf(fp, "%-*.*s", col,  col-1,
+				fprintf(fp, "%-*.*s", (int)col,  (int)col-1,
 					list[word]);
 			fprintf(fp, "\n");
 		}
@@ -3258,7 +3258,7 @@ tstflags(
 			*cp++ = ' ';
 			cb--;
 		}
-		for (i = 0; i < COUNTOF(tstflagnames); i++) {
+		for (i = 0; i < (int)COUNTOF(tstflagnames); i++) {
 			if (val & 0x1) {
 				snprintf(cp, cb, "%s%s", sep,
 					 tstflagnames[i]);

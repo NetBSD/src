@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.3 2012/02/01 07:46:23 kardel Exp $	*/
+/*	$NetBSD: crypto.c,v 1.4 2012/02/01 20:48:01 kardel Exp $	*/
 
 #include <config.h>
 #include "crypto.h"
@@ -53,7 +53,7 @@ auth_md5(
 	int  authentic;
 	char digest[20];
 
-	if (mac_size > sizeof(digest))
+	if (mac_size > (int)sizeof(digest))
 		return 0;
 	hash_len = make_mac(pkt_data, pkt_size, sizeof(digest), cmp_key,
 			    digest);

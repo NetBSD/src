@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.7 2012/02/01 07:46:22 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.8 2012/02/01 20:48:01 kardel Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -209,7 +209,7 @@ static	isc_boolean_t	socket_multicast_disable(endpt *, sockaddr_u *);
 #ifdef DEBUG
 static void interface_dump	(const endpt *);
 static void sockaddr_dump	(const sockaddr_u *);
-static void print_interface	(const endpt *, char *, char *);
+static void print_interface	(const endpt *, const char *, const char *);
 #define DPRINT_INTERFACE(level, args) do { if (debug >= (level)) { print_interface args; } } while (0)
 #else
 #define DPRINT_INTERFACE(level, args) do {} while (0)
@@ -623,7 +623,7 @@ sockaddr_dump(const sockaddr_u *psau)
  * print_interface - helper to output debug information
  */
 static void
-print_interface(const endpt *iface, char *pfx, char *sfx)
+print_interface(const endpt *iface, const char *pfx, const char *sfx)
 {
 	printf("%sinterface #%d: fd=%d, bfd=%d, name=%s, flags=0x%x, ifindex=%u, sin=%s",
 	       pfx,
@@ -3865,7 +3865,7 @@ calc_addr_distance(
 
 	found_greater = FALSE;
 	a1_greater = FALSE;	/* suppress pot. uninit. warning */
-	for (i = 0; i < sizeof(NSRCADR6(a1)); i++) {
+	for (i = 0; i < (int)sizeof(NSRCADR6(a1)); i++) {
 		if (!found_greater &&
 		    NSRCADR6(a1)[i] != NSRCADR6(a2)[i]) {
 			found_greater = TRUE;
@@ -3908,7 +3908,7 @@ cmp_addr_distance(
 			return 1;
 	}
 
-	for (i = 0; i < sizeof(NSRCADR6(d1)); i++) {
+	for (i = 0; i < (int)sizeof(NSRCADR6(d1)); i++) {
 		if (NSRCADR6(d1)[i] < NSRCADR6(d2)[i])
 			return -1;
 		else if (NSRCADR6(d1)[i] > NSRCADR6(d2)[i])

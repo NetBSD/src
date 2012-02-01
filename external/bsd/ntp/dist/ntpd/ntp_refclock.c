@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.c,v 1.3 2012/02/01 07:46:22 kardel Exp $	*/
+/*	$NetBSD: ntp_refclock.c,v 1.4 2012/02/01 20:48:01 kardel Exp $	*/
 
 /*
  * ntp_refclock - processing support for reference clocks
@@ -514,7 +514,7 @@ refclock_sample(
 	if (debug)
 		printf(
 		    "refclock_sample: n %d offset %.6f disp %.6f jitter %.6f\n",
-		    n, pp->offset, pp->disp, pp->jitter);
+		    (int)n, pp->offset, pp->disp, pp->jitter);
 #endif
 	return (int)n;
 }

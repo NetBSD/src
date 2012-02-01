@@ -1,4 +1,4 @@
-/*	$NetBSD: numeric.c,v 1.1.1.2 2012/01/31 21:27:49 kardel Exp $	*/
+/*	$NetBSD: numeric.c,v 1.2 2012/02/01 20:48:01 kardel Exp $	*/
 
 
 /**
@@ -40,7 +40,7 @@
  *   Show information about a numeric option with range constraints.
 =*/
 void
-optionShowRange(tOptions* pOpts, tOptDesc* pOD, void * rng_table, int rng_ct)
+optionShowRange(tOptions* pOpts, tOptDesc* pOD, const void * rng_table, int rng_ct)
 {
     static char const bullet[] = "\t\t\t\t- ";
     static char const deepin[] = "\t\t\t\t  ";
