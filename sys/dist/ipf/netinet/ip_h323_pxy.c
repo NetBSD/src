@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.13 2012/02/01 02:21:19 christos Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.14 2012/02/01 16:46:28 christos Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.13 2012/02/01 02:21:19 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.14 2012/02/01 16:46:28 christos Exp $");
 
 #define IPF_H323_PROXY
 
@@ -43,11 +43,7 @@ static int find_port(int, void *, int datlen, int *, u_short *);
 
 
 static int
-find_port(ipaddr, data, datlen, off, port)
-	int ipaddr;
-	void *data;
-	int datlen, *off;
-	unsigned short *port;
+find_port(int ipaddr, void *data, int datlen, int *off, unsigned short *port)
 {
 	u_32_t addr, netaddr;
 	u_char *dp;
@@ -77,7 +73,7 @@ find_port(ipaddr, data, datlen, off, port)
  * Initialize local structures.
  */
 void
-ipf_p_h323_main_load()
+ipf_p_h323_main_load(void)
 {
 	bzero((char *)&h323_fr, sizeof(h323_fr));
 	h323_fr.fr_ref = 1;
@@ -88,7 +84,7 @@ ipf_p_h323_main_load()
 
 
 void
-ipf_p_h323_main_unload()
+ipf_p_h323_main_unload(void)
 {
 	if (h323_proxy_init == 1) {
 		MUTEX_DESTROY(&h323_fr.fr_lock);
@@ -98,11 +94,7 @@ ipf_p_h323_main_unload()
 
 
 int
-ipf_p_h323_new(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_h323_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	fin = fin;	/* LINT */
 	nat = nat;	/* LINT */
@@ -115,9 +107,7 @@ ipf_p_h323_new(arg, fin, aps, nat)
 
 
 void
-ipf_p_h323_del(softc, aps)
-	ipf_main_softc_t *softc;
-	ap_session_t *aps;
+ipf_p_h323_del(ipf_main_softc_t *softc, ap_session_t *aps)
 {
 	int i;
 	ipnat_t *ipn;
@@ -149,11 +139,7 @@ ipf_p_h323_del(softc, aps)
 
 
 int
-ipf_p_h323_in(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_h323_in(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	int ipaddr, off, datlen;
@@ -224,11 +210,7 @@ ipf_p_h323_in(arg, fin, aps, nat)
 
 
 int
-ipf_p_h245_new(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_h245_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	fin = fin;	/* LINT */
 	nat = nat;	/* LINT */
@@ -240,11 +222,7 @@ ipf_p_h245_new(arg, fin, aps, nat)
 
 
 int
-ipf_p_h245_out(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_h245_out(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 #ifdef USE_MUTEXES

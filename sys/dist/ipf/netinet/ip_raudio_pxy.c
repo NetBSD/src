@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.8 2012/02/01 02:21:20 christos Exp $	*/
+/*	$NetBSD: ip_raudio_pxy.c,v 1.9 2012/02/01 16:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2008 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.8 2012/02/01 02:21:20 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.9 2012/02/01 16:46:28 christos Exp $");
 
 #define	IPF_RAUDIO_PROXY
 
@@ -29,7 +29,7 @@ int	raudio_proxy_init = 0;
  * Real Audio application proxy initialization.
  */
 void
-ipf_p_raudio_main_load()
+ipf_p_raudio_main_load(void)
 {
 	bzero((char *)&raudiofr, sizeof(raudiofr));
 	raudiofr.fr_ref = 1;
@@ -40,7 +40,7 @@ ipf_p_raudio_main_load()
 
 
 void
-ipf_p_raudio_main_unload()
+ipf_p_raudio_main_unload(void)
 {
 	if (raudio_proxy_init == 1) {
 		MUTEX_DESTROY(&raudiofr.fr_lock);
@@ -53,11 +53,7 @@ ipf_p_raudio_main_unload()
  * Setup for a new proxy to handle Real Audio.
  */
 int
-ipf_p_raudio_new(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_raudio_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	raudio_t *rap;
 
@@ -78,11 +74,7 @@ ipf_p_raudio_new(arg, fin, aps, nat)
 
 
 int
-ipf_p_raudio_out(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_raudio_out(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	raudio_t *rap = aps->aps_data;
 	unsigned char membuf[512 + 1], *s;
@@ -186,11 +178,7 @@ ipf_p_raudio_out(arg, fin, aps, nat)
 
 
 int
-ipf_p_raudio_in(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_raudio_in(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	unsigned char membuf[IPF_MAXPORTLEN + 1], *s;
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_tftp_pxy.c,v 1.2 2012/02/01 02:21:21 christos Exp $	*/
+/*	$NetBSD: ip_tftp_pxy.c,v 1.3 2012/02/01 16:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2010 by Darren Reed.
@@ -67,11 +67,7 @@ ipf_p_tftp_main_unload(void)
 
 
 int
-ipf_p_tftp_out(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_tftp_out(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 
 	if (nat->nat_dir == NAT_OUTBOUND)
@@ -81,11 +77,7 @@ ipf_p_tftp_out(arg, fin, aps, nat)
 
 
 int
-ipf_p_tftp_in(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_tftp_in(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 
 	if (nat->nat_dir == NAT_INBOUND)
@@ -95,11 +87,7 @@ ipf_p_tftp_in(arg, fin, aps, nat)
 
 
 int
-ipf_p_tftp_new(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_tftp_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	udphdr_t *udp;
 	tftpinfo_t *ti;
@@ -126,10 +114,7 @@ ipf_p_tftp_new(arg, fin, aps, nat)
  * Setup for a new TFTP proxy.
  */
 int
-ipf_p_tftp_backchannel(fin, aps, nat)
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_tftp_backchannel(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 #ifdef USE_MUTEXES
@@ -211,10 +196,7 @@ ipf_p_tftp_backchannel(fin, aps, nat)
 
 
 int
-ipf_p_tftp_client(fin, aps, nat)
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_tftp_client(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	u_char *msg, *s, *t;
 	tftpinfo_t *ti;
@@ -257,10 +239,7 @@ ipf_p_tftp_client(fin, aps, nat)
 
 
 int
-ipf_p_tftp_server(fin, aps, nat)
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_tftp_server(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	tftpinfo_t *ti;
 	u_short opcode;
