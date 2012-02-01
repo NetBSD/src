@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.31 2010/07/27 14:34:34 jakllsch Exp $	*/
+/*	$NetBSD: spkr.c,v 1.32 2012/02/01 02:01:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.31 2010/07/27 14:34:34 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.32 2012/02/01 02:01:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,18 +88,16 @@ static void playinit(void);
 static void playtone(int, int, int);
 static void playstring(char *, int);
 
-static
-void tone(xhz, ticks)
+static void
+tone(u_int xhz, u_int ticks)
 /* emit tone of frequency hz for given number of ticks */
-    u_int xhz, ticks;
 {
 	pcppi_bell(ppicookie, xhz, ticks, PCPPI_BELL_SLEEP);
 }
 
 static void
-rest(ticks)
+rest(int ticks)
 /* rest for given number of ticks */
-    int	ticks;
 {
     /*
      * Set timeout to endrest function, then give up the timeslice.
@@ -182,9 +180,8 @@ playinit(void)
 }
 
 static void
-playtone(pitch, val, sustain)
+playtone(int pitch, int val, int sustain)
 /* play tone of proper duration for current rhythm signature */
-    int	pitch, val, sustain;
 {
     int	sound, silence, snum = 1, sdenom = 1;
 
@@ -215,10 +212,8 @@ playtone(pitch, val, sustain)
 }
 
 static void
-playstring(cp, slen)
+playstring(char *cp, int slen)
 /* interpret and play an item from a notation string */
-    char	*cp;
-    int		slen;
 {
     int		pitch, lastpitch = OCTAVE_NOTES * DFLT_OCTAVE;
 
@@ -414,10 +409,9 @@ spkrattach(device_t parent, device_t self, void *aux)
 	printf("\n");
 	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
 	spkr_attached = 1;
-        if (!device_pmf_is_registered(self))
-		if (!pmf_device_register(self, NULL, NULL))
-			aprint_error_dev(self,
-			    "couldn't establish power handler\n"); 
+        if (!device_pmf_is_registered(self)
+	    && !pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n"); 
 
 }
 
@@ -463,8 +457,8 @@ spkrwrite(dev_t dev, struct uio *uio, int flags)
     }
 }
 
-int spkrclose(dev_t dev, int flags, int mode,
-    struct lwp *l)
+int
+spkrclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 #ifdef SPKRDEBUG
     printf("spkrclose: entering with dev = %"PRIx64"\n", dev);
@@ -481,8 +475,8 @@ int spkrclose(dev_t dev, int flags, int mode,
     return(0);
 }
 
-int spkrioctl(dev_t dev, u_long cmd, void *data, int	flag,
-    struct lwp *l)
+int
+spkrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 #ifdef SPKRDEBUG
     printf("spkrioctl: entering with dev = %"PRIx64", cmd = %lx\n", dev, cmd);
