@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.39 2012/01/29 07:23:52 dholland Exp $	*/
+/*	$NetBSD: repquota.c,v 1.40 2012/02/01 05:12:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.39 2012/01/29 07:23:52 dholland Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.40 2012/02/01 05:12:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,6 @@ __RCSID("$NetBSD: repquota.c,v 1.39 2012/01/29 07:23:52 dholland Exp $");
 #include <unistd.h>
 
 #include <quota/quota.h>
-#include <quota/quotaprop.h>
 #include <quota.h>
 
 #include "printquota.h"
@@ -395,69 +394,77 @@ printquotas(int idtype, struct quotahandle *qh)
 }
 
 static void
-exportquotas(void)
+exportquotaval(const struct quotaval *qv)
 {
-	uint32_t id;
-	struct fileusage *fup;
-	prop_dictionary_t dict, data;
-	prop_array_t cmds, datas;
-	int idtype;
-	uint64_t *valuesp[QUOTA_NLIMITS];
-
-	dict = quota_prop_create();
-	cmds = prop_array_create();
-
-	if (dict == NULL || cmds == NULL) {
-		errx(1, "can't allocate proplist");
+	if (qv->qv_hardlimit == QUOTA_NOLIMIT) {
+		printf(" -");
+	} else {
+		printf(" %llu", (unsigned long long)qv->qv_hardlimit);
 	}
 
+	if (qv->qv_softlimit == QUOTA_NOLIMIT) {
+		printf(" -");
+	} else {
+		printf(" %llu", (unsigned long long)qv->qv_softlimit);
+	}
+
+	printf(" %llu", (unsigned long long)qv->qv_usage);
+
+	if (qv->qv_expiretime == QUOTA_NOTIME) {
+		printf(" -");
+	} else {
+		printf(" %lld", (long long)qv->qv_expiretime);
+	}
+
+	if (qv->qv_grace == QUOTA_NOTIME) {
+		printf(" -");
+	} else {
+		printf(" %lld", (long long)qv->qv_grace);
+	}
+}
+
+static void
+exportquotas(void)
+{
+	int idtype;
+	id_t id;
+	struct fileusage *fup;
+
+	/* header */
+	printf("@format netbsd-quota-dump v1\n");
+	printf("# idtype id objtype   hard soft usage expire grace\n");
 
 	for (idtype = 0; idtype < REPQUOTA_NUMIDTYPES; idtype++) {
 		if (valid[idtype] == 0)
 			continue;
-		datas = prop_array_create();
-		if (datas == NULL)
-			errx(1, "can't allocate proplist");
-		valuesp[QUOTA_LIMIT_BLOCK] =
-		    &defaultqv[idtype][QUOTA_LIMIT_BLOCK].qv_hardlimit;
-		valuesp[QUOTA_LIMIT_FILE] =
-		    &defaultqv[idtype][QUOTA_LIMIT_FILE].qv_hardlimit;
-		data = quota64toprop(0, 1, valuesp,
-		    ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
-		    ufs_quota_limit_names, QUOTA_NLIMITS);
-		if (data == NULL)
-			err(1, "quota64toprop(default)");
-		if (!prop_array_add_and_rel(datas, data))
-			err(1, "prop_array_add(data)");
+
+		printf("%s default blocks  ", repquota_idtype_names[idtype]);
+		exportquotaval(&defaultqv[idtype][QUOTA_OBJTYPE_BLOCKS]);
+		printf("\n");
+			
+		printf("%s default files  ", repquota_idtype_names[idtype]);
+		exportquotaval(&defaultqv[idtype][QUOTA_OBJTYPE_FILES]);
+		printf("\n");
 
 		for (id = 0; id <= highid[idtype]; id++) {
 			fup = qremove(id, idtype);
 			if (fup == 0)
 				continue;
-			valuesp[QUOTA_LIMIT_BLOCK] =
-			    &fup->fu_qv[QUOTA_LIMIT_BLOCK].qv_hardlimit;
-			valuesp[QUOTA_LIMIT_FILE] =
-			    &fup->fu_qv[QUOTA_LIMIT_FILE].qv_hardlimit;
-			data = quota64toprop(id, 0, valuesp,
-			    ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
-			    ufs_quota_limit_names, QUOTA_NLIMITS);
-			if (data == NULL)
-				err(1, "quota64toprop(id)");
-			if (!prop_array_add_and_rel(datas, data))
-				err(1, "prop_array_add(data)");
+
+			printf("%s %u blocks  ", repquota_idtype_names[idtype],
+			       id);
+			exportquotaval(&fup->fu_qv[QUOTA_OBJTYPE_BLOCKS]);
+			printf("\n");
+
+			printf("%s %u files  ", repquota_idtype_names[idtype],
+			       id);
+			exportquotaval(&fup->fu_qv[QUOTA_OBJTYPE_FILES]);
+			printf("\n");
+
 			free(fup);
 		}
-
-		if (!quota_prop_add_command(cmds, "set",
-		    ufs_quota_class_names[idtype], datas))
-			err(1, "prop_add_command");
 	}
-
-	if (!prop_dictionary_set(dict, "commands", cmds))
-		err(1, "prop_dictionary_set(command)");
-
-	printf("%s\n", prop_dictionary_externalize(dict));
-	return;
+	printf("@end\n");
 }
 
 /*
