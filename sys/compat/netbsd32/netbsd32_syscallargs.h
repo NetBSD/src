@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.97 2012/01/31 22:53:28 matt Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.98 2012/02/01 05:40:00 dholland Exp $ */
 
 /*
  * System call argument lists.
@@ -2303,12 +2303,6 @@ struct netbsd32___fhstat50_args {
 };
 check_syscall_args(netbsd32___fhstat50)
 
-struct netbsd32___quotactl50_args {
-	syscallarg(const netbsd32_charp) path;
-	syscallarg(netbsd32_voidp) pref;
-};
-check_syscall_args(netbsd32___quotactl50)
-
 struct netbsd32_pipe2_args {
 	syscallarg(netbsd32_intp) fildes;
 	syscallarg(int) flags;
@@ -3234,8 +3228,6 @@ int	netbsd32___wait450(struct lwp *, const struct netbsd32___wait450_args *, reg
 int	netbsd32___mknod50(struct lwp *, const struct netbsd32___mknod50_args *, register_t *);
 
 int	netbsd32___fhstat50(struct lwp *, const struct netbsd32___fhstat50_args *, register_t *);
-
-int	netbsd32___quotactl50(struct lwp *, const struct netbsd32___quotactl50_args *, register_t *);
 
 int	netbsd32_pipe2(struct lwp *, const struct netbsd32_pipe2_args *, register_t *);
 
