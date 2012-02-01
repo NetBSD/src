@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.71 2012/01/23 16:22:57 phx Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.72 2012/02/01 05:25:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.71 2012/01/23 16:22:57 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.72 2012/02/01 05:25:57 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -269,17 +269,27 @@ cpu_model_init(void)
 	oeacpufeat = 0;
 	
 	if ((vers >= IBMRS64II && vers <= IBM970GX) || vers == MPC620 ||
-		vers == IBMCELL || vers == IBMPOWER6P5)
-		oeacpufeat |= OEACPU_64 | OEACPU_64_BRIDGE | OEACPU_NOBAT;
+		vers == IBMCELL || vers == IBMPOWER6P5) {
+		oeacpufeat |= OEACPU_64;
+		oeacpufeat |= OEACPU_64_BRIDGE;
+		oeacpufeat |= OEACPU_NOBAT;
 	
-	else if (vers == MPC601)
+	} else if (vers == MPC601) {
 		oeacpufeat |= OEACPU_601;
 
-	else if (MPC745X_P(vers) && vers != MPC7450)
-		oeacpufeat |= OEACPU_XBSEN | OEACPU_HIGHBAT | OEACPU_HIGHSPRG;
-
-	else if (vers == IBM750FX || vers == IBM750GX)
+	} else if (MPC745X_P(vers) && vers != MPC7450) {
+		oeacpufeat |= OEACPU_HIGHSPRG;
+		oeacpufeat |= OEACPU_XBSEN;
 		oeacpufeat |= OEACPU_HIGHBAT;
+		/* Enable more and larger BAT registers */
+		register_t hid0 = mfspr(SPR_HID0);
+		hid0 |= HID0_XBSEN;
+		hid0 |= HID0_HIGH_BAT_EN;
+		mtspr(SPR_HID0, hid0);
+
+	} else if (vers == IBM750FX || vers == IBM750GX) {
+		oeacpufeat |= OEACPU_HIGHBAT;
+	}
 }
 
 void
@@ -525,11 +535,6 @@ cpu_setup(device_t self, struct cpu_info *ci)
 		/* Enable the 7450 branch caches */
 		hid0 |= HID0_SGE | HID0_BTIC;
 		hid0 |= HID0_LRSTK | HID0_FOLD | HID0_BHT;
-		/* Enable more and larger BAT registers */
-		if (oeacpufeat & OEACPU_XBSEN)
-			hid0 |= HID0_XBSEN;
-		if (oeacpufeat & OEACPU_HIGHBAT)
-			hid0 |= HID0_HIGH_BAT_EN;
 		/* Disable BTIC on 7450 Rev 2.0 or earlier */
 		if (vers == MPC7450 && (pvr & 0xFFFF) <= 0x0200)
 			hid0 &= ~HID0_BTIC;

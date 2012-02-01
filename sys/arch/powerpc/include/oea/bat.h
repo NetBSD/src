@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.14 2011/06/20 06:04:33 matt Exp $	*/
+/*	$NetBSD: bat.h,v 1.15 2012/02/01 05:25:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -126,6 +126,8 @@ struct bat {
 #define	BAT_BL_2G	0x0000fffc
 #define	BAT_BL_4G	0x0001fffc
 
+#define	BAT_BL_TO_SIZE(bl)	(((bl)+4) << 15)
+
 #define	BATU(va, len, v)						\
 	(((va) & BAT_EPI) | ((len) & BAT_BL) | ((v) & BAT_V))
 
@@ -196,7 +198,8 @@ struct bat {
 #define	BAT601_VALID_P(batl) \
 	((batl) & BAT601_V)
 
-#define	BAT_VA2IDX(va)	((va) >> ADDR_SR_SHFT)
+#define	BAT_VA2IDX(va)	((va) / (8*1024*1024))
+#define	BAT_IDX2VA(i)	((i) * (8*1024*1024))
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 void oea_batinit(paddr_t, ...);
