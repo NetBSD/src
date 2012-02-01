@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.32 2011/07/01 18:41:51 dyoung Exp $	*/
+/*	$NetBSD: adb.c,v 1.33 2012/02/01 02:02:07 matt Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.32 2011/07/01 18:41:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.33 2012/02/01 02:02:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -107,7 +107,7 @@ adbattach(device_t parent, device_t self, void *aux)
 	int totaladbs;
 	int adbindex, adbaddr, adb_node;
 
-	extern volatile u_char *Via1Base;
+	extern volatile uint8_t *Via1Base;
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
