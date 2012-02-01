@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.249 2011/08/17 07:26:17 manu Exp $ */
+/* $NetBSD: syscalls.c,v 1.250 2012/02/01 05:34:41 dholland Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.249 2011/08/17 07:26:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.250 2012/02/01 05:34:41 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_modular.h"
@@ -541,7 +541,7 @@ const char *const syscallnames[] = {
 	/* 449 */	"__wait450",
 	/* 450 */	"__mknod50",
 	/* 451 */	"__fhstat50",
-	/* 452 */	"__quotactl50",
+	/* 452 */	"#452 (obsolete 5.99 quotactl)",
 	/* 453 */	"pipe2",
 	/* 454 */	"dup3",
 	/* 455 */	"kqueue1",
@@ -562,7 +562,7 @@ const char *const syscallnames[] = {
 	/* 470 */	"symlinkat",
 	/* 471 */	"unlinkat",
 	/* 472 */	"futimens",
-	/* 473 */	"# filler",
+	/* 473 */	"__quotactl",
 	/* 474 */	"# filler",
 	/* 475 */	"# filler",
 	/* 476 */	"# filler",
