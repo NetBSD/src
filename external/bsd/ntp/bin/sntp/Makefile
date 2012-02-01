@@ -1,17 +1,17 @@
-# $NetBSD: Makefile,v 1.2 2010/12/04 23:08:33 christos Exp $
+# $NetBSD: Makefile,v 1.3 2012/02/01 07:46:21 kardel Exp $
 
 USE_FORT?= yes	# network client/server
 
 PROG=	sntp
 MAN=	sntp.1
-SRCS=	crypto.c kod_management.c log.c main.c networking.c sntp-opts.c utilities.c
+SRCS=	crypto.c kod_management.c log.c main.c networking.c sntp-opts.c utilities.c sntp.c
 BINDIR=	/usr/sbin
 
 .include "${.CURDIR}/../Makefile.inc"
 
 DIST=${IDIST}/sntp
 
-CPPFLAGS+=-I${IDIST}/sntp -I${IDIST}/libopts
+CPPFLAGS+=-I${IDIST}/sntp -I${IDIST}/sntp/libopts
 
 .PATH: ${DIST}
 

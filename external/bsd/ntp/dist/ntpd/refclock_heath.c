@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_heath.c,v 1.2 2009/12/14 00:46:21 christos Exp $	*/
+/*	$NetBSD: refclock_heath.c,v 1.3 2012/02/01 07:46:22 kardel Exp $	*/
 
 /*
  * refclock_heath - clock driver for Heath GC-1000
@@ -223,7 +223,7 @@ heath_start(
 	/*
 	 * Open serial port
 	 */
-	sprintf(device, DEVICE, unit);
+	snprintf(device, sizeof(device), DEVICE, unit);
 	if (!(fd = refclock_open(device, speed[peer->ttl & 0x3],
 	    LDISC_REMOTE)))
 		return (0);
@@ -233,7 +233,8 @@ heath_start(
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
-		(void) close(fd);
+		close(fd);
+		pp->io.fd = -1;
 		return (0);
 	}
 
@@ -243,7 +244,7 @@ heath_start(
 	peer->precision = PRECISION;
 	peer->burst = NSTAGE;
 	pp->clockdesc = DESCRIPTION;
-	memcpy((char *)&pp->refid, REFID, 4);
+	memcpy(&pp->refid, REFID, 4);
 	return (1);
 }
 
@@ -260,7 +261,8 @@ heath_shutdown(
 	struct refclockproc *pp;
 
 	pp = peer->procptr;
-	io_closeclock(&pp->io);
+	if (-1 != pp->io.fd)
+		io_closeclock(&pp->io);
 }
 
 
