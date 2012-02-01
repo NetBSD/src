@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.178 2012/02/01 05:40:00 dholland Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.179 2012/02/01 05:43:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.178 2012/02/01 05:40:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.179 2012/02/01 05:43:54 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1204,7 +1204,7 @@ netbsd32___quotactl(struct lwp *l, const struct netbsd32___quotactl_args *uap, r
 	args.qc_op = args32.qc_op;
 	switch (args.qc_op) {
 	    case QUOTACTL_STAT:
-		args.u.stat.qc_ret = NETBSD32PTR64(args32.u.stat.qc_ret);
+		args.u.stat.qc_info = NETBSD32PTR64(args32.u.stat.qc_info);
 		break;
 	    case QUOTACTL_IDTYPESTAT:
 		args.u.idtypestat.qc_idtype = args32.u.idtypestat.qc_idtype;
@@ -1219,7 +1219,7 @@ netbsd32___quotactl(struct lwp *l, const struct netbsd32___quotactl_args *uap, r
 		break;
 	    case QUOTACTL_GET:
 		args.u.get.qc_key = NETBSD32PTR64(args32.u.get.qc_key);
-		args.u.get.qc_ret = NETBSD32PTR64(args32.u.get.qc_ret);
+		args.u.get.qc_val = NETBSD32PTR64(args32.u.get.qc_val);
 		break;
 	    case QUOTACTL_PUT:
 		args.u.put.qc_key = NETBSD32PTR64(args32.u.put.qc_key);

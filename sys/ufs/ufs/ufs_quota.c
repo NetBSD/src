@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.107 2012/02/01 05:34:43 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.108 2012/02/01 05:43:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.107 2012/02/01 05:34:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.108 2012/02/01 05:43:54 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -227,32 +227,32 @@ quota_handle_cmd_stat(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	struct quotastat *ret;
+	struct quotastat *info;
 
 	KASSERT(args->qc_op == QUOTACTL_STAT);
-	ret = args->u.stat.qc_ret;
+	info = args->u.stat.qc_info;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 
 #ifdef QUOTA
 	if (ump->um_flags & UFS_QUOTA) {
-		strcpy(ret->qs_implname, "ufs/ffs quota v1");
-		ret->qs_numidtypes = MAXQUOTAS;
+		strcpy(info->qs_implname, "ufs/ffs quota v1");
+		info->qs_numidtypes = MAXQUOTAS;
 		/* XXX no define for this */
-		ret->qs_numobjtypes = 2;
-		ret->qs_restrictions = 0;
-		ret->qs_restrictions |= QUOTA_RESTRICT_NEEDSQUOTACHECK;
-		ret->qs_restrictions |= QUOTA_RESTRICT_UNIFORMGRACE;
-		ret->qs_restrictions |= QUOTA_RESTRICT_32BIT;
+		info->qs_numobjtypes = 2;
+		info->qs_restrictions = 0;
+		info->qs_restrictions |= QUOTA_RESTRICT_NEEDSQUOTACHECK;
+		info->qs_restrictions |= QUOTA_RESTRICT_UNIFORMGRACE;
+		info->qs_restrictions |= QUOTA_RESTRICT_32BIT;
 	} else
 #endif
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
-		strcpy(ret->qs_implname, "ufs/ffs quota v2");
-		ret->qs_numidtypes = MAXQUOTAS;
-		ret->qs_numobjtypes = N_QL;
-		ret->qs_restrictions = 0;
+		strcpy(info->qs_implname, "ufs/ffs quota v2");
+		info->qs_numidtypes = MAXQUOTAS;
+		info->qs_numobjtypes = N_QL;
+		info->qs_restrictions = 0;
 	} else
 #endif
 		return EOPNOTSUPP;
@@ -347,11 +347,11 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
 	const struct quotakey *qk;
-	struct quotaval *ret;
+	struct quotaval *qv;
 
 	KASSERT(args->qc_op == QUOTACTL_GET);
 	qk = args->u.get.qc_key;
-	ret = args->u.get.qc_ret;
+	qv = args->u.get.qc_val;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
@@ -361,12 +361,12 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 		return error;
 #ifdef QUOTA
 	if (ump->um_flags & UFS_QUOTA) {
-		error = quota1_handle_cmd_get(ump, qk, ret);
+		error = quota1_handle_cmd_get(ump, qk, qv);
 	} else
 #endif
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
-		error = quota2_handle_cmd_get(ump, qk, ret);
+		error = quota2_handle_cmd_get(ump, qk, qv);
 	} else
 #endif
 		panic("quota_handle_cmd_get: no support ?");
