@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.31 2012/02/01 05:25:58 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.32 2012/02/01 09:54:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.31 2012/02/01 05:25:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.32 2012/02/01 09:54:03 matt Exp $");
 
 #define _POWERPC_BUS_SPACE_PRIVATE
 
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.31 2012/02/01 05:25:58 matt Exp $");
 #include <sys/device.h>
 #include <sys/endian.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <uvm/uvm.h>

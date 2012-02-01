@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.7 2012/01/14 19:35:59 phx Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.8 2012/02/01 09:54:03 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,10 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.7 2012/01/14 19:35:59 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.8 2012/02/01 09:54:03 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
@@ -55,7 +55,7 @@ setup_openpic(void *addr, int passthrough)
 	u_int x;
 
 	openpic_base = (void *)addr;
-	opicops = malloc(sizeof(struct openpic_ops), M_DEVBUF, M_NOWAIT);
+	opicops = kmem_alloc(sizeof(*opicops), KM_SLEEP);
 	KASSERT(opicops != NULL);
 	pic = &opicops->pic;
 
