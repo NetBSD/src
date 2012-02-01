@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.3 2012/02/01 07:46:22 kardel Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.4 2012/02/01 20:48:01 kardel Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers
@@ -272,9 +272,9 @@ struct	refclock refclock_jjy = {
 
 static  struct
 {
-	char	commandNumber ;
-	char	*commandLog ;
-	char	*command ;
+	const char	commandNumber ;
+	const char	*commandLog ;
+	const char	*command ;
 	int	commandLength ;
 } tristate_jjy01_command_sequence[] =
 {
@@ -653,7 +653,7 @@ static int
 jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 {
 
-	static	char	*sFunctionName = "jjy_receive_tristate_jjy01" ;
+	static	const char	*sFunctionName = "jjy_receive_tristate_jjy01" ;
 
 	struct jjyunit	    *up ;
 	struct refclockproc *pp ;
@@ -667,7 +667,7 @@ jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 
 	char	sLogText [ MAX_LOGTEXT ], sReplyText  [ MAX_LOGTEXT ] ;
 
-	char	*pCmd ;
+	const char *pCmd ;
 	int 	iCmdLen ;
 
 	/*
@@ -841,7 +841,7 @@ jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 static int
 jjy_receive_cdex_jst2000 ( struct recvbuf *rbufp )
 {
-	static	char	*sFunctionName = "jjy_receive_cdex_jst2000" ;
+	static	const char	*sFunctionName = "jjy_receive_cdex_jst2000" ;
 
 	struct jjyunit      *up ;
 	struct refclockproc *pp ;
@@ -919,7 +919,7 @@ jjy_receive_cdex_jst2000 ( struct recvbuf *rbufp )
 static int
 jjy_receive_echokeisokuki_lt2000 ( struct recvbuf *rbufp )
 {
-	static	char	*sFunctionName = "jjy_receive_echokeisokuki_lt2000" ;
+	static	const char	*sFunctionName = "jjy_receive_echokeisokuki_lt2000" ;
 
 	struct jjyunit      *up ;
 	struct refclockproc *pp ;
@@ -1077,7 +1077,7 @@ static int
 jjy_receive_citizentic_jjy200 ( struct recvbuf *rbufp )
 {
 
-	static char *sFunctionName = "jjy_receive_citizentic_jjy200" ;
+	static const char *sFunctionName = "jjy_receive_citizentic_jjy200" ;
 
 	struct jjyunit		*up ;
 	struct refclockproc	*pp ;
@@ -1229,12 +1229,12 @@ static void
 jjy_poll_tristate_jjy01  ( int unit, struct peer *peer )
 {
 
-	static char *sFunctionName = "jjy_poll_tristate_jjy01" ;
+	static const char *sFunctionName = "jjy_poll_tristate_jjy01" ;
 
 	struct jjyunit	    *up;
 	struct refclockproc *pp;
 
-	char	*pCmd ;
+	const char *pCmd ;
 	int 	iCmdLen ;
 
 	pp = peer->procptr;
@@ -1350,7 +1350,7 @@ static void
 printableString ( char *sOutput, int iOutputLen, char *sInput, int iInputLen )
 {
 
-	char	*printableControlChar[] = {
+	const char	*printableControlChar[] = {
 			"<NUL>", "<SOH>", "<STX>", "<ETX>",
 			"<EOT>", "<ENQ>", "<ACK>", "<BEL>",
 			"<BS>" , "<HT>" , "<LF>" , "<VT>" ,
@@ -1364,7 +1364,7 @@ printableString ( char *sOutput, int iOutputLen, char *sInput, int iInputLen )
 	int	i, j, n ;
 
 	for ( i = j = 0 ; i < iInputLen && j < iOutputLen ; i ++ ) {
-		if ( isprint( sInput[i] ) ) {
+		if ( isprint( (int)sInput[i] ) ) {
 			n = 1 ;
 			if ( j + 1 >= iOutputLen )
 				break ;

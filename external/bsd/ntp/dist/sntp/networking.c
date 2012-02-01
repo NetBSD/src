@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.c,v 1.5 2012/02/01 07:46:23 kardel Exp $	*/
+/*	$NetBSD: networking.c,v 1.6 2012/02/01 20:48:01 kardel Exp $	*/
 
 #include <config.h>
 #include "networking.h"
@@ -20,7 +20,7 @@ resolve_hosts (
 		int pref_family
 		) 
 {
-	register unsigned int a;
+	register int a;
 	unsigned int resc;
 	struct addrinfo **tres;
 
@@ -197,7 +197,7 @@ recv_bcst_data (
 		}
 		mdevadr.imr_multiaddr.s_addr = NSRCADR(sas); 
 		mdevadr.imr_interface.s_addr = htonl(INADDR_ANY);
-		if (mdevadr.imr_multiaddr.s_addr == -1) {
+		if (mdevadr.imr_multiaddr.s_addr == ~(unsigned)0) {
 			if (ENABLED_OPT(NORMALVERBOSE)) {
 				printf("sntp recv_bcst_data: %s:%d is not a broad-/multicast address, aborting...\n",
 				       stoa(sas), SRCPORT(sas));
@@ -293,7 +293,7 @@ process_pkt (
 	int pkt_len,
 	int mode,
 	struct pkt *spkt,
-	char * func_name
+	const char * func_name
 	)
 {
 	unsigned int key_id = 0;
@@ -313,7 +313,7 @@ process_pkt (
 	 * extension field is present, so we subtract the length of the
 	 * field and go around again.
 	 */
-	if (pkt_len < LEN_PKT_NOMAC || (pkt_len & 3) != 0) {
+	if (pkt_len < (int)LEN_PKT_NOMAC || (pkt_len & 3) != 0) {
 unusable:
 		if (ENABLED_OPT(NORMALVERBOSE))
 			printf("sntp %s: Funny packet length: %i. Discarding package.\n", func_name, pkt_len);

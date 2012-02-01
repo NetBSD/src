@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.5 2012/02/01 07:46:22 kardel Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.6 2012/02/01 20:48:01 kardel Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -700,11 +700,11 @@ process_control(
 	 * If the length is less than required for the header, or
 	 * it is a response or a fragment, ignore this.
 	 */
-	if (rbufp->recv_length < CTL_HEADER_LEN
+	if (rbufp->recv_length < (int)CTL_HEADER_LEN
 	    || pkt->r_m_e_op & (CTL_RESPONSE|CTL_MORE|CTL_ERROR)
 	    || pkt->offset != 0) {
 		DPRINTF(1, ("invalid format in control packet\n"));
-		if (rbufp->recv_length < CTL_HEADER_LEN)
+		if (rbufp->recv_length < (int)CTL_HEADER_LEN)
 			numctltooshort++;
 		if (pkt->r_m_e_op & CTL_RESPONSE)
 			numctlinputresp++;
@@ -1082,7 +1082,7 @@ ctl_putdbl(
 	while (*cq != '\0')
 		*cp++ = *cq++;
 	*cp++ = '=';
-	NTP_INSIST((cp - buffer) < sizeof(buffer));
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "%.3f", ts);
 	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)(cp - buffer), 0);
@@ -1107,7 +1107,7 @@ ctl_putuint(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	NTP_INSIST((cp - buffer) < sizeof(buffer));
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "%lu", uval);
 	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
@@ -1138,7 +1138,7 @@ ctl_putfs(
 	tm = gmtime(&fstamp);
 	if (NULL ==  tm)
 		return;
-	NTP_INSIST((cp - buffer) < sizeof(buffer));
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer),
 		 "%04d%02d%02d%02d%02d", tm->tm_year + 1900,
 		 tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
@@ -1167,7 +1167,7 @@ ctl_puthex(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	NTP_INSIST((cp - buffer) < sizeof(buffer));
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "0x%lx", uval);
 	cp += strlen(cp);
 	ctl_putdata(buffer,(unsigned)( cp - buffer ), 0);
@@ -1193,7 +1193,7 @@ ctl_putint(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	NTP_INSIST((cp - buffer) < sizeof(buffer));
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "%ld", ival);
 	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
@@ -1219,7 +1219,7 @@ ctl_putts(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	NTP_INSIST((cp - buffer) < sizeof(buffer));
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "0x%08lx.%08lx",
 		 ts->l_ui & 0xffffffffUL, ts->l_uf & 0xffffffffUL);
 	cp += strlen(cp);
@@ -1251,7 +1251,7 @@ ctl_putadr(
 		cq = numtoa(addr32);
 	else
 		cq = stoa(addr);
-	NTP_INSIST((cp - buffer) < sizeof(buffer));
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "%s", cq);
 	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)(cp - buffer), 0);
@@ -1288,7 +1288,7 @@ ctl_putrefid(
 	iplim = iptr + sizeof(refid);
 	for ( ; optr < oplim && iptr < iplim && '\0' != *iptr; 
 	     iptr++, optr++)
-		if (isprint(*iptr))
+		if (isprint((int)*iptr))
 			*optr = *iptr;
 		else
 			*optr = '.';
@@ -1321,7 +1321,7 @@ ctl_putarray(
 		if (i == 0)
 			i = NTP_SHIFT;
 		i--;
-		NTP_INSIST((cp - buffer) < sizeof(buffer));
+		NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
 		snprintf(cp, sizeof(buffer) - (cp - buffer),
 			 " %.2f", arr[i] * 1e3);
 		cp += strlen(cp);
