@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.49 2012/02/01 05:25:58 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.50 2012/02/01 09:51:00 matt Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49 2012/02/01 05:25:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.50 2012/02/01 09:51:00 matt Exp $");
 
 #define USERACC
 
@@ -343,6 +343,9 @@ db_show_bat(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	u_int i;
 	u_int maxbat = (oeacpufeat & OEACPU_HIGHBAT) ? 8 : 4;
 
+	if (oeacpufeat & OEACPU_NOBAT)
+		return;
+
 	cpuvers = mfpvr() >> 16;
 
 	ibat[0].batu = mfspr(SPR_IBAT0U);
@@ -406,26 +409,27 @@ static void
 db_show_mmu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	paddr_t sdr1;
-#if !defined(PPC_OEA64) && !defined(PPC_OEA64_BRIDGE)
-	register_t sr;
-	vaddr_t saddr;
-	int i;
-#endif
 
 	__asm volatile ("mfsdr1 %0" : "=r"(sdr1));
 	db_printf("sdr1\t\t0x%08lx\n", sdr1);
 
 #if defined(PPC_OEA64) || defined(PPC_OEA64_BRIDGE)
-	__asm volatile ("mfasr %0" : "=r"(sdr1));
-	db_printf("asr\t\t0x%08lx\n", sdr1);
-#else
-	saddr = 0;
-	for (i = 0; i<= 0xf; i++) {
-		if ((i & 3) == 0)
-			db_printf("sr%d-%d\t\t", i, i+3);
-		__asm volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(saddr));
-		db_printf("0x%08lx   %c", sr, (i&3) == 3 ? '\n' : ' ');
-		saddr += 1 << ADDR_SR_SHFT;
+	if (oeacpufeat & (OEACPU_64|OEACPU_64_BRIDGE)) {
+		__asm volatile ("mfasr %0" : "=r"(sdr1));
+		db_printf("asr\t\t0x%08lx\n", sdr1);
+	}
+#endif
+#if defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE)
+	if ((oeacpufeat & OEACPU_64) == 0) {
+		vaddr_t saddr = 0;
+		for (u_int i = 0; i <= 0xf; i++) {
+			register_t sr;
+			if ((i & 3) == 0)
+				db_printf("sr%d-%d\t\t", i, i+3);
+			__asm volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(saddr));
+			db_printf("0x%08lx   %c", sr, (i&3) == 3 ? '\n' : ' ');
+			saddr += 1 << ADDR_SR_SHFT;
+		}
 	}
 #endif
 }
