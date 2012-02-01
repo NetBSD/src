@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.2 2009/12/14 00:41:03 christos Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.3 2012/02/01 07:46:22 kardel Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -10,6 +10,9 @@
 # include <config.h>
 #endif
 
+#ifdef __NetBSD__
+#include <util.h>
+#endif
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_unixtime.h"
@@ -20,9 +23,6 @@
 
 #include <signal.h>
 #include <setjmp.h>
-#ifdef __NetBSD__
-#include <util.h>
-#endif
 
 #if defined(VMS) && defined(VMS_LOCALUNIT)	/*wjm*/
 #include "ntp_refclock.h"
@@ -341,7 +341,7 @@ local_clock(
 		switch (state) {
 
 		/*
-		 * In SYNC state we ignore the first outlyer amd switch
+		 * In SYNC state we ignore the first outlyer and switch
 		 * to SPIK state.
 		 */
 		case EVNT_SYNC:

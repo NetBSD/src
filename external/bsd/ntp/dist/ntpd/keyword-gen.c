@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword-gen.c,v 1.2 2010/11/29 00:39:41 christos Exp $	*/
+/*	$NetBSD: keyword-gen.c,v 1.3 2012/02/01 07:46:22 kardel Exp $	*/
 
 /*
  * keyword-gen.c -- generate keyword scanner finite state machine and
@@ -32,6 +32,7 @@ struct key_tok {
 };
 
 struct key_tok ntp_keywords[] = {
+{ "...",		T_Ellipsis,		FOLLBY_TOKEN },
 { "automax",		T_Automax,		FOLLBY_TOKEN },
 { "broadcast",		T_Broadcast,		FOLLBY_STRING },
 { "broadcastclient",	T_Broadcastclient,	FOLLBY_TOKEN },

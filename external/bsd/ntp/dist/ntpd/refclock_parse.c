@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.4 2011/06/22 03:59:49 mrg Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.5 2012/02/01 07:46:22 kardel Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -191,7 +191,7 @@
 #include "ieee754io.h"
 #include "recvbuff.h"
 
-static char rcsid[] = "refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A";
+static char rcsid[] = "refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A+POWERUPTRUST";
 
 /**===========================================================================
  ** external interface to ntp mechanism
@@ -255,12 +255,11 @@ typedef struct bind
 #define PARSE_GETTIMECODE(_X_, _DCT_)	(*(_X_)->binding->bd_timecode)(_X_, _DCT_)
 
 /*
- * io modes
+ * special handling flags
  */
-#define PARSE_F_PPSPPS		0x0001 /* use loopfilter PPS code (CIOGETEV) */
-#define PARSE_F_PPSONSECOND	0x0002 /* PPS pulses are on second */
-
-
+#define PARSE_F_PPSONSECOND	0x00000001 /* PPS pulses are on second */
+#define PARSE_F_POWERUPTRUST	0x00000100 /* POWERUP state ist trusted for */
+                                           /* trusttime after SYNC was seen */
 /**===========================================================================
  ** error message regression handling
  **
@@ -681,6 +680,7 @@ static poll_info_t wsdcf_pollinfo = { WS_POLLRATE, WS_POLLCMD, WS_CMDSIZE };
  */
 static	int	rawdcf_init_1	(struct parseunit *);
 #define RAWDCFDTRSET_DESCRIPTION	"RAW DCF77 CODE (DTR SET/RTS CLR)"
+#define RAWDCFDTRSET75_DESCRIPTION	"RAW DCF77 CODE (DTR SET/RTS CLR @ 75 baud)"
 #define RAWDCFDTRSET_INIT 		rawdcf_init_1
 
 /*
@@ -689,6 +689,7 @@ static	int	rawdcf_init_1	(struct parseunit *);
  */
 static	int	rawdcf_init_2	(struct parseunit *);
 #define RAWDCFDTRCLRRTSSET_DESCRIPTION	"RAW DCF77 CODE (DTR CLR/RTS SET)"
+#define RAWDCFDTRCLRRTSSET75_DESCRIPTION "RAW DCF77 CODE (DTR CLR/RTS SET @ 75 baud)"
 #define RAWDCFDTRCLRRTSSET_INIT	rawdcf_init_2
 
 /*
@@ -859,7 +860,7 @@ static poll_info_t rcc8000_pollinfo = { RCC_POLLRATE, RCC_POLLCMD, RCC_CMDSIZE }
 
 static struct parse_clockinfo
 {
-	u_long  cl_flags;		/* operation flags (io modes) */
+	u_long  cl_flags;		/* operation flags (PPS interpretation, trust handling) */
   void  (*cl_poll)    (struct parseunit *);			/* active poll routine */
   int   (*cl_init)    (struct parseunit *);			/* active poll init routine */
   void  (*cl_event)   (struct parseunit *, int);		/* special event handling (e.g. reset clock) */
@@ -1353,6 +1354,99 @@ static struct parse_clockinfo
 		RAWDCF_SAMPLES,
 		RAWDCF_KEEP
 	},
+	{				/* mode 20, like mode 14 but driven by 75 baud */
+		RAWDCF_FLAGS,
+		NO_POLL,
+		RAWDCFDTRSET_INIT,
+		NO_EVENT,
+		NO_END,
+		NO_MESSAGE,
+		NO_LCLDATA,
+		RAWDCF_ROOTDELAY,
+		RAWDCF_BASEDELAY,
+		DCF_A_ID,
+		RAWDCFDTRSET75_DESCRIPTION,
+		RAWDCF_FORMAT,
+		DCF_TYPE,
+		RAWDCF_MAXUNSYNC,
+		B75,
+		RAWDCF_CFLAG,
+		RAWDCF_IFLAG,
+		RAWDCF_OFLAG,
+		RAWDCF_LFLAG,
+		RAWDCF_SAMPLES,
+		RAWDCF_KEEP
+	},
+	{				/* mode 21, like mode 16 but driven by 75 baud
+					 - RAWDCF RTS set, DTR clr */
+		RAWDCF_FLAGS,
+		NO_POLL,
+		RAWDCFDTRCLRRTSSET_INIT,
+		NO_EVENT,
+		NO_END,
+		NO_MESSAGE,
+		NO_LCLDATA,
+		RAWDCF_ROOTDELAY,
+		RAWDCF_BASEDELAY,
+		DCF_A_ID,
+		RAWDCFDTRCLRRTSSET75_DESCRIPTION,
+		RAWDCF_FORMAT,
+		DCF_TYPE,
+		RAWDCF_MAXUNSYNC,
+		B75,
+		RAWDCF_CFLAG,
+		RAWDCF_IFLAG,
+		RAWDCF_OFLAG,
+		RAWDCF_LFLAG,
+		RAWDCF_SAMPLES,
+		RAWDCF_KEEP
+	},
+	{				/* mode 22 - like 2 with POWERUP trust */
+		MBG_FLAGS | PARSE_F_POWERUPTRUST,
+		NO_POLL,
+		NO_INIT,
+		NO_EVENT,
+		NO_END,
+		NO_MESSAGE,
+		NO_LCLDATA,
+		DCFUA31_ROOTDELAY,
+		DCFUA31_BASEDELAY,
+		DCF_A_ID,
+		DCFUA31_DESCRIPTION,
+		DCFUA31_FORMAT,
+		DCF_TYPE,
+		DCFUA31_MAXUNSYNC,
+		DCFUA31_SPEED,
+		DCFUA31_CFLAG,
+		DCFUA31_IFLAG,
+		DCFUA31_OFLAG,
+		DCFUA31_LFLAG,
+		DCFUA31_SAMPLES,
+		DCFUA31_KEEP
+	},
+	{				/* mode 23 - like 7 with POWERUP trust */
+		MBG_FLAGS | PARSE_F_POWERUPTRUST,
+		GPS16X_POLL,
+		GPS16X_INIT,
+		NO_EVENT,
+		GPS16X_END,
+		GPS16X_MESSAGE,
+		GPS16X_DATA,
+		GPS16X_ROOTDELAY,
+		GPS16X_BASEDELAY,
+		GPS16X_ID,
+		GPS16X_DESCRIPTION,
+		GPS16X_FORMAT,
+		GPS_TYPE,
+		GPS16X_MAXUNSYNC,
+		GPS16X_SPEED,
+		GPS16X_CFLAG,
+		GPS16X_IFLAG,
+		GPS16X_OFLAG,
+		GPS16X_LFLAG,
+		GPS16X_SAMPLES,
+		GPS16X_KEEP
+	},
 };
 
 static int ncltypes = sizeof(parse_clockinfo) / sizeof(struct parse_clockinfo);
@@ -1476,10 +1570,10 @@ mkreadable(
 	)
 {
 	char *b    = buffer;
-	char *endb = (char *)0;
+	char *endb = NULL;
 
 	if (blen < 4)
-		return (char *)0;		/* don't bother with mini buffers */
+		return NULL;		/* don't bother with mini buffers */
 
 	endb = buffer + blen - 4;
 
@@ -1517,7 +1611,7 @@ mkreadable(
 				}
 				else
 				{
-					sprintf(buffer, "\\x%02x", *src++);
+					snprintf(buffer, blen, "\\x%02x", *src++);
 					blen   -= 4;
 					buffer += 4;
 				}
@@ -3724,7 +3818,7 @@ parse_process(
 		 * for PARSE Meinberg DCF77 receivers the lost synchronisation
 		 * is true as it is the powerup state and the time is taken
 		 * from a crude real time clock chip
-		 * for the PZF series this is only partly true, as
+		 * for the PZF/GPS series this is only partly true, as
 		 * PARSE_POWERUP only means that the pseudo random
 		 * phase shift sequence cannot be found. this is only
 		 * bad, if we have never seen the clock in the SYNC
@@ -3742,11 +3836,14 @@ parse_process(
 		 * interval. fortunately powerdowns last usually longer than 64
 		 * seconds and the receiver is at least 2 minutes in the
 		 * POWERUP or NOSYNC state before switching to SYNC
+		 * for GPS receivers this can mean antenna problems and other causes.
+		 * the additional grace period can be enables by a clock
+		 * mode having the PARSE_F_POWERUPTRUST flag in cl_flag set.
 		 */
 		parse_event(parse, CEVNT_FAULT);
 		NLOG(NLOG_CLOCKSTATUS)
 			ERR(ERR_BADSTATUS)
-			msyslog(LOG_ERR,"PARSE receiver #%d: NOT SYNCHRONIZED",
+			msyslog(LOG_ERR,"PARSE receiver #%d: NOT SYNCHRONIZED/RECEIVER PROBLEMS",
 				CLK_UNIT(parse->peer));
 	}
 	else
@@ -3952,13 +4049,14 @@ parse_process(
 	 * we have seen the clock in sync at least once
 	 * after the last time we didn't see an expected data telegram
 	 * at startup being not in sync is also bad just like
-	 * POWERUP state
+	 * POWERUP state unless PARSE_F_POWERUPTRUST is set 
 	 * see the clock states section above for more reasoning
 	 */
-	if (((current_time - parse->lastsync) > parse->maxunsync) ||
-	    (parse->lastsync < parse->lastmissed) ||
+	if (((current_time - parse->lastsync) > parse->maxunsync)           ||
+	    (parse->lastsync < parse->lastmissed)                           ||
 	    ((parse->lastsync == 0) && !PARSE_SYNC(parsetime->parse_state)) ||
-	    PARSE_POWERUP(parsetime->parse_state))
+	    (((parse->parse_type->cl_flags & PARSE_F_POWERUPTRUST) == 0) &&
+	     PARSE_POWERUP(parsetime->parse_state)))
 	{
 		parse->generic->leap = LEAP_NOTINSYNC;
 		parse->lastsync = 0;	/* wait for full sync again */
