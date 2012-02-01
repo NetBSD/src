@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.8 2012/02/01 20:48:01 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.9 2012/02/01 21:21:25 kardel Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -3801,7 +3801,9 @@ findclosestinterface(
 	sockaddr_u	addr_dist;
 	sockaddr_u	min_dist;
 
+	
 	winner = NULL;
+	min_dist = *addr;
 	
 	for (ep = ep_list; ep != NULL; ep = ep->elink) {
 		if (ep->ignore_packets ||
