@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.57 2012/02/01 10:04:55 he Exp $
+#	$NetBSD: WALNUT,v 1.58 2012/02/01 21:47:17 matt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -75,6 +75,7 @@ file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
 file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
+file-system 	TMPFS		# efficient memory file system
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
