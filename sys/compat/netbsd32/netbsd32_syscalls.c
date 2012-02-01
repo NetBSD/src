@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.96 2012/01/31 22:53:28 matt Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.97 2012/02/01 05:40:00 dholland Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.96 2012/01/31 22:53:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.97 2012/02/01 05:40:00 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -563,7 +563,7 @@ const char *const netbsd32_syscallnames[] = {
 	/* 449 */	"netbsd32___wait450",
 	/* 450 */	"netbsd32___mknod50",
 	/* 451 */	"netbsd32___fhstat50",
-	/* 452 */	"netbsd32___quotactl50",
+	/* 452 */	"#452 (obsolete 5.99 quotactl)",
 	/* 453 */	"netbsd32_pipe2",
 	/* 454 */	"netbsd32_dup3",
 	/* 455 */	"netbsd32_kqueue1",

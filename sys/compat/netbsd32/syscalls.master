@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.90 2012/02/01 05:34:40 dholland Exp $
+	$NetBSD: syscalls.master,v 1.91 2012/02/01 05:40:01 dholland Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1037,6 +1037,5 @@
 			    int flag); }
 472	STD  		{ int|netbsd32||futimens(int fd, \
 			    const netbsd32_timespecp_t tptr); }
-; XXX notyet
-;473	STD		{ int|sys||__quotactl(const netbsd32_charp path, \
-;			    netbsd32_quotactlargsp_t args); }
+473	STD		{ int|netbsd32||__quotactl(const netbsd32_charp path, \
+			    netbsd32_voidp args); }
