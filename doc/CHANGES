@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1663 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1664 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1231,3 +1231,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	kernel: Add a new library, libquota, for control of and access to
 		disk quotas, extending the file-system-independent interface
 		added with the bouyer-quota2 branch. [dholland 20120201]
+	mac68k: Add timecounter support to the CSI Hurdler Centronics
+		Parallel Interface cpi(4) driver. [hauke 20120201]
