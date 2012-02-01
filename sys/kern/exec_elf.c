@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.33 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.34 2012/02/01 21:49:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.33 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.34 2012/02/01 21:49:52 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -65,7 +65,6 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.33 2011/11/19 22:51:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
@@ -242,7 +241,7 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 			a++;
 		}
 
-		free(ap, M_TEMP);
+		kmem_free(ap, sizeof(*ap));
 		pack->ep_emul_arg = NULL;
 	}
 
@@ -782,7 +781,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		}
 	}
 	if (interp || (epp->ep_flags & EXEC_FORCEAUX) != 0) {
-		ap = malloc(sizeof(struct elf_args), M_TEMP, M_WAITOK);
+		ap = kmem_alloc(sizeof(*ap), KM_SLEEP);
 		ap->arg_interp = (vaddr_t)NULL;
 	}
 
@@ -829,7 +828,7 @@ bad:
 	if (interp)
 		PNBUF_PUT(interp);
 	if (ap)
-		free(ap, M_TEMP);
+		kmem_free(ap, sizeof(*ap));
 	kmem_free(ph, phsize);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return error;
