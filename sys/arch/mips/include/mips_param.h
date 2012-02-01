@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.32 2012/01/24 20:03:37 christos Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.33 2012/02/01 02:05:51 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -39,6 +39,9 @@
 #undef MACHINE
 #define MACHINE "mips"
 #endif
+
+#define ALIGNBYTES32		(sizeof(double) - 1)
+#define ALIGN32(p)		(((uintptr_t)(p) + ALIGNBYTES32) &~ALIGNBYTES32)
 
 /*
  * On mips, UPAGES is fixed by sys/arch/mips/mips/locore code
