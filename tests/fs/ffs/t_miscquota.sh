@@ -1,4 +1,4 @@
-# $NetBSD: t_miscquota.sh,v 1.4 2012/01/18 20:51:23 bouyer Exp $ 
+# $NetBSD: t_miscquota.sh,v 1.5 2012/02/01 05:12:45 dholland Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -82,7 +82,7 @@ quota_walk_list()
 		i=$((i + 1))
 	done
 	# do a repquota
-	atf_check -s exit:0 -o 'match:<integer>0x64000' \
+	atf_check -s exit:0 -o 'match:user 409600 blocks  *81920 20 0' \
 	    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -x -${expect} /mnt
 	rump_quota_shutdown
 }
