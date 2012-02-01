@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.115 2012/02/01 02:22:27 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.116 2012/02/01 23:43:49 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.115 2012/02/01 02:22:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.116 2012/02/01 23:43:49 para Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -167,8 +167,8 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 {
 	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
 
-	kmemsize = MIN(((((vsize_t)(end - start)) / 3) * 2),
-	    ((((vsize_t)uvmexp.npages) * PAGE_SIZE)));
+	kmemsize = MIN((((vsize_t)(end - start)) / 3),
+	    ((((vsize_t)uvmexp.npages) * PAGE_SIZE) / 2));
 	kmemsize = round_page(kmemsize);
 
 	/*
