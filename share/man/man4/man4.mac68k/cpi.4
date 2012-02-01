@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpi.4,v 1.5 2012/02/01 08:45:03 hauke Exp $
+.\"	$NetBSD: cpi.4,v 1.6 2012/02/01 09:37:29 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Hauke Fath.  All rights reserved.
 .\"
@@ -33,6 +33,7 @@
 .Cd "cpi* at nubus? flags 0x1"
 .\"
 .Sh DESCRIPTION
+The
 .Nm
 interface provides access to parallel printer ports.
 .\"
@@ -47,7 +48,7 @@ files:
 .Pp
 .Bl -tag -compact -width "bits 16-23:"
 .It bit 0 :
-use the CIO counters 1 and 2 as a 32 bit 
+use the CIO counters 1 and 2 as a 32 bit
 .Xr timecounter 9 .
 .El
 .\"
