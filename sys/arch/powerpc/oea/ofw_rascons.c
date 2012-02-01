@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.7 2012/02/01 05:25:57 matt Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.8 2012/02/01 09:54:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,32 +28,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.7 2012/02/01 05:25:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.8 2012/02/01 09:54:03 matt Exp $");
+
+#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
-#include <powerpc/oea/bat.h>
 
 #include <dev/ofw/openfirm.h>
 #include <uvm/uvm_extern.h>
 
-#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
-#include <dev/wsfont/wsfont.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wsfont/wsfont.h>
 
+#include <powerpc/oea/bat.h>
 #include <powerpc/oea/ofw_rasconsvar.h>
-#include "wsdisplay.h"
 
 /* we need a wsdisplay to do anything halfway useful */
 #if NWSDISPLAY > 0
