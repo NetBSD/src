@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2012/02/01 07:46:21 kardel Exp $
+# $NetBSD: Makefile,v 1.4 2012/02/01 21:22:19 kardel Exp $
 
 USE_FORT?= yes	# network client/server
 
@@ -8,6 +8,8 @@ SRCS=	crypto.c kod_management.c log.c main.c networking.c sntp-opts.c utilities.
 BINDIR=	/usr/sbin
 
 .include "${.CURDIR}/../Makefile.inc"
+
+WARNS=0
 
 DIST=${IDIST}/sntp
 
