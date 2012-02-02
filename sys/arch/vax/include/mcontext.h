@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.7 2012/01/07 16:47:42 chs Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8 2012/02/02 18:32:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,12 +73,16 @@ typedef struct {
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
+#ifndef _KERNEL
+#include <sys/syscall.h>
+
 static __inline void *
 __lwp_getprivate_fast(void)
 {
 	register void *tcb __asm("r0");
-	__asm("chmu $1" ::: "r0");
+	__asm("chmk %0" :: "i"(SYS__lwp_getprivate) : "r0");
 	return tcb;
 }
+#endif
 
 #endif	/* !_VAX_MCONTEXT_H_ */
