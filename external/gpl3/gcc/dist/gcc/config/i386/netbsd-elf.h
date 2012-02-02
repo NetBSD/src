@@ -122,3 +122,7 @@ along with GCC; see the file COPYING3.  If not see
 #define ENABLE_EXECUTE_STACK NETBSD_ENABLE_EXECUTE_STACK
 
 #define TARGET_VERSION fprintf (stderr, " (NetBSD/i386 ELF)");
+
+#undef X87_ENABLE_ARITH
+#define X87_ENABLE_ARITH(MODE) \
+  (flag_excess_precision == EXCESS_PRECISION_FAST || (MODE) == DFmode)
