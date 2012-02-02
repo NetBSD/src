@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.17 2012/02/01 05:43:54 dholland Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.18 2012/02/02 03:00:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.17 2012/02/01 05:43:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.18 2012/02/02 03:00:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -611,19 +611,17 @@ quota1_handle_cmd_put(struct ufsmount *ump, const struct quotakey *key,
 	dqb.dqb_curinodes = dq->dq_curinodes;
 	dqb.dqb_btime = dq->dq_btime;
 	dqb.dqb_itime = dq->dq_itime;
-	switch (key->qk_objtype) {
-	    case QUOTA_OBJTYPE_BLOCKS:
+	if (key->qk_objtype == QUOTA_OBJTYPE_BLOCKS) {
 		dqb.dqb_bsoftlimit = quota1_encode_limit(val->qv_softlimit);
 		dqb.dqb_bhardlimit = quota1_encode_limit(val->qv_hardlimit);
 		dqb.dqb_isoftlimit = dq->dq_isoftlimit;
 		dqb.dqb_ihardlimit = dq->dq_ihardlimit;
-		break;
-	    case QUOTA_OBJTYPE_FILES:
+	} else {
+		KASSERT(key->qk_objtype == QUOTA_OBJTYPE_FILES);
 		dqb.dqb_bsoftlimit = dq->dq_bsoftlimit;
 		dqb.dqb_bhardlimit = dq->dq_bhardlimit;
 		dqb.dqb_isoftlimit = quota1_encode_limit(val->qv_softlimit);
 		dqb.dqb_ihardlimit = quota1_encode_limit(val->qv_hardlimit);
-		break;
 	}
 	if (dq->dq_id == 0 && val->qv_grace != QUOTA_NOTIME) {
 		/* also update grace time if available */
