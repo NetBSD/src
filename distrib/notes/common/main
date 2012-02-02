@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.14.2.1 2012/01/03 05:31:07 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.14.2.2 2012/02/02 08:23:02 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd January 3, 2012
+.Dd February 2, 2012
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -455,7 +455,7 @@ wouldn't exist.
 .Pp
 .
 .Nx
-5.1.1 is dedicated to the memory of Yoshihiro Masuda, who passed away
+5.1.2 is dedicated to the memory of Yoshihiro Masuda, who passed away
 in May 2011.
 .Pp
 He was a spiritual pillar of the BSD community in Japan.
@@ -464,11 +464,11 @@ to BSD developers.
 We remember his passion and deep love for BSD.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between the NetBSD 5.1 and 5.1.1 Releases
+.Ss Changes Between the NetBSD 5.1 and 5.1.2 Releases
 .Pp
 .Nx
 \*V
-is the first critical/security update of the NetBSD 5.1 release branch.
+is the second critical/security update of the NetBSD 5.1 release branch.
 It represents a selected subset of fixes deemed critical for security or
 stability reasons.
 .Pp
@@ -479,9 +479,11 @@ These fixes also appear in minor releases (i.e., NetBSD 5.1, 5.2, etc.).
 .
 .Pp
 The complete list of changes can be found in the
-CHANGES-5.1.1:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.1.1/CHANGES-5.1.1
-file in the top level directory of the NetBSD 5.1.1 release tree.
+CHANGES-5.1.2:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.1.2/CHANGES-5.1.2
+file in the top level directory of the NetBSD 5.1.2 release tree.
+Note that since 5.1.1 was not announced, the changes below are relative to
+5.1, not 5.1.1.
 An abbreviated list is as follows:
 .Ss2 Security Advisory Fixes
 .(bullet
@@ -528,13 +530,14 @@ BIND resolver DoS.
 .
 .Pp
 Advisories prior to NetBSD-SA2010-012 do not affect
-NetBSD 5.1.1:
-.Lk http://www.NetBSD.org/support/security/patches-5.1.1.html .
+NetBSD 5.1.2:
+.Lk http://www.NetBSD.org/support/security/patches-5.1.2.html .
 .Ss2 Other Security Fixes
 .(bullet
 Fix a buffer overflow in libtelnet.
 .It
-OpenSSL: Fix CVE-2010-4180.
+OpenSSL: Fix CVE-2010-4180, CVE-2012-0050, CVE-2011-4109, CVE-2011-4109,
+and CVE-2011-4576.
 .It
 Postfix: Update to 2.6.9, fixing CVE-2011-0411.
 .It
@@ -544,6 +547,8 @@ xrdb: Fix CVE-2011-0465.
 .It
 .Xr glob 3 :
 Prevent resource DoS from brace expansion.
+.It
+OpenSSH: Fix CVE-2012-0814.
 .bullet)
 .
 .Ss2 Kernel
@@ -671,7 +676,9 @@ Changes between the initial 5.0 branch and final release of 5.0.
 .It Li CHANGES-5.1
 Changes between the 5.0 and 5.1 releases.
 .It Li CHANGES-5.1.1
-Changes between the 5.1 adn 5.1.1 releases.
+Changes between the 5.1 and 5.1.1 releases.
+.It Li CHANGES-5.1.2
+Changes between the 5.1.1 and 5.1.2 releases.
 .It Li CHANGES.prev
 Changes in previous
 .Nx

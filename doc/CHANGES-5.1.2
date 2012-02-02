@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.2,v 1.1.2.3 2012/01/27 19:33:06 riz Exp $
+# $NetBSD: CHANGES-5.1.2,v 1.1.2.4 2012/02/02 08:23:03 snj Exp $
 
 A complete list of changes from the NetBSD 5.1.1 release to the NetBSD 5.1.2
 release:
@@ -9,7 +9,7 @@ sys/sys/param.h					patched by hand
 	Welcome to 5.1.1_PATCH.
 	[snj]
 
-crypto/dist/openssl/ssl/d1_pkt.c	patch
+crypto/dist/openssl/ssl/d1_pkt.c		patch
 
 	Address CVE-2012-0050.
 	[drochner, ticket #1710]
@@ -26,13 +26,23 @@ crypto/dist/openssl/engines/ccgost/gost94_keyx.c	patch
 	Address CVE-2011-4109.
 	[drochner, ticket #1712]
 
-crypto/dist/openssl/ssl/s3_enc.c        patch
+crypto/dist/openssl/ssl/s3_enc.c		patch
 
 	Address CVE-2011-4576.
 	[drochner, ticket #1713]
 
-crypto/dist/ssh/auth-options.c		patch
+crypto/dist/ssh/auth-options.c			patch
 
 	Prevent minor information disclosure in ssh.
 	[drochner, ticket #1717]
+
+distrib/notes/common/main			patched by hand
+distrib/notes/common/xfer			patched by hand
+doc/LAST_MINUTE					patched by hand
+doc/README.files				patched by hand
+gnu/usr.bin/groff/tmac/mdoc.local		patched by hand
+sys/sys/param.h					patched by hand
+
+	Welcome to 5.1.2!
+	[snj]
 
