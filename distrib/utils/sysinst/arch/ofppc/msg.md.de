@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.7 2011/04/04 08:30:39 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.8 2012/02/02 22:15:04 phx Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,25 +64,26 @@ message set_kernel_1
 {Kernel (GENERIC)}
 
 message nobootpart
-{There is no boot partition in the MBR partition table.}
+{Es gibt keine Boot Partition in der MBR Partitionstabelle.}
 
 message boottoosmall
-{The boot partition is too small.  It needs to be at least 2MB in size,
-however a size of at least 100MB is recommended.}
+{Die Boot Partition ist zu klein.  Sie benötigt mindestens 2MB,
+wobei eine Größe von 100MB empfohlen wird.}
 
 message nobootpartdisklabel
-{There is no boot partition in the disklabel.  The boot partition should
-match the boot partition you set up in the MBR partition table.}
+{Es gibt keine Boot Partition im Disklabel.  Die Boot Partition sollte
+zu derjenigen passen, die Sie in der MBR Partitionstabelle angelegt haben.}
 
 message preptoosmall
-{You need to have two PReP partitions to boot an IBM RS/6000.  One needs to
-be at least 1MB in size, and the other must be at least 1KB in size.}
+{Sie benötigen zwei PReP Partitionen, um unter IBM RS/6000 booten zu können.
+Eine sollte mindestens 1MB groß sein, und die andere mindestens 1KB.}
 
 message bootnotright
-{In order to boot ofppc, you need either a FAT12 partition of at least 2MB
-in size, or a pair of PReP partitions.  The PReP partitions need to be at
-least 1KB, and 1MB in size.  IBM RS/6000 machines generally need the PReP
-partitions, however some can utilize the FAT12.  Most other machines require
-the FAT12 partition.  If you are not sure which to choose, accept the
-defaults, and install all three.  You do not currently have any partitions
-that meet the minimum requirements.}
+{Um ofppc booten zu können benötigen Sie entweder eine 2MB große FAT12
+Partition oder zwei PReP Partitionen.  Die PReP Partitionen sollten
+mindestens eine Größe von 1KB und 1MB haben.  IBM/RS6000 Maschinen benötigen
+meistens die PReP Partitionen, obwohl einige auch mit FAT12 zurecht kommen.
+Alle anderen Maschinen benötigen meistens die FAT12 Partition.  Wenn Sie
+nicht sicher sind welche Sie benötigen, so akzeptieren Sie die Standard
+Einstellungen und installieren alle drei.  Momentan haben Sie noch nicht
+genügend Partitionen um die Minimalanforderungen zu erfüllen.}
