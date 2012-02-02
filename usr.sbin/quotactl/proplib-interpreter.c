@@ -1,4 +1,4 @@
-/*	$NetBSD: proplib-interpreter.c,v 1.3 2012/01/30 19:31:31 dholland Exp $	*/
+/*	$NetBSD: proplib-interpreter.c,v 1.4 2012/02/02 03:01:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: proplib-interpreter.c,v 1.3 2012/01/30 19:31:31 dholland Exp $");
+__RCSID("$NetBSD: proplib-interpreter.c,v 1.4 2012/02/02 03:01:42 matt Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -606,6 +606,7 @@ vfs_quotactl_getall(struct quotahandle *qh,
 		num = quotacursor_getn(cursor, keys, vals, loopmax);
 		if (num < 0) {
 			error = errno;
+			loopnum = -1;
 		} else {
 			error = 0;
 			loopnum = num;
