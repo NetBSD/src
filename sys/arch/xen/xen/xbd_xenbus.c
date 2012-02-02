@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.52 2012/02/02 19:43:01 tls Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.53 2012/02/02 20:11:26 para Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.52 2012/02/02 19:43:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.53 2012/02/02 20:11:26 para Exp $");
 
 #include "opt_xen.h"
 
@@ -1058,7 +1058,7 @@ xbd_map_align(struct xbd_req *req)
 
 	rc = uvm_km_kmem_alloc(kmem_va_arena,
 	    req->req_bp->b_bcount, (VM_NOSLEEP | VM_INSTANTFIT),
-	    req->req_data);
+	    (vmem_addr_t *)&req->req_data);
 	splx(s);
 	if (__predict_false(rc != 0))
 		return ENOMEM;
