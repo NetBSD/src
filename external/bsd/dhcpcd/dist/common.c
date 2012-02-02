@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -203,10 +203,15 @@ get_monotonic(struct timeval *tp)
 ssize_t
 setvar(char ***e, const char *prefix, const char *var, const char *value)
 {
-	size_t len = strlen(prefix) + strlen(var) + strlen(value) + 4;
+	size_t len = strlen(var) + strlen(value) + 3;
 
+	if (prefix)
+		len += strlen(prefix) + 1;
 	**e = xmalloc(len);
-	snprintf(**e, len, "%s_%s=%s", prefix, var, value);
+	if (prefix)
+		snprintf(**e, len, "%s_%s=%s", prefix, var, value);
+	else
+		snprintf(**e, len, "%s=%s", var, value);
 	(*e)++;
 	return len;
 }

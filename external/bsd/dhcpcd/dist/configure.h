@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,10 @@
 #include "net.h"
 
 int send_interface(int, const struct interface *);
-int run_script(const struct interface *);
+int run_script_reason(const struct interface *, const char *);
 void build_routes(void);
 int configure(struct interface *);
 int route_deleted(const struct rt *);
+
+#define run_script(ifp) run_script_reason(ifp, (ifp)->state->reason);
 #endif
