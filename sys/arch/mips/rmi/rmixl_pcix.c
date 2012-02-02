@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.1.2.12 2012/01/04 16:17:54 matt Exp $	*/
+/*	rmixl_pcix.c,v 1.1.2.12 2012/01/04 16:17:54 matt Exp	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.12 2012/01/04 16:17:54 matt Exp $");
+__KERNEL_RCSID(0, "rmixl_pcix.c,v 1.1.2.12 2012/01/04 16:17:54 matt Exp");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -331,7 +331,7 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	 * HBAR[0,1] if a 64 bit BAR pair 
 	 * must cover all RAM
 	 */
-	extern u_quad_t mem_cluster_maxaddr;
+	extern u_quad_t avail_cluster_maxaddr;
 	uint64_t hbar_addr;
 	uint64_t hbar_size;
 	uint32_t hbar_size_lo, hbar_size_hi;
@@ -348,7 +348,7 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 		hbar_addr |= (uint64_t)hbar_addr_hi << 32;
 		hbar_size |= (uint64_t)hbar_size_hi << 32;
 	}
-	if ((hbar_addr != 0) || (hbar_size < mem_cluster_maxaddr)) {
+	if ((hbar_addr != 0) || (hbar_size < avail_cluster_maxaddr)) {
 		int error;
 
 		aprint_error_dev(self, "HostBAR0 addr %#x, size %#x\n",
@@ -359,7 +359,7 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "WARNING: firmware PCI-X setup error: "
 			"RAM %#"PRIx64"..%#"PRIx64" not accessible by Host BAR, "
 			"enabling DMA bounce buffers\n",
-			hbar_size, mem_cluster_maxaddr-1);
+			hbar_size, avail_cluster_maxaddr-1);
 
 		/*
 		 * force use of bouce buffers for inaccessible RAM addrs
