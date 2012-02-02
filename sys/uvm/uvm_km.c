@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.116 2012/02/01 23:43:49 para Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.117 2012/02/02 18:59:45 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,9 +120,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.116 2012/02/01 23:43:49 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.117 2012/02/02 18:59:45 para Exp $");
 
 #include "opt_uvmhist.h"
+
+#include "opt_kmempages.h"
+
+#ifndef NKMEMPAGES
+#define NKMEMPAGES 0
+#endif
+
+/*
+ * Defaults for lower and upper-bounds for the kmem_arena page count.
+ * Can be overridden by kernel config options.
+ */
+#ifndef NKMEMPAGES_MIN
+#define NKMEMPAGES_MIN NKMEMPAGES_MIN_DEFAULT
+#endif
+
+#ifndef NKMEMPAGES_MAX
+#define NKMEMPAGES_MAX NKMEMPAGES_MAX_DEFAULT
+#endif
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,11 +166,39 @@ static struct vm_map		kernel_map_store;
 static struct vm_map_entry	kernel_image_mapent_store;
 static struct vm_map_entry	kernel_kmem_mapent_store;
 
+int nkmempages = 0;
 vaddr_t kmembase;
 vsize_t kmemsize;
 
 vmem_t *kmem_arena;
 vmem_t *kmem_va_arena;
+
+/*
+ * kmeminit_nkmempages: calculate the size of kmem_arena.
+ */
+void
+kmeminit_nkmempages(void)
+{
+	int npages;
+
+	if (nkmempages != 0) {
+		/*
+		 * It's already been set (by us being here before)
+		 * bail out now;
+		 */
+		return;
+	}
+
+	npages = physmem;
+
+	if (npages > NKMEMPAGES_MAX)
+		npages = NKMEMPAGES_MAX;
+
+	if (npages < NKMEMPAGES_MIN)
+		npages = NKMEMPAGES_MIN;
+
+	nkmempages = npages;
+}
 
 /*
  * uvm_km_bootstrap: init kernel maps and objects to reflect reality (i.e.
@@ -167,9 +214,12 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 {
 	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
 
-	kmemsize = MIN((((vsize_t)(end - start)) / 3),
+	kmeminit_nkmempages();
+	kmemsize = nkmempages * PAGE_SIZE;
+
+	/* kmemsize = MIN((((vsize_t)(end - start)) / 3),
 	    ((((vsize_t)uvmexp.npages) * PAGE_SIZE) / 2));
-	kmemsize = round_page(kmemsize);
+	kmemsize = round_page(kmemsize); */
 
 	/*
 	 * next, init kernel memory objects.
