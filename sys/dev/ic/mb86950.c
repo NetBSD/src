@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.18 2010/04/05 07:19:35 joerg Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.19 2012/02/02 19:43:03 tls Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.18 2010/04/05 07:19:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.19 2012/02/02 19:43:03 tls Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -120,7 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.18 2010/04/05 07:19:35 joerg Exp $");
  */
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,9 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.18 2010/04/05 07:19:35 joerg Exp $");
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -296,10 +293,8 @@ mb86950_config(struct mb86950_softc *sc, int *media,
 
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 /* XXX No! This doesn't work - DLCR6 of the mb86950 is different
 
@@ -984,10 +979,9 @@ mb86950_detach(struct mb86950_softc *sc)
 	/* Delete all media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
-#if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
-#endif
+
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 

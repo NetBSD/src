@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.6 2011/12/07 15:47:43 cegger Exp $      */
+/*      $NetBSD: pciback.c,v 1.7 2012/02/02 19:43:01 tls Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,10 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.6 2011/12/07 15:47:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.7 2012/02/02 19:43:01 tls Exp $");
 
 #include "opt_xen.h"
-#include "rnd.h"
+
 
 #include <sys/types.h>
 #include <sys/param.h>

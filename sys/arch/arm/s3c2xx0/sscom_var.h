@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_var.h,v 1.10 2012/01/30 03:28:33 nisimura Exp $ */
+/* $NetBSD: sscom_var.h,v 1.11 2012/02/02 19:42:58 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -174,7 +174,7 @@ struct sscom_softc {
 	pps_params_t ppsparam;
 #endif
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	krndsource_t  rnd_source;
 #endif
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(SSCOM_MPLOCK)

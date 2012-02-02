@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.23 2011/12/17 13:18:20 apb Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.24 2012/02/02 19:42:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -33,7 +33,7 @@
 #include <sha1.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.23 2011/12/17 13:18:20 apb Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.24 2012/02/02 19:42:57 tls Exp $");
 #endif
 
 
@@ -62,6 +62,10 @@ static const arg_t source_types[] = {
 	{ "tape",    RND_TYPE_TAPE },
 	{ "tty",     RND_TYPE_TTY },
 	{ "rng",     RND_TYPE_RNG },
+	{ "skew",    RND_TYPE_SKEW },
+	{ "env",     RND_TYPE_ENV },
+	{ "vm",      RND_TYPE_VM },
+	{ "power",   RND_TYPE_POWER },
 	{ NULL,      0 }
 };
 

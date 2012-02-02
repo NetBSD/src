@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.54 2011/12/23 00:51:46 jakllsch Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.55 2012/02/02 19:43:07 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.54 2011/12/23 00:51:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.55 2012/02/02 19:43:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,11 +354,9 @@ nomem:
 					return;
 				}
 #endif
-#if NRND > 0
 				rnd_attach_source(&csc->rnd_source,
 						  device_xname(dev),
 						  RND_TYPE_TTY, 0);
-#endif
 			}
 		}
 	}
@@ -428,9 +426,7 @@ uhidev_detach(device_t self, int flags)
 {
 	struct uhidev_softc *sc = device_private(self);
 	int i, rv;
-#if NRND > 0
 	struct uhidev *csc;
-#endif
 
 	DPRINTF(("uhidev_detach: sc=%p flags=%d\n", sc, flags));
 
@@ -444,10 +440,8 @@ uhidev_detach(device_t self, int flags)
 	rv = 0;
 	for (i = 0; i < sc->sc_nrepid; i++) {
 		if (sc->sc_subdevs[i] != NULL) {
-#if NRND > 0
 			csc = device_private(sc->sc_subdevs[i]);
 			rnd_detach_source(&csc->rnd_source);
-#endif
 			rv |= config_detach(sc->sc_subdevs[i], flags);
 		}
 	}
@@ -522,9 +516,7 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 			device_xname(sc->sc_dev)));
 		return;
 	}
-#if NRND > 0
 	rnd_add_uint32(&scd->rnd_source, (uintptr_t)(sc->sc_ibuf));
-#endif
 	scd->sc_intr(scd, p, cc);
 }
 

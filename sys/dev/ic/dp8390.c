@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.79 2010/04/11 09:58:36 tsutsui Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.80 2012/02/02 19:43:03 tls Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,11 +14,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.79 2010/04/11 09:58:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.80 2012/02/02 19:43:03 tls Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -29,9 +28,7 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.79 2010/04/11 09:58:36 tsutsui Exp $");
 #include <sys/socket.h>
 #include <sys/syslog.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -156,10 +153,8 @@ dp8390_config(struct dp8390_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 	/* The attach is successful. */
 	sc->sc_flags |= DP8390_ATTACHED;
@@ -627,9 +622,7 @@ dp8390_intr(void *arg)
 	bus_space_handle_t regh = sc->sc_regh;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint8_t isr;
-#if NRND > 0
 	uint8_t rndisr;
-#endif
 
 	if (sc->sc_enabled == 0 ||
 	    !device_is_active(sc->sc_dev))
@@ -645,9 +638,7 @@ dp8390_intr(void *arg)
 	if (isr == 0)
 		return 0;
 
-#if NRND > 0
 	rndisr = isr;
-#endif
 
 	/* Loop until there are no more new interrupts. */
 	for (;;) {
@@ -825,9 +816,7 @@ dp8390_intr(void *arg)
 	}
 
  out:
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, rndisr);
-#endif
 	return 1;
 }
 
@@ -1258,9 +1247,7 @@ dp8390_detach(struct dp8390_softc *sc, int flags)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
-#if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
