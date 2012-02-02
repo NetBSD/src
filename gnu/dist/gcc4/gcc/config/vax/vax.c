@@ -1547,6 +1547,8 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
     {
       rtx a = XEXP (base, 0);
       rtx b = XEXP (base, 1);
+      if (GET_CODE (b) == CONST)
+	b = XEXP (b, 0);
       if (GET_CODE (b) == CONST_INT)
 	{
           off += INTVAL (b);
@@ -1567,7 +1569,10 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
 	  off = 0;
 	}
       else
-	gcc_assert(0);
+        {
+	  print_rtl(stderr, base); fprintf(stderr, "\n");
+	  gcc_assert(0);
+	}
     }
   if (code == POST_INC)
     tmp = gen_rtx_POST_INC (SImode, base);
