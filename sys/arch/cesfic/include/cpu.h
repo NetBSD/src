@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2011/05/16 13:22:52 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 2012/02/02 16:59:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,8 +41,6 @@
 #ifndef _MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
 
-#if defined(_KERNEL)
-
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_m68k_arch.h"
@@ -52,6 +50,8 @@
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
+
+#if defined(_KERNEL)
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
