@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.50 2011/04/14 08:17:42 matt Exp $
+#	$NetBSD: genassym.cf,v 1.51 2012/02/02 18:31:41 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -150,6 +150,7 @@ define	EV_COUNT	offsetof(struct evcnt, ev_count)
 
 define	SYS_compat_16___sigreturn14	SYS_compat_16___sigreturn14
 define	SYS_exit	SYS_exit
+define	SYS__lwp_getprivate	SYS__lwp_getprivate
 
 define	VAX_TYP_UV2	VAX_TYP_UV2
 define	VAX_TYP_8SS	VAX_TYP_8SS
