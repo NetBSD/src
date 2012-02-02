@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.180 2011/05/24 23:30:30 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.181 2012/02/02 14:30:13 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180 2011/05/24 23:30:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.181 2012/02/02 14:30:13 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -224,25 +224,20 @@ calc_kvmsize(vsize_t usrptsize)
 {
 	vsize_t kvmsize, bufsz;
 
-	/*
-	 * Compute the number of pages kmem_map will have.
-	 */
-	kmeminit_nkmempages();
-
 	/* All physical memory */
 	kvmsize = avail_end;
 	/* User Page table area. This may be large */
 	kvmsize += (usrptsize * sizeof(struct pte));
 	/* Kernel stacks per process */
 	kvmsize += (USPACE * maxproc);
-	/* kernel malloc arena */
-	kvmsize += nkmempages * PAGE_SIZE;
 	/* IO device register space */
 	kvmsize += (IOSPSZ * VAX_NBPG);
 	/* Pager allocations */
 	kvmsize += (pager_map_size + MAXBSIZE);
 	/* Anon pool structures */
 	kvmsize += (physmem * sizeof(struct vm_anon));
+	/* kernel malloc arena */
+	kvmsize += avail_end;
 
 	/* Buffer space - get size of buffer cache and set an upper limit */
 	bufsz = buf_memcalc();
@@ -277,7 +272,7 @@ calc_kvmsize(vsize_t usrptsize)
 #ifndef PIPE_SOCKETPAIR
 	kvmsize += PIPE_DIRECT_CHUNK*10;
 #endif
-	kvmsize = (kvmsize + PAGE_SIZE + 1) & ~(PAGE_SIZE - 1);
+	kvmsize = round_page(kvmsize);
 	return kvmsize;
 }
 
@@ -508,7 +503,7 @@ pmap_init(void)
 	 * Create the extent map used to manage the page table space.
 	 */
 	ptemap = extent_create("ptemap", ptemapstart, ptemapend,
-	    M_VMPMAP, ptmapstorage, PTMAPSZ, EX_NOCOALESCE);
+	    ptmapstorage, PTMAPSZ, EX_NOCOALESCE);
 	if (ptemap == NULL)
 		panic("pmap_init");
 }
