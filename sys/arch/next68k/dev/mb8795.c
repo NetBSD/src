@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.49 2010/04/24 19:58:13 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.50 2012/02/02 19:43:00 tls Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,10 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.49 2010/04/24 19:58:13 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.50 2012/02/02 19:43:00 tls Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,9 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.49 2010/04/24 19:58:13 dbj Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -140,10 +137,8 @@ mb8795_config(struct mb8795_softc *sc, int *media, int nmedia, int defmedia)
   if (sc->sc_sh == NULL)
     panic("mb8795_config: can't establish shutdownhook");
 
-#if NRND > 0
   rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
                     RND_TYPE_NET, 0);
-#endif
 
 	DPRINTF(("%s: leaving mb8795_config()\n",sc->sc_dev.dv_xname));
 }

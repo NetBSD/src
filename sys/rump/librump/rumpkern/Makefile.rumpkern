@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.114 2011/12/04 19:24:59 jym Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.115 2012/02/02 19:43:08 tls Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -73,6 +73,8 @@ SRCS+=	init_sysctl_base.c	\
 	kern_prot.c		\
 	kern_rate.c		\
 	kern_resource.c		\
+	kern_rndpool.c		\
+	kern_rndq.c		\
 	kern_stub.c		\
 	kern_syscall.c		\
 	kern_sysctl.c		\

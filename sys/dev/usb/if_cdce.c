@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.34 2012/01/10 11:32:25 ws Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.35 2012/02/02 19:43:07 tls Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.34 2012/01/10 11:32:25 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.35 2012/02/02 19:43:07 tls Exp $");
 #ifdef	__NetBSD__
 #include "opt_inet.h"
 #endif
@@ -54,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.34 2012/01/10 11:32:25 ws Exp $");
 #include <sys/socket.h>
 #include <sys/device.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_arp.h>

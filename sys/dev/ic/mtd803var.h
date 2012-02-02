@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803var.h,v 1.7 2011/11/19 22:51:22 tls Exp $ */
+/* $NetBSD: mtd803var.h,v 1.8 2012/02/02 19:43:03 tls Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <sys/device.h>
 #include <sys/socket.h>
+#include <sys/rnd.h>
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
@@ -74,9 +75,7 @@ struct mtd_softc {
 	void *			buf;
 	bus_dmamap_t		buf_dma_map;
 
-#if NRND > 0
 	krndsource_t	rnd_src;
-#endif
 };
 
 

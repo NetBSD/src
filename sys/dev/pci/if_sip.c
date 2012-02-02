@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.152 2011/12/12 02:44:14 jakllsch Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.153 2012/02/02 19:43:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,9 +73,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.152 2011/12/12 02:44:14 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.153 2012/02/02 19:43:05 tls Exp $");
 
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,9 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.152 2011/12/12 02:44:14 jakllsch Exp $"
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -354,9 +352,7 @@ struct sip_softc {
 
 	void (*sc_rxintr)(struct sip_softc *);
 
-#if NRND > 0
 	krndsource_t rnd_source;	/* random source */
-#endif
 };
 
 #define	sc_bits	sc_parm->p_bits
@@ -911,9 +907,7 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 		}
 #endif /* SIP_EVENT_COUNTERS */
 
-#if NRND > 0
 		rnd_detach_source(&sc->rnd_source);
-#endif
 
 		ether_ifdetach(ifp);
 		if_detach(ifp);
@@ -1291,10 +1285,8 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_prev.ec_capenable = sc->sc_ethercom.ec_capenable;
 	sc->sc_prev.is_vlan = VLAN_ATTACHED(&(sc)->sc_ethercom);
 	sc->sc_prev.if_capenable = ifp->if_capenable;
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 	/*
 	 * The number of bytes that must be available in
@@ -1842,10 +1834,7 @@ sipcom_intr(void *arg)
 		if ((isr & sc->sc_imr) == 0)
 			break;
 
-#if NRND > 0
-		if (RND_ENABLED(&sc->rnd_source))
-			rnd_add_uint32(&sc->rnd_source, isr);
-#endif
+		rnd_add_uint32(&sc->rnd_source, isr);
 
 		handled = 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.15 2012/01/30 19:41:19 drochner Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.16 2012/02/02 19:43:05 tls Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.15 2012/01/30 19:41:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.16 2012/02/02 19:43:05 tls Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -610,10 +610,8 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
-#endif
 
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->sc_dev), "interrupts");
@@ -643,9 +641,7 @@ cas_detach(device_t self, int flags)
 		cas_stop(&sc->sc_ethercom.ec_if, 1);
 		evcnt_detach(&sc->sc_ev_intr);
 
-#if NRND > 0
 		rnd_detach_source(&sc->rnd_source);
-#endif
 
 		ether_ifdetach(ifp);
 		if_detach(ifp);
@@ -1493,9 +1489,7 @@ cas_intr(void *v)
 			    device_xname(sc->sc_dev), rxstat);
 #endif
 	}
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, status);
-#endif
 	return (r);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.17 2011/11/19 22:51:24 tls Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.18 2012/02/02 19:43:07 tls Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -162,9 +162,7 @@ struct kue_softc {
 	device_t kue_dev;
 
 	struct ethercom		kue_ec;
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 #define GET_IFP(sc) (&(sc)->kue_ec.ec_if)
 
 	usbd_device_handle	kue_udev;

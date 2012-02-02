@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_isapnp.c,v 1.17 2009/09/22 16:44:08 tsutsui Exp $ */
+/* $NetBSD: if_cs_isapnp.c,v 1.18 2012/02/02 19:43:04 tls Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,17 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.17 2009/09/22 16:44:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.18 2012/02/02 19:43:04 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>

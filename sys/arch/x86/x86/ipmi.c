@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.51 2012/01/10 15:23:11 njoly Exp $ */
+/*	$NetBSD: ipmi.c,v 1.52 2012/02/02 19:43:01 tls Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.51 2012/01/10 15:23:11 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.52 2012/02/02 19:43:01 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.51 2012/01/10 15:23:11 njoly Exp $");
 #include <sys/kthread.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
+#include <sys/rnd.h>
 
 #include <x86/smbiosvar.h>
 
@@ -87,13 +88,15 @@ struct ipmi_sensor {
 	sysmon_envsys_lim_t i_limits, i_deflims;
 	uint32_t	i_props, i_defprops;
 	SLIST_ENTRY(ipmi_sensor) i_list;
+	int32_t		i_prevval;	/* feed rnd source on change */
+	krndsource_t	i_rnd;
 };
 
 int	ipmi_nintr;
 int	ipmi_dbg = 0;
 int	ipmi_enabled = 0;
 
-#define SENSOR_REFRESH_RATE (5 * hz)
+#define SENSOR_REFRESH_RATE (hz / 2)
 
 #define SMBIOS_TYPE_IPMI	0x26
 
@@ -1499,6 +1502,10 @@ ipmi_convert_sensor(uint8_t *reading, struct ipmi_sensor *psensor)
 		val = 0;
 		break;
 	}
+	if (val != psensor->i_prevval) {
+		rnd_add_uint32(&psensor->i_rnd, val);
+		psensor->i_prevval = val;
+	}
 	return val;
 }
 
@@ -1852,6 +1859,22 @@ add_child_sensors(struct ipmi_softc *sc, uint8_t *psdr, int count,
 			         ipmi_is_dupname(psensor->i_envdesc));
 		}
 
+		/*
+		 * Add entropy source.
+		 */
+		switch (psensor->i_envtype) {
+		    case ENVSYS_STEMP:
+		    case ENVSYS_SFANRPM:
+			rnd_attach_source(&psensor->i_rnd,
+					  psensor->i_envdesc,
+					  RND_TYPE_ENV, 0);
+		        break;
+		    default:	/* XXX intrusion sensors? */
+			rnd_attach_source(&psensor->i_rnd,
+					  psensor->i_envdesc,
+					  RND_TYPE_POWER, 0);
+		}
+		    
 		dbg_printf(5, "add sensor:%.4x %.2x:%d ent:%.2x:%.2x %s\n",
 		    s1->sdrhdr.record_id, s1->sensor_type,
 		    typ, s1->entity_id, s1->entity_instance,

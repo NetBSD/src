@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.391 2012/01/24 20:04:07 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.392 2012/02/02 19:43:02 tls Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,11 +54,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.391 2012/01/24 20:04:07 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.392 2012/02/02 19:43:02 tls Exp $");
 
 #include "opt_ata.h"
-
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.391 2012/01/24 20:04:07 jakllsch Exp $");
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/vnode.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <sys/intr.h>
 #include <sys/bus.h>
@@ -391,10 +387,8 @@ wdattach(device_t parent, device_t self, void *aux)
 	disk_init(&wd->sc_dk, device_xname(wd->sc_dev), &wddkdriver);
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
-#if NRND > 0
 	rnd_attach_source(&wd->rnd_source, device_xname(wd->sc_dev),
 			  RND_TYPE_DISK, 0);
-#endif
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&wd->sc_dk);
@@ -462,10 +456,8 @@ wddetach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-#if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
-#endif
 
 	callout_destroy(&sc->sc_restart_ch);
 
@@ -829,9 +821,7 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 	}
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
-#if NRND > 0
 	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
-#endif
 	/* XXX Yuck, but we don't want to increment openings in this case */
 	if (__predict_false(bp->b_iodone == wd_split_mod15_write))
 		biodone(bp);

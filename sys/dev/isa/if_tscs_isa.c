@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tscs_isa.c,v 1.14 2009/09/22 16:44:08 tsutsui Exp $	*/
+/*	$NetBSD: if_tscs_isa.c,v 1.15 2012/02/02 19:43:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,17 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.14 2009/09/22 16:44:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.15 2012/02/02 19:43:04 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/device.h>
 
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.19 2011/11/19 22:51:22 tls Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.20 2012/02/02 19:43:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,22 +32,16 @@
 #ifndef	_DEV_LDVAR_H_
 #define	_DEV_LDVAR_H_
 
-#include "rnd.h"
-
 #include <sys/mutex.h>
 #include <sys/device.h>	/* for device_t */
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 struct ld_softc {
 	device_t sc_dv;
 	struct	disk sc_dk;
 	struct	bufq_state *sc_bufq;
 	kmutex_t sc_mutex;
-#if NRND > 0
 	krndsource_t	sc_rnd_source;
-#endif
 	int	sc_queuecnt;		/* current h/w queue depth */
 	int	sc_ncylinders;		/* # cylinders */
 	int	sc_nheads;		/* # heads */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.41 2011/08/01 11:20:28 drochner Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.42 2012/02/02 19:43:02 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.41 2011/08/01 11:20:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.42 2012/02/02 19:43:02 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.41 2011/08/01 11:20:28 drochner Exp $
 #include <sys/device.h>
 #include <sys/kmem.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <machine/endian.h>
 

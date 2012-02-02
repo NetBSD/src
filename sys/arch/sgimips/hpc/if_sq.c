@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.43 2012/02/02 19:43:00 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.43 2012/02/02 19:43:00 tls Exp $");
 
 
 #include <sys/param.h>
@@ -927,10 +927,8 @@ sq_intr(void *arg)
 		handled++;
 	}
 
-#if NRND > 0
 	if (handled)
 		rnd_add_uint32(&sc->rnd_source, stat);
-#endif
 	return handled;
 }
 

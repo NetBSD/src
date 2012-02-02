@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.4 2012/01/30 19:41:21 drochner Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.5 2012/02/02 19:43:05 tls Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.4 2012/01/30 19:41:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.5 2012/02/02 19:43:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.4 2012/01/30 19:41:21 drochner Exp $");
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include "opt_inet.h"
 #include <net/if_ether.h>
@@ -277,10 +274,9 @@ vte_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-#if NRND > 0
         rnd_attach_source(&sc->rnd_source, device_xname(self),
             RND_TYPE_NET, 0);
-#endif
+
 	if (sysctl_createv(&sc->vte_clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, device_xname(sc->vte_dev),
 	    SYSCTL_DESCR("vte per-controller controls"),
@@ -1177,10 +1173,7 @@ vte_rxeof(struct vte_softc *sc)
 		    (((VTE_RX_RING_CNT * 2) / 10) <<
 		    VTE_MRDCR_RX_PAUSE_THRESH_SHIFT));
 #endif
-#if NRND > 0
-        if (RND_ENABLED(&sc->rnd_source))
-		rnd_add_uint32(&sc->rnd_source, prog);
-#endif /* NRND > 0 */
+	rnd_add_uint32(&sc->rnd_source, prog);
 	}
 }
 

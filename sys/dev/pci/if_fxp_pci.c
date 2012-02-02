@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.78 2012/01/30 19:41:20 drochner Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.79 2012/02/02 19:43:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,9 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.78 2012/01/30 19:41:20 drochner Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.79 2012/02/02 19:43:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,9 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.78 2012/01/30 19:41:20 drochner Exp
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <machine/endian.h>
 

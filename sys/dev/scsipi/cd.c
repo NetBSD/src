@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.304 2011/11/25 12:39:55 joerg Exp $	*/
+/*	$NetBSD: cd.c,v 1.305 2012/02/02 19:43:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,9 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.304 2011/11/25 12:39:55 joerg Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.305 2012/02/02 19:43:06 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.304 2011/11/25 12:39:55 joerg Exp $");
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -289,10 +285,8 @@ cdattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
-#if NRND > 0
 	rnd_attach_source(&cd->rnd_source, device_xname(cd->sc_dev),
 			  RND_TYPE_DISK, 0);
-#endif
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -335,10 +329,8 @@ cddetach(device_t self, int flags)
 	disk_detach(&cd->sc_dk);
 	disk_destroy(&cd->sc_dk);
 
-#if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&cd->rnd_source);
-#endif
 
 	return (0);
 }
@@ -904,9 +896,7 @@ cddone(struct scsipi_xfer *xs, int error)
 
 		disk_unbusy(&cd->sc_dk, bp->b_bcount - bp->b_resid,
 		    (bp->b_flags & B_READ));
-#if NRND > 0
 		rnd_add_uint32(&cd->rnd_source, bp->b_rawblkno);
-#endif
 
 		biodone(bp);
 	}

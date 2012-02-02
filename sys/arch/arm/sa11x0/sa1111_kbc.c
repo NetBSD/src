@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111_kbc.c,v 1.13 2011/11/19 22:51:19 tls Exp $ */
+/*      $NetBSD: sa1111_kbc.c,v 1.14 2012/02/02 19:42:58 tls Exp $ */
 
 /*
  * Copyright (c) 2004  Ben Harris.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.13 2011/11/19 22:51:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.14 2012/02/02 19:42:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.13 2011/11/19 22:51:19 tls Exp $");
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/bus.h>
+#include <sys/rnd.h>
 
 #include <arm/sa11x0/sa1111_reg.h>
 #include <arm/sa11x0/sa1111_var.h>
@@ -78,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.13 2011/11/19 22:51:19 tls Exp $");
 #include <dev/pckbport/pckbportvar.h>		/* for prototypes */
 
 #include "pckbd.h"
-#include "rnd.h"
 #include "locators.h"
 
 struct sackbc_softc {
@@ -95,9 +95,7 @@ struct sackbc_softc {
 	int	poll_stat;	/* data read from inr handler if polling */
 	int	poll_data;	/* status read from intr handler if polling */
 
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 	pckbport_tag_t pt;
 };
 
@@ -171,9 +169,7 @@ sackbc_rxint(void *cookie)
 	if (stat & KBDSTAT_RXF) {
 		code = bus_space_read_4(sc->iot, sc->ioh, SACCKBD_DATA);
 
-#if NRND > 0
 		rnd_add_uint32(&sc->rnd_source, (stat<<8)|data);
-#endif
 
 		if (sc->polling) {
 			sc->poll_data = code;
@@ -279,10 +275,8 @@ sackbc_attach(device_t parent, device_t self, void *aux)
 		if (child == NULL)
 			continue;
 		sc->slot = slot;
-#if NRND > 0
 		rnd_attach_source(&sc->rnd_source, device_xname(child),
 		    RND_TYPE_TTY, 0);
-#endif
 		/* only one of KBD_SLOT or AUX_SLOT is used. */
 		break;			
 	}

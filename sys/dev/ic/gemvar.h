@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.22 2011/11/19 22:51:22 tls Exp $ */
+/*	$NetBSD: gemvar.h,v 1.23 2012/02/02 19:43:03 tls Exp $ */
 
 /*
  *
@@ -33,14 +33,10 @@
 #define	_IF_GEMVAR_H
 
 
-#include "rnd.h"
-
 #include <sys/queue.h>
 #include <sys/callout.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 /*
  * Misc. definitions for the Sun ``Gem'' Ethernet controller family driver.
@@ -216,9 +212,7 @@ struct gem_softc {
 	void	(*sc_hwreset)(struct gem_softc *);
 	void	(*sc_hwinit)(struct gem_softc *);
 
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 
 	struct evcnt sc_ev_intr;
 #ifdef GEM_COUNTERS

@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.32 2009/12/06 22:48:17 dyoung Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.33 2012/02/02 19:43:06 tls Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,10 +50,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.32 2009/12/06 22:48:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.33 2012/02/02 19:43:06 tls Exp $");
 
 #include "opt_scsi.h"
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/device.h>

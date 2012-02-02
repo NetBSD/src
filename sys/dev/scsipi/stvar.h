@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.22 2011/11/19 22:51:24 tls Exp $ */
+/*	$NetBSD: stvar.h,v 1.23 2012/02/02 19:43:06 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,10 +49,7 @@
  * A lot of rewhacking done by mjacob (mjacob@nas.nasa.gov).
  */
 
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -146,9 +143,7 @@ struct st_softc {
 
 	struct io_stats *stats;		/* statistics for the drive */
 
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 };
 
 #define	ST_INFO_VALID	0x0001

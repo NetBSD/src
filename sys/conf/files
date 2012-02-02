@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1042 2012/01/31 05:08:14 macallan Exp $
+#	$NetBSD: files,v 1.1043 2012/02/02 19:43:01 tls Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1449,8 +1449,6 @@ file	dev/mm.c
 file	dev/mulaw.c			mulaw			needs-flag
 file	dev/nullcons_subr.c		nullcons		needs-flag
 file	dev/radio.c			radio			needs-flag
-file	dev/rnd.c
-file	dev/rndpool.c
 file	dev/rndpseudo.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
 file	dev/video.c			video			needs-flag
@@ -1510,6 +1508,8 @@ file	kern/kern_prot.c
 file	kern/kern_ras.c
 file	kern/kern_rate.c
 file	kern/kern_resource.c
+file	kern/kern_rndpool.c
+file	kern/kern_rndq.c
 file	kern/kern_runq.c
 file	kern/kern_rwlock.c
 file	kern/kern_rwlock_obj.c

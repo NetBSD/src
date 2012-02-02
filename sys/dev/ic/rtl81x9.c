@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.92 2010/11/13 13:52:02 uebayasi Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.93 2012/02/02 19:43:03 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,9 +86,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.92 2010/11/13 13:52:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.93 2012/02/02 19:43:03 tls Exp $");
 
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,9 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.92 2010/11/13 13:52:02 uebayasi Exp $"
 #include <net/if_media.h>
 
 #include <net/bpf.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <sys/bus.h>
 #include <machine/endian.h>
@@ -742,10 +739,8 @@ rtk_attach(struct rtk_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
-#endif
 
 	return;
  fail_4:
@@ -830,9 +825,7 @@ rtk_detach(struct rtk_softc *sc)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->mii.mii_media, IFM_INST_ANY);
 
-#if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
@@ -1213,10 +1206,7 @@ rtk_intr(void *arg)
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		rtk_start(ifp);
 
-#if NRND > 0
-	if (RND_ENABLED(&sc->rnd_source))
-		rnd_add_uint32(&sc->rnd_source, status);
-#endif
+	rnd_add_uint32(&sc->rnd_source, status);
 
 	return handled;
 }

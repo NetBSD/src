@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.49 2012/01/30 19:41:19 drochner Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.50 2012/02/02 19:43:04 tls Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.49 2012/01/30 19:41:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.50 2012/02/02 19:43:04 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,11 +544,11 @@ hifn_rng(void *vsc)
 {
 	struct hifn_softc *sc = vsc;
 #ifdef __NetBSD__
-	u_int32_t num[HIFN_RNG_BITSPER * SHA1_DIGEST_LENGTH];
+	uint32_t num[64];
 #else
-	u_int32_t num[2];
+	uint32_t num[2];
 #endif
-	u_int32_t sts;
+	uint32_t sts;
 	int i;
 
 	if (sc->sc_flags & HIFN_IS_7811) {

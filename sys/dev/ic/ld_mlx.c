@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.19 2009/01/16 04:20:28 mhitch Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.20 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,9 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.19 2009/01/16 04:20:28 mhitch Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.20 2012/02/02 19:43:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.19 2009/01/16 04:20:28 mhitch Exp $");
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <machine/vmparam.h>
 #include <sys/bus.h>

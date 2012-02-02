@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2011/12/20 17:09:04 apb Exp $
+#	$NetBSD: Makefile,v 1.6 2012/02/02 19:43:08 tls Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
 
 LIB=	rumpdev_rnd
 
-SRCS=	rnd.c rndpseudo.c rndpool.c
+SRCS=	rndpseudo.c
 
 SRCS+=	component.c
 

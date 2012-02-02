@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.14 2011/11/19 22:51:23 tls Exp $	*/
+/*	$NetBSD: edvar.h,v 1.15 2012/02/02 19:43:04 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,5 @@ struct ed_softc {
 	u_int8_t spares;	/* spares per cylinder */
 	u_int32_t rba;		/* # of RBAs */
 
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 };

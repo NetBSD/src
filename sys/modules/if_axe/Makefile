@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/08/23 12:54:05 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2 2012/02/02 19:43:07 tls Exp $
 
 .include "../Makefile.inc"
 
@@ -10,6 +10,6 @@ SRCS=	if_axe.c
 
 WARNS=	4
 
-CPPFLAGS+=	-DINET -DNRND=1
+CPPFLAGS+=	-DINET
 
 .include <bsd.kmodule.mk>

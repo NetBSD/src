@@ -1,4 +1,4 @@
-/*	$NetBSD: harmonyvar.h,v 1.6 2011/11/23 23:07:29 jmcneill Exp $	*/
+/*	$NetBSD: harmonyvar.h,v 1.7 2012/02/02 19:42:59 tls Exp $	*/
 
 /*	$OpenBSD: harmonyvar.h,v 1.8 2003/08/15 13:25:53 mickey Exp $	*/
 
@@ -106,11 +106,9 @@ struct harmony_softc {
 	int sc_micpreamp, sc_ov, sc_outputgain;
 	int sc_teleshare;
 
-#if NRND > 0
 	krndsource_t sc_rnd_source;
 	struct callout sc_acc_tmo;
 	uint32_t sc_acc, sc_acc_num, sc_acc_cnt;
-#endif
 };
 
 #define	READ_REG(sc, reg)		\

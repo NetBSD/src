@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.33 2011/12/23 00:51:43 jakllsch Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.34 2012/02/02 19:43:07 tls Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,10 +44,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.33 2011/12/23 00:51:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.34 2012/02/02 19:43:07 tls Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.33 2011/12/23 00:51:43 jakllsch Exp $"
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -306,10 +303,8 @@ udav_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
-#endif
 
 	callout_init(&sc->sc_stat_ch, 0);
 	sc->sc_attached = 1;
@@ -353,9 +348,7 @@ udav_detach(device_t self, int flags)
 	if (ifp->if_flags & IFF_RUNNING)
 		udav_stop(GET_IFP(sc), 1);
 
-#if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);

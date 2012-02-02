@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xivar.h,v 1.7 2011/11/19 22:51:24 tls Exp $	*/
+/*	$NetBSD: if_xivar.h,v 1.8 2012/02/02 19:43:06 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -18,11 +18,7 @@
  *    derived from this software without specific prior written permission.
  */
 
-#include "rnd.h"
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 struct xi_softc {
 	device_t sc_dev;			/* Generic device info */
@@ -44,9 +40,7 @@ struct xi_softc {
 #define	XI_CHIPSET_DINGO	2
 	u_int8_t	sc_rev;			/* Chip revision */
 
-#if NRND > 0
 	krndsource_t	sc_rnd_source;
-#endif
 };
 
 void	xi_attach(struct xi_softc *, u_int8_t *);

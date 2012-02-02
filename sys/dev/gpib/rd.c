@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.29 2011/11/19 22:51:22 tls Exp $ */
+/*	$NetBSD: rd.c,v 1.30 2012/02/02 19:43:02 tls Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,9 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.29 2011/11/19 22:51:22 tls Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.30 2012/02/02 19:43:02 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,9 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.29 2011/11/19 22:51:22 tls Exp $");
 #include <sys/proc.h>
 #include <sys/stat.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/gpib/gpibvar.h>
 #include <dev/gpib/cs80busvar.h>
@@ -142,9 +138,7 @@ struct	rd_softc {
 
 	struct	callout sc_restart_ch;
 
-#if NRND > 0
 	krndsource_t rnd_source;
-#endif
 };
 
 #define RDUNIT(dev)			DISKUNIT(dev)
@@ -412,13 +406,11 @@ rdattach(device_t parent, device_t self, void *aux)
 	if (rddebug & RDB_ERROR)
 		rderrthresh = 0;
 #endif
-#if NRND > 0
 	/*
 	 * attach the device into the random source list
 	 */
 	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_DISK, 0);
-#endif
 }
 
 /*
@@ -798,9 +790,7 @@ rdintr(struct rd_softc *sc)
 	}
 	if (rdfinish(sc, bp) != NULL)
 		rdustart(sc);
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, bp->b_blkno);
-#endif
 }
 
 /*

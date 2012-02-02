@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.33 2012/01/30 19:41:19 drochner Exp $ */
+/*	$NetBSD: if_dge.c,v 1.34 2012/02/02 19:43:05 tls Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,9 +80,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.33 2012/01/30 19:41:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.34 2012/02/02 19:43:05 tls Exp $");
 
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.33 2012/01/30 19:41:19 drochner Exp $")
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -333,9 +331,7 @@ struct dge_softc {
 
 	uint16_t sc_eeprom[EEPROM_SIZE];
 
-#if NRND > 0
 	krndsource_t rnd_source; /* random source */
-#endif
 #ifdef DGE_OFFBYONE_RXBUG
 	void *sc_bugbuf;
 	SLIST_HEAD(, rxbugentry) sc_buglist;
@@ -897,10 +893,8 @@ dge_attach(device_t parent, device_t self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 #ifdef DGE_EVENT_COUNTERS
 	/* Fix segment event naming */
@@ -1490,10 +1484,7 @@ dge_intr(void *arg)
 		if ((icr & sc->sc_icr) == 0)
 			break;
 
-#if 0 /*NRND > 0*/
-		if (RND_ENABLED(&sc->rnd_source))
-			rnd_add_uint32(&sc->rnd_source, icr);
-#endif
+		rnd_add_uint32(&sc->rnd_source, icr);
 
 		handled = 1;
 

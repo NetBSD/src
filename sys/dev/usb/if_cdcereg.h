@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdcereg.h,v 1.6 2011/11/19 22:51:24 tls Exp $ */
+/*	$NetBSD: if_cdcereg.h,v 1.7 2012/02/02 19:43:07 tls Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -68,9 +68,7 @@ struct cdce_cdata {
 struct cdce_softc {
 	device_t cdce_dev;
 	struct ethercom		 cdce_ec;
-#if NRND > 0
 	krndsource_t	 rnd_source;
-#endif
 #define GET_IFP(sc) (&(sc)->cdce_ec.ec_if)
 	usbd_device_handle	 cdce_udev;
 	usbd_interface_handle	 cdce_ctl_iface;
