@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 2012/01/26 16:12:14 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.5 2012/02/02 16:00:35 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,8 +57,10 @@
  *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
  */
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
+#define SET_KERNEL_C700		SET_KERNEL_2
 
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
+#define SET_KERNEL_2_NAME	"kern-C700"
 
 /*
  * Machine-specific command to write a new label to a disk.
