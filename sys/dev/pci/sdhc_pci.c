@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.5 2012/01/30 19:41:23 drochner Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.6 2012/02/02 22:49:17 nonaka Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.5 2012/01/30 19:41:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.6 2012/02/02 22:49:17 nonaka Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_sdmmc.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>
