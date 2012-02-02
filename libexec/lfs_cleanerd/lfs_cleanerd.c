@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.28 2012/01/02 21:35:18 perseant Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.29 2012/02/02 03:47:11 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1155,6 +1155,12 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 			if (oerrno != EAGAIN && oerrno != ESHUTDOWN) {
 				syslog(LOG_DEBUG, "%s: errno %d, returning",
 				       fs->lfs_fsmnt, oerrno);
+				fd_release_all(fs->clfs_devvp);
+				return r;
+			}
+			if (oerrno == ESHUTDOWN) {
+				syslog(LOG_NOTICE, "%s: filesystem unmounted",
+				       fs->lfs_fsmnt);
 				fd_release_all(fs->clfs_devvp);
 				return r;
 			}
