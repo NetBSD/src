@@ -499,10 +499,9 @@ ipv6rs_handledata(_unused void *arg)
 			rao->type = ndo->nd_opt_type;
 			rao->option = opt;
 		}
-		if (lifetime == ~0U) {
-			rao->expire.tv_sec = 0;
-			rao->expire.tv_usec = 0;
-		} else {
+		if (lifetime == ~0U)
+			timerclear(&rao->expire);
+		else {
 			expire.tv_sec = lifetime;
 			expire.tv_usec = 0;
 			timeradd(&rap->received, &expire, &rao->expire);
@@ -510,12 +509,7 @@ ipv6rs_handledata(_unused void *arg)
 	}
 
 	ipv6rs_sort(ifp);
-
-	if (options & DHCPCD_TEST)
-		ifp->state->reason = "TEST";
-	else
-		ifp->state->reason = "ROUTERADVERT";
-	run_script(ifp);
+	run_script_reason(ifp, options & DHCPCD_TEST ? "TEST" : "ROUTERADVERT");
 	if (options & DHCPCD_TEST)
 		exit(EXIT_SUCCESS);
 
@@ -545,15 +539,8 @@ ipv6rs_env(char **env, const char *prefix, const struct interface *ifp)
 			setvar(&env, prefix, buffer, rap->sfrom);
 		}
 		l++;
+
 		for (rao = rap->options; rao; rao = rao->next) {
-			if (rao->expire.tv_sec != 0 &&
-			    rao->expire.tv_usec != 0 &&
-			    timercmp(&now, &rao->expire, >))
-			{
-				syslog(LOG_INFO, "%s: %s: expired option %d",
-				    ifp->name, rap->sfrom, rao->type);
-				continue;
-			}
 			if (rao->option == NULL)
 				continue;
 			if (env == NULL) {
@@ -644,6 +631,7 @@ ipv6rs_expire(void *arg)
 {
 	struct interface *ifp;
 	struct ra *rap, *ran, *ral;
+	struct ra_opt *rao, *raol, *raon;
 	struct timeval now, lt, expire, next;
 	int expired;
 	uint32_t expire_secs;
@@ -662,6 +650,8 @@ ipv6rs_expire(void *arg)
 		lt.tv_usec = 0;
 		timeradd(&rap->received, &lt, &expire);
 		if (timercmp(&now, &expire, >)) {
+			syslog(LOG_INFO, "%s: %s: expired Router Advertisement",
+			    ifp->name, rap->sfrom);
 			expired = 1;
 			if (ral)
 				ral->next = ran;
@@ -669,8 +659,29 @@ ipv6rs_expire(void *arg)
 				ifp->ras = ran;
 			ipv6rs_free_opts(rap);
 			free(rap);
-		} else {
-			timersub(&now, &expire, &lt);
+			continue;
+		}
+		timersub(&expire, &now, &lt);
+		if (!timerisset(&next) || timercmp(&next, &lt, >))
+			next = lt;
+		
+		for (rao = rap->options;
+		    rao && (raon = rao->next);
+		    raol = rao, rao = raon)
+		{
+			if (!timerisset(&rao->expire))
+				continue;
+			if (timercmp(&now, &rao->expire, >)) {
+				syslog(LOG_INFO,
+				    "%s: %s: expired option %d",
+				    ifp->name, rap->sfrom, rao->type);
+				if (raol)
+					raol = raon;
+				else
+					rap->options = raon;
+				continue;
+			}
+			timersub(&rao->expire, &now, &lt);
 			if (!timerisset(&next) || timercmp(&next, &lt, >))
 				next = lt;
 		}
@@ -678,12 +689,8 @@ ipv6rs_expire(void *arg)
 
 	if (timerisset(&next))
 		add_timeout_tv(&next, ipv6rs_expire, ifp);
-
-	if (expired) {
-		ifp->state->reason = "ROUTERADVERT";
-		run_script(ifp);
-	}
-
+	if (expired)
+		run_script_reason(ifp, "ROUTERADVERT");
 }
 
 int
