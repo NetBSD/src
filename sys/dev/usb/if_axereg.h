@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.13 2011/11/19 22:51:24 tls Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.14 2012/02/02 19:43:07 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -199,9 +199,7 @@ struct axe_softc {
 	device_t axe_dev;
 	struct ethercom		axe_ec;
 	struct mii_data		axe_mii;
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 	usbd_device_handle	axe_udev;
 	usbd_interface_handle	axe_iface;
 

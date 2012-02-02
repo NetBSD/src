@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.68 2010/09/20 06:54:06 kiyohara Exp $	*/
+/*	$NetBSD: ld.c,v 1.69 2012/02/02 19:43:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,9 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.68 2010/09/20 06:54:06 kiyohara Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.69 2012/02/02 19:43:01 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.68 2010/09/20 06:54:06 kiyohara Exp $");
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/mutex.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/ldvar.h>
 
@@ -149,11 +145,9 @@ ldattach(struct ld_softc *sc)
 
 	ld_set_properties(sc);
 
-#if NRND > 0
 	/* Attach the device into the rnd source list. */
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
 	    RND_TYPE_DISK, 0);
-#endif
 
 	/* Register with PMF */
 	if (!pmf_device_register1(sc->sc_dv, ld_suspend, NULL, ld_shutdown))
@@ -243,10 +237,8 @@ ldenddetach(struct ld_softc *sc)
 	disk_detach(&sc->sc_dk);
 	disk_destroy(&sc->sc_dk);
 
-#if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->sc_rnd_source);
-#endif
 
 	/* Deregister with PMF */
 	pmf_device_deregister(sc->sc_dv);
@@ -725,9 +717,7 @@ lddone(struct ld_softc *sc, struct buf *bp)
 
 	disk_unbusy(&sc->sc_dk, bp->b_bcount - bp->b_resid,
 	    (bp->b_flags & B_READ));
-#if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, bp->b_rawblkno);
-#endif
 	biodone(bp);
 
 	mutex_enter(&sc->sc_mutex);

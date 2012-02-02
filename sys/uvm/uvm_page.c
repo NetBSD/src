@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.180 2012/01/28 15:43:34 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.181 2012/02/02 19:43:08 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.180 2012/01/28 15:43:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.181 2012/02/02 19:43:08 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1076,7 +1076,7 @@ uvm_cpu_attach(struct cpu_info *ci)
 
 	if (CPU_IS_PRIMARY(ci)) {
 		/* Already done in uvm_page_init(). */
-		return;
+		goto attachrnd;
 	}
 
 	/* Add more reserve pages for this CPU. */
@@ -1094,6 +1094,14 @@ uvm_cpu_attach(struct cpu_info *ci)
 		uvm_page_init_buckets(&pgfl);
 		ucpu->page_free[lcv].pgfl_buckets = pgfl.pgfl_buckets;
 	}
+
+attachrnd:
+	/*
+	 * Attach RNG source for this CPU's VM events
+	 */
+        rnd_attach_source(&uvm.cpus[cpu_index(ci)]->rs,
+			  ci->ci_data.cpu_name, RND_TYPE_VM, 0);
+
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.179 2011/08/13 19:23:34 jakllsch Exp $	*/
+/*	$NetBSD: tulip.c,v 1.180 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.179 2011/08/13 19:23:34 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.180 2012/02/02 19:43:03 tls Exp $");
 
 
 #include <sys/param.h>
@@ -525,10 +525,9 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, tlp_ifflags_cb);
-#if NRND > 0
+
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
-#endif
 
 	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);
@@ -616,9 +615,8 @@ tlp_detach(struct tulip_softc *sc)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
-#if NRND > 0
 	rnd_detach_source(&sc->sc_rnd_source);
-#endif
+
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
@@ -1195,10 +1193,9 @@ tlp_intr(void *arg)
 	/* Try to get more packets going. */
 	tlp_start(ifp);
 
-#if NRND > 0
 	if (handled)
 		rnd_add_uint32(&sc->sc_rnd_source, status);
-#endif
+
 	return (handled);
 }
 

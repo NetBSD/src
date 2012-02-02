@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.9 2011/11/19 22:51:23 tls Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.10 2012/02/02 19:43:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -81,11 +81,7 @@
 #ifndef _DEV_PCI_IF_MSKVAR_H_
 #define _DEV_PCI_IF_MSKVAR_H_
 
-#include "rnd.h"
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 struct sk_jpool_entry {
 	int                             slot;
@@ -209,9 +205,7 @@ struct sk_softc {
 	bus_dmamap_t		sk_status_map;
 	int			sk_status_idx;
 	int			sk_status_own_idx;
-#if NRND > 0
 	krndsource_t     rnd_source;
-#endif
 };
 
 /* Softc for each logical interface */

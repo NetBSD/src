@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.7 2011/11/19 22:51:24 tls Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.8 2012/02/02 19:43:07 tls Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -189,9 +189,7 @@ struct udav_softc {
 	kmutex_t		sc_mii_lock;
 	int			sc_link;
 #define	sc_media udav_mii.mii_media
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 	struct udav_cdata	sc_cdata;
 
 	int                     sc_attached;

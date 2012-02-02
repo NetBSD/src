@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.33 2012/01/03 07:36:02 kiyohara Exp $ */
+/* $NetBSD: if_aumac.c,v 1.34 2012/02/02 19:42:59 tls Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,9 +46,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.33 2012/01/03 07:36:02 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.34 2012/02/02 19:42:59 tls Exp $");
 
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,9 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.33 2012/01/03 07:36:02 kiyohara Exp $
 #include <net/if_ether.h>
 
 #include <net/bpf.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -142,9 +140,7 @@ struct aumac_softc {
 
 	int sc_rxptr;			/* next ready Rx descriptor */
 
-#if NRND > 0
 	krndsource_t rnd_source;
-#endif
 
 #ifdef AUMAC_EVENT_COUNTERS
 	struct evcnt sc_ev_txstall;	/* Tx stalled */
@@ -341,9 +337,8 @@ aumac_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp); 
 	ether_ifattach(ifp, enaddr);
 
-#if NRND > 0
-	rnd_attach_source(&sc->rnd_source, device_xname(self), RND_TYPE_NET, 0);
-#endif
+	rnd_attach_source(&sc->rnd_source, device_xname(self),
+	    RND_TYPE_NET, 0);
 
 #ifdef AUMAC_EVENT_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_ev_txstall, EVCNT_TYPE_MISC,
@@ -532,10 +527,7 @@ aumac_intr(void *arg)
 	status = aumac_rxintr(sc);
 	status += aumac_txintr(sc);
 
-#if NRND > 0
-	if (RND_ENABLED(&sc->rnd_source))
-		rnd_add_uint32(&sc->rnd_source, status);
-#endif
+	rnd_add_uint32(&sc->rnd_source, status);
 
 	return status;
 }

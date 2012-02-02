@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.25 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.26 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -34,9 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.25 2009/05/12 14:25:17 cegger Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.26 2012/02/02 19:43:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.25 2009/05/12 14:25:17 cegger Exp $");
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <sys/bus.h>
 

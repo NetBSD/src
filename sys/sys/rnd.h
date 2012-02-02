@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.28 2011/12/17 20:05:40 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.29 2012/02/02 19:43:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -96,9 +96,12 @@ typedef struct {
 #define	RND_TYPE_NET		2	/* source is a network device */
 #define	RND_TYPE_TAPE		3	/* source is a tape drive */
 #define	RND_TYPE_TTY		4	/* source is a tty device */
-#define	RND_TYPE_RNG		5	/* source is a random number
-					   generator */
-#define	RND_TYPE_MAX		5	/* last type id used */
+#define	RND_TYPE_RNG		5	/* source is a hardware RNG */
+#define RND_TYPE_SKEW		6	/* source is skew between clocks */
+#define RND_TYPE_ENV		7	/* source is temp or fan sensor */
+#define RND_TYPE_VM		8	/* source is VM system events */
+#define RND_TYPE_POWER		9	/* source is power events */
+#define	RND_TYPE_MAX		9	/* last type id used */
 
 #ifdef _KERNEL
 /*
@@ -153,7 +156,7 @@ uint32_t	rndpool_get_poolsize(void);
 void		rndpool_add_data(rndpool_t *, void *, uint32_t, uint32_t);
 uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t, uint32_t);
 void		rnd_init(void);
-void		rnd_add_uint32(krndsource_t *, uint32_t);
+void		_rnd_add_uint32(krndsource_t *, uint32_t);
 void		rnd_add_data(krndsource_t *, const void *const, uint32_t,
 		    uint32_t);
 void		rnd_attach_source(krndsource_t *, const char *,
@@ -164,6 +167,14 @@ void		rndsink_attach(rndsink_t *);
 void		rndsink_detach(rndsink_t *);
 
 void		rnd_seed(void *, size_t);
+
+static inline void
+rnd_add_uint32(krndsource_t *kr, uint32_t val)
+{
+	if (RND_ENABLED(kr)) {
+		_rnd_add_uint32(kr, val);
+	}
+}
 
 extern int	rnd_full;
 
