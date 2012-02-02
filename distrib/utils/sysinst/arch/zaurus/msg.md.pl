@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.4 2011/04/04 08:30:46 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.5 2012/02/02 16:00:35 tsutsui Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2002/02/11 13:50:18 skrll Exp */
 
@@ -54,3 +54,6 @@ message zaurusfspart
 
 message set_kernel_1
 {Kernel (GENERIC)}
+
+message set_kernel_2
+{Kernel (C700)}
