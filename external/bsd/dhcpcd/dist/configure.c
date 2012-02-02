@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -163,7 +163,7 @@ arraytostr(const char *const *argv, char **s)
 }
 
 static ssize_t
-make_env(const struct interface *iface, char ***argv)
+make_env(const struct interface *iface, const char *reason, char ***argv)
 {
 	char **env, *p;
 	ssize_t e, elen, l;
@@ -171,9 +171,8 @@ make_env(const struct interface *iface, char ***argv)
 	const struct interface *ifp;
 	int dhcp, ra;
 
-	dhcp = 0;
-	ra = 0;
-	if (strcmp(iface->state->reason, "ROUTERADVERT") == 0)
+	dhcp = ra = 0;
+	if (strcmp(reason, "ROUTERADVERT") == 0)
 		ra = 1;
 	else
 		dhcp = 1;
@@ -183,16 +182,16 @@ make_env(const struct interface *iface, char ***argv)
 	if (options & DHCPCD_DUMPLEASE)
 		elen = 2;
 	else
-		elen = 8;
+		elen = 10;
 
 	/* Make our env */
 	env = xmalloc(sizeof(char *) * (elen + 1));
 	e = strlen("interface") + strlen(iface->name) + 2;
 	env[0] = xmalloc(e);
 	snprintf(env[0], e, "interface=%s", iface->name);
-	e = strlen("reason") + strlen(iface->state->reason) + 2;
+	e = strlen("reason") + strlen(reason) + 2;
 	env[1] = xmalloc(e);
-	snprintf(env[1], e, "reason=%s", iface->state->reason);
+	snprintf(env[1], e, "reason=%s", reason);
 	if (options & DHCPCD_DUMPLEASE)
 		goto dumplease;
 
@@ -222,6 +221,13 @@ make_env(const struct interface *iface, char ***argv)
 		e--;
 	}
 	*--p = '\0';
+	if ((dhcp && iface->state->new) || (ra && iface->ras)) {
+		env[8] = strdup("if_up=true");
+		env[9] = strdup("if_down=false");
+	} else {
+		env[8] = strdup("if_up=false");
+		env[9] = strdup("if_down=true");
+	}
 	if (*iface->state->profile) {
 		e = strlen("profile=") + strlen(iface->state->profile) + 2;
 		env[elen] = xmalloc(e);
@@ -270,7 +276,7 @@ dumplease:
 		e = ipv6rs_env(NULL, NULL, iface);
 		if (e > 0) {
 			env = xrealloc(env, sizeof(char *) * (elen + e + 1));
-			elen += ipv6rs_env(env + elen, "new", iface);
+			elen += ipv6rs_env(env + elen, NULL, iface);
 		}
 	}
 
@@ -293,8 +299,8 @@ dumplease:
 	return elen;
 }
 
-int
-send_interface(int fd, const struct interface *iface)
+static int
+send_interface1(int fd, const struct interface *iface, const char *reason)
 {
 	char **env, **ep, *s;
 	ssize_t elen;
@@ -302,7 +308,7 @@ send_interface(int fd, const struct interface *iface)
 	int retval;
 
 	retval = 0;
-	make_env(iface, &env);
+	make_env(iface, reason, &env);
 	elen = arraytostr((const char *const *)env, &s);
 	iov[0].iov_base = &elen;
 	iov[0].iov_len = sizeof(ssize_t);
@@ -318,7 +324,20 @@ send_interface(int fd, const struct interface *iface)
 }
 
 int
-run_script(const struct interface *iface)
+send_interface(int fd, const struct interface *iface)
+{
+	int retval = 0;
+	if (send_interface1(fd, iface, iface->state->reason) == -1)
+		retval = -1;
+	if (iface->ras) {
+		if (send_interface1(fd, iface, "ROUTERADVERT") == -1)
+			retval = -1;
+	}
+	return retval;
+}
+
+int
+run_script_reason(const struct interface *iface, const char *reason)
 {
 	char *const argv[2] = { UNCONST(iface->state->options->script), NULL };
 	char **env = NULL, **ep;
@@ -334,11 +353,13 @@ run_script(const struct interface *iface)
 	    strcmp(iface->state->options->script, "/dev/null") == 0)
 		return 0;
 
+	if (reason == NULL)
+		reason = iface->state->reason;
 	syslog(LOG_DEBUG, "%s: executing `%s', reason %s",
-	    iface->name, argv[0], iface->state->reason);
+	    iface->name, argv[0], reason);
 
 	/* Make our env */
-	elen = make_env(iface, &env);
+	elen = make_env(iface, reason, &env);
 	env = xrealloc(env, sizeof(char *) * (elen + 2));
 	/* Add path to it */
 	path = getenv("PATH");
