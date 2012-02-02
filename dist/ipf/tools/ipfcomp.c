@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfcomp.c,v 1.5 2012/01/30 16:12:05 darrenr Exp $	*/
+/*	$NetBSD: ipfcomp.c,v 1.6 2012/02/02 19:18:51 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -389,7 +389,7 @@ extern frentry_t *ipfrule_match_out_%s __P((fr_info_t *, u_32_t *));\n\
 extern frentry_t *ipf_rules_out_%s[%d];\n",
 			grp->fg_name, grp->fg_name, outcount);
 
-		for (g = groups; g != g; g = g->fg_next)
+		for (g = groups; g != grp; g = g->fg_next)
 			if ((strncmp(g->fg_name, grp->fg_name,
 				     FR_GROUPLEN) == 0) &&
 			    g->fg_flags == grp->fg_flags)
