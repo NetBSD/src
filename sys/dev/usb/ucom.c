@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.96 2012/01/14 20:51:00 jakllsch Exp $	*/
+/*	$NetBSD: ucom.c,v 1.97 2012/02/02 19:43:07 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.96 2012/01/14 20:51:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.97 2012/02/02 19:43:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.96 2012/01/14 20:51:00 jakllsch Exp $");
 #include <sys/queue.h>
 #include <sys/kauth.h>
 #if defined(__NetBSD__)
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 #endif
 
 #include <dev/usb/usb.h>
@@ -146,9 +143,7 @@ struct ucom_softc {
 	int			sc_refcnt;
 	u_char			sc_dying;	/* disconnecting */
 
-#if defined(__NetBSD__) && NRND > 0
 	krndsource_t	sc_rndsource;	/* random source */
-#endif
 };
 
 dev_type_open(ucomopen);
@@ -246,7 +241,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("ucom_attach: tty_attach %p\n", tp));
 	tty_attach(tp);
 
-#if defined(__NetBSD__) && NRND > 0
+#if defined(__NetBSD__)
 	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
@@ -320,7 +315,7 @@ ucom_detach(device_t self, int flags)
 	}
 
 	/* Detach the random source */
-#if defined(__NetBSD__) && NRND > 0
+#if defined(__NetBSD__)
 	rnd_detach_source(&sc->sc_rndsource);
 #endif
 
@@ -1074,7 +1069,7 @@ ucom_write_status(struct ucom_softc *sc, struct ucom_buffer *ub,
 		break;
 	case USBD_NORMAL_COMPLETION:
 		usbd_get_xfer_status(ub->ub_xfer, NULL, NULL, &cc, NULL);
-#if defined(__NetBSD__) && NRND > 0
+#if defined(__NetBSD__)
 		rnd_add_uint32(&sc->sc_rndsource, cc);
 #endif
 		/*FALLTHROUGH*/
@@ -1259,7 +1254,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 
 	KDASSERT(cp == ub->ub_data);
 
-#if defined(__NetBSD__) && NRND > 0
+#if defined(__NetBSD__)
 	rnd_add_uint32(&sc->sc_rndsource, cc);
 #endif
 

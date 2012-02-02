@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.50 2011/08/25 02:29:08 pgoyette Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.51 2012/02/02 19:43:07 tls Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,12 +89,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.50 2011/08/25 02:29:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.51 2012/02/02 19:43:07 tls Exp $");
 
 #if defined(__NetBSD__)
 #ifndef _MODULE
 #include "opt_inet.h"
-#include "rnd.h"
 #endif
 #endif
 
@@ -110,9 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.50 2011/08/25 02:29:08 pgoyette Exp $")
 #include <sys/sockio.h>
 #include <sys/systm.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -727,10 +724,8 @@ axe_attach(device_t parent, device_t self, void *aux)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->axe_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 	callout_init(&sc->axe_stat_ch, 0);
 	callout_setfunc(&sc->axe_stat_ch, axe_tick, sc);
@@ -769,9 +764,7 @@ axe_detach(device_t self, int flags)
 
 	callout_destroy(&sc->axe_stat_ch);
 	mutex_destroy(&sc->axe_mii_lock);
-#if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
 	mii_detach(&sc->axe_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->axe_mii.mii_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);

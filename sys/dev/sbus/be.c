@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.77 2010/04/05 07:21:47 joerg Exp $	*/
+/*	$NetBSD: be.c,v 1.78 2012/02/02 19:43:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,11 +57,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.77 2010/04/05 07:21:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.78 2012/02/02 19:43:06 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.77 2010/04/05 07:21:47 joerg Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>

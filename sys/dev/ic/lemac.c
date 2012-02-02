@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.39 2010/11/13 13:52:01 uebayasi Exp $ */
+/* $NetBSD: lemac.c,v 1.40 2012/02/02 19:43:03 tls Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.39 2010/11/13 13:52:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.40 2012/02/02 19:43:03 tls Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.39 2010/11/13 13:52:01 uebayasi Exp $");
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -955,10 +952,8 @@ lemac_intr(
     LEMAC_OUTB(sc, LEMAC_REG_CTL, LEMAC_INB(sc, LEMAC_REG_CTL) ^ LEMAC_CTL_LED);
     LEMAC_INTR_ENABLE(sc);		/* Unmask interrupts */
 
-#if NRND > 0
     if (cs_value)
         rnd_add_uint32(&sc->rnd_source, cs_value);
-#endif
 
     return 1;
 }
@@ -1016,10 +1011,8 @@ lemac_ifattach(
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dv),
 			  RND_TYPE_NET, 0);
-#endif
 
 	ifmedia_init(&sc->sc_ifmedia, 0,
 		     lemac_ifmedia_change,

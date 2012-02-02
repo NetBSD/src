@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.192 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.193 2012/02/02 19:43:08 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.192 2012/01/27 19:48:41 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.193 2012/02/02 19:43:08 tls Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -167,6 +167,12 @@ static const struct uvm_advice uvmadvice[] = {
 /*
  * private prototypes
  */
+
+/*
+ * externs from other modules
+ */
+
+extern int start_init_exec;	/* Is init_main() done / init running? */
 
 /*
  * inline functions
@@ -780,6 +786,8 @@ int
 uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
     vm_prot_t access_type, int fault_flag)
 {
+	struct cpu_data *cd;
+	struct uvm_cpu *ucpu;
 	struct uvm_faultinfo ufi;
 	struct uvm_faultctx flt = {
 		.access_type = access_type,
@@ -795,13 +803,64 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons;
 	struct vm_page *pages_store[UVM_MAXRANGE], **pages;
 	int error;
+#if 0
+	uintptr_t delta, delta2, delta3;
+#endif
 	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, at=%d, ff=%d)",
 	      orig_map, vaddr, access_type, fault_flag);
 
-	curcpu()->ci_data.cpu_nfault++;
+	cd = &(curcpu()->ci_data);
+	cd->cpu_nfault++;
+	ucpu = cd->cpu_uvm;
 
+	/* Don't flood RNG subsystem with samples. */
+	if (cd->cpu_nfault % 503)
+		goto norng;
+#if 0
+	/*
+	 * Avoid trying to count "entropy" for accesses of regular
+	 * stride, by checking the 1st, 2nd, 3rd order differentials
+	 * of vaddr, like the rnd code does internally with sample times.
+	 *
+	 * XXX If the selection of only every 503rd fault above is
+	 * XXX removed, this code should exclude most samples, but
+	 * XXX does not, and is therefore disabled.
+	 */
+	if (ucpu->last_fltaddr > (uintptr_t)trunc_page(vaddr))
+		delta = ucpu->last_fltaddr - (uintptr_t)trunc_page(vaddr);
+	else
+		delta = (uintptr_t)trunc_page(vaddr) - ucpu->last_fltaddr;
+
+	if (ucpu->last_delta > delta) 
+		delta2 = ucpu->last_delta - delta;
+	else
+		delta2 = delta - ucpu->last_delta;
+
+	if (ucpu->last_delta2 > delta2)
+		delta3 = ucpu->last_delta2 - delta2;
+	else
+		delta3 = delta2 - ucpu->last_delta2;
+
+	ucpu->last_fltaddr = (uintptr_t)vaddr;
+	ucpu->last_delta = delta;
+	ucpu->last_delta2 = delta2;
+
+	if (delta != 0 && delta2 != 0 && delta3 != 0)
+#endif
+	/* Don't count anything until user interaction is possible */
+	if (__predict_true(start_init_exec)) {
+		kpreempt_disable();
+		rnd_add_uint32(&ucpu->rs,
+			       sizeof(vaddr_t) == sizeof(uint32_t) ?
+			       (uint32_t)vaddr : sizeof(vaddr_t) ==
+			       sizeof(uint64_t) ?
+			       (uint32_t)(vaddr & 0x00000000ffffffff) :
+			       (uint32_t)(cd->cpu_nfault & 0x00000000ffffffff));
+		kpreempt_enable();
+	}
+norng:
 	/*
 	 * init the IN parameters in the ufi
 	 */

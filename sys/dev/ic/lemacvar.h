@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacvar.h,v 1.10 2011/11/19 22:51:22 tls Exp $ */
+/*      $NetBSD: lemacvar.h,v 1.11 2012/02/02 19:43:03 tls Exp $ */
 
 /*
  * Copyright (c) 1997 Matt Thomas <matt@3am-software.com>
@@ -27,10 +27,8 @@
 #ifndef _LEMAC_VAR_H
 #define	_LEMAC_VAR_H
 
-#include "rnd.h"
-#if NRND > 0
+
 #include <sys/rnd.h>
-#endif
 
 /*
  * Ethernet status, per interface.
@@ -79,9 +77,7 @@ typedef struct {
     unsigned char sc_enaddr[ETHER_ADDR_LEN];	/* current Ethernet address */
     char sc_prodname[LEMAC_EEP_PRDNMSZ+1]; /* product name DE20x-xx */
     u_int8_t sc_eeprom[LEMAC_EEP_SIZE];	/* local copy eeprom */
-#if NRND > 0
     krndsource_t rnd_source;
-#endif
 } lemac_softc_t;
 
 #define	sc_if	sc_ec.ec_if

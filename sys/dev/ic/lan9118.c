@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.14 2010/04/05 07:19:35 joerg Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.15 2012/02/02 19:43:03 tls Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.14 2010/04/05 07:19:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.15 2012/02/02 19:43:03 tls Exp $");
 
 /*
  * The LAN9118 Family
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.14 2010/04/05 07:19:35 joerg Exp $");
  *   Also support HP Auto-MDIX.
  */
 
-#include "rnd.h"
-
 #include <sys/param.h>
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -67,9 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.14 2010/04/05 07:19:35 joerg Exp $");
 #include <dev/mii/miivar.h>
 
 #include <net/bpf.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/ic/lan9118reg.h>
 #include <dev/ic/lan9118var.h>
@@ -282,10 +278,8 @@ lan9118_attach(struct lan9118_softc *sc)
 
 	callout_init(&sc->sc_tick, 0);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
-#endif
 	return 0;
 }
 
@@ -341,10 +335,7 @@ lan9118_intr(void *arg)
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		lan9118_start(ifp);
 
-#if NRND > 0
-	if (RND_ENABLED(&sc->rnd_source))
-		rnd_add_uint32(&sc->rnd_source, datum);
-#endif
+	rnd_add_uint32(&sc->rnd_source, datum);
 
 	return handled;
 }

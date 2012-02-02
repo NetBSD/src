@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.45 2010/04/05 07:19:35 joerg Exp $	*/
+/*	$NetBSD: lance.c,v 1.46 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,9 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.45 2010/04/05 07:19:35 joerg Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.46 2012/02/02 19:43:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.45 2010/04/05 07:19:35 joerg Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -258,10 +254,8 @@ lance_config(struct lance_softc *sc)
 	sc->sc_tbufaddr = malloc(sc->sc_ntbuf * sizeof(int), M_DEVBUF,
 					M_WAITOK);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
-#endif
 }
 
 void

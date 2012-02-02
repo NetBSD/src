@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.9 2012/02/01 22:34:42 matt Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.10 2012/02/02 19:43:06 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,9 +28,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.9 2012/02/01 22:34:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.10 2012/02/02 19:43:06 tls Exp $");
 
-#include "rnd.h"
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
 #endif
@@ -47,9 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.9 2012/02/01 22:34:42 matt Exp $");
 #include <sys/dkio.h>
 #include <sys/disk.h>
 #include <sys/kthread.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/ldvar.h>
 

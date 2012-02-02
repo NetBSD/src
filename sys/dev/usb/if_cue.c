@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.60 2010/11/03 22:28:31 dyoung Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.61 2012/02/02 19:43:07 tls Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,11 +56,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.60 2010/11/03 22:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.61 2012/02/02 19:43:07 tls Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
-#include "rnd.h"
 #elif defined(__OpenBSD__)
 #include "bpfilter.h"
 #endif /* defined(__OpenBSD__) */
@@ -77,9 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.60 2010/11/03 22:28:31 dyoung Exp $");
 #include <sys/socket.h>
 
 #include <sys/device.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #if defined(__NetBSD__)
@@ -578,10 +575,8 @@ cue_attach(device_t parent, device_t self, void *aux)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->cue_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 	callout_init(&(sc->cue_stat_ch), 0);
 
@@ -621,9 +616,7 @@ cue_detach(device_t self, int flags)
 		cue_stop(sc);
 
 #if defined(__NetBSD__)
-#if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
 	ether_ifdetach(ifp);
 #endif /* __NetBSD__ */
 
