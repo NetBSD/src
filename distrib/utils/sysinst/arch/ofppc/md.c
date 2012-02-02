@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 2012/01/29 16:01:36 phx Exp $	*/
+/*	$NetBSD: md.c,v 1.12 2012/02/02 21:58:31 phx Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -605,7 +605,7 @@ const char *md_disklabel_cmd(void)
 
 	/* we cannot rewrite an RDB disklabel */
 	if (rdb_found)
-		return "echo No disklabel";
+		return "sync No disklabel";
 
 	return "disklabel -w -r";
 }
