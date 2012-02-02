@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.19 2009/03/18 16:00:16 cegger Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.20 2012/02/02 14:29:25 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19 2009/03/18 16:00:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20 2012/02/02 14:29:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -219,6 +219,8 @@ get_operands(inst_buffer *ib)
 		return (-1);
 	}
 	ib->argp = vax_inst[ib->opc].argdesc;
+	if (ib->argp == NULL)
+		return 0;
 
 	while (*ib->argp) {
 		switch (*ib->argp) {
