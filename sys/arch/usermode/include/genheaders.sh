@@ -20,6 +20,7 @@ HDRS="$HDRS netbsd32_machdep.h"
 HDRS="$HDRS param.h"
 HDRS="$HDRS ptrace.h"
 HDRS="$HDRS wchar_limits.h"
+HDRS="$HDRS cdefs.h"
 
 for hdr in ${HDRS}; do
 	G="_USERMODE_$(echo ${hdr} | sed 's/\./_/g' | tr [a-z] [A-Z])"
