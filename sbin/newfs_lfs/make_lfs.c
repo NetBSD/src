@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.17 2012/01/17 16:27:19 perseant Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.18 2012/02/02 03:50:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.17 2012/01/17 16:27:19 perseant Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.18 2012/02/02 03:50:32 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -355,12 +355,20 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		    "expected \"%s\"", dkw->dkw_ptype, DKW_PTYPE_LFS);
 	}
 
-	if (!(bsize = block_size))
+	if (!(bsize = block_size)) {
 		bsize = DFL_LFSBLOCK;
-	if (!(fsize = frag_size))
+		if (dkw->dkw_size <= SMALL_FSSIZE)
+			bsize = SMALL_LFSBLOCK;
+	}
+	if (!(fsize = frag_size)) {
 		fsize = DFL_LFSFRAG;
+		if (dkw->dkw_size <= SMALL_FSSIZE)
+			fsize = SMALL_LFSFRAG;
+	}
 	if (!(ssize = seg_size)) {
 		ssize = DFL_LFSSEG;
+		if (dkw->dkw_size <= SMALL_FSSIZE)
+			ssize = SMALL_LFSSEG;
 	}
 	if (version > 1) {
 		if (ibsize == 0)
@@ -511,7 +519,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 			"segment size.\n", ssize, fs->lfs_bsize);
 	}
 	if(warned_segtoobig)
-		fprintf(stderr,"Using segment size %d.\n", ssize);
+		fprintf(stderr,"Using segment size %d, block size %d, frag size %d.\n", ssize, bsize, fsize);
 
 	/*
 	 * Now that we've determined what we're going to do, announce it
