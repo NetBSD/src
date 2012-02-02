@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.57 2012/01/04 10:48:24 cherry Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.58 2012/02/02 19:43:01 tls Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,11 +85,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.57 2012/01/04 10:48:24 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.58 2012/02/02 19:43:01 tls Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -98,9 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.57 2012/01/04 10:48:24 cherry
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/intr.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -204,9 +201,7 @@ struct xennet_xenbus_softc {
 	unsigned long sc_rx_feature;
 #define FEATURE_RX_FLIP		0
 #define FEATURE_RX_COPY		1
-#if NRND > 0
 	krndsource_t     sc_rnd_source;
-#endif
 };
 #define SC_NLIVEREQ(sc) ((sc)->sc_rx_ring.req_prod_pvt - \
 			    (sc)->sc_rx_ring.sring->rsp_prod)
@@ -397,10 +392,8 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-#if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 	if (!pmf_device_register(self, xennet_xenbus_suspend,
 	    xennet_xenbus_resume))
@@ -439,10 +432,8 @@ xennet_xenbus_detach(device_t self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-#if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->sc_rnd_source);
-#endif
 
 	while (xengnt_status(sc->sc_tx_ring_gntref)) {
 		tsleep(xennet_xenbus_detach, PRIBIO, "xnet_txref", hz/2);
@@ -991,9 +982,7 @@ xennet_handler(void *arg)
 
 	xennet_tx_complete(sc);
 
-#if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx_ring.req_prod_pvt);
-#endif
 
 again:
 	DPRINTFN(XEDB_EVENT, ("xennet_handler prod %d cons %d\n",
@@ -1166,9 +1155,7 @@ xennet_start(struct ifnet *ifp)
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start()\n", device_xname(sc->sc_dev)));
 
-#if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx_ring.req_prod_pvt);
-#endif
 
 	xennet_tx_complete(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.37 2011/11/19 22:51:22 tls Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.38 2012/02/02 19:43:03 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -30,11 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rnd.h"
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 /*
  * Ethernet software status per interface.
@@ -101,9 +97,7 @@ struct ep_softc {
 #define	ELINK_IS_BUS_32(a)	((a) & 0x2)
 	int ep_pktlenshift;		/* scale factor for pkt lengths */
 
-#if NRND > 0
 	krndsource_t rnd_source;
-#endif
 
 	/* power management hooks */
 	int (*enable)(struct ep_softc *);

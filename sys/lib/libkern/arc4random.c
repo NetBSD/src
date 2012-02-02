@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.29 2011/11/29 13:16:27 drochner Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.30 2012/02/02 19:43:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include <sys/cdefs.h>
 
 #ifdef _KERNEL
-#include "rnd.h"
+#define NRND 1
 #else
 #define NRND 0
 #endif

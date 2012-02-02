@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.168 2011/10/31 12:52:19 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.169 2012/02/02 19:43:08 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
-#include "rnd.h"
+
 #endif
 
 /*
@@ -807,9 +807,7 @@ extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_log_refused;	/* log refused connections */
 extern	int tcp_do_ecn;		/* TCP ECN enabled/disabled? */
 extern	int tcp_ecn_maxretries;	/* Max ECN setup retries */
-#if NRND > 0
 extern	int tcp_do_rfc1948;	/* ISS by cryptographic hash */
-#endif
 extern int tcp_sack_tp_maxholes;	/* Max holes per connection. */
 extern int tcp_sack_globalmaxholes;	/* Max holes per system. */
 extern int tcp_sack_globalholes;	/* Number of holes present. */

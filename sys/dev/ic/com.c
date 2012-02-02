@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.303 2011/11/27 18:17:08 jakllsch Exp $ */
+/* $NetBSD: com.c,v 1.304 2012/02/02 19:43:02 tls Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.303 2011/11/27 18:17:08 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.304 2012/02/02 19:43:02 tls Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.303 2011/11/27 18:17:08 jakllsch Exp $");
 #include "opt_ntp.h"
 
 #include "rnd.h"
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 #include <sys/rnd.h>
 #endif
 
@@ -554,7 +554,7 @@ fifodone:
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, comsoft, sc);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
@@ -684,7 +684,7 @@ com_detach(device_t self, int flags)
 	/* Unhook the soft interrupt handler. */
 	softint_disestablish(sc->sc_si);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
@@ -2070,7 +2070,7 @@ again:	do {
 	/* Wake up the poller. */
 	softint_schedule(sc->sc_si);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);
 #endif
 

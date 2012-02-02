@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.34 2012/01/30 03:28:33 nisimura Exp $ */
+/*	$NetBSD: sscom.c,v 1.35 2012/02/02 19:42:58 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.34 2012/01/30 03:28:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.35 2012/02/02 19:42:58 tls Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.34 2012/01/30 03:28:33 nisimura Exp $");
 #include "opt_lockdebug.h"
 
 #include "rnd.h"
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 #include <sys/rnd.h>
 #endif
 
@@ -494,10 +494,8 @@ sscom_attach_subr(struct sscom_softc *sc)
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, sscomsoft, sc);
 
-#if NRND > 0 && defined(RND_COM)
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev->dv_xname,
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_TTY, 0);
-#endif
 
 	/* if there are no enable/disable functions, assume the device
 	   is always enabled */
@@ -1727,7 +1725,7 @@ sscomrxintr(void *arg)
 	/* Wake up the poller. */
 	softint_schedule(sc->sc_si);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_add_uint32(&sc->rnd_source, iir | rsr);
 #endif
 
@@ -1792,7 +1790,7 @@ sscomtxintr(void *arg)
 	/* Wake up the poller. */
 	softint_schedule(sc->sc_si);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_add_uint32(&sc->rnd_source, iir | rsr);
 #endif
 

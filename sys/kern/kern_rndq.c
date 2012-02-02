@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.89 2011/12/17 20:05:38 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.1 2012/02/02 19:43:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.89 2011/12/17 20:05:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.1 2012/02/02 19:43:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -152,7 +152,7 @@ static krndsource_t rnd_source_no_collect = {
 	.test = NULL
 };
 
-struct callout rnd_callout;
+struct callout rnd_callout, skew_callout;
 
 void	      rnd_wakeup_readers(void);
 static inline u_int32_t rnd_estimate_entropy(krndsource_t *, u_int32_t);
@@ -160,6 +160,8 @@ static inline u_int32_t rnd_counter(void);
 static        void	rnd_timeout(void *);
 static	      void	rnd_process_events(void *);
 u_int32_t     rnd_extract_data_locked(void *, u_int32_t, u_int32_t); /* XXX */
+static	      void	rnd_add_data_ts(krndsource_t *, const void *const,
+					uint32_t, uint32_t, uint32_t);
 
 int			rnd_ready = 0;
 static int		rnd_have_entropy = 0;
@@ -173,6 +175,7 @@ static uint8_t		rnd_testbits[sizeof(rnd_rt.rt_b)];
 LIST_HEAD(, krndsource)	rnd_sources;
 
 rndsave_t		*boot_rsp;
+
 /*
  * Generate a 32-bit counter.  This should be more machine dependent,
  * using cycle counters and the like when possible.
@@ -308,6 +311,43 @@ rnd_estimate_entropy(krndsource_t *rs, u_int32_t t)
 	return (1);
 }
 
+#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL)
+static void
+rnd_skew(void *arg)
+{
+	static krndsource_t skewsrc;
+	static int live, flipflop;
+
+	/*
+	 * Only one instance of this callout will ever be scheduled
+	 * at a time (it is only ever scheduled by itself).  So no
+	 * locking is required here.
+	 */
+
+	/*
+	 * Even on systems with seemingly stable clocks, the
+	 * entropy estimator seems to think we get 1 bit here
+	 * about every 2 calls.  That seems like too much.  Set
+	 * NO_ESTIMATE on this source until we can better analyze
+	 * the entropy of its output.
+	 */
+	if (__predict_false(!live)) {
+		rnd_attach_source(&skewsrc, "callout", RND_TYPE_SKEW,
+				  RND_FLAG_NO_ESTIMATE);
+		live = 1;
+	}
+
+	flipflop = !flipflop;
+
+	if (flipflop) {
+		rnd_add_uint32(&skewsrc, rnd_counter());
+		callout_schedule(&skew_callout, hz);
+	} else {
+		callout_schedule(&skew_callout, 1);
+	}
+}
+#endif
+
 /*
  * initialize the global random pool for our use.
  * rnd_init() must be called very early on in the boot process, so
@@ -357,6 +397,21 @@ rnd_init(void)
 	}
 
 	rnd_ready = 1;
+
+	/*
+	 * If we have a cycle counter, take its error with respect
+	 * to the callout mechanism as a source of entropy, ala
+	 * TrueRand.
+ 	 *
+	 * XXX This will do little when the cycle counter *is* what's
+	 * XXX clocking the callout mechanism.  How to get this right
+	 * XXX without unsightly spelunking in the timecounter code?
+	 */
+#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
+	callout_init(&skew_callout, CALLOUT_MPSAFE);
+	callout_setfunc(&skew_callout, rnd_skew, NULL);
+	rnd_skew(NULL);
+#endif
 
 #ifdef RND_VERBOSE
 	printf("rnd: initialised (%u)%s", RND_POOLBITS,
@@ -529,11 +584,11 @@ rnd_detach_source(krndsource_t *source)
 }
 
 /*
- * Add a value to the entropy pool. The rs parameter should point to the
- * source-specific source structure.
+ * Add a 32-bit value to the entropy pool.  The rs parameter should point to
+ * the source-specific source structure.
  */
 void
-rnd_add_uint32(krndsource_t *rs, u_int32_t val)
+_rnd_add_uint32(krndsource_t *rs, u_int32_t val)
 {
 	u_int32_t ts;
 	u_int32_t entropy = 0;
@@ -556,15 +611,21 @@ rnd_add_uint32(krndsource_t *rs, u_int32_t val)
 		entropy = rnd_estimate_entropy(rs, ts);
 	}
 
-	rnd_add_data(rs, &val, sizeof(val), entropy);
+	rnd_add_data_ts(rs, &val, sizeof(val), entropy, ts);
 }
 
 void
-rnd_add_data(krndsource_t *rs, const void *const data, u_int32_t len,
-    u_int32_t entropy)
+rnd_add_data(krndsource_t *rs, const void *const data, uint32_t len,
+	     uint32_t entropy)
+{
+	rnd_add_data_ts(rs, data, len, entropy, rnd_counter());
+}
+
+static void
+rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
+		u_int32_t entropy, uint32_t ts)
 {
 	rnd_sample_t *state = NULL;
-	uint32_t ts;
 	const uint32_t *dint = data;
 	int todo, done, filled = 0;
 	SIMPLEQ_HEAD(, _rnd_sample_t) tmp_samples =
@@ -573,12 +634,6 @@ rnd_add_data(krndsource_t *rs, const void *const data, u_int32_t len,
 	if (rs->flags & RND_FLAG_NO_COLLECT) {
 		return;
 	}
-
-        /*
-         * Sample the counter as soon as possible to avoid entropy
-         * overestimation.
-         */
-        ts = rnd_counter();
 
 	/*
 	 * Loop over data packaging it into sample buffers.
