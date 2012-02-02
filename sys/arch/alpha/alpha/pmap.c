@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.256 2012/01/27 19:48:38 para Exp $ */
+/* $NetBSD: pmap.c,v 1.257 2012/02/02 18:59:44 para Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.256 2012/01/27 19:48:38 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.257 2012/02/02 18:59:44 para Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -757,6 +757,11 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 #endif
 
 	/*
+	 * Compute the number of pages kmem_arena will have.
+	 */
+	kmeminit_nkmempages();
+
+	/*
 	 * Figure out how many initial PTE's are necessary to map the
 	 * kernel.  We also reserve space for kmem_alloc_pageable()
 	 * for vm_fork().
@@ -769,7 +774,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	lev3mapsize =
 		(VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
 		 bufsz + 16 * NCARGS + pager_map_size) / PAGE_SIZE +
-		(maxproc * UPAGES) + (256 * 1024 * 1024) / PAGE_SIZE;
+		(maxproc * UPAGES) + nkmempages;
 
 #ifdef SYSVSHM
 	lev3mapsize += shminfo.shmall;

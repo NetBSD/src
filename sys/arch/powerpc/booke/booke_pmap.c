@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.11 2012/01/27 19:48:39 para Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.12 2012/02/02 18:59:44 para Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.11 2012/01/27 19:48:39 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.12 2012/02/02 18:59:44 para Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -146,6 +146,11 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	pmap_tlb_info_init(&pmap_tlb0_info);		/* init the lock */
 
 	/*
+	 * Compute the number of pages kmem_arena will have.
+	 */
+	kmeminit_nkmempages();
+
+	/*
 	 * Figure out how many PTE's are necessary to map the kernel.
 	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
 	 */
@@ -164,7 +169,7 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 #ifdef SYSVSHM
 	    + NBPG * shminfo.shmall
 #endif
-	    + NBPG * 32 * 1024);
+	    + NBPG * nkmempages);
 
 	/*
 	 * Initialize `FYI' variables.	Note we're relying on

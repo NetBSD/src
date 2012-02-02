@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.206 2012/01/27 19:48:39 para Exp $	*/
+/*	$NetBSD: pmap.c,v 1.207 2012/02/02 18:59:44 para Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.206 2012/01/27 19:48:39 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207 2012/02/02 18:59:44 para Exp $");
 
 /*
  *	Manages physical address maps.
@@ -496,6 +496,11 @@ pmap_bootstrap(void)
 	pmap_tlb_info_init(&pmap_tlb0_info);		/* init the lock */
 
 	/*
+	 * Compute the number of pages kmem_arena will have.
+	 */
+	kmeminit_nkmempages();
+
+	/*
 	 * Figure out how many PTE's are necessary to map the kernel.
 	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
 	 */
@@ -507,7 +512,7 @@ pmap_bootstrap(void)
 
 	Sysmapsize = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
 	    bufsz + 16 * NCARGS + pager_map_size + iospace_size) / NBPG +
-	    (maxproc * UPAGES) + 1024 * 1024;
+	    (maxproc * UPAGES) + nkmempages;
 #ifdef DEBUG
 	{
 		extern int kmem_guard_depth;

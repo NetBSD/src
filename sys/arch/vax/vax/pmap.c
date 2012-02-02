@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.181 2012/02/02 14:30:13 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.182 2012/02/02 18:59:44 para Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.181 2012/02/02 14:30:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182 2012/02/02 18:59:44 para Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -224,12 +224,19 @@ calc_kvmsize(vsize_t usrptsize)
 {
 	vsize_t kvmsize, bufsz;
 
+	/*
+	 * Compute the number of pages kmem_arena will have.
+	 */
+	kmeminit_nkmempages();
+
 	/* All physical memory */
 	kvmsize = avail_end;
 	/* User Page table area. This may be large */
 	kvmsize += (usrptsize * sizeof(struct pte));
 	/* Kernel stacks per process */
 	kvmsize += (USPACE * maxproc);
+	/* kernel malloc arena */
+	kvmsize += nkmempages * PAGE_SIZE;
 	/* IO device register space */
 	kvmsize += (IOSPSZ * VAX_NBPG);
 	/* Pager allocations */
