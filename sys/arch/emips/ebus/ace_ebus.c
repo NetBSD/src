@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.4 2012/02/02 19:42:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,9 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.4 2012/02/02 19:42:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $");
 #include <sys/lock.h>
 #include <sys/queue.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -192,9 +188,7 @@ struct ace_softc {
 	int hw_busy;
 	int retries; /* number of xfer retry */
 
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 };
 
 int  ace_ebus_match(device_t, cfdata_t, void *);
@@ -1467,7 +1461,7 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: ace_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $ */
+/*	$NetBSD: ace_ebus.c,v 1.4 2012/02/02 19:42:58 tls Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1644,10 +1638,8 @@ aceattach(struct ace_softc *ace)
 	 */
 	disk_attach(&ace->sc_dk);
 
-#if NRND > 0
 	rnd_attach_source(&ace->rnd_source, device_xname(ace->sc_dev),
 			  RND_TYPE_DISK, 0);
-#endif
 
 }
 
@@ -1703,10 +1695,8 @@ acedetach(struct device *self, int flags)
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
 
-#if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
-#endif
 
 #if 0
 	sc->drvp->drive_flags = 0; /* no drive any more here */
@@ -1901,9 +1891,7 @@ retry:		/* Just reset and retry. Can we do more ? */
 	}
 	disk_unbusy(&ace->sc_dk, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
-#if NRND > 0
 	rnd_add_uint32(&ace->rnd_source, bp->b_blkno);
-#endif
 	biodone(bp);
 	ace->openings++;
 	acestart(ace);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aevar.h,v 1.4 2011/11/19 22:51:20 tls Exp $	*/
+/*	$NetBSD: aevar.h,v 1.5 2012/02/02 19:43:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -33,14 +33,10 @@
 #ifndef _MIPS_ATHEROS_DEV_AEVAR_H_
 #define	_MIPS_ATHEROS_DEV_AEVAR_H_
 
-#include "rnd.h"
-
 #include <sys/queue.h>
 #include <sys/callout.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 /*
  * Misc. definitions for the Digital Semiconductor ``Tulip'' (21x4x)
@@ -186,9 +182,7 @@ struct ae_softc {
 
 	int	sc_rxptr;		/* next ready RX descriptor/descsoft */
 
-#if NRND > 0
 	krndsource_t sc_rnd_source; /* random source */
-#endif
 };
 #endif
 

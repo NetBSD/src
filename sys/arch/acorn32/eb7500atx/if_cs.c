@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs.c,v 1.7 2011/07/19 15:59:52 dyoung Exp $	*/
+/*	$NetBSD: if_cs.c,v 1.8 2012/02/02 19:42:57 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.7 2011/07/19 15:59:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.8 2012/02/02 19:42:57 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,10 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.7 2011/07/19 15:59:52 dyoung Exp $");
 #include <sys/device.h>
 #include <sys/bus.h>
 
-#include "rnd.h"
-#if NRND > 0
+
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>

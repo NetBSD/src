@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.161 2011/12/19 11:59:57 drochner Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.162 2012/02/02 19:43:07 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,13 +95,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.161 2011/12/19 11:59:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.162 2012/02/02 19:43:07 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_tcp_debug.h"
 #include "opt_mbuftrace.h"
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2020,7 +2020,6 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("TCP drop connection"),
 		       sysctl_net_inet_tcp_drop, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DROP, CTL_EOL);
-#if NRND > 0
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "iss_hash",
@@ -2029,7 +2028,6 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       NULL, 0, &tcp_do_rfc1948, sizeof(tcp_do_rfc1948),
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
-#endif
 
 	/* ABC subtree */
 

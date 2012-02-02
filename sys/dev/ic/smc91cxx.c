@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.79 2010/11/13 13:52:02 uebayasi Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.80 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,10 +71,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.79 2010/11/13 13:52:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.80 2012/02/02 19:43:03 tls Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.79 2010/11/13 13:52:02 uebayasi Exp $
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -384,10 +381,8 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 		break;
 	}
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_NET, 0);
-#endif
 
 	callout_init(&sc->sc_mii_callout, 0);
 
@@ -1131,10 +1126,8 @@ out:
 	mask |= sc->sc_intmask;
 	smc91cxx_intr_mask_write(bst, bsh, mask);
 
-#if NRND > 0
 	if (status)
 		rnd_add_uint32(&sc->rnd_source, status);
-#endif
 
 	return (1);
 }
@@ -1528,9 +1521,8 @@ smc91cxx_detach(device_t self, int flags)
 	/* Delete all media. */
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
-#if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
+
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 

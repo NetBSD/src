@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.20 2012/01/17 03:39:33 jakllsch Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.21 2012/02/02 19:43:01 tls Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,14 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.20 2012/01/17 03:39:33 jakllsch Exp $");
-
-#ifdef _KERNEL_OPT
-# include "rnd.h"
-# if NRND == 0
-#  error padlock requires rnd pseudo-devices
-# endif
-#endif
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.21 2012/02/02 19:43:01 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

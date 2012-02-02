@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.440 2012/01/29 22:55:40 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.441 2012/02/02 19:43:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.440 2012/01/29 22:55:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.441 2012/02/02 19:43:07 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.440 2012/01/29 22:55:40 rmind Exp $"
 
 #include "drvctl.h"
 #include "ksyms.h"
-#include "rnd.h"
+
 #include "sysmon_envsys.h"
 #include "sysmon_power.h"
 #include "sysmon_taskq.h"
