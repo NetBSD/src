@@ -1545,8 +1545,29 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
 
   if (GET_CODE (base) == PLUS)
     {
-      off += INTVAL (XEXP (base, 1));
-      base = XEXP (base, 0);
+      rtx a = XEXP (base, 0);
+      rtx b = XEXP (base, 1);
+      if (GET_CODE (b) == CONST_INT)
+	{
+          off += INTVAL (b);
+          base = a;
+	}
+      else if (GET_CODE (a) == REG && GET_CODE (b) == SYMBOL_REF)
+	{
+	  if (off != 0)
+	    {
+	      base = gen_rtx_PLUS (Pmode, a, plus_constant(b, off));
+	      off = 0;
+	    }
+	}
+      else if (GET_CODE (a) == REG && GET_CODE (b) == PLUS)
+	{
+          off += INTVAL (XEXP (b, 1));
+	  base = gen_rtx_PLUS (Pmode, a, plus_constant(XEXP (b, 0), off));
+	  off = 0;
+	}
+      else
+	gcc_assert(0);
     }
   if (code == POST_INC)
     tmp = gen_rtx_POST_INC (SImode, base);
