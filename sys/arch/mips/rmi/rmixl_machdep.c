@@ -1122,6 +1122,8 @@ rmixlp_physaddr_dram_init(struct extent *ext)
 	}
 
 	mem_cluster_cnt = mp - mem_clusters;
+	avail_cluster_cnt = mem_cluster_cnt;
+	memcpy(avail_clusters, mem_clusters, sizeof(avail_clusters));
 	return memsize;
 }
 #endif /* MIPS64_XLP */
