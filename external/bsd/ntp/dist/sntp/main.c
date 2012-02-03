@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2012/02/03 16:33:10 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2012/02/03 21:35:55 christos Exp $	*/
 
 #include <config.h>
 
@@ -203,7 +203,6 @@ handle_pkt (
 	double offset, precision, root_dispersion;
 	char addr_buf[INET6_ADDRSTRLEN];
 	char *p_SNTP_PRETEND_TIME;
-	time_t pretend_time;
 
 	if(rpktl > 0)
 		sw_case = 1;
@@ -251,14 +250,9 @@ handle_pkt (
 
 		p_SNTP_PRETEND_TIME = getenv("SNTP_PRETEND_TIME");
 		if (p_SNTP_PRETEND_TIME) {
-#if SIZEOF_TIME_T == 4
-			sscanf(p_SNTP_PRETEND_TIME, "%ld", &pretend_time);
-#elif SIZEOF_TIME_T == 8
-			sscanf(p_SNTP_PRETEND_TIME, "%zd", &pretend_time);
-#else
-# include "GRONK: unexpected value for SIZEOF_TIME_T"
-#endif
-			tv_dst.tv_sec = pretend_time;
+			long long input_time;
+			sscanf(p_SNTP_PRETEND_TIME, "%lld", &input_time);
+			tv_dst.tv_sec = (time_t)input_time;
 		}
 
 		offset_calculation(rpkt, rpktl, &tv_dst, &offset,
