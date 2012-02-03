@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.199 2011/12/23 05:01:59 sjg Exp $
+.\"	$NetBSD: make.1,v 1.200 2012/02/03 21:39:25 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd December 22, 2011
+.Dd February 3, 2012
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -788,6 +788,9 @@ will not create .meta files in
 This can be overridden by setting
 .Va bf
 to a value which represents True.
+.It Pa env
+For debugging, it can be useful to inlcude the environment
+in the .meta file.
 .It Pa verbose
 If in "meta" mode, print a clue about the target being built.
 This is useful if the build is otherwise running silently.
@@ -803,6 +806,7 @@ See also
 If
 .Va bf
 is True, when a .meta file is created, mark the target
+.Ic .SILENT .
 .El
 .It Va .MAKE.META.BAILIWICK
 In "meta" mode, provides a list of prefixes which
