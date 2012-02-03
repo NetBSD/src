@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17 2011/04/04 08:30:24 mbalmer Exp $	*/
+/*	$NetBSD: md.h,v 1.18 2012/02/03 00:35:35 nisimura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,8 +49,9 @@
 #define SET_KERNEL_2_NAME	"kern-INTEGRATOR"
 #define SET_KERNEL_3_NAME	"kern-IQ80310"
 #define SET_KERNEL_4_NAME	"kern-IQ80321"
-#define SET_KERNEL_5_NAME	"kern-TEAMASA_NPWR"
-#define SET_KERNEL_6_NAME	"kern-TS7200"
+#define SET_KERNEL_5_NAME	"kern-MINI2440"
+#define SET_KERNEL_6_NAME	"kern-TEAMASA_NPWR"
+#define SET_KERNEL_7_NAME	"kern-TS7200"
 
 #define MD_SETS_SELECTED SET_SYSTEM
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.9 2011/04/04 08:30:25 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.10 2012/02/03 00:35:35 nisimura Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:02:54 thorpej Exp */
 
@@ -79,6 +79,8 @@ message set_kernel_3
 message set_kernel_4
 {Kernel (IQ80321)}
 message set_kernel_5
-{Kernel (TEAMASA_NPWR)}
+{Kernel (MINI2440)}
 message set_kernel_6
+{Kernel (TEAMASA_NPWR)}
+message set_kernel_7
 {Kernel (TS7200)}
