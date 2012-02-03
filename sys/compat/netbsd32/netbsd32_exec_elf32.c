@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.33 2011/03/07 05:09:12 joerg Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.34 2012/02/03 03:54:35 christos Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.33 2011/03/07 05:09:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.34 2012/02/03 03:54:35 christos Exp $");
 
 #define	ELFSIZE		32
 
@@ -196,7 +196,7 @@ netbsd32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 		a->a_v = kauth_cred_getgid(l->l_cred);
 		a++;
 
-		free((char *)ap, M_TEMP);
+		kmem_free(ap, sizeof(*ap));
 		pack->ep_emul_arg = NULL;
 	}
 
