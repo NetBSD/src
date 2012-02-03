@@ -665,7 +665,7 @@ ipv6rs_expire(void *arg)
 		if (!timerisset(&next) || timercmp(&next, &lt, >))
 			next = lt;
 		
-		for (rao = rap->options;
+		for (rao = rap->options, raol = NULL;
 		    rao && (raon = rao->next);
 		    raol = rao, rao = raon)
 		{
