@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.83 2011/04/02 08:11:32 mbalmer Exp $	*/
+/*	$NetBSD: if_se.c,v 1.84 2012/02/03 23:39:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.83 2011/04/02 08:11:32 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.84 2012/02/03 23:39:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -351,17 +351,9 @@ seattach(device_t parent, device_t self, void *aux)
 
 
 static inline int
-se_scsipi_cmd(periph, cmd, cmdlen, data_addr, datalen,
-		       retries, timeout, bp, flags)
-	struct scsipi_periph *periph;
-	struct scsipi_generic *cmd;
-	int cmdlen;
-	u_char *data_addr;
-	int datalen;
-	int retries;
-	int timeout;
-	struct buf *bp;
-	int flags;
+se_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_generic *cmd,
+    int cmdlen, u_char *data_addr, int datalen, int retries, int timeout,
+    struct buf *bp, int flags)
 {
 	int error;
 	int s = splbio();
