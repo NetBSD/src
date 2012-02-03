@@ -1,4 +1,4 @@
-/*	$NetBSD: putshell.c,v 1.1.1.2 2012/01/31 21:27:55 kardel Exp $	*/
+/*	$NetBSD: putshell.c,v 1.2 2012/02/03 21:36:40 christos Exp $	*/
 
 
 /**
@@ -192,7 +192,7 @@ print_stacked_arg(tOptions * pOpts, tOptDesc * pOD)
 static void
 print_reordering(tOptions * pOpts)
 {
-    int  optIx;
+    size_t optIx;
 
     fputs("set --", stdout);
 
