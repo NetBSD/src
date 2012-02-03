@@ -1,4 +1,4 @@
-/*	$NetBSD: makeshell.c,v 1.1.1.2 2012/01/31 21:27:47 kardel Exp $	*/
+/*	$NetBSD: makeshell.c,v 1.2 2012/02/03 21:36:40 christos Exp $	*/
 
 
 /**
@@ -653,13 +653,13 @@ emitUsage(tOptions* pOpts)
         char **      pp;
 
         for (;;) {
-            if ((*pzPN++ = tolower(*pz++)) == '\0')
+            if ((*pzPN++ = tolower((unsigned char)*pz++)) == '\0')
                 break;
         }
 
-        pp = (char **)(void *)&(pOpts->pzProgPath);
+        pp = (char **)(intptr_t)&(pOpts->pzProgPath);
         *pp = zTimeBuf;
-        pp  = (char **)(void *)&(pOpts->pzProgName);
+        pp  = (char **)(intptr_t)&(pOpts->pzProgName);
         *pp = zTimeBuf;
     }
 
@@ -871,8 +871,8 @@ emitMatchExpr(tCC* pzMatchName, tOptDesc* pCurOpt, tOptions* pOpts)
          *  They must not be the same.  They cannot be, because it would
          *  not compile correctly if they were.
          */
-        while (  toupper(pOD->pz_Name[matchCt])
-              == toupper(pzMatchName[matchCt]))
+        while (  toupper((unsigned char)pOD->pz_Name[matchCt])
+              == toupper((unsigned char)pzMatchName[matchCt]))
             matchCt++;
 
         if (matchCt > min)
@@ -883,8 +883,8 @@ emitMatchExpr(tCC* pzMatchName, tOptDesc* pCurOpt, tOptions* pOpts)
          */
         if (pOD->pz_DisableName != NULL) {
             matchCt = 0;
-            while (  toupper(pOD->pz_DisableName[matchCt])
-                  == toupper(pzMatchName[matchCt]))
+            while (  toupper((unsigned char)pOD->pz_DisableName[matchCt])
+                  == toupper((unsigned char)pzMatchName[matchCt]))
                 matchCt++;
             if (matchCt > min)
                 min = matchCt;
@@ -1099,11 +1099,11 @@ genshelloptUsage(tOptions * pOpts, int exitCode)
      */
     {
         char *  pz;
-        char ** pp = (char **)(void *)&(optionParseShellOptions->pzProgName);
+        char ** pp = (char **)(intptr_t)&(optionParseShellOptions->pzProgName);
         AGDUPSTR(pz, optionParseShellOptions->pzPROGNAME, "program name");
         *pp = pz;
         while (*pz != NUL) {
-            *pz = tolower(*pz);
+            *pz = tolower((unsigned char)*pz);
             pz++;
         }
     }
