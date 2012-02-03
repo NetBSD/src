@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.24 2011/12/28 17:33:53 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.25 2012/02/03 15:54:15 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -242,6 +242,7 @@ perfuse_open(path, flags, mode)
 		/* NOTREACHED */
 		break;
 	case 0:
+		(void)close(sv[0]);
 		(void)execve(argv[0], argv, environ);
 #ifdef PERFUSE_DEBUG
 		DWARN("%s:%d: execve failed", __func__, __LINE__);
@@ -253,6 +254,7 @@ perfuse_open(path, flags, mode)
 		break;
 	}
 	
+	(void)close(sv[1]);
 	return sv[0];
 }
 
