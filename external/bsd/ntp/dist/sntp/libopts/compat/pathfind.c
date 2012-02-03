@@ -1,4 +1,4 @@
-/*	$NetBSD: pathfind.c,v 1.1.1.2 2012/01/31 21:27:55 kardel Exp $	*/
+/*	$NetBSD: pathfind.c,v 1.2 2012/02/03 21:36:41 christos Exp $	*/
 
 /*  -*- Mode: C -*-  */
 
@@ -311,7 +311,7 @@ extract_colon_unit( char* pzDir, char const *string, int *p_index )
                 goto copy_done;
             }
 
-            if ((pzDest - pzDir) >= AG_PATH_MAX)
+            if ((size_t)(pzDest - pzDir) >= AG_PATH_MAX)
                 break;
         } copy_done:;
 

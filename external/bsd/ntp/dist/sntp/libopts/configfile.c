@@ -1,4 +1,4 @@
-/*	$NetBSD: configfile.c,v 1.1.1.2 2012/01/31 21:27:51 kardel Exp $	*/
+/*	$NetBSD: configfile.c,v 1.2 2012/02/03 21:36:40 christos Exp $	*/
 
 /**
  * \file configfile.c
@@ -179,7 +179,7 @@ optionFindValue(const tOptDesc* pOptDesc, char const* pzName,
     else do {
         tArgList* pAL = pOptDesc->optCookie;
         int    ct   = pAL->useCt;
-        void** ppOV = (void**)(pAL->apzArgs);
+        void** ppOV = (void**)(intptr_t)(pAL->apzArgs);
 
         if (ct == 0) {
             errno = ENOENT;
@@ -256,7 +256,7 @@ optionFindNextValue(const tOptDesc * pOptDesc, const tOptionValue * pPrevVal,
     else do {
         tArgList* pAL = pOptDesc->optCookie;
         int    ct   = pAL->useCt;
-        void** ppOV = (void**)pAL->apzArgs;
+        void** ppOV = (void**)(intptr_t)pAL->apzArgs;
 
         if (ct == 0) {
             errno = ENOENT;
@@ -319,7 +319,7 @@ optionGetValue(const tOptionValue* pOld, char const* pzValName)
 
     if (pAL->useCt > 0) {
         int    ct    = pAL->useCt;
-        void** papOV = (void**)(pAL->apzArgs);
+        void** papOV = (void**)(intptr_t)(pAL->apzArgs);
 
         if (pzValName == NULL) {
             pRes = (tOptionValue*)*papOV;
@@ -380,7 +380,7 @@ optionNextValue(tOptionValue const * pOVList,tOptionValue const * pOldOV )
     pAL = pOVList->v.nestVal;
     {
         int    ct    = pAL->useCt;
-        void** papNV = (void**)(pAL->apzArgs);
+        void** papNV = (void**)(intptr_t)(pAL->apzArgs);
 
         while (ct-- > 0) {
             tOptionValue* pNV = *(papNV++);
@@ -1099,7 +1099,7 @@ optionFileLoad(tOptions* pOpts, char const* pzProgram)
 
     {
         char const ** pp =
-            (char const **)(void *)&(pOpts->pzProgName);
+            (char const **)(intptr_t)&(pOpts->pzProgName);
         *pp = pzProgram;
     }
 
@@ -1384,12 +1384,12 @@ validateOptionsStruct(tOptions* pOpts, char const* pzProgram)
     if (pOpts->pzProgName == NULL) {
         char const *  pz = strrchr(pzProgram, DIRCH);
         char const ** pp =
-            (char const **)(void **)&(pOpts->pzProgName);
+            (char const **)(intptr_t)&(pOpts->pzProgName);
         if (pz == NULL)
              *pp = pzProgram;
         else *pp = pz+1;
 
-        pp  = (char const **)(void **)&(pOpts->pzProgPath);
+        pp  = (char const **)(intptr_t)&(pOpts->pzProgPath);
         *pp = pzProgram;
 
         /*

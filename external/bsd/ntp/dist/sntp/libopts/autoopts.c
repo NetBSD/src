@@ -1,4 +1,4 @@
-/*	$NetBSD: autoopts.c,v 1.1.1.2 2012/01/31 21:27:48 kardel Exp $	*/
+/*	$NetBSD: autoopts.c,v 1.2 2012/02/03 21:36:40 christos Exp $	*/
 
 
 /**
@@ -37,7 +37,7 @@
 #endif
 
 static char const   zNil[] = "";
-static arg_types_t  argTypes             = { NULL };
+static arg_types_t  argTypes             = { .pzStr = NULL };
 static char         zOptFmtLine[16]      = { NUL };
 static ag_bool      displayEnum          = AG_FALSE;
 static char const   pkgdatadir_default[] = PKGDATADIR;
@@ -180,7 +180,8 @@ handle_opt(tOptions* pOpts, tOptState* pOptState)
              *  THEN we have a usage problem.
              */
             if (p->optActualIndex != pOD->optIndex) {
-                fprintf(stderr, (char*)zMultiEquiv, p->pz_Name, pOD->pz_Name,
+                fprintf(stderr, (const char*)zMultiEquiv, p->pz_Name,
+			pOD->pz_Name,
                         (pOpts->pOptDesc + p->optActualIndex)->pz_Name);
                 return FAILURE;
             }
@@ -273,7 +274,7 @@ longOptionFind(tOptions* pOpts, char* pzOptName, tOptState* pOptState)
     int        idxLim   = pOpts->optCt;
     int        matchCt  = 0;
     int        matchIdx = 0;
-    int        nameLen;
+    size_t     nameLen;
     char       opt_name_buf[128];
 
     /*
@@ -281,7 +282,7 @@ longOptionFind(tOptions* pOpts, char* pzOptName, tOptState* pOptState)
      *  copy it off so we can NUL terminate.
      */
     if (pzEq != NULL) {
-        nameLen = (int)(pzEq - pzOptName);
+        nameLen = (size_t)(pzEq - pzOptName);
         if (nameLen >= sizeof(opt_name_buf))
             return FAILURE;
         memcpy(opt_name_buf, pzOptName, nameLen);
@@ -517,7 +518,7 @@ findOptDesc(tOptions* pOpts, tOptState* pOptState)
          *  strip off the "const" quality of the "default_opt" field.
          */
         while (*(++pz) == '-')   ;
-        def_opt = (void *)&(pOpts->specOptIdx.default_opt);
+        def_opt = (void *)(intptr_t)&(pOpts->specOptIdx.default_opt);
         def = *def_opt;
         *def_opt = NO_EQUIVALENT;
         res = longOptionFind(pOpts, pz, pOptState);

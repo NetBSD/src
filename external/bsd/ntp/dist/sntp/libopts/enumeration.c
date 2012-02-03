@@ -1,4 +1,4 @@
-/*	$NetBSD: enumeration.c,v 1.1.1.2 2012/01/31 21:27:45 kardel Exp $	*/
+/*	$NetBSD: enumeration.c,v 1.2 2012/02/03 21:36:40 christos Exp $	*/
 
 
 /**
@@ -127,7 +127,7 @@ enum_err(tOptions * pOpts, tOptDesc * pOD,
      *  Otherwise, columnize the output
      */
     else {
-        int   ent_no = 0;
+        size_t ent_no = 0;
         char  zFmt[16];  /* format for all-but-last entries on a line */
 
         sprintf(zFmt, "%%-%ds", (int)max_len);
@@ -178,11 +178,11 @@ find_name(char const * pzName, tOptions * pOpts, tOptDesc * pOD,
      *  The result gets stashed in a char* pointer.
      */
     uintptr_t   res = name_ct;
-    size_t      len = strlen((char*)pzName);
+    size_t      len = strlen(pzName);
     uintptr_t   idx;
 
     if (IS_DEC_DIGIT_CHAR(*pzName)) {
-        char * pz = (char *)(void *)pzName;
+        char * pz = (char *)(intptr_t)pzName;
         unsigned long val = strtoul(pz, &pz, 0);
         if ((*pz == NUL) && (val < name_ct))
             return (uintptr_t)val;
@@ -195,11 +195,11 @@ find_name(char const * pzName, tOptions * pOpts, tOptDesc * pOD,
      *  Multiple partial matches means we have an ambiguous match.
      */
     for (idx = 0; idx < name_ct; idx++) {
-        if (strncmp((char*)paz_names[idx], (char*)pzName, len) == 0) {
+        if (strncmp(paz_names[idx], pzName, len) == 0) {
             if (paz_names[idx][len] == NUL)
                 return idx;  /* full match */
 
-            res = (res != name_ct) ? ~0 : idx; /* save partial match */
+            res = (res != name_ct) ? (uintptr_t)~0 : idx; /* save partial match */
         }
     }
 
@@ -330,7 +330,7 @@ set_memb_shell(tOptions * pOpts, tOptDesc * pOD, char const * const * paz_names,
     /*
      *  print the name string.
      */
-    int       ix   =  0;
+    size_t    ix   =  0;
     uintptr_t bits = (uintptr_t)pOD->optCookie;
     size_t    len  = 0;
 
@@ -355,7 +355,7 @@ set_memb_names(tOptions * pOpts, tOptDesc * pOD, char const * const * paz_names,
 
     char *    pz;
     uintptr_t bits = (uintptr_t)pOD->optCookie;
-    int       ix   = 0;
+    size_t    ix   = 0;
     size_t    len  = sizeof(none);
 
     bits &= ((uintptr_t)1 << (uintptr_t)name_ct) - (uintptr_t)1;
@@ -479,7 +479,7 @@ optionSetMembers(tOptions * pOpts, tOptDesc * pOD,
                 if (pz != pzArg + len) {
                     char z[ AO_NAME_SIZE ];
                     char const* p;
-                    int  shift_ct;
+                    size_t shift_ct;
 
                     if (*pz != NUL) {
                         if (len >= AO_NAME_LIMIT)

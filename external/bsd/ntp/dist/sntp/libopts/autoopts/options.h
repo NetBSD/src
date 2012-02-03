@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.4 2012/02/01 20:48:01 kardel Exp $	*/
+/*	$NetBSD: options.h,v 1.5 2012/02/03 21:36:40 christos Exp $	*/
 
 /*   -*- buffer-read-only: t -*- vi: set ro:
  *  
@@ -1022,7 +1022,7 @@ extern char const * optionKeywordName(tOptDesc*, unsigned int);
 
 extern void optionLoadOpt(tOptions*, tOptDesc*);
 
-extern ag_bool optionMakePath(char*, int, char const*, char const*);
+extern ag_bool optionMakePath(char*, size_t, char const*, char const*);
 
 extern void optionNestedVal(tOptions*, tOptDesc*);
 
