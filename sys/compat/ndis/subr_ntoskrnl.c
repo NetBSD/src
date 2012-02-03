@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ntoskrnl.c,v 1.21 2011/08/31 18:31:02 plunky Exp $	*/
+/*	$NetBSD: subr_ntoskrnl.c,v 1.22 2012/02/03 23:39:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.21 2011/08/31 18:31:02 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.22 2012/02/03 23:39:59 christos Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -661,17 +661,17 @@ IoBuildAsynchronousFsdRequest(uint32_t func, device_object *dobj, void *buf, uin
 }
 
 __stdcall static irp *
-IoBuildDeviceIoControlRequest(iocode, dobj, ibuf, ilen, obuf, olen,
-    isinternal, event, status)
-	uint32_t		iocode;
-	device_object		*dobj;
-	void			*ibuf;
-	uint32_t		ilen;
-	void			*obuf;
-	uint32_t		olen;
-	uint8_t			isinternal;
-	nt_kevent		*event;
-	io_status_block		*status;
+IoBuildDeviceIoControlRequest(
+	uint32_t		iocode,
+	device_object		*dobj,
+	void			*ibuf,
+	uint32_t		ilen,
+	void			*obuf,
+	uint32_t		olen,
+	uint8_t			isinternal,
+	nt_kevent		*event,
+	io_status_block		*status
+)
 {
 	irp			*ip;
 	io_stack_location	*sl;
