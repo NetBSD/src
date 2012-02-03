@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ndis.c,v 1.25 2011/07/17 20:54:50 joerg Exp $	*/
+/*	$NetBSD: subr_ndis.c,v 1.26 2012/02/03 23:38:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.25 2011/07/17 20:54:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.26 2012/02/03 23:38:07 christos Exp $");
 #endif
 
 /*
@@ -617,19 +617,16 @@ NdisOpenConfigurationKeyByIndex(
 }
 
 static ndis_status
+ndis_encode_parm(
+    ndis_miniport_block	*block,
 #ifdef __FreeBSD__
-ndis_encode_parm(block, oid, type, parm)
-	ndis_miniport_block	*block;	
-    struct sysctl_oid	*oid;
-	ndis_parm_type		type;
-	ndis_config_parm	**parm;
-#else /* __NetBSD__ */
-ndis_encode_parm(block, data, type, parm)
-	ndis_miniport_block	*block;	
-    void				*data;
-	ndis_parm_type		type;
-	ndis_config_parm	**parm;
-#endif	
+    struct sysctl_oid	*oid,
+#define oiddata	oid->iod_arg1
+#else
+    void 		*oiddata,
+#endif
+    ndis_parm_type	type,
+    ndis_config_parm	**parm)
 {
 	uint16_t		*unicode;
 	ndis_unicode_string	*ustr;
@@ -641,56 +638,31 @@ ndis_encode_parm(block, data, type, parm)
 
 	switch(type) {
 	case ndis_parm_string:
-#ifdef __FreeBSD__		
-		ndis_ascii_to_unicode((char *)oid->oid_arg1, &unicode);
-#else /* __NetBSD__ */
-		ndis_ascii_to_unicode((char *)data, &unicode);
-#endif		
+		ndis_ascii_to_unicode((char *)oiddata, &unicode);
 		(*parm)->ncp_type = ndis_parm_string;
 		ustr = &(*parm)->ncp_parmdata.ncp_stringdata;
-#ifdef __FreeBSD__		
-		ustr->us_len = strlen((char *)oid->oid_arg1) * 2;
-#else /* __NetBSD__ */
-		ustr->us_len = strlen((char *)data) * 2;
-#endif		
+		ustr->us_len = strlen((char *)oiddata) * 2;
 		ustr->us_buf = unicode;
 		break;
 	case ndis_parm_int:
-#ifdef __FreeBSD__		
-		if (strncmp((char *)oid->oid_arg1, "0x", 2) == 0) {
-#else /* __NetBSD__ */
-		if (strncmp((char *)data, "0x", 2) == 0) {
-#endif		
+		if (strncmp(oiddata, "0x", 2) == 0) {
 			base = 16;
 		}
 		else
 			base = 10;
 		(*parm)->ncp_type = ndis_parm_int;
 		(*parm)->ncp_parmdata.ncp_intdata =
-#ifdef __FreeBSD__				
-		    strtol((char *)oid->oid_arg1, NULL, base);
-#else /* __NetBSD__ */
-/* TODO: NetBSD dosen't seem to have a strtol in sys/lib/libkern I hope strtoul is OK */
-		    strtoul((char *)data, NULL, base);
-#endif		
+		    strtoul((char *)oiddata, NULL, base);
 		break;
 	case ndis_parm_hexint:
-#ifdef __FreeBSD__		
-		if (strncmp((char *)oid->oid_arg1, "0x", 2) == 0) {
-#else /* __NetBSD__ */
-		if (strncmp((char *)data, "0x", 2) == 0) {
-#endif
+		if (strncmp((char *)oiddata, "0x", 2) == 0) {
 			base = 16;
 		}
 		else
 			base = 10;
 		(*parm)->ncp_type = ndis_parm_hexint;
 		(*parm)->ncp_parmdata.ncp_intdata =
-#ifdef __FreeBSD__				
-		    strtoul((char *)oid->oid_arg1, NULL, base);
-#else /* __NetBSD__ */
-		    strtoul((char *)data, NULL, base);
-#endif		
+		    strtoul((char *)oiddata, NULL, base);
 		break;
 	default:
 		return(NDIS_STATUS_FAILURE);
