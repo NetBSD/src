@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.34 2012/02/01 21:49:52 matt Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.35 2012/02/03 20:11:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.34 2012/02/01 21:49:52 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.35 2012/02/03 20:11:54 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -95,6 +95,7 @@ extern struct emul emul_netbsd;
 #define netbsd_elf_signature	ELFNAME2(netbsd,signature)
 #define netbsd_elf_probe	ELFNAME2(netbsd,probe)
 #define	coredump		ELFNAMEEND(coredump)
+#define	elf_free_emul_arg	ELFNAME(free_emul_arg)
 
 int	elf_load_file(struct lwp *, struct exec_package *, char *,
 	    struct exec_vmcmd_set *, u_long *, struct elf_args *, Elf_Addr *);
@@ -104,6 +105,8 @@ void	elf_load_psection(struct exec_vmcmd_set *, struct vnode *,
 int	netbsd_elf_signature(struct lwp *, struct exec_package *, Elf_Ehdr *);
 int	netbsd_elf_probe(struct lwp *, struct exec_package *, void *, char *,
 	    vaddr_t *);
+
+static void	elf_free_emul_arg(void *);
 
 /* round up and down to page boundaries. */
 #define	ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
@@ -241,8 +244,7 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 			a++;
 		}
 
-		kmem_free(ap, sizeof(*ap));
-		pack->ep_emul_arg = NULL;
+		exec_free_emul_arg(pack);
 	}
 
 	a->a_type = AT_NULL;
@@ -814,6 +816,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		ap->arg_phnum = eh->e_phnum;
 		ap->arg_entry = eh->e_entry;
 		epp->ep_emul_arg = ap;
+		epp->ep_emul_arg_free = elf_free_emul_arg;
 	}
 
 #ifdef ELF_MAP_PAGE_ZERO
@@ -827,8 +830,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 bad:
 	if (interp)
 		PNBUF_PUT(interp);
-	if (ap)
-		kmem_free(ap, sizeof(*ap));
+	exec_free_emul_arg(epp);
 	kmem_free(ph, phsize);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return error;
@@ -950,4 +952,12 @@ netbsd_elf_probe(struct lwp *l, struct exec_package *epp, void *eh, char *itp,
 #endif
 	epp->ep_flags |= EXEC_FORCEAUX;
 	return 0;
+}
+
+void
+elf_free_emul_arg(void *arg)
+{
+	struct elf_args *ap = arg;
+	KASSERT(ap != NULL);
+	kmem_free(ap, sizeof(*ap));
 }
