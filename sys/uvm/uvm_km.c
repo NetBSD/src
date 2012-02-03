@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.117 2012/02/02 18:59:45 para Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.118 2012/02/03 19:25:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.117 2012/02/02 18:59:45 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.118 2012/02/03 19:25:07 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -213,6 +213,12 @@ void
 uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 {
 	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
+	struct uvm_map_args args;
+	int error;
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+	UVMHIST_LOG(maphist, "start=%"PRIxVADDR" end=%#"PRIxVADDR,
+	    start, end, 0,0);
 
 	kmeminit_nkmempages();
 	kmemsize = nkmempages * PAGE_SIZE;
@@ -220,6 +226,8 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 	/* kmemsize = MIN((((vsize_t)(end - start)) / 3),
 	    ((((vsize_t)uvmexp.npages) * PAGE_SIZE) / 2));
 	kmemsize = round_page(kmemsize); */
+
+	UVMHIST_LOG(maphist, "kmemsize=%#"PRIxVSIZE, kmemsize, 0,0,0);
 
 	/*
 	 * next, init kernel memory objects.
@@ -237,9 +245,6 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 	uvm_map_setup(&kernel_map_store, base, end, VM_MAP_PAGEABLE);
 	kernel_map_store.pmap = pmap_kernel();
 	if (start != base) {
-		int error;
-		struct uvm_map_args args;
-
 		error = uvm_map_prepare(&kernel_map_store,
 		    base, start - base,
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
@@ -257,24 +262,24 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 			    "uvm_km_bootstrap: could not reserve space for kernel");
 
 		kmembase = args.uma_start + args.uma_size;
-		error = uvm_map_prepare(&kernel_map_store,
-		    kmembase, kmemsize,
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-		    		UVM_ADV_RANDOM, UVM_FLAG_FIXED), &args);
-		if (!error) {
-			kernel_kmem_mapent_store.flags =
-			    UVM_MAP_KERNEL | UVM_MAP_STATIC | UVM_MAP_NOMERGE;
-			error = uvm_map_enter(&kernel_map_store, &args,
-			    &kernel_kmem_mapent_store);
-		}
-
-		if (error)
-			panic(
-			    "uvm_km_bootstrap: could not reserve kernel kmem");
 	} else {
 		kmembase = base;
 	}
+
+	error = uvm_map_prepare(&kernel_map_store,
+	    kmembase, kmemsize,
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+	    		UVM_ADV_RANDOM, UVM_FLAG_FIXED), &args);
+	if (!error) {
+		kernel_kmem_mapent_store.flags =
+		    UVM_MAP_KERNEL | UVM_MAP_STATIC | UVM_MAP_NOMERGE;
+		error = uvm_map_enter(&kernel_map_store, &args,
+		    &kernel_kmem_mapent_store);
+	}
+
+	if (error)
+		panic("uvm_km_bootstrap: could not reserve kernel kmem");
 
 	/*
 	 * install!
@@ -291,9 +296,14 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 
 	vmem_init(kmem_arena);
 
+	UVMHIST_LOG(maphist, "kmem vmem created (base=%#"PRIxVADDR
+	    ", size=%#"PRIxVSIZE, kmembase, kmemsize, 0,0);
+
 	kmem_va_arena = vmem_create("kva", 0, 0, PAGE_SIZE,
 	    vmem_alloc, vmem_free, kmem_arena,
 	    16 * PAGE_SIZE, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
+
+	UVMHIST_LOG(maphist, "<- done", 0,0,0,0);
 }
 
 /*
@@ -327,6 +337,7 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *vmin /* IN/OUT */,
     struct vm_map *submap)
 {
 	int mapflags = UVM_FLAG_NOMERGE | (fixed ? UVM_FLAG_FIXED : 0);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
@@ -339,7 +350,7 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *vmin /* IN/OUT */,
 	if (uvm_map(map, vmin, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, mapflags)) != 0) {
-	       panic("uvm_km_suballoc: unable to allocate space in parent map");
+		panic("%s: unable to allocate space in parent map", __func__);
 	}
 
 	/*
@@ -384,7 +395,7 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 	struct vm_page *pg;
 	voff_t curoff, nextoff;
 	int swpgonlydelta = 0;
-	UVMHIST_FUNC("uvm_km_pgremove"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(VM_MIN_KERNEL_ADDRESS <= startva);
 	KASSERT(startva < endva);
@@ -445,7 +456,7 @@ uvm_km_pgremove_intrsafe(struct vm_map *map, vaddr_t start, vaddr_t end)
 {
 	struct vm_page *pg;
 	paddr_t pa;
-	UVMHIST_FUNC("uvm_km_pgremove_intrsafe"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(VM_MAP_IS_KERNEL(map));
 	KASSERT(vm_map_min(map) <= start);
@@ -471,6 +482,7 @@ uvm_km_check_empty(struct vm_map *map, vaddr_t start, vaddr_t end)
 	struct vm_page *pg;
 	vaddr_t va;
 	paddr_t pa;
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KDASSERT(VM_MAP_IS_KERNEL(map));
 	KDASSERT(vm_map_min(map) <= start);
@@ -635,6 +647,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 void
 uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 {
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT((flags & UVM_KMF_TYPEMASK) == UVM_KMF_WIRED ||
 		(flags & UVM_KMF_TYPEMASK) == UVM_KMF_PAGEABLE ||
