@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2012/02/01 20:49:09 kardel Exp $
+#	$NetBSD: Makefile,v 1.5 2012/02/03 16:33:10 christos Exp $
 
 LIBISPRIVATE=yes
 
@@ -7,9 +7,6 @@ LIB=opts
 .include <bsd.own.mk>
 
 .include "${.CURDIR}/../Makefile.inc"
-
-# libopts is not really great code
-WARNS=0
 
 DIST=	${IDIST}/sntp/libopts
 
