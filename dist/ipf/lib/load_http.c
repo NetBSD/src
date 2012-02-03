@@ -1,4 +1,4 @@
-/*	$NetBSD: load_http.c,v 1.5 2012/01/30 16:12:04 darrenr Exp $	*/
+/*	$NetBSD: load_http.c,v 1.6 2012/02/03 04:28:55 joerg Exp $	*/
 
 /*
  * Copyright (C) 2010 by Darren Reed.
@@ -174,7 +174,7 @@ load_http(char *url)
 			u = strchr(buffer, '#');
 			if (u != NULL) {
 				*u = '\0';
-				if (u == buffer);
+				if (u == buffer)
 					continue;
 			}
 
