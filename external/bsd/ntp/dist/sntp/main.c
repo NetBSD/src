@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2012/02/01 20:48:01 kardel Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2012/02/03 16:33:10 christos Exp $	*/
 
 #include <config.h>
 
@@ -111,7 +111,7 @@ sntp_main (
 	/* Considering employing a variable that prevents functions of doing anything until 
 	 * everything is initialized properly 
 	 */
-	resc = resolve_hosts((const char **)argv, argc, &resh, ai_fam_pref);
+	resc = resolve_hosts((void *)argv, argc, &resh, ai_fam_pref);
 	if (resc < 1) {
 		printf("Unable to resolve hostname(s)\n");
 		return -1;
