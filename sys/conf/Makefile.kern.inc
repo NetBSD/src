@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.150 2011/12/19 14:06:17 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.151 2012/02/03 23:39:26 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -73,6 +73,9 @@ CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 .  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
 	${MACHINE_ARCH} == "sparc64" || ${MACHINE} == "prep"
 CWARNFLAGS+=	-Wextra -Wno-unused-parameter
+.  endif
+.  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
+CWARNFLAGS+=	-Wold-style-definition
 .  endif
 . endif
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
