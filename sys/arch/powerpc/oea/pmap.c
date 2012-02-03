@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 2012/02/01 09:54:03 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.85 2012/02/03 19:29:59 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2012/02/03 19:29:59 matt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -425,11 +425,11 @@ static int pmap_initialized;
 
 unsigned int pmapdebug = 0;
 
-# define DPRINTF(x)		printf x
-# define DPRINTFN(n, x)		if (pmapdebug & PMAPDEBUG_ ## n) printf x
+# define DPRINTF(x, ...)	printf(x, __VA_ARGS__)
+# define DPRINTFN(n, x, ...)	do if (pmapdebug & PMAPDEBUG_ ## n) printf(x, __VA_ARGS__); while (0)
 #else
-# define DPRINTF(x)
-# define DPRINTFN(n, x)
+# define DPRINTF(x, ...)	do { } while (0)
+# define DPRINTFN(n, x, ...)	do { } while (0)
 #endif
 
 
@@ -855,8 +855,8 @@ pmap_pte_insert(int ptegidx, struct pte *pvo_pt)
 	int i;
 	
 #if defined(DEBUG)
-	DPRINTFN(PTE, ("pmap_pte_insert: idx %#x, pte %#" _PRIxpte " %#" _PRIxpte "\n",
-		ptegidx, pvo_pt->pte_hi, pvo_pt->pte_lo));
+	DPRINTFN(PTE, "pmap_pte_insert: idx %#x, pte %#" _PRIxpte " %#" _PRIxpte "\n",
+		ptegidx, pvo_pt->pte_hi, pvo_pt->pte_lo);
 #endif
 	/*
 	 * First try primary hash.
@@ -1151,7 +1151,7 @@ pmap_create(void)
 	memset((void *)pm, 0, sizeof *pm);
 	pmap_pinit(pm);
 	
-	DPRINTFN(CREATE,("pmap_create: pm %p:\n"
+	DPRINTFN(CREATE, "pmap_create: pm %p:\n"
 	    "\t%#" _PRIsr " %#" _PRIsr " %#" _PRIsr " %#" _PRIsr
 	    "    %#" _PRIsr " %#" _PRIsr " %#" _PRIsr " %#" _PRIsr "\n"
 	    "\t%#" _PRIsr " %#" _PRIsr " %#" _PRIsr " %#" _PRIsr
@@ -1164,7 +1164,7 @@ pmap_create(void)
 	    pm->pm_sr[8], pm->pm_sr[9],
 	    pm->pm_sr[10], pm->pm_sr[11], 
 	    pm->pm_sr[12], pm->pm_sr[13],
-	    pm->pm_sr[14], pm->pm_sr[15]));
+	    pm->pm_sr[14], pm->pm_sr[15]);
 	return pm;
 }
 
@@ -1669,8 +1669,8 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #if defined(DEBUG)
 /*	if (pm != pmap_kernel() && va < VM_MIN_KERNEL_ADDRESS) */
 		DPRINTFN(PVOENTER,
-		    ("pmap_pvo_enter: pvo %p: pm %p va %#" _PRIxva " pa %#" _PRIxpa "\n",
-		    pvo, pm, va, pa));
+		    "pmap_pvo_enter: pvo %p: pm %p va %#" _PRIxva " pa %#" _PRIxpa "\n",
+		    pvo, pm, va, pa);
 #endif
 
 	/*
@@ -1777,15 +1777,15 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, struct pvo_head *pvol)
 			    (pmap_attr_fetch(pg) & PTE_EXEC)) {
 				struct pvo_head *pvoh = vm_page_to_pvoh(pg);
 				if (LIST_EMPTY(pvoh)) {
-					DPRINTFN(EXEC, ("[pmap_pvo_remove: "
+					DPRINTFN(EXEC, "[pmap_pvo_remove: "
 					    "%#" _PRIxpa ": clear-exec]\n",
-					    VM_PAGE_TO_PHYS(pg)));
+					    VM_PAGE_TO_PHYS(pg));
 					pmap_attr_clear(pg, PTE_EXEC);
 					PMAPCOUNT(exec_uncached_pvo_remove);
 				} else {
-					DPRINTFN(EXEC, ("[pmap_pvo_remove: "
+					DPRINTFN(EXEC, "[pmap_pvo_remove: "
 					    "%#" _PRIxpa ": syncicache]\n",
-					    VM_PAGE_TO_PHYS(pg)));
+					    VM_PAGE_TO_PHYS(pg));
 					pmap_syncicache(VM_PAGE_TO_PHYS(pg),
 					    PAGE_SIZE);
 					PMAPCOUNT(exec_synced_pvo_remove);
@@ -1909,8 +1909,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 
 	DPRINTFN(ENTER,
-	    ("pmap_enter(%p, %#" _PRIxva ", %#" _PRIxpa ", 0x%x, 0x%x):",
-	    pm, va, pa, prot, flags));
+	    "pmap_enter(%p, %#" _PRIxva ", %#" _PRIxpa ", 0x%x, 0x%x):",
+	    pm, va, pa, prot, flags);
 
 	/*
 	 * If this is a managed page, and it's the first reference to the
@@ -1919,7 +1919,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (pg != NULL)
 		was_exec = pmap_attr_fetch(pg) & PTE_EXEC;
 
-	DPRINTFN(ENTER, (" was_exec=%d", was_exec));
+	DPRINTFN(ENTER, " was_exec=%d", was_exec);
 
 	/*
 	 * Assume the page is cache inhibited and access is guarded unless
@@ -1976,7 +1976,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
             (flags & VM_PROT_EXECUTE) &&
             (pte_lo & PTE_I) == 0 &&
 	    was_exec == 0) {
-		DPRINTFN(ENTER, (" syncicache"));
+		DPRINTFN(ENTER, " %s", "syncicache");
 		PMAPCOUNT(exec_synced);
 		pmap_syncicache(pa, PAGE_SIZE);
 		if (pg != NULL) {
@@ -1993,7 +1993,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		}
 	}
 
-	DPRINTFN(ENTER, (": error=%d\n", error));
+	DPRINTFN(ENTER, ": error=%d\n", error);
 
 	PMAP_UNLOCK();
 
@@ -2007,14 +2007,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	register_t pte_lo;
 	int error;
 
-#if defined (PMAP_OEA64_BRIDGE)
+#if defined (PMAP_OEA64_BRIDGE) || defined (PMAP_OEA)
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		panic("pmap_kenter_pa: attempt to enter "
 		    "non-kernel address %#" _PRIxva "!", va);
 #endif
 
 	DPRINTFN(KENTER,
-	    ("pmap_kenter_pa(%#" _PRIxva ",%#" _PRIxpa ",%#x)\n", va, pa, prot));
+	    "pmap_kenter_pa(%#" _PRIxva ",%#" _PRIxpa ",%#x)\n", va, pa, prot);
 
 	PMAP_LOCK();
 
@@ -2058,7 +2058,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		panic("pmap_kremove: attempt to remove "
 		    "non-kernel address %#" _PRIxva "!", va);
 
-	DPRINTFN(KREMOVE,("pmap_kremove(%#" _PRIxva ",%#" _PRIxva ")\n", va, len));
+	DPRINTFN(KREMOVE, "pmap_kremove(%#" _PRIxva ",%#" _PRIxva ")\n", va, len);
 	pmap_remove(pmap_kernel(), va, va + len);
 }
 
@@ -2291,8 +2291,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	 * since we know the page will have different contents.
 	 */
 	if ((prot & VM_PROT_READ) == 0) {
-		DPRINTFN(EXEC, ("[pmap_page_protect: %#" _PRIxpa ": clear-exec]\n",
-		    VM_PAGE_TO_PHYS(pg)));
+		DPRINTFN(EXEC, "[pmap_page_protect: %#" _PRIxpa ": clear-exec]\n",
+		    VM_PAGE_TO_PHYS(pg));
 		if (pmap_attr_fetch(pg) & PTE_EXEC) {
 			PMAPCOUNT(exec_uncached_page_protect);
 			pmap_attr_clear(pg, PTE_EXEC);
@@ -2360,7 +2360,7 @@ pmap_activate(struct lwp *l)
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	DPRINTFN(ACTIVATE,
-	    ("pmap_activate: lwp %p (curlwp %p)\n", l, curlwp));
+	    "pmap_activate: lwp %p (curlwp %p)\n", l, curlwp);
 
 	/*
 	 * XXX Normally performed in cpu_lwp_fork().
@@ -2511,13 +2511,13 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	 */
 	if ((ptebit & PTE_CHG) && (rv & PTE_EXEC)) {
 		if (LIST_EMPTY(pvoh)) {
-			DPRINTFN(EXEC, ("[pmap_clear_bit: %#" _PRIxpa ": clear-exec]\n",
-			    VM_PAGE_TO_PHYS(pg)));
+			DPRINTFN(EXEC, "[pmap_clear_bit: %#" _PRIxpa ": clear-exec]\n",
+			    VM_PAGE_TO_PHYS(pg));
 			pmap_attr_clear(pg, PTE_EXEC);
 			PMAPCOUNT(exec_uncached_clear_modify);
 		} else {
-			DPRINTFN(EXEC, ("[pmap_clear_bit: %#" _PRIxpa ": syncicache]\n",
-			    VM_PAGE_TO_PHYS(pg)));
+			DPRINTFN(EXEC, "[pmap_clear_bit: %#" _PRIxpa ": syncicache]\n",
+			    VM_PAGE_TO_PHYS(pg));
 			pmap_syncicache(VM_PAGE_TO_PHYS(pg), PAGE_SIZE);
 			PMAPCOUNT(exec_synced_clear_modify);
 		}
@@ -2975,8 +2975,8 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
 	size = round_page(size);
 
 	DPRINTFN(BOOT,
-	    ("pmap_boot_find_memory: size=%#" _PRIxpa ", alignment=%#" _PRIxpa ", at_end=%d",
-	    size, alignment, at_end));
+	    "pmap_boot_find_memory: size=%#" _PRIxpa ", alignment=%#" _PRIxpa ", at_end=%d",
+	    size, alignment, at_end);
 
 	if (alignment < PAGE_SIZE || (alignment & (alignment-1)) != 0)
 		panic("pmap_boot_find_memory: invalid alignment %#" _PRIxpa,
@@ -2990,16 +2990,16 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
 		for (mp = &avail[avail_cnt-1]; mp >= avail; mp--) {
 			s = mp->start + mp->size - size;
 			if (s >= mp->start && mp->size >= size) {
-				DPRINTFN(BOOT,(": %#" _PRIxpa "\n", s));
+				DPRINTFN(BOOT, ": %#" _PRIxpa "\n", s);
 				DPRINTFN(BOOT,
-				    ("pmap_boot_find_memory: b-avail[%d] start "
-				     "%#" _PRIxpa " size %#" _PRIxpa "\n", mp - avail,
-				     mp->start, mp->size));
+				    "pmap_boot_find_memory: b-avail[%d] start "
+				    "%#" _PRIxpa " size %#" _PRIxpa "\n", mp - avail,
+				     mp->start, mp->size);
 				mp->size -= size;
 				DPRINTFN(BOOT,
-				    ("pmap_boot_find_memory: a-avail[%d] start "
-				     "%#" _PRIxpa " size %#" _PRIxpa "\n", mp - avail,
-				     mp->start, mp->size));
+				    "pmap_boot_find_memory: a-avail[%d] start "
+				    "%#" _PRIxpa " size %#" _PRIxpa "\n", mp - avail,
+				     mp->start, mp->size);
 				return s;
 			}
 		}
@@ -3016,7 +3016,7 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
 		if (s < mp->start || e > mp->start + mp->size)
 			continue;
 
-		DPRINTFN(BOOT,(": %#" _PRIxpa "\n", s));
+		DPRINTFN(BOOT, ": %#" _PRIxpa "\n", s);
 		if (s == mp->start) {
 			/*
 			 * If the block starts at the beginning of region,
@@ -3024,25 +3024,25 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
 			 * zero in length)
 			 */
 			DPRINTFN(BOOT,
-			    ("pmap_boot_find_memory: b-avail[%d] start "
-			     "%#" _PRIxpa " size %#" _PRIxpa "\n", i, mp->start, mp->size));
+			    "pmap_boot_find_memory: b-avail[%d] start "
+			    "%#" _PRIxpa " size %#" _PRIxpa "\n", i, mp->start, mp->size);
 			mp->start += size;
 			mp->size -= size;
 			DPRINTFN(BOOT,
-			    ("pmap_boot_find_memory: a-avail[%d] start "
-			     "%#" _PRIxpa " size %#" _PRIxpa "\n", i, mp->start, mp->size));
+			    "pmap_boot_find_memory: a-avail[%d] start "
+			    "%#" _PRIxpa " size %#" _PRIxpa "\n", i, mp->start, mp->size);
 		} else if (e == mp->start + mp->size) {
 			/*
 			 * If the block starts at the beginning of region,
 			 * adjust only the size.
 			 */
 			DPRINTFN(BOOT,
-			    ("pmap_boot_find_memory: b-avail[%d] start "
-			     "%#" _PRIxpa " size %#" _PRIxpa "\n", i, mp->start, mp->size));
+			    "pmap_boot_find_memory: b-avail[%d] start "
+			    "%#" _PRIxpa " size %#" _PRIxpa "\n", i, mp->start, mp->size);
 			mp->size -= size;
 			DPRINTFN(BOOT,
-			    ("pmap_boot_find_memory: a-avail[%d] start "
-			     "%#" _PRIxpa " size %#" _PRIxpa "\n", i, mp->start, mp->size));
+			    "pmap_boot_find_memory: a-avail[%d] start "
+			    "%#" _PRIxpa " size %#" _PRIxpa "\n", i, mp->start, mp->size);
 		} else {
 			/*
 			 * Block is in the middle of the region, so we
@@ -3052,17 +3052,17 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
 				avail[j] = avail[j-1];
 			}
 			DPRINTFN(BOOT,
-			    ("pmap_boot_find_memory: b-avail[%d] start "
-			     "%#" _PRIxpa " size %#" _PRIxpa "\n", i, mp->start, mp->size));
+			    "pmap_boot_find_memory: b-avail[%d] start "
+			    "%#" _PRIxpa " size %#" _PRIxpa "\n", i, mp->start, mp->size);
 			mp[1].start = e;
 			mp[1].size = mp[0].start + mp[0].size - e;
 			mp[0].size = s - mp[0].start;
 			avail_cnt++;
 			for (; i < avail_cnt; i++) {
 				DPRINTFN(BOOT,
-				    ("pmap_boot_find_memory: a-avail[%d] "
-				     "start %#" _PRIxpa " size %#" _PRIxpa "\n", i,
-				     avail[i].start, avail[i].size));
+				    "pmap_boot_find_memory: a-avail[%d] "
+				    "start %#" _PRIxpa " size %#" _PRIxpa "\n", i,
+				     avail[i].start, avail[i].size);
 			}
 		}
 		KASSERT(s == (uintptr_t) s);
@@ -3191,8 +3191,8 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		e = mp->start + mp->size;
 
 		DPRINTFN(BOOT,
-		    ("pmap_bootstrap: b-avail[%d] start %#" _PRIxpa " size %#" _PRIxpa "\n",
-		    i, mp->start, mp->size));
+		    "pmap_bootstrap: b-avail[%d] start %#" _PRIxpa " size %#" _PRIxpa "\n",
+		    i, mp->start, mp->size);
 
 		/*
 		 * Don't allow the end to run beyond our artificial limit
@@ -3248,8 +3248,8 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 			mp->size = e - s;
 		}
 		DPRINTFN(BOOT,
-		    ("pmap_bootstrap: a-avail[%d] start %#" _PRIxpa " size %#" _PRIxpa "\n",
-		    i, mp->start, mp->size));
+		    "pmap_bootstrap: a-avail[%d] start %#" _PRIxpa " size %#" _PRIxpa "\n",
+		    i, mp->start, mp->size);
 	}
 
 	/*
@@ -3284,12 +3284,12 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 			mp[0].size = mp[1].start - mp[0].start;
 		}
 		DPRINTFN(BOOT,
-		    ("pmap_bootstrap: avail[%d] start %#" _PRIxpa " size %#" _PRIxpa "\n",
-		    i, mp->start, mp->size));
+		    "pmap_bootstrap: avail[%d] start %#" _PRIxpa " size %#" _PRIxpa "\n",
+		    i, mp->start, mp->size);
 	}
 	DPRINTFN(BOOT,
-	    ("pmap_bootstrap: avail[%d] start %#" _PRIxpa " size %#" _PRIxpa "\n",
-	    i, mp->start, mp->size));
+	    "pmap_bootstrap: avail[%d] start %#" _PRIxpa " size %#" _PRIxpa "\n",
+	    i, mp->start, mp->size);
 
 #ifdef	PTEGCOUNT
 	pmap_pteg_cnt = PTEGCOUNT;
@@ -3304,8 +3304,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 #endif /* PTEGCOUNT */
 
 #ifdef DEBUG
-	DPRINTFN(BOOT,
-		("pmap_pteg_cnt: 0x%x\n", pmap_pteg_cnt));
+	DPRINTFN(BOOT, "pmap_pteg_cnt: 0x%x\n", pmap_pteg_cnt);
 #endif
 
 	/*
@@ -3316,7 +3315,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 
 #ifdef DEBUG
 	DPRINTFN(BOOT,
-		("PTEG cnt: 0x%x HTAB size: 0x%08x bytes, address: %p\n", pmap_pteg_cnt, (unsigned int)size, pmap_pteg_table));
+		"PTEG cnt: 0x%x HTAB size: 0x%08x bytes, address: %p\n", pmap_pteg_cnt, (unsigned int)size, pmap_pteg_table);
 #endif
 
 
