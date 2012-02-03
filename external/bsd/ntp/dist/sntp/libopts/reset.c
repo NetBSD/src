@@ -1,4 +1,4 @@
-/*	$NetBSD: reset.c,v 1.1.1.2 2012/01/31 21:27:48 kardel Exp $	*/
+/*	$NetBSD: reset.c,v 1.2 2012/02/03 21:36:40 christos Exp $	*/
 
 
 /**
@@ -110,7 +110,7 @@ optionResetOpt( tOptions* pOpts, tOptDesc* pOD )
             assert(0 == 1);
         }
     } else {
-        succ = longOptionFind(pOpts, (char *)pzArg, &opt_state);
+        succ = longOptionFind(pOpts, (char *)(intptr_t)pzArg, &opt_state);
         if (! SUCCESSFUL(succ)) {
             fprintf(stderr, zIllOptStr, pOpts->pzProgPath, pzArg);
             pOpts->pUsageProc(pOpts, EXIT_FAILURE);

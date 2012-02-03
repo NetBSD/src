@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenize.c,v 1.1.1.2 2012/01/31 21:27:45 kardel Exp $	*/
+/*	$NetBSD: tokenize.c,v 1.2 2012/02/03 21:36:40 christos Exp $	*/
 
 /*
  *  This file defines the string_tokenize interface
@@ -54,7 +54,7 @@ copy_cooked(ch_t** ppDest, char const ** ppSrc)
         case NUL:   *ppSrc = NULL; return;
         case '"':   goto done;
         case '\\':
-            pSrc += ao_string_cook_escape_char((char*)pSrc, (char*)&ch, 0x7F);
+            pSrc += ao_string_cook_escape_char((char*)(intptr_t)pSrc, (char*)(intptr_t)&ch, 0x7F);
             if (ch == 0x7F)
                 break;
             /* FALLTHROUGH */
