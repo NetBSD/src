@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.4 2012/01/23 04:12:26 christos Exp $	*/
+/*	$NetBSD: tpm.c,v 1.5 2012/02/03 04:03:11 christos Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
  * Copyright (c) 2009, 2010 Hans-Jörg Höxer
@@ -18,9 +18,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.4 2012/01/23 04:12:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.5 2012/02/03 04:03:11 christos Exp $");
 
-#if 0
+#if 1
 #define	TPM_DEBUG 
 #define aprint_debug_dev aprint_error_dev
 #endif
@@ -323,12 +323,13 @@ tpm_suspend(device_t dev, const pmf_qual_t *qual)
 	    0, 0, 0, 10,	/* Length in bytes */
 	    0, 0, 0, 156	/* TPM_ORD_SaveStates */
 	};
+	uint8_t scratch[sizeof(command)];
 
 	/*
 	 * Power down:  We have to issue the SaveStates command.
 	 */
 	(*sc->sc_write)(sc, &command, sizeof(command));
-	(*sc->sc_read)(sc, &command, sizeof(command), NULL, TPM_HDRSIZE);
+	(*sc->sc_read)(sc, &scratch, sizeof(scratch), NULL, TPM_HDRSIZE);
 #ifdef TPM_DEBUG
 	aprint_debug_dev(sc->sc_dev, "%s: power down\n", __func__);
 #endif
