@@ -1,4 +1,4 @@
-/*	$NetBSD: nested.c,v 1.3 2012/02/01 07:46:23 kardel Exp $	*/
+/*	$NetBSD: nested.c,v 1.4 2012/02/03 21:36:40 christos Exp $	*/
 
 
 /**
@@ -426,7 +426,7 @@ scan_xml(char const* pzName, tOptionValue* pRes)
     case ' ':
     case '\t':
         pzScan = parseAttributes(
-            NULL, (char*)pzScan, &option_load_mode, &valu );
+            NULL, (char *)(intptr_t)pzScan, &option_load_mode, &valu );
         if (*pzScan == '>') {
             pzScan++;
             break;
@@ -541,7 +541,7 @@ unload_arg_list(tArgList* pAL)
     tCC** ppNV = pAL->apzArgs;
 
     while (ct-- > 0) {
-        tOptionValue* pNV = (tOptionValue*)(void*)*(ppNV++);
+        tOptionValue* pNV = (tOptionValue*)(intptr_t)*(ppNV++);
         if (pNV->valType == OPARG_TYPE_HIERARCHY)
             unload_arg_list(pNV->v.nestVal);
         AGFREE(pNV);
@@ -571,7 +571,7 @@ optionUnloadNested(tOptionValue const * pOV)
 
     unload_arg_list(pOV->v.nestVal);
 
-    AGFREE((void*)pOV);
+    AGFREE(pOV);
 }
 
 /**
@@ -590,8 +590,8 @@ sort_list(tArgList* pAL)
      */
     for (ix = 0; ++ix < lm;) {
         int iy = ix-1;
-        tOptionValue* pNewNV = (tOptionValue*)(void*)(pAL->apzArgs[ix]);
-        tOptionValue* pOldNV = (tOptionValue*)(void*)(pAL->apzArgs[iy]);
+        tOptionValue* pNewNV = (tOptionValue*)(intptr_t)(pAL->apzArgs[ix]);
+        tOptionValue* pOldNV = (tOptionValue*)(intptr_t)(pAL->apzArgs[iy]);
 
         /*
          *  For as long as the new entry precedes the "old" entry,
@@ -600,7 +600,7 @@ sort_list(tArgList* pAL)
          */
         while (strcmp(pOldNV->pzName, pNewNV->pzName) > 0) {
             pAL->apzArgs[iy+1] = (void*)pOldNV;
-            pOldNV = (tOptionValue*)(void*)(pAL->apzArgs[--iy]);
+            pOldNV = (tOptionValue*)(intptr_t)(pAL->apzArgs[--iy]);
             if (iy < 0)
                 break;
         }
@@ -727,7 +727,7 @@ optionNestedVal(tOptions* pOpts, tOptDesc* pOD)
         av = pAL->apzArgs;
 
         while (--ct >= 0) {
-            void * p = (void *)*(av++);
+            void * p = (void *)(intptr_t)*(av++);
             optionUnloadNested((tOptionValue const *)p);
         }
 
@@ -762,7 +762,7 @@ get_special_char(char const ** ppz, int * ct)
             base = 16;
             pz++;
         }
-        retch = (int)strtoul(pz, (char **)&pz, base);
+        retch = (int)strtoul(pz, (char **)(intptr_t)&pz, base);
         if (*pz != ';')
             return '&';
         base = ++pz - *ppz;

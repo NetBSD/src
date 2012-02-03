@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.1.1.2 2012/01/31 21:27:50 kardel Exp $	*/
+/*	$NetBSD: load.c,v 1.2 2012/02/03 21:36:40 christos Exp $	*/
 
 
 /**
@@ -32,11 +32,11 @@
 
 /* = = = START-STATIC-FORWARD = = = */
 static ag_bool
-insertProgramPath(char * pzBuf, int bufSize, char const * pzName,
+insertProgramPath(char * pzBuf, size_t bufSize, char const * pzName,
                   char const * pzProgPath);
 
 static ag_bool
-insertEnvVal(char * pzBuf, int bufSize, char const * pzName,
+insertEnvVal(char * pzBuf, size_t bufSize, char const * pzName,
              char const * pzProgPath);
 
 static char*
@@ -95,7 +95,7 @@ assembleArgValue(char* pzTxt, tOptionLoadMode mode);
  *                 errors (cannot resolve the resulting path).
 =*/
 ag_bool
-optionMakePath(char * pzBuf, int bufSize, char const * pzName,
+optionMakePath(char * pzBuf, size_t bufSize, char const * pzName,
                char const * pzProgPath)
 {
     size_t name_len = strlen(pzName);
@@ -137,7 +137,7 @@ optionMakePath(char * pzBuf, int bufSize, char const * pzName,
         if (program_pkgdatadir[0] == NUL)
             return AG_FALSE;
 
-        if (snprintf(pzBuf, bufSize, "%s%s", program_pkgdatadir, pzName + 2)
+        if ((size_t)snprintf(pzBuf, bufSize, "%s%s", program_pkgdatadir, pzName + 2)
             >= bufSize)
             return AG_FALSE;
         break;
@@ -183,7 +183,7 @@ optionMakePath(char * pzBuf, int bufSize, char const * pzName,
 
 
 static ag_bool
-insertProgramPath(char * pzBuf, int bufSize, char const * pzName,
+insertProgramPath(char * pzBuf, size_t bufSize, char const * pzName,
                   char const * pzProgPath)
 {
     char const*    pzPath;
@@ -207,7 +207,7 @@ insertProgramPath(char * pzBuf, int bufSize, char const * pzName,
     if (strchr(pzProgPath, DIRCH) != NULL)
         pzPath = pzProgPath;
     else {
-        pzPath = pathfind(getenv("PATH"), (char*)pzProgPath, "rx");
+        pzPath = pathfind(getenv("PATH"), pzProgPath, "rx");
 
         if (pzPath == NULL)
             return AG_FALSE;
@@ -245,7 +245,7 @@ insertProgramPath(char * pzBuf, int bufSize, char const * pzName,
 
 
 static ag_bool
-insertEnvVal(char * pzBuf, int bufSize, char const * pzName,
+insertEnvVal(char * pzBuf, size_t bufSize, char const * pzName,
              char const * pzProgPath)
 {
     char* pzDir = pzBuf;
