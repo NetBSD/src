@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.5 2012/02/03 04:03:11 christos Exp $	*/
+/*	$NetBSD: tpm.c,v 1.6 2012/02/03 15:42:46 christos Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
  * Copyright (c) 2009, 2010 Hans-Jörg Höxer
@@ -18,9 +18,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.5 2012/02/03 04:03:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.6 2012/02/03 15:42:46 christos Exp $");
 
-#if 1
+#if 0
 #define	TPM_DEBUG 
 #define aprint_debug_dev aprint_error_dev
 #endif
