@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.335 2012/01/25 18:26:26 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.336 2012/02/03 20:11:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.335 2012/01/25 18:26:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.336 2012/02/03 20:11:54 matt Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -652,6 +652,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
 	pack.ep_emul_arg = NULL;
+	pack.ep_emul_arg_free = NULL;
 	pack.ep_vmcmds.evs_cnt = 0;
 	pack.ep_vmcmds.evs_used = 0;
 	pack.ep_vap = &attr;
@@ -1344,8 +1345,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 */
 	uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
-	if (pack.ep_emul_arg)
-		free(pack.ep_emul_arg, M_TEMP);
+	exec_free_emul_arg(&pack);
 	pool_put(&exec_pool, argp);
 	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
 	if (pack.ep_emul_root != NULL)
@@ -1681,4 +1681,17 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 	}
 	p->p_sigctx.ps_sigcode = (void *)va;
 	return (0);
+}
+
+void
+exec_free_emul_arg(struct exec_package *epp)
+{
+	if (epp->ep_emul_arg_free != NULL) {
+		KASSERT(epp->ep_emul_arg != NULL);
+		(*epp->ep_emul_arg_free)(epp->ep_emul_arg);
+		epp->ep_emul_arg_free = NULL;
+		epp->ep_emul_arg = NULL;
+	} else {
+		KASSERT(epp->ep_emul_arg == NULL);
+	}
 }
