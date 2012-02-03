@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.140 2012/02/02 19:35:18 christos Exp $	*/
+/*	$NetBSD: nd6.c,v 1.141 2012/02/03 03:32:45 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.140 2012/02/02 19:35:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.141 2012/02/03 03:32:45 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -163,8 +163,7 @@ nd6_ifattach(struct ifnet *ifp)
 {
 	struct nd_ifinfo *nd;
 
-	nd = (struct nd_ifinfo *)malloc(sizeof(*nd), M_IP6NDP, M_WAITOK);
-	memset(nd, 0, sizeof(*nd));
+	nd = (struct nd_ifinfo *)malloc(sizeof(*nd), M_IP6NDP, M_WAITOK|M_ZERO);
 
 	nd->initialized = 1;
 
@@ -722,7 +721,6 @@ nd6_accepts_rtadv(const struct nd_ifinfo *ndi)
 void
 nd6_purge(struct ifnet *ifp)
 {
-	struct nd_ifinfo *ndi = ND_IFINFO(ifp);
 	struct llinfo_nd6 *ln, *nln;
 	struct nd_defrouter *dr, *ndr;
 	struct nd_prefix *pr, *npr;
@@ -776,9 +774,12 @@ nd6_purge(struct ifnet *ifp)
 		nd6_setdefaultiface(0);
 
 	/* XXX: too restrictive? */
-	if (!ip6_forwarding && ndi && nd6_accepts_rtadv(ndi)) {
-		/* refresh default router list */
-		defrouter_select();
+	if (!ip6_forwarding && ifp->if_afdata[AF_INET6]) {
+		struct nd_ifinfo *ndi = ND_IFINFO(ifp);
+		if (ndi && nd6_accepts_rtadv(ndi)) {
+			/* refresh default router list */
+			defrouter_select();
+		}
 	}
 
 	/*
