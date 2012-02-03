@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.22 2010/07/07 01:30:34 chs Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.23 2012/02/03 20:11:53 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,14 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.22 2010/07/07 01:30:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.23 2012/02/03 20:11:53 matt Exp $");
 
 #define ELFSIZE 32
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
@@ -166,8 +165,7 @@ ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
 		a->a_v = LINUX_ELF_HWCAP;
 		a++;
 
-		free((char *)ap, M_TEMP);
-		pack->ep_emul_arg = NULL;
+		exec_free_emul_arg(pack);
 	}
 
 	a->a_type = AT_NULL;
