@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.26 2011/12/04 17:00:10 chs Exp $	*/
+/*	$NetBSD: i386.c,v 1.27 2012/02/03 05:07:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.26 2011/12/04 17:00:10 chs Exp $");
+__RCSID("$NetBSD: i386.c,v 1.27 2012/02/03 05:07:17 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1694,7 +1694,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	cai = &ci->ci_cinfo[CAI_DCACHE];
 	cai->cai_totalsize = AMD_L1_ECX_DC_SIZE(descs[2]);
 	cai->cai_associativity = AMD_L1_ECX_DC_ASSOC(descs[2]);
-	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[2]);
+	cai->cai_linesize = AMD_L1_ECX_DC_LS(descs[2]);
 
 	cai = &ci->ci_cinfo[CAI_ICACHE];
 	cai->cai_totalsize = AMD_L1_EDX_IC_SIZE(descs[3]);
