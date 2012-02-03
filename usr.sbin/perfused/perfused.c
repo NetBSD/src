@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.20 2012/01/30 22:49:03 christos Exp $ */
+/*  $NetBSD: perfused.c,v 1.21 2012/02/03 15:54:15 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -480,4 +480,14 @@ main(int argc, char **argv)
 		
 	/* NOTREACHED */
 	return 0;
+}
+
+void
+perfused_panic(void)
+{
+	DWARNX("filesystem crashed");
+	exit(EX_OK);
+
+	/* NOTREACHED */
+	return;
 }
