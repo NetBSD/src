@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.259 2011/12/28 02:14:57 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.260 2012/02/03 03:35:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.259 2011/12/28 02:14:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.260 2012/02/03 03:35:30 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -810,13 +810,18 @@ again:
 	/* Walk the routing table looking for stragglers. */
 	for (i = 0; i <= AF_MAX; i++) {
 		while (rt_walktree(i, if_rt_walktree, ifp) == ERESTART)
-			;
+			continue;
 	}
 
 	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifdetach != NULL && ifp->if_afdata[dp->dom_family])
-			(*dp->dom_ifdetach)(ifp,
-			    ifp->if_afdata[dp->dom_family]);
+		{
+			void *p = ifp->if_afdata[dp->dom_family];
+			if (p) {
+				ifp->if_afdata[dp->dom_family] = NULL;
+				(*dp->dom_ifdetach)(ifp, p);
+			}
+		}
 
 		/*
 		 * One would expect multicast memberships (INET and
@@ -859,9 +864,11 @@ again:
 	 */
 	DOMAIN_FOREACH(dp) {
 		for (i = 0; i < __arraycount(dp->dom_ifqueues); i++) {
-			if (dp->dom_ifqueues[i] == NULL)
+			struct ifqueue *iq = dp->dom_ifqueues[i];
+			if (iq == NULL)
 				break;
-			if_detach_queues(ifp, dp->dom_ifqueues[i]);
+			dp->dom_ifqueues[i] = NULL;
+			if_detach_queues(ifp, iq);
 		}
 	}
 
