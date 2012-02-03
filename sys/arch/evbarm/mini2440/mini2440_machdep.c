@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.1 2012/01/30 03:28:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.2 2012/02/03 00:33:08 nisimura Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -262,11 +262,11 @@ extern int pmap_debug_level;
 
 #define KERNEL_PT_SYS		0	/* L2 table for mapping zero page */
 #define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
-#define	KERNEL_PT_KERNEL_NUM	2	/* L2 tables for mapping kernel VM */
+#define KERNEL_PT_KERNEL_NUM	3	/* L2 tables for mapping kernel VM */
 
 #define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
 
-#define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
+#define KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
@@ -1110,6 +1110,7 @@ extern char *booted_kernel;
 static void
 mini2440_device_register(device_t dev, void *aux) {
 	if (device_class(dev) == DV_IFNET) {
+#ifndef MEMORY_DISK_IS_ROOT
 		if (bi_rdev != NULL && device_is_a(dev, bi_rdev->devname) ) {
 			booted_device = dev;
 			rootfstype = MOUNT_NFS;
@@ -1117,6 +1118,7 @@ mini2440_device_register(device_t dev, void *aux) {
 				booted_kernel = bi_path->bootpath;
 			}
 		}
+#endif
 		if (bi_net != NULL && device_is_a(dev, bi_net->devname)) {
 			prop_data_t pd;
 			pd = prop_data_create_data_nocopy(bi_net->mac_address, ETHER_ADDR_LEN);
@@ -1128,6 +1130,7 @@ mini2440_device_register(device_t dev, void *aux) {
 			bi_net = NULL;
 		}
 	}
+#ifndef MEMORY_DISK_IS_ROOT
 	if (bi_rdev != NULL && device_class(dev) == DV_DISK
 	    && device_is_a(dev, bi_rdev->devname)
 	    && device_unit(dev) == bi_rdev->cookie) {
@@ -1138,4 +1141,5 @@ mini2440_device_register(device_t dev, void *aux) {
 			booted_kernel = bi_path->bootpath;
 		}
 	}
+#endif
 }
