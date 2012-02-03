@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.3 2012/02/01 07:46:23 kardel Exp $	*/
+/*	$NetBSD: save.c,v 1.4 2012/02/03 21:36:40 christos Exp $	*/
 
 
 /*
@@ -186,7 +186,7 @@ findFileName(tOptions * pOpts, int * p_free_name)
             fprintf(stderr, zWarn, pOpts->pzProgName);
             fprintf(stderr, zNoStat, errno, strerror(errno), pzDir);
             if (free_dir_name)
-                AGFREE((void*)pzDir);
+                AGFREE(pzDir);
             return NULL;
         }
 
@@ -200,7 +200,7 @@ findFileName(tOptions * pOpts, int * p_free_name)
             break; /* found directory -- viz.,  "." */
         }
 
-        if ((dirchp - pzDir) >= sizeof(z))
+        if ((size_t)(dirchp - pzDir) >= sizeof(z))
             goto bogus_name;
 
         memcpy(z, pzDir, (size_t)(dirchp - pzDir));
@@ -226,7 +226,7 @@ findFileName(tOptions * pOpts, int * p_free_name)
             sprintf(pzPath, "%s/%s", pzDir, pOpts->pzRcName);
 #endif
             if (free_dir_name)
-                AGFREE((void*)pzDir);
+                AGFREE(pzDir);
             pzDir = pzPath;
             free_dir_name = 1;
         }
@@ -240,7 +240,7 @@ findFileName(tOptions * pOpts, int * p_free_name)
                 fprintf(stderr, zWarn, pOpts->pzProgName);
                 fprintf(stderr, zNoStat, errno, strerror(errno),
                         pzDir);
-                AGFREE((void*)pzDir);
+                AGFREE(pzDir);
                 return NULL;
             }
 
@@ -259,7 +259,7 @@ findFileName(tOptions * pOpts, int * p_free_name)
         fprintf(stderr, zWarn, pOpts->pzProgName);
         fprintf(stderr, zNotFile, pzDir);
         if (free_dir_name)
-            AGFREE((void*)pzDir);
+            AGFREE(pzDir);
         return NULL;
     }
 
@@ -378,7 +378,7 @@ print_a_value(FILE * fp, int depth, tOptDesc * pOD, tOptionValue const * ovp)
                     /*
                      *  set membership strings get allocated
                      */
-                    AGFREE((void*)pOD->optArg.argString);
+                    AGFREE(pOD->optArg.argString);
                 }
             }
 
@@ -454,7 +454,7 @@ printValueList(FILE * fp, char const * name, tArgList * al)
     if (al == NULL)
         return;
     opt_ct   = al->useCt;
-    opt_list = (void **)al->apzArgs;
+    opt_list = (void **)(intptr_t)al->apzArgs;
 
     if (opt_ct <= 0) {
         fprintf(fp, "<%s/>\n", name);
@@ -488,7 +488,7 @@ printHierarchy(FILE * fp, tOptDesc * p)
         return;
 
     opt_ct   = al->useCt;
-    opt_list = (void **)al->apzArgs;
+    opt_list = (void **)(intptr_t)al->apzArgs;
 
     if (opt_ct <= 0)
         return;
@@ -529,12 +529,12 @@ openSaveFile(tOptions* pOpts)
             fprintf(stderr, zWarn, pOpts->pzProgName);
             fprintf(stderr, zNoCreat, errno, strerror(errno), pzFName);
             if (free_name)
-                AGFREE( pzFName );
+                AGFREE(pzFName);
             return fp;
         }
 
         if (free_name)
-            AGFREE((void*)pzFName);
+            AGFREE(pzFName);
     }
 
     {
@@ -613,7 +613,7 @@ printEnumArg(FILE * fp, tOptDesc * pOD)
      *  bit flag values back into a string suitable for printing.
      */
     (*(pOD->pOptProc))(OPTPROC_RETURN_VALNAME, pOD);
-    printEntry(fp, pOD, (void*)(pOD->optArg.argString));
+    printEntry(fp, pOD, (void*)(intptr_t)(pOD->optArg.argString));
 
     pOD->optArg.argEnum = val;
 }
@@ -628,13 +628,13 @@ printSetMemberArg(FILE * fp, tOptDesc * pOD)
      *  bit flag values back into a string suitable for printing.
      */
     (*(pOD->pOptProc))(OPTPROC_RETURN_VALNAME, pOD);
-    printEntry(fp, pOD, (void*)(pOD->optArg.argString));
+    printEntry(fp, pOD, (void*)(intptr_t)(pOD->optArg.argString));
 
     if (pOD->optArg.argString != NULL) {
         /*
          *  set membership strings get allocated
          */
-        AGFREE((void*)pOD->optArg.argString);
+        AGFREE(pOD->optArg.argString);
         pOD->fOptState &= ~OPTST_ALLOC_ARG;
     }
 

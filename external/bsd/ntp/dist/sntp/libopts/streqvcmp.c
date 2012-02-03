@@ -1,4 +1,4 @@
-/*	$NetBSD: streqvcmp.c,v 1.1.1.2 2012/01/31 21:27:54 kardel Exp $	*/
+/*	$NetBSD: streqvcmp.c,v 1.2 2012/02/03 21:36:40 christos Exp $	*/
 
 
 /**
@@ -194,8 +194,8 @@ streqvmap(char From, char To, int ct)
     }
 
     else {
-        int  chTo   = (int)To   & 0xFF;
-        int  chFrom = (int)From & 0xFF;
+        size_t  chTo   = (int)To   & 0xFF;
+        size_t  chFrom = (int)From & 0xFF;
 
         do  {
             charmap[ chFrom ] = (unsigned)chTo;
