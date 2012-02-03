@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.18 2012/01/30 22:49:03 christos Exp $ */
+/*  $NetBSD: msg.c,v 1.19 2012/02/03 15:54:15 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -488,14 +488,13 @@ perfused_readframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 
 	switch (readen = recv(fd, data, len, MSG_NOSIGNAL|MSG_PEEK)) {
 	case 0:
-		DWARNX("%s: recv retunred 0", __func__);
-		return ECONNRESET;
+		perfused_panic();
 		/* NOTREACHED */
 		break;
 	case -1:
 		if (errno == EAGAIN)
 			return 0;
-		DWARN("%s: recv retunred -1", __func__);
+		DWARN("%s: recv returned -1", __func__);
 		return errno;
 		/* NOTREACHED */
 		break;
@@ -535,14 +534,15 @@ perfused_readframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 
 	switch (readen = recv(fd, data, len, MSG_NOSIGNAL)) {
 	case 0:
-		DWARNX("%s: recv retunred 0", __func__);
-		return ECONNRESET;
+		DWARNX("%s: recv returned 0", __func__);
+		perfused_panic();
+		
 		/* NOTREACHED */
 		break;
 	case -1:
 		if (errno == EAGAIN)
 			return 0;
-		DWARN("%s: recv retunred -1", __func__);
+		DWARN("%s: recv returned -1", __func__);
 		return errno;
 		/* NOTREACHED */
 		break;
@@ -574,17 +574,24 @@ perfused_writeframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 
 	switch (written = send(fd, data, len, MSG_NOSIGNAL)) {
 	case 0:
-		DWARNX("%s: send retunred 0", __func__);
+#ifdef PERFUSE_DEBUG
+		DERRX(EX_SOFTWARE, "%s: send returned 0", __func__);
+#else
 		return ECONNRESET;
+#endif
 		/* NOTREACHED */
 		break;
 	case -1:
-		DWARN("%s: send retunred -1, errno = %d", __func__, errno);
+		DWARN("%s: send returned -1, errno = %d", __func__, errno);
 		switch(errno) {
 		case EAGAIN:
 		case ENOBUFS:
 		case EMSGSIZE:
 			return 0;
+			break;
+		case EPIPE:
+			perfused_panic();
+			/* NOTREACHED */
 			break;
 		default:
 			return errno;
