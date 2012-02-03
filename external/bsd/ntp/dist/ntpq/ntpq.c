@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.6 2012/02/01 22:48:15 kardel Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.7 2012/02/03 10:20:29 kardel Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -1080,7 +1080,7 @@ getresponse(
 
 		if (debug >= 2)
 			printf("Got packet, size = %d\n", n);
-		if ((int)count > (n - CTL_HEADER_LEN)) {
+		if ((int)count > (n - (int)CTL_HEADER_LEN)) {
 			if (debug)
 				printf("Received count of %d octets, "
 					"data in packet is %u\n",
