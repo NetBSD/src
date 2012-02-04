@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.35 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.35.4.1 2012/02/04 16:57:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.35 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.35.4.1 2012/02/04 16:57:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -292,7 +292,9 @@ sleepq_block(int timo, bool catch)
 			 * not recurse again.
 			 */
 			mutex_enter(p->p_lock);
-			if ((sig = issignal(l)) != 0)
+			if (((sig = sigispending(l, 0)) != 0 &&
+			    (sigprop[sig] & SA_STOP) == 0) ||
+			    (sig = issignal(l)) != 0)
 				error = sleepq_sigtoerror(l, sig);
 			mutex_exit(p->p_lock);
 		}

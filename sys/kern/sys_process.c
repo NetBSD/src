@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.143.4.1 2009/02/06 01:54:09 snj Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.143.4.2 2012/02/04 16:57:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.143.4.1 2009/02/06 01:54:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.143.4.2 2012/02/04 16:57:59 bouyer Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -294,6 +294,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	case  PT_DETACH:
 	case  PT_LWPINFO:
 	case  PT_SYSCALL:
+	case  PT_SYSCALLEMU:
 #ifdef COREDUMP
 	case  PT_DUMPCORE:
 #endif
@@ -378,6 +379,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	case PT_DETACH:
 	case PT_KILL:
 	case PT_SYSCALL:
+	case PT_SYSCALLEMU:
 	case PT_ATTACH:
 	case PT_TRACE_ME:
 		pheld = 1;
@@ -525,7 +527,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 #endif
 			}
 		}
-		p->p_trace_enabled = trace_is_enabled(p);
+		t->p_trace_enabled = trace_is_enabled(t);
 
 		/*
 		 * From the 4.4BSD PRM:
@@ -596,6 +598,14 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			ksi.ksi_signo = signo;
 			kpsignal2(t, &ksi);
 		}
+		break;
+
+	case  PT_SYSCALLEMU:
+		if (!ISSET(t->p_slflag, PSL_SYSCALL) || t->p_stat != SSTOP) {
+			error = EINVAL;
+			break;
+		}
+		SET(t->p_slflag, PSL_SYSCALLEMU);
 		break;
 
 	case  PT_KILL:
@@ -951,14 +961,11 @@ process_stoptrace(void)
 	proc_stop(p, 1, SIGSTOP);
 	mutex_exit(proc_lock);
 
-	/*
-	 * Call issignal() once only, to have it take care of the
-	 * pending stop.  Signal processing will take place as usual
-	 * from userret().
-	 */
-	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
-	(void)issignal(l);
+	if (sigispending(l, 0)) {
+		lwp_lock(l);
+		l->l_flag |= LW_PENDSIG;
+		lwp_unlock(l);
+	}
 	mutex_exit(p->p_lock);
-	KERNEL_LOCK(l->l_biglocks, l);
 }
 #endif	/* KTRACE || PTRACE */
