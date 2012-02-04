@@ -1,4 +1,4 @@
-/*	$NetBSD: dfrem.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $	*/
+/*	$NetBSD: dfrem.c,v 1.5 2012/02/04 17:03:09 skrll Exp $	*/
 
 /*	$OpenBSD: dfrem.c,v 1.4 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dfrem.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dfrem.c,v 1.5 2012/02/04 17:03:09 skrll Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"
@@ -51,10 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: dfrem.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $");
  *  Double Precision Floating-point Remainder
  */
 int
-dbl_frem(srcptr1,srcptr2,dstptr,status)
-
-dbl_floating_point *srcptr1, *srcptr2, *dstptr;
-unsigned int *status;
+dbl_frem(dbl_floating_point *srcptr1, dbl_floating_point *srcptr2,
+   dbl_floating_point *dstptr, unsigned int *status)
 {
 	register unsigned int opnd1p1, opnd1p2, opnd2p1, opnd2p2;
 	register unsigned int resultp1, resultp2;

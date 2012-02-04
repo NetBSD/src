@@ -1,4 +1,4 @@
-/*	$NetBSD: fcnvfxt.c,v 1.4 2012/01/01 20:04:36 skrll Exp $	*/
+/*	$NetBSD: fcnvfxt.c,v 1.5 2012/02/04 17:03:09 skrll Exp $	*/
 
 /*	$OpenBSD: fcnvfxt.c,v 1.8 2010/07/30 18:05:23 kettenis Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcnvfxt.c,v 1.4 2012/01/01 20:04:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcnvfxt.c,v 1.5 2012/02/04 17:03:09 skrll Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -55,11 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: fcnvfxt.c,v 1.4 2012/01/01 20:04:36 skrll Exp $");
  */
 /*ARGSUSED*/
 int
-sgl_to_sgl_fcnvfxt(srcptr,dstptr,status)
-
-sgl_floating_point *srcptr;
-int *dstptr;
-unsigned int *status;
+sgl_to_sgl_fcnvfxt(sgl_floating_point *srcptr, int *dstptr,
+    unsigned int *status)
 {
 	register unsigned int src, temp;
 	register int src_exponent, result;
@@ -119,11 +116,8 @@ unsigned int *status;
  */
 /*ARGSUSED*/
 int
-sgl_to_dbl_fcnvfxt(srcptr,dstptr,status)
-
-sgl_floating_point *srcptr;
-dbl_integer *dstptr;
-unsigned int *status;
+sgl_to_dbl_fcnvfxt(sgl_floating_point *srcptr, dbl_integer *dstptr,
+    unsigned int *status)
 {
 	register int src_exponent, resultp1;
 	register unsigned int src, temp, resultp2;
@@ -194,11 +188,8 @@ unsigned int *status;
  */
 /*ARGSUSED*/
 int
-dbl_to_sgl_fcnvfxt(srcptr,dstptr,status)
-
-dbl_floating_point *srcptr;
-int *dstptr;
-unsigned int *status;
+dbl_to_sgl_fcnvfxt(dbl_floating_point *srcptr, int *dstptr,
+    unsigned int *status)
 {
 	register unsigned int srcp1, srcp2, tempp1, tempp2;
 	register int src_exponent, result;
@@ -259,11 +250,8 @@ unsigned int *status;
  */
 /*ARGSUSED*/
 int
-dbl_to_dbl_fcnvfxt(srcptr,dstptr,status)
-
-dbl_floating_point *srcptr;
-dbl_integer *dstptr;
-unsigned int *status;
+dbl_to_dbl_fcnvfxt(dbl_floating_point *srcptr, dbl_integer *dstptr,
+    unsigned int *status)
 {
 	register int src_exponent, resultp1;
 	register unsigned int srcp1, srcp2, tempp1, tempp2, resultp2;
