@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.21 2011/12/09 03:58:12 cherry Exp $      */
+/*      $NetBSD: xengnt.c,v 1.22 2012/02/04 02:00:07 riz Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.21 2011/12/09 03:58:12 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.22 2012/02/04 02:00:07 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,7 +129,7 @@ xengnt_resume(void)
  * Suspend grant table state
  */
 bool
-xengnt_suspend() {
+xengnt_suspend(void) {
 
 	int i;
 
