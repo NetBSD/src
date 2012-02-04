@@ -1,4 +1,4 @@
-/*	$NetBSD: divsim.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $	*/
+/*	$NetBSD: divsim.c,v 1.5 2012/02/04 17:03:09 skrll Exp $	*/
 
 /*	$OpenBSD: divsim.c,v 1.4 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -42,15 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: divsim.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: divsim.c,v 1.5 2012/02/04 17:03:09 skrll Exp $");
 
 #include "md.h"
 
 void
-divsim(opnd1,opnd2,result)
-
-int opnd1, opnd2;
-struct mdsfu_register *result;
+divsim(int opnd1, int opnd2, struct mdsfu_register *result)
 {
 	int sign, op1_sign;
 
