@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.134 2012/02/04 16:59:20 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.135 2012/02/04 17:10:02 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5994,4 +5994,19 @@ sys/sys/ptrace.h				patch
 	  kern/45312: ptrace: PT_SETREGS can't alter system calls
 	  kern/45330: ptrace: signals can alter syscall return values
 	[jmcneill, ticket #1668]
+
+sys/arch/i386/conf/INSTALL_FLOPPY		1.15
+
+	Add virtio driver to INSTALL_FLOPPY.
+	Requested by Matthias Scheler <tron@netbsd.org> for particular cases
+	like
+	http://mail-index.netbsd.org/netbsd-users/2011/09/13/msg009128.html
+	[hannken, ticket #1719]
+
+sys/dev/ic/mpt_netbsd.c				1.17
+
+	allows the mpt(4) driver to use tagged queuing on SAS adapters (and
+	hopefully FC adapters) to improve write performance when logical
+	drives do not have write cache enabled.
+	[mhitch, ticket #1720]
 
