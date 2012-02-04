@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.solmod,v 1.2 2012/02/04 18:38:13 christos Exp $
+#	$NetBSD: Makefile.solmod,v 1.3 2012/02/04 18:39:21 christos Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
@@ -84,5 +84,4 @@ CPPFLAGS+=	-Dcaddr_t=__caddr_t "-D__va_list=va_list"
 CPPFLAGS+=	-std=c99
 # CPPFLAGS+=	-D_NFS_NFS_H_
 # CPPFLAGS+=	-D_PROPLIB_ZFS_CONFLICT
-
-CFLAGS+=	-g -O0 -DDIAGNOSTIC
+CPPFLAGS+=	-DDIAGNOSTIC
