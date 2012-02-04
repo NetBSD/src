@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.193 2012/01/29 20:20:18 he Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.194 2012/02/04 22:11:42 para Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.193 2012/01/29 20:20:18 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.194 2012/02/04 22:11:42 para Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2730,13 +2730,10 @@ struct pool_allocator pool_allocator_kmem = {
 };
 #endif
 
-void	*pool_page_alloc_nointr(struct pool *, int);
-void	pool_page_free_nointr(struct pool *, void *);
-
 #ifdef POOL_SUBPAGE
 struct pool_allocator pool_allocator_nointr_fullpage = {
-	.pa_alloc = pool_page_alloc_nointr,
-	.pa_free = pool_page_free_nointr,
+	.pa_alloc = pool_page_alloc,
+	.pa_free = pool_page_free,
 	.pa_pagesz = 0
 };
 #else
@@ -2756,9 +2753,6 @@ struct pool_allocator pool_allocator_kmem = {
 	.pa_free = pool_subpage_free,
 	.pa_pagesz = POOL_SUBPAGE
 };
-
-void	*pool_subpage_alloc_nointr(struct pool *, int);
-void	pool_subpage_free_nointr(struct pool *, void *);
 
 struct pool_allocator pool_allocator_nointr = {
 	.pa_alloc = pool_subpage_alloc,
@@ -2850,20 +2844,6 @@ pool_subpage_free(struct pool *pp, void *v)
 	pool_put(&psppool, v);
 }
 
-/* We don't provide a real nointr allocator.  Maybe later. */
-void *
-pool_subpage_alloc_nointr(struct pool *pp, int flags)
-{
-
-	return (pool_subpage_alloc(pp, flags));
-}
-
-void
-pool_subpage_free_nointr(struct pool *pp, void *v)
-{
-
-	pool_subpage_free(pp, v);
-}
 #endif /* POOL_SUBPAGE */
 
 #if defined(DDB)
