@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.118 2012/02/03 19:25:07 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.119 2012/02/04 17:56:17 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.118 2012/02/03 19:25:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.119 2012/02/04 17:56:17 para Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -189,10 +189,16 @@ kmeminit_nkmempages(void)
 		return;
 	}
 
-	npages = physmem;
+#if defined(PMAP_MAP_POOLPAGE)
+	npages = (physmem / 4);
+#else
+	npages = (physmem / 3) * 2;
+#endif /* defined(PMAP_MAP_POOLPAGE) */
 
+#ifndef NKMEMPAGES_MAX_UNLIMITED
 	if (npages > NKMEMPAGES_MAX)
 		npages = NKMEMPAGES_MAX;
+#endif
 
 	if (npages < NKMEMPAGES_MIN)
 		npages = NKMEMPAGES_MIN;
@@ -212,6 +218,7 @@ kmeminit_nkmempages(void)
 void
 uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 {
+	bool kmem_arena_small;
 	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
 	struct uvm_map_args args;
 	int error;
@@ -221,11 +228,8 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 	    start, end, 0,0);
 
 	kmeminit_nkmempages();
-	kmemsize = nkmempages * PAGE_SIZE;
-
-	/* kmemsize = MIN((((vsize_t)(end - start)) / 3),
-	    ((((vsize_t)uvmexp.npages) * PAGE_SIZE) / 2));
-	kmemsize = round_page(kmemsize); */
+	kmemsize = (vsize_t)nkmempages * PAGE_SIZE;
+	kmem_arena_small = kmemsize < 64 * 1024 * 1024;
 
 	UVMHIST_LOG(maphist, "kmemsize=%#"PRIxVSIZE, kmemsize, 0,0,0);
 
@@ -301,7 +305,8 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 
 	kmem_va_arena = vmem_create("kva", 0, 0, PAGE_SIZE,
 	    vmem_alloc, vmem_free, kmem_arena,
-	    16 * PAGE_SIZE, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
+	    (kmem_arena_small ? 4 : 16) * PAGE_SIZE,
+	    VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
 
 	UVMHIST_LOG(maphist, "<- done", 0,0,0,0);
 }
