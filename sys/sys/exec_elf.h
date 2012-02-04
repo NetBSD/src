@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.121 2012/01/21 21:44:03 njoly Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.122 2012/02/04 18:12:02 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -714,6 +714,7 @@ typedef struct {
 #define AT_DCACHEBSIZE	10	/* Data cache block size */
 #define AT_ICACHEBSIZE	11	/* Instruction cache block size */
 #define AT_UCACHEBSIZE	12	/* Unified cache block size */
+#define AT_STACKBASE	13	/* Base address of the main thread */
 
 	/* Vendor specific */
 #define AT_MIPS_NOTELF	10	/* XXX a_val != 0 -> MIPS XCOFF executable */
@@ -1138,7 +1139,7 @@ typedef Elf32_Versym	Elf64_Versym;
 
 #ifdef _KERNEL
 
-#define ELF_AUX_ENTRIES 14	/* Max size of aux array passed to loader */
+#define ELF_AUX_ENTRIES 15	/* Max size of aux array passed to loader */
 #define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
 #define ELF32_LINK_ADDR ((Elf32_Addr)-2) /* advises to use link address */
 #define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */

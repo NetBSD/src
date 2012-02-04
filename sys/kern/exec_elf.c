@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.35 2012/02/03 20:11:54 matt Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.36 2012/02/04 18:12:02 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.35 2012/02/03 20:11:54 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.36 2012/02/04 18:12:02 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -238,6 +238,10 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 		a->a_v = kauth_cred_getgid(l->l_cred);
 		a++;
 
+		a->a_type = AT_STACKBASE;
+		a->a_v = l->l_proc->p_stackbase;
+		a++;
+
 		if (pack->ep_path) {
 			execname = a;
 			a->a_type = AT_SUN_EXECNAME;
@@ -251,7 +255,9 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 	a->a_v = 0;
 	a++;
 
-	vlen = (a - ai) * sizeof(AuxInfo);
+	vlen = (a - ai) * sizeof(ai[0]);
+
+	KASSERT(vlen <= sizeof(ai));
 
 	if (execname) {
 		char *path = pack->ep_path;
