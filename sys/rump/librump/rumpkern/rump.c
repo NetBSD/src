@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.239 2012/01/29 14:57:31 njoly Exp $	*/
+/*	$NetBSD: rump.c,v 1.240 2012/02/04 10:02:25 njoly Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.239 2012/01/29 14:57:31 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.240 2012/02/04 10:02:25 njoly Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -314,6 +314,8 @@ rump__init(int rump_version)
 	kauth_init();
 
 	secmodel_init();
+
+	rnd_init();
 
 	/*
 	 * Create the kernel cprng.  Yes, it's currently stubbed out
