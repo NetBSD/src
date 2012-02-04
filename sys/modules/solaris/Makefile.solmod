@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile.solmod,v 1.1 2011/01/18 22:21:22 haad Exp $
-
-CFLAGS+= -g -fno-inline
+#	$NetBSD: Makefile.solmod,v 1.2 2012/02/04 18:38:13 christos Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
