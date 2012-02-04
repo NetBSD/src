@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.14.14.1 2010/12/02 23:45:59 snj Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.14.14.2 2012/02/04 17:05:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.14.14.1 2010/12/02 23:45:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.14.14.2 2012/02/04 17:05:56 bouyer Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -112,8 +112,8 @@ mpt_scsipi_attach(mpt_softc_t *mpt)
 	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = &mpt->sc_dev;
 	adapt->adapt_nchannels = 1;
-	adapt->adapt_openings = maxq;
-	adapt->adapt_max_periph = maxq;
+	adapt->adapt_openings = maxq - 2;	/* Reserve 2 for driver use*/
+	adapt->adapt_max_periph = maxq - 2;
 	adapt->adapt_request = mpt_scsipi_request;
 	adapt->adapt_minphys = mpt_minphys;
 
@@ -939,14 +939,6 @@ mpt_set_xfer_mode(mpt_softc_t *mpt, struct scsipi_xfer_mode *xm)
 {
 	fCONFIG_PAGE_SCSI_DEVICE_1 tmp;
 
-	if (!mpt->is_scsi) {
-		/*
-		 * SCSI transport settings don't make any sense for
-		 * Fibre Channel; silently ignore the request.
-		 */
-		return;
-	}
-
 	/*
 	 * Always allow disconnect; we don't have a way to disable
 	 * it right now, in any case.
@@ -958,64 +950,71 @@ mpt_set_xfer_mode(mpt_softc_t *mpt, struct scsipi_xfer_mode *xm)
 	else
 		mpt->mpt_tag_enable &= ~(1 << xm->xm_target);
 
-	tmp = mpt->mpt_dev_page1[xm->xm_target];
+	if (mpt->is_scsi) {
+		/*
+		 * SCSI transport settings only make any sense for
+		 * SCSI
+		 */
 
-	/*
-	 * Set the wide/narrow parameter for the target.
-	 */
-	if (xm->xm_mode & PERIPH_CAP_WIDE16)
-		tmp.RequestedParameters |= MPI_SCSIDEVPAGE1_RP_WIDE;
-	else
-		tmp.RequestedParameters &= ~MPI_SCSIDEVPAGE1_RP_WIDE;
+		tmp = mpt->mpt_dev_page1[xm->xm_target];
 
-	/*
-	 * Set the synchronous parameters for the target.
-	 *
-	 * XXX If we request sync transfers, we just go ahead and
-	 * XXX request the maximum available.  We need finer control
-	 * XXX in order to implement Domain Validation.
-	 */
-	tmp.RequestedParameters &= ~(MPI_SCSIDEVPAGE1_RP_MIN_SYNC_PERIOD_MASK |
-	    MPI_SCSIDEVPAGE1_RP_MAX_SYNC_OFFSET_MASK |
-	    MPI_SCSIDEVPAGE1_RP_DT | MPI_SCSIDEVPAGE1_RP_QAS |
-	    MPI_SCSIDEVPAGE1_RP_IU);
-	if (xm->xm_mode & PERIPH_CAP_SYNC) {
-		int factor, offset, np;
+		/*
+		 * Set the wide/narrow parameter for the target.
+		 */
+		if (xm->xm_mode & PERIPH_CAP_WIDE16)
+			tmp.RequestedParameters |= MPI_SCSIDEVPAGE1_RP_WIDE;
+		else
+			tmp.RequestedParameters &= ~MPI_SCSIDEVPAGE1_RP_WIDE;
 
-		factor = (mpt->mpt_port_page0.Capabilities >> 8) & 0xff;
-		offset = (mpt->mpt_port_page0.Capabilities >> 16) & 0xff;
-		np = 0;
-		if (factor < 0x9) {
-			/* Ultra320 */
-			np |= MPI_SCSIDEVPAGE1_RP_QAS | MPI_SCSIDEVPAGE1_RP_IU;
+		/*
+		 * Set the synchronous parameters for the target.
+		 *
+		 * XXX If we request sync transfers, we just go ahead and
+		 * XXX request the maximum available.  We need finer control
+		 * XXX in order to implement Domain Validation.
+		 */
+		tmp.RequestedParameters &= ~(MPI_SCSIDEVPAGE1_RP_MIN_SYNC_PERIOD_MASK |
+		    MPI_SCSIDEVPAGE1_RP_MAX_SYNC_OFFSET_MASK |
+		    MPI_SCSIDEVPAGE1_RP_DT | MPI_SCSIDEVPAGE1_RP_QAS |
+		    MPI_SCSIDEVPAGE1_RP_IU);
+		if (xm->xm_mode & PERIPH_CAP_SYNC) {
+			int factor, offset, np;
+
+			factor = (mpt->mpt_port_page0.Capabilities >> 8) & 0xff;
+			offset = (mpt->mpt_port_page0.Capabilities >> 16) & 0xff;
+			np = 0;
+			if (factor < 0x9) {
+				/* Ultra320 */
+				np |= MPI_SCSIDEVPAGE1_RP_QAS | MPI_SCSIDEVPAGE1_RP_IU;
+			}
+			if (factor < 0xa) {
+				/* at least Ultra160 */
+				np |= MPI_SCSIDEVPAGE1_RP_DT;
+			}
+			np |= (factor << 8) | (offset << 16);
+			tmp.RequestedParameters |= np;
 		}
-		if (factor < 0xa) {
-			/* at least Ultra160 */
-			np |= MPI_SCSIDEVPAGE1_RP_DT;
+
+		host2mpt_config_page_scsi_device_1(&tmp);
+		if (mpt_write_cfg_page(mpt, xm->xm_target, &tmp.Header)) {
+			mpt_prt(mpt, "unable to write Device Page 1");
+			return;
 		}
-		np |= (factor << 8) | (offset << 16);
-		tmp.RequestedParameters |= np;
-	}
 
-	host2mpt_config_page_scsi_device_1(&tmp);
-	if (mpt_write_cfg_page(mpt, xm->xm_target, &tmp.Header)) {
-		mpt_prt(mpt, "unable to write Device Page 1");
-		return;
-	}
+		if (mpt_read_cfg_page(mpt, xm->xm_target, &tmp.Header)) {
+			mpt_prt(mpt, "unable to read back Device Page 1");
+			return;
+		}
 
-	if (mpt_read_cfg_page(mpt, xm->xm_target, &tmp.Header)) {
-		mpt_prt(mpt, "unable to read back Device Page 1");
-		return;
-	}
-
-	mpt2host_config_page_scsi_device_1(&tmp);
-	mpt->mpt_dev_page1[xm->xm_target] = tmp;
-	if (mpt->verbose > 1) {
-		mpt_prt(mpt,
-		    "SPI Target %d Page 1: RequestedParameters %x Config %x",
-		    xm->xm_target,
-		    mpt->mpt_dev_page1[xm->xm_target].RequestedParameters,
-		    mpt->mpt_dev_page1[xm->xm_target].Configuration);
+		mpt2host_config_page_scsi_device_1(&tmp);
+		mpt->mpt_dev_page1[xm->xm_target] = tmp;
+		if (mpt->verbose > 1) {
+			mpt_prt(mpt,
+			    "SPI Target %d Page 1: RequestedParameters %x Config %x",
+			    xm->xm_target,
+			    mpt->mpt_dev_page1[xm->xm_target].RequestedParameters,
+			    mpt->mpt_dev_page1[xm->xm_target].Configuration);
+		}
 	}
 
 	/*
@@ -1296,6 +1295,12 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 	case MPI_EVENT_SAS_DEVICE_STATUS_CHANGE:
 	case MPI_EVENT_SAS_DISCOVERY:
 		/* ignore these events for now */
+		break;
+
+	case MPI_EVENT_QUEUE_FULL:
+		/* This can get a little chatty */
+		if (mpt->verbose > 0)
+			mpt_prt(mpt, "Queue Full Event");
 		break;
 
 	default:
