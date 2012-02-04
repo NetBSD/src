@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110 2011/12/30 08:33:49 skrll Exp $
+# $NetBSD: GENERIC,v 1.111 2012/02/04 16:29:14 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.110 $"
+#ident 		"GENERIC-$Revision: 1.111 $"
 
 maxusers	32		# estimated number of users
 
@@ -230,12 +230,6 @@ pdc0	at mainbus0		# PDC/IODC wrapper for boot console
 power0	at mainbus0		# power/fail manager
 lcd0	at mainbus0		# LCD
 
-# STI graphics
-sti*	at mainbus0		# [H]CRX-{8,24,48}[Z] and Visualize graphics
-sti*	at phantomas?		# [H]CRX-{8,24,48}[Z] and Visualize graphics
-#sti*	at uturn?
-sti*	at pci?			# EG-PCI, FX*
-
 # Basic Bus Support
 lasi*	at mainbus0		# LASI host adapter ( LSI PN??? )
 asp*	at mainbus0		# this one comes w/ Viper and leds
@@ -262,7 +256,6 @@ uturn0	at mainbus0		# U2/UTurn Runway IOA
 uturn1	at mainbus0
 lasi*	at uturn?		# LASI on [CJ]*
 dino*	at uturn?		# PCI bus bridge
-#sti*	at uturn?		#
 #wax*	at uturn?		# Wax on C*
 
 #gecko*	at uturn?		# GeckoBOA
@@ -296,6 +289,12 @@ eisa*	at mongoose?
 #vme*	at vmeb?
 
 # Console Devices
+
+# STI graphics
+sti*	at mainbus0		# [H]CRX-{8,24,48}[Z] and Visualize graphics
+sti*	at phantomas?		# [H]CRX-{8,24,48}[Z] and Visualize graphics
+sti*	at uturn?
+sti*	at pci?			# EG-PCI, FX*
 
 # Human Interface Loop
 hil*		at gsc? irq 1	# Human Interface Loop, kbd and mouse
