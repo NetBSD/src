@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.74 2012/01/24 20:03:37 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.75 2012/02/04 17:56:16 para Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -129,7 +129,7 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((280 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * Mach derived conversion macros

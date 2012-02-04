@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 2012/01/24 20:03:36 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.17 2012/02/04 17:56:16 para Exp $	*/
 
 #ifdef __x86_64__
 
@@ -81,11 +81,12 @@
 #endif
 
 /*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * Minimum size of the kernel kmem_arena in PAGE_SIZE-sized
  * logical pages.
+ * No enforced maximum on amd64.
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((1 *1024 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_UNLIMITED 1
 
 /*
  * XXXfvdl the PD* stuff is different from i386.
