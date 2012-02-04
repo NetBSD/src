@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.21 2012/02/03 15:54:15 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.22 2012/02/04 18:36:30 joerg Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -455,12 +455,11 @@ main(int argc, char **argv)
 	case SOCK_DGRAM:
 		new_mount(s, PMNT_DEVFUSE|PMNT_DGRAM);
 		exit(0);
-		break;
 	case SOCK_SEQPACKET:
 		if (listen(s, 0) != 0)
 			DERR(EX_OSERR, "listen failed");
 
-		do {
+		for (;;) {
 			int fd;
 			struct sockaddr_un sun;
 			struct sockaddr *sa;
@@ -471,8 +470,7 @@ main(int argc, char **argv)
 				DERR(EX_OSERR, "accept failed");
 
 			new_mount(fd, PMNT_DEVFUSE);
-		} while (1 /* CONSTCOND */);
-		break;
+		}
 	default:
 		DERRX(EX_SOFTWARE, "unexpected so_type %d", sock_type);
 		break;
@@ -487,7 +485,4 @@ perfused_panic(void)
 {
 	DWARNX("filesystem crashed");
 	exit(EX_OK);
-
-	/* NOTREACHED */
-	return;
 }

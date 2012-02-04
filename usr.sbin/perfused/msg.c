@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.19 2012/02/03 15:54:15 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.20 2012/02/04 18:36:30 joerg Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -489,8 +489,6 @@ perfused_readframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 	switch (readen = recv(fd, data, len, MSG_NOSIGNAL|MSG_PEEK)) {
 	case 0:
 		perfused_panic();
-		/* NOTREACHED */
-		break;
 	case -1:
 		if (errno == EAGAIN)
 			return 0;
@@ -536,16 +534,11 @@ perfused_readframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 	case 0:
 		DWARNX("%s: recv returned 0", __func__);
 		perfused_panic();
-		
-		/* NOTREACHED */
-		break;
 	case -1:
 		if (errno == EAGAIN)
 			return 0;
 		DWARN("%s: recv returned -1", __func__);
 		return errno;
-		/* NOTREACHED */
-		break;
 	default:
 		break;
 	}

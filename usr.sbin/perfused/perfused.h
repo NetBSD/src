@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.h,v 1.9 2012/02/03 15:54:15 manu Exp $ */
+/*  $NetBSD: perfused.h,v 1.10 2012/02/04 18:36:30 joerg Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -66,7 +66,7 @@ perfuse_msg_t *perfused_new_pb(struct puffs_usermount *,
 int perfused_xchg_pb(struct puffs_usermount *, perfuse_msg_t *, size_t, 
     enum perfuse_xchg_pb_reply);
 
-void perfused_panic(void);
+void perfused_panic(void) __dead;
 
 __END_DECLS
 
