@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.4 2012/02/04 14:56:58 he Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.5 2012/02/04 16:31:02 christos Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
@@ -90,8 +90,7 @@ extern	u_int32	addr2refid	(sockaddr_u *);
 #ifndef EREALLOC_CALLSITE	/* ntp_malloc.h defines */
 extern	void *	ereallocz	(void *, size_t, size_t, int);
 #define	erealloczsite(p, n, o, z, f, l) ereallocz(p, n, o, (z))
-#define emalloc(arg)		ntp_emalloc(arg)
-extern	void *	emalloc		(size_t);
+#define	emalloc(n)		ereallocz(NULL, n, 0, FALSE)
 #define	emalloc_zero(c)		ereallocz(NULL, (c), 0, TRUE)
 #define	erealloc(p, c)		ereallocz(p, (c), 0, FALSE)
 #define erealloc_zero(p, n, o)	ereallocz(p, n, (o), TRUE)
