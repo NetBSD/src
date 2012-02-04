@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111_kbc.c,v 1.14 2012/02/02 19:42:58 tls Exp $ */
+/*      $NetBSD: sa1111_kbc.c,v 1.15 2012/02/04 22:20:38 matt Exp $ */
 
 /*
  * Copyright (c) 2004  Ben Harris.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.14 2012/02/02 19:42:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.15 2012/02/04 22:20:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ sackbc_rxint(void *cookie)
 	if (stat & KBDSTAT_RXF) {
 		code = bus_space_read_4(sc->iot, sc->ioh, SACCKBD_DATA);
 
-		rnd_add_uint32(&sc->rnd_source, (stat<<8)|data);
+		rnd_add_uint32(&sc->rnd_source, (stat<<8)|code);
 
 		if (sc->polling) {
 			sc->poll_data = code;
