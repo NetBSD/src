@@ -57,7 +57,7 @@ EOF
 		echo "#undef __HAVE_PROCFS_MACHDEP" >> ${hdr}
 	elif [ "$hdr" = "param.h" ]; then
 		echo "#undef UPAGES" >> ${hdr}
-		echo "#define UPAGES 8" >> ${hdr}
+		echo "#define UPAGES 12" >> ${hdr}
 		echo "#undef USPACE" >> ${hdr}
 		echo "#define USPACE (PAGE_SIZE*UPAGES)" >> ${hdr}
 	fi
