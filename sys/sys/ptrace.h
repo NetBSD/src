@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.40 2008/01/05 12:41:43 dsl Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.40.20.1 2012/02/04 16:57:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -47,6 +47,7 @@
 #define	PT_DUMPCORE	12	/* make the child generate a core dump */
 #define	PT_LWPINFO	13	/* get info about the LWP */
 #define	PT_SYSCALL	14	/* stop on syscall entry/exit */
+#define	PT_SYSCALLEMU	15	/* cancel syscall, tracer will emulate it */
 #define	PT_FIRSTMACH	32	/* for machine-specific requests */
 #include <machine/ptrace.h>	/* machine-specific requests, if any */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.192.4.1 2008/11/17 18:56:05 snj Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.192.4.2 2012/02/04 16:57:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.192.4.1 2008/11/17 18:56:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.192.4.2 2012/02/04 16:57:59 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1306,6 +1306,8 @@ trace_is_enabled(struct proc *p)
 int
 trace_enter(register_t code, const register_t *args, int narg)
 {
+	int error = 0;
+
 #ifdef SYSCALL_DEBUG
 	scdebug_call(code, args);
 #endif /* SYSCALL_DEBUG */
@@ -1314,10 +1316,15 @@ trace_enter(register_t code, const register_t *args, int narg)
 
 #ifdef PTRACE
 	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
-	    (PSL_SYSCALL|PSL_TRACED))
+	    (PSL_SYSCALL|PSL_TRACED)) {
 		process_stoptrace();
+		if (curlwp->l_proc->p_slflag & PSL_SYSCALLEMU) {
+			/* tracer will emulate syscall for us */
+			error = EJUSTRETURN;
+		}
+	}
 #endif
-	return 0;
+	return error;
 }
 
 /*
@@ -1330,6 +1337,10 @@ trace_enter(register_t code, const register_t *args, int narg)
 void
 trace_exit(register_t code, register_t rval[], int error)
 {
+#ifdef PTRACE
+	struct proc *p = curlwp->l_proc;
+#endif
+
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(code, error, rval);
 #endif /* SYSCALL_DEBUG */
@@ -1337,8 +1348,9 @@ trace_exit(register_t code, register_t rval[], int error)
 	ktrsysret(code, error, rval);
 	
 #ifdef PTRACE
-	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
+	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED|PSL_SYSCALLEMU)) ==
 	    (PSL_SYSCALL|PSL_TRACED))
 		process_stoptrace();
+	CLR(p->p_slflag, PSL_SYSCALLEMU);
 #endif
 }
