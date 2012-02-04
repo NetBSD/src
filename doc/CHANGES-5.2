@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.133 2012/01/27 19:31:54 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.134 2012/02/04 16:59:20 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5975,4 +5975,23 @@ crypto/dist/ssh/auth-options.c		patch
 
 	Prevent minor information disclosure in ssh.
 	[drochner, ticket #1717]
+
+sys/arch/amd64/amd64/syscall.c			patch
+sys/arch/i386/i386/syscall.c			patch
+sys/arch/i386/i386/trap.c			patch
+sys/kern/kern_sig.c				patch
+sys/kern/kern_sleepq.c				patch
+sys/kern/kern_subr.c				patch
+sys/kern/sys_process.c				patch
+sys/secmodel/bsd44/secmodel_bsd44_suser.c	patch
+sys/sys/proc.h					patch
+sys/sys/ptrace.h				patch
+
+	Fix PR# kern/43681: ptrace(2) PT_SYSCALL appears to be broken
+	Should also fix
+	  kern/45327: ptrace: siginfo doesn't work with traced processes
+	  kern/40594: gdb does not work on 5.0 RC2
+	  kern/45312: ptrace: PT_SETREGS can't alter system calls
+	  kern/45330: ptrace: signals can alter syscall return values
+	[jmcneill, ticket #1668]
 
