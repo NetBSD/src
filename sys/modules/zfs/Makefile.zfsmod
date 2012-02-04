@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zfsmod,v 1.1 2011/01/18 22:21:22 haad Exp $
+#	$NetBSD: Makefile.zfsmod,v 1.2 2012/02/04 18:28:53 christos Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
@@ -126,5 +126,5 @@ CPPFLAGS+=	-std=c99
 CPPFLAGS+=	-D_NFS_NFS_H_
 CPPFLAGS+=	-D_PROPLIB_ZFS_CONFLICT
 
-CFLAGS+=	-DDIAGNOSTIC -g -O0
+CFLAGS+=	-DDIAGNOSTIC
 # -DZFS_DEBUG
