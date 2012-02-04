@@ -1,9 +1,9 @@
-/*	$NetBSD: cpudevs_data.h,v 1.5 2009/04/30 07:01:26 skrll Exp $	*/
+/*	$NetBSD: cpudevs_data.h,v 1.6 2012/02/04 17:05:38 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	NetBSD: cpudevs,v 1.4 2005/12/11 12:17:24 christos Exp 
+ *	NetBSD: cpudevs,v 1.5 2009/04/30 07:01:26 skrll Exp 
  */
 
 {HPPA_TYPE_BOARD,	HPPA_BOARD_HP840,	"840/930 (Indigo)" },
@@ -203,6 +203,7 @@
 {HPPA_TYPE_BUS,	HPPA_BUS_ROPES,	"Ropes" },
 {HPPA_TYPE_BUS,	HPPA_BUS_MERCED,	"Merced" },
 {HPPA_TYPE_CPU,	HPPA_CPU_SOFTEMU,	"Software Emulation" },
+{HPPA_TYPE_CPU,	HPPA_CPU_PCXT,	"PCXT (Thunderbird)" },
 {HPPA_TYPE_CPU,	HPPA_CPU_PCXT2,	"PCXT' (Thunderbird')" },
 {HPPA_TYPE_CPU,	HPPA_CPU_PCXL,	"PCXL (Hummingbird)" },
 {HPPA_TYPE_CPU,	HPPA_CPU_PCXU,	"PCXU (Onyx)" },
