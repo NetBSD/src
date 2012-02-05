@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 2012/02/05 08:23:11 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.107 2012/02/05 08:24:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2012/02/05 08:23:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2012/02/05 08:24:43 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -410,7 +410,6 @@ const struct hppa_cpu_info cpu_types[] = {
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u, NULL },
 #endif
-	{ "" }
 };
 
 void
@@ -649,7 +648,7 @@ cpuid(void)
 	const struct hppa_cpu_info *p = NULL;
 	const char *model;
 	u_int cpu_version, cpu_features;
-	int error;
+	int error, i;
 
 	/* may the scientific guessing begin */
 	cpu_type = hpc_unknown;
@@ -786,21 +785,25 @@ cpuid(void)
 		pmap_hptsize = 0;
 	}
 
-	if (cpu_version)
-		for (p = cpu_types; p->hci_chip_name; p++) {
+	if (cpu_version) {
+		for (i = 0, p = cpu_types; i < __arraycount(cpu_types);
+		     i++, p++) {
 			if (p->hci_cpuversion == cpu_version)
 				break;
 		}
-	else if (cpu_type != hpc_unknown)
-		for (p = cpu_types; p->hci_chip_name; p++) {
+	} else if (cpu_type != hpc_unknown) {
+		for (i = 0, p = cpu_types; i < __arraycount(cpu_types);
+		     i++, p++) {
 			if (p->hci_cputype == cpu_type)
 				break;
 		}
-	else
-		for (p = cpu_types; p->hci_chip_name; p++) {
+	} else {
+		for (i = 0, p = cpu_types; i < __arraycount(cpu_types);
+		     i++, p++) {
 			if (p->hci_features == cpu_features)
 				break;
 		}
+	}
 
 	hppa_cpu_info = p;
 
