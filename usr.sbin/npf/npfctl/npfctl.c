@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.9 2012/01/15 00:49:48 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.10 2012/02/05 00:37:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.9 2012/01/15 00:49:48 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.10 2012/02/05 00:37:13 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -205,6 +205,31 @@ npfctl_print_stats(int fd)
 
 	free(st);
 	return 0;
+}
+
+void
+npfctl_print_error(const nl_error_t *ne)
+{
+	static const char *ncode_errors[] = {
+		[-NPF_ERR_OPCODE]	= "invalid instruction",
+		[-NPF_ERR_JUMP]		= "invalid jump",
+		[-NPF_ERR_REG]		= "invalid register",
+		[-NPF_ERR_INVAL]	= "invalid argument value",
+		[-NPF_ERR_RANGE]	= "processing out of range"
+	};
+	const int nc_err = ne->ne_ncode_error;
+	const char *srcfile = ne->ne_source_file;
+
+	if (srcfile) {
+		warnx("source %s line %d", srcfile, ne->ne_source_line);
+	}
+	if (nc_err) {
+		warnx("n-code error (%d): %s at offset 0x%x",
+		    nc_err, ncode_errors[-nc_err], ne->ne_ncode_errat);
+	}
+	if (ne->ne_id) {
+		warnx("object: %d", ne->ne_id);
+	}
 }
 
 static void
