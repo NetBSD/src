@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.144 2012/01/10 20:05:37 drochner Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.145 2012/02/05 00:41:15 rmind Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.144 2012/01/10 20:05:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.145 2012/02/05 00:41:15 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -677,7 +677,10 @@ skip_ipsec2:;
 		 * If in6_selectroute() does not return a route entry,
 		 * dst may not have been updated.
 		 */
-		rtcache_setdst(ro, sin6tosa(&dst_sa));
+		error = rtcache_setdst(ro, sin6tosa(&dst_sa));
+		if (error) {
+			goto bad;
+		}
 	}
 
 	/*
