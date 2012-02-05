@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.12 2012/01/15 00:49:48 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.13 2012/02/05 00:37:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #include "testing.h"
 #endif
 
-#define	NPF_VERSION		3
+#define	NPF_VERSION		4
 
 /*
  * Public declarations and definitions.
@@ -309,11 +309,11 @@ typedef enum {
 
 #define	IOC_NPF_VERSION		_IOR('N', 100, int)
 #define	IOC_NPF_SWITCH		_IOW('N', 101, int)
-#define	IOC_NPF_RELOAD		_IOW('N', 102, struct plistref)
+#define	IOC_NPF_RELOAD		_IOWR('N', 102, struct plistref)
 #define	IOC_NPF_TABLE		_IOW('N', 103, struct npf_ioctl_table)
 #define	IOC_NPF_STATS		_IOW('N', 104, void *)
 #define	IOC_NPF_SESSIONS_SAVE	_IOR('N', 105, struct plistref)
 #define	IOC_NPF_SESSIONS_LOAD	_IOW('N', 106, struct plistref)
-#define	IOC_NPF_UPDATE_RULE	_IOW('N', 107, struct plistref)
+#define	IOC_NPF_UPDATE_RULE	_IOWR('N', 107, struct plistref)
 
 #endif	/* _NPF_NET_H_ */

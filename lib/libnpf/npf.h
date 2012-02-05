@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.5 2012/01/15 00:49:47 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.6 2012/02/05 00:37:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -53,6 +53,18 @@ typedef struct nl_table		nl_table_t;
 
 typedef struct nl_rule		nl_nat_t;
 
+#ifdef _NPF_PRIVATE
+
+typedef struct {
+	int		ne_id;
+	char *		ne_source_file;
+	u_int		ne_source_line;
+	int		ne_ncode_error;
+	int		ne_ncode_errat;
+} nl_error_t;
+
+#endif
+
 #define	NPF_CODE_NCODE		1
 #define	NPF_CODE_BPF		2
 
@@ -65,6 +77,7 @@ int		npf_config_submit(nl_config_t *, int);
 void		npf_config_destroy(nl_config_t *);
 int		npf_config_flush(int);
 #ifdef _NPF_PRIVATE
+void		_npf_config_error(nl_config_t *, nl_error_t *);
 void		_npf_config_setsubmit(nl_config_t *, const char *);
 #endif
 

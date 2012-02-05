@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.2 2012/01/15 00:49:48 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.3 2012/02/05 00:37:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.2 2012/01/15 00:49:48 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.3 2012/02/05 00:37:13 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -75,6 +75,11 @@ npfctl_config_send(int fd)
 		errx(EXIT_FAILURE, "default group was not defined");
 	}
 	error = npf_config_submit(npf_conf, fd);
+	if (error) {
+		nl_error_t ne;
+		_npf_config_error(npf_conf, &ne);
+		npfctl_print_error(&ne);
+	}
 	npf_config_destroy(npf_conf);
 	return error;
 }
