@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.113.4.1 2009/04/03 17:59:03 snj Exp $	*/
+/*	$NetBSD: route.c,v 1.113.4.1.2.1 2012/02/05 12:35:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.113.4.1 2009/04/03 17:59:03 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.113.4.1.2.1 2012/02/05 12:35:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -847,8 +847,8 @@ rt_maskedcopy(const struct sockaddr *src, struct sockaddr *dst,
 	const char *netmaskp = &netmask->sa_data[0],
 	           *srcp = &src->sa_data[0];
 	char *dstp = &dst->sa_data[0];
-	const char *maskend = dstp + MIN(netmask->sa_len, src->sa_len);
-	const char *srcend = dstp + src->sa_len;
+	const char *maskend = (char *)dst + MIN(netmask->sa_len, src->sa_len);
+	const char *srcend = (char *)dst + src->sa_len;
 
 	dst->sa_len = src->sa_len;
 	dst->sa_family = src->sa_family;
