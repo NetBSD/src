@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_kmguard.c,v 1.7 2012/01/28 00:00:06 rmind Exp $	*/
+/*	$NetBSD: uvm_kmguard.c,v 1.8 2012/02/05 03:40:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
  * - Invalid pointer/size passed, at free
  * - Use-after-free
  */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.7 2012/01/28 00:00:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.8 2012/02/05 03:40:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.7 2012/01/28 00:00:06 rmind Exp $"
 #define	MAXSIZE			(PAGE_SIZE - sizeof(void *))
 
 void
-uvm_kmguard_init(struct uvm_kmguard *kg, u_int *depth, size_t *size,
-		 struct vm_map *map)
+uvm_kmguard_init(struct uvm_kmguard *kg, u_int *depth, size_t *size, vmem_t *vm)
 {
 	vaddr_t va;
 
@@ -67,7 +67,7 @@ uvm_kmguard_init(struct uvm_kmguard *kg, u_int *depth, size_t *size,
 	*depth = roundup((*depth), PAGE_SIZE / sizeof(void *));
 	KASSERT(*depth != 0);
 
-	/*	
+	/*
 	 * allocate fifo.
 	 */
 
@@ -84,7 +84,7 @@ uvm_kmguard_init(struct uvm_kmguard *kg, u_int *depth, size_t *size,
 	 * init object.
 	 */
 
-	kg->kg_map = map;
+	kg->kg_vmem = vm;
 	kg->kg_fifo = (void *)va;
 	kg->kg_depth = *depth;
 	kg->kg_rotor = 0;
@@ -96,9 +96,9 @@ void *
 uvm_kmguard_alloc(struct uvm_kmguard *kg, size_t len, bool waitok)
 {
 	struct vm_page *pg;
+	vm_flag_t flags;
 	void **p;
 	vaddr_t va;
-	int flag;
 
 	/*
 	 * can't handle >PAGE_SIZE allocations.  let the caller handle it
@@ -113,15 +113,8 @@ uvm_kmguard_alloc(struct uvm_kmguard *kg, size_t len, bool waitok)
 	 * allocate two pages of kernel VA, but do not map anything in yet.
 	 */
 
-	if (waitok) {
-		flag = UVM_KMF_WAITVA;
-	} else {
-		flag = UVM_KMF_TRYLOCK | UVM_KMF_NOWAIT;
-	}
-	va = vm_map_min(kg->kg_map);
-	if (__predict_false(uvm_map(kg->kg_map, &va, PAGE_SIZE*2, NULL,
-	    UVM_UNKNOWN_OFFSET, PAGE_SIZE, UVM_MAPFLAG(UVM_PROT_ALL,
-	    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, flag)) != 0)) {
+	flags = VM_BESTFIT | (waitok ? VM_SLEEP : VM_NOSLEEP);
+	if (vmem_alloc(kg->kg_vmem, PAGE_SIZE * 2, flags, &va) != 0) {
 		return NULL;
 	}
 
@@ -131,7 +124,7 @@ uvm_kmguard_alloc(struct uvm_kmguard *kg, size_t len, bool waitok)
 	 */
 
 	for (;;) {
-		pg = uvm_pagealloc(NULL, va - vm_map_min(kg->kg_map), NULL, 0);
+		pg = uvm_pagealloc(NULL, va, NULL, 0);
 		if (__predict_true(pg != NULL)) {
 			break;
 		}
@@ -139,8 +132,7 @@ uvm_kmguard_alloc(struct uvm_kmguard *kg, size_t len, bool waitok)
 			uvm_wait("kmguard");	/* sleep here */
 			continue;
 		} else {
-			uvm_km_free(kg->kg_map, va, PAGE_SIZE*2,
-			    UVM_KMF_VAONLY);
+			vmem_free(kg->kg_vmem, va, PAGE_SIZE * 2);
 			return NULL;
 		}
 	}
@@ -157,7 +149,7 @@ uvm_kmguard_alloc(struct uvm_kmguard *kg, size_t len, bool waitok)
 
 	p = (void **)((va + PAGE_SIZE - len) & ~(uintptr_t)ALIGNBYTES);
 	p[-1] = CANARY(va, len);
-	return (void *)p; 
+	return (void *)p;
 }
 
 bool
@@ -187,7 +179,7 @@ uvm_kmguard_free(struct uvm_kmguard *kg, size_t len, void *p)
 	 * allocated .
 	 */
 
-	uvm_km_pgremove_intrsafe(kg->kg_map, va, va + PAGE_SIZE * 2);
+	uvm_km_pgremove_intrsafe(kernel_map, va, va + PAGE_SIZE * 2);
 	pmap_kremove(va, PAGE_SIZE * 2);
 	pmap_update(pmap_kernel());
 
@@ -199,7 +191,7 @@ uvm_kmguard_free(struct uvm_kmguard *kg, size_t len, void *p)
 	rotor = atomic_inc_uint_nv(&kg->kg_rotor) % kg->kg_depth;
 	va = (vaddr_t)atomic_swap_ptr(&kg->kg_fifo[rotor], (void *)va);
 	if (va != 0) {
-		uvm_km_free(kg->kg_map, va, PAGE_SIZE*2, UVM_KMF_VAONLY);
+		vmem_free(kg->kg_vmem, va, PAGE_SIZE * 2);
 	}
 
 	return true;
