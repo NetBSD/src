@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_kmguard.c,v 1.8 2012/02/05 03:40:07 rmind Exp $	*/
+/*	$NetBSD: uvm_kmguard.c,v 1.9 2012/02/05 11:08:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.8 2012/02/05 03:40:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.9 2012/02/05 11:08:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,8 @@ uvm_kmguard_alloc(struct uvm_kmguard *kg, size_t len, bool waitok)
 {
 	struct vm_page *pg;
 	vm_flag_t flags;
+	vmem_addr_t va;
 	void **p;
-	vaddr_t va;
 
 	/*
 	 * can't handle >PAGE_SIZE allocations.  let the caller handle it
