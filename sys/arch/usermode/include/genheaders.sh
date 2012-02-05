@@ -60,6 +60,9 @@ EOF
 		echo "#define UPAGES 12" >> ${hdr}
 		echo "#undef USPACE" >> ${hdr}
 		echo "#define USPACE (PAGE_SIZE*UPAGES)" >> ${hdr}
+		echo "" >> ${hdr}
+		echo "#undef NKMEMPAGES_MAX_UNLIMITED" >> ${hdr}
+		echo "#include \"opt_kmempages.h\"" >> ${hdr}
 	fi
 
 	echo >>${hdr}
