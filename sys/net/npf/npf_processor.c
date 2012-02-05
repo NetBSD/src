@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.8 2012/01/15 00:49:49 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.9 2012/02/05 00:37:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.8 2012/01/15 00:49:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.9 2012/02/05 00:37:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -452,7 +452,7 @@ jmp_check:
 		error = nc_ptr_check(&iptr, nc, sz, 3, NULL, 0);
 		break;
 	case NPF_OPCODE_IP4MASK:
-		error = nc_ptr_check(&iptr, nc, sz, 3, &val, 1);
+		error = nc_ptr_check(&iptr, nc, sz, 3, &val, 3);
 		if (error) {
 			return error;
 		}
@@ -461,7 +461,7 @@ jmp_check:
 		}
 		break;
 	case NPF_OPCODE_IP6MASK:
-		error = nc_ptr_check(&iptr, nc, sz, 6, &val, 1);
+		error = nc_ptr_check(&iptr, nc, sz, 6, &val, 6);
 		if (error) {
 			return error;
 		}
@@ -507,12 +507,13 @@ static inline int
 nc_jmp_check(const void *nc, size_t sz, const uintptr_t jaddr)
 {
 	uintptr_t iaddr = (uintptr_t)nc;
-	size_t _jmp, adv;
-	bool _ret;
 	int error;
 
 	KASSERT(iaddr != jaddr);
 	do {
+		size_t _jmp, adv;
+		bool _ret;
+
 		error = nc_insn_check(iaddr, nc, sz, &adv, &_jmp, &_ret);
 		if (error) {
 			break;

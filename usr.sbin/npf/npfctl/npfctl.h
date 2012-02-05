@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.10 2012/01/15 00:49:48 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.11 2012/02/05 00:37:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ void *		xrealloc(void *, size_t);
 char *		xstrdup(const char *);
 char *		xstrndup(const char *, size_t);
 
+void		npfctl_print_error(const nl_error_t *);
 bool		npfctl_table_exists_p(const char *);
 in_port_t	npfctl_portno(const char *);
 uint8_t		npfctl_icmpcode(uint8_t, const char *);
