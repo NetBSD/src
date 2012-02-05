@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.41 2012/01/30 21:05:40 rmind Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.42 2012/02/05 03:40:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.41 2012/01/30 21:05:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.42 2012/02/05 03:40:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -170,8 +170,7 @@ kmem_intr_alloc(size_t size, km_flag_t kmflags)
 	KASSERT(size > 0);
 
 #ifdef KMEM_GUARD
-	if (size <= kmem_guard_size &&
-	    __builtin_return_address(0) == &kmem_alloc) {
+	if (size <= kmem_guard_size) {
 		return uvm_kmguard_alloc(&kmem_guard, size,
 		    (kmflags & KM_SLEEP) != 0);
 	}
@@ -220,8 +219,7 @@ kmem_intr_free(void *p, size_t size)
 	KASSERT(size > 0);
 
 #ifdef KMEM_GUARD
-	if (size <= kmem_guard_size &&
-	    __builtin_return_address(0) == &kmem_free) {
+	if (size <= kmem_guard_size) {
 		uvm_kmguard_free(&kmem_guard, size, p);
 		return;
 	}
@@ -344,7 +342,7 @@ kmem_init(void)
 
 #ifdef KMEM_GUARD
 	uvm_kmguard_init(&kmem_guard, &kmem_guard_depth, &kmem_guard_size,
-		kernel_map);
+	    kmem_va_arena);
 #endif
 	kmem_create_caches(kmem_cache_sizes, kmem_cache, KMEM_MAXSIZE);
 }
