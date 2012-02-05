@@ -1,4 +1,4 @@
-#	$NetBSD: devlist2h.awk,v 1.5 2009/04/30 07:01:26 skrll Exp $
+#	$NetBSD: devlist2h.awk,v 1.6 2012/02/05 08:31:53 skrll Exp $
 
 #	$OpenBSD: devlist2h.awk,v 1.6 2004/04/07 18:24:19 mickey Exp $
 
@@ -122,7 +122,6 @@ END	{
 		print("unterminated comment at the EOF\n");
 		exit(1);
 	}
-	printf("{ -1 }\n") > cpud;
 	close(cpud)
 	close(cpuh)
 }
