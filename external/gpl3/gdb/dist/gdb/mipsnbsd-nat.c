@@ -86,7 +86,7 @@ mipsnbsd_store_inferior_registers (struct target_ops *ops,
       mipsnbsd_fill_reg (regcache, (char *) &regs, regno);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid), 
-		  (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid).) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't write registers"));
 
       if (regno != -1)
