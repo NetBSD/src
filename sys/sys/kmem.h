@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.h,v 1.8 2012/01/28 23:09:07 rmind Exp $	*/
+/*	$NetBSD: kmem.h,v 1.9 2012/02/05 03:40:08 rmind Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -42,7 +42,7 @@ void	kmem_free(void *, size_t);
 
 void *	kmem_intr_alloc(size_t, km_flag_t);
 void *	kmem_intr_zalloc(size_t, km_flag_t);
-void	kmem_intr_free(void *, size_t size);
+void	kmem_intr_free(void *, size_t);
 
 char *	kmem_asprintf(const char *, ...) __printflike(1, 2);
 
