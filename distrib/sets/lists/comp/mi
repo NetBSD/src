@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1729 2012/02/01 05:34:38 dholland Exp $
+#	$NetBSD: mi,v 1.1730 2012/02/05 14:19:05 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2215,8 +2215,8 @@
 ./usr/include/puffsdump.h			comp-puffs-include
 ./usr/include/pwd.h				comp-c-include
 ./usr/include/quota.h				comp-c-include
-./usr/include/quota/quota.h			comp-c-include
-./usr/include/quota/quotaprop.h			comp-c-include
+./usr/include/quota/quota.h			comp-obsolete		obsolete
+./usr/include/quota/quotaprop.h			comp-obsolete		obsolete
 ./usr/include/radlib.h				comp-c-include
 ./usr/include/radlib_vs.h			comp-c-include
 ./usr/include/randomid.h			comp-c-include
