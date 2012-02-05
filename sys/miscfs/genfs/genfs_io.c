@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.10 2012/01/25 00:40:08 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.11 2012/02/05 05:01:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.10 2012/01/25 00:40:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.11 2012/02/05 05:01:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -854,9 +854,10 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	off_t nextoff;
 	/* Even for strange MAXPHYS, the shift rounds down to a page */
 #define maxpages (MAXPHYS >> PAGE_SHIFT)
-	int i, error;
+	unsigned int i;
 	unsigned int npages, nback;
-	int freeflag;
+	unsigned int freeflag;
+	int error;
 	struct vm_page *pgs[maxpages], *pg;
 	struct uvm_page_array a;
 	bool wasclean, needs_clean, yld;
@@ -1040,7 +1041,7 @@ retry:
 
 		/*
 		 * if we're freeing, remove all mappings of the page now.
-		 * if we're cleaning, check if the page is needs to be cleaned.
+		 * if we're cleaning, check if the page needs to be cleaned.
 		 */
 
 		protected = false;
@@ -1181,6 +1182,10 @@ retry:
 			struct vm_page *tpg = pgs[i];
 
 			KASSERT(tpg->uobject == uobj);
+			KASSERT(i == 0 ||
+			    pgs[i-1]->offset + PAGE_SIZE == tpg->offset);
+			KASSERT(!needs_clean || uvm_pagegetdirty(pgs[i]) !=
+			    UVM_PAGE_STATUS_DIRTY);
 			if (tpg->offset < startoff || tpg->offset >= endoff)
 				continue;
 			if (flags & PGO_DEACTIVATE && tpg->wire_count == 0) {
@@ -1218,6 +1223,7 @@ retry:
 		if (needs_clean) {
 			mutex_exit(slock);
 			KASSERT(nextoff == pg->offset + PAGE_SIZE);
+			KASSERT(nback < npages);
 			nextoff = pg->offset + ((npages - nback) << PAGE_SHIFT);
 			KASSERT(pgs[nback] == pg);
 			KASSERT(nextoff == pgs[npages - 1]->offset + PAGE_SIZE);
