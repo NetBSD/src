@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.60 2012/01/27 19:32:31 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.61 2012/02/05 12:45:54 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2922,4 +2922,22 @@ crypto/dist/ssh/auth-options.c		patch
 
 	Prevent minor information disclosure in ssh.
 	[drochner, ticket #1717]
+
+sys/kern/kern_fork.c				1.184 via patch
+
+	fork1: fix stop-on-fork case, lend a correct lock to LWP for
+	LSSTOP state.
+	Fixes PR/44935.
+	[rmind, ticket #1628]
+
+sys/kern/vfs_bio.c				1.233
+
+	sysctl_dobuf: re-acquire the sysctl lock on retry path.  PR/45827.
+	[rmind, ticket #1718]
+
+sys/net/route.c					1.126
+
+	Count length from the beginning of the structure not the sa_data
+	portion.
+	[christos, ticket #1721]
 
