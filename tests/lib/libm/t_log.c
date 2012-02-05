@@ -1,4 +1,4 @@
-/* $NetBSD: t_log.c,v 1.5 2011/09/18 04:49:11 jruoho Exp $ */
+/* $NetBSD: t_log.c,v 1.6 2012/02/05 17:52:55 matt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_log.c,v 1.5 2011/09/18 04:49:11 jruoho Exp $");
+__RCSID("$NetBSD: t_log.c,v 1.6 2012/02/05 17:52:55 matt Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
@@ -684,7 +684,7 @@ ATF_TC_HEAD(log_base, tc)
 
 ATF_TC_BODY(log_base, tc)
 {
-	const double eps = 1.0e-40;
+	const double eps = 1.0e-38;
 
 	if (fabs(log(M_E) - 1.0) > eps)
 		atf_tc_fail_nonfatal("log(e) != 1");
