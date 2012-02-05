@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81.2.14 2012/02/05 04:58:29 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.15 2012/02/05 04:59:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.14 2012/02/05 04:58:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.15 2012/02/05 04:59:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1620,7 +1620,7 @@ retry:
 		if (anon->an_lock == NULL) {
 			anon->an_lock = amap->am_lock;
 		}
-		amap_add(&entry->aref, aoff + pgoff, anon, FALSE);
+		amap_add(&entry->aref, aoff + pgoff, anon, false);
 	}
 
 	/*
