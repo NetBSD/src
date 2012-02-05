@@ -1097,14 +1097,14 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	      || GET_CODE (XEXP (operands[0], 0)) == PRE_DEC
 	      || GET_CODE (XEXP (operands[0], 0)) == POST_INC
 	      || !illegal_addsub_di_memory_operand (operands[0], DImode))
-	  && ((GET_CODE (operands[1]) == CONST_INT
+	  && ((CONST_INT_P (operands[1])
 	       && (unsigned HOST_WIDE_INT) INTVAL (operands[1]) >= 64)
 	      || GET_CODE (operands[1]) == CONST_DOUBLE))
 	{
 	  hi[0] = operands[0];
 	  hi[1] = operands[1];
 
-	  split_quadword_operands(insn, SET, hi, lo, 2);
+	  split_quadword_operands (insn, SET, hi, lo, 2);
 
 	  pattern_lo = vax_output_int_move (NULL, lo, SImode);
 	  pattern_hi = vax_output_int_move (NULL, hi, SImode);
@@ -1549,12 +1549,12 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
       rtx b = XEXP (base, 1);
       if (GET_CODE (b) == CONST)
 	b = XEXP (b, 0);
-      if (GET_CODE (b) == CONST_INT)
+      if (CONST_INT_P (b))
 	{
           off += INTVAL (b);
           base = a;
 	}
-      else if (GET_CODE (a) == REG && GET_CODE (b) == SYMBOL_REF)
+      else if (REG_P (a) && GET_CODE (b) == SYMBOL_REF)
 	{
 	  if (off != 0)
 	    {
@@ -1562,7 +1562,7 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
 	      off = 0;
 	    }
 	}
-      else if (GET_CODE (a) == REG && GET_CODE (b) == PLUS)
+      else if (REG_P (a) && GET_CODE (b) == PLUS)
 	{
           off += INTVAL (XEXP (b, 1));
 	  base = gen_rtx_PLUS (Pmode, a, plus_constant(XEXP (b, 0), off));
@@ -1570,8 +1570,8 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
 	}
       else
         {
-	  print_rtl(stderr, base); fprintf(stderr, "\n");
-	  gcc_assert(0);
+	  debug_rtx(base);
+	  gcc_unreachable ();
 	}
     }
   if (code == POST_INC)
