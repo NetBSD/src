@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.11 2012/02/05 05:01:26 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.12 2012/02/05 08:23:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.11 2012/02/05 05:01:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.12 2012/02/05 08:23:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1333,8 +1333,17 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	return error;
 }
 
+/*
+ * genfs_gop_write_rwmap:
+ *
+ * a variant of genfs_gop_write.  it's used by UDF for its directory buffers.
+ * this maps pages with PROT_WRITE so that VOP_STRATEGY can modifies
+ * the contents before writing it out to the underlying storage.
+ */
+
 int
-genfs_gop_write_rwmap(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
+genfs_gop_write_rwmap(struct vnode *vp, struct vm_page **pgs, int npages,
+    int flags)
 {
 	off_t off;
 	vaddr_t kva;
