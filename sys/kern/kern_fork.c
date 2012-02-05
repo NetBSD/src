@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.171.4.1 2011/06/18 16:35:51 bouyer Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.171.4.2 2012/02/05 12:28:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.171.4.1 2011/06/18 16:35:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.171.4.2 2012/02/05 12:28:08 bouyer Exp $");
 
 #include "opt_ktrace.h"
 
@@ -509,13 +509,15 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_acflag = AFORK;
 	lwp_lock(l2);
 	if (p2->p_sflag & PS_STOPFORK) {
+		struct schedstate_percpu *spc = &l2->l_cpu->ci_schedstate;
 		p2->p_nrlwps = 0;
 		p2->p_stat = SSTOP;
 		p2->p_waited = 0;
 		p1->p_nstopchild++;
 		l2->l_stat = LSSTOP;
 		l2->l_flag |= tmp;
-		lwp_unlock(l2);
+		KASSERT(l2->l_wchan == NULL);
+		lwp_unlock_to(l2, spc->spc_lwplock);
 	} else {
 		p2->p_nrlwps = 1;
 		p2->p_stat = SACTIVE;
@@ -524,7 +526,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		sched_enqueue(l2, false);
 		lwp_unlock(l2);
 	}
-
 	mutex_exit(p2->p_lock);
 
 	/*
