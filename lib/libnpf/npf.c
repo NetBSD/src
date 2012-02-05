@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.6 2012/01/15 00:49:47 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.7 2012/02/05 00:37:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.6 2012/01/15 00:49:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7 2012/02/05 00:37:13 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.6 2012/01/15 00:49:47 rmind Exp $");
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include <errno.h>
 #include <err.h>
 
@@ -54,6 +55,8 @@ struct nl_config {
 	/* Priority counters. */
 	pri_t			ncf_rule_pri;
 	pri_t			ncf_nat_pri;
+	/* Error report. */
+	prop_dictionary_t	ncf_err;
 	/* Custom file to externalise property-list. */
 	const char *		ncf_plist;
 	bool			ncf_flush;
@@ -80,7 +83,7 @@ npf_config_create(void)
 {
 	nl_config_t *ncf;
 
-	ncf = malloc(sizeof(*ncf));
+	ncf = calloc(1, sizeof(*ncf));
 	if (ncf == NULL) {
 		return NULL;
 	}
@@ -101,8 +104,8 @@ npf_config_create(void)
 int
 npf_config_submit(nl_config_t *ncf, int fd)
 {
-	prop_dictionary_t npf_dict;
 	const char *plist = ncf->ncf_plist;
+	prop_dictionary_t npf_dict;
 	int error = 0;
 
 	npf_dict = prop_dictionary_create();
@@ -119,9 +122,19 @@ npf_config_submit(nl_config_t *ncf, int fd)
 		if (!prop_dictionary_externalize_to_file(npf_dict, plist)) {
 			error = errno;
 		}
-	} else {
-		error = prop_dictionary_send_ioctl(npf_dict, fd, IOC_NPF_RELOAD);
+		prop_object_release(npf_dict);
+		return error;
 	}
+
+	error = prop_dictionary_sendrecv_ioctl(npf_dict, fd,
+	    IOC_NPF_RELOAD, &ncf->ncf_err);
+	if (error) {
+		prop_object_release(npf_dict);
+		assert(ncf->ncf_err == NULL);
+		return error;
+	}
+
+	prop_dictionary_get_int32(ncf->ncf_err, "errno", &error);
 	prop_object_release(npf_dict);
 	return error;
 }
@@ -143,6 +156,21 @@ npf_config_flush(int fd)
 }
 
 void
+_npf_config_error(nl_config_t *ncf, nl_error_t *ne)
+{
+	memset(ne, 0, sizeof(*ne));
+	prop_dictionary_get_int32(ncf->ncf_err, "id", &ne->ne_id);
+	prop_dictionary_get_cstring(ncf->ncf_err,
+	    "source-file", &ne->ne_source_file);
+	prop_dictionary_get_uint32(ncf->ncf_err,
+	    "source-line", &ne->ne_source_line);
+	prop_dictionary_get_int32(ncf->ncf_err,
+	    "ncode-error", &ne->ne_ncode_error);
+	prop_dictionary_get_int32(ncf->ncf_err,
+	    "ncode-errat", &ne->ne_ncode_errat);
+}
+
+void
 npf_config_destroy(nl_config_t *ncf)
 {
 
@@ -150,6 +178,9 @@ npf_config_destroy(nl_config_t *ncf)
 	prop_object_release(ncf->ncf_rproc_list);
 	prop_object_release(ncf->ncf_table_list);
 	prop_object_release(ncf->ncf_nat_list);
+	if (ncf->ncf_err) {
+		prop_object_release(ncf->ncf_err);
+	}
 	free(ncf);
 }
 
@@ -531,10 +562,14 @@ npf_table_destroy(nl_table_t *tl)
 int
 npf_update_rule(int fd, const char *rname __unused, nl_rule_t *rl)
 {
-	prop_dictionary_t rldict = rl->nrl_dict;
+	prop_dictionary_t rldict = rl->nrl_dict, errdict = NULL;
 	int error;
 
-	error = prop_dictionary_send_ioctl(rldict, fd, IOC_NPF_UPDATE_RULE);
+	error = prop_dictionary_sendrecv_ioctl(rldict, fd,
+	    IOC_NPF_UPDATE_RULE, &errdict);
+	if (errdict) {
+		prop_object_release(errdict);
+	}
 	return error;
 }
 
