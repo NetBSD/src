@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 2012/01/13 07:05:57 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44 2012/02/05 08:31:53 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43 2012/01/13 07:05:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44 2012/02/05 08:31:53 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -649,15 +649,21 @@ hppa_mod_info(int type, int sv)
 {
 	const struct hppa_mod_info *mi;
 	static char fakeid[32];
+	int i;
 
-	for (mi = hppa_knownmods; mi->mi_type >= 0 &&
-	     (mi->mi_type != type || mi->mi_sv != sv); mi++);
+	for (i = 0, mi = hppa_knownmods; i < __arraycount(hppa_knownmods);
+	    i++, mi++) {
+		if (mi->mi_type == type && mi->mi_sv == sv) {
+			break;
+		}
+	}
 
-	if (mi->mi_type < 0) {
+	if (i == __arraycount(hppa_knownmods)) {
 		sprintf(fakeid, "type %x, sv %x", type, sv);
 		return fakeid;
-	} else
-		return mi->mi_name;
+	}
+
+	return mi->mi_name;
 }
 
 /*

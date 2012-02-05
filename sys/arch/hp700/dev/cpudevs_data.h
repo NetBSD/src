@@ -1,4 +1,4 @@
-/*	$NetBSD: cpudevs_data.h,v 1.6 2012/02/04 17:05:38 skrll Exp $	*/
+/*	$NetBSD: cpudevs_data.h,v 1.7 2012/02/05 08:31:53 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
@@ -354,4 +354,3 @@
 {HPPA_TYPE_FABRIC,	HPPA_FABRIC_DNACA,	"Halfdome DNA Central Agent" },
 {HPPA_TYPE_FABRIC,	HPPA_FABRIC_TOGO,	"Halfdome TOGO Fabric Crossbar" },
 {HPPA_TYPE_FABRIC,	HPPA_FABRIC_SAKURA,	"Halfdome Sakura Fabric Router" },
-{ -1 }
