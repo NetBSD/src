@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.41 2012/02/01 17:48:10 dholland Exp $	*/
+/*	$NetBSD: repquota.c,v 1.42 2012/02/05 14:14:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.41 2012/02/01 17:48:10 dholland Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.42 2012/02/05 14:14:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,6 @@ __RCSID("$NetBSD: repquota.c,v 1.41 2012/02/01 17:48:10 dholland Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include <quota/quota.h>
 #include <quota.h>
 
 #include "printquota.h"
