@@ -42,10 +42,11 @@
 #include "observer.h"
 
 #include <machine/reg.h>
-#ifndef __sh3__
-#define HAVE_FPREGS
-#else
+#ifdef __sh3__
 struct fpreg { };
+#elif defined(__vax__)
+#else
+#define HAVE_FPREGS
 #endif
 
 #ifndef HAVE_GREGSET_T
