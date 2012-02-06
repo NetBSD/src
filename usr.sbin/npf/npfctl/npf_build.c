@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.3 2012/02/05 00:37:13 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.4 2012/02/06 00:37:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.3 2012/02/05 00:37:13 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.4 2012/02/06 00:37:52 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -299,19 +299,85 @@ npfctl_build_ncode(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	return true;
 }
 
+static void
+npfctl_build_rpcall(nl_rproc_t *rp, const char *name, npfvar_t *args)
+{
+	/*
+	 * XXX/TODO: Hardcoded for the first release.  However,
+	 * rule procedures will become fully dynamic modules.
+	 */
+
+	bool log = false, norm = false;
+	bool rnd = false, no_df = false;
+	int minttl = 0, maxmss = 0;
+
+	if (strcmp(name, "log") == 0) {
+		log = true;
+	} else if (strcmp(name, "normalise") == 0) {
+		norm = true;
+	} else {
+		yyerror("unknown rule procedure '%s'", name);
+	}
+
+	for (size_t i = 0; i < npfvar_get_count(args); i++) {
+		module_arg_t *arg;
+		const char *aval;
+
+		arg = npfvar_get_data(args, NPFVAR_MODULE_ARG, i);
+		aval = arg->ma_name;
+
+		if (log) {
+			u_int if_idx = npfctl_find_ifindex(aval);
+			if (!if_idx) {
+				yyerror("unknown interface '%s'", aval);
+			}
+			_npf_rproc_setlog(rp, if_idx);
+			return;
+		}
+
+		const int type = npfvar_get_type(arg->ma_opts);
+		if (type != -1 && type != NPFVAR_NUM) {
+			yyerror("option '%s' is not numeric", aval);
+		}
+		unsigned long *opt;
+
+		if (strcmp(aval, "random-id") == 0) {
+			rnd = true;
+		} else if (strcmp(aval, "min-ttl") == 0) {
+			opt = npfvar_get_data(arg->ma_opts, NPFVAR_NUM, 0);
+			minttl = *opt;
+		} else if (strcmp(aval, "max-mss") == 0) {
+			opt = npfvar_get_data(arg->ma_opts, NPFVAR_NUM, 0);
+			maxmss = *opt;
+		} else if (strcmp(aval, "no-df") == 0) {
+			no_df = true;
+		} else {
+			yyerror("unknown argument '%s'", aval);
+		}
+	}
+	assert(norm == true);
+	_npf_rproc_setnorm(rp, rnd, no_df, minttl, maxmss);
+}
+
 /*
  * npfctl_build_rproc: create and insert a rule procedure.
  */
 void
-npfctl_build_rproc(const char *name, npfvar_t *var)
+npfctl_build_rproc(const char *name, npfvar_t *procs)
 {
 	nl_rproc_t *rp;
+	size_t i;
 
 	rp = npf_rproc_create(name);
 	if (rp == NULL) {
 		errx(EXIT_FAILURE, "npf_rproc_create failed");
 	}
 	npf_rproc_insert(npf_conf, rp);
+
+	for (i = 0; i < npfvar_get_count(procs); i++) {
+		proc_op_t *po = npfvar_get_data(procs, NPFVAR_PROC_OP, i);
+		npfctl_build_rpcall(rp, po->po_name, po->po_opts);
+	}
 }
 
 /*
