@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.6 2012/02/03 15:42:46 christos Exp $	*/
+/*	$NetBSD: tpm.c,v 1.7 2012/02/06 02:03:32 christos Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
  * Copyright (c) 2009, 2010 Hans-Jörg Höxer
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.6 2012/02/03 15:42:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.7 2012/02/06 02:03:32 christos Exp $");
 
 #if 0
 #define	TPM_DEBUG 
@@ -333,7 +333,7 @@ tpm_suspend(device_t dev, const pmf_qual_t *qual)
 #ifdef TPM_DEBUG
 	aprint_debug_dev(sc->sc_dev, "%s: power down\n", __func__);
 #endif
-	return 0;
+	return true;
 }
 
 /*
@@ -347,7 +347,7 @@ tpm_resume(device_t dev, const pmf_qual_t *qual)
 	struct tpm_softc *sc = device_private(dev);
 	aprint_debug_dev(sc->sc_dev, "%s: resume\n", __func__);
 #endif
-	return 0;
+	return true;
 }
 
 /* Wait for given status bits using polling. */
