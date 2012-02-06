@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.28 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: mcpcia.c,v 1.29 2012/02/06 02:14:14 matt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.28 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.29 2012/02/06 02:14:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.28 2011/06/14 15:34:22 matt Exp $");
 	badaddr((void *)KV(((((unsigned long) gid) << MCBUS_GID_SHIFT) | \
 	 (((unsigned long) mid) << MCBUS_MID_SHIFT) | \
 	 (MCBUS_IOSPACE) | MCPCIA_PCI_BRIDGE | _MCPCIA_PCI_REV)), \
-	sizeof(u_int32_t))
+	sizeof(uint32_t))
 
 static int	mcpciamatch(device_t, cfdata_t, void *);
 static void	mcpciaattach(device_t, device_t, void *);
@@ -131,7 +131,7 @@ mcpciaattach(device_t parent, device_t self, void *aux)
 	struct mcpcia_softc *mcp = device_private(self);
 	struct mcpcia_config *ccp;
 	struct pcibus_attach_args pba;
-	u_int32_t ctl;
+	uint32_t ctl;
 
 	/*
 	 * Make sure this MCPCIA exists...
@@ -226,7 +226,7 @@ mcpcia_init(void)
 		ccp->cc_sysbase = MCPCIA_SYSBASE(ccp);
 
 		if (badaddr((void *)ALPHA_PHYS_TO_K0SEG(MCPCIA_PCI_REV(ccp)),
-		    sizeof(u_int32_t)))
+		    sizeof(uint32_t)))
 			continue;
 
 		if (EISA_PRESENT(REGVAL(MCPCIA_PCI_REV(ccp)))) {
@@ -246,7 +246,7 @@ mcpcia_init(void)
 void
 mcpcia_init0(struct mcpcia_config *ccp, int mallocsafe)
 {
-	u_int32_t ctl;
+	uint32_t ctl;
 
 	if (ccp->cc_initted == 0) {
 		/* don't do these twice since they set up extents */
@@ -303,7 +303,7 @@ die_heathen_dog(void *arg)
 void
 mcpcia_config_cleanup(void)
 {
-	volatile u_int32_t ctl;
+	volatile uint32_t ctl;
 	struct mcpcia_softc *mcp;
 	struct mcpcia_config *ccp;
 	int i;

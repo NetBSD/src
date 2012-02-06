@@ -1,21 +1,21 @@
-/* $NetBSD: cia_pci.c,v 1.31 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: cia_pci.c,v 1.32 2012/02/06 02:14:14 matt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.31 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.32 2012/02/06 02:14:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ cia_conf_read(void *cpv, pcitag_t tag, int offset)
 	struct cia_config *ccp = cpv;
 	pcireg_t *datap, data;
 	int s, secondary, ba;
-	u_int32_t old_cfg, errbits;
+	uint32_t old_cfg, errbits;
 
 #ifdef __GNUC__
 	s = 0;					/* XXX gcc -Wuninitialized */
@@ -194,7 +194,7 @@ cia_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	struct cia_config *ccp = cpv;
 	pcireg_t *datap;
 	int s, secondary;
-	u_int32_t old_cfg;
+	uint32_t old_cfg;
 
 #ifdef __GNUC__
 	s = 0;					/* XXX gcc -Wuninitialized */

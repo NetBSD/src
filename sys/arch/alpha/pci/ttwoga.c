@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.14 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: ttwoga.c,v 1.15 2012/02/06 02:14:15 matt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.14 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.15 2012/02/06 02:14:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ ttwogaattach(device_t parent, device_t self, void *aux)
 	 */
 	for (hose = 0; hose < 1 /* XXX */; hose++) {
 #if 0 /* XXX */
-		if (badaddr(_T2GA(hose, T2_IOCSR), sizeof(u_int64_t)))
+		if (badaddr(_T2GA(hose, T2_IOCSR), sizeof(uint64_t)))
 			continue;
 #endif
 		memset(&pba, 0, sizeof(pba));
@@ -230,7 +230,7 @@ ttwopciattach(device_t parent, device_t self, void *aux)
 
 	ttwoga_dma_init(tcp);
 
-	aprint_normal(": %s Gate Array rev. %d\n", 
+	aprint_normal(": %s Gate Array rev. %d\n",
 	    (tcp->tc_rev < TRN_T3) ? "T2" : "T3 or T4",
 	    tcp->tc_rev);
 

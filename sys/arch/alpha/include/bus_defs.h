@@ -1,4 +1,4 @@
-/* $NetBSD: bus_defs.h,v 1.2 2011/08/12 22:22:49 dyoung Exp $ */
+/* $NetBSD: bus_defs.h,v 1.3 2012/02/06 02:14:13 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -149,84 +149,84 @@ struct alpha_bus_space {
 			    bus_size_t, bus_size_t, int);
 
 	/* read (single) */
-	u_int8_t	(*abs_r_1)(void *, bus_space_handle_t,
+	uint8_t	(*abs_r_1)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int16_t	(*abs_r_2)(void *, bus_space_handle_t,
+	uint16_t	(*abs_r_2)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int32_t	(*abs_r_4)(void *, bus_space_handle_t,
+	uint32_t	(*abs_r_4)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int64_t	(*abs_r_8)(void *, bus_space_handle_t,
+	uint64_t	(*abs_r_8)(void *, bus_space_handle_t,
 			    bus_size_t);
 
 	/* read multiple */
 	void		(*abs_rm_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*abs_rm_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t);
+			    bus_size_t, uint16_t *, bus_size_t);
 	void		(*abs_rm_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t);
+			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*abs_rm_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t *, bus_size_t);
+			    bus_size_t, uint64_t *, bus_size_t);
 					
 	/* read region */
 	void		(*abs_rr_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*abs_rr_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t);
+			    bus_size_t, uint16_t *, bus_size_t);
 	void		(*abs_rr_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t);
+			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*abs_rr_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t *, bus_size_t);
+			    bus_size_t, uint64_t *, bus_size_t);
 					
 	/* write (single) */
 	void		(*abs_w_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t);
+			    bus_size_t, uint8_t);
 	void		(*abs_w_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t);
+			    bus_size_t, uint16_t);
 	void		(*abs_w_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t);
+			    bus_size_t, uint32_t);
 	void		(*abs_w_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t);
+			    bus_size_t, uint64_t);
 
 	/* write multiple */
 	void		(*abs_wm_1)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t);
+			    bus_size_t, const uint8_t *, bus_size_t);
 	void		(*abs_wm_2)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t);
+			    bus_size_t, const uint16_t *, bus_size_t);
 	void		(*abs_wm_4)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t);
+			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*abs_wm_8)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int64_t *, bus_size_t);
+			    bus_size_t, const uint64_t *, bus_size_t);
 					
 	/* write region */
 	void		(*abs_wr_1)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t);
+			    bus_size_t, const uint8_t *, bus_size_t);
 	void		(*abs_wr_2)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t);
+			    bus_size_t, const uint16_t *, bus_size_t);
 	void		(*abs_wr_4)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t);
+			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*abs_wr_8)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int64_t *, bus_size_t);
+			    bus_size_t, const uint64_t *, bus_size_t);
 
 	/* set multiple */
 	void		(*abs_sm_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t, bus_size_t);
+			    bus_size_t, uint8_t, bus_size_t);
 	void		(*abs_sm_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t, bus_size_t);
+			    bus_size_t, uint16_t, bus_size_t);
 	void		(*abs_sm_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t, bus_size_t);
+			    bus_size_t, uint32_t, bus_size_t);
 	void		(*abs_sm_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t, bus_size_t);
+			    bus_size_t, uint64_t, bus_size_t);
 
 	/* set region */
 	void		(*abs_sr_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t, bus_size_t);
+			    bus_size_t, uint8_t, bus_size_t);
 	void		(*abs_sr_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t, bus_size_t);
+			    bus_size_t, uint16_t, bus_size_t);
 	void		(*abs_sr_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t, bus_size_t);
+			    bus_size_t, uint32_t, bus_size_t);
 	void		(*abs_sr_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t, bus_size_t);
+			    bus_size_t, uint64_t, bus_size_t);
 
 	/* copy */
 	void		(*abs_c_1)(void *, bus_space_handle_t, bus_size_t,

@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_500.c,v 1.17 2011/07/01 19:19:50 dyoung Exp $ */
+/* $NetBSD: tc_dma_3000_500.c,v 1.18 2012/02/06 02:14:16 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.17 2011/07/01 19:19:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.18 2012/02/06 02:14:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,15 +111,14 @@ tc_dma_get_tag_3000_500(int slot)
  * Create a TurboChannel SGMAP-mapped DMA map.
  */
 int
-tc_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
-    flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+tc_bus_dmamap_create_sgmap(
+	bus_dma_tag_t t,
+	bus_size_t size,
+	int nsegments,
+	bus_size_t maxsegsz,
+	bus_size_t boundary,
+	int flags,
+	bus_dmamap_t *dmamp)
 {
 	bus_dmamap_t map;
 	int error;

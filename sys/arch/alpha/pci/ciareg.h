@@ -1,21 +1,21 @@
-/* $NetBSD: ciareg.h,v 1.22 1998/06/06 20:40:14 thorpej Exp $ */
+/* $NetBSD: ciareg.h,v 1.23 2012/02/06 02:14:14 matt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Authors: Chris G. Demetriou, Jason R. Thorpe
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -34,7 +34,7 @@
  */
 
 #define	REGVAL(r)	(*(volatile int32_t *)ALPHA_PHYS_TO_K0SEG(r))
-#define	REGVAL64(r)	(*(volatile u_int64_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define	REGVAL64(r)	(*(volatile uint64_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 /*
  * Base addresses
@@ -168,18 +168,18 @@
 
 #define	CIA_CSR_HAE_MEM	(CIA_CSRS + 0x400)
 
-#define		HAE_MEM_REG1_START(x)	(((u_int32_t)(x) & 0xe0000000UL) << 0)
+#define		HAE_MEM_REG1_START(x)	(((uint32_t)(x) & 0xe0000000UL) << 0)
 #define		HAE_MEM_REG1_MASK	0x1fffffffUL
-#define		HAE_MEM_REG2_START(x)	(((u_int32_t)(x) & 0x0000f800UL) << 16)
+#define		HAE_MEM_REG2_START(x)	(((uint32_t)(x) & 0x0000f800UL) << 16)
 #define		HAE_MEM_REG2_MASK	0x07ffffffUL
-#define		HAE_MEM_REG3_START(x)	(((u_int32_t)(x) & 0x000000fcUL) << 24)
+#define		HAE_MEM_REG3_START(x)	(((uint32_t)(x) & 0x000000fcUL) << 24)
 #define		HAE_MEM_REG3_MASK	0x03ffffffUL
 
 #define	CIA_CSR_HAE_IO	(CIA_CSRS + 0x440)
 
 #define		HAE_IO_REG1_START(x)	0UL
 #define		HAE_IO_REG1_MASK	0x01ffffffUL
-#define		HAE_IO_REG2_START(x)	(((u_int32_t)(x) & 0xfe000000UL) << 0)
+#define		HAE_IO_REG2_START(x)	(((uint32_t)(x) & 0xfe000000UL) << 0)
 #define		HAE_IO_REG2_MASK	0x01ffffffUL
 
 #define	CIA_CSR_CFG	(CIA_CSRS + 0x480)
