@@ -7792,11 +7792,7 @@ SQLITE_PRIVATE void sqlite3HashClear(Hash*);
 # endif
 #endif
 #ifndef SQLITE_BIG_DBL
-# ifdef __vax__
-#  define SQLITE_BIG_DBL (1e38)
-# else
-#  define SQLITE_BIG_DBL (1e99)
-# endif
+# define SQLITE_BIG_DBL (1e99)
 #endif
 #ifndef SQLITE_HUGE_DBL
 # define SQLITE_HUGE_DBL (1.0e+308)
@@ -132876,7 +132872,7 @@ SQLITE_API int sqlite3_extension_init(
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: sqlite3.c,v 1.5 2012/02/05 17:55:12 matt Exp $
+** $Id: sqlite3.c,v 1.6 2012/02/06 17:24:49 matt Exp $
 **
 ** This file implements an integration between the ICU library 
 ** ("International Components for Unicode", an open-source library 
