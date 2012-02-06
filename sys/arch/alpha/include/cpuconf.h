@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.14 2011/06/14 06:49:31 matt Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.15 2012/02/06 02:14:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  * Platform Specific Information and Function Hooks.
  *
  * The tags family and model information are strings describing the platform.
- * 
+ *
  * The tag iobus describes the primary iobus for the platform- primarily
  * to give a hint as to where to start configuring. The likely choices
  * are one of tcasic, lca, apecs, cia, or tlsb.
@@ -88,7 +88,7 @@ struct platform {
 
 struct cpuinit {
 	void	(*init)(void);
-	u_int64_t systype;
+	uint64_t systype;
 	const char *option;
 };
 

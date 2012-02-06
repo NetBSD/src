@@ -1,4 +1,4 @@
-/* $NetBSD: tlsbreg.h,v 1.5 2000/01/27 22:27:50 mjacob Exp $ */
+/* $NetBSD: tlsbreg.h,v 1.6 2012/02/06 02:14:16 matt Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 by Matthew Jacob
@@ -70,9 +70,9 @@
 
 /* Access the specified register on the specified node. */
 #define TLSB_GET_NODEREG(_node, _reg)				\
-	*(volatile u_int32_t *)(TLSB_NODE_REG_ADDR((_node), (_reg)))
+	*(volatile uint32_t *)(TLSB_NODE_REG_ADDR((_node), (_reg)))
 #define TLSB_PUT_NODEREG(_node, _reg, _val)			\
-	*(volatile u_int32_t *)(TLSB_NODE_REG_ADDR((_node), (_reg))) = (_val)
+	*(volatile uint32_t *)(TLSB_NODE_REG_ADDR((_node), (_reg))) = (_val)
 
 /*
  * Some registers are shared by all TurboLaser nodes, and appear in
@@ -84,9 +84,9 @@
 
 /* Access the specified register in the broadcast space. */
 #define TLSB_GET_BCASTREG(_reg)					\
-	*(volatile u_int32_t *)(TLSB_BCAST_REG_ADDR + (_reg))
+	*(volatile uint32_t *)(TLSB_BCAST_REG_ADDR + (_reg))
 #define TLSB_PUT_BCASTREG(_reg, _val)				\
-	*(volatile u_int32_t *)(TLSB_BCAST_REG_ADDR + (_reg)) = (_val)
+	*(volatile uint32_t *)(TLSB_BCAST_REG_ADDR + (_reg)) = (_val)
 
 /*
  * Location of the Gbus, the per-CPU bus containing the clock and
@@ -378,25 +378,25 @@
  * Platform specific uncorrectable machine check logout frame.
  */
 struct tlsb_mchk_fatal {
-	u_int64_t	rsvdheader;
-	u_int32_t	tldev;             
-	u_int32_t	tlber;
-	u_int32_t	tlcnr;             
-	u_int32_t	tlvid;
-	u_int32_t	tlesr0;            
-	u_int32_t	tlesr1;
-	u_int32_t	tlesr2;            
-	u_int32_t	tlesr3;
-	u_int32_t	tlepaerr;
-	u_int32_t	tlmodconfig;
-	u_int32_t	tlepmerr;
-	u_int32_t	tlepderr; 
-	u_int32_t	tlintrmask0;
-	u_int32_t	tlintrmask1;
-	u_int32_t	tlintrsum0;
-	u_int32_t	tlintrsum1;
-	u_int32_t	tlep_vmg;
-	u_int32_t	spare[5];
+	uint64_t	rsvdheader;
+	uint32_t	tldev;
+	uint32_t	tlber;
+	uint32_t	tlcnr;
+	uint32_t	tlvid;
+	uint32_t	tlesr0;
+	uint32_t	tlesr1;
+	uint32_t	tlesr2;
+	uint32_t	tlesr3;
+	uint32_t	tlepaerr;
+	uint32_t	tlmodconfig;
+	uint32_t	tlepmerr;
+	uint32_t	tlepderr;
+	uint32_t	tlintrmask0;
+	uint32_t	tlintrmask1;
+	uint32_t	tlintrsum0;
+	uint32_t	tlintrsum1;
+	uint32_t	tlep_vmg;
+	uint32_t	spare[5];
 };
 /*
  * Magic values from Digital Unix- if these bits are set in these
@@ -411,11 +411,11 @@ struct tlsb_mchk_fatal {
  * Platform specific correctable machine check logout frame.
  */
 struct tlsb_mchk_soft {
-	u_int64_t	rsvdheader;
-	u_int32_t	tldev;             
-	u_int32_t	tlber;
-	u_int32_t	tlesr0;            
-	u_int32_t	tlesr1;
-	u_int32_t	tlesr2;            
-	u_int32_t	tlesr3;
+	uint64_t	rsvdheader;
+	uint32_t	tldev;
+	uint32_t	tlber;
+	uint32_t	tlesr0;
+	uint32_t	tlesr1;
+	uint32_t	tlesr2;
+	uint32_t	tlesr3;
 };

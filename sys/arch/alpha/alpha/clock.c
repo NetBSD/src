@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.41 2011/02/08 20:20:07 rmind Exp $ */
+/* $NetBSD: clock.c,v 1.42 2012/02/06 02:14:10 matt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41 2011/02/08 20:20:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42 2012/02/06 02:14:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,7 +77,7 @@ clockattach(void (*fns)(void *), void *dev)
 void
 cpu_initclocks(void)
 {
-        uint64_t pcc_freq;
+	uint64_t pcc_freq;
 
 	if (clock_init == NULL)
 		panic("cpu_initclocks: no clock attached");
@@ -100,8 +100,8 @@ cpu_initclocks(void)
 	/*
 	 * Initialize PCC timecounter.
 	 */
-        pcc_freq = cpu_frequency(curcpu());
-        cc_init(NULL, pcc_freq, "PCC", PCC_QUAL);
+	pcc_freq = cpu_frequency(curcpu());
+	cc_init(NULL, pcc_freq, "PCC", PCC_QUAL);
 
 	/*
 	 * Get the clock started.

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.336 2011/12/12 19:03:07 mrg Exp $ */
+/* $NetBSD: machdep.c,v 1.337 2012/02/06 02:14:11 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -35,17 +35,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.336 2011/12/12 19:03:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.337 2012/02/06 02:14:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ int	bootdev_debug = 0;	/* patchable, or from DDB */
  * XXX We need an address to which we can assign things so that they
  * won't be optimized away because we didn't use the value.
  */
-u_int32_t no_optimize;
+uint32_t no_optimize;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -166,7 +166,7 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[128];
 
 /* Number of machine cycles per microsecond */
-u_int64_t	cycles_per_usec;
+uint64_t	cycles_per_usec;
 
 /* number of CPUs in the box.  really! */
 int		ncpus;
@@ -175,7 +175,7 @@ struct bootinfo_kernel bootinfo;
 
 /* For built-in TCDS */
 #if defined(DEC_3000_300) || defined(DEC_3000_500)
-u_int8_t	dec_3000_scsiid[2], dec_3000_scsifast[2];
+uint8_t	dec_3000_scsiid[2], dec_3000_scsifast[2];
 #endif
 
 struct platform platform;
@@ -303,7 +303,7 @@ alpha_init(u_long pfn, u_long ptb, u_long bim, u_long bip, u_long biv)
 			/* booted dev not provided in bootinfo */
 			init_prom_interface((struct rpb *)
 			    ALPHA_PHYS_TO_K0SEG(bootinfo.hwrpb_phys));
-                	prom_getenv(PROM_E_BOOTED_DEV, bootinfo.booted_dev,
+	        	prom_getenv(PROM_E_BOOTED_DEV, bootinfo.booted_dev,
 			    sizeof bootinfo.booted_dev);
 			break;
 		}
@@ -344,7 +344,7 @@ nobootinfo:
 #endif
 
 	/*
-	 * Remember how many cycles there are per microsecond, 
+	 * Remember how many cycles there are per microsecond,
 	 * so that we can use delay().  Round up, for safety.
 	 */
 	cycles_per_usec = (hwrpb->rpb_cc_freq + 999999) / 1000000;
@@ -774,7 +774,7 @@ nobootinfo:
 	 * Initialize debuggers, and break into them if appropriate.
 	 */
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_addsyms_elf((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
+	ksyms_addsyms_elf((int)((uint64_t)ksym_end - (uint64_t)ksym_start),
 	    ksym_start, ksym_end);
 #endif
 
@@ -904,7 +904,7 @@ alpha_dsr_sysname(void)
 
 	dsr = (struct dsrdb *)(((char *)hwrpb) + hwrpb->rpb_dsrdb_off);
 	sysname = (const char *)((char *)dsr + (dsr->dsr_sysname_off +
-	    sizeof(u_int64_t)));
+	    sizeof(uint64_t)));
 	return (sysname);
 }
 
@@ -913,7 +913,7 @@ alpha_dsr_sysname(void)
  * returning the model string on match.
  */
 const char *
-alpha_variation_name(u_int64_t variation, const struct alpha_variation_table *avtp)
+alpha_variation_name(uint64_t variation, const struct alpha_variation_table *avtp)
 {
 	int i;
 
@@ -1072,7 +1072,7 @@ haltsys:
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
@@ -1435,9 +1435,9 @@ buildcontext(struct lwp *l, const void *catcher, const void *tramp, const void *
 {
 	struct trapframe *tf = l->l_md.md_tf;
 
-	tf->tf_regs[FRAME_RA] = (u_int64_t)tramp;
-	tf->tf_regs[FRAME_PC] = (u_int64_t)catcher;
-	tf->tf_regs[FRAME_T12] = (u_int64_t)catcher;
+	tf->tf_regs[FRAME_RA] = (uint64_t)tramp;
+	tf->tf_regs[FRAME_PC] = (uint64_t)catcher;
+	tf->tf_regs[FRAME_T12] = (uint64_t)catcher;
 	alpha_pal_wrusp((unsigned long)fp);
 }
 
@@ -1509,8 +1509,8 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	
 	tf->tf_regs[FRAME_A0] = sig;
-	tf->tf_regs[FRAME_A1] = (u_int64_t)&fp->sf_si;
-	tf->tf_regs[FRAME_A2] = (u_int64_t)&fp->sf_uc;
+	tf->tf_regs[FRAME_A1] = (uint64_t)&fp->sf_si;
+	tf->tf_regs[FRAME_A2] = (uint64_t)&fp->sf_uc;
 
 	buildcontext(l,catcher,ps->sa_sigdesc[sig].sd_tramp,fp);
 
@@ -1529,21 +1529,21 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 
-void 
+void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
        	struct trapframe *tf;
 
 	tf = l->l_md.md_tf;
 
-	tf->tf_regs[FRAME_PC] = (u_int64_t)upcall;
+	tf->tf_regs[FRAME_PC] = (uint64_t)upcall;
 	tf->tf_regs[FRAME_RA] = 0;
 	tf->tf_regs[FRAME_A0] = type;
-	tf->tf_regs[FRAME_A1] = (u_int64_t)sas;
+	tf->tf_regs[FRAME_A1] = (uint64_t)sas;
 	tf->tf_regs[FRAME_A2] = nevents;
 	tf->tf_regs[FRAME_A3] = ninterrupted;
-	tf->tf_regs[FRAME_A4] = (u_int64_t)ap;
-	tf->tf_regs[FRAME_T12] = (u_int64_t)upcall;  /* t12 is pv */
+	tf->tf_regs[FRAME_A4] = (uint64_t)ap;
+	tf->tf_regs[FRAME_T12] = (uint64_t)upcall;  /* t12 is pv */
 	alpha_pal_wrusp((unsigned long)sp);
 }
 
@@ -1695,7 +1695,7 @@ cpu_exec_ecoff_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 /*
  * cpu_exec_ecoff_hook():
  *	cpu-dependent ECOFF format hook for execve().
- * 
+ *
  * Do any machine-dependent diddling of the exec package when doing ECOFF.
  *
  */
@@ -1743,7 +1743,7 @@ mm_md_direct_mapped_io(void *addr, paddr_t *paddr)
 	}
 	return false;
 }
- 
+
 bool
 mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
 {
@@ -1756,8 +1756,7 @@ mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
 paddr_t alpha_XXX_dmamap_or;					/* XXX */
 								/* XXX */
 paddr_t								/* XXX */
-alpha_XXX_dmamap(v)						/* XXX */
-	vaddr_t v;						/* XXX */
+alpha_XXX_dmamap(vaddr_t v)					/* XXX */
 {								/* XXX */
 								/* XXX */
 	return (vtophys(v) | alpha_XXX_dmamap_or);		/* XXX */

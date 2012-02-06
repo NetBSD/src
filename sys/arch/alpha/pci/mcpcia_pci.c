@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_pci.c,v 1.10 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: mcpcia_pci.c,v 1.11 2012/02/06 02:14:14 matt Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.10 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.11 2012/02/06 02:14:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ mcpcia_conf_read(void *cpv, pcitag_t tag, int offset)
 	/*
 	 * There's nothing in slot 0 on a primary bus- don't even try.
 	 */
-	if ((tag >> 21) == 0 && ((u_int32_t) tag & 0x1f0000) == 0)
+	if ((tag >> 21) == 0 && ((uint32_t) tag & 0x1f0000) == 0)
 		return (data);
 
 	if (ccp == NULL) {
@@ -139,7 +139,7 @@ mcpcia_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	/*
 	 * There's nothing in slot 0 on a primary bus- don't even try.
 	 */
-	if ((tag >> 21) == 0 && ((u_int32_t) tag & 0x1f0000) == 0)
+	if ((tag >> 21) == 0 && ((uint32_t) tag & 0x1f0000) == 0)
 		return;
 
 	if (ccp == NULL) {
