@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.12 2012/01/15 00:49:48 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.13 2012/02/06 23:30:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.12 2012/01/15 00:49:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.13 2012/02/06 23:30:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,9 +166,12 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		goto block;
 	}
 
-	/* Get rule procedure for assocation and/or execution. */
+	/*
+	 * Get the rule procedure (acquires a reference) for assocation
+	 * with a session (if any) and execution.
+	 */
 	KASSERT(rp == NULL);
-	rp = npf_rproc_return(rl);
+	rp = npf_rule_getrproc(rl);
 
 	/* Apply the rule, release the lock. */
 	error = npf_rule_apply(&npc, nbuf, rl, &retfl);
@@ -185,6 +188,10 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 			error = ENOMEM;
 			goto out;
 		}
+		/*
+		 * Note: the reference to the rule procedure is transfered to
+		 * the session.  It will be released on session destruction.
+		 */
 		npf_session_setpass(se, rp);
 	}
 pass:
@@ -195,44 +202,47 @@ pass:
 	error = npf_do_nat(&npc, se, nbuf, ifp, di);
 block:
 	/*
-	 * Perform rule procedure, if any.
+	 * Execute rule procedure, if any.
 	 */
 	if (rp) {
 		npf_rproc_run(&npc, nbuf, rp, error);
 	}
 out:
-	/* Release the reference on session, or rule procedure. */
+	/*
+	 * Release the reference on a session.  Release the reference on a
+	 * rule procedure only if there was no association.
+	 */
 	if (se) {
 		npf_session_release(se);
 	} else if (rp) {
-		npf_rproc_release(rp); /* XXXkmem */
+		npf_rproc_release(rp);
 	}
 
-	/*
-	 * If error is set - drop the packet.
-	 * Normally, ENETUNREACH is used for "block".
-	 */
-	if (error) {
-		/*
-		 * Depending on flags and protocol, return TCP reset (RST)
-		 * or ICMP destination unreachable
-		 */
-		if (retfl) {
-			npf_return_block(&npc, nbuf, retfl);
-		}
-		if (error != ENETUNREACH) {
-			NPF_PRINTF(("NPF: error in handler '%d'\n", error));
-			npf_stats_inc(NPF_STAT_ERROR);
-		}
-		m_freem(*mp);
-		*mp = NULL;
-	} else {
+	/* Pass the packet, if no error. */
+	if (!error) {
 		/*
 		 * XXX: Disable for now, it will be set accordingly later,
 		 * for optimisations (to reduce inspection).
 		 */
 		(*mp)->m_flags &= ~M_CANFASTFWD;
+		return 0;
 	}
+
+	/*
+	 * Block the packet.  ENETUNREACH is used to indicate blocking.
+	 * Depending on the flags and protocol, return TCP reset (RST) or
+	 * ICMP destination unreachable.
+	 */
+	if (retfl) {
+		npf_return_block(&npc, nbuf, retfl);
+	}
+	if (error != ENETUNREACH) {
+		NPF_PRINTF(("NPF: error in handler '%d'\n", error));
+		npf_stats_inc(NPF_STAT_ERROR);
+	}
+	m_freem(*mp);
+	*mp = NULL;
+
 	return error;
 }
 
