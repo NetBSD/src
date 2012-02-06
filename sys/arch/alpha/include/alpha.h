@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.29 2011/07/17 20:54:36 joerg Exp $ */
+/* $NetBSD: alpha.h,v 1.30 2012/02/06 02:14:13 matt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,15 +42,15 @@
 #define _ALPHA_H_
 
 typedef union alpha_s_float {
-	u_int32_t i;
-	u_int32_t frac: 23,
+	uint32_t i;
+	uint32_t frac: 23,
 		  exp:   8,
 		  sign:  1;
 } s_float;
 
 typedef union alpha_t_float {
-	u_int64_t i;
-	u_int64_t frac: 52,
+	uint64_t i;
+	uint64_t frac: 52,
 		  exp:  11,
 		  sign:  1;
 } t_float;
@@ -73,18 +73,18 @@ extern int bootdev_debug;
 extern int alpha_fp_sync_complete;
 extern int alpha_unaligned_print, alpha_unaligned_fix, alpha_unaligned_sigbus;
 
-void	XentArith(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
-void	XentIF(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
-void	XentInt(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
-void	XentMM(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
+void	XentArith(uint64_t, uint64_t, uint64_t);		/* MAGIC */
+void	XentIF(uint64_t, uint64_t, uint64_t);		/* MAGIC */
+void	XentInt(uint64_t, uint64_t, uint64_t);		/* MAGIC */
+void	XentMM(uint64_t, uint64_t, uint64_t);		/* MAGIC */
 void	XentRestart(void);					/* MAGIC */
-void	XentSys(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
-void	XentUna(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
+void	XentSys(uint64_t, uint64_t, uint64_t);		/* MAGIC */
+void	XentUna(uint64_t, uint64_t, uint64_t);		/* MAGIC */
 void	alpha_init(u_long, u_long, u_long, u_long, u_long);
 void	ast(struct trapframe *);
 int	badaddr(void *, size_t);
 int	badaddr_read(void *, size_t, void *);
-u_int64_t console_restart(struct trapframe *);
+uint64_t console_restart(struct trapframe *);
 void	do_sir(void);
 void	dumpconf(void);
 void	exception_return(void);					/* MAGIC */
@@ -96,7 +96,7 @@ void	interrupt(unsigned long, unsigned long, unsigned long,
 	    struct trapframe *);
 void	machine_check(unsigned long, struct trapframe *, unsigned long,
 	    unsigned long);
-u_int64_t hwrpb_checksum(void);
+uint64_t hwrpb_checksum(void);
 void	hwrpb_restart_setup(void);
 void	regdump(struct trapframe *);
 void	regtoframe(const struct reg *, struct trapframe *);
@@ -155,12 +155,12 @@ void alpha_lds(int, s_float *);					/* MAGIC */
 void alpha_ldt(int, t_float *);					/* MAGIC */
 
 uint64_t alpha_read_fpcr(void);					/* MAGIC */
-void alpha_write_fpcr(u_int64_t);				/* MAGIC */
+void alpha_write_fpcr(uint64_t);				/* MAGIC */
 
-u_int64_t alpha_read_fp_c(struct lwp *);
-void alpha_write_fp_c(struct lwp *, u_int64_t);
+uint64_t alpha_read_fp_c(struct lwp *);
+void alpha_write_fp_c(struct lwp *, uint64_t);
 
-int alpha_fp_complete(u_long, u_long, struct lwp *, u_int64_t *);
+int alpha_fp_complete(u_long, u_long, struct lwp *, uint64_t *);
 
 /* Security sensitive rate limiting printf */
 

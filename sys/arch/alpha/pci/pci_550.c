@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.35 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: pci_550.c,v 1.36 2012/02/06 02:14:15 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,17 +35,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.35 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.36 2012/02/06 02:14:15 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,12 +131,12 @@ pci_550_pickintr(struct cia_config *ccp)
 	char *cp;
 	int i;
 
-        pc->pc_intr_v = ccp;
-        pc->pc_intr_map = dec_550_intr_map;
-        pc->pc_intr_string = dec_550_intr_string;
+	pc->pc_intr_v = ccp;
+	pc->pc_intr_map = dec_550_intr_map;
+	pc->pc_intr_string = dec_550_intr_string;
 	pc->pc_intr_evcnt = dec_550_intr_evcnt;
-        pc->pc_intr_establish = dec_550_intr_establish;
-        pc->pc_intr_disestablish = dec_550_intr_disestablish;
+	pc->pc_intr_establish = dec_550_intr_establish;
+	pc->pc_intr_disestablish = dec_550_intr_disestablish;
 
 	pc->pc_pciide_compat_intr_establish =
 	    dec_550_pciide_compat_intr_establish;
@@ -167,7 +167,7 @@ pci_550_pickintr(struct cia_config *ccp)
 #endif
 }
 
-int     
+int
 dec_550_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
@@ -334,7 +334,7 @@ dec_550_intr_disestablish(void *ccv, void *cookie)
 		return;
 	}
 #endif
- 
+
 	s = splhigh();
 
 	alpha_shared_intr_disestablish(dec_550_pci_intr, cookie,
@@ -345,7 +345,7 @@ dec_550_intr_disestablish(void *ccv, void *cookie)
 		    IST_NONE);
 		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
- 
+
 	splx(s);
 }
 
@@ -380,7 +380,7 @@ dec_550_pciide_compat_intr_establish(void *v, device_t dev,
 void
 dec_550_iointr(void *arg, unsigned long vec)
 {
-	int irq; 
+	int irq;
 
 	irq = SCB_VECTOIDX(vec - 0x900);
 

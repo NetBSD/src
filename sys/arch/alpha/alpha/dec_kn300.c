@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.38 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.39 2012/02/06 02:14:11 matt Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.38 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.39 2012/02/06 02:14:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,9 @@ const struct alpha_variation_table dec_kn300_variations[] = {
 };
 
 void
-dec_kn300_init()
+dec_kn300_init(void)
 {
-	u_int64_t variation;
+	uint64_t variation;
 	int cachesize;
 
 	platform.family = ALPHASERVER_4100;
@@ -159,7 +159,7 @@ dec_kn300_init()
 }
 
 void
-dec_kn300_cons_init()
+dec_kn300_cons_init(void)
 {
 	struct ctb *ctb;
 	struct mcpcia_config *ccp;
@@ -171,7 +171,7 @@ dec_kn300_cons_init()
 	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
-	case CTB_PRINTERPORT: 
+	case CTB_PRINTERPORT:
 		/* serial console ... */
 		/*
 		 * Delay to allow PROM putchars to complete.
@@ -393,25 +393,25 @@ typedef struct {
 	 * Should be mc_cc_ev5 structure. Contents are the same,
 	 * just in different places.
 	 */
-	u_int64_t	ei_stat;
-	u_int64_t	ei_addr;
-	u_int64_t	fill_syndrome;
-	u_int64_t	isr;
+	uint64_t	ei_stat;
+	uint64_t	ei_addr;
+	uint64_t	fill_syndrome;
+	uint64_t	isr;
 	/*
 	 * Platform Specific Area
 	 */
-	u_int32_t	whami;
-	u_int32_t	sys_env;
-	u_int64_t	mcpcia_regs;
-	u_int32_t	pci_rev;
-	u_int32_t	mc_err0;
-	u_int32_t	mc_err1;
-	u_int32_t	cap_err;
-	u_int32_t	mdpa_stat;
-	u_int32_t	mdpa_syn;
-	u_int32_t	mdpb_stat;
-	u_int32_t	mdpb_syn;
-	u_int64_t	end_rsvd;
+	uint32_t	whami;
+	uint32_t	sys_env;
+	uint64_t	mcpcia_regs;
+	uint32_t	pci_rev;
+	uint32_t	mc_err0;
+	uint32_t	mc_err1;
+	uint32_t	cap_err;
+	uint32_t	mdpa_stat;
+	uint32_t	mdpa_syn;
+	uint32_t	mdpb_stat;
+	uint32_t	mdpb_syn;
+	uint64_t	end_rsvd;
 } mc_soft300;
 #define	CAP_ERR_CRDX	204
 
