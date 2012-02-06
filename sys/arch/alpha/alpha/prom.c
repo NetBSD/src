@@ -1,33 +1,33 @@
-/* $NetBSD: prom.c,v 1.47 2011/05/24 20:26:34 rmind Exp $ */
+/* $NetBSD: prom.c,v 1.48 2012/02/06 02:14:12 matt Exp $ */
 
-/* 
+/*
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.47 2011/05/24 20:26:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.48 2012/02/06 02:14:12 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -82,8 +82,8 @@ init_prom_interface(struct rpb *rpb)
 
 	c = (struct crb *)((char *)rpb + rpb->rpb_crb_off);
 
-        prom_dispatch_v.routine_arg = c->crb_v_dispatch;
-        prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
+	prom_dispatch_v.routine_arg = c->crb_v_dispatch;
+	prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
 
 	mutex_init(&prom_lock, MUTEX_DEFAULT, IPL_HIGH);
 }
@@ -171,14 +171,14 @@ prom_cache_sync(void)
  * Remap char before passing off to prom.
  *
  * Prom only takes 32 bit addresses. Copy char somewhere prom can
- * find it. This routine will stop working after pmap_rid_of_console 
+ * find it. This routine will stop working after pmap_rid_of_console
  * is called in alpha_init. This is due to the hard coded address
  * of the console area.
  */
 void
 promcnputc(dev_t dev, int c)
 {
-        prom_return_t ret;
+	prom_return_t ret;
 	unsigned char *to = (unsigned char *)0x20000000;
 
 	prom_enter();
@@ -199,15 +199,15 @@ promcnputc(dev_t dev, int c)
 int
 promcngetc(dev_t dev)
 {
-        prom_return_t ret;
+	prom_return_t ret;
 
-        for (;;) {
+	for (;;) {
 		prom_enter();
-                ret.bits = prom_getc(alpha_console);
+	        ret.bits = prom_getc(alpha_console);
 		prom_leave();
-                if (ret.u.status == 0 || ret.u.status == 1)
-                        return (ret.u.retval);
-        }
+	        if (ret.u.status == 0 || ret.u.status == 1)
+	                return (ret.u.retval);
+	}
 }
 
 /*
@@ -218,7 +218,7 @@ promcngetc(dev_t dev)
 int
 promcnlookc(dev_t dev, char *cp)
 {
-        prom_return_t ret;
+	prom_return_t ret;
 
 	prom_enter();
 	ret.bits = prom_getc(alpha_console);
@@ -275,14 +275,14 @@ prom_halt(int halt)
 	alpha_pal_halt();
 }
 
-u_int64_t
+uint64_t
 hwrpb_checksum(void)
 {
-	u_int64_t *p, sum;
+	uint64_t *p, sum;
 	int i;
 
-	for (i = 0, p = (u_int64_t *)hwrpb, sum = 0;
-	    i < (offsetof(struct rpb, rpb_checksum) / sizeof (u_int64_t));
+	for (i = 0, p = (uint64_t *)hwrpb, sum = 0;
+	    i < (offsetof(struct rpb, rpb_checksum) / sizeof (uint64_t));
 	    i++, p++)
 		sum += *p;
 
@@ -315,7 +315,7 @@ hwrpb_restart_setup(void)
 	p->pcs_flags &= ~PCS_BIP;
 
 	/* when 'c'ontinuing from console halt, do a dump */
-	hwrpb->rpb_rest_term = (u_int64_t)&XentRestart;
+	hwrpb->rpb_rest_term = (uint64_t)&XentRestart;
 	hwrpb->rpb_rest_term_val = 0x1;
 
 	hwrpb->rpb_checksum = hwrpb_checksum();
@@ -323,7 +323,7 @@ hwrpb_restart_setup(void)
 	p->pcs_flags |= (PCS_RC | PCS_CV);
 }
 
-u_int64_t
+uint64_t
 console_restart(struct trapframe *framep)
 {
 	struct pcs *p;
