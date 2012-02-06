@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_pci.c,v 1.6 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: ttwoga_pci.c,v 1.7 2012/02/06 02:14:15 matt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,14 +31,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga_pci.c,v 1.6 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga_pci.c,v 1.7 2012/02/06 02:14:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/device.h> 
+#include <sys/device.h>
 
-#include <dev/pci/pcireg.h> 
+#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
 #include <alpha/pci/ttwogareg.h>
@@ -144,7 +144,7 @@ ttwoga_conf_read(void *cpv, pcitag_t tag, int offset)
 	pcireg_t *datap, data;
 	int b, d, f, ba;
 	paddr_t addr;
-	u_int64_t old_hae3;
+	uint64_t old_hae3;
 
 	pci_decompose_tag(&tcp->tc_pc, tag, &b, &d, &f);
 
@@ -196,7 +196,7 @@ ttwoga_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	pcireg_t *datap;
 	int b, d, f;
 	paddr_t addr;
-	u_int64_t old_hae3;
+	uint64_t old_hae3;
 
 	pci_decompose_tag(&tcp->tc_pc, tag, &b, &d, &f);
 

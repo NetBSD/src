@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.c,v 1.8 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: eisa_machdep.c,v 1.9 2012/02/06 02:14:13 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.8 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.9 2012/02/06 02:14:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,13 +104,13 @@ struct ecu_io {
 struct ecu_func {
 	SIMPLEQ_ENTRY(ecu_func) ecuf_list;
 	int ecuf_funcno;
-	u_int32_t ecuf_id;
-	u_int16_t ecuf_slot_info;
-	u_int16_t ecuf_cfg_ext;
-	u_int8_t ecuf_selections[ECUF_SELECTIONS_SIZE];
-	u_int8_t ecuf_func_info;
-	u_int8_t ecuf_type_string[ECUF_TYPE_STRING_SIZE];
-	u_int8_t ecuf_init[ECUF_INIT_ENTRY_SIZE];
+	uint32_t ecuf_id;
+	uint16_t ecuf_slot_info;
+	uint16_t ecuf_cfg_ext;
+	uint8_t ecuf_selections[ECUF_SELECTIONS_SIZE];
+	uint8_t ecuf_func_info;
+	uint8_t ecuf_type_string[ECUF_TYPE_STRING_SIZE];
+	uint8_t ecuf_init[ECUF_INIT_ENTRY_SIZE];
 	SIMPLEQ_HEAD(, ecu_mem) ecuf_mem;
 	SIMPLEQ_HEAD(, ecu_irq) ecuf_irq;
 	SIMPLEQ_HEAD(, ecu_dma) ecuf_dma;
@@ -120,17 +120,17 @@ struct ecu_func {
 struct ecu_data {
 	SIMPLEQ_ENTRY(ecu_data) ecud_list;
 	int ecud_slot;
-	u_int8_t ecud_eisaid[EISA_IDSTRINGLEN];
-	u_int32_t ecud_offset;
+	uint8_t ecud_eisaid[EISA_IDSTRINGLEN];
+	uint32_t ecud_offset;
 
 	/* General slot info. */
-	u_int8_t ecud_slot_info;
-	u_int16_t ecud_ecu_major_rev;
-	u_int16_t ecud_ecu_minor_rev;
-	u_int16_t ecud_cksum;
-	u_int16_t ecud_ndevfuncs;
-	u_int8_t ecud_funcinfo;
-	u_int32_t ecud_comp_id;
+	uint8_t ecud_slot_info;
+	uint16_t ecud_ecu_major_rev;
+	uint16_t ecud_ecu_minor_rev;
+	uint16_t ecud_cksum;
+	uint16_t ecud_ndevfuncs;
+	uint8_t ecud_funcinfo;
+	uint32_t ecud_comp_id;
 
 	/* The functions */
 	SIMPLEQ_HEAD(, ecu_func) ecud_funcs;
@@ -151,7 +151,7 @@ ecuf_init(struct ecu_func *ecuf)
 }
 
 static void
-eisa_parse_mem(struct ecu_func *ecuf, u_int8_t *dp)
+eisa_parse_mem(struct ecu_func *ecuf, uint8_t *dp)
 {
 	struct ecu_mem *ecum;
 	int i;
@@ -185,7 +185,7 @@ eisa_parse_mem(struct ecu_func *ecuf, u_int8_t *dp)
 }
 
 static void
-eisa_parse_irq(struct ecu_func *ecuf, u_int8_t *dp)
+eisa_parse_irq(struct ecu_func *ecuf, uint8_t *dp)
 {
 	struct ecu_irq *ecui;
 	int i;
@@ -213,7 +213,7 @@ eisa_parse_irq(struct ecu_func *ecuf, u_int8_t *dp)
 }
 
 static void
-eisa_parse_dma(struct ecu_func *ecuf, u_int8_t *dp)
+eisa_parse_dma(struct ecu_func *ecuf, uint8_t *dp)
 {
 	struct ecu_dma *ecud;
 	int i;
@@ -242,7 +242,7 @@ eisa_parse_dma(struct ecu_func *ecuf, u_int8_t *dp)
 }
 
 static void
-eisa_parse_io(struct ecu_func *ecuf, u_int8_t *dp)
+eisa_parse_io(struct ecu_func *ecuf, uint8_t *dp)
 {
 	struct ecu_io *ecuio;
 	int i;
@@ -271,8 +271,8 @@ eisa_parse_io(struct ecu_func *ecuf, u_int8_t *dp)
 static void
 eisa_read_config_bytes(paddr_t addr, void *buf, size_t count)
 {
-	const u_int8_t *src = (const u_int8_t *)ALPHA_PHYS_TO_K0SEG(addr);
-	u_int8_t *dst = buf;
+	const uint8_t *src = (const uint8_t *)ALPHA_PHYS_TO_K0SEG(addr);
+	uint8_t *dst = buf;
 
 	for (; count != 0; count--) {
 		*dst++ = *src;
@@ -281,10 +281,10 @@ eisa_read_config_bytes(paddr_t addr, void *buf, size_t count)
 }
 
 static void
-eisa_read_config_word(paddr_t addr, u_int32_t *valp)
+eisa_read_config_word(paddr_t addr, uint32_t *valp)
 {
-	const u_int8_t *src = (const u_int8_t *)ALPHA_PHYS_TO_K0SEG(addr);
-	u_int32_t val = 0;
+	const uint8_t *src = (const uint8_t *)ALPHA_PHYS_TO_K0SEG(addr);
+	uint32_t val = 0;
 	int i;
 
 	for (i = 0; i < sizeof(val); i++) {
@@ -298,8 +298,8 @@ eisa_read_config_word(paddr_t addr, u_int32_t *valp)
 static size_t
 eisa_uncompress(void *cbufp, void *ucbufp, size_t count)
 {
-	const u_int8_t *cbuf = cbufp;
-	u_int8_t *ucbuf = ucbufp;
+	const uint8_t *cbuf = cbufp;
+	uint8_t *ucbuf = ucbufp;
 	u_int zeros = 0;
 
 	while (count--) {
@@ -321,10 +321,10 @@ eisa_init(eisa_chipset_tag_t ec)
 {
 	struct ecu_data *ecud;
 	paddr_t cfgaddr;
-	u_int32_t offset;
-	u_int8_t eisaid[EISA_IDSTRINGLEN];
-	u_int8_t *cdata, *data;
-	u_int8_t *cdp, *dp;
+	uint32_t offset;
+	uint8_t eisaid[EISA_IDSTRINGLEN];
+	uint8_t *cdata, *data;
+	uint8_t *cdp, *dp;
 	struct ecu_func *ecuf;
 	int i, func;
 
