@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm_isa.c,v 1.1 2012/01/22 06:44:28 christos Exp $	*/
+/*	$NetBSD: tpm_isa.c,v 1.2 2012/02/06 04:29:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.1 2012/01/22 06:44:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.2 2012/02/06 04:29:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,9 +118,10 @@ tpm_isa_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if ((rv = (*sc->sc_init)(sc, ia->ia_irq[0].ir_irq,
-	    device_xname(sc->sc_dev))) != 0)
+	    device_xname(sc->sc_dev))) != 0) {
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, size);
 		return;
+	}
 
 	/*
 	 * Only setup interrupt handler when we have a vector and the
