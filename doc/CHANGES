@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1666 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1667 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1236,4 +1236,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	ntp: import ntp 4.2.6p5.
 		[kardel 20120201]
 	dhcpcd(8): Import dhcpcd-5.5.3 [roy 20120202]
+	dhcpcd(8): Import dhcpcd-5.5.4 [roy 20120206]
 
