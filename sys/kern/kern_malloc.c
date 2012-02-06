@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.137 2012/01/30 05:42:54 mrg Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.138 2012/02/06 12:13:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.137 2012/01/30 05:42:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.138 2012/02/06 12:13:44 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -108,9 +108,17 @@ kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #endif /* MALLOCLOG */
 {
 	const int kmflags = (flags & M_NOWAIT) ? KM_NOSLEEP : KM_SLEEP;
-	const size_t allocsize = sizeof(struct malloc_header) + size;
+	size_t allocsize, hdroffset;
 	struct malloc_header *mh;
 	void *p;
+
+	if (size >= PAGE_SIZE) {
+		allocsize = PAGE_SIZE + size; /* for page alignment */
+		hdroffset = PAGE_SIZE - sizeof(struct malloc_header);
+	} else {
+		allocsize = sizeof(struct malloc_header) + size;
+		hdroffset = 0;
+	}
 
 	p = kmem_intr_alloc(allocsize, kmflags);
 	if (p == NULL)
@@ -119,8 +127,8 @@ kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
 	if ((flags & M_ZERO) != 0) {
 		memset(p, 0, allocsize);
 	}
-	mh = (void *)p;
-	mh->mh_size = allocsize;
+	mh = (void *)((char *)p + hdroffset);
+	mh->mh_size = allocsize - hdroffset;
 
 	return mh + 1;
 }
@@ -141,7 +149,11 @@ kern_free(void *addr, struct malloc_type *ksp)
 	mh = addr;
 	mh--;
 
-	kmem_intr_free(mh, mh->mh_size);
+	if (mh->mh_size >= PAGE_SIZE + sizeof(struct malloc_header))
+		kmem_intr_free((char *)addr - PAGE_SIZE,
+		    mh->mh_size + PAGE_SIZE - sizeof(struct malloc_header));
+	else
+		kmem_intr_free(mh, mh->mh_size);
 }
 
 /*
