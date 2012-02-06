@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.8 2012/02/06 00:37:52 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.9 2012/02/06 00:41:36 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -156,7 +156,7 @@ group-opts	= "interface" iface "," [ "in" | "out" ]
 ruleset		= "{" rule1 \*[Lt]newline\*[Gt], rule2 \*[Lt]newline\*[Gt], ... "}"
 
 rule		= ( "block" block-opts | "pass" ) [ "in" | out" ] [ "quick" ]
-		  [ "on" iface ] [ family "fam-opt" ] [ "proto" \*[Lt]protocol\*[Gt] ]
+		  [ "on" iface ] [ "family" fam-opt ] [ "proto" \*[Lt]protocol\*[Gt] ]
 		  ( "all" | filt-opts ) [ "keep state" ] [ "apply" rproc ] }
 
 fam-opt		= [ "inet" | "inet6" ]
@@ -200,7 +200,7 @@ group (name "external", interface $ext_if) {
 	block in quick from \*[Lt]1\*[Gt]
 	pass out quick from $ext_if keep state apply "rid"
 
-	pass in quick inet proto tcp to $ext_if port ssh apply "log"
+	pass in quick family inet proto tcp to $ext_if port ssh apply "log"
 	pass in quick proto tcp to $ext_if port $services_tcp
 	pass in quick proto udp to $ext_if port $services_udp
 	pass in quick proto tcp to $ext_if port 49151-65535	# Passive FTP
