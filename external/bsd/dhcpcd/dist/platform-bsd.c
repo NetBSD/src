@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
+#include <netinet/in.h>
+
+#include <syslog.h>
 
 #include "platform.h"
 
@@ -47,4 +51,35 @@ hardware_platform(void)
 		march, &len, NULL, 0) != 0)
 		return NULL;
 	return march;
+}
+
+static int
+inet6_sysctl(int code)
+{
+	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, 0 };
+	int val;
+	size_t size;
+
+	mib[3] = code;
+	size = sizeof(val);
+	if (sysctl(mib, sizeof(mib)/sizeof(mib[0]), &val, &size, NULL, 0) == -1)
+		return -1;
+	return val;
+}
+
+int
+check_ipv6(void)
+{
+
+	if (inet6_sysctl(IPV6CTL_ACCEPT_RTADV) != 1) {
+		syslog(LOG_WARNING,
+		    "Kernel is not configured to accept IPv6 RAs");
+		return 0;
+	}
+	if (inet6_sysctl(IPV6CTL_FORWARDING) != 0) {
+		syslog(LOG_WARNING,
+		    "Kernel is configured as a router, not a host");
+		return 0;
+	}
+	return 1;
 }
