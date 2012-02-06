@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.9 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.10 2012/02/06 23:30:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -226,9 +226,10 @@ void		npf_rule_free(npf_rule_t *);
 npf_ruleset_t *	npf_rule_subset(npf_rule_t *);
 npf_natpolicy_t *npf_rule_getnat(const npf_rule_t *);
 void		npf_rule_setnat(npf_rule_t *, npf_natpolicy_t *);
+npf_rproc_t *	npf_rule_getrproc(npf_rule_t *);
 
 npf_rproc_t *	npf_rproc_create(prop_dictionary_t);
-npf_rproc_t *	npf_rproc_return(npf_rule_t *);
+void		npf_rproc_acquire(npf_rproc_t *);
 void		npf_rproc_release(npf_rproc_t *);
 void		npf_rproc_run(npf_cache_t *, nbuf_t *, npf_rproc_t *, int);
 

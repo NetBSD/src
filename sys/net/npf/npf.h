@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.13 2012/02/05 00:37:13 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.14 2012/02/06 23:30:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -68,10 +68,7 @@ typedef uint8_t			npf_netmask_t;
 typedef void			nbuf_t;
 
 struct npf_rproc;
-struct npf_hook;
-
 typedef struct npf_rproc	npf_rproc_t;
-typedef struct npf_hook		npf_hook_t;
 
 /*
  * Packet information cache.
@@ -214,12 +211,6 @@ int		nbuf_store_datum(nbuf_t *, void *, size_t, void *);
 
 int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
-
-#if 0
-npf_hook_t *	npf_hook_register(npf_rule_t *,
-		    void (*)(npf_cache_t *, nbuf_t *, void *), void *);
-void		npf_hook_unregister(npf_rule_t *, npf_hook_t *);
-#endif
 
 #endif	/* _KERNEL */
 
