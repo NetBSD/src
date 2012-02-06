@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.264 2012/01/27 18:53:03 para Exp $ */
+/*	$NetBSD: machdep.c,v 1.265 2012/02/06 10:40:26 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,10 +71,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.264 2012/01/27 18:53:03 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.265 2012/02/06 10:40:26 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#include "opt_modular.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
@@ -152,6 +153,11 @@ int sigpid = 0;
 #endif
 
 extern vaddr_t avail_end;
+#ifdef MODULAR
+vaddr_t module_start, module_end;
+static struct vm_map module_map_store;
+extern struct vm_map *module_map;
+#endif
 
 int	physmem;
 
@@ -207,6 +213,12 @@ cpu_startup(void)
 
 #if 0
 	pmap_redzone();
+#endif
+
+#ifdef MODULAR
+	uvm_map_setup(&module_map_store, module_start, module_end, 0);
+	module_map_store.pmap = pmap_kernel();
+	module_map = &module_map_store;
 #endif
 }
 
