@@ -1,4 +1,4 @@
-/* $NetBSD: kftxxvar.h,v 1.5 2005/12/11 12:16:21 christos Exp $ */
+/* $NetBSD: kftxxvar.h,v 1.6 2012/02/06 02:14:16 matt Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -40,6 +40,6 @@
 struct kft_dev_attach_args {
 	const char	*ka_name;	/*  name */
 	int		ka_node;	/* node number */
-	u_int16_t	ka_dtype;	/* device type */
-	u_int16_t	ka_hosenum;	/* hose number */
+	uint16_t	ka_dtype;	/* device type */
+	uint16_t	ka_hosenum;	/* hose number */
 };

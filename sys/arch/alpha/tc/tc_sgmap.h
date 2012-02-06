@@ -1,4 +1,4 @@
-/* $NetBSD: tc_sgmap.h,v 1.3 2008/04/28 20:23:12 martin Exp $ */
+/* $NetBSD: tc_sgmap.h,v 1.4 2012/02/06 02:14:16 matt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #define	SGMAP_TYPE		tc_sgmap
-#define	SGMAP_PTE_TYPE		u_int32_t
+#define	SGMAP_PTE_TYPE		uint32_t
 #define	SGMAP_PTE_SPACING	2
 
 /*

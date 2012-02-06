@@ -1,4 +1,4 @@
-/* $NetBSD: ttwogareg.h,v 1.3 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: ttwogareg.h,v 1.4 2012/02/06 02:14:15 matt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 extern bus_addr_t ttwoga_gamma_cbus_bias;
 
-#define	REGVAL(r)	(*(volatile u_int64_t *)			\
+#define	REGVAL(r)	(*(volatile uint64_t *)			\
 			    ALPHA_PHYS_TO_K0SEG(ttwoga_gamma_cbus_bias + (r)))
 
 /*

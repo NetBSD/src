@@ -1,4 +1,4 @@
-/* $NetBSD: pci_sgmap_pte32.h,v 1.4 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: pci_sgmap_pte32.h,v 1.5 2012/02/06 02:14:15 matt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #define	SGMAP_TYPE		pci_sgmap_pte32
-#define	SGMAP_PTE_TYPE		u_int32_t
+#define	SGMAP_PTE_TYPE		uint32_t
 #define	SGMAP_PTE_SPACING	0x20
 
 /*

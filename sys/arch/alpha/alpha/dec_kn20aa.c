@@ -1,21 +1,21 @@
-/* $NetBSD: dec_kn20aa.c,v 1.63 2011/07/01 19:22:35 dyoung Exp $ */
+/* $NetBSD: dec_kn20aa.c,v 1.64 2012/02/06 02:14:11 matt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.63 2011/07/01 19:22:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.64 2012/02/06 02:14:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,9 @@ const struct alpha_variation_table dec_kn20aa_variations[] = {
 };
 
 void
-dec_kn20aa_init()
+dec_kn20aa_init(void)
 {
-	u_int64_t variation;
+	uint64_t variation;
 
 	platform.family = "AlphaStation 500 or 600 (KN20AA)";
 
@@ -119,7 +119,7 @@ dec_kn20aa_init()
 }
 
 static void
-dec_kn20aa_cons_init()
+dec_kn20aa_cons_init(void)
 {
 	struct ctb *ctb;
 	struct cia_config *ccp;
@@ -131,7 +131,7 @@ dec_kn20aa_cons_init()
 	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
-	case CTB_PRINTERPORT: 
+	case CTB_PRINTERPORT:
 		/* serial console ... */
 		/* XXX */
 		{

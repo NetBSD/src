@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.36 2011/06/14 15:34:23 matt Exp $ */
+/* $NetBSD: tlsb.c,v 1.37 2012/02/06 02:14:16 matt Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.36 2011/06/14 15:34:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.37 2012/02/06 02:14:16 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -71,7 +71,7 @@ CFATTACH_DECL_NEW(tlsb, 0,
 extern struct cfdriver tlsb_cd;
 
 static int	tlsbprint(void *, const char *);
-static const char *tlsb_node_type_str(u_int32_t);
+static const char *tlsb_node_type_str(uint32_t);
 
 /*
  * There can be only one TurboLaser, and we'll overload it
@@ -123,7 +123,7 @@ static void
 tlsbattach(device_t parent, device_t self, void *aux)
 {
 	struct tlsb_dev_attach_args ta;
-	u_int32_t tldev;
+	uint32_t tldev;
 	int node;
 	int locs[TLSBCF_NLOCS];
 
@@ -147,7 +147,7 @@ tlsbattach(device_t parent, device_t self, void *aux)
 		 * Check for invalid address.  This may not really
 		 * be necessary, but what the heck...
 		 */
-		if (badaddr(TLSB_NODE_REG_ADDR(node, TLDEV), sizeof(u_int32_t)))
+		if (badaddr(TLSB_NODE_REG_ADDR(node, TLDEV), sizeof(uint32_t)))
 			continue;
 		tldev = TLSB_GET_NODEREG(node, TLDEV);
 		if (tldev == 0) {
@@ -187,7 +187,7 @@ tlsbattach(device_t parent, device_t self, void *aux)
 	 * *Now* search for I/O nodes (in descending order)
 	 */
 	while (--node > 0) {
-		if (badaddr(TLSB_NODE_REG_ADDR(node, TLDEV), sizeof(u_int32_t)))
+		if (badaddr(TLSB_NODE_REG_ADDR(node, TLDEV), sizeof(uint32_t)))
 			continue;
 		tldev = TLSB_GET_NODEREG(node, TLDEV);
 		if (tldev == 0) {
@@ -233,7 +233,7 @@ tlsbattach(device_t parent, device_t self, void *aux)
 }
 
 static const char *
-tlsb_node_type_str(u_int32_t dtype)
+tlsb_node_type_str(uint32_t dtype)
 {
 	static char	tlsb_line[64];
 

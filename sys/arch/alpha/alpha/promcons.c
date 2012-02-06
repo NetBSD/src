@@ -1,21 +1,21 @@
-/* $NetBSD: promcons.c,v 1.36 2011/04/24 16:26:52 rmind Exp $ */
+/* $NetBSD: promcons.c,v 1.37 2012/02/06 02:14:12 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.36 2011/04/24 16:26:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.37 2012/02/06 02:14:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ promopen(dev_t dev, int flag, int mode, struct lwp *l)
 		callout_init(&prom_ch, 0);
 		callo = true;
 	}
- 
+
 	if (!pmap_uses_prom_console() || unit >= 1)
 		return ENXIO;
 
@@ -136,7 +136,7 @@ promopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 	return error;
 }
- 
+
 int
 promclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -148,7 +148,7 @@ promclose(dev_t dev, int flag, int mode, struct lwp *l)
 	ttyclose(tp);
 	return 0;
 }
- 
+
 int
 promread(dev_t dev, struct uio *uio, int flag)
 {
@@ -156,20 +156,20 @@ promread(dev_t dev, struct uio *uio, int flag)
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
- 
+
 int
 promwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp = prom_tty[minor(dev)];
- 
+
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
- 
+
 int
 prompoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp = prom_tty[minor(dev)];
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 

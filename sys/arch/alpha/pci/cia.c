@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.72 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: cia.c,v 1.73 2012/02/06 02:14:14 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,17 +35,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.72 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.73 2012/02/06 02:14:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ cia_init(struct cia_config *ccp, int mallocsafe)
 	if ((pci_use_bwx || bus_use_bwx) &&
 	    (ccp->cc_cnfg & CNFG_BWEN) != 0 &&
 	    (cpu_amask & ALPHA_AMASK_BWX) != 0) {
-		u_int32_t ctrl;
+		uint32_t ctrl;
 
 		if (pci_use_bwx)
 			ccp->cc_flags |= CCF_PCI_USE_BWX;
@@ -337,7 +337,7 @@ ciaattach(device_t parent, device_t self, void *aux)
 		 * XXX WE NEED TO THINK ABOUT HOW TO HANDLE THIS FOR
 		 * XXX SGMAP DMA MAPPINGS!
 		 */
-		u_int32_t ctrl;
+		uint32_t ctrl;
 
 		/* XXX no bets... */
 		aprint_error_dev(self,
@@ -432,7 +432,7 @@ cia_bus_get_window(int type, int window, struct alpha_bus_space_translation *abs
 void
 cia_pyxis_intr_enable(int irq, int onoff)
 {
-	u_int64_t imask;
+	uint64_t imask;
 	int s;
 
 #if 0

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.76 2010/11/14 13:33:20 uebayasi Exp $ */
+/* $NetBSD: pmap.h,v 1.77 2012/02/06 02:14:13 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * Copyright (c) 1987 Carnegie-Mellon University
  *
  * This code is derived from software contributed to Berkeley by

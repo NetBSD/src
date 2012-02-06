@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.37 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: dwlpx.c,v 1.38 2012/02/06 02:14:14 matt Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.37 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.38 2012/02/06 02:14:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ dwlpxmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct kft_dev_attach_args *ka = aux;
 	unsigned long ls;
-	u_int32_t ctl;
+	uint32_t ctl;
 
 	if (strcmp(ka->ka_name, dwlpx_cd.cd_name) != 0)
 		return (0);
@@ -87,14 +87,14 @@ dwlpxmatch(device_t parent, cfdata_t cf, void *aux)
 	/*
 	 * Probe the first HPC to make sure this really is a dwlpx and
 	 * nothing else.
-	 */ 
+	 */
 	if (badaddr(KV(PCIA_CTL(1) + ls), sizeof (ctl)) != 0) {
 		/*
 		 * If we are here something went wrong. One reason
 		 * could be that this is a dwlma and not a dwlpx.
 		 *
 		 * We can not clear potential illegal CSR errors here
-		 * since it is unknown hardware. 
+		 * since it is unknown hardware.
 		 */
 		return (0);
 	}
@@ -110,7 +110,7 @@ dwlpxattach(device_t parent, device_t self, void *aux)
 	struct dwlpx_config *ccp = &sc->dwlpx_cc;
 	struct kft_dev_attach_args *ka = aux;
 	struct pcibus_attach_args pba;
-	u_int32_t pcia_present;
+	uint32_t pcia_present;
 
 	sc->dwlpx_dev = self;
 	sc->dwlpx_node = ka->ka_node;
@@ -186,7 +186,7 @@ dwlpxattach(device_t parent, device_t self, void *aux)
 void
 dwlpx_init(struct dwlpx_softc *sc)
 {
-	u_int32_t ctl;
+	uint32_t ctl;
 	struct dwlpx_config *ccp = &sc->dwlpx_cc;
 	unsigned long vec, ls = DWLPX_SYSBASE(sc);
 	int i;
@@ -310,8 +310,8 @@ dwlpx_errintr(void *arg, unsigned long vec)
 	struct dwlpx_config *ccp = &sc->dwlpx_cc;
 	int i;
 	struct {
-		u_int32_t err;
-		u_int32_t addr;
+		uint32_t err;
+		uint32_t addr;
 	} hpcs[NHPC];
 
 	for (i = 0; i < sc->dwlpx_nhpc; i++) {
