@@ -1,4 +1,4 @@
-.\" $NetBSD: run_query.3,v 1.1 2012/02/07 19:13:32 joerg Exp $
+.\" $NetBSD: run_query.3,v 1.2 2012/02/07 21:02:23 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 03, 2011
+.Dd December 3, 2011
 .Dt RUN_QUERY 3
 .Os
 .Sh NAME
@@ -113,7 +113,8 @@ as to search in all the sections.
 This specifies the number of matching rows to fetch from the database.
 Specifiy a negative value to fetch all the matching rows.
 .It Li int offset
-This specifies the offset within the result-set. Use it to specify the position
+This specifies the offset within the result-set.
+Use it to specify the position
 from where to start processing the result-set.
 For example if the value of nrec is m and value of offset is n, then the first
 n records from the result-set will be omitted and rest m-n (or less) records will
