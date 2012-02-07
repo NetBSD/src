@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.2 2012/02/07 19:17:16 joerg Exp $	*/
+/*	$NetBSD: apropos.c,v 1.3 2012/02/07 22:59:32 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.2 2012/02/07 19:17:16 joerg Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.3 2012/02/07 22:59:32 joerg Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -73,10 +73,9 @@ main(int argc, char *argv[])
 #endif
 	query_args args;
 	char *query = NULL;	// the user query
-	char ch;
 	char *errmsg = NULL;
 	char *str;
-	int rc = 0;
+	int ch, rc = 0;
 	callback_data cbdata;
 	cbdata.out = stdout;		// the default output stream
 	cbdata.count = 0;
