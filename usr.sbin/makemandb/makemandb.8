@@ -1,0 +1,109 @@
+.\" $NetBSD: makemandb.8,v 1.1 2012/02/07 19:13:32 joerg Exp $
+.\"
+.\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
+.\" All rights reserved.
+.\"
+.\" This code was developed as part of Google's Summer of Code 2011 program.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+.\" FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+.\" COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd February 4, 2012
+.Dt MAKEMANDB 8
+.Os
+.Sh NAME
+.Nm makemandb
+.Nd parse the manual pages and build a search index over them
+.Sh SYNOPSIS
+.Nm
+.Op Fl C Ar path
+.Op Fl floqv
+.Sh DESCRIPTION
+The
+.Nm
+utility traverses the directories containing man pages, parses the manual
+pages with the help of libmandoc and builds an Sqlite database
+.Pa man.db
+to support full text searches.
+It obtains the list of directories to traverse using the
+.Fl Ar path
+and
+.Fl p
+options of
+.Xr man 1 .
+.Pp
+It supports the following options:
+.Bl -tag -width indent
+.It Fl C Ar path
+Use different
+.Xr man 1
+configuration file than the default,
+.Pa /etc/man.conf .
+.It Fl f
+Force rebuilding the index from scratch, pruning the existing one.
+.It Fl l
+Limit the parsing to only the NAME section of the pages.
+This option can be used to mimic the behavior of the classic
+.Xr apropos 1
+and also to substantially save disk space.
+.It Fl o
+Use this option to optimize the index for speed and also
+to significantly reduce disk space usage.
+This is a somewhat expensive operation.
+.It Fl q
+Print only error messages and no status updates.
+.It Fl v
+Enable verbose output.
+This prints the name of every file being parsed.
+.El
+.Pp
+As the database file is stored under
+.Pa /var/db ,
+root privileges are required to run
+.Nm .
+.Ss DATABASE SCHEMA
+The name of the FTS table is mandb and its schema is as follows:
+.Bl -column -offset indent "Column Name" "Column Description"
+.It Li section Ta The section number of the page
+.It Li name Ta The name of the page from the NAME section.
+.It Li name_desc Ta The one line description from the NAME section.
+.It Li desc Ta The DESCRIPTION section.
+.It Li lib Ta The LIBRARY section.
+.It Li return_vals Ta The RETURN VALUES section.
+.It Li env Ta The ENVIRONMENT section.
+.It Li files Ta The FILES section.
+.It Li exit_status Ta The EXIT STATUS section.
+.It Li errors Ta The ERRORS section.
+.El
+.Sh FILES
+.Bl -hang -width /var/db/man.db -compact
+.It Pa /var/db/man.db
+The Sqlite FTS database which contains an index of the manual pages.
+.El
+.Sh SEE ALSO
+.Xr apropos 1 ,
+.Xr man 1 ,
+.Xr man.conf 5
+.Sh AUTHORS
+.An Abhinav Upadhyay
