@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.232 2011/12/27 16:54:51 christos Exp $
+$NetBSD: UPDATING,v 1.233 2012/02/07 19:37:14 joerg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20120207:
+	Default for MKCATPAGES changed to NO. Update builds with fail
+	unless DESTDIR is cleaned manually.
 
 20111227:
 	If you built between 20111225 and 20111227 you need to remove
