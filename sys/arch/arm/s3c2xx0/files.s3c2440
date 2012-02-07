@@ -1,4 +1,4 @@
-#	$NetBSD: files.s3c2440,v 1.1 2012/01/30 03:28:33 nisimura Exp $
+#	$NetBSD: files.s3c2440,v 1.2 2012/02/07 09:06:04 nisimura Exp $
 #
 # Configuration info for Samsung S3C2440
 #
@@ -49,3 +49,8 @@ file	arch/arm/s3c2xx0/s3c2440_i2s.c		ssiis
 device	sstouch: wsmousedev, tpcalib
 attach	sstouch at ssio
 file	arch/arm/s3c2xx0/s3c2440_touch.c	sstouch
+
+# RTC
+device ssrtc
+attach ssrtc at ssio
+file	arch/arm/s3c2xx0/s3c2440_rtc.c		ssrtc
