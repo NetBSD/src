@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.1 2012/01/30 03:28:33 nisimura Exp $
+#	$NetBSD: MINI2440,v 1.2 2012/02/07 09:07:47 nisimura Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -60,7 +60,7 @@ file-system	NFS		# Network file system
 #file-system 	ADOSFS		# AmigaDOS-compatible file system
 #file-system 	EXT2FS		# second extended file system (linux)
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
-#file-system	MSDOSFS		# MS-DOS file system
+file-system	MSDOSFS		# MS-DOS file system
 file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
@@ -75,7 +75,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 #options 	SOFTDEP
-#options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
@@ -159,7 +159,7 @@ options 	DDB_KEYCODE=0x1d	# Enter ddb on ^]
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	UVMHIST
-options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 #options 	KGDB
 #options  	DEBUG_KGDB
 #options 	DDB		# in-kernel debugger
@@ -200,6 +200,8 @@ options 	WSDISPLAY_DEFAULTSCREENS=1
 
 sstouch0 at ssio?
 wsmouse* at sstouch0 mux 0
+
+ssrtc0 at ssio?
 
 ssiis0 at ssio?
 udassio* at ssiis0
