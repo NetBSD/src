@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.55 2011/12/23 00:51:47 jakllsch Exp $	*/
+/*	$NetBSD: umidi.c,v 1.56 2012/02/07 11:40:24 plunky Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.55 2011/12/23 00:51:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.56 2012/02/07 11:40:24 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -255,6 +255,7 @@ umidi_attach(device_t parent, device_t self, void *aux)
 error:
 	aprint_error_dev(self, "disabled.\n");
 	sc->sc_dying = 1;
+	KERNEL_UNLOCK_ONE(curlwp);
 	return;
 }
 
@@ -1125,7 +1126,9 @@ open_in_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *, int))
 	jack->u.in.intr = intr;
 	jack->opened = 1;
 	if (ep->num_open++ == 0 && UE_GET_DIR(ep->addr)==UE_DIR_IN) {
+		KERNEL_LOCK(1, curlwp);
 		err = start_input_transfer(ep);
+		KERNEL_UNLOCK_ONE(curlwp);
 		if (err != USBD_NORMAL_COMPLETION &&
 		    err != USBD_IN_PROGRESS) {
 			ep->num_open--;
