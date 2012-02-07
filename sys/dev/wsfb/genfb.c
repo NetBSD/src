@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.46 2012/01/11 16:13:11 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.47 2012/02/07 18:48:19 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.46 2012/01/11 16:13:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.47 2012/02/07 18:48:19 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -510,7 +510,7 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (ri->ri_depth == 32)
 		ri->ri_flg |= RI_ENABLE_ALPHA;
 
-	if (ri->ri_depth == 8)
+	if (ri->ri_depth == 8 && sc->sc_cmcb != NULL)
 		ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
 
 
