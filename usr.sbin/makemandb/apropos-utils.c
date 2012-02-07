@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: apropos-utils.c,v 1.2 2012/02/07 19:17:16 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.1 2012/02/07 19:13:32 joerg Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.2 2012/02/07 19:17:16 joerg Exp $");
 
 #include <sys/stat.h>
 

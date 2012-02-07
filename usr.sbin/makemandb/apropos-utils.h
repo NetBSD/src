@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: apropos-utils.h,v 1.2 2012/02/07 19:17:16 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.

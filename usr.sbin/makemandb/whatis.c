@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: whatis.c,v 1.2 2012/02/07 19:17:16 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: whatis.c,v 1.1 2012/02/07 19:13:32 joerg Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.2 2012/02/07 19:17:16 joerg Exp $");
 
 #include <err.h>
 #include <stdio.h>
