@@ -1,11 +1,11 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$NetBSD: Makefile,v 1.16 2008/10/25 22:27:36 apb Exp $
+#	$NetBSD: Makefile,v 1.17 2012/02/07 19:13:31 joerg Exp $
 
 NOOBJ=		# defined
 
 .include <bsd.own.mk>
 
-.if ${MKSHARE} != "no"
+.if ${MKSHARE} != "no" && ${MKMAKEMANDB} == "no"
 FILES=		makewhatis.sed
 FILESDIR=	/usr/share/man
 .endif
