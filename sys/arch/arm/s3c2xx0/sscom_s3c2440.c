@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2440.c,v 1.1 2012/01/30 03:28:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2440.c,v 1.2 2012/02/07 09:06:05 nisimura Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -70,36 +70,24 @@ __KERNEL_RCSID(0, "$NetBSD: sscom_s3c2440.c,v 1.1 2012/01/30 03:28:33 nisimura E
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
-#include <sys/tty.h>
-#include <sys/proc.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/uio.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/timepps.h>
-#include <sys/vnode.h>
 
-#include <machine/intr.h>
 #include <sys/bus.h>
+#include <machine/intr.h>
 
 #include <arm/s3c2xx0/s3c2440reg.h>
 #include <arm/s3c2xx0/s3c2440var.h>
 #include <arm/s3c2xx0/sscom_var.h>
-#include <sys/termios.h>
 
-static int sscom_match(struct device *, struct cfdata *, void *);
-static void sscom_attach(struct device *, struct device *, void *);
+#include "locators.h"
+
+static int sscom_match(device_t, struct cfdata *, void *);
+static void sscom_attach(device_t, struct device *, void *);
 
 CFATTACH_DECL_NEW(sscom, sizeof(struct sscom_softc), sscom_match,
     sscom_attach, NULL, NULL);
 
-const struct sscom_uart_info s3c2440_uart_config[] = {
+const static struct sscom_uart_info s3c2440_uart_config[] = {
 	/* UART 0 */
 	{
 		0,
@@ -125,33 +113,38 @@ const struct sscom_uart_info s3c2440_uart_config[] = {
 		S3C2440_UART_BASE(2),
 	},
 };
+static int found;
 
 static int
-sscom_match(struct device *parent, struct cfdata *cf, void *aux)
+sscom_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct s3c2xx0_attach_args *sa = aux;
 	int unit = sa->sa_index;
 
-	return unit == 0 || unit == 1;
+	if (unit == SSIOCF_INDEX_DEFAULT && found == 0)
+		return 1;
+	return (unit == 0 || unit == 1 || unit == 2);
 }
 
 static void
-sscom_attach(struct device *parent, struct device *self, void *aux)
+sscom_attach(device_t parent, struct device *self, void *aux)
 {
 	struct sscom_softc *sc = device_private(self);
 	struct s3c2xx0_attach_args *sa = aux;
-	int unit = sa->sa_index;
-	bus_addr_t iobase = s3c2440_uart_config[unit].iobase;
+	int unit;
+	bus_addr_t iobase;
 
-	printf( ": UART%d addr=%lx", sa->sa_index, iobase );
+	found = 1;
+	unit = (sa->sa_index == SSIOCF_INDEX_DEFAULT) ? 0 : sa->sa_index;
+	iobase = s3c2440_uart_config[unit].iobase;
 
 	sc->sc_dev = self;
 	sc->sc_iot = s3c2xx0_softc->sc_iot;
 	sc->sc_unit = unit;
 	sc->sc_frequency = s3c2xx0_softc->sc_pclk;
 
-	sc->sc_rx_irqno = s3c2440_uart_config[sa->sa_index].rx_int;
-	sc->sc_tx_irqno = s3c2440_uart_config[sa->sa_index].tx_int;
+	sc->sc_rx_irqno = s3c2440_uart_config[unit].rx_int;
+	sc->sc_tx_irqno = s3c2440_uart_config[unit].tx_int;
 
 	if (bus_space_map(sc->sc_iot, iobase, SSCOM_SIZE, 0, &sc->sc_ioh)) {
 		printf( ": failed to map registers\n" );
@@ -170,8 +163,6 @@ sscom_attach(struct device *parent, struct device *self, void *aux)
 
 	sscom_attach_subr(sc);
 }
-
-
 
 int
 s3c2440_sscom_cnattach(bus_space_tag_t iot, int unit, int rate,

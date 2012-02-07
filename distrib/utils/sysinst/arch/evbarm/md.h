@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.18 2012/02/03 00:35:35 nisimura Exp $	*/
+/*	$NetBSD: md.h,v 1.19 2012/02/07 09:06:04 nisimura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -35,10 +35,14 @@
 
 /* md.h -- Machine specific definitions for evbarm */
 
+#include "mbr.h"
+
 /* Constants and defines */
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 60
+
+#define HAVE_UFS2_BOOT
 
 /*
  *  Default filesets to fetch and install during installation
