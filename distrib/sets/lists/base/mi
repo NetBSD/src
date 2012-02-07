@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.980 2012/02/05 14:19:04 dholland Exp $
+# $NetBSD: mi,v 1.981 2012/02/07 19:13:25 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1023,7 +1023,7 @@
 ./usr/libexec/fingerd				base-netutil-bin
 ./usr/libexec/ftp-proxy				base-obsolete		obsolete
 ./usr/libexec/ftpd				base-netutil-bin
-./usr/libexec/getNAME				base-man-bin
+./usr/libexec/getNAME				base-man-bin		!makemandb
 ./usr/libexec/getty				base-sysutil-bin
 ./usr/libexec/hprop				base-obsolete		obsolete
 ./usr/libexec/hpropd				base-krb5-bin		kerberos
@@ -1044,7 +1044,7 @@
 ./usr/libexec/lpr/pjlfilter			base-lpr-bin
 ./usr/libexec/mail.local			base-mail-bin
 ./usr/libexec/makekey				base-crypto-bin
-./usr/libexec/makewhatis			base-man-bin
+./usr/libexec/makewhatis			base-man-bin		!makemandb
 ./usr/libexec/named-xfer			base-obsolete		obsolete
 ./usr/libexec/ntalkd				base-netutil-bin
 ./usr/libexec/pfspamd				base-obsolete		obsolete
@@ -3614,7 +3614,7 @@
 ./usr/share/man/html9/vax			base-man-share
 ./usr/share/man/html9/x68k			base-man-share
 ./usr/share/man/html9/x86			base-man-share
-./usr/share/man/makewhatis.sed			base-man-share		share
+./usr/share/man/makewhatis.sed			base-man-share		!makemandb,share
 ./usr/share/man/man1				base-man-share
 ./usr/share/man/man1/atari			base-man-share
 ./usr/share/man/man1/hp300			base-man-share
@@ -3742,7 +3742,7 @@
 ./usr/share/man/man9/vax			base-man-share
 ./usr/share/man/man9/x68k			base-man-share
 ./usr/share/man/man9/x86			base-man-share
-./usr/share/man/whatis.db			base-man-share		man
+./usr/share/man/whatis.db			base-man-share		man,!makemandb
 ./usr/share/me					base-groff-share
 ./usr/share/misc				base-terminfo-share
 ./usr/share/misc/acronyms			base-reference-share	share

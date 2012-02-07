@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.78 2011/12/17 12:27:42 darcy Exp $
+#	$NetBSD: daily,v 1.79 2012/02/07 19:13:30 joerg Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -287,6 +287,16 @@ if checkyesno run_skeyaudit; then
 		echo ""
 		echo "Checking remaining s/key OTPs:"
 		skeyaudit
+	fi
+fi
+
+run_makemandb=YES
+
+if checkyesno run_makemandb; then
+	if [ -f /etc/man.conf -a -x /usr/sbin/makemandb ]; then
+		echo ""
+		echo "Updating man page index:"
+		nice -n 5 /usr/sbin/makemandb
 	fi
 fi
 

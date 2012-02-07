@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.180 2011/11/05 22:40:01 christos Exp $
+#	$NetBSD: Makefile,v 1.181 2012/02/07 19:13:31 joerg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -178,6 +178,8 @@ SUBDIR+=	libpam		# depends on heimdal
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
 .endif
+
+SUBDIR+=	../external/bsd/mdocml/lib
 
 #==================== 4th library dependency barrier ====================
 SUBDIR+=	.WAIT

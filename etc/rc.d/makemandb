@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# $NetBSD: makemandb,v 1.1 2012/02/07 19:13:30 joerg Exp $
+#
+
+# PROVIDE: makemandb
+# REQUIRE: DAEMON
+# BEFORE:  LOGIN
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="makemandb"
+required_files="/etc/man.conf /usr/sbin/makemandb"
+start_cmd="makemandb_start"
+stop_cmd=":"
+
+makemandb_start()
+{
+	# Initiate update build in the background
+	nice -n 5 /usr/sbin/makemandb -q > /dev/null 2>&1 &
+}
+
+load_rc_config $name
+run_rc_command "$1"
