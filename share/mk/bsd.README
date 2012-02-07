@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.291 2012/01/28 21:32:13 christos Exp $
+#	$NetBSD: bsd.README,v 1.292 2012/02/07 22:58:49 joerg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -128,7 +128,7 @@ MKBSDTAR	If "yes", use the libarchive based cpio and tar instead of
 		Default: no
 
 MKCATPAGES	If "no", don't build or install the catman pages.
-		Default: yes
+		Default: no
 
 MKCOMPAT  	If "no", don't build or install the src/compat.
 		Default: yes on amd64/sparc64, no elsewhere.
@@ -253,7 +253,7 @@ MKMANDOC	If "yes", mandoc is built as tool and used to compile
 		catman or html pages.  A directory can be exempted by
 		defining NOMANDOC.  Individual man pages are exempted
 		if NOMANDOC.${target} is set to "yes".
-		Default: no
+		Default: yes
 
 MKMANZ		If not "no", compress manual pages at installation time.
 		Default: no
