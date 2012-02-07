@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: makemandb.c,v 1.2 2012/02/07 19:17:16 joerg Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.1 2012/02/07 19:13:32 joerg Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.2 2012/02/07 19:17:16 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
