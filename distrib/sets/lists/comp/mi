@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1730 2012/02/05 14:19:05 dholland Exp $
+#	$NetBSD: mi,v 1.1731 2012/02/07 19:13:25 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3971,7 +3971,7 @@
 ./usr/libdata/debug/usr/libexec/fingerd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/ftp-proxy.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/ftpd.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/libexec/getNAME.debug	comp-man-debug		debug
+./usr/libdata/debug/usr/libexec/getNAME.debug	comp-man-debug		!makemandb,debug
 ./usr/libdata/debug/usr/libexec/getty.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/libexec/hpropd.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/httpd.debug	comp-netutil-debug	debug
@@ -3988,7 +3988,7 @@
 ./usr/libdata/debug/usr/libexec/lpr/lpf.debug	comp-lpr-debug		debug
 ./usr/libdata/debug/usr/libexec/mail.local.debug	comp-mail-debug		debug
 ./usr/libdata/debug/usr/libexec/makekey.debug	comp-crypto-debug	debug
-./usr/libdata/debug/usr/libexec/makewhatis.debug	comp-man-debug		debug
+./usr/libdata/debug/usr/libexec/makewhatis.debug	comp-man-debug		!makemandb,debug
 ./usr/libdata/debug/usr/libexec/ntalkd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/pcpp.debug	comp-c-debug		pcc,debug
 ./usr/libdata/debug/usr/libexec/postfix/anvil.debug	comp-postfix-debug	postfix,debug
@@ -4148,6 +4148,7 @@
 ./usr/libdata/debug/usr/sbin/lpd.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/lptest.debug	comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/mailwrapper.debug	comp-mailwrapper-debug	debug
+./usr/libdata/debug/usr/sbin//makemandb.debug	comp-makemandb-debug	makemandb,debug
 ./usr/libdata/debug/usr/sbin/makedbm.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/makefs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/map-mbone.debug	comp-netutil-debug	debug
