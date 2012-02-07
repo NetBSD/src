@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_clk.c,v 1.12 2012/01/30 03:28:33 nisimura Exp $ */
+/*	$NetBSD: s3c24x0_clk.c,v 1.13 2012/02/07 09:06:05 nisimura Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.12 2012/01/30 03:28:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.13 2012/02/07 09:06:05 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ static struct timecounter s3c24x0_timecounter = {
 	0,			/* no poll_pps */
 	0xfff,			/* counter_mask */
 	0,			/* frequency */
-	"s3c234x0",		/* name */
+	"s3c24x0",		/* name */
 	100,			/* quality */
 	NULL,			/* prev */
 	NULL,			/* next */

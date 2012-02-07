@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.36 2012/02/04 18:50:42 christos Exp $ */
+/*	$NetBSD: sscom.c,v 1.37 2012/02/07 09:06:05 nisimura Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.36 2012/02/04 18:50:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.37 2012/02/07 09:06:05 nisimura Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -430,13 +430,19 @@ sscom_attach_subr(struct sscom_softc *sc)
 #endif
 
 	if (unit == sscomconsunit) {
-		sscomconsattached = 1;
+		int timo, stat;
 
+		sscomconsattached = 1;
 		sscomconstag = iot;
 		sscomconsioh = ioh;
 
+		/* wait for this transmission to complete */
+		timo = 1500000;
+		do {
+			stat = bus_space_read_1(iot, ioh, SSCOM_UTRSTAT);
+		} while ((stat & UTRSTAT_TXEMPTY) == 0 && --timo > 0);
+
 		/* Make sure the console is always "hardwired". */
-		delay(1000);			/* XXX: wait for output to finish */
 		SET(sc->sc_hwflags, SSCOM_HW_CONSOLE);
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
 
