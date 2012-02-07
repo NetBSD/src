@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.3 2012/02/07 22:59:32 joerg Exp $	*/
+/*	$NetBSD: apropos.c,v 1.4 2012/02/07 23:03:34 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.3 2012/02/07 22:59:32 joerg Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.4 2012/02/07 23:03:34 joerg Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 		case '7':
 		case '8':
 		case '9':
-			aflags.sec_nums[atoi(&ch) - 1] = 1;
+			aflags.sec_nums[ch - '1'] = 1;
 			break;
 		case 'C':
 			aflags.no_context = 1;
