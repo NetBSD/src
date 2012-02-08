@@ -1,4 +1,4 @@
-#	$NetBSD: getdirs.awk,v 1.4 2008/04/30 13:10:49 martin Exp $
+#	$NetBSD: getdirs.awk,v 1.5 2012/02/08 16:51:09 njoly Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,6 +48,15 @@ function dirname(file) \
 /^\/(un)?set/ \
 {
 	next
+}
+
+#	error if consecutive slashes are found
+#
+/\/\// \
+{
+	print "Unsupported consecutive slashes in path:" >"/dev/stderr"
+	print >"/dev/stderr"
+	exit 1
 }
 
 #	all other lines are parsed 
