@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_readdir.c,v 1.2 2012/02/08 03:24:30 christos Exp $	*/
+/*	$NetBSD: compat_readdir.c,v 1.3 2012/02/08 12:10:17 mbalmer Exp $	*/
 
 #define __LIBC12_SOURCE__
 #include "namespace.h"
@@ -35,7 +35,7 @@ direnttodirent12(struct dirent12 *d12, const struct dirent *d)
 	d12->d_reclen = (uint16_t)d->d_reclen;
 	d12->d_namlen = (uint8_t)MIN(d->d_namlen, sizeof(d->d_name) - 1);
 	d12->d_type = (uint8_t)d->d_type;
-	memcpy(d12->d_name, d->d_name, d12->d_namlen);
+	memcpy(d12->d_name, d->d_name, (size_t)d12->d_namlen);
 	d12->d_name[d12->d_namlen] = '\0';
 	return d12;
 }
