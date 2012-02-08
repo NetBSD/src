@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.54 2011/06/14 07:49:09 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.55 2012/02/08 08:25:05 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -527,7 +527,7 @@ from the freelist, increment its reference count and lock it.
 The argument
 .Fa lockflags
 specifies the
-.Xr lockmgr 9
+.Xr rwlock 9
 flags used to lock the vnode.
 If the VXLOCK is set in
 .Fa vp Ns 's
