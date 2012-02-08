@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.52 2012/01/15 10:30:21 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.53 2012/02/08 17:55:21 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -37,7 +37,7 @@
 #include "opt_memsize.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2012/01/15 10:30:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2012/02/08 17:55:21 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2012/01/15 10:30:21 jmcneill Exp $"
 #include <uvm/uvm_page.h>
 
 #include <dev/mm.h>
+#include <machine/vmparam.h>
 #include <machine/machdep.h>
 #include <machine/thunk.h>
 
@@ -249,8 +250,30 @@ consinit(void)
 }
 
 int
-mm_md_physacc(paddr_t pa, vm_prot_t prog)
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
+	// printf("%s: pa = %p, acc %d\n", __func__, (void *) pa, prot);
+	if (pa >= physmem * PAGE_SIZE)
+		return EFAULT;
+	return 0;
+}
+
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+	const vaddr_t va = (vaddr_t)ptr;
+	extern void *end;
+
+	// printf("%s: ptr %p, acc %d\n", __func__, ptr, prot);
+	if (va < kmem_kvm_start)
+		return EFAULT;
+	if ((va >= kmem_kvm_cur_end) && (va < kmem_k_start))
+		return EFAULT;
+	if (va > (vaddr_t) end)
+		return EFAULT;
+
+	*handled = true;
 	return 0;
 }
 
