@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.9 2012/01/19 12:14:49 reinoud Exp $ */
+/* $NetBSD: cpu.h,v 1.10 2012/02/08 17:55:21 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -50,10 +50,10 @@ extern void cpu_need_resched(struct cpu_info *ci, int flags);
 
 
 struct cpu_info {
-	device_t	ci_dev;
+	struct cpu_data	ci_data;		/* MI per-cpu data */
+	device_t	ci_dev;			/* pointer to our device */
 	struct cpu_info	*ci_self;
 	struct cpu_info	*ci_next;
-	struct cpu_data	ci_data;
 	u_int		ci_cpuid;
 	int		ci_want_resched;
 	int		ci_idepth;
