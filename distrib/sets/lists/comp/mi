@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1731 2012/02/07 19:13:25 joerg Exp $
+#	$NetBSD: mi,v 1.1732 2012/02/08 16:52:39 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4148,7 +4148,7 @@
 ./usr/libdata/debug/usr/sbin/lpd.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/lptest.debug	comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/mailwrapper.debug	comp-mailwrapper-debug	debug
-./usr/libdata/debug/usr/sbin//makemandb.debug	comp-makemandb-debug	makemandb,debug
+./usr/libdata/debug/usr/sbin/makemandb.debug	comp-makemandb-debug	makemandb,debug
 ./usr/libdata/debug/usr/sbin/makedbm.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/makefs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/map-mbone.debug	comp-netutil-debug	debug
