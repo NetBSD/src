@@ -2541,7 +2541,7 @@ pmap_pv_page_free(struct pool *pp, void *v)
 	struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 	KASSERT(pg != NULL);
 	pmap_clear_mdpage_attributes(VM_PAGE_TO_MD(pg), PG_MD_POOLPAGE);
-	uvm_pagefree(pg);
+	uvm_km_pagefree(pg);
 }
 
 pt_entry_t *
@@ -2594,17 +2594,23 @@ pmap_prefer(vaddr_t foff, vaddr_t *vap, vsize_t sz, int td)
 struct vm_page *
 mips_pmap_alloc_poolpage(int flags)
 {
+	struct vm_page *pg;
 	/*
 	 * On 32bit kernels, we must make sure that we only allocate pages that
 	 * can be mapped via KSEG0.  On 64bit kernels, try to allocated from
 	 * the first 4G.  If all memory is in KSEG0/4G, then we can just
 	 * use the default freelist otherwise we must use the pool page list.
 	 */
-	if (mips_poolpage_vmfreelist != VM_FREELIST_DEFAULT)
-		return uvm_pagealloc_strat(NULL, 0, NULL, flags,
+	if (mips_poolpage_vmfreelist != VM_FREELIST_DEFAULT) {
+		pg = uvm_pagealloc_strat(NULL, 0, NULL, flags,
 		    UVM_PGA_STRAT_ONLY, mips_poolpage_vmfreelist);
-
-	return uvm_pagealloc(NULL, 0, NULL, flags);
+	} else {
+		pg = uvm_pagealloc(NULL, 0, NULL, flags);
+	}
+	if (pg != NULL) {
+		uvm_km_pageclaim(pg);
+	}
+	return pg;
 }
 
 vaddr_t
