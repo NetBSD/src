@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.1 2012/01/21 23:20:58 matt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.2 2012/02/09 03:05:01 matt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.1 2012/01/21 23:20:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.2 2012/02/09 03:05:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -94,12 +94,23 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.1 2012/01/21 23:20:58
 #define	CLOCK_INACTIVEPCT	33
 #endif /* !defined(CLOCK_INACTIVEPCT) */
 
+struct uvmpdpol_scanstate {
+	struct vm_page *ss_nextpg;
+	bool ss_first;
+	bool ss_anonreact, ss_filereact, ss_execreact;
+};
+
+struct uvmpdpol_groupstate {
+	struct pglist gs_activeq;	/* allocated pages, in use */
+	struct pglist gs_inactiveq;	/* pages between the clock hands */
+	u_int gs_active;
+	u_int gs_inactive;
+	u_int gs_inactarg;
+	struct uvmpdpol_scanstate gs_scanstate;
+};
+
 struct uvmpdpol_globalstate {
-	struct pglist s_activeq;	/* allocated pages, in use */
-	struct pglist s_inactiveq;	/* pages between the clock hands */
-	int s_active;
-	int s_inactive;
-	int s_inactarg;
+	struct uvmpdpol_groupstate *s_pggroups;
 	struct uvm_pctparam s_anonmin;
 	struct uvm_pctparam s_filemin;
 	struct uvm_pctparam s_execmin;
@@ -109,37 +120,51 @@ struct uvmpdpol_globalstate {
 	struct uvm_pctparam s_inactivepct;
 };
 
-struct uvmpdpol_scanstate {
-	bool ss_first;
-	bool ss_anonreact, ss_filereact, ss_execreact;
-	struct vm_page *ss_nextpg;
-};
 
 static struct uvmpdpol_globalstate pdpol_state;
-static struct uvmpdpol_scanstate pdpol_scanstate;
 
 PDPOL_EVCNT_DEFINE(reactexec)
 PDPOL_EVCNT_DEFINE(reactfile)
 PDPOL_EVCNT_DEFINE(reactanon)
 
-static void
-clock_tune(void)
+#ifdef DEBUG
+static size_t
+clock_pglist_count(struct pglist *pglist)
 {
-	struct uvmpdpol_globalstate *s = &pdpol_state;
+	size_t count = 0;
+	struct vm_page *pg;
+	TAILQ_FOREACH(pg, pglist, pageq.queue) {
+		count++;
+	}
+	return count;
+}
+#endif
 
-	s->s_inactarg = UVM_PCTPARAM_APPLY(&s->s_inactivepct,
-	    s->s_active + s->s_inactive);
-	if (s->s_inactarg <= uvmexp.freetarg) {
-		s->s_inactarg = uvmexp.freetarg + 1;
+static size_t
+clock_space(void)
+{
+	return sizeof(struct uvmpdpol_groupstate);
+}
+
+static void
+clock_tune(struct uvm_pggroup *grp)
+{
+	struct uvmpdpol_globalstate * const s = &pdpol_state;
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
+
+	gs->gs_inactarg = UVM_PCTPARAM_APPLY(&s->s_inactivepct,
+	    gs->gs_active + gs->gs_inactive);
+	if (gs->gs_inactarg <= grp->pgrp_freetarg) {
+		gs->gs_inactarg = grp->pgrp_freetarg + 1;
 	}
 }
 
 void
-uvmpdpol_scaninit(void)
+uvmpdpol_scaninit(struct uvm_pggroup *grp)
 {
-	struct uvmpdpol_globalstate *s = &pdpol_state;
-	struct uvmpdpol_scanstate *ss = &pdpol_scanstate;
-	int t;
+	struct uvmpdpol_globalstate * const s = &pdpol_state;
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
+	struct uvmpdpol_scanstate * const ss = &gs->gs_scanstate;
 	bool anonunder, fileunder, execunder;
 	bool anonover, fileover, execover;
 	bool anonreact, filereact, execreact;
@@ -149,13 +174,13 @@ uvmpdpol_scaninit(void)
 	 * to keep usage within the minimum and maximum usage limits.
 	 */
 
-	t = s->s_active + s->s_inactive + uvmexp.free;
-	anonunder = uvmexp.anonpages <= UVM_PCTPARAM_APPLY(&s->s_anonmin, t);
-	fileunder = uvmexp.filepages <= UVM_PCTPARAM_APPLY(&s->s_filemin, t);
-	execunder = uvmexp.execpages <= UVM_PCTPARAM_APPLY(&s->s_execmin, t);
-	anonover = uvmexp.anonpages > UVM_PCTPARAM_APPLY(&s->s_anonmax, t);
-	fileover = uvmexp.filepages > UVM_PCTPARAM_APPLY(&s->s_filemax, t);
-	execover = uvmexp.execpages > UVM_PCTPARAM_APPLY(&s->s_execmax, t);
+	u_int t = gs->gs_active + gs->gs_inactive + grp->pgrp_free;
+	anonunder = grp->pgrp_anonpages <= UVM_PCTPARAM_APPLY(&s->s_anonmin, t);
+	fileunder = grp->pgrp_filepages <= UVM_PCTPARAM_APPLY(&s->s_filemin, t);
+	execunder = grp->pgrp_execpages <= UVM_PCTPARAM_APPLY(&s->s_execmin, t);
+	anonover = grp->pgrp_anonpages > UVM_PCTPARAM_APPLY(&s->s_anonmax, t);
+	fileover = grp->pgrp_filepages > UVM_PCTPARAM_APPLY(&s->s_filemax, t);
+	execover = grp->pgrp_execpages > UVM_PCTPARAM_APPLY(&s->s_execmax, t);
 	anonreact = anonunder || (!anonover && (fileover || execover));
 	filereact = fileunder || (!fileover && (anonover || execover));
 	execreact = execunder || (!execover && (anonover || fileover));
@@ -170,10 +195,12 @@ uvmpdpol_scaninit(void)
 }
 
 struct vm_page *
-uvmpdpol_selectvictim(void)
+uvmpdpol_selectvictim(struct uvm_pggroup *grp)
 {
-	struct uvmpdpol_scanstate *ss = &pdpol_scanstate;
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
+	struct uvmpdpol_scanstate * const ss = &gs->gs_scanstate;
 	struct vm_page *pg;
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
 
@@ -181,21 +208,27 @@ uvmpdpol_selectvictim(void)
 		struct vm_anon *anon;
 		struct uvm_object *uobj;
 
+		KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
+
 		if (ss->ss_first) {
-			pg = TAILQ_FIRST(&pdpol_state.s_inactiveq);
+			pg = TAILQ_FIRST(&gs->gs_inactiveq);
 			ss->ss_first = false;
+			UVMHIST_LOG(pdhist, "  select first inactive page: %p",
+			    pg, 0, 0, 0);
 		} else {
 			pg = ss->ss_nextpg;
 			if (pg != NULL && (pg->pqflags & PQ_INACTIVE) == 0) {
-				pg = TAILQ_FIRST(&pdpol_state.s_inactiveq);
+				pg = TAILQ_FIRST(&gs->gs_inactiveq);
 			}
+			UVMHIST_LOG(pdhist, "  select next inactive page: %p",
+			    pg, 0, 0, 0);
 		}
 		if (pg == NULL) {
 			break;
 		}
 		ss->ss_nextpg = TAILQ_NEXT(pg, pageq.queue);
 
-		uvmexp.pdscans++;
+		grp->pgrp_pdscans++;
 
 		/*
 		 * move referenced pages back to active queue and
@@ -204,7 +237,7 @@ uvmpdpol_selectvictim(void)
 
 		if (pmap_is_referenced(pg)) {
 			uvmpdpol_pageactivate(pg);
-			uvmexp.pdreact++;
+			grp->pgrp_pdreact++;
 			continue;
 		}
 
@@ -243,9 +276,10 @@ uvmpdpol_selectvictim(void)
 }
 
 void
-uvmpdpol_balancequeue(int swap_shortage)
+uvmpdpol_balancequeue(struct uvm_pggroup *grp, u_int swap_shortage)
 {
-	int inactive_shortage;
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
+
 	struct vm_page *pg, *nextpg;
 
 	/*
@@ -253,8 +287,10 @@ uvmpdpol_balancequeue(int swap_shortage)
 	 * our inactive target.
 	 */
 
-	inactive_shortage = pdpol_state.s_inactarg - pdpol_state.s_inactive;
-	for (pg = TAILQ_FIRST(&pdpol_state.s_activeq);
+	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+
+	u_int inactive_shortage = gs->gs_inactarg - gs->gs_inactive;
+	for (pg = TAILQ_FIRST(&gs->gs_activeq);
 	     pg != NULL && (inactive_shortage > 0 || swap_shortage > 0);
 	     pg = nextpg) {
 		nextpg = TAILQ_NEXT(pg, pageq.queue);
@@ -263,11 +299,13 @@ uvmpdpol_balancequeue(int swap_shortage)
 		 * if there's a shortage of swap slots, try to free it.
 		 */
 
+#ifdef VMSWAP
 		if (swap_shortage > 0 && (pg->pqflags & PQ_SWAPBACKED) != 0) {
 			if (uvmpd_trydropswap(pg)) {
 				swap_shortage--;
 			}
 		}
+#endif
 
 		/*
 		 * if there's a shortage of inactive pages, deactivate.
@@ -276,59 +314,92 @@ uvmpdpol_balancequeue(int swap_shortage)
 		if (inactive_shortage > 0) {
 			/* no need to check wire_count as pg is "active" */
 			uvmpdpol_pagedeactivate(pg);
-			uvmexp.pddeact++;
+			grp->pgrp_pddeact++;
 			inactive_shortage--;
 		}
 	}
+
+	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 }
 
 void
 uvmpdpol_pagedeactivate(struct vm_page *pg)
 {
+	struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
+
+	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+
 	if (pg->pqflags & PQ_ACTIVE) {
-		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq.queue);
+		TAILQ_REMOVE(&gs->gs_activeq, pg, pageq.queue);
 		pg->pqflags &= ~PQ_ACTIVE;
-		KASSERT(pdpol_state.s_active > 0);
-		pdpol_state.s_active--;
+		KASSERT(gs->gs_active > 0);
+		gs->gs_active--;
+		grp->pgrp_active--;
 	}
+
+	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+	KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
+
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
 		KASSERT(pg->wire_count == 0);
 		pmap_clear_reference(pg);
-		TAILQ_INSERT_TAIL(&pdpol_state.s_inactiveq, pg, pageq.queue);
+		TAILQ_INSERT_TAIL(&gs->gs_inactiveq, pg, pageq.queue);
 		pg->pqflags |= PQ_INACTIVE;
-		pdpol_state.s_inactive++;
+		gs->gs_inactive++;
+		grp->pgrp_inactive++;
 	}
+
+	KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
 }
 
 void
 uvmpdpol_pageactivate(struct vm_page *pg)
 {
+	struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 
 	uvmpdpol_pagedequeue(pg);
-	TAILQ_INSERT_TAIL(&pdpol_state.s_activeq, pg, pageq.queue);
+	TAILQ_INSERT_TAIL(&gs->gs_activeq, pg, pageq.queue);
 	pg->pqflags |= PQ_ACTIVE;
-	pdpol_state.s_active++;
+	gs->gs_active++;
+	grp->pgrp_active++;
+
+	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 }
 
 void
 uvmpdpol_pagedequeue(struct vm_page *pg)
 {
+	struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
+
+	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 
 	if (pg->pqflags & PQ_ACTIVE) {
 		KASSERT(mutex_owned(&uvm_pageqlock));
-		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq.queue);
+		TAILQ_REMOVE(&gs->gs_activeq, pg, pageq.queue);
 		pg->pqflags &= ~PQ_ACTIVE;
-		KASSERT(pdpol_state.s_active > 0);
-		pdpol_state.s_active--;
-	} else if (pg->pqflags & PQ_INACTIVE) {
-		KASSERT(mutex_owned(&uvm_pageqlock));
-		TAILQ_REMOVE(&pdpol_state.s_inactiveq, pg, pageq.queue);
-		pg->pqflags &= ~PQ_INACTIVE;
-		KASSERT(pdpol_state.s_inactive > 0);
-		pdpol_state.s_inactive--;
+		KASSERT(gs->gs_active > 0);
+		gs->gs_active--;
+		grp->pgrp_active--;
 	}
+
+	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+	KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
+
+	if (pg->pqflags & PQ_INACTIVE) {
+		KASSERT(mutex_owned(&uvm_pageqlock));
+		TAILQ_REMOVE(&gs->gs_inactiveq, pg, pageq.queue);
+		pg->pqflags &= ~PQ_INACTIVE;
+		KASSERT(gs->gs_inactive > 0);
+		gs->gs_inactive--;
+		grp->pgrp_inactive--;
+	}
+
+	KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
 }
 
 void
@@ -351,14 +422,26 @@ uvmpdpol_pageisqueued_p(struct vm_page *pg)
 }
 
 void
-uvmpdpol_estimatepageable(int *active, int *inactive)
+uvmpdpol_estimatepageable(u_int *activep, u_int *inactivep)
 {
+	struct uvm_pggroup *grp;
+	u_int active = 0, inactive = 0;
 
-	if (active) {
-		*active = pdpol_state.s_active;
+	STAILQ_FOREACH(grp, &uvm.page_groups, pgrp_uvm_link) {
+		struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
+
+		KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+		KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
+
+		active += gs->gs_active;
+		inactive += gs->gs_inactive;
 	}
-	if (inactive) {
-		*inactive = pdpol_state.s_inactive;
+
+	if (activep) {
+		*activep = active;
+	}
+	if (inactivep) {
+		*inactivep = inactive;
 	}
 }
 
@@ -366,8 +449,8 @@ uvmpdpol_estimatepageable(int *active, int *inactive)
 static int
 min_check(struct uvm_pctparam *pct, int t)
 {
-	struct uvmpdpol_globalstate *s = &pdpol_state;
-	int total = t;
+	struct uvmpdpol_globalstate * const s = &pdpol_state;
+	u_int total = t;
 
 	if (pct != &s->s_anonmin) {
 		total += uvm_pctparam_get(&s->s_anonmin);
@@ -386,12 +469,23 @@ min_check(struct uvm_pctparam *pct, int t)
 #endif /* !defined(PDSIM) */
 
 void
-uvmpdpol_init(void)
+uvmpdpol_init(void *new_gs, size_t npggroups)
 {
-	struct uvmpdpol_globalstate *s = &pdpol_state;
+	struct uvmpdpol_globalstate * const s = &pdpol_state;
+	struct uvmpdpol_groupstate *gs = new_gs;
 
-	TAILQ_INIT(&s->s_activeq);
-	TAILQ_INIT(&s->s_inactiveq);
+	s->s_pggroups = gs;
+
+	struct uvm_pggroup *grp = uvm.pggroups;
+	for (size_t pggroup = 0; pggroup < npggroups; pggroup++, gs++, grp++) {
+		TAILQ_INIT(&gs->gs_activeq);
+		TAILQ_INIT(&gs->gs_inactiveq);
+		grp->pgrp_gs = gs;
+		KASSERT(gs->gs_active == 0);
+		KASSERT(gs->gs_inactive == 0);
+		KASSERT(grp->pgrp_active == 0);
+		KASSERT(grp->pgrp_inactive == 0);
+	}
 	uvm_pctparam_init(&s->s_inactivepct, CLOCK_INACTIVEPCT, NULL);
 	uvm_pctparam_init(&s->s_anonmin, 10, min_check);
 	uvm_pctparam_init(&s->s_filemin, 10, min_check);
@@ -399,6 +493,10 @@ uvmpdpol_init(void)
 	uvm_pctparam_init(&s->s_anonmax, 80, NULL);
 	uvm_pctparam_init(&s->s_filemax, 50, NULL);
 	uvm_pctparam_init(&s->s_execmax, 30, NULL);
+
+	STAILQ_FOREACH(grp, &uvm.page_groups, pgrp_uvm_link) {
+		uvmpdpol_scaninit(grp);
+	}
 }
 
 void
@@ -407,17 +505,79 @@ uvmpdpol_reinit(void)
 }
 
 bool
-uvmpdpol_needsscan_p(void)
+uvmpdpol_needsscan_p(struct uvm_pggroup *grp)
 {
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 
-	return pdpol_state.s_inactive < pdpol_state.s_inactarg;
+	return gs->gs_inactive < gs->gs_inactarg;
 }
 
 void
-uvmpdpol_tune(void)
+uvmpdpol_tune(struct uvm_pggroup *grp)
 {
 
-	clock_tune();
+	clock_tune(grp);
+}
+
+size_t
+uvmpdpol_space(void)
+{
+
+	return clock_space();
+}
+
+void
+uvmpdpol_recolor(void *new_gs, struct uvm_pggroup *grparray,
+	size_t npggroups, size_t old_ncolors)
+{
+	struct uvmpdpol_globalstate * const s = &pdpol_state;
+	struct uvmpdpol_groupstate * src_gs = s->s_pggroups;
+	struct uvmpdpol_groupstate * const gs = new_gs;
+
+	s->s_pggroups = gs;
+
+	for (size_t i = 0; i < npggroups; i++) {
+		struct uvmpdpol_groupstate * const dst_gs = &gs[i];
+		TAILQ_INIT(&dst_gs->gs_activeq);
+		TAILQ_INIT(&dst_gs->gs_inactiveq);
+		uvm.pggroups[i].pgrp_gs = dst_gs;
+	}
+
+	const size_t old_npggroups = VM_NPGGROUP(old_ncolors);
+	for (size_t i = 0; i < old_npggroups; i++, src_gs++) {
+		struct vm_page *pg;
+		KDASSERT(src_gs->gs_inactive == clock_pglist_count(&src_gs->gs_inactiveq));
+		while ((pg = TAILQ_FIRST(&src_gs->gs_inactiveq)) != NULL) {
+			u_int pggroup = VM_PAGE_TO_PGGROUP(pg, uvmexp.ncolors);
+			struct uvmpdpol_groupstate * const xgs = &gs[pggroup];
+
+			TAILQ_INSERT_TAIL(&xgs->gs_inactiveq, pg, pageq.queue);
+			src_gs->gs_inactive--;
+			xgs->gs_inactive++;
+			uvm.pggroups[pggroup].pgrp_inactive++;
+			KDASSERT(xgs->gs_inactive == clock_pglist_count(&xgs->gs_inactiveq));
+		}
+		KASSERT(src_gs->gs_inactive == 0);
+
+		KDASSERT(src_gs->gs_active == clock_pglist_count(&src_gs->gs_activeq));
+		while ((pg = TAILQ_FIRST(&src_gs->gs_activeq)) != NULL) {
+			u_int pggroup = VM_PAGE_TO_PGGROUP(pg, uvmexp.ncolors);
+			struct uvmpdpol_groupstate * const xgs = &gs[pggroup];
+
+			TAILQ_INSERT_TAIL(&xgs->gs_activeq, pg, pageq.queue);
+			src_gs->gs_active--;
+			xgs->gs_active++;
+			KDASSERT(xgs->gs_active == clock_pglist_count(&xgs->gs_activeq));
+			uvm.pggroups[pggroup].pgrp_active++;
+		}
+		KASSERT(src_gs->gs_active == 0);
+	}
+
+	struct uvm_pggroup *grp;
+	STAILQ_FOREACH(grp, &uvm.page_groups, pgrp_uvm_link) {
+		clock_tune(grp);
+		uvmpdpol_scaninit(grp);
+	}
 }
 
 #if !defined(PDSIM)

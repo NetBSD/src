@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.34 2008/10/18 03:46:22 rmind Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.34.12.1 2012/02/09 03:04:59 matt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.34 2008/10/18 03:46:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.34.12.1 2012/02/09 03:04:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.34 2008/10/18 03:46:22 rmind Exp $");
  * easier to spot...
  */
 
-struct uvm uvm;		/* decl */
+struct uvm uvm = {	/* decl */
+	.kmem_pageq = TAILQ_HEAD_INITIALIZER(uvm.kmem_pageq),
+};
 struct uvmexp uvmexp;	/* decl */
 struct uvm_object *uvm_kernel_object;
 
@@ -90,10 +92,8 @@ uvm_init(void)
 	}
 
 	/*
-	 * step 1: zero the uvm structure
+	 * step 1: don't zero the uvm structure 
 	 */
-
-	memset(&uvm, 0, sizeof(uvm));
 	averunnable.fscale = FSCALE;
 	uvm_amap_init();
 

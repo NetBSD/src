@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.84.20.1 2009/02/02 19:24:04 snj Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.84.20.1.4.1 2012/02/09 03:04:59 matt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.84.20.1 2009/02/02 19:24:04 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.84.20.1.4.1 2012/02/09 03:04:59 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -227,7 +227,7 @@ fail1:
 	if ((waitf & UVM_FLAG_NOWAIT) != 0) {
 		extern u_int uvm_extrapages;
 		atomic_add_int(&uvm_extrapages,
-		    ((sizeof(int) * 2 + sizeof(struct vm_anon *)) *
+		    round_page((sizeof(int) * 2 + sizeof(struct vm_anon *)) *
 		    totalslots) >> PAGE_SHIFT);
 	}
 	return (NULL);

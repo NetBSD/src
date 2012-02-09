@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.42.16.10 2011/06/03 08:00:51 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.42.16.11 2012/02/09 03:05:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.10 2011/06/03 08:00:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.11 2012/02/09 03:05:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,7 @@ uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 	uvm.page_free[color].pgfl_pages[queue]--;
 	ucpu->page_free[color].pgfl_pages[queue]--;
 	ucpu->pages[queue]--;
+	uvm_page_to_pggroup(pg)->pgrp_free--;
 	uvmexp.free--;
 	if (pg->flags & PG_ZERO)
 		uvmexp.zeropages--;
@@ -622,6 +623,7 @@ uvm_pglistfree(struct pglist *list)
 		uvm.page_free[color].pgfl_pages[queue]++;
 		ucpu->page_free[color].pgfl_pages[queue]++;
 		ucpu->pages[queue]++;
+		uvm_page_to_pggroup(pg)->pgrp_free++;
 		uvmexp.free++;
 		if (iszero)
 			uvmexp.zeropages++;

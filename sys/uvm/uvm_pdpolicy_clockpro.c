@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.15 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.15.16.1 2012/02/09 03:05:01 matt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.15 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.15.16.1 2012/02/09 03:05:01 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -131,11 +131,11 @@ PDPOL_EVCNT_DEFINE(speculativemiss)
 #define	CLOCKPRO_NOQUEUE	0
 #define	CLOCKPRO_NEWQ		1	/* small queue to clear initial ref. */
 #if defined(LISTQ)
-#define	CLOCKPRO_COLDQ		2
-#define	CLOCKPRO_HOTQ		3
+#define	CLOCKPRO_COLDQ(gs)	2
+#define	CLOCKPRO_HOTQ(gs)	3
 #else /* defined(LISTQ) */
-#define	CLOCKPRO_COLDQ		(2 + coldqidx)	/* XXX */
-#define	CLOCKPRO_HOTQ		(3 - coldqidx)	/* XXX */
+#define	CLOCKPRO_COLDQ(gs)	(2 + (gs)->gs_coldqidx)	/* XXX */
+#define	CLOCKPRO_HOTQ(gs)	(3 - (gs)->gs_coldqidx)	/* XXX */
 #endif /* defined(LISTQ) */
 #define	CLOCKPRO_LISTQ		4
 #define	CLOCKPRO_NQUEUE		4
@@ -162,47 +162,65 @@ clockpro_getq(struct vm_page *pg)
 
 typedef struct {
 	struct pglist q_q;
-	int q_len;
+	u_int q_len;
 } pageq_t;
 
+typedef uint32_t nonres_cookie_t;
+#define	NONRES_COOKIE_INVAL	0
+
+#define	BUCKETSIZE	14
+struct bucket {
+	u_int cycle;
+	u_int cur;
+	nonres_cookie_t pages[BUCKETSIZE];
+};
+
+static size_t cycle_target;
+static size_t cycle_target_frac;
+static size_t hashsize;
+static struct bucket *buckets;
+
+struct uvmpdpol_groupstate {
+	pageq_t gs_q[CLOCKPRO_NQUEUE];
+	struct uvm_pggroup *gs_pgrp;
+	u_int gs_npages;
+	u_int gs_coldtarget;
+	u_int gs_ncold;
+	u_int gs_newqlenmax;
+#if !defined(LISTQ)
+	u_int gs_coldqidx;
+#endif
+	u_int gs_nscanned;
+	u_int gs_coldadj;
+};
+
 struct clockpro_state {
-	int s_npages;
-	int s_coldtarget;
-	int s_ncold;
-
-	int s_newqlenmax;
-	pageq_t s_q[CLOCKPRO_NQUEUE];
-
+	struct uvmpdpol_groupstate *s_gs;
 	struct uvm_pctparam s_coldtargetpct;
 };
 
-static pageq_t *
-clockpro_queue(struct clockpro_state *s, int qidx)
+static inline pageq_t *
+clockpro_queue(struct uvmpdpol_groupstate *gs, u_int qidx)
 {
 
 	KASSERT(CLOCKPRO_NOQUEUE < qidx);
 	KASSERT(qidx <= CLOCKPRO_NQUEUE);
 
-	return &s->s_q[qidx - 1];
+	return &gs->gs_q[qidx - 1];
 }
 
 #if !defined(LISTQ)
 
-static int coldqidx;
-
-static void
-clockpro_switchqueue(void)
+static inline void
+clockpro_switchqueue(struct uvmpdpol_groupstate *gs)
 {
 
-	coldqidx = 1 - coldqidx;
+	gs->gs_coldqidx ^= 1;
 }
 
 #endif /* !defined(LISTQ) */
 
 static struct clockpro_state clockpro;
-static struct clockpro_scanstate {
-	int ss_nscanned;
-} scanstate;
 
 /* ---------------------------------------- */
 
@@ -214,7 +232,7 @@ pageq_init(pageq_t *q)
 	q->q_len = 0;
 }
 
-static int
+static u_int
 pageq_len(const pageq_t *q)
 {
 
@@ -229,8 +247,9 @@ pageq_first(const pageq_t *q)
 }
 
 static void
-pageq_insert_tail(pageq_t *q, struct vm_page *pg)
+pageq_insert_tail(struct uvmpdpol_groupstate *gs, pageq_t *q, struct vm_page *pg)
 {
+	KASSERT(clockpro_queue(gs, clockpro_getq(pg)) == q);
 
 	TAILQ_INSERT_TAIL(&q->q_q, pg, pageq.queue);
 	q->q_len++;
@@ -238,8 +257,9 @@ pageq_insert_tail(pageq_t *q, struct vm_page *pg)
 
 #if defined(LISTQ)
 static void
-pageq_insert_head(pageq_t *q, struct vm_page *pg)
+pageq_insert_head(struct uvmpdpol_groupstate *gs, pageq_t *q, struct vm_page *pg)
 {
+	KASSERT(clockpro_queue(gs, clockpro_getq(pg)) == q);
 
 	TAILQ_INSERT_HEAD(&q->q_q, pg, pageq.queue);
 	q->q_len++;
@@ -247,19 +267,16 @@ pageq_insert_head(pageq_t *q, struct vm_page *pg)
 #endif
 
 static void
-pageq_remove(pageq_t *q, struct vm_page *pg)
+pageq_remove(struct uvmpdpol_groupstate *gs, pageq_t *q, struct vm_page *pg)
 {
-
-#if 1
-	KASSERT(clockpro_queue(&clockpro, clockpro_getq(pg)) == q);
-#endif
+	KASSERT(clockpro_queue(gs, clockpro_getq(pg)) == q);
 	KASSERT(q->q_len > 0);
 	TAILQ_REMOVE(&q->q_q, pg, pageq.queue);
 	q->q_len--;
 }
 
 static struct vm_page *
-pageq_remove_head(pageq_t *q)
+pageq_remove_head(struct uvmpdpol_groupstate *gs, pageq_t *q)
 {
 	struct vm_page *pg;
 
@@ -268,36 +285,34 @@ pageq_remove_head(pageq_t *q)
 		KASSERT(q->q_len == 0);
 		return NULL;
 	}
-	pageq_remove(q, pg);
+
+	pageq_remove(gs, q, pg);
 	return pg;
 }
 
 /* ---------------------------------------- */
 
 static void
-clockpro_insert_tail(struct clockpro_state *s, int qidx, struct vm_page *pg)
+clockpro_insert_tail(struct uvmpdpol_groupstate *gs, u_int qidx, struct vm_page *pg)
 {
-	pageq_t *q = clockpro_queue(s, qidx);
+	pageq_t *q = clockpro_queue(gs, qidx);
 	
 	clockpro_setq(pg, qidx);
-	pageq_insert_tail(q, pg);
+	pageq_insert_tail(gs, q, pg);
 }
 
 #if defined(LISTQ)
 static void
-clockpro_insert_head(struct clockpro_state *s, int qidx, struct vm_page *pg)
+clockpro_insert_head(struct uvmpdpol_groupstate *gs, u_int qidx, struct vm_page *pg)
 {
-	pageq_t *q = clockpro_queue(s, qidx);
+	pageq_t *q = clockpro_queue(gs, qidx);
 	
 	clockpro_setq(pg, qidx);
-	pageq_insert_head(q, pg);
+	pageq_insert_head(gs, q, pg);
 }
 
 #endif
 /* ---------------------------------------- */
-
-typedef uint32_t nonres_cookie_t;
-#define	NONRES_COOKIE_INVAL	0
 
 typedef uintptr_t objid_t;
 
@@ -343,28 +358,14 @@ calccookie(objid_t obj, off_t idx)
 	return cookie;
 }
 
-#define	BUCKETSIZE	14
-struct bucket {
-	int cycle;
-	int cur;
-	nonres_cookie_t pages[BUCKETSIZE];
-};
-static int cycle_target;
-static int cycle_target_frac;
-
-static struct bucket static_bucket;
-static struct bucket *buckets = &static_bucket;
-static size_t hashsize = 1;
-
-static int coldadj;
-#define	COLDTARGET_ADJ(d)	coldadj += (d)
+#define	COLDTARGET_ADJ(gs, d)	((gs)->gs_coldadj += (d))
 
 #if defined(PDSIM)
 
 static void *
-clockpro_hashalloc(int n)
+clockpro_hashalloc(u_int n)
 {
-	size_t allocsz = sizeof(*buckets) * n;
+	size_t allocsz = sizeof(struct bucket) * n;
 
 	return malloc(allocsz);
 }
@@ -379,17 +380,17 @@ clockpro_hashfree(void *p, int n)
 #else /* defined(PDSIM) */
 
 static void *
-clockpro_hashalloc(int n)
+clockpro_hashalloc(u_int n)
 {
-	size_t allocsz = round_page(sizeof(*buckets) * n);
+	size_t allocsz = round_page(sizeof(struct bucket) * n);
 
 	return (void *)uvm_km_alloc(kernel_map, allocsz, 0, UVM_KMF_WIRED);
 }
 
 static void
-clockpro_hashfree(void *p, int n)
+clockpro_hashfree(void *p, u_int n)
 {
-	size_t allocsz = round_page(sizeof(*buckets) * n);
+	size_t allocsz = round_page(sizeof(struct bucket) * n);
 
 	uvm_km_free(kernel_map, (vaddr_t)p, allocsz, UVM_KMF_WIRED);
 }
@@ -427,7 +428,7 @@ clockpro_hashinit(uint64_t n)
 	buckets = newbuckets;
 	hashsize = sz;
 	/* XXX unlock */
-	if (oldbuckets != &static_bucket) {
+	if (oldbuckets) {
 		clockpro_hashfree(oldbuckets, oldsz);
 	}
 }
@@ -442,7 +443,7 @@ nonresident_getbucket(objid_t obj, off_t idx)
 }
 
 static void
-nonresident_rotate(struct bucket *b)
+nonresident_rotate(struct uvmpdpol_groupstate *gs, struct bucket *b)
 {
 	const int target = cycle_target;
 	const int cycle = b->cycle;
@@ -457,7 +458,8 @@ nonresident_rotate(struct bucket *b)
 	while (todo > 0) {
 		if (b->pages[cur] != NONRES_COOKIE_INVAL) {
 			PDPOL_EVCNT_INCR(nreshandhot);
-			COLDTARGET_ADJ(-1);
+			if (gs != NULL)
+				COLDTARGET_ADJ(gs, -1);
 		}
 		b->pages[cur] = NONRES_COOKIE_INVAL;
 		cur++;
@@ -471,14 +473,13 @@ nonresident_rotate(struct bucket *b)
 }
 
 static bool
-nonresident_lookupremove(objid_t obj, off_t idx)
+nonresident_lookupremove(struct uvmpdpol_groupstate *gs, objid_t obj, off_t idx)
 {
 	struct bucket *b = nonresident_getbucket(obj, idx);
 	nonres_cookie_t cookie = calccookie(obj, idx);
-	int i;
 
-	nonresident_rotate(b);
-	for (i = 0; i < BUCKETSIZE; i++) {
+	nonresident_rotate(gs, b);
+	for (u_int i = 0; i < BUCKETSIZE; i++) {
 		if (b->pages[i] == cookie) {
 			b->pages[i] = NONRES_COOKIE_INVAL;
 			return true;
@@ -517,9 +518,9 @@ pageidx(struct vm_page *pg)
 }
 
 static bool
-nonresident_pagelookupremove(struct vm_page *pg)
+nonresident_pagelookupremove(struct uvmpdpol_groupstate *gs, struct vm_page *pg)
 {
-	bool found = nonresident_lookupremove(pageobj(pg), pageidx(pg));
+	bool found = nonresident_lookupremove(gs, pageobj(pg), pageidx(pg));
 
 	if (pg->uobject) {
 		PDPOL_EVCNT_INCR(nreslookupobj);
@@ -537,17 +538,15 @@ nonresident_pagelookupremove(struct vm_page *pg)
 }
 
 static void
-nonresident_pagerecord(struct vm_page *pg)
+nonresident_pagerecord(struct uvmpdpol_groupstate *gs, struct vm_page *pg)
 {
-	objid_t obj = pageobj(pg);
-	off_t idx = pageidx(pg);
-	struct bucket *b = nonresident_getbucket(obj, idx);
+	const objid_t obj = pageobj(pg);
+	const off_t idx = pageidx(pg);
+	struct bucket * const b = nonresident_getbucket(obj, idx);
 	nonres_cookie_t cookie = calccookie(obj, idx);
 
 #if defined(DEBUG)
-	int i;
-
-	for (i = 0; i < BUCKETSIZE; i++) {
+	for (u_int i = 0; i < BUCKETSIZE; i++) {
 		if (b->pages[i] == cookie) {
 			PDPOL_EVCNT_INCR(nresconflict);
 		}
@@ -559,10 +558,10 @@ nonresident_pagerecord(struct vm_page *pg)
 	} else {
 		PDPOL_EVCNT_INCR(nresrecordanon);
 	}
-	nonresident_rotate(b);
+	nonresident_rotate(gs, b);
 	if (b->pages[b->cur] != NONRES_COOKIE_INVAL) {
 		PDPOL_EVCNT_INCR(nresoverwritten);
-		COLDTARGET_ADJ(-1);
+		COLDTARGET_ADJ(gs, -1);
 	}
 	b->pages[b->cur] = cookie;
 	b->cur = (b->cur + 1) % BUCKETSIZE;
@@ -587,47 +586,97 @@ clockpro_reinit(void)
 }
 
 static void
-clockpro_init(void)
+clockpro_recolor(void *new_gs, struct uvm_pggroup *grparray,
+	size_t npggroup, size_t old_ncolors)
 {
-	struct clockpro_state *s = &clockpro;
-	int i;
+	struct uvmpdpol_groupstate *old_gs = clockpro.s_gs;
+	struct uvm_pggroup *grp = uvm.pggroups;
+	struct uvmpdpol_groupstate *gs = new_gs;
+	const size_t old_npggroup = VM_NPGGROUP(old_ncolors);
 
-	for (i = 0; i < CLOCKPRO_NQUEUE; i++) {
-		pageq_init(&s->s_q[i]);
+	clockpro.s_gs = gs;
+
+	for (size_t pggroup = 0; pggroup < npggroup; pggroup++, gs++, grp++) {
+		grp->pgrp_gs = gs;
+		gs->gs_pgrp = grp;
+		for (u_int i = 0; i < CLOCKPRO_NQUEUE; i++) {
+			pageq_init(&gs->gs_q[i]);
+		}
+		gs->gs_newqlenmax = 1;
+		gs->gs_coldtarget = 1;
 	}
-	s->s_newqlenmax = 1;
-	s->s_coldtarget = 1;
-	uvm_pctparam_init(&s->s_coldtargetpct, CLOCKPRO_COLDPCT, NULL);
+
+	for (size_t pggroup = 0; pggroup < old_npggroup; pggroup++, old_gs++) {
+		pageq_t *oldq = old_gs->gs_q;
+		for (u_int i = 0; i < CLOCKPRO_NQUEUE; i++, oldq++) {
+			while (pageq_len(oldq) > 0) {
+				struct vm_page *pg = pageq_remove_head(old_gs, oldq);
+				KASSERT(pg != NULL);
+				grp = uvm_page_to_pggroup(pg);
+				gs = grp->pgrp_gs;
+				pageq_insert_tail(gs, &gs->gs_q[i], pg);
+#if defined(USEONCE2)
+#else
+				gs->gs_npages++;
+				if (pg->pqflags & (PQ_TEST|PQ_SPECULATIVE)) {
+					gs->gs_ncold++;
+				}
+#endif
+			}
+		}
+	}
+
+	uvm_pctparam_init(&clockpro.s_coldtargetpct, CLOCKPRO_COLDPCT, NULL);
+
 }
 
 static void
-clockpro_tune(void)
+clockpro_init(void *new_gs, size_t npggroup)
 {
-	struct clockpro_state *s = &clockpro;
+	struct uvm_pggroup *grp = uvm.pggroups;
+	struct uvmpdpol_groupstate *gs = new_gs;
+
+	for (size_t pggroup = 0; pggroup < npggroup; pggroup++, gs++, grp++) {
+		grp->pgrp_gs = gs;
+		gs->gs_pgrp = grp;
+		for (u_int i = 0; i < CLOCKPRO_NQUEUE; i++) {
+			pageq_init(&gs->gs_q[i]);
+		}
+		gs->gs_newqlenmax = 1;
+		gs->gs_coldtarget = 1;
+	}
+
+	uvm_pctparam_init(&clockpro.s_coldtargetpct, CLOCKPRO_COLDPCT, NULL);
+}
+
+static void
+clockpro_tune(struct uvmpdpol_groupstate *gs)
+{
 	int coldtarget;
 
 #if defined(ADAPTIVE)
-	int coldmax = s->s_npages * CLOCKPRO_COLDPCTMAX / 100;
-	int coldmin = 1;
+	u_int coldmax = gs->s_npages * CLOCKPRO_COLDPCTMAX / 100;
+	u_int coldmin = 1;
 
-	coldtarget = s->s_coldtarget;
-	if (coldtarget + coldadj < coldmin) {
-		coldadj = coldmin - coldtarget;
-	} else if (coldtarget + coldadj > coldmax) {
-		coldadj = coldmax - coldtarget;
+	coldtarget = gs->gs_coldtarget;
+	if (coldtarget + gs->gs_coldadj < coldmin) {
+		gs->gs_coldadj = coldmin - coldtarget;
+	} else if (coldtarget + gs->gs_coldadj > coldmax) {
+		gs->gs_coldadj = coldmax - coldtarget;
 	}
-	coldtarget += coldadj;
+	coldtarget += gs->gs_coldadj;
 #else /* defined(ADAPTIVE) */
-	coldtarget = UVM_PCTPARAM_APPLY(&s->s_coldtargetpct, s->s_npages);
+	coldtarget = UVM_PCTPARAM_APPLY(&clockpro.s_coldtargetpct,
+	    gs->gs_npages);
 	if (coldtarget < 1) {
 		coldtarget = 1;
 	}
 #endif /* defined(ADAPTIVE) */
 
-	s->s_coldtarget = coldtarget;
-	s->s_newqlenmax = coldtarget / 4;
-	if (s->s_newqlenmax < CLOCKPRO_NEWQMIN) {
-		s->s_newqlenmax = CLOCKPRO_NEWQMIN;
+	gs->gs_coldtarget = coldtarget;
+	gs->gs_newqlenmax = coldtarget / 4;
+	if (gs->gs_newqlenmax < CLOCKPRO_NEWQMIN) {
+		gs->gs_newqlenmax = CLOCKPRO_NEWQMIN;
 	}
 }
 
@@ -651,14 +700,12 @@ clockpro_clearreferencebit(struct vm_page *pg)
 }
 
 static void
-clockpro___newqrotate(int len)
+clockpro___newqrotate(struct uvmpdpol_groupstate * const gs, int len)
 {
-	struct clockpro_state * const s = &clockpro;
-	pageq_t * const newq = clockpro_queue(s, CLOCKPRO_NEWQ);
-	struct vm_page *pg;
+	pageq_t * const newq = clockpro_queue(gs, CLOCKPRO_NEWQ);
 
 	while (pageq_len(newq) > len) {
-		pg = pageq_remove_head(newq);
+		struct vm_page *pg = pageq_remove_head(gs, newq);
 		KASSERT(pg != NULL);
 		KASSERT(clockpro_getq(pg) == CLOCKPRO_NEWQ);
 		if ((pg->pqflags & PQ_INITIALREF) != 0) {
@@ -666,36 +713,34 @@ clockpro___newqrotate(int len)
 			pg->pqflags &= ~PQ_INITIALREF;
 		}
 		/* place at the list head */
-		clockpro_insert_tail(s, CLOCKPRO_COLDQ, pg);
+		clockpro_insert_tail(gs, CLOCKPRO_COLDQ(gs), pg);
 	}
 }
 
 static void
-clockpro_newqrotate(void)
+clockpro_newqrotate(struct uvmpdpol_groupstate * const gs)
 {
-	struct clockpro_state * const s = &clockpro;
 
 	check_sanity();
-	clockpro___newqrotate(s->s_newqlenmax);
+	clockpro___newqrotate(gs, gs->gs_newqlenmax);
 	check_sanity();
 }
 
 static void
-clockpro_newqflush(int n)
+clockpro_newqflush(struct uvmpdpol_groupstate * const gs, int n)
 {
 
 	check_sanity();
-	clockpro___newqrotate(n);
+	clockpro___newqrotate(gs, n);
 	check_sanity();
 }
 
 static void
-clockpro_newqflushone(void)
+clockpro_newqflushone(struct uvmpdpol_groupstate *gs)
 {
-	struct clockpro_state * const s = &clockpro;
 
-	clockpro_newqflush(
-	    MAX(pageq_len(clockpro_queue(s, CLOCKPRO_NEWQ)) - 1, 0));
+	clockpro_newqflush(gs,
+	    MAX(pageq_len(clockpro_queue(gs, CLOCKPRO_NEWQ)) - 1, 0));
 }
 
 /*
@@ -703,21 +748,20 @@ clockpro_newqflushone(void)
  */
 
 static void
-clockpro___enqueuetail(struct vm_page *pg)
+clockpro___enqueuetail(struct uvmpdpol_groupstate *gs, struct vm_page *pg)
 {
-	struct clockpro_state * const s = &clockpro;
 
 	KASSERT(clockpro_getq(pg) == CLOCKPRO_NOQUEUE);
 
 	check_sanity();
 #if !defined(USEONCE2)
-	clockpro_insert_tail(s, CLOCKPRO_NEWQ, pg);
-	clockpro_newqrotate();
+	clockpro_insert_tail(gs, CLOCKPRO_NEWQ, pg);
+	clockpro_newqrotate(gs);
 #else /* !defined(USEONCE2) */
 #if defined(LISTQ)
 	KASSERT((pg->pqflags & PQ_REFERENCED) == 0);
 #endif /* defined(LISTQ) */
-	clockpro_insert_tail(s, CLOCKPRO_COLDQ, pg);
+	clockpro_insert_tail(gs, CLOCKPRO_COLDQ(gs), pg);
 #endif /* !defined(USEONCE2) */
 	check_sanity();
 }
@@ -725,7 +769,8 @@ clockpro___enqueuetail(struct vm_page *pg)
 static void
 clockpro_pageenqueue(struct vm_page *pg)
 {
-	struct clockpro_state * const s = &clockpro;
+	struct uvm_pggroup *grp = uvm_page_to_pggroup(pg);
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 	bool hot;
 	bool speculative = (pg->pqflags & PQ_SPECULATIVE) != 0; /* XXX */
 
@@ -733,15 +778,15 @@ clockpro_pageenqueue(struct vm_page *pg)
 	KASSERT(mutex_owned(&uvm_pageqlock));
 	check_sanity();
 	KASSERT(clockpro_getq(pg) == CLOCKPRO_NOQUEUE);
-	s->s_npages++;
+	gs->gs_npages++;
 	pg->pqflags &= ~(PQ_HOT|PQ_TEST);
 	if (speculative) {
 		hot = false;
 		PDPOL_EVCNT_INCR(speculativeenqueue);
 	} else {
-		hot = nonresident_pagelookupremove(pg);
+		hot = nonresident_pagelookupremove(gs, pg);
 		if (hot) {
-			COLDTARGET_ADJ(1);
+			COLDTARGET_ADJ(gs, 1);
 		}
 	}
 
@@ -764,79 +809,86 @@ clockpro_pageenqueue(struct vm_page *pg)
 	if (hot) {
 		pg->pqflags |= PQ_TEST;
 	}
-	s->s_ncold++;
+	gs->gs_ncold++;
 	clockpro_clearreferencebit(pg);
-	clockpro___enqueuetail(pg);
+	clockpro___enqueuetail(gs, pg);
 #else /* defined(USEONCE2) */
 	if (speculative) {
-		s->s_ncold++;
+		gs->gs_ncold++;
 	} else if (hot) {
 		pg->pqflags |= PQ_HOT;
 	} else {
 		pg->pqflags |= PQ_TEST;
-		s->s_ncold++;
+		gs->gs_ncold++;
 	}
-	clockpro___enqueuetail(pg);
+	clockpro___enqueuetail(gs, pg);
 #endif /* defined(USEONCE2) */
-	KASSERT(s->s_ncold <= s->s_npages);
+	grp->pgrp_inactive = gs->gs_ncold;
+	grp->pgrp_active = gs->gs_npages - gs->gs_ncold;
+	KASSERT(gs->gs_ncold <= gs->gs_npages);
 }
 
 static pageq_t *
 clockpro_pagequeue(struct vm_page *pg)
 {
-	struct clockpro_state * const s = &clockpro;
-	int qidx;
+	struct uvm_pggroup *grp = uvm_page_to_pggroup(pg);
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
+	u_int qidx;
 
 	qidx = clockpro_getq(pg);
 	KASSERT(qidx != CLOCKPRO_NOQUEUE);
 
-	return clockpro_queue(s, qidx);
+	return clockpro_queue(gs, qidx);
 }
 
 static void
 clockpro_pagedequeue(struct vm_page *pg)
 {
-	struct clockpro_state * const s = &clockpro;
+	struct uvm_pggroup *grp = uvm_page_to_pggroup(pg);
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 	pageq_t *q;
 
-	KASSERT(s->s_npages > 0);
+	KASSERT(gs->gs_npages > 0);
 	check_sanity();
 	q = clockpro_pagequeue(pg);
-	pageq_remove(q, pg);
+	pageq_remove(gs, q, pg);
 	check_sanity();
 	clockpro_setq(pg, CLOCKPRO_NOQUEUE);
 	if ((pg->pqflags & PQ_HOT) == 0) {
-		KASSERT(s->s_ncold > 0);
-		s->s_ncold--;
+		KASSERT(gs->gs_ncold > 0);
+		gs->gs_ncold--;
 	}
-	KASSERT(s->s_npages > 0);
-	s->s_npages--;
+	KASSERT(gs->gs_npages > 0);
+	gs->gs_npages--;
+	grp->pgrp_inactive = gs->gs_ncold;
+	grp->pgrp_active = gs->gs_npages - gs->gs_ncold;
 	check_sanity();
 }
 
 static void
 clockpro_pagerequeue(struct vm_page *pg)
 {
-	struct clockpro_state * const s = &clockpro;
-	int qidx;
+	struct uvm_pggroup *grp = uvm_page_to_pggroup(pg);
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
+	u_int qidx;
 
 	qidx = clockpro_getq(pg);
-	KASSERT(qidx == CLOCKPRO_HOTQ || qidx == CLOCKPRO_COLDQ);
-	pageq_remove(clockpro_queue(s, qidx), pg);
+	KASSERT(qidx == CLOCKPRO_HOTQ(gs) || qidx == CLOCKPRO_COLDQ(gs));
+	pageq_remove(gs, clockpro_queue(gs, qidx), pg);
 	check_sanity();
 	clockpro_setq(pg, CLOCKPRO_NOQUEUE);
 
-	clockpro___enqueuetail(pg);
+	clockpro___enqueuetail(gs, pg);
 }
 
 static void
-handhot_endtest(struct vm_page *pg)
+handhot_endtest(struct uvmpdpol_groupstate * const gs, struct vm_page *pg)
 {
 
 	KASSERT((pg->pqflags & PQ_HOT) == 0);
 	if ((pg->pqflags & PQ_TEST) != 0) {
 		PDPOL_EVCNT_INCR(hhotcoldtest);
-		COLDTARGET_ADJ(-1);
+		COLDTARGET_ADJ(gs, -1);
 		pg->pqflags &= ~PQ_TEST;
 	} else {
 		PDPOL_EVCNT_INCR(hhotcold);
@@ -844,20 +896,19 @@ handhot_endtest(struct vm_page *pg)
 }
 
 static void
-handhot_advance(void)
+handhot_advance(struct uvmpdpol_groupstate * const gs)
 {
-	struct clockpro_state * const s = &clockpro;
 	struct vm_page *pg;
 	pageq_t *hotq;
-	int hotqlen;
+	u_int hotqlen;
 
-	clockpro_tune();
+	clockpro_tune(gs);
 
 	dump("hot called");
-	if (s->s_ncold >= s->s_coldtarget) {
+	if (gs->gs_ncold >= gs->gs_coldtarget) {
 		return;
 	}
-	hotq = clockpro_queue(s, CLOCKPRO_HOTQ);
+	hotq = clockpro_queue(gs, CLOCKPRO_HOTQ(gs));
 again:
 	pg = pageq_first(hotq);
 	if (pg == NULL) {
@@ -866,11 +917,11 @@ again:
 		PDPOL_EVCNT_INCR(hhottakeover);
 #if defined(LISTQ)
 		while (/* CONSTCOND */ 1) {
-			pageq_t *coldq = clockpro_queue(s, CLOCKPRO_COLDQ);
+			pageq_t *coldq = clockpro_queue(gs, CLOCKPRO_COLDQ(gs));
 
 			pg = pageq_first(coldq);
 			if (pg == NULL) {
-				clockpro_newqflushone();
+				clockpro_newqflushone(gs);
 				pg = pageq_first(coldq);
 				if (pg == NULL) {
 					WARN("hhot: no page?\n");
@@ -878,20 +929,20 @@ again:
 				}
 			}
 			KASSERT(clockpro_pagequeue(pg) == coldq);
-			pageq_remove(coldq, pg);
+			pageq_remove(gs, coldq, pg);
 			check_sanity();
 			if ((pg->pqflags & PQ_HOT) == 0) {
-				handhot_endtest(pg);
-				clockpro_insert_tail(s, CLOCKPRO_LISTQ, pg);
+				handhot_endtest(gs, pg);
+				clockpro_insert_tail(gs, CLOCKPRO_LISTQ, pg);
 			} else {
-				clockpro_insert_head(s, CLOCKPRO_HOTQ, pg);
+				clockpro_insert_head(gs, CLOCKPRO_HOTQ(gs), pg);
 				break;
 			}
 		}
 #else /* defined(LISTQ) */
-		clockpro_newqflush(0); /* XXX XXX */
-		clockpro_switchqueue();
-		hotq = clockpro_queue(s, CLOCKPRO_HOTQ);
+		clockpro_newqflush(gs, 0); /* XXX XXX */
+		clockpro_switchqueue(gs);
+		hotq = clockpro_queue(gs, CLOCKPRO_HOTQ(gs));
 		goto again;
 #endif /* defined(LISTQ) */
 	}
@@ -913,7 +964,7 @@ again:
 #if defined(LISTQ)
 		panic("cold page in hotq: %p", pg);
 #else /* defined(LISTQ) */
-		handhot_endtest(pg);
+		handhot_endtest(gs, pg);
 		goto next;
 #endif /* defined(LISTQ) */
 	}
@@ -927,17 +978,20 @@ again:
 	 * have larger recency than any hot pages.
 	 */
 
-	if (s->s_ncold >= s->s_coldtarget) {
+	if (gs->gs_ncold >= gs->gs_coldtarget) {
 		dump("hot done");
 		return;
 	}
 	clockpro_movereferencebit(pg);
 	if ((pg->pqflags & PQ_REFERENCED) == 0) {
+		struct uvm_pggroup *grp = gs->gs_pgrp;
 		PDPOL_EVCNT_INCR(hhotunref);
-		uvmexp.pddeact++;
+		grp->pgrp_pddeact++;
 		pg->pqflags &= ~PQ_HOT;
-		clockpro.s_ncold++;
-		KASSERT(s->s_ncold <= s->s_npages);
+		gs->gs_ncold++;
+		grp->pgrp_inactive = gs->gs_ncold;
+		grp->pgrp_active = gs->gs_npages - gs->gs_ncold;
+		KASSERT(gs->gs_ncold <= gs->gs_npages);
 	} else {
 		PDPOL_EVCNT_INCR(hhotref);
 	}
@@ -951,19 +1005,19 @@ next:
 }
 
 static struct vm_page *
-handcold_advance(void)
+handcold_advance(struct uvmpdpol_groupstate * const gs)
 {
-	struct clockpro_state * const s = &clockpro;
+	struct uvm_pggroup * const grp = gs->gs_pgrp;
 	struct vm_page *pg;
 
 	for (;;) {
 #if defined(LISTQ)
-		pageq_t *listq = clockpro_queue(s, CLOCKPRO_LISTQ);
+		pageq_t *listq = clockpro_queue(gs, CLOCKPRO_LISTQ);
 #endif /* defined(LISTQ) */
 		pageq_t *coldq;
 
-		clockpro_newqrotate();
-		handhot_advance();
+		clockpro_newqrotate(gs);
+		handhot_advance(gs);
 #if defined(LISTQ)
 		pg = pageq_first(listq);
 		if (pg != NULL) {
@@ -971,17 +1025,17 @@ handcold_advance(void)
 			KASSERT((pg->pqflags & PQ_TEST) == 0);
 			KASSERT((pg->pqflags & PQ_HOT) == 0);
 			KASSERT((pg->pqflags & PQ_INITIALREF) == 0);
-			pageq_remove(listq, pg);
+			pageq_remove(gs, listq, pg);
 			check_sanity();
-			clockpro_insert_head(s, CLOCKPRO_COLDQ, pg); /* XXX */
+			clockpro_insert_head(gs, CLOCKPRO_COLDQ(gs), pg); /* XXX */
 			goto gotcold;
 		}
 #endif /* defined(LISTQ) */
 		check_sanity();
-		coldq = clockpro_queue(s, CLOCKPRO_COLDQ);
+		coldq = clockpro_queue(gs, CLOCKPRO_COLDQ(gs));
 		pg = pageq_first(coldq);
 		if (pg == NULL) {
-			clockpro_newqflushone();
+			clockpro_newqflushone(gs);
 			pg = pageq_first(coldq);
 		}
 		if (pg == NULL) {
@@ -989,13 +1043,13 @@ handcold_advance(void)
 			dump("hcoldtakeover");
 			PDPOL_EVCNT_INCR(hcoldtakeover);
 			KASSERT(
-			    pageq_len(clockpro_queue(s, CLOCKPRO_NEWQ)) == 0);
+			    pageq_len(clockpro_queue(gs, CLOCKPRO_NEWQ)) == 0);
 #if defined(LISTQ)
 			KASSERT(
-			    pageq_len(clockpro_queue(s, CLOCKPRO_HOTQ)) == 0);
+			    pageq_len(clockpro_queue(gs, CLOCKPRO_HOTQ(gs))) == 0);
 #else /* defined(LISTQ) */
-			clockpro_switchqueue();
-			coldq = clockpro_queue(s, CLOCKPRO_COLDQ);
+			clockpro_switchqueue(gs);
+			coldq = clockpro_queue(gs, CLOCKPRO_COLDQ(gs));
 			pg = pageq_first(coldq);
 #endif /* defined(LISTQ) */
 		}
@@ -1006,18 +1060,18 @@ handcold_advance(void)
 		KASSERT((pg->pqflags & PQ_INITIALREF) == 0);
 		if ((pg->pqflags & PQ_HOT) != 0) {
 			PDPOL_EVCNT_INCR(hcoldhot);
-			pageq_remove(coldq, pg);
-			clockpro_insert_tail(s, CLOCKPRO_HOTQ, pg);
+			pageq_remove(gs, coldq, pg);
+			clockpro_insert_tail(gs, CLOCKPRO_HOTQ(gs), pg);
 			check_sanity();
 			KASSERT((pg->pqflags & PQ_TEST) == 0);
-			uvmexp.pdscans++;
+			grp->pgrp_pdscans++;
 			continue;
 		}
 #if defined(LISTQ)
 gotcold:
 #endif /* defined(LISTQ) */
 		KASSERT((pg->pqflags & PQ_HOT) == 0);
-		uvmexp.pdscans++;
+		grp->pgrp_pdscans++;
 		clockpro_movereferencebit(pg);
 		if ((pg->pqflags & PQ_SPECULATIVE) != 0) {
 			KASSERT((pg->pqflags & PQ_TEST) == 0);
@@ -1033,22 +1087,24 @@ gotcold:
 		switch (pg->pqflags & (PQ_REFERENCED|PQ_TEST)) {
 		case PQ_TEST:
 			PDPOL_EVCNT_INCR(hcoldunreftest);
-			nonresident_pagerecord(pg);
+			nonresident_pagerecord(gs, pg);
 			goto gotit;
 		case 0:
 			PDPOL_EVCNT_INCR(hcoldunref);
 gotit:
-			KASSERT(s->s_ncold > 0);
+			KASSERT(gs->gs_ncold > 0);
 			clockpro_pagerequeue(pg); /* XXX */
 			dump("cold done");
 			/* XXX "pg" is still in queue */
-			handhot_advance();
+			handhot_advance(gs);
 			goto done;
 
 		case PQ_REFERENCED|PQ_TEST:
 			PDPOL_EVCNT_INCR(hcoldreftest);
-			s->s_ncold--;
-			COLDTARGET_ADJ(1);
+			gs->gs_ncold--;
+			grp->pgrp_inactive = gs->gs_ncold;
+			grp->pgrp_active = gs->gs_npages - gs->gs_ncold;
+			COLDTARGET_ADJ(gs, 1);
 			pg->pqflags |= PQ_HOT;
 			pg->pqflags &= ~PQ_TEST;
 			break;
@@ -1059,7 +1115,7 @@ gotit:
 			break;
 		}
 		pg->pqflags &= ~PQ_REFERENCED;
-		uvmexp.pdreact++;
+		grp->pgrp_pdreact++;
 		/* move to the list head */
 		clockpro_pagerequeue(pg);
 		dump("cold");
@@ -1125,16 +1181,16 @@ uvmpdpol_anfree(struct vm_anon *an)
 {
 
 	KASSERT(an->an_page == NULL);
-	if (nonresident_lookupremove((objid_t)an, 0)) {
+	if (nonresident_lookupremove(NULL, (objid_t)an, 0)) {
 		PDPOL_EVCNT_INCR(nresanonfree);
 	}
 }
 
 void
-uvmpdpol_init(void)
+uvmpdpol_init(void *new_gs, size_t npggroup)
 {
 
-	clockpro_init();
+	clockpro_init(new_gs, npggroup);
 }
 
 void
@@ -1144,16 +1200,38 @@ uvmpdpol_reinit(void)
 	clockpro_reinit();
 }
 
-void
-uvmpdpol_estimatepageable(int *active, int *inactive)
+size_t
+uvmpdpol_space(void)
 {
-	struct clockpro_state * const s = &clockpro;
 
-	if (active) {
-		*active = s->s_npages - s->s_ncold;
+	return sizeof(struct uvmpdpol_groupstate);
+}
+
+void
+uvmpdpol_recolor(void *new_gs, struct uvm_pggroup *grparray,
+	size_t npggroup, size_t old_ncolors)
+{
+
+	clockpro_recolor(new_gs, grparray, npggroup, old_ncolors);
+}
+
+void
+uvmpdpol_estimatepageable(u_int *activep, u_int *inactivep)
+{
+	u_int active = 0;
+	u_int inactive = 0;
+
+	struct uvm_pggroup *grp;
+	STAILQ_FOREACH(grp, &uvm.page_groups, pgrp_uvm_link) {
+		struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
+		active += gs->gs_npages - gs->gs_ncold;
+		inactive += gs->gs_ncold;
+	}
+	if (activep) {
+		*activep = active;
 	}
 	if (inactive) {
-		*inactive = s->s_ncold;
+		*inactivep = inactive;
 	}
 }
 
@@ -1165,26 +1243,24 @@ uvmpdpol_pageisqueued_p(struct vm_page *pg)
 }
 
 void
-uvmpdpol_scaninit(void)
+uvmpdpol_scaninit(struct uvm_pggroup *grp)
 {
-	struct clockpro_scanstate * const ss = &scanstate;
 
-	ss->ss_nscanned = 0;
+	grp->pgrp_gs->gs_nscanned = 0;
 }
 
 struct vm_page *
-uvmpdpol_selectvictim(void)
+uvmpdpol_selectvictim(struct uvm_pggroup *grp)
 {
-	struct clockpro_state * const s = &clockpro;
-	struct clockpro_scanstate * const ss = &scanstate;
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 	struct vm_page *pg;
 
-	if (ss->ss_nscanned > s->s_npages) {
+	if (gs->gs_nscanned > gs->gs_npages) {
 		DPRINTF("scan too much\n");
 		return NULL;
 	}
-	pg = handcold_advance();
-	ss->ss_nscanned++;
+	pg = handcold_advance(gs);
+	gs->gs_nscanned++;
 	return pg;
 }
 
@@ -1210,10 +1286,10 @@ clockpro_dropswap(pageq_t *q, int *todo)
 }
 
 void
-uvmpdpol_balancequeue(int swap_shortage)
+uvmpdpol_balancequeue(struct uvm_pggroup *grp, u_int swap_shortage)
 {
-	struct clockpro_state * const s = &clockpro;
-	int todo = swap_shortage;
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
+	u_int todo = swap_shortage;
 
 	if (todo == 0) {
 		return;
@@ -1223,31 +1299,30 @@ uvmpdpol_balancequeue(int swap_shortage)
 	 * reclaim swap slots from hot pages
 	 */
 
-	DPRINTF("%s: swap_shortage=%d\n", __func__, swap_shortage);
+	DPRINTF("%s: [%zd] swap_shortage=%u\n",
+	    __func__, grp - uvm.pggroups, swap_shortage);
 
-	clockpro_dropswap(clockpro_queue(s, CLOCKPRO_NEWQ), &todo);
-	clockpro_dropswap(clockpro_queue(s, CLOCKPRO_COLDQ), &todo);
-	clockpro_dropswap(clockpro_queue(s, CLOCKPRO_HOTQ), &todo);
+	clockpro_dropswap(clockpro_queue(gs, CLOCKPRO_NEWQ), &todo);
+	clockpro_dropswap(clockpro_queue(gs, CLOCKPRO_COLDQ(gs)), &todo);
+	clockpro_dropswap(clockpro_queue(gs, CLOCKPRO_HOTQ(gs)), &todo);
 
-	DPRINTF("%s: done=%d\n", __func__, swap_shortage - todo);
+	DPRINTF("%s: [%zd]: done=%u\n",
+	    __func__, grp - uvm.pggroups, swap_shortage - todo);
 }
 
 bool
-uvmpdpol_needsscan_p(void)
+uvmpdpol_needsscan_p(struct uvm_pggroup *grp)
 {
-	struct clockpro_state * const s = &clockpro;
+	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 
-	if (s->s_ncold < s->s_coldtarget) {
-		return true;
-	}
-	return false;
+	return (gs->gs_ncold < gs->gs_coldtarget);
 }
 
 void
-uvmpdpol_tune(void)
+uvmpdpol_tune(struct uvm_pggroup *grp)
 {
 
-	clockpro_tune();
+	clockpro_tune(grp->pgrp_gs);
 }
 
 #if !defined(PDSIM)
@@ -1274,15 +1349,17 @@ void clockpro_dump(void);
 void
 clockpro_dump(void)
 {
-	struct clockpro_state * const s = &clockpro;
+	struct uvm_pggroup *grp;
+	STAILQ_FOREACH(grp, &uvm.page_groups, pgrp_uvm_link) {
+		struct uvmpdpol_groupstate *gs = grp->pgrp_gs;
+		struct vm_page *pg;
+		int ncold, nhot, ntest, nspeculative, ninitialref, nref;
+		int newqlen, coldqlen, hotqlen, listqlen;
 
-	struct vm_page *pg;
-	int ncold, nhot, ntest, nspeculative, ninitialref, nref;
-	int newqlen, coldqlen, hotqlen, listqlen;
-
-	newqlen = coldqlen = hotqlen = listqlen = 0;
-	printf("npages=%d, ncold=%d, coldtarget=%d, newqlenmax=%d\n",
-	    s->s_npages, s->s_ncold, s->s_coldtarget, s->s_newqlenmax);
+		newqlen = coldqlen = hotqlen = listqlen = 0;
+		printf(" [%zd]: npages=%d, ncold=%d, coldtarget=%d, newqlenmax=%d\n",
+		    grp - uvm.pggroups, gs->gs_npages, gs->gs_ncold,
+		    gs->gs_coldtarget, gs->gs_newqlenmax);
 
 #define	INITCOUNT()	\
 	ncold = nhot = ntest = nspeculative = ninitialref = nref = 0
@@ -1307,74 +1384,74 @@ clockpro_dump(void)
 	}
 
 #define	PRINTCOUNT(name)	\
-	printf("%s hot=%d, cold=%d, test=%d, speculative=%d, initialref=%d, " \
-	    "nref=%d\n", \
-	    (name), nhot, ncold, ntest, nspeculative, ninitialref, nref)
+	printf("%s#%zd hot=%d, cold=%d, test=%d, speculative=%d, " \
+	    "initialref=%d, nref=%d\n", \
+	    (name), grp - uvm.pggroups, nhot, ncold, ntest, nspeculative, ninitialref, nref)
 
-	INITCOUNT();
-	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_NEWQ)->q_q, pageq.queue) {
-		if (clockpro_getq(pg) != CLOCKPRO_NEWQ) {
-			printf("newq corrupt %p\n", pg);
+		INITCOUNT();
+		TAILQ_FOREACH(pg, &clockpro_queue(gs, CLOCKPRO_NEWQ)->q_q, pageq.queue) {
+			if (clockpro_getq(pg) != CLOCKPRO_NEWQ) {
+				printf("newq corrupt %p\n", pg);
+			}
+			COUNT(pg)
+			newqlen++;
 		}
-		COUNT(pg)
-		newqlen++;
-	}
-	PRINTCOUNT("newq");
+		PRINTCOUNT("newq");
 
-	INITCOUNT();
-	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_COLDQ)->q_q, pageq.queue) {
-		if (clockpro_getq(pg) != CLOCKPRO_COLDQ) {
-			printf("coldq corrupt %p\n", pg);
+		INITCOUNT();
+		TAILQ_FOREACH(pg, &clockpro_queue(gs, CLOCKPRO_COLDQ(gs))->q_q, pageq.queue) {
+			if (clockpro_getq(pg) != CLOCKPRO_COLDQ(gs)) {
+				printf("coldq corrupt %p\n", pg);
+			}
+			COUNT(pg)
+			coldqlen++;
 		}
-		COUNT(pg)
-		coldqlen++;
-	}
-	PRINTCOUNT("coldq");
+		PRINTCOUNT("coldq");
 
-	INITCOUNT();
-	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_HOTQ)->q_q, pageq.queue) {
-		if (clockpro_getq(pg) != CLOCKPRO_HOTQ) {
-			printf("hotq corrupt %p\n", pg);
-		}
+		INITCOUNT();
+		TAILQ_FOREACH(pg, &clockpro_queue(gs, CLOCKPRO_HOTQ(gs))->q_q, pageq.queue) {
+			if (clockpro_getq(pg) != CLOCKPRO_HOTQ(gs)) {
+				printf("hotq corrupt %p\n", pg);
+			}
 #if defined(LISTQ)
-		if ((pg->pqflags & PQ_HOT) == 0) {
-			printf("cold page in hotq: %p\n", pg);
-		}
+			if ((pg->pqflags & PQ_HOT) == 0) {
+				printf("cold page in hotq: %p\n", pg);
+			}
 #endif /* defined(LISTQ) */
-		COUNT(pg)
-		hotqlen++;
-	}
-	PRINTCOUNT("hotq");
-
-	INITCOUNT();
-	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_LISTQ)->q_q, pageq.queue) {
-#if !defined(LISTQ)
-		printf("listq %p\n", pg);
-#endif /* !defined(LISTQ) */
-		if (clockpro_getq(pg) != CLOCKPRO_LISTQ) {
-			printf("listq corrupt %p\n", pg);
+			COUNT(pg)
+			hotqlen++;
 		}
-		COUNT(pg)
-		listqlen++;
+		PRINTCOUNT("hotq");
+
+		INITCOUNT();
+		TAILQ_FOREACH(pg, &clockpro_queue(gs, CLOCKPRO_LISTQ)->q_q, pageq.queue) {
+#if !defined(LISTQ)
+			printf("listq %p\n", pg);
+#endif /* !defined(LISTQ) */
+			if (clockpro_getq(pg) != CLOCKPRO_LISTQ) {
+				printf("listq corrupt %p\n", pg);
+			}
+			COUNT(pg)
+			listqlen++;
+		}
+		PRINTCOUNT("listq");
+
+		printf("#%zd: newqlen=%u/%u, coldqlen=%u/%u, hotqlen=%u/%u, listqlen=%d/%d\n",
+		    grp - uvm.pggroups,
+		    newqlen, pageq_len(clockpro_queue(gs, CLOCKPRO_NEWQ)),
+		    coldqlen, pageq_len(clockpro_queue(gs, CLOCKPRO_COLDQ(gs))),
+		    hotqlen, pageq_len(clockpro_queue(gs, CLOCKPRO_HOTQ(gs))),
+		    listqlen, pageq_len(clockpro_queue(gs, CLOCKPRO_LISTQ)));
 	}
-	PRINTCOUNT("listq");
-
-	printf("newqlen=%d/%d, coldqlen=%d/%d, hotqlen=%d/%d, listqlen=%d/%d\n",
-	    newqlen, pageq_len(clockpro_queue(s, CLOCKPRO_NEWQ)),
-	    coldqlen, pageq_len(clockpro_queue(s, CLOCKPRO_COLDQ)),
-	    hotqlen, pageq_len(clockpro_queue(s, CLOCKPRO_HOTQ)),
-	    listqlen, pageq_len(clockpro_queue(s, CLOCKPRO_LISTQ)));
 }
-
 #endif /* defined(DDB) */
 
 #if defined(PDSIM)
 #if defined(DEBUG)
 static void
-pdsim_dumpq(int qidx)
+pdsim_dumpq(struct uvmpdpol_groupstate *gs, int qidx)
 {
-	struct clockpro_state * const s = &clockpro;
-	pageq_t *q = clockpro_queue(s, qidx);
+	pageq_t *q = clockpro_queue(gs, qidx);
 	struct vm_page *pg;
 
 	TAILQ_FOREACH(pg, &q->q_q, pageq.queue) {
@@ -1398,15 +1475,15 @@ pdsim_dump(const char *id)
 	struct clockpro_state * const s = &clockpro;
 
 	DPRINTF("  %s L(", id);
-	pdsim_dumpq(CLOCKPRO_LISTQ);
+	pdsim_dumpq(gs, CLOCKPRO_LISTQ);
 	DPRINTF(" ) H(");
-	pdsim_dumpq(CLOCKPRO_HOTQ);
+	pdsim_dumpq(gs, CLOCKPRO_HOTQ(gs));
 	DPRINTF(" ) C(");
-	pdsim_dumpq(CLOCKPRO_COLDQ);
+	pdsim_dumpq(gs, CLOCKPRO_COLDQ(gs));
 	DPRINTF(" ) N(");
-	pdsim_dumpq(CLOCKPRO_NEWQ);
+	pdsim_dumpq(gs, CLOCKPRO_NEWQ);
 	DPRINTF(" ) ncold=%d/%d, coldadj=%d\n",
-	    s->s_ncold, s->s_coldtarget, coldadj);
+	    gs->gs_ncold, gs->gs_coldtarget, gs->gs_coldadj);
 #endif /* defined(DEBUG) */
 }
 #endif /* defined(PDSIM) */
