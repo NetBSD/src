@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.48 2010/03/14 14:47:03 pgoyette Exp $
+.\"	$NetBSD: envsys.4,v 1.49 2012/02/09 18:10:26 riz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@ the userland part, to receive the current sensor data and
 to set some properties on sensors:
 .Xr envstat 8 .
 .It
-The kernel part that is able to talk to the drivers providing sensor
+The kernel part that is able to talk to the devices providing sensor
 data:
 .Xr sysmon_envsys 9 .
 .El
@@ -209,12 +209,12 @@ Used to monitor possible over-charging of batteries.
 .It Fa min-value
 Current min value in the sensor.
 .It Fa monitoring-state-critical
-If true, the driver has enabled the flag to monitor a critical state.
+If true, the device has enabled the flag to monitor a critical state.
 .It Fa monitoring-state-hw-range-limits
-If true, the driver has enabled the flag to monitor warning or critical
+If true, the device has enabled the flag to monitor warning or critical
 limits.
 .It Fa monitoring-state-state-changed
-If true, the driver has enabled the flag to monitor for state changes in
+If true, the device has enabled the flag to monitor for state changes in
 a drive or Battery state sensor.
 .It Fa monitoring-supported
 If true, critical/warning capacity/max/min limits may be set by the
@@ -253,7 +253,7 @@ This
 is used to remove all properties that are currently set via the
 .Dv ENVSYS_SETDICTIONARY
 ioctl.
-The values will be set to defaults, the ones that the driver uses.
+The values will be set to defaults, the ones that the device uses.
 .Pp
 Only one object is allowed on this dictionary:
 .Bd -literal -offset ident
@@ -429,6 +429,7 @@ main(void)
 }
 .Ed
 .Sh SEE ALSO
+.Xr envsys.conf 5 ,
 .Xr envstat 8 ,
 .Xr powerd 8 ,
 .Xr sysmon_envsys 9
