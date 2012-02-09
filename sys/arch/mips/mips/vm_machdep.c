@@ -85,6 +85,12 @@ mips_page_to_pggroup(struct vm_page *pg, size_t ncolors)
 	    && (mips_freelist_mask & (1 << VM_FREELIST_FIRST512M))) {
 		lcv = VM_FREELIST_FIRST512M;
 	} else
+#ifdef ENABLE_MIPS_KSEGX
+	if (mips_ksegx_start <= pa && pa < mips_ksegx_start + VM_KSEGX_SIZE
+	    && (mips_freelist_mask & (1 << VM_FREELIST_FIRST512M))) {
+		lcv = VM_FREELIST_FIRST512M;
+	} else
+#endif
 #endif
 #ifdef VM_FREELIST_FIRST4G
 	if (VM_FREELIST_FIRST4G_P(pa)
