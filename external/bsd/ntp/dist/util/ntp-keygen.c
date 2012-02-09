@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.3 2012/02/01 07:46:30 kardel Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.4 2012/02/09 17:53:56 christos Exp $	*/
 
 /*
  * Program to generate cryptographic keys for ntp clients and servers
@@ -2068,8 +2068,8 @@ fheader	(
 	char	linkname[MAXFILENAME]; /* link name */
 	int	temp;
 
-	sprintf(filename, "ntpkey_%s_%s.%lu", file, owner, epoch +
-	    JAN_1970);
+	snprintf(filename, sizeof(filename), "ntpkey_%s_%s.%lld", file, owner,
+	    (long long)(epoch + JAN_1970));
 	if ((str = fopen(filename, "w")) == NULL) {
 		perror("Write");
 		exit (-1);
