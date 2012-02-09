@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.267.6.1 2009/04/04 18:11:17 snj Exp $	*/
+/*	lfs_vfsops.c,v 1.267.6.1 2009/04/04 18:11:17 snj Exp	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.267.6.1 2009/04/04 18:11:17 snj Exp $");
+__KERNEL_RCSID(0, "lfs_vfsops.c,v 1.267.6.1 2009/04/04 18:11:17 snj Exp");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1630,7 +1630,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			KASSERT(!(pgs[i]->flags & PG_PAGEOUT));
 			pgs[i]->flags &= ~PG_DELWRI;
 			pgs[i]->flags |= PG_PAGEOUT;
-			uvm_pageout_start(1);
+			uvm_pageout_start(uvm_page_to_pggroup(pg), 1);
 			mutex_enter(&uvm_pageqlock);
 			uvm_pageunwire(pgs[i]);
 			mutex_exit(&uvm_pageqlock);
@@ -1815,7 +1815,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		pg = pgs[i];
 
 		if (pg->flags & PG_PAGEOUT)
-			uvm_pageout_done(1);
+			uvm_pageout_done(pg, false);
 		if (pg->flags & PG_DELWRI) {
 			uvm_pageunwire(pg);
 		}
