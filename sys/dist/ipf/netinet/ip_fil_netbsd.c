@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.59 2012/02/01 02:21:19 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.60 2012/02/09 07:15:27 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.59 2012/02/01 02:21:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.60 2012/02/09 07:15:27 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.144.2.10 2012/01/29 05:30:36 darrenr Exp";
@@ -638,7 +638,7 @@ ipfioctl(dev_t dev, u_long cmd,
 	}
 
 	if (ipfmain.ipf_running <= 0) {
-		if (unit != IPL_LOGIPF) {
+		if (unit != IPL_LOGIPF && cmd != SIOCIPFINTERROR) {
 			ipfmain.ipf_interror = 130003;
 			return EIO;
 		}

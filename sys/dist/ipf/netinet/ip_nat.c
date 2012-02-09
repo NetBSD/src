@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.46 2012/02/01 02:21:20 christos Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.47 2012/02/09 07:15:27 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.46 2012/02/01 02:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.47 2012/02/09 07:15:27 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.357.2.23 2012/01/29 05:30:36 darrenr Exp";
@@ -229,6 +229,7 @@ static	void	ipf_nat_addmap(ipf_nat_softc_t *, ipnat_t *);
 static	void	ipf_nat_addrdr(ipf_nat_softc_t *, ipnat_t *);
 static	int	ipf_nat_builddivertmp(ipf_nat_softc_t *, ipnat_t *);
 static	int	ipf_nat_clearlist(ipf_main_softc_t *, ipf_nat_softc_t *);
+static	int	ipf_nat_cmp_rules(ipnat_t *, ipnat_t *);
 static	int	ipf_nat_decap(fr_info_t *, nat_t *);
 static	void	ipf_nat_del_active(int, u_32_t *);
 static	void	ipf_nat_del_map_mask(ipf_nat_softc_t *, int);
@@ -1273,8 +1274,7 @@ ipf_nat_ioctl(ipf_main_softc_t *softc, void *data, ioctlcmd_t cmd, int mode,
 		MUTEX_ENTER(&softn->ipf_nat_io);
 		for (np = &softn->ipf_nat_list; ((n = *np) != NULL);
 		     np = &n->in_next)
-			if (!bcmp((char *)&nat->in_v, (char *)&n->in_v,
-					IPN_CMPSIZ))
+			if (ipf_nat_cmp_rules(nat, n) == 0)
 				break;
 	}
 
@@ -8895,4 +8895,64 @@ ipf_nat_uncreate(fr_info_t *fin)
 	}
 
 	RWLOCK_EXIT(&softc->ipf_nat);
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    ipf_nat_cmp_rules                                           */
+/* Returns:     int   - 0 == success, else rules do not match.              */
+/* Parameters:  n1(I) - first rule to compare                               */
+/*              n2(I) - first rule to compare                               */
+/*                                                                          */
+/* Compare two rules using pointers to each rule. A straight bcmp will not  */
+/* work as some fields (such as in_dst, in_pkts) actually do change once    */
+/* the rule has been loaded into the kernel. Whilst this function returns   */
+/* various non-zero returns, they're strictly to aid in debugging. Use of   */
+/* this function should simply care if the result is zero or not.           */
+/* ------------------------------------------------------------------------ */
+static int
+ipf_nat_cmp_rules(ipnat_t *n1, ipnat_t *n2)
+{
+	if (n1->in_size != n2->in_size)
+		return 1;
+
+	if (bcmp((char *)&n1->in_v, (char *)&n2->in_v,
+		 offsetof(ipnat_t, in_ndst) - offsetof(ipnat_t, in_v)) != 0)
+		return 2;
+
+	if (bcmp((char *)&n1->in_tuc, (char *)&n2->in_tuc,
+		 offsetof(ipnat_t, in_pkts) - offsetof(ipnat_t, in_tuc)) != 0)
+		return 3;
+	if (bcmp((char *)&n1->in_namelen, (char *)&n2->in_namelen,
+		 n1->in_size  - offsetof(ipnat_t, in_namelen)) != 0)
+		return 4;
+	if (n1->in_ndst.na_atype != n2->in_ndst.na_atype)
+		return 5;
+	if (n1->in_ndst.na_function != n2->in_ndst.na_function)
+		return 6;
+	if (bcmp((char *)&n1->in_ndst.na_addr, (char *)&n2->in_ndst.na_addr,
+		 sizeof(n1->in_ndst.na_addr)))
+		return 7;
+	if (n1->in_nsrc.na_atype != n2->in_nsrc.na_atype)
+		return 8;
+	if (n1->in_nsrc.na_function != n2->in_nsrc.na_function)
+		return 9;
+	if (bcmp((char *)&n1->in_nsrc.na_addr, (char *)&n2->in_nsrc.na_addr,
+		 sizeof(n1->in_nsrc.na_addr)))
+		return 10;
+	if (n1->in_odst.na_atype != n2->in_odst.na_atype)
+		return 11;
+	if (n1->in_odst.na_function != n2->in_odst.na_function)
+		return 12;
+	if (bcmp((char *)&n1->in_odst.na_addr, (char *)&n2->in_odst.na_addr,
+		 sizeof(n1->in_odst.na_addr)))
+		return 13;
+	if (n1->in_osrc.na_atype != n2->in_osrc.na_atype)
+		return 14;
+	if (n1->in_osrc.na_function != n2->in_osrc.na_function)
+		return 15;
+	if (bcmp((char *)&n1->in_osrc.na_addr, (char *)&n2->in_osrc.na_addr,
+		 sizeof(n1->in_osrc.na_addr)))
+		return 16;
+	return 0;
 }
