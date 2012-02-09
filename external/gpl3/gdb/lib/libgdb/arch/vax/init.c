@@ -9,7 +9,6 @@
 extern initialize_file_ftype _initialize_gdbtypes;
 extern initialize_file_ftype _initialize_vax_tdep;
 extern initialize_file_ftype _initialize_vaxnbsd_tdep;
-extern initialize_file_ftype _initialize_vaxnbsd_nat;
 extern initialize_file_ftype _initialize_corelow;
 extern initialize_file_ftype _initialize_solib;
 extern initialize_file_ftype _initialize_svr4_solib;
