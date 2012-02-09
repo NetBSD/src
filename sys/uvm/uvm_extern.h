@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.148.4.2.4.4 2011/06/03 07:56:08 matt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.148.4.2.4.5 2012/02/09 03:04:59 matt Exp $	*/
 
 /*
  *
@@ -331,12 +331,17 @@ struct uvmexp {
 				   not available */
 	int zeroaborts;		/* number of times page zeroing was
 				   aborted */
+#if 0
 	int colorfail;		/* pagealloc where we got no page */
 	int colorhit;		/* pagealloc where we got optimal color */
 	int colormiss;		/* pagealloc where we didn't */
 	int colorany;		/* pagealloc where we wanted any color */
 	int cpuhit;		/* pagealloc where we allocated locally */
 	int cpumiss;		/* pagealloc where we didn't */
+#else
+	int _padcolor[4];
+	int _padcpu[2];
+#endif
 
 	/* fault subcounters.  XXX: should be 64-bit counters */
 	int fltnoram;	/* number of times fault was out of ram */
@@ -360,6 +365,7 @@ struct uvmexp {
 
 	/* daemon counters.  XXX: should be 64-bit counters */
 	int pdwoke;	/* number of times daemon woke up */
+#if 0
 	int pdrevs;	/* number of times daemon rev'd clock hand */
 	int pdswout;	/* number of times daemon called for swapout */
 	int pdfreed;	/* number of pages daemon freed since boot */
@@ -368,12 +374,20 @@ struct uvmexp {
 	int pdobscan;	/* number of object pages scanned by daemon */
 	int pdreact;	/* number of pages daemon reactivated since boot */
 	int pdbusy;	/* number of times daemon found a busy page */
+#else
+	int _pdpad0[8];
+#endif
 	int pdpageouts;	/* number of times daemon started a pageout */
 	int pdpending;	/* number of times daemon got a pending pagout */
+#if 0
 	int pddeact;	/* number of pages daemon deactivates */
 	int pdreanon;	/* anon pages reactivated due to thresholds */
 	int pdrefile;	/* file pages reactivated due to thresholds */
 	int pdreexec;	/* executable pages reactivated due to thresholds */
+#else
+	int _pdpad1[4];
+#endif
+	u_int npggroups;
 };
 
 /*
@@ -631,6 +645,8 @@ vaddr_t			uvm_km_alloc_poolpage_cache(struct vm_map *, bool);
 void			uvm_km_free_poolpage_cache(struct vm_map *, vaddr_t);
 void			uvm_km_vacache_init(struct vm_map *,
 			    const char *, size_t);
+void			uvm_km_pageclaim(struct vm_page *);
+void			uvm_km_pagefree(struct vm_page *);
 
 /* uvm_map.c */
 int			uvm_map(struct vm_map *, vaddr_t *, vsize_t,
@@ -710,9 +726,10 @@ void			uvm_aio_aiodone_pages(struct vm_page **, int, bool,
 void			uvm_pageout(void *);
 struct work;
 void			uvm_aiodone_worker(struct work *, void *);
-void			uvm_pageout_start(int);
-void			uvm_pageout_done(int);
-void			uvm_estimatepageable(int *, int *);
+struct uvm_pggroup;
+void			uvm_pageout_start(struct uvm_pggroup *, u_int);
+void			uvm_pageout_done(struct vm_page *, bool);
+void			uvm_estimatepageable(u_int *, u_int *);
 
 /* uvm_pglist.c */
 int			uvm_pglistalloc(psize_t, paddr_t, paddr_t,

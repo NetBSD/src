@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.55.14.5 2011/06/03 07:56:08 matt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.55.14.6 2012/02/09 03:05:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -244,6 +244,57 @@ struct vm_physseg {
 #endif
 };
 
+/*
+ * Fields from uvmexp which need to be kept on a per-group basis.
+ */
+struct uvm_pggroup {
+	TAILQ_ENTRY(uvm_pggroup) pgrp_pd_link;
+	STAILQ_ENTRY(uvm_pggroup) pgrp_uvm_link;
+
+	struct uvmpdpol_groupstate *pgrp_gs;	/* for pdpolicy */
+
+	/* vm_page counters */
+	u_int pgrp_npages;	/* # of pages we manage */
+	u_int pgrp_free;	/* # of free pages */
+	u_int pgrp_paging;	/* # of pages in the process of being paged out */
+	u_int pgrp_wired;	/* # of wired pages */
+
+	/* pageout params */
+	u_int pgrp_freemin;	/* min number of free pages */
+	u_int pgrp_freetarg;	/* target number of free pages */
+	u_int pgrp_wiredmax;	/* max number of wired pages */
+
+	u_int pgrp_active;	/* # of pages on the active q */
+	u_int pgrp_inactive;	/* # of pages on the inactive q */
+
+	u_int pgrp_kmempages;	/* # of pages used for kernel memory */
+	u_int pgrp_anonpages;	/* # of pages used by anon mappings */
+	u_int pgrp_filepages;	/* # of pages used by cached file data */
+	u_int pgrp_execpages;	/* # of pages used by cached exec data */
+
+	/* internal stuff */
+	bool pgrp_scan_needed;	/* this color needs pages to be reclaimed */
+
+	/* page daemon counters */
+	uint64_t pgrp_pgswapout; /* # of pages swapped out */
+	uint64_t pgrp_pdrevs;	/* # of times daemon rev'd clock hand */
+	uint64_t pgrp_pdswout;	/* # of times daemon called for swapout */
+	uint64_t pgrp_pdfreed;	/* # of pages daemon freed since boot */
+	uint64_t pgrp_pdscans;	/* # of pages daemon scanned since boot */
+	uint64_t pgrp_pdanscan;	/* # of anonymous pages scanned by daemon */
+	uint64_t pgrp_pdobscan;	/* # of object pages scanned by daemon */
+	uint64_t pgrp_pdreact;	/* # of pages daemon reactivated since boot */
+	uint64_t pgrp_pdbusy;	/* # of times daemon found a busy page */
+	uint64_t pgrp_pdpageouts; /* # of times daemon started a pageout */
+	uint64_t pgrp_pdpending; /* # of times daemon got a pending pagout */
+	uint64_t pgrp_pddeact;	/* # of pages daemon deactivates */
+	uint64_t pgrp_pdreanon;	/* anon pages reactivated due to thresholds */
+	uint64_t pgrp_pdrefile;	/* file pages reactivated due to thresholds */
+	uint64_t pgrp_pdreexec;	/* executable pages reactivated due to thresholds */
+};
+
+TAILQ_HEAD(uvm_pggrouplist, uvm_pggroup);
+
 #ifdef _KERNEL
 
 /*
@@ -293,6 +344,7 @@ void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
 
 int uvm_page_lookup_freelist(struct vm_page *);
+struct uvm_pggroup *uvm_page_to_pggroup(struct vm_page *);
 
 static struct vm_page *PHYS_TO_VM_PAGE(paddr_t);
 static int vm_physseg_find(paddr_t, int *);
@@ -306,7 +358,7 @@ static int vm_physseg_find(paddr_t, int *);
 #define uvm_pagehash(obj,off) \
 	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)
 
-#define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
+#define VM_PAGE_TO_PHYS(pg)	((pg)->phys_addr)
 
 #ifdef __HAVE_VM_PAGE_MD
 #define VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.31.12.1 2010/01/22 04:03:21 matt Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.31.12.2 2012/02/09 03:05:01 matt Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.31.12.1 2010/01/22 04:03:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.31.12.2 2012/02/09 03:05:01 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.31.12.1 2010/01/22 04:03:21 matt Exp 
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
@@ -207,14 +208,16 @@ uvmhist_print(void (*pr)(const char *, ...))
 void
 uvmexp_print(void (*pr)(const char *, ...))
 {
+	struct uvm_pggroup *grp;
 	int active, inactive;
 
 	uvm_estimatepageable(&active, &inactive);
 
 	(*pr)("Current UVM status:\n");
-	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d, ncolors=%d\n",
+	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d,"
+	    " ncolors=%d, npggroups=%d\n",
 	    uvmexp.pagesize, uvmexp.pagesize, uvmexp.pagemask,
-	    uvmexp.pageshift, uvmexp.ncolors);
+	    uvmexp.pageshift, uvmexp.ncolors, uvmexp.npggroups);
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
 	    uvmexp.npages, active, inactive, uvmexp.wired,
 	    uvmexp.free);
@@ -222,11 +225,60 @@ uvmexp_print(void (*pr)(const char *, ...))
 	    uvmexp.anonpages, uvmexp.filepages, uvmexp.execpages);
 	(*pr)("  freemin=%d, free-target=%d, wired-max=%d\n",
 	    uvmexp.freemin, uvmexp.freetarg, uvmexp.wiredmax);
+	STAILQ_FOREACH(grp, &uvm.page_groups, pgrp_uvm_link) {
+		if (uvmexp.npggroups > 1) {
+			(*pr)("   [%zd]: pages=%u, free=%u, freemin=%u,"
+			    " free-target=%u, wired-max=%u\n",
+			    grp - uvm.pggroups, grp->pgrp_npages, 
+			    grp->pgrp_free, grp->pgrp_freemin,
+			    grp->pgrp_freetarg, grp->pgrp_wiredmax);
+			(*pr)("        active=%u, inactive=%u, kmem=%u,"
+			    " anon=%u, file=%u, exec=%u\n",
+			    grp->pgrp_active, grp->pgrp_inactive,
+			    grp->pgrp_kmempages, grp->pgrp_anonpages,
+			    grp->pgrp_filepages, grp->pgrp_execpages);
+		} else {
+			(*pr)("  active=%u, inactive=%u\n",
+			    grp->pgrp_active, grp->pgrp_inactive);
+		}
+	}
 	(*pr)("  faults=%d, traps=%d, intrs=%d, ctxswitch=%d\n",
 	    uvmexp.faults, uvmexp.traps, uvmexp.intrs, uvmexp.swtch);
 	(*pr)("  softint=%d, syscalls=%d, swapins=%d, swapouts=%d\n",
 	    uvmexp.softs, uvmexp.syscalls, uvmexp.swapins, uvmexp.swapouts);
 
+	(*pr)("  color counts:\n");
+	for (u_int pggroup = 0; pggroup < uvmexp.ncolors; pggroup++) {
+		const struct pgfreelist * const gpgfl = &uvm.page_free[pggroup];
+		(*pr)("   color#%u: hit=%"PRIu64", miss=%"PRIu64
+		    ", fail=%"PRIu64", any=%"PRIu64"\n", pggroup,
+		    gpgfl->pgfl_colorhit, gpgfl->pgfl_colormiss,
+		    gpgfl->pgfl_colorfail, gpgfl->pgfl_colorany);
+#if defined(MULTIPROCESSOR)
+		if (ncpu > 1) {
+			CPU_INFO_ITERATOR cii;
+			struct cpu_info *ci;
+			for (CPU_INFO_FOREACH(cii, ci)) {
+				const struct uvm_cpu * const ucpu =
+				    &uvm.cpus[cpu_index(ci)];
+				const struct pgfreelist * const pgfl =
+				    &ucpu->page_free[pggroup];
+				(*pr)("    cpu#%u: hit=%"PRIu64", miss=%"PRIu64
+				    ", fail=%"PRIu64", any=%"PRIu64"\n",
+				    cpu_index(ci),
+				    pgfl->pgfl_colorhit, pgfl->pgfl_colormiss,
+				    pgfl->pgfl_colorfail, pgfl->pgfl_colorany);
+			}
+			for (CPU_INFO_FOREACH(cii, ci)) {
+				const struct uvm_cpu * const ucpu =
+				    &uvm.cpus[cpu_index(ci)];
+				(*pr)("   cpu%u: cpuhit=%"PRIu64", cpumiss=%"PRIu64"\n",
+				    cpu_index(ci),
+				    ucpu->page_cpuhit, ucpu->page_cpumiss);
+			}
+		}
+#endif
+	}
 	(*pr)("  fault counts:\n");
 	(*pr)("    noram=%d, noanon=%d, pgwait=%d, pgrele=%d\n",
 	    uvmexp.fltnoram, uvmexp.fltnoanon, uvmexp.fltpgwait,
@@ -240,18 +292,28 @@ uvmexp_print(void (*pr)(const char *, ...))
 	    uvmexp.flt_anon, uvmexp.flt_acow, uvmexp.flt_obj, uvmexp.flt_prcopy,
 	    uvmexp.flt_przero);
 
-	(*pr)("  daemon and swap counts:\n");
-	(*pr)("    woke=%d, revs=%d, scans=%d, obscans=%d, anscans=%d\n",
-	    uvmexp.pdwoke, uvmexp.pdrevs, uvmexp.pdscans, uvmexp.pdobscan,
-	    uvmexp.pdanscan);
-	(*pr)("    busy=%d, freed=%d, reactivate=%d, deactivate=%d\n",
-	    uvmexp.pdbusy, uvmexp.pdfreed, uvmexp.pdreact, uvmexp.pddeact);
-	(*pr)("    pageouts=%d, pending=%d, nswget=%d\n", uvmexp.pdpageouts,
-	    uvmexp.pdpending, uvmexp.nswget);
-	(*pr)("    nswapdev=%d, swpgavail=%d\n",
+	(*pr)("  page daemon counts:\n");
+	(*pr)("    woke=%d\n", uvmexp.pdwoke);
+	STAILQ_FOREACH(grp, &uvm.page_groups, pgrp_uvm_link) {
+		(*pr)("   group#%zd\n", grp - uvm.pggroups);
+		(*pr)("    revs=%"PRIu64", scans=%"PRIu64
+		    ", obscans=%"PRIu64", anscans=%"PRIu64"\n",
+		    grp->pgrp_pdrevs, grp->pgrp_pdscans,
+		    grp->pgrp_pdobscan, grp->pgrp_pdanscan);
+		(*pr)("    busy=%"PRIu64", freed=%"PRIu64", reactivate=%"PRIu64
+		    ", deactivate=%"PRIu64"\n",
+		    grp->pgrp_pdbusy, grp->pgrp_pdfreed, grp->pgrp_pdreact,
+		    grp->pgrp_pddeact);
+		(*pr)("    pageouts=%"PRIu64", pending=%"PRIu64
+		    ", paging=%"PRIu64"\n",
+		    grp->pgrp_pdpageouts, grp->pgrp_pdpending,
+		    grp->pgrp_paging);
+	}
+	(*pr)("  swap counts:\n");
+	(*pr)("    nswapdev=%"PRIu64", swpgavail=%"PRIu64"\n",
 	    uvmexp.nswapdev, uvmexp.swpgavail);
-	(*pr)("    swpages=%d, swpginuse=%d, swpgonly=%d, paging=%d\n",
-	    uvmexp.swpages, uvmexp.swpginuse, uvmexp.swpgonly, uvmexp.paging);
+	(*pr)("    swpages=%d, swpginuse=%d, swpgonly=%d, nswget=%"PRIu64"\n",
+	    uvmexp.swpages, uvmexp.swpginuse, uvmexp.swpgonly, uvmexp.nswget);
 }
 #endif
 
