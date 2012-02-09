@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2011/09/26 21:16:14 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2012/02/09 15:15:58 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -47,7 +47,6 @@ CONFIGURE_ENV+=	ac_cv_header_ncurses_h=no \
 # enable sim if supported).
 CONFIGURE_ARGS_SIM=
 .if \
-    ${MACHINE_CPU} != "mips" && \
     ${MACHINE_CPU} != "powerpc" && \
     ${MACHINE_CPU} != "powerpc64"
 CONFIGURE_ARGS_SIM+= --disable-sim
