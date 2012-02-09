@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.1 2012/01/29 15:54:35 phx Exp $
+.\"	$NetBSD: contents,v 1.2 2012/02/09 11:58:35 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,7 +82,7 @@ see below.
 .
 .		It Pa netboot/
 .
-.		(tag netboot -compact \" installtion/netboot
+.		(tag netboot -compact \" installation/netboot
 .
 .			It Pa netbsd-GENERIC.gz
 A gzipped
