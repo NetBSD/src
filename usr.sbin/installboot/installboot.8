@@ -1,6 +1,6 @@
-.\"	$NetBSD: installboot.8,v 1.81 2012/01/09 19:40:09 skrll Exp $
+.\"	$NetBSD: installboot.8,v 1.82 2012/02/09 18:35:44 ast Exp $
 .\"
-.\" Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 9, 2012
+.Dd February 9, 2012
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -458,9 +458,12 @@ to get the media and filesytem properties.
 Primary bootstrap for
 .Sy FFSv1
 file systems
-(the "traditional"
+(the 
+.Ql traditional
 .Nx
-file system).
+file system prior to
+.Nx
+6).
 Use
 .Xr dumpfs 8
 to confirm the file system format is
@@ -469,7 +472,9 @@ to confirm the file system format is
 .It Pa /usr/mdec/bootxx_ffsv2
 Primary bootstrap for
 .Sy FFSv2
-file systems.
+file systems (the default file system for some platforms as of
+.Nx
+6).
 Use
 .Xr dumpfs 8
 to confirm the file system format is
@@ -623,12 +628,14 @@ already present in the SysVBFS partition on the disk:
 .Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx_bfs
 .
 .Ss Nx Ns Tn /i386 and Nx Ns Tn /amd64
-Install new boot blocks on an existing mounted root file system on
+Install new boot blocks on an existing
+.Sy FFSv2
+mounted root file system on
 .Sq wd0 ,
 setting the timeout to five seconds, after copying a new secondary
 bootstrap:
 .Dl Ic cp /usr/mdec/boot /boot
-.Dl Ic installboot -v -o timeout=5 /dev/rwd0a /usr/mdec/bootxx_ffsv1
+.Dl Ic installboot -v -o timeout=5 /dev/rwd0a /usr/mdec/bootxx_ffsv2
 .
 .Pp
 Create a bootable CD-ROM with an ISO 9660
