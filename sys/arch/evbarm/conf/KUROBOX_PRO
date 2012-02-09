@@ -1,4 +1,4 @@
-#	$NetBSD: KUROBOX_PRO,v 1.2 2011/03/06 05:08:03 jakllsch Exp $
+#	$NetBSD: KUROBOX_PRO,v 1.3 2012/02/09 19:07:37 matt Exp $
 #
 #  KUROBOX_PRO -- KUROUTOSHIKOU. KURO-BOX/PRO platform kernel
 #
@@ -25,7 +25,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=710000
+options 	SYMTAB_SPACE=780000
 #options 	AUDIO_DEBUG=2
 
 

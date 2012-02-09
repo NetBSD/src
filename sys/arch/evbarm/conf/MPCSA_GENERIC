@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.25 2011/12/18 05:49:26 dholland Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.26 2012/02/09 19:07:37 matt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.25 $"
+#ident 		"GENERIC-$Revision: 1.26 $"
 
 maxusers	32		# estimated number of users
 
@@ -93,7 +93,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-Os -g"	# compile full symbol table
-options     SYMTAB_SPACE="(1024 * 606)"
+options 	SYMTAB_SPACE=640000
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
