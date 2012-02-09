@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.233 2012/02/07 19:37:14 joerg Exp $
+$NetBSD: UPDATING,v 1.234 2012/02/09 21:49:31 spz Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -17,7 +17,7 @@ Recent changes:
 ^^^^^^^^^^^^^^^
 
 20120207:
-	Default for MKCATPAGES changed to NO. Update builds with fail
+	Default for MKCATPAGES changed to NO. Update builds will fail
 	unless DESTDIR is cleaned manually.
 
 20111227:
