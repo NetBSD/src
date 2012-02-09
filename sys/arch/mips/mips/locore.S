@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.24 2012/01/19 08:28:49 matt Exp $	*/
+/*	locore.S,v 1.167.38.24 2012/01/19 08:28:49 matt Exp	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -172,17 +172,18 @@ _C_LABEL(kernel_text):
 _C_LABEL(verylocore):
 
 /*
- * struct lwp *cpu_switchto(struct lwp *cur, struct lwp *next)
+ * lwp_t *mips_cpu_switchto(lwp_t *cur, lwp_t *next, bool returning)
  * Switch to the specified next LWP
  * Arguments:
  *	a0	the current LWP
  *	a1	the LWP to switch to
+ *	a2	returning to a softint LWP
  * Returns:
  *	v0	the LWP we have switched from
  *
  * called at IPL_SCHED
  */
-NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
+NESTED(mips_cpu_switchto, CALLFRAME_SIZ, ra)
 #ifdef PARANOIA
 	/*
 	 * Make sure we are at IPL_SCHED
@@ -299,7 +300,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 #else
 	JR_HB_RA
 #endif /* PARANOIA */
-END(cpu_switchto)
+END(mips_cpu_switchto)
 
 #ifdef __HAVE_FAST_SOFTINTS
 /*
