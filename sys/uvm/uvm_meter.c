@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.49.16.2 2011/06/03 07:59:58 matt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.49.16.3 2012/02/09 03:05:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.49.16.2 2011/06/03 07:59:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.49.16.3 2012/02/09 03:05:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.49.16.2 2011/06/03 07:59:58 matt Exp
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
 
 /*
@@ -227,26 +227,36 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.flt_prcopy = uvmexp.flt_prcopy;
 	u.flt_przero = uvmexp.flt_przero;
 	u.pdwoke = uvmexp.pdwoke;
-	u.pdrevs = uvmexp.pdrevs;
-	u.pdswout = uvmexp.pdswout;
-	u.pdfreed = uvmexp.pdfreed;
-	u.pdscans = uvmexp.pdscans;
-	u.pdanscan = uvmexp.pdanscan;
-	u.pdobscan = uvmexp.pdobscan;
-	u.pdreact = uvmexp.pdreact;
-	u.pdbusy = uvmexp.pdbusy;
-	u.pdpageouts = uvmexp.pdpageouts;
-	u.pdpending = uvmexp.pdpending;
-	u.pddeact = uvmexp.pddeact;
-	u.anonpages = uvmexp.anonpages;
-	u.filepages = uvmexp.filepages;
-	u.execpages = uvmexp.execpages;
-	u.colorhit = uvmexp.colorhit;
-	u.colormiss = uvmexp.colormiss;
-	u.cpuhit = uvmexp.cpuhit;
-	u.cpumiss = uvmexp.cpumiss;
-	u.colorany = uvmexp.colorany;
-	u.colorfail = uvmexp.colorfail;
+	const struct uvm_pggroup *grp;
+	STAILQ_FOREACH(grp, &uvm.page_groups, pgrp_uvm_link) {
+		u.pdrevs += grp->pgrp_pdrevs;
+		u.pdswout += grp->pgrp_pdswout;
+		u.pdfreed += grp->pgrp_pdfreed;
+		u.pdscans += grp->pgrp_pdscans;
+		u.pdanscan += grp->pgrp_pdanscan;
+		u.pdobscan += grp->pgrp_pdobscan;
+		u.pdreact += grp->pgrp_pdreact;
+		u.pdbusy += grp->pgrp_pdbusy;
+		u.pdpageouts += grp->pgrp_pdpageouts;
+		u.pdpending += grp->pgrp_pdpending;
+		u.pddeact += grp->pgrp_pddeact;
+		u.anonpages += grp->pgrp_anonpages;
+		u.filepages += grp->pgrp_filepages;
+		u.execpages += grp->pgrp_execpages;
+	}
+	UVM_COLOR_FOREACH(pggroup, u_int) {
+		const struct pgfreelist * pgfl = &uvm.page_free[pggroup];
+		u.colorhit += pgfl->pgfl_colorhit;
+		u.colormiss += pgfl->pgfl_colormiss;
+		u.colorany += pgfl->pgfl_colorany;
+		u.colorfail += pgfl->pgfl_colorfail;
+	} 
+
+	for (size_t i = 0; i < ncpu; i++) {
+		const struct uvm_cpu * ucpu = &uvm.cpus[i];
+		u.cpuhit += ucpu->page_cpuhit;
+		u.cpumiss += ucpu->page_cpumiss;
+	}
 
 	node = *rnode;
 	node.sysctl_data = &u;

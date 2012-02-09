@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.6 2011/11/29 07:45:57 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.7 2012/02/09 03:05:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.6 2011/11/29 07:45:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.7 2012/02/09 03:05:00 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -207,6 +207,7 @@ static inline void
 uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
     struct vm_page *where)
 {
+	struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
 
 	KASSERT(uobj == pg->uobject);
 	KASSERT(mutex_owned(&uobj->vmobjlock));
@@ -222,11 +223,14 @@ uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
 		}
 		if (UVM_OBJ_IS_VTEXT(uobj)) {
 			atomic_inc_uint(&uvmexp.execpages);
+			atomic_inc_uint(&grp->pgrp_execpages);
 		} else {
 			atomic_inc_uint(&uvmexp.filepages);
+			atomic_inc_uint(&grp->pgrp_filepages);
 		}
 	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
 		atomic_inc_uint(&uvmexp.anonpages);
+		atomic_inc_uint(&grp->pgrp_anonpages);
 	}
 
 	if (where)
@@ -267,6 +271,8 @@ uvm_pageinsert(struct vm_page *pg)
 static inline void
 uvm_pageremove_list(struct uvm_object *uobj, struct vm_page *pg)
 {
+	struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
+
 
 	KASSERT(uobj == pg->uobject);
 	KASSERT(mutex_owned(&uobj->vmobjlock));
@@ -280,11 +286,14 @@ uvm_pageremove_list(struct uvm_object *uobj, struct vm_page *pg)
 		}
 		if (UVM_OBJ_IS_VTEXT(uobj)) {
 			atomic_dec_uint(&uvmexp.execpages);
+			atomic_dec_uint(&grp->pgrp_execpages);
 		} else {
 			atomic_dec_uint(&uvmexp.filepages);
+			atomic_dec_uint(&grp->pgrp_filepages);
 		}
 	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
 		atomic_dec_uint(&uvmexp.anonpages);
+		atomic_dec_uint(&grp->pgrp_anonpages);
 	}
 
 	/* object should be locked */
@@ -333,11 +342,21 @@ uvm_page_init_freelist(struct pgfreelist *pgfl)
 void
 uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 {
-	vsize_t freepages, pagecount;
+	vsize_t freepages, pagecount, pgflamount, pgrpamount, pdpolamount;
 	struct vm_page *pagearray;
+	struct uvm_pggroup *grparray;
+	void *pdpolarray;
 
 	KASSERT(ncpu <= 1);
 	CTASSERT(sizeof(pagearray->offset) >= sizeof(struct uvm_cpu *));
+
+	/*
+	 * Let MD code initialize the number of colors, or default
+	 * to 1 color if MD code doesn't care.
+	 */
+	if (uvmexp.ncolors == 0)
+		uvmexp.ncolors = 1;
+	uvmexp.colormask = uvmexp.ncolors - 1;
 
 	/*
 	 * init the page queues and page queue locks, except the free
@@ -346,7 +365,6 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	curcpu()->ci_data.cpu_uvm = &uvm.cpus[0];
-	uvmpdpol_init();
 	mutex_init(&uvm_pageqlock, MUTEX_DRIVER, IPL_NONE);
 	mutex_init(&uvm_fpageqlock, MUTEX_DRIVER, IPL_VM);
 
@@ -373,18 +391,10 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	freepages = 0;
-	for (size_t free_list = 0 ; free_list < vm_nphysseg ; free_list++) {
-		struct vm_physseg * const seg = VM_PHYSMEM_PTR(free_list);
+	for (u_int lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
+		const struct vm_physseg * const seg = VM_PHYSMEM_PTR(lcv);
 		freepages += seg->end - seg->start;
 	}
-
-	/*
-	 * Let MD code initialize the number of colors, or default
-	 * to 1 color if MD code doesn't care.
-	 */
-	if (uvmexp.ncolors == 0)
-		uvmexp.ncolors = 1;
-	uvmexp.colormask = uvmexp.ncolors - 1;
 
 	/*
 	 * we now know we have (PAGE_SIZE * freepages) bytes of memory we can
@@ -399,22 +409,42 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	pagecount = ((freepages + 1) << PAGE_SHIFT) /
 	    (PAGE_SIZE + sizeof(struct vm_page));
 
+	pgflamount = uvmexp.ncolors * 2 * sizeof(struct pgfreelist);
+	CTASSERT(2 * sizeof(struct pgfreelist) % sizeof(uint64_t) == 0);
+
+	size_t npggroup = VM_NPGGROUP(uvmexp.ncolors);
+	pgrpamount = roundup2(npggroup * sizeof(grparray[0]),
+	   sizeof(uint64_t));
+
+	pdpolamount = npggroup * uvmpdpol_space();
+
 	uvm.page_free = (void *)uvm_pageboot_alloc(
-	    2 * uvmexp.ncolors * sizeof(struct pgfreelist)
-	    + (pagecount * sizeof(struct vm_page)));
+	    pgflamount + pgrpamount + pdpolamount);
 
 	uvm.cpus[0].page_free = uvm.page_free + uvmexp.ncolors;
-	pagearray = (struct vm_page *)(uvm.cpus[0].page_free + uvmexp.ncolors);
 
-	for (size_t color = 0; color < uvmexp.ncolors; color++) {
+	grparray = (void *)(uvm.cpus[0].page_free + uvmexp.ncolors);
+	memset(grparray, 0, pgrpamount);
+	uvm.pggroups = grparray;
+
+	pdpolarray = (void *)((uintptr_t)grparray + pgrpamount);
+	memset(pdpolarray, 0, pdpolamount);
+	uvmpdpol_init(pdpolarray, npggroup);
+
+	pagearray = (void *)uvm_pageboot_alloc(pagecount * sizeof(pagearray[0]));
+	KASSERT(pagearray != NULL);
+
+	for (u_int color = 0; color < uvmexp.ncolors; color++) {
 		uvm_page_init_freelist(&uvm.page_free[color]);
 		uvm_page_init_freelist(&uvm.cpus[0].page_free[color]);
 	}
+
 	memset(pagearray, 0, pagecount * sizeof(struct vm_page));
 
 	/*
 	 * init the vm_page structures and put them in the correct place.
 	 */
+	STAILQ_INIT(&uvm.page_groups);
 
 	for (size_t free_list = 0; free_list < vm_nphysseg; free_list++) {
 		struct vm_physseg * const seg = VM_PHYSMEM_PTR(free_list);
@@ -434,7 +464,16 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 			VM_MDPAGE_INIT(pg);
 #endif
 			if (i >= seg->avail_start && i < seg->avail_end) {
+				size_t pggroup = VM_PAGE_TO_PGGROUP(pg, uvmexp.ncolors);
 				uvmexp.npages++;
+				
+				KASSERT(pggroup < npggroup);
+				if (grparray[pggroup].pgrp_npages++ == 0) {
+					uvmexp.npggroups++;
+					STAILQ_INSERT_TAIL(&uvm.page_groups,
+					    &grparray[pggroup], pgrp_uvm_link);
+				}
+
 				/* add page to free pool */
 				uvm_pagefree(pg);
 			}
@@ -462,7 +501,8 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	uvmexp.reserve_pagedaemon = 1;
-	uvmexp.reserve_kernel = vm_page_reserve_kernel;
+	uvmexp.reserve_kernel = roundup(vm_page_reserve_kernel,
+	    MAX(uvmexp.ncolors, uvmexp.npggroups));
 
 	/*
 	 * determine if we should zero pages in the idle loop.
@@ -860,11 +900,13 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 void
 uvm_page_recolor(int newncolors)
 {
-	struct pgfreelist *uvmarray, *cpuarray, *olduvmarray;
+	struct pgfreelist *uvmarray, *cpuarray;
 	struct pgfreelist *old_gpgfl, *old_pgfl;
+	struct uvm_pggroup *grparray;
+	void *pdpolarray;
 	struct vm_page *pg;
-	size_t freelistcount;
-	int color, ocolors;
+	size_t pgflamount, pgrpamount, pdpolamount;
+	size_t color;
 	struct uvm_cpu *ucpu;
 
 	if (newncolors <= uvmexp.ncolors)
@@ -877,30 +919,46 @@ uvm_page_recolor(int newncolors)
 
 	KASSERT(!mp_online);
 
-	freelistcount = newncolors * sizeof(struct pgfreelist) * 2;
+	pgflamount = newncolors * sizeof(struct pgfreelist) * 2;
+	size_t npggroup = VM_NPGGROUP(newncolors);
+	pgrpamount = roundup2(npggroup * sizeof(grparray[0]),
+	    sizeof(uint64_t));
+	pdpolamount = npggroup * uvmpdpol_space();
 
-	uvmarray = malloc(freelistcount, M_VMPAGE, M_NOWAIT);
+	uvmarray = malloc(pgflamount + pgrpamount + pdpolamount,
+	    M_VMPAGE, M_NOWAIT);
 	cpuarray = uvmarray + newncolors;
+	grparray = (void *)(cpuarray + newncolors);
+	pdpolarray = (void *)((uintptr_t)grparray + pgrpamount);
+
 	if (uvmarray == NULL) {
 		printf("WARNING: unable to allocate %d color page freelists\n",
 		    newncolors);
 		return;
 	}
 
+	/*
+	 * Need to take both locks since we need make sure the page daemon
+	 * won't interfere (and for the call to the policy engine to recolor).
+	 */
+	mutex_enter(&uvm_pageqlock);
 	mutex_spin_enter(&uvm_fpageqlock);
 
 	/* Make sure we should still do this. */
 	if (newncolors <= uvmexp.ncolors) {
 		mutex_spin_exit(&uvm_fpageqlock);
+		mutex_exit(&uvm_pageqlock);
 		free(uvmarray, M_VMPAGE);
 		return;
 	}
 
-	olduvmarray = uvm.page_free;
-	ocolors = uvmexp.ncolors;
+	struct pgfreelist * const olduvmarray = uvm.page_free;
+	const size_t ocolors = uvmexp.ncolors;
 
 	uvmexp.ncolors = newncolors;
 	uvmexp.colormask = uvmexp.ncolors - 1;
+	uvmexp.reserve_kernel = roundup(vm_page_reserve_kernel,
+	    MAX(uvmexp.ncolors, uvmexp.npggroups));
 
 	ucpu = curcpu()->ci_data.cpu_uvm;
 	for (color = 0; color < newncolors; color++) {
@@ -912,8 +970,12 @@ uvm_page_recolor(int newncolors)
 	KASSERT(old_pgfl == olduvmarray + ocolors);
 	for (color = 0; color < ocolors; color++, old_gpgfl++, old_pgfl++) {
 		struct pgflist *freeq = &old_gpgfl->pgfl_queues[0][0];
-		for (size_t free_list = 0; free_list < VM_NFREELIST; free_list++) {
-			for (size_t queue = 0; queue < PGFL_NQUEUES; queue++, freeq++) {
+		for (u_int free_list = 0;
+		     free_list < VM_NFREELIST;
+		     free_list++) {
+			for (u_int queue = 0;
+			     queue < PGFL_NQUEUES;
+			     queue++, freeq++) {
 				KASSERT(freeq == &old_gpgfl->pgfl_queues[free_list][queue]);
 				while ((pg = LIST_FIRST(freeq)) != NULL) {
 					const u_int pgcolor = VM_PGCOLOR_BUCKET(pg);
@@ -933,12 +995,53 @@ uvm_page_recolor(int newncolors)
 
 					uvmarray[pgcolor].pgfl_pages[queue]++;
 					cpuarray[pgcolor].pgfl_pages[queue]++;
+					grparray[VM_PAGE_TO_PGGROUP(pg,
+					    newncolors)].pgrp_free++;
 				}
 			}
 		}
 	}
+
+	u_int new_npggroup = 0;
+	for (u_int bank = 0; bank < vm_nphysseg; bank++) {
+		const struct vm_physseg * const seg = VM_PHYSMEM_PTR(bank);
+		new_npggroup += (seg->avail_start < seg->avail_end);
+		for (pg = seg->pgs + seg->avail_start;
+		     pg < seg->pgs + seg->avail_end;
+		     pg++) {
+			u_int pggroup = VM_PAGE_TO_PGGROUP(pg, uvmexp.ncolors);
+			grparray[pggroup].pgrp_npages++;
+		}
+	}
+
 	uvm.page_free = uvmarray;
 	ucpu->page_free = cpuarray;
+	uvm.pggroups = grparray;
+	uvmexp.npggroups = new_npggroup;
+
+	STAILQ_INIT(&uvm.page_groups);
+
+	for (u_int pggroup = 0; pggroup < npggroup; pggroup++) {
+		struct uvm_pggroup * const grp = grparray + pggroup;
+		if (grp->pgrp_npages > 0) {
+			grp->pgrp_freemin =
+			    uvmexp.freemin * grp->pgrp_npages / uvmexp.npages;
+			grp->pgrp_freetarg =
+			    uvmexp.freetarg * grp->pgrp_npages / uvmexp.npages;
+			grp->pgrp_wiredmax = grp->pgrp_npages / 3;
+			STAILQ_INSERT_TAIL(&uvm.page_groups, grp,
+			    pgrp_uvm_link);
+		}
+	}
+
+	KASSERT(!STAILQ_EMPTY(&uvm.page_groups));
+
+	/*
+	 * Let the page daemon policy recolor its stuff.
+	 */
+	uvmpdpol_recolor(pdpolarray, grparray, npggroup, ocolors);
+
+	mutex_exit(&uvm_pageqlock);
 
 	if (have_recolored_pages) {
 		/*
@@ -970,7 +1073,9 @@ uvm_cpu_attach(struct cpu_info *ci)
 	}
 
 	/* Add more reserve pages for this CPU. */
-	uvmexp.reserve_kernel += vm_page_reserve_kernel;
+	uvmexp.reserve_kernel = roundup(
+	    uvmexp.reserve_kernel + vm_page_reserve_kernel,
+	    MAX(uvmexp.ncolors, uvmexp.npggroups));
 
 	/* Configure this CPU's free lists. */
 	ucpu = &uvm.cpus[cpu_index(ci)];
@@ -1006,7 +1111,7 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int free_list, int try1, int try2,
 		if ((pg = LIST_FIRST(&freeq[try1])) != NULL) {
 			KASSERT(ucpu == VM_FREE_PAGE_TO_CPU(pg));
 			KASSERT(pgfl == &ucpu->page_free[color]);
-		    	uvmexp.cpuhit++;
+		    	ucpu->page_cpuhit++;
 			goto gotit;
 		}
 
@@ -1015,7 +1120,7 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int free_list, int try1, int try2,
 		if ((pg = LIST_FIRST(&gfreeq[try1])) != NULL) {
 			ucpu = VM_FREE_PAGE_TO_CPU(pg);
 			pgfl = &ucpu->page_free[color];
-		    	uvmexp.cpumiss++;
+		    	ucpu->page_cpumiss++;
 			goto gotit;
 		}
 
@@ -1023,7 +1128,7 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int free_list, int try1, int try2,
 		if ((pg = LIST_FIRST(&freeq[try2])) != NULL) {
 			KASSERT(ucpu == VM_FREE_PAGE_TO_CPU(pg));
 			KASSERT(pgfl == &ucpu->page_free[color]);
-		    	uvmexp.cpuhit++;
+		    	ucpu->page_cpuhit++;
 			try1 = try2;
 			goto gotit;
 		}
@@ -1032,20 +1137,22 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int free_list, int try1, int try2,
 		if ((pg = LIST_FIRST(&gfreeq[try2])) != NULL) {
 			ucpu = VM_FREE_PAGE_TO_CPU(pg);
 			pgfl = &ucpu->page_free[color];
-		    	uvmexp.cpumiss++;
+		    	ucpu->page_cpumiss++;
 			try1 = try2;
 			goto gotit;
 		}
 		color = (color + 1) & uvmexp.colormask;
 	} while (anycolor && color != trycolor);
 
-	uvmexp.colorfail++;
+	pgfl->pgfl_colorfail++;
+	gpgfl->pgfl_colorfail++;
 	return (NULL);
 
  gotit:
 	LIST_REMOVE(pg, pageq.list);	/* global list */
 	LIST_REMOVE(pg, listq.list);	/* per-cpu list */
 	uvmexp.free--;
+	uvm_page_to_pggroup(pg)->pgrp_free--;
 	pgfl->pgfl_pages[try1]--;
 	gpgfl->pgfl_pages[try1]--;
 	ucpu->pages[try1]--;
@@ -1054,13 +1161,17 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int free_list, int try1, int try2,
 	if (pg->flags & PG_ZERO)
 		uvmexp.zeropages--;
 
-	if (anycolor)
-		uvmexp.colorany++;
+	if (anycolor) {
+		pgfl->pgfl_colorany++;
+		gpgfl->pgfl_colorany++;
+	}
 
-	if (color == trycolor)
-		uvmexp.colorhit++;
-	else {
-		uvmexp.colormiss++;
+	if (color == trycolor) {
+		pgfl->pgfl_colorhit++;
+		gpgfl->pgfl_colorhit++;
+	} else {
+		pgfl->pgfl_colormiss++;
+		gpgfl->pgfl_colormiss++;
 		*trycolorp = color;
 	}
 
@@ -1238,9 +1349,12 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	pg->uanon = anon;
 	pg->flags = PG_BUSY|PG_CLEAN|PG_FAKE;
 	if (anon) {
+		struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
+
 		anon->an_page = pg;
 		pg->pqflags = PQ_ANON;
 		atomic_inc_uint(&uvmexp.anonpages);
+		atomic_inc_uint(&grp->pgrp_anonpages);
 	} else {
 		if (obj) {
 			uvm_pageinsert(pg);
@@ -1421,8 +1535,11 @@ uvm_pagefree(struct vm_page *pg)
 			if ((pg->pqflags & PQ_ANON) == 0) {
 				pg->loan_count--;
 			} else {
+				struct uvm_pggroup * const grp =
+				    uvm_page_to_pggroup(pg);
 				pg->pqflags &= ~PQ_ANON;
 				atomic_dec_uint(&uvmexp.anonpages);
+				atomic_dec_uint(&grp->pgrp_anonpages);
 			}
 			pg->uanon->an_page = NULL;
 			pg->uanon = NULL;
@@ -1450,8 +1567,10 @@ uvm_pagefree(struct vm_page *pg)
 	if (pg->uobject != NULL) {
 		uvm_pageremove(pg);
 	} else if (pg->uanon != NULL) {
+		struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
 		pg->uanon->an_page = NULL;
 		atomic_dec_uint(&uvmexp.anonpages);
+		atomic_dec_uint(&grp->pgrp_anonpages);
 	}
 
 	/*
@@ -1496,6 +1615,7 @@ uvm_pagefree(struct vm_page *pg)
 	pgfl = &uvm.page_free[color].pgfl_queues[free_list][queue];
 	LIST_INSERT_HEAD(pgfl, pg, pageq.list);
 	uvm.page_free[color].pgfl_pages[queue]++;
+	uvm_page_to_pggroup(pg)->pgrp_free++;
 	uvmexp.free++;
 	if (iszero) {
 		uvmexp.zeropages++;
@@ -1670,6 +1790,9 @@ uvm_pageidlezero(void)
 				ucpu->pages[PGFL_UNKNOWN]--;
 				gpgfl->pgfl_pages[PGFL_UNKNOWN]--;
 				pgfl->pgfl_pages[PGFL_UNKNOWN]--;
+				struct uvm_pggroup * const grp =
+				    uvm_page_to_pggroup(pg);
+				grp->pgrp_free--;
 				uvmexp.free--;
 				KASSERT(pg->pqflags == PQ_FREE);
 				pg->pqflags = 0;
@@ -1693,6 +1816,7 @@ uvm_pageidlezero(void)
 					ucpu->pages[PGFL_UNKNOWN]++;
 					gpgfl->pgfl_pages[PGFL_UNKNOWN]++;
 					pgfl->pgfl_pages[PGFL_UNKNOWN]++;
+					grp->pgrp_free++;
 					uvmexp.free++;
 					uvmexp.zeroaborts++;
 					goto quit;
@@ -1711,6 +1835,7 @@ uvm_pageidlezero(void)
 				ucpu->pages[PGFL_ZEROS]++;
 				gpgfl->pgfl_pages[PGFL_ZEROS]++;
 				pgfl->pgfl_pages[PGFL_ZEROS]++;
+				grp->pgrp_free++;
 				uvmexp.free++;
 				uvmexp.zeropages++;
 			}
@@ -1903,4 +2028,11 @@ uvm_page_lookup_freelist(struct vm_page *pg)
 	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
 	KASSERT(lcv != -1);
 	return (vm_physmem[lcv].free_list);
+}
+
+struct uvm_pggroup *
+uvm_page_to_pggroup(struct vm_page *pg)
+{
+	size_t pggroup = VM_PAGE_TO_PGGROUP(pg, uvmexp.ncolors);
+	return &uvm.pggroups[pggroup];
 }

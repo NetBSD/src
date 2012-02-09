@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.101.4.2.4.5 2011/06/03 07:59:58 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.101.4.2.4.6 2012/02/09 03:04:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,11 +128,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2.4.5 2011/06/03 07:59:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2.4.6 2012/02/09 03:04:59 matt Exp $");
 
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -480,7 +481,7 @@ uvm_km_pgremove_intrsafe(struct vm_map *map, vaddr_t start, vaddr_t end)
 		pg = PHYS_TO_VM_PAGE(pa);
 		KASSERT(pg);
 		KASSERT(pg->uobject == NULL && pg->uanon == NULL);
-		uvm_pagefree(pg);
+		uvm_km_pagefree(pg);
 	}
 }
 
@@ -627,6 +628,8 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 			}
 		}
 
+		uvm_km_pageclaim(pg);
+
 		pg->flags &= ~PG_BUSY;	/* new page */
 		UVM_PAGE_OWN(pg, NULL);
 
@@ -718,6 +721,7 @@ again:
 			return 0;
 		}
 	}
+	uvm_km_pageclaim(pg);
 	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
 	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE);
 	pmap_update(pmap_kernel());
@@ -748,8 +752,11 @@ uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 			return (0);
 	}
 	va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
-	if (__predict_false(va == 0))
+	if (__predict_false(va == 0)) {
 		uvm_pagefree(pg);
+	} else {
+		uvm_km_pageclaim(pg);
+	}
 	return (va);
 #else
 	vaddr_t va;
@@ -797,11 +804,25 @@ void
 uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 {
 #if defined(PMAP_UNMAP_POOLPAGE)
-	paddr_t pa;
-
-	pa = PMAP_UNMAP_POOLPAGE(addr);
-	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+	paddr_t pa = PMAP_UNMAP_POOLPAGE(addr);
+	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+	uvm_km_pagefree(pg);
 #else
 	uvm_km_free(map, addr, PAGE_SIZE, UVM_KMF_WIRED);
 #endif /* PMAP_UNMAP_POOLPAGE */
+}
+
+void
+uvm_km_pageclaim(struct vm_page *pg)
+{
+	atomic_inc_uint(&uvm_page_to_pggroup(pg)->pgrp_kmempages);
+//	TAILQ_INSERT_TAIL(&uvm.kmem_pageq, pg, listq.queue);
+}
+
+void
+uvm_km_pagefree(struct vm_page *pg)
+{
+	atomic_dec_uint(&uvm_page_to_pggroup(pg)->pgrp_kmempages);
+//	TAILQ_REMOVE(&uvm.kmem_pageq, pg, listq.queue);
+	uvm_pagefree(pg);
 }

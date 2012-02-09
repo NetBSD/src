@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy.h,v 1.3 2007/02/21 23:00:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdpolicy.h,v 1.3.62.1 2012/02/09 03:05:01 matt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -36,11 +36,12 @@ struct vm_anon;
  * these API is for uvm internal use only.
  * don't use them directly from outside of /sys/uvm.
  */
-
-void uvmpdpol_init(void);
+size_t uvmpdpol_space(void);
+void uvmpdpol_init(void *, size_t);
 void uvmpdpol_reinit(void);
-void uvmpdpol_estimatepageable(int *, int *);
-bool uvmpdpol_needsscan_p(void);
+void uvmpdpol_recolor(void *, struct uvm_pggroup *, size_t, size_t);
+void uvmpdpol_estimatepageable(u_int *, u_int *);
+bool uvmpdpol_needsscan_p(struct uvm_pggroup *);
 
 void uvmpdpol_pageactivate(struct vm_page *);
 void uvmpdpol_pagedeactivate(struct vm_page *);
@@ -49,10 +50,10 @@ void uvmpdpol_pageenqueue(struct vm_page *);
 bool uvmpdpol_pageisqueued_p(struct vm_page *);
 void uvmpdpol_anfree(struct vm_anon *);
 
-void uvmpdpol_tune(void);
-void uvmpdpol_scaninit(void);
-struct vm_page *uvmpdpol_selectvictim(void);
-void uvmpdpol_balancequeue(int);
+void uvmpdpol_tune(struct uvm_pggroup *);
+void uvmpdpol_scaninit(struct uvm_pggroup *);
+struct vm_page *uvmpdpol_selectvictim(struct uvm_pggroup *);
+void uvmpdpol_balancequeue(struct uvm_pggroup *, u_int);
 
 void uvmpdpol_sysctlsetup(void);
 

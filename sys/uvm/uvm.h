@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.55.16.2 2011/06/03 07:56:08 matt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.55.16.3 2012/02/09 03:04:59 matt Exp $	*/
 
 /*
  *
@@ -83,7 +83,9 @@ struct uvm_cpu {
 	int page_idlezero_next;		/* which color to zero next */
 	bool page_idle_zero;		/* TRUE if we should try to zero
 					   pages in the idle loop */
-	int pages[PGFL_NQUEUES];	/* total of pages in page_free */
+	u_int pages[PGFL_NQUEUES];	/* total of pages in page_free */
+	uint64_t page_cpuhit;		/* pagealloc where we alloced locally */
+	uint64_t page_cpumiss;		/* pagealloc where we didn't */
 };
 
 /*
@@ -95,7 +97,7 @@ struct uvm {
 	/* vm_page related parameters */
 
 		/* vm_page queues */
-	struct pgfreelist *page_free;	/* unallocated pages */
+	struct pgfreelist *page_free;	/* unallocated pages (by color) */
 	bool page_init_done;		/* TRUE if uvm_page_init() finished */
 
 		/* page daemon trigger */
@@ -105,17 +107,24 @@ struct uvm {
 		/* aiodone daemon */
 	struct workqueue *aiodone_queue;
 
-	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
-	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
+		/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
+	TAILQ_HEAD(, buf) aio_done;	/* done async i/o reqs */
 
-	/* swap-related items */
+		/* swap-related items */
 	bool swap_running;
 	kcondvar_t scheduler_cv;
 	bool scheduler_kicked;
 	int swapout_enabled;
 
-	/* per-cpu data */
+		/* per-cpu data */
 	struct uvm_cpu cpus[MAXCPUS];
+
+		/* list of page groups with pages */
+	STAILQ_HEAD(,uvm_pggroup) page_groups;
+		/* array of all page groups */
+	struct uvm_pggroup *pggroups;
+
+	struct pglist kmem_pageq;
 };
 
 /*
@@ -183,6 +192,12 @@ do {									\
 } while (/*CONSTCOND*/ 0)
 
 void uvm_kick_pdaemon(void);
+
+#define	UVM_COLOR_FOREACH(var, type) \
+	for (type var = 0; var < uvmexp.ncolors; var++)
+
+#define	VMFREELIST_FOREACH(var, type) \
+	for (type var = 0; var < VM_NFREELIST; var++)
 
 /*
  * UVM_PAGE_OWN: track page ownership (only if UVM_PAGE_TRKOWN)
