@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.60 2011/06/07 17:47:24 wiz Exp $
+.\"	$NetBSD: envstat.8,v 1.61 2012/02/09 18:10:26 riz Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,11 +65,11 @@ See the
 .Xr envsys.conf 5
 manual page for more information.
 .It Fl D
-Display the names of the drivers that were registered with
+Display the names of the devices that are currently registered with
 the
 .Xr envsys 4
-framework, one per line and some properties for the driver: refresh timeout
-value, for example.
+framework, one per line, along with some properties for the device
+(for example, its refresh timeout value).
 .It Fl d Ar device
 Display only the sensors for the given
 .Ar device .
@@ -79,7 +79,7 @@ you want to only see results from a specific device.
 Display temperature values in degrees Fahrenheit.
 The default is to display temperature values in degrees Celsius.
 .It Fl I
-This flag skips the sensors with invalid state, these are normally
+This flag skips the sensors with invalid state; these are normally
 shown using the
 .Qq N/A
 string by default.
@@ -110,12 +110,13 @@ row mode; this mode is now the default.
 This flag is used to restore defaults to all devices registered with
 the framework.
 This will remove all properties that were set in
-the configuration file to the setting that the drivers use by
+the configuration file to the setting that the devices use by
 default.
 .It Fl s Ar "device:sensor,..."
-Restrict the display to the named sensors.
+Restrict the display to the named devices and sensors.
 The pair device and sensor description must be supplied as a comma separated list.
 Device as well as sensor descriptions are case sensitive.
+Note that the order of the arguments given does not influence the order of output.
 .It Fl T
 Create and display max, min and average statistics for a sensor.
 Must be used with an
@@ -134,9 +135,9 @@ The default is the length of the longest sensor name.
 This option has no effect.
 It is retained for historical reasons.
 .It Fl x
-Shows the property list used by the
+Shows the raw XML property list used by the
 .Xr sysmon_envsys 9
-framework that contains details about all registered drivers
+framework that contains details about all registered devices
 and sensors.
 .El
 .Sh UNITS
@@ -169,18 +170,18 @@ Watt-hours
 .Sh EXAMPLES
 To display the
 .Dq charge
-sensor of the driver
+sensor of the device
 .Ar acpibat0
 in one line every ten seconds:
 .Pp
 .Dl $ envstat -s \*qacpibat0:charge\*q -i 10
 .Pp
-To list the drivers that are currently registered with
+To list the devices that are currently registered with
 .Xr envsys 4 :
 .Pp
 .Dl $ envstat -D
 .Pp
-To display the sensors of the driver
+To display the sensors of the device
 .Ar aibs0 :
 .Pp
 .Dl $ envstat -d aibs0
