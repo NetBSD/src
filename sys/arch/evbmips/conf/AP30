@@ -1,10 +1,10 @@
-#	$NetBSD: AP30,v 1.23 2011/12/18 05:49:26 dholland Exp $
+#	$NetBSD: AP30,v 1.24 2012/02/09 18:58:14 matt Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.23 $"
+#ident 		"AP30-$Revision: 1.24 $"
 
 maxusers	32
 
@@ -45,7 +45,7 @@ options 	DIAGNOSTIC	# extra kernel sanity checking
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=351000	# size for embedded symbol table
+options 	SYMTAB_SPACE=355000	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries
