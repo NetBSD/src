@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unpriv.c,v 1.4 2012/01/31 19:02:49 njoly Exp $	*/
+/*	$NetBSD: t_unpriv.c,v 1.5 2012/02/09 18:31:03 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,6 +27,7 @@
  */
 
 #include <atf-c.h>
+#include <libgen.h>
 #include <unistd.h>
 
 #include <rump/rump_syscalls.h>
@@ -71,13 +72,57 @@ owner(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+static void
+dirperms(const atf_tc_t *tc, const char *mp)
+{
+	char name[] = "dir.test/file.test";
+	char *dir = dirname(name);
+	int fd;
+
+	if (FSTYPE_SYSVBFS(tc))
+		atf_tc_skip("directories not supported by file system");
+
+	FSTEST_ENTER();
+
+	if (rump_sys_mkdir(dir, 0777) == -1)
+		atf_tc_fail_errno("mkdir");
+
+	rump_pub_lwproc_rfork(RUMP_RFCFDG);
+	if (rump_sys_setuid(1) == -1)
+		atf_tc_fail_errno("setuid");
+        if (rump_sys_open(name, O_RDWR|O_CREAT, 0666) != -1 || errno != EACCES)
+		atf_tc_fail_errno("open");
+	rump_pub_lwproc_releaselwp();
+
+	if ((fd = rump_sys_open(name, O_RDWR|O_CREAT, 0666)) == -1)
+		atf_tc_fail_errno("open");
+	if (rump_sys_close(fd) == -1)
+		atf_tc_fail_errno("close");
+
+	rump_pub_lwproc_rfork(RUMP_RFCFDG);
+	if (rump_sys_setuid(1) == -1)
+		atf_tc_fail_errno("setuid");
+        if (rump_sys_unlink(name) != -1 || errno != EACCES)
+		atf_tc_fail_errno("unlink");
+	rump_pub_lwproc_releaselwp();
+
+        if (rump_sys_unlink(name) == -1)
+		atf_tc_fail_errno("unlink");
+
+	if (rump_sys_rmdir(dir) == -1)
+		atf_tc_fail_errno("rmdir");
+
+	FSTEST_EXIT();
+}
 
 ATF_TC_FSAPPLY(owner, "owner unprivileged checks");
+ATF_TC_FSAPPLY(dirperms, "directory permission checks");
 
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_FSAPPLY(owner);
+	ATF_TP_FSAPPLY(dirperms);
 
 	return atf_no_error();
 }
