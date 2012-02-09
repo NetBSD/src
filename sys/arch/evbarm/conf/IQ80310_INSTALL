@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310_INSTALL,v 1.1 2003/04/08 20:49:02 thorpej Exp $
+#	$NetBSD: IQ80310_INSTALL,v 1.2 2012/02/09 19:07:37 matt Exp $
 #
 #	IQ80310_INSTALL -- IQ80310 kernel with installation-sized
 #	ramdisk
@@ -6,3 +6,9 @@
 
 include "arch/evbarm/conf/IQ80310"
 include "arch/evbarm/conf/INSTALL"
+
+options UVMHIST,UVMHIST_PRINT
+
+no config netbsd-sd0
+no config netbsd-wd0
+no config netbsd-fxp0
