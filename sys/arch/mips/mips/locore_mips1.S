@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.14 2011/12/23 23:12:34 matt Exp $	*/
+/*	locore_mips1.S,v 1.64.26.1.2.14 2011/12/23 23:12:34 matt Exp	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1735,6 +1735,7 @@ _C_LABEL(MIPSX(locore_vec)):
 	PTR_WORD _C_LABEL(MIPSX(tlb_enter))
 	PTR_WORD _C_LABEL(MIPSX(tlb_read_indexed))
 	PTR_WORD _C_LABEL(MIPSX(tlb_write_indexed))
+	PTR_WORD _C_LABEL(mips_cpu_switchto)
 
 	.globl _C_LABEL(MIPSX(locoresw))
 _C_LABEL(MIPSX(locoresw)):
