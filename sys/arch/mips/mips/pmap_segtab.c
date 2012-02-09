@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.1.2.11 2011/11/29 07:48:31 matt Exp $	*/
+/*	pmap_segtab.c,v 1.1.2.11 2011/11/29 07:48:31 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.11 2011/11/29 07:48:31 matt Exp $");
+__KERNEL_RCSID(0, "pmap_segtab.c,v 1.1.2.11 2011/11/29 07:48:31 matt Exp");
 
 /*
  *	Manages physical address maps.
@@ -199,7 +199,6 @@ pmap_segtab_release(union segtab *stp, u_int level)
 {
 
 	for (size_t i = 0; i < PMAP_SEGTABSIZE; i++) {
-		paddr_t pa;
 #ifdef _LP64
 		if (level > 0) {
 			if (stp->seg_seg[i] != NULL) {
@@ -236,8 +235,9 @@ pmap_segtab_release(union segtab *stp, u_int level)
 #ifdef _LP64
 		KASSERT(MIPS_XKPHYS_P(pte));
 #endif
-		pa = mips_pmap_unmap_poolpage((vaddr_t)pte);
-		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+		paddr_t pa = mips_pmap_unmap_poolpage((vaddr_t)pte);
+		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+		uvm_km_pagefree(pg);
 
 		stp->seg_tab[i] = NULL;
 	}
@@ -464,7 +464,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 		 * free the page we just allocated.
 		 */
 		if (__predict_false(opte != NULL)) {
-			uvm_pagefree(pg);
+			uvm_km_pagefree(pg);
 			pte = opte;
 		}
 #else

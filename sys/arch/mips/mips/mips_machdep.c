@@ -2126,6 +2126,8 @@ mips_init_lwp0_uarea(void)
 }
 
 int mips_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
+u_int mips_nfreelist;
+uint32_t mips_freelist_mask = 0;
 
 #define	HALFGIG		((paddr_t)512 * 1024 * 1024)
 #define	FOURGIG		((paddr_t)4 * 1024 * 1024 * 1024)
@@ -2144,6 +2146,7 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 #ifdef VM_FREELIST_FIRST4G
 	bool need4g = false;
 #endif
+	CTASSERT(VM_NFREELIST <= 32);
 
 	/*
 	 * Do a first pass and see what ranges memory we have to deal with.
@@ -2152,7 +2155,9 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 #ifdef VM_FREELIST_FIRST4G
 		if (round_page(segs[i].start + segs[i].size) > FOURGIG) {
 			need4g = true;
+#ifdef _LP64
 			mips_poolpage_vmfreelist = VM_FREELIST_FIRST4G;
+#endif
 		}
 #endif
 #ifdef VM_FREELIST_FIRST512M
@@ -2279,11 +2284,21 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 			uvm_page_physload(first, last, first, last, freelist);
 
 			/*
+			 * Mark that we loaded pages of this freelist type.
+			 */
+			mips_freelist_mask |= (1 << freelist);
+
+			/*
 			 * Start where we finished.
 			 */
 			segstart = segend;
 		}
 	}
+
+	/*
+	 * Now to get the number of freelists in use.
+	 */
+	mips_nfreelist = popcount32(mips_freelist_mask);
 }
 
 /* 

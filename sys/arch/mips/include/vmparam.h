@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.25 2011/12/27 16:09:36 matt Exp $	*/
+/*	vmparam.h,v 1.41.28.25 2011/12/27 16:09:36 matt Exp	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -208,9 +208,8 @@
 #define	VM_PHYSSEG_NOADD	/* can add RAM after vm_mem_init */
 
 #ifndef VM_NFREELIST
-#define	VM_NFREELIST		16	/* 16 distinct memory segments */
+#define	VM_NFREELIST		1	/* 16 distinct memory segments */
 #define VM_FREELIST_DEFAULT	0
-#define VM_FREELIST_MAX		1
 #endif
 
 #ifdef _KERNEL
@@ -286,5 +285,15 @@ do {								\
 	PG_MD_PVLIST_LOCK_INIT(md);				\
 	(md)->pvh_attrs = 0;					\
 } while (/* CONSTCOND */ 0)
+
+#define	VM_NPGGROUP(colors)		(mips_nfreelist * (colors))
+#define	VM_PAGE_TO_PGGROUP(pg, ncolors)	(mips_page_to_pggroup((pg), (ncolors)))
+
+#ifdef _KERNEL
+extern u_int mips_nfreelist;
+extern uint32_t mips_freelist_mask;
+struct vm_page;
+extern size_t mips_page_to_pggroup(struct vm_page *, size_t); 
+#endif
 
 #endif /* ! _MIPS_VMPARAM_H_ */
