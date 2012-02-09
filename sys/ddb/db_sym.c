@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.62 2012/02/09 00:21:23 christos Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.63 2012/02/09 17:07:07 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.62 2012/02/09 00:21:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.63 2012/02/09 17:07:07 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -322,23 +322,20 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 
 		cursym = db_search_symbol(off, strategy, &d);
 		db_symbol_values(cursym, &name, &value);
-		if (name != NULL &&
-		    ((unsigned int) d < db_maxoff) &&
+		if (name != NULL && ((unsigned int)d < db_maxoff) &&
 		    value != 0) {
 			strlcpy(buf, name, buflen);
 			if (d) {
 				strlcat(buf, "+", buflen);
-				db_format_radix(buf+strlen(buf),
-				    24, d, true);
+				db_format_radix(buf + strlen(buf), 24, d, true);
 			}
 			if (strategy == DB_STGY_PROC) {
 				if ((*db_symformat->sym_line_at_pc)
-				    (NULL, cursym, &filename,
-				    &linenum, off))
-					snprintf(buf + strlen(buf),
-					    buflen - strlen(buf),
-					    " [%s:%d]",
-					    filename, linenum);
+				    (NULL, cursym, &filename, &linenum, off)) {
+					size_t len = strlen(buf);
+					snprintf(buf + len, buflen - len,
+					    " [%s:%d]", filename, linenum);
+				}
 			}
 			return;
 		}
@@ -397,8 +394,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 
 		cursym = db_search_symbol(off, strategy, &d);
 		db_symbol_values(cursym, &name, &value);
-		if (name != NULL &&
-		    ((unsigned int) d < db_maxoff) &&
+		if (name != NULL && ((unsigned int)d < db_maxoff) &&
 		    value != 0) {
 			(*pr)("%s", name);
 			if (d) {
@@ -409,10 +405,8 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 			}
 			if (strategy == DB_STGY_PROC) {
 				if ((*db_symformat->sym_line_at_pc)
-				    (NULL, cursym, &filename,
-				    &linenum, off))
-					(*pr)(" [%s:%d]",
-					    filename, linenum);
+				    (NULL, cursym, &filename, &linenum, off))
+					(*pr)(" [%s:%d]", filename, linenum);
 			}
 			return;
 		}
