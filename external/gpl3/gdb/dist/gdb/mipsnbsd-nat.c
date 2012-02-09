@@ -27,6 +27,16 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+
+#include "gregset.h"
+
 #include "mips-tdep.h"
 #include "mipsnbsd-tdep.h"
 #include "inf-ptrace.h"
@@ -110,6 +120,32 @@ mipsnbsd_store_inferior_registers (struct target_ops *ops,
     }
 }
 
+/* Wrapper functions.  These are only used by nbsd-thread.  */
+void
+supply_gregset (struct regcache *regcache, const gdb_gregset_t *gregsetp)
+{
+  mipsnbsd_supply_reg (regcache, (const char *) gregsetp, -1);
+}   
+
+void
+fill_gregset (const struct regcache *regcache,
+              gdb_gregset_t *gregsetp, int regno)
+{
+  mipsnbsd_fill_reg (regcache, (char *) gregsetp, -1);
+}   
+
+void
+supply_fpregset (struct regcache *regcache, const gdb_fpregset_t *fpregsetp)
+{   
+  mipsnbsd_supply_fpreg (regcache, (const char *) fpregsetp, -1);
+}
+
+void
+fill_fpregset (const struct regcache *regcache,
+               gdb_fpregset_t *fpregsetp, int regno)
+{
+  mipsnbsd_fill_fpreg (regcache, (char *) fpregsetp, -1);
+}
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
 void _initialize_mipsnbsd_nat (void);
