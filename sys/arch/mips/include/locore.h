@@ -111,6 +111,8 @@ struct mips_jump_fixup_info {
 void	fixup_splcalls(void);				/* splstubs.c */
 bool	mips_fixup_exceptions(mips_fixup_callback_t);
 bool	mips_fixup_zero_relative(int32_t, uint32_t [2]);
+intptr_t
+	mips_fixup_addr(const uint32_t *);
 void	mips_fixup_stubs(uint32_t *, uint32_t *);
 
 /*
@@ -348,6 +350,7 @@ typedef struct  {
 	void	(*ljv_tlb_enter)(size_t, vaddr_t, uint32_t);
 	void	(*ljv_tlb_read_indexed)(size_t, struct tlbmask *);
 	void	(*ljv_tlb_write_indexed)(size_t, const struct tlbmask *);
+	lwp_t *	(*ljv_cpu_switchto)(lwp_t *, lwp_t *, bool);
 } mips_locore_jumpvec_t;
 
 typedef struct {
