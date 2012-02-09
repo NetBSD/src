@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.163 2008/10/22 11:36:58 matt Exp $ */
+/* vmstat.c,v 1.163 2008/10/22 11:36:58 matt Exp */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.163 2008/10/22 11:36:58 matt Exp $");
+__RCSID("vmstat.c,v 1.163 2008/10/22 11:36:58 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -699,16 +699,20 @@ dovmstat(struct timespec *interval, int reps)
 		PRWORD(ovflw, " %*ld", 7, 1, pgtok(total.t_free));
 		PRWORD(ovflw, " %*ld", 5, 1,
 		    rate(uvmexp.faults - ouvmexp.faults));
+#if 0
 		PRWORD(ovflw, " %*ld", 4, 1,
 		    rate(uvmexp.pdreact - ouvmexp.pdreact));
 		PRWORD(ovflw, " %*ld", 4, 1,
 		    rate(uvmexp.pageins - ouvmexp.pageins));
+#endif
 		PRWORD(ovflw, " %*ld", 5, 1,
 		    rate(uvmexp.pgswapout - ouvmexp.pgswapout));
+#if 0
 		PRWORD(ovflw, " %*ld", 5, 1,
 		    rate(uvmexp.pdfreed - ouvmexp.pdfreed));
 		PRWORD(ovflw, " %*ld", 6, 2,
 		    rate(uvmexp.pdscans - ouvmexp.pdscans));
+#endif
 		drvstats(&ovflw);
 		PRWORD(ovflw, " %*ld", 5, 1,
 		    rate(uvmexp.intrs - ouvmexp.intrs));
@@ -804,102 +808,187 @@ dosum(void)
 		if (sysctl(mib, 2, &uvmexp2, &ssize, NULL, 0) < 0)
 			fprintf(stderr, "%s: sysctl vm.uvmexp2 failed: %s",
 				getprogname(), strerror(errno));
+	} else {
+		kread(namelist, X_UVMEXP, &uvmexp, sizeof(uvmexp));
+		uvmexp2.pagesize = uvmexp.pagesize;
+		uvmexp2.ncolors = uvmexp.ncolors;
+		uvmexp2.npages = uvmexp.npages;
+		uvmexp2.free = uvmexp.free;
+		uvmexp2.paging = uvmexp.paging;
+		uvmexp2.wired = uvmexp.wired;
+		uvmexp2.zeropages = uvmexp.zeropages;
+		uvmexp2.reserve_pagedaemon = uvmexp.reserve_pagedaemon;
+		uvmexp2.reserve_kernel = uvmexp.reserve_kernel;
+		uvmexp2.anonpages = uvmexp.anonpages;
+		uvmexp2.filepages = uvmexp.filepages;
+		uvmexp2.execpages = uvmexp.execpages;
+
+		uvmexp2.freemin = uvmexp.freemin;
+		uvmexp2.freetarg = uvmexp.freetarg;
+		uvmexp2.wiredmax = uvmexp.wiredmax;
+
+		uvmexp2.nswapdev = uvmexp.nswapdev;
+		uvmexp2.swpages = uvmexp.swpages;
+		uvmexp2.swpginuse = uvmexp.swpginuse;
+		uvmexp2.nswget = uvmexp.nswget;
+
+		uvmexp2.faults = uvmexp.faults;
+		uvmexp2.traps = uvmexp.traps;
+		uvmexp2.intrs = uvmexp.intrs;
+		uvmexp2.swtch = uvmexp.swtch;
+		uvmexp2.softs = uvmexp.softs;
+		uvmexp2.syscalls = uvmexp.syscalls;
+		uvmexp2.pageins = uvmexp.pageins;
+		uvmexp2.pdpageouts = uvmexp.pdpageouts;
+		uvmexp2.swapins = uvmexp.swapins;
+		uvmexp2.swapouts = uvmexp.swapouts;
+		uvmexp2.pgswapin = uvmexp.pgswapin;
+		uvmexp2.pgswapout = uvmexp.pgswapout;
+		uvmexp2.forks = uvmexp.forks;
+		uvmexp2.forks_ppwait = uvmexp.forks_ppwait;
+		uvmexp2.forks_sharevm = uvmexp.forks_sharevm;
+		uvmexp2.pga_zerohit = uvmexp.pga_zerohit;
+		uvmexp2.pga_zeromiss = uvmexp.pga_zeromiss;
+		uvmexp2.zeroaborts = uvmexp.zeroaborts;
+
+		uvmexp2.colorany = uvmexp2.colorany;
+		uvmexp2.colorfail = uvmexp2.colorfail;
+		uvmexp2.colorhit = uvmexp2.colorhit;
+		uvmexp2.colormiss = uvmexp2.colormiss;
+		uvmexp2.cpuhit = uvmexp2.cpuhit;
+		uvmexp2.cpumiss = uvmexp2.cpumiss;
+
+		uvmexp2.fltnoram = uvmexp.fltnoram;
+		uvmexp2.fltnoanon = uvmexp.fltnoanon;
+		uvmexp2.fltpgwait = uvmexp.fltpgwait;
+		uvmexp2.fltpgrele = uvmexp.fltpgrele;
+		uvmexp2.fltrelck = uvmexp.fltrelck,
+		uvmexp2.fltrelckok = uvmexp.fltrelckok;
+		uvmexp2.fltanget = uvmexp.fltanget;
+		uvmexp2.fltanretry = uvmexp.fltanretry;
+		uvmexp2.fltamcopy = uvmexp.fltamcopy;
+		uvmexp2.fltnamap = uvmexp.fltnamap;
+		uvmexp2.fltnomap = uvmexp.fltnomap;
+		uvmexp2.fltlget = uvmexp.fltlget;
+		uvmexp2.fltget = uvmexp.fltget;
+		uvmexp2.flt_anon = uvmexp.flt_anon;
+		uvmexp2.flt_acow = uvmexp.flt_acow;
+		uvmexp2.flt_obj = uvmexp.flt_obj;
+		uvmexp2.flt_prcopy = uvmexp.flt_prcopy;
+		uvmexp2.flt_przero = uvmexp.flt_przero;
+
+#if 0
+		uvmexp2.pdwoke = uvmexp.pdwoke;
+		uvmexp2.pdrevs = uvmexp.pdrevs;
+		uvmexp2.pdswout = uvmexp.pdswout;
+		uvmexp2.pdfreed = uvmexp.pdfreed;
+		uvmexp2.pdscans = uvmexp.pdscans;
+		uvmexp2.pdanscan = uvmexp.pdanscan;
+		uvmexp2.pdobscan = uvmexp.pdobscan;
+		uvmexp2.pdreact = uvmexp.pdreact;
+		uvmexp2.pdbusy = uvmexp.pdbusy;
+		uvmexp2.pdpending = uvmexp.pdpending;
+		uvmexp2.pddeact = uvmexp.pddeact;
+#endif
 	}
 
-	kread(namelist, X_UVMEXP, &uvmexp, sizeof(uvmexp));
+	(void)printf("%9"PRIu64" bytes per page\n", uvmexp2.pagesize);
 
-	(void)printf("%9u bytes per page\n", uvmexp.pagesize);
+	(void)printf("%9"PRIu64" page color%s\n",
+	    uvmexp2.ncolors, uvmexp2.ncolors == 1 ? "" : "s");
 
-	(void)printf("%9u page color%s\n",
-	    uvmexp.ncolors, uvmexp.ncolors == 1 ? "" : "s");
-
-	(void)printf("%9u pages managed\n", uvmexp.npages);
-	(void)printf("%9u pages free\n", uvmexp.free);
+	(void)printf("%9"PRIu64" pages managed\n", uvmexp2.npages);
+	(void)printf("%9"PRIu64" pages free\n", uvmexp2.free);
 	if (active_kernel) {
 		(void)printf("%9" PRIu64 " pages active\n", uvmexp2.active);
 		(void)printf("%9" PRIu64 " pages inactive\n", uvmexp2.inactive);
 	}
-	(void)printf("%9u pages paging\n", uvmexp.paging);
-	(void)printf("%9u pages wired\n", uvmexp.wired);
-	(void)printf("%9u zero pages\n", uvmexp.zeropages);
-	(void)printf("%9u reserve pagedaemon pages\n",
-	    uvmexp.reserve_pagedaemon);
-	(void)printf("%9u reserve kernel pages\n", uvmexp.reserve_kernel);
-	(void)printf("%9u anonymous pages\n", uvmexp.anonpages);
-	(void)printf("%9u cached file pages\n", uvmexp.filepages);
-	(void)printf("%9u cached executable pages\n", uvmexp.execpages);
+	(void)printf("%9"PRIu64" pages paging\n", uvmexp2.paging);
+	(void)printf("%9"PRIu64" pages wired\n", uvmexp2.wired);
+	(void)printf("%9"PRIu64" zero pages\n", uvmexp2.zeropages);
+	(void)printf("%9"PRIu64" reserve pagedaemon pages\n",
+	    uvmexp2.reserve_pagedaemon);
+	(void)printf("%9"PRIu64" reserve kernel pages\n", uvmexp2.reserve_kernel);
+	(void)printf("%9"PRIu64" anonymous pages\n", uvmexp2.anonpages);
+	(void)printf("%9"PRIu64" cached file pages\n", uvmexp2.filepages);
+	(void)printf("%9"PRIu64" cached executable pages\n", uvmexp2.execpages);
 
-	(void)printf("%9u minimum free pages\n", uvmexp.freemin);
-	(void)printf("%9u target free pages\n", uvmexp.freetarg);
-	(void)printf("%9u maximum wired pages\n", uvmexp.wiredmax);
+	(void)printf("%9"PRIu64" minimum free pages\n", uvmexp2.freemin);
+	(void)printf("%9"PRIu64" target free pages\n", uvmexp2.freetarg);
+	(void)printf("%9"PRIu64" maximum wired pages\n", uvmexp2.wiredmax);
 
-	(void)printf("%9u swap devices\n", uvmexp.nswapdev);
-	(void)printf("%9u swap pages\n", uvmexp.swpages);
-	(void)printf("%9u swap pages in use\n", uvmexp.swpginuse);
-	(void)printf("%9u swap allocations\n", uvmexp.nswget);
+	(void)printf("%9"PRIu64" swap devices\n", uvmexp2.nswapdev);
+	(void)printf("%9"PRIu64" swap pages\n", uvmexp2.swpages);
+	(void)printf("%9"PRIu64" swap pages in use\n", uvmexp2.swpginuse);
+	(void)printf("%9"PRIu64" swap allocations\n", uvmexp2.nswget);
 
-	(void)printf("%9u total faults taken\n", uvmexp.faults);
-	(void)printf("%9u traps\n", uvmexp.traps);
-	(void)printf("%9u device interrupts\n", uvmexp.intrs);
-	(void)printf("%9u CPU context switches\n", uvmexp.swtch);
-	(void)printf("%9u software interrupts\n", uvmexp.softs);
-	(void)printf("%9u system calls\n", uvmexp.syscalls);
-	(void)printf("%9u pagein requests\n", uvmexp.pageins);
-	(void)printf("%9u pageout requests\n", uvmexp.pdpageouts);
-	(void)printf("%9u swap ins\n", uvmexp.swapins);
-	(void)printf("%9u swap outs\n", uvmexp.swapouts);
-	(void)printf("%9u pages swapped in\n", uvmexp.pgswapin);
-	(void)printf("%9u pages swapped out\n", uvmexp.pgswapout);
-	(void)printf("%9u forks total\n", uvmexp.forks);
-	(void)printf("%9u forks blocked parent\n", uvmexp.forks_ppwait);
-	(void)printf("%9u forks shared address space with parent\n",
-	    uvmexp.forks_sharevm);
-	(void)printf("%9u pagealloc zero wanted and avail\n",
-	    uvmexp.pga_zerohit);
-	(void)printf("%9u pagealloc zero wanted and not avail\n",
-	    uvmexp.pga_zeromiss);
-	(void)printf("%9u aborts of idle page zeroing\n",
-	    uvmexp.zeroaborts);
-	(void)printf("%9u pagealloc desired color avail\n",
-	    uvmexp.colorhit);
-	(void)printf("%9u pagealloc desired color not avail\n",
-	    uvmexp.colormiss);
-	(void)printf("%9u pagealloc local cpu avail\n",
-	    uvmexp.cpuhit);
-	(void)printf("%9u pagealloc local cpu not avail\n",
-	    uvmexp.cpumiss);
+	(void)printf("%9"PRIu64" total faults taken\n", uvmexp2.faults);
+	(void)printf("%9"PRIu64" traps\n", uvmexp2.traps);
+	(void)printf("%9"PRIu64" device interrupts\n", uvmexp2.intrs);
+	(void)printf("%9"PRIu64" CPU context switches\n", uvmexp2.swtch);
+	(void)printf("%9"PRIu64" software interrupts\n", uvmexp2.softs);
+	(void)printf("%9"PRIu64" system calls\n", uvmexp2.syscalls);
+	(void)printf("%9"PRIu64" pagein requests\n", uvmexp2.pageins);
+	(void)printf("%9"PRIu64" pageout requests\n", uvmexp2.pdpageouts);
+	(void)printf("%9"PRIu64" swap ins\n", uvmexp2.swapins);
+	(void)printf("%9"PRIu64" swap outs\n", uvmexp2.swapouts);
+	(void)printf("%9"PRIu64" pages swapped in\n", uvmexp2.pgswapin);
+	(void)printf("%9"PRIu64" pages swapped out\n", uvmexp2.pgswapout);
+	(void)printf("%9"PRIu64" forks total\n", uvmexp2.forks);
+	(void)printf("%9"PRIu64" forks blocked parent\n", uvmexp2.forks_ppwait);
+	(void)printf("%9"PRIu64" forks shared address space with parent\n",
+	    uvmexp2.forks_sharevm);
+	(void)printf("%9"PRIu64" pagealloc zero wanted and avail\n",
+	    uvmexp2.pga_zerohit);
+	(void)printf("%9"PRIu64" pagealloc zero wanted and not avail\n",
+	    uvmexp2.pga_zeromiss);
+	(void)printf("%9"PRIu64" aborts of idle page zeroing\n",
+	    uvmexp2.zeroaborts);
 
-	(void)printf("%9u faults with no memory\n", uvmexp.fltnoram);
-	(void)printf("%9u faults with no anons\n", uvmexp.fltnoanon);
-	(void)printf("%9u faults had to wait on pages\n", uvmexp.fltpgwait);
-	(void)printf("%9u faults found released page\n", uvmexp.fltpgrele);
-	(void)printf("%9u faults relock (%u ok)\n", uvmexp.fltrelck,
-	    uvmexp.fltrelckok);
-	(void)printf("%9u anon page faults\n", uvmexp.fltanget);
-	(void)printf("%9u anon retry faults\n", uvmexp.fltanretry);
-	(void)printf("%9u amap copy faults\n", uvmexp.fltamcopy);
-	(void)printf("%9u neighbour anon page faults\n", uvmexp.fltnamap);
-	(void)printf("%9u neighbour object page faults\n", uvmexp.fltnomap);
-	(void)printf("%9u locked pager get faults\n", uvmexp.fltlget);
-	(void)printf("%9u unlocked pager get faults\n", uvmexp.fltget);
-	(void)printf("%9u anon faults\n", uvmexp.flt_anon);
-	(void)printf("%9u anon copy on write faults\n", uvmexp.flt_acow);
-	(void)printf("%9u object faults\n", uvmexp.flt_obj);
-	(void)printf("%9u promote copy faults\n", uvmexp.flt_prcopy);
-	(void)printf("%9u promote zero fill faults\n", uvmexp.flt_przero);
+	(void)printf("%9"PRIu64" pagealloc any color requested\n",
+	    uvmexp2.colorany);
+	(void)printf("%9"PRIu64" pagealloc no page available\n",
+	    uvmexp2.colorfail);
+	(void)printf("%9"PRIu64" pagealloc desired color avail\n",
+	    uvmexp2.colorhit);
+	(void)printf("%9"PRIu64" pagealloc desired color not avail\n",
+	    uvmexp2.colormiss);
+	(void)printf("%9"PRIu64" pagealloc local cpu avail\n",
+	    uvmexp2.cpuhit);
+	(void)printf("%9"PRIu64" pagealloc local cpu not avail\n",
+	    uvmexp2.cpumiss);
 
-	(void)printf("%9u times daemon wokeup\n",uvmexp.pdwoke);
-	(void)printf("%9u revolutions of the clock hand\n", uvmexp.pdrevs);
-	(void)printf("%9u times daemon attempted swapout\n", uvmexp.pdswout);
-	(void)printf("%9u pages freed by daemon\n", uvmexp.pdfreed);
-	(void)printf("%9u pages scanned by daemon\n", uvmexp.pdscans);
-	(void)printf("%9u anonymous pages scanned by daemon\n",
-	    uvmexp.pdanscan);
-	(void)printf("%9u object pages scanned by daemon\n", uvmexp.pdobscan);
-	(void)printf("%9u pages reactivated\n", uvmexp.pdreact);
-	(void)printf("%9u pages found busy by daemon\n", uvmexp.pdbusy);
-	(void)printf("%9u total pending pageouts\n", uvmexp.pdpending);
-	(void)printf("%9u pages deactivated\n", uvmexp.pddeact);
+	(void)printf("%9"PRIu64" faults with no memory\n", uvmexp2.fltnoram);
+	(void)printf("%9"PRIu64" faults with no anons\n", uvmexp2.fltnoanon);
+	(void)printf("%9"PRIu64" faults had to wait on pages\n", uvmexp2.fltpgwait);
+	(void)printf("%9"PRIu64" faults found released page\n", uvmexp2.fltpgrele);
+	(void)printf("%9"PRIu64" faults relock (%"PRIu64" ok)\n", uvmexp2.fltrelck,
+	    uvmexp2.fltrelckok);
+	(void)printf("%9"PRIu64" anon page faults\n", uvmexp2.fltanget);
+	(void)printf("%9"PRIu64" anon retry faults\n", uvmexp2.fltanretry);
+	(void)printf("%9"PRIu64" amap copy faults\n", uvmexp2.fltamcopy);
+	(void)printf("%9"PRIu64" neighbour anon page faults\n", uvmexp2.fltnamap);
+	(void)printf("%9"PRIu64" neighbour object page faults\n", uvmexp2.fltnomap);
+	(void)printf("%9"PRIu64" locked pager get faults\n", uvmexp2.fltlget);
+	(void)printf("%9"PRIu64" unlocked pager get faults\n", uvmexp2.fltget);
+	(void)printf("%9"PRIu64" anon faults\n", uvmexp2.flt_anon);
+	(void)printf("%9"PRIu64" anon copy on write faults\n", uvmexp2.flt_acow);
+	(void)printf("%9"PRIu64" object faults\n", uvmexp2.flt_obj);
+	(void)printf("%9"PRIu64" promote copy faults\n", uvmexp2.flt_prcopy);
+	(void)printf("%9"PRIu64" promote zero fill faults\n", uvmexp2.flt_przero);
+
+	(void)printf("%9"PRIu64" times daemon wokeup\n",uvmexp2.pdwoke);
+	(void)printf("%9"PRIu64" revolutions of the clock hand\n", uvmexp2.pdrevs);
+	(void)printf("%9"PRIu64" times daemon attempted swapout\n", uvmexp2.pdswout);
+	(void)printf("%9"PRIu64" pages freed by daemon\n", uvmexp2.pdfreed);
+	(void)printf("%9"PRIu64" pages scanned by daemon\n", uvmexp2.pdscans);
+	(void)printf("%9"PRIu64" anonymous pages scanned by daemon\n",
+	    uvmexp2.pdanscan);
+	(void)printf("%9"PRIu64" object pages scanned by daemon\n", uvmexp2.pdobscan);
+	(void)printf("%9"PRIu64" pages reactivated\n", uvmexp2.pdreact);
+	(void)printf("%9"PRIu64" pages found busy by daemon\n", uvmexp2.pdbusy);
+	(void)printf("%9"PRIu64" total pending pageouts\n", uvmexp2.pdpending);
+	(void)printf("%9"PRIu64" pages deactivated\n", uvmexp2.pddeact);
 
 	kread(namelist, X_NCHSTATS, &nchstats, sizeof(nchstats));
 	nchtotal = nchstats.ncs_goodhits + nchstats.ncs_neghits +
