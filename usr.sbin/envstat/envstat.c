@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.89 2011/12/04 19:34:22 jmcneill Exp $ */
+/* $NetBSD: envstat.c,v 1.90 2012/02/09 18:10:26 riz Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.89 2011/12/04 19:34:22 jmcneill Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.90 2012/02/09 18:10:26 riz Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 		case 'x':	/* print the dictionary in raw format */
 			flags |= ENVSYS_XFLAG;
 			break;
-		case 'W':	/* No longer used, retained for campatability */
+		case 'W':	/* No longer used, retained for compatibility */
 			break;
 		case '?':
 		default:
