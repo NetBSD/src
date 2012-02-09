@@ -1101,7 +1101,9 @@ retry:
 				if (tpg->flags & PG_BUSY) {
 					tpg->flags |= freeflag;
 					if (pagedaemon) {
-						uvm_pageout_start(1);
+						uvm_pageout_start(
+						    uvm_page_to_pggroup(tpg),
+						    1);
 						uvm_pagedequeue(tpg);
 					}
 				} else {
@@ -1114,8 +1116,9 @@ retry:
 
 					nextpg = TAILQ_NEXT(tpg, listq.queue);
 					uvm_pagefree(tpg);
-					if (pagedaemon)
-						uvmexp.pdfreed++;
+					if (pagedaemon) {
+						uvm_page_to_pggroup(tpg)->pgrp_pdfreed++;
+					}
 				}
 			}
 		}
