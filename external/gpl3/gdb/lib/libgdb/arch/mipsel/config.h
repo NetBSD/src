@@ -864,7 +864,7 @@
 /* #undef WITH_PYTHON_PATH */
 
 /* Define if the simulator is being linked in. */
-#define WITH_SIM 1
+/* #undef WITH_SIM */
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
