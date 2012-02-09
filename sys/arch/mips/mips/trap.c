@@ -1083,7 +1083,7 @@ mips3_eret:
 done:
 	if (mask & (1 << _R_RA))
 		ra = regs[_R_RA];
-	(*printfn)("%#"PRIxVADDR": %s+%"PRIxVADDR" (%"PRIxREGISTER",%"PRIxREGISTER",%"PRIxREGISTER",%"PRIxREGISTER") ra %"PRIxVADDR" sz %d\n",
+	(*printfn)("%#"PRIxVADDR": %s+%#"PRIxVADDR" (%"PRIxREGISTER",%"PRIxREGISTER",%"PRIxREGISTER",%"PRIxREGISTER") ra %"PRIxVADDR" sz %d\n",
 		sp, fn_name(subr), pc - subr,
 		regs[_R_A0], regs[_R_A1], regs[_R_A2], regs[_R_A3],
 		ra, stksize);
