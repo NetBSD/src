@@ -67,6 +67,40 @@ __KERNEL_RCSID(0, "vm_machdep.c,v 1.121.6.1.2.19 2011/04/29 08:26:31 matt Exp");
 
 paddr_t kvtophys(vaddr_t);	/* XXX */
 
+size_t
+mips_page_to_pggroup(struct vm_page *pg, size_t ncolors)
+{
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	const u_int color = VM_PGCOLOR_BUCKET(pg);
+	u_int lcv;
+#if VM_NFREELIST == 1
+	return color;
+#else
+	CTASSERT(VM_FREELIST_DEFAULT == 0);
+	if (mips_nfreelist == 1)
+		return color;
+
+#ifdef VM_FREELIST_FIRST512M
+	if (VM_FREELIST_FIRST512M_P(pa)
+	    && (mips_freelist_mask & (1 << VM_FREELIST_FIRST512M))) {
+		lcv = VM_FREELIST_FIRST512M;
+	} else
+#endif
+#ifdef VM_FREELIST_FIRST4G
+	if (VM_FREELIST_FIRST4G_P(pa)
+	    && (mips_freelist_mask & (1 << VM_FREELIST_FIRST4G))) {
+		lcv = VM_FREELIST_FIRST4G;
+	} else
+#endif
+	{
+		lcv = VM_FREELIST_DEFAULT;
+	}
+	KDASSERT(lcv == uvm_page_lookup_freelist(pg));
+	KASSERT(lcv < mips_nfreelist);
+	return lcv * ncolors + color;
+#endif
+}
+
 /*
  * cpu_lwp_fork: Finish a fork operation, with lwp l2 nearly set up.
  * Copy and update the pcb and trapframe, making the child ready to run.
