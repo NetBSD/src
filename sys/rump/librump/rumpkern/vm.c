@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.41 2008/10/15 13:04:26 pooka Exp $	*/
+/*	vm.c,v 1.41 2008/10/15 13:04:26 pooka Exp	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -80,6 +80,8 @@ const struct uvm_pagerops aobj_pager = {
 	.pgo_get = ao_get,
 	.pgo_put = ao_put,
 };
+
+struct uvm_pggroup uvm_pggroup_store;
 
 kmutex_t uvm_pageqlock;
 
@@ -517,7 +519,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 }
 
 void
-uvm_estimatepageable(int *active, int *inactive)
+uvm_estimatepageable(u_int *active, u_int *inactive)
 {
 
 	/* XXX: guessing game */
@@ -639,17 +641,17 @@ vm_map_starved_p(struct vm_map *map)
 }
 
 void
-uvm_pageout_start(int npages)
+uvm_pageout_start(struct uvm_pggroup *grp, u_int npages)
 {
 
 	uvmexp.paging += npages;
 }
 
 void
-uvm_pageout_done(int npages)
+uvm_pageout_done(struct vm_page *pg, bool freed)
 {
 
-	uvmexp.paging -= npages;
+	uvmexp.paging -= 1;
 
 	/*
 	 * wake up either of pagedaemon or LWPs waiting for it.
@@ -660,6 +662,7 @@ uvm_pageout_done(int npages)
 	} else {
 		wakeup(&uvmexp.free);
 	}
+	return NULL;
 }
 
 /* XXX: following two are unfinished because lwp's are not refcounted yet */
@@ -766,4 +769,10 @@ uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 {
 
 	rumpuser_free((void *)addr);
+}
+
+struct uvm_pggroup *
+uvm_page_to_pggroup(struct vm_page *pg)
+{
+	return &uvm_pggroup_store;
 }
