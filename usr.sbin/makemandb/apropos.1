@@ -1,4 +1,4 @@
-.\" $NetBSD: apropos.1,v 1.1 2012/02/07 19:13:32 joerg Exp $
+.\" $NetBSD: apropos.1,v 1.2 2012/02/10 16:57:44 njoly Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -47,7 +47,7 @@ The
 utility performs a full text search over the complete content of all man pages.
 It uses the FTS engine of Sqlite to perform the search.
 The database is created with the help of
-.Xr makemandb 1
+.Xr makemandb 8
 utility.
 .Pp
 This implementation of the
@@ -101,7 +101,7 @@ By default pages for all architectures are shown in the search results.
 The Sqlite FTS database which contains an index of the manual pages.
 .El
 .Sh SEE ALSO
-.Xr makemandb 1 ,
-.Xr man 1
+.Xr man 1 ,
+.Xr makemandb 8
 .Sh AUTHORS
 .An Abhinav Upadhyay
