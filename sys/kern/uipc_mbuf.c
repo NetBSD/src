@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.144 2012/01/27 19:48:40 para Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.145 2012/02/10 17:35:47 para Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.144 2012/01/27 19:48:40 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.145 2012/02/10 17:35:47 para Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -154,7 +154,7 @@ nmbclusters_limit(void)
 	/* direct mapping, doesn't use space in kmem_map */
 	vsize_t max_size = physmem / 4;
 #else
-	vsize_t max_size = MIN(physmem / 4, (128 * 1024) / 2);
+	vsize_t max_size = MIN(physmem / 4, nkmempages / 4);
 #endif
 
 	max_size = max_size * PAGE_SIZE / MCLBYTES;

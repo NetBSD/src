@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.119 2012/02/04 17:56:17 para Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.120 2012/02/10 17:35:47 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.119 2012/02/04 17:56:17 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.120 2012/02/10 17:35:47 para Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -305,7 +305,7 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 
 	kmem_va_arena = vmem_create("kva", 0, 0, PAGE_SIZE,
 	    vmem_alloc, vmem_free, kmem_arena,
-	    (kmem_arena_small ? 4 : 16) * PAGE_SIZE,
+	    (kmem_arena_small ? 4 : 8) * PAGE_SIZE,
 	    VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
 
 	UVMHIST_LOG(maphist, "<- done", 0,0,0,0);
