@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.150 2012/01/22 06:44:29 christos Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.151 2012/02/10 20:54:11 nakayama Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1996,13 +1996,13 @@ spif[0-9]*)
 		break
 	fi
 	for j in 0 1 2 3 4 5 6 7; do
-		mkdev ttyS$unit$j c 102 $(($unit * 64 + $j)) "" "" $u_uucp
+		mkdev ttyS$unit$j c %stty_chr% $(($unit * 64 + $j)) "" "" $u_uucp
 	done
-	mkdev bppS${unit}0 c 103 $(($unit * 64 + 0))
-	mkdev bppS${unit}1 c 103 $(($unit * 64 + 1))
+	mkdev bppS${unit}0 c %sbpp_chr% $(($unit * 64 + 0))
+	mkdev bppS${unit}1 c %sbpp_chr% $(($unit * 64 + 1))
 	;;
 
-bpp[0-9]*)
+bpp|bpp[0-9]*)
 	unit=${i#bpp}
 	mkdev bpp$unit c %bpp_chr% $(($unit + 0))
 	;;
