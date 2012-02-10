@@ -1,5 +1,7 @@
-# $NetBSD: md.zaurus,v 1.8 2011/08/03 01:43:26 mrg Exp $
-./etc/X11/xorg.conf.sample				-unknown-	xorg
+# $NetBSD: md.zaurus,v 1.9 2012/02/10 11:25:42 tsutsui Exp $
+./etc/X11/xorg.conf.sample				-unknown-	obsolete
+./etc/X11/xorg.conf.C3x00				-unknown-	xorg
+./etc/X11/xorg.conf.C7x0				-unknown-	xorg
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
