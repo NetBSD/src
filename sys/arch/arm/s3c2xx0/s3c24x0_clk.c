@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_clk.c,v 1.13 2012/02/07 09:06:05 nisimura Exp $ */
+/*	$NetBSD: s3c24x0_clk.c,v 1.14 2012/02/10 09:17:49 nisimura Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.13 2012/02/07 09:06:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.14 2012/02/10 09:17:49 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.13 2012/02/07 09:06:05 nisimura Ex
 
 #define TIMER_FREQUENCY(pclk) ((pclk)/16) /* divider=1/16 */
 
-static unsigned int timer4_reload_value;
-static unsigned int timer4_prescaler;
-static unsigned int timer4_mseccount;
+static uint32_t timer4_reload_value;
+static uint32_t timer4_prescaler;
+static uint32_t timer4_mseccount;
 
 #define usec_to_counter(t)	\
 	((timer4_mseccount*(t))/1000)
@@ -68,7 +68,7 @@ static u_int	s3c24x0_get_timecount(struct timecounter *);
 static struct timecounter s3c24x0_timecounter = {
 	s3c24x0_get_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
-	0xfff,			/* counter_mask */
+	0xffffffff,		/* counter_mask */
 	0,			/* frequency */
 	"s3c24x0",		/* name */
 	100,			/* quality */
@@ -83,21 +83,22 @@ s3c24x0_get_timecount(struct timecounter *tc)
 {
 	struct s3c24x0_softc *sc = (struct s3c24x0_softc *) s3c2xx0_softc;
 	int save, int_pend0, int_pend1, count;
+	int int_pend;
 
 	save = disable_interrupts(I32_bit);
 
  again:
-	int_pend0 = S3C24X0_INT_TIMER4 &
-	    bus_space_read_4(sc->sc_sx.sc_iot, sc->sc_sx.sc_intctl_ioh,
+	int_pend = bus_space_read_4(sc->sc_sx.sc_iot, sc->sc_sx.sc_intctl_ioh,
 		INTCTL_SRCPND);
+	int_pend0 = (1<<S3C24X0_INT_TIMER4) & int_pend;
 	count = bus_space_read_2(sc->sc_sx.sc_iot, sc->sc_timer_ioh,
 	    TIMER_TCNTO(4));
 	
 	for (;;) {
 
-		int_pend1 = S3C24X0_INT_TIMER4 &
-		    bus_space_read_4(sc->sc_sx.sc_iot, sc->sc_sx.sc_intctl_ioh,
-			INTCTL_SRCPND);
+		int_pend1 = bus_space_read_4(sc->sc_sx.sc_iot,
+			sc->sc_sx.sc_intctl_ioh, INTCTL_SRCPND);
+		int_pend1 &= (1<<S3C24X0_INT_TIMER4);
 		if( int_pend0 == int_pend1 )
 			break;
 
@@ -122,11 +123,10 @@ s3c24x0_get_timecount(struct timecounter *tc)
 
 	restore_interrupts(save);
 
-	if (int_pend1) {
+	if (int_pend1 && count > 0) {
 		count -= timer4_reload_value;
 	}
 
-	//printf("delta: %u\n", (s3c24x0_base - count));
 	return s3c24x0_base - count;
 }
 
@@ -250,7 +250,7 @@ cpu_initclocks(void)
 	calc_time_constant(h);
 
 	timer4_prescaler = prescaler;
-	timer4_reload_value = TIMER_FREQUENCY(pclk) / hz / prescaler;
+	timer4_reload_value = (TIMER_FREQUENCY(pclk) / hz / prescaler) - 1;
 	timer4_mseccount = TIMER_FREQUENCY(pclk)/timer4_prescaler/1000 ;
 
 	bus_space_write_4(iot, ioh, TIMER_TCNTB(4),
