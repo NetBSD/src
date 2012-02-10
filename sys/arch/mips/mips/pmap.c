@@ -2513,6 +2513,7 @@ pmap_pv_page_alloc(struct pool *pp, int flags)
 	if (pg == NULL)
 		return NULL;
 
+	uvm_km_pageclaim(pg);
 	return (void *)mips_pmap_map_poolpage(VM_PAGE_TO_PHYS(pg));
 }
 
@@ -2606,9 +2607,6 @@ mips_pmap_alloc_poolpage(int flags)
 		    UVM_PGA_STRAT_ONLY, mips_poolpage_vmfreelist);
 	} else {
 		pg = uvm_pagealloc(NULL, 0, NULL, flags);
-	}
-	if (pg != NULL) {
-		uvm_km_pageclaim(pg);
 	}
 	return pg;
 }
