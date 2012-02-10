@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.38 2012/02/10 04:49:45 mhitch Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.39 2012/02/10 06:21:15 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.38 2012/02/10 04:49:45 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.39 2012/02/10 06:21:15 mhitch Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -138,7 +138,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	kptmpa = nextpa;
 	nextpa += PAGE_SIZE;
 	kptpa = nextpa;
-	nptpages = RELOC(Sysptsize, int) + howmany(physmem, NPTEPG) +
+	nptpages = RELOC(Sysptsize, int) + howmany(RELOC(physmem), NPTEPG) +
 		(iiomapsize + eiomapsize + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * PAGE_SIZE;
 
