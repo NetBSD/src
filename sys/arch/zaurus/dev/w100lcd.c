@@ -1,4 +1,4 @@
-/* $NetBSD: w100lcd.c,v 1.1 2012/01/29 10:12:42 tsutsui Exp $ */
+/* $NetBSD: w100lcd.c,v 1.2 2012/02/10 11:25:42 tsutsui Exp $ */
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -39,7 +39,7 @@
  * LCD on/off switch and backlight brightness are done in lcdctl.c.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w100lcd.c,v 1.1 2012/01/29 10:12:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w100lcd.c,v 1.2 2012/02/10 11:25:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: w100lcd.c,v 1.1 2012/01/29 10:12:42 tsutsui Exp $");
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
+
+#include <dev/hpc/hpcfbio.h>
 
 #include <arm/xscale/pxa2x0var.h>
 #include <zaurus/dev/w100var.h>
@@ -188,6 +190,9 @@ static int
 w100lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
+	struct w100_softc *sc = (struct w100_softc *)v;
+	struct hpcfb_fbconf *fbconf;
+	struct hpcfb_dspconf *dspconf;
 	int res = EINVAL;
 
 	switch (cmd) {
@@ -197,6 +202,112 @@ w100lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		res = lcdctl_param(cmd, (struct wsdisplay_param *)data);
 		break;
 #endif
+	case HPCFBIO_GCONF:
+		fbconf = (struct hpcfb_fbconf *)data;
+		if (fbconf->hf_conf_index != 0 &&
+		    fbconf->hf_conf_index != HPCFB_CURRENT_CONFIG) {
+			break;
+		}
+
+		fbconf->hf_conf_index = 0;
+		fbconf->hf_nconfs = 1;
+		fbconf->hf_class = HPCFB_CLASS_RGBCOLOR;
+		strlcpy(fbconf->hf_name, "Sharp Zaurus frame buffer",
+		    sizeof(fbconf->hf_name));
+		strlcpy(fbconf->hf_conf_name, "default",
+		    sizeof(fbconf->hf_conf_name));
+		fbconf->hf_width = sc->display_width;
+		fbconf->hf_height = sc->display_height;
+		fbconf->hf_baseaddr = (u_long)sc->active->buf_va;
+		fbconf->hf_offset = 0;
+		fbconf->hf_bytes_per_line = sc->display_width *
+		    sc->active->depth / 8;
+		fbconf->hf_nplanes = 1;
+		fbconf->hf_bytes_per_plane = sc->display_width *
+		    sc->display_height * sc->active->depth / 8;
+		fbconf->hf_pack_width = sc->active->depth;
+		fbconf->hf_pixels_per_pack = 1;
+		fbconf->hf_pixel_width = sc->active->depth;
+		fbconf->hf_access_flags = (0
+					   | HPCFB_ACCESS_BYTE
+					   | HPCFB_ACCESS_WORD
+					   | HPCFB_ACCESS_DWORD);
+		fbconf->hf_order_flags = 0;
+		fbconf->hf_reg_offset = 0;
+
+		fbconf->hf_class_data_length = sizeof(struct hf_rgb_tag);
+		fbconf->hf_u.hf_rgb.hf_flags = 0;
+		fbconf->hf_u.hf_rgb.hf_red_width = 5;
+		fbconf->hf_u.hf_rgb.hf_red_shift = 11;
+		fbconf->hf_u.hf_rgb.hf_green_width = 6;
+		fbconf->hf_u.hf_rgb.hf_green_shift = 5;
+		fbconf->hf_u.hf_rgb.hf_blue_width = 5;
+		fbconf->hf_u.hf_rgb.hf_blue_shift = 0;
+		fbconf->hf_u.hf_rgb.hf_alpha_width = 0;
+		fbconf->hf_u.hf_rgb.hf_alpha_shift = 0;
+
+		fbconf->hf_ext_size = 0;
+		fbconf->hf_ext_data = NULL;
+
+		res = 0;
+		break;
+
+	case HPCFBIO_SCONF:
+		fbconf = (struct hpcfb_fbconf *)data;
+		if (fbconf->hf_conf_index != 0 &&
+		    fbconf->hf_conf_index != HPCFB_CURRENT_CONFIG) {
+			break;
+		}
+		/* nothing to do because we have only one configuration */
+		res = 0;
+		break;
+
+	case HPCFBIO_GDSPCONF:
+		dspconf = (struct hpcfb_dspconf *)data;
+		if ((dspconf->hd_unit_index != 0 &&
+		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
+		    (dspconf->hd_conf_index != 0 &&
+		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
+			break;
+		}
+
+		dspconf->hd_unit_index = 0;
+		dspconf->hd_nunits = 1;
+		dspconf->hd_class = HPCFB_DSP_CLASS_COLORLCD;
+		strlcpy(dspconf->hd_name, "Sharp Zaurus LCD",
+		    sizeof(dspconf->hd_name));
+		dspconf->hd_op_flags = 0;
+		dspconf->hd_conf_index = 0;
+		dspconf->hd_nconfs = 1;
+		strlcpy(dspconf->hd_conf_name, "default",
+		    sizeof(dspconf->hd_conf_name));
+		dspconf->hd_width = sc->display_width;
+		dspconf->hd_height = sc->display_height;
+		dspconf->hd_xdpi = HPCFB_DSP_DPI_UNKNOWN;
+		dspconf->hd_ydpi = HPCFB_DSP_DPI_UNKNOWN;
+
+		res = 0;
+		break;
+
+	case HPCFBIO_SDSPCONF:
+		dspconf = (struct hpcfb_dspconf *)data;
+		if ((dspconf->hd_unit_index != 0 &&
+		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
+		    (dspconf->hd_conf_index != 0 &&
+		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
+			break;
+		}
+		/*
+		 * nothing to do
+		 * because we have only one unit and one configuration
+		 */
+		res = 0;
+		break;
+
+	case HPCFBIO_GOP:
+	case HPCFBIO_SOP:
+		/* curently not implemented...  */
+		break;
 
 	default:
 		break;
