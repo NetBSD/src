@@ -1838,6 +1838,12 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 			pa = MIPS_XKPHYS_TO_PHYS(va);
 			goto done;
 		}
+#elif defined(ENABLE_MIPS_KSEGX)
+		if (VM_KSEGX_ADDRESS <= va
+		    && va < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE)
+			pa = mips_ksegx_start + va - VM_KSEGX_ADDRESS;
+			goto done;
+		}
 #endif
 #ifdef DIAGNOSTIC
 		if (MIPS_KSEG1_P(va))
