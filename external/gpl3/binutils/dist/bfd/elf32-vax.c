@@ -1358,6 +1358,7 @@ elf_vax_instantiate_got_entries (struct elf_link_hash_entry *h, PTR infoptr)
 
   if (!elf_hash_table (info)->dynamic_sections_created
       || (info->shared && info->symbolic)
+      || ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
       || h->forced_local)
     {
       h->got.refcount = 0;
@@ -1378,9 +1379,7 @@ elf_vax_instantiate_got_entries (struct elf_link_hash_entry *h, PTR infoptr)
 
       dyn = elf_hash_table (info)->dynamic_sections_created;
       /* Allocate space in the .got and .rela.got sections.  */
-      if (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
-	  && (info->shared
-	      || WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, 0, h)))
+      if (info->shared || WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, 0, h))
 	{
 	  sgot->size += 4;
 	  srelgot->size += sizeof (Elf32_External_Rela);
