@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.101.4.2.4.6 2012/02/09 03:04:59 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.101.4.2.4.7 2012/02/10 07:14:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2.4.6 2012/02/09 03:04:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2.4.7 2012/02/10 07:14:00 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -815,14 +815,16 @@ uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 void
 uvm_km_pageclaim(struct vm_page *pg)
 {
+	KASSERT(!(pg->pqflags & (PQ_PRIVATE1|PQ_PRIVATE2)));
 	atomic_inc_uint(&uvm_page_to_pggroup(pg)->pgrp_kmempages);
-//	TAILQ_INSERT_TAIL(&uvm.kmem_pageq, pg, listq.queue);
+	TAILQ_INSERT_TAIL(&uvm.kmem_pageq, pg, pageq.queue);
 }
 
 void
 uvm_km_pagefree(struct vm_page *pg)
 {
+	KASSERT(!(pg->pqflags & (PQ_PRIVATE1|PQ_PRIVATE2)));
 	atomic_dec_uint(&uvm_page_to_pggroup(pg)->pgrp_kmempages);
-//	TAILQ_REMOVE(&uvm.kmem_pageq, pg, listq.queue);
+	TAILQ_REMOVE(&uvm.kmem_pageq, pg, pageq.queue);
 	uvm_pagefree(pg);
 }
