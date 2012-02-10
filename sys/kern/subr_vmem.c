@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.71 2012/02/01 23:43:49 para Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.72 2012/02/10 17:35:47 para Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.71 2012/02/01 23:43:49 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.72 2012/02/10 17:35:47 para Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -804,7 +804,7 @@ vmem_import(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 	}
 
 	if (vm->vm_flags & VM_LARGEIMPORT) {
-		size *= 32;
+		size *= 8;
 	}
 
 	if (vm->vm_flags & VM_XIMPORT) {
