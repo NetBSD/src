@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.97 2012/01/27 18:52:52 para Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.98 2012/02/10 04:49:44 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.97 2012/01/27 18:52:52 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.98 2012/02/10 04:49:44 mhitch Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -322,6 +322,12 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	if (machineid & ATARI_MILAN)
 		ptextra += btoc(PCI_IO_SIZE + PCI_MEM_SIZE);
 	ptextra += btoc(BOOTM_VA_POOL);
+	/*
+	 * now need to account for the kmem area, which is allocated
+	 * before pmap_init() is called.  It is roughly the size of physical
+	 * memory.
+	 */
+	ptextra += physmem;
 
 	/*
 	 * The 'pt' (the initial kernel pagetable) has to map the kernel and
