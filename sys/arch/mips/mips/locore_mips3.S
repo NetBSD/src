@@ -534,7 +534,7 @@ END(mipsNN_cp0_watchhi_write)
 #if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
 /*
  * void mipsNN_cp0_userlocal_write(void *);
- *	Set the value of the CP0 USERLOCAL (TLB_CONTEXT, select 2) register.
+ *	Set the value of the CP0 HWRENA register.
  */
 LEAF(mipsNN_cp0_hwrena_write)
 	j	ra
