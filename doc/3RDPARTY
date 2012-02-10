@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.908 2012/02/06 15:58:56 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.909 2012/02/10 23:46:25 riz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -398,13 +398,13 @@ Notes:
 
 Package:	grep
 Version:	2.5.1
-Current Vers:	2.7
+Current Vers:	2.10
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/grep/
 Home Page:	http://www.gnu.org/software/grep/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	simonb
-License:	GPLv2 (2.5.1), GPLv3 (2.5.3)
+License:	GPLv2+ (2.5.1), GPLv3+ (2.5.3 and later)
 Notes:
 Use src/gnu/dist/grep/grep2netbsd for preparing the source tree
 for the import.
@@ -1059,7 +1059,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Home Page:	http://www.gnu.org/software/texinfo/
 Mailing List:	bug-texinfo@gnu.org
 Responsible:	
-License:	GPLv2 (4.8; 4.9 and higher is GPLv3)
+License:	GPLv2+ (4.8), GPLv3+ (4.9 and later)
 Notes:
 Use src/gnu/dist/texinfo/texinfo2netbsd for preparing the source tree
 for the import.
