@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.63 2012/02/09 17:07:07 christos Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.64 2012/02/10 02:14:04 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.63 2012/02/09 17:07:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.64 2012/02/10 02:14:04 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -410,7 +410,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 			}
 			return;
 		}
-		(*pr)(db_num_to_str(off));
+		(*pr)("%s", db_num_to_str(off));
 		return;
 	}
 #endif
@@ -437,7 +437,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 		}
 	}
 #endif
-	(*pr)(db_num_to_str(off));
+	(*pr)("%s", db_num_to_str(off));
 	return;
 }
 
