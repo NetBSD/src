@@ -149,7 +149,13 @@ uint32_t npage_segtab;
 static inline struct vm_page *
 pmap_pte_pagealloc(void)
 {
-	return mips_pmap_alloc_poolpage(UVM_PGA_ZERO|UVM_PGA_USERESERVE);
+	struct vm_page *pg;
+
+	pg = PMAP_ALLOC_POOLPAGE(UVM_PGA_ZERO|UVM_PGA_USERESERVE);
+	if (pg)
+		uvm_km_pageclaim(pg);
+
+	return pg;
 }
 
 static inline pt_entry_t * 
