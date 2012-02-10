@@ -1840,7 +1840,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		}
 #elif defined(ENABLE_MIPS_KSEGX)
 		if (VM_KSEGX_ADDRESS <= va
-		    && va < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE)
+		    && va < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE) {
 			pa = mips_ksegx_start + va - VM_KSEGX_ADDRESS;
 			goto done;
 		}
