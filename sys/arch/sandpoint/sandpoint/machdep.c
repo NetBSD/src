@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 2012/01/14 19:39:25 phx Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 2012/02/10 12:02:33 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2012/01/14 19:39:25 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2012/02/10 12:02:33 phx Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -173,7 +173,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	oea_batinit(
 	    0x80000000, BAT_BL_256M,	/* SANDPOINT_BUS_SPACE_MEM */
 	    0xfc000000, BAT_BL_64M,	/* _EUMB|_IO */
-	    0x70000000, BAT_BL_128K,	/* only for NH230 board control */
+	    0x70000000, BAT_BL_8M,	/* only for NH230 board control */
 	    0);
 
 	/* Install vectors and interrupt handler */
