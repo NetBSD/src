@@ -10,7 +10,7 @@ maxusers	32
 
 options 	MIPS32
 options 	MIPS64
-options 	NOFPU		# No FPU
+#options 	NOFPU		# No FPU
 #options 	FPEMUL		# emulate FPU insn
 
 # Options for necessary to use MD
