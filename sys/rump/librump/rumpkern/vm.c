@@ -662,7 +662,6 @@ uvm_pageout_done(struct vm_page *pg, bool freed)
 	} else {
 		wakeup(&uvmexp.free);
 	}
-	return NULL;
 }
 
 /* XXX: following two are unfinished because lwp's are not refcounted yet */
