@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.25 2012/01/25 14:04:09 christos Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.26 2012/02/11 23:16:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.25 2012/01/25 14:04:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.26 2012/02/11 23:16:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ sys_dup(struct lwp *l, const struct sys_dup_args *uap, register_t *retval)
 /*
  * Duplicate a file descriptor to a particular value.
  */
-static int
+int
 dodup(struct lwp *l, int from, int to, int flags, register_t *retval)
 {
 	int error;
