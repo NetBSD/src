@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.181 2011/12/16 12:46:00 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.182 2012/02/11 23:31:24 martin Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -18,11 +18,11 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	getpass.c getprogname.c getpwent.c getttyent.c \
 	getusershell.c glob.c humanize_number.c initdir.c initgroups.c \
 	isascii.c isatty.c isctype.c lockf.c nftw.c \
-	nice.c nlist.c nlist_aout.c \
-	nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c \
-	pause.c popen.c psignal.c pthread_atfork.c ptree.c pwcache.c \
-	pw_scan.c raise.c randomid.c rb.c readdir.c rewinddir.c \
-	scandir.c seekdir.c setdomainname.c \
+	nice.c nlist.c nlist_aout.c nlist_coff.c nlist_ecoff.c nlist_elf32.c \
+	nlist_elf64.c opendir.c pause.c popen.c posix_spawn_sched.c \
+	posix_spawn_fileactions.c posix_spawnp.c psignal.c pthread_atfork.c \
+	ptree.c pwcache.c pw_scan.c raise.c randomid.c rb.c readdir.c \
+	rewinddir.c scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
 	siglist.c signal.c signame.c sigrelse.c \
@@ -69,7 +69,13 @@ MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 closefrom.3 \
 	isnormal.3 isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 \
 	lockf.3 _lwp_makecontext.3 makecontext.3 \
 	nice.3 nlist.3 \
-	pause.3 popen.3 psignal.3 pwcache.3 pthread_atfork.3 \
+	pause.3 popen.3 \
+	posix_spawn.3 posix_spawn_file_actions_addopen.3 \
+	posix_spawn_file_actions_init.3 posix_spawnattr_getflags.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_getschedparam.3 \
+	posix_spawnattr_getschedpolicy.3 posix_spawnattr_init.3 \
+	posix_spawnattr_getsigdefault.3 posix_spawnattr_getsigmask.3 \
+	psignal.3 pwcache.3 pthread_atfork.3 \
 	raise.3 randomid.3 realpath.3 scandir.3 setjmp.3 setmode.3 \
 	setproctitle.3 shquote.3 sighold.3 sigignore.3 siginterrupt.3 \
 	signal.3 signbit.3 sigrelse.3 sigset.3 sigsetops.3 sleep.3 \
@@ -138,6 +144,17 @@ MLINKS+=glob.3 glob_pattern_p.3
 MLINKS+=humanize_number.3 dehumanize_number.3
 MLINKS+=makecontext.3 swapcontext.3
 MLINKS+=popen.3 pclose.3
+MLINKS+=posix_spawn.3 posix_spawnp.3 \
+	posix_spawn_file_actions_addopen.3 posix_spawn_file_actions_addclose.3 \
+	posix_spawn_file_actions_addopen.3 posix_spawn_file_actions_adddup2.3 \
+	posix_spawn_file_actions_init.3 posix_spawn_file_actions_destroy.3 \
+	posix_spawnattr_getflags.3 posix_spawnattr_setflags.3 \
+	posix_spawnattr_getpgroup.3 posix_spawnattr_setpgroup.3 \
+	posix_spawnattr_getschedparam.3 posix_spawnattr_setschedparam.3 \
+	posix_spawnattr_getschedpolicy.3 posix_spawnattr_setschedpolicy.3 \
+	posix_spawnattr_getsigdefault.3 posix_spawnattr_setsigdefault.3 \
+	posix_spawnattr_getsigmask.3 posix_spawnattr_setsigmask.3 \
+	posix_spawnattr_init.3 posix_spawnattr_destroy.3
 MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3 psignal.3 psiginfo.3
 MLINKS+=pwcache.3 user_from_uid.3 pwcache.3 group_from_gid.3
 MLINKS+=pwcache.3 uid_from_user.3 pwcache.3 gid_from_group.3
