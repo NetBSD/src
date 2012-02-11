@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1668 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1669 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1241,3 +1241,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[joerg 20120207]
 	userland: Man pages are formatted with mandoc by default.
 		[joerg 20120207]
+	posix_spawn: Import Charles Zhang's summer of code project.
+		[martin 20120212]
