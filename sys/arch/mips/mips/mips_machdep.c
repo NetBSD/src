@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.251 2011/12/12 19:03:10 mrg Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.252 2012/02/11 23:16:15 martin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.251 2011/12/12 19:03:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.252 2012/02/11 23:16:15 martin Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -2380,3 +2380,14 @@ mips_watchpoint_init(void)
 	curcpu()->ci_cpuwatch_count = cpuwatch_discover();
 }
 #endif
+
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+	userret(l);
+}
+
