@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.210 2012/02/01 05:34:40 dholland Exp $
+#	$NetBSD: Makefile.inc,v 1.211 2012/02/11 23:31:24 martin Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -157,7 +157,7 @@ WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
 	__wait450.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
-	issetugid.S sync.S __posix_fadvise50.S
+	issetugid.S posix_spawn.S sync.S __posix_fadvise50.S
 
 PSEUDONOERR=	_exit.S
 
