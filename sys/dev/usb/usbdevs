@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.606 2012/01/21 12:50:28 skrll Exp $
+$NetBSD: usbdevs,v 1.607 2012/02/11 05:26:31 plunky Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -504,7 +504,7 @@ vendor LINKSYS4		0x1737	Linksys
 vendor SENAO		0x1740	Senao
 vendor ASUSTEK2		0x1761	ASUSTeK Computer
 vendor SWEEX2		0x177f	Sweex
-vendor METAGEEK		0x1781	MetaGeek
+vendor MISC		0x1781	Misc Vendors
 vendor DISPLAYLINK	0x17e9	DisplayLink
 vendor E3C		0x18b4	E3C Technologies
 vendor AMIT		0x18c5	AMIT
@@ -1858,9 +1858,6 @@ product MELCO WLIUCGN		0x015d	WLI-UC-GN
 /* Merlin products */
 product MERLIN V620             0x1110  Merlin V620
 
-/* MetaGeek products */
-product METAGEEK WISPY_24X	0x083f	Wi-Spy 2.4x
-
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
 
@@ -1943,6 +1940,11 @@ product MINOLTA DIMAGE7I	0x400b	Dimage 7i
 product MINOLTA 5400		0x400e	Dimage 5400
 product MINOLTA DIMAGEA1	0x401a	Dimage A1
 product MINOLTA XT		0x4015	Dimage Xt
+
+/* Misc Vendors (sharing a Vendor ID) */
+product MISC WISPY_24X		0x083f	MetaGeek Wi-Spy 2.4x
+product MISC TELLSTICK		0x0c30	Telldus Tellstick
+product MISC TELLSTICK_DUO	0x0c31	Telldus Tellstick Duo
 
 /* Mitsumi products */
 product MITSUMI CDRRW		0x0000	CD-R/RW Drive
@@ -2414,6 +2416,7 @@ product ROLAND UA1EX		0x0096	EDIROL UA-1EX
 product ROLAND UM3		0x009A	EDIROL UM-3
 product ROLAND UA4FX 		0x00A3	EDIROL UA-4FX
 product ROLAND SONICCELL	0x00C2	SonicCell
+product ROLAND UMONE		0x012a	UM-ONE MIDI I/F
 
 /* Sagem products */
 product SAGEM XG760A		0x004a	XG-760A
