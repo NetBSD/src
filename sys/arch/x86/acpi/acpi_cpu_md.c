@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.70 2012/02/11 22:07:53 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.71 2012/02/11 22:09:47 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.70 2012/02/11 22:07:53 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.71 2012/02/11 22:09:47 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -553,7 +553,8 @@ acpicpu_md_pstate_init(struct acpicpu_softc *sc)
 		case 0x10:
 		case 0x11:
 		case 0x12:
-		case 0x14: /* AMD Fusion */
+		case 0x14:
+		case 0x15:
 			msr.ps_control_addr = MSR_10H_CONTROL;
 			msr.ps_control_mask = __BITS(0, 2);
 
