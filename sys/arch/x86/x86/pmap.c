@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.163 2012/02/01 18:55:32 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164 2012/02/11 18:59:41 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.163 2012/02/01 18:55:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2012/02/11 18:59:41 chs Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1188,7 +1188,7 @@ pmap_bootstrap(vaddr_t kva_start)
 #ifdef __HAVE_DIRECT_MAP
 	phys_ram_seg_t *mc;
 	long ndmpdp;
-	paddr_t dmpd, dmpdp, pdp;
+	paddr_t lastpa, dmpd, dmpdp, pdp;
 	vaddr_t tmpva;
 #endif
 
@@ -1331,9 +1331,18 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * otherwise use 2MB pages.
 	 */
 
-	mc = &mem_clusters[mem_cluster_cnt - 1];
-	ndmpdp = (mc->start + mc->size + NBPD_L3 - 1) >> L3_SHIFT;
+	lastpa = 0;
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		mc = &mem_clusters[i];
+		lastpa = MAX(lastpa, mc->start + mc->size);
+	}
+
+	ndmpdp = (lastpa + NBPD_L3 - 1) >> L3_SHIFT;
 	dmpdp = avail_start;	avail_start += PAGE_SIZE;
+
+	*pte = dmpdp | PG_V | PG_RW;
+	pmap_update_pg(tmpva);
+	memset((void *)tmpva, 0, PAGE_SIZE);
 
 	if (cpu_feature[2] & CPUID_P1GB) {
 		for (i = 0; i < ndmpdp; i++) {
@@ -1348,6 +1357,13 @@ pmap_bootstrap(vaddr_t kva_start)
 	} else {
 		dmpd = avail_start;	avail_start += ndmpdp * PAGE_SIZE;
 
+		for (i = 0; i < ndmpdp; i++) {
+			pdp = dmpd + i * PAGE_SIZE;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW;
+			pmap_update_pg(tmpva);
+
+			memset((void *)tmpva, 0, PAGE_SIZE);
+		}
 		for (i = 0; i < NPDPG * ndmpdp; i++) {
 			pdp = (paddr_t)&(((pd_entry_t *)dmpd)[i]);
 			*pte = (pdp & PG_FRAME) | PG_V | PG_RW;
