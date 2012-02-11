@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1732 2012/02/08 16:52:39 njoly Exp $
+#	$NetBSD: mi,v 1.1733 2012/02/11 23:31:22 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2319,6 +2319,7 @@
 ./usr/include/skey.h				comp-c-include		skey
 ./usr/include/smbfs				comp-obsolete		obsolete
 ./usr/include/soundcard.h			comp-c-include
+./usr/include/spawn.h				comp-c-include
 ./usr/include/sqlite3.h				comp-c-include
 ./usr/include/sqlite3ext.h			comp-c-include
 ./usr/include/ssp/ssp.h				comp-c-include
@@ -2506,6 +2507,7 @@
 ./usr/include/sys/socketvar.h			comp-c-include
 ./usr/include/sys/sockio.h			comp-c-include
 ./usr/include/sys/soundcard.h			comp-c-include
+./usr/include/sys/spawn.h			comp-c-include
 ./usr/include/sys/specificdata.h		comp-c-include
 ./usr/include/sys/stat.h			comp-c-include
 ./usr/include/sys/statvfs.h			comp-c-include
@@ -8147,6 +8149,27 @@
 ./usr/share/man/cat3/posix2time_z.0		comp-c-catman		.cat
 ./usr/share/man/cat3/posix_memalign.0		comp-c-catman		.cat
 ./usr/share/man/cat3/posix_openpt.0		comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawn.0		comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawn_file_actions_addclose.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawn_file_actions_adddup2.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawn_file_actions_addopen.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawn_file_actions_destroy.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawn_file_actions_init.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_destroy.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_getflags.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_getpgroup.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_getschedparam.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_getschedpolicy.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_getsigdefault.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_getsigmask.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_init.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_setflags.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_setpgroup.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_setschedparam.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_setschedpolicy.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_setsigdefault.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnattr_setsigmask.0	comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawnp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/post_form.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pow.0			comp-c-catman		.cat
 ./usr/share/man/cat3/powf.0			comp-c-catman		.cat
@@ -14381,6 +14404,27 @@
 ./usr/share/man/html3/posix2time_z.html		comp-c-htmlman		html
 ./usr/share/man/html3/posix_memalign.html	comp-c-htmlman		html
 ./usr/share/man/html3/posix_openpt.html		comp-c-htmlman		html
+./usr/share/man/html3/posix_spawn.html		comp-c-htmlman		html
+./usr/share/man/html3/posix_spawn_file_actions_addclose.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawn_file_actions_adddup2.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawn_file_actions_addopen.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawn_file_actions_destroy.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawn_file_actions_init.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_destroy.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_getflags.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_getpgroup.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_getschedparam.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_getschedpolicy.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_getsigdefault.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_getsigmask.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_init.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_setflags.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_setpgroup.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_setschedparam.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_setschedpolicy.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_setsigdefault.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnattr_setsigmask.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawnp.html		comp-c-htmlman		html
 ./usr/share/man/html3/post_form.html		comp-c-htmlman		html
 ./usr/share/man/html3/pow.html			comp-c-htmlman		html
 ./usr/share/man/html3/powf.html			comp-c-htmlman		html
@@ -20607,6 +20651,27 @@
 ./usr/share/man/man3/posix2time_z.3		comp-c-man		.man
 ./usr/share/man/man3/posix_memalign.3		comp-c-man		.man
 ./usr/share/man/man3/posix_openpt.3		comp-c-man		.man
+./usr/share/man/man3/posix_spawn.3		comp-c-man		.man
+./usr/share/man/man3/posix_spawn_file_actions_addclose.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawn_file_actions_adddup2.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawn_file_actions_addopen.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawn_file_actions_destroy.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawn_file_actions_init.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_destroy.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_getflags.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_getpgroup.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_getschedparam.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_getschedpolicy.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_getsigdefault.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_getsigmask.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_init.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_setflags.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_setpgroup.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_setschedparam.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_setschedpolicy.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_setsigdefault.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnattr_setsigmask.3	comp-c-man		.man
+./usr/share/man/man3/posix_spawnp.3		comp-c-man		.man
 ./usr/share/man/man3/post_form.3		comp-c-man		.man
 ./usr/share/man/man3/pow.3			comp-c-man		.man
 ./usr/share/man/man3/powf.3			comp-c-man		.man

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.58 2011/12/27 14:51:15 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.59 2012/02/11 23:31:23 martin Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -44,6 +44,7 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write
+./usr/libdata/debug/usr/tests/kernel/posix_spawn
 ./usr/libdata/debug/usr/tests/kernel/tty
 ./usr/libdata/debug/usr/tests/lib
 ./usr/libdata/debug/usr/tests/lib/csu
@@ -168,6 +169,7 @@
 ./usr/tests/kernel/kqueue
 ./usr/tests/kernel/kqueue/read
 ./usr/tests/kernel/kqueue/write
+./usr/tests/kernel/posix_spawn
 ./usr/tests/kernel/tty
 ./usr/tests/lib
 ./usr/tests/lib/csu
