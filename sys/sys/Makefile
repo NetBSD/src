@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.141 2012/02/01 05:34:42 dholland Exp $
+#	$NetBSD: Makefile,v 1.142 2012/02/11 23:16:18 martin Exp $
 
 .include <bsd.sys.mk>
 
@@ -32,8 +32,8 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	scanio.h sched.h scsiio.h sdt.h select.h selinfo.h sem.h sha1.h \
 	sha2.h shm.h siginfo.h signal.h signalvar.h sigtypes.h simplelock.h \
 	sleepq.h socket.h \
-	socketvar.h sockio.h specificdata.h stat.h statvfs.h \
-	syscall.h syscallargs.h sysctl.h stdarg.h stdint.h swap.h \
+	socketvar.h sockio.h spawn.h specificdata.h stat.h \
+	statvfs.h syscall.h syscallargs.h sysctl.h stdarg.h stdint.h swap.h \
 	syncobj.h syslimits.h syslog.h \
 	tape.h termios.h time.h timeb.h timepps.h times.h \
 	timex.h tls.h trace.h tree.h tty.h ttychars.h ttycom.h \

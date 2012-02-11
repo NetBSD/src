@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.165 2011/12/15 00:05:18 jmcneill Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.166 2012/02/11 23:16:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.165 2011/12/15 00:05:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.166 2012/02/11 23:16:17 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -871,7 +871,8 @@ lwp_startup(struct lwp *prev, struct lwp *new)
 	}
 	KPREEMPT_DISABLE(new);
 	spl0();
-	pmap_activate(new);
+	if (__predict_true(new->l_proc->p_vmspace))
+		pmap_activate(new);
 
 	/* Note trip through cpu_switchto(). */
 	pserialize_switchpoint();

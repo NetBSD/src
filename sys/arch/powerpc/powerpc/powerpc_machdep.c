@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.61 2011/12/12 19:03:11 mrg Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.62 2012/02/11 23:16:16 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.61 2011/12/12 19:03:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.62 2012/02/11 23:16:16 martin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -320,6 +320,17 @@ startlwp(void *arg)
 	KASSERT(error == 0);
 
 	kmem_free(uc, sizeof(ucontext_t));
+	userret(l, tf);
+}
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+	struct trapframe * const tf = l->l_md.md_utf;
+
 	userret(l, tf);
 }
 

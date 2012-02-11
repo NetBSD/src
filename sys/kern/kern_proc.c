@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.180 2011/05/13 22:22:03 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.181 2012/02/11 23:16:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.180 2011/05/13 22:22:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.181 2012/02/11 23:16:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -836,7 +836,7 @@ proc_free_mem(struct proc *p)
  * of the process.
  * Also mksess should only be set if we are creating a process group
  *
- * Only called from sys_setsid and sys_setpgid.
+ * Only called from sys_setsid, sys_setpgid and posix_spawn/spawn_return.
  */
 int
 proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)

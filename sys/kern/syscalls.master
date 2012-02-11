@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.253 2012/02/01 05:34:41 dholland Exp $
+	$NetBSD: syscalls.master,v 1.254 2012/02/11 23:16:17 martin Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -927,3 +927,8 @@
 			    const struct timespec *tptr); }
 473	STD  RUMP	{ int|sys||__quotactl(const char *path, \
 			    struct quotactl_args *args); }
+474	NOERR		{ int|sys||posix_spawn(pid_t *pid, const char *path, \
+				const struct posix_spawn_file_actions *file_actions, \
+				const struct posix_spawnattr *attrp, \
+				char *const *argv, char *const *envp); }
+
