@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.69 2011/11/15 07:20:30 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.70 2012/02/11 22:07:53 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.69 2011/11/15 07:20:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.70 2012/02/11 22:07:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.69 2011/11/15 07:20:30 jruoho Exp 
 #define MSR_CMPHALT_BMSTS	__BIT(29)
 
 /*
- * AMD families 10h, 11h, 12h, and 14h.
+ * AMD families 10h, 11h, 12h, 14h, and 15h.
  */
 #define MSR_10H_LIMIT		0xc0010061
 #define MSR_10H_CONTROL		0xc0010062
@@ -275,6 +275,7 @@ acpicpu_md_flags(void)
 
 		case 0x12:
 		case 0x14: /* AMD Fusion */
+		case 0x15: /* AMD Bulldozer */
 
 			/*
 			 * Like with Intel, detect invariant TSC,
