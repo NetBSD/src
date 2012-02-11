@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.36 2012/02/04 18:12:02 joerg Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.37 2012/02/11 23:16:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.36 2012/02/04 18:12:02 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.37 2012/02/11 23:16:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.36 2012/02/04 18:12:02 joerg Exp $");
 #include <compat/common/compat_util.h>
 
 #include <sys/pax.h>
+#include <uvm/uvm_param.h>
 
 extern struct emul emul_netbsd;
 
@@ -416,8 +417,18 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 	u_long phsize;
 	Elf_Addr addr = *last;
 	struct proc *p;
+	bool use_topdown;
 
 	p = l->l_proc;
+
+	if (p->p_vmspace)
+		use_topdown = p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN;
+	else
+#ifdef __USING_TOPDOWN_VM
+		use_topdown = true;
+#else
+		use_topdown = false;
+#endif
 
 	/*
 	 * 1. open file
@@ -562,7 +573,7 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 				flags = VMCMD_BASE;
 				if (addr == ELF_LINK_ADDR)
 					addr = ph0->p_vaddr;
-				if (p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN)
+				if (use_topdown)
 					addr = ELF_TRUNC(addr, ph0->p_align);
 				else
 					addr = ELF_ROUND(addr, ph0->p_align);

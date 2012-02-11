@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.447 2012/02/01 05:46:45 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.448 2012/02/11 23:16:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.447 2012/02/01 05:46:45 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.448 2012/02/11 23:16:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.447 2012/02/01 05:46:45 dholland 
 static int change_flags(struct vnode *, u_long, struct lwp *);
 static int change_mode(struct vnode *, int, struct lwp *l);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
+static int do_open(lwp_t *, struct pathbuf *, int, int, int *);
 
 /*
  * This table is used to maintain compatibility with 4.3BSD
@@ -1464,6 +1465,78 @@ chdir_lookup(const char *path, int where, struct vnode **vpp, struct lwp *l)
 }
 
 /*
+ * Internals of sys_open - path has already been converted into a pathbuf
+ * (so we can easily reuse this function from other parts of the kernel,
+ * like posix_spawn post-processing).
+ */
+static int
+do_open(lwp_t *l, struct pathbuf *pb, int open_flags, int open_mode, int *fd)
+{
+	struct proc *p = l->l_proc;
+	struct cwdinfo *cwdi = p->p_cwdi;
+	file_t *fp;
+	struct vnode *vp;
+	int flags, cmode;
+	int indx, error;
+	struct nameidata nd;
+
+	flags = FFLAGS(open_flags);
+	if ((flags & (FREAD | FWRITE)) == 0)
+		return EINVAL;
+
+	if ((error = fd_allocfile(&fp, &indx)) != 0) {
+		pathbuf_destroy(pb);
+		return error;
+	}
+	/* We're going to read cwdi->cwdi_cmask unlocked here. */
+	cmode = ((open_mode &~ cwdi->cwdi_cmask) & ALLPERMS) &~ S_ISTXT;
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, pb);
+	l->l_dupfd = -indx - 1;			/* XXX check for fdopen */
+	if ((error = vn_open(&nd, flags, cmode)) != 0) {
+		fd_abort(p, fp, indx);
+		if ((error == EDUPFD || error == EMOVEFD) &&
+		    l->l_dupfd >= 0 &&			/* XXX from fdopen */
+		    (error =
+			fd_dupopen(l->l_dupfd, &indx, flags, error)) == 0) {
+			*fd = indx;
+			pathbuf_destroy(pb);
+			return (0);
+		}
+		if (error == ERESTART)
+			error = EINTR;
+		pathbuf_destroy(pb);
+		return error;
+	}
+
+	l->l_dupfd = 0;
+	vp = nd.ni_vp;
+	pathbuf_destroy(pb);
+
+	if ((error = open_setfp(l, fp, vp, indx, flags)))
+		return error;
+
+	VOP_UNLOCK(vp);
+	*fd = indx;
+	fd_affix(p, fp, indx);
+	return 0;
+}
+
+int
+fd_open(const char *path, int open_flags, int open_mode, int *fd)
+{
+	struct pathbuf *pb;
+
+	if ((open_flags & (FREAD | FWRITE)) == 0)
+		return EINVAL;
+
+	pb = pathbuf_create(path);
+	if (pb == NULL)
+		return ENOMEM;
+
+	return do_open(curlwp, pb, open_flags, open_mode, fd);
+}
+
+/*
  * Check permissions, allocate an open file structure,
  * and call the device open routine if any.
  */
@@ -1475,59 +1548,23 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 		syscallarg(int) flags;
 		syscallarg(int) mode;
 	} */
-	struct proc *p = l->l_proc;
-	struct cwdinfo *cwdi = p->p_cwdi;
-	file_t *fp;
-	struct vnode *vp;
-	int flags, cmode;
-	int indx, error;
 	struct pathbuf *pb;
-	struct nameidata nd;
+	int result, flags, error;
 
 	flags = FFLAGS(SCARG(uap, flags));
 	if ((flags & (FREAD | FWRITE)) == 0)
 		return (EINVAL);
 
 	error = pathbuf_copyin(SCARG(uap, path), &pb);
-	if (error) {
-		return error;
-	}
-
-	if ((error = fd_allocfile(&fp, &indx)) != 0) {
-		pathbuf_destroy(pb);
-		return error;
-	}
-	/* We're going to read cwdi->cwdi_cmask unlocked here. */
-	cmode = ((SCARG(uap, mode) &~ cwdi->cwdi_cmask) & ALLPERMS) &~ S_ISTXT;
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, pb);
-	l->l_dupfd = -indx - 1;			/* XXX check for fdopen */
-	if ((error = vn_open(&nd, flags, cmode)) != 0) {
-		fd_abort(p, fp, indx);
-		if ((error == EDUPFD || error == EMOVEFD) &&
-		    l->l_dupfd >= 0 &&			/* XXX from fdopen */
-		    (error =
-			fd_dupopen(l->l_dupfd, &indx, flags, error)) == 0) {
-			*retval = indx;
-			pathbuf_destroy(pb);
-			return (0);
-		}
-		if (error == ERESTART)
-			error = EINTR;
-		pathbuf_destroy(pb);
-		return (error);
-	}
-
-	l->l_dupfd = 0;
-	vp = nd.ni_vp;
-	pathbuf_destroy(pb);
-
-	if ((error = open_setfp(l, fp, vp, indx, flags)))
+	if (error)
 		return error;
 
-	VOP_UNLOCK(vp);
-	*retval = indx;
-	fd_affix(p, fp, indx);
-	return (0);
+	error = do_open(l, pb, SCARG(uap, flags), SCARG(uap, mode), &result);
+	if (error)
+		return error;
+
+	*retval = result;
+	return 0;
 }
 
 int

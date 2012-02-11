@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.62 2012/01/25 00:28:35 christos Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.63 2012/02/11 23:16:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,6 +181,7 @@ struct proc;
  * Kernel global variables and routines.
  */
 void	fd_sys_init(void);
+int	fd_open(const char*, int, int, int*);
 int	fd_dupopen(int, int *, int, int);
 int	fd_alloc(struct proc *, int, int *);
 void	fd_tryexpand(struct proc *);
@@ -209,6 +210,7 @@ int	fd_dup2(file_t *, unsigned, int);
 int	fd_clone(file_t *, unsigned, int, const struct fileops *, void *);
 void	fd_set_exclose(struct lwp *, int, bool);
 int	pipe1(struct lwp *, register_t *, int);
+int	dodup(struct lwp *, int, int, int, register_t *);
 
 void	cwd_sys_init(void);
 struct cwdinfo *cwdinit(void);
