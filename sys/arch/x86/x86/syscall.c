@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.8 2012/01/05 17:26:57 reinoud Exp $	*/
+/*	$NetBSD: syscall.c,v 1.9 2012/02/11 23:16:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2012/01/05 17:26:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2012/02/11 23:16:16 martin Exp $");
 
 #include "opt_sa.h"
 
@@ -88,6 +88,16 @@ child_return(void *arg)
 	ktrsysret(SYS_fork, 0, 0);
 }
 
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+
+	userret(l);
+}
+	
 void
 syscall_intern(struct proc *p)
 {
