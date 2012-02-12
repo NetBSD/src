@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.109 2012/01/24 00:20:45 rkujawa Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.110 2012/02/12 16:34:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.109 2012/01/24 00:20:45 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.110 2012/02/12 16:34:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,7 +500,7 @@ int a4000_flag = 0;		/* patchable */
 #endif
 
 int
-is_a3000()
+is_a3000(void)
 {
 	/* this is a dirty kludge.. but how do you do this RIGHT ? :-) */
 	extern long boot_fphystart;
@@ -545,7 +545,7 @@ is_a3000()
 }
 
 int
-is_a4000()
+is_a4000(void)
 {
 	if ((machineid >> 16) == 4000)
 		return (1);		/* It's an A4000 */
@@ -568,7 +568,7 @@ is_a4000()
 }
 
 int
-is_a1200()
+is_a1200(void)
 {
 	if ((machineid >> 16) == 1200)
 		return (1);		/* It's an A1200 */
@@ -576,7 +576,7 @@ is_a1200()
 }
 
 int
-is_a600()
+is_a600(void)
 {
 	if ((machineid >> 16) == 600)
 		return (1);		/* It's an A600 */
