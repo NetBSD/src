@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.208 2012/02/01 17:53:55 dholland Exp $
+# $NetBSD: shl.mi,v 1.209 2012/02/12 10:01:58 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -248,7 +248,7 @@
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libc.so.12.180.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libc.so.12.181.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcom_err.so.7.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcrypto.so.7.0.debug	comp-crypto-debug	crypto,debug
