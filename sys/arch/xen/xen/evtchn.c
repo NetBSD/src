@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.61 2011/12/08 03:34:44 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.62 2012/02/12 14:24:08 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.61 2011/12/08 03:34:44 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.62 2012/02/12 14:24:08 jym Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -774,7 +774,7 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	for (ihp = &evts->ev_handlers, ih = evts->ev_handlers;
 	    ih != NULL;
 	    ihp = &ih->ih_evt_next, ih = ih->ih_evt_next) {
-		if (ih->ih_fun == func && ih->ih_arg == arg)
+		if (ih->ih_realfun == func && ih->ih_realarg == arg)
 			break;
 	}
 	if (ih == NULL) {
@@ -789,7 +789,7 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	for (ihp = &ipls->ipl_handlers, ih = ipls->ipl_handlers;
 	    ih != NULL;
 	    ihp = &ih->ih_ipl_next, ih = ih->ih_ipl_next) {
-		if (ih->ih_fun == func && ih->ih_arg == arg)
+		if (ih->ih_realfun == func && ih->ih_realarg == arg)
 			break;
 	}
 	if (ih == NULL)
