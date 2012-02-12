@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.58 2011/07/17 20:54:37 joerg Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.59 2012/02/12 16:34:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.58 2011/07/17 20:54:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.59 2012/02/12 16:34:07 matt Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -933,7 +933,7 @@ falcon_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 }
 
 static int
-falcon_can_access_5380()
+falcon_can_access_5380(void)
 {
 
 	if (connected && (connected->dr_flag & DRIVER_IN_DMA) &&

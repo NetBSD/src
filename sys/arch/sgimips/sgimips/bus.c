@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.63 2011/07/17 01:36:50 dyoung Exp $	*/
+/*	$NetBSD: bus.c,v 1.64 2012/02/12 16:34:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.63 2011/07/17 01:36:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.64 2012/02/12 16:34:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1232,17 +1232,17 @@ bus_space_mmap(bus_space_tag_t space, bus_addr_t addr, off_t off,
  */
 
 #define __SGIMIPS_bus_space_read_multi(BYTES,BITS)			\
-void __CONCAT(bus_space_read_multi_,BYTES)		\
+void __CONCAT(bus_space_read_multi_,BYTES)				\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, bus_size_t);				\
 									\
-void							\
-__CONCAT(bus_space_read_multi_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	bus_size_t c;							\
+void									\
+__CONCAT(bus_space_read_multi_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	bus_size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -1256,17 +1256,17 @@ __SGIMIPS_bus_space_read_multi(4,32)
 #undef __SGIMIPS_bus_space_read_multi
 
 #define __SGIMIPS_bus_space_read_multi_stream(BYTES,BITS)		\
-void __CONCAT(bus_space_read_multi_stream_,BYTES)	\
+void __CONCAT(bus_space_read_multi_stream_,BYTES)			\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, bus_size_t);				\
 									\
-void							\
-__CONCAT(bus_space_read_multi_stream_,BYTES)(t, h, o, a, c)		\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	bus_size_t c;							\
+void									\
+__CONCAT(bus_space_read_multi_stream_,BYTES)(				\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	bus_size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -1290,17 +1290,17 @@ __SGIMIPS_bus_space_read_multi_stream(4,32)
  */
 
 #define __SGIMIPS_bus_space_read_region(BYTES,BITS)			\
-void __CONCAT(bus_space_read_region_,BYTES)		\
+void __CONCAT(bus_space_read_region_,BYTES)				\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, bus_size_t);				\
 									\
-void							\
-__CONCAT(bus_space_read_region_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	bus_size_t c;							\
+void									\
+__CONCAT(bus_space_read_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	bus_size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -1326,17 +1326,17 @@ __SGIMIPS_bus_space_read_region(4,32)
  */
 
 #define __SGIMIPS_bus_space_read_region_stream(BYTES,BITS)		\
-void __CONCAT(bus_space_read_region_stream_,BYTES)	\
+void __CONCAT(bus_space_read_region_stream_,BYTES)			\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, bus_size_t);				\
 									\
-void							\
-__CONCAT(bus_space_read_region_stream_,BYTES)(t, h, o, a, c)		\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	bus_size_t c;							\
+void									\
+__CONCAT(bus_space_read_region_stream_,BYTES)(				\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	bus_size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -1360,17 +1360,17 @@ __SGIMIPS_bus_space_read_region_stream(4,32)
  */
 
 #define __SGIMIPS_bus_space_write_multi(BYTES,BITS)			\
-void __CONCAT(bus_space_write_multi_,BYTES)		\
+void __CONCAT(bus_space_write_multi_,BYTES)				\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, bus_size_t);			\
 									\
-void							\
-__CONCAT(bus_space_write_multi_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	const __PB_TYPENAME(BITS) *a;					\
-	bus_size_t c;							\
+void									\
+__CONCAT(bus_space_write_multi_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	const __PB_TYPENAME(BITS) *a,					\
+	bus_size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -1384,17 +1384,17 @@ __SGIMIPS_bus_space_write_multi(4,32)
 #undef __SGIMIPS_bus_space_write_multi
 
 #define __SGIMIPS_bus_space_write_multi_stream(BYTES,BITS)		\
-void __CONCAT(bus_space_write_multi_stream_,BYTES)	\
+void __CONCAT(bus_space_write_multi_stream_,BYTES)			\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, bus_size_t);			\
 									\
-void							\
-__CONCAT(bus_space_write_multi_stream_,BYTES)(t, h, o, a, c)		\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	const __PB_TYPENAME(BITS) *a;					\
-	bus_size_t c;							\
+void									\
+__CONCAT(bus_space_write_multi_stream_,BYTES)(				\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	const __PB_TYPENAME(BITS) *a,					\
+	bus_size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -1416,17 +1416,17 @@ __SGIMIPS_bus_space_write_multi_stream(4,32)
  */
 
 #define __SGIMIPS_bus_space_write_region(BYTES,BITS)			\
-void __CONCAT(bus_space_write_region_,BYTES)		\
+void __CONCAT(bus_space_write_region_,BYTES)				\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, bus_size_t);			\
 									\
-void							\
-__CONCAT(bus_space_write_region_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	const __PB_TYPENAME(BITS) *a;					\
-	bus_size_t c;							\
+void									\
+__CONCAT(bus_space_write_region_,BYTES)(				\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	const __PB_TYPENAME(BITS) *a,					\
+	bus_size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -1452,17 +1452,17 @@ __SGIMIPS_bus_space_write_region(4,32)
  */
 
 #define __SGIMIPS_bus_space_write_region_stream(BYTES,BITS)		\
-void __CONCAT(bus_space_write_region_stream_,BYTES)	\
+void __CONCAT(bus_space_write_region_stream_,BYTES)			\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, bus_size_t);			\
 									\
-void							\
-__CONCAT(bus_space_write_region_stream_,BYTES)(t, h, o, a, c)		\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	const __PB_TYPENAME(BITS) *a;					\
-	bus_size_t c;							\
+void									\
+__CONCAT(bus_space_write_region_stream_,BYTES)(				\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	const __PB_TYPENAME(BITS) *a,					\
+	bus_size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -1486,17 +1486,17 @@ __SGIMIPS_bus_space_write_region_stream(4,32)
  */
 
 #define __SGIMIPS_bus_space_set_multi(BYTES,BITS)			\
-void __CONCAT(bus_space_set_multi_,BYTES)		\
+void __CONCAT(bus_space_set_multi_,BYTES)				\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), bus_size_t);				\
 									\
-void							\
-__CONCAT(bus_space_set_multi_,BYTES)(t, h, o, v, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) v;						\
-	bus_size_t c;							\
+void									\
+__CONCAT(bus_space_set_multi_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) v,						\
+	bus_size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -1519,17 +1519,17 @@ __SGIMIPS_bus_space_set_multi(4,32)
  */
 
 #define __SGIMIPS_bus_space_set_region(BYTES,BITS)			\
-void __CONCAT(bus_space_set_region_,BYTES)		\
+void __CONCAT(bus_space_set_region_,BYTES)				\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), bus_size_t);				\
 									\
-void							\
-__CONCAT(bus_space_set_region_,BYTES)(t, h, o, v, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) v;						\
-	bus_size_t c;							\
+void									\
+__CONCAT(bus_space_set_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) v,						\
+	bus_size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -1555,17 +1555,20 @@ __SGIMIPS_bus_space_set_region(4,32)
  */
 
 #define	__SGIMIPS_copy_region(BYTES)					\
-void __CONCAT(bus_space_copy_region_,BYTES)		\
+void __CONCAT(bus_space_copy_region_,BYTES)				\
 	(bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
 	    bus_size_t count);						\
 									\
-void							\
-__CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h1, h2;					\
-	bus_size_t o1, o2, c;						\
+void									\
+__CONCAT(bus_space_copy_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h1,						\
+	bus_size_t o1,							\
+	bus_space_handle_t h2,						\
+	bus_size_t o2,							\
+	bus_size_t c)							\
 {									\
 	bus_size_t o;							\
 									\
