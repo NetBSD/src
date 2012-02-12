@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.80 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.81 2012/02/12 16:34:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.80 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.81 2012/02/12 16:34:11 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -1505,7 +1505,7 @@ smc91cxx_activate(device_t self, enum devact act)
 int
 smc91cxx_detach(device_t self, int flags)
 {
-	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
+	struct smc91cxx_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 
 	/* Succeed now if there's no work to do. */
@@ -1532,7 +1532,7 @@ smc91cxx_detach(device_t self, int flags)
 u_int32_t
 smc91cxx_mii_bitbang_read(device_t self)
 {
-	struct smc91cxx_softc *sc = (void *) self;
+	struct smc91cxx_softc *sc = device_private(self);
 
 	/* We're already in bank 3. */
 	return (bus_space_read_2(sc->sc_bst, sc->sc_bsh, MGMT_REG_W));
@@ -1541,7 +1541,7 @@ smc91cxx_mii_bitbang_read(device_t self)
 void
 smc91cxx_mii_bitbang_write(device_t self, u_int32_t val)
 {
-	struct smc91cxx_softc *sc = (void *) self;
+	struct smc91cxx_softc *sc = device_private(self);
 
 	/* We're already in bank 3. */
 	bus_space_write_2(sc->sc_bst, sc->sc_bsh, MGMT_REG_W, val);
@@ -1550,7 +1550,7 @@ smc91cxx_mii_bitbang_write(device_t self, u_int32_t val)
 int
 smc91cxx_mii_readreg(device_t self, int phy, int reg)
 {
-	struct smc91cxx_softc *sc = (void *) self;
+	struct smc91cxx_softc *sc = device_private(self);
 	int val;
 
 	SMC_SELECT_BANK(sc, 3);
@@ -1565,7 +1565,7 @@ smc91cxx_mii_readreg(device_t self, int phy, int reg)
 void
 smc91cxx_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct smc91cxx_softc *sc = (void *) self;
+	struct smc91cxx_softc *sc = device_private(self);
 
 	SMC_SELECT_BANK(sc, 3);
 
@@ -1577,7 +1577,7 @@ smc91cxx_mii_writereg(device_t self, int phy, int reg, int val)
 void
 smc91cxx_statchg(device_t self)
 {
-	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
+	struct smc91cxx_softc *sc = device_private(self);
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	int mctl;

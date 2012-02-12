@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.34 2012/01/30 17:03:58 he Exp $ */
+/* $NetBSD: pmap.c,v 1.35 2012/02/12 16:34:06 matt Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2012/01/30 17:03:58 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2012/02/12 16:34:06 matt Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/kmem.h>
@@ -336,7 +336,7 @@ pmap_init(void)
  * for allocating user pmaps, and frees some unnecessary memory.
  */
 void
-pmap_init2()
+pmap_init2(void)
 {
 	struct pmap *pmap;
 	struct pv_entry *new_pv_table, *old_pv_table;

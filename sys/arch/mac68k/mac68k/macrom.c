@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.71 2009/11/01 01:51:35 snj Exp $	*/
+/*	$NetBSD: macrom.c,v 1.72 2012/02/12 16:34:09 matt Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.71 2009/11/01 01:51:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.72 2012/02/12 16:34:09 matt Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -384,7 +384,7 @@ mrg_lvl2dtpanic(void)		/* Lvl2DT stopper */
 }
 
 void
-mrg_jadbprocpanic()	/* JADBProc stopper */
+mrg_jadbprocpanic(void)	/* JADBProc stopper */
 {
 	panic("Agh!  Called JADBProc!");
 }
