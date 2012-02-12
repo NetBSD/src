@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3dreg.h,v 1.10 2011/12/15 14:25:13 phx Exp $	*/
+/*	$NetBSD: grf_cv3dreg.h,v 1.11 2012/02/12 16:34:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -559,8 +559,7 @@ static inline unsigned char RGfx(volatile void *, short);
 /* Gfx engine busy wait */
 
 static inline void
-GfxBusyWait (ba)
-	volatile void *ba;
+GfxBusyWait (volatile void *ba)
 {
 	int test;
 
@@ -572,8 +571,7 @@ GfxBusyWait (ba)
 
 
 static inline void
-GfxFifoWait(ba)
-	volatile void *ba;
+GfxFifoWait(volatile void *ba)
 {
 #if 0	/* XXX */
 	int test;
@@ -593,9 +591,7 @@ GfxFifoWait(ba)
  */
 
 static inline unsigned char
-RAttr(ba, idx)
-	volatile void *ba;
-	short idx;
+RAttr(volatile void *ba, short idx)
 {
 
 	vgaw(ba, ACT_ADDRESS_W, idx);
@@ -604,27 +600,21 @@ RAttr(ba, idx)
 }
 
 static inline unsigned char
-RSeq(ba, idx)
-	volatile void *ba;
-	short idx;
+RSeq(volatile void *ba, short idx)
 {
 	vgaw(ba, SEQ_ADDRESS, idx);
 	return vgar(ba, SEQ_ADDRESS_R);
 }
 
 static inline unsigned char
-RCrt(ba, idx)
-	volatile void *ba;
-	short idx;
+RCrt(volatile void *ba, short idx)
 {
 	vgaw(ba, CRT_ADDRESS, idx);
 	return vgar(ba, CRT_ADDRESS_R);
 }
 
 static inline unsigned char
-RGfx(ba, idx)
-	volatile void *ba;
-	short idx;
+RGfx(volatile void *ba, short idx)
 {
 	vgaw(ba, GCT_ADDRESS, idx);
 	return vgar(ba, GCT_ADDRESS_R);

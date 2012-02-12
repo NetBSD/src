@@ -1,4 +1,4 @@
-/* $NetBSD: xs_bee3.c,v 1.2 2011/02/22 08:20:20 matt Exp $ */
+/* $NetBSD: xs_bee3.c,v 1.3 2012/02/12 16:34:07 matt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xs_bee3.c,v 1.2 2011/02/22 08:20:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xs_bee3.c,v 1.3 2012/02/12 16:34:07 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -104,7 +104,7 @@ xs_bee3_init(void)
 }
 
 static void
-xs_bee3_cons_init()
+xs_bee3_cons_init(void)
 {
 
 	/*
