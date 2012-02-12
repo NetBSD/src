@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.22 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: i80321.c,v 1.23 2012/02/12 16:31:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.22 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.23 2012/02/12 16:31:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ i80321_attach(struct i80321_softc *sc)
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, VERDE_ATU_BASE,
 	    VERDE_ATU_SIZE, &sc->sc_atu_sh))
 		panic("%s: unable to subregion ATU registers",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 
 	/* We expect the Memory Controller to be already sliced off. */
 
@@ -266,7 +266,7 @@ i80321_attach(struct i80321_softc *sc)
 		ia.ia_offset = id->id_offset;
 		ia.ia_size = id->id_size;
 
-		(void) config_found_ia(&sc->sc_dev, "iopxs", &ia,
+		(void) config_found_ia(sc->sc_dev, "iopxs", &ia,
 				       i80321_iopxs_print);
 	}
 
@@ -288,7 +288,7 @@ i80321_attach(struct i80321_softc *sc)
 	pba.pba_intrtag = 0;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
+	(void) config_found_ia(sc->sc_dev, "pcibus", &pba, pcibusprint);
 }
 
 /*
