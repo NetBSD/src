@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpcom_ixm.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $ */
+/*	$NetBSD: ixpcom_ixm.c,v 1.10 2012/02/12 16:31:01 matt Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.10 2012/02/12 16:31:01 matt Exp $");
 
 /* Front-end of ixpcom */
 
@@ -50,14 +50,14 @@ __KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $"
 
 #include <evbarm/ixm1200/ixpcom_ixmvar.h>
 
-static int	ixpcom_ixm_match(struct device *, struct cfdata *, void *);
-static void	ixpcom_ixm_attach(struct device *, struct device *, void *);
+static int	ixpcom_ixm_match(device_t, cfdata_t, void *);
+static void	ixpcom_ixm_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(ixpcom_ixm, sizeof(struct ixpcom_softc),
     ixpcom_ixm_match, ixpcom_ixm_attach, NULL, NULL);
 
 static int
-ixpcom_ixm_match(struct device *parent, struct cfdata *match, void *aux)
+ixpcom_ixm_match(device_t parent, cfdata_t match, void *aux)
 {
 	if (strcmp(match->cf_name, "ixpcom") == 0)
 		return 1;
@@ -65,12 +65,9 @@ ixpcom_ixm_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ixpcom_ixm_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;  
-	void *aux;
+ixpcom_ixm_attach(device_t parent, device_t self, void *aux)
 {
-	struct ixpcom_ixm_softc *isc = (struct ixpcom_ixm_softc *)self;
+	struct ixpcom_ixm_softc *isc = device_private(self);
 	struct ixpcom_softc *sc = &isc->sc_ixpcom;
 	struct ixpsip_attach_args *sa = aux;
 
@@ -78,15 +75,13 @@ ixpcom_ixm_attach(parent, self, aux)
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_baseaddr = sa->sa_addr;
 
-	printf("\n");
-
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
 			 &sc->sc_ioh)) {
-		printf("%s: unable to map device\n", sc->sc_dev.dv_xname);
+		aprint_error(": unable to map device\n");
 		return;
 	}
 
-	printf("%s: IXP12x0 UART\n", sc->sc_dev.dv_xname);
+	aprint_normal(": IXP12x0 UART\n");
 
 	ixpcom_attach_subr(sc);
 
