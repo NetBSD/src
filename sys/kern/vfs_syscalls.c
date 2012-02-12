@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.448 2012/02/11 23:16:17 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.449 2012/02/12 13:12:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.448 2012/02/11 23:16:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.449 2012/02/12 13:12:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1525,8 +1525,10 @@ int
 fd_open(const char *path, int open_flags, int open_mode, int *fd)
 {
 	struct pathbuf *pb;
+	int oflags;
 
-	if ((open_flags & (FREAD | FWRITE)) == 0)
+	oflags = FFLAGS(open_flags);
+	if ((oflags & (FREAD | FWRITE)) == 0)
 		return EINVAL;
 
 	pb = pathbuf_create(path);
