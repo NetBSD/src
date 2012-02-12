@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_mainbus.c,v 1.2 2011/07/01 20:39:34 dyoung Exp $	*/
+/*	$NetBSD: i80321_mainbus.c,v 1.3 2012/02/12 16:31:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.2 2011/07/01 20:39:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.3 2012/02/12 16:31:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,17 +54,17 @@ __KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.2 2011/07/01 20:39:34 dyoung Ex
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-int	hdlg_mainbus_match(struct device *, struct cfdata *, void *);
-void	hdlg_mainbus_attach(struct device *, struct device *, void *);
+int	hdlg_mainbus_match(device_t, cfdata_t, void *);
+void	hdlg_mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(iopxs_mainbus, sizeof(struct i80321_softc),
+CFATTACH_DECL_NEW(iopxs_mainbus, sizeof(struct i80321_softc),
     hdlg_mainbus_match, hdlg_mainbus_attach, NULL, NULL);
 
 /* There can be only one. */
 int	hdlg_mainbus_found;
 
 int
-hdlg_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+hdlg_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (hdlg_mainbus_found)
@@ -73,14 +73,15 @@ hdlg_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-hdlg_mainbus_attach(struct device *parent, struct device *self, void *aux)
+hdlg_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct i80321_softc *sc = (void *) self;
+	struct i80321_softc *sc = device_private(self);
 	pcireg_t b0u, b0l, b1u, b1l;
 	paddr_t memstart;
 	psize_t memsize;
 
 	hdlg_mainbus_found = 1;
+	sc->sc_dev = self;
 
 	/*
 	 * Fill in the space tag for the i80321's own devices,
@@ -98,12 +99,12 @@ hdlg_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, VERDE_MCU_BASE,
 	    VERDE_MCU_SIZE, &sc->sc_mcu_sh))
 		panic("%s: unable to subregion MCU registers",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, VERDE_ATU_BASE,
 	    VERDE_ATU_SIZE, &sc->sc_atu_sh))
 		panic("%s: unable to subregion ATU registers",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 
 	/*
 	 * We have mapped the PCI I/O windows in the early bootstrap phase.
@@ -136,6 +137,8 @@ hdlg_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": i80219 I/O Processor\n");
 	aprint_normal(": i80219 I/O Processor, acting as PCI %s\n",
 	    sc->sc_is_host ? "host" : "slave");
+
+	i80321_intr_evcnt_attach();
 
 	i80321_sdram_bounds(sc->sc_st, sc->sc_mcu_sh, &memstart, &memsize);
 

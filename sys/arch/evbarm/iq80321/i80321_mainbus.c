@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_mainbus.c,v 1.17 2011/07/01 20:41:16 dyoung Exp $	*/
+/*	$NetBSD: i80321_mainbus.c,v 1.18 2012/02/12 16:31:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.17 2011/07/01 20:41:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.18 2012/02/12 16:31:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,17 +60,17 @@ __KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.17 2011/07/01 20:41:16 dyoung E
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-int	i80321_mainbus_match(struct device *, struct cfdata *, void *);
-void	i80321_mainbus_attach(struct device *, struct device *, void *);
+int	i80321_mainbus_match(device_t, cfdata_t, void *);
+void	i80321_mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(iopxs_mainbus, sizeof(struct i80321_softc),
+CFATTACH_DECL_NEW(iopxs_mainbus, sizeof(struct i80321_softc),
     i80321_mainbus_match, i80321_mainbus_attach, NULL, NULL);
 
 /* There can be only one. */
 int	i80321_mainbus_found;
 
 int
-i80321_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+i80321_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 #if 0
 	struct mainbus_attach_args *ma = aux;
@@ -91,13 +91,15 @@ i80321_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
+i80321_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct i80321_softc *sc = (void *) self;
+	struct i80321_softc *sc = device_private(self);
+	const char *xname = device_xname(self);
 	pcireg_t b0u, b0l, b1u, b1l;
 	paddr_t memstart;
 	psize_t memsize;
 
+	sc->sc_dev = self;
 	i80321_mainbus_found = 1;
 
 	/*
@@ -115,13 +117,11 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, VERDE_MCU_BASE,
 	    VERDE_MCU_SIZE, &sc->sc_mcu_sh))
-		panic("%s: unable to subregion MCU registers",
-		    sc->sc_dev.dv_xname);
+		panic("%s: unable to subregion MCU registers", xname);
 
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, VERDE_ATU_BASE,
 	    VERDE_ATU_SIZE, &sc->sc_atu_sh))
-		panic("%s: unable to subregion ATU registers",
-		    sc->sc_dev.dv_xname);
+		panic("%s: unable to subregion ATU registers", xname);
 
 	/*
 	 * We have mapped the PCI I/O windows in the early bootstrap phase.
@@ -154,6 +154,8 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": i80321 I/O Processor\n");
 	aprint_normal(": i80321 I/O Processor, acting as PCI %s\n",
 	    sc->sc_is_host ? "host" : "slave");
+
+	i80321_intr_evcnt_attach();
 
 	i80321_sdram_bounds(sc->sc_st, sc->sc_mcu_sh, &memstart, &memsize);
 
