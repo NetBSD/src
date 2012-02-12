@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.337 2012/02/11 23:16:17 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.338 2012/02/12 13:14:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.337 2012/02/11 23:16:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.338 2012/02/12 13:14:37 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -1778,14 +1778,22 @@ spawn_return(void *arg)
 	const struct posix_spawn_file_actions_entry *fae;
 	register_t retval;
 
+	error = 0;
 	/* handle posix_spawn_file_actions */
 	if (spawn_data->sed_actions != NULL) {
 		for (i = 0; i < spawn_data->sed_actions_len; i++) {
 			fae = &spawn_data->sed_actions[i];
 			switch (fae->fae_action) {
 			case FAE_OPEN:
+				if (fd_getfile(fae->fae_fildes) != NULL) {
+					error = fd_close(fae->fae_fildes);
+					if (error)
+						break;
+				}
 				error = fd_open(fae->fae_path, fae->fae_oflag,
 				    fae->fae_mode, &newfd);
+ 				if (error)
+ 					break;
 				if (newfd != fae->fae_fildes) {
 					error = dodup(l, newfd,
 					    fae->fae_fildes, 0, &retval);
