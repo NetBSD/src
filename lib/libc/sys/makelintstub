@@ -1,5 +1,5 @@
 #!/bin/sh -
-# $NetBSD: makelintstub,v 1.24 2012/02/01 05:34:40 dholland Exp $
+# $NetBSD: makelintstub,v 1.25 2012/02/12 01:46:05 martin Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou
 # All rights reserved.
@@ -74,6 +74,7 @@ header()
 	#include <sys/msg.h>
 	#include <sys/sem.h>
 	#include <sys/shm.h>
+	#include <sys/spawn.h>
 	#include <sys/sched.h>
 	#include <sys/timex.h>
 	#include <sys/socket.h>
