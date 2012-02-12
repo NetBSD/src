@@ -2538,8 +2538,15 @@ pmap_pv_page_free(struct pool *pp, void *v)
 	KASSERT(MIPS_XKPHYS_P(va));
 	pa = MIPS_XKPHYS_TO_PHYS(va);
 #else
-	KASSERT(MIPS_KSEG0_P(va));
-	pa = MIPS_KSEG0_TO_PHYS(va);
+#ifdef ENABLE_MIPS_KSEGX
+	if (VM_KSEGX_ADDRESS <= va && va <= VM_KSEGX_ADDRESS + VM_KSEGX_SIZE) { 
+		pa = mips_ksegx_start + va - VM_KSEGX_ADDRESS;
+	} else
+#endif
+	{
+		KASSERT(MIPS_KSEG0_P(va));
+		pa = MIPS_KSEG0_TO_PHYS(va);
+	}
 #endif
 #ifdef MIPS3_PLUS
 	if (MIPS_CACHE_VIRTUAL_ALIAS)
