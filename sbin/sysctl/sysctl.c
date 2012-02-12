@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.139 2012/01/04 16:09:42 drochner Exp $ */
+/*	$NetBSD: sysctl.c,v 1.140 2012/02/12 20:54:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.139 2012/01/04 16:09:42 drochner Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.140 2012/02/12 20:54:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1688,8 +1688,8 @@ sysctlerror(int soft)
 		}
 	}
 
-	sysctlperror("%s: sysctl() failed with %s\n",
-		     gsname, strerror(errno));
+	if (Aflag || req)
+		sysctlperror("%s: %s\n", gsname, strerror(errno));
 	if (!soft)
 		EXIT(1);
 }
