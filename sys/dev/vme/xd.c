@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.87 2011/02/01 19:36:24 chuck Exp $	*/
+/*	$NetBSD: xd.c,v 1.88 2012/02/12 16:34:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.87 2011/02/01 19:36:24 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.88 2012/02/12 16:34:12 matt Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -444,10 +444,8 @@ xdc_probe(void *arg, bus_space_tag_t tag, bus_space_handle_t handle)
 	return (del > 0 ? 0 : EIO);
 }
 
-int xdcmatch(parent, cf, aux)
-	device_t parent;
-	cfdata_t cf;
-	void *aux;
+int
+xdcmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
@@ -1000,12 +998,7 @@ xd_getkauthreq(u_char cmd)
  * xdioctl: ioctls on XD drives.   based on ioctl's of other netbsd disks.
  */
 int
-xdioctl(dev, command, addr, flag, l)
-	dev_t   dev;
-	u_long  command;
-	void *addr;
-	int     flag;
-	struct lwp *l;
+xdioctl(dev_t dev, u_long command, void *addr, int flag, struct lwp *l)
 
 {
 	struct xd_softc *xd;
@@ -1198,9 +1191,7 @@ xdwrite(dev_t dev, struct uio *uio, int flags)
  */
 
 int
-xdsize(dev)
-	dev_t   dev;
-
+xdsize(dev_t dev)
 {
 	struct xd_softc *xdsc;
 	int     unit, part, size, omask;
@@ -1231,9 +1222,7 @@ xdsize(dev)
  */
 
 void
-xdstrategy(bp)
-	struct buf *bp;
-
+xdstrategy(struct buf *bp)
 {
 	struct xd_softc *xd;
 	struct xdc_softc *parent;
@@ -1332,9 +1321,7 @@ done:				/* tells upper layers we are done with this
  * xdcintr: hardware interrupt.
  */
 int
-xdcintr(v)
-	void   *v;
-
+xdcintr(void *v)
 {
 	struct xdc_softc *xdcsc = v;
 
@@ -1388,11 +1375,7 @@ xdc_rqinit(struct xd_iorq *rq, struct xdc_softc *xdc, struct xd_softc *xd, int m
  */
 
 void
-xdc_rqtopb(iorq, iopb, cmd, subfun)
-	struct xd_iorq *iorq;
-	struct xd_iopb *iopb;
-	int     cmd, subfun;
-
+xdc_rqtopb(struct xd_iorq *iorq, struct xd_iopb *iopb, int cmd, int subfun)
 {
 	u_long  block, dp;
 
@@ -1496,12 +1479,8 @@ xdc_rqtopb(iorq, iopb, cmd, subfun)
  * there is no need to do this).    NORM requests are handled separately.
  */
 int
-xdc_cmd(xdcsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
-	struct xdc_softc *xdcsc;
-	int     cmd, subfn, unit, block, scnt;
-	char   *dptr;
-	int     fullmode;
-
+xdc_cmd(struct xdc_softc *xdcsc, int cmd, int subfn, int unit, int block,
+	int scnt, char *dptr, int fullmode)
 {
 	int     rqno, submode = XD_STATE(fullmode), retry;
 	struct xd_iorq *iorq;
@@ -1562,11 +1541,7 @@ xdc_cmd(xdcsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
  */
 
 int
-xdc_startbuf(xdcsc, xdsc, bp)
-	struct xdc_softc *xdcsc;
-	struct xd_softc *xdsc;
-	struct buf *bp;
-
+xdc_startbuf(struct xdc_softc *xdcsc, struct xd_softc *xdsc, struct buf *bp)
 {
 	int     rqno, partno;
 	struct xd_iorq *iorq;
@@ -1672,11 +1647,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 
 
 int
-xdc_submit_iorq(xdcsc, iorqno, type)
-	struct xdc_softc *xdcsc;
-	int     iorqno;
-	int     type;
-
+xdc_submit_iorq(struct xdc_softc *xdcsc, int iorqno, int type)
 {
 	u_long  iopbaddr;
 	struct xd_iorq *iorq = &xdcsc->reqs[iorqno];
@@ -1753,11 +1724,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
  * when there is a free iorq.
  */
 int
-xdc_piodriver(xdcsc, iorqno, freeone)
-	struct	xdc_softc *xdcsc;
-	int	iorqno;
-	int	freeone;
-
+xdc_piodriver(struct xdc_softc *xdcsc, int iorqno, int freeone)
 {
 	int	nreset = 0;
 	int	retval = 0;
@@ -1831,10 +1798,7 @@ xdc_piodriver(xdcsc, iorqno, freeone)
  * we steal iopb[0] for this, but we put it back when we are done.
  */
 void
-xdc_xdreset(xdcsc, xdsc)
-	struct xdc_softc *xdcsc;
-	struct xd_softc *xdsc;
-
+xdc_xdreset(struct xdc_softc *xdcsc, struct xd_softc *xdsc)
 {
 	struct xd_iopb tmpiopb;
 	u_long  addr;
@@ -1865,10 +1829,8 @@ xdc_xdreset(xdcsc, xdsc)
  * a polled request (which is resubmitted)
  */
 int
-xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
-	struct xdc_softc *xdcsc;
-	int     quiet, blastmode, error;
-	struct xd_softc *xdsc;
+xdc_reset(struct xdc_softc *xdcsc, int quiet, int blastmode, int error,
+	struct xd_softc *xdsc)
 
 {
 	int     del = 0, lcv, retval = XD_ERR_AOK;
@@ -1968,9 +1930,7 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
  */
 
 void
-xdc_start(xdcsc, maxio)
-	struct xdc_softc *xdcsc;
-	int     maxio;
+xdc_start(struct xdc_softc *xdcsc, int maxio)
 
 {
 	int     rqno;
@@ -1988,9 +1948,7 @@ xdc_start(xdcsc, maxio)
  */
 
 int
-xdc_remove_iorq(xdcsc)
-	struct xdc_softc *xdcsc;
-
+xdc_remove_iorq(struct xdc_softc *xdcsc)
 {
 	int     errnum, rqno, comm, errs;
 	struct xdc *xdc = xdcsc->xdc;
@@ -2157,10 +2115,7 @@ xdc_remove_iorq(xdcsc)
  *   from that error (otherwise iorq->errnum == iorq->lasterror).
  */
 void
-xdc_perror(iorq, iopb, still_trying)
-	struct xd_iorq *iorq;
-	struct xd_iopb *iopb;
-	int     still_trying;
+xdc_perror(struct xd_iorq *iorq, struct xd_iopb *iopb, int still_trying)
 
 {
 
@@ -2190,11 +2145,8 @@ xdc_perror(iorq, iopb, still_trying)
  * return AOK if resubmitted, return FAIL if this iopb is done
  */
 int
-xdc_error(xdcsc, iorq, iopb, rqno, comm)
-	struct xdc_softc *xdcsc;
-	struct xd_iorq *iorq;
-	struct xd_iopb *iopb;
-	int     rqno, comm;
+xdc_error(struct xdc_softc *xdcsc, struct xd_iorq *iorq, struct xd_iopb *iopb,
+	int rqno, int comm)
 
 {
 	int     errnum = iorq->errnum;
@@ -2267,8 +2219,7 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
  * xdc_tick: make sure xd is still alive and ticking (err, kicking).
  */
 void
-xdc_tick(arg)
-	void   *arg;
+xdc_tick(void *arg)
 
 {
 	struct xdc_softc *xdcsc = arg;
@@ -2360,10 +2311,7 @@ xdc_tick(arg)
  * an error code.   called at user priority.
  */
 int
-xdc_ioctlcmd(xd, dev, xio)
-	struct xd_softc *xd;
-	dev_t   dev;
-	struct xd_iocmd *xio;
+xdc_ioctlcmd(struct xd_softc *xd, dev_t dev, struct xd_iocmd *xio)
 
 {
 	int     s, rqno, dummy;

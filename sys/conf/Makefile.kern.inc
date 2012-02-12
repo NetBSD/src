@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.151 2012/02/03 23:39:26 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.152 2012/02/12 16:34:11 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -65,6 +65,7 @@ DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
 CWARNFLAGS+=	-Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
+CWARNFLAGS+=	-Wold-style-definition
 CWARNFLAGS+=	-Wswitch -Wshadow
 CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-unreachable-code

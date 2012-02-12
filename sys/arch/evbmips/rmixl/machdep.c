@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2012/01/27 18:52:54 para Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2012/02/12 16:34:08 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2012/01/27 18:52:54 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2012/02/12 16:34:08 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -424,7 +424,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
  * set up Processor Control Regs for this core
  */
 void
-rmixl_pcr_init_core()
+rmixl_pcr_init_core(void)
 {
 	uint32_t r;
 
@@ -983,7 +983,7 @@ consinit(void)
  * Allocate memory for variable-sized tables,
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];

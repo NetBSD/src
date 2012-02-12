@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.13 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.14 2012/02/12 16:34:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.13 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.14 2012/02/12 16:34:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ static inline void __sh4_itlb_invalidate_all(void)
 
 
 static inline void
-__sh4_itlb_invalidate_all()
+__sh4_itlb_invalidate_all(void)
 {
 
 	_reg_write_4(SH4_ITLB_AA, 0);
@@ -57,7 +57,7 @@ __sh4_itlb_invalidate_all()
 }
 
 void
-sh4_mmu_start()
+sh4_mmu_start(void)
 {
 
 	/* Zero clear all TLB entry */
@@ -122,7 +122,7 @@ sh4_tlb_invalidate_asid(int asid)
 }
 
 void
-sh4_tlb_invalidate_all()
+sh4_tlb_invalidate_all(void)
 {
 	uint32_t a;
 	int e, eend, s;

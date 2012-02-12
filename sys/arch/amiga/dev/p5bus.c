@@ -1,4 +1,4 @@
-/*      $NetBSD: p5bus.c,v 1.2 2012/01/19 00:14:08 rkujawa Exp $ */
+/*      $NetBSD: p5bus.c,v 1.3 2012/02/12 16:34:07 matt Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ p5bus_callback(device_t self) {
 
 /* Get serial number of the card. */
 static char * 
-p5bus_cardsn()
+p5bus_cardsn(void)
 {
 	char *snr, *sn;
 

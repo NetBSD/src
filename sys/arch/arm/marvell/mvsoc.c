@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.4 2011/09/21 14:38:51 reinoud Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.5 2012/02/12 16:34:07 matt Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.4 2011/09/21 14:38:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.5 2012/02/12 16:34:07 matt Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -503,7 +503,7 @@ mvsoc_bootstrap(bus_addr_t iobase)
  * We can read register of PCI configurations from (MVSOC_PEX_BASE + 0).
  */
 uint16_t
-mvsoc_model()
+mvsoc_model(void)
 {
 	/*
 	 * We read product-id from vendor/device register of PCI-Express.
@@ -529,7 +529,7 @@ mvsoc_model()
 }
 
 uint8_t
-mvsoc_rev()
+mvsoc_rev(void)
 {
 	uint32_t reg;
 	uint8_t rev;

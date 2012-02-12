@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.15 2010/11/13 13:52:00 uebayasi Exp $ */
+/* $NetBSD: bt463.c,v 1.16 2012/02/12 16:34:11 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.15 2010/11/13 13:52:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.16 2012/02/12 16:34:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,11 +189,11 @@ bt463_funcs(void)
 }
 
 struct ramdac_cookie *
-bt463_register(v, sched_update, wr, rd)
-	void *v;
-	int (*sched_update)(void *, void (*)(void *));
-	void (*wr)(void *, u_int, u_int8_t);
-	u_int8_t (*rd)(void *, u_int);
+bt463_register(
+	void *v,
+	int (*sched_update)(void *, void (*)(void *)),
+	void (*wr)(void *, u_int, u_int8_t),
+	u_int8_t (*rd)(void *, u_int))
 {
 	struct bt463data *data;
 	/*
@@ -217,11 +217,11 @@ bt463_register(v, sched_update, wr, rd)
  * initializing the console early on.
  */
 void
-bt463_cninit(v, sched_update, wr, rd)
-	void *v;
-	int (*sched_update)(void *, void (*)(void *));
-	void (*wr)(void *, u_int, u_int8_t);
-	u_int8_t (*rd)(void *, u_int);
+bt463_cninit(
+	void *v,
+	int (*sched_update)(void *, void (*)(void *)),
+	void (*wr)(void *, u_int, u_int8_t),
+	u_int8_t (*rd)(void *, u_int))
 {
 	struct bt463data tmp, *data = &tmp;
 	data->cookie = v;
@@ -602,41 +602,46 @@ bt463_update(void *p)
 	data->changed = 0;
 }
 
-int	bt463_set_cursor (rc, cur)
-	struct ramdac_cookie *rc;
-	struct wsdisplay_cursor *cur;
+int
+bt463_set_cursor(
+	struct ramdac_cookie *rc,
+	struct wsdisplay_cursor *cur)
 {
 	struct bt463data *data = (struct bt463data *)rc;
 	return tga_builtin_set_cursor(data->cookie, cur);
 }
 
-int	bt463_get_cursor (rc, cur)
-	struct ramdac_cookie *rc;
-	struct wsdisplay_cursor *cur;
+int
+bt463_get_cursor(
+	struct ramdac_cookie *rc,
+	struct wsdisplay_cursor *cur)
 {
 	struct bt463data *data = (struct bt463data *)rc;
 	return tga_builtin_get_cursor(data->cookie, cur);
 }
 
-int	bt463_set_curpos (rc, cur)
-	struct ramdac_cookie *rc;
-	struct wsdisplay_curpos *cur;
+int
+bt463_set_curpos(
+	struct ramdac_cookie *rc,
+	struct wsdisplay_curpos *cur)
 {
 	struct bt463data *data = (struct bt463data *)rc;
 	return tga_builtin_set_curpos(data->cookie, cur);
 }
 
-int	bt463_get_curpos (rc, cur)
-	struct ramdac_cookie *rc;
-	struct wsdisplay_curpos *cur;
+int
+bt463_get_curpos(
+	struct ramdac_cookie *rc,
+	struct wsdisplay_curpos *cur)
 {
 	struct bt463data *data = (struct bt463data *)rc;
 	return tga_builtin_get_curpos(data->cookie, cur);
 }
 
-int	bt463_get_curmax (rc, cur)
-	struct ramdac_cookie *rc;
-	struct wsdisplay_curpos *cur;
+int
+bt463_get_curmax(
+	struct ramdac_cookie *rc,
+	struct wsdisplay_curpos *cur)
 {
 	struct bt463data *data = (struct bt463data *)rc;
 	return tga_builtin_get_curmax(data->cookie, cur);

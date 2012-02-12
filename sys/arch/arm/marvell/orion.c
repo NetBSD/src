@@ -1,4 +1,4 @@
-/*	$NetBSD: orion.c,v 1.3 2012/01/28 03:10:26 jakllsch Exp $	*/
+/*	$NetBSD: orion.c,v 1.4 2012/02/12 16:34:07 matt Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: orion.c,v 1.3 2012/01/28 03:10:26 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: orion.c,v 1.4 2012/02/12 16:34:07 matt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -87,7 +87,7 @@ static struct pic_softc orion_pic = {
  *	ready to handle interrupts from devices.
  */
 void
-orion_intr_bootstrap()
+orion_intr_bootstrap(void)
 {
 	extern void (*mvsoc_intr_init)(void);
 

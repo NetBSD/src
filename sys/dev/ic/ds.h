@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.h,v 1.9 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: ds.h,v 1.10 2012/02/12 16:34:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -98,8 +98,7 @@ static u_int8_t ds_read_byte(struct ds_handle *);
 static void ds_write_byte(struct ds_handle *, unsigned int);
 
 static __inline u_int8_t
-ds_read_byte(dsh)
-	struct ds_handle *dsh;
+ds_read_byte(struct ds_handle *dsh)
 {
 	u_int8_t buf;
 	int i;
@@ -111,9 +110,7 @@ ds_read_byte(dsh)
 }
 
 static __inline void
-ds_write_byte(dsh, b)
-	struct ds_handle *dsh;
-	unsigned int b;
+ds_write_byte(struct ds_handle *dsh, unsigned int b)
 {
 	int i;
 

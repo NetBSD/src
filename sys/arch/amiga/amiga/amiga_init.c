@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.125 2012/01/10 20:29:49 rkujawa Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.126 2012/02/12 16:34:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.125 2012/01/10 20:29:49 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.126 2012/02/12 16:34:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,15 +193,9 @@ int kernel_copyback = 1;
 
 __attribute__ ((no_instrument_function))
 void
-start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
-	boot_part, loadbase)
-	int id;
-	u_int fphystart, fphysize, cphysize;
-	char *esym_addr;
-	u_int flags;
-	u_long inh_sync;
-	u_long boot_part;
-	u_int loadbase;
+start_c(int id, u_int fphystart, u_int fphysize, u_int cphysize,
+	char *esym_addr, u_int flags, u_long inh_sync, u_long boot_part,
+	u_int loadbase)
 {
 	extern char end[];
 	extern u_int protorp[2];

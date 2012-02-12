@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 2011/12/12 19:03:09 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 2012/02/12 16:34:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2011/12/12 19:03:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2012/02/12 16:34:07 matt Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -192,15 +192,12 @@ zs_check_kgdb(struct zs_chanstate *cs, int dev)
 }
 
 void zs_kgdb_cnputc(dev_t, int);
-void zs_kgdb_cnputc(dev, c)
-dev_t dev;
-int c;
+void zs_kgdb_cnputc(dev_t dev, int c)
 {
 	zscnputc(dev, c);
 }
 int zs_kgdb_cngetc(dev_t);
-int zs_kgdb_cngetc(dev)
-dev_t dev;
+int zs_kgdb_cngetc(dev_t dev)
 {
 	return (zscngetc(dev));
 }

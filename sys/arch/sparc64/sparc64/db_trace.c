@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.48 2011/06/20 09:25:48 nakayama Exp $ */
+/*	$NetBSD: db_trace.c,v 1.49 2012/02/12 16:34:10 matt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.48 2011/06/20 09:25:48 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.49 2012/02/12 16:34:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -70,12 +70,8 @@ kload(db_addr_t addr)
 #endif
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t       addr;
-	bool            have_addr;
-	db_expr_t       count;
-	const char      *modif;
- 	void		(*pr) (const char *, ...);
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
+	const char *modif, void (*pr) (const char *, ...))
 {
 	vaddr_t		frame;
 	bool		kernel_only = true;

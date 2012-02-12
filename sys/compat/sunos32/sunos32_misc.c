@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.73 2010/11/19 06:44:38 dholland Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.74 2012/02/12 16:34:11 matt Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.73 2010/11/19 06:44:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.74 2012/02/12 16:34:11 matt Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -154,10 +154,10 @@ sunos32_sigvec_to_sigaction(const struct netbsd32_sigvec *sv, struct sigaction *
 	sa->sa_flags = sv->sv_flags ^ SA_RESTART;
 }
 
-static
-void sunos32_sigvec_from_sigaction(sv, sa)
-	struct netbsd32_sigvec *sv;
-	const struct sigaction *sa;
+static void
+sunos32_sigvec_from_sigaction(
+	struct netbsd32_sigvec *sv,
+	const struct sigaction *sa)
 {
 /*XXX*/ extern void compat_43_sigset_to_sigmask(const sigset_t *, int *);
 
