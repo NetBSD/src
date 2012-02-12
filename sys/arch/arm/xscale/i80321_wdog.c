@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_wdog.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: i80321_wdog.c,v 1.10 2012/02/12 16:31:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_wdog.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_wdog.c,v 1.10 2012/02/12 16:31:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: i80321_wdog.c,v 1.9 2011/07/01 20:32:51 dyoung Exp $
 #include <dev/sysmon/sysmonvar.h>
 
 struct iopwdog_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct sysmon_wdog sc_smw;
 	int sc_wdog_armed;
 	int sc_wdog_period;
@@ -104,7 +104,7 @@ iopwdog_setmode(struct sysmon_wdog *smw)
 }
 
 static int
-iopwdog_match(struct device *parent, struct cfdata *cf, void *aux)
+iopwdog_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct iopxs_attach_args *ia = aux;
 
@@ -115,10 +115,12 @@ iopwdog_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-iopwdog_attach(struct device *parent, struct device *self, void *aux)
+iopwdog_attach(device_t parent, device_t self, void *aux)
 {
-	struct iopwdog_softc *sc = (void *) self;
+	struct iopwdog_softc *sc = device_private(self);
+	const char *xname = device_xname(self);
 
+	sc->sc_dev = self;
 	/*
 	 * XXX Should compute the period based on processor speed.
 	 * For a 600MHz XScale core, the wdog must be tickled approx.
@@ -129,16 +131,16 @@ iopwdog_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Watchdog timer\n");
 	aprint_normal(": %d second period\n", sc->sc_wdog_period);
 
-	sc->sc_smw.smw_name = sc->sc_dev.dv_xname;
+	sc->sc_smw.smw_name = xname;
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = iopwdog_setmode;
 	sc->sc_smw.smw_tickle = iopwdog_tickle;
 	sc->sc_smw.smw_period = sc->sc_wdog_period;
 
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
-		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to register with sysmon\n");
 }
 
-CFATTACH_DECL(iopwdog, sizeof(struct iopwdog_softc),
+CFATTACH_DECL_NEW(iopwdog, sizeof(struct iopwdog_softc),
     iopwdog_match, iopwdog_attach, NULL, NULL);

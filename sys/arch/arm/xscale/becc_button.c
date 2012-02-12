@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_button.c,v 1.3 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: becc_button.c,v 1.4 2012/02/12 16:31:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_button.c,v 1.3 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_button.c,v 1.4 2012/02/12 16:31:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: becc_button.c,v 1.3 2005/12/11 12:16:51 christos Exp
 static int beccbut_attached;	/* there can be only one */
 
 struct beccbut_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct sysmon_pswitch sc_smpsw;
 	void *sc_ih;
 };
@@ -82,44 +82,46 @@ beccbut_intr(void *arg)
 	rv = sysmon_task_queue_sched(0, beccbut_pressed_event, sc);
 	if (rv != 0)
 		printf("%s: WARNING: unable to queue button pressed "
-		    "callback: %d\n", sc->sc_dev.dv_xname, rv);
+		    "callback: %d\n", device_xname(sc->sc_dev), rv);
 
 	return (1);
 }
 
 static int
-beccbut_match(struct device *parent, struct cfdata *match, void *aux)
+beccbut_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (beccbut_attached == 0);
 }
 
 static void
-beccbut_attach(struct device *parent, struct device *self, void *aux)
+beccbut_attach(device_t parent, device_t self, void *aux)
 {
-	struct beccbut_softc *sc = (void *) self;
+	struct beccbut_softc *sc = device_private(self);
 
-	printf(": Reset button\n");
+	aprint_normal(": Reset button\n");
+	aprint_naive(": Reset button\n");
 
 	beccbut_attached = 1;
+	sc->sc_dev = self;
 
 	sysmon_task_queue_init();
 
-	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_smpsw.smpsw_name = device_xname(sc->sc_dev);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_RESET;
 
 	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
-		printf("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to register with sysmon\n");
 		return;
 	}
 
 	sc->sc_ih = becc_intr_establish(ICU_PUSHBUTTON, IPL_TTY,
 	    beccbut_intr, sc);
 	if (sc->sc_ih == NULL)
-		printf("%s: unable to establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to establish interrupt handler\n");
 }
 
-CFATTACH_DECL(beccbut, sizeof(struct beccbut_softc),
+CFATTACH_DECL_NEW(beccbut, sizeof(struct beccbut_softc),
     beccbut_match, beccbut_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci.c,v 1.11 2012/01/27 18:52:51 para Exp $	*/
+/*	$NetBSD: i80321_pci.c,v 1.12 2012/02/12 16:31:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.11 2012/01/27 18:52:51 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.12 2012/02/12 16:31:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ i80321_pci_init(pci_chipset_tag_t pc, void *cookie)
 	    NULL, 0, EX_NOWAIT);
 #endif
 
-	aprint_normal("%s: configuring PCI bus\n", sc->sc_dev.dv_xname);
+	aprint_normal_dev(sc->sc_dev, "configuring PCI bus\n");
 	pci_configure_bus(pc, ioext, memext, NULL, busno, arm_dcache_align);
 
 	extent_destroy(ioext);
