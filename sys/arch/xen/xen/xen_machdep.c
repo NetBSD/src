@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.9 2011/11/20 19:41:27 jym Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.10 2012/02/12 14:38:18 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.9 2011/11/20 19:41:27 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.10 2012/02/12 14:38:18 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -286,7 +286,7 @@ xen_prepare_suspend(void)
 	kpreempt_disable();
 
 	pmap_xen_suspend();
-	xen_suspendclocks();
+	xen_suspendclocks(curcpu());
 
 	/*
 	 * save/restore code does not translate these MFNs to their
@@ -337,7 +337,7 @@ xen_prepare_resume(void)
 
 	xen_suspend_allow = false;
 
-	xen_resumeclocks();
+	xen_resumeclocks(curcpu());
 
 	kpreempt_enable();
 

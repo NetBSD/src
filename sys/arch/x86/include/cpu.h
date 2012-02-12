@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2012/01/28 07:19:17 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47 2012/02/12 14:38:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -413,8 +413,8 @@ void	child_trampoline(void);
 void	startrtclock(void);
 void	xen_delay(unsigned int);
 void	xen_initclocks(void);
-void	xen_suspendclocks(void);
-void	xen_resumeclocks(void);
+void	xen_suspendclocks(struct cpu_info *);
+void	xen_resumeclocks(struct cpu_info *);
 #else
 /* clock.c */
 void	initrtclock(u_long);
