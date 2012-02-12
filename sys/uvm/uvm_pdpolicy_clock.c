@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.2 2012/02/09 03:05:01 matt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.3 2012/02/12 07:30:25 matt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.2 2012/02/09 03:05:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.3 2012/02/12 07:30:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -208,7 +208,7 @@ uvmpdpol_selectvictim(struct uvm_pggroup *grp)
 		struct vm_anon *anon;
 		struct uvm_object *uobj;
 
-		KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
+		//KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
 
 		if (ss->ss_first) {
 			pg = TAILQ_FIRST(&gs->gs_inactiveq);
@@ -287,7 +287,7 @@ uvmpdpol_balancequeue(struct uvm_pggroup *grp, u_int swap_shortage)
 	 * our inactive target.
 	 */
 
-	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 
 	u_int inactive_shortage = gs->gs_inactarg - gs->gs_inactive;
 	for (pg = TAILQ_FIRST(&gs->gs_activeq);
@@ -319,7 +319,7 @@ uvmpdpol_balancequeue(struct uvm_pggroup *grp, u_int swap_shortage)
 		}
 	}
 
-	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 }
 
 void
@@ -330,7 +330,7 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
 
-	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 
 	if (pg->pqflags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&gs->gs_activeq, pg, pageq.queue);
@@ -340,8 +340,8 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 		grp->pgrp_active--;
 	}
 
-	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
-	KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
+	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+	//KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
 
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
 		KASSERT(pg->wire_count == 0);
@@ -352,7 +352,7 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 		grp->pgrp_inactive++;
 	}
 
-	KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
+	//KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
 }
 
 void
@@ -367,7 +367,7 @@ uvmpdpol_pageactivate(struct vm_page *pg)
 	gs->gs_active++;
 	grp->pgrp_active++;
 
-	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 }
 
 void
@@ -376,7 +376,7 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 	struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
 	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 
-	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 
 	if (pg->pqflags & PQ_ACTIVE) {
 		KASSERT(mutex_owned(&uvm_pageqlock));
@@ -387,8 +387,8 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 		grp->pgrp_active--;
 	}
 
-	KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
-	KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
+	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+	//KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
 
 	if (pg->pqflags & PQ_INACTIVE) {
 		KASSERT(mutex_owned(&uvm_pageqlock));
@@ -399,7 +399,7 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 		grp->pgrp_inactive--;
 	}
 
-	KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
+	//KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
 }
 
 void
@@ -430,8 +430,8 @@ uvmpdpol_estimatepageable(u_int *activep, u_int *inactivep)
 	STAILQ_FOREACH(grp, &uvm.page_groups, pgrp_uvm_link) {
 		struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 
-		KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
-		KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
+		//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+		//KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
 
 		active += gs->gs_active;
 		inactive += gs->gs_inactive;
