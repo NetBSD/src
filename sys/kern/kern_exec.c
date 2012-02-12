@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.338 2012/02/12 13:14:37 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.339 2012/02/12 20:11:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.338 2012/02/12 13:14:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.339 2012/02/12 20:11:03 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -1294,7 +1294,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data)
 
 	kmem_free(data->ed_pack.ep_hdr, data->ed_pack.ep_hdrlen);
 
-	SDT_PROBE(proc,,,exec_success, path, 0, 0, 0, 0);
+	SDT_PROBE(proc,,,exec_success, data->ed_pack.ep_name, 0, 0, 0, 0);
 
 	/* The emulation root will usually have been found when we looked
 	 * for the elf interpreter (or similar), if not look now. */
