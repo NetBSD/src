@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416_reset.c,v 1.5 2011/03/07 11:25:44 cegger Exp $
+ * $Id: ar5416_reset.c,v 1.6 2012/02/12 13:55:27 wiz Exp $
  */
 #include "opt_ah.h"
 
@@ -1028,7 +1028,7 @@ ar5416GetRfgain(struct ath_hal *ah)
 HAL_BOOL
 ar5416Disable(struct ath_hal *ah)
 {
-	if (!ar5212SetPowerMode(ah, HAL_PM_AWAKE, AH_TRUE))
+	if (!ar5416SetPowerMode(ah, HAL_PM_AWAKE, AH_TRUE))
 		return AH_FALSE;
 	return ar5416SetResetReg(ah, HAL_RESET_COLD);
 }
