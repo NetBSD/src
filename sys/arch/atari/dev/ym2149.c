@@ -1,4 +1,4 @@
-/*	$NetBSD: ym2149.c,v 1.5 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: ym2149.c,v 1.6 2012/02/12 16:34:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym2149.c,v 1.5 2009/10/20 19:10:11 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym2149.c,v 1.6 2012/02/12 16:34:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ym2149.c,v 1.5 2009/10/20 19:10:11 snj Exp $");
 u_char	ym2149_ioa;	/* Soft-copy of port-A			*/
 
 void
-ym2149_init()
+ym2149_init(void)
 {
 	/*
 	 * Initialize the sound-chip YM2149:
