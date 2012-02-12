@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.155 2012/02/11 23:16:18 martin Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.156 2012/02/12 11:18:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.155 2012/02/11 23:16:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.156 2012/02/12 11:18:04 martin Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -416,6 +416,8 @@ uvm_proc_exit(struct proc *p)
 
 	KASSERT(p == l->l_proc);
 	ovm = p->p_vmspace;
+	if (__predict_false(ovm == NULL))
+		return;
 
 	/*
 	 * borrow proc0's address space.
