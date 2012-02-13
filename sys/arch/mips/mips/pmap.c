@@ -364,18 +364,9 @@ pmap_map_ephemeral_page(struct vm_page *pg, int prot, pt_entry_t *old_pt_entry_p
 	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv = &md->pvh_first;
-
-#ifdef _LP64
-	vaddr_t va = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
-#else
 	vaddr_t va;
-	if (pa <= MIPS_PHYS_MASK) {
-		va = MIPS_PHYS_TO_KSEG0(pa);
-#ifdef ENABLE_MIPS_KSEGX
-	} else if (mips_ksegx_start <= pa && pa < mips_ksegx_start + VM_KSEGX_SIZE) {
-		va = VM_KSEGX_ADDRESS + pa - mips_ksegx_start;
-#endif
-	} else {
+
+	if (!mm_md_direct_mapped_phys(pa, &va, NULL)) {
 		KASSERT(pmap_initialized);
 		/*
 		 * Make sure to use a congruent mapping to the last mapped
@@ -389,7 +380,6 @@ pmap_map_ephemeral_page(struct vm_page *pg, int prot, pt_entry_t *old_pt_entry_p
 		*old_pt_entry_p = *kvtopte(va);
 		pmap_kenter_pa(va, pa, prot);
 	}
-#endif /* _LP64 */
 	if (MIPS_CACHE_VIRTUAL_ALIAS) {
 		/*
 		 * If we are forced to use an incompatible alias, flush the
@@ -1342,11 +1332,7 @@ pmap_page_cache(struct vm_page *pg, bool cached)
 		uint32_t pt_entry;
 
 		KASSERT(pmap != NULL);
-		KASSERT(!MIPS_KSEG0_P(va));
-		KASSERT(!MIPS_KSEG1_P(va));
-#ifdef _LP64
-		KASSERT(!MIPS_XKPHYS_P(va));
-#endif
+		KASSERT(!mm_md_direct_mapped_virt(va, NULL, NULL));
 		if (pmap == pmap_kernel()) {
 			/*
 			 * Change entries in kernel pmap.
@@ -1829,22 +1815,8 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		printf("pmap_extract(%p, %#"PRIxVADDR") -> ", pmap, va);
 #endif
 	if (pmap == pmap_kernel()) {
-		if (MIPS_KSEG0_P(va)) {
-			pa = MIPS_KSEG0_TO_PHYS(va);
+		if (mm_md_direct_mapped_virt(va, &pa, NULL))
 			goto done;
-		}
-#ifdef _LP64
-		if (MIPS_XKPHYS_P(va)) {
-			pa = MIPS_XKPHYS_TO_PHYS(va);
-			goto done;
-		}
-#elif defined(ENABLE_MIPS_KSEGX)
-		if (VM_KSEGX_ADDRESS <= va
-		    && va < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE) {
-			pa = mips_ksegx_start + va - VM_KSEGX_ADDRESS;
-			goto done;
-		}
-#endif
 #ifdef DIAGNOSTIC
 		if (MIPS_KSEG1_P(va))
 			panic("pmap_extract: kseg1 address %#"PRIxVADDR"", va);
@@ -2125,11 +2097,7 @@ pmap_check_pvlist(struct vm_page_md *md)
 	pt_entry_t pv = &md->pvh_first;
 	if (pv->pv_pmap != NULL) {
 		for (; pv != NULL; pv = pv->pv_next) {
-			KASSERT(!MIPS_KSEG0_P(pv->pv_va));
-			KASSERT(!MIPS_KSEG1_P(pv->pv_va));
-#ifdef _LP64
-			KASSERT(!MIPS_XKPHYS_P(pv->pv_va));
-#endif
+			KASSERT(!mm_md_direct_mapped_virt(pv->pv_va, NULL, NULL));
 		}
 		pv = &md->pvh_first;
 	}
@@ -2148,11 +2116,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, u_int *npte)
 	int16_t gen;
 
         KASSERT(kpreempt_disabled());
-        KASSERT(!MIPS_KSEG0_P(va));
-        KASSERT(!MIPS_KSEG1_P(va));
-#ifdef _LP64
-        KASSERT(!MIPS_XKPHYS_P(va));
-#endif
+	KASSERT(!mm_md_direct_mapped_virt(va, NULL, NULL));
 
 	apv = NULL;
 	pv = &md->pvh_first;
@@ -2534,20 +2498,8 @@ pmap_pv_page_free(struct pool *pp, void *v)
 	vaddr_t va = (vaddr_t)v;
 	paddr_t pa;
 
-#ifdef _LP64
-	KASSERT(MIPS_XKPHYS_P(va));
-	pa = MIPS_XKPHYS_TO_PHYS(va);
-#else
-#ifdef ENABLE_MIPS_KSEGX
-	if (VM_KSEGX_ADDRESS <= va && va <= VM_KSEGX_ADDRESS + VM_KSEGX_SIZE) { 
-		pa = mips_ksegx_start + va - VM_KSEGX_ADDRESS;
-	} else
-#endif
-	{
-		KASSERT(MIPS_KSEG0_P(va));
-		pa = MIPS_KSEG0_TO_PHYS(va);
-	}
-#endif
+	bool ok = mm_md_direct_mapped_virt(va, &pa, NULL);
+	KASSERT(ok);
 #ifdef MIPS3_PLUS
 	if (MIPS_CACHE_VIRTUAL_ALIAS)
 		mips_dcache_inv_range(va, PAGE_SIZE);
@@ -2636,19 +2588,10 @@ mips_pmap_map_poolpage(paddr_t pa)
 
 #ifdef _LP64
 	KASSERT(mips_options.mips3_xkphys_cached);
-	va = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
-#else
-#ifdef ENABLE_MIPS_KSEGX
-	if (pa >= mips_ksegx_start && pa < mips_ksegx_start + VM_KSEGX_SIZE) {
-		va = VM_KSEGX_ADDRESS + pa - mips_ksegx_start;
-	} else
 #endif
-	if (pa > MIPS_PHYS_MASK)
-		panic("mips_pmap_map_poolpage: "
-		    "pa #%"PRIxPADDR" can not be mapped into KSEG0", pa);
-	else
-		va = MIPS_PHYS_TO_KSEG0(pa);
-#endif
+	if (!mm_md_direct_mapped_phys(pa, &va, NULL))
+		panic("%s: pa #%"PRIxPADDR" can not be direct mapped",
+		    __func__, pa);
 #if !defined(_LP64)
 	if (MIPS_CACHE_VIRTUAL_ALIAS) {
 		/*
@@ -2672,20 +2615,8 @@ paddr_t
 mips_pmap_unmap_poolpage(vaddr_t va)
 {
 	paddr_t pa;
-#if defined(_LP64)
-	KASSERT(MIPS_XKPHYS_P(va));
-	pa = MIPS_XKPHYS_TO_PHYS(va);
-#else
-#ifdef ENABLE_MIPS_KSEGX
-	if (VM_KSEGX_ADDRESS <= va && va < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE) {
-		pa = mips_ksegx_start + va - VM_KSEGX_ADDRESS;
-	} else
-#endif
-	{
-		KASSERT(MIPS_KSEG0_P(va));
-		pa = MIPS_KSEG0_TO_PHYS(va);
-	}
-#endif
+	bool ok = mm_md_direct_mapped_virt(va, &pa, NULL);
+	KASSERT(ok);
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 	KASSERT(pg);
 	pmap_clear_mdpage_attributes(VM_PAGE_TO_MD(pg), PG_MD_POOLPAGE);
@@ -2699,9 +2630,3 @@ mips_pmap_unmap_poolpage(vaddr_t va)
 #endif
 	return pa;
 }
-
-
-
-/******************** page table page management ********************/
-
-/* TO BE DONE */

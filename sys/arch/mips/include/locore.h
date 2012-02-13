@@ -32,6 +32,8 @@
 #include "opt_cputype.h"
 #endif
 
+#include <sys/kcore.h>
+
 #include <mips/mutex.h>
 #include <mips/cpuregs.h>
 #include <mips/reg.h>
@@ -416,6 +418,19 @@ void	mips_init_lwp0_uarea(void);
 void	mips_page_physload(vaddr_t, vaddr_t,
 	    const struct phys_ram_seg *, size_t,
 	    const struct mips_vmfreelist *, size_t);
+
+paddr_t	kvtophys(vaddr_t);
+
+extern struct phys_ram_seg mem_clusters[];
+extern u_int mem_cluster_cnt;
+
+#ifndef _LP64
+/*
+ * Helper routines for kernel coredumps.
+ */
+bool	mips_kcore_window_vtophys(vaddr_t, paddr_t *);
+vaddr_t	mips_kcore_window_map(paddr_t, vsize_t *);
+#endif
 
 
 /*

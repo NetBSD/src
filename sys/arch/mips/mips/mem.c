@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35.38.10 2012/01/10 18:36:58 matt Exp $	*/
+/*	mem.c,v 1.35.38.10 2012/01/10 18:36:58 matt Exp	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.10 2012/01/10 18:36:58 matt Exp $");
+__KERNEL_RCSID(0, "mem.c,v 1.35.38.10 2012/01/10 18:36:58 matt Exp");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -85,8 +85,10 @@ const struct cdevsw mem_ultrix_cdevsw = {
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
-	vaddr_t v;
-	int c;
+	paddr_t pa;
+	vsize_t vs;
+	vaddr_t va;
+	size_t c;
 	struct iovec *iov;
 	int error = 0;
 
@@ -102,79 +104,70 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		switch (minor(dev)) {
 
 		case DEV_MEM:
-			v = uio->uio_offset;
+			pa = uio->uio_offset;
 			c = iov->iov_len;
 			/*
 			 * XXX Broken; assumes contiguous physical memory.
 			 */
-#ifdef _LP64
-			if (v + c > ctob(physmem))
+			if (!mm_md_direct_mapped_phys(pa, &va, &vs))
+				return EFAULT;
+			if (vs < c)
+				c = vs;
+			if (pa + c > ctob(physmem))
 				return (EFAULT);
-			v = MIPS_PHYS_TO_XKPHYS_CACHED(v);
-#else
-			if (MIPS_KSEG0_P(v + c - 1)) {
-				v = MIPS_PHYS_TO_KSEG0(v);
-#ifdef ENABLE_MIPS_KSEGX
-			} else if (mips_ksegx_start <= v
-			    && v + c <= mips_ksegx_start + VM_KSEGX_SIZE) {
-				v += VM_KSEGX_ADDRESS - mips_ksegx_start;
-#endif
-			} else
-				return (EFAULT);
-#endif
-			error = uiomove((void *)v, c, uio);
+
+			error = uiomove((void *)va, c, uio);
 #if defined(MIPS3_PLUS)
 			if (MIPS_CACHE_VIRTUAL_ALIAS)
-				mips_dcache_wbinv_range(v, c);
+				mips_dcache_wbinv_range(va, c);
 #endif
 			continue;
 
 		case DEV_KMEM:
-			v = uio->uio_offset;
+			va = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 #ifdef _LP64
-			if (v < MIPS_XKPHYS_START) {
+			if (va < MIPS_XKPHYS_START) {
 				return (EFAULT);
-			} else if (MIPS_XKPHYS_P(v)
-			    && v > MIPS_PHYS_TO_XKPHYS_CACHED(mips_avail_end +
-					mips_round_page(MSGBUFSIZE) - c)) {
-				return (EFAULT);
-			} else if (MIPS_XKSEG_P(v)
+			} else if (mm_md_direct_mapped_virt(va, &pa, &vs)) {
+				if (c > vs)
+					c = vs;
+				if (pa > mips_avail_end
+				    + mips_round_page(MSGBUFSIZE) - c)) {
+					return (EFAULT);
+			} else if (MIPS_XKSEG_P(va)
 			    && v < MIPS_KSEG0_START
-			    && !uvm_kernacc((void *)v, c,
+			    && !uvm_kernacc((void *)va, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)) {
 				return (EFAULT);
-			} else if (MIPS_KSEG1_P(v) || MIPS_KSEG2_P(v)) {
+			} else if (MIPS_KSEG1_P(va) || MIPS_KSEG2_P(va)) {
 				return (EFAULT);
 			}
 #else
-			if (v < MIPS_KSEG0_START)
+			if (va < MIPS_KSEG0_START)
 				return (EFAULT);
-			if (MIPS_KSEG0_P(v + c - 1)) {
+			if (mm_md_direct_mapped_virt(va, &pa, &vs)) {
+				if (c > vs)
+					c = vs;
 				/*
 				 * If all of memory is in KSEG0, make sure we
 				 * don't go beyond its limit.  (mips_avail_end
 				 * may be beyond the end of KSEG0).
 				 */
-				if (MIPS_KSEG0_TO_PHYS(v) >= mips_avail_end
+				if (pa >= mips_avail_end
 				    + mips_round_page(MSGBUFSIZE) - c)
 					return (EFAULT);
-#ifdef ENABLE_MIPS_KSEGX
-			} else if (VM_KSEGX_ADDRESS <= v
-			    && v + c <= VM_KSEGX_ADDRESS + VM_KSEGX_SIZE) {
-				/* nothing */
-#endif
-			} else if (v < MIPS_KSEG2_START
-				   || !uvm_kernacc((void *)v, c,
+			} else if (va < MIPS_KSEG2_START
+				   || !uvm_kernacc((void *)va, c,
 					    uio->uio_rw == UIO_READ
 						? B_READ
 						: B_WRITE))
 				return (EFAULT);
 #endif
-			error = uiomove((void *)v, c, uio);
+			error = uiomove((void *)va, c, uio);
 #if defined(MIPS3_PLUS)
 			if (MIPS_CACHE_VIRTUAL_ALIAS)
-				mips_dcache_wbinv_range(v, c);
+				mips_dcache_wbinv_range(va, c);
 #endif
 			continue;
 
