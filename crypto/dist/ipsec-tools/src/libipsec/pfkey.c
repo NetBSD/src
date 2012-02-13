@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.23 2012/01/09 15:25:13 drochner Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.24 2012/02/13 13:03:06 wiz Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -710,7 +710,7 @@ pfkey_send_register(int so, u_int satype)
 {
 	int len, algno;
 
-	if (satype == PF_UNSPEC) {
+	if (satype == SADB_SATYPE_UNSPEC) {
 		for (algno = 0;
 		     algno < sizeof(supported_map)/sizeof(supported_map[0]);
 		     algno++) {
