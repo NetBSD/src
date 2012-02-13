@@ -120,6 +120,8 @@ const char * const trap_names[] = {
 	"r4000 virtual coherency data",
 };
 
+bool cpu_printfataltraps;
+
 void trap(uint32_t, uint32_t, vaddr_t, vaddr_t, struct trapframe *);
 void ast(void);
 
@@ -628,21 +630,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	}
 	utf->tf_regs[_R_CAUSE] = cause;
 	utf->tf_regs[_R_BADVADDR] = vaddr;
-#if defined(DEBUG)
-	printf("trap: cpu%d, pid %d(%s): sig %d: cause=%#x epc=%#"PRIxREGISTER
-	    " va=%#"PRIxVADDR" (asid %d)\n",
-	    cpu_number(), p->p_pid, p->p_comm, ksi.ksi_signo, cause,
-	    utf->tf_regs[_R_PC], vaddr, curcpu()->ci_pmap_asid_cur);
-	printf("registers:\n");
-	for (size_t i = 0; i < 32; i += 4) {
-		printf(
-		    "[%2zu]=%08"PRIxREGISTER" [%2zu]=%08"PRIxREGISTER
-		    " [%2zu]=%08"PRIxREGISTER" [%2zu]=%08"PRIxREGISTER "\n",
-		    i+0, utf->tf_regs[i+0], i+1, utf->tf_regs[i+1],
-		    i+2, utf->tf_regs[i+2], i+3, utf->tf_regs[i+3]);
-	}
-#endif
-	(*p->p_emul->e_trapsignal)(l, &ksi);
+	cpu_trapsignal(l, &ksi, utf);
 	if ((type & T_USER) == 0) {
 #ifdef DDB
 		Debugger();
@@ -651,6 +639,31 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	}
 	userret(l);
 	return;
+}
+
+void
+cpu_trapsignal(lwp_t *l, ksiginfo_t *ksi, struct trapframe *tf)
+{
+	struct proc * const p = l->l_proc;
+	if (cpu_printfataltraps) {
+		printf("trap: cpu%d, pid %d(%s): sig %d: cause=%#x epc=%#"PRIxREGISTER
+		    " va=%#"PRIxREGISTER" (asid %d)\n",
+		    cpu_number(), p->p_pid, p->p_comm, ksi->ksi_signo,
+		    (uint32_t) tf->tf_regs[_R_CAUSE],
+		    tf->tf_regs[_R_PC], tf->tf_regs[_R_BADVADDR],
+		    curcpu()->ci_pmap_asid_cur);
+		printf("registers:\n");
+		for (size_t i = 0; i < 32; i += 4) {
+			printf(
+			    "[%2zu]=%08"PRIxREGISTER
+			    " [%2zu]=%08"PRIxREGISTER
+			    " [%2zu]=%08"PRIxREGISTER
+			    " [%2zu]=%08"PRIxREGISTER "\n",
+			    i+0, tf->tf_regs[i+0], i+1, tf->tf_regs[i+1],
+			    i+2, tf->tf_regs[i+2], i+3, tf->tf_regs[i+3]);
+		}
+	}
+	(*p->p_emul->e_trapsignal)(l, ksi);
 }
 
 /*

@@ -1758,6 +1758,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
                        CTLTYPE_INT, "llsc", NULL,
                        NULL, MIPS_HAS_LLSC, NULL, 0,
                        CTL_MACHDEP, CPU_LLSC, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "printfataltraps", NULL,
+		       NULL, 0, &cpu_printfataltraps, 0,
+		       CTL_MACHDEP, CPU_PRINTFATALTRAPS, CTL_EOL);
 }
 
 /*

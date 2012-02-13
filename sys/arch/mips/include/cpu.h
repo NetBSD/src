@@ -163,6 +163,7 @@ struct cpu_info {
 #define CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
 #define CPU_ROOT_DEVICE		3	/* string: root device name */
 #define CPU_LLSC		4	/* OS/CPU supports LL/SC instruction */
+#define CPU_PRINTFATALTRAPS	5	/* bool: print fatal traps */
 
 /*
  * Platform can override, but note this breaks userland compatibility
