@@ -1,4 +1,4 @@
-# $NetBSD: t_pools.sh,v 1.2 2010/10/19 16:36:36 jmmv Exp $
+# $NetBSD: t_pools.sh,v 1.3 2012/02/13 18:52:53 darrenr Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,10 +43,18 @@ ptest()
 {
 	h_copydata $1
 	cp $(atf_get_srcdir)/regress/$1.pool pool 2>/dev/null
-	cp $(atf_get_srcdir)/regress/$1.ipf ipf
+	if [ -f $(atf_get_srcdir)/regress/$1.nat ] ; then
+		cp $(atf_get_srcdir)/regress/$1.nat nat
+	else
+		cp $(atf_get_srcdir)/regress/$1.ipf ipf
+	fi
 
 	if [ -f pool ] ; then
-		atf_check -o save:out ipftest -RD -b -P pool -r ipf -i in
+		if [ -f nat ] ; then
+			atf_check -o save:out ipftest -RD -b -P pool -N nat -i in
+		else
+			atf_check -o save:out ipftest -RD -b -P pool -r ipf -i in
+		fi
 	else
 		atf_check -o save:out ipftest -RD -b -r ipf -i in
 	fi
@@ -55,19 +63,41 @@ ptest()
 
 }
 
+test_case f28 ptest text text
+test_case f29 ptest text text
 test_case p1 ptest text text
 test_case p2 ptest text text
 test_case p3 ptest text text
+test_case p4 ptest text text
 test_case p5 ptest text text
+test_case p6 ptest text text
+test_case p7 ptest text text
+test_case p9 ptest text text
+test_case p10 ptest text text
+test_case p11 ptest text text
+test_case p12 ptest text text
+test_case p13 ptest text text
 test_case ip1 iptest text text
 test_case ip2 iptest text text
+test_case ip3 iptest text text
 
 atf_init_test_cases()
 {
+	atf_add_test_case f28
+	atf_add_test_case f29
 	atf_add_test_case p1
 	atf_add_test_case p2
 	atf_add_test_case p3
+	atf_add_test_case p4
 	atf_add_test_case p5
+	atf_add_test_case p6
+	atf_add_test_case p7
+	atf_add_test_case p9
+	atf_add_test_case p10
+	atf_add_test_case p11
+	atf_add_test_case p12
+	atf_add_test_case p13
 	atf_add_test_case ip1
 	atf_add_test_case ip2
+	atf_add_test_case ip3
 }
