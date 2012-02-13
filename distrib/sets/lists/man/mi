@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1376 2012/02/07 19:13:29 joerg Exp $
+# $NetBSD: mi,v 1.1377 2012/02/13 01:35:08 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2699,8 +2699,10 @@
 ./usr/share/man/cat8/quot.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/quotacheck.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/quotactl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/quotadump.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/quotaoff.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/quotaon.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/quotarestore.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/racoon.0			man-netutil-catman	crypto,.cat
 ./usr/share/man/cat8/racoonctl.0		man-netutil-catman	crypto,.cat
 ./usr/share/man/cat8/raidctl.0			man-sysutil-catman	.cat
@@ -5311,8 +5313,10 @@
 ./usr/share/man/html8/quot.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/quotacheck.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/quotactl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/quotadump.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/quotaoff.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/quotaon.html		man-sysutil-htmlman	html
+./usr/share/man/html8/quotarestore.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/racoon.html		man-netutil-htmlman	crypto,html
 ./usr/share/man/html8/racoonctl.html		man-netutil-htmlman	crypto,html
 ./usr/share/man/html8/raidctl.html		man-sysutil-htmlman	html
@@ -8200,8 +8204,10 @@
 ./usr/share/man/man8/quot.8			man-sysutil-man		.man
 ./usr/share/man/man8/quotacheck.8		man-sysutil-man		.man
 ./usr/share/man/man8/quotactl.8			man-sysutil-man		.man
+./usr/share/man/man8/quotadump.8		man-sysutil-man		.man
 ./usr/share/man/man8/quotaoff.8			man-sysutil-man		.man
 ./usr/share/man/man8/quotaon.8			man-sysutil-man		.man
+./usr/share/man/man8/quotarestore.8		man-sysutil-man		.man
 ./usr/share/man/man8/racoon.8			man-netutil-man		crypto,.man
 ./usr/share/man/man8/racoonctl.8		man-netutil-man		crypto,.man
 ./usr/share/man/man8/raidctl.8			man-sysutil-man		.man

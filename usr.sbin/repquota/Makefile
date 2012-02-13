@@ -1,11 +1,14 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.9 2012/02/01 17:53:01 dholland Exp $
+#	$NetBSD: Makefile,v 1.10 2012/02/13 01:35:09 dholland Exp $
 
 WARNS ?= 4
 .include <bsd.own.mk>
 PROG=	repquota
 SRCS=	repquota.c 
 MAN=	repquota.8
+
+LINKS+=	${BINDIR}/repquota ${BINDIR}/quotadump
+MLINKS+=repquota.8 quotadump.8
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/usr.bin/quota
 DPADD=	${LIBQUOTA} ${LIBRPCSVC}
