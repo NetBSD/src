@@ -1,4 +1,4 @@
-.\"	$NetBSD: libquota.3,v 1.3 2012/02/01 05:46:46 dholland Exp $
+.\"	$NetBSD: libquota.3,v 1.4 2012/02/13 01:24:03 dholland Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,6 +36,7 @@
 .Nm quota_getmountdevice ,
 .Nm quota_getmountpoint ,
 .Nm quota_getimplname ,
+.Nm quota_getrestrictions ,
 .Nm quota_getnumidtypes ,
 .Nm quota_getnumobjtypes ,
 .Nm quota_idtype_getname ,
@@ -51,6 +52,8 @@
 .Nm quotacursor_getn ,
 .Nm quotacursor_atend ,
 .Nm quotacursor_rewind ,
+.Nm quota_quotaon ,
+.Nm quota_quotaoff ,
 .Nm quotaval_clear
 .Nd disk quota access and control library
 .Sh LIBRARY
@@ -67,6 +70,8 @@
 .Fn quota_getmountpoint "struct quotahandle *qh"
 .Ft const char *
 .Fn quota_getimplname "struct quotahandle *qh"
+.Ft unsigned
+.Fn quota_getrestrictions "struct quotahandle *qh"
 .Ft int
 .Fn quota_getnumidtypes "struct quotahandle *qh"
 .Ft int
@@ -97,6 +102,10 @@
 .Fn quotacursor_atend "struct quotacursor *qc"
 .Ft int
 .Fn quotacursor_rewind "struct quotacursor *qc"
+.Ft int
+.Fn quota_quotaon "struct quotahandle *qh" "int idtype"
+.Ft int
+.Fn quota_quotaoff "struct quotahandle *qh" "int idtype"
 .Ft void
 .Fn quotaval_clear "struct quotaval *qv"
 .Sh DESCRIPTION
@@ -218,6 +227,42 @@ library provides access to quota v1 data even before
 .Xr quotaon 8
 is called by direct access to the on-disk quota information.
 However, this method is not recommended.
+Note that the
+.Dv userquota
+and
+.Dv groupquota
+mount options are read and interpreted at quotaon time, not
+.Xr mount 8
+time.
+This allowed historic implementations to avoid storing the path in the
+kernel.
+.Ss Semantic Restrictions
+Some quota implementations are restricted in their functionality or
+semantics.
+The following restriction codes are defined to allow
+.Nm libquota
+client code to adapt or to provide more helpful diagnostic messages.
+.Bl -tag -width 4n
+.It QUOTA_RESTRICT_NEEDSQUOTACHECK
+The quota implementation is a quota v1 system and requires the
+old-style quota check and mount process as described in the
+previous section.
+.It QUOTA_RESTRICT_UNIFORMGRACE
+The grace period for how long a quota can be over the soft limit can
+be specified only once, globally, for all principals.
+It is set via the default
+.Pq Dv QUOTA_DEFAULTID
+quota entry.
+.It QUOTA_RESTRICT_32BIT
+The values in struct quotaval are limited to 32 bits wide.
+Larger values will be treated as
+.Dv QUOTA_NOLIMIT .
+.It QUOTA_RESTRICT_READONLY
+The quota information is read-only.
+Attempts to update it using
+.Fn quota_put
+or other functions will fail.
+.El
 .Ss Function Descriptions
 .Bl -tag -width 4n
 .It Fn quota_open
@@ -246,6 +291,10 @@ This is retrieved with
 Return a human-readable string describing the underlying quota
 implementation.
 Client programs should not attempt to interpret this string.
+.It Fn quota_getrestrictions
+Return the semantic restriction flags for the underlying quota
+implementation.
+The possible flags are described above.
 .It Fn quota_getnumidtypes
 Return the number of ID types supported by this volume.
 Will ordinarily be two; ideally code using this library should be
@@ -344,6 +393,30 @@ Returns true if the cursor has reached the end of the quota store.
 .It Fn quotacursor_rewind
 Resets a cursor to point to the beginning of the quota store, allowing
 another pass over the data.
+.It Fn quota_quotaon
+For old-style quota v1 implementations, this function enables quotas
+for the specified ID type.
+To ensure that the quota files are consistent with the file system
+state,
+.Xr quotacheck 8
+must have been run beforehand.
+As described above, the file system volume must be listed in
+.Xr fstab 5
+and the corresponding old-style mount option,
+.Dv userquota
+or
+.Dv groupquota ,
+must be set therein.
+The path name for the quota file is retrieved from
+.Xr fstab 5
+and passed to the kernel.
+This function will fail if used on newer quota implementations with
+in-file-system quotas.
+.It Fn quota_quotaoff
+For old-style quotas, this function disables quotas for the specified
+ID type.
+This function will fail if used on newer quota implementations with
+in-file-system quotas.
 .It Fn quotaval_clear
 A convenience function for initializing a struct quotaval instance
 to the default empty state.
