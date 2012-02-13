@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.33 2012/02/05 14:19:04 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.34 2012/02/13 06:23:41 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.33 2012/02/05 14:19:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.34 2012/02/13 06:23:41 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -957,6 +957,7 @@ struct q2cursor_getids {
 	unsigned skip;		/* number of ids to skip over */
 	unsigned new_skip;	/* number of ids to skip over next time */
 	unsigned skipped;	/* number skipped so far */
+	int stopped;		/* true if we stopped quota_walk_list early */
 };
 
 /*
@@ -1109,6 +1110,7 @@ q2cursor_getids_callback(struct ufsmount *ump, uint64_t *offp,
 	gi->new_skip++;
 	if (gi->state->numids >= gi->state->maxids) {
 		/* got enough ids, stop now */
+		gi->stopped = 1;
 		return Q2WL_ABORT;
 	}
 	return 0;
@@ -1175,11 +1177,16 @@ q2cursor_getkeys(struct ufsmount *ump, int idtype, struct ufsq2_cursor *cursor,
 		gi.skip = cursor->q2c_uidpos;
 		gi.new_skip = gi.skip;
 		gi.skipped = 0;
+		gi.stopped = 0;
 		offset = q2h->q2h_entries[cursor->q2c_hashpos];
 
 		error = quota2_walk_list(ump, hbp, idtype, &offset, 0, &gi,
 		    q2cursor_getids_callback);
-		if (error == Q2WL_ABORT) {
+		KASSERT(error != Q2WL_ABORT);
+		if (error) {
+			break;
+		}
+		if (gi.stopped) {
 			/* callback stopped before reading whole chain */
 			cursor->q2c_uidpos = gi.new_skip;
 			/* if we didn't get both halves, back up */
@@ -1187,10 +1194,6 @@ q2cursor_getkeys(struct ufsmount *ump, int idtype, struct ufsq2_cursor *cursor,
 				KASSERT(cursor->q2c_uidpos > 0);
 				cursor->q2c_uidpos--;
 			}
-			/* not an error */
-			error = 0;
-		} else if (error) {
-			break;
 		} else {
 			/* read whole chain */
 			/* if we got both halves of the last id, advance */
