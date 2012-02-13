@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.22 2012/01/14 21:45:28 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.23 2012/02/13 19:15:59 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.22 2012/01/14 21:45:28 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23 2012/02/13 19:15:59 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,16 @@ child_return(void *arg)
 	aprint_debug("child return! lwp %p\n", l);
 	userret(l);
 	ktrsysret(SYS_fork, 0, 0);
+}
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+
+	userret(l);
 }
 
 extern const char *const syscallnames[];
