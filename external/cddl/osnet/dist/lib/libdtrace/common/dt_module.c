@@ -880,7 +880,7 @@ dt_module_update(dtrace_hdl_t *dtp, const char *name)
 		}
 
 		(void) snprintf(fname, sizeof (fname),
-		    "/stand/%s/%s/%s.kmod", machine, osrel, name, name);
+		    "/stand/%s/%s/modules/%s/%s.kmod", machine, osrel, name, name);
 	}
 #endif
 
