@@ -1,4 +1,4 @@
-/* $NetBSD: t_sqrt.c,v 1.2 2011/11/19 12:46:41 mlelstv Exp $ */
+/* $NetBSD: t_sqrt.c,v 1.3 2012/02/13 05:09:01 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sqrt.c,v 1.2 2011/11/19 12:46:41 mlelstv Exp $");
+__RCSID("$NetBSD: t_sqrt.c,v 1.3 2012/02/13 05:09:01 jruoho Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -75,7 +75,7 @@ ATF_TC_BODY(sqrt_pow, tc)
 
 		if (fabs(y - z) > eps)
 			atf_tc_fail_nonfatal("sqrt(%0.03f) != "
-			    "pow(%0.03f, 1/3)\n", x[i], x[i]);
+			    "pow(%0.03f, 1/2)\n", x[i], x[i]);
 	}
 #endif
 }
