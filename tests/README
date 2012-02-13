@@ -3,8 +3,8 @@ When adding new tests, please try to follow the directory structure of
 the real source tree. For instance, interfaces available via the C library
 should follow:
 
-	src/lib/libc/gen -> tests/lib/libc/gen
-	src/lib/libc/sys -> tests/lib/libc/sys
+	src/lib/libc/gen -> src/tests/lib/libc/gen
+	src/lib/libc/sys -> src/tests/lib/libc/sys
 
 Equivalently, tests for a program residing in src/usr.bin/program should be
-added to the tests/usr.bin/program subdirectory.
+added to the src/tests/usr.bin/program subdirectory.
