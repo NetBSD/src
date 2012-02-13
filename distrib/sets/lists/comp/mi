@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1733 2012/02/11 23:31:22 martin Exp $
+#	$NetBSD: mi,v 1.1734 2012/02/13 01:24:01 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4655,6 +4655,7 @@
 ./usr/share/man/cat1/yacc.0			comp-c-catman		.cat
 ./usr/share/man/cat2/_Exit.0			comp-c-catman		.cat
 ./usr/share/man/cat2/__clone.0			comp-c-catman		.cat
+./usr/share/man/cat2/__quotactl.0		comp-c-catman		.cat
 ./usr/share/man/cat2/__syscall.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_exit.0			comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_continue.0		comp-c-catman		.cat
@@ -4838,7 +4839,7 @@
 ./usr/share/man/cat2/ptrace.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pwrite.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pwritev.0			comp-c-catman		.cat
-./usr/share/man/cat2/quotactl.0			comp-c-catman		.cat
+./usr/share/man/cat2/quotactl.0			comp-obsolete		obsolete
 ./usr/share/man/cat2/rasctl.0			comp-c-catman		.cat
 ./usr/share/man/cat2/read.0			comp-c-catman		.cat
 ./usr/share/man/cat2/readlink.0			comp-c-catman		.cat
@@ -8549,12 +8550,15 @@
 ./usr/share/man/cat3/quota_getmountpoint.0	comp-c-catman		.cat
 ./usr/share/man/cat3/quota_getnumidtypes.0	comp-c-catman		.cat
 ./usr/share/man/cat3/quota_getnumobjtypes.0	comp-c-catman		.cat
+./usr/share/man/cat3/quota_getrestrictions.0	comp-c-catman		.cat
 ./usr/share/man/cat3/quota_idtype_getname.0	comp-c-catman		.cat
 ./usr/share/man/cat3/quota_objtype_getname.0	comp-c-catman		.cat
 ./usr/share/man/cat3/quota_objtype_isbytes.0	comp-c-catman		.cat
 ./usr/share/man/cat3/quota_open.0		comp-c-catman		.cat
 ./usr/share/man/cat3/quota_opencursor.0		comp-c-catman		.cat
 ./usr/share/man/cat3/quota_put.0		comp-c-catman		.cat
+./usr/share/man/cat3/quota_quotaoff.0		comp-c-catman		.cat
+./usr/share/man/cat3/quota_quotaon.0		comp-c-catman		.cat
 ./usr/share/man/cat3/quotacursor_atend.0	comp-c-catman		.cat
 ./usr/share/man/cat3/quotacursor_close.0	comp-c-catman		.cat
 ./usr/share/man/cat3/quotacursor_get.0		comp-c-catman		.cat
@@ -11024,6 +11028,7 @@
 ./usr/share/man/html1/yacc.html			comp-c-htmlman		html
 ./usr/share/man/html2/_Exit.html		comp-c-htmlman		html
 ./usr/share/man/html2/__clone.html		comp-c-htmlman		html
+./usr/share/man/html2/__quotactl.html		comp-c-htmlman		html
 ./usr/share/man/html2/__syscall.html		comp-c-htmlman		html
 ./usr/share/man/html2/_exit.html		comp-c-htmlman		html
 ./usr/share/man/html2/_lwp_continue.html	comp-c-htmlman		html
@@ -11199,7 +11204,7 @@
 ./usr/share/man/html2/ptrace.html		comp-c-htmlman		html
 ./usr/share/man/html2/pwrite.html		comp-c-htmlman		html
 ./usr/share/man/html2/pwritev.html		comp-c-htmlman		html
-./usr/share/man/html2/quotactl.html		comp-c-htmlman		html
+./usr/share/man/html2/quotactl.html		comp-obsolete		obsolete
 ./usr/share/man/html2/rasctl.html		comp-c-htmlman		html
 ./usr/share/man/html2/read.html			comp-c-htmlman		html
 ./usr/share/man/html2/readlink.html		comp-c-htmlman		html
@@ -14801,12 +14806,15 @@
 ./usr/share/man/html3/quota_getmountpoint.html	comp-c-htmlman		html
 ./usr/share/man/html3/quota_getnumidtypes.html	comp-c-htmlman		html
 ./usr/share/man/html3/quota_getnumobjtypes.html	comp-c-htmlman		html
+./usr/share/man/html3/quota_getrestrictions.html	comp-c-htmlman		html
 ./usr/share/man/html3/quota_idtype_getname.html	comp-c-htmlman		html
 ./usr/share/man/html3/quota_objtype_getname.html	comp-c-htmlman		html
 ./usr/share/man/html3/quota_objtype_isbytes.html	comp-c-htmlman		html
 ./usr/share/man/html3/quota_open.html		comp-c-htmlman		html
 ./usr/share/man/html3/quota_opencursor.html	comp-c-htmlman		html
 ./usr/share/man/html3/quota_put.html		comp-c-htmlman		html
+./usr/share/man/html3/quota_quotaoff.html		comp-c-htmlman		html
+./usr/share/man/html3/quota_quotaon.html		comp-c-htmlman		html
 ./usr/share/man/html3/quotacursor_atend.html	comp-c-htmlman		html
 ./usr/share/man/html3/quotacursor_close.html	comp-c-htmlman		html
 ./usr/share/man/html3/quotacursor_get.html	comp-c-htmlman		html
@@ -17159,6 +17167,7 @@
 ./usr/share/man/man1/yacc.1			comp-c-man		.man
 ./usr/share/man/man2/_Exit.2			comp-c-man		.man
 ./usr/share/man/man2/__clone.2			comp-c-man		.man
+./usr/share/man/man2/__quotactl.2		comp-c-man		.man
 ./usr/share/man/man2/__syscall.2		comp-c-man		.man
 ./usr/share/man/man2/_exit.2			comp-c-man		.man
 ./usr/share/man/man2/_lwp_continue.2		comp-c-man		.man
@@ -17341,7 +17350,7 @@
 ./usr/share/man/man2/ptrace.2			comp-c-man		.man
 ./usr/share/man/man2/pwrite.2			comp-c-man		.man
 ./usr/share/man/man2/pwritev.2			comp-c-man		.man
-./usr/share/man/man2/quotactl.2			comp-c-man		.man
+./usr/share/man/man2/quotactl.2			comp-obsolete		obsolete
 ./usr/share/man/man2/rasctl.2			comp-c-man		.man
 ./usr/share/man/man2/read.2			comp-c-man		.man
 ./usr/share/man/man2/readlink.2			comp-c-man		.man
@@ -21051,12 +21060,15 @@
 ./usr/share/man/man3/quota_getmountpoint.3	comp-c-man		.man
 ./usr/share/man/man3/quota_getnumidtypes.3	comp-c-man		.man
 ./usr/share/man/man3/quota_getnumobjtypes.3	comp-c-man		.man
+./usr/share/man/man3/quota_getrestrictions.3		comp-c-man		.man
 ./usr/share/man/man3/quota_idtype_getname.3	comp-c-man		.man
 ./usr/share/man/man3/quota_objtype_getname.3	comp-c-man		.man
 ./usr/share/man/man3/quota_objtype_isbytes.3	comp-c-man		.man
 ./usr/share/man/man3/quota_open.3		comp-c-man		.man
 ./usr/share/man/man3/quota_opencursor.3		comp-c-man		.man
 ./usr/share/man/man3/quota_put.3		comp-c-man		.man
+./usr/share/man/man3/quota_quotaoff.3		comp-c-man		.man
+./usr/share/man/man3/quota_quotaon.3		comp-c-man		.man
 ./usr/share/man/man3/quotacursor_atend.3	comp-c-man		.man
 ./usr/share/man/man3/quotacursor_close.3	comp-c-man		.man
 ./usr/share/man/man3/quotacursor_get.3		comp-c-man		.man
