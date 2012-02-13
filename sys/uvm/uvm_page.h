@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.55.14.6 2012/02/09 03:05:00 matt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.55.14.7 2012/02/13 23:07:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -248,7 +248,8 @@ struct vm_physseg {
  * Fields from uvmexp which need to be kept on a per-group basis.
  */
 struct uvm_pggroup {
-	TAILQ_ENTRY(uvm_pggroup) pgrp_pd_link;
+	TAILQ_ENTRY(uvm_pggroup) pgrp_pending_link;
+	TAILQ_ENTRY(uvm_pggroup) pgrp_paging_link;
 	STAILQ_ENTRY(uvm_pggroup) pgrp_uvm_link;
 
 	struct uvmpdpol_groupstate *pgrp_gs;	/* for pdpolicy */

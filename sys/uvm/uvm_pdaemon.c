@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.3 2012/02/09 03:05:01 matt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.4 2012/02/13 23:07:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.3 2012/02/09 03:05:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.4 2012/02/13 23:07:31 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -105,6 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.3 2012/02/09 03:05:01 mat
 static void	uvmpd_scan(struct uvm_pggroup *);
 static void	uvmpd_scan_queue(struct uvm_pggroup *);
 static void	uvmpd_tune(void);
+
+static void	uvmpd_checkgroup(const struct uvm_pggroup *);
 
 static struct uvm_pdinfo {
 	unsigned int pd_waiters;
@@ -170,6 +172,40 @@ uvm_wait(const char *wmsg)
 	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm_fpageqlock, false, wmsg, timo);
 }
 
+
+static void
+uvmpd_checkgroup(const struct uvm_pggroup *grp)
+{
+#ifdef DEBUG
+	struct uvm_pdinfo * const pdinfo = &uvm_pdinfo;
+	bool in_pendingq = false;
+	bool in_pagingq = false;
+	const struct uvm_pggroup *tstgrp;
+
+	TAILQ_FOREACH(tstgrp, &pdinfo->pd_pendingq, pgrp_pending_link) {
+		if (tstgrp == grp) {
+			in_pendingq = true;
+			break;
+		}
+	}
+
+	TAILQ_FOREACH(tstgrp, &pdinfo->pd_pagingq, pgrp_paging_link) {
+		if (tstgrp == grp) {
+			in_pagingq = true;
+			break;
+		}
+	}
+
+	if (grp->pgrp_paging > 0) {
+		KASSERT(in_pagingq);
+		KASSERT(!in_pendingq);
+	} else {
+		KASSERT(!in_pagingq);
+		KASSERT(in_pendingq == grp->pgrp_scan_needed);
+	}
+#endif
+}
+
 /*
  * uvm_kick_pdaemon: perform checks to determine if we need to
  * give the pagedaemon a nudge, and do so if necessary.
@@ -191,6 +227,7 @@ uvm_kick_pdaemon(void)
 		const bool prev_scan_needed = grp->pgrp_scan_needed;
 
 		KASSERT(grp->pgrp_npages > 0);
+		uvmpd_checkgroup(grp);
 
 		grp->pgrp_scan_needed =
 		    grp->pgrp_free + grp->pgrp_paging < grp->pgrp_freemin
@@ -207,16 +244,16 @@ uvm_kick_pdaemon(void)
 			    grp->pgrp_freemin, grp->pgrp_freetarg);
 		}
 
-		if (grp->pgrp_paging == 0
-		    && prev_scan_needed != grp->pgrp_scan_needed) {
+		if (prev_scan_needed != grp->pgrp_scan_needed) {
 			if (grp->pgrp_scan_needed) {
 				TAILQ_INSERT_TAIL(&pdinfo->pd_pendingq,
-				    grp, pgrp_pd_link);
+				    grp, pgrp_pending_link);
 				need_wakeup = true;
 			} else {
 				TAILQ_REMOVE(&pdinfo->pd_pendingq,
-				    grp, pgrp_pd_link);
+				    grp, pgrp_pending_link);
 			}
+			uvmpd_checkgroup(grp);
 		}
 	}
 
@@ -224,7 +261,7 @@ uvm_kick_pdaemon(void)
 		wakeup(&uvm.pagedaemon);
 
 	UVMHIST_LOG(pdhist, " <- done: wakeup=%d!",
-	    grp - uvm.pggroups, need_wakeup, 0, 0);
+	    need_wakeup, 0, 0, 0);
 }
 
 /*
@@ -371,6 +408,16 @@ uvm_pageout(void *arg)
 
 			uvmpdpol_tune(grp);
 
+			/*
+			 * While we are locked, remove this from the pendingq.
+			 */
+			uvmpd_checkgroup(grp);
+			KASSERT(grp->pgrp_scan_needed);
+			TAILQ_REMOVE(&pdinfo->pd_pendingq, grp,
+			    pgrp_pending_link);
+			grp->pgrp_scan_needed = false;
+			uvmpd_checkgroup(grp);
+
 			int diff = grp->pgrp_freetarg - grp->pgrp_free;
 			if (diff < 0)
 				diff = 0;
@@ -411,11 +458,6 @@ uvm_pageout(void *arg)
 				need_wakeup = true;
 			}
 
-			/*
-			 * We are done, remove it from the queue.
-			 */
-			TAILQ_REMOVE(&pdinfo->pd_pendingq, grp, pgrp_pd_link);
-			grp->pgrp_scan_needed = false;
 		}
 		if (need_wakeup) {
 			pdinfo->pd_waiters = 0;
@@ -487,10 +529,10 @@ uvm_pageout_start(struct uvm_pggroup *grp, u_int npages)
 	mutex_spin_enter(&uvm_fpageqlock);
 
 	uvmexp.paging += npages;
+	uvmpd_checkgroup(grp);
 	if (grp->pgrp_paging == 0) {
-		KASSERT(grp->pgrp_scan_needed);
-		TAILQ_REMOVE(&pdinfo->pd_pendingq, grp, pgrp_pd_link);
-		TAILQ_INSERT_TAIL(&pdinfo->pd_pagingq, grp, pgrp_pd_link);
+		TAILQ_INSERT_TAIL(&pdinfo->pd_pagingq, grp, pgrp_paging_link);
+		uvmpd_checkgroup(grp);
 	}
 	grp->pgrp_paging += npages;
 	mutex_spin_exit(&uvm_fpageqlock);
@@ -507,13 +549,11 @@ uvm_pageout_done(struct vm_page *pg, bool freed)
 	struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
 
 	KASSERT(grp->pgrp_paging > 0);
+	uvmpd_checkgroup(grp);
 	if (--grp->pgrp_paging == 0) {
-		TAILQ_REMOVE(&pdinfo->pd_pagingq, grp, pgrp_pd_link);
-		if (grp->pgrp_scan_needed) {
-			TAILQ_INSERT_TAIL(&pdinfo->pd_pendingq, grp, pgrp_pd_link);
-		}
+		TAILQ_REMOVE(&pdinfo->pd_pagingq, grp, pgrp_paging_link);
+		uvmpd_checkgroup(grp);
 	}
-
 	KASSERT(uvmexp.paging > 0);
 	uvmexp.paging--;
 	grp->pgrp_pdfreed += freed;
