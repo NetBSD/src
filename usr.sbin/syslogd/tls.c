@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.8 2011/10/07 10:50:01 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.9 2012/02/13 07:40:24 spz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.8 2011/10/07 10:50:01 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.9 2012/02/13 07:40:24 spz Exp $");
 
 #ifndef DISABLE_TLS
 #include "syslogd.h"
@@ -1139,7 +1139,8 @@ parse_tls_destination(const char *p, struct filed *f, size_t linenum)
 		calloc(1, sizeof(*f->f_un.f_tls.tls_conn)))
 	 || !(f->f_un.f_tls.tls_conn->event = allocev())
 	 || !(f->f_un.f_tls.tls_conn->retryevent = allocev())) {
-		free(f->f_un.f_tls.tls_conn->event);
+		if (f->f_un.f_tls.tls_conn)
+			free(f->f_un.f_tls.tls_conn->event);
 		free(f->f_un.f_tls.tls_conn);
 		logerror("Couldn't allocate memory for TLS config");
 		return false;
@@ -1409,7 +1410,8 @@ dispatch_socket_accept(int fd, short event, void *ev)
 	if (!(conn_info = calloc(1, sizeof(*conn_info)))
 	    || !(conn_info->event = allocev())
 	    || !(conn_info->retryevent = allocev())) {
-		free(conn_info->event);
+		if (conn_info)
+			free(conn_info->event);
 		free(conn_info);
 		SSL_free(ssl);
 		close(newsock);
@@ -1968,10 +1970,13 @@ write_x509files(EVP_PKEY *pkey, X509 *cert,
 {
 	FILE *certfile, *keyfile;
 
-	if (!(umask(0177),(keyfile  = fopen(keyfilename,  "a")))
-	    || !(umask(0122),(certfile = fopen(certfilename, "a")))) {
-		logerror("Unable to write to files \"%s\" and \"%s\"",
-		    keyfilename, certfilename);
+	if (!(umask(0177),(keyfile  = fopen(keyfilename,  "a")))) {
+		logerror("Unable to write to file \"%s\"", keyfilename);
+		return false;
+	}
+	if (!(umask(0122),(certfile = fopen(certfilename, "a")))) {
+		logerror("Unable to write to file \"%s\"", certfilename);
+		(void)fclose(keyfile);
 		return false;
 	}
 	if (!PEM_write_PrivateKey(keyfile, pkey, NULL, NULL, 0, NULL, NULL))
