@@ -1,4 +1,4 @@
-.\"	$NetBSD: __quotactl.2,v 1.1 2012/02/13 01:24:03 dholland Exp $
+.\"	$NetBSD: __quotactl.2,v 1.2 2012/02/13 13:22:09 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -309,11 +309,9 @@ failures include:
 .It Bq Er EFAULT
 A pointer points outside the process's allocated address space.
 .It Bq Er EINVAL
-The operation code was out of range.
-.It Bq Er EINVAL
-A requested ID or object type was out of range.
-.It Bq Er EINVAL
-A corrupted or invalid cursor was passed in.
+The operation code was out of range; or
+a requested ID or object type was out of range; or
+a corrupted or invalid cursor was passed in.
 .It Bq Er ENODEV
 The requested action was inappropriate for
 .Pq or not supported by
