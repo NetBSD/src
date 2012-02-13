@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.44 2012/02/13 01:24:00 dholland Exp $
+.\"     $NetBSD: vfsops.9,v 1.45 2012/02/13 13:01:39 njoly Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -290,9 +290,9 @@ This is the same interface as documented in
 .Xr __quotactl 2
 except that the file system argument has been resolved.
 All
-.Xr copyin 2
+.Xr copyin 9
 and
-.Xr copyout 2
+.Xr copyout 9
 processing is handled by code above the file system.
 .It Fn VFS_STATVFS "mp" "sbp"
 Get file system statistics for the file system specified by the mount
