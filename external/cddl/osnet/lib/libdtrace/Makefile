@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/04/03 18:34:19 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2012/02/13 12:52:54 wiz Exp $
 
 # $FreeBSD: src/cddl/lib/libdtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -82,13 +82,10 @@ COPTS.dt_program.c	+= -Wno-stack-protector
 COPTS.dt_provider.c	+= -Wno-stack-protector
 COPTS.dt_subr.c		+= -Wno-stack-protector
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "amd64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/intel
 .elif ${MACHINE_ARCH} == "sparc64"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/sparc
-.else
-# temporary hack
-CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/intel
 .endif
 
 LFLAGS+=-l
