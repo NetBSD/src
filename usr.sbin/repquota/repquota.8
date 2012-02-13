@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)repquota.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: repquota.8,v 1.13 2012/02/01 09:30:01 wiz Exp $
+.\"	$NetBSD: repquota.8,v 1.14 2012/02/13 01:35:09 dholland Exp $
 .\"
 .Dd February 2, 2012
 .Dt REPQUOTA 8
@@ -46,6 +46,9 @@
 .Fl a
 .Nm
 .Fl x
+.Op Fl Dgu
+.Ar file-system
+.Nm quotadump
 .Op Fl Dgu
 .Ar file-system
 .Sh DESCRIPTION
@@ -71,10 +74,15 @@ group and user quotas if they exist).
 Print a header line before printing each file system quotas.
 Print all exiting quotas, including those whose current usage is 0.
 .It Fl x
-export file system quota in a tabular dump format suitable for
+Export file system quota data in a tabular dump format suitable for
 .Xr quotarestore 8 .
 A single file system should be specified.
 .El
+.Pp
+If invoked as
+.Nm quotadump
+the behavior is the same as
+.Nm repquota Fl x .
 .Pp
 For each user or group, the current
 number files and amount of space (in kilobytes, unless the

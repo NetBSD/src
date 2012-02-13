@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1734 2012/02/13 01:24:01 dholland Exp $
+#	$NetBSD: mi,v 1.1735 2012/02/13 01:35:06 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4230,7 +4230,9 @@
 ./usr/libdata/debug/usr/sbin/quot.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/quotacheck.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/quotactl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/quotadump.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/quotaon.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/quotarestore.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/racoon.debug	comp-netutil-debug	crypto,debug
 ./usr/libdata/debug/usr/sbin/racoonctl.debug	comp-netutil-debug	crypto,debug
 ./usr/libdata/debug/usr/sbin/rarpd.debug	comp-bootserver-debug	debug

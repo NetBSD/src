@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.42 2012/02/05 14:14:44 dholland Exp $	*/
+/*	$NetBSD: repquota.c,v 1.43 2012/02/13 01:35:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.42 2012/02/05 14:14:44 dholland Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.43 2012/02/13 01:35:09 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,6 +128,10 @@ main(int argc, char **argv)
 	struct statvfs *fst;
 	int nfst;
 	struct quotahandle *qh;
+
+	if (!strcmp(getprogname(), "quotadump")) {
+		xflag = 1;
+	}
 
 	while ((ch = getopt(argc, argv, "Daguhvx")) != -1) {
 		switch(ch) {
@@ -431,11 +435,11 @@ exportquotas(void)
 		if (valid[idtype] == 0)
 			continue;
 
-		printf("%s default blocks  ", repquota_idtype_names[idtype]);
+		printf("%s default block  ", repquota_idtype_names[idtype]);
 		exportquotaval(&defaultqv[idtype][QUOTA_OBJTYPE_BLOCKS]);
 		printf("\n");
 			
-		printf("%s default files  ", repquota_idtype_names[idtype]);
+		printf("%s default file  ", repquota_idtype_names[idtype]);
 		exportquotaval(&defaultqv[idtype][QUOTA_OBJTYPE_FILES]);
 		printf("\n");
 
@@ -444,12 +448,12 @@ exportquotas(void)
 			if (fup == 0)
 				continue;
 
-			printf("%s %u blocks  ", repquota_idtype_names[idtype],
+			printf("%s %u block  ", repquota_idtype_names[idtype],
 			       id);
 			exportquotaval(&fup->fu_qv[QUOTA_OBJTYPE_BLOCKS]);
 			printf("\n");
 
-			printf("%s %u files  ", repquota_idtype_names[idtype],
+			printf("%s %u file  ", repquota_idtype_names[idtype],
 			       id);
 			exportquotaval(&fup->fu_qv[QUOTA_OBJTYPE_FILES]);
 			printf("\n");
