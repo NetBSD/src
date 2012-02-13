@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.111 2012/02/07 14:14:45 tsutsui Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.112 2012/02/13 12:59:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.111 2012/02/07 14:14:45 tsutsui Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.112 2012/02/13 12:59:56 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1343,11 +1343,10 @@ static void
 iput(union dinode *ip, ino_t ino)
 {
 	daddr_t d;
-	int c, i;
+	int i;
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
 
-	c = ino_to_cg(&sblock, ino);
 	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
 	/* fs -> host byte order */
 	if (needswap)
