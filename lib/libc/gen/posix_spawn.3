@@ -1,4 +1,4 @@
-.\" $NetBSD: posix_spawn.3,v 1.1 2012/02/11 23:31:24 martin Exp $
+.\" $NetBSD: posix_spawn.3,v 1.2 2012/02/13 16:35:59 njoly Exp $
 .\"
 .\" Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
 .\" All rights reserved.
@@ -427,8 +427,6 @@ in addition to those described by
 .Xr execve 2 ,
 .Xr fcntl 2 ,
 .Xr open 2 ,
-.Xr sched_setparam 2 ,
-.Xr sched_setscheduler 2 ,
 .Xr setpgid 2 ,
 .Xr vfork 2 ,
 .Xr posix_spawn_file_actions_addclose 3 ,
@@ -449,7 +447,9 @@ in addition to those described by
 .Xr posix_spawnattr_setschedparam 3 ,
 .Xr posix_spawnattr_setschedpolicy 3 ,
 .Xr posix_spawnattr_setsigdefault 3 ,
-.Xr posix_spawnattr_setsigmask 3
+.Xr posix_spawnattr_setsigmask 3 ,
+.Xr sched_setparam 3 ,
+.Xr sched_setscheduler 3
 .Sh STANDARDS
 The
 .Fn posix_spawn
