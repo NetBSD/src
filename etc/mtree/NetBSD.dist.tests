@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.59 2012/02/11 23:31:23 martin Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.60 2012/02/13 21:03:06 martin Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -44,7 +44,6 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write
-./usr/libdata/debug/usr/tests/kernel/posix_spawn
 ./usr/libdata/debug/usr/tests/kernel/tty
 ./usr/libdata/debug/usr/tests/lib
 ./usr/libdata/debug/usr/tests/lib/csu
@@ -52,6 +51,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc
 ./usr/libdata/debug/usr/tests/lib/libc/db
 ./usr/libdata/debug/usr/tests/lib/libc/gen
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn
 ./usr/libdata/debug/usr/tests/lib/libc/hash
 ./usr/libdata/debug/usr/tests/lib/libc/locale
 ./usr/libdata/debug/usr/tests/lib/libc/inet
@@ -169,7 +169,6 @@
 ./usr/tests/kernel/kqueue
 ./usr/tests/kernel/kqueue/read
 ./usr/tests/kernel/kqueue/write
-./usr/tests/kernel/posix_spawn
 ./usr/tests/kernel/tty
 ./usr/tests/lib
 ./usr/tests/lib/csu
@@ -177,6 +176,7 @@
 ./usr/tests/lib/libc
 ./usr/tests/lib/libc/db
 ./usr/tests/lib/libc/gen
+./usr/tests/lib/libc/gen/posix_spawn
 ./usr/tests/lib/libc/hash
 ./usr/tests/lib/libc/hash/data
 ./usr/tests/lib/libc/locale

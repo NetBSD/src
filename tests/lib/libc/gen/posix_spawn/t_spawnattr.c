@@ -1,4 +1,4 @@
-/* $NetBSD: t_spawnattr.c,v 1.1 2012/02/11 23:31:25 martin Exp $ */
+/* $NetBSD: t_spawnattr.c,v 1.1 2012/02/13 21:03:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
