@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.982 2012/02/13 01:35:06 dholland Exp $
+# $NetBSD: mi,v 1.983 2012/02/13 01:43:22 dholland Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1389,7 +1389,7 @@
 ./usr/sbin/pwd_mkdb				base-sysutil-bin
 ./usr/sbin/quot					base-sysutil-bin
 ./usr/sbin/quotacheck				base-sysutil-bin
-./usr/sbin/quotactl				base-sysutil-bin
+./usr/sbin/quotactl				base-obsolete		obsolete
 ./usr/sbin/quotadump				base-sysutil-bin
 ./usr/sbin/quotaoff				base-sysutil-bin
 ./usr/sbin/quotaon				base-sysutil-bin
