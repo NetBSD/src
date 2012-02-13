@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)edquota.8	8.2 (Berkeley) 4/27/95
-.\"	$NetBSD: edquota.8,v 1.15 2012/01/30 19:17:29 dholland Exp $
+.\"	$NetBSD: edquota.8,v 1.16 2012/02/13 19:53:25 dholland Exp $
 .\"
 .Dd January 29, 2012
 .Dt EDQUOTA 8
@@ -191,10 +191,10 @@ time for the default quotas on file system
 .Dl edquota -h 4M/2k -s 2M/1k -t 2W3D/2W3D -f /home -u -d
 .Sh SEE ALSO
 .Xr quota 1 ,
-.Xr quotactl 2 ,
 .Xr humanize_number 3 ,
+.Xr libquota 3 ,
 .Xr fstab 5 ,
 .Xr quotacheck 8 ,
-.Xr quotactl 8 ,
 .Xr quotaon 8 ,
+.Xr quotarestore 8 ,
 .Xr repquota 8
