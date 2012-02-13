@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.435 2012/02/11 23:31:23 martin Exp $
+# $NetBSD: mi,v 1.436 2012/02/13 21:03:06 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -322,13 +322,13 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_fifo.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_pipe.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_ttypty.debug	tests-kernel-tests	debug,atf
-./usr/libdata/debug/usr/tests/kernel/posix_spawn			tests-kernel-tests
-./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_spawn.debug		tests-kernel-tests	debug,atf
-./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_spawnattr.debug	tests-kernel-tests	debug,atf
-./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_fileactions.debug	tests-kernel-tests	debug,atf
-./usr/libdata/debug/usr/tests/kernel/posix_spawn/h_spawn.debug		tests-kernel-tests	debug,atf
-./usr/libdata/debug/usr/tests/kernel/posix_spawn/h_fileactions.debug	tests-kernel-tests	debug,atf
-./usr/libdata/debug/usr/tests/kernel/posix_spawn/h_spawnattr.debug	tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/posix_spawn			tests-kernel-tests	obsolete
+./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_spawn.debug		tests-kernel-tests	obsolete
+./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_spawnattr.debug	tests-kernel-tests	obsolete
+./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_fileactions.debug	tests-kernel-tests	obsolete
+./usr/libdata/debug/usr/tests/kernel/posix_spawn/h_spawn.debug		tests-kernel-tests	obsolete
+./usr/libdata/debug/usr/tests/kernel/posix_spawn/h_fileactions.debug	tests-kernel-tests	obsolete
+./usr/libdata/debug/usr/tests/kernel/posix_spawn/h_spawnattr.debug	tests-kernel-tests	obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_extattrctl.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_filedesc.debug			tests-kernel-tests	debug,atf
@@ -365,6 +365,13 @@
 ./usr/libdata/debug/usr/tests/lib/libc/db				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/db/h_db.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn			tests-kernel-tests
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/t_spawn.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/t_spawnattr.debug	tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/t_fileactions.debug	tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_spawn.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_fileactions.debug	tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_spawnattr.debug	tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_alarm.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_assert.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_basedirname.debug		tests-lib-debug		debug,atf
@@ -1897,16 +1904,16 @@
 ./usr/tests/kernel/kqueue/write/t_fifo		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/write/t_pipe		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/write/t_ttypty	tests-kernel-tests		atf
-./usr/tests/kernel/posix_spawn			tests-kernel-tests
-./usr/tests/kernel/posix_spawn/Atffile		tests-kernel-tests		atf
-./usr/tests/kernel/posix_spawn/t_spawn		tests-kernel-tests		atf
-./usr/tests/kernel/posix_spawn/t_spawnattr	tests-kernel-tests		atf
-./usr/tests/kernel/posix_spawn/t_fileactions	tests-kernel-tests		atf
-./usr/tests/kernel/posix_spawn/h_spawn		tests-kernel-tests		atf
-./usr/tests/kernel/posix_spawn/h_spawnattr	tests-kernel-tests		atf
-./usr/tests/kernel/posix_spawn/h_fileactions	tests-kernel-tests		atf
-./usr/tests/kernel/posix_spawn/h_nonexec	tests-kernel-tests		atf
-./usr/tests/kernel/posix_spawn/h_zero		tests-kernel-tests		atf
+./usr/tests/kernel/posix_spawn			tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/Atffile		tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/t_spawn		tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/t_spawnattr	tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/t_fileactions	tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/h_spawn		tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/h_spawnattr	tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/h_fileactions	tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/h_nonexec	tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/h_zero		tests-kernel-tests		obsolete
 ./usr/tests/kernel/t_extattrctl			tests-kernel-tests		atf
 ./usr/tests/kernel/t_extent			tests-kernel-tests		atf
 ./usr/tests/kernel/t_filedesc			tests-kernel-tests		atf
@@ -1955,6 +1962,16 @@
 ./usr/tests/lib/libc/db/t_db			tests-lib-tests		atf
 ./usr/tests/lib/libc/gen			tests-lib-tests
 ./usr/tests/lib/libc/gen/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/posix_spawn			tests-kernel-tests
+./usr/tests/lib/libc/gen/posix_spawn/Atffile		tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/t_spawn		tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/t_spawnattr	tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/t_fileactions	tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/h_spawn		tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/h_spawnattr	tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/h_fileactions	tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/h_nonexec	tests-kernel-tests		atf
+./usr/tests/lib/libc/gen/posix_spawn/h_zero	tests-kernel-tests		atf
 ./usr/tests/lib/libc/gen/t_alarm		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_assert		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_basedirname		tests-lib-tests		atf

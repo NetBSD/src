@@ -1,4 +1,4 @@
-/* $NetBSD: h_spawnattr.c,v 1.1 2012/02/11 23:31:25 martin Exp $ */
+/* $NetBSD: h_spawn.c,v 1.1 2012/02/13 21:03:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,61 +30,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
-#include <unistd.h>
 
-/*
- * Helper to test the hardcoded assumptions from t_spawnattr.c
- * Exit with apropriate exit status and print diagnostics to
- * stderr explaining what is wrong.
- */
 int
 main(int argc, char **argv)
 {
-	int parent_pipe, res = EXIT_SUCCESS;
-	sigset_t sig;
-	struct sigaction act;
-	ssize_t rd;
-	char tmp;
+	unsigned long ret;
+	char *endp;
 
-	sigemptyset(&sig);
-	if (sigprocmask(0, NULL, &sig) < 0) {
-		fprintf(stderr, "%s: sigprocmask error\n", getprogname());
-		res = EXIT_FAILURE;
+	if (argc < 2) {
+		fprintf(stderr, "usage:\n\t%s (retcode)\n", getprogname());
+		exit(255);
 	}
-	if (!sigismember(&sig, SIGUSR1)) {
-		fprintf(stderr, "%s: SIGUSR not in procmask\n", getprogname());
-		res = EXIT_FAILURE;
-	}
-	if (sigaction(SIGUSR1, NULL, &act) < 0) {
-		fprintf(stderr, "%s: sigaction error\n", getprogname());
-		res = EXIT_FAILURE;
-	}
-	if (act.sa_sigaction != (void *)SIG_DFL) {
-		fprintf(stderr, "%s: SIGUSR1 action != SIG_DFL\n",
-		    getprogname());
-		res = EXIT_FAILURE;
-	}
+	ret = strtoul(argv[1], &endp, 10);
 
-	if (argc >= 2) {
-		parent_pipe = atoi(argv[1]);
-		if (parent_pipe > 2) {
-			printf("%s: waiting for command from parent on pipe "
-			    "%d\n", getprogname(), parent_pipe);
-			rd = read(parent_pipe, &tmp, 1);
-			if (rd == 1) {
-				printf("%s: got command %c from parent\n",
-				    getprogname(), tmp);
-			} else if (rd == -1) {
-				printf("%s: %d is no pipe, errno %d\n",
-				    getprogname(), parent_pipe, errno);
-				res = EXIT_FAILURE;
-			}
-		}
-	}
-
-	return res;
+	fprintf(stderr, "%s exiting with status %lu\n", getprogname(), ret);
+	return ret;
 }

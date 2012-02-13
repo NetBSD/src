@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.1 2012/02/11 23:31:24 martin Exp $
+# $NetBSD: Makefile,v 1.1 2012/02/13 21:03:08 martin Exp $
 
 NOMAN=		# defined
 
 .include <bsd.own.mk>
 
-TESTSDIR=	${TESTSBASE}/kernel/posix_spawn
+TESTSDIR=	${TESTSBASE}/lib/libc/gen/posix_spawn
 
 TESTS_C=	t_spawn
 TESTS_C+=	t_fileactions
@@ -25,4 +25,3 @@ h_zero:
 CLEANFILES+=	h_nonexec h_zero
 
 .include <bsd.test.mk>
-
