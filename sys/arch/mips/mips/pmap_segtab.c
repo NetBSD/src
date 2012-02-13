@@ -162,10 +162,8 @@ static inline pt_entry_t *
 pmap_segmap(struct pmap *pmap, vaddr_t va)
 {
 	union segtab *stp = pmap->pm_segtab;
-	KASSERT(!MIPS_KSEG0_P(va));
-	KASSERT(!MIPS_KSEG1_P(va));
+	KASSERT(!mm_md_direct_mapped_virt(va, NULL, NULL));
 #ifdef _LP64
-	KASSERT(!MIPS_XKPHYS_P(va));
 	stp = stp->seg_seg[(va >> XSEGSHIFT) & (NSEGPG - 1)];
 	if (stp == NULL)
 		return NULL;
@@ -238,9 +236,6 @@ pmap_segtab_release(union segtab *stp, u_int level)
 		if (MIPS_CACHE_VIRTUAL_ALIAS)
 			mips_dcache_inv_range((vaddr_t)pte, PAGE_SIZE);
 #endif	/* MIPS3_PLUS */
-#ifdef _LP64
-		KASSERT(MIPS_XKPHYS_P(pte));
-#endif
 		paddr_t pa = mips_pmap_unmap_poolpage((vaddr_t)pte);
 		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 		uvm_km_pagefree(pg);

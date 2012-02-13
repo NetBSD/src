@@ -1009,18 +1009,22 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		return 0;
 	}
 #else
-	if ((nsegs == 1) && (segs[0].ds_addr < MIPS_PHYS_MASK)) {
-		if (((mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT) == 0)
-		&&  (flags & BUS_DMA_COHERENT))
+	if (nsegs == 1) {
+		vsize_t vs;
+		if (!(mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT)
+		    && segs[0].ds_addr < MIPS_PHYS_MASK
+		    && segs[0].ds_addr + segs[0].ds_len <= MIPS_PHYS_MASK + 1
+		    && (flags & BUS_DMA_COHERENT)) {
 			*kvap = (void *)MIPS_PHYS_TO_KSEG1(segs[0].ds_addr);
-#ifdef ENABLE_MIPS_KSEGX
-		else if (mips_ksegx_start < segs[0].ds_addr
-		    && segs[0].ds_addr < mips_ksegx_start + VM_KSEGX_SIZE)
-			*kvap = (void *)(vaddr_t)(VM_KSEGX_ADDRESS + segs[0].ds_addr);
-#endif
-		else
-			*kvap = (void *)MIPS_PHYS_TO_KSEG0(segs[0].ds_addr);
-		return (0);
+			return (0);
+		}
+		if (((mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT)
+		     || (flags & BUS_DMA_COHERENT) == 0)
+		    && mm_md_direct_mapped_phys(segs[0].ds_addr, &va, &vs)
+		    && segs[0].ds_len <= vs) {
+			*kvap = (void *)va;
+			return (0);
+		}
 	}
 #endif	/* _LP64 */
 
@@ -1068,17 +1072,9 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	 * Nothing to do if we mapped it with KSEG0 or KSEG1 (i.e.
 	 * not in KSEG2 or XKSEG).
 	 */
-	if (MIPS_KSEG0_P(kva) || MIPS_KSEG1_P(kva))
+	if (mm_md_direct_mapped_virt((vaddr_t)kva, NULL, NULL)
+	    || MIPS_KSEG1_P(kva))
 		return;
-#ifdef ENABLE_MIPS_KSEGX
-	if (VM_KSEGX_ADDRESS <= (vaddr_t)kva
-	    && (vaddr_t)kva < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE)
-		return;
-#endif
-#ifdef _LP64
-	if (MIPS_XKPHYS_P((vaddr_t)kva))
-		return;
-#endif
 
 	size = round_page(size);
 	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
