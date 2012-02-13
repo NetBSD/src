@@ -164,16 +164,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_utf = tf;
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
 
-	bool direct_mapped_p = MIPS_KSEG0_P(ua2);
-#ifdef ENABLE_MIPS_KSEGX
-	if (!direct_mapped_p)
-		direct_mapped_p = VM_KSEGX_ADDRESS <= ua2
-		    && ua2 < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE;
-#endif
-#ifdef _LP64
-	direct_mapped_p = direct_mapped_p || MIPS_XKPHYS_P(ua2);
-#endif
-	if (!direct_mapped_p) {
+	if (!mm_md_direct_mapped_virt(ua2, NULL, NULL)) {
 		pt_entry_t * const pte = kvtopte(ua2);
 		const uint32_t x = (MIPS_HAS_R4K_MMU) ?
 		    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) : MIPS1_PG_G;
@@ -243,15 +234,12 @@ cpu_uarea_remap(struct lwp *l)
 	 * Grab the starting physical address of the uarea.
 	 */
 	va = (vaddr_t)l->l_addr;
-	if (MIPS_KSEG0_P(va))
+
+	/*
+	 * If already direct mapped, we're done!
+	 */
+	if (mm_md_direct_mapped_phys(va, NULL, NULL))
 		return;
-#ifdef _LP64
-	if (MIPS_XKPHYS_P(va))
-		return;
-#elif defined(ENABLE_MIPS_KSEGX)
-	if (VM_KSEGX_ADDRESS <= va && va < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE)
-		return;
-#endif
 
 	if (!pmap_extract(pmap_kernel(), va, &pa))
 		panic("%s: pmap_extract(%#"PRIxVADDR") failed", __func__, va);
@@ -347,18 +335,8 @@ cpu_swapin(struct lwp *l)
 	int i, x;
 	vaddr_t kva = (vaddr_t) lwp_getpcb(l);
 
-#ifdef _LP64
-	if (MIPS_XKPHYS_P(kva))
+	if (mm_md_direct_mapped_virt(kva, NULL, NULL))
 		return;
-#else
-	if (MIPS_KSEG0_P(kva))
-		return;
-	
-#ifdef ENABLE_MIPS_KSEGX
-	if (VM_KSEGX_ADDRESS <= kva && kva < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE)
-		return;
-#endif
-#endif
 
 	/*
 	 * Cache the PTEs for the user area in the machine dependent
@@ -510,21 +488,23 @@ vunmapbuf(struct buf *bp, vsize_t len)
 paddr_t
 kvtophys(vaddr_t kva)
 {
-	pt_entry_t *pte;
 	paddr_t phys;
 
-	if (kva >= VM_MIN_KERNEL_ADDRESS) {
-		if (kva >= VM_MAX_KERNEL_ADDRESS)
-			goto overrun;
+	/*
+	 * When we dumping memory in a crash dump, we try to use a large
+	 * TLB entry to reduce the TLB trashing.
+	 */
+	if (__predict_false(mips_kcore_window_vtophys(kva, &phys)))
+		return phys;
 
-#ifdef ENABLE_MIPS_KSEGX
-		if (VM_KSEGX_ADDRESS <= kva
-		    && kva < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE) {
-			return mips_ksegx_start + kva - VM_KSEGX_ADDRESS;
-		}
-#endif
+	/*
+	 * If the KVA is direct mapped, we're done!
+	 */
+	if (mm_md_direct_mapped_virt(kva, &phys, NULL))
+		return phys;
 
-		pte = kvtopte(kva);
+	if (VM_MIN_KERNEL_ADDRESS <= kva && kva < VM_MAX_KERNEL_ADDRESS) {
+		pt_entry_t *pte = kvtopte(kva);
 		if ((size_t) (pte - Sysmap) >= Sysmapsize)  {
 			printf("oops: Sysmap overrun, max %d index %zd\n",
 			       Sysmapsize, pte - Sysmap);
@@ -536,20 +516,7 @@ kvtophys(vaddr_t kva)
 		phys = mips_tlbpfn_to_paddr(pte->pt_entry) | (kva & PGOFSET);
 		return phys;
 	}
-	if (MIPS_KSEG1_P(kva))
-		return MIPS_KSEG1_TO_PHYS(kva);
 
-	if (MIPS_KSEG0_P(kva))
-		return MIPS_KSEG0_TO_PHYS(kva);
-#ifdef _LP64
-	if (MIPS_XKPHYS_P(kva))
-		return MIPS_XKPHYS_TO_PHYS(kva);
-#endif
-overrun:
-	printf("Virtual address %#"PRIxVADDR": cannot map to physical\n", kva);
-#ifdef DDB
-	Debugger();
-	return 0;	/* XXX */
-#endif
-	panic("kvtophys");
+	panic("%s: Virtual address %#"PRIxVADDR": cannot map to physical\n",
+	    __func__, kva);
 }

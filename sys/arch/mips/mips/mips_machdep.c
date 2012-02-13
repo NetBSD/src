@@ -259,6 +259,8 @@ extern const mips_locore_jumpvec_t mips64r2_rmixl_locore_vec;
 void std_splsw_test(void);
 #endif
 
+static void mips_kcore_window_unmap(void);
+
 CTASSERT(CPU_ARCH_MIPS64R2 / CPU_ARCH_MIPS64 == CPU_ARCH_MIPS32R2 / CPU_ARCH_MIPS32);
 
 mips_locore_jumpvec_t mips_locore_jumpvec;
@@ -1766,22 +1768,13 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 
 /*
- * These are imported from platform-specific code.
- * XXX Should be declared in a header file.
- */
-extern phys_ram_seg_t mem_clusters[];
-extern int mem_cluster_cnt;
-
-/*
  * These variables are needed by /sbin/savecore.
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
-long	dumplo = 0;		/* blocks */
+long	dumplo = -1;		/* blocks */
 
-#if 0
 struct pcb dumppcb;
-#endif
 
 /*
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
@@ -1789,11 +1782,13 @@ struct pcb dumppcb;
 int
 cpu_dumpsize(void)
 {
-	int size;
+	size_t size = 0;
 
-	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)) +
-	    ALIGN(mem_cluster_cnt * sizeof(phys_ram_seg_t));
-	if (roundup(size, dbtob(1)) != dbtob(1))
+	size += ALIGN(sizeof(kcore_seg_t));
+	size += ALIGN(sizeof(cpu_kcore_hdr_t));
+	size += ALIGN(mem_cluster_cnt * sizeof(phys_ram_seg_t));
+
+	if (size > dbtob(1))
 		return (-1);
 
 	return (1);
@@ -1805,11 +1800,16 @@ cpu_dumpsize(void)
 u_long
 cpu_dump_mempagecnt(void)
 {
-	u_long i, n;
+	u_long n;
 
 	n = 0;
-	for (i = 0; i < mem_cluster_cnt; i++)
+	for (u_int i = 0; i < mem_cluster_cnt; i++) {
 		n += atop(mem_clusters[i].size);
+		if (n >= atop(INT32_MAX)) {
+			n = atop(INT32_MAX);
+			break;
+		}
+	}
 	return (n);
 }
 
@@ -1820,11 +1820,14 @@ int
 cpu_dump(void)
 {
 	int (*dump)(dev_t, daddr_t, void *, size_t);
-	char buf[dbtob(1)];
+	uint64_t buf64[dbtob(1)/sizeof(uint64_t)];
+	uint8_t * const buf = (uint8_t *)buf64;
+	uint8_t *bp = buf;
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
 	const struct bdevsw *bdev;
+	const size_t blocksize = dbtob(1);
 	int i;
 
 	bdev = bdevsw_lookup(dumpdev);
@@ -1834,16 +1837,15 @@ cpu_dump(void)
 	dump = bdev->d_dump;
 
 	memset(buf, 0, sizeof buf);
-	segp = (kcore_seg_t *)buf;
-	cpuhdrp = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp))];
-	memsegp = (phys_ram_seg_t *)&buf[ ALIGN(sizeof(*segp)) +
-	    ALIGN(sizeof(*cpuhdrp))];
+	segp = (kcore_seg_t *)bp;		bp += ALIGN(sizeof(*segp));
+	cpuhdrp = (cpu_kcore_hdr_t *)bp;	bp += ALIGN(sizeof(*cpuhdrp));
+	memsegp = (phys_ram_seg_t  *)bp;
 
 	/*
 	 * Generate a segment header.
 	 */
 	CORE_SETMAGIC(*segp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	segp->c_size = dbtob(1) - ALIGN(sizeof(*segp));
+	segp->c_size = blocksize - ALIGN(sizeof(*segp));
 
 	/*
 	 * Add the machine-dependent header info.
@@ -1879,7 +1881,7 @@ cpu_dump(void)
 		memsegp[i].size = mem_clusters[i].size;
 	}
 
-	return (dump(dumpdev, dumplo, (void *)buf, dbtob(1)));
+	return dump(dumpdev, dumplo, buf, blocksize);
 }
 
 /*
@@ -1905,7 +1907,7 @@ cpu_dumpconf(void)
 	if (bdev->d_psize == NULL)
 		goto bad;
 	nblks = (*bdev->d_psize)(dumpdev);
-	if (nblks <= ctod(1))
+	if (nblks < 0)
 		goto bad;
 
 	dumpblks = cpu_dumpsize();
@@ -1914,7 +1916,7 @@ cpu_dumpconf(void)
 	dumpblks += ctod(cpu_dump_mempagecnt());
 
 	/* If dump won't fit (incl. room for possible label), punt. */
-	if (dumpblks > (nblks - ctod(1)))
+	if (nblks <= dumpblks)
 		goto bad;
 
 	/* Put dump at end of partition */
@@ -1931,23 +1933,19 @@ cpu_dumpconf(void)
 /*
  * Dump the kernel's image to the swap partition.
  */
-#define	BYTES_PER_DUMP	PAGE_SIZE
+#define	BYTES_PER_DUMP	MAXPHYS
 
 void
 dumpsys(void)
 {
-	u_long totalbytesleft, bytes, i, n, memcl;
-	u_long maddr;
-	int psize;
+	psize_t totalbytesleft;
 	daddr_t blkno;
 	const struct bdevsw *bdev;
 	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
 
-#if 0
 	/* Save registers. */
 	savectx(&dumppcb);
-#endif
 
 	if (dumpdev == NODEV)
 		return;
@@ -1969,9 +1967,9 @@ dumpsys(void)
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	int nblks = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
-	if (psize == -1) {
+	if (nblks == -1) {
 		printf("area unavailable\n");
 		return;
 	}
@@ -1986,29 +1984,29 @@ dumpsys(void)
 	dump = bdev->d_dump;
 	error = 0;
 
-	for (memcl = 0; memcl < mem_cluster_cnt; memcl++) {
-		maddr = mem_clusters[memcl].start;
-		bytes = mem_clusters[memcl].size;
+	int32_t meg = 1024*1024;
+	for (size_t memcl = 0; memcl < mem_cluster_cnt; memcl++) {
+		paddr_t maddr = mem_clusters[memcl].start;
+		psize_t msize = mem_clusters[memcl].size;
+		vsize_t n = 0;
 
-		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
-			void *maddr_va;
+		for (psize_t i = 0;
+		     i < msize;
+		     i += n, totalbytesleft -= n, meg -= n) {
+			vaddr_t maddr_va;
 
 			/* Print out how many MBs we have left to go. */
-			if ((totalbytesleft % (1024*1024)) == 0)
-				printf_nolog("%ld ",
-				    totalbytesleft / (1024 * 1024));
+			if (meg <= 0) {
+				printf_nolog("%u ",
+				    (u_int)(totalbytesleft >> 20));
+				meg += 1024*1024;
+			}
 
 			/* Limit size for next transfer. */
-			n = bytes - i;
-			if (n > BYTES_PER_DUMP)
-				n = BYTES_PER_DUMP;
+			n = MIN(BYTES_PER_DUMP, msize - i);
 
-#ifdef _LP64
-			maddr_va = (void *)MIPS_PHYS_TO_XKPHYS_CACHED(maddr);
-#else
-			maddr_va = (void *)MIPS_PHYS_TO_KSEG0(maddr);
-#endif
-			error = (*dump)(dumpdev, blkno, maddr_va, n);
+			maddr_va = mips_kcore_window_map(maddr, &n);
+			error = (*dump)(dumpdev, blkno, (void*)maddr_va, n);
 			if (error)
 				goto err;
 			maddr += n;
@@ -2017,6 +2015,7 @@ dumpsys(void)
 			/* XXX should look for keystrokes, to cancel. */
 		}
 	}
+	mips_kcore_window_unmap();
 
  err:
 	switch (error) {
@@ -2051,6 +2050,98 @@ dumpsys(void)
 	}
 	printf("\n\n");
 	delay(5000000);		/* 5 seconds */
+}
+
+#ifdef MIPS3_PLUS
+static struct mips_kcore_window_info {
+	struct tlbmask mkwi_tlb;
+	int mkwi_tlb_slot;
+} mips_kcore_window_info = {
+	.mkwi_tlb = {
+		.tlb_hi = 1024*1024*1024,
+		.tlb_mask = MIPS3_PG_SIZE_256M,
+	},
+	.mkwi_tlb_slot = -1,
+};
+#endif
+
+bool
+mips_kcore_window_vtophys(vaddr_t va, paddr_t *pap)
+{
+#ifdef MIPS3_PLUS
+	struct mips_kcore_window_info * const mkwi = &mips_kcore_window_info;
+	const vaddr_t tlb_va = mkwi->mkwi_tlb.tlb_hi & -PAGE_SIZE;
+	psize_t tlb_size = MIPS3_PG_SIZE_MASK_TO_SIZE(mkwi->mkwi_tlb.tlb_mask);
+	if (mips_pg_v(mkwi->mkwi_tlb.tlb_lo0)
+	    && tlb_va <= va && va < tlb_va + 2 * tlb_size) {
+		*pap = va - tlb_va
+		    + mips_tlbpfn_to_paddr(mkwi->mkwi_tlb.tlb_lo0);
+		return true;
+	}
+#endif
+	return false;
+}
+
+vaddr_t
+mips_kcore_window_map(paddr_t pa, vsize_t *vsp)
+{
+	vaddr_t va;
+	vsize_t vs;
+	if (mm_md_direct_mapped_phys(pa, &va, &vs)) {
+#ifndef _LP64
+		/*
+		 * Make sure the length we want to mapped doesn't cross the
+		 * direct-mapped boundary.
+		 */
+		if (*vsp > vs)
+			*vsp = vs;
+#endif
+		return va;
+	}
+#if defined(MIPS3_PLUS) && !defined(_LP64)
+	KASSERT(MIPS_HAS_R4K_MMU);
+	struct mips_kcore_window_info * const mkwi = &mips_kcore_window_info;
+	paddr_t tlb_pa = mips_tlbpfn_to_paddr(mkwi->mkwi_tlb.tlb_lo0);
+	psize_t tlb_size = MIPS3_PG_SIZE_MASK_TO_SIZE(mkwi->mkwi_tlb.tlb_mask);
+	if (!mips_pg_v(mkwi->mkwi_tlb.tlb_lo0)
+	    || pa < tlb_pa
+	    || tlb_pa + 2 * tlb_size <= pa) {
+		tlb_pa = pa & (2 * tlb_size - 1);
+		mkwi->mkwi_tlb.tlb_lo0 = mips_paddr_to_tlbpfn(tlb_pa)
+		    | MIPS3_PG_CACHED | MIPS3_PG_V | MIPS3_PG_G;
+		mkwi->mkwi_tlb.tlb_lo0 = mkwi->mkwi_tlb.tlb_lo1
+		    + mips_paddr_to_tlbpfn(tlb_size);
+
+		if (mkwi->mkwi_tlb_slot < 0) {
+			mkwi->mkwi_tlb_slot = pmap_tlb0_info.ti_wired++;
+			mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
+		}
+		tlb_write_indexed(mkwi->mkwi_tlb_slot, &mkwi->mkwi_tlb);
+	}
+	if (*vsp + pa - tlb_pa > 2 * tlb_size)
+		*vsp = tlb_pa + 2 * tlb_size - pa;
+	return (mkwi->mkwi_tlb.tlb_hi & -PAGE_SIZE) + pa - tlb_pa;
+#else
+	panic("%s: failed to map non-KSEG0 memory", __func__);
+#endif /* MIPS3_PLUS && !_LP64 */
+}
+
+void
+mips_kcore_window_unmap(void)
+{
+#if defined(MIPS3_PLUS) && !defined(_LP64)
+	struct mips_kcore_window_info * const mkwi = &mips_kcore_window_info;
+	if (mkwi->mkwi_tlb_slot >= 0) {
+		struct tlbmask tlb;
+		mkwi->mkwi_tlb.tlb_lo0 = 0;
+		mkwi->mkwi_tlb.tlb_lo1 = 0;
+		tlb.tlb_hi = mkwi->mkwi_tlb_slot << (PAGE_SHIFT | 1);
+		tlb.tlb_lo0 = 0;
+		tlb.tlb_lo1 = 0;
+		tlb.tlb_mask = 0;
+		tlb_write_indexed(mkwi->mkwi_tlb_slot, &mkwi->mkwi_tlb);
+	}
+#endif /* MIPS3_PLUS && !_LP64 */
 }
 
 void
@@ -2456,23 +2547,64 @@ mips_watchpoint_init(void)
 #endif
 
 bool
-mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
+mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap, vsize_t *vsp)
 {
 #ifdef _LP64
-	*vap = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
+	if (vap != NULL)
+		*vap = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
+	if (vsp != NULL)
+		*vsp = MIPS_XKPHYS_TO_PHYS(MIPS_XKPHYS_MASK) - pa + 1;
 	return true;
 #else
 #ifdef ENABLE_MIPS_KSEGX
 	if (mips_ksegx_start <= pa && pa < mips_ksegx_start + VM_KSEGX_SIZE) {
-		*vap = VM_KSEGX_ADDRESS + pa - mips_ksegx_start;
+		if (vap != NULL)
+			*vap = VM_KSEGX_ADDRESS + pa - mips_ksegx_start;
+		if (vsp != NULL)
+			*vsp = mips_ksegx_start + VM_KSEGX_SIZE - pa;
 		return true;
 	}
 #endif
 	if (pa <= MIPS_PHYS_MASK) {
-		*vap = MIPS_PHYS_TO_KSEG0(pa);
+		if (vap != NULL)
+			*vap = MIPS_PHYS_TO_KSEG0(pa);
+		if (vsp != NULL)
+			*vsp = MIPS_PHYS_MASK - pa + 1;
 		return true;
 	}
 	return false;
 #endif
 }
 
+bool
+mm_md_direct_mapped_virt(vaddr_t va, paddr_t *pap, vsize_t *vsp)
+{
+#ifdef _LP64
+	if (MIPS_XKPHYS_P(va)) {
+		const paddr_t pa = MIPS_XKPHYS_TO_PHYS(va);
+		if (pap != NULL)
+			*pap = pa;
+		if (vsp != NULL)
+			*vsp = MIPS_XKPHYS_TO_PHYS(MIPS_XKPHYS_MASK) - pa + 1;
+		return true;
+	}
+#endif
+#ifdef ENABLE_MIPS_KSEGX
+	if (VM_KSEGX_ADDRESS <= va && va < VM_KSEGX_ADDRESS + VM_KSEGX_SIZE) {
+		const paddr_t pa = mips_ksegx_start + va - VM_KSEGX_ADDRESS;
+		if (pap != NULL)
+			*pap = pa;
+		if (vsp != NULL)
+			*vsp = VM_KSEGX_ADDRESS + VM_KSEGX_SIZE - va;
+		return true;
+	}
+#endif
+	if (MIPS_KSEG0_P(va)) {
+		if (pap != NULL)
+			*pap = MIPS_KSEG0_TO_PHYS(va);
+		if (vsp != NULL)
+			*vsp = MIPS_KSEG1_START - va;
+		return true;
+	}
+	return false;
+}
