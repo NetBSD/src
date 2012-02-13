@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$Id: obio_ohci.c,v 1.6 2012/02/13 17:34:21 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.6 2012/02/13 17:34:21 matt Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -23,15 +23,15 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.6 2012/02/13 17:34:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-
-#include <machine/intr.h>
-#include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $")
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
 
+#include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap2_obiovar.h>
 #include <arm/omap/omap2_obioreg.h>
 
@@ -51,6 +52,7 @@ struct obioohci_softc {
 	void		*sc_ih;
 	bus_addr_t	sc_addr;
 	bus_addr_t	sc_size;
+	void		*sc_powerhook;
 };
 
 static int	obioohci_match(struct device *, struct cfdata *, void *);
@@ -71,7 +73,7 @@ static void	obioohci_disable(struct obioohci_softc *);
 #define	HWRITE4(sc,r,v)	bus_space_write_4((sc)->sc.iot, (sc)->sc.ioh, (r), (v))
 
 static int
-obioohci_match(struct device *parent, struct cfdata *cf, void *aux)
+obioohci_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	struct obio_attach_args *obio = aux;
@@ -88,9 +90,9 @@ obioohci_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-obioohci_attach(struct device *parent, struct device *self, void *aux)
+obioohci_attach(device_t parent, device_t self, void *aux)
 {
-	struct obioohci_softc *sc = (struct obioohci_softc *)self;
+	struct obioohci_softc *sc = device_private(self);
 	struct obio_attach_args *obio = aux;
 	usbd_status r;
 
@@ -107,7 +109,7 @@ obioohci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc.iot = obio->obio_iot;
 	sc->sc_addr = obio->obio_addr;
 	sc->sc.sc_size = obio->obio_size;
-	sc->sc.sc_bus.dmatag = obio->obio_dmac;
+	sc->sc.sc_bus.dmatag = obio->obio_dmat;
 
 	/* XXX copied from ohci_pci.c. needed? */
 	bus_space_barrier(sc->sc.iot, sc->sc.ioh, 0, sc->sc.sc_size,
@@ -123,9 +125,9 @@ obioohci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
 	    OHCI_MIE);
 
-#ifdef NOTYET
-	sc->sc_ih = obio_intr_establish(obio->obio_intr, IPL_USB,
-		sc->sc.sc_bus.bdev.dv_xname, ohci_intr, &sc->sc);
+#if 1
+	sc->sc_ih = intr_establish(obio->obio_intr, IPL_USB, IST_LEVEL,
+		ohci_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error(": unable to establish interrupt\n");
 		goto free_map;
@@ -137,16 +139,14 @@ obioohci_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc.sc_vendor, "OMAP2", sizeof(sc->sc.sc_vendor));
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error("%s: init failed, error=%d\n",
-		    sc->sc.sc_bus.bdev.dv_xname, r);
+		aprint_error_dev(self, "init failed, error=%d\n", r);
 		goto free_intr;
 	}
 
-	sc->sc.sc_powerhook = powerhook_establish(sc->sc.sc_bus.bdev.dv_xname,
+	sc->sc_powerhook = powerhook_establish(device_xname(self),
 	    obioohci_power, sc);
-	if (sc->sc.sc_powerhook == NULL) {
-		aprint_error("%s: cannot establish powerhook\n",
-		    sc->sc.sc_bus.bdev.dv_xname);
+	if (sc->sc_powerhook == NULL) {
+		aprint_error_dev(self, "cannot establish powerhook\n");
 	}
 
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus, usbctlprint);
@@ -158,9 +158,7 @@ free_intr:
 	obio_gpio_intr_disestablish(sc->sc_ih);
 #endif
 	sc->sc_ih = NULL;
-#ifdef NOTYET
 free_map:
-#endif
 	obioohci_disable(sc);
 #ifdef NOTYET
 	pxa2x0_clkman_config(CKEN_USBHC, 0);
@@ -170,18 +168,18 @@ free_map:
 }
 
 static int
-obioohci_detach(struct device *self, int flags)
+obioohci_detach(device_t self, int flags)
 {
-	struct obioohci_softc *sc = (struct obioohci_softc *)self;
+	struct obioohci_softc *sc = device_private(self);
 	int error;
 
 	error = ohci_detach(&sc->sc, flags);
 	if (error)
 		return error;
 
-	if (sc->sc.sc_powerhook) {
-		powerhook_disestablish(sc->sc.sc_powerhook);
-		sc->sc.sc_powerhook = NULL;
+	if (sc->sc_powerhook) {
+		powerhook_disestablish(sc->sc_powerhook);
+		sc->sc_powerhook = NULL;
 	}
 
 	if (sc->sc_ih) {
@@ -272,22 +270,22 @@ obioohci_clkinit(struct obio_attach_args *obio)
 	uint32_t r;
 	int err;
 
-	err = bus_space_map(obio->obio_iot, OMAP2430_CM_BASE,
-		OMAP2430_CM_SIZE, 0, &ioh);
+	err = bus_space_map(obio->obio_iot, OMAP2_CM_BASE,
+		OMAP2_CM_SIZE, 0, &ioh);
 	if (err != 0)
-		panic("%s: cannot map OMAP2430_CM_BASE at %#x, error %d\n",
-			__func__, OMAP2430_CM_BASE, err);
+		panic("%s: cannot map OMAP2_CM_BASE at %#x, error %d\n",
+			__func__, OMAP2_CM_BASE, err);
 
-	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2430_CM_FCLKEN2_CORE);
-	r |= OMAP2430_CM_FCLKEN2_CORE_EN_USB;
-	bus_space_write_4(obio->obio_iot, ioh, OMAP2430_CM_FCLKEN2_CORE, r);
+	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2_CM_FCLKEN2_CORE);
+	r |= OMAP2_CM_FCLKEN2_CORE_EN_USB;
+	bus_space_write_4(obio->obio_iot, ioh, OMAP2_CM_FCLKEN2_CORE, r);
 
-	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2430_CM_ICLKEN2_CORE);
-	r |= OMAP2430_CM_ICLKEN2_CORE_EN_USB;
-	r &= ~OMAP2430_CM_ICLKEN2_CORE_EN_USBHS;	/* force FS for ohci */
-	bus_space_write_4(obio->obio_iot, ioh, OMAP2430_CM_ICLKEN2_CORE, r);
+	r = bus_space_read_4(obio->obio_iot, ioh, OMAP2_CM_ICLKEN2_CORE);
+	r |= OMAP2_CM_ICLKEN2_CORE_EN_USB;
+	r &= ~OMAP2_CM_ICLKEN2_CORE_EN_USBHS;	/* force FS for ohci */
+	bus_space_write_4(obio->obio_iot, ioh, OMAP2_CM_ICLKEN2_CORE, r);
 
-	bus_space_unmap(obio->obio_iot, ioh, OMAP2430_CM_SIZE);
+	bus_space_unmap(obio->obio_iot, ioh, OMAP2_CM_SIZE);
 }
 
 #if 0
