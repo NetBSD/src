@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.73 2011/06/13 05:23:33 uch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.74 2012/02/13 01:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73 2011/06/13 05:23:33 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.74 2012/02/13 01:04:26 martin Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -273,6 +273,16 @@ child_return(void *arg)
 	ktrsysret(SYS_fork, 0, 0);
 }
 
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+
+	userret(l);
+}
+ 
 /*
  * struct emul e_startlwp (for _lwp_create(2))
  */
