@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1669 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1670 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -959,15 +959,21 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	atf-run(1): In case a test program dumps core, dump the stack
 		trace from the core file as part of test output.
 		[pooka 20110302]
-	kernel: merge the bouyer-quota2 branch. This adds a new on-disk format
+	ffs: merge the bouyer-quota2 branch. This adds a new on-disk format
 		to store disk quota usage and limits, integrated with ffs
 		metadata. Usage is checked by fsck_ffs (no more quotacheck)
 		and is covered by the WAPBL journal. Enabled with kernel
 		option QUOTA2, turned on with tunefs(8) on a per-filesystem
 		basis. mount_mfs(8) can also turn quotas on.
-		See repquota(8) and quotactl(8) for a way to migrate
-		limits from QUOTA to QUOTA2.
 		[bouyer 20110306]
+	quotactl(2): quotactl system call interface changed to support the
+		bouyer-quota2 branch. Quotas are no longer limited to
+		32-bit values. [bouyer 20110306]
+	repquota(8): added -x option to dump quotas for backup or
+		transfer purposes. [bouyer 20110306]
+	quotactl(8): Added tool to manipulate quotas via proplib XML bundles.
+		This can be used (among other things) to restore backups
+		created with repquota -x. [bouyer 20110306]
 	tmux(1): First import of tmux (version 1.4).  [jmmv 20110310]
 	powerpc: add TLS (thread local storage) support.  [matt 20110311]
 	sh3: add TLS (thread local storage) support.  [joerg 20110312]
@@ -1228,9 +1234,14 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		ported by TOYOKURA Atsushi. [tsutsui 20120129]
 	evbarm: Add FriendlyARM Mini2440 support. Code was written by Paul
 		Fleischer. [nisimura 20120130]
-	kernel: Add a new library, libquota, for control of and access to
+	libquota(3): Add a new library, libquota, for control of and access to
 		disk quotas, extending the file-system-independent interface
 		added with the bouyer-quota2 branch. [dholland 20120201]
+	quotactl(2): Removed quotactl(2) interface, replaced with new
+		private __quotactl(2) interface. All user code should use
+		the libquota(3) API. [dholland 20120201]
+	repquota(8): The repquota -x dump format is now tabular, not XML.
+		[dholland 20120201]
 	mac68k: Add timecounter support to the CSI Hurdler Centronics
 		Parallel Interface cpi(4) driver. [hauke 20120201]
 	ntp: import ntp 4.2.6p5.
@@ -1243,3 +1254,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[joerg 20120207]
 	posix_spawn: Import Charles Zhang's summer of code project.
 		[martin 20120212]
+	quotactl(8): quotactl(8) was removed in favor of quotadump and
+		quotarestore. [dholland 20120212]
+	quotadump(8): Added quotadump, which is the same as repquota -x,
+		for creating backups of quota information.
+		[dholland 20120212]
+	quotarestore(8): New quota tool quotarestore for loading backups
+		created with quotadump. [dholland 20120212]
