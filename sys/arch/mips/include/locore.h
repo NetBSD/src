@@ -42,6 +42,13 @@ struct trapframe;
 void	trap(uint32_t, uint32_t, vaddr_t, vaddr_t, struct trapframe *);
 void	ast(void);
 
+/*
+ * Perform a trapsignal, and if cpu_printfataltraps is true, print the trap info
+ * to the console.
+ */
+extern bool cpu_printfataltraps;
+void cpu_trapsignal(struct lwp *, ksiginfo_t *, struct trapframe *);
+
 void	mips_fpu_trap(vaddr_t, struct trapframe *);
 void	mips_fpu_intr(vaddr_t, struct trapframe *);
 

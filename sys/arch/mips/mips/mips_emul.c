@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14.78.13 2011/04/29 08:26:28 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.14.78.14 2012/02/13 08:13:42 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.13 2011/04/29 08:26:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.14 2012/02/13 08:13:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,9 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.13 2011/04/29 08:26:28 matt Ex
 #include <mips/vmparam.h>			/* for VM_MAX_ADDRESS */
 #include <mips/trap.h>
 
-static inline void	send_sigsegv(intptr_t, uint32_t, struct trapframe *,
-			    uint32_t);
-static inline void	update_pc(struct trapframe *, uint32_t);
+static void	send_sigsegv(intptr_t, uint32_t, struct trapframe *, uint32_t);
+static void	send_sigill(intptr_t, uint32_t, struct trapframe *, uint32_t,
+		    uint32_t);
+static void	update_pc(struct trapframe *, uint32_t);
 
 /*
  * MIPS2 LL instruction emulation state
@@ -78,9 +79,11 @@ mips_emul_branch(struct trapframe *tf, vaddr_t instpc, uint32_t fpuCSR,
 			nextpc = tf->tf_regs[inst.RType.rs];
 		else if (allowNonBranch)
 			nextpc = instpc + 4;
-		else
-			panic("%s: %s instruction %08x at pc 0x%"PRIxVADDR,
-			    __func__, "non-branch", inst.word, instpc);
+		else {
+			send_sigill(instpc, T_RES_INST, tf,
+			    tf->tf_regs[_R_CAUSE], inst.word);
+			nextpc = instpc;
+		}
 		break;
 
 	case OP_BCOND:
@@ -106,8 +109,10 @@ mips_emul_branch(struct trapframe *tf, vaddr_t instpc, uint32_t fpuCSR,
 			break;
 
 		default:
-			panic("%s: %s instruction 0x%08x at pc 0x%"PRIxVADDR,
-			    __func__, "bad branch", inst.word, instpc);
+			send_sigill(instpc, T_RES_INST, tf,
+			    tf->tf_regs[_R_CAUSE], inst.word);
+			nextpc = instpc;
+			break;
 		}
 		break;
 
@@ -161,16 +166,22 @@ mips_emul_branch(struct trapframe *tf, vaddr_t instpc, uint32_t fpuCSR,
 		}
 		else if (allowNonBranch)
 			nextpc = instpc + 4;
-		else
-			panic("%s: %s instruction 0x%08x at pc 0x%"PRIxVADDR,
-			    __func__, "bad COP1 branch", inst.word, instpc);
+		else {
+			send_sigill(instpc, T_RES_INST, tf,
+			    tf->tf_regs[_R_CAUSE], inst.word);
+			nextpc = instpc;
+		}
 		break;
 
 	default:
-		if (!allowNonBranch)
-			panic("%s: %s instruction 0x%08x at pc 0x%"PRIxVADDR,
-			    __func__, "non-branch", inst.word, instpc);
-		nextpc = instpc + 4;
+		if (__predict_false(!allowNonBranch)) {
+			send_sigill(instpc, T_RES_INST, tf,
+			    tf->tf_regs[_R_CAUSE], inst.word);
+			nextpc = instpc;
+		} else {
+			nextpc = instpc + 4;
+		}
+		break;
 	}
 	KASSERT((nextpc & 0x3) == 0);
 	return nextpc;
@@ -185,8 +196,6 @@ mips_emul_inst(uint32_t status, uint32_t cause, vaddr_t opc,
     struct trapframe *tf)
 {
 	uint32_t inst;
-	ksiginfo_t ksi;
-	int code = ILL_ILLOPC;
 
 	/*
 	 *  Fetch the instruction.
@@ -232,28 +241,17 @@ mips_emul_inst(uint32_t status, uint32_t cause, vaddr_t opc,
 	case OP_SDC1:
 #if defined(FPEMUL)
 		mips_emul_sdc1(inst, tf, cause);
-		break;
 #else
-		code = ILL_COPROC;
-		/* FALLTHROUGH */
+		send_sigill(opc, T_COP_UNUSABLE, tf, cause, inst);
 #endif
+		break;
 	default:
-#ifdef DEBUG
-		printf("pid %d (%s): trap: bad insn @ %#"PRIxVADDR" cause %#x insn %#x code %d\n", curproc->p_pid, curproc->p_comm, opc, cause, inst, code);
-#endif
-		tf->tf_regs[_R_CAUSE] = cause;
-		tf->tf_regs[_R_BADVADDR] = opc;
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGILL;
-		ksi.ksi_trap = cause; /* XXX */
-		ksi.ksi_code = code;
-		ksi.ksi_addr = (void *)opc;
-		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
+		send_sigill(opc, T_RES_INST, tf, cause, inst);
 		break;
 	}
 }
 
-static inline void
+static void
 send_sigsegv(intptr_t vaddr, uint32_t exccode, struct trapframe *tf,
     uint32_t cause)
 {
@@ -266,7 +264,23 @@ send_sigsegv(intptr_t vaddr, uint32_t exccode, struct trapframe *tf,
 	ksi.ksi_trap = cause;
 	ksi.ksi_code = SEGV_MAPERR;
 	ksi.ksi_addr = (void *)vaddr;
-	(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
+	cpu_trapsignal(curlwp, &ksi, tf);
+}
+
+static void
+send_sigill(intptr_t vaddr, uint32_t exccode, struct trapframe *tf,
+    uint32_t cause, uint32_t inst)
+{
+	ksiginfo_t ksi;
+	cause = (cause & ~0xFF) | (exccode << MIPS_CR_EXC_CODE_SHIFT);
+	tf->tf_regs[_R_CAUSE] = cause;
+	tf->tf_regs[_R_BADVADDR] = vaddr;
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = SIGILL;
+	ksi.ksi_trap = cause; /* XXX */
+	ksi.ksi_code = (exccode == T_COP_UNUSABLE ? ILL_COPROC : ILL_ILLOPC);
+	ksi.ksi_addr = (void *)vaddr;
+	cpu_trapsignal(curlwp, &ksi, tf);
 }
 
 static inline void
@@ -371,7 +385,6 @@ mips_emul_swc0(uint32_t inst, struct trapframe *tf, uint32_t cause)
 void
 mips_emul_special(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
-	ksiginfo_t ksi;
 	const InstFmt instfmt = { .word = inst };
 
 	switch (instfmt.RType.func) {
@@ -379,15 +392,8 @@ mips_emul_special(uint32_t inst, struct trapframe *tf, uint32_t cause)
 		/* nothing */
 		break;
 	default:
-		tf->tf_regs[_R_CAUSE] = cause;
-		tf->tf_regs[_R_BADVADDR] = tf->tf_regs[_R_PC];
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGILL;
-		ksi.ksi_trap = cause;
-		ksi.ksi_code = ILL_ILLOPC;
-		ksi.ksi_addr = (void *)(intptr_t)tf->tf_regs[_R_PC];
-		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
-		break;
+		send_sigill(tf->tf_regs[_R_PC], T_RES_INST, tf, cause, inst);
+		return;
 	}
 
 	update_pc(tf, cause);
@@ -396,7 +402,6 @@ mips_emul_special(uint32_t inst, struct trapframe *tf, uint32_t cause)
 void
 mips_emul_special3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
-	ksiginfo_t ksi;
 	const InstFmt instfmt = { .word = inst };
 	switch (instfmt.RType.func) {
 	case OP_RDHWR:
@@ -408,14 +413,7 @@ mips_emul_special3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 		}
 		/* FALLTHROUGH */
 	default:
-		tf->tf_regs[_R_CAUSE] = cause;
-		tf->tf_regs[_R_BADVADDR] = tf->tf_regs[_R_PC];
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGILL;
-		ksi.ksi_trap = cause;
-		ksi.ksi_code = ILL_ILLOPC;
-		ksi.ksi_addr = (void *)(intptr_t)tf->tf_regs[_R_PC];
-		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
+		send_sigill(tf->tf_regs[_R_PC], T_RES_INST, tf, cause, inst);
 		return;
 	}
 
