@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.56 2012/02/07 11:40:24 plunky Exp $	*/
+/*	$NetBSD: umidi.c,v 1.57 2012/02/13 01:51:02 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.56 2012/02/07 11:40:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.57 2012/02/13 01:51:02 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -366,11 +366,19 @@ umidi_close(void *addr)
 {
 	struct umidi_mididev *mididev = addr;
 
+	/* XXX SMP */
+	KERNEL_LOCK(1, curlwp);
+	mutex_spin_exit(&mididev->sc->sc_lock);
+
 	if ((mididev->flags & FWRITE) && mididev->out_jack)
 		close_out_jack(mididev->out_jack);
 	if ((mididev->flags & FREAD) && mididev->in_jack)
 		close_in_jack(mididev->in_jack);
 	mididev->opened = 0;
+
+	/* XXX SMP */
+	mutex_spin_enter(&mididev->sc->sc_lock);
+	KERNEL_UNLOCK_ONE(curlwp);
 }
 
 int
@@ -1003,6 +1011,11 @@ bind_jacks_to_mididev(struct umidi_softc *sc,
 static void
 unbind_jacks_from_mididev(struct umidi_mididev *mididev)
 {
+
+	/* XXX SMP */
+	KERNEL_LOCK(1, curlwp);
+	mutex_spin_exit(&mididev->sc->sc_lock);
+
 	if ((mididev->flags & FWRITE) && mididev->out_jack)
 		close_out_jack(mididev->out_jack);
 	if ((mididev->flags & FREAD) && mididev->in_jack)
@@ -1013,6 +1026,10 @@ unbind_jacks_from_mididev(struct umidi_mididev *mididev)
 	if (mididev->in_jack)
 		mididev->in_jack->binded = 0;
 	mididev->out_jack = mididev->in_jack = NULL;
+
+	/* XXX SMP */
+	mutex_spin_enter(&mididev->sc->sc_lock);
+	KERNEL_UNLOCK_ONE(curlwp);
 }
 
 static void
