@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.981 2012/02/07 19:13:25 joerg Exp $
+# $NetBSD: mi,v 1.982 2012/02/13 01:35:06 dholland Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1390,8 +1390,10 @@
 ./usr/sbin/quot					base-sysutil-bin
 ./usr/sbin/quotacheck				base-sysutil-bin
 ./usr/sbin/quotactl				base-sysutil-bin
+./usr/sbin/quotadump				base-sysutil-bin
 ./usr/sbin/quotaoff				base-sysutil-bin
 ./usr/sbin/quotaon				base-sysutil-bin
+./usr/sbin/quotarestore				base-sysutil-bin
 ./usr/sbin/racoon				base-netutil-bin	crypto
 ./usr/sbin/racoonctl				base-netutil-bin	crypto
 ./usr/sbin/rarpd				base-bootserver-bin
