@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.101.4.2.4.7 2012/02/10 07:14:00 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.101.4.2.4.8 2012/02/14 01:12:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2.4.7 2012/02/10 07:14:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2.4.8 2012/02/14 01:12:42 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -437,6 +437,7 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 		uao_dropswap(uobj, curoff >> PAGE_SHIFT);
 		if (pg != NULL) {
 			mutex_enter(&uvm_pageqlock);
+			uvm_pagedequeue(pg);
 			uvm_pagefree(pg);
 			mutex_exit(&uvm_pageqlock);
 		}

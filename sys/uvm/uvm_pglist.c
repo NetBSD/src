@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.42.16.11 2012/02/09 03:05:01 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.42.16.12 2012/02/14 01:12:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.11 2012/02/09 03:05:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.12 2012/02/14 01:12:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,12 +85,16 @@ uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 	int free_list, color, queue;
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
+	KASSERT(pg->pqflags & PQ_FREE);
 
 #if PGFL_NQUEUES != 2
 #error uvm_pglistalloc needs to be updated
 #endif
 
 	ucpu = VM_FREE_PAGE_TO_CPU(pg);
+#ifndef MULTIPROCESSOR
+	KASSERT(ucpu == uvm.cpus);
+#endif
 	free_list = uvm_page_lookup_freelist(pg);
 	color = VM_PGCOLOR_BUCKET(pg);
 	queue = (pg->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN;
@@ -599,6 +603,9 @@ uvm_pglistfree(struct pglist *list)
 
 	mutex_spin_enter(&uvm_fpageqlock);
 	struct uvm_cpu * const ucpu = curcpu()->ci_data.cpu_uvm;
+#ifndef MULTIPROCESSOR
+	KASSERT(ucpu == uvm.cpus);
+#endif
 	while ((pg = TAILQ_FIRST(list)) != NULL) {
 		KASSERT(!uvmpdpol_pageisqueued_p(pg));
 		TAILQ_REMOVE(list, pg, pageq.queue);
@@ -615,6 +622,9 @@ uvm_pglistfree(struct pglist *list)
 		const size_t free_list = uvm_page_lookup_freelist(pg);
 		const size_t color = VM_PGCOLOR_BUCKET(pg);
 		const size_t queue = iszero ? PGFL_ZEROS : PGFL_UNKNOWN;
+#ifndef MULTIPROCESSOR
+		KASSERT(ucpu == uvm.cpus);
+#endif
 		pg->offset = (uintptr_t)ucpu;
 		LIST_INSERT_HEAD(&uvm.page_free[color].
 		    pgfl_queues[free_list][queue], pg, pageq.list);

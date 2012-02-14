@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.7 2012/02/09 03:05:00 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.8 2012/02/14 01:12:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.7 2012/02/09 03:05:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.8 2012/02/14 01:12:42 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1109,6 +1109,7 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int free_list, int try1, int try2,
 		/* cpu, try1 */
 		struct pgflist * const freeq = pgfl->pgfl_queues[free_list];
 		if ((pg = LIST_FIRST(&freeq[try1])) != NULL) {
+			KASSERT(pg->pqflags & PQ_FREE);
 			KASSERT(ucpu == VM_FREE_PAGE_TO_CPU(pg));
 			KASSERT(pgfl == &ucpu->page_free[color]);
 		    	ucpu->page_cpuhit++;
@@ -1118,7 +1119,11 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int free_list, int try1, int try2,
 		/* global, try1 */
 		struct pgflist * const gfreeq = gpgfl->pgfl_queues[free_list];
 		if ((pg = LIST_FIRST(&gfreeq[try1])) != NULL) {
+			KASSERT(pg->pqflags & PQ_FREE);
 			ucpu = VM_FREE_PAGE_TO_CPU(pg);
+#ifndef MULTIPROCESSOR
+			KASSERT(ucpu == uvm.cpus);
+#endif
 			pgfl = &ucpu->page_free[color];
 		    	ucpu->page_cpumiss++;
 			goto gotit;
@@ -1126,6 +1131,7 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int free_list, int try1, int try2,
 
 		/* cpu, try2 */
 		if ((pg = LIST_FIRST(&freeq[try2])) != NULL) {
+			KASSERT(pg->pqflags & PQ_FREE);
 			KASSERT(ucpu == VM_FREE_PAGE_TO_CPU(pg));
 			KASSERT(pgfl == &ucpu->page_free[color]);
 		    	ucpu->page_cpuhit++;
@@ -1135,7 +1141,11 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int free_list, int try1, int try2,
 
 		/* global, try2 */
 		if ((pg = LIST_FIRST(&gfreeq[try2])) != NULL) {
+			KASSERT(pg->pqflags & PQ_FREE);
 			ucpu = VM_FREE_PAGE_TO_CPU(pg);
+#ifndef MULTIPROCESSOR
+			KASSERT(ucpu == uvm.cpus);
+#endif
 			pgfl = &ucpu->page_free[color];
 		    	ucpu->page_cpumiss++;
 			try1 = try2;
@@ -1503,6 +1513,7 @@ uvm_pagefree(struct vm_page *pg)
 	}
 #endif /* DEBUG */
 
+	KASSERT(!uvmpdpol_pageisqueued_p(pg));
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
 	KASSERT(!(pg->pqflags & PQ_FREE));
 	KASSERT(mutex_owned(&uvm_pageqlock) || !uvmpdpol_pageisqueued_p(pg));
