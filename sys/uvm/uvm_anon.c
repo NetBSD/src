@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.51 2008/01/18 10:48:23 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.51.28.1 2012/02/14 01:12:42 matt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.51 2008/01/18 10:48:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.51.28.1 2012/02/14 01:12:42 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -192,6 +192,7 @@ uvm_anfree(struct vm_anon *anon)
 				return;
 			}
 			mutex_enter(&uvm_pageqlock);
+			uvm_pagedequeue(pg);
 			uvm_pagefree(pg);
 			mutex_exit(&uvm_pageqlock);
 			mutex_exit(&anon->an_lock);

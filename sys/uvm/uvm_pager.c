@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.92.18.4 2012/02/09 03:05:01 matt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.92.18.5 2012/02/14 01:12:42 matt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.92.18.4 2012/02/09 03:05:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.92.18.5 2012/02/14 01:12:42 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -422,7 +422,6 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 		 */
 
 		if (pg->flags & PG_PAGEOUT) {
-			pg->flags &= ~PG_PAGEOUT;
 			uvm_pageout_done(pg, true);
 			pg->flags |= PG_RELEASED;
 		}
