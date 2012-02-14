@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.10.4 2010/03/21 17:38:33 cliff Exp $	*/
+/*	machdep.c,v 1.112.10.4 2010/03/21 17:38:33 cliff Exp	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.10.4 2010/03/21 17:38:33 cliff Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.112.10.4 2010/03/21 17:38:33 cliff Exp");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -198,7 +198,7 @@ char **environment;		/* On some arches, pointer to environment */
 
 int mem_reserved[VM_PHYSSEG_MAX]; /* the cluster is reserved, i.e. not free */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int mem_cluster_cnt;
+u_int mem_cluster_cnt;
 
 /* initialize bss, etc. from kernel start, before main() is called. */
 void mach_init(int, char *[], u_int, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.8.1.2.10 2011/12/23 23:25:42 matt Exp $	*/
+/*	machdep.c,v 1.223.8.1.2.10 2011/12/23 23:25:42 matt Exp	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.10 2011/12/23 23:25:42 matt Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.223.8.1.2.10 2011/12/23 23:25:42 matt Exp");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -137,7 +137,7 @@ char		*bootinfo = NULL;	/* pointer to bootinfo structure */
 int		cpuspeed = 30;		/* approx # instr per usec. */
 int		physmem;		/* max supported memory, changes to actual */
 intptr_t	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
-int		mem_cluster_cnt;
+u_int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 
 /*      

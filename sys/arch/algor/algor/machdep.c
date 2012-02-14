@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.10.7 2010/03/21 17:38:32 cliff Exp $	*/
+/*	machdep.c,v 1.38.10.7 2010/03/21 17:38:32 cliff Exp	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.7 2010/03/21 17:38:32 cliff Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.38.10.7 2010/03/21 17:38:32 cliff Exp");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -195,7 +195,7 @@ struct vm_map *phys_map = NULL;
 int	physmem;		/* # pages of physical memory */
 int	maxmem;			/* max memory per process */
 
-int	mem_cluster_cnt;
+u_int	mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 
 char	algor_ethaddr[ETHER_ADDR_LEN];
