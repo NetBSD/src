@@ -21,7 +21,7 @@
  * XXX too many hardcoded numbers... need to expand glxreg.h
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.2 2012/02/14 22:22:45 macallan Exp $");
 
 
 #include <sys/param.h>
@@ -295,7 +295,7 @@ glx_pci_write_hook(void *v, pcitag_t tag,
 }
 
 pcireg_t
-glx_get_status()
+glx_get_status(void)
 {
 	uint64_t msr;
 	pcireg_t data;
