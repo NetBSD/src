@@ -133,10 +133,10 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				if (c > vs)
 					c = vs;
 				if (pa > mips_avail_end
-				    + mips_round_page(MSGBUFSIZE) - c)) {
+				    + mips_round_page(MSGBUFSIZE) - c)
 					return (EFAULT);
 			} else if (MIPS_XKSEG_P(va)
-			    && v < MIPS_KSEG0_START
+			    && va < MIPS_KSEG0_START
 			    && !uvm_kernacc((void *)va, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)) {
 				return (EFAULT);

@@ -367,6 +367,10 @@ pmap_map_ephemeral_page(struct vm_page *pg, int prot, pt_entry_t *old_pt_entry_p
 	vaddr_t va;
 
 	if (!mm_md_direct_mapped_phys(pa, &va, NULL)) {
+#ifdef _LP64
+		panic("%s: direct_mapped_phys failed for pa %#"PRIxPADDR,
+		    __func__, pa);
+#else
 		KASSERT(pmap_initialized);
 		/*
 		 * Make sure to use a congruent mapping to the last mapped
@@ -379,6 +383,7 @@ pmap_map_ephemeral_page(struct vm_page *pg, int prot, pt_entry_t *old_pt_entry_p
 		    + mips_cache_indexof(MIPS_CACHE_VIRTUAL_ALIAS ? pv->pv_va : pa);
 		*old_pt_entry_p = *kvtopte(va);
 		pmap_kenter_pa(va, pa, prot);
+#endif
 	}
 	if (MIPS_CACHE_VIRTUAL_ALIAS) {
 		/*

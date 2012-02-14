@@ -424,12 +424,12 @@ paddr_t	kvtophys(vaddr_t);
 extern struct phys_ram_seg mem_clusters[];
 extern u_int mem_cluster_cnt;
 
-#ifndef _LP64
 /*
  * Helper routines for kernel coredumps.
  */
-bool	mips_kcore_window_vtophys(vaddr_t, paddr_t *);
 vaddr_t	mips_kcore_window_map(paddr_t, vsize_t *);
+#ifndef _LP64
+bool	mips_kcore_window_vtophys(vaddr_t, paddr_t *);
 #endif
 
 
