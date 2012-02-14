@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2012/01/30 09:48:11 nisimura Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2012/02/14 15:09:02 jakllsch Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -9,7 +9,7 @@
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms
 EVBARM_BOARDS=		ADI_BRH CP3100 GEMINI GUMSTIX INTEGRATOR \
-			IQ80310 IQ80321 SHEEVAPLUG MINI2440 SMDK2410 \
+			IQ80310 IQ80321 SHEEVAPLUG MINI2440 MV2120 SMDK2410 \
 			SMDK2800 TEAMASA_NPWR TISDP2420 TS7200 TWINTAIL
 .else
 # Big endian platforms
