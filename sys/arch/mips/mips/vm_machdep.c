@@ -490,12 +490,14 @@ kvtophys(vaddr_t kva)
 {
 	paddr_t phys;
 
+#if defined(MIPS3_PLUS) && !defined(_LP64)
 	/*
 	 * When we dumping memory in a crash dump, we try to use a large
 	 * TLB entry to reduce the TLB trashing.
 	 */
 	if (__predict_false(mips_kcore_window_vtophys(kva, &phys)))
 		return phys;
+#endif
 
 	/*
 	 * If the KVA is direct mapped, we're done!
