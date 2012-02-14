@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14.10.4 2010/03/21 17:38:34 cliff Exp $	*/
+/*	machdep.c,v 1.14.10.4 2010/03/21 17:38:34 cliff Exp	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14.10.4 2010/03/21 17:38:34 cliff Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.14.10.4 2010/03/21 17:38:34 cliff Exp");
 
 #include "opt_ddb.h"
 
@@ -80,7 +80,7 @@ struct vm_map *phys_map;
 int physmem;		/* max supported memory, changes to actual */
 
 /* referenced by mips_machdep.c:cpu_dump() */
-int mem_cluster_cnt;
+u_int mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 
 void mach_init(int, char *[], struct bootinfo *);

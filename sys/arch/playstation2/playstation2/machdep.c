@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.10.2 2010/03/21 17:38:34 cliff Exp $	*/
+/*	machdep.c,v 1.23.10.2 2010/03/21 17:38:34 cliff Exp	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.10.2 2010/03/21 17:38:34 cliff Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.23.10.2 2010/03/21 17:38:34 cliff Exp");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -75,7 +75,7 @@ struct cpu_info cpu_info_store;
 struct vm_map *mb_map;
 struct vm_map *phys_map;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int mem_cluster_cnt;
+u_int mem_cluster_cnt;
 int physmem;	/* for buffer cache, vnode cache estimation */
 
 #ifdef DEBUG

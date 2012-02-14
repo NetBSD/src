@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28.10.9 2011/04/29 08:26:18 matt Exp $	*/
+/*	machdep.c,v 1.28.10.9 2011/04/29 08:26:18 matt Exp	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.9 2011/04/29 08:26:18 matt Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.28.10.9 2011/04/29 08:26:18 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -178,7 +178,7 @@ int	netboot;		/* Are we netbooting? */
 yamon_env_var *yamon_envp;
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int mem_cluster_cnt;
+u_int mem_cluster_cnt;
 
 void	configure(void);
 void	mach_init(int, char **, yamon_env_var *, u_long);

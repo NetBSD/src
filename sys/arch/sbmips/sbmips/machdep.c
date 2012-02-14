@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.38.10.10 2011/04/29 08:26:35 matt Exp $ */
+/* machdep.c,v 1.38.10.10 2011/04/29 08:26:35 matt Exp */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.10 2011/04/29 08:26:35 matt Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.38.10.10 2011/04/29 08:26:35 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"       /* for SYMTAB_SPACE */
@@ -140,7 +140,7 @@ int	cfe_present;
 struct bootinfo_v1_int bootinfo;
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int mem_cluster_cnt;
+u_int mem_cluster_cnt;
 
 void	configure(void);
 void	mach_init(long, long, long, long);

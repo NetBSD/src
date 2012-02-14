@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.1 2011/07/01 05:45:44 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.2 2012/02/14 01:25:52 matt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.1 2011/07/01 05:45:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.2 2012/02/14 01:25:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 struct cpu_info cpu_info_store;
 int physmem;		/* # pages of physical memory */
-int mem_cluster_cnt = 0;
+u_int mem_cluster_cnt = 0;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 
 /* structures others define for us */

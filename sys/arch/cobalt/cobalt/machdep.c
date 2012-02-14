@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98.10.5 2010/12/24 07:52:01 matt Exp $	*/
+/*	machdep.c,v 1.98.10.5 2010/12/24 07:52:01 matt Exp	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.5 2010/12/24 07:52:01 matt Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.98.10.5 2010/12/24 07:52:01 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -123,7 +123,7 @@ static const char * const cobalt_model[] =
 #define COBALT_MODELS	__arraycount(cobalt_model)
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int mem_cluster_cnt;
+u_int mem_cluster_cnt;
 
 void	mach_init(uint32_t, u_int, uint32_t);
 void	decode_bootstring(void);

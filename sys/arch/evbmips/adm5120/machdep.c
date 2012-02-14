@@ -166,7 +166,7 @@ struct vm_map *phys_map = NULL;
 int physmem;			/* # pages of physical memory */
 int maxmem;			/* max memory per process */
 
-int mem_cluster_cnt;
+u_int mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 
 struct adm5120_config adm5120_configuration;

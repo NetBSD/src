@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121.8.6 2010/12/29 07:15:48 matt Exp $	*/
+/*	machdep.c,v 1.121.8.6 2010/12/29 07:15:48 matt Exp	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.8.6 2010/12/29 07:15:48 matt Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.121.8.6 2010/12/29 07:15:48 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -167,7 +167,7 @@ static const struct ipl_sr_map sgi_ip3x_ipl_sr_map = {
 #endif /* defined(MIPS3) */
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int mem_cluster_cnt;
+u_int mem_cluster_cnt;
 
 #if defined(INDY_R4600_CACHE)
 extern void	ip22_sdcache_disable(void);

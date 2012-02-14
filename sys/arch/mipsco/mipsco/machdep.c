@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58.10.4 2010/12/29 08:16:21 matt Exp $	*/
+/*	machdep.c,v 1.58.10.4 2010/12/29 08:16:21 matt Exp	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.10.4 2010/12/29 08:16:21 matt Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.58.10.4 2010/12/29 08:16:21 matt Exp");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -148,7 +148,7 @@ int	physmem;		/* max supported memory, changes to actual */
 char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int mem_cluster_cnt;
+u_int mem_cluster_cnt;
 
 void to_monitor(int) __dead;
 void prom_halt(int) __dead;
