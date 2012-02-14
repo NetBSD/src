@@ -627,40 +627,42 @@ BUILDING
                    ity, which is not part of NetBSD, but which can be
                    installed from pkgsrc/sysutils/cdrtools.
 
-     install-image Create a bootable NetBSD installation disk image in the
+     install-image
+                   Create a bootable NetBSD installation disk image in the
                    RELEASEDIR/RELEASEMACHINEDIR/installation/installimage
-                   directory.  The bootable installation disk image is
-                   suitable to USB flash memory sticks etc. for machines which
-                   may support boot from such USB devices.  File system in the
-                   bootable disk image will have a layout as described in
-                   release(7).
+                   directory.  The installation disk image is suitable for
+                   copying to bootable USB flash memory sticks, etc., for
+                   machines which are able to boot from such devices.  The
+                   file system in the bootable disk image will have a layout
+                   as described in release(7).
 
                    The installation image is bootable, and will automatically
                    run the sysinst(8) menu-based installation program, which
-                   can be used to install or upgrade a NetBSD system.
-                   Bootable installation images also contain tools that may be
-                   useful in repairing a damaged NetBSD installation.
+                   can be used to install or upgrade a NetBSD system.  The
+                   image also contains tools that may be useful in repairing a
+                   damaged NetBSD installation.
 
                    Before ``make install-image'' is attempted, RELEASEDIR must
-                   be populated by ``make release'' or equivalent and
-                   RELEASEDIR binaries must be built with ``MKUNPRIVED=yes''
-                   to refer permission information from specfiles.
+                   be populated by ``make release'' or equivalent.  The build
+                   must have been performed with MKUNPRIVED=yes because ``make
+                   install-image'' relies on information in DESTDIR/METALOG.
 
      live-image    Create NetBSD live images in the
-                   RELEASEDIR/RELEASEMACHINEDIR/installation/liveimage
-                   directory.  The live image contains all necessary files
-                   to boot NetBSD upto multi user mode, including all files
-                   which should be extracted during installation, NetBSD
-                   disklabel, and bootloaders etc.
+                   RELEASEDIR/RELEASEMACHINEDIR/installation/liveimage direc-
+                   tory.  The live image contains all necessary files to boot
+                   NetBSD up to multi-user mode, including all files which
+                   should be extracted during installation, NetBSD disklabel,
+                   bootloaders, etc.
 
-                   The live image is suitable for misc emulators like QEMU,
-                   and also usuful to try NetBSD on real machines with USB
-                   flash memory sticks without installation.
+                   The live image is suitable for use as a disk image in vir-
+                   tual machine environments such as QEMU, and also useful to
+                   boot NetBSD from a USB flash memory stick on a real
+                   machine, without the need for installation.
 
                    Before ``make live-image'' is attempted, RELEASEDIR must be
-                   populated by ``make release'' or equivalent and RELEASEDIR
-                   binaries must be built with ``MKUNPRIVED=yes'' to refer
-                   permission information from specfiles.
+                   populated by ``make release'' or equivalent The build must
+                   have been performed with MKUNPRIVED=yes because ``make
+                   install-image'' relies on information in DESTDIR/METALOG.
 
      regression-tests
                    Can only be run after building the regression tests in the
@@ -773,7 +775,8 @@ BUILDING
      iso-image-source
                    Perform ``make iso-image-source''.
 
-     install-image Perform ``make install-image''.
+     install-image
+                   Perform ``make install-image''.
 
      live-image    Perform ``make live-image''.
 
