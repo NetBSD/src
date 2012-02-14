@@ -1,4 +1,4 @@
-/*	$NetBSD: pwmclock.c,v 1.2 2011/12/13 14:46:07 macallan Exp $	*/
+/*	$NetBSD: pwmclock.c,v 1.3 2012/02/14 22:27:20 macallan Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.2 2011/12/13 14:46:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.3 2012/02/14 22:27:20 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ pwmclock_intr(void *cookie)
 }
 
 static void
-pwmclock_start()
+pwmclock_start(void)
 {
 	struct pwmclock_softc *sc = pwmclock;
 	sc->sc_count = 0;
