@@ -48,7 +48,7 @@
  * Generic Loongson 2E code and configuration data.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: generic2e_machdep.c,v 1.1 2011/08/27 13:42:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: generic2e_machdep.c,v 1.2 2012/02/14 21:41:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,7 @@ generic2e_isa_intr(int ipl, vaddr_t pc, uint32_t ipending)
  */
 
 void
-generic2e_reset()
+generic2e_reset(void)
 {
 	REGVAL(BONITO_BONGENCFG) &= ~BONITO_BONGENCFG_CPUSELFRESET;
 	REGVAL(BONITO_BONGENCFG) |= BONITO_BONGENCFG_CPUSELFRESET;
