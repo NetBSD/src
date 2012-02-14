@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.437 2012/02/14 00:39:08 riz Exp $
+# $NetBSD: mi,v 1.438 2012/02/14 17:29:51 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -383,7 +383,6 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_ftok.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/gen/t_fmtcheck.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_getcwd.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_getgrent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob.debug			tests-lib-debug		debug,atf
@@ -2905,7 +2904,6 @@
 ./usr/tests/usr.bin/rump_server			tests-util-tests
 ./usr/tests/usr.bin/rump_server/Atffile		tests-util-tests	atf
 ./usr/tests/usr.bin/rump_server/t_disk		tests-util-tests	atf
-./usr/tests/usr.bin				tests-util-tests
 ./usr/tests/usr.bin/shmif_dumpbus			tests-util-tests
 ./usr/tests/usr.bin/shmif_dumpbus/Atffile		tests-util-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus/d_pcap.out		tests-obsolete	obsolete
