@@ -474,7 +474,7 @@ lemote_isa_intr(int ipl, vaddr_t pc, uint32_t ipending)
 }
 
 uint
-lemote_get_isa_imr()
+lemote_get_isa_imr(void)
 {
 	uint imr1, imr2;
 
@@ -486,7 +486,7 @@ lemote_get_isa_imr()
 }
 
 uint
-lemote_get_isa_isr()
+lemote_get_isa_isr(void)
 {
 	uint isr1, isr2 = 0;
 
@@ -502,7 +502,7 @@ lemote_get_isa_isr()
  */
 
 void
-fuloong_powerdown()
+fuloong_powerdown(void)
 {
 	vaddr_t gpiobase;
 
@@ -514,14 +514,14 @@ fuloong_powerdown()
 }
 
 void
-yeeloong_powerdown()
+yeeloong_powerdown(void)
 {
 	REGVAL(BONITO_GPIODATA) &= ~0x00000001;
 	REGVAL(BONITO_GPIOIE) &= ~0x00000001;
 }
 
 void
-lemote_reset()
+lemote_reset(void)
 {
 	wrmsr(GCSC_GLCP_SYS_RST, rdmsr(GCSC_GLCP_SYS_RST) | 1);
 }
