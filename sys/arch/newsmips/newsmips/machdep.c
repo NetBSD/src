@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98.10.6 2010/12/29 08:14:43 matt Exp $	*/
+/*	machdep.c,v 1.98.10.6 2010/12/29 08:14:43 matt Exp	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.6 2010/12/29 08:14:43 matt Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.98.10.6 2010/12/29 08:14:43 matt Exp");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -155,7 +155,7 @@ int systype;			/* what type of NEWS we are */
 struct apbus_sysinfo *_sip = NULL;
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int mem_cluster_cnt;
+u_int mem_cluster_cnt;
 
 struct idrom idrom;
 void (*hardware_intr)(int, vaddr_t, uint32_t);
