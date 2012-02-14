@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.96 2012/01/28 05:32:49 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.97 2012/02/14 14:03:35 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -717,7 +717,6 @@
 ./usr/share/man/cat1/x68k
 ./usr/share/man/cat2
 ./usr/share/man/cat3
-./usr/share/man/cat3f
 ./usr/share/man/cat4
 ./usr/share/man/cat4/acorn26
 ./usr/share/man/cat4/acorn32
