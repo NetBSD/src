@@ -1,4 +1,4 @@
-/* $NetBSD: t_fileactions.c,v 1.1 2012/02/13 21:03:08 martin Exp $ */
+/* $NetBSD: t_fileactions.c,v 1.2 2012/02/14 00:13:54 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,17 +35,212 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <spawn.h>
 #include <unistd.h>
 #include <sys/wait.h>
+
+
+ATF_TC(t_spawn_openmode);
+
+ATF_TC_HEAD(t_spawn_openmode, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test the proper handling of 'mode' for 'open' fileactions");
+	atf_tc_set_md_var(tc, "require.progs", "/bin/cat");
+}
+
+static off_t
+filesize(const char * restrict fname)
+{
+	struct stat st;
+	int err;
+
+	err = stat(fname, &st);
+	ATF_REQUIRE(err == 0);
+	return st.st_size;
+}
+
+#define TESTFILE	"./the_input_data"
+#define CHECKFILE	"./the_output_data"
+#define TESTCONTENT	"marry has a little lamb"
+
+static void
+make_testfile(const char *restrict file)
+{
+	FILE *f;
+	size_t written;
+
+	f = fopen(file, "w");
+	ATF_REQUIRE(f != NULL);
+	written = fwrite(TESTCONTENT, 1, strlen(TESTCONTENT), f);
+	fclose(f);
+	ATF_REQUIRE(written == strlen(TESTCONTENT));
+}
+
+static void
+empty_outfile(const char *restrict filename)
+{
+	FILE *f;
+
+	f = fopen(filename, "w");
+	ATF_REQUIRE(f != NULL);
+	fclose(f);
+}
+
+ATF_TC_BODY(t_spawn_openmode, tc)
+{
+	int status, err;
+	pid_t pid;
+	size_t insize, outsize;
+	char * const args[2] = { __UNCONST("cat"), NULL };
+	posix_spawn_file_actions_t fa;
+
+	/*
+	 * try a "cat < testfile > checkfile"
+	 */
+	make_testfile(TESTFILE);
+	unlink(CHECKFILE);
+
+	posix_spawn_file_actions_init(&fa);
+	posix_spawn_file_actions_addopen(&fa, fileno(stdin),
+	    TESTFILE, O_RDONLY, 0);
+	posix_spawn_file_actions_addopen(&fa, fileno(stdout),
+	    CHECKFILE, O_WRONLY|O_CREAT, 0600);
+	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
+	posix_spawn_file_actions_destroy(&fa);
+
+	ATF_REQUIRE(err == 0);
+
+	/* ok, wait for the child to finish */
+	waitpid(pid, &status, 0);
+	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS);
+
+	/* now check that input and output have the same size */
+	insize = filesize(TESTFILE);
+	outsize = filesize(CHECKFILE);
+	ATF_REQUIRE(insize == strlen(TESTCONTENT));
+	ATF_REQUIRE(insize == outsize);
+
+	/*
+	 * try a "cat < testfile >> checkfile"
+	 */
+	make_testfile(TESTFILE);
+	make_testfile(CHECKFILE);
+
+	posix_spawn_file_actions_init(&fa);
+	posix_spawn_file_actions_addopen(&fa, fileno(stdin),
+	    TESTFILE, O_RDONLY, 0);
+	posix_spawn_file_actions_addopen(&fa, fileno(stdout),
+	    CHECKFILE, O_WRONLY|O_APPEND, 0);
+	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
+	posix_spawn_file_actions_destroy(&fa);
+
+	ATF_REQUIRE(err == 0);
+
+	/* ok, wait for the child to finish */
+	waitpid(pid, &status, 0);
+	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS);
+
+	/* now check that output is twice as long as input */
+	insize = filesize(TESTFILE);
+	outsize = filesize(CHECKFILE);
+	ATF_REQUIRE(insize == strlen(TESTCONTENT));
+	ATF_REQUIRE(insize*2 == outsize);
+
+	/*
+	 * try a "cat < testfile  > checkfile" with input and output swapped
+	 */
+	make_testfile(TESTFILE);
+	empty_outfile(CHECKFILE);
+
+	posix_spawn_file_actions_init(&fa);
+	posix_spawn_file_actions_addopen(&fa, fileno(stdout),
+	    TESTFILE, O_RDONLY, 0);
+	posix_spawn_file_actions_addopen(&fa, fileno(stdin),
+	    CHECKFILE, O_WRONLY, 0);
+	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
+	posix_spawn_file_actions_destroy(&fa);
+
+	ATF_REQUIRE(err == 0);
+
+	/* ok, wait for the child to finish */
+	waitpid(pid, &status, 0);
+	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_FAILURE);
+
+	/* now check that input and output are still the same size */
+	insize = filesize(TESTFILE);
+	outsize = filesize(CHECKFILE);
+	ATF_REQUIRE(insize == strlen(TESTCONTENT));
+	ATF_REQUIRE(outsize == 0);
+}
+
+ATF_TC(t_spawn_reopen);
+
+ATF_TC_HEAD(t_spawn_reopen, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "an open filehandle can be replaced by a 'open' fileaction");
+	atf_tc_set_md_var(tc, "require.progs", "/bin/cat");
+}
+
+ATF_TC_BODY(t_spawn_reopen, tc)
+{
+	int status, err;
+	pid_t pid;
+	char * const args[2] = { __UNCONST("cat"), NULL };
+	posix_spawn_file_actions_t fa;
+
+	/*
+	 * make sure stdin is open in the parent
+	 */
+	freopen("/dev/zero", "r", stdin);
+	/*
+	 * now request an open for this fd again in the child
+	 */
+	posix_spawn_file_actions_init(&fa);
+	posix_spawn_file_actions_addopen(&fa, fileno(stdin),
+	    "/dev/null", O_RDONLY, 0);
+	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
+	posix_spawn_file_actions_destroy(&fa);
+
+	ATF_REQUIRE(err == 0);
+
+	waitpid(pid, &status, 0);
+	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS);
+}
+
+ATF_TC(t_spawn_open_nonexistent);
+
+ATF_TC_HEAD(t_spawn_open_nonexistent, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "posix_spawn fails when a file to open does not exist");
+	atf_tc_set_md_var(tc, "require.progs", "/bin/cat");
+}
+
+ATF_TC_BODY(t_spawn_open_nonexistent, tc)
+{
+	int err;
+	pid_t pid;
+	char * const args[2] = { __UNCONST("cat"), NULL };
+	posix_spawn_file_actions_t fa;
+
+	posix_spawn_file_actions_init(&fa);
+	posix_spawn_file_actions_addopen(&fa, STDIN_FILENO,
+	    "./non/ex/ist/ent", O_RDONLY, 0);
+	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
+	ATF_REQUIRE(err == ENOENT);
+	posix_spawn_file_actions_destroy(&fa);
+}
 
 ATF_TC(t_spawn_fileactions);
 
 ATF_TC_HEAD(t_spawn_fileactions, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Tests posix_spawn with fileactions");
+	    "Tests various complex fileactions");
 }
 
 ATF_TC_BODY(t_spawn_fileactions, tc)
@@ -76,17 +271,20 @@ ATF_TC_BODY(t_spawn_fileactions, tc)
 	snprintf(helper, sizeof helper, "%s/h_fileactions",
 	    atf_tc_get_config_var(tc, "srcdir"));
 	err = posix_spawn(&pid, helper, &fa, NULL, args, NULL);
+	posix_spawn_file_actions_destroy(&fa);
+
 	ATF_REQUIRE(err == 0);
 
 	waitpid(pid, &status, 0);
 	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS);
-
-	posix_spawn_file_actions_destroy(&fa);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, t_spawn_fileactions);
+	ATF_TP_ADD_TC(tp, t_spawn_open_nonexistent);
+	ATF_TP_ADD_TC(tp, t_spawn_reopen);
+	ATF_TP_ADD_TC(tp, t_spawn_openmode);
 
 	return atf_no_error();
 }
