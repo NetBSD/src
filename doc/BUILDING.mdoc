@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.86 2012/02/14 21:19:19 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.87 2012/02/14 21:32:07 apb Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1159,10 +1159,10 @@ Create a bootable
 installation disk image in the
 .Sy RELEASEDIR/RELEASEMACHINEDIR Ns Pa /installation/installimage
 directory.
-The bootable installation disk image is
-suitable to USB flash memory sticks etc. for machines which
-may support boot from such USB devices.
-File system in the bootable disk image will have a layout
+The installation disk image is suitable for copying to
+bootable USB flash memory sticks, etc., for machines which
+are able to boot from such devices.
+The file system in the bootable disk image will have a layout
 as described in
 .Xr release 7 .
 .Pp
@@ -1172,19 +1172,24 @@ run the
 menu-based installation program, which can be used to install or upgrade a
 .Nx
 system.
-Bootable installation images also contain tools that may be
+The image also contains tools that may be
 useful in repairing a damaged
 .Nx
 installation.
 .Pp
 Before
 .Dq make install-image
-is attempted, RELEASEDIR must be populated by
+is attempted,
+.Sy RELEASEDIR
+must be populated by
 .Dq make release
-or equivalent
-and RELEASEDIR binaries must be built with
-.Sy MKUNPRIVED=yes
-to refer permission information from specfiles.
+or equivalent.
+The build must have been performed with
+.Sy MKUNPRIVED=yes 
+because
+.Dq make install-image
+relies on information in
+.Sy DESTDIR Ns Pa /METALOG .
 .
 .It live-image
 Create
@@ -1195,25 +1200,29 @@ directory.
 The live image contains all necessary files
 to boot
 .Nx
-upto multi user mode, including all files
+up to multi-user mode, including all files
 which should be extracted during installation,
 .Nx
-disklabel, and bootloaders etc.
+disklabel, bootloaders, etc.
 .Pp
-The live image is suitable for misc emulators like QEMU,
-and also usuful to try
+The live image is suitable for use as a disk image in
+virtual machine environments such as QEMU,
+and also useful to boot
 .Nx
-on real machines with USB
-flash memory sticks without installation.
+from a USB flash memory stick
+on a real machine, without the need for installation.
 .Pp
 Before
 .Dq make live-image
 is attempted, RELEASEDIR must be populated by
 .Dq make release
 or equivalent
-and RELEASEDIR binaries must be built with
-.Sy MKUNPRIVED=yes
-to refer permission information from specfiles.
+The build must have been performed with
+.Sy MKUNPRIVED=yes 
+because
+.Dq make install-image
+relies on information in
+.Sy DESTDIR Ns Pa /METALOG .
 .
 .It Sy regression-tests
 Can only be run after building the regression tests in the directory
