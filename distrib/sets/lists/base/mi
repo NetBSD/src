@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.983 2012/02/13 01:43:22 dholland Exp $
+# $NetBSD: mi,v 1.984 2012/02/14 14:03:34 wiz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3371,7 +3371,7 @@
 ./usr/share/man/cat2				base-man-share
 ./usr/share/man/cat3				base-man-share
 ./usr/share/man/cat3/atari			base-obsolete		obsolete
-./usr/share/man/cat3f				base-man-share
+./usr/share/man/cat3f				base-obsolete		obsolete
 ./usr/share/man/cat4				base-man-share
 ./usr/share/man/cat4/acorn26			base-man-share
 ./usr/share/man/cat4/acorn32			base-man-share
