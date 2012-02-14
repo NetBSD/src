@@ -1,11 +1,11 @@
-#	$NetBSD: MV2120,v 1.4 2011/12/18 05:49:26 dholland Exp $
+#	$NetBSD: MV2120,v 1.5 2012/02/14 15:09:03 jakllsch Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
 include 	"arch/evbarm/conf/std.mv2120"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-options 	SYMTAB_SPACE="(1024 * 900)"
+options 	SYMTAB_SPACE="(1024 * 908)"
 
 makeoptions	DEBUG="-g"
 
@@ -157,7 +157,10 @@ options 	USERCONF	# userconf(4) support
 
 config		netbsd		root on ? type ?
 config		netbsd-mvgbe0	root on mvgbe0 type nfs
-#config		netbsd-wd0g	root on wd0g type ffs
+config		netbsd-wd0e	root on wd0e type ?
+config		netbsd-wd0f	root on wd0f type ?
+config		netbsd-wd0g	root on wd0g type ?
+config		netbsd-wd0h	root on wd0h type ?
 
 # The main bus device
 mainbus0 at root
