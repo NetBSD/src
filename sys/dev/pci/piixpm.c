@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.39 2012/01/30 19:41:22 drochner Exp $ */
+/* $NetBSD: piixpm.c,v 1.40 2012/02/14 15:08:07 pgoyette Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,13 +22,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.39 2012/01/30 19:41:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.40 2012/02/14 15:08:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/rwlock.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
 
 #include <sys/bus.h>
@@ -82,7 +82,7 @@ struct piixpm_softc {
 	pcireg_t		sc_id;
 
 	struct i2c_controller	sc_i2c_tag;
-	krwlock_t		sc_i2c_rwlock;
+	kmutex_t		sc_i2c_mutex;
 	struct {
 		i2c_op_t     op;
 		void *      buf;
@@ -251,7 +251,7 @@ nopowermanagement:
 
 attach_i2c:
 	/* Attach I2C bus */
-	rw_init(&sc->sc_i2c_rwlock);
+	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = piixpm_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = piixpm_i2c_release_bus;
@@ -331,6 +331,7 @@ piixpm_sb800_init(struct piixpm_softc *sc, struct pci_attach_args *pa)
 		aprint_error_dev(sc->sc_dev, "can't map smbus I/O space\n");
 		return EBUSY;
 	}
+	aprint_normal_dev(sc->sc_dev, "polling (SB800)\n");
 	sc->sc_poll = 1;
 
 	return 0;
@@ -362,10 +363,9 @@ piixpm_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct piixpm_softc *sc = cookie;
 
-	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
-		return (0);
+	if (!cold)
+		mutex_enter(&sc->sc_i2c_mutex);
 
-	rw_enter(&sc->sc_i2c_rwlock, RW_WRITER);
 	return 0;
 }
 
@@ -374,10 +374,8 @@ piixpm_i2c_release_bus(void *cookie, int flags)
 {
 	struct piixpm_softc *sc = cookie;
 
-	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
-		return;
-
-	rw_exit(&sc->sc_i2c_rwlock);
+	if (!cold)
+		mutex_exit(&sc->sc_i2c_mutex);
 }
 
 static int
