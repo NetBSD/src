@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.30 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.31 2012/02/14 18:57:35 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -302,7 +302,8 @@ _arc4randbytes(void *p, size_t len)
 	if (!arc4_initialized) {
 		arc4_init();
 		/* avoid conditionalizing locking */
-		return arc4randbytes_unlocked(p, len);
+		arc4randbytes_unlocked(p, len);
+		return;
 	}
 	mutex_spin_enter(&arc4_mtx);
 	arc4randbytes_unlocked(p, len);
