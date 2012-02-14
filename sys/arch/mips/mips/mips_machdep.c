@@ -2052,7 +2052,7 @@ dumpsys(void)
 	delay(5000000);		/* 5 seconds */
 }
 
-#ifdef MIPS3_PLUS
+#if defined(MIPS3_PLUS) && !defined(_LP64)
 static struct mips_kcore_window_info {
 	struct tlbmask mkwi_tlb;
 	int mkwi_tlb_slot;
@@ -2063,12 +2063,10 @@ static struct mips_kcore_window_info {
 	},
 	.mkwi_tlb_slot = -1,
 };
-#endif
 
 bool
 mips_kcore_window_vtophys(vaddr_t va, paddr_t *pap)
 {
-#ifdef MIPS3_PLUS
 	struct mips_kcore_window_info * const mkwi = &mips_kcore_window_info;
 	const vaddr_t tlb_va = mkwi->mkwi_tlb.tlb_hi & -PAGE_SIZE;
 	psize_t tlb_size = MIPS3_PG_SIZE_MASK_TO_SIZE(mkwi->mkwi_tlb.tlb_mask);
@@ -2078,9 +2076,9 @@ mips_kcore_window_vtophys(vaddr_t va, paddr_t *pap)
 		    + mips_tlbpfn_to_paddr(mkwi->mkwi_tlb.tlb_lo0);
 		return true;
 	}
-#endif
 	return false;
 }
+#endif
 
 vaddr_t
 mips_kcore_window_map(paddr_t pa, vsize_t *vsp)
@@ -2553,7 +2551,7 @@ mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap, vsize_t *vsp)
 	if (vap != NULL)
 		*vap = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
 	if (vsp != NULL)
-		*vsp = MIPS_XKPHYS_TO_PHYS(MIPS_XKPHYS_MASK) - pa + 1;
+		*vsp = MIPS_XKPHYS_TO_PHYS(MIPS_XSEG_MASK) - pa + 1;
 	return true;
 #else
 #ifdef ENABLE_MIPS_KSEGX
@@ -2585,7 +2583,7 @@ mm_md_direct_mapped_virt(vaddr_t va, paddr_t *pap, vsize_t *vsp)
 		if (pap != NULL)
 			*pap = pa;
 		if (vsp != NULL)
-			*vsp = MIPS_XKPHYS_TO_PHYS(MIPS_XKPHYS_MASK) - pa + 1;
+			*vsp = MIPS_XKPHYS_TO_PHYS(MIPS_XSEG_MASK) - pa + 1;
 		return true;
 	}
 #endif
