@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.4 2012/02/13 23:07:31 matt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.5 2012/02/14 01:12:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.4 2012/02/13 23:07:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.5 2012/02/14 01:12:42 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -528,13 +528,13 @@ uvm_pageout_start(struct uvm_pggroup *grp, u_int npages)
 
 	mutex_spin_enter(&uvm_fpageqlock);
 
-	uvmexp.paging += npages;
 	uvmpd_checkgroup(grp);
+	uvmexp.paging += npages;
 	if (grp->pgrp_paging == 0) {
 		TAILQ_INSERT_TAIL(&pdinfo->pd_pagingq, grp, pgrp_paging_link);
-		uvmpd_checkgroup(grp);
 	}
 	grp->pgrp_paging += npages;
+	uvmpd_checkgroup(grp);
 	mutex_spin_exit(&uvm_fpageqlock);
 }
 
@@ -557,6 +557,11 @@ uvm_pageout_done(struct vm_page *pg, bool freed)
 	KASSERT(uvmexp.paging > 0);
 	uvmexp.paging--;
 	grp->pgrp_pdfreed += freed;
+
+	/*
+	 * Page is no longer being paged out.
+	 */
+	pg->flags &= ~PG_PAGEOUT;
 
 	/*
 	 * wake up either of pagedaemon or LWPs waiting for it.
