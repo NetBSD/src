@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.17 2011/11/26 13:22:09 mrg Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.18 2012/02/14 19:28:23 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -51,6 +51,7 @@ struct umidi_mididev {
 	size_t			label_len;
 	/* */
 	int			opened;
+	int			closing;
 	int			flags;
 };
 
