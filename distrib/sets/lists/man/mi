@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1378 2012/02/13 01:43:24 dholland Exp $
+# $NetBSD: mi,v 1.1379 2012/02/14 17:35:11 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -824,6 +824,7 @@
 ./usr/share/man/cat4/atw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/au8522.0			man-sys-catman		.cat
 ./usr/share/man/cat4/auacer.0			man-sys-catman		.cat
+./usr/share/man/cat4/aubtfwl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/audio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/audiocs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/audioctl.0			man-sys-catman		.cat
@@ -3692,6 +3693,7 @@
 ./usr/share/man/html4/atw.html			man-sys-htmlman		html
 ./usr/share/man/html4/au8522.html		man-sys-htmlman		html
 ./usr/share/man/html4/auacer.html		man-sys-htmlman		html
+./usr/share/man/html4/aubtfwl.html		man-sys-htmlman		html
 ./usr/share/man/html4/audio.html		man-sys-htmlman		html
 ./usr/share/man/html4/audiocs.html		man-sys-htmlman		html
 ./usr/share/man/html4/audioctl.html		man-sys-htmlman		html
@@ -6329,6 +6331,7 @@
 ./usr/share/man/man4/atw.4			man-sys-man		.man
 ./usr/share/man/man4/au8522.4			man-sys-man		.man
 ./usr/share/man/man4/auacer.4			man-sys-man		.man
+./usr/share/man/man4/aubtfwl.4			man-sys-man		.man
 ./usr/share/man/man4/audio.4			man-sys-man		.man
 ./usr/share/man/man4/audiocs.4			man-sys-man		.man
 ./usr/share/man/man4/audioctl.4			man-sys-man		.man
