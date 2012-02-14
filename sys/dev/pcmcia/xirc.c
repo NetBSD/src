@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.32 2010/01/19 22:07:43 pooka Exp $	*/
+/*	$NetBSD: xirc.c,v 1.33 2012/02/14 13:51:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.32 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.33 2012/02/14 13:51:19 drochner Exp $");
 
 #include "opt_inet.h"
 
@@ -602,7 +602,7 @@ int	xi_xirc_match(device_t, cfdata_t, void *);
 void	xi_xirc_attach(device_t, device_t, void *);
 
 /* No xirc-specific goo in the softc; it's all in the parent. */
-CFATTACH_DECL(xi_xirc, sizeof(struct xi_softc),
+CFATTACH_DECL_NEW(xi_xirc, sizeof(struct xi_softc),
     xi_xirc_match, xi_xirc_attach, xi_detach, NULL);
 
 int	xi_xirc_enable(struct xi_softc *);
