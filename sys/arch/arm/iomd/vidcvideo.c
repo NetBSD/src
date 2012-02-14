@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.39 2011/07/01 20:26:35 dyoung Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.40 2012/02/14 13:04:51 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.39 2011/07/01 20:26:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.40 2012/02/14 13:04:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ vidcvideoinit_screen(void *cookie, struct vcons_screen *scr,
 	if ((scr == &dc->dc_console) && (dc->dc_vd.active != NULL))
 		return;
 
-	ri->ri_flg    = 0; /* RI_CENTER | RI_FULLCLEAR; */
+	ri->ri_flg    = RI_NO_AUTO ; /* RI_CENTER | RI_FULLCLEAR; */
 	ri->ri_depth  = dc->dc_depth;
 	ri->ri_bits   = (void *) dc->dc_videobase;
 	ri->ri_width  = dc->dc_width;
