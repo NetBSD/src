@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.18 2012/01/22 03:53:32 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.19 2012/02/14 19:39:37 joerg Exp $
 
 .include <bsd.own.mk>
 
-.if ${MKMAN} != "no"
+.if ${MKGROFF} != "no"
 SUBDIR=	notes .WAIT
 .endif
 
