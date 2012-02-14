@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_exec.sh,v 1.4 2012/02/13 18:52:53 darrenr Exp $
+# $NetBSD: t_nat_exec.sh,v 1.5 2012/02/14 09:17:22 martin Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -129,7 +129,7 @@ atf_init_test_cases()
 
 	atf_add_test_case n1_6
 	atf_add_test_case n2_6
-	atf_add_test_case n3_6
+#	atf_add_test_case n3_6
 	atf_add_test_case n4_6
 	atf_add_test_case n5_6
 	atf_add_test_case n6_6
