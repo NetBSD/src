@@ -1,4 +1,4 @@
-/*	$NetBSD: quotarestore.c,v 1.1 2012/02/13 01:35:09 dholland Exp $	*/
+/*	$NetBSD: quotarestore.c,v 1.2 2012/02/14 17:33:38 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quotarestore.c,v 1.1 2012/02/13 01:35:09 dholland Exp $");
+__RCSID("$NetBSD: quotarestore.c,v 1.2 2012/02/14 17:33:38 joerg Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -499,7 +499,7 @@ readdumpfile(struct quotahandle *qh, FILE *f, const char *path,
 ////////////////////////////////////////////////////////////
 // top level control logic
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-d] volume [dump-file]\n",
