@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.175 2011/11/12 01:20:05 jmmv Exp $
+# $NetBSD: mi,v 1.176 2012/02/14 17:29:51 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -317,7 +317,6 @@
 ./usr/share/doc/html/postfix/SCHEDULER_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SMTPD_ACCESS_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SMTPD_POLICY_README.html	misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/SMTPD_PROXY_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SMTPD_PROXY_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SOHO_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SQLITE_README.html		misc-postfix-htmldoc	postfix,doc
