@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.212 2011/12/31 20:41:59 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.213 2012/02/15 16:11:23 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.212 2011/12/31 20:41:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.213 2012/02/15 16:11:23 drochner Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -896,7 +896,7 @@ spd_done:
 			 */
 			if (natt_frag) {
 				error = ip_output(m, opt,
-				    ro, flags, imo, so, mtu_p);
+				    ro, flags | IP_RAWOUTPUT | IP_NOIPNEWID, imo, so, mtu_p);
 			} else
 #endif /* IPSEC_NAT_T */
 			{
