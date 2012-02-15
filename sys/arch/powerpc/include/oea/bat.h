@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.15 2012/02/01 05:25:57 matt Exp $	*/
+/*	$NetBSD: bat.h,v 1.16 2012/02/15 01:46:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ struct bat {
 #define	BAT_BL_TO_SIZE(bl)	(((bl)+4) << 15)
 
 #define	BATU(va, len, v)						\
-	(((va) & BAT_EPI) | ((len) & BAT_BL) | ((v) & BAT_V))
+	(((va) & BAT_EPI) | ((len) & (BAT_BL|BAT_XBL)) | ((v) & BAT_V))
 
 #define	BATL(pa, wimg, pp)						\
 	(((pa) & BAT_RPN) | (wimg) | (pp))
