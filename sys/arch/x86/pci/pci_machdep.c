@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.53 2011/11/18 22:18:08 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.54 2012/02/15 16:30:29 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.53 2011/11/18 22:18:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.54 2012/02/15 16:30:29 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -197,6 +197,8 @@ struct {
 	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_740),
 	/* SIS 741 */
 	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741),
+	/* VIA Technologies VX900 */
+	_qe(0, 0, 0, PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX900_HB),
 	{0, 0xffffffff} /* patchable */
 };
 #undef _m1tag
