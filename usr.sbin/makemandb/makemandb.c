@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.2 2012/02/07 19:17:16 joerg Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.3 2012/02/15 23:35:00 joerg Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.2 2012/02/07 19:17:16 joerg Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.3 2012/02/15 23:35:00 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -26,6 +26,7 @@ __RCSID("$NetBSD: makemandb.c,v 1.2 2012/02/07 19:17:16 joerg Exp $");
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
+#include <libgen.h>
 #include <md5.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -291,7 +292,7 @@ main(int argc, char *argv[])
 {
 	FILE *file;
 	const char *sqlstr, *manconf = NULL;
-	char *line, *command;
+	char *line, *command, *parent;
 	char *errmsg;
 	int ch;
 	struct mparse *mp;
@@ -397,6 +398,9 @@ main(int argc, char *argv[])
 	while ((len = getline(&line, &linesize, file)) != -1) {
 		/* Replace the new line character at the end of string with '\0' */
 		line[len - 1] = '\0';
+		parent = estrdup(line);
+		chdir(dirname(parent));
+		free(parent);
 		/* Traverse the man page directories and parse the pages */
 		traversedir(line, db, mp);
 	}
