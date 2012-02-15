@@ -1,25 +1,18 @@
-/*	$NetBSD: kmem.h,v 1.5 2012/01/30 16:12:02 darrenr Exp $	*/
+/*	$NetBSD: kmem.h,v 1.6 2012/02/15 17:55:04 riz Exp $	*/
 
 /*
- * Copyright (C) 2002 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
- * Id: kmem.h,v 2.5.6.1 2012/01/26 05:29:13 darrenr Exp
+ * Id: kmem.h,v 2.5 2002/08/21 22:57:36 darrenr Exp
  */
 
 #ifndef	__KMEM_H__
 #define	__KMEM_H__
 
-#ifndef	__P
-# ifdef	__STDC__
-#  define	__P(x)	x
-# else
-#  define	__P(x)	()
-# endif
-#endif
-extern	int	openkmem __P((char *, char *));
-extern	int	kmemcpy __P((char *, long, int));
-extern	int	kstrncpy __P((char *, long, int));
+extern	int	openkmem(char *, char *);
+extern	int	kmemcpy(char *, long, int);
+extern	int	kstrncpy(char *, long, int);
 
 #if defined(__NetBSD__) || defined(__OpenBSD)
 # include <paths.h>

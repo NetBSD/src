@@ -1,20 +1,19 @@
-/*	$NetBSD: printhostmask.c,v 1.1.1.3 2012/01/30 16:03:25 darrenr Exp $	*/
+/*	$NetBSD: printhostmask.c,v 1.2 2012/02/15 17:55:07 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2000-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printhostmask.c,v 1.14.2.1 2012/01/26 05:29:16 darrenr Exp
+ * Id: printhostmask.c,v 1.8.4.1 2006/06/16 17:21:12 darrenr Exp
  */
 
 #include "ipf.h"
 
 
-void
-printhostmask(family, addr, mask)
-	int	family;
-	u_32_t	*addr, *mask;
+void	printhostmask(v, addr, mask)
+int	v;
+u_32_t	*addr, *mask;
 {
 #ifdef  USE_INET6
 	char ipbuf[64];
@@ -22,18 +21,26 @@ printhostmask(family, addr, mask)
 	struct in_addr ipa;
 #endif
 
-	if ((family == -1) || ((!addr || !*addr) && (!mask || !*mask)))
-		PRINTF("any");
+	if (!*addr && !*mask)
+		printf("any");
 	else {
-		void *ptr = addr;
-
 #ifdef  USE_INET6
-		PRINTF("%s", inet_ntop(family, ptr, ipbuf, sizeof(ipbuf)));
+		void *ptr = addr;
+		int af;
+
+		if (v == 4) {
+			ptr = addr;
+			af = AF_INET;
+		} else if (v == 6) {
+			ptr = addr;
+			af = AF_INET6;
+		} else
+			af = 0;
+		printf("%s", inet_ntop(af, ptr, ipbuf, sizeof(ipbuf)));
 #else
 		ipa.s_addr = *addr;
-		PRINTF("%s", inet_ntoa(ipa));
+		printf("%s", inet_ntoa(ipa));
 #endif
-		if (mask != NULL)
-			printmask(family, mask);
+		printmask(mask);
 	}
 }

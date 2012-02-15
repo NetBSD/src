@@ -1,19 +1,19 @@
-/*	$NetBSD: kmemcpywrap.c,v 1.1.1.4 2012/01/30 16:03:25 darrenr Exp $	*/
+/*	$NetBSD: kmemcpywrap.c,v 1.2 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: kmemcpywrap.c,v 1.5.2.1 2012/01/26 05:29:16 darrenr Exp
+ * Id: kmemcpywrap.c,v 1.1.4.2 2009/12/27 06:58:06 darrenr Exp
  */
 
 #include "ipf.h"
 #include "kmem.h"
 
 int kmemcpywrap(from, to, size)
-	void *from, *to;
-	size_t size;
+void *from, *to;
+size_t size;
 {
 	int ret;
 

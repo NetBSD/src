@@ -1,15 +1,14 @@
-/*	$NetBSD: load_http.c,v 1.6 2012/02/03 04:28:55 joerg Exp $	*/
+/*	$NetBSD: load_http.c,v 1.7 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_http.c,v 1.5.2.3 2012/01/26 05:29:16 darrenr Exp
+ * Id: load_http.c,v 1.1.2.2 2009/07/23 20:01:12 darrenr Exp
  */
 
 #include "ipf.h"
-#include <ctype.h>
 
 /*
  * Because the URL can be included twice into the buffer, once as the
@@ -30,10 +29,12 @@
 alist_t *
 load_http(char *url)
 {
-	int fd, len, left, port, endhdr, removed, linenum = 0;
 	char *s, *t, *u, buffer[LOAD_BUFSIZE], *myurl;
+	int fd, len, left, port, endhdr, removed;
 	alist_t *a, *rtop, *rbot;
-	int rem;
+	struct sockaddr_in sin;
+	struct hostent *host;
+	size_t rem;
 
 	/*
 	 * More than this would just be absurd.
@@ -94,9 +95,27 @@ load_http(char *url)
 		port = 80;
 	}
 
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(port);
 
-	fd = connecttcp(s, port);
+	if (isdigit((unsigned char)*s)) {
+		if (inet_aton(s, &sin.sin_addr) == -1) {
+			goto done;
+		}
+	} else {
+		host = gethostbyname(s);
+		if (host == NULL)
+			goto done;
+		memcpy(&sin.sin_addr, host->h_addr_list[0],
+		       sizeof(sin.sin_addr));
+	}
+
+	fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd == -1)
+		goto done;
+
+	if (connect(fd, (struct sockaddr *)&sin, sizeof(sin)) == -1)
 		goto done;
 
 	len = strlen(buffer);
@@ -150,9 +169,7 @@ load_http(char *url)
 			if (t == NULL)
 				break;
 
-			linenum++;
-			*t = '\0';
-
+			*t++ = '\0';
 			for (u = buffer; isdigit((unsigned char)*u) ||
 			    (*u == '.'); u++)
 				continue;
@@ -166,38 +183,17 @@ load_http(char *url)
 				if (!isspace((unsigned char)*u) && *u)
 					u = slash;
 			}
+			*u = '\0';
 
-			/*
-			 * Remove comment and continue to the next line if
-			 * the comment is at the start of the line.
-			 */
-			u = strchr(buffer, '#');
-			if (u != NULL) {
-				*u = '\0';
-				if (u == buffer)
-					continue;
-			}
-
-			/*
-			 * Trim off tailing white spaces, will include \r
-			 */
-			for (u = t - 1; (u >= buffer) && ISSPACE(*u); u--)
-				*u = '\0';
-
-			a = alist_new(AF_UNSPEC, buffer);
+			a = alist_new(4, buffer);
 			if (a != NULL) {
 				if (rbot != NULL)
 					rbot->al_next = a;
 				else
 					rtop = a;
 				rbot = a;
-			} else {
-				fprintf(stderr,
-					"%s:%d unrecognised content:%s\n",
-					url, linenum, buffer);
 			}
 
-			t++;
 			removed = t - buffer;
 			memmove(buffer, t, sizeof(buffer) - left - removed);
 			s -= removed;

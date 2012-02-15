@@ -1,11 +1,11 @@
-/*	$NetBSD: load_hashnode.c,v 1.1.1.3 2012/01/30 16:03:25 darrenr Exp $	*/
+/*	$NetBSD: load_hashnode.c,v 1.2 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2003-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_hashnode.c,v 1.9.2.1 2012/01/26 05:29:16 darrenr Exp
+ * Id: load_hashnode.c,v 1.2.4.2 2006/06/16 17:21:05 darrenr Exp
  */
 
 #include <fcntl.h>
@@ -14,20 +14,22 @@
 #include "netinet/ip_lookup.h"
 #include "netinet/ip_htable.h"
 
+static int hashfd = -1;
 
-int
-load_hashnode(unit, name, node, ttl, iocfunc)
-	int unit;
-	char *name;
-	iphtent_t *node;
-	int ttl;
-	ioctlfunc_t iocfunc;
+
+int load_hashnode(unit, name, node, iocfunc)
+int unit;
+char *name;
+iphtent_t *node;
+ioctlfunc_t iocfunc;
 {
 	iplookupop_t op;
 	iphtent_t ipe;
 	int err;
 
-	if (pool_open() == -1)
+	if ((hashfd == -1) && ((opts & OPT_DONOTHING) == 0))
+		hashfd = open(IPLOOKUP_NAME, O_RDWR);
+	if ((hashfd == -1) && ((opts & OPT_DONOTHING) == 0))
 		return -1;
 
 	op.iplo_type = IPLT_HASH;
@@ -38,8 +40,6 @@ load_hashnode(unit, name, node, ttl, iocfunc)
 	strncpy(op.iplo_name, name, sizeof(op.iplo_name));
 
 	bzero((char *)&ipe, sizeof(ipe));
-	ipe.ipe_family = node->ipe_family;
-	ipe.ipe_die = ttl;
 	bcopy((char *)&node->ipe_addr, (char *)&ipe.ipe_addr,
 	      sizeof(ipe.ipe_addr));
 	bcopy((char *)&node->ipe_mask, (char *)&ipe.ipe_mask,
@@ -48,9 +48,9 @@ load_hashnode(unit, name, node, ttl, iocfunc)
 	      sizeof(ipe.ipe_group));
 
 	if ((opts & OPT_REMOVE) == 0)
-		err = pool_ioctl(iocfunc, SIOCLOOKUPADDNODE, &op);
+		err = (*iocfunc)(hashfd, SIOCLOOKUPADDNODE, &op);
 	else
-		err = pool_ioctl(iocfunc, SIOCLOOKUPDELNODE, &op);
+		err = (*iocfunc)(hashfd, SIOCLOOKUPDELNODE, &op);
 
 	if (err != 0)
 		if (!(opts & OPT_DONOTHING)) {

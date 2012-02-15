@@ -1,12 +1,12 @@
-/*	$NetBSD: ip_sync.h,v 1.10 2012/02/01 02:21:21 christos Exp $	*/
+/*	$NetBSD: ip_sync.h,v 1.11 2012/02/15 17:55:24 riz Exp $	*/
 
 /*
- * Copyright (C) 2008 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_sync.h,v 2.19.2.1 2012/01/26 05:29:13 darrenr Exp
+ * Id: ip_sync.h,v 2.11.2.4 2006/07/14 06:12:20 darrenr Exp
  */
 
 #ifndef __IP_SYNC_H__
@@ -38,7 +38,6 @@ typedef	struct	synchdr	{
 /*
  * Tables
  */
-#define	SMC_RLOG	-2	/* Only used with SIOCIPFFL */
 #define	SMC_NAT		0
 #define	SMC_STATE	1
 #define	SMC_MAXTBL	1
@@ -102,22 +101,19 @@ typedef	struct	syncupdent	{		/* 28 or 32 bytes */
 	struct	synctcp_update	sup_tcp;
 } syncupdent_t;
 
-extern	void *ipf_sync_create(ipf_main_softc_t *);
-extern	int ipf_sync_soft_init(ipf_main_softc_t *, void *);
-extern	int ipf_sync_soft_fini(ipf_main_softc_t *, void *);
-extern	int ipf_sync_canread(void *);
-extern	int ipf_sync_canwrite(void *);
-extern	void ipf_sync_del_nat(void *, synclist_t *);
-extern	void ipf_sync_del_state(void *, synclist_t *);
-extern	int ipf_sync_init(void);
-extern	int ipf_sync_ioctl(ipf_main_softc_t *, void *, ioctlcmd_t, int, int, void *);
-extern	synclist_t *ipf_sync_new(ipf_main_softc_t *, int, fr_info_t *, void *);
-extern	int ipf_sync_read(ipf_main_softc_t *, struct uio *uio);
-extern	int ipf_sync_write(ipf_main_softc_t *, struct uio *uio);
-extern	int ipf_sync_main_unload(void);
-extern	void ipf_sync_update(ipf_main_softc_t *, int, fr_info_t *, synclist_t *);
-extern	void ipf_sync_expire(ipf_main_softc_t *);
-extern	void	ipf_sync_soft_destroy(ipf_main_softc_t *, void *);
-extern	void	*ipf_sync_soft_create(ipf_main_softc_t *);
+extern	synclogent_t	synclog[SYNCLOG_SZ];
+
+
+extern	int fr_sync_ioctl(void *, ioctlcmd_t, int, int, void *);
+extern	synclist_t *ipfsync_new(int, fr_info_t *, void *);
+extern	void ipfsync_del(synclist_t *);
+extern	void ipfsync_update(int, fr_info_t *, synclist_t *);
+extern	int ipfsync_init(void);
+extern	int ipfsync_nat(synchdr_t *sp, void *data);
+extern	int ipfsync_state(synchdr_t *sp, void *data);
+extern	int ipfsync_read(struct uio *uio);
+extern	int ipfsync_write(struct uio *uio);
+extern	int ipfsync_canread(void);
+extern	int ipfsync_canwrite(void);
 
 #endif /* IP_SYNC */

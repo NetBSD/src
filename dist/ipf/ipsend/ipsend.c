@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.c,v 1.15 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: ipsend.c,v 1.16 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1998 Darren Reed
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipsend.c	1.5 12/10/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipsend.c,v 2.12 2007/12/20 09:35:09 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipsend.c,v 2.8.2.3 2006/03/17 13:45:34 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -68,7 +68,7 @@ int	main __P((int, char **));
 
 
 static	void	usage(prog)
-	char	*prog;
+char	*prog;
 {
 	fprintf(stderr, "Usage: %s [options] dest [flags]\n\
 \toptions:\n\
@@ -97,8 +97,8 @@ static	void	usage(prog)
 
 
 static void do_icmp(ip, args)
-	ip_t *ip;
-	char *args;
+ip_t *ip;
+char *args;
 {
 	struct	icmp	*ic;
 	char	*s;
@@ -148,10 +148,10 @@ static void do_icmp(ip, args)
 
 
 int send_packets(dev, mtu, ip, gwip)
-	char *dev;
-	int mtu;
-	ip_t *ip;
-	struct in_addr gwip;
+char *dev;
+int mtu;
+ip_t *ip;
+struct in_addr gwip;
 {
 	int wfd;
 
@@ -194,8 +194,8 @@ udpcksum(ip_t *ip, struct udphdr *udp, int len)
 }
 
 int main(argc, argv)
-	int	argc;
-	char	**argv;
+int	argc;
+char	**argv;
 {
 	FILE	*langfile = NULL;
 	struct	in_addr	gwip;
